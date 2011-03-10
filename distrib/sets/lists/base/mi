@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.924 2011/03/06 17:08:10 bouyer Exp $
+# $NetBSD: mi,v 1.925 2011/03/10 13:16:57 jmmv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -657,6 +657,7 @@
 ./usr/bin/tic					base-util-bin
 ./usr/bin/time					base-util-bin
 ./usr/bin/tip					base-util-bin
+./usr/bin/tmux					base-util-bin
 ./usr/bin/tn3270				base-obsolete		obsolete
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
