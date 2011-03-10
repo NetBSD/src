@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.2 2011/02/22 08:20:20 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3 2011/03/10 17:22:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.2 2011/02/22 08:20:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.3 2011/03/10 17:22:51 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -127,6 +127,7 @@ emips_aic_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 
 	cf.pc = pc;
 	cf.sr = status;
+	cf.intr = (curcpu()->ci_idepth > 1);
 
 	ipending = TheAic->IrqStatus;
 
