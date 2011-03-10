@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.1 2011/03/09 23:10:07 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.2 2011/03/10 14:27:31 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,9 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.1 2011/03/09 23:10:07 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.2 2011/03/10 14:27:31 joerg Exp $");
 
 #include <sys/param.h>
+#include <sys/ucontext.h>
 #include <lwp.h>
 #include <string.h>
 #include "rtld.h"
@@ -231,5 +232,29 @@ _rtld_tls_offset_free(Obj_Entry *obj)
 	obj->tls_done = 0;
 	return;
 }
+
+#ifdef __HAVE_COMMON___TLS_GET_ADDR
+/*
+ * The fast path is access to an already allocated DTV entry.
+ * This checks the current limit and the entry without needing any
+ * locking. Entries are only freed on dlclose() and it is an application
+ * bug if code of the module is still running at that point.
+ */
+void *
+__tls_get_addr(void *arg_)
+{
+	size_t *arg = (size_t *)arg_;
+	void **dtv;
+	struct tls_tcb *tcb = __lwp_getprivate_fast();
+	size_t idx = arg[0], offset = arg[1];
+
+	dtv = tcb->tcb_dtv;
+
+	if (__predict_true(idx < DTV_MAX_INDEX(dtv) && dtv[idx] != NULL))
+		return (uint8_t *)dtv[idx] + offset;
+
+	return _rtld_tls_get_addr(tcb, idx, offset);
+}
+#endif
 
 #endif /* __HAVE_TLS_VARIANT_I || __HAVE_TLS_VARIANT_II */
