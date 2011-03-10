@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.8 2011/03/06 18:22:13 phx Exp $ */
+/* $NetBSD: globals.h,v 1.9 2011/03/10 21:11:49 phx Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -80,12 +80,16 @@ unsigned pcicfgread(unsigned, int);
 void  pcicfgwrite(unsigned, int, unsigned);
 
 #define PCI_ID_REG			0x00
-#define PCI_COMMAND_STATUS_REG		0x04
 #define  PCI_VENDOR(id)			((id) & 0xffff)
 #define  PCI_PRODUCT(id)		(((id) >> 16) & 0xffff)
 #define  PCI_VENDOR_INVALID		0xffff
 #define  PCI_DEVICE(v,p)		((v) | ((p) << 16))
+#define PCI_COMMAND_STATUS_REG		0x04
 #define PCI_CLASS_REG			0x08
+#define  PCI_CLASS(v)			(((v) >> 16) & 0xffff)
+#define  PCI_SUBCLASS(v)		(((v) >> 16) & 0xff)
+#define  PCI_INTERFACE(v)		(((v) & 0xff00) >> 8)
+#define  PCI_REVISION(v)		((v) & 0xff)
 #define  PCI_CLASS_PPB			0x0604
 #define  PCI_CLASS_ETH			0x0200
 #define  PCI_CLASS_SCSI			0x0100
