@@ -53,7 +53,7 @@
 .\"           *  PLEASE DO NOT "UN-IFDEF" THIS FILE!  *
 .\"           * * * * * * * * * * * * * * * * * * * * *
 .\"
-.\" $NetBSD: lmc.4,v 1.17 2009/10/14 23:32:42 joerg Exp $
+.\" $NetBSD: lmc.4,v 1.18 2011/03/10 17:09:17 wiz Exp $
 .\"
 .Dd April 11, 2006
 .Dt LMC 4
@@ -97,9 +97,9 @@ wide-area network router.
 The
 .Nm
 driver works with
-.Tn FreeBSD ,
-.Tn NetBSD ,
-.Tn OpenBSD ,
+.Fx ,
+.Nx ,
+.Ox ,
 .Tn BSD/OS ,
 and
 .Tn Linux
@@ -535,7 +535,7 @@ To test the BPF kernel interface,
 bring up a link between two machines, then run
 .Xr ping 8
 and
-.Xr tcpdump 1 :
+.Xr tcpdump 8 :
 .Bd -unfilled -offset indent -compact
 .Ic ping 10.0.0.1
 .Ed
@@ -639,7 +639,6 @@ of time slots for whatever frame format is selected.
 supported.
 .\"
 .Sh SEE ALSO
-.Xr tcpdump 1 ,
 .Xr ioctl 2 ,
 .Xr bpf 4 ,
 .Xr de 4 ,
