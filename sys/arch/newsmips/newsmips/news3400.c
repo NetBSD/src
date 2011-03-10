@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.21 2011/03/09 13:21:36 tsutsui Exp $	*/
+/*	$NetBSD: news3400.c,v 1.22 2011/03/10 15:40:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.21 2011/03/09 13:21:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.22 2011/03/10 15:40:36 tsutsui Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -102,7 +102,7 @@ news3400_intr(int ppl, uint32_t pc, uint32_t status)
 				struct clockframe cf = {
 					.pc = pc,
 					.sr = status,
-					.intr = (curcpu()->ci_idepth > 0),
+					.intr = (curcpu()->ci_idepth > 1),
 				};
 				hardclock(&cf);
 				intrcnt[HARDCLOCK_INTR]++;
