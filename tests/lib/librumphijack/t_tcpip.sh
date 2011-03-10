@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.6 2011/03/09 21:25:59 pooka Exp $
+#       $NetBSD: t_tcpip.sh,v 1.7 2011/03/10 13:42:33 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -198,10 +198,14 @@ nfs_body()
 
 	# finally, le nfschuck
 	export RUMPHIJACK='blanket=/var/run,socket=all,vfs=all'
-	atf_check -s exit:0 nfsd -tu &
+	atf_check -s exit:0 nfsd -tu
 
+	#
 	# now, time for the client server and associated madness.
+	#
+
 	export RUMP_SERVER=unix://clientsock
+	unset RUMPHIJACK
 	unset LD_PRELOAD
 
 	# at least the kernel server is easier
@@ -214,7 +218,6 @@ nfs_body()
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.1.1.100
 
 	export LD_PRELOAD=/usr/lib/librumphijack.so
-	unset RUMPHIJACK
 
 	atf_check -s exit:0 mkdir /rump/mnt
 	atf_check -s exit:0 mount_nfs 10.1.1.1:/export /rump/mnt
