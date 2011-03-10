@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.34 2011/03/10 13:20:54 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.35 2011/03/10 13:27:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.34 2011/03/10 13:20:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.35 2011/03/10 13:27:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.34 2011/03/10 13:20:54 pooka Exp $");
 #include <sys/lock.h>
 #include <sys/vmem.h>
 
+#include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_ether.h>
 
@@ -517,6 +518,8 @@ shmif_start(struct ifnet *ifp)
 		sp.sp_sec = tv.tv_sec;
 		sp.sp_usec = tv.tv_usec;
 
+		bpf_mtap(ifp, m0);
+
 		shmif_lockbus(busmem);
 		KASSERT(busmem->shm_magic == SHMIF_MAGIC);
 		busmem->shm_last = shmif_nextpktoff(busmem, busmem->shm_last);
@@ -702,6 +705,7 @@ shmif_rcv(void *arg)
 		if (memcmp(eth->ether_dhost, sc->sc_myaddr, 6) == 0 ||
 		    memcmp(eth->ether_dhost, etherbroadcastaddr, 6) == 0) {
 			KERNEL_LOCK(1, NULL);
+			bpf_mtap(ifp, m);
 			ifp->if_input(ifp, m);
 			KERNEL_UNLOCK_ONE(NULL);
 			m = NULL;
