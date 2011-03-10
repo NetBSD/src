@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.34 2010/09/24 11:41:46 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.35 2011/03/10 12:53:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.34 2010/09/24 11:41:46 skrll Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.35 2011/03/10 12:53:42 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -177,7 +177,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 		case DT_PLTGOT:
 			pltgot = (Elf_Addr *)
 			    (relocbase + dynp->d_un.d_ptr);
-                        break;
+			break;
 		}
 	}
 	relalim = (const Elf_Rela *)((const char *)relafirst + relasz);
@@ -230,11 +230,11 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 		
 		plabel = &hppa_plabel_pre[hppa_plabel_pre_next++];
 
-        	plabel->hppa_plabel_pc = (Elf_Addr)
+		plabel->hppa_plabel_pc = (Elf_Addr)
 		    (relocbase + sym->st_value + rela->r_addend);
-        	plabel->hppa_plabel_sl = (Elf_Addr)pltgot;
+		plabel->hppa_plabel_sl = (Elf_Addr)pltgot;
 
-        	SLIST_INSERT_HEAD(&hppa_plabel_list, plabel, hppa_plabel_next);
+		SLIST_INSERT_HEAD(&hppa_plabel_list, plabel, hppa_plabel_next);
 		*((Elf_Addr *)where) = (Elf_Addr)(RTLD_MAKE_PLABEL(plabel));
 	}
 	
