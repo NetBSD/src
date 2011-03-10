@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.11 2010/09/20 23:11:38 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.12 2011/03/10 14:39:40 reed Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.18 2010/09/20 22:26:29 mrg Exp $	*/
 
@@ -145,6 +145,10 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirname, int isindex)
 		} else if (S_ISDIR(sb.st_mode)) {
 			bozo_printf(httpd, "<a href=\"%s/\">", name);
 			l += bozo_printf(httpd, "%s/", name);
+		} else if (strchr(name, ':') != NULL) {
+			/* RFC 3986 4.2 */
+			bozo_printf(httpd, "<a href=\"./%s\">", name);
+			l += bozo_printf(httpd, "%s", name);
 		} else {
 			bozo_printf(httpd, "<a href=\"%s\">", name);
 			l += bozo_printf(httpd, "%s", name);
