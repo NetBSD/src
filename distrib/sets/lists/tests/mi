@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.264 2011/03/10 11:16:03 pooka Exp $
+# $NetBSD: mi,v 1.265 2011/03/10 14:11:18 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2045,6 +2045,9 @@
 ./usr/tests/rump/rumpkern/h_client/h_stresscli		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/h_server			tests-rump-tests
 ./usr/tests/rump/rumpkern/h_server/h_simpleserver		tests-rump-tests atf
+./usr/tests/rump/rumpnet			tests-rump-tests
+./usr/tests/rump/rumpnet/Atffile		tests-rump-tests	atf
+./usr/tests/rump/rumpnet/t_shmif		tests-rump-tests	atf
 ./usr/tests/rump/rumpvfs			tests-rump-tests
 ./usr/tests/rump/rumpvfs/Atffile		tests-rump-tests	atf
 ./usr/tests/rump/rumpvfs/t_basic		tests-rump-tests	atf
