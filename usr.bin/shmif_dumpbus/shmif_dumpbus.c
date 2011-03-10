@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.2 2011/03/09 12:56:08 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.3 2011/03/10 10:11:25 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -158,21 +158,26 @@ main(int argc, char *argv[])
 		uint32_t oldoff;
 		bool wrap;
 
+		assert(curbus < sb.st_size);
+
 		wrap = false;
 		oldoff = curbus;
 		curbus = shmif_busread(bmem, &sp, oldoff, sizeof(sp), &wrap);
 		if (wrap)
 			bonus = 0;
 
-		if (sp.sp_len == 0)
+		assert(curbus < sb.st_size);
+
+		if (sp.sp_len == 0) {
 			continue;
+		}
 
 		if (pfd != STDOUT_FILENO)
 			printf("packet %d, offset 0x%04x, length 0x%04x, "
 			    "ts %d/%06d\n", i++, curbus,
 			    sp.sp_len, sp.sp_sec, sp.sp_usec);
 
-		if (!pcapfile || sp.sp_len == 0) {
+		if (!pcapfile) {
 			curbus = shmif_busread(bmem,
 			    buf, curbus, sp.sp_len, &wrap);
 			if (wrap)
@@ -184,6 +189,7 @@ main(int argc, char *argv[])
 		packhdr.caplen = packhdr.len = sp.sp_len;
 		packhdr.ts.tv_sec = sp.sp_sec;
 		packhdr.ts.tv_usec = sp.sp_usec;
+		assert(sp.sp_len <= BUFSIZE);
 
 		if (write(pfd, &packhdr, sizeof(packhdr)) != sizeof(packhdr))
 			err(1, "error writing packethdr");
