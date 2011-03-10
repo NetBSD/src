@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.9 2010/09/30 19:32:40 skrll Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.10 2011/03/10 12:53:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ ENTRY($rtld_start,HPPA_FRAME_SIZE)
 	 * twice later: once to call _rtld, and again to transfer to the
 	 * program's entry point.
 	 */
-        stw     %arg0, HPPA_FRAME_ARG(0)(%r3)
+	stw     %arg0, HPPA_FRAME_ARG(0)(%r3)
 
 	/*
 	 * We can't move to C until we relocate at least the 
