@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.83 2011/03/10 09:47:32 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.84 2011/03/10 23:02:56 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.83 2011/03/10 09:47:32 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.84 2011/03/10 23:02:56 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -1870,7 +1870,7 @@ __sysctl(const int *name, unsigned int namelen, void *old, size_t *oldlenp,
 		op___sysctl = GETSYSCALL(host, __SYSCTL);
 		/* we haven't inited yet */
 		if (__predict_false(op___sysctl == NULL)) {
-			op___sysctl = dlsym(RTLD_NEXT, "__sysctl");
+			op___sysctl = rumphijack_dlsym(RTLD_NEXT, "__sysctl");
 		}
 	}
 
