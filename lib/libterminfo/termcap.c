@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.11 2011/03/07 00:27:51 christos Exp $ */
+/* $NetBSD: termcap.c,v 1.12 2011/03/10 10:17:19 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.11 2011/03/07 00:27:51 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.12 2011/03/10 10:17:19 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -226,14 +226,61 @@ strname(const char *key)
 	return key;
 }
 
-/* We don't currently map %> %B %D
- * That means no conversion for regent100, hz1500, act4, act5, mime terms. */
+/* Convert a termcap character into terminfo equivalents */
+static int
+printchar(char **dst, const char **src)
+{
+	unsigned char v;
+	int l;
+
+	l = 4;
+	v = (unsigned char) *++(*src);
+	if (v == '\\') {
+		v = (unsigned char) *++(*src);
+		switch (v) {
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+			v = 0;
+			while (isdigit((unsigned char) **src))	
+				v = 8 * v + ((unsigned char) *(*src)++ - '0');
+			(*src)--;
+			break;
+		case '\0':
+			v = '\\';
+			break;
+		}
+	} else if (v == '^')
+		v = (unsigned char) (*++(*src) & 0x1f);
+	*(*dst)++ = '%';
+	if (isgraph(v) && v != ',' && v != '\'' && v != '\\' && v != ':') {
+		*(*dst)++ = '\'';
+		*(*dst)++ = v;
+		*(*dst)++ = '\'';
+	} else {
+		*(*dst)++ = '{';
+		if (v > 99) {
+			*(*dst)++ = '0'+ v / 100;
+			l++;
+		}
+		if (v > 9) {
+			*(*dst)++ = '0' + ((int) (v / 10)) % 10;
+			l++;
+		}
+		*(*dst)++ = '0' + v % 10;
+		*(*dst)++ = '}';
+	}
+	return l;
+}
+
+/* Convert termcap commands into terminfo commands */
 static char *
 strval(const char *val)
 {
 	char *info, *ip, c;
 	const char *ps, *pe;
-	int p;
+	int p, nop;
 	size_t len, l;
 
 	len = 1024; /* no single string should be bigger */
@@ -257,7 +304,7 @@ strval(const char *val)
 	} else
 		ps = pe  = NULL;
 
-	l = 0;
+	l = nop = 0;
 	p = 1;
 	for (; *val != '\0'; val++) {
 		if (l + 2 > len)
@@ -273,27 +320,124 @@ strval(const char *val)
 			l++;
 			continue;
 		}
-		switch (c = *(++val)) {
-		case 'd':
-			if (l + 6 > len)
+		switch (c = *++(val)) {
+		case 'B':
+			if (l + 30 > len)
+				goto elen;
+			*ip++ = '%';
+			*ip++ = 'p';
+			*ip++ = '0' + p;
+			strcpy(ip, "%{10}%/%{16}%*%p");
+			ip += 16;
+			*ip++ = '0' + p;
+			strcpy(ip, "%{10}%m%+");
+			ip += 9;
+			l += 29;
+			nop = 1;
+			continue;
+		case 'D':
+			if (l + 15 > len)
 				goto elen;
 			*ip++ = '%';
 			*ip++ = 'p';
 			*ip++ = '0' + p;
 			*ip++ = '%';
-			*ip++ = 'd';
-			l += 5;
-			/* FALLTHROUGH */
+			*ip++ = 'p';
+			*ip++ = '0' + p;
+			strcpy(ip, "%{2}%*%-");
+			ip += 8;
+			l += 14;
+			nop = 1;
+			continue;
 		case 'r':
-			p = 3 - p;
+			/* non op as switched below */
+			break;
+		case '2': /* FALLTHROUGH */
+		case '3': /* FALLTHROUGH */
+		case 'd':
+			if (l + 7 > len)
+				goto elen;
+			if (nop == 0) {
+				*ip++ = '%';
+				*ip++ = 'p';
+				*ip++ = '0' + p;
+				l += 3;
+			} else
+				nop = 0;
+			*ip++ = '%';
+			if (c != 'd') {
+				*ip++ = c;
+				l++;
+			}
+			*ip++ = 'd';
+			l += 2;
+			break;
+		case '+':
+			if (l + 13 > len)
+				goto elen;
+			if (nop == 0) {
+				*ip++ = '%';
+				*ip++ = 'p';
+				*ip++ = '0' + p;
+				l += 3;
+			} else
+				nop = 0;
+			l += printchar(&ip, &val);
+			*ip++ = '%';
+			*ip++ = c; 
+			*ip++ = '%';
+			*ip++ = 'c';
+			l += 7;
+			break;
+		case '>':
+			if (l + 29 > len)
+				goto elen;
+			*ip++ = '%';
+			*ip++ = 'p';
+			*ip++ = '0' + p;
+			*ip++ = '%';
+			*ip++ = 'p';
+			*ip++ = '0' + p;
+			*ip++ = '%';
+			*ip++ = '?';
+			l += printchar(&ip, &val);
+			*ip++ = '%';
+			*ip++ = '>';
+			*ip++ = '%';
+			*ip++ = 't';
+			l += printchar(&ip, &val);
+			*ip++ = '%';
+			*ip++ = '+';
+			*ip++ = '%';
+			*ip++ = ';';
+			l += 16;
+			nop = 1;
+			continue;
+		case '.':
+			if (l + 6 > len)
+				goto elen;
+			if (nop == 0) {
+				*ip++ = '%';
+				*ip++ = 'p';
+				*ip++ = '0' + p;
+				l += 3;
+			} else
+				nop = 0;
+			*ip++ = '%';
+			*ip++ = 'c';
+			l += 2;
 			break;
 		default:
 			/* Hope it matches a terminfo command. */
 			*ip++ = '%';
 			*ip++ = c;
 			l += 2;
+			if (c == 'i')
+				continue;
 			break;
 		}
+		/* Swap p1 and p2 */
+		p = 3 - p;
 	}
 
 	/* \E\ is valid termcap.
