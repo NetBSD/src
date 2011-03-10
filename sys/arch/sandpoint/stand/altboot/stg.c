@@ -1,4 +1,4 @@
-/* $NetBSD: stg.c,v 1.2 2011/03/08 19:00:38 phx Exp $ */
+/* $NetBSD: stg.c,v 1.3 2011/03/10 21:11:50 phx Exp $ */
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -63,9 +63,7 @@ struct desc {
 #define R1_ER_MASK		0x3f0000	/* Rx error indication */
 
 #define STGE_DMACtrl		0x00
-#define  DMAC_RxDMAComplete	(1U << 3)
 #define  DMAC_RxDMAPollNow	(1U << 4)
-#define  DMAC_TxDMAComplete	(1U << 11)
 #define  DMAC_TxDMAPollNow	(1U << 12)
 #define STGE_TFDListPtrLo	0x10
 #define STGE_TFDListPtrHi	0x14
@@ -149,7 +147,7 @@ stg_match(unsigned tag, void *data)
 
 	v = pcicfgread(tag, PCI_ID_REG);
 	switch (v) {
-	case PCI_DEVICE(0x13f0, 0x1023):	/* ST1023 */
+	case PCI_DEVICE(0x13f0, 0x1023):	/* ST1023, IP1000A */
 		return 1;
 	}
 	return 0;
@@ -257,7 +255,7 @@ stg_init(unsigned tag, void *data)
 	CSR_WRITE_4(l, STGE_MACCtrl, 0);	/* do IFSSelect(0) first */
 	macctl = MC_StatisticsDisable | MC_TxEnable | MC_RxEnable;
 
-	if ((pcicfgread(tag, PCI_CLASS_REG) & 0xff) >= 6) {
+	if (PCI_REVISION(pcicfgread(tag, PCI_CLASS_REG)) >= 6) {
 		/* some workarounds for revisions >= 6 */
 		CSR_WRITE_2(l, STGE_DebugCtrl,
 		    CSR_READ_2(l, STGE_DebugCtrl) | 0x0200);
