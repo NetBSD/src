@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.265 2011/03/10 14:11:18 pooka Exp $
+# $NetBSD: mi,v 1.266 2011/03/10 16:27:03 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -421,6 +421,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigqueue.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/tls/libh_tls_dlopen.so.1.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/tls/libh_tls_dynamic.so.1.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dlopen.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dynamic.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_static.debug		tests-lib-debug		debug,atf
