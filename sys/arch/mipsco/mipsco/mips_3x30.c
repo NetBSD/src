@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.13 2011/02/20 07:56:16 matt Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.14 2011/03/10 17:30:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #define	__INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.13 2011/02/20 07:56:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.14 2011/03/10 17:30:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ pizazz_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 		
 		cf.pc = pc;
 		cf.sr = status;
-		cf.intr = (curcpu()->ci_idepth > 0);
+		cf.intr = (curcpu()->ci_idepth > 1);
 
 		rambo_clkintr(&cf);
 	}
