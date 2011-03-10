@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.82 2011/03/09 23:26:19 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.83 2011/03/10 09:47:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.82 2011/03/09 23:26:19 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.83 2011/03/10 09:47:32 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -97,7 +97,9 @@ enum dualcall {
 	DUALCALL___SYSCTL,
 	DUALCALL_GETVFSSTAT, DUALCALL_NFSSVC,
 	DUALCALL_GETFH, DUALCALL_FHOPEN, DUALCALL_FHSTAT, DUALCALL_FHSTATVFS1,
+#if __NetBSD_Prereq__(5,99,48)
 	DUALCALL_QUOTACTL,
+#endif
 	DUALCALL__NUM
 };
 
@@ -133,7 +135,6 @@ enum dualcall {
 #define REALMKNOD __mknod50
 #define REALFHSTAT __fhstat50
 #endif
-
 #define REALREAD _sys_read
 #define REALPREAD _sys_pread
 #define REALPWRITE _sys_pwrite
@@ -173,9 +174,7 @@ struct sysnames {
 	enum dualcall scm_callnum;
 	const char *scm_hostname;
 	const char *scm_rumpname;
-};
-
-struct sysnames sys_mandatory[] = {
+} syscnames[] = {
 	{ DUALCALL_SOCKET,	"__socket30",	RSYS_NAME(SOCKET)	},
 	{ DUALCALL_ACCEPT,	"accept",	RSYS_NAME(ACCEPT)	},
 	{ DUALCALL_BIND,	"bind",		RSYS_NAME(BIND)		},
@@ -245,22 +244,14 @@ struct sysnames sys_mandatory[] = {
 	{ DUALCALL_GETVFSSTAT,	"getvfsstat",	RSYS_NAME(GETVFSSTAT)	},
 	{ DUALCALL_NFSSVC,	"nfssvc",	RSYS_NAME(NFSSVC)	},
 	{ DUALCALL_GETFH,	S(REALGETFH),	RSYS_NAME(GETFH)	},
-	{ DUALCALL_FHOPEN,	S(REALFHOPEN),	RSYS_NAME(FHOPEN)	},
-	{ DUALCALL_FHSTAT,	S(REALFHSTAT),	RSYS_NAME(FHSTAT)	},
+	{ DUALCALL_FHOPEN,	S(REALFHOPEN),RSYS_NAME(FHOPEN)		},
+	{ DUALCALL_FHSTAT,	S(REALFHSTAT),RSYS_NAME(FHSTAT)		},
 	{ DUALCALL_FHSTATVFS1,	S(REALFHSTATVFS1),RSYS_NAME(FHSTATVFS1)	},
-};
-
-struct sysnames sys_optional[] = {
+#if __NetBSD_Prereq__(5,99,48)
 	{ DUALCALL_QUOTACTL,	S(REALQUOTACTL),RSYS_NAME(QUOTACTL)	},
+#endif
 };
 #undef S
-
-static int
-nolibcstub(void)
-{
-
-	return ENOSYS;
-}
 
 struct bothsys {
 	void *bs_host;
@@ -713,8 +704,6 @@ static void __attribute__((constructor))
 rcinit(void)
 {
 	char buf[1024];
-	struct sysnames *sysvec;
-	size_t totalsys;
 	unsigned i, j;
 
 	host_fork = dlsym(RTLD_NEXT, "fork");
@@ -727,38 +716,27 @@ rcinit(void)
 	 * is a bit of a strech, but it might work.
 	 */
 
-	totalsys = __arraycount(sys_mandatory) + __arraycount(sys_optional);
 	for (i = 0; i < DUALCALL__NUM; i++) {
 		/* build runtime O(1) access */
-
-		sysvec = sys_mandatory;
-		for (j = 0; j < __arraycount(sys_mandatory); j++) {
-			if (sys_mandatory[j].scm_callnum == i)
-				goto found;
+		for (j = 0; j < __arraycount(syscnames); j++) {
+			if (syscnames[j].scm_callnum == i)
+				break;
 		}
-		sysvec = sys_optional;
-		for (j = 0; j < __arraycount(sys_optional); j++, j++) {
-			if (sys_optional[j].scm_callnum == i)
-				goto found;
-		}
-		errx(1, "rumphijack error: syscall pos %d missing", i);
 
- found:
+		if (j == __arraycount(syscnames))
+			errx(1, "rumphijack error: syscall pos %d missing", i);
+
 		syscalls[i].bs_host = dlsym(RTLD_NEXT,
-		    sysvec[j].scm_hostname);
-		if (syscalls[i].bs_host == NULL) {
-			if (sysvec == sys_optional)
-				syscalls[i].bs_host = nolibcstub;
-			else
-				errx(1, "hostcall %s not found!",
-				    sysvec[j].scm_hostname);
-		}
+		    syscnames[j].scm_hostname);
+		if (syscalls[i].bs_host == NULL)
+			errx(1, "hostcall %s not found!",
+			    syscnames[j].scm_hostname);
 
 		syscalls[i].bs_rump = dlsym(RTLD_NEXT,
-		    sysvec[j].scm_rumpname);
+		    syscnames[j].scm_rumpname);
 		if (syscalls[i].bs_rump == NULL)
 			errx(1, "rumpcall %s not found!",
-			    sysvec[j].scm_rumpname);
+			    syscnames[j].scm_rumpname);
 	}
 
 	if (rumpclient_init() == -1)
@@ -2194,10 +2172,12 @@ PATHCALL(int, unmount, DUALCALL_UNMOUNT,				\
 	(const char *, int),						\
 	(path, flags))
 
+#if __NetBSD_Prereq__(5,99,48)
 PATHCALL(int, REALQUOTACTL, DUALCALL_QUOTACTL,				\
 	(const char *path, struct plistref *p),				\
 	(const char *, struct plistref *),				\
 	(path, p))
+#endif
 
 PATHCALL(int, REALGETFH, DUALCALL_GETFH,				\
 	(const char *path, void *fhp, size_t *fh_size),			\
