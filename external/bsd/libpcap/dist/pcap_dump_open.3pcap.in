@@ -40,7 +40,7 @@ is called to open a ``savefile'' for writing.
 .I fname
 specifies the name of the file to open. The file will have
 the same format as those used by
-.BR tcpdump (1)
+.BR tcpdump (8)
 and
 .BR tcpslice (1).
 The name "-" in a synonym
