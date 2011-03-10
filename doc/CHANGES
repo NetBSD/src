@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1518 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1519 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -884,3 +884,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		See repquota(8) and quotactl(8) for a way to migrate
 		limits from QUOTA to QUOTA2.
 		[bouyer 20110306]
+	tmux(1): First import of tmux (version 1.4).  [jmmv 20110310]
