@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumphijack.3,v 1.10 2011/03/09 23:40:44 pooka Exp $
+.\"     $NetBSD: rumphijack.3,v 1.11 2011/03/10 08:53:04 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Antti Kantee.  All rights reserved.
 .\"
@@ -144,16 +144,16 @@ These differ from the pathname-based file system syscalls in that
 there is no pathname to make the selection based on.
 Current possible values are
 .Dq nfssvc ,
-.Dq getvfsstat
+.Dq getvfsstat ,
 and
-.Dq fhcalls.
+.Dq fhcalls .
 They indicate hijacking
 .Fn nfssvc ,
-.Fn getvfsstat
+.Fn getvfsstat ,
 and all file handle calls, respectively.
 The file handle calls include
 .Fn fhopen ,
-.Fn fhstat
+.Fn fhstat ,
 and
 .Fn fhstatvfs1 .
 .Pp
