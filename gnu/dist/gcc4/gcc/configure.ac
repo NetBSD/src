@@ -2229,7 +2229,7 @@ x:      .long   25
 	tls_first_major=2
 	tls_first_minor=14
 	;;
-  hppa*-*-linux*)
+  hppa*-*-linux* | hppa*-*-netbsd*)
     conftest_s='
 t1:	.reg	%r20
 t2:	.reg	%r21
