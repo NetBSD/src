@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.818 2011/03/05 19:56:05 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.819 2011/03/10 09:19:14 jmmv Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1042,6 +1042,19 @@ License:	GPLv2 (4.9 is GPLv3)
 Notes:
 Use src/gnu/dist/texinfo/texinfo2netbsd for preparing the source tree
 for the import.
+
+Package:	tmux
+Version:	1.4
+Current Vers:	1.4
+Maintainer:	Nicholas Marriott <nicm@users.sourceforge.net>
+Archive site:	http://downloads.sourceforge.net/tmux/
+Home page:	http://tmux.sourceforge.net/
+Mailing List:	tmux-users@lists.sourceforge.net
+Responsible:	jmmv
+License:	BSD
+Notes:
+See src/external/bsd/tmux/README for instructions on how to import a
+new tmux release.
 
 Package:	top
 Version:	3.8beta1
