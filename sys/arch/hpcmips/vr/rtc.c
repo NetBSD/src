@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.26 2009/12/12 14:44:08 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.27 2011/03/10 17:27:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.26 2009/12/12 14:44:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.27 2011/03/10 17:27:43 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.26 2009/12/12 14:44:08 tsutsui Exp $");
 #include <sys/systm.h>
 #include <sys/timetc.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <machine/sysconf.h>
 #include <machine/bus.h>
@@ -230,6 +231,7 @@ vrrtc_intr(void *arg, u_int32_t pc, u_int32_t statusReg)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCINT_REG_W, RTCINT_ALL);
 	cf.pc = pc;
 	cf.sr = statusReg;
+	cf.intr = (curcpu()->ci_idepth > 1);
 	hardclock(&cf);
 
 	return 0;
