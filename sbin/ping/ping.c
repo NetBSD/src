@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.92 2010/12/13 17:42:17 pooka Exp $	*/
+/*	$NetBSD: ping.c,v 1.93 2011/03/11 09:59:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.92 2010/12/13 17:42:17 pooka Exp $");
+__RCSID("$NetBSD: ping.c,v 1.93 2011/03/11 09:59:56 pooka Exp $");
 #endif
 
 #include <stdio.h>
@@ -261,7 +261,7 @@ main(int argc, char *argv[])
 	if (prog_shutdown(sloop, SHUT_RD) == -1)
 		warn("Cannot shutdown for read");
 
-	if (setuid(getuid()) == -1)
+	if (prog_setuid(prog_getuid()) == -1)
 		err(1, "setuid");
 
 	setprogname(argv[0]);
@@ -410,11 +410,11 @@ main(int argc, char *argv[])
 	if (interval == 0)
 		interval = (pingflags & F_FLOOD) ? FLOOD_INTVL : 1.0;
 #ifndef sgi
-	if (pingflags & F_FLOOD && getuid())
+	if (pingflags & F_FLOOD && prog_getuid())
 		errx(1, "Must be superuser to use -f");
-	if (interval < 1.0 && getuid())
+	if (interval < 1.0 && prog_getuid())
 		errx(1, "Must be superuser to use < 1 sec ping interval");
-	if (preload > 0 && getuid())
+	if (preload > 0 && prog_getuid())
 		errx(1, "Must be superuser to use -l");
 #endif
 	sec_to_timeval(interval, &interval_tv);

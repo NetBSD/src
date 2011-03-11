@@ -1,4 +1,4 @@
-/*	$NetBSD: ping_rumpops.c,v 1.1 2010/12/13 17:42:17 pooka Exp $	*/
+/*	$NetBSD: ping_rumpops.c,v 1.2 2011/03/11 09:59:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping_rumpops.c,v 1.1 2010/12/13 17:42:17 pooka Exp $");
+__RCSID("$NetBSD: ping_rumpops.c,v 1.2 2011/03/11 09:59:56 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -53,4 +53,6 @@ const struct prog_ops prog_ops = {
 	.op_sendto =	rump_sys_sendto,
 	.op_recvfrom =	rump_sys_recvfrom,
 	.op_close =	rump_sys_close,
+	.op_getuid =	rump_sys_getuid,
+	.op_setuid =	rump_sys_setuid,
 };
