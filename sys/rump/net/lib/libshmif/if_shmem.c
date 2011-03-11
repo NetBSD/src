@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.36 2011/03/11 09:25:59 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.37 2011/03/11 12:10:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.36 2011/03/11 09:25:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.37 2011/03/11 12:10:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.36 2011/03/11 09:25:59 pooka Exp $");
 
 #include <net/bpf.h>
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_ether.h>
 
 #include <netinet/in.h>
@@ -78,7 +79,6 @@ static void	shmif_stop(struct ifnet *, int);
 
 struct shmif_sc {
 	struct ethercom sc_ec;
-	uint8_t sc_myaddr[6];
 	struct shmif_mem *sc_busmem;
 	int sc_memfd;
 	int sc_kq;
@@ -160,7 +160,6 @@ allocif(int unit, struct shmif_sc **scp)
 	sc->sc_unit = unit;
 
 	ifp = &sc->sc_ec.ec_if;
-	memcpy(sc->sc_myaddr, enaddr, sizeof(enaddr));
 
 	sprintf(ifp->if_xname, "shmif%d", unit);
 	ifp->if_softc = sc;
@@ -170,6 +169,7 @@ allocif(int unit, struct shmif_sc **scp)
 	ifp->if_start = shmif_start;
 	ifp->if_stop = shmif_stop;
 	ifp->if_mtu = ETHERMTU;
+	ifp->if_dlt = DLT_EN10MB;
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_cv, "shmifcv");
@@ -623,7 +623,7 @@ shmif_rcv(void *arg)
 	struct mbuf *m = NULL;
 	struct ether_header *eth;
 	uint32_t nextpkt;
-	bool wrap;
+	bool wrap, passup;
 	int error;
 
  reup:
@@ -704,16 +704,30 @@ shmif_rcv(void *arg)
 		m->m_len = m->m_pkthdr.len = sp.sp_len;
 		m->m_pkthdr.rcvif = ifp;
 
-		/* if it's for us, pass up.  otherwise, reuse storage space */
+		/*
+		 * Test if we want to pass the packet upwards
+		 */
+		passup = false;
 		eth = mtod(m, struct ether_header *);
-		if (memcmp(eth->ether_dhost, sc->sc_myaddr, 6) == 0 ||
-		    memcmp(eth->ether_dhost, etherbroadcastaddr, 6) == 0) {
+		if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
+		    ETHER_ADDR_LEN) == 0) {
+			passup = true;
+		} else if (memcmp(eth->ether_dhost, etherbroadcastaddr,
+		    ETHER_ADDR_LEN) == 0) {
+			passup = true;
+		} else if (ifp->if_flags & IFF_PROMISC) {
+			m->m_flags |= M_PROMISC;
+			passup = true;
+		}
+
+		if (passup) {
 			KERNEL_LOCK(1, NULL);
 			bpf_mtap(ifp, m);
 			ifp->if_input(ifp, m);
 			KERNEL_UNLOCK_ONE(NULL);
 			m = NULL;
 		}
+		/* else: reuse mbuf for a future packet */
 	}
 	m_freem(m);
 	m = NULL;
