@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.54 2010/03/11 03:54:56 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.55 2011/03/11 18:55:26 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.54 2010/03/11 03:54:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.55 2011/03/11 18:55:26 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -70,10 +70,6 @@ int ebus_debug = 0;
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <sparc64/dev/iommureg.h>
-#include <sparc64/dev/iommuvar.h>
-#include <sparc64/dev/psychoreg.h>
-#include <sparc64/dev/psychovar.h>
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 
