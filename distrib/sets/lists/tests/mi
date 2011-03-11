@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.267 2011/03/10 20:04:46 pooka Exp $
+# $NetBSD: mi,v 1.268 2011/03/11 10:36:29 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2100,8 +2100,10 @@
 ./usr/tests/usr.bin				tests-util-tests
 ./usr/tests/usr.bin/shmif_dumpbus			tests-util-tests
 ./usr/tests/usr.bin/shmif_dumpbus/Atffile		tests-util-tests	atf
-./usr/tests/usr.bin/shmif_dumpbus/d_pcap.out		tests-util-tests	atf
-./usr/tests/usr.bin/shmif_dumpbus/d_pkthdrs.out		tests-util-tests	atf
+./usr/tests/usr.bin/shmif_dumpbus/d_pcap.out		tests-obsolete	obsolete
+./usr/tests/usr.bin/shmif_dumpbus/d_pkthdrs.out		tests-obsolete	obsolete
+./usr/tests/usr.bin/shmif_dumpbus/d_pcap.out.bz2.uue		tests-util-tests	atf
+./usr/tests/usr.bin/shmif_dumpbus/d_pkthdrs.out.bz2.uue		tests-util-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus/shmbus.bz2.uue		tests-util-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus/t_basic		tests-util-tests	atf
 ./usr/tests/usr.sbin				tests-util-tests
