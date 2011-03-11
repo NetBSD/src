@@ -1,4 +1,4 @@
-/*	$NetBSD: ping_hostops.c,v 1.1 2010/12/13 17:42:17 pooka Exp $	*/
+/*	$NetBSD: ping_hostops.c,v 1.2 2011/03/11 09:59:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping_hostops.c,v 1.1 2010/12/13 17:42:17 pooka Exp $");
+__RCSID("$NetBSD: ping_hostops.c,v 1.2 2011/03/11 09:59:56 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -48,4 +48,6 @@ const struct prog_ops prog_ops = {
 	.op_recvfrom = recvfrom,
 	.op_sendto = sendto,
 	.op_close = close,
+	.op_getuid = getuid,
+	.op_setuid = setuid,
 };
