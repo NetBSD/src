@@ -1,4 +1,4 @@
-/*      $NetBSD: prog_ops.h,v 1.2 2010/12/13 19:19:10 pooka Exp $	*/
+/*      $NetBSD: prog_ops.h,v 1.3 2011/03/11 09:59:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -47,6 +47,9 @@ struct prog_ops {
 			       const struct sockaddr *, socklen_t);
 
 	int (*op_close)(int);
+
+	uid_t (*op_getuid)(void);
+	int (*op_setuid)(uid_t);
 };
 extern const struct prog_ops prog_ops;
 
@@ -58,6 +61,8 @@ extern const struct prog_ops prog_ops;
 #define prog_recvfrom prog_ops.op_recvfrom
 #define prog_sendto prog_ops.op_sendto
 #define prog_close prog_ops.op_close
+#define prog_getuid prog_ops.op_getuid
+#define prog_setuid prog_ops.op_setuid
 #else
 #define prog_init ((int (*)(void))NULL)
 #define prog_socket socket
@@ -67,6 +72,8 @@ extern const struct prog_ops prog_ops;
 #define prog_recvfrom recvfrom
 #define prog_sendto sendto
 #define prog_close close
+#define prog_getuid getuid
+#define prog_setuid setuid
 #endif
 
 #endif /* _PROG_OPS_H_ */
