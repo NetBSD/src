@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.37 2011/03/11 12:10:15 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.38 2011/03/11 12:11:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.37 2011/03/11 12:10:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.38 2011/03/11 12:11:00 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -707,7 +707,6 @@ shmif_rcv(void *arg)
 		/*
 		 * Test if we want to pass the packet upwards
 		 */
-		passup = false;
 		eth = mtod(m, struct ether_header *);
 		if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) == 0) {
@@ -718,6 +717,8 @@ shmif_rcv(void *arg)
 		} else if (ifp->if_flags & IFF_PROMISC) {
 			m->m_flags |= M_PROMISC;
 			passup = true;
+		} else {
+			passup = false;
 		}
 
 		if (passup) {
