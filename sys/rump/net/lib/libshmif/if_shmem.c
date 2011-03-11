@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.35 2011/03/10 13:27:03 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.36 2011/03/11 09:25:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.35 2011/03/10 13:27:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.36 2011/03/11 09:25:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -219,10 +219,14 @@ initbackend(struct shmif_sc *sc, int memfd)
 		return ENOEXEC; 
 	}
 
-	/* Prefault in pages to minimize runtime penalty with buslock */
+	/*
+	 * Prefault in pages to minimize runtime penalty with buslock.
+	 * Use 512 instead of PAGE_SIZE to make sure we catch cases where
+	 * rump kernel PAGE_SIZE > host page size.
+	 */
 	for (p = (uint8_t *)sc->sc_busmem;
 	    p < (uint8_t *)sc->sc_busmem + BUSMEM_SIZE;
-	    p += PAGE_SIZE)
+	    p += 512)
 		v = *p;
 
 	shmif_lockbus(sc->sc_busmem);
