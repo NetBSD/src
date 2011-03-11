@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.68 2011/03/01 14:33:58 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.69 2011/03/11 14:30:07 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -2048,6 +2048,9 @@ isakmp_ph1delete(iph1)
 		next = LIST_NEXT(p, ph1bind);
 		if (p->status >= PHASE2ST_ESTABLISHED)
 			unbindph12(p);
+		/* Should we also remove non established ph2
+		 * handles, as we just invalidated ph1handle ?
+		 */
 	}
 
 	if (LIST_FIRST(&iph1->ph2tree) != NULL) {
