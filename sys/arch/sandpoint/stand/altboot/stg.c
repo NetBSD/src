@@ -1,4 +1,4 @@
-/* $NetBSD: stg.c,v 1.3 2011/03/10 21:11:50 phx Exp $ */
+/* $NetBSD: stg.c,v 1.4 2011/03/11 17:46:30 phx Exp $ */
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -55,12 +55,13 @@ struct desc {
 	uint64_t xd0, xd1, xd2, dummy;
 };
 #define T1_EMPTY		(1U << 31)	/* no Tx frame available */
-#define T1_NOALIGN		(03 << 16)	/* allow any Tx alignment */
+#define T1_NOALIGN		(3U << 16)	/* allow any Tx alignment */
 #define T1_CNTSHIFT		24		/* Tx fragment count */
-#define T2_LENSHIFT		48		/* Tx frame length */
+#define T2_LENSHIFT		48		/* Tx fragment length */
 #define R1_DONE			(1U << 31)	/* desc has a Rx frame */
 #define R1_FL_MASK		0xffff		/* Rx frame length */
 #define R1_ER_MASK		0x3f0000	/* Rx error indication */
+#define R2_LENSHIFT		48		/* Rx fragment length */
 
 #define STGE_DMACtrl		0x00
 #define  DMAC_RxDMAPollNow	(1U << 4)
@@ -161,6 +162,10 @@ stg_init(unsigned tag, void *data)
 	uint8_t *en;
 	unsigned i;
 	uint32_t macctl, reg;
+	static uint8_t bad[2][6] = {
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }
+	};
 
 	l = ALLOC(struct local, 32);		/* desc alignment */
 	memset(l, 0, sizeof(struct local));
@@ -187,20 +192,10 @@ stg_init(unsigned tag, void *data)
 
 	/* read ethernet address */
 	en = data;
-	if (PCI_PRODUCT(pcicfgread(tag, PCI_ID_REG)) != 0x1023) {
-		/* read from station address registers when not ST1023 */
-		en[0] = CSR_READ_2(l, STGE_StationAddress0) & 0xff;
-		en[1] = CSR_READ_2(l, STGE_StationAddress0) >> 8;
-		en[2] = CSR_READ_2(l, STGE_StationAddress1) & 0xff;
-		en[3] = CSR_READ_2(l, STGE_StationAddress1) >> 8;
-		en[4] = CSR_READ_2(l, STGE_StationAddress2) & 0xff;
-		en[5] = CSR_READ_2(l, STGE_StationAddress2) >> 8;
-	} else {
-		/* ST1023: read the address from the serial EEPROM */
-		static uint8_t bad[2][6] = {
-			{ 0x00,0x00,0x00,0x00,0x00,0x00 },
-			{ 0xff,0xff,0xff,0xff,0xff,0xff }
-		};
+	for (i = 0; i < 6; i++)
+		en[i] = CSR_READ_1(l, STGE_StationAddress0 + i);
+
+	if (memcmp(en, bad[0], 6) == 0 || memcmp(en, bad[1], 6) == 0) {
 		uint16_t addr[3];
 
 		for (i = 0; i < 3; i++) {
@@ -223,6 +218,7 @@ stg_init(unsigned tag, void *data)
 		for (i = 0; i < 6; i++)
 			CSR_WRITE_1(l, STGE_StationAddress0 + i, en[i]);
 	}
+
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
 	    en[0], en[1], en[2], en[3], en[4], en[5]);
 
@@ -237,10 +233,10 @@ stg_init(unsigned tag, void *data)
 	txd[1].xd1 = htole64(T1_EMPTY);
 	rxd = &l->rxd[0];
 	rxd[0].xd0 = htole64(VTOPHYS(&rxd[1]));
-	rxd[0].xd2 = htole64((uint64_t)VTOPHYS(l->rxstore[0]) |
+	rxd[0].xd2 = htole64(VTOPHYS(l->rxstore[0]) |
 	    ((uint64_t)FRAMESIZE << 48));
 	rxd[1].xd0 = htole64(VTOPHYS(&rxd[0]));
-	rxd[1].xd2 = htole64((uint64_t)VTOPHYS(l->rxstore[1]) |
+	rxd[1].xd2 = htole64(VTOPHYS(l->rxstore[1]) |
 	    ((uint64_t)FRAMESIZE << 48));
 	wbinv(l, sizeof(struct local));
 
