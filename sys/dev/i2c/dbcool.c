@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.27 2011/03/11 18:38:52 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.28 2011/03/11 19:12:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.27 2011/03/11 18:38:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.28 2011/03/11 19:12:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1837,7 +1837,7 @@ dbcool_chip_ident(struct dbcool_chipset *dc)
 
 	/* The EMC6D103S only supports read_byte and since dc->dc_chip is
 	 * NULL when we call dc->dc_readreg above we use
-	 * send_byte/receive_byte which dosn't work.
+	 * send_byte/receive_byte which doesn't work.
 	 *
 	 * So if we only get 0's back then try again with dc->dc_chip
 	 * set to the EMC6D103S_DEVICEID and which dosn't have
