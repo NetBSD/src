@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.2 2011/03/11 10:35:29 pooka Exp $
+#	$NetBSD: t_basic.sh,v 1.3 2011/03/11 16:41:27 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,7 +60,7 @@ contents()
 {
 
 	unpack_file d_pkthdrs.out
-	atf_check -s exit:0 -o file:$(atf_get_srcdir)/d_pkthdrs.out \
+	atf_check -s exit:0 -o file:d_pkthdrs.out \
 	    shmif_dumpbus shmbus
 }
 
@@ -69,7 +69,7 @@ pcap()
 
 	unpack_file d_pcap.out
 	atf_check -s exit:0 -o ignore shmif_dumpbus -p pcap shmbus
-	atf_check -s exit:0 -o file:$(atf_get_srcdir)/d_pcap.out -e ignore \
+	atf_check -s exit:0 -o file:d_pcap.out -e ignore \
 	    tcpdump -n -r pcap
 }
 
