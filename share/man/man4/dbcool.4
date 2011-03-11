@@ -1,4 +1,4 @@
-.\"	$NetBSD: dbcool.4,v 1.8 2010/04/01 05:10:52 macallan Exp $
+.\"	$NetBSD: dbcool.4,v 1.9 2011/03/11 18:38:51 pgoyette Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,8 @@
 .Nm adt7473 ,
 .Nm adt7475 ,
 .Nm adt7476 ,
-.Nm adt7490
+.Nm adt7490 ,
+.Nm emc6d103s
 .Nd dbCool(tm) family of environmental monitors and fan controllers
 .Sh SYNOPSIS
 .Cd "dbcool* at ki2c?"
@@ -52,7 +53,9 @@ The
 .Nm
 driver provides support for the
 .Tn Analog Devices
-dbCool environmental monitor chips to be used with the
+dbCool and the
+.Tn SMSC
+EMC6D103S environmental monitor chips to be used with the
 .Xr envsys 4
 API.
 .Pp
