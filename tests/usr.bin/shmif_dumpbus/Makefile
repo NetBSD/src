@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/10 14:49:17 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2011/03/11 10:35:29 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -8,6 +8,6 @@ FILESDIR=	${TESTSDIR}
 
 TESTS_SH=	t_basic
 
-FILES+=		d_pcap.out d_pkthdrs.out shmbus.bz2.uue
+FILES+=		d_pcap.out.bz2.uue d_pkthdrs.out.bz2.uue shmbus.bz2.uue
 
 .include <bsd.test.mk>

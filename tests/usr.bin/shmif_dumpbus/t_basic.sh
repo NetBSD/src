@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.1 2011/03/10 11:13:33 pooka Exp $
+#	$NetBSD: t_basic.sh,v 1.2 2011/03/11 10:35:29 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,11 +25,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-prepare_files()
+unpack_file()
 {
 
-	atf_check -s exit:0 uudecode $(atf_get_srcdir)/shmbus.bz2.uue
-	atf_check -s exit:0 bunzip2 shmbus.bz2
+	atf_check -s exit:0 uudecode $(atf_get_srcdir)/${1}.bz2.uue
+	atf_check -s exit:0 bunzip2 -f ${1}.bz2
 }
 
 test_case()
@@ -39,7 +39,7 @@ test_case()
 	atf_test_case "${name}"
 	eval "${name}_head() {  }"
 	eval "${name}_body() { \
-		prepare_files ; \
+		unpack_file shmbus ; \
 		${name} ; \
 	}"
 }
@@ -48,7 +48,7 @@ test_case header
 test_case contents
 test_case pcap
 
-ehdr='bus version 2, lock: 0, generation: 4, firstoff: 0x5fbc, lastoff: 0x5d7a'
+ehdr='bus version 2, lock: 0, generation: 22, firstoff: 0x9e414, lastoff: 0x9dfd0'
 
 header()
 {
@@ -59,6 +59,7 @@ header()
 contents()
 {
 
+	unpack_file d_pkthdrs.out
 	atf_check -s exit:0 -o file:$(atf_get_srcdir)/d_pkthdrs.out \
 	    shmif_dumpbus shmbus
 }
@@ -66,6 +67,7 @@ contents()
 pcap()
 {
 
+	unpack_file d_pcap.out
 	atf_check -s exit:0 -o ignore shmif_dumpbus -p pcap shmbus
 	atf_check -s exit:0 -o file:$(atf_get_srcdir)/d_pcap.out -e ignore \
 	    tcpdump -n -r pcap
