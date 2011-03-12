@@ -1,4 +1,4 @@
-/* $Id: cmd-server-info.c,v 1.1.1.1 2011/03/10 09:15:37 jmmv Exp $ */
+/* $Id: cmd-server-info.c,v 1.2 2011/03/12 03:02:58 christos Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -60,7 +60,6 @@ cmd_server_info_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 	struct grid			*gd;
 	struct grid_line		*gl;
 	u_int		 		 i, j, k;
-	char				 out[80];
 	char				*tim;
 	time_t		 		 t;
 	u_int				 lines, ulines;
@@ -153,12 +152,15 @@ cmd_server_info_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 				ctx->print(ctx, "%2u: %s: [missing]",
 				    ent->code, ent->name);
 				break;
-			case TTYCODE_STRING:
-				strnvis(out, code->value.string, sizeof out,
+			case TTYCODE_STRING: {
+				size_t slen = strlen(code->value.string);
+				char out[slen * 4 + 1];
+				strvisx(out, code->value.string, slen,
 				    VIS_OCTAL|VIS_TAB|VIS_NL);
 				ctx->print(ctx, "%2u: %s: (string) %s",
 				    ent->code, ent->name, out);
 				break;
+			}
 			case TTYCODE_NUMBER:
 				ctx->print(ctx, "%2u: %s: (number) %d",
 				    ent->code, ent->name, code->value.number);
