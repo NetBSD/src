@@ -129,7 +129,9 @@
  * but until the cross build does the right thing...)
  */
 #undef TARGET_SECURE_PLT
-#define TARGET_SECURE_PLT       secure_plt
+#define TARGET_SECURE_PLT secure_plt
+#undef HAVE_AS_TLS
+#define HAVE_AS_TLS 1
 
 #undef TARGET_E500
 #undef TARGET_E500_SINGLE
