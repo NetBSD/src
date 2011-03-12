@@ -1,4 +1,4 @@
-/* $NetBSD: stg.c,v 1.4 2011/03/11 17:46:30 phx Exp $ */
+/* $NetBSD: stg.c,v 1.5 2011/03/12 16:41:23 phx Exp $ */
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -132,6 +132,7 @@ struct local {
 	uint8_t phyctrl_saved;
 };
 
+static void stg_reset(struct local *);
 static int mii_read(struct local *, int, int);
 static void mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
@@ -173,20 +174,7 @@ stg_init(unsigned tag, void *data)
 	if (l->csr == 0)
 		l->csr = DEVTOV(PCI_XIOBASE + (pcicfgread(tag, 0x10) & ~01));
 
-	/* reset the chip */
-	reg = CSR_READ_4(l, STGE_AsicCtrl);
-	CSR_WRITE_4(l, STGE_AsicCtrl, reg | AC_GlobalReset | AC_RxReset |
-	    AC_TxReset | AC_DMA | AC_FIFO | AC_Network | AC_Host |
-	    AC_AutoInit | ((reg & AC_PhyMedia) ? AC_RstOut : 0));
-	DELAY(50000);
-	for (i = 0; i < 1000; i++) {
-		DELAY(5000);
-		if ((CSR_READ_4(l, STGE_AsicCtrl) & AC_ResetBusy) == 0)
-			break;
-	}
-	if (i >= 1000)
-		printf("NIC reset failed to complete!\n");
-	DELAY(1000);
+	stg_reset(l);
 
 	mii_initphy(l);
 
@@ -286,6 +274,19 @@ stg_init(unsigned tag, void *data)
 	return l;
 }
 
+void
+stg_shutdown(void *dev)
+{
+	struct local *l = dev;
+
+	/*
+	 * We have to reset the chip, when we don't need it anymore,
+	 * otherwise bad things will happen (e.g. the DSM-G600 will no
+	 * longer be able to reboot).
+	 */
+	stg_reset(l);
+}
+
 int
 stg_send(void *dev, char *buf, unsigned len)
 {
@@ -351,6 +352,27 @@ stg_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 	wbinv(rxd, sizeof(struct desc));
 	l->rx ^= 1;
 	return len;
+}
+
+static void
+stg_reset(struct local *l)
+{
+	uint32_t reg;
+	int i;
+
+	reg = CSR_READ_4(l, STGE_AsicCtrl);
+	CSR_WRITE_4(l, STGE_AsicCtrl, reg | AC_GlobalReset | AC_RxReset |
+	    AC_TxReset | AC_DMA | AC_FIFO | AC_Network | AC_Host |
+	    AC_AutoInit | ((reg & AC_PhyMedia) ? AC_RstOut : 0));
+	DELAY(50000);
+	for (i = 0; i < 1000; i++) {
+		DELAY(5000);
+		if ((CSR_READ_4(l, STGE_AsicCtrl) & AC_ResetBusy) == 0)
+			break;
+	}
+	if (i >= 1000)
+		printf("NIC reset failed to complete!\n");
+	DELAY(1000);
 }
 
 #define R0110	6		/* 0110b read op */
