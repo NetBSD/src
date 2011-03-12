@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/03/12 03:02:59 christos Exp $
+# $NetBSD: Makefile,v 1.3 2011/03/12 14:19:25 tron Exp $
 
 .include <bsd.own.mk>
 WARNS?=	4
@@ -154,6 +154,12 @@ SRCS+=		strtonum.c
 VERSION!=	cat "$(.CURDIR)/version.txt"
 CPPFLAGS+=	-DBUILD="\"$(VERSION)\""
 CPPFLAGS+=	-I${SRCDIR} -I${.CURDIR}
+
+COPTS.cmd-paste-buffer.c+=	-Wno-stack-protector
+COPTS.cmd-server-info.c+=	-Wno-stack-protector
+COPTS.imsg-buffer.c+=		-Wno-stack-protector
+COPTS.imsg.c+=			-Wno-stack-protector
+COPTS.screen.c+=		-Wno-stack-protector
 
 LDADD+=		-levent -lterminfo -lutil
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
