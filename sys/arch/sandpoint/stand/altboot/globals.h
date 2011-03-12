@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.9 2011/03/10 21:11:49 phx Exp $ */
+/* $NetBSD: globals.h,v 1.10 2011/03/12 16:41:23 phx Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -133,6 +133,7 @@ int net_close(struct open_file *);
 int net_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 
 int netif_init(void *);
+void netif_shutdown_all(void);
 int netif_open(void *); 
 int netif_close(int); 
 
@@ -140,7 +141,8 @@ int netif_close(int);
     int xxx ## _match(unsigned, void *); \
     void * xxx ## _init(unsigned, void *); \
     int xxx ## _send(void *, char *, unsigned); \
-    int xxx ## _recv(void *, char *, unsigned, unsigned)
+    int xxx ## _recv(void *, char *, unsigned, unsigned); \
+    void xxx ## _shutdown(void *)
 
 NIF_DECL(fxp);
 NIF_DECL(tlp);
