@@ -1,4 +1,4 @@
-/* $Id: cmd-copy-buffer.c,v 1.1.1.1 2011/03/10 09:15:36 jmmv Exp $ */
+/* $Id: cmd-copy-buffer.c,v 1.2 2011/03/12 03:02:58 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -127,7 +127,7 @@ cmd_copy_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct cmd_copy_buffer_data	*data = self->data;
 	struct paste_buffer		*pb;
 	struct paste_stack		*dst_ps, *src_ps;
-	u_char				*pdata;
+	char				*pdata;
 	struct session			*dst_session, *src_session;
 	u_int				 limit;
 

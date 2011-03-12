@@ -1,4 +1,4 @@
-/* $Id: session.c,v 1.1.1.1 2011/03/10 09:15:39 jmmv Exp $ */
+/* $Id: session.c,v 1.2 2011/03/12 03:02:59 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -65,7 +65,7 @@ session_find(const char *name)
 {
 	struct session	s;
 
-	s.name = (char *) name;
+	s.name = __UNCONST(name);
 	return (RB_FIND(sessions, &sessions, &s));
 }
 
