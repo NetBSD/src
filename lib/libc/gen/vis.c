@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.42 2011/03/12 03:24:08 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.43 2011/03/12 05:23:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.42 2011/03/12 03:24:08 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.43 2011/03/12 05:23:41 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -183,8 +183,9 @@ static char *
 do_svis(char *dst, size_t *len, int c, int flag, int nextc, const char *extra)
 {
 	int isextra;
-	isextra = strchr(extra, c) != NULL;
 	size_t olen = len ? *len : 0;
+
+	isextra = strchr(extra, c) != NULL;
 #define HAVE(x) \
 	do { \
 		if (len) { \
