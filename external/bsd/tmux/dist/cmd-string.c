@@ -1,4 +1,4 @@
-/* $Id: cmd-string.c,v 1.1.1.1 2011/03/10 09:15:37 jmmv Exp $ */
+/* $Id: cmd-string.c,v 1.2 2011/03/12 03:02:58 christos Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,11 +40,11 @@ char   *cmd_string_expand_tilde(const char *, size_t *);
 int
 cmd_string_getc(const char *s, size_t *p)
 {
-	const u_char	*ucs = s;
+	const char	*ucs = s;
 
 	if (ucs[*p] == '\0')
 		return (EOF);
-	return (ucs[(*p)++]);
+	return (u_char)(ucs[(*p)++]);
 }
 
 void

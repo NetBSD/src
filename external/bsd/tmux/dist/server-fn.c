@@ -1,4 +1,4 @@
-/* $Id: server-fn.c,v 1.1.1.1 2011/03/10 09:15:39 jmmv Exp $ */
+/* $Id: server-fn.c,v 1.2 2011/03/12 03:02:59 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,7 +49,7 @@ server_write_client(
 	if (c->flags & CLIENT_BAD)
 		return;
 	log_debug("writing %d to client %d", type, c->ibuf.fd);
-	imsg_compose(ibuf, type, PROTOCOL_VERSION, -1, -1, (void *) buf, len);
+	imsg_compose(ibuf, type, PROTOCOL_VERSION, -1, -1, __UNCONST(buf), len);
 	server_update_event(c);
 }
 

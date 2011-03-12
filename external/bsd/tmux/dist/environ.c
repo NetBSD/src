@@ -1,4 +1,4 @@
-/* $Id: environ.c,v 1.1.1.1 2011/03/10 09:15:38 jmmv Exp $ */
+/* $Id: environ.c,v 1.2 2011/03/12 03:02:59 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -74,7 +74,7 @@ environ_find(struct environ *env, const char *name)
 {
 	struct environ_entry	envent;
 
-	envent.name = (char *) name;
+	envent.name = __UNCONST(name);
 	return (RB_FIND(environ, env, &envent));
 }
 

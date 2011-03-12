@@ -1,4 +1,4 @@
-/* $Id: cmd-paste-buffer.c,v 1.1.1.1 2011/03/10 09:15:37 jmmv Exp $ */
+/* $Id: cmd-paste-buffer.c,v 1.2 2011/03/12 03:02:58 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -195,7 +195,6 @@ cmd_paste_buffer_print(struct cmd *self, char *buf, size_t len)
 {
 	struct cmd_paste_buffer_data	*data = self->data;
 	size_t				 off = 0;
-	char                             tmp[BUFSIZ];
 	int				 r_flag;
 
 	r_flag = 0;
@@ -212,8 +211,9 @@ cmd_paste_buffer_print(struct cmd *self, char *buf, size_t len)
 	if (off < len && data->buffer != -1)
 		off += xsnprintf(buf + off, len - off, " -b %d", data->buffer);
 	if (off < len && data->sepstr != NULL && !r_flag) {
-		strnvis(
-		    tmp, data->sepstr, sizeof tmp, VIS_OCTAL|VIS_TAB|VIS_NL);
+		size_t slen = strlen(data->sepstr);
+		char tmp[slen * 4 + 1];
+		strvisx(tmp, data->sepstr, slen, VIS_OCTAL|VIS_TAB|VIS_NL);
 		off += cmd_prarg(buf + off, len - off, " -s ", tmp);
 	}
 	if (off < len && data->target != NULL)

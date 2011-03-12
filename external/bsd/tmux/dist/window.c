@@ -1,4 +1,4 @@
-/* $Id: window.c,v 1.1.1.1 2011/03/10 09:15:40 jmmv Exp $ */
+/* $Id: window.c,v 1.2 2011/03/12 03:02:59 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -629,7 +629,7 @@ window_pane_read_callback(unused struct bufferevent *bufev, void *data)
 
 	new_size = EVBUFFER_LENGTH(wp->event->input) - wp->pipe_off;
 	if (wp->pipe_fd != -1 && new_size > 0) {
-		new_data = EVBUFFER_DATA(wp->event->input);
+		new_data = (char *)EVBUFFER_DATA(wp->event->input);
 		bufferevent_write(wp->pipe_event, new_data, new_size);
 	}
 

@@ -1,4 +1,4 @@
-/* $Id: tty-keys.c,v 1.1.1.1 2011/03/10 09:15:39 jmmv Exp $ */
+/* $Id: tty-keys.c,v 1.2 2011/03/12 03:02:59 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -434,7 +434,7 @@ tty_keys_next(struct tty *tty)
 	struct tty_key		*tk;
 	struct timeval		 tv;
 	struct mouse_event	 mouse;
-	const char		*buf;
+	const u_char		*buf;
 	size_t			 len, size;
 	cc_t			 bspace;
 	int			 key, delay;
@@ -447,7 +447,7 @@ tty_keys_next(struct tty *tty)
 
 	/* If a normal key, return it. */
 	if (*buf != '\033') {
-		key = (u_char) *buf;
+		key = *buf;
 		evbuffer_drain(tty->event->input, 1);
 
 		/*
@@ -462,7 +462,7 @@ tty_keys_next(struct tty *tty)
 	}
 
 	/* Is this a mouse key press? */
-	switch (tty_keys_mouse(buf, len, &size, &mouse)) {
+	switch (tty_keys_mouse((const char *)buf, len, &size, &mouse)) {
 	case 0:		/* yes */
 		evbuffer_drain(tty->event->input, size);
 		key = KEYC_MOUSE;
@@ -474,7 +474,7 @@ tty_keys_next(struct tty *tty)
 	}
 
 	/* Try to parse a key with an xterm-style modifier. */
-	switch (xterm_keys_find(buf, len, &size, &key)) {
+	switch (xterm_keys_find((const char *)buf, len, &size, &key)) {
 	case 0:		/* found */
 		evbuffer_drain(tty->event->input, size);
 		goto handle_key;
@@ -485,7 +485,7 @@ tty_keys_next(struct tty *tty)
 	}
 
 	/* Look for matching key string and return if found. */
-	tk = tty_keys_find(tty, buf + 1, len - 1, &size);
+	tk = tty_keys_find(tty, (const char *)buf + 1, len - 1, &size);
 	if (tk != NULL) {
 		key = tk->key;
 		goto found_key;
@@ -504,7 +504,7 @@ tty_keys_next(struct tty *tty)
 
 	/* Or a key string? */
 	if (len > 1) {
-		tk = tty_keys_find(tty, buf + 1, len - 1, &size);
+		tk = tty_keys_find(tty, (const char *)buf + 1, len - 1, &size);
 		if (tk != NULL) {
 			key = tk->key | KEYC_ESCAPE;
 			size++;	/* include escape */
