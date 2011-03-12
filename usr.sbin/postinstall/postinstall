@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.114 2011/02/13 20:25:35 tron Exp $
+# $NetBSD: postinstall,v 1.115 2011/03/12 23:04:16 erh Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1513,8 +1513,8 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
 			of the following:
 			* A directory that contains a NetBSD source tree;
 			* A distribution set file such as "etc.tgz" or
-			  "xetc.tgz", or a colon-separated list of such
-			  files;
+			  "xetc.tgz".  Pass multiple -s options to specify
+                          multiple such files;
 			* A temporary directory in which one or both of
 			  "etc.tgz" and "xetc.tgz" have been extracted.
 							[${SRC_DIR:-/}]
