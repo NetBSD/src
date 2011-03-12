@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.268 2011/03/11 10:36:29 pooka Exp $
+# $NetBSD: mi,v 1.269 2011/03/12 08:08:38 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -227,10 +227,6 @@
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/ffs/h_quota2_server.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/h_quota2_tests.debug		tests-fs-debug		debug,atf
-./usr/libdata/debug/usr/tests/fs/ffs/rump_edquota.debug			tests-fs-debug		debug,atf
-./usr/libdata/debug/usr/tests/fs/ffs/rump_quota.debug			tests-fs-debug		debug,atf
-./usr/libdata/debug/usr/tests/fs/ffs/rump_quotactl.debug		tests-fs-debug		debug,atf
-./usr/libdata/debug/usr/tests/fs/ffs/rump_repquota.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_fifos.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_mount.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_quota2_1.debug			tests-fs-debug		debug,atf
