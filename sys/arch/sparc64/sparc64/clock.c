@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.101 2010/03/11 03:54:56 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.102 2011/03/12 11:42:57 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.101 2010/03/11 03:54:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.102 2011/03/12 11:42:57 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -90,10 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.101 2010/03/11 03:54:56 mrg Exp $");
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
 #include <sparc64/dev/iommureg.h>
-#include <sparc64/dev/sbusreg.h>
-#include <dev/sbus/sbusvar.h>
-#include <dev/ebus/ebusreg.h>
-#include <dev/ebus/ebusvar.h>
 
 
 /*
