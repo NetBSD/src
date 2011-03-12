@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.269 2011/03/12 08:08:38 matt Exp $
+# $NetBSD: mi,v 1.270 2011/03/12 14:03:38 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1228,6 +1228,7 @@
 ./usr/tests/fs/nfs				tests-fs-tests
 ./usr/tests/fs/nfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/nfs/t_mountd				tests-fs-tests	atf
+./usr/tests/fs/nfs/t_rquotad				tests-fs-tests	atf
 ./usr/tests/fs/nfs/nfsservice				tests-fs-tests
 ./usr/tests/fs/nfs/nfsservice/exports			tests-fs-tests		atf
 ./usr/tests/fs/nfs/nfsservice/rumpnfsd			tests-fs-tests		atf
