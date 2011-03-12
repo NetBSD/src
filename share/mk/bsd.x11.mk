@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.93 2010/12/08 01:57:22 joerg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.94 2011/03/12 13:22:03 plunky Exp $
 
 .include <bsd.init.mk>
 
@@ -339,7 +339,9 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		< ${.IMPSRC} > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
-CLEANFILES+=	${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
+cleandir:	cleanpkgconfig
+cleanpkgconfig: .PHONY
+	rm -f ${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
 .endif
 
 #
