@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.52 2011/03/08 19:06:58 phx Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.53 2011/03/12 16:52:05 phx Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.52 2011/03/08 19:06:58 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.53 2011/03/12 16:52:05 phx Exp $");
 
 
 #include <sys/param.h>
@@ -754,7 +754,7 @@ stge_shutdown(device_t self, int howto)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	stge_stop(ifp, 1);
-
+	stge_reset(sc);
 	return true;
 }
 
