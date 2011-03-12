@@ -1,4 +1,4 @@
-/* $Id: screen-write.c,v 1.1.1.1 2011/03/10 09:15:39 jmmv Exp $ */
+/* $Id: screen-write.c,v 1.2 2011/03/12 03:02:59 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -97,7 +97,7 @@ screen_write_strlen(int utf8flag, const char *fmt, ...)
 	va_list			ap;
 	char   	       	       *msg;
 	struct utf8_data	utf8data;
-	u_char 	      	       *ptr;
+	char 	      	       *ptr;
 	size_t			left, size = 0;
 
 	va_start(ap, fmt);
@@ -106,13 +106,13 @@ screen_write_strlen(int utf8flag, const char *fmt, ...)
 
 	ptr = msg;
 	while (*ptr != '\0') {
-		if (utf8flag && *ptr > 0x7f && utf8_open(&utf8data, *ptr)) {
+		if (utf8flag && *ptr & 0x80 && utf8_open(&utf8data, (u_char)*ptr)) {
 			ptr++;
 
 			left = strlen(ptr);
 			if (left < utf8data.size - 1)
 				break;
-			while (utf8_append(&utf8data, *ptr))
+			while (utf8_append(&utf8data, (u_char)*ptr))
 				ptr++;
 			ptr++;
 
@@ -157,20 +157,20 @@ screen_write_vnputs(struct screen_write_ctx *ctx, ssize_t maxlen,
 {
 	char   		       *msg;
 	struct utf8_data	utf8data;
-	u_char 		       *ptr;
+	char 		       *ptr;
 	size_t		 	left, size = 0;
 
 	xvasprintf(&msg, fmt, ap);
 
 	ptr = msg;
 	while (*ptr != '\0') {
-		if (utf8flag && *ptr > 0x7f && utf8_open(&utf8data, *ptr)) {
+		if (utf8flag && *ptr & 0x80 && utf8_open(&utf8data, (u_char)*ptr)) {
 			ptr++;
 
 			left = strlen(ptr);
 			if (left < utf8data.size - 1)
 				break;
-			while (utf8_append(&utf8data, *ptr))
+			while (utf8_append(&utf8data, (u_char)*ptr))
 				ptr++;
 			ptr++;
 
@@ -192,7 +192,7 @@ screen_write_vnputs(struct screen_write_ctx *ctx, ssize_t maxlen,
 				break;
 
 			size++;
-			screen_write_putc(ctx, gc, *ptr);
+			screen_write_putc(ctx, gc, (u_char)*ptr);
 			ptr++;
 		}
 	}
@@ -209,7 +209,7 @@ screen_write_cnputs(struct screen_write_ctx *ctx,
 	struct utf8_data	 utf8data;
 	va_list			 ap;
 	char			*msg;
-	u_char 			*ptr, *last;
+	char 			*ptr, *last;
 	size_t			 left, size = 0;
 
 	va_start(ap, fmt);
@@ -234,13 +234,13 @@ screen_write_cnputs(struct screen_write_ctx *ctx,
 			continue;
 		}
 
-		if (utf8flag && *ptr > 0x7f && utf8_open(&utf8data, *ptr)) {
+		if (utf8flag && *ptr & 0x80 && utf8_open(&utf8data, (u_char)*ptr)) {
 			ptr++;
 
 			left = strlen(ptr);
 			if (left < utf8data.size - 1)
 				break;
-			while (utf8_append(&utf8data, *ptr))
+			while (utf8_append(&utf8data, (u_char)*ptr))
 				ptr++;
 			ptr++;
 
@@ -262,7 +262,7 @@ screen_write_cnputs(struct screen_write_ctx *ctx,
 				break;
 
 			size++;
-			screen_write_putc(ctx, &lgc, *ptr);
+			screen_write_putc(ctx, &lgc, (u_char)*ptr);
 			ptr++;
 		}
 	}
@@ -388,8 +388,9 @@ screen_write_copy(struct screen_write_ctx *ctx,
 				}
 				/* Reinject the UTF-8 sequence. */
 				gu = &gl->utf8data[xx];
-				utf8data.size = grid_utf8_copy(
-				    gu, utf8data.data, sizeof utf8data.data);
+				utf8data.size = grid_utf8_copy(gu,
+				    (char *)utf8data.data,
+				    sizeof utf8data.data);
 				utf8data.width = gu->width;
 				screen_write_cell(ctx, gc, &utf8data);
 			}

@@ -1,4 +1,4 @@
-/* $Id: job.c,v 1.1.1.1 2011/03/10 09:15:38 jmmv Exp $ */
+/* $Id: job.c,v 1.2 2011/03/12 03:02:59 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -69,7 +69,7 @@ job_get(struct jobs *jobs, const char *cmd)
 {
 	struct job	job;
 
-	job.cmd = (char *) cmd;
+	job.cmd = __UNCONST(cmd);
 	return (RB_FIND(jobs, jobs, &job));
 }
 
