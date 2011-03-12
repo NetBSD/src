@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.2 2011/03/09 23:50:40 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.3 2011/03/12 07:52:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.2 2011/03/09 23:50:40 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.3 2011/03/12 07:52:37 matt Exp $");
 
 #include "namespace.h"
 
@@ -150,7 +150,11 @@ __libc_static_tls_setup(void)
 	dl_iterate_phdr(__libc_static_tls_setup_cb, NULL);
 
 	tcb = _rtld_tls_allocate();
+#ifdef __HAVE___LWP_SETTCB
+	__lwp_settcb(tcb);
+#else
 	_lwp_setprivate(tcb);
+#endif
 }
 
 #endif /* __HAVE_TLS_VARIANT_I || __HAVE_TLS_VARIANT_II */
