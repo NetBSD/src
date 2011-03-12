@@ -1,11 +1,12 @@
-/*	$NetBSD: mdreloc.c,v 1.32 2010/08/06 16:33:18 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.33 2011/03/12 22:54:36 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.32 2010/08/06 16:33:18 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.33 2011/03/12 22:54:36 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/ucontext.h>
 
 #include "debug.h"
 #include "rtld.h"
@@ -119,6 +120,47 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			rdbg(("COPY (avoid in main)"));
 			break;
 
+		case R_TYPE(TLS_TPOFF):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			if (!defobj->tls_done &&
+			    _rtld_tls_offset_allocate(obj))
+				return -1;
+
+			*where = (Elf_Addr)(def->st_value - defobj->tlsoffset);
+
+			rdbg(("TLS_TPOFF %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where));
+			break;
+
+		case R_TYPE(TLS_DTPMOD32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			*where = (Elf_Addr)(defobj->tlsindex);
+
+			rdbg(("TLS_DTPMOD32 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where));
+			break;
+
+		case R_TYPE(TLS_DTPOFF32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			*where = (Elf_Addr)(def->st_value);
+
+			rdbg(("TLS_DTPOFF32 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where));
+
+			break;
+
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "contents = %p, symbol = %s",
@@ -213,4 +255,26 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 			break;
 	}
 	return err;
+}
+
+/*
+ * i386 specific GNU variant of __tls_get_addr using register based
+ * argument passing.
+ */
+#define	DTV_MAX_INDEX(dtv)	((size_t)((dtv)[-1]))
+
+__dso_public __attribute__((__regparm__(1))) void *
+___tls_get_addr(void *arg_)
+{
+	size_t *arg = (size_t *)arg_;
+	void **dtv;
+	struct tls_tcb *tcb = __lwp_getprivate_fast();
+	size_t idx = arg[0], offset = arg[1];
+
+	dtv = tcb->tcb_dtv;
+
+	if (__predict_true(idx < DTV_MAX_INDEX(dtv) && dtv[idx] != NULL))
+		return (uint8_t *)dtv[idx] + offset;
+
+	return _rtld_tls_get_addr(tcb, idx, offset);
 }

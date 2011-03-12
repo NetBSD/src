@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.38 2010/08/06 16:33:19 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.39 2011/03/12 22:54:36 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.38 2010/08/06 16:33:19 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.39 2011/03/12 22:54:36 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -161,7 +161,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 				*where32 = tmp32;
 			rdbg(("32/32S %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)(unsigned long)*where32,
+			    obj->path, (void *)(uintptr_t)*where32,
 			    defobj->path));
 			break;
 		case R_TYPE(64):	/* word64 S + A */
@@ -210,6 +210,50 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			rdbg(("RELATIVE in %s --> %p", obj->path,
 			    (void *)*where64));
        			break;
+
+		case R_TYPE(TPOFF64):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			if (!defobj->tls_done &&
+			    _rtld_tls_offset_allocate(obj))
+				return -1;
+
+			*where64 = (Elf64_Addr)(def->st_value -
+			    defobj->tlsoffset + rela->r_addend);
+
+			rdbg(("TPOFF64 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where64));
+
+			break;
+
+		case R_TYPE(DTPMOD64):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			*where64 = (Elf64_Addr)defobj->tlsindex;
+
+			rdbg(("DTPMOD64 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where64));
+
+			break;
+
+		case R_TYPE(DTPOFF64):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			*where64 = (Elf64_Addr)(def->st_value + rela->r_addend);
+
+			rdbg(("DTPOFF64 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where64));
+
+			break;
 
 		case R_TYPE(COPY):
 			rdbg(("COPY"));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.102 2011/03/10 14:27:31 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.103 2011/03/12 22:54:36 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -375,6 +375,10 @@ extern size_t _rtld_tls_dtv_generation;
 extern size_t _rtld_tls_max_index;
 
 __dso_public extern void *__tls_get_addr(void *);
+#ifdef __i386__
+__dso_public extern void *___tls_get_addr(void *)
+    __attribute__((__regparm__(1)));
+#endif
 #endif
 
 /* map_object.c */
