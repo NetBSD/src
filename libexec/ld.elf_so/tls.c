@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.2 2011/03/10 14:27:31 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.3 2011/03/12 07:43:53 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.2 2011/03/10 14:27:31 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.3 2011/03/12 07:43:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -38,6 +38,10 @@ __RCSID("$NetBSD: tls.c,v 1.2 2011/03/10 14:27:31 joerg Exp $");
 #include "rtld.h"
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+
+#ifndef TLS_DTV_OFFSET
+#define	TLS_DTV_OFFSET	0
+#endif
 
 static size_t _rtld_tls_static_space;	/* Static TLS space allocated */
 static size_t _rtld_tls_static_offset;	/* Next offset for static TLS to use */
@@ -91,7 +95,11 @@ _rtld_tls_initial_allocation(void)
 #endif
 
 	tcb = _rtld_tls_allocate();
+#ifdef __HAVE___LWP_SETTCB
+	__lwp_settcb(tcb);
+#else
 	_lwp_setprivate(tcb);
+#endif
 }
 
 struct tls_tcb *
@@ -245,8 +253,12 @@ __tls_get_addr(void *arg_)
 {
 	size_t *arg = (size_t *)arg_;
 	void **dtv;
-	struct tls_tcb *tcb = __lwp_getprivate_fast();
-	size_t idx = arg[0], offset = arg[1];
+#ifdef __HAVE___LWP_GETTCB_FAST
+	struct tls_tcb * const tcb = __lwp_gettcb_fast();
+#else
+	struct tls_tcb * const tcb = __lwp_getprivate_fast();
+#endif
+	size_t idx = arg[0], offset = arg[1] + TLS_DTV_OFFSET;
 
 	dtv = tcb->tcb_dtv;
 
