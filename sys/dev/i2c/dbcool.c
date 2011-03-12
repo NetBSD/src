@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.28 2011/03/11 19:12:46 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.29 2011/03/12 13:33:18 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.28 2011/03/11 19:12:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.29 2011/03/12 13:33:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1840,7 +1840,7 @@ dbcool_chip_ident(struct dbcool_chipset *dc)
 	 * send_byte/receive_byte which doesn't work.
 	 *
 	 * So if we only get 0's back then try again with dc->dc_chip
-	 * set to the EMC6D103S_DEVICEID and which dosn't have
+	 * set to the EMC6D103S_DEVICEID and which doesn't have
 	 * DBCFLAG_NO_READBYTE set so read_byte will be used
 	 */
 	if ((c_id == 0) && (d_id == 0) && (r_id == 0)) {
