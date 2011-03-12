@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.3 2011/03/10 10:11:25 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.4 2011/03/12 18:27:42 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -54,6 +54,19 @@ usage(void)
 	fprintf(stderr, "usage: %s [-h] [-p pcapfile] buspath\n",getprogname());
 	exit(1);
 }
+
+/*
+ * Apparently pcap uses a non-exported structure as the on-disk
+ * packet header.  Since that format isn't very likely to change
+ * soon, just define a local version
+ */
+struct ondisk_pcaphdr {
+	uint32_t ts_sec;
+	uint32_t ts_usec;
+	uint32_t caplen;
+	uint32_t len;
+
+};
 
 #define BUFSIZE 64*1024
 int
@@ -153,7 +166,7 @@ main(int argc, char *argv[])
 
 	i = 0;
 	while (curbus <= buslast || bonus) {
-		struct pcap_pkthdr packhdr;
+		struct ondisk_pcaphdr packhdr;
 		struct shmif_pkthdr sp;
 		uint32_t oldoff;
 		bool wrap;
@@ -187,8 +200,8 @@ main(int argc, char *argv[])
 
 		memset(&packhdr, 0, sizeof(packhdr));
 		packhdr.caplen = packhdr.len = sp.sp_len;
-		packhdr.ts.tv_sec = sp.sp_sec;
-		packhdr.ts.tv_usec = sp.sp_usec;
+		packhdr.ts_sec = sp.sp_sec;
+		packhdr.ts_usec = sp.sp_usec;
 		assert(sp.sp_len <= BUFSIZE);
 
 		if (write(pfd, &packhdr, sizeof(packhdr)) != sizeof(packhdr))
