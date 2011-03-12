@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.9 2011/03/11 17:46:30 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.10 2011/03/12 16:41:23 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 
+#include <powerpc/psl.h>
 #include <powerpc/oea/spr.h>
 
 #include <lib/libsa/stand.h>
@@ -128,6 +129,8 @@ static uint32_t ticks_per_sec, ns_per_tick;
 
 static void brdfixup(void);
 static void setup(void);
+static inline uint32_t mfmsr(void);
+static inline void mtmsr(uint32_t);
 static inline uint32_t cputype(void);
 static inline u_quad_t mftb(void);
 static void init_uart(unsigned, unsigned, uint8_t);
@@ -252,7 +255,7 @@ brdsetup(void)
 			busclock = (extclk *
 			    pci_to_memclk[(val >> 19) & 0x1f] + 10) / 10;
 			/* PLLRATIO from HID1 */
-			__asm ("mfspr %0,1009" : "=r"(val));
+			asm volatile ("mfspr %0,1009" : "=r"(val));
 			cpuclock = ((uint64_t)busclock *
 			    mem_to_cpuclk[val >> 27] + 10) / 10;
 		} else
@@ -696,11 +699,23 @@ nhnasbrdfix(struct brdprop *brd)
 void
 _rtt(void)
 {
+	uint32_t msr;
+
+	netif_shutdown_all();
 
 	if (brdprop->reset != NULL)
 		(*brdprop->reset)();
-	else
+	else {
+		msr = mfmsr();
+		msr &= ~PSL_EE;
+		mtmsr(msr);
+		asm volatile ("sync; isync");
+		asm volatile("mtspr %0,%1" : : "K"(81), "r"(0));
+		msr &= ~(PSL_ME | PSL_DR | PSL_IR);
+		mtmsr(msr);
+		asm volatile ("sync; isync");
 		run(0, 0, 0, 0, (void *)0xFFF00100); /* reset entry */
+	}
 	/*NOTREACHED*/
 }
 
@@ -785,11 +800,26 @@ _inv(uint32_t adr, uint32_t siz)
 }
 
 static inline uint32_t
+mfmsr(void)
+{
+	uint32_t msr;
+
+	asm volatile ("mfmsr %0" : "=r"(msr));
+	return msr;
+}
+
+static inline void
+mtmsr(uint32_t msr)
+{
+	asm volatile ("mtmsr %0" : : "r"(msr));
+}
+
+static inline uint32_t
 cputype(void)
 {
 	uint32_t pvr;
 
-	__asm volatile ("mfpvr %0" : "=r"(pvr));
+	asm volatile ("mfpvr %0" : "=r"(pvr));
 	return pvr >> 16;
 }
 
@@ -801,7 +831,7 @@ mftb(void)
 
 	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 	    : "=r"(tb), "=r"(scratch));
-	return (tb);
+	return tb;
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.9 2011/03/06 18:22:13 phx Exp $ */
+/* $NetBSD: main.c,v 1.10 2011/03/12 16:41:23 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -249,6 +249,8 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 			bi_add(btinfo_modulelist, BTINFO_MODULELIST,
 			    btinfo_modulelist_size);
 	}
+
+	netif_shutdown_all();
 
 	__syncicache((void *)marks[MARK_ENTRY],
 	    (u_int)marks[MARK_SYM] - (u_int)marks[MARK_ENTRY]);
