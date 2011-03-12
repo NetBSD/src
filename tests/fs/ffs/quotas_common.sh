@@ -1,4 +1,4 @@
-# $NetBSD: quotas_common.sh,v 1.2 2011/03/06 17:08:40 bouyer Exp $ 
+# $NetBSD: quotas_common.sh,v 1.3 2011/03/12 13:43:58 bouyer Exp $ 
 
 create_with_quotas()
 {
@@ -25,7 +25,9 @@ create_with_quotas_server()
 
 rump_shutdown()
 {
-	atf_check -s exit:0 rump.halt
+	for s in ${RUMP_SOCKETS_LIST}; do
+		atf_check -s exit:0 env RUMP_SERVER=unix://${s} rump.halt;
+	done
 # check that the quota inode creation didn't corrupt the filesystem
 	atf_check -s exit:0 -o "match:already clean" \
 		-o "match:Phase 6 - Check Quotas" \
@@ -46,10 +48,15 @@ test_case()
 		atf_set "timeout" "60"
 	}"
 	eval "${name}_body() { \
+		RUMP_SOCKETS_LIST=\${RUMP_SOCKET}; \
+		export RUMP_SERVER=unix://\${RUMP_SOCKET}; \
 		${check_function} " "${@}" "; \
 	}"
 	eval "${name}_cleanup() { \
-		atf_check -s exit:1 -o ignore -e ignore rump.halt; \
+		for s in \${RUMP_SOCKETS_LIST}; do \
+			export RUMP_SERVER=unix://\${s}; \
+			atf_check -s exit:1 -o ignore -e ignore rump.halt; \
+		done; \
 	}"
 	tests="${tests} ${name}"
 }
@@ -68,10 +75,15 @@ test_case_root()
 		atf_set "timeout" "60"
 	}"
 	eval "${name}_body() { \
+		RUMP_SOCKETS_LIST=\${RUMP_SOCKET}; \
+		export RUMP_SERVER=unix://\${RUMP_SOCKET}; \
 		${check_function} " "${@}" "; \
 	}"
 	eval "${name}_cleanup() { \
-		atf_check -s exit:1 -o ignore -e ignore rump.halt; \
+		for s in \${RUMP_SOCKETS_LIST}; do \
+			export RUMP_SERVER=unix://\${s}; \
+			atf_check -s exit:1 -o ignore -e ignore rump.halt; \
+		done; \
 	}"
 	tests="${tests} ${name}"
 }
@@ -80,9 +92,7 @@ atf_init_test_cases()
 {
 	IMG=fsimage
 	DIR=target
-	RUMP_SOCKET=test
-	RUMP_SERVER=unix://${RUMP_SOCKET}
-	export RUMP_SERVER
+	RUMP_SOCKET=test;
 	for i in ${tests}; do
 		atf_add_test_case $i
 	done
