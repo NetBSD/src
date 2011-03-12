@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vis.c,v 1.1 2010/12/28 12:46:15 pgoyette Exp $	*/
+/*	$NetBSD: t_vis.c,v 1.2 2011/03/12 19:52:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,9 +46,9 @@ static int styles[] = {
 #if 0	/* Not reversible */
 	VIS_NOSLASH,
 #endif
-#ifdef VIS_HTTPSTYLE
-	VIS_HTTPSTYLE
-#endif
+	VIS_HTTP1808,
+	VIS_MIMESTYLE,
+	VIS_HTTP1866,
 };
 
 #define SIZE	256
@@ -75,13 +75,7 @@ ATF_TC_BODY(vis, tc)
 
 	for (i = 0; i < __arraycount(styles); i++) {
 		strsvisx(visbuf, srcbuf, SIZE, styles[i], "");
-		/*
-		 * XXX: The strunvisx api is busted; flags should be
-		 * UNVIS_ flags, buf we follow FreeBSD's lead. This
-		 * needs to be redone, by moving UNVIS_END into the
-		 * VIS_ space, and bump the library/symbol.
-		 */
-		strunvisx(dstbuf, visbuf, styles[i] & VIS_HTTPSTYLE);
+		strunvisx(dstbuf, visbuf, styles[i]);
 		for (j = 0; j < SIZE; j++)
 			if (dstbuf[j] != (char)j)
 				atf_tc_fail_nonfatal("Failed for style %x, "

@@ -1,7 +1,7 @@
-/*	$NetBSD: vis.h,v 1.2 2011/03/12 19:52:47 christos Exp $	*/
+/*	$NetBSD: compat___unvis13.c,v 1.1 2011/03/12 19:52:47 christos Exp $	*/
 
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 2011
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,17 +27,31 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)vis.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef _COMPAT_VIS_H_
-#define	_COMPAT_VIS_H_
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: compat___unvis13.c,v 1.1 2011/03/12 19:52:47 christos Exp $");
+#endif /* LIBC_SCCS and not lint */
 
-__BEGIN_DECLS
-int	unvis(char *, int, int *, int);
-int	__unvis13(char *, int, int *, int);
-int	__unvis50(char *, int, int *, int);
-__END_DECLS
+#define __LIBC12_SOURCE__
 
-#endif /* !_COMPAT_VIS_H_ */
+#include "namespace.h"
+#include <sys/types.h>
+
+#include <assert.h>
+#include <stdio.h>
+#include <vis.h>
+#include <compat/include/vis.h>
+
+#ifdef __warn_references
+__warn_references(__unvis13,
+    "warning: reference to compatibility __unvis13(); include <vis.h> for correct reference")
+#endif
+
+int
+__unvis13(char *cp, int c, int *astate, int flag)
+{
+	flag = (flag & ~1) | ((flag & 1) ? UNVIS_END : 0);
+	return __unvis50(cp, c, astate, flag);
+}

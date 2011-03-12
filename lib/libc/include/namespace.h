@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.146 2010/12/16 18:38:06 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.147 2011/03/12 19:52:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -591,11 +591,8 @@
 #define strsignal		_strsignal
 #define strsuftoll	 	_strsuftoll
 #define strsuftollx	 	_strsuftollx
-#define strsvis			_strsvis
-#define strsvisx		_strsvisx
 #define strtok_r		_strtok_r
-#define strunvis		_strunvis
-#define strvis			_strvis
+#define strnunvisx		_strnunvisx
 #define strvisx			_strvisx
 #define svc_auth_reg		_svc_auth_reg
 #define svc_create		_svc_create
@@ -628,7 +625,6 @@
 #define svcudp_bufcreate	_svcudp_bufcreate
 #define svcudp_create		_svcudp_create
 #define svcudp_enablecache	_svcudp_enablecache
-#define svis			_svis
 #define sysarch			_sys_sysarch
 #define sysctl			_sysctl
 #define sysctlbyname		_sysctlbyname
@@ -667,7 +663,6 @@
 #define ualarm			_ualarm
 #define uname			_uname
 #define unsetenv		_unsetenv
-#define unvis			_unvis
 #define user_from_uid		_user_from_uid
 #define usleep			_usleep
 #define utime			_utime
@@ -675,7 +670,6 @@
 #define uuid_is_nil		_uuid_is_nil
 #define valloc			_valloc
 #define vdprintf		_vdprintf
-#define vis			_vis
 #define	vdprintf		_vdprintf
 #ifndef vsnprintf
 #define vsnprintf		_vsnprintf
