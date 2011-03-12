@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.418 2011/03/06 17:08:36 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.419 2011/03/12 07:16:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.418 2011/03/06 17:08:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.419 2011/03/12 07:16:50 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2085,14 +2085,15 @@ sys_link(struct lwp *l, const struct sys_link_args *uap, register_t *retval)
 	if ((error = namei(&nd)) != 0)
 		goto out2;
 	if (nd.ni_vp) {
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == nd.ni_vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
-		vrele(nd.ni_vp);
 		error = EEXIST;
-		goto out2;
+		goto abortop;
+	}
+	/*
+	 * Prevent cross-mount operation.
+	 */
+	if (nd.ni_dvp->v_mount != vp->v_mount) {
+		error = EXDEV;
+		goto abortop;
 	}
 	error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
 out2:
@@ -2100,6 +2101,15 @@ out2:
 out1:
 	vrele(vp);
 	return (error);
+abortop:
+	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+	if (nd.ni_dvp == nd.ni_vp)
+		vrele(nd.ni_dvp);
+	else
+		vput(nd.ni_dvp);
+	if (nd.ni_vp != NULL)
+		vrele(nd.ni_vp);
+	goto out2;
 }
 
 int
@@ -3568,7 +3578,14 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 		          fromnd.ni_cnd.cn_namelen))
 		error = -1;
 	}
-
+	/*
+	 * Prevent cross-mount operation.
+	 */
+	if (error == 0) {
+		if (tond.ni_dvp->v_mount != fromnd.ni_dvp->v_mount) {
+			error = EXDEV;
+		}
+	}
 #if NVERIEXEC > 0
 	if (!error) {
 		char *f1, *f2;
