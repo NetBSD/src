@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.47 2011/02/10 02:28:20 matt Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.48 2011/03/12 07:43:53 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.47 2011/02/10 02:28:20 matt Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.48 2011/03/12 07:43:53 matt Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -202,6 +202,47 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 				return -1;
 			}
 			rdbg(("COPY (avoid in main)"));
+			break;
+
+		case R_TYPE(DTPMOD32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			*where = (Elf_Addr)defobj->tlsindex;
+			rdbg(("DTPMOD32 %s in %s --> %p in %s",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
+			break;
+
+		case R_TYPE(DTPREL32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
+				return -1;
+
+			*where = (Elf_Addr)(def->st_value + rela->r_addend
+			    - TLS_DTV_OFFSET);
+			rdbg(("DTPREL32 %s in %s --> %p in %s",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
+			break;
+
+		case R_TYPE(TPREL32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
+				return -1;
+
+			*where = (Elf_Addr)(def->st_value + rela->r_addend
+			    + defobj->tlsoffset - TLS_TP_OFFSET);
+			rdbg(("TPREL32 %s in %s --> %p in %s",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		default:
