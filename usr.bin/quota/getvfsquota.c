@@ -1,4 +1,4 @@
-/*	$NetBSD: getvfsquota.c,v 1.4 2011/03/06 22:36:07 christos Exp $ */
+/*	$NetBSD: getvfsquota.c,v 1.5 2011/03/12 12:28:47 bouyer Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getvfsquota.c,v 1.4 2011/03/06 22:36:07 christos Exp $");
+__RCSID("$NetBSD: getvfsquota.c,v 1.5 2011/03/12 12:28:47 bouyer Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +43,6 @@ __RCSID("$NetBSD: getvfsquota.c,v 1.4 2011/03/06 22:36:07 christos Exp $");
 #include <sys/quota.h>
 
 #include "getvfsquota.h"
-#include "quotautil.h"
 
 /* retrieve quotas from vfs, for the given user id */
 int
