@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.33 2011/02/27 01:53:22 christos Exp $	*/
+/*	$NetBSD: unvis.c,v 1.34 2011/03/12 19:52:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.33 2011/02/27 01:53:22 christos Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.34 2011/03/12 19:52:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,10 +45,11 @@ __RCSID("$NetBSD: unvis.c,v 1.33 2011/02/27 01:53:22 christos Exp $");
 #include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <errno.h>
 #include <vis.h>
 
 #ifdef __weak_alias
-__weak_alias(strunvis,_strunvis)
+__weak_alias(strnunvisx,_strnunvisx)
 #endif
 
 #if !HAVE_VIS
@@ -469,47 +470,76 @@ unvis(char *cp, int c, int *astate, int flag)
 }
 
 /*
- * strunvis - decode src into dst
+ * strnunvisx - decode src into dst
  *
  *	Number of chars decoded into dst is returned, -1 on error.
  *	Dst is null terminated.
  */
 
 int
-strunvisx(char *dst, const char *src, int flag)
+strnunvisx(char *dst, size_t dlen, const char *src, int flag)
 {
 	char c;
-	char *start = dst;
+	char t, *start = dst;
 	int state = 0;
 
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(dst != NULL);
+#define CHECKSPACE() \
+	do { \
+		if (dlen-- == 0) { \
+			errno = ENOSPC; \
+			return -1; \
+		} \
+	} while (/*CONSTCOND*/0)
 
 	while ((c = *src++) != '\0') {
  again:
-		switch (unvis(dst, c, &state, flag)) {
+		switch (unvis(&t, c, &state, flag)) {
 		case UNVIS_VALID:
-			dst++;
+			CHECKSPACE();
+			*dst++ = t;
 			break;
 		case UNVIS_VALIDPUSH:
-			dst++;
+			CHECKSPACE();
+			*dst++ = t;
 			goto again;
 		case 0:
 		case UNVIS_NOCHAR:
 			break;
+		case UNVIS_SYNBAD:
+			errno = EINVAL;
+			return -1;
 		default:
-			return (-1);
+			_DIAGASSERT(0);
+			errno = EINVAL;
+			return -1;
 		}
 	}
-	if (unvis(dst, c, &state, UNVIS_END) == UNVIS_VALID)
-		dst++;
+	if (unvis(&t, c, &state, UNVIS_END) == UNVIS_VALID) {
+		CHECKSPACE();
+		*dst++ = t;
+	}
+	CHECKSPACE();
 	*dst = '\0';
 	return (int)(dst - start);
 }
 
 int
+strunvisx(char *dst, const char *src, int flag)
+{
+	return strnunvisx(dst, ~0, src, flag);
+}
+
+int
 strunvis(char *dst, const char *src)
 {
-	return strunvisx(dst, src, 0);
+	return strnunvisx(dst, ~0, src, 0);
+}
+
+int
+strnunvis(char *dst, size_t dlen, const char *src)
+{
+	return strnunvisx(dst, dlen, src, 0);
 }
 #endif
