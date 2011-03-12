@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.121 2011/03/09 23:10:06 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.122 2011/03/12 07:46:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.121 2011/03/09 23:10:06 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.122 2011/03/12 07:46:29 matt Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -196,7 +196,11 @@ pthread__init(void)
 	pthread__scrubthread(first, NULL, 0);
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+#ifdef __HAVE___LWP_GETTCB_FAST
+	first->pt_tls = __lwp_gettcb_fast();
+#else
 	first->pt_tls = _lwp_getprivate();
+#endif
 	first->pt_tls->tcb_pthread = first;
 #endif
 
