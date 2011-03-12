@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_elf.c,v 1.8 2011/03/07 05:09:11 joerg Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.9 2011/03/12 21:55:09 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -27,14 +27,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dlfcn_elf.c,v 1.8 2011/03/07 05:09:11 joerg Exp $");
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.9 2011/03/12 21:55:09 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include "reentrant.h"
 #include "namespace.h"
+#include <sys/atomic.h>
 #include <elf.h>
 #include <errno.h>
 #include <string.h>
+#include <stdbool.h>
 
 #undef dlopen
 #undef dlclose
@@ -132,7 +133,6 @@ dlinfo(void *handle, int req, void *v)
 	return -1;
 }
 
-static once_t dl_iterate_phdr_once = ONCE_INITIALIZER;
 static const char *dlpi_name;
 static Elf_Addr dlpi_addr;
 static const Elf_Phdr *dlpi_phdr;
@@ -175,12 +175,22 @@ int
 dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
     void *data)
 {
+	static bool setup_done;
 	struct dl_phdr_info phdr_info;
 
 	if (__auxinfo == NULL)
 		return EOPNOTSUPP;
 
-	thr_once(&dl_iterate_phdr_once, dl_iterate_phdr_setup);
+	if (!setup_done) {
+		/*
+		 * This can race on the first call to dl_iterate_phdr.
+		 * dl_iterate_phdr_setup only touches field of pointer size
+		 * and smaller and such stores are atomic.
+		 */
+		dl_iterate_phdr_setup();
+		membar_producer();
+		setup_done = true;
+	}
 
 	memset(&phdr_info, 0, sizeof(phdr_info));
 	phdr_info.dlpi_addr = dlpi_addr;
