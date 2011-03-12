@@ -1,4 +1,4 @@
-.\" $NetBSD: tsc.9,v 1.1 2011/03/11 19:50:33 jruoho Exp $
+.\" $NetBSD: tsc.9,v 1.2 2011/03/12 13:25:41 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Ft void
 .Fn tsc_sync_drift "int64_t drift"
 .Sh DESCRIPTION
-The time stamp sounter
+The time stamp counter
 .Pq Tn TSC
 is a hardware counter found in all contemporary x86 processors.
 The counter is implemented as a 64-bit model-specific register
@@ -65,7 +65,7 @@ Recently, however, this reliability has been undermined by
 such factors as system sleep states,
 .Tn CPU
 .Dq hotplugging ,
-.Dq hiberanation ,
+.Dq hibernation ,
 and
 .Tn CPU
 frequency scaling.
