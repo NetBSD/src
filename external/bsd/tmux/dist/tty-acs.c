@@ -1,4 +1,4 @@
-/* $Id: tty-acs.c,v 1.1.1.1 2011/03/10 09:15:39 jmmv Exp $ */
+/* $Id: tty-acs.c,v 1.2 2011/03/12 03:02:59 christos Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -70,7 +70,7 @@ tty_acs_cmp(const void *key, const void *value)
 	const struct tty_acs_entry	*entry = value;
 	u_char				 ch;
 
-	ch = *(u_char *) key;
+	ch = *(const u_char *) key;
 	return (ch - entry->key);
 }
 

@@ -1,4 +1,4 @@
-/* $Id: screen.c,v 1.1.1.1 2011/03/10 09:15:39 jmmv Exp $ */
+/* $Id: screen.c,v 1.2 2011/03/12 03:02:59 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -94,9 +94,10 @@ screen_reset_tabs(struct screen *s)
 void
 screen_set_title(struct screen *s, const char *title)
 {
-	char	tmp[BUFSIZ];
+	size_t	slen = strlen(title);
+	char	tmp[slen * 4 + 1];
 
-	strnvis(tmp, title, sizeof tmp, VIS_OCTAL|VIS_TAB|VIS_NL);
+	strvisx(tmp, title, slen, VIS_OCTAL|VIS_TAB|VIS_NL);
 
 	xfree(s->title);
 	s->title = xstrdup(tmp);

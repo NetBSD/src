@@ -29,7 +29,7 @@
 #undef HAVE_TREE_H
 #undef HAVE_UTIL_H
 #undef HAVE_U_INT
-#undef HAVE_VIS
+#define HAVE_VIS
 #define HAVE_ASPRINTF
 #define HAVE_BZERO
 #define HAVE_CLOSEFROM
