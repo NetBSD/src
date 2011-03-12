@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.25 2011/03/06 17:08:16 bouyer Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.26 2011/03/12 12:30:39 bouyer Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.25 2011/03/06 17:08:16 bouyer Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.26 2011/03/12 12:30:39 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -36,6 +36,8 @@ __RCSID("$NetBSD: rquotad.c,v 1.25 2011/03/06 17:08:16 bouyer Exp $");
 #include <arpa/inet.h>
 
 #include <getvfsquota.h>
+
+const char *qfextension[MAXQUOTAS] = INITQFNAMES;
 
 void rquota_service(struct svc_req *request, SVCXPRT *transp);
 void ext_rquota_service(struct svc_req *request, SVCXPRT *transp);
