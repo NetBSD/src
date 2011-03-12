@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1519 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1520 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -885,3 +885,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		limits from QUOTA to QUOTA2.
 		[bouyer 20110306]
 	tmux(1): First import of tmux (version 1.4).  [jmmv 20110310]
+	powerpc: add TLS (thread local storage) support.  [matt 20110311]
