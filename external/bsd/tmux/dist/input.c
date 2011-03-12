@@ -1,4 +1,4 @@
-/* $Id: input.c,v 1.1.1.1 2011/03/10 09:15:38 jmmv Exp $ */
+/* $Id: input.c,v 1.2 2011/03/12 03:02:59 christos Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -638,7 +638,7 @@ input_table_compare(const void *key, const void *value)
 
 	if (ictx->ch != entry->ch)
 		return (ictx->ch - entry->ch);
-	return (strcmp(ictx->interm_buf, entry->interm));
+	return (strcmp((const char *)ictx->interm_buf, entry->interm));
 }
 
 /* Initialise input parser. */
@@ -752,7 +752,7 @@ input_split(struct input_ctx *ictx)
 	if (ictx->param_len == 0)
 		return (0);
 
-	ptr = ictx->param_buf;
+	ptr = (char *)ictx->param_buf;
 	while ((out = strsep(&ptr, ";")) != NULL) {
 		if (*out == '\0')
 			n = -1;
@@ -1409,7 +1409,7 @@ input_exit_osc(struct input_ctx *ictx)
 	if (ictx->input_buf[0] != '0' && ictx->input_buf[0] != '2')
 		return;
 
-	screen_set_title(ictx->ctx.s, ictx->input_buf + 2);
+	screen_set_title(ictx->ctx.s, (const char *)ictx->input_buf + 2);
 	server_status_window(ictx->wp->window);
 }
 
@@ -1430,7 +1430,7 @@ input_exit_apc(struct input_ctx *ictx)
 		return;
 	log_debug("%s: \"%s\"", __func__, ictx->input_buf);
 
-	screen_set_title(ictx->ctx.s, ictx->input_buf);
+	screen_set_title(ictx->ctx.s, (const char *)ictx->input_buf);
 	server_status_window(ictx->wp->window);
 }
 
@@ -1452,7 +1452,7 @@ input_exit_rename(struct input_ctx *ictx)
 	log_debug("%s: \"%s\"", __func__, ictx->input_buf);
 
 	xfree(ictx->wp->window->name);
-	ictx->wp->window->name = xstrdup(ictx->input_buf);
+	ictx->wp->window->name = xstrdup((const char *)ictx->input_buf);
 	options_set_number(&ictx->wp->window->options, "automatic-rename", 0);
 
 	server_status_window(ictx->wp->window);

@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.1 2011/03/10 09:18:01 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2011/03/12 03:02:59 christos Exp $
 
 .include <bsd.own.mk>
+WARNS?=	4
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/tmux/dist
 .PATH:		${SRCDIR}
@@ -147,8 +148,8 @@ SRCS+=		xterm-keys.c
 SRCS+=		imsg-buffer.c
 SRCS+=		imsg.c
 SRCS+=		strtonum.c
-SRCS+=		unvis.c
-SRCS+=		vis.c
+#SRCS+=		unvis.c
+#SRCS+=		vis.c
 
 VERSION!=	cat "$(.CURDIR)/version.txt"
 CPPFLAGS+=	-DBUILD="\"$(VERSION)\""
