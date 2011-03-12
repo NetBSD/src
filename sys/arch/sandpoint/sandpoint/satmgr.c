@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.5 2011/03/09 20:33:57 phx Exp $ */
+/* $NetBSD: satmgr.c,v 1.6 2011/03/12 16:49:16 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -115,11 +115,9 @@ static void swintr(void *);
 static void kreboot(struct satmgr_softc *);
 static void sreboot(struct satmgr_softc *);
 static void qreboot(struct satmgr_softc *);
-static void dreboot(struct satmgr_softc *);
 static void kpwroff(struct satmgr_softc *);
 static void spwroff(struct satmgr_softc *);
 static void qpwroff(struct satmgr_softc *);
-static void dpwroff(struct satmgr_softc *);
 static void kbutton(struct satmgr_softc *, int);
 static void sbutton(struct satmgr_softc *, int);
 static void qbutton(struct satmgr_softc *, int);
@@ -138,7 +136,7 @@ static struct satops satmodel[] = {
     { "kurobox",  kreboot, kpwroff, kbutton },
     { "synology", sreboot, spwroff, sbutton },
     { "qnap",     qreboot, qpwroff, qbutton },
-    { "dlink",    dreboot, dpwroff, dbutton }
+    { "dlink",    NULL, NULL, dbutton }
 };
 
 /* single byte stride register layout */
@@ -266,11 +264,16 @@ static void
 satmgr_reboot(int howto)
 {
 	struct satmgr_softc *sc = device_lookup_private(&satmgr_cd, 0);
-	
-	if ((howto & RB_POWERDOWN) == RB_AUTOBOOT)
-		(*sc->sc_ops->reboot)(sc);	/* REBOOT */
-	else
-		(*sc->sc_ops->pwroff)(sc);	/* HALT or POWERDOWN */
+
+	if ((howto & RB_POWERDOWN) == RB_AUTOBOOT) {
+		if (sc->sc_ops->reboot != NULL)
+			(*sc->sc_ops->reboot)(sc);	/* REBOOT */
+		else
+			return;				/* default reboot */
+	} else
+		if (sc->sc_ops->pwroff != NULL)
+			(*sc->sc_ops->pwroff)(sc);	/* HALT or POWERDOWN */
+
 	tsleep(satmgr_reboot, PWAIT, "reboot", 0);
 	/*NOTREACHED*/
 }
@@ -696,20 +699,6 @@ qbutton(struct satmgr_softc *sc, int ch)
 {
 
 	/* research in progress */
-}
-
-static void
-dreboot(struct satmgr_softc *sc)
-{
-
-	/* XXX cause a machine check exception? */
-}
-
-static void
-dpwroff(struct satmgr_softc *sc)
-{
-
-	/* not possible */
 }
 
 static void
