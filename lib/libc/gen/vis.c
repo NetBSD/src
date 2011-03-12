@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.41 2009/11/23 10:08:47 plunky Exp $	*/
+/*	$NetBSD: vis.c,v 1.42 2011/03/12 03:24:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.41 2009/11/23 10:08:47 plunky Exp $");
+__RCSID("$NetBSD: vis.c,v 1.42 2011/03/12 03:24:08 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -82,7 +82,7 @@ __weak_alias(vis,_vis)
 #include <stdio.h>
 #include <string.h>
 
-static char *do_svis(char *, int, int, int, const char *);
+static char *do_svis(char *, size_t *, int, int, int, const char *);
 
 #undef BELL
 #define BELL '\a'
@@ -118,7 +118,7 @@ do {									      \
  * This is do_hvis, for HTTP style (RFC 1808)
  */
 static char *
-do_hvis(char *dst, int c, int flag, int nextc, const char *extra)
+do_hvis(char *dst, size_t *len, int c, int flag, int nextc, const char *extra)
 {
 
 	if ((isascii(c) && isalnum(c))
@@ -127,8 +127,13 @@ do_hvis(char *dst, int c, int flag, int nextc, const char *extra)
 	    /* extra */
 	    || c == '!' || c == '*' || c == '\'' || c == '(' || c == ')'
 	    || c == ',') {
-		dst = do_svis(dst, c, flag, nextc, extra);
+		dst = do_svis(dst, len, c, flag, nextc, extra);
 	} else {
+		if (len) {
+			if (*len < 3)
+				return NULL;
+			*len -= 3;
+		}
 		*dst++ = '%';
 		*dst++ = xtoa(((unsigned int)c >> 4) & 0xf);
 		*dst++ = xtoa((unsigned int)c & 0xf);
@@ -142,7 +147,7 @@ do_hvis(char *dst, int c, int flag, int nextc, const char *extra)
  * NB: No handling of long lines or CRLF.
  */
 static char *
-do_mvis(char *dst, int c, int flag, int nextc, const char *extra)
+do_mvis(char *dst, size_t *len, int c, int flag, int nextc, const char *extra)
 {
 	if ((c != '\n') &&
 	    /* Space at the end of the line */
@@ -151,11 +156,16 @@ do_mvis(char *dst, int c, int flag, int nextc, const char *extra)
 	    (!isspace(c) && (c < 33 || (c > 60 && c < 62) || c > 126)) ||
 	    /* Specific char to be escaped */ 
 	    strchr("#$@[\\]^`{|}~", c) != NULL)) {
+		if (len) {
+			if (*len < 3)
+				return NULL;
+			*len -= 3;
+		}
 		*dst++ = '=';
 		*dst++ = XTOA(((unsigned int)c >> 4) & 0xf);
 		*dst++ = XTOA((unsigned int)c & 0xf);
 	} else {
-		dst = do_svis(dst, c, flag, nextc, extra);
+		dst = do_svis(dst, len, c, flag, nextc, extra);
 	}
 	return dst;
 }
@@ -170,16 +180,27 @@ do_mvis(char *dst, int c, int flag, int nextc, const char *extra)
  *	      backslash-protected.
  */
 static char *
-do_svis(char *dst, int c, int flag, int nextc, const char *extra)
+do_svis(char *dst, size_t *len, int c, int flag, int nextc, const char *extra)
 {
 	int isextra;
 	isextra = strchr(extra, c) != NULL;
+	size_t olen = len ? *len : 0;
+#define HAVE(x) \
+	do { \
+		if (len) { \
+			if (*len < (x)) \
+				goto out; \
+			*len -= (x); \
+		} \
+	} while (/*CONSTCOND*/0)
 	if (!isextra && isascii(c) && (isgraph(c) || iswhite(c) ||
 	    ((flag & VIS_SAFE) && issafe(c)))) {
+		HAVE(1);
 		*dst++ = c;
 		return dst;
 	}
 	if (flag & VIS_CSTYLE) {
+		HAVE(2);
 		switch (c) {
 		case '\n':
 			*dst++ = '\\'; *dst++ = 'n';
@@ -208,6 +229,7 @@ do_svis(char *dst, int c, int flag, int nextc, const char *extra)
 		case '\0':
 			*dst++ = '\\'; *dst++ = '0';
 			if (isoctal(nextc)) {
+				HAVE(2);
 				*dst++ = '0';
 				*dst++ = '0';
 			}
@@ -217,32 +239,46 @@ do_svis(char *dst, int c, int flag, int nextc, const char *extra)
 				*dst++ = '\\'; *dst++ = c;
 				return dst;
 			}
+			if (len)
+				*len = olen;
 		}
 	}
 	if (isextra || ((c & 0177) == ' ') || (flag & VIS_OCTAL)) {
+		HAVE(4);
 		*dst++ = '\\';
 		*dst++ = (u_char)(((u_int32_t)(u_char)c >> 6) & 03) + '0';
 		*dst++ = (u_char)(((u_int32_t)(u_char)c >> 3) & 07) + '0';
 		*dst++ =			     (c	      & 07) + '0';
 	} else {
-		if ((flag & VIS_NOSLASH) == 0) *dst++ = '\\';
+		if ((flag & VIS_NOSLASH) == 0) {
+			HAVE(1);
+			*dst++ = '\\';
+		}
+
 		if (c & 0200) {
+			HAVE(1);
 			c &= 0177; *dst++ = 'M';
 		}
+
 		if (iscntrl(c)) {
+			HAVE(2);
 			*dst++ = '^';
 			if (c == 0177)
 				*dst++ = '?';
 			else
 				*dst++ = c + '@';
 		} else {
+			HAVE(2);
 			*dst++ = '-'; *dst++ = c;
 		}
 	}
 	return dst;
+out:
+	*len = olen;
+	return NULL;
 }
 
-typedef char *(*visfun_t)(char *, int, int, int, const char *);
+typedef char *(*visfun_t)(char *, size_t *, int, int, int, const char *);
 
 /*
  * Return the appropriate encoding function depending on the flags given.
@@ -275,7 +311,7 @@ svis(char *dst, int c, int flag, int nextc, const char *extra)
 		return dst;
 	}
 	f = getvisfun(flag);
-	dst = (*f)(dst, c, flag, nextc, nextra);
+	dst = (*f)(dst, NULL, c, flag, nextc, nextra);
 	free(nextra);
 	*dst = '\0';
 	return dst;
@@ -316,7 +352,7 @@ strsvis(char *dst, const char *csrc, int flag, const char *extra)
 	}
 	f = getvisfun(flag);
 	for (start = dst; (c = *src++) != '\0'; /* empty */)
-		dst = (*f)(dst, c, flag, *src, nextra);
+		dst = (*f)(dst, NULL, c, flag, *src, nextra);
 	free(nextra);
 	*dst = '\0';
 	return (int)(dst - start);
@@ -344,7 +380,7 @@ strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra)
 	f = getvisfun(flag);
 	for (start = dst; len > 0; len--) {
 		c = *src++;
-		dst = (*f)(dst, c, flag, len > 1 ? *src : '\0', nextra);
+		dst = (*f)(dst, NULL, c, flag, len > 1 ? *src : '\0', nextra);
 	}
 	free(nextra);
 	*dst = '\0';
@@ -371,7 +407,7 @@ vis(char *dst, int c, int flag, int nextc)
 		return dst;
 	}
 	f = getvisfun(flag);
-	dst = (*f)(dst, uc, flag, nextc, extra);
+	dst = (*f)(dst, NULL, uc, flag, nextc, extra);
 	free(extra);
 	*dst = '\0';
 	return dst;
