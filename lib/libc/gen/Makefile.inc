@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.173 2010/12/12 20:22:48 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.174 2011/03/12 19:52:48 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -155,8 +155,11 @@ MLINKS+=syslog.3 syslogp.3 syslog.3 syslogp_r.3 \
 	syslog.3 vsyslogp.3 syslog.3 vsyslogp_r.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3 ttyname.3 ttyname_r.3
 MLINKS+=unvis.3 strunvis.3 unvis.3 strunvisx.3
+MLINKS+=unvis.3 strnunvis.3 unvis.3 strnunvisx.3
 MLINKS+=vis.3 svis.3 vis.3 strvis.3 vis.3 strvisx.3 vis.3 strsvis.3 \
-	vis.3 strsvisx.3
+	vis.3 strsvisx.3 vis.3 nvis.3
+MLINKS+=vis.3 snvis.3 vis.3 strnvis.3 vis.3 strnvisx.3 vis.3 strsnvis.3 \
+	vis.3 strsnvisx.3
 
 CPPFLAGS.ctype_.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.isctype.c+=	-I${LIBCDIR}/locale
