@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.52 2011/03/06 17:08:28 bouyer Exp $
+# 	$NetBSD: INSTALL,v 1.53 2011/03/13 12:58:02 he Exp $
 
 #	config for bootable floppy kernel
 #
@@ -18,7 +18,7 @@ options 	CPU_SINGLE		# Will IOP be supported eventually?
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=3000	# 1.50 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=3200	# 1.60 Megabytes
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # Standard system options
