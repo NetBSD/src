@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.10 2011/03/12 16:41:23 phx Exp $ */
+/* $NetBSD: main.c,v 1.11 2011/03/13 01:56:21 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -100,6 +100,7 @@ int brdtype;
 uint32_t busclock, cpuclock;
 
 static int check_bootname(char *);
+static int input_cmdline(char **, int);
 static int parse_cmdline(char **, int, char *, char *);
 static int is_space(char);
 
@@ -184,6 +185,21 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 		argc = parse_cmdline(argv, MAX_ARGS, bootargs_start,
 		    bootargs_end);
 	}
+
+	/* wait 2s for user to enter interactive mode */
+	for (n = 200; n >= 0; n--) {
+		if (n % 100 == 0)
+			printf("Hit any key to enter interactive mode: %d\r",
+			    n / 100);
+		if (tstchar()) {
+			(void)getchar();
+			argv = new_argv;
+			argc = input_cmdline(argv, MAX_ARGS);
+			break;
+		}
+		delay(10000);
+	}
+	putchar('\n');
 
 	howto = RB_AUTOBOOT;		/* default is autoboot = 0 */
 
@@ -535,6 +551,18 @@ check_bootname(char *s)
 		return *s == ':';
 	}
 	return 0;
+}
+
+static int input_cmdline(char **argv, int maxargc)
+{
+	char *cmdline;
+
+	printf("\nbootargs> ");
+	cmdline = alloc(256);
+	gets(cmdline);
+
+	return parse_cmdline(argv, maxargc, cmdline,
+	    cmdline + strlen(cmdline));
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.10 2011/03/12 16:41:23 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.11 2011/03/13 01:56:21 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@ const unsigned dcache_range_size = 4 * 1024;	/* 16KB / 4-way */
 
 unsigned uart1base;	/* console */
 unsigned uart2base;	/* optional satellite processor */
+#define RBR		0
 #define THR		0
 #define DLB		0
 #define DMB		1
@@ -156,6 +157,7 @@ unsigned uart2base;	/* optional satellite processor */
 #define  MCR_DTR	0x01
 #define LSR		5
 #define  LSR_THRE	0x20
+#define  LSR_DRDY	0x01
 #define DCR		0x11
 #define UART_READ(base, r)	*(volatile char *)(base + (r))
 #define UART_WRITE(base, r, v)	*(volatile char *)(base + (r)) = (v)
@@ -663,7 +665,7 @@ synoreset()
 {
 
 	send_sat("C");
-	/*NOTRECHED*/
+	/*NOTREACHED*/
 }
 
 void
@@ -876,6 +878,23 @@ putchar(int c)
 	} while (timo-- > 0 && (lsr & LSR_THRE) == 0);
 	if (timo > 0)
 		UART_WRITE(uart1base, THR, c);
+}
+
+int
+getchar(void)
+{
+	unsigned lsr;
+
+	do {
+		lsr = UART_READ(uart1base, LSR);
+	} while ((lsr & LSR_DRDY) == 0);
+	return UART_READ(uart1base, RBR);
+}
+
+int
+tstchar(void)
+{
+	return (UART_READ(uart1base, LSR) & LSR_DRDY) != 0;
 }
 
 unsigned
