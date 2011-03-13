@@ -1,4 +1,4 @@
-.\"	$NetBSD: unvis.3,v 1.21 2011/03/12 19:52:48 christos Exp $
+.\"	$NetBSD: unvis.3,v 1.22 2011/03/13 09:11:54 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -199,12 +199,10 @@ if (unvis(\*[Am]out, '\e0', \*[Am]state, UNVIS_END) == UNVIS_VALID)
 The functions
 .Fn strunvis ,
 .Fn strnunvis ,
-.Fn strunvisx
+.Fn strunvisx ,
 and
 .Fn strnunvisx
-will return
-.Dv -1
-on error and set
+will return \-1 on error and set
 .Va errno 
 to:
 .Bl -tag -width Er
@@ -238,3 +236,9 @@ The
 function
 first appeared in
 .Bx 4.4 .
+The
+.Fn strnunvis
+and
+.Fn strnunvisx
+functions appeared in
+.Nx 6.0 .
