@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.3 2011/03/11 16:41:27 pooka Exp $
+#	$NetBSD: t_basic.sh,v 1.4 2011/03/13 15:40:01 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,7 +70,7 @@ pcap()
 	unpack_file d_pcap.out
 	atf_check -s exit:0 -o ignore shmif_dumpbus -p pcap shmbus
 	atf_check -s exit:0 -o file:d_pcap.out -e ignore \
-	    tcpdump -n -r pcap
+	    tcpdump -tt -n -r pcap
 }
 
 atf_init_test_cases()
