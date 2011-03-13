@@ -6,3 +6,6 @@
 1.4:	load kernels from local disk
 1.5:	altboot is the new name as this is capable of handling net & dsk.
 1.6:	build altboot.img to fake a Linux kernel module, supports bootargs
+1.7:	ST1023/IP1000A driver, load kernels from memory (mem:), possibility
+	to replace altboot with a new version while running, interactive
+	mode, default boot path is now wd0:netbsd in multiuser mode

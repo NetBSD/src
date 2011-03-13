@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.11 2011/03/13 01:56:21 phx Exp $ */
+/* $NetBSD: main.c,v 1.12 2011/03/13 15:23:43 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -54,7 +54,8 @@ static const struct bootarg {
 	{ "quiet",	AB_QUIET },
 	{ "verb",	AB_VERBOSE },
 	{ "silent",	AB_SILENT },
-	{ "debug",	AB_DEBUG }
+	{ "debug",	AB_DEBUG },
+	{ "altboot",	-1 }
 };
 
 void *bootinfo; /* low memory reserved to pass bootinfo structures */
@@ -89,7 +90,9 @@ void module_load(char *);
 int module_open(struct boot_module *);
 
 void main(int, char **, char *, char *);
+
 extern char bootprog_name[], bootprog_rev[];
+extern char newaltboot[], newaltboot_end[];
 
 struct pcidev lata[2];
 struct pcidev lnif[1];
@@ -104,7 +107,7 @@ static int input_cmdline(char **, int);
 static int parse_cmdline(char **, int, char *, char *);
 static int is_space(char);
 
-#define	BNAME_DEFAULT "nfs:"
+#define	BNAME_DEFAULT "wd0:"
 #define MAX_ARGS 10
 
 void
@@ -113,6 +116,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	struct brdprop *brdprop;
 	unsigned long marks[MARK_MAX];
 	char *new_argv[MAX_ARGS];
+	ssize_t len;
 	int n, i, fd, howto;
 	char *bname;
 
@@ -232,7 +236,22 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	}
 	printf("loading \"%s\" ", bi_path.bootpath);
 	marks[MARK_START] = 0;
-	if (fdloadfile(fd, marks, LOAD_KERNEL) < 0)
+
+	if (howto == -1) {
+		/* load another altboot binary and replace ourselves */
+		len = read(fd, (void *)0x100000, 0x1000000 - 0x100000);
+		if (len == -1)
+			goto loadfail;
+		close(fd);
+		netif_shutdown_all();
+
+		memcpy((void *)0xf0000, newaltboot,
+		    newaltboot_end - newaltboot);
+		__syncicache((void *)0xf0000, newaltboot_end - newaltboot);
+		printf("Restarting...\n");
+		run((void *)1, argv, (void *)0x100000, (void *)len,
+		    (void *)0xf0000);
+	} else if (fdloadfile(fd, marks, LOAD_KERNEL) < 0)
 		goto loadfail;
 	close(fd);
 

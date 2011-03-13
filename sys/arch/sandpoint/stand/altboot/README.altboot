@@ -1,6 +1,6 @@
 /// notes about altboot ///
 
-$NetBSD: README.altboot,v 1.1 2011/01/23 01:05:30 nisimura Exp $
+$NetBSD: README.altboot,v 1.2 2011/03/13 15:23:43 phx Exp $
 
 Altboot is a functional bridge to fill the gap between a NAS product
 custom bootloader and the NetBSD kernel startup environment.  Altboot
@@ -17,7 +17,7 @@ NetBSD kernels.
   targets to make it possible having common NetBSD kernels for them.
 - builds and hands a bootinfo list to the NetBSD kernel.
 
-Altboot is known working on two models.
+Altboot is known working on at least three models.
 - KuroBox with a popular U-Boot as the replacement of vendor proprietary
 
    U-Boot 1.1.4 LiSt 2.1.0 (Sep 21 2006 - 00:22:56) LinkStation / KuroBox
@@ -25,6 +25,10 @@ Altboot is known working on two models.
 - Synology 101g+ with vendor custom PPCboot
 
    PPCBoot 2.0.0 (Mar  1 2005 - 15:31:41)
+
+- D-Link DSM-G600 with heavily restricted vendor custom U-Boot
+
+   U-Boot 0.2.0 (May 26 2005 - 19:38:32)
 
 The standard use of altboot is to invoke it with a short script from
 U-Boot/PPCboot, where the altboot image is stored in an unoccupied 128KB
@@ -45,4 +49,3 @@ kernel.
 - preloaded kernel module names (under development).
 
                              ### ### ###
-
