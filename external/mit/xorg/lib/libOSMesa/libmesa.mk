@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.6 2010/07/19 05:34:27 mrg Exp $
+#	$NetBSD: libmesa.mk,v 1.7 2011/03/13 04:48:53 mrg Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -344,13 +344,14 @@ LIBDPLIBS=	m	${NETBSDSRCDIR}/lib/libm
 CPPFLAGS+=	-I.
 
 # XXXX
-${SRCS.slang}: library/slang_120_core_gc.h \
-	library/slang_builtin_120_common_gc.h \
-	library/slang_builtin_120_fragment_gc.h \
-	library/slang_common_builtin_gc.h \
-	library/slang_core_gc.h \
-	library/slang_fragment_builtin_gc.h \
-	library/slang_vertex_builtin_gc.h
+HEADERS.slang=	library/slang_120_core_gc.h \
+		library/slang_builtin_120_common_gc.h \
+		library/slang_builtin_120_fragment_gc.h \
+		library/slang_common_builtin_gc.h \
+		library/slang_core_gc.h \
+		library/slang_fragment_builtin_gc.h \
+		library/slang_vertex_builtin_gc.h
+${SRCS.slang}: ${HEADERS.slang}
 
 library/slang_120_core_gc.h: slang_120_core.gc
 	-@mkdir -p library
@@ -381,3 +382,9 @@ library/slang_vertex_builtin_gc.h: slang_vertex_builtin.gc
 	$(GLSL) vertex $> library/slang_vertex_builtin_gc.h
 
 .PATH: ${X11SRCDIR.MesaLib}/src/mesa/shader/slang/library
+
+CLEANFILES+=	${HEADERS.slang}
+cleandir:     cleanmesa
+cleanmesa: .PHONY
+	-@if [ -d library ]; then rmdir library; fi
+
