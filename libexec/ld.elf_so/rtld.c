@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.139 2011/03/09 23:10:07 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.140 2011/03/13 21:08:45 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.139 2011/03/09 23:10:07 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.140 2011/03/13 21:08:45 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -1154,12 +1154,12 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *), void *pa
 		    STAILQ_FIRST(&obj->names)->name : obj->path;
 		phdr_info.dlpi_phdr = obj->phdr;
 		phdr_info.dlpi_phnum = obj->phsize / sizeof(obj->phdr[0]);
-#if 1
-		phdr_info.dlpi_tls_modid = 0;
-		phdr_info.dlpi_tls_data = 0;
-#else
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 		phdr_info.dlpi_tls_modid = obj->tlsindex;
 		phdr_info.dlpi_tls_data = obj->tlsinit;
+#else
+		phdr_info.dlpi_tls_modid = 0;
+		phdr_info.dlpi_tls_data = 0;
 #endif
 		phdr_info.dlpi_adds = _rtld_objloads;
 		phdr_info.dlpi_subs = _rtld_objloads - _rtld_objcount;
