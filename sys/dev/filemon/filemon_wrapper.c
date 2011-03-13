@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.1 2010/09/09 00:10:16 sjg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.2 2011/03/13 21:26:31 sjg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -82,7 +82,7 @@ filemon_wrapper_execve(struct lwp * l, struct sys_execve_args * uap,
 	
 	error = copyinstr(SCARG(uap, path), fname, sizeof(fname), &done);
 
-	if ((ret = sys_execve(l, uap, retval)) == 0 && error == 0) {
+	if ((ret = sys_execve(l, uap, retval)) == EJUSTRETURN && error == 0) {
 		filemon = filemon_lookup(curproc);
 
 		if (filemon) {
