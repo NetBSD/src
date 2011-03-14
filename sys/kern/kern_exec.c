@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.312 2011/03/13 23:44:14 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.313 2011/03/14 20:12:40 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.312 2011/03/13 23:44:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.313 2011/03/14 20:12:40 jakllsch Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -673,7 +673,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		len = argp + ARG_MAX - dp;
 		if ((error = (*fetch_element)(args, i, &sp)) != 0) {
 			DPRINTF(("%s: fetch_element args %d\n",
-			    error, __func__));
+			    __func__, error));
 			goto bad;
 		}
 		if (!sp)
@@ -1320,7 +1320,7 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 			return error;
 		}
 		if ((error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0) {
-			COPYPRINTF("str", dp, ARG_MAX);
+			COPYPRINTF("str", dp, (size_t)ARG_MAX);
 			return error;
 		}
 	}
@@ -1338,7 +1338,7 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 			return error;
 		}
 		if ((error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0) {
-			COPYPRINTF("str", dp, ARG_MAX);
+			COPYPRINTF("str", dp, (size_t)ARG_MAX);
 			return error;
 		}
 	}
