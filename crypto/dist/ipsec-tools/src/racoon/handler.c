@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.37 2011/03/14 09:19:23 vanhu Exp $	*/
+/*	$NetBSD: handler.c,v 1.38 2011/03/14 14:54:07 vanhu Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -1447,7 +1447,6 @@ remove_ph2(struct ph2handle *iph2)
 		 * - delete SPIs in kernel
 		 * - delete generated SPD
 		 * - unbind / rem / del ph2
-		 * - XXX shoudld also send a delete-sa !?
 		 */
 		purge_ipsec_spi(iph2->dst, iph2->approval->head->proto_id,
 						spis, 2);
