@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.5 2011/03/14 11:08:28 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.6 2011/03/14 11:10:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		if (!isstdout)
+		if (pcapfile && !isstdout)
 			printf("packet %d, offset 0x%04x, length 0x%04x, "
 			    "ts %d/%06d\n", i++, curbus,
 			    curlen, SWAPME(sp.sp_sec), SWAPME(sp.sp_usec));
