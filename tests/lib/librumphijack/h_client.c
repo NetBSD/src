@@ -1,4 +1,4 @@
-/*	$NetBSD: h_client.c,v 1.5 2011/03/08 14:53:03 pooka Exp $	*/
+/*	$NetBSD: h_client.c,v 1.6 2011/03/14 15:56:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -112,6 +112,21 @@ main(int argc, char *argv[])
 		if (pfd[1].revents != POLLNVAL || pfd[0].revents != 0)
 			errx(1, "poll unexpected revents");
 
+		exit(0);
+	} else if (strcmp(argv[1], "fdoff8") == 0) {
+		int fd;
+
+		do
+			if ((fd = open("/dev/null", O_RDWR)) == -1)
+				err(1, "open1");
+		while (fd < 7);
+		fd = open("/dev/null", O_RDWR);
+		if (fd != -1 || errno != ENFILE)
+			errx(1, "unexpected fd8 %d %d", fd, errno);
+		if (fcntl(0, F_MAXFD) != 7)
+			errx(1, "fd leak?");
+		if ((fd = open("/rump/dev/null", O_RDWR)) != 8)
+			errx(1, "rump open %d %d", fd, errno);
 		exit(0);
 	} else {
 		return ENOTSUP;
