@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.270 2011/03/12 14:03:38 bouyer Exp $
+# $NetBSD: mi,v 1.271 2011/03/14 15:57:33 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1964,6 +1964,7 @@
 ./usr/tests/lib/librumphijack/index.html			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/netstat.expout			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/t_asyncio			tests-lib-tests		atf
+./usr/tests/lib/librumphijack/t_config			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/t_cwd			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/t_sh			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/t_tcpip			tests-lib-tests		atf
