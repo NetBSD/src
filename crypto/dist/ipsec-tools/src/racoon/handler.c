@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.36 2011/03/11 14:30:07 vanhu Exp $	*/
+/*	$NetBSD: handler.c,v 1.37 2011/03/14 09:19:23 vanhu Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -1486,6 +1486,7 @@ static void remove_ph1(struct ph1handle *iph1){
 static int revalidate_ph1tree_rmconf(void)
 {
 	struct ph1handle *p, *next;
+	struct remoteconf *rmconf;
 
 	for (p = LIST_FIRST(&ph1tree); p; p = next) {
 		next = LIST_NEXT(p, chain);
@@ -1495,9 +1496,11 @@ static int revalidate_ph1tree_rmconf(void)
 		if (p->rmconf == NULL)
 			continue;
 
-		p->rmconf = getrmconf_by_ph1(p);
-		if (p->rmconf == NULL || p->rmconf == RMCONF_ERR_MULTIPLE)
+		rmconf = getrmconf_by_ph1(p);
+		if (rmconf == NULL || rmconf == RMCONF_ERR_MULTIPLE)
 			remove_ph1(p);
+		else
+			p->rmconf = rmconf;
 	}
 
 	return 1;
