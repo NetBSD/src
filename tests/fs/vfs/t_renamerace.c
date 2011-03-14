@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.21 2011/03/06 16:00:16 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.22 2011/03/14 19:05:19 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -113,8 +113,18 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	if (FSTYPE_LFS(tc))
 		abort();
 
-	if (FSTYPE_MSDOS(tc))
+	if (FSTYPE_MSDOS(tc)) {
 		atf_tc_expect_fail("PR kern/44661");
+		/*
+		 * XXX: race does not trigger every time at least
+		 * on amd64/qemu.
+		 */
+		if (msdosfs_fstest_unmount(tc, mp, 0) != 0) {
+			rump_pub_vfs_mount_print(mp, 1);
+			atf_tc_fail_errno("unmount failed");
+		}
+		atf_tc_fail("race did not trigger this time");
+	}
 }
 
 static void
