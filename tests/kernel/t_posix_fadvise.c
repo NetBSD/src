@@ -1,4 +1,4 @@
-/* $NetBSD: t_posix_fadvise.c,v 1.5 2010/12/30 22:23:13 pooka Exp $ */
+/* $NetBSD: t_posix_fadvise.c,v 1.6 2011/03/14 20:41:25 pooka Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_posix_fadvise.c,v 1.5 2010/12/30 22:23:13 pooka Exp $");
+__RCSID("$NetBSD: t_posix_fadvise.c,v 1.6 2011/03/14 20:41:25 pooka Exp $");
 
 #include <sys/fcntl.h>
 
@@ -88,10 +88,12 @@ ATF_TC_HEAD(posix_fadvise_reg, tc)
 
 ATF_TC_BODY(posix_fadvise, tc)
 {
-	int fd = STDIN_FILENO;
+	int fd;
 	int pipe_fds[2];
 	int badfd = 10;
 	int ret;
+
+	RL(fd = open("/dev/null", O_RDWR));
 
 	(void)close(badfd);
 	RL(pipe(pipe_fds));
