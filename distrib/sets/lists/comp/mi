@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1598 2011/03/12 19:52:46 christos Exp $
+#	$NetBSD: mi,v 1.1599 2011/03/14 13:53:55 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6904,6 +6904,7 @@
 ./usr/share/man/cat3/krb5_make_principal.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_max_sockaddr_size.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_mcc_ops.0		comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/krb5_mk_priv.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_mk_rep.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_mk_rep_exact.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_mk_rep_extended.0	comp-krb5-catman	kerberos,.cat
@@ -6953,6 +6954,7 @@
 ./usr/share/man/cat3/krb5_rc_store.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_rcache.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_rd_error.0		comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/krb5_rd_priv.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_rd_rep.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_rd_req.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_rd_req_with_keyblock.0	comp-krb5-catman	kerberos,.cat
@@ -12969,6 +12971,7 @@
 ./usr/share/man/html3/krb5_make_principal.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_max_sockaddr_size.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_mcc_ops.html		comp-krb5-htmlman	kerberos,html
+./usr/share/man/html3/krb5_mk_priv.html		comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_mk_rep.html		comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_mk_rep_exact.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_mk_rep_extended.html	comp-krb5-htmlman	kerberos,html
@@ -13017,6 +13020,7 @@
 ./usr/share/man/html3/krb5_rc_store.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_rcache.html		comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_rd_error.html	comp-krb5-htmlman	kerberos,html
+./usr/share/man/html3/krb5_rd_priv.html		comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_rd_rep.html		comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_rd_req.html		comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb5_rd_req_with_keyblock.html	comp-krb5-htmlman	kerberos,html
@@ -18956,6 +18960,7 @@
 ./usr/share/man/man3/krb5_make_principal.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_max_sockaddr_size.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_mcc_ops.3		comp-krb5-man		kerberos,.man
+./usr/share/man/man3/krb5_mk_priv.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_mk_rep.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_mk_rep_exact.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_mk_rep_extended.3	comp-krb5-man		kerberos,.man
@@ -19005,6 +19010,7 @@
 ./usr/share/man/man3/krb5_rc_store.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_rcache.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_rd_error.3		comp-krb5-man		kerberos,.man
+./usr/share/man/man3/krb5_rd_priv.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_rd_rep.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_rd_req.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_rd_req_with_keyblock.3	comp-krb5-man		kerberos,.man
