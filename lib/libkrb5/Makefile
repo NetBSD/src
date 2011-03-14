@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.41 2009/07/20 12:16:37 skrll Exp $
+# $NetBSD: Makefile,v 1.42 2011/03/14 13:53:56 njoly Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -531,6 +531,7 @@ MLINKS=	\
 	krb5_krbhst_init.3		krb5_krbhst_next.3		\
 	krb5_krbhst_init.3		krb5_krbhst_next_as_string.3	\
 	krb5_krbhst_init.3		krb5_krbhst_reset.3		\
+	krb5_mk_safe.3			krb5_mk_priv.3			\
 	krb5_mk_req.3			krb5_build_ap_req.3		\
 	krb5_mk_req.3			krb5_mk_rep.3			\
 	krb5_mk_req.3			krb5_mk_rep_exact.3		\
@@ -597,6 +598,7 @@ MLINKS=	\
 	krb5_rd_error.3			krb5_error_from_rd_error.3	\
 	krb5_rd_error.3			krb5_free_error.3		\
 	krb5_rd_error.3			krb5_free_error_contents.3	\
+	krb5_rd_safe.3			krb5_rd_priv.3			\
 	krb5_set_default_realm.3	krb5_copy_host_realm.3		\
 	krb5_set_default_realm.3	krb5_free_host_realm.3		\
 	krb5_set_default_realm.3	krb5_get_default_realm.3	\
