@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.35 2011/03/10 12:53:42 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.36 2011/03/14 08:21:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.35 2011/03/10 12:53:42 skrll Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.36 2011/03/14 08:21:54 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -471,6 +471,32 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 				return -1;
 			}
 			rdbg(("COPY (avoid in main)"));
+			break;
+
+		case R_TYPE(TLS_DTPMOD32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			*where = (Elf_Addr)(defobj->tlsindex);
+
+			rdbg(("TLS_DTPMOD32 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where));
+
+			break;
+
+		case R_TYPE(TLS_DTPOFF32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			*where = (Elf_Addr)(def->st_value);
+
+			rdbg(("TLS_DTPOFF32 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where));
+
 			break;
 
 		default:
