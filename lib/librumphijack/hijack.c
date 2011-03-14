@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.85 2011/03/14 15:13:26 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.86 2011/03/14 15:15:47 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.85 2011/03/14 15:13:26 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.86 2011/03/14 15:15:47 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -677,7 +677,7 @@ static struct {
 	{ blanketparser, "blanket", true },
 	{ vfsparser, "vfs", true },
 	{ sysctlparser, "sysctl", false },
-	{ fdoffparser, "fdoffset", true },
+	{ fdoffparser, "fdoff", true },
 	{ NULL, NULL, false },
 };
 
