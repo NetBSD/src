@@ -1,4 +1,4 @@
-/*	$NetBSD: nattraversal.c,v 1.13 2009/09/01 12:22:09 tteras Exp $	*/
+/*	$NetBSD: nattraversal.c,v 1.14 2011/03/14 17:18:13 tteras Exp $	*/
 
 /*
  * Copyright (C) 2004 SuSE Linux AG, Nuernberg, Germany.
@@ -398,8 +398,8 @@ natt_keepalive_add (struct sockaddr *src, struct sockaddr *dst)
   struct natt_ka_addrs *ka = NULL, *new_addr;
   
   TAILQ_FOREACH (ka, &ka_tree, chain) {
-    if (cmpsaddr(ka->src, src) == 0 &&
-	cmpsaddr(ka->dst, dst) == 0) {
+    if (cmpsaddr(ka->src, src) == CMPSADDR_MATCH &&
+	cmpsaddr(ka->dst, dst) == CMPSADDR_MATCH) {
       ka->in_use++;
       plog (LLV_INFO, LOCATION, NULL, "KA found: %s (in_use=%u)\n",
 	    saddr2str_fromto("%s->%s", src, dst), ka->in_use);
@@ -462,8 +462,8 @@ natt_keepalive_remove (struct sockaddr *src, struct sockaddr *dst)
     plog (LLV_DEBUG, LOCATION, NULL, "KA tree dump: %s (in_use=%u)\n",
 	  saddr2str_fromto("%s->%s", src, dst), ka->in_use);
 
-    if (cmpsaddr(ka->src, src) == 0 &&
-	cmpsaddr(ka->dst, dst) == 0 &&
+    if (cmpsaddr(ka->src, src) == CMPSADDR_MATCH &&
+	cmpsaddr(ka->dst, dst) == CMPSADDR_MATCH &&
 	-- ka->in_use <= 0) {
 
       plog (LLV_DEBUG, LOCATION, NULL, "KA removing this one...\n");
