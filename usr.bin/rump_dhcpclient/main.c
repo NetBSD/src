@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2011/01/20 18:47:20 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2011/03/14 23:02:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -204,6 +204,8 @@ get_offer(struct interface *ifp)
 
 	ifp->state->offer = xzalloc(sizeof(*ifp->state->offer));
 	memcpy(ifp->state->offer, dhcp, sizeof(*ifp->state->offer));
+	ifp->state->lease.addr.s_addr = dhcp->yiaddr;
+	ifp->state->lease.cookie = dhcp->cookie;
 	free(raw);
 }
 
