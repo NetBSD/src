@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.38 2011/03/14 14:54:07 vanhu Exp $	*/
+/*	$NetBSD: handler.c,v 1.39 2011/03/14 17:18:12 tteras Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -120,11 +120,11 @@ enumph1(sel, enum_func, enum_arg)
 	LIST_FOREACH(p, &ph1tree, chain) {
 		if (sel != NULL) {
 			if (sel->local != NULL &&
-			    cmpsaddr(sel->local, p->local) != 0)
+			    cmpsaddr(sel->local, p->local) > CMPSADDR_WILDPORT_MATCH)
 				continue;
 
 			if (sel->remote != NULL &&
-			    cmpsaddr(sel->remote, p->remote) != 0)
+			    cmpsaddr(sel->remote, p->remote) > CMPSADDR_WILDPORT_MATCH)
 				continue;
 		}
 
@@ -300,8 +300,8 @@ void migrate_dying_ph12(iph1)
 		if (p->status < PHASE1ST_DYING)
 			continue;
 
-		if (cmpsaddr(iph1->local, p->local) == 0
-		 && cmpsaddr(iph1->remote, p->remote) == 0)
+		if (cmpsaddr(iph1->local, p->local) == CMPSADDR_MATCH
+		 && cmpsaddr(iph1->remote, p->remote) == CMPSADDR_MATCH)
 			migrate_ph12(p, iph1);
 	}
 }
@@ -547,11 +547,11 @@ enumph2(sel, enum_func, enum_arg)
 				continue;
 
 			if (sel->src != NULL &&
-			    cmpsaddr(sel->src, p->src) != 0)
+			    cmpsaddr(sel->src, p->src) != CMPSADDR_MATCH)
 				continue;
 
 			if (sel->dst != NULL &&
-			    cmpsaddr(sel->dst, p->dst) != 0)
+			    cmpsaddr(sel->dst, p->dst) != CMPSADDR_MATCH)
 				continue;
 		}
 
@@ -615,8 +615,8 @@ getph2byid(src, dst, spid)
 
 	LIST_FOREACH(p, &ph2tree, chain) {
 		if (spid == p->spid &&
-		    cmpsaddr(src, p->src) == 0 &&
-		    cmpsaddr(dst, p->dst) == 0){
+		    cmpsaddr(src, p->src) <= CMPSADDR_WILDPORT_MATCH &&
+		    cmpsaddr(dst, p->dst) <= CMPSADDR_WILDPORT_MATCH){
 			/* Sanity check to detect zombie handlers
 			 * XXX Sould be done "somewhere" more interesting,
 			 * because we have lots of getph2byxxxx(), but this one
@@ -643,8 +643,8 @@ getph2bysaddr(src, dst)
 	struct ph2handle *p;
 
 	LIST_FOREACH(p, &ph2tree, chain) {
-		if (cmpsaddr(src, p->src) == 0 &&
-		    cmpsaddr(dst, p->dst) == 0)
+		if (cmpsaddr(src, p->src) <= CMPSADDR_WILDPORT_MATCH &&
+		    cmpsaddr(dst, p->dst) <= CMPSADDR_WILDPORT_MATCH)
 			return p;
 	}
 
@@ -947,7 +947,7 @@ getcontacted(remote)
 	struct contacted *p;
 
 	LIST_FOREACH(p, &ctdtree, chain) {
-		if (cmpsaddr(remote, p->remote) == 0)
+		if (cmpsaddr(remote, p->remote) <= CMPSADDR_WILDPORT_MATCH)
 			return p;
 	}
 
@@ -988,7 +988,7 @@ remcontacted(remote)
 	struct contacted *p;
 
 	LIST_FOREACH(p, &ctdtree, chain) {
-		if (cmpsaddr(remote, p->remote) == 0) {
+		if (cmpsaddr(remote, p->remote) <= CMPSADDR_WILDPORT_MATCH) {
 			LIST_REMOVE(p, chain);
 			racoon_free(p->remote);
 			racoon_free(p);
@@ -1042,7 +1042,7 @@ check_recvdpkt(remote, local, rbuf)
 	/*
 	 * the packet was processed before, but the remote address mismatches.
 	 */
-	if (cmpsaddr(remote, r->remote) != 0)
+	if (cmpsaddr(remote, r->remote) != CMPSADDR_MATCH)
 		return 2;
 
 	/*

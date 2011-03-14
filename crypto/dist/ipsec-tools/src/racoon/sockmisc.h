@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.h,v 1.12 2010/02/28 15:52:16 snj Exp $	*/
+/*	$NetBSD: sockmisc.h,v 1.13 2011/03/14 17:18:13 tteras Exp $	*/
 
 /* Id: sockmisc.h,v 1.9 2005/10/05 16:55:41 manubsd Exp */
 
@@ -57,8 +57,9 @@ struct netaddr {
 extern const int niflags;
 
 #define CMPSADDR_MATCH		0
-#define CMPSADDR_WOP_MATCH	1
-#define CMPSADDR_MISMATCH	2
+#define CMPSADDR_WILDPORT_MATCH	1
+#define CMPSADDR_WOP_MATCH	2
+#define CMPSADDR_MISMATCH	3
 
 extern int cmpsaddr __P((const struct sockaddr *, const struct sockaddr *));
 
