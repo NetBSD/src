@@ -1,4 +1,4 @@
-/*	$NetBSD: rsalist.c,v 1.5 2011/03/02 15:04:01 vanhu Exp $	*/
+/*	$NetBSD: rsalist.c,v 1.6 2011/03/14 15:50:36 vanhu Exp $	*/
 
 /* Id: rsalist.c,v 1.3 2004/11/08 12:04:23 ludvigm Exp */
 
@@ -86,6 +86,48 @@ rsa_key_insert(struct genlist *list, struct netaddr *src,
 	genlist_append(list, rsa_key);
 
 	return 0;
+}
+
+struct rsa_key *
+rsa_key_dup(struct rsa_key *key)
+{
+	struct rsa_key *new;
+
+	new = calloc(sizeof(struct rsa_key), 1);
+	if (new == NULL)
+		return NULL;
+
+	if (key->rsa) {
+		new->rsa = key->rsa->d != NULL ? RSAPrivateKey_dup(key->rsa) : RSAPublicKey_dup(key->rsa);
+		if (new->rsa == NULL)
+			goto dup_error;
+	}
+
+	if (key->src) {
+		new->src = malloc(sizeof(*new->src));
+		if (new->src == NULL)
+			goto dup_error;
+		memcpy(new->src, key->src, sizeof(*new->src));
+	}	
+	if (key->dst) {
+		new->dst = malloc(sizeof(*new->dst));
+		if (new->dst == NULL)
+			goto dup_error;
+		memcpy(new->dst, key->dst, sizeof(*new->dst));
+	}
+
+	return new;
+
+dup_error:
+	if (new->rsa != NULL)
+		RSA_free(new->rsa);
+	if (new->dst != NULL)
+		free(new->dst);
+	if (new->src != NULL)
+		free(new->src);
+
+	free(new);
+	return NULL;
 }
 
 void

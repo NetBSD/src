@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.h,v 1.6 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: isakmp_xauth.h,v 1.7 2011/03/14 15:50:36 vanhu Exp $	*/
 
 /*	$KAME$ */
 
@@ -114,6 +114,7 @@ void xauth_reply_stub(struct sched *);
 int xauth_reply(struct ph1handle *, int, int, int);
 int xauth_rmconf_used(struct xauth_rmconf **);
 void xauth_rmconf_delete(struct xauth_rmconf **);
+struct xauth_rmconf * xauth_rmconf_dup(struct xauth_rmconf *);
 
 #ifdef HAVE_LIBPAM
 int xauth_login_pam(int, struct sockaddr *, char *, char *);

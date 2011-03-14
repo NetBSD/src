@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.41 2011/03/02 14:58:27 vanhu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.42 2011/03/14 15:50:36 vanhu Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -145,6 +145,7 @@ static int oldloglevel = LLV_BASE;
 
 static struct secprotospec *newspspec __P((void));
 static void insspspec __P((struct remoteconf *, struct secprotospec *));
+void dupspspec_list __P((struct remoteconf *dst, struct remoteconf *src));
 void flushspspec __P((struct remoteconf *));
 static void adminsock_conf __P((vchar_t *, vchar_t *, vchar_t *, int));
 
@@ -1629,7 +1630,7 @@ remote_statement
 				return -1;
 			}
 
-			new = duprmconf(from);
+			new = duprmconf_shallow(from);
 			if (new == NULL) {
 				yyerror("failed to duplicate remoteconf from \"%s\".",
 					$4->v);
@@ -1674,13 +1675,14 @@ remote_statement
 				return -1;
 			}
 
-			new = duprmconf(from);
+			new = duprmconf_shallow(from);
 			if (new == NULL) {
 				yyerror("failed to duplicate remoteconf from %s.",
 					saddr2str($4));
 				return -1;
 			}
 
+			racoon_free($4);
 			new->remote = $2;
 			cur_rmconf = new;
 		}
@@ -1727,11 +1729,19 @@ remote_specs_block
 					return -1;
 				}
 			}
-			
+
+			if (duprmconf_finish(cur_rmconf))
+				return -1;
+
+#if 0
+			/* this pointer copy will never happen, because duprmconf_shallow
+			 * already copied all pointers.
+			 */
 			if (cur_rmconf->spspec == NULL &&
 			    cur_rmconf->inherited_from != NULL) {
 				cur_rmconf->spspec = cur_rmconf->inherited_from->spspec;
 			}
+#endif
 			if (set_isakmp_proposal(cur_rmconf) != 0)
 				return -1;
 
@@ -2415,6 +2425,62 @@ insspspec(rmconf, spspec)
 	rmconf->spspec = spspec;
 }
 
+static struct secprotospec *
+dupspspec(spspec)
+	struct secprotospec *spspec;
+{
+	struct secprotospec *new;
+
+	new = newspspec();
+	if (new == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, 
+		    "dupspspec: malloc failed\n");
+		return NULL;
+	}
+	memcpy(new, spspec, sizeof(*new));
+
+	if (spspec->gssid) {
+		new->gssid = racoon_strdup(spspec->gssid);
+		STRDUP_FATAL(new->gssid);
+	}
+	if (spspec->remote) {
+		new->remote = racoon_malloc(sizeof(*new->remote));
+		if (new->remote == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			    "dupspspec: malloc failed (remote)\n");
+			return NULL;
+		}
+		memcpy(new->remote, spspec->remote, sizeof(*new->remote));
+	}
+
+	return new;
+}
+
+/*
+ * copy the whole list
+ */
+void
+dupspspec_list(dst, src)
+	struct remoteconf *dst, *src;
+{
+	struct secprotospec *p, *new, *last;
+
+	for(p = src->spspec, last = NULL; p; p = p->next, last = new) {
+		new = dupspspec(p);
+		if (new == NULL)
+			exit(1);
+
+		new->prev = last;
+		new->next = NULL; /* not necessary but clean */
+
+		if (last)
+			last->next = new;
+		else /* first element */
+			dst->spspec = new;
+
+	}
+}
+
 /*
  * delete the whole list
  */
@@ -2430,8 +2496,13 @@ flushspspec(rmconf)
 		if (p->next != NULL)
 			p->next->prev = NULL; /* not necessary but clean */
 
-		racoon_free(p);		  
+		if (p->gssid)
+			racoon_free(p->gssid);
+		if (p->remote)
+			racoon_free(p->remote);
+		racoon_free(p);
 	}
+	rmconf->spspec = NULL;
 }
 
 /* set final acceptable proposal */

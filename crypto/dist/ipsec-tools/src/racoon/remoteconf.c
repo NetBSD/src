@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.25 2011/03/02 15:04:01 vanhu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.26 2011/03/14 15:50:36 vanhu Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -570,8 +570,25 @@ dupidvl(entry, arg)
 	return NULL;
 }
 
+void *
+duprsa(entry, arg)
+	void *entry;
+	void *arg;
+{
+	struct rsa_key *new;
+
+	new = rsa_key_dup((struct rsa_key *)entry);
+	if (new == NULL)
+		return (void *) -1;
+	genlist_append(arg, new);
+
+	/* keep genlist_foreach going */
+	return NULL;
+}
+
+/* Creates shallow copy of a remote config. Used for "inherit" keyword. */
 struct remoteconf *
-duprmconf (rmconf)
+duprmconf_shallow (rmconf)
 	struct remoteconf *rmconf;
 {
 	struct remoteconf *new;
@@ -585,31 +602,113 @@ duprmconf (rmconf)
 	new->name = NULL;
 	new->inherited_from = rmconf;
 
-	/* duplicate dynamic structures */
-	if (new->etypes)
-		new->etypes = dupetypes(new->etypes);
-	new->idvl_p = genlist_init();
-	genlist_foreach(rmconf->idvl_p, dupidvl, new->idvl_p);
+	new->proposal = NULL; /* will be filled by set_isakmp_proposal() */
 
-        /* duplicate strings */ 
-	if (new->mycertfile != NULL) { 
+	return new;
+}
+
+/* Copies pointer structures of an inherited remote config. 
+ * Used by "inherit" mechanism in a two step copy method, necessary to
+ * prevent both double free() and memory leak during config reload.
+ */
+int
+duprmconf_finish (new)
+	struct remoteconf *new;
+{
+	struct remoteconf *rmconf;
+	int i;
+
+	if (new->inherited_from == NULL)
+		return 0; /* nothing todo, no inheritance */
+
+	rmconf = new->inherited_from;
+
+	/* duplicate dynamic structures unless value overridden */
+	if (new->etypes != NULL && new->etypes == rmconf->etypes)
+		new->etypes = dupetypes(new->etypes);
+	if (new->idvl_p == rmconf->idvl_p) {
+		new->idvl_p = genlist_init();
+		genlist_foreach(rmconf->idvl_p, dupidvl, new->idvl_p);
+	}
+
+	if (new->rsa_private == rmconf->rsa_private) {
+		new->rsa_private = genlist_init();
+		genlist_foreach(rmconf->rsa_private, duprsa, new->rsa_private);
+	}
+	if (new->rsa_public == rmconf->rsa_public) {
+		new->rsa_public = genlist_init();
+		genlist_foreach(rmconf->rsa_public, duprsa, new->rsa_public);
+	}
+	if (new->remote != NULL && new->remote == rmconf->remote) {
+		new->remote = racoon_malloc(sizeof(*new->remote));
+		if (new->remote == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			    "duprmconf_finish: malloc failed (remote)\n");
+			exit(1);
+		}
+		memcpy(new->remote, rmconf->remote, sizeof(*new->remote));
+	}
+	if (new->spspec != NULL && new->spspec == rmconf->spspec) {
+		dupspspec_list(new, rmconf);
+	}
+
+	/* proposal has been deep copied already from spspec's, see
+	 * cfparse.y:set_isakmp_proposal, which in turn calls
+	 * cfparse.y:expand_isakmpspec where the copying happens.
+	 */
+
+#ifdef ENABLE_HYBRID
+	if (new->xauth != NULL && new->xauth == rmconf->xauth) {
+		new->xauth = xauth_rmconf_dup(new->xauth);
+		if (new->xauth == NULL)
+			exit(1);
+	}
+#endif
+
+        /* duplicate strings unless value overridden */ 
+	if (new->mycertfile != NULL && new->mycertfile == rmconf->mycertfile) { 
 		new->mycertfile = racoon_strdup(new->mycertfile); 
 		STRDUP_FATAL(new->mycertfile); 
 	} 
-	if (new->myprivfile != NULL) { 
+	if (new->myprivfile != NULL && new->myprivfile == rmconf->myprivfile) { 
 		new->myprivfile = racoon_strdup(new->myprivfile); 
 		STRDUP_FATAL(new->myprivfile); 
 	} 
-	if (new->peerscertfile != NULL) { 
+	if (new->peerscertfile != NULL && new->peerscertfile == rmconf->peerscertfile) { 
 		new->peerscertfile = racoon_strdup(new->peerscertfile); 
 		STRDUP_FATAL(new->peerscertfile); 
 	} 
-	if (new->cacertfile != NULL) { 
-                new->cacertfile = racoon_strdup(new->cacertfile); 
+	if (new->cacertfile != NULL && new->cacertfile == rmconf->cacertfile) { 
+		new->cacertfile = racoon_strdup(new->cacertfile); 
 		STRDUP_FATAL(new->cacertfile); 
 	} 
+	if (new->idv != NULL && new->idv == rmconf->idv) {
+		new->idv = vdup(new->idv); 
+		STRDUP_FATAL(new->idv); 
+	}
+	if (new->key != NULL && new->key == rmconf->key) {
+		new->key = vdup(new->key); 
+		STRDUP_FATAL(new->key); 
+	}
+	if (new->mycert != NULL && new->mycert == rmconf->mycert) {
+		new->mycert = vdup(new->mycert);
+		STRDUP_FATAL(new->mycert); 
+	}
+	if (new->peerscert != NULL && new->peerscert == rmconf->peerscert) {
+		new->peerscert = vdup(new->peerscert);
+		STRDUP_FATAL(new->peerscert); 
+	}
+	if (new->cacert != NULL && new->cacert == rmconf->cacert) {
+		new->cacert = vdup(new->cacert);
+		STRDUP_FATAL(new->cacert); 
+	}
+	for (i = 0; i <= SCRIPT_MAX; i++)
+		if (new->script[i] != NULL && new->script[i] == rmconf->script[i]) {
+			new->script[i] = vdup(new->script[i]);
+			STRDUP_FATAL(new->script[i]);
+		}
 
-	return new;
+	return 0;
 }
 
 static void
@@ -623,6 +722,8 @@ void
 delrmconf(rmconf)
 	struct remoteconf *rmconf;
 {
+	int i;
+
 #ifdef ENABLE_HYBRID
 	if (rmconf->xauth)
 		xauth_rmconf_delete(&rmconf->xauth);
@@ -631,12 +732,17 @@ delrmconf(rmconf)
 		deletypes(rmconf->etypes);
 		rmconf->etypes=NULL;
 	}
+	if (rmconf->idv)
+		vfree(rmconf->idv);
+	if (rmconf->key)
+		vfree(rmconf->key);
 	if (rmconf->idvl_p)
 		genlist_free(rmconf->idvl_p, idspec_free);
 	if (rmconf->dhgrp)
 		oakley_dhgrp_free(rmconf->dhgrp);
 	if (rmconf->proposal)
 		delisakmpsa(rmconf->proposal);
+	flushspspec(rmconf);
 	if (rmconf->mycert)
 		vfree(rmconf->mycert);
 	if (rmconf->mycertfile)
@@ -659,7 +765,10 @@ delrmconf(rmconf)
 		racoon_free(rmconf->name);
 	if (rmconf->remote)
 		racoon_free(rmconf->remote);
-	flushspspec(rmconf);
+	for (i = 0; i <= SCRIPT_MAX; i++)
+		if (rmconf->script[i])
+			vfree(rmconf->script[i]);
+
 	racoon_free(rmconf);
 }
 
