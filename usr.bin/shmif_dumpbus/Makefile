@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/01/12 16:14:24 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2011/03/14 11:08:28 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,5 +9,7 @@ SHMIFD=	${NETBSDSRCDIR}/sys/rump/net/lib/libshmif
 PROG=		shmif_dumpbus
 SRCS+=		shmif_dumpbus.c shmif_busops.c
 CPPFLAGS+=	-I${SHMIFD}
+
+LDADD+=		-lpcap
 
 .include <bsd.prog.mk>
