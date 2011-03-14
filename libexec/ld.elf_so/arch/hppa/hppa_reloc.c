@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.36 2011/03/14 08:21:54 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.37 2011/03/14 08:49:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.36 2011/03/14 08:21:54 skrll Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.37 2011/03/14 08:49:29 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -114,7 +114,7 @@ static SLIST_HEAD(hppa_plabel_head, _hppa_plabel) hppa_plabel_list
  * Because I'm hesitant to use NEW while relocating self,
  * this is a small pool of preallocated PLABELs.
  */
-#define	HPPA_PLABEL_PRE	(14)
+#define	HPPA_PLABEL_PRE	(18)
 static hppa_plabel hppa_plabel_pre[HPPA_PLABEL_PRE];
 static int hppa_plabel_pre_next = 0;
 
