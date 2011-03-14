@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.69 2011/03/11 14:30:07 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.70 2011/03/14 17:18:12 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -468,8 +468,8 @@ isakmp_main(msg, remote, local)
 		/* Floating ports for NAT-T */
 		if (NATT_AVAILABLE(iph1) &&
 		    ! (iph1->natt_flags & NAT_PORTS_CHANGED) &&
-		    ((cmpsaddr(iph1->remote, remote) != 0) ||
-		     (cmpsaddr(iph1->local, local) != 0)))
+		    ((cmpsaddr(iph1->remote, remote) != CMPSADDR_MATCH) ||
+		     (cmpsaddr(iph1->local, local) != CMPSADDR_MATCH)))
 		{
 			/* prevent memory leak */
 			racoon_free(iph1->remote);
@@ -510,7 +510,7 @@ isakmp_main(msg, remote, local)
 #endif
 
 		/* must be same addresses in one stream of a phase at least. */
-		if (cmpsaddr(iph1->remote, remote) != 0) {
+		if (cmpsaddr(iph1->remote, remote) != CMPSADDR_MATCH) {
 			char *saddr_db, *saddr_act;
 
 			saddr_db = racoon_strdup(saddr2str(iph1->remote));
@@ -636,7 +636,7 @@ isakmp_main(msg, remote, local)
 					"exchange received.\n");
 				return -1;
 			}
-			if (cmpsaddr(iph1->remote, remote) != 0) {
+			if (cmpsaddr(iph1->remote, remote) != CMPSADDR_MATCH) {
 				plog(LLV_WARNING, LOCATION, remote,
 					"remote address mismatched. "
 					"db=%s\n",
@@ -3325,10 +3325,10 @@ purge_remote(iph1)
 		 * Select only SAs where src == local and dst == remote (outgoing)
 		 * or src == remote and dst == local (incoming).
 		 */
-		if ((cmpsaddr(iph1->local, src) ||
-		     cmpsaddr(iph1->remote, dst)) &&
-		    (cmpsaddr(iph1->local, dst) ||
-		     cmpsaddr(iph1->remote, src))) {
+		if ((cmpsaddr(iph1->local, src) != CMPSADDR_MATCH ||
+		     cmpsaddr(iph1->remote, dst) != CMPSADDR_MATCH) &&
+		    (cmpsaddr(iph1->local, dst) != CMPSADDR_MATCH ||
+		     cmpsaddr(iph1->remote, src) != CMPSADDR_MATCH)) {
 			msg = next;
 			continue;
 		}

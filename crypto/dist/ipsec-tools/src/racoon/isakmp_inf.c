@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.45 2011/01/22 07:38:51 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.46 2011/03/14 17:18:13 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1177,7 +1177,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 
 		/* don't delete inbound SAs at the moment */
 		/* XXX should we remove SAs with opposite direction as well? */
-		if (cmpsaddr(dst0, dst)) {
+		if (cmpsaddr(dst0, dst) != CMPSADDR_MATCH) {
 			msg = next;
 			continue;
 		}
@@ -1355,10 +1355,10 @@ isakmp_info_recv_initialcontact(iph1, protectedph2)
 		 * ports. Correct thing to do is delete all entries with
                  * same identity. -TT
                  */
-		if ((cmpsaddr(iph1->local, src) != 0 ||
-		     cmpsaddr(iph1->remote, dst) != 0) &&
-		    (cmpsaddr(iph1->local, dst) != 0 ||
-		     cmpsaddr(iph1->remote, src) != 0))
+		if ((cmpsaddr(iph1->local, src) != CMPSADDR_MATCH ||
+		     cmpsaddr(iph1->remote, dst) != CMPSADDR_MATCH) &&
+		    (cmpsaddr(iph1->local, dst) != CMPSADDR_MATCH ||
+		     cmpsaddr(iph1->remote, src) != CMPSADDR_MATCH))
 			continue;
 
 		/*

@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.55 2011/03/01 14:33:58 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.56 2011/03/14 17:18:13 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.55 2011/03/01 14:33:58 vanhu Exp $ */
+/* $Id: pfkey.c,v 1.56 2011/03/14 17:18:13 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2882,8 +2882,8 @@ migrate_ph1_ike_addresses(iph1, arg)
 	u_int16_t port;
 
 	/* Already up-to-date? */
-	if (cmpsaddr(iph1->local, ma->local) == 0 &&
-	    cmpsaddr(iph1->remote, ma->remote) == 0)
+	if (cmpsaddr(iph1->local, ma->local) == CMPSADDR_MATCH &&
+	    cmpsaddr(iph1->remote, ma->remote) == CMPSADDR_MATCH)
 		return 0;
 
 	if (iph1->status < PHASE1ST_ESTABLISHED) {
@@ -2983,8 +2983,8 @@ migrate_ph2_ike_addresses(iph2, arg)
 		migrate_ph1_ike_addresses(iph2->ph1, arg);
 
 	/* Already up-to-date? */
-	if (cmpsaddr(iph2->src, ma->local) == 0 &&
-	    cmpsaddr(iph2->dst, ma->remote) == 0)
+	if (cmpsaddr(iph2->src, ma->local) == CMPSADDR_MATCH &&
+	    cmpsaddr(iph2->dst, ma->remote) == CMPSADDR_MATCH)
 		return 0;
 
 	/* save src/dst as sa_src/sa_dst before rewriting */
@@ -3207,8 +3207,8 @@ migrate_ph2_one_isr(spid, isr_cur, xisr_old, xisr_new)
 		     "changing address families (%d to %d) for endpoints.\n",
 		     osaddr->sa_family, nsaddr->sa_family);
 
-	if (cmpsaddr(osaddr, (struct sockaddr *) &saidx->src) ||
-	    cmpsaddr(odaddr, (struct sockaddr *) &saidx->dst)) {
+	if (cmpsaddr(osaddr, (struct sockaddr *) &saidx->src) != CMPSADDR_MATCH ||
+	    cmpsaddr(odaddr, (struct sockaddr *) &saidx->dst) != CMPSADDR_MATCH) {
 		plog(LLV_DEBUG, LOCATION, NULL, "SADB_X_MIGRATE: "
 		     "mismatch of addresses in saidx and xisr.\n");
 		return -1;
