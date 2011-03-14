@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.15 2007/08/27 19:53:33 dsl Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.16 2011/03/14 12:03:45 pooka Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -126,8 +126,6 @@ main(int argc, char *argv[])
 			rl.rlim_cur = 128;
 		setrlimit(RLIMIT_NOFILE, &rl);
 	}
-	if (geteuid()) /* This command allowed only to root */
-		errx(1, "Sorry. You are not superuser");
 	nc_handle = setnetconfig(); 	/* open netconfig file */
 	if (nc_handle == NULL)
 		errx(1, "could not read /etc/netconfig");
