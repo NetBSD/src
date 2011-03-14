@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.11 2009/07/03 06:41:46 tteras Exp $	*/
+/*	$NetBSD: policy.c,v 1.12 2011/03/14 17:18:13 tteras Exp $	*/
 
 /*	$KAME: policy.c,v 1.46 2001/11/16 04:08:10 sakane Exp $	*/
 
@@ -142,7 +142,7 @@ getsp_r(spidx, iph2)
 	plog(LLV_DEBUG, LOCATION, NULL, "src2: %s\n",
 		saddr2str((struct sockaddr *)&spidx->src));
 
-	if (cmpsaddr(iph2->src, (struct sockaddr *) &spidx->src) ||
+	if (cmpsaddr(iph2->src, (struct sockaddr *) &spidx->src) != CMPSADDR_MATCH ||
 	    spidx->prefs != prefixlen)
 		return NULL;
 
@@ -151,7 +151,7 @@ getsp_r(spidx, iph2)
 	plog(LLV_DEBUG, LOCATION, NULL, "dst2: %s\n",
 		saddr2str((struct sockaddr *)&spidx->dst));
 
-	if (cmpsaddr(iph2->dst, (struct sockaddr *) &spidx->dst) ||
+	if (cmpsaddr(iph2->dst, (struct sockaddr *) &spidx->dst) != CMPSADDR_MATCH ||
 	    spidx->prefd != prefixlen)
 		return NULL;
 
@@ -201,10 +201,10 @@ cmpspidxstrict(a, b)
 		return 1;
 
 	if (cmpsaddr((struct sockaddr *) &a->src,
-		     (struct sockaddr *) &b->src))
+		     (struct sockaddr *) &b->src) != CMPSADDR_MATCH)
 		return 1;
 	if (cmpsaddr((struct sockaddr *) &a->dst,
-		     (struct sockaddr *) &b->dst))
+		     (struct sockaddr *) &b->dst) != CMPSADDR_MATCH)
 		return 1;
 
 #ifdef HAVE_SECCTX
@@ -261,7 +261,7 @@ cmpspidxwild(a, b)
 		a, b->prefs, saddr2str((struct sockaddr *)&sa1));
 	plog(LLV_DEBUG, LOCATION, NULL, "%p masked with /%d: %s\n",
 		b, b->prefs, saddr2str((struct sockaddr *)&sa2));
-	if (cmpsaddr((struct sockaddr *)&sa1, (struct sockaddr *)&sa2))
+	if (cmpsaddr((struct sockaddr *)&sa1, (struct sockaddr *)&sa2) > CMPSADDR_WILDPORT_MATCH)
 		return 1;
 
 #ifndef __linux__
@@ -279,7 +279,7 @@ cmpspidxwild(a, b)
 		a, b->prefd, saddr2str((struct sockaddr *)&sa1));
 	plog(LLV_DEBUG, LOCATION, NULL, "%p masked with /%d: %s\n",
 		b, b->prefd, saddr2str((struct sockaddr *)&sa2));
-	if (cmpsaddr((struct sockaddr *)&sa1, (struct sockaddr *)&sa2))
+	if (cmpsaddr((struct sockaddr *)&sa1, (struct sockaddr *)&sa2) > CMPSADDR_WILDPORT_MATCH)
 		return 1;
 
 #ifdef HAVE_SECCTX
