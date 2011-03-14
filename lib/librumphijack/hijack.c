@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.84 2011/03/10 23:02:56 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.85 2011/03/14 15:13:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.84 2011/03/10 23:02:56 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.85 2011/03/14 15:13:26 pooka Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -273,6 +273,9 @@ enum pathtype { PATH_HOST, PATH_RUMP, PATH_RUMPBLANKET };
 
 static bool		fd_isrump(int);
 static enum pathtype	path_isrump(const char *);
+
+/* default FD_SETSIZE is 256 ==> default fdoff is 128 */
+static int hijack_fdoff = FD_SETSIZE/2;
 
 /*
  * Maintain a mapping table for the usual dup2 suspects.
@@ -647,6 +650,23 @@ sysctlparser(char *buf)
 	errx(1, "sysctl value should be y(es)/n(o), gave: %s", buf);
 }
 
+static void
+fdoffparser(char *buf)
+{
+	unsigned long fdoff;
+	char *ep;
+
+	if (*buf == '-') {
+		errx(1, "fdoff must not be negative");
+	}
+	fdoff = strtoul(buf, &ep, 10);
+	if (*ep != '\0')
+		errx(1, "invalid fdoff specifier \"%s\"", buf);
+	if (fdoff >= INT_MAX/2 || fdoff < 3)
+		errx(1, "fdoff out of range");
+	hijack_fdoff = fdoff;
+}
+
 static struct {
 	void (*parsefn)(char *);
 	const char *name;
@@ -657,6 +677,7 @@ static struct {
 	{ blanketparser, "blanket", true },
 	{ vfsparser, "vfs", true },
 	{ sysctlparser, "sysctl", false },
+	{ fdoffparser, "fdoffset", true },
 	{ NULL, NULL, false },
 };
 
@@ -783,16 +804,13 @@ rcinit(void)
 	}
 }
 
-/* Need runtime selection.  low for now due to FD_SETSIZE */
-#define HIJACK_FDOFF 128
-
 static int
 fd_rump2host(int fd)
 {
 
 	if (fd == -1)
 		return fd;
-	return fd + HIJACK_FDOFF;
+	return fd + hijack_fdoff;
 }
 
 static int
@@ -814,7 +832,7 @@ fd_host2rump(int fd)
 {
 
 	if (!isdup2d(fd))
-		return fd - HIJACK_FDOFF;
+		return fd - hijack_fdoff;
 	else
 		return mapdup2(fd);
 }
@@ -823,10 +841,10 @@ static bool
 fd_isrump(int fd)
 {
 
-	return isdup2d(fd) || fd >= HIJACK_FDOFF;
+	return isdup2d(fd) || fd >= hijack_fdoff;
 }
 
-#define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= HIJACK_FDOFF)
+#define assertfd(_fd_) assert(ISDUP2D(_fd_) || (_fd_) >= hijack_fdoff)
 
 static enum pathtype
 path_isrump(const char *path)
@@ -885,8 +903,8 @@ dodup(int oldd, int minfd)
 	if (fd_isrump(oldd)) {
 		op_fcntl = GETSYSCALL(rump, FCNTL);
 		oldd = fd_host2rump(oldd);
-		if (minfd >= HIJACK_FDOFF)
-			minfd -= HIJACK_FDOFF;
+		if (minfd >= hijack_fdoff)
+			minfd -= hijack_fdoff;
 		isrump = 1;
 	} else {
 		op_fcntl = GETSYSCALL(host, FCNTL);
@@ -903,14 +921,21 @@ dodup(int oldd, int minfd)
 }
 
 /*
- * dup a host file descriptor so that it doesn't collide with the dup2mask
+ * Check that host fd value does not exceed fdoffset and if necessary
+ * dup the file descriptor so that it doesn't collide with the dup2mask.
  */
 static int
-fd_dupgood(int fd)
+fd_host2host(int fd)
 {
 	int (*op_fcntl)(int, int, ...) = GETSYSCALL(host, FCNTL);
 	int (*op_close)(int) = GETSYSCALL(host, CLOSE);
 	int ofd, i;
+
+	if (fd >= hijack_fdoff) {
+		op_close(fd);
+		errno = ENFILE;
+		return -1;
+	}
 
 	for (i = 1; isdup2d(fd); i++) {
 		ofd = fd;
@@ -949,7 +974,7 @@ open(const char *path, int flags, ...)
 	if (isrump)
 		fd = fd_rump2host(fd);
 	else
-		fd = fd_dupgood(fd);
+		fd = fd_host2host(fd);
 
 	DPRINTF(("open <- %d (%s)\n", fd, whichfd(fd)));
 	return fd;
@@ -1099,7 +1124,7 @@ __socket30(int domain, int type, int protocol)
 	if (isrump)
 		fd = fd_rump2host(fd);
 	else
-		fd = fd_dupgood(fd);
+		fd = fd_host2host(fd);
 	DPRINTF(("socket <- %d\n", fd));
 
 	return fd;
@@ -1125,7 +1150,7 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 	if (fd != -1 && isrump)
 		fd = fd_rump2host(fd);
 	else
-		fd = fd_dupgood(fd);
+		fd = fd_host2host(fd);
 
 	DPRINTF((" <- %d\n", fd));
 
@@ -1177,7 +1202,7 @@ fcntl(int fd, int cmd, ...)
 		 * So, if fd < HIJACKOFF, we want to do a host closem.
 		 */
 
-		if (fd < HIJACK_FDOFF) {
+		if (fd < hijack_fdoff) {
 			int closemfd = fd;
 
 			if (rumpclient__closenotify(&closemfd,
@@ -1203,8 +1228,8 @@ fcntl(int fd, int cmd, ...)
 			}
 		}
 		
-		if (fd >= HIJACK_FDOFF)
-			fd -= HIJACK_FDOFF;
+		if (fd >= hijack_fdoff)
+			fd -= hijack_fdoff;
 		else
 			fd = 0;
 		fd = MAX(maxdup2+1, fd);
