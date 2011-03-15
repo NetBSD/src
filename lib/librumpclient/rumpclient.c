@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.43 2011/03/09 15:09:21 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.44 2011/03/15 09:35:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.43 2011/03/09 15:09:21 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.44 2011/03/15 09:35:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -85,7 +85,7 @@ static struct spclient clispc = {
 static int kq = -1;
 static sigset_t fullset;
 
-static int doconnect(bool);
+static int doconnect(void);
 static int handshake_req(struct spclient *, int, void *, int, bool);
 
 /*
@@ -93,6 +93,9 @@ static int handshake_req(struct spclient *, int, void *, int, bool);
  * (consider e.g. fds suddenly going missing).
  */
 static time_t retrytimo = 0;
+
+/* always defined to nothingness for now */
+#define ERRLOG(a)
 
 static int
 send_with_recon(struct spclient *spc, struct iovec *iov, size_t iovlen)
@@ -152,7 +155,7 @@ send_with_recon(struct spclient *spc, struct iovec *iov, size_t iovlen)
 			}
 			reconretries++;
 
-			if ((rv = doconnect(false)) != 0)
+			if ((rv = doconnect()) != 0)
 				continue;
 			if ((rv = handshake_req(&clispc, HANDSHAKE_GUEST,
 			    NULL, 0, true)) != 0)
@@ -605,7 +608,7 @@ dupgood(int myfd, int mustchange)
 }
 
 static int
-doconnect(bool noisy)
+doconnect(void)
 {
 	struct respwait rw;
 	struct rsp_hdr rhdr;
@@ -660,34 +663,23 @@ doconnect(bool noisy)
 	while (host_connect(s, serv_sa, (socklen_t)serv_sa->sa_len) == -1) {
 		if (errno == EINTR)
 			continue;
-		error = errno;
-		if (noisy)
-			fprintf(stderr, "rump_sp: client connect failed: %s\n",
-			    strerror(errno));
-		errno = error;
+		ERRLOG(("rump_sp: client connect failed: %s\n",
+		    strerror(errno)));
 		return -1;
 	}
 
 	if ((error = parsetab[ptab_idx].connhook(s)) != 0) {
-		error = errno;
-		if (noisy)
-			fprintf(stderr, "rump_sp: connect hook failed\n");
-		errno = error;
+		ERRLOG(("rump_sp: connect hook failed\n"));
 		return -1;
 	}
 
 	if ((n = host_read(s, banner, sizeof(banner)-1)) < 0) {
-		error = errno;
-		if (noisy)
-			fprintf(stderr, "rump_sp: failed to read banner\n");
-		errno = error;
+		ERRLOG(("rump_sp: failed to read banner\n"));
 		return -1;
 	}
 
 	if (banner[n-1] != '\n') {
-		if (noisy)
-			fprintf(stderr, "rump_sp: invalid banner\n");
-		errno = EINVAL;
+		ERRLOG(("rump_sp: invalid banner\n"));
 		return -1;
 	}
 	banner[n] = '\0';
@@ -695,10 +687,7 @@ doconnect(bool noisy)
 
 	flags = host_fcntl(s, F_GETFL, 0);
 	if (host_fcntl(s, F_SETFL, flags | O_NONBLOCK) == -1) {
-		if (noisy)
-			fprintf(stderr, "rump_sp: socket fd NONBLOCK: %s\n",
-			    strerror(errno));
-		errno = EINVAL;
+		ERRLOG(("rump_sp: socket fd NONBLOCK: %s\n", strerror(errno)));
 		return -1;
 	}
 	clispc.spc_fd = s;
@@ -707,10 +696,7 @@ doconnect(bool noisy)
 
 	/* setup kqueue, we want all signals and the fd */
 	if ((kq = dupgood(host_kqueue(), 0)) == -1) {
-		error = errno;
-		if (noisy)
-			fprintf(stderr, "rump_sp: cannot setup kqueue");
-		errno = error;
+		ERRLOG(("rump_sp: cannot setup kqueue"));
 		return -1;
 	}
 
@@ -720,10 +706,7 @@ doconnect(bool noisy)
 	EV_SET(&kev[NSIG], clispc.spc_fd,
 	    EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
 	if (host_kevent(kq, kev, NSIG+1, NULL, 0, NULL) == -1) {
-		error = errno;
-		if (noisy)
-			fprintf(stderr, "rump_sp: kevent() failed");
-		errno = error;
+		ERRLOG(("rump_sp: kevent() failed"));
 		return -1;
 	}
 
@@ -832,7 +815,7 @@ rumpclient_init()
 		unsetenv("RUMPCLIENT__EXECFD");
 		hstype = HANDSHAKE_EXEC;
 	} else {
-		if (doconnect(true) == -1)
+		if (doconnect() == -1)
 			goto out;
 		hstype = HANDSHAKE_GUEST;
 	}
@@ -905,7 +888,7 @@ rumpclient_fork_init(struct rumpclient_fork *rpf)
 
 	if (doinit() == -1)
 		return -1;
-	if (doconnect(false) == -1)
+	if (doconnect() == -1)
 		return -1;
 
 	error = handshake_req(&clispc, HANDSHAKE_FORK, rpf->fork_auth,
