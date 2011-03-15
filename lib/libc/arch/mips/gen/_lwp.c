@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.6 2011/02/24 04:28:42 joerg Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.7 2011/03/15 07:40:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.6 2011/02/24 04:28:42 joerg Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.7 2011/03/15 07:40:18 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -42,8 +42,9 @@ __RCSID("$NetBSD: _lwp.c,v 1.6 2011/02/24 04:28:42 joerg Exp $");
 
 #define CALLFRAME_SIZ	24
 
-void _lwp_makecontext(ucontext_t *u, void (*start)(void *),
-	void *arg, void *private, caddr_t stack_base, size_t stack_size)
+void
+_lwp_makecontext(ucontext_t *u, void (*start)(void *),
+	void *arg, void *tcb, caddr_t stack_base, size_t stack_size)
 {
 	caddr_t sp;
 	__greg_t *gr;
@@ -56,11 +57,12 @@ void _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	u->uc_stack.ss_size = stack_size;
 	sp = stack_base + stack_size - CALLFRAME_SIZ;
 
-	gr[_REG_EPC] = (unsigned long) start;
-	gr[_REG_T9] = (unsigned long) start; /* required for .abicalls */
-	gr[_REG_RA] = (unsigned long) _lwp_exit;
-	gr[_REG_A0] = (unsigned long) arg;
-	gr[_REG_SP] = (unsigned long) sp;
-	u->uc_mcontext._mc_tlsbase = (uintptr_t)private;
+	gr[_REG_EPC] = (uintptr_t) start;
+	gr[_REG_T9] = (uintptr_t) start; /* required for .abicalls */
+	gr[_REG_RA] = (uintptr_t) _lwp_exit;
+	gr[_REG_A0] = (uintptr_t) arg;
+	gr[_REG_SP] = (uintptr_t) sp;
+	u->uc_mcontext._mc_tlsbase =
+	    (uintptr_t)tcb + TLS_TP_OFFSET + sizeof(struct tls_tcb);
 	u->uc_flags |= _UC_TLSBASE;
 }
