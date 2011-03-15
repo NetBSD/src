@@ -48,6 +48,7 @@ struct pyro_pbm {
 	bus_space_tag_t		pp_cfgt;
 	bus_space_handle_t	pp_cfgh;
 	bus_dma_tag_t		pp_dmat;
+	int			pp_flags;
 	int			pp_bus_a;
 	struct iommu_state	pp_is;
 	struct strbuf_ctl	pp_sb;
@@ -58,7 +59,7 @@ struct pyro_softc {
 	int sc_node;
 	int sc_ign;
 	bus_dma_tag_t sc_dmat;
-	bus_space_tag_t sc_bust;
+	bus_space_tag_t sc_bustag;
 	bus_addr_t sc_csr, sc_xbc;
 	bus_space_handle_t sc_csrh, sc_xbch;
 
