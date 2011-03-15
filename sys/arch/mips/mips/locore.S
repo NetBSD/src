@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.184 2011/03/08 15:05:40 tsutsui Exp $	*/
+/*	$NetBSD: locore.S,v 1.185 2011/03/15 07:39:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,12 +137,8 @@ _C_LABEL(kernel_text):
 	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
 	COP0_HAZARD_FPUENABLE
 #endif
-	nop
-	nop
 	mfc0	t0, MIPS_COP_0_PRID		# read product revision ID
-	nop					# XXX r4000 pipeline:
-	nop					# wait for new SR
-	nop					# to be effective
+	COP0_SYNC
 	nop
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	add	t1, zero, zero
@@ -153,7 +149,7 @@ _C_LABEL(kernel_text):
 	INT_S	t1, _C_LABEL(mips_options)+MO_FPU_ID # save FPU ID register
 	PTR_LA	MIPS_CURLWP, _C_LABEL(lwp0)	# set curlwp
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
-	nop
+	 nop
 
 	# XXXuvm_lwp_getuarea
 	PTR_L	sp, L_PCB(MIPS_CURLWP)		# switch to lwp0 stack
@@ -296,16 +292,16 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_L	s8, PCB_CONTEXT+SF_REG_S8(a0)
 	REG_EPILOGUE
 	mtc0	t0, MIPS_COP_0_STATUS
-	COP0_SYNC
 #ifdef PARANOIA
+	COP0_SYNC
 	/*
 	 * Verify interrupt configuration still matches IPL_SCHED
 	 */
 	j	_C_LABEL(splcheck)
+	 nop
 #else
-	j	ra
+	JR_HB_RA
 #endif /* PARANOIA */
-	nop
 END(cpu_switchto)
 
 #ifdef __HAVE_FAST_SOFTINTS
@@ -527,7 +523,7 @@ LEAF(longjmp)
 	mtc0	v0, MIPS_COP_0_STATUS
 	COP0_SYNC
 	j	ra
-	li	v0, 1
+	 li	v0, 1
 END(longjmp)
 #endif
 
@@ -542,7 +538,7 @@ END(longjmp)
 LEAF_NOPROFILE(mips_cp0_cause_read)
 	mfc0	v0, MIPS_COP_0_CAUSE
 	j	ra
-	nop
+	 nop
 END(mips_cp0_cause_read)
 
 /*
@@ -552,11 +548,7 @@ END(mips_cp0_cause_read)
  */
 LEAF(mips_cp0_cause_write)
 	mtc0	a0, MIPS_COP_0_CAUSE
-	COP0_SYNC
-	nop
-	nop
-	j	ra
-	nop
+	JR_HB_RA
 END(mips_cp0_cause_write)
 
 
@@ -568,7 +560,7 @@ END(mips_cp0_cause_write)
 LEAF(mips_cp0_status_read)
 	mfc0	v0, MIPS_COP_0_STATUS
 	j	ra
-	nop
+	 nop
 END(mips_cp0_status_read)
 
 /*
@@ -582,11 +574,7 @@ END(mips_cp0_status_read)
  */
 LEAF(mips_cp0_status_write)
 	mtc0	a0, MIPS_COP_0_STATUS
-	COP0_SYNC
-	nop
-	nop
-	j	ra
-	nop
+	JR_HB_RA
 END(mips_cp0_status_write)
 
 #if !defined(NOFPU) || defined(FPEMUL)
@@ -758,7 +746,7 @@ END(mips_pagecopy)
 LEAF(mips_pagezero)
 /* We can always safely store a 64-bit zero on MIPS3,4,64 */
 	.set	push
-#if !defined(MIPS1) && !defined(MIPS32)
+#if (MIPS1 + MIPS32 + MIPS32R2) == 0
 	.set	mips3
 #endif
 	li		a1, PAGE_SIZE / (8*SZREG)

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.14 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.15 2011/03/15 07:39:22 matt Exp $	*/
 
 #ifndef _MIPS_ELF_MACHDEP_H_
 #define  _MIPS_ELF_MACHDEP_H_
@@ -142,7 +142,7 @@
 #define	EF_MIPS_ARCH_32		0x50000000	/* -mips32 code */
 #define	EF_MIPS_ARCH_64		0x60000000	/* -mips64 code */
 #define	EF_MIPS_ARCH_32R2	0x70000000	/* -mips32r2 code */
-#define	EF_MIPS_ARCH_64R4	0x80000000	/* -mips64r2 code */
+#define	EF_MIPS_ARCH_64R2	0x80000000	/* -mips64r2 code */
 
 #define	EF_MIPS_ABI		0x0000f000
 #define	EF_MIPS_ABI_O32		0x00001000
