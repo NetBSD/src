@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.70 2011/03/14 17:18:12 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.71 2011/03/15 13:20:14 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -2018,7 +2018,7 @@ isakmp_ph1expire(iph1)
 		iph1->status = PHASE1ST_EXPIRED;
 	}
 
-	sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
+	isakmp_ph1delete(iph1);
 }
 
 /* called from scheduler */
@@ -2046,19 +2046,15 @@ isakmp_ph1delete(iph1)
 	/* Discard any left phase2s */
 	for (p = LIST_FIRST(&iph1->ph2tree); p; p = next) {
 		next = LIST_NEXT(p, ph1bind);
-		if (p->status >= PHASE2ST_ESTABLISHED)
-			unbindph12(p);
-		/* Should we also remove non established ph2
-		 * handles, as we just invalidated ph1handle ?
+		if (p->status == PHASE2ST_ESTABLISHED)
+			isakmp_info_send_d2(p);
+		/* remove all ph2 handles,
+		 * as ph1handle will be expired soon
 		 */
+		delete_spd(p, 1);
+		remph2(p);
+		delph2(p);
 	}
-
-	if (LIST_FIRST(&iph1->ph2tree) != NULL) {
-		sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
-		return;
-	}
-
-	/* don't re-negosiation when the phase 1 SA expires. */
 
 	src = racoon_strdup(saddr2str(iph1->local));
 	dst = racoon_strdup(saddr2str(iph1->remote));
@@ -3397,7 +3393,7 @@ purge_remote(iph1)
 		 "purged ISAKMP-SA spi=%s.\n",
 		 isakmp_pindex(&(iph1->index), iph1->msgid));
 
-	sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
+	isakmp_ph1delete(iph1);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.46 2011/03/14 17:18:13 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.47 2011/03/15 13:20:14 vanhu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1094,7 +1094,7 @@ purge_isakmp_spi(proto, spi, n)
 			isakmp_pindex(&spi[i], 0));
 
 		iph1->status = PHASE1ST_EXPIRED;
-		sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
+		isakmp_ph1delete(iph1);
 	}
 }
 
