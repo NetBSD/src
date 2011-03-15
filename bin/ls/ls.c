@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.67 2010/07/08 20:43:34 rmind Exp $	*/
+/*	$NetBSD: ls.c,v 1.68 2011/03/15 03:52:37 erh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.67 2010/07/08 20:43:34 rmind Exp $");
+__RCSID("$NetBSD: ls.c,v 1.68 2011/03/15 03:52:37 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ int f_columnacross;		/* columnated format, sorted across */
 int f_flags;			/* show flags associated with a file */
 int f_grouponly;		/* long listing without owner */
 int f_humanize;			/* humanize the size field */
+int f_commas;           /* separate size field with comma */
 int f_inode;			/* print inode */
 int f_listdir;			/* list actual directory, not contents */
 int f_listdot;			/* list files beginning with . */
@@ -137,7 +138,7 @@ ls_main(int argc, char *argv[])
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ABCFLRSTWabcdfghiklmnopqrstuwx")) != -1) {
+	while ((ch = getopt(argc, argv, "1ABCFLMRSTWabcdfghiklmnopqrstuwx")) != -1) {
 		switch (ch) {
 		/*
 		 * The -1, -C, -l, -m and -x options all override each other so
@@ -230,6 +231,11 @@ ls_main(int argc, char *argv[])
 		case 'h':
 			f_humanize = 1;
 			kflag = 0;
+			f_commas = 0;
+			break;
+		case 'M':
+			f_humanize = 0;
+			f_commas = 1;
 			break;
 		case 'n':
 			f_numericonly = 1;
@@ -603,6 +609,8 @@ display(FTSENT *p, FTSENT *list)
 			(void)snprintf(buf, sizeof(buf), "%llu",
 			    (long long)howmany(maxblock, blocksize));
 			d.s_block = strlen(buf);
+			if (f_commas) /* allow for commas before every third digit */
+				d.s_block += (d.s_block - 1) / 3;
 		}
 		d.s_flags = maxflags;
 		d.s_group = maxgroup;
@@ -617,6 +625,8 @@ display(FTSENT *p, FTSENT *list)
 			(void)snprintf(buf, sizeof(buf), "%llu",
 			    (long long)maxsize);
 			d.s_size = strlen(buf);
+			if (f_commas) /* allow for commas before every third digit */
+				d.s_size += (d.s_size - 1) / 3;
 		}
 		d.s_user = maxuser;
 		if (bcfile) {
