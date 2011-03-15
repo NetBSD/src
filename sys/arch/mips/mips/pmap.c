@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.197 2011/03/02 13:26:41 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.198 2011/03/15 07:31:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.197 2011/03/02 13:26:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.198 2011/03/15 07:31:33 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2234,7 +2234,7 @@ again:
 			    pmap, va);
 #endif
 		if (__predict_true(apv == NULL)) {
-#if defined(MULTIPROCESSOR) || !defined(_LP64) || defined(PMAP_POOLPAGE_DEBUG)
+#if defined(MULTIPROCESSOR) || !defined(_LP64) || defined(PMAP_POOLPAGE_DEBUG) || defined(LOCKDEBUG)
 			/*
 			 * To allocate a PV, we have to release the PVLIST lock
 			 * so get the page generation.  We allocate the PV, and
@@ -2245,7 +2245,7 @@ again:
 			apv = (pv_entry_t)pmap_pv_alloc();
 			if (apv == NULL)
 				panic("pmap_enter_pv: pmap_pv_alloc() failed");
-#if defined(MULTIPROCESSOR) || !defined(_LP64) || defined(PMAP_POOLPAGE_DEBUG)
+#if defined(MULTIPROCESSOR) || !defined(_LP64) || defined(PMAP_POOLPAGE_DEBUG) || defined(LOCKDEBUG)
 #ifdef MULTIPROCESSOR
 			/*
 			 * If the generation has changed, then someone else
