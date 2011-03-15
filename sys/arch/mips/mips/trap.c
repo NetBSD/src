@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.227 2011/02/20 07:45:48 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.228 2011/03/15 07:39:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.227 2011/02/20 07:45:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.228 2011/03/15 07:39:23 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -160,7 +160,6 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	struct lwp * const l = curlwp;
 	struct proc * const p = curproc;
 	struct trapframe * const utf = l->l_md.md_utf;
-	struct cpu_info * ci = curcpu();
 	struct pcb * const pcb = lwp_getpcb(l);
 	vm_prot_t ftype;
 	ksiginfo_t ksi;
@@ -170,7 +169,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 
 	KSI_INIT_TRAP(&ksi);
 
-	ci->ci_data.cpu_ntrap++;
+	curcpu()->ci_data.cpu_ntrap++;
 	type = TRAPTYPE(cause);
 	if (USERMODE(status)) {
 		tf = utf;
@@ -193,7 +192,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		sz -= n; 
 		str += n;
 		n = snprintf(str, sz, "trap: cpu%d, %s in %s mode\n",
-			cpu_index(ci), trap_names[TRAPTYPE(cause)],
+			cpu_number(), trap_names[TRAPTYPE(cause)],
 			USERMODE(status) ? "user" : "kernel");
 		sz -= n; 
 		str += n;
@@ -378,7 +377,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		 * cpu's cpu_info but not other cpu's) so we need to detect
 		 * and fix this here.
 		 */
-		ci = curcpu();
+		struct cpu_info * const ci = curcpu();
 		if ((va >> XSEGSHIFT) == 0 &&
 		    __predict_false(ci->ci_pmap_seg0tab == NULL
 				&& ci->ci_pmap_segtab->seg_seg[0] != NULL)) {
@@ -390,7 +389,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			return; /* GEN */
 		}
 #endif
-		KASSERT(va < 0 || ci->ci_pmap_asid_cur != 0);
+		KASSERT(va < 0 || curcpu()->ci_pmap_asid_cur != 0);
 		pmap_tlb_asid_check();
 		kpreempt_enable();
 
@@ -668,7 +667,6 @@ void
 ast(void)
 {
 	struct lwp * const l = curlwp;
-	struct cpu_info * const ci = l->l_cpu;
 	u_int astpending;
 
 	while ((astpending = l->l_md.md_astpending) != 0) {
@@ -676,8 +674,13 @@ ast(void)
 		l->l_md.md_astpending = 0;
 
 #ifdef MULTIPROCESSOR
-		if (ci->ci_tlb_info->ti_synci_page_bitmap != 0)
-			pmap_tlb_syncicache_ast(ci);
+		{
+			kpreempt_disable();
+			struct cpu_info * const ci = l->l_cpu;
+			if (ci->ci_tlb_info->ti_synci_page_bitmap != 0)
+				pmap_tlb_syncicache_ast(ci);
+			kpreempt_enable();
+		}
 #endif
 
 		if (l->l_pflag & LP_OWEUPC) {
@@ -687,7 +690,7 @@ ast(void)
 
 		userret(l);
 
-		if (ci->ci_want_resched) {
+		if (l->l_cpu->ci_want_resched) {
 			/*
 			 * We are being preempted.
 			 */
@@ -824,12 +827,26 @@ extern char mips32_kern_intr[];
 extern char mips32_user_intr[];
 extern char mips32_systemcall[];
 #endif
+#ifdef MIPS32R2
+extern char mips32r2_kern_gen_exception[];
+extern char mips32r2_user_gen_exception[];
+extern char mips32r2_kern_intr[];
+extern char mips32r2_user_intr[];
+extern char mips32r2_systemcall[];
+#endif
 #ifdef MIPS64
 extern char mips64_kern_gen_exception[];
 extern char mips64_user_gen_exception[];
 extern char mips64_kern_intr[];
 extern char mips64_user_intr[];
 extern char mips64_systemcall[];
+#endif
+#ifdef MIPS64R2
+extern char mips64r2_kern_gen_exception[];
+extern char mips64r2_user_gen_exception[];
+extern char mips64r2_kern_intr[];
+extern char mips64r2_user_intr[];
+extern char mips64r2_systemcall[];
 #endif
 
 int main(void *);	/* XXX */
@@ -1180,6 +1197,14 @@ const static struct { void *addr; const char *name;} names[] = {
 	Name(mips32_user_intr),
 #endif	/* MIPS32 */
 
+#if defined(MIPS32R2)			/* MIPS32R2 family (mips-III CPU) */
+	Name(mips32r2_kern_gen_exception),
+	Name(mips32r2_user_gen_exception),
+	Name(mips32r2_systemcall),
+	Name(mips32r2_kern_intr),
+	Name(mips32r2_user_intr),
+#endif	/* MIPS32R2 */
+
 #if defined(MIPS64)			/* MIPS64 family (mips-III CPU) */
 	Name(mips64_kern_gen_exception),
 	Name(mips64_user_gen_exception),
@@ -1187,6 +1212,14 @@ const static struct { void *addr; const char *name;} names[] = {
 	Name(mips64_kern_intr),
 	Name(mips64_user_intr),
 #endif	/* MIPS64 */
+
+#if defined(MIPS64R2)			/* MIPS64R2 family (mips-III CPU) */
+	Name(mips64r2_kern_gen_exception),
+	Name(mips64r2_user_gen_exception),
+	Name(mips64r2_systemcall),
+	Name(mips64r2_kern_intr),
+	Name(mips64r2_user_intr),
+#endif	/* MIPS64R2 */
 
 	Name(cpu_idle),
 	Name(cpu_switchto),
