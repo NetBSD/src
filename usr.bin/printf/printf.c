@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.34 2009/10/13 19:28:31 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.35 2011/03/15 23:11:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.34 2009/10/13 19:28:31 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.35 2011/03/15 23:11:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 	format = *argv;
 	gargv = ++argv;
 
-#define SKIP1	"#-+ 0"
+#define SKIP1	"#-+ 0'"
 #define SKIP2	"0123456789"
 	do {
 		/*
