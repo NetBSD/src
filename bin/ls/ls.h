@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.h,v 1.17 2009/02/14 08:02:04 lukem Exp $	*/
+/*	$NetBSD: ls.h,v 1.18 2011/03/15 03:52:38 erh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,6 +42,7 @@ extern int f_accesstime;	/* use time of last access */
 extern int f_flags;		/* show flags associated with a file */
 extern int f_grouponly;		/* long listing without owner */
 extern int f_humanize;		/* humanize size field */
+extern int f_commas;        /* separate size field with commas */
 extern int f_inode;		/* print inode */
 extern int f_longform;		/* long listing format */
 extern int f_octal;		/* print octal escapes for nongraphic characters */
