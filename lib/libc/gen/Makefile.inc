@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.174 2011/03/12 19:52:48 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.175 2011/03/15 03:47:04 erh Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
 .PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
 
 SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
-	closedir.c closefrom.c confstr.c ctermid.c ctype_.c daemon.c \
+	closedir.c closefrom.c commaize_number.c \
+	confstr.c ctermid.c ctype_.c daemon.c \
 	dehumanize_number.c devname.c dirname.c disklabel.c err.c errx.c \
 	errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
 	extattr.c fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
@@ -50,7 +51,8 @@ COPTS.execlp.c = -Wno-stack-protector
 
 .include "${ARCHDIR}/gen/Makefile.inc"
 
-MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 closefrom.3 confstr.3 \
+MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 closefrom.3 \
+	commaize_number.3 confstr.3 \
 	cpuset.3 ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 \
 	endutxent.3 err.3 exec.3 extattr.3 \
 	fmtcheck.3 fmtmsg.3 fnmatch.3 fpclassify.3 fpgetmask.3 \
