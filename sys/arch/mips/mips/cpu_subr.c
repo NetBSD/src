@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.4 2011/02/24 04:28:47 joerg Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.5 2011/03/15 07:39:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.4 2011/02/24 04:28:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.5 2011/03/15 07:39:22 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -185,6 +185,28 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_node_id,
 }
 #endif /* MULTIPROCESSOR */
 
+static void
+cpu_hwrena_setup(void)
+{
+#if (MIPS32R2 + MIPS64R2) > 0
+	const int cp0flags = mips_options.mips_cpu->cpu_cp0flags;
+	if ((cp0flags & MIPS_CP0FL_USE) == 0)
+		return;
+
+	if (cp0flags & MIPS_CP0FL_HWRENA) {
+		mipsNN_cp0_hwrena_write(
+		    MIPS_HWRENA_UL
+		    |MIPS_HWRENA_CCRES
+		    |MIPS_HWRENA_CC
+		    |MIPS_HWRENA_SYNCI_STEP
+		    |MIPS_HWRENA_CPUNUM);
+		if (cp0flags & MIPS_CP0FL_USERLOCAL) {
+			mipsNN_cp0_userlocal_write(curlwp->l_private);
+		}
+	}
+#endif
+}
+
 void
 cpu_attach_common(device_t self, struct cpu_info *ci)
 {
@@ -251,6 +273,8 @@ cpu_startup_common(void)
 	char pbuf[9];	/* "99999 MB" */
 
 	pmap_tlb_info_evcnt_attach(&pmap_tlb0_info);
+
+	cpu_hwrena_setup();
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -860,6 +884,11 @@ cpu_hatch(struct cpu_info *ci)
 	mips3_cp0_wired_write(ti->ti_wired);
 
 	/*
+	 * Setup HWRENA and USERLOCAL COP0 registers (MIPSxxR2).
+	 */
+	cpu_hwrena_setup();
+
+	/*
 	 * If we are using register zero relative addressing to access cpu_info
 	 * in the exception vectors, enter that mapping into TLB now.
 	 */
@@ -965,3 +994,14 @@ cpu_vmspace_exec(lwp_t *l, vaddr_t start, vaddr_t end)
 	}
 }
 #endif
+
+int
+cpu_lwp_setprivate(lwp_t *l, void *v)
+{
+#if (MIPS32R2 + MIPS64R2) > 0
+	if (mips_options.mips_cpu->cpu_cp0flags & MIPS_CP0FL_USERLOCAL) {
+		mipsNN_cp0_userlocal_write(v);
+	}
+#endif
+	return 0;
+}
