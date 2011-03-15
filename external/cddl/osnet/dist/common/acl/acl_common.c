@@ -423,6 +423,7 @@ cacl_free(void *ptr, size_t size)
 #endif
 }
 
+#if !defined(_KERNEL)
 acl_t *
 acl_alloc(enum acl_type type)
 {
@@ -468,6 +469,7 @@ acl_free(acl_t *aclp)
 
 	cacl_free(aclp, sizeof (acl_t));
 }
+#endif
 
 static uint32_t
 access_mask_set(int haswriteperm, int hasreadperm, int isowner, int isallow)
