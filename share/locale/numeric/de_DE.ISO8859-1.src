@@ -1,4 +1,4 @@
-# $NetBSD: de_DE.ISO8859-1.src,v 1.1 2008/05/17 04:07:29 ginsbach Exp $
+# $NetBSD: de_DE.ISO8859-1.src,v 1.2 2011/03/15 15:30:52 martin Exp $
 #
 # German Language Numeric Locale for Germany
 #
@@ -9,8 +9,8 @@
 # Decimal Delimiter/Radix Character (decimal_point)
 ,
 # Separator for groups of digits left of above (thousands_sep)
-
+.
 # Grouping Sequence (grouping)
 #    A sequence of integers separated by semi-colons ';'.
--1
+3;3
 # EOF
