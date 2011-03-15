@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.48 2010/08/18 02:53:54 enami Exp $	*/
+/*	$NetBSD: print.c,v 1.49 2011/03/15 03:52:38 erh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.48 2010/08/18 02:53:54 enami Exp $");
+__RCSID("$NetBSD: print.c,v 1.49 2011/03/15 03:52:38 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ printlong(DISPLAY *dp)
 	FTSENT *p;
 	NAMES *np;
 	char buf[20], szbuf[5];
+    char commabuf[27];  /* 64 bits == 20 digits, +6 for commas, +1 for NUL */
 
 	now = time(NULL);
 
@@ -112,6 +113,13 @@ printlong(DISPLAY *dp)
 				    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 					err(1, "humanize_number");
 				(void)printf("%*s ", dp->s_block, szbuf);
+			} else if (f_commas) {
+				if (commaize_number(commabuf, sizeof(commabuf),
+				    (long long)howmany(sp->st_blocks,
+				    blocksize)) == -1)
+					err(1, "commaize_number(blocks=%lld)",
+					    (long long)howmany(sp->st_blocks, blocksize));
+				(void)printf("%*s ", dp->s_block, commabuf);
 			} else {
 				(void)printf("%*llu ", dp->s_block,
 				    (long long)howmany(sp->st_blocks,
@@ -138,6 +146,11 @@ printlong(DISPLAY *dp)
 				    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 					err(1, "humanize_number");
 				(void)printf("%*s ", dp->s_size, szbuf);
+			} else if (f_commas) {
+				if (commaize_number(commabuf, sizeof(commabuf),
+				    sp->st_size) == -1)
+					err(1, "commaize_number(size=%lld)", sp->st_size);
+				(void)printf("%*s ", dp->s_size, commabuf);
 			} else {
 				(void)printf("%*llu ", dp->s_size,
 				    (long long)sp->st_size);
@@ -321,6 +334,7 @@ printaname(FTSENT *p, int inodefield, int sizefield)
 	struct stat *sp;
 	int chcnt;
 	char szbuf[5];
+    char commabuf[27];  /* 64 bits == 20 digits, +6 for commas, +1 for NUL */
 
 	sp = p->fts_statp;
 	chcnt = 0;
@@ -333,6 +347,12 @@ printaname(FTSENT *p, int inodefield, int sizefield)
 			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 				err(1, "humanize_number");
 			chcnt += printf("%*s ", sizefield, szbuf);
+		} else if (f_commas) {
+			if (commaize_number(commabuf, sizeof(commabuf),
+			    (long long)howmany(sp->st_blocks, blocksize) == -1))
+				err(1, "commaize_number(blocks=%lld)",
+				    (long long)howmany(sp->st_blocks, blocksize));
+			(void)printf("%*s ", sizefield, commabuf);
 		} else {
 			chcnt += printf("%*llu ", sizefield,
 			    (long long)howmany(sp->st_blocks, blocksize));
@@ -380,12 +400,14 @@ printtime(time_t ftime)
 /*
  * Display total used disk space in the form "total: %u\n".
  * Note: POSIX (IEEE Std 1003.1-2001) says this should be always in 512 blocks,
- * but we humanise it with -h and use 1024 with -k.
+ * but we humanise it with -h, or separate it with commas with -M, and use 1024
+ * with -k.
  */
 static void
 printtotal(DISPLAY *dp)
 {
 	char szbuf[5];
+    char commabuf[27];  /* 64 bits == 20 digits, +6 for commas, +1 for NUL */
 	
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size)) {
 		if (f_humanize) {
@@ -394,6 +416,12 @@ printtotal(DISPLAY *dp)
 			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 				err(1, "humanize_number");
 			(void)printf("total %s\n", szbuf);
+		} else if (f_commas) {
+			if (commaize_number(commabuf, sizeof(commabuf),
+			    (long long)howmany(dp->btotal, blocksize)) == -1)
+				err(1, "commaize_number(total=%lld)",
+				    (long long)howmany(dp->btotal, blocksize));
+			(void)printf("total %s\n", commabuf);
 		} else {
 			(void)printf("total %llu\n",
 			    (long long)(howmany(dp->btotal, blocksize)));
@@ -452,3 +480,4 @@ printlink(FTSENT *p)
 	else
 		(void)printf("%s", path);
 }
+
