@@ -1,4 +1,4 @@
-.\"	$NetBSD: commaize_number.3,v 1.1 2011/03/15 03:47:04 erh Exp $
+.\"	$NetBSD: commaize_number.3,v 1.2 2011/03/15 08:33:35 wiz Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm commaize_number
-.Nd format a number into a human readable form by adding commas (actually, the locale specific thousands separator)
+.Nd format a number into a human readable form by grouping the digits
 .Sh SYNOPSIS
 .In stdlib.h
 .Ft int
@@ -40,23 +40,28 @@
 .Sh DESCRIPTION
 The
 .Fn commaize_number
-function formats the signed 64 bit quantity given in
+function formats the signed 64-bit quantity given in
 .Fa number
 into
 .Fa buffer ,
-which 
-must be at least
+which must be at least
 .Fa len
 bytes long.
 .Pp
 If the formatted number would be too long to fit into
 .Fa buffer ,
 then an error is returned.
+.Pp
+The function name is slightly mistaken,
+since actually, the locale specific thousands separator is used, which
+might not be comma.
 .Sh RETURN VALUES
 .Fn commaize_number
 returns the number of characters stored in
 .Fa buffer
-(excluding the terminating NUL) upon success, or \-1 upon failure with 
+(excluding the terminating
+.Dv NUL )
+upon success, or \-1 upon failure with
 .Va errno
 set to indicate the error.
 .Sh ERRORS
@@ -66,18 +71,19 @@ will fail and nothing will be written to
 if:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
-The formatted number, including commas and terminating NUL, is too long to fit in
+The formatted number, including commas and terminating
+.Dv NUL ,
+is too long to fit in
 .Fa len
 bytes.
 .El
 .Sh SEE ALSO
-.Xr humanize_number 9 ,
+.Xr ls 1 ,
 .Xr setlocale 3 ,
-.Xr ls 1 .
+.Xr humanize_number 9
 .Sh HISTORY
-.Fn humanize_number
+.Fn commaize_number
 first appeared in
 .Nx 6.0 .
-.Pp
 .Sh AUTHORS
-.An Eric Haszlakiewicz Aq erh@netbsd.org
+.An Eric Haszlakiewicz Aq erh@NetBSD.org
