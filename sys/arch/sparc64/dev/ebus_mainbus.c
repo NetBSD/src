@@ -1,3 +1,4 @@
+/*	$NetBSD: ebus_mainbus.c,v 1.2 2011/03/15 11:42:03 mrg Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -41,35 +42,33 @@ extern int ebus_debug;
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/hypervisor.h>
+//#include <machine/hypervisor.h>
 #include <machine/openfirm.h>
 
 #include <dev/pci/pcivar.h>
 
 #include <sparc64/dev/iommureg.h>
-#include <sparc64/dev/ebusreg.h>
-#include <sparc64/dev/ebusvar.h>
+#include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/pyrovar.h>
+#include <dev/ebus/ebusreg.h>
+#include <dev/ebus/ebusvar.h>
+#include <sparc64/dev/ebusvar.h>
 
-extern struct cfdriver pyro_cd;
-
-int	ebus_mainbus_match(struct device *, void *, void *);
+int	ebus_mainbus_match(struct device *, struct cfdata *, void *);
 void	ebus_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach ebus_mainbus_ca = {
-	sizeof(struct ebus_softc), ebus_mainbus_match, ebus_mainbus_attach
-};
+CFATTACH_DECL(ebus_mainbus, sizeof(struct ebus_softc),
+    ebus_mainbus_match, ebus_mainbus_attach, NULL, NULL);
 
-
-int ebus_mainbus_bus_map(bus_space_tag_t, bus_space_tag_t,
-    bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-void *ebus_mainbus_intr_establish(bus_space_tag_t, bus_space_tag_t,
-    int, int, int, int (*)(void *), void *, const char *);
-bus_space_tag_t ebus_alloc_bus_tag(struct ebus_softc *, bus_space_tag_t);
+int ebus_mainbus_bus_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+    vaddr_t, bus_space_handle_t *);
+void *ebus_mainbus_intr_establish(bus_space_tag_t, int, int,
+	int (*)(void *), void *, void (*)(void));
+bus_space_tag_t ebus_mainbus_alloc_bus_tag(struct ebus_softc *, bus_space_tag_t, int);
 void ebus_mainbus_intr_ack(struct intrhand *);
 
 int
-ebus_mainbus_match(struct device *parent, void *match, void *aux)
+ebus_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -94,11 +93,14 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	if (CPU_ISSUN4U) {
 		printf(": ign %x", sc->sc_ign);
+		/* XXX */
+		extern struct cfdriver pyro_cd;
 
 		for (i = 0; i < pyro_cd.cd_ndevs; i++) {
-			psc = pyro_cd.cd_devs[i];
+			device_t dt = pyro_cd.cd_devs[i];
+			psc = (struct pyro_softc *)dt;
 			if (psc && psc->sc_ign == sc->sc_ign) {
-				sc->sc_bust = psc->sc_bust;
+				sc->sc_bust = psc->sc_bustag;
 				sc->sc_csr = psc->sc_csr;
 				sc->sc_csrh = psc->sc_csrh;
 				break;
@@ -113,22 +115,23 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	sc->sc_memtag = ebus_alloc_bus_tag(sc, ma->ma_bustag);
-	sc->sc_iotag = ebus_alloc_bus_tag(sc, ma->ma_bustag);
-	sc->sc_dmatag = ebus_alloc_dma_tag(sc, ma->ma_dmatag);
+	sc->sc_memtag = ebus_mainbus_alloc_bus_tag(sc, ma->ma_bustag, PCI_MEMORY_BUS_SPACE);
+	sc->sc_iotag = ebus_mainbus_alloc_bus_tag(sc, ma->ma_bustag, PCI_IO_BUS_SPACE);
+	sc->sc_childbustag = sc->sc_memtag;
+	sc->sc_dmatag = ma->ma_dmatag;
 
 	/*
 	 * fill in our softc with information from the prom
 	 */
 	sc->sc_intmap = NULL;
 	sc->sc_range = NULL;
-	error = getprop(node, "interrupt-map",
+	error = prom_getprop(node, "interrupt-map",
 			sizeof(struct ebus_interrupt_map),
 			&sc->sc_nintmap, (void **)&sc->sc_intmap);
 	switch (error) {
 	case 0:
 		immp = &sc->sc_intmapmask;
-		error = getprop(node, "interrupt-map-mask",
+		error = prom_getprop(node, "interrupt-map-mask",
 			    sizeof(struct ebus_interrupt_map_mask), &nmapmask,
 			    (void **)&immp);
 		if (error)
@@ -143,7 +146,7 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	error = getprop(node, "ranges", sizeof(struct ebus_mainbus_ranges),
+	error = prom_getprop(node, "ranges", sizeof(struct ebus_mainbus_ranges),
 	    &sc->sc_nrange, (void **)&sc->sc_range);
 	if (error)
 		panic("ebus ranges: error %d", error);
@@ -156,7 +159,7 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		if (ebus_setup_attach_args(sc, node, &eba) != 0) {
 			DPRINTF(EDB_CHILD,
 			    ("ebus_mainbus_attach: %s: incomplete\n",
-			    getpropstring(node, "name")));
+			    prom_getpropstring(node, "name")));
 			continue;
 		} else {
 			DPRINTF(EDB_CHILD, ("- found child `%s', attaching\n",
@@ -168,7 +171,7 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 bus_space_tag_t
-ebus_alloc_bus_tag(struct ebus_softc *sc, bus_space_tag_t parent)
+ebus_mainbus_alloc_bus_tag(struct ebus_softc *sc, bus_space_tag_t parent, int type)
 {
 	struct sparc_bus_space_tag *bt;
 
@@ -176,25 +179,24 @@ ebus_alloc_bus_tag(struct ebus_softc *sc, bus_space_tag_t parent)
 	if (bt == NULL)
 		panic("could not allocate ebus bus tag");
 
-	strlcpy(bt->name, sc->sc_dev.dv_xname, sizeof(bt->name));
 	bt->cookie = sc;
 	bt->parent = parent;
-	bt->asi = parent->asi;
-	bt->sasi = parent->sasi;
+	bt->type = type;
 	bt->sparc_bus_map = ebus_mainbus_bus_map;
+	bt->sparc_bus_mmap = ebus_bus_mmap;
 	bt->sparc_intr_establish = ebus_mainbus_intr_establish;
 
 	return (bt);
 }
 
 int
-ebus_mainbus_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
-    bus_size_t size, int flags, bus_space_handle_t *hp)
+ebus_mainbus_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
+	int flags, vaddr_t va, bus_space_handle_t *hp)
 {
 	struct ebus_softc *sc = t->cookie;
 	struct ebus_mainbus_ranges *range;
 	bus_addr_t hi, lo;
-	int i;
+	int i, ss;
 
 	DPRINTF(EDB_BUSMAP,
 	    ("\n_ebus_mainbus_bus_map: off %016llx sz %x flags %d",
@@ -206,11 +208,6 @@ ebus_mainbus_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 	}
 
 	t = t->parent;
-
-	if (flags & BUS_SPACE_MAP_PROMADDRESS) {
-		return ((*t->sparc_bus_map)
-		    (t, t0, offset, size, flags, hp));
-	}
 
 	hi = offset >> 32UL;
 	lo = offset & 0xffffffff;
@@ -226,25 +223,47 @@ ebus_mainbus_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 		    (lo + size) > (range[i].child_lo + range[i].size))
 			continue;
 
+#if 0
+		/* Isolate address space and find the right tag */
+		ss = (range[i].phys_hi>>24)&3;
+		switch (ss) {
+		case 1:	/* I/O space */
+			t = sc->sc_iotag;
+			break;
+		case 2:	/* Memory space */
+			t = sc->sc_memtag;
+			break;
+		case 0:	/* Config space */
+		case 3:	/* 64-bit Memory space */
+		default: /* WTF? */
+			/* We don't handle these */
+			panic("ebus_mainbus_bus_map: illegal space %x", ss);
+			break;
+		}
+#else
+ss = 0;
+#endif
+
 		addr = ((bus_addr_t)range[i].phys_hi << 32UL) |
 				    range[i].phys_lo;
 		addr += lo;
 		DPRINTF(EDB_BUSMAP,
 		    ("\n_ebus_mainbus_bus_map: paddr offset %qx addr %qx\n", 
 		    (unsigned long long)offset, (unsigned long long)addr));
-                return ((*t->sparc_bus_map)(t, t0, addr, size, flags, hp));
+		return (bus_space_map(t, addr, size, flags, hp));
 	}
 	DPRINTF(EDB_BUSMAP, (": FAILED\n"));
 	return (EINVAL);
 }
 
 void *
-ebus_mainbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
-    int level, int flags, int (*handler)(void *), void *arg, const char *what)
+ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
+	int (*handler)(void *), void *arg, void (*fastvec)(void) /* ignored */)
 {
 	struct ebus_softc *sc = t->cookie;
 	struct intrhand *ih = NULL;
 	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
+	u_int64_t *imap, *iclr;
 	int ino;
 
 #ifdef SUN4V
@@ -301,33 +320,37 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	ihandle |= sc->sc_ign;
 	ino = INTINO(ihandle);
 
-	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) == 0) {
-		u_int64_t *imap, *iclr;
+	/* XXX */
+	imap = (uint64_t *)((uintptr_t)bus_space_vaddr(sc->sc_bustag, sc->sc_csrh) + 0x1000);
+	iclr = (uint64_t *)((uintptr_t)bus_space_vaddr(sc->sc_bustag, sc->sc_csrh) + 0x1400);
+	intrmapptr = &imap[ino];
+	intrclrptr = &iclr[ino];
+	ino |= INTVEC(ihandle);
 
-		/* XXX */
-		imap = bus_space_vaddr(sc->sc_bust, sc->sc_csrh) + 0x1000;
-		iclr = bus_space_vaddr(sc->sc_bust, sc->sc_csrh) + 0x1400;
-		intrmapptr = &imap[ino];
-		intrclrptr = &iclr[ino];
-		ino |= INTVEC(ihandle);
-	}
-
-	ih = bus_intr_allocate(t0, handler, arg, ino, level, intrmapptr,
-	    intrclrptr, what);
+	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		return (NULL);
 
-	intr_establish(ih->ih_pil, ih);
+	/* Register the map and clear intr registers */
+	ih->ih_map = intrmapptr;
+	ih->ih_clr = intrclrptr;
+
+	ih->ih_fun = handler;
+	ih->ih_arg = arg;
+	ih->ih_pil = level;
+	ih->ih_number = ino;
+
+	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 
 	if (intrmapptr != NULL) {
-		u_int64_t intrmap;
+		u_int64_t imapval;
 
-		intrmap = *intrmapptr;
-		intrmap |= (1LL << 6);
-		intrmap |= INTMAP_V;
-		*intrmapptr = intrmap;
-		intrmap = *intrmapptr;
-		ih->ih_number |= intrmap & INTMAP_INR;
+		imapval = *intrmapptr;
+		imapval |= (1LL << 6);
+		imapval |= INTMAP_V;
+		*intrmapptr = imapval;
+		imapval = *intrmapptr;
+		ih->ih_number |= imapval & INTMAP_INR;
 	}
 
 	return (ih);
