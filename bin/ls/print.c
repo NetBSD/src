@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.49 2011/03/15 03:52:38 erh Exp $	*/
+/*	$NetBSD: print.c,v 1.50 2011/03/15 22:53:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.49 2011/03/15 03:52:38 erh Exp $");
+__RCSID("$NetBSD: print.c,v 1.50 2011/03/15 22:53:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,6 @@ printlong(DISPLAY *dp)
 	FTSENT *p;
 	NAMES *np;
 	char buf[20], szbuf[5];
-    char commabuf[27];  /* 64 bits == 20 digits, +6 for commas, +1 for NUL */
 
 	now = time(NULL);
 
@@ -113,16 +112,10 @@ printlong(DISPLAY *dp)
 				    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 					err(1, "humanize_number");
 				(void)printf("%*s ", dp->s_block, szbuf);
-			} else if (f_commas) {
-				if (commaize_number(commabuf, sizeof(commabuf),
-				    (long long)howmany(sp->st_blocks,
-				    blocksize)) == -1)
-					err(1, "commaize_number(blocks=%lld)",
-					    (long long)howmany(sp->st_blocks, blocksize));
-				(void)printf("%*s ", dp->s_block, commabuf);
 			} else {
-				(void)printf("%*llu ", dp->s_block,
-				    (long long)howmany(sp->st_blocks,
+				(void)printf(f_commas ? "%'*llu " : "%*llu ",
+				    dp->s_block,
+				    (unsigned long long)howmany(sp->st_blocks,
 				    blocksize));
 			}
 		}
@@ -146,14 +139,10 @@ printlong(DISPLAY *dp)
 				    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 					err(1, "humanize_number");
 				(void)printf("%*s ", dp->s_size, szbuf);
-			} else if (f_commas) {
-				if (commaize_number(commabuf, sizeof(commabuf),
-				    sp->st_size) == -1)
-					err(1, "commaize_number(size=%lld)", sp->st_size);
-				(void)printf("%*s ", dp->s_size, commabuf);
 			} else {
-				(void)printf("%*llu ", dp->s_size,
-				    (long long)sp->st_size);
+				(void)printf(f_commas ? "%'*llu " : "%*llu ", 
+				    dp->s_size, (unsigned long long)
+				    sp->st_size);
 			}
 		if (f_accesstime)
 			printtime(sp->st_atime);
@@ -334,7 +323,6 @@ printaname(FTSENT *p, int inodefield, int sizefield)
 	struct stat *sp;
 	int chcnt;
 	char szbuf[5];
-    char commabuf[27];  /* 64 bits == 20 digits, +6 for commas, +1 for NUL */
 
 	sp = p->fts_statp;
 	chcnt = 0;
@@ -347,15 +335,10 @@ printaname(FTSENT *p, int inodefield, int sizefield)
 			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 				err(1, "humanize_number");
 			chcnt += printf("%*s ", sizefield, szbuf);
-		} else if (f_commas) {
-			if (commaize_number(commabuf, sizeof(commabuf),
-			    (long long)howmany(sp->st_blocks, blocksize) == -1))
-				err(1, "commaize_number(blocks=%lld)",
-				    (long long)howmany(sp->st_blocks, blocksize));
-			(void)printf("%*s ", sizefield, commabuf);
 		} else {
-			chcnt += printf("%*llu ", sizefield,
-			    (long long)howmany(sp->st_blocks, blocksize));
+			chcnt += printf(f_commas ? "%'*llu " : "%*llu ",
+			    sizefield, (unsigned long long)
+			    howmany(sp->st_blocks, blocksize));
 		}
 	}
 	if (f_octal || f_octal_escape)
@@ -407,7 +390,6 @@ static void
 printtotal(DISPLAY *dp)
 {
 	char szbuf[5];
-    char commabuf[27];  /* 64 bits == 20 digits, +6 for commas, +1 for NUL */
 	
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size)) {
 		if (f_humanize) {
@@ -416,15 +398,10 @@ printtotal(DISPLAY *dp)
 			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 				err(1, "humanize_number");
 			(void)printf("total %s\n", szbuf);
-		} else if (f_commas) {
-			if (commaize_number(commabuf, sizeof(commabuf),
-			    (long long)howmany(dp->btotal, blocksize)) == -1)
-				err(1, "commaize_number(total=%lld)",
-				    (long long)howmany(dp->btotal, blocksize));
-			(void)printf("total %s\n", commabuf);
 		} else {
-			(void)printf("total %llu\n",
-			    (long long)(howmany(dp->btotal, blocksize)));
+			(void)printf(f_commas ? "total %'llu\n" :
+			    "total %llu\n", (unsigned long long)
+			    howmany(dp->btotal, blocksize));
 		}
 	}
 }
