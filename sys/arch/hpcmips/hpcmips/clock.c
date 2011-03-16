@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 2011/02/08 20:20:15 rmind Exp $	*/
+/*	$NetBSD: clock.c,v 1.22 2011/03/16 14:43:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2011/02/08 20:20:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 2011/03/16 14:43:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,12 +83,12 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2011/02/08 20:20:15 rmind Exp $");
  *	Register CPU(VR41XX or TX39XX) dependent clock routine to system.
  */
 void
-platform_clock_attach(void *ctx, struct platform_clock *clock)
+platform_clock_attach(device_t dev, struct platform_clock *clock)
 {
 
 	printf("\n");
 
-	clock->self = ctx;
+	clock->self = dev;
 	platform.clock = clock;
 }
 
