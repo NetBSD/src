@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.16 2011/02/20 07:58:14 matt Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.17 2011/03/16 14:43:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -73,12 +73,12 @@ extern struct platform {
 
 struct platform_clock {
 	int	hz;
-	void	(*init)(struct device *);
+	void	(*init)(device_t);
 	void	*self;
 	int	start;
 };
 
-void platform_clock_attach(void *, struct platform_clock *);
+void platform_clock_attach(device_t, struct platform_clock *);
 
 #endif /* _KERNEL */
 #endif /* !_HPCMIPS_SYSCONF_H_ */
