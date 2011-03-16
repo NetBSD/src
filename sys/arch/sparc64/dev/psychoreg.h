@@ -1,4 +1,4 @@
-/*	$NetBSD: psychoreg.h,v 1.16 2011/03/16 03:51:29 mrg Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.17 2011/03/16 05:49:43 mrg Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -110,7 +110,7 @@ struct psychoreg {
 
 	uint64_t	pad2[30];
 
-	struct iommureg_old psy_iommu;						/* 1fe.0000.0200,0210 */
+	struct iommureg psy_iommu;							/* 1fe.0000.0200,0210 */
 
 	uint64_t	pad3[317];
 
