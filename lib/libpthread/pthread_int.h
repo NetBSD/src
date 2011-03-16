@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.76 2011/03/09 23:10:06 joerg Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.77 2011/03/16 12:39:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -255,21 +255,19 @@ int	pthread__find(pthread_t) PTHREAD_HIDE;
 	} while (/*CONSTCOND*/0)
 
 
-#if 0 && defined(__HAVE___LWP_GETPRIVATE_FAST)
-#  if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 static inline pthread_t __constfunc
 pthread__self(void)
 {
-	struct tls_tcb *tcb = __lwp_getprivate_fast()
+	struct tls_tcb *tcb = __lwp_getprivate_fast();
 	return (pthread_t)tcb->tcb_pthread;
 }
-#  else
+#elif 0 && defined(__HAVE___LWP_GETPRIVATE_FAST)
 static inline pthread_t __constfunc
 pthread__self(void)
 {
 	return (pthread_t)__lwp_getprivate_fast();
 }
-#  endif
 #else
 /* Stack location of pointer to a particular thread */
 extern vaddr_t	pthread__mainbase;
