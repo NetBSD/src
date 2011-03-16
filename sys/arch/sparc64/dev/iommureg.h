@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.16 2011/03/16 02:41:19 mrg Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.17 2011/03/16 03:49:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,12 @@
  */
 
 /* iommmu registers */
+struct iommureg_old {
+	volatile uint64_t	iommu_cr;	/* IOMMU control register */
+	volatile uint64_t	iommu_tsb;	/* IOMMU TSB base register */
+	volatile uint64_t	iommu_flush;	/* IOMMU flush register */
+};
+
 struct iommureg {
 	volatile uint64_t	iommu_cr;	/* IOMMU control register */
 	volatile uint64_t	iommu_tsb;	/* IOMMU TSB base register */
