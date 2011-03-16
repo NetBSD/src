@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.61 2011/03/16 13:23:41 tsutsui Exp $	*/
+/*	$NetBSD: vr.c,v 1.62 2011/03/16 13:26:55 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.61 2011/03/16 13:23:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.62 2011/03/16 13:26:55 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -548,7 +548,7 @@ VR_INTR(int ppl, vaddr_t pc, uint32_t status)
 		}
 
 		if (ipending & MIPS_INT_MASK_1) {
-			(*vr_intr_handler[1])(vr_intr_arg[1], pc, ipending);
+			(*vr_intr_handler[1])(vr_intr_arg[1], pc, status);
 		}
 
 		if (ipending & MIPS_INT_MASK_0) {
