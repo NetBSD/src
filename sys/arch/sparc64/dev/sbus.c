@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.85 2009/09/17 16:28:12 tsutsui Exp $ */
+/*	$NetBSD: sbus.c,v 1.86 2011/03/16 03:51:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.85 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.86 2011/03/16 03:51:29 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -234,7 +234,7 @@ sbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_is.is_bustag = sc->sc_bustag;
 	bus_space_subregion(sc->sc_bustag, sc->sc_bh, 
 		(vaddr_t)&((struct sysioreg *)NULL)->sys_iommu, 
-		sizeof (struct iommureg), &sc->sc_is.is_iommu);
+		sizeof (struct iommureg_old), &sc->sc_is.is_iommu);
  
 	/* initialize our strbuf_ctl */
 	sc->sc_is.is_sb[0] = &sc->sc_sb;
