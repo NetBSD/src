@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.102 2011/02/13 11:54:24 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.103 2011/03/16 03:51:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.102 2011/02/13 11:54:24 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.103 2011/03/16 03:51:29 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -996,7 +996,7 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 	is->is_bustag = sc->sc_bustag;
 	bus_space_subregion(sc->sc_bustag, sc->sc_bh,
 		offsetof(struct psychoreg, psy_iommu),
-		sizeof (struct iommureg),
+		sizeof (struct iommureg_old),
 		&is->is_iommu);
 
 	/*
