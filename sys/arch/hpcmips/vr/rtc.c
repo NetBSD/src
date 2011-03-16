@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.30 2011/03/16 14:43:37 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.31 2011/03/16 14:47:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.30 2011/03/16 14:43:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.31 2011/03/16 14:47:34 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -74,7 +74,7 @@ int vrrtc_debug = VRRTCDEBUG_CONF;
 #endif /* VRRTCDEBUG */
 
 struct vrrtc_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	void *sc_ih;
@@ -98,16 +98,16 @@ struct platform_clock vr_clock = {
 	CLOCK_RATE, vrrtc_init,
 };
 
-int	vrrtc_match(struct device *, struct cfdata *, void *);
-void	vrrtc_attach(struct device *, struct device *, void *);
+int	vrrtc_match(device_t, cfdata_t, void *);
+void	vrrtc_attach(device_t, device_t, void *);
 int	vrrtc_intr(void*, uint32_t, uint32_t);
 void	vrrtc_dump_regs(struct vrrtc_softc *);
 
-CFATTACH_DECL(vrrtc, sizeof(struct vrrtc_softc),
+CFATTACH_DECL_NEW(vrrtc, sizeof(struct vrrtc_softc),
     vrrtc_match, vrrtc_attach, NULL, NULL);
 
 int
-vrrtc_match(struct device *parent, struct cfdata *cf, void *aux)
+vrrtc_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
@@ -122,7 +122,7 @@ vrrtc_match(struct device *parent, struct cfdata *cf, void *aux)
 #endif /* SINGLE_VRIP_BASE */
 
 void
-vrrtc_attach(struct device *parent, struct device *self, void *aux)
+vrrtc_attach(device_t parent, device_t self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	struct vrrtc_softc *sc = device_private(self);
@@ -149,7 +149,7 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_tclk_cnt_l_reg = RTC_NO_REG_W;
 	} else {
 		panic("%s: unknown base address 0x%lx",
-		    sc->sc_dev.dv_xname, va->va_addr);
+		    device_xname(self), va->va_addr);
 	}
 #endif /* SINGLE_VRIP_BASE */
 
