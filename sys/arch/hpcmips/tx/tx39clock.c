@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.24 2011/03/16 14:39:26 tsutsui Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.25 2011/03/16 14:43:37 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.24 2011/03/16 14:39:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.25 2011/03/16 14:43:37 tsutsui Exp $");
 
 #include "opt_tx39clock_debug.h"
 
@@ -110,7 +110,7 @@ void
 tx39clock_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
-	struct tx39clock_softc *sc = (void*)self;
+	struct tx39clock_softc *sc = device_private(self);
 	tx_chipset_tag_t tc;
 	txreg_t reg;
 
@@ -248,9 +248,9 @@ tx39_timecount(struct timecounter *tch)
 }
 
 void
-tx39clock_init(struct device *dev)
+tx39clock_init(device_t self)
 {
-	struct tx39clock_softc *sc = (void*)dev;
+	struct tx39clock_softc *sc = device_private(self);
 	tx_chipset_tag_t tc = sc->sc_tc;
 	txreg_t reg;
 	int pcnt;
