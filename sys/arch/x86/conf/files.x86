@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.64 2011/03/04 04:48:40 jruoho Exp $
+#	$NetBSD: files.x86,v 1.65 2011/03/16 11:35:36 jakllsch Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -107,9 +107,6 @@ file	arch/x86/x86/acpi_machdep.c	acpi
 file	arch/x86/acpi/acpi_wakeup.c	acpi
 
 file	arch/x86/isa/isa_machdep.c	isa
-
-# Intel On Demand Clock Modulation
-file	arch/x86/x86/iclockmod.c	intel_ondemand_clockmod
 
 # IPMI device
 device	ipmi: sysmon_envsys, sysmon_wdog
