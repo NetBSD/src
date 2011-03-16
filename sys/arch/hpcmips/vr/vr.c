@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.62 2011/03/16 13:26:55 tsutsui Exp $	*/
+/*	$NetBSD: vr.c,v 1.63 2011/03/16 13:38:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.62 2011/03/16 13:26:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.63 2011/03/16 13:38:34 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -141,7 +141,7 @@ const struct ipl_sr_map __ipl_sr_map_vr = {
 				| MIPS_INT_MASK_0
 				| MIPS_INT_MASK_1,
 	[IPL_DDB] =		MIPS_INT_MASK,
-	[IPL_VM] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
     },
 };
 
