@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.60 2011/02/26 12:07:46 tsutsui Exp $	*/
+/*	$NetBSD: vr.c,v 1.61 2011/03/16 13:23:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.60 2011/02/26 12:07:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.61 2011/03/16 13:23:41 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -504,7 +504,7 @@ vr_reboot(int howto, char *bootstr)
 	 */
 	if (howto & RB_HALT) {
 #if NVRIP_COMMON > 0
-		_spllower(~MIPS_INT_MASK_0);
+		vrip_splpiu();
 		vrip_intr_suspend();
 #else
 		splhigh();

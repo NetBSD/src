@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm_machdep.c,v 1.4 2011/02/20 07:58:14 matt Exp $	*/
+/*	$NetBSD: hpcapm_machdep.c,v 1.5 2011/03/16 13:23:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm_machdep.c,v 1.4 2011/02/20 07:58:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm_machdep.c,v 1.5 2011/03/16 13:23:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,7 +64,7 @@ machine_standby(void)
 		 * disable all interrupts except PIU interrupt
 		 */
 		vrip_intr_suspend();
-		_spllower(~MIPS_INT_MASK_0);
+		vrip_splpiu();
 
 		/*
 		 * STANDBY instruction puts the CPU into power saveing
@@ -96,7 +96,7 @@ machine_sleep(void)
 		 * disable all interrupts except PIU interrupt
 		 */
 		vrip_intr_suspend();
-		_spllower(~MIPS_INT_MASK_0);
+		vrip_splpiu();
 
 		/*
 		 * SUSPEND instruction puts the CPU into power saveing
