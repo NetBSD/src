@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.28 2011/03/16 14:23:19 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.29 2011/03/16 14:28:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.28 2011/03/16 14:23:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.29 2011/03/16 14:28:39 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -100,7 +100,7 @@ struct platform_clock vr_clock = {
 
 int	vrrtc_match(struct device *, struct cfdata *, void *);
 void	vrrtc_attach(struct device *, struct device *, void *);
-int	vrrtc_intr(void*, u_int32_t, u_int32_t);
+int	vrrtc_intr(void*, uint32_t, uint32_t);
 void	vrrtc_dump_regs(struct vrrtc_softc *);
 
 CFATTACH_DECL(vrrtc, sizeof(struct vrrtc_softc),
@@ -110,7 +110,7 @@ int
 vrrtc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 #ifndef SINGLE_VRIP_BASE
@@ -135,15 +135,13 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_tclk_l_reg = VR4102_TCLK_L_REG_W;
 		sc->sc_tclk_cnt_h_reg = VR4102_TCLK_CNT_H_REG_W;
 		sc->sc_tclk_cnt_l_reg = VR4102_TCLK_CNT_L_REG_W;
-	} else
-	if (va->va_addr == VR4122_RTC_ADDR) {
+	} else if (va->va_addr == VR4122_RTC_ADDR) {
 		sc->sc_rtcint_reg = VR4122_RTCINT_REG_W;
 		sc->sc_tclk_h_reg = VR4122_TCLK_H_REG_W;
 		sc->sc_tclk_l_reg = VR4122_TCLK_L_REG_W;
 		sc->sc_tclk_cnt_h_reg = VR4122_TCLK_CNT_H_REG_W;
 		sc->sc_tclk_cnt_l_reg = VR4122_TCLK_CNT_L_REG_W;
-	} else
-	if (va->va_addr == VR4181_RTC_ADDR) {
+	} else if (va->va_addr == VR4181_RTC_ADDR) {
 		sc->sc_rtcint_reg = VR4181_RTCINT_REG_W;
 		sc->sc_tclk_h_reg = RTC_NO_REG_W;
 		sc->sc_tclk_l_reg = RTC_NO_REG_W;
@@ -223,14 +221,14 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-vrrtc_intr(void *arg, u_int32_t pc, u_int32_t statusReg)
+vrrtc_intr(void *arg, uint32_t pc, uint32_t status)
 {
 	struct vrrtc_softc *sc = arg;
 	struct clockframe cf;
 
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCINT_REG_W, RTCINT_ALL);
 	cf.pc = pc;
-	cf.sr = statusReg;
+	cf.sr = status;
 	cf.intr = (curcpu()->ci_idepth > 1);
 	hardclock(&cf);
 
@@ -247,8 +245,8 @@ vrrtc_init(struct device *dev)
 	 * Set tick (CLOCK_RATE)
 	 */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCL1_H_REG_W, 0);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCL1_L_REG_W,
-	    RTCL1_L_HZ/CLOCK_RATE);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    RTCL1_L_REG_W, RTCL1_L_HZ / CLOCK_RATE);
 
 	/*
 	 * Initialize timecounter.
@@ -269,19 +267,18 @@ vrrtc_get_timecount(struct timecounter *tc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
-	return (bus_space_read_2(iot, ioh, ETIME_L_REG_W));
+	return bus_space_read_2(iot, ioh, ETIME_L_REG_W);
 }
 
 int
 vrrtc_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
-
 	struct vrrtc_softc *sc = (struct vrrtc_softc *)tch->cookie;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t timeh;	/* elapse time (2*timeh sec) */
-	u_int32_t timel;	/* timel/32768 sec */
-	u_int64_t sec, usec;
+	uint32_t timeh;		/* elapse time (2*timeh sec) */
+	uint32_t timel;		/* timel/32768 sec */
+	uint64_t sec, usec;
 
 	timeh = bus_space_read_2(iot, ioh, ETIME_H_REG_W);
 	timeh = (timeh << 16) | bus_space_read_2(iot, ioh, ETIME_M_REG_W);
@@ -310,8 +307,8 @@ vrrtc_set(todr_chip_handle_t tch, struct timeval *tvp)
 	struct vrrtc_softc *sc = (struct vrrtc_softc *)tch->cookie;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t timeh;	/* elapse time (2*timeh sec) */
-	u_int32_t timel;	/* timel/32768 sec */
+	uint32_t timeh;		/* elapse time (2*timeh sec) */
+	uint32_t timel;		/* timel/32768 sec */
 	int64_t sec, cnt;
 
 	sec = tvp->tv_sec + sc->sc_epoch;
@@ -371,8 +368,10 @@ vrrtc_dump_regs(struct vrrtc_softc *sc)
 		timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, TCLK_L_REG_W);
 		printf("clock_init()  TCLK %04x%04x\n", timeh, timel);
 
-		timeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh, TCLK_CNT_H_REG_W);
-		timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, TCLK_CNT_L_REG_W);
+		timeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+		    TCLK_CNT_H_REG_W);
+		timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+		    TCLK_CNT_L_REG_W);
 		printf("clock_init()  TCLK CNTL %04x%04x\n", timeh, timel);
 	}
 }
