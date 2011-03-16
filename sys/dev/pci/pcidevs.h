@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1064 2011/03/05 15:36:50 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1065 2011/03/16 23:20:00 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1067 2011/03/05 15:36:27 matt Exp
+ *	NetBSD: pcidevs,v 1.1068 2011/03/16 23:19:32 matt Exp
  */
 
 /*
@@ -2066,6 +2066,10 @@
 #define	PCI_PRODUCT_FREESCALE_MPC8572	0x0041		/* MPC8572 */
 #define	PCI_PRODUCT_FREESCALE_MPC8536E	0x0050		/* MPC8536E */
 #define	PCI_PRODUCT_FREESCALE_MPC8536	0x0051		/* MPC8536 */
+#define	PCI_PRODUCT_FREESCALE_P2020E	0x0070		/* P2020E */
+#define	PCI_PRODUCT_FREESCALE_P2020	0x0071		/* P2020 */
+#define	PCI_PRODUCT_FREESCALE_P2010E	0x0078		/* P2010E */
+#define	PCI_PRODUCT_FREESCALE_P2010	0x0079		/* P2010 */
 
 /* Marvell products */
 #define	PCI_PRODUCT_MARVELL_GT64010A	0x0146		/* GT-64010A System Controller */
