@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.3 2011/02/16 18:43:35 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.4 2011/03/16 05:31:03 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1018,7 +1018,7 @@ e500_intr_init(void)
 	struct intr_source *is;
 	struct e500_intr_info * const ii = &e500_intr_info;
 
-	const uint16_t svr = mfspr(SPR_SVR) >> 16;
+	const uint16_t svr = (mfspr(SPR_SVR) & ~0x80000) >> 16;
 	switch (svr) {
 #ifdef MPC8536
 	case SVR_MPC8536v1 >> 16:
