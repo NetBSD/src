@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.3 2011/02/08 06:19:13 matt Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.4 2011/03/16 05:31:04 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.3 2011/02/08 06:19:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.4 2011/03/16 05:31:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -83,9 +83,9 @@ __KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.3 2011/02/08 06:19:13 matt Exp $");
     TRUTH_ENCODE(SVR_MPC8572v1, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##MPC8572##_##value, PORDEVSR_##field), result)
 #define	PORDEVSR_P20x0_TRUTH_ENCODE(inst, field, value, result) \
-    TRUTH_ENCODE(SVR_P2020, inst, PORDEVSR_##field, \
+    TRUTH_ENCODE(SVR_P2020v2, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result), \
-    TRUTH_ENCODE(SVR_P2010, inst, PORDEVSR_##field, \
+    TRUTH_ENCODE(SVR_P2010v2, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result)
 
 #define	PORDEVSR_TRUTH_ENCODE(svr, inst, field, value, result) \
