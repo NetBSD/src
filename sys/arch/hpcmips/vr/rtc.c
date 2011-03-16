@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.29 2011/03/16 14:28:39 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.30 2011/03/16 14:43:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.29 2011/03/16 14:28:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.30 2011/03/16 14:43:37 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -88,7 +88,7 @@ struct vrrtc_softc {
 	struct timecounter sc_tc;
 };
 
-void	vrrtc_init(struct device *);
+void	vrrtc_init(device_t);
 int	vrrtc_get(todr_chip_handle_t, struct timeval *);
 int	vrrtc_set(todr_chip_handle_t, struct timeval *);
 uint32_t vrrtc_get_timecount(struct timecounter *);
@@ -125,7 +125,7 @@ void
 vrrtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
-	struct vrrtc_softc *sc = (void *)self;
+	struct vrrtc_softc *sc = device_private(self);
 	int year;
 
 #ifndef SINGLE_VRIP_BASE
@@ -217,7 +217,7 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	todr_attach(&sc->sc_todr);
 
-	platform_clock_attach(sc, &vr_clock);
+	platform_clock_attach(self, &vr_clock);
 }
 
 int
@@ -236,9 +236,9 @@ vrrtc_intr(void *arg, uint32_t pc, uint32_t status)
 }
 
 void
-vrrtc_init(struct device *dev)
+vrrtc_init(device_t self)
 {
-	struct vrrtc_softc *sc = (struct vrrtc_softc *)dev;
+	struct vrrtc_softc *sc = device_private(self);
 
 	DDUMP_REGS(sc);
 	/*
