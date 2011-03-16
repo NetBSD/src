@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.96 2011/03/15 12:21:08 pooka Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.97 2011/03/16 00:48:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -281,8 +281,6 @@ __aconst char *devname(dev_t, mode_t) __RENAME(__devname50);
 
 int	 humanize_number(char *, size_t, int64_t, const char *, int, int);
 int	 dehumanize_number(const char *, int64_t *);
-
-int	 commaize_number(char *, size_t, int64_t);
 
 devmajor_t getdevmajor(const char *, mode_t);
 int	 getloadavg(double [], int);
