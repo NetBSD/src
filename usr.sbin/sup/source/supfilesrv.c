@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.44 2010/10/20 17:05:54 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.45 2011/03/16 20:17:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -443,6 +443,14 @@ main(int argc, char **argv)
 			(void) servicekill();
 			continue;
 		}
+		/*
+		 * If we are being bombarded, don't even spend time forking
+		 * or conversing
+		 */
+		if (nchildren >= maxchildren + 5) {
+			(void) servicekill();
+			continue;
+		}
 		sigemptyset(&nset);
 		sigaddset(&nset, SIGCHLD);
 		sigprocmask(SIG_BLOCK, &nset, &oset);
@@ -481,10 +489,23 @@ void
 chldsig(int snum __unused)
 {
 	int w;
+	pid_t pid;
 
-	while (wait3((int *) &w, WNOHANG, (struct rusage *) 0) > 0) {
-		if (nchildren)
-			nchildren--;
+	while ((pid = waitpid(-1, &w, WNOHANG)) > 0) {
+		if (kill(pid, 0) == -1)
+			switch (errno) {
+			case ESRCH:
+				if (nchildren == 0)
+					logerr("no children but pid %jd\n",
+					    (intmax_t)pid);
+				nchildren--;
+				break;
+			default:
+				logerr("killing pid %jd: (%s)\n", (intmax_t)
+				    pid, strerror(errno));
+				break;
+			}
+
 	}
 }
 /*****************************************
