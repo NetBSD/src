@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.17 2008/10/18 03:31:10 nakayama Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.18 2011/03/16 02:41:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -55,6 +55,8 @@ struct iommu_state {
 	u_int			is_dvmaend;
 	int64_t			is_cr;		/* IOMMU control regiter value */
 	struct extent		*is_dvmamap;	/* DVMA map for this instance */
+	int			is_flags;
+#define IOMMU_FLUSH_CACHE	0x00000001
 
 	struct strbuf_ctl	*is_sb[2];	/* Streaming buffers if any */
 
@@ -83,5 +85,16 @@ void	iommu_dvmamem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
 int	iommu_dvmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
 		void **, int);
 void	iommu_dvmamem_unmap(bus_dma_tag_t, void *, size_t);
+
+#define IOMMUREG_READ(is, reg)				\
+	bus_space_read_8((is)->is_bustag,		\
+		(is)->is_iommu,				\
+		IOMMUREG(reg))	
+
+#define IOMMUREG_WRITE(is, reg, v)			\
+	bus_space_write_8((is)->is_bustag,		\
+		(is)->is_iommu,				\
+		IOMMUREG(reg),				\
+		(v))
 
 #endif /* _SPARC64_DEV_IOMMUVAR_H_ */
