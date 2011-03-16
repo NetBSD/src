@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.3 2010/11/15 06:01:29 uebayasi Exp $	*/
+/*	$NetBSD: uhso.c,v 1.4 2011/03/16 21:36:55 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.3 2010/11/15 06:01:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.4 2011/03/16 21:36:55 plunky Exp $");
 
 #include "opt_inet.h"
 
@@ -87,9 +87,11 @@ __KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.3 2010/11/15 06:01:29 uebayasi Exp $");
  */
 int uhso_debug = 0;
 
-#define DPRINTF(n, fmt, args...)	do {		\
-	if (uhso_debug >= (n))				\
-		printf("%s: "fmt, __func__ , ##args);	\
+#define DPRINTF(n, ...)	do {			\
+	if (uhso_debug >= (n)) {		\
+		printf("%s: ", __func__);	\
+		printf(__VA_ARGS__);		\
+	}					\
 } while (/* CONSTCOND */0)
 #else
 #define DPRINTF(...)	((void)0)
