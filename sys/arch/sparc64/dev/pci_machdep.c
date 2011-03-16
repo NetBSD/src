@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.68 2010/12/18 05:14:13 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.69 2011/03/16 03:54:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.68 2010/12/18 05:14:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69 2011/03/16 03:54:51 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,7 +84,7 @@ ofpci_make_tag(pci_chipset_tag_t pc, int node, int b, int d, int f)
 	tag = PCITAG_CREATE(node, b, d, f);
 
 	DPRINTF(SPDB_TAG,
-		("%s: creating tag for node %d bus %d dev %d fn %d\n",
+		("%s: creating tag for node %x bus %d dev %d fn %d\n",
 		 __func__, node, b, d, f));
 
 	/* Enable all the different spaces for this device */
@@ -270,7 +270,9 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 	int node, b, d, f, ret;
 	int bus_frequency, lt, cl, cacheline;
 	char name[30];
+#if 0
 	extern int pci_config_dump;
+#endif
 
 	if (sc->sc_bridgetag)
 		node = PCITAG_NODE(*sc->sc_bridgetag);
@@ -289,6 +291,11 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 	    (cacheline/ecache_min_line_size)*ecache_min_line_size == cacheline &&
 	    (cacheline/4)*4 == cacheline);
 
+#if 0
+	/*
+	 * XXX this faults on Fire PCIe controllers.
+	 * XXX move into the psycho and schizo driver front ends.
+	 */
 	/* Turn on parity for the bus. */
 	tag = ofpci_make_tag(pc, node, sc->sc_bus, 0, 0);
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
@@ -304,7 +311,9 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 	bhlc |= 0x40 << PCI_LATTIMER_SHIFT;
 	pci_conf_write(pc, tag, PCI_BHLC_REG, bhlc);
 
-	if (pci_config_dump) pci_conf_print(pc, tag, NULL);
+	if (pci_config_dump)
+		pci_conf_print(pc, tag, NULL);
+#endif
 
 	for (node = prom_firstchild(node); node != 0 && node != -1;
 	     node = prom_nextsibling(node)) {
@@ -493,7 +502,7 @@ sparc_pci_childspace(int type)
 		break;
 #endif
 	default:
-		panic("get_childspace: unknown bus type");
+		panic("get_childspace: unknown bus type: %d", type);
 	}
 
 	return (ss);
