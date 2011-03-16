@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.27 2011/03/10 17:27:43 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.28 2011/03/16 14:23:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.27 2011/03/10 17:27:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.28 2011/03/16 14:23:19 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -281,7 +281,7 @@ vrrtc_get(todr_chip_handle_t tch, struct timeval *tvp)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int32_t timeh;	/* elapse time (2*timeh sec) */
 	u_int32_t timel;	/* timel/32768 sec */
-	int64_t sec, usec;
+	u_int64_t sec, usec;
 
 	timeh = bus_space_read_2(iot, ioh, ETIME_H_REG_W);
 	timeh = (timeh << 16) | bus_space_read_2(iot, ioh, ETIME_M_REG_W);
@@ -290,7 +290,7 @@ vrrtc_get(todr_chip_handle_t tch, struct timeval *tvp)
 	DPRINTF(("clock_get: timeh %08x timel %08x\n", timeh, timel));
 
 	timeh -= EPOCHOFF;
-	sec = timeh * 2;
+	sec = (uint64_t)timeh * 2;
 	sec -= sc->sc_epoch;
 	tvp->tv_sec = sec;
 	tvp->tv_sec += timel / ETIME_L_HZ;
@@ -299,7 +299,7 @@ vrrtc_get(todr_chip_handle_t tch, struct timeval *tvp)
 	usec = (timel % ETIME_L_HZ);
 	usec *= 1000000;
 	usec /= ETIME_L_HZ;
-	tvp->tv_usec = (uint32_t)usec;
+	tvp->tv_usec = usec;
 
 	return 0;
 }
