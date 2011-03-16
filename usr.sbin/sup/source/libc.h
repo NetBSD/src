@@ -1,4 +1,4 @@
-/*	$NetBSD: libc.h,v 1.8 2009/01/15 15:58:42 christos Exp $	*/
+/*	$NetBSD: libc.h,v 1.9 2011/03/16 20:15:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -152,4 +152,8 @@ extern long atot(const char*);
 #if defined(c_plusplus)
 typedef int (*PFI2)(...);
 #endif /* c_plusplus */
+
+#ifndef __UNCONST
+#define __UNCONST(a)	(void *)(intptr_t)(a)
+#endif
 #endif	/* not _LIBC_H_ */
