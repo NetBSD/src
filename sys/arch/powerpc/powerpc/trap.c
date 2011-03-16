@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.138 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.139 2011/03/16 21:15:30 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.138 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2011/03/16 21:15:30 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -96,8 +96,8 @@ trap(struct trapframe *tf)
 
 	ci->ci_ev_traps.ev_count++;
 
-	KASSERTMSG(!usertrap || tf == trapframe(l),
-	    ("trap: tf=%p is invalid: trapframe(%p)=%p", tf, l, trapframe(l)));
+	KASSERTMSG(!usertrap || tf == l->l_md.md_utf,
+	    ("trap: tf=%p is invalid: trapframe(%p)=%p", tf, l, l->l_md.md_utf));
 
 	if (usertrap) {
 		type |= EXC_USER;
@@ -914,9 +914,9 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 void
 startlwp(void *arg)
 {
-	ucontext_t *uc = arg;
-	lwp_t *l = curlwp;
-	struct trapframe *tf = trapframe(l);
+	ucontext_t * const uc = arg;
+	lwp_t * const l = curlwp;
+	struct trapframe * const tf = l->l_md.md_utf;
 	int error;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
@@ -929,7 +929,7 @@ startlwp(void *arg)
 void
 upcallret(struct lwp *l)
 {
-        struct trapframe *tf = trapframe(l);
+        struct trapframe * const tf = l->l_md.md_utf;
 
 	KERNEL_UNLOCK_LAST(l);
 	userret(l, tf);
