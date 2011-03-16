@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.17 2011/03/16 03:49:53 mrg Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.18 2011/03/16 05:49:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,21 +49,10 @@
  */
 
 /* iommmu registers */
-struct iommureg_old {
-	volatile uint64_t	iommu_cr;	/* IOMMU control register */
-	volatile uint64_t	iommu_tsb;	/* IOMMU TSB base register */
-	volatile uint64_t	iommu_flush;	/* IOMMU flush register */
-};
-
 struct iommureg {
-	volatile uint64_t	iommu_cr;	/* IOMMU control register */
-	volatile uint64_t	iommu_tsb;	/* IOMMU TSB base register */
-	volatile uint64_t	iommu_flush;	/* IOMMU flush register */
-	volatile u_int64_t	iommu_ctxflush;
-	volatile u_int64_t	iommu_reserved[28];
-	volatile u_int64_t	iommu_cache_flush;
-	volatile u_int64_t	iommu_cache_invalidate;
-	volatile u_int64_t	iommu_reserved2[30];
+	uint64_t	iommu_cr;	/* IOMMU control register */
+	uint64_t	iommu_tsb;	/* IOMMU TSB base register */
+	uint64_t	iommu_flush;	/* IOMMU flush register */
 };
 
 /* streaming buffer registers */
@@ -75,7 +64,6 @@ struct iommu_strbuf {
 
 #define	IOMMUREG(x)	(offsetof(struct iommureg, x))
 #define	STRBUFREG(x)	(offsetof(struct iommu_strbuf, x))
-
 /* streaming buffer control register */
 #define STRBUF_EN	0x000000000000000001LL
 #define STRBUF_D	0x000000000000000002LL
