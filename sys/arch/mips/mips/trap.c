@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.228 2011/03/15 07:39:23 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.229 2011/03/16 15:14:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.228 2011/03/15 07:39:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.229 2011/03/16 15:14:08 tsutsui Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -619,6 +619,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 #if defined(FPEMUL)
 		mips_emul_inst(status, cause, pc, utf);
 #elif !defined(NOFPU)
+		utf->tf_regs[_R_CAUSE] = cause;
 		mips_fpu_trap(pc, utf);
 #endif
 		userret(l);
