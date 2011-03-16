@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusreg.h,v 1.8 2006/02/13 21:47:12 cdi Exp $ */
+/*	$NetBSD: sbusreg.h,v 1.9 2011/03/16 03:51:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -94,7 +94,7 @@ struct sysioreg {
 
 	uint64_t	pad3[117];
 
-	struct iommureg sys_iommu;							/* 1fe.0000.2400,2410 */
+	struct iommureg_old	sys_iommu;						/* 1fe.0000.2400,2410 */
 
 	uint64_t	pad4[125];
 
