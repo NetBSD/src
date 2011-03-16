@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.46 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.47 2011/03/16 21:15:30 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -64,13 +64,13 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.46 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.47 2011/03/16 21:15:30 matt Exp $");
 
 void
 child_return(void *arg)
 {
 	struct lwp * const l = arg;
-	struct trapframe * const tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 
 	tf->tf_fixreg[FIRSTARG] = 0;
 	tf->tf_fixreg[FIRSTARG + 1] = 1;
