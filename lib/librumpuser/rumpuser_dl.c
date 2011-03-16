@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.5 2010/12/30 15:47:30 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.6 2011/03/16 11:44:01 njoly Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.5 2010/12/30 15:47:30 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.6 2011/03/16 11:44:01 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -123,17 +123,6 @@ do {									\
 	}								\
 } while (/*CONSTCOND*/0)
 
-#define GETVECWORDn(base, n, result)					\
-do {									\
-	if (eident == ELFCLASS32) {					\
-		Elf32_Word *vec = base;					\
-		result = vec[n];					\
-	} else {							\
-		Elf64_Word *vec = base;					\
-		result = vec[n];					\
-	}								\
-} while (/*CONSTCOND*/0)
-
 #define SYM_GETSIZE() ((eident==ELFCLASS32)?sizeof(Elf32_Sym):sizeof(Elf64_Sym))
 
 static int
@@ -177,7 +166,7 @@ getsymbols(struct link_map *map)
 	for (i = 0; ed_tag != DT_NULL;) {
 		uintptr_t edptr;
 		size_t edval;
-		void *hashtab;
+		Elf_Symindx *hashtab;
 
 		switch (ed_tag) {
 		case DT_SYMTAB:
@@ -194,8 +183,8 @@ getsymbols(struct link_map *map)
 			break;
 		case DT_HASH:
 			DYNn_GETMEMBER(ed_base, i, d_un.d_ptr, edptr);
-			hashtab = map->l_addr + edptr;
-			GETVECWORDn(hashtab, 1, cursymcount);
+			hashtab = (Elf_Symindx *)(map->l_addr + edptr);
+			cursymcount = hashtab[1];
 			break;
 		case DT_SYMENT:
 			DYNn_GETMEMBER(ed_base, i, d_un.d_val, edval);
