@@ -1,4 +1,4 @@
-/*	$NetBSD: t_full.c,v 1.6 2011/03/06 10:33:40 pooka Exp $	*/
+/*	$NetBSD: t_full.c,v 1.7 2011/03/17 19:48:37 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -57,13 +57,6 @@ fillfs(const atf_tc_t *tc, const char *mp)
 	int fd, i = 0;
 
 	if (FSTYPE_P2K_FFS(tc) || FSTYPE_PUFFS(tc) || FSTYPE_RUMPFS(tc)) {
-		/*
-		 * XXX: explicitly unmount to prevent some race.
-		 * temporary hack, fix properly
-		 */
-		if (FSTYPE_P2K_FFS(tc)) {
-			puffs_fstest_unmount(tc, mp, MNT_FORCE);
-		}
 		atf_tc_skip("fs does not support explicit block allocation "
 		    "(GOP_ALLOC)");
 	}
