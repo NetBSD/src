@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.21 2011/03/17 14:39:06 vanhu Exp $	*/
+/*	$NetBSD: oakley.c,v 1.22 2011/03/17 14:42:58 vanhu Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -2288,7 +2288,7 @@ oakley_append_rmconf_cr(rmconf, ctx)
 	     s_isakmp_certtype(buf->v[0]));
 	plogdump(LLV_DEBUG, buf->v, buf->l);
 
-	actx->plist = isakmp_plist_append(actx->plist, buf, ISAKMP_NPTYPE_CR);
+	actx->plist = isakmp_plist_append_full(actx->plist, buf, ISAKMP_NPTYPE_CR, 1);
 
 err:
 	vfree(asn1dn);
