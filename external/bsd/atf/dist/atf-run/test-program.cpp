@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -724,10 +724,9 @@ impl::run_test_case(const atf::fs::path& executable,
         UNREACHABLE;
     }
 
-    ::killpg(child_pid, SIGTERM);
+    ::killpg(child_pid, SIGKILL);
     mux.flush();
     atf::process::status status = child.wait();
-    ::killpg(child_pid, SIGKILL);
 
     std::string reason;
 
