@@ -1,10 +1,10 @@
-# $NetBSD: t_df_1_noopen.sh,v 1.2 2010/12/31 08:52:32 pooka Exp $
+# $NetBSD: t_df_1_noopen.sh,v 1.3 2011/03/17 15:59:32 skrll Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
-# by
+# by Nick Hudson.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
