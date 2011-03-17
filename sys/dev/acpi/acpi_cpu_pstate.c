@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.45 2011/03/05 09:47:19 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.46 2011/03/17 15:59:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.45 2011/03/05 09:47:19 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.46 2011/03/17 15:59:36 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -56,7 +56,6 @@ static void		 acpicpu_pstate_reset(struct acpicpu_softc *);
 static void		 acpicpu_pstate_bios(void);
 static void		 acpicpu_pstate_set_xcall(void *, void *);
 
-static uint32_t acpicpu_pstate_saved = 0;
 extern struct acpicpu_softc **acpicpu_sc;
 
 void
@@ -216,14 +215,15 @@ acpicpu_pstate_suspend(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 	struct acpicpu_pstate *ps = NULL;
+	struct cpu_info *ci = sc->sc_ci;
+	uint64_t xc;
 	int32_t i;
 
+	/*
+	 * Reset any dynamic limits.
+	 */
 	mutex_enter(&sc->sc_mtx);
 	acpicpu_pstate_reset(sc);
-	mutex_exit(&sc->sc_mtx);
-
-	if (acpicpu_pstate_saved != 0)
-		return true;
 
 	/*
 	 * Following design notes for Windows, we set the highest
@@ -233,6 +233,8 @@ acpicpu_pstate_suspend(device_t self)
 	 *	Microsoft Corporation: Windows Native Processor
 	 *	Performance Control. Version 1.1a, November, 2002.
 	 */
+	sc->sc_pstate_saved = sc->sc_pstate_current;
+
 	for (i = sc->sc_pstate_count - 1; i >= 0; i--) {
 
 		if (sc->sc_pstate[i].ps_freq != 0) {
@@ -241,17 +243,16 @@ acpicpu_pstate_suspend(device_t self)
 		}
 	}
 
+	mutex_exit(&sc->sc_mtx);
+
 	if (__predict_false(ps == NULL))
 		return true;
 
-	mutex_enter(&sc->sc_mtx);
-	acpicpu_pstate_saved = sc->sc_pstate_current;
-	mutex_exit(&sc->sc_mtx);
-
-	if (acpicpu_pstate_saved == ps->ps_freq)
+	if (sc->sc_pstate_saved == ps->ps_freq)
 		return true;
 
-	acpicpu_pstate_set(sc->sc_ci, ps->ps_freq);
+	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &ps->ps_freq, NULL, ci);
+	xc_wait(xc);
 
 	return true;
 }
@@ -260,11 +261,11 @@ bool
 acpicpu_pstate_resume(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
+	uint32_t freq = sc->sc_pstate_saved;
+	uint64_t xc;
 
-	if (acpicpu_pstate_saved != 0) {
-		acpicpu_pstate_set(sc->sc_ci, acpicpu_pstate_saved);
-		acpicpu_pstate_saved = 0;
-	}
+	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &freq, NULL, sc->sc_ci);
+	xc_wait(xc);
 
 	return true;
 }
