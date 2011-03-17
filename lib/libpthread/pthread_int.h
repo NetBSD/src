@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.77 2011/03/16 12:39:44 joerg Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.78 2011/03/17 00:43:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -259,7 +259,11 @@ int	pthread__find(pthread_t) PTHREAD_HIDE;
 static inline pthread_t __constfunc
 pthread__self(void)
 {
-	struct tls_tcb *tcb = __lwp_getprivate_fast();
+#ifdef __HAVE___LWP_GETTCB_FAST
+	struct tls_tcb * const tcb = __lwp_gettcb_fast();
+#else
+	struct tls_tcb * const tcb = __lwp_getprivate_fast();
+#endif
 	return (pthread_t)tcb->tcb_pthread;
 }
 #elif 0 && defined(__HAVE___LWP_GETPRIVATE_FAST)
