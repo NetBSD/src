@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1301 2011/03/10 13:16:57 jmmv Exp $
+# $NetBSD: mi,v 1.1302 2011/03/17 02:35:28 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2133,7 +2133,7 @@
 ./usr/share/man/cat8/chat.0			man-ppp-catman		.cat
 ./usr/share/man/cat8/chown.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/chroot.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/chrtbl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/chrtbl.0			man-obsolete		obsolete
 ./usr/share/man/cat8/cleanup.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/clri.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/cnwctl.0			man-sysutil-catman	.cat
@@ -4770,7 +4770,7 @@
 ./usr/share/man/html8/chat.html			man-ppp-htmlman		html
 ./usr/share/man/html8/chown.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/chroot.html		man-sysutil-htmlman	html
-./usr/share/man/html8/chrtbl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/chrtbl.html		man-obsolete		obsolete
 ./usr/share/man/html8/cleanup.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/clri.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/cnwctl.html		man-sysutil-htmlman	html
@@ -7457,7 +7457,7 @@
 ./usr/share/man/man8/chat.8			man-ppp-man		.man
 ./usr/share/man/man8/chown.8			man-sysutil-man		.man
 ./usr/share/man/man8/chroot.8			man-sysutil-man		.man
-./usr/share/man/man8/chrtbl.8			man-sysutil-man		.man
+./usr/share/man/man8/chrtbl.8			man-obsolete		obsolete
 ./usr/share/man/man8/cleanup.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/clri.8			man-sysutil-man		.man
 ./usr/share/man/man8/cnwctl.8			man-sysutil-man		.man

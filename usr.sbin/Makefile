@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.253 2011/03/06 17:08:42 bouyer Exp $
+#	$NetBSD: Makefile,v 1.254 2011/03/17 02:35:28 joerg Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
 
 SUBDIR=	ac accton acpitools altq apm apmd arp bad144 bootp \
 	btattach btconfig btdevctl bthcid btpand catman \
-	chroot chrtbl cnwctl cpuctl crash dev_mkdb \
+	chroot cnwctl cpuctl crash dev_mkdb \
 	dhcp diskpart dumpfs dumplfs edquota eeprom \
 	envstat eshconfig etcupdate extattrctl flashctl fssconfig fusermount \
 	fwctl gpioctl grfconfig gspa hdaudioctl ifwatchd inetd \

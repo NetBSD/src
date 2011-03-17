@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1599 2011/03/14 13:53:55 njoly Exp $
+#	$NetBSD: mi,v 1.1600 2011/03/17 02:35:27 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3640,7 +3640,7 @@
 ./usr/libdata/debug/usr/sbin/chat.debug		comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/chown.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/chroot.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/chrtbl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/chrtbl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/cnwctl.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cpuctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/crash.debug	comp-sysutil-debug	debug
