@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.37 2011/03/05 09:47:19 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.38 2011/03/17 15:59:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -210,6 +210,7 @@ struct acpicpu_softc {
 	uint64_t		 sc_pstate_aperf;	/* ACPICPU_FLAG_P_HW */
 	uint64_t		 sc_pstate_mperf;	/* ACPICPU_FLAG_P_HW*/
 	uint32_t		 sc_pstate_current;
+	uint32_t		 sc_pstate_saved;
 	uint32_t		 sc_pstate_count;
 	uint32_t		 sc_pstate_max;
 	uint32_t		 sc_pstate_min;
