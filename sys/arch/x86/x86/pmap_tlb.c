@@ -1,11 +1,11 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.4 2011/03/08 23:41:09 rmind Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.5 2011/03/17 04:46:29 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+ * by Andrew Doran and Mindaugas Rasiukevicius.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,12 +35,12 @@
  * TLB shootdowns are hard interrupts that operate outside the SPL framework:
  * They do not need to be blocked, provided that the pmap module gets the
  * order of events correct.  The calls are made by poking the LAPIC directly.
- * The stub to handle the interrupts is short and does one of the following:
- * invalidate a set of pages, all user TLB entries or the entire TLB.
+ * The interrupt handler is short and does one of the following:  invalidate
+ * a set of pages, all user TLB entries or the entire TLB.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.4 2011/03/08 23:41:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.5 2011/03/17 04:46:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,11 +57,38 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.4 2011/03/08 23:41:09 rmind Exp $
 #include <x86/i82489var.h>
 
 /*
+ * TLB shootdown structures.
+ */
+
+typedef struct {
+#ifdef _LP64
+	uintptr_t		tp_va[14];	/* whole struct: 128 bytes */
+#else
+	uintptr_t		tp_va[13];	/* whole struct: 64 bytes */
+#endif
+	uint16_t		tp_count;
+	uint16_t		tp_pte;
+	uint32_t		tp_cpumask;
+	uint32_t		tp_usermask;
+} pmap_tlb_packet_t;
+
+/* No more than N seperate invlpg. */
+#define	TP_MAXVA		6
+
+typedef struct {
+	volatile uint32_t	tm_pending;
+	volatile uint32_t	tm_gen;
+	uint32_t		tm_usergen;
+	uint32_t		tm_globalgen;
+	char			tm_pad[64 - sizeof(uintptr_t) * 4];
+} pmap_tlb_mailbox_t;
+
+/*
  * TLB shootdown state.
  */
 static struct evcnt		pmap_tlb_evcnt		__cacheline_aligned;
-struct pmap_tlb_packet		pmap_tlb_packet		__cacheline_aligned;
-struct pmap_tlb_mailbox		pmap_tlb_mailbox	__cacheline_aligned;
+static pmap_tlb_packet_t	pmap_tlb_packet		__cacheline_aligned;
+static pmap_tlb_mailbox_t	pmap_tlb_mailbox	__cacheline_aligned;
 
 /*
  * TLB shootdown statistics.
@@ -93,15 +120,16 @@ static const char *		tlbstat_name[ ] = {
 void
 pmap_tlb_init(void)
 {
-	int i = 0;
 
-	memset(&pmap_tlb_packet, 0, sizeof(struct pmap_tlb_packet));
-	memset(&pmap_tlb_mailbox, 0, sizeof(struct pmap_tlb_mailbox));
+	memset(&pmap_tlb_packet, 0, sizeof(pmap_tlb_packet_t));
+	memset(&pmap_tlb_mailbox, 0, sizeof(pmap_tlb_mailbox_t));
 
 	evcnt_attach_dynamic(&pmap_tlb_evcnt, EVCNT_TYPE_INTR,
 	    NULL, "TLB", "shootdown");
 
 #ifdef TLBSTATS
+	int i;
+
 	for (i = 0; i < TLBSHOOT__MAX; i++) {
 		evcnt_attach_dynamic(&tlbstat_local[i], EVCNT_TYPE_MISC,
 		    NULL, "tlbshoot local", tlbstat_name[i]);
@@ -148,13 +176,37 @@ pmap_tlbstat_count(struct pmap *pm, vaddr_t va, tlbwhy_t why)
 #endif
 }
 
+static inline void
+pmap_tlb_invalidate(pmap_tlb_packet_t *tp)
+{
+	int i;
+
+	/* Find out what we need to invalidate. */
+	if (tp->tp_count == (uint16_t)-1) {
+		u_int egen = uvm_emap_gen_return();
+		if (tp->tp_pte & PG_G) {
+			/* Invalidating user and kernel TLB entries. */
+			tlbflushg();
+		} else {
+			/* Invalidating user TLB entries only. */
+			tlbflush();
+		}
+		uvm_emap_update(egen);
+	} else {
+		/* Invalidating a single page or a range of pages. */
+		for (i = tp->tp_count - 1; i >= 0; i--) {
+			pmap_update_pg(tp->tp_va[i]);
+		}
+	}
+}
+
 /*
  * pmap_tlb_shootdown: invalidate a page on all CPUs using pmap 'pm'
  */
 void
 pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 {
-	struct pmap_tlb_packet *tp;
+	pmap_tlb_packet_t *tp;
 	int s;
 
 	KASSERT((pte & PG_G) == 0 || pm == pmap_kernel());
@@ -175,7 +227,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 	 * Add the shootdown operation to our pending set.
 	 */ 
 	s = splvm();
-	tp = (struct pmap_tlb_packet *)curcpu()->ci_pmap_data;
+	tp = (pmap_tlb_packet_t *)curcpu()->ci_pmap_data;
 
 	/* Whole address flush will be needed if PG_G is set. */
 	CTASSERT(PG_G == (uint16_t)PG_G);
@@ -215,18 +267,24 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 void
 pmap_tlb_shootnow(void)
 {
-	struct pmap_tlb_packet *tp;
-	struct pmap_tlb_mailbox *tm;
+	pmap_tlb_packet_t *tp;
+	pmap_tlb_mailbox_t *tm;
 	struct cpu_info *ci;
 	uint32_t remote;
 	uintptr_t gen;
-	int s, i, count;
+	int s;
 
 	KASSERT(kpreempt_disabled());
 
-	s = splvm();
 	ci = curcpu();
-	tp = (struct pmap_tlb_packet *)ci->ci_pmap_data;
+	tp = (pmap_tlb_packet_t *)ci->ci_pmap_data;
+
+	/* Pre-check first. */
+	if (tp->tp_count == 0) {
+		return;
+	}
+
+	s = splvm();
 	if (tp->tp_count == 0) {
 		splx(s);
 		return;
@@ -239,7 +297,7 @@ pmap_tlb_shootnow(void)
 	if (remote != 0) {
 		CPU_INFO_ITERATOR cii;
 		struct cpu_info *lci;
-		int err;
+		int count, err;
 		/*
 		 * Gain ownership of the shootdown mailbox.  We must stay
 		 * at IPL_VM once we own it or could deadlock against an
@@ -298,19 +356,7 @@ pmap_tlb_shootnow(void)
 	 * perform local shootdowns and do not forget to update emap gen.
 	 */
 	if ((tp->tp_cpumask & ci->ci_cpumask) != 0) {
-		if (tp->tp_count == (uint16_t)-1) {
-			u_int egen = uvm_emap_gen_return();
-			if ((tp->tp_pte & PG_G) != 0) {
-				tlbflushg();
-			} else {
-				tlbflush();
-			}
-			uvm_emap_update(egen);
-		} else {
-			for (i = tp->tp_count - 1; i >= 0; i--) {
-				pmap_update_pg(tp->tp_va[i]);
-			}
-		}
+		pmap_tlb_invalidate(tp);
 	}
 
 	/*
@@ -332,9 +378,43 @@ pmap_tlb_shootnow(void)
 	 * processed by remote CPUs.
 	 */
 	if (remote != 0 && tm->tm_pending != 0) {
-		count = SPINLOCK_BACKOFF_MIN;
+		int count = SPINLOCK_BACKOFF_MIN;
 		while (tm->tm_pending != 0 && tm->tm_gen == gen) {
 			SPINLOCK_BACKOFF(count);
 		}
 	}
+}
+
+/*
+ * pmap_tlb_ipi: pmap shootdown interrupt handler to invalidate TLB entries.
+ *
+ * => Called from IPI only.
+ */
+void
+pmap_tlb_intr(void)
+{
+	pmap_tlb_packet_t *tp = &pmap_tlb_packet;
+	pmap_tlb_mailbox_t *tm;
+	struct cpu_info *ci;
+	uint32_t cm;
+
+	pmap_tlb_invalidate(tp);
+
+	/*
+	 * Check the current TLB state.  If we do not want further
+	 * invalidations for this pmap, then take the CPU out of
+	 * the pmap's bitmask.
+	 */
+	ci = curcpu();
+	cm = ci->ci_cpumask;
+	if (ci->ci_tlbstate == TLBSTATE_LAZY && (tp->tp_usermask & cm) != 0) {
+		struct pmap *pm = ci->ci_pmap;
+
+		atomic_and_32(&pm->pm_cpus, ~cm);
+		ci->ci_tlbstate = TLBSTATE_STALE;
+	}
+
+	/* Ack the request. */
+	tm = &pmap_tlb_mailbox;
+	atomic_and_32(&tm->tm_pending, ~cm);
 }
