@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105.2.12 2011/03/08 23:26:35 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.13 2011/03/17 04:46:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.12 2011/03/08 23:26:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.13 2011/03/17 04:46:29 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4301,9 +4301,7 @@ pmap_update(struct pmap *pmap)
 	 * Initiate any pending TLB shootdowns.  Wait for them to
 	 * complete before returning control to the caller.
 	 */
-	if (((struct pmap_tlb_packet *)curcpu()->ci_pmap_data)->tp_count) {
-		pmap_tlb_shootnow();
-	}
+	pmap_tlb_shootnow();
 	KPREEMPT_ENABLE(l);
 
 	/*

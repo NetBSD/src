@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.69.2.3 2011/03/05 20:52:29 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.69.2.4 2011/03/17 04:46:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69.2.3 2011/03/05 20:52:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69.2.4 2011/03/17 04:46:28 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -354,7 +354,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_init_tss(ci);
 	} else {
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
-		cpus_running = (1 << cpu_index(ci));
 	}
 
 	ci->ci_cpumask = (1 << cpu_index(ci));

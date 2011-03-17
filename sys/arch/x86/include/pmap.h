@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29.2.8 2011/03/08 23:27:50 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.2.9 2011/03/17 04:46:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -266,6 +266,7 @@ typedef enum tlbwhy {
 void		pmap_tlb_init(void);
 void		pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, tlbwhy_t);
 void		pmap_tlb_shootnow(void);
+void		pmap_tlb_intr(void);
 
 #define	__HAVE_PMAP_EMAP
 
@@ -458,33 +459,6 @@ bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
-
-/*
- * TLB shootdown structures.
- */
-
-struct pmap_tlb_packet {
-#ifdef _LP64
-	uintptr_t		tp_va[14];	/* whole struct: 128 bytes */
-#else
-	uintptr_t		tp_va[13];	/* whole struct: 64 bytes */
-#endif
-	uint16_t		tp_count;
-	uint16_t		tp_pte;
-	uint32_t		tp_cpumask;
-	uint32_t		tp_usermask;
-};
-
-/* No more than N seperate invlpg. */
-#define	TP_MAXVA		6
-
-struct pmap_tlb_mailbox {
-	volatile uint32_t	tm_pending;
-	volatile uint32_t	tm_gen;
-	uint32_t		tm_usergen;
-	uint32_t		tm_globalgen;
-	char			tm_pad[64 - sizeof(uintptr_t) * 4];
-};
 
 #endif /* _KERNEL */
 

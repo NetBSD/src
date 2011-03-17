@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.53.2.3 2011/03/05 20:50:41 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.53.2.4 2011/03/17 04:46:29 rmind Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.53.2.3 2011/03/05 20:50:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.53.2.4 2011/03/17 04:46:29 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -187,91 +187,12 @@ IDTVEC_END(resume_lapic_ipi)
  * TLB shootdown handler.
  */
 IDTVEC(intr_lapic_tlb)
-	/* Save state and ack the interrupt. */
-	pushl	%eax
-	pushl	%ebx
-	pushl	%ecx
-	pushl	%edx
-	pushl	%ds
-	pushl	%fs
-	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
-	movl	$GSEL(GCPU_SEL, SEL_KPL), %edx
-	mov	%ax, %ds
-	mov	%dx, %fs
+	pushl	$0
+	pushl	$T_ASTFLT
+	INTRENTRY
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
-
-	/* Find out what we need to invalidate. */
-	leal	_C_LABEL(pmap_tlb_packet), %ebx
-	movswl	TP_COUNT(%ebx), %ecx
-	cmpl	$-1, %ecx
-	je	4f
-	leal	TP_VA(%ebx), %edx
-1:
-	/* Invalidate a single page or a range of pages. */
-	movl	(%edx), %eax
-	invlpg	(%eax)
-	addl	$4, %edx
-	decl	%ecx
-	jg	1b
-2:
-	/*
-	 * Check the current TLB state.  If we do not want further
-	 * invalidations for this pmap, then take the CPU out of
-	 * the pmap's bitmask.
-	 */
-	movl	CPUVAR(CPUMASK), %eax
-	cmpl	$TLBSTATE_LAZY, CPUVAR(TLBSTATE)
-	jne	3f
-	testl	%eax, TP_USERMASK(%ebx)
-	jz	3f
-	movl	CPUVAR(PMAP), %edx
-	movl	%eax, %ecx
-	notl	%ecx
-	lock
-	andl	%ecx, PM_CPUS(%edx)
-	movl	$TLBSTATE_STALE, CPUVAR(TLBSTATE)
-3:
-	/* Ack the request, restore state & return. */
-	lock
-	xorl	%eax, _C_LABEL(pmap_tlb_mailbox)+TM_PENDING
-	popl	%fs
-	popl	%ds
-	popl	%edx
-	popl	%ecx
-	popl	%ebx
-	popl	%eax
-	iret
-4:
-	/*
-	 * Note that caller-save registers might be modified (all saved in the
-	 * beginning).  Only %ebx value must be preserved for the 2b context.
-	 */
-
-	/* Get the emap generation number. */
-	call	_C_LABEL(uvm_emap_gen_return)
-	movl	%eax, %ecx
-
-	/* Which entries we are invalidating? */
-	testw	$PG_G, TP_PTE(%ebx)
-	jnz	5f
-
-	/* a) Invalidating user TLB entries only. */
-	movl	%cr3, %eax
-	movl	%eax, %cr3
-	jmp	6f
-5:
-	/* b) Invalidating user and kernel TLB entries. */
-	movl	%cr4, %eax
-	movl	%eax, %edx
-	andl	$~CR4_PGE, %edx
-	movl	%edx, %cr4
-	movl	%eax, %cr4
-6:
-	/* Perform emap update, pass the generation number. */
-	pushl	%ecx
-	call	_C_LABEL(uvm_emap_update)
-	addl	$4, %esp
-	jmp	2b
+	call	_C_LABEL(pmap_tlb_intr)
+	INTRFASTEXIT
 IDTVEC_END(intr_lapic_tlb)
 
 #if defined(DDB)

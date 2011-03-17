@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.43.4.3 2011/03/05 20:49:15 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.43.4.4 2011/03/17 04:46:29 rmind Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -136,8 +136,6 @@ define	KERNBASE		KERNBASE
 define	KERNTEXTOFF_LO		KERNTEXTOFF_LO
 define	KERNTEXTOFF		KERNTEXTOFF
 
-define	PG_G			PG_G
-
 define	NBPG			NBPG
 
 define	L4_SLOT_KERNBASE	L4_SLOT_KERNBASE
@@ -230,8 +228,6 @@ define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
 define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
 define	TLBSTATE_VALID		TLBSTATE_VALID
-define	TLBSTATE_LAZY		TLBSTATE_LAZY
-define	TLBSTATE_STALE		TLBSTATE_STALE
 define	CPU_INFO_TLB_EVCNT	offsetof(struct cpu_info, ci_tlb_evcnt)
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_CURLDT		offsetof(struct cpu_info, ci_curldt)
@@ -351,14 +347,6 @@ define	RW_HAS_WAITERS		RW_HAS_WAITERS
 define	RW_THREAD		RW_THREAD
 define	RW_READER		RW_READER
 define	RW_WRITER		RW_WRITER
-
-define	TM_PENDING		offsetof(struct pmap_tlb_mailbox, tm_pending)
-define	TP_COUNT		offsetof(struct pmap_tlb_packet, tp_count)
-define	TP_VA			offsetof(struct pmap_tlb_packet, tp_va)
-define	TP_USERMASK		offsetof(struct pmap_tlb_packet, tp_usermask)
-define	TP_PTE			offsetof(struct pmap_tlb_packet, tp_pte)
-
-define	PM_CPUS			offsetof(struct pmap, pm_cpus)
 
 define	EV_COUNT		offsetof(struct evcnt, ev_count)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.33.2.3 2011/03/05 20:49:15 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.33.2.4 2011/03/17 04:46:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -479,97 +479,12 @@ IDTVEC(resume_lapic_ltimer)
  * TLB shootdown handler.
  */
 IDTVEC(intr_lapic_tlb)
-	/* Save state and ack the interrupt. */
-	testq	$SEL_UPL,8(%rsp)
-	jz	0f
-	swapgs
-0:
-	pushq	%rax
-	pushq	%rbx
-	pushq	%rdi
-	pushq	%rsi
-	pushq	%rdx
-	pushq	%rcx
-	pushq	%r8
-	pushq	%r9
+	pushq	$0
+	pushq	$T_ASTFLT
+	INTRENTRY
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
-
-	/* Find out what we need to invalidate. */
-	leaq	_C_LABEL(pmap_tlb_packet)(%rip), %rbx
-	movswq	TP_COUNT(%rbx), %rcx
-	cmpq	$-1, %rcx
-	je	5f
-	leaq	TP_VA(%rbx), %rdx
-1:
-	/* Invalidate a single page or a range of pages. */
-	movq	(%rdx), %rax
-	invlpg	(%rax)
-	addq	$8, %rdx
-	decq	%rcx
-	jg	1b
-2:
-	/*
-	 * Check the current TLB state.  If we do not want further
-	 * invalidations for this pmap, then take the CPU out of
-	 * the pmap's bitmask.
-	 */
-	movl	CPUVAR(CPUMASK), %eax
-	cmpl	$TLBSTATE_LAZY, CPUVAR(TLBSTATE)
-	jne	3f
-	testl	%eax, TP_USERMASK(%rbx)
-	jz	3f
-	movl	CPUVAR(PMAP), %edx
-	movl	%eax, %ecx
-	notl	%ecx
-	lock
-	andl	%ecx, PM_CPUS(%edx)
-	movl	$TLBSTATE_STALE, CPUVAR(TLBSTATE)
-3:
-	/* Ack the request, restore state & return. */
-	lock
-	xorl	%eax, _C_LABEL(pmap_tlb_mailbox)+TM_PENDING
-	popq	%r9
-	popq	%r8
-	popq	%rcx
-	popq	%rdx
-	popq	%rsi
-	popq	%rdi
-	popq	%rbx
-	popq	%rax
-	testq	$SEL_UPL, 8(%rsp)
-	jz	4f
-	swapgs
-4:
-	iretq
-5:
-	/*
-	 * Note that caller-save registers might be modified (all saved in the
-	 * beginning).  Only %rbx value must be preserved for the 2f context.
-	 */
-
-	/* Get the emap generation number. */
-	callq	_C_LABEL(uvm_emap_gen_return)
-	movq	%rax, %rdi
-
-	/* Which entries we are invalidating? */
-	testw	$PG_G, TP_PTE(%rbx)
-	jnz	6f
-
-	/* a) Invalidating user TLB entries only. */
-	movq	%cr3, %rax
-	movq	%rax, %cr3
-	jmp	7f
-6:
-	/* b) Invalidating user and kernel TLB entries. */
-	movq	%cr4, %rax
-	movq	%rax, %rdx
-	andq	$~CR4_PGE, %rdx
-	movq	%rdx, %cr4
-	movq	%rax, %cr4
-7:
-	/* Perform emap update, pass the generation number. */
-	callq	_C_LABEL(uvm_emap_update)
-	jmp	2b
+	callq	_C_LABEL(pmap_tlb_intr)
+	INTRFASTEXIT
 
 #endif /* !XEN */
 
