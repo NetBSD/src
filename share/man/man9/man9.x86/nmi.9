@@ -1,4 +1,4 @@
-.\"     $NetBSD: nmi.9,v 1.2 2010/08/21 10:38:51 wiz Exp $
+.\"     $NetBSD: nmi.9,v 1.3 2011/03/17 10:02:54 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 9, 2010
+.Dd March 17, 2011
 .Dt NMI 9 x86
 .Os
 .Sh NAME
@@ -115,15 +115,6 @@ returned by
 .Fn nmi_establish .
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing the
-.Nm
-interface
-can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The
 .Nm
 interface is implemented within the file
