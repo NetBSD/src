@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.45 2011/03/16 20:17:00 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.46 2011/03/17 19:43:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -495,9 +495,11 @@ chldsig(int snum __unused)
 		if (kill(pid, 0) == -1)
 			switch (errno) {
 			case ESRCH:
-				if (nchildren == 0)
+				if (nchildren == 0) {
 					logerr("no children but pid %jd\n",
 					    (intmax_t)pid);
+					break;
+				}
 				nchildren--;
 				break;
 			default:
