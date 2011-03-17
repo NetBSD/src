@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.3 2011/03/12 07:52:37 matt Exp $	*/
+/*	$NetBSD: tls.c,v 1.4 2011/03/17 22:13:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.3 2011/03/12 07:52:37 matt Exp $");
+__RCSID("$NetBSD: tls.c,v 1.4 2011/03/17 22:13:58 skrll Exp $");
 
 #include "namespace.h"
 
@@ -58,10 +58,19 @@ static size_t tls_size;
 static size_t tls_allocation;
 static void *initial_thread_tcb;
 
-__weak_alias(__tls_get_addr, 0)
+void * __libc_tls_get_addr(void);
+
+__weak_alias(__tls_get_addr, __libc_tls_get_addr)
 #ifdef __i386__
-__weak_alias(___tls_get_addr, 0)
+__weak_alias(___tls_get_addr, __libc_tls_get_addr)
 #endif
+
+void *
+__libc_tls_get_addr(void)
+{
+
+	abort();
+}
 
 __weak_alias(_rtld_tls_allocate, __libc_rtld_tls_allocate)
 
