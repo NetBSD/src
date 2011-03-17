@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1522 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1523 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -890,3 +890,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	x86: add TLS (thread locale storage) support.  [joerg 20110312
 	mips: add TLS (thread local storage) support.  [matt 20110314]
 	mips: add MIPS32R2 and MIPS64R2 support.  [matt 20110314]
+	hppa: add TLS support.  [skrll 20110317]
