@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.50 2011/03/04 09:28:34 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.51 2011/03/17 15:32:18 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.50 2011/03/04 09:28:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.51 2011/03/17 15:32:18 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -345,6 +345,11 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm, int i)
 
 		case ACPI_STATE_C1:
 
+			/*
+			 * If ACPI wants native access (FFH), but the
+			 * MD code does not support MONITOR/MWAIT, use
+			 * HLT for C1 and error out for higher C-states.
+			 */
 			if ((sc->sc_flags & ACPICPU_FLAG_C_FFH) == 0)
 				state.cs_method = ACPICPU_C_STATE_HALT;
 
