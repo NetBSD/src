@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.925 2011/03/10 13:16:57 jmmv Exp $
+# $NetBSD: mi,v 1.926 2011/03/17 02:35:27 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1130,7 +1130,7 @@
 ./usr/sbin/chat					base-ppp-bin
 ./usr/sbin/chown				base-sysutil-bin
 ./usr/sbin/chroot				base-sysutil-bin
-./usr/sbin/chrtbl				base-sysutil-bin
+./usr/sbin/chrtbl				base-obsolete		obsolete
 ./usr/sbin/cnwctl				base-netutil-bin
 ./usr/sbin/cpuctl				base-sysutil-bin
 ./usr/sbin/crash				base-sysutil-bin
