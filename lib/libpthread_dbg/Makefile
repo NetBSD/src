@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2007/08/16 01:09:50 ad Exp $
+#	$NetBSD: Makefile,v 1.8 2011/03/17 01:01:15 matt Exp $
 #
 
 WARNS=	2
@@ -31,6 +31,8 @@ assym.h: genassym.sh ${ARCHDIR}/genassym.cf
 	mv -f assym.h.tmp assym.h
 
 SRCS=	pthread_dbg.c 
+
+CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__
 
 INCS=	pthread_dbg.h
 INCSDIR=/usr/include
