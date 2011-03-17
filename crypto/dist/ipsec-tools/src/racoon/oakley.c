@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.20 2011/03/17 14:35:24 vanhu Exp $	*/
+/*	$NetBSD: oakley.c,v 1.21 2011/03/17 14:39:06 vanhu Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -1791,7 +1791,7 @@ oakley_check_certid(iph1)
 		return 0;
 
 	if (iph1->id_p == NULL || iph1->cert_p == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL, "no ID nor CERT found.\n");
+		plog(LLV_ERROR, LOCATION, iph1->remote, "no ID nor CERT found.\n");
 		return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 	}
 
@@ -1802,26 +1802,28 @@ oakley_check_certid(iph1)
 	case IPSECDOI_ID_DER_ASN1_DN:
 		name = eay_get_x509asn1subjectname(iph1->cert_p);
 		if (!name) {
-			plog(LLV_ERROR, LOCATION, NULL,
+			plog(LLV_ERROR, LOCATION, iph1->remote,
 				"failed to get subjectName\n");
 			return ISAKMP_NTYPE_INVALID_CERTIFICATE;
 		}
 		if (idlen != name->l) {
-			plog(LLV_ERROR, LOCATION, NULL,
+			plog(LLV_ERROR, LOCATION, iph1->remote,
 				"Invalid ID length in phase 1.\n");
 			vfree(name);
 			return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 		}
 		error = memcmp(id_b + 1, name->v, idlen);
-		vfree(name);
 		if (error != 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
+			plog(LLV_ERROR, LOCATION, iph1->remote,
 				"ID mismatched with ASN1 SubjectName.\n");
 			plogdump(LLV_DEBUG, id_b + 1, idlen);
 			plogdump(LLV_DEBUG, name->v, idlen);
-			if (iph1->rmconf->verify_identifier)
+			if (iph1->rmconf->verify_identifier) {
+				vfree(name);
 				return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
+			}
 		}
+		vfree(name);
 		return 0;
 	case IPSECDOI_ID_IPV4_ADDR:
 	case IPSECDOI_ID_IPV6_ADDR:
