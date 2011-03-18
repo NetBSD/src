@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.31 2011/03/16 14:47:34 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.32 2011/03/18 15:31:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.31 2011/03/16 14:47:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.32 2011/03/18 15:31:38 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -100,7 +100,7 @@ struct platform_clock vr_clock = {
 
 int	vrrtc_match(device_t, cfdata_t, void *);
 void	vrrtc_attach(device_t, device_t, void *);
-int	vrrtc_intr(void*, uint32_t, uint32_t);
+int	vrrtc_intr(void*, vaddr_t, uint32_t);
 void	vrrtc_dump_regs(struct vrrtc_softc *);
 
 CFATTACH_DECL_NEW(vrrtc, sizeof(struct vrrtc_softc),
@@ -221,7 +221,7 @@ vrrtc_attach(device_t parent, device_t self, void *aux)
 }
 
 int
-vrrtc_intr(void *arg, uint32_t pc, uint32_t status)
+vrrtc_intr(void *arg, vaddr_t pc, uint32_t status)
 {
 	struct vrrtc_softc *sc = arg;
 	struct clockframe cf;
