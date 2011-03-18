@@ -1,3 +1,4 @@
+/*	$NetBSD: nand_micron.c,v 1.3 2011/03/18 16:46:04 ahoka Exp $	*/
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
  *		      University of Szeged, Hungary
@@ -154,7 +155,7 @@ mt29fxgx_parameters(device_t self, struct nand_chip *chip,
 	chip->nc_size = MT29FxG_PAGESIZE * MT29FxG_BLOCK_PAGES *
 		dp->lun_blocks * dp->num_luns;
 
-	aprint_normal_dev(self, "%s %s, size %ldMB\n",
+	aprint_normal_dev(self, "%s %s, size %zuMB\n",
 		vendor, dp->name, chip->nc_size >> 20);
 
 	return 0;
