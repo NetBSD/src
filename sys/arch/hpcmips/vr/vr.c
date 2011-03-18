@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.63 2011/03/16 13:38:34 tsutsui Exp $	*/
+/*	$NetBSD: vr.c,v 1.64 2011/03/18 15:31:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.63 2011/03/16 13:38:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.64 2011/03/18 15:31:38 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -164,7 +164,7 @@ STATIC void vr_reboot(int, char *);
  * CPU interrupt dispatch table (HwInt[0:3])
  */
 STATIC int vr_null_handler(void *, uint32_t, uint32_t);
-STATIC int (*vr_intr_handler[4])(void *, uint32_t, uint32_t) = 
+STATIC int (*vr_intr_handler[4])(void *, vaddr_t, uint32_t) = 
 {
 	vr_null_handler,
 	vr_null_handler,
@@ -558,7 +558,7 @@ VR_INTR(int ppl, vaddr_t pc, uint32_t status)
 }
 
 void *
-vr_intr_establish(int line, int (*ih_fun)(void *, uint32_t, uint32_t),
+vr_intr_establish(int line, int (*ih_fun)(void *, vaddr_t, uint32_t),
     void *ih_arg)
 {
 
@@ -580,7 +580,7 @@ vr_intr_disestablish(void *ih)
 }
 
 int
-vr_null_handler(void *arg, uint32_t pc, uint32_t status)
+vr_null_handler(void *arg, vaddr_t pc, uint32_t status)
 {
 
 	printf("vr_null_handler\n");
