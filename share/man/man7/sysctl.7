@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.61 2011/02/02 09:07:32 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.62 2011/03/18 16:20:12 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd February 1, 2011
+.Dd March 18, 2011
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1085,7 +1085,7 @@ point, the file system type, and the number of entries.
 .It Li kern.veriexec.strict
 Controls the strict level of Veriexec.
 See
-.Xr security 8
+.Xr security 7
 for more information on each level's implications.
 .It Li kern.veriexec.verbose
 Controls the verbosity level of Veriexec.
@@ -2268,7 +2268,7 @@ Settings for PaX -- exploit mitigation features.
 For more information on any of the PaX features, please see
 .Xr paxctl 8
 and
-.Xr security 8 .
+.Xr security 7 .
 The available third and fourth level names are:
 .Bl -column "security.pax.segvguard.suspend_timeout" "integer" "Changeable" \
 -offset 2n
@@ -2371,7 +2371,7 @@ Intended use is to store values under
 .Xr sysctl 3 ,
 .Xr ipsec 4 ,
 .Xr tcp 4 ,
-.Xr security 8 ,
+.Xr security 7 ,
 .Xr sysctl 8
 .Sh HISTORY
 The
