@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2010/12/20 01:12:45 jakllsch Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2011/03/18 18:21:38 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -136,8 +136,11 @@ main(void)
 				 & X86_BP_FLAGS_NOMODULES);
 
 #ifndef SMALL
-	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF))
+	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
 		parsebootconf(BOOTCONF);
+	} else {
+		bootconf.timeout = boot_params.bp_timeout;
+	}
 
 	/*
 	 * If console set in boot.cfg, switch to it.
