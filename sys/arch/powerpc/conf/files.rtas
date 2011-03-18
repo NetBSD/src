@@ -1,5 +1,0 @@
-#	$NetBSD: files.rtas,v 1.1 2007/01/14 22:18:02 aymeric Exp $
-
-device	rtas
-attach	rtas at ofbus
-file	arch/powerpc/powerpc/rtas.c		rtas	needs-flag

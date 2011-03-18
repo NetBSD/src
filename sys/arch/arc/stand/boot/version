@@ -1,8 +1,0 @@
-$NetBSD: version,v 1.3 2006/07/22 18:15:06 tsutsui Exp $
-
-NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
-file is important - make sure the entries are appended on end, last item
-is taken as the current.
-
-1.0:	Initial arc booter, based on sgimips one
-1.1:	Add bootinfo support and pass bi_bpath and bi_syms
