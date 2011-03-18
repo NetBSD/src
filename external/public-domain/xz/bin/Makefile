@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/11/02 16:34:36 joerg Exp $
+# $NetBSD: Makefile,v 1.2 2011/03/18 19:45:27 dyoung Exp $
 
 PROG=	xz
 BINDIR=	/usr/bin
@@ -23,10 +23,12 @@ LINKS+=	${BINDIR}/xz ${BINDIR}/unxz \
 
 .PATH:	${XZSRCDIR}/src/common ${XZSRCDIR}/src/xz
 
+.if ${MKNLS} != "no"
 .for lang in cs de it
 FILES+=					${XZSRCDIR}/po/${lang}.gmo
 FILESDIR_${XZSRCDIR}/po/${lang}.gmo=	/usr/share/locale/${lang}/LC_MESSAGES
 FILESNAME_${XZSRCDIR}/po/${lang}.gmo=	xz.mo
 .endfor
+.endif
 
 .include <bsd.prog.mk>
