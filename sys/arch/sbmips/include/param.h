@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2011/03/06 20:34:56 he Exp $	*/
+/*	$NetBSD: param.h,v 1.10 2011/03/18 16:32:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,19 +38,13 @@
 #define _SBMIPS_PARAM_H_
 
 /*
- * Machine-dependent constants (VM, etc) common across MIPS cpus
- */
-
-#include <mips/mips_param.h>
-
-/*
  * Machine dependent constants for Broadcom/Sibyte boards.
  */
 
 #define	_MACHINE	sbmips
-#ifdef _KERNEL
 #define	MACHINE		"sbmips"
-#endif
+
+#include <mips/mips_param.h>
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
