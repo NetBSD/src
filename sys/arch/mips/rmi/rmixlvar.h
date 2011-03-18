@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.3 2011/02/20 07:48:37 matt Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.4 2011/03/18 00:58:54 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,6 +112,8 @@ rmixlfw_psb_type_name(rmixlfw_psb_type_t type)
 
 struct rmixl_config {
 	uint64_t		 rc_io_pbase;	
+	uint64_t		 rc_flash_pbase;	/* FLASH_BAR */
+	uint64_t		 rc_flash_mask;		/* FLASH_BAR */
 	bus_addr_t		 rc_pci_cfg_pbase;	
 	bus_size_t		 rc_pci_cfg_size;
 	bus_addr_t		 rc_pci_ecfg_pbase;	
@@ -122,6 +124,7 @@ struct rmixl_config {
 	bus_size_t		 rc_pci_io_size;
 	struct mips_bus_space	 rc_obio_eb_memt; 	/* DEVIO -eb */
 	struct mips_bus_space	 rc_obio_el_memt; 	/* DEVIO -el */
+	struct mips_bus_space	 rc_iobus_memt; 	/* Peripherals IO Bus */
 	struct mips_bus_space	 rc_pci_cfg_memt; 	/* PCI CFG  */
 	struct mips_bus_space	 rc_pci_ecfg_memt; 	/* PCI ECFG */
 	struct mips_bus_space	 rc_pci_memt; 		/* PCI MEM */
@@ -133,6 +136,7 @@ struct rmixl_config {
 	struct extent		*rc_phys_ex;	/* Note: MB units */
 	struct extent		*rc_obio_eb_ex;
 	struct extent		*rc_obio_el_ex;
+	struct extent		*rc_iobus_ex;
 	struct extent		*rc_pci_cfg_ex;
 	struct extent		*rc_pci_ecfg_ex;
 	struct extent		*rc_pci_mem_ex;
@@ -149,6 +153,7 @@ extern struct rmixl_config rmixl_configuration;
 
 extern void rmixl_obio_eb_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_obio_el_bus_mem_init(bus_space_tag_t, void *);
+extern void rmixl_iobus_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_pci_cfg_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_pci_ecfg_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_pci_bus_mem_init(bus_space_tag_t, void *);
