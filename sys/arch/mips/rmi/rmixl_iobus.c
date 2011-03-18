@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_iobus.c,v 1.1 2011/03/18 01:05:57 cliff Exp $	*/
+/*	$NetBSD: rmixl_iobus.c,v 1.2 2011/03/18 01:21:34 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.1 2011/03/18 01:05:57 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.2 2011/03/18 01:21:34 cliff Exp $");
 
 #include "locators.h"
 
@@ -156,7 +156,7 @@ rmixl_iobus_attach(device_t parent, device_t self, void *aux)
 
 	/* write-1-to-clear Flash interrupt status */
 	bus_space_write_4(sc->sc_obio_bst, sc->sc_obio_bsh,
-		RMIXL_FLASH_INT_STATUS, 0);
+		RMIXL_FLASH_INT_STATUS, ~0);
 
 	rmixl_iobus_csconfig_init(sc);
 
