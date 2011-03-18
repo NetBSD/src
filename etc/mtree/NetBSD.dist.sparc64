@@ -1,7 +1,0 @@
-#	$NetBSD: NetBSD.dist.sparc64,v 1.2 2010/04/29 14:09:11 lukem Exp $
-
-./usr/lib/sparc
-./usr/lib/sparc/i18n
-./usr/lib/sparc/security
-./usr/libdata/debug/usr/lib/sparc
-./usr/libdata/debug/usr/lib/sparc/i18n

@@ -1,5 +1,0 @@
-#	$NetBSD: shlib_version,v 1.2 2003/01/09 16:55:13 mrg Exp $
-#	Remember to update distrib/sets/lists/base/md.sparc when changing
-#
-major=0
-minor=0

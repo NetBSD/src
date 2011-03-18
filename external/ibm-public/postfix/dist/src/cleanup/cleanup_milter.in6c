@@ -1,7 +1,0 @@
-open test-queue-file6.tmp
-
-ins_header 1 X-Virus-Scanned hya
-ins_header 2 Domainkey-Signature hya
-ins_header 2 DKIM-Signature hya
-
-close

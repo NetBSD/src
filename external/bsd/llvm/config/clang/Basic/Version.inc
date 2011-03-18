@@ -1,6 +1,0 @@
-#define CLANG_VERSION 2.9
-#define CLANG_VERSION_MAJOR 2
-#define CLANG_VERSION_MINOR 9
-#if 0
-#define CLANG_VERSION_PATCHLEVEL 
-#endif

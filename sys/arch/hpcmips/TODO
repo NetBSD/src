@@ -1,7 +1,0 @@
-The following parts do not yet work on VR41xx-based systems (such as the
-IBM WorkPad) as of 20000218:
-
-* brightness and contrast buttons
-* screenblank
-* power button and battery state detection
-* audio

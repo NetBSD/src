@@ -1,3 +1,0 @@
-.\"	$NetBSD: install,v 1.2 2002/06/28 15:26:37 skrll Exp $
-.
-.so ../common/sysinst
