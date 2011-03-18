@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.13 2011/03/11 13:28:52 christos Exp $ */
+/* $NetBSD: termcap.c,v 1.14 2011/03/18 10:42:54 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.13 2011/03/11 13:28:52 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.14 2011/03/18 10:42:54 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -222,6 +222,21 @@ strname(const char *key)
 	return key;
 }
 
+/* Print a parameter if needed */
+static int
+printparam(char **dst, char p, int *nop)
+{
+	if (*nop != 0) {
+		*nop = 0;
+		return 0;
+	}
+
+	*(*dst)++ = '%';
+	*(*dst)++ = 'p';
+	*(*dst)++ = '0' + p;
+	return 3;
+}
+
 /* Convert a termcap character into terminfo equivalents */
 static int
 printchar(char **dst, const char **src)
@@ -271,6 +286,12 @@ printchar(char **dst, const char **src)
 }
 
 /* Convert termcap commands into terminfo commands */
+static const char fmtB[] = "%p0%{10}%/%{16}%*%p0%{10}%m%+";
+static const char fmtD[] = "%p0%p0%{2}%*%-";
+static const char fmtIf[] = "%p0%p0%?";
+static const char fmtThen[] = "%>%t";
+static const char fmtElse[] = "%+%;";
+
 static char *
 strval(const char *val)
 {
@@ -318,31 +339,25 @@ strval(const char *val)
 		}
 		switch (c = *++(val)) {
 		case 'B':
-			if (l + 30 > len)
+			if (l + sizeof(fmtB) > len)
 				goto elen;
-			*ip++ = '%';
-			*ip++ = 'p';
-			*ip++ = '0' + p;
-			strcpy(ip, "%{10}%/%{16}%*%p");
-			ip += 16;
-			*ip++ = '0' + p;
-			strcpy(ip, "%{10}%m%+");
-			ip += 9;
-			l += 29;
+			memcpy(ip, fmtB, sizeof(fmtB) - 1);
+			/* Replace the embedded parameters with real ones */
+			ip[2] += p;
+			ip[19] += p;
+			ip += sizeof(fmtB) - 1;
+			l += sizeof(fmtB) - 1;
 			nop = 1;
 			continue;
 		case 'D':
-			if (l + 15 > len)
+			if (l + sizeof(fmtD) > len)
 				goto elen;
-			*ip++ = '%';
-			*ip++ = 'p';
-			*ip++ = '0' + p;
-			*ip++ = '%';
-			*ip++ = 'p';
-			*ip++ = '0' + p;
-			strcpy(ip, "%{2}%*%-");
-			ip += 8;
-			l += 14;
+			memcpy(ip, fmtD, sizeof(fmtD) - 1);
+			/* Replace the embedded parameters with real ones */
+			ip[2] += p;
+			ip[5] += p;
+			ip += sizeof(fmtD) - 1;
+			l += sizeof(fmtD) - 1;
 			nop = 1;
 			continue;
 		case 'r':
@@ -353,13 +368,7 @@ strval(const char *val)
 		case 'd':
 			if (l + 7 > len)
 				goto elen;
-			if (nop == 0) {
-				*ip++ = '%';
-				*ip++ = 'p';
-				*ip++ = '0' + p;
-				l += 3;
-			} else
-				nop = 0;
+			l += printparam(&ip, p, &nop);
 			*ip++ = '%';
 			if (c != 'd') {
 				*ip++ = c;
@@ -371,13 +380,7 @@ strval(const char *val)
 		case '+':
 			if (l + 13 > len)
 				goto elen;
-			if (nop == 0) {
-				*ip++ = '%';
-				*ip++ = 'p';
-				*ip++ = '0' + p;
-				l += 3;
-			} else
-				nop = 0;
+			l += printparam(&ip, p, &nop);
 			l += printchar(&ip, &val);
 			*ip++ = '%';
 			*ip++ = c; 
@@ -386,39 +389,31 @@ strval(const char *val)
 			l += 7;
 			break;
 		case '>':
-			if (l + 29 > len)
+			if (l + sizeof(fmtIf) + sizeof(fmtThen) +
+			    sizeof(fmtElse) + (6 * 2) > len)
 				goto elen;
-			*ip++ = '%';
-			*ip++ = 'p';
-			*ip++ = '0' + p;
-			*ip++ = '%';
-			*ip++ = 'p';
-			*ip++ = '0' + p;
-			*ip++ = '%';
-			*ip++ = '?';
+
+			memcpy(ip, fmtIf, sizeof(fmtIf) - 1);
+			/* Replace the embedded parameters with real ones */
+			ip[2] += p;
+			ip[5] += p;
+			ip += sizeof(fmtIf) - 1;
+			l += sizeof(fmtIf) - 1;
 			l += printchar(&ip, &val);
-			*ip++ = '%';
-			*ip++ = '>';
-			*ip++ = '%';
-			*ip++ = 't';
+			memcpy(ip, fmtThen, sizeof(fmtThen) - 1);
+			ip += sizeof(fmtThen) - 1;
+			l += sizeof(fmtThen) - 1;
 			l += printchar(&ip, &val);
-			*ip++ = '%';
-			*ip++ = '+';
-			*ip++ = '%';
-			*ip++ = ';';
+			memcpy(ip, fmtElse, sizeof(fmtElse) - 1);
+			ip += sizeof(fmtElse) - 1;
+			l += sizeof(fmtElse) - 1;
 			l += 16;
 			nop = 1;
 			continue;
 		case '.':
 			if (l + 6 > len)
 				goto elen;
-			if (nop == 0) {
-				*ip++ = '%';
-				*ip++ = 'p';
-				*ip++ = '0' + p;
-				l += 3;
-			} else
-				nop = 0;
+			l += printparam(&ip, p, &nop);
 			*ip++ = '%';
 			*ip++ = 'c';
 			l += 2;
