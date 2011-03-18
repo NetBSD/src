@@ -1,4 +1,4 @@
-.\" $NetBSD: security.7,v 1.4 2011/03/18 16:12:26 jruoho Exp $
+.\" $NetBSD: security.7,v 1.5 2011/03/18 16:14:49 jruoho Exp $
 .\"
 .\" Copyright (c) 2006, 2011 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -357,9 +357,7 @@ It is however known that some third-party programs
 may not function properly with the restriction.
 Such mappings can be allowed either by using the
 .Dv USER_VA0_DISABLE_DEFAULT
-kernel configuration
-.Xr option 4
-or by changing the following variable at runtime:
+kernel configuration option or by changing the following variable at runtime:
 .Bd -literal -offset indent
 # sysctl -w vm.user_va0_disable=0
 .Ed
