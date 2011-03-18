@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:48 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:02 joerg Exp $
 
 PROG_CXX=	opt
 NOMAN=		yes
@@ -18,11 +18,11 @@ LLVM_LIBS+= \
 	BitWriter \
 	InstCombine \
 	Instrumentation \
+	ipo \
 	ScalarOpts \
+	TransformsUtils \
 	Analysis \
 	Target \
-	ipo \
-	TransformsUtils \
 	ipa \
 	Core \
 	Support
