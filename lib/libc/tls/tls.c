@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.4 2011/03/17 22:13:58 skrll Exp $	*/
+/*	$NetBSD: tls.c,v 1.5 2011/03/18 14:56:01 he Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.4 2011/03/17 22:13:58 skrll Exp $");
+__RCSID("$NetBSD: tls.c,v 1.5 2011/03/18 14:56:01 he Exp $");
 
 #include "namespace.h"
 
@@ -70,6 +70,7 @@ __libc_tls_get_addr(void)
 {
 
 	abort();
+	/* NOTREACHED */
 }
 
 __weak_alias(_rtld_tls_allocate, __libc_rtld_tls_allocate)
