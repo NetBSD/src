@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:04 joerg Exp $
 
 LIB=	clangFrontend
 
@@ -13,10 +13,8 @@ SRCS+=	ASTConsumers.cpp \
 	CacheTokens.cpp \
 	CompilerInstance.cpp \
 	CompilerInvocation.cpp \
-	DeclXML.cpp \
 	DependencyFile.cpp \
 	DiagChecker.cpp \
-	DocumentXML.cpp \
 	FrontendAction.cpp \
 	FrontendActions.cpp \
 	FrontendOptions.cpp \
@@ -26,10 +24,8 @@ SRCS+=	ASTConsumers.cpp \
 	LangStandards.cpp \
 	MultiplexConsumer.cpp \
 	PrintPreprocessedOutput.cpp \
-	StmtXML.cpp \
 	TextDiagnosticBuffer.cpp \
 	TextDiagnosticPrinter.cpp \
-	TypeXML.cpp \
 	VerifyDiagnosticsClient.cpp \
 	Warnings.cpp
 
