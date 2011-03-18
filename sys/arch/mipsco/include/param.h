@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 2011/02/08 20:20:19 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.14 2011/03/18 16:37:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,14 +38,8 @@
  *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
-/*
- * Machine-dependent constants (VM, etc) common across MIPS cpus
- */
-
 #ifndef	_MIPSCO_PARAM_H_
 #define	_MIPSCO_PARAM_H_
-
-#include <mips/mips_param.h>
 
 /*
  * Machine dependent constants for Mips Corp. machines
@@ -53,6 +47,8 @@
 
 #define	_MACHINE	mipsco
 #define	MACHINE		"mipsco"
+
+#include <mips/mips_param.h>
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define KERNTEXTOFF	0x80001000	/* start of kernel text for kvm_mkdb */
