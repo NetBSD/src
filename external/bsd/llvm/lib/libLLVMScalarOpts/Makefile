@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:03 joerg Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -14,7 +14,6 @@ SRCS+=	ADCE.cpp \
 	DCE.cpp \
 	DeadStoreElimination.cpp \
 	EarlyCSE.cpp \
-	GEPSplitter.cpp \
 	GVN.cpp \
 	IndVarSimplify.cpp \
 	JumpThreading.cpp \
@@ -34,7 +33,6 @@ SRCS+=	ADCE.cpp \
 	Scalar.cpp \
 	ScalarReplAggregates.cpp \
 	SimplifyCFGPass.cpp \
-	SimplifyHalfPowrLibCalls.cpp \
 	SimplifyLibCalls.cpp \
 	Sink.cpp \
 	TailDuplication.cpp \

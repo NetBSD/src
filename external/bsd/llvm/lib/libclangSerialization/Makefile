@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:04 joerg Exp $
 
 LIB=	clangSerialization
 
@@ -6,14 +6,15 @@ LIB=	clangSerialization
 
 .PATH: ${CLANG_SRCDIR}/lib/Serialization
 
-SRCS+=	GeneratePCH.cpp \
-	ASTCommon.cpp \
+SRCS+=	ASTCommon.cpp \
 	ASTReader.cpp \
 	ASTReaderDecl.cpp \
 	ASTReaderStmt.cpp \
 	ASTWriter.cpp \
 	ASTWriterDecl.cpp \
-	ASTWriterStmt.cpp
+	ASTWriterStmt.cpp \
+	ChainedIncludesSource.cpp \
+	GeneratePCH.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

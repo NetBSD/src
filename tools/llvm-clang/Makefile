@@ -1,20 +1,20 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:11 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:04 joerg Exp $
 
-HOSTPROGNAME=	${_TOOL_PREFIX}clang
-HOSTPROG_CXX=	${_TOOL_PREFIX}clang
+HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-clang
+HOSTPROG_CXX=	${MACHINE_GNU_PLATFORM}-clang
 HOST_SRCDIR=	external/bsd/llvm/bin/clang
 
 .include "${.CURDIR}/../Makefile.host"
 
-install.host: ${HOST_BINDIR}/${_TOOL_PREFIX}clang++ ${HOST_BINDIR}/${_TOOL_PREFIX}clang-cpp
+install.host: ${HOST_BINDIR}/${MACHINE_GNU_PLATFORM}-clang++
+install.host: ${HOST_BINDIR}/${MACHINE_GNU_PLATFORM}-clang-cpp
 
-${HOST_BINDIR}/${_TOOL_PREFIX}clang++:
+${HOST_BINDIR}/${MACHINE_GNU_PLATFORM}-clang++:
 	${_MKTARGET_INSTALL}
 	mkdir -p ${HOST_BINDIR}
 	${HOST_INSTALL_SYMLINK} ${HOSTPROGNAME} ${.TARGET}
 
-${HOST_BINDIR}/${_TOOL_PREFIX}clang-cpp:
+${HOST_BINDIR}/${MACHINE_GNU_PLATFORM}-clang-cpp:
 	${_MKTARGET_INSTALL}
 	mkdir -p ${HOST_BINDIR}
-	printf '#!/bin/sh\nexec ${HOST_BINDIR}/${_TOOL_PREFIX}clang -x c -E "$$@"' > ${.TARGET}
-	chmod a+x ${.TARGET}
+	${HOST_INSTALL_SYMLINK} ${HOSTPROGNAME} ${.TARGET}

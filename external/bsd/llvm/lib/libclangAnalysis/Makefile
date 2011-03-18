@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:03 joerg Exp $
 
 LIB=	clangAnalysis
 
@@ -8,6 +8,7 @@ LIB=	clangAnalysis
 
 SRCS+=	AnalysisContext.cpp \
 	CFG.cpp \
+	CFGReachabilityAnalysis.cpp \
 	CFGStmtMap.cpp \
 	CocoaConventions.cpp \
 	FormatString.cpp \
@@ -16,8 +17,7 @@ SRCS+=	AnalysisContext.cpp \
 	PseudoConstantAnalysis.cpp \
 	ReachableCode.cpp \
 	ScanfFormatString.cpp \
-	UninitializedValues.cpp \
-	UninitializedValuesV2.cpp
+	UninitializedValues.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
