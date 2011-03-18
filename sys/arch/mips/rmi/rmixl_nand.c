@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_nand.c,v 1.2 2011/03/18 02:01:45 cliff Exp $	*/
+/*	$NetBSD: rmixl_nand.c,v 1.3 2011/03/18 19:58:21 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.2 2011/03/18 02:01:45 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.3 2011/03/18 19:58:21 cliff Exp $");
 
 #include "opt_flash.h"
 
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.2 2011/03/18 02:01:45 cliff Exp $")
 #include <dev/nand/onfi.h>
 
 
-static int  rmixl_nand_match(struct device *, struct cfdata *, void *);
-static void rmixl_nand_attach(struct device *, struct device *, void *);
+static int  rmixl_nand_match(device_t, cfdata_t, void *);
+static void rmixl_nand_attach(device_t, device_t, void *);
 static int  rmixl_nand_detach(device_t, int);
 static void rmixl_nand_command(device_t, uint8_t);
 static void rmixl_nand_address(device_t, uint8_t);
@@ -98,7 +98,7 @@ CFATTACH_DECL_NEW(rmixl_nand, sizeof(struct rmixl_nand_softc), rmixl_nand_match,
     rmixl_nand_attach, rmixl_nand_detach, NULL);
 
 static int
-rmixl_nand_match(struct device *parent, struct cfdata *match, void *aux)
+rmixl_nand_match(device_tparent, cfdata_tmatch, void *aux)
 {
 	struct rmixl_iobus_attach_args *ia = aux;
 	bus_space_handle_t bsh;
@@ -202,21 +202,21 @@ rmixl_nand_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_debug_dev(self, "bus width %d bits\n", 8 * sc->sc_buswidth);
 
-	sc->sc_nand_if.select = &nand_default_select;
-	sc->sc_nand_if.command = &rmixl_nand_command;
-	sc->sc_nand_if.address = &rmixl_nand_address;
-	sc->sc_nand_if.read_buf_byte = &rmixl_nand_read_buf;
-	sc->sc_nand_if.read_buf_word = &rmixl_nand_read_buf;
-	sc->sc_nand_if.read_byte = &rmixl_nand_read_byte;
-	sc->sc_nand_if.read_word = &rmixl_nand_read_word;
-	sc->sc_nand_if.write_buf_byte = &rmixl_nand_write_buf;
-	sc->sc_nand_if.write_buf_word = &rmixl_nand_write_buf;
-	sc->sc_nand_if.write_byte = &rmixl_nand_write_byte;
-	sc->sc_nand_if.write_word = &rmixl_nand_write_word;
-	sc->sc_nand_if.busy = &rmixl_nand_busy;
+	sc->sc_nand_if.select = nand_default_select;
+	sc->sc_nand_if.command = rmixl_nand_command;
+	sc->sc_nand_if.address = rmixl_nand_address;
+	sc->sc_nand_if.read_buf_byte = rmixl_nand_read_buf;
+	sc->sc_nand_if.read_buf_word = rmixl_nand_read_buf;
+	sc->sc_nand_if.read_byte = rmixl_nand_read_byte;
+	sc->sc_nand_if.read_word = rmixl_nand_read_word;
+	sc->sc_nand_if.write_buf_byte = rmixl_nand_write_buf;
+	sc->sc_nand_if.write_buf_word = rmixl_nand_write_buf;
+	sc->sc_nand_if.write_byte = rmixl_nand_write_byte;
+	sc->sc_nand_if.write_word = rmixl_nand_write_word;
+	sc->sc_nand_if.busy = rmixl_nand_busy;
 
-	sc->sc_nand_if.ecc_compute = &nand_default_ecc_compute;
-	sc->sc_nand_if.ecc_correct = &nand_default_ecc_correct;
+	sc->sc_nand_if.ecc_compute = nand_default_ecc_compute;
+	sc->sc_nand_if.ecc_correct = nand_default_ecc_correct;
 	sc->sc_nand_if.ecc_prepare = NULL;
 	sc->sc_nand_if.ecc.necc_code_size = 3;
 	sc->sc_nand_if.ecc.necc_block_size = 256;
