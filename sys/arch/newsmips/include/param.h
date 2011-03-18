@@ -1,4 +1,4 @@
-/*	from $NetBSD: param.h,v 1.20 2011/03/06 20:34:57 he Exp $	*/
+/*	from $NetBSD: param.h,v 1.21 2011/03/18 16:21:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,23 +38,17 @@
  *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
-/*
- * Machine-dependent constants (VM, etc) common across MIPS cpus
- */
-
 #ifndef	_NEWSMIPS_PARAM_H_
 #define	_NEWSMIPS_PARAM_H_
-
-#include <mips/mips_param.h>
 
 /*
  * Machine dependent constants for mips-based NEWS.
  */
 
 #define	_MACHINE	newsmips
-#ifdef _KERNEL
 #define	MACHINE		"newsmips"
-#endif
+
+#include <mips/mips_param.h>
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define KERNTEXTOFF	0x80001000	/* start of kernel text for kvm_mkdb */
