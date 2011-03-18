@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:46 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:02 joerg Exp $
 
 PROG_CXX=	llvm-dis
 NOMAN=		yes
@@ -10,6 +10,7 @@ NOMAN=		yes
 SRCS=	llvm-dis.cpp
 
 LLVM_LIBS+= \
+	Analysis \
 	BitReader \
 	Core \
 	Support
