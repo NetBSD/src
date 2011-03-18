@@ -1,8 +1,0 @@
-Important things to make ACPI useful on more machines:
-
-* Fix problems with PCI_INTR_FIXUP.  The current code always chooses the last
-  possible interrupt, which causes problems when that interrupt is shared with
-  an ISA device.  http://mail-index.netbsd.org/tech-kern/2005/11/11/0011.html
-  has a more detailed analysis.
-
-- sekiya, 21 December 2005

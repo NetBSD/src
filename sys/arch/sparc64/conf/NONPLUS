@@ -1,9 +1,0 @@
-# 	$NetBSD: NONPLUS,v 1.58 2006/06/30 10:27:48 tsutsui Exp $
-
-include "arch/sparc64/conf/NONPLUS64"
-include "arch/sparc64/conf/std.sparc64-32"
-
-#ident 		"NONPLUS-$Revision: 1.58 $"
-
-no options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
-no options 	COMPAT_SVR4_32	# 32-bit SVR4 binaries
