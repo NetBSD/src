@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1600 2011/03/17 02:35:27 joerg Exp $
+#	$NetBSD: mi,v 1.1601 2011/03/18 00:57:19 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5576,6 +5576,7 @@
 ./usr/share/man/cat3/confstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/conj.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/conjf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/conjl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/copysign.0			comp-c-catman		.cat
 ./usr/share/man/cat3/copysignf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/copysignl.0		comp-c-catman		.cat
@@ -5587,6 +5588,8 @@
 ./usr/share/man/cat3/cpow.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cpowf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cproj.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/cprojf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/cprojl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cpuset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cpuset_clr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cpuset_create.0		comp-c-catman		.cat
@@ -11651,6 +11654,7 @@
 ./usr/share/man/html3/confstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/conj.html			comp-c-htmlman		complex,html
 ./usr/share/man/html3/conjf.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/conjl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/copysign.html		comp-c-htmlman		html
 ./usr/share/man/html3/copysignf.html		comp-c-htmlman		html
 ./usr/share/man/html3/copysignl.html		comp-c-htmlman		html
@@ -11662,6 +11666,8 @@
 ./usr/share/man/html3/cpow.html			comp-c-htmlman		complex,html
 ./usr/share/man/html3/cpowf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cproj.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/cprojf.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/cprojl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cpuset.html		comp-c-htmlman		html
 ./usr/share/man/html3/cpuset_clr.html		comp-c-htmlman		html
 ./usr/share/man/html3/cpuset_create.html	comp-c-htmlman		html
@@ -17632,6 +17638,7 @@
 ./usr/share/man/man3/confstr.3			comp-c-man		.man
 ./usr/share/man/man3/conj.3			comp-c-man		complex,.man
 ./usr/share/man/man3/conjf.3			comp-c-man		complex,.man
+./usr/share/man/man3/conjl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/copysign.3			comp-c-man		.man
 ./usr/share/man/man3/copysignf.3		comp-c-man		.man
 ./usr/share/man/man3/copysignl.3		comp-c-man		.man
@@ -17643,6 +17650,8 @@
 ./usr/share/man/man3/cpow.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cpowf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cproj.3			comp-c-man		complex,.man
+./usr/share/man/man3/cprojf.3			comp-c-man		complex,.man
+./usr/share/man/man3/cprojl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cpuset.3			comp-c-man		.man
 ./usr/share/man/man3/cpuset_clr.3		comp-c-man		.man
 ./usr/share/man/man3/cpuset_create.3		comp-c-man		.man
