@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.44 2011/03/06 20:34:56 he Exp $	*/
+/*	$NetBSD: param.h,v 1.45 2011/03/18 16:28:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,19 +42,13 @@
 #define _PMAX_PARAM_H_
 
 /*
- * Machine-dependent constants (VM, etc) common across MIPS cpus
- */
-
-#include <mips/mips_param.h>
-
-/*
  * Machine dependent constants for mips-based DECstations.
  */
 
 #define	_MACHINE	pmax
-#ifdef _KERNEL
 #define	MACHINE		"pmax"
-#endif
+
+#include <mips/mips_param.h>
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
