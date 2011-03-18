@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2011/02/08 20:20:12 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2011/03/18 16:30:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,17 +38,13 @@
 #define _EVBMIPS_PARAM_H_
 
 /*
- * Machine-dependent constants (VM, etc) common across MIPS cpus
- */
-
-#include <mips/mips_param.h>
-
-/*
  * Machine dependent constants for MIPS evaluation boards.
  */
 
 #define	_MACHINE	evbmips
 #define	MACHINE		"evbmips"
+
+#include <mips/mips_param.h>
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
