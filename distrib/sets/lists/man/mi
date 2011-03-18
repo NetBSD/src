@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1302 2011/03/17 02:35:28 joerg Exp $
+# $NetBSD: mi,v 1.1303 2011/03/18 15:21:56 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2032,6 +2032,7 @@
 ./usr/share/man/cat7/release.0			man-reference-catman	.cat
 ./usr/share/man/cat7/rump_sp.0			man-reference-catman	.cat
 ./usr/share/man/cat7/script.0			man-reference-catman	.cat
+./usr/share/man/cat7/security.0			man-reference-catman	.cat
 ./usr/share/man/cat7/setuid.0			man-reference-catman	.cat
 ./usr/share/man/cat7/signal.0			man-reference-catman	.cat
 ./usr/share/man/cat7/sticky.0			man-reference-catman	.cat
@@ -2702,7 +2703,7 @@
 ./usr/share/man/cat8/schedctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/scsictl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/sdpd.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/security.0			man-sys-catman		.cat
+./usr/share/man/cat8/security.0			man-obsolete		obsolete
 ./usr/share/man/cat8/sendmail.0			man-obsolete		obsolete
 ./usr/share/man/cat8/services_mkdb.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/sesd.0			man-sysutil-catman	.cat
@@ -4704,6 +4705,7 @@
 ./usr/share/man/html7/release.html		man-reference-htmlman	html
 ./usr/share/man/html7/rump_sp.html		man-reference-htmlman	html
 ./usr/share/man/html7/script.html		man-reference-htmlman	html
+./usr/share/man/html7/security.html		man-reference-htmlman	html
 ./usr/share/man/html7/setuid.html		man-reference-htmlman	html
 ./usr/share/man/html7/signal.html		man-reference-htmlman	html
 ./usr/share/man/html7/sticky.html		man-reference-htmlman	html
@@ -5220,7 +5222,7 @@
 ./usr/share/man/html8/schedctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/scsictl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/sdpd.html			man-sysutil-htmlman	html
-./usr/share/man/html8/security.html		man-sys-htmlman		html
+./usr/share/man/html8/security.html		man-obsolete		obsolete
 ./usr/share/man/html8/services_mkdb.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/sesd.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/setencstat.html		man-sysutil-htmlman	html
@@ -7356,6 +7358,7 @@
 ./usr/share/man/man7/re_format.7		man-reference-man	.man
 ./usr/share/man/man7/release.7			man-reference-man	.man
 ./usr/share/man/man7/script.7			man-reference-man	.man
+./usr/share/man/man7/security.7			man-reference-man	.man
 ./usr/share/man/man7/setuid.7			man-reference-man	.man
 ./usr/share/man/man7/signal.7			man-reference-man	.man
 ./usr/share/man/man7/sticky.7			man-reference-man	.man
@@ -8027,7 +8030,7 @@
 ./usr/share/man/man8/schedctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/scsictl.8			man-sysutil-man		.man
 ./usr/share/man/man8/sdpd.8			man-sysutil-man		.man
-./usr/share/man/man8/security.8			man-sys-man		.man
+./usr/share/man/man8/security.8			man-obsolete		obsolete
 ./usr/share/man/man8/sendmail.8			man-obsolete		obsolete
 ./usr/share/man/man8/services_mkdb.8		man-sysutil-man		.man
 ./usr/share/man/man8/sesd.8			man-sysutil-man		.man

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 2011/01/26 11:25:51 nisimura Exp $
+#	$NetBSD: Makefile,v 1.100 2011/03/18 15:21:57 jruoho Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	MAKEDEV.8 MAKEDEV.local.8 afterboot.8 boot.8 compat_30.8 \
@@ -7,7 +7,7 @@ MAN=	MAKEDEV.8 MAKEDEV.local.8 afterboot.8 boot.8 compat_30.8 \
 	compat_netbsd32.8 compat_osf1.8 compat_pecoff.8 compat_sunos.8 \
 	compat_svr4.8 compat_ultrix.8 diskless.8 hpcboot.8 \
 	intro.8 nis.8 pam.8 rc.8 rc.subr.8 rescue.8 \
-	security.8 sysinst.8 veriexec.8 \
+	sysinst.8 veriexec.8 \
 	wizd.8
 MLINKS+=MAKEDEV.8 makedev.8
 MLINKS+=MAKEDEV.local.8 makedev.local.8
