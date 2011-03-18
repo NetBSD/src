@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.3 2011/02/20 07:48:34 matt Exp $
+#	$NetBSD: files.rmixl,v 1.4 2011/03/18 00:59:13 cliff Exp $
 
 file	arch/evbmips/rmixl/autoconf.c
 file	arch/evbmips/rmixl/machdep.c
@@ -43,8 +43,6 @@ include "dev/isa/files.isa"
 #
 # PCI bus support.
 #
-## TBD
-
 
 device	pchb
 attach	pchb at pci
