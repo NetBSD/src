@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_nand.c,v 1.3 2011/03/18 19:58:21 cliff Exp $	*/
+/*	$NetBSD: rmixl_nand.c,v 1.4 2011/03/18 20:23:26 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.3 2011/03/18 19:58:21 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.4 2011/03/18 20:23:26 cliff Exp $");
 
 #include "opt_flash.h"
 
@@ -98,7 +98,7 @@ CFATTACH_DECL_NEW(rmixl_nand, sizeof(struct rmixl_nand_softc), rmixl_nand_match,
     rmixl_nand_attach, rmixl_nand_detach, NULL);
 
 static int
-rmixl_nand_match(device_tparent, cfdata_tmatch, void *aux)
+rmixl_nand_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct rmixl_iobus_attach_args *ia = aux;
 	bus_space_handle_t bsh;
