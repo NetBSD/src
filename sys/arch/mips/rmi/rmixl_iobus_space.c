@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_iobus_space.c,v 1.1 2011/03/18 01:04:09 cliff Exp $	*/
+/*	$NetBSD: rmixl_iobus_space.c,v 1.2 2011/03/18 07:12:29 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus_space.c,v 1.1 2011/03/18 01:04:09 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus_space.c,v 1.2 2011/03/18 07:12:29 cliff Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,14 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_iobus_space.c,v 1.1 2011/03/18 01:04:09 cliff 
 #define CHIP_BIG_ENDIAN
 
 #define CHIP_EX_MALLOC_SAFE(v)	(((struct rmixl_config *)(v))->rc_mallocsafe)
+
+/*
+ * RMIXL_FLASH_BAR_MASK_MAX is __BITS(34,0)
+ * so avoid extent if that value overflows 'long'
+ */
+#ifdef _LP64
 #define CHIP_EXTENT(v)		(((struct rmixl_config *)(v))->rc_iobus_ex)
+#endif
 
 
 /* MEM region 1 */
