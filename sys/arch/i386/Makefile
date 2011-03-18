@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2009/08/30 02:00:56 dyoung Exp $
+#	$NetBSD: Makefile,v 1.39 2011/03/18 19:48:12 dyoung Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -19,7 +19,7 @@ SI386+=	${SYSDIR}/arch/x86/x86/*.[ch] \
 	${SYSDIR}/arch/x86/include/*.h \
 	${SYSDIR}/arch/x86/isa/*.[ch] \
 	${SYSDIR}/arch/x86/pci/*.[ch]
-AI386=	${SYSDIR}/arch/i386/i386/*.[sS]
+AI386=	${SYSDIR}/arch/i386/i386/*.S
 
 # Directories in which to place tags links
 DI386=	i386 eisa isa include pci
