@@ -1,4 +1,4 @@
-.\" $NetBSD: security.7,v 1.2 2011/03/18 15:32:26 jruoho Exp $
+.\" $NetBSD: security.7,v 1.3 2011/03/18 16:11:13 jruoho Exp $
 .\"
 .\" Copyright (c) 2006, 2011 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -417,6 +417,21 @@ and
 Information filtering is enabled as follows:
 .Bd -literal -offset indent
 # sysctl -w security.curtain=1
+.Ed
+.Ss Administrative security
+Also certain administrative tasks are related to security.
+For instance, the the daily maintenance script includes some basic
+consistency checks; see
+.Xr security.conf 5
+for more details.
+In particular, it is possible to configure
+.Nx
+to automatically audit all third-party packages installed via
+.Xr pkgsrc 7 .
+To audit for any known vulnerabilities on daily basis, set the following in
+.Fa /etc/daily.conf :
+.Bd -literal -offset indent
+fetch_pkg_vulnerabilities=YES
 .Ed
 .Sh SEE ALSO
 .Xr ssp 3 ,
