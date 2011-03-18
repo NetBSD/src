@@ -1,4 +1,4 @@
-/*	$NetBSD: testldt.c,v 1.14 2008/04/28 20:23:05 martin Exp $	*/
+/*	$NetBSD: testldt.c,v 1.15 2011/03/18 03:06:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ get_cs(void)
 {
 	unsigned short _v;
 
-	__asm ("movw %%cs,%0": "=r" ((unsigned short) _v));
+	__asm ("movw %%cs,%0": "=r" (_v));
 	return _v;
 }
 
