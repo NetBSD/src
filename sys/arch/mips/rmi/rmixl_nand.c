@@ -1,5 +1,4 @@
-/*	$NetBSD: rmixl_nand.c,v 1.1 2011/03/18 01:04:46 cliff Exp $	*/
-/*	$NetBSD: rmixl_nand.c,v 1.1 2011/03/18 01:04:46 cliff Exp $	*/
+/*	$NetBSD: rmixl_nand.c,v 1.2 2011/03/18 02:01:45 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -37,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.1 2011/03/18 01:04:46 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.2 2011/03/18 02:01:45 cliff Exp $");
 
 #include "opt_flash.h"
 
@@ -105,20 +104,20 @@ rmixl_nand_match(struct device *parent, struct cfdata *match, void *aux)
 	bus_space_handle_t bsh;
 	volatile uint32_t *vaddr;
 	int err;
-	int rv = 0;
+	int rv;
 
 	if ((ia->ia_dev_parm & RMIXL_FLASH_CSDEV_NANDEN) == 0)
-		return rv;	/* not NAND */
+		return 0;	/* not NAND */
 
 	if (cpu_rmixlp(mips_options.mips_cpu)) {
 		aprint_error("%s: NAND not yet supported on XLP", __func__);
-		return rv;
+		return 0;
 	}
 
 	if (! cpu_rmixls(mips_options.mips_cpu)) {
 		aprint_error("%s: NAND not supported on this processor",
 			__func__);
-		return rv;
+		return 0;
 	}
 
 	/*
@@ -132,7 +131,7 @@ rmixl_nand_match(struct device *parent, struct cfdata *match, void *aux)
 		aprint_debug("%s: bus_space_map err %d, "
 			"iobus space addr %#" PRIxBUSADDR "\n",
 			__func__, err, ia->ia_iobus_addr);
-		return rv;
+		return 0;
 	}
 
 	vaddr = bus_space_vaddr(ia->ia_iobus_bst, bsh);
@@ -201,8 +200,7 @@ rmixl_nand_attach(device_t parent, device_t self, void *aux)
 		sc->sc_buswidth = 4;	/* 32 bit */
 		break;
 	}
-	aprint_debug_dev(self, "bus width %d bits\n",
-		8 * sc->sc_buswidth);
+	aprint_debug_dev(self, "bus width %d bits\n", 8 * sc->sc_buswidth);
 
 	sc->sc_nand_if.select = &nand_default_select;
 	sc->sc_nand_if.command = &rmixl_nand_command;
@@ -247,8 +245,7 @@ rmixl_nand_detach(device_t self, int flags)
 	if (sc->sc_nanddev != NULL)
 		rv = config_detach(sc->sc_nanddev, flags);
 
-	bus_space_unmap(sc->sc_iobus_bst, sc->sc_iobus_bsh,
-		sc->sc_iobus_size);
+	bus_space_unmap(sc->sc_iobus_bst, sc->sc_iobus_bsh, sc->sc_iobus_size);
 
 	return rv;
 }
@@ -313,8 +310,7 @@ rmixl_nand_read_word(device_t self, uint16_t *data)
 {
 	struct rmixl_nand_softc *sc = device_private(self);
 	
-	*data = bus_space_read_2(sc->sc_iobus_bst, sc->sc_iobus_bsh,
-		0);
+	*data = bus_space_read_2(sc->sc_iobus_bst, sc->sc_iobus_bsh, 0);
 }
 
 static void
