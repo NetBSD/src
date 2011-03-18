@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2011/02/08 20:20:13 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.5 2011/03/18 16:23:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,10 +37,10 @@
 #ifndef _EWS4800MIPS_PARAM_H_
 #define _EWS4800MIPS_PARAM_H_
 
-#include <mips/mips_param.h>
-
 #define	_MACHINE	ews4800mips
 #define	MACHINE		"ews4800mips"
+
+#include <mips/mips_param.h>
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
