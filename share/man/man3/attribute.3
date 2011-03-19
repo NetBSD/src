@@ -1,4 +1,4 @@
-.\" $NetBSD: attribute.3,v 1.9 2010/12/19 08:10:09 jruoho Exp $
+.\" $NetBSD: attribute.3,v 1.10 2011/03/19 04:59:44 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,6 +56,10 @@
 .Ic __read_mostly
 .Pp
 .Ic __cacheline_aligned
+.Pp
+.Fn __predict_true "exp"
+.Pp
+.Fn __prefict_false "exp"
 .Sh DESCRIPTION
 The
 .Tn GNU
@@ -261,6 +265,39 @@ Both
 and
 .Ic __read_mostly
 are only available for the kernel.
+.It Ic __predict_true
+A branch is generally defined to be a conditional execution of a
+program depending on whether a certain flow control mechanism is altered.
+Typical example would be a
+.Dq if-then-else
+sequence used in high-level languages or
+a jump instruction used in machine-level code.
+A branch prediction would then be defined as an
+attempt to guess whether a conditional branch will be taken.
+.Pp
+The macros
+.Fn __predict_true
+and
+.Fn __predict_false
+annotate the likelihood of whether
+a branch will evaluate to true or false.
+The rationale is to improve instruction pipelining.
+Semantically
+.Ic __predict_true
+expects that the integral expression
+.Fa exp
+equals 1.
+.It Ic __predict_false
+The
+.Ic __predict_false
+expands to an attribute that instructs the compiler
+to predict that a given branch will be likely false.
+As programmers are notoriously bad at predicting
+the likely behavior of their code, profiling and
+empirical evidence should precede the use of
+.Ic __predict_false
+and
+.Ic __predict_true .
 .El
 .Sh SEE ALSO
 .Xr gcc 1 ,
