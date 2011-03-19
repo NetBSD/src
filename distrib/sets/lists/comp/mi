@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1601 2011/03/18 00:57:19 joerg Exp $
+#	$NetBSD: mi,v 1.1602 2011/03/19 04:59:43 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4977,6 +4977,8 @@
 ./usr/share/man/cat3/__insn_barrier.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__noinline.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__packed.0			comp-c-catman		.cat
+./usr/share/man/cat3/__predict_true.0		comp-c-catman		.cat
+./usr/share/man/cat3/__predict_false.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__pure.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__read_mostly.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__section.0		comp-c-catman		.cat
@@ -11108,6 +11110,8 @@
 ./usr/share/man/html3/__insn_barrier.html	comp-c-htmlman		html
 ./usr/share/man/html3/__noinline.html		comp-c-htmlman		html
 ./usr/share/man/html3/__packed.html		comp-c-htmlman		html
+./usr/share/man/html3/__predict_true.html	comp-c-htmlman		html
+./usr/share/man/html3/__predict_false.html	comp-c-htmlman		html
 ./usr/share/man/html3/__pure.html		comp-c-htmlman		html
 ./usr/share/man/html3/__read_mostly.html	comp-c-htmlman		html
 ./usr/share/man/html3/__section.html		comp-c-htmlman		html
@@ -17039,6 +17043,8 @@
 ./usr/share/man/man3/__insn_barrier.3		comp-c-man		.man
 ./usr/share/man/man3/__noinline.3		comp-c-man		.man
 ./usr/share/man/man3/__packed.3			comp-c-man		.man
+./usr/share/man/man3/__predict_true.3		comp-c-man		.man
+./usr/share/man/man3/__predict_false.3		comp-c-man		.man
 ./usr/share/man/man3/__pure.3			comp-c-man		.man
 ./usr/share/man/man3/__read_mostly.3		comp-c-man		.man
 ./usr/share/man/man3/__section.3		comp-c-man		.man
