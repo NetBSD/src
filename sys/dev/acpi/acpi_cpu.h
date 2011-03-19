@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.38 2011/03/17 15:59:36 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.39 2011/03/19 12:57:31 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -235,16 +235,16 @@ struct acpicpu_softc {
 void		 acpicpu_cstate_attach(device_t);
 int		 acpicpu_cstate_detach(device_t);
 void		 acpicpu_cstate_start(device_t);
-bool		 acpicpu_cstate_suspend(device_t);
-bool		 acpicpu_cstate_resume(device_t);
+void		 acpicpu_cstate_suspend(void *);
+void		 acpicpu_cstate_resume(void *);
 void		 acpicpu_cstate_callback(void *);
 void		 acpicpu_cstate_idle(void);
 
 void		 acpicpu_pstate_attach(device_t);
 int		 acpicpu_pstate_detach(device_t);
 void		 acpicpu_pstate_start(device_t);
-bool		 acpicpu_pstate_suspend(device_t);
-bool		 acpicpu_pstate_resume(device_t);
+void		 acpicpu_pstate_suspend(void *);
+void		 acpicpu_pstate_resume(void *);
 void		 acpicpu_pstate_callback(void *);
 int		 acpicpu_pstate_get(struct cpu_info *, uint32_t *);
 void		 acpicpu_pstate_set(struct cpu_info *, uint32_t);
@@ -252,8 +252,8 @@ void		 acpicpu_pstate_set(struct cpu_info *, uint32_t);
 void		 acpicpu_tstate_attach(device_t);
 int		 acpicpu_tstate_detach(device_t);
 void		 acpicpu_tstate_start(device_t);
-bool		 acpicpu_tstate_suspend(device_t);
-bool		 acpicpu_tstate_resume(device_t);
+void		 acpicpu_tstate_suspend(void *);
+void		 acpicpu_tstate_resume(void *);
 void		 acpicpu_tstate_callback(void *);
 int		 acpicpu_tstate_get(struct cpu_info *, uint32_t *);
 void		 acpicpu_tstate_set(struct cpu_info *, uint32_t);
