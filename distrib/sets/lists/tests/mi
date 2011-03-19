@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.271 2011/03/14 15:57:33 pooka Exp $
+# $NetBSD: mi,v 1.272 2011/03/19 06:39:17 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -281,6 +281,7 @@
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vnops.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/include					tests-ipf-tests
 ./usr/libdata/debug/usr/tests/include/sys				tests-ipf-tests
+./usr/libdata/debug/usr/tests/include/sys/t_bitops.debug		tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_bootblock.debug		tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/t_bitstring.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/t_inttypes.debug			tests-ipf-tests		debug,atf
@@ -1324,6 +1325,7 @@
 ./usr/tests/include/d_bitstring_8.out		tests-include-tests	atf
 ./usr/tests/include/sys				tests-include-tests
 ./usr/tests/include/sys/Atffile			tests-include-tests	atf
+./usr/tests/include/sys/t_bitops		tests-include-tests	atf
 ./usr/tests/include/sys/t_bootblock		tests-include-tests	atf
 ./usr/tests/include/t_bitstring			tests-include-tests	atf
 ./usr/tests/include/t_inttypes			tests-include-tests	atf
