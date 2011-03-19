@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.23 2011/02/14 09:00:04 nisimura Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.24 2011/03/19 19:54:02 phx Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.23 2011/02/14 09:00:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.24 2011/03/19 19:54:02 phx Exp $");
 
 #include "opt_pci.h"
 
@@ -353,6 +353,8 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	case BRD_DLINKDSM:
 		/* map line 13,14,15,16 to EPIC IRQ0,1,3,4 */
 		*ihp = (line < 15) ? line - 13 : line - 12;
+		if (line == 14 && pin == 3)
+			*ihp += 1;	/* USB pin C (EHCI) uses next IRQ */
 		break;
 	case BRD_NH230NAS:
 		/* map line 13,14,15,16 to EPIC IRQ0,3,1,2 */
