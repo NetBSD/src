@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.29 2011/02/01 18:33:24 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.30 2011/03/19 06:48:09 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.29 2011/02/01 18:33:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.30 2011/03/19 06:48:09 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1667,7 +1667,6 @@ dinoattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ih = hp700_intr_establish(IPL_NONE, NULL, &sc->sc_ir,
 	    &ir_cpu, ca->ca_irq);
-
 
 	/* TODO establish the bus error interrupt */
 
