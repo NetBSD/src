@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.24 2011/03/18 20:56:46 jruoho Exp $ */
+/* $NetBSD: coretemp.c,v 1.25 2011/03/19 06:15:12 ahoka Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.24 2011/03/18 20:56:46 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.25 2011/03/19 06:15:12 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -294,7 +294,7 @@ coretemp_tjmax(device_t self)
 	 * but only consider the interval [70, 100] C as valid.
 	 * It is not fully known which CPU models have the MSR.
 	 */
-	if (model == 0x0E) {
+	if (model == 0x0E && extmodel != 0) {
 
 		msr = rdmsr(MSR_TEMPERATURE_TARGET);
 		msr = __SHIFTOUT(msr, MSR_TEMP_TARGET_READOUT);
