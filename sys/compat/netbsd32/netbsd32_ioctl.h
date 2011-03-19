@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.31 2011/03/06 17:08:34 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.32 2011/03/19 04:07:35 cliff Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -393,3 +393,11 @@ struct netbsd32_vnd_ioctl50 {
 #define ENVSYS_SETDICTIONARY32	_IOWR('E', 1, struct netbsd32_plistref)
 #define ENVSYS_REMOVEPROPS32	_IOWR('E', 2, struct netbsd32_plistref)
 
+/* from <sys/flashio.h> */
+struct netbsd32_flash_info_params {
+	flash_addr_t ip_flash_size;
+	netbsd32_size_t ip_page_size;
+	netbsd32_size_t ip_erase_size;
+	uint8_t ip_flash_type;
+};
+#define FLASH_GET_INFO32	 _IOWR('&', 2, struct netbsd32_flash_info_params)
