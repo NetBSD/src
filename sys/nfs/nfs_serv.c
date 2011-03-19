@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.156 2011/02/05 13:35:11 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.157 2011/03/19 01:34:24 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.156 2011/02/05 13:35:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.157 2011/03/19 01:34:24 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,6 +463,12 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	}
 
 	if (error) {
+		if (nd.ni_pathbuf != NULL) {
+			pathbuf_destroy(nd.ni_pathbuf);
+		}
+		if (ipb != NULL) {
+			pathbuf_destroy(ipb);
+		}
 		nfsm_reply(NFSX_POSTOPATTR(v3));
 		nfsm_srvpostop_attr(dirattr_ret, &dirattr);
 		return (0);
