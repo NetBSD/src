@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.820 2011/03/17 17:13:29 jruoho Exp $
+#	$NetBSD: 3RDPARTY,v 1.821 2011/03/19 14:54:05 jakllsch Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -13,7 +13,7 @@
 #   2. After the import, add NetBSD RCS IDs to all of the files.
 #
 # A few notes on the format of this file (for the benefit of
-# 3dparty2html):
+# 3rdparty2html):
 #
 # 1.) Any line whose first non-whitespace character is # is a comment
 # 2.) Entries are separated by blank lines
@@ -502,13 +502,13 @@ among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	less
 Version:	less394
-Current Vers:	less429
+Current Vers:	less436
 Maintainer:	Mark Nudleman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
 Mailing List:
 Responsible:	mrg
-License:	BSD or GPLv2
+License:	Less License (BSD 2-clause) or GPLv3 (v2 prior to less418)
 Notes:
 Many changes to make less act as more when invoked as more.  Beware.
 Use the src/usr.bin/less/less2netbsd script to prepare source tree
