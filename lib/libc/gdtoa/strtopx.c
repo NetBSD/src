@@ -1,5 +1,3 @@
-/* $NetBSD: strtopx.c,v 1.1.1.1 2006/01/25 15:18:54 kleink Exp $ */
-
 /****************************************************************
 
 The author of this software is David M. Gay.
@@ -60,13 +58,18 @@ strtopx(s, sp, V) CONST char *s; char **sp; void *V;
 strtopx(CONST char *s, char **sp, void *V)
 #endif
 {
-	static FPI fpi = { 64, 1-16383-64+1, 32766 - 16383 - 64 + 1, 1, SI };
+	static FPI fpi0 = { 64, 1-16383-64+1, 32766 - 16383 - 64 + 1, 1, SI };
 	ULong bits[2];
 	Long exp;
 	int k;
 	UShort *L = (UShort*)V;
+#ifdef Honor_FLT_ROUNDS
+#include "gdtoa_fltrnds.h"
+#else
+#define fpi &fpi0
+#endif
 
-	k = strtodg(s, sp, &fpi, &exp, bits);
+	k = strtodg(s, sp, fpi, &exp, bits);
 	switch(k & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:
 	  case STRTOG_Zero:
@@ -89,7 +92,8 @@ strtopx(CONST char *s, char **sp, void *V)
 
 	  case STRTOG_Infinite:
 		L[_0] = 0x7fff;
-		L[_1] = L[_2] = L[_3] = L[_4] = 0;
+		L[_1] = 0x8000;
+		L[_2] = L[_3] = L[_4] = 0;
 		break;
 
 	  case STRTOG_NaN:

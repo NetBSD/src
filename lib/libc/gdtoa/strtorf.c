@@ -1,5 +1,3 @@
-/* $NetBSD: strtorf.c,v 1.1.1.1 2006/01/25 15:18:55 kleink Exp $ */
-
 /****************************************************************
 
 The author of this software is David M. Gay.
@@ -48,7 +46,7 @@ ULtof(ULong *L, ULong *bits, Long exp, int k)
 
 	  case STRTOG_Normal:
 	  case STRTOG_NaNbits:
-		L[0] = bits[0] & 0x7fffff | exp + 0x7f + 23 << 23;
+		L[0] = (bits[0] & 0x7fffff) | ((exp + 0x7f + 23) << 23);
 		break;
 
 	  case STRTOG_Denormal:

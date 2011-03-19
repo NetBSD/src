@@ -1,5 +1,3 @@
-/* $NetBSD: strtorxL.c,v 1.1.1.1 2006/01/25 15:18:55 kleink Exp $ */
-
 /****************************************************************
 
 The author of this software is David M. Gay.
@@ -72,7 +70,8 @@ ULtoxL(ULong *L, ULong *bits, Long exp, int k)
 
 	  case STRTOG_Infinite:
 		L[_0] = 0x7fff << 16;
-		L[_1] = L[_2] = 0;
+		L[_1] = 0x80000000;
+		L[_2] = 0;
 		break;
 
 	  case STRTOG_NaN:

@@ -1,5 +1,3 @@
-/* $NetBSD: arithchk.c,v 1.1.1.1 2006/01/25 15:18:40 kleink Exp $ */
-
 /****************************************************************
 Copyright (C) 1997, 1998 Lucent Technologies
 All Rights Reserved

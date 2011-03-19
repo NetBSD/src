@@ -1,5 +1,3 @@
-/* $NetBSD: strtopf.c,v 1.1.1.1 2006/01/25 15:18:54 kleink Exp $ */
-
 /****************************************************************
 
 The author of this software is David M. Gay.
@@ -40,12 +38,17 @@ strtopf(s, sp, f) CONST char *s; char **sp; float *f;
 strtopf(CONST char *s, char **sp, float *f)
 #endif
 {
-	static FPI fpi = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
+	static FPI fpi0 = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
 	ULong bits[1], *L;
 	Long exp;
 	int k;
+#ifdef Honor_FLT_ROUNDS
+#include "gdtoa_fltrnds.h"
+#else
+#define fpi &fpi0
+#endif
 
-	k = strtodg(s, sp, &fpi, &exp, bits);
+	k = strtodg(s, sp, fpi, &exp, bits);
 	L = (ULong*)f;
 	switch(k & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:
@@ -55,7 +58,7 @@ strtopf(CONST char *s, char **sp, float *f)
 
 	  case STRTOG_Normal:
 	  case STRTOG_NaNbits:
-		L[0] = bits[0] & 0x7fffff | exp + 0x7f + 23 << 23;
+		L[0] = (bits[0] & 0x7fffff) | ((exp + 0x7f + 23) << 23);
 		break;
 
 	  case STRTOG_Denormal:

@@ -1,5 +1,3 @@
-/* $NetBSD: gdtoa.h,v 1.1.1.1 2006/01/25 15:18:46 kleink Exp $ */
-
 /****************************************************************
 
 The author of this software is David M. Gay.
@@ -35,9 +33,10 @@ THIS SOFTWARE.
 #define GDTOA_H_INCLUDED
 
 #include "arith.h"
+#include <stddef.h> /* for size_t */
 
 #ifndef Long
-#define Long long
+#define Long int
 #endif
 #ifndef ULong
 typedef unsigned Long ULong;
@@ -76,9 +75,9 @@ typedef unsigned short UShort;
 
 	/* The following may be or-ed into one of the above values. */
 
-	STRTOG_Neg	= 0x08,
-	STRTOG_Inexlo	= 0x10,
-	STRTOG_Inexhi	= 0x20,
+	STRTOG_Neg	= 0x08, /* does not affect STRTOG_Inexlo or STRTOG_Inexhi */
+	STRTOG_Inexlo	= 0x10,	/* returned result rounded toward zero */
+	STRTOG_Inexhi	= 0x20, /* returned result rounded away from zero */
 	STRTOG_Inexact	= 0x30,
 	STRTOG_Underflow= 0x40,
 	STRTOG_Overflow	= 0x80
@@ -113,12 +112,12 @@ extern float  strtof ANSI((CONST char *, char **));
 extern double strtod ANSI((CONST char *, char **));
 extern int strtodg ANSI((CONST char*, char**, FPI*, Long*, ULong*));
 
-extern char*	g_ddfmt  ANSI((char*, double*, int, unsigned));
-extern char*	g_dfmt   ANSI((char*, double*, int, unsigned));
-extern char*	g_ffmt   ANSI((char*, float*,  int, unsigned));
-extern char*	g_Qfmt   ANSI((char*, void*,   int, unsigned));
-extern char*	g_xfmt   ANSI((char*, void*,   int, unsigned));
-extern char*	g_xLfmt  ANSI((char*, void*,   int, unsigned));
+extern char*	g_ddfmt  ANSI((char*, double*, int, size_t));
+extern char*	g_dfmt   ANSI((char*, double*, int, size_t));
+extern char*	g_ffmt   ANSI((char*, float*,  int, size_t));
+extern char*	g_Qfmt   ANSI((char*, void*,   int, size_t));
+extern char*	g_xfmt   ANSI((char*, void*,   int, size_t));
+extern char*	g_xLfmt  ANSI((char*, void*,   int, size_t));
 
 extern int	strtoId  ANSI((CONST char*, char**, double*, double*));
 extern int	strtoIdd ANSI((CONST char*, char**, double*, double*));

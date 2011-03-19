@@ -1,5 +1,3 @@
-/* $NetBSD: strtoIdd.c,v 1.1.1.1 2006/01/25 15:18:49 kleink Exp $ */
-
 /****************************************************************
 
 The author of this software is David M. Gay.
