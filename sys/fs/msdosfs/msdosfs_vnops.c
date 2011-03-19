@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.72 2011/03/03 08:10:45 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.73 2011/03/19 20:05:21 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.72 2011/03/03 08:10:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.73 2011/03/19 20:05:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -935,11 +935,11 @@ abortit:
 		 */
 		vref(tdvp);
 		if ((error = doscheckpath(ip, dp)) != 0)
-			goto out;
+			goto bad;
 		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = relookup(tdvp, &tvp, tcnp, 0)) != 0) {
 			VOP_UNLOCK(tdvp);
-			goto out;
+			goto bad;
 		}
 		dp = VTODE(tdvp);
 		xp = tvp ? VTODE(tvp) : NULL;
@@ -1114,7 +1114,6 @@ bad:
 	if (tvp)
 		vput(tvp);
 	vrele(tdvp);
-out:
 	ip->de_flag &= ~DE_RENAME;
 	vrele(fdvp);
 	vrele(fvp);
