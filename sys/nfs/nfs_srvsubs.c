@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.8 2010/11/30 10:30:03 dholland Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.9 2011/03/19 01:34:24 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.8 2010/11/30 10:30:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.9 2011/03/19 01:34:24 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -276,6 +276,7 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 out:
 	if (ndp->ni_pathbuf != NULL) {
 		pathbuf_destroy(ndp->ni_pathbuf);
+		ndp->ni_pathbuf = NULL;
 	} else {
 		PNBUF_PUT(path);
 	}
