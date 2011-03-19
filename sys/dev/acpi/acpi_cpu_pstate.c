@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.46 2011/03/17 15:59:36 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.47 2011/03/19 12:57:31 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.46 2011/03/17 15:59:36 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.47 2011/03/19 12:57:31 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -210,14 +210,18 @@ fail:
 	aprint_error_dev(self, "failed to start P-states (err %d)\n", rv);
 }
 
-bool
-acpicpu_pstate_suspend(device_t self)
+void
+acpicpu_pstate_suspend(void *aux)
 {
-	struct acpicpu_softc *sc = device_private(self);
 	struct acpicpu_pstate *ps = NULL;
-	struct cpu_info *ci = sc->sc_ci;
+	struct acpicpu_softc *sc;
+	struct cpu_info *ci;
+	device_t self = aux;
 	uint64_t xc;
 	int32_t i;
+
+	sc = device_private(self);
+	ci = sc->sc_ci;
 
 	/*
 	 * Reset any dynamic limits.
@@ -246,28 +250,28 @@ acpicpu_pstate_suspend(device_t self)
 	mutex_exit(&sc->sc_mtx);
 
 	if (__predict_false(ps == NULL))
-		return true;
+		return;
 
 	if (sc->sc_pstate_saved == ps->ps_freq)
-		return true;
+		return;
 
 	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &ps->ps_freq, NULL, ci);
 	xc_wait(xc);
-
-	return true;
 }
 
-bool
-acpicpu_pstate_resume(device_t self)
+void
+acpicpu_pstate_resume(void *aux)
 {
-	struct acpicpu_softc *sc = device_private(self);
-	uint32_t freq = sc->sc_pstate_saved;
+	struct acpicpu_softc *sc;
+	device_t self = aux;
+	uint32_t freq;
 	uint64_t xc;
+
+	sc = device_private(self);
+	freq = sc->sc_pstate_saved;
 
 	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &freq, NULL, sc->sc_ci);
 	xc_wait(xc);
-
-	return true;
 }
 
 void
