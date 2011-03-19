@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.32 2011/03/19 04:07:35 cliff Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.33 2011/03/19 13:47:43 cliff Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,6 +29,7 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/flashio.h>
 
 #include <net/zlib.h>
 
