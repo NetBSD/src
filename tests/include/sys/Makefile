@@ -1,11 +1,12 @@
-# $NetBSD: Makefile,v 1.1 2010/07/17 19:26:27 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2011/03/19 06:39:17 jruoho Exp $
 
 NOMAN=		# defined
 
 .include <bsd.own.mk>
 
-TESTSDIR=	${TESTSBASE}/include/sys
+TESTSDIR=		${TESTSBASE}/include/sys
 
-TESTS_C=	t_bootblock
+LDADD.t_bitops+=	-lm
+TESTS_C=		t_bitops t_bootblock
 
 .include <bsd.test.mk>
