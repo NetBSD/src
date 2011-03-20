@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.45 2011/01/04 01:37:55 matt Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.46 2011/03/20 17:38:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.45 2011/01/04 01:37:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.46 2011/03/20 17:38:11 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -74,10 +74,6 @@ extern int usbdebug;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-MALLOC_DEFINE(M_USB, "USB", "USB misc. memory");
-MALLOC_DEFINE(M_USBDEV, "USB device", "USB device driver");
-MALLOC_DEFINE(M_USBHC, "USB HC", "USB host controller");
 
 #define USB_MEM_SMALL 64
 #define USB_MEM_CHUNKS 64
