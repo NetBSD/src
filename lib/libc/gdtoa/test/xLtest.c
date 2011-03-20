@@ -63,14 +63,14 @@ THIS SOFTWARE.
 #undef _0
 #undef _1
 
-/* one or the other of IEEE_MC68k or IEEE_8087 should be #defined */
+/* one or the other of IEEE_BIG_ENDIAN or IEEE_LITTLE_ENDIAN should be #defined */
 
-#ifdef IEEE_MC68k
+#ifdef IEEE_BIG_ENDIAN
 #define _0 0
 #define _1 1
 #define _2 2
 #endif
-#ifdef IEEE_8087
+#ifdef IEEE_LITTLE_ENDIAN
 #define _0 2
 #define _1 1
 #define _2 0
