@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.29 2011/03/08 17:44:16 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.30 2011/03/20 21:33:41 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2587,4 +2587,18 @@ etc/mtree/NetBSD.dist				patch
 
 	Add keys directory for recently updated BIND.
 	[spz, ticket #1566]
+
+sys/kern/vfs_syscalls.c				1.415 via patch
+
+	Check for bogus flags to access() up front. Otherwise we end up
+	calling VOP_ACCESS with flags 0 and something asserts deep in the
+	bowels of kauth. PR 44648 from Taylor Campbell. (I moved the check
+	earlier relative to the suggested patch.)
+	[dholland, ticket #1567]
+
+lib/libc/inet/inet_net_pton.c			1.2
+
+	Check bits on each loop to prevent integer oveflow.
+	Reported by Maksymilian Arciemowicz
+	[spz, ticket #1574]
 
