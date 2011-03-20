@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.12 2011/03/13 15:23:43 phx Exp $ */
+/* $NetBSD: main.c,v 1.13 2011/03/20 02:07:05 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -184,10 +184,18 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	 * "bootm".
 	 */
 	if (argc > MAX_ARGS) {
-		/* parse Linux bootargs */
-		argv = new_argv;
-		argc = parse_cmdline(argv, MAX_ARGS, bootargs_start,
-		    bootargs_end);
+		if (argv != NULL) {
+			/*
+			 * initrd image was loaded: assume extremely
+			 * restricted firmware and boot default
+			 */
+			argc = 0;
+		} else {
+			/* parse standard Linux bootargs */
+			argc = parse_cmdline(new_argv, MAX_ARGS,
+			    bootargs_start, bootargs_end);
+			argv = new_argv;
+		}
 	}
 
 	/* wait 2s for user to enter interactive mode */
