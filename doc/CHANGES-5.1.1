@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.15 2011/03/08 17:43:34 riz Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.16 2011/03/20 21:33:56 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -2279,4 +2279,25 @@ etc/mtree/NetBSD.dist				patch
 
 	Add keys directory for recently updated BIND.
 	[spz, ticket #1566]
+
+sys/kern/vfs_syscalls.c				1.415 via patch
+
+	Check for bogus flags to access() up front. Otherwise we end up
+	calling VOP_ACCESS with flags 0 and something asserts deep in the
+	bowels of kauth. PR 44648 from Taylor Campbell. (I moved the check
+	earlier relative to the suggested patch.)
+	[dholland, ticket #1567]
+
+sys/net/bpf_filter.c				1.42 - 1.46 via patch
+
+	Avoid stack memory disclosure by keeping track during filter
+	validation time of initialized memory. Idea taken from linux.
+	Use kmem instead of malloc. Requested by rmind.
+	[spz, ticket #1571]
+
+lib/libc/inet/inet_net_pton.c			1.2
+
+	Check bits on each loop to prevent integer oveflow.
+	Reported by Maksymilian Arciemowicz
+	[spz, ticket #1574]
 
