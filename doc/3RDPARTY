@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.823 2011/03/19 17:12:12 jakllsch Exp $
+#	$NetBSD: 3RDPARTY,v 1.824 2011/03/20 23:19:35 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -293,8 +293,8 @@ Use src/gnu/dist/diffutils/diffutils2netbsd for preparing the source tree
 for the import.
 
 Package:	gdtoa
-Version:	2005-09-23
-Current Vers:	2005-09-23
+Version:	2011-03-19
+Current Vers:	$(date)
 Maintainer:	David M. Gay <dmg@acm.org>
 Archive Site:	http://www.netlib.org/fp/
 Home Page:	http://www.netlib.org/fp/
@@ -302,7 +302,7 @@ Mailing List:	none
 Responsible:	kleink
 License:	BSD-like
 Notes:
-Test suite not integrated at this time.
+Test suite integrated at this time, but not built (and fails to run).
 No hexadecimal floating-point string conversion for VAX FP yet.
 Only double-precision addressed at this time.
 
