@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.279.2.5 2007/02/28 22:47:44 pavel Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.279.2.5.6.1 2011/03/20 20:37:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.279.2.5 2007/02/28 22:47:44 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.279.2.5.6.1 2011/03/20 20:37:27 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2372,6 +2372,11 @@ sys_access(struct lwp *l, void *v, register_t *retval)
 	struct vnode *vp;
 	int error, flags;
 	struct nameidata nd;
+
+	if ((SCARG(uap, flags) & ~(R_OK | W_OK | X_OK)) != 0) {
+		/* nonsense flags */
+		return EINVAL;
+	}
 
 	cred = kauth_cred_dup(l->l_cred);
 	kauth_cred_seteuid(cred, kauth_cred_getuid(l->l_cred));
