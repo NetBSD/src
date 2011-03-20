@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.2 2011/03/15 11:42:03 mrg Exp $	*/
+/*	$NetBSD: pyro.c,v 1.3 2011/03/20 20:48:36 mrg Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -118,12 +118,6 @@ void *pyro_intr_establish(bus_space_tag_t, int, int,
 int pyro_dmamap_create(bus_dma_tag_t, bus_size_t, int,
     bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
-#if 0
-#ifdef DDB
-void pyro_xir(void *, int);
-#endif
-#endif
-
 int
 pyro_match(struct device *parent, struct cfdata *match, void *aux)
 {
@@ -219,7 +213,6 @@ pyro_init(struct pyro_softc *sc, int busa)
 
 	if (bus_space_map(pbm->pp_cfgt, 0, 0x10000000, 0, &pbm->pp_cfgh))
 		panic("pyro: can't map config space");
-printf("cfgh: _ptr %p _asi %x _sasi %x\n", (void *)pbm->pp_cfgh._ptr, pbm->pp_cfgh._asi, pbm->pp_cfgh._sasi);
 
 	pbm->pp_pc = pyro_alloc_chipset(pbm, sc->sc_node, &_sparc_pci_chipset);
 	pbm->pp_pc->spc_busmax = busranges[1];
@@ -244,12 +237,6 @@ printf("cfgh: _ptr %p _asi %x _sasi %x\n", (void *)pbm->pp_cfgh._ptr, pbm->pp_cf
 
 	free(busranges, M_DEVBUF);
 
-#if 0
-#ifdef DDB 
-	db_register_xir(pyro_xir, sc);
-#endif
-#endif
-
 	config_found(&sc->sc_dv, &pba, pyro_print);
 }
 
@@ -269,15 +256,16 @@ pyro_init_iommu(struct pyro_softc *sc, struct pyro_pbm *pbm)
 		panic("pyro: unable to create iommu handle");
 	}
 
-#if 0
-	is->is_sb[0] = &pbm->pp_sb;
-	is->is_sb[0]->sb_bustag = is->is_bustag;
-#endif
+	/* We have no STC.  */
+	is->is_sb[0] = NULL;
 
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
 	if (name == NULL)
 		panic("couldn't malloc iommu name");
 	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
+
+	/* Tell iommu how to set the TSB size.  */
+	is->is_flags = IOMMU_TSBSIZE_IN_PTSB;
 
 	/* On Oberon, we need to flush the cache. */
 	if (sc->sc_oberon)
@@ -293,14 +281,6 @@ pyro_print(void *aux, const char *p)
 		return (UNCONF);
 	return (QUIET);
 }
-
-#if 0	/* XXXMRG */
-int
-pyro_conf_size(pci_chipset_tag_t pc, pcitag_t tag)
-{
-	return PCIE_CONFIG_SPACE_SIZE;
-}
-#endif
 
 pcireg_t
 pyro_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
@@ -347,7 +327,7 @@ pyro_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	if (*ihp != (pci_intr_handle_t)-1) {
 		*ihp |= sc->sc_ign;
-		DPRINTF(PDB_INTR, ("%s: not -1 -> ih %lx", __func__, (u_long)*ihp));
+		DPRINTF(PDB_INTR, ("%s: not -1 -> ih %lx\n", __func__, (u_long)*ihp));
 		return (0);
 	}
 
@@ -359,7 +339,7 @@ pyro_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 */
 
 	if (pa->pa_intrpin == 0) {
-		DPRINTF(PDB_INTR, ("%s: no intrpen", __func__));
+		DPRINTF(PDB_INTR, ("%s: no intrpen\n", __func__));
 		return (-1);
 	}
 
@@ -373,7 +353,7 @@ pyro_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	*ihp |= (dev << 2) & INTMAP_PCISLOT;
 	*ihp |= sc->sc_ign;
 
-	DPRINTF(PDB_INTR, ("%s: weird hack -> ih %lx", __func__, (u_long)*ihp));
+	DPRINTF(PDB_INTR, ("%s: weird hack -> ih %lx\n", __func__, (u_long)*ihp));
 	return (0);
 }
 
@@ -561,7 +541,7 @@ pyro_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	struct pyro_softc *sc = pbm->pp_sc;
 	struct intrhand *ih = NULL;
 	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
-	u_int64_t *imap, *iclr;
+	u_int64_t *imapbase, *iclrbase;
 	int ino;
 
 	ino = INTINO(ihandle);
@@ -574,11 +554,11 @@ pyro_intr_establish(bus_space_tag_t t, int ihandle, int level,
 		level = 2;
 	}
 
-	imap = (uint64_t *)((uintptr_t)bus_space_vaddr(sc->sc_bustag, sc->sc_csrh) + 0x1000);
-	iclr = (uint64_t *)((uintptr_t)bus_space_vaddr(sc->sc_bustag, sc->sc_csrh) + 0x1400);
-	intrmapptr = &imap[ino];
-	intrclrptr = &iclr[ino];
-	DPRINTF(PDB_INTR, (" imap %p iclr %p mapptr %p clrptr %p", imap, iclr, intrmapptr, intrclrptr));
+	imapbase = (uint64_t *)((uintptr_t)bus_space_vaddr(sc->sc_bustag, sc->sc_csrh) + 0x1000);
+	iclrbase = (uint64_t *)((uintptr_t)bus_space_vaddr(sc->sc_bustag, sc->sc_csrh) + 0x1400);
+	intrmapptr = &imapbase[ino];
+	intrclrptr = &iclrbase[ino];
+	DPRINTF(PDB_INTR, (" imapbase %p iclrbase %p mapptr %p clrptr %p\n", imapbase, iclrbase, intrmapptr, intrclrptr));
 	ino |= INTVEC(ihandle);
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
@@ -597,30 +577,38 @@ pyro_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 
 	if (intrmapptr != NULL) {
-		u_int64_t ival;
+		u_int64_t imap;
 
-		ival = *intrmapptr;
-		ival &= ~FIRE_INTRMAP_INT_CNTRL_NUM_MASK;
-		ival |= FIRE_INTRMAP_INT_CNTRL_NUM0;
+		imap = *intrmapptr;
+		DPRINTF(PDB_INTR, ("%s: read intrmap = %016qx", __func__,
+			(unsigned long long)imap));
+		imap &= ~FIRE_INTRMAP_INT_CNTRL_NUM_MASK;
+		imap |= FIRE_INTRMAP_INT_CNTRL_NUM0;
+		DPRINTF(PDB_INTR, ("; set intr group intrmap = %016qx",
+			(unsigned long long)imap));
 		if (sc->sc_oberon) {
-			ival &= ~OBERON_INTRMAP_T_DESTID_MASK;
-			ival |= CPU_JUPITERID <<
+			imap &= ~OBERON_INTRMAP_T_DESTID_MASK;
+			imap |= CPU_JUPITERID <<
 			    OBERON_INTRMAP_T_DESTID_SHIFT;
 		} else {
-			ival &= ~FIRE_INTRMAP_T_JPID_MASK;
-			ival |= CPU_UPAID << FIRE_INTRMAP_T_JPID_SHIFT;
+			imap &= ~FIRE_INTRMAP_T_JPID_MASK;
+			imap |= CPU_UPAID << FIRE_INTRMAP_T_JPID_SHIFT;
 		}
-		ival |= INTMAP_V;
-		*intrmapptr = ival;
-		ival = *intrmapptr;
-		ih->ih_number |= ival & INTMAP_INR;
+		DPRINTF(PDB_INTR, ("; set cpuid num intrmap = %016qx",
+			(unsigned long long)imap));
+		imap |= INTMAP_V;
+		*intrmapptr = imap;
+		DPRINTF(PDB_INTR, ("; writing intrmap = %016qx",
+			(unsigned long long)imap));
+		imap = *intrmapptr;
+		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx\n",
+			(unsigned long long)imap));
+		ih->ih_number |= imap & INTMAP_INR;
 	}
-#if 0 /* XXXMRG? do this?  our schizo does. */
  	if (intrclrptr) {
  		/* set state to IDLE */
 		*intrclrptr = 0;
  	}
-#endif
 
 	return (ih);
 }
@@ -632,22 +620,9 @@ pyro_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	void *cookie;
 	struct pyro_pbm *pbm = (struct pyro_pbm *)pc->cookie;
 
-	DPRINTF(PDB_INTR, ("%s: ih %lx; level %d", __func__, (u_long)ih, level));
+	DPRINTF(PDB_INTR, ("%s: ih %lx; level %d\n", __func__, (u_long)ih, level));
 	cookie = bus_intr_establish(pbm->pp_memt, ih, level, func, arg);
 
-	DPRINTF(PDB_INTR, ("; returning handle %p\n", cookie));
+	DPRINTF(PDB_INTR, ("%s: returning handle %p\n", __func__, cookie));
 	return (cookie);
 }
-
-#if 0
-#ifdef DDB
-void
-pyro_xir(void *arg, int cpu)
-{
-	struct pyro_softc *sc = arg;
-
-	bus_space_write_8(sc->sc_bustag, sc->sc_xbch, FIRE_RESET_GEN,
-	    FIRE_RESET_GEN_XIR);
-}
-#endif
-#endif
