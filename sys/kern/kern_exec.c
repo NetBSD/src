@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.232.2.2.6.1 2009/09/05 13:45:28 bouyer Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.232.2.2.6.2 2011/03/20 20:52:01 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.232.2.2.6.1 2009/09/05 13:45:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.232.2.2.6.2 2011/03/20 20:52:01 bouyer Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -428,18 +428,40 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
 	int			oldlwpflags;
+	uid_t			uid;
 #ifdef SYSTRACE
 	int			wassugid = ISSET(p->p_flag, P_SUGID);
 	char			pathbuf[MAXPATHLEN];
 	size_t			pathbuflen;
 #endif /* SYSTRACE */
 
+	p = l->l_proc;
+
+	/*
+	 * Check if we have exceeded our number of processes limit.
+	 * This is so that we handle the case where a root daemon
+	 * forked, ran setuid to become the desired user and is trying
+	 * to exec. The obvious place to do the reference counting check
+	 * is setuid(), but we don't do the reference counting check there
+	 * like other OS's do because then all the programs that use setuid()
+	 * must be modified to check the return code of setuid() and exit().
+	 * It is dangerous to make setuid() fail, because it fails open and
+	 * the program will continue to run as root. If we make it succeed
+	 * and return an error code, again we are not enforcing the limit.
+	 * The best place to enforce the limit is here, when the process tries
+	 * to execute a new image, because eventually the process will need
+	 * to call exec in order to do something useful.
+	 */
+
+	if ((p->p_flag & P_SUGID) && (uid = kauth_cred_getuid(l->l_cred)) != 0
+	    && chgproccnt(uid, 0) > p->p_rlimit[RLIMIT_NPROC].rlim_cur)
+		return EAGAIN;
+
 	/* Disable scheduler activation upcalls. */
 	oldlwpflags = l->l_flag & (L_SA | L_SA_UPCALL);
 	if (l->l_flag & L_SA)
 		l->l_flag &= ~(L_SA | L_SA_UPCALL);
 
-	p = l->l_proc;
 	/*
 	 * Lock the process and set the P_INEXEC flag to indicate that
 	 * it should be left alone until we're done here.  This is
