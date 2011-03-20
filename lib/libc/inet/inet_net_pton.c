@@ -20,7 +20,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_pton.c,v 1.4.2.1 2002/08/02 02:17:21 marka Exp ";
 #else
-__RCSID("$NetBSD: inet_net_pton.c,v 1.1 2004/05/20 23:13:02 christos Exp $");
+__RCSID("$NetBSD: inet_net_pton.c,v 1.1.38.1 2011/03/20 21:32:38 bouyer Exp $");
 #endif
 #endif
 
@@ -145,12 +145,12 @@ inet_net_pton_ipv4( const char *src, u_char *dst, size_t size) {
 			INSIST(n >= 0 && n <= 9);
 			bits *= 10;
 			bits += n;
+			if (bits > 32)
+				goto emsgsize;
 		} while ((ch = *src++) != '\0' && isascii((u_char)ch)
 		    && isdigit((u_char)ch));
 		if (ch != '\0')
 			goto enoent;
-		if (bits > 32)
-			goto emsgsize;
 	}
 
 	/* Firey death and destruction unless we prefetched EOS. */
