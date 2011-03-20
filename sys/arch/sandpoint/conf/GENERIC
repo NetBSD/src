@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.56 2011/03/19 16:05:35 phx Exp $
+# $NetBSD: GENERIC,v 1.57 2011/03/20 17:10:46 phx Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.56 $"
+#ident 		"GENERIC-$Revision: 1.57 $"
 
 maxusers	32
 
@@ -102,8 +102,27 @@ options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 
-options 	INET
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires BPF)
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
+#options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
