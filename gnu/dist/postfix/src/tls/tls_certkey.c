@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_certkey.c,v 1.1.1.2 2006/07/19 01:17:39 rpaulo Exp $	*/
+/*	$NetBSD: tls_certkey.c,v 1.1.1.2.14.1 2011/03/20 20:51:17 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -69,6 +69,10 @@
 
 #include <msg.h>
 
+/* Global library. */
+
+#include <mail_params.h>
+
 /* TLS library. */
 
 #define TLS_INTERNAL
@@ -89,7 +93,7 @@ int     tls_set_ca_certificate_info(SSL_CTX *ctx, const char *CAfile,
 	    tls_print_errors();
 	    return (-1);
 	}
-	if (!SSL_CTX_set_default_verify_paths(ctx)) {
+	if (var_tls_append_def_CA && !SSL_CTX_set_default_verify_paths(ctx)) {
 	    msg_info("cannot set certificate verification paths");
 	    tls_print_errors();
 	    return (-1);

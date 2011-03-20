@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.13.2.2 2007/08/06 11:06:23 ghen Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.13.2.2.2.1 2011/03/20 20:51:15 bouyer Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -594,6 +594,10 @@ extern bool var_stat_home_dir;
 #define VAR_DUP_FILTER_LIMIT	"duplicate_filter_limit"
 #define DEF_DUP_FILTER_LIMIT	1000
 extern int var_dup_filter_limit;
+
+#define VAR_TLS_APPEND_DEF_CA	"tls_append_default_CA"
+#define DEF_TLS_APPEND_DEF_CA	0	/* Postfix < 2.8 BC break */
+extern bool var_tls_append_def_CA;
 
 #define VAR_TLS_RAND_EXCH_NAME	"tls_random_exchange_name"
 #define DEF_TLS_RAND_EXCH_NAME	"${config_directory}/prng_exch"
@@ -2003,7 +2007,11 @@ extern int var_local_rcpt_code;
 				" $" VAR_RCPT_CANON_MAPS \
 				" $" VAR_RELOCATED_MAPS \
 				" $" VAR_TRANSPORT_MAPS \
-				" $" VAR_MYNETWORKS
+				" $" VAR_MYNETWORKS \
+				" $" VAR_SEND_BCC_MAPS \
+				" $" VAR_RCPT_BCC_MAPS \
+				" $" VAR_SMTP_GENERIC_MAPS \
+				" $" VAR_LMTP_GENERIC_MAPS
 extern char *var_proxy_read_maps;
 
  /*

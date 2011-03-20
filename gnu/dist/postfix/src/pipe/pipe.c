@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.c,v 1.1.1.9.4.1 2007/06/16 17:00:34 snj Exp $	*/
+/*	$NetBSD: pipe.c,v 1.1.1.9.4.1.2.1 2011/03/20 20:51:16 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -850,7 +850,7 @@ static void get_service_attr(PIPE_ATTR *attr, char **argv)
 	/*
 	 * null_sender=string
 	 */
-	else if (strncasecmp("null_sender=", *argv, sizeof("eol=") - 1) == 0) {
+	else if (strncasecmp("null_sender=", *argv, sizeof("null_sender=") - 1) == 0) {
 	    vstring_strcpy(attr->null_sender, *argv + sizeof("null_sender=") - 1);
 	}
 
