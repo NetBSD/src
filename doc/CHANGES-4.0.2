@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.81 2011/03/07 17:14:24 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.82 2011/03/20 20:52:33 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1118,4 +1118,74 @@ sys/kern/init_sysctl.c				patch
 
 	Sanitize arguments before memory allocation.
 	[joerg, ticket #1419]
+
+sys/kern/vfs_syscalls.c				1.415 via patch
+
+	Check for bogus flags to access() up front. Otherwise we end up
+	calling VOP_ACCESS with flags 0 and something asserts deep in the
+	bowels of kauth. PR 44648 from Taylor Campbell. (I moved the check
+	earlier relative to the suggested patch.)
+	[dholland, ticket #1417]
+
+lib/libc/inet/inet_net_pton.c			1.2
+
+	Check bits on each loop to prevent integer oveflow.
+	Reported by Maksymilian Arciemowicz
+	[spz, ticket #1418]
+
+gnu/dist/postfix/HISTORY				patch
+gnu/dist/postfix/RELEASE_NOTES				patch
+gnu/dist/postfix/makedefs				patch
+gnu/dist/postfix/html/postconf.5.html			patch
+gnu/dist/postfix/man/man5/postconf.5			patch
+gnu/dist/postfix/mantools/postlink			patch
+gnu/dist/postfix/src/bounce/bounce_template.c		patch
+gnu/dist/postfix/src/cleanup/cleanup_map1n.c		patch
+gnu/dist/postfix/src/flush/flush.c			patch
+gnu/dist/postfix/src/global/cleanup_user.h		patch
+gnu/dist/postfix/src/global/db_common.c			patch
+gnu/dist/postfix/src/global/mail_params.h		patch
+gnu/dist/postfix/src/global/mail_version.h		patch
+gnu/dist/postfix/src/global/pipe_command.c		patch
+gnu/dist/postfix/src/local/recipient.c			patch
+gnu/dist/postfix/src/master/master_sig.c		patch
+gnu/dist/postfix/src/milter/milter8.c			patch
+gnu/dist/postfix/src/oqmgr/qmgr_entry.c			patch
+gnu/dist/postfix/src/pickup/pickup.c			patch
+gnu/dist/postfix/src/pipe/pipe.c			patch
+gnu/dist/postfix/src/postdrop/postdrop.c		patch
+gnu/dist/postfix/src/postsuper/postsuper.c		patch
+gnu/dist/postfix/src/qmgr/qmgr_entry.c			patch
+gnu/dist/postfix/src/smtp/smtp.c			patch
+gnu/dist/postfix/src/smtp/lmtp_params.c			patch
+gnu/dist/postfix/src/smtp/smtp_params.c			patch
+gnu/dist/postfix/src/smtp/smtp_proto.c			patch
+gnu/dist/postfix/src/smtp/smtp_reuse.c			patch
+gnu/dist/postfix/src/smtpd/smtpd.c			patch
+gnu/dist/postfix/src/smtpd/smtpd_check.c		patch
+gnu/dist/postfix/src/smtpd/smtpd_proxy.c		patch
+gnu/dist/postfix/src/tls/Makefile.in			patch
+gnu/dist/postfix/src/tls/tls_certkey.c			patch
+gnu/dist/postfix/src/trivial-rewrite/resolve.c		patch
+gnu/dist/postfix/src/util/events.c			patch
+gnu/dist/postfix/src/util/host_port.c			patch
+gnu/dist/postfix/src/util/make_dirs.c			patch
+gnu/dist/postfix/src/util/match_ops.c			patch
+gnu/dist/postfix/src/util/safe_open.c			patch
+gnu/dist/postfix/src/util/sys_defs.h			patch
+gnu/dist/postfix/src/util/valid_hostname.c		patch
+gnu/dist/postfix/src/util/vstream.c			patch
+gnu/dist/postfix/src/util/vstring.c			patch
+gnu/dist/postfix/src/util/watchdog.c			patch
+gnu/dist/postfix/src/xsasl/xsasl_dovecot_server.c	patch
+gnu/dist/postfix/proto/postconf.proto			patch
+
+	Update Postfix to version 2.4.16. This update fixes many bugs
+	including the vulnerability reported in CVE-2011-0411.
+	[tron, ticket #1420]
+
+sys/kern/kern_exec.c				1.269 via patch
+
+	Check for number of processes resource violation in execve().
+	[spz, ticket #1421]
 
