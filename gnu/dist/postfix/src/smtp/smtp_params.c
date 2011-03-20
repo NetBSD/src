@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_params.c,v 1.1.1.2.6.1 2007/06/16 17:01:15 snj Exp $	*/
+/*	$NetBSD: smtp_params.c,v 1.1.1.2.6.1.2.1 2011/03/20 20:51:17 bouyer Exp $	*/
 
     static CONFIG_STR_TABLE smtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
@@ -100,6 +100,7 @@
 #ifdef USE_TLS
 	VAR_SMTP_TLS_ENFORCE_PN, DEF_SMTP_TLS_ENFORCE_PN, &var_smtp_tls_enforce_peername,
 	VAR_SMTP_TLS_NOTEOFFER, DEF_SMTP_TLS_NOTEOFFER, &var_smtp_tls_note_starttls_offer,
+	VAR_TLS_APPEND_DEF_CA, DEF_TLS_APPEND_DEF_CA, &var_tls_append_def_CA,
 #endif
 	VAR_SMTP_SENDER_AUTH, DEF_SMTP_SENDER_AUTH, &var_smtp_sender_auth,
 	VAR_SMTP_CNAME_OVERR, DEF_SMTP_CNAME_OVERR, &var_smtp_cname_overr,

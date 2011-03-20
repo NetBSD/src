@@ -99,6 +99,7 @@ tls_bio_ops.o: ../../include/vstream.h
 tls_bio_ops.o: ../../include/vstring.h
 tls_bio_ops.o: tls.h
 tls_bio_ops.o: tls_bio_ops.c
+tls_certkey.o: ../../include/mail_params.h
 tls_certkey.o: ../../include/msg.h
 tls_certkey.o: ../../include/name_code.h
 tls_certkey.o: ../../include/name_mask.h

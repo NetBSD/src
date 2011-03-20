@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.1.1.12.2.2 2007/08/06 11:06:27 ghen Exp $	*/
+/*	$NetBSD: smtp.c,v 1.1.1.12.2.2.2.1 2011/03/20 20:51:17 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -706,6 +706,7 @@ char   *var_smtp_tls_sec_cmatch;
 int     var_smtp_tls_scert_vd;
 char   *var_smtp_tls_vfy_cmatch;
 int     var_tls_daemon_rand_bytes;
+bool    var_tls_append_def_CA;
 
 #endif
 
