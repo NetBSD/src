@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.40 2010/07/21 17:52:10 hannken Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.41 2011/03/20 12:21:28 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.40 2010/07/21 17:52:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.41 2011/03/20 12:21:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,7 +583,7 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 	uvm_vnp_setwritesize(DETOV(dep), (voff_t)dep->de_FileSize);
 	dep->de_flag |= DE_UPDATE|DE_MODIFIED;
 	uvm_vnp_zerorange(DETOV(dep), (off_t)osize,
-	    (size_t)(dep->de_FileSize - osize));
+	    (size_t)(round_page(dep->de_FileSize) - osize));
 	uvm_vnp_setsize(DETOV(dep), (voff_t)dep->de_FileSize);
 	return (deupdat(dep, 1));
 }
