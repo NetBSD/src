@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe_command.c,v 1.1.1.11.4.1 2007/06/16 17:00:10 snj Exp $	*/
+/*	$NetBSD: pipe_command.c,v 1.1.1.11.4.2 2011/03/20 20:47:23 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -630,7 +630,7 @@ int     pipe_command(VSTREAM *src, DSN_BUF *why,...)
 	 */
 	if (!NORMAL_EXIT_STATUS(wait_status)) {
 	    if (WIFSIGNALED(wait_status)) {
-		dsb_unix(why, "5.3.0", log_len ?
+		dsb_unix(why, "4.3.0", log_len ?
 			 log_buf : sys_exits_detail(EX_SOFTWARE)->text,
 			 "Command died with signal %d: \"%s\"%s%s",
 			 WTERMSIG(wait_status), args.command,

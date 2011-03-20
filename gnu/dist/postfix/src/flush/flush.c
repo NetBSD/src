@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.1.1.9.4.1 2007/06/16 16:59:52 snj Exp $	*/
+/*	$NetBSD: flush.c,v 1.1.1.9.4.2 2011/03/20 20:47:23 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -151,6 +151,7 @@
 
 #include <sys_defs.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <utime.h>
@@ -577,6 +578,11 @@ static int flush_send_path(const char *path, int how)
      */
     if (count > 0 && ftruncate(vstream_fileno(log), (off_t) 0) < 0)
 	msg_fatal("%s: truncate fast flush logfile %s: %m", myname, path);
+
+    /*
+     * Workaround for noatime mounts. Use futimes() if available.
+     */
+    (void) utimes(VSTREAM_PATH(log), (struct timeval *) 0);
 
     /*
      * Request delivery and clean up.
