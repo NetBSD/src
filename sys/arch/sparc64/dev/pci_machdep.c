@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.69 2011/03/16 03:54:51 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.70 2011/03/20 20:40:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69 2011/03/16 03:54:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.70 2011/03/20 20:40:22 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,9 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69 2011/03/16 03:54:51 mrg Exp $")
 #include <dev/ofw/ofw_pci.h>
 
 #include <sparc64/dev/iommureg.h>
-#include <sparc64/dev/iommuvar.h>
-#include <sparc64/dev/psychoreg.h>
-#include <sparc64/dev/psychovar.h>
 #include <sparc64/sparc64/cache.h>
 
 #include "locators.h"
