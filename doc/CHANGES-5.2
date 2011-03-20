@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.66 2011/03/08 17:49:22 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.67 2011/03/20 21:33:13 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4835,4 +4835,48 @@ Makefile					1.282 via patch
 
 	Pass down INSTALLSETS variable to installsets target.
 	[jym, ticket #1565]
+
+sys/kern/vfs_syscalls.c				1.415 via patch
+
+	Check for bogus flags to access() up front. Otherwise we end up
+	calling VOP_ACCESS with flags 0 and something asserts deep in the
+	bowels of kauth. PR 44648 from Taylor Campbell. (I moved the check
+	earlier relative to the suggested patch.)
+	[dholland, ticket #1567]
+
+lib/librefuse/refuse_opt.c			1.15
+
+	fuse_opt_parse() was using uninitialized struct fuse_opt_option::data,
+	this bug made fuse_opt_proc_t not work, if it used first ``data''
+	argument, and might cause memory corruption even.
+	[soda, ticket #1568]
+
+sys/arch/sparc64/dev/lom.c			1.7
+
+	lom_refresh():
+	Update only the sensor status specified by the edata as noted in
+	sysmon_envsys(9).
+	lom_sysctl_alarm():
+	Update alarm status before reading via sysctl to make it usable at
+	a boot time.
+	[nakayama, ticket #1570]
+
+sys/net/bpf_filter.c				1.42 - 1.46 via patch
+
+	Avoid stack memory disclosure by keeping track during filter
+	validation time of initialized memory. Idea taken from linux.
+	Use kmem instead of malloc. Requested by rmind.
+	[spz, ticket #1571]
+
+sys/arch/mips/mips/fp.S				1.40 via patch
+
+	Fix cvt.d.s per analysis by Marcus Comstedt in PR port-mips/36251.
+	Confirmed on ews4800mips.
+	[tsutsui, ticket #1572]
+
+lib/libc/inet/inet_net_pton.c			1.2
+
+	Check bits on each loop to prevent integer oveflow.
+	Reported by Maksymilian Arciemowicz
+	[spz, ticket #1574]
 
