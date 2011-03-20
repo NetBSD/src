@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.73 2011/03/19 20:05:21 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.74 2011/03/20 12:21:28 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.73 2011/03/19 20:05:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.74 2011/03/20 12:21:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,6 +554,7 @@ msdosfs_write(void *v)
 	u_long count;
 	vsize_t bytelen;
 	off_t oldoff;
+	size_t rem;
 	struct uio *uio = ap->a_uio;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
@@ -623,6 +624,10 @@ msdosfs_write(void *v)
 		dep->de_FileSize = uio->uio_offset + resid;
 		/* hint uvm to not read in extended part */
 		uvm_vnp_setwritesize(vp, dep->de_FileSize);
+		/* zero out the remainder of the last page */
+		rem = round_page(dep->de_FileSize) - dep->de_FileSize;
+		if (rem > 0)
+			uvm_vnp_zerorange(vp, (off_t)dep->de_FileSize, rem);
 		extended = 1;
 	}
 
