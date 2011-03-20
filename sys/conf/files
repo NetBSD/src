@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1004 2011/03/06 17:08:35 bouyer Exp $
+#	$NetBSD: files,v 1.1005 2011/03/20 17:54:02 tsutsui Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1117,7 +1117,7 @@ defflag	opt_chipsfb.h	CHIPSFB_WAIT
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
-file	dev/ic/sti.c		sti & (sti_pci | sti_gedoens)
+file	dev/ic/sti.c		sti
 
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
@@ -1153,17 +1153,19 @@ defparam USB_MEM_RESERVE
 define	usbroothub
 file	dev/usb/usbroothub_subr.c	usbroothub
 
-device	uhci: usbus, usbroothub
+define	usb_dma
+
+device	uhci: usbus, usbroothub, usb_dma
 file	dev/usb/uhci.c			uhci			needs-flag
 
 # OHCI USB controller
 #
-device	ohci: usbus, usbroothub
+device	ohci: usbus, usbroothub, usb_dma
 file	dev/usb/ohci.c			ohci			needs-flag
 
 # EHCI USB controller
 #
-device	ehci: usbus, usbroothub
+device	ehci: usbus, usbroothub, usb_dma
 file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
