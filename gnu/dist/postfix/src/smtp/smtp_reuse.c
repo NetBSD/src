@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reuse.c,v 1.1.1.3 2006/11/07 02:58:41 rpaulo Exp $	*/
+/*	$NetBSD: smtp_reuse.c,v 1.1.1.3.12.1 2011/03/20 20:51:17 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -214,6 +214,11 @@ static SMTP_SESSION *smtp_reuse_common(SMTP_STATE *state, int fd,
 	smtp_session_free(session);
 	return (state->session = 0);
     }
+
+    /*
+     * Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE.
+     */
+    vstream_tweak_sock(session->stream);
 
     /*
      * Update the list of used cached addresses.
