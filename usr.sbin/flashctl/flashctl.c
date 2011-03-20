@@ -1,4 +1,4 @@
-/*	$NetBSD: flashctl.c,v 1.1 2011/02/26 18:07:32 ahoka Exp $	*/
+/*	$NetBSD: flashctl.c,v 1.2 2011/03/20 06:10:27 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -57,8 +57,10 @@ main(int argc, char **argv)
 
 	setprogname(argv[0]);
 
-	if (argc < 3)
+	if (argc < 3) {
 		usage();
+		exit(1);
+	}
 
 	device = argv[1];
 	command = argv[2];
@@ -66,8 +68,9 @@ main(int argc, char **argv)
 	argv += 3;
 
 	fd = open(device, O_RDWR, 0);
-	if (fd == -1)
+	if (fd == -1) {
 		err(EXIT_FAILURE, "can't open flash device");
+	}
 
 	if (!strcmp("erase", command)) {
 		struct flash_info_params ip;
@@ -176,14 +179,24 @@ main(int argc, char **argv)
 			addr += ip.ip_erase_size;
 		}
 
-		if (hasbad)
+		if (hasbad) {
 			printf("Done.\n");
-		else
+		} else {
 			printf("No bad blocks found.\n");
+		}
 	} else if (!strcmp("markbad", command)) {
 		flash_addr_t address;
+
+		/* TODO: maybe we should let the user specify
+		 * multiple blocks?
+		 */
+		if (argc != 1) {
+			warnx("invalid number of arguments");
+			error = 1;
+			goto out;
+		}
 		
-		error = to_intmax(&n, argv[1]);
+		error = to_intmax(&n, argv[0]);
 		if (error) {
 			warnx(strerror(error));
 			goto out;
@@ -244,6 +257,4 @@ usage(void)
 	    getprogname());
 	fprintf(stderr, "       %s device markbad <address>\n",
 	    getprogname());
-	
-	exit(1);
 }
