@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.14 2011/03/06 17:08:24 bouyer Exp $
+# 	$NetBSD: RAMDISK,v 1.15 2011/03/20 17:32:19 tsutsui Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -33,6 +33,9 @@ no options	COMPAT_13
 no options	COMPAT_14
 no options	COMPAT_15
 no options	COMPAT_16
+no options	COMPAT_20
+no options	COMPAT_30
+no options	COMPAT_43
 
 no file-system	EXT2FS
 no file-system	LFS
@@ -41,9 +44,11 @@ no file-system	KERNFS
 no file-system	NULLFS
 no file-system	OVERLAY
 no file-system	PUFFS
+no file-system	PROCFS
 no file-system	UMAPFS
 no file-system	UNION
 no file-system	PTYFS
+no file-system	TMPFS
 
 no options 	QUOTA
 no options 	QUOTA2
@@ -60,6 +65,7 @@ no ses*	at scsibus?
 no ss*	at scsibus?
 no uk*	at scsibus?
 
+no pseudo-device	ccd
 no pseudo-device	raid
 no pseudo-device	vnd
 no pseudo-device	fss
