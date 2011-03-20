@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.8 2010/04/28 06:18:07 plunky Exp $	*/
+/*	$NetBSD: sdp.c,v 1.9 2011/03/20 19:46:13 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.8 2010/04/28 06:18:07 plunky Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.9 2011/03/20 19:46:13 plunky Exp $");
 
 #include <sys/types.h>
 
@@ -180,26 +180,22 @@ cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 	prop_dictionary_t dict;
 	sdp_session_t ss;
 	size_t i;
-	bool rv;
 
 	dict = prop_dictionary_create();
 	if (dict == NULL)
-		return NULL;
+		err(EXIT_FAILURE, "prop_dictionary_create()");
 
 	for (i = 0; i < __arraycount(cfgtype); i++) {
 		if (strcasecmp(service, cfgtype[i].name) == 0) {
 			ss = sdp_open(laddr, raddr);
-			if (ss != NULL) {
-				rv = cfg_search(ss, i, dict);
+			if (ss == NULL)
+				err(EXIT_FAILURE, "SDP connection failed");
 
-				sdp_close(ss);
+			if (!cfg_search(ss, i, dict))
+				errx(EXIT_FAILURE, "service %s not found", service);
 
-				if (rv == true)
-					return dict;
-			}
-
-			prop_object_release(dict);
-			return NULL;
+			sdp_close(ss);
+			return dict;
 		}
 	}
 
