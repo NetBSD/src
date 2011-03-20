@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.20.4.1 2007/06/16 17:01:20 snj Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.20.4.2 2011/03/20 20:47:25 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -2271,8 +2271,13 @@ static int check_access(SMTPD_STATE *state, const char *table, const char *name,
     if (msg_verbose)
 	msg_info("%s: %s", myname, name);
 
-    if ((dict = dict_handle(table)) == 0)
-	msg_panic("%s: dictionary not found: %s", myname, table);
+    if ((dict = dict_handle(table)) == 0) {
+	msg_warn("%s: unexpected dictionary: %s", myname, table);
+	value = "451 4.3.5 Server configuration error";
+	CHK_ACCESS_RETURN(check_table_result(state, table, value, name,
+					     reply_name, reply_class,
+					     def_acl), FOUND);
+    }
     if (flags == 0 || (flags & dict->flags) != 0) {
 	if ((value = dict_get(dict, name)) != 0)
 	    CHK_ACCESS_RETURN(check_table_result(state, table, value, name,
@@ -2316,8 +2321,13 @@ static int check_domain_access(SMTPD_STATE *state, const char *table,
      */
 #define CHK_DOMAIN_RETURN(x,y) { *found = y; return(x); }
 
-    if ((dict = dict_handle(table)) == 0)
-	msg_panic("%s: dictionary not found: %s", myname, table);
+    if ((dict = dict_handle(table)) == 0) {
+	msg_warn("%s: unexpected dictionary: %s", myname, table);
+	value = "451 4.3.5 Server configuration error";
+	CHK_DOMAIN_RETURN(check_table_result(state, table, value,
+					     domain, reply_name, reply_class,
+					     def_acl), FOUND);
+    }
     for (name = domain; *name != 0; name = next) {
 	if (flags == 0 || (flags & dict->flags) != 0) {
 	    if ((value = dict_get(dict, name)) != 0)
@@ -2375,8 +2385,13 @@ static int check_addr_access(SMTPD_STATE *state, const char *table,
 #endif
 	delim = '.';
 
-    if ((dict = dict_handle(table)) == 0)
-	msg_panic("%s: dictionary not found: %s", myname, table);
+    if ((dict = dict_handle(table)) == 0) {
+	msg_warn("%s: unexpected dictionary: %s", myname, table);
+	value = "451 4.3.5 Server configuration error";
+	CHK_ADDR_RETURN(check_table_result(state, table, value, address,
+					   reply_name, reply_class,
+					   def_acl), FOUND);
+    }
     do {
 	if (flags == 0 || (flags & dict->flags) != 0) {
 	    if ((value = dict_get(dict, addr)) != 0)
@@ -2513,12 +2528,12 @@ static int check_server_access(SMTPD_STATE *state, const char *table,
      */
     dns_status = dns_lookup(domain, type, 0, &server_list,
 			    (VSTRING *) 0, (VSTRING *) 0);
-    if (dns_status == DNS_NOTFOUND && h_errno == NO_DATA) {
+    if (dns_status == DNS_NOTFOUND /* Not: h_errno == NO_DATA */ ) {
 	if (type == T_MX) {
 	    server_list = dns_rr_create(domain, domain, type, C_IN, 0, 0,
 					domain, strlen(domain) + 1);
 	    dns_status = DNS_OK;
-	} else if (type == T_NS) {
+	} else if (type == T_NS && h_errno == NO_DATA) {
 	    while ((domain = strchr(domain, '.')) != 0 && domain[1]) {
 		domain += 1;
 		dns_status = dns_lookup(domain, type, 0, &server_list,
@@ -2547,6 +2562,13 @@ static int check_server_access(SMTPD_STATE *state, const char *table,
 	if (msg_verbose)
 	    msg_info("%s: %s hostname check: %s",
 		     myname, dns_strtype(type), (char *) server->data);
+	if (valid_hostaddr((char *) server->data, DONT_GRIPE)) {
+	    if ((status = check_addr_access(state, table, (char *) server->data,
+				      FULL, &found, reply_name, reply_class,
+					    def_acl)) != 0 || found)
+		CHECK_SERVER_RETURN(status);
+	    continue;
+	}
 	if ((status = check_domain_access(state, table, (char *) server->data,
 				      FULL, &found, reply_name, reply_class,
 					  def_acl)) != 0 || found)
@@ -3304,7 +3326,7 @@ static int check_policy_service(SMTPD_STATE *state, const char *server,
 	    coded_CN_buf = 0; \
 	    coded_CN = ""; \
 	} else { \
-	    coded_CN_buf = vstring_alloc(strlen(CN)); \
+	    coded_CN_buf = vstring_alloc(strlen(CN) + 1); \
 	    xtext_quote(coded_CN_buf, CN, ""); \
 	    coded_CN = STR(coded_CN_buf); \
 	} \
@@ -3664,7 +3686,8 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 			 name);
 	    else {
 		cpp += 1;
-		if (state->helo_name)
+		if (state->helo_name
+		    && valid_hostname(state->helo_name, DONT_GRIPE))
 		    status = reject_rbl_domain(state, *cpp, state->helo_name,
 					       SMTPD_NAME_HELO);
 	    }
@@ -4279,7 +4302,9 @@ static int check_recipient_rcpt_maps(SMTPD_STATE *state, const char *recipient)
 	return (0);
     if (state->recipient_rcptmap_checked == 1)
 	return (0);
-    state->recipient_rcptmap_checked = 1;
+    if (state->warn_if_reject == 0)
+	/* We really validate the recipient address. */
+	state->recipient_rcptmap_checked = 1;
     return (check_rcpt_maps(state, recipient, SMTPD_NAME_RECIPIENT));
 }
 

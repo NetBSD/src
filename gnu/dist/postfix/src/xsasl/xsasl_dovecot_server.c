@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_dovecot_server.c,v 1.1.1.1 2006/07/19 01:17:58 rpaulo Exp $	*/
+/*	$NetBSD: xsasl_dovecot_server.c,v 1.1.1.1.6.1 2011/03/20 20:47:26 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -455,7 +455,7 @@ int     xsasl_dovecot_server_first(XSASL_SERVER *xp, const char *sasl_method,
 	/* send the request */
 	server->last_request_id = ++server->impl->request_id_counter;
 	vstream_fprintf(server->impl->sasl_stream,
-			"AUTH\t%u\t%s\tservice=%s",
+			"AUTH\t%u\t%s\tservice=%s\tnologin",
 			server->last_request_id, sasl_method,
 			server->service);
 	if (init_response) {

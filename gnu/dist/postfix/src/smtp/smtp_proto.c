@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_proto.c,v 1.1.1.13.2.1 2007/06/16 17:01:16 snj Exp $	*/
+/*	$NetBSD: smtp_proto.c,v 1.1.1.13.2.2 2011/03/20 20:47:25 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -801,6 +801,9 @@ static int smtp_start_tls(SMTP_STATE *state)
 			       SMTP_RESP_FAKE(&fake, "4.7.5"),
 			       "Cannot start TLS: handshake failure"));
     }
+
+    /* At this point there must not be any pending plaintext. */
+    vstream_fpurge(session->stream, VSTREAM_PURGE_BOTH);
 
     /*
      * At this point we have to re-negotiate the "EHLO" to reget the
@@ -1771,7 +1774,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		    fail_status = smtp_mesg_fail(state, DSN_BY_LOCAL_MTA,
 					     SMTP_RESP_FAKE(&fake, "5.3.0"),
 					     "unreadable mail queue entry");
-		    if (fail_status == 0)
+		    if (state->status == 0)
 			(void) mark_corrupt(state->src);
 		    RETURN(fail_status);
 		}
