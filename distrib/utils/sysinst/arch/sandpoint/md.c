@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.33 2011/02/01 01:42:14 joerg Exp $ */
+/*	$NetBSD: md.c,v 1.34 2011/03/20 12:43:40 phx Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,13 +41,17 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
+
 #include <stdio.h>
+#include <string.h>
 #include <util.h>
 
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+static char *prodname;
 
 void
 md_init(void)
@@ -57,26 +61,35 @@ md_init(void)
 void
 md_init_set_status(int flags)
 {
-	struct utsname instsys;
+	static const char mib_name[] = "machdep.prodfamily";
+	static char unknown[] = "unknown";
+	size_t len;
 
 	(void)flags;
 
 	/*
-	 * Get the name of the Install Kernel we are running under and
+	 * Determine the product family of the board we are running on and
 	 * enable the installation of the corresponding GENERIC kernel.
 	 *
 	 * Note:  In md.h the two kernels are disabled.  If they are
 	 *        enabled there the logic here needs to be switched.
 	 */
-        uname(&instsys);
-        if (strstr(instsys.version, "(INSTALL_KURO)"))
+	if (sysctlbyname(mib_name, NULL, &len, NULL, 0) != 0) {
+		prodname = unknown;
+		return;
+	}
+	prodname = malloc(len);
+	sysctlbyname(mib_name, prodname, &len, NULL, 0);
+printf("\n***\n*** Installing on %s\n***\n", prodname);
+
+	if (strcmp(prodname, "kurobox") == 0)
 		/*
-		 * Running the KuroBox Installation Kernel, so enable KUROBOX
+		 * Running on a KuroBox family product, so enable KUROBOX
 		 */
 		set_kernel_set(SET_KERNEL_2);
         else
 		/*
-		 * Running the GENERIC Installation Kernel, so enable GENERIC
+		 * Otherwise enable GENERIC
 		 */
 		set_kernel_set(SET_KERNEL_1);
 }
@@ -159,15 +172,30 @@ void
 md_cleanup_install(void)
 {
 #ifndef DEBUG
+	int new_speed;
+	char sed_cmd[64];
+
 	enable_rc_conf();
 
 	/*
-	 * For KUROBOX set the console speed to 57600 in /etc/ttys.
+	 * Set the console speed in /etc/ttys depending on the board.
+	 * The default speed is 115200, which is patched when needed.
 	 */
-	if (get_kernel_set() == SET_KERNEL_2)
-		run_program(RUN_CHROOT,
-		    "sed -an -e 's/115200/57600/;H;$!d;g;w /etc/ttys'"
-		    " /etc/ttys");
+	if (strcmp(prodname, "kurobox") == 0)
+		new_speed = 57600;			/* KuroBox */
+
+	else if (strcmp(prodname, "dlink") == 0 ||	/* D-Link DSM-G600 */
+	    strcmp(prodname, "nhnas") == 0)		/* NH23x, All6250 */
+		new_speed = 9600;
+	
+	else
+		new_speed = 0;
+
+	if (new_speed != 0) {
+		snprintf(sed_cmd, 64, "sed -an -e 's/115200/%d/;H;$!d;g;w"
+		    "/etc/ttys' /etc/ttys", new_speed);
+		run_program(RUN_CHROOT, sed_cmd);
+	}
 #endif
 }
 
