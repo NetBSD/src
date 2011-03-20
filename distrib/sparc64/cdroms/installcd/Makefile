@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/01/14 10:26:36 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.10 2011/03/20 09:04:53 martin Exp $
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 
@@ -23,9 +23,10 @@ CDRUNTIME+=	./sbin
 # CDRUNTIME+=	./stand
 CDRUNTIME+=	./tmp
 CDRUNTIME+=	./usr/bin/ftp
+CDRUNTIME+=	./usr/bin/getopt
+CDRUNTIME+=	./usr/bin/gunzip
 CDRUNTIME+=	./usr/bin/gzcat
 CDRUNTIME+=	./usr/bin/gzip
-CDRUNTIME+=	./usr/bin/gunzip
 CDRUNTIME+=	./usr/bin/grep
 CDRUNTIME+=	./usr/bin/less
 CDRUNTIME+=	./usr/bin/more
