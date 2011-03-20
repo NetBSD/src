@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.128 2010/09/21 03:26:20 macallan Exp $
+#	$NetBSD: files.sparc64,v 1.129 2011/03/20 20:55:46 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -34,19 +34,24 @@ device	psycho: pcibus, sysmon_power, sysmon_taskq
 attach	psycho at mainbus
 device	schizo: pcibus, sysmon_power, sysmon_taskq
 attach	schizo at mainbus
+device	pyro: pcibus, sysmon_power, sysmon_taskq
+attach	pyro at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho
 file	arch/sparc64/dev/schizo.c		schizo
-file	arch/sparc64/dev/pci_machdep.c		psycho | schizo
+file	arch/sparc64/dev/pyro.c			pyro
+file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro
 
 # IOMMU is for both
-file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo
+file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro
 
 include "dev/ata/files.ata"
 
 device ebus {[addr = -1]}: pcibus
 attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
+attach ebus at mainbus with ebus_mainbus
+file	arch/sparc64/dev/ebus_mainbus.c		ebus_mainbus
 
 device clock: mk48txx
 attach clock at sbus with mkclock_sbus
