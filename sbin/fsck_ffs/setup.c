@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.91 2011/03/06 17:08:16 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.92 2011/03/20 11:41:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.91 2011/03/06 17:08:16 bouyer Exp $");
+__RCSID("$NetBSD: setup.c,v 1.92 2011/03/20 11:41:24 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -565,9 +565,9 @@ setup(const char *dev, const char *origdev)
 			    q2h_hash_mask);
 		}
 		uquot_user_hash =
-		    malloc((1 << q2h_hash_shift) * sizeof(struct uquot_hash));
+		    calloc((1 << q2h_hash_shift), sizeof(struct uquot_hash));
 		uquot_group_hash =
-		    malloc((1 << q2h_hash_shift) * sizeof(struct uquot_hash));
+		    calloc((1 << q2h_hash_shift), sizeof(struct uquot_hash));
 		if (uquot_user_hash == NULL || uquot_group_hash == NULL)
 			errexit("Cannot allocate space for quotas hash\n");
 	} else {
