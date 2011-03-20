@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.c,v 1.1.1.8.2.1 2007/06/16 17:02:13 snj Exp $	*/
+/*	$NetBSD: vstream.c,v 1.1.1.8.2.2 2011/03/20 20:47:26 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -496,6 +496,7 @@ static void vstream_buf_init(VBUF *bp, int flags)
 
 static void vstream_buf_alloc(VBUF *bp, ssize_t len)
 {
+    VSTREAM *stream = VBUF_TO_APPL(bp, VSTREAM, buf);
     ssize_t used = bp->ptr - bp->data;
     const char *myname = "vstream_buf_alloc";
 
@@ -511,10 +512,15 @@ static void vstream_buf_alloc(VBUF *bp, ssize_t len)
     bp->data = (unsigned char *)
 	(bp->data ? myrealloc((char *) bp->data, len) : mymalloc(len));
     bp->len = len;
-    if (bp->flags & VSTREAM_FLAG_READ)
+    if (bp->flags & VSTREAM_FLAG_READ) {
 	bp->ptr = bp->data + used;
-    else
+	if (bp->flags & VSTREAM_FLAG_DOUBLE)
+	    VSTREAM_SAVE_STATE(stream, read_buf, read_fd);
+    } else {
 	VSTREAM_BUF_AT_OFFSET(bp, used);
+	if (bp->flags & VSTREAM_FLAG_DOUBLE)
+	    VSTREAM_SAVE_STATE(stream, write_buf, write_fd);
+    }
 }
 
 /* vstream_buf_wipe - reset buffer to initial state */
@@ -682,11 +688,8 @@ static int vstream_buf_get_ready(VBUF *bp)
      * allocation gives the application a chance to override the default
      * buffering policy.
      */
-    if (bp->data == 0) {
+    if (bp->data == 0)
 	vstream_buf_alloc(bp, VSTREAM_BUFSIZE);
-	if (bp->flags & VSTREAM_FLAG_DOUBLE)
-	    VSTREAM_SAVE_STATE(stream, read_buf, read_fd);
-    }
 
     /*
      * If the stream is double-buffered and the write buffer is not empty,

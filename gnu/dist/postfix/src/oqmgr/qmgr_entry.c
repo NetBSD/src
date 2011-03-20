@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_entry.c,v 1.1.1.4.4.1 2007/06/16 17:00:26 snj Exp $	*/
+/*	$NetBSD: qmgr_entry.c,v 1.1.1.4.4.2 2011/03/20 20:47:24 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -244,7 +244,8 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
     /*
      * Maintain back-to-back delivery status.
      */
-    queue->last_done = event_time();
+    if (which == QMGR_QUEUE_BUSY)
+	queue->last_done = event_time();
 
     /*
      * When the in-core queue for this site is empty and when this site is

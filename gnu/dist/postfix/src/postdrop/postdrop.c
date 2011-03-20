@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.1.1.8.4.2 2007/08/06 11:06:26 ghen Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.1.1.8.4.3 2011/03/20 20:47:24 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -342,7 +342,8 @@ int     main(int argc, char **argv)
 
     signal(SIGINT, postdrop_sig);
     signal(SIGQUIT, postdrop_sig);
-    signal(SIGTERM, postdrop_sig);
+    if (signal(SIGTERM, SIG_IGN) == SIG_DFL)
+	signal(SIGTERM, postdrop_sig);
     if (signal(SIGHUP, SIG_IGN) == SIG_DFL)
 	signal(SIGHUP, postdrop_sig);
     msg_cleanup(postdrop_cleanup);
