@@ -23,17 +23,15 @@
 #
 # ****************************************************************/
 
-.SUFFIXES: .c .o
 CC = cc
 CFLAGS = -g -I..
-A = ../gdtoa.a
+CFLAGS+=-I${.CURDIR}/../../arch/${MACHINE_ARCH}/gdtoa
 L = -lm
-L1 =
+L1 = -lm
 #use "L1=-lm" when compiled with -DHonor_FLTP_ROUNDS or -DUSE_LOCALE
 INFFIX = | sed 's/[Ii][Nn][Ff][intyINTY]*/Infinity/g'
 
-.c.o:
-	$(CC) -c $(CFLAGS) $*.c
+.PATH: /usr/src/lib/libc/gdtoa
 
 all: dt dItest ddtest dtest ftest Qtest xLtest xtest ddtestsi dItestsi tests
 
@@ -41,49 +39,48 @@ dt = dt.o $A
 dt: $(dt)
 	$(CC) -o dt $(dt) $L
 
-dItest = dItest.o getround.o $A
+dItest = dItest.o getround.o g_dfmt.o strtoId.o strtodI.o \
+	g__fmt.o strtoIg.o
 dItest: $(dItest)
 	$(CC) -o dItest $(dItest) $(L1)
 
-ddtest = ddtest.o getround.o $A
+ddtest = ddtest.o getround.o g_dfmt.o strtordd.o strtopdd.o g_ddfmt.o \
+	strtoIdd.o g__fmt.o strtoIg.o
 ddtest: $(ddtest)
 	$(CC) -o ddtest $(ddtest) $L
 
-dtest = dtest.o getround.o $A
+dtest = dtest.o getround.o g_dfmt.o strtopd.o strtoId.o \
+	g__fmt.o strtoIg.o
 dtest: $(dtest)
 	$(CC) -o dtest $(dtest) $L
 
-ftest = ftest.o getround.o $A
+ftest = ftest.o getround.o strtorf.o strtopf.o g_ffmt.o strtoIf.o \
+	g__fmt.o strtoIg.o
 ftest: $(ftest)
 	$(CC) -o ftest $(ftest) $(L1)
 
-Qtest = Qtest.o getround.o $A
+Qtest = Qtest.o getround.o strtorQ.o g_Qfmt.o strtoIQ.o strtopQ.o \
+	g__fmt.o strtoIg.o
 Qtest: $(Qtest)
 	$(CC) -o Qtest $(Qtest) $(L1)
 
-xtest = xtest.o getround.o $A
+xtest = xtest.o getround.o strtorx.o g_xfmt.o strtoIx.o \
+	g__fmt.o strtoIg.o
 xtest: $(xtest)
 	$(CC) -o xtest $(xtest) $(L1)
 
-xLtest = xLtest.o getround.o $A
+xLtest = xLtest.o getround.o strtorxL.o strtopxL.o g_xLfmt.o strtoIxL.o \
+	g__fmt.o strtoIg.o
 xLtest: $(xLtest)
 	$(CC) -o xLtest $(xLtest) $(L1)
 
-strtopddSI.o: strtopddSI.c ../strtopdd.c
-
-strtorddSI.o: strtorddSI.c ../strtordd.c
-
-strtodISI.o: strtodISI.c ../strtodI.c
-
-strtoIddSI.o: strtoIddSI.c ../strtoIdd.c
-
-strtoIdSI.o: strtoIdSI.c ../strtoId.c
-
-ddtestsi = ddtest.o strtopddSI.o strtorddSI.o strtoIddSI.o getround.o $A
+ddtestsi = ddtest.o strtopddSI.o strtorddSI.o strtoIddSI.o getround.o \
+	g_dfmt.o g_ddfmt.o g__fmt.o strtoIg.o
 ddtestsi: $(ddtestsi)
 	$(CC) -o ddtestsi $(ddtestsi) $L
 
-dItestsi = dItest.o strtodISI.o strtoIdSI.o getround.o $A
+dItestsi = dItest.o strtodISI.o strtoIdSI.o getround.o \
+	g_dfmt.o g__fmt.o strtoIg.o
 dItestsi: $(dItestsi)
 	$(CC) -o dItestsi $(dItestsi) $(L1)
 
@@ -92,7 +89,7 @@ strtodt: $(strtodt)
 	$(CC) -o strtodt $(strtodt) $L
 
 pftest = pftest.o $A
-pftest: ../Printf  $(pftest)
+pftest: $(pftest)
 	$(CC) -o pftest $(pftest) $L
 
 ## On Intel (and Intel-like) systems using extended-precision registers
@@ -102,7 +99,7 @@ pftest: ../Printf  $(pftest)
 ## (which does all computations in integer arithmetic) and should show no
 ## unexpected results.
 
-strtodtnrp = strtodt.o ../strtodnrp.c $A
+strtodtnrp = strtodt.o strtodnrp.o
 strtodtnrp: $(strtodtnrp)
 	$(CC) -o strtodtnrp $(strtodtnrp)
 
