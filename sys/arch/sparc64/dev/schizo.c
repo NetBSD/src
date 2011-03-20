@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.17 2011/01/02 10:43:18 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.18 2011/03/20 20:43:34 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -299,21 +299,20 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_safari_error, sc,
 	    SCZ_SERR_INO, "safari");
 
-#if 0
 	if (sc->sc_tomatillo) {
 		/*
-		 * We should enable the IOCACHE here.
+		 * Enable the IOCACHE.
 		 */
 		uint64_t iocache_csr;
-		char bits[128];
 
-		iocache_csr = schizo_pbm_read(pbm, SCZ_PCI_IOCACHE_CSR);
+		iocache_csr = TOM_IOCACHE_CSR_WRT_PEN |
+			      (1 << TOM_IOCACHE_CSR_POFFSET_SHIFT) |
+			      TOM_IOCACHE_CSR_PEN_RDM |
+			      TOM_IOCACHE_CSR_PEN_ONE |
+			      TOM_IOCACHE_CSR_PEN_LINE;
 
-		snprintb(bits, sizeof(bits), TOM_IOCACHE_CSR_BITS, iocache_csr);
-		printf("IOCACHE_CSR=%s\n", bits);
-		printf("IOCACHE_CSR=%" PRIx64 "\n", iocache_csr);
+		schizo_pbm_write(pbm, SCZ_PCI_IOCACHE_CSR, iocache_csr);
 	}
-#endif
 
 	config_found(&sc->sc_dv, &pba, schizo_print);
 }
@@ -424,7 +423,7 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 	is->is_bustag = pbm->sp_regt;
 	bus_space_subregion(is->is_bustag, pbm->sp_regh,
 		offsetof(struct schizo_pbm_regs, iommu),
-		sizeof(struct schizo_iommureg),
+		sizeof(struct iommureg2),
 		&is->is_iommu);
 
 	/*
