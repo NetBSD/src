@@ -1,10 +1,7 @@
-/*	$NetBSD: vm_vfs.c,v 1.27 2011/03/01 10:02:11 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.28 2011/03/21 16:41:09 pooka Exp $	*/
 
 /*
- * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by the
- * Finnish Cultural Foundation.
+ * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.27 2011/03/01 10:02:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.28 2011/03/21 16:41:09 pooka Exp $");
 
 #include <sys/param.h>
 

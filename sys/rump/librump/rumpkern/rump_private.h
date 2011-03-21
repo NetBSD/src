@@ -1,9 +1,7 @@
-/*	$NetBSD: rump_private.h,v 1.69 2011/01/13 15:38:29 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.70 2011/03/21 16:41:09 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
