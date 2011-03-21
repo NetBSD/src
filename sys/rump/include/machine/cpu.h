@@ -1,9 +1,7 @@
-/*	$NetBSD: cpu.h,v 1.14 2011/01/04 16:23:35 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2011/03/21 16:41:08 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

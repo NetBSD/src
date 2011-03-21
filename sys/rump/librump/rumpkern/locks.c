@@ -1,10 +1,7 @@
-/*	$NetBSD: locks.c,v 1.53 2011/03/09 23:41:24 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.54 2011/03/21 16:41:08 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by the
- * Finnish Cultural Foundation.
+ * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.53 2011/03/09 23:41:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.54 2011/03/21 16:41:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
