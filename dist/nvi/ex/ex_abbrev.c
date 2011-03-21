@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_abbrev.c,v 1.1.1.2 2008/05/18 14:31:09 aymeric Exp $ */
+/*	$NetBSD: ex_abbrev.c,v 1.2 2011/03/21 14:53:03 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -71,7 +71,7 @@ ex_abbr(SCR *sp, EXCMD *cmdp)
 			return (1);
 	}
 	for (p = cmdp->argv[0]->bp; *p != '\0'; ++p)
-		if (ISBLANK(p[0])) {
+		if (ISBLANK((UCHAR_T)p[0])) {
 			msgq(sp, M_ERR,
 			    "107|Abbreviations may not contain tabs or spaces");
 			return (1);

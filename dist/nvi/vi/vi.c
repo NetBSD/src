@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.3 2009/11/15 18:43:28 dsl Exp $ */
+/*	$NetBSD: vi.c,v 1.4 2011/03/21 14:53:04 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -450,7 +450,7 @@ v_cmd(SCR *sp, VICMD *dp, VICMD *vp, VICMD *ismotion, int *comcountp, int *mappe
 	                         
 {
 	enum { COMMANDMODE, ISPARTIAL, NOTPARTIAL } cpart;
-	CHAR_T key;
+	ARG_CHAR_T key;
 	VIKEYS const *kp;
 	gcret_t gcret;
 	u_int flags;
@@ -1084,7 +1084,7 @@ v_curword(SCR *sp)
 	 * follow the same rule.
 	 */
 	for (moved = 0,
-	    beg = sp->cno; beg < len && isspace(p[beg]); moved = 1, ++beg);
+	    beg = sp->cno; beg < len && ISSPACE((UCHAR_T)p[beg]); moved = 1, ++beg);
 	if (beg >= len) {
 		msgq(sp, M_BERR, "212|Cursor not in a word");
 		return (1);
@@ -1254,9 +1254,9 @@ v_comlog(sp, vp)
 	SCR *sp;
 	VICMD *vp;
 {
-	vtrace(sp, "vcmd: %c", vp->key);
+	vtrace(sp, "vcmd: "WC, vp->key);
 	if (F_ISSET(vp, VC_BUFFER))
-		vtrace(sp, " buffer: %c", vp->buffer);
+		vtrace(sp, " buffer: "WC, vp->buffer);
 	if (F_ISSET(vp, VC_C1SET))
 		vtrace(sp, " c1: %lu", vp->count);
 	if (F_ISSET(vp, VC_C2SET))
