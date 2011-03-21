@@ -1,4 +1,4 @@
-/* $NetBSD: dtoa.c,v 1.6 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: dtoa.c,v 1.7 2011/03/21 19:46:41 christos Exp $ */
 
 /****************************************************************
 
@@ -712,7 +712,7 @@ dtoa
 						return NULL;
 					jj1 = cmp(b, S);
 #ifdef ROUND_BIASED
-					if (jjj1 >= 0 /*)*/
+					if (jj1 >= 0 /*)*/
 #else
 					if ((jj1 > 0 || (jj1 == 0 && dig & 1))
 #endif
