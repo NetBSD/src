@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.8 2010/05/13 17:52:11 tnozaki Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.9 2011/03/21 14:53:03 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -962,7 +962,7 @@ ctag_search(SCR *sp, CHAR_T *search, size_t slen, char *tag)
 	 * used a line number, not a search string.  I got complaints, so
 	 * people are still using the format.  POSIX 1003.2 permits it.
 	 */
-	if (ISDIGIT(search[0])) {
+	if (ISDIGIT((UCHAR_T)search[0])) {
 		INT2CHAR(sp, search, slen+1, np, nlen);
 		m.lno = atoi(np);
 		if (!db_exist(sp, m.lno)) {

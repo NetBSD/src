@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_global.c,v 1.3 2009/11/14 23:31:37 christos Exp $ */
+/*	$NetBSD: ex_global.c,v 1.4 2011/03/21 14:53:03 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -92,7 +92,7 @@ ex_g_setup(SCR *sp, EXCMD *cmdp, enum which cmd)
 	if (cmdp->argc == 0)
 		goto usage;
 	for (p = cmdp->argv[0]->bp; ISBLANK(*p); ++p);
-	if (*p == '\0' || ISALNUM(*p) ||
+	if (*p == '\0' || ISALNUM((UCHAR_T)*p) ||
 	    *p == '\\' || *p == '|' || *p == '\n') {
 usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		return (1);

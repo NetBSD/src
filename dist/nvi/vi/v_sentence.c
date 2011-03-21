@@ -1,4 +1,4 @@
-/*	$NetBSD: v_sentence.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
+/*	$NetBSD: v_sentence.c,v 1.3 2011/03/21 14:53:04 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -74,7 +74,7 @@ v_sentencef(SCR *sp, VICMD *vp)
 	 * This may not handle "  .  " correctly, but it's real unclear
 	 * what correctly means in that case.
 	 */
-	if (cs.cs_flags == CS_EMP || (cs.cs_flags == 0 && isblank(cs.cs_ch))) {
+	if (cs.cs_flags == CS_EMP || (cs.cs_flags == 0 && ISBLANK2(cs.cs_ch))) {
 		if (cs_fblank(sp, &cs))
 			return (1);
 		if (--cnt == 0) {
@@ -95,7 +95,7 @@ v_sentencef(SCR *sp, VICMD *vp)
 				if (cs_next(sp, &cs))
 					return (1);
 				if (cs.cs_flags == 0 &&
-				    isblank(cs.cs_ch) && cs_fblank(sp, &cs))
+				    ISBLANK2(cs.cs_ch) && cs_fblank(sp, &cs))
 					return (1);
 				goto okret;
 			}
@@ -235,11 +235,11 @@ v_sentenceb(SCR *sp, VICMD *vp)
 			if (cs.cs_flags != CS_EOL)
 				break;
 		}
-	} else if (cs.cs_flags == 0 && !isblank(cs.cs_ch))
+	} else if (cs.cs_flags == 0 && !ISBLANK2(cs.cs_ch))
 		for (;;) {
 			if (cs_prev(sp, &cs))
 				return (1);
-			if (cs.cs_flags != 0 || isblank(cs.cs_ch))
+			if (cs.cs_flags != 0 || ISBLANK2(cs.cs_ch))
 				break;
 		}
 
@@ -282,7 +282,7 @@ ret:			slno = cs.cs_lno;
 			} while (!cs.cs_flags &&
 			    (cs.cs_ch == ')' || cs.cs_ch == ']' ||
 			    cs.cs_ch == '"' || cs.cs_ch == '\''));
-			if ((cs.cs_flags || isblank(cs.cs_ch)) &&
+			if ((cs.cs_flags || ISBLANK2(cs.cs_ch)) &&
 			    cs_fblank(sp, &cs))
 				return (1);
 
@@ -305,7 +305,7 @@ ret:			slno = cs.cs_lno;
 					return (1);
 				if (cs.cs_flags == CS_EOL)
 					continue;
-				if (cs.cs_flags == 0 && isblank(cs.cs_ch))
+				if (cs.cs_flags == 0 && ISBLANK2(cs.cs_ch))
 					continue;
 				break;
 			}
@@ -323,7 +323,7 @@ ret:			slno = cs.cs_lno;
 			break;
 		default:
 			last =
-			    cs.cs_flags == CS_EOL || isblank(cs.cs_ch) ||
+			    cs.cs_flags == CS_EOL || ISBLANK2(cs.cs_ch) ||
 			    cs.cs_ch == ')' || cs.cs_ch == ']' ||
 			    cs.cs_ch == '"' || cs.cs_ch == '\'' ? 1 : 0;
 		}

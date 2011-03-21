@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstemp.c,v 1.1.1.2 2008/05/18 14:29:38 aymeric Exp $ */
+/*	$NetBSD: mkstemp.c,v 1.2 2011/03/21 14:53:02 tnozaki Exp $ */
 
 /*
  * Copyright (c) 1987, 1993
@@ -119,7 +119,7 @@ _gettemp(char *path, register int *doopen)
 			if (*trv == 'z')
 				*trv++ = 'a';
 			else {
-				if (isdigit(*trv))
+				if (isdigit((unsigned char)*trv))
 					*trv = 'a';
 				else
 					++*trv;

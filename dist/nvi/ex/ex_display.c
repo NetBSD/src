@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_display.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: ex_display.c,v 1.3 2011/03/21 14:53:03 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -91,7 +91,7 @@ bdisplay(SCR *sp)
 
 	/* Display regular cut buffers. */
 	for (cbp = sp->wp->cutq.lh_first; cbp != NULL; cbp = cbp->q.le_next) {
-		if (isdigit(cbp->name))
+		if (ISDIGIT(cbp->name))
 			continue;
 		if (cbp->textq.cqh_first != (void *)&cbp->textq)
 			db(sp, cbp, NULL);
@@ -100,7 +100,7 @@ bdisplay(SCR *sp)
 	}
 	/* Display numbered buffers. */
 	for (cbp = sp->wp->cutq.lh_first; cbp != NULL; cbp = cbp->q.le_next) {
-		if (!isdigit(cbp->name))
+		if (!ISDIGIT(cbp->name))
 			continue;
 		if (cbp->textq.cqh_first != (void *)&cbp->textq)
 			db(sp, cbp, NULL);

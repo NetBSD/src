@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_write.c,v 1.3 2009/10/31 14:30:55 dsl Exp $ */
+/*	$NetBSD: ex_write.c,v 1.4 2011/03/21 14:53:03 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -145,7 +145,7 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 
 	/* Skip any leading whitespace. */
 	if (cmdp->argc != 0)
-		for (p = cmdp->argv[0]->bp; *p != '\0' && isblank(*p); ++p);
+		for (p = cmdp->argv[0]->bp; *p != '\0' && ISBLANK((UCHAR_T)*p); ++p);
 
 	/* If "write !" it's a pipe to a utility. */
 	if (cmdp->argc != 0 && cmd == WRITE && *p == '!') {
@@ -156,7 +156,7 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 		}
 
 		/* Expand the argument. */
-		for (++p; *p && isblank(*p); ++p);
+		for (++p; *p && ISBLANK((UCHAR_T)*p); ++p);
 		if (*p == '\0') {
 			ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 			return (1);
@@ -203,7 +203,7 @@ exwr(SCR *sp, EXCMD *cmdp, enum which cmd)
 		LF_SET(FS_APPEND);
 
 		/* Skip ">>" and whitespace. */
-		for (p += 2; *p && isblank(*p); ++p);
+		for (p += 2; *p && ISBLANK((UCHAR_T)*p); ++p);
 	}
 
 	/* If no other arguments, just write the file back. */

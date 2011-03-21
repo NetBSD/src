@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.9 2010/11/14 20:53:54 schnoebe Exp $ */
+/*	$NetBSD: options.c,v 1.10 2011/03/21 14:53:02 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -639,7 +639,7 @@ opts_set(SCR *sp, ARGS **argv, const char *usage)
 				break;
 			}
 
-			if (!ISDIGIT(sep[0]))
+			if (!ISDIGIT((UCHAR_T)sep[0]))
 				goto badnum;
 			if ((nret =
 			    nget_uslong(sp, &value, sep, &endp, 10)) != NUM_OK) {

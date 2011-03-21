@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 2009/11/14 23:31:37 christos Exp $ */
+/*	$NetBSD: extern.h,v 1.4 2011/03/21 14:53:02 tnozaki Exp $ */
 
 /* Do not edit: automatically built by build/distrib. */
 SCR *api_fscreen __P((int, char *));
@@ -66,7 +66,7 @@ int v_key_init __P((SCR *));
 void v_key_ilookup __P((SCR *));
 size_t v_key_len __P((SCR *, ARG_CHAR_T));
 u_char *v_key_name __P((SCR *, ARG_CHAR_T));
-int v_key_val __P((SCR *, ARG_CHAR_T));
+e_key_t v_key_val __P((SCR *, ARG_CHAR_T));
 int v_event_push __P((SCR *, EVENT *, const CHAR_T *, size_t, u_int));
 int v_event_get __P((SCR *, EVENT *, int, u_int32_t));
 void v_event_err __P((SCR *, EVENT *));

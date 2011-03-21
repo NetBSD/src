@@ -1,4 +1,4 @@
-/*	$NetBSD: v_match.c,v 1.4 2009/01/18 03:45:50 lukem Exp $ */
+/*	$NetBSD: v_match.c,v 1.5 2011/03/21 14:53:04 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -163,7 +163,7 @@ nomatch:		msgq(sp, M_BERR, "184|No match character on this line");
 	if (db_get(sp, mp->lno, DBG_FATAL, &p, &len))
 		return (1);
 	for (p += mp->cno + 1, len -= mp->cno; --len; ++p)
-		if (!isblank(*p))
+		if (!ISBLANK((UCHAR_T)*p))
 			return (0);
 	F_SET(vp, VM_LMODE);
 	return (0);

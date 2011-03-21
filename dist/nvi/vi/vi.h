@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.h,v 1.3 2008/12/05 22:51:43 christos Exp $ */
+/*	$NetBSD: vi.h,v 1.4 2011/03/21 14:53:04 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,20 +12,15 @@
  */
 
 /* Definition of a vi "word". */
-#ifdef USE_WIDECHAR
-#define	inword(ch)	((UCHAR_T)ch <= 255 && \
-			 (isalnum((unsigned char)ch) || (ch) == '_'))
-#else
-#define	inword(ch)	(isalnum((UCHAR_T)ch) || (ch) == '_')
-#endif
+#define	inword(ch)	((ch) == '_' || (ISGRAPH((UCHAR_T)ch) && !ISPUNCT((UCHAR_T)ch)))
 
 typedef struct _vikeys VIKEYS;
 
 /* Structure passed around to functions implementing vi commands. */
 typedef struct _vicmd {
-	CHAR_T	key;			/* Command key. */
-	CHAR_T	buffer;			/* Buffer. */
-	CHAR_T	character;		/* Character. */
+	ARG_CHAR_T key;			/* Command key. */
+	ARG_CHAR_T buffer;		/* Buffer. */
+	ARG_CHAR_T character;		/* Character. */
 	u_long	count;			/* Count. */
 	u_long	count2;			/* Second count (only used by z). */
 	EVENT	ev;			/* Associated event. */
@@ -160,7 +155,7 @@ typedef struct _vcs {
 	size_t	 cs_cno;		/* Column. */
 	CHAR_T	*cs_bp;			/* Buffer. */
 	size_t	 cs_len;		/* Length. */
-	CHAR_T	 cs_ch;			/* Character. */
+	ARG_CHAR_T cs_ch;		/* Character. */
 #define	CS_EMP	1			/* Empty line. */
 #define	CS_EOF	2			/* End-of-file. */
 #define	CS_EOL	3			/* End-of-line. */

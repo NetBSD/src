@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.h,v 1.3 2009/12/23 12:44:21 mlelstv Exp $ */
+/*	$NetBSD: cut.h,v 1.4 2011/03/21 14:53:02 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -19,7 +19,7 @@ struct _cb {
 	LIST_ENTRY(_cb) q;		/* Linked list of cut buffers. */
 	TEXTH	 textq;			/* Linked list of TEXT structures. */
 	/* XXXX Needed ? Can non ascii-chars be cut buffer names ? */
-	CHAR_T	 name;			/* Cut buffer name. */
+	ARG_CHAR_T name;		/* Cut buffer name. */
 	size_t	 len;			/* Total length of cut text. */
 
 #define	CB_LMODE	0x01		/* Cut was in line mode. */
@@ -66,9 +66,9 @@ struct _text {				/* Text: a linked list of lines. */
  * Translate upper-case buffer names to lower-case buffer names.
  */
 #define	CBNAME(sp, cbp, nch) {						\
-	CHAR_T L__name;							\
-	L__name = ISUPPER((unsigned char)nch) ? 			\
-	    TOLOWER((unsigned char)nch) : (nch);			\
+	ARG_CHAR_T L__name;						\
+	L__name = ISUPPER(nch) ? 					\
+	    TOLOWER(nch) : (nch);					\
 	for (cbp = sp->wp->cutq.lh_first;				\
 	    cbp != NULL; cbp = cbp->q.le_next)				\
 		if (cbp->name == L__name)				\

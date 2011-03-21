@@ -1,4 +1,4 @@
-/*	$NetBSD: v_replace.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
+/*	$NetBSD: v_replace.c,v 1.3 2011/03/21 14:53:04 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -174,7 +174,7 @@ next:		if (v_event_get(sp, &ev, 0, 0))
 		p += vp->m_start.cno + cnt;
 		len -= vp->m_start.cno + cnt;
 		if (len != 0 && O_ISSET(sp, O_AUTOINDENT))
-			for (; len && isblank(*p); --len, ++p);
+			for (; len && ISBLANK((UCHAR_T)*p); --len, ++p);
 
 		if ((tp = text_init(sp, p, len, len)) == NULL)
 			goto err_ret;

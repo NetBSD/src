@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.3 2009/12/23 12:44:21 mlelstv Exp $ */
+/*	$NetBSD: cut.c,v 1.4 2011/03/21 14:53:02 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -69,7 +69,7 @@ int
 cut(SCR *sp, CHAR_T *namep, MARK *fm, MARK *tm, int flags)
 {
 	CB *cbp;
-	CHAR_T name = '\0';
+	ARG_CHAR_T name = '\0';
 	db_recno_t lno;
 	int append, copy_one, copy_def;
 
@@ -97,7 +97,7 @@ cut(SCR *sp, CHAR_T *namep, MARK *fm, MARK *tm, int flags)
 	 */
 	append = copy_one = copy_def = 0;
 	if (namep != NULL) {
-		name = *namep;
+		name = (UCHAR_T)*namep;
 		if (LF_ISSET(CUT_NUMREQ) || (LF_ISSET(CUT_NUMOPT) &&
 		    (LF_ISSET(CUT_LINEMODE) || fm->lno != tm->lno))) {
 			copy_one = 1;

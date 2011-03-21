@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: util.c,v 1.4 2011/03/21 14:53:02 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -94,7 +94,7 @@ nonblank(SCR *sp, db_recno_t lno, size_t *cnop)
 		return (0);
 
 	for (cnt = off, p = &p[off],
-	    len -= off; len && isblank(*p); ++cnt, ++p, --len);
+	    len -= off; len && ISBLANK((UCHAR_T)*p); ++cnt, ++p, --len);
 
 	/* Set the return. */
 	*cnop = len ? cnt : cnt - 1;

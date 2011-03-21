@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_main.c,v 1.1.1.2 2008/05/18 14:31:24 aymeric Exp $ */
+/*	$NetBSD: ip_main.c,v 1.2 2011/03/21 14:53:03 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1996
@@ -211,10 +211,10 @@ get_fds(char *ip_arg, int *i_fd, int *o_fd)
 	 * file descriptor from the screen, the second is the file descriptor
 	 * to the screen.
 	 */
-	if (!ip_arg || !isdigit(ip_arg[0]))
+	if (!ip_arg || !isdigit((unsigned char)ip_arg[0]))
 		goto usage;
 	*i_fd = strtol(ip_arg, &ep, 10);
-	if (ep[0] != '.' || !isdigit(ep[1]))
+	if (ep[0] != '.' || !isdigit((unsigned char)ep[1]))
 		goto usage;
 	*o_fd = strtol(++ep, &ep, 10);
 	if (ep[0] != '\0') {
