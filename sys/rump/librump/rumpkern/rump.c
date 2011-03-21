@@ -1,9 +1,7 @@
-/*	$NetBSD: rump.c,v 1.232 2011/03/08 12:39:29 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.233 2011/03/21 16:41:08 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.232 2011/03/08 12:39:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.233 2011/03/21 16:41:08 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
