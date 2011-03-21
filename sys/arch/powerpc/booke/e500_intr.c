@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.4 2011/03/16 05:31:03 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.5 2011/03/21 19:55:04 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -433,11 +433,11 @@ e500_intr_onchip_name_lookup(int irq)
 {
 	const char *name;
 
-	return e500_intr_name_lookup(e500_intr_info.ii_onchip_intr_names, irq);
-	if (name != NULL)
-		return name;
+	name = e500_intr_name_lookup(e500_intr_info.ii_onchip_intr_names, irq);
+	if (name == NULL)
+	       name = e500_intr_name_lookup(e500_onchip_intr_names, irq);
 
-	name = e500_intr_name_lookup(e500_onchip_intr_names, irq);
+	return name;
 }
 
 #ifdef __HAVE_FAST_SOFTINTS
@@ -1115,10 +1115,17 @@ e500_intr_cpu_init(struct cpu_info *ci)
 	}
 	KASSERT(evcnt == cpu->cpu_evcnt_intrs + info->ii_ist_vectors[IST_ONCHIP]);
 	for (size_t j = 0; j < info->ii_onchip_sources; j++, evcnt++) {
-		const char *name = e500_intr_onchip_name_lookup(j);
-		if (name != NULL) {
-			evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR,
-			    NULL, xname, name);
+		if (info->ii_onchip_bitmap[j / 32] & __BIT(j & 31)) {
+			const char *name = e500_intr_onchip_name_lookup(j);
+			if (name != NULL) {
+				evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR,
+				    NULL, xname, name);
+#ifdef DIAGNOSTIC
+			} else {
+				printf("%s: missing evcnt for onchip irq %zu\n",
+				    __func__, j);
+#endif
+			}
 		}
 	}
 
