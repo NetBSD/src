@@ -1,7 +1,7 @@
-/*	$NetBSD: p2k.h,v 1.7 2009/12/03 14:27:16 pooka Exp $	*/
+/*	$NetBSD: p2k.h,v 1.8 2011/03/21 16:41:27 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by Google Summer of Code.
  *
