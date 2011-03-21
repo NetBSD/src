@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.10 2011/03/21 04:52:09 christos Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.11 2011/03/21 22:33:29 christos Exp $ */
 
 /****************************************************************
 
@@ -406,6 +406,7 @@ typedef union { double d; ULong L[2]; } __attribute__((__may_alias__)) U;
 #define Exp_mask  0x7f80
 #define P 56
 #define Bias 129
+#define Emin (-127)	/* XXX: Check this */
 #define Exp_1  0x40800000
 #define Exp_11 0x4080
 #define Ebits 8
