@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.6 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: misc.c,v 1.7 2011/03/21 04:52:09 christos Exp $ */
 
 /****************************************************************
 
@@ -45,9 +45,9 @@ static double private_mem[PRIVATE_mem], *pmem_next = private_mem;
  Bigint *
 Balloc
 #ifdef KR_headers
-	(k) size_t k;
+	(k) int k;
 #else
-	(size_t k)
+	(int k)
 #endif
 {
 	int x;
@@ -59,17 +59,17 @@ Balloc
 	ACQUIRE_DTOA_LOCK(0);
 	/* The k > Kmax case does not need ACQUIRE_DTOA_LOCK(0), */
 	/* but this case seems very unlikely. */
-	if (k <= Kmax && (rv = freelist[k]) !=0) {
+	if ((size_t)k <= Kmax && (rv = freelist[k]) !=0) {
 		freelist[k] = rv->next;
 		}
 	else {
-		x = 1 << (int)k;
+		x = 1 << k;
 #ifdef Omit_Private_Memory
 		rv = (Bigint *)MALLOC(sizeof(Bigint) + (x-1)*sizeof(ULong));
 #else
 		len = (sizeof(Bigint) + (x-1)*sizeof(ULong) + sizeof(double) - 1)
 			/sizeof(double);
-		if (k <= Kmax && pmem_next - private_mem + len <= PRIVATE_mem) {
+		if ((size_t)k <= Kmax && pmem_next - private_mem + len <= PRIVATE_mem) {
 			rv = (Bigint*)(void *)pmem_next;
 			pmem_next += len;
 			}
@@ -78,7 +78,7 @@ Balloc
 #endif
 		if (rv == NULL)
 			return NULL;
-		rv->k = (int)k;
+		rv->k = k;
 		rv->maxwds = x;
 		}
 	FREE_DTOA_LOCK(0);
