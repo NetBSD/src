@@ -1,9 +1,7 @@
-/*	$NetBSD: rumpuser.h,v 1.67 2011/03/08 12:39:29 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.68 2011/03/21 16:41:08 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

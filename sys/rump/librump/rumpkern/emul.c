@@ -1,9 +1,7 @@
-/*	$NetBSD: emul.c,v 1.149 2011/01/21 13:11:03 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.150 2011/03/21 16:41:08 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.149 2011/01/21 13:11:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150 2011/03/21 16:41:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
