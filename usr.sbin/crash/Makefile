@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/04/23 02:10:01 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2011/03/21 05:09:33 joerg Exp $
 
 PROG=	crash
 MAN=	crash.8
@@ -49,7 +49,7 @@ SRCS+=	generic.c
 # vers.c
 SRCS+=	vers.c
 vers.c:	${S}/conf/newvers.sh
-	${HOST_SH} ${S}/conf/newvers.sh
+	${HOST_SH} ${S}/conf/newvers.sh -r
 CLEANFILES+=	vers.c version
 
 .endif
