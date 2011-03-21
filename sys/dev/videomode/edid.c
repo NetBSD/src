@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.6 2009/11/14 09:19:41 tsutsui Exp $ */
+/* $NetBSD: edid.c,v 1.7 2011/03/21 19:34:27 jdc Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.6 2009/11/14 09:19:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.7 2011/03/21 19:34:27 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,13 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.6 2009/11/14 09:19:41 tsutsui Exp $");
 #define	EDIDVERBOSE	1
 #define	DIVIDE(x,y)	(((x) + ((y) / 2)) / (y))
 
+/* These are reversed established timing order */
 static const char *_edid_modes[] =  {
 	"1280x1024x75",
 	"1024x768x75",
 	"1024x768x70",
 	"1024x768x60",
 	"1024x768x87i",
-	"832x768x74",	/* rounding error, 74.55 Hz aka "832x624x75" */
+	"832x624x74",	/* rounding error, 74.55 Hz aka "832x624x75" */
 	"800x600x75",
 	"800x600x72",
 	"800x600x60",
@@ -63,8 +64,8 @@ static const char *_edid_modes[] =  {
 	"640x480x72",
 	"640x480x67",
 	"640x480x60",
-	"720x400x85",	/* should this really be "720x400x88" ? */
-	"720x400x70",	/* hmm... videmode.c doesn't have this one */
+	"720x400x87",	/* rounding error, 87.85 Hz aka "720x400x88" */
+	"720x400x70",
 };
 
 #ifdef	EDIDVERBOSE
@@ -542,7 +543,8 @@ edid_parse(uint8_t *data, struct edid_info *edid)
 	edid->edid_nmodes = 0;
 	edid->edid_preferred_mode = NULL;
 	estmodes = EDID_EST_TIMING(data);
-	for (i = 0; i < 16; i++) {
+	/* Iterate in esztablished timing order */
+	for (i = 15; i >= 0; i--) {
 		if (estmodes & (1 << i)) {
 			vmp = edid_mode_lookup_list(_edid_modes[i]);
 			if (vmp != NULL) {
