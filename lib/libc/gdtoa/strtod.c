@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.6 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: strtod.c,v 1.7 2011/03/21 12:53:50 christos Exp $ */
 
 /****************************************************************
 
@@ -122,7 +122,7 @@ strtod
 	static int dplen;
 	if (!(s0 = decimalpoint_cache)) {
 		s0 = localeconv()->decimal_point;
-		if ((decimalpoint_cache = MALLOC(strlen(s0) + 1))) {
+		if ((decimalpoint_cache = MALLOC(strlen(s0) + 1)) != NULL) {
 			strcpy(decimalpoint_cache, s0);
 			s0 = decimalpoint_cache;
 			}
