@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.9 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.10 2011/03/21 04:52:09 christos Exp $ */
 
 /****************************************************************
 
@@ -581,7 +581,7 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern CONST double bigtens[], tens[], tinytens[];
  extern unsigned char hexdig[];
 
- extern Bigint *Balloc ANSI((size_t));
+ extern Bigint *Balloc ANSI((int));
  extern void Bfree ANSI((Bigint*));
  extern void ULtof ANSI((ULong*, ULong*, Long, int));
  extern void ULtod ANSI((ULong*, ULong*, Long, int));

@@ -1,4 +1,4 @@
-/* $NetBSD: hexnan.c,v 1.4 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: hexnan.c,v 1.5 2011/03/21 04:52:09 christos Exp $ */
 
 /****************************************************************
 
@@ -79,7 +79,7 @@ hexnan( CONST char **sp, CONST FPI *fpi, ULong *x0)
 	if (s[1] == '0' && (s[2] == 'x' || s[2] == 'X')
 	 && *(CONST unsigned char*)(s+3) > ' ')
 		s += 2;
-	while((c = *(CONST unsigned char*)++s)) {
+	while((c = *(CONST unsigned char*)++s) != '\0') {
 		if (!(h = hexdig[c])) {
 			if (c <= ' ') {
 				if (hd0 < havedig) {
@@ -111,7 +111,7 @@ hexnan( CONST char **sp, CONST FPI *fpi, ULong *x0)
 					*sp = s + 1;
 					break;
 					}
-				} while((c = *++s));
+				} while((c = *++s) != '\0');
 #endif
 			return STRTOG_NaN;
 			}
