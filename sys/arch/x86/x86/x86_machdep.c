@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.45 2011/02/06 23:25:17 jmcneill Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.46 2011/03/21 22:25:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.45 2011/02/06 23:25:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.46 2011/03/21 22:25:13 rmind Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -216,15 +216,16 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		} else {
 			x86_send_ipi(ci, X86_IPI_KPREEMPT);
 		}
+		return;
 #endif
-	} else {
-		aston(l, X86_AST_PREEMPT);
-		if (ci == cur) {
-			return;
-		}
-		if ((flags & RESCHED_IMMED) != 0) {
-			x86_send_ipi(ci, 0);
-		}
+	}
+
+	aston(l, X86_AST_PREEMPT);
+	if (ci == cur) {
+		return;
+	}
+	if ((flags & RESCHED_IMMED) != 0) {
+		x86_send_ipi(ci, 0);
 	}
 }
 
