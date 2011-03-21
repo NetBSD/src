@@ -1,4 +1,4 @@
-/* $NetBSD: strtodg.c,v 1.7 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: strtodg.c,v 1.8 2011/03/21 12:53:50 christos Exp $ */
 
 /****************************************************************
 
@@ -349,7 +349,7 @@ strtodg
 	static int dplen;
 	if (!(s0 = decimalpoint_cache)) {
 		s0 = localeconv()->decimal_point;
-		if ((decimalpoint_cache = MALLOC(strlen(s0) + 1))) {
+		if ((decimalpoint_cache = MALLOC(strlen(s0) + 1)) != NULL) {
 			strcpy(decimalpoint_cache, s0);
 			s0 = decimalpoint_cache;
 			}
@@ -640,7 +640,7 @@ strtodg
 			e2 += ((word0(&rv) & Exp_mask) >> Exp_shift1) - Bias;
 			word0(&rv) &= ~Exp_mask;
 			word0(&rv) |= Bias << Exp_shift1;
-			for(j = 0; e1 > 0; j++, e1 >>= 1)
+			for(j = 0; e1 > 0; j++, e1 = (unsigned int)e1 >> 1)
 				if (e1 & 1)
 					dval(&rv) *= bigtens[j];
 			}
@@ -651,7 +651,6 @@ strtodg
 			dval(&rv) /= tens[i];
 		if (e1 &= ~15) {
 			e1 = (unsigned int)e1 >> 4;
-			e1 >>= 4;
 			while(e1 >= (1 << (n_bigtens-1))) {
 				e2 += ((word0(&rv) & Exp_mask)
 					>> Exp_shift1) - Bias;
@@ -663,7 +662,7 @@ strtodg
 			e2 += ((word0(&rv) & Exp_mask) >> Exp_shift1) - Bias;
 			word0(&rv) &= ~Exp_mask;
 			word0(&rv) |= Bias << Exp_shift1;
-			for(j = 0; e1 > 0; j++, e1 >>= 1)
+			for(j = 0; e1 > 0; j++, e1 = (unsigned int)e1 >> 1)
 				if (e1 & 1)
 					dval(&rv) *= tinytens[j];
 			}
@@ -1073,10 +1072,10 @@ strtodg
 		irv = STRTOG_Normal | STRTOG_Inexlo;
 		*expt = fpi->emax;
 		b = bits;
-		be = b + ((fpi->nbits + 31) >> 5);
+		be = b + ((unsigned int)(fpi->nbits + 31) >> 5);
 		while(b < be)
-			*b++ = -1;
-		if ((j = fpi->nbits & 0x1f))
+			*b++ = (unsigned int)-1;
+		if ((j = fpi->nbits & 0x1f) != 0)
 			*--be >>= (32 - j);
 		goto ret;
  huge:
