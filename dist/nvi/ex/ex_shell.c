@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_shell.c,v 1.4 2009/11/15 18:43:28 dsl Exp $ */
+/*	$NetBSD: ex_shell.c,v 1.5 2011/03/21 14:53:03 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -20,6 +20,7 @@ static const char sccsid[] = "Id: ex_shell.c,v 10.42 2003/11/05 17:11:54 skimo E
 #include <sys/wait.h>
 
 #include <bitstring.h>
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <signal.h>
@@ -169,7 +170,7 @@ proc_wait(SCR *sp, long int pid, const char *cmd, int silent, int okpipe)
 	 * exit before reading all of its input.
 	 */
 	if (WIFSIGNALED(pstat) && (!okpipe || WTERMSIG(pstat) != SIGPIPE)) {
-		for (; isblank(*cmd); ++cmd);
+		for (; isblank((unsigned char)*cmd); ++cmd);
 		p = msg_print(sp, cmd, &nf);
 		len = strlen(p);
 		msgq(sp, M_ERR, "%.*s%s: received signal: %s%s",
@@ -191,7 +192,7 @@ proc_wait(SCR *sp, long int pid, const char *cmd, int silent, int okpipe)
 		 * practice.
 		 */
 		if (!silent) {
-			for (; isblank(*cmd); ++cmd);
+			for (; isblank((unsigned char)*cmd); ++cmd);
 			p = msg_print(sp, cmd, &nf);
 			len = strlen(p);
 			msgq(sp, M_ERR, "%.*s%s: exited with status %d",
