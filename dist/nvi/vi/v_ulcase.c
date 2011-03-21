@@ -1,4 +1,4 @@
-/*	$NetBSD: v_ulcase.c,v 1.2 2009/12/23 12:44:22 mlelstv Exp $ */
+/*	$NetBSD: v_ulcase.c,v 1.3 2011/03/21 14:53:04 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -147,15 +147,15 @@ ulcase(SCR *sp, db_recno_t lno, CHAR_T *lp, size_t len, size_t scno, size_t ecno
 {
 	size_t blen;
 	int change, rval;
-	CHAR_T ch, *p, *t;
-	CHAR_T *bp;
+	ARG_CHAR_T ch;
+	CHAR_T *p, *t, *bp;
 
 	GET_SPACE_RETW(sp, bp, blen, len);
 	MEMMOVEW(bp, lp, len);
 
 	change = rval = 0;
 	for (p = bp + scno, t = bp + ecno + 1; p < t; ++p) {
-		ch = *p;
+		ch = (UCHAR_T)*p;
 		if (ISLOWER(ch)) {
 			*p = TOUPPER(ch);
 			change = 1;

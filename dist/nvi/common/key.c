@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.5 2009/01/18 03:45:50 lukem Exp $ */
+/*	$NetBSD: key.c,v 1.6 2011/03/21 14:53:02 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -138,16 +138,12 @@ v_key_init(SCR *sp)
 	qsort(keylist, nkeylist, sizeof(keylist[0]), v_key_cmp);
 
 	/* Initialize the fast lookup table. */
-	for (gp->max_special = 0, kp = keylist, cnt = nkeylist; cnt--; ++kp) {
-		if (gp->max_special < kp->ch)
-			gp->max_special = kp->ch;
-		if (kp->ch <= MAX_FAST_KEY)
-			gp->special_key[kp->ch] = kp->value;
-	}
+	for (kp = keylist, cnt = nkeylist; cnt--; ++kp)
+		gp->special_key[kp->ch] = kp->value;
 
 	/* Find a non-printable character to use as a message separator. */
-	for (ch = 1; (unsigned)ch <= MAX_CHAR_T; ++ch)
-		if (!ISPRINT(ch)) {
+	for (ch = 1; ch <= UCHAR_MAX; ++ch)
+		if (!isprint(ch)) {
 			gp->noprint = ch;
 			break;
 		}
@@ -243,12 +239,13 @@ v_key_name(SCR *sp, ARG_CHAR_T ach)
 {
 	static const char hexdigit[] = "0123456789abcdef";
 	static const char octdigit[] = "01234567";
-	CHAR_T ch, mask;
-	size_t len;
-	int cnt, shift;
+	int ch;
+	size_t len, i;
 	const char *chp;
 
-	ch = ach;
+	if (INTISWIDE(ach))
+		goto vis;
+	ch = (unsigned char)ach;
 
 	/* See if the character was explicitly declared printable or not. */
 	if ((chp = O_STR(sp, O_PRINT)) != NULL)
@@ -279,38 +276,33 @@ v_key_name(SCR *sp, ARG_CHAR_T ach)
 	 * NB: There's an assumption here that all printable characters take
 	 * up a single column on the screen.  This is not always correct.
 	 */
-	if (ISPRINT(ch)) {
+	if (isprint(ch)) {
 pr:		sp->cname[0] = ch;
 		len = 1;
 		goto done;
 	}
-nopr:	if (ISCNTRL(ch) && (ch < 0x20 || ch == 0x7f)) {
+nopr:	if (iscntrl(ch) && (ch < 0x20 || ch == 0x7f)) {
 		sp->cname[0] = '^';
 		sp->cname[1] = ch == 0x7f ? '?' : '@' + ch;
 		len = 2;
-	} else if (O_ISSET(sp, O_OCTAL)) {
-#define	BITS	(sizeof(CHAR_T) * 8)
-#define	SHIFT	(BITS - BITS % 3)
-#define	TOPMASK	(BITS % 3 == 2 ? 3 : 1) << (BITS - BITS % 3)
+		goto done;
+	}
+vis:	for (i = 1; i <= sizeof(CHAR_T); ++i)
+		if ((ach >> i * CHAR_BIT) == 0)	
+			break;
+	ch = (ach >> --i * CHAR_BIT) & UCHAR_MAX;
+	if (O_ISSET(sp, O_OCTAL)) {
 		sp->cname[0] = '\\';
-		sp->cname[1] = octdigit[(ch & TOPMASK) >> SHIFT];
-		shift = SHIFT - 3;
-		for (len = 2, mask = 7 << (SHIFT - 3),
-		    cnt = BITS / 3; cnt-- > 0; mask >>= 3, shift -= 3)
-			sp->cname[len++] = octdigit[(ch & mask) >> shift];
+		sp->cname[1] = octdigit[(ch & 0300) >> 6];
+		sp->cname[2] = octdigit[(ch &  070) >> 3];
+		sp->cname[3] = octdigit[ ch &   07      ];
 	} else {
 		sp->cname[0] = '\\';
 		sp->cname[1] = 'x';
-		for (len = 2, chp = (char *)&ch,
-		    /* sizeof(CHAR_T) conflict with MAX_CHARACTER_COLUMNS
-		     * and code depends on big endian
-		     * and might not be needed in the long run
-		     */
-		    cnt = /*sizeof(CHAR_T)*/1; cnt-- > 0; ++chp) {
-			sp->cname[len++] = hexdigit[(*chp & 0xf0) >> 4];
-			sp->cname[len++] = hexdigit[*chp & 0x0f];
-		}
+		sp->cname[2] = hexdigit[(ch & 0xf0) >> 4];
+		sp->cname[3] = hexdigit[ ch & 0x0f      ];
 	}
+	len = 4;
 done:	sp->cname[sp->clen = len] = '\0';
 	return (sp->cname);
 }
@@ -322,7 +314,7 @@ done:	sp->cname[sp->clen = len] = '\0';
  *
  * PUBLIC: int v_key_val __P((SCR *, ARG_CHAR_T));
  */
-int
+e_key_t
 v_key_val(SCR *sp, ARG_CHAR_T ch)
 {
 	KEYLIST k, *kp;
@@ -628,8 +620,8 @@ newmap:	evp = &wp->i_event[wp->i_next];
 	 */
 	if (istimeout || FL_ISSET(evp->e_flags, CH_NOMAP) ||
 	    !LF_ISSET(EC_MAPCOMMAND | EC_MAPINPUT) ||
-	    ((UCHAR_T)evp->e_c < MAX_BIT_SEQ &&
-	    !bit_test(gp->seqb, (UCHAR_T)evp->e_c)))
+	    ((evp->e_c & ~MAX_BIT_SEQ) == 0 &&
+	    !bit_test(gp->seqb, evp->e_c)))
 		goto nomap;
 
 	/* Search the map. */
