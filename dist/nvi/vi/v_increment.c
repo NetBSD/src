@@ -1,4 +1,4 @@
-/*	$NetBSD: v_increment.c,v 1.4 2009/08/11 21:28:02 aymeric Exp $ */
+/*	$NetBSD: v_increment.c,v 1.5 2011/03/21 14:53:04 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -93,7 +93,7 @@ v_increment(SCR *sp, VICMD *vp)
 	 * implies moving the cursor to its beginning, if we moved, refresh
 	 * now.
 	 */
-	for (beg = vp->m_start.cno; beg < len && isspace(p[beg]); ++beg);
+	for (beg = vp->m_start.cno; beg < len && ISSPACE((UCHAR_T)p[beg]); ++beg);
 	if (beg >= len)
 		goto nonum;
 	if (beg != vp->m_start.cno) {
@@ -101,10 +101,8 @@ v_increment(SCR *sp, VICMD *vp)
 		(void)vs_refresh(sp, 0);
 	}
 
-#undef	ishex
-#define	ishex(c)	(isdigit(c) || STRCHR(L("abcdefABCDEF"), c))
 #undef	isoctal
-#define	isoctal(c)	(isdigit(c) && (c) != '8' && (c) != '9')
+#define	isoctal(c)	((c) >= '0' && (c) <= '7')
 
 	/*
 	 * Look for 0[Xx], or leading + or - signs, guess at the base.
@@ -117,26 +115,26 @@ v_increment(SCR *sp, VICMD *vp)
 	    (p[beg + 1] == 'X' || p[beg + 1] == 'x')) {
 		base = 16;
 		end = beg + 2;
-		if (!ishex(p[end]))
+		if (!ISXDIGIT((UCHAR_T)p[end]))
 			goto decimal;
 		ntype = p[beg + 1] == 'X' ? fmt[HEXC] : fmt[HEXL];
 	} else if (p[beg] == '0' && wlen > 1) {
 		base = 8;
 		end = beg + 1;
-		if (!isoctal(p[end]))
+		if (!isoctal((UCHAR_T)p[end]))
 			goto decimal;
 		ntype = fmt[OCTAL];
 	} else if (wlen >= 1 && (p[beg] == '+' || p[beg] == '-')) {
 		base = 10;
 		end = beg + 1;
 		ntype = fmt[SDEC];
-		if (!isdigit(p[end]))
+		if (!ISDIGIT((UCHAR_T)p[end]))
 			goto nonum;
 	} else {
 decimal:	base = 10;
 		end = beg;
 		ntype = fmt[DEC];
-		if (!isdigit(p[end])) {
+		if (!ISDIGIT((UCHAR_T)p[end])) {
 nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 			return (1);
 		}
@@ -146,7 +144,7 @@ nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 	while (++end < len) {
 		switch (base) {
 		case 8:
-			if (isoctal(p[end]))
+			if (isoctal((UCHAR_T)p[end]))
 				continue;
 			if (p[end] == '8' || p[end] == '9') {
 				base = 10;
@@ -155,11 +153,11 @@ nonum:			msgq(sp, M_ERR, "181|Cursor not in a number");
 			}
 			break;
 		case 10:
-			if (isdigit(p[end]))
+			if (ISDIGIT((UCHAR_T)p[end]))
 				continue;
 			break;
 		case 16:
-			if (ishex(p[end]))
+			if (ISXDIGIT((UCHAR_T)p[end]))
 				continue;
 			break;
 		default:
