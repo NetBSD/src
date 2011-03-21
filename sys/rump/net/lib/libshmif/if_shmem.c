@@ -1,7 +1,7 @@
-/*	$NetBSD: if_shmem.c,v 1.38 2011/03/11 12:11:00 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.39 2011/03/21 16:41:09 pooka Exp $	*/
 
 /*
- * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by The Nokia Foundation.
  *
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.38 2011/03/11 12:11:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.39 2011/03/21 16:41:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>

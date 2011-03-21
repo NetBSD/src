@@ -1,7 +1,7 @@
-/*      $NetBSD: scheduler.c,v 1.25 2011/01/28 16:58:28 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.26 2011/03/21 16:41:09 pooka Exp $	*/
 
 /*
- * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.25 2011/01/28 16:58:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.26 2011/03/21 16:41:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
