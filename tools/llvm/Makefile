@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:04 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/03/21 02:10:10 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -21,7 +21,6 @@ config/config.status: ${LLVM_SRCDIR}/configure
 	mkdir -p config
 	cd config && ${LLVM_SRCDIR}/configure --prefix=/usr \
 	    --enable-targets=x86 --host=x86_64--netbsd \
-	    --with-clang-resource-dir=${DESTDIR}/usr/lib \
 	    --enable-optimized --disable--assertions
 need-dl:
 	printf '#include <dlfcn.h>\nint main(void){void *p; return dladdr(p, p);}' > need-dl.c
