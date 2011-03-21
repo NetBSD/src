@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.5 2009/08/30 14:57:51 tnozaki Exp $ */
+/*	$NetBSD: regcomp.c,v 1.6 2011/03/21 14:53:03 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -414,7 +414,7 @@ p_ere_exp(register struct parse *p)
 		ordinary(p, c);
 		break;
 	case '{':		/* okay as ordinary except if digit follows */
-		(void)REQUIRE(!MORE() || !isdigit(PEEK()), REG_BADRPT);
+		(void)REQUIRE(!MORE() || !ISDIGIT((UCHAR_T)PEEK()), REG_BADRPT);
 		/* FALLTHROUGH */
 	default:
 		ordinary(p, c);
@@ -426,7 +426,7 @@ p_ere_exp(register struct parse *p)
 	c = PEEK();
 	/* we call { a repetition if followed by a digit */
 	if (!( c == '*' || c == '+' || c == '?' ||
-				(c == '{' && MORE2() && isdigit(PEEK2())) ))
+				(c == '{' && MORE2() && ISDIGIT((UCHAR_T)PEEK2())) ))
 		return;		/* no repetition, we're done */
 	NEXT();
 
@@ -455,7 +455,7 @@ p_ere_exp(register struct parse *p)
 	case '{':
 		count = p_count(p);
 		if (EAT(',')) {
-			if (isdigit(PEEK())) {
+			if (ISDIGIT((UCHAR_T)PEEK())) {
 				count2 = p_count(p);
 				(void)REQUIRE(count <= count2, REG_BADBR);
 			} else		/* single number with comma */
@@ -476,7 +476,7 @@ p_ere_exp(register struct parse *p)
 		return;
 	c = PEEK();
 	if (!( c == '*' || c == '+' || c == '?' ||
-				(c == '{' && MORE2() && isdigit(PEEK2())) ) )
+				(c == '{' && MORE2() && ISDIGIT((UCHAR_T)PEEK2())) ) )
 		return;
 	SETERROR(REG_BADRPT);
 }
@@ -639,7 +639,7 @@ p_simp_re(register struct parse *p, int starordinary)
 	} else if (EATTWO('\\', '{')) {
 		count = p_count(p);
 		if (EAT(',')) {
-			if (MORE() && isdigit(PEEK())) {
+			if (MORE() && ISDIGIT((UCHAR_T)PEEK())) {
 				count2 = p_count(p);
 				(void)REQUIRE(count <= count2, REG_BADBR);
 			} else		/* single number with comma */
@@ -669,7 +669,7 @@ p_count(register struct parse *p)
 	register int count = 0;
 	register int ndigits = 0;
 
-	while (MORE() && isdigit(PEEK()) && count <= DUPMAX) {
+	while (MORE() && ISDIGIT((UCHAR_T)PEEK()) && count <= DUPMAX) {
 		count = count*10 + (GETNEXT() - '0');
 		ndigits++;
 	}
