@@ -1,4 +1,4 @@
-// $NetBSD: modelines,v 1.7 2009/01/21 14:40:25 jnemeth Exp $
+// $NetBSD: modelines,v 1.8 2011/03/21 19:28:37 jdc Exp $
 //
 // This file was imported from XFree86, and is made of the contents of both
 // the vesamodes and extramodes files.  As a result these should correspond
@@ -21,8 +21,14 @@ ModeLine "640x350"    31.5  640  672  736  832    350  382  385  445 +hsync -vsy
 # 640x400 @ 85Hz (VESA) hsync: 37.9kHz
 ModeLine "640x400"    31.5  640  672  736  832    400  401  404  445 -hsync +vsync
 
+# 720x400 @ 70Hz (EDID established timing) hsync: 31.47kHz
+ModeLine "720x400"    28.32 720  738  846  900    400  412  414  449 -hsync +vsync
+
 # 720x400 @ 85Hz (VESA) hsync: 37.9kHz
 ModeLine "720x400"    35.5  720  756  828  936    400  401  404  446 -hsync +vsync
+
+# 720x400 @ 88Hz (EDID established timing) hsync: 39.44kHz
+ModeLine "720x400"    35.5  720  738  846  900    400  421  423  449 -hsync -vsync
 
 # 640x480 @ 60Hz (Industry standard) hsync: 31.5kHz
 ModeLine "640x480"    25.2  640  656  752  800    480  490  492  525 -hsync -vsync
