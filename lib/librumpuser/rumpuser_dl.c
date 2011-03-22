@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.6 2011/03/16 11:44:01 njoly Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.7 2011/03/22 22:27:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.6 2011/03/16 11:44:01 njoly Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.7 2011/03/22 22:27:33 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -56,6 +56,11 @@ static size_t symtaboff = 0, strtaboff = 0;
 static uint8_t *symtab = NULL;
 static char *strtab = NULL;
 static unsigned char eident;
+
+/* nb5 compat */
+#ifndef Elf_Symindx
+#define Elf_Symindx uint32_t
+#endif
 
 static void *
 reservespace(void *store, size_t *storesize,
