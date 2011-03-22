@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.30 2011/03/20 21:33:41 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.31 2011/03/22 20:03:04 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2601,4 +2601,14 @@ lib/libc/inet/inet_net_pton.c			1.2
 	Check bits on each loop to prevent integer oveflow.
 	Reported by Maksymilian Arciemowicz
 	[spz, ticket #1574]
+
+sys/net/bpf_filter.c				1.36, 1.42 -> 1.46 via patch
+
+	Avoid stack memory disclosure by keeping track during filter
+	validation time of initialized memory. Idea taken from linux.
+	the correct check for BPF_K is with BPF_SRC for BPF_ALU ops, from
+	Guy Harris per PR kern/43185
+	fixes possible division-by-zero crashes by evil filter expressions
+	like "len / 0 = 1"
+	[spz, ticket #1571]
 
