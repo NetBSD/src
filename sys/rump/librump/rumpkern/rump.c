@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.233 2011/03/21 16:41:08 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.234 2011/03/22 15:16:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.233 2011/03/21 16:41:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.234 2011/03/22 15:16:23 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.233 2011/03/21 16:41:08 pooka Exp $");
 #include <sys/ksyms.h>
 #include <sys/msgbuf.h>
 #include <sys/module.h>
+#include <sys/namei.h>
 #include <sys/once.h>
 #include <sys/percpu.h>
 #include <sys/pipe.h>
@@ -125,7 +126,6 @@ static int rump_inited;
 /*
  * Make sure pnbuf_cache is available even without vfs
  */
-struct pool_cache *pnbuf_cache;
 int rump_initpnbufpool(void);
 int rump_initpnbufpool(void)
 {
