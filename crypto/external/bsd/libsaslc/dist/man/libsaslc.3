@@ -1,4 +1,4 @@
-.\"	$NetBSD: libsaslc.3,v 1.10 2011/02/20 01:59:46 christos Exp $
+.\"	$NetBSD: libsaslc.3,v 1.11 2011/03/22 07:06:02 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,21 +34,21 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 18, 2011
+.Dd March 22, 2011
 .Dt LIBSASLC 3
 .Os
 .Sh NAME
 .Nm saslc_alloc ,
 .Nm saslc_end ,
 .Nm saslc_init ,
+.Nm saslc_sess_init ,
+.Nm saslc_sess_end ,
+.Nm saslc_sess_getprop ,
+.Nm saslc_sess_setprop ,
 .Nm saslc_sess_cont ,
 .Nm saslc_sess_decode ,
 .Nm saslc_sess_encode ,
-.Nm saslc_sess_end ,
 .Nm saslc_sess_getmech ,
-.Nm saslc_sess_getprop ,
-.Nm saslc_sess_init ,
-.Nm saslc_sess_setprop ,
 .Nm saslc_sess_strerror ,
 .Nm saslc_strerror
 .Nd Simple Authentication and Security Layer client library
@@ -62,6 +62,15 @@
 .Fn saslc_end "saslc_t *ctx"
 .Ft int
 .Fn saslc_init "saslc_t *ctx" "const char *appname" "const char *cfgpath"
+.Ft saslc_sess_t *
+.Fn saslc_sess_init "saslc_t *ctx" "const char *mechs" "const char *secopts"
+.Ft void
+.Fn saslc_sess_end "saslc_sess_t *sess"
+.Ft const char *
+.Fn saslc_sess_getprop "saslc_sess_t *sess" "const char *key"
+.Ft int
+.Fn saslc_sess_setprop "saslc_sess_t *sess" "const char *key" \
+"const char *value"
 .Ft int
 .Fn saslc_sess_cont "saslc_sess_t *sess" "const void *in" "size_t inlen" \
 "void* *out" "size_t *outlen"
@@ -71,22 +80,24 @@
 .Ft ssize_t
 .Fn saslc_sess_encode "saslc_sess_t *sess" "const void *in" "size_t inlen" \
 "void* *out" "size_t *outlen"
-.Ft void
-.Fn saslc_sess_end "saslc_sess_t *sess"
 .Ft const char *
 .Fn saslc_sess_getmech "saslc_sess_t *sess"
-.Ft const char *
-.Fn saslc_sess_getprop "saslc_sess_t *sess" "const char *key"
-.Ft saslc_sess_t *
-.Fn saslc_sess_init "saslc_t *ctx" "const char *mechs" "const char *secopts"
-.Ft int
-.Fn saslc_sess_setprop "saslc_sess_t *sess" "const char *key" \
-"const char *value"
 .Ft const char *
 .Fn saslc_sess_strerror "saslc_sess_t *sess"
 .Ft const char *
 .Fn saslc_strerror "saslc_t *ctx"
 .Sh DESCRIPTION
+The
+.Nm libsaslc
+library offers a client interface for the
+Simple Authentication and Security Layer
+.Pq Tn SASL .
+The library is heavily influenced by its use with
+.Xr postfix 1 .
+.Sh FUNCTIONS
+The following functions are available in the library.
+.Bl -tag -width compact
+.It Fn saslc_alloc ""
 The
 .Fn saslc_alloc
 function allocates and returns a new saslc context.
@@ -95,7 +106,7 @@ The context is uninitialized: see
 Returns
 .Dv NULL
 on error.
-.Pp
+.It Fn saslc_end "ctx"
 The
 .Fn saslc_end
 function destroys and deallocate resources used by the context
@@ -103,7 +114,7 @@ function destroys and deallocate resources used by the context
 The context shouldn't have any sessions assigned to it.
 Returns 0 on success and \-1 if the context has active sessions and
 cannot be deallocated.
-.Pp
+.It Fn saslc_init "ctx" "appname" "cfgpath"
 The
 .Fn saslc_init
 function initializes the saslc context
@@ -123,7 +134,7 @@ it checks the environment variable
 for a location and if that is not found it uses the default path
 .Pa /etc/saslc.d .
 Returns 0 on success and \-1 on failure.
-.Pp
+.It Fn saslc_sess_init "ctx" "mechs" "secopts"
 The
 .Fn saslc_sess_init
 function creates new session assigned to the
@@ -160,14 +171,14 @@ Unknown security options are ignored.
 Returns a session handle or
 .Dv NULL
 on error or no match.
-.Pp
+.It Fn saslc_sess_end "sess"
 The
 .Fn saslc_sess_end
 function ends the sasl session
 .Ar sess .
 It destroys and deallocates all internal resources.
 This does not fail.
-.Pp
+.It Fn saslc_sess_getprop "sess" "key"
 The
 .Fn saslc_sess_getprop
 function gets the property indicated by the
@@ -180,7 +191,7 @@ context dictionary (global configuration), and mechanism dictionary.
 Returns the property value or
 .Dv NULL
 if the property is not found.
-.Pp
+.It Fn saslc_sess_setprop "sess" "key" "value"
 The
 .Fn saslc_sess_setprop
 function sets the property indexed by
@@ -198,28 +209,10 @@ is
 .Dv NULL ,
 then any previous value in the session dictionary is removed.
 Returns 0 on success or \-1 on failure.
-.Pp
-.Fn saslc_strerror
-and
-.Fn saslc_sess_strerror
-functions return the error message string for the last error in the
-context
-.Ar ctx
-or session
-.Ar sess ,
-respectively.
-It never returns
-.Dv NULL .
-.Pp
-The
-.Fn saslc_strmech
-function gets the name of the mechanism used in the saslc session
-.Ar sess .
-This does not fail.
-.Pp
+.It Fn saslc_sess_cont "sess" "in" "inlen" "out" "outlen"
 The
 .Fn saslc_sess_cont
-performs one step of the sasl authentication.
+function performs one step of the sasl authentication.
 It reads
 .Ar inlen
 bytes of input data
@@ -237,11 +230,12 @@ It returns 0 if the authentication process is completed, 1 if another
 step is required, and \-1 on error.
 Note that the completion of authentication process does not mean the
 client is authenticated; that is determined by the server.
-.Pp
+.It Fn saslc_sess_decode "sess" "in" "inlen" "out" "outlen"
+The
 .Fn saslc_sess_encode
 and
 .Fn saslc_sess_decode
-are used to provide the integrity
+functions are used to provide the integrity
 .Pq Qq auth-int
 and  confidentiality
 .Pq Qq auth-int
@@ -266,16 +260,6 @@ If
 is 0, more data is needed before anything can be output.
 Unused input data is stored internally for use in subsequent calls.
 .Pp
-When encoding, the internal buffer may be flushed through the encoder
-by calling
-.Fn saslc_sess_encode
-with
-.Ar inlen
-= 0.
-In this case,
-.Fn saslc_sess_encode
-returns the number of bytes that were flushed from the internal buffer.
-.Pp
 When decoding, the internal buffers can only be flushed by providing
 the missing packet data and it is an error to call
 .Fn ssalc_sess_decode
@@ -286,9 +270,48 @@ The first call of
 .Fn saslc_sess_decode
 in a session must begin at the start of a packet.
 Subsequent calls need not be aligned on packet boundaries.
-.Pp
-The following code fragments illustrate the possible use of these
-functions.
+.It Fn saslc_sess_encode "sess" "in" "inlen" "out" "outlen"
+As described above,
+.Fn saslc_sess_encode
+encodes
+.Ar inlen
+bytes of data from the
+.Ar in
+buffer.
+Note that unlike when decoding,
+the internal buffer may be flushed through the encoder
+by calling
+.Fn saslc_sess_encode
+with
+.Ar inlen
+= 0.
+In this case,
+.Fn saslc_sess_encode
+returns the number of bytes that were flushed from the internal buffer.
+.It Fn saslc_sess_getmech "sess"
+The
+.Fn saslc_sess_getmech
+function returns the name of the mechanism used in the session
+.Fa sess .
+The function does not fail.
+.It Fn saslc_sess_strerror "sess"
+The
+.Fn saslc_sess_strerror
+returns the error message associated with the session
+.Fa sess .
+.It Fn saslc_strerror "ctx"
+The
+.Fn saslc_strerror
+function operates as
+.Fn saslc_sess_strerror ,
+but instead returns the error message string for the last error in the context
+.Fa ctx .
+Neither function will ever return
+.Dv NULL .
+.El
+.Sh EXAMPLES
+The following code fragments illustrate the possible use of the
+functions described above.
 .Bd -literal
 int
 decode_stream(saslc_sess_t *sess, int fdin, int fdout)
@@ -365,18 +388,20 @@ encode_stream(saslc_sess_t *sess, int fdin, int fdout)
 }
 .Ed
 .Sh CONFIGURATION
-.Nm
-uses three types of dictionaries: context (or global), session, and
-mechanism, and they are searched in that order by
+The library uses three types of dictionaries: context (or global),
+session, and mechanism, and they are searched in that order by
 .Fn saslc_getprop
 and the first matching entry is taken.
 The context and mechanism dictionaries are loaded from configuration
 files, while the session dictionary is loaded by the caller via
 .Fn saslc_setprop .
-The configuration context configuration file is
-.Pa <cfgpath>/<appname>/saslc.conf ,
-while the mechanism configuration file is
-.Pa <cfgpath>/<appname>/mech/<mechanism>.conf .
+.Pp
+The configuration file
+.Pa <cfgpath>/<appname>/saslc.conf
+is used for the configuration context.
+The
+.Pa <cfgpath>/<appname>/mech/<mechanism>.conf
+file is used for the mechanism configuration.
 The
 .Pa <cfgpath>
 is
@@ -397,7 +422,7 @@ is the mechanism in use by the session as returned by
 .Fn saslc_sess_getmech .
 Note that this name is case sensitive.
 The currently supported mechanisms are
-.Bl -tag -width DIGEST-MD5
+.Bl -tag -width DIGEST-MD5 -offset indent
 .It ANONYMOUS
 See RFC 2245 and RFC 4505.
 .It CRAM-MD5
@@ -457,8 +482,7 @@ Any base supported by
 .Xr strtoll 3
 is allowed.
 .Sh PROPERTIES
-Most of the control of the
-.Nm
+Most of the control of the library
 behavior is done via setting various properties in the context or
 mechanism dictionaries via the configuration files or in the session
 dictionary with
@@ -619,8 +643,7 @@ files.
 .Sh ENVIRONMENT
 The following environment variables
 .Pq defined in Pa saslc.h
-affect the behavior of
-.Nm :
+affect the behavior of the library:
 .Bl -tag -width indent
 .It Ev SASLC_ENV_CONFIG Po Qo SASLC_CONFIG Qc Pc
 If the environment variable
