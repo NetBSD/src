@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.33 2011/03/05 20:56:28 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.34 2011/03/22 16:50:16 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ do {									\
 } while (/*CONSTCOND*/0);
 
 #define ATF_TC_FSADD(fs,type,func,desc)					\
-	ATF_TC_WITH_CLEANUP(fs##_##func);				\
+	ATF_TC(fs##_##func);						\
 	ATF_TC_HEAD(fs##_##func,tc)					\
 	{								\
 		atf_tc_set_md_var(tc, "descr", type " test for " desc);	\
@@ -120,18 +120,10 @@ do {									\
 			rump_pub_vfs_mount_print(FSTEST_MNTNAME, 1);	\
 			atf_tc_fail_errno("unmount failed");		\
 		}							\
-	}								\
-									\
-	ATF_TC_CLEANUP(fs##_##func,tc)					\
-	{								\
-		if (!atf_check_fstype(tc, #fs))				\
-			return;						\
-		if (fs##_fstest_delfs(tc, fs##func##tmp) != 0)		\
-			atf_tc_fail_errno("delfs failed");		\
 	}
 
 #define ATF_TC_FSADD_RO(_fs_,_type_,_func_,_desc_,_gen_)		\
-	ATF_TC_WITH_CLEANUP(_fs_##_##_func_);				\
+	ATF_TC(_fs_##_##_func_);					\
 	ATF_TC_HEAD(_fs_##_##_func_,tc)					\
 	{								\
 		atf_tc_set_md_var(tc, "descr",_type_" test for "_desc_);\
@@ -156,14 +148,6 @@ do {									\
 			rump_pub_vfs_mount_print(FSTEST_MNTNAME, 1);	\
 			atf_tc_fail_errno("unmount failed");		\
 		}							\
-	}								\
-									\
-	ATF_TC_CLEANUP(_fs_##_##_func_,tc)				\
-	{								\
-		if (!atf_check_fstype(tc, #_fs_))			\
-			return;						\
-		if (_fs_##_fstest_delfs(tc, _fs_##_func_##tmp) != 0)	\
-			atf_tc_fail_errno("delfs failed");		\
 	}
 
 #define ATF_TP_FSADD(fs,func)						\
