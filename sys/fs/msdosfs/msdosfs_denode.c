@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.41 2011/03/20 12:21:28 hannken Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.42 2011/03/22 20:33:51 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.41 2011/03/20 12:21:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.42 2011/03/22 20:33:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,8 +461,6 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 		}
 	}
 
-	fc_purge(dep, lastblock + 1);
-
 	/*
 	 * If the new length is not a multiple of the cluster size then we
 	 * must zero the tail end of the new last cluster in case it
@@ -505,6 +503,8 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 	printf("detrunc(): allerror %d, eofentry %lu\n",
 	       allerror, eofentry);
 #endif
+
+	fc_purge(dep, lastblock + 1);
 
 	/*
 	 * If we need to break the cluster chain for the file then do it
