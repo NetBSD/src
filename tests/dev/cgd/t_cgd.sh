@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgd.sh,v 1.7 2011/02/04 19:58:10 pooka Exp $
+#	$NetBSD: t_cgd.sh,v 1.8 2011/03/22 16:16:30 jmmv Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -57,7 +57,7 @@ basic_body()
 basic_cleanup()
 {
 
-	env RUMP_SERVER=unix://csock rump.halt
+	env RUMP_SERVER=unix://csock rump.halt || true
 }
 
 atf_test_case wrongpass cleanup
@@ -94,7 +94,7 @@ wrongpass_body()
 wrongpass_cleanup()
 {
 
-	env RUMP_SERVER=unix://csock rump.halt
+	env RUMP_SERVER=unix://csock rump.halt || true
 }
 
 
@@ -122,7 +122,7 @@ non512_body()
 
 non512_cleanup()
 {
-	env RUMP_SERVER=unix://csock rump.halt
+	env RUMP_SERVER=unix://csock rump.halt || true
 }
 
 atf_init_test_cases()
