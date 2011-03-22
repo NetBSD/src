@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1525 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1526 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -703,6 +703,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	tests(7): Convert the lint1 and libobjc tests to ATF.  [jmmv 20100718]
 	amd64, i386: Intel Firmware Hub Random Number Generator support moved
 		from pchb(4) to fwhrng(4) at ichlpcib(4).  [jakllsch 20100723]
+	tests(7): Add NFS (client and server) to VFS tests [pooka 20100726]
 	i386: Add PAE support. [jym 20100727]
 	hpcarm, hpcmips, hpcsh: Switch to using Xorg servers and binaries.
 		[tsutsui 20100731]
@@ -710,22 +711,33 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[kiyohara 20100801]
 	tests(7): Convert the sort tests to ATF.  [jmmv 20100801]
 	wpa: New wpa_supplicant and hostapd 0.7.2 [christos 20100804]
+	tests(7): Add elementary tests for the audio subsystem.
+		[pooka 20100804]
 	hpcarm: Improve console speed on W-ZERO3 machines using
 		write through mapping for framebuffer memory.
 		[tsutsui 20100808]
 	bind: Update to 9.7.2b1. [christos 20100806]
+	newfs(8): Add -G parameter to allow creating test images.
+		[pooka 20100809]
+	rump(3): Support carp(4) in the networking stack.  [pooka 20100810]
 	acpicpu(4): Add a driver for ACPI-based processor functionality.
 		[jruoho 20100815]
 	network: Added NPF - a new packet filter. [rmind 20100822]
+	rump(3): Add rumpdev_scsipi.  [pooka 20100823]
+	rump(3): Add a virtual SCSI target used for testing of scsipi(9)
+		and SCSI devices.  [pooka 20100823]
 	tests(7): Convert the libdes tests to ATF.  [jmmv 20100825]
 	awk(1): upgrade to 20100523 [christos 20100826]
 	ntp: switch build to ntp 4.2.6 (imported 20091213 in external/bsd/ntp)
 		[kardel 20100827]
+	rump(3): Support setuid(2), geteuid(2), etc.  [pooka 20100830]
 	dreamcast: Fix a long standing GD-ROM driver bug so that file system
 		on GD-ROM works properly.  The problem is reported and tracked
 		by Yasushi Oshima. [tsutsui 20100831]
 	omapfb: a simple driver for OMAP 3xxx on-chip video, especially the
 		Beagleboard [macallan 20100831]
+	rump_lwproc(3): Add an interface for process/thread management
+		in a rump kernel.  [pooka 20100901]
 	hpcarm: Add an install kernel for JORNADA720 and make sysinst(8)
 		choose a proper default kernel per running installation kernel.
 		[tsutsui 20100904]
@@ -733,6 +745,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		year is 2000 or older. To override this behaviour, set
 		acpi_force_load=1 or add options ACPI_BLACKLIST_YEAR=0 to your
 		kernel config. [jmcneill 20100906]
+	rump(3): Significantly improve VM performance for large objects.
+		[pooka 20100907]
+	rump(3): Make the pagedaemon flush VFS objects and drain the
+		kmem/kernel_map in case of memory shortage.  [pooka 20100908]
 	amd64, i386: Enable Ext2fs support in bootloader. [tsutsui 20100911]
 	m68k: Re-enable m68k optimized in_cksum routine.  Makes
 		~5% improvements of ttcp(1) xfer rates. [tsutsui 20100919]
@@ -757,14 +773,20 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		on m68k ports.  [tsutsui 20101014]
 	sun3: Make common module(7) binaries work on both sun3 and sun3x.
 		[tsutsui 20101015]
+	virt(4): Make interface a cloner.  [pooka 20101019]
 	atf(7): Import 0.11.  [jmmv 20101020]
+	rump_sp(7): Initial import of remote rump kernel access
+		protocol.  [pooka 20101027]
 	lua(1): Import of Lua 5.1.4. [mbalmer 20101031]
 	raidframe(4): Support greater than 2TB devices.  [mrg 20101101]
 	xz(1): Import of XZ 5.0.0. [joerg 20101102]
 	otus(4): Port the Atheros AR9001U from OpenBSD (Anon Ymous)
 		[christos 20101103]
+	rumpclient(3): Add a clientside library for remote rump kernel
+		access.  [pooka 20101104]
 	fujitsu(4): Add brightness and hotkey drivers for Fujitsu laptops.
 		[gsutre 20101105]
+	rump_sp(7): Support local domain sockets.  [pooka 20101105]
 	schide(4): Add Intel SCH IDE driver from OpenBSD.
 		[jakllsch 20101106]
 	atf(7): Import 0.12.  [jmmv 20101107]
@@ -772,6 +794,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[skrll 20101109]
 	nside(4): Add a driver for the National Semiconductor PC87415 IDE
 		controller. [skrll 20101110]
+	tests(7): Add basic tests for cgd(4).  [pooka 20101111]
 	dreamcast: Switch to using Xorg servers and binaries.
 		[tsutsui 20101112]
 	et(4): Add a driver for Agere/LSI ET1310/ET1301 10/100/Gigabit
@@ -782,14 +805,21 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[bsh 20101113]
 	evbarm: Add initial support for Sharp NetWalker MID.
 		[bsh 20101113]
+	ifconfig(8): Add the "linkstr" command which can be used to communicate
+		an arbitrary string with the interface driver.  [pooka 20101115]
+	shmif(4): Convert to a cloner interface.  [pooka 20101115]
 	module(7): Allow disabling autoloading a specific module by setting
 		noautoload property.  [jnemeth 20101118]
 	openssh: Import 5.6. [adam 20101121]
 	dhcpcd(8): Import dhcpcd-5.2.9. [roy 20101127]
 	module(7): Rename <module>.prop to <module>.plist.  [jnemeth 20101127]
+	rump_sp(7): Add worker thread caching and significantly improve
+		performance.  [pooka 20101129]
 	ukbd(4): Support for Apple notebook keyboards: swapped keys on ISO
 		keyboards, Apple FN key, simulate AltGr with FN-Alt,
 		generate special keycodes for the hotkeys. [phx 20101130]
+	rump(3): Implement mutex_owner() and use it to improve pagedaemon
+		performance on multiprocessor systems.  [pooka 20101201]
 	bind: Update to 9.7.2-P3. Bug and security fixes since 9.7.2b1. See
 		src/external/bsd/bind/dist/CHANGES [christos 20101202]
 	passwd.conf(5): Set the default local cipher for passwords to 'sha1'.
@@ -803,8 +833,16 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		for the list of changes [christos 20101205]
 	prenice(1): Add new command to change process priorities based upon
 		the command name, like pkill(1) and pgrep(1).  [mrg 20101205]
+	rump_allserver(1): Add a rump server which uses rump_sp(7) and
+		serves all available kernel components.  [pooka 20101205]
+	rumpnet_bridge: Add a bridge(4) component.  [pooka 20101208]
+	rumpnet_agr: Add an agr(4) component.  [pooka 20101208]
 	bnx(4): Add support for Broadcom BCM5709S (SerDes) chip. [jym 20101210]
 	openldap: Import 2.4.23. [adam 20101212]
+	rump.halt(1): Add a utility to halt a rump kernel.  [pooka 20101212]
+	rump_server(1): Add a modular version of rump_allserver(1)
+		which can load the specified components dynamically.
+		[pooka 20101213]
 	libc: Provide a re-entrant and thread-safe set of timezone API's that
 		don't require locking and can operate on user-specified
 		timezones as opposed to having to alter the environment
@@ -815,13 +853,29 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	auvitek(4): Add a driver for Auvitek AU0828 family USB video
 		capture controllers. [jmcneill 20101227]
 	ofppc: Support for RDB partitions. [phx 20101231]
+	tests(7): Add r/o file system tests to the VFS testing framework.
+		[pooka 20101231]
+	rump_lwproc(3): Support a variant of rfork().  [pooka 20110102]
 	dhcpcd(8): Import dhcpcd-5.2.10. [roy 20110103]
+	rump_server(1): Add -c to control the number of virtual CPUs
+		configured into the kernel server.  [pooka 20110103]
 	resize_ffs(8): support byteswapped file systems, and support
 		growing ufs2 file systems. [riz 20110104]
+	rump(3): Support SMP on all architectures regardless of if
+		the host supports it.  [pooka 20110104]
 	acpipmtr(4): Add a driver for ACPI power meters. [jruoho 20110105]
+	rumpclient(3): Support clients that fork(2).  [pooka 20110105]
 	amd64, i386: Booting from a disk with a GUID Partition Table is
 		now possible. [jakllsch 20110106]
+	rump(3): Support LOCKDEBUG.  [pooka 20110106]
+	rumphijack(3): Add a system call hijacking library which can be
+		used to run unmodified binaries against kernel services
+		provided by rump_server(1).  [pooka 20110107]
 	sigqueue(2): Implement sigqueue/sigqueueinfo [christos 20110109]
+	shmif_dumpbus(1): Add a utility for converting the contents of
+		an shmif(4) busfile into pcap(3).  [pooka 20110112]
+	tests(7): Add union mount tests to the VFS test framework.
+		[pooka 20110113]
 	amiga: Add a driver for BlizzardPPC 603e+ SCSI [phx 20110114]
 	powerpc: Add support for using secure PLT (thereby allowing data
 		and bss of powerpc programs and shared library to be set
@@ -830,9 +884,18 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[jmcneill 20110117]
 	isns(3): Add a library providing iSNS (IETF RFC 4171) protocol
 		support, contributed by Wasabi Systems. [agc 20110117]
+	rump(3): Rework rump syscall compat.  The interface provided
+		by a newer NetBSD version is now always compatible
+		with a client compiled on an older version.  [pooka 20110117]
 	atactl(8): Fix mislabelled S.M.A.R.T. lifetime temperature record
 		reading. [nisimura 20110119]
+	rump.dhcpclient(1): Add a very simple DHCP client for rump kernels.
+		Unlike other DHCP clients, it does not assume it is the
+		only DHCP client running on the host.  [pooka 20110120]
 	pcf8563rtc(4): Add a todr(9) driver for NXP PCF8563 [jakllsch 20110124]
+	rumpclient(3): Support server reconnect in case of a severed
+		connection.  This makes things like rebooting a kernel
+		server from under an application possible.  [pooka 20110124]
 	emips: Initial commit of the eMIPS port [pooka 20110126]
 	kernel: add kern.evcnt sysctl [matt 20110129]
 	vmstat(1): add support for getting evcnts and boottime for sysctl.
@@ -842,6 +905,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.2.11. [roy 20110204]
 	hp300: Switch NetBSD/hp300 to wscons with rasops.
 		Simply ported from OpenBSD/hp300.  [tsutsui 20110206]
+	rumphijack(3): Improve select(2) emulation.  Commit was done
+		through a rump TCP/IP stack.  [pooka 20110211]
 	hp300: Add support for framebuffers on HP362 and HP382.
 		[tsutsui 20110212]
 	hp300: Add support for Apollo Domain keyboard. From OpenBSD.
@@ -854,10 +919,16 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		disk. Those with very, very old NetBSD installations may
 		need to use fdisk(8) to change the NetBSD partition ids
 		from 165 (0xA5) to 169 (0xA9). [dholland 20110212]
+	rumpclient(3): Support clients that execve(2).  [pooka 20110214]
 	hp700: Add support for HIL devices. From OpenBSD. [tsutsui 20110215]
 	bind: Update to 9.8.0rc1: Response policy zones (RPZ) and DNS64 support.
 		[christos 20110215]
 	acpi(4): Updated ACPICA to 20110211. [jruoho 20110217]
+	rumphijack(3): Support hijacking of pathname-based system calls.
+		[pooka 20110217]
+	rumphijack(3): Allow clients to specify system calls to hijack
+		and how by setting the RUMPHIJACK environment variable.
+		[pooka 20110218]
 	ath(4): Add support for AR9280 devices. [jmcneill 20110220]
 	mips: Second merge of matt-nb5-mips64 branch.  Added SMP support for
 		MIPS architecture.  Rewritten interrupt handling to be much
@@ -871,10 +942,14 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		DIGEST-MD5, EXTERNAL, GSSAPI, LOGIN, PLAIN [christos 20110221]
 	alc(4):	Add a driver for Atheros AR813x/AR815x Ethernet.
 		[jmcneill 20110222]
+	ukfs(3): Support reverse-endian disklabels.  [pooka 20110222]
 	flash(9): Add subsystem to handle Flash devices. [ahoka 20110226]
 	nand(9): Add subsystem to handle NAND controllers. [ahoka 20110226]
 	evbarm: Add driver for OMAP NAND controllers. [ahoka 20110226]
 	postfix(1): Import version 2.8.1 [tron 20110302]
+	atf-run(1): In case a test program dumps core, dump the stack
+		trace from the core file as part of test output.
+		[pooka 20110302]
 	kernel: merge the bouyer-quota2 branch. This adds a new on-disk format
 		to store disk quota usage and limits, integrated with ffs
 		metadata. Usage is checked by fsck_ffs (no more quotacheck)
@@ -890,6 +965,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	x86: add TLS (thread locale storage) support.  [joerg 20110312
 	mips: add TLS (thread local storage) support.  [matt 20110314]
 	mips: add MIPS32R2 and MIPS64R2 support.  [matt 20110314]
+	shmif_dumpbus(1): Make endian-independent.  [pooka 20110314]
 	hppa: add TLS support.  [skrll 20110317]
 	gdtoa: Import the latest [christos 20110319]
 	sandpoint: D-Link DSM-G600 support. [phx 20110319]
