@@ -1,4 +1,4 @@
-.\"	$NetBSD: libsaslc.3,v 1.11 2011/03/22 07:06:02 jruoho Exp $
+.\"	$NetBSD: libsaslc.3,v 1.12 2011/03/22 09:42:00 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -309,84 +309,6 @@ but instead returns the error message string for the last error in the context
 Neither function will ever return
 .Dv NULL .
 .El
-.Sh EXAMPLES
-The following code fragments illustrate the possible use of the
-functions described above.
-.Bd -literal
-int
-decode_stream(saslc_sess_t *sess, int fdin, int fdout)
-{
-	uint8_t buf[BUFSIZE];
-	uint8_t *in;
-	void *out;
-	size_t inlen, outlen;
-	ssize_t n, rval;
-.Pp
-	for (;;) {
-		if ((rval = read(fdin, buf, sizeof(buf))) == \-1)
-			return \-1;
-		if (rval == 0)
-			break;
-		in = buf;
-		inlen = rval;
-		while (inlen > 0) {
-			rval = saslc_sess_decode(sess, in, inlen, &out,
-			    &outlen);
-			if (rval == \-1)
-				return \-1;
-			if (outlen > 0) {
-				n = write(fdout, out, outlen);
-				free(out);
-				if (n == \-1)
-					return \-1;
-			}
-			in += rval;
-			inlen -= rval;
-		}
-	}
-	return 0;
-}
-.Pp
-int
-encode_stream(saslc_sess_t *sess, int fdin, int fdout)
-{
-	uint8_t buf[BUFSIZE];
-	uint8_t *in;
-	void *out;
-	size_t inlen, outlen;
-	ssize_t n, rval;
-.Pp
-	for (;;) {
-		if ((rval = read(fdin, buf, sizeof(buf))) == \-1)
-			return \-1;
-		if (rval == 0)
-			break;
-		in = buf;
-		inlen = rval;
-		while (inlen > 0) {
-			rval = saslc_sess_encode(sess, in, inlen, &out,
-			    &outlen);
-			if (rval == \-1)
-				return \-1;
-			if (outlen > 0) {
-				n = write(fdout, out, outlen);
-				free(out);
-				if (n == \-1)
-					return \-1;
-			}
-			in += rval;
-			inlen -= rval;
-		}
-	}
-	/* flush internal encoder buffer */
-	if (saslc_sess_encode(sess, NULL, 0, &out, &outlen) == \-1)
-		return \-1;
-	if (outlen > 0)
-		if (write(fdout, out, outlen) == \-1)
-			return \-1;
-	return 0;
-}
-.Ed
 .Sh CONFIGURATION
 The library uses three types of dictionaries: context (or global),
 session, and mechanism, and they are searched in that order by
@@ -785,6 +707,84 @@ su -m postfix -c kinit
 .Pp
 to obtain a ticket for the postfix user with the postfix credential
 and you should be good to go!
+.Sh EXAMPLES
+The following code fragments illustrate the possible use of the
+functions described above.
+.Bd -literal
+int
+decode_stream(saslc_sess_t *sess, int fdin, int fdout)
+{
+	uint8_t buf[BUFSIZE];
+	uint8_t *in;
+	void *out;
+	size_t inlen, outlen;
+	ssize_t n, rval;
+.Pp
+	for (;;) {
+		if ((rval = read(fdin, buf, sizeof(buf))) == \-1)
+			return \-1;
+		if (rval == 0)
+			break;
+		in = buf;
+		inlen = rval;
+		while (inlen > 0) {
+			rval = saslc_sess_decode(sess, in, inlen, &out,
+			    &outlen);
+			if (rval == \-1)
+				return \-1;
+			if (outlen > 0) {
+				n = write(fdout, out, outlen);
+				free(out);
+				if (n == \-1)
+					return \-1;
+			}
+			in += rval;
+			inlen -= rval;
+		}
+	}
+	return 0;
+}
+.Pp
+int
+encode_stream(saslc_sess_t *sess, int fdin, int fdout)
+{
+	uint8_t buf[BUFSIZE];
+	uint8_t *in;
+	void *out;
+	size_t inlen, outlen;
+	ssize_t n, rval;
+.Pp
+	for (;;) {
+		if ((rval = read(fdin, buf, sizeof(buf))) == \-1)
+			return \-1;
+		if (rval == 0)
+			break;
+		in = buf;
+		inlen = rval;
+		while (inlen > 0) {
+			rval = saslc_sess_encode(sess, in, inlen, &out,
+			    &outlen);
+			if (rval == \-1)
+				return \-1;
+			if (outlen > 0) {
+				n = write(fdout, out, outlen);
+				free(out);
+				if (n == \-1)
+					return \-1;
+			}
+			in += rval;
+			inlen -= rval;
+		}
+	}
+	/* flush internal encoder buffer */
+	if (saslc_sess_encode(sess, NULL, 0, &out, &outlen) == \-1)
+		return \-1;
+	if (outlen > 0)
+		if (write(fdout, out, outlen) == \-1)
+			return \-1;
+	return 0;
+}
+.Ed
 .Sh COMPATIBILITY
 There exist other SASL client library implementations including Cyrus SASL
 (http://asg.web.cmu.edu/sasl/sasl-library.html) and GNU SASL
