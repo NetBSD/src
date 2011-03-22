@@ -1,4 +1,4 @@
-#	$NetBSD: files.mmeye,v 1.14 2011/02/19 10:46:28 kiyohara Exp $
+#	$NetBSD: files.mmeye,v 1.15 2011/03/22 05:39:31 kiyohara Exp $
 #
 # config file for mmeye
 
@@ -70,6 +70,7 @@ device	rtciic: i2cbus, i2c_bitbang
 attach	rtciic at mainbus
 file	arch/mmeye/dev/rtciic.c		rtciic
 
+include "dev/usb/files.usb"
 include "dev/bluetooth/files.bluetooth"
 
 include "arch/mmeye/conf/majors.mmeye"
