@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.218 2011/03/20 20:52:29 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.219 2011/03/22 08:02:50 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4398,4 +4398,11 @@ sys/kern/kern_exec.c				1.269 via patch
 
 	Check for number of processes resource violation in execve().
 	[spz, ticket #1421]
+
+usr.sbin/nfsd/nfsd.c				1.57 via patch
+
+	PR/42486: Ed Ravin nfsd sometimes exits prematurely during
+	port-scan fix from freebsd bin 61084 applied (preserving errno
+	properly).
+	[bouyer, ticket #1414]
 
