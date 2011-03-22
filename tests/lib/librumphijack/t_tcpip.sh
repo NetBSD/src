@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.7 2011/03/10 13:42:33 pooka Exp $
+#       $NetBSD: t_tcpip.sh,v 1.8 2011/03/22 17:07:11 pooka Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -146,14 +146,7 @@ ssh_cleanup()
 	# sshd dies due to RUMPHIJACK_RETRYCONNECT=1d6
 }
 
-
-atf_test_case nfs cleanup
-nfs_head()
-{
-        atf_set "descr" "Test hijacked nfsd and mount_nfs"
-}
-
-nfs_body()
+test_nfs()
 {
 
 	magicstr='wind in my hair'
@@ -162,11 +155,7 @@ nfs_body()
 
 	# start nfs kernel server.  this is a mouthful
 	export RUMP_SERVER=unix://serversock
-	atf_check -s exit:0 rump_server -lrumpvfs -lrumpdev -lrumpnet	\
-	    -lrumpnet_net -lrumpnet_netinet -lrumpnet_local		\
-	    -lrumpnet_shmif -lrumpdev_disk -lrumpfs_ffs -lrumpfs_nfs	\
-	    -lrumpfs_nfsserver						\
-	    -d key=/dk,hostpath=ffs.img,size=host ${RUMP_SERVER}
+	atf_check -s exit:0 rump_server $* ${RUMP_SERVER}
 
 	atf_check -s exit:0 rump.ifconfig shmif0 create
 	atf_check -s exit:0 rump.ifconfig shmif0 linkstr shmbus
@@ -223,20 +212,54 @@ nfs_body()
 	atf_check -s exit:0 mount_nfs 10.1.1.1:/export /rump/mnt
 
 	atf_check -s exit:0 -o inline:"${magicstr}\n" cat /rump/mnt/im_alive
+	atf_check -s exit:0 -o match:'.*im_alive$' ls -l /rump/mnt/im_alive
+}
+
+
+atf_test_case nfs cleanup
+nfs_head()
+{
+        atf_set "descr" "Test hijacked nfsd and mount_nfs"
+}
+
+nfs_body()
+{
+	test_nfs -lrumpvfs -lrumpdev -lrumpnet -lrumpnet_net		\
+	    -lrumpnet_netinet -lrumpnet_local -lrumpnet_shmif		\
+	    -lrumpdev_disk -lrumpfs_ffs -lrumpfs_nfs -lrumpfs_nfsserver	\
+	    -d key=/dk,hostpath=ffs.img,size=host
 }
 
 nfs_cleanup()
 {
-
 	RUMP_SERVER=unix://serversock rump.halt 2> /dev/null
 	RUMP_SERVER=unix://clientsock rump.halt 2> /dev/null
 	:
 }
 
+atf_test_case nfs_autoload cleanup
+nfs_autoload_head()
+{
+        atf_set "descr" "Test hijacked nfsd with autoload from /stand"
+}
+
+nfs_autoload_body()
+{
+	[ `uname -m` = "i386" ] || atf_skip "test currently valid only on i386"
+	test_nfs -lrumpvfs -lrumpdev -lrumpnet -lrumpnet_net		\
+	    -lrumpnet_netinet -lrumpnet_local -lrumpnet_shmif		\
+	    -lrumpdev_disk -d key=/dk,hostpath=ffs.img,size=host
+}
+
+nfs_autoload_cleanup()
+{
+	nfs_cleanup
+}
 
 atf_init_test_cases()
 {
 	atf_add_test_case http
 	atf_add_test_case ssh
 	atf_add_test_case nfs
+	atf_add_test_case nfs_autoload
 }
