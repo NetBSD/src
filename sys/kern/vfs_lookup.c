@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.131 2011/01/04 07:43:42 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.132 2011/03/22 15:16:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.131 2011/01/04 07:43:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.132 2011/03/22 15:16:23 pooka Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -62,8 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.131 2011/01/04 07:43:42 dholland Ex
 #endif
 
 int vfs_magiclinks = MAGICLINKS;
-
-pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 
 /*
  * Substitute replacement text for 'magic' strings in symlinks.
