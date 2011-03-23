@@ -1,4 +1,4 @@
-/* $NetBSD: t_pidfile.c,v 1.1 2011/03/22 23:07:32 jmmv Exp $ */
+/* $NetBSD: t_pidfile.c,v 1.2 2011/03/23 09:13:54 jmmv Exp $ */
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_pidfile.c,v 1.1 2011/03/22 23:07:32 jmmv Exp $");
+__RCSID("$NetBSD: t_pidfile.c,v 1.2 2011/03/23 09:13:54 jmmv Exp $");
 
 #include <sys/wait.h>
 
@@ -125,27 +125,20 @@ run_child(void (*child)(const char *), const char *cookie)
 }
 
 /* Callable from the test case parent/child code. */
-static void
-generate_default_pidfile_path(char **path)
+static char *
+generate_varrun_pidfile(const char *basename)
 {
-	if (asprintf(path, "%s%s.pid", _PATH_VARRUN, getprogname()) == -1) {
-		if (in_child)
-			errx(EXIT_FAILURE, "Cannot allocate memory for path");
-		else
-			atf_tc_fail("Cannot allocate memory for path");
-	}
-}
+	char *path;
 
-/* Callable from the test case parent/child code. */
-static void
-generate_custom_pidfile_path(char **path)
-{
-	if (asprintf(path, "%scustom-basename.pid", _PATH_VARRUN) == -1) {
+	if (asprintf(&path, "%s%s.pid", _PATH_VARRUN,
+	    basename == NULL ? getprogname() : basename) == -1) {
 		if (in_child)
 			errx(EXIT_FAILURE, "Cannot allocate memory for path");
 		else
 			atf_tc_fail("Cannot allocate memory for path");
 	}
+
+	return path;
 }
 
 static void
@@ -160,18 +153,19 @@ helper_default_basename(const char *path)
 	exit(EXIT_SUCCESS);
 }
 
-ATF_TC(pidfile__default_basename);
-ATF_TC_HEAD(pidfile__default_basename, tc)
+ATF_TC(default_basename);
+ATF_TC_HEAD(default_basename, tc)
 {
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
-ATF_TC_BODY(pidfile__default_basename, tc)
+ATF_TC_BODY(default_basename, tc)
 {
 	char *path;
 
-	generate_default_pidfile_path(&path);
+	path = generate_varrun_pidfile(NULL);
 	run_child(helper_default_basename, path);
 	ensure_deleted(path);
+	free(path);
 }
 
 static void
@@ -186,18 +180,19 @@ helper_custom_basename(const char *path)
 	exit(EXIT_SUCCESS);
 }
 
-ATF_TC(pidfile__custom_basename);
-ATF_TC_HEAD(pidfile__custom_basename, tc)
+ATF_TC(custom_basename);
+ATF_TC_HEAD(custom_basename, tc)
 {
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
-ATF_TC_BODY(pidfile__custom_basename, tc)
+ATF_TC_BODY(custom_basename, tc)
 {
 	char *path;
 
-	generate_custom_pidfile_path(&path);
+	path = generate_varrun_pidfile("custom-basename");
 	run_child(helper_custom_basename, path);
 	ensure_deleted(path);
+	free(path);
 }
 
 static void
@@ -206,7 +201,7 @@ helper_change_basenames(const char *unused_cookie)
 	char *default_path;
 	char *custom_path;
 
-	generate_default_pidfile_path(&default_path);
+	default_path = generate_varrun_pidfile(NULL);
 	if (pidfile(NULL) == -1)
 		errx(EXIT_FAILURE, "Failed to create pidfile with default "
 		    "basename");
@@ -216,7 +211,7 @@ helper_change_basenames(const char *unused_cookie)
 		    "basename");
 	check_pidfile(default_path);
 
-	generate_custom_pidfile_path(&custom_path);
+	custom_path = generate_varrun_pidfile("custom-basename");
 	if (pidfile("custom-basename") == -1)
 		errx(EXIT_FAILURE, "Failed to create pidfile with custom "
 		    "basename");
@@ -227,34 +222,39 @@ helper_change_basenames(const char *unused_cookie)
 		    "basename");
 	check_pidfile(custom_path);
 
+	free(custom_path);
+	free(default_path);
 	exit(EXIT_SUCCESS);
 }
 
-ATF_TC(pidfile__change_basenames);
-ATF_TC_HEAD(pidfile__change_basenames, tc)
+ATF_TC(change_basenames);
+ATF_TC_HEAD(change_basenames, tc)
 {
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
-ATF_TC_BODY(pidfile__change_basenames, tc)
+ATF_TC_BODY(change_basenames, tc)
 {
 	char *default_path;
 	char *custom_path;
 
 	run_child(helper_change_basenames, NULL);
 
-	generate_default_pidfile_path(&default_path);
-	generate_custom_pidfile_path(&custom_path);
+	default_path = generate_varrun_pidfile(NULL);
+	custom_path = generate_varrun_pidfile("custom-basename");
 
 	ensure_deleted(default_path);
 	ensure_deleted(custom_path);
+
+	free(custom_path);
+	free(default_path);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, pidfile__default_basename);
-	ATF_TP_ADD_TC(tp, pidfile__custom_basename);
-	ATF_TP_ADD_TC(tp, pidfile__change_basenames);
+	ATF_TP_ADD_TC(tp, default_basename);
+	ATF_TP_ADD_TC(tp, custom_basename);
+	ATF_TP_ADD_TC(tp, change_basenames);
 
 	return atf_no_error();
 }
