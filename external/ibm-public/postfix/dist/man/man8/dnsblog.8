@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnsblog.8,v 1.1.1.1 2011/03/02 19:31:54 tron Exp $
+.\"	$NetBSD: dnsblog.8,v 1.1.1.2 2011/03/23 19:07:17 tron Exp $
 .\"
 .TH DNSBLOG 8 
 .ad
@@ -24,12 +24,13 @@ replaced by an UDP client that is built directly into the
 .ad
 .fi
 With each connection, the \fBdnsblog\fR(8) server receives
-a DNS white/blacklist domain name and an IP address. If the
-address is listed under the DNS white/blacklist, the
+a DNS white/blacklist domain name, IP address, and an ID.
+If the address is listed under the DNS white/blacklist, the
 \fBdnsblog\fR(8) server logs the match and replies with the
-query arguments plus a non-zero status.  Otherwise it replies
-with the query arguments plus a zero status.  Finally, The
-\fBdnsblog\fR(8) server closes the connection.
+query arguments plus an address list with the resulting IP
+addresses separated by whitespace.  Otherwise it replies
+with the query arguments plus an empty address list.  Finally,
+The \fBdnsblog\fR(8) server closes the connection.
 .SH DIAGNOSTICS
 .ad
 .fi

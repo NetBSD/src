@@ -11,6 +11,16 @@ instead, a new snapshot is released.
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
+Incompatible changes with Postfix 2.8.2
+---------------------------------------
+
+Use "postfix reload" after "make upgrade" on a running Postfix
+system. This is needed because the protocol between postscreen(8)
+and dnsblog(8) has changed.
+
+Postfix 2.8.0 release notes
+---------------------------
+
 If you upgrade from Postfix 2.6 or earlier, read RELEASE_NOTES-2.7
 before proceeding.
 

@@ -16538,3 +16538,34 @@ Apologies for any names omitted.
 	Cleanup: don't log a "connection reset by peer" warning
 	when postscreen(8) tries to send a server response.  File:
 	postscreen/postscreen_send.c.
+
+20110225
+
+	Workaround (problem introduced with IPv6 support in Postfix
+	2.2): the SMTP client did not support mail to [ipv6:ipv6addr].
+	Fix based on a patch by Gurusamy Sarathy (Sophos).  File:
+	util/host_port.c and regression test files.
+
+20110227
+
+	Portability: FreeBSD closefrom() support time window. Sahil
+	Tandon.  File: util/sys_defs.h.
+
+20110313
+
+	Bugfix (introduced Postfix 2.8): postscreen DNSBL scoring
+	error. When a client disconnected and then reconnected
+	before all DNSBL results for the earlier session arrived,
+	DNSBL results for the earlier session would be added to the
+	score for the later session. Problem report by Larry Vaden.
+	Files: dnsblog/dnsblog.c, postscreen/postscreen_dnsbl.c.
+
+	Cleanup: protocol description in dnsblog(8) manpage. File:
+	dnsblog/dnsblog.c.
+
+20110314
+
+	Portability: the SUN compiler had trouble with a pointer
+	expression of the form ``("text1" "text2") + constant'' so
+	we don't try to be so clever. Fix by Victor Duchovni.  File:
+	global/mail_params.h.
