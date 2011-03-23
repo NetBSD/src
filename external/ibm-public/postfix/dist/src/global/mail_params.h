@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.6 2011/03/02 19:56:38 tron Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.7 2011/03/23 19:10:44 tron Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -2990,33 +2990,20 @@ extern char *var_tls_eecdh_ultra;
 #define DEF_TLS_PREEMPT_CLIST	0
 extern bool var_tls_preempt_clist;
 
-#ifdef USE_TLS
-
- /*
-  * The tweak for CVE-2005-2969 is needed in some versions prior to 1.0.0
-  */
+ /* The tweak for CVE-2010-4180 is needed in some versions prior to 1.0.1 */
+ /* The tweak for CVE-2005-2969 is needed in some versions prior to 1.0.0 */
+#if defined(USE_TLS) && (OPENSSL_VERSION_NUMBER < 0x1000100fL)
 #if (OPENSSL_VERSION_NUMBER < 0x1000000fL)
-#define TLS_BUG_TWEAK_A	" CVE-2005-2969"
+#define TLS_BUG_TWEAKS		"CVE-2005-2969 CVE-2010-4180"
 #else
-#define TLS_BUG_TWEAK_A ""
+#define TLS_BUG_TWEAKS		"CVE-2010-4180"
 #endif
-
- /*
-  * The tweak for CVE-2010-4180 is needed in some versions prior to 1.0.1
-  */
-#if (OPENSSL_VERSION_NUMBER < 0x1000100fL)
-#define TLS_BUG_TWEAK_B	" CVE-2010-4180"
 #else
-#define TLS_BUG_TWEAK_B	" "
+#define TLS_BUG_TWEAKS		""
 #endif
-
-#else /* USE_TLS */
-#define TLS_BUG_TWEAK_A	""
-#define TLS_BUG_TWEAK_B	" "
-#endif /* USE_TLS */
 
 #define VAR_TLS_BUG_TWEAKS	"tls_disable_workarounds"
-#define DEF_TLS_BUG_TWEAKS	((TLS_BUG_TWEAK_A TLS_BUG_TWEAK_B)+1)
+#define DEF_TLS_BUG_TWEAKS	TLS_BUG_TWEAKS
 extern char *var_tls_bug_tweaks;
 
  /*
