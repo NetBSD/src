@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550var.h,v 1.1 2011/02/09 21:18:04 macallan Exp $	*/
+/*	$NetBSD: ct65550var.h,v 1.2 2011/03/23 04:02:43 macallan Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -40,19 +40,16 @@ struct chipsfb_softc {
 
 	bus_space_tag_t sc_memt;
 	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_memh;
 
-	bus_space_tag_t sc_fbt;
-	bus_space_tag_t sc_ioregt;
 	bus_space_handle_t sc_fbh;
+	bus_space_handle_t sc_mmregh;
 	bus_space_handle_t sc_ioregh;
-	bus_addr_t sc_fb, sc_ioreg;
+	bus_addr_t sc_fb;
 	bus_size_t sc_fbsize, sc_ioregsize;
 
 	int (*sc_ioctl)(void *, void *, u_long, void *, int, struct lwp *);
-	paddr_t	(*chipsfb_mmap)(void *, void *, off_t, int);
+	paddr_t	(*sc_mmap)(void *, void *, off_t, int);
 
-	void *sc_ih;
 
 	size_t memsize;
 
