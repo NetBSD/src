@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_strings.c,v 1.4 2007/01/16 17:32:05 hubertf Exp $	*/
+/*	$NetBSD: cd9660_strings.c,v 1.5 2011/03/23 13:11:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -46,7 +46,7 @@
 #include "cd9660.h"
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_strings.c,v 1.4 2007/01/16 17:32:05 hubertf Exp $");
+__RCSID("$NetBSD: cd9660_strings.c,v 1.5 2011/03/23 13:11:51 christos Exp $");
 #endif  /* !__lint */
 
 
@@ -62,19 +62,19 @@ cd9660_uppercase_characters(char *str, int len)
 }
 
 static inline int
-cd9660_is_a_char(char c)
-{
-	return (isupper((unsigned char)c)
-		|| c == '_'
-		|| (c >= '0' && c <= '?'));
-}
-
-static inline int
 cd9660_is_d_char(char c)
 {
 	return (isupper((unsigned char)c)
+		|| c == '_'
+		|| (c >= '0' && c <= '9'));
+}
+
+static inline int
+cd9660_is_a_char(char c)
+{
+	return (isupper((unsigned char)c)
 			|| c == '_'
-			|| (c >= '%' && c <= '9')
+			|| (c >= '%' && c <= '?')
 			|| (c >= ' ' && c <= '\"'));
 }
 
