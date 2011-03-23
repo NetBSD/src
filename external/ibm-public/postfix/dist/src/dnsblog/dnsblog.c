@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsblog.c,v 1.1.1.1 2011/03/02 19:32:10 tron Exp $	*/
+/*	$NetBSD: dnsblog.c,v 1.1.1.2 2011/03/23 19:07:34 tron Exp $	*/
 
 /*++
 /* NAME
@@ -16,12 +16,13 @@
 /* .ad
 /* .fi
 /*	With each connection, the \fBdnsblog\fR(8) server receives
-/*	a DNS white/blacklist domain name and an IP address. If the
-/*	address is listed under the DNS white/blacklist, the
+/*	a DNS white/blacklist domain name, IP address, and an ID.
+/*	If the address is listed under the DNS white/blacklist, the
 /*	\fBdnsblog\fR(8) server logs the match and replies with the
-/*	query arguments plus a non-zero status.  Otherwise it replies
-/*	with the query arguments plus a zero status.  Finally, The
-/*	\fBdnsblog\fR(8) server closes the connection.
+/*	query arguments plus an address list with the resulting IP
+/*	addresses separated by whitespace.  Otherwise it replies
+/*	with the query arguments plus an empty address list.  Finally,
+/*	The \fBdnsblog\fR(8) server closes the connection.
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* CONFIGURATION PARAMETERS
@@ -217,6 +218,7 @@ static VSTRING *dnsblog_query(VSTRING *result, const char *dnsbl_domain,
 static void dnsblog_service(VSTREAM *client_stream, char *unused_service,
 			            char **argv)
 {
+    int     request_id;
 
     /*
      * Sanity check. This service takes no command-line arguments.
@@ -233,13 +235,15 @@ static void dnsblog_service(VSTREAM *client_stream, char *unused_service,
 		  ATTR_FLAG_MORE | ATTR_FLAG_STRICT,
 		  ATTR_TYPE_STR, MAIL_ATTR_RBL_DOMAIN, rbl_domain,
 		  ATTR_TYPE_STR, MAIL_ATTR_ACT_CLIENT_ADDR, addr,
-		  ATTR_TYPE_END) == 2) {
+		  ATTR_TYPE_INT, MAIL_ATTR_LABEL, &request_id,
+		  ATTR_TYPE_END) == 3) {
 	(void) dnsblog_query(result, STR(rbl_domain), STR(addr));
 	if (var_dnsblog_delay > 0)
 	    sleep(var_dnsblog_delay);
 	attr_print(client_stream, ATTR_FLAG_NONE,
 		   ATTR_TYPE_STR, MAIL_ATTR_RBL_DOMAIN, STR(rbl_domain),
 		   ATTR_TYPE_STR, MAIL_ATTR_ACT_CLIENT_ADDR, STR(addr),
+		   ATTR_TYPE_INT, MAIL_ATTR_LABEL, request_id,
 		   ATTR_TYPE_STR, MAIL_ATTR_RBL_ADDR, STR(result),
 		   ATTR_TYPE_END);
 	vstream_fflush(client_stream);
