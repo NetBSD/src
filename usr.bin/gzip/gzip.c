@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.98 2010/11/06 21:42:32 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.99 2011/03/23 12:59:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -30,7 +30,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006\
  Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.98 2010/11/06 21:42:32 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.99 2011/03/23 12:59:44 tsutsui Exp $");
 #endif /* not lint */
 
 /*
@@ -291,7 +291,7 @@ main(int argc, char **argv)
 		dflag = cflag = 1;
 
 #ifdef SMALL
-#define OPT_LIST "123456789cdhltV"
+#define OPT_LIST "123456789cdhlV"
 #else
 #define OPT_LIST "123456789cdfhklNnqrS:tVv"
 #endif
