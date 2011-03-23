@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2011/03/22 05:37:37 kiyohara Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2011/03/23 13:01:04 tsutsui Exp $	*/
 
 #ifndef _MMEYE_BUS_H_
 #define _MMEYE_BUS_H_
@@ -14,7 +14,7 @@ typedef void *bus_dma_tag_t;
 typedef struct bus_dma_segment {
 	bus_addr_t ds_addr;
 	bus_size_t ds_len;
-} *bus_dma_segment_t;
+} bus_dma_segment_t;
 
 typedef struct bus_dmamap {
 	bus_size_t dm_maxsegsz;
