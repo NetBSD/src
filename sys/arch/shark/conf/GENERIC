@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.93 2011/03/06 17:08:31 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.94 2011/03/23 04:46:29 macallan Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.93 $"
+#ident		"GENERIC-$Revision: 1.94 $"
 
 # estimated number of users
 maxusers	32
@@ -251,7 +251,8 @@ pckbc*		at ofisa?
 pckbd*		at pckbc?
 pms*		at pckbc?
 vga*		at ofbus?
-igsfb*		at ofbus?
+igsfb*		at ofbus?	# IGS CyberPro in rev. 5 sharks
+chipsfb*	at ofbus?	# C&T 65550 in rev. 4 and earlier
 wsdisplay*	at wsemuldisplaydev?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
