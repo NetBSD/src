@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.217 2010/07/21 17:52:13 hannken Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.218 2011/03/23 00:58:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.217 2010/07/21 17:52:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.218 2011/03/23 00:58:39 rmind Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -108,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.217 2010/07/21 17:52:13 hannken Ex
 
 MALLOC_JUSTDEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
 
-extern int count_lock_queue(void);
 extern kmutex_t vnode_free_list_lock;		/* XXX */
 
 static void lfs_generic_callback(struct buf *, void (*)(struct buf *));

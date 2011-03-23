@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.227 2011/01/17 07:13:32 uebayasi Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.228 2011/03/23 00:58:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.227 2011/01/17 07:13:32 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.228 2011/03/23 00:58:38 rmind Exp $");
 
 #include "opt_bufcache.h"
 
@@ -181,7 +181,6 @@ static void *buf_malloc(size_t);
 static void buf_mrelease(void *, size_t);
 static void binsheadfree(buf_t *, struct bqueue *);
 static void binstailfree(buf_t *, struct bqueue *);
-int count_lock_queue(void); /* XXX */
 #ifdef DEBUG
 static int checkfreelist(buf_t *, struct bqueue *, int);
 #endif
@@ -1574,22 +1573,6 @@ biointr(void *cookie)
 
 		biodone2(bp);
 	}
-}
-
-/*
- * Return a count of buffers on the "locked" queue.
- */
-int
-count_lock_queue(void)
-{
-	buf_t *bp;
-	int n = 0;
-
-	mutex_enter(&bufcache_lock);
-	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED].bq_queue, b_freelist)
-		n++;
-	mutex_exit(&bufcache_lock);
-	return (n);
 }
 
 /*
