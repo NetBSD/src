@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.7 2010/11/10 11:14:12 pooka Exp $	*/
+/*	$NetBSD: sem.c,v 1.8 2011/03/23 13:57:04 joerg Exp $	*/
 
 /*
  * Common code for semaphore tests.  This can be included both into
@@ -159,6 +159,9 @@ ATF_TC_BODY(busydestroy, tc)
 	}
 	if (i == 1000)
 		atf_tc_fail("sem destroy not reporting EBUSY");
+
+	pthread_cancel(pt);
+	pthread_join(pt, NULL);
 }
 
 ATF_TC(blockwait);
@@ -194,6 +197,9 @@ ATF_TC_BODY(blockwait, tc)
 		sem_post(&semmarit[1]);
 
 	}
+
+	pthread_cancel(pt);
+	pthread_join(pt, NULL);
 }
 
 ATF_TC(named);
