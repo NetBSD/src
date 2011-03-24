@@ -119,6 +119,31 @@ struct WATCHDOG {
   */
 static WATCHDOG *watchdog_curr;
 
+ /*
+  * Workaround for systems where the alarm signal does not wakeup the event
+  * machinery, and therefore does not restart the watchdog timer in the
+  * single_server etc. skeletons. The symptom is that programs abort when the
+  * watchdog timeout is less than the max_idle time.
+  */
+#ifdef USE_WATCHDOG_PIPE
+#include <errno.h>
+#include <iostuff.h>
+#include <events.h>
+
+static int watchdog_pipe[2];
+
+/* watchdog_read - read event pipe */
+
+static void watchdog_read(int unused_event, char *unused_context)
+{
+    char    ch;
+
+    while (read(watchdog_pipe[0], &ch, 1) > 0)
+	 /* void */ ;
+}
+
+#endif					/* USE_WATCHDOG_PIPE */
+
 /* watchdog_event - handle timeout event */
 
 static void watchdog_event(int unused_sig)
@@ -137,6 +162,14 @@ static void watchdog_event(int unused_sig)
     if (msg_verbose > 1)
 	msg_info("%s: %p %d", myname, (void *) wp, wp->trip_run);
     if (++(wp->trip_run) < WATCHDOG_STEPS) {
+#ifdef USE_WATCHDOG_PIPE
+	int     saved_errno = errno;
+
+	/* Wake up the events(3) engine. */
+	if (write(watchdog_pipe[1], "", 1) != 1)
+	    msg_warn("%s: write watchdog_pipe: %m", myname);
+	errno = saved_errno;
+#endif
 	alarm(wp->timeout);
     } else {
 	if (wp->action)
@@ -177,6 +210,15 @@ WATCHDOG *watchdog_create(unsigned timeout, WATCHDOG_FN action, char *context)
 	msg_fatal("%s: sigaction(SIGALRM): %m", myname);
     if (msg_verbose > 1)
 	msg_info("%s: %p %d", myname, (void *) wp, timeout);
+#ifdef USE_WATCHDOG_PIPE
+    if (watchdog_curr == 0) {
+	if (pipe(watchdog_pipe) < 0)
+	    msg_fatal("%s: pipe: %m", myname);
+	non_blocking(watchdog_pipe[0], NON_BLOCKING);
+	non_blocking(watchdog_pipe[1], NON_BLOCKING);
+	event_enable_read(watchdog_pipe[0], watchdog_read, (char *) 0);
+    }
+#endif
     return (watchdog_curr = wp);
 }
 
@@ -193,6 +235,13 @@ void    watchdog_destroy(WATCHDOG *wp)
     if (wp->saved_time)
 	alarm(wp->saved_time);
     myfree((char *) wp);
+#ifdef USE_WATCHDOG_PIPE
+    if (watchdog_curr == 0) {
+	event_disable_readwrite(watchdog_pipe[0]);
+	(void) close(watchdog_pipe[0]);
+	(void) close(watchdog_pipe[1]);
+    }
+#endif
     if (msg_verbose > 1)
 	msg_info("%s: %p", myname, (void *) wp);
 }

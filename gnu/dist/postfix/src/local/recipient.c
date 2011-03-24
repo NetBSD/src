@@ -287,6 +287,10 @@ int     deliver_recipient(LOCAL_STATE state, USER_ATTR usr_attr)
 
     /*
      * Address extension management.
+     * 
+     * XXX Fix 20100422, finalized 20100529: it is too error-prone to
+     * distinguish between "no extension" and "no valid extension", so we
+     * drop an invalid extension from the recipient address local-part.
      */
     state.msg_attr.user = mystrdup(state.msg_attr.local);
     if (*var_rcpt_delim) {
@@ -296,6 +300,9 @@ int     deliver_recipient(LOCAL_STATE state, USER_ATTR usr_attr)
 	    msg_warn("%s: address with illegal extension: %s",
 		     state.msg_attr.queue_id, state.msg_attr.local);
 	    state.msg_attr.extension = 0;
+	    /* XXX Can't myfree + mystrdup, must truncate instead. */
+	    state.msg_attr.local[strlen(state.msg_attr.user)] = 0;
+	    /* Truncating is safe. The code below rejects null usernames. */
 	}
     } else
 	state.msg_attr.extension = 0;

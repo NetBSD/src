@@ -1792,7 +1792,7 @@ is decremented by 1 after each failed pseudo-cohort.  </dd>
 <p> A pseudo-cohort is the number of deliveries equal to a destination's
 delivery concurrency. </p>
 
-<p> Use <a href="postconf.5.html#transport_destination_concurrency_positive_feedback"><i>transport</i>_destination_concurrency_negative_feedback</a>
+<p> Use <a href="postconf.5.html#transport_destination_concurrency_negative_feedback"><i>transport</i>_destination_concurrency_negative_feedback</a>
 to specify a transport-specific override, where <i>transport</i>
 is the <a href="master.5.html">master.cf</a>
 name of the message delivery transport. </p>
@@ -3718,7 +3718,7 @@ client, for example:
 <blockquote>
 <pre>
 /etc/postfix/<a href="master.5.html">master.cf</a>:
-    mylmtp ... lmtp -o <a href="postconf.5.html#lmtp_lhloname">lmtp_lhlo_name</a>=foo.bar.com
+    mylmtp ... lmtp -o <a href="postconf.5.html#lmtp_lhlo_name">lmtp_lhlo_name</a>=foo.bar.com
 </pre>
 </blockquote>
 
@@ -8542,6 +8542,10 @@ during TLS startup and shutdown handshake procedures. </p>
 needed only when the CA certificate is not already present in the
 client certificate file.  </p>
 
+<p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
+
 <p> Example: </p>
 
 <pre>
@@ -8564,6 +8568,10 @@ with, for example, "$OPENSSL_HOME/bin/c_rehash /etc/postfix/certs".
 
 <p> To use this option in chroot mode, this directory (or a copy)
 must be inside the chroot jail. </p>
+
+<p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
 
 <p> Example: </p>
 
@@ -10041,8 +10049,11 @@ authenticated via the <a href="http://tools.ietf.org/html/rfc4954">RFC 4954</a> 
 <dd> Permit the request when the remote SMTP client certificate is
 verified successfully.  This option must be used only if a special
 CA issues the certificates and only this CA is listed as trusted
-CA, otherwise all clients with a recognized certificate would be
-allowed to relay. This feature is available with Postfix version 2.2.</dd>
+CA. Otherwise, clients with a third-party certificate would also
+be allowed to relay.  Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" when the
+trusted CA is specified with <a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> or <a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a>,
+to prevent Postfix from appending the system-supplied default CAs.
+This feature is available with Postfix version 2.2.</dd>
 
 <dt><b><a name="permit_tls_clientcerts">permit_tls_clientcerts</a></b></dt>
 
@@ -11671,6 +11682,10 @@ server certificate file.  This file may also contain the CA
 certificates of other trusted CAs.  You must use this file for the
 list of trusted CAs if you want to use chroot-mode. </p>
 
+<p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
+
 <p> Example: </p>
 
 <pre>
@@ -11696,6 +11711,10 @@ must be inside the chroot jail. Please note that in this case the
 CA certificates are not offered to the client, so that e.g.  Netscape
 clients might not offer certificates issued by them.  Use of this
 feature is therefore not recommended. </p>
+
+<p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
 
 <p> Example: </p>
 
@@ -12630,6 +12649,23 @@ process initialization will be logged with the default name. Examples
 are errors while parsing the command line arguments, and errors
 while accessing the Postfix <a href="postconf.5.html">main.cf</a> configuration file.
 </p>
+
+
+</DD>
+
+<DT><b><a name="tls_append_default_CA">tls_append_default_CA</a>
+(default: no)</b></DT><DD>
+
+<p> Append the system-supplied default certificate authority
+certificates to the ones specified with *_tls_CApath or *_tls_CAfile.
+The default is "no"; this prevents Postfix from trusting third-party
+certificates and giving them relay permission with
+<a href="postconf.5.html#permit_tls_all_clientcerts">permit_tls_all_clientcerts</a>.  </p>
+
+<p> This feature is available in Postfix 2.4.15, 2.5.11, 2.6.8,
+2.7.2 and later versions. Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = yes" for
+backwards compatibility, to avoid breaking certificate verification
+with sites that don't use <a href="postconf.5.html#permit_tls_all_clientcerts">permit_tls_all_clientcerts</a>. </p>
 
 
 </DD>

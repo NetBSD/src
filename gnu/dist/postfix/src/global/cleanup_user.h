@@ -65,7 +65,8 @@
   * These are set when we can't bounce even if we were asked to.
   */
 #define CLEANUP_STAT_MASK_CANT_BOUNCE \
-	(CLEANUP_STAT_BAD | CLEANUP_STAT_WRITE | CLEANUP_STAT_DEFER)
+	(CLEANUP_STAT_BAD | CLEANUP_STAT_WRITE | CLEANUP_STAT_DEFER \
+	    | CLEANUP_STAT_RCPT)
 
  /*
   * These are set when we can't examine every record of a message.

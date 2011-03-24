@@ -57,9 +57,6 @@
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
-/* .IP "\fBdaemon_timeout (18000s)\fR"
-/*	How much time a Postfix daemon process may take to handle a
-/*	request before it is terminated by a built-in watchdog timer.
 /* .IP "\fBipc_timeout (3600s)\fR"
 /*	The time limit for sending or receiving information over an internal
 /*	communication channel.
@@ -194,10 +191,14 @@ static int cleanup_service_error_reason(PICKUP_INFO *info, int status,
     /*
      * XXX If the cleanup server gave a reason, then it was already logged.
      * Don't bother logging it another time.
+     * 
+     * XXX Discard a message without recipient. This can happen with "postsuper
+     * -r" when a message is already delivered (or bounced). The Postfix
+     * sendmail command rejects submissions without recipients.
      */
     if (reason == 0)
 	msg_warn("%s: %s", info->path, cleanup_strerror(status));
-    return ((status & CLEANUP_STAT_BAD) ?
+    return ((status & (CLEANUP_STAT_BAD | CLEANUP_STAT_RCPT)) ?
 	    REMOVE_MESSAGE_FILE : KEEP_MESSAGE_FILE);
 }
 

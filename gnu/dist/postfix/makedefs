@@ -132,6 +132,8 @@ case "$SYSTEM.$RELEASE" in
 		;;
   FreeBSD.7*)	SYSTYPE=FREEBSD7
 		;;
+  FreeBSD.8*)	SYSTYPE=FREEBSD8
+		;;
   OpenBSD.2*)	SYSTYPE=OPENBSD2
 		;;
   OpenBSD.3*)	SYSTYPE=OPENBSD3
@@ -212,6 +214,12 @@ case "$SYSTEM.$RELEASE" in
 		done
 		;;
        AIX.*)	case "`uname -v`" in
+		6)	SYSTYPE=AIX6
+			case "$CC" in
+			cc|*/cc|xlc|*/xlc) CCARGS="$CCARGS -w -blibpath:/usr/lib:/lib:/usr/local/lib";;
+			esac
+			CCARGS="$CCARGS -D_ALL_SOURCE -DHAS_POSIX_REGEXP"
+			;;
 		5)	SYSTYPE=AIX5
 			case "$CC" in
 			cc|*/cc|xlc|*/xlc) CCARGS="$CCARGS -w -blibpath:/usr/lib:/lib:/usr/local/lib";;

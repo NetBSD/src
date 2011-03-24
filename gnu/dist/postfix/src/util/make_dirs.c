@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
 /* Utility library. */
 
@@ -49,12 +50,14 @@
 
 int     make_dirs(const char *path, int perms)
 {
+    const char *myname = "make_dirs";
     char   *saved_path;
     unsigned char *cp;
     int     saved_ch;
     struct stat st;
     int     ret;
     mode_t  saved_mode = 0;
+    gid_t   egid = -1;
 
     /*
      * Initialize. Make a copy of the path that we can safely clobber.
@@ -116,6 +119,21 @@ int     make_dirs(const char *path, int perms)
 		    ret = -1;
 		    break;
 		}
+	    }
+
+	    /*
+	     * Fix directory ownership when mkdir() ignores the effective
+	     * GID. Don't change the effective UID for doing this.
+	     */
+	    if ((ret = stat(saved_path, &st)) < 0) {
+		msg_warn("%s: stat %s: %m", myname, saved_path);
+		break;
+	    }
+	    if (egid == -1)
+		egid = getegid();
+	    if (st.st_gid != egid && (ret = chown(saved_path, -1, egid)) < 0) {
+		msg_warn("%s: chgrp %s: %m", myname, saved_path);
+		break;
 	    }
 	}
 	if (saved_ch != 0)

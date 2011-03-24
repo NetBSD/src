@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.23 2008/08/30 10:54:27 christos Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.23.8.1 2011/03/24 20:02:46 riz Exp $	*/
 
 /*++
 /* NAME
@@ -3053,9 +3053,9 @@ static int vrfy_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "501 5.1.3 Bad recipient address syntax");
 	return (-1);
     }
-    /* Not: state->addr_buf */
+    /* Use state->addr_buf, with the unquoted result from extract_addr() */
     if (SMTPD_STAND_ALONE(state) == 0
-	&& (err = smtpd_check_rcpt(state, argv[1].strval)) != 0) {
+	&& (err = smtpd_check_rcpt(state, STR(state->addr_buf))) != 0) {
 	smtpd_chat_reply(state, "%s", err);
 	return (-1);
     }
@@ -3913,6 +3913,8 @@ static int starttls_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     smtpd_chat_reply(state, "220 2.0.0 Ready to start TLS");
     /* Flush before we switch the stream's read/write routines. */
     smtp_flush(state->client);
+    /* At this point there must not be any pending plaintext. */
+    vstream_fpurge(state->client, VSTREAM_PURGE_BOTH);
 
     /*
      * Reset all inputs to the initial state.
@@ -4223,6 +4225,11 @@ static void smtpd_proto(SMTPD_STATE *state)
 	    }
 	    /* XXX We use the real client for connect access control. */
 	    if (state->access_denied && cmdp->action != quit_cmd) {
+		/* XXX Exception for Milter override. */
+		if (strncmp(state->access_denied + 1, "21", 2) == 0) {
+		    smtpd_chat_reply(state, "%s", state->access_denied);
+		    continue;
+		}
 		smtpd_chat_reply(state, "503 5.7.0 Error: access denied for %s",
 				 state->namaddr);	/* RFC 2821 Sec 3.1 */
 		state->error_count++;
@@ -4557,7 +4564,7 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
 				    = var_smtpd_tls_dh512_param_file,
 				    protocols = enforce_tls ?
 				    var_smtpd_tls_mand_proto : "",
-				    ask_ccert = var_smtpd_tls_ask_ccert,
+				    ask_ccert = wantcert,
 				    fpt_dgst = var_smtpd_tls_fpt_dgst);
 	    else
 		msg_warn("No server certs available. TLS won't be enabled");

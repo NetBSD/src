@@ -127,83 +127,85 @@ TRANSPORT(5)                                                      TRANSPORT(5)
               ting.   Otherwise, a domain name matches itself and
               its subdomains.
 
-       Note 1: the special pattern <b>*</b> represents any address (i.e.
-       it functions as the wild-card pattern).
+       <b>*</b> <i>transport</i>:<i>nexthop</i>
+              The special pattern <b>*</b> represents any address  (i.e.
+              it  functions  as  the  wild-card  pattern,  and is
+              unique to Postfix transport tables).
 
-       Note  2:  the  null  recipient  address  is  looked  up as
+       Note 1:  the  null  recipient  address  is  looked  up  as
        <b>$<a href="postconf.5.html#empty_address_recipient">empty_address_recipient</a></b>@<b>$<a href="postconf.5.html#myhostname">myhostname</a></b> (default: mailer-dae-
        mon@hostname).
 
-       Note  3:  <i>user@domain</i>  or  <i>user+extension@domain</i> lookup is
+       Note 2: <i>user@domain</i>  or  <i>user+extension@domain</i>  lookup  is
        available in Postfix 2.0 and later.
 
 <b>RESULT FORMAT</b>
-       The lookup result is of the form  <i>transport</i><b>:</b><i>nexthop</i>.   The
-       <i>transport</i>  field  specifies a mail delivery transport such
-       as <b>smtp</b> or <b>local</b>. The <i>nexthop</i> field  specifies  where  and
+       The  lookup  result is of the form <i>transport</i><b>:</b><i>nexthop</i>.  The
+       <i>transport</i> field specifies a mail delivery  transport  such
+       as  <b>smtp</b>  or  <b>local</b>. The <i>nexthop</i> field specifies where and
        how to deliver mail.
 
-       The  transport field specifies the name of a mail delivery
+       The transport field specifies the name of a mail  delivery
        transport (the first name of a mail delivery service entry
        in the Postfix <a href="master.5.html"><b>master.cf</b></a> file).
 
-       The  interpretation  of  the  nexthop  field  is transport
-       dependent. In the case of SMTP, specify  a  service  on  a
-       non-default  port  as  <i>host</i>:<i>service</i>,  and disable MX (mail
-       exchanger) DNS lookups with [<i>host</i>] or [<i>host</i>]:<i>port</i>. The  []
+       The interpretation  of  the  nexthop  field  is  transport
+       dependent.  In  the  case  of SMTP, specify a service on a
+       non-default port as <i>host</i>:<i>service</i>,  and  disable  MX  (mail
+       exchanger)  DNS lookups with [<i>host</i>] or [<i>host</i>]:<i>port</i>. The []
        form is required when you specify an IP address instead of
        a hostname.
 
-       A null <i>transport</i> and null <i>nexthop</i>  result  means  "do  not
-       change":  use  the delivery transport and nexthop informa-
-       tion that would be used when the  entire  transport  table
+       A  null  <i>transport</i>  and  null <i>nexthop</i> result means "do not
+       change": use the delivery transport and  nexthop  informa-
+       tion  that  would  be used when the entire transport table
        did not exist.
 
-       A  non-null  <i>transport</i>  field  with  a  null <i>nexthop</i> field
+       A non-null <i>transport</i>  field  with  a  null  <i>nexthop</i>  field
        resets the nexthop information to the recipient domain.
 
-       A null <i>transport</i> field with non-null  <i>nexthop</i>  field  does
+       A  null  <i>transport</i>  field with non-null <i>nexthop</i> field does
        not modify the transport information.
 
 <b>EXAMPLES</b>
-       In  order to deliver internal mail directly, while using a
-       mail relay for all other mail, specify a  null  entry  for
-       internal  destinations  (do not change the delivery trans-
-       port or the nexthop information) and  specify  a  wildcard
+       In order to deliver internal mail directly, while using  a
+       mail  relay  for  all other mail, specify a null entry for
+       internal destinations (do not change the  delivery  trans-
+       port  or  the  nexthop information) and specify a wildcard
        for all other destinations.
 
             <b>my.domain    :</b>
             <b>.my.domain   :</b>
             <b>*            <a href="smtp.8.html">smtp</a>:outbound-relay.my.domain</b>
 
-       In  order  to send mail for <b>example.com</b> and its subdomains
+       In order to send mail for <b>example.com</b> and  its  subdomains
        via the <b>uucp</b> transport to the UUCP host named <b>example</b>:
 
             <b>example.com      uucp:example</b>
             <b>.example.com     uucp:example</b>
 
-       When no nexthop host name is  specified,  the  destination
-       domain  name  is  used instead. For example, the following
-       directs mail for <i>user</i>@<b>example.com</b> via the  <b>slow</b>  transport
-       to  a  mail exchanger for <b>example.com</b>.  The <b>slow</b> transport
+       When  no  nexthop  host name is specified, the destination
+       domain name is used instead. For  example,  the  following
+       directs  mail  for <i>user</i>@<b>example.com</b> via the <b>slow</b> transport
+       to a mail exchanger for <b>example.com</b>.  The  <b>slow</b>  transport
        could be configured to run at most one delivery process at
        a time:
 
             <b>example.com      slow:</b>
 
        When no transport is specified, Postfix uses the transport
-       that matches the address  domain  class  (see  DESCRIPTION
-       above).   The following sends all mail for <b>example.com</b> and
+       that  matches  the  address  domain class (see DESCRIPTION
+       above).  The following sends all mail for <b>example.com</b>  and
        its subdomains to host <b>gateway.example.com</b>:
 
             <b>example.com      :[gateway.example.com]</b>
             <b>.example.com     :[gateway.example.com]</b>
 
-       In the above example, the [] suppress  MX  lookups.   This
-       prevents  mail  routing loops when your machine is primary
+       In  the  above  example, the [] suppress MX lookups.  This
+       prevents mail routing loops when your machine  is  primary
        MX host for <b>example.com</b>.
 
-       In the case of delivery via SMTP, one  may  specify  <i>host-</i>
+       In  the  case  of delivery via SMTP, one may specify <i>host-</i>
        <i>name</i>:<i>service</i> instead of just a host:
 
             <b>example.com      <a href="smtp.8.html">smtp</a>:bar.example:2025</b>
@@ -217,55 +219,55 @@ TRANSPORT(5)                                                      TRANSPORT(5)
 
             <b>.example.com     <a href="error.8.html">error</a>:mail for *.example.com is not deliverable</b>
 
-       This causes all mail for <i>user</i>@<i>anything</i><b>.example.com</b>  to  be
+       This  causes  all mail for <i>user</i>@<i>anything</i><b>.example.com</b> to be
        bounced.
 
 <b>REGULAR EXPRESSION TABLES</b>
-       This  section  describes how the table lookups change when
+       This section describes how the table lookups  change  when
        the table is given in the form of regular expressions. For
-       a  description  of regular expression lookup table syntax,
+       a description of regular expression lookup  table  syntax,
        see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
 
-       Each pattern is a regular expression that  is  applied  to
-       the    entire    address    being    looked    up.   Thus,
-       <i>some.domain.hierarchy</i> is not  looked  up  via  its  parent
-       domains,  nor is <i>user+foo@domain</i> looked up as <i>user@domain</i>.
+       Each  pattern  is  a regular expression that is applied to
+       the   entire    address    being    looked    up.    Thus,
+       <i>some.domain.hierarchy</i>  is  not  looked  up  via its parent
+       domains, nor is <i>user+foo@domain</i> looked up as  <i>user@domain</i>.
 
-       Patterns are applied in the order as specified in the  ta-
-       ble,  until  a  pattern  is  found that matches the search
+       Patterns  are applied in the order as specified in the ta-
+       ble, until a pattern is  found  that  matches  the  search
        string.
 
        The <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a> server disallows regular expression
-       substitution  of  $1  etc.  in  regular  expression lookup
-       tables, because that could open a security  hole  (Postfix
+       substitution of  $1  etc.  in  regular  expression  lookup
+       tables,  because  that could open a security hole (Postfix
        version 2.3 and later).
 
 <b>TCP-BASED TABLES</b>
-       This  section  describes how the table lookups change when
+       This section describes how the table lookups  change  when
        lookups are directed to a TCP-based server. For a descrip-
        tion of the TCP client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_ta-</b></a>
        <a href="tcp_table.5.html"><b>ble</b>(5)</a>.  This feature is not available up to and including
        Postfix version 2.4.
 
-       Each  lookup  operation  uses the entire recipient address
-       once.  Thus, <i>some.domain.hierarchy</i> is not  looked  up  via
-       its  parent  domains,  nor is <i>user+foo@domain</i> looked up as
+       Each lookup operation uses the  entire  recipient  address
+       once.   Thus,  <i>some.domain.hierarchy</i>  is not looked up via
+       its parent domains, nor is <i>user+foo@domain</i>  looked  up  as
        <i>user@domain</i>.
 
        Results are the same as with indexed file lookups.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially  relevant.
-       The  text  below  provides  only  a parameter summary. See
+       The  following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant.
+       The text below provides  only  a  parameter  summary.  See
        <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#empty_address_recipient">empty_address_recipient</a></b>
-              The address that is looked up instead of  the  null
+              The  address  that is looked up instead of the null
               sender address.
 
        <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a></b>
-              List  of  Postfix features that use <i>domain.tld</i> pat-
-              terns  to  match  <i>sub.domain.tld</i>  (as  opposed   to
+              List of Postfix features that use  <i>domain.tld</i>  pat-
+              terns   to  match  <i>sub.domain.tld</i>  (as  opposed  to
               requiring <i>.domain.tld</i> patterns).
 
        <b><a href="postconf.5.html#transport_maps">transport_maps</a></b>
@@ -283,7 +285,7 @@ TRANSPORT(5)                                                      TRANSPORT(5)
        <a href="FILTER_README.html">FILTER_README</a>, external content filter
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>

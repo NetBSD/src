@@ -110,12 +110,12 @@ PCRE_TABLE(5)                                                    PCRE_TABLE(5)
 
        <b>x</b> (default: off)
               Toggles  the  pcre extended flag. When this flag is
-              on, whitespace in the  pattern  (other  than  in  a
-              character class) and characters between a <b>#</b> outside
-              a character class and the  next  newline  character
-              are  ignored.  An escaping backslash can be used to
-              include a whitespace or <b>#</b> character as part of  the
-              pattern.
+              on, whitespace characters  in  the  pattern  (other
+              than in a character class) are ignored.  To include
+              a whitespace character  as  part  of  the  pattern,
+              escape it with backslash.
+
+              Note: do not use <b>#</b><i>comment</i> after patterns.
 
        <b>A</b> (default: off)
               Toggles  the PCRE_ANCHORED flag.  When this flag is

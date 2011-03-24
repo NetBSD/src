@@ -11,6 +11,18 @@ instead, a new snapshot is released.
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
+Incompatibility with Postfix 2.5.11
+===================================
+
+Postfix no longer appends the system-supplied default CA certificates
+to the lists specified with *_tls_CAfile or with *_tls_CApath. This
+prevents third-party certificates from getting mail relay permission
+with the permit_tls_all_clientcerts feature.
+ 
+Unfortunately this change may cause compatibility problems when
+configurations rely on certificate verification for other purposes.
+Specify "tls_append_default_CA = yes" for backwards compatibility.
+
 Incompatibility with Postfix 2.5.3
 ==================================
 

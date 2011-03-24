@@ -299,29 +299,25 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
     }
 
     /*
-     * If the queue was blocking some of the jobs on the job list, check if
-     * the concurrency limit has lifted. If there are still some pending
-     * deliveries, give it a try and unmark all transport blockers at once.
-     * The qmgr_job_entry_select() will do the rest. In either case make sure
-     * the queue is not marked as a blocker anymore, with extra handling of
-     * queues which were declared dead.
+     * We implement a rate-limited queue by emulating a slow delivery
+     * channel. We insert the artificial delays with qmgr_queue_suspend().
      * 
-     * Note that changing the blocker status also affects the candidate cache.
-     * Most of the cases would be automatically recognized by the current job
-     * change, but we play safe and reset the cache explicitly below.
-     * 
-     * Keeping the transport blocker tag odd is an easy way to make sure the tag
-     * never matches jobs that are not explicitly marked as blockers.
+     * When a queue is suspended, we must postpone any job scheduling decisions
+     * until the queue is resumed. Otherwise, we make those decisions now.
+     * The job scheduling decisions are made by qmgr_job_blocker_update().
      */
-    if (queue->blocker_tag == transport->blocker_tag) {
-	if (queue->window > queue->busy_refcount && queue->todo.next != 0) {
-	    transport->blocker_tag += 2;
-	    transport->job_current = transport->job_list.next;
-	    transport->candidate_cache_current = 0;
-	}
-	if (queue->window > queue->busy_refcount || QMGR_QUEUE_THROTTLED(queue))
-	    queue->blocker_tag = 0;
+    if (which == QMGR_QUEUE_BUSY && transport->rate_delay > 0) {
+	if (queue->window > 1)
+	    msg_panic("%s: queue %s/%s: window %d > 1 on rate-limited service",
+		      myname, transport->name, queue->name, queue->window);
+	if (QMGR_QUEUE_THROTTLED(queue))	/* XXX */
+	    qmgr_queue_unthrottle(queue);
+	if (QMGR_QUEUE_READY(queue))
+	    qmgr_queue_suspend(queue, transport->rate_delay);
     }
+    if (!QMGR_QUEUE_SUSPENDED(queue)
+	&& queue->blocker_tag == transport->blocker_tag)
+	qmgr_job_blocker_update(queue);
 
     /*
      * When there are no more entries for this peer, discard the peer
@@ -336,19 +332,6 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
      */
     if (which == QMGR_QUEUE_BUSY)
 	queue->last_done = event_time();
-
-    /*
-     * Suspend a rate-limited queue, so that mail trickles out.
-     */
-    if (which == QMGR_QUEUE_BUSY && transport->rate_delay > 0) {
-	if (queue->window > 1)
-	    msg_panic("%s: queue %s/%s: window %d > 1 on rate-limited service",
-		      myname, transport->name, queue->name, queue->window);
-	if (QMGR_QUEUE_THROTTLED(queue))	/* XXX */
-	    qmgr_queue_unthrottle(queue);
-	if (QMGR_QUEUE_READY(queue))
-	    qmgr_queue_suspend(queue, transport->rate_delay);
-    }
 
     /*
      * When the in-core queue for this site is empty and when this site is

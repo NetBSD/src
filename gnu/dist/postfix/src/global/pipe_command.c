@@ -628,7 +628,7 @@ int     pipe_command(VSTREAM *src, DSN_BUF *why,...)
 	 */
 	if (!NORMAL_EXIT_STATUS(wait_status)) {
 	    if (WIFSIGNALED(wait_status)) {
-		dsb_unix(why, "5.3.0", log_len ?
+		dsb_unix(why, "4.3.0", log_len ?
 			 log_buf : sys_exits_detail(EX_SOFTWARE)->text,
 			 "Command died with signal %d: \"%s\"%s%s",
 			 WTERMSIG(wait_status), args.command,
