@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.2 2011/03/06 17:08:39 bouyer Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.3 2011/03/24 17:05:46 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -28,7 +28,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.2 2011/03/06 17:08:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.3 2011/03/24 17:05:46 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.2 2011/03/06 17:08:39 bouyer Exp $"
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_quota.h>
 #include <ufs/ufs/ufs_wapbl.h>
-#include <ufs/ufs/quota2_prop.h>
+#include <quota/quotaprop.h>
 
 /*
  * LOCKING:
@@ -75,7 +75,68 @@ static int quota2_walk_list(struct ufsmount *, struct buf *, int,
     int (*func)(struct ufsmount *, uint64_t *, struct quota2_entry *,
       uint64_t, void *));
 
-static const char *valtypes[] = INITQLNAMES;
+static int quota2_dict_update_q2e_limits(prop_dictionary_t,
+    struct quota2_entry *);
+static prop_dictionary_t q2etoprop(struct quota2_entry *, int);
+
+static const char *limnames[] = INITQLNAMES;
+
+static int
+quota2_dict_update_q2e_limits(prop_dictionary_t data,
+    struct quota2_entry *q2e)
+{
+	const char *val_limitsonly_names[] = INITQVNAMES_LIMITSONLY;
+
+	int i, error;
+	prop_dictionary_t val;
+
+	for (i = 0; i < N_QL; i++) {
+		if (!prop_dictionary_get_dict(data, limnames[i], &val))
+			return EINVAL;
+		error = quotaprop_dict_get_uint64(val,
+		    &q2e->q2e_val[i].q2v_hardlimit,
+		    val_limitsonly_names, N_QV, true);
+		if (error)
+			return error;
+	}
+	return 0;
+}
+static prop_dictionary_t
+q2etoprop(struct quota2_entry *q2e, int def)
+{
+	const char *val_names[] = INITQVNAMES_ALL;
+	prop_dictionary_t dict1 = prop_dictionary_create();
+	prop_dictionary_t dict2;
+	int i;
+
+	if (dict1 == NULL)
+		return NULL;
+
+	if (def) {
+		if (!prop_dictionary_set_cstring_nocopy(dict1, "id",
+		    "default")) {
+			goto err;
+		}
+	} else {
+		if (!prop_dictionary_set_uint32(dict1, "id", q2e->q2e_uid)) {
+			goto err;
+		}
+	}
+	for (i = 0; i < N_QL; i++) {
+		dict2 = limits64toprop(&q2e->q2e_val[i].q2v_hardlimit,
+		    val_names, N_QV);
+		if (dict2 == NULL)
+			goto err;
+		if (!prop_dictionary_set_and_rel(dict1, limnames[i], dict2))
+			goto err;
+	}
+	return dict1;
+
+err:
+	prop_object_release(dict1);
+	return NULL;
+}
+
 
 static int
 quota2_bwrite(struct mount *mp, struct buf *bp)
@@ -457,7 +518,7 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 					uprintf("\n%s: write failed, %s %s "
 					    "limit reached\n",
 					    mp->mnt_stat.f_mntonname,
-					    quotatypes[i], valtypes[vtype]);
+					    quotatypes[i], limnames[vtype]);
 					dq->dq_flags |= DQ_WARN(vtype);
 				}
 				error = EDQUOT;
@@ -467,7 +528,7 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 					uprintf("\n%s: write failed, %s %s "
 					    "limit reached\n",
 					    mp->mnt_stat.f_mntonname,
-					    quotatypes[i], valtypes[vtype]);
+					    quotatypes[i], limnames[vtype]);
 					dq->dq_flags |= DQ_WARN(vtype);
 				}
 				error = EDQUOT;
@@ -477,7 +538,7 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 					uprintf("\n%s: warning, %s %s "
 					    "quota exceeded\n",
 					    mp->mnt_stat.f_mntonname,
-					    quotatypes[i], valtypes[vtype]);
+					    quotatypes[i], limnames[vtype]);
 					dq->dq_flags |= DQ_WARN(vtype);
 				}
 				break;

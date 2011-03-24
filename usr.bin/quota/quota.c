@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.36 2011/03/06 22:36:07 christos Exp $	*/
+/*	$NetBSD: quota.c,v 1.37 2011/03/24 17:05:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.36 2011/03/06 22:36:07 christos Exp $");
+__RCSID("$NetBSD: quota.c,v 1.37 2011/03/24 17:05:46 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,29 +69,22 @@ __RCSID("$NetBSD: quota.c,v 1.36 2011/03/06 22:36:07 christos Exp $");
 #include <time.h>
 #include <unistd.h>
 
-#include <ufs/ufs/quota2.h>
-#include <ufs/ufs/quota1.h>
-
-#include <rpc/rpc.h>
-#include <rpc/pmap_prot.h>
-#include <rpcsvc/rquota.h>
+#include <quota/quotaprop.h>
+#include <quota/quota.h>
 
 #include "printquota.h"
-#include "quotautil.h"
 #include "getvfsquota.h"
 
 struct quotause {
 	struct	quotause *next;
 	long	flags;
-	struct	quota2_entry q2e;
+	uid_t	id;
+	struct	ufs_quota_entry qe[QUOTA_NLIMITS];
 	char	fsname[MAXPATHLEN + 1];
 };
 #define	FOUND	0x01
 #define	QUOTA2	0x02
 
-static int	callaurpc(const char *, rpcprog_t, rpcvers_t, rpcproc_t,
-    xdrproc_t, void *, xdrproc_t, void *);
-static int	getnfsquota(struct statvfs *, struct quotause *, uint32_t, int);
 static struct quotause	*getprivs(uint32_t, int);
 static void	heading(int, uint32_t, const char *, const char *);
 static void	showgid(gid_t);
@@ -154,9 +147,9 @@ main(int argc, char *argv[])
 			errx(1, "-d: permission denied");
 #endif
 		if (uflag)
-			showquotas(USRQUOTA, 0, "");
+			showquotas(QUOTA_CLASS_USER, 0, "");
 		if (gflag)
-			showquotas(GRPQUOTA, 0, "");
+			showquotas(QUOTA_CLASS_GROUP, 0, "");
 		return 0;
 	}
 	if (argc == 0) {
@@ -230,7 +223,7 @@ showuid(uid_t uid)
 		warnx("%s (uid %d): permission denied", name, uid);
 		return;
 	}
-	showquotas(USRQUOTA, uid, name);
+	showquotas(QUOTA_CLASS_USER, uid, name);
 }
 
 /*
@@ -249,7 +242,7 @@ showusrname(const char *name)
 		warnx("%s (uid %d): permission denied", name, pwd->pw_uid);
 		return;
 	}
-	showquotas(USRQUOTA, pwd->pw_uid, name);
+	showquotas(QUOTA_CLASS_USER, pwd->pw_uid, name);
 }
 
 /*
@@ -283,7 +276,7 @@ showgid(gid_t gid)
 			return;
 		}
 	}
-	showquotas(GRPQUOTA, gid, name);
+	showquotas(QUOTA_CLASS_GROUP, gid, name);
 }
 
 /*
@@ -317,7 +310,7 @@ showgrpname(const char *name)
 			return;
 		}
 	}
-	showquotas(GRPQUOTA, grp->gr_gid, name);
+	showquotas(QUOTA_CLASS_GROUP, grp->gr_gid, name);
 }
 
 static void
@@ -335,14 +328,17 @@ showquotas(int type, uint32_t id, const char *name)
 	quplist = getprivs(id, type);
 	for (qup = quplist; qup; qup = qup->next) {
 		int ql_stat;
-		struct quota2_val *q = qup->q2e.q2e_val;
+		struct ufs_quota_entry *q = qup->qe;
 		if (!vflag &&
-		    q[QL_BLOCK].q2v_softlimit == UQUAD_MAX &&
-		    q[QL_BLOCK].q2v_hardlimit == UQUAD_MAX &&
-		    q[QL_FILE].q2v_softlimit == UQUAD_MAX &&
-		    q[QL_FILE].q2v_hardlimit == UQUAD_MAX)
+		    q[QUOTA_LIMIT_BLOCK].ufsqe_softlimit == UQUAD_MAX &&
+		    q[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit == UQUAD_MAX &&
+		    q[QUOTA_LIMIT_FILE].ufsqe_softlimit == UQUAD_MAX &&
+		    q[QUOTA_LIMIT_FILE].ufsqe_hardlimit == UQUAD_MAX)
 			continue;
-		ql_stat = quota2_check_limit(&q[QL_FILE], 1, now);
+		ql_stat = quota_check_limit(q[QUOTA_LIMIT_FILE].ufsqe_cur, 1,
+		    q[QUOTA_LIMIT_FILE].ufsqe_softlimit,
+		    q[QUOTA_LIMIT_FILE].ufsqe_hardlimit,
+		    q[QUOTA_LIMIT_FILE].ufsqe_time, now);
 		switch(QL_STATUS(ql_stat)) {
 		case QL_S_DENY_HARD:
 			msgi = "File limit reached on";
@@ -356,7 +352,10 @@ showquotas(int type, uint32_t id, const char *name)
 		default:
 			msgi = NULL;
 		}
-		ql_stat = quota2_check_limit(&q[QL_BLOCK], 1, now);
+		ql_stat = quota_check_limit(q[QUOTA_LIMIT_BLOCK].ufsqe_cur, 1,
+		    q[QUOTA_LIMIT_BLOCK].ufsqe_softlimit,
+		    q[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit,
+		    q[QUOTA_LIMIT_BLOCK].ufsqe_time, now);
 		switch(QL_STATUS(ql_stat)) {
 		case QL_S_DENY_HARD:
 			msgb = "Block limit reached on";
@@ -380,8 +379,9 @@ showquotas(int type, uint32_t id, const char *name)
 				printf("\t%s %s\n", msgb, qup->fsname);
 			continue;
 		}
-		if (vflag || dflag || msgi || msgb || q[QL_BLOCK].q2v_cur ||
-		    q[QL_FILE].q2v_cur) {
+		if (vflag || dflag || msgi || msgb ||
+		    q[QUOTA_LIMIT_BLOCK].ufsqe_cur ||
+		    q[QUOTA_LIMIT_FILE].ufsqe_cur) {
 			if (lines++ == 0)
 				heading(type, id, name, "");
 			nam = qup->fsname;
@@ -391,38 +391,41 @@ showquotas(int type, uint32_t id, const char *name)
 			} 
 			if (msgb)
 				timemsg = timeprt(b0, 9, now,
-				    q[QL_BLOCK].q2v_time);
+				    q[QUOTA_LIMIT_BLOCK].ufsqe_time);
 			else if ((qup->flags & QUOTA2) != 0 && vflag)
 				timemsg = timeprt(b0, 9, 0,
-				    q[QL_BLOCK].q2v_grace);
+				    q[QUOTA_LIMIT_BLOCK].ufsqe_grace);
 			else
 				timemsg = "";
 				
 			printf("%12s%9s%c%8s%9s%8s",
 			    nam,
-			    intprt(b1, 9, q[QL_BLOCK].q2v_cur,
+			    intprt(b1, 9, q[QUOTA_LIMIT_BLOCK].ufsqe_cur,
 			    HN_B, hflag),
 			    (msgb == NULL) ? ' ' : '*',
-			    intprt(b2, 9, q[QL_BLOCK].q2v_softlimit,
+			    intprt(b2, 9, q[QUOTA_LIMIT_BLOCK].ufsqe_softlimit,
 			    HN_B, hflag),
-			    intprt(b3, 9, q[QL_BLOCK].q2v_hardlimit,
+			    intprt(b3, 9, q[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit,
 			    HN_B, hflag),
 			    timemsg);
 
 			if (msgi)
 				timemsg = timeprt(b0, 9, now, 
-				    q[QL_FILE].q2v_time);
+				    q[QUOTA_LIMIT_FILE].ufsqe_time);
 			else if ((qup->flags & QUOTA2) != 0 && vflag)
 				timemsg = timeprt(b0, 9, 0,
-				    q[QL_FILE].q2v_grace);
+				    q[QUOTA_LIMIT_FILE].ufsqe_grace);
 			else
 				timemsg = "";
 				
 			printf("%8s%c%7s%8s%8s\n",
-			    intprt(b1, 8, q[QL_FILE].q2v_cur, 0, hflag),
+			    intprt(b1, 8, q[QUOTA_LIMIT_FILE].ufsqe_cur, 0,
+			     hflag),
 			    (msgi == NULL) ? ' ' : '*',
-			    intprt(b2, 8, q[QL_FILE].q2v_softlimit, 0, hflag),
-			    intprt(b3, 8, q[QL_FILE].q2v_hardlimit, 0, hflag),
+			    intprt(b2, 8, q[QUOTA_LIMIT_FILE].ufsqe_softlimit,
+			     0, hflag),
+			    intprt(b3, 8, q[QUOTA_LIMIT_FILE].ufsqe_hardlimit,
+			     0, hflag),
 			    timemsg);
 			continue;
 		}
@@ -436,11 +439,11 @@ heading(int type, uint32_t id, const char *name, const char *tag)
 {
 	if (dflag)
 		printf("Default %s disk quotas: %s\n",
-		    qfextension[type], tag);
+		    ufs_quota_class_names[type], tag);
 	else
 		printf("Disk quotas for %s %s (%cid %u): %s\n",
-		    qfextension[type], name, *qfextension[type],
-		    id, tag);
+		    ufs_quota_class_names[type], name,
+		    *ufs_quota_class_names[type], id, tag);
 
 	if (!qflag && tag[0] == '\0') {
 		printf("%12s%9s %8s%9s%8s%8s %7s%8s%8s\n"
@@ -482,11 +485,12 @@ getprivs(uint32_t id, int quotatype)
 		if (strncmp(fst[i].f_fstypename, "nfs", 
 		    sizeof(fst[i].f_fstypename)) == 0) {
 			version = 0;
-			if (getnfsquota(&fst[i], qup, id, quotatype) == 0)
+			if (getnfsquota(fst[i].f_mntfromname,
+			    qup->qe, id, ufs_quota_class_names[quotatype]) != 1)
 				continue;
 		} else if ((fst[i].f_flag & ST_QUOTA) != 0) {
-			if (getvfsquota(fst[i].f_mntonname, &qup->q2e, &version,
-			    id, quotatype, dflag, Dflag) == 0)
+			if (getvfsquota(fst[i].f_mntonname, qup->qe, &version,
+			    id, quotatype, dflag, Dflag) != 1)
 				continue;
 		} else
 			continue;
@@ -504,137 +508,4 @@ getprivs(uint32_t id, int quotatype)
 	}
 	free(qup);
 	return quphead;
-}
-
-static int
-getnfsquota(struct statvfs *fst, struct quotause *qup,
-    uint32_t id, int quotatype)
-{
-	struct getquota_args gq_args;
-	struct ext_getquota_args ext_gq_args;
-	struct getquota_rslt gq_rslt;
-	struct quota2_entry *q2e = &qup->q2e;
-	struct dqblk dqblk;
-	struct timeval tv;
-	char *cp;
-	int ret;
-
-	if (fst->f_flag & MNT_LOCAL)
-		return 0;
-
-	/*
-	 * must be some form of "hostname:/path"
-	 */
-	cp = strchr(fst->f_mntfromname, ':');
-	if (cp == NULL) {
-		warnx("cannot find hostname for %s", fst->f_mntfromname);
-		return 0;
-	}
- 
-	*cp = '\0';
-	if (*(cp+1) != '/') {
-		*cp = ':';
-		return 0;
-	}
-
-	ext_gq_args.gqa_pathp = cp + 1;
-	ext_gq_args.gqa_id = id;
-	ext_gq_args.gqa_type =
-	    (quotatype == USRQUOTA) ? RQUOTA_USRQUOTA : RQUOTA_GRPQUOTA;
-	ret = callaurpc(fst->f_mntfromname, RQUOTAPROG, EXT_RQUOTAVERS,
-	    RQUOTAPROC_GETQUOTA, xdr_ext_getquota_args, &ext_gq_args,
-	    xdr_getquota_rslt, &gq_rslt);
-	if (ret == RPC_PROGVERSMISMATCH) {
-		if (quotatype != USRQUOTA) {
-			*cp = ':';
-			return 0;
-		}
-		/* try RQUOTAVERS */
-		gq_args.gqa_pathp = cp + 1;
-		gq_args.gqa_uid = id;
-		ret = callaurpc(fst->f_mntfromname, RQUOTAPROG, RQUOTAVERS,
-		    RQUOTAPROC_GETQUOTA, xdr_getquota_args, &gq_args,
-		    xdr_getquota_rslt, &gq_rslt);
-	}
-	if (ret != RPC_SUCCESS) {
-		*cp = ':';
-		return 0;
-	}
-
-	switch (gq_rslt.status) {
-	case Q_NOQUOTA:
-		break;
-	case Q_EPERM:
-		warnx("quota permission error, host: %s", fst->f_mntfromname);
-		break;
-	case Q_OK:
-		gettimeofday(&tv, NULL);
-
-		/* blocks*/
-		q2e->q2e_val[QL_BLOCK].q2v_hardlimit =
-		dqblk.dqb_bhardlimit =
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bhardlimit *
-		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
-		dqblk.dqb_bsoftlimit =
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsoftlimit *
-		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
-		dqblk.dqb_curblocks =
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curblocks *
-		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
-
-		/* inodes */
-		dqblk.dqb_ihardlimit =
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit;
-		dqblk.dqb_isoftlimit =
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_fsoftlimit;
-		dqblk.dqb_curinodes =
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curfiles;
-
-		/* grace times */
-		dqblk.dqb_btime = (int)(tv.tv_sec +
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_btimeleft);
-		dqblk.dqb_itime = (int)(tv.tv_sec +
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft);
-		dqblk2q2e(&dqblk, q2e);
-		*cp = ':';
-		return 1;
-	default:
-		warnx("bad rpc result, host: %s", fst->f_mntfromname);
-		break;
-	}
-	*cp = ':';
-	return 0;
-}
- 
-static int
-callaurpc(const char *host, rpcprog_t prognum, rpcvers_t versnum,
-    rpcproc_t procnum, xdrproc_t inproc, void *in, xdrproc_t outproc, void *out)
-{
-	struct sockaddr_in server_addr;
-	enum clnt_stat clnt_stat;
-	struct hostent *hp;
-	struct timeval timeout, tottimeout;
- 
-	CLIENT *client = NULL;
-	int sock = RPC_ANYSOCK;
- 
-	if ((hp = gethostbyname(host)) == NULL)
-		return (int) RPC_UNKNOWNHOST;
-	timeout.tv_usec = 0;
-	timeout.tv_sec = 6;
-	memmove(&server_addr.sin_addr, hp->h_addr, hp->h_length);
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port =  0;
-
-	if ((client = clntudp_create(&server_addr, prognum,
-	    versnum, timeout, &sock)) == NULL)
-		return (int) rpc_createerr.cf_stat;
-
-	client->cl_auth = authunix_create_default();
-	tottimeout.tv_sec = 25;
-	tottimeout.tv_usec = 0;
-	clnt_stat = clnt_call(client, procnum, inproc, in,
-	    outproc, out, tottimeout);
- 
-	return (int) clnt_stat;
 }

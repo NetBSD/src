@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.103 2011/03/12 19:52:46 christos Exp $
+# $NetBSD: md.amd64,v 1.104 2011/03/24 17:05:41 bouyer Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -735,6 +735,11 @@
 ./usr/lib/i386/libpuffs_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libpuffs_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libpuffs_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libquota.a			comp-c-lib		compat
+./usr/lib/i386/libquota.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libquota_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libquota_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libquota_pic.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libradius.a			comp-c-lib		compat
 ./usr/lib/i386/libradius.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libradius_g.a			comp-c-proflib		compat,debuglib
@@ -992,6 +997,7 @@
 ./usr/libdata/debug/usr/lib/i386/libpthread.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libpthread_dbg.so.2.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libpuffs.so.2.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libquota.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libradius.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librefuse.so.2.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libresolv.so.2.0.debug	comp-compat-shlib	compat,pic,debug

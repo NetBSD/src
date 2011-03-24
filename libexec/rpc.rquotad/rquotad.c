@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.26 2011/03/12 12:30:39 bouyer Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.27 2011/03/24 17:05:43 bouyer Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.26 2011/03/12 12:30:39 bouyer Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.27 2011/03/24 17:05:43 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -29,15 +29,11 @@ __RCSID("$NetBSD: rquotad.c,v 1.26 2011/03/12 12:30:39 bouyer Exp $");
 
 #include <syslog.h>
 
-#include <ufs/ufs/quota2_prop.h>
-#include <ufs/ufs/quota1.h>
+#include <quota/quotaprop.h>
+#include <quota/quota.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/rquota.h>
 #include <arpa/inet.h>
-
-#include <getvfsquota.h>
-
-const char *qfextension[MAXQUOTAS] = INITQFNAMES;
 
 void rquota_service(struct svc_req *request, SVCXPRT *transp);
 void ext_rquota_service(struct svc_req *request, SVCXPRT *transp);
@@ -46,6 +42,15 @@ void cleanup(int);
 int main(int, char *[]);
 
 int from_inetd = 1;
+
+static uint32_t
+qlim2rqlim(uint64_t lim)
+{
+	if (lim == UQUAD_MAX)
+		return 0;
+	else
+		return (lim + 1);
+}
 
 void 
 cleanup(int dummy)
@@ -166,10 +171,8 @@ sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
 	struct getquota_args getq_args;
 	struct ext_getquota_args ext_getq_args;
 	struct getquota_rslt getq_rslt;
-	struct quota2_entry q2e;
-	struct dqblk dqblk;
-	int type;
-	int8_t version;
+	struct ufs_quota_entry qe[QUOTA_NLIMITS];
+	const char *class;
 	struct timeval timev;
 
 	memset((char *)&getq_args, 0, sizeof(getq_args));
@@ -195,10 +198,10 @@ sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
 	}
 	switch (ext_getq_args.gqa_type) {
 	case RQUOTA_USRQUOTA:
-		type = USRQUOTA;
+		class = QUOTADICT_CLASS_USER;
 		break;
 	case RQUOTA_GRPQUOTA:
-		type = GRPQUOTA;
+		class = QUOTADICT_CLASS_GROUP;
 		break;
 	default:
 		getq_rslt.status = Q_NOQUOTA;
@@ -207,31 +210,31 @@ sendquota(struct svc_req *request, int vers, SVCXPRT *transp)
 	if (request->rq_cred.oa_flavor != AUTH_UNIX) {
 		/* bad auth */
 		getq_rslt.status = Q_EPERM;
-	} else if (!getvfsquota(ext_getq_args.gqa_pathp, &q2e, &version, ext_getq_args.gqa_id, ext_getq_args.gqa_type, 0, 0)) {
+	} else if (!getufsquota(ext_getq_args.gqa_pathp, qe,
+	    ext_getq_args.gqa_id, class)) {
 		/* failed, return noquota */
 		getq_rslt.status = Q_NOQUOTA;
 	} else {
-		q2e2dqblk(&q2e, &dqblk);
 		gettimeofday(&timev, NULL);
 		getq_rslt.status = Q_OK;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_active = TRUE;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize = DEV_BSIZE;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_bhardlimit =
-		    dqblk.dqb_bhardlimit;
+		    qlim2rqlim(qe[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit);
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_bsoftlimit =
-		    dqblk.dqb_bsoftlimit;
+		    qlim2rqlim(qe[QUOTA_LIMIT_BLOCK].ufsqe_softlimit);
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_curblocks =
-		    dqblk.dqb_curblocks;
+		    qe[QUOTA_LIMIT_BLOCK].ufsqe_cur;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit =
-		    dqblk.dqb_ihardlimit;
+		    qlim2rqlim(qe[QUOTA_LIMIT_FILE].ufsqe_hardlimit);
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_fsoftlimit =
-		    dqblk.dqb_isoftlimit;
+		    qlim2rqlim(qe[QUOTA_LIMIT_FILE].ufsqe_softlimit);
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_curfiles =
-		    dqblk.dqb_curinodes;
+		    qe[QUOTA_LIMIT_FILE].ufsqe_cur;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_btimeleft =
-		    dqblk.dqb_btime;
+		    qe[QUOTA_LIMIT_BLOCK].ufsqe_time - timev.tv_sec;
 		getq_rslt.getquota_rslt_u.gqr_rquota.rq_ftimeleft =
-		    dqblk.dqb_itime;
+		    qe[QUOTA_LIMIT_FILE].ufsqe_time - timev.tv_sec;
 	}
 out:
 	if (!svc_sendreply(transp, xdr_getquota_rslt, (char *)&getq_rslt))

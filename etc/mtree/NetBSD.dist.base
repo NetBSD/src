@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.78 2011/03/10 13:16:58 jmmv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.79 2011/03/24 17:05:42 bouyer Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -164,6 +164,7 @@
 ./usr/include/pcap
 ./usr/include/prop
 ./usr/include/protocols
+./usr/include/quota
 ./usr/include/readline
 ./usr/include/rpc
 ./usr/include/rpcsvc

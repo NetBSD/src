@@ -1,4 +1,4 @@
-/* $NetBSD: quotactl.c,v 1.2 2011/03/06 17:08:43 bouyer Exp $ */
+/* $NetBSD: quotactl.c,v 1.3 2011/03/24 17:05:47 bouyer Exp $ */
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quotactl.c,v 1.2 2011/03/06 17:08:43 bouyer Exp $");
+__RCSID("$NetBSD: quotactl.c,v 1.3 2011/03/24 17:05:47 bouyer Exp $");
 #endif /* not lint */
 
 /*
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: quotactl.c,v 1.2 2011/03/06 17:08:43 bouyer Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include <ufs/ufs/quota2_prop.h>
+#include <quota/quotaprop.h>
 
 void usage(void);
 
@@ -146,7 +146,7 @@ main(int argc, char * const argv[])
 		exit(0);
 	}
 	/* parse the reply, looking for errors */
-	if ((error = quota2_get_cmds(qdict, &cmds)) != 0) {
+	if ((error = quota_get_cmds(qdict, &cmds)) != 0) {
 		errx(1, "error parsing reply from kernel: %s\n",
 		    strerror(error));
 	}
