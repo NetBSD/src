@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.23 2011/03/24 14:58:33 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.24 2011/03/24 15:05:55 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ void x68k_bus_space_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 #define BUS_SPACE_MAP_LINEAR		0x0002
 #define BUS_SPACE_MAP_PREFETCHABLE	0x0004
 /*
- * For simpler hadware, many x68k devices are mapped with shifted address
+ * For simpler hardware, many x68k devices are mapped with shifted address
  * i.e. only on even or odd addresses.
  */
 #define BUS_SPACE_MAP_SHIFTED_MASK	0x1001
