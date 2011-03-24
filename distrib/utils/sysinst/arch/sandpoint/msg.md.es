@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.5 2010/06/09 17:37:24 phx Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.6 2011/03/24 22:08:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,11 @@
 /* MD Message catalog -- spanish, sandpoint version */
 
 message md_hello
-{Si ha iniciado desde disquette, ahora deberia retirar el disco.
+{
+}
 
+message md_may_remove_boot_medium
+{Si ha iniciado desde disquette, ahora deberia retirar el disco.
 }
 
 message dobad144

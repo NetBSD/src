@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.49 2009/10/24 12:47:30 stacktic Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.50 2011/03/24 22:08:33 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,9 +39,12 @@
 /* MD Message catalog -- french, i386 version */
 
 message md_hello
+{
+}
+
+message md_may_remove_boot_medium
 {Si vous avez démarré sur un média amovible (clé USB, disquette...), vous
 pouvez maintenant le retirer.
-
 }
 
 message Keyboard_type {Type de clavier}

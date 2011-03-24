@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.3 2005/09/10 20:00:02 he Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.4 2011/03/24 22:08:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,10 @@
 /* cats machine dependent messages, spanish */
 
 message md_hello
+{
+}
+
+message md_may_remove_boot_medium
 {
 }
 

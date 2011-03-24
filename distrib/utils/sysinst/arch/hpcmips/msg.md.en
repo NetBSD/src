@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.17 2010/05/02 16:35:09 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.18 2011/03/24 22:08:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,11 @@
 /* MD Message catalog -- English, hpcmips version */
 
 message md_hello
-{If you booted from an external device, you may now remove it.
+{
+}
 
+message md_may_remove_boot_medium
+{If you booted from an external device, you may now remove it.
 }
 
 message dobad144
