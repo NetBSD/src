@@ -3138,7 +3138,7 @@ stmp-int-hdrs: $(STMP_FIXINC) $(USER_H) xlimits.h $(UNWIND_H)
 # Using basename would be simpler, but some systems don't have it.
 # The touch command is here to workaround an AIX/Linux NFS bug.
 	-if [ -d include ] ; then true; else mkdir include; chmod a+rx include; fi
-	for file in .. $(USER_H); do \
+	if false; then for file in .. $(USER_H); do \
 	  if [ X$$file != X.. ]; then \
 	    realfile=`echo $$file | sed -e 's|.*/\([^/]*\)$$|\1|'`; \
 	    $(STAMP) include/$$realfile; \
@@ -3146,11 +3146,11 @@ stmp-int-hdrs: $(STMP_FIXINC) $(USER_H) xlimits.h $(UNWIND_H)
 	    cp $$file include; \
 	    chmod a+r include/$$realfile; \
 	  fi; \
-	done
-	rm -f include/limits.h
+	done; \
+	rm -f include/limits.h; \
+	chmod a+r include/limits.h; fi
 	cp xlimits.h include/limits.h
 	cp $(UNWIND_H) include/unwind.h
-	chmod a+r include/limits.h
 # Install the README
 	rm -f include/README
 	cp $(srcdir)/../fixincludes/README-fixinc include/README
