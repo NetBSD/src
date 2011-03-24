@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.2 2011/03/08 11:24:28 adam Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.3 2011/03/24 22:08:37 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2002/02/11 13:50:18 skrll Exp */
 
@@ -41,6 +41,10 @@
 /* zaurus machine dependent messages, Polish */
 
 message md_hello
+{
+}
+
+message md_may_remove_boot_medium
 {
 }
 

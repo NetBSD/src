@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.59 2009/08/23 20:57:40 jmcneill Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.60 2011/03/24 22:08:33 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,9 +39,12 @@
 /* MD Message catalog -- English, i386 version */
 
 message md_hello
+{
+}
+
+message md_may_remove_boot_medium
 {If you booted from removable media such as a USB drive or floppy disk, you
 may now remove the device.
-
 }
 
 message Keyboard_type {Keyboard type}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.6 2004/02/23 03:44:29 jschauma Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.7 2011/03/24 22:08:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,7 +42,10 @@
 
 message md_hello
 {If your machine has 4MB or less, sysinst will not operate correctly.
+}
 
+message md_may_remove_boot_medium
+{
 }
 
 message dobootblks

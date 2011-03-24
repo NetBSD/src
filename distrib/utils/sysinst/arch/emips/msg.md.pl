@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.1 2011/01/26 01:18:46 pooka Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.2 2011/03/24 22:08:30 martin Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.8 2000/12/03 01:54:49 minoura Exp */
 
@@ -43,8 +43,11 @@
 
 
 message md_hello
-{Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
+{
+}
 
+message md_may_remove_boot_medium
+{Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
 }
 
 message dobootblks
