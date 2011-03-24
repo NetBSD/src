@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2009/11/20 22:51:29 skrll Exp $
+#	$NetBSD: Makefile,v 1.19 2011/03/24 13:33:42 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,8 @@ GNUHOSTDIST=	${.CURDIR}/../../external/gpl3/binutils/dist
 
 BRANDING?=	\
 	--with-pkgversion="NetBSD Binutils nb1" \
-	--with-bugurl="http://www.NetBSD.org/support/send-pr.html"
+	--with-bugurl="http://www.NetBSD.org/support/send-pr.html" \
+	--with-lib-path="=/usr/lib" --with-sysroot
 .else
 BRANDING?=	
 .endif
