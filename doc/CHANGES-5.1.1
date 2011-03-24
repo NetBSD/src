@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.16 2011/03/20 21:33:56 bouyer Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.17 2011/03/24 20:20:04 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -2300,4 +2300,49 @@ lib/libc/inet/inet_net_pton.c			1.2
 	Check bits on each loop to prevent integer oveflow.
 	Reported by Maksymilian Arciemowicz
 	[spz, ticket #1574]
+
+external/ibm-public/postfix/dist/HISTORY			patch
+external/ibm-public/postfix/dist/RELEASE_NOTES			patch
+external/ibm-public/postfix/dist/makedefs			patch
+external/ibm-public/postfix/dist/conf/access			patch
+external/ibm-public/postfix/dist/html/access.5.html		patch
+external/ibm-public/postfix/dist/html/postconf.5.html		patch
+external/ibm-public/postfix/dist/man/man5/access.5		patch
+external/ibm-public/postfix/dist/man/man5/postconf.5		patch
+external/ibm-public/postfix/dist/mantools/postlink		patch
+external/ibm-public/postfix/dist/proto/access			patch
+external/ibm-public/postfix/dist/proto/postconf.proto		patch
+external/ibm-public/postfix/dist/src/cleanup/cleanup_map1n.c	patch
+external/ibm-public/postfix/dist/src/dns/dns.h			patch
+external/ibm-public/postfix/dist/src/global/cleanup_user.h	patch
+external/ibm-public/postfix/dist/src/global/db_common.c		patch
+external/ibm-public/postfix/dist/src/global/dict_ldap.c		patch
+external/ibm-public/postfix/dist/src/global/mail_params.c	patch
+external/ibm-public/postfix/dist/src/global/mail_params.h	patch
+external/ibm-public/postfix/dist/src/global/mail_version.h	patch
+external/ibm-public/postfix/dist/src/global/pipe_command.c	patch
+external/ibm-public/postfix/dist/src/local/recipient.c		patch
+external/ibm-public/postfix/dist/src/master/master_sig.c	patch
+external/ibm-public/postfix/dist/src/milter/milter8.c		patch
+external/ibm-public/postfix/dist/src/pickup/pickup.c		patch
+external/ibm-public/postfix/dist/src/postmulti/postmulti.c	patch
+external/ibm-public/postfix/dist/src/smtp/smtp_proto.c		patch
+external/ibm-public/postfix/dist/src/smtpd/smtpd.c		patch
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.c	patch
+external/ibm-public/postfix/dist/src/smtpd/smtpd_proxy.c	patch
+external/ibm-public/postfix/dist/src/tls/Makefile.in		patch
+external/ibm-public/postfix/dist/src/tls/tls_certkey.c		patch
+external/ibm-public/postfix/dist/src/tls/tls_dh.c		patch
+external/ibm-public/postfix/dist/src/tls/tls_misc.c		patch
+external/ibm-public/postfix/dist/src/trivial-rewrite/resolve.c	patch
+external/ibm-public/postfix/dist/src/util/dict_db.c		patch
+external/ibm-public/postfix/dist/src/util/host_port.c		patch
+external/ibm-public/postfix/dist/src/util/make_dirs.c		patch
+external/ibm-public/postfix/dist/src/util/sys_defs.h		patch
+external/ibm-public/postfix/dist/src/util/valid_hostname.c	patch
+external/ibm-public/postfix/dist/src/util/watchdog.c		patch
+
+	Update Postfix to version 2.6.9. This update fixes many bugs            
+        including the vulnerability reported in CVE-2011-0411. 
+	[tron, ticket #1577]
 
