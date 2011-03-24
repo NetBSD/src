@@ -15730,6 +15730,18 @@ Apologies for any names omitted.
 	The last protocol change was in Postfix 2.1. File:
 	util/dict_open.c.
 
+20100422
+
+	Workaround (introduced: postfix-19990906 a.k.a. Postfix
+	0.8.0).  The Postfix local delivery agent did not properly
+	distinguish between "address has no extension" and "address
+	has an extension, but the extension is invalid". In both
+	cases it would run only the full recipient local-part through
+	the alias maps.  Instead, it now drops the faulty extension
+	from the recipient address local-part (it would be too
+	error-prone to replace all tests for "no extension" by tests
+	for "no valid extension".  File: local/recipient.c.
+
 20100515
 
 	Bugfix (introduced Postfix 2.6): the Postfix SMTP client
@@ -15816,3 +15828,59 @@ Apologies for any names omitted.
 	compliance. We now make an exception for "final" replies,
 	as permitted by RFC. Solution by Victor Duchovni. File:
 	smtpd/smtpd.c.
+
+20101201
+
+	Workaround: BSD-ish mkdir() ignores the effective GID and
+	copies group ownership from the parent directory.  File:
+	util/make_dirs.c.
+
+20101202
+
+	Cleanup: the cleanup server now reports a temporary delivery
+	error when it reaches the virtual_alias_expansion_limit or
+	virtual_alias_recursion_limit. Previously, it would silently
+	ignore the excess recipients and deliver the message.  File:
+	cleanup/cleanup_map1n.c.
+
+20110105
+
+	Bugfix (introduced with the Postfix TLS patch): discard
+	plaintext following the STARTTLS command or response. This
+	matters only for the minority of SMTP clients that actually
+	verify server certificates.  Files: smtpd/smtpd.c,
+	smtp/smtp_proto.c.
+
+	This vulnerability is also known as CVE-2011-0411.
+
+20110109
+
+	Bugfix (introduced Postfix 2.4): on Solaris the Postfix
+	event engine was deaf for SIGHUP and SIGALRM signals after
+	the switch to /dev/poll. Symptoms were delayed "postfix
+	reload" response, and killed processes when the watchdog
+	timeout was less than max_idle.  The fix is to set up SIGHUP
+	and SIGALRM handlers that write to a pipe, and to monitor
+	that pipe for read events via the Postfix event engine.
+	Files: master/master_sig.c, util/watchdog.c, util/sys_defs.h.
+
+20110117
+
+	Bugfix (introduced Postfix alpha, or thereabouts): on HP-UX
+	the Postfix event engine was deaf for SIGALRM signals.
+	Symptoms were killed processes when the watchdog timeout
+	was less than max_idle.  The fix is the same as Solaris fix
+	20110109. Since we can't know what other systems need this,
+	the workaround is enabled by default.  Files: util/sys_defs.h.
+
+20110225
+
+	Workaround (problem introduced with IPv6 support in Postfix
+	2.2): the SMTP client did not support mail to [ipv6:ipv6addr].
+	Fix based on a patch by Gurusamy Sarathy (Sophos).  File:
+	util/host_port.c and regression test files.
+
+20110227
+
+	Portability: FreeBSD closefrom() support time window.  Sahil
+	Tandon.  File: util/sys_defs.h.

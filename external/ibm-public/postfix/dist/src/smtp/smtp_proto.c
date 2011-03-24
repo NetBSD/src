@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_proto.c,v 1.1.1.1.2.4 2011/01/07 01:24:13 riz Exp $	*/
+/*	$NetBSD: smtp_proto.c,v 1.1.1.1.2.5 2011/03/24 19:54:08 riz Exp $	*/
 
 /*++
 /* NAME
@@ -813,6 +813,9 @@ static int smtp_start_tls(SMTP_STATE *state)
 	    return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
 				   SMTP_RESP_FAKE(&fake, "4.7.5"),
 				   "Server certificate not verified"));
+
+    /* At this point there must not be any pending plaintext. */
+    vstream_fpurge(session->stream, VSTREAM_PURGE_BOTH);
 
     /*
      * At this point we have to re-negotiate the "EHLO" to reget the
