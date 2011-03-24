@@ -1,4 +1,4 @@
-/*	$NetBSD: pickup.c,v 1.1.1.1.2.2 2009/09/15 06:03:22 snj Exp $	*/
+/*	$NetBSD: pickup.c,v 1.1.1.1.2.2.2.1 2011/03/24 20:17:21 riz Exp $	*/
 
 /*++
 /* NAME
@@ -193,10 +193,14 @@ static int cleanup_service_error_reason(PICKUP_INFO *info, int status,
     /*
      * XXX If the cleanup server gave a reason, then it was already logged.
      * Don't bother logging it another time.
+     * 
+     * XXX Discard a message without recipient. This can happen with "postsuper
+     * -r" when a message is already delivered (or bounced). The Postfix
+     * sendmail command rejects submissions without recipients.
      */
     if (reason == 0)
 	msg_warn("%s: %s", info->path, cleanup_strerror(status));
-    return ((status & CLEANUP_STAT_BAD) ?
+    return ((status & (CLEANUP_STAT_BAD | CLEANUP_STAT_RCPT)) ?
 	    REMOVE_MESSAGE_FILE : KEEP_MESSAGE_FILE);
 }
 

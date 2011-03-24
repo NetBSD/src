@@ -15274,3 +15274,204 @@ Apologies for any names omitted.
 
 	Bugfix: don't panic when an unexpected smtpd access map is
 	specified. File: smtpd/smtpd_check.c.
+
+20090918
+
+	Bugfix (introduced Postfix 2.3): with Milter RCPT TO replies
+	turned off, there was no automatic flush-before-read on the
+	smtpd-to-milter stream, because the read was done on the
+	cleanup-to-milter stream. Problem reported by Stephen Warren.
+	File: milter/milter8.c.
+
+20091005
+
+	Bugfix: core dump while printing error message for malformed
+	%<letter> sequence in LDAP, MySQL or PostgreSQL configuration.
+	File: global/db_common.c. Fix by Victor Duchovni.
+
+20091012
+
+	Bugfix: postmulti did not skip commands with -p.  Luca
+	Berra. File: postmulti/postmulti.c.
+
+20091026
+
+	Cleanup: changed parameter evaluation order so that the
+	multi_instance_wrapper parameter value is evaluated after
+	the command and daemon directory parameters. File:
+	global/mail_params.h.
+
+20091209
+
+	Bugfix: sender_dependent_relayhost_maps did not reject an
+	empty lookup result, and did not recognize lookup errors,
+	thus treating errors as "not found". Problem found during
+	code maintenance. File: trivial-rewrite/resolve.c.
+
+20091229
+
+	Cleanup: the address_verify_poll_count default parameter
+	value is now stress-dependent, so that the Postfix SMTP
+	server will not wait (up to 6 seconds) for the address
+	verification result. File: global/mail_params.h.
+
+20100107
+
+	Documentation: the access(5) manual page did not document
+	the "send 521 and disconnect" behavior in the Postfix SMTP
+	server. File: proto/access.
+
+	Bugfix: the pickup daemon did not discard messages that
+	were requeued after all recipients were delivered (or
+	bounced), and the cleanup server tried to bounce such
+	messages. Files: pickup/pickup.c, global/cleanup_user.h.
+
+20100115
+
+	Bugfix: the valid_hostname() fuction did not set the
+	"non-numeric" flag after encountering the '-' character.
+	Reported by Jan Schampera.  File: util/valid_hostname.c.
+
+20100116
+
+	Workaround: as of Postfix 2.3 the VRFY command did not allow
+	a mailbox address inside <>, which broke expectations.  RFC
+	2821 (and 5321) is vague about the VRFY request format, but
+	spends lots of text on the reply format.  File: smtpd/smtpd.c.
+
+20100422
+
+	Workaround (introduced: postfix-19990906 a.k.a. Postfix
+	0.8.0).  The Postfix local delivery agent did not properly
+	distinguish between "address has no extension" and "address
+	has an extension, but the extension is invalid". In both
+	cases it would run only the full recipient local-part through
+	the alias maps.  Instead, it now drops the faulty extension
+	from the recipient address local-part (it would be too
+	error-prone to replace all tests for "no extension" by tests
+	for "no valid extension".  File: local/recipient.c.
+
+20100515
+
+	Bugfix (introduced Postfix 2.6): the Postfix SMTP client
+	XFORWARD implementation did not skip "unknown" SMTP client
+	attributes, causing a syntax error when sending a PORT
+	attribute. Reported by Victor Duchovni. File: smtp/smtp_proto.c.
+
+20100529
+
+	Portability: OpenSSL 1.0.0 changes the priority of anonymous
+	cyphers. Victor Duchovni. Files: postconf.proto,
+	global/mail_params.h, tls/tls_certkey.c, tls/tls_client.c,
+	tls/tls_dh.c, tls/tls_server.c.
+
+	Portability: Mac OS 10.6.3 requires <arpa/nameser_compat.h>
+	instead of <nameser8_compat.h>. Files: makedefs, util/sys_defs.h,
+	dns/dns.h.
+
+20100531
+
+	Robustness: skip LDAP queries with non-ASCII search strings.
+	The LDAP library requires well-formed UTF-8.  Victor Duchovni.
+	File: global/dict_ldap.c.
+
+20100601
+
+	Portability: Berkeley DB 5.x has the same API as Berkeley
+	DB 4.1 and later. File: util/dict_db.c.
+
+20100610
+
+	Bugfix (introduced Postfix 2.2): Postfix no longer appends
+	the system default CA certificates to the lists specified
+	with *_tls_CAfile or with *_tls_CApath.  This prevents
+	third-party certificates from getting mail relay permission
+	with the permit_tls_all_clientcerts feature.  Unfortunately
+	this may cause compatibility problems with configurations
+	that rely on certificate verification for other purposes.
+	To get the old behavior, specify "tls_append_default_CA =
+	yes".  Files: tls/tls_certkey.c, tls/tls_misc.c,
+	global/mail_params.h.  proto/postconf.proto, mantools/postlink.
+
+20100714
+
+	Compatibility with Postfix < 2.3: fix 20061207 was incomplete
+	(undoing the change to bounce instead of defer after
+	pipe-to-command delivery fails with a signal). Fix by Thomas
+	Arnett. File: global/pipe_command.c.
+
+20100827
+
+	Performance: fix for poor smtpd_proxy_filter TCP performance
+	over loopback (127.0.0.1) connections. Problem reported by
+	Mark Martinec.  Files: smtpd/smtpd_proxy.c.
+
+20101023
+
+	Cleanup: don't apply reject_rhsbl_helo to non-domain forms
+	such as network addresses.  This would cause false positives
+	with dbl.spamhaus.org.  File: smtpd/smtpd_check.c.
+
+20101117
+
+	Bugfix: the "421" reply after Milter error was overruled
+	by Postfix 1.1 code that replied with "503" for RFC 2821
+	compliance. We now make an exception for "final" replies,
+	as permitted by RFC. Solution by Victor Duchovni. File:
+	smtpd/smtpd.c.
+
+20101201
+
+	Workaround: BSD-ish mkdir() ignores the effective GID and
+	copies group ownership from the parent directory.  File:
+	util/make_dirs.c.
+
+20101202
+
+	Cleanup: the cleanup server now reports a temporary delivery
+	error when it reaches the virtual_alias_expansion_limit or
+	virtual_alias_recursion_limit. Previously, it would silently
+	ignore the excess recipients and deliver the message.  File:
+	cleanup/cleanup_map1n.c.
+
+20110105
+
+	Bugfix (introduced with the Postfix TLS patch): discard
+	plaintext following the STARTTLS command or response. This
+	matters only for the minority of SMTP clients that actually
+	verify server certificates.  Files: smtpd/smtpd.c,
+	smtp/smtp_proto.c.
+
+	This vulnerability is also known as CVE-2011-0411.
+
+20110109
+
+	Bugfix (introduced Postfix 2.4): on Solaris the Postfix
+	event engine was deaf for SIGHUP and SIGALRM signals after
+	the switch to /dev/poll. Symptoms were delayed "postfix
+	reload" response, and killed processes when the watchdog
+	timeout was less than max_idle.  The fix is to set up SIGHUP
+	and SIGALRM handlers that write to a pipe, and to monitor
+	that pipe for read events via the Postfix event engine.
+	Files: master/master_sig.c, util/watchdog.c, util/sys_defs.h.
+
+20110117
+
+	Bugfix (introduced Postfix alpha, or thereabouts): on HP-UX
+	the Postfix event engine was deaf for SIGALRM signals.
+	Symptoms were killed processes when the watchdog timeout
+	was less than max_idle.  The fix is the same as Solaris fix
+	20110109. Since we can't know what other systems need this,
+	the workaround is enabled by default.  Files: util/sys_defs.h.
+
+20110225
+
+	Workaround (problem introduced with IPv6 support in Postfix
+	2.2): the SMTP client did not support mail to [ipv6:ipv6addr].
+	Fix based on a patch by Gurusamy Sarathy (Sophos).  File:
+	util/host_port.c and regression test files.
+
+20110227
+
+	Portability: FreeBSD closefrom() support time window.  Sahil
+	Tandon. File: util/sys_defs.h.

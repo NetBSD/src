@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_certkey.c,v 1.1.1.1.2.2 2009/09/15 06:03:51 snj Exp $	*/
+/*	$NetBSD: tls_certkey.c,v 1.1.1.1.2.2.2.1 2011/03/24 20:17:23 riz Exp $	*/
 
 /*++
 /* NAME
@@ -72,6 +72,10 @@
 
 #include <msg.h>
 
+/* Global library. */
+
+#include <mail_params.h>
+
 /* TLS library. */
 
 #define TLS_INTERNAL
@@ -93,7 +97,7 @@ int     tls_set_ca_certificate_info(SSL_CTX *ctx, const char *CAfile,
 	    tls_print_errors();
 	    return (-1);
 	}
-	if (!SSL_CTX_set_default_verify_paths(ctx)) {
+	if (var_tls_append_def_CA && !SSL_CTX_set_default_verify_paths(ctx)) {
 	    msg_info("cannot set certificate verification paths: "
 		     "disabling TLS support");
 	    tls_print_errors();
@@ -160,7 +164,7 @@ int     tls_set_my_certificate_key_info(SSL_CTX *ctx,
 	return (-1);			/* logged */
     if (*dcert_file && !set_cert_stuff(ctx, "DSA", dcert_file, dkey_file))
 	return (-1);				/* logged */
-#if OPENSSL_VERSION_NUMBER >= 0x00909000 && !defined(OPENSSL_NO_ECDH)
+#if OPENSSL_VERSION_NUMBER >= 0x1000000fL && !defined(OPENSSL_NO_ECDH)
     if (*eccert_file && !set_cert_stuff(ctx, "ECDSA", eccert_file, eckey_file))
 	return (-1);				/* logged */
 #else

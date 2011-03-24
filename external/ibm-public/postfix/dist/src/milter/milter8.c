@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.1.1.2.2.2 2009/09/15 06:03:20 snj Exp $	*/
+/*	$NetBSD: milter8.c,v 1.1.1.2.2.2.2.1 2011/03/24 20:17:21 riz Exp $	*/
 
 /*++
 /* NAME
@@ -2585,6 +2585,13 @@ static int milter8_send(MILTER *m, VSTREAM *stream)
 
     if (msg_verbose)
 	msg_info("%s: milter %s", myname, milter->m.name);
+
+    /*
+     * The next read on this Milter socket happens in a different process. It
+     * will not automatically flush the output buffer in this process.
+     */
+    if (milter->fp)
+	vstream_fflush(milter->fp);
 
     if (attr_print(stream, ATTR_FLAG_MORE,
 		   ATTR_TYPE_STR, MAIL_ATTR_MILT_NAME, milter->m.name,

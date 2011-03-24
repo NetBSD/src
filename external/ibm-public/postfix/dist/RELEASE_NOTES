@@ -14,6 +14,18 @@ specifies the release date of a stable release or snapshot release.
 If you upgrade from Postfix 2.4 or earlier, read RELEASE_NOTES-2.5
 before proceeding.
 
+Incompatibility with Postfix 2.6.8
+----------------------------------
+
+Postfix no longer appends the system-supplied default CA certificates
+to the lists specified with *_tls_CAfile or with *_tls_CApath. This
+prevents third-party certificates from getting mail relay permission
+with the permit_tls_all_clientcerts feature.
+ 
+Unfortunately this change may cause compatibility problems when
+configurations rely on certificate verification for other purposes.
+Specify "tls_append_default_CA = yes" for backwards compatibility.
+
 Major changes - multi-instance support
 --------------------------------------
 
@@ -241,7 +253,7 @@ Major changes - header rewriting
 Message-ID: or To: headers only when clients match
 $local_header_rewrite_clients.  Specify "always_add_missing_headers
 = yes" for backwards compatibility.  Adding such headers can break
-DKIM signatures that cover headers that are not present.
+DKIM signatures that cover headers that are not present. For
 compatibility with existing logfile processing software, Postfix
 will log ``message-id=<>'' for messages without Message-Id header.
 

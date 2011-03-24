@@ -256,9 +256,11 @@ How many times to query the <a href="verify.8.html">verify(8)</a> service for th
 of an address verification request in progress.
 </p>
 
-<p>
-The default poll count is 3.
-</p>
+<p> By default, the Postfix SMTP server polls the <a href="verify.8.html">verify(8)</a> service
+up to three times under non-overload conditions, and only once when
+under overload.  With Postfix version 2.5 and earlier, the SMTP
+server always polls the <a href="verify.8.html">verify(8)</a> service up to three times by
+default.  </p>
 
 <p>
 Specify 1 to implement a crude form of greylisting, that is, always
@@ -4277,7 +4279,7 @@ configuration parameter.  See there for details. </p>
 parameter.  See there for details. </p>
 
 <p> This feature is available in Postfix 2.6 and later, when Postfix is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 
 </DD>
@@ -4289,7 +4291,7 @@ compiled and linked with OpenSSL 0.9.9 or later. </p>
 parameter.  See there for details. </p>
 
 <p> This feature is available in Postfix 2.6 and later, when Postfix is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 
 </DD>
@@ -8887,6 +8889,10 @@ file may also be used to augment the client certificate trust chain,
 but it is best to include all the required certificates directly in
 $<a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a>. </p>
 
+<p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
+
 <p> Example: </p>
 
 <pre>
@@ -8909,6 +8915,10 @@ with, for example, "$OPENSSL_HOME/bin/c_rehash /etc/postfix/certs".
 
 <p> To use this option in chroot mode, this directory (or a copy)
 must be inside the chroot jail. </p>
+
+<p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
 
 <p> Example: </p>
 
@@ -9079,7 +9089,7 @@ This file may also contain the Postfix SMTP client ECDSA private key. </p>
 </pre>
 
 <p> This feature is available in Postfix 2.6 and later, when Postfix is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 
 </DD>
@@ -9097,7 +9107,7 @@ access to the system superuser account ("root"), and no access
 to anyone else. </p>
 
 <p> This feature is available in Postfix 2.6 and later, when Postfix is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 
 </DD>
@@ -10521,8 +10531,11 @@ authenticated via the <a href="http://tools.ietf.org/html/rfc4954">RFC 4954</a> 
 <dd> Permit the request when the remote SMTP client certificate is
 verified successfully.  This option must be used only if a special
 CA issues the certificates and only this CA is listed as trusted
-CA, otherwise all clients with a recognized certificate would be
-allowed to relay. This feature is available with Postfix version 2.2.</dd>
+CA. Otherwise, clients with a third-party certificate would also
+be allowed to relay.  Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" when the
+trusted CA is specified with <a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> or <a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a>,
+to prevent Postfix from appending the system-supplied default CAs.
+This feature is available with Postfix version 2.2.</dd>
 
 <dt><b><a name="permit_tls_clientcerts">permit_tls_clientcerts</a></b></dt>
 
@@ -12191,6 +12204,10 @@ file may also be used to augment the server certificate trust chain,
 but it is best to include all the required certificates directly in the
 server certificate file. </p>
 
+<p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
+
 <p> By default (see <a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a>), client certificates are not
 requested, and <a href="postconf.5.html#smtpd_tls_CAfile">smtpd_tls_CAfile</a> should remain empty. If you do make use
 of client certificates, the distinguished names (DNs) of the certificate
@@ -12221,6 +12238,10 @@ certificates. Do not forget to create the necessary "hash" links with,
 for example, "$OPENSSL_HOME/bin/c_rehash /etc/postfix/certs". To use
 <a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a> in chroot mode, this directory (or a copy) must be
 inside the chroot jail. </p>
+
+<p> Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates. </p>
 
 <p> By default (see <a href="postconf.5.html#smtpd_tls_ask_ccert">smtpd_tls_ask_ccert</a>), client certificates are
 not requested, and <a href="postconf.5.html#smtpd_tls_CApath">smtpd_tls_CApath</a> should remain empty. In contrast
@@ -12532,7 +12553,7 @@ This file may also contain the Postfix SMTP server private ECDSA key. </p>
 </pre>
 
 <p> This feature is available in Postfix 2.6 and later, when Postfix is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 
 </DD>
@@ -12550,7 +12571,7 @@ access to the system superuser account ("root"), and no access
 to anyone else. </p>
 
 <p> This feature is available in Postfix 2.6 and later, when Postfix is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 
 </DD>
@@ -12584,7 +12605,7 @@ users. </dd>
 </dl>
 
 <p> This feature is available in Postfix 2.6 and later, when it is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 
 </DD>
@@ -13341,6 +13362,23 @@ connections.  Next, you enable Postfix TCP servers with the updated
 
 </DD>
 
+<DT><b><a name="tls_append_default_CA">tls_append_default_CA</a>
+(default: no)</b></DT><DD>
+
+<p> Append the system-supplied default certificate authority
+certificates to the ones specified with *_tls_CApath or *_tls_CAfile.
+The default is "no"; this prevents Postfix from trusting third-party
+certificates and giving them relay permission with
+<a href="postconf.5.html#permit_tls_all_clientcerts">permit_tls_all_clientcerts</a>.  </p>
+
+<p> This feature is available in Postfix 2.4.15, 2.5.11, 2.6.8,
+2.7.2 and later versions. Specify "<a href="postconf.5.html#tls_append_default_CA">tls_append_default_CA</a> = yes" for
+backwards compatibility, to avoid breaking certificate verification
+with sites that don't use <a href="postconf.5.html#permit_tls_all_clientcerts">permit_tls_all_clientcerts</a>. </p>
+
+
+</DD>
+
 <DT><b><a name="tls_daemon_random_bytes">tls_daemon_random_bytes</a>
 (default: 32)</b></DT><DD>
 
@@ -13378,7 +13416,7 @@ under the SECG name "secp256r1", but OpenSSL does not recognize the
 latter name. </p>
 
 <p> This feature is available in Postfix 2.6 and later, when it is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 
 </DD>
@@ -13401,7 +13439,7 @@ of <a href="http://tools.ietf.org/html/rfc4492">RFC 4492</a>. You should not gen
 classified as TOP SECRET. </p>
 
 <p> This feature is available in Postfix 2.6 and later, when it is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 
 </DD>
@@ -13414,7 +13452,11 @@ defines the meaning of the "export" setting in <a href="postconf.5.html#smtpd_tl
 <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a> and <a href="postconf.5.html#lmtp_tls_mandatory_ciphers">lmtp_tls_mandatory_ciphers</a>. This is
 the cipherlist for the opportunistic ("may") TLS client security
 level and is the default cipherlist for the SMTP server. You are
-strongly encouraged to not change this setting. </p>
+strongly encouraged to not change this setting. With OpenSSL 1.0.0 and
+later the cipherlist may start with an "aNULL:" prefix, which restores
+the 0.9.8-compatible ordering of the aNULL ciphers to the top of the
+list when they are enabled. This prefix is not needed with previous
+OpenSSL releases. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
@@ -13427,7 +13469,11 @@ strongly encouraged to not change this setting. </p>
 <p> The OpenSSL cipherlist for "HIGH" grade ciphers. This defines
 the meaning of the "high" setting in <a href="postconf.5.html#smtpd_tls_mandatory_ciphers">smtpd_tls_mandatory_ciphers</a>,
 <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a> and <a href="postconf.5.html#lmtp_tls_mandatory_ciphers">lmtp_tls_mandatory_ciphers</a>. You are
-strongly encouraged to not change this setting. </p>
+strongly encouraged to not change this setting. With OpenSSL 1.0.0 and
+later the cipherlist may start with an "aNULL:" prefix, which restores
+the 0.9.8-compatible ordering of the aNULL ciphers to the top of the
+list when they are enabled. This prefix is not needed with previous
+OpenSSL releases. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
@@ -13440,7 +13486,11 @@ strongly encouraged to not change this setting. </p>
 <p> The OpenSSL cipherlist for "LOW" or higher grade ciphers. This defines
 the meaning of the "low" setting in <a href="postconf.5.html#smtpd_tls_mandatory_ciphers">smtpd_tls_mandatory_ciphers</a>,
 <a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a> and <a href="postconf.5.html#lmtp_tls_mandatory_ciphers">lmtp_tls_mandatory_ciphers</a>. You are
-strongly encouraged to not change this setting. </p>
+strongly encouraged to not change this setting.  With OpenSSL 1.0.0 and
+later the cipherlist may start with an "aNULL:" prefix, which restores
+the 0.9.8-compatible ordering of the aNULL ciphers to the top of the
+list when they are enabled. This prefix is not needed with previous
+OpenSSL releases. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
@@ -13456,7 +13506,10 @@ defines the meaning of the "medium" setting in <a href="postconf.5.html#smtpd_tl
 the default cipherlist for mandatory TLS encryption in the TLS
 client (with anonymous ciphers disabled when verifying server
 certificates). You are strongly encouraged to not change this
-setting. </p>
+setting.  With OpenSSL 1.0.0 and later the cipherlist may start with an
+"aNULL:" prefix, which restores the 0.9.8-compatible ordering of the
+aNULL ciphers to the top of the list when they are enabled. This prefix
+is not needed with previous OpenSSL releases. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
