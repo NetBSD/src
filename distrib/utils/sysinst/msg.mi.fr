@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.112 2011/02/01 01:42:07 joerg Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.113 2011/03/24 22:08:28 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,7 +82,6 @@ Dans les menus suivants, vous pourrez changer de sélection soit en tapant la
 lettre en référence (a, b, c, d,...) soit en utilisant les touches
 flèches du clavier.
 La sélection courante est activée en appuyant sur entrée.
-
 }
 
 message thanks

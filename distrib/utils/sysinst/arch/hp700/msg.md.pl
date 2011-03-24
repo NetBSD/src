@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.3 2008/02/02 05:40:02 itohy Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.4 2011/03/24 22:08:32 martin Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/12/03 01:54:49 minoura Exp */
 
@@ -43,6 +43,10 @@
 
 
 message md_hello
+{
+}
+
+message md_may_remove_boot_medium
 {
 }
 

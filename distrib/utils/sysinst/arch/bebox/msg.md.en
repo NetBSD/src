@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.19 2006/02/24 22:13:16 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.20 2011/03/24 22:08:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,11 @@
 /* MD Message catalog -- english, bebox version */
 
 message md_hello
-{If you booted from a floppy, you may now remove the disk.
+{
+}
 
+message md_may_remove_boot_medium
+{If you booted from a floppy, you may now remove the disk.
 }
 
 message dobad144

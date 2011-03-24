@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.5 2003/07/07 12:30:27 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.6 2011/03/24 22:08:37 martin Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/12/03 01:54:57 minoura Exp */
 
@@ -43,8 +43,11 @@
 
 
 message md_hello
-{Jesli dyskietka nie jest zablokowana, mozesz ja teraz wyciagnac.
+{
+}
 
+message md_may_remove_boot_medium
+{Jesli dyskietka nie jest zablokowana, mozesz ja teraz wyciagnac.
 }
 
 message dobootblks

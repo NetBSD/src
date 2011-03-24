@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.32 2011/02/01 01:43:15 joerg Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.33 2011/03/24 22:08:28 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -84,12 +84,10 @@ seleccionar una opción, o teclee CTRL+N/CTRL+P para seleccionar la opción
 siguiente/anterior. 
 Las teclas de cursor y AvPág/RePág puede que también funcionen. 
 Active la selección actual desde el menú pulsando la tecla Intro.
-
 }
 
 message thanks
 {¡Gracias por usar NetBSD!
-
 }
 
 message installusure

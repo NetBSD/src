@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2011/01/26 01:18:46 pooka Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2 2011/03/24 22:08:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,8 +40,11 @@
 
 
 message md_hello
-{Si ha iniciado desde disquette, ahora deberia retirar el disco.
+{
+}
 
+message md_may_remove_boot_medium
+{Si ha iniciado desde disquette, ahora deberia retirar el disco.
 }
 
 message dobootblks

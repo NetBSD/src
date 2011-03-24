@@ -42,6 +42,10 @@ message md_hello
 {
 }
 
+message md_may_remove_boot_medium
+{
+}
+
 message dobad144
 {Instalowanie tablicy zlych blokow ...
 }

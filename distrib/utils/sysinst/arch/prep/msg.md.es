@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.4 2009/03/06 19:05:02 reed Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.5 2011/03/24 22:08:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,10 @@
 /* MD Message catalog -- spanish, prep version */
 
 message md_hello
+{
+}
+
+message md_may_remove_boot_medium
 {
 }
 

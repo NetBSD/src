@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.162 2011/02/01 01:42:07 joerg Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.163 2011/03/24 22:08:28 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,12 +79,10 @@ In the following menus type the reference letter (a, b, c, ...) to
 select an item, or type CTRL+N/CTRL+P to select the next/previous item. 
 The arrow keys and Page-up/Page-down may also work. 
 Activate the current selection from the menu by typing the enter key.
-
 }
 
 message thanks
 {Thank you for using NetBSD!
-
 }
 
 message installusure

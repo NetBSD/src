@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.6 2009/10/24 12:47:30 stacktic Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.7 2011/03/24 22:08:29 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,11 @@
 /* MD Message catalog -- french, amiga version */
 
 message md_hello
-{Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
+{
+}
 
+message md_may_remove_boot_medium
+{Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
 }
 
 message dobootblks

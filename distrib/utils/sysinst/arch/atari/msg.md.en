@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.8 2009/01/24 21:20:22 abs Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.9 2011/03/24 22:08:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,11 @@
 /* MD Message catalog -- english, atari version */
 
 message md_hello
-{If you booted from a floppy, you may now remove the disk.
+{
+}
 
+message md_may_remove_boot_medium
+{If you booted from a floppy, you may now remove the disk.
 }
 
 message dobootblks

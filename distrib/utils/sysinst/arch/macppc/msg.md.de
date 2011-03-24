@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.4 2008/02/02 04:51:38 itohy Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.5 2011/03/24 22:08:34 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,9 +41,12 @@
 
 
 message md_hello
+{
+}
+
+message md_may_remove_boot_medium
 {Wenn Sie von einer Diskette gebootet haben, können Sie diese jetzt
 entfernen.
-
 }
 
 message dobootblks
