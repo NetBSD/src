@@ -340,7 +340,8 @@ int     main(int argc, char **argv)
 
     signal(SIGINT, postdrop_sig);
     signal(SIGQUIT, postdrop_sig);
-    signal(SIGTERM, postdrop_sig);
+    if (signal(SIGTERM, SIG_IGN) == SIG_DFL)
+	signal(SIGTERM, postdrop_sig);
     if (signal(SIGHUP, SIG_IGN) == SIG_DFL)
 	signal(SIGHUP, postdrop_sig);
     msg_cleanup(postdrop_cleanup);

@@ -53,9 +53,8 @@
 
 #ifdef USE_SIG_RETURN
 #include <sys/syscall.h>
-#endif
-
-#ifndef USE_SIG_RETURN
+#undef USE_SIG_PIPE
+#else
 #define USE_SIG_PIPE
 #endif
 
@@ -76,6 +75,8 @@ int     master_sig_pipe[2];
 int     master_gotsigchld;
 int     master_gotsighup;
 
+#ifdef USE_SIG_RETURN
+
 /* master_sighup - register arrival of hangup signal */
 
 static void master_sighup(int sig)
@@ -91,8 +92,6 @@ static void master_sighup(int sig)
 }
 
 /* master_sigchld - register arrival of child death signal */
-
-#ifdef USE_SIG_RETURN
 
 static void master_sigchld(int sig, int code, struct sigcontext * scp)
 {
@@ -116,7 +115,25 @@ static void master_sigchld(int sig, int code, struct sigcontext * scp)
 
 #else
 
-#ifdef USE_SIG_PIPE
+/* master_sighup - register arrival of hangup signal */
+
+static void master_sighup(int sig)
+{
+    int     saved_errno = errno;
+
+    /*
+     * WARNING WARNING WARNING.
+     * 
+     * This code runs at unpredictable moments, as a signal handler. Don't put
+     * any code here other than for setting a global flag, or code that is
+     * intended to be run within a signal handler. Restore errno in case we
+     * are interrupting the epilog of a failed system call.
+     */
+    master_gotsighup = sig;
+    if (write(SIG_PIPE_WRITE_FD, "", 1) != 1)
+	msg_warn("write to SIG_PIPE_WRITE_FD failed: %m");
+    errno = saved_errno;
+}
 
 /* master_sigchld - force wakeup from select() */
 
@@ -132,6 +149,7 @@ static void master_sigchld(int unused_sig)
      * intended to be run within a signal handler. Restore errno in case we
      * are interrupting the epilog of a failed system call.
      */
+    master_gotsigchld = 1;
     if (write(SIG_PIPE_WRITE_FD, "", 1) != 1)
 	msg_warn("write to SIG_PIPE_WRITE_FD failed: %m");
     errno = saved_errno;
@@ -145,24 +163,8 @@ static void master_sig_event(int unused_event, char *unused_context)
 
     while (read(SIG_PIPE_READ_FD, c, 1) > 0)
 	 /* void */ ;
-    master_gotsigchld = 1;
 }
 
-#else
-
-static void master_sigchld(int sig)
-{
-
-    /*
-     * WARNING WARNING WARNING.
-     * 
-     * This code runs at unpredictable moments, as a signal handler. Don't put
-     * any code here other than for setting a global flag.
-     */
-    master_gotsigchld = sig;
-}
-
-#endif
 #endif
 
 /* master_sigdeath - die, women and children first */

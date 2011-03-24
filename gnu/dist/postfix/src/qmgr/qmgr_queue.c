@@ -66,7 +66,11 @@
 /*	"slow open" mode, and eliminates the "thundering herd" problem.
 /*
 /*	qmgr_queue_suspend() suspends delivery for this destination
-/*	briefly.
+/*	briefly. This function invalidates any scheduling decisions
+/*	that are based on the present queue's concurrency window.
+/*	To compensate for work skipped by qmgr_entry_done(), the
+/*	status of blocker jobs is re-evaluated after the queue is
+/*	resumed.
 /* DIAGNOSTICS
 /*	Panic: consistency check failure.
 /* LICENSE
@@ -152,9 +156,20 @@ static void qmgr_queue_resume(int event, char *context)
     /*
      * Every event handler that leaves a queue in the "ready" state should
      * remove the queue when it is empty.
+     * 
+     * XXX Do not omit the redundant test below. It is here to simplify code
+     * consistency checks. The check is trivially eliminated by the compiler
+     * optimizer. There is no need to sacrifice code clarity for the sake of
+     * performance.
+     * 
+     * XXX Do not expose the blocker job logic here. Rate-limited queues are not
+     * a performance-critical feature. Here, too, there is no need to sacrifice
+     * code clarity for the sake of performance.
      */
     if (QMGR_QUEUE_READY(queue) && queue->todo.next == 0 && queue->busy.next == 0)
 	qmgr_queue_done(queue);
+    else
+	qmgr_job_blocker_update(queue);
 }
 
 /* qmgr_queue_suspend - briefly suspend a destination */

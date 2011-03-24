@@ -228,7 +228,7 @@ int     db_common_parse(DICT *dict, void **ctxPtr, const char *format, int query
 		break;
 	    default:
 		msg_fatal("db_common_parse: %s: Invalid %s template: %s",
-			  dict->name, query ? "query" : "result", format);
+		       ctx->dict->name, query ? "query" : "result", format);
 	    }
     return dynamic;
 }

@@ -214,6 +214,11 @@ static SMTP_SESSION *smtp_reuse_common(SMTP_STATE *state, int fd,
     }
 
     /*
+     * Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE.
+     */
+    vstream_tweak_sock(session->stream);
+
+    /*
      * Update the list of used cached addresses.
      */
     htable_enter(state->cache_used, session->addr, (char *) 0);

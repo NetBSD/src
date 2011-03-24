@@ -153,6 +153,7 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
     char   *oper;
     char   *junk;
     const char *relay;
+    const char *sender_key;
 
     *flags = 0;
     vstring_strcpy(channel, "CHANNEL NOT UPDATED");
@@ -508,11 +509,21 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
 	     * override the recipient domain.
 	     */
 	    if (rp->snd_relay_info
-		&& (relay = mail_addr_find(rp->snd_relay_info, *sender ?
-					   sender : var_null_relay_maps_key,
-					   (char **) 0)) != 0)
+		&& (relay = mail_addr_find(rp->snd_relay_info,
+					   sender_key = (*sender ? sender :
+						   var_null_relay_maps_key),
+					   (char **) 0)) != 0) {
+		if (*relay == 0) {
+		    msg_warn("%s: ignoring null lookup result for %s",
+			     rp->snd_relay_maps_name, sender_key);
+		    relay = rcpt_domain;
+		}
 		vstring_strcpy(nexthop, relay);
-	    else if (*RES_PARAM_VALUE(rp->relayhost))
+	    } else if (dict_errno != 0) {
+		msg_warn("%s lookup failure", rp->snd_relay_maps_name);
+		*flags |= RESOLVE_FLAG_FAIL;
+		FREE_MEMORY_AND_RETURN;
+	    } else if (*RES_PARAM_VALUE(rp->relayhost))
 		vstring_strcpy(nexthop, RES_PARAM_VALUE(rp->relayhost));
 	    else
 		vstring_strcpy(nexthop, rcpt_domain);
