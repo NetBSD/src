@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.56 2011/01/26 10:58:19 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.57 2011/03/24 22:01:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -317,6 +317,10 @@ select_language(void)
 	}
 }
 
+#ifndef md_may_remove_boot_medium
+#define md_may_remove_boot_medium()	(boot_media_still_needed()<=0)
+#endif
+
 /* toplevel menu handler ... */
 void
 toplevel(void)
@@ -325,6 +329,8 @@ toplevel(void)
 	/* Display banner message in (english, francais, deutsch..) */
 	msg_display(MSG_hello);
 	msg_display_add(MSG_md_hello);
+	if (md_may_remove_boot_medium())
+		msg_display_add(MSG_md_may_remove_boot_medium);
 	msg_display_add(MSG_thanks);
 
 	/* 

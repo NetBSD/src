@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.4 2009/10/24 14:41:57 stacktic Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.5 2011/03/24 22:08:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,6 +41,10 @@
 
 
 message md_hello
+{
+}
+
+message md_may_remove_boot_medium
 {
 }
 

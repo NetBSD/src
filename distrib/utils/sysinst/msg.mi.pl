@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.71 2011/03/08 11:24:28 adam Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.72 2011/03/24 22:08:28 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -84,7 +84,6 @@ NetBSD na twardym dysku, lub zaktualizowac istniejacy system NetBSD,
 zuzywajac minimum czasu.  W ponizszych menu mozesz zmienic aktualne
 ustawienia poprzez naciskanie klawiszy (a, b, c, ...). Klawisze strzalek
 takze moga dzialac.  Aktywujesz ustawienie poprzez nacisniecie ENTER.
-
 }
 
 message thanks

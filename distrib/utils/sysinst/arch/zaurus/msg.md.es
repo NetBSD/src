@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2008/03/31 23:55:30 chris Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2 2011/03/24 22:08:37 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,10 @@
 /* zaurus machine dependent messages, spanish */
 
 message md_hello
+{
+}
+
+message md_may_remove_boot_medium
 {
 }
 

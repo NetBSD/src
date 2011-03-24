@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.11 2011/03/08 11:24:28 adam Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.12 2011/03/24 22:08:33 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.10 2001/07/26 22:47:34 wiz Exp */
 
@@ -41,6 +41,10 @@
 /* MD Message catalog -- Polish, mac68k version */
 
 message md_hello
+{
+}
+
+message md_may_remove_boot_medium
 {
 }
 
