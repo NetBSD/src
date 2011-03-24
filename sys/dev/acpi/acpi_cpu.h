@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.39 2011/03/19 12:57:31 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.40 2011/03/24 05:10:06 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -224,7 +224,6 @@ struct acpicpu_softc {
 	uint32_t		 sc_tstate_max;
 	uint32_t		 sc_tstate_min;
 
-	__cpu_simple_lock_t	 sc_lock;
 	kmutex_t		 sc_mtx;
 	uint32_t		 sc_cap;
 	uint32_t		 sc_ncpus;
@@ -270,7 +269,7 @@ void		 acpicpu_md_cstate_enter(int, int);
 int		 acpicpu_md_pstate_start(struct acpicpu_softc *);
 int		 acpicpu_md_pstate_stop(void);
 int		 acpicpu_md_pstate_init(struct acpicpu_softc *);
-uint8_t		 acpicpu_md_pstate_percent(struct cpu_info *);
+uint8_t		 acpicpu_md_pstate_hwf(struct cpu_info *);
 int		 acpicpu_md_pstate_get(struct acpicpu_softc *, uint32_t *);
 int		 acpicpu_md_pstate_set(struct acpicpu_pstate *);
 int		 acpicpu_md_tstate_get(struct acpicpu_softc *, uint32_t *);
