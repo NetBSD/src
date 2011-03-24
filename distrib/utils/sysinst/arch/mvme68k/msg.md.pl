@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.5 2003/07/07 12:30:26 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.6 2011/03/24 22:08:34 martin Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2002/03/24 22:04:06 scw Exp */
 
@@ -44,7 +44,10 @@
 
 message md_hello
 {Jesli masz mniej niz 4 MB ram, sysinst nie bedzie pracowal prawidlowo
+}
 
+message md_may_remove_boot_medium
+{
 }
 
 message dobootblks

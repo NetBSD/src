@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.167 2011/02/01 01:42:07 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.168 2011/03/24 22:08:28 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/mount.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/ioctl.h>
@@ -489,6 +490,29 @@ set_cd_select(menudesc *m, void *arg)
 }
 
 /*
+ * Check wether we can remove the boot media.
+ * If it is not a local filesystem, return -1.
+ * If we can not decide for sure (can not tell MD content from plain ffs
+ * on hard disk, for example), return 0.
+ * If it is a CD/DVD, return 1.
+ */
+int
+boot_media_still_needed(void)
+{
+	struct statvfs sb;
+
+	if (statvfs("/", &sb) == 0) {
+		if (!(sb.f_flag & ST_LOCAL))
+			return -1;
+		if (strcmp(sb.f_fstypename, MOUNT_CD9660) == 0
+			   || strcmp(sb.f_fstypename, MOUNT_UDF) == 0)
+			return 1;
+	}
+
+	return 0;
+}
+
+/*
  * Get from a CDROM distribution.
  */
 int
@@ -501,7 +525,8 @@ get_via_cdrom(void)
 
 	/* If root is a CD-ROM and we have sets, skip this step. */
 	if (statvfs(set_dir, &sb) == 0 &&
-	    strcmp(sb.f_fstypename, "cd9660") == 0) {
+	    (strcmp(sb.f_fstypename, MOUNT_CD9660) == 0
+		    || strcmp(sb.f_fstypename, MOUNT_UDF) == 0)) {
 	    	strlcpy(ext_dir, set_dir, sizeof ext_dir);
 		return SET_OK;
 	}
