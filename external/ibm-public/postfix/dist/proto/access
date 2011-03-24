@@ -165,9 +165,22 @@
 #	Reject the address etc. that matches the pattern, and respond with
 #	the numerical three-digit code and text. \fB4\fINN\fR means "try
 #	again later", while \fB5\fINN\fR means "do not try again".
+#
+#	The following responses have special meaning for the Postfix
+#	SMTP server:
+# .RS
+# .IP "\fB421 \fItext\fR (Postfix 2.3 and later)"
+# .IP "\fB521 \fItext\fR (Postfix 2.6 and later)"
+#	After responding with the numerical three-digit code and
+#	text, disconnect immediately from the SMTP client.  This
+#	frees up SMTP server resources so that they can be made
+#	available to another SMTP client.
 # .IP
-#	The reply code "421" causes Postfix to disconnect immediately
-#	(Postfix version 2.3 and later).
+#	Note: The "521" response should be used only with botnets
+#	and other malware where interoperability is of no concern.
+#	The "send 521 and disconnect" behavior is NOT defined in
+#	the SMTP standard.
+# .RE
 # .IP "\fBREJECT \fIoptional text...\fR
 #	Reject the address etc. that matches the pattern. Reply with
 #	"\fB$access_map_reject_code \fIoptional text...\fR" when the

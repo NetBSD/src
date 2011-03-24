@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.2.2.2 2009/09/15 06:03:33 snj Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.2.2.2.2.1 2011/03/24 20:17:22 riz Exp $	*/
 
 /*++
 /* NAME
@@ -3207,9 +3207,9 @@ static int vrfy_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "501 5.1.3 Bad recipient address syntax");
 	return (-1);
     }
-    /* Not: state->addr_buf */
+    /* Use state->addr_buf, with the unquoted result from extract_addr() */
     if (SMTPD_STAND_ALONE(state) == 0
-	&& (err = smtpd_check_rcpt(state, argv[1].strval)) != 0) {
+	&& (err = smtpd_check_rcpt(state, STR(state->addr_buf))) != 0) {
 	smtpd_chat_reply(state, "%s", err);
 	return (-1);
     }
@@ -4074,6 +4074,8 @@ static int starttls_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     smtpd_chat_reply(state, "220 2.0.0 Ready to start TLS");
     /* Flush before we switch the stream's read/write routines. */
     smtp_flush(state->client);
+    /* At this point there must not be any pending plaintext. */
+    vstream_fpurge(state->client, VSTREAM_PURGE_BOTH);
 
     /*
      * Reset all inputs to the initial state.
@@ -4454,6 +4456,11 @@ static void smtpd_proto(SMTPD_STATE *state)
 	    }
 	    /* XXX We use the real client for connect access control. */
 	    if (state->access_denied && cmdp->action != quit_cmd) {
+		/* XXX Exception for Milter override. */
+		if (strncmp(state->access_denied + 1, "21", 2) == 0) {
+		    smtpd_chat_reply(state, "%s", state->access_denied);
+		    continue;
+		}
 		smtpd_chat_reply(state, "503 5.7.0 Error: access denied for %s",
 				 state->namaddr);	/* RFC 2821 Sec 3.1 */
 		state->error_count++;
@@ -4466,7 +4473,7 @@ static void smtpd_proto(SMTPD_STATE *state)
 		    && (err = milter_unknown_event(smtpd_milters,
 						   argv[0].strval)) != 0
 		    && (err = check_milter_reply(state, err)) != 0) {
-		    smtpd_chat_reply(state, err);
+		    smtpd_chat_reply(state, "%s", err);
 		} else
 		    smtpd_chat_reply(state, "502 5.5.2 Error: command not recognized");
 		state->error_mask |= MAIL_ERROR_PROTOCOL;
@@ -4903,6 +4910,7 @@ int     main(int argc, char **argv)
 	VAR_SMTPD_SOFT_ERLIM, DEF_SMTPD_SOFT_ERLIM, &var_smtpd_soft_erlim, 1, 0,
 	VAR_SMTPD_HARD_ERLIM, DEF_SMTPD_HARD_ERLIM, &var_smtpd_hard_erlim, 1, 0,
 	VAR_SMTPD_JUNK_CMD, DEF_SMTPD_JUNK_CMD, &var_smtpd_junk_cmd_limit, 1, 0,
+	VAR_VERIFY_POLL_COUNT, DEF_VERIFY_POLL_COUNT, &var_verify_poll_count, 1, 0,
 	0,
     };
     static const CONFIG_INT_TABLE int_table[] = {
@@ -4931,7 +4939,6 @@ int     main(int argc, char **argv)
 	VAR_VIRT_MAILBOX_CODE, DEF_VIRT_MAILBOX_CODE, &var_virt_mailbox_code, 0, 0,
 	VAR_RELAY_RCPT_CODE, DEF_RELAY_RCPT_CODE, &var_relay_rcpt_code, 0, 0,
 	VAR_PLAINTEXT_CODE, DEF_PLAINTEXT_CODE, &var_plaintext_code, 0, 0,
-	VAR_VERIFY_POLL_COUNT, DEF_VERIFY_POLL_COUNT, &var_verify_poll_count, 1, 0,
 	VAR_SMTPD_CRATE_LIMIT, DEF_SMTPD_CRATE_LIMIT, &var_smtpd_crate_limit, 0, 0,
 	VAR_SMTPD_CCONN_LIMIT, DEF_SMTPD_CCONN_LIMIT, &var_smtpd_cconn_limit, 0, 0,
 	VAR_SMTPD_CMAIL_LIMIT, DEF_SMTPD_CMAIL_LIMIT, &var_smtpd_cmail_limit, 0, 0,

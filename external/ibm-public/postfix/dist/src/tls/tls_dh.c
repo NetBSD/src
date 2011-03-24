@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_dh.c,v 1.1.1.1.2.2 2009/09/15 06:03:51 snj Exp $	*/
+/*	$NetBSD: tls_dh.c,v 1.1.1.1.2.2.2.1 2011/03/24 20:17:23 riz Exp $	*/
 
 /*++
 /* NAME
@@ -207,7 +207,7 @@ DH     *tls_tmp_dh_cb(SSL *unused_ssl, int export, int keylength)
 
 int     tls_set_eecdh_curve(SSL_CTX *server_ctx, const char *grade)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x00909000 && !defined(OPENSSL_NO_ECDH)
+#if OPENSSL_VERSION_NUMBER >= 0x1000000fL && !defined(OPENSSL_NO_ECDH)
     int     nid;
     EC_KEY *ecdh;
     const char *curve;
