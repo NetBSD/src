@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.31 2011/03/22 20:03:04 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.32 2011/03/24 20:11:25 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2611,4 +2611,65 @@ sys/net/bpf_filter.c				1.36, 1.42 -> 1.46 via patch
 	fixes possible division-by-zero crashes by evil filter expressions
 	like "len / 0 = 1"
 	[spz, ticket #1571]
+
+gnu/dist/postfix/HISTORY				patch
+gnu/dist/postfix/RELEASE_NOTES				patch
+gnu/dist/postfix/makedefs				patch
+gnu/dist/postfix/conf/postfix-files			patch
+gnu/dist/postfix/conf/transport				patch
+gnu/dist/postfix/html/oqmgr.8.html			patch
+gnu/dist/postfix/html/pcre_table.5.html			patch
+gnu/dist/postfix/html/pickup.8.html			patch
+gnu/dist/postfix/html/postconf.5.html			patch
+gnu/dist/postfix/html/qmgr.8.html			patch
+gnu/dist/postfix/html/transport.5.html			patch
+gnu/dist/postfix/man/man5/pcre_table.5			patch
+gnu/dist/postfix/man/man5/postconf.5			patch
+gnu/dist/postfix/man/man5/transport.5			patch
+gnu/dist/postfix/man/man8/oqmgr.8			patch
+gnu/dist/postfix/man/man8/pickup.8			patch
+gnu/dist/postfix/man/man8/qmgr.8			patch
+gnu/dist/postfix/mantools/postlink			patch
+gnu/dist/postfix/proto/pcre_table			patch
+gnu/dist/postfix/proto/postconf.proto			patch
+gnu/dist/postfix/proto/transport			patch
+gnu/dist/postfix/src/cleanup/cleanup_map1n.c		patch
+gnu/dist/postfix/src/global/cleanup_user.h		patch
+gnu/dist/postfix/src/global/db_common.c			patch
+gnu/dist/postfix/src/global/mail_params.h		patch
+gnu/dist/postfix/src/global/mail_version.h		patch
+gnu/dist/postfix/src/global/pipe_command.c		patch
+gnu/dist/postfix/src/local/recipient.c			patch
+gnu/dist/postfix/src/master/master_sig.c		patch
+gnu/dist/postfix/src/milter/milter8.c			patch
+gnu/dist/postfix/src/oqmgr/qmgr.c			patch
+gnu/dist/postfix/src/oqmgr/qmgr_transport.c		patch
+gnu/dist/postfix/src/pickup/pickup.c			patch
+gnu/dist/postfix/src/postdrop/postdrop.c		patch
+gnu/dist/postfix/src/postsuper/postsuper.c		patch
+gnu/dist/postfix/src/qmgr/qmgr.c			patch
+gnu/dist/postfix/src/qmgr/qmgr.h			patch
+gnu/dist/postfix/src/qmgr/qmgr_entry.c			patch
+gnu/dist/postfix/src/qmgr/qmgr_job.c			patch
+gnu/dist/postfix/src/qmgr/qmgr_queue.c			patch
+gnu/dist/postfix/src/qmgr/qmgr_transport.c		patch
+gnu/dist/postfix/src/smtp/smtp_proto.c			patch
+gnu/dist/postfix/src/smtp/smtp_reuse.c			patch
+gnu/dist/postfix/src/smtpd/smtpd.c			patch
+gnu/dist/postfix/src/smtpd/smtpd_check.c		patch
+gnu/dist/postfix/src/smtpd/smtpd_proxy.c		patch
+gnu/dist/postfix/src/tls/Makefile.in			patch
+gnu/dist/postfix/src/tls/tls_certkey.c			patch
+gnu/dist/postfix/src/tls/tls_misc.c			patch
+gnu/dist/postfix/src/trivial-rewrite/resolve.c		patch
+gnu/dist/postfix/src/util/events.c			patch
+gnu/dist/postfix/src/util/host_port.c			patch
+gnu/dist/postfix/src/util/make_dirs.c			patch
+gnu/dist/postfix/src/util/sys_defs.h			patch
+gnu/dist/postfix/src/util/valid_hostname.c		patch
+gnu/dist/postfix/src/util/watchdog.c			patch
+
+	Update Postfix to version 2.5.12. This update fixes many bugs           
+	including the vulnerability reported in CVE-2011-0411.
+	[tron, ticket #1578]
 
