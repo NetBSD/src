@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.2 2011/03/24 07:06:34 jruoho Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.3 2011/03/24 07:37:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -58,6 +58,42 @@ static const struct {
 	{ 0xFC, 3, 8 },	{ 0xFD, 1, 8 },	{ 0xFE, 2, 8 },	{ 0xFF, 1, 8 },
 
 };
+
+ATF_TC(fast_divide32);
+ATF_TC_HEAD(fast_divide32, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of fast_divide32(3)");
+}
+
+ATF_TC_BODY(fast_divide32, tc)
+{
+	uint32_t a, b, q, r, m;
+	uint8_t i, s1, s2;
+
+	a = 0xFFFF;
+	b = 0x000F;
+
+	fast_divide32_prepare(b, &m, &s1, &s2);
+
+	q = fast_divide32(a, b, m, s1, s2);
+	r = fast_remainder32(a, b, m, s1, s2);
+
+	ATF_REQUIRE(q == 0x1111 && r == 0);
+
+	for (i = 1; i < __arraycount(bits); i++) {
+
+		a = bits[i].val;
+		b = bits[i].ffs;
+
+		fast_divide32_prepare(b, &m, &s1, &s2);
+
+		q = fast_divide32(a, b, m, s1, s2);
+		r = fast_remainder32(a, b, m, s1, s2);
+
+		ATF_REQUIRE(q == a / b);
+		ATF_REQUIRE(r == a % b);
+	}
+}
 
 ATF_TC(ffsfls);
 ATF_TC_HEAD(ffsfls, tc)
@@ -140,6 +176,7 @@ ATF_TC_BODY(ilog2_2, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, fast_divide32);
 	ATF_TP_ADD_TC(tp, ffsfls);
 	ATF_TP_ADD_TC(tp, ilog2_1);
 	ATF_TP_ADD_TC(tp, ilog2_2);
