@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.41 2011/03/06 17:08:39 bouyer Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.42 2011/03/24 17:05:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.41 2011/03/06 17:08:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.42 2011/03/24 17:05:46 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.41 2011/03/06 17:08:39 bouyer Exp $
 #ifdef UFS_DIRHASH
 #include <ufs/ufs/dirhash.h>
 #endif
-#include <ufs/ufs/quota2_prop.h>
+#include <quota/quotaprop.h>
 
 /* how many times ufs_init() was called */
 static int ufs_initcount = 0;
@@ -120,7 +120,7 @@ ufs_quotactl(struct mount *mp, prop_dictionary_t dict)
 	if (error)
 		return (error);
 
-	error = quota2_get_cmds(dict, &commands);
+	error = quota_get_cmds(dict, &commands);
 	if (error)
 		goto out_vfs;
 	iter = prop_array_iterator(commands);

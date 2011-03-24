@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.164 2011/02/12 22:24:40 matt Exp $
+#	$NetBSD: Makefile,v 1.165 2011/03/24 17:05:43 bouyer Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -87,6 +87,7 @@ SUBDIR+=	libroken	# depends on libutil, libcrypt
 SUBDIR+=	libcurses	# depends on libterminfo
 SUBDIR+=	libdm		# depends on libprop
 SUBDIR+=	libedit		# depends on libterminfo
+SUBDIR+=	libquota	# depends on libprop and librpcsvc
 SUBDIR+=	librefuse	# depends on libpuffs
 SUBDIR+=	librumpuser	# depends on libpthread
 
