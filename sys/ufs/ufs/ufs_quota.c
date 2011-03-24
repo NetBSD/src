@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.69 2011/03/06 17:08:39 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.70 2011/03/24 17:05:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.69 2011/03/06 17:08:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.70 2011/03/24 17:05:46 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -55,12 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.69 2011/03/06 17:08:39 bouyer Exp $"
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_quota.h>
-#include <ufs/ufs/quota2_prop.h>
+#include <quota/quotaprop.h>
 
 kmutex_t dqlock;
 kcondvar_t dqcv;
-
-const char *quotatypes[MAXQUOTAS] = INITQFNAMES;
 
 /*
  * Code pertaining to management of the in-core dquot data structures.
@@ -165,9 +163,9 @@ quota_handle_cmd(struct mount *mp, struct lwp *l, prop_dictionary_t cmddict)
 		return EINVAL;
 	if (!prop_dictionary_get_cstring_nocopy(cmddict, "type", &type))
 		return EINVAL;
-	if (!strcmp(type, "user")) {
+	if (!strcmp(type, QUOTADICT_CLASS_USER)) {
 		q2type = USRQUOTA;
-	} else if (!strcmp(type, "group")) {
+	} else if (!strcmp(type, QUOTADICT_CLASS_GROUP)) {
 		q2type = GRPQUOTA;
 	} else
 		return EOPNOTSUPP;

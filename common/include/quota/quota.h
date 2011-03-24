@@ -1,4 +1,4 @@
-/* $NetBSD: quota.h,v 1.3 2011/03/24 17:05:45 bouyer Exp $ */
+/* $NetBSD: quota.h,v 1.1 2011/03/24 17:05:39 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -27,28 +27,35 @@
   * POSSIBILITY OF SUCH DAMAGE.
   */
 
-#ifndef _SYS_QUOTA_H_
-#define _SYS_QUOTA_H_
+#ifndef _QUOTA_QUOTA_H
+#define _QUOTA_QUOTA_H
+#include <sys/types.h>
+#include <quota/quotaprop.h>
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-__BEGIN_DECLS
-int quotactl(const char *, struct plistref *) __RENAME(__quotactl50);
-__END_DECLS
-#endif
+/* check a quota usage against limits (assumes UFS semantic) */
+int quota_check_limit(uint64_t, uint64_t,  uint64_t, uint64_t, time_t, time_t);
+/* return values for above */
+#define QL_S_ALLOW_OK	0x00 /* below soft limit */
+#define QL_S_ALLOW_SOFT	0x01 /* over soft limit */
+#define QL_S_DENY_GRACE	0x02 /* over soft limit, grace time expired */
+#define QL_S_DENY_HARD	0x03 /* over hard limit */
+ 
+#define QL_F_CROSS	0x80 /* crossing soft limit */
 
-/* strings used in dictionary for the different quota class */
-#define QUOTADICT_CLASS_USER "user"
-#define QUOTADICT_CLASS_GROUP "group"
+#define QL_STATUS(x)	((x) & 0x0f)
+#define QL_FLAGS(x)	((x) & 0xf0)
 
-/* strings used in dictionary for the different limit types */
-#define QUOTADICT_LTYPE_BLOCK "block"
-#define QUOTADICT_LTYPE_FILE "file"
+/*
+ * retrieve quotas with ufs semantics from vfs, for the given id and class.
+ * second argument points to a struct ufs_quota_entry array of QUOTA_NLIMITS
+ * elements.
+ */
+int getufsquota(const char *, struct ufs_quota_entry *, uid_t, const char *);
 
-/* strings used in dictionary for the different limit and usage values */
-#define QUOTADICT_LIMIT_SOFT "soft"
-#define QUOTADICT_LIMIT_HARD "hard"
-#define QUOTADICT_LIMIT_GTIME "grace time"
-#define QUOTADICT_LIMIT_USAGE "usage"
-#define QUOTADICT_LIMIT_ETIME "expire time"
+/* same as above, but for NFS */
+int getnfsquota(const char *, struct ufs_quota_entry *, uid_t, const char *);
 
-#endif /* _SYS_QUOTA_H_ */
+/* call one of the above, if appropriate, after a statvfs(2) */
+int getfsquota(const char *, struct ufs_quota_entry *, uid_t, const char *);
+
+#endif /* _QUOTA_QUOTA_H */
