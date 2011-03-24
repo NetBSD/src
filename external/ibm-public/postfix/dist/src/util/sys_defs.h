@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.1.1.1.2.4 2011/01/07 01:24:20 riz Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.1.1.1.2.5 2011/03/24 19:54:09 riz Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -113,7 +113,8 @@
 #define HAS_DUPLEX_PIPE			/* 4.1 breaks with kqueue(2) */
 #endif
 
-#if __FreeBSD_version >= 800107		/* safe; don't believe the experts */
+#if (__FreeBSD_version >= 702104 && __FreeBSD_version <= 800000) \
+    || __FreeBSD_version >= 800100
 #define HAS_CLOSEFROM
 #endif
 
@@ -515,7 +516,7 @@ extern int opterr;
   * AIX: a SYSV-flavored hybrid. NB: fcntl() and flock() access the same
   * underlying locking primitives.
   */
-#ifdef AIX5
+#if defined(AIX5) || defined(AIX6)
 #define SUPPORTED
 #include <sys/types.h>
 #define UINT32_TYPE	unsigned int
@@ -1276,6 +1277,17 @@ extern int dup2_pass_on_exec(int oldd, int newd);
 extern const char *inet_ntop(int, const void *, char *, size_t);
 extern int inet_pton(int, const char *, void *);
 
+#endif
+
+ /*
+  * Workaround: after a watchdog alarm signal, wake up from select/poll/etc.
+  * by writing to a pipe. Solaris needs this, and HP-UX apparently, too. The
+  * run-time cost is negligible so we just turn it on for all systems. As a
+  * side benefit, making this code system-independent will simplify the
+  * detection of bit-rot problems.
+  */
+#ifndef NO_WATCHDOG_PIPE
+#define USE_WATCHDOG_PIPE
 #endif
 
  /*
