@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.22 2010/03/19 14:20:56 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.23 2011/03/24 14:58:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -36,14 +36,6 @@
 
 #ifndef _X68K_BUS_H_
 #define _X68K_BUS_H_
-
-#ifndef X68K_BUS_PERFORMANCE_HACK
-#if defined(__GNUC__) && defined(__STDC__)
-#define X68K_BUS_PERFORMANCE_HACK	1
-#else
-#define X68K_BUS_PERFORMANCE_HACK	0
-#endif
-#endif
 
 /*
  * Bus address and size types
@@ -293,120 +285,72 @@ static __inline void
 _bus_space_read_multi_1(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, uint8_t *datap, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint8_t *regadr = (uint8_t *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint8_t *regadr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_read_multi_1" : : : "memory");
+	regadr = (volatile uint8_t *)__X68K_BUS_ADDR(t, bsh, offset);
+
+	for (; count; count--)
 		*datap++ = *regadr;
-	}
-#else
-
-	while (count-- > 0) {
-		*datap++ = *(volatile uint8_t *)
-				__X68K_BUS_ADDR(t, bsh, offset);
-	}
-#endif
 }
 
 static __inline void
 _bus_space_read_multi_2(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, uint16_t *datap, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint16_t *regadr = (uint16_t *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint16_t *regadr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_read_multi_2" : : : "memory");
+	regadr = (volatile uint16_t *)__X68K_BUS_ADDR(t, bsh, offset);
+
+	for (; count; count--)
 		*datap++ = *regadr;
-	}
-#else
-
-	while (count-- > 0) {
-		*datap++ = *(volatile uint16_t *)
-				__X68K_BUS_ADDR(t, bsh, offset);
-	}
-#endif
 }
 
 static __inline void
 _bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, uint32_t *datap, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint32_t *regadr = (uint32_t *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint32_t *regadr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_read_multi_4" : : : "memory");
+	regadr = (volatile uint32_t *)__X68K_BUS_ADDR(t, bsh, offset);
+
+	for (; count; count--)
 		*datap++ = *regadr;
-	}
-#else
-
-	while (count-- > 0) {
-		*datap++ = *(volatile uint32_t *)
-				__X68K_BUS_ADDR(t, bsh, offset);
-	}
-#endif
 }
 
 static __inline void
 _bus_space_read_region_1(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, uint8_t *datap, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint8_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint8_t *addr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_read_region_1" : : : "memory");
-		*datap++ = *addr++;
-	}
-#else
-	volatile uint8_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	addr = (volatile uint8_t *)__X68K_BUS_ADDR(t, bsh, offset);
 
-	while (count-- > 0) {
+	for (; count; count--)
 		*datap++ = *addr++;
-	}
-#endif
 }
 
 static __inline void
 _bus_space_read_region_2(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, uint16_t *datap, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint16_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint16_t *addr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_read_region_2" : : : "memory");
-		*datap++ = *addr++;
-	}
-#else
-	volatile uint16_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	addr = (volatile uint16_t *)__X68K_BUS_ADDR(t, bsh, offset);
 
-	while (count-- > 0) {
+	for (; count; count--)
 		*datap++ = *addr++;
-	}
-#endif
 }
 
 static __inline void
 _bus_space_read_region_4(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, uint32_t *datap, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint32_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint32_t *addr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_read_region_4" : : : "memory");
-		*datap++ = *addr++;
-	}
-#else
-	volatile uint32_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	addr = (volatile uint32_t *)__X68K_BUS_ADDR(t, bsh, offset);
 
-	while (count-- > 0) {
+	for (; count; count--)
 		*datap++ = *addr++;
-	}
-#endif
 }
 
 static __inline void
@@ -437,180 +381,108 @@ static __inline void
 _bus_space_write_multi_1(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, const uint8_t *datap, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint8_t *regadr = (uint8_t *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint8_t *regadr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_write_multi_1" : : : "memory");
+	regadr = (volatile uint8_t *)__X68K_BUS_ADDR(t, bsh, offset);
+
+	for (; count; count--)
 		*regadr = *datap++;
-	}
-#else
-
-	while (count-- > 0) {
-		*(volatile uint8_t *) __X68K_BUS_ADDR(t, bsh, offset)
-		    = *datap++;
-	}
-#endif
 }
 
 static __inline void
 _bus_space_write_multi_2(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, const uint16_t *datap, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint16_t *regadr = (uint16_t *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint16_t *regadr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_write_multi_2" : : : "memory");
+	regadr = (volatile uint16_t *)__X68K_BUS_ADDR(t, bsh, offset);
+
+	for (; count; count--)
 		*regadr = *datap++;
-	}
-#else
-
-	while (count-- > 0) {
-		*(volatile uint16_t *) __X68K_BUS_ADDR(t, bsh, offset)
-		    = *datap++;
-	}
-#endif
 }
 
 static __inline void
 _bus_space_write_multi_4(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, const uint32_t *datap, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint32_t *regadr = (uint32_t *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint32_t *regadr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_write_multi_4" : : : "memory");
+	regadr = (volatile uint32_t *)__X68K_BUS_ADDR(t, bsh, offset);
+
+	for (; count; count--)
 		*regadr = *datap++;
-	}
-#else
-
-	while (count-- > 0) {
-		*(volatile uint32_t *) __X68K_BUS_ADDR(t, bsh, offset)
-		    = *datap++;
-	}
-#endif
 }
 
 static __inline void
 _bus_space_write_region_1(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, const uint8_t *datap, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint8_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint8_t *addr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_write_region_1": : : "memory");
-		*addr++ = *datap++;
-	}
-#else
-	volatile uint8_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	addr = (volatile uint8_t *)__X68K_BUS_ADDR(t, bsh, offset);
 
-	while (count-- > 0) {
+	for (; count; count--)
 		*addr++ = *datap++;
-	}
-#endif
 }
 
 static __inline void
 _bus_space_write_region_2(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, const uint16_t *datap, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint16_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint16_t *addr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_write_region_2": : : "memory");
-		*addr++ = *datap++;
-	}
-#else
-	volatile uint16_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	addr = (volatile uint16_t *)__X68K_BUS_ADDR(t, bsh, offset);
 
-	while (count-- > 0) {
+	for (; count; count--)
 		*addr++ = *datap++;
-	}
-#endif
 }
 
 static __inline void
 _bus_space_write_region_4(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, const uint32_t *datap, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint32_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint32_t *addr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_write_region_4": : : "memory");
-		*addr++ = *datap++;
-	}
-#else
-	volatile uint32_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	addr = (volatile uint32_t *)__X68K_BUS_ADDR(t, bsh, offset);
 
-	while (count-- > 0) {
+	for (; count; count--)
 		*addr++ = *datap++;
-	}
-#endif
 }
 
 static __inline void
 _bus_space_set_region_1(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, uint8_t value, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint8_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint8_t *addr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_set_region_1" : : : "memory");
-		*addr++ = value;
-	}
-#else
-	volatile uint8_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	addr = (volatile uint8_t *)__X68K_BUS_ADDR(t, bsh, offset);
 
-	while (count-- > 0) {
+	for (; count; count--)
 		*addr++ = value;
-	}
-#endif
 }
 
 static __inline void
 _bus_space_set_region_2(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, uint16_t value, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint16_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint16_t *addr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_set_region_2" : : : "memory");
-		*addr++ = value;
-	}
-#else
-	volatile uint16_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	addr = (volatile uint16_t *)__X68K_BUS_ADDR(t, bsh, offset);
 
-	while (count-- > 0) {
+	for (; count; count--)
 		*addr++ = value;
-	}
-#endif
 }
 
 static __inline void
 _bus_space_set_region_4(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, uint32_t value, bus_size_t count)
 {
-#if X68K_BUS_PERFORMANCE_HACK
-	uint32_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	volatile uint32_t *addr;
 
-	for (; count; count--) {
-		__asm("| avoid optim. _bus_space_set_region_4" : : : "memory");
-		*addr++ = value;
-	}
-#else
-	volatile uint32_t *addr = (void *) __X68K_BUS_ADDR(t, bsh, offset);
+	addr = (volatile uint32_t *)__X68K_BUS_ADDR(t, bsh, offset);
 
-	while (count-- > 0) {
+	for (; count; count--)
 		*addr++ = value;
-	}
-#endif
 }
 
 static __inline void
