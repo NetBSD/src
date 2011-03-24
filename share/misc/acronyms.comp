@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.122 2011/03/09 17:52:45 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.123 2011/03/24 17:00:31 ginsbach Exp $
 
 3WHS	three-way handshake
 AA	anti-aliasing
@@ -934,6 +934,7 @@ SB	sound blaster
 SBU	standard build unit
 SC	store conditional
 SCA	source code analyzer
+SCADA	supervisory control and data acquisition
 SCC	single chip cloud
 SCC	source code control
 SCCS	source code control system
