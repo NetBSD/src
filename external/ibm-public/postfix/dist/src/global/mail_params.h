@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.2.2.2 2009/09/15 06:02:46 snj Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.2.2.2.2.1 2011/03/24 20:17:20 riz Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -616,6 +616,10 @@ extern bool var_stat_home_dir;
 #define VAR_DUP_FILTER_LIMIT	"duplicate_filter_limit"
 #define DEF_DUP_FILTER_LIMIT	1000
 extern int var_dup_filter_limit;
+
+#define VAR_TLS_APPEND_DEF_CA	"tls_append_default_CA"
+#define DEF_TLS_APPEND_DEF_CA	0	/* Postfix < 2.8 BC break */
+extern bool var_tls_append_def_CA;
 
 #define VAR_TLS_RAND_EXCH_NAME	"tls_random_exchange_name"
 #define DEF_TLS_RAND_EXCH_NAME	"${data_directory}/prng_exch"
@@ -2554,7 +2558,7 @@ extern bool var_verify_neg_cache;
 extern char *var_verify_sender;
 
 #define VAR_VERIFY_POLL_COUNT		"address_verify_poll_count"
-#define DEF_VERIFY_POLL_COUNT		3
+#define DEF_VERIFY_POLL_COUNT		"${stress?1}${stress:3}"
 extern int var_verify_poll_count;
 
 #define VAR_VERIFY_POLL_DELAY		"address_verify_poll_delay"
@@ -2877,20 +2881,31 @@ extern bool var_smtp_cname_overr;
  /*
   * TLS cipherlists
   */
+#ifdef USE_TLS
+#include <openssl/opensslv.h>
+#if OPENSSL_VERSION_NUMBER >= 0x1000000fL
+#define PREFER_aNULL "aNULL:-aNULL:"
+#else
+#define PREFER_aNULL ""
+#endif
+#else
+#define PREFER_aNULL ""
+#endif
+
 #define VAR_TLS_HIGH_CLIST	"tls_high_cipherlist"
-#define DEF_TLS_HIGH_CLIST	"ALL:!EXPORT:!LOW:!MEDIUM:+RC4:@STRENGTH"
+#define DEF_TLS_HIGH_CLIST	PREFER_aNULL "ALL:!EXPORT:!LOW:!MEDIUM:+RC4:@STRENGTH"
 extern char *var_tls_high_clist;
 
 #define VAR_TLS_MEDIUM_CLIST	"tls_medium_cipherlist"
-#define DEF_TLS_MEDIUM_CLIST	"ALL:!EXPORT:!LOW:+RC4:@STRENGTH"
+#define DEF_TLS_MEDIUM_CLIST	PREFER_aNULL "ALL:!EXPORT:!LOW:+RC4:@STRENGTH"
 extern char *var_tls_medium_clist;
 
 #define VAR_TLS_LOW_CLIST	"tls_low_cipherlist"
-#define DEF_TLS_LOW_CLIST	"ALL:!EXPORT:+RC4:@STRENGTH"
+#define DEF_TLS_LOW_CLIST	PREFER_aNULL "ALL:!EXPORT:+RC4:@STRENGTH"
 extern char *var_tls_low_clist;
 
 #define VAR_TLS_EXPORT_CLIST	"tls_export_cipherlist"
-#define DEF_TLS_EXPORT_CLIST	"ALL:+RC4:@STRENGTH"
+#define DEF_TLS_EXPORT_CLIST	PREFER_aNULL "ALL:+RC4:@STRENGTH"
 extern char *var_tls_export_clist;
 
 #define VAR_TLS_NULL_CLIST	"tls_null_cipherlist"

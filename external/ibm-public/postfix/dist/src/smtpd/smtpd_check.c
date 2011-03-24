@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.1.1.2.2.2 2009/09/15 06:03:34 snj Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.1.1.2.2.2.2.1 2011/03/24 20:17:22 riz Exp $	*/
 
 /*++
 /* NAME
@@ -3757,7 +3757,8 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 			 name);
 	    else {
 		cpp += 1;
-		if (state->helo_name)
+		if (state->helo_name
+		    && valid_hostname(state->helo_name, DONT_GRIPE))
 		    status = reject_rbl_domain(state, *cpp, state->helo_name,
 					       SMTPD_NAME_HELO);
 	    }
