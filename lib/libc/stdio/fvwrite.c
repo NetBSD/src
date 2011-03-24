@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.21 2009/10/25 20:44:13 christos Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.22 2011/03/24 02:29:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.21 2009/10/25 20:44:13 christos Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.22 2011/03/24 02:29:33 dholland Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,7 +75,7 @@ __sfvwrite(fp, uio)
 		errno = EINVAL;
 		return (EOF);
 	}
-	if ((len = uio->uio_resid) == 0)
+	if (uio->uio_resid == 0)
 		return (0);
 	/* make sure we can write */
 	if (cantwrite(fp)) {
