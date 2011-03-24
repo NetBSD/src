@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.4 2010/05/10 16:33:45 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.5 2011/03/24 22:08:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,11 @@
 /* MD Message catalog -- Polish, hpcarm version */
 
 message md_hello
-{Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
+{
+}
 
+message md_may_remove_boot_medium
+{Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
 }
 
 message dobad144

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.10 2009/01/25 17:48:05 abs Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.11 2011/03/24 22:08:31 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/10/24 19:43:40 briggs Exp */
 
@@ -41,8 +41,11 @@
 /* MD Message catalog -- Polish, evbppc version */
 
 message md_hello
-{Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
+{
+}
 
+message md_may_remove_boot_medium
+{Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
 }
 
 message dobad144

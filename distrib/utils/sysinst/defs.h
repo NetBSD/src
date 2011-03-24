@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.151 2011/02/01 01:42:07 joerg Exp $	*/
+/*	$NetBSD: defs.h,v 1.152 2011/03/24 22:01:13 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -406,6 +406,7 @@ int	file_mode_match(const char *, unsigned int);
 uint	get_ramsize(void);
 void	ask_sizemult(int);
 void	run_makedev(void);
+int	boot_media_still_needed(void);
 int	get_via_floppy(void);
 int	get_via_cdrom(void);
 int	get_via_localfs(void);
