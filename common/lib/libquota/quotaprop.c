@@ -1,6 +1,6 @@
-/* $NetBSD: quota2_prop.c,v 1.2 2011/03/06 17:08:39 bouyer Exp $ */
+/* $NetBSD: quotaprop.c,v 1.1 2011/03/24 17:05:40 bouyer Exp $ */
 /*-
-  * Copyright (c) 2010 Manuel Bouyer
+  * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
   * This software is distributed under the following condiions
   * compliant with the NetBSD foundation policy.
@@ -32,90 +32,50 @@
 #include <sys/inttypes.h>
 #include <sys/errno.h>
 
-#include <ufs/ufs/quota2_prop.h>
+#include <quota/quotaprop.h>
 
-const char *quota2_valnames[] = INITQLNAMES;
-
-prop_dictionary_t
-prop_dictionary_get_dict(prop_dictionary_t dict, const char *key)
-{
-	prop_object_t o;
-	o = prop_dictionary_get(dict, key);
-	if (o == NULL || prop_object_type(o) != PROP_TYPE_DICTIONARY)
-		return NULL;
-	return o;
-
-}
-
+/*
+ * update values from value[] using dict entries whose key is stored
+ * in name[]. Unknown keys are ignored. If update is false,
+ * a key in name[] but not in dict is an error.
+ * name[] may have NULL pointers to skip a value[]
+ */
 int
-quota2_dict_get_q2v_limits(prop_dictionary_t dict, struct quota2_val *q2v,
-    bool update)
+quotaprop_dict_get_uint64(prop_dictionary_t dict, uint64_t value[],
+    const char *name[], int nvalues, bool update)
 {
-	uint64_t vu;
-	int64_t v;
-	if (!prop_dictionary_get_uint64(dict, "soft", &vu)) {
-		if (!update)
-			return EINVAL;
-	} else
-		q2v->q2v_softlimit = vu;
-	if (!prop_dictionary_get_uint64(dict, "hard", &vu)) {
-		if (!update)
-			return EINVAL;
-	} else
-		q2v->q2v_hardlimit = vu;
-	if (!prop_dictionary_get_int64(dict, "grace time", &v)) {
-		if (!update)
-			return EINVAL;
-	} else
-		q2v->q2v_grace = v;
-	return 0;
-}
+	int i;
+	uint64_t v;
 
-int
-quota2_dict_update_q2e_limits(prop_dictionary_t data, struct quota2_entry *q2e)
-{
-	int i, error;
-	prop_dictionary_t val;
-	for (i = 0; i < N_QL; i++) {
-		val = prop_dictionary_get_dict(data, quota2_valnames[i]);
-		if (val == NULL)
+	for (i = 0; i < nvalues; i++) {
+		if (name[i] == NULL)
 			continue;
-		error = quota2_dict_get_q2v_limits(val, &q2e->q2e_val[i], 1);
-		if (error)
-			return error;
+		if (!prop_dictionary_get_uint64(dict, name[i], &v)) {
+			if (!update)
+				return EINVAL;
+		}
+		value[i] = v;
 	}
 	return 0;
 }
 
+/*
+ * convert a quota entry dictionary to in-memory array of uint64_t's
+ */
 int
-quota2_dict_get_q2v_usage(prop_dictionary_t dict, struct quota2_val *q2v)
-{
-	uint64_t vu;
-	int64_t v;
-	int err;
-
-	err = quota2_dict_get_q2v_limits(dict, q2v, false);
-	if (err)
-		return err;
-	if (!prop_dictionary_get_uint64(dict, "usage", &vu))
-		return EINVAL;
-	q2v->q2v_cur = vu;
-	if (!prop_dictionary_get_int64(dict, "expire time", &v))
-		return EINVAL;
-	q2v->q2v_time = v;
-	return 0;
-}
-
-int
-quota2_dict_get_q2e_usage(prop_dictionary_t data, struct quota2_entry *q2e)
+proptoquota64(prop_dictionary_t data, uint64_t *values[], const char *valname[],
+    int nvalues, const char *limname[], int nlimits)
 {
 	int i, error;
 	prop_dictionary_t val;
-	for (i = 0; i < N_QL; i++) {
-		val = prop_dictionary_get_dict(data, quota2_valnames[i]);
-		if (val == NULL)
+
+	for (i = 0; i < nlimits; i++) {
+		if (limname[i] == NULL)
+			continue;
+		if (!prop_dictionary_get_dict(data, limname[i], &val))
 			return EINVAL;
-		error = quota2_dict_get_q2v_usage(val, &q2e->q2e_val[i]);
+		error = quotaprop_dict_get_uint64(val, values[i],
+		    valname, nvalues, false);
 		if (error)
 			return error;
 	}
@@ -123,7 +83,7 @@ quota2_dict_get_q2e_usage(prop_dictionary_t data, struct quota2_entry *q2e)
 }
 
 int
-quota2_get_cmds(prop_dictionary_t qdict, prop_array_t *cmds)
+quota_get_cmds(prop_dictionary_t qdict, prop_array_t *cmds)
 {
 	prop_number_t pn;
 	prop_object_t o;
@@ -143,31 +103,9 @@ quota2_get_cmds(prop_dictionary_t qdict, prop_array_t *cmds)
 	return 0;
 }
 
-bool
-prop_array_add_and_rel(prop_array_t array, prop_object_t po)
-{
-	bool ret;
-	if (po == NULL)
-		return false;
-	ret = prop_array_add(array, po);
-	prop_object_release(po);
-	return ret;
-}
-
-bool
-prop_dictionary_set_and_rel(prop_dictionary_t dict, const char *key,
-    prop_object_t po)
-{
-	bool ret;
-	if (po == NULL)
-		return false;
-	ret = prop_dictionary_set(dict, key, po);
-	prop_object_release(po);
-	return ret;
-}
 
 prop_dictionary_t
-quota2_prop_create(void)
+quota_prop_create(void)
 {
 	prop_dictionary_t dict = prop_dictionary_create();
 
@@ -184,7 +122,7 @@ err:
 }
 
 bool
-quota2_prop_add_command(prop_array_t arrcmd, const char *cmd, const char *type,
+quota_prop_add_command(prop_array_t arrcmd, const char *cmd, const char *type,
     prop_array_t data)
 {
 	prop_dictionary_t dict;
@@ -212,36 +150,33 @@ err:
 	return false;
 }
 
+/* construct a dictionary using array of values and corresponding keys */
 prop_dictionary_t
-q2vtoprop(struct quota2_val *q2v)
+limits64toprop(uint64_t value[], const char *name[], int nvalues)
 {
+	int i;
 	prop_dictionary_t dict1 = prop_dictionary_create();
-
 	if (dict1 == NULL)
 		return NULL;
-	if (!prop_dictionary_set_uint64(dict1, "hard", q2v->q2v_hardlimit)) {
-		goto err;
-	}
-	if (!prop_dictionary_set_uint64(dict1, "soft", q2v->q2v_softlimit)) {
-		goto err;
-	}
-	if (!prop_dictionary_set_uint64(dict1, "usage", q2v->q2v_cur)) {
-		goto err;
-	}
-	if (!prop_dictionary_set_int64(dict1, "expire time", q2v->q2v_time)) {
-		goto err;
-	}
-	if (!prop_dictionary_set_int64(dict1, "grace time", q2v->q2v_grace)) {
-		goto err;
+
+	for (i = 0;  i < nvalues; i++) {
+		if (name[i] == NULL)
+			continue;
+		if (!prop_dictionary_set_uint64(dict1, name[i], value[i])) {
+			prop_object_release(dict1);
+			return NULL;
+		}
 	}
 	return dict1;
-err:
-	prop_object_release(dict1);
-	return NULL;
 }
 
+/*
+ * construct a quota entry using provided array of values, array of values
+ * names
+ */
 prop_dictionary_t
-q2etoprop(struct quota2_entry *q2e, int def)
+quota64toprop(uid_t uid, int def, uint64_t *values[], const char *valname[],
+    int nvalues, const char *limname[], int nlimits)
 {
 	prop_dictionary_t dict1 = prop_dictionary_create();
 	prop_dictionary_t dict2;
@@ -255,15 +190,17 @@ q2etoprop(struct quota2_entry *q2e, int def)
 			goto err;
 		}
 	} else {
-		if (!prop_dictionary_set_uint32(dict1, "id", q2e->q2e_uid)) {
+		if (!prop_dictionary_set_uint32(dict1, "id", uid)) {
 			goto err;
 		}
 	}
-	for (i = 0; i < N_QL; i++) {
-		dict2 = q2vtoprop(&q2e->q2e_val[i]);
+	for (i = 0; i < nlimits; i++) {
+		if (limname[i] == NULL)
+			continue;
+		dict2 = limits64toprop(values[i], valname, nvalues);
 		if (dict2 == NULL)
 			goto err;
-		if (!prop_dictionary_set_and_rel(dict1, quota2_valnames[i],
+		if (!prop_dictionary_set_and_rel(dict1, limname[i],
 		    dict2))
 			goto err;
 	}
@@ -273,3 +210,7 @@ err:
 	prop_object_release(dict1);
 	return NULL;
 }
+
+const char *ufs_quota_entry_names[] = UFS_QUOTA_ENTRY_NAMES;
+const char *ufs_quota_limit_names[] = QUOTA_LIMIT_NAMES;
+const char *ufs_quota_class_names[] = QUOTA_CLASS_NAMES;

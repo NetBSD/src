@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.12 2011/02/26 18:17:55 jakllsch Exp $
+#	$NetBSD: Makefile.libkern,v 1.13 2011/03/24 17:05:44 bouyer Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -32,6 +32,7 @@ CPPFLAGS+=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
 .include "${.PARSEDIR}/../../../common/lib/libc/Makefile.inc"
 .include "${.PARSEDIR}/../../../common/lib/libutil/Makefile.inc"
 .include "${.PARSEDIR}/../../../common/lib/libprop/Makefile.inc"
+.include "${.PARSEDIR}/../../../common/lib/libquota/Makefile.inc"
 
 CPPFLAGS+=	-I${KERNDIR}/../../../common/include
 

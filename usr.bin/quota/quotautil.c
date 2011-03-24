@@ -1,4 +1,4 @@
-/*	$NetBSD: quotautil.c,v 1.2 2011/03/06 23:26:05 christos Exp $ */
+/*	$NetBSD: quotautil.c,v 1.3 2011/03/24 17:05:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotautil.c,v 1.2 2011/03/06 23:26:05 christos Exp $");
+__RCSID("$NetBSD: quotautil.c,v 1.3 2011/03/24 17:05:46 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,13 +60,13 @@ __RCSID("$NetBSD: quotautil.c,v 1.2 2011/03/06 23:26:05 christos Exp $");
 #include <limits.h>
 #include <inttypes.h>
 
-#include <ufs/ufs/quota2.h>
+#include <quota/quotaprop.h>
 #include <ufs/ufs/quota1.h>
 
 #include "quotautil.h"
 
-const char *qfextension[MAXQUOTAS] = INITQFNAMES;
-const char *qfname = QUOTAFILENAME;
+const char *qfextension[] = INITQFNAMES;
+const char *qfnamep = QUOTAFILENAME;
  
 /*
  * Check to see if a particular quota is to be enabled.
@@ -102,19 +102,6 @@ hasquota(char *buf, size_t len, struct fstab *fs, int type)
 	}
 	(void)snprintf(buf, len, "%s/%s.%s", fs->fs_file, qfname,
 	    qfextension[type]);
-	return 1;
-}
-
-int
-alldigits(const char *s)
-{
-	unsigned char c;
-
-	c = *s++;
-	do {
-		if (!isdigit(c))
-			return 0;
-	} while ((c = *s++) != 0);
 	return 1;
 }
 

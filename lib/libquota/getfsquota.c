@@ -1,6 +1,7 @@
-/* $NetBSD: quota2_prop.h,v 1.2 2011/03/06 17:08:39 bouyer Exp $ */
+/*	$NetBSD: getfsquota.c,v 1.1 2011/03/24 17:05:43 bouyer Exp $ */
+
 /*-
-  * Copyright (c) 2010 Manuel Bouyer
+  * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
   * This software is distributed under the following condiions
   * compliant with the NetBSD foundation policy.
@@ -27,21 +28,40 @@
   * POSSIBILITY OF SUCH DAMAGE.
   */
 
-#include <prop/proplib.h>
-#include <ufs/ufs/quota2.h>
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: getfsquota.c,v 1.1 2011/03/24 17:05:43 bouyer Exp $");
 
-prop_dictionary_t prop_dictionary_get_dict(prop_dictionary_t, const char *);
-int quota2_dict_get_q2v_limits(prop_dictionary_t, struct quota2_val *, bool);
-int quota2_dict_update_q2e_limits(prop_dictionary_t, struct quota2_entry *);
-int quota2_dict_get_q2v_usage(prop_dictionary_t, struct quota2_val *);
-int quota2_dict_get_q2e_usage(prop_dictionary_t, struct quota2_entry *);
-int quota2_get_cmds(prop_dictionary_t, prop_array_t *);
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <err.h>
+#include <string.h>
 
-bool prop_array_add_and_rel(prop_array_t, prop_object_t);
-bool prop_dictionary_set_and_rel(prop_dictionary_t, const char *,
-     prop_object_t);
-prop_dictionary_t quota2_prop_create(void);
-bool quota2_prop_add_command(prop_array_t, const char *, const char *,
-    prop_array_t);
-prop_dictionary_t q2vtoprop(struct quota2_val *);
-prop_dictionary_t q2etoprop(struct quota2_entry *, int);
+#include <sys/types.h>
+#include <sys/statvfs.h>
+
+#include <quota/quotaprop.h>
+#include <quota/quota.h>
+
+/* retrieve quotas with ufs semantics from vfs, for the given user id */
+int
+getfsquota(const char *path, struct ufs_quota_entry *qv, uid_t id,
+    const char *class)
+{
+	struct statvfs v;
+
+	if (statvfs(path, &v) < 0) {
+		return -1;
+	}
+	if (strcmp(v.f_fstypename, "nfs") == 0)
+		return getnfsquota(v.f_mntfromname, qv, id, class);
+	else {
+		if ((v.f_flag & ST_QUOTA) == 0)
+			return 0;
+		/*
+		 * assume all quota-enabled local filesystems have UFS
+		 * semantic for now
+		 */
+		return getufsquota(v.f_mntonname, qv, id, class);
+	}
+}

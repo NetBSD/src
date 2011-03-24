@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.26 2011/03/06 17:08:39 bouyer Exp $	*/
+/*	$NetBSD: quota.h,v 1.27 2011/03/24 17:05:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,6 +36,7 @@
 
 #ifndef	_UFS_UFS_QUOTA_H_
 #define	_UFS_UFS_QUOTA_H_
+#include <quota/quotaprop.h>
 
 /*
  * These definitions are common to the original disk quota implementation
@@ -53,22 +54,32 @@
 #define	USRQUOTA	0	/* element used for user quotas */
 #define	GRPQUOTA	1	/* element used for group quotas */
 
-/*
- * Definitions for the default names of the quotas files/quota types.
- */
-#define INITQFNAMES { \
-	"user",		/* USRQUOTA */ \
-	"group",	/* GRPQUOTA */ \
+
+__inline static int __unused
+ufsclass2qtype(int class)
+{
+	switch(class) {
+	case QUOTA_CLASS_USER:
+		return USRQUOTA;
+	case QUOTA_CLASS_GROUP:
+		return GRPQUOTA;
+	default:
+		return -1;
+	}
 }
 
-/* definition of limits types for each quota */
-#define QL_BLOCK 0
-#define QL_FILE  1
-#define N_QL     2
-
-#define INITQLNAMES  {"block", "file", "undefined" }
-
-
+static __inline int __unused
+qtype2ufsclass(int type)
+{
+	switch(type) {
+	case USRQUOTA:
+		return QUOTA_CLASS_USER;
+	case GRPQUOTA:
+		return QUOTA_CLASS_GROUP;
+	default:
+		return -1;
+	}
+}
 
 #ifdef _KERNEL
 

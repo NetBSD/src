@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.7 2011/03/06 17:08:33 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.8 2011/03/24 17:05:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.7 2011/03/06 17:08:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.8 2011/03/24 17:05:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ compat_50_sys_mknod(struct lwp *l,
 }
 
 #include <ufs/ufs/quota1.h>
-#include <ufs/ufs/quota2_prop.h>
+#include <quota/quotaprop.h>
 
 /* ARGSUSED */
 int   
@@ -335,8 +335,11 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 	prop_array_t cmds, datas;
 	char *bufpath;
 	struct dqblk dqblk;
-	struct quota2_entry q2e;
-	static const char *quotatypes[MAXQUOTAS] = INITQFNAMES;
+	struct ufs_quota_entry qe[QUOTA_NLIMITS];
+	uint64_t *values[QUOTA_NLIMITS];
+
+	values[QUOTA_LIMIT_BLOCK] = &qe[QUOTA_LIMIT_BLOCK].ufsqe_hardlimit;
+	values[QUOTA_LIMIT_FILE] = &qe[QUOTA_LIMIT_FILE].ufsqe_hardlimit;
 
 	error = namei_simple_user(SCARG(uap, path),
 				NSM_FOLLOW_TRYEMULROOT, &vp);
@@ -344,7 +347,7 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 		return (error);       
 	error = ENOMEM;
 	mp = vp->v_mount;
-	if ((dict = quota2_prop_create()) == NULL)
+	if ((dict = quota_prop_create()) == NULL)
 		goto out;
 	if ((cmds = prop_array_create()) == NULL)
 		goto out_dict;
@@ -372,15 +375,17 @@ compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *
 		error = ENOMEM;
 		if (!prop_array_add_and_rel(datas, data))
 			goto out_datas;
-		if (!quota2_prop_add_command(cmds, "quotaon",
-		    quotatypes[q1cmd & SUBCMDMASK], datas))
+		if (!quota_prop_add_command(cmds, "quotaon",
+		    ufs_quota_class_names[qtype2ufsclass(q1cmd & SUBCMDMASK)],
+		    datas))
 			goto out_cmds;
 		goto do_quotaonoff;
 
 	case Q_QUOTAOFF:
 		error = ENOMEM;
-		if (!quota2_prop_add_command(cmds, "quotaoff",
-		    quotatypes[q1cmd & SUBCMDMASK], datas))
+		if (!quota_prop_add_command(cmds, "quotaoff",
+		    ufs_quota_class_names[qtype2ufsclass(q1cmd & SUBCMDMASK)],
+		    datas))
 			goto out_cmds;
 do_quotaonoff:
 		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
@@ -388,7 +393,7 @@ do_quotaonoff:
 		error = VFS_QUOTACTL(mp, dict);
 		if (error)
 			goto out_dict;
-		if ((error = quota2_get_cmds(dict, &cmds)) != 0)
+		if ((error = quota_get_cmds(dict, &cmds)) != 0)
 			goto out_dict;
 		cmd = prop_array_get(cmds, 0);
 		if (cmd == NULL) {
@@ -411,15 +416,16 @@ do_quotaonoff:
 			goto out_data;
 		if (!prop_array_add_and_rel(datas, data))
 			goto out_datas;
-		if (!quota2_prop_add_command(cmds, "get",
-		    quotatypes[q1cmd & SUBCMDMASK], datas))
+		if (!quota_prop_add_command(cmds, "get",
+		    ufs_quota_class_names[qtype2ufsclass(q1cmd & SUBCMDMASK)],
+		    datas))
 			goto out_cmds;
 		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
 			goto out_dict;
 		error = VFS_QUOTACTL(mp, dict);
 		if (error)
 			goto out_dict;
-		if ((error = quota2_get_cmds(dict, &cmds)) != 0)
+		if ((error = quota_get_cmds(dict, &cmds)) != 0)
 			goto out_dict;
 		cmd = prop_array_get(cmds, 0);
 		if (cmd == NULL) {
@@ -440,10 +446,12 @@ do_quotaonoff:
 		data = prop_array_get(datas, 0);
 		if (data == NULL)
 			goto out_dict;
-		error = quota2_dict_get_q2e_usage(data, &q2e);
+		error = proptoquota64(data, values,
+		    ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
+		    ufs_quota_limit_names, QUOTA_NLIMITS);
 		if (error)
 			goto out_dict;
-		q2e2dqblk(&q2e, &dqblk);
+		ufsqe2dqblk(qe, &dqblk);
 		error = copyout(&dqblk, SCARG(uap, arg), sizeof(dqblk));
 		goto out_dict;
 		
@@ -451,24 +459,26 @@ do_quotaonoff:
 		error = copyin(SCARG(uap, arg), &dqblk, sizeof(dqblk));
 		if (error)
 			goto out_datas;
-		dqblk2q2e(&dqblk, &q2e);
-		q2e.q2e_uid = SCARG(uap, uid);
+		dqblk2ufsqe(&dqblk, qe);
 
 		error = ENOMEM;
-		data = q2etoprop(&q2e, 0);
+		data = quota64toprop(SCARG(uap, uid), 0, values,
+		    ufs_quota_entry_names, UFS_QUOTA_NENTRIES,
+		    ufs_quota_limit_names, QUOTA_NLIMITS);
 		if (data == NULL)
 			goto out_data;
 		if (!prop_array_add_and_rel(datas, data))
 			goto out_datas;
-		if (!quota2_prop_add_command(cmds, "set",
-		    quotatypes[q1cmd & SUBCMDMASK], datas))
+		if (!quota_prop_add_command(cmds, "set",
+		    ufs_quota_class_names[qtype2ufsclass(q1cmd & SUBCMDMASK)],
+		    datas))
 			goto out_cmds;
 		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
 			goto out_dict;
 		error = VFS_QUOTACTL(mp, dict);
 		if (error)
 			goto out_dict;
-		if ((error = quota2_get_cmds(dict, &cmds)) != 0)
+		if ((error = quota_get_cmds(dict, &cmds)) != 0)
 			goto out_dict;
 		cmd = prop_array_get(cmds, 0);
 		if (cmd == NULL) {
@@ -488,15 +498,16 @@ do_quotaonoff:
 		 * emulate with a "get version"
 		 */
 		error = ENOMEM;
-		if (!quota2_prop_add_command(cmds, "get version",
-		    quotatypes[q1cmd & SUBCMDMASK], datas))
+		if (!quota_prop_add_command(cmds, "get version",
+		    ufs_quota_class_names[qtype2ufsclass(q1cmd & SUBCMDMASK)],
+		    datas))
 			goto out_cmds;
 		if (!prop_dictionary_set_and_rel(dict, "commands", cmds))
 			goto out_dict;
 		error = VFS_QUOTACTL(mp, dict);
 		if (error)
 			goto out_dict;
-		if ((error = quota2_get_cmds(dict, &cmds)) != 0)
+		if ((error = quota_get_cmds(dict, &cmds)) != 0)
 			goto out_dict;
 		cmd = prop_array_get(cmds, 0);
 		if (cmd == NULL) {

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.926 2011/03/17 02:35:27 joerg Exp $
+# $NetBSD: mi,v 1.927 2011/03/24 17:05:40 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -846,6 +846,7 @@
 ./usr/include/pcap				base-c-usr
 ./usr/include/prop				base-c-usr
 ./usr/include/protocols				base-c-usr
+./usr/include/quota				base-c-usr
 ./usr/include/readline				base-c-usr
 ./usr/include/rpc				base-c-usr
 ./usr/include/rpcsvc				base-c-usr

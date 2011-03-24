@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.25 2011/03/06 23:24:33 christos Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.26 2011/03/24 17:05:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.25 2011/03/06 23:24:33 christos Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.26 2011/03/24 17:05:47 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: quotaon.c,v 1.25 2011/03/06 23:24:33 christos Exp $");
 #include <sys/file.h>
 #include <sys/mount.h>
 
-#include <ufs/ufs/quota2_prop.h>
+#include <quota/quotaprop.h>
 #include <ufs/ufs/quota1.h>
 #include <sys/quota.h>
 
@@ -167,7 +167,7 @@ quotaonoff( struct fstab *fs, int offmode, int type, const char *qfpathname)
 	struct plistref pref;
 	int8_t error8;
 
-	dict = quota2_prop_create();
+	dict = quota_prop_create();
 	cmds = prop_array_create();
 	datas = prop_array_create();
 
@@ -178,7 +178,7 @@ quotaonoff( struct fstab *fs, int offmode, int type, const char *qfpathname)
 		errx(1, "can't allocate proplist");
 
 	if (offmode) {
-		if (!quota2_prop_add_command(cmds, "quotaoff",
+		if (!quota_prop_add_command(cmds, "quotaoff",
 		    qfextension[type], datas))
 			err(1, "prop_add_command");
 	} else {
@@ -190,7 +190,7 @@ quotaonoff( struct fstab *fs, int offmode, int type, const char *qfpathname)
 			err(1, "prop_dictionary_set(quotafile)");
 		if (!prop_array_add_and_rel(datas, data))
 			err(1, "prop_array_add(data)");
-		if (!quota2_prop_add_command(cmds, "quotaon",
+		if (!quota_prop_add_command(cmds, "quotaon",
 		    qfextension[type], datas))
 			err(1, "prop_add_command");
 	}
@@ -209,8 +209,8 @@ quotaonoff( struct fstab *fs, int offmode, int type, const char *qfpathname)
 	if ((errno = prop_dictionary_recv_syscall(&pref, &dict)) != 0)
 		err(1, "prop_dictionary_recv_syscall");
 
-	if ((errno = quota2_get_cmds(dict, &cmds)) != 0)
-		err(1, "quota2_get_cmds");
+	if ((errno = quota_get_cmds(dict, &cmds)) != 0)
+		err(1, "quota_get_cmds");
 
 	/* only one command, no need to iter */
 	cmd = prop_array_get(cmds, 0);

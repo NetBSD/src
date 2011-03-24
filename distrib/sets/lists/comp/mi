@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1602 2011/03/19 04:59:43 jruoho Exp $
+#	$NetBSD: mi,v 1.1603 2011/03/24 17:05:41 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1869,6 +1869,8 @@
 ./usr/include/puffs.h				comp-puffs-include
 ./usr/include/puffsdump.h			comp-puffs-include
 ./usr/include/pwd.h				comp-c-include
+./usr/include/quota/quota.h			comp-c-include
+./usr/include/quota/quotaprop.h			comp-c-include
 ./usr/include/radlib.h				comp-c-include
 ./usr/include/radlib_vs.h			comp-c-include
 ./usr/include/randomid.h			comp-c-include
@@ -2623,6 +2625,9 @@
 ./usr/lib/libpuffs.a				comp-puffs-lib
 ./usr/lib/libpuffs_g.a				-unknown-		debuglib
 ./usr/lib/libpuffs_p.a				comp-puffs-proflib	profile
+./usr/lib/libquota.a				comp-c-lib
+./usr/lib/libquota_g.a				-unknown-		debuglib
+./usr/lib/libquota_p.a				comp-c-proflib		profile
 ./usr/lib/libradius.a				comp-c-lib
 ./usr/lib/libradius_g.a				-unknown-		debuglib
 ./usr/lib/libradius_p.a				comp-c-proflib		profile
@@ -3960,6 +3965,7 @@
 ./usr/libdata/lint/llib-lpthread_dbg.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpuffs.ln		comp-puffs-lintlib	lint
 ./usr/libdata/lint/llib-lradius.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lquota.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrefuse.ln		comp-refuse-lintlib	lint
 ./usr/libdata/lint/llib-lresolv.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrmt.ln			comp-c-lintlib		lint

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.h,v 1.12 2011/01/20 11:17:58 bouyer Exp $	*/
+/*	$NetBSD: prop_dictionary.h,v 1.13 2011/03/24 17:05:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -115,6 +115,8 @@ int		prop_dictionary_copyout_ioctl(struct plistref *,
  * Utility routines to make it more convenient to work with values
  * stored in dictionaries.
  */
+bool		prop_dictionary_get_dict(prop_dictionary_t, const char *,
+					 prop_dictionary_t *);
 bool		prop_dictionary_get_bool(prop_dictionary_t, const char *,
 					 bool *);
 bool		prop_dictionary_set_bool(prop_dictionary_t, const char *,
@@ -167,6 +169,10 @@ bool		prop_dictionary_get_cstring_nocopy(prop_dictionary_t,
 bool		prop_dictionary_set_cstring_nocopy(prop_dictionary_t,
 						   const char *,
 						   const char *);
+
+bool		prop_dictionary_set_and_rel(prop_dictionary_t,
+						   const char *,
+						   prop_object_t);
 
 __END_DECLS
 

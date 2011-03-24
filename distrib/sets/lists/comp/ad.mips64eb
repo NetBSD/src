@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.25 2011/03/12 19:52:46 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.26 2011/03/24 17:05:41 bouyer Exp $
 ./usr/bin/elf2aout				comp-obsolete	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -459,6 +459,10 @@
 ./usr/lib/64/libpuffs.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libpuffs_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/libpuffs_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/libquota.a				comp-c-lib		compat
+./usr/lib/64/libquota.so			base-sys-shlib		compat,pic
+./usr/lib/64/libquota_p.a			comp-c-proflib		compat,profile
+./usr/lib/64/libquota_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libradius.a			comp-c-lib		compat
 ./usr/lib/64/libradius.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libradius_p.a			comp-c-proflib		compat,profile
@@ -989,6 +993,10 @@
 ./usr/lib/o32/libpuffs.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libpuffs_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/libpuffs_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/libquota.a			comp-c-lib		compat
+./usr/lib/o32/libquota.so			base-sys-shlib		compat,pic
+./usr/lib/o32/libquota_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/libquota_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libradius.a			comp-c-lib		compat
 ./usr/lib/o32/libradius.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libradius_p.a			comp-c-proflib		compat,profile
@@ -1217,6 +1225,7 @@
 ./usr/libdata/debug/usr/lib/64/libpthread.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libpthread_dbg.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libpuffs.so.2.0.debug	comp-puffs-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libquota.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libradius.so.4.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/librefuse.so.2.0.debug	comp-refuse-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libresolv.so.2.0.debug	comp-net-debug	debug,compat
@@ -1409,6 +1418,7 @@
 ./usr/libdata/debug/usr/lib/o32/libpthread.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libpthread_dbg.so.2.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libpuffs.so.2.0.debug	comp-puffs-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libquota.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libradius.so.4.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/librefuse.so.2.0.debug	comp-refuse-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libresolv.so.2.0.debug	comp-net-debug	debug,compat

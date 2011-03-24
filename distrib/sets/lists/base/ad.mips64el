@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.42 2011/03/12 19:52:45 christos Exp $
+# $NetBSD: ad.mips64el,v 1.43 2011/03/24 17:05:40 bouyer Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -185,6 +185,8 @@
 ./usr/lib/64/libpthread_dbg.so.2.0		base-compat-shlib	compat,pic
 ./usr/lib/64/libpuffs.so.2			base-compat-shlib	compat,pic
 ./usr/lib/64/libpuffs.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/64/libquota.so.0			base-compat-shlib	compat,pic
+./usr/lib/64/libquota.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libradius.so.4			base-compat-shlib	compat,pic
 ./usr/lib/64/libradius.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libresolv.so.2			base-compat-shlib	compat,pic
@@ -452,6 +454,8 @@
 ./usr/lib/o32/libpthread_dbg.so.2.0		base-compat-shlib	compat,pic
 ./usr/lib/o32/libpuffs.so.2			base-compat-shlib	compat,pic
 ./usr/lib/o32/libpuffs.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libquota.so.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libquota.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libradius.so.4			base-compat-shlib	compat,pic
 ./usr/lib/o32/libradius.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libresolv.so.2			base-compat-shlib	compat,pic

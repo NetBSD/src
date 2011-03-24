@@ -1,4 +1,4 @@
-/*     $NetBSD: prop_array.h,v 1.11 2011/01/20 11:17:58 bouyer Exp $    */
+/*     $NetBSD: prop_array.h,v 1.12 2011/03/24 17:05:39 bouyer Exp $    */
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -153,6 +153,8 @@ bool		prop_array_get_cstring_nocopy(prop_array_t,
 bool		prop_array_set_cstring_nocopy(prop_array_t,
 						   unsigned int,
 						   const char *);
+
+bool		prop_array_add_and_rel(prop_array_t, prop_object_t);
 
 __END_DECLS
 

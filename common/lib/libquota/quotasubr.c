@@ -1,6 +1,6 @@
-/* $NetBSD: quota.h,v 1.3 2011/03/24 17:05:45 bouyer Exp $ */
+/* $NetBSD: quotasubr.c,v 1.1 2011/03/24 17:05:40 bouyer Exp $ */
 /*-
-  * Copyright (c) 2010 Manuel Bouyer
+  * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
   * This software is distributed under the following condiions
   * compliant with the NetBSD foundation policy.
@@ -27,28 +27,28 @@
   * POSSIBILITY OF SUCH DAMAGE.
   */
 
-#ifndef _SYS_QUOTA_H_
-#define _SYS_QUOTA_H_
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/inttypes.h>
+#include <sys/errno.h>
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-__BEGIN_DECLS
-int quotactl(const char *, struct plistref *) __RENAME(__quotactl50);
-__END_DECLS
-#endif
+#include <quota/quota.h>
 
-/* strings used in dictionary for the different quota class */
-#define QUOTADICT_CLASS_USER "user"
-#define QUOTADICT_CLASS_GROUP "group"
-
-/* strings used in dictionary for the different limit types */
-#define QUOTADICT_LTYPE_BLOCK "block"
-#define QUOTADICT_LTYPE_FILE "file"
-
-/* strings used in dictionary for the different limit and usage values */
-#define QUOTADICT_LIMIT_SOFT "soft"
-#define QUOTADICT_LIMIT_HARD "hard"
-#define QUOTADICT_LIMIT_GTIME "grace time"
-#define QUOTADICT_LIMIT_USAGE "usage"
-#define QUOTADICT_LIMIT_ETIME "expire time"
-
-#endif /* _SYS_QUOTA_H_ */
+int
+quota_check_limit(uint64_t cur, uint64_t change, uint64_t soft, uint64_t hard,
+    time_t expire, time_t now)
+{ 
+	if (cur + change > hard) {
+		if (cur <= soft)
+			return (QL_F_CROSS | QL_S_DENY_HARD);
+		return QL_S_DENY_HARD;
+	} else if (cur + change > soft) {
+		if (cur <= soft)
+			return (QL_F_CROSS | QL_S_ALLOW_SOFT);
+		if (now > expire) {
+			return QL_S_DENY_GRACE;
+		}
+		return QL_S_ALLOW_SOFT;
+	}
+	return QL_S_ALLOW_OK;
+} 
