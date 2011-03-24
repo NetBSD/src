@@ -67,6 +67,10 @@
 
 #include <msg.h>
 
+/* Global library. */
+
+#include <mail_params.h>
+
 /* TLS library. */
 
 #define TLS_INTERNAL
@@ -87,7 +91,7 @@ int     tls_set_ca_certificate_info(SSL_CTX *ctx, const char *CAfile,
 	    tls_print_errors();
 	    return (-1);
 	}
-	if (!SSL_CTX_set_default_verify_paths(ctx)) {
+	if (var_tls_append_def_CA && !SSL_CTX_set_default_verify_paths(ctx)) {
 	    msg_info("cannot set certificate verification paths");
 	    tls_print_errors();
 	    return (-1);

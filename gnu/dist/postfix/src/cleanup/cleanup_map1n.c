@@ -15,13 +15,18 @@
 /*	This module implements one-to-many table mapping via table lookup.
 /*	Table lookups are done with quoted (externalized) address forms.
 /*	The process is recursive. The recursion terminates when the
-/*	left-hand side appears in its own expansion, or when a maximal
-/*	nesting level is reached.
+/*	left-hand side appears in its own expansion.
 /*
 /*	cleanup_map1n_internal() is the interface for addresses in
 /*	internal (unquoted) form.
 /* DIAGNOSTICS
-/*	Recoverable errors: the global \fIcleanup_errs\fR flag is updated.
+/*	When the maximal expansion or recursion limit is reached,
+/*	the alias is not expanded and the CLEANUP_STAT_DEFER error
+/*	is raised with reason "4.6.0 Alias expansion error".
+/*
+/*	When table lookup fails, the alias is not expanded and the
+/*	CLEANUP_STAT_WRITE error is raised with reason "4.6.0 Alias
+/*	expansion error".
 /* SEE ALSO
 /*	mail_addr_map(3) address mappings
 /*	mail_addr_find(3) address lookups
@@ -93,15 +98,26 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, const char *addr,
      * must index the array explicitly, instead of running along it with a
      * pointer.
      */
-#define UPDATE(ptr,new)	{ myfree(ptr); ptr = mystrdup(new); }
+#define UPDATE(ptr,new)	do { \
+	if (ptr) myfree(ptr); ptr = mystrdup(new); \
+    } while (0)
 #define STR	vstring_str
-#define RETURN(x) { been_here_free(been_here); return (x); }
+#define RETURN(x) do { \
+	been_here_free(been_here); return (x); \
+    } while (0)
+#define UNEXPAND(argv, addr) do { \
+	argv_truncate((argv), 0); argv_add((argv), (addr), (char *) 0); \
+    } while (0)
 
     for (arg = 0; arg < argv->argc; arg++) {
 	if (argv->argc > var_virt_expan_limit) {
-	    msg_warn("%s: unreasonable %s map expansion size for %s",
+	    msg_warn("%s: unreasonable %s map expansion size for %s -- "
+		     "deferring delivery",
 		     state->queue_id, maps->title, addr);
-	    break;
+	    state->errs |= CLEANUP_STAT_DEFER;
+	    UPDATE(state->reason, "4.6.0 Alias expansion error");
+	    UNEXPAND(argv, addr);
+	    RETURN(argv);
 	}
 	for (count = 0; /* void */ ; count++) {
 
@@ -111,9 +127,13 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, const char *addr,
 	    if (been_here_check_fixed(been_here, argv->argv[arg]) != 0)
 		break;
 	    if (count >= var_virt_recur_limit) {
-		msg_warn("%s: unreasonable %s map nesting for %s",
+		msg_warn("%s: unreasonable %s map nesting for %s -- "
+			 "deferring delivery",
 			 state->queue_id, maps->title, addr);
-		break;
+		state->errs |= CLEANUP_STAT_DEFER;
+		UPDATE(state->reason, "4.6.0 Alias expansion error");
+		UNEXPAND(argv, addr);
+		RETURN(argv);
 	    }
 	    quote_822_local(state->temp1, argv->argv[arg]);
 	    if ((lookup = mail_addr_map(maps, STR(state->temp1), propagate)) != 0) {
@@ -136,9 +156,12 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, const char *addr,
 		myfree(saved_lhs);
 		argv_free(lookup);
 	    } else if (dict_errno != 0) {
-		msg_warn("%s: %s map lookup problem for %s",
+		msg_warn("%s: %s map lookup problem for %s -- "
+			 "deferring delivery",
 			 state->queue_id, maps->title, addr);
 		state->errs |= CLEANUP_STAT_WRITE;
+		UPDATE(state->reason, "4.6.0 Alias expansion error");
+		UNEXPAND(argv, addr);
 		RETURN(argv);
 	    } else {
 		break;

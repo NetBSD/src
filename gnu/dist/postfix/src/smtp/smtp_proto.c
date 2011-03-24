@@ -811,6 +811,9 @@ static int smtp_start_tls(SMTP_STATE *state)
 				   SMTP_RESP_FAKE(&fake, "4.7.5"),
 				   "Server certificate not verified"));
 
+    /* At this point there must not be any pending plaintext. */
+    vstream_fpurge(session->stream, VSTREAM_PURGE_BOTH);
+
     /*
      * At this point we have to re-negotiate the "EHLO" to reget the
      * feature-list.
@@ -1771,12 +1774,15 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		 * XXX Don't downgrade just because generic_maps is turned
 		 * on.
 		 */
-		if (downgrading || smtp_generic_maps || smtp_header_checks
-		    || smtp_body_checks)
+#define SMTP_ANY_CHECKS (smtp_header_checks || smtp_body_checks)
+
+		if (downgrading || smtp_generic_maps || SMTP_ANY_CHECKS)
 		    session->mime_state = mime_state_alloc(downgrading ?
 							   MIME_OPT_DOWNGRADE
 						 | MIME_OPT_REPORT_NESTING :
-						      MIME_OPT_DISABLE_MIME,
+						      SMTP_ANY_CHECKS == 0 ?
+						     MIME_OPT_DISABLE_MIME :
+							   0,
 							   smtp_generic_maps
 						     || smtp_header_checks ?
 						       smtp_header_rewrite :

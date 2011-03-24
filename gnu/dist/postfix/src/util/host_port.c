@@ -95,22 +95,41 @@
 
 #include <host_port.h>
 
+ /*
+  * Point-fix workaround. The libutil library should be email agnostic, but
+  * we can't rip up the library APIs in the stable releases.
+  */
+#include <string.h>
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
+#define IPV6_COL           "IPv6:"	/* RFC 2821 */
+#define IPV6_COL_LEN       (sizeof(IPV6_COL) - 1)
+#define HAS_IPV6_COL(str)  (strncasecmp((str), IPV6_COL, IPV6_COL_LEN) == 0)
+
 /* host_port - parse string into host and port, destroy string */
 
 const char *host_port(char *buf, char **host, char *def_host,
 		              char **port, char *def_service)
 {
     char   *cp = buf;
+    int     ipv6 = 0;
 
     /*
      * [host]:port, [host]:, [host].
+     * [ipv6:ipv6addr]:port, [ipv6:ipv6addr]:, [ipv6:ipv6addr].
      */
     if (*cp == '[') {
-	*host = ++cp;
+	++cp;
+	if ((ipv6 = HAS_IPV6_COL(cp)) != 0)
+	    cp += IPV6_COL_LEN;
+	*host = cp;
 	if ((cp = split_at(cp, ']')) == 0)
 	    return ("missing \"]\"");
 	if (*cp && *cp++ != ':')
 	    return ("garbage after \"]\"");
+	if (ipv6 && !valid_ipv6_hostaddr(*host, DONT_GRIPE))
+	    return ("malformed IPv6 address");
 	*port = *cp ? cp : def_service;
     }
 

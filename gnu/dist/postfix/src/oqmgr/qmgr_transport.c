@@ -286,6 +286,8 @@ QMGR_TRANSPORT *qmgr_transport_select(void)
 	    continue;
 	need = xport->pending + 1;
 	for (queue = xport->queue_list.next; queue; queue = queue->peers.next) {
+	    if (QMGR_QUEUE_READY(queue) == 0)
+		continue;
 	    if ((need -= MIN5af51743e4eef(queue->window - queue->busy_refcount,
 					  queue->todo_refcount)) <= 0) {
 		QMGR_LIST_ROTATE(qmgr_transport_list, xport);
