@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2011/01/13 02:40:43 pgoyette Exp $
+# $NetBSD: Makefile,v 1.14 2011/03/24 16:56:38 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ TESTS_C+=	t_humanize_number
 TESTS_C+=	t_ldexp
 TESTS_C+=	t_randomid
 TESTS_C+=	t_rbstress
+TESTS_C+=	t_raise
 TESTS_C+=	t_siginfo
 TESTS_C+=	t_syslog_pthread
 TESTS_C+=	t_vis

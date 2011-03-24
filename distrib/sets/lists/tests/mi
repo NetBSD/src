@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.276 2011/03/24 15:43:06 jruoho Exp $
+# $NetBSD: mi,v 1.277 2011/03/24 16:56:37 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -338,6 +338,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob_star.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_humanize_number.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_ldexp.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_raise.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_randomid.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_rbstress.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-lib-debug		debug,atf
@@ -1705,6 +1706,7 @@
 ./usr/tests/lib/libc/gen/t_glob_star		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_humanize_number	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_ldexp		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_raise		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_randomid		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_rbstress		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_syslog_pthread	tests-lib-tests		atf
