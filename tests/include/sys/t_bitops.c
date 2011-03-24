@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.1 2011/03/19 06:39:17 jruoho Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.2 2011/03/24 07:06:34 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,8 +31,72 @@
 
 #include <atf-c.h>
 
+#include <sys/cdefs.h>
 #include <sys/bitops.h>
+
 #include <math.h>
+
+static const struct {
+	uint32_t	val;
+	int		ffs;
+	int		fls;
+} bits[] = {
+
+	{ 0x00, 0, 0 }, { 0x01, 1, 1 },	{ 0x02, 2, 2 },	{ 0x03, 1, 2 },
+	{ 0x04, 3, 3 }, { 0x05, 1, 3 },	{ 0x06, 2, 3 },	{ 0x07, 1, 3 },
+	{ 0x08, 4, 4 }, { 0x09, 1, 4 },	{ 0x0A, 2, 4 },	{ 0x0B, 1, 4 },
+	{ 0x0C, 3, 4 }, { 0x0D, 1, 4 },	{ 0x0E, 2, 4 },	{ 0x0F, 1, 4 },
+
+	{ 0x10, 5, 5 },	{ 0x11, 1, 5 },	{ 0x12, 2, 5 },	{ 0x13, 1, 5 },
+	{ 0x14, 3, 5 },	{ 0x15, 1, 5 },	{ 0x16, 2, 5 },	{ 0x17, 1, 5 },
+	{ 0x18, 4, 5 },	{ 0x19, 1, 5 },	{ 0x1A, 2, 5 },	{ 0x1B, 1, 5 },
+	{ 0x1C, 3, 5 },	{ 0x1D, 1, 5 },	{ 0x1E, 2, 5 },	{ 0x1F, 1, 5 },
+
+	{ 0xF0, 5, 8 },	{ 0xF1, 1, 8 },	{ 0xF2, 2, 8 },	{ 0xF3, 1, 8 },
+	{ 0xF4, 3, 8 },	{ 0xF5, 1, 8 },	{ 0xF6, 2, 8 },	{ 0xF7, 1, 8 },
+	{ 0xF8, 4, 8 },	{ 0xF9, 1, 8 },	{ 0xFA, 2, 8 },	{ 0xFB, 1, 8 },
+	{ 0xFC, 3, 8 },	{ 0xFD, 1, 8 },	{ 0xFE, 2, 8 },	{ 0xFF, 1, 8 },
+
+};
+
+ATF_TC(ffsfls);
+ATF_TC_HEAD(ffsfls, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ffs32(3)-family for correctness");
+}
+
+ATF_TC_BODY(ffsfls, tc)
+{
+	uint8_t i;
+
+	ATF_REQUIRE(ffs32(0) == 0x00);
+	ATF_REQUIRE(fls32(0) == 0x00);
+	ATF_REQUIRE(ffs64(0) == 0x00);
+	ATF_REQUIRE(fls64(0) == 0x00);
+
+	ATF_REQUIRE(ffs32(UINT32_MAX) == 0x01);
+	ATF_REQUIRE(fls32(UINT32_MAX) == 0x20);
+	ATF_REQUIRE(ffs64(UINT64_MAX) == 0x01);
+	ATF_REQUIRE(fls64(UINT64_MAX) == 0x40);
+
+	for (i = 1; i < __arraycount(bits); i++) {
+
+		ATF_REQUIRE(ffs32(bits[i].val) == bits[i].ffs);
+		ATF_REQUIRE(fls32(bits[i].val) == bits[i].fls);
+		ATF_REQUIRE(ffs64(bits[i].val) == bits[i].ffs);
+		ATF_REQUIRE(fls64(bits[i].val) == bits[i].fls);
+
+		ATF_REQUIRE(ffs32(bits[i].val << 1) == bits[i].ffs + 1);
+		ATF_REQUIRE(fls32(bits[i].val << 1) == bits[i].fls + 1);
+		ATF_REQUIRE(ffs64(bits[i].val << 1) == bits[i].ffs + 1);
+		ATF_REQUIRE(fls64(bits[i].val << 1) == bits[i].fls + 1);
+
+		ATF_REQUIRE(ffs32(bits[i].val << 9) == bits[i].ffs + 9);
+		ATF_REQUIRE(fls32(bits[i].val << 9) == bits[i].fls + 9);
+		ATF_REQUIRE(ffs64(bits[i].val << 9) == bits[i].ffs + 9);
+		ATF_REQUIRE(fls64(bits[i].val << 9) == bits[i].fls + 9);
+	}
+}
 
 ATF_TC(ilog2_1);
 ATF_TC_HEAD(ilog2_1, tc)
@@ -76,6 +140,7 @@ ATF_TC_BODY(ilog2_2, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, ffsfls);
 	ATF_TP_ADD_TC(tp, ilog2_1);
 	ATF_TP_ADD_TC(tp, ilog2_2);
 
