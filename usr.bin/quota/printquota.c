@@ -1,4 +1,4 @@
-/*	$NetBSD: printquota.c,v 1.5 2011/03/07 11:46:55 bouyer Exp $ */
+/*	$NetBSD: printquota.c,v 1.6 2011/03/24 17:05:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: printquota.c,v 1.5 2011/03/07 11:46:55 bouyer Exp $");
+__RCSID("$NetBSD: printquota.c,v 1.6 2011/03/24 17:05:46 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -270,4 +270,17 @@ intrd(char *str, uint64_t *val, u_int flags)
 	if (flags & HN_B)
 		*val = btodb(*val);
 	return ret;
+}
+
+int
+alldigits(const char *s)
+{
+	unsigned char c;
+
+	c = *s++;
+	do {
+		if (!isdigit(c))
+			return 0;
+	} while ((c = *s++) != 0);
+	return 1;
 }

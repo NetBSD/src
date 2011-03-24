@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.89 2011/03/12 19:52:46 christos Exp $
+# $NetBSD: md.sparc64,v 1.90 2011/03/24 17:05:41 bouyer Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -530,6 +530,10 @@
 ./usr/lib/sparc/libpuffs.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libpuffs_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libpuffs_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libquota.a			comp-c-lib		compat
+./usr/lib/sparc/libquota.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libquota_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libquota_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libradius.a			comp-c-lib		compat
 ./usr/lib/sparc/libradius.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libradius_p.a			comp-c-proflib		compat,profile
@@ -752,6 +756,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libpthread.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpthread_dbg.so.2.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpuffs.so.2.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libquota.so.2.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libradius.so.4.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librefuse.so.2.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libresolv.so.2.0.debug		comp-compat-shlib	compat,pic,debug

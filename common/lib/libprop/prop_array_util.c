@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array_util.c,v 1.2 2008/09/11 13:15:13 haad Exp $	*/
+/*	$NetBSD: prop_array_util.c,v 1.3 2011/03/24 17:05:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -238,3 +238,14 @@ TEMPLATE(,)
 TEMPLATE(_nocopy,const)
 
 #undef TEMPLATE
+
+bool
+prop_array_add_and_rel(prop_array_t array, prop_object_t po)
+{
+	bool ret;
+	if (po == NULL)
+		return false;
+	ret = prop_array_add(array, po);
+	prop_object_release(po);
+	return ret;
+}
