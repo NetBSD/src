@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.67 2011/03/20 21:33:13 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.68 2011/03/24 19:55:41 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4879,4 +4879,32 @@ lib/libc/inet/inet_net_pton.c			1.2
 	Check bits on each loop to prevent integer oveflow.
 	Reported by Maksymilian Arciemowicz
 	[spz, ticket #1574]
+
+external/ibm-public/postfix/dist/HISTORY			patch
+external/ibm-public/postfix/dist/makedefs			patch
+external/ibm-public/postfix/dist/src/cleanup/cleanup_map1n.c	patch
+external/ibm-public/postfix/dist/src/global/mail_version.h	patch
+external/ibm-public/postfix/dist/src/local/recipient.c		patch
+external/ibm-public/postfix/dist/src/master/master_sig.c	patch
+external/ibm-public/postfix/dist/src/smtp/smtp_proto.c		patch
+external/ibm-public/postfix/dist/src/smtpd/smtpd.c		patch
+external/ibm-public/postfix/dist/src/util/host_port.c		patch
+external/ibm-public/postfix/dist/src/util/make_dirs.c		patch
+external/ibm-public/postfix/dist/src/util/sys_defs.h		patch
+external/ibm-public/postfix/dist/src/util/watchdog.c		patch
+
+	Update postfix to version 2.7.3:
+	- Fix for CVE-2011-0411: discard buffered plaintext input, after        
+          reading the SMTP "STARTTLS" command or response.                      
+        - Fix to the local delivery agent: look up the "unextended" address     
+          in the local aliases database, when that address has a malformed      
+          address extension.                                                    
+        - Fix to virtual alias expansion: report a tempfail error, instead of   
+          silently ignoring recipients that exceed the                          
+          virtual_alias_expansion_limit or the virtual_alias_recursion_limit.   
+        - Fix for BSD-ish mkdir() to prevent maildir directories from           
+          inheriting their group ownership from the parent directory.           
+        - Fix to the SMTP client: missing support for mail to [ipv6:ipv6addr]   
+          address literal destinations.                                         
+	[tron, ticket #1576]
 
