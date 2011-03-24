@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.56 2011/03/24 05:10:05 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.57 2011/03/24 11:52:53 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.56 2011/03/24 05:10:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.57 2011/03/24 11:52:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -475,6 +475,16 @@ acpicpu_md_cstate_enter(int method, int state)
 int
 acpicpu_md_pstate_start(struct acpicpu_softc *sc)
 {
+	uint64_t xc;
+
+	/*
+	 * Reset the APERF and MPERF counters.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_P_HWF) != 0) {
+		xc = xc_broadcast(0, acpicpu_md_pstate_hwf_reset, NULL, NULL);
+		xc_wait(xc);
+	}
+
 	return acpicpu_md_pstate_sysctl_init();
 }
 
@@ -493,7 +503,7 @@ acpicpu_md_pstate_init(struct acpicpu_softc *sc)
 	struct cpu_info *ci = sc->sc_ci;
 	struct acpicpu_pstate *ps, msr;
 	uint32_t family, i = 0;
-	uint64_t val, xc;
+	uint64_t val;
 
 	(void)memset(&msr, 0, sizeof(struct acpicpu_pstate));
 
@@ -614,14 +624,6 @@ acpicpu_md_pstate_init(struct acpicpu_softc *sc)
 			ps->ps_control_mask = msr.ps_control_mask;
 
 		i++;
-	}
-
-	/*
-	 * Reset the APERF and MPERF counters.
-	 */
-	if ((sc->sc_flags & ACPICPU_FLAG_P_HWF) != 0) {
-		xc = xc_unicast(0, acpicpu_md_pstate_hwf_reset, sc, NULL, ci);
-		xc_wait(xc);
 	}
 
 	return 0;
