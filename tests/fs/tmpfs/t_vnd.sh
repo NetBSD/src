@@ -1,4 +1,4 @@
-# $NetBSD: t_vnd.sh,v 1.6 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_vnd.sh,v 1.7 2011/03/24 21:52:51 jmmv Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,10 +61,13 @@ basic_body() {
 	atf_check -s eq:0 -o empty -e empty vnconfig -u /dev/vnd3
 
 	test_unmount
+	touch done
 }
 basic_cleanup() {
-	umount mnt 2>/dev/null 1>&2
-	vnconfig -u /dev/vnd3 2>/dev/null 1>&2
+	if [ ! -f done ]; then
+		umount mnt 2>/dev/null 1>&2
+		vnconfig -u /dev/vnd3 2>/dev/null 1>&2
+	fi
 }
 
 atf_init_test_cases() {
