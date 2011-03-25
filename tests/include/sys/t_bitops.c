@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.4 2011/03/25 04:26:42 jruoho Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.5 2011/03/25 10:00:31 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/bitops.h>
 
 #include <math.h>
+#include <stdlib.h>
 
 static const struct {
 	uint32_t	val;
@@ -155,9 +156,6 @@ ATF_TC_BODY(ilog2_1, tc)
 ATF_TC(ilog2_2);
 ATF_TC_HEAD(ilog2_2, tc)
 {
-	/*
-	 * This may fail under QEMU; see PR misc/44767.
-	 */
 	atf_tc_set_md_var(tc, "descr", "Test log2(3) vs. ilog2(3)");
 }
 
@@ -165,6 +163,12 @@ ATF_TC_BODY(ilog2_2, tc)
 {
 	double  x, y;
 	uint64_t i;
+
+	/*
+	 * This may fail under QEMU; see PR misc/44767.
+	 */
+	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+		atf_tc_skip("Test not applicable on QEMU");
 
 	for (i = 1; i < UINT32_MAX; i += UINT16_MAX) {
 

@@ -1,4 +1,4 @@
-/* $NetBSD: t_ceil.c,v 1.1 2011/03/24 15:43:06 jruoho Exp $ */
+/* $NetBSD: t_ceil.c,v 1.2 2011/03/25 10:00:32 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,10 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ceil.c,v 1.1 2011/03/24 15:43:06 jruoho Exp $");
+__RCSID("$NetBSD: t_ceil.c,v 1.2 2011/03/25 10:00:32 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
+#include <stdlib.h>
 
 #include <atf-c.h>
 
@@ -47,6 +48,12 @@ ATF_TC_BODY(ceil, tc)
 	const int n = 10240;
 	double x, y;
 	int i;
+
+	/*
+	 * This may fail under QEMU; see PR misc/44767.
+	 */
+	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+		atf_tc_skip("Test not applicable on QEMU");
 
 	for (i = 0; i < n; i++) {
 
