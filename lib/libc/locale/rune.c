@@ -1,4 +1,4 @@
-/* $NetBSD: rune.c,v 1.41 2010/11/30 15:25:05 tnozaki Exp $ */
+/* $NetBSD: rune.c,v 1.42 2011/03/25 00:45:24 joerg Exp $ */
 
 /*-
  * Copyright (c)2010 Citrus Project,
@@ -280,52 +280,6 @@ err:
 	return ret;
 }
 
-static __inline int
-_rune_read_bsdctype(const char * __restrict var, size_t lenvar,
-    _RuneLocale ** __restrict prl)
-{
-	const _FileBSDCTypeLocale *fbl;
-	uint32_t value;
-	int i, bits;
-	uint16_t lower, upper;
-	_RuneLocalePriv *rlp;
-	_RuneLocale *rl;
-
-        if (lenvar < sizeof(*fbl))
-		return EFTYPE;
-	fbl = (const _FileBSDCTypeLocale *)(const void *)var;
-	if (memcmp(&fbl->fbl_id[0], _CTYPE_ID, sizeof(fbl->fbl_id)))
-		return EFTYPE;
-	value = be32toh(fbl->fbl_rev);
-	if (value != _CTYPE_REV)
-		return EFTYPE;
-	value = be32toh(fbl->fbl_num_chars);
-	if (value != _CTYPE_CACHE_SIZE)
-		return EFTYPE;
-	rlp = (_RuneLocalePriv *)malloc(sizeof(*rlp));
-	if (rlp == NULL)
-		return ENOMEM;
-	_rune_init_priv(rlp);
-	rlp->rlp_codeset[0] = '\0';
-
-	rl = &rlp->rl;
-	for (i = 0; i < _CTYPE_CACHE_SIZE; ++i) {
-		bits  = fbl->fbl_ctype_tab[i];
-		lower = be16toh(fbl->fbl_tolower_tab[i]);
-		upper = be16toh(fbl->fbl_toupper_tab[i]);
-
-		rlp->rlp_ctype_tab  [i + 1] = (unsigned char)bits;
-		rlp->rlp_tolower_tab[i + 1] = (short)lower;
-		rlp->rlp_toupper_tab[i + 1] = (short)upper;
-
-		rl->rl_runetype[i] = _runetype_from_ctype(bits, i);
-		rl->rl_maplower[i] = (__nbrune_t)lower;
-		rl->rl_mapupper[i] = (__nbrune_t)upper;
-	}
-	*prl = rl;
-	return 0;
-}
-
 int
 _rune_load(const char * __restrict var, size_t lenvar,
     _RuneLocale ** __restrict prl)
@@ -340,9 +294,6 @@ _rune_load(const char * __restrict var, size_t lenvar,
 	switch (*var) {
 	case 'R':
 		ret = _rune_read_file(var, lenvar, prl);
-		break;
-	case 'B':
-		ret = _rune_read_bsdctype(var, lenvar, prl);
 		break;
 	default:
 		ret = EFTYPE;

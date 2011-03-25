@@ -1,4 +1,4 @@
-/* $NetBSD: bsdctype_file.h,v 1.1 2010/06/13 04:14:57 tnozaki Exp $ */
+/* $NetBSD: bsdctype_file.h,v 1.2 2011/03/25 00:45:24 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -40,7 +40,6 @@ typedef struct {
 	int16_t			fbl_toupper_tab[_CTYPE_CACHE_SIZE];
 } __packed _FileBSDCTypeLocale;
 
-#define _CTYPE_ID		"BSDCTYPE"
 #define _CTYPE_REV		2
 
 #endif /*_BSDCTYPE_FILE_H_*/
