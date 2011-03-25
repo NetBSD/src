@@ -1,4 +1,4 @@
-/* $NetBSD: bsdctype.c,v 1.9 2010/06/20 02:23:15 tnozaki Exp $ */
+/* $NetBSD: bsdctype.c,v 1.10 2011/03/25 00:45:24 joerg Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bsdctype.c,v 1.9 2010/06/20 02:23:15 tnozaki Exp $");
+__RCSID("$NetBSD: bsdctype.c,v 1.10 2011/03/25 00:45:24 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/endian.h>
@@ -76,35 +76,6 @@ _bsdctype_init_priv(_BSDCTypeLocalePriv *blp)
 	blp->bl.bl_ctype_tab   = &blp->blp_ctype_tab  [0];
 	blp->bl.bl_tolower_tab = &blp->blp_tolower_tab[0];
 	blp->bl.bl_toupper_tab = &blp->blp_toupper_tab[0];
-}
-
-static __inline int
-_bsdctype_read_file(const char * __restrict var, size_t lenvar,
-    _BSDCTypeLocalePriv * __restrict blp)
-{
-	const _FileBSDCTypeLocale *fbl;
-	uint32_t value;
-	int i;
-
-	_DIAGASSERT(blp != NULL);
-
-	if (lenvar < sizeof(*fbl))
-		return EFTYPE;
-	fbl = (const _FileBSDCTypeLocale *)(const void *)var;
-	if (memcmp(&fbl->fbl_id[0], _CTYPE_ID, sizeof(fbl->fbl_id)))
-		return EFTYPE;
-	value = be32toh(fbl->fbl_rev);
-	if (value != _CTYPE_REV)
-		return EFTYPE;
-	value = be32toh(fbl->fbl_num_chars);
-	if (value != _CTYPE_CACHE_SIZE)
-		return EFTYPE;
-	for (i = 0; i < _CTYPE_CACHE_SIZE; ++i) {
-		blp->blp_ctype_tab  [i + 1] = fbl->fbl_ctype_tab[i];
-		blp->blp_tolower_tab[i + 1] = be16toh(fbl->fbl_tolower_tab[i]);
-		blp->blp_toupper_tab[i + 1] = be16toh(fbl->fbl_toupper_tab[i]);
-	}
-	return 0;
 }
 
 static __inline int
@@ -161,9 +132,6 @@ _bsdctype_load(const char * __restrict var, size_t lenvar,
 		return errno;
 	_bsdctype_init_priv(blp);
 	switch (*var) {
-	case 'B':
-		_bsdctype_read_file(var, lenvar, blp);
-		break;
 	case 'R':
 		_bsdctype_read_runetype(var, lenvar, blp);
 		break;
