@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.277 2011/03/24 16:56:37 jruoho Exp $
+# $NetBSD: mi,v 1.278 2011/03/25 09:34:02 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -488,6 +488,7 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_sleep.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_status.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librt					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/librt/t_sched.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librt/t_sem.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librumpclient					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librumpclient/h_exec.debug			tests-lib-debug		debug,atf
@@ -1961,6 +1962,7 @@
 ./usr/tests/lib/libpthread/t_status		tests-lib-tests		atf
 ./usr/tests/lib/librt				tests-lib-tests		atf
 ./usr/tests/lib/librt/Atffile			tests-lib-tests		atf
+./usr/tests/lib/librt/t_sched			tests-lib-tests		atf
 ./usr/tests/lib/librt/t_sem			tests-lib-tests		atf
 ./usr/tests/lib/librumpclient				tests-lib-tests		atf
 ./usr/tests/lib/librumpclient/Atffile			tests-lib-tests		atf
