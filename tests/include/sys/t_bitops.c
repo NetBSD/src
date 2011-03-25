@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.3 2011/03/24 07:37:04 jruoho Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.4 2011/03/25 04:26:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -155,6 +155,9 @@ ATF_TC_BODY(ilog2_1, tc)
 ATF_TC(ilog2_2);
 ATF_TC_HEAD(ilog2_2, tc)
 {
+	/*
+	 * This may fail under QEMU; see PR misc/44767.
+	 */
 	atf_tc_set_md_var(tc, "descr", "Test log2(3) vs. ilog2(3)");
 }
 
