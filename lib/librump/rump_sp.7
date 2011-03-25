@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump_sp.7,v 1.5 2011/02/16 23:51:50 pooka Exp $
+.\"     $NetBSD: rump_sp.7,v 1.6 2011/03/25 16:13:05 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -63,6 +63,16 @@ namespace
 and
 .Nm rump.traceroute
 which is used to display a network trace starting from the rump kernel.
+.Pp
+Also, almost any unmodified dynamically linked application
+(for example
+.Xr telnet 1
+or 
+.Xr ls 1 )
+can be used as a rump kernel client with the help of system call hijacking.
+See
+.Xr rumphijack 3
+for more information.
 .Ss Connecting to the server
 A remote rump server is specified using an URL.
 Currently two types of URLs are supported: TCP and local domain sockets.
@@ -99,7 +109,8 @@ $ env RUMP_SERVER=unix://sock rump.sysctl vfs.generic.fstypes
 .Sh SEE ALSO
 .Xr rump_server 1 ,
 .Xr rump 3 ,
-.Xr rumpclient 3
+.Xr rumpclient 3 ,
+.Xr rumphijack 3
 .Sh HISTORY
 .Nm
 first appeared in
