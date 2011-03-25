@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlinfo.c,v 1.3 2011/03/25 14:45:21 pooka Exp $	*/
+/*	$NetBSD: t_dlinfo.c,v 1.4 2011/03/25 14:47:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -106,6 +106,8 @@ ATF_TC_BODY(rtld_dlinfo_linkmap_dlopen_iter, tc)
 			break;
 	
 	ATF_REQUIRE_MSG(map, "dlopen()d object not found from linkmap");
+	ATF_REQUIRE_MSG(dlopen(map->l_name, RTLD_LAZY) != NULL,
+	    "could not dlopen() name in linkmap");
 }
 
 ATF_TP_ADD_TCS(tp)
