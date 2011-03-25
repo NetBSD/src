@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.5 2011/03/25 10:00:31 jruoho Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.6 2011/03/25 10:42:38 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ ATF_TC_BODY(ilog2_2, tc)
 	 * This may fail under QEMU; see PR misc/44767.
 	 */
 	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
-		atf_tc_skip("Test not applicable on QEMU");
+		atf_tc_expect_fail("PR misc/44767");
 
 	for (i = 1; i < UINT32_MAX; i += UINT16_MAX) {
 

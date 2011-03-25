@@ -1,4 +1,4 @@
-/* $NetBSD: t_floor.c,v 1.3 2011/03/25 10:00:32 jruoho Exp $ */
+/* $NetBSD: t_floor.c,v 1.4 2011/03/25 10:42:38 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_floor.c,v 1.3 2011/03/25 10:00:32 jruoho Exp $");
+__RCSID("$NetBSD: t_floor.c,v 1.4 2011/03/25 10:42:38 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
@@ -53,7 +53,7 @@ ATF_TC_BODY(floor, tc)
 	 * This may fail under QEMU; see PR misc/44767.
 	 */
 	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
-		atf_tc_skip("Test not applicable on QEMU");
+		atf_tc_expect_fail("PR misc/44767");
 
 	for (i = 0; i < n; i++) {
 
