@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.140 2011/03/13 21:08:45 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.141 2011/03/25 18:07:04 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,19 +40,21 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.140 2011/03/13 21:08:45 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.141 2011/03/25 18:07:04 joerg Exp $");
 #endif /* not lint */
 
+#include <sys/param.h>
+#include <sys/atomic.h>
+#include <sys/mman.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <lwp.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/param.h>
-#include <sys/mman.h>
 #include <dirent.h>
 
 #include <ctype.h>
@@ -107,6 +109,8 @@ Library_Xform  *_rtld_xforms;
 char           *__progname;
 char          **environ;
 
+static volatile bool _rtld_mutex_may_recurse;
+
 #if defined(RTLD_DEBUG)
 #ifndef __sh__
 extern Elf_Addr _GLOBAL_OFFSET_TABLE_[];
@@ -153,7 +157,10 @@ _rtld_call_fini_functions(int force)
 		dbg (("calling fini function %s at %p",  obj->path,
 		    (void *)obj->fini));
 		obj->fini_called = 1;
+		/* XXXlocking: exit point */
+		_rtld_mutex_may_recurse = true;
 		(*obj->fini)();
+		_rtld_mutex_may_recurse = false;
 	}
 
 	/* Second pass: objects marked with DF_1_INITFIRST. */
@@ -168,7 +175,10 @@ _rtld_call_fini_functions(int force)
 		dbg (("calling fini function %s at %p (DF_1_INITFIRST)",
 		    obj->path, (void *)obj->fini));
 		obj->fini_called = 1;
+		/* XXXlocking: exit point */
+		_rtld_mutex_may_recurse = true;
 		(*obj->fini)();
+		_rtld_mutex_may_recurse = false;
 	}
 
         _rtld_objlist_clear(&finilist);
@@ -194,7 +204,10 @@ _rtld_call_init_functions()
 		dbg (("calling init function %s at %p (DF_1_INITFIRST)",
 		    obj->path, (void *)obj->init));
 		obj->init_called = 1;
+		/* XXXlocking: exit point */
+		_rtld_mutex_may_recurse = true;
 		(*obj->init)();
+		_rtld_mutex_may_recurse = false;
 	}
 
 	/* Second pass: all other objects. */
@@ -206,7 +219,10 @@ _rtld_call_init_functions()
 		dbg (("calling init function %s at %p",  obj->path,
 		    (void *)obj->init));
 		obj->init_called = 1;
+		/* XXXlocking: exit point */
+		_rtld_mutex_may_recurse = true;
 		(*obj->init)();
+		_rtld_mutex_may_recurse = false;
 	}
 
         _rtld_objlist_clear(&initlist);
@@ -619,11 +635,15 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	if (real___mainprog_obj)
 		*real___mainprog_obj = _rtld_objmain;
 
+	_rtld_exclusive_enter();
+
 	dbg(("calling _init functions"));
 	_rtld_call_init_functions();
 
 	dbg(("control at program entry point = %p, obj = %p, exit = %p",
 	     _rtld_objmain->entry, _rtld_objmain, _rtld_exit));
+
+	_rtld_exclusive_exit();
 
 	/*
 	 * Return with the entry point and the exit procedure in at the top
@@ -856,6 +876,8 @@ dlopen(const char *name, int mode)
 	bool nodelete;
 	bool now;
 
+	_rtld_exclusive_enter();
+
 	flags |= (mode & RTLD_GLOBAL) ? _RTLD_GLOBAL : 0;
 	flags |= (mode & RTLD_NOLOAD) ? _RTLD_NOLOAD : 0;
 	
@@ -899,6 +921,8 @@ dlopen(const char *name, int mode)
 	_rtld_debug.r_state = RT_CONSISTENT;
 	_rtld_debug_state();
 
+	_rtld_exclusive_exit();
+
 	return obj;
 }
 
@@ -933,6 +957,14 @@ hackish_return_address(void)
 }
 #endif
 
+#ifdef __HAVE_FUNCTION_DESCRIPTORS
+#define	lookup_mutex_enter()	_rtld_exclusive_enter()
+#define	lookup_mutex_exit()	_rtld_exclusive_exit()
+#else
+#define	lookup_mutex_enter()	_rtld_shared_enter()
+#define	lookup_mutex_exit()	_rtld_shared_exit()
+#endif
+
 __strong_alias(__dlsym,dlsym)
 void *
 dlsym(void *handle, const char *name)
@@ -943,7 +975,9 @@ dlsym(void *handle, const char *name)
 	const Obj_Entry *defobj;
 	void *retaddr;
 	DoneList donelist; 
-	
+
+	lookup_mutex_enter();
+
 	hash = _rtld_elf_hash(name);
 	def = NULL;
 	defobj = NULL;
@@ -960,6 +994,7 @@ dlsym(void *handle, const char *name)
 #endif
 		if ((obj = _rtld_obj_from_addr(retaddr)) == NULL) {
 			_rtld_error("Cannot determine caller's shared object");
+			lookup_mutex_exit();
 			return NULL;
 		}
 
@@ -994,9 +1029,11 @@ dlsym(void *handle, const char *name)
 		break;
 
 	default:
-		if ((obj = _rtld_dlcheck(handle)) == NULL)
+		if ((obj = _rtld_dlcheck(handle)) == NULL) {
+			lookup_mutex_exit();
 			return NULL;
-		
+		}
+
 		_rtld_donelist_init(&donelist);
 
 		if (obj->mainprog) {
@@ -1021,15 +1058,20 @@ dlsym(void *handle, const char *name)
 	}
 	
 	if (def != NULL) {
+		void *p;
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
-		if (ELF_ST_TYPE(def->st_info) == STT_FUNC)
-			return (void *)_rtld_function_descriptor_alloc(defobj, 
-			    def, 0);
+		if (ELF_ST_TYPE(def->st_info) == STT_FUNC) {
+			lookup_mutex_exit();
+			return p;
+		}
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
-		return defobj->relocbase + def->st_value;
+		p = defobj->relocbase + def->st_value;
+		lookup_mutex_exit();
+		return p;
 	}
 	
 	_rtld_error("Undefined symbol \"%s\"", name);
+	lookup_mutex_exit();
 	return NULL;
 }
 
@@ -1041,7 +1083,9 @@ dladdr(const void *addr, Dl_info *info)
 	const Elf_Sym *def, *best_def;
 	void *symbol_addr;
 	unsigned long symoffset;
-	
+
+	lookup_mutex_enter();
+
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
 	addr = _rtld_function_descriptor_function(addr);
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
@@ -1049,6 +1093,7 @@ dladdr(const void *addr, Dl_info *info)
 	obj = _rtld_obj_from_addr(addr);
 	if (obj == NULL) {
 		_rtld_error("No shared object contains address");
+		lookup_mutex_enter();
 		return 0;
 	}
 	info->dli_fname = obj->path;
@@ -1096,6 +1141,7 @@ dladdr(const void *addr, Dl_info *info)
 		    best_def, 0);
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
 
+	lookup_mutex_exit();
 	return 1;
 }
 
@@ -1106,6 +1152,8 @@ dlinfo(void *handle, int req, void *v)
 	const Obj_Entry *obj;
 	void *retaddr;
 
+	_rtld_shared_enter();
+
 	if (handle == RTLD_SELF) {
 #ifdef __powerpc__
 		retaddr = hackish_return_address();
@@ -1114,11 +1162,13 @@ dlinfo(void *handle, int req, void *v)
 #endif
 		if ((obj = _rtld_obj_from_addr(retaddr)) == NULL) {
 			_rtld_error("Cannot determine caller's shared object");
+			_rtld_shared_exit();
 			return -1;
 		}
 	} else {
 		if ((obj = _rtld_dlcheck(handle)) == NULL) {
 			_rtld_error("Invalid handle");
+			_rtld_shared_exit();
 			return -1;
 		}
 	}
@@ -1134,9 +1184,11 @@ dlinfo(void *handle, int req, void *v)
 
 	default:
 		_rtld_error("Invalid request");
+		_rtld_shared_exit();
 		return -1;
 	}
 
+	_rtld_shared_exit();
 	return 0;
 }
 
@@ -1147,6 +1199,8 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *), void *pa
 	struct dl_phdr_info phdr_info;
 	const Obj_Entry *obj;
 	int error = 0;
+
+	_rtld_shared_enter();
 
 	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next) {
 		phdr_info.dlpi_addr = (Elf_Addr)obj->relocbase;
@@ -1164,11 +1218,13 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *), void *pa
 		phdr_info.dlpi_adds = _rtld_objloads;
 		phdr_info.dlpi_subs = _rtld_objloads - _rtld_objcount;
 
+		/* XXXlocking: exit point */
 		error = callback(&phdr_info, sizeof(phdr_info), param);
 		if (error)
 			break;
 	}
 
+	_rtld_shared_exit();
 	return error;
 }
 
@@ -1277,4 +1333,118 @@ _rtld_objlist_remove(Objlist *list, Obj_Entry *obj)
 		SIMPLEQ_REMOVE(list, elm, Struct_Objlist_Entry, link);
 		xfree(elm);
 	}
+}
+
+#define	RTLD_EXCLUSIVE_MASK	0x80000000U
+static volatile unsigned int _rtld_mutex;
+static volatile unsigned int _rtld_waiter_exclusive;
+static volatile unsigned int _rtld_waiter_shared;
+
+void
+_rtld_shared_enter(void)
+{
+	unsigned int cur;
+	lwpid_t waiter, self = 0;
+
+	membar_enter();
+
+	for (;;) {
+		cur = _rtld_mutex;
+		/*
+		 * First check if we are currently not exclusively locked.
+		 */
+		if ((cur & RTLD_EXCLUSIVE_MASK) == 0) {
+			/* Yes, so increment use counter */
+			if (atomic_cas_uint(&_rtld_mutex, cur, cur + 1) != cur)
+				continue;
+			return;
+		}
+		/*
+		 * Someone has an exclusive lock.  Puts us on the waiter list.
+		 */
+		if (!self)
+			self = _lwp_self();
+		if (cur == (self | RTLD_EXCLUSIVE_MASK)) {
+			if (_rtld_mutex_may_recurse)
+				return;
+			_rtld_error("dead lock detected");
+			_rtld_die();
+		}
+		waiter = atomic_swap_uint(&_rtld_waiter_shared, self);
+		/*
+		 * Check for race against _rtld_exclusive_exit before sleeping.
+		 */
+		if ((_rtld_mutex & RTLD_EXCLUSIVE_MASK) ||
+		    _rtld_waiter_exclusive)
+			_lwp_park(NULL, -1, __UNVOLATILE(&_rtld_mutex), NULL);
+		/* Try to remove us from the waiter list. */
+		atomic_cas_uint(&_rtld_waiter_shared, self, 0);
+		if (waiter)
+			_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));
+	}
+}
+
+void
+_rtld_shared_exit(void)
+{
+	lwpid_t waiter;
+
+	/*
+	 * Shared lock taken after an exclusive lock.
+	 * Just assume this is a partial recursion.
+	 */
+	if (_rtld_mutex & RTLD_EXCLUSIVE_MASK)
+		return;
+
+	/*
+	 * Wakeup LWPs waiting for an exclusive lock if this is the last
+	 * LWP on the shared lock.
+	 */
+	if (atomic_dec_uint_nv(&_rtld_mutex))
+		return;
+	if ((waiter = _rtld_waiter_exclusive) != 0)
+		_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));
+
+	membar_exit();
+}
+
+void
+_rtld_exclusive_enter(void)
+{
+	lwpid_t waiter, self = _lwp_self();
+	unsigned int locked_value = (unsigned int)self | RTLD_EXCLUSIVE_MASK;
+	unsigned int cur;
+
+	membar_enter();
+
+	for (;;) {
+		if (atomic_cas_uint(&_rtld_mutex, 0, locked_value) == 0)
+			break;
+		waiter = atomic_swap_uint(&_rtld_waiter_exclusive, self);
+		cur = _rtld_mutex;
+		if (cur == locked_value) {
+			_rtld_error("dead lock detected");
+			_rtld_die();
+		}
+		if (cur)
+			_lwp_park(NULL, -1, __UNVOLATILE(&_rtld_mutex), NULL);
+		atomic_cas_uint(&_rtld_waiter_exclusive, self, 0);
+		if (waiter)
+			_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));
+	}
+}
+
+void
+_rtld_exclusive_exit(void)
+{
+	lwpid_t waiter;
+
+	_rtld_mutex = 0;
+	if ((waiter = _rtld_waiter_exclusive) != 0)
+		_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));
+
+	if ((waiter = _rtld_waiter_shared) != 0)
+		_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));
+
+	membar_exit();
 }
