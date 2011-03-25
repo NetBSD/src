@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.3 2011/03/12 07:43:53 matt Exp $	*/
+/*	$NetBSD: tls.c,v 1.4 2011/03/25 18:07:04 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.3 2011/03/12 07:43:53 matt Exp $");
+__RCSID("$NetBSD: tls.c,v 1.4 2011/03/25 18:07:04 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -38,6 +38,8 @@ __RCSID("$NetBSD: tls.c,v 1.3 2011/03/12 07:43:53 matt Exp $");
 #include "rtld.h"
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+
+static struct tls_tcb *_rtld_tls_allocate_locked(void);
 
 #ifndef TLS_DTV_OFFSET
 #define	TLS_DTV_OFFSET	0
@@ -59,6 +61,8 @@ _rtld_tls_get_addr(void *tls, size_t idx, size_t offset)
 	struct tls_tcb *tcb = tls;
 	void **dtv, **new_dtv;
 
+	_rtld_exclusive_enter();
+
 	dtv = tcb->tcb_dtv;
 
 	if (__predict_false(DTV_GENERATION(dtv) != _rtld_tls_dtv_generation)) {
@@ -78,6 +82,8 @@ _rtld_tls_get_addr(void *tls, size_t idx, size_t offset)
 	if (__predict_false(dtv[idx] == NULL))
 		dtv[idx] = _rtld_tls_module_allocate(idx);
 
+	_rtld_exclusive_exit();
+
 	return (uint8_t *)dtv[idx] + offset;
 }
 
@@ -94,7 +100,7 @@ _rtld_tls_initial_allocation(void)
 	    sizeof(void *));
 #endif
 
-	tcb = _rtld_tls_allocate();
+	tcb = _rtld_tls_allocate_locked();
 #ifdef __HAVE___LWP_SETTCB
 	__lwp_settcb(tcb);
 #else
@@ -102,8 +108,8 @@ _rtld_tls_initial_allocation(void)
 #endif
 }
 
-struct tls_tcb *
-_rtld_tls_allocate(void)
+static struct tls_tcb *
+_rtld_tls_allocate_locked(void)
 {
 	Obj_Entry *obj;
 	struct tls_tcb *tcb;
@@ -138,11 +144,25 @@ _rtld_tls_allocate(void)
 	return tcb;
 }
 
+struct tls_tcb *
+_rtld_tls_allocate(void)
+{
+	struct tls_tcb *tcb;
+
+	_rtld_exclusive_enter();
+	tcb = _rtld_tls_allocate_locked();
+	_rtld_exclusive_exit();
+
+	return tcb;
+}
+
 void
 _rtld_tls_free(struct tls_tcb *tcb)
 {
 	size_t i, max_index;
 	uint8_t *p;
+
+	_rtld_exclusive_enter();
 
 	max_index = DTV_MAX_INDEX(tcb->tcb_dtv);
 	for (i = 1; i <= max_index; ++i)
@@ -155,6 +175,8 @@ _rtld_tls_free(struct tls_tcb *tcb)
 	p = (uint8_t *)tcb - _rtld_tls_static_space;
 #endif
 	xfree(p);
+
+	_rtld_exclusive_exit();
 }
 
 void *
