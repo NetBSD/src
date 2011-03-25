@@ -1,4 +1,4 @@
-/* $NetBSD: t_sched.c,v 1.1 2011/03/25 09:34:02 jruoho Exp $ */
+/* $NetBSD: t_sched.c,v 1.2 2011/03/25 09:39:19 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sched.c,v 1.1 2011/03/25 09:34:02 jruoho Exp $");
+__RCSID("$NetBSD: t_sched.c,v 1.2 2011/03/25 09:39:19 jruoho Exp $");
 
 #include <sched.h>
 #include <limits.h>
@@ -223,7 +223,7 @@ ATF_TC_BODY(sched_rr_get_interval_2, tc)
 	sched_priority_set(pri, SCHED_RR);
 
 	tv1.tv_sec = tv2.tv_sec = -1;
-	tv1.tv_nsec = tv2.tv_nsec -1;
+	tv1.tv_nsec = tv2.tv_nsec = -1;
 
 	ATF_REQUIRE(sched_rr_get_interval(0, &tv1) == 0);
 	ATF_REQUIRE(sched_rr_get_interval(getpid(), &tv2) == 0);
