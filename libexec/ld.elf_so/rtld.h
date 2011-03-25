@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.103 2011/03/12 22:54:36 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.104 2011/03/25 18:07:04 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -311,6 +311,11 @@ void _rtld_objlist_push_head(Objlist *, Obj_Entry *);
 void _rtld_objlist_push_tail(Objlist *, Obj_Entry *);
 Objlist_Entry *_rtld_objlist_find(Objlist *, const Obj_Entry *);
 void _rtld_ref_dag(Obj_Entry *);
+
+void _rtld_shared_enter(void);
+void _rtld_shared_exit(void);
+void _rtld_exclusive_enter(void);
+void _rtld_exclusive_exit(void);
 
 /* expand.c */
 size_t _rtld_expand_path(char *, size_t, const char *, const char *,\

@@ -1,4 +1,4 @@
-#	$NetBSD: list.ldd,v 1.5 2011/03/09 23:10:07 joerg Exp $
+#	$NetBSD: list.ldd,v 1.6 2011/03/25 18:07:07 joerg Exp $
 
 PROG	ldd
 
@@ -10,4 +10,7 @@ SPECIAL ldd	keepsymbols	_rtld_default_paths _rtld_paths
 SPECIAL ldd	keepsymbols	_rtld_xforms _rtld_objmain
 SPECIAL ldd	keepsymbols	_rtld_objtail _rtld_objlist
 SPECIAL ldd	keepsymbols	_rtld_objcount _rtld_objloads
+SPECIAL ldd	keepsymbols	_rtld_shared_enter _rtld_shared_exit
+SPECIAL ldd	keepsymbols	_rtld_exclusive_enter _rtld_exclusive_exit
+
 SPECIAL ldd	keepsymbols	print_needed main_local main_progname

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.48 2011/03/12 07:43:53 matt Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.49 2011/03/25 18:07:06 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.48 2011/03/12 07:43:53 matt Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.49 2011/03/25 18:07:06 joerg Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -397,9 +397,11 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 
 	new_value = 0;	/* XXX gcc */
 
+	_rtld_shared_enter();
 	err = _rtld_relocate_plt_object(obj, rela, reloff, &new_value); 
 	if (err)
 		_rtld_die();
+	_rtld_shared_exit();
 
 	return (caddr_t)new_value;
 }
