@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.27 2011/03/24 17:05:45 bouyer Exp $	*/
+/*	$NetBSD: quota.h,v 1.28 2011/03/25 10:25:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,6 @@
 
 #ifndef	_UFS_UFS_QUOTA_H_
 #define	_UFS_UFS_QUOTA_H_
-#include <quota/quotaprop.h>
 
 /*
  * These definitions are common to the original disk quota implementation
@@ -55,6 +54,8 @@
 #define	GRPQUOTA	1	/* element used for group quotas */
 
 
+#if !defined(HAVE_NBTOOL_CONFIG_H)
+#include <quota/quotaprop.h>
 __inline static int __unused
 ufsclass2qtype(int class)
 {
@@ -80,6 +81,7 @@ qtype2ufsclass(int type)
 		return -1;
 	}
 }
+#endif /* !defined(HAVE_NBTOOL_CONFIG_H) */
 
 #ifdef _KERNEL
 
