@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.16 2011/03/09 23:10:08 joerg Exp $	*/
+/*	$NetBSD: ldd.c,v 1.17 2011/03/25 18:07:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.16 2011/03/09 23:10:08 joerg Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.17 2011/03/25 18:07:07 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -312,4 +312,24 @@ _rtld_die(void)
 	if (msg == NULL)
 		msg = "Fatal error";
 	xerrx(1, "%s", msg);
+}
+
+void
+_rtld_shared_enter(void)
+{
+}
+
+void
+_rtld_shared_exit(void)
+{
+}
+
+void
+_rtld_exclusive_enter(void)
+{
+}
+
+void
+_rtld_exclusive_exit(void)
+{
 }
