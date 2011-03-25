@@ -1,4 +1,4 @@
-/* $NetBSD: t_floor.c,v 1.2 2011/03/25 04:26:41 jruoho Exp $ */
+/* $NetBSD: t_floor.c,v 1.3 2011/03/25 10:00:32 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,21 +29,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_floor.c,v 1.2 2011/03/25 04:26:41 jruoho Exp $");
+__RCSID("$NetBSD: t_floor.c,v 1.3 2011/03/25 10:00:32 jruoho Exp $");
 
 #include <math.h>
 #include <limits.h>
-
-#include <stdio.h>
+#include <stdlib.h>
 
 #include <atf-c.h>
 
 ATF_TC(floor);
 ATF_TC_HEAD(floor, tc)
 {
-	/*
-	 * This may fail under QEMU; see PR misc/44767.
-	 */
 	atf_tc_set_md_var(tc, "descr", "A basic test of floor(3)");
 }
 
@@ -52,6 +48,12 @@ ATF_TC_BODY(floor, tc)
 	const int n = 10240;
 	double x, y;
 	int i;
+
+	/*
+	 * This may fail under QEMU; see PR misc/44767.
+	 */
+	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+		atf_tc_skip("Test not applicable on QEMU");
 
 	for (i = 0; i < n; i++) {
 
