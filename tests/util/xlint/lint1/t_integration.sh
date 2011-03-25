@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.1 2010/07/18 10:11:01 jmmv Exp $
+# $NetBSD: t_integration.sh,v 1.2 2011/03/25 19:19:46 njoly Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,7 @@ test_case()
 	atf_test_case ${name}
 	eval "${name}_head() {
 		atf_set \"descr\" \"${descr}\";
+		atf_set \"require.progs\" \"${LINT1}\";
 	}"
 	eval "${name}_body() {
 		${result} d_${name}.c;
