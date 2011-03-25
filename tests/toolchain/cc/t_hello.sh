@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.1 2011/02/24 10:24:24 pooka Exp $
+#	$NetBSD: t_hello.sh,v 1.2 2011/03/25 19:19:45 njoly Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,11 +28,13 @@
 atf_test_case hello
 hello_head() {
 	atf_set "descr" "compile and run \"hello world\""
+	atf_set "require.progs" "cc"
 }
 
 atf_test_case hello_pic
 hello_pic_head() {
 	atf_set "descr" "compile and run PIC \"hello world\""
+	atf_set "require.progs" "cc"
 }
 
 hello_body() {

@@ -1,4 +1,4 @@
-# $NetBSD: t_config.sh,v 1.2 2010/11/07 17:51:22 jmmv Exp $
+# $NetBSD: t_config.sh,v 1.3 2011/03/25 19:19:46 njoly Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -59,6 +59,7 @@ test_case()
 	atf_test_case "${name}"
 	eval "${name}_head() { \
 		atf_set descr \"${descr}\"; \
+		atf_set require.progs \"config\"; \
 	}"
 	eval "${name}_body() { \
 		run_and_check_${type} '${name}'; \
