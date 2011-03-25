@@ -1,16 +1,12 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.2 2011/03/06 17:08:43 bouyer Exp $
+#	$NetBSD: Makefile,v 1.3 2011/03/25 10:30:35 bouyer Exp $
 
 .include <bsd.own.mk>
 PROG=	quotactl
 SRCS=	quotactl.c
 MAN=	quotactl.8
 
-CPPFLAGS+=-I${NETBSDSRCDIR}/sys 
-DPADD=	${LIBPROP}
-LDADD=	-lprop
-
-.PATH:	${NETBSDSRCDIR}/sys/ufs/ufs 
-SRCS+=	quota2_prop.c
+DPADD=	${LIBQUOTA} ${LIBRPCSVC} ${LIBPROP}
+LDADD=	-lquota -lrpcsvc -lprop
 
 .include <bsd.prog.mk>
