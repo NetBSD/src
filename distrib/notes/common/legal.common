@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.90 2010/04/24 20:56:19 snj Exp $
+.\"	$NetBSD: legal.common,v 1.91 2011/03/25 00:03:27 rmind Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,22 +124,6 @@ This product includes software developed by Brini.
 This product includes software developed by Bruce M. Simpson.
 .It
 This product includes software developed by Causality Limited.
-.It
-This product includes software developed by Charles D. Cranor
-and Seth Widoff.
-.It
-This product includes software developed by Charles D. Cranor and
-Washington University.
-.It
-This product includes software developed by Charles D. Cranor,
-Washington University, and the University of California, Berkeley
-and its contributors.
-.It
-This product includes software developed by Charles D. Cranor,
-Washington University, the University of California, Berkeley and
-its contributors.
-.It
-This product includes software developed by Charles D. Cranor.
 .It
 This product includes software developed by Charles Hannum.
 .It
