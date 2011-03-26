@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.24 2011/03/19 19:54:02 phx Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.25 2011/03/26 22:20:04 phx Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.24 2011/03/19 19:54:02 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.25 2011/03/26 22:20:04 phx Exp $");
 
 #include "opt_pci.h"
 
@@ -92,7 +92,7 @@ static int brdtype;
 #define BRD_SANDPOINTX3		3
 #define BRD_ENCOREPP1		10
 #define BRD_KUROBOX		100
-#define BRD_QNAPTS101		101
+#define BRD_QNAPTS		101
 #define BRD_SYNOLOGY		102
 #define BRD_STORCENTER		103
 #define BRD_DLINKDSM		104
@@ -135,9 +135,10 @@ pci_attach_hook(struct device *parent, struct device *self,
 	}
 	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 15, 0);
 	dev15 = pci_conf_read(pba->pba_pc, tag, PCI_ID_REG);
-	if (PCI_VENDOR(dev15) == PCI_VENDOR_INTEL) {
-		/* Intel GbE at dev 15 */
-		brdtype = BRD_QNAPTS101;
+	if (PCI_VENDOR(dev15) == PCI_VENDOR_INTEL
+	    || PCI_VENDOR(dev15) == PCI_VENDOR_REALTEK) {
+		/* Intel or Realtek GbE at dev 15 */
+		brdtype = BRD_QNAPTS;
 		return;
 	}
 	if (PCI_VENDOR(dev15) == PCI_VENDOR_MARVELL) {
@@ -342,7 +343,7 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		/* map line 11,12,13,14 to EPIC IRQ0,1,4,3 */
 		*ihp = (line == 13) ? 4 : line - 11;
 		break;
-	case BRD_QNAPTS101:
+	case BRD_QNAPTS:
 		/* map line 13-16 to EPIC IRQ0-3 */
 		*ihp = line - 13;
 		break;
