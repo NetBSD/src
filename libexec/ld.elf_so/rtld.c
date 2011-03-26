@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.141 2011/03/25 18:07:04 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.142 2011/03/26 21:40:37 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.141 2011/03/25 18:07:04 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.142 2011/03/26 21:40:37 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1061,6 +1061,8 @@ dlsym(void *handle, const char *name)
 		void *p;
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
 		if (ELF_ST_TYPE(def->st_info) == STT_FUNC) {
+			p = (void *)_rtld_function_descriptor_alloc(defobj,
+			    def, 0);
 			lookup_mutex_exit();
 			return p;
 		}
