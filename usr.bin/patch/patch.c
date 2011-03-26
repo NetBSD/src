@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: patch.c,v 1.45 2007/04/18 21:52:24 sobrado Exp $
  * $DragonFly: src/usr.bin/patch/patch.c,v 1.10 2008/08/10 23:39:56 joerg Exp $
- * $NetBSD: patch.c,v 1.27 2008/09/19 18:33:34 joerg Exp $
+ * $NetBSD: patch.c,v 1.28 2011/03/26 21:45:48 dholland Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: patch.c,v 1.27 2008/09/19 18:33:34 joerg Exp $");
+__RCSID("$NetBSD: patch.c,v 1.28 2011/03/26 21:45:48 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -623,7 +623,7 @@ usage(void)
 "             [-r rej-name] [-V t | nil | never] [-x number] [-z backup-ext]\n"
 "             [--posix] [origfile [patchfile]]\n"
 "       patch <patchfile\n");
-	my_exit(EXIT_SUCCESS);
+	my_exit(EXIT_FAILURE);
 }
 
 /*
