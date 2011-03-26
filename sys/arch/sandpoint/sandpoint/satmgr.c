@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.6 2011/03/12 16:49:16 phx Exp $ */
+/* $NetBSD: satmgr.c,v 1.7 2011/03/26 22:36:34 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -112,6 +112,8 @@ static void rxintr(struct satmgr_softc *);
 static void txintr(struct satmgr_softc *);
 static void startoutput(struct satmgr_softc *);
 static void swintr(void *);
+static void sinit(struct satmgr_softc *);
+static void qinit(struct satmgr_softc *);
 static void kreboot(struct satmgr_softc *);
 static void sreboot(struct satmgr_softc *);
 static void qreboot(struct satmgr_softc *);
@@ -127,16 +129,17 @@ static void sched_sysmon_pbutton(void *);
 
 struct satops {
 	const char *family;
+	void (*init)(struct satmgr_softc *);
 	void (*reboot)(struct satmgr_softc *);
 	void (*pwroff)(struct satmgr_softc *);
 	void (*dispatch)(struct satmgr_softc *, int);
 };
 
 static struct satops satmodel[] = {
-    { "kurobox",  kreboot, kpwroff, kbutton },
-    { "synology", sreboot, spwroff, sbutton },
-    { "qnap",     qreboot, qpwroff, qbutton },
-    { "dlink",    NULL, NULL, dbutton }
+    { "kurobox",  NULL, kreboot, kpwroff, kbutton },
+    { "synology", sinit, sreboot, spwroff, sbutton },
+    { "qnap",     qinit, qreboot, qpwroff, qbutton },
+    { "dlink",    NULL, NULL, NULL, dbutton }
 };
 
 /* single byte stride register layout */
@@ -253,7 +256,9 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 			CTL_CREATE, CTL_EOL);
 	}
 
-	md_reboot = satmgr_reboot; /* cpu_reboot() hook */
+	md_reboot = satmgr_reboot;	/* cpu_reboot() hook */
+	if (ops->init != NULL)
+		(*ops->init)(sc);	/* init sat.cpu, LEDs, etc. */
 	return;
 
   notavail:
@@ -652,6 +657,13 @@ kbutton(struct satmgr_softc *sc, int ch)
 }
 
 static void
+sinit(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "8");	/* status LED green */
+}
+
+static void
 sreboot(struct satmgr_softc *sc)
 {
 
@@ -681,24 +693,39 @@ sbutton(struct satmgr_softc *sc, int ch)
 }
 
 static void
+qinit(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "V");	/* status LED green */
+}
+
+static void
 qreboot(struct satmgr_softc *sc)
 {
 
-	send_sat(sc, "f");
+	send_sat(sc, "Pf");
 }
 
 static void
 qpwroff(struct satmgr_softc *sc)
 {
 
-	send_sat(sc, "A");
+	send_sat(sc, "PA");
 }
 
 static void
 qbutton(struct satmgr_softc *sc, int ch)
 {
 
-	/* research in progress */
+	switch (ch) {
+	case '@':
+		/* power button, notified after 5 seconds guard time */
+		sysmon_task_queue_sched(0, sched_sysmon_pbutton, sc);
+		break;
+	case 'j':	/* reset to default button */
+	case 'h':	/* USB copy button */
+		break;
+	}
 }
 
 static void
