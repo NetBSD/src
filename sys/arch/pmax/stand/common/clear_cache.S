@@ -1,4 +1,4 @@
-/*	$NetBSD: clear_cache.S,v 1.8 2011/01/10 16:43:29 tsutsui Exp $	*/
+/*	$NetBSD: clear_cache.S,v 1.9 2011/03/26 15:49:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,12 +33,9 @@
 #include <mips/cpuregs.h>
 #include <machine/dec_prom.h>
 
-	.set	noreorder
+	.set	reorder		# make as(1) handle hazard and BDslot
 LEAF(clear_cache)
 	lw	v0, _C_LABEL(callv)	# get pointer to call back vectors
-	nop
 	lw	v0, 0x7c(v0)	# offset for callv->_clear_cache
-	nop
 	j	v0		# call PROM clear_cache
-	 nop
 END(clear_cache)
