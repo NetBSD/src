@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.11 2011/03/13 01:56:21 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.12 2011/03/26 17:55:05 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -89,14 +89,14 @@ static struct brdprop brdlist[] = {
 	NULL, synobrdfix, NULL, synoreset },
     {
 	"qnap",
-	"QNAP TS-101",
-	BRD_QNAPTS101,
+	"QNAP TS",
+	BRD_QNAPTS,
 	0,
 	"eumb", 0x4500, 115200,
-	NULL, qnapbrdfix, NULL, NULL },
+	NULL, qnapbrdfix, NULL, qnapreset },
     {
 	"iomega",
-	"IOMEGA StorCenter",
+	"IOMEGA StorCenter G2",
 	BRD_STORCENTER,
 	0,
 	"eumb", 0x4500, 115200,
@@ -224,9 +224,10 @@ brdsetup(void)
 		/* SKnet/Marvell (sk) at dev 15 */
 		brdtype = BRD_SYNOLOGY;
 	}
-	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x8086) {
-		/* Intel (wm) at dev 15 */
-		brdtype = BRD_QNAPTS101;
+	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x8086
+	    || PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x10ec) {
+		/* Intel (wm) or RealTek (re) at dev 15 */
+		brdtype = BRD_QNAPTS;
 	}
 	else if (PCI_VENDOR(pcicfgread(dev13, PCI_ID_REG)) == 0x1106) {
 		/* VIA 6410 (viaide) at dev 13 */
@@ -237,7 +238,7 @@ brdsetup(void)
 		brdtype = BRD_DLINKDSM;
 	}
 	else if (PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1283
-		   || PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1095) {
+	    || PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1095) {
 		/* ITE (iteide) or SiI (satalink) at dev 16 */
 		brdtype = BRD_NH230NAS;
 	}
@@ -672,7 +673,17 @@ void
 qnapbrdfix(struct brdprop *brd)
 {
 
-	/* illuminate LEDs */
+	init_uart(uart2base, 19200, LCR_8BITS | LCR_PNONE);
+	/* beep, status LED red */
+	send_sat("PW");
+}
+
+void
+qnapreset()
+{
+
+	send_sat("f");
+	/*NOTREACHED*/
 }
 
 void
