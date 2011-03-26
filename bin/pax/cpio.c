@@ -1,4 +1,4 @@
-/*	$NetBSD: cpio.c,v 1.20 2009/02/14 08:10:06 lukem Exp $	*/
+/*	$NetBSD: cpio.c,v 1.21 2011/03/26 12:01:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cpio.c,v 1.20 2009/02/14 08:10:06 lukem Exp $");
+__RCSID("$NetBSD: cpio.c,v 1.21 2011/03/26 12:01:06 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -649,8 +649,8 @@ vcpio_rd(ARCHD *arcn, char *buf)
 off_t
 vcpio_endrd(void)
 {
-	return (off_t)(sizeof(HD_VCPIO) + sizeof(TRAILER +
-		(VCPIO_PAD(sizeof(HD_VCPIO) + sizeof(TRAILER)))));
+	return (off_t)(sizeof(HD_VCPIO) + sizeof(TRAILER) +
+		(VCPIO_PAD(sizeof(HD_VCPIO) + sizeof(TRAILER))));
 }
 
 /*
@@ -958,8 +958,8 @@ bcpio_rd(ARCHD *arcn, char *buf)
 off_t
 bcpio_endrd(void)
 {
-	return (off_t)(sizeof(HD_BCPIO) + sizeof(TRAILER +
-		(BCPIO_PAD(sizeof(HD_BCPIO) + sizeof(TRAILER)))));
+	return (off_t)(sizeof(HD_BCPIO) + sizeof(TRAILER) +
+		(BCPIO_PAD(sizeof(HD_BCPIO) + sizeof(TRAILER))));
 }
 
 /*
