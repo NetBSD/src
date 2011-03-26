@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.177 2011/03/16 01:30:24 erh Exp $
+#	$NetBSD: Makefile.inc,v 1.178 2011/03/26 19:51:42 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -96,7 +96,8 @@ MLINKS+=extattr.3 extattr_namespace_to_string.3 \
 	extattr.3 extattr_string_to_namespace.3
 MLINKS+=fpgetmask.3 fpgetround.3 fpgetmask.3 fpgetsticky.3 \
 	fpgetmask.3 fpsetmask.3  fpgetmask.3 fpsetround.3 \
-	fpgetmask.3 fpsetsticky.3
+	fpgetmask.3 fpsetsticky.3 fpgetmask.3 fpgetprec.3 \
+	fpgetmask.3 fpsetprec.3
 MLINKS+=fts.3 fts_open.3 fts.3 fts_read.3 fts.3 fts_children.3 \
 	fts.3 fts_set.3 fts.3 fts_close.3
 MLINKS+=ftw.3 nftw.3
