@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1603 2011/03/24 17:05:41 bouyer Exp $
+#	$NetBSD: mi,v 1.1604 2011/03/26 19:55:27 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6083,10 +6083,12 @@
 ./usr/share/man/cat3/fparseln.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fpclassify.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpgetmask.0		comp-c-catman		.cat
+./usr/share/man/cat3/fpgetprec.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpgetround.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpgetsticky.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fpsetmask.0		comp-c-catman		.cat
+./usr/share/man/cat3/fpsetprec.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpsetround.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpsetsticky.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpurge.0			comp-c-catman		.cat
@@ -12160,10 +12162,12 @@
 ./usr/share/man/html3/fparseln.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpclassify.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpgetmask.html		comp-c-htmlman		html
+./usr/share/man/html3/fpgetprec.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpgetround.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpgetsticky.html		comp-c-htmlman		html
 ./usr/share/man/html3/fprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpsetmask.html		comp-c-htmlman		html
+./usr/share/man/html3/fpsetprec.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpsetround.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpsetsticky.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpurge.html		comp-c-htmlman		html
@@ -18149,10 +18153,12 @@
 ./usr/share/man/man3/fparseln.3			comp-c-man		.man
 ./usr/share/man/man3/fpclassify.3		comp-c-man		.man
 ./usr/share/man/man3/fpgetmask.3		comp-c-man		.man
+./usr/share/man/man3/fpgetprec.3		comp-c-man		.man
 ./usr/share/man/man3/fpgetround.3		comp-c-man		.man
 ./usr/share/man/man3/fpgetsticky.3		comp-c-man		.man
 ./usr/share/man/man3/fprintf.3			comp-c-man		.man
 ./usr/share/man/man3/fpsetmask.3		comp-c-man		.man
+./usr/share/man/man3/fpsetprec.3		comp-c-man		.man
 ./usr/share/man/man3/fpsetround.3		comp-c-man		.man
 ./usr/share/man/man3/fpsetsticky.3		comp-c-man		.man
 ./usr/share/man/man3/fpurge.3			comp-c-man		.man
