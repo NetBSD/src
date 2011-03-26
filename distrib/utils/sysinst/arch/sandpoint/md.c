@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.34 2011/03/20 12:43:40 phx Exp $ */
+/*	$NetBSD: md.c,v 1.35 2011/03/26 22:16:33 phx Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,7 +80,6 @@ md_init_set_status(int flags)
 	}
 	prodname = malloc(len);
 	sysctlbyname(mib_name, prodname, &len, NULL, 0);
-printf("\n***\n*** Installing on %s\n***\n", prodname);
 
 	if (strcmp(prodname, "kurobox") == 0)
 		/*
