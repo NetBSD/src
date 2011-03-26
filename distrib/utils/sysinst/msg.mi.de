@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.54 2011/02/01 01:42:07 joerg Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.55 2011/03/26 16:30:20 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,7 +85,7 @@ Durch Betätigen der Eingabetaste aktivieren Sie die gegenwärtige Auswahl.
 }
 
 message thanks
-{Danke, daß Sie NetBSD benutzen!
+{Danke, dass Sie NetBSD benutzen!
 }
 
 message installusure
@@ -135,7 +135,7 @@ Zurück zum Hauptmenü...
 }
 
 message onedisk
-{Ich habe nur eine Festplatte, %s, gefunden. Ich gehe somit davon aus, daß
+{Ich habe nur eine Festplatte, %s, gefunden. Ich gehe somit davon aus, dass
 Sie NetBSD darauf %s möchten. 
 }
 
@@ -726,7 +726,7 @@ message rootmissing
 
 message badroot
 {Das neu installierte root Dateisystem scheint unvollständig zu sein.
-Sind Sie sicher, daß Sie alle benötigten Sets installiert haben? 
+Sind Sie sicher, dass Sie alle benötigten Sets installiert haben? 
 }
 
 message fd_type
@@ -846,7 +846,7 @@ message install_selected_sets
 {Installieren der ausgewählten Pakete}
 
 message tarerror
-{Beim Extrahieren der Datei %s ist ein Fehler aufgetreten. Das bedeutet, daß
+{Beim Extrahieren der Datei %s ist ein Fehler aufgetreten. Das bedeutet, dass
 nicht alle Dateien korrekt extrahiert wurden und Ihr System somit nicht
 vollständig sein wird.
 
@@ -995,7 +995,7 @@ message Root_shell {Root-Shell}
 message aoutfail
 {Das Verzeichnis, in das die alten a.out-Bibliotheken gesichert
 werden sollten, konnte nicht erstellt werden. Bitte starten Sie
-die Aktualisierung erneut und stellen Sie sicher, daß alle Dateisysteme
+die Aktualisierung erneut und stellen Sie sicher, dass alle Dateisysteme
 gemountet sind.}
 
 message emulbackup
