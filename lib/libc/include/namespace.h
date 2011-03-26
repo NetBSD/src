@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.147 2011/03/12 19:52:48 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.148 2011/03/26 19:51:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -265,9 +265,11 @@
 #define fnmatch			_fnmatch
 #define fparseln		_fparseln
 #define fpgetmask		_fpgetmask
+#define fpgetprec		_fpgetprec
 #define fpgetround		_fpgetround
 #define fpgetsticky		_fpgetsticky
 #define fpsetmask		_fpsetmask
+#define fpsetprec		_fpsetprec
 #define fpsetround		_fpsetround
 #define fpsetsticky		_fpsetsticky
 #define freenetconfigent	_freenetconfigent
