@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.5 2011/03/24 22:08:30 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.6 2011/03/26 16:30:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,7 +58,7 @@ Nachfolgend wird dieser Vorgang 'Labeling' einer Festplatte genannt.
 Zuvor besteht die Möglichkeit eine AHDI-kompatible Partitionierung
 auf der Festplatte zu bearbeiten oder neu zu erstellen, auf der dann NetBSD
 installiert werden soll.
-Beachten Sie, daß NetBSD nicht auf AHDI Partitionen angewiesen ist - Details
+Beachten Sie, dass NetBSD nicht auf AHDI Partitionen angewiesen ist - Details
 können Sie der NetBSD Installationsdokumentation entnehmen.
 Wenn Sie eine AHDI-kompatible Partitionierung nutzen wollen, müssen Sie
 NetBSD einige Partitionen zuweisen, damit NetBSD fähig ist die Festplatte
