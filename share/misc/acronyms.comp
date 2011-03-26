@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.123 2011/03/24 17:00:31 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.124 2011/03/26 12:40:07 dholland Exp $
 
 3WHS	three-way handshake
 AA	anti-aliasing
@@ -246,6 +246,7 @@ DCU	data cache unit
 DDC	display data channel
 DDE	dynamic data exchange
 DDK	device driver kit
+DDL	data description language
 DDR	double data rate
 DDS	direct digital sound
 DDWG	digital display working group
@@ -256,6 +257,7 @@ DEK	data encryption key
 DEP	data execution prevention
 DER	distinguished encoding rules
 DES	Data Encryption Standard
+DF	don't fragment
 DFA	deterministic finite automaton
 DFC	data flow control
 DFS	depth first search
@@ -469,7 +471,7 @@ ICMP	Internet control message protocol
 IDA	Intel dynamic acceleration
 IDE	integrated drive electronics
 IDE	integrated development environment
-IDPS	instruction detection [and] prevention system
+IDPS	intrusion detection [and] prevention system
 IDRP	inter-domain routing protocol
 IDS	intrusion detection system
 IDT	interrupt descriptor table
@@ -766,6 +768,7 @@ PCC	Portable C Compiler
 PCD	page-level cache disable
 PCE	performance-monitor counter enable
 PCI	peripheral component interconnect
+PCM	phase change memory
 PCM	pulse code modulation
 PCMCIA	personal computer memory card international association
 PD	public domain
@@ -917,8 +920,9 @@ RUP	rational unified process
 RWM	read-write memory
 RX	receive, receiver
 S/PDIF	Sony/Phillips digital interface
-SA	source address
+SA	security advisory
 SA	security association
+SA	source address
 SA	structured analysis
 SAAS	software as a service
 SACD	super audio compact disc
@@ -1122,6 +1126,7 @@ VCC	common collector voltage
 VCF	voltage-controlled filter
 VCM	virtual channel memory
 VCO	voltage-controlled oscillator
+VCS	version control system
 VESA	video electronics standards association
 VFO	variable-frequency oscillator
 VG	volume group
