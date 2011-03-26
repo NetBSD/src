@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.4 2011/03/24 22:08:33 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.5 2011/03/26 16:30:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -97,11 +97,11 @@ message ovrwrite
 {Ihr Festplatte enthält mindestens eine MacOS HFS Partition. Das überschreiben
 der ganzen Festplatte wird die Festplatte für MacOS unbenutzbar machen. Sie
 sollten erwägen, eine kleine MacOS HFS Partition anzulegen, um 
-sicherzustellen, daß die Festplatte unter MacOS benutzt werden kann. Dies
+sicherzustellen, dass die Festplatte unter MacOS benutzt werden kann. Dies
 wäre eine gute Stelle, um eine Kopie der NetBSD/mac68k Booter Applikation
 zu speichern, mit der NetBSD von MacOS aus gestartet wird.
 
-Sind Sie sicher, daß Sie die MacOS HFS Partition(en) überschreiben
+Sind Sie sicher, dass Sie die MacOS HFS Partition(en) überschreiben
 möchten?
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.6 2011/03/24 22:08:35 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.7 2011/03/26 16:30:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,7 +60,7 @@ message pickdisk
 message partabovechs
 {Der NetBSD Teil der Festplatte liegt außerhalb des vom BIOS dieser Maschine
 adressierbaren Bereichs. Eventuell können Sie von dieser Partition nicht
-booten. Sind Sie sicher, daß Sie fortfahren möchten?
+booten. Sind Sie sicher, dass Sie fortfahren möchten?
 
 (Antworten Sie mit 'nein' um die Partitionen erneut zu editieren.)}
 
