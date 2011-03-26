@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.18 2011/02/14 13:05:00 nisimura Exp $
+$NetBSD: README.NAS,v 1.19 2011/03/26 22:18:06 phx Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -19,15 +19,17 @@ sk.15	satalink.13	Synology DS-101g+/106e/106/106x/107e/107/207
 			DS-108j/109j/209j
 sk.15	satalink.12/13	Synology CS-406/RS-406/CS-406e/CS-407e
 
-			>> Board type BRD_QNAPTS101 <<
-wm.15	satalink.13 	QNAP TS-100/101
+			>> Board type BRD_QNAPTS <<
+wm.15	satalink.13 	QNAP TS-100/TS-101(V1.02)
+re.15	satalink.13	QNAP TS-101(V200), QNAP TS-201, LevelOne FNS-5000B
 
 			>> Board type BRD_STORCENTER <<
 re.15	viaide.13	IOMEGA StorCenter 250/500/1T
 
-			>> Not yet recognized, research in progress <<
-re.15	satalink.13 	QNAP TS-201, LevelOne FNS-5000B
+			>> Board type BRD_DLINKDSM <<
 stge.15	acardide.16	D-Link DSM-G600 (Rev.B only!)
+
+			>> Board type BRD_NH230NAS <<
 re.15	iteide.16	Netronix NH-230, Allnet ALL6250, Encore ENNHD-1000,
 			Planex NAS-01G
 re.15	satalink.16	Netronix NH-231, Allnet ALL6260, Longshine LCS-8311,
@@ -45,7 +47,11 @@ DLink		13, 14, 15, 16	-> 0, 1, 3, 4
 NH230		13, 14, 15, 16	-> 0, 3, 1, 2
 
 - USB EHCI is a multiple function PCI device which has
-  pin assignment A, B and C.
+  pin assignment A, B and C. Special cases:
+
+		IDSEL	Pin		   EPIC IRQ
+  DLink		14	A, B, C		-> 1, 1, 2
+
 
 //// e300 NAS products ////
 
