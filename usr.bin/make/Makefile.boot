@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.19 2009/01/24 11:59:39 dsl Exp $
+#	$NetBSD: Makefile.boot,v 1.20 2011/03/26 21:42:12 dholland Exp $
 #
 # a very simple makefile...
 #
@@ -32,7 +32,7 @@ LIBOBJ= lst.lib/lstAppend.o lst.lib/lstAtEnd.o lst.lib/lstAtFront.o \
 	lst.lib/lstInit.o lst.lib/lstInsert.o lst.lib/lstIsAtEnd.o \
 	lst.lib/lstIsEmpty.o lst.lib/lstLast.o lst.lib/lstMember.o \
 	lst.lib/lstNext.o lst.lib/lstOpen.o lst.lib/lstRemove.o \
-	lst.lib/lstReplace.o lst.lib/lstSucc.o
+	lst.lib/lstReplace.o lst.lib/lstSucc.o lst.lib/lstPrev.o
 
 bmake: ${OBJ} ${LIBOBJ}
 #	@echo 'make of make and make.0 started.'
