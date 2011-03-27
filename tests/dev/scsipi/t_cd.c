@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cd.c,v 1.2 2010/09/11 16:03:41 martin Exp $	*/
+/*	$NetBSD: t_cd.c,v 1.3 2011/03/27 08:53:56 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -50,9 +50,10 @@ ATF_TC_HEAD(noisyeject, tc)
 ATF_TC_BODY(noisyeject, tc)
 {
 	static char fname[] = "/dev/rcd0_";
-	int fd, arg = 0;
+	int part, fd, arg = 0;
 
-	fname[strlen(fname)-1] = 'a' + getrawpartition();
+	RL(part = getrawpartition());
+	fname[strlen(fname)-1] = 'a' + part;
 	rump_init();
 	RL(fd = rump_sys_open(fname, O_RDWR));
 	RL(rump_sys_ioctl(fd, DIOCEJECT, &arg));
