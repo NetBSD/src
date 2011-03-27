@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.16 2011/02/20 20:16:01 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.17 2011/03/27 14:22:02 plunky Exp $
 #
 
 .include <bsd.init.mk>
@@ -83,6 +83,10 @@ Atffile: Makefile
 
 .if !empty(SCRIPTS) || !empty(PROGS) || !empty(PROGS_CXX)
 .  include <bsd.prog.mk>
+.else
+cleandir:	cleantest
+cleantest:	.PHONY
+	rm -f ${CLEANFILES}
 .endif
 
 #
