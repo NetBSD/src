@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1304 2011/03/27 00:08:07 fair Exp $
+# $NetBSD: mi,v 1.1305 2011/03/27 02:52:10 fair Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1000,6 +1000,7 @@
 ./usr/share/man/cat4/gpiosim.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gre.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gsip.0			man-sys-catman		.cat
+./usr/share/man/cat4/gtp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/guspnp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hcide.0			man-sys-catman		.cat
@@ -1269,7 +1270,7 @@
 ./usr/share/man/cat4/mpls.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpu.0			man-sys-catman		.cat
-./usr/share/man/cat4/mr.0			man-sys-catman		.cat
+./usr/share/man/cat4/mr.0			man-obsolete		obsolete
 ./usr/share/man/cat4/msk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mskc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtd.0			man-sys-catman		.cat
@@ -3775,6 +3776,7 @@
 ./usr/share/man/html4/gpiosim.html		man-sys-htmlman		html
 ./usr/share/man/html4/gre.html			man-sys-htmlman		html
 ./usr/share/man/html4/gsip.html			man-sys-htmlman		html
+./usr/share/man/html4/gtp.html			man-sys-htmlman		html
 ./usr/share/man/html4/gus.html			man-sys-htmlman		html
 ./usr/share/man/html4/guspnp.html		man-sys-htmlman		html
 ./usr/share/man/html4/hcide.html		man-sys-htmlman		html
@@ -4006,7 +4008,7 @@
 ./usr/share/man/html4/mpls.html			man-sys-htmlman		html
 ./usr/share/man/html4/mpt.html			man-sys-htmlman		html
 ./usr/share/man/html4/mpu.html			man-sys-htmlman		html
-./usr/share/man/html4/mr.html			man-sys-htmlman		html
+./usr/share/man/html4/mr.html			man-obsolete		obsolete
 ./usr/share/man/html4/msk.html			man-sys-htmlman		html
 ./usr/share/man/html4/mskc.html			man-sys-htmlman		html
 ./usr/share/man/html4/mtd.html			man-sys-htmlman		html
