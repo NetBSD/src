@@ -550,8 +550,8 @@ meta_init(const char *make_mode)
 	    writeMeta = FALSE;
 	if (strstr(make_mode, "nofilemon"))
 	    useFilemon = FALSE;
-	if ((cp = strstr(make_mode, "curdir="))) {
-	    metaCurdirOk = boolValue(&cp[7]);
+	if ((cp = strstr(make_mode, "curdirok="))) {
+	    metaCurdirOk = boolValue(&cp[9]);
 	}
 	if (strstr(make_mode, "ignore-cmd"))
 	    metaIgnoreCMDs = TRUE;
