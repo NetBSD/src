@@ -1,4 +1,4 @@
-#	$NetBSD: files.drm,v 1.6 2011/02/18 14:26:09 jmcneill Exp $
+#	$NetBSD: files.drm,v 1.7 2011/03/27 08:45:11 mlelstv Exp $
 
 # direct rendering modules
 define	drmbase
@@ -8,7 +8,7 @@ defflag		opt_drm.h	DRM_DEBUG DRM_NO_AGP DRM_NO_MTRR
 
 makeoptions	drmbase		CPPFLAGS+="-I$S/external/bsd/drm/dist/bsd-core -I$S/external/bsd/drm/dist/shared-core"
 
-file	external/bsd/drm/dist/bsd-core/drm_agpsupport.c		drmbase
+file	external/bsd/drm/dist/bsd-core/drm_agpsupport.c		drmbase & agp
 file	external/bsd/drm/dist/bsd-core/drm_auth.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_bufs.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_context.c		drmbase
