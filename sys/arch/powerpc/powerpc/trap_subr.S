@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.65.16.4 2011/01/28 04:37:25 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.65.16.5 2011/03/27 08:47:10 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1110,8 +1110,8 @@ _C_LABEL(sctrapexit):
 	ldreg	%r11,(savearea+CPUSAVE_SRR0)(%r2); /* get saved SRR0 */	\
 	ldreg	%r12,(savearea+CPUSAVE_SRR1)(%r2); /* get saved SRR1 */	\
 	ldint	%r3,CI_IDEPTH(%r2);					\
-	addi	%r3,%r3,1;						\
-	stint	%r3,CI_IDEPTH(%r2);					\
+	addi	%r4,%r3,1;						\
+	stint	%r4,CI_IDEPTH(%r2);					\
 	stint	%r3,FRAME_IDEPTH(%r1);					\
 	mfxer	%r3;							\
 	mfctr	%r4;							\
