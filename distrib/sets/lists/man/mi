@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1303 2011/03/18 15:21:56 jruoho Exp $
+# $NetBSD: mi,v 1.1304 2011/03/27 00:08:07 fair Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6327,6 +6327,7 @@
 ./usr/share/man/man4/gpiosim.4			man-sys-man		.man
 ./usr/share/man/man4/gre.4			man-sys-man		.man
 ./usr/share/man/man4/gsip.4			man-sys-man		.man
+./usr/share/man/man4/gtp.4			man-sys-man		.man
 ./usr/share/man/man4/gus.4			man-sys-man		.man
 ./usr/share/man/man4/guspnp.4			man-sys-man		.man
 ./usr/share/man/man4/hcide.4			man-sys-man		.man
@@ -6596,7 +6597,7 @@
 ./usr/share/man/man4/mpls.4			man-sys-man		.man
 ./usr/share/man/man4/mpt.4			man-sys-man		.man
 ./usr/share/man/man4/mpu.4			man-sys-man		.man
-./usr/share/man/man4/mr.4			man-sys-man		.man
+./usr/share/man/man4/mr.4			man-obsolete		obsolete
 ./usr/share/man/man4/msk.4			man-sys-man		.man
 ./usr/share/man/man4/mskc.4			man-sys-man		.man
 ./usr/share/man/man4/mtd.4			man-sys-man		.man
