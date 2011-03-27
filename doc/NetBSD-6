@@ -14,12 +14,12 @@ May not make 6.0
 Will be in 6.0
 --------------
 + ZFS - need an update on viability, needs work
-+ in-kernel iSCSI initiator, libisns and userland tools
++ in-kernel iSCSI initiator, and userland tools - libisns in repo and in build
 + 64-bit time_t
-+ rump
++ rump - pooka has declared interfaces stable
 + LVM/dmapper and tools
 + workable MIPS for all
-+ netpgp - maybe I am a bit biased in this?
++ netpgp - agc
 + able to use external compilers and toolchain
 + cleaned up files in repos - joerg
 + support for wide efficient regexps with tre
@@ -30,13 +30,13 @@ Will be in 6.0
 + agreement and communication of tiered port system (before release) - pooka
 + other enhancements and new functionality in -current
 + tcp support in libsa? need to merge SoC project
-+ sasl - SoC project merged, needs to be hooked into the build
++ sasl - SoC project was merged
 + namei changes - dholland
-+ support for resizing ffs
-+ production support for fss - no longer experimental
++ support for resizing ffs - riz
++ production support for fss
 + Xen/SMP
 + automated test framework for testing releng autobuilds
-+ full functionality for NPF
++ full functionality for NPF - SMP-aware packet filter - rmind
 + fixed IPSEC NAT-T
 + GPT-aware bootloader for i386/amd64
 
@@ -51,4 +51,4 @@ Possibly in 6.0
 
 Alistair Crooks
 On behalf of core and releng teams
-Sat Nov 27 12:32:06 PST 2010
+Fri Mar 25 17:20:36 PDT 2011
