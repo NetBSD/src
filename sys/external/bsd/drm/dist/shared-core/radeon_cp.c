@@ -2006,11 +2006,13 @@ int radeon_driver_load(struct drm_device *dev, unsigned long flags)
 	}
 
 	dev_priv->chip_family = flags & RADEON_FAMILY_MASK;
+#if !defined(__NetBSD__) || NAGP > 0
 	if (drm_device_is_agp(dev))
 		dev_priv->flags |= RADEON_IS_AGP;
 	else if (drm_device_is_pcie(dev))
 		dev_priv->flags |= RADEON_IS_PCIE;
 	else
+#endif
 		dev_priv->flags |= RADEON_IS_PCI;
 
 	ret = drm_vblank_init(dev, 2);
