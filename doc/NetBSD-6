@@ -4,13 +4,6 @@ Release plans for NetBSD-6.0
 This file is managed by the release engineering team - please get in touch
 with them with any feedback.
 
-May not make 6.0
-----------------
-+ XIP
-+ gaols
-+ sctp
-+ devfs
-
 Will be in 6.0
 --------------
 + ZFS - need an update on viability, needs work
@@ -47,6 +40,16 @@ Possibly in 6.0
 + kernel modules need work
 + Xen suspend/resume - jym working on it
 + TNF funding for release engineering
+
+May not make 6.0
+----------------
++ XIP
+
+Will not be in 6.0
+------------------
++ gaols
++ sctp
++ devfs
 
 
 Alistair Crooks
