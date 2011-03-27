@@ -1,4 +1,4 @@
-.\"	$NetBSD: fpgetmask.3,v 1.11 2011/03/26 19:51:42 christos Exp $
+.\"	$NetBSD: fpgetmask.3,v 1.12 2011/03/27 22:55:07 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .Ft fp_except_t
 .Fn fpsetsticky "fp_except_t sticky"
 .Sh DESCRIPTION
-A rounding mode 
+A rounding mode
 .Ft fp_rnd_t
 is one of:
 .Bl -column -offset indent FP_RZ
@@ -106,7 +106,7 @@ The
 .Fn fpgetmask
 function will return the current exception mask.
 .Pp
-The 
+The
 .Fn fpgetprec
 function will return the current floating point precision.
 The
@@ -159,7 +159,7 @@ functions return the
 .Pq previous
 exception mask and exception history bits.
 .Sh SEE ALSO
-.Xr sigaction 2
+.Xr sigaction 2 ,
 .Xr fenv 3
 .Sh BUGS
 There is no way to return an unsupported value.
