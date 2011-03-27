@@ -1,4 +1,4 @@
-/* $NetBSD: t_cond.c,v 1.2 2010/11/03 16:10:22 christos Exp $ */
+/* $NetBSD: t_cond.c,v 1.3 2011/03/27 16:45:15 jruoho Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_cond.c,v 1.2 2010/11/03 16:10:22 christos Exp $");
+__RCSID("$NetBSD: t_cond.c,v 1.3 2011/03/27 16:45:15 jruoho Exp $");
 
 #include <sys/time.h>
 
@@ -306,6 +306,66 @@ ATF_TC_BODY(signal_wait_race, tc)
 }
 
 static void *
+pthread_cond_timedwait_func(void *arg)
+{
+	struct timespec ts;
+	size_t i = 0;
+	int rv;
+
+	for (;;) {
+
+		if (i++ >= 10000)
+			pthread_exit(NULL);
+
+		(void)memset(&ts, 0, sizeof(struct timespec));
+
+		ATF_REQUIRE(clock_gettime(CLOCK_REALTIME, &ts) == 0);
+
+		/*
+		 * Set to one second in the past:
+		 * pthread_cond_timedwait(3) should
+		 * return ETIMEDOUT immediately.
+		 */
+		ts.tv_sec = ts.tv_sec - 1;
+
+		PTHREAD_REQUIRE(pthread_mutex_lock(&static_mutex));
+		rv = pthread_cond_timedwait(&static_cond, &static_mutex, &ts);
+
+		/*
+		 * Sometimes we catch ESRCH.
+		 * This should never happen.
+		 */
+		ATF_REQUIRE(rv == ETIMEDOUT);
+		PTHREAD_REQUIRE(pthread_mutex_unlock(&static_mutex));
+	}
+}
+
+ATF_TC(cond_timedwait_race);
+ATF_TC_HEAD(cond_timedwait_race, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test pthread_cond_timedwait(3)");
+
+}
+ATF_TC_BODY(cond_timedwait_race, tc)
+{
+	pthread_t tid[64];
+	size_t i;
+
+	atf_tc_expect_fail("PR lib/44756");
+
+	for (i = 0; i < __arraycount(tid); i++) {
+
+		PTHREAD_REQUIRE(pthread_create(&tid[i], NULL,
+			pthread_cond_timedwait_func, NULL));
+	}
+
+	for (i = 0; i < __arraycount(tid); i++) {
+
+		PTHREAD_REQUIRE(pthread_join(tid[i], NULL));
+	}
+}
+
+static void *
 broadcast_threadfunc(void *arg)
 {
 	printf("2: Second thread.\n");
@@ -502,6 +562,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, signal_before_unlock);
 	ATF_TP_ADD_TC(tp, signal_before_unlock_static_init);
 	ATF_TP_ADD_TC(tp, signal_wait_race);
+	ATF_TP_ADD_TC(tp, cond_timedwait_race);
 	ATF_TP_ADD_TC(tp, broadcast);
 	ATF_TP_ADD_TC(tp, bogus_timedwaits);
 	ATF_TP_ADD_TC(tp, destroy_after_cancel);
