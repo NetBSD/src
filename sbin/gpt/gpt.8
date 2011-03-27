@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.6 2011/02/09 05:11:15 schnoebe Exp $
+.\" $NetBSD: gpt.8,v 1.7 2011/03/27 01:01:07 jym Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd June 22, 2006
+.Dd March 27, 2011
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -131,6 +131,27 @@ accepts
 and
 .Cm windows
 as aliases for the most commonly used partition types.
+.\" ==== biosboot ====
+.It Nm Ic biosboot Oo Fl c Ar bootcode Oc Oo Fl i Ar index Oc Ar device ...
+The
+.Ic biosboot
+command allows the user to configure the partition that contains the
+primary bootstrap program, used during
+.Xr boot 8 .
+.Pp
+The
+.Fl c
+option allows the user to specify the filename that
+.Nm
+should read the bootcode from.
+The default is to read from
+.Pa /usr/mdec/mbr_gpt .
+.Pp
+The
+.Fl i
+option selects the partition that should contain the primary
+bootstrap code, as installed via
+.Xr installboot 8 .
 .\" ==== create ====
 .It Nm Ic create Oo Fl fp Oc Ar device ...
 The
@@ -274,7 +295,9 @@ option takes precedence over the
 option.
 .El
 .Sh SEE ALSO
+.Xr boot 8 ,
 .Xr fdisk 8 ,
+.Xr installboot 8 ,
 .Xr mount 8 ,
 .Xr newfs 8 ,
 .Xr swapon 8
