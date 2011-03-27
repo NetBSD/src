@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.8 2011/03/26 19:51:59 christos Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.9 2011/03/27 05:13:15 mrg Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
@@ -13,7 +13,9 @@
 
 __BEGIN_DECLS
 typedef fp_rnd fp_rnd_t;
+#ifdef _X86_IEEEFP_H_	/* XXX */
 typedef fp_prec fp_prec_t;
+#endif
 typedef fp_except fp_except_t;
 
 fp_rnd_t	fpgetround(void);
