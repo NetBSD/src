@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_nand.c,v 1.4 2011/03/18 20:23:26 cliff Exp $	*/
+/*	$NetBSD: rmixl_nand.c,v 1.5 2011/03/27 13:36:50 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.4 2011/03/18 20:23:26 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.5 2011/03/27 13:36:50 ahoka Exp $");
 
 #include "opt_flash.h"
 
@@ -202,7 +202,8 @@ rmixl_nand_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_debug_dev(self, "bus width %d bits\n", 8 * sc->sc_buswidth);
 
-	sc->sc_nand_if.select = nand_default_select;
+	nand_init_interface(&sc->sc_nand_if);
+
 	sc->sc_nand_if.command = rmixl_nand_command;
 	sc->sc_nand_if.address = rmixl_nand_address;
 	sc->sc_nand_if.read_buf_byte = rmixl_nand_read_buf;
@@ -215,12 +216,8 @@ rmixl_nand_attach(device_t parent, device_t self, void *aux)
 	sc->sc_nand_if.write_word = rmixl_nand_write_word;
 	sc->sc_nand_if.busy = rmixl_nand_busy;
 
-	sc->sc_nand_if.ecc_compute = nand_default_ecc_compute;
-	sc->sc_nand_if.ecc_correct = nand_default_ecc_correct;
-	sc->sc_nand_if.ecc_prepare = NULL;
 	sc->sc_nand_if.ecc.necc_code_size = 3;
 	sc->sc_nand_if.ecc.necc_block_size = 256;
-	sc->sc_nand_if.ecc.necc_type = NAND_ECC_TYPE_SW;
 
 	/*
 	 * reset to get NAND into known state
