@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.7 2011/03/21 12:53:50 christos Exp $ */
+/* $NetBSD: strtod.c,v 1.8 2011/03/27 11:21:54 he Exp $ */
 
 /****************************************************************
 
@@ -1000,7 +1000,7 @@ strtod
 				dval(&rv0) = dval(&rv);
 				word0(&rv) += P*Exp_msk1;
 				dval(&adj) = dval(&aadj1) * ulp(&rv);
-				dval(&rv) += adj;
+				dval(&rv) += dval(&adj);
 #ifdef IBM
 				if ((word0(&rv) & Exp_mask) <  P*Exp_msk1)
 #else
@@ -1019,7 +1019,7 @@ strtod
 				}
 			else {
 				dval(&adj) = dval(&aadj1) * ulp(&rv);
-				dval(&rv) += adj;
+				dval(&rv) += dval(&adj);
 				}
 #else /*Sudden_Underflow*/
 			/* Compute dval(&adj) so that the IEEE rounding rules will
