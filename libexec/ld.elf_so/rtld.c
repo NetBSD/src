@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.143 2011/03/27 13:14:42 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.144 2011/03/27 13:15:34 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.143 2011/03/27 13:14:42 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.144 2011/03/27 13:15:34 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -841,6 +841,7 @@ dlclose(void *handle)
 {
 	Obj_Entry *root;
 
+	dbg(("dlclose of %p", handle));
 
 	_rtld_exclusive_enter();
 
@@ -884,6 +885,8 @@ dlopen(const char *name, int mode)
 	int flags = _RTLD_DLOPEN;
 	bool nodelete;
 	bool now;
+
+	dbg(("dlopen of %s %d", name, mode));
 
 	_rtld_exclusive_enter();
 
@@ -984,6 +987,8 @@ dlsym(void *handle, const char *name)
 	const Obj_Entry *defobj;
 	void *retaddr;
 	DoneList donelist; 
+
+	dbg(("dlsym of %s in %p", name, handle));
 
 	lookup_mutex_enter();
 
@@ -1095,6 +1100,8 @@ dladdr(const void *addr, Dl_info *info)
 	void *symbol_addr;
 	unsigned long symoffset;
 
+	dbg(("dladdr of %p", addr));
+
 	lookup_mutex_enter();
 
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
@@ -1163,6 +1170,8 @@ dlinfo(void *handle, int req, void *v)
 	const Obj_Entry *obj;
 	void *retaddr;
 
+	dbg(("dlinfo for %p %d", handle, req));
+
 	_rtld_shared_enter();
 
 	if (handle == RTLD_SELF) {
@@ -1210,6 +1219,8 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *), void *pa
 	struct dl_phdr_info phdr_info;
 	const Obj_Entry *obj;
 	int error = 0;
+
+	dbg(("dl_iterate_phdr"));
 
 	_rtld_shared_enter();
 
