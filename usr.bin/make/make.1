@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.183 2011/02/26 01:17:24 sjg Exp $
+.\"	$NetBSD: make.1,v 1.184 2011/03/27 19:39:21 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd February 25, 2011
+.Dd March 27, 2011
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -767,7 +767,7 @@ It can contain a number of keywords:
 .Bl -hang -width ignore-cmd
 .It Pa compat
 Like
-.Fl B
+.Fl B ,
 puts
 .Nm
 into "compat" mode.
@@ -780,6 +780,14 @@ to capture the command run, the output generated and if
 is available, the system calls which are of interest to
 .Nm .
 The captured output can be very useful when diagnosing errors.
+.It Pa curdir= Ar bf
+Normally
+.Nm
+will not create .meta files in
+.Ql Va .CURDIR .
+This can be overridden by setting
+.Va bf 
+to a value which represents True.
 .It Pa verbose
 If in "meta" mode, print a clue about the target being built.
 This is useful if the build is otherwise running silently.
