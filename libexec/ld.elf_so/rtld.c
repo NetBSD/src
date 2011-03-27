@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.142 2011/03/26 21:40:37 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.143 2011/03/27 13:14:42 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.142 2011/03/26 21:40:37 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.143 2011/03/27 13:14:42 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -839,10 +839,17 @@ __strong_alias(__dlclose,dlclose)
 int
 dlclose(void *handle)
 {
-	Obj_Entry *root = _rtld_dlcheck(handle);
+	Obj_Entry *root;
 
-	if (root == NULL)
+
+	_rtld_exclusive_enter();
+
+	root = _rtld_dlcheck(handle);
+
+	if (root == NULL) {
+		_rtld_exclusive_exit();
 		return -1;
+	}
 
 	_rtld_debug.r_state = RT_DELETE;
 	_rtld_debug_state();
@@ -852,6 +859,8 @@ dlclose(void *handle)
 
 	_rtld_debug.r_state = RT_CONSISTENT;
 	_rtld_debug_state();
+
+	_rtld_exclusive_enter();
 
 	return 0;
 }
