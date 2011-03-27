@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.34 2011/02/16 08:35:51 jruoho Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.35 2011/03/27 08:52:25 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.34 2011/02/16 08:35:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.35 2011/03/27 08:52:25 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -582,6 +582,7 @@ thinkpad_wireless_toggle(thinkpad_softc_t *sc)
 {
 	/* Ignore return value, as the hardware may not support bluetooth */
 	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "BTGL", NULL, NULL);
+	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "GWAN", NULL, NULL);
 }
 
 static uint8_t
