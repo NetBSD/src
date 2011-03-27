@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.5 2011/03/09 12:33:59 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.6 2011/03/27 13:33:04 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.5 2011/03/09 12:33:59 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.6 2011/03/27 13:33:04 ahoka Exp $");
 
 #include "locators.h"
 
@@ -63,9 +63,7 @@ int nand_print(void *, const char *);
 static int nand_search(device_t, cfdata_t, const int *, void *);
 static void nand_address_row(device_t, size_t);
 static void nand_address_column(device_t, size_t, size_t);
-static void nand_readid(device_t, struct nand_chip *);
-static void nand_read_parameter_page(device_t, struct nand_chip *);
-static const char *nand_midtoname(int);
+static int nand_fill_chip_structure(device_t, struct nand_chip *);
 static int nand_scan_media(device_t, struct nand_chip *);
 static bool nand_check_wp(device_t);
 
@@ -79,6 +77,7 @@ int	nanddebug = NAND_DEBUG;
 int nand_cachesync_timeout = 1;
 int nand_cachesync_nodenum;
 
+#ifdef NAND_VERBOSE
 const struct nand_manufacturer nand_mfrs[] = {
 	{ NAND_MFR_AMD,		"AMD" },
 	{ NAND_MFR_FUJITSU,	"Fujitsu" },
@@ -91,6 +90,22 @@ const struct nand_manufacturer nand_mfrs[] = {
 	{ NAND_MFR_SAMSUNG,	"Samsung" },
 	{ NAND_MFR_UNKNOWN,	"Unknown" }
 };
+
+static const char *
+nand_midtoname(int id)
+{
+	int i;
+
+	for (i = 0; nand_mfrs[i].id != 0; i++) {
+		if (nand_mfrs[i].id == id)
+			return nand_mfrs[i].name;
+	}
+
+	KASSERT(nand_mfrs[i].id == 0);
+
+	return nand_mfrs[i].name;
+}
+#endif
 
 /* ARGSUSED */
 int
@@ -108,7 +123,7 @@ nand_attach(device_t parent, device_t self, void *aux)
 	struct nand_chip *chip = &sc->sc_chip;
 
 	sc->sc_dev = self;
-	sc->nand_dev = parent;
+	sc->controller_dev = parent;
 	sc->nand_if = naa->naa_nand_if;
 
 	aprint_naive("\n");
@@ -238,6 +253,7 @@ nand_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
+/* ask for a nand driver to attach to the controller */
 device_t
 nand_attach_mi(struct nand_interface *nand_if, device_t parent)
 {
@@ -245,23 +261,50 @@ nand_attach_mi(struct nand_interface *nand_if, device_t parent)
 
 	KASSERT(nand_if != NULL);
 
+	/* fill the defaults if we have null pointers */
+	if (nand_if->program_page == NULL) {
+		nand_if->program_page = &nand_default_program_page;
+	}
+
+	if (nand_if->read_page == NULL) {
+		nand_if->read_page = &nand_default_read_page;
+	}
+
 	arg.naa_nand_if = nand_if;
 	return config_found_ia(parent, "nandbus", &arg, nand_print);
 }
 
-static const char *
-nand_midtoname(int id)
+/* default everything to reasonable values, to ease future api changes */
+void
+nand_init_interface(struct nand_interface *interface)
 {
-	int i;
+	interface->select = &nand_default_select;
+	interface->command = NULL;
+	interface->address = NULL;
+	interface->read_buf_byte = NULL;
+	interface->read_buf_word = NULL;
+	interface->read_byte = NULL;
+	interface->read_word = NULL;
+	interface->write_buf_byte = NULL;
+	interface->write_buf_word = NULL;
+	interface->write_byte = NULL;
+	interface->write_word = NULL;
+	interface->busy = NULL;
 
-	for (i = 0; nand_mfrs[i].id != 0; i++) {
-		if (nand_mfrs[i].id == id)
-			return nand_mfrs[i].name;
-	}
+	/*-
+	 * most drivers dont want to change this, but some implement
+	 * read/program in one step
+	 */
+	interface->program_page = &nand_default_program_page;
+	interface->read_page = &nand_default_read_page;
 
-	KASSERT(nand_mfrs[i].id == 0);
-
-	return nand_mfrs[i].name;
+	/* default to soft ecc, that should work everywhere */
+	interface->ecc_compute = &nand_default_ecc_compute;
+	interface->ecc_correct = &nand_default_ecc_correct;
+	interface->ecc_prepare = NULL;
+	interface->ecc.necc_code_size = 3;
+	interface->ecc.necc_block_size = 256;
+	interface->ecc.necc_type = NAND_ECC_TYPE_SW;
 }
 
 #if 0
@@ -284,7 +327,7 @@ nand_quirks(device_t self, struct nand_chip *chip)
 #endif
 
 static int
-nand_read_legacy_parameters(device_t self, struct nand_chip *chip)
+nand_fill_chip_structure_legacy(device_t self, struct nand_chip *chip)
 {
 	switch (chip->nc_manf_id) {
 	case NAND_MFR_MICRON:
@@ -327,9 +370,9 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 		
 		aprint_normal(": Legacy NAND Flash\n");
 		
-		nand_readid(self, chip);
+		nand_read_id(self, &chip->nc_manf_id, &chip->nc_dev_id);
 
-		if (nand_read_legacy_parameters(self, chip)) {
+		if (nand_fill_chip_structure_legacy(self, chip)) {
 			aprint_error_dev(self,
 			    "can't read device parameters for legacy chip\n");
 			return 1;
@@ -339,8 +382,14 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 
 		aprint_normal(": ONFI NAND Flash\n");
 
-		nand_readid(self, chip);
-		nand_read_parameter_page(self, chip);
+		nand_read_id(self, &chip->nc_manf_id, &chip->nc_dev_id);
+		
+		if (nand_fill_chip_structure(self, chip)) {
+			aprint_error_dev(self,
+			    "can't read device parameters\n");
+			
+			return 1;
+		}
 	}
 
 #ifdef NAND_VERBOSE
@@ -425,37 +474,41 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 	return 0;
 }
 
-static void
-nand_readid(device_t self, struct nand_chip *chip)
+void
+nand_read_id(device_t self, uint8_t *manf, uint8_t *dev)
 {
 	nand_select(self, true);
 	nand_command(self, ONFI_READ_ID);
 	nand_address(self, 0x00);
 	
-	nand_read_byte(self, &chip->nc_manf_id);
-	nand_read_byte(self, &chip->nc_dev_id);
+	nand_read_byte(self, manf);
+	nand_read_byte(self, dev);
 	
 	nand_select(self, false);
 }
 
-static void
-nand_read_parameter_page(device_t self, struct nand_chip *chip)
+int
+nand_read_parameter_page(device_t self, struct onfi_parameter_page *params)
 {
-	struct onfi_parameter_page params;
 	uint8_t *bufp;
-	uint8_t	vendor[13], model[21];
 	uint16_t crc;
-	int i;
+	int i;//, tries = 0;
 
-	KASSERT(sizeof(params) == 256);
+	KASSERT(sizeof(*params) == 256);
 
+//read_params:
+//	tries++;
+	
 	nand_select(self, true);
 	nand_command(self, ONFI_READ_PARAMETER_PAGE);
 	nand_address(self, 0x00);
 
 	nand_busy(self);
 
-	bufp = (uint8_t *)&params;
+	/* TODO check the signature if it contains at least 2 letters */
+
+	bufp = (uint8_t *)params;
+	/* XXX why i am not using read_buf? */
 	for (i = 0; i < 256; i++) {
 		nand_read_byte(self, &bufp[i]);
 	}
@@ -464,9 +517,24 @@ nand_read_parameter_page(device_t self, struct nand_chip *chip)
 	/* validate the parameter page with the crc */
 	crc = nand_crc16(bufp, 254);
 
-	if (crc != params.param_integrity_crc) {
+	if (crc != params->param_integrity_crc) {
 		aprint_error_dev(self, "parameter page crc check failed\n");
 		/* TODO: we should read the next parameter page copy */
+		return 1;
+	}
+
+	return 0;
+}
+
+static int
+nand_fill_chip_structure(device_t self, struct nand_chip *chip)
+{
+	struct onfi_parameter_page params;
+	uint8_t	vendor[13], model[21];
+	int i;
+
+	if (nand_read_parameter_page(self, &params)) {
+		return 1;
 	}
 
 	/* strip manufacturer and model string */
@@ -480,8 +548,11 @@ nand_read_parameter_page(device_t self, struct nand_chip *chip)
 	aprint_normal_dev(self, "vendor: %s, model: %s\n", vendor, model);
 
 	/* XXX TODO multiple LUNs */
-	if (__predict_false(params.param_numluns != 1)) {
-		panic("more than one LUNs are not supported yet!\n");
+	if (params.param_numluns != 1) {
+		aprint_error_dev(self,
+		    "more than one LUNs are not supported yet!\n");
+
+		return 1;
 	}
 
 	chip->nc_size = params.param_pagesize * params.param_blocksize *
@@ -504,6 +575,8 @@ nand_read_parameter_page(device_t self, struct nand_chip *chip)
 
 	if (params.param_features & ONFI_FEATURE_EXTENDED_PARAM)
 		chip->nc_flags |= NC_EXTENDED_PARAM;
+
+	return 0;
 }
 
 /* ARGSUSED */
@@ -583,9 +656,9 @@ nand_prepare_read(device_t self, flash_addr_t row, flash_addr_t column)
 	nand_busy(self);
 }
 
-/* read a page with ecc correction */
+/* read a page with ecc correction, default implementation */
 int
-nand_read_page(device_t self, size_t offset, uint8_t *data)
+nand_default_read_page(device_t self, size_t offset, uint8_t *data)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
@@ -672,8 +745,8 @@ nand_read_page(device_t self, size_t offset, uint8_t *data)
 	return 0;
 }
 
-static int
-nand_program_page(device_t self, size_t page, const uint8_t *data)
+int
+nand_default_program_page(device_t self, size_t page, const uint8_t *data)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
@@ -739,8 +812,9 @@ nand_program_page(device_t self, size_t page, const uint8_t *data)
 	return 0;
 }
 
+/* read the OOB of a page */
 int
-nand_read_oob(device_t self, size_t page, void *oob)
+nand_read_oob(device_t self, size_t page, uint8_t *oob)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;

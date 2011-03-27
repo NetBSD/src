@@ -1,4 +1,4 @@
-/*	$NetBSD: nandemulator.c,v 1.1 2011/02/26 18:07:31 ahoka Exp $	*/
+/*	$NetBSD: nandemulator.c,v 1.2 2011/03/27 13:33:04 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.1 2011/02/26 18:07:31 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.2 2011/03/27 13:33:04 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -182,7 +182,8 @@ nandemulator_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	sc->sc_nand_if.select = &nand_default_select;
+	nand_init_interface(&sc->sc_nand_if);
+
 	sc->sc_nand_if.command = &nandemulator_command;
 	sc->sc_nand_if.address = &nandemulator_address;
 	sc->sc_nand_if.read_buf_byte = &nandemulator_read_buf_byte;
@@ -195,12 +196,8 @@ nandemulator_attach(device_t parent, device_t self, void *aux)
 	sc->sc_nand_if.write_word = &nandemulator_write_word;
 	sc->sc_nand_if.busy = &nandemulator_busy;
 
-	sc->sc_nand_if.ecc_compute = &nand_default_ecc_compute;
-	sc->sc_nand_if.ecc_correct = &nand_default_ecc_correct;
-	sc->sc_nand_if.ecc_prepare = NULL;
 	sc->sc_nand_if.ecc.necc_code_size = 3;
 	sc->sc_nand_if.ecc.necc_block_size = 256;
-	sc->sc_nand_if.ecc.necc_type = NAND_ECC_TYPE_SW;
 
 	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, NULL))
 		aprint_error_dev(sc->sc_dev,
