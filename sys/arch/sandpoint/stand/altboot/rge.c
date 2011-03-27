@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.2 2011/01/27 17:38:04 phx Exp $ */
+/* $NetBSD: rge.c,v 1.3 2011/03/27 19:09:43 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -133,6 +133,7 @@ rge_match(unsigned tag, void *data)
 
 	v = pcicfgread(tag, PCI_ID_REG);
 	switch (v) {
+	case PCI_DEVICE(0x10ec, 0x8167):
 	case PCI_DEVICE(0x10ec, 0x8169):
 		return 1;
 	}
@@ -199,7 +200,7 @@ rge_init(unsigned tag, void *data)
 	l->rcr = (07 << 13) | (07 << 8) | RCR_APM;
 	CSR_WRITE_1(l, RGE_CR, CR_TXEN | CR_RXEN);
 	CSR_WRITE_1(l, RGE_ETTHR, 0x3f);
-	CSR_WRITE_2(l, RGE_RMS, FRAMELEN);
+	CSR_WRITE_2(l, RGE_RMS, FRAMESIZE);
 	CSR_WRITE_4(l, RGE_TCR, l->tcr);
 	CSR_WRITE_4(l, RGE_RCR, l->rcr);
 	CSR_WRITE_4(l, RGE_TNPDS, VTOPHYS(txd));
@@ -208,7 +209,6 @@ rge_init(unsigned tag, void *data)
 	CSR_WRITE_4(l, RGE_RDSAR + 4, 0); 
 	CSR_WRITE_2(l, RGE_ISR, ~0);
 	CSR_WRITE_2(l, RGE_IMR, 0);
-
 	return l;
 }
 
@@ -287,15 +287,16 @@ printf("recving with %u sec. timeout\n", timo);
 static int
 mii_read(struct local *l, int phy, int reg)
 {
-	unsigned v, loop;
+	unsigned v;
 
 	v = reg << 16;
 	CSR_WRITE_4(l, RGE_PHYAR, v);
-	loop = 100;
+	DELAY(1000);
 	do {
+		DELAY(100);
 		v = CSR_READ_4(l, RGE_PHYAR);
 	} while ((v & (1U << 31)) == 0); /* wait for 0 -> 1 */
-	return v;
+	return v & 0xffff;
 }
 
 static void
@@ -305,7 +306,9 @@ mii_write(struct local *l, int phy, int reg, int data)
 
 	v = (reg << 16) | (data & 0xffff) | (1U << 31);
 	CSR_WRITE_4(l, RGE_PHYAR, v);
+	DELAY(1000);
 	do {
+		DELAY(100);
 		v = CSR_READ_4(l, RGE_PHYAR);
 	} while (v & (1U << 31)); /* wait for 1 -> 0 */
 }
@@ -337,17 +340,9 @@ mii_write(struct local *l, int phy, int reg, int data)
 static void
 mii_initphy(struct local *l)
 {
-	int phy, ctl, sts, bound;
+	int bound, ctl, phy, sts;
 
-	for (phy = 0; phy < 32; phy++) {
-		ctl = mii_read(l, phy, MII_BMCR);
-		sts = mii_read(l, phy, MII_BMSR);
-		if (ctl != 0xffff && sts != 0xffff)
-			goto found;
-	}
-	printf("MII: no PHY found\n");
-	return;
-  found:
+	phy = 7;	/* internal rgephy, always at 7 */
 	ctl = mii_read(l, phy, MII_BMCR);
 	mii_write(l, phy, MII_BMCR, ctl | BMCR_RESET);
 	bound = 100;
