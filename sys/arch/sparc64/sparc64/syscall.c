@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.38 2011/03/23 20:41:31 martin Exp $ */
+/*	$NetBSD: syscall.c,v 1.39 2011/03/27 18:47:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.38 2011/03/23 20:41:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.39 2011/03/27 18:47:09 martin Exp $");
 
 #include "opt_sa.h"
 
@@ -130,7 +130,8 @@ handle_old(struct trapframe64 *tf, register_t *code)
 	int new = *code & (SYSCALL_G7RFLAG|SYSCALL_G2RFLAG|SYSCALL_G5RFLAG);
 	*code &= ~(SYSCALL_G7RFLAG|SYSCALL_G2RFLAG|SYSCALL_G5RFLAG);
 	if (new) {
-		if (new & SYSCALL_G5RFLAG)
+		/* note that G5RFLAG is multiple bits! */
+		if (__predict_true((new & SYSCALL_G5RFLAG) == SYSCALL_G5RFLAG))
 			tf->tf_pc = tf->tf_global[5];
 		else if (new & SYSCALL_G7RFLAG)
 			tf->tf_pc = tf->tf_global[7];
