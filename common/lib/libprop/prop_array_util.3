@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_array_util.3,v 1.5 2011/03/24 17:05:39 bouyer Exp $
+.\"	$NetBSD: prop_array_util.3,v 1.6 2011/03/27 22:44:47 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .Nm prop_array_get_cstring ,
 .Nm prop_array_set_cstring ,
 .Nm prop_array_get_cstring_nocopy ,
-.Nm prop_array_set_cstring_nocopy,
+.Nm prop_array_set_cstring_nocopy ,
 .Nm prop_array_add_and_rel
 .Sh LIBRARY
 .Lb libprop
@@ -197,7 +197,7 @@ for more information.
 .Pp
 The
 .Fn prop_array_add_and_rel
-function adds the object to the end of the array and release it.
+function adds the object to the end of the array and releases it.
 The object is also released on failure.
 .Sh RETURN VALUES
 The

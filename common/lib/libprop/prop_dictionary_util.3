@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary_util.3,v 1.5 2011/03/24 17:05:39 bouyer Exp $
+.\"	$NetBSD: prop_dictionary_util.3,v 1.6 2011/03/27 22:45:30 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 .Nm prop_dictionary_get_cstring ,
 .Nm prop_dictionary_set_cstring ,
 .Nm prop_dictionary_get_cstring_nocopy ,
-.Nm prop_dictionary_set_cstring_nocopy,
+.Nm prop_dictionary_set_cstring_nocopy ,
 .Nm prop_dictionary_set_and_rel
 .Sh LIBRARY
 .Lb libprop
@@ -169,7 +169,7 @@ for more information.
 .Pp
 The
 .Fn prop_dictionary_set_and_rel
-function adds the object to the dictionary and release it.
+function adds the object to the dictionary and releases it.
 The object is also released on failure.
 .Sh RETURN VALUES
 The
