@@ -60,6 +60,7 @@ static Boolean writeMeta = FALSE;
 static Boolean metaEnv = FALSE;		/* don't save env unless asked */
 static Boolean metaVerbose = FALSE;
 static Boolean metaIgnoreCMDs = FALSE;	/* ignore CMDs in .meta files */
+static Boolean metaCurdirOk = FALSE;	/* write .meta in .CURDIR Ok? */
 
 extern Boolean forceJobs;
 extern Boolean comatMake;
@@ -435,7 +436,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 	dname = objdir;
 
     /* If we aren't in the object directory, don't create a meta file. */
-    if (strcmp(curdir, dname) == 0) {
+    if (!metaCurdirOk && strcmp(curdir, dname) == 0) {
 	if (DEBUG(META))
 	    fprintf(debug_file, "Skipping meta for %s: .OBJDIR == .CURDIR\n",
 		    gn->name);
@@ -516,11 +517,25 @@ meta_create(BuildMon *pbm, GNode *gn)
     return (mf.fp);
 }
 
+static Boolean
+boolValue(char *s)
+{
+    switch(*s) {
+    case '0':
+    case 'N':
+    case 'n':
+    case 'F':
+    case 'f':
+	return FALSE;
+    }
+    return TRUE;
+}
 
 void
 meta_init(const char *make_mode)
 {
     static int once = 0;
+    char *cp;
 
     useMeta = TRUE;
     useFilemon = TRUE;
@@ -535,6 +550,9 @@ meta_init(const char *make_mode)
 	    writeMeta = FALSE;
 	if (strstr(make_mode, "nofilemon"))
 	    useFilemon = FALSE;
+	if ((cp = strstr(make_mode, "curdir="))) {
+	    metaCurdirOk = boolValue(&cp[7]);
+	}
 	if (strstr(make_mode, "ignore-cmd"))
 	    metaIgnoreCMDs = TRUE;
 	/* for backwards compatability */
