@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.144 2011/03/27 13:15:34 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.145 2011/03/27 21:58:50 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.144 2011/03/27 13:15:34 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.145 2011/03/27 21:58:50 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -304,7 +304,11 @@ _rtld_exit(void)
 {
 	dbg(("rtld_exit()"));
 
+	_rtld_exclusive_enter();
+
 	_rtld_call_fini_functions(1);
+
+	_rtld_exclusive_exit();
 }
 
 /*
