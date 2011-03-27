@@ -1,4 +1,4 @@
-/*	$NetBSD: repquota.c,v 1.30 2011/03/24 17:05:47 bouyer Exp $	*/
+/*	$NetBSD: repquota.c,v 1.31 2011/03/27 17:15:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.30 2011/03/24 17:05:47 bouyer Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.31 2011/03/27 17:15:17 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,8 +284,9 @@ repquota2(const struct statvfs *vfs, int class)
 		if (dataiter == NULL)
 			err(1, "prop_array_iterator");
 
-		valid[class] = 1;
+		valid[class] = 0;
 		while ((data = prop_object_iterator_next(dataiter)) != NULL) {
+			valid[class] = 1;
 			strid = NULL;
 			if (!prop_dictionary_get_uint32(data, "id", &id)) {
 				if (!prop_dictionary_get_cstring_nocopy(data,
@@ -317,7 +318,7 @@ repquota2(const struct statvfs *vfs, int class)
 	}
 	prop_object_iterator_release(cmditer);
 	prop_object_release(dict);
-	if (xflag == 0)
+	if (xflag == 0 && valid[class])
 		printquotas(class, vfs, version);
 	return 0;
 }
