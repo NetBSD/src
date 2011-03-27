@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24 2011/03/23 20:41:31 martin Exp $ */
+/*	$NetBSD: syscall.c,v 1.25 2011/03/27 18:47:09 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2011/03/23 20:41:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25 2011/03/27 18:47:09 martin Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -250,7 +250,8 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 		tf->tf_out[1] = rval.o[1];
 		if (new) {
 			/* jmp %g5, (or %g2 or %g7, deprecated) on success */
-			if (new & SYSCALL_G5RFLAG)
+			if (__predict_true((new & SYSCALL_G5RFLAG)
+						== SYSCALL_G5RFLAG))
 				i = tf->tf_global[5];
 			else if (new & SYSCALL_G2RFLAG)
 				i = tf->tf_global[2];
@@ -340,7 +341,8 @@ out:
 		tf->tf_out[1] = rval.o[1];
 		if (new) {
 			/* jmp %g5, (or %g2 or %g7, deprecated) on success */
-			if (new & SYSCALL_G5RFLAG)
+			if (__predict_true((new & SYSCALL_G5RFLAG) ==
+					SYSCALL_G5RFLAG))
 				i = tf->tf_global[5];
 			else if (new & SYSCALL_G2RFLAG)
 				i = tf->tf_global[2];
