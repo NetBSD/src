@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.18 2007/12/03 15:34:13 ad Exp $	*/
+/*	$NetBSD: extintr.c,v 1.18.40.1 2011/03/28 00:40:25 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.18 2007/12/03 15:34:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.18.40.1 2011/03/28 00:40:25 matt Exp $");
 
 #include "opt_marvell.h"
 #include "opt_kgdb.h"
@@ -622,8 +622,6 @@ ext_intr(struct intrframe *frame)
 
 #ifdef __HAVE_FAST_SOFTINTS
 #error don't count soft interrupts here
-#else
-	ci->ci_idepth++;
 #endif
 	EXT_INTR_STATS_DECL(tstart);
 	EXT_INTR_STATS_DEPTH();
@@ -653,7 +651,6 @@ ext_intr(struct intrframe *frame)
 	intrframe = oframe;
 	intr_depth--;
 #endif
-	ci->ci_idepth--;
 }
 
 /*
