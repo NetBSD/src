@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.4 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.5 2011/03/28 11:19:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,10 +32,9 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.4 2008/04/28 20:22:57 martin Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.5 2011/03/28 11:19:13 martin Exp $")
 #endif /* LIBC_SCCS && !lint */
 
-	.register	%g2,#scratch
 
 ENTRY(swapcontext)
 	mov	%o0, %o2			/* must save pointer */
@@ -52,7 +51,7 @@ ENTRY(swapcontext)
 	stx	%o1, [%o2 + 64 + 1 * 8]		/* gr[_REG_PC] = retaddr */
 
 	mov	%o3, %o0
-	mov	%o1, %g2			/* optimize `return' */
-	mov	SYS_setcontext|SYSCALL_G2RFLAG, %g1
+	mov	%o1, %g5			/* optimize `return' */
+	mov	SYS_setcontext|SYSCALL_G5RFLAG, %g1
 	t	ST_SYSCALL
 	ERROR()
