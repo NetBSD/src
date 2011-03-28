@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.18 2010/03/08 10:24:37 pooka Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.19 2011/03/28 22:23:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.18 2010/03/08 10:24:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.19 2011/03/28 22:23:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -82,20 +82,16 @@ cpu_rootconf(void)
 	panic("%s: unimplemented", __func__);
 }
 
-#ifdef __HAVE_DEVICE_REGISTER
 void
 device_register(struct device *dev, void *v)
 {
 
 	/* nada */
 }
-#endif
 
-#ifdef __HAVE_DEVICE_REGISTER_POSTCONFIG
 void
 device_register_post_config(struct device *dev, void *v)
 {
 
 	/* nada */
 }
-#endif
