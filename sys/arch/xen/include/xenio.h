@@ -1,4 +1,4 @@
-/*	$NetBSD: xenio.h,v 1.6.24.2 2011/01/10 00:37:38 jym Exp $	*/
+/*	$NetBSD: xenio.h,v 1.6.24.3 2011/03/28 23:04:55 jym Exp $	*/
 
 /******************************************************************************
  * privcmd.h
@@ -112,7 +112,7 @@ typedef struct oprivcmd_hypercall
 #define IOCTL_PRIVCMD_INITDOMAIN_EVTCHN \
     _IOR('P', 5, int)
 #define IOCTL_PRIVCMD_MMAPBATCH_V2      \
-    _IOW('P", 6, privcmd_mmapbatch_v2_t)
+    _IOW('P', 6, privcmd_mmapbatch_v2_t)
 
 /* Interface to /dev/xenevt */
 /* EVTCHN_RESET: Clear and reinit the event buffer. Clear error condition. */

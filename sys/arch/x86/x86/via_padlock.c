@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.10.2.3 2010/10/24 22:48:20 jym Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.10.2.4 2011/03/28 23:04:54 jym Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,20 +20,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10.2.3 2010/10/24 22:48:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10.2.4 2011/03/28 23:04:54 jym Exp $");
 
-#include "rnd.h"
-
-#if NRND == 0
-#error padlock requires rnd pseudo-devices
+#ifdef _KERNEL_OPT
+# include "rnd.h"
+# if NRND == 0
+#  error padlock requires rnd pseudo-devices
+# endif
 #endif
-
-#include "opt_viapadlock.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
+#include <sys/device.h>
+#include <sys/module.h>
 #include <sys/rnd.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -52,9 +53,21 @@ __KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10.2.3 2010/10/24 22:48:20 jym Exp
 
 #include <opencrypto/cryptosoft_xform.c>
 
-#ifdef VIA_PADLOCK
+#include <x86/via_padlock.h>
 
-char	xxx_via_buffer[1024];
+static int	via_padlock_match(device_t, cfdata_t, void *);
+static void	via_padlock_attach(device_t, device_t, void *);
+static int	via_padlock_detach(device_t, int);
+static void	via_padlock_attach_intr(device_t);
+
+CFATTACH_DECL_NEW(
+    padlock,
+    sizeof(struct via_padlock_softc),
+    via_padlock_match,
+    via_padlock_attach,
+    via_padlock_detach,
+    NULL
+);
 
 int	via_padlock_crypto_newsession(void *, uint32_t *, struct cryptoini *);
 int	via_padlock_crypto_process(void *, struct cryptop *, int);
@@ -69,7 +82,7 @@ static	__inline void via_padlock_cbc(void *, void *, void *, void *, int,
 static void
 via_c3_rnd(void *arg)
 {
-	struct via_padlock_softc *vp_sc = arg;
+	struct via_padlock_softc *sc = arg;
 
 	unsigned int rv, creg0, len = VIAC3_RNG_BUFSIZ;
 	static uint32_t buffer[VIAC3_RNG_BUFSIZ + 2];	/* XXX 2? */
@@ -101,29 +114,31 @@ via_c3_rnd(void *arg)
 	lcr0(creg0);
 	x86_enable_intr();
 	kpreempt_enable();
-	rnd_add_data(&vp_sc->sc_rnd_source, buffer, len * sizeof(int),
+	rnd_add_data(&sc->sc_rnd_source, buffer, len * sizeof(int),
 		     len * sizeof(int));
-	callout_reset(&vp_sc->sc_rnd_co, vp_sc->sc_rnd_hz, via_c3_rnd, vp_sc);
+	callout_reset(&sc->sc_rnd_co, sc->sc_rnd_hz, via_c3_rnd, sc);
 }	
 
 static void
-via_c3_rnd_init(struct via_padlock_softc *const vp_sc)
+via_c3_rnd_init(struct via_padlock_softc *sc)
 {
+	sc->sc_rnd_attached = true;
+
 	if (hz >= 100) {
-	    vp_sc->sc_rnd_hz = 10 * hz / 100;
+	    sc->sc_rnd_hz = 10 * hz / 100;
 	} else {
-	    vp_sc->sc_rnd_hz = 10;
+	    sc->sc_rnd_hz = 10;
 	}
 	/* See hifn7751.c re use of RND_FLAG_NO_ESTIMATE */
-	rnd_attach_source(&vp_sc->sc_rnd_source, "padlock",
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
-	callout_init(&vp_sc->sc_rnd_co, 0);
+	callout_init(&sc->sc_rnd_co, 0);
 	/* Call once to prime the pool early and set callout. */
-	via_c3_rnd(vp_sc);
+	via_c3_rnd(sc);
 }
 
 static void
-via_c3_ace_init(struct via_padlock_softc *const vp_sc)
+via_c3_ace_init(struct via_padlock_softc *sc)
 {
 	/*
 	 * There is no reason to call into the kernel to use this
@@ -133,12 +148,14 @@ via_c3_ace_init(struct via_padlock_softc *const vp_sc)
 	 * confusing (however, consider that crypto via unprivileged
 	 * instructions _is_ "just software" in some sense).
 	 */
-	vp_sc->sc_cid = crypto_get_driverid(CRYPTOCAP_F_SOFTWARE);
-	if (vp_sc->sc_cid < 0) {
-		printf("PadLock: Could not get a crypto driver ID\n");
-		free(vp_sc, M_DEVBUF);
+	sc->sc_cid = crypto_get_driverid(CRYPTOCAP_F_SOFTWARE);
+	if (sc->sc_cid < 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "could not get a crypto driver ID\n");
 		return;
 	}
+
+	sc->sc_cid_attached = true;
 
 	/*
 	 * Ask the opencrypto subsystem to register ourselves. Although
@@ -160,9 +177,9 @@ via_c3_ace_init(struct via_padlock_softc *const vp_sc)
 	 * XXX from _us_!
 	 */
 #define REGISTER(alg) \
-	crypto_register(vp_sc->sc_cid, alg, 0, 0, \
+	crypto_register(sc->sc_cid, alg, 0, 0, \
 	    via_padlock_crypto_newsession, via_padlock_crypto_freesession, \
-	    via_padlock_crypto_process, vp_sc);
+	    via_padlock_crypto_process, sc);
 
 	REGISTER(CRYPTO_AES_CBC);
 	REGISTER(CRYPTO_MD5_HMAC_96);
@@ -172,36 +189,6 @@ via_c3_ace_init(struct via_padlock_softc *const vp_sc)
 	REGISTER(CRYPTO_RIPEMD160_HMAC_96);
 	REGISTER(CRYPTO_RIPEMD160_HMAC);
 	REGISTER(CRYPTO_SHA2_HMAC);
-}
-
-void
-via_padlock_attach(void)
-{
-	struct via_padlock_softc *vp_sc;
-
-	printf("%s", xxx_via_buffer);
-
-	if (!((cpu_feature[4] & CPUID_VIA_HAS_ACE) ||
-	      (cpu_feature[4] & CPUID_VIA_HAS_RNG))) {
-		printf("PadLock: Nothing (%08x ! %08X ! %08X)\n",
-			cpu_feature[4], CPUID_VIA_HAS_ACE,
-			CPUID_VIA_HAS_RNG);
-		return;		/* Nothing to see here, move along. */
-	}
-
-	if ((vp_sc = malloc(sizeof(*vp_sc), M_DEVBUF, M_NOWAIT)) == NULL)
-		return;
-	memset(vp_sc, 0, sizeof(*vp_sc));
-
-	if (cpu_feature[4] & CPUID_VIA_HAS_RNG) {
-		via_c3_rnd_init(vp_sc);
-		printf("PadLock: RNG attached\n");
-	}
-
-	if (cpu_feature[4] & CPUID_VIA_HAS_ACE) {
-		via_c3_ace_init(vp_sc);
-		printf("PadLock: AES-CBC attached\n");
-	}
 }
 
 int
@@ -271,12 +258,8 @@ via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 				C3_CRYPT_CWLO_KEYGEN_SW |
 				C3_CRYPT_CWLO_NORMAL;
 
-#ifdef __NetBSD__
 			rnd_extract_data(ses->ses_iv, sizeof(ses->ses_iv),
 			    RND_EXTRACT_ANY);
-#else
-			get_random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
-#endif
 			ses->ses_klen = c->cri_klen;
 			ses->ses_cw0 = cw0;
 
@@ -382,7 +365,7 @@ via_padlock_crypto_freesession(void *arg, uint64_t tid)
 {
 	struct via_padlock_softc *sc = arg;
 	struct swcr_data *swd;
-	struct auth_hash *axf;
+	const struct auth_hash *axf;
 	int sesn;
 	uint32_t sid = ((uint32_t)tid) & 0xffffffff;
 
@@ -597,4 +580,106 @@ out:
 	return (err);
 }
 
-#endif /* VIA_PADLOCK */
+static int
+via_padlock_match(device_t parent, cfdata_t cf, void *opaque)
+{
+	struct cpufeature_attach_args *cfaa = opaque;
+	struct cpu_info *ci = cfaa->ci;
+
+	if (strcmp(cfaa->name, "padlock") != 0)
+		return 0;
+	if ((cpu_feature[4] & (CPUID_VIA_HAS_ACE|CPUID_VIA_HAS_RNG)) == 0)
+		return 0;
+	if ((ci->ci_flags & (CPUF_BSP|CPUF_SP|CPUF_PRIMARY)) == 0)
+		return 0;
+	return 1;
+}
+
+static void
+via_padlock_attach(device_t parent, device_t self, void *opaque)
+{
+	struct via_padlock_softc *sc = device_private(self);
+
+	sc->sc_dev = self;
+
+	aprint_naive("\n");
+	aprint_normal(": VIA PadLock\n");
+
+	pmf_device_register(self, NULL, NULL);
+
+	config_interrupts(self, via_padlock_attach_intr);
+}
+
+static void
+via_padlock_attach_intr(device_t self)
+{
+	struct via_padlock_softc *sc = device_private(self);
+
+	aprint_normal("%s:", device_xname(self));
+	if (cpu_feature[4] & CPUID_VIA_HAS_RNG) {
+		via_c3_rnd_init(sc);
+		aprint_normal(" RNG");
+	}
+	if (cpu_feature[4] & CPUID_VIA_HAS_ACE) {
+		via_c3_ace_init(sc);
+		aprint_normal(" ACE");
+	}
+	aprint_normal("\n");
+}
+
+static int
+via_padlock_detach(device_t self, int flags)
+{
+	struct via_padlock_softc *sc = device_private(self);
+
+	if (sc->sc_rnd_attached) {
+		callout_stop(&sc->sc_rnd_co);
+		callout_destroy(&sc->sc_rnd_co);
+		rnd_detach_source(&sc->sc_rnd_source);
+		sc->sc_rnd_attached = false;
+	}
+	if (sc->sc_cid_attached) {
+		crypto_unregister(sc->sc_cid, CRYPTO_AES_CBC);
+		crypto_unregister(sc->sc_cid, CRYPTO_MD5_HMAC_96);
+		crypto_unregister(sc->sc_cid, CRYPTO_MD5_HMAC);
+		crypto_unregister(sc->sc_cid, CRYPTO_SHA1_HMAC_96);
+		crypto_unregister(sc->sc_cid, CRYPTO_SHA1_HMAC);
+		crypto_unregister(sc->sc_cid, CRYPTO_RIPEMD160_HMAC_96);
+		crypto_unregister(sc->sc_cid, CRYPTO_RIPEMD160_HMAC);
+		crypto_unregister(sc->sc_cid, CRYPTO_SHA2_HMAC);
+		sc->sc_cid_attached = false;
+	}
+
+	pmf_device_deregister(self);
+
+	return 0;
+}
+
+MODULE(MODULE_CLASS_DRIVER, padlock, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+padlock_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_padlock,
+		    cfattach_ioconf_padlock, cfdata_ioconf_padlock);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_padlock,
+		    cfattach_ioconf_padlock, cfdata_ioconf_padlock);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
+}

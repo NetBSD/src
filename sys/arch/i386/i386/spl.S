@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.32.10.1 2010/10/24 22:48:01 jym Exp $	*/
+/*	$NetBSD: spl.S,v 1.32.10.2 2011/03/28 23:04:42 jym Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.32.10.1 2010/10/24 22:48:01 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.32.10.2 2011/03/28 23:04:42 jym Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -123,14 +123,14 @@ ENTRY(cx8_spllower)
 	movl	CPUVAR(ILEVEL),%edx
 	cmpl	%edx,%ecx			/* new level is lower? */
 	pushl	%ebx
-	jae,pn	1f
+	jae	1f
 0:
 	movl	CPUVAR(IPENDING),%eax
 	testl	%eax,CPUVAR(IUNMASK)(,%ecx,4)	/* deferred interrupts? */
 	movl	%eax,%ebx
-	jnz,pn	2f
+	jnz	2f
 	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
-	jnz,pn	0b
+	jnz	0b
 1:
 	popl	%ebx
 	ret

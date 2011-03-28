@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.75.2.3 2010/10/24 22:48:19 jym Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.75.2.4 2011/03/28 23:04:52 jym Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.75.2.3 2010/10/24 22:48:19 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.75.2.4 2011/03/28 23:04:52 jym Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -524,8 +524,10 @@ mpacpi_get_bbn(struct acpi_softc *acpi, ACPI_HANDLE handle, int *bus)
 {
 	ACPI_STATUS rv;
 	ACPI_INTEGER val;
+#if NPCHB > 0
 	pcireg_t class, dvid;
 	pcitag_t tag;
+#endif
 
 	rv = acpi_eval_integer(handle, METHOD_NAME__BBN, &val);
 	if (ACPI_SUCCESS(rv))

@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.2.6.4 2010/10/24 22:48:18 jym Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.2.6.5 2011/03/28 23:04:51 jym Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,16 +31,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.2.6.4 2010/10/24 22:48:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.2.6.5 2011/03/28 23:04:51 jym Exp $");
+
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
+#include <machine/mtrr.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -48,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.2.6.4 2010/10/24 22:48:18 jym Ex
 #include <dev/wsfont/wsfont.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
+#include <dev/wsfb/genfbvar.h>
 #include <arch/x86/include/genfb_machdep.h>
 
 #include "wsdisplay.h"
@@ -61,6 +66,8 @@ struct vcons_screen x86_genfb_console_screen;
 extern int acpi_md_vesa_modenum;
 #endif
 
+static device_t x86_genfb_console_dev = NULL;
+
 static struct wsscreen_descr x86_genfb_stdscreen = {
 	"std",
 	0, 0,
@@ -69,6 +76,62 @@ static struct wsscreen_descr x86_genfb_stdscreen = {
 	0,
 	NULL
 };
+
+void
+x86_genfb_set_console_dev(device_t dev)
+{
+	KASSERT(x86_genfb_console_dev == NULL);
+	x86_genfb_console_dev = dev;
+}
+
+void
+x86_genfb_ddb_trap_callback(int where)
+{
+	if (x86_genfb_console_dev == NULL)
+		return;
+
+	if (where) {
+		genfb_enable_polling(x86_genfb_console_dev);
+	} else {
+		genfb_disable_polling(x86_genfb_console_dev);
+	}
+}
+
+void
+x86_genfb_mtrr_init(uint64_t physaddr, uint32_t size)
+{
+#if notyet
+#ifdef MTRR
+	struct mtrr mtrr;
+	int error, n;
+
+	if (mtrr_funcs == NULL) {
+		aprint_debug("%s: no mtrr funcs\n", __func__);
+		return;
+	}
+
+	mtrr.base = physaddr;
+	mtrr.len = size;
+	mtrr.type = MTRR_TYPE_WC;
+	mtrr.flags = MTRR_VALID;
+	mtrr.owner = 0;
+
+	aprint_debug("%s: 0x%" PRIx64 "-0x%" PRIx64 "\n", __func__,
+	    mtrr.base, mtrr.base + mtrr.len - 1);
+
+	n = 1;
+	KERNEL_LOCK(1, NULL);
+	error = mtrr_set(&mtrr, &n, curlwp->l_proc, MTRR_GETSET_KERNEL);
+	if (n != 0)
+		mtrr_commit();
+	KERNEL_UNLOCK_ONE(NULL);
+
+	aprint_debug("%s: mtrr_set returned %d\n", __func__, error);
+#else
+	aprint_debug("%s: kernel lacks MTRR option\n", __func__);
+#endif
+#endif
+}
 
 int
 x86_genfb_cnattach(void)
@@ -97,7 +160,7 @@ x86_genfb_cnattach(void)
 
 	err = _x86_memio_map(t, (bus_addr_t)fbinfo->physaddr,
 	    fbinfo->width * fbinfo->stride,
-	    BUS_SPACE_MAP_LINEAR, &h);
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &h);
 	if (err) {
 		aprint_error("x86_genfb_cnattach: couldn't map framebuffer\n");
 		return 0;

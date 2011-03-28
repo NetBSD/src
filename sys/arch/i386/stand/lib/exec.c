@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.38.2.2 2009/11/01 13:58:36 jym Exp $	 */
+/*	$NetBSD: exec.c,v 1.38.2.3 2011/03/28 23:04:46 jym Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -142,6 +142,7 @@ static char module_base[64] = "/";
 static int howto;
 
 static void	module_init(const char *);
+static void	module_add_common(char *, uint8_t);
 
 void
 framebuffer_configure(struct btinfo_framebuffer *fb)
@@ -156,6 +157,18 @@ framebuffer_configure(struct btinfo_framebuffer *fb)
 
 void
 module_add(char *name)
+{
+	return module_add_common(name, BM_TYPE_KMOD);
+}
+
+void
+splash_add(char *name)
+{
+	return module_add_common(name, BM_TYPE_IMAGE);
+}
+
+static void
+module_add_common(char *name, uint8_t type)
 {
 	boot_module_t *bm, *bmp;
 	size_t len;
@@ -174,6 +187,7 @@ module_add(char *name)
 	memcpy(str, name, len);
 	bm->bm_path = str;
 	bm->bm_next = NULL;
+	bm->bm_type = type;
 	if (boot_modules == NULL)
 		boot_modules = bm;
 	else {
@@ -516,7 +530,8 @@ module_init(const char *kernel_path)
 			strncpy(bi->path, bm->bm_path, sizeof(bi->path) - 1);
 			bi->base = image_end;
 			bi->len = len;
-			bi->type = BI_MODULE_ELF;
+			bi->type = bm->bm_type == BM_TYPE_KMOD ?
+			    BI_MODULE_ELF : BI_MODULE_IMAGE;
 			if ((howto & AB_SILENT) == 0)
 				printf(" \n");
 		}

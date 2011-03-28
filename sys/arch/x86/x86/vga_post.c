@@ -1,4 +1,4 @@
-/* $NetBSD: vga_post.c,v 1.11.8.4 2011/01/10 00:37:37 jym Exp $ */
+/* $NetBSD: vga_post.c,v 1.11.8.5 2011/03/28 23:04:54 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.11.8.4 2011/01/10 00:37:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.11.8.5 2011/03/28 23:04:54 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -235,6 +235,19 @@ vga_post_call(struct vga_post *sc)
 void
 vga_post_set_vbe(struct vga_post *sc, uint16_t vbemode)
 {
+	sc->emu.x86.R_EAX = sc->initial_eax;
+	sc->emu.x86.R_EDX = 0x00000080;
+	sc->emu.x86.R_DS = 0x0040;
+	sc->emu.x86.register_flags = 0x3200;
+
+	memcpy((void *)sc->sys_image, sc->bios_data, PAGE_SIZE);
+
+	/* stack is at the end of the first 64KB */
+	sc->emu.x86.R_SS = 0;
+	sc->emu.x86.R_ESP = 0;
+
+	x86emu_i8254_init(&sc->i8254, nanotime);
+
 	sc->emu.x86.R_EBX = vbemode | 0x4000;
 	sc->emu.x86.R_EAX = 0x4f02;
 	X86EMU_exec_intr(&sc->emu, 0x10);

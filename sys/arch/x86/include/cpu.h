@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.2.6 2011/01/10 00:37:36 jym Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.2.7 2011/03/28 23:04:49 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,6 @@
 #include <machine/intrdefs.h>
 
 #include <x86/cacheinfo.h>
-#include <x86/via_padlock.h>
 
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
@@ -180,7 +179,9 @@ struct cpu_info {
 
 	struct evcnt ci_ipi_events[X86_NIPI];
 
-	struct via_padlock	ci_vp;	/* VIA PadLock private storage */
+	device_t	ci_frequency;	/* Frequency scaling technology */
+	device_t	ci_padlock;	/* VIA PadLock private storage */
+	device_t	ci_temperature;	/* Intel coretemp(4) or equivalent */
 
 	struct i386tss	ci_tss;		/* Per-cpu TSS; shared among LWPs */
 	char		ci_iomap[IOMAPSIZE]; /* I/O Bitmap */

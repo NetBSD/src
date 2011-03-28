@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.20.2.4 2011/01/10 00:37:29 jym Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.20.2.5 2011/03/28 23:04:37 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,10 +80,10 @@
 #define	MAXDSIZ		(8L*1024*1024*1024)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
+#define	DFLSSIZ		(4*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		(32*1024*1024)		/* max stack size */
+#define	MAXSSIZ		(128*1024*1024)		/* max stack size */
 #endif
 
 /*

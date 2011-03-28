@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.28.24.1 2009/11/01 13:58:36 jym Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.28.24.2 2011/03/28 23:04:44 jym Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -162,7 +162,191 @@ alloc_biosdisk(int biosdev)
 	return d;
 }
 
+#if !defined(NO_DISKLABEL) || !defined(NO_GPT)
+static void
+md5(void *hash, const void *data, size_t len)
+{
+	MD5_CTX ctx;
+
+	MD5Init(&ctx);
+	MD5Update(&ctx, data, len);
+	MD5Final(hash, &ctx);
+
+	return;
+}
+#endif
+
+#ifndef NO_GPT
+static bool
+guid_is_nil(const struct uuid *u)
+{
+	static const struct uuid nil = { .time_low = 0 };
+	return (memcmp(u, &nil, sizeof(*u)) == 0 ? true : false);
+}
+
+static bool
+guid_is_equal(const struct uuid *a, const struct uuid *b)
+{
+	return (memcmp(a, b, sizeof(*a)) == 0 ? true : false);
+}
+
+static int
+check_gpt(struct biosdisk *d, daddr_t sector)
+{
+	struct gpt_hdr gpth;
+	const struct gpt_ent *ep;
+	const struct uuid *u;
+	daddr_t entblk;
+	size_t size;
+	uint32_t crc;
+	int sectors;
+	int entries;
+	int entry;
+	int i, j;
+
+	/* read in gpt_hdr sector */
+	if (readsects(&d->ll, sector, 1, d->buf, 1)) {
+#ifdef DISK_DEBUG
+		printf("Error reading GPT header at %"PRId64"\n", sector);
+#endif
+		return EIO;
+	}
+
+	gpth = *(const struct gpt_hdr *)d->buf;
+
+	if (memcmp(GPT_HDR_SIG, gpth.hdr_sig, sizeof(gpth.hdr_sig)))
+		return -1;
+
+	crc = gpth.hdr_crc_self;
+	gpth.hdr_crc_self = 0;
+	gpth.hdr_crc_self = crc32(0, (const void *)&gpth, GPT_HDR_SIZE);
+	if (gpth.hdr_crc_self != crc) {
+		return -1;
+	}
+
+	if (gpth.hdr_lba_self != sector)
+		return -1;
+
+#ifdef _STANDALONE
+	bi_wedge.matchblk = sector;
+	bi_wedge.matchnblks = 1;
+
+	md5(bi_wedge.matchhash, d->buf, d->ll.secsize);
+#endif
+
+	sectors = sizeof(d->buf)/d->ll.secsize; /* sectors per buffer */
+	entries = sizeof(d->buf)/gpth.hdr_entsz; /* entries per buffer */
+	entblk = gpth.hdr_lba_table;
+	crc = crc32(0, NULL, 0);
+
+	j = 0;
+	ep = (const struct gpt_ent *)d->buf;
+
+	for (entry = 0; entry < gpth.hdr_entries; entry += entries) {
+		size = MIN(sizeof(d->buf),
+		    (gpth.hdr_entries - entry) * gpth.hdr_entsz);
+		entries = size / gpth.hdr_entsz;
+		sectors = roundup(size, d->ll.secsize) / d->ll.secsize;
+		if (readsects(&d->ll, entblk, sectors, d->buf, 1))
+			return -1;
+		entblk += sectors;
+		crc = crc32(crc, (const void *)d->buf, size);
+
+		for (i = 0; j < BIOSDISKNPART && i < entries; i++, j++) {
+			u = (const struct uuid *)ep[i].ent_type;
+			if (!guid_is_nil(u)) {
+				d->part[j].offset = ep[i].ent_lba_start;
+				d->part[j].size = ep[i].ent_lba_end -
+				    ep[i].ent_lba_start + 1;
+				if (guid_is_equal(u, &GET_nbsd_ffs))
+					d->part[j].fstype = FS_BSDFFS;
+				else if (guid_is_equal(u, &GET_nbsd_lfs))
+					d->part[j].fstype = FS_BSDLFS;
+				else if (guid_is_equal(u, &GET_nbsd_raid))
+					d->part[j].fstype = FS_RAID;
+				else if (guid_is_equal(u, &GET_nbsd_swap))
+					d->part[j].fstype = FS_SWAP;
+				else
+					d->part[j].fstype = FS_OTHER;
+			}
+		}
+
+	}
+
+	if (crc != gpth.hdr_crc_table) {
+#ifdef DISK_DEBUG	
+		printf("GPT table CRC invalid\n");
+#endif
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+read_gpt(struct biosdisk *d)
+{
+	struct biosdisk_extinfo ed;
+	daddr_t gptsector[2];
+	int i, error;
+
+	if (d->ll.type != BIOSDISK_TYPE_HD)
+		/* No GPT on floppy and CD */
+		return -1;
+
+	gptsector[0] = GPT_HDR_BLKNO;
+	if (set_geometry(&d->ll, &ed) == 0 && d->ll.flags & BIOSDISK_INT13EXT) {
+		gptsector[1] = ed.totsec - 1;
+		d->ll.secsize = ed.sbytes;
+	} else {
+#ifdef DISK_DEBUG
+		printf("Unable to determine extended disk geometry - "
+			"using CHS\n");
+#endif
+		/* at least try some other reasonable values then */
+		gptsector[1] = d->ll.chs_sectors - 1;
+	}
+
+	/*
+	 * Use any valid GPT available, do not require both GPTs to be valid
+	 */
+	for (i = 0; i < __arraycount(gptsector); i++) {
+		error = check_gpt(d, gptsector[i]);
+		if (error == 0)
+			break;
+	}
+
+	if (i >= __arraycount(gptsector)) {
+		memset(d->part, 0, sizeof(d->part));
+		return -1;
+	}
+
+#ifdef DISK_DEBUG
+	printf("using %s GPT\n", (i == 0) ? "primary" : "secondary");
+#endif
+	return 0;
+}
+#endif	/* !NO_GPT */
+
 #ifndef NO_DISKLABEL
+static void
+ingest_label(struct biosdisk *d, struct disklabel *lp)
+{
+	int part;
+
+	memset(d->part, 0, sizeof(d->part));
+
+	for (part = 0; part < lp->d_npartitions; part++) {
+		if (lp->d_partitions[part].p_size == 0)
+			continue;
+		if (lp->d_partitions[part].p_fstype == FS_UNUSED)
+			continue;
+		d->part[part].fstype = lp->d_partitions[part].p_fstype;
+		d->part[part].offset = lp->d_partitions[part].p_offset;
+		d->part[part].size = lp->d_partitions[part].p_size;
+	}
+}
+	
 static int
 check_label(struct biosdisk *d, int sector)
 {
@@ -183,7 +367,20 @@ check_label(struct biosdisk *d, int sector)
 		return -1;
 	}
 
-	d->boff = sector;
+	ingest_label(d, lp);
+
+#ifdef _STANDALONE
+	bi_disk.labelsector = d->boff + LABELSECTOR;
+	bi_disk.label.type = lp->d_type;
+	memcpy(bi_disk.label.packname, lp->d_packname, 16);
+	bi_disk.label.checksum = lp->d_checksum;
+
+	bi_wedge.matchblk = d->boff + LABELSECTOR;
+	bi_wedge.matchnblks = 1;
+
+	md5(bi_wedge.matchhash, d->buf, d->ll.secsize);
+#endif
+
 	return 0;
 }
 
@@ -292,7 +489,7 @@ read_label(struct biosdisk *d)
 	 */
 	/* XXX fill it to make checksum match kernel one */
 	dflt_lbl.d_checksum = dkcksum(&dflt_lbl);
-	memcpy(d->buf, &dflt_lbl, sizeof(dflt_lbl));
+	ingest_label(d, &dflt_lbl);
 	return 0;
 }
 #endif /* NO_DISKLABEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18.2.2 2009/11/01 13:58:44 jym Exp $	*/
+/*	$NetBSD: main.c,v 1.18.2.3 2011/03/28 23:04:46 jym Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -125,7 +125,11 @@ main(void)
 	gateA20();
 
 #ifndef SMALL
-	parsebootconf(BOOTCONF);
+	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
+		parsebootconf(BOOTCONF);
+	} else {
+		bootconf.timeout = boot_params.bp_timeout;
+	}
 
 	/*
 	 * If console set in boot.cfg, switch to it.

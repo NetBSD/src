@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.27.2.6 2011/01/10 00:37:39 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.27.2.7 2011/03/28 23:04:57 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -242,13 +242,13 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 
 	if ((err = xenbus_read_ul(NULL, xbusd->xbusd_path,
 	    "frontend-id", &domid, 10)) != 0) {
-		aprint_error("xvif: can' read %s/frontend-id: %d\n",
+		aprint_error("xvif: can't read %s/frontend-id: %d\n",
 		    xbusd->xbusd_path, err);
 		return err;
 	}
 	if ((err = xenbus_read_ul(NULL, xbusd->xbusd_path,
 	    "handle", &handle, 10)) != 0) {
-		aprint_error("xvif: can' read %s/handle: %d\n",
+		aprint_error("xvif: can't read %s/handle: %d\n",
 		    xbusd->xbusd_path, err);
 		return err;
 	}
@@ -319,33 +319,46 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	do {
 		xbt = xenbus_transaction_start();
 		if (xbt == NULL) {
-			printf("xbdback %s: can't start transaction\n",
+			aprint_error_ifnet(ifp,
+			    "%s: can't start transaction\n",
 			    xbusd->xbusd_path);
 			goto fail;
 		}
 		err = xenbus_printf(xbt, xbusd->xbusd_path,
+		    "vifname", ifp->if_xname);
+		if (err) {
+			aprint_error_ifnet(ifp,
+			    "failed to write %s/vifname: %d\n",
+			    xbusd->xbusd_path, err);
+			goto abort_xbt;
+		}
+		err = xenbus_printf(xbt, xbusd->xbusd_path,
 		    "feature-rx-copy", "%d", 1);
 		if (err) {
-			printf("xbdback: failed to write %s/feature-rx-copy: "
-			    "%d\n", xbusd->xbusd_path, err);
+			aprint_error_ifnet(ifp,
+			    "failed to write %s/feature-rx-copy: %d\n",
+			    xbusd->xbusd_path, err);
 			goto abort_xbt;
 		}
 		err = xenbus_printf(xbt, xbusd->xbusd_path,
 		    "feature-rx-flip", "%d", 1);
 		if (err) {
-			printf("xbdback: failed to write %s/feature-rx-flip: "
-			    "%d\n", xbusd->xbusd_path, err);
+			aprint_error_ifnet(ifp,
+			    "failed to write %s/feature-rx-flip: %d\n",
+			    xbusd->xbusd_path, err);
 			goto abort_xbt;
 		}
 	} while ((err = xenbus_transaction_end(xbt, 0)) == EAGAIN);
 	if (err) {
-		printf("xbdback %s: can't end transaction: %d\n",
+		aprint_error_ifnet(ifp,
+		    "%s: can't end transaction: %d\n",
 		    xbusd->xbusd_path, err);
 	}
 
 	err = xenbus_switch_state(xbusd, NULL, XenbusStateInitWait);
 	if (err) {
-		printf("failed to switch state on %s: %d\n",
+		aprint_error_ifnet(ifp,
+		    "failed to switch state on %s: %d\n",
 		    xbusd->xbusd_path, err);
 		goto fail;
 	}

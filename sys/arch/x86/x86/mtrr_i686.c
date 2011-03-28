@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.19.8.1 2010/10/24 22:48:19 jym Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.19.8.2 2011/03/28 23:04:52 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.19.8.1 2010/10/24 22:48:19 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.19.8.2 2011/03/28 23:04:52 jym Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -63,7 +63,7 @@ static void i686_soft2raw(void);
 static void i686_raw2soft(void);
 static void i686_mtrr_commit(void);
 static int i686_mtrr_setone(struct mtrr *, struct proc *p);
-
+static int i686_mtrr_conflict(uint8_t, uint8_t);
 
 static struct mtrr_state
 mtrr_raw[] = {
@@ -481,6 +481,14 @@ i686_mtrr_validate(struct mtrr *mtrrp, struct proc *p)
 	    || mtrrp->type > MTRR_TYPE_WB) && (mtrrp->flags & MTRR_VALID))
 		return EINVAL;
 
+	/* 
+	 * If write-combining is requested, make sure that the WC feature   
+	 * is supported by the processor.
+	 */
+	if (mtrrp->type == MTRR_TYPE_WC &&
+	    !(i686_mtrr_cap & MTRR_I686_CAP_WC_MASK))
+		return ENODEV;
+
 	/*
 	 * Only use fixed ranges < 1M.
 	 */
@@ -604,7 +612,7 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 	 * XXX could be more sophisticated here by merging ranges.
 	 */
 	low = mtrrp->base;
-	high = low + mtrrp->len;
+	high = low + mtrrp->len - 1;
 	freep = NULL;
 	for (i = 0; i < i686_mtrr_vcnt; i++) {
 		if (!(mtrr_var[i].flags & MTRR_VALID)) {
@@ -612,7 +620,7 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 			continue;
 		}
 		curlow = mtrr_var[i].base;
-		curhigh = curlow + mtrr_var[i].len;
+		curhigh = curlow + mtrr_var[i].len - 1;
 		if (low == curlow && high == curhigh &&
 		    (!(mtrr_var[i].flags & MTRR_PRIVATE) ||
 		     ((mtrrp->flags & MTRR_PRIVATE) && (p != NULL) &&
@@ -622,7 +630,7 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 		}
 		if (((high >= curlow && high < curhigh) ||
 		    (low >= curlow && low < curhigh)) &&
-	 	    ((mtrr_var[i].type != mtrrp->type) ||
+	 	    (i686_mtrr_conflict(mtrr_var[i].type, mtrrp->type) ||
 		     ((mtrr_var[i].flags & MTRR_PRIVATE) &&
  		      (!(mtrrp->flags & MTRR_PRIVATE) || (p == NULL) ||
 		       (mtrr_var[i].owner != p->p_pid))))) {
@@ -636,6 +644,17 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 	freep->owner = (mtrrp->flags & MTRR_PRIVATE) ? p->p_pid : 0;
 
 	return 0;
+}
+
+static int
+i686_mtrr_conflict(uint8_t type1, uint8_t type2)
+{
+	if (type1 == MTRR_TYPE_UC || type2 == MTRR_TYPE_UC)
+		return 0;
+	if ((type1 == MTRR_TYPE_WT && type2 == MTRR_TYPE_WB) ||
+	    (type1 == MTRR_TYPE_WB && type2 == MTRR_TYPE_WT))
+		return 0;
+	return 1;
 }
 
 static void

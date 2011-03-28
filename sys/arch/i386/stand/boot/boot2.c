@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.42.2.2 2009/11/01 13:58:35 jym Exp $	*/
+/*	$NetBSD: boot2.c,v 1.42.2.3 2011/03/28 23:04:44 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -135,6 +135,7 @@ const struct bootblk_command commands[] = {
 	{ "load",	module_add },
 	{ "multiboot",	command_multiboot },
 	{ "vesa",	command_vesa },
+	{ "splash",	splash_add },
 	{ NULL,		NULL },
 };
 
@@ -308,7 +309,12 @@ boot2(int biosdev, u_int biossector)
 	default_filename = DEFFILENAME;
 
 #ifndef SMALL
-	parsebootconf(BOOTCONF);
+	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
+		parsebootconf(BOOTCONF);
+	} else {
+		bootconf.timeout = boot_params.bp_timeout;
+	}
+	
 
 	/*
 	 * If console set in boot.cfg, switch to it.

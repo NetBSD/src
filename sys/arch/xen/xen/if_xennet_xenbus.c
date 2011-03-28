@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.33.2.6 2010/10/24 22:48:22 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.33.2.7 2011/03/28 23:04:56 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33.2.6 2010/10/24 22:48:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33.2.7 2011/03/28 23:04:56 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -523,6 +523,12 @@ again:
 	xbt = xenbus_transaction_start();
 	if (xbt == NULL)
 		return false;
+	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
+	    "vifname", device_xname(sc->sc_dev));
+	if (error) {
+		errmsg = "vifname";
+		goto abort_transaction;
+	}
 	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
 	    "tx-ring-ref","%u", sc->sc_tx_ring_gntref);
 	if (error) {

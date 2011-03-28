@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.29.2.2 2009/11/01 13:58:36 jym Exp $	*/
+/*	$NetBSD: libi386.h,v 1.29.2.3 2011/03/28 23:04:46 jym Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -120,7 +120,7 @@ int getmementry(int *, int *);
 int biosdisk_int13ext(int);
 int biosdisk_getinfo(int);
 struct biosdisk_extinfo;
-void biosdisk_getextinfo(int, struct biosdisk_extinfo *);
+int biosdisk_getextinfo(int, struct biosdisk_extinfo *);
 int get_harddrives(void);
 void biosdisk_probe(void);
 
@@ -136,6 +136,7 @@ int dosseek(int, int, int);
 extern int doserrno;	/* in dos_file.S */
 
 void module_add(char *);
+void splash_add(char *);
 
 struct btinfo_framebuffer;
 void framebuffer_configure(struct btinfo_framebuffer *);
