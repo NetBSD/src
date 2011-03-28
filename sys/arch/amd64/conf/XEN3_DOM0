@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.35.4.2 2009/11/01 13:58:54 jym Exp $
+# $NetBSD: XEN3_DOM0,v 1.35.4.3 2011/03/28 23:04:35 jym Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -18,12 +18,9 @@ options 	MSGBUFSIZE=24576
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
-# Enhanced SpeedStep Technology in the Pentium M
-options		ENHANCED_SPEEDSTEP
-#options	EST_FREQ_USERWRITE	# any user can set frequency
-
-# AMD PowerNow! and Cool`n'Quiet technology
-options		POWERNOW_K8
+# CPU features
+est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
+powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 
 #options 	MTRR		# memory-type range register syscall support
 
@@ -99,7 +96,8 @@ file-system 	PTYFS		# /dev/pts/N support
 file-system 	TMPFS		# Efficient memory file-system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options		WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

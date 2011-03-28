@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.57.2.3 2011/01/10 00:37:28 jym Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.57.2.4 2011/03/28 23:04:34 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.57.2.3 2011/01/10 00:37:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.57.2.4 2011/03/28 23:04:34 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -157,11 +157,11 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA32_SEL, SEL_UPL);
 	cpu_fsgs_zero(l);
-	cpu_fsgs_reload(l, tf->tf_ds, tf->tf_ds);
+	cpu_fsgs_reload(l, tf->tf_ds, tf->tf_es);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
-	tf->tf_rbx = (uint64_t)p->p_psstr;
+	tf->tf_rbx = (uint32_t)p->p_psstrp;
 	tf->tf_rdx = 0;
 	tf->tf_rcx = 0;
 	tf->tf_rax = 0;
@@ -859,6 +859,9 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		tf->tf_ss     = gr[_REG32_SS];
 	}
 
+	if ((flags & _UC_TLSBASE) != 0)
+		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
+
 	/* Restore floating point register context, if any. */
 	if ((flags & _UC_FPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
@@ -870,7 +873,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 			fpusave_lwp(l, false);
 		}
 		memcpy(&pcb->pcb_savefpu.fp_fxsave, &mcp->__fpregs,
-		    sizeof (mcp->__fpregs));
+		    sizeof (pcb->pcb_savefpu.fp_fxsave));
 		/* If not set already. */
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
@@ -919,6 +922,9 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
+	mcp->_mc_tlsbase = (uint32_t)(uintptr_t)l->l_private;
+	*flags |= _UC_TLSBASE;
+
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
@@ -927,7 +933,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 			fpusave_lwp(l, true);
 		}
 		memcpy(&mcp->__fpregs, &pcb->pcb_savefpu.fp_fxsave,
-		    sizeof (mcp->__fpregs));
+		    sizeof (pcb->pcb_savefpu.fp_fxsave));
 		*flags |= _UC_FPU;
 	}
 }
@@ -952,6 +958,7 @@ startlwp32(void *arg)
  * and rely on catching invalid user contexts on exit from the kernel.
  * These functions perform the needed checks.
  */
+
 static int
 check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 {
@@ -965,10 +972,10 @@ check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 	    !VALID_USER_CSEL32(scp->sc_cs))
 		return EINVAL;
 	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
-	    !(scp->sc_fs == GSEL(GUFS_SEL, SEL_UPL) && pcb->pcb_fs != 0))
+	    !(VALID_USER_FSEL32(scp->sc_fs) && pcb->pcb_fs != 0))
 		return EINVAL;
 	if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs) &&
-	    !(scp->sc_gs == GSEL(GUGS_SEL, SEL_UPL) && pcb->pcb_gs != 0))
+	    !(VALID_USER_GSEL32(scp->sc_gs) && pcb->pcb_gs != 0))
 		return EINVAL;
 	if (scp->sc_es != 0 && !VALID_USER_DSEL32(scp->sc_es))
 		return EINVAL;
@@ -994,10 +1001,10 @@ check_mcontext32(struct lwp *l, const mcontext32_t *mcp)
 	    !VALID_USER_CSEL32(gr[_REG32_CS]))
 		return EINVAL;
 	if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]) &&
-	    !(gr[_REG32_FS] == GSEL(GUFS_SEL, SEL_UPL) && pcb->pcb_fs != 0))
+	    !(VALID_USER_FSEL32(gr[_REG32_FS]) && pcb->pcb_fs != 0))
 		return EINVAL;
 	if (gr[_REG32_GS] != 0 && !VALID_USER_DSEL32(gr[_REG32_GS]) &&
-	    !(gr[_REG32_GS] == GSEL(GUGS_SEL, SEL_UPL) && pcb->pcb_gs != 0))
+	    !(VALID_USER_GSEL32(gr[_REG32_GS]) && pcb->pcb_gs != 0))
 		return EINVAL;
 	if (gr[_REG32_ES] != 0 && !VALID_USER_DSEL32(gr[_REG32_ES]))
 		return EINVAL;

@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.h,v 1.1.6.3 2009/11/01 13:58:16 jym Exp $ */
+/* $NetBSD: genfb_machdep.h,v 1.1.6.4 2011/03/28 23:04:49 jym Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,5 +30,8 @@
 #define _X86_GENFB_MACHDEP_H
 
 int	x86_genfb_cnattach(void);
+void	x86_genfb_mtrr_init(uint64_t, uint32_t);
+void	x86_genfb_set_console_dev(device_t);
+void	x86_genfb_ddb_trap_callback(int);
 
 #endif /* !_X86_GENFB_MACHDEP_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.h,v 1.9.52.2 2011/01/10 00:37:37 jym Exp $	*/
+/*	$NetBSD: powernow.h,v 1.9.52.3 2011/03/28 23:04:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004 Martin Végiard.
@@ -52,8 +52,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef X86_POWERNOW_H
-#define X86_POWERNOW_H
+#ifndef _X86_POWERNOW_H
+#define _X86_POWERNOW_H
 
 #ifdef POWERNOW_DEBUG
 #define DPRINTF(x)		do { printf x; } while (0)
@@ -126,7 +126,7 @@ struct powernow_state {
 };
 
 struct powernow_cpu_state {
-	struct powernow_state state_table[POWERNOW_MAX_STATES];
+	struct powernow_state	state_table[POWERNOW_MAX_STATES];
 	unsigned int fsb;
 	unsigned int n_states;
 	unsigned int sgtc;
@@ -155,14 +155,4 @@ struct powernow_pst_s {
 	uint8_t n_states;
 };
 
-int powernow_probe(struct cpu_info *);
-
-/* i386/i386/powernow_k7.c */
-void k7_powernow_init(void);
-void k7_powernow_destroy(void);
-
-/* x86/x86/powernow_k8.c */
-void k8_powernow_init(void);
-void k8_powernow_destroy(void);
-
-#endif
+#endif	/* !_X86_POWERNOW_H */

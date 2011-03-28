@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.93.4.3 2010/10/24 22:47:59 jym Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.93.4.4 2011/03/28 23:04:40 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.93.4.3 2010/10/24 22:47:59 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.93.4.4 2011/03/28 23:04:40 jym Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_intrdebug.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.93.4.3 2010/10/24 22:47:59 jym Exp $"
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
@@ -93,8 +94,6 @@ extern void platform_init(void);
 #ifdef KVM86
 #include <machine/kvm86.h>
 #endif
-
-#include "opt_viapadlock.h"
 
 /*
  * Determine i/o configuration for a machine.
@@ -139,9 +138,5 @@ cpu_configure(void)
 	spl0();
 #if NLAPIC > 0
 	lapic_tpr = 0;
-#endif
-
-#if defined(VIA_PADLOCK)
-	via_padlock_attach();
 #endif
 }

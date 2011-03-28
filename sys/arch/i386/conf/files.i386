@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.341.2.3 2009/11/01 13:58:20 jym Exp $
+#	$NetBSD: files.i386,v 1.341.2.4 2011/03/28 23:04:39 jym Exp $
 #
 # new style config file for i386 architecture
 #
@@ -55,9 +55,6 @@ defparam 	opt_beep.h		BEEP_ONHALT_PERIOD=250
 defflag 	opt_multiboot.h		MULTIBOOT
 obsolete 	defparam		MULTIBOOT_SYMTAB_SPACE
 file 	arch/i386/i386/multiboot.c	multiboot
-
-# PowerNow K7
-defflag 	POWERNOW_K7
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/aout_machdep.c	exec_aout
@@ -490,9 +487,6 @@ file	arch/i386/acpi/npx_acpi.c		npx_acpi
 obsolete	defflag	opt_vesabios.h	VESABIOSVERBOSE
 obsolete	defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
 obsolete	defflag	opt_vesafb.h	VESAFB_PM
-
-# AMD PowerNow K7
-file	arch/i386/i386/powernow_k7.c	powernow_k7
 
 # AMD Geode LX Security Block
 device	glxsb: opencrypto

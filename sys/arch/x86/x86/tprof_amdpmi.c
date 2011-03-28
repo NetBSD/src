@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_amdpmi.c,v 1.2.6.3 2009/11/01 13:58:18 jym Exp $	*/
+/*	$NetBSD: tprof_amdpmi.c,v 1.2.6.4 2011/03/28 23:04:54 jym Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.2.6.3 2009/11/01 13:58:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.2.6.4 2011/03/28 23:04:54 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.2.6.3 2009/11/01 13:58:18 jym Exp
 #include <sys/xcall.h>
 
 #include <dev/tprof/tprof.h>
+
+#include <uvm/uvm.h>		/* VM_MIN_KERNEL_ADDRESS */
 
 #include <x86/tprof.h>
 #include <x86/nmi.h>
@@ -100,7 +102,7 @@ tprof_amdpmi_start_cpu(void *arg1, void *arg2)
 
 	event_hi = event >> 8;
 	event_lo = event & 0xff;
-	pesr = PESR_OS | PESR_INT |
+	pesr = PESR_USR | PESR_OS | PESR_INT |
 	    __SHIFTIN(event_lo, PESR_EVENT_MASK_LO) |
 	    __SHIFTIN(event_hi, PESR_EVENT_MASK_HI) |
 	    __SHIFTIN(0, PESR_COUNTER_MASK) |
@@ -146,6 +148,7 @@ tprof_amdpmi_nmi(const struct trapframe *tf, void *dummy)
 #else /* defined(__x86_64__) */
 	tfi.tfi_pc = tf->tf_eip;
 #endif /* defined(__x86_64__) */
+	tfi.tfi_inkernel = tfi.tfi_pc >= VM_MIN_KERNEL_ADDRESS;
 	tprof_sample(tprof_cookie, &tfi);
 
 	/* reset counter */

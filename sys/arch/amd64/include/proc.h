@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.11.8.2 2009/11/01 13:58:54 jym Exp $	*/
+/*	$NetBSD: proc.h,v 1.11.8.3 2011/03/28 23:04:36 jym Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -36,8 +36,8 @@
 
 #ifdef __x86_64__
 
-#include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/frame.h>
+#include <machine/pcb.h>
 
 /*
  * Machine-dependent part of the lwp structure for amd64.
@@ -66,9 +66,10 @@ struct mdproc {
 #define MDP_USEDMTRR	0x0008	/* has set volatile MTRRs */
 #define MDP_IRET	0x0010	/* return via iret, not sysret */
 
-#define	UAREA_USER_OFFSET	(USPACE - ALIGN(sizeof(struct user)))
-#define	KSTACK_LOWEST_ADDR(l)	((void *)USER_TO_UAREA((l)->l_addr))
-#define	KSTACK_SIZE		UAREA_USER_OFFSET
+#define	UAREA_PCB_OFFSET	(USPACE - ALIGN(sizeof(struct pcb)))
+#define	KSTACK_LOWEST_ADDR(l)	\
+    ((void *)((vaddr_t)(l)->l_addr - UAREA_PCB_OFFSET))
+#define	KSTACK_SIZE		UAREA_PCB_OFFSET
 
 #else	/*	__x86_64__	*/
 

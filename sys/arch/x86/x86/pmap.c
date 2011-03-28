@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77.2.8 2010/10/24 22:48:19 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.2.9 2011/03/28 23:04:53 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -42,7 +42,6 @@
  */
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -54,12 +53,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -123,7 +116,7 @@
 
 /*
  * pmap.c: i386 pmap module rewrite
- * Chuck Cranor <chuck@ccrc.wustl.edu>
+ * Chuck Cranor <chuck@netbsd>
  * 11-Aug-97
  *
  * history of this pmap module: in addition to my own input, i used
@@ -149,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.8 2010/10/24 22:48:19 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.9 2011/03/28 23:04:53 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2053,6 +2046,7 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 static inline void
 pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 {
+	lwp_t *l;
 	int lidx;
 	struct uvm_object *obj;
 
@@ -2068,8 +2062,10 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&obj->memq);
 	ptp->wire_count = 0;
 	uvm_pagerealloc(ptp, NULL, 0);
-	VM_PAGE_TO_PP(ptp)->pp_link = curlwp->l_md.md_gc_ptp;
-	curlwp->l_md.md_gc_ptp = ptp;
+	l = curlwp;
+	KASSERT((l->l_pflag & LP_INTR) == 0);
+	VM_PAGE_TO_PP(ptp)->pp_link = l->l_md.md_gc_ptp;
+	l->l_md.md_gc_ptp = ptp;
 	if (lidx != 0)
 		mutex_exit(&obj->vmobjlock);
 }
@@ -2327,7 +2323,12 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 		if (i == l2tol3(PDIR_SLOT_PTE))
 			continue;
 #endif
+
+#ifdef __x86_64__
+		xpq_queue_pin_l4_table(xpmap_ptom_masked(pdirpa));
+#else
 		xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
+#endif
 	}
 #ifdef PAE
 	object = ((vaddr_t)pdir) + PAGE_SIZE  * l2tol3(PDIR_SLOT_PTE);
@@ -4824,7 +4825,8 @@ pmap_update(struct pmap *pmap)
 	 * but not from interrupt context.
 	 */
 	if (l->l_md.md_gc_ptp != NULL) {
-		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
+		KASSERT((l->l_pflag & LP_INTR) == 0);
+		if (cpu_intr_p()) {
 			return;
 		}
 
@@ -4919,4 +4921,16 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 #endif
 
 	return x86_tmp_pml_paddr[PTP_LEVELS - 1];
+}
+
+u_int
+x86_mmap_flags(paddr_t mdpgno)
+{
+	u_int nflag = (mdpgno >> X86_MMAP_FLAG_SHIFT) & X86_MMAP_FLAG_MASK;
+	u_int pflag = 0;
+
+	if (nflag & X86_MMAP_FLAG_PREFETCH)
+		pflag |= PMAP_WRITE_COMBINE;
+
+	return pflag;
 }

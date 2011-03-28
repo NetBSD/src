@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.12.4.9 2011/01/10 00:37:39 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.12.4.10 2011/03/28 23:04:56 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.9 2011/01/10 00:37:39 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.10 2011/03/28 23:04:56 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -237,16 +237,16 @@ xpq_queue_pt_switch(paddr_t pa)
 }
 
 void
-xpq_queue_pin_table(paddr_t pa, unsigned int level)
+xpq_queue_pin_table(paddr_t pa, int lvl)
 {
 	struct mmuext_op op;
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_pin_table: level %u %#"PRIx64"\n",
-	    level, (int64_t)pa));
+	XENPRINTK2(("xpq_queue_pin_l%d_table: %#" PRIxPADDR "\n",
+	    lvl + 1, pa));
 
 	op.arg1.mfn = pa >> PAGE_SHIFT;
-	op.cmd = level;
+	op.cmd = lvl;
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic("xpq_queue_pin_table: level %u %#"PRIx64"\n",
@@ -259,8 +259,7 @@ xpq_queue_unpin_table(paddr_t pa)
 	struct mmuext_op op;
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_unpin_table: 0x%" PRIx64 " 0x%" PRIx64 "\n",
-	    (int64_t)pa, (int64_t)pa));
+	XENPRINTK2(("xpq_queue_unpin_table: %#" PRIxPADDR "\n", pa));
 	op.arg1.mfn = pa >> PAGE_SHIFT;
 	op.cmd = MMUEXT_UNPIN_TABLE;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
@@ -793,7 +792,9 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 #endif
 	/* Pin the PGD */
 	__PRINTK(("pin PGD\n"));
-#ifdef PAE
+#ifdef __x86_64__
+	xpq_queue_pin_l4_table(xpmap_ptom_masked(new_pgd - KERNBASE));
+#elif PAE
 	xpq_queue_pin_l3_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #elif defined(__x86_64__)
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(new_pgd - KERNBASE));

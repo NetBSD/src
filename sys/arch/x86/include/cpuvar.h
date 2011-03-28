@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.27.12.3 2010/10/24 22:48:16 jym Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.27.12.4 2011/03/28 23:04:49 jym Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -85,16 +85,15 @@ struct cpu_attach_args {
 	const struct cpu_functions *cpu_func;
 };
 
+struct cpufeature_attach_args {
+	struct cpu_info *ci;
+	const char *name;
+};
+
 #ifdef _KERNEL
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
-#include "opt_enhanced_speedstep.h"
-#ifndef XEN
-#include "opt_intel_coretemp.h"
-#include "opt_intel_odcm.h"
-#include "opt_via_c7temp.h"
-#endif
 #endif /* defined(_KERNEL_OPT) */
 
 #ifdef MULTIPROCESSOR
@@ -118,26 +117,6 @@ void x86_cpu_idle_halt(void);
 void x86_cpu_idle_mwait(void);
 #ifdef XEN
 void x86_cpu_idle_xen(void);
-#endif
-
-#ifdef VIA_C7TEMP
-void viac7temp_register(struct cpu_info *);
-#endif
-
-#ifdef INTEL_CORETEMP
-void coretemp_register(struct cpu_info *);
-#endif
-
-#ifdef INTEL_ONDEMAND_CLOCKMOD
-void clockmod_init(void);
-#endif
-
-#ifdef ENHANCED_SPEEDSTEP
-void	est_init(int);
-int	via_get_bus_clock(struct cpu_info *);
-int	viac7_get_bus_clock(struct cpu_info *);
-int	p3_get_bus_clock(struct cpu_info *);
-int	p4_get_bus_clock(struct cpu_info *);
 #endif
 
 void	cpu_get_tsc_freq(struct cpu_info *);

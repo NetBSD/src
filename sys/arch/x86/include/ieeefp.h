@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.2.8.1 2010/10/24 22:48:16 jym Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.2.8.2 2011/03/28 23:04:50 jym Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
@@ -20,10 +20,18 @@ typedef int fp_except;
 #define FP_X_IMP	FE_INEXACT	/* imprecise (loss of precision) */
 
 typedef enum {
-    FP_RN=FE_TONEAREST,		/* round to nearest representable number */
-    FP_RM=FE_DOWNWARD,		/* round toward negative infinity */
-    FP_RP=FE_UPWARD,		/* round toward positive infinity */
-    FP_RZ=FE_TOWARDZERO		/* round to zero (truncate) */
+	FP_RN=FE_TONEAREST,		/* round to nearest representable num */
+	FP_RM=FE_DOWNWARD,		/* round toward negative infinity */
+	FP_RP=FE_UPWARD,		/* round toward positive infinity */
+	FP_RZ=FE_TOWARDZERO		/* round to zero (truncate) */
 } fp_rnd;
+
+typedef enum {
+	FP_PS = 0,			/* 24 bit (single-precision) */
+	FP_PRS,				/* reserved */
+	FP_PD,				/* 53 bit (double-precision) */
+	FP_PE				/* 64 bit (extended-precision) */
+} fp_prec;
+
 
 #endif /* _X86_IEEEFP_H_ */

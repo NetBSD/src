@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.62.2.4 2011/01/10 00:37:37 jym Exp $	*/
+/*	$NetBSD: cpu.c,v 1.62.2.5 2011/03/28 23:04:51 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62.2.4 2011/01/10 00:37:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62.2.5 2011/03/28 23:04:51 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -117,11 +117,14 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62.2.4 2011/01/10 00:37:37 jym Exp $");
 #error cpu_info contains 32bit bitmasks
 #endif
 
-int     cpu_match(device_t, cfdata_t, void *);
-void    cpu_attach(device_t, device_t, void *);
-
+static int	cpu_match(device_t, cfdata_t, void *);
+static void	cpu_attach(device_t, device_t, void *);
+static void	cpu_defer(device_t);
+static int	cpu_rescan(device_t, const char *, const int *);
+static void	cpu_childdetached(device_t, device_t);
 static bool	cpu_suspend(device_t, const pmf_qual_t *);
 static bool	cpu_resume(device_t, const pmf_qual_t *);
+static bool	cpu_shutdown(device_t, int);
 
 struct cpu_softc {
 	device_t sc_dev;		/* device tree glue */
@@ -135,8 +138,8 @@ const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 					    mp_cpu_start_cleanup };
 
 
-CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
-    cpu_match, cpu_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(cpu, sizeof(struct cpu_softc),
+    cpu_match, cpu_attach, NULL, NULL, cpu_rescan, cpu_childdetached);
 
 /*
  * Statically-allocated CPU info for the primary CPU (or the only
@@ -210,7 +213,7 @@ cpu_init_first(void)
 	pmap_update(pmap_kernel());
 }
 
-int
+static int
 cpu_match(device_t parent, cfdata_t match, void *aux)
 {
 
@@ -270,7 +273,7 @@ cpu_vm_init(struct cpu_info *ci)
 }
 
 
-void
+static void
 cpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_softc *sc = device_private(self);
@@ -427,7 +430,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	pat_init(ci);
 	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
-	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
+	if (!pmf_device_register1(self, cpu_suspend, cpu_resume, cpu_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	if (mp_verbose) {
@@ -444,6 +447,64 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #endif
 		);
 	}
+
+	(void)config_defer(self, cpu_defer);
+}
+
+static void
+cpu_defer(device_t self)
+{
+	cpu_rescan(self, NULL, NULL);
+}
+
+static int
+cpu_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct cpu_softc *sc = device_private(self);
+	struct cpufeature_attach_args cfaa;
+	struct cpu_info *ci = sc->sc_info;
+
+	memset(&cfaa, 0, sizeof(cfaa));
+	cfaa.ci = ci;
+
+	if (ifattr_match(ifattr, "cpufeaturebus")) {
+
+		if (ci->ci_frequency == NULL) {
+			cfaa.name = "frequency";
+			ci->ci_frequency = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+
+		if (ci->ci_padlock == NULL) {
+			cfaa.name = "padlock";
+			ci->ci_padlock = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+
+		if (ci->ci_temperature == NULL) {
+			cfaa.name = "temperature";
+			ci->ci_temperature = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+	}
+
+	return 0;
+}
+
+static void
+cpu_childdetached(device_t self, device_t child)
+{
+	struct cpu_softc *sc = device_private(self);
+	struct cpu_info *ci = sc->sc_info;
+
+	if (ci->ci_frequency == child)
+		ci->ci_frequency = NULL;
+
+	if (ci->ci_padlock == child)
+		ci->ci_padlock = NULL;
+
+	if (ci->ci_temperature == child)
+		ci->ci_temperature = NULL;
 }
 
 /*
@@ -1036,7 +1097,7 @@ cpu_suspend(device_t dv, const pmf_qual_t *qual)
 		mutex_enter(&cpu_lock);
 		err = cpu_setstate(ci, false);
 		mutex_exit(&cpu_lock);
-	
+
 		if (err)
 			return false;
 	}
@@ -1067,15 +1128,22 @@ cpu_resume(device_t dv, const pmf_qual_t *qual)
 	return err == 0;
 }
 
+static bool
+cpu_shutdown(device_t dv, int how)
+{
+	return cpu_suspend(dv, NULL);
+}
+
 void
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
 	uint64_t last_tsc;
 
 	if (cpu_hascounter()) {
-		last_tsc = rdmsr(MSR_TSC);
+		last_tsc = cpu_counter_serializing();
 		i8254_delay(100000);
-		ci->ci_data.cpu_cc_freq = (rdmsr(MSR_TSC) - last_tsc) * 10;
+		ci->ci_data.cpu_cc_freq =
+		    (cpu_counter_serializing() - last_tsc) * 10;
 	}
 }
 

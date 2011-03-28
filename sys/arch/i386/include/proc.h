@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.37 2008/12/20 13:09:44 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.37.2.1 2011/03/28 23:04:43 jym Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -34,8 +34,8 @@
 #ifndef _I386_PROC_H_
 #define _I386_PROC_H_
 
-#include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/frame.h>
+#include <machine/pcb.h>
 
 /*
  * Machine-dependent part of the lwp structure for i386.
@@ -64,9 +64,10 @@ struct mdproc {
 /* md_flags */
 #define MDP_USEDMTRR	0x0002	/* has set volatile MTRRs */
 
-/* kernel stack params */
-#define	UAREA_USER_OFFSET	(USPACE - ALIGN(sizeof(struct user)))
-#define	KSTACK_LOWEST_ADDR(l)	((void *)USER_TO_UAREA((l)->l_addr))
-#define	KSTACK_SIZE		UAREA_USER_OFFSET
+/* Kernel stack parameters. */
+#define	UAREA_PCB_OFFSET	(USPACE - ALIGN(sizeof(struct pcb)))
+#define	KSTACK_LOWEST_ADDR(l)	\
+    ((void *)((vaddr_t)(l)->l_addr - UAREA_PCB_OFFSET))
+#define	KSTACK_SIZE		UAREA_PCB_OFFSET
 
 #endif /* _I386_PROC_H_ */

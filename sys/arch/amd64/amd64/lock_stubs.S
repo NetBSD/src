@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.21.4.2 2009/11/01 13:58:48 jym Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.21.4.3 2011/03/28 23:04:33 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@
 #include "assym.h"
 
 #define	ENDLABEL(name,a) .align	a; LABEL(name)
-#define	LOCK(num)	.Lpatch/**/num: lock
-#define	RET(num)	.Lret/**/num: ret; nop; nop; ret
+#define	LOCK(num)	.Lpatch ## num: lock
+#define	RET(num)	.Lret ## num: ret; nop; nop; ret
 
 #ifndef LOCKDEBUG
 

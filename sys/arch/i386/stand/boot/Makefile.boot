@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.36.8.2 2009/11/01 13:58:35 jym Exp $
+# $NetBSD: Makefile.boot,v 1.36.8.3 2011/03/28 23:04:44 jym Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -81,7 +81,8 @@ CPPFLAGS+= -DEPIA_HACK
 # The biosboot code is linked to 'virtual' address of zero and is
 # loaded at physical address 0x10000.
 # XXX The heap values should be determined from _end.
-SAMISCCPPFLAGS+= -DHEAP_START=0x30000 -DHEAP_LIMIT=0x50000
+SAMISCCPPFLAGS+= -DHEAP_START=0x40000 -DHEAP_LIMIT=0x70000
+SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 
@@ -138,7 +139,7 @@ LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 CLEANFILES+= ${PROG}.tmp ${PROG}.map vers.c
 
 vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
-	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${VERSIONFILE} x86 ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
 
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.
 # We link the program, find the callers (all in libi386), then

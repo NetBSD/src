@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.11.4.4 2011/01/10 00:37:36 jym Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.11.4.5 2011/03/28 23:04:48 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.11.4.4 2011/01/10 00:37:36 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.11.4.5 2011/03/28 23:04:48 jym Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -341,12 +341,26 @@ acpi_md_sleep(int state)
 	initrtclock(TIMER_FREQ);
 	inittodr(time_second);
 
-	AcpiClearEvent(ACPI_EVENT_PMTIMER);
-	AcpiClearEvent(ACPI_EVENT_GLOBAL);
-	AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
-	AcpiClearEvent(ACPI_EVENT_SLEEP_BUTTON);
-	AcpiClearEvent(ACPI_EVENT_RTC);
-	AcpiHwDisableAllGpes ();
+	/*
+	 * The BIOS should always re-enable the SCI upon
+	 * resume from the S3 state. The following is a
+	 * workaround for systems that fail to do this.
+	 */
+	(void)AcpiWriteBitRegister(ACPI_BITREG_SCI_ENABLE, 1);
+
+	/*
+	 * Clear fixed events (see e.g. ACPI 3.0, p. 62).
+	 * Also prevent GPEs from misfiring by disabling
+	 * all GPEs before interrupts are enabled. The
+	 * AcpiLeaveSleepState() function will enable
+	 * and handle the general purpose events later.
+	 */
+	(void)AcpiClearEvent(ACPI_EVENT_PMTIMER);
+	(void)AcpiClearEvent(ACPI_EVENT_GLOBAL);
+	(void)AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
+	(void)AcpiClearEvent(ACPI_EVENT_SLEEP_BUTTON);
+	(void)AcpiClearEvent(ACPI_EVENT_RTC);
+	(void)AcpiHwDisableAllGpes();
 
 	acpi_pci_link_resume();
 

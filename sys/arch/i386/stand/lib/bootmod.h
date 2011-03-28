@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmod.h,v 1.3 2008/05/05 00:12:49 jmcneill Exp $	*/
+/*	$NetBSD: bootmod.h,v 1.3.20.1 2011/03/28 23:04:45 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,6 +32,9 @@
 typedef struct boot_module {
 	char			*bm_path;
 	ssize_t			bm_len;
+	uint8_t			bm_type;
+#define	BM_TYPE_KMOD		0x00
+#define	BM_TYPE_IMAGE		0x01
 	struct boot_module	*bm_next;
 } boot_module_t;
 

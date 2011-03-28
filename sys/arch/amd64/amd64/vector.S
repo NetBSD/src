@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.29.4.2 2009/11/01 13:58:49 jym Exp $	*/
+/*	$NetBSD: vector.S,v 1.29.4.3 2011/03/28 23:04:34 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -355,9 +355,9 @@ calltrap:
 
 /* XXX See comment in locore.s */
 #ifdef __ELF__
-#define	XINTR(name,num)		Xintr_/**/name/**/num
+#define	XINTR(name,num)		Xintr_ ## name ## num
 #else
-#define	XINTR(name,num)		_Xintr_/**/name/**/num
+#define	XINTR(name,num)		_Xintr_ ## name ## num
 #endif
 
 #if NLAPIC > 0
@@ -542,7 +542,7 @@ IDTVEC(intr_lapic_tlb_bcast)
 	movq	_C_LABEL(pmap_mbox)+MB_GLOBAL, %rdi
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpq	$-1, %rax
-	je,pn	3f
+	je	3f
 1:
 	/* Invalidate a single page or a range of pages. */
 	invlpg	(%rax)
@@ -609,18 +609,18 @@ IDTVEC(intr_lapic_tlb_bcast)
  */
 
 #define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(recurse_/**/name/**/num)						;\
+IDTVEC(recurse_ ## name ## num)						;\
 	INTR_RECURSE_HWFRAME						;\
 	subq	$8,%rsp							;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
-IDTVEC(resume_/**/name/**/num)						\
+IDTVEC(resume_ ## name ## num)						\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
 	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
 	movl	IS_MAXLEVEL(%r14),%ebx					;\
 	jmp	1f							;\
-IDTVEC(intr_/**/name/**/num)						;\
+IDTVEC(intr_ ## name ## num)						;\
 	pushq	$0			/* dummy error code */		;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
@@ -958,12 +958,12 @@ _C_LABEL(ioapic_level_stubs):
 #else	/* !XEN */
 /* Resume/recurse procedures for spl() */
 #define	XENINTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(recurse_/**/name/**/num)						;\
+IDTVEC(recurse_ ## name ## num)						;\
   	INTR_RECURSE_HWFRAME						;\
   	subq	$8,%rsp							;\
   	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
   	INTRENTRY							;\
-IDTVEC(resume_/**/name/**/num)						\
+IDTVEC(resume_ ## name ## num)						\
   	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
   	movl	%ebx,%r13d						;\
   	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\

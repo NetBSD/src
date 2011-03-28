@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.77.2.2 2009/11/01 13:58:35 jym Exp $
+#	$NetBSD: Makefile.booters,v 1.77.2.3 2011/03/28 23:04:43 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -105,7 +105,7 @@ LDFLAGS+=-Wl,-N -Wl,-M -Wl,-e,_start
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
 vers.c: ${VERSIONFILE} ${SOURCES} ${S}/conf/newvers_stand.sh
-	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${VERSIONFILE} x86 ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
 
 CLEANFILES+= ${BASE}.sym
 ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
