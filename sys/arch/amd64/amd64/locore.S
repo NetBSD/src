@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50.4.2 2009/11/01 13:58:48 jym Exp $	*/
+/*	$NetBSD: locore.S,v 1.50.4.3 2011/03/28 23:58:09 jym Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -231,20 +231,16 @@ _C_LABEL(lapic_isr):
 #endif
 
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendorname), _C_LABEL(cpu_brand_id)
-	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature),_C_LABEL(cpu_feature2)
+	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym),_C_LABEL(eblob),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdtstore),_C_LABEL(cpu)
 
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
 _C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
-_C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid'
-					#   instruction
-_C_LABEL(cpu_feature2):	.long	0	# feature flags from 'cpuid'
-					#   instruction
 _C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
 _C_LABEL(cpu_vendorname):	.space	16	# vendor string returned by `cpuid'
@@ -253,7 +249,6 @@ _C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
 _C_LABEL(esym):		.quad	0	# ptr to end of syms
 _C_LABEL(eblob):	.quad	0	# ptr to end of modules
 _C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
-_C_LABEL(proc0paddr):	.quad	0
 _C_LABEL(PDPpaddr):	.quad	0	# paddr of PTD, for libkvm
 #ifndef REALBASEMEM
 _C_LABEL(biosbasemem):	.long	0	# base memory reported by BIOS
@@ -270,12 +265,24 @@ _C_LABEL(biosextmem):	.long	REALEXTMEM
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
 #ifndef XEN
-	.globl	gdt64
+	.globl	gdt64_lo
+	.globl	gdt64_hi
 
-gdt64:
-	.word	gdt64_end-gdt64_start
+#define GDT64_LIMIT gdt64_end-gdt64_start-1
+
+/* Temporary gdt64, with base address in low memory */
+gdt64_lo:
+	.word	GDT64_LIMIT
 	.quad	_RELOC(gdt64_start)
 .align 64
+
+/* Temporary gdt64, with base address in high memory */
+gdt64_hi:
+	.word	GDT64_LIMIT
+	.quad	gdt64_start
+.align 64
+
+#undef GDT64_LIMIT
 
 gdt64_start:
 	.quad 0x0000000000000000	/* always empty */
@@ -284,7 +291,7 @@ gdt64_start:
 gdt64_end:
 
 farjmp64:
-	.long	longmode-KERNBASE
+	.long	_RELOC(longmode)
 	.word	GSEL(GCODE_SEL, SEL_KPL)
 	
 #endif	/* !XEN */
@@ -407,17 +414,10 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	$1,%eax
 	cpuid
 	movl	%eax,RELOC(cpu_id)
-	movl	%edx,RELOC(cpu_feature)
-	movl	%ecx,RELOC(cpu_feature2)
 
 	/* Brand ID is bits 0-7 of %ebx */
 	andl	$255,%ebx
 	movl	%ebx,RELOC(cpu_brand_id)
-
-	/* add AMD specific feature flags */
-	movl	$0x80000001,%eax
-	cpuid
-	orl	%edx,RELOC(cpu_feature)
 
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
@@ -639,7 +639,7 @@ compat:
 	 * in it to do that.
 	 */
 
-	movl	$RELOC(gdt64),%eax
+	movl	$RELOC(gdt64_lo),%eax
 	lgdt	(%eax)
 	movl	$RELOC(farjmp64),%eax
 	ljmp	*(%eax)
@@ -655,9 +655,17 @@ longmode:
 	 */
 	movabsq	$longmode_hi,%rax
 	jmp	*%rax
+
 longmode_hi:
+
 	/*
-	 * We have arrived.
+	 * We left the identity mapped area. Base address of
+	 * the temporary gdt64 should now be in high memory.
+	 */
+	movq	$RELOC(gdt64_hi),%rax
+	lgdt	(%rax)
+
+	/*
 	 * There's no need anymore for the identity mapping in low
 	 * memory, remove it.
 	 */
@@ -696,7 +704,7 @@ longmode_hi:
 	/* Set up bootstrap stack. */
 	leaq	(PROC0_STK_OFF)(%rsi),%rax
 	addq	%r8,%rax
-	movq	%rax,_C_LABEL(proc0paddr)(%rip)
+	movq	%rax,(_C_LABEL(lwp0)+L_PCB)(%rip) /* XXX L_PCB != uarea */
 	leaq	(USPACE-FRAMESIZE)(%rax),%rsp
 	movq	%rsi,PCB_CR3(%rax)	# pcb->pcb_cr3
 	xorq	%rbp,%rbp               # mark end of frames
@@ -776,14 +784,8 @@ start:
 	 * First avail returned by xen_pmap_bootstrap in %rax
 	 */
 	movq	%rax, %rsi
-	movq	%rsi,_C_LABEL(proc0paddr)
+	movq	%rsi,(_C_LABEL(lwp0)+L_PCB)	/* XXX L_PCB != uarea */
 	
-	xorq	%rax,%rax
-	movq	%rsi,%rdi
-	movq	$USPACE,%rcx
-	rep
-	stosb
-
 	/*
 	 * Set new stack and clear segments
 	 */
@@ -791,6 +793,7 @@ start:
 	leaq	(USPACE-FRAMESIZE)(%rsi),%rsp
 	xorq	%rbp,%rbp
 
+	xorw	%ax,%ax
 	movw	%ax,%gs
 	movw	%ax,%fs
 	
@@ -879,7 +882,7 @@ ENTRY(dumpsys)
 	ret
 
 /*
- * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp,
+ * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp,
  *			    bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
@@ -903,12 +906,12 @@ ENTRY(cpu_switchto)
 	jz	1f
 
 	/* Save old context. */
-	movq	L_ADDR(%r13),%rax
+	movq	L_PCB(%r13),%rax
 	movq	%rsp,PCB_RSP(%rax)
 	movq	%rbp,PCB_RBP(%rax)
 
 	/* Switch to newlwp's stack. */
-1:	movq	L_ADDR(%r12),%r14
+1:	movq	L_PCB(%r12),%r14
 #ifdef XEN /* XXX debug code */
 	cmpq	$0, PCB_RSP(%r14)
 	jne 999f
@@ -948,13 +951,13 @@ ENTRY(cpu_switchto)
 	jne	5f
 
 	/*
-	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_IPI.
+	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_HIGH.
 	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
 	 * is deferred until mi_switch(), when cpu_switchto() returns.
 	 */
 2:
 #ifndef XEN
-	movl	$IPL_IPI,CPUVAR(ILEVEL)
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%r14),%ecx	/* has CR0_TS clear */
 	movq	%cr0,%rdx
 
@@ -968,10 +971,58 @@ ENTRY(cpu_switchto)
 
 	/* Reloading CR0 is very expensive - avoid if possible. */
 3:	cmpq	%rdx,%rcx
-	je	4f
+	je	6f
 	movq	%rcx,%cr0
-#endif
 
+6:	testl   $PCB_COMPAT32, PCB_FLAGS(%r14)
+	jne	32f
+
+	/* Zero out %fs/%gs registers and GDT descriptors. */
+	xorq	%rax, %rax
+	movw	%ax, %fs
+	CLI(cx)
+	swapgs
+	movw	%ax, %gs
+	swapgs
+	STI(cx)
+
+	movq	CPUVAR(GDT),%rcx
+	movq	%rax, (GUFS_SEL*8)(%rcx)
+	movq	%rax, (GUGS_SEL*8)(%rcx)
+
+	/* Reload 64-bit %fs/%gs MSRs. */
+	movl	$MSR_FSBASE, %ecx
+	movl	PCB_FS(%r14), %eax
+	movl	4+PCB_FS(%r14), %edx
+	wrmsr
+	movl	$MSR_KERNELGSBASE, %ecx
+	movl	PCB_GS(%r14), %eax
+	movl	4+PCB_GS(%r14), %edx
+	wrmsr
+	jmp	4f
+
+32:
+	/* Reload %fs/%gs GDT descriptors. */
+	movq	CPUVAR(GDT),%rcx
+	movq	PCB_FS(%r14), %rax
+	movq	%rax, (GUFS_SEL*8)(%rcx)
+	movq	PCB_GS(%r14), %rax
+	movq	%rax, (GUGS_SEL*8)(%rcx)
+
+	/* Reload %fs and %gs */
+	movq	L_MD_REGS(%r12), %rbx
+	movw	TF_FS(%rbx), %fs
+	CLI(ax)
+	swapgs
+	movw	TF_GS(%rbx), %gs
+	swapgs
+	STI(ax)
+
+#else
+	movq	%r12,%rdi
+	callq	_C_LABEL(x86_64_tls_switch)
+#endif
+	
 	/* Return to the new LWP, returning 'oldlwp' in %rax. */
 4:	movq	%r13,%rax
 	popq	%r15
@@ -1015,7 +1066,7 @@ IDTVEC(syscall)
 	swapgs
 	movq	%r15,CPUVAR(SCRATCH)
 	movq	CPUVAR(CURLWP),%r15
-	movq	L_ADDR(%r15),%r15
+	movq	L_PCB(%r15),%r15
 	movq	PCB_RSP0(%r15),%r15
 	xchgq	%r15,%rsp
 
@@ -1029,12 +1080,12 @@ IDTVEC(syscall)
 	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))	/* Known to be user ss */
 	pushq	%r15				/* User space rsp */
 	movq	CPUVAR(SCRATCH),%r15
-	sti
 	subq	$TF_REGSIZE+(TF_RSP-TF_TRAPNO),%rsp
+	movw	%es,TF_ES(%rsp)
+	sti
 	INTR_SAVE_GPRS
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
-	movw	%es,TF_ES(%rsp)
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
 	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
@@ -1058,7 +1109,7 @@ IDTVEC(syscall)
 #endif
 
 	movq	CPUVAR(CURLWP),%r14
-	incl	CPUVAR(NSYSCALL)	# count it atomically
+	incq	CPUVAR(NSYSCALL)	# count it atomically
 	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
 	movq	L_PROC(%r14),%r15
 	andl	$~MDP_IRET,L_MD_FLAGS(%r14)
@@ -1070,23 +1121,15 @@ IDTVEC(syscall)
 	movl	L_MD_ASTPENDING(%r14), %eax
 	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
-#ifdef XEN
-	STI(si)					/* wtf is this? */
-#endif
 	testl	$MDP_IRET, L_MD_FLAGS(%r14)
 	jne	iret_return;
-syscall_return:
 #ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 #endif
+	movw	TF_ES(%rsp),%es
 #ifndef XEN
 	swapgs
-#endif
-	movw	TF_ES(%rsp),%es
-	movw	TF_FS(%rsp),%fs
-#ifndef XEN
-	movw	TF_GS(%rsp),%gs
 #endif
 	INTR_RESTORE_GPRS
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),%r11
@@ -1123,7 +1166,6 @@ syscall_return:
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 10:
-	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%r14)
 	STI(si)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
@@ -1211,36 +1253,40 @@ _C_LABEL(osyscall_return):
 .Losyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(si)
-	CHECK_ASTPENDING(%r14)
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%r14)
-	STI(si)
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	movq	%rsp,%rdi
-	call	_C_LABEL(trap)
-	jmp	.Losyscall_checkast
-1:	CHECK_DEFERRED_SWITCH
+	movl	L_MD_ASTPENDING(%r14), %eax
+	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
 iret_return:
-#ifndef DIAGNOSTIC
-	INTRFASTEXIT
-#else /* DIAGNOSTIC */
+#ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
+#endif
 	INTRFASTEXIT
-3:
-	STI(si)
-	movabsq	$4f, %rdi
+#ifdef DIAGNOSTIC
+3:	movabsq	$4f, %rdi
+	movl	TF_RAX(%rsp),%esi
+	movl	TF_RDI(%rsp),%edx
+	movl	%ebx,%ecx
+	movl	CPUVAR(ILEVEL),%r8d
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
 	movl	$IPL_NONE,%edi
 	call	_C_LABEL(spllower)
 	jmp	.Losyscall_checkast
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
-#endif /* DIAGNOSTIC */
-9:	STI(si)
+4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
+#endif
+9:
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
+	jz	10f
+	STI(si)
 	call	_C_LABEL(do_pmap_load)
+	jmp	.Losyscall_checkast	/* re-check ASTs */
+10:
+	CLEAR_ASTPENDING(%r14)
+	STI(si)
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp,%rdi
+	call	_C_LABEL(trap)
 	jmp	.Losyscall_checkast	/* re-check ASTs */
 
 /*

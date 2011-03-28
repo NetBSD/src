@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.70.2.2 2009/11/01 13:58:34 jym Exp $	*/
+/*	$NetBSD: param.h,v 1.70.2.3 2011/03/28 23:58:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -127,16 +127,8 @@
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
-#ifndef NMBCLUSTERS
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
-#endif
+#ifndef NMBCLUSTERS_MAX
+#define	NMBCLUSTERS_MAX	(0x2000000 / MCLBYTES)	/* Limit to 64MB for clusters */
 #endif
 
 #ifndef NFS_RSIZE

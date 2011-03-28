@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.38.2.3 2011/03/28 23:04:46 jym Exp $	 */
+/*	$NetBSD: exec.c,v 1.38.2.4 2011/03/28 23:58:11 jym Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,13 +71,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -125,7 +118,7 @@
 #define	PAGE_SIZE	4096
 #endif
 
-#define MODULE_WARNING_DELAY	5000000
+#define MODULE_WARNING_SEC	5
 
 extern struct btinfo_console btinfo_console;
 
@@ -242,7 +235,7 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 #endif
 	marks[MARK_START] = loadaddr;
 	if ((fd = loadfile(file, marks,
-	    LOAD_KERNEL & ~(floppy ? LOAD_NOTE : 0))) == -1)
+	    LOAD_KERNEL & ~(floppy ? LOAD_BACKWARDS : 0))) == -1)
 		return EIO;
 
 	close(fd);
@@ -500,7 +493,7 @@ module_init(const char *kernel_path)
 	btinfo_modulelist = alloc(len);
 	if (btinfo_modulelist == NULL) {
 		printf("WARNING: couldn't allocate module list\n");
-		delay(MODULE_WARNING_DELAY);
+		wait_sec(MODULE_WARNING_SEC);
 		return;
 	}
 	memset(btinfo_modulelist, 0, len);
@@ -545,7 +538,7 @@ module_init(const char *kernel_path)
 		printf("WARNING: %d module%s failed to load\n",
 		    nfail, nfail == 1 ? "" : "s");
 #if notyet
-		delay(MODULE_WARNING_DELAY);
+		wait_sec(MODULE_WARNING_SEC);
 #endif
 	}
 }

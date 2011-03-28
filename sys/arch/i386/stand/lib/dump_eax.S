@@ -1,4 +1,4 @@
-/*	$NetBSD: dump_eax.S,v 1.2.14.2 2009/11/01 13:58:36 jym Exp $	*/
+/*	$NetBSD: dump_eax.S,v 1.2.14.3 2011/03/28 23:58:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,9 +39,6 @@
 ENTRY(dump_eax)
 	.code16
 	pusha					/* saves bottom 16 bits only! */
-	push	%es				/* allow for %es != %ds */
-	push	%ds
-	pop	%es
 	movw	$dump_eax_buff, %si
 	mov	%si, %di
 	movw	$8, %cx
@@ -54,10 +51,9 @@ ENTRY(dump_eax)
 	addb	$0xc0, %al			/* f0..f9, 00..05 */
 	adcb	$0x40, %al			/* 30..39, 41..46 */
 #endif
-	stosb
+	mov	%al,(%di)
+	inc	%di
 	pop	%ax
 	loop	1b
-	movw	$0x20, %ax			/* space + null */
-	stosw
-	pop	%es
+	movw	$0x20,(%di)			/* space + NIL */
 	jmp	message_1

@@ -1,4 +1,4 @@
-/* $NetBSD: vbe.c,v 1.2.6.4 2011/03/28 23:04:46 jym Exp $ */
+/* $NetBSD: vbe.c,v 1.2.6.5 2011/03/28 23:58:11 jym Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -174,7 +174,7 @@ vbe_commit(void)
 		if (ret) {
 			printf("WARNING: failed to set VBE mode 0x%x\n",
 			    vbestate.modenum);
-			delay(5000000);
+			wait_sec(5);
 		}
 	}
 	return ret;

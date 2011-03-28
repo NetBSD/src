@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.12.4.10 2011/03/28 23:04:56 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.12.4.11 2011/03/28 23:58:12 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.10 2011/03/28 23:04:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.11 2011/03/28 23:58:12 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -249,8 +249,7 @@ xpq_queue_pin_table(paddr_t pa, int lvl)
 	op.cmd = lvl;
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_pin_table: level %u %#"PRIx64"\n",
-		    level, (int64_t)pa);
+		panic("xpq_queue_pin_table");
 }
 
 void

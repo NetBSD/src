@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.12.2.2 2009/11/01 13:58:44 jym Exp $	*/
+/*	$NetBSD: pxe.c,v 1.12.2.3 2011/03/28 23:58:11 jym Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -250,13 +250,6 @@ pxe_netif_close(int sock)
 	if (uc->status != PXENV_STATUS_SUCCESS)
 		printf("pxe_netif_end: PXENV_UDP_CLOSE failed: 0x%x\n",
 		    uc->status);
-}
-
-void
-pxe_netif_shutdown(void)
-{
-
-	pxe_fini();
 }
 
 struct iodesc *
