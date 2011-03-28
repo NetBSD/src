@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.659.2.5 2011/01/10 00:37:29 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.659.2.6 2011/03/28 23:04:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659.2.5 2011/01/10 00:37:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.659.2.6 2011/03/28 23:04:41 jym Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -864,7 +864,9 @@ cpu_reboot(int howto, char *bootstr)
 {
 	static bool syncdone = false;
 	struct lwp *l;
+	int s;
 
+	s = IPL_NONE;
 	l = (curlwp == NULL) ? &lwp0 : curlwp;
 
 	if (cold) {
@@ -908,7 +910,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	pmf_system_shutdown(boothowto);
 
-	splhigh();
+	s = splhigh();
 haltsys:
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
@@ -923,6 +925,9 @@ haltsys:
 		}
 #endif
 #if NACPICA > 0
+		if (s != IPL_NONE)
+			splx(s);
+
 		acpi_enter_sleep_state(ACPI_STATE_S5);
 #endif
 #if NAPMBIOS > 0 && !defined(APM_NO_POWEROFF)
@@ -1029,7 +1034,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_edi = 0;
 	tf->tf_esi = 0;
 	tf->tf_ebp = 0;
-	tf->tf_ebx = (int)l->l_proc->p_psstr;
+	tf->tf_ebx = l->l_proc->p_psstrp;
 	tf->tf_edx = 0;
 	tf->tf_ecx = 0;
 	tf->tf_eax = 0;
@@ -1750,6 +1755,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
+	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
+	*flags |= _UC_TLSBASE;
+
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
@@ -1839,6 +1847,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_esp    = gr[_REG_UESP];
 		tf->tf_ss     = gr[_REG_SS];
 	}
+
+	if ((flags & _UC_TLSBASE) != 0)
+		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
 #if NNPX > 0
 	/*

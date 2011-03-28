@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.6.4.3 2010/10/24 22:48:18 jym Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.6.4.4 2011/03/28 23:04:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.6.4.3 2010/10/24 22:48:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.6.4.4 2011/03/28 23:04:52 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,10 +39,10 @@ __KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.6.4.3 2010/10/24 22:48:18 jym E
 
 #include <machine/specialreg.h>
 #include <machine/pio.h>
-#include <machine/cpufunc.h>
 
 #include <x86/cpuvar.h>
 #include <x86/cpufunc.h>
+#include <x86/est.h>
 
 int
 via_get_bus_clock(struct cpu_info *ci)

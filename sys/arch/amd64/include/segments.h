@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.19.8.1 2010/10/24 22:47:53 jym Exp $	*/
+/*	$NetBSD: segments.h,v 1.19.8.2 2011/03/28 23:04:36 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -397,6 +397,10 @@ void cpu_fsgs_reload(struct lwp *, int, int);
      ((s) & 0xffff) == LSEL(LUDATA32_SEL, SEL_UPL))
 #define VALID_USER_CSEL32(s) \
     ((s) == GSEL(GUCODE32_SEL, SEL_UPL) || (s) == LSEL(LUCODE32_SEL, SEL_UPL))
+#define VALID_USER_FSEL32(s) \
+    (((s) & 0xffff) == GSEL(GUFS_SEL, SEL_UPL))
+#define VALID_USER_GSEL32(s) \
+    (((s) & 0xffff) == GSEL(GUGS_SEL, SEL_UPL))
 
 #define VALID_USER_CSEL(s) \
     ((s) == GSEL(GUCODE_SEL, SEL_UPL) || (s) == LSEL(LUCODE_SEL, SEL_UPL))

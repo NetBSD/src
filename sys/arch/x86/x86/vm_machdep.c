@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.6.4 2010/10/24 22:48:20 jym Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.6.5 2011/03/28 23:04:54 jym Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.6.4 2010/10/24 22:48:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.6.5 2011/03/28 23:04:54 jym Exp $");
 
 #include "opt_mtrr.h"
 
@@ -119,8 +119,6 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
-	if (p1->p_flag & PK_32)
-		p2->p_flag |= PK_32;
 }
 
 /*
@@ -277,7 +275,8 @@ void
 cpu_lwp_free2(struct lwp *l)
 {
 
-	/* nothing */
+	KASSERT(l->l_md.md_gc_ptp == NULL);
+	KASSERT(l->l_md.md_gc_pmap == NULL);
 }
 
 /*
@@ -299,7 +298,7 @@ kvtop(void *addr)
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
@@ -334,6 +333,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		len -= PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
+
+	return 0;
 }
 
 /*

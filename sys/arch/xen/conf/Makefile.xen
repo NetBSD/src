@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.28.2.1 2010/10/24 22:48:20 jym Exp $
+#	$NetBSD: Makefile.xen,v 1.28.2.2 2011/03/28 23:04:55 jym Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -40,7 +40,7 @@ ARCH_INC=	$S/arch/xen/include/${XEN_BUILD}
 ##
 DEFCOPTS=	-O2
 CPPFLAGS+=	-D${XEN_BUILD}
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp ${DBG} -D__XEN__
+AFLAGS+=	-x assembler-with-cpp ${DBG} -D__XEN__
 EXTRA_INCLUDES=	-I${.CURDIR}/xen-ma
 
 .if ${XEN_BUILD} == "amd64"

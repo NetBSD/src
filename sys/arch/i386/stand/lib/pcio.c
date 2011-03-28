@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.25.2.2 2009/11/01 13:58:36 jym Exp $	 */
+/*	$NetBSD: pcio.c,v 1.25.2.3 2011/03/28 23:04:46 jym Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -271,6 +271,8 @@ getchar(void)
 	default: /* to make gcc -Wall happy... */
 	case CONSDEV_PC:
 #endif
+		while (!coniskey())
+			;
 		c = congetc();
 #ifdef CONSOLE_KEYMAP
 		{

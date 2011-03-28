@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.42.10.3 2009/11/01 13:58:22 jym Exp $	*/
+/*	$NetBSD: vector.S,v 1.42.10.4 2011/03/28 23:04:42 jym Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.10.3 2009/11/01 13:58:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.10.4 2011/03/28 23:04:42 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -264,7 +264,7 @@ IDTVEC(intr_lapic_tlb_bcast)
 	movl	%ss:_C_LABEL(pmap_mbox)+MB_GLOBAL, %ebx
 	movl	$0, %ss:_C_LABEL(local_apic)+LAPIC_EOI
 	cmpl	$-1, %eax
-	je,pn	3f
+	je	3f
 1:
 	/* Invalidate a single page or a range of pages. */
 	invlpg	%ss:(%eax)
@@ -386,22 +386,22 @@ IDTVEC_END(intr_lapic_ltimer)
  */
 
 #define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(recurse_/**/name/**/num)						;\
+IDTVEC(recurse_ ## name ## num)						;\
 	pushfl								;\
 	pushl	%cs							;\
 	pushl	%esi							;\
 	subl	$4,%esp							;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
-IDTVEC_END(recurse_/**/name/**/num)					;\
-IDTVEC(resume_/**/name/**/num)						\
+IDTVEC_END(recurse_ ## name ## num)					;\
+IDTVEC(resume_ ## name ## num)						\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	movl	%ebx,%esi						;\
 	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
 	movl	IS_MAXLEVEL(%ebp),%ebx					;\
 	jmp	1f							;\
-IDTVEC_END(resume_/**/name/**/num)					;\
-IDTVEC(intr_/**/name/**/num)						;\
+IDTVEC_END(resume_ ## name ## num)					;\
+IDTVEC(intr_ ## name ## num)						;\
 	pushl	$0			/* dummy error code */		;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
@@ -456,7 +456,7 @@ IDTVEC(intr_/**/name/**/num)						;\
 	late_ack(num)							;\
 	addl	$4,%esp							;\
 	INTRFASTEXIT							;\
-IDTVEC_END(intr_/**/name/**/num)
+IDTVEC_END(intr_ ## name ## num)
 
 #define ICUADDR IO_ICU1
 
@@ -740,7 +740,7 @@ _C_LABEL(ioapic_level_stubs):
 #define voidop(num)
 
 #define	XENINTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
-IDTVEC(recurse_/**/name/**/num)						;\
+IDTVEC(recurse_ ## name ## num)						;\
 	pushfl								;\
 	pushl	%cs							;\
 	pushl	%esi							;\
@@ -748,7 +748,7 @@ IDTVEC(recurse_/**/name/**/num)						;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
 	movl	$_C_LABEL(Xdoreti), %esi; /* we now have a trap frame, so loop using doreti instead */ ;\
-IDTVEC(resume_/**/name/**/num)						\
+IDTVEC(resume_ ## name ## num)						\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	pushl	%ebx							;\
 	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\

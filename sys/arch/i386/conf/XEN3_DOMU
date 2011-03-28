@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.11.4.3 2009/11/01 13:58:20 jym Exp $
+# $NetBSD: XEN3_DOMU,v 1.11.4.4 2011/03/28 23:04:39 jym Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -55,6 +55,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
 #makeoptions 	DEBUG="-g"	# compile full symbol table
+options DDB_COMMANDONENTER="trace;show registers"
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -109,7 +110,8 @@ file-system 	TMPFS		# Efficient memory file-system
 file-system	NILFS		# experimental - NTT's NiLFS(2)
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options		WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

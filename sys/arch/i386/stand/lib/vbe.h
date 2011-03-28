@@ -1,4 +1,4 @@
-/* $NetBSD: vbe.h,v 1.1.6.3 2009/11/01 13:58:36 jym Exp $ */
+/* $NetBSD: vbe.h,v 1.1.6.4 2011/03/28 23:04:46 jym Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -85,12 +85,18 @@ struct paletteentry {
 	uint8_t Alignment;
 } __packed;
 
+/* EDID */
+#define	EDID_MAGIC	{ 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00 }
+#define	EDID_DESC_BLOCK	0x36
+
 /* low-level VBE calls, from biosvbe.S */
 int biosvbe_info(struct vbeinfoblock *);
 int biosvbe_set_mode(int);
 int biosvbe_get_mode_info(int, struct modeinfoblock *);
 int biosvbe_palette_format(int); 
 int biosvbe_palette_data(int, int, struct paletteentry *);
+int biosvbe_ddc_caps(void);
+int biosvbe_ddc_read_edid(int, void *);
 
 /* high-level VBE helpers, from vbe.c */
 void vbe_init(void);

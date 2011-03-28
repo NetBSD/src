@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.22.4.2 2009/11/01 13:58:21 jym Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.22.4.3 2011/03/28 23:04:40 jym Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.22.4.2 2009/11/01 13:58:21 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.22.4.3 2011/03/28 23:04:40 jym Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.22.4.2 2009/11/01 13:58:21 jym Exp 
 
 #define	ALIGN64		.align	64
 #define	ALIGN32		.align	32
-#define	LOCK(num)	.Lpatch/**/num:	lock
-#define	RET(num)	.Lret/**/num: ret; nop; nop; ret
+#define	LOCK(num)	.Lpatch ## num:	lock
+#define	RET(num)	.Lret ## num: ret; nop; nop; ret
 #define	ENDLABEL(name,a) .align	a; LABEL(name)
 
 #if !defined(LOCKDEBUG)

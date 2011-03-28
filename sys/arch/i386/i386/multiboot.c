@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.18.4.3 2010/10/24 22:48:01 jym Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.18.4.4 2011/03/28 23:04:41 jym Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.18.4.3 2010/10/24 22:48:01 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.18.4.4 2011/03/28 23:04:41 jym Exp $");
 
 #include "opt_multiboot.h"
 
@@ -339,27 +339,34 @@ copy_syms(struct multiboot_info *mi)
 	    (void *)strtabp < RELOC(void *, &end)) {
 		symstart = RELOC(Elf32_Addr, &end);
 		strstart = symstart + symsize;
+		memcpy((void *)symstart, (void *)symaddr, symsize);
+		memcpy((void *)strstart, (void *)straddr, strsize);
         } else if ((void *)symtabp > RELOC(void *, &end) &&
 	           (void *)strtabp < RELOC(void *, &end)) {
 		symstart = RELOC(Elf32_Addr, &end);
 		strstart = symstart + symsize;
+		memcpy((void *)symstart, (void *)symaddr, symsize);
+		memcpy((void *)strstart, (void *)straddr, strsize);
         } else if ((void *)symtabp < RELOC(void *, &end) &&
 	           (void *)strtabp > RELOC(void *, &end)) {
 		strstart = RELOC(Elf32_Addr, &end);
 		symstart = strstart + strsize;
+		memcpy((void *)strstart, (void *)straddr, strsize);
+		memcpy((void *)symstart, (void *)symaddr, symsize);
 	} else {
 		/* symtabp and strtabp are both over end */
 		if (symtabp < strtabp) {
 			symstart = RELOC(Elf32_Addr, &end);
 			strstart = symstart + symsize;
+			memcpy((void *)symstart, (void *)symaddr, symsize);
+			memcpy((void *)strstart, (void *)straddr, strsize);
 		} else {
 			strstart = RELOC(Elf32_Addr, &end);
 			symstart = strstart + strsize;
+			memcpy((void *)strstart, (void *)straddr, strsize);
+			memcpy((void *)symstart, (void *)symaddr, symsize);
 		}
 	}
-
-	memcpy((void *)strstart, (void *)straddr, strsize);
-	memcpy((void *)symstart, (void *)symaddr, symsize);
 
 	*RELOC(int *, &esym) =
 	    (int)(symstart + symsize + strsize + KERNBASE);

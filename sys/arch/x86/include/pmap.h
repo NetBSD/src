@@ -1,7 +1,6 @@
-/*	$NetBSD: pmap.h,v 1.21.2.7 2010/10/24 22:48:16 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21.2.8 2011/03/28 23:04:50 jym Exp $	*/
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -205,9 +198,18 @@ extern long nkptp[PTP_LEVELS];
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
 #define pmap_move(DP,SP,D,L,S)
-#define pmap_phys_address(ppn)		x86_ptob(ppn)
+#define pmap_phys_address(ppn)		(x86_ptob(ppn) & ~X86_MMAP_FLAG_MASK)
+#define pmap_mmap_flags(ppn)		x86_mmap_flags(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
+#if defined(__x86_64__) || defined(PAE)
+#define X86_MMAP_FLAG_SHIFT	(64 - PGSHIFT)
+#else
+#define X86_MMAP_FLAG_SHIFT	(32 - PGSHIFT)
+#endif
+
+#define X86_MMAP_FLAG_MASK	0xf
+#define X86_MMAP_FLAG_PREFETCH	0x1
 
 /*
  * prototypes
@@ -235,6 +237,8 @@ void		pmap_map_ptes(struct pmap *, struct pmap **, pd_entry_t **,
 void		pmap_unmap_ptes(struct pmap *, struct pmap *);
 
 int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
+
+u_int		x86_mmap_flags(paddr_t);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
