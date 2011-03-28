@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.29.4.3 2011/03/28 23:04:34 jym Exp $	*/
+/*	$NetBSD: vector.S,v 1.29.4.4 2011/03/28 23:58:10 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#include "opt_xen.h"
+#include "opt_dtrace.h"
 
 #define ALIGN_TEXT	.align 16,0x90
 
@@ -111,6 +113,21 @@
 
 #define	BPTTRAP(a)	ZTRAP(a)
 
+#ifdef KDTRACE_HOOKS
+	.bss
+	.globl	dtrace_invop_jump_addr
+	.align	8
+	.type	dtrace_invop_jump_addr, @object
+	.size	dtrace_invop_jump_addr, 8
+dtrace_invop_jump_addr:
+	.zero	8
+	.globl	dtrace_invop_calltrap_addr
+	.align	8
+	.type	dtrace_invop_calltrap_addr, @object
+	.size	dtrace_invop_calltrap_addr, 8
+dtrace_invop_calltrap_addr:
+	.zero	8
+#endif
 	.text
 
 IDTVEC(trap00)
@@ -135,17 +152,15 @@ IDTVEC(trap02)
 	movw	%es,TF_ES(%rsp)
 	movw	%ds,TF_DS(%rsp)
 	movq	%rsp,%rdi
-	incl	CPUVAR(NTRAP)
+	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
-	swapgs
-	movw	TF_GS(%rsp),%gs
-	movw	TF_FS(%rsp),%fs
 	movw	TF_ES(%rsp),%es
 	movw	TF_DS(%rsp),%ds
+	swapgs
 	jmp	2f
 1:
 	movq	%rsp,%rdi
-	incl	CPUVAR(NTRAP)
+	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 2:
 	INTR_RESTORE_GPRS
@@ -282,12 +297,36 @@ NENTRY(resume_pop_es)
 NENTRY(alltraps)
 	INTRENTRY
   	STI(si)
+#ifdef KDTRACE_HOOKS
+	/*
+	 * DTrace Function Boundary Trace (fbt) probes are triggered
+	 * by int3 (0xcc) which causes the #BP (T_BPTFLT) breakpoint
+	 * interrupt. For all other trap types, just handle them in
+	 * the usual way.
+	 */
+	cmpl    $T_BPTFLT,TF_TRAPNO(%rsp)
+	jne     calltrap
+
+	/* Check if there is no DTrace hook registered. */
+	cmpq	$0,dtrace_invop_jump_addr
+	je	calltrap
+
+	/*
+	 * Set our jump address for the jump back in the event that
+	 * the exception wasn't caused by DTrace at all.
+	 */
+	movq	$calltrap, dtrace_invop_calltrap_addr(%rip)
+
+	/* Jump to the code hooked in by DTrace. */
+	movq	dtrace_invop_jump_addr, %rax
+	jmpq	*dtrace_invop_jump_addr
+#endif
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
 	movq	%rsp,%rdi
-	incl	CPUVAR(NTRAP)
+	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 .Lalltraps_checkusr:
 	testb	$SEL_RPL,TF_CS(%rsp)
@@ -302,7 +341,7 @@ calltrap:
   	STI(si)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
-	incl	CPUVAR(NTRAP)
+	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH
@@ -350,8 +389,6 @@ calltrap:
  * segment registers.
  *
  */
-
-#define MY_COUNT _C_LABEL(uvmexp)
 
 /* XXX See comment in locore.s */
 #ifdef __ELF__
@@ -633,7 +670,7 @@ IDTVEC(intr_ ## name ## num)						;\
 	movl	CPUVAR(ILEVEL),%r13d					;\
 	cmpl	%ebx,%r13d						;\
 	jae	10f			/* currently masked; hold it */	;\
-	incl	MY_COUNT+V_INTR		/* statistical info */		;\
+	incq	CPUVAR(NINTR)		/* statistical info */		;\
 	incq	IS_EVCNT(%r14)						;\
 1:									\
 	pushq	%r13							;\

@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.12.8.2 2009/11/01 13:58:48 jym Exp $	*/
+/*	$NetBSD: copy.S,v 1.12.8.3 2011/03/28 23:58:09 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 
 #define GET_CURPCB(reg)	\
 	movq	CPUVAR(CURLWP), reg; \
-	movq	L_ADDR(reg), reg
+	movq	L_PCB(reg), reg
 
 /*
  * These are arranged so that the abnormal case is a forwards
@@ -386,7 +386,7 @@ ENTRY(fusword)
 	DEFERRED_SWITCH_CALL
 	
 ENTRY(fuswintr)
-	cmpq	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
+	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
 	jnz	_C_LABEL(fusuaddrfault)
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi
@@ -444,7 +444,7 @@ ENTRY(susword)
 	DEFERRED_SWITCH_CALL
 
 ENTRY(suswintr)
-	cmpq	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
+	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
 	jnz	_C_LABEL(fusuaddrfault)
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi
@@ -501,14 +501,12 @@ ENTRY(ucas_64)
 	/* Fail if kernel-space */
 	movq	$VM_MAXUSER_ADDRESS-8, %r8
 	cmpq	%r8, %rdi
-	ja	1f
-	/* Label for fault handler */
+	ja	_C_LABEL(ucas_fault)
+	movq	%rsi, %rax
 .Lucas64_start:
 	/* Perform the CAS */
 	lock
 	cmpxchgq %rdx, (%rdi)
-	/* Clear the fault handler */
-	movq	%rax, PCB_ONFAULT(%r8)
 .Lucas64_end:
 	/*
 	 * Note: %rax is "old" value.
@@ -516,11 +514,6 @@ ENTRY(ucas_64)
 	 */
 	movq	%rax, (%rcx)
 	xorq	%rax, %rax
-	/* Clear the fault handler */
-	movq	%rax, PCB_ONFAULT(%r8)
-1:
-	/* Failure case */
-	movq	$EFAULT, %rax
 	ret
 	DEFERRED_SWITCH_CALL
 
@@ -532,8 +525,8 @@ ENTRY(ucas_32)
 	/* Fail if kernel-space */
 	movq	$VM_MAXUSER_ADDRESS-4, %r8
 	cmpq	%r8, %rdi
-	ja	1f
-	/* Label for fault handler */
+	ja	_C_LABEL(ucas_fault)
+	movl	%esi, %eax
 .Lucas32_start:
 	/* Perform the CAS */
 	lock
@@ -545,22 +538,19 @@ ENTRY(ucas_32)
 	 */
 	movl	%eax, (%rcx)
 	xorq	%rax, %rax
-1:
-	/* Failure case */
-	movq	$EFAULT, %rax
 	ret
 	DEFERRED_SWITCH_CALL
 
 /*
- * Fault handler for ucas_32() and ucas_64().
- * Unset the handler and return the failure.
+ * Fault handler for ucas_*().
+ * Just return the error set by trap().
  */
 NENTRY(ucas_fault)
-	movq	$EFAULT, %rax
 	ret
 
 /*
- * int	ucas_ptr(volatile void *uptr, void *old, void *new, void *ret);
+ * int	ucas_ptr(volatile void **uptr, void *old, void *new, void **ret);
+ * int	ucas_int(volatile int *uptr, int old, intnew, int *ret);
  */
 STRONG_ALIAS(ucas_ptr, ucas_64)
 STRONG_ALIAS(ucas_int, ucas_32)

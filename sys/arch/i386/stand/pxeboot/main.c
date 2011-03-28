@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18.2.3 2011/03/28 23:04:46 jym Exp $	*/
+/*	$NetBSD: main.c,v 1.18.2.4 2011/03/28 23:58:11 jym Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -64,6 +64,7 @@ void	command_quit(char *);
 void	command_boot(char *);
 void	command_consdev(char *);
 void	command_modules(char *);
+void	command_multiboot(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -72,6 +73,7 @@ const struct bootblk_command commands[] = {
 	{ "boot",	command_boot },
 	{ "consdev",	command_consdev },
 	{ "modules",    command_modules },
+	{ "multiboot",  command_multiboot },
 	{ "load",	module_add },
 	{ "vesa",	command_vesa },
 	{ NULL,		NULL },
@@ -85,10 +87,17 @@ clearit(void)
 		clear_pc_screen();
 }
 
+static void
+alldone(void)
+{
+	pxe_fini();
+	clearit();
+}
+
 static int 
 bootit(const char *filename, int howto)
 {
-	if (exec_netbsd(filename, 0, howto, 0, clearit) < 0)
+	if (exec_netbsd(filename, 0, howto, 0, alldone) < 0)
 		printf("boot: %s\n", strerror(errno));
 	else
 		printf("boot returned\n");
@@ -123,6 +132,8 @@ main(void)
 	initio(CONSDEV_PC);
 #endif
 	gateA20();
+	boot_modules_enabled = !(boot_params.bp_flags
+				 & X86_BP_FLAGS_NOMODULES);
 
 #ifndef SMALL
 	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
@@ -186,8 +197,9 @@ command_help(char *arg)
 	       "boot [filename] [-adsqv]\n"
 	       "     (ex. \"netbsd.old -s\"\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
-	       "vesa {enabled|disabled|list|modenum}\n"
-	       "modules {enabled|disabled}\n"
+	       "vesa {modenum|on|off|enabled|disabled|list}\n"
+	       "multiboot [filename] [<args>]\n"
+	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "help|?\n"
 	       "quit\n");
@@ -203,7 +215,6 @@ command_quit(char *arg)
 	reboot();
 	/* Note: we shouldn't get to this point! */
 	panic("Could not reboot!");
-	exit(0);
 }
 
 void
@@ -257,4 +268,17 @@ command_modules(char *arg)
 		boot_modules_enabled = false;
 	else
 		printf("invalid flag, must be 'enabled' or 'disabled'.\n");
+}
+
+void
+command_multiboot(char *arg)
+{
+	char *filename;
+
+	filename = arg;
+	if (exec_multiboot(filename, gettrailer(arg)) < 0)
+		printf("multiboot: %s: %s\n", filename,
+		  strerror(errno));
+	else
+		printf("boot returned\n");
 }
