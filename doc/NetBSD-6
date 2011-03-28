@@ -40,6 +40,7 @@ Possibly in 6.0
 + kernel modules need work
 + Xen suspend/resume - jym working on it
 + TNF funding for release engineering
++ in-kernel iscsi initiator - excellent progress being made
 
 May not make 6.0
 ----------------
