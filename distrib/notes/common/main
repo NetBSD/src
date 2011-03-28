@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.472 2011/01/30 11:50:43 rumko Exp $
+.\"	$NetBSD: main,v 1.473 2011/03/28 18:48:21 para Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1181,6 +1181,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta John Hawkinson Ta Mt jhawk@NetBSD.org
 .It Ta Emile Heitor Ta Mt imil@NetBSD.org
 .It Ta John Heasley Ta Mt heas@NetBSD.org
+.It Ta Lars Heidieker Ta Mt para@NetBSD.org
 .It Ta Geert Hendrickx Ta Mt ghen@NetBSD.org
 .It Ta Ren\('e Hexel Ta Mt rh@NetBSD.org
 .It Ta Iain Hibbert Ta Mt plunky@NetBSD.org
