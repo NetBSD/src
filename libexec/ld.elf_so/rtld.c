@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.146 2011/03/27 22:20:51 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.147 2011/03/28 00:37:40 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.146 2011/03/27 22:20:51 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.147 2011/03/28 00:37:40 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,6 +89,7 @@ Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
 u_int		_rtld_objcount;	/* Number of objects in _rtld_objlist */
 u_int		_rtld_objloads;	/* Number of objects loaded in _rtld_objlist */
+u_int		_rtld_objgen;	/* Generation count for _rtld_objlist */
 const char	_rtld_path[] = _PATH_RTLD;
 
 /* Initialize a fake symbol for resolving undefined weak references. */
@@ -139,9 +140,13 @@ _rtld_call_fini_functions(int force)
 	Objlist_Entry *elm;
 	Objlist finilist;
 	Obj_Entry *obj;
+	void (*fini)(void);
+	u_int cur_objgen;
 
 	dbg(("_rtld_call_fini_functions(%d)", force));
 
+restart:
+	cur_objgen = ++_rtld_objgen;
 	SIMPLEQ_INIT(&finilist);
 	_rtld_initlist_tsort(&finilist, 1);
 
@@ -157,10 +162,20 @@ _rtld_call_fini_functions(int force)
 		dbg (("calling fini function %s at %p",  obj->path,
 		    (void *)obj->fini));
 		obj->fini_called = 1;
-		/* XXXlocking: exit point */
-		_rtld_mutex_may_recurse = true;
-		(*obj->fini)();
-		_rtld_mutex_may_recurse = false;
+		/*
+		 * XXX This can race against a concurrent dlclose().
+		 * XXX In that case, the object could be unmapped before
+		 * XXX the fini() call is done.
+		 */
+		fini = obj->fini;
+		_rtld_exclusive_exit();
+		(*fini)();
+		_rtld_exclusive_enter();
+		if (_rtld_objgen != cur_objgen) {
+			dbg(("restarting fini iteration"));
+			_rtld_objlist_clear(&finilist);
+			goto restart;
+		}
 	}
 
 	/* Second pass: objects marked with DF_1_INITFIRST. */
@@ -175,10 +190,16 @@ _rtld_call_fini_functions(int force)
 		dbg (("calling fini function %s at %p (DF_1_INITFIRST)",
 		    obj->path, (void *)obj->fini));
 		obj->fini_called = 1;
-		/* XXXlocking: exit point */
-		_rtld_mutex_may_recurse = true;
-		(*obj->fini)();
-		_rtld_mutex_may_recurse = false;
+		/* XXX See above for the race condition here */
+		fini = obj->fini;
+		_rtld_exclusive_exit();
+		(*fini)();
+		_rtld_exclusive_enter();
+		if (_rtld_objgen != cur_objgen) {
+			dbg(("restarting fini iteration"));
+			_rtld_objlist_clear(&finilist);
+			goto restart;
+		}
 	}
 
         _rtld_objlist_clear(&finilist);
@@ -190,8 +211,13 @@ _rtld_call_init_functions()
 	Objlist_Entry *elm;
 	Objlist initlist;
 	Obj_Entry *obj;
+	void (*init)(void);
+	u_int cur_objgen;
 
 	dbg(("_rtld_call_init_functions()"));
+
+restart:
+	cur_objgen = ++_rtld_objgen;
 	SIMPLEQ_INIT(&initlist);
 	_rtld_initlist_tsort(&initlist, 0);
 
@@ -204,10 +230,15 @@ _rtld_call_init_functions()
 		dbg (("calling init function %s at %p (DF_1_INITFIRST)",
 		    obj->path, (void *)obj->init));
 		obj->init_called = 1;
-		/* XXXlocking: exit point */
-		_rtld_mutex_may_recurse = true;
-		(*obj->init)();
-		_rtld_mutex_may_recurse = false;
+		init = obj->init;
+		_rtld_exclusive_exit();
+		(*init)();
+		_rtld_exclusive_enter();
+		if (_rtld_objgen != cur_objgen) {
+			dbg(("restarting init iteration"));
+			_rtld_objlist_clear(&initlist);
+			goto restart;
+		}
 	}
 
 	/* Second pass: all other objects. */
@@ -219,10 +250,15 @@ _rtld_call_init_functions()
 		dbg (("calling init function %s at %p",  obj->path,
 		    (void *)obj->init));
 		obj->init_called = 1;
-		/* XXXlocking: exit point */
-		_rtld_mutex_may_recurse = true;
-		(*obj->init)();
-		_rtld_mutex_may_recurse = false;
+		init = obj->init;
+		_rtld_exclusive_exit();
+		(*init)();
+		_rtld_exclusive_enter();
+		if (_rtld_objgen != cur_objgen) {
+			dbg(("restarting init iteration"));
+			_rtld_objlist_clear(&initlist);
+			goto restart;
+		}
 	}
 
         _rtld_objlist_clear(&initlist);
