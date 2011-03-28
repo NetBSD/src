@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.14 2007/02/15 22:37:27 dogcow Exp $
+/	$NetBSD: units.lib,v 1.15 2011/03/28 00:08:47 dholland Exp $
 
 / primitive units
 
@@ -378,6 +378,7 @@ britishthermalunit	1.05506e+3 joule fuzz
 btu			britishthermalunit
 refrigeration		12000 btu/ton-hour
 buck			dollar
+Ci			curie
 cable			720 ft
 caliber			1e-2 in
 calorie			cal
@@ -430,6 +431,7 @@ fortnight		14 da
 franklin		3.33564e-10 coul
 frigorie		kilocal
 furlong			220 yd
+Gy			gray
 galileo			1e-2 m/sec2
 gamma			1e-9 weber/m2
 gauss			1e-4 weber/m2
@@ -437,6 +439,7 @@ geodeticfoot		british-ft
 geographicalmile	1852 m
 gilbert			7.95775e-1 amp
 gill			1|4 pt
+gray			joule/kg
 gross			144
 gunterschain		22 yd
 hand			4 in
@@ -518,17 +521,21 @@ quarter			9 in
 quartersection		1|4 mi2
 quintal			100 kg
 quire			25
+R			roentgen
 rackunit		1.75 in
 rad			100 erg/gm
 ream			500
 registerton		100 ft3
+rem			1e-2 sievert
 rhe			10 m2/nt-sec
-rontgen			2.58e-4 curie/kg
+roentgen		2.58e-4 coulomb/kg
+rontgen			roentgen
 rood			1.21e+3 yd
 rope			20 ft
 RU			rackunit
 rutherford		1e+6 /sec
 rydberg			1.36054e+1 ev
+Sv			sievert
 sabin			1 ft2
 sack			3 bu
 score			20
@@ -539,6 +546,7 @@ shippington		40 ft3
 shorthundredweight	100 lb
 shortquarter		25 lb
 siemens			/ohm
+sievert			joule/kg
 sigma			microsec
 skein			120 yd
 skot			1e-3 apostilb
@@ -627,7 +635,6 @@ kip			1000 lbf
 frenchfoot		16|15 ft
 frenchfeet		frenchfoot
 toise			6 frenchfeet
-sievert			8.4 rontgen
 candle			1.02 candela
 militarypace		2.5 feet
 metre			meter
