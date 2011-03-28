@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.28.24.2 2011/03/28 23:04:44 jym Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.28.24.3 2011/03/28 23:58:11 jym Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -63,18 +63,22 @@
  * the rights to redistribute these changes.
  */
 
-#ifndef NO_DISKLABEL
+#if !defined(NO_DISKLABEL) || !defined(NO_GPT)
 #define FSTYPENAMES
 #endif
+
+#include <lib/libkern/libkern.h>
+#include <lib/libsa/stand.h>
 
 #include <sys/types.h>
 #include <sys/md5.h>
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <sys/disklabel_gpt.h>
+#include <sys/uuid.h>
 
 #include <fs/cd9660/iso.h>
 
-#include <lib/libsa/stand.h>
 #include <lib/libsa/saerrno.h>
 #include <machine/stdarg.h>
 #include <machine/cpu.h>
@@ -88,11 +92,27 @@
 
 #define BUFSIZE	2048	/* must be large enough for a CD sector */
 
+#define BIOSDISKNPART 26
+
 struct biosdisk {
 	struct biosdisk_ll ll;
-	int             boff;
+	daddr_t         boff;
 	char            buf[BUFSIZE];
+#if !defined(NO_DISKLABEL) || !defined(NO_GPT)
+	struct {
+		daddr_t offset;
+		daddr_t size;
+		int     fstype;
+	} part[BIOSDISKNPART];
+#endif
 };
+
+#ifndef NO_GPT
+const struct uuid GET_nbsd_raid = GPT_ENT_TYPE_NETBSD_RAIDFRAME;
+const struct uuid GET_nbsd_ffs = GPT_ENT_TYPE_NETBSD_FFS;
+const struct uuid GET_nbsd_lfs = GPT_ENT_TYPE_NETBSD_LFS;
+const struct uuid GET_nbsd_swap = GPT_ENT_TYPE_NETBSD_SWAP;
+#endif /* NO_GPT */
 
 #ifdef _STANDALONE
 static struct btinfo_bootdisk bi_disk;
@@ -348,7 +368,7 @@ ingest_label(struct biosdisk *d, struct disklabel *lp)
 }
 	
 static int
-check_label(struct biosdisk *d, int sector)
+check_label(struct biosdisk *d, daddr_t sector)
 {
 	struct disklabel *lp;
 
@@ -362,7 +382,7 @@ check_label(struct biosdisk *d, int sector)
 	lp = (struct disklabel *) (d->buf + LABELOFFSET);
 	if (lp->d_magic != DISKMAGIC || dkcksum(lp)) {
 #ifdef DISK_DEBUG
-		printf("warning: no disklabel in sector %u\n", sector);
+		printf("warning: no disklabel in sector %"PRId64"\n", sector);
 #endif
 		return -1;
 	}
@@ -431,7 +451,7 @@ read_label(struct biosdisk *d)
 				continue;
 			sector = this_ext + mbr[i].mbrp_start;
 #ifdef DISK_DEBUG
-			printf("ptn type %d in sector %u\n", typ, sector);
+			printf("ptn type %d in sector %d\n", typ, sector);
 #endif
 			if (typ == MBR_PTYPE_NETBSD) {
 				error = check_label(d, sector);
@@ -494,17 +514,39 @@ read_label(struct biosdisk *d)
 }
 #endif /* NO_DISKLABEL */
 
+#if !defined(NO_DISKLABEL) || !defined(NO_GPT)
+static int
+read_partitions(struct biosdisk *d)
+{
+	int error;
+
+	error = -1;
+
+#ifndef NO_GPT
+	error = read_gpt(d);
+	if (error == 0)
+		return 0;
+
+#endif
+#ifndef NO_DISKLABEL
+	error = read_label(d);
+	
+#endif
+	return error;
+}
+#endif
+
 void
 biosdisk_probe(void)
 {
-#ifndef NO_DISKLABEL
-	struct disklabel *lp;
-	int first, part;
-#endif
 	struct biosdisk d;
 	struct biosdisk_extinfo ed;
 	uint64_t size;
+	int first;
 	int i;
+#if !defined(NO_DISKLABEL) || !defined(NO_GPT)
+	int part;
+#endif
 
 	for (i = 0; i < MAX_BIOSDISKS + 2; i++) {
 		first = 1;
@@ -531,41 +573,42 @@ biosdisk_probe(void)
 				printf(" size ");
 				size = ed.totsec * ed.sbytes;
 				if (size >= (10ULL * 1024 * 1024 * 1024))
-					printf("%llu GB",
+					printf("%"PRIu64" GB",
 					    size / (1024 * 1024 * 1024));
 				else
-					printf("%llu MB",
+					printf("%"PRIu64" MB",
 					    size / (1024 * 1024));
 			}
 			printf("\n");
 			break;
 		}
-#ifndef NO_DISKLABEL
+#if !defined(NO_DISKLABEL) || !defined(NO_GPT)
 		if (d.ll.type != BIOSDISK_TYPE_HD)
 			continue;
-		if (read_label(&d) == -1)
-			break;
-		lp = (struct disklabel *)(d.buf + LABELOFFSET);
-		for (part = 0; part < lp->d_npartitions; part++) {
-			if (lp->d_partitions[part].p_size == 0)
+
+		if (read_partitions(&d) != 0)
+			continue;
+			
+		for (part = 0; part < BIOSDISKNPART; part++) {
+			if (d.part[part].size == 0)
 				continue;
-			if (lp->d_partitions[part].p_fstype == FS_UNUSED)
+			if (d.part[part].fstype == FS_UNUSED)
 				continue;
 			if (first) {
 				printf(" ");
 				first = 0;
 			}
 			printf(" hd%d%c(", d.ll.dev & 0x7f, part + 'a');
-			if (lp->d_partitions[part].p_fstype < FSMAXTYPES)
+			if (d.part[part].fstype < FSMAXTYPES)
 				printf("%s",
-				  fstypenames[lp->d_partitions[part].p_fstype]);
+				  fstypenames[d.part[part].fstype]);
 			else
-				printf("%d", lp->d_partitions[part].p_fstype);
+				printf("%d", d.part[part].fstype);
 			printf(")");
 		}
+#endif
 		if (first == 0)
 			printf("\n");
-#endif
 	}
 }
 
@@ -574,16 +617,15 @@ biosdisk_probe(void)
  */
 
 int
-biosdisk_findpartition(int biosdev, u_int sector)
+biosdisk_findpartition(int biosdev, daddr_t sector)
 {
-#ifdef NO_DISKLABEL
+#if defined(NO_DISKLABEL) && defined(NO_GPT)
 	return 0;
 #else
 	struct biosdisk *d;
 	int partition = 0;
-	struct disklabel *lp;
 #ifdef DISK_DEBUG
-	printf("looking for partition device %x, sector %u\n", biosdev, sector);
+	printf("looking for partition device %x, sector %"PRId64"\n", biosdev, sector);
 #endif
 
 	/* Look for netbsd partition that is the dos boot one */
@@ -591,20 +633,43 @@ biosdisk_findpartition(int biosdev, u_int sector)
 	if (d == NULL)
 		return 0;
 
-	if (read_label(d) == 0) {
-		lp = (struct disklabel *)(d->buf + LABELOFFSET);
-		for (partition = lp->d_npartitions; --partition;){
-			if (lp->d_partitions[partition].p_fstype == FS_UNUSED)
+	if (read_partitions(d) == 0) {
+		for (partition = (BIOSDISKNPART-1); --partition;) {
+			if (d->part[partition].fstype == FS_UNUSED)
 				continue;
-			if (lp->d_partitions[partition].p_offset == sector)
+			if (d->part[partition].offset == sector)
 				break;
 		}
 	}
 
 	dealloc(d, sizeof(*d));
 	return partition;
-#endif /* NO_DISKLABEL */
+#endif /* NO_DISKLABEL && NO_GPT */
 }
+
+#ifdef _STANDALONE
+static void
+add_biosdisk_bootinfo(void)
+{
+	static bool done;
+
+	if (bootinfo == NULL) {
+		done = false;
+		return;
+	}
+	
+	if (done)
+		return;
+
+	BI_ADD(&bi_disk, BTINFO_BOOTDISK, sizeof(bi_disk));
+	BI_ADD(&bi_wedge, BTINFO_BOOTWEDGE, sizeof(bi_wedge));
+
+	done = true;
+
+	return;
+}
+
+#endif
 
 int
 biosdisk_open(struct open_file *f, ...)
@@ -614,9 +679,6 @@ biosdisk_open(struct open_file *f, ...)
 	struct biosdisk *d;
 	int biosdev;
 	int partition;
-#ifndef NO_DISKLABEL
-	struct disklabel *lp;
-#endif
 	int error = 0;
 
 	va_start(ap, f);
@@ -637,10 +699,8 @@ biosdisk_open(struct open_file *f, ...)
 	bi_wedge.matchblk = -1;
 #endif
 
-#ifndef NO_DISKLABEL
-	if (partition == RAW_PART)
-		goto nolabel;
-	error = read_label(d);
+#if !defined(NO_DISKLABEL) || !defined(NO_GPT)
+	error = read_partitions(d);
 	if (error == -1) {
 		error = 0;
 		goto nolabel;
@@ -648,53 +708,40 @@ biosdisk_open(struct open_file *f, ...)
 	if (error)
 		goto out;
 
-	lp = (struct disklabel *) (d->buf + LABELOFFSET);
-	if (partition >= lp->d_npartitions ||
-	    lp->d_partitions[partition].p_fstype == FS_UNUSED) {
+	if (partition >= BIOSDISKNPART ||
+	    d->part[partition].fstype == FS_UNUSED) {
 #ifdef DISK_DEBUG
 		printf("illegal partition\n");
 #endif
 		error = EPART;
 		goto out;
 	}
-#ifdef _STANDALONE
-	bi_disk.labelsector = d->boff + LABELSECTOR;
-	bi_disk.label.type = lp->d_type;
-	memcpy(bi_disk.label.packname, lp->d_packname, 16);
-	bi_disk.label.checksum = lp->d_checksum;
 
-	bi_wedge.startblk = lp->d_partitions[partition].p_offset;
-	bi_wedge.nblks = lp->d_partitions[partition].p_size;
-	bi_wedge.matchblk = d->boff + LABELSECTOR;
-	bi_wedge.matchnblks = 1;
-	{
-		MD5_CTX ctx;
+	d->boff = d->part[partition].offset;
 
-		MD5Init(&ctx);
-		MD5Update(&ctx, (void *) d->buf, 512);
-		MD5Final(bi_wedge.matchhash, &ctx);
-	}
-#endif
-	d->boff = lp->d_partitions[partition].p_offset;
-	if (lp->d_partitions[partition].p_fstype == FS_RAID)
+	if (d->part[partition].fstype == FS_RAID)
 		d->boff += RF_PROTECTED_SECTORS;
-nolabel:
-#endif /* NO_DISKLABEL */
 
+#ifdef _STANDALONE
+	bi_wedge.startblk = d->part[partition].offset;
+	bi_wedge.nblks = d->part[partition].size;
+#endif
+
+nolabel:
+#endif
 #ifdef DISK_DEBUG
-	printf("partition @%d\n", d->boff);
+	printf("partition @%"PRId64"\n", d->boff);
 #endif
 
 #ifdef _STANDALONE
-	BI_ADD(&bi_disk, BTINFO_BOOTDISK, sizeof(bi_disk));
-	BI_ADD(&bi_wedge, BTINFO_BOOTWEDGE, sizeof(bi_wedge));
+	add_biosdisk_bootinfo();
 #endif
 
 	f->f_devdata = d;
 out:
         va_end(ap);
 	if (error)
-		dealloc(d, sizeof(struct biosdisk));
+		dealloc(d, sizeof(*d));
 	return error;
 }
 
@@ -706,9 +753,9 @@ biosdisk_close(struct open_file *f)
 
 	/* let the floppy drive go off */
 	if (d->ll.type == BIOSDISK_TYPE_FD)
-		delay(3000000);	/* 2s is enough on all PCs I found */
+		wait_sec(3);	/* 2s is enough on all PCs I found */
 
-	dealloc(d, sizeof(struct biosdisk));
+	dealloc(d, sizeof(*d));
 	f->f_devdata = NULL;
 	return 0;
 }

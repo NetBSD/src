@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.21.8.6 2011/03/28 23:04:55 jym Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.21.8.7 2011/03/28 23:58:12 jym Exp $	*/
 
 /*
  *
@@ -38,7 +38,7 @@ void xpq_queue_invlpg(vaddr_t);
 void xpq_queue_pte_update(paddr_t, pt_entry_t);
 void xpq_queue_pt_switch(paddr_t);
 void xpq_flush_queue(void);
-void xpq_queue_set_ldt(vaddr_t, unsigned int);
+void xpq_queue_set_ldt(vaddr_t, uint32_t);
 void xpq_queue_tlb_flush(void);
 void xpq_queue_pin_table(paddr_t, int);
 void xpq_queue_unpin_table(paddr_t);

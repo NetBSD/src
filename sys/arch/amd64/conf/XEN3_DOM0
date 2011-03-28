@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.35.4.3 2011/03/28 23:04:35 jym Exp $
+# $NetBSD: XEN3_DOM0,v 1.35.4.4 2011/03/28 23:58:10 jym Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,6 +12,8 @@ maxusers	32		# estimated number of users
 
 #
 options 	DOM0OPS
+#options         XEN_BALLOON     # Xen memory ballooning - Experimental
+
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
 
@@ -73,6 +75,13 @@ options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
 options 	EXEC_ELF32
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+# The following two options can break /etc/fstab, so handle with care
+#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+
 # File systems
 file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
@@ -86,7 +95,7 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system 	PORTAL		# portal filesystem (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
@@ -222,7 +231,7 @@ acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz*		at acpi?		# ACPI Thermal Zone
-aiboost*	at acpi?		# ASUS AI Booster Hardware monitor
+aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 hpqlb*		at acpi?		# HP Quick Launch Buttons
 pckbc*		at acpi?		# PC keyboard controller
 pcppi*		at acpi?		# AT-style speaker sound
@@ -295,8 +304,13 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #dbcool* at iic? addr 0x2D		# Tyan S2881
 #dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
+# Winbond LPC Super I/O
+#wbsio*	at isa? port 0x2e
+#wbsio*	at isa? port 0x4e
+
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
+#lm*	at wbsio?
 
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management TImer
 #viaenv*	at pci? dev ? function ?
@@ -316,6 +330,7 @@ en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card
+et*	at pci? dev ? function ?	# Agere/LSI ET1310/ET1301 Gigabit
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
@@ -362,12 +377,14 @@ bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
+etphy*	at mii? phy ?			# Agere/LSI ET1011 TruePHY Gig-E PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 gentbi* at mii? phy ?			# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
+ihphy*	at mii? phy ?			# Intel 82577 PHYs
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
@@ -416,6 +433,7 @@ pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+siisata*	at pci? dev ? function ?	# SiI SteelVine controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
@@ -563,6 +581,9 @@ ulpt*   at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem* at uhub? port ? configuration ?
 ucom*   at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*  at uhub? port ? configuration ? interface ?
@@ -723,6 +744,10 @@ wsmouse* at btms? mux 0
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
+
 # Bluetooth Audio support
 btsco* at bthub?
 
@@ -758,10 +783,12 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
+pseudo-device	putter			# for puffs and pud
+pseudo-device	dm			# device-mapper driver for LVM
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
@@ -805,3 +832,6 @@ pseudo-device   drvctl
 pseudo-device	xenevt
 pseudo-device	xvif
 pseudo-device	xbdback
+
+options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

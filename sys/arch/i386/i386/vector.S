@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.42.10.4 2011/03/28 23:04:42 jym Exp $	*/
+/*	$NetBSD: vector.S,v 1.42.10.5 2011/03/28 23:58:10 jym Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,13 +65,14 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.10.4 2011/03/28 23:04:42 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.10.5 2011/03/28 23:58:10 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_ipkdb.h"
 #include "opt_vm86.h"
 #include "opt_xen.h"
+#include "opt_dtrace.h"
 
 #include <machine/i8259.h>
 #include <machine/i82093reg.h>
@@ -109,8 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.10.4 2011/03/28 23:04:42 jym Exp $")
  *
  */
 
-#define MY_COUNT _C_LABEL(uvmexp)
-
 /*
  * Store address of TSS in %eax, given a selector in %eax.
  * Clobbers %eax, %ecx, %edx, but that's ok for its usage.
@@ -128,6 +127,23 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.10.4 2011/03/28 23:04:42 jym Exp $")
 	movzbl	7(%eax),%eax				;\
 	shl	$24,%eax				;\
 	orl	%edx,%eax
+
+#ifdef KDTRACE_HOOKS
+	.bss
+	.globl	dtrace_invop_jump_addr
+	.align	4
+	.type	dtrace_invop_jump_addr, @object
+        .size	dtrace_invop_jump_addr, 4
+dtrace_invop_jump_addr:
+	.zero	4
+	.globl	dtrace_invop_calltrap_addr
+	.align	4
+	.type	dtrace_invop_calltrap_addr, @object
+        .size	dtrace_invop_calltrap_addr, 4
+dtrace_invop_calltrap_addr:
+	.zero	8
+	.text
+#endif
 
 #ifndef XEN
 #if NLAPIC > 0
@@ -150,14 +166,14 @@ IDTVEC(intr_lapic_ipi)
 	INTRENTRY		
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
 	movl	CPUVAR(ILEVEL),%ebx
-	cmpl	$IPL_IPI,%ebx
+	cmpl	$IPL_HIGH,%ebx
 	jae	2f
 IDTVEC_END(intr_lapic_ipi)
 IDTVEC(resume_lapic_ipi)
 1:
 	pushl	%ebx
 	IDEPTH_INCR
-	movl	$IPL_IPI,CPUVAR(ILEVEL)
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	sti
 	call	_C_LABEL(x86_ipi_handler)
 	cli
@@ -414,7 +430,8 @@ IDTVEC(intr_ ## name ## num)						;\
 	movl	CPUVAR(ILEVEL),%esi					;\
 	cmpl	%ebx,%esi						;\
 	jae	10f			/* currently masked; hold it */	;\
-	incl	MY_COUNT+V_INTR		/* statistical info */		;\
+	addl	$1,CPUVAR(NINTR)	/* statistical info */		;\
+	adcl	$0,CPUVAR(NINTR)+4					;\
 	addl	$1,IS_EVCNTLO(%ebp)	/* inc event counter */		;\
 	adcl	$0,IS_EVCNTHI(%ebp)					;\
 1:									\
@@ -878,15 +895,57 @@ IDTVEC(trap00)
 IDTVEC(trap01)
 	BPTTRAP(T_TRCTRAP)
 IDTVEC(trap02)
-	ZTRAP(T_NMI)
+	pushl $0
+	pushl $(T_NMI)
+	INTRENTRY
+	jmp _C_LABEL(calltrap)
 IDTVEC(trap03)
 	BPTTRAP(T_BPTFLT)
 IDTVEC(trap04)
 	ZTRAP(T_OFLOW)
 IDTVEC(trap05)
 	ZTRAP(T_BOUND)
+/*
+ * Privileged instruction fault.
+ */
+#ifdef KDTRACE_HOOKS
+	SUPERALIGN_TEXT
+IDTVEC(trap06)
+	/* Check if there is no DTrace hook registered. */
+	cmpl	$0,dtrace_invop_jump_addr
+	je	norm_ill
+
+	/* Check if this is a user fault. */
+	/* XXX this was 0x0020 in FreeBSD */
+	cmpl	$GSEL(GCODE_SEL, SEL_KPL), 4(%esp)   /* Check code segment. */
+
+	/* If so, just handle it as a normal trap. */
+	jne	norm_ill
+              
+	/*
+	 * This is a kernel instruction fault that might have been caused
+	 * by a DTrace provider.
+	 */
+	pushal				/* Push all registers onto the stack. */
+
+	/*
+	 * Set our jump address for the jump back in the event that
+	 * the exception wasn't caused by DTrace at all.
+	 */
+	movl	$norm_ill, dtrace_invop_calltrap_addr
+
+	/* Jump to the code hooked in by DTrace. */
+	jmpl	*dtrace_invop_jump_addr
+
+	/*
+	 * Process the instruction fault in the normal way.
+	 */
+norm_ill:
+	ZTRAP(T_PRIVINFLT)
+#else
 IDTVEC(trap06)
 	ZTRAP(T_PRIVINFLT)
+#endif
 IDTVEC(trap07)
 #if NNPX > 0
 	pushl	$0			# dummy error code
@@ -970,7 +1029,8 @@ IDTVEC(trap10)
 	pushl	%ebx
 	pushl	%esp
 	pushl	$0			# dummy arg
-	incl	_C_LABEL(uvmexp)+V_TRAP
+	addl	$1,CPUVAR(NTRAP)	# statistical info
+	adcl	$0,CPUVAR(NTRAP)+4
 	call	_C_LABEL(npxintr)
 	addl	$12,%esp
 	jmp	_C_LABEL(trapreturn)
@@ -1036,6 +1096,18 @@ IDTVEC(tss_trap08)
 	iret
 	jmp	1b
 
+/*
+ * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
+ * segment registers or during the iret itself).
+ * The address of the (possibly reconstructed) user trap frame is
+ * passed as an argument.
+ * Typically the code will have raised a SIGSEGV which will be actioned
+ * by the code below.
+ */
+_C_LABEL(trap_return_fault_return):	.globl	trap_return_fault_return
+	mov	4(%esp),%esp	/* frame for user return */
+	jmp	_C_LABEL(trapreturn)
+
 /* LINTSTUB: Ignore */
 NENTRY(alltraps)
 	INTRENTRY
@@ -1044,7 +1116,8 @@ calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
-	incl	CPUVAR(NTRAP)
+	addl	$1,CPUVAR(NTRAP)	# statistical info
+	adcl	$0,CPUVAR(NTRAP)+4
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
@@ -1065,7 +1138,8 @@ _C_LABEL(trapreturn):	.globl	trapreturn
 5:	CLEAR_ASTPENDING(%eax)
 	STI(%eax)
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
-	incl	CPUVAR(NTRAP)
+	addl	$1,CPUVAR(NTRAP)	# statistical info
+	adcl	$0,CPUVAR(NTRAP)+4
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
