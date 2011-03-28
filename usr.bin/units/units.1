@@ -1,5 +1,5 @@
-.\"	$NetBSD: units.1,v 1.14 2011/03/28 00:14:51 dholland Exp $
-.Dd December 18, 2001
+.\"	$NetBSD: units.1,v 1.15 2011/03/28 16:09:10 fair Exp $
+.Dd March 28, 2011
 .Dt UNITS 1
 .Os
 .Sh NAME
@@ -180,3 +180,6 @@ of the units converted and on the length of the data file.
 The program should use a hash table to store units so that
 it doesn't take so long to load the units list and check
 for duplication.
+.Pp
+The program should warn users when they're trying to do perform a conversion
+that doesn't make sense, since there are many such combinations.
