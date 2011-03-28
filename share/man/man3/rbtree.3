@@ -1,4 +1,4 @@
-.\"     $NetBSD: rbtree.3,v 1.4 2011/03/17 17:53:02 jruoho Exp $
+.\"     $NetBSD: rbtree.3,v 1.5 2011/03/28 13:46:14 ahoka Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,16 +77,16 @@ A red-black tree.
 (*const rbto_compare_nodes_fn)(void *, const void *, const void *);
 The node-comparison operator.
 Defines an ordering on nodes.
-Returns a positive value if the first node precedes the second node.
-Returns a negative value if the first node follows the second node.
+Returns a negative value if the first node precedes the second node.
+Returns a positive value if the first node follows the second node.
 Returns 0 if the first node and the second are identical according
 to the ordering.
 .It Vt typedef signed int \
 (*const rbto_compare_key_fn)(void *, const void *, const void *);
 The node-key comparison operator.
 Defines the order of nodes and keys.
-Returns a positive value if the node precedes the key.
-Returns a negative value if the node follows the key.
+Returns a negative value if the node precedes the key.
+Returns a positive value if the node follows the key.
 Returns 0 if the node is identical to the key according to the ordering.
 .It Vt rb_tree_ops_t
 Defines the operator for comparing two nodes in the same tree,
