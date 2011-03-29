@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.173.4.5 2011/03/29 19:34:45 riz Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.173.4.6 2011/03/29 19:36:50 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.173.4.5 2011/03/29 19:34:45 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.173.4.6 2011/03/29 19:36:50 riz Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -540,7 +540,7 @@ nfs_send(so, nam, top, rep, l)
 				 */
 				if (rep->r_flags & R_SOFTTERM)
 					error = EINTR;
-				else
+				else if (error != EMSGSIZE)
 					rep->r_flags |= R_MUSTRESEND;
 			}
 		} else {
@@ -557,7 +557,8 @@ nfs_send(so, nam, top, rep, l)
 		 * Handle any recoverable (soft) socket errors here. (? ? ?)
 		 */
 		if (error != EINTR && error != ERESTART &&
-			error != EWOULDBLOCK && error != EPIPE)
+		    error != EWOULDBLOCK && error != EPIPE &&
+		    error != EMSGSIZE)
 			error = 0;
 	}
 	return (error);
