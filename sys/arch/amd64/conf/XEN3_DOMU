@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.15.4.4 2011/03/28 23:58:10 jym Exp $
+# $NetBSD: XEN3_DOMU,v 1.15.4.5 2011/03/29 20:42:57 jym Exp $
 
 include 	"arch/amd64/conf/std.xen"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.7.34.1 2010/10/24 22:47:59 jym Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.7.34.2 2011/03/29 20:42:58 jym Exp $	*/
 
 OUTPUT_FORMAT("elf32-i386", "elf32-i386",
 	      "elf32-i386")

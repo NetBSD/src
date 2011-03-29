@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.341.2.4 2011/03/28 23:04:39 jym Exp $
+#	$NetBSD: files.i386,v 1.341.2.5 2011/03/29 20:42:58 jym Exp $
 #
 # new style config file for i386 architecture
 #
@@ -45,6 +45,9 @@ defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
 # kernel stack debug
 defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
 
+# splraise()/spllower() debug
+defflag	opt_spldebug.h			SPLDEBUG
+
 # Beep on halt
 defflag 	opt_beep.h		BEEP_ONHALT
 defparam 	opt_beep.h		BEEP_ONHALT_COUNT=3
@@ -68,6 +71,7 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/dumpsys.c
 file	kern/subr_disk_mbr.c		disk
+file	kern/subr_spldebug.c		spldebug
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/i386func.S
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
@@ -78,11 +82,10 @@ file 	arch/i386/i386/longrun.c
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
-file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/trap.c
 file	dev/cons.c
 
-file	arch/i386/i386/mptramp.S  	multiprocessor
+file	arch/i386/i386/mptramp.S	multiprocessor
 
 file	arch/i386/i386/pmc.c		perfctrs
 
@@ -473,11 +476,6 @@ include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
 file	arch/i386/acpi/acpi_wakeup_low.S	acpi
-
-# Toshiba VALD 
-device	vald
-attach	vald at acpinodebus with vald_acpi
-file	arch/i386/acpi/vald_acpi.c		vald_acpi
 
 # Numeric Processing Extension; Math Co-processor
 attach	npx at acpinodebus with npx_acpi

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.26.2.2 2011/03/28 23:04:35 jym Exp $
+#	$NetBSD: Makefile.amd64,v 1.26.2.3 2011/03/29 20:42:57 jym Exp $
 
 # Makefile for NetBSD
 #
@@ -21,6 +21,8 @@ MACHINE_ARCH=x86_64
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
+
+USE_SSP?=	yes
 
 ##
 ## (1) port identification

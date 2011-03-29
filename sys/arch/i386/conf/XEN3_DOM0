@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.11.4.4 2011/03/28 23:58:10 jym Exp $
+#	$NetBSD: XEN3_DOM0,v 1.11.4.5 2011/03/29 20:42:58 jym Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
