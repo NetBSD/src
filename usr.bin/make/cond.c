@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.61 2011/02/13 21:24:42 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.62 2011/03/29 17:19:22 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.61 2011/02/13 21:24:42 sjg Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.62 2011/03/29 17:19:22 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.61 2011/02/13 21:24:42 sjg Exp $");
+__RCSID("$NetBSD: cond.c,v 1.62 2011/03/29 17:19:22 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -401,16 +401,16 @@ CondDoExists(int argLen __unused, const char *arg)
     char    *path;
 
     path = Dir_FindFile(arg, dirSearchPath);
+    if (DEBUG(COND)) {
+	fprintf(debug_file, "exists(%s) result is \"%s\"\n",
+	       arg, path ? path : "");
+    }    
     if (path != NULL) {
 	result = TRUE;
 	free(path);
     } else {
 	result = FALSE;
     }
-    if (DEBUG(COND)) {
-	fprintf(debug_file, "exists(%s) result is \"%s\"\n",
-	       arg, path ? path : "");
-    }    
     return (result);
 }
 
