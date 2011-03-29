@@ -1,4 +1,4 @@
-/* $NetBSD: t_pidfile.c,v 1.2 2011/03/23 09:13:54 jmmv Exp $ */
+/* $NetBSD: t_pidfile.c,v 1.3 2011/03/29 13:55:37 jmmv Exp $ */
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,8 +46,9 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_pidfile.c,v 1.2 2011/03/23 09:13:54 jmmv Exp $");
+__RCSID("$NetBSD: t_pidfile.c,v 1.3 2011/03/29 13:55:37 jmmv Exp $");
 
+#include <sys/stat.h>
 #include <sys/wait.h>
 
 #include <assert.h>
@@ -142,7 +143,7 @@ generate_varrun_pidfile(const char *basename)
 }
 
 static void
-helper_default_basename(const char *path)
+helper_default_path(const char *path)
 {
 
 	if (pidfile(NULL) == -1)
@@ -153,17 +154,17 @@ helper_default_basename(const char *path)
 	exit(EXIT_SUCCESS);
 }
 
-ATF_TC(default_basename);
-ATF_TC_HEAD(default_basename, tc)
+ATF_TC(default_path);
+ATF_TC_HEAD(default_path, tc)
 {
 	atf_tc_set_md_var(tc, "require.user", "root");
 }
-ATF_TC_BODY(default_basename, tc)
+ATF_TC_BODY(default_path, tc)
 {
 	char *path;
 
 	path = generate_varrun_pidfile(NULL);
-	run_child(helper_default_basename, path);
+	run_child(helper_default_path, path);
 	ensure_deleted(path);
 	free(path);
 }
@@ -193,6 +194,28 @@ ATF_TC_BODY(custom_basename, tc)
 	run_child(helper_custom_basename, path);
 	ensure_deleted(path);
 	free(path);
+}
+
+static void
+helper_custom_path(const char *path)
+{
+
+	if (pidfile(path) == -1)
+		errx(EXIT_FAILURE, "Failed to create pidfile '%s'", path);
+	check_pidfile(path);
+	exit(EXIT_SUCCESS);
+}
+
+ATF_TC_WITHOUT_HEAD(custom_path);
+ATF_TC_BODY(custom_path, tc)
+{
+
+	ATF_REQUIRE(mkdir("var", 0777) != -1);
+	ATF_REQUIRE(mkdir("var/run", 0777) != -1);
+
+	run_child(helper_custom_path, "./var/run/my-pidfile.pid");
+
+	ensure_deleted("./var/run/my-pidfile.pid");
 }
 
 static void
@@ -249,12 +272,92 @@ ATF_TC_BODY(change_basenames, tc)
 	free(default_path);
 }
 
+static void
+helper_change_paths(const char *unused_cookie)
+{
+
+	if (pidfile("./var/run/first.pid") == -1)
+		errx(EXIT_FAILURE, "Failed to create pidfile "
+		    "'./var/run/first.pid'");
+	check_pidfile("./var/run/first.pid");
+
+	if (pidfile("./second.pid") == -1)
+		errx(EXIT_FAILURE, "Failed to create pidfile 'second.pid'");
+	ensure_deleted("./var/run/first.pid");
+	check_pidfile("./second.pid");
+
+	exit(EXIT_SUCCESS);
+}
+
+ATF_TC_WITHOUT_HEAD(change_paths);
+ATF_TC_BODY(change_paths, tc)
+{
+
+	ATF_REQUIRE(mkdir("var", 0777) != -1);
+	ATF_REQUIRE(mkdir("var/run", 0777) != -1);
+
+	run_child(helper_change_paths, NULL);
+
+	ensure_deleted("./var/run/my-pidfile.pid");
+	ensure_deleted("second.pid");
+}
+
+static void
+helper_mix(const char *unused_cookie)
+{
+	char *default_path;
+	char *custom_path;
+
+	default_path = generate_varrun_pidfile(NULL);
+	custom_path = generate_varrun_pidfile("custom-basename");
+
+	if (pidfile(NULL) == -1)
+		errx(EXIT_FAILURE, "Failed to create default pidfile");
+	check_pidfile(default_path);
+
+	if (pidfile("./second.pid") == -1)
+		errx(EXIT_FAILURE, "Failed to create pidfile 'second.pid'");
+	ensure_deleted(default_path);
+	check_pidfile("./second.pid");
+
+	if (pidfile("custom-basename") == -1)
+		errx(EXIT_FAILURE, "Failed to create pidfile 'second.pid'");
+	ensure_deleted(default_path);
+	ensure_deleted("./second.pid");
+	ensure_deleted("./custom-basename");
+	check_pidfile(custom_path);
+
+	free(custom_path);
+	free(default_path);
+	exit(EXIT_SUCCESS);
+}
+
+ATF_TC(change_mix);
+ATF_TC_HEAD(change_mix, tc)
+{
+	atf_tc_set_md_var(tc, "require.user", "root");
+}
+ATF_TC_BODY(change_mix, tc)
+{
+	char *default_path;
+
+	run_child(helper_mix, NULL);
+
+	default_path = generate_varrun_pidfile(NULL);
+	ensure_deleted(default_path);
+	ensure_deleted("second.pid");
+	free(default_path);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, default_basename);
+	ATF_TP_ADD_TC(tp, default_path);
 	ATF_TP_ADD_TC(tp, custom_basename);
+	ATF_TP_ADD_TC(tp, custom_path);
 	ATF_TP_ADD_TC(tp, change_basenames);
+	ATF_TP_ADD_TC(tp, change_paths);
+	ATF_TP_ADD_TC(tp, change_mix);
 
 	return atf_no_error();
 }
