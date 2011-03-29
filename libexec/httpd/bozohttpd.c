@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.26 2011/01/12 19:29:24 pooka Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.27 2011/03/29 07:22:31 jmmv Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.176 2010/09/20 22:26:28 mrg Exp $	*/
 
@@ -1996,6 +1996,9 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	if ((cp = bozo_get_pref(prefs, "foreground")) != NULL &&
 	    strcmp(cp, "true") == 0) {
 		httpd->foreground = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "pid file")) != NULL) {
+		httpd->pidfile = strdup(cp);
 	}
 	if ((cp = bozo_get_pref(prefs, "unknown slash")) != NULL &&
 	    strcmp(cp, "true") == 0) {
