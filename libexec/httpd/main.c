@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2010/09/20 23:07:21 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2011/03/29 07:22:31 jmmv Exp $	*/
 
 /*	$eterna: main.c,v 1.4 2010/07/11 00:34:28 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -89,6 +89,7 @@ usage(bozohttpd_t *httpd, char *progname)
 	bozo_warn(httpd,
 		"   -i address\t\tbind on this address (daemon mode only)");
 	bozo_warn(httpd, "   -I port\t\tbind on this port (daemon mode only)");
+	bozo_warn(httpd, "   -P pidfile\t\tpath to the pid file to create");
 #endif
 	bozo_warn(httpd, "   -S version\t\tset server version string");
 	bozo_warn(httpd, "   -t dir\t\tchroot to `dir'");
@@ -141,7 +142,7 @@ main(int argc, char **argv)
 	bozo_set_defaults(&httpd, &prefs);
 
 	while ((c = getopt(argc, argv,
-			   "C:HI:M:S:U:VXZ:bc:defhi:np:rst:uv:x:z:")) != -1) {
+			   "C:HI:M:P:S:U:VXZ:bc:defhi:np:rst:uv:x:z:")) != -1) {
 		switch(c) {
 
 		case 'M':
@@ -207,6 +208,7 @@ main(int argc, char **argv)
 		case 'f':
 		case 'i':
 		case 'I':
+		case 'P':
 			bozo_err(&httpd, 1, "Daemon mode is not enabled");
 			/* NOTREACHED */
 #else
@@ -237,6 +239,9 @@ main(int argc, char **argv)
 
 		case 'I':
 			bozo_set_pref(&prefs, "port number", optarg);
+			break;
+		case 'P':
+			bozo_set_pref(&prefs, "pid file", optarg);
 			break;
 #endif /* NO_DAEMON_MODE */
 
