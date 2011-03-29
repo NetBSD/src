@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.8 2011/03/22 17:07:11 pooka Exp $
+#       $NetBSD: t_tcpip.sh,v 1.9 2011/03/29 15:43:45 jmmv Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,12 +38,10 @@ http_body()
 {
 
 	atf_check -s exit:0 ${rumpnetsrv} ${RUMP_SERVER}
-	# make sure clients die after we nuke the server
-	export RUMPHIJACK_RETRYCONNECT='die'
 
 	# start bozo in daemon mode
 	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    /usr/libexec/httpd -b -s $(atf_get_srcdir)
+	    /usr/libexec/httpd -P ./httpd.pid -b -s $(atf_get_srcdir)
 
 	atf_check -s exit:0 -o file:"$(atf_get_srcdir)/netstat.expout" \
 	    rump.netstat -a
@@ -62,6 +60,11 @@ http_body()
 http_cleanup()
 {
 	rump.halt
+
+	if [ -f httpd.pid ]; then
+		kill -9 "$(cat httpd.pid)"
+		rm -f httpd.pid
+	fi
 }
 
 #
