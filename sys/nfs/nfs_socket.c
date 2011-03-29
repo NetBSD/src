@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.173.4.6 2011/03/29 19:36:50 riz Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.173.4.7 2011/03/29 19:38:56 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.173.4.6 2011/03/29 19:36:50 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.173.4.7 2011/03/29 19:38:56 riz Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1159,10 +1159,14 @@ tryagain:
 			if (nmp->nm_soflags & PR_CONNREQUIRED)
 				nfs_sndunlock(nmp);
 		}
+		s = splsoftnet();
 		if (!error && (rep->r_flags & R_MUSTRESEND) == 0) {
-			nmp->nm_sent += NFS_CWNDSCALE;
-			rep->r_flags |= R_SENT;
+			if ((rep->r_flags & R_SENT) == 0) {
+				nmp->nm_sent += NFS_CWNDSCALE;
+				rep->r_flags |= R_SENT;
+			}
 		}
+		splx(s);
 	} else {
 		splx(s);
 		rep->r_rtt = -1;
@@ -1179,7 +1183,6 @@ tryagain:
 	 */
 	s = splsoftnet();
 	TAILQ_REMOVE(&nfs_reqq, rep, r_chain);
-	splx(s);
 
 	/*
 	 * Decrement the outstanding request count.
@@ -1188,6 +1191,7 @@ tryagain:
 		rep->r_flags &= ~R_SENT;	/* paranoia */
 		nmp->nm_sent -= NFS_CWNDSCALE;
 	}
+	splx(s);
 
 	if (rexmitp != NULL) {
 		int rexmit;
