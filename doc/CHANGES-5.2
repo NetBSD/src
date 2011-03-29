@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.68 2011/03/24 19:55:41 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.69 2011/03/29 20:12:49 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -4907,4 +4907,41 @@ external/ibm-public/postfix/dist/src/util/watchdog.c		patch
         - Fix to the SMTP client: missing support for mail to [ipv6:ipv6addr]   
           address literal destinations.                                         
 	[tron, ticket #1576]
+
+sys/nfs/nfs_socket.c				1.175
+
+	Avoid noisy nfs_timer/nfs_reply DEBUG output that occurs when the
+	NFS server goes away.  use ratelimit(9) and only print the console
+	error once every 10 seconds.  PR#31562.
+	[tls, ticket #1580]
+
+sys/nfs/nfs_socket.c				1.181
+
+	If send fails with EMSGSIZE, fail the request.
+	[tls, ticket #1581]
+
+sys/nfs/nfs_socket.c				1.185
+
+	Fix race conditions in nfs_request which cause clients to stick.
+	[tls, ticket #1582]
+
+sys/nfs/nfs_socket.c				1.186
+
+	nfs_msg: #if 0 out tprintf, because nfs_timer can't block on
+	proc_lock.
+	[tls, ticket #1583]
+
+distrib/sets/lists/man/mi			1.1304-1305
+share/man/man4/Makefile				1.556
+share/man/man4/gtp.4				1.1
+share/man/man4/mr.4				delete
+
+	The mr(4) driver was replaced by gtp(4) in 2002. PR#40070
+	[fair, ticket #1584]
+
+sys/netinet/tcp_output.c			1.170
+
+	Clean up setting ECN bit in TOS.  Fixes PR 44742
+  
+	[spz, ticket #1586]
 
