@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.4 2011/03/25 18:07:04 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.5 2011/03/29 20:56:35 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.4 2011/03/25 18:07:04 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.5 2011/03/29 20:56:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -60,8 +60,9 @@ _rtld_tls_get_addr(void *tls, size_t idx, size_t offset)
 {
 	struct tls_tcb *tcb = tls;
 	void **dtv, **new_dtv;
+	sigset_t mask;
 
-	_rtld_exclusive_enter();
+	_rtld_exclusive_enter(&mask);
 
 	dtv = tcb->tcb_dtv;
 
@@ -82,7 +83,7 @@ _rtld_tls_get_addr(void *tls, size_t idx, size_t offset)
 	if (__predict_false(dtv[idx] == NULL))
 		dtv[idx] = _rtld_tls_module_allocate(idx);
 
-	_rtld_exclusive_exit();
+	_rtld_exclusive_exit(&mask);
 
 	return (uint8_t *)dtv[idx] + offset;
 }
@@ -148,10 +149,11 @@ struct tls_tcb *
 _rtld_tls_allocate(void)
 {
 	struct tls_tcb *tcb;
+	sigset_t mask;
 
-	_rtld_exclusive_enter();
+	_rtld_exclusive_enter(&mask);
 	tcb = _rtld_tls_allocate_locked();
-	_rtld_exclusive_exit();
+	_rtld_exclusive_exit(&mask);
 
 	return tcb;
 }
@@ -161,8 +163,9 @@ _rtld_tls_free(struct tls_tcb *tcb)
 {
 	size_t i, max_index;
 	uint8_t *p;
+	sigset_t mask;
 
-	_rtld_exclusive_enter();
+	_rtld_exclusive_enter(&mask);
 
 	max_index = DTV_MAX_INDEX(tcb->tcb_dtv);
 	for (i = 1; i <= max_index; ++i)
@@ -176,7 +179,7 @@ _rtld_tls_free(struct tls_tcb *tcb)
 #endif
 	xfree(p);
 
-	_rtld_exclusive_exit();
+	_rtld_exclusive_exit(&mask);
 }
 
 void *
