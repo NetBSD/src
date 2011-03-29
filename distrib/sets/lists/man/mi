@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109.2.17 2011/02/16 19:27:14 bouyer Exp $
+# $NetBSD: mi,v 1.1109.2.18 2011/03/29 20:09:01 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -933,6 +933,7 @@
 ./usr/share/man/cat4/gpioow.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gre.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gsip.0			man-sys-catman		.cat
+./usr/share/man/cat4/gtp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/guspnp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hcide.0			man-sys-catman		.cat
@@ -1185,7 +1186,7 @@
 ./usr/share/man/cat4/mly.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpu.0			man-sys-catman		.cat
-./usr/share/man/cat4/mr.0			man-sys-catman		.cat
+./usr/share/man/cat4/mr.0			man-obsolete		obsolete
 ./usr/share/man/cat4/msk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mskc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtd.0			man-sys-catman		.cat
@@ -3485,6 +3486,7 @@
 ./usr/share/man/html4/gpioow.html		man-sys-htmlman		html
 ./usr/share/man/html4/gre.html			man-sys-htmlman		html
 ./usr/share/man/html4/gsip.html			man-sys-htmlman		html
+./usr/share/man/html4/gtp.html			man-sys-htmlman		html
 ./usr/share/man/html4/gus.html			man-sys-htmlman		html
 ./usr/share/man/html4/guspnp.html		man-sys-htmlman		html
 ./usr/share/man/html4/hcide.html		man-sys-htmlman		html
@@ -3699,7 +3701,7 @@
 ./usr/share/man/html4/mly.html			man-sys-htmlman		html
 ./usr/share/man/html4/mpt.html			man-sys-htmlman		html
 ./usr/share/man/html4/mpu.html			man-sys-htmlman		html
-./usr/share/man/html4/mr.html			man-sys-htmlman		html
+./usr/share/man/html4/mr.html			man-obsolete		obsolete
 ./usr/share/man/html4/msk.html			man-sys-htmlman		html
 ./usr/share/man/html4/mskc.html			man-sys-htmlman		html
 ./usr/share/man/html4/mtd.html			man-sys-htmlman		html
@@ -5817,6 +5819,7 @@
 ./usr/share/man/man4/gpioow.4			man-sys-man		.man
 ./usr/share/man/man4/gre.4			man-sys-man		.man
 ./usr/share/man/man4/gsip.4			man-sys-man		.man
+./usr/share/man/man4/gtp.4			man-sys-man		.man
 ./usr/share/man/man4/gus.4			man-sys-man		.man
 ./usr/share/man/man4/guspnp.4			man-sys-man		.man
 ./usr/share/man/man4/hcide.4			man-sys-man		.man
@@ -6069,7 +6072,7 @@
 ./usr/share/man/man4/mly.4			man-sys-man		.man
 ./usr/share/man/man4/mpt.4			man-sys-man		.man
 ./usr/share/man/man4/mpu.4			man-sys-man		.man
-./usr/share/man/man4/mr.4			man-sys-man		.man
+./usr/share/man/man4/mr.4			man-obsolete		obsolete
 ./usr/share/man/man4/msk.4			man-sys-man		.man
 ./usr/share/man/man4/mskc.4			man-sys-man		.man
 ./usr/share/man/man4/mtd.4			man-sys-man		.man
