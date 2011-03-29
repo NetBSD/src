@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.24 2011/02/10 00:23:14 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.25 2011/03/29 23:51:32 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.24 2011/02/10 00:23:14 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.25 2011/03/29 23:51:32 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -617,7 +617,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	 */
 	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
 		/*
-		 * Xen doens't want R/W mappings in L3 entries, it'll add it
+		 * Xen doesn't want R/W mappings in L3 entries, it'll add it
 		 * itself.
 		 */
 		pdtpe[i] = xpmap_ptom_masked(addr) | PG_k | PG_V;
