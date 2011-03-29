@@ -7,7 +7,7 @@ with them with any feedback.
 Will be in 6.0
 --------------
 + ZFS - need an update on viability, needs work
-+ in-kernel iSCSI initiator, and userland tools - libisns in repo and in build
++ in-kernel iSCSI initiator, and user tools - libisns done, kernel portion near
 + 64-bit time_t
 + rump - pooka has declared interfaces stable
 + LVM/dmapper and tools
@@ -40,7 +40,6 @@ Possibly in 6.0
 + kernel modules need work
 + Xen suspend/resume - jym working on it
 + TNF funding for release engineering
-+ in-kernel iscsi initiator - excellent progress being made
 
 May not make 6.0
 ----------------
