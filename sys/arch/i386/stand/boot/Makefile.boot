@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.36.8.3 2011/03/28 23:04:44 jym Exp $
+# $NetBSD: Makefile.boot,v 1.36.8.4 2011/03/29 20:42:59 jym Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -32,11 +32,10 @@ BINMODE=444
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
 
 LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
-# CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
 #CPPFLAGS+= -DDEBUG_MEMSIZE
-
+#CPPFLAGS+= -DBOOT_MSG_COM0
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 
@@ -72,7 +71,7 @@ CPPFLAGS+= -DCONSOLE_KEYMAP=boot_params.bp_keymap
 CPPFLAGS+= -DSUPPORT_CD9660
 CPPFLAGS+= -DSUPPORT_USTARFS
 CPPFLAGS+= -DSUPPORT_DOSFS
-#CPPFLAGS+= -DSUPPORT_EXT2FS
+CPPFLAGS+= -DSUPPORT_EXT2FS
 CPPFLAGS+= -DPASS_BIOSGEOM
 CPPFLAGS+= -DPASS_MEMMAP
 #CPPFLAGS+= -DBOOTPASSWD
@@ -128,7 +127,7 @@ Z_AS= library
 LIBZ= ${ZLIB}
 
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib
@@ -136,7 +135,7 @@ cleanlibdir:
 LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 # LIBLIST= ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN}
 
-CLEANFILES+= ${PROG}.tmp ${PROG}.map vers.c
+CLEANFILES+= ${PROG}.tmp ${PROG}.map ${PROG}.syms vers.c
 
 vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
@@ -146,7 +145,7 @@ vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 # explicitly pull in the required objects before any other library code.
 ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${_MKTARGET_LINK}
-	bb="$$( ${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,0 -Wl,-cref \
+	bb="$$( ${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 -Wl,-cref \
 	    ${OBJS} ${LIBLIST} | ( \
 		while read symbol file; do \
 			[ -z "$$file" ] && continue; \
@@ -162,9 +161,8 @@ ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 		do :; \
 		done; \
 	) )"; \
-	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,0 \
+	${CC} -o ${PROG}.syms ${LDFLAGS} -Wl,-Ttext,0 \
 		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} $$bb ${LIBLIST}
-	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
-	rm -f ${PROG}.tmp
+	${OBJCOPY} -O binary ${PROG}.syms ${PROG}
 
 .include <bsd.prog.mk>

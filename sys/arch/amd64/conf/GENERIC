@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.237.2.5 2011/03/28 23:04:34 jym Exp $
+# $NetBSD: GENERIC,v 1.237.2.6 2011/03/29 20:42:57 jym Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.237.2.5 $"
+#ident 		"GENERIC-$Revision: 1.237.2.6 $"
 
 maxusers	64		# estimated number of users
 
@@ -73,7 +73,7 @@ options 	SYSVSHM		# System V-like memory sharing
 no options	AIO		# POSIX asynchronous I/O, built as a module(7)
 no options	MQUEUE		# POSIX messsage queues, built as a module(7)
 
-options		MODULAR		# new style module framework
+options 	MODULAR		# new style module(7) framework
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -116,9 +116,9 @@ options 	COMPAT_15	# compatibility with NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0,
+options 	COMPAT_50	# NetBSD 5.0 compatibility,
 options 	COMPAT_43	# and 4.3BSD
-options 	COMPAT_50	# NetBSD 5.0
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 options 	COMPAT_OSSAUDIO
@@ -192,6 +192,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -269,10 +270,9 @@ options 	ACPI_SCANPCI		# find PCI roots using ACPI
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
-#options	PCI_BUS_FIXUP		# fixup PCI bus numbering
-#options	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+#options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+#options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
-#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 options 	VGA_POST		# in-kernel support for VGA POST
 
 # ACPI devices
@@ -280,12 +280,12 @@ acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
 acpidalb*	at acpi?		# Direct Application Launch Button
-# The ACPI Embedded Controller is generally configured via the special ECDT.
-# This is required as parts of the DSDT can reference the EC before the normal
-# attach phase.
-acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
-acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
+acpiec* 	at acpi?		# ACPI Embedded Controller (late)
+acpiecdt* 	at acpi?		# ACPI Embedded Controller (early)
+acpifan* 	at acpi?		# ACPI Fan
 acpilid* 	at acpi?		# ACPI Lid Switch
+#acpipmtr*	at acpi?		# ACPI Power Meter (experimental)
+#acpismbus*	at acpi?		# ACPI SMBus CMI (experimental)
 acpitz* 	at acpi?		# ACPI Thermal Zone
 acpivga*	at acpi?		# ACPI Display Adapter
 acpiout*	at acpivga?		# ACPI Display Output Device
@@ -293,11 +293,13 @@ acpiwdrt*	at acpi?		# ACPI Watchdog Resource Table
 acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
-aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
+aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
 #com* 		at acpi?		# Serial communications interface
 #fdc* 		at acpi?		# Floppy disk controller
+fujbp*		at acpi?		# Fujitsu Brightness & Pointer
+fujhk*		at acpi?		# Fujitsu Hotkeys
 hpqlb*		at acpi?		# HP Quick Launch Buttons
 hpet*		at acpi?		# High Precision Event Timer
 joy*		at acpi?		# Joystick/Game port
@@ -312,16 +314,9 @@ thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
-
-#apm0	at mainbus0			# Advanced power management
-
-# Tuning for power management, see apm(4) for more details.
-#options 	APM_NO_IDLE		# Don't call BIOS CPU idle function
-#options 	APM_V10_ONLY		# Use only the APM 1.0 calls
-#options 	APM_NO_POWEROFF		# Don't power off on halt(8)
-#options 	APM_POWER_PRINT		# Print stats on the console
-#options 	APM_DISABLE_INTERRUPTS=0 # Don't disable interrupts
-
+wmidell*	at acpiwmibus?		# Dell WMI mappings
+#wmihp*		at acpiwmibus?		# HP WMI mappings
+wmimsi*		at acpiwmibus?		# MSI WMI mappings
 
 # Basic Bus Support
 
@@ -340,8 +335,9 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 #hpet* 	at amdpcib?
 
-ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
-					# watchdog and Speedstep support.
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-LPC w/ timecounter,
+					# watchdog and Speedstep and HPET
+fwhrng* at ichlpcib?		# Intel 82802 FWH Random Number Generator
 #hpet* 	at ichlpcib?
 
 aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
@@ -441,10 +437,16 @@ amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
 #ibmhawk0	at iic? addr 0x37
 
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
+# Use flags to select temp sensor type (see lm(4) man page for details)
+#lm0	at isa?	port 0x290 flags 0x0	# other common ports: 0x280, 0x310
+#lm*	at wbsio?
 
 # SMSC LPC47B397 hardware monitor functions
 #smsc0   at isa? port 0x02e
+
+# SMSC LPC47M192 hardware monitor
+#smscmon*	at iic? addr 0x2c
+#smscmon*	at iic? addr 0x2d	# (alternate address)
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
@@ -485,6 +487,10 @@ iic*	at ichsmb?
 #spdmem* at iic? addr 0x51
 #spdmem* at iic? addr 0x52
 #spdmem* at iic? addr 0x53
+#spdmem* at iic? addr 0x54
+#spdmem* at iic? addr 0x55
+#spdmem* at iic? addr 0x56
+#spdmem* at iic? addr 0x57
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
@@ -603,7 +609,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
-options	ATADEBUG
+options 	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -649,6 +655,7 @@ fd*	at fdc? drive ?			# the drives themselves
 age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
 alc*	at pci? dev ? function ?	# Attansic/Atheros L1C/L2C Ethernet
 ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
+an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 440x 10/100 Ethernet
@@ -660,13 +667,14 @@ en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card
+et*	at pci? dev ? function ?	# Agere/LSI ET1310/ET1301 Gigabit
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
-iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
+iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
@@ -740,12 +748,14 @@ bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
+etphy*	at mii? phy ?			# Agere/LSI ET1011 TruePHY Gig-E PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 gentbi* at mii? phy ?			# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*  at mii? phy ?			# Intel IGP01E1000
+ihphy*	at mii? phy ?			# Intel 82577 PHYs
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
@@ -813,6 +823,10 @@ ucycom*	at uhidev? reportid ?
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
 
+# USB LCDs and USB-VGA adaptors
+udl*	at uhub? port ?		# DisplayLink DL-1x0/1x5
+wsdisplay* at udl?
+
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
 
@@ -820,9 +834,8 @@ ulpt*	at uhub? port ? configuration ? interface ?
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
 
-# Huawei E220 3G/HSDPA modem
-uhmodem* at uhub? port ? configuration ? interface ?
-ucom*   at uhmodem? portno ?
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
@@ -830,6 +843,7 @@ wd* at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
+uaudio*	at usbifif?
 
 # USB MIDI
 umidi* at uhub? port ? configuration ?
@@ -902,6 +916,7 @@ uscanner* at uhub? port ?
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel at76c50x 802.11b
+otus*	at uhub? port ?		# Atheros AR9001U
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum* 	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 zyd*	at uhub? port ?		# Zydas ZD1211
@@ -921,10 +936,9 @@ radio*	at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
-# On ugen bulk endpoints, perform read-ahead and write-behind.
-options	UGEN_BULK_RA_WB
 
 # USB 3G datacards
+u3ginit* at uhub? port ?
 u3g*	at uhub? port ?
 ucom*	at u3g?
 
@@ -1051,6 +1065,10 @@ wsmouse* at btms? mux 0
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
+
 # Bluetooth Audio support
 btsco* at bthub?
 
@@ -1063,8 +1081,6 @@ sdmmc* at sdhc?		# SD/MMC bus
 
 ld*    at sdmmc?
 
-
-# Mice
 
 # Middle Digital, Inc. PCI-Weasel serial console board control
 # devices (watchdog timer, etc.)
@@ -1092,14 +1108,18 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
+pseudo-device	putter			# for puffs and pud
 
-pseudo-device	md		1	# memory disk device (ramdisk)
-options		MEMORY_DISK_HOOKS	# enable root ramdisk
-options		MEMORY_DISK_DYNAMIC	# loaded via kernel module
+pseudo-device	md			# memory disk device (ramdisk)
+options 	MEMORY_DISK_HOOKS	# enable root ramdisk
+options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module(7)
 
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
+
+# NPF
+#pseudo-device	npf
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

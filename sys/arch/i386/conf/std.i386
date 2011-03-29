@@ -1,4 +1,4 @@
-# $NetBSD: std.i386,v 1.29.2.1 2010/10/24 22:47:59 jym Exp $
+# $NetBSD: std.i386,v 1.29.2.2 2011/03/29 20:42:58 jym Exp $
 #
 # standard, required NetBSD/i386 'options'
 

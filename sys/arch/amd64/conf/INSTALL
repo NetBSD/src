@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.81.2.2 2011/03/28 23:04:35 jym Exp $
+# $NetBSD: INSTALL,v 1.81.2.3 2011/03/29 20:42:57 jym Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -7,7 +7,7 @@
 
 include	"arch/amd64/conf/GENERIC"
 
-#ident 		"INSTALL-$Revision: 1.81.2.2 $"
+#ident 		"INSTALL-$Revision: 1.81.2.3 $"
 
 # INSTALL kernels do not have access to module(7)s. Compile some
 # file-systems statically.
