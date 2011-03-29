@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.9 2011/03/29 15:43:45 jmmv Exp $
+#       $NetBSD: t_tcpip.sh,v 1.10 2011/03/29 16:03:32 jmmv Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -59,12 +59,12 @@ http_body()
 
 http_cleanup()
 {
-	rump.halt
-
 	if [ -f httpd.pid ]; then
 		kill -9 "$(cat httpd.pid)"
 		rm -f httpd.pid
 	fi
+
+	rump.halt
 }
 
 #
