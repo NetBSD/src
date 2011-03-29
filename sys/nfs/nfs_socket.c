@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.173.4.7 2011/03/29 19:38:56 riz Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.173.4.8 2011/03/29 19:47:37 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.173.4.7 2011/03/29 19:38:56 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.173.4.8 2011/03/29 19:47:37 riz Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2190,9 +2190,11 @@ nfs_msg(l, server, msg)
 {
 	tpr_t tpr;
 
+#if 0 /* XXX nfs_timer can't block on proc_lock */
 	if (l)
 		tpr = tprintf_open(l->l_proc);
 	else
+#endif
 		tpr = NULL;
 	tprintf(tpr, "nfs server %s: %s\n", server, msg);
 	tprintf_close(tpr);
