@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.32 2011/03/24 20:11:25 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.33 2011/03/29 20:13:51 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2672,4 +2672,10 @@ gnu/dist/postfix/src/util/watchdog.c			patch
 	Update Postfix to version 2.5.12. This update fixes many bugs           
 	including the vulnerability reported in CVE-2011-0411.
 	[tron, ticket #1578]
+
+sys/netinet/tcp_output.c			1.170
+
+	Clean up setting ECN bit in TOS.  Fixes PR 44742
+  
+	[spz, ticket #1586]
 
