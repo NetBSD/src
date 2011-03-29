@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.17 2010/09/20 23:11:38 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.18 2011/03/29 07:22:31 jmmv Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.37 2010/09/20 22:26:28 mrg Exp $	*/
 
@@ -76,6 +76,7 @@ typedef struct bozohttpd_t {
 	int		 logstderr;	/* log to stderr (even if not tty) */
 	int		 background;	/* drop into daemon mode */
 	int		 foreground;	/* keep daemon mode in foreground */
+	char		*pidfile;	/* path to the pid file, if any */
 	size_t		 page_size;	/* page size */
 	char		*slashdir;	/* www slash directory */
 	char		*bindport;	/* bind port; default "http" */
