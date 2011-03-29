@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.14.24.2 2011/01/10 00:37:38 jym Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.14.24.3 2011/03/29 20:43:00 jym Exp $	*/
 
 /*
  *
@@ -35,8 +35,6 @@
 #include <xen/evtchn.h>
 #include <xen/xenpmap.h>
 #include <machine/pte.h>
-
-#define XENDEBUG_LOW
 
 #ifdef XENDEBUG_LOW
 #define	__PRINTK(x) printk x

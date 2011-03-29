@@ -1,4 +1,4 @@
-# $NetBSD: CARDBUS,v 1.79.8.1 2010/10/24 22:47:59 jym Exp $
+# $NetBSD: CARDBUS,v 1.79.8.2 2011/03/29 20:42:58 jym Exp $
 #
 #	CARDBUS: GENERIC + CardBus support
 

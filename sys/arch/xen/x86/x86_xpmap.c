@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.12.4.11 2011/03/28 23:58:12 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.12.4.12 2011/03/29 20:43:01 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.11 2011/03/28 23:58:12 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.12 2011/03/29 20:43:01 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.11 2011/03/28 23:58:12 jym Exp 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
 
-#define	XENDEBUG
+#undef	XENDEBUG
 /* #define XENDEBUG_SYNC */
 /* #define	XENDEBUG_LOW */
 
@@ -795,8 +795,6 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #elif PAE
 	xpq_queue_pin_l3_table(xpmap_ptom_masked(new_pgd - KERNBASE));
-#elif defined(__x86_64__)
-	xpq_queue_pin_l4_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #else
 	xpq_queue_pin_l2_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #endif

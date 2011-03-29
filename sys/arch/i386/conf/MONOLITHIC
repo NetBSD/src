@@ -1,4 +1,4 @@
-# $NetBSD: MONOLITHIC,v 1.3.2.5 2011/03/28 23:04:39 jym Exp $
+# $NetBSD: MONOLITHIC,v 1.3.2.6 2011/03/29 20:42:58 jym Exp $
 #
 # Non MODULAR, used mostly as a reference as to what we modularized.
 #

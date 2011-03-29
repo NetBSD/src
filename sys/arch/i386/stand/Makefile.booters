@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.77.2.3 2011/03/28 23:04:43 jym Exp $
+#	$NetBSD: Makefile.booters,v 1.77.2.4 2011/03/29 20:42:58 jym Exp $
 
 .include <bsd.own.mk>
 
@@ -15,14 +15,11 @@ LIBC=		# nothing
 .if defined(HAVE_GCC)
 .if ${MACHINE_ARCH} == "x86_64"
 CPUFLAGS= -m32
-.if ${HAVE_GCC} != 3
-CPUFLAGS+= -Wno-attributes
-.endif
 .else
 .if ${HAVE_GCC} == 3
 CPUFLAGS=  -mcpu=i386
 .else
-CPUFLAGS=  -march=i386 -mtune=i386 -Wno-attributes
+CPUFLAGS=  -march=i386 -mtune=i386
 .endif
 .endif
 .endif
@@ -91,16 +88,12 @@ I386DIR= ${I386_STAND_DIR}/lib
 .include "${I386DIR}/Makefile.inc"
 LIBI386=		${I386LIB}
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib
 
-.if ${OBJECT_FMT} == "ELF"
 LDFLAGS+=-Wl,-M -Wl,-e,start 	# -N does not work properly.
-.else
-LDFLAGS+=-Wl,-N -Wl,-M -Wl,-e,_start 
-.endif
 
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 

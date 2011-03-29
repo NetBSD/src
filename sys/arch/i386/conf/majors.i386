@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.37.4.2 2011/01/10 00:37:29 jym Exp $
+#	$NetBSD: majors.i386,v 1.37.4.3 2011/03/29 20:42:58 jym Exp $
 #
 # Device majors for i386
 #
