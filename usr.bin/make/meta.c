@@ -1110,22 +1110,21 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    ln = Lst_Succ(ln);
 		}
 	    } else if (strcmp(buf, "CWD") == 0) {
+		/*
+		 * Check if there are extra commands now
+		 * that weren't in the meta data file.
+		 */
+		if (!oodate && ln != NULL) {
+		    if (DEBUG(META))
+			fprintf(debug_file, "%s: %d: there are extra build commands now that weren't in the meta data file\n", fname, lineno);
+		    oodate = TRUE;
+		}
 		if (strcmp(p, cwd) != 0) {
 		    if (DEBUG(META))
 			fprintf(debug_file, "%s: %d: the current working directory has changed from '%s' to '%s'\n", fname, lineno, p, curdir);
 		    oodate = TRUE;
 		}
 	    }
-	}
-
-	/*
-	 * Check if there are extra commands now
-	 * that weren't in the meta data file.
-	 */
-	if (!oodate && ln != NULL) {
-	    if (DEBUG(META))
-		fprintf(debug_file, "%s: %d: there are extra build commands now that weren't in the meta data file\n", fname, lineno);
-	    oodate = TRUE;
 	}
 
 	fclose(fp);
