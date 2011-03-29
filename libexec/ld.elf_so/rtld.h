@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.104 2011/03/25 18:07:04 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.105 2011/03/29 20:56:35 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -35,6 +35,7 @@
 #define RTLD_H
 
 #include <dlfcn.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/param.h>
@@ -314,8 +315,8 @@ void _rtld_ref_dag(Obj_Entry *);
 
 void _rtld_shared_enter(void);
 void _rtld_shared_exit(void);
-void _rtld_exclusive_enter(void);
-void _rtld_exclusive_exit(void);
+void _rtld_exclusive_enter(sigset_t *);
+void _rtld_exclusive_exit(sigset_t *);
 
 /* expand.c */
 size_t _rtld_expand_path(char *, size_t, const char *, const char *,\

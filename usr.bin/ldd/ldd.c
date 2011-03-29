@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.17 2011/03/25 18:07:07 joerg Exp $	*/
+/*	$NetBSD: ldd.c,v 1.18 2011/03/29 20:56:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.17 2011/03/25 18:07:07 joerg Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.18 2011/03/29 20:56:35 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -325,11 +325,11 @@ _rtld_shared_exit(void)
 }
 
 void
-_rtld_exclusive_enter(void)
+_rtld_exclusive_enter(sigset_t *mask)
 {
 }
 
 void
-_rtld_exclusive_exit(void)
+_rtld_exclusive_exit(sigset_t *mask)
 {
 }

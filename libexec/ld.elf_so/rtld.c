@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.147 2011/03/28 00:37:40 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.148 2011/03/29 20:56:35 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.147 2011/03/28 00:37:40 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.148 2011/03/29 20:56:35 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -121,8 +121,8 @@ register Elf_Addr *_GLOBAL_OFFSET_TABLE_ asm("r12");
 #endif /* RTLD_DEBUG */
 extern Elf_Dyn  _DYNAMIC;
 
-static void _rtld_call_fini_functions(int);
-static void _rtld_call_init_functions(void);
+static void _rtld_call_fini_functions(sigset_t *, int);
+static void _rtld_call_init_functions(sigset_t *);
 static void _rtld_initlist_visit(Objlist *, Obj_Entry *, int);
 static void _rtld_initlist_tsort(Objlist *, int);
 static Obj_Entry *_rtld_dlcheck(void *);
@@ -130,12 +130,12 @@ static void _rtld_init_dag(Obj_Entry *);
 static void _rtld_init_dag1(Obj_Entry *, Obj_Entry *);
 static void _rtld_objlist_remove(Objlist *, Obj_Entry *);
 static void _rtld_objlist_clear(Objlist *);
-static void _rtld_unload_object(Obj_Entry *, bool);
+static void _rtld_unload_object(sigset_t *, Obj_Entry *, bool);
 static void _rtld_unref_dag(Obj_Entry *);
 static Obj_Entry *_rtld_obj_from_addr(const void *);
 
 static void
-_rtld_call_fini_functions(int force)
+_rtld_call_fini_functions(sigset_t *mask, int force)
 {
 	Objlist_Entry *elm;
 	Objlist finilist;
@@ -168,9 +168,9 @@ restart:
 		 * XXX the fini() call is done.
 		 */
 		fini = obj->fini;
-		_rtld_exclusive_exit();
+		_rtld_exclusive_exit(mask);
 		(*fini)();
-		_rtld_exclusive_enter();
+		_rtld_exclusive_enter(mask);
 		if (_rtld_objgen != cur_objgen) {
 			dbg(("restarting fini iteration"));
 			_rtld_objlist_clear(&finilist);
@@ -192,9 +192,9 @@ restart:
 		obj->fini_called = 1;
 		/* XXX See above for the race condition here */
 		fini = obj->fini;
-		_rtld_exclusive_exit();
+		_rtld_exclusive_exit(mask);
 		(*fini)();
-		_rtld_exclusive_enter();
+		_rtld_exclusive_enter(mask);
 		if (_rtld_objgen != cur_objgen) {
 			dbg(("restarting fini iteration"));
 			_rtld_objlist_clear(&finilist);
@@ -206,7 +206,7 @@ restart:
 }
 
 static void
-_rtld_call_init_functions()
+_rtld_call_init_functions(sigset_t *mask)
 {
 	Objlist_Entry *elm;
 	Objlist initlist;
@@ -231,9 +231,9 @@ restart:
 		    obj->path, (void *)obj->init));
 		obj->init_called = 1;
 		init = obj->init;
-		_rtld_exclusive_exit();
+		_rtld_exclusive_exit(mask);
 		(*init)();
-		_rtld_exclusive_enter();
+		_rtld_exclusive_enter(mask);
 		if (_rtld_objgen != cur_objgen) {
 			dbg(("restarting init iteration"));
 			_rtld_objlist_clear(&initlist);
@@ -251,9 +251,9 @@ restart:
 		    (void *)obj->init));
 		obj->init_called = 1;
 		init = obj->init;
-		_rtld_exclusive_exit();
+		_rtld_exclusive_exit(mask);
 		(*init)();
-		_rtld_exclusive_enter();
+		_rtld_exclusive_enter(mask);
 		if (_rtld_objgen != cur_objgen) {
 			dbg(("restarting init iteration"));
 			_rtld_objlist_clear(&initlist);
@@ -338,13 +338,15 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 static void
 _rtld_exit(void)
 {
+	sigset_t mask;
+
 	dbg(("rtld_exit()"));
 
-	_rtld_exclusive_enter();
+	_rtld_exclusive_enter(&mask);
 
-	_rtld_call_fini_functions(1);
+	_rtld_call_fini_functions(&mask, 1);
 
-	_rtld_exclusive_exit();
+	_rtld_exclusive_exit(&mask);
 }
 
 /*
@@ -383,6 +385,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	const char **real___progname;
 	const Obj_Entry **real___mainprog_obj;
 	char ***real_environ;
+	sigset_t        mask;
 #ifdef DEBUG
 	const char     *ld_debug;
 #endif
@@ -675,15 +678,15 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	if (real___mainprog_obj)
 		*real___mainprog_obj = _rtld_objmain;
 
-	_rtld_exclusive_enter();
+	_rtld_exclusive_enter(&mask);
 
 	dbg(("calling _init functions"));
-	_rtld_call_init_functions();
+	_rtld_call_init_functions(&mask);
 
 	dbg(("control at program entry point = %p, obj = %p, exit = %p",
 	     _rtld_objmain->entry, _rtld_objmain, _rtld_exit));
 
-	_rtld_exclusive_exit();
+	_rtld_exclusive_exit(&mask);
 
 	/*
 	 * Return with the entry point and the exit procedure in at the top
@@ -792,7 +795,7 @@ _rtld_init_dag1(Obj_Entry *root, Obj_Entry *obj)
  * Note, this is called only for objects loaded by dlopen().
  */
 static void
-_rtld_unload_object(Obj_Entry *root, bool do_fini_funcs)
+_rtld_unload_object(sigset_t *mask, Obj_Entry *root, bool do_fini_funcs)
 {
 
 	_rtld_unref_dag(root);
@@ -803,7 +806,7 @@ _rtld_unload_object(Obj_Entry *root, bool do_fini_funcs)
 
 		/* Finalize objects that are about to be unmapped. */
 		if (do_fini_funcs)
-			_rtld_call_fini_functions(0);
+			_rtld_call_fini_functions(mask, 0);
 
 		/* Remove the DAG from all objects' DAG lists. */
 		SIMPLEQ_FOREACH(elm, &root->dagmembers, link)
@@ -880,15 +883,16 @@ int
 dlclose(void *handle)
 {
 	Obj_Entry *root;
+	sigset_t mask;
 
 	dbg(("dlclose of %p", handle));
 
-	_rtld_exclusive_enter();
+	_rtld_exclusive_enter(&mask);
 
 	root = _rtld_dlcheck(handle);
 
 	if (root == NULL) {
-		_rtld_exclusive_exit();
+		_rtld_exclusive_exit(&mask);
 		return -1;
 	}
 
@@ -896,12 +900,12 @@ dlclose(void *handle)
 	_rtld_debug_state();
 
 	--root->dl_refcount;
-	_rtld_unload_object(root, true);
+	_rtld_unload_object(&mask, root, true);
 
 	_rtld_debug.r_state = RT_CONSISTENT;
 	_rtld_debug_state();
 
-	_rtld_exclusive_exit();
+	_rtld_exclusive_exit(&mask);
 
 	return 0;
 }
@@ -925,10 +929,11 @@ dlopen(const char *name, int mode)
 	int flags = _RTLD_DLOPEN;
 	bool nodelete;
 	bool now;
+	sigset_t mask;
 
 	dbg(("dlopen of %s %d", name, mode));
 
-	_rtld_exclusive_enter();
+	_rtld_exclusive_enter(&mask);
 
 	flags |= (mode & RTLD_GLOBAL) ? _RTLD_GLOBAL : 0;
 	flags |= (mode & RTLD_NOLOAD) ? _RTLD_NOLOAD : 0;
@@ -955,11 +960,11 @@ dlopen(const char *name, int mode)
 			    (_rtld_init_dag(obj),
 			    _rtld_relocate_objects(obj,
 			    (now || obj->z_now))) == -1) {
-				_rtld_unload_object(obj, false);
+				_rtld_unload_object(&mask, obj, false);
 				obj->dl_refcount--;
 				obj = NULL;
 			} else {
-				_rtld_call_init_functions();
+				_rtld_call_init_functions(&mask);
 			}
 		}
 		if (obj != NULL) {
@@ -973,7 +978,7 @@ dlopen(const char *name, int mode)
 	_rtld_debug.r_state = RT_CONSISTENT;
 	_rtld_debug_state();
 
-	_rtld_exclusive_exit();
+	_rtld_exclusive_exit(&mask);
 
 	return obj;
 }
@@ -1010,8 +1015,8 @@ hackish_return_address(void)
 #endif
 
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
-#define	lookup_mutex_enter()	_rtld_exclusive_enter()
-#define	lookup_mutex_exit()	_rtld_exclusive_exit()
+#define	lookup_mutex_enter()	_rtld_exclusive_enter(&mask)
+#define	lookup_mutex_exit()	_rtld_exclusive_exit(&mask)
 #else
 #define	lookup_mutex_enter()	_rtld_shared_enter()
 #define	lookup_mutex_exit()	_rtld_shared_exit()
@@ -1026,7 +1031,10 @@ dlsym(void *handle, const char *name)
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	void *retaddr;
-	DoneList donelist; 
+	DoneList donelist;
+#ifdef __HAVE_FUNCTION_DESCRIPTORS
+	sigset_t mask;
+#endif
 
 	dbg(("dlsym of %s in %p", name, handle));
 
@@ -1471,11 +1479,15 @@ _rtld_shared_exit(void)
 }
 
 void
-_rtld_exclusive_enter(void)
+_rtld_exclusive_enter(sigset_t *mask)
 {
 	lwpid_t waiter, self = _lwp_self();
 	unsigned int locked_value = (unsigned int)self | RTLD_EXCLUSIVE_MASK;
 	unsigned int cur;
+	sigset_t blockmask;
+
+	sigfillset(&blockmask);
+	sigprocmask(SIG_BLOCK, &blockmask, mask);
 
 	membar_enter();
 
@@ -1497,7 +1509,7 @@ _rtld_exclusive_enter(void)
 }
 
 void
-_rtld_exclusive_exit(void)
+_rtld_exclusive_exit(sigset_t *mask)
 {
 	lwpid_t waiter;
 
@@ -1509,4 +1521,5 @@ _rtld_exclusive_exit(void)
 		_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));
 
 	membar_exit();
+	sigprocmask(SIG_SETMASK, mask, NULL);
 }
