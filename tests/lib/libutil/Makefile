@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/03/22 23:07:32 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2011/03/30 17:02:17 jruoho Exp $
 
 NOMAN=		# defined
 
@@ -9,7 +9,8 @@ TESTSDIR=	${TESTSBASE}/lib/libutil
 DPADD+=		${LIBUTIL}
 LDADD+=		-lutil
 
-TESTS_C=	t_parsedate
+TESTS_C=	t_efun
+TESTS_C+=	t_parsedate
 TESTS_C+=	t_pidfile
 TESTS_C+=	t_snprintb
 TESTS_C+=	t_sockaddr_snprintf
