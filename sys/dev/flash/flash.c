@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.1 2011/02/26 18:07:30 ahoka Exp $	*/
+/*	$NetBSD: flash.c,v 1.2 2011/03/30 14:34:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.1 2011/02/26 18:07:30 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.2 2011/03/30 14:34:26 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -487,6 +487,7 @@ flashioctl(dev_t dev, u_long command, void *data, int flags, struct lwp *l)
 
 	return err;
 }
+
 int
 flashsize(dev_t dev)
 {
