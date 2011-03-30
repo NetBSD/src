@@ -35,6 +35,10 @@
 #include "radeon_drv.h"
 #include "r300_reg.h"
 
+#if defined(__NetBSD__)
+#include "agp.h"
+#endif
+
 #define RADEON_FIFO_DEBUG	0
 
 static int radeon_do_cleanup_cp(struct drm_device * dev);
