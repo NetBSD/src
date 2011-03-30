@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.62 2011/03/30 05:20:59 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.63 2011/03/30 05:24:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.62 2011/03/30 05:20:59 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.63 2011/03/30 05:24:05 dholland Exp $");
 #endif
 
 #include <sys/param.h>
@@ -180,7 +180,7 @@ makebinding(const char *dm)
 {
 	struct _dom_binding *ypdb;
 
-	if ((ypdb = (struct _dom_binding *)malloc(sizeof *ypdb)) == NULL) {
+	if ((ypdb = malloc(sizeof *ypdb)) == NULL) {
 		yp_log(LOG_ERR, "makebinding");
 		exit(1);
 	}
