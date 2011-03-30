@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.104 2011/03/24 17:05:41 bouyer Exp $
+# $NetBSD: md.amd64,v 1.105 2011/03/30 19:57:15 roy Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -739,7 +739,7 @@
 ./usr/lib/i386/libquota.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libquota_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libquota_p.a			comp-c-proflib		compat,profile
-./usr/lib/i386/libquota_pic.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libquota_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libradius.a			comp-c-lib		compat
 ./usr/lib/i386/libradius.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libradius_g.a			comp-c-proflib		compat,debuglib
