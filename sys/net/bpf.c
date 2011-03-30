@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.163 2011/03/30 18:04:27 bouyer Exp $	*/
+/*	$NetBSD: bpf.c,v 1.164 2011/03/30 21:34:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.163 2011/03/30 18:04:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.164 2011/03/30 21:34:08 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1178,6 +1178,7 @@ bpf_stat(struct file *fp, struct stat *st)
 	st->st_ctimespec = st->st_birthtimespec = d->bd_btime;
 	st->st_uid = kauth_cred_geteuid(fp->f_cred);
 	st->st_gid = kauth_cred_getegid(fp->f_cred);
+	st->st_mode = S_IFCHR;
 	KERNEL_UNLOCK_ONE(NULL);
 	return 0;
 }
