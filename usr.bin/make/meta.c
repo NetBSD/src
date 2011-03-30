@@ -1,3 +1,5 @@
+/*      $NetBSD: meta.c,v 1.15 2011/03/30 22:03:49 sjg Exp $ */
+
 /*
  * Implement 'meta' mode.
  * Adapted from John Birrell's patches to FreeBSD make.
