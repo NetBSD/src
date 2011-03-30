@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.38.2.7 2010/10/24 22:48:23 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.38.2.8 2011/03/30 23:15:06 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.7 2010/10/24 22:48:23 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.8 2011/03/30 23:15:06 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -810,7 +810,6 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct xbd_req *xbdreq;
 	blkif_request_t *req;
 	int notify;
-
 
 	DPRINTF(("xbdioctl(%d, %08lx, %p, %d, %p)\n",
 	    dev, cmd, data, flag, l));
