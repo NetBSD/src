@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.6 2011/03/25 10:42:38 jruoho Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.7 2011/03/30 08:34:20 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_bitops.c,v 1.7 2011/03/30 08:34:20 jruoho Exp $");
 
 #include <atf-c.h>
 
