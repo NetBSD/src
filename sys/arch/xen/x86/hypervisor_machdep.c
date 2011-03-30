@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.11.8.5 2011/03/29 20:43:01 jym Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.11.8.6 2011/03/30 23:15:05 jym Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.11.8.5 2011/03/29 20:43:01 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.11.8.6 2011/03/30 23:15:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,11 +394,11 @@ build_p2m_frame_list_list(void)
          * A L1 page contains the list of MFN we are looking for
          */
         max_pfn = xen_start_info.nr_pages;
-        fpp = PAGE_SIZE / sizeof(vaddr_t);
+        fpp = PAGE_SIZE / sizeof(xen_pfn_t);
 
         /* we only need one L3 page */
         l3_p2m_page = (vaddr_t *)uvm_km_alloc(kernel_map, PAGE_SIZE,
-            PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_NOWAIT);
+	    PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_NOWAIT);
         if (l3_p2m_page == NULL)
                 panic("could not allocate memory for l3_p2m_page");
 
@@ -430,7 +430,7 @@ update_p2m_frame_list_list(void)
         unsigned long max_pfn;
 
         max_pfn = xen_start_info.nr_pages;
-        fpp = PAGE_SIZE / sizeof(vaddr_t);
+        fpp = PAGE_SIZE / sizeof(xen_pfn_t);
 
         for (i = 0; i < l2_p2m_page_size; i++) {
                 /*
