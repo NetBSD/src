@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.16 2011/01/09 00:12:45 kochi Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.17 2011/03/30 18:11:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.16 2011/01/09 00:12:45 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.17 2011/03/30 18:11:37 bouyer Exp $");
 
 
 #include <sys/param.h>
@@ -439,13 +439,14 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < JME_NBUFS; i++) {
 		sc->jme_txmbuf[i] = sc->jme_rxmbuf[i] = NULL;
 		if (bus_dmamap_create(sc->jme_dmatag, JME_MAX_TX_LEN,
-		    JME_NBUFS, JME_MAX_TX_LEN, 0, BUS_DMA_NOWAIT,
+		    JME_NBUFS, JME_MAX_TX_LEN, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &sc->jme_txmbufm[i]) != 0) {
 			aprint_error_dev(self, "can't allocate DMA TX map\n");
 			return;
 		}
 		if (bus_dmamap_create(sc->jme_dmatag, JME_MAX_RX_LEN,
-		    1, JME_MAX_RX_LEN, 0, BUS_DMA_NOWAIT,
+		    1, JME_MAX_RX_LEN, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &sc->jme_rxmbufm[i]) != 0) {
 			aprint_error_dev(self, "can't allocate DMA RX map\n");
 			return;
@@ -706,6 +707,8 @@ jme_add_rxbuf(jme_softc_t *sc, struct mbuf *m)
 	}
 	map = sc->jme_rxmbufm[i];
 	m->m_len = m->m_pkthdr.len = m->m_ext.ext_size;
+	KASSERT(m->m_len == MCLBYTES);
+
 	error = bus_dmamap_load_mbuf(sc->jme_dmatag, map, m,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
@@ -1051,6 +1054,7 @@ jme_statchg(device_t self)
 static void
 jme_intr_rx(jme_softc_t *sc) {
 	struct mbuf *m, *mhead;
+	bus_dmamap_t mmap;
 	struct ifnet *ifp = &sc->jme_if;
 	uint32_t flags,  buflen;
 	int i, ipackets, nsegs, seg, error;
@@ -1064,7 +1068,7 @@ jme_intr_rx(jme_softc_t *sc) {
 	    sc->jme_rx_cons, le32toh(sc->jme_rxring[sc->jme_rx_cons].flags));
 #endif
 	ipackets = 0;
-	while((le32toh(sc->jme_rxring[ sc->jme_rx_cons].flags) & JME_RD_OWN)
+	while((le32toh(sc->jme_rxring[sc->jme_rx_cons].flags) & JME_RD_OWN)
 	    == 0) {
 		i = sc->jme_rx_cons;
 		desc = &sc->jme_rxring[i];
@@ -1072,11 +1076,19 @@ jme_intr_rx(jme_softc_t *sc) {
 		printf("rxintr i %d flags 0x%x buflen 0x%x\n",
 		    i,  le32toh(desc->flags), le32toh(desc->buflen));
 #endif
+		if (sc->jme_rxmbuf[i] == NULL) {
+			if ((error = jme_add_rxbuf(sc, NULL)) != 0) {
+				aprint_error_dev(sc->jme_dev,
+				    "can't add new mbuf to empty slot: %d\n",
+				    error);
+				break;
+			}
+			JME_DESC_INC(sc->jme_rx_cons, JME_NBUFS);
+			i = sc->jme_rx_cons;
+			continue;
+		}
 		if ((le32toh(desc->buflen) & JME_RD_VALID) == 0)
 			break;
-		bus_dmamap_sync(sc->jme_dmatag, sc->jme_rxmbufm[i], 0,
-		    sc->jme_rxmbufm[i]->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->jme_dmatag, sc->jme_rxmbufm[i]);
 
 		buflen = le32toh(desc->buflen);
 		nsegs = JME_RX_NSEGS(buflen);
@@ -1094,6 +1106,10 @@ jme_intr_rx(jme_softc_t *sc) {
 			for (seg = 0; seg < nsegs; seg++) {
 				m = sc->jme_rxmbuf[i];
 				sc->jme_rxmbuf[i] = NULL;
+				mmap = sc->jme_rxmbufm[i];
+				bus_dmamap_sync(sc->jme_dmatag, mmap, 0,
+				    mmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+				bus_dmamap_unload(sc->jme_dmatag, mmap);
 				if ((error = jme_add_rxbuf(sc, m)) != 0)
 					aprint_error_dev(sc->jme_dev,
 					    "can't reuse mbuf: %d\n", error);
@@ -1105,11 +1121,24 @@ jme_intr_rx(jme_softc_t *sc) {
 		/* receive this packet */
 		mhead = m = sc->jme_rxmbuf[i];
 		sc->jme_rxmbuf[i] = NULL;
+		mmap = sc->jme_rxmbufm[i];
+		bus_dmamap_sync(sc->jme_dmatag, mmap, 0,
+		    mmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->jme_dmatag, mmap);
 		/* add a new buffer to chain */
-		if (jme_add_rxbuf(sc, NULL) == ENOBUFS) {
-			for (seg = 0; seg < nsegs; seg++) {
+		if (jme_add_rxbuf(sc, NULL) != 0) {
+			if ((error = jme_add_rxbuf(sc, m)) != 0)
+				aprint_error_dev(sc->jme_dev,
+				    "can't reuse mbuf: %d\n", error);
+			JME_DESC_INC(sc->jme_rx_cons, JME_NBUFS);
+			i = sc->jme_rx_cons;
+			for (seg = 1; seg < nsegs; seg++) {
 				m = sc->jme_rxmbuf[i];
 				sc->jme_rxmbuf[i] = NULL;
+				mmap = sc->jme_rxmbufm[i];
+				bus_dmamap_sync(sc->jme_dmatag, mmap, 0,
+				    mmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+				bus_dmamap_unload(sc->jme_dmatag, mmap);
 				if ((error = jme_add_rxbuf(sc, m)) != 0)
 					aprint_error_dev(sc->jme_dev,
 					    "can't reuse mbuf: %d\n", error);
@@ -1131,7 +1160,13 @@ jme_intr_rx(jme_softc_t *sc) {
 			i = sc->jme_rx_cons;
 			m = sc->jme_rxmbuf[i];
 			sc->jme_rxmbuf[i] = NULL;
-			(void)jme_add_rxbuf(sc, NULL);
+			mmap = sc->jme_rxmbufm[i];
+			bus_dmamap_sync(sc->jme_dmatag, mmap, 0,
+			    mmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->jme_dmatag, mmap);
+			if ((error = jme_add_rxbuf(sc, NULL)) != 0)
+				aprint_error_dev(sc->jme_dev,
+				    "can't add new mbuf: %d\n", error);
 			m->m_flags &= ~M_PKTHDR;
 			m_cat(mhead, m);
 			JME_DESC_INC(sc->jme_rx_cons, JME_NBUFS);
@@ -1425,7 +1460,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 	txd = &sc->jme_txring[prod];
 
 	error = bus_dmamap_load_mbuf(sc->jme_dmatag, sc->jme_txmbufm[prod],
-	    *m_head, BUS_DMA_WRITE);
+	    *m_head, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	if (error) {
 		if (error == EFBIG) {
 			log(LOG_ERR, "%s: Tx packet consumes too many "
