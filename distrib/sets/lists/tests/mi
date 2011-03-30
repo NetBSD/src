@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.280 2011/03/30 11:43:15 he Exp $
+# $NetBSD: mi,v 1.281 2011/03/30 17:02:17 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -499,6 +499,7 @@
 ./usr/libdata/debug/usr/tests/lib/libskey				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms.debug		tests-lib-debug		debug,atf,skey
 ./usr/libdata/debug/usr/tests/lib/libutil				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libutil/t_efun.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libutil/t_parsedate.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libutil/t_pidfile.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libutil/t_snprintb.debug		tests-lib-debug		debug,atf
@@ -1986,6 +1987,7 @@
 ./usr/tests/lib/libskey/t_algorithms		tests-lib-tests		atf,skey
 ./usr/tests/lib/libutil				tests-lib-tests		atf
 ./usr/tests/lib/libutil/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libutil/t_efun			tests-lib-tests		atf
 ./usr/tests/lib/libutil/t_parsedate		tests-lib-tests		atf
 ./usr/tests/lib/libutil/t_pidfile		tests-lib-tests		atf
 ./usr/tests/lib/libutil/t_snprintb		tests-lib-tests		atf
