@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.2 2011/03/30 18:31:15 jruoho Exp $ */
+/*	$NetBSD: t_paths.c,v 1.3 2011/03/30 19:32:13 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.2 2011/03/30 18:31:15 jruoho Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.3 2011/03/30 19:32:13 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -57,7 +57,7 @@ static const struct {
 	{ _PATH_AUDIOCTL0,	PATH_DEV		},
 	{ _PATH_BPF,		PATH_DEV | PATH_ROOT	},
 	{ _PATH_CLOCKCTL,	PATH_DEV | PATH_ROOT	},
-	{ _PATH_CONSOLE,	PATH_DEV		},
+	{ _PATH_CONSOLE,	PATH_DEV | PATH_ROOT	},
 	{ _PATH_CONSTTY,	PATH_DEV | PATH_ROOT	},
 	{ _PATH_CSMAPPER,	PATH_DIR		},
 	{ _PATH_DEFTAPE,	PATH_DEV | PATH_ROOT	},
