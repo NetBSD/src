@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.7 2011/03/21 19:34:27 jdc Exp $ */
+/* $NetBSD: edid.c,v 1.8 2011/03/30 18:50:37 jdc Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.7 2011/03/21 19:34:27 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.8 2011/03/30 18:50:37 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,12 +260,25 @@ edid_print(struct edid_info *edid)
 	}
 	printf("Video modes:\n");
 	for (i = 0; i < edid->edid_nmodes; i++) {
-		printf("\t%dx%d @ %dHz\n",
+		printf("\t%dx%d @ %dHz",
 		    edid->edid_modes[i].hdisplay,
 		    edid->edid_modes[i].vdisplay,
 		    DIVIDE(DIVIDE(edid->edid_modes[i].dot_clock * 1000,
 			       edid->edid_modes[i].htotal),
 			edid->edid_modes[i].vtotal));
+		printf(" (%d %d %d %d %d %d %d",
+		    edid->edid_modes[i].dot_clock,
+		    edid->edid_modes[i].hsync_start,
+		    edid->edid_modes[i].hsync_end,
+		    edid->edid_modes[i].htotal,
+		    edid->edid_modes[i].vsync_start,
+		    edid->edid_modes[i].vsync_end,
+		    edid->edid_modes[i].vtotal);
+		printf(" %s%sH %s%sV)\n",
+		    edid->edid_modes[i].flags & VID_PHSYNC ? "+" : "",
+		    edid->edid_modes[i].flags & VID_NHSYNC ? "-" : "",
+		    edid->edid_modes[i].flags & VID_PVSYNC ? "+" : "",
+		    edid->edid_modes[i].flags & VID_NVSYNC ? "-" : "");
 	}
 	if (edid->edid_preferred_mode)
 		printf("Preferred mode: %dx%d @ %dHz\n",
@@ -345,7 +358,7 @@ edid_det_timing(uint8_t *data, struct videomode *vmp)
 
 	/* we don't support stereo modes (for now) */
 	if (flags & (EDID_DET_TIMING_FLAG_STEREO |
-		EDID_DET_TIMING_FLAG_STEREO1))
+		EDID_DET_TIMING_FLAG_STEREO_MODE))
 		return 0;
 
 	vmp->dot_clock = EDID_DET_TIMING_DOT_CLOCK(data) / 1000;
