@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.27.2.5 2010/10/24 22:48:23 jym Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.27.2.6 2011/03/30 23:15:06 jym Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.27.2.5 2010/10/24 22:48:23 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.27.2.6 2011/03/30 23:15:06 jym Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -69,20 +69,23 @@ static int  xenbus_match(device_t, cfdata_t, void *);
 static void xenbus_attach(device_t, device_t, void *);
 static int  xenbus_print(void *, const char *);
 
-static void xenbus_probe_init(void *);
-
-static struct xenbus_device *xenbus_lookup_device_path(const char *);
-
 /* power management, for save/restore */
 static bool xenbus_suspend(device_t, const pmf_qual_t *);
 static bool xenbus_resume(device_t, const pmf_qual_t *);
 
 /* routines gathering device information from XenStore */
 static int  read_otherend_details(struct xenbus_device *,
-				  const char *, const char *);
+		const char *, const char *);
 static int  read_backend_details (struct xenbus_device *);
 static int  read_frontend_details(struct xenbus_device *);
 static void free_otherend_details(struct xenbus_device *);
+
+static int  watch_otherend     (struct xenbus_device *);
+static void free_otherend_watch(struct xenbus_device *);
+
+static void xenbus_probe_init(void *);
+
+static struct xenbus_device *xenbus_lookup_device_path(const char *);
 
 CFATTACH_DECL_NEW(xenbus, 0, xenbus_match, xenbus_attach,
     NULL, NULL);
@@ -240,7 +243,6 @@ free_otherend_details(struct xenbus_device *dev)
 	dev->xbusd_otherend = NULL;
 }
 
-
 static void
 free_otherend_watch(struct xenbus_device *dev)
 {
@@ -298,18 +300,6 @@ otherend_changed(struct xenbus_watch *watch,
 		    (xdev->xbusd_type == XENBUS_BACKEND_DEVICE) ?
 		    xdev->xbusd_u.b.b_cookie : xdev->xbusd_u.f.f_dev, state);
 }
-
-#ifdef unused
-static int
-talk_to_otherend(struct xenbus_device *dev)
-{
-	free_otherend_watch(dev);
-
-	return xenbus_watch_path2(dev, dev->xbusd_otherend, "state",
-				  &dev->xbusd_otherend_watch,
-				  otherend_changed);
-}
-#endif
 
 static int
 watch_otherend(struct xenbus_device *dev)
