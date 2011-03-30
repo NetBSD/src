@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.279 2011/03/30 09:43:21 jruoho Exp $
+# $NetBSD: mi,v 1.280 2011/03/30 11:43:15 he Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -420,10 +420,6 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigqueue.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libc/tls/libh_tls_dlopen.so.1.debug	tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/tls/libh_tls_dynamic.so.1.debug	tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dlopen.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_dynamic.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_static.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ttyio				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/ttyio/t_ptm.debug		tests-lib-debug		debug,atf
@@ -1869,12 +1865,6 @@
 ./usr/tests/lib/libc/sys/t_sigqueue		tests-lib-tests		atf
 ./usr/tests/lib/libc/tls			tests-lib-tests
 ./usr/tests/lib/libc/tls/Atffile		tests-lib-tests		atf
-./usr/tests/lib/libc/tls/h_tls_dlopen.so	tests-lib-tests		atf
-./usr/tests/lib/libc/tls/h_tls_dlopen.so.1	tests-lib-tests		atf
-./usr/tests/lib/libc/tls/libh_tls_dynamic.so	tests-lib-tests		atf
-./usr/tests/lib/libc/tls/libh_tls_dynamic.so.1	tests-lib-tests		atf
-./usr/tests/lib/libc/tls/t_tls_dlopen		tests-lib-tests		atf
-./usr/tests/lib/libc/tls/t_tls_dynamic		tests-lib-tests		atf
 ./usr/tests/lib/libc/tls/t_tls_static		tests-lib-tests		atf
 ./usr/tests/lib/libc/ttyio			tests-lib-tests
 ./usr/tests/lib/libc/ttyio/Atffile		tests-lib-tests		atf
