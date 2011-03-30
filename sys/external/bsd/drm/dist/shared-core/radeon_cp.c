@@ -35,7 +35,7 @@
 #include "radeon_drv.h"
 #include "r300_reg.h"
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) && defined(_KERNEL_OPT)
 #include "agp.h"
 #endif
 
