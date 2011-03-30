@@ -1,4 +1,4 @@
-.\" $NetBSD: security.7,v 1.7 2011/03/20 13:07:38 jruoho Exp $
+.\" $NetBSD: security.7,v 1.8 2011/03/30 11:41:48 jruoho Exp $
 .\"
 .\" Copyright (c) 2006, 2011 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 20, 2011
+.Dd March 30, 2011
 .Dt SECURITY 7
 .Os
 .Sh NAME
@@ -438,7 +438,46 @@ fetch_pkg_vulnerabilities=YES
 .Xr options 4 ,
 .Xr paxctl 8 ,
 .Xr sysctl 8 ,
-.Xr veriexec 8
+.Xr veriexec 8 ,
+.Xr kauth 9
+.\"
+.Rs
+.%A Joseph Kong
+.%B "Designing BSD Rootkits: An Introduction to Kernel Hacking"
+.%D 2007
+.%I "No Starch Press"
+.Re
+.\"
+.Rs
+.%A Enrico Perla
+.%A Massimiliano Oldani
+.%B "A Guide to Kernel Exploitation: Attacking the Core"
+.%D 2010
+.%I "Elsevier"
+.Re
+.\"
+.Rs
+.%A Erik Buchanan
+.%A Ryan Roemer
+.%A Hovav Shacham
+.%A Stefan Savage
+.%T "When Good Instructions Go Bad: \
+Generalizing Return-Oriented Programming to RISC"
+.%P 27-38
+.%O CCS '08: Proceedings of the 15th ACM Conference \
+on Computer and Communications Security
+.%I ACM Press
+.%D October 27-31, 2008
+.%U http://cseweb.ucsd.edu/~hovav/dist/sparc.pdf
+.Re
+.\"
+.Rs
+.%A Sebastian Krahmer
+.%T "x86-64 Buffer Overflow Exploits and \
+the Borrowed Code Chunks Exploitation Technique"
+.%D September 28, 2005
+.%U http://www.suse.de/~krahmer/no-nx.pdf
+.Re
 .Sh AUTHORS
 Many of the security features were pioneered by
 .An Elad Efrat Aq elad@NetBSD.org .
