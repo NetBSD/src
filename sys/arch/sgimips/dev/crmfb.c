@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.28 2011/03/01 21:47:13 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.29 2011/03/30 19:16:35 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.28 2011/03/01 21:47:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.29 2011/03/30 19:16:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ struct wsdisplay_accessops crmfb_accessops = {
  */
 #define CRMFB_TILESIZE	(512*128)
 
-static int	crmfb_match(struct device *, struct cfdata *, void *);
-static void	crmfb_attach(struct device *, struct device *, void *);
+static int	crmfb_match(device_t, struct cfdata *, void *);
+static void	crmfb_attach(device_t, device_t, void *);
 int		crmfb_probe(void);
 
 #define KERNADDR(p)	((void *)((p).addr))
@@ -118,7 +118,7 @@ struct crmfb_dma {
 };
 
 struct crmfb_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct vcons_data	sc_vd;
 
 	bus_space_tag_t		sc_iot;
@@ -182,17 +182,17 @@ static void	crmfb_eraserows(void *, int, int, long);
 static void	crmfb_cursor(void *, int, int, int);
 static void	crmfb_putchar(void *, int, int, u_int, long);
 
-CFATTACH_DECL(crmfb, sizeof(struct crmfb_softc),
+CFATTACH_DECL_NEW(crmfb, sizeof(struct crmfb_softc),
     crmfb_match, crmfb_attach, NULL, NULL);
 
 static int
-crmfb_match(struct device *parent, struct cfdata *cf, void *opaque)
+crmfb_match(device_t parent, struct cfdata *cf, void *opaque)
 {
 	return crmfb_probe();
 }
 
 static void
-crmfb_attach(struct device *parent, struct device *self, void *opaque)
+crmfb_attach(device_t parent, device_t self, void *opaque)
 {
 	struct mainbus_attach_args *ma;
 	struct crmfb_softc *sc;
@@ -205,7 +205,9 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	const char *consdev;
 	int rv, i;
 
-	sc = (struct crmfb_softc *)self;
+	sc = device_private(self);
+	sc->sc_dev = self;
+
 	ma = (struct mainbus_attach_args *)opaque;
 
 	sc->sc_iot = SGIMIPS_BUS_SPACE_CRIME;
@@ -236,14 +238,14 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 		sc->sc_depth = 32;
 
 	if (sc->sc_width == 0 || sc->sc_height == 0) {
-		aprint_error("%s: device unusable if not setup by firmware\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "device unusable if not setup by firmware\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 0 /* XXX */);
 		return;
 	}
 
-	aprint_normal("%s: initial resolution %dx%d\n",
-	    sc->sc_dev.dv_xname, sc->sc_width, sc->sc_height);
+	aprint_normal_dev(sc->sc_dev, "initial resolution %dx%d\n",
+	    sc->sc_width, sc->sc_height);
 
 	/*
 	 * first determine how many tiles we need
@@ -306,8 +308,7 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	sc->sc_scratch = (char *)KERNADDR(sc->sc_dma) + (0xf0000 * sc->sc_tiles_x);
 	sc->sc_linear = (paddr_t)DMAADDR(sc->sc_dma) + 0x100000 * sc->sc_tiles_x;
 
-	aprint_normal("%s: allocated %d byte fb @ %p (%p)\n", 
-	    sc->sc_dev.dv_xname,
+	aprint_normal_dev(sc->sc_dev, "allocated %d byte fb @ %p (%p)\n", 
 	    sc->sc_fbsize, KERNADDR(sc->sc_dmai), KERNADDR(sc->sc_dma));
 
 	crmfb_setup_video(sc, 8);
