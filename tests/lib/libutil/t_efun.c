@@ -1,4 +1,4 @@
-/*	$NetBSD: t_efun.c,v 1.1 2011/03/30 17:02:17 jruoho Exp $ */
+/*	$NetBSD: t_efun.c,v 1.2 2011/03/30 17:03:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_efun.c,v 1.2 2011/03/30 17:03:02 jruoho Exp $");
 
 #include <atf-c.h>
 
