@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.3 2011/03/30 19:32:13 jruoho Exp $ */
+/*	$NetBSD: t_paths.c,v 1.4 2011/03/30 22:26:26 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.3 2011/03/30 19:32:13 jruoho Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.4 2011/03/30 22:26:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -159,9 +159,6 @@ ATF_TC_BODY(paths, tc)
 		m = st.st_mode;
 
 		if ((paths[i].flags & PATH_DEV) != 0) {
-
-			if (strcmp(paths[i].path, _PATH_BPF) == 0)
-				atf_tc_expect_fail("PR kern/44807");
 
 			ATF_REQUIRE(S_ISBLK(m) != 0 || S_ISCHR(m) != 0);
 
