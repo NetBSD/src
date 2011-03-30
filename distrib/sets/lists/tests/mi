@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.278 2011/03/25 09:34:02 jruoho Exp $
+# $NetBSD: mi,v 1.279 2011/03/30 09:43:21 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -286,6 +286,7 @@
 ./usr/libdata/debug/usr/tests/include/t_bitstring.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/t_inttypes.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/t_limits.debug			tests-ipf-tests		debug,atf
+./usr/libdata/debug/usr/tests/include/t_paths.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/t_stdint.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests
@@ -564,6 +565,7 @@
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs				tests-sbin-tests
 ./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_fsync.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_timer.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/usr.bin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/usr.sbin					tests-sbin-tests
@@ -1337,6 +1339,7 @@
 ./usr/tests/include/t_bitstring			tests-include-tests	atf
 ./usr/tests/include/t_inttypes			tests-include-tests	atf
 ./usr/tests/include/t_limits			tests-include-tests	atf
+./usr/tests/include/t_paths			tests-include-tests	atf
 ./usr/tests/include/t_stdint			tests-include-tests	atf
 ./usr/tests/ipf					tests-ipf-tests
 ./usr/tests/ipf/Atffile				tests-ipf-tests
@@ -2100,6 +2103,7 @@
 ./usr/tests/syscall				tests-syscall-tests
 ./usr/tests/syscall/Atffile			tests-syscall-tests	atf
 ./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
+./usr/tests/syscall/t_fsync			tests-syscall-tests	atf
 ./usr/tests/syscall/t_timer			tests-syscall-tests	atf
 ./usr/tests/toolchain	tests-syscall-tests	atf
 ./usr/tests/toolchain/Atffile	tests-syscall-tests	atf
