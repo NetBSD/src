@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.122 2011/03/12 07:46:29 matt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.123 2011/03/30 00:03:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.122 2011/03/12 07:46:29 matt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.123 2011/03/30 00:03:26 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -195,15 +195,6 @@ pthread__init(void)
 	pthread__initthread(first);
 	pthread__scrubthread(first, NULL, 0);
 
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-#ifdef __HAVE___LWP_GETTCB_FAST
-	first->pt_tls = __lwp_gettcb_fast();
-#else
-	first->pt_tls = _lwp_getprivate();
-#endif
-	first->pt_tls->tcb_pthread = first;
-#endif
-
 	first->pt_lid = _lwp_self();
 	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
 	RB_INSERT(__pthread__alltree, &pthread__alltree, first);
@@ -294,9 +285,6 @@ pthread__initthread(pthread_t t)
 {
 
 	t->pt_self = t;
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-	t->pt_tls = NULL;
-#endif
 	t->pt_magic = PT_MAGIC;
 	t->pt_willpark = 0;
 	t->pt_unpark = 0;
@@ -320,12 +308,6 @@ static void
 pthread__scrubthread(pthread_t t, char *name, int flags)
 {
 
-#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-	if (t->pt_tls) {
-		_rtld_tls_free(t->pt_tls);
-		t->pt_tls = NULL;
-	}
-#endif
 	t->pt_state = PT_STATE_RUNNING;
 	t->pt_exitval = NULL;
 	t->pt_flags = flags;
@@ -389,6 +371,12 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		if (newthread)
 			PTQ_REMOVE(&pthread__deadqueue, newthread, pt_deadq);
 		pthread_mutex_unlock(&pthread__deadqueue_lock);
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+		if (newthread && newthread->pt_tls) {
+			_rtld_tls_free(newthread->pt_tls);
+			newthread->pt_tls = NULL;
+		}
+#endif
 	}
 
 	/*
@@ -410,6 +398,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 #endif
 		newthread->pt_uc.uc_stack = newthread->pt_stack;
 		newthread->pt_uc.uc_link = NULL;
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+		newthread->pt_tls = NULL;
+#endif
 
 		/* Add to list of all threads. */
 		pthread_rwlock_wrlock(&pthread__alltree_lock);
@@ -1267,7 +1258,14 @@ pthread__initmain(pthread_t *newt)
 	}
 
 	*newt = t;
-#if !defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE_TLS_VARIANT_II)
+#if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
+#  ifdef __HAVE___LWP_GETTCB_FAST
+	t->pt_tls = __lwp_gettcb_fast();
+#  else
+	t->pt_tls = _lwp_getprivate();
+#  endif
+	t->pt_tls->tcb_pthread = t;
+#else
 	_lwp_setprivate(t);
 #endif
 }
