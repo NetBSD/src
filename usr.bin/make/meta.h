@@ -1,3 +1,5 @@
+/*      $NetBSD: meta.h,v 1.2 2011/03/30 22:03:49 sjg Exp $ */
+
 /*
  * Things needed for 'meta' mode.
  */
