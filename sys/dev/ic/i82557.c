@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.136 2010/11/13 08:55:13 uebayasi Exp $	*/
+/*	$NetBSD: i82557.c,v 1.137 2011/03/30 17:52:45 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.136 2010/11/13 08:55:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.137 2011/03/30 17:52:45 jakllsch Exp $");
 
 #include "rnd.h"
 
@@ -2237,7 +2237,13 @@ fxp_mc_setup(struct fxp_softc *sc)
 		panic("fxp_mc_setup: pending transmissions");
 #endif
 
-	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		return;
+	} else {
+		ifp->if_flags &= ~IFF_ALLMULTI;
+	}
 
 	/*
 	 * Initialize multicast setup descriptor.
