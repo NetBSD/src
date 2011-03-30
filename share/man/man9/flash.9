@@ -1,4 +1,4 @@
-.\"	$NetBSD: flash.9,v 1.2 2011/02/27 06:25:07 wiz Exp $
+.\"	$NetBSD: flash.9,v 1.3 2011/03/30 21:40:01 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Department of Software Engineering,
 .\"		      University of Szeged, Hungary
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 21, 2010
+.Dd March 31, 2011
 .Dt FLASH 9
 .Os
 .Sh NAME
@@ -45,15 +45,17 @@ Flash-like devices can register themselves to the
 layer with the
 .Fa flash_hw_if
 structure.
-This structure has function pointers and and other fields.
+This structure has function pointers and other fields.
 .Pp
 The attachment can be done by calling
-.Fa flash_attach_mi
-with this structure and the device's device_t as argument.
+.Fn flash_attach_mi
+with this structure and the device's
+.Vt device_t
+as an argument.
 Return value is the flash layer device.
 The
 .Fa flash_interface
-struct is shown below.
+structure is shown below.
 .Bd -literal
 struct flash_interface {
 	int (*erase) (device_t, struct flash_erase_instruction *);
