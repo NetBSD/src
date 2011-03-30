@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.h,v 1.1 2011/02/26 18:07:30 ahoka Exp $	*/
+/*	$NetBSD: flash.h,v 1.2 2011/03/30 14:34:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -75,7 +75,7 @@ device_t flash_get_device(dev_t);
 struct flash_erase_instruction {
 	flash_addr_t ei_addr;
 	flash_addr_t ei_len;
-	void (*ei_callback) (struct flash_erase_instruction *);
+	void (*ei_callback)(struct flash_erase_instruction *);
 	u_long ei_priv;
 	u_char ei_state;
 };
@@ -106,12 +106,12 @@ struct flash_partition {
  * @block_isbad: checks if a block is bad on flash
  */
 struct flash_interface {
-	int (*erase) (device_t, struct flash_erase_instruction *);
-	int (*read) (device_t, off_t, size_t, size_t *, uint8_t *);
-	int (*write) (device_t, off_t, size_t, size_t *, const uint8_t *);
+	int (*erase)(device_t, struct flash_erase_instruction *);
+	int (*read)(device_t, off_t, size_t, size_t *, uint8_t *);
+	int (*write)(device_t, off_t, size_t, size_t *, const uint8_t *);
 	int (*block_markbad)(device_t, uint64_t);
 	int (*block_isbad)(device_t, uint64_t);
-	int (*sync) (device_t);
+	int (*sync)(device_t);
 
 	int (*submit)(device_t, struct buf *);
 
@@ -159,7 +159,7 @@ check_pattern(const void *buf, uint8_t patt, size_t offset, size_t size)
 {
 	size_t i;
 	for (i = offset; i < size; i++) {
-		if (((const uint8_t *) buf)[i] != patt)
+		if (((const uint8_t *)buf)[i] != patt)
 			return 0;
 	}
 	return 1;
