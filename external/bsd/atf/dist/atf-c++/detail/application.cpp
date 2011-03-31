@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010, 2011 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -178,6 +178,7 @@ impl::app::process_options(void)
     }
 
     int ch;
+    const int old_opterr = ::opterr;
     ::opterr = 0;
     while ((ch = ::getopt(m_argc, m_argv, optstr.c_str())) != -1) {
         switch (ch) {
@@ -201,6 +202,7 @@ impl::app::process_options(void)
     m_argv += ::optind;
 
     // Clear getopt state just in case the test wants to use it.
+    opterr = old_opterr;
     optind = 1;
 #if defined(HAVE_OPTRESET)
     optreset = 1;

@@ -101,6 +101,12 @@
         } \
     } while (false)
 
+#define ATF_REQUIRE_IN(element, collection) \
+    ATF_REQUIRE((collection).find(element) != (collection).end())
+
+#define ATF_REQUIRE_NOT_IN(element, collection) \
+    ATF_REQUIRE((collection).find(element) == (collection).end())
+
 #define ATF_REQUIRE_MATCH(regexp, string) \
     do { \
         if (!atf::tests::detail::match(regexp, string)) { \
