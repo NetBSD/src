@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.28 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.29 2011/03/31 19:40:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.28 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.29 2011/03/31 19:40:53 dyoung Exp $");
 
 
 #include <sys/param.h>
@@ -261,8 +261,8 @@ struct domain   isodomain = {
 	.dom_dispose = NULL,
 	.dom_protosw = isosw,
 	.dom_protoswNPROTOSW = &isosw[sizeof(isosw) / sizeof(isosw[0])],
-	.dom_rtattach = rn_inithead,		/* rtattach */
-	.dom_rtoffset = 48,			/* rtoffset */
+	.dom_rtattach = rt_inithead,
+	.dom_rtoffset = 48,
 	.dom_maxrtkey = sizeof(struct sockaddr_iso),	/* maxkeylen */
 	.dom_ifattach = NULL,
 	.dom_ifdetach = NULL,
