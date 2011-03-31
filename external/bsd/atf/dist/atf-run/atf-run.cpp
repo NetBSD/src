@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -98,6 +98,45 @@ public:
 
     int main(void);
 };
+
+static void
+dump_stacktrace(const atf::fs::path& tp, const atf::process::status& s,
+                const atf::fs::path& workdir, impl::atf_tps_writer& w)
+{
+    PRE(s.signaled() && s.coredump());
+
+    w.stderr_tc("Test program crashed; attempting to get stack trace");
+
+    const atf::fs::path corename = workdir / (tp.leaf_name() + ".core");
+    if (!atf::fs::exists(corename)) {
+        w.stderr_tc("Expected file " + corename.str() + " not found");
+        return;
+    }
+
+    const atf::fs::path gdb(GDB);
+    const atf::fs::path gdbout = workdir / "gdb.out";
+    const atf::process::argv_array args(gdb.leaf_name().c_str(), "-batch",
+                                        "-q", "-ex", "bt", tp.c_str(),
+                                        corename.c_str(), NULL);
+    atf::process::status status = atf::process::exec(
+        gdb, args,
+        atf::process::stream_redirect_path(gdbout),
+        atf::process::stream_redirect_path(atf::fs::path("/dev/null")));
+    if (!status.exited() || status.exitstatus() != EXIT_SUCCESS) {
+        w.stderr_tc("Execution of " GDB " failed");
+        return;
+    }
+
+    std::ifstream input(gdbout.c_str());
+    if (input) {
+        std::string line;
+        while (std::getline(input, line).good())
+            w.stderr_tc(line);
+        input.close();
+    }
+
+    w.stderr_tc("Stack trace complete");
+}
 
 const char* atf_run::m_description =
     "atf-run is a tool that runs tests programs and collects their "
@@ -370,8 +409,8 @@ atf_run::run_test_program(const atf::fs::path& tp,
                 if (user.first != -1 && user.second != -1) {
                     if (::chown(workdir.get_path().c_str(), user.first,
                                 user.second) == -1) {
-                        throw atf::system_error("chmod(" +
-                            workdir.get_path().str() + ")", "chmod(2) failed",
+                        throw atf::system_error("chown(" +
+                            workdir.get_path().str() + ")", "chown(2) failed",
                             errno);
                     }
                     resfile = workdir.get_path() / "tcr";
@@ -380,44 +419,16 @@ atf_run::run_test_program(const atf::fs::path& tp,
                 std::pair< std::string, const atf::process::status > s =
                     impl::run_test_case(tp, tcname, "body", tcmd, config,
                                             resfile, workdir.get_path(), w);
+                if (s.second.signaled() && s.second.coredump())
+                    dump_stacktrace(tp, s.second, workdir.get_path(), w);
+                if (has_cleanup)
+                    (void)impl::run_test_case(tp, tcname, "cleanup", tcmd,
+                            config, resfile, workdir.get_path(), w);
 
                 // TODO: Force deletion of workdir.
 
                 impl::test_case_result tcr = get_test_case_result(s.first,
                     s.second, resfile);
-
-		/* if we have a core, scope out stacktrace */
-		size_t slashpos = tp.str().rfind("/");
-		std::string corename = workdir.get_path().str()
-		    + std::string("/") + tp.str().substr(slashpos+1)
-		    + std::string(".core");
-		if (s.second.signaled() && s.second.coredump() &&
-		    access(corename.c_str(), F_OK) == 0) {
-			std::string gdbcmd;
-			char buf[256];
-			char *p;
-
-			gdbcmd = std::string("gdb -batch -q -ex bt ") +
-			    tp.str() + std::string(" ") + corename +
-			    std::string(" 2> /dev/null | grep -v ") +
-			    std::string("'(no debugging symbols found)'");
-			FILE *gdbstrm = popen(gdbcmd.c_str(), "r");
-			if (gdbstrm) {
-				w.stderr_tc(std::string("test program crashed, "
-				    "autolisting stacktrace:"));
-				while (fgets(buf, sizeof(buf), gdbstrm)) {
-					if ((p = strchr(buf, '\n')) != NULL)
-						*p = '\0';
-					w.stderr_tc(std::string(buf));
-				}
-				pclose(gdbstrm);
-				w.stderr_tc(std::string("stacktrace complete"));
-			}
-		}
-
-                if (has_cleanup)
-                    (void)impl::run_test_case(tp, tcname, "cleanup", tcmd,
-                            config, resfile, workdir.get_path(), w);
 
                 w.end_tc(tcr.state(), tcr.reason());
                 if (tcr.state() == "failed")

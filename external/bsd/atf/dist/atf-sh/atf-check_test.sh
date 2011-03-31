@@ -27,7 +27,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# The Atf_Check variable is set by atf-sh.
+# The Atf_Check and Atf-Shell variables are set by atf-sh.
 
 h_pass()
 {
@@ -36,7 +36,7 @@ h_pass()
     echo "Running [atf-check $*] against [${cmd}]"
 
     cat >script.sh <<EOF
-#! $(atf-config -t atf_shell)
+#! ${Atf_Shell}
 ${cmd}
 EOF
     chmod +x script.sh
@@ -54,7 +54,7 @@ h_fail()
     echo "Running [atf-check $*] against [${cmd}]"
 
     cat >script.sh <<EOF
-#! $(atf-config -t atf_shell)
+#! ${Atf_Shell}
 ${cmd}
 EOF
     chmod +x script.sh
