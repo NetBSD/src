@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.3 2010/10/20 08:56:16 jmmv Exp $
+# $NetBSD: prepare-import.sh,v 1.4 2011/03/31 16:45:44 jmmv Exp $
 #
 # Use this script to recreate the 'dist' subdirectory from a newly released
 # distfile.  The script takes care of unpacking the distfile, removing any
@@ -13,7 +13,7 @@ ProgName=${0##*/}
 
 CLEAN_PATTERNS=
 CLEAN_PATTERNS="${CLEAN_PATTERNS} *.m4"
-CLEAN_PATTERNS="${CLEAN_PATTERNS} INSTALL"
+CLEAN_PATTERNS="${CLEAN_PATTERNS} INSTALL TODO"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} Makefile* */Makefile* */*/Makefile*"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} admin"
 CLEAN_PATTERNS="${CLEAN_PATTERNS} bconfig.h.in"
