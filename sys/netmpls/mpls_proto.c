@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.1 2010/06/26 14:24:29 kefren Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.2 2011/03/31 19:40:53 dyoung Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.1 2010/06/26 14:24:29 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.2 2011/03/31 19:40:53 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -102,7 +102,7 @@ struct domain mplsdomain = {
 	.dom_dispose = NULL, 
 	.dom_protosw = mplssw,
 	.dom_protoswNPROTOSW = &mplssw[__arraycount(mplssw)],
-	.dom_rtattach = rn_inithead,
+	.dom_rtattach = rt_inithead,
 	.dom_rtoffset = offsetof(struct sockaddr_mpls, smpls_addr) << 3,
 	.dom_maxrtkey = sizeof(union mpls_shim),
 	.dom_ifattach = NULL,
