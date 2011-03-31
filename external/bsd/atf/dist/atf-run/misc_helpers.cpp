@@ -37,6 +37,7 @@ extern "C" {
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
+#include <ios>
 #include <iostream>
 #include <string>
 
