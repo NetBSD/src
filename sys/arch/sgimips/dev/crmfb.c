@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.29 2011/03/30 19:16:35 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.30 2011/03/31 00:01:08 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.29 2011/03/30 19:16:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.30 2011/03/31 00:01:08 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.29 2011/03/30 19:16:35 macallan Exp $");
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_bitbang.h>
+#include <dev/i2c/ddcvar.h>
+#include <dev/videomode/videomode.h>
+#include <dev/videomode/edidvar.h>
 
 #include <arch/sgimips/dev/crmfbreg.h>
 
@@ -120,6 +126,8 @@ struct crmfb_dma {
 struct crmfb_softc {
 	device_t		sc_dev;
 	struct vcons_data	sc_vd;
+	struct i2c_controller	sc_i2c;
+	int sc_dir;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -182,6 +190,33 @@ static void	crmfb_eraserows(void *, int, int, long);
 static void	crmfb_cursor(void *, int, int, int);
 static void	crmfb_putchar(void *, int, int, u_int, long);
 
+/* I2C glue */
+static int crmfb_i2c_acquire_bus(void *, int);
+static void crmfb_i2c_release_bus(void *, int);
+static int crmfb_i2c_send_start(void *, int);
+static int crmfb_i2c_send_stop(void *, int);
+static int crmfb_i2c_initiate_xfer(void *, i2c_addr_t, int);
+static int crmfb_i2c_read_byte(void *, uint8_t *, int);
+static int crmfb_i2c_write_byte(void *, uint8_t, int);
+
+/* I2C bitbang glue */
+static void crmfb_i2cbb_set_bits(void *, uint32_t);
+static void crmfb_i2cbb_set_dir(void *, uint32_t);
+static uint32_t crmfb_i2cbb_read(void *);
+
+static const struct i2c_bitbang_ops crmfb_i2cbb_ops = {
+	crmfb_i2cbb_set_bits,
+	crmfb_i2cbb_set_dir,
+	crmfb_i2cbb_read,
+	{
+		CRMFB_I2C_SDA,
+		CRMFB_I2C_SCL,
+		0,
+		1
+	}
+};
+static void crmfb_setup_ddc(struct crmfb_softc *);
+
 CFATTACH_DECL_NEW(crmfb, sizeof(struct crmfb_softc),
     crmfb_match, crmfb_attach, NULL, NULL);
 
@@ -222,6 +257,8 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 	rv = bus_space_map(sc->sc_iot, 0x15000000, 0x6000, 0, &sc->sc_reh);
 	if (rv)
 		panic("crmfb_attach: can't map rendering engine");
+
+	//crmfb_setup_ddc(sc);
 
 	/* determine mode configured by firmware */
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_VT_HCMAP);
@@ -351,6 +388,7 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 #ifdef CRMFB_DEBUG
 	crmfb_test_mte(sc);
 #endif
+	crmfb_setup_ddc(sc);
 	return;
 }
 
@@ -1434,4 +1472,109 @@ crmfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			}
 		}
 	}
+}
+
+static void
+crmfb_setup_ddc(struct crmfb_softc *sc)
+{
+	int i;
+	char edid_data[128];
+	struct edid_info ei;
+
+	memset(edid_data, 0, 128);
+	sc->sc_i2c.ic_cookie = sc;
+	sc->sc_i2c.ic_acquire_bus = crmfb_i2c_acquire_bus;
+	sc->sc_i2c.ic_release_bus = crmfb_i2c_release_bus;
+	sc->sc_i2c.ic_send_start = crmfb_i2c_send_start;
+	sc->sc_i2c.ic_send_stop = crmfb_i2c_send_stop;
+	sc->sc_i2c.ic_initiate_xfer = crmfb_i2c_initiate_xfer;
+	sc->sc_i2c.ic_read_byte = crmfb_i2c_read_byte;
+	sc->sc_i2c.ic_write_byte = crmfb_i2c_write_byte;
+	sc->sc_i2c.ic_exec = NULL;
+	i = 0;
+	while (edid_data[1] == 0 && i++ < 10)
+		ddc_read_edid(&sc->sc_i2c, edid_data, 128);
+	if (i > 1)
+		aprint_debug_dev(sc->sc_dev,
+		    "had to try %d times to get EDID data\n", i);
+	if (i < 11) {
+		edid_parse(edid_data, &ei);
+		edid_print(&ei);
+	}
+}
+
+/* I2C bitbanging */
+static void
+crmfb_i2cbb_set_bits(void *cookie, uint32_t bits)
+{
+	struct crmfb_softc *sc = cookie;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_I2C_VGA, bits ^ 3);
+}
+
+static void
+crmfb_i2cbb_set_dir(void *cookie, uint32_t dir)
+{
+
+	/* Nothing to do */
+}
+
+static uint32_t
+crmfb_i2cbb_read(void *cookie)
+{
+	struct crmfb_softc *sc = cookie;
+
+	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_I2C_VGA) ^ 3;
+}
+
+/* higher level I2C stuff */
+static int
+crmfb_i2c_acquire_bus(void *cookie, int flags)
+{
+
+	/* private bus */
+	return 0;
+}
+
+static void
+crmfb_i2c_release_bus(void *cookie, int flags)
+{
+
+	/* private bus */
+}
+
+static int
+crmfb_i2c_send_start(void *cookie, int flags)
+{
+
+	return i2c_bitbang_send_start(cookie, flags, &crmfb_i2cbb_ops);
+}
+
+static int
+crmfb_i2c_send_stop(void *cookie, int flags)
+{
+
+	return i2c_bitbang_send_stop(cookie, flags, &crmfb_i2cbb_ops);
+}
+
+static int
+crmfb_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
+{
+
+	return i2c_bitbang_initiate_xfer(cookie, addr, flags, 
+	    &crmfb_i2cbb_ops);
+}
+
+static int
+crmfb_i2c_read_byte(void *cookie, uint8_t *valp, int flags)
+{
+
+	return i2c_bitbang_read_byte(cookie, valp, flags, &crmfb_i2cbb_ops);
+}
+
+static int
+crmfb_i2c_write_byte(void *cookie, uint8_t val, int flags)
+{
+
+	return i2c_bitbang_write_byte(cookie, val, flags, &crmfb_i2cbb_ops);
 }

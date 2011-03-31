@@ -1,4 +1,4 @@
-/* $NetBSD: crmfbreg.h,v 1.12 2011/03/30 18:25:31 macallan Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.13 2011/03/31 00:01:08 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -74,8 +74,8 @@
 #define		CRMFB_DOTCLOCK_TUPI		0x02000000 /* ? */
 
 #define CRMFB_I2C_VGA		0x00000008
-#define 	CRMFB_I2C_SDA			0x00000001
-#define 	CRMFB_I2C_SCL			0x00000002
+#define 	CRMFB_I2C_SDA			0x00000001 /* these bits are */
+#define 	CRMFB_I2C_SCL			0x00000002 /* low active */
 
 #define CRMFB_SYSCLK		0x0000000c
 
