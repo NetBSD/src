@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.282 2011/03/31 13:07:20 jruoho Exp $
+# $NetBSD: mi,v 1.283 2011/03/31 15:47:56 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -562,6 +562,7 @@
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs				tests-sbin-tests
 ./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_dup.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_fsync.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_mmap.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_timer.debug			tests-syscall-debug	debug,atf
@@ -2096,6 +2097,7 @@
 ./usr/tests/syscall				tests-syscall-tests
 ./usr/tests/syscall/Atffile			tests-syscall-tests	atf
 ./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
+./usr/tests/syscall/t_dup			tests-syscall-tests	atf
 ./usr/tests/syscall/t_fsync			tests-syscall-tests	atf
 ./usr/tests/syscall/t_mmap			tests-syscall-tests	atf
 ./usr/tests/syscall/t_timer			tests-syscall-tests	atf
