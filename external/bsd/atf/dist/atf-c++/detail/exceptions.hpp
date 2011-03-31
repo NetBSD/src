@@ -31,6 +31,7 @@
 #define _ATF_CXX_EXCEPTIONS_HPP_
 
 #include <stdexcept>
+#include <string>
 
 extern "C" {
 struct atf_error;
