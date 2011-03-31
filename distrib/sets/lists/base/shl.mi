@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.579 2011/03/24 17:05:40 bouyer Exp $
+# $NetBSD: shl.mi,v 1.580 2011/03/31 08:25:30 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -426,6 +426,9 @@
 ./usr/lib/librumpdev_pad.so			base-rump-shlib
 ./usr/lib/librumpdev_pad.so.0			base-rump-shlib
 ./usr/lib/librumpdev_pad.so.0.0			base-rump-shlib
+./usr/lib/librumpdev_pud.so			base-rump-shlib
+./usr/lib/librumpdev_pud.so.0			base-rump-shlib
+./usr/lib/librumpdev_pud.so.0.0			base-rump-shlib
 ./usr/lib/librumpdev_putter.so			base-rump-shlib
 ./usr/lib/librumpdev_putter.so.0		base-rump-shlib
 ./usr/lib/librumpdev_putter.so.0.0		base-rump-shlib
