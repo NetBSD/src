@@ -34,6 +34,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
+#include <new>
 
 extern "C" {
 #include "../../atf-c/error.h"

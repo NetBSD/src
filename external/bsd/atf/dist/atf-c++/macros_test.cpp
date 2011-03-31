@@ -125,6 +125,25 @@ ATF_TEST_CASE_BODY(h_require_eq)
     create_ctl_file(*this, "after");
 }
 
+ATF_TEST_CASE(h_require_in);
+ATF_TEST_CASE_HEAD(h_require_in)
+{
+    set_md_var("descr", "Helper test case");
+}
+ATF_TEST_CASE_BODY(h_require_in)
+{
+    const std::string element = get_config_var("value");
+
+    std::set< std::string > collection;
+    collection.insert("foo");
+    collection.insert("bar");
+    collection.insert("baz");
+
+    create_ctl_file(*this, "before");
+    ATF_REQUIRE_IN(element, collection);
+    create_ctl_file(*this, "after");
+}
+
 ATF_TEST_CASE(h_require_match);
 ATF_TEST_CASE_HEAD(h_require_match)
 {
@@ -137,6 +156,25 @@ ATF_TEST_CASE_BODY(h_require_match)
 
     create_ctl_file(*this, "before");
     ATF_REQUIRE_MATCH(regexp, string);
+    create_ctl_file(*this, "after");
+}
+
+ATF_TEST_CASE(h_require_not_in);
+ATF_TEST_CASE_HEAD(h_require_not_in)
+{
+    set_md_var("descr", "Helper test case");
+}
+ATF_TEST_CASE_BODY(h_require_not_in)
+{
+    const std::string element = get_config_var("value");
+
+    std::set< std::string > collection;
+    collection.insert("foo");
+    collection.insert("bar");
+    collection.insert("baz");
+
+    create_ctl_file(*this, "before");
+    ATF_REQUIRE_NOT_IN(element, collection);
     create_ctl_file(*this, "after");
 }
 
@@ -373,6 +411,50 @@ ATF_TEST_CASE_BODY(require_eq)
     }
 }
 
+ATF_TEST_CASE(require_in);
+ATF_TEST_CASE_HEAD(require_in)
+{
+    set_md_var("descr", "Tests the ATF_REQUIRE_IN macro");
+}
+ATF_TEST_CASE_BODY(require_in)
+{
+    struct test {
+        const char *value;
+        bool ok;
+    } *t, tests[] = {
+        { "foo", true },
+        { "bar", true },
+        { "baz", true },
+        { "xxx", false },
+        { "fooa", false },
+        { "foo ", false },
+        { NULL, false }
+    };
+
+    const atf::fs::path before("before");
+    const atf::fs::path after("after");
+
+    for (t = &tests[0]; t->value != NULL; t++) {
+        atf::tests::vars_map config;
+        config["value"] = t->value;
+
+        run_h_tc< ATF_TEST_CASE_NAME(h_require_in) >(config);
+
+        ATF_REQUIRE(atf::fs::exists(before));
+        if (t->ok) {
+            ATF_REQUIRE(grep_file("result", "^passed"));
+            ATF_REQUIRE(atf::fs::exists(after));
+        } else {
+            ATF_REQUIRE(grep_file("result", "^failed: "));
+            ATF_REQUIRE(!atf::fs::exists(after));
+        }
+
+        atf::fs::remove(before);
+        if (t->ok)
+            atf::fs::remove(after);
+    }
+}
+
 ATF_TEST_CASE(require_match);
 ATF_TEST_CASE_HEAD(require_match)
 {
@@ -403,6 +485,50 @@ ATF_TEST_CASE_BODY(require_match)
                   << "\n";
 
         run_h_tc< ATF_TEST_CASE_NAME(h_require_match) >(config);
+
+        ATF_REQUIRE(atf::fs::exists(before));
+        if (t->ok) {
+            ATF_REQUIRE(grep_file("result", "^passed"));
+            ATF_REQUIRE(atf::fs::exists(after));
+        } else {
+            ATF_REQUIRE(grep_file("result", "^failed: "));
+            ATF_REQUIRE(!atf::fs::exists(after));
+        }
+
+        atf::fs::remove(before);
+        if (t->ok)
+            atf::fs::remove(after);
+    }
+}
+
+ATF_TEST_CASE(require_not_in);
+ATF_TEST_CASE_HEAD(require_not_in)
+{
+    set_md_var("descr", "Tests the ATF_REQUIRE_NOT_IN macro");
+}
+ATF_TEST_CASE_BODY(require_not_in)
+{
+    struct test {
+        const char *value;
+        bool ok;
+    } *t, tests[] = {
+        { "foo", false },
+        { "bar", false },
+        { "baz", false },
+        { "xxx", true },
+        { "fooa", true },
+        { "foo ", true },
+        { NULL, false }
+    };
+
+    const atf::fs::path before("before");
+    const atf::fs::path after("after");
+
+    for (t = &tests[0]; t->value != NULL; t++) {
+        atf::tests::vars_map config;
+        config["value"] = t->value;
+
+        run_h_tc< ATF_TEST_CASE_NAME(h_require_not_in) >(config);
 
         ATF_REQUIRE(atf::fs::exists(before));
         if (t->ok) {
@@ -635,7 +761,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, check_errno);
     ATF_ADD_TEST_CASE(tcs, require);
     ATF_ADD_TEST_CASE(tcs, require_eq);
+    ATF_ADD_TEST_CASE(tcs, require_in);
     ATF_ADD_TEST_CASE(tcs, require_match);
+    ATF_ADD_TEST_CASE(tcs, require_not_in);
     ATF_ADD_TEST_CASE(tcs, require_throw);
     ATF_ADD_TEST_CASE(tcs, require_throw_re);
     ATF_ADD_TEST_CASE(tcs, require_errno);
