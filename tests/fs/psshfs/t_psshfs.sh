@@ -1,4 +1,4 @@
-# $NetBSD: t_psshfs.sh,v 1.4 2011/02/11 13:19:46 pooka Exp $
+# $NetBSD: t_psshfs.sh,v 1.5 2011/03/31 12:56:03 pooka Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -150,7 +150,10 @@ inode_nos_body() {
 # Compares the inodes of the two given files and returns true if they are
 # different; false otherwise.
 #
-test \$(stat -f %i \${1}) -ne \$(stat -f %i \${2})
+set -e
+ino1=\$(stat -f %i \${1})
+ino2=\$(stat -f %i \${2})
+test \${ino1} -ne \${ino2}
 EOF
 	chmod +x ne_inodes.sh
 
