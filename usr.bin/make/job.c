@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.155 2010/09/13 15:36:57 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.156 2011/03/31 06:28:42 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.155 2010/09/13 15:36:57 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.156 2011/03/31 06:28:42 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.155 2010/09/13 15:36:57 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.156 2011/03/31 06:28:42 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -960,12 +960,6 @@ JobFinish(Job *job, int status)
 {
     Boolean 	 done, return_job_token;
 
-#ifdef USE_META
-    if (useMeta) {
-	meta_job_finish(job);
-    }
-#endif
-    
     if (DEBUG(JOB)) {
 	fprintf(debug_file, "Jobfinish: %d [%s], status %d\n",
 				job->pid, job->node->name, status);
@@ -1056,6 +1050,12 @@ JobFinish(Job *job, int status)
 	(void)fflush(stdout);
     }
 
+#ifdef USE_META
+    if (useMeta) {
+	meta_job_finish(job);
+    }
+#endif
+    
     return_job_token = FALSE;
 
     Trace_Log(JOBEND, job);
