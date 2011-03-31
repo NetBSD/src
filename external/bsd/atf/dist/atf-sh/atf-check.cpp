@@ -33,12 +33,14 @@ extern "C" {
 
 #include <limits.h>
 #include <signal.h>
+#include <unistd.h>
 }
 
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <ios>
 #include <iostream>
 #include <iterator>
 #include <list>
@@ -184,6 +186,7 @@ static struct name_number {
     { "int", SIGINT },
     { "quit", SIGQUIT },
     { "trap", SIGTRAP },
+    { "abrt", SIGABRT },
     { "kill", SIGKILL },
     { "segv", SIGSEGV },
     { "pipe", SIGPIPE },
@@ -378,7 +381,7 @@ grep_file(const atf::fs::path& path, const std::string& regexp)
     bool found = false;
 
     std::string line;
-    while (!found && std::getline(stream, line).good()) {
+    while (!found && !std::getline(stream, line).fail()) {
         if (atf::text::match(line, regexp))
             found = true;
     }

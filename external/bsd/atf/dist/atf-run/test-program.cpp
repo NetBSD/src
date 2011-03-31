@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -110,7 +110,7 @@ class metadata_reader : public detail::atf_tp_reader {
             m_tcs[ident].insert(std::make_pair("has.cleanup", "false"));
 
         if (m_tcs[ident].find("timeout") == m_tcs[ident].end())
-            m_tcs[ident].insert(std::make_pair("timeout", "30"));
+            m_tcs[ident].insert(std::make_pair("timeout", "300"));
     }
 
 public:
@@ -724,10 +724,9 @@ impl::run_test_case(const atf::fs::path& executable,
         UNREACHABLE;
     }
 
-    ::killpg(child_pid, SIGTERM);
+    ::killpg(child_pid, SIGKILL);
     mux.flush();
     atf::process::status status = child.wait();
-    ::killpg(child_pid, SIGKILL);
 
     std::string reason;
 

@@ -190,7 +190,7 @@ ATF_TEST_CASE_BODY(tp_2)
         "\n"
         "ident: test_case_1\n"
         "descr: This is the description\n"
-        "timeout: 30\n"
+        "timeout: 300\n"
         "\n"
         "ident: test_case_2\n"
         "\n"
@@ -201,7 +201,7 @@ ATF_TEST_CASE_BODY(tp_2)
 
     // NO_CHECK_STYLE_BEGIN
     const char* exp_calls[] = {
-        "got_tc(test_case_1, {descr=This is the description, ident=test_case_1, timeout=30})",
+        "got_tc(test_case_1, {descr=This is the description, ident=test_case_1, timeout=300})",
         "got_tc(test_case_2, {ident=test_case_2})",
         "got_tc(test_case_3, {X-prop1=A custom property, descr=Third test case, ident=test_case_3})",
         "got_eof()",
@@ -224,7 +224,7 @@ ATF_TEST_CASE_BODY(tp_3)
         "\n"
         "ident: single_test\n"
         "descr: Some description\n"
-        "timeout: 30\n"
+        "timeout: 300\n"
         "require.arch: thearch\n"
         "require.config: foo-bar\n"
         "require.machine: themachine\n"
@@ -234,7 +234,7 @@ ATF_TEST_CASE_BODY(tp_3)
 
     // NO_CHECK_STYLE_BEGIN
     const char* exp_calls[] = {
-        "got_tc(single_test, {descr=Some description, ident=single_test, require.arch=thearch, require.config=foo-bar, require.machine=themachine, require.progs=/bin/cp mv, require.user=root, timeout=30})",
+        "got_tc(single_test, {descr=Some description, ident=single_test, require.arch=thearch, require.config=foo-bar, require.machine=themachine, require.progs=/bin/cp mv, require.user=root, timeout=300})",
         "got_eof()",
         NULL
     };
@@ -474,7 +474,7 @@ ATF_TEST_CASE_BODY(tp_59)
         "\n"
         "\n"
         "ident: test\n"
-        "timeout: 30\n"
+        "timeout: 300\n"
     ;
 
     const char* exp_calls[] = {
@@ -762,7 +762,7 @@ ATF_TEST_CASE_BODY(get_metadata_several_tcs) {
         check_property((*iter).second, "descr", "Description 1");
         check_property((*iter).second, "has.cleanup", "false");
         check_property((*iter).second, "ident", "first");
-        check_property((*iter).second, "timeout", "30");
+        check_property((*iter).second, "timeout", "300");
     }
 
     {
@@ -786,7 +786,7 @@ ATF_TEST_CASE_BODY(get_metadata_several_tcs) {
         ATF_REQUIRE_EQ(3, (*iter).second.size());
         check_property((*iter).second, "has.cleanup", "false");
         check_property((*iter).second, "ident", "third");
-        check_property((*iter).second, "timeout", "30");
+        check_property((*iter).second, "timeout", "300");
     }
 }
 
