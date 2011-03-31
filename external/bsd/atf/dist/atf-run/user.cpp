@@ -31,11 +31,13 @@ extern "C" {
 #include <sys/types.h>
 
 #include <pwd.h>
+#include <unistd.h>
 
 #include "../atf-c/detail/user.h"
 }
 
 #include <stdexcept>
+#include <string>
 
 #include "../atf-c++/detail/sanity.hpp"
 
