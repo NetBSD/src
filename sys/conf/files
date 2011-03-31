@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1005 2011/03/20 17:54:02 tsutsui Exp $
+#	$NetBSD: files,v 1.1006 2011/03/31 19:40:51 dyoung Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1654,6 +1654,7 @@ file	net/radix.c
 file	net/raw_cb.c
 file	net/raw_usrreq.c
 file	net/route.c
+file	net/rtbl.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
