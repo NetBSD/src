@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.16 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.17 2011/03/31 19:40:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.16 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.17 2011/03/31 19:40:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ struct domain atalkdomain = {
 	.dom_dispose = NULL,
 	.dom_protosw = atalksw,
 	.dom_protoswNPROTOSW = &atalksw[__arraycount(atalksw)],
-	.dom_rtattach = rn_inithead,
+	.dom_rtattach = rt_inithead,
 	.dom_rtoffset = 32,
 	.dom_maxrtkey = sizeof(struct sockaddr_at),
 	.dom_ifattach = NULL,

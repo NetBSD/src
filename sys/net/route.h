@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.78 2011/02/01 01:39:20 matt Exp $	*/
+/*	$NetBSD: route.h,v 1.79 2011/03/31 19:40:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -309,7 +309,14 @@ struct rttimer_queue {
 };
 
 
+struct rtbl;
+typedef struct rtbl rtbl_t;
+
 #ifdef _KERNEL
+
+struct rtbl {
+	struct radix_node_head t_rnh;
+};
 
 struct rt_walkarg {
 	int	w_op;
@@ -347,7 +354,6 @@ struct route_info {
 
 extern	struct	route_info route_info;
 extern	struct	rtstat	rtstat;
-extern	struct	radix_node_head *rt_tables[AF_MAX+1];
 
 struct socket;
 struct dom_rtlist;
@@ -375,7 +381,6 @@ void	 rt_timer_queue_destroy(struct rttimer_queue *, int);
 void	 rt_timer_remove_all(struct rtentry *, int);
 unsigned long	rt_timer_count(struct rttimer_queue *);
 void	 rt_timer_timer(void *);
-void	 rtable_init(void **);
 void	 rtcache(struct route *);
 void	 rtflushall(int);
 struct rtentry *
@@ -424,8 +429,6 @@ out:
 	rt->rt_nodes->rn_key = (const char *)rt->_rt_key;
 	return rt->_rt_key;
 }
-
-struct rtentry *rtfindparent(struct radix_node_head *, struct route *);
 
 struct rtentry *rtcache_init(struct route *);
 struct rtentry *rtcache_init_noclone(struct route *);
@@ -502,9 +505,19 @@ RTFREE(struct rtentry *rt)
 		rt->rt_refcnt--;
 }
 
-int
-rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
+int rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
 void route_enqueue(struct mbuf *, int);
+int rt_inithead(rtbl_t **, int);
+struct rtentry *rt_matchaddr(rtbl_t *, const struct sockaddr *);
+int rt_addaddr(rtbl_t *, struct rtentry *, const struct sockaddr *);
+struct rtentry *rt_lookup(rtbl_t *, const struct sockaddr *,
+    const struct sockaddr *);
+struct rtentry *rt_deladdr(rtbl_t *, const struct sockaddr *,
+    const struct sockaddr *);
+void rtbl_init(void);
+rtbl_t *rt_gettable(sa_family_t);
+void rt_assert_inactive(const struct rtentry *);
 
 #endif /* _KERNEL */
+
 #endif /* !_NET_ROUTE_H_ */
