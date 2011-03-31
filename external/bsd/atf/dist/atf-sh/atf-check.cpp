@@ -33,12 +33,14 @@ extern "C" {
 
 #include <limits.h>
 #include <signal.h>
+#include <unistd.h>
 }
 
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <ios>
 #include <iostream>
 #include <iterator>
 #include <list>
