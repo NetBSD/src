@@ -1,11 +1,15 @@
-#	$NetBSD: Makefile,v 1.1 2010/06/30 16:14:18 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2011/03/31 08:22:54 pooka Exp $
 #
 
-.PATH:	${.CURDIR}/../../../../dev/putter
+.PATH:	${.CURDIR}/../../../../dev/pud
 
-LIB=	rumpdev_putter
+LIB=	rumpdev_pud
 
-SRCS=	putter.c
+SRCS=	pud.c pud_dev.c
+
+SRCS+=	component.c
+
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
