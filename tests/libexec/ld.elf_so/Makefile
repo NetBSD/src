@@ -5,6 +5,8 @@ NOMAN=		# defined
 
 .include <bsd.own.mk>
 
+SUBDIR+=	helper_dso1 .WAIT helper_dso2
+
 TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
 
 TESTS_C+=	t_dlerror-cleared t_dlerror-false t_dlinfo
@@ -20,5 +22,9 @@ SRCS.h_df_1_noopen1=	h_df_1_noopen.c
 PROGS+=			h_df_1_noopen2
 SRCS.h_df_1_noopen2=	h_df_1_noopen.c
 LDADD.h_df_1_noopen2=	-lpthread
+
+PROGS+=			h_locking
+SRCS.h_locking=		h_locking.c
+LDADD.h_locking=	-lpthread -Wl,--export-dynamic -Wl,-rpath,${TESTSDIR}
 
 .include <bsd.test.mk>
