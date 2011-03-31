@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.46 2011/03/30 09:22:29 martin Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.47 2011/03/31 12:47:01 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.46 2011/03/30 09:22:29 martin Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.47 2011/03/31 12:47:01 nakayama Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -101,7 +101,7 @@ static const char *reloc_names[] = {
 	"DISP_16", "DISP_32", "WDISP_30", "WDISP_22", "HI22",
 	"22", "13", "LO10", "GOT10", "GOT13",
 	"GOT22", "PC10", "PC22", "WPLT30", "COPY",
-	"GLOB_DAT", "JMP_SLOT", "RELATIVE", "UA_32"
+	"GLOB_DAT", "JMP_SLOT", "RELATIVE", "UA_32",
 
 	/* not used with 32bit userland, besides a few of the TLS ones */
 	"PLT32",
