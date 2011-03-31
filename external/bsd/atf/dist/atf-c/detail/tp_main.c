@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -322,11 +322,13 @@ process_params(int argc, char **argv, struct params *p)
 {
     atf_error_t err;
     int ch;
+    int old_opterr;
 
     err = params_init(p, argv[0]);
     if (atf_is_error(err))
         goto out;
 
+    old_opterr = opterr;
     opterr = 0;
     while (!atf_is_error(err) &&
            (ch = getopt(argc, argv, GETOPT_POSIX ":lr:s:v:")) != -1) {
@@ -360,6 +362,7 @@ process_params(int argc, char **argv, struct params *p)
     argv += optind;
 
     /* Clear getopt state just in case the test wants to use it. */
+    opterr = old_opterr;
     optind = 1;
 #if defined(HAVE_OPTRESET)
     optreset = 1;
