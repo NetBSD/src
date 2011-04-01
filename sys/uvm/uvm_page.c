@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.171 2011/02/02 17:53:42 chuck Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.172 2011/04/01 00:47:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.171 2011/02/02 17:53:42 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.172 2011/04/01 00:47:11 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1716,6 +1716,7 @@ uvm_pageidlezero(void)
 	struct pgfreelist *pgfl, *gpgfl;
 	struct uvm_cpu *ucpu;
 	int free_list, firstbucket, nextbucket;
+	bool lcont = false;
 
 	ucpu = curcpu()->ci_data.cpu_uvm;
 	if (!ucpu->page_idle_zero ||
@@ -1723,7 +1724,10 @@ uvm_pageidlezero(void)
 	    	ucpu->page_idle_zero = false;
 		return;
 	}
-	mutex_enter(&uvm_fpageqlock);
+	if (!mutex_tryenter(&uvm_fpageqlock)) {
+		/* Contention: let other CPUs to use the lock. */
+		return;
+	}
 	firstbucket = ucpu->page_free_nextcolor;
 	nextbucket = firstbucket;
 	do {
@@ -1735,7 +1739,7 @@ uvm_pageidlezero(void)
 			gpgfl = &uvm.page_free[free_list];
 			while ((pg = LIST_FIRST(&pgfl->pgfl_buckets[
 			    nextbucket].pgfl_queues[PGFL_UNKNOWN])) != NULL) {
-				if (sched_curcpu_runnable_p()) {
+				if (lcont || sched_curcpu_runnable_p()) {
 					goto quit;
 				}
 				LIST_REMOVE(pg, pageq.list); /* global list */
@@ -1773,7 +1777,12 @@ uvm_pageidlezero(void)
 #endif /* PMAP_PAGEIDLEZERO */
 				pg->flags |= PG_ZERO;
 
-				mutex_spin_enter(&uvm_fpageqlock);
+				if (!mutex_tryenter(&uvm_fpageqlock)) {
+					lcont = true;
+					mutex_spin_enter(&uvm_fpageqlock);
+				} else {
+					lcont = false;
+				}
 				pg->pqflags = PQ_FREE;
 				LIST_INSERT_HEAD(&gpgfl->pgfl_buckets[
 				    nextbucket].pgfl_queues[PGFL_ZEROS],
