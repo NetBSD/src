@@ -1,4 +1,4 @@
-.\"	$NetBSD: filemon.4,v 1.2 2011/04/01 08:48:41 wiz Exp $
+.\"	$NetBSD: filemon.4,v 1.3 2011/04/01 10:32:37 jruoho Exp $
 .\"
 .\" Copyright (c) 2011, Juniper Networks, Inc.
 .\"
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 14, 2011
+.Dd April 1, 2011
 .Dt FILEMON 4
 .Os
 .Sh NAME
@@ -31,7 +31,6 @@
 .Nd track interesting system calls
 .Sh SYNOPSIS
 .In filemon.h
-.Pa /dev/filemon
 .Sh DESCRIPTION
 .Nm
 provides a means for tracking the successful system calls performed by a process.
@@ -40,51 +39,13 @@ It is used by
 to track the activities of build scripts, for the purpose of automatically
 learning dependencies.
 .Pp
-Example:
-.Bd -literal -offset indent
-#include <filemon.h>
-
-pid_d pid;
-int fd, tfd;
-int status;
-
-filemon_fd = open("/dev/filemon", O_RDWR);
-temp_fd = mkstemp("/tmp/filemon.XXXXXXX");
-/* give filemon the temp file to use */
-ioctl(filemon_fd, FILEMON_SET_FD, &temp_fd);
-/* children do not need these once they exec */
-fcntl(filemon_fd, F_SETFD, 1);
-fcntl(temp_fd, F_SETFD, 1);
-
-pid = fork();
-switch(pid) {
- case -1:
-     err(1, "cannot fork");
-     break;
- case 0:
-     pid = getpid();
-     /* tell filemon to monitor this process */
-     ioctl(filemon_fd, FILEMON_SET_PID, &pid);
-     execvp(...);
-     _exit(1);
-     break;
- default:
-     status = wait();
-     close(filemon_fd);
-     lseek(temp_fd, SEEK_SET, 0);
-     /* read the captured syscalls from temp_fd */
-     close(temp_fd);
-     break;
-}
-.Ed
-It is possible to achieve almost equivalent results with
-.Xr dtrace 1
-though on many systems this requires elevated privileges.
-.Pp
 The data captured by
 .Nm
 for the command
-.Dl cat /etc/motd
+.Bd -literal -offset indent
+cat /etc/motd
+.Ed
+.Pp
 looks like:
 .Bd -literal -offset indent
 # filemon version 2
@@ -98,7 +59,10 @@ X 21848 0
 .Ed
 .Pp
 Most records follow the format:
-.Dl Ar type pid data
+.Bd -literal -offset indent
+type pid data
+.Ed
+.Pp
 where
 .Ar type
 is one of the list below, and unless otherwise specified,
@@ -139,6 +103,54 @@ is the exit status.
 indicates the version of
 .Nm .
 .El
+.Sh EXAMPLES
+The following example demonstrates the basic usage of
+.Nm :
+.Pp
+.Bd -literal -offset indent
+#include <filemon.h>
+
+pid_d pid;
+int fd, tfd;
+int status;
+
+filemon_fd = open("/dev/filemon", O_RDWR);
+temp_fd = mkstemp("/tmp/filemon.XXXXXXX");
+/* give filemon the temp file to use */
+ioctl(filemon_fd, FILEMON_SET_FD, &temp_fd);
+/* children do not need these once they exec */
+fcntl(filemon_fd, F_SETFD, 1);
+fcntl(temp_fd, F_SETFD, 1);
+
+pid = fork();
+switch(pid) {
+ case -1:
+     err(1, "cannot fork");
+     break;
+ case 0:
+     pid = getpid();
+     /* tell filemon to monitor this process */
+     ioctl(filemon_fd, FILEMON_SET_PID, &pid);
+     execvp(...);
+     _exit(1);
+     break;
+ default:
+     status = wait();
+     close(filemon_fd);
+     lseek(temp_fd, SEEK_SET, 0);
+     /* read the captured syscalls from temp_fd */
+     close(temp_fd);
+     break;
+}
+.Ed
+.Pp
+It is possible to achieve almost equivalent results with
+.Xr dtrace 1
+though on many systems this requires elevated privileges.
+.Sh FILES
+.Bd -literal
+/dev/filemon
+.Ed
 .Sh HISTORY
 .Nm
 was contributed by Juniper Networks.
