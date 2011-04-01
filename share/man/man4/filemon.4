@@ -1,16 +1,16 @@
-.\"	$NetBSD: filemon.4,v 1.1 2011/04/01 00:07:34 sjg Exp $
+.\"	$NetBSD: filemon.4,v 1.2 2011/04/01 08:48:41 wiz Exp $
 .\"
 .\" Copyright (c) 2011, Juniper Networks, Inc.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions 
-.\" are met: 
+.\" modification, are permitted provided that the following conditions
+.\" are met:
 .\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer. 
+.\"    notice, this list of conditions and the following disclaimer.
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.  
-.\" 
+.\"    documentation and/or other materials provided with the distribution.
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 .\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 .\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -21,7 +21,7 @@
 .\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+.\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd March 14, 2011
 .Dt FILEMON 4
@@ -33,15 +33,15 @@
 .In filemon.h
 .Pa /dev/filemon
 .Sh DESCRIPTION
-.Nm 
+.Nm
 provides a means for tracking the successful system calls performed by a process.
 It is used by
 .Xr make 1
 to track the activities of build scripts, for the purpose of automatically
 learning dependencies.
-
+.Pp
 Example:
-.Bd -literal
+.Bd -literal -offset indent
 #include <filemon.h>
 
 pid_d pid;
@@ -76,22 +76,17 @@ switch(pid) {
      close(temp_fd);
      break;
 }
-
 .Ed
-
 It is possible to achieve almost equivalent results with
-.Xr dtrace 1M 
+.Xr dtrace 1
 though on many systems this requires elevated privileges.
-
+.Pp
 The data captured by
 .Nm
 for the command
-.Bd -literal
-cat /etc/motd
-
-.Ed
+.Dl cat /etc/motd
 looks like:
-.Bd -literal
+.Bd -literal -offset indent
 # filemon version 2
 # Target pid 7437
 V 2
@@ -100,52 +95,47 @@ R 21848 /lib/libc.so.12
 R 21848 /etc/motd
 X 21848 0
 # Bye bye
-
 .Ed
-
+.Pp
 Most records follow the format:
-
-.Pa type
-.Pa pid
-.Pa data
-
-Where
-.Pa type
+.Dl Ar type pid data
+where
+.Ar type
 is one of the list below, and unless otherwise specified,
-.Pa data
+.Ar data
 is a pathname.
-.Bl -tag -width Ds
-.It C
+.Bl -tag -width Ds -offset indent
+.It Dv C
 .Xr chdir 2 .
-.It D
+.It Dv D
 .Xr unlink 2 .
-.It E
-.Xr exec 2 .
-.It F
+.It Dv E
+.Xr exec 3 .
+.It Dv F
 .Xr fork 2 ,
 .Xr vfork 2 ;
-.Pa data 
+.Ar data
 is the process id of the child.
-.It L
+.It Dv L
 .Xr link 2 ,
 .Xr symlink 2 ;
-.Pa data
+.Ar data
 is two pathnames.
-.It M
+.It Dv M
 .Xr rename 2 ;
-.Pa data
+.Ar data
 is two pathnames.
-.It R
+.It Dv R
 .Xr open 2
 read-only.
-.It W
+.It Dv W
 .Xr open 2
 for writing or read-write.
-.It X
-.Xr exit 2 ;
-.Pa data 
+.It Dv X
+.Xr exit 3 ;
+.Ar data
 is the exit status.
-.It V
+.It Dv V
 indicates the version of
 .Nm .
 .El
