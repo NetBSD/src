@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.22 2011/03/19 20:05:21 hannken Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.23 2011/04/01 17:40:54 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -526,10 +526,6 @@ symlink_zerolen(const atf_tc_t *tc, const char *mp)
 	USES_SYMLINKS;
 
 	RL(rump_sys_chdir(mp));
-
-	if (FSTYPE_TMPFS(tc)) {
-		atf_tc_expect_signal(SIGABRT, "PR kern/43843");
-	}
 
 	RL(rump_sys_symlink("", "afile"));
 	RL(rump_sys_chdir("/"));
