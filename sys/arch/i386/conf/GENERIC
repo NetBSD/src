@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1026 2011/03/06 17:08:25 bouyer Exp $
+# $NetBSD: GENERIC,v 1.1027 2011/04/01 12:11:16 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1026 $"
+#ident 		"GENERIC-$Revision: 1.1027 $"
 
 maxusers	64		# estimated number of users
 
@@ -38,7 +38,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	PAE		# PAE mode (36 bits physical addressing)
 
 # CPU features
-#acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
+acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
 coretemp*	at cpu?		# Intel on-die thermal sensor
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 #odcm0		at cpu0		# On-demand clock modulation
