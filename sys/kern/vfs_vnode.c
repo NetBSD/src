@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.2 2011/04/02 04:45:24 rmind Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.3 2011/04/02 05:07:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.2 2011/04/02 04:45:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.3 2011/04/02 05:07:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1144,7 +1144,7 @@ vwait(vnode_t *vp, int flags)
 }
 
 int
-vfs_drainvnodes(long target, struct lwp *l)
+vfs_drainvnodes(long target)
 {
 
 	while (numvnodes > target) {
@@ -1152,8 +1152,9 @@ vfs_drainvnodes(long target, struct lwp *l)
 
 		mutex_enter(&vnode_free_list_lock);
 		vp = getcleanvnode();
-		if (vp == NULL)
-			return EBUSY; /* give up */
+		if (vp == NULL) {
+			return EBUSY;
+		}
 		ungetnewvnode(vp);
 	}
 	return 0;
