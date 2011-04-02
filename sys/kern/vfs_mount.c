@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_mount.c,v 1.1 2011/04/02 04:28:56 rmind Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.2 2011/04/02 04:45:24 rmind Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.1 2011/04/02 04:28:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.2 2011/04/02 04:45:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -436,31 +436,20 @@ vflushnext(vnode_t *mvp, int *when)
 	return vunmark(mvp);
 }
 
-extern kmutex_t	vrele_lock;
-extern kcondvar_t vrele_cv;
-extern int vrele_pending;
-extern int vrele_gen;
-
 int
 vflush(struct mount *mp, vnode_t *skipvp, int flags)
 {
 	vnode_t *vp, *mvp;
-	int busy = 0, when = 0, gen;
+	int busy = 0, when = 0;
 
-	/*
-	 * First, flush out any vnode references from vrele_list.
-	 */
-	mutex_enter(&vrele_lock);
-	gen = vrele_gen;
-	while (vrele_pending && gen == vrele_gen) {
-		cv_broadcast(&vrele_cv);
-		cv_wait(&vrele_cv, &vrele_lock);
-	}
-	mutex_exit(&vrele_lock);
+	/* First, flush out any vnode references from vrele_list. */
+	vrele_flush();
 
 	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL)
-		return (ENOMEM);
+	mvp = vnalloc(mp);
+	if (mvp == NULL) {
+		return ENOMEM;
+	}
 
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
