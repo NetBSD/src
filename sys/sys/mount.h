@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.197 2011/03/06 17:08:38 bouyer Exp $	*/
+/*	$NetBSD: mount.h,v 1.198 2011/04/02 04:28:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -406,6 +406,7 @@ void	vfs_scrubvnlist(struct mount *);
 struct mount *vfs_mountalloc(struct vfsops *, struct vnode *);
 int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 	    int, const char *);
+void	vfs_insmntque(struct vnode *, struct mount *);
 
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
@@ -413,7 +414,10 @@ extern	int nvfssw;
 extern  kmutex_t mountlist_lock;
 extern	kmutex_t vfs_list_lock;
 
+void	vfs_mount_sysinit(void);
 long	makefstype(const char *);
+int	mount_domount(struct lwp *, struct vnode **, struct vfsops *,
+	    const char *, int, void *, size_t *);
 int	dounmount(struct mount *, int, struct lwp *);
 int	do_sys_mount(struct lwp *, struct vfsops *, const char *, const char *,
 	    int, void *, enum uio_seg, size_t, register_t *);
