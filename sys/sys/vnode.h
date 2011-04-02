@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.223 2010/07/28 11:03:47 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.224 2011/04/02 04:28:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -343,8 +343,6 @@ extern const int	vttoif_tab[];
 #define	UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
 #define	UPDATE_CLOSE	0x0004		/* update: clean up on close */
 
-extern kmutex_t	vnode_free_list_lock;
-
 void holdrelel(struct vnode *);
 void vholdl(struct vnode *);
 void vref(struct vnode *);
@@ -562,6 +560,7 @@ struct vattr;
 struct vnode;
 
 /* see vnode(9) */
+void	vfs_vnode_sysinit(void);
 int 	bdevvp(dev_t, struct vnode **);
 int 	cdevvp(dev_t, struct vnode **);
 int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
@@ -597,7 +596,7 @@ void	vnfree(struct vnode *);
 void	vmark(struct vnode *, struct vnode *);
 struct vnode *
 	vunmark(struct vnode *);
-void	vn_init1(void);
+void	vremfree(struct vnode *);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);
