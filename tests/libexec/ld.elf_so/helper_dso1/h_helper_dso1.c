@@ -29,6 +29,11 @@
 
 #include <poll.h>
 #include <stddef.h>
+#include <sys/tls.h>
+
+#if !defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE_TLS_VARIANT_II)
+#define	__thread
+#endif
 
 extern int sleep_init;
 extern int sleep_fini;
