@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.3 2011/04/02 05:07:57 rmind Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.4 2011/04/02 07:33:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.3 2011/04/02 05:07:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.4 2011/04/02 07:33:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -309,7 +309,7 @@ try_nextlist:
 }
 
 /*
- * Return the next vnode from the free list.
+ * getnewvnode: return the next vnode from the free list.
  */
 int
 getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
@@ -323,9 +323,8 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 try_again:
 	if (mp != NULL) {
 		/*
-		 * Mark filesystem busy while we're creating a
-		 * vnode.  If unmount is in progress, this will
-		 * fail.
+		 * Mark filesystem busy while we are creating a vnode.
+		 * If unmount is in progress, this will fail.
 		 */
 		error = vfs_busy(mp, NULL);
 		if (error)
@@ -384,7 +383,7 @@ try_again:
 			}
 			tablefull("vnode", "increase kern.maxvnodes or NVNODE");
 			*vpp = 0;
-			return (ENFILE);
+			return ENFILE;
 		}
 		vp->v_iflag = 0;
 		vp->v_vflag = 0;
@@ -405,7 +404,7 @@ try_again:
 	vp->v_data = NULL;
 
 	/*
-	 * initialize uvm_object within vnode.
+	 * Initialize uvm_object within vnode.
 	 */
 
 	uobj = &vp->v_uobj;
@@ -420,7 +419,7 @@ try_again:
 		vfs_unbusy(mp, true, NULL);
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -497,13 +496,15 @@ vtryget(vnode_t *vp)
 }
 
 /*
- * Grab a particular vnode from the free list, increment its
- * reference count and lock it. If the vnode lock bit is set the
- * vnode is being eliminated in vgone. In that case, we can not
- * grab the vnode, so the process is awakened when the transition is
- * completed, and an error returned to indicate that the vnode is no
- * longer usable (possibly having been changed to a new file system type).
- * Called with v_interlock held.
+ * vget: get a particular vnode from the free list, increment its reference
+ * count and lock it.
+ *
+ * => Should be called with v_interlock held.
+ *
+ * If VI_XLOCK is set, the vnode is being eliminated in vgone()/vclean().
+ * In that case, we cannot grab the vnode, so the process is awakened when
+ * the transition is completed, and an error returned to indicate that the
+ * vnode is no longer usable (e.g. changed to a new file system type).
  */
 int
 vget(vnode_t *vp, int flags)
@@ -556,7 +557,7 @@ vget(vnode_t *vp, int flags)
 }
 
 /*
- * vput(), just unlock and vrele()
+ * vput: unlock and release the reference.
  */
 void
 vput(vnode_t *vp)
@@ -660,7 +661,7 @@ retry:
 			 * our caller may hold other vnode locks; defer.
 			 */
 			defer = true;
-		} else {		
+		} else {
 			/* If we can't acquire the lock, then defer. */
 			vp->v_iflag &= ~VI_INACTREDO;
 			mutex_exit(&vp->v_interlock);
@@ -1029,7 +1030,7 @@ vrecycle(vnode_t *vp, kmutex_t *inter_lkp, struct lwp *l)
 	mutex_enter(&vp->v_interlock);
 	if (vp->v_usecount != 0) {
 		mutex_exit(&vp->v_interlock);
-		return (0);
+		return 0;
 	}
 	if (inter_lkp) {
 		mutex_exit(inter_lkp);
@@ -1038,7 +1039,7 @@ vrecycle(vnode_t *vp, kmutex_t *inter_lkp, struct lwp *l)
 	vp->v_usecount = 1;
 	vclean(vp, DOCLOSE);
 	vrelel(vp, 0);
-	return (1);
+	return 1;
 }
 
 /*
