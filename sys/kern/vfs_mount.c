@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.2 2011/04/02 04:45:24 rmind Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.3 2011/04/02 06:48:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.2 2011/04/02 04:45:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.3 2011/04/02 06:48:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1002,36 +1002,26 @@ vfs_sync_all(struct lwp *l)
 		printf("done\n");
 }
 
-static void
-vfs_shutdown1(struct lwp *l)
-{
-
-	vfs_sync_all(l);
-
-	/*
-	 * If we've panic'd, don't make the situation potentially
-	 * worse by unmounting the file systems.
-	 */
-	if (panicstr != NULL)
-		return;
-
-	/* Release inodes held by texts before update. */
-#ifdef notdef
-	vnshutdown();
-#endif
-	/* Unmount file systems. */
-	vfs_unmountall(l);
-}
-
 /*
  * Sync and unmount file systems before shutting down.
  */
 void
 vfs_shutdown(void)
 {
+	lwp_t *l = curlwp;
 
-	/* XXX we're certainly not running in lwp0's context! */
-	vfs_shutdown1(curlwp);
+	vfs_sync_all(l);
+
+	/*
+	 * If we have paniced - do not make the situation potentially
+	 * worse by unmounting the file systems.
+	 */
+	if (panicstr != NULL) {
+		return;
+	}
+
+	/* Unmount file systems. */
+	vfs_unmountall(l);
 }
 
 /*
