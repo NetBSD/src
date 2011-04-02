@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.149 2011/04/02 12:30:41 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.150 2011/04/02 16:49:49 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.149 2011/04/02 12:30:41 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.150 2011/04/02 16:49:49 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1405,24 +1405,6 @@ _rtld_objlist_remove(Objlist *list, Obj_Entry *obj)
 	if ((elm = _rtld_objlist_find(list, obj)) != NULL) {
 		SIMPLEQ_REMOVE(list, elm, Struct_Objlist_Entry, link);
 		xfree(elm);
-	}
-}
-
-void
-_rtld_lock(int arg, sigset_t *mask)
-{
-	switch (arg) {
-	default:
-		dbg(("%s: invalid argument: %d", __func__, arg));
-		break;
-	case RTLD_LOCK_PRE_FORK:
-		_rtld_exclusive_enter(mask);
-		_rtld_mutex_may_recurse = true;
-		break;
-	case RTLD_LOCK_POST_FORK:
-		_rtld_mutex_may_recurse = false;
-		_rtld_exclusive_exit(mask);
-		break;
 	}
 }
 
