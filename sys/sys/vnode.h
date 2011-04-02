@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.225 2011/04/02 04:45:24 rmind Exp $	*/
+/*	$NetBSD: vnode.h,v 1.226 2011/04/02 05:07:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -636,7 +636,7 @@ uint8_t	vtype2dt(enum vtype);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);
-int	vfs_drainvnodes(long target, struct lwp *);
+int	vfs_drainvnodes(long);
 void	vfs_timestamp(struct timespec *);
 #if defined(DDB) || defined(DEBUGPRINT)
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
