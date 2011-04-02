@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_vnode.c,v 1.1 2011/04/02 04:28:57 rmind Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.2 2011/04/02 04:45:24 rmind Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.1 2011/04/02 04:28:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.2 2011/04/02 04:45:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -124,11 +124,11 @@ static vnodelst_t	vnode_free_list;
 static vnodelst_t	vnode_hold_list;
 static vnodelst_t	vrele_list;
 
-/* static */ kmutex_t	vrele_lock;
-/* static */ kcondvar_t	vrele_cv;
+static kmutex_t		vrele_lock;
+static kcondvar_t	vrele_cv;
 static lwp_t *		vrele_lwp;
-/* static */ int	vrele_pending;
-/* static */ int	vrele_gen;
+static int		vrele_pending;
+static int		vrele_gen;
 
 static vnode_t *	getcleanvnode(void);
 static void		vrele_thread(void *);
@@ -838,6 +838,20 @@ vrele_thread(void *cookie)
 		vp->v_iflag &= ~VI_INACTPEND;
 		vrelel(vp, 0);
 	}
+}
+
+void
+vrele_flush(void)
+{
+	int gen;
+
+	mutex_enter(&vrele_lock);
+	gen = vrele_gen;
+	while (vrele_pending && gen == vrele_gen) {
+		cv_broadcast(&vrele_cv);
+		cv_wait(&vrele_cv, &vrele_lock);
+	}
+	mutex_exit(&vrele_lock);
 }
 
 /*
