@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.3 2010/06/24 13:03:05 hannken Exp $	*/
+/*	$NetBSD: vfs.c,v 1.4 2011/04/02 04:57:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -38,8 +38,6 @@
 #include <sys/pathname.h>
 #include <sys/priv.h>
 #include <lib/libkern/libkern.h>
-
-MALLOC_DECLARE(M_MOUNT);
 
 int
 lookupname(char *dirname, enum uio_seg seg, vnode_t **dirvpp, vnode_t **compvpp)

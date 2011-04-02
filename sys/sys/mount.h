@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.198 2011/04/02 04:28:57 rmind Exp $	*/
+/*	$NetBSD: mount.h,v 1.199 2011/04/02 04:57:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -375,8 +375,6 @@ struct mnt_export_args30 {
 };
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
-MALLOC_DECLARE(M_MOUNT);
 
 /*
  * exported VFS interface (see vfssubr(9))

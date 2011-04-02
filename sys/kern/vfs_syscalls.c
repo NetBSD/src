@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.420 2011/04/02 04:28:56 rmind Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.421 2011/04/02 04:57:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.420 2011/04/02 04:28:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.421 2011/04/02 04:57:35 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -111,8 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.420 2011/04/02 04:28:56 rmind Exp
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfs_var.h>
-
-MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 
 static int change_flags(struct vnode *, u_long, struct lwp *);
 static int change_mode(struct vnode *, int, struct lwp *l);
