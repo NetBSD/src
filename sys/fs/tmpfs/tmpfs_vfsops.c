@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.46 2010/06/26 03:38:14 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.47 2011/04/02 14:24:53 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.46 2010/06/26 03:38:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.47 2011/04/02 14:24:53 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -278,9 +278,6 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 
 	memcpy(&tfh, fhp, sizeof(struct tmpfs_fid));
 
-	if (tfh.tf_id >= tmp->tm_nodes_max)
-		return EINVAL;
-
 	found = false;
 	mutex_enter(&tmp->tm_lock);
 	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
@@ -293,7 +290,7 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	mutex_exit(&tmp->tm_lock);
 
 	/* XXXAD nothing to prevent 'node' from being removed. */
-	return found ? tmpfs_alloc_vp(mp, node, vpp) : EINVAL;
+	return found ? tmpfs_alloc_vp(mp, node, vpp) : ESTALE;
 }
 
 /* --------------------------------------------------------------------- */
