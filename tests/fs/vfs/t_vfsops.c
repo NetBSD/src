@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vfsops.c,v 1.9 2011/01/07 12:01:11 pooka Exp $	*/
+/*	$NetBSD: t_vfsops.c,v 1.10 2011/04/02 14:24:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -108,11 +108,6 @@ tfilehandle(const atf_tc_t *tc, const char *path)
 
 	/* open file based on file handle */
 	fd = rump_sys_fhopen(fhp, fhsize, O_RDONLY);
-	if (FSTYPE_TMPFS(tc)) {
-		atf_tc_expect_fail("PR kern/43605");
-		if (fd != -1 || errno != EINVAL)
-			atf_tc_expect_pass();
-	}
 	if (fd == -1) {
 		atf_tc_fail_errno("fhopen");
 	}
@@ -154,8 +149,6 @@ tfhremove(const atf_tc_t *tc, const char *path)
 	if (FSTYPE_MSDOS(tc) || FSTYPE_LFS(tc))
 		atf_tc_expect_fail("fhopen() for removed file succeeds "
 		    "(PR kern/43745)");
-	if (FSTYPE_TMPFS(tc))
-		atf_tc_expect_fail("PR kern/43605");
 	ATF_REQUIRE_ERRNO(ESTALE, rump_sys_fhopen(fhp, fhsize, O_RDONLY) == -1);
 	atf_tc_expect_pass();
 
@@ -174,8 +167,6 @@ tfhinval(const atf_tc_t *tc, const char *path)
 	void *fhp;
 	unsigned long seed;
 	int fd;
-
-	/* XXX: this test succeeds "accidentally" on tmpfs, PR kern/43605 */
 
 	srandom(seed = time(NULL));
 	printf("RNG seed %lu\n", seed);
