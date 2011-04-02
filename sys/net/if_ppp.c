@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.132 2010/08/21 13:19:40 pgoyette Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.133 2011/04/02 08:11:32 mbalmer Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.132 2010/08/21 13:19:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.133 2011/04/02 08:11:32 mbalmer Exp $");
 
 #include "ppp.h"
 
@@ -838,7 +838,7 @@ pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
     case SIOCSIFMTU:
 	if ((error = kauth_authorize_network(l->l_cred,
 	    KAUTH_NETWORK_INTERFACE, KAUTH_REQ_NETWORK_INTERFACE_SETPRIV,
-	    ifp, (void *)cmd, NULL) != 0))
+	    ifp, (void *)cmd, NULL)) != 0)
 	    break;
 	/*FALLTHROUGH*/
     default:

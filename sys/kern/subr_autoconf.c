@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.213 2011/02/06 23:25:17 jmcneill Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.214 2011/04/02 08:11:31 mbalmer Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.213 2011/02/06 23:25:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.214 2011/04/02 08:11:31 mbalmer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -275,7 +275,7 @@ frob_cfattachvec(const struct cfattachinit *cfattachv,
 	for (cfai = &cfattachv[0]; cfai->cfai_name != NULL; cfai++) {
 		for (j = 0; cfai->cfai_list[j] != NULL; j++) {
 			if ((error = att_do(cfai->cfai_name,
-			    cfai->cfai_list[j]) != 0)) {
+			    cfai->cfai_list[j])) != 0) {
 				pr("configure: attachment `%s' "
 				    "of `%s' driver %s failed: %d",
 				    cfai->cfai_list[j]->ca_name,

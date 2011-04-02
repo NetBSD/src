@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.76 2011/02/21 09:53:06 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.77 2011/04/02 08:11:31 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.76 2011/02/21 09:53:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.77 2011/04/02 08:11:31 mbalmer Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -351,7 +351,7 @@ module_init(void)
 	    module_listener_cb, NULL);
 
 	__link_set_foreach(mip, modules) {
-		if ((rv = module_builtin_add(mip, 1, false) != 0))
+		if ((rv = module_builtin_add(mip, 1, false)) != 0)
 			module_error("builtin %s failed: %d\n",
 			    (*mip)->mi_name, rv);
 	}
