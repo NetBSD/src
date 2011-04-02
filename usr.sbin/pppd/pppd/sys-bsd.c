@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.62 2010/03/10 13:45:39 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.63 2011/04/02 10:19:27 mbalmer Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.62 2010/03/10 13:45:39 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.63 2011/04/02 10:19:27 mbalmer Exp $");
 #endif
 #endif
 
@@ -793,7 +793,7 @@ sif6addr(int unit, eui64_t our_eui64, eui64_t his_eui64)
     addreq6.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
     memset(&addreq6.ifra_prefixmask.sin6_addr, 0xff,
 	sizeof(addreq6.ifra_prefixmask.sin6_addr) - sizeof(our_eui64));
-    memset(&addreq6.ifra_prefixmask.sin6_addr +
+    memset((char *)&addreq6.ifra_prefixmask.sin6_addr +
 	sizeof(addreq6.ifra_prefixmask.sin6_addr) - sizeof(our_eui64), 0x00,
 	sizeof(our_eui64));
 
