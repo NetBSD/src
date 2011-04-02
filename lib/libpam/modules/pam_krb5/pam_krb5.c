@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.22 2009/03/08 19:38:03 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.23 2011/04/02 10:22:09 mbalmer Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.22 2009/03/08 19:38:03 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.23 2011/04/02 10:22:09 mbalmer Exp $");
 #endif
 
 #include <sys/types.h>
@@ -540,7 +540,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 
 	/* Copy the creds (should be two of them) */
 	while ((krbret = krb5_cc_next_cred(pam_context, ccache_temp,
-				&cursor, &creds) == 0)) {
+				&cursor, &creds)) == 0) {
 
 		krbret = krb5_cc_store_cred(pam_context, ccache_perm, &creds);
 		if (krbret != 0) {
