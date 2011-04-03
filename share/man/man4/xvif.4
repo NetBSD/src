@@ -1,4 +1,4 @@
-.\"	$NetBSD: xvif.4,v 1.2 2011/01/11 10:47:45 wiz Exp $
+.\"	$NetBSD: xvif.4,v 1.3 2011/04/03 23:44:46 jym Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 8, 2011
+.Dd April 4, 2011
 .Dt XVIF 4 xen
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@ entries.
 All
 .Nm
 interfaces follow the
-.Dq xvifX.Y
+.Dq xvifX-Y
 naming convention, where
 .Sq X
 represents the guest domain identifier, and
@@ -80,12 +80,12 @@ Conceptually, frontends and backends drivers are
 similar to two Ethernet cards connected via a crossover cable.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "xvif%d.%d: can't read %s/mac: %d"
+.It "xvif%d-%d: can't read %s/mac: %d"
 The MAC address for this interface could not be read from XenStore.
-.It "xvif%d.%d: %s is not a valid mac address"
+.It "xvif%d-%d: %s is not a valid mac address"
 The MAC address specified in the configuration file of the newly
 created guest domain is invalid.
-.It "xvif%d.%d: Ethernet address %s"
+.It "xvif%d-%d: Ethernet address %s"
 MAC address of the
 .Nm
 interface.
