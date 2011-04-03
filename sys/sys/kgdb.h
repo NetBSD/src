@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.11 2009/01/11 10:20:53 cegger Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.12 2011/04/03 22:29:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,12 +89,14 @@ void kgdb_attach(int (*)(void *), void (*)(void *, int), void *);
 void kgdb_connect(int);
 void kgdb_panic(void);
 int kgdb_trap(int, db_regs_t *);
+int kgdb_disconnected(void);
 
 /*
  * Machine dependent functions needed by kgdb_stub.c
  */
 int kgdb_signal(int);
 int kgdb_acc(vaddr_t, size_t);
+void kgdb_entry_notice(int, db_regs_t *);
 void kgdb_getregs(db_regs_t *, kgdb_reg_t *);
 void kgdb_setregs(db_regs_t *, kgdb_reg_t *);
 
