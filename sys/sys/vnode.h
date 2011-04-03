@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.226 2011/04/02 05:07:56 rmind Exp $	*/
+/*	$NetBSD: vnode.h,v 1.227 2011/04/03 01:19:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -433,8 +433,6 @@ extern time_t		metadelay;	/* time to delay syncing metadata */
 #define	VDESC_VP1_WILLPUT	0x00000202
 #define	VDESC_VP2_WILLPUT	0x00000404
 #define	VDESC_VP3_WILLPUT	0x00000808
-#define	VDESC_NOMAP_VPP		0x00010000
-#define	VDESC_VPP_WILLRELE	0x00020000
 
 /*
  * VDESC_NO_OFFSET is used to identify the end of the offset list
@@ -465,11 +463,6 @@ struct vnodeop_desc {
 #ifdef _KERNEL
 
 /*
- * A list of all the operation descs.
- */
-extern struct vnodeop_desc	*vnodeop_descs[];
-
-/*
  * Interlock for scanning list of vnodes attached to a mountpoint
  */
 extern kmutex_t		mntvnode_lock;
@@ -480,19 +473,10 @@ extern kmutex_t		mntvnode_lock;
 extern int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
 
 /*
- * This macro is very helpful in defining those offsets in the vdesc struct.
- *
- * This is stolen from X11R4.  I ingored all the fancy stuff for
- * Crays, so if you decide to port this to such a serious machine,
- * you might want to consult Intrisics.h's XtOffset{,Of,To}.
+ * Macros for offsets in the vdesc struct.
  */
-#define	VOPARG_OFFSET(p_type,field) \
-	((int) (((char *) (&(((p_type)NULL)->field))) - ((char *) NULL)))
-#define	VOPARG_OFFSETOF(s_type,field) \
-	VOPARG_OFFSET(s_type*,field)
-#define	VOPARG_OFFSETTO(S_TYPE,S_OFFSET,STRUCT_P) \
-	((S_TYPE)(((char*)(STRUCT_P))+(S_OFFSET)))
-
+#define	VOPARG_OFFSETOF(type, member)	offsetof(type, member)
+#define	VOPARG_OFFSETTO(type,offset,sp)	((type)(((char *)(sp)) + (offset)))
 
 /*
  * This structure is used to configure the new vnodeops vector.
@@ -501,6 +485,7 @@ struct vnodeopv_entry_desc {
 	const struct vnodeop_desc *opve_op;	/* which operation this is */
 	int (*opve_impl)(void *);	/* code implementing this operation */
 };
+
 struct vnodeopv_desc {
 			/* ptr to the ptr to the vector where op should go */
 	int (***opv_desc_vector_p)(void *);
@@ -588,8 +573,6 @@ void	vwait(struct vnode *, int);
 void	vclean(struct vnode *, int);
 void	vrevoke(struct vnode *);
 void	vrelel(struct vnode *, int);
-#define VRELEL_NOINACTIVE	0x01
-#define VRELEL_ONHEAD 		0x02
 #define VRELEL_ASYNC_RELE	0x03
 struct vnode *
 	vnalloc(struct mount *);
