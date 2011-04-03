@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.113 2011/02/24 10:56:03 jruoho Exp $
+#	$NetBSD: files.xen,v 1.114 2011/04/03 22:29:27 dyoung Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -255,6 +255,9 @@ file	arch/x86/x86/mpacpi.c		acpi
 file	arch/x86/x86/acpi_machdep.c	acpi
 file	arch/x86/x86/i8259.c
 
+# Stubs for x86 routines not included in the system
+file	arch/x86/x86/x86_stub.c
+
 # MP configuration using Intel SMP specification 1.4
 file	arch/x86/x86/mpbios.c		mpbios
 
@@ -265,6 +268,7 @@ file	arch/x86/pci/pci_bus_fixup.c	pci_bus_fixup
 file	arch/x86/pci/pci_addr_fixup.c	pci_addr_fixup
 
 file	arch/x86/x86/apic.c		ioapic
+file	arch/x86/x86/nmi.c
 
 device ioapic
 attach ioapic at ioapicbus
