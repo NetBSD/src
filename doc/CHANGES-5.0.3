@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.33 2011/03/29 20:13:51 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.34 2011/04/03 06:11:05 jdc Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2678,4 +2678,10 @@ sys/netinet/tcp_output.c			1.170
 	Clean up setting ECN bit in TOS.  Fixes PR 44742
   
 	[spz, ticket #1586]
+
+sys/netinet6/ipcomp_input.c			1.37
+sys/netipsec/xform_ipcomp.c			1.26
+
+	mitigation for CVE-2011-1547
+	[spz, ticket #1590]
 
