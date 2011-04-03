@@ -1,4 +1,4 @@
-/* $NetBSD: t_mprotect.c,v 1.1 2011/04/03 16:12:46 jruoho Exp $ */
+/* $NetBSD: t_mprotect.c,v 1.2 2011/04/03 16:22:15 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mprotect.c,v 1.1 2011/04/03 16:12:46 jruoho Exp $");
+__RCSID("$NetBSD: t_mprotect.c,v 1.2 2011/04/03 16:22:15 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -41,8 +41,6 @@ __RCSID("$NetBSD: t_mprotect.c,v 1.1 2011/04/03 16:12:46 jruoho Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <stdio.h>		/* XXX. */
 
 #include <atf-c.h>
 
