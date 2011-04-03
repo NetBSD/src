@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.66 2011/02/20 07:50:25 matt Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.67 2011/04/03 03:19:52 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.66 2011/02/20 07:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.67 2011/04/03 03:19:52 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,6 +433,14 @@ dec_3maxplus_get_timecount(struct timecounter *tc)
 static void
 dec_3maxplus_tc_init(void)
 {
+#if defined(MIPS3)
+	static struct timecounter tc3 =  {
+		.tc_get_timecount = (timecounter_get_t *)mips3_cp0_count_read,
+		.tc_counter_mask = ~0u,
+		.tc_name = "mips3_cp0_counter",
+		.tc_quality = 200,
+	};
+#endif
 	static struct timecounter tc = {
 		.tc_get_timecount = dec_3maxplus_get_timecount,
 		.tc_quality = 100,
@@ -442,4 +450,12 @@ dec_3maxplus_tc_init(void)
 	};
 
 	tc_init(&tc);
+
+#if defined(MIPS3)
+	if (MIPS_HAS_CLOCK) {
+		tc3.tc_frequency = mips_options.mips_cpu_mhz * 1000000;
+
+		tc_init(&tc3);
+	}
+#endif
 }

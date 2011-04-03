@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.69 2011/03/10 17:13:13 tsutsui Exp $ */
+/* $NetBSD: dec_3min.c,v 1.70 2011/04/03 03:19:52 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.69 2011/03/10 17:13:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.70 2011/04/03 03:19:52 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,9 +469,6 @@ dec_3min_tc_init(void)
 
 	if (MIPS_HAS_CLOCK) {
 		tc.tc_frequency = mips_options.mips_cpu_mhz * 1000000;
-		if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
-			tc.tc_frequency /= 2;
-		}
 
 		tc_init(&tc);
 	}
