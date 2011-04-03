@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.82 2011/03/20 20:52:33 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.83 2011/04/03 15:15:57 riz Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1188,4 +1188,15 @@ sys/kern/kern_exec.c				1.269 via patch
 
 	Check for number of processes resource violation in execve().
 	[spz, ticket #1421]
+
+sys/netinet/tcp_output.c			1.170 via patch
+
+	Clean up setting ECN bit in TOS.  Fixes PR 44742
+	[spz, ticket #1424]
+
+sys/netinet6/ipcomp_input.c			1.37 via patch
+sys/netipsec/xform_ipcomp.c			1.26 via patch
+
+	Prevent nesting ipcomp.  CVE-2011-1547.
+	[spz, ticket #1425]
 
