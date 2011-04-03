@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.284 2011/03/31 23:34:48 joerg Exp $
+# $NetBSD: mi,v 1.285 2011/04/03 16:12:45 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -564,10 +564,12 @@
 ./usr/libdata/debug/usr/tests/sbin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs				tests-sbin-tests
 ./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
+./usr/libdata/debug/usr/tests/syscall/t_access.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_dup.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_fsync.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_mmap.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_mprotect.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_timer.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/usr.bin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/usr.sbin					tests-sbin-tests
@@ -2104,10 +2106,12 @@
 ./usr/tests/sys/rc/t_rc_d_cli			tests-sys-tests	atf
 ./usr/tests/syscall				tests-syscall-tests
 ./usr/tests/syscall/Atffile			tests-syscall-tests	atf
+./usr/tests/syscall/t_access			tests-syscall-tests	atf
 ./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
 ./usr/tests/syscall/t_dup			tests-syscall-tests	atf
 ./usr/tests/syscall/t_fsync			tests-syscall-tests	atf
 ./usr/tests/syscall/t_mmap			tests-syscall-tests	atf
+./usr/tests/syscall/t_mprotect			tests-syscall-tests	atf
 ./usr/tests/syscall/t_timer			tests-syscall-tests	atf
 ./usr/tests/toolchain	tests-syscall-tests	atf
 ./usr/tests/toolchain/Atffile	tests-syscall-tests	atf
