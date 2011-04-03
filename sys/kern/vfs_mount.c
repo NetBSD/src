@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.3 2011/04/02 06:48:20 rmind Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.4 2011/04/03 01:20:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.3 2011/04/02 06:48:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.4 2011/04/03 01:20:23 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -376,13 +376,8 @@ vfs_insmntque(vnode_t *vp, struct mount *mp)
 {
 	struct mount *omp;
 
-#ifdef DIAGNOSTIC
-	if ((mp != NULL) &&
-	    (mp->mnt_iflag & IMNT_UNMOUNT) &&
-	    vp->v_tag != VT_VFS) {
-		panic("insmntque into dying filesystem");
-	}
-#endif
+	KASSERT(mp == NULL || (mp->mnt_iflag & IMNT_UNMOUNT) == 0 ||
+	    vp->v_tag == VT_VFS);
 
 	mutex_enter(&mntvnode_lock);
 	/*
