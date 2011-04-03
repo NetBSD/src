@@ -1,5 +1,5 @@
-.\"	$NetBSD: units.1,v 1.16 2011/04/03 19:25:05 dholland Exp $
-.Dd March 28, 2011
+.\"	$NetBSD: units.1,v 1.17 2011/04/03 19:44:15 dholland Exp $
+.Dd April 3, 2011
 .Dt UNITS 1
 .Os
 .Sh NAME
@@ -159,6 +159,32 @@ the standard units library
 .An Adrian Mariano Aq adrian@cam.cornell.edu
 or
 .Aq mariano@geom.umn.edu
+.Sh CAVEATS
+While
+.Nm
+can be used as a calculator for many unit-related computations,
+caution is required: many computations require additional constant
+factors deriving from the physics (or chemistry or whatever) of the
+situation.
+As these factors are dimensionless,
+.Nm
+cannot itself either provide them or warn the user when they have been
+forgotten.
+For example, one joule is one kilogram meter squared per second
+squared, by definition; however, the kinetic energy of a one-kilogram
+object moving at one meter per second is half a joule, not one joule,
+because of a dimensionless factor that arises from integration.
+.Pp
+Also, some pairs of units that have the same dimensionality are
+nonetheless used to measure different things and attempting to convert
+between them may require additional fudge factors or be entirely
+meaningless.
+For example, torque and energy have the same dimensionality, but
+attempting to convert torque in newton-meters to energy in joules is
+nonsensical.
+There is no practical way for
+.Nm
+to warn about these issues either.
 .Sh BUGS
 The effect of including a
 .Sq \&/
@@ -180,6 +206,3 @@ of the units converted and on the length of the data file.
 The program should use a hash table to store units so that
 it doesn't take so long to load the units list and check
 for duplication.
-.Pp
-The program should warn users when they're trying to perform a conversion
-that doesn't make sense, since there are many such combinations.
