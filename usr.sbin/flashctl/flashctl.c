@@ -1,4 +1,4 @@
-/*	$NetBSD: flashctl.c,v 1.2 2011/03/20 06:10:27 ahoka Exp $	*/
+/*	$NetBSD: flashctl.c,v 1.3 2011/04/04 18:30:07 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -137,10 +137,10 @@ main(int argc, char **argv)
 		printf("\n");
 
 		/* TODO: humanize */
-		printf("Capacity %jd Mbytes, %jd pages, %zu bytes/page\n", 
+		printf("Capacity %jd Mbytes, %jd pages, %ju bytes/page\n", 
 		    (intmax_t )ip.ip_flash_size / 1024 / 1024,
 		    (intmax_t )ip.ip_flash_size / ip.ip_page_size,
-		    ip.ip_page_size);
+		    (intmax_t )ip.ip_page_size);
 
 		if (ip.ip_flash_type == FLASH_TYPE_NAND) {
 			printf("Block size %jd Kbytes, %jd pages/block\n",
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 	} else if (!strcmp("badblocks", command)) {
 		struct flash_info_params ip;
 		struct flash_badblock_params bbp;
-		flash_addr_t addr;
+		flash_off_t addr;
 		bool hasbad = false;
 
 		error = ioctl(fd, FLASH_GET_INFO, &ip);
@@ -185,7 +185,7 @@ main(int argc, char **argv)
 			printf("No bad blocks found.\n");
 		}
 	} else if (!strcmp("markbad", command)) {
-		flash_addr_t address;
+		flash_off_t address;
 
 		/* TODO: maybe we should let the user specify
 		 * multiple blocks?
