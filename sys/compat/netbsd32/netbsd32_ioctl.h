@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.33 2011/03/19 13:47:43 cliff Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.34 2011/04/04 17:46:22 ahoka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -396,7 +396,7 @@ struct netbsd32_vnd_ioctl50 {
 
 /* from <sys/flashio.h> */
 struct netbsd32_flash_info_params {
-	flash_addr_t ip_flash_size;
+	flash_off_t ip_flash_size;
 	netbsd32_size_t ip_page_size;
 	netbsd32_size_t ip_erase_size;
 	uint8_t ip_flash_type;
