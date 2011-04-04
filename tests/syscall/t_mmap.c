@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.1 2011/03/31 13:07:20 jruoho Exp $ */
+/* $NetBSD: t_mmap.c,v 1.2 2011/04/04 10:30:29 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.1 2011/03/31 13:07:20 jruoho Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.2 2011/04/04 10:30:29 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -66,7 +66,7 @@ map_check(void *map, int flag)
 static void
 map_sighandler(int signo)
 {
-	exit(signo);
+	_exit(signo);
 }
 
 ATF_TC(mmap_err);
