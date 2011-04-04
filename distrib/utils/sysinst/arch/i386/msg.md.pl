@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.33 2011/03/24 22:08:33 martin Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.34 2011/04/04 08:30:33 mbalmer Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -130,7 +126,7 @@ chcesz to zrobic?
 (Odpowiedz 'nie' zabierze cie spowrotem do menu edycji partycji.)}
 
 message missing_bootmenu_text
-{Masz wiecej niz jeden system operacyjny na tym dysku, ale nie 
+{Masz wiecej niz jeden system operacyjny na tym dysku, ale nie
 zostalo wskazane menu ani dla aktywnej partycji ani dla partycji
 NetBSD, ktora bedzie zainstalowana.
 

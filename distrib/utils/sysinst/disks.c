@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.112 2011/01/26 01:18:46 pooka Exp $ */
+/*	$NetBSD: disks.c,v 1.113 2011/04/04 08:30:12 mbalmer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -216,7 +212,7 @@ get_descr_scsi(struct disk_desc *dd, int fd)
 	humanize_number(size, sizeof(size),
 	    (uint64_t)dd->dd_secsize * (uint64_t)dd->dd_totsec,
 	    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
-	
+
 	snprintf(dd->dd_descr, sizeof(dd->dd_descr),
 	    "%s (%s, %s %s)",
 	    dd->dd_name, size, vendor, product);
@@ -271,7 +267,7 @@ get_descr_ata(struct disk_desc *dd, int fd)
 	humanize_number(size, sizeof(size),
 	    (uint64_t)dd->dd_secsize * (uint64_t)dd->dd_totsec,
 	    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
-	
+
 	snprintf(dd->dd_descr, sizeof(dd->dd_descr), "%s (%s, %s)",
 	    dd->dd_name, size, model);
 
@@ -421,9 +417,9 @@ find_disks(const char *doingwhat)
 	if (dlsize == 0)
 		dlsize = disk->dd_cyl * disk->dd_head * disk->dd_sec;
 	if (dlsize > UINT32_MAX) {
-		msg_display(MSG_toobigdisklabel);	
+		msg_display(MSG_toobigdisklabel);
 		process_menu(MENU_ok, NULL);
-		return -1;	
+		return -1;
 	}
 	dlcylsize = dlhead * dlsec;
 
@@ -832,7 +828,7 @@ fsck_preen(const char *disk, int ptn, const char *fsname)
 {
 	char *prog;
 	int error;
-	
+
 	ptn += 'a';
 	if (fsname == NULL)
 		return 0;
