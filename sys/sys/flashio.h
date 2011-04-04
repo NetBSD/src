@@ -1,4 +1,4 @@
-/*	$NetBSD: flashio.h,v 1.2 2011/04/04 16:26:09 ahoka Exp $	*/
+/*	$NetBSD: flashio.h,v 1.3 2011/04/04 18:23:39 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -79,8 +79,8 @@ struct flash_badblock_params {
 
 struct flash_info_params {
 	flash_off_t ip_flash_size;
-	size_t ip_page_size;
-	size_t ip_erase_size;
+	flash_size_t ip_page_size;
+	flash_size_t ip_erase_size;
 	uint8_t ip_flash_type;
 };
 
