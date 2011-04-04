@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.3 2011/03/27 19:09:43 phx Exp $ */
+/* $NetBSD: rge.c,v 1.4 2011/04/04 16:41:34 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -219,6 +219,10 @@ rge_send(void *dev, char *buf, unsigned len)
 	volatile struct desc *txd;
 	unsigned loop;
 
+	if (len < 60) {
+		memset(buf + len, 0, 60 - len);
+		len = 60; /* RTL does not stretch <60 Tx frame */
+	}
 	wbinv(buf, len);
 	txd = &l->txd[l->tx];
 	txd->xd2 = htole32(VTOPHYS(buf));
