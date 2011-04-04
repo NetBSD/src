@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.51 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.52 2011/04/04 22:48:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.51 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.52 2011/04/04 22:48:15 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,10 +282,12 @@ ehci_pci_detach(device_t self, int flags)
 	struct ehci_pci_softc *sc = device_private(self);
 	int rv;
 
-	pmf_device_deregister(self);
 	rv = ehci_detach(&sc->sc, flags);
 	if (rv)
 		return rv;
+
+	pmf_device_deregister(self);
+	ehci_shutdown(self, flags);
 
 	/* disable interrupts */
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
