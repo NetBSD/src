@@ -1,4 +1,4 @@
-/* $NetBSD: t_getpid.c,v 1.1 2011/04/04 06:48:05 jruoho Exp $ */
+/* $NetBSD: t_getpid.c,v 1.2 2011/04/04 10:30:29 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getpid.c,v 1.1 2011/04/04 06:48:05 jruoho Exp $");
+__RCSID("$NetBSD: t_getpid.c,v 1.2 2011/04/04 10:30:29 jruoho Exp $");
 
 #include <sys/wait.h>
 
@@ -74,15 +74,15 @@ ATF_TC_BODY(getpid_process, tc)
 			ppid = getppid();
 
 			if (tpid != ppid)
-				exit(EXIT_FAILURE);
+				_exit(EXIT_FAILURE);
 
 			if (cpid == ppid)
-				exit(EXIT_FAILURE);
+				_exit(EXIT_FAILURE);
 
 			if (tpid == fpid)
-				exit(EXIT_FAILURE);
+				_exit(EXIT_FAILURE);
 
-			exit(EXIT_SUCCESS);
+			_exit(EXIT_SUCCESS);
 		}
 
 		wpid = wait(&sta);
