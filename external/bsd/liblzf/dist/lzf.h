@@ -76,9 +76,12 @@
  *
  */
 unsigned int 
-lzf_compress (const void *const in_data,  unsigned int in_len,
-              void             *out_data, unsigned int out_len,
-	      LZF_STATE htab);
+lzf_compress (const void *const,  unsigned int,
+              void             *, unsigned int 
+#if LZF_STATE_ARG
+	      , LZF_STATE
+#endif
+	      );
 	 
 /*
  * Decompress data compressed with some version of the lzf_compress
@@ -96,8 +99,8 @@ lzf_compress (const void *const in_data,  unsigned int in_len,
  * This function is very fast, about as fast as a copying loop.
  */
 unsigned int 
-lzf_decompress (const void *const in_data,  unsigned int in_len,
-                void             *out_data, unsigned int out_len);
+lzf_decompress (const void *const ,  unsigned int,
+                void             *, unsigned int);
 
 #endif
 
