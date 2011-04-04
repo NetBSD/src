@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1065 2011/03/16 23:20:00 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1066 2011/04/04 15:13:08 dyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1068 2011/03/16 23:19:32 matt Exp
+ *	NetBSD: pcidevs,v 1.1069 2011/04/04 14:33:51 bouyer Exp
  */
 
 /*
@@ -3922,6 +3922,7 @@
 
 /* RDC Semiconductor products */
 #define	PCI_PRODUCT_RDC_R6040	0x6040		/* RDC R6040 10/100 Ethernet */
+#define	PCI_PRODUCT_RDC_IDE	0x1011		/* RDC IDE controller */
 
 /* Realtek products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 Ethernet */
