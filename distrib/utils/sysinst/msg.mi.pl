@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.72 2011/03/24 22:08:28 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.73 2011/04/04 08:30:13 mbalmer Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -93,7 +89,7 @@ message thanks
 message installusure
 {Zdecydowales sie zainstalowac NetBSD na twardym dysku. Spowoduje to zmiane
 informacji na twoim dysku. Powinienes zrobic pelny backup danych przed
-rozpoczeciem tej procedury!  Zostana wykonane nastepujace czynnosci: 
+rozpoczeciem tej procedury!  Zostana wykonane nastepujace czynnosci:
 	a) Podzial dysku twardego
 	b) Stworzenie nowych systemow plikow BSD
 	c) Wgranie i zainstalowanie pakietow dystrybucji
@@ -117,7 +113,7 @@ message reinstallusure
 Ta procedura tylko sciaga i rozpakowuje pakiety na pre-partycjonowany
 bootowalny dysk. Nie nazywa dyskow, aktualizuje bootblokow, lub zapisuje
 istniejacej konfiguracji.   (Wyjdz i wybierz `instaluj' lub
-`aktualizuj' jesli chcesz to zrobic.) Powinienes wykonac `instaluj' lub 
+`aktualizuj' jesli chcesz to zrobic.) Powinienes wykonac `instaluj' lub
 `aktualizuj' przed rozpoczeciem tej procedury!
 
 Czy napewno chcesz przeinstalowac pakiety dystrybucjne NetBSD?
@@ -164,13 +160,13 @@ message megname
 {MB}
 
 message layout
-{NetBSD uzywa BSD disklabel aby pociac czesc dysku NetBSD na kilka  
+{NetBSD uzywa BSD disklabel aby pociac czesc dysku NetBSD na kilka
 partycji BSD.  Musisz teraz skonfigurowac BSD disklabel.
-Masz kilka mozliwosci. Sa one opisane ponizej. 
--- Standard: partycje BSD disklabel sa ustawiane przez ten program. 
+Masz kilka mozliwosci. Sa one opisane ponizej.
+-- Standard: partycje BSD disklabel sa ustawiane przez ten program.
 -- Uzyj istniejacych: Uzywa aktualnych partycji. Musisz je zamontowac.
 
-Dysk NetBSD to %d Megabajtow. 
+Dysk NetBSD to %d Megabajtow.
 Standard wymaga przynajmniej %d Megabajtow.
 Standard z X Window System wymaga przynajmniej %d Megabajtow.
 }
@@ -189,7 +185,7 @@ Wybierz specyfikator rozmiaru}
 message ptnsizes
 {Mozesz teraz zmienic rozmiary partycji systemowych. Domyslne ustawienia
 alokuja cala przestrzen na glowny system plikow, aczkolwiek mozesz zdefiniowac
-osobne partycje /usr (dodatkowe pliki systemowe), /var (dane systemowe i logi) 
+osobne partycje /usr (dodatkowe pliki systemowe), /var (dane systemowe i logi)
 lub /home (katalogi domowe uzytkownikow).
 
 Wolna przestrzen zostanie dodana do partycji oznaczonej '+'.
@@ -263,7 +259,7 @@ message partition_sizes_ok
 {Rozmiary partycji w porzadku}
 
 message edfspart
-{Powinienes najpierw ustawic rodzaj systemu plikow (SP). 
+{Powinienes najpierw ustawic rodzaj systemu plikow (SP).
 Pozniej inne wartosci.
 
 Aktualne wartosci dla partycji %c:
@@ -349,7 +345,7 @@ message packname
 {Podaj nazwe dla swojego dysku NetBSD}
 
 message lastchance
-{Ok, jestesmy teraz gotowi zainstalowac NetBSD na twoim dysku (%s). Nic 
+{Ok, jestesmy teraz gotowi zainstalowac NetBSD na twoim dysku (%s). Nic
 nie zostalo jeszcze zapisane. Masz teraz ostatnia szanse na przerwanie tego
 procesu poki nic nie zostalo jeszcze zmienione.
 
@@ -393,7 +389,7 @@ potrzebom. Przegladnij /etc/defaults/rc.conf aby poznac domyslne wartosci.
 
 message upgrcomplete
 {Aktualizacja NetBSD-@@VERSION@@ zostala zakonczona. Bedziesz teraz
-musial wykonac polecenia zawarte w pliku INSTALL, aby uzyskac system 
+musial wykonac polecenia zawarte w pliku INSTALL, aby uzyskac system
 odpowiadajacy twoim potrzebom.
 
 Musisz przynajmniej dostosowac rc.conf do swojego lokalnego srodowiska
@@ -405,7 +401,7 @@ zostac utworzone dla tej wersji), jesli uzywales lokalnych plikow hasel.
 
 
 message unpackcomplete
-{Rozpakowywanie dodatkowych pakietow NetBSD-@@VERSION@@ zostalo zakonczone. 
+{Rozpakowywanie dodatkowych pakietow NetBSD-@@VERSION@@ zostalo zakonczone.
 Musisz teraz wykonac
 polecenia zawarte w pliku INSTALL aby przekonfigurowac system do swoich
 potrzeb.
@@ -444,7 +440,7 @@ message dev
 {urzadzenie}
 
 message nfssource
-{Wprowadz hosta NFS oraz katalog gdzie znajduje sie dystrybucja. 
+{Wprowadz hosta NFS oraz katalog gdzie znajduje sie dystrybucja.
 Pamietaj, ze katalog musi zawierac pliki .tgz oraz, ze musi byc
 dostepny przez NFS.
 
@@ -459,7 +455,7 @@ znajdowac sie w glownym katalogu dyskietki.
 
 message cdromsource
 {Podaj urzadzenie CDROM oraz katalog na CDROMie, w ktorym znajduje sie
-dystrybucja. 
+dystrybucja.
 Pamietaj, ze katalog musi zawierac pliki .tgz.
 
 }
@@ -476,13 +472,13 @@ CD. Prosze sprawdzic urzadzenie i sciezke.}
 
 message localfssource
 {Podaj niezamountowane lokalne urzadzenie oraz katalog na nim, gdzie
-znajduje sie dystrybucja. 
+znajduje sie dystrybucja.
 Pamietaj, ze katalog musi zawierac pliki .tgz.
 
 }
 
 message localdir
-{Podaj aktualnie zamountowany lokalny katalog, gdzie znajduje sie dystrybucja. 
+{Podaj aktualnie zamountowany lokalny katalog, gdzie znajduje sie dystrybucja.
 Pamietaj, ze katalog musi zawierac pliki .tgz.
 
 }
@@ -543,33 +539,33 @@ message net_media
 message netok
 {Ponizej sa wartosci, ktore wprowadziles.
 
-Domena DNS:		%s 
-Nazwa hosta:		%s 
-Podstawowy interfejs:	%s 
-Twoj adres IP:		%s 
-Maska podsieci:		%s 
-Serwer nazw IPv4:	%s 
-Bramka IPv4:		%s 
+Domena DNS:		%s
+Nazwa hosta:		%s
+Podstawowy interfejs:	%s
+Twoj adres IP:		%s
+Maska podsieci:		%s
+Serwer nazw IPv4:	%s
+Bramka IPv4:		%s
 Medium sieciowe:	%s
 }
 
 message netok_slip
 {Ponizej sa wartosci, ktore wprowadziles. Czy sa poprawne?
 
-Domena DNS:		%s 
-Nazwa hosta:		%s 
-Podstawowy interfejs:	%s 
-Twoj adres IP:		%s 
+Domena DNS:		%s
+Nazwa hosta:		%s
+Podstawowy interfejs:	%s
+Twoj adres IP:		%s
 Adres IP serwera:	%s
-Maska podsieci:		%s 
-Serwer nazw IPv4:	%s 
-Bramka IPv4:		%s 
+Maska podsieci:		%s
+Serwer nazw IPv4:	%s
+Bramka IPv4:		%s
 Medium sieciowe:	%s
 }
 
 message netokv6
-{Autkonfiguracja IPv6:	%s 
-Serwer nazw IPv6:	%s 
+{Autkonfiguracja IPv6:	%s
+Serwer nazw IPv6:	%s
 }
 
 message netok_ok
@@ -644,7 +640,7 @@ message createfstab
 
 
 message noetcfstab
-{Pomocy! Na dysku docelowym %s nie ma /etc/fstab. Przerywamy aktualizacje. 
+{Pomocy! Na dysku docelowym %s nie ma /etc/fstab. Przerywamy aktualizacje.
 }
 
 message badetcfstab
@@ -690,7 +686,7 @@ message rootmissing
 
 message badroot
 {Kompletny nowy system plikow nie przeszedl podstawowych testow.
- Jestes pewien, ze zainstalowales wszystkie wymagane pakiety? 
+ Jestes pewien, ze zainstalowales wszystkie wymagane pakiety?
 }
 
 message fd_type
@@ -704,7 +700,7 @@ message fdremount
 {Dyskietka nie zostala pomyslnie zamountowana.
 }
 
-message fdmount	
+message fdmount
 {Wloz dyskietke zawierajaca plik "%s.%s".
 
 Jezeli nie masz juz wiecej dyskietek, wybierz "Pakiet kompletny"
@@ -815,13 +811,13 @@ message config_open_error
 {Nie moglem otworzyc pliku konfiguracyjnego %s\n}
 
 message choose_timezone
-{Wybierz strefe czasowa, ktora najlepiej ci odpowiada z ponizszej listy. 
-Nacisnij ENTER aby wybrac. 
+{Wybierz strefe czasowa, ktora najlepiej ci odpowiada z ponizszej listy.
+Nacisnij ENTER aby wybrac.
 Nacisnij 'x' a potem ENTER aby wyjsc.
 
- Domyslna:	%s 
- Wybrana:	%s 
- Lokalny czas:	%s %s 
+ Domyslna:	%s
+ Wybrana:	%s
+ Lokalny czas:	%s %s
 }
 
 message tz_back
@@ -831,7 +827,7 @@ message swapactive
 {Dysk, ktory wybrales posiada partycje wymiany, ktora moze byc aktualnie
 w uzyciu jesli twoj system ma malo pamieci. Poniewaz chcesz zmienic uklad
 partycji, partycja wymiany zostanie teraz wylaczona. Moze to spowodowac
-pojawienie sie bledow. Jesli zuwazysz takie bledy zrestartuj komputer, 
+pojawienie sie bledow. Jesli zuwazysz takie bledy zrestartuj komputer,
 a nastepnie sprobuj jeszcze raz.}
 
 message swapdelfailed

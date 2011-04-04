@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.163 2011/03/24 22:08:28 martin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.164 2011/04/04 08:30:13 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -74,10 +70,10 @@ message hello
 {NetBSD/@@MACHINE@@ @@VERSION@@
 
 This menu-driven tool is designed to help you install NetBSD to a hard
-disk, or upgrade an existing NetBSD system, with a minimum of work. 
+disk, or upgrade an existing NetBSD system, with a minimum of work.
 In the following menus type the reference letter (a, b, c, ...) to
-select an item, or type CTRL+N/CTRL+P to select the next/previous item. 
-The arrow keys and Page-up/Page-down may also work. 
+select an item, or type CTRL+N/CTRL+P to select the next/previous item.
+The arrow keys and Page-up/Page-down may also work.
 Activate the current selection from the menu by typing the enter key.
 }
 
@@ -88,9 +84,9 @@ message thanks
 message installusure
 {You have chosen to install NetBSD on your hard disk.  This will change
 information on your hard disk.  You should have made a full backup
-before this procedure!  This procedure will do the following things: 
-	a) Partition your disk 
-	b) Create new BSD file systems 
+before this procedure!  This procedure will do the following things:
+	a) Partition your disk
+	b) Create new BSD file systems
 	c) Load and install distribution sets
 	d) Some initial system configuration
 
@@ -128,7 +124,7 @@ returned to the original menu.
 }
 
 message onedisk
-{I found only one disk, %s. 
+{I found only one disk, %s.
 Therefore I assume you want to %s NetBSD on it.
 }
 
@@ -161,10 +157,10 @@ message megname
 
 message layout
 {NetBSD uses a BSD disklabel to carve up the NetBSD portion of the disk
-into multiple BSD partitions.  You must now set up your BSD disklabel. 
+into multiple BSD partitions.  You must now set up your BSD disklabel.
 
 You can use a simple editor to set the sizes of the NetBSD partitions,
-or keep the existing partition sizes and contents. 
+or keep the existing partition sizes and contents.
 
 You will then be given the opportunity to change any of the disklabel
 fields.
@@ -245,7 +241,7 @@ partition.
 }
 
 message fspart
-{We now have your BSD-disklabel partitions as: 
+{We now have your BSD-disklabel partitions as:
 This is your last chance to change them.
 
 }
@@ -265,7 +261,7 @@ message partition_sizes_ok
 {Partition sizes ok}
 
 message edfspart
-{The current values for partition `%c' are, 
+{The current values for partition `%c' are,
 Select the field you wish to change:
 
                           MB cylinders   sectors
@@ -351,7 +347,7 @@ message packname
 message lastchance
 {Ok, we are now ready to install NetBSD on your hard disk (%s).  Nothing has been
 written yet.  This is your last chance to quit this process before anything
-gets changed.  
+gets changed.
 
 Shall we continue?
 }
@@ -410,7 +406,7 @@ password files.
 
 
 message unpackcomplete
-{Unpacking additional release sets of NetBSD-@@VERSION@@ is now complete.  
+{Unpacking additional release sets of NetBSD-@@VERSION@@ is now complete.
 You will now need to follow the instructions in the INSTALL document
 to get your system reconfigured for your situation.
 The afterboot(8) manpage can also be of some help.
@@ -450,7 +446,7 @@ message dev
 {device}
 
 message nfssource
-{Enter the nfs host and server directory where the distribution is located. 
+{Enter the nfs host and server directory where the distribution is located.
 Remember, the directory should contain the .tgz files and
 must be nfs mountable.
 
@@ -464,7 +460,7 @@ file system.  The set files must be in the root directory of the floppies.
 
 message cdromsource
 {Enter the CDROM device to be used and directory on the CDROM where
-the distribution is located. 
+the distribution is located.
 Remember, the directory should contain the .tgz files.
 
 }
@@ -481,13 +477,13 @@ CD. Please check device and path name.}
 
 message localfssource
 {Enter the unmounted local device and directory on that device where
-the distribution is located. 
+the distribution is located.
 Remember, the directory should contain the .tgz files.
 
 }
 
 message localdir
-{Enter the already-mounted local directory where the distribution is located. 
+{Enter the already-mounted local directory where the distribution is located.
 Remember, the directory should contain the .tgz files.
 
 }
@@ -548,33 +544,33 @@ message net_media
 message netok
 {The following are the values you entered.
 
-DNS Domain:		%s 
-Host Name:		%s 
-Primary Interface:	%s 
-Host IP:		%s 
-Netmask:		%s 
-IPv4 Nameserver:	%s 
-IPv4 Gateway:		%s 
-Media type:		%s 
+DNS Domain:		%s
+Host Name:		%s
+Primary Interface:	%s
+Host IP:		%s
+Netmask:		%s
+IPv4 Nameserver:	%s
+IPv4 Gateway:		%s
+Media type:		%s
 }
 
 message netok_slip
 {The following are the values you entered.  Are they OK?
 
-DNS Domain:		%s 
-Host Name:		%s 
-Primary Interface:	%s 
-Host IP:		%s 
-Server IP:		%s 
-Netmask:		%s 
-IPv4 Nameserver:	%s 
-IPv4 Gateway:		%s 
-Media type:		%s 
+DNS Domain:		%s
+Host Name:		%s
+Primary Interface:	%s
+Host IP:		%s
+Server IP:		%s
+Netmask:		%s
+IPv4 Nameserver:	%s
+IPv4 Gateway:		%s
+Media type:		%s
 }
 
 message netokv6
-{IPv6 autoconf:		%s 
-IPv6 Nameserver:	%s 
+{IPv6 autoconf:		%s
+IPv6 Nameserver:	%s
 }
 
 message netok_ok
@@ -704,7 +700,7 @@ message fdnotfound
 }
 
 message fdremount
-{The floppy was not mounted successfully. 
+{The floppy was not mounted successfully.
 }
 
 message fdmount
@@ -817,13 +813,13 @@ message config_open_error
 {Could not open config file %s\n}
 
 message choose_timezone
-{Please choose the timezone that fits you best from the list below. 
-Press RETURN to select an entry. 
-Press 'x' followed by RETURN to quit the timezone selection. 
+{Please choose the timezone that fits you best from the list below.
+Press RETURN to select an entry.
+Press 'x' followed by RETURN to quit the timezone selection.
 
- Default:	%s 
- Selected:	%s 
- Local time: 	%s %s 
+ Default:	%s
+ Selected:	%s
+ Local time: 	%s %s
 }
 
 message tz_back

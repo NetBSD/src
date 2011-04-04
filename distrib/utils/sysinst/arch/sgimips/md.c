@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26 2011/02/01 01:42:14 joerg Exp $	*/
+/*	$NetBSD: md.c,v 1.27 2011/04/04 08:30:42 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -161,7 +157,7 @@ int
 md_post_disklabel(void)
 {
 	set_swap(diskdev, bsdlabel);
-        if (strstr(instsys.version, "(INSTALL32_IP3x)"))   
+        if (strstr(instsys.version, "(INSTALL32_IP3x)"))
 		return run_program(RUN_DISPLAY,
 		    "%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip3xboot",
 		    diskdev);
@@ -202,7 +198,7 @@ md_cleanup_install(void)
 #ifndef DEBUG
 	enable_rc_conf();
 #endif
-	
+
 	if (strstr(instsys.version, "(GENERIC32_IP12)"))
 		run_program(0, "/usr/mdec/sgivol -f -w netbsd %s %s",
 			    target_expand("/netbsd.ecoff"), diskdev);
