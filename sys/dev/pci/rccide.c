@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.20 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: rccide.c,v 1.21 2011/04/04 20:37:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.20 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.21 2011/04/04 20:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.20 2010/11/05 18:07:24 jakllsch Exp $")
 #include <dev/pci/pciidevar.h>
 
 static void serverworks_chip_map(struct pciide_softc *,
-				 struct pci_attach_args *);
+				 const struct pci_attach_args *);
 static void serverworks_setup_channel(struct ata_channel *);
 static int  serverworks_pci_intr(void *);
 static int  serverworkscsb6_pci_intr(void *);
@@ -110,7 +110,7 @@ rccide_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+serverworks_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);

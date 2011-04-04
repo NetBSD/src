@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpexvar.h,v 1.1 2010/07/13 11:16:02 kiyohara Exp $	*/
+/*	$NetBSD: mvpexvar.h,v 1.2 2011/04/04 20:37:56 dyoung Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -66,7 +66,7 @@ void mvpex_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t mvpex_conf_read(void *, pcitag_t, int);
 void mvpex_conf_write(void *, pcitag_t, int, pcireg_t);
 int mvpex_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
-int mvpex_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int mvpex_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 const char *mvpex_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *mvpex_intr_evcnt(void *, pci_intr_handle_t);
 void *mvpex_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),

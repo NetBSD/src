@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.104 2011/03/16 05:49:43 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.105 2011/04/04 20:37:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.104 2011/03/16 05:49:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.105 2011/04/04 20:37:54 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -119,7 +119,7 @@ static void	psycho_pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 static void	*psycho_pci_intr_establish(pci_chipset_tag_t,
 					   pci_intr_handle_t,
 					   int, int (*)(void *), void *);
-static int	psycho_pci_find_ino(struct pci_attach_args *,
+static int	psycho_pci_find_ino(const struct pci_attach_args *,
 				    pci_intr_handle_t *);
 
 /* Interrupt handlers */
@@ -1408,7 +1408,7 @@ psycho_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 }
 
 static int
-psycho_pci_find_ino(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+psycho_pci_find_ino(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct psycho_pbm *pp = pa->pa_pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;

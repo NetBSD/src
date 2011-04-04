@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.71 2010/11/06 01:24:55 jakllsch Exp $	*/
+/*	$NetBSD: viaide.c,v 1.72 2011/04/04 20:37:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.71 2010/11/06 01:24:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.72 2011/04/04 20:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,22 +37,24 @@ __KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.71 2010/11/06 01:24:55 jakllsch Exp $")
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_apollo_reg.h>
 
-static int	via_pcib_match(struct pci_attach_args *);
-static void	via_chip_map(struct pciide_softc *, struct pci_attach_args *);
-static void	via_mapchan(struct pci_attach_args *, struct pciide_channel *,
+static int	via_pcib_match(const struct pci_attach_args *);
+static void	via_chip_map(struct pciide_softc *,
+		    const struct pci_attach_args *);
+static void	via_mapchan(const struct pci_attach_args *,
+		    struct pciide_channel *,
 		    pcireg_t, int (*)(void *));
-static void	via_mapregs_compat_native(struct pci_attach_args *,
+static void	via_mapregs_compat_native(const struct pci_attach_args *,
 		    struct pciide_channel *);
 static int	via_sata_chip_map_common(struct pciide_softc *,
 		    struct pci_attach_args *);
 static void	via_sata_chip_map(struct pciide_softc *,
-		    struct pci_attach_args *, int);
+		    const struct pci_attach_args *, int);
 static void	via_sata_chip_map_6(struct pciide_softc *,
-		    struct pci_attach_args *);
+		    const struct pci_attach_args *);
 static void	via_sata_chip_map_7(struct pciide_softc *,
-		    struct pci_attach_args *);
+		    const struct pci_attach_args *);
 static void	via_sata_chip_map_new(struct pciide_softc *,
-		    struct pci_attach_args *);
+		    const struct pci_attach_args *);
 static void	via_setup_channel(struct ata_channel *);
 
 static int	viaide_match(device_t, cfdata_t, void *);
@@ -390,7 +392,7 @@ viaide_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-via_pcib_match(struct pci_attach_args *pa)
+via_pcib_match(const struct pci_attach_args *pa)
 {
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA &&
@@ -433,7 +435,7 @@ viaide_resume(device_t dv, const pmf_qual_t *qual)
 }
 
 static void
-via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
@@ -618,7 +620,7 @@ unknown:
 }
 
 static void
-via_mapchan(struct pci_attach_args *pa,	struct pciide_channel *cp,
+via_mapchan(const struct pci_attach_args *pa,	struct pciide_channel *cp,
     pcireg_t interface, int (*pci_intr)(void *))
 {
 	struct ata_channel *wdc_cp;
@@ -653,7 +655,7 @@ via_mapchan(struct pci_attach_args *pa,	struct pciide_channel *cp,
  * handler for each channel, as in compatibility mode.
  */
 static void
-via_mapregs_compat_native(struct pci_attach_args *pa,
+via_mapregs_compat_native(const struct pci_attach_args *pa,
     struct pciide_channel *cp)
 {
 	struct ata_channel *wdc_cp;
@@ -906,15 +908,17 @@ via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa,
+via_sata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa0,
     int satareg_shift)
 {
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;
 	struct wdc_regs *wdr;
+	struct pci_attach_args pacopy, *pa = &pacopy;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	int channel;
 
+	pacopy = *pa0;
 	if (via_sata_chip_map_common(sc, pa) == 0)
 		return;
 
@@ -964,29 +968,32 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa,
 }
 
 static void
-via_sata_chip_map_6(struct pciide_softc *sc, struct pci_attach_args *pa)
+via_sata_chip_map_6(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	via_sata_chip_map(sc, pa, 6);
 }
 
 static void
-via_sata_chip_map_7(struct pciide_softc *sc, struct pci_attach_args *pa)
+via_sata_chip_map_7(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	via_sata_chip_map(sc, pa, 7);
 }
 
 static void
-via_sata_chip_map_new(struct pciide_softc *sc, struct pci_attach_args *pa)
+via_sata_chip_map_new(struct pciide_softc *sc,
+    const struct pci_attach_args *pa0)
 {
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;
 	struct wdc_regs *wdr;
+	struct pci_attach_args pacopy, *pa = &pacopy;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	int channel;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	int i;
 
+	pacopy = *pa0;
 	if (via_sata_chip_map_common(sc, pa) == 0)
 		return;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1550.c,v 1.9 2011/02/20 07:48:33 matt Exp $ */
+/* $NetBSD: dbau1550.c,v 1.10 2011/04/04 20:37:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.9 2011/02/20 07:48:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.10 2011/04/04 20:37:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.9 2011/02/20 07:48:33 matt Exp $");
 	(*((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(x)) = (v))
 
 static void dbau1550_init(void);
-static int dbau1550_pci_intr_map(struct pci_attach_args *,
+static int dbau1550_pci_intr_map(const struct pci_attach_args *,
 				 pci_intr_handle_t *);
 static void dbau1550_poweroff(void);
 static void dbau1550_reboot(void);
@@ -94,7 +94,7 @@ static struct alchemy_board dbau1550_info = {
 	.ab_name = "AMD Alchemy DBAu1550",
 	.ab_devices = dbau1550_devices,
 	.ab_init = dbau1550_init,
-	.ab_pci_intr_map =dbau1550_pci_intr_map,
+	.ab_pci_intr_map = dbau1550_pci_intr_map,
 	.ab_reboot = dbau1550_reboot,
 	.ab_poweroff = dbau1550_poweroff,
 	.ab_pcmcia = &dbau1550_pcmcia,
@@ -166,7 +166,7 @@ dbau1550_init(void)
 }
 
 int
-dbau1550_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+dbau1550_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	/*
 	 * This platform has one onboard PCI IDE controller, and two

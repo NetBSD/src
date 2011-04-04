@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.60 2010/05/25 08:37:10 pgoyette Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.61 2011/04/04 20:37:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.60 2010/05/25 08:37:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.61 2011/04/04 20:37:56 dyoung Exp $");
 
 #include "midi.h"
 
@@ -114,8 +114,8 @@ static bool cs4280_resume(device_t, const pmf_qual_t *);
 static bool cs4280_suspend(device_t, const pmf_qual_t *);
 
 /* Internal functions */
-static const struct cs4280_card_t * cs4280_identify_card(struct pci_attach_args *);
-static int  cs4280_piix4_match(struct pci_attach_args *);
+static const struct cs4280_card_t * cs4280_identify_card(const struct pci_attach_args *);
+static int  cs4280_piix4_match(const struct pci_attach_args *);
 static void cs4280_clkrun_hack(struct cs428x_softc *, int);
 static void cs4280_clkrun_hack_init(struct cs428x_softc *);
 static void cs4280_set_adc_rate(struct cs428x_softc *, int );
@@ -1074,7 +1074,7 @@ static enum ac97_host_flags cs4280_flags_codec(void *addr)
 /* Internal functions */
 
 static const struct cs4280_card_t *
-cs4280_identify_card(struct pci_attach_args *pa)
+cs4280_identify_card(const struct pci_attach_args *pa)
 {
 	pcireg_t idreg;
 	u_int16_t i;
@@ -1089,7 +1089,7 @@ cs4280_identify_card(struct pci_attach_args *pa)
 }
 
 static int
-cs4280_piix4_match(struct pci_attach_args *pa)
+cs4280_piix4_match(const struct pci_attach_args *pa)
 {
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82371AB_PMC) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.9 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: jmide.c,v 1.10 2011/04/04 20:37:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.9 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.10 2011/04/04 20:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ static int  jmide_match(device_t, cfdata_t, void *);
 static void jmide_attach(device_t, device_t, void *);
 static int  jmide_intr(void *);
 
-static void jmpata_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void jmpata_chip_map(struct pciide_softc*, const struct pci_attach_args*);
 static void jmpata_setup_channel(struct ata_channel*);
 
 static int  jmahci_print(void *, const char *);
@@ -107,7 +107,7 @@ struct jmide_softc {
 };
 
 struct jmahci_attach_args {
-	struct pci_attach_args *jma_pa;
+	const struct pci_attach_args *jma_pa;
 	bus_space_tag_t jma_ahcit;
 	bus_space_handle_t jma_ahcih;
 };
@@ -303,7 +303,7 @@ jmide_intr(void *arg)
 }
 
 static void
-jmpata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+jmpata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct jmide_softc *jmidesc = (struct jmide_softc *)sc;
 	int channel;
@@ -445,7 +445,7 @@ static void
 jmahci_attach(device_t parent, device_t self, void *aux)
 {
 	struct jmahci_attach_args *jma = aux;
-	struct pci_attach_args *pa = jma->jma_pa;
+	const struct pci_attach_args *pa = jma->jma_pa;
 	struct ahci_softc *sc = device_private(self);
 	uint32_t ahci_cap;
 

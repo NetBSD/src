@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.18 2010/11/13 13:52:05 uebayasi Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.19 2011/04/04 20:37:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.18 2010/11/13 13:52:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.19 2011/04/04 20:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.18 2010/11/13 13:52:05 uebayasi Exp $
 #include <dev/pci/pciide_geode_reg.h>
 
 static void geodeide_chip_map(struct pciide_softc *,
-				 struct pci_attach_args *);
+				 const struct pci_attach_args *);
 static void geodeide_setup_channel(struct ata_channel *);
 static int geodeide_dma_init(void *, int, int, void *, size_t, int);
 
@@ -100,7 +100,7 @@ geodeide_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-geodeide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+geodeide_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.91 2011/02/10 12:37:58 jmcneill Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.92 2011/04/04 20:37:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -77,7 +77,7 @@ struct pci_overrides {
 	pcireg_t (*ov_conf_read)(void *, pci_chipset_tag_t, pcitag_t, int);
 	void (*ov_conf_write)(void *, pci_chipset_tag_t, pcitag_t, int,
 	    pcireg_t);
-	int (*ov_intr_map)(void *, struct pci_attach_args *,
+	int (*ov_intr_map)(void *, const struct pci_attach_args *,
 	   pci_intr_handle_t *);
 	const char *(*ov_intr_string)(void *, pci_chipset_tag_t,
 	    pci_intr_handle_t);
@@ -238,14 +238,12 @@ int	pci_mapreg_probe(pci_chipset_tag_t, pcitag_t, int, pcireg_t *);
 pcireg_t pci_mapreg_type(pci_chipset_tag_t, pcitag_t, int);
 int	pci_mapreg_info(pci_chipset_tag_t, pcitag_t, int, pcireg_t,
 	    bus_addr_t *, bus_size_t *, int *);
-int	pci_mapreg_map(struct pci_attach_args *, int, pcireg_t, int,
+int	pci_mapreg_map(const struct pci_attach_args *, int, pcireg_t, int,
 	    bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *,
 	    bus_size_t *);
-int	pci_mapreg_submap(struct pci_attach_args *, int, pcireg_t, int,
-	    bus_size_t, bus_size_t, bus_space_tag_t *, bus_space_handle_t *, 
-	    bus_addr_t *, bus_size_t *);
 
-int pci_find_rom(struct pci_attach_args *, bus_space_tag_t, bus_space_handle_t,
+int pci_find_rom(const struct pci_attach_args *, bus_space_tag_t,
+	    bus_space_handle_t,
 	    int, bus_space_handle_t *, bus_size_t *);
 
 int pci_get_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
@@ -254,7 +252,8 @@ int pci_get_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
  * Helper functions for autoconfiguration.
  */
 int	pci_probe_device(struct pci_softc *, pcitag_t tag,
-	    int (*)(struct pci_attach_args *), struct pci_attach_args *);
+	    int (*)(const struct pci_attach_args *),
+	    struct pci_attach_args *);
 void	pci_devinfo(pcireg_t, pcireg_t, int, char *, size_t);
 void	pci_conf_print(pci_chipset_tag_t, pcitag_t,
 	    void (*)(pci_chipset_tag_t, pcitag_t, const pcireg_t *));
@@ -288,8 +287,8 @@ int	pci_vpd_write(pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *);
  * Misc.
  */
 int	pci_find_device(struct pci_attach_args *pa,
-			int (*match)(struct pci_attach_args *));
-int	pci_dma64_available(struct pci_attach_args *);
+			int (*match)(const struct pci_attach_args *));
+int	pci_dma64_available(const struct pci_attach_args *);
 void	pci_conf_capture(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
 void	pci_conf_restore(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
 int	pci_get_powerstate(pci_chipset_tag_t, pcitag_t, pcireg_t *);

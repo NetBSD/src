@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.4 2011/02/20 07:48:35 matt Exp $ */
+/* $NetBSD: admpci.c,v 1.5 2011/04/04 20:37:51 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.4 2011/02/20 07:48:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.5 2011/04/04 20:37:51 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -141,7 +141,7 @@ static void admpci_conf_interrupt(void *, int, int, int, int, int *);
 static void *admpci_intr_establish(void *, pci_intr_handle_t, int,
     int (*)(void *), void *);
 static void admpci_intr_disestablish(void *, void *);
-static int admpci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int admpci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 
 #ifdef	PCI_NETBSD_CONFIGURE
 static struct extent	*io_ex = NULL;
@@ -425,7 +425,7 @@ admpci_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *iline)
  * XXX How to handle bridges?
  */
 static int
-admpci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+admpci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int bus, device, function;
 

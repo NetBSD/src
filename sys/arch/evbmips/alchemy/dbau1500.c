@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1500.c,v 1.4 2011/02/20 07:48:33 matt Exp $ */
+/* $NetBSD: dbau1500.c,v 1.5 2011/04/04 20:37:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.4 2011/02/20 07:48:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.5 2011/04/04 20:37:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.4 2011/02/20 07:48:33 matt Exp $");
 	(*((volatile uint16_t *)MIPS_PHYS_TO_KSEG1(x)) = (v))
 
 static void dbau1500_init(void);
-static int dbau1500_pci_intr_map(struct pci_attach_args *,
+static int dbau1500_pci_intr_map(const struct pci_attach_args *,
 				 pci_intr_handle_t *);
 static void dbau1500_reboot(void);
 
@@ -102,7 +102,7 @@ dbau1500_init(void)
 }
 
 int
-dbau1500_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+dbau1500_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	/*
 	 * This platform has PCI slot and IDE interrupts mapped

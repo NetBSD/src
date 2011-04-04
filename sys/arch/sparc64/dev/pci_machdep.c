@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.70 2011/03/20 20:40:22 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.71 2011/04/04 20:37:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.70 2011/03/20 20:40:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.71 2011/04/04 20:37:54 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -258,7 +258,7 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
 
 int
 sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
-    int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
+    int (*match)(const struct pci_attach_args *), struct pci_attach_args *pap)
 {
 	struct ofw_pci_register reg;
 	pci_chipset_tag_t pc = sc->sc_pc;
@@ -418,7 +418,7 @@ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
  * XXX: how does this deal with multiple interrupts for a device?
  */
 int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t tag = pa->pa_tag;
 	int interrupts[4], *intp, int_used;

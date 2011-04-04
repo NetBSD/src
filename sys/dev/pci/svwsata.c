@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.12 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.13 2011/04/04 20:37:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.12 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.13 2011/04/04 20:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,8 +34,10 @@ __KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.12 2010/11/05 18:07:24 jakllsch Exp $"
 static int  svwsata_match(device_t, cfdata_t, void *);
 static void svwsata_attach(device_t, device_t, void *);
 
-static void svwsata_chip_map(struct pciide_softc *, struct pci_attach_args *);
-static void svwsata_mapreg_dma(struct pciide_softc *, struct pci_attach_args *);
+static void svwsata_chip_map(struct pciide_softc *,
+    const struct pci_attach_args *);
+static void svwsata_mapreg_dma(struct pciide_softc *,
+    const struct pci_attach_args *);
 static void svwsata_mapchan(struct pciide_channel *);
 
 CFATTACH_DECL_NEW(svwsata, sizeof(struct pciide_softc),
@@ -100,7 +102,7 @@ svwsata_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+svwsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pci_intr_handle_t intrhandle;
@@ -189,7 +191,7 @@ svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-svwsata_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
+svwsata_mapreg_dma(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *pc;
 	int chan, reg;

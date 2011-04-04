@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.2 2011/02/20 07:48:37 matt Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.3 2011/04/04 20:37:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.2 2011/02/20 07:48:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.3 2011/04/04 20:37:52 dyoung Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -242,7 +242,7 @@ static int	rmixl_pcix_conf_setup(rmixl_pcix_softc_t *,
 static pcireg_t	rmixl_pcix_conf_read(void *, pcitag_t, int);
 static void	rmixl_pcix_conf_write(void *, pcitag_t, int, pcireg_t);
 
-static int	rmixl_pcix_intr_map(struct pci_attach_args *,
+static int	rmixl_pcix_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 static const char *
 		rmixl_pcix_intr_string(void *, pci_intr_handle_t);
@@ -765,7 +765,7 @@ rmixl_pcix_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 }
 
 int
-rmixl_pcix_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
+rmixl_pcix_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *pih)
 {
 	const u_int irq = 16;	/* PCIX index in IRT */
 

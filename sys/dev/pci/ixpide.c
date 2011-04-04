@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.18 2011/02/13 16:21:05 jakllsch Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.19 2011/04/04 20:37:56 dyoung Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.18 2011/02/13 16:21:05 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.19 2011/04/04 20:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ static bool	ixpide_suspend(device_t, const pmf_qual_t *);
 static int	ixpide_match(device_t, cfdata_t, void *);
 static void	ixpide_attach(device_t, device_t, void *);
 
-static void	ixp_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void	ixp_chip_map(struct pciide_softc *, const struct pci_attach_args *);
 static void	ixp_setup_channel(struct ata_channel *);
 
 CFATTACH_DECL_NEW(ixpide, sizeof(struct pciide_softc),
@@ -94,7 +94,7 @@ ixpide_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-ixp_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+ixp_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;
