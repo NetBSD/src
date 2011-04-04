@@ -1,4 +1,4 @@
-/* $NetBSD: t_access.c,v 1.1 2011/04/03 16:12:46 jruoho Exp $ */
+/* $NetBSD: t_access.c,v 1.2 2011/04/04 01:49:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_access.c,v 1.1 2011/04/03 16:12:46 jruoho Exp $");
+__RCSID("$NetBSD: t_access.c,v 1.2 2011/04/04 01:49:45 jruoho Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -54,6 +54,9 @@ ATF_TC_BODY(access_access, tc)
 	const int perm[3] = { 0200, 0400, 0000 };
 	size_t i;
 	int fd;
+
+	if (getuid() == 0)
+		return;
 
 	fd = open(path, O_RDONLY | O_CREAT);
 
