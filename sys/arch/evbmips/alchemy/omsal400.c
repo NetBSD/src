@@ -1,4 +1,4 @@
-/* $NetBSD: omsal400.c,v 1.6 2011/02/20 07:48:33 matt Exp $ */
+/* $NetBSD: omsal400.c,v 1.7 2011/04/04 20:37:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.6 2011/02/20 07:48:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.7 2011/04/04 20:37:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.6 2011/02/20 07:48:33 matt Exp $");
 	(*((volatile uint16_t *)MIPS_PHYS_TO_KSEG1(x)) = (v))
 
 static void	omsal400_init(void);
-static int	omsal400_pci_intr_map(struct pci_attach_args *,
+static int	omsal400_pci_intr_map(const struct pci_attach_args *,
 					 pci_intr_handle_t *);
 static void	omsal400_poweroff(void);
 static void	omsal400_reboot(void);
@@ -124,7 +124,7 @@ omsal400_init(void)
 }
 
 int
-omsal400_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+omsal400_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	/*
 	 * This platform has 4 PCI devices:

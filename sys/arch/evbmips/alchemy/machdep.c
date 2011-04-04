@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.49 2011/02/20 07:48:33 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.50 2011/04/04 20:37:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2011/02/20 07:48:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/04/04 20:37:49 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -480,7 +480,7 @@ cpu_reboot(int howto, char *bootstr)
  * Export our interrupt map function so aupci can find it.
  */
 int
-aupci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+aupci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	const struct alchemy_board *board;
 
