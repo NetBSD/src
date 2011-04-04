@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.302 2011/04/04 14:33:51 bouyer Exp $
+# $NetBSD: ALL,v 1.303 2011/04/04 17:09:39 bouyer Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.302 $"
+#ident 		"ALL-$Revision: 1.303 $"
 
 maxusers	64		# estimated number of users
 
@@ -487,6 +487,7 @@ piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 iic*	at viapcib?
+rdcpcib* at pci? dev ? function ?	# RDC Vortex86/PMX-1000 PCI-ISA w/
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
@@ -509,6 +510,7 @@ isa0	at ichlpcib?
 isa0	at piixpcib?
 isa0	at gscpcib?
 isa0	at viapcib?
+isa0	at rdcpcib?
 isa0	at mainbus?
 isa0	at pceb?
 isa0	at pcib?
