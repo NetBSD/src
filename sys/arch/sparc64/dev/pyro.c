@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.3 2011/03/20 20:48:36 mrg Exp $	*/
+/*	$NetBSD: pyro.c,v 1.4 2011/04/04 20:37:54 dyoung Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ static void * pyro_pci_intr_establish(pci_chipset_tag_t pc,
 				      pci_intr_handle_t ih, int level,
 				      int (*func)(void *), void *arg);
 
-int pyro_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int pyro_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 int pyro_bus_map(bus_space_tag_t, bus_addr_t,
     bus_size_t, int, vaddr_t, bus_space_handle_t *);
 paddr_t pyro_bus_mmap(bus_space_tag_t, bus_addr_t, off_t,
@@ -319,7 +319,7 @@ pyro_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
  * Bus-specific interrupt mapping
  */
 int
-pyro_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+pyro_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct pyro_pbm *pp = pa->pa_pc->cookie;
 	struct pyro_softc *sc = pp->pp_sc;

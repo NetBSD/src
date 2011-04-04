@@ -1,4 +1,4 @@
-/* $NetBSD: aupcivar.h,v 1.2 2006/02/16 01:55:17 gdamore Exp $ */
+/* $NetBSD: aupcivar.h,v 1.3 2011/04/04 20:37:51 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,6 +58,6 @@
  * pci_intr_handle_t.  See pci_intr_map(9) for more detail.  Returns 0
  * on success, non-zero on failure.
  */
-int aupci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int aupci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 
 #endif	/* _MIPS_ALCHEMY_DEV_AUPCIVAR_H */

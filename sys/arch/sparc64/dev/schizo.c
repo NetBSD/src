@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.18 2011/03/20 20:43:34 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.19 2011/04/04 20:37:54 dyoung Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -100,7 +100,8 @@ static paddr_t schizo_bus_mmap(bus_space_tag_t t, bus_addr_t paddr,
                                off_t off, int prot, int flags);
 static void *schizo_intr_establish(bus_space_tag_t, int, int, int (*)(void *),
 	void *, void(*)(void));
-static int schizo_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int schizo_pci_intr_map(const struct pci_attach_args *,
+    pci_intr_handle_t *);
 static void *schizo_pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
                                        int, int (*)(void *), void *);
 static int schizo_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
@@ -720,7 +721,7 @@ schizo_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
  * Set the IGN for this schizo into the handle.
  */
 int
-schizo_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+schizo_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct schizo_pbm *pbm = pa->pa_pc->cookie;
 	struct schizo_softc *sc = pbm->sp_sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.11 2011/02/01 18:33:24 skrll Exp $	*/
+/*	$NetBSD: apic.c,v 1.12 2011/04/04 20:37:50 dyoung Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -124,7 +124,7 @@ apic_attach(struct elroy_softc *sc)
 }
 
 int
-apic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+apic_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct elroy_softc *sc = pa->pa_pc->_cookie;
 	pci_chipset_tag_t pc = pa->pa_pc;

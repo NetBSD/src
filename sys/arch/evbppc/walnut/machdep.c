@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 2011/01/14 02:06:25 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 2011/04/04 20:37:50 dyoung Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2011/01/14 02:06:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2011/04/04 20:37:50 dyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -567,7 +567,7 @@ pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 }
 
 int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin;
 	int dev = pa->pa_device;
