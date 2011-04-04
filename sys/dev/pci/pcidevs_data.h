@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1065 2011/04/04 15:13:08 dyoung Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1066 2011/04/04 18:01:21 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1069 2011/04/04 14:33:51 bouyer Exp
+ *	NetBSD: pcidevs,v 1.1070 2011/04/04 17:59:59 bouyer Exp
  */
 
 /*
@@ -6333,10 +6333,12 @@ static const uint16_t pci_products[] = {
 	    22214, 11343, 0,
 	    PCI_VENDOR_RATOC, PCI_PRODUCT_RATOC_REXPCI31, 
 	    22221, 22225, 6349, 0,
-	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6040, 
-	    5061, 22235, 5503, 5401, 0,
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_IDE, 
-	    5061, 6305, 22241, 0,
+	    5061, 6305, 22235, 0,
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_PCIB, 
+	    5061, 6516, 10383, 0,
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6040, 
+	    5061, 22246, 5503, 5401, 0,
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029, 
 	    22252, 5401, 0,
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139D, 
@@ -8383,7 +8385,7 @@ static const char pci_words[] = { "."
 	    "I4\0" /* 1 refs @ 5047 */
 	    "Areca\0" /* 1 refs @ 5050 */
 	    "S2io\0" /* 1 refs @ 5056 */
-	    "RDC\0" /* 3 refs @ 5061 */
+	    "RDC\0" /* 4 refs @ 5061 */
 	    "Ralink\0" /* 1 refs @ 5065 */
 	    "Raza\0" /* 1 refs @ 5072 */
 	    "(NetLogic)\0" /* 1 refs @ 5077 */
@@ -8572,7 +8574,7 @@ static const char pci_words[] = { "."
 	    "(5-8)\0" /* 1 refs @ 6498 */
 	    "M1445\0" /* 1 refs @ 6504 */
 	    "M1449\0" /* 1 refs @ 6510 */
-	    "PCI-ISA\0" /* 45 refs @ 6516 */
+	    "PCI-ISA\0" /* 46 refs @ 6516 */
 	    "M1451\0" /* 1 refs @ 6524 */
 	    "Host-PCI\0" /* 42 refs @ 6530 */
 	    "M1461\0" /* 1 refs @ 6539 */
@@ -9184,7 +9186,7 @@ static const char pci_words[] = { "."
 	    "T1\0" /* 1 refs @ 10366 */
 	    "XLS\0" /* 1 refs @ 10369 */
 	    "PCIe-PCIe\0" /* 1 refs @ 10373 */
-	    "bridge\0" /* 1 refs @ 10383 */
+	    "bridge\0" /* 2 refs @ 10383 */
 	    "single-channel\0" /* 2 refs @ 10390 */
 	    "RS-485\0" /* 8 refs @ 10405 */
 	    "UART\0" /* 19 refs @ 10412 */
@@ -10744,8 +10746,8 @@ static const char pci_words[] = { "."
 	    "RT3090\0" /* 1 refs @ 22214 */
 	    "REX\0" /* 1 refs @ 22221 */
 	    "PCI-31/33\0" /* 1 refs @ 22225 */
-	    "R6040\0" /* 1 refs @ 22235 */
-	    "controller\0" /* 1 refs @ 22241 */
+	    "controller\0" /* 1 refs @ 22235 */
+	    "R6040\0" /* 1 refs @ 22246 */
 	    "8029\0" /* 1 refs @ 22252 */
 	    "8139D\0" /* 1 refs @ 22257 */
 	    "8100\0" /* 1 refs @ 22263 */
