@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.34 2011/04/04 17:46:22 ahoka Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.35 2011/04/04 18:24:56 ahoka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,6 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/flashio.h>
 
 #include <net/zlib.h>
 
@@ -393,12 +392,3 @@ struct netbsd32_vnd_ioctl50 {
 #define ENVSYS_GETDICTIONARY32	_IOWR('E', 0, struct netbsd32_plistref)
 #define ENVSYS_SETDICTIONARY32	_IOWR('E', 1, struct netbsd32_plistref)
 #define ENVSYS_REMOVEPROPS32	_IOWR('E', 2, struct netbsd32_plistref)
-
-/* from <sys/flashio.h> */
-struct netbsd32_flash_info_params {
-	flash_off_t ip_flash_size;
-	netbsd32_size_t ip_page_size;
-	netbsd32_size_t ip_erase_size;
-	uint8_t ip_flash_type;
-};
-#define FLASH_GET_INFO32	 _IOWR('&', 2, struct netbsd32_flash_info_params)
