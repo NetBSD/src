@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.29 2011/03/06 17:08:26 bouyer Exp $
+# $NetBSD: XEN3_DOMU,v 1.30 2011/04/04 19:57:31 dyoung Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -256,6 +256,6 @@ options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 
 # PCI pass-through support: 
-#xpci* at xenbus ?			#Xen3 PCI front end driver
-#pci* at xpci ?
+xpci* at xenbus ?			#Xen3 PCI front end driver
+pci* at xpci ?
 # you then need to add your PCI devices drivers below.
