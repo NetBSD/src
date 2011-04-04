@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.4 2011/03/27 13:33:04 ahoka Exp $	*/
+/*	$NetBSD: nand.h,v 1.5 2011/04/04 14:25:10 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -401,7 +401,7 @@ nand_read_page(device_t self, size_t offset, uint8_t *data)
 
 #if 0
 static inline bool
-nand_block_isbad(device_t self, off_t block)
+nand_block_isbad(device_t self, flash_off_t block)
 {
 	struct nand_softc *sc = device_private(self);
 
@@ -455,10 +455,10 @@ nand_dump_data(const char *name, void *data, size_t len)
 }
 
 /* flash interface implementation */
-int nand_flash_isbad(device_t, uint64_t);
-int nand_flash_markbad(device_t, uint64_t);
-int nand_flash_write(device_t, off_t, size_t, size_t *, const u_char *);
-int nand_flash_read(device_t, off_t, size_t, size_t *, uint8_t *);
+int nand_flash_isbad(device_t, flash_off_t, bool *);
+int nand_flash_markbad(device_t, flash_off_t);
+int nand_flash_write(device_t, flash_off_t, size_t, size_t *, const u_char *);
+int nand_flash_read(device_t, flash_off_t, size_t, size_t *, uint8_t *);
 int nand_flash_erase(device_t, struct flash_erase_instruction *);
 
 /* nand specific functions */
@@ -469,9 +469,9 @@ void nand_sync_thread(void *);
 int nand_sync_thread_start(device_t);
 void nand_sync_thread_stop(device_t);
 
-bool nand_isfactorybad(device_t, flash_addr_t);
-bool nand_iswornoutbad(device_t, flash_addr_t);
-bool nand_isbad(device_t, flash_addr_t);
+bool nand_isfactorybad(device_t, flash_off_t);
+bool nand_iswornoutbad(device_t, flash_off_t);
+bool nand_isbad(device_t, flash_off_t);
 void nand_markbad(device_t, size_t);
 
 //int nand_read_page(device_t, size_t, uint8_t *);

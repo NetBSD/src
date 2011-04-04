@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_bbt.h,v 1.1 2011/02/26 18:07:31 ahoka Exp $	*/
+/*	$NetBSD: nand_bbt.h,v 1.2 2011/04/04 14:25:10 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -50,9 +50,9 @@ void nand_bbt_detach(device_t);
 void nand_bbt_scan(device_t);
 bool nand_bbt_update(device_t);
 bool nand_bbt_load(device_t);
-void nand_bbt_block_mark(device_t, flash_addr_t, uint8_t);
-void nand_bbt_block_markbad(device_t, flash_addr_t);
-void nand_bbt_block_markfactorybad(device_t, flash_addr_t);
-bool nand_bbt_block_isbad(device_t, flash_addr_t);
+void nand_bbt_block_mark(device_t, flash_off_t, uint8_t);
+void nand_bbt_block_markbad(device_t, flash_off_t);
+void nand_bbt_block_markfactorybad(device_t, flash_off_t);
+bool nand_bbt_block_isbad(device_t, flash_off_t);
 
 #endif

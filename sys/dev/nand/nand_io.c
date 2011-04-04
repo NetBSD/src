@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_io.c,v 1.1 2011/02/26 18:07:31 ahoka Exp $	*/
+/*	$NetBSD: nand_io.c,v 1.2 2011/04/04 14:25:10 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -72,7 +72,7 @@ nand_io_getblock(device_t self, struct buf *bp)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	flash_addr_t block, last;
+	flash_off_t block, last;
 
 	/* get block number of first byte */
 	block = bp->b_rawblkno * DEV_BSIZE / chip->nc_block_size;

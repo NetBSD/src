@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.2 2011/03/30 14:34:26 uebayasi Exp $	*/
+/*	$NetBSD: flash.c,v 1.3 2011/04/04 14:25:09 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.2 2011/03/30 14:34:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.3 2011/04/04 14:25:09 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -88,7 +88,7 @@ bool flash_shutdown(device_t dev, int how);
 int flash_nsectors(struct buf *bp);
 int flash_sector(struct buf *bp);
 
-static inline off_t flash_get_part_offset(struct flash_softc *fl,
+static inline flash_off_t flash_get_part_offset(struct flash_softc *fl,
     size_t poffset);
 
 int flash_match(device_t parent, cfdata_t match, void *aux);
@@ -405,7 +405,8 @@ flashioctl(dev_t dev, u_long command, void *data, int flags, struct lwp *l)
 	struct flash_softc *sc;
 	int unit, err;
 	size_t retlen;
-	flash_addr_t offset;
+	flash_off_t offset;
+	bool bad;
 
 	unit = minor(dev);
 	if ((sc = device_lookup_private(&flash_cd, unit)) == NULL)
@@ -441,15 +442,11 @@ flashioctl(dev_t dev, u_long command, void *data, int flags, struct lwp *l)
 		 */
 		bbp = data;
 
-		err = flash_block_isbad(sc->sc_dev, bbp->bbp_addr);
-		if (err == EIO) {
-			bbp->bbp_isbad = true;
-			err = 0;
-		} else if (err) {
+		err = flash_block_isbad(sc->sc_dev, bbp->bbp_addr, &bad);
+		if (err) {
 			return err;
-		} else {
-			bbp->bbp_isbad = false;
 		}
+		bbp->bbp_isbad = bad;
 
 		break;
 	case FLASH_BLOCK_MARKBAD:
@@ -548,7 +545,7 @@ flash_get_device(dev_t dev)
 	return sc->sc_dev;
 }
 
-static inline off_t
+static inline flash_off_t
 flash_get_part_offset(struct flash_softc *fl, size_t poffset)
 {
 	return fl->flash_if->partition.part_offset + poffset;
@@ -577,7 +574,7 @@ flash_erase(device_t self, struct flash_erase_instruction *ei)
 
 int
 flash_read(device_t self,
-    off_t offset, size_t len, size_t *retlen, uint8_t *buf)
+    flash_off_t offset, size_t len, size_t *retlen, uint8_t *buf)
 {
 	struct flash_softc *sc = device_private(self);
 
@@ -593,7 +590,7 @@ flash_read(device_t self,
 
 int
 flash_write(device_t self,
-    off_t offset, size_t len, size_t *retlen, const uint8_t *buf)
+    flash_off_t offset, size_t len, size_t *retlen, const uint8_t *buf)
 {
 	struct flash_softc *sc = device_private(self);
 
@@ -611,7 +608,7 @@ flash_write(device_t self,
 }
 
 int
-flash_block_markbad(device_t self, uint64_t offset)
+flash_block_markbad(device_t self, flash_off_t offset)
 {
 	struct flash_softc *sc = device_private(self);
 
@@ -629,7 +626,7 @@ flash_block_markbad(device_t self, uint64_t offset)
 }
 
 int
-flash_block_isbad(device_t self, uint64_t offset)
+flash_block_isbad(device_t self, flash_off_t offset, bool *bad)
 {
 	struct flash_softc *sc = device_private(self);
 	
@@ -640,7 +637,7 @@ flash_block_isbad(device_t self, uint64_t offset)
 	    sc->flash_if->partition.part_offset)
 		return EINVAL;
 
-	return sc->flash_if->block_isbad(device_parent(self), offset);
+	return sc->flash_if->block_isbad(device_parent(self), offset, bad);
 }
 
 int
