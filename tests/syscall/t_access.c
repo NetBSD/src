@@ -1,4 +1,4 @@
-/* $NetBSD: t_access.c,v 1.2 2011/04/04 01:49:45 jruoho Exp $ */
+/* $NetBSD: t_access.c,v 1.3 2011/04/04 07:16:29 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_access.c,v 1.2 2011/04/04 01:49:45 jruoho Exp $");
+__RCSID("$NetBSD: t_access.c,v 1.3 2011/04/04 07:16:29 jruoho Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -47,6 +47,7 @@ ATF_TC_WITH_CLEANUP(access_access);
 ATF_TC_HEAD(access_access, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test access(2) for EACCES");
+	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
 
 ATF_TC_BODY(access_access, tc)
@@ -54,9 +55,6 @@ ATF_TC_BODY(access_access, tc)
 	const int perm[3] = { 0200, 0400, 0000 };
 	size_t i;
 	int fd;
-
-	if (getuid() == 0)
-		return;
 
 	fd = open(path, O_RDONLY | O_CREAT);
 
