@@ -1,14 +1,20 @@
-#	$NetBSD: Makefile,v 1.7 2008/10/25 22:27:37 apb Exp $
+#	$NetBSD: Makefile,v 1.8 2011/04/04 19:44:16 dyoung Exp $
 
 # Makefile for atari tags file and boot blocks
 
 # Find where m68k source files are for inclusion in tags
 .include <../m68k/Makefile.inc>
 
-TATARI=	../atari/tags
-SATARI=	../atari/atari/*.[ch] ../atari/include/*.h \
-	../atari/dev/*.[ch]
-AATARI=	../atari/atari/*.s
+TATARI=	${SYSDIR}/arch/atari/tags
+SATARI=		${SYSDIR}/arch/atari/atari/*.[ch]
+SATARI+=	${SYSDIR}/arch/atari/include/*.h
+SATARI+=	${SYSDIR}/arch/atari/dev/*.[ch]
+SATARI+=	${SYSDIR}/arch/atari/isa/*.[ch]
+SATARI+=	${SYSDIR}/arch/atari/pci/*.[ch]
+SATARI+=	${SYSDIR}/arch/atari/vme/*.[ch]
+
+AATARI=		${SYSDIR}/arch/atari/atari/*.s
+AATARI+=	${SYSDIR}/arch/atari/dev/*.s
 
 # Directories in which to place tags links
 DATARI=	atari dev include
@@ -16,7 +22,9 @@ DATARI=	atari dev include
 .include "../../kern/Make.tags.inc"
 
 tags:
-	-ctags -wdtf ${TATARI} ${SATARI} ${SM68K} ${COMM}
+	-rm -f ${TATARI}
+	-echo ${SATARI} ${SM68K} | xargs ctags -wadtf ${TATARI}
+	-${FINDCOMM} | xargs ctags -wadtf ${TATARI}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AATARI} ${AM68K} | \
 	    ${TOOL_SED} "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TATARI}

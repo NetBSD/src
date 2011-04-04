@@ -1,4 +1,32 @@
-#	$NetBSD: Makefile,v 1.3 2011/01/28 22:15:36 phx Exp $
+#	$NetBSD: Makefile,v 1.4 2011/04/04 19:47:50 dyoung Exp $
+
+.include <../powerpc/Makefile.inc>
+
+TSANDPOINT=	${SYSDIR}/arch/sandpoint/tags
+SSANDPOINT=	${SYSDIR}/arch/sandpoint/sandpoint/*.[ch] \
+		${SYSDIR}/arch/sandpoint/isa/*.[ch] \
+		${SYSDIR}/arch/sandpoint/pci/*.[ch] \
+		${SYSDIR}/arch/sandpoint/include/*.h
+ASANDPOINT=	${SYSDIR}/arch/sandpoint/sandpoint/*.S
+
+DSANDPOINT=	include
+
+.include "../../kern/Make.tags.inc"
+
+tags:
+	-rm -f ${TSANDPOINT}
+	-echo ${SSANDPOINT} ${SPPC} | xargs ctags -wadtf ${TSANDPOINT}
+	-${FINDCOMM} | xargs ctags -wadtf ${TSANDPOINT}
+	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ASANDPOINT} ${APPC} | \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
+	    >> ${TSANDPOINT}
+	sort -o ${TSANDPOINT} ${TSANDPOINT}
+
+links:
+	-for i in ${DSANDPOINT}; do \
+	    cd $$i && rm -f tags; ln -s ../tags tags; done
+
 
 SUBDIR=	compile include stand
 
