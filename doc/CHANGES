@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1533 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1534 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -897,6 +897,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		connection.  This makes things like rebooting a kernel
 		server from under an application possible.  [pooka 20110124]
 	emips: Initial commit of the eMIPS port [pooka 20110126]
+	vte(4): add a driver for the R6040 fast ethernet controller found in
+		RDC's vortex86 and PMX-1000 system-on-chip.  [bouyer 20110126]
 	kernel: add kern.evcnt sysctl [matt 20110129]
 	vmstat(1): add support for getting evcnts and boottime for sysctl.
 		Allow unprived vmstat to function is everything wanted is
@@ -976,3 +978,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	alpha: add TLS (thread locale storage) support.  [skrll 20110331]
 	atf(7): Import 0.13.  [jmmv 20110331]
 	ssh-askpass: Updated to 1.2.0. [mbalmer 20110403]
+	rdcide(4): add a driver for the IDE controller found in RDC's
+		vortex86 and PMX-1000 system-on-chip.  [bouyer 20110404]
