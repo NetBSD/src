@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.89 2010/12/27 18:49:42 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.90 2011/04/04 19:16:58 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.89 2010/12/27 18:49:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.90 2011/04/04 19:16:58 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -887,6 +887,7 @@ msdosfs_unmount(struct mount *mp, int mntflags)
 	(void) VOP_CLOSE(pmp->pm_devvp,
 	    pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED);
 	vput(pmp->pm_devvp);
+	msdosfs_fh_destroy(pmp);
 	free(pmp->pm_inusemap, M_MSDOSFSFAT);
 	free(pmp, M_MSDOSFSMNT);
 	mp->mnt_data = NULL;
@@ -1009,6 +1010,7 @@ msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct defid defh;
 	struct denode *dep;
+	uint32_t gen;
 	int error;
 
 	if (fhp->fid_len != sizeof(struct defid)) {
@@ -1016,8 +1018,15 @@ msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 		    sizeof(struct defid)));
 		return EINVAL;
 	}
-
 	memcpy(&defh, fhp, sizeof(defh));
+	error = msdosfs_fh_lookup(pmp, defh.defid_dirclust, defh.defid_dirofs,
+	    &gen);
+	if (error == 0 && gen != defh.defid_gen)
+		error = ESTALE;
+	if (error) {
+		*vpp = NULLVP;
+		return error;
+	}
 	error = deget(pmp, defh.defid_dirclust, defh.defid_dirofs, &dep);
 	if (error) {
 		DPRINTF(("deget %d\n", error));
@@ -1031,8 +1040,10 @@ msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 int
 msdosfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
+	struct msdosfsmount *pmp = VFSTOMSDOSFS(vp->v_mount);
 	struct denode *dep;
 	struct defid defh;
+	int error;
 
 	if (*fh_size < sizeof(struct defid)) {
 		*fh_size = sizeof(struct defid);
@@ -1044,9 +1055,11 @@ msdosfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 	defh.defid_len = sizeof(struct defid);
 	defh.defid_dirclust = dep->de_dirclust;
 	defh.defid_dirofs = dep->de_diroffset;
-	/* defh.defid_gen = dep->de_gen; */
-	memcpy(fhp, &defh, sizeof(defh));
-	return (0);
+	error = msdosfs_fh_enter(pmp, dep->de_dirclust, dep->de_diroffset,
+	     &defh.defid_gen);
+	if (error == 0)
+		memcpy(fhp, &defh, sizeof(defh));
+	return error;
 }
 
 int
