@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.339 2011/02/23 00:35:29 jmcneill Exp $
+#	$NetBSD: files.pci,v 1.340 2011/04/04 14:33:51 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -305,6 +305,11 @@ file	dev/pci/pdcide.c		pdcide
 device	rccide: ata, ata_dma, ata_udma, pciide_common, wdc_common
 attach	rccide at pci
 file	dev/pci/rccide.c		rccide
+
+# RDC IDE controllers
+device	rdcide: ata, ata_dma, ata_udma, pciide_common, wdc_common
+attach	rdcide at pci
+file	dev/pci/rdcide.c		rdcide
 
 # ServerWorks SATA controllers
 device	svwsata: ata, ata_dma, ata_udma, pciide_common, wdc_common, sata
