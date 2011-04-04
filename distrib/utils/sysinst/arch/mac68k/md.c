@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.58 2011/02/01 01:42:12 joerg Exp $ */
+/*	$NetBSD: md.c,v 1.59 2011/04/04 08:30:34 mbalmer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -59,7 +55,7 @@ static char	*getUse(struct apple_part_map_entry *, int, char *);
 static char	*getName(struct apple_part_map_entry *, int, char *);
 static int	findStdType(int, char *, int, int *, int);
 static int	check_for_errors(void);
-static int	edit_diskmap(void);		
+static int	edit_diskmap(void);
 #ifdef MD_DEBUG_SORT_MERGE
 static int	md_debug_dump(char *);
 #endif
@@ -283,7 +279,7 @@ md_make_bsd_partitions(void)
 		pl = bzb->flags.part - 'a';
 		switch (whichType(&map.blk[j])) {
 		    case HFS_PART:
-			bsdlabel[pl].pi_fstype = FS_HFS; 
+			bsdlabel[pl].pi_fstype = FS_HFS;
 			strcpy (bsdlabel[pl].pi_mount, (char *)bzb->mount_point);
 			break;
 		    case ROOT_PART:
@@ -464,11 +460,11 @@ md_post_disklabel(void)
     struct disklabel updated_label;
     int fd, i, no_match;
     char dev_name[100], buf[80];
-    const char *fst[] = {"free", "swap", " v6 ", " v7 ", "sysv", "v71k", 
+    const char *fst[] = {"free", "swap", " v6 ", " v7 ", "sysv", "v71k",
 			" v8 ", "ffs ", "dos ", "lfs ", "othr", "hpfs",
 			"9660", "boot", "ados", "hfs ", "fcor", "ex2f",
 			"ntfs", "raid", "ccd "};
-      
+
     snprintf(dev_name, sizeof(dev_name), "/dev/r%sc", diskdev);
     /*
      * Open the disk as a raw device
@@ -1078,7 +1074,7 @@ check_for_errors()
 		errs++;
 	if ((map.blk[j].pmPyPartStart + map.blk[j].pmPartBlkCnt) > dlsize + 1)
 		errs++;
-    } 
+    }
     return(errs);
 }
 

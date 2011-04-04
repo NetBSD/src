@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.12 2011/03/24 22:08:33 martin Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.13 2011/04/04 08:30:34 mbalmer Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.10 2001/07/26 22:47:34 wiz Exp */
 
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -49,7 +45,7 @@ message md_may_remove_boot_medium
 }
 
 message fullpart
-{Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac, czy chcesz 
+{Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac, czy chcesz
 zainstalowac NetBSD na calym dysku, czy tylko na jego czesci.
 
 Ktora instalacje chcesz zrobic?
@@ -145,7 +141,7 @@ Czy chcesz zrezygnowac z podzialu tej partycji?}
 
 message custom_mount_point
 {Podaj Punkt Montazu dla aktualnie wybranej partycji. Powinna byc to
-unikalna nazwa, zaczynajaca sie od "/", ktora nie jest juz uzywana 
+unikalna nazwa, zaczynajaca sie od "/", ktora nie jest juz uzywana
 przez inna partycje.
 
 }
