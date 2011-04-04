@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.10 2011/02/10 20:10:54 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.11 2011/04/04 15:42:42 plunky Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -39,6 +39,7 @@ syncbar(const char *fs)
 		atf_tc_fail_errno("statvfs");
 }
 
+#ifdef PUFFSDUMP
 static void __unused
 dumpopcount(struct puffstestargs *args)
 {
@@ -56,6 +57,7 @@ dumpopcount(struct puffstestargs *args)
 		    puffsdump_vnop_revmap[i], args->pta_vn_toserv_ops[i]);
 	}
 }
+#endif
 
 ATF_TC(mount);
 ATF_TC_HEAD(mount, tc)
