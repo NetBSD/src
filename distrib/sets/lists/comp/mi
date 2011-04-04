@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1606 2011/03/31 08:25:30 pooka Exp $
+#	$NetBSD: mi,v 1.1607 2011/04/04 10:36:28 blymn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -17772,6 +17772,7 @@
 ./usr/share/man/man3/dcngettext.3		comp-c-man		.man
 ./usr/share/man/man3/def_prog_mode.3		comp-c-man		.man
 ./usr/share/man/man3/def_shell_mode.3		comp-c-man		.man
+./usr/share/man/man3/define_key.3		comp-c-man		.man
 ./usr/share/man/man3/dehumanize_number.3	comp-c-man		.man
 ./usr/share/man/man3/del_curterm.3		comp-c-man		.man
 ./usr/share/man/man3/delay_output.3		comp-c-man		.man
