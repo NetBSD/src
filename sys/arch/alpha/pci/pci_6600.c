@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.20 2010/12/15 01:27:19 matt Exp $ */
+/* $NetBSD: pci_6600.c,v 1.21 2011/04/04 20:37:44 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.20 2010/12/15 01:27:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.21 2011/04/04 20:37:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,9 +83,9 @@ void *dec_6600_intr_establish(
     void *, pci_intr_handle_t, int, int (*func)(void *), void *);
 const char *dec_6600_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *dec_6600_intr_evcnt(void *, pci_intr_handle_t);
-int dec_6600_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int dec_6600_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 void *dec_6600_pciide_compat_intr_establish(void *, struct device *,
-    struct pci_attach_args *, int, int (*)(void *), void *);
+    const struct pci_attach_args *, int, int (*)(void *), void *);
 
 struct alpha_shared_intr *dec_6600_pci_intr;
 
@@ -137,7 +137,7 @@ pci_6600_pickintr(struct tsp_config *pcp)
 }
 
 int     
-dec_6600_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+dec_6600_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
@@ -307,7 +307,8 @@ dec_6600_intr_disable(int irq)
 }
 
 void *
-dec_6600_pciide_compat_intr_establish(void *v, struct device *dev, struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
+dec_6600_pciide_compat_intr_establish(void *v, struct device *dev,
+    const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	void *cookie = NULL;
