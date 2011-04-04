@@ -1,4 +1,4 @@
-/*	$NetBSD: rdcide.c,v 1.1 2011/04/04 14:33:51 bouyer Exp $	*/
+/*	$NetBSD: rdcide.c,v 1.2 2011/04/04 22:13:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rdcide.c,v 1.1 2011/04/04 14:33:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rdcide.c,v 1.2 2011/04/04 22:13:58 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: rdcide.c,v 1.1 2011/04/04 14:33:51 bouyer Exp $");
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/rdcide_reg.h>
 
-static void rdcide_chip_map(struct pciide_softc*, struct pci_attach_args *);
+static void rdcide_chip_map(struct pciide_softc *,
+    const struct pci_attach_args *);
 static void rdcide_setup_channel(struct ata_channel *);
 
 static bool rdcide_resume(device_t, const pmf_qual_t *);
@@ -117,7 +118,7 @@ rdcide_suspend(device_t dv, const pmf_qual_t *qual)
 }
 
 static void
-rdcide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+rdcide_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;
