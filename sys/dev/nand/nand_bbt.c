@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_bbt.c,v 1.1 2011/02/26 18:07:31 ahoka Exp $	*/
+/*	$NetBSD: nand_bbt.c,v 1.2 2011/04/04 14:25:10 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -68,7 +68,7 @@ nand_bbt_scan(device_t self)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	flash_addr_t i, blocks, addr;
+	flash_off_t i, blocks, addr;
 
 	blocks = chip->nc_size / chip->nc_block_size;
 
@@ -93,7 +93,7 @@ nand_bbt_update(device_t self)
 }
 
 static bool
-nand_bbt_page_has_bbt(device_t self, flash_addr_t addr) {
+nand_bbt_page_has_bbt(device_t self, flash_off_t addr) {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
 	uint8_t *oob = chip->nc_oob_cache;
@@ -110,7 +110,7 @@ nand_bbt_page_has_bbt(device_t self, flash_addr_t addr) {
 }
 
 static bool
-nand_bbt_get_bbt_from_page(device_t self, flash_addr_t addr)
+nand_bbt_get_bbt_from_page(device_t self, flash_off_t addr)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
@@ -156,7 +156,7 @@ nand_bbt_load(device_t self)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	flash_addr_t blockaddr;
+	flash_off_t blockaddr;
 	int n;
 
 	blockaddr = chip->nc_size - chip->nc_block_size;
@@ -173,7 +173,7 @@ nand_bbt_load(device_t self)
 }
 
 void
-nand_bbt_block_markbad(device_t self, flash_addr_t block)
+nand_bbt_block_markbad(device_t self, flash_off_t block)
 {
 	if (nand_bbt_block_isbad(self, block)) {
 		aprint_error_dev(self,
@@ -184,7 +184,7 @@ nand_bbt_block_markbad(device_t self, flash_addr_t block)
 }
 
 void
-nand_bbt_block_markfactorybad(device_t self, flash_addr_t block)
+nand_bbt_block_markfactorybad(device_t self, flash_off_t block)
 {
 	if (nand_bbt_block_isbad(self, block)) {
 		aprint_error_dev(self,
@@ -195,7 +195,7 @@ nand_bbt_block_markfactorybad(device_t self, flash_addr_t block)
 }
 
 void
-nand_bbt_block_mark(device_t self, flash_addr_t block, uint8_t marker)
+nand_bbt_block_mark(device_t self, flash_off_t block, uint8_t marker)
 {
 	struct nand_softc *sc = device_private(self);
 #ifdef DIAGNOSTIC
@@ -215,7 +215,7 @@ nand_bbt_block_mark(device_t self, flash_addr_t block, uint8_t marker)
 }
 
 bool
-nand_bbt_block_isbad(device_t self, flash_addr_t block)
+nand_bbt_block_isbad(device_t self, flash_off_t block)
 {
 	struct nand_softc *sc = device_private(self);
 #ifdef DIAGNOSTIC

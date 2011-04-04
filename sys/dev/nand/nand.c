@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.6 2011/03/27 13:33:04 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.7 2011/04/04 14:25:10 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.6 2011/03/27 13:33:04 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.7 2011/04/04 14:25:10 ahoka Exp $");
 
 #include "locators.h"
 
@@ -615,7 +615,7 @@ nand_address_row(device_t self, size_t row)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	off_t i;
+	int i;
 
 	/* XXX TODO */
 	row >>= chip->nc_page_shift;
@@ -647,7 +647,7 @@ nand_check_wp(device_t self)
 }
 
 static void
-nand_prepare_read(device_t self, flash_addr_t row, flash_addr_t column)
+nand_prepare_read(device_t self, flash_off_t row, flash_off_t column)
 {
 	nand_command(self, ONFI_READ);
 	nand_address_column(self, row, column);
@@ -865,9 +865,9 @@ nand_markbad(device_t self, size_t offset)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	flash_addr_t blockoffset, marker;
+	flash_off_t blockoffset, marker;
 #ifdef NAND_BBT
-	flash_addr_t block;
+	flash_off_t block;
 
 	block = offset / chip->nc_block_size;
 
@@ -889,11 +889,11 @@ nand_markbad(device_t self, size_t offset)
 }
 
 bool
-nand_isfactorybad(device_t self, flash_addr_t offset)
+nand_isfactorybad(device_t self, flash_off_t offset)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	flash_addr_t block, first_page, last_page, page;
+	flash_off_t block, first_page, last_page, page;
 	int i;
 
 	/* Check for factory bad blocks first
@@ -926,11 +926,11 @@ nand_isfactorybad(device_t self, flash_addr_t offset)
 }
 
 bool
-nand_iswornoutbad(device_t self, flash_addr_t offset)
+nand_iswornoutbad(device_t self, flash_off_t offset)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	flash_addr_t block;
+	flash_off_t block;
 
 	/* we inspect the first page of the block */
 	block = offset & chip->nc_block_mask;
@@ -963,12 +963,12 @@ nand_iswornoutbad(device_t self, flash_addr_t offset)
 }
 
 bool
-nand_isbad(device_t self, flash_addr_t offset)
+nand_isbad(device_t self, flash_off_t offset)
 {
 #ifdef NAND_BBT
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	flash_addr_t block;
+	flash_off_t block;
 
 	block = offset / chip->nc_block_size;
 
@@ -1041,14 +1041,14 @@ nand_default_select(device_t self, bool enable)
  * handle (page) unaligned write to nand
  */
 static int
-nand_flash_write_unaligned(device_t self, off_t offset, size_t len,
+nand_flash_write_unaligned(device_t self, flash_off_t offset, size_t len,
     size_t *retlen, const uint8_t *buf)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	flash_addr_t first, last, firstoff;
+	flash_off_t first, last, firstoff;
 	const uint8_t *bufp;
-	flash_addr_t addr;
+	flash_off_t addr;
 	size_t left, count;
 	int error, i;
 
@@ -1155,7 +1155,7 @@ nand_flash_write_unaligned(device_t self, off_t offset, size_t len,
 }
 
 int
-nand_flash_write(device_t self, off_t offset, size_t len, size_t *retlen,
+nand_flash_write(device_t self, flash_off_t offset, size_t len, size_t *retlen,
     const uint8_t *buf)
 {
 	struct nand_softc *sc = device_private(self);
@@ -1287,7 +1287,7 @@ out:
 }
 
 int
-nand_flash_read(device_t self, off_t offset, size_t len, size_t *retlen,
+nand_flash_read(device_t self, flash_off_t offset, size_t len, size_t *retlen,
     uint8_t *buf)
 {
 	struct nand_softc *sc = device_private(self);
@@ -1354,7 +1354,7 @@ out:
 }
 
 int
-nand_flash_isbad(device_t self, uint64_t ofs)
+nand_flash_isbad(device_t self, flash_off_t ofs, bool *isbad)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
@@ -1368,22 +1368,23 @@ nand_flash_isbad(device_t self, uint64_t ofs)
 	}
 
 	if (ofs % chip->nc_block_size != 0) {
-		panic("offset (0x%jx) is not the multiple of block size (%ju)",
-		    (uintmax_t)ofs, (uintmax_t)chip->nc_block_size);
+		DPRINTF(("offset (0x%jx) is not the multiple of block size "
+			"(%ju)",
+			(uintmax_t)ofs, (uintmax_t)chip->nc_block_size));
+		return EINVAL;
 	}
 
 	mutex_enter(&sc->sc_device_lock);
 	result = nand_isbad(self, ofs);
 	mutex_exit(&sc->sc_device_lock);
 
-	if (result)
-		return 1;
-	else
-		return 0;
+	*isbad = result;
+	
+	return 0;
 }
 
 int
-nand_flash_markbad(device_t self, uint64_t ofs)
+nand_flash_markbad(device_t self, flash_off_t ofs)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
@@ -1413,7 +1414,7 @@ nand_flash_erase(device_t self,
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	flash_addr_t addr;
+	flash_off_t addr;
 	int error;
 
 	if (ei->ei_addr < 0 || ei->ei_len < chip->nc_block_size)
