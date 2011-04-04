@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.55 2011/03/19 04:07:35 cliff Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.56 2011/04/04 18:24:56 ahoka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.55 2011/03/19 04:07:35 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.56 2011/04/04 18:24:56 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.55 2011/03/19 04:07:35 cliff Ex
 #include <sys/ktrace.h>
 #include <sys/kmem.h>
 #include <sys/envsys.h>
-#include <sys/flashio.h>
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -443,26 +442,6 @@ netbsd32_from_u_long(u_long *p, netbsd32_u_long *s32p, u_long cmd)
 	*s32p = (netbsd32_u_long)*p;
 }
 
-static inline void
-netbsd32_to_flash_info_params(struct netbsd32_flash_info_params *s32p,
-	struct flash_info_params *p, u_long cmd)
-{
-	p->ip_flash_size = s32p->ip_flash_size;
-	p->ip_page_size = (size_t)s32p->ip_page_size;
-	p->ip_erase_size = (size_t)s32p->ip_erase_size;
-	p->ip_flash_type = s32p->ip_flash_type;
-}
-
-static inline void
-netbsd32_from_flash_info_params(struct flash_info_params *p,
-	struct netbsd32_flash_info_params *s32p, u_long cmd)
-{
-	s32p->ip_flash_size = p->ip_flash_size;
-	s32p->ip_page_size = (netbsd32_size_t)p->ip_page_size;
-	s32p->ip_erase_size = (netbsd32_size_t)p->ip_erase_size;
-	s32p->ip_flash_type = p->ip_flash_type;
-}
-
 /*
  * main ioctl syscall.
  *
@@ -763,9 +742,6 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(ENVSYS_SETDICTIONARY, plistref);
 	case ENVSYS_REMOVEPROPS32:
 		IOCTL_STRUCT_CONV_TO(ENVSYS_REMOVEPROPS, plistref);
-
-	case FLASH_GET_INFO32:
-		IOCTL_STRUCT_CONV_TO(FLASH_GET_INFO, flash_info_params);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL
