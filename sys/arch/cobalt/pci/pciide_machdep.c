@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.7 2006/04/05 15:50:48 tsutsui Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.8 2011/04/04 20:37:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.7 2006/04/05 15:50:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.8 2011/04/04 20:37:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.7 2006/04/05 15:50:48 tsutsui E
 
 void *
 pciide_machdep_compat_intr_establish(struct device *dev,
-    struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
+    const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	int irq;
 	void *cookie;

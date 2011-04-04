@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.13 2008/01/06 01:37:56 matt Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.14 2011/04/04 20:37:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.13 2008/01/06 01:37:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.14 2011/04/04 20:37:46 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,8 @@ pcitag_t s3c2800_pci_make_tag(void *, int, int, int);
 void	s3c2800_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t s3c2800_pci_conf_read(void *, pcitag_t, int);
 void	s3c2800_pci_conf_write(void *, pcitag_t, int, pcireg_t);
-int	s3c2800_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int	s3c2800_pci_intr_map(const struct pci_attach_args *,
+	    pci_intr_handle_t *);
 const char *s3c2800_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *s3c2800_pci_intr_evcnt(void *, pci_intr_handle_t);
 void *s3c2800_pci_intr_establish(void *, pci_intr_handle_t, int,
@@ -545,7 +546,7 @@ s3c2800_pci_intr_disestablish(void *pcv, void *cookie)
 }
 
 int
-s3c2800_pci_intr_map(struct pci_attach_args * pa, pci_intr_handle_t * ihp)
+s3c2800_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 #ifdef PCI_DEBUG
 	int pin = pa->pa_intrpin;

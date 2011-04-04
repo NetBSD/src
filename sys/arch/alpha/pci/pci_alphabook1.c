@@ -1,4 +1,4 @@
-/* $NetBSD: pci_alphabook1.c,v 1.14 2010/12/15 01:27:19 matt Exp $ */
+/* $NetBSD: pci_alphabook1.c,v 1.15 2011/04/04 20:37:44 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.14 2010/12/15 01:27:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.15 2011/04/04 20:37:44 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.14 2010/12/15 01:27:19 matt Exp
 
 #include "sio.h"
 
-int     dec_alphabook1_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int     dec_alphabook1_intr_map(const struct pci_attach_args *,
+	    pci_intr_handle_t *);
 const char *dec_alphabook1_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *dec_alphabook1_intr_evcnt(void *, pci_intr_handle_t);
 void    *dec_alphabook1_intr_establish(void *, pci_intr_handle_t,
@@ -125,7 +126,8 @@ pci_alphabook1_pickintr(struct lca_config *lcp)
 }
 
 int
-dec_alphabook1_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+dec_alphabook1_intr_map(const struct pci_attach_args *pa,
+    pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;
