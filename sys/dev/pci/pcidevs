@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1069 2011/04/04 14:33:51 bouyer Exp $
+$NetBSD: pcidevs,v 1.1070 2011/04/04 17:59:59 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3914,8 +3914,9 @@ product	RALINK	RT3090		0x3090	RT3090 802.11b/g/n
 product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
 
 /* RDC Semiconductor products */
-product RDC	R6040		0x6040	RDC R6040 10/100 Ethernet
 product RDC	IDE		0x1011	RDC IDE controller
+product RDC	PCIB		0x6036	RDC PCI-ISA bridge
+product RDC	R6040		0x6040	RDC R6040 10/100 Ethernet
 
 /* Realtek products */
 product REALTEK RT8029		0x8029	8029 Ethernet
