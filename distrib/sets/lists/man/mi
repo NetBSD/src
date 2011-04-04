@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1305 2011/03/27 02:52:10 fair Exp $
+# $NetBSD: mi,v 1.1306 2011/04/04 17:26:23 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1119,6 +1119,8 @@
 ./usr/share/man/cat4/i386/pcvt.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/pms.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/pnpbios.0		man-sys-catman		.cat
+./usr/share/man/cat4/i386/rdcide.0		man-sys-catman		.cat
+./usr/share/man/cat4/i386/rdcpcib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/sony.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/speaker.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/spic.0		man-sys-catman		.cat
@@ -3876,6 +3878,8 @@
 ./usr/share/man/html4/i386/npx.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/pcibios.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/pnpbios.html		man-sys-htmlman		html
+./usr/share/man/html4/i386/rdcide.html		man-sys-htmlman		html
+./usr/share/man/html4/i386/rdcpcib.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/spic.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/vald.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/vesafb.html		man-obsolete		obsolete
@@ -6448,6 +6452,8 @@
 ./usr/share/man/man4/i386/pcvt.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/pms.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/pnpbios.4		man-sys-man		.man
+./usr/share/man/man4/i386/rdcide.4		man-sys-man		.man
+./usr/share/man/man4/i386/rdcpcib.4		man-sys-man		.man
 ./usr/share/man/man4/i386/sony.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/speaker.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/spic.4		man-sys-man		.man
