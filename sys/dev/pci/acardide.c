@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.24 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: acardide.c,v 1.25 2011/04/04 20:37:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.24 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.25 2011/04/04 20:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.24 2010/11/05 18:07:24 jakllsch Exp $
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_acard_reg.h>
 
-static void acard_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void acard_chip_map(struct pciide_softc*, const struct pci_attach_args*);
 static void acard_setup_channel(struct ata_channel*);
 #if 0 /* XXX !! */
 static int  acard_pci_intr(void *);
@@ -110,7 +110,7 @@ acardide_attach(device_t parent, device_t self, void *aux)
 	((sc)->sc_pp->ide_product == PCI_PRODUCT_ACARD_ATP850U)
 
 static void
-acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+acard_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int i;

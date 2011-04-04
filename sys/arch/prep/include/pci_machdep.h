@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.16 2010/12/13 16:19:02 matt Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.17 2011/04/04 20:37:53 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 int prep_pci_bus_maxdevs(void *, int);
-int prep_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int prep_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 int prep_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 
 void prep_pci_get_chipset_tag_direct(pci_chipset_tag_t);

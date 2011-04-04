@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.4 2011/03/16 05:31:04 matt Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.5 2011/04/04 20:37:52 dyoung Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.4 2011/03/16 05:31:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.5 2011/04/04 20:37:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1159,7 +1159,8 @@ pq3pci_intr_source_lookup(struct pq3pci_softc *sc, pci_intr_handle_t handle)
 }
 
 static pci_intr_handle_t
-pq3pci_intr_handle_lookup(struct pq3pci_softc *sc, struct pci_attach_args *pa)
+pq3pci_intr_handle_lookup(struct pq3pci_softc *sc,
+    const struct pci_attach_args *pa)
 {
 	prop_dictionary_t entry;
 
@@ -1216,7 +1217,7 @@ pq3pci_intr_handle_lookup(struct pq3pci_softc *sc, struct pci_attach_args *pa)
 }
 
 static int
-pq3pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *handlep)
+pq3pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *handlep)
 {
 	struct pq3pci_softc * const sc = pa->pa_pc->pc_intr_v;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.50 2010/12/11 17:58:41 matt Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.51 2011/04/04 20:37:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.50 2010/12/11 17:58:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.51 2011/04/04 20:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ struct ehci_pci_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-static int ehci_sb700_match(struct pci_attach_args *pa);
+static int ehci_sb700_match(const struct pci_attach_args *pa);
 static int ehci_apply_amd_quirks(struct ehci_pci_softc *sc);
 enum ehci_pci_quirk_flags ehci_pci_lookup_quirkdata(pci_vendor_id_t,
 	pci_product_id_t);
@@ -445,7 +445,7 @@ ehci_pci_resume(device_t dv, const pmf_qual_t *qual)
 }
 
 static int
-ehci_sb700_match(struct pci_attach_args *pa)
+ehci_sb700_match(const struct pci_attach_args *pa)
 {
 	if (!(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB600_SMB))
