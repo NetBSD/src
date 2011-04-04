@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_get.c,v 1.2 2011/04/04 16:19:25 plunky Exp $	*/
+/*	$NetBSD: sdp_get.c,v 1.3 2011/04/04 18:29:47 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,14 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_get.c,v 1.2 2011/04/04 16:19:25 plunky Exp $");
+__RCSID("$NetBSD: sdp_get.c,v 1.3 2011/04/04 18:29:47 plunky Exp $");
 
 #include <sdp.h>
 #include <limits.h>
-
-#if INTMAX_MAX < INT64_MAX
-#warning INTMAX type is not large enough to hold INT64 values
-#endif
 
 /******************************************************************************
  *	sdp_get_xxxx(data, value)
