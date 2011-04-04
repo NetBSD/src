@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1027 2011/04/01 12:11:16 jruoho Exp $
+# $NetBSD: GENERIC,v 1.1028 2011/04/04 14:33:51 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1027 $"
+#ident 		"GENERIC-$Revision: 1.1028 $"
 
 maxusers	64		# estimated number of users
 
@@ -847,6 +847,7 @@ piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
+rdcide* 	at pci? dev ? function ?	# RDC PMX-1000 IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 schide* 	at pci? dev ? function ?	# Intel SCH IDE controllers
 siisata*	at pci? dev ? function ?	# SiI SteelVine controllers
