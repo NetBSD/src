@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.70 2011/04/03 22:29:26 dyoung Exp $
+#	$NetBSD: files.amd64,v 1.71 2011/04/04 21:35:31 dyoung Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -110,9 +110,6 @@ file	arch/x86/isa/rtc.c			isa
 
 # TSC timecounter support
 file	arch/x86/x86/tsc.c
-
-# Stubs for x86 routines not included in the system
-file	arch/x86/x86/x86_stub.c
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
