@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.20 2011/02/20 07:48:34 matt Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.21 2011/04/04 20:37:49 dyoung Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.20 2011/02/20 07:48:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.21 2011/04/04 20:37:49 dyoung Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -93,7 +93,8 @@ const char * const malta_cpuintrnames[NINTRS] = {
 	"int 4 (core lo)",
 };
 
-static int	malta_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int	malta_pci_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 static const char
 		*malta_pci_intr_string(void *, pci_intr_handle_t);
 static const struct evcnt
@@ -103,7 +104,8 @@ static void	*malta_pci_intr_establish(void *, pci_intr_handle_t, int,
 static void	malta_pci_intr_disestablish(void *, void *);
 static void	malta_pci_conf_interrupt(void *, int, int, int, int, int *);
 static void	*malta_pciide_compat_intr_establish(void *, struct device *,
-		    struct pci_attach_args *, int, int (*)(void *), void *);
+		    const struct pci_attach_args *, int, int (*)(void *),
+		    void *);
 
 void
 evbmips_intr_init(void)
@@ -281,7 +283,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
  * PCI interrupt support
  */
 static int
-malta_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+malta_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 #ifdef YAMON_IRQ_MAP_BAD
 	static const int pciirqmap[12/*device*/][4/*pin*/] = {
@@ -380,7 +382,7 @@ malta_pci_conf_interrupt(void *v, int bus, int dev, int func, int swiz,
 
 void *
 malta_pciide_compat_intr_establish(void *v, struct device *dev,
-    struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
+    const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc; 
 	void *cookie;

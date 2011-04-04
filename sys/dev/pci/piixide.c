@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.56 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: piixide.c,v 1.57 2011/04/04 20:37:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.56 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.57 2011/04/04 20:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,13 +36,15 @@ __KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.56 2010/11/05 18:07:24 jakllsch Exp $"
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_piix_reg.h>
 
-static void piix_chip_map(struct pciide_softc*, struct pci_attach_args *);
+static void piix_chip_map(struct pciide_softc*,
+    const struct pci_attach_args *);
 static void piix_setup_channel(struct ata_channel *);
 static void piix3_4_setup_channel(struct ata_channel *);
 static u_int32_t piix_setup_idetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static u_int32_t piix_setup_idetim_drvs(struct ata_drive_datas *);
 static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
-static void piixsata_chip_map(struct pciide_softc*, struct pci_attach_args *);
+static void piixsata_chip_map(struct pciide_softc*,
+    const struct pci_attach_args *);
 static int piix_dma_init(void *, int, int, void *, size_t, int);
 
 static bool piixide_resume(device_t, const pmf_qual_t *);
@@ -393,7 +395,7 @@ piixide_suspend(device_t dv, const pmf_qual_t *qual)
 }
 
 static void
-piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+piix_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;
@@ -889,7 +891,7 @@ piix_setup_sidetim_timings(u_int8_t mode, u_int8_t dma, u_int8_t channel)
 }
 
 static void
-piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+piixsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface, cmdsts;

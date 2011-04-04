@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.57 2011/03/24 11:52:53 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.58 2011/04/04 20:37:55 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.57 2011/03/24 11:52:53 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.58 2011/04/04 20:37:55 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,7 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.57 2011/03/24 11:52:53 jruoho Exp 
 static char	  native_idle_text[16];
 void		(*native_idle)(void) = NULL;
 
-static int	 acpicpu_md_quirk_piix4(struct pci_attach_args *);
+static int	 acpicpu_md_quirk_piix4(const struct pci_attach_args *);
 static void	 acpicpu_md_pstate_hwf_reset(void *, void *);
 static int	 acpicpu_md_pstate_fidvid_get(struct acpicpu_softc *,
                                               uint32_t *);
@@ -363,7 +363,7 @@ acpicpu_md_flags(void)
 }
 
 static int
-acpicpu_md_quirk_piix4(struct pci_attach_args *pa)
+acpicpu_md_quirk_piix4(const struct pci_attach_args *pa)
 {
 
 	/*
