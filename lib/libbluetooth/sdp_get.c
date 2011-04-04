@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_get.c,v 1.1 2009/05/12 10:05:06 plunky Exp $	*/
+/*	$NetBSD: sdp_get.c,v 1.2 2011/04/04 16:19:25 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,10 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_get.c,v 1.1 2009/05/12 10:05:06 plunky Exp $");
+__RCSID("$NetBSD: sdp_get.c,v 1.2 2011/04/04 16:19:25 plunky Exp $");
 
 #include <sdp.h>
 #include <limits.h>
+
+#if INTMAX_MAX < INT64_MAX
+#warning INTMAX type is not large enough to hold INT64 values
+#endif
 
 /******************************************************************************
  *	sdp_get_xxxx(data, value)
@@ -188,9 +192,6 @@ sdp_get_uint(sdp_data_t *data, uintmax_t *value)
 			return false;
 
 		v = be64dec(p);
-		if (v > UINTMAX_MAX)
-			return false;
-
 		p += 8;
 		break;
 
@@ -200,7 +201,7 @@ sdp_get_uint(sdp_data_t *data, uintmax_t *value)
 
 		x = be64dec(p);
 		v = be64dec(p + 8);
-		if (x != 0 || v > UINTMAX_MAX)
+		if (x != 0)
 			return false;
 
 		p += 16;
@@ -254,9 +255,6 @@ sdp_get_int(sdp_data_t *data, intmax_t *value)
 			return false;
 
 		v = (int64_t)be64dec(p);
-		if (v > INTMAX_MAX || v < INTMAX_MIN)
-			return false;
-
 		p += 8;
 		break;
 
@@ -267,10 +265,10 @@ sdp_get_int(sdp_data_t *data, intmax_t *value)
 		x = (int64_t)be64dec(p);
 		v = (int64_t)be64dec(p + 8);
 		if (x == 0) {
-			if (v > INTMAX_MAX)
+			if (v < 0)
 				return false;
 		} else if (x == -1) {
-			if (v < INTMAX_MIN)
+			if (v >= 0)
 				return false;
 		} else {
 			return false;
