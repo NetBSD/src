@@ -738,7 +738,7 @@ do_gettimeofday(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("0x%lx, 0x%lx", (long)t_addr, (long)tz_addr);
 
-  SYS(gettimeofday);
+  SYS(__gettimeofday50);
   emul_write_status(processor, status, err);
   if (status == 0) {
     if (t_addr != 0)
