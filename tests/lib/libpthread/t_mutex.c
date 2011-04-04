@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.4 2011/02/21 21:43:41 riz Exp $ */
+/* $NetBSD: t_mutex.c,v 1.5 2011/04/04 14:47:22 martin Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.4 2011/02/21 21:43:41 riz Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.5 2011/04/04 14:47:22 martin Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -118,7 +118,8 @@ ATF_TC(mutex2);
 ATF_TC_HEAD(mutex2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks mutexes");
-	atf_tc_set_md_var(tc, "timeout", "40");
+	if (strcmp(atf_config_get("atf_arch"), "powerpc") == 0)
+		atf_tc_set_md_var(tc, "timeout", "40");
 }
 ATF_TC_BODY(mutex2, tc)
 {
@@ -189,7 +190,8 @@ ATF_TC_HEAD(mutex3, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks mutexes using a static "
 	    "initializer");
-	atf_tc_set_md_var(tc, "timeout", "40");
+	if (strcmp(atf_config_get("atf_arch"), "powerpc") == 0)
+		atf_tc_set_md_var(tc, "timeout", "40");
 }
 ATF_TC_BODY(mutex3, tc)
 {
