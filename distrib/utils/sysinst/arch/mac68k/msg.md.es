@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.3 2011/03/24 22:08:33 martin Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.4 2011/04/04 08:30:34 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -176,7 +172,7 @@ de Disco ha sido escrita a disco y estara disponible la proxima vez que
 NetBSD sea iniciado.  Por favor reinicie inmediatamente y vuelva a iniciar
 el Proceso de Instalacion.
 }
- 
+
 .if debug
 message mapdebug
 {Mapa de Particiones:
@@ -241,7 +237,7 @@ message parttable_fix_fixing
 
 message parttable_fix_fine
 {¡La particion %s%c ya es correcta!\n}
- 
+
 message dump_line
 {%s\n}
 

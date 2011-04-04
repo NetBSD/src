@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.33 2011/03/24 22:08:28 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.34 2011/04/04 08:30:13 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -78,11 +74,11 @@ message hello
 {Bienvenido a sysinst, la herramienta de instalación de NetBSD-@@VERSION@@.
 Esta herramienta guiada por menús está diseñada para ayudarle a instalar
 NetBSD en un disco duro, o actualizar un sistema NetBSD existente con
-un trabajo mínimo. 
+un trabajo mínimo.
 En los siguientes menús teclee la letra de referencia (a, b, c, ...) para
 seleccionar una opción, o teclee CTRL+N/CTRL+P para seleccionar la opción
-siguiente/anterior. 
-Las teclas de cursor y AvPág/RePág puede que también funcionen. 
+siguiente/anterior.
+Las teclas de cursor y AvPág/RePág puede que también funcionen.
 Active la selección actual desde el menú pulsando la tecla Intro.
 }
 
@@ -94,7 +90,7 @@ message installusure
 {Ha escogido instalar NetBSD en su disco duro.  Esto cambiará información
 de su disco duro.  ¡Debería haber hecho una copia de seguridad completa
 antes de este procedimiento!  Este procedimiento realizará las siguientes
-operaciones: 
+operaciones:
 	a) Particionar su disco
 	b) Crear nuevos sistemas de ficheros BSD
 	c) Cargar e instalar los conjuntos de distribución
@@ -135,7 +131,7 @@ Se le volverá a llevar al menú original.
 }
 
 message onedisk
-{Solamente se ha encontrado un disco, %s. 
+{Solamente se ha encontrado un disco, %s.
 Por tanto se entiende que quiere %s NetBSD en él.
 }
 
@@ -168,7 +164,7 @@ message megname
 
 message layout
 {NetBSD usa una etiqueta de BSD para dividir la porción NetBSD del disco
-en varias particiones BSD.  Ahora debería configurar su etiqueta BSD. 
+en varias particiones BSD.  Ahora debería configurar su etiqueta BSD.
 
 Puede usar un simple editor para establecer los tamaños de las particiones
 NetBSD, o mantener los tamaños de partición y contenidos actuales.
@@ -188,7 +184,7 @@ Seleccionar sectores le permitirá especificar los tamaños de manera
 más precisa.  En discos ZBR modernos, el tamaño real del cilindro varía
 a lo largo del disco y no hay mucha ventaja real en el alineamiento de
 cilindros.  En discos más viejos, lo más eficiente es seleccionar
-tamaños de partición que sean multiples exactos del tamaño real del 
+tamaños de partición que sean multiples exactos del tamaño real del
 cilindro.
 
 Escoja su especificador de tamaño}
@@ -259,7 +255,7 @@ message fspart
 }
 
 message fspart_header
-{   Inicio %3s Fin %3s   Tamaño %3s Tipo FS    Newfs Mont. Punto mont. 
+{   Inicio %3s Fin %3s   Tamaño %3s Tipo FS    Newfs Mont. Punto mont.
    ---------- --------- ---------- ---------- ----- ----- -----------
 }
 
@@ -273,7 +269,7 @@ message partition_sizes_ok
 {Tamaños de partición ok}
 
 message edfspart
-{Los valores actuales de la particion `%c' son, 
+{Los valores actuales de la particion `%c' son,
 Seleccione el campo que desee cambiar:
 
                           MB cilindros  sectores
@@ -359,7 +355,7 @@ message packname
 message lastchance
 {Bien, todo está preparado para instalar NetBSD en su disco duro (%s).
 Todavía no se ha escrito nada.  Ésta es su última oportunidad para salir
-del proceso antes de que se cambie nada.  
+del proceso antes de que se cambie nada.
 
 ¿Desea continuar?
 }
@@ -494,7 +490,7 @@ CD. Please check device and path name.}
 
 message localfssource
 {Introduzca el dispositivo local desmontado y el directorio de ese
-dispositivo donde se encuentre la distribución. 
+dispositivo donde se encuentre la distribución.
 Recuerde, el directorio debe contener los archivos .tgz.
 
 }
@@ -562,33 +558,33 @@ message net_media
 message netok
 {Ha introducido los siguientes valores.
 
-Dominio DNS: 		%s 
-Nombre de máquina:	%s 
-Interfaz primaria:	%s 
-IP de la máquina:	%s 
-Máscara de red:		%s 
-Serv de nombres IPv4:	%s 
-Pasarela IPv4:		%s 
-Tipo de medio:		%s 
+Dominio DNS: 		%s
+Nombre de máquina:	%s
+Interfaz primaria:	%s
+IP de la máquina:	%s
+Máscara de red:		%s
+Serv de nombres IPv4:	%s
+Pasarela IPv4:		%s
+Tipo de medio:		%s
 }
 
 message netok_slip
 {Ha introducido los siguientes valores. ¿Son correctos?
 
-Dominio DNS: 		%s 
-Nombre de la máquina:	%s 
-Interfaz primaria:	%s 
-IP de la máquina:	%s 
-IP del servidor:	%s 
-Máscara de red:		%s 
-Serv de nombres IPv4:	%s 
-Pasarela IPv4:		%s 
-Tipo de medio:		%s 
+Dominio DNS: 		%s
+Nombre de la máquina:	%s
+Interfaz primaria:	%s
+IP de la máquina:	%s
+IP del servidor:	%s
+Máscara de red:		%s
+Serv de nombres IPv4:	%s
+Pasarela IPv4:		%s
+Tipo de medio:		%s
 }
 
 message netokv6
-{IPv6 autoconf:		%s 
-Serv de nombres IPv6:	%s 
+{IPv6 autoconf:		%s
+Serv de nombres IPv6:	%s
 }
 
 message netok_ok
@@ -652,7 +648,7 @@ a mano.  Instalación interrumpida.
 }
 
 message abortunpack
-{El desempaquetamiento de los conjuntos adicionales no ha sido satisfactorio. 
+{El desempaquetamiento de los conjuntos adicionales no ha sido satisfactorio.
 Necesitará proceder a mano, o escoger una fuente diferente para los conjuntos
 de esta distribución y volver a intentarlo.
 }
@@ -714,7 +710,7 @@ message rootmissing
 
 message badroot
 {El nuevo sistema de archivos raíz no ha pasado la comprobación básica.
- ¿Está seguro de que ha instalado todos los conjuntos requeridos? 
+ ¿Está seguro de que ha instalado todos los conjuntos requeridos?
 
 }
 
@@ -840,14 +836,14 @@ message config_open_error
 {No se ha podido abrir el fichero de configuración %s\n}
 
 message choose_timezone
-{Por favor, escoja de la siguiente lista la zona horaria que le convenga.  
-Presione RETURN para seleccionar una entrada. 
+{Por favor, escoja de la siguiente lista la zona horaria que le convenga.
+Presione RETURN para seleccionar una entrada.
 Presione «x» seguido de RETURN para salir de la selección de la
 zona horaria.
 
- Predefinida:	%s 
- Seleccionada:	%s 
- Hora local: 	%s %s 
+ Predefinida:	%s
+ Seleccionada:	%s
+ Hora local: 	%s %s
 }
 
 message tz_back
@@ -855,7 +851,7 @@ message tz_back
 
 message swapactive
 {El disco que ha seleccionado tiene una partición de intercambio (swap) que
-puede que esté en uso actualmente si su sistema tiene poca memoria.  Como 
+puede que esté en uso actualmente si su sistema tiene poca memoria.  Como
 se dispone a reparticionar este disco, esta partición swap será desactivada
 ahora.  Se advierte de que esto puede conducir a problemas de swap.
 Si obtuviera algun error, reinicie el sistema e inténtelo de nuevo.}

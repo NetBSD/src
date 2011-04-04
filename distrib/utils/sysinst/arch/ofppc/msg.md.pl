@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -75,7 +71,7 @@ message boottoosmall
 however a size of at least 100MB is recommended.}
 
 message nobootpartdisklabel
-{There is no boot partition in the disklabel.  The boot partition should 
+{There is no boot partition in the disklabel.  The boot partition should
 match the boot partition you set up in the MBR partition table.}
 
 message preptoosmall

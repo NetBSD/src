@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.19 2011/03/26 16:30:21 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.20 2011/04/04 08:30:32 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -137,7 +133,7 @@ booten. Sind Sie sicher, dass Sie fortfahren möchten?
 
 
 message missing_bootmenu_text
-{Sie haben mehr als ein Betriebssystem auf dieser Festplatte; allerdings ist kein 
+{Sie haben mehr als ein Betriebssystem auf dieser Festplatte; allerdings ist kein
 'bootmenu' (Eintrag für den NetBSD Bootloader) für die aktive Partition und/oder
 der Partition vorhanden, auf die NetBSD installiert werden soll.
 
@@ -155,7 +151,7 @@ Sind Sie sicher, dass Sie dennoch fortfahren möchten?
 gelangen.)}
 
 message installbootsel
-{Ihre Konfiguration benötigt den NetBSD Bootselect (Bootauswahl) Code, um 
+{Ihre Konfiguration benötigt den NetBSD Bootselect (Bootauswahl) Code, um
 das zu startende Betriebssystem beim Start des Computers zu wählen.
 
 Dieser ist gegenwärtig noch nicht installiert; wollen Sie dies jetzt tun?}

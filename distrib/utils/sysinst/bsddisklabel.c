@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.54 2010/02/18 12:21:52 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.55 2011/04/04 08:30:12 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -161,7 +157,7 @@ set_ptn_titles(menudesc *m, int opt, void *arg)
 	}
 	size = p->size;
 	if (p == pi->pool_part)
-		snprintf(inc_free, sizeof inc_free, "(%" PRIi64 ")", 
+		snprintf(inc_free, sizeof inc_free, "(%" PRIi64 ")",
 		    (size + pi->free_space) / sm);
 	else
 		inc_free[0] = 0;
@@ -394,7 +390,7 @@ get_ptn_sizes(daddr_t part_start, daddr_t sectors, int no_swap)
 			    pi.ptn_sizes[PI_SWAP].dflt_size;
 #endif
 		}
-			
+
 		/* If installing X increase default size of /usr */
 		if (set_X11_selected())
 			pi.ptn_sizes[PI_USR].dflt_size += XNEEDMB;
@@ -688,7 +684,7 @@ make_bsd_partitions(void)
 				}
 			}
 		} else {
-			if (p->pi_offset < ptstart + ptsize &&			
+			if (p->pi_offset < ptstart + ptsize &&
 			    p->pi_offset + p->pi_size > ptstart)
 				/* Not outside area we are allocating */
 				continue;

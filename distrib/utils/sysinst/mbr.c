@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.85 2010/04/19 21:12:51 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.86 2011/04/04 08:30:12 mbalmer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -14,24 +14,20 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
@@ -393,7 +389,7 @@ set_mbr_type(menudesc *m, void *arg)
 #ifdef BOOTSEL
 		if (ombri->bootsec == mbri->sector + mbrp->mbrp_start)
 			ombri->bootsec = 0;
-				
+
 		memset(mbri->mbrb.mbrbs_nametab[opt], 0,
 		    sizeof mbri->mbrb.mbrbs_nametab[opt]);
 #endif
@@ -876,7 +872,7 @@ edit_mbr_active(menudesc *m, void *arg)
 		*fl = 0;
 		return 0;
 	}
-		
+
 	/* Ensure there is at most one active partition */
 	for (i = 0; i < MBR_PART_COUNT; i++)
 		mbri->mbr.mbr_parts[i].mbrp_flag = 0;
@@ -1490,7 +1486,7 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 #if BOOTSEL
 		if (mbrs->mbr_bootsel_magic == htole16(MBR_MAGIC)) {
 			/* old bootsel, grab bootsel info */
-			bootkey = validate_and_set_names(mbri, 
+			bootkey = validate_and_set_names(mbri,
 				(struct mbr_bootsel *)
 				((uint8_t *)mbrs + MBR_BS_OLD_OFFSET),
 				ext_base);

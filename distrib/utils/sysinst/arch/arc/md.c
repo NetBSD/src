@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.34 2011/02/01 01:42:08 joerg Exp $ */
+/*	$NetBSD: md.c,v 1.35 2011/04/04 08:30:19 mbalmer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -167,7 +163,7 @@ md_make_bsd_partitions(void)
 			if (PI_ISBSDFS(p))
 				p->pi_flags |= PIF_MOUNT;
 		} else {
-			if (p->pi_offset < ptstart + ptsize &&			
+			if (p->pi_offset < ptstart + ptsize &&
 			    p->pi_offset + p->pi_size > ptstart)
 				/* Not outside area we are allocating */
 				continue;

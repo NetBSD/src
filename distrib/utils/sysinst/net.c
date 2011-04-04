@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.126 2010/02/01 00:39:03 ahoka Exp $	*/
+/*	$NetBSD: net.c,v 1.127 2011/04/04 08:30:13 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -89,7 +85,7 @@ static int net_dhcpconf;
 static char net_ip6[STRSIZE];
 char net_namesvr6[STRSIZE];
 static int net_ip6conf;
-#define IP6CONF_AUTOHOST        0x01    
+#define IP6CONF_AUTOHOST        0x01
 #endif
 
 
@@ -922,21 +918,21 @@ done:
 
 #ifdef INET6
 	if (v6config && network_up) {
-		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS, 
+		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
 		    "/sbin/ping6 -v -c 3 -n -I %s ff02::2", net_dev);
 
 		if (net_namesvr6[0] != '\0')
-			network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS, 
+			network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
 			    "/sbin/ping6 -v -c 3 -n %s", net_namesvr6);
 	}
 #endif
 
 	if (net_namesvr[0] != '\0' && network_up)
-		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS, 
+		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
 		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_namesvr);
 
 	if (net_defroute[0] != '\0' && network_up)
-		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS, 
+		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
 		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_defroute);
 	fflush(NULL);
 
@@ -993,7 +989,7 @@ ftp_fetch(const char *set_name)
 			ftp_dir_encoded + sizeof ftp_dir_encoded,
 			RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 0);
 
-	rval = run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_XFER_DIR, 
+	rval = run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_XFER_DIR,
 		    "/usr/bin/ftp %s%s://%s%s/%s/%s%s",
 		    ftp_opt, ftp.xfer_type, ftp_user_encoded, ftp.host,
 		    ftp_dir_encoded, set_name, dist_postfix);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26 2011/02/01 01:42:07 joerg Exp $ */
+/*	$NetBSD: md.c,v 1.27 2011/04/04 08:30:15 mbalmer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
@@ -162,7 +158,7 @@ md_get_info(void)
 		} else {
 			/*
 			 * Valid filecore boot block and no non-ADFS partition.
-			 * This means that the whole disc is allocated for ADFS 
+			 * This means that the whole disc is allocated for ADFS
 			 * so do not trash ! If the user really wants to put a
 			 * NetBSD disklabel on the disc then they should remove
 			 * the filecore boot block first with dd.
@@ -174,7 +170,7 @@ md_get_info(void)
 		}
 	}
 	close(fd);
- 
+
 	dlcyl = disklabel.d_ncylinders;
 	dlhead = disklabel.d_ntracks;
 	dlsec = disklabel.d_nsectors;
@@ -183,7 +179,7 @@ md_get_info(void)
 
 	/*
 	 * Compute whole disk size. Take max of (dlcyl*dlhead*dlsec)
-	 * and secperunit,  just in case the disk is already labelled.  
+	 * and secperunit,  just in case the disk is already labelled.
 	 * (If our new label's RAW_PART size ends up smaller than the
 	 * in-core RAW_PART size  value, updating the label will fail.)
 	 */
@@ -317,15 +313,15 @@ md_update(void)
 
 static int
 filecore_checksum(u_char *bootblock)
-{  
+{
 	u_char byte0, accum_diff;
 	u_int sum;
 	int i;
- 
+
 	sum = 0;
 	accum_diff = 0;
 	byte0 = bootblock[0];
- 
+
 	/*
 	 * Sum the contents of the block, keeping track of whether
 	 * or not all bytes are the same.  If 'accum_diff' ends up

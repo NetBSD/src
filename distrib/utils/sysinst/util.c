@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.168 2011/03/24 22:08:28 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.169 2011/04/04 08:30:14 mbalmer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -14,24 +14,20 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Piermont Information Systems Inc.
- * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
  *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
@@ -165,7 +161,7 @@ struct cd_info {
 static struct cd_info cds[MAX_CD_INFOS];
 
 /*
- * local prototypes 
+ * local prototypes
  */
 
 static int check_for(unsigned int mode, const char *pathname);
@@ -250,7 +246,7 @@ get_ramsize(void)
 	uint64_t ramsize;
 	size_t len = sizeof ramsize;
 	int mib[2] = {CTL_HW, HW_PHYSMEM64};
-	
+
 	sysctl(mib, 2, &ramsize, &len, NULL, 0);
 
 	/* Find out how many Megs ... round up. */
@@ -389,7 +385,7 @@ get_iso9660_volname(int dev, int sess, char *volname)
 			pd = (struct iso_primary_descriptor*)buf;
 			strncpy(volname, pd->volume_id, sizeof pd->volume_id);
 			last = sizeof pd->volume_id-1;
-			while (last >= 0 
+			while (last >= 0
 			    && (volname[last] == ' ' || volname[last] == 0))
 				last--;
 			volname[last+1] = 0;
@@ -581,7 +577,7 @@ get_via_cdrom(void)
 
 /*
  * Get from a pathname inside an unmounted local filesystem
- * (e.g., where sets were preloaded onto a local DOS partition) 
+ * (e.g., where sets were preloaded onto a local DOS partition)
  */
 int
 get_via_localfs(void)
@@ -845,7 +841,7 @@ customise_sets(void)
 /*
  * Extract_file **REQUIRES** an absolute path in ext_dir.  Any code
  * that sets up xfer_dir for use by extract_file needs to put in the
- * full path name to the directory. 
+ * full path name to the directory.
  */
 
 static int
@@ -861,7 +857,7 @@ extract_file(distinfo *dist, int update)
 
 	(void)snprintf(path, sizeof path, "%s/%s%s",
 	    ext_dir, dist->name, dist_postfix);
-	
+
 	owd = getcwd(NULL, 0);
 
 	/* Do we need to fetch the file now? */
@@ -877,7 +873,7 @@ extract_file(distinfo *dist, int update)
 #ifdef SUPPORT_8_3_SOURCE_FILESYSTEM
 	/*
 	 * Update path to use dist->name tuncated to the first eight
-	 * characters and check again 
+	 * characters and check again
 	 */
 	(void)snprintf(path, sizeof path, "%s/%.8s%.4s", /* 4 as includes '.' */
 	    ext_dir, dist->name, dist_postfix);
@@ -894,7 +890,7 @@ extract_file(distinfo *dist, int update)
 	}
 #endif /* SUPPORT_8_3_SOURCE_FILESYSTEM */
 
-	tarstats.nfound++;	
+	tarstats.nfound++;
 	/* cd to the target root. */
 	if (update && (dist->set == SET_ETC || dist->set == SET_X11_ETC)) {
 		make_target_dir("/.sysinst");
@@ -911,7 +907,7 @@ extract_file(distinfo *dist, int update)
 		run_program(0, "rm -rf usr/X11R7/lib/X11/xkb/symbols/pc");
 
 	/* now extract set files into "./". */
-	rval = run_program(RUN_DISPLAY | RUN_PROGRESS, 
+	rval = run_program(RUN_DISPLAY | RUN_PROGRESS,
 			"progress -zf %s tar --chroot -xhepf -", path);
 
 	chdir(owd);
@@ -1126,7 +1122,7 @@ struct check_table { unsigned int mode; const char *path;} checks[] = {
   { S_IFREG, "/foo/bar" },		/* bad entry to exercise warning */
 #endif
   { 0, 0 }
-  
+
 };
 
 /*
@@ -1135,10 +1131,10 @@ struct check_table { unsigned int mode; const char *path;} checks[] = {
 static int
 check_for(unsigned int mode, const char *pathname)
 {
-	int found; 
+	int found;
 
 	found = (target_test(mode, pathname) == 0);
-	if (found == 0) 
+	if (found == 0)
 		msg_display(MSG_rootmissing, pathname);
 	return found;
 }
@@ -1157,7 +1153,7 @@ sanity_check(void)
 		target_ok = target_ok && check_for(p->mode, p->path);
 	}
 	if (target_ok)
-		return 0;	    
+		return 0;
 
 	/* Uh, oh. Something's missing. */
 	msg_display(MSG_badroot);
@@ -1201,7 +1197,7 @@ set_tz_select(menudesc *m, void *arg)
 
 	/* Update displayed time */
 	t = time(NULL);
-	msg_display(MSG_choose_timezone, 
+	msg_display(MSG_choose_timezone,
 		    tz_default, tz_selected, ctime(&t), localtime(&t)->tm_zone);
 	return 0;
 }
@@ -1269,7 +1265,7 @@ tzm_set_names(menudesc *m, void *arg)
 		return;	/* error - skip timezone setting */
 	while (nfiles > 0)
 		free(tz_names[--nfiles]);
-	
+
 	dir = opendir(zoneinfo_dir);
 	fp = strchr(zoneinfo_dir, 0);
 	if (fp != zoneinfo_dir + zonerootlen) {
@@ -1333,7 +1329,7 @@ set_timezone(void)
 	int rc;
 	time_t t;
 	int menu_no;
-       
+
 	strlcpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo/"),
 	    sizeof zoneinfo_dir - 1);
 	zonerootlen = strlen(zoneinfo_dir);
@@ -1358,19 +1354,19 @@ set_timezone(void)
 	snprintf(tz_env, sizeof(tz_env), "%s%s", zoneinfo_dir, tz_selected);
 	setenv("TZ", tz_env, 1);
 	t = time(NULL);
-	msg_display(MSG_choose_timezone, 
+	msg_display(MSG_choose_timezone,
 		    tz_default, tz_selected, ctime(&t), localtime(&t)->tm_zone);
 
 	signal(SIGALRM, timezone_sig);
 	alarm(60);
-	
+
 	menu_no = new_menu(NULL, NULL, 14, 23, 9,
 			   12, 32, MC_ALWAYS_SCROLL | MC_NOSHORTCUT,
 			   tzm_set_names, NULL, NULL,
 			   "\nPlease consult the install documents.", NULL);
 	if (menu_no < 0)
 		goto done;	/* error - skip timezone setting */
-	
+
 	process_menu(menu_no, NULL);
 
 	free_menu(menu_no);
@@ -1381,7 +1377,7 @@ set_timezone(void)
 		 "/usr/share/zoneinfo/%s", tz_selected);
 	unlink(localtime_link);
 	symlink(localtime_target, localtime_link);
-	
+
 done:
 	return 1;
 }
