@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.9 2010/12/13 16:19:02 matt Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.10 2011/04/04 20:37:52 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ struct genppc_pci_chipset {
 	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
 	void		*pc_intr_v;
-	int		(*pc_intr_map)(struct pci_attach_args *, 
+	int		(*pc_intr_map)(const struct pci_attach_args *, 
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
 	const struct evcnt *(*pc_intr_evcnt)(void *, pci_intr_handle_t);
@@ -143,7 +143,8 @@ void *genppc_pci_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
 void genppc_pci_intr_disestablish(void *, void *);
 void genppc_pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
 int genppc_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
-int genppc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp);
+int genppc_pci_intr_map(const struct pci_attach_args *pa,
+    pci_intr_handle_t *ihp);
 
 /* generic indirect PCI functions */
 void genppc_pci_indirect_attach_hook(device_t, device_t,
@@ -168,7 +169,7 @@ void genofw_find_ofpics(int);
 void genofw_fixup_picnode_offsets(void);
 void genofw_setup_pciintr_map(void *, struct genppc_pci_chipset_businfo *, int);
 int genofw_find_node_by_devfunc(int, int, int, int);
-int genofw_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int genofw_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 int genofw_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 
 

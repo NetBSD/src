@@ -1,4 +1,4 @@
-/*	$NetBSD: iteide.c,v 1.11 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: iteide.c,v 1.12 2011/04/04 20:37:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.11 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.12 2011/04/04 20:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.11 2010/11/05 18:07:24 jakllsch Exp $")
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_ite_reg.h>
 
-static void ite_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void ite_chip_map(struct pciide_softc*, const struct pci_attach_args*);
 static void ite_setup_channel(struct ata_channel*);
 
 static int  iteide_match(device_t, cfdata_t, void *);
@@ -94,7 +94,7 @@ iteide_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-ite_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+ite_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;

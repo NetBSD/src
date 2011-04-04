@@ -1,4 +1,4 @@
-/* $NetBSD: mtx-1.c,v 1.4 2011/02/20 07:48:33 matt Exp $ */
+/* $NetBSD: mtx-1.c,v 1.5 2011/04/04 20:37:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.4 2011/02/20 07:48:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.5 2011/04/04 20:37:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.4 2011/02/20 07:48:33 matt Exp $");
 	(*((volatile uint16_t *)MIPS_PHYS_TO_KSEG1(x)) = (v))
 
 static void mtx1_init(void);
-static int mtx1_pci_intr_map(struct pci_attach_args *,
+static int mtx1_pci_intr_map(const struct pci_attach_args *,
 				 pci_intr_handle_t *);
 static void mtx1_reboot(void);
 
@@ -93,7 +93,7 @@ mtx1_init(void)
 }
 
 int
-mtx1_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+mtx1_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	/*
 	 * The board has up to 4 adapters, each with two minipci slots,
