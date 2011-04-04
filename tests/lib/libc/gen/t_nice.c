@@ -1,4 +1,4 @@
-/*	$NetBSD: t_nice.c,v 1.1 2011/04/04 09:52:18 jruoho Exp $ */
+/*	$NetBSD: t_nice.c,v 1.2 2011/04/04 10:30:29 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nice.c,v 1.1 2011/04/04 09:52:18 jruoho Exp $");
+__RCSID("$NetBSD: t_nice.c,v 1.2 2011/04/04 10:30:29 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -104,9 +104,9 @@ ATF_TC_BODY(nice_priority, tc)
 			ATF_REQUIRE(errno == 0);
 
 			if (nic != pri)
-				exit(EXIT_FAILURE);
+				_exit(EXIT_FAILURE);
 
-			exit(EXIT_SUCCESS);
+			_exit(EXIT_SUCCESS);
 		}
 
 		(void)wait(&sta);
