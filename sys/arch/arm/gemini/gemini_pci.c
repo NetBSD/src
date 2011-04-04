@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.8 2010/01/05 13:14:56 mbalmer Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.9 2011/04/04 20:37:45 dyoung Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.8 2010/01/05 13:14:56 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.9 2011/04/04 20:37:45 dyoung Exp $");
 
 #include <sys/cdefs.h>
 
@@ -86,7 +86,7 @@ void		gemini_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 int		gemini_pci_conf_hook(pci_chipset_tag_t, int, int, int,
 		    pcireg_t);
 
-int		gemini_pci_intr_map(struct pci_attach_args *,
+int		gemini_pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 const char	*gemini_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *gemini_pci_intr_evcnt(void *, pci_intr_handle_t);
@@ -360,7 +360,7 @@ gemini_pci_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 }
 
 int
-gemini_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+gemini_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int irq;
 
