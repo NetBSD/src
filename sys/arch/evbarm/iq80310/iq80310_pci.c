@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_pci.c,v 1.9 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: iq80310_pci.c,v 1.10 2011/04/04 20:37:48 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_pci.c,v 1.9 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_pci.c,v 1.10 2011/04/04 20:37:48 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: iq80310_pci.c,v 1.9 2005/12/11 12:17:09 christos Exp
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
-int	iq80310_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int	iq80310_pci_intr_map(const struct pci_attach_args *,
+	    pci_intr_handle_t *);
 const char *iq80310_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *iq80310_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*iq80310_pci_intr_establish(void *, pci_intr_handle_t,
@@ -79,7 +80,7 @@ iq80310_pci_init(pci_chipset_tag_t pc, void *cookie)
 
 #if defined(IOP310_TEAMASA_NPWR)
 int
-iq80310_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+iq80310_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct i80312_softc *sc = pa->pa_pc->pc_intr_v;
 	pcireg_t reg;
@@ -123,7 +124,7 @@ iq80310_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 #else /* Default to stock IQ80310 */
 int
-iq80310_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+iq80310_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct i80312_softc *sc = pa->pa_pc->pc_intr_v;
 	pcitag_t tag;

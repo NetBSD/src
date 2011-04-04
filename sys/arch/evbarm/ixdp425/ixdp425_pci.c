@@ -1,4 +1,4 @@
-/*      $NetBSD: ixdp425_pci.c,v 1.6 2009/10/21 14:15:51 rmind Exp $ */
+/*      $NetBSD: ixdp425_pci.c,v 1.7 2011/04/04 20:37:48 dyoung Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.6 2009/10/21 14:15:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.7 2011/04/04 20:37:48 dyoung Exp $");
 
 /*
  * IXDP425 PCI interrupt support.
@@ -50,7 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.6 2009/10/21 14:15:51 rmind Exp $"
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
-static int ixdp425_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int ixdp425_pci_intr_map(const struct pci_attach_args *,
+    pci_intr_handle_t *);
 static const char *ixdp425_pci_intr_string(void *, pci_intr_handle_t);
 static const struct evcnt *ixdp425_pci_intr_evcnt(void *, pci_intr_handle_t);
 static void *ixdp425_pci_intr_establish(void *, pci_intr_handle_t, int,
@@ -180,7 +181,7 @@ ixp425_md_pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
 #define	IXP425_MAX_DEV	4
 #define	IXP425_MAX_LINE	4
 static int
-ixdp425_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+ixdp425_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	static int ixp425_pci_table[IXP425_MAX_DEV][IXP425_MAX_LINE] =
 	{

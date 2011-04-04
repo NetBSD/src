@@ -1,4 +1,4 @@
-/*	$NetBSD: iq31244_pci.c,v 1.3 2005/12/11 12:17:09 christos Exp $	*/
+/*	$NetBSD: iq31244_pci.c,v 1.4 2011/04/04 20:37:48 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq31244_pci.c,v 1.3 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq31244_pci.c,v 1.4 2011/04/04 20:37:48 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: iq31244_pci.c,v 1.3 2005/12/11 12:17:09 christos Exp
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
-int	iq80321_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int	iq80321_pci_intr_map(const struct pci_attach_args *,
+	    pci_intr_handle_t *);
 const char *iq80321_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *iq80321_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*iq80321_pci_intr_establish(void *, pci_intr_handle_t,
@@ -78,7 +79,7 @@ iq80321_pci_init(pci_chipset_tag_t pc, void *cookie)
 }
 
 int
-iq80321_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+iq80321_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct i80321_softc *sc = pa->pa_pc->pc_intr_v;
 	int b, d, f;

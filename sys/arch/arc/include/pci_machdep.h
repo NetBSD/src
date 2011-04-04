@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.8 2006/04/15 12:53:09 tsutsui Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.9 2011/04/04 20:37:45 dyoung Exp $ */
 /* NetBSD: pci_machdep.h,v 1.3 1999/03/19 03:40:46 cgd Exp  */
 
 /*
@@ -59,7 +59,7 @@ struct arc_pci_chipset {
 	pcireg_t	(*pc_conf_read)(pci_chipset_tag_t, pcitag_t, int);
 	void		(*pc_conf_write)(pci_chipset_tag_t, pcitag_t, int,
 			    pcireg_t);
-	int		(*pc_intr_map)(struct pci_attach_args *,
+	int		(*pc_intr_map)(const struct pci_attach_args *,
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(pci_chipset_tag_t,
 			    pci_intr_handle_t);

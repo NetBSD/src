@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2 2011/04/04 20:37:46 dyoung Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2 2011/04/04 20:37:46 dyoung Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -68,7 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp
 static pcireg_t gtpci_mbus_conf_read(void *, pcitag_t, int);
 static void gtpci_mbus_conf_write(void *, pcitag_t, int, pcireg_t);
 #endif
-static int gtpci_gpp_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int gtpci_gpp_intr_map(const struct pci_attach_args *,
+    pci_intr_handle_t *);
 static const char *gtpci_gpp_intr_string(void *, pci_intr_handle_t);
 static const struct evcnt *gtpci_gpp_intr_evcnt(void *, pci_intr_handle_t);
 static void *gtpci_gpp_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *), void *);
@@ -209,7 +210,7 @@ gtpci_mbus_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 
 /* ARGSUSED */
 static int
-gtpci_gpp_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+gtpci_gpp_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 
 	*ihp = pa->pa_intrpin;
