@@ -1,4 +1,4 @@
-/* $NetBSD: iic_eumb.c,v 1.11 2011/03/31 02:32:35 nisimura Exp $ */
+/* $NetBSD: iic_eumb.c,v 1.12 2011/04/04 18:01:08 phx Exp $ */
 
 /*-
  * Copyright (c) 2010,2011 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.11 2011/03/31 02:32:35 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.12 2011/04/04 18:01:08 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,11 +59,13 @@ struct i2cdev {
 };
 
 static struct i2cdev rtcmodel[] = {
+   { "dlink",    "strtc",      0x68 },
    { "kurobox",  "rs5c372rtc", 0x32 },
+   { "qnap",     "s390rtc",    0x30 },
    { "synology", "rs5c372rtc", 0x32 },
 };
 
-void add_i2c_child_devices(device_t, const char *);
+static void add_i2c_child_devices(device_t, const char *);
 
 static int
 iic_eumb_match(device_t parent, cfdata_t cf, void *aux)
@@ -100,7 +102,7 @@ iic_eumb_attach(device_t parent, device_t self, void *aux)
 	motoi2c_attach_common(self, &sc->sc_motoi2c, NULL);
 }
 
-void
+static void
 add_i2c_child_devices(device_t self, const char *family)
 {
 	struct i2cdev *rtc;
