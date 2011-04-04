@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1607 2011/04/04 10:36:28 blymn Exp $
+#	$NetBSD: mi,v 1.1608 2011/04/04 11:32:25 blymn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5700,6 +5700,7 @@
 ./usr/share/man/cat3/dcngettext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/def_prog_mode.0		comp-c-catman		.cat
 ./usr/share/man/cat3/def_shell_mode.0		comp-c-catman		.cat
+./usr/share/man/cat3/define_key.0		comp-c-catman		.cat
 ./usr/share/man/cat3/dehumanize_number.0	comp-c-catman		.cat
 ./usr/share/man/cat3/del_curterm.0		comp-c-catman		.cat
 ./usr/share/man/cat3/delay_output.0		comp-c-catman		.cat
@@ -11783,6 +11784,7 @@
 ./usr/share/man/html3/dcngettext.html		comp-c-htmlman		html
 ./usr/share/man/html3/def_prog_mode.html	comp-c-htmlman		html
 ./usr/share/man/html3/def_shell_mode.html	comp-c-htmlman		html
+./usr/share/man/html3/define_key.html		comp-c-htmlman		html
 ./usr/share/man/html3/dehumanize_number.html	comp-c-htmlman		html
 ./usr/share/man/html3/del_curterm.html		comp-c-htmlman		html
 ./usr/share/man/html3/delay_output.html		comp-c-htmlman		html
