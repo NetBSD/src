@@ -1,26 +1,32 @@
-#	$NetBSD: Makefile,v 1.9 2008/10/25 22:27:38 apb Exp $
+#	$NetBSD: Makefile,v 1.10 2011/04/04 19:41:24 dyoung Exp $
 
 # Makefile for sparc tags file and boot blocks
 
-TSPARC=	../sparc/tags
-SSPARC=	../sparc/dev/*.[ch] ../sparc/fpu/*.[ch] \
-	../sparc/include/*.[ch] ../sparc/sparc/*.[ch]
-ASPARC=	../sparc/sparc/*.s
+TSPARC=	${SYSDIR}/arch/sparc/tags
+SSPARC=	${SYSDIR}/arch/sparc/dev/*.[ch] \
+	${SYSDIR}/arch/sparc/fpu/*.[ch] \
+	${SYSDIR}/arch/sparc/sparc/*.[ch] \
+	${SYSDIR}/arch/sparc/include/*.h
+ASPARC=	${SYSDIR}/arch/sparc/sparc/*.s
 
 # Directories in which to place tags links
-DSPARC=	conf dev fpu include sparc
+DSPARC=	sparc dev fpu include
+
+.include "../../kern/Make.tags.inc"
 
 tags:
-	-ctags -wdtf ${TSPARC} ${SSPARC} ${COMM}
+	-rm -f ${TSPARC}
+	-echo ${SSPARC} | xargs ctags -wadtf ${TSPARC}
+	-${FINDCOMM} | xargs ctags -wadtf ${TSPARC}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ASPARC} | \
 	    ${TOOL_SED} -e \
-		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-	    >> tags
+	"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
+		>> ${TSPARC}
 	sort -o ${TSPARC} ${TSPARC}
 
 links:
 	-for i in ${DSPARC}; do \
-	    cd $$i && rm -f tags; ln -s ../tags tags; done
+	    (cd $$i && rm -f tags; ln -s ../tags tags); done
 
 
 SUBDIR=	compile include stand
