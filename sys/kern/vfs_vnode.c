@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.4 2011/04/02 07:33:49 rmind Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.5 2011/04/04 02:46:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.4 2011/04/02 07:33:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.5 2011/04/04 02:46:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -215,8 +215,11 @@ vnfree(vnode_t *vp)
 
 /*
  * getcleanvnode: grab a vnode from freelist and clean it.
+ *
+ * => Releases vnode_free_list_lock.
+ * => Returns referenced vnode on success.
  */
-vnode_t *
+static vnode_t *
 getcleanvnode(void)
 {
 	vnode_t *vp;
@@ -233,16 +236,10 @@ try_nextlist:
 		 * these vnodes should never appear on the
 		 * lists.
 		 */
-		if (vp->v_usecount != 0) {
-			vpanic(vp, "free vnode isn't");
-		}
-		if ((vp->v_iflag & VI_CLEAN) != 0) {
-			vpanic(vp, "clean vnode on freelist");
-		}
-		if (vp->v_freelisthd != listhd) {
-			printf("vnode sez %p, listhd %p\n", vp->v_freelisthd, listhd);
-			vpanic(vp, "list head mismatch");
-		}
+		KASSERT(vp->v_usecount == 0);
+		KASSERT((vp->v_iflag & VI_CLEAN) == 0);
+		KASSERT(vp->v_freelisthd == listhd);
+
 		if (!mutex_tryenter(&vp->v_interlock))
 			continue;
 		if ((vp->v_iflag & VI_XLOCK) == 0)
@@ -294,22 +291,19 @@ try_nextlist:
 		goto retry;
 	}
 
-	if (vp->v_data != NULL || vp->v_uobj.uo_npages != 0 ||
-	    !TAILQ_EMPTY(&vp->v_uobj.memq)) {
-		vpanic(vp, "cleaned vnode isn't");
-	}
-	if (vp->v_numoutput != 0) {
-		vpanic(vp, "clean vnode has pending I/O's");
-	}
-	if ((vp->v_iflag & VI_ONWORKLST) != 0) {
-		vpanic(vp, "clean vnode on syncer list");
-	}
+	KASSERT(vp->v_data == NULL);
+	KASSERT(vp->v_uobj.uo_npages == 0);
+	KASSERT(TAILQ_EMPTY(&vp->v_uobj.memq));
+	KASSERT(vp->v_numoutput == 0);
+	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 
 	return vp;
 }
 
 /*
  * getnewvnode: return the next vnode from the free list.
+ *
+ * => Returns referenced vnode, moved into the mount queue.
  */
 int
 getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
@@ -360,6 +354,7 @@ try_again:
 	    (TAILQ_FIRST(&vnode_hold_list) == NULL || toggle));
 
 	if (tryalloc) {
+		/* Allocate a new vnode. */
 		numvnodes++;
 		mutex_exit(&vnode_free_list_lock);
 		if ((vp = vnalloc(NULL)) == NULL) {
@@ -370,6 +365,7 @@ try_again:
 	}
 
 	if (vp == NULL) {
+		/* Recycle and get vnode clean. */
 		vp = getcleanvnode();
 		if (vp == NULL) {
 			if (mp != NULL) {
@@ -396,16 +392,11 @@ try_again:
 	KASSERT(LIST_EMPTY(&vp->v_nclist));
 	KASSERT(LIST_EMPTY(&vp->v_dnclist));
 
+	/* Initialize vnode. */
 	vp->v_type = VNON;
 	vp->v_tag = tag;
 	vp->v_op = vops;
-	vfs_insmntque(vp, mp);
-	*vpp = vp;
 	vp->v_data = NULL;
-
-	/*
-	 * Initialize uvm_object within vnode.
-	 */
 
 	uobj = &vp->v_uobj;
 	KASSERT(uobj->pgops == &uvm_vnodeops);
@@ -413,12 +404,16 @@ try_again:
 	KASSERT(TAILQ_FIRST(&uobj->memq) == NULL);
 	vp->v_size = vp->v_writesize = VSIZENOTSET;
 
+	/* Finally, move vnode into the mount queue. */
+	vfs_insmntque(vp, mp);
+
 	if (mp != NULL) {
 		if ((mp->mnt_iflag & IMNT_MPSAFE) != 0)
 			vp->v_vflag |= VV_MPSAFE;
 		vfs_unbusy(mp, true, NULL);
 	}
 
+	*vpp = vp;
 	return 0;
 }
 
