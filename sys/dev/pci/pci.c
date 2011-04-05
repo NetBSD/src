@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.137 2011/04/05 23:05:06 macallan Exp $	*/
+/*	$NetBSD: pci.c,v 1.138 2011/04/05 23:10:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.137 2011/04/05 23:05:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.138 2011/04/05 23:10:52 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -303,9 +303,15 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	    sizeof(sc->PCI_SC_DEVICESC(device, function).c_range));
 	i = 0;
 	switch (PCI_HDRTYPE_TYPE(bhlcr)) {
-	case PCI_HDRTYPE_PPB: endbar = PCI_MAPREG_PPB_END; break;
-	case PCI_HDRTYPE_PCB: endbar = PCI_MAPREG_PCB_END; break;
-	default: endbar = PCI_MAPREG_END; break;
+	case PCI_HDRTYPE_PPB:
+		endbar = PCI_MAPREG_PPB_END;
+		break;
+	case PCI_HDRTYPE_PCB:
+		endbar = PCI_MAPREG_PCB_END;
+		break;
+	default:
+		endbar = PCI_MAPREG_END;
+		break;
 	}
 	for (bar = PCI_MAPREG_START; bar < endbar; bar += width) {
 		struct pci_range *r;
@@ -373,9 +379,10 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	 * If the cache line size is not configured, then
 	 * clear the MRL/MRM/MWI command-ok flags.
 	 */
-	if (PCI_CACHELINE(bhlcr) == 0)
+	if (PCI_CACHELINE(bhlcr) == 0) {
 		pa.pa_flags &= ~(PCI_FLAGS_MRL_OKAY|
 		    PCI_FLAGS_MRM_OKAY|PCI_FLAGS_MWI_OKAY);
+	}
 
 	if (sc->sc_bridgetag == NULL) {
 		pa.pa_intrswiz = 0;
