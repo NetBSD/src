@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.291 2011/04/04 19:08:42 jruoho Exp $
+# $NetBSD: mi,v 1.292 2011/04/05 06:15:30 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -336,6 +336,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_basedirname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_dir.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fmtcheck.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_getgrent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob_star.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_humanize_number.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_ldexp.debug		tests-lib-debug		debug,atf
@@ -345,6 +346,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_rbstress.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_syslog_pthread.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_siginfo.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_ttyname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_vis.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo/data			tests-obsolete		obsolete
@@ -407,6 +409,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_hsearch.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_posix_memalign.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtod.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtox.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_memcpy.debug		tests-lib-debug		debug,atf
@@ -1714,6 +1717,7 @@
 ./usr/tests/lib/libc/gen/t_basedirname		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_dir			tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fmtcheck		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_getgrent		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_glob_star		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_humanize_number	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_ldexp		tests-lib-tests		atf
@@ -1723,6 +1727,7 @@
 ./usr/tests/lib/libc/gen/t_rbstress		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_syslog_pthread	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_siginfo		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_ttyname		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_vis			tests-lib-tests		atf
 ./usr/tests/lib/libc/getaddrinfo		tests-obsolete		obsolete
 ./usr/tests/lib/libc/getaddrinfo/Atffile	tests-obsolete		obsolete
@@ -1860,6 +1865,7 @@
 ./usr/tests/lib/libc/stdlib/t_hsearch		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_posix_memalign	tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_strtod		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_strtox		tests-lib-tests		atf
 ./usr/tests/lib/libc/string			tests-lib-tests
 ./usr/tests/lib/libc/string/Atffile		tests-lib-tests		atf
