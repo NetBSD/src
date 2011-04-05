@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.27 2011/03/23 04:02:43 macallan Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.28 2011/04/05 23:25:00 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.27 2011/03/23 04:02:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.28 2011/04/05 23:25:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ chipsfb_pci_attach(device_t parent, device_t self, void *aux)
 
 	screg = pci_conf_read(scp->sc_pc, scp->sc_pcitag,
 	    PCI_COMMAND_STATUS_REG);
-	screg |= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	screg |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
 	pci_conf_write(scp->sc_pc, scp->sc_pcitag, PCI_COMMAND_STATUS_REG, 
 	    screg);
 
