@@ -1,4 +1,4 @@
-.\" $NetBSD: intro.4,v 1.26 2005/06/20 13:25:24 peter Exp $
+.\" $NetBSD: intro.4,v 1.27 2011/04/05 08:24:43 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -68,8 +68,8 @@ The networking support is introduced in
 .Sh DEVICE SUPPORT
 This section describes the hardware supported on the i386
 (PC-clone) platform.
-Software support for these devices comes in two forms.  A hardware
-device may be supported with a character or block
+Software support for these devices comes in two forms.
+A hardware device may be supported with a character or block
 .Em device driver ,
 or it may be used within the networking subsystem and have a
 .Em network interface driver .
@@ -82,7 +82,8 @@ communication facilities provided by the system; see
 .Pp
 A hardware device is identified to the system at configuration time
 and the appropriate device or network interface driver is then compiled
-into the system.  When the resultant system is booted, the
+into the system.
+When the resultant system is booted, the
 autoconfiguration facilities in the system probe for the device
 and, if found, enable the software support for it.
 If a device does not respond at autoconfiguration
@@ -95,7 +96,8 @@ The autoconfiguration system is described in
 A list of the supported devices is given below.
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
-the system.  Devices are indicated by their functional interface.
+the system.
+Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .\"
 .\"
@@ -184,14 +186,14 @@ Symbios (formerly NCR) PCI SCSI adapter boards.
 .It pciide
 PCI IDE controllers.
 .It sea
-Seagate/Future Domain SCSI cards.  ST01/02, Future Domain TMC-885, and
-Future Domain TMC-950.
+Seagate/Future Domain SCSI cards.
+ST01/02, Future Domain TMC-885, and Future Domain TMC-950.
 .It uha
-Ultrastor ISA and EISA SCSI adapter cards.  Ultrastore 14f, Ultrastore 34f,
-and Ultrastore 24f.
+Ultrastor ISA and EISA SCSI adapter cards.
+Ultrastore 14f, Ultrastore 34f, and Ultrastore 24f.
 .It wdc
-Standard ISA Western Digital type hard drives controllers. MFM, RLL, ESDI, and
-IDE.
+Standard ISA Western Digital type hard drives controllers.
+MFM, RLL, ESDI, and IDE.
 .It wt
 Wangtek and compatible ISA controllers for QIC-02 and QIC-36 tapes.
 .El
