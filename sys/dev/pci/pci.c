@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.136 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: pci.c,v 1.137 2011/04/05 23:05:06 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.136 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.137 2011/04/05 23:05:06 macallan Exp $");
 
 #include "opt_pci.h"
 
@@ -325,7 +325,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 			    &r->r_offset, &r->r_size, &r->r_flags) != 0)
 				break;
 			if ((PCI_VENDOR(id) == PCI_VENDOR_ATI) && (bar == 0x10)
-			    && (r->r_size = 0x1000000)) {
+			    && (r->r_size == 0x1000000)) {
 				struct pci_range *nr;
 				/*
 				 * this has to be a mach64
