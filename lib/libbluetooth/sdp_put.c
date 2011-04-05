@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_put.c,v 1.4 2011/04/04 19:51:33 plunky Exp $	*/
+/*	$NetBSD: sdp_put.c,v 1.5 2011/04/05 18:19:04 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_put.c,v 1.4 2011/04/04 19:51:33 plunky Exp $");
+__RCSID("$NetBSD: sdp_put.c,v 1.5 2011/04/05 18:19:04 plunky Exp $");
 
 #include <bluetooth.h>
 #include <limits.h>
@@ -51,7 +51,7 @@ sdp_put_data(sdp_data_t *data, sdp_data_t *value)
 
 	len = value->end - value->next;
 
-	if (data->next + len > data->end)
+	if (len > data->end - data->next)
 		return false;
 
 	memcpy(data->next, value->next, (size_t)len);
@@ -304,21 +304,21 @@ _sdp_put_ext(uint8_t type, sdp_data_t *data, ssize_t len)
 		return false;
 
 	if ((size_t)len > UINT16_MAX) {
-		if (p + 5 + len > data->end)
+		if (len > data->end - 5 - p)
 			return false;
 
 		p[0] = type | SDP_DATA_EXT32;
 		be32enc(p + 1, (uint32_t)len);
 		p += 5;
 	} else if ((size_t)len > UINT8_MAX) {
-		if (p + 3 + len > data->end)
+		if (len > data->end - 3 - p)
 			return false;
 
 		p[0] = type | SDP_DATA_EXT16;
 		be16enc(p + 1, (uint16_t)len);
 		p += 3;
 	} else {
-		if (p + 2 + len > data->end)
+		if (len > data->end - 2 - p)
 			return false;
 
 		p[0] = type | SDP_DATA_EXT8;
