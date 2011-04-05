@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.827 2011/03/31 17:00:57 jmmv Exp $
+#	$NetBSD: 3RDPARTY,v 1.828 2011/04/05 08:51:05 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -646,7 +646,7 @@ The sources were integrated into src/sys/external/apache2/mDNSResponder/dist.
 
 Package:	mdocml
 Version:	1.10.9
-Current Vers:	1.10.9
+Current Vers:	1.11.1
 Maintainer:	Kristaps Džonsons
 Archive Site:	http://mdocml.bsd.lv/snapshots/
 Home Page:	http://mdocml.bsd.lv/
