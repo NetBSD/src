@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"   $NetBSD: apm.4,v 1.17 2003/06/27 18:27:58 wiz Exp $
+.\"   $NetBSD: apm.4,v 1.18 2011/04/05 08:24:43 wiz Exp $
 .\"
 .Dd May 18, 1996
 .Dt APM 4 i386
@@ -41,7 +41,8 @@ Advanced Power Management pseudo-device driver
 The
 .Nm apm
 driver provides support for the Advanced Power Management features of
-some i386 system BIOSes.  The driver supports the Advanced Power
+some i386 system BIOSes.
+The driver supports the Advanced Power
 Management (APM) BIOS Interface Specification (revision 1.2), published
 jointly by the Intel Corporation and the Microsoft Corporation.
 .Pp
@@ -49,13 +50,14 @@ The APM driver's behavior may be adjusted by specifying any of the
 following kernel configuration options:
 .Bl -tag -width indent -compact
 .It Dv APM_NO_IDLE
-Do not call the BIOS CPU idle function from the system idle loop.  (Some
-systems will hang on certain device accesses, such as sound cards or
-floppy diskette drives, without this option)
+Do not call the BIOS CPU idle function from the system idle loop.
+(Some systems will hang on certain device accesses, such as sound
+cards or floppy diskette drives, without this option)
 .It Dv APM_V10_ONLY
-Use only the APM revision 1.0 specification calls.  (Some systems do not
-implement APM v1.1 very well, and generate weird events instead of the
-expected events when the system suspend key is pressed.)
+Use only the APM revision 1.0 specification calls.
+(Some systems do not implement APM v1.1 very well, and generate
+weird events instead of the expected events when the system suspend
+key is pressed.)
 .It Dv APM_NO_V12
 Don't attach to the BIOS as APM v1.2 compliant device.
 (In case there are problems with v1.2 support.)
@@ -74,32 +76,38 @@ Enable kernel printout of every call to the APM BIOS (this is very noisy).
 .It Dv APM_POWER_PRINT
 Print power state on console at
 .Dv APM_POWER_CHANGE
-events.  (Since it increases
+events.
+(Since it increases
 .Xr syslogd 8 Ns 's
-activity, it may consume increased
-battery power.  Some systems generate the events too frequently,
+activity, it may consume increased battery power.
+Some systems generate the events too frequently,
 and printing the status may disturb single-user operations.)
 .It Dv APM_DISABLE_INTERRUPTS
 Set this to zero if you don't want the kernel to disable interrupts
-before calling the BIOS. This is required for most IBM ThinkPads, and
-some other newer laptops. A good indication that you need this is that
-the machine hangs just after resuming from suspended state. It's
-unclear if doing this has negative effects on older BIOS, therefore it
+before calling the BIOS.
+This is required for most IBM ThinkPads, and some other newer laptops.
+A good indication that you need this is that
+the machine hangs just after resuming from suspended state.
+It's unclear if doing this has negative effects on older BIOS, therefore it
 defaults to one (i.e interrupts are disabled).
 .El
 .Pp
 If no processes are holding open file descriptors to the APM device, the
-driver will process the APM BIOS events itself.  If a process has the
+driver will process the APM BIOS events itself.
+If a process has the
 device open for write, the driver defers all suspend and standby
 processing to the user process as long as there is sufficient queue
-space to store the event for the process.  If the device is only open
+space to store the event for the process.
+If the device is only open
 for read, the driver will report events but handle them itself.
 .Pp
 The APM device may be opened by multiple readers but only one
-writer. Multiple readers may fetch the status with
+writer.
+Multiple readers may fetch the status with
 .Xr ioctl 2
 without worrying about interference, but they must cooperate to share
-events as only a single event queue is provided.  The device may only be
+events as only a single event queue is provided.
+The device may only be
 .Xr select 2 Ns ed
 or manipulated with
 .Xr ioctl 2 ;
@@ -112,12 +120,14 @@ The
 calls supported are:
 .Bl -tag -width indent -compact
 .It Dv APM_IOC_SUSPEND
-Initiate an APM suspend mode.  This is a deep sleep mode which powers down
-most devices.  The device must be open for writing for this command to succeed.
+Initiate an APM suspend mode.
+This is a deep sleep mode which powers down most devices.
+The device must be open for writing for this command to succeed.
 .It Dv APM_IOC_STANDBY
-Initiate an APM standby mode.  This is a light sleep mode from which the
-system can quickly restore normal operation.  The device must be open
-for writing for this command to succeed.
+Initiate an APM standby mode.
+This is a light sleep mode from which the
+system can quickly restore normal operation.
+The device must be open for writing for this command to succeed.
 .It Dv APM_IOC_GETPOWER
 Fetch the current power status into an
 .Va apm_power_info
@@ -166,8 +176,8 @@ is an estimated remaining lifetime (or 0 if the BIOS cannot provide an
 estimate).
 .Pp
 .Va nbattery
-is the number of batteries in the system. If the system is using APM
-v1.1 or earlier, nbattery will always return 0.
+is the number of batteries in the system.
+If the system is using APM v1.1 or earlier, nbattery will always return 0.
 .Pp
 Batteries are numbered from a base of 1.
 If the passed value of
@@ -191,7 +201,8 @@ is always set to the passed value upon return.
 .It Dv APM_IOC_NEXTEVENT
 Fetch the next event from the APM BIOS into an
 .Va apm_event_info
-structure.  If no more events are ready, this will return
+structure.
+If no more events are ready, this will return
 .Dv EAGAIN .
 .Bd -literal
 struct apm_event_info {
@@ -210,8 +221,8 @@ is the ordinal event sequence number.
 .Xr apmd 8
 .Sh REFERENCES
 Advanced Power Management (APM) BIOS Interface Specification (Revision
-1.1), Intel Corporation and Microsoft Corporation.  Intel order number
-241704-001; Microsoft part number 781-110-X01.
+1.1), Intel Corporation and Microsoft Corporation.
+Intel order number 241704-001; Microsoft part number 781-110-X01.
 .Sh HISTORY
 The
 .Nm apm

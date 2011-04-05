@@ -1,4 +1,4 @@
-.\" $NetBSD: pcibios.4,v 1.17 2009/11/02 00:50:29 joerg Exp $
+.\" $NetBSD: pcibios.4,v 1.18 2011/04/05 08:24:43 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +47,8 @@ using information extracted from the BIOS.
 .Pp
 Ideally, the boot firmware of a machine (a.k.a. BIOS) should set
 up all PCI devices; assigning them I/O and memory addresses and
-interrupts.  Alas, this does not always happen, so there is some
+interrupts.
+Alas, this does not always happen, so there is some
 PC specific code that can do the initialization when
 .Nx
 boots.
@@ -60,7 +61,7 @@ turn on the PCI BIOS support.
 make the setup procedure verbose.
 .It Nm PCIBIOS_IRQS_HINT
 hint for IRQ use.
-When 
+When
 .Em PCI_INTR_FIXUP
 cannot guess an adequate IRQ for a device, the hint is used.
 .Pp
@@ -108,9 +109,10 @@ prompt:
 .It Nm PCIBIOS_INTR_FIXUP_FORCE
 Some buggy BIOS implementations provide inconsistent
 information between the PCI Interrupt Configuration Register
-and the PCI Interrupt Routing table. In such case,
-the PCI Interrupt Configuration Register takes precedence
-by default. If this happens, a kernel with
+and the PCI Interrupt Routing table.
+In such case, the PCI Interrupt Configuration Register takes precedence
+by default.
+If this happens, a kernel with
 .Em PCIBIOSVERBOSE
 shows
 .Qq Sy WARNING: preserving irq XX
