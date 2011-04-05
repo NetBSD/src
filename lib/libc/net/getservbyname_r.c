@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyname_r.c,v 1.6 2007/03/21 02:35:39 christos Exp $	*/
+/*	$NetBSD: getservbyname_r.c,v 1.6.28.1 2011/04/05 06:23:25 riz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getservbyname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyname_r.c,v 1.6 2007/03/21 02:35:39 christos Exp $");
+__RCSID("$NetBSD: getservbyname_r.c,v 1.6.28.1 2011/04/05 06:23:25 riz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,6 +70,8 @@ _servent_getbyname(struct servent_data *sd, struct servent *sp,
 			key.size = snprintf(buf, sizeof(buf), "\376%s/%s",
 			    name, proto);
 		key.size++;
+		if (key.size > sizeof(buf))
+			return NULL;
 			
 		if ((*db->get)(db, &key, &data, 0) != 0)
 			return NULL;
