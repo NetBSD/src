@@ -1,4 +1,4 @@
-/*	$NetBSD: t_raise.c,v 1.2 2011/03/30 08:34:19 jruoho Exp $ */
+/*	$NetBSD: t_raise.c,v 1.3 2011/04/05 14:04:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_raise.c,v 1.2 2011/03/30 08:34:19 jruoho Exp $");
+__RCSID("$NetBSD: t_raise.c,v 1.3 2011/04/05 14:04:42 jruoho Exp $");
 
 #include <atf-c.h>
 
@@ -56,13 +56,13 @@ handler(int signo)
 	}
 }
 
-ATF_TC(raise_1);
-ATF_TC_HEAD(raise_1, tc)
+ATF_TC(raise_err);
+ATF_TC_HEAD(raise_err, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test raise(3) for invalid parameters");
 }
 
-ATF_TC_BODY(raise_1, tc)
+ATF_TC_BODY(raise_err, tc)
 {
 	int i = 0;
 
@@ -74,13 +74,13 @@ ATF_TC_BODY(raise_1, tc)
 	}
 }
 
-ATF_TC(raise_2);
-ATF_TC_HEAD(raise_2, tc)
+ATF_TC(raise_sig);
+ATF_TC_HEAD(raise_sig, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "A basic test of raise(3)");
 }
 
-ATF_TC_BODY(raise_2, tc)
+ATF_TC_BODY(raise_sig, tc)
 {
 	struct timespec tv, tr;
 	struct sigaction sa;
@@ -111,8 +111,8 @@ ATF_TC_BODY(raise_2, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, raise_1);
-	ATF_TP_ADD_TC(tp, raise_2);
+	ATF_TP_ADD_TC(tp, raise_err);
+	ATF_TP_ADD_TC(tp, raise_sig);
 
 	return atf_no_error();
 }
