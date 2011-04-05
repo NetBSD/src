@@ -148,7 +148,7 @@ lzf_compress (const void *const in_data, unsigned int in_len,
       hslot = htab + IDX (hval);
       ref = *hslot; *hslot = ip;
 
-      if (1
+      if (/*CONSTCOND*/1
 #if INIT_HTAB
           && ref < ip /* the next test will actually take care of this, but this is faster */
 #endif
@@ -160,14 +160,14 @@ lzf_compress (const void *const in_data, unsigned int in_len,
           && ref[1] == ip[1]
           && ref[2] == ip[2]
 #else
-          && *(u16 *)ref == *(u16 *)ip
+          && *(const u16 *)(const void *)ref == *(const u16 *)(const void *)ip
           && ref[2] == ip[2]
 #endif
         )
         {
           /* match found at *ref++ */
           unsigned int len = 2;
-          unsigned int maxlen = in_end - ip - len;
+          unsigned int maxlen = (unsigned)(in_end - ip) - len;
           maxlen = maxlen > MAX_REF ? MAX_REF : maxlen;
 
           if (expect_false (op + 3 + 1 >= out_end)) /* first a faster conservative test */
@@ -214,15 +214,15 @@ lzf_compress (const void *const in_data, unsigned int in_len,
 
           if (len < 7)
             {
-              *op++ = (off >> 8) + (len << 5);
+              *op++ = (unsigned char)((off >> 8) + (len << 5));
             }
           else
             {
-              *op++ = (off >> 8) + (  7 << 5);
+              *op++ = (unsigned char)((off >> 8) + (  7 << 5));
               *op++ = len - 7;
             }
 
-          *op++ = off;
+          *op++ = (unsigned char)off;
           lit = 0; op++; /* start run */
 
           ip += len + 1;
@@ -266,6 +266,7 @@ lzf_compress (const void *const in_data, unsigned int in_len,
 
           lit++; *op++ = *ip++;
 
+	  /*LINTED*/
           if (expect_false (lit == MAX_LIT))
             {
               op [- lit - 1] = lit - 1; /* stop run */
@@ -281,6 +282,7 @@ lzf_compress (const void *const in_data, unsigned int in_len,
     {
       lit++; *op++ = *ip++;
 
+      /*LINTED*/
       if (expect_false (lit == MAX_LIT))
         {
           op [- lit - 1] = lit - 1; /* stop run */
@@ -291,6 +293,6 @@ lzf_compress (const void *const in_data, unsigned int in_len,
   op [- lit - 1] = lit - 1; /* end run */
   op -= !lit; /* undo run if length is zero */
 
-  return op - (u8 *)out_data;
+  return (unsigned)(op - (u8 *)out_data);
 }
 
