@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -592,6 +592,7 @@ list_to_array(const atf_list_t *l, const char ***ap)
 struct exec_args {
     const atf_fs_path_t *m_prog;
     const char *const *m_argv;
+    void (*m_prehook)(void);
 };
 
 static
@@ -599,6 +600,9 @@ void
 do_exec(void *v)
 {
     struct exec_args *ea = v;
+
+    if (ea->m_prehook != NULL)
+        ea->m_prehook();
 
     const int ret = const_execvp(atf_fs_path_cstring(ea->m_prog), ea->m_argv);
     const int errnocopy = errno;
@@ -613,11 +617,12 @@ atf_process_exec_array(atf_process_status_t *s,
                        const atf_fs_path_t *prog,
                        const char *const *argv,
                        const atf_process_stream_t *outsb,
-                       const atf_process_stream_t *errsb)
+                       const atf_process_stream_t *errsb,
+                       void (*prehook)(void))
 {
     atf_error_t err;
     atf_process_child_t c;
-    struct exec_args ea = { prog, argv };
+    struct exec_args ea = { prog, argv, prehook };
 
     PRE(outsb == NULL ||
         atf_process_stream_type(outsb) != atf_process_stream_type_capture);
@@ -645,7 +650,8 @@ atf_process_exec_list(atf_process_status_t *s,
                       const atf_fs_path_t *prog,
                       const atf_list_t *argv,
                       const atf_process_stream_t *outsb,
-                      const atf_process_stream_t *errsb)
+                      const atf_process_stream_t *errsb,
+                      void (*prehook)(void))
 {
     atf_error_t err;
     const char **argv2;
@@ -660,7 +666,7 @@ atf_process_exec_list(atf_process_status_t *s,
     if (atf_is_error(err))
         goto out;
 
-    err = atf_process_exec_array(s, prog, argv2, outsb, errsb);
+    err = atf_process_exec_array(s, prog, argv2, outsb, errsb, prehook);
 
     free(argv2);
 out:
