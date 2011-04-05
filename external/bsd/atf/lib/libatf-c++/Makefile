@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.9 2011/03/31 16:45:45 jmmv Exp $
+# $NetBSD: Makefile,v 1.10 2011/04/05 16:37:06 jmmv Exp $
 
 NOLINT=		# defined
 
 .include <bsd.own.mk>
 
 LIB=		atf-c++
+LIBISCXX=	yes
 LDADD=		-L${.OBJDIR}/../libatf-c -latf-c
 DPADD=		${LIBATF_C}
 NOPIC=		# defined; interface is still too unstable
