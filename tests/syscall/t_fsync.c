@@ -1,4 +1,4 @@
-/* $NetBSD: t_fsync.c,v 1.1 2011/03/30 09:43:21 jruoho Exp $ */
+/* $NetBSD: t_fsync.c,v 1.2 2011/04/05 14:04:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fsync.c,v 1.1 2011/03/30 09:43:21 jruoho Exp $");
+__RCSID("$NetBSD: t_fsync.c,v 1.2 2011/04/05 14:04:42 jruoho Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -40,13 +40,13 @@ __RCSID("$NetBSD: t_fsync.c,v 1.1 2011/03/30 09:43:21 jruoho Exp $");
 
 #include <atf-c.h>
 
-ATF_TC(fsync_1);
-ATF_TC_HEAD(fsync_1, tc)
+ATF_TC(fsync_err);
+ATF_TC_HEAD(fsync_err, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test error conditions of fsync(2)");
 }
 
-ATF_TC_BODY(fsync_1, tc)
+ATF_TC_BODY(fsync_err, tc)
 {
 	int i, fd[2];
 
@@ -83,13 +83,13 @@ ATF_TC_BODY(fsync_1, tc)
 	ATF_REQUIRE(close(fd[1]) == 0);
 }
 
-ATF_TC(fsync_2);
-ATF_TC_HEAD(fsync_2, tc)
+ATF_TC(fsync_sync);
+ATF_TC_HEAD(fsync_sync, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "A basic test of fsync(2)");
 }
 
-ATF_TC_BODY(fsync_2, tc)
+ATF_TC_BODY(fsync_sync, tc)
 {
 	char buf[128];
 	int fd, i;
@@ -112,8 +112,8 @@ ATF_TC_BODY(fsync_2, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, fsync_1);
-	ATF_TP_ADD_TC(tp, fsync_2);
+	ATF_TP_ADD_TC(tp, fsync_err);
+	ATF_TP_ADD_TC(tp, fsync_sync);
 
 	return atf_no_error();
 }
