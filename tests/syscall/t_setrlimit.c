@@ -1,4 +1,4 @@
-/* $NetBSD: t_setrlimit.c,v 1.1 2011/04/05 19:02:23 jruoho Exp $ */
+/* $NetBSD: t_setrlimit.c,v 1.2 2011/04/05 19:06:09 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.1 2011/04/05 19:02:23 jruoho Exp $");
+__RCSID("$NetBSD: t_setrlimit.c,v 1.2 2011/04/05 19:06:09 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -277,7 +277,7 @@ ATF_TC_BODY(setrlimit_memlock, tc)
 
 		(void)munlock(buf, page);
 
-		_exit(EXIT_SUCCESS);
+		_exit(EXIT_FAILURE);
 	}
 
 	free(buf);
