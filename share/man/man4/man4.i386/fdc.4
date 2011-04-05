@@ -1,4 +1,4 @@
-.\"   $NetBSD: fdc.4,v 1.14 2010/03/22 18:58:31 joerg Exp $
+.\"   $NetBSD: fdc.4,v 1.15 2011/04/05 08:24:43 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,8 @@ The driver supports floppy disk formatting using the interfaces in
 .In sys/fdio.h :
 .Bl -tag -width FDIOCFORMAT_TRACK -compact
 .It Dv FDIOCGETFORMAT Fa struct fdformat_parms
-Fetch current formatting parameters.  This gets the default parameters
+Fetch current formatting parameters.
+This gets the default parameters
 for the open device if no parameters have been set during the session.
 .It Dv FDIOCSETFORMAT Fa struct fdformat_parms
 Set formatting parameters.
@@ -78,8 +79,8 @@ If it returns
 .Er EIO ,
 there was a medium error while formatting the track.
 .It Dv FDIOCSETOPTS Fa int
-Set driver options which persist until the device is closed.  The
-options should be the logical OR of the desired values below:
+Set driver options which persist until the device is closed.
+The options should be the logical OR of the desired values below:
 .Bl -tag -width FDOPT_NORETRY -compact
 .It Dv FDOPT_NORETRY
 Do not retry operations on failure
