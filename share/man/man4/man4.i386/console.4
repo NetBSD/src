@@ -1,4 +1,4 @@
-.\"	$NetBSD: console.4,v 1.11 2009/03/09 19:24:29 joerg Exp $
+.\"	$NetBSD: console.4,v 1.12 2011/04/05 08:24:43 wiz Exp $
 .\"
 .Dd September 6, 2006
 .Dt CONS 4 i386
@@ -61,7 +61,8 @@ The available
 options are:
 .Bl -ohang
 .It Cd options CONSDEVNAME=string
-specifies the name of the console device. Valid values are
+specifies the name of the console device.
+Valid values are
 .Dq pc
 for the pc keyboard / display (default)
 and
@@ -74,15 +75,18 @@ sets the baudrate for the serial console (default: 9600).
 .It Cd options CONS_OVERRIDE
 causes console information passed by the bootloader to be ignored and
 the settings specified by the three options above (or the defaults) to be
-used. Default behaviour is to use the settings from the bootloader if
+used.
+Default behaviour is to use the settings from the bootloader if
 present, and to use option / default values only if no information was
 passed.
 .It Cd options CONMODE=integer
-allows to specify terminal control flags. The argument is a
+allows to specify terminal control flags.
+The argument is a
 .Dq cflag
 value, see
 .Xr termios 4
-for details. Default is
+for details.
+Default is
 .Li (CREAD | CS8 | HUPCL)
 (8N1).
 This option takes always effect, because mode settings are not passed
@@ -105,7 +109,8 @@ The console device is chosen early in system startup regardless
 if the specified driver / device is present in the system configuration file.
 If the driver asked for by the bootloader or
 .Dq Cd options CONSDEVNAME
-is not configured into the system, a panic is caused. Because there is
+is not configured into the system, a panic is caused.
+Because there is
 no console device, no explaining message will be printed.
 If the driver is present, but the specific device instance not, kernel
 printf will work, but
