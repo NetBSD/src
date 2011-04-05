@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.1 2011/04/05 06:15:30 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.2 2011/04/05 08:24:28 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,10 +32,11 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.1 2011/04/05 06:15:30 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.2 2011/04/05 08:24:28 jruoho Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,6 +65,33 @@ ATF_TC_BODY(strtod_basic, tc)
 		ATF_REQUIRE(d > 0.0);
 		ATF_REQUIRE(errno == 0);
 	}
+}
+
+ATF_TC(strtod_hex);
+ATF_TC_HEAD(strtod_hex, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A strtod(3) with hexadecimals");
+}
+
+ATF_TC_BODY(strtod_hex, tc)
+{
+	const char *str;
+	char *end;
+	double d;
+
+	str = "-0x0";
+	d = strtod(str, &end);	/* -0.0 */
+
+	ATF_REQUIRE(end == str + 4);
+	ATF_REQUIRE(signbit(d) != 0);
+	ATF_REQUIRE(fabs(d) < 1.0e-40);
+
+	str = "-0x";
+	d = strtod(str, &end);	/* -0.0 */
+
+	ATF_REQUIRE(end == str + 2);
+	ATF_REQUIRE(signbit(d) != 0);
+	ATF_REQUIRE(fabs(d) < 1.0e-40);
 }
 
 ATF_TC(strtod_underflow);
@@ -98,6 +126,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, strtod_basic);
+	ATF_TP_ADD_TC(tp, strtod_hex);
 	ATF_TP_ADD_TC(tp, strtod_underflow);
 
 	return atf_no_error();
