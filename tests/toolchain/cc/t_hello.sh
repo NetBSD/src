@@ -1,4 +1,5 @@
-#	$NetBSD: t_hello.sh,v 1.2 2011/03/25 19:19:45 njoly Exp $
+#! /usr/bin/atf-sh
+#	$NetBSD: t_hello.sh,v 1.3 2011/04/05 09:53:10 martin Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,6 +38,12 @@ hello_pic_head() {
 	atf_set "require.progs" "cc"
 }
 
+atf_test_case hello32
+hello32_head() {
+	atf_set "descr" "compile and run \"hello world\" for/in netbsd32 emulation"
+	atf_set "require.progs" "cc file diff cat"
+}
+
 hello_body() {
 	cat > test.c << EOF
 #include <stdio.h>
@@ -66,9 +73,52 @@ EOF
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
 }
 
+hello32_body() {
+	# check wether this arch is 64bit
+	if ! cc -dM -E - < /dev/null | fgrep -q _LP64; then
+		atf_skip "this is not a 64 bit architecture"
+	fi
+	if ! cc -m32 -dM -E - < /dev/null 2>/dev/null > ./def32; then
+		atf_skip "cc -m32 not supported on this architecture"
+	else
+		if fgrep -q _LP64 ./def32; then
+			atf_fail "cc -m32 does not generate netbsd32 binaries"
+		fi
+	fi
+
+	cat > test.c << EOF
+#include <stdio.h>
+#include <stdlib.h>
+int main(void) {printf("hello world\n");exit(0);}
+EOF
+	atf_check -s exit:0 -o ignore -e ignore cc -o hello32 -m32 test.c
+	atf_check -s exit:0 -o ignore -e ignore cc -o hello64 test.c
+	file -b ./hello32 > ./ftype32
+	file -b ./hello64 > ./ftype64
+	if diff ./ftype32 ./ftype64 >/dev/null; then
+		atf_fail "generated binaries do not differ"
+	fi
+	echo "32bit binaries on this platform are:"
+	cat ./ftype32
+	echo "While native (64bit) binareis are:"
+	cat ./ftype64
+	atf_check -s exit:0 -o inline:"hello world\n" ./hello32
+
+	# do another test with static 32bit binaries
+	cat > test.c << EOF
+#include <stdio.h>
+#include <stdlib.h>
+int main(void) {printf("hello static world\n");exit(0);}
+EOF
+	atf_check -s exit:0 -o ignore -e ignore cc -o hello -m32 \
+	    -static test.c
+	atf_check -s exit:0 -o inline:"hello static world\n" ./hello
+}
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case hello
 	atf_add_test_case hello_pic
+	atf_add_test_case hello32
 }
