@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/12/14 15:49:19 skrll Exp $
+#	$NetBSD: Makefile,v 1.9 2011/04/05 10:48:47 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -84,7 +84,7 @@ EMUL_LIB_PATH.${f}=/usr/lib/sparc
 . elif ${MACHINE_ARCH} == "mips64el"
 .  if "${f}" == "elf32ltsmip" || "${f}" == "elf32btsmip"
 EMUL_LIB_PATH.${f}:=/usr/lib/o32
-.  elif "${f}" == "elf64btsmip" || "${f}" == "elf64btsmip"
+.  elif "${f}" == "elf64ltsmip" || "${f}" == "elf64btsmip"
 EMUL_LIB_PATH.${f}:=/usr/lib/64
 .  else
 EMUL_LIB_PATH.${f}=/usr/lib
