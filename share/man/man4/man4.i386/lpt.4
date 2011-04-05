@@ -1,4 +1,4 @@
-.\" $NetBSD: lpt.4,v 1.20 2009/03/23 16:05:53 joerg Exp $
+.\" $NetBSD: lpt.4,v 1.21 2011/04/05 08:24:43 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -48,8 +48,9 @@ Parallel port driver
 .Cd "lpt* at pnpbios? index ?"
 .Cd "lpt* at puc? port ?"
 .Sh DESCRIPTION
-This driver provides access to parallel ports.  The bits in the minor
-number select various features of the driver.  If no IRQ is
+This driver provides access to parallel ports.
+The bits in the minor number select various features of the driver.
+If no IRQ is
 specified in the kernel configuration, only the polling device may be used.
 .Pp
 .Bl -column "Minor Bit" "Functionxxxxxxxxxxxxxxxxxxxxxxxxxxxx" -offset indent
