@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.173 2011/03/05 01:52:18 matt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.174 2011/04/05 09:02:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.173 2011/03/05 01:52:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.174 2011/04/05 09:02:23 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1940,8 +1940,11 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		goto out_locked;
 	}
 
-	rw_enter(&p->p_reflock, RW_READER);
+	error = rw_tryenter(&p->p_reflock, RW_READER) ? 0 : EBUSY;
 	mutex_exit(p->p_lock);
+	if (error) {
+		goto out_locked;
+	}
 	mutex_exit(proc_lock);
 
 	if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV) {
