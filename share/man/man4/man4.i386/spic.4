@@ -1,4 +1,4 @@
-.\" $NetBSD: spic.4,v 1.3 2008/04/30 13:10:56 martin Exp $
+.\" $NetBSD: spic.4,v 1.4 2011/04/05 08:24:43 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,7 +37,8 @@
 Some
 .Tn Sony
 computers have an I/O controller that handles various interface
-devices, e.g., the jog dial.  The
+devices, e.g., the jog dial.
+The
 .Nm
 driver provides support for some of these.
 .Pp
@@ -48,10 +49,11 @@ been tested on the Vaio SRX77.
 .Pp
 The
 .Nm
-driver handles the jog dial and its associated buttons.  They are turned
-into a
+driver handles the jog dial and its associated buttons.
+They are turned into a
 .Nm wsmouse
-which can the be accessed in the normal way.  The jog dial works as a
+which can the be accessed in the normal way.
+The jog dial works as a
 scroll button, and clicking it generates a click with the "middle" button.
 .Sh SEE ALSO
 .Xr acpi 4 ,
