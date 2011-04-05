@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.70 2011/01/26 00:49:56 dyoung Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.71 2011/04/05 23:37:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -369,7 +369,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_BAR4		0x20
 #define PCI_BAR5		0x24
 
-#define	PCI_BAR(__n)		(0x10 + 4 * (__n))
+#define	PCI_BAR(__n)		(PCI_MAPREG_START + 4 * (__n))
 
 #define	PCI_MAPREG_TYPE(mr)						\
 	    ((mr) & PCI_MAPREG_TYPE_MASK)
