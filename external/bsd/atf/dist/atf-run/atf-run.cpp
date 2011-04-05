@@ -100,6 +100,18 @@ public:
 };
 
 static void
+sanitize_gdb_env(void)
+{
+    try {
+        atf::env::unset("TERM");
+    } catch (...) {
+        // Just swallow exceptions here; they cannot propagate into C, which
+        // is where this function is called from, and even if these exceptions
+        // appear they are benign.
+    }
+}
+
+static void
 dump_stacktrace(const atf::fs::path& tp, const atf::process::status& s,
                 const atf::fs::path& workdir, impl::atf_tps_writer& w)
 {
@@ -121,7 +133,8 @@ dump_stacktrace(const atf::fs::path& tp, const atf::process::status& s,
     atf::process::status status = atf::process::exec(
         gdb, args,
         atf::process::stream_redirect_path(gdbout),
-        atf::process::stream_redirect_path(atf::fs::path("/dev/null")));
+        atf::process::stream_redirect_path(atf::fs::path("/dev/null")),
+        sanitize_gdb_env);
     if (!status.exited() || status.exitstatus() != EXIT_SUCCESS) {
         w.stderr_tc("Execution of " GDB " failed");
         return;
