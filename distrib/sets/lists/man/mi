@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1306 2011/04/04 17:26:23 bouyer Exp $
+# $NetBSD: mi,v 1.1307 2011/04/05 11:24:46 phx Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1438,7 +1438,8 @@
 ./usr/share/man/cat4/rtpphy.0			man-obsolete		obsolete
 ./usr/share/man/cat4/rtw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rum.0			man-sys-catman		.cat
-./usr/share/man/cat4/sandpoint/satmgr.0			man-sys-catman		.cat
+./usr/share/man/cat4/s390rtc.0			man-sys-catman		.cat
+./usr/share/man/cat4/sandpoint/satmgr.0		man-sys-catman		.cat
 ./usr/share/man/cat4/satalink.0			man-sys-catman		.cat
 ./usr/share/man/cat4/savagedrm.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sdhc.0			man-sys-catman		.cat
@@ -4150,7 +4151,8 @@
 ./usr/share/man/html4/rtk.html			man-sys-htmlman		html
 ./usr/share/man/html4/rtw.html			man-sys-htmlman		html
 ./usr/share/man/html4/rum.html			man-sys-htmlman		html
-./usr/share/man/html4/sandpoint/satmgr.html		man-sys-htmlman		html
+./usr/share/man/html4/s390rtc.html		man-sys-htmlman		html
+./usr/share/man/html4/sandpoint/satmgr.html	man-sys-htmlman		html
 ./usr/share/man/html4/satalink.html		man-sys-htmlman		html
 ./usr/share/man/html4/savagedrm.html		man-sys-htmlman		html
 ./usr/share/man/html4/sdhc.html			man-sys-htmlman		html
@@ -6771,7 +6773,8 @@
 ./usr/share/man/man4/rtpphy.4			man-obsolete		obsolete
 ./usr/share/man/man4/rtw.4			man-sys-man		.man
 ./usr/share/man/man4/rum.4			man-sys-man		.man
-./usr/share/man/man4/sandpoint/satmgr.4			man-sys-man		.man
+./usr/share/man/man4/s390rtc.4			man-sys-man		.man
+./usr/share/man/man4/sandpoint/satmgr.4		man-sys-man		.man
 ./usr/share/man/man4/satalink.4			man-sys-man		.man
 ./usr/share/man/man4/savagedrm.4		man-sys-man		.man
 ./usr/share/man/man4/sdhc.4			man-sys-man		.man
