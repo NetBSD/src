@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -861,7 +861,8 @@ ATF_TC_BODY(child_wait_eintr, tc)
 
 static
 void
-do_exec(const atf_tc_t *tc, const char *helper_name, atf_process_status_t *s)
+do_exec(const atf_tc_t *tc, const char *helper_name, atf_process_status_t *s,
+        void (*prehook)(void))
 {
     atf_fs_path_t process_helpers;
     const char *argv[3];
@@ -873,7 +874,7 @@ do_exec(const atf_tc_t *tc, const char *helper_name, atf_process_status_t *s)
     argv[2] = NULL;
     printf("Executing %s %s\n", argv[0], argv[1]);
 
-    RE(atf_process_exec_array(s, &process_helpers, argv, NULL, NULL));
+    RE(atf_process_exec_array(s, &process_helpers, argv, NULL, NULL, prehook));
     atf_fs_path_fini(&process_helpers);
 }
 
@@ -902,7 +903,7 @@ ATF_TC_BODY(exec_failure, tc)
 {
     atf_process_status_t status;
 
-    do_exec(tc, "exit-failure", &status);
+    do_exec(tc, "exit-failure", &status, NULL);
     ATF_CHECK(atf_process_status_exited(&status));
     ATF_CHECK_EQ(atf_process_status_exitstatus(&status), EXIT_FAILURE);
     atf_process_status_fini(&status);
@@ -932,7 +933,7 @@ ATF_TC_BODY(exec_list, tc)
         RE(atf_fs_path_init_fmt(&outpath, "stdout"));
         RE(atf_process_stream_init_redirect_path(&outsb, &outpath));
         RE(atf_process_exec_list(&status, &process_helpers, &argv, &outsb,
-                                 NULL));
+                                 NULL, NULL));
         atf_process_stream_fini(&outsb);
         atf_fs_path_fini(&outpath);
     }
@@ -952,6 +953,27 @@ ATF_TC_BODY(exec_list, tc)
     atf_fs_path_fini(&process_helpers);
 }
 
+static void
+exit_early(void)
+{
+    exit(80);
+}
+
+ATF_TC(exec_prehook);
+ATF_TC_HEAD(exec_prehook, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Tests execing a command with a prehook");
+}
+ATF_TC_BODY(exec_prehook, tc)
+{
+    atf_process_status_t status;
+
+    do_exec(tc, "exit-success", &status, exit_early);
+    ATF_CHECK(atf_process_status_exited(&status));
+    ATF_CHECK_EQ(atf_process_status_exitstatus(&status), 80);
+    atf_process_status_fini(&status);
+}
+
 ATF_TC(exec_success);
 ATF_TC_HEAD(exec_success, tc)
 {
@@ -961,7 +983,7 @@ ATF_TC_BODY(exec_success, tc)
 {
     atf_process_status_t status;
 
-    do_exec(tc, "exit-success", &status);
+    do_exec(tc, "exit-success", &status, NULL);
     ATF_CHECK(atf_process_status_exited(&status));
     ATF_CHECK_EQ(atf_process_status_exitstatus(&status), EXIT_SUCCESS);
     atf_process_status_fini(&status);
@@ -1104,6 +1126,7 @@ ATF_TP_ADD_TCS(tp)
     /* Add the tests for the free functions. */
     ATF_TP_ADD_TC(tp, exec_failure);
     ATF_TP_ADD_TC(tp, exec_list);
+    ATF_TP_ADD_TC(tp, exec_prehook);
     ATF_TP_ADD_TC(tp, exec_success);
     ATF_TP_ADD_TC(tp, fork_cookie);
     ATF_TP_ADD_TC(tp, fork_out_capture_err_capture);

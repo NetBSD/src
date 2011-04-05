@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -124,11 +124,13 @@ atf_error_t atf_process_exec_array(atf_process_status_t *,
                                    const atf_fs_path_t *,
                                    const char *const *,
                                    const atf_process_stream_t *,
-                                   const atf_process_stream_t *);
+                                   const atf_process_stream_t *,
+                                   void (*)(void));
 atf_error_t atf_process_exec_list(atf_process_status_t *,
                                   const atf_fs_path_t *,
                                   const atf_list_t *,
                                   const atf_process_stream_t *,
-                                  const atf_process_stream_t *);
+                                  const atf_process_stream_t *,
+                                  void (*)(void));
 
 #endif /* !defined(ATF_C_PROCESS_H) */
