@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.85 2011/03/15 07:39:22 matt Exp $ */
+/* $NetBSD: locore.h,v 1.86 2011/04/06 05:43:11 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -141,6 +141,7 @@ void	mips3_cp0_compare_write(uint32_t);
 
 uint32_t mips3_cp0_config_read(void);
 void	mips3_cp0_config_write(uint32_t);
+
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 uint32_t mipsNN_cp0_config1_read(void);
 void	mipsNN_cp0_config1_write(uint32_t);
