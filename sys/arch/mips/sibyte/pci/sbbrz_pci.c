@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz_pci.c,v 1.2 2011/02/17 14:24:12 matt Exp $ */
+/* $NetBSD: sbbrz_pci.c,v 1.3 2011/04/06 01:44:45 dyoung Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.2 2011/02/17 14:24:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.3 2011/04/06 01:44:45 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ static void	sbbrz_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 static void	sbbrz_pci_conf_interrupt(void *, int, int, int, int, int *);
 #endif
 
-static int	sbbrz_pci_intr_map(struct pci_attach_args *,
+static int	sbbrz_pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 static const char *
 		sbbrz_pci_intr_string(void *, pci_intr_handle_t);
@@ -209,7 +209,7 @@ sbbrz_pci_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 }
 
 int
-sbbrz_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+sbbrz_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int bus, device, func;
 	sbbrz_pci_decompose_tag(NULL, pa->pa_intrtag, &bus, &device, &func);
