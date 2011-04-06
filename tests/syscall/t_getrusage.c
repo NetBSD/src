@@ -1,4 +1,4 @@
-/* $NetBSD: t_getrusage.c,v 1.1 2011/04/06 05:53:17 jruoho Exp $ */
+/* $NetBSD: t_getrusage.c,v 1.2 2011/04/06 05:56:05 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrusage.c,v 1.1 2011/04/06 05:53:17 jruoho Exp $");
+__RCSID("$NetBSD: t_getrusage.c,v 1.2 2011/04/06 05:56:05 jruoho Exp $");
 
 #include <sys/resource.h>
 
@@ -117,9 +117,8 @@ ATF_TC_BODY(getrusage_utime, tc)
 
 	/*
 	 * Test that getrusage(2) does not return
-	 * zero user time for the calling process;
-	 * cf. PR port-xen/41734. Note that this
-	 * does not trigger always.
+	 * zero user time for the calling process.
+	 * Note that this does not trigger always.
 	 */
 	atf_tc_expect_fail("PR port-amd64/41734");
 
