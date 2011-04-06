@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.39 2011/04/03 23:21:37 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.40 2011/04/06 23:51:55 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -271,7 +271,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 
 	ifp = &xneti->xni_if;
 	ifp->if_softc = xneti;
-	snprintf(ifp->if_xname, IFNAMSIZ, "xvif%d-%d",
+	snprintf(ifp->if_xname, IFNAMSIZ, "xvif%di%d",
 	    (int)domid, (int)handle);
 
 	/* read mac address */
