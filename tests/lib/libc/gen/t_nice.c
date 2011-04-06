@@ -1,4 +1,4 @@
-/*	$NetBSD: t_nice.c,v 1.2 2011/04/04 10:30:29 jruoho Exp $ */
+/*	$NetBSD: t_nice.c,v 1.3 2011/04/06 08:47:55 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nice.c,v 1.2 2011/04/04 10:30:29 jruoho Exp $");
+__RCSID("$NetBSD: t_nice.c,v 1.3 2011/04/06 08:47:55 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -57,12 +57,16 @@ ATF_TC_BODY(nice_err, tc)
 	 * caller does not have privileges. Note
 	 * that the errno is thus "wrong" in NetBSD.
 	 */
+	atf_tc_expect_fail("PR lib/42587");
+
 	for (i = -20; i < 0; i++) {
 
 		errno = 0;
 
 		ATF_REQUIRE(nice(i) == -1);
-		ATF_REQUIRE(errno == EACCES);
+
+		if (errno != EPERM)
+			atf_tc_fail("wrong return value");
 	}
 }
 
