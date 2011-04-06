@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.229 2011/03/16 15:14:08 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.230 2011/04/06 05:33:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.229 2011/03/16 15:14:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.230 2011/04/06 05:33:07 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -291,8 +291,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			return; /* KERN */
 		}
 		/*FALLTHROUGH*/
-	case T_TLB_MOD+T_USER:
-	    {
+	case T_TLB_MOD+T_USER: {
 		pt_entry_t *pte;
 		uint32_t pt_entry;
 		paddr_t pa;
@@ -335,7 +334,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		if (type & T_USER)
 			userret(l);
 		return; /* GEN */
-	    }
+	}
 	case T_TLB_LD_MISS:
 	case T_TLB_ST_MISS:
 		ftype = (type == T_TLB_LD_MISS) ? VM_PROT_READ : VM_PROT_WRITE;
@@ -359,8 +358,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		goto pagefault;
 	case T_TLB_ST_MISS+T_USER:
 		ftype = VM_PROT_WRITE;
-	pagefault: ;
-	    {
+	pagefault: {
 		const vaddr_t va = trunc_page(vaddr);
 		struct vmspace * const vm = p->p_vmspace;
 		struct vm_map * const map = &vm->vm_map;
@@ -482,7 +480,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)vaddr;
 		break; /* SIGNAL */
-	    }
+	}
 	kernelfault: {
 		onfault = pcb->pcb_onfault;
 
@@ -556,8 +554,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 #else
 		goto dopanic;
 #endif
-	case T_BREAK+T_USER:
-	    {
+	case T_BREAK+T_USER: {
 		uint32_t instr;
 
 		/* compute address of break instruction */
@@ -602,7 +599,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		ksi.ksi_addr = (void *)va;
 		ksi.ksi_code = TRAP_BRKPT;
 		break; /* SIGNAL */
-	    }
+	}
 	case T_RES_INST+T_USER:
 	case T_COP_UNUSABLE+T_USER:
 #if !defined(FPEMUL) && !defined(NOFPU)
@@ -881,8 +878,6 @@ stacktrace_subr(mips_reg_t a0, mips_reg_t a1, mips_reg_t a2, mips_reg_t a3,
 	int more, stksize;
 	unsigned int frames =  0;
 	int foundframesize = 0;
-	uint8_t rop[32];
-	uint32_t rwant[32];
 	mips_reg_t regs[32] = {
 		[_R_ZERO] = 0,
 		[_R_A0] = a0, [_R_A1] = a1, [_R_A2] = a2, [_R_A3] = a3,
@@ -895,10 +890,6 @@ stacktrace_subr(mips_reg_t a0, mips_reg_t a1, mips_reg_t a2, mips_reg_t a3,
 
 /* Jump here when done with a frame, to start a new one */
 loop:
-	for (u_int j = 0; j < __arraycount(rop); j++) {
-		rop[j] = OP_SLL;
-		rwant[j] = 0;
-	}
 	stksize = 0;
 	subr = 0;
 	mask = 1;
@@ -1071,71 +1062,19 @@ mips3_eret:
 			break;
 		}
 
-#if 0
-		case OP_LUI:
-			if (mask & (1 << i.IType.rt))
-				break;
-			for (u_int want = rwant[i.IType.rt] >> 1, r = 1;
-			     want != 0; 
-			     want >>= 1, r++) {
-				switch (rop[r]) {
-				case OP_ADDI:
-				case OP_ADDIU:
-#ifndef __mips_o32
-					regs[r] = (int32_t)(regs[r]
-					    + ((int16_t)i.IType.imm << 16));
-					mask |= 1 << r;
-					break;
-				case OP_DADDI:
-				case OP_DADDIU:
-#endif
-					regs[r] += (int16_t)i.IType.imm << 16;
-					mask |= 1 << r;
-					break;
-				}
-			}
-			rwant[i.IType.rt] = 0;
-			break;
-#endif
-
 		case OP_ADDI:
 		case OP_ADDIU:
 #if !defined(__mips_o32)
 		case OP_DADDI:
 		case OP_DADDIU:
 #endif
-			switch (i.IType.rt) {
-#if 0
-			case _R_A0:
-			case _R_A1:
-			case _R_A2:
-			case _R_A3:
-				if (mask & (1 << i.IType.rt))
-					break;
-				regs[i.IType.rt] = (int16_t)i.IType.imm;
-				if (i.IType.rs == _R_ZERO) {
-					mask |= 1 << i.IType.rt;
-					break;
-				}
-				if (mask & (1 << i.IType.rs)) {
-					regs[i.IType.rt] += regs[i.IType.rt];
-					mask |= 1 << i.IType.rt;
-					break;
-				}
-				rwant[i.IType.rs] |= (1 << i.IType.rt);
-				rop[i.IType.rt] = i.IType.op;
+			/* look for stack pointer adjustment */
+			if (i.IType.rs != _R_SP || i.IType.rt != _R_SP)
 				break;
-#endif
-			case _R_SP:
-				/* look for stack pointer adjustment */
-				if (i.IType.rs != _R_SP)
-					break;
-				/* don't count pops for mcount */
-				if (!foundframesize) {
-					stksize = - ((short)i.IType.imm);
-					foundframesize = 1;
-				}
-				break;
+			/* don't count pops for mcount */
+			if (!foundframesize) {
+				stksize = - ((short)i.IType.imm);
+				foundframesize = 1;
 			}
 			break;
 		}
