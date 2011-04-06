@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.185 2011/03/15 07:39:22 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.186 2011/04/06 05:37:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -218,6 +218,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_S	s5, PCB_CONTEXT+SF_REG_S5(a2)
 	REG_S	s6, PCB_CONTEXT+SF_REG_S6(a2)
 	REG_S	s7, PCB_CONTEXT+SF_REG_S7(a2)
+	#REG_S	t8, PCB_CONTEXT+SF_REG_T8(a2)	# no reason to save MIPS_CURLWP
 	REG_S	sp, PCB_CONTEXT+SF_REG_SP(a2)
 	REG_S	s8, PCB_CONTEXT+SF_REG_S8(a2)
 	REG_S	ra, PCB_CONTEXT+SF_REG_RA(a2)
@@ -367,7 +368,7 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	REG_S	s5, PCB_CONTEXT+SF_REG_S5(t0)
 	REG_S	s6, PCB_CONTEXT+SF_REG_S6(t0)
 	REG_S	s7, PCB_CONTEXT+SF_REG_S7(t0)
-	REG_S	t8, PCB_CONTEXT+SF_REG_T8(t0) # MIPS_CURLWP
+	#REG_S	t8, PCB_CONTEXT+SF_REG_T8(t0)	# no reason to save MIPS_CURLWP
 	REG_S	sp, PCB_CONTEXT+SF_REG_SP(t0)
 	REG_S	s8, PCB_CONTEXT+SF_REG_S8(t0)
 	REG_S	t2, PCB_CONTEXT+SF_REG_RA(t0)
@@ -385,7 +386,7 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	move	s0, MIPS_CURLWP				# remember current lwp
 	move	MIPS_CURLWP, a0				# switch to softint lwp
 	PTR_L	s1, L_CPU(MIPS_CURLWP)			# get curcpu()
-	nop		# patchable load delay slot
+	nop					# patchable load delay slot
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ...
 	move	s2, sp					# remember sp
 	move	s3, t0					# remember curpcb
@@ -440,7 +441,7 @@ END(lwp_oncpu)
 	
 
 /*
- * savectx(struct pcb *)
+ * void savectx(struct pcb *)
  */
 LEAF(savectx)
 #ifdef PARANOIA
@@ -458,7 +459,7 @@ LEAF(savectx)
 	REG_S	s5, PCB_CONTEXT+SF_REG_S5(a0)
 	REG_S	s6, PCB_CONTEXT+SF_REG_S6(a0)
 	REG_S	s7, PCB_CONTEXT+SF_REG_S7(a0)
-	REG_S	t8, PCB_CONTEXT+SF_REG_T8(a0)
+	REG_S	t8, PCB_CONTEXT+SF_REG_T8(a0)	# MIPS_CURLWP
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, PCB_CONTEXT+SF_REG_GP(a0)
 #endif
@@ -487,7 +488,7 @@ LEAF(setjmp)
 	REG_S	s5, SF_REG_S5(a0)
 	REG_S	s6, SF_REG_S6(a0)
 	REG_S	s7, SF_REG_S7(a0)
-	REG_S	t8, SF_REG_T8(a0)
+	#REG_S	t8, SF_REG_T8(a0)		# no reason to save MIPS_CURLWP
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, SF_REG_GP(a0)
 #endif
@@ -513,7 +514,7 @@ LEAF(longjmp)
 	REG_L	s5, SF_REG_S5(a0)
 	REG_L	s6, SF_REG_S6(a0)
 	REG_L	s7, SF_REG_S7(a0)
-	REG_L	t8, SF_REG_T8(a0)
+	#REG_L	t8, SF_REG_T8(a0)		# no reason to load MIPS_CURLWP
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_L	gp, SF_REG_GP(a0)
 #endif
@@ -626,19 +627,10 @@ XNESTED(mips_fpu_trap)
  * We check whether it's an unimplemented FP instruction here rather
  * than invoking mips_emul_inst(), since it is faster.
  */
-	bgez		a2, 1f			# Check the branch delay bit.
-	 nop
-/*
- * The instruction is in the branch delay slot.
- */
-	b		2f
-	 INT_L		a0, 4(a0)		# a0 = coproc instruction
-/*
- * This is not in the branch delay slot.
- */
-1:
+	srl		v1, a2, 31		# move branch delay bit to LSB
+	sll		v1, 2			# shift it left by 2 (mult by 4)
+	PTR_ADDIU	a0, v1			# add to a0
 	INT_L		a0, 0(a0)		# a0 = coproc instruction
-2:
 	NOP_L					# load delay
 
 /*
@@ -690,7 +682,7 @@ XNESTED(mips_fpu_trap)
 
 /*
  * Finally, we can call
- * mips_emul_fp(uint32_t instr, struct trapframe *tf, uint32_t cause).
+ * mips_emul_fp(uint32_t insn, struct trapframe *tf, uint32_t cause).
  */
 4:
 	jal		_C_LABEL(mips_emul_fp)
