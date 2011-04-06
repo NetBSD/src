@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.2 2011/04/05 08:24:28 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.3 2011/04/06 07:25:34 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.2 2011/04/05 08:24:28 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.3 2011/04/06 07:25:34 jruoho Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -94,6 +94,30 @@ ATF_TC_BODY(strtod_hex, tc)
 	ATF_REQUIRE(fabs(d) < 1.0e-40);
 }
 
+ATF_TC(strtod_inf);
+ATF_TC_HEAD(strtod_inf, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A strtod(3) with INF");
+}
+
+ATF_TC_BODY(strtod_inf, tc)
+{
+	long double ld;
+	double d;
+	float f;
+
+	atf_tc_expect_fail("PR lib/33262");
+
+	d = strtod("INF", NULL);
+	ATF_REQUIRE(isinf(d) != 0);
+
+	f = strtof("INF", NULL);
+	ATF_REQUIRE(isinf(f) != 0);
+
+	ld = strtold("INF", NULL);
+	ATF_REQUIRE(isinf(ld) != 0);
+}
+
 ATF_TC(strtod_underflow);
 ATF_TC_HEAD(strtod_underflow, tc)
 {
@@ -127,6 +151,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, strtod_basic);
 	ATF_TP_ADD_TC(tp, strtod_hex);
+	ATF_TP_ADD_TC(tp, strtod_inf);
 	ATF_TP_ADD_TC(tp, strtod_underflow);
 
 	return atf_no_error();
