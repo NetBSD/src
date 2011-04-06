@@ -67,7 +67,11 @@ if [ "$reason" = PREINIT ]; then
 	rm -f "$ypbind_dir/$interface"
 elif $if_up || $if_down; then
 	if [ -n "$new_nis_domain" ]; then
-		make_yp_binding
+		if valid_domainname "$new_nis_domain"; then
+			make_yp_binding
+		else
+			syslog err "Invalid NIS domain name: $new_nis_domain"
+		fi
 	elif [ -n "$old_nis_domain" ]; then
 		restore_yp_binding
 	fi
