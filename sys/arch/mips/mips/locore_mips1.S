@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.75 2011/03/08 15:12:46 tsutsui Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.76 2011/04/06 05:39:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -445,14 +445,13 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 /*
  * Call the interrupt handler.
  */
-	_MFC0	ra, MIPS_COP_0_EXC_PC		# grab exception PC
+	_MFC0	ta0, MIPS_COP_0_EXC_PC		# grab exception PC
 	PTR_L	s2, L_CPU(MIPS_CURLWP)		# delay slot
-	REG_S	ra, TF_BASE+TF_REG_EPC(sp)	# and save it
+	REG_S	ta0, TF_BASE+TF_REG_EPC(sp)	# and save it
 
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
-	REG_S	ra, KERNFRAME_RA(sp)		# for debugging
+	REG_S	ta0, KERNFRAME_RA(sp)		# for debugging
 #endif
-	move	ta0, ra				# save across spl* calls
 
 #ifdef PARANOIA
 	INT_L	s0, CPU_INFO_CPL(s2)
@@ -721,7 +720,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
  */
 	PTR_L	k1, CPUVAR(CURLWP)
 	nop
-	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
+	PTR_L	k0, L_PCB(k1)				# XXXuvm_lwp_getuarea
 	nop
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
 	REG_S	AT, CALLFRAME_SIZ+TF_REG_AST(k0)	# $1
@@ -751,20 +750,19 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	REG_S	sp, CALLFRAME_SIZ+TF_REG_SP(k0)		# $29
 	REG_S	ra, CALLFRAME_SIZ+TF_REG_RA(k0)		# $31
 	REG_S	s1, CALLFRAME_SIZ+TF_REG_SR(k0)
-	_MFC0	ra, MIPS_COP_0_EXC_PC
+	_MFC0	ta0, MIPS_COP_0_EXC_PC
 	REG_S	v0, CALLFRAME_SIZ+TF_REG_MULLO(k0)
 	REG_S	v1, CALLFRAME_SIZ+TF_REG_MULHI(k0)
-	REG_S	ra, CALLFRAME_SIZ+TF_REG_EPC(k0)
+	REG_S	ta0, CALLFRAME_SIZ+TF_REG_EPC(k0)
 	REG_S	t0, CALLFRAME_SIZ+TF_REG_CAUSE(k0)
 	move	sp, k0				# switch to kernel SP
 	move	MIPS_CURLWP, k1			# set curlwp reg (t8)
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
-	REG_S	ra, CALLFRAME_RA(sp)		# for debugging
+	REG_S	ta0, CALLFRAME_RA(sp)		# for debugging
 #endif
 #ifdef __GP_SUPPORT__
 	PTR_LA	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-	move	ta0, ra				# save across spl* calls
 
 	/*
 	 * We first need to get to IPL_HIGH so that interrupts are masked.
@@ -1165,17 +1163,16 @@ LEAF(MIPSX(tlb_read_indexed))
 	tlbr					# Read from the TLB
 	mfc0	t2, MIPS_COP_0_TLB_HI		# fetch the hi entry
 	mfc0	t3, MIPS_COP_0_TLB_LOW		# fetch the low entry
+
+	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore proper PID
+						# (before touching memory)
+	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+
 	PTR_S	t2, TLBMASK_HI(a1)
 	INT_S	t3, TLBMASK_LO0(a1)
 	INT_S	zero, TLBMASK_LO1(a1)
-	INT_S	zero, TLBMASK_MASK(a1)
-
-	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore proper PID
- 						# (before touching memory)
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-	sw	t2, 0(a1)			# Write results back
 	j	ra
-	 mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+	 INT_S	zero, TLBMASK_MASK(a1)
 END(MIPSX(tlb_read_indexed))
 
 /*--------------------------------------------------------------------------
@@ -1208,7 +1205,7 @@ LEAF(MIPSX(tlb_write_indexed))
 
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+	 mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(MIPSX(tlb_write_indexed))
 
 /*
@@ -1228,6 +1225,7 @@ LEAF(MIPSX(tlb_invalidate_addr))
 	mfc0	a0, MIPS_COP_0_TLB_INDEX	# see what we got
 	li	t1, MIPS_KSEG0_START		# load invalid address
 	bltz	a0, 1f				# index < 0 then skip
+	 nop
 	mtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entryLo
 	nop
@@ -1235,7 +1233,7 @@ LEAF(MIPSX(tlb_invalidate_addr))
 1:
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# restore the status register
+	 mtc0	v1, MIPS_COP_0_STATUS		# restore the status register
 END(MIPSX(tlb_invalidate_addr))
 
 /*
@@ -1287,7 +1285,7 @@ LEAF(MIPSX(tlb_invalidate_asids))
 	mtc0	t3, MIPS_COP_0_TLB_HI		# restore entryHi
 
 	j	ra				# new TLBpid will be set soon
-	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
+	 mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 END(MIPSX(tlb_invalidate_asids))
 
 /*
