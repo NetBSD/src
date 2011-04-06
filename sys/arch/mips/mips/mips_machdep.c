@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.237 2011/03/15 07:39:23 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.238 2011/04/06 05:50:39 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.237 2011/03/15 07:39:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.238 2011/04/06 05:50:39 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -481,6 +481,13 @@ static const struct pridtab cputab[] = {
 	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
 	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG6 | MIPS_CP0FL_CONFIG7,
 	  0, "74K" },
+	{ MIPS_PRID_CID_MTI, MIPS_1004K, -1, -1,	-1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
+	  MIPS_CP0FL_USE |
+	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
+	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG6 | MIPS_CP0FL_CONFIG7,
+	  0, "1004K" },
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1000, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT, 0, 0,
@@ -945,7 +952,7 @@ mips64r2_vector_init(const struct splsw *splsw)
 	if (!(mips_options.mips_cpu->cpu_cp0flags & MIPS_CP0FL_USERLOCAL)) {
 		extern uint32_t mips64r2_cpu_switch_resume[];
 		for (uint32_t *insnp = mips64r2_cpu_switch_resume;; insnp++) {
-			KASSERT(*insnp != JR_RA);
+			KASSERT(insnp[0] != JR_RA);
 			if (insnp[0] == _LOAD_V0_L_PRIVATE_A0
 			    && insnp[1] == _MTC0_V0_USERLOCAL) {
 				insnp[0] = JR_RA;
@@ -1062,7 +1069,7 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 			    MIPSNN_GET(CFG_MT, cfg));
 		}
 	}
-#endif /* defined(MIPS32) || defined(MIPS64) */
+#endif /* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 
 	if (opts->mips_cpu_arch < 1)
 		panic("Unknown CPU ISA for CPU type 0x%x", cpu_id);
@@ -1417,7 +1424,7 @@ cpu_identify(device_t dev)
 			    mci->mci_scache_unified ? "unified" : "data");
 		break;
 	}
-#endif /* MIPS3 */
+#endif /* (MIPS3 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 	default:
 		panic("cpu_identify: impossible");
 	}
@@ -1434,7 +1441,7 @@ void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
-	struct pcb *pcb = lwp_getpcb(l);
+	struct pcb * const pcb = lwp_getpcb(l);
 	struct proc * const p = l->l_proc;
 
 	memset(tf, 0, sizeof(struct trapframe));
@@ -1446,7 +1453,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	/*
 	 * allow 64bit ops in userland for non-O32 ABIs
 	 */
-	if (p->p_md.md_abi == _MIPS_BSD_API_N32 && CPUISMIPS64) {
+	if (p->p_md.md_abi == _MIPS_BSD_API_N32
+	    && (CPUISMIPS64 || CPUISMIPS64R2)) {
 		tf->tf_regs[_R_SR] |= MIPS_SR_PX;
 	} else if (p->p_md.md_abi != _MIPS_BSD_API_O32) {
 		tf->tf_regs[_R_SR] |= MIPS_SR_UX;
@@ -2057,8 +2065,8 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 void
 startlwp(void *arg)
 {
-	ucontext_t *uc = arg;
-	lwp_t *l = curlwp;
+	ucontext_t * const uc = arg;
+	lwp_t * const l = curlwp;
 	int error;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
@@ -2075,8 +2083,8 @@ startlwp(void *arg)
 void
 startlwp32(void *arg)
 {
-	ucontext32_t *uc = arg;
-	lwp_t *l = curlwp;
+	ucontext32_t * const uc = arg;
+	lwp_t * const l = curlwp;
 	int error;
 
 	error = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
