@@ -1,4 +1,4 @@
-/* $NetBSD: t_setrlimit.c,v 1.2 2011/04/05 19:06:09 jruoho Exp $ */
+/* $NetBSD: t_setrlimit.c,v 1.3 2011/04/06 03:47:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.2 2011/04/05 19:06:09 jruoho Exp $");
+__RCSID("$NetBSD: t_setrlimit.c,v 1.3 2011/04/06 03:47:14 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -186,8 +186,6 @@ ATF_TC_BODY(setrlimit_fsize, tc)
 	ATF_REQUIRE(pid >= 0);
 
 	if (pid == 0) {
-
-		(void)memset(&res, 0, sizeof(struct rlimit));
 
 		res.rlim_cur = 2;
 		res.rlim_max = 2;
@@ -416,8 +414,6 @@ ATF_TC_BODY(setrlimit_nproc, tc)
 		/*
 		 * Set RLIMIT_NPROC to zero and try to fork.
 		 */
-		(void)memset(&res, 0, sizeof(struct rlimit));
-
 		res.rlim_cur = 0;
 		res.rlim_max = 0;
 
