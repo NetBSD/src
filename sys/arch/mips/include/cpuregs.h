@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.82 2011/03/15 07:39:22 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.83 2011/04/06 05:42:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -476,24 +476,24 @@
  *  4/2	MIPS_COP_0_USERLOCAL	..36 UserLocal.
  *  5	MIPS_COP_0_TLB_PG_MASK	.333 TLB Page Mask register.
  *  6	MIPS_COP_0_TLB_WIRED	.333 Wired TLB number.
- *  7	MIPS_COP_0_HWRENA	..33 rdHWR Enable
+ *  7	MIPS_COP_0_HWRENA	..33 rdHWR Enable.
  *  8	MIPS_COP_0_BAD_VADDR	3636 Bad virtual address.
  *  9	MIPS_COP_0_COUNT	.333 Count register.
  * 10	MIPS_COP_0_TLB_HI	3636 TLB entry high.
  * 11	MIPS_COP_0_COMPARE	.333 Compare (against Count).
  * 12	MIPS_COP_0_STATUS	3333 Status register.
- * 12/1	MIPS_COP_0_INTCTL	..33 Interrupt Control
- * 12/2	MIPS_COP_0_SRSCTL	..33 Shadow Register Set Selectors
- * 12/3	MIPS_COP_0_SRSMAP	..33 Shadow Set Map
+ * 12/1	MIPS_COP_0_INTCTL	..33 Interrupt Control.
+ * 12/2	MIPS_COP_0_SRSCTL	..33 Shadow Register Set Selectors.
+ * 12/3	MIPS_COP_0_SRSMAP	..33 Shadow Set Map.
  * 13	MIPS_COP_0_CAUSE	3333 Exception cause register.
  * 14	MIPS_COP_0_EXC_PC	3636 Exception PC.
  * 15	MIPS_COP_0_PRID		3333 Processor revision identifier.
- * 15/1	MIPS_COP_0_EBASE	..33 Exception Base
+ * 15/1	MIPS_COP_0_EBASE	..33 Exception Base.
  * 16	MIPS_COP_0_CONFIG	3333 Configuration register.
  * 16/1	MIPS_COP_0_CONFIG1	..33 Configuration register 1.
  * 16/2	MIPS_COP_0_CONFIG2	..33 Configuration register 2.
  * 16/3	MIPS_COP_0_CONFIG3	..33 Configuration register 3.
- * 16/7	MIPS_COP_0_CONFIG6	..33 Configuration register 6.
+ * 16/6	MIPS_COP_0_CONFIG6	..33 Configuration register 6.
  * 16/7	MIPS_COP_0_CONFIG7	..33 Configuration register 7.
  * 17	MIPS_COP_0_LLADDR	.336 Load Linked Address.
  * 18	MIPS_COP_0_WATCH_LO	.336 WatchLo register.
