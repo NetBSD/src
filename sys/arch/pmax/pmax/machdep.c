@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.242 2011/02/20 07:50:25 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.243 2011/04/06 15:31:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.242 2011/02/20 07:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243 2011/04/06 15:31:08 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -314,9 +314,6 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 
 	/* Machine specific initialization. */
 	(*sysinit[systype].init)();
-
-	/* Interrupt initialization. */
-	intr_init();
 
 	/* Find out how much memory is available. */
 	physmem = (*platform.memsize)(kernend);
