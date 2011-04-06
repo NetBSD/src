@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.296 2011/04/06 09:35:49 jruoho Exp $
+# $NetBSD: mi,v 1.297 2011/04/06 16:04:16 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -488,7 +488,7 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_sigsuspend.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_siglongjmp.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_sleep.debug		tests-lib-tests		debug,atf
-./usr/libdata/debug/usr/tests/lib/libpthread/t_status.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_status.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/librt					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librt/t_sched.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librt/t_sem.debug			tests-lib-debug		debug,atf
@@ -1974,7 +1974,7 @@
 ./usr/tests/lib/libpthread/t_sigsuspend		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_siglongjmp		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_sleep		tests-lib-tests		atf
-./usr/tests/lib/libpthread/t_status		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_status		tests-obsolete		obsolete
 ./usr/tests/lib/librt				tests-lib-tests		atf
 ./usr/tests/lib/librt/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/librt/t_sched			tests-lib-tests		atf
