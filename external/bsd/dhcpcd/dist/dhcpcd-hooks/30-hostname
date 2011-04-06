@@ -18,13 +18,22 @@ need_hostname()
 	esac
 }
 
+try_hostname()
+{
+	if valid_domainname "$1"; then
+		hostname "$1"
+	else
+		syslog err "Invalid hostname: $1"
+	fi
+}
+
 set_hostname()
 {
 	if need_hostname; then
 		if [ -n "$new_host_name" ]; then
-			hostname "$new_host_name"
+			try_hostname "$new_host_name"
 		elif [ -n "$new_fqdn_name" ]; then
-			hostname "$new_fqdn_name"
+			try_hostname "$new_fqdn_name"
 		fi
 	fi
 }

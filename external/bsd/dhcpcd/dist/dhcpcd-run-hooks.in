@@ -142,9 +142,49 @@ syslog()
 	[ -n "$lvl" ] && shift
 	if [ -n "$*" ]; then
 		if type logger >/dev/null 2>&1; then
-			logger -t dhcpcd -p daemon."$lvl" -s "$*"
+			logger -t dhcpcd -p daemon."$lvl" -is "$interface: $*"
 		fi
 	fi
+}
+
+# Check for a valid domain name as per RFC1123 with the exception of
+# allowing - and _ as they seem to be widely used.
+valid_domainname()
+{
+	local name="$1" label
+
+	[ -z "$name" -o ${#name} -gt 255 ] && return 1
+	
+	while [ -n "$name" ]; do
+		label="${name%%.*}"
+		[ -z "$label" -o ${#label} -gt 63 ] && return 1
+		case "$label" in
+		-*|_*|*-|*_)		return 1;;
+		*[![:alnum:]-_]*)	return 1;;
+		esac
+		[ "$name" = "${name#*.}" ] && break
+		name="${name#*.}"
+	done
+	return 0	
+}
+
+valid_domainname_list()
+{
+	local name
+
+	for name in $@; do
+		valid_domainname "$name" || return $?
+	done
+	return 0
+}
+
+# Check for a valid path
+valid_path()
+{
+	case "$@" in
+	*[![:alnum:]#%+-_:\.,@~\\/\[\]=\ ]*) return 1;;
+	esac
+	return 0
 }
 
 # Check a system service exists 
