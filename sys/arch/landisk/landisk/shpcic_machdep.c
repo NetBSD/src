@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic_machdep.c,v 1.2 2009/08/02 00:06:44 nonaka Exp $	*/
+/*	$NetBSD: shpcic_machdep.c,v 1.3 2011/04/06 01:32:06 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.2 2009/08/02 00:06:44 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.3 2011/04/06 01:32:06 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,7 +89,7 @@ landisk_pci_attach_hook(struct device *parent, struct device *self,
 }
 
 int
-landisk_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+landisk_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
