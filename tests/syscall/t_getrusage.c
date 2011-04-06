@@ -1,4 +1,4 @@
-/* $NetBSD: t_getrusage.c,v 1.3 2011/04/06 06:46:14 jruoho Exp $ */
+/* $NetBSD: t_getrusage.c,v 1.4 2011/04/06 19:09:16 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrusage.c,v 1.3 2011/04/06 06:46:14 jruoho Exp $");
+__RCSID("$NetBSD: t_getrusage.c,v 1.4 2011/04/06 19:09:16 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -42,11 +42,6 @@ __RCSID("$NetBSD: t_getrusage.c,v 1.3 2011/04/06 06:46:14 jruoho Exp $");
 
 static void	work(void);
 static void	sighandler(int);
-
-static const int who[] = {
-	RUSAGE_SELF,
-	RUSAGE_CHILDREN
-};
 
 static void
 sighandler(int signo)
@@ -74,20 +69,16 @@ ATF_TC_HEAD(getrusage_err, tc)
 ATF_TC_BODY(getrusage_err, tc)
 {
 	struct rusage ru;
-	size_t i;
 
-	for (i = 0; i < __arraycount(who); i++) {
+	errno = 0;
 
-		errno = 0;
+	ATF_REQUIRE(getrusage(INT_MAX, &ru) != 0);
+	ATF_REQUIRE(errno == EINVAL);
 
-		ATF_REQUIRE(getrusage(INT_MAX, &ru) != 0);
-		ATF_REQUIRE(errno == EINVAL);
+	errno = 0;
 
-		errno = 0;
-
-		ATF_REQUIRE(getrusage(who[i], (void *)0) != 0);
-		ATF_REQUIRE(errno == EFAULT);
-	}
+	ATF_REQUIRE(getrusage(RUSAGE_SELF, (void *)0) != 0);
+	ATF_REQUIRE(errno == EFAULT);
 }
 
 ATF_TC(getrusage_sig);
@@ -136,7 +127,7 @@ ATF_TC_BODY(getrusage_utime_back, tc)
 	for (i = 0; i < n; i++) {
 
 		(void)memset(&ru1, 0, sizeof(struct rusage));
-		(void)memset(&ru1, 0, sizeof(struct rusage));
+		(void)memset(&ru2, 0, sizeof(struct rusage));
 
 		work();
 
