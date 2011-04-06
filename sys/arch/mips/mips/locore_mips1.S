@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.76 2011/04/06 05:39:51 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.77 2011/04/06 14:12:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -987,7 +987,7 @@ END(MIPSX(systemcall))
 
 /*----------------------------------------------------------------------------
  *
- * mipsN_kernel_tlb_miss --
+ * mipsN_kern_tlb_miss --
  *
  *	Handle a TLB miss exception from kernel mode in kernel space.
  *	The BaddVAddr, Context, and EntryHi registers contain the failed
@@ -1001,7 +1001,7 @@ END(MIPSX(systemcall))
  *
  *----------------------------------------------------------------------------
  */
-LEAF_NOPROFILE(MIPSX(kernel_tlb_miss))
+LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
@@ -1026,7 +1026,7 @@ LEAF_NOPROFILE(MIPSX(kernel_tlb_miss))
 	tlbwr					# write random TLB
 	j	k1
 	rfe
-END(MIPSX(kernel_tlb_miss))
+END(MIPSX(kern_tlb_miss))
 
 #if 0
 /*----------------------------------------------------------------------------
@@ -1710,8 +1710,8 @@ MIPSX(excpt_sw):
 	####
 	PTR_WORD _C_LABEL(MIPSX(kern_intr))	# 0 external interrupt
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 1 TLB modification
-	PTR_WORD _C_LABEL(MIPSX(kernel_tlb_miss))	# 2 TLB miss (LW/I-fetch)
-	PTR_WORD _C_LABEL(MIPSX(kernel_tlb_miss))	# 3 TLB miss (SW)
+	PTR_WORD _C_LABEL(MIPSX(kern_tlb_miss))	# 2 TLB miss (LW/I-fetch)
+	PTR_WORD _C_LABEL(MIPSX(kern_tlb_miss))	# 3 TLB miss (SW)
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 4 address error (LW/I-fetch)
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 5 address error (SW)
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 6 bus error (I-fetch)
