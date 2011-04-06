@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.11 2011/03/16 14:54:31 tsutsui Exp $	*/
+/*	$NetBSD: copy.S,v 1.12 2011/04/06 05:07:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -145,13 +145,13 @@ LEAF(copyoutstr)
 	beq	v0, zero, 2f
 	 sb	v0, 0(a1)
 	PTR_ADDU a0, a0, 1
-	 bne	a2, zero, 1b
-	PTR_ADDU a1, a1, 1
+	bne	a2, zero, 1b
+	 PTR_ADDU a1, a1, 1
 4:
 	li	v0, ENAMETOOLONG
 2:
 	beq	a3, zero, 3f
-	PTR_SUBU a2, t0, a2
+	 PTR_SUBU a2, t0, a2
 	PTR_S	a2, 0(a3)
 3:
 	j	ra				# v0 is 0 or ENAMETOOLONG
@@ -221,8 +221,8 @@ NESTED(copyin, CALLFRAME_SIZ, ra)
 	PTR_SUBU sp, sp, CALLFRAME_SIZ
 	.mask	0x80000000, -4
 	REG_S	ra, CALLFRAME_RA(sp)
-	 blt	a0, zero, _C_LABEL(copyefault)
-	move	v0, a0				# swap a0, a1 for call to memcpy
+	blt	a0, zero, _C_LABEL(copyefault)
+	 move	v0, a0				# swap a0, a1 for call to memcpy
 	move	a0, a1
 	move	a1, v0
 	PTR_L	v1, L_PCB(MIPS_CURLWP)
@@ -249,7 +249,7 @@ NESTED(copyout, CALLFRAME_SIZ, ra)
 	.mask	0x80000000, -4
 	REG_S	ra, CALLFRAME_RA(sp)
 	blt	a1, zero, _C_LABEL(copyefault)
-	move	v0, a0				# swap a0, a1 for call to memcpy
+	 move	v0, a0				# swap a0, a1 for call to memcpy
 	move	a0, a1
 	move	a1, v0
 	PTR_L	v1, L_PCB(MIPS_CURLWP)
@@ -567,12 +567,12 @@ LEAF(badaddr)
 	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(baderr)
 	bne	a1, 1, 2f
-	PTR_S	v0, PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	b	5f
 	 lbu	v0, (a0)
 2:
 	bne	a1, 2, 4f
-	nop
+	 nop
 	b	5f
 	 lhu	v0, (a0)
 4:
