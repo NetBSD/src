@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.99 2011/03/15 07:39:22 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.100 2011/04/06 05:42:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -146,11 +146,13 @@ struct cpu_info {
 #ifdef _KERNEL
 #if defined(_MODULAR) || defined(_LKM) || defined(_STANDALONE)
 /* Assume all CPU architectures are valid for LKM's and standlone progs */
-#define	MIPS1	1
-#define	MIPS3	1
-#define	MIPS4	1
-#define	MIPS32	1
-#define	MIPS64	1
+#define	MIPS1		1
+#define	MIPS3		1
+#define	MIPS4		1
+#define	MIPS32		1
+#define	MIPS32R2	1
+#define	MIPS64		1
+#define	MIPS64R2	1
 #endif
 
 #if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 0
