@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.3 2011/03/15 07:32:53 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.4 2011/04/06 05:35:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3 2011/03/15 07:32:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.4 2011/04/06 05:35:37 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -806,9 +806,11 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 #ifdef MULTIPROCESSOR
 	/*
 	 * The kernel pmap is aways onproc and active and must never have
-	 * those bits cleared.
+	 * those bits cleared.  If pmap_remove_all was called, it has already
+	 * deactivated the pmap and thusly onproc will be 0 so there's nothing
+	 * to do.
 	 */
-	if (pm != pmap_kernel()) {
+	if (pm != pmap_kernel() && pm->pm_onproc != 0) {
 		struct cpu_info * const ci = curcpu();
 		struct pmap_tlb_info * const ti = ci->ci_tlb_info;
 		const uint32_t cpu_mask = 1 << cpu_index(ci);
