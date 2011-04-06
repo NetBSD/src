@@ -1,4 +1,4 @@
-.\"     $NetBSD: KASSERT.9,v 1.11 2011/01/26 09:53:20 wiz Exp $
+.\"     $NetBSD: KASSERT.9,v 1.12 2011/04/06 05:40:19 jruoho Exp $
 .\"
 .\" Copyright (c) 2006 Igor Sobrado
 .\" All rights reserved.
@@ -24,16 +24,19 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 26, 2011
+.Dd April 6, 2011
 .Dt KASSERT 9
 .Os
 .Sh NAME
 .Nm KASSERT ,
+.Nm KASSERTMSG ,
 .Nm KDASSERT
 .Nd kernel expression verification macros
 .Sh SYNOPSIS
 .Ft void
 .Fn KASSERT expression
+.Ft void
+.Fn KASSERTMSG expression message
 .Ft void
 .Fn KDASSERT expression
 .Sh DESCRIPTION
@@ -42,32 +45,40 @@ These machine independent assertion-checking macros cause a kernel
 if the given
 .Ar expression
 evaluates to false.
-.Pp
+Two compile-time
+.Xr options 4
+define the behavior of the checks.
+.Bl -enum -offset 2n
+.It
+The
 .Fn KASSERT
+and
+.Fn KASSERTMSG
 tests are included only in kernels compiled with the
 .Dv DIAGNOSTIC
 configuration option.
-In a kernel that does not have this configuration option, the
-.Fn KASSERT
-macro is defined to be a no-op.
-.Pp
+In a kernel that does not have this configuration option,
+the macros are defined to be no-ops.
+.It
+The
 .Fn KDASSERT
 tests are included only in kernels compiled with the
 .Dv DEBUG
 configuration option.
+The
 .Fn KDASSERT
 and
 .Fn KASSERT
-are identical except for the controlling option
+macros are identical except for the controlling option
 .Pf ( Dv DEBUG
 vs
 .Dv DIAGNOSTIC ) .
-.Pp
 Basically,
 .Fn KASSERT
 should be used for light-weight checks and
 .Fn KDASSERT
 should be used for heavier ones.
+.El
 .Pp
 Callers should not rely on the side effects of
 .Ar expression
@@ -78,6 +89,13 @@ might not be evaluated at all.
 The panic message will display the style of assertion (debugging
 vs. diagnostic), the expression that failed and the filename, and line
 number the failure happened on.
+The
+.Fn KASSERTMSG
+macro appends additional
+.Fa message
+to the
+.Xr panic 9
+format string.
 .Sh SEE ALSO
 .Xr config 1 ,
 .Xr options 4 ,

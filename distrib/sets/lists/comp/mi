@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1608 2011/04/04 11:32:25 blymn Exp $
+#	$NetBSD: mi,v 1.1609 2011/04/06 05:40:18 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8914,6 +8914,7 @@
 ./usr/share/man/cat9/HOLDRELE.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/ISSET.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/KASSERT.0			comp-sys-catman		.cat
+./usr/share/man/cat9/KASSERTMSG.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/KDASSERT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/KNOTE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/LWP_CACHE_CREDS.0		comp-sys-catman		.cat
@@ -14906,6 +14907,7 @@
 ./usr/share/man/html9/HOLDRELE.html		comp-obsolete	obsolete
 ./usr/share/man/html9/ISSET.html		comp-sys-htmlman	html
 ./usr/share/man/html9/KASSERT.html		comp-sys-htmlman	html
+./usr/share/man/html9/KASSERTMSG.html		comp-sys-htmlman	html
 ./usr/share/man/html9/KDASSERT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/KNOTE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/LWP_CACHE_CREDS.html	comp-sys-htmlman	html
@@ -20983,6 +20985,7 @@
 ./usr/share/man/man9/HOLDRELE.9			comp-obsolete		obsolete
 ./usr/share/man/man9/ISSET.9			comp-sys-man		.man
 ./usr/share/man/man9/KASSERT.9			comp-sys-man		.man
+./usr/share/man/man9/KASSERTMSG.9		comp-sys-man		.man
 ./usr/share/man/man9/KDASSERT.9			comp-sys-man		.man
 ./usr/share/man/man9/KNOTE.9			comp-sys-man		.man
 ./usr/share/man/man9/LWP_CACHE_CREDS.9		comp-sys-man		.man
