@@ -1,4 +1,4 @@
-/* $NetBSD: t_getrusage.c,v 1.2 2011/04/06 05:56:05 jruoho Exp $ */
+/* $NetBSD: t_getrusage.c,v 1.3 2011/04/06 06:46:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,9 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrusage.c,v 1.2 2011/04/06 05:56:05 jruoho Exp $");
+__RCSID("$NetBSD: t_getrusage.c,v 1.3 2011/04/06 06:46:14 jruoho Exp $");
 
 #include <sys/resource.h>
+#include <sys/time.h>
 
 #include <atf-c.h>
 #include <errno.h>
@@ -39,6 +40,7 @@ __RCSID("$NetBSD: t_getrusage.c,v 1.2 2011/04/06 05:56:05 jruoho Exp $");
 #include <signal.h>
 #include <string.h>
 
+static void	work(void);
 static void	sighandler(int);
 
 static const int who[] = {
@@ -50,6 +52,17 @@ static void
 sighandler(int signo)
 {
 	/* Nothing. */
+}
+
+static void
+work(void)
+{
+	size_t n = UINT16_MAX * 100;
+
+	while (n > 0) {
+		 asm volatile("nop");	/* Do something. */
+		 n--;
+	}
 }
 
 ATF_TC(getrusage_err);
@@ -104,30 +117,60 @@ ATF_TC_BODY(getrusage_sig, tc)
 		atf_tc_fail("getrusage(2) did not record signals");
 }
 
-ATF_TC(getrusage_utime);
-ATF_TC_HEAD(getrusage_utime, tc)
+ATF_TC(getrusage_utime_back);
+ATF_TC_HEAD(getrusage_utime_back, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test bogus values from getrusage(2)");
+}
+
+ATF_TC_BODY(getrusage_utime_back, tc)
+{
+	struct rusage ru1, ru2;
+	size_t i, n = 100;
+
+	/*
+	 * Test that two consecutive calls are sane.
+	 */
+	atf_tc_expect_fail("PR kern/30115");
+
+	for (i = 0; i < n; i++) {
+
+		(void)memset(&ru1, 0, sizeof(struct rusage));
+		(void)memset(&ru1, 0, sizeof(struct rusage));
+
+		work();
+
+		ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru1) == 0);
+
+		work();
+
+		ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru2) == 0);
+
+		if (timercmp(&ru2.ru_utime, &ru1.ru_utime, <) != 0)
+			atf_tc_fail("user time went backwards");
+	}
+}
+
+ATF_TC(getrusage_utime_zero);
+ATF_TC_HEAD(getrusage_utime_zero, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test zero utime from getrusage(2)");
 }
 
-ATF_TC_BODY(getrusage_utime, tc)
+ATF_TC_BODY(getrusage_utime_zero, tc)
 {
-	size_t n = UINT16_MAX * 100;
 	struct rusage ru;
 
 	/*
 	 * Test that getrusage(2) does not return
 	 * zero user time for the calling process.
-	 * Note that this does not trigger always.
 	 */
 	atf_tc_expect_fail("PR port-amd64/41734");
 
-	while (n > 0) {
-		 asm volatile("nop");	/* Do something. */
-		 n--;
-	}
+	work();
 
 	(void)memset(&ru, 0, sizeof(struct rusage));
+
 	ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru) == 0);
 
 	if (ru.ru_utime.tv_sec == 0 && ru.ru_utime.tv_usec == 0)
@@ -139,7 +182,8 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, getrusage_err);
 	ATF_TP_ADD_TC(tp, getrusage_sig);
-	ATF_TP_ADD_TC(tp, getrusage_utime);
+	ATF_TP_ADD_TC(tp, getrusage_utime_back);
+	ATF_TP_ADD_TC(tp, getrusage_utime_zero);
 
 	return atf_no_error();
 }
