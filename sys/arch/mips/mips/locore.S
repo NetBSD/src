@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.186 2011/04/06 05:37:59 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.187 2011/04/06 13:30:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -629,7 +629,7 @@ XNESTED(mips_fpu_trap)
  */
 	srl		v1, a2, 31		# move branch delay bit to LSB
 	sll		v1, 2			# shift it left by 2 (mult by 4)
-	PTR_ADDIU	a0, v1			# add to a0
+	PTR_ADDU	a0, v1			# add to a0
 	INT_L		a0, 0(a0)		# a0 = coproc instruction
 	NOP_L					# load delay
 
