@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.42 2011/04/06 05:13:36 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.43 2011/04/06 14:04:32 tsutsui Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -823,14 +823,13 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 /*
  * Call the interrupt handler.
  */
-	_MFC0	ra, MIPS_COP_0_EXC_PC		# grab exception PC
+	_MFC0	ta0, MIPS_COP_0_EXC_PC		# grab exception PC
 	PTR_L	s2, L_CPU(MIPS_CURLWP)		# delay slot
-	REG_S	ra, TF_BASE+TF_REG_EPC(sp)	# and save it
+	REG_S	ta0, TF_BASE+TF_REG_EPC(sp)	# and save it
 
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
-	REG_S	ra, KERNFRAME_RA(sp)		# for debugging
+	REG_S	ta0, KERNFRAME_RA(sp)		# for debugging
 #endif
-	move	ta0, ra				# save across spl* calls
 
 #ifdef PARANOIA
 	INT_L	s0, CPU_INFO_CPL(s2)
@@ -1192,20 +1191,19 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	REG_S	sp, CALLFRAME_SIZ+TF_REG_SP(k0)		# $29
 	REG_S	ra, CALLFRAME_SIZ+TF_REG_RA(k0)		# $31
 	REG_S	s1, CALLFRAME_SIZ+TF_REG_SR(k0)
-	_MFC0	ra, MIPS_COP_0_EXC_PC
+	_MFC0	ta0, MIPS_COP_0_EXC_PC
 	REG_S	v0, CALLFRAME_SIZ+TF_REG_MULLO(k0)
 	REG_S	v1, CALLFRAME_SIZ+TF_REG_MULHI(k0)
-	REG_S	ra, CALLFRAME_SIZ+TF_REG_EPC(k0)
+	REG_S	ta0, CALLFRAME_SIZ+TF_REG_EPC(k0)
 	REG_S	t0, CALLFRAME_SIZ+TF_REG_CAUSE(k0)
 	move	sp, k0				# switch to kernel SP
 	move	MIPS_CURLWP, k1			# set curlwp reg (t8)
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
-	REG_S	ra, CALLFRAME_RA(sp)		# for debugging
+	REG_S	ta0, CALLFRAME_RA(sp)		# for debugging
 #endif
 #ifdef __GP_SUPPORT__
 	PTR_LA	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-	move	ta0, ra				# save across SPL calls
 
 	/*
 	 * We first need to get to IPL_HIGH so that interrupts are masked.
