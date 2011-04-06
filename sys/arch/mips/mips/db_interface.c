@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.69 2011/03/03 18:44:58 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.70 2011/04/06 05:53:27 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.69 2011/03/03 18:44:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.70 2011/04/06 05:53:27 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -107,8 +107,6 @@ void db_cp0dump_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_mfcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_mtcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
-
-bool db_running_on_this_cpu_p(void);
 
 paddr_t kvtophys(vaddr_t);
 
@@ -204,7 +202,7 @@ cpu_Debugger(void)
 void
 db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
-	char *src = (char *)addr;
+	const char *src = (char *)addr;
 
 	while (size--)
 		*data++ = *src++;
@@ -295,8 +293,8 @@ db_kvtophys_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 #define	FLDWIDTH	10
 
-#define	SHOW32(reg, name)	SHOW32SEL(reg, 0, name)
-#define SHOW64(reg, name)	MIPS64_SHOW64(reg, 0, name)
+#define SHOW32(reg, name)	SHOW32SEL(reg, 0, name)
+#define SHOW64(reg, name)	SHOW64SEL(reg, 0, name)
 
 #define	SHOW32SEL(num, sel, name)					\
 do {									\
@@ -313,7 +311,7 @@ do {									\
 } while (0)
 
 /* XXX not 64-bit ABI safe! */
-#define	MIPS64_SHOW64(num, sel, name)					\
+#define	SHOW64SEL(num, sel, name)					\
 do {									\
 	uint64_t __val;							\
 									\
@@ -343,10 +341,9 @@ do {									\
 #define	MIPS64_SET32(num, sel, name, val)				\
 do {									\
 									\
-	KASSERT (CPUIS64BITS);						\
 	__asm volatile(							\
 		".set push			\n\t"			\
-		".set mips64			\n\t"			\
+		".set mips32			\n\t"			\
 		"mtc0 %0,$%1,%2			\n\t"			\
 		".set pop			\n\t"			\
 	    :: "r"(val), "n"(num), "n"(sel));				\
@@ -415,9 +412,9 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 
 	if ((cp0flags & MIPS_CP0FL_EIRR) != 0)
-		MIPS64_SHOW64(9, 6, "eirr");
+		SHOW64SEL(9, 6, "eirr");
 	if ((cp0flags & MIPS_CP0FL_EIMR) != 0)
-		MIPS64_SHOW64(9, 7, "eimr");
+		SHOW64SEL(9, 7, "eimr");
 
 	if (CPUIS64BITS) {
 		SHOW64(MIPS_COP_0_TLB_HI, "entryhi");
@@ -989,13 +986,13 @@ next_instr_address(db_addr_t pc, bool bd)
 #ifdef MULTIPROCESSOR
 
 bool 
-ddb_running_on_this_cpu(void)
+ddb_running_on_this_cpu_p(void)
 {               
-	return ddb_cpu == cpu_index(curcpu());
+	return ddb_cpu == cpu_number();
 }
 
 bool 
-ddb_running_on_any_cpu(void)
+ddb_running_on_any_cpu_p(void)
 {               
 	return ddb_cpu != NOCPU;
 }
@@ -1003,9 +1000,9 @@ ddb_running_on_any_cpu(void)
 void
 db_resume_others(void)
 {
-	int cpu_me = cpu_index(curcpu());
+	u_int cpu_me = cpu_number();
 
-	if (atomic_cas_32(&ddb_cpu, cpu_me, NOCPU) == cpu_me)
+	if (atomic_cas_uint(&ddb_cpu, cpu_me, NOCPU) == cpu_me)
 		cpu_resume_others();
 }
 

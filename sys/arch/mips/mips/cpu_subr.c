@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.5 2011/03/15 07:39:22 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.6 2011/04/06 05:53:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.5 2011/03/15 07:39:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.6 2011/04/06 05:53:27 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -105,7 +105,7 @@ static void cpu_ipi_error(const char *, __cpuset_t, __cpuset_t);
 static struct cpu_info *cpu_info_last = &cpu_info_store;
 
 struct cpu_info *
-cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_node_id,
+cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	cpuid_t cpu_core_id, cpuid_t cpu_smt_id)
 {
 	vaddr_t cpu_info_offset = (vaddr_t)&cpu_info_store & PAGE_MASK; 
@@ -143,7 +143,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_node_id,
 	}
 
 	ci->ci_cpuid = cpu_id;
-	ci->ci_data.cpu_package_id = cpu_node_id;
+	ci->ci_data.cpu_package_id = cpu_package_id;
 	ci->ci_data.cpu_core_id = cpu_core_id;
 	ci->ci_data.cpu_smt_id = cpu_smt_id;
 	ci->ci_cpu_freq = cpu_info_store.ci_cpu_freq;
@@ -210,6 +210,8 @@ cpu_hwrena_setup(void)
 void
 cpu_attach_common(device_t self, struct cpu_info *ci)
 {
+	const char * const xname = device_xname(self);
+
 	/*
 	 * Cross link cpu_info and its device together
 	 */
@@ -218,19 +220,19 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 	KASSERT(ci->ci_idepth == 0);
 
 	evcnt_attach_dynamic(&ci->ci_ev_count_compare,
-		EVCNT_TYPE_INTR, NULL, device_xname(self),
+		EVCNT_TYPE_INTR, NULL, xname,
 		"int 5 (clock)");
 	evcnt_attach_dynamic(&ci->ci_ev_count_compare_missed,
-		EVCNT_TYPE_INTR, NULL, device_xname(self),
+		EVCNT_TYPE_INTR, NULL, xname,
 		"int 5 (clock) missed");
 	evcnt_attach_dynamic(&ci->ci_ev_fpu_loads,
-		EVCNT_TYPE_MISC, NULL, device_xname(self),
+		EVCNT_TYPE_MISC, NULL, xname,
 		"fpu loads");
 	evcnt_attach_dynamic(&ci->ci_ev_fpu_saves,
-		EVCNT_TYPE_MISC, NULL, device_xname(self),
+		EVCNT_TYPE_MISC, NULL, xname,
 		"fpu saves");
 	evcnt_attach_dynamic(&ci->ci_ev_tlbmisses,
-		EVCNT_TYPE_TRAP, NULL, device_xname(self),
+		EVCNT_TYPE_TRAP, NULL, xname,
 		"tlb misses");
 
 	if (ci == &cpu_info_store)
@@ -247,16 +249,16 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 		cpu_info_last = ci;
 	}
 	evcnt_attach_dynamic(&ci->ci_evcnt_synci_activate_rqst,
-	    EVCNT_TYPE_MISC, NULL, device_xname(self),
+	    EVCNT_TYPE_MISC, NULL, xname,
 	    "syncicache activate request");
 	evcnt_attach_dynamic(&ci->ci_evcnt_synci_deferred_rqst,
-	    EVCNT_TYPE_MISC, NULL, device_xname(self),
+	    EVCNT_TYPE_MISC, NULL, xname,
 	    "syncicache deferred request");
 	evcnt_attach_dynamic(&ci->ci_evcnt_synci_ipi_rqst,
-	    EVCNT_TYPE_MISC, NULL, device_xname(self),
+	    EVCNT_TYPE_MISC, NULL, xname,
 	    "syncicache ipi request");
 	evcnt_attach_dynamic(&ci->ci_evcnt_synci_onproc_rqst,
-	    EVCNT_TYPE_MISC, NULL, device_xname(self),
+	    EVCNT_TYPE_MISC, NULL, xname,
 	    "syncicache onproc request");
 
 	/*
@@ -384,15 +386,13 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	gr[_REG_CAUSE] = tf->tf_regs[_R_CAUSE];
 	gr[_REG_EPC]   = tf->tf_regs[_R_PC];
 	gr[_REG_SR]    = tf->tf_regs[_R_SR];
+	mcp->_mc_tlsbase = (intptr_t)l->l_private;
 
 	if ((ras_pc = (intptr_t)ras_lookup(l->l_proc,
 	    (void *) (intptr_t)gr[_REG_EPC])) != -1)
 		gr[_REG_EPC] = ras_pc;
 
-	*flags |= _UC_CPU;
-
-	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
-	*flags |= _UC_TLSBASE;
+	*flags |= _UC_CPU | _UC_TLSBASE;
 
 	/* Save floating point register context, if any. */
 	if (fpu_used_p(l)) {
@@ -453,6 +453,11 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		/* Do not restore SR. */
 	}
 
+	/* Restore the private thread context */
+	if (flags & _UC_TLSBASE) {
+		lwp_setprivate(l, (void *)(intptr_t)mcp->_mc_tlsbase);
+	}
+
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
 		size_t fplen;
@@ -476,9 +481,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		struct pcb * const pcb = lwp_getpcb(l);
 		memcpy(&pcb->pcb_fpregs, &mcp->__fpregs, fplen);
 	}
-
-	if ((flags & _UC_TLSBASE) != 0)
-		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
@@ -698,7 +700,7 @@ cpu_ipi_error(const char *s, __cpuset_t succeeded, __cpuset_t expected)
 			int index = CPUSET_NEXT(expected);
 			CPUSET_DEL(expected, index);
 			printf(" cpu%d", index);
-		} while(!CPUSET_EMPTY_P(expected));
+		} while (!CPUSET_EMPTY_P(expected));
 		printf("\n");
 	}
 }
@@ -772,13 +774,13 @@ cpu_pause(struct reg *regsp)
 		CPUSET_ADD(cpus_paused, index);
 		do {
 			;
-		} while(CPUSET_HAS_P(cpus_paused, index));
+		} while (CPUSET_HAS_P(cpus_paused, index));
 		CPUSET_ADD(cpus_resumed, index);
 
 #if defined(DDB)
-		if (ddb_running_on_this_cpu())
+		if (ddb_running_on_this_cpu_p())
 			cpu_Debugger();
-		if (ddb_running_on_any_cpu())
+		if (ddb_running_on_any_cpu_p())
 			continue;
 #endif
 		break;
