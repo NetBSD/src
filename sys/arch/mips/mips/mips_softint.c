@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_softint.c,v 1.3 2011/02/20 16:38:13 rmind Exp $	*/
+/*	$NetBSD: mips_softint.c,v 1.4 2011/04/06 05:23:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.3 2011/02/20 16:38:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.4 2011/04/06 05:23:59 matt Exp $");
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/lwp.h>
 #include <sys/intr.h>
@@ -115,7 +116,9 @@ softint_process(uint32_t ipending)
 	KASSERT((ipending & MIPS_SOFT_INT_MASK) != 0);
 	KASSERT((ipending & ~MIPS_SOFT_INT_MASK) == 0);
 	KASSERT(ci->ci_cpl == IPL_HIGH);
-	KASSERT(ci->ci_mtx_count == 0);
+	KASSERTMSG(ci->ci_mtx_count == 0,
+	    ("%s: cpu%u (%p): ci_mtx_count (%d) != 0",
+	     __func__, cpu_index(ci), ci, ci->ci_mtx_count));
 
 	if (ipending & MIPS_SOFT_INT_MASK_0) {
 		/*
