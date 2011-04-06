@@ -625,11 +625,16 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		}
 		p++;
 		if (strncmp(arg, "ip_address=", strlen("ip_address=")) == 0) {
-			if (parse_addr(&ifo->req_addr, &ifo->req_mask, p) != 0)
+			if (parse_addr(&ifo->req_addr,
+			    ifo->req_mask.s_addr == 0 ? &ifo->req_mask : NULL,
+			    p) != 0)
 				return -1;
 
 			ifo->options |= DHCPCD_STATIC;
 			ifo->options &= ~DHCPCD_INFORM;
+		} else if (strncmp(arg, "subnet_mask=", strlen("subnet_mask=")) == 0) {
+			if (parse_addr(&ifo->req_mask, NULL, p) != 0)
+				return -1;
 		} else if (strncmp(arg, "routes=", strlen("routes=")) == 0 ||
 		    strncmp(arg, "static_routes=", strlen("static_routes=")) == 0 ||
 		    strncmp(arg, "classless_static_routes=", strlen("classless_static_routes=")) == 0 ||

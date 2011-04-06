@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -84,6 +84,7 @@ struct rt {
 	struct in_addr net;
 	struct in_addr gate;
 	const struct interface *iface;
+	struct in_addr src;
 	struct rt *next;
 };
 
@@ -139,14 +140,14 @@ extern const size_t udp_dhcp_len;
 ssize_t make_udp_packet(uint8_t **, const uint8_t *, size_t,
     struct in_addr, struct in_addr);
 ssize_t get_udp_data(const uint8_t **, const uint8_t *);
-int valid_udp_packet(const uint8_t *, size_t, struct in_addr *);
+int valid_udp_packet(const uint8_t *, size_t, struct in_addr *, int);
 
 int open_socket(struct interface *, int);
 ssize_t send_packet(const struct interface *, struct in_addr, 
     const uint8_t *, ssize_t);
 ssize_t send_raw_packet(const struct interface *, int,
     const void *, ssize_t);
-ssize_t get_raw_packet(struct interface *, int, void *, ssize_t);
+ssize_t get_raw_packet(struct interface *, int, void *, ssize_t, int *);
 
 int init_sockets(void);
 int open_link_socket(void);

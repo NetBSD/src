@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -160,7 +160,7 @@ send_raw_packet(const struct interface *iface, int protocol,
  * So we pass the buffer in the API so we can loop on >1 packet. */
 ssize_t
 get_raw_packet(struct interface *iface, int protocol,
-    void *data, ssize_t len)
+    void *data, ssize_t len, int *partialcsum)
 {
 	int fd = -1;
 	struct bpf_hdr packet;
@@ -171,6 +171,9 @@ get_raw_packet(struct interface *iface, int protocol,
 		fd = iface->arp_fd;
 	else
 		fd = iface->raw_fd;
+
+	if (partialcsum != NULL)
+		*partialcsum = 0; /* Not supported on BSD */
 
 	for (;;) {
 		if (iface->buffer_len == 0) {

@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -726,7 +726,8 @@ get_udp_data(const uint8_t **data, const uint8_t *udp)
 }
 
 int
-valid_udp_packet(const uint8_t *data, size_t data_len, struct in_addr *from)
+valid_udp_packet(const uint8_t *data, size_t data_len, struct in_addr *from,
+    int noudpcsum)
 {
 	struct udp_dhcp_packet packet;
 	uint16_t bytes, udpsum;
@@ -754,19 +755,22 @@ valid_udp_packet(const uint8_t *data, size_t data_len, struct in_addr *from)
 		errno = EINVAL;
 		return -1;
 	}
-	udpsum = packet.udp.uh_sum;
-	packet.udp.uh_sum = 0;
-	packet.ip.ip_hl = 0;
-	packet.ip.ip_v = 0;
-	packet.ip.ip_tos = 0;
-	packet.ip.ip_len = packet.udp.uh_ulen;
-	packet.ip.ip_id = 0;
-	packet.ip.ip_off = 0;
-	packet.ip.ip_ttl = 0;
-	packet.ip.ip_sum = 0;
-	if (udpsum && checksum(&packet, bytes) != udpsum) {
-		errno = EINVAL;
-		return -1;
+
+	if (noudpcsum == 0) {
+		udpsum = packet.udp.uh_sum;
+		packet.udp.uh_sum = 0;
+		packet.ip.ip_hl = 0;
+		packet.ip.ip_v = 0;
+		packet.ip.ip_tos = 0;
+		packet.ip.ip_len = packet.udp.uh_ulen;
+		packet.ip.ip_id = 0;
+		packet.ip.ip_off = 0;
+		packet.ip.ip_ttl = 0;
+		packet.ip.ip_sum = 0;
+		if (udpsum && checksum(&packet, bytes) != udpsum) {
+			errno = EINVAL;
+			return -1;
+		}
 	}
 
 	return 0;

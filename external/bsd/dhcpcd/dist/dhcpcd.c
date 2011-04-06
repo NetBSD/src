@@ -528,7 +528,17 @@ handle_dhcp(struct interface *iface, struct dhcp_message **dhcpp, const struct i
 			log_dhcp(LOG_WARNING, "reject DHCP", iface, dhcp, from);
 			return;
 		}
-	}		
+	}
+
+	/* Ensure that the address offered is valid */
+	if ((type == 0 || type == DHCP_OFFER || type == DHCP_ACK) &&
+	    (dhcp->ciaddr == INADDR_ANY || dhcp->ciaddr == INADDR_BROADCAST) &&
+	    (dhcp->yiaddr == INADDR_ANY || dhcp->yiaddr == INADDR_BROADCAST))
+	{
+		log_dhcp(LOG_WARNING, "reject invalid address",
+		    iface, dhcp, from);
+		return;
+	}
 
 	/* No NAK, so reset the backoff */
 	state->nakoff = 1;
@@ -631,7 +641,7 @@ handle_dhcp_packet(void *arg)
 	const uint8_t *pp;
 	ssize_t bytes;
 	struct in_addr from;
-	int i;
+	int i, partialcsum = 0;
 
 	/* We loop through until our buffer is empty.
 	 * The benefit is that if we get >1 DHCP packet in our buffer and
@@ -639,10 +649,10 @@ handle_dhcp_packet(void *arg)
 	packet = xmalloc(udp_dhcp_len);
 	for(;;) {
 		bytes = get_raw_packet(iface, ETHERTYPE_IP,
-		    packet, udp_dhcp_len);
+		    packet, udp_dhcp_len, &partialcsum);
 		if (bytes == 0 || bytes == -1)
 			break;
-		if (valid_udp_packet(packet, bytes, &from) == -1) {
+		if (valid_udp_packet(packet, bytes, &from, partialcsum) == -1) {
 			syslog(LOG_ERR, "%s: invalid UDP packet from %s",
 			    iface->name, inet_ntoa(from));
 			continue;
@@ -919,7 +929,11 @@ start_discover(void *arg)
 		else
 			add_timeout_sec(ifo->timeout, start_ipv4ll, iface);
 	}
-	syslog(LOG_INFO, "%s: broadcasting for a lease", iface->name);
+	if (ifo->options & DHCPCD_REQUEST)
+		syslog(LOG_INFO, "%s: broadcasting for a lease (requesting %s)",
+		    iface->name, inet_ntoa(ifo->req_addr));
+	else
+		syslog(LOG_INFO, "%s: broadcasting for a lease", iface->name);
 	send_discover(iface);
 }
 
@@ -2011,17 +2025,20 @@ main(int argc, char **argv)
 				}
 			}
 		}
+		if (options & DHCPCD_MASTER)
+			i = if_options->timeout;
+		else
+			i = ifaces->state->options->timeout;
 		if (opt == 0 &&
 		    options & DHCPCD_LINK &&
 		    !(options & DHCPCD_WAITIP))
 		{
 			syslog(LOG_WARNING, "no interfaces have a carrier");
 			daemonise();
-		} else if (if_options->timeout > 0) {
+		} else if (i > 0) {
 			if (options & DHCPCD_IPV4LL)
 				options |= DHCPCD_TIMEOUT_IPV4LL;
-			add_timeout_sec(if_options->timeout,
-			    handle_exit_timeout, NULL);
+			add_timeout_sec(i, handle_exit_timeout, NULL);
 		}
 	}
 	free_options(if_options);
