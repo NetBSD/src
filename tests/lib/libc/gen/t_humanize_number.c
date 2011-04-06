@@ -1,4 +1,4 @@
-/*	$NetBSD: t_humanize_number.c,v 1.2 2011/04/06 10:04:53 jruoho Exp $	*/
+/*	$NetBSD: t_humanize_number.c,v 1.3 2011/04/06 10:06:49 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -257,8 +257,10 @@ ATF_TC_BODY(humanize_big, tc)
 	char buf[1024];
 	int rv;
 
+	atf_tc_expect_fail("PR lib/44097");
+
 	/*
-	 * Seems to works.
+	 * Seems to work.
 	 */
 	(void)memset(buf, 0, sizeof(buf));
 
