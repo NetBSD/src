@@ -1,11 +1,8 @@
-/*	$NetBSD: t_humanize_number.c,v 1.1 2010/12/28 12:46:15 pgoyette Exp $	*/
+/*	$NetBSD: t_humanize_number.c,v 1.2 2011/04/06 10:04:53 jruoho Exp $	*/
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by 
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -113,11 +110,10 @@ const struct hnflags normal_flags[] = {
 	{ HN_DIVISOR_1000, "HN_DIVISOR_1000" },
 };
 
-const char *
-	formatflags(char *, size_t, const struct hnflags *, size_t, int);
-void	newline(void);
-void	w_printf(const char *, ...);
-int	main(int, char *[]);
+const char *formatflags(char *, size_t, const struct hnflags *, size_t, int);
+void	    newline(void);
+void	    w_printf(const char *, ...);
+int	    main(int, char *[]);
 
 const char *
 formatflags(char *buf, size_t buflen, const struct hnflags *hfs,
@@ -198,15 +194,15 @@ out:
 	va_end(ap);
 }
 
-ATF_TC(humanize);
+ATF_TC(humanize_basic);
 
-ATF_TC_HEAD(humanize, tc)
+ATF_TC_HEAD(humanize_basic, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Test humanize_number(3)");
 }
 
-ATF_TC_BODY(humanize, tc)
+ATF_TC_BODY(humanize_basic, tc)
 {
 	char fbuf[128];
 	const struct hnopts *ho;
@@ -248,10 +244,70 @@ ATF_TC_BODY(humanize, tc)
 	}
 }
 
+ATF_TC(humanize_big);
+
+ATF_TC_HEAD(humanize_big, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Test humanize big numbers");
+}
+
+ATF_TC_BODY(humanize_big, tc)
+{
+	char buf[1024];
+	int rv;
+
+	/*
+	 * Seems to works.
+	 */
+	(void)memset(buf, 0, sizeof(buf));
+
+	rv = humanize_number(buf, 10, 10000, "",
+	    HN_AUTOSCALE, HN_NOSPACE);
+
+	ATF_REQUIRE(rv != -1);
+	ATF_REQUIRE(strcmp(buf, "10000") == 0);
+
+	/*
+	 * A bogus value with large number.
+	 */
+	(void)memset(buf, 0, sizeof(buf));
+
+	rv = humanize_number(buf, 10, INT64_MAX, "",
+	    HN_AUTOSCALE, HN_NOSPACE);
+
+	ATF_REQUIRE(rv != -1);
+	ATF_REQUIRE(strcmp(buf, "0") != 0);
+
+	/*
+	 * Large buffer with HN_AUTOSCALE. Entirely bogus.
+	 */
+	(void)memset(buf, 0, sizeof(buf));
+
+	rv = humanize_number(buf, sizeof(buf), 10000, "",
+	    HN_AUTOSCALE, HN_NOSPACE);
+
+	ATF_REQUIRE(rv != -1);
+	ATF_REQUIRE(strcmp(buf, "0%d%s%d%s%s%s") != 0);
+
+	/*
+	 * Tight buffer.
+	 *
+	 * The man page says that len must be at least 4, but...
+	 */
+	(void)memset(buf, 0, sizeof(buf));
+
+	rv = humanize_number(buf, 1, 1, "",
+	    HN_AUTOSCALE, HN_NOSPACE);
+
+	ATF_REQUIRE(rv != -1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, humanize);
+	ATF_TP_ADD_TC(tp, humanize_basic);
+	ATF_TP_ADD_TC(tp, humanize_big);
 
 	return atf_no_error();
 }
