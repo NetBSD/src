@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.57 2011/03/20 17:10:46 phx Exp $
+# $NetBSD: GENERIC,v 1.58 2011/04/06 18:12:15 phx Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.57 $"
+#ident 		"GENERIC-$Revision: 1.58 $"
 
 maxusers	32
 
@@ -185,8 +185,12 @@ com0		at eumb? unit 0			# console at 0x4500
 satmgr0 	at eumb? unit 1 		# satmgr at 0x4600
 ociic*		at eumb?
 iic*		at ociic?
+dsrtc*		at iic? addr 0x68
 rs5c372rtc*	at iic? addr 0x32
-#dsrtc*		at iic? addr 0x68
+s390rtc*	at iic? addr 0x30
+#strtc*		at iic? addr 0x68
+#options 	STRTC_NO_WATCHDOG
+#options 	STRTC_NO_USERRAM
 
 # PCI IDE controllers - see pciide(4) for supported hardware.
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
