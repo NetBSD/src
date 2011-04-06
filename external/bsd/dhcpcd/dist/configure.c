@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -170,8 +170,14 @@ make_env(const struct interface *iface, char ***argv)
 	const struct if_options *ifo = iface->state->options;
 	const struct interface *ifp;
 
+	/* When dumping the lease, we only want to report interface and
+	   reason - the other interface variables are meaningless */
+	if (options & DHCPCD_DUMPLEASE)
+		elen = 2;
+	else
+		elen = 8;
+
 	/* Make our env */
-	elen = 8;
 	env = xmalloc(sizeof(char *) * (elen + 1));
 	e = strlen("interface") + strlen(iface->name) + 2;
 	env[0] = xmalloc(e);
@@ -179,7 +185,10 @@ make_env(const struct interface *iface, char ***argv)
 	e = strlen("reason") + strlen(iface->state->reason) + 2;
 	env[1] = xmalloc(e);
 	snprintf(env[1], e, "reason=%s", iface->state->reason);
-	e = 20;
+	if (options & DHCPCD_DUMPLEASE)
+		goto dumplease;
+
+ 	e = 20;
 	env[2] = xmalloc(e);
 	snprintf(env[2], e, "pid=%d", getpid());
 	env[3] = xmalloc(e);
@@ -237,6 +246,8 @@ make_env(const struct interface *iface, char ***argv)
 		append_config(&env, &elen, "old",
 		    (const char *const *)ifo->config);
 	}
+
+dumplease:
 	if (iface->state->new) {
 		e = configure_env(NULL, NULL, iface->state->new, ifo);
 		if (e > 0) {
@@ -653,9 +664,11 @@ build_routes(void)
 			/* Is this route already in our table? */
 			if ((find_route(nrs, rt, NULL, NULL)) != NULL)
 				continue;
+			rt->src.s_addr = ifp->addr.s_addr;
 			/* Do we already manage it? */
 			if ((or = find_route(routes, rt, &rtl, NULL))) {
 				if (or->iface != ifp ||
+				    or->src.s_addr != ifp->addr.s_addr ||
 				    rt->gate.s_addr != or->gate.s_addr)
 				{
 					if (c_route(or, rt, ifp) != 0)
