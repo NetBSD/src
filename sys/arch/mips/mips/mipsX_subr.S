@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.41 2011/03/15 07:39:22 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.42 2011/04/06 05:13:36 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -480,7 +480,7 @@ VECTOR(MIPSX(exception), unknown)
 #endif
 	.p2align 4
 MIPSX(kernelfault):
-	j	_C_LABEL(MIPSX(kernel_tlb_miss)) #10: kernel exception
+	j	_C_LABEL(MIPSX(kern_tlb_miss))	#10: kernel exception
 	 nop					#11: branch delay slot
 	nop
 	nop
@@ -1486,7 +1486,7 @@ END(MIPSX(cache_exception))
 
 /*----------------------------------------------------------------------------
  *
- * mipsN_kernel_tlb_miss --
+ * mipsN_kern_tlb_miss --
  *
  *	Handle a TLB miss exception from kernel mode in kernel space.
  *	The BaddVAddr, Context, and EntryHi registers contain the failed
@@ -1500,7 +1500,7 @@ END(MIPSX(cache_exception))
  *
  *----------------------------------------------------------------------------
  */
-LEAF_NOPROFILE(MIPSX(kernel_tlb_miss))
+LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 #if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
@@ -1525,7 +1525,7 @@ LEAF_NOPROFILE(MIPSX(kernel_tlb_miss))
 	 * If we are beyond the bounds of Sysmap, let trap panic for us.
 	 */
 	beqz	k1, _C_LABEL(MIPSX(kern_gen_exception)) # full trap processing
-	 move	k1, MIPS_CURLWP			# - delay slot -
+	 nop					# - delay slot -
 #endif
 	PTR_L	k1, _C_LABEL(Sysmap)
 	PTR_SRL	k0, 1
@@ -1549,7 +1549,7 @@ LEAF_NOPROFILE(MIPSX(kernel_tlb_miss))
 #endif
 	eret
 	.set	at
-END(MIPSX(kernel_tlb_miss))
+END(MIPSX(kern_tlb_miss))
 
 /*----------------------------------------------------------------------------
  *
@@ -1585,27 +1585,33 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	dsll32	k1, k1, 0
 #endif
 	bgez	k0, _C_LABEL(MIPSX(kern_gen_exception))	# full trap processing
-	 move	k1, MIPS_CURLWP
+	 nop		
 	PTR_SUBU k0, k1
 	INT_L	k1, _C_LABEL(Sysmapsize)	# index within range?
 	PTR_SRL	k0, PGSHIFT
 	sltu	k1, k0, k1
 	beqz	k1, _C_LABEL(MIPSX(kern_gen_exception))	# No. Failing beyond...
-	 move	k1, MIPS_CURLWP			# - delay slot -
+	 nop					# - delay slot -
 	PTR_L	k1, _C_LABEL(Sysmap)
 	PTR_SLL	k0, 2				# compute offset from index
 	PTR_ADDU k1, k0
 	tlbp					# Probe the invalid entry
 	COP0_SYNC
-	and	k0, 4				# check even/odd page
-	nop					# required for QED 5230
-	bnez	k0, MIPSX(kern_tlbi_odd)
-	nop
 
 	mfc0	k0, MIPS_COP_0_TLB_INDEX
+#ifdef MIPS3
 	nop
+#endif
 	bltz	k0, _C_LABEL(MIPSX(kern_gen_exception)) # ASSERT(TLB entry exists)
-	 move	k1, MIPS_CURLWP
+	 nop		
+
+	and	k0, k1, 4			# check even/odd page
+#ifdef MIPS3
+	nop					# required for QED 5230
+#endif
+	bnez	k0, MIPSX(kern_tlbi_odd)
+	 nop
+
 	INT_L	k0, 0(k1)			# get PTE entry
 
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of "wired" bit
@@ -1617,7 +1623,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	nop					# required for QED5230
 #endif
 	beqz	k0, _C_LABEL(MIPSX(kern_gen_exception))	# PTE invalid
-	 move	k1, MIPS_CURLWP
+	 nop		
 	INT_L	k0, 4(k1)			# get odd PTE entry
 	_SLL	k0, k0, WIRED_SHIFT
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
@@ -1639,10 +1645,6 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	eret
 
 MIPSX(kern_tlbi_odd):
-	mfc0	k0, MIPS_COP_0_TLB_INDEX
-	nop
-	bltz	k0, _C_LABEL(MIPSX(kern_gen_exception))	# assert(TLB Entry exists)
-	 move	k1, MIPS_CURLWP
 	INT_L	k0, 0(k1)			# get PTE entry
 
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of wired bit
@@ -1650,9 +1652,11 @@ MIPSX(kern_tlbi_odd):
 	_MTC0	k0, MIPS_COP_0_TLB_LO1		# save PTE entry
 	COP0_SYNC
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
+#ifdef MIPS3
 	nop					# required for QED5230
+#endif
 	beqz	k0, _C_LABEL(MIPSX(kern_gen_exception))	# PTE invalid
-	 move	k1, MIPS_CURLWP
+	 nop
 	INT_L	k0, -4(k1)			# get even PTE entry
 	_SLL	k0, k0, WIRED_SHIFT
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
