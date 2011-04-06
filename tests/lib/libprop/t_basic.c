@@ -1,4 +1,4 @@
-/* $NetBSD: t_basic.c,v 1.2 2010/11/03 16:10:22 christos Exp $ */
+/* $NetBSD: t_basic.c,v 1.3 2011/04/06 17:41:27 jruoho Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_basic.c,v 1.2 2010/11/03 16:10:22 christos Exp $");
+__RCSID("$NetBSD: t_basic.c,v 1.3 2011/04/06 17:41:27 jruoho Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -79,12 +79,13 @@ static const char compare1[] =
 "</dict>\n"
 "</plist>\n";
 
-ATF_TC(simple);
-ATF_TC_HEAD(simple, tc)
+ATF_TC(prop_basic);
+ATF_TC_HEAD(prop_basic, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks basic functionality of proplib");
+	atf_tc_set_md_var(tc, "descr", "A basic test of proplib(3)");
 }
-ATF_TC_BODY(simple, tc)
+
+ATF_TC_BODY(prop_basic, tc)
 {
 	prop_dictionary_t dict;
 	char *ext1;
@@ -160,10 +161,38 @@ ATF_TC_BODY(simple, tc)
 	free(ext1);
 }
 
+ATF_TC(prop_dictionary_equals);
+ATF_TC_HEAD(prop_dictionary_equals, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test prop_dictionary_equals(3)");
+}
+
+ATF_TC_BODY(prop_dictionary_equals, tc)
+{
+	prop_dictionary_t c, d;
+
+	atf_tc_expect_death("PR lib/43964");
+
+	d = prop_dictionary_internalize(compare1);
+
+	ATF_REQUIRE(d != NULL);
+
+	c = prop_dictionary_copy(d);
+
+	ATF_REQUIRE(c != NULL);
+
+	if (prop_dictionary_equals(c, d) != true)
+		atf_tc_fail("dictionaries are not equal");
+
+	prop_object_release(c);
+	prop_object_release(d);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, simple);
+	ATF_TP_ADD_TC(tp, prop_basic);
+	ATF_TP_ADD_TC(tp, prop_dictionary_equals);
 
 	return atf_no_error();
 }
