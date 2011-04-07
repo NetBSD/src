@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.221 2011/04/07 06:33:50 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.222 2011/04/07 17:34:14 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4421,4 +4421,10 @@ xsrc/xfree/xc/programs/xrdb/xrdb.c		patch
 
 	Fix CVE-2011-0465.
 	[mrg, ticket #1426]
+
+dist/dhcp/client/dhclient.c			1.21
+
+	CVE-2011-0997 dhclient: insufficient sanitization of certain DHCP
+	response values.
+	[christos, ticket #1427]
 
