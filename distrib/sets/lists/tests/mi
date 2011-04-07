@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.297 2011/04/06 16:04:16 jruoho Exp $
+# $NetBSD: mi,v 1.298 2011/04/07 06:24:07 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -329,6 +329,13 @@
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini1.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini2.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libbluetooth				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libbluetooth/t_bluetooth.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_data.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_get.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_match.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_put.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_set.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/db				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/db/h_db.debug			tests-lib-debug		debug,atf
@@ -1708,6 +1715,14 @@
 ./usr/tests/lib/csu/h_initfini2			tests-lib-tests		atf
 ./usr/tests/lib/csu/h_initfini3			tests-lib-tests		atf
 ./usr/tests/lib/csu/t_crt0			tests-lib-tests		atf
+./usr/tests/lib/libbluetooth			tests-lib-tests
+./usr/tests/lib/libbluetooth/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libbluetooth/t_bluetooth	tests-lib-tests		atf
+./usr/tests/lib/libbluetooth/t_sdp_data		tests-lib-tests		atf
+./usr/tests/lib/libbluetooth/t_sdp_get		tests-lib-tests		atf
+./usr/tests/lib/libbluetooth/t_sdp_match	tests-lib-tests		atf
+./usr/tests/lib/libbluetooth/t_sdp_put		tests-lib-tests		atf
+./usr/tests/lib/libbluetooth/t_sdp_set		tests-lib-tests		atf
 ./usr/tests/lib/libc				tests-lib-tests
 ./usr/tests/lib/libc/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libc/db				tests-lib-tests
