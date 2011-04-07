@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.31 2011/04/04 22:50:36 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.32 2011/04/07 01:20:31 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.31 2011/04/04 22:50:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.32 2011/04/07 01:20:31 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.31 2011/04/04 22:50:36 macallan Exp $");
 
 #include <arch/sgimips/dev/crmfbreg.h>
 
-/*#define CRMFB_DEBUG*/
+#include "opt_crmfb.h"
+
+#ifdef CRMFB_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF while (0) printf
+#endif
 
 struct wsscreen_descr crmfb_defaultscreen = {
 	"default",
@@ -147,6 +153,7 @@ struct crmfb_softc {
 	uint8_t			*sc_scratch;
 	paddr_t			sc_linear;
 	int			sc_wsmode;
+	struct edid_info sc_edid_info;
 
 	/* cursor stuff */
 	int			sc_cur_x;
@@ -213,6 +220,10 @@ static const struct i2c_bitbang_ops crmfb_i2cbb_ops = {
 };
 static void crmfb_setup_ddc(struct crmfb_softc *);
 
+/* mode setting stuff */
+static uint32_t calc_pll(int);	/* frequency in kHz */
+static int crmfb_set_mode(struct crmfb_softc *, const struct videomode *);
+
 CFATTACH_DECL_NEW(crmfb, sizeof(struct crmfb_softc),
     crmfb_match, crmfb_attach, NULL, NULL);
 
@@ -254,8 +265,6 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 	if (rv)
 		panic("crmfb_attach: can't map rendering engine");
 
-	//crmfb_setup_ddc(sc);
-
 	/* determine mode configured by firmware */
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_VT_HCMAP);
 	sc->sc_width = (d >> CRMFB_VT_HCMAP_ON_SHIFT) & 0xfff;
@@ -280,6 +289,12 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 	aprint_normal_dev(sc->sc_dev, "initial resolution %dx%d\n",
 	    sc->sc_width, sc->sc_height);
 
+	crmfb_setup_ddc(sc);
+	if ((sc->sc_edid_info.edid_preferred_mode != NULL)) {
+		if (crmfb_set_mode(sc, sc->sc_edid_info.edid_preferred_mode))
+			aprint_normal_dev(sc->sc_dev, "using %dx%d\n",
+			    sc->sc_width, sc->sc_height);
+	}
 	/*
 	 * first determine how many tiles we need
 	 * in 32bit each tile is 128x128 pixels
@@ -381,7 +396,6 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_hot_x = 0;
 	sc->sc_hot_y = 0;
 
-	crmfb_setup_ddc(sc);
 	return;
 }
 
@@ -798,7 +812,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 {
 	uint64_t reg;
 	uint32_t d, h, mode, page;
-	int i, bail, tile_width, tlbptr, lptr, j, tx, shift;
+	int i, bail, tile_width, tlbptr, lptr, j, tx, shift, overhang;
 	const char *wantsync;
 	uint16_t v;
 
@@ -811,7 +825,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	d &= ~(1 << CRMFB_FRM_CONTROL_DMAEN_SHIFT);
 	crmfb_write_reg(sc, CRMFB_FRM_CONTROL, d);
 	DELAY(50000);
-	crmfb_write_reg(sc, CRMFB_DID_CONTROL, 0);
+	crmfb_write_reg(sc, CRMFB_DID_CONTROL, d);
 	DELAY(50000);
 
 	if (!crmfb_wait_dma_idle(sc))
@@ -875,8 +889,16 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 
 	d = ((int)(sc->sc_width / tile_width)) << 
 	    CRMFB_FRM_TILESIZE_WIDTH_SHIFT;
-	if ((sc->sc_width & (tile_width - 1)) != 0)
-		d |= sc->sc_tiles_y;
+	overhang = sc->sc_width % tile_width;
+	if (overhang != 0) {
+		uint32_t val; 
+		DPRINTF("tile width: %d\n", tile_width);
+		DPRINTF("overhang: %d\n", overhang);
+		val = (overhang * (depth >> 3)) >> 5;
+		DPRINTF("reg: %08x\n", val);
+		d |= (val & 0x1f);
+		DPRINTF("d: %08x\n", d);
+	}
 
 	switch (depth) {
 	case 8:
@@ -903,16 +925,16 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	crmfb_write_reg(sc, CRMFB_OVR_WIDTH_TILE, 0);
 	crmfb_write_reg(sc, CRMFB_CURSOR_CONTROL, 0);
 
-	/* enable drawing again */
-	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_DOTCLOCK);
-	d |= (1 << CRMFB_DOTCLOCK_CLKRUN_SHIFT);
-	crmfb_write_reg(sc, CRMFB_DOTCLOCK, d);
-	crmfb_write_reg(sc, CRMFB_VT_XY, 0);
-
 	/* turn on DMA for the framebuffer */
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_CONTROL);
 	d |= (1 << CRMFB_FRM_CONTROL_DMAEN_SHIFT);
 	crmfb_write_reg(sc, CRMFB_FRM_CONTROL, d);
+
+	/* enable drawing again */
+	crmfb_write_reg(sc, CRMFB_VT_XY, 0);
+	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_DOTCLOCK);
+	d |= (1 << CRMFB_DOTCLOCK_CLKRUN_SHIFT);
+	crmfb_write_reg(sc, CRMFB_DOTCLOCK, d);
 
 	/* turn off sync-on-green */
 
@@ -932,9 +954,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	tx = ((sc->sc_width + (tile_width - 1)) & ~(tile_width - 1)) / 
 	    tile_width;
 
-#ifdef CRMFB_DEBUG
-	printf("tx: %d\n", tx);
-#endif
+	DPRINTF("tx: %d\n", tx);
 
 	for (i = 0; i < 16; i++) {
 		reg = 0;
@@ -948,9 +968,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 				bus_space_write_8(sc->sc_iot, sc->sc_reh,
 				    CRIME_RE_TLB_A + tlbptr + lptr, 
 				    reg);
-#ifdef CRMFB_DEBUG
-				printf("%04x: %016llx\n", tlbptr + lptr, reg);
-#endif
+				DPRINTF("%04x: %016llx\n", tlbptr + lptr, reg);
 				reg = 0;
 				lptr += 8;
 			}
@@ -959,9 +977,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 		if (shift != 64) {
 			bus_space_write_8(sc->sc_iot, sc->sc_reh,
 			    CRIME_RE_TLB_A + tlbptr + lptr, reg);
-#ifdef CRMFB_DEBUG
-			printf("%04x: %016llx\n", tlbptr + lptr, reg);
-#endif
+			DPRINTF("%04x: %016llx\n", tlbptr + lptr, reg);
 		}
 		tlbptr += 32;
 	}
@@ -1358,7 +1374,6 @@ crmfb_setup_ddc(struct crmfb_softc *sc)
 {
 	int i;
 	char edid_data[128];
-	struct edid_info ei;
 
 	memset(edid_data, 0, 128);
 	sc->sc_i2c.ic_cookie = sc;
@@ -1377,8 +1392,8 @@ crmfb_setup_ddc(struct crmfb_softc *sc)
 		aprint_debug_dev(sc->sc_dev,
 		    "had to try %d times to get EDID data\n", i);
 	if (i < 11) {
-		edid_parse(edid_data, &ei);
-		edid_print(&ei);
+		edid_parse(edid_data, &sc->sc_edid_info);
+		edid_print(&sc->sc_edid_info);
 	}
 }
 
@@ -1457,3 +1472,143 @@ crmfb_i2c_write_byte(void *cookie, uint8_t val, int flags)
 
 	return i2c_bitbang_write_byte(cookie, val, flags, &crmfb_i2cbb_ops);
 }
+
+/* mode setting stuff */
+static uint32_t
+calc_pll(int f_out)
+{
+	uint32_t ret;
+	int f_in = 20000;	/* 20MHz in */
+	int M, N, P;
+	int error, div, best = 9999999;
+	int ff1, ff2;
+	int MM = 0, NN = 0, PP = 0, ff = 0;
+
+	/* f_out = M * f_in / (N * (1 << P) */
+
+	for (P = 0; P < 4; P++) {
+		for (N = 64; N > 0; N--) {
+			div = N * (1 << P);
+			M = f_out * div / f_in;
+			if ((M < 257) && (M > 100)) {
+				ff1 = M * f_in / div;
+				ff2 = (M + 1) * f_in / div;
+				error = abs(ff1 - f_out);
+				if (error < best) {
+					MM = M;
+					NN = N;
+					PP = P;
+					ff = ff1;
+					best = error;
+				}
+				error = abs(ff2 - f_out);
+				if ((error < best) && ( M < 256)){
+					MM = M + 1;
+					NN = N;
+					PP = P;
+					ff = ff2;
+					best = error;
+				}
+			}
+		}
+	}
+	DPRINTF("%d: M %d N %d P %d -> %d\n", f_out, MM, NN, PP, ff);
+	/* now shove the parameters into the register's format */
+	ret = (MM - 1) | ((NN - 1) << 8) | (P << 14);
+	return ret;
+}
+
+static int
+crmfb_set_mode(struct crmfb_softc *sc, const struct videomode *mode)
+{
+	uint32_t d, dc;
+	int tmp, diff;
+
+	if ((mode->hdisplay % 32) != 0) {
+		aprint_error_dev(sc->sc_dev, "hdisplay (%d) is not a multiple of 32\n", mode->hdisplay);
+		return FALSE;
+	}
+	if (mode->dot_clock > 140000) {
+		aprint_error_dev(sc->sc_dev, "requested dot clock is too high ( %d MHz )\n", mode->dot_clock / 1000);
+		return FALSE;
+	}
+
+	/* disable DMA */
+	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_OVR_CONTROL);
+	d &= ~(1 << CRMFB_OVR_CONTROL_DMAEN_SHIFT);
+	crmfb_write_reg(sc, CRMFB_OVR_CONTROL, d);
+	DELAY(50000);
+	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_CONTROL);
+	d &= ~(1 << CRMFB_FRM_CONTROL_DMAEN_SHIFT);
+	crmfb_write_reg(sc, CRMFB_FRM_CONTROL, d);
+	DELAY(50000);
+	crmfb_write_reg(sc, CRMFB_DID_CONTROL, d);
+	DELAY(50000);
+
+	if (!crmfb_wait_dma_idle(sc))
+		aprint_error("crmfb: crmfb_wait_dma_idle timed out\n");
+
+	/* ok, now we're good to go */
+	dc = calc_pll(mode->dot_clock);
+
+	crmfb_write_reg(sc, CRMFB_VT_XY, 1 << CRMFB_VT_XY_FREEZE_SHIFT);
+	delay(1000);
+
+	/* set the dot clock pll but don't start it yet */
+	crmfb_write_reg(sc, CRMFB_DOTCLOCK, dc);
+	delay(10000);
+
+	/* pixel counter */
+	d = mode->htotal | (mode->vtotal << 12);
+	crmfb_write_reg(sc, CRMFB_VT_XYMAX, d);
+
+	/* video timings */
+	d = mode->vsync_end | (mode->vsync_start << 12);
+	crmfb_write_reg(sc, CRMFB_VT_VSYNC, d);
+
+	d = mode->hsync_end | (mode->hsync_start << 12);
+	crmfb_write_reg(sc, CRMFB_VT_HSYNC, d);
+
+	d = mode->vtotal | (mode->vdisplay << 12);
+	crmfb_write_reg(sc, CRMFB_VT_VBLANK, d);
+
+	d = (mode->htotal - 5) | ((mode->hdisplay - 5) << 12);
+	crmfb_write_reg(sc, CRMFB_VT_HBLANK, d);
+
+	d = mode->vtotal | (mode->vdisplay << 12);
+	crmfb_write_reg(sc, CRMFB_VT_VCMAP, d);
+	d = mode->htotal | (mode->hdisplay << 12);
+	crmfb_write_reg(sc, CRMFB_VT_HCMAP, d);
+
+	d = 0;
+	if (mode->flags & VID_NHSYNC) d |= CRMFB_VT_FLAGS_HDRV_INVERT;
+	if (mode->flags & VID_NVSYNC) d |= CRMFB_VT_FLAGS_VDRV_INVERT;
+	crmfb_write_reg(sc, CRMFB_VT_FLAGS, d);
+
+	diff = -abs(mode->vtotal - mode->vdisplay - 1);
+	d = ((uint32_t)diff << 12) & 0x00fff000;
+	d |= (mode->htotal - 20);
+	crmfb_write_reg(sc, CRMFB_VT_DID_STARTXY, d);
+
+	d = ((uint32_t)(diff + 1) << 12) & 0x00fff000;
+	d |= (mode->htotal - 54);
+	crmfb_write_reg(sc, CRMFB_VT_CRS_STARTXY, d);
+
+	d = ((uint32_t)diff << 12) & 0x00fff000;
+	d |= (mode->htotal - 4);
+	crmfb_write_reg(sc, CRMFB_VT_VC_STARTXY, d);
+
+	tmp = mode->htotal - 19;
+	d = tmp << 12;
+	d |= ((tmp + mode->hdisplay - 2) % mode->htotal);
+	crmfb_write_reg(sc, CRMFB_VT_HPIX_EN, d);
+
+	d = mode->vdisplay | (mode->vtotal << 12);
+	crmfb_write_reg(sc, CRMFB_VT_VPIX_EN, d);
+
+	sc->sc_width = mode->hdisplay;
+	sc->sc_height = mode->vdisplay;
+
+	return TRUE;
+}
+
