@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.5 2011/03/18 14:56:01 he Exp $	*/
+/*	$NetBSD: tls.c,v 1.6 2011/04/07 02:19:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.5 2011/03/18 14:56:01 he Exp $");
+__RCSID("$NetBSD: tls.c,v 1.6 2011/04/07 02:19:28 matt Exp $");
 
 #include "namespace.h"
 
@@ -154,8 +154,18 @@ __libc_static_tls_setup(void)
 {
 	struct tls_tcb *tcb;
 
-	if (&rtld_DYNAMIC != NULL)
+	if (&rtld_DYNAMIC != NULL) {
+#ifdef __powerpc__
+		/*
+		 * Old powerpc crt0's are going to overwrite r2 so we need to
+		 * restore it but only do so if the saved value isn't NULL (if
+		 * it is NULL, ld.elf_so doesn't have the matching change).
+		 */
+		if ((tcb = _lwp_getprivate()) != NULL)
+			__lwp_settcb(tcb);
+#endif
 		return;
+	}
 
 	dl_iterate_phdr(__libc_static_tls_setup_cb, NULL);
 
