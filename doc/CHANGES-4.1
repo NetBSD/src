@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.220 2011/04/03 15:18:32 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.221 2011/04/07 06:33:50 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4416,4 +4416,9 @@ sys/netipsec/xform_ipcomp.c			1.26 via patch
 
 	Prevent nesting ipcomp.  CVE-2011-1547.
 	[spz, ticket #1425]
+
+xsrc/xfree/xc/programs/xrdb/xrdb.c		patch
+
+	Fix CVE-2011-0465.
+	[mrg, ticket #1426]
 
