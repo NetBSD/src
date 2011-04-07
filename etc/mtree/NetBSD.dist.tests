@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.34 2011/03/10 20:03:40 pooka Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.35 2011/04/07 06:24:07 plunky Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -45,6 +45,7 @@
 ./usr/libdata/debug/usr/tests/kernel/tty
 ./usr/libdata/debug/usr/tests/lib
 ./usr/libdata/debug/usr/tests/lib/csu
+./usr/libdata/debug/usr/tests/lib/libbluetooth
 ./usr/libdata/debug/usr/tests/lib/libc
 ./usr/libdata/debug/usr/tests/lib/libc/db
 ./usr/libdata/debug/usr/tests/lib/libc/gen
@@ -158,6 +159,7 @@
 ./usr/tests/kernel/tty
 ./usr/tests/lib
 ./usr/tests/lib/csu
+./usr/tests/lib/libbluetooth
 ./usr/tests/lib/libc
 ./usr/tests/lib/libc/db
 ./usr/tests/lib/libc/gen
