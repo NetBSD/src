@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.185 2011/03/27 19:47:46 sjg Exp $
+.\"	$NetBSD: make.1,v 1.186 2011/04/07 01:40:01 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd March 27, 2011
+.Dd April 2, 2011
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1042,6 +1042,8 @@ safely through recursive invocations of
 .Nm .
 .It Cm \&:R
 Replaces each word in the variable with everything but its suffix.
+.It Cm \&:hash
+Compute a 32bit hash of the value and encode it as hex digits.
 .It Cm \&:tA
 Attempt to convert variable to an absolute path using
 .Xr realpath 3 ,

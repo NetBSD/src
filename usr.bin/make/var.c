@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.162 2011/03/06 00:02:15 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.163 2011/04/07 01:40:01 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.162 2011/03/06 00:02:15 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.163 2011/04/07 01:40:01 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.162 2011/03/06 00:02:15 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.163 2011/04/07 01:40:01 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -129,6 +129,7 @@ __RCSID("$NetBSD: var.c,v 1.162 2011/03/06 00:02:15 sjg Exp $");
 #include    <regex.h>
 #endif
 #include    <ctype.h>
+#include    <inttypes.h>
 #include    <stdlib.h>
 #include    <limits.h>
 
@@ -302,6 +303,7 @@ static char *VarGetPattern(GNode *, Var_Parse_State *,
 			   VarPattern *);
 static char *VarQuote(char *);
 static char *VarChangeCase(char *, int);
+static char *VarHash(char *);
 static char *VarModify(GNode *, Var_Parse_State *,
     const char *,
     Boolean (*)(GNode *, Var_Parse_State *, char *, Boolean, Buffer *, void *),
@@ -2262,6 +2264,79 @@ VarQuote(char *str)
 
 /*-
  *-----------------------------------------------------------------------
+ * VarHash --
+ *      Hash the string using the MurmurHash3 algorithm.
+ *      Output is computed using 32bit Little Endian arithmetic.
+ *
+ * Input:
+ *	str		String to modify
+ *
+ * Results:
+ *      Hash value of str, encoded as 8 hex digits.
+ *
+ * Side Effects:
+ *      None.
+ *
+ *-----------------------------------------------------------------------
+ */
+static char *
+VarHash(char *str)
+{
+    static const char    hexdigits[16] = "0123456789abcdef";
+    Buffer         buf;
+    size_t         len, len2;
+    unsigned char  *ustr = (unsigned char *)str;
+    uint32_t       h, k, c1, c2;
+    int            done;
+
+    done = 1;
+    h  = 0x971e137bU;
+    c1 = 0x95543787U;
+    c2 = 0x2ad7eb25U;
+    len2 = strlen(str);
+
+    for (len = len2; len; ) {
+	k = 0;
+	switch (len) {
+	default:
+	    k = (ustr[3] << 24) | (ustr[2] << 16) | (ustr[1] << 8) | ustr[0];
+	    len -= 4;
+	    ustr += 4;
+	    break;
+	case 3:
+	    k |= (ustr[2] << 16);
+	case 2:
+	    k |= (ustr[1] << 8);
+	case 1:
+	    k |= ustr[0];
+	    len = 0;
+	}
+	c1 = c1 * 5 + 0x7b7d159cU;
+	c2 = c2 * 5 + 0x6bce6396U;
+	k *= c1;
+	k = (k << 11) ^ (k >> 21);
+	k *= c2;
+	h = (h << 13) ^ (h >> 19);
+	h = h * 5 + 0x52dce729U;
+	h ^= k;
+   } while (!done);
+   h ^= len2;
+   h *= 0x85ebca6b;
+   h ^= h >> 13;
+   h *= 0xc2b2ae35;
+   h ^= h >> 16;
+
+   Buf_Init(&buf, 0);
+   for (len = 0; len < 8; ++len) {
+       Buf_AddByte(&buf, hexdigits[h & 15]);
+       h >>= 4;
+   }
+
+   return Buf_Destroy(&buf, FALSE);
+}
+
+/*-
+ *-----------------------------------------------------------------------
  * VarChangeCase --
  *      Change the string to all uppercase or all lowercase
  *
@@ -2821,6 +2896,17 @@ ApplyModifiers(char *nstr, const char *tstr,
 		}
 
 	    }
+	case 'h':
+	    cp = tstr + 1;	/* make sure it is set */
+	    if (strncmp(tstr, "hash", 4) == 0 &&
+		(tstr[4] == endc || tstr[4] == ':')) {
+		newStr = VarHash(nstr);
+		cp = tstr + 4;
+		termc = *cp;
+	    } else {
+		goto bad_modifier;
+	    }
+	    break;
 	case 't':
 	    {
 		cp = tstr + 1;	/* make sure it is set */
