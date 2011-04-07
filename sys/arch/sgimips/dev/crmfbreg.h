@@ -1,4 +1,4 @@
-/* $NetBSD: crmfbreg.h,v 1.13 2011/03/31 00:01:08 macallan Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.14 2011/04/07 01:20:31 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -89,7 +89,7 @@
 #define		CRMFB_VT_XY_X_MASK		0x00000fff
 #define		CRMFB_VT_XY_Y_MASK		0x00fff000
 #define		CRMFB_VT_XY_FREEZE_SHIFT	31
-#define CRMFB_VT_MAX		0x00010004 /* same masks as CRMFB_VT_XY, counters in
+#define CRMFB_VT_XYMAX		0x00010004 /* same masks as CRMFB_VT_XY, counters in
 					    * CRMFB_VT_XY reset when reaching max */
 #define CRMFB_VT_VSYNC		0x00010008
 #define		CRMFB_VT_VSYNC_OFF_MASK		0x00000fff
@@ -128,7 +128,7 @@
 #define		CRMFB_INTR_3_MASK		0x00000fff /* intr3 when y == this */
 #define		CRMFB_INTR_2_MASK		0x00fff000 /* intr2 when y == this */
 
-#define CRMFB_VT_HPIXEN		0x00010034
+#define CRMFB_VT_HPIX_EN		0x00010034
 #define		CRMFB_HPIXEN_OFF_MASK		0x00000fff
 #define		CRMFB_HPIXEN_ON_MASK		0x00fff000
 #define CRMFB_VT_VPIX_EN	0x00010038
@@ -144,13 +144,13 @@
 #define		CRMFB_VCMAP_ON_MASK		0x00fff000
 #define		CRMFB_VT_VCMAP_ON_SHIFT		12
 
-#define CRMFB_VT_DID_START	0x00010044
+#define CRMFB_VT_DID_STARTXY	0x00010044
 #define		CRMFB_VT_DID_START_X_MASK	0x00000fff
 #define		CRMFB_VT_DID_START_Y_MASK	0x00fff000
-#define CRMFB_VT_CRS_START	0x00010048
+#define CRMFB_VT_CRS_STARTXY	0x00010048
 #define		CRMFB_VT_CRS_START_X_MASK	0x00000fff
 #define		CRMFB_VT_CRS_START_Y_MASK	0x00fff000
-#define CRMFB_VT_VC_START	0x0001004c
+#define CRMFB_VT_VC_STARTXY	0x0001004c
 #define		CRMFB_VT_VC_START_X_MASK	0x00000fff
 #define		CRMFB_VT_VC_START_Y_MASK	0x00fff000
 
