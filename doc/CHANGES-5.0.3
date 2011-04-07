@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.35 2011/04/05 06:23:12 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.36 2011/04/07 06:56:25 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2690,4 +2690,29 @@ lib/libc/net/getservbyport_r.c			patch
 
 	Protect against stack smashes.
 	[christos, ticket #1593]
+
+xsrc/external/mit/xrdb/dist/COPYING		patch
+xsrc/external/mit/xrdb/dist/ChangeLog		patch
+xsrc/external/mit/xrdb/dist/Makefile.am		patch
+xsrc/external/mit/xrdb/dist/Makefile.in		patch
+xsrc/external/mit/xrdb/dist/README		patch
+xsrc/external/mit/xrdb/dist/aclocal.m4		patch
+xsrc/external/mit/xrdb/dist/config.guess	patch
+xsrc/external/mit/xrdb/dist/config.h.in		patch
+xsrc/external/mit/xrdb/dist/config.sub		patch
+xsrc/external/mit/xrdb/dist/configure		patch
+xsrc/external/mit/xrdb/dist/configure.ac	patch
+xsrc/external/mit/xrdb/dist/depcomp		patch
+xsrc/external/mit/xrdb/dist/install-sh		patch
+xsrc/external/mit/xrdb/dist/missing		patch
+xsrc/external/mit/xrdb/dist/xrdb.c		patch
+xsrc/external/mit/xrdb/dist/xrdb.man		patch
+xsrc/external/mit/xrdb/dist/man/Makefile.am	patch
+xsrc/external/mit/xrdb/dist/man/Makefile.in	patch
+xsrc/external/mit/xrdb/dist/man/xrdb.man	patch
+xsrc/xfree/xc/programs/xrdb/xrdb.c		patch
+external/mit/xorg/bin/xrdb/Makefile		patch
+
+	Fix CVE-2011-0465
+	[mrg, ticket #1594]
 
