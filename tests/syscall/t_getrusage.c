@@ -1,4 +1,4 @@
-/* $NetBSD: t_getrusage.c,v 1.4 2011/04/06 19:09:16 jruoho Exp $ */
+/* $NetBSD: t_getrusage.c,v 1.5 2011/04/07 17:33:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrusage.c,v 1.4 2011/04/06 19:09:16 jruoho Exp $");
+__RCSID("$NetBSD: t_getrusage.c,v 1.5 2011/04/07 17:33:11 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -40,8 +40,10 @@ __RCSID("$NetBSD: t_getrusage.c,v 1.4 2011/04/06 19:09:16 jruoho Exp $");
 #include <signal.h>
 #include <string.h>
 
-static void	work(void);
-static void	sighandler(int);
+static void		work(void);
+static void		sighandler(int);
+
+static const size_t	maxiter = 2000;
 
 static void
 sighandler(int signo)
@@ -52,7 +54,7 @@ sighandler(int signo)
 static void
 work(void)
 {
-	size_t n = UINT16_MAX * 100;
+	size_t n = UINT16_MAX * 10;
 
 	while (n > 0) {
 		 asm volatile("nop");	/* Do something. */
@@ -117,14 +119,14 @@ ATF_TC_HEAD(getrusage_utime_back, tc)
 ATF_TC_BODY(getrusage_utime_back, tc)
 {
 	struct rusage ru1, ru2;
-	size_t i, n = 100;
+	size_t i;
 
 	/*
 	 * Test that two consecutive calls are sane.
 	 */
 	atf_tc_expect_fail("PR kern/30115");
 
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < maxiter; i++) {
 
 		(void)memset(&ru1, 0, sizeof(struct rusage));
 		(void)memset(&ru2, 0, sizeof(struct rusage));
@@ -151,21 +153,25 @@ ATF_TC_HEAD(getrusage_utime_zero, tc)
 ATF_TC_BODY(getrusage_utime_zero, tc)
 {
 	struct rusage ru;
+	size_t i;
 
 	/*
 	 * Test that getrusage(2) does not return
 	 * zero user time for the calling process.
 	 */
-	atf_tc_expect_fail("PR port-amd64/41734");
+	for (i = 0; i < maxiter; i++) {
 
-	work();
+		atf_tc_expect_fail("PR port-amd64/41734");
 
-	(void)memset(&ru, 0, sizeof(struct rusage));
+		work();
 
-	ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru) == 0);
+		(void)memset(&ru, 0, sizeof(struct rusage));
 
-	if (ru.ru_utime.tv_sec == 0 && ru.ru_utime.tv_usec == 0)
-		atf_tc_fail("zero user time from getrusage(2)");
+		ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru) == 0);
+
+		if (ru.ru_utime.tv_sec == 0 && ru.ru_utime.tv_usec == 0)
+			atf_tc_fail("zero user time from getrusage(2)");
+	}
 }
 
 ATF_TP_ADD_TCS(tp)
