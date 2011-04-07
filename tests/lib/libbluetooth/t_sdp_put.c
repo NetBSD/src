@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sdp_put.c,v 1.1 2011/04/07 06:21:57 plunky Exp $	*/
+/*	$NetBSD: t_sdp_put.c,v 1.2 2011/04/07 08:29:50 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@ ATF_TC(check_sdp_put_data);
 
 ATF_TC_HEAD(check_sdp_put_data, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_data results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_data, tc)
 {
 	uint8_t buf[256];
@@ -72,10 +72,10 @@ ATF_TC(check_sdp_put_attr);
 
 ATF_TC_HEAD(check_sdp_put_attr, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_attr results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_attr, tc)
 {
 	uint8_t buf[256];
@@ -102,10 +102,10 @@ ATF_TC(check_sdp_put_uuid);
 
 ATF_TC_HEAD(check_sdp_put_uuid, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_uuid results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_uuid, tc)
 {
 	uint8_t buf[256];
@@ -160,10 +160,10 @@ ATF_TC(check_sdp_put_uuid16);
 
 ATF_TC_HEAD(check_sdp_put_uuid16, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_uuid16 results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_uuid16, tc)
 {
 	uint8_t buf[256];
@@ -185,10 +185,10 @@ ATF_TC(check_sdp_put_uuid32);
 
 ATF_TC_HEAD(check_sdp_put_uuid32, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_uuid32 results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_uuid32, tc)
 {
 	uint8_t buf[256];
@@ -211,10 +211,10 @@ ATF_TC(check_sdp_put_uuid128);
 
 ATF_TC_HEAD(check_sdp_put_uuid128, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_uuid128 results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_uuid128, tc)
 {
 	uint8_t buf[256];
@@ -248,10 +248,10 @@ ATF_TC(check_sdp_put_bool);
 
 ATF_TC_HEAD(check_sdp_put_bool, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_bool results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_bool, tc)
 {
 	uint8_t buf[256];
@@ -275,10 +275,10 @@ ATF_TC(check_sdp_put_uint);
 
 ATF_TC_HEAD(check_sdp_put_uint, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_uint results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_uint, tc)
 {
 	uint8_t buf[256];
@@ -320,10 +320,10 @@ ATF_TC(check_sdp_put_uint8);
 
 ATF_TC_HEAD(check_sdp_put_uint8, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_uint8 results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_uint8, tc)
 {
 	uint8_t buf[256];
@@ -347,10 +347,10 @@ ATF_TC(check_sdp_put_uint16);
 
 ATF_TC_HEAD(check_sdp_put_uint16, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_uint16 results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_uint16, tc)
 {
 	uint8_t buf[256];
@@ -378,10 +378,10 @@ ATF_TC(check_sdp_put_uint32);
 
 ATF_TC_HEAD(check_sdp_put_uint32, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_uint32 results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_uint32, tc)
 {
 	uint8_t buf[256];
@@ -416,10 +416,10 @@ ATF_TC(check_sdp_put_uint64);
 
 ATF_TC_HEAD(check_sdp_put_uint64, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_uint64 results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_uint64, tc)
 {
 	uint8_t buf[256];
@@ -463,15 +463,15 @@ ATF_TC(check_sdp_put_int);
 
 ATF_TC_HEAD(check_sdp_put_int, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_int results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_int, tc)
 {
 	uint8_t buf[256];
 	sdp_data_t test = { buf, buf + sizeof(buf) };
-	
+
 	ATF_REQUIRE(sdp_put_int(&test, (intmax_t)0));
 	ATF_REQUIRE(sdp_put_int(&test, (intmax_t)INT8_MIN));
 	ATF_REQUIRE(sdp_put_int(&test, (intmax_t)INT8_MAX));
@@ -489,7 +489,6 @@ ATF_TC_BODY(check_sdp_put_int, tc)
 	ATF_REQUIRE(sdp_put_int(&test, (intmax_t)INT64_MAX));
 	test.end = test.next;
 	test.next = buf;
-
 
 	const uint8_t expect[] = {
 		0x10, 0x00,		// int8		0
@@ -529,10 +528,10 @@ ATF_TC(check_sdp_put_int8);
 
 ATF_TC_HEAD(check_sdp_put_int8, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_int8 results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_int8, tc)
 {
 	uint8_t buf[256];
@@ -558,10 +557,10 @@ ATF_TC(check_sdp_put_int16);
 
 ATF_TC_HEAD(check_sdp_put_int16, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_int16 results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_int16, tc)
 {
 	uint8_t buf[256];
@@ -591,10 +590,10 @@ ATF_TC(check_sdp_put_int32);
 
 ATF_TC_HEAD(check_sdp_put_int32, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_int32 results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_int32, tc)
 {
 	uint8_t buf[256];
@@ -635,10 +634,10 @@ ATF_TC(check_sdp_put_int64);
 
 ATF_TC_HEAD(check_sdp_put_int64, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_int64 results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_int64, tc)
 {
 	uint8_t buf[256];
@@ -694,10 +693,10 @@ ATF_TC(check_sdp_put_seq);
 
 ATF_TC_HEAD(check_sdp_put_seq, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_seq results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_seq, tc)
 {
 	uint8_t buf[512];
@@ -728,10 +727,10 @@ ATF_TC(check_sdp_put_alt);
 
 ATF_TC_HEAD(check_sdp_put_alt, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_alt results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_alt, tc)
 {
 	uint8_t buf[512];
@@ -762,10 +761,10 @@ ATF_TC(check_sdp_put_str);
 
 ATF_TC_HEAD(check_sdp_put_str, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_str results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_str, tc)
 {
 	uint8_t buf[512];
@@ -806,10 +805,10 @@ ATF_TC(check_sdp_put_url);
 
 ATF_TC_HEAD(check_sdp_put_url, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_put_url results");
 }
- 
+
 ATF_TC_BODY(check_sdp_put_url, tc)
 {
 	uint8_t buf[512];
