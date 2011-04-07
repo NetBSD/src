@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.37 2011/04/07 16:27:11 snj Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.38 2011/04/07 17:25:47 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2716,4 +2716,10 @@ external/mit/xorg/bin/xrdb/Makefile		patch
 
 	Fix CVE-2011-0465
 	[mrg, ticket #1594]
+
+dist/dhcp/client/dhclient.c			1.21
+
+	CVE-2011-0997 dhclient: insufficient sanitization of certain DHCP
+	response values.
+	[spz, ticket #1595]
 
