@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bluetooth.c,v 1.1 2011/04/07 06:21:57 plunky Exp $	*/
+/*	$NetBSD: t_bluetooth.c,v 1.2 2011/04/07 08:29:50 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,10 +38,10 @@ ATF_TC(check_bt_aton);
 
 ATF_TC_HEAD(check_bt_aton, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test bt_aton results");
 }
- 
+
 ATF_TC_BODY(check_bt_aton, tc)
 {
 	bdaddr_t bdaddr;
@@ -66,10 +66,10 @@ ATF_TC(check_bt_ntoa);
 
 ATF_TC_HEAD(check_bt_ntoa, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test bt_ntoa results");
 }
- 
+
 ATF_TC_BODY(check_bt_ntoa, tc)
 {
 	bdaddr_t bdaddr = { { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55 } };

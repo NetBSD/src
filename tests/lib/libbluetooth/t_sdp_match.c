@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sdp_match.c,v 1.1 2011/04/07 06:21:57 plunky Exp $	*/
+/*	$NetBSD: t_sdp_match.c,v 1.2 2011/04/07 08:29:50 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@ ATF_TC(check_sdp_match_uuid16);
 
 ATF_TC_HEAD(check_sdp_match_uuid16, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_match_uuid16 results");
 }
- 
+
 ATF_TC_BODY(check_sdp_match_uuid16, tc)
 {
 	uint8_t data[] = {

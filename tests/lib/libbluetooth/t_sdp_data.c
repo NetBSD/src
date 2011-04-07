@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sdp_data.c,v 1.1 2011/04/07 06:21:57 plunky Exp $	*/
+/*	$NetBSD: t_sdp_data.c,v 1.2 2011/04/07 08:29:50 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@ ATF_TC(check_sdp_data_type);
 
 ATF_TC_HEAD(check_sdp_data_type, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_data_type results");
 }
- 
+
 ATF_TC_BODY(check_sdp_data_type, tc)
 {
 	uint8_t data[] = {
@@ -63,10 +63,10 @@ ATF_TC(check_sdp_data_size);
 
 ATF_TC_HEAD(check_sdp_data_size, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_data_size results");
 }
- 
+
 ATF_TC_BODY(check_sdp_data_size, tc)
 {
 	uint8_t data[] = {
