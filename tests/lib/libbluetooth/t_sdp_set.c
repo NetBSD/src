@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sdp_set.c,v 1.1 2011/04/07 06:21:57 plunky Exp $	*/
+/*	$NetBSD: t_sdp_set.c,v 1.2 2011/04/07 08:29:50 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@ ATF_TC(check_sdp_set_bool);
 
 ATF_TC_HEAD(check_sdp_set_bool, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_set_bool results");
 }
- 
+
 ATF_TC_BODY(check_sdp_set_bool, tc)
 {
 	uint8_t data[] = {
@@ -72,10 +72,10 @@ ATF_TC(check_sdp_set_uint);
 
 ATF_TC_HEAD(check_sdp_set_uint, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_set_uint results");
 }
- 
+
 ATF_TC_BODY(check_sdp_set_uint, tc)
 {
 	uint8_t data[] = {
@@ -152,10 +152,10 @@ ATF_TC(check_sdp_set_int);
 
 ATF_TC_HEAD(check_sdp_set_int, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_set_int results");
 }
- 
+
 ATF_TC_BODY(check_sdp_set_int, tc)
 {
 	uint8_t data[] = {
@@ -232,10 +232,10 @@ ATF_TC(check_sdp_set_seq);
 
 ATF_TC_HEAD(check_sdp_set_seq, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_set_seq results");
 }
- 
+
 ATF_TC_BODY(check_sdp_set_seq, tc)
 {
 	uint8_t data[] = {
@@ -290,10 +290,10 @@ ATF_TC(check_sdp_set_alt);
 
 ATF_TC_HEAD(check_sdp_set_alt, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_set_alt results");
 }
- 
+
 ATF_TC_BODY(check_sdp_set_alt, tc)
 {
 	uint8_t data[] = {

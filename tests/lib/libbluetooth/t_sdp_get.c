@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sdp_get.c,v 1.1 2011/04/07 06:21:57 plunky Exp $	*/
+/*	$NetBSD: t_sdp_get.c,v 1.2 2011/04/07 08:29:50 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@ ATF_TC(check_sdp_get_data);
 
 ATF_TC_HEAD(check_sdp_get_data, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_get_data results");
 }
- 
+
 ATF_TC_BODY(check_sdp_get_data, tc)
 {
 	uint8_t data[] = {
@@ -87,10 +87,10 @@ ATF_TC(check_sdp_get_attr);
 
 ATF_TC_HEAD(check_sdp_get_attr, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_get_attr results");
 }
- 
+
 ATF_TC_BODY(check_sdp_get_attr, tc)
 {
 	uint8_t data[] = {
@@ -132,10 +132,10 @@ ATF_TC(check_sdp_get_uuid);
 
 ATF_TC_HEAD(check_sdp_get_uuid, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_get_uuid results");
 }
- 
+
 ATF_TC_BODY(check_sdp_get_uuid, tc)
 {
 	uint8_t data[] = {
@@ -201,10 +201,10 @@ ATF_TC(check_sdp_get_bool);
 
 ATF_TC_HEAD(check_sdp_get_bool, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_get_bool results");
 }
- 
+
 ATF_TC_BODY(check_sdp_get_bool, tc)
 {
 	uint8_t data[] = {
@@ -237,10 +237,10 @@ ATF_TC(check_sdp_get_uint);
 
 ATF_TC_HEAD(check_sdp_get_uint, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_get_uint results");
 }
- 
+
 ATF_TC_BODY(check_sdp_get_uint, tc)
 {
 	uint8_t data[] = {
@@ -330,10 +330,10 @@ ATF_TC(check_sdp_get_int);
 
 ATF_TC_HEAD(check_sdp_get_int, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_get_int results");
 }
- 
+
 ATF_TC_BODY(check_sdp_get_int, tc)
 {
 	uint8_t data[] = {
@@ -459,10 +459,10 @@ ATF_TC(check_sdp_get_seq);
 
 ATF_TC_HEAD(check_sdp_get_seq, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_get_seq results");
 }
- 
+
 ATF_TC_BODY(check_sdp_get_seq, tc)
 {
 	uint8_t data[] = {
@@ -499,10 +499,10 @@ ATF_TC(check_sdp_get_alt);
 
 ATF_TC_HEAD(check_sdp_get_alt, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_get_alt results");
 }
- 
+
 ATF_TC_BODY(check_sdp_get_alt, tc)
 {
 	uint8_t data[] = {
@@ -539,10 +539,10 @@ ATF_TC(check_sdp_get_str);
 
 ATF_TC_HEAD(check_sdp_get_str, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_get_str results");
 }
- 
+
 ATF_TC_BODY(check_sdp_get_str, tc)
 {
 	uint8_t data[] = {
@@ -584,10 +584,10 @@ ATF_TC(check_sdp_get_url);
 
 ATF_TC_HEAD(check_sdp_get_url, tc)
 {
-  
+
 	atf_tc_set_md_var(tc, "descr", "Test sdp_get_url results");
 }
- 
+
 ATF_TC_BODY(check_sdp_get_url, tc)
 {
 	uint8_t data[] = {
