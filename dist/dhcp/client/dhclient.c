@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.18.12.1 2009/07/14 19:57:00 snj Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.18.12.2 2011/04/07 17:33:17 riz Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -78,6 +78,11 @@ int nowait=0;
 
 static void usage PROTO ((void));
 static void limit_interval PROTO((struct client_state *));
+
+static int check_domain_name(const char *ptr, size_t len, int dots);
+static int check_domain_name_list(const char *ptr, size_t len, int dots);
+static int check_option_values(struct universe *universe, unsigned int opt,
+			       const char *ptr, size_t len);
 
 void do_release(struct client_state *);
 
@@ -2476,12 +2481,23 @@ void client_option_envadd (struct option_cache *oc,
 			char name [256];
 			if (dhcp_option_ev_name (name, sizeof name,
 						 oc -> option)) {
-				client_envadd (es -> client, es -> prefix,
-					       name, "%s",
-					       (pretty_print_option
-						(oc -> option,
-						 data.data, data.len,
-						 0, 0)));
+				const char *value;
+				value = pretty_print_option(oc->option,
+							    data.data,
+							    data.len, 0, 0);
+				size_t length = strlen(value);
+
+				if (check_option_values(oc->option->universe,
+							oc->option->code,
+							value, length) == 0) {
+					client_envadd(es->client, es->prefix,
+						      name, "%s", value);
+				} else {
+					log_error("suspect value in %s "
+						  "option - discarded",
+						  name);
+				}
+
 				data_string_forget (&data, MDL);
 			}
 		}
@@ -2554,13 +2570,31 @@ void script_write_params (client, prefix, lease)
 		data_string_forget (&data, MDL);
 	}
 
-	if (lease -> filename)
-		client_envadd (client,
-			       prefix, "filename", "%s", lease -> filename);
-	if (lease -> server_name)
-		client_envadd (client, prefix, "server_name",
-			       "%s", lease -> server_name);
+	if (lease->filename) {
+		if (check_option_values(NULL, DHO_ROOT_PATH,
+					lease->filename,
+					strlen(lease->filename)) == 0) {
+			client_envadd(client, prefix, "filename",
+				      "%s", lease->filename);
+		} else {
+			log_error("suspect value in %s "
+				  "option - discarded",
+				  lease->filename);
+		}
+	}
 
+	if (lease->server_name) {
+		if (check_option_values(NULL, DHO_HOST_NAME,
+					lease->server_name,
+					strlen(lease->server_name)) == 0 ) {
+			client_envadd (client, prefix, "server_name",
+				       "%s", lease->server_name);
+		} else {
+			log_error("suspect value in %s "
+				  "option - discarded",
+				  lease->server_name);
+		}
+	}
 	for (i = 0; i < lease -> options -> universe_count; i++) {
 		option_space_foreach ((struct packet *)0, (struct lease *)0,
 				      client, (struct option_state *)0,
@@ -3185,3 +3219,115 @@ isc_result_t client_dns_update (struct client_state *client, int addp, int ttl)
 #endif
 	return rcode;
 }
+
+/*
+ * The following routines are used to check that certain
+ * strings are reasonable before we pass them to the scripts.
+ * This avoids some problems with scripts treating the strings
+ * as commands - see ticket 23722
+ * The domain checking code should be done as part of assembling
+ * the string but we are doing it here for now due to time
+ * constraints.
+ */
+
+static int check_domain_name(const char *ptr, size_t len, int dots)
+{
+	const char *p;
+
+	/* not empty or complete length not over 255 characters   */
+	if ((len == 0) || (len > 256))
+		return(-1);
+
+	/* consists of [[:alnum:]-]+ labels separated by [.]      */
+	/* a [_] is against RFC but seems to be "widely used"...  */
+	for (p=ptr; (*p != 0) && (len-- > 0); p++) {
+		if ((*p == '-') || (*p == '_')) {
+			/* not allowed at begin or end of a label */
+			if (((p - ptr) == 0) || (len == 0) || (p[1] == '.'))
+				return(-1);
+		} else if (*p == '.') {
+			/* each label has to be 1-63 characters;
+			   we allow [.] at the end ('foo.bar.')   */
+			size_t d = p - ptr;
+			if ((d <= 0) || (d >= 64))
+				return(-1);
+			ptr = p + 1; /* jump to the next label    */
+			if ((dots > 0) && (len > 0))
+				dots--;
+		} else if (isalnum((unsigned char)*p) == 0) {
+			/* also numbers at the begin are fine     */
+			return(-1);
+		}
+	}
+	return(dots ? -1 : 0);
+}
+
+static int check_domain_name_list(const char *ptr, size_t len, int dots)
+{
+	const char *p;
+	int ret = -1; /* at least one needed */
+
+	if ((ptr == NULL) || (len == 0))
+		return(-1);
+
+	for (p=ptr; (*p != 0) && (len > 0); p++, len--) {
+		if (*p != ' ')
+			continue;
+		if (p > ptr) {
+			if (check_domain_name(ptr, p - ptr, dots) != 0)
+				return(-1);
+			ret = 0;
+		}
+		ptr = p + 1;
+	}
+	if (p > ptr)
+		return(check_domain_name(ptr, p - ptr, dots));
+	else
+		return(ret);
+}
+
+static int check_option_values(struct universe *universe,
+			       unsigned int opt,
+			       const char *ptr,
+			       size_t len)
+{
+	if (ptr == NULL)
+		return(-1);
+
+	/* just reject options we want to protect, will be escaped anyway */
+	if ((universe == NULL) || (universe == &dhcp_universe)) {
+		switch(opt) {
+		      case DHO_HOST_NAME:
+		      case DHO_DOMAIN_NAME:
+		      case DHO_NIS_DOMAIN:
+		      case DHO_NETBIOS_SCOPE:
+			return check_domain_name(ptr, len, 0);
+			break;
+#ifdef DHO_DOMAIN_SEARCH
+		      case DHO_DOMAIN_SEARCH:
+			return check_domain_name_list(ptr, len, 0);
+			break;
+#endif
+		      case DHO_ROOT_PATH:
+			if (len == 0)
+				return(-1);
+			for (; (*ptr != 0) && (len-- > 0); ptr++) {
+				if(!(isalnum((unsigned char)*ptr) ||
+				     *ptr == '#'  || *ptr == '%' ||
+				     *ptr == '+'  || *ptr == '-' ||
+				     *ptr == '_'  || *ptr == ':' ||
+				     *ptr == '.'  || *ptr == ',' ||
+				     *ptr == '@'  || *ptr == '~' ||
+				     *ptr == '\\' || *ptr == '/' ||
+				     *ptr == '['  || *ptr == ']' ||
+				     *ptr == '='  || *ptr == ' '))
+					return(-1);
+			}
+			return(0);
+			break;
+		}
+	}
+
+	return(0);
+}
+
