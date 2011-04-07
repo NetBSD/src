@@ -1,11 +1,8 @@
-/* $NetBSD: t_subnormal.c,v 1.2 2011/01/04 22:30:41 pgoyette Exp $ */
+/* $NetBSD: t_subnormal.c,v 1.3 2011/04/07 18:14:09 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by 
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
