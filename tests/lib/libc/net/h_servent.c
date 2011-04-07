@@ -1,11 +1,8 @@
-/* $NetBSD: h_servent.c,v 1.1 2011/01/12 17:32:27 pgoyette Exp $ */
+/* $NetBSD: h_servent.c,v 1.2 2011/04/07 18:14:09 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by 
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

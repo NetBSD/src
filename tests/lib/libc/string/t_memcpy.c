@@ -1,11 +1,8 @@
-/* $NetBSD: t_memcpy.c,v 1.1 2010/12/26 13:35:54 pgoyette Exp $ */
+/* $NetBSD: t_memcpy.c,v 1.2 2011/04/07 18:14:09 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by 
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
