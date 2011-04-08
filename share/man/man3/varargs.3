@@ -1,4 +1,4 @@
-.\"	$NetBSD: varargs.3,v 1.7 2010/03/22 18:36:27 joerg Exp $
+.\"	$NetBSD: varargs.3,v 1.8 2011/04/08 08:47:54 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -184,6 +184,13 @@ void foo(fmt, va_alist)
 	va_end(ap);
 }
 .Ed
+.Sh COMPATIBILITY
+These macros are
+.Em not
+compatible with the new macros they were replaced by.
+In particular, it is not possible for a
+.Em stdarg
+function to have no fixed arguments.
 .Sh SEE ALSO
 .Xr stdarg 3
 .Sh STANDARDS
@@ -194,10 +201,3 @@ by the include file
 see
 .Xr stdarg 3
 for its description.
-.Sh COMPATIBILITY
-These macros are
-.Em not
-compatible with the new macros they were replaced by.
-In particular, it is not possible for a
-.Em stdarg
-function to have no fixed arguments.
