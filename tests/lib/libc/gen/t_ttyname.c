@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ttyname.c,v 1.1 2011/04/05 06:15:31 jruoho Exp $ */
+/*	$NetBSD: t_ttyname.c,v 1.2 2011/04/08 15:25:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ttyname.c,v 1.1 2011/04/05 06:15:31 jruoho Exp $");
+__RCSID("$NetBSD: t_ttyname.c,v 1.2 2011/04/08 15:25:00 jruoho Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -93,10 +93,10 @@ ATF_TC_HEAD(ttyname_stdin, tc)
 ATF_TC_BODY(ttyname_stdin, tc)
 {
 
-	ATF_REQUIRE(isatty(STDIN_FILENO) == 1);
-	ATF_REQUIRE(ttyname(STDIN_FILENO) != NULL);
+	if (isatty(STDIN_FILENO) != 0)
+		ATF_REQUIRE(ttyname(STDIN_FILENO) != NULL);
 
-	ATF_REQUIRE(close(STDIN_FILENO) == 0);
+	(void)close(STDIN_FILENO);
 
 	ATF_REQUIRE(isatty(STDIN_FILENO) != 1);
 	ATF_REQUIRE(ttyname(STDIN_FILENO) == NULL);
