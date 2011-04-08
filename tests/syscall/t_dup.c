@@ -1,4 +1,4 @@
-/* $NetBSD: t_dup.c,v 1.2 2011/04/03 16:22:15 jruoho Exp $ */
+/* $NetBSD: t_dup.c,v 1.3 2011/04/08 15:35:49 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,8 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dup.c,v 1.2 2011/04/03 16:22:15 jruoho Exp $");
+__RCSID("$NetBSD: t_dup.c,v 1.3 2011/04/08 15:35:49 jruoho Exp $");
 
+#include <sys/resource.h>
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -63,6 +64,7 @@ ATF_TC_HEAD(dup_max, tc)
 ATF_TC_BODY(dup_max, tc)
 {
 	int current, fd, *buf, serrno;
+	struct rlimit res;
 	long i, maxfd;
 
 	/*
@@ -71,9 +73,14 @@ ATF_TC_BODY(dup_max, tc)
 	 * reached. Ater that dup(2) should
 	 * fail with EMFILE.
 	 */
-	maxfd = sysconf(_SC_OPEN_MAX);
-	ATF_REQUIRE(maxfd >= 0);
+	(void)memset(&res, 0, sizeof(struct rlimit));
 
+	ATF_REQUIRE(getrlimit(RLIMIT_NOFILE, &res) == 0);
+
+	ATF_REQUIRE(res.rlim_cur > 0);
+	ATF_REQUIRE(res.rlim_max > 0);
+
+	maxfd = res.rlim_cur;
 	buf = calloc(maxfd, sizeof(int));
 
 	if (buf == NULL)
@@ -107,7 +114,7 @@ out:
 	free(buf);
 
 	if (fd != -1 || serrno != EMFILE)
-		atf_tc_fail("dup(2) dupped more than _SC_OPEN_MAX");
+		atf_tc_fail("dup(2) dupped more than RLIMIT_NOFILE");
 }
 
 ATF_TC_CLEANUP(dup_max, tc)
