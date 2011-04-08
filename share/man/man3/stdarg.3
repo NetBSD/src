@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdarg.3,v 1.19 2010/03/22 18:36:27 joerg Exp $
+.\"	$NetBSD: stdarg.3,v 1.20 2011/04/08 08:47:54 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -219,6 +219,13 @@ foo(char *fmt, ...)
 	va_end(ap);
 }
 .Ed
+.Sh COMPATIBILITY
+These macros are
+.Em not
+compatible with the historic macros they replace.
+A backward compatible version can be found in the include
+file
+.In varargs.h .
 .Sh STANDARDS
 The
 .Fn va_start ,
@@ -240,13 +247,6 @@ The
 .Fn va_copy
 macro was introduced in
 .St -isoC-99 .
-.Sh COMPATIBILITY
-These macros are
-.Em not
-compatible with the historic macros they replace.
-A backward compatible version can be found in the include
-file
-.In varargs.h .
 .Sh BUGS
 Unlike the
 .Em varargs
