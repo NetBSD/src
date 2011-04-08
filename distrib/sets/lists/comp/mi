@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1611 2011/04/08 08:03:25 jruoho Exp $
+#	$NetBSD: mi,v 1.1612 2011/04/08 08:36:33 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5367,6 +5367,7 @@
 ./usr/share/man/cat3/bit_nset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bit_set.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bit_test.0			comp-c-catman		.cat
+./usr/share/man/cat3/bitops.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bits.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bitstr_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bitstring.0		comp-c-catman		.cat
@@ -11508,6 +11509,7 @@
 ./usr/share/man/html3/bit_nset.html		comp-c-htmlman		html
 ./usr/share/man/html3/bit_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/bit_test.html		comp-c-htmlman		html
+./usr/share/man/html3/bitops.html		comp-c-htmlman		html
 ./usr/share/man/html3/bits.html			comp-c-htmlman		html
 ./usr/share/man/html3/bitstr_size.html		comp-c-htmlman		html
 ./usr/share/man/html3/bitstring.html		comp-c-htmlman		html
@@ -17449,6 +17451,7 @@
 ./usr/share/man/man3/bit_nset.3			comp-c-man		.man
 ./usr/share/man/man3/bit_set.3			comp-c-man		.man
 ./usr/share/man/man3/bit_test.3			comp-c-man		.man
+./usr/share/man/man3/bitops.3			comp-c-man		.man
 ./usr/share/man/man3/bits.3			comp-c-man		.man
 ./usr/share/man/man3/bitstr_size.3		comp-c-man		.man
 ./usr/share/man/man3/bitstring.3		comp-c-man		.man
