@@ -1,4 +1,4 @@
-.\" $NetBSD: bitops.3,v 1.1 2011/04/08 08:36:34 jruoho Exp $
+.\" $NetBSD: bitops.3,v 1.2 2011/04/08 08:42:56 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -46,12 +46,13 @@ functions to find the first and last bit in integers of type
 and
 .Vt uint64_t
 .It Xr ilog2 3
-a function for binary logarithm
+a macro for binary logarithm
 .It Xr fast_divide32 3
 a function for fast 32-bit division
 .El
 .Sh SEE ALSO
 .Xr bits 3 ,
+.Xr bitstring 3 ,
 .Xr cdefs 3 ,
 .Xr param 3
 .Sh HISTORY
