@@ -1,4 +1,4 @@
-.\"	$NetBSD: fast_divide32.3,v 1.6 2010/04/15 03:36:18 jruoho Exp $
+.\"	$NetBSD: fast_divide32.3,v 1.7 2011/04/08 08:40:05 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 14, 2010
+.Dd April 8, 2011
 .Dt FAST_DIVIDE32 3
 .Os
 .Sh NAME
@@ -92,6 +92,7 @@ q = fast_divide32(a, b, m, s1, s2);
 r = fast_remainder32(a, b, m, s1, s2);
 .Ed
 .Sh SEE ALSO
+.Xr bitops 3
 .Rs
 .%A Torbj\(:orn Granlund
 .%A Peter L. Montgomery
