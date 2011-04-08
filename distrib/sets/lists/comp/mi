@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1610 2011/04/08 07:47:42 jruoho Exp $
+#	$NetBSD: mi,v 1.1611 2011/04/08 08:03:25 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4666,6 +4666,7 @@
 ./usr/share/man/cat3/LIST_INSERT_HEAD.0		comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_NEXT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_REMOVE.0		comp-c-catman		.cat
+./usr/share/man/cat3/MAX.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD2Data.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD2End.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD2File.0			comp-c-catman		.cat
@@ -4687,6 +4688,7 @@
 ./usr/share/man/cat3/MD5Init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/MD5Update.0		comp-c-catman		.cat
 ./usr/share/man/cat3/MD5_Init.0			comp-obsolete		obsolete
+./usr/share/man/cat3/MIN.0			comp-c-catman		.cat
 ./usr/share/man/cat3/OBJ_nid2obj.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_Applink.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_VERSION_NUMBER.0	comp-c-catman		crypto,.cat
@@ -10807,6 +10809,7 @@
 ./usr/share/man/html3/LIST_INSERT_HEAD.html	comp-c-htmlman		html
 ./usr/share/man/html3/LIST_NEXT.html		comp-c-htmlman		html
 ./usr/share/man/html3/LIST_REMOVE.html		comp-c-htmlman		html
+./usr/share/man/html3/MAX.html			comp-c-htmlman		html
 ./usr/share/man/html3/MD2Data.html		comp-c-htmlman		html
 ./usr/share/man/html3/MD2End.html		comp-c-htmlman		html
 ./usr/share/man/html3/MD2File.html		comp-c-htmlman		html
@@ -10827,6 +10830,7 @@
 ./usr/share/man/html3/MD5Final.html		comp-c-htmlman		html
 ./usr/share/man/html3/MD5Init.html		comp-c-htmlman		html
 ./usr/share/man/html3/MD5Update.html		comp-c-htmlman		html
+./usr/share/man/html3/MIN.html			comp-c-htmlman		html
 ./usr/share/man/html3/OBJ_nid2obj.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/OPENSSL_Applink.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/OPENSSL_VERSION_NUMBER.html	comp-c-htmlman		crypto,html
@@ -16744,6 +16748,7 @@
 ./usr/share/man/man3/LIST_INSERT_HEAD.3		comp-c-man		.man
 ./usr/share/man/man3/LIST_NEXT.3		comp-c-man		.man
 ./usr/share/man/man3/LIST_REMOVE.3		comp-c-man		.man
+./usr/share/man/man3/MAX.3			comp-c-man		.man
 ./usr/share/man/man3/MD2Data.3			comp-c-man		.man
 ./usr/share/man/man3/MD2End.3			comp-c-man		.man
 ./usr/share/man/man3/MD2File.3			comp-c-man		.man
@@ -16765,6 +16770,7 @@
 ./usr/share/man/man3/MD5Init.3			comp-c-man		.man
 ./usr/share/man/man3/MD5Update.3		comp-c-man		.man
 ./usr/share/man/man3/MD5_Init.3			comp-obsolete		obsolete
+./usr/share/man/man3/MIN.3			comp-c-man		.man
 ./usr/share/man/man3/OBJ_nid2obj.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/OPENSSL_Applink.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/OPENSSL_VERSION_NUMBER.3	comp-c-man		crypto,.man
