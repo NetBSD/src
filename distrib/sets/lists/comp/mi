@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1609 2011/04/06 05:40:18 jruoho Exp $
+#	$NetBSD: mi,v 1.1610 2011/04/08 07:47:42 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7594,6 +7594,7 @@
 ./usr/share/man/cat3/pam_verror.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_vinfo.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_vprompt.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/param.0			comp-c-catman		.cat
 ./usr/share/man/cat3/parsedate.0		comp-c-catman		.cat
 ./usr/share/man/cat3/paths.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pause.0			comp-c-catman		.cat
@@ -13636,6 +13637,7 @@
 ./usr/share/man/html3/pam_verror.html		comp-c-htmlman		html,pam
 ./usr/share/man/html3/pam_vinfo.html		comp-c-htmlman		html,pam
 ./usr/share/man/html3/pam_vprompt.html		comp-c-htmlman		html,pam
+./usr/share/man/html3/param.html		comp-c-htmlman		html
 ./usr/share/man/html3/parsedate.html		comp-c-htmlman		html
 ./usr/share/man/html3/paths.html		comp-c-htmlman		html
 ./usr/share/man/html3/pause.html		comp-c-htmlman		html
@@ -19670,6 +19672,7 @@
 ./usr/share/man/man3/pam_verror.3		comp-c-man		.man,pam
 ./usr/share/man/man3/pam_vinfo.3		comp-c-man		.man,pam
 ./usr/share/man/man3/pam_vprompt.3		comp-c-man		.man,pam
+./usr/share/man/man3/param.3			comp-c-man		.man
 ./usr/share/man/man3/parsedate.3		comp-c-man		.man
 ./usr/share/man/man3/paths.3			comp-c-man		.man
 ./usr/share/man/man3/pause.3			comp-c-man		.man
