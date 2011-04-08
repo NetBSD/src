@@ -1,11 +1,11 @@
 /// notes about altboot ///
 
-$NetBSD: README.altboot,v 1.2 2011/03/13 15:23:43 phx Exp $
+$NetBSD: README.altboot,v 1.3 2011/04/08 08:29:07 phx Exp $
 
 Altboot is a functional bridge to fill the gap between a NAS product
 custom bootloader and the NetBSD kernel startup environment.  Altboot
 irons out and rectifies erroneously configured HW by product
-bootloaders and prepares a sane runtime better suited for booting
+bootloaders and prepares a sane runtime, better suited for booting
 NetBSD kernels.
 
 - provides the foundation of a fast NetBSD porting cycle with functionalities
@@ -17,8 +17,10 @@ NetBSD kernels.
   targets to make it possible having common NetBSD kernels for them.
 - builds and hands a bootinfo list to the NetBSD kernel.
 
-Altboot is known working on at least three models.
-- KuroBox with a popular U-Boot as the replacement of vendor proprietary
+Altboot is known working on at least these models:
+
+- KuroBox or LinkStation with a popular U-Boot as the replacement of
+  vendor proprietary
 
    U-Boot 1.1.4 LiSt 2.1.0 (Sep 21 2006 - 00:22:56) LinkStation / KuroBox
 
@@ -30,13 +32,21 @@ Altboot is known working on at least three models.
 
    U-Boot 0.2.0 (May 26 2005 - 19:38:32)
 
+- QNAP TS-101 (V200) with vendor custom U-Boot
+
+   U-Boot 1.1.2 (Aug 28 2005 - 13:37:25) QNAP System, Inc.
+
 The standard use of altboot is to invoke it with a short script from
-U-Boot/PPCboot, where the altboot image is stored in an unoccupied 128KB
+U-Boot/PPCboot, where the altboot.bin image is stored in an unoccupied 128KB
 section of the target's HW NOR flash.  Combined with standard
 U-Boot/PPCboot functions, it is possible to boot a NetBSD kernel off
 it right after power-on, without the help of manual intervention.  Note
 that the original U-Boot/PPCboot still remains useful and altboot works
 as a functional extension for them.
+
+In case the firmware was crippled by the vendor so that it only boots
+Linux U-Boot images (D-Link), you can still use altboot by uploading
+altboot.img instead of the Linux kernel.
 
 Altboot hands the following bootinfo records to the NetBSD/sandpoint
 kernel.
