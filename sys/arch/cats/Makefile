@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/04/04 19:44:37 dyoung Exp $
+#	$NetBSD: Makefile,v 1.5 2011/04/08 14:58:46 dyoung Exp $
 
 # Makefile for cats tags file and boot blocks
 
@@ -10,7 +10,7 @@ SCATS=	${SYSDIR}/arch/cats/cats/*.[ch] ${SYSDIR}/arch/cats/include/*.h \
 	${SYSDIR}/arch/cats/pci/*.[ch]
 
 # Directories in which to place tags links
-DCATS=	isa include
+DCATS=	include
 
 .include "../../kern/Make.tags.inc"
 
