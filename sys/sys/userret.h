@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.22 2011/02/25 22:37:12 yamt Exp $	*/
+/*	$NetBSD: userret.h,v 1.23 2011/04/08 10:36:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -94,6 +94,13 @@ mi_userret(struct lwp *l)
 	if (__predict_false(((l->l_flag & LW_USERRET) | p->p_timerpend) != 0))
 		lwp_userret(l);
 	l->l_kpriority = false;
+	/*
+	 * cpu_set_curpri(prio) is a MD optimized version of:
+	 *
+	 *	kpreempt_disable();
+	 *	curcpu()->ci_schedstate.spc_curpriority = prio;
+	 *	kpreempt_enable();
+	 */
 	cpu_set_curpri(l->l_priority);	/* XXX this needs to die */
 #else
 	ci = l->l_cpu;
