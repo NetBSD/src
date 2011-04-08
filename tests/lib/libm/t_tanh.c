@@ -1,4 +1,4 @@
-/* $NetBSD: t_tanh.c,v 1.1 2011/04/06 09:35:49 jruoho Exp $ */
+/* $NetBSD: t_tanh.c,v 1.2 2011/04/08 06:37:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_tanh.c,v 1.1 2011/04/06 09:35:49 jruoho Exp $");
+__RCSID("$NetBSD: t_tanh.c,v 1.2 2011/04/08 06:37:50 jruoho Exp $");
 
 #include <math.h>
 
@@ -46,6 +46,10 @@ ATF_TC_BODY(tanh_sign, tc)
 	double d;
 	float f;
 
+	d = 0.0;
+	f = 0.0;
+
+#ifndef __vax__
 	/*
 	 * PR lib/44057.
 	 */
@@ -54,6 +58,7 @@ ATF_TC_BODY(tanh_sign, tc)
 
 	ATF_REQUIRE(signbit(d) != 0);
 	ATF_REQUIRE(signbit(f) != 0);
+#endif
 }
 
 ATF_TP_ADD_TCS(tp)
