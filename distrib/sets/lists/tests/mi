@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.299 2011/04/07 17:38:02 jruoho Exp $
+# $NetBSD: mi,v 1.300 2011/04/08 06:49:20 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -459,7 +459,8 @@
 ./usr/libdata/debug/usr/tests/lib/libm					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libm/t_ceil.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_floor.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libm/t_libm.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libm/t_libm.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libm/t_round.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_tanh.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libobjc				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libobjc/t_threads.debug		tests-lib-debug		debug,atf
@@ -1942,7 +1943,8 @@
 ./usr/tests/lib/libm/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_ceil			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_floor			tests-lib-tests		atf
-./usr/tests/lib/libm/t_libm			tests-lib-tests		atf
+./usr/tests/lib/libm/t_libm			tests-obsolete		obsolete
+./usr/tests/lib/libm/t_round			tests-lib-tests		atf
 ./usr/tests/lib/libm/t_tanh			tests-lib-tests		atf
 ./usr/tests/lib/libobjc				tests-lib-tests		atf
 ./usr/tests/lib/libobjc/Atffile			tests-lib-tests		atf
