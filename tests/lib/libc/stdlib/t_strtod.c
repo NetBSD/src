@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.3 2011/04/06 07:25:34 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.4 2011/04/08 06:37:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.3 2011/04/06 07:25:34 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.4 2011/04/08 06:37:51 jruoho Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -106,6 +106,12 @@ ATF_TC_BODY(strtod_inf, tc)
 	double d;
 	float f;
 
+	d = 0.0;
+	f = 0.0;
+	ld = 0.0;
+
+#ifndef __vax__
+
 	atf_tc_expect_fail("PR lib/33262");
 
 	d = strtod("INF", NULL);
@@ -116,6 +122,7 @@ ATF_TC_BODY(strtod_inf, tc)
 
 	ld = strtold("INF", NULL);
 	ATF_REQUIRE(isinf(ld) != 0);
+#endif
 }
 
 ATF_TC(strtod_underflow);
