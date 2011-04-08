@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.66 2010/04/05 07:22:24 joerg Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.67 2011/04/08 13:56:51 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.66 2010/04/05 07:22:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.67 2011/04/08 13:56:51 sborrill Exp $");
 
 #include "opt_inet.h"
 
@@ -316,7 +316,8 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 		 * assisted checksumming flags and tcp segmentation
 		 * offload.
 		 */
-		if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING)
+		if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING) {
+		        ec->ec_capenable |= ETHERCAP_VLAN_HWTAGGING;
 			ifp->if_capabilities = p->if_capabilities &
 			    (IFCAP_TSOv4 | IFCAP_TSOv6 |
 			     IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx|
@@ -324,7 +325,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 			     IFCAP_CSUM_UDPv4_Tx|IFCAP_CSUM_UDPv4_Rx|
 			     IFCAP_CSUM_TCPv6_Tx|IFCAP_CSUM_TCPv6_Rx|
 			     IFCAP_CSUM_UDPv6_Tx|IFCAP_CSUM_UDPv6_Rx);
-
+                }
 		/*
 		 * We inherit the parent's Ethernet address.
 		 */
