@@ -1,4 +1,4 @@
-/*	$NetBSD: t_timer.c,v 1.1 2010/05/19 19:17:08 jruoho Exp $ */
+/*	$NetBSD: t_timer.c,v 1.2 2011/04/08 11:11:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -96,15 +96,16 @@ fail:
 	atf_tc_fail("timer_create() successful with bogus values");
 }
 
-ATF_TC(timer_create_signal);
-ATF_TC_HEAD(timer_create_signal, tc)
+ATF_TC(timer_create_signal_realtime);
+ATF_TC_HEAD(timer_create_signal_realtime, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr",
-	    "Checks timer_create(2) and sigevent(3), SIGEV_SIGNAL");
+	    "Checks timer_create(2) with CLOCK_REALTIME and sigevent(3), "
+	    "SIGEV_SIGNAL");
 }
 
-ATF_TC_BODY(timer_create_signal, tc)
+ATF_TC_BODY(timer_create_signal_realtime, tc)
 {
 	int i, signals[6] = {
 		SIGALRM, SIGIO, SIGPROF, SIGUSR1, SIGUSR2, -1
@@ -112,6 +113,25 @@ ATF_TC_BODY(timer_create_signal, tc)
 
 	for (i = 0; signals[i] > 0; i++)
 		timer_signal_create(CLOCK_REALTIME, signals[i]);
+}
+
+ATF_TC(timer_create_signal_monotonic);
+ATF_TC_HEAD(timer_create_signal_monotonic, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks timer_create(2) with CLOCK_MONOTONIC and sigevent(3), "
+	    "SIGEV_SIGNAL");
+}
+
+ATF_TC_BODY(timer_create_signal_monotonic, tc)
+{
+	int i, signals[6] = {
+		SIGALRM, SIGIO, SIGPROF, SIGUSR1, SIGUSR2, -1
+	};
+
+	for (i = 0; signals[i] > 0; i++)
+		timer_signal_create(CLOCK_MONOTONIC, signals[i]);
 }
 
 static void
@@ -317,7 +337,8 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, timer_create_bogus);
-	ATF_TP_ADD_TC(tp, timer_create_signal);
+	ATF_TP_ADD_TC(tp, timer_create_signal_realtime);
+	ATF_TP_ADD_TC(tp, timer_create_signal_monotonic);
      /*	ATF_TP_ADD_TC(tp, timer_create_thread); */
 
 	return atf_no_error();
