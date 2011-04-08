@@ -1,4 +1,4 @@
-/* $NetBSD: t_getrusage.c,v 1.5 2011/04/07 17:33:11 jruoho Exp $ */
+/* $NetBSD: t_getrusage.c,v 1.6 2011/04/08 10:36:09 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrusage.c,v 1.5 2011/04/07 17:33:11 jruoho Exp $");
+__RCSID("$NetBSD: t_getrusage.c,v 1.6 2011/04/08 10:36:09 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -158,10 +158,12 @@ ATF_TC_BODY(getrusage_utime_zero, tc)
 	/*
 	 * Test that getrusage(2) does not return
 	 * zero user time for the calling process.
+	 *
+	 * See also (duplicate) PR port-amd64/41734.
 	 */
-	for (i = 0; i < maxiter; i++) {
+	atf_tc_expect_fail("PR kern/30115");
 
-		atf_tc_expect_fail("PR port-amd64/41734");
+	for (i = 0; i < maxiter; i++) {
 
 		work();
 
