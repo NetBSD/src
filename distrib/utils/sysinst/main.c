@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.58 2011/04/04 08:30:12 mbalmer Exp $	*/
+/*	$NetBSD: main.c,v 1.59 2011/04/08 15:53:44 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 	if (!getenv("TERM")) {
 		(void)fprintf(stderr,
 			 "sysinst: environment variable TERM not set.\n");
-		exit(1);
+		exit(4);
 	}
 
 	/* argv processing */
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 	/* initialize message window */
 	if (menu_init()) {
 		__menu_initerror();
-		exit(1);
+		exit(4);
 	}
 
 	/*

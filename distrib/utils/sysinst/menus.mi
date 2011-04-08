@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.40 2011/02/01 01:42:07 joerg Exp $	*/
+/*	$NetBSD: menus.mi,v 1.41 2011/04/08 15:53:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,11 @@ default y=12, no exit, scrollable;
 
 allow dynamic menus;
 allow dynamic messages;
-
+error action {
+	fprintf (stderr, "Could not initialize menu system, please check "
+	    "your terminal type.\n");
+	exit(4);
+};
 
 menu selfskind, title MSG_Select_the_type, exitstring MSG_unchanged, y=6, x=30;
 	display action {
