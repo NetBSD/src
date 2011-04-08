@@ -1,4 +1,4 @@
-.\"	$NetBSD: types.3,v 1.4 2010/04/22 08:42:34 jruoho Exp $
+.\"	$NetBSD: types.3,v 1.5 2011/04/08 07:55:04 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\"
 .\"     @(#)types.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd March 22, 2010
+.Dd April 8, 2011
 .Dt TYPES 3
 .Os
 .Sh NAME
@@ -75,7 +75,8 @@ A companion header
 typically used in the kernel,
 includes
 .In sys/types.h
-and provides additional types as well as other facilities.
+and provides additional types as well as other facilities (see
+.Xr param 3 ) .
 .Ss Standard Types
 The following standards-compliant system data types are defined:
 .Pp
@@ -197,11 +198,12 @@ described in
 .Xr stdint 3
 are preferred to the older fixed size integer types prefixed with an
 .Dq u_
-(in another words,
+(in other words,
 .Va uint32_t
 should be used instead of
 .Va u_int32_t ) .
 .Sh SEE ALSO
+.Xr param 3 ,
 .Xr stdbool 3 ,
 .Xr stddef 3 ,
 .Xr stdint 3 ,
