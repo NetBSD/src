@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.192 2011/04/08 15:49:37 sborrill Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.193 2011/04/08 17:45:10 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.192 2011/04/08 15:49:37 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.193 2011/04/08 17:45:10 sborrill Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -221,7 +221,6 @@ static int bge_read_nvram(struct bge_softc *, uint8_t *, int, int);
 static uint8_t bge_eeprom_getbyte(struct bge_softc *, int, uint8_t *);
 static int bge_read_eeprom(struct bge_softc *, void *, int, int);
 static void bge_setmulti(struct bge_softc *);
-static void bge_setvlan(struct bge_softc *);
 
 static void bge_handle_events(struct bge_softc *);
 static int bge_alloc_jumbo_mem(struct bge_softc *);
@@ -1646,18 +1645,6 @@ bge_setmulti(struct bge_softc *sc)
  setit:
 	for (i = 0; i < 4; i++)
 		CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), hashes[i]);
-}
-
-static void
-bge_setvlan(struct bge_softc *sc)
-{
-	struct ethercom *ac = &sc->ethercom;
-
-	/* Enable or disable VLAN tag stripping as needed. */
-	if (ac->ec_capenable & ETHERCAP_VLAN_HWTAGGING)
-		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_KEEP_VLAN_DIAG);
-	else
-		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_KEEP_VLAN_DIAG);
 }
 
 static void
@@ -4330,9 +4317,6 @@ bge_init(struct ifnet *ifp)
 
 	/* Program multicast filter. */
 	bge_setmulti(sc);
-
-	/* Program VLAN tag stripping */
-	bge_setvlan(sc);
 
 	/* Init RX ring. */
 	bge_init_rx_ring_std(sc);
