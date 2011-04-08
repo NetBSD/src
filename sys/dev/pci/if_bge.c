@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.191 2011/04/08 13:56:51 sborrill Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.192 2011/04/08 15:49:37 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.191 2011/04/08 13:56:51 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.192 2011/04/08 15:49:37 sborrill Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -1657,7 +1657,7 @@ bge_setvlan(struct bge_softc *sc)
 	if (ac->ec_capenable & ETHERCAP_VLAN_HWTAGGING)
 		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_KEEP_VLAN_DIAG);
 	else
-		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_KEEP_VLAN_DIAG);
+		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_KEEP_VLAN_DIAG);
 }
 
 static void
