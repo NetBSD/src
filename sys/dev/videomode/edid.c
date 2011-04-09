@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.8 2011/03/30 18:50:37 jdc Exp $ */
+/* $NetBSD: edid.c,v 1.9 2011/04/09 18:18:28 jdc Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.8 2011/03/30 18:50:37 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.9 2011/04/09 18:18:28 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,6 +300,26 @@ edid_mode_lookup_list(const char *name)
 	return NULL;
 }
 
+static struct videomode *
+edid_search_mode(struct edid_info *edid, const struct videomode *mode)
+{
+	int	refresh, i;
+
+	refresh = DIVIDE(DIVIDE(mode->dot_clock * 1000,
+	    mode->htotal), mode->vtotal);
+	for (i = 0; i < edid->edid_nmodes; i++) {
+		if (mode->hdisplay == edid->edid_modes[i].hdisplay &&
+		    mode->vdisplay == edid->edid_modes[i].vdisplay &&
+		    refresh == DIVIDE(DIVIDE(
+		    edid->edid_modes[i].dot_clock * 1000,
+		    edid->edid_modes[i].htotal),
+		    edid->edid_modes[i].vtotal)) {
+			return &(edid->edid_modes[i]);
+		}
+	}
+	return NULL;
+}
+
 static int
 edid_std_timing(uint8_t *data, struct videomode *vmp)
 {
@@ -373,7 +393,7 @@ edid_det_timing(uint8_t *data, struct videomode *vmp)
 	vsyncwid = EDID_DET_TIMING_VSYNC_WIDTH(data);
 	vsyncoff = EDID_DET_TIMING_VSYNC_OFFSET(data);
 	
-	/* XXX: I'm not doing anything with the borders, should I? */
+	/* Borders are contained within the blank areas. */
 
 	vmp->hdisplay = hactive;
 	vmp->htotal = hactive + hblank;
@@ -406,16 +426,27 @@ static void
 edid_block(struct edid_info *edid, uint8_t *data)
 {
 	int			i;
-	struct videomode	mode;
+	struct videomode	mode, *exist_mode;
 
 	if (EDID_BLOCK_IS_DET_TIMING(data)) {
 		if (edid_det_timing(data, &mode)) {
-			edid->edid_modes[edid->edid_nmodes] = mode;
-			if (edid->edid_preferred_mode == NULL) {
-				edid->edid_preferred_mode =
-				    &edid->edid_modes[edid->edid_nmodes];
+			/* Does this mode already exist? */
+			exist_mode = edid_search_mode(edid, &mode);
+			if (exist_mode != NULL) {
+				memcpy(exist_mode, &mode,
+				    sizeof(struct videomode));
+				if (edid->edid_preferred_mode == NULL) {
+					edid->edid_preferred_mode =
+					    exist_mode;
+				}
+			} else {
+				edid->edid_modes[edid->edid_nmodes] = mode;
+				if (edid->edid_preferred_mode == NULL) {
+					edid->edid_preferred_mode =
+					    &edid->edid_modes[edid->edid_nmodes];
+				}
+				edid->edid_nmodes++;	
 			}
-			edid->edid_nmodes++;	
 		}
 		return;
 	}
@@ -473,8 +504,13 @@ edid_block(struct edid_info *edid, uint8_t *data)
 		data += EDID_DESC_STD_TIMING_START;
 		for (i = 0; i < EDID_DESC_STD_TIMING_COUNT; i++) {
 			if (edid_std_timing(data, &mode)) {
-				edid->edid_modes[edid->edid_nmodes] = mode;
-				edid->edid_nmodes++;
+				/* Does this mode already exist? */
+				exist_mode = edid_search_mode(edid, &mode);
+				if (exist_mode == NULL) {
+					edid->edid_modes[edid->edid_nmodes] =
+					    mode;
+					edid->edid_nmodes++;
+				}
 			}
 			data += 2;
 		}
@@ -574,11 +610,15 @@ edid_parse(uint8_t *data, struct edid_info *edid)
 
 	/* do standard timing section */
 	for (i = 0; i < EDID_STD_TIMING_COUNT; i++) {
-		struct videomode	mode;
+		struct videomode	mode, *exist_mode;
 		if (edid_std_timing(data + EDID_OFFSET_STD_TIMING + i * 2,
 			&mode)) {
-			edid->edid_modes[edid->edid_nmodes] = mode;
-			edid->edid_nmodes++;
+			/* Does this mode already exist? */
+			exist_mode = edid_search_mode(edid, &mode);
+			if (exist_mode == NULL) {
+				edid->edid_modes[edid->edid_nmodes] = mode;
+				edid->edid_nmodes++;
+			}
 		}
 	}
 
