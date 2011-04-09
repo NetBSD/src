@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.124 2010/11/16 23:58:11 dyoung Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.125 2011/04/09 06:34:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.124 2010/11/16 23:58:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.125 2011/04/09 06:34:06 martin Exp $");
 
 #include "opt_ptm.h"
 
@@ -523,7 +523,11 @@ ptsstop(struct tty *tp, int flush)
 void
 ptcwakeup(struct tty *tp, int flag)
 {
-	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+	struct pt_softc *pti = NULL;
+
+	if (tp->t_dev == NODEV) return;
+
+	pti = pt_softc[minor(tp->t_dev)];
 
 	mutex_spin_enter(&tty_lock);
 	if (flag & FREAD) {
