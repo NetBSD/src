@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.106 2009/12/30 22:12:12 elad Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.107 2011/04/09 23:03:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.106 2009/12/30 22:12:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.107 2011/04/09 23:03:59 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -285,8 +285,8 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
 	so->so_rcv.sb_timeo = head->so_rcv.sb_timeo;
 	so->so_snd.sb_timeo = head->so_snd.sb_timeo;
-	so->so_rcv.sb_flags |= head->so_rcv.sb_flags & SB_AUTOSIZE;
-	so->so_snd.sb_flags |= head->so_snd.sb_flags & SB_AUTOSIZE;
+	so->so_rcv.sb_flags |= head->so_rcv.sb_flags & (SB_AUTOSIZE | SB_ASYNC);
+	so->so_snd.sb_flags |= head->so_snd.sb_flags & (SB_AUTOSIZE | SB_ASYNC);
 	soqinsque(head, so, soqueue);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_ATTACH, NULL, NULL,
 	    NULL, NULL);
