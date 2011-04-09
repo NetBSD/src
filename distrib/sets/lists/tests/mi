@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.300 2011/04/08 06:49:20 jruoho Exp $
+# $NetBSD: mi,v 1.301 2011/04/09 17:45:25 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -370,6 +370,12 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_nan_inf.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_round.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_subnormal.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype1			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype2			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbtowc			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcstod			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctomb			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/inet				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/inet/t_inet_network.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net				tests-lib-debug
@@ -1787,6 +1793,13 @@
 ./usr/tests/lib/libc/ieeefp/t_nan_inf		tests-lib-tests		atf
 ./usr/tests/lib/libc/ieeefp/t_round		tests-lib-tests		atf
 ./usr/tests/lib/libc/ieeefp/t_subnormal		tests-lib-tests		atf
+./usr/tests/lib/libc/locale			tests-lib-tests
+./usr/tests/lib/libc/locale/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/locale/t_ctype1		tests-lib-tests		atf
+./usr/tests/lib/libc/locale/t_ctype2		tests-lib-tests		atf
+./usr/tests/lib/libc/locale/t_mbtowc		tests-lib-tests		atf
+./usr/tests/lib/libc/locale/t_wcstod		tests-lib-tests		atf
+./usr/tests/lib/libc/locale/t_wctomb		tests-lib-tests		atf
 ./usr/tests/lib/libc/inet			tests-lib-tests
 ./usr/tests/lib/libc/inet/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/inet/t_inet_network	tests-lib-tests		atf
