@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.10 2011/04/09 20:53:39 christos Exp $ */
+/* $NetBSD: edid.c,v 1.11 2011/04/09 22:09:05 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.10 2011/04/09 20:53:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.11 2011/04/09 22:09:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ edid_findproduct(const char *vendor, uint16_t product)
 	for (n = 0; n < edid_nproducts; n++)
 		if (edid_products[n].product == product &&
 		    memcmp(edid_products[n].vendor, vendor, 3) == 0)
-			return (edid_products[n].name;
+			return edid_products[n].name;
 #endif	/* EDIDVERBOSE */
 	return NULL;
 
@@ -425,7 +425,7 @@ edid_block(struct edid_info *edid, uint8_t *data)
 	struct videomode	mode, *exist_mode;
 
 	if (EDID_BLOCK_IS_DET_TIMING(data)) {
-		if (!edid_det_timing(data, &mode)) {
+		if (!edid_det_timing(data, &mode))
 			return;
 		/* Does this mode already exist? */
 		exist_mode = edid_search_mode(edid, &mode);
