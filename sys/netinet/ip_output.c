@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.205 2009/07/17 22:02:54 minskim Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.206 2011/04/09 20:34:36 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.205 2009/07/17 22:02:54 minskim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.206 2011/04/09 20:34:36 martin Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1026,13 +1026,18 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	ip->ip_len = htons((u_int16_t)m->m_pkthdr.len);
 	ip->ip_off |= htons(IP_MF);
 	ip->ip_sum = 0;
-	if (sw_csum & M_CSUM_IPv4) {
-		ip->ip_sum = in_cksum(m, hlen);
-		m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
-	} else {
-		KASSERT(m->m_pkthdr.csum_flags & M_CSUM_IPv4);
-		KASSERT(M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data) >=
-			sizeof(struct ip));
+	/*
+	 * We do not do checksums on loopback interfaces
+	 */
+	if (__predict_true(ifp == NULL || !(ifp->if_flags & IFF_LOOPBACK)))  {
+		if (sw_csum & M_CSUM_IPv4) {
+			ip->ip_sum = in_cksum(m, hlen);
+			m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
+		} else {
+			KASSERT(m->m_pkthdr.csum_flags & M_CSUM_IPv4);
+			KASSERT(M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data) >=
+				sizeof(struct ip));
+		}
 	}
 sendorfree:
 	/*
