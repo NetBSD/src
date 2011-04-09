@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.242 2011/02/02 03:00:44 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.243 2011/04/09 06:34:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.242 2011/02/02 03:00:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.243 2011/04/09 06:34:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2695,6 +2695,7 @@ ttymalloc(void)
 	cv_init(&tp->t_outcvf, "ttyoutf");
 	/* Set default line discipline. */
 	tp->t_linesw = ttyldisc_default();
+	tp->t_dev = NODEV;
 	selinit(&tp->t_rsel);
 	selinit(&tp->t_wsel);
 	for (i = 0; i < TTYSIG_COUNT; i++) 
