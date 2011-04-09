@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1307 2011/04/05 11:24:46 phx Exp $
+# $NetBSD: mi,v 1.1308 2011/04/09 19:37:13 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1541,6 +1541,7 @@
 ./usr/share/man/cat4/sparc/xy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sparc/zx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/envctrl.0		man-sys-catman		.cat
+./usr/share/man/cat4/sparc64/ffb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/fdc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/lom.0		man-sys-catman		.cat
@@ -4252,6 +4253,7 @@
 ./usr/share/man/html4/sparc/xy.html		man-sys-htmlman		html
 ./usr/share/man/html4/sparc/zx.html		man-sys-htmlman		html
 ./usr/share/man/html4/sparc64/envctrl.html	man-sys-htmlman		html
+./usr/share/man/html4/sparc64/ffb.html		man-sys-htmlman		html
 ./usr/share/man/html4/sparc64/fdc.html		man-sys-htmlman		html
 ./usr/share/man/html4/sparc64/intro.html	man-sys-htmlman		html
 ./usr/share/man/html4/sparc64/lom.html		man-sys-htmlman		html
@@ -6876,6 +6878,7 @@
 ./usr/share/man/man4/sparc/xy.4			man-sys-man		.man
 ./usr/share/man/man4/sparc/zx.4			man-sys-man		.man
 ./usr/share/man/man4/sparc64/envctrl.4		man-sys-man		.man
+./usr/share/man/man4/sparc64/ffb.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/fdc.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/intro.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/lom.4		man-sys-man		.man
