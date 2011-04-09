@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.125 2011/04/09 06:34:06 martin Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.126 2011/04/09 07:02:57 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.125 2011/04/09 06:34:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.126 2011/04/09 07:02:57 martin Exp $");
 
 #include "opt_ptm.h"
 
@@ -523,11 +523,13 @@ ptsstop(struct tty *tp, int flush)
 void
 ptcwakeup(struct tty *tp, int flag)
 {
-	struct pt_softc *pti = NULL;
+	struct pt_softc *pti;
 
-	if (tp->t_dev == NODEV) return;
+	if (tp->t_dev == NODEV)
+		return;	/* client side not open yet */
 
 	pti = pt_softc[minor(tp->t_dev)];
+	KASSERT(pti != NULL);
 
 	mutex_spin_enter(&tty_lock);
 	if (flag & FREAD) {
