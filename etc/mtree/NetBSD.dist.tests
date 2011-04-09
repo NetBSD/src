@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.35 2011/04/07 06:24:07 plunky Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.36 2011/04/09 17:45:24 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -51,6 +51,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen
 ./usr/libdata/debug/usr/tests/lib/libc/hash
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp
+./usr/libdata/debug/usr/tests/lib/libc/locale
 ./usr/libdata/debug/usr/tests/lib/libc/inet
 ./usr/libdata/debug/usr/tests/lib/libc/net
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo
@@ -166,6 +167,7 @@
 ./usr/tests/lib/libc/hash
 ./usr/tests/lib/libc/hash/data
 ./usr/tests/lib/libc/ieeefp
+./usr/tests/lib/libc/locale
 ./usr/tests/lib/libc/inet
 ./usr/tests/lib/libc/net
 ./usr/tests/lib/libc/net/getaddrinfo
