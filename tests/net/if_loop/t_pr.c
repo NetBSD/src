@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.3 2010/11/03 16:10:25 christos Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.4 2011/04/09 20:42:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_pr.c,v 1.3 2010/11/03 16:10:25 christos Exp $");
+__RCSID("$NetBSD: t_pr.c,v 1.4 2011/04/09 20:42:12 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -125,7 +125,11 @@ ATF_TC_BODY(loopmtu, tc)
 	sin.sin_port = htons(12345);
 	sin.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-	atf_tc_expect_signal(SIGABRT, "PR kern/43664");
+	/*
+	 * Should not fail anymore, PR has been fixed...
+	 *
+	 * atf_tc_expect_signal(SIGABRT, "PR kern/43664");
+	 */
 	if (rump_sys_sendto(s, data, sizeof(data), 0,
 	    (struct sockaddr *)&sin, sizeof(sin)) == -1)
 		atf_tc_fail_errno("sendto failed");
