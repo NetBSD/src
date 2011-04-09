@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.12 2011/03/26 17:55:05 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.13 2011/04/09 19:56:20 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -699,7 +699,8 @@ dlinkbrdfix(struct brdprop *brd)
 {
 
 	init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
-	/* illuminate LEDs */
+	send_sat("SYN\n");
+	send_sat("ZWO\n");	/* power LED solid on */
 }
 
 void
