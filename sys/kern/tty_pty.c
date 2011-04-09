@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.126 2011/04/09 07:02:57 martin Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.127 2011/04/09 12:07:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.126 2011/04/09 07:02:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.127 2011/04/09 12:07:06 martin Exp $");
 
 #include "opt_ptm.h"
 
@@ -476,7 +476,10 @@ ptspoll(dev_t dev, int events, struct lwp *l)
 void
 ptsstart(struct tty *tp)
 {
-	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+	struct pt_softc *pti;
+
+	KASSERT(tp->t_dev != NODEV);
+	pti = pt_softc[minor(tp->t_dev)];
 
 	KASSERT(mutex_owned(&tty_lock));
 
@@ -497,7 +500,10 @@ ptsstart(struct tty *tp)
 void
 ptsstop(struct tty *tp, int flush)
 {
-	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+	struct pt_softc *pti;
+
+	KASSERT(tp->t_dev != NODEV);
+	pti = pt_softc[minor(tp->t_dev)];
 
 	KASSERT(mutex_owned(&tty_lock));
 
