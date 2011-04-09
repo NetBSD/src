@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.38 2010/09/21 03:31:04 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.39 2011/04/09 19:31:15 jdc Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.38 2010/09/21 03:31:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.39 2011/04/09 19:31:15 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,6 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.38 2010/09/21 03:31:04 macallan Exp $");
 #include <dev/wsfont/wsfont.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_bitbang.h>
+#include <dev/i2c/ddcvar.h>
+
 #include <sparc64/dev/ffbreg.h>
 #include <sparc64/dev/ffbvar.h>
 
@@ -72,6 +76,19 @@ __KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.38 2010/09/21 03:31:04 macallan Exp $");
 #define SYNC ffb_ras_wait(sc)
 #else
 #define SYNC
+#endif
+
+/* Debugging */
+#if !defined FFB_DEBUG
+#define FFB_DEBUG 0
+#endif
+#define DPRINTF(x)	if (ffb_debug) printf x
+/* Patchable */
+extern int ffb_debug;
+#if FFB_DEBUG > 0
+int ffb_debug = 1;
+#else
+int ffb_debug = 0;
 #endif
 
 extern struct cfdriver ffb_cd;
@@ -136,18 +153,53 @@ struct wsdisplay_accessops ffb_accessops = {
 	.mmap = ffb_mmap,
 };
 
+/* I2C glue */
+static int ffb_i2c_acquire_bus(void *, int);
+static void ffb_i2c_release_bus(void *, int);
+static int ffb_i2c_send_start(void *, int);
+static int ffb_i2c_send_stop(void *, int);
+static int ffb_i2c_initiate_xfer(void *, i2c_addr_t, int);
+static int ffb_i2c_read_byte(void *, uint8_t *, int);
+static int ffb_i2c_write_byte(void *, uint8_t, int);
+
+/* I2C bitbang glue */
+static void ffb_i2cbb_set_bits(void *, uint32_t);
+static void ffb_i2cbb_set_dir(void *, uint32_t);
+static uint32_t ffb_i2cbb_read(void *);
+
+static const struct i2c_bitbang_ops ffb_i2cbb_ops = {
+	ffb_i2cbb_set_bits,
+	ffb_i2cbb_set_dir,
+	ffb_i2cbb_read,
+	{
+		FFB_DAC_CFG_MPDATA_SDA,
+		FFB_DAC_CFG_MPDATA_SCL,
+		0,
+		0
+	}
+};
+
+void ffb_attach_i2c(struct ffb_softc *);
+
+/* Video mode setting */
+int ffb_tgc_disable(struct ffb_softc *);
+void ffb_get_pclk(int, uint32_t *, int *);
+int ffb_set_vmode(struct ffb_softc *, struct videomode *, int, int *, int *);
+
+
 void
 ffb_attach(struct ffb_softc *sc)
 {
 	struct wsemuldisplaydev_attach_args waa;
 	struct rasops_info *ri;
 	long defattr;
-	const char *model;
+	const char *model, *out_dev;
 	int btype;
 	uint32_t dac;
 	int maxrow, maxcol;
 	u_int blank = WSDISPLAYIO_VIDEO_ON;
 	char buf[6+1];
+	int i, try_edid;
 
 	printf(":");
 		
@@ -157,8 +209,10 @@ ffb_attach(struct ffb_softc *sc)
 			printf(" Creator3D");
 		else
 			printf(" Creator");
-	} else
+	} else {
 		printf(" Elite3D");
+		btype = 0;
+	}
 
 	model = prom_getpropstring(sc->sc_node, "model");
 	if (model == NULL || strlen(model) == 0)
@@ -166,6 +220,7 @@ ffb_attach(struct ffb_softc *sc)
 
 	sc->sc_depth = 24;
 	sc->sc_linebytes = 8192;
+	/* We might alter these during EDID mode setting */
 	sc->sc_height = prom_getpropint(sc->sc_node, "height", 0);
 	sc->sc_width = prom_getpropint(sc->sc_node, "width", 0);
 	
@@ -180,10 +235,8 @@ ffb_attach(struct ffb_softc *sc)
 		? strtoul(buf, NULL, 10)
 		: 34;
 
-	ffb_ras_init(sc);
-
 	/* collect DAC version, as Elite3D cursor enable bit is reversed */
-	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_GVERS);
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_DEVID);
 	dac = DAC_READ(sc, FFB_DAC_VALUE);
 	sc->sc_dacrev = (dac >> 28) & 0xf;
 
@@ -203,6 +256,63 @@ ffb_attach(struct ffb_softc *sc)
 	if (sc->sc_needredraw) 
 		printf("%s: found old DAC, enabling redraw on unblank\n", 
 		    device_xname(&sc->sc_dv));
+
+	/* Check if a console resolution "<device>:r<res>" is set. */
+	if (sc->sc_console) {
+		out_dev = prom_getpropstring(sc->sc_node, "output_device");
+		if (out_dev != NULL && strlen(out_dev) != 0 &&
+		    strstr(out_dev, ":r") != NULL)
+			try_edid = 0;
+		else
+			try_edid = 1;
+	} else
+		try_edid = 1;
+
+	ffb_attach_i2c(sc);
+
+	/* Need to set asynchronous blank during DDC write/read */
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_USR_CTRL);
+	dac = DAC_READ(sc, FFB_DAC_VALUE);
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_USR_CTRL);
+	DAC_WRITE(sc, FFB_DAC_VALUE, dac | FFB_DAC_USR_CTRL_BLANK);
+
+	/* Some monitors don't respond first time */
+	i = 0;
+	while (sc->sc_edid_data[1] == 0 && i++ < 3)
+		ddc_read_edid(&sc->sc_i2c, sc->sc_edid_data, EDID_DATA_LEN);
+
+	/* Remove asynchronous blank */
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_USR_CTRL);
+	DAC_WRITE(sc, FFB_DAC_VALUE, dac);
+
+	if (edid_parse(&sc->sc_edid_data[0], &sc->sc_edid_info) != -1) {
+		sort_modes(sc->sc_edid_info.edid_modes,
+		    &sc->sc_edid_info.edid_preferred_mode,
+		    sc->sc_edid_info.edid_nmodes);
+		DPRINTF(("%s: EDID data:\n  ", device_xname(&sc->sc_dv)));
+		for (i = 0; i < EDID_DATA_LEN; i++) {
+			if (i && !(i % 32))
+				DPRINTF(("\n "));
+			if (i && !(i % 4))
+				DPRINTF((" "));
+			DPRINTF(("%02x", sc->sc_edid_data[i]));
+		}
+		DPRINTF(("\n"));
+		if (ffb_debug)
+			edid_print(&sc->sc_edid_info);
+
+		if (try_edid)
+			for (i = 0; i < sc->sc_edid_info.edid_nmodes; i++) {
+				if (ffb_set_vmode(sc,
+			    	    &(sc->sc_edid_info.edid_modes[i]), btype,
+				    &(sc->sc_width), &(sc->sc_height)))
+					break;
+			}
+	} else {
+		DPRINTF(("%s: No EDID data.\n", device_xname(&sc->sc_dv)));
+	}
+		
+	ffb_ras_init(sc);
 
 	ffb_blank(sc, WSDISPLAYIO_SVIDEO, &blank);
 
@@ -261,6 +371,27 @@ ffb_attach(struct ffb_softc *sc)
 	config_found(&sc->sc_dv, &waa, wsemuldisplaydevprint);
 }
 
+void
+ffb_attach_i2c(struct ffb_softc *sc)
+{
+	struct i2cbus_attach_args iba;
+
+	/* Fill in the i2c tag */
+	sc->sc_i2c.ic_cookie = sc;
+	sc->sc_i2c.ic_acquire_bus = ffb_i2c_acquire_bus;
+	sc->sc_i2c.ic_release_bus = ffb_i2c_release_bus;
+	sc->sc_i2c.ic_send_start = ffb_i2c_send_start;
+	sc->sc_i2c.ic_send_stop = ffb_i2c_send_stop;
+	sc->sc_i2c.ic_initiate_xfer = ffb_i2c_initiate_xfer;
+	sc->sc_i2c.ic_read_byte = ffb_i2c_read_byte;
+	sc->sc_i2c.ic_write_byte = ffb_i2c_write_byte;
+	sc->sc_i2c.ic_exec = NULL;
+
+	/* Attach I2C bus */
+	bzero(&iba, sizeof(iba));
+	iba.iba_tag = &sc->sc_i2c;
+}
+
 int
 ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 {
@@ -268,13 +399,11 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 	struct ffb_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
-	
-#ifdef FFB_DEBUG
-	printf("ffb_ioctl: %s cmd _IO%s%s('%c', %lu)\n",
+
+	DPRINTF(("ffb_ioctl: %s cmd _IO%s%s('%c', %lu)\n",
 	       device_xname(&sc->sc_dv),
 	       (cmd & IOC_IN) ? "W" : "", (cmd & IOC_OUT) ? "R" : "",
-	       (char)IOCGROUP(cmd), cmd & 0xff);
-#endif
+	       (char)IOCGROUP(cmd), cmd & 0xff));
 
 	switch (cmd) {
 	case FBIOGTYPE:
@@ -362,7 +491,7 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 		return EIO; /* not supported yet */
 	default:
 		return EPASSTHROUGH;
-        }
+	}
 
 	return (0);
 }
@@ -374,7 +503,7 @@ ffb_blank(struct ffb_softc *sc, u_long cmd, u_int *data)
 	struct vcons_screen *ms = sc->vd.active;
 	u_int val;
 	
-	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_GSBLANK);
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_TGC);
 	val = DAC_READ(sc, FFB_DAC_VALUE);
 
 	switch (cmd) {
@@ -394,7 +523,7 @@ ffb_blank(struct ffb_softc *sc, u_long cmd, u_int *data)
 		return(EINVAL);
 	}
 
-	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_GSBLANK);
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_TGC);
 	DAC_WRITE(sc, FFB_DAC_VALUE, val);
 	
 	if ((val & 1) && sc->sc_needredraw) {
@@ -477,13 +606,23 @@ ffb_ras_wait(struct ffb_softc *sc)
 void
 ffb_ras_init(struct ffb_softc *sc)
 {
+	uint32_t fbc;
+
+	if (sc->sc_width > 1280) {
+	DPRINTF(("ffb_ras_init: high resolution.\n"));
+		fbc = FFB_FBC_WB_B | FFB_FBC_WM_COMBINED | FFB_FBC_WE_FORCEON |
+		    FFB_FBC_ZE_OFF | FFB_FBC_YE_OFF | FFB_FBC_XE_ON;
+	} else {
+	DPRINTF(("ffb_ras_init: standard resolution.\n"));
+		fbc = FFB_FBC_XE_OFF;
+	}
 	ffb_ras_fifo_wait(sc, 7);
 	FBC_WRITE(sc, FFB_FBC_PPC,
 	    FBC_PPC_VCE_DIS | FBC_PPC_TBE_OPAQUE | FBC_PPC_ACE_DIS | 
 	    FBC_PPC_APE_DIS | FBC_PPC_DCE_DIS | FBC_PPC_CS_CONST);
 	FBC_WRITE(sc, FFB_FBC_FBC,
 	    FFB_FBC_WB_A | FFB_FBC_RB_A | FFB_FBC_SB_BOTH |
-	    FFB_FBC_XE_OFF | FFB_FBC_RGBE_MASK);
+	    FFB_FBC_RGBE_MASK | fbc);
 	FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_NEW);
 	FBC_WRITE(sc, FFB_FBC_DRAWOP, FBC_DRAWOP_RECTANGLE);
 	FBC_WRITE(sc, FFB_FBC_PMASK, 0xffffffff);
@@ -949,9 +1088,8 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
 	 */
 	scr->scr_flags |= VCONS_NO_COPYCOLS;
 
-#ifdef FFB_DEBUG
-	printf("addr: %08lx\n",(ulong)ri->ri_bits);
-#endif
+	DPRINTF(("ffb_init_screen: addr: %08lx\n",(ulong)ri->ri_bits));
+
 	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
@@ -964,4 +1102,366 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.cursor = ffb_cursor;
 	ri->ri_ops.allocattr = ffb_allocattr;
 	ri->ri_ops.putchar = ffb_putchar;
+}
+
+/* I2C bitbanging */
+static void ffb_i2cbb_set_bits(void *cookie, uint32_t bits)
+{
+	struct ffb_softc *sc = cookie;
+
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_CFG_MPDATA);
+	DAC_WRITE(sc, FFB_DAC_VALUE, bits);
+}
+
+static void ffb_i2cbb_set_dir(void *cookie, uint32_t dir)
+{
+	/* Nothing to do */
+}
+
+static uint32_t ffb_i2cbb_read(void *cookie)
+{
+	struct ffb_softc *sc = cookie;
+	uint32_t bits;
+
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_CFG_MPSENSE);
+	bits = DAC_READ(sc, FFB_DAC_VALUE);
+
+	return bits;
+}
+
+/* higher level I2C stuff */
+static int
+ffb_i2c_acquire_bus(void *cookie, int flags)
+{
+	/* private bus */
+	return (0);
+}
+
+static void
+ffb_i2c_release_bus(void *cookie, int flags)
+{
+	/* private bus */
+}
+
+static int
+ffb_i2c_send_start(void *cookie, int flags)
+{
+	return (i2c_bitbang_send_start(cookie, flags, &ffb_i2cbb_ops));
+}
+
+static int
+ffb_i2c_send_stop(void *cookie, int flags)
+{
+
+	return (i2c_bitbang_send_stop(cookie, flags, &ffb_i2cbb_ops));
+}
+
+static int
+ffb_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
+{
+	/*
+	 * for some reason i2c_bitbang_initiate_xfer left-shifts
+	 * the I2C-address and then sets the direction bit
+	 */
+	return (i2c_bitbang_initiate_xfer(cookie, addr, flags, 
+	    &ffb_i2cbb_ops));
+}
+
+static int
+ffb_i2c_read_byte(void *cookie, uint8_t *valp, int flags)
+{
+	return (i2c_bitbang_read_byte(cookie, valp, flags, &ffb_i2cbb_ops));
+}
+
+static int
+ffb_i2c_write_byte(void *cookie, uint8_t val, int flags)
+{
+	return (i2c_bitbang_write_byte(cookie, val, flags, &ffb_i2cbb_ops));
+}
+
+
+#define TVC_READ_LIMIT	100000
+int
+ffb_tgc_disable(struct ffb_softc *sc)
+{
+	int i;
+
+	/* Is the timing generator disabled? */
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_TGC);
+	if (!(DAC_READ(sc, FFB_DAC_VALUE) & FFB_DAC_TGC_TIMING_ENABLE))
+		return 1;
+
+	/* If not, disable it when the vertical counter reaches 0 */
+	for (i = 0; i < TVC_READ_LIMIT; i++) {
+		DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_TVC);
+		if (!DAC_READ(sc, FFB_DAC_VALUE)) {
+			DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_TGC);
+			DAC_WRITE(sc, FFB_DAC_VALUE, 0);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/*
+ * PLL Control Register values:
+ *	M)ultiplier = bits 0:6 + 1
+ *	D)ivisor = bits 7:10 + 1
+ *	P)ost divisor = bits 11:13 (000 = 1, 001 = 2, 010 = 4, 011 = 8)
+ *	Frequency = 13.5 * M / D / P
+ */
+#define FFB_PLL_FREQ	13500000
+void
+ffb_get_pclk(int request, uint32_t *pll, int *diff)
+{
+	int m, d, p, f, hex = 0, curdiff;
+
+	*diff = 100000000;
+
+	for (m = 32; m <= 80; m++) {
+		for (d = 4; d <= 11; d++) {
+			for (p = 1; p <= 8; p = p << 1) {
+				switch (p) {
+				case 1:
+					hex = 0x4000 + (d << 7) + m;
+					break;
+				case 2:
+					hex = 0x4800 + (d << 7) + m;
+					break;
+				case 4:
+					hex = 0x5000 + (d << 7) + m;
+					break;
+				case 8:
+					hex = 0x6000 + (d << 7) + m;
+					break;
+				}
+				f = 13500000 * m / d / p;
+				if (f == request) {
+					*diff = 0;
+					*pll = hex;
+					return;
+				} else {
+					curdiff = abs(request - f);
+					if (curdiff < *diff) {
+						*diff = curdiff;
+						*pll = hex;
+					}
+				}
+			}
+		}
+	}
+}
+
+/*
+ * Details of the FFB RAMDAC are contained in the Brooktree BT497/498
+ * and in the Connexant BT497A/498A documentation.
+ *
+ * VESA timings to FFB register conversion:
+ *	If interleave = 4/2:1 then x = 2, if interleave = 8/2:1 then x = 4
+ *	VBE = VBS - vres = (sync pulse - 1) + back porch
+ *	VBS = VSS - front porch = (sync pulse - 1) + back porch + vres
+ *	VSE = sync pulse - 1
+ *	VSS = (sync pulse - 1) + back porch + vres + front porch
+ *	HRE = HSS - HSE - 1
+ *	HBE = (sync pulse + back porch) / x - 1
+ *	HBS = (sync pulse + back porch + hres) / x - 1
+ *	HSE = sync pulse / x - 1
+ *	HSS = (sync pulse + back porch + hres + front porch) / x - 1
+ *	HCE = HBS - 4
+ *	HCS = HBE - 4
+ *	EPE = EIE = EIS = 0 (for all non-interlaced modes)
+ *
+ * Note, that 8/2:1 Single Buffered Interleaving is only supported by the
+ * double-buffered FFB (Creator3D), and at higher resolutions than 1280x1024
+ *
+ * Note, that the timing generator should be disabled and re-enabled when the
+ * the timing parameter registers are being programmed.  Stopping the timing
+ * generator should only be done when the vertical counter is zero.
+ */
+#define DIVIDE(x,y)	(((x) + ((y) / 2)) / (y))
+int
+ffb_set_vmode(struct ffb_softc *sc, struct videomode *mode, int btype,
+    int *hres, int *vres)
+{
+	int diff;
+	uint32_t fp, sp, bp, x;
+	uint32_t pll, pfc, ucl, dcl, tgc;
+	uint32_t vbe, vbs, vse, vss, hre, hbe, hbs, hse, hss, hce, hcs;
+	uint32_t epe, eie, eis;
+	uint32_t fbcfg0;
+
+	DPRINTF(("ffb_set_vmode: %dx%d@%d", mode->hdisplay, mode->vdisplay,
+	    DIVIDE(DIVIDE(mode->dot_clock * 1000,
+	    mode->htotal), mode->vtotal)));
+	DPRINTF((" (%d %d %d %d %d %d %d",
+	    mode->dot_clock, mode->hsync_start, mode->hsync_end, mode->htotal,
+	    mode->vsync_start, mode->vsync_end, mode->vtotal));
+	DPRINTF((" %s%sH %s%sV)\n",
+	    mode->flags & VID_PHSYNC ? "+" : "",
+	    mode->flags & VID_NHSYNC ? "-" : "",
+	    mode->flags & VID_PVSYNC ? "+" : "",
+	    mode->flags & VID_NVSYNC ? "-" : ""));
+
+	/* We don't handle interlaced or doublescan (yet) */
+	if ((mode->flags & VID_INTERLACE) || (mode->flags & VID_DBLSCAN))
+		return 0;
+
+	/* Only Creator3D can be set to > 1280x1024 */
+	if(((sc->sc_type == FFB_CREATOR && !((btype & 7) == 3)) ||
+	    sc->sc_type == FFB_AFB)
+	    && (mode->hdisplay > 1280 || mode->vdisplay > 1024))
+		return 0;
+	/* Creator3D can be set to <= 1920x1360 */
+	if (mode->hdisplay > 1920 || mode->vdisplay > 1360)
+		return 0;
+
+	/*
+	 * Look for a matching pixel clock and set PLL Control.
+	 * XXX: 640x480@60 is 25175000 in modelines but 25125000 in the
+	 * FFB PROM, and the closest match to 25175000 (0x4da9/25159090)
+	 * does not work.  So, use the PROM value instead.
+	 */
+	if (mode->hdisplay == 640 && mode->vdisplay == 480 &&
+	    mode->dot_clock == 25175) {
+		DPRINTF(("ffb_set_vmode: 640x480@60: adjusted dot clock\n"));
+		mode->dot_clock = 25125;
+	}
+	ffb_get_pclk(mode->dot_clock * 1000, &pll, &diff);
+	if (diff > 250000)
+		return 0;
+	
+	/* Pixel Format Control, User Control and FBC Configuration. */
+	if (mode->hdisplay > 1280) {
+		pfc = FFB_DAC_PIX_FMT_821;
+		ucl = FFB_DAC_USR_CTRL_OVERLAY | FFB_DAC_USR_CTRL_WMODE_C;
+		x = 4;
+		fbcfg0 = FBC_READ(sc, FFB_FBC_FBCFG0) | FBC_CFG0_DOUBLE_BUF;
+	} else {
+		pfc = FFB_DAC_PIX_FMT_421;
+		/* Only Creator3D and Elite3D can have double-buffer */
+		if ((sc->sc_type == FFB_CREATOR && !((btype & 7) == 3)))
+			ucl = 0;
+		else
+			ucl = FFB_DAC_USR_CTRL_DOUBLE;
+		ucl |= (FFB_DAC_USR_CTRL_OVERLAY | FFB_DAC_USR_CTRL_WMODE_S8);
+		x = 2;
+		fbcfg0 = FBC_READ(sc, FFB_FBC_FBCFG0) | FBC_CFG0_SINGLE_BUF;
+	}
+
+	/* DAC Control and Timing Generator Control */
+	if (mode->flags & VID_PHSYNC) {
+		dcl = FFB_DAC_DAC_CTRL_POS_SYNC;
+		if (mode->flags & VID_NVSYNC) {
+			dcl |= FFB_DAC_DAC_CTRL_VSYNC_REV;
+			tgc = 0;
+		} else {
+			tgc = FFB_DAC_TGC_EQUAL_DISABLE;
+		}
+	} else {
+		dcl = 0;
+		if (mode->flags & VID_PVSYNC) {
+			dcl |= FFB_DAC_DAC_CTRL_VSYNC_REV;
+			tgc = 0;
+		} else {
+			tgc = FFB_DAC_TGC_EQUAL_DISABLE;
+		}
+	}
+#define EDID_VID_INP	sc->sc_edid_info.edid_video_input
+	if (!(EDID_VID_INP & EDID_VIDEO_INPUT_COMPOSITE_SYNC) &&
+	    (EDID_VID_INP & EDID_VIDEO_INPUT_SYNC_ON_GRN)) {
+		dcl |= FFB_DAC_DAC_CTRL_SYNC_G;
+		tgc |= FFB_DAC_TGC_VSYNC_DISABLE;
+	}
+	if (EDID_VID_INP & EDID_VIDEO_INPUT_BLANK_TO_BLACK)
+		dcl |= FFB_DAC_DAC_CTRL_PED_ENABLE;
+	tgc |= (FFB_DAC_TGC_VIDEO_ENABLE | FFB_DAC_TGC_TIMING_ENABLE |
+	    FFB_DAC_TGC_MASTER_ENABLE);
+
+	/* Vertical timing */
+	fp = mode->vsync_start - mode->vdisplay;
+	sp = mode->vsync_end - mode->vsync_start;
+	bp = mode->vtotal - mode->vsync_end;
+	
+	vbe = sp - 1 + bp;
+	vbs = sp - 1 + bp + mode->vdisplay;
+	vse = sp - 1;
+	vss = sp  - 1 + bp + mode->vdisplay + fp;
+	
+	/* Horizontal timing */
+	fp = mode->hsync_start - mode->hdisplay;
+	sp = mode->hsync_end - mode->hsync_start;
+	bp = mode->htotal - mode->hsync_end;
+
+	hbe = (sp + bp) / x - 1;
+	hbs = (sp + bp + mode->hdisplay) / x - 1;
+	hse = sp / x - 1;
+	hss = (sp + bp + mode->hdisplay + fp) / x -1;
+	hre = hss - hse - 1;
+	hce = hbs - 4;
+	hcs = hbe - 4;
+
+	/* Equalisation (interlaced modes) */
+	epe = 0;
+	eie = 0;
+	eis = 0;
+
+	DPRINTF(("ffb_set_vmode: 0x%04x 0x%04x 0x%04x 0x%04x 0x%04x\n",
+	    pll, pfc, ucl, dcl, tgc));
+	DPRINTF(("\t0x%04x 0x%04x 0x%04x 0x%04x\n", vbe, vbs, vse, vss));
+	DPRINTF(("\t0x%04x 0x%04x 0x%04x 0x%04x 0x%04x 0x%04x 0x%04x\n",
+	    hre, hbe, hbs, hse, hss, hce, hcs));
+	DPRINTF(("\t0x%04x 0x%04x 0x%04x\n", epe, eie, eis));
+
+	if (!ffb_tgc_disable(sc)) {
+		DPRINTF(("ffb_set_vmode: failed to disable TGC register\n"));
+		return 0;
+	}
+
+	/*
+	 * Program the mode registers.
+	 * Program the timing generator last, as that re-enables output.
+	 * Note, that a read to/write from a register increments the
+	 * register address to the next register automatically.
+	 */
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_PLL_CTRL);
+	DAC_WRITE(sc, FFB_DAC_VALUE, pll);
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_PIX_FMT);
+	DAC_WRITE(sc, FFB_DAC_VALUE, pfc);
+	DAC_WRITE(sc, FFB_DAC_VALUE, ucl);
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_DAC_CTRL);
+	DAC_WRITE(sc, FFB_DAC_VALUE, dcl);
+
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_VBE);
+	DAC_WRITE(sc, FFB_DAC_VALUE, vbe);
+	DAC_WRITE(sc, FFB_DAC_VALUE, vbs);
+	DAC_WRITE(sc, FFB_DAC_VALUE, vse);
+	DAC_WRITE(sc, FFB_DAC_VALUE, vss);
+
+	DAC_WRITE(sc, FFB_DAC_VALUE, hre);
+	DAC_WRITE(sc, FFB_DAC_VALUE, hbe);
+	DAC_WRITE(sc, FFB_DAC_VALUE, hbs);
+	DAC_WRITE(sc, FFB_DAC_VALUE, hse);
+	DAC_WRITE(sc, FFB_DAC_VALUE, hss);
+	DAC_WRITE(sc, FFB_DAC_VALUE, hce);
+	DAC_WRITE(sc, FFB_DAC_VALUE, hcs);
+
+	DAC_WRITE(sc, FFB_DAC_VALUE, epe);
+	DAC_WRITE(sc, FFB_DAC_VALUE, eie);
+	DAC_WRITE(sc, FFB_DAC_VALUE, eis);
+
+	FBC_WRITE(sc, FFB_FBC_FBCFG0, fbcfg0);
+
+	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_TGC);
+	DAC_WRITE(sc, FFB_DAC_VALUE, tgc);
+
+	*hres = mode->hdisplay;
+	*vres = mode->vdisplay;
+
+	printf("%s: video mode set to %d x %d @ %dHz\n",
+	    device_xname(&sc->sc_dv),
+	    mode->hdisplay, mode->vdisplay,
+	    DIVIDE(DIVIDE(mode->dot_clock * 1000,
+	    mode->htotal), mode->vtotal));
+
+	return 1;
 }
