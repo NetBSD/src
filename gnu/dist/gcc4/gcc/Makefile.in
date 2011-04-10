@@ -3147,9 +3147,9 @@ stmp-int-hdrs: $(STMP_FIXINC) $(USER_H) xlimits.h $(UNWIND_H)
 	    chmod a+r include/$$realfile; \
 	  fi; \
 	done; \
-	rm -f include/limits.h; \
-	chmod a+r include/limits.h; fi
-	cp xlimits.h include/limits.h
+	true || rm -f include/limits.h; \
+	true || chmod a+r include/limits.h; fi
+	true || cp xlimits.h include/limits.h
 	cp $(UNWIND_H) include/unwind.h
 # Install the README
 	rm -f include/README
