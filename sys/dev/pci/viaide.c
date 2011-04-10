@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.72 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: viaide.c,v 1.73 2011/04/10 15:02:01 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.72 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.73 2011/04/10 15:02:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -914,11 +914,14 @@ via_sata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa0,
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;
 	struct wdc_regs *wdr;
-	struct pci_attach_args pacopy, *pa = &pacopy;
-	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	struct pci_attach_args pacopy, *pa;
+	pcireg_t interface;
 	int channel;
 
 	pacopy = *pa0;
+	pa = &pacopy;
+	interface = PCI_INTERFACE(pa->pa_class);
+
 	if (via_sata_chip_map_common(sc, pa) == 0)
 		return;
 
@@ -986,14 +989,17 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;
 	struct wdc_regs *wdr;
-	struct pci_attach_args pacopy, *pa = &pacopy;
-	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	struct pci_attach_args pacopy, *pa;
+	pcireg_t interface;
 	int channel;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	int i;
 
 	pacopy = *pa0;
+	pa = &pacopy;
+	interface = PCI_INTERFACE(pa->pa_class);
+
 	if (via_sata_chip_map_common(sc, pa) == 0)
 		return;
 
