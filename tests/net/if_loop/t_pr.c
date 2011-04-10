@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.4 2011/04/09 20:42:12 martin Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.5 2011/04/10 11:31:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_pr.c,v 1.4 2011/04/09 20:42:12 martin Exp $");
+__RCSID("$NetBSD: t_pr.c,v 1.5 2011/04/10 11:31:48 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 
 #include <netinet/in.h>
 #include <net/route.h>
@@ -51,15 +52,11 @@ __RCSID("$NetBSD: t_pr.c,v 1.4 2011/04/09 20:42:12 martin Exp $");
 #include "../config/netconfig.c"
 #include "../../h_macros.h"
 
-ATF_TC(loopmtu);
-ATF_TC_HEAD(loopmtu, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr", "test lo0 fragmentation");
-	/* PR kern/43664 */
-}
-
-ATF_TC_BODY(loopmtu, tc)
+/*
+ * Prepare rump server, configure interface and route to cause fragmentation
+ */
+static void
+setup(void)
 {
 	char ifname[IFNAMSIZ];
 	struct {
@@ -68,10 +65,11 @@ ATF_TC_BODY(loopmtu, tc)
 	} m_rtmsg;
 #define rtm m_rtmsg.m_rtm
 #define rsin m_rtmsg.m_sin
-	struct sockaddr_in sin;
 	struct ifreq ifr;
-	char data[2000];
 	int s;
+
+	static bool init_done = false;
+	if (init_done) return;
 
 	strcpy(ifname, "lo0");
 	rump_init();
@@ -113,6 +111,106 @@ ATF_TC_BODY(loopmtu, tc)
 		atf_tc_fail_errno("set route mtu");
 	rump_sys_close(s);
 
+	init_done = true;
+}
+
+/*
+ * Turn on checksums on loopback interfaces
+ */
+static int
+enable_locsums(void)
+{
+	struct sysctlnode q, ans[256];
+	int mib[5], enable;
+	size_t alen;
+	unsigned i;
+
+	mib[0] = CTL_NET;
+	mib[1] = PF_INET;
+	mib[2] = IPPROTO_IP;
+	mib[3] = CTL_QUERY;
+	alen = sizeof(ans);
+
+	memset(&q, 0, sizeof(q));
+	q.sysctl_flags = SYSCTL_VERSION;
+
+	if (rump_sys___sysctl(mib, 4, ans, &alen, &q, sizeof(q)) == -1)
+		return -1;
+
+	for (i = 0; i < __arraycount(ans); i++)
+		if (strcmp("do_loopback_cksum", ans[i].sysctl_name) == 0)
+			break;
+	if (i == __arraycount(ans)) {
+		errno = ENOENT;
+		return -1;
+	}
+
+	mib[3] = ans[i].sysctl_num;
+
+	enable = 1;
+	if (rump_sys___sysctl(mib, 4, NULL, NULL, &enable,
+	    sizeof(enable)) == -1)
+		return errno;
+
+	return 0;
+}
+
+ATF_TC(loopmtu);
+ATF_TC_HEAD(loopmtu, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "test lo0 fragmentation");
+	/* PR kern/43664 */
+}
+
+ATF_TC_BODY(loopmtu, tc)
+{
+	struct sockaddr_in sin;
+	char data[2000];
+	int s;
+
+	setup();
+
+	/* open raw socket */
+	s = rump_sys_socket(PF_INET, SOCK_RAW, 0);
+	if (s == -1)
+		atf_tc_fail_errno("raw socket");
+
+	/* then, send data */
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_len = sizeof(sin);
+	sin.sin_port = htons(12345);
+	sin.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+	/*
+	 * Should not fail anymore, PR has been fixed...
+	 *
+	 * atf_tc_expect_signal(SIGABRT, "PR kern/43664");
+	 */
+	if (rump_sys_sendto(s, data, sizeof(data), 0,
+	    (struct sockaddr *)&sin, sizeof(sin)) == -1)
+		atf_tc_fail_errno("sendto failed");
+}
+
+ATF_TC(loopmtu_csum);
+ATF_TC_HEAD(loopmtu_csum, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "test lo0 fragmentation with checksums");
+	/* PR kern/43664 */
+}
+
+ATF_TC_BODY(loopmtu_csum, tc)
+{
+	struct sockaddr_in sin;
+	char data[2000];
+	int s;
+
+	setup();
+
+	ATF_CHECK(enable_locsums() == 0);
+
 	/* open raw socket */
 	s = rump_sys_socket(PF_INET, SOCK_RAW, 0);
 	if (s == -1)
@@ -139,6 +237,8 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, loopmtu);
+	ATF_TP_ADD_TC(tp, loopmtu_csum);
 
 	return atf_no_error();
 }
+
