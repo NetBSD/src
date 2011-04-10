@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.2 2009/04/16 06:52:08 lukem Exp $	*/
+/*	$NetBSD: crash.c,v 1.3 2011/04/10 20:39:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.2 2009/04/16 06:52:08 lukem Exp $");
+__RCSID("$NetBSD: crash.c,v 1.3 2011/04/10 20:39:42 christos Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -52,18 +52,20 @@ __RCSID("$NetBSD: crash.c,v 1.2 2009/04/16 06:52:08 lukem Exp $");
 #include <kvm.h>
 #include <err.h>
 #include <ctype.h>
+#include <util.h>
 
 #include "extern.h"
 
 #define	MAXSTAB	(16 * 1024 * 1024)
 
-static kvm_t	*kd;
 db_regs_t	ddb_regs;
-History		*hist;
-HistEvent	he;
-EditLine	*elptr;
-char		imgrelease[16];
-FILE		*ofp;
+
+static kvm_t		*kd;
+static History		*hist;
+static HistEvent	he;
+static EditLine		*elptr;
+static char		imgrelease[16];
+static FILE		*ofp;
 
 static struct nlist nl[] = {
 #define	X_OSRELEASE	0
@@ -72,6 +74,18 @@ static struct nlist nl[] = {
 	{ .n_name = "_panicstr" },
 	{ .n_name = NULL },
 };
+
+static void
+cleanup(void)
+{
+	if (ofp != stdout) {
+		(void)fflush(ofp);
+		(void)pclose(ofp);
+		ofp = stdout;
+	}
+	el_end(elptr);
+	history_end(hist);
+}
 
 void
 db_vprintf(const char *fmt, va_list ap)
@@ -121,14 +135,14 @@ void *
 db_alloc(size_t sz)
 {
 
-	return malloc(sz);
+	return emalloc(sz);
 }
 
 void *
 db_zalloc(size_t sz)
 {
 
-	return calloc(1, sz);
+	return ecalloc(1, sz);
 }
 
 void
@@ -231,9 +245,8 @@ db_readline(char *lstart, int lsize)
 
 	/* Read next command. */
 	el = el_gets(elptr, &cnt);
-	if (el == NULL) {
-		*lstart = '\0';
-		return 0;
+	if (el == NULL) {	/* EOF */
+		exit(EXIT_SUCCESS);
 	}
 
 	/* Save to history, and copy to caller's buffer. */
@@ -255,7 +268,7 @@ db_readline(char *lstart, int lsize)
 
 	/* Open a pipe to specified command, redirect output. */
 	assert(ofp == stdout);
-	for (*pcmd++ = '\0'; isspace((int)*pcmd); pcmd++) {
+	for (*pcmd++ = '\0'; isspace((unsigned char)*pcmd); pcmd++) {
 		/* nothing */
 	}
 	errno = 0;
@@ -323,6 +336,8 @@ main(int argc, char **argv)
 	memf = _PATH_MEM;
 	ofp = stdout;
 
+	setprogname(argv[0]);
+
 	/*
 	 * Parse options.
 	 */
@@ -354,31 +369,30 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 	fd = open(nlistf, O_RDONLY);
-	if (fd < 0)  {
-		err(EXIT_FAILURE, "open(%s)", nlistf);
+	if (fd == -1)  {
+		err(EXIT_FAILURE, "open `%s'", nlistf);
 	}
-	if (fstat(fd, &sb) < 0) {
-		err(EXIT_FAILURE, "stat(%s)", nlistf);
+	if (fstat(fd, &sb) == -1) {
+		err(EXIT_FAILURE, "stat `%s'", nlistf);
 	}
 	if ((sb.st_mode & S_IFMT) != S_IFREG) {	/* XXX ksyms */
 		sz = MAXSTAB;
 		elf = malloc(sz);
 		if (elf == NULL) {
-			err(EXIT_FAILURE, "malloc(%zd)", sz);
+			err(EXIT_FAILURE, "malloc(%zu)", sz);
 		}
 		sz = read(fd, elf, sz);
-		if ((ssize_t)sz < 0) {
-			err(EXIT_FAILURE, "read(%s)", nlistf);
+		if ((ssize_t)sz == -1) {
+			err(EXIT_FAILURE, "read `%s'", nlistf);
 		}
 		if (sz == MAXSTAB) {
-			errx(EXIT_FAILURE, "symbol table > %d bytes",
-			    MAXSTAB);
+			errx(EXIT_FAILURE, "symbol table > %d bytes", MAXSTAB);
 		}
 	} else {
 		sz = sb.st_size;
 		elf = mmap(NULL, sz, PROT_READ, MAP_FILE, fd, 0);
 		if (elf == MAP_FAILED) {
-			err(EXIT_FAILURE, "mmap(%s)", nlistf);
+			err(EXIT_FAILURE, "mmap `%s'", nlistf);
 		}
 	}
 
@@ -440,6 +454,8 @@ main(int argc, char **argv)
 	el_set(elptr, EL_PROMPT, prompt);
 	el_source(elptr, NULL);
 
+	atexit(cleanup);
+
 	/*
 	 * Initialize ddb.
 	 */
@@ -455,15 +471,7 @@ main(int argc, char **argv)
 	db_command_loop();
 
 	/*
-	 * Clean up and exit.
+	 * Finish.
 	 */
-	if (ofp != stdout) {
-		(void)fflush(ofp);
-		(void)pclose(ofp);
-		ofp = stdout;
-	}
-	el_end(elptr);
-	history_end(hist);
-	exit(EXIT_SUCCESS);
-	/* NOTREACHED */
+	return EXIT_SUCCESS;
 }
