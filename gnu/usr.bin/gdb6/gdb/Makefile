@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/02/03 15:34:39 roy Exp $
+#	$NetBSD: Makefile,v 1.9 2011/04/10 16:47:04 joerg Exp $
 
 .include "../Makefile.inc"
 
@@ -10,7 +10,7 @@ DIST=		${TOP}/dist/gdb6
 PROG=		gdb
 
 SRCS=		gdb.c
-CPPFLAGS=	-I${.CURDIR} \
+CPPFLAGS+=	-I${.CURDIR} \
 		-I${.CURDIR}/../arch/${MACHINE_ARCH} \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
