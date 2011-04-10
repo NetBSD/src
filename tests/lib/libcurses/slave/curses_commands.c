@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.1 2011/04/10 09:55:10 blymn Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.2 2011/04/10 23:31:30 dholland Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -4442,7 +4442,7 @@ cmd_vw_scanw(int nargs, char **args)
 void
 cmd_vwprintw(int nargs, char **args)
 {
-	cmd_vwprintw(nargs, args);
+	cmd_vw_printw(nargs, args);
 }
 
 
