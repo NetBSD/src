@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.223 2011/04/10 20:22:32 joerg Exp $
+$NetBSD: UPDATING,v 1.224 2011/04/10 22:46:09 dholland Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -16,9 +16,9 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 20110410:
-	The configuration of src/tools/gcc has changed. Update builds
-	have to remove the stale content explicitly. See the note toward
-	the end of the file for details.
+	The configuration of src/tools/gcc has changed. To do an
+	update build you have to clean both tools/binutils and
+	tools/gcc by hand.
 
 20110328:
 	Building the Xorg binary was moved into a subdirectory to fix
