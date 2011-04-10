@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.8 2011/04/08 14:09:24 nisimura Exp $ */
+/* $NetBSD: satmgr.c,v 1.9 2011/04/10 16:30:32 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -136,10 +136,10 @@ struct satops {
 };
 
 static struct satops satmodel[] = {
-    { "dlink",    NULL, NULL, NULL, dbutton }
+    { "dlink",    NULL, NULL, NULL, dbutton },
     { "kurobox",  NULL, kreboot, kpwroff, kbutton },
     { "qnap",     qinit, qreboot, qpwroff, qbutton },
-    { "synology", sinit, sreboot, spwroff, sbutton },
+    { "synology", sinit, sreboot, spwroff, sbutton }
 };
 
 /* single byte stride register layout */
