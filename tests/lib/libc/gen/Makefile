@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2011/04/05 06:15:31 jruoho Exp $
+# $NetBSD: Makefile,v 1.18 2011/04/10 06:27:21 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ TESTSDIR=	${TESTSBASE}/lib/libc/gen
 TESTS_C+=	t_basedirname
 TESTS_C+=	t_dir
 TESTS_C+=	t_fmtcheck
+TESTS_C+=	t_getcwd
 TESTS_C+=	t_getgrent
 TESTS_C+=	t_glob_star
 TESTS_C+=	t_humanize_number

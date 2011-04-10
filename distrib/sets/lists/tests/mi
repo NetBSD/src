@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.302 2011/04/10 06:11:47 jruoho Exp $
+# $NetBSD: mi,v 1.303 2011/04/10 06:27:20 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -343,6 +343,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_basedirname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_dir.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_fmtcheck.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_getcwd.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_getgrent.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob_star.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_humanize_number.debug	tests-lib-debug		debug,atf
@@ -1744,6 +1745,7 @@
 ./usr/tests/lib/libc/gen/t_basedirname		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_dir			tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_fmtcheck		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_getcwd		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_getgrent		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_glob_star		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_humanize_number	tests-lib-tests		atf
