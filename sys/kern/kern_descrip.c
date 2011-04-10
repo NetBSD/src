@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.211 2011/02/15 15:54:28 pooka Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.212 2011/04/10 15:45:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.211 2011/02/15 15:54:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.212 2011/04/10 15:45:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1774,6 +1774,16 @@ fsetown(pid_t *pgid, u_long cmd, const void *data)
 		*pgid = id;
 	}
 	return error;
+}
+
+void
+fd_set_exclose(struct lwp *l, int fd, bool exclose)
+{
+	filedesc_t *fdp = l->l_fd;
+	fdfile_t *ff = fdp->fd_dt->dt_ff[fd];
+	ff->ff_exclose = exclose;
+	if (exclose)
+		fdp->fd_exclose = true;
 }
 
 /*
