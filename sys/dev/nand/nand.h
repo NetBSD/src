@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.5 2011/04/04 14:25:10 ahoka Exp $	*/
+/*	$NetBSD: nand.h,v 1.6 2011/04/10 12:48:09 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -44,7 +44,6 @@
 #include <dev/nand/onfi.h>
 #include <dev/flash/flash.h>
 
-//#define NAND_DEBUG 1
 #ifdef NAND_DEBUG
 #define DPRINTF(x)	if (nanddebug) printf x
 #define DPRINTFN(n,x)	if (nanddebug>(n)) printf x
