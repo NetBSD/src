@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.107 2011/04/10 00:05:51 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.108 2011/04/10 14:38:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.107 2011/04/10 00:05:51 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.108 2011/04/10 14:38:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -950,9 +950,8 @@ ktrpsig(void *v, int len)
 				    si->si_value.sival_ptr);
 				return;
 			case SI_LWP:
-				printf(": code=SI_LWP sent by pid=%d, uid=%d "
-				    "with target lid=%d)\n", si->si_pid,
-				    si->si_uid, si->si_lid);
+				printf(": code=SI_LWP sent by pid=%d, "
+				    "uid=%d")\n", si->si_pid, si->si_uid);
 				return;
 			default:
 				code = NULL;
