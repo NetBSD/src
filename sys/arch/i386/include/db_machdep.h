@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.27 2009/03/07 22:02:16 ad Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.28 2011/04/10 20:36:48 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -44,6 +44,13 @@ typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
+
+struct i386_frame {
+	struct i386_frame	*f_frame;
+	int			f_retaddr;
+	int			f_arg0;
+};
+
 #ifndef MULTIPROCESSOR
 extern db_regs_t ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
@@ -141,5 +148,8 @@ int kdb_trap(int, int, db_regs_t *);
 extern void db_machine_init(void);
 
 extern void cpu_debug_dump(void);
+
+/* i386/db_machdep.c */
+bool db_intrstack_p(const void *);
 
 #endif	/* _I386_DB_MACHDEP_H_ */
