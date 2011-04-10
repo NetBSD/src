@@ -1,4 +1,4 @@
-/*	$NetBSD: t_types.c,v 1.1 2011/04/10 08:07:41 jruoho Exp $ */
+/*	$NetBSD: t_types.c,v 1.2 2011/04/10 08:11:34 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_types.c,v 1.1 2011/04/10 08:07:41 jruoho Exp $");
+__RCSID("$NetBSD: t_types.c,v 1.2 2011/04/10 08:11:34 jruoho Exp $");
 
 #include <sys/types.h>
 
@@ -66,8 +66,8 @@ ATF_TC_BODY(types_limits, tc)
 	/*
 	 * IEEE Std 1003.1-2008:
 	 *
-	 * The type suseconds_t shall be a signed integer type capable
-	 * of storing values at least in the range [-1, 1000000].
+	 * "The type suseconds_t shall be a signed integer type capable
+	 *  of storing values at least in the range [-1, 1000000]."
 	 */
 	usec = 1000000;
 	ATF_REQUIRE(usec > 0);
@@ -131,7 +131,7 @@ ATF_TC_BODY(types_unsigned, tc)
 	ATF_REQUIRE((size - 1) > 0);
 
 	/*
-	 * Test also rlim_; PR standards/18067.
+	 * Test also rlim_t; PR standards/18067.
 	 */
 	lim = 0;
 
