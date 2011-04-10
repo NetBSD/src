@@ -1,24 +1,23 @@
-#	$NetBSD: Makefile,v 1.6 2011/03/21 05:09:33 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2011/04/10 20:39:42 christos Exp $
 
-PROG=	crash
-MAN=	crash.8
+PROG=		crash
+MAN=		crash.8
 RUMPKERNEL=	yes	# XXX: Avoid -mcmodel=kernel
 
-LDADD+=	-lkvm -ledit -lterminfo -T${.CURDIR}/ldscript.crash
-DPADD+=	${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
+LDADD+=	-lutil -lkvm -ledit -lterminfo -T${.CURDIR}/ldscript.crash
+DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 
 # some ddb kernel components need limited modifications.  for now,
 # punt if not noted as implemented here.
-.if (${MACHINE} != "i386")
-
+.if !empty(${MACHINE:C/(amd64|i386)//})
 SRCS+=	unsupported.c
-
 .else
 
-S=	${.CURDIR}/../../sys
+S=		${.CURDIR}/../../sys
 
 CPPFLAGS+=	-I${.CURDIR} -I${.OBJDIR} -I${S} -fno-strict-aliasing
 CPPFLAGS+=	-DDDB_VERBOSE_HELP -DDB_MAX_LINE=10000000 -D_KMEMUSER
+CPPFLAGS+=	-DDB_AOUT_SYMBOLS -UDB_MACHINE_COMMANDS
 
 # ddb files from kernel
 .PATH:	$S/ddb
@@ -27,24 +26,24 @@ SRCS+=	db_access.c db_elf.c db_examine.c
 SRCS+=	db_expr.c db_lex.c db_output.c db_print.c
 SRCS+=	db_sym.c db_variables.c db_write_cmd.c
 
-# db_trace.c, db_disasm.c
-.PATH:	${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
-.for i in ${i} db_disasm db_trace
-. if (exists(${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}/${i}.c))
-SRCS+=	${i}.c
+.PATH:	${S}/arch/${MACHINE}/${MACHINE}
+SRCS+=	db_machdep.c db_disasm.c
+
+. if empty(${MACHINE:C/(amd64|i386)//})
+.PATH:	${S}/arch/x86/x86
+SRCS+=	db_trace.c
 . endif
-.endfor
 
 # crash main source
 SRCS+=	crash.c
 
 # arch.c
 .PATH:	${.CURDIR}/arch
-.if (exists(${.CURDIR}/arch/${MACHINE_ARCH}.c))
+. if (exists(${.CURDIR}/arch/${MACHINE_ARCH}.c))
 SRCS+=	${MACHINE_ARCH}.c
-.else
+. else
 SRCS+=	generic.c
-.endif
+. endif
 
 # vers.c
 SRCS+=	vers.c
