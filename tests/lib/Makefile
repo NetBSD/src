@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.13 2011/04/07 06:24:07 plunky Exp $
+# $NetBSD: Makefile,v 1.14 2011/04/10 09:49:13 blymn Exp $
 
 .include <bsd.own.mk>
 
-TESTS_SUBDIRS=	csu libbluetooth libc libevent libm \
+TESTS_SUBDIRS=	csu libbluetooth libc libcurses libevent libm \
 		libobjc libposix libprop libpthread \
 		librt librumpclient librumphijack libutil semaphore
 
