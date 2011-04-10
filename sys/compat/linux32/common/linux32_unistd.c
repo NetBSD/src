@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.34 2009/11/11 09:48:51 rmind Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.35 2011/04/10 15:48:23 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.34 2009/11/11 09:48:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.35 2011/04/10 15:48:23 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.34 2009/11/11 09:48:51 rmind Ex
 #include <sys/ucred.h>
 #include <sys/swap.h>
 #include <sys/kauth.h>
+#include <sys/filedesc.h>
 
 #include <machine/types.h>
 
@@ -62,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.34 2009/11/11 09:48:51 rmind Ex
 #include <compat/linux/common/linux_oldolduname.h>
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_sem.h>
+#include <compat/linux/common/linux_fcntl.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
@@ -221,8 +223,8 @@ linux32_select1(struct lwp *l, register_t *retval, int nfds,
 	return 0;
 }
 
-int
-linux32_sys_pipe(struct lwp *l, const struct linux32_sys_pipe_args *uap, register_t *retval)
+static int
+linux32_pipe(struct lwp *l, int *fd, register_t *retval, int flags)
 {
 	/* {
 		syscallarg(netbsd32_intp) fd;
@@ -230,21 +232,79 @@ linux32_sys_pipe(struct lwp *l, const struct linux32_sys_pipe_args *uap, registe
 	int error;
 	int pfds[2];
 
-	if ((error = sys_pipe(l, 0, retval)))
-		return error;
-
 	pfds[0] = (int)retval[0];
 	pfds[1] = (int)retval[1];
 
-	if ((error = copyout(pfds, SCARG_P32(uap, fd), 2 * sizeof (int))) != 0)
+	if ((error = copyout(pfds, fd, 2 * sizeof(*fd))) != 0)
 		return error;
 
+	if (flags & LINUX_O_CLOEXEC) {
+		fd_set_exclose(l, retval[0], true);
+		fd_set_exclose(l, retval[1], true);
+	}
 	retval[0] = 0;
 	retval[1] = 0;
 
 	return 0;
 }
 
+int
+linux32_sys_pipe(struct lwp *l, const struct linux32_sys_pipe_args *uap,
+    register_t *retval)
+{
+	int error;
+	if ((error = pipe1(l, retval, 0)))
+		return error;
+	return linux32_pipe(l, SCARG_P32(uap, fd), retval, 0);
+}
+
+int
+linux32_sys_pipe2(struct lwp *l, const struct linux32_sys_pipe2_args *uap,
+    register_t *retval)
+{
+	int flag = 0;
+	int error;
+
+	switch (SCARG(uap, flags)) {
+	case LINUX_O_CLOEXEC:
+		break;
+	case LINUX_O_NONBLOCK:
+	case LINUX_O_NONBLOCK|LINUX_O_CLOEXEC:
+		flag = O_NONBLOCK;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if ((error = pipe1(l, retval, flag)))
+		return error;
+
+	return linux32_pipe(l, SCARG_P32(uap, fd), retval, SCARG(uap, flags));
+}
+
+int
+linux32_sys_dup3(struct lwp *l, const struct linux32_sys_dup3_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) from;
+		syscallarg(int) to;
+		syscallarg(int) flags;
+	} */
+	struct sys_dup2_args ua;
+	int error;
+
+	NETBSD32TO64_UAP(from);
+	NETBSD32TO64_UAP(to);
+
+	if ((error = sys_dup2(l, &ua, retval)))
+		return error;
+
+	if (SCARG(uap, flags) & LINUX_O_CLOEXEC)
+		fd_set_exclose(l, SCARG(uap, to), true);
+
+	return 0;
+}
 
 int
 linux32_sys_unlink(struct lwp *l, const struct linux32_sys_unlink_args *uap, register_t *retval)
