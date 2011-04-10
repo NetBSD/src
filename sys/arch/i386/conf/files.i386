@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.356 2011/02/24 10:56:01 jruoho Exp $
+#	$NetBSD: files.i386,v 1.357 2011/04/10 20:36:48 christos Exp $
 #
 # new style config file for i386 architecture
 #
@@ -67,8 +67,8 @@ file	arch/i386/i386/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
+file	arch/i386/i386/db_machdep.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
-file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/dumpsys.c
 file	kern/subr_disk_mbr.c		disk
 file	kern/subr_spldebug.c		spldebug
