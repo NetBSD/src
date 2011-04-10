@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.421 2011/04/02 04:57:35 rmind Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.422 2011/04/10 15:45:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.421 2011/04/02 04:57:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.422 2011/04/10 15:45:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -138,6 +138,45 @@ const char * const mountcompatnames[] = {
 };
 
 const int nmountcompatnames = __arraycount(mountcompatnames);
+
+static int
+open_setfp(struct lwp *l, file_t *fp, struct vnode *vp, int indx, int flags)
+{
+	int error;
+
+	fp->f_flag = flags & FMASK;
+	fp->f_type = DTYPE_VNODE;
+	fp->f_ops = &vnops;
+	fp->f_data = vp;
+
+	if (flags & (O_EXLOCK | O_SHLOCK)) {
+		struct flock lf;
+		int type;
+
+		lf.l_whence = SEEK_SET;
+		lf.l_start = 0;
+		lf.l_len = 0;
+		if (flags & O_EXLOCK)
+			lf.l_type = F_WRLCK;
+		else
+			lf.l_type = F_RDLCK;
+		type = F_FLOCK;
+		if ((flags & FNONBLOCK) == 0)
+			type |= F_WAIT;
+		VOP_UNLOCK(vp);
+		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
+		if (error) {
+			(void) vn_close(vp, fp->f_flag, fp->f_cred);
+			fd_abort(l->l_proc, fp, indx);
+			return error;
+		}
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		atomic_or_uint(&fp->f_flag, FHASLOCK);
+	}
+	if (flags & O_CLOEXEC)
+		fd_set_exclose(l, indx, true);
+	return 0;
+}
 
 static int
 mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
@@ -1039,8 +1078,7 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 	file_t *fp;
 	struct vnode *vp;
 	int flags, cmode;
-	int type, indx, error;
-	struct flock lf;
+	int indx, error;
 	struct pathbuf *pb;
 	struct nameidata nd;
 
@@ -1081,31 +1119,9 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 	vp = nd.ni_vp;
 	pathbuf_destroy(pb);
 
-	fp->f_flag = flags & FMASK;
-	fp->f_type = DTYPE_VNODE;
-	fp->f_ops = &vnops;
-	fp->f_data = vp;
-	if (flags & (O_EXLOCK | O_SHLOCK)) {
-		lf.l_whence = SEEK_SET;
-		lf.l_start = 0;
-		lf.l_len = 0;
-		if (flags & O_EXLOCK)
-			lf.l_type = F_WRLCK;
-		else
-			lf.l_type = F_RDLCK;
-		type = F_FLOCK;
-		if ((flags & FNONBLOCK) == 0)
-			type |= F_WAIT;
-		VOP_UNLOCK(vp);
-		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
-		if (error) {
-			(void) vn_close(vp, fp->f_flag, fp->f_cred);
-			fd_abort(p, fp, indx);
-			return (error);
-		}
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		atomic_or_uint(&fp->f_flag, FHASLOCK);
-	}
+	if ((error = open_setfp(l, fp, vp, indx, flags)))
+		return error;
+
 	VOP_UNLOCK(vp);
 	*retval = indx;
 	fd_affix(p, fp, indx);
@@ -1362,8 +1378,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	struct vnode *vp = NULL;
 	kauth_cred_t cred = l->l_cred;
 	file_t *nfp;
-	int type, indx, error=0;
-	struct flock lf;
+	int indx, error = 0;
 	struct vattr va;
 	fhandle_t *fh;
 	int flags;
@@ -1422,32 +1437,9 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	}
 
 	/* done with modified vn_open, now finish what sys_open does. */
+	if ((error = open_setfp(l, fp, vp, indx, flags)))
+		return error;
 
-	fp->f_flag = flags & FMASK;
-	fp->f_type = DTYPE_VNODE;
-	fp->f_ops = &vnops;
-	fp->f_data = vp;
-	if (flags & (O_EXLOCK | O_SHLOCK)) {
-		lf.l_whence = SEEK_SET;
-		lf.l_start = 0;
-		lf.l_len = 0;
-		if (flags & O_EXLOCK)
-			lf.l_type = F_WRLCK;
-		else
-			lf.l_type = F_RDLCK;
-		type = F_FLOCK;
-		if ((flags & FNONBLOCK) == 0)
-			type |= F_WAIT;
-		VOP_UNLOCK(vp);
-		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
-		if (error) {
-			(void) vn_close(vp, fp->f_flag, fp->f_cred);
-			fd_abort(p, fp, indx);
-			return (error);
-		}
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		atomic_or_uint(&fp->f_flag, FHASLOCK);
-	}
 	VOP_UNLOCK(vp);
 	*retval = indx;
 	fd_affix(p, fp, indx);
