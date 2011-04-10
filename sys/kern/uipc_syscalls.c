@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.141 2010/04/23 15:19:19 rmind Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.142 2011/04/10 15:45:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.141 2010/04/23 15:19:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.142 2011/04/10 15:45:33 christos Exp $");
 
 #include "opt_pipe.h"
 
@@ -960,7 +960,7 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t 
 #ifdef PIPE_SOCKETPAIR
 /* ARGSUSED */
 int
-sys_pipe(struct lwp *l, const void *v, register_t *retval)
+pipe1(struct lwp *l, register_t *retval, int flags)
 {
 	file_t		*rf, *wf;
 	struct socket	*rso, *wso;
@@ -978,13 +978,13 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 	if ((error = fd_allocfile(&rf, &fd)) != 0)
 		goto free2;
 	retval[0] = fd;
-	rf->f_flag = FREAD;
+	rf->f_flag = FREAD | flags;
 	rf->f_type = DTYPE_SOCKET;
 	rf->f_ops = &socketops;
 	rf->f_data = rso;
 	if ((error = fd_allocfile(&wf, &fd)) != 0)
 		goto free3;
-	wf->f_flag = FWRITE;
+	wf->f_flag = FWRITE | flags;
 	wf->f_type = DTYPE_SOCKET;
 	wf->f_ops = &socketops;
 	wf->f_data = wso;
@@ -1006,6 +1006,12 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
  free1:
 	(void)soclose(rso);
 	return (error);
+}
+
+int
+sys_pipe(struct lwp *l, const void *v, register_t *retval)
+{
+	return pipe1(l, retval, 0);
 }
 #endif /* PIPE_SOCKETPAIR */
 

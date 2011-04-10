@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.36 2010/09/21 19:26:18 chs Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.37 2011/04/10 15:45:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -113,6 +113,7 @@
 #endif
 
 #define	O_DIRECTORY	0x00200000	/* fail if not a directory */
+#define	O_CLOEXEC	0x00400000	/* set close on exec */
 
 #ifdef _KERNEL
 /* convert from open() flags to/from fflags; convert O_RD/WR to FREAD/FWRITE */
@@ -123,7 +124,7 @@
 #define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
 			 O_ASYNC|O_SYNC|O_CREAT|O_TRUNC|O_EXCL|O_DSYNC|\
 			 O_RSYNC|O_NOCTTY|O_ALT_IO|O_NOFOLLOW|O_DIRECT|\
-			 O_DIRECTORY)
+			 O_DIRECTORY|O_CLOEXEC)
 
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */
