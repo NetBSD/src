@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.653 2011/03/08 12:20:17 njoly Exp $
+#	$NetBSD: bsd.own.mk,v 1.654 2011/04/10 16:52:36 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -63,15 +63,6 @@ HAVE_GDB?=	6
 
 # default to binutils 2.19
 HAVE_BINUTILS?=	219
-
-CPPFLAG_ISYSTEM=	-isystem
-.if defined(HAVE_GCC)
-.if ${HAVE_GCC} == 3
-CPPFLAG_ISYSTEMXX=	-isystem-cxx
-.else	# GCC 4
-CPPFLAG_ISYSTEMXX=	-cxx-isystem
-.endif
-.endif
 
 .if empty(.MAKEFLAGS:M-V*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
@@ -216,6 +207,8 @@ FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-f77
 OBJC=		false
 .endif
 
+CPPFLAGS+=	${HOSTPROG:U${HOSTLIB:U${DESTDIR:D--sysroot=${DESTDIR}}}}
+LDFLAGS+=	${HOSTPROG:U${HOSTLIB:U${DESTDIR:D--sysroot=${DESTDIR}}}}
 .endif	# EXTERNAL_TOOLCHAIN						# }
 
 HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.262 2011/03/08 07:53:43 jmmv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.263 2011/04/10 16:52:36 joerg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -50,16 +50,6 @@ CLEANFILES+=strings
 CFLAGS+=	${PIE_CFLAGS}
 AFLAGS+=	${PIE_AFLAGS}
 LDFLAGS+=	${PIE_LDFLAGS}
-.endif
-
-##### Default values
-.if !defined(HOSTLIB)
-.if empty(CPPFLAGS:M-nostdinc)
-CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
-.endif
-.if empty(CXXFLAGS:M-nostdinc++)
-CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
-.endif
 .endif
 
 CFLAGS+=	${COPTS}
@@ -172,15 +162,13 @@ _PROGLDOPTS=
 _PROGLDOPTS+=	-Wl,-dynamic-linker=${_SHLINKER}
 .endif
 .if ${SHLIBDIR} != "/usr/lib"
-_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR} \
-		-Wl,-rpath,${SHLIBDIR} \
-		-L${DESTDIR}${SHLIBDIR}
+_PROGLDOPTS+=	-Wl,-rpath-link,=${SHLIBDIR} \
+		-Wl,-rpath,=${SHLIBDIR} \
+		-L=${SHLIBDIR}
 .elif ${SHLIBINSTALLDIR} != "/usr/lib"
-_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
-		-L${DESTDIR}${SHLIBINSTALLDIR}
+_PROGLDOPTS+=	-Wl,-rpath-link,=${SHLIBINSTALLDIR} \
+		-L=${SHLIBINSTALLDIR}
 .endif
-_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}/usr/lib \
-		-L${DESTDIR}/usr/lib
 
 __proginstall: .USE
 	${_MKTARGET_INSTALL}
@@ -208,9 +196,6 @@ _APPEND_MANS=yes
 _APPEND_SRCS=yes
 
 _CCLINKFLAGS=
-.if defined(DESTDIR)
-_CCLINKFLAGS+=	-B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/
-.endif
 
 .if defined(PROG_CXX)
 PROG=		${PROG_CXX}
@@ -327,10 +312,8 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${D
 .if !commands(${_P})
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
-	    ${DESTDIR:D-Wl,-nostdlib} \
 	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} \
 	    ${OBJS.${_P}} ${_LDADD.${_P}} \
-	    ${DESTDIR:D-L${_GCC_LIBGCCDIR}} \
 	    ${_PROGLDOPTS}
 .if defined(CTFMERGE)
 	${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${OBJS.${_P}}

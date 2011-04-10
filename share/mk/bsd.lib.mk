@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.312 2011/02/10 21:55:33 matt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.313 2011/04/10 16:52:36 joerg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -62,17 +62,6 @@ DPADD+=		${LIBDO.${_lib}}/lib${_lib}.so
 
 ##### Build and install rules
 MKDEP_SUFFIXES?=	.o .po .pico .go .ln
-
-# Use purely kernel private headers in rump builds
-# Skip NetBSD headers for the toolchain builds
-.if !defined(RUMPKERNEL) && !defined(HOSTLIB)
-.if empty(CPPFLAGS:M-nostdinc)
-CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
-.endif
-.if empty(CXXFLAGS:M-nostdinc++)
-CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
-.endif
-.endif
 
 .if !defined(SHLIB_MAJOR) && exists(${SHLIB_VERSION_FILE})		# {
 SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major
@@ -522,12 +511,12 @@ lib${LIB}_g.a:: ${GOBJS} __archivebuild
 
 _LIBLDOPTS=
 .if ${SHLIBDIR} != "/usr/lib"
-_LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR}:${DESTDIR}/usr/lib \
-		-Wl,-rpath,${SHLIBDIR} \
-		-L${DESTDIR}${SHLIBDIR}
+_LIBLDOPTS+=	-Wl,-rpath-link,=${SHLIBDIR} \
+		-Wl,-rpath,=${SHLIBDIR} \
+		-L=${SHLIBDIR}
 .elif ${SHLIBINSTALLDIR} != "/usr/lib"
-_LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
-		-L${DESTDIR}${SHLIBINSTALLDIR}
+_LIBLDOPTS+=	-Wl,-rpath-link,=${SHLIBINSTALLDIR} \
+		-L=${SHLIBINSTALLDIR}
 .endif
 
 # gcc -shared now adds -lc automatically. For libraries other than libc and
@@ -565,18 +554,9 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	${_MKTARGET_BUILD}
 	rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
-.if defined(DESTDIR)
-	${LIBCC} ${LDLIBC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}${SHLIBDIR}/ \
-	    -Wl,-x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
-	    -Wl,--whole-archive ${SOLIB} \
-	    -Wl,--no-whole-archive ${_LDADD.lib${LIB}} \
-	    ${_LIBLDOPTS} ${_LDFLAGS.lib${LIB}} \
-	    -L${_GCC_LIBGCCDIR}
-.else
 	${LIBCC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${_LDFLAGS.lib${LIB}} \
 	    -o ${.TARGET} ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${_LDADD.lib${LIB}}
-.endif
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
