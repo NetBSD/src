@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.303 2011/04/10 06:27:20 jruoho Exp $
+# $NetBSD: mi,v 1.304 2011/04/10 08:07:41 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -288,6 +288,7 @@
 ./usr/libdata/debug/usr/tests/include/t_limits.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/t_paths.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/t_stdint.debug			tests-ipf-tests		debug,atf
+./usr/libdata/debug/usr/tests/include/t_types.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/h_ps_strings1.debug		tests-kernel-tests	debug,atf
@@ -1371,6 +1372,7 @@
 ./usr/tests/include/t_limits			tests-include-tests	atf
 ./usr/tests/include/t_paths			tests-include-tests	atf
 ./usr/tests/include/t_stdint			tests-include-tests	atf
+./usr/tests/include/t_types			tests-include-tests	atf
 ./usr/tests/ipf					tests-ipf-tests
 ./usr/tests/ipf/Atffile				tests-ipf-tests
 ./usr/tests/ipf/expected			tests-ipf-tests
