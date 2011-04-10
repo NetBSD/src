@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1612 2011/04/08 08:36:33 jruoho Exp $
+#	$NetBSD: mi,v 1.1613 2011/04/10 09:58:00 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8644,6 +8644,7 @@
 ./usr/share/man/cat3/ungetc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ungetch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ungetwc.0			comp-c-catman		.cat
+./usr/share/man/cat3/unistd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/unlockpt.0			comp-c-catman		.cat
 ./usr/share/man/cat3/unpost_form.0		comp-c-catman		.cat
 ./usr/share/man/cat3/unsetenv.0			comp-c-catman		.cat
@@ -14650,6 +14651,7 @@
 ./usr/share/man/html3/ungetc.html		comp-c-htmlman		html
 ./usr/share/man/html3/ungetch.html		comp-c-htmlman		html
 ./usr/share/man/html3/ungetwc.html		comp-c-htmlman		html
+./usr/share/man/html3/unistd.html		comp-c-htmlman		html
 ./usr/share/man/html3/unlockpt.html		comp-c-htmlman		html
 ./usr/share/man/html3/unpost_form.html		comp-c-htmlman		html
 ./usr/share/man/html3/unsetenv.html		comp-c-htmlman		html
@@ -20724,6 +20726,7 @@
 ./usr/share/man/man3/ungetc.3			comp-c-man		.man
 ./usr/share/man/man3/ungetch.3			comp-c-man		.man
 ./usr/share/man/man3/ungetwc.3			comp-c-man		.man
+./usr/share/man/man3/unistd.3			comp-c-man		.man
 ./usr/share/man/man3/unlockpt.3			comp-c-man		.man
 ./usr/share/man/man3/unpost_form.3		comp-c-man		.man
 ./usr/share/man/man3/unsetenv.3			comp-c-man		.man
