@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/03/30 09:43:22 jruoho Exp $
+# $NetBSD: Makefile,v 1.3 2011/04/10 08:07:41 jruoho Exp $
 
 NOMAN=		# defined
 
@@ -12,6 +12,7 @@ TESTS_C+=	t_inttypes
 TESTS_C+=	t_limits
 TESTS_C+=	t_paths
 TESTS_C+=	t_stdint
+TESTS_C+=	t_types
 
 FILESDIR=	${TESTSDIR}
 FILES=		d_bitstring_27.out
