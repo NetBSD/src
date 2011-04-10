@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/03/27 19:46:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2011/04/10 16:47:04 joerg Exp $
 
 .include "../Makefile.inc"
 
@@ -10,7 +10,7 @@ DIST=		${TOP}/dist/gdb6
 PROG=		gdbtui
 
 SRCS=		tui-main.c
-CPPFLAGS=	-I${.CURDIR} \
+CPPFLAGS+=	-I${.CURDIR} \
 		-I${.CURDIR}/../arch/${MACHINE_ARCH} \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
