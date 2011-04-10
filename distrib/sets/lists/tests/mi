@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.305 2011/04/10 08:35:47 jruoho Exp $
+# $NetBSD: mi,v 1.306 2011/04/10 09:47:43 blymn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1944,6 +1944,105 @@
 ./usr/tests/lib/libc/t_servent			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_strptime			tests-obsolete		obsolete
 ./usr/tests/lib/libc/time			tests-lib-tests
+./usr/tests/lib/libcurses			tests-lib-tests
+./usr/tests/lib/libcurses/.terminfo.db		tests-lib-tests		atf
+./usr/tests/lib/libcurses/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files			tests-lib-tests
+./usr/tests/lib/libcurses/check_files/addch.chk		tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/addchstr.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/addstr.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/attributes.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/background1.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/background2.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/background3.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/background4.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/background5.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/bell.chk		tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/box_standout.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/chgat1.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/chgat2.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/chgat3.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/clear1.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/clear10.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/clear2.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/clear3.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/clear4.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/clear5.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/clear6.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/clear7.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/clear8.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/clear9.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/color_blank_draw.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/color_blue_back.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/color_default.chk		tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/color_red_fore.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/color_set.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/color_start.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin1.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin10.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin11.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin12.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin13.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin14.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin2.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin3.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin4.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin5.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin6.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin7.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin8.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/copywin9.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/curs_set1.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/curs_set2.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/curs_set3.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/curses_start.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/fill.chk		tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/home.chk		tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/timeout.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/wborder.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/wborder_refresh.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/wgetstr.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/wgetstr_refresh.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/window.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/wprintw_refresh.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/wscrl1.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/check_files/wscrl2.chk	tests-lib-tests		atf
+./usr/tests/lib/libcurses/director		tests-lib-tests		atf
+./usr/tests/lib/libcurses/slave			tests-lib-tests		atf
+./usr/tests/lib/libcurses/t_curses		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests			tests-lib-tests
+./usr/tests/lib/libcurses/tests/addch		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/addchnstr	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/addchstr	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/addnstr		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/addstr		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/assume_default_colors	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/attributes	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/background	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/beep		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/box		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/can_change_color	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/cbreak		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/chgat		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/clear		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/color_content	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/color_set	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/copywin		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/curs_set	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/fill_screen	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/getch		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/getstr		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/mvwin		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/start		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/start_color	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/std_defines	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/termattrs	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/timeout		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/wborder		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/window		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/window_create	tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/wprintw		tests-lib-tests		atf
+./usr/tests/lib/libcurses/tests/wscrl		tests-lib-tests		atf
 ./usr/tests/lib/libdes				tests-lib-tests
 ./usr/tests/lib/libc/time/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/time/t_mktime		tests-lib-tests		atf
