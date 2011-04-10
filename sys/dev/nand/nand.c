@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.7 2011/04/04 14:25:10 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.8 2011/04/10 12:48:09 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.7 2011/04/04 14:25:10 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.8 2011/04/10 12:48:09 ahoka Exp $");
 
 #include "locators.h"
 
@@ -1050,7 +1050,7 @@ nand_flash_write_unaligned(device_t self, flash_off_t offset, size_t len,
 	const uint8_t *bufp;
 	flash_off_t addr;
 	size_t left, count;
-	int error, i;
+	int error = 0, i;
 
 	first = offset & chip->nc_page_mask;
 	firstoff = offset & ~chip->nc_page_mask;
@@ -1061,26 +1061,30 @@ nand_flash_write_unaligned(device_t self, flash_off_t offset, size_t len,
 	addr = first;
 	*retlen = 0;
 
+	mutex_enter(&sc->sc_device_lock);
 	if (count == 1) {
 		if (nand_isbad(self, addr)) {
 			aprint_error_dev(self,
 			    "nand_flash_write_unaligned: "
 			    "bad block encountered\n");
-			return EIO;
+			error = EIO;
+			goto out;
 		}
 
 		error = nand_read_page(self, addr, chip->nc_page_cache);
-		if (error)
-			return error;
+		if (error) {
+			goto out;
+		}
 
 		memcpy(chip->nc_page_cache + firstoff, buf, len);
 
 		error = nand_program_page(self, addr, chip->nc_page_cache);
-		if (error)
-			return error;
+		if (error) {
+			goto out;
+		}
 
 		*retlen = len;
-		return 0;
+		goto out;
 	}
 
 	bufp = buf;
@@ -1091,14 +1095,16 @@ nand_flash_write_unaligned(device_t self, flash_off_t offset, size_t len,
 			aprint_error_dev(self,
 			    "nand_flash_write_unaligned: "
 			    "bad block encountered\n");
-			return EIO;
+			error = EIO;
+			goto out;
 		}
 
 		if (i == 0) {
 			error = nand_read_page(self,
 			    addr, chip->nc_page_cache);
-			if (error)
-				return error;
+			if (error) {
+				goto out;
+			}
 
 			memcpy(chip->nc_page_cache + firstoff,
 			    bufp, chip->nc_page_size - firstoff);
@@ -1106,8 +1112,9 @@ nand_flash_write_unaligned(device_t self, flash_off_t offset, size_t len,
 			printf("program page: %s: %d\n", __FILE__, __LINE__);
 			error = nand_program_page(self,
 			    addr, chip->nc_page_cache);
-			if (error)
-				return error;
+			if (error) {
+				goto out;
+			}
 
 			bufp += chip->nc_page_size - firstoff;
 			left -= chip->nc_page_size - firstoff;
@@ -1116,15 +1123,17 @@ nand_flash_write_unaligned(device_t self, flash_off_t offset, size_t len,
 		} else if (i == count - 1) {
 			error = nand_read_page(self,
 			    addr, chip->nc_page_cache);
-			if (error)
-				return error;
+			if (error) {
+				goto out;
+			}
 
 			memcpy(chip->nc_page_cache, bufp, left);
 
 			error = nand_program_page(self,
 			    addr, chip->nc_page_cache);
-			if (error)
-				return error;
+			if (error) {
+				goto out;
+			}
 
 			*retlen += left;
 			KASSERT(left < chip->nc_page_size);
@@ -1138,8 +1147,9 @@ nand_flash_write_unaligned(device_t self, flash_off_t offset, size_t len,
 			KASSERT(left > chip->nc_page_size);
 
 			error = nand_program_page(self, addr, bufp);
-			if (error)
-				return error;
+			if (error) {
+				goto out;
+			}
 
 			bufp += chip->nc_page_size;
 			left -= chip->nc_page_size;
@@ -1150,8 +1160,10 @@ nand_flash_write_unaligned(device_t self, flash_off_t offset, size_t len,
 	}
 
 	KASSERT(*retlen == len);
+out:
+	mutex_exit(&sc->sc_device_lock);
 
-	return 0;
+	return error;
 }
 
 int
@@ -1198,8 +1210,9 @@ nand_flash_write(device_t self, flash_off_t offset, size_t len, size_t *retlen,
 		}
 
 		error = nand_program_page(self, addr, bufp);
-		if (error)
+		if (error) {
 			goto out;
+		}
 
 		addr += chip->nc_page_size;
 		bufp += chip->nc_page_size;
@@ -1240,8 +1253,9 @@ nand_flash_read_unaligned(device_t self, size_t offset,
 	mutex_enter(&sc->sc_device_lock);
 	if (count == 1) {
 		error = nand_read_page(self, addr, chip->nc_page_cache);
-		if (error)
+		if (error) {
 			goto out;
+		}
 
 		memcpy(bufp, chip->nc_page_cache + firstoff, len);
 
@@ -1251,8 +1265,9 @@ nand_flash_read_unaligned(device_t self, size_t offset,
 
 	for (i = 0; i < count && left != 0; i++) {
 		error = nand_read_page(self, addr, chip->nc_page_cache);
-		if (error)
+		if (error) {
 			goto out;
+		}
 
 		if (i == 0) {
 			memcpy(bufp, chip->nc_page_cache + firstoff,
@@ -1415,7 +1430,7 @@ nand_flash_erase(device_t self,
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
 	flash_off_t addr;
-	int error;
+	int error = 0;
 
 	if (ei->ei_addr < 0 || ei->ei_len < chip->nc_block_size)
 		return EINVAL;
@@ -1448,17 +1463,18 @@ nand_flash_erase(device_t self,
 	addr = ei->ei_addr;
 	while (addr < ei->ei_addr + ei->ei_len) {
 		if (nand_isbad(self, addr)) {
-			mutex_exit(&sc->sc_device_lock);
 			aprint_error_dev(self, "bad block encountered\n");
 			ei->ei_state = FLASH_ERASE_FAILED;
-			return EIO;
+			
+			error = EIO;
+			goto out;
 		}
 
 		error = nand_erase_block(self, addr);
 		if (error) {
-			mutex_exit(&sc->sc_device_lock);
 			ei->ei_state = FLASH_ERASE_FAILED;
-			return error;
+			
+			goto out;
 		}
 
 		addr += chip->nc_block_size;
@@ -1466,10 +1482,15 @@ nand_flash_erase(device_t self,
 	mutex_exit(&sc->sc_device_lock);
 
 	ei->ei_state = FLASH_ERASE_DONE;
-	if (ei->ei_callback != NULL)
+	if (ei->ei_callback != NULL) {
 		ei->ei_callback(ei);
+	}
 
 	return 0;
+out:
+	mutex_exit(&sc->sc_device_lock);
+
+	return error;
 }
 
 static int
