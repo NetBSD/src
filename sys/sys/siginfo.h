@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.21 2011/04/10 00:04:37 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.22 2011/04/10 14:37:20 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,12 +60,6 @@ struct _ksiginfo {
 		struct {
 			pid_t	_pid;
 			uid_t	_uid;
-			lwpid_t	_lid;
-		} _lwp;
-
-		struct {
-			pid_t	_pid;
-			uid_t	_uid;
 			int	_status;
 			clock_t	_utime;
 			clock_t	_stime;
@@ -88,6 +82,7 @@ typedef struct ksiginfo {
 	u_long			ksi_flags;	/* 4 or 8 bytes (LP64) */
 	CIRCLEQ_ENTRY(ksiginfo) ksi_list;
 	struct _ksiginfo	ksi_info;
+	lwpid_t			ksi_lid;	/* 0, or directed to LWP */
 } ksiginfo_t;
 
 #define	KSI_TRAP	0x01	/* signal caused by trap */
@@ -145,9 +140,6 @@ typedef union siginfo {
 #define	si_value	_info._reason._rt._value
 #define	si_pid		_info._reason._child._pid
 #define	si_uid		_info._reason._child._uid
-#if defined(_NETBSD_SOURCE)
-#define	si_lid		_info._reason._lwp._lid
-#endif
 #define	si_status	_info._reason._child._status
 #define	si_utime	_info._reason._child._utime
 #define	si_stime	_info._reason._child._stime
@@ -165,14 +157,11 @@ typedef union siginfo {
 #define	ksi_errno	ksi_info._errno
 
 #define	ksi_value	ksi_info._reason._rt._value
-
 #define	ksi_pid		ksi_info._reason._child._pid
 #define	ksi_uid		ksi_info._reason._child._uid
 #define	ksi_status	ksi_info._reason._child._status
 #define	ksi_utime	ksi_info._reason._child._utime
 #define	ksi_stime	ksi_info._reason._child._stime
-
-#define	ksi_lid		ksi_info._reason._lwp._lid /* 0, or directed to LWP */
 
 #define	ksi_addr	ksi_info._reason._fault._addr
 #define	ksi_trap	ksi_info._reason._fault._trap
