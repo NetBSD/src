@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.221 2011/01/23 23:40:37 lukem Exp $
+$NetBSD: UPDATING,v 1.222 2011/04/10 08:29:31 plunky Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,13 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+20110328:
+	Building the Xorg binary was moved into a subdirectory to fix
+	ordering issues with "make all". It may be necessary to remove
+	the OBJDIR for external/mit/xorg/server/xorg-server/hw/xfree86
+	if your update build fails, as the "Xorg" entry there is now a
+	directory.
+
 20110121:
 	Assembler files no longer use -traditional-cpp.  This can break
 	the build of individual parts of the tree.  This is handled
