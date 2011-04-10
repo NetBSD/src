@@ -6277,7 +6277,7 @@ main (int argc, const char **argv)
 			      PREFIX_PRIORITY_LAST, 0, 1);
       else if (*cross_compile == '0')
 	{
-#ifndef NETBSD_NATIVE
+#if !defined(NETBSD_NATIVE) && !defined(NETBSD_TOOLS)
 	  if (gcc_exec_prefix)
 	    add_prefix (&startfile_prefixes,
 			concat (gcc_exec_prefix, machine_suffix,
@@ -6295,7 +6295,7 @@ main (int argc, const char **argv)
 #endif /* NETBSD_NATIVE */
 	}
 
-#ifndef NETBSD_NATIVE
+#if !defined(NETBSD_NATIVE) && !defined(NETBSD_TOOLS)
       if (*standard_startfile_prefix_1)
  	add_sysrooted_prefix (&startfile_prefixes,
 			      standard_startfile_prefix_1, "BINUTILS",
