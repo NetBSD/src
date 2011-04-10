@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.9 2010/02/11 09:06:48 roy Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.10 2011/04/10 16:45:52 joerg Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -29,7 +29,8 @@ PARSELISTENV+=	BOOTMODEL=${BOOTMODEL:Q}
 
 # This propogates through to the link of ramdiskbin
 # The map file is useful when trying to prune the image
-CRUNCHENV += LDFLAGS='-Wl,-Map,${CRUNCHBIN}.map,--cref'
+LDFLAGS+=	-Wl,-Map,${CRUNCHBIN}.map,--cref
+CRUNCHENV += LDFLAGS=${LDFLAGS:Q}
 
 .if defined(USE_SYSINST)
 .if ${USE_SYSINST} != yes
