@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.144 2011/04/11 01:39:28 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.145 2011/04/11 01:39:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.144 2011/04/11 01:39:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.145 2011/04/11 01:39:46 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1043,6 +1043,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 {
 	struct nameidata *ndp = state->ndp;
 	struct componentname *cnp = state->cnp;
+	struct vnode *searchdir;
 	const char *cp;
 	int error;
 
@@ -1083,7 +1084,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 
 		ndp->ni_dvp = NULL;
 		cnp->cn_flags &= ~ISSYMLINK;
-		state->dp = state->namei_startdir;
+		searchdir = state->namei_startdir;
 
     dirloop:
 		/*
@@ -1099,8 +1100,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			ndp->ni_pathlen -= cp - cnp->cn_nameptr;
 			cnp->cn_nameptr = cp;
 
-			if (state->dp->v_type != VDIR) {
-				vput(state->dp);
+			if (searchdir->v_type != VDIR) {
+				vput(searchdir);
 				ndp->ni_vp = NULL;
 				/* XXX this should use namei_end() */
 				if (ndp->ni_dvp) {
@@ -1116,8 +1117,10 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * current node.
 		 */
 		if (cnp->cn_nameptr[0] == '\0') {
-			ndp->ni_vp = state->dp;
+			ndp->ni_vp = searchdir;
 			cnp->cn_flags |= ISLASTCN;
+
+			/* XXX this conflates searchdir/foundobj wrongly */
 
 			/* bleh */
 			goto terminal;
@@ -1125,7 +1128,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 
 		error = lookup_parsepath(state);
 		if (error) {
-			vput(state->dp);
+			vput(searchdir);
 			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
 			/* XXX this should use namei_end() */
@@ -1136,7 +1139,10 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			return (error);
 		}
 
+		state->dp = searchdir;
 		error = lookup_once(state);
+		/* XXX here and below searchdir is really "foundobj" */
+		searchdir = state->dp;
 		if (error) {
 			ndp->ni_vp = NULL;
 			/* XXX this should use namei_end() */
@@ -1168,7 +1174,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * over any slashes that we skipped, as we will need
 		 * them again.
 		 */
-		if (namei_atsymlink(state, state->dp)) {
+		if (namei_atsymlink(state, searchdir)) {
 			ndp->ni_pathlen += state->slashes;
 			ndp->ni_next -= state->slashes;
 			cnp->cn_flags |= ISSYMLINK;
@@ -1195,9 +1201,9 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * Check for directory, if the component was
 		 * followed by a series of slashes.
 		 */
-		if ((state->dp->v_type != VDIR) && (cnp->cn_flags & REQUIREDIR)) {
-			KASSERT(state->dp != ndp->ni_dvp);
-			vput(state->dp);
+		if ((searchdir->v_type != VDIR) && (cnp->cn_flags & REQUIREDIR)) {
+			KASSERT(searchdir != ndp->ni_dvp);
+			vput(searchdir);
 			ndp->ni_vp = NULL;
 			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
@@ -1214,18 +1220,20 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 */
 		if (!(cnp->cn_flags & ISLASTCN)) {
 			cnp->cn_nameptr = ndp->ni_next;
-			if (ndp->ni_dvp == state->dp) {
+			if (ndp->ni_dvp == searchdir) {
 				vrele(ndp->ni_dvp);
 			} else {
 				vput(ndp->ni_dvp);
 			}
 			ndp->ni_dvp = NULL;
+			/* XXX notyet */
+			//searchdir = foundobj;
 			goto dirloop;
 		}
 
     terminal:
 		error = 0;
-		if (state->dp == ndp->ni_erootdir) {
+		if (searchdir == ndp->ni_erootdir) {
 			/*
 			 * We are about to return the emulation root.
 			 * This isn't a good idea because code might
@@ -1233,17 +1241,17 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			 * matches that returned for "/" and loop
 			 * forever.  So convert it to the real root.
 			 */
-			if (ndp->ni_dvp == state->dp)
-				vrele(state->dp);
+			if (ndp->ni_dvp == searchdir)
+				vrele(searchdir);
 			else
 				if (ndp->ni_dvp != NULL)
 					vput(ndp->ni_dvp);
 			ndp->ni_dvp = NULL;
-			vput(state->dp);
-			state->dp = ndp->ni_rootdir;
-			vref(state->dp);
-			vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
-			ndp->ni_vp = state->dp;
+			vput(searchdir);
+			searchdir = ndp->ni_rootdir;
+			vref(searchdir);
+			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
+			ndp->ni_vp = searchdir;
 		}
 
 		/*
@@ -1264,8 +1272,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			    default:
 				KASSERT(0);
 			}
-			vput(state->dp);
-			ndp->ni_vp = NULL;
+			vput(searchdir);
+			searchdir = NULL;
 			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
 				vput(ndp->ni_dvp);
@@ -1281,8 +1289,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		if (state->rdonly &&
 		    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
 			error = EROFS;
-			if (state->dp != ndp->ni_dvp) {
-				vput(state->dp);
+			if (searchdir != ndp->ni_dvp) {
+				vput(searchdir);
 			}
 			ndp->ni_vp = NULL;
 			/* XXX this should use namei_end() */
@@ -1293,7 +1301,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			return (error);
 		}
 		if ((cnp->cn_flags & LOCKLEAF) == 0) {
-			VOP_UNLOCK(state->dp);
+			VOP_UNLOCK(searchdir);
 		}
 
 		break;
