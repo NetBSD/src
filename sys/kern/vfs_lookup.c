@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.156 2011/04/11 02:15:38 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.157 2011/04/11 02:15:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.156 2011/04/11 02:15:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.157 2011/04/11 02:15:54 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1107,6 +1107,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * current node.
 		 */
 		if (cnp->cn_nameptr[0] == '\0') {
+			vref(searchdir);
 			foundobj = searchdir;
 			ndp->ni_vp = foundobj;
 			cnp->cn_flags |= ISLASTCN;
@@ -1141,8 +1142,9 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			state->attempt_retry = 1;
 			return (error);
 		}
-		ndp->ni_dvp = searchdir;
+		KASSERT(ndp->ni_dvp == NULL);
 		ndp->ni_vp = foundobj;
+
 		// XXX ought to be able to avoid this case too
 		if (state->lookup_alldone) {
 			error = 0;
@@ -1175,9 +1177,10 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 						     &searchdir);
 			}
 			if (error) {
-				KASSERT(ndp->ni_dvp != ndp->ni_vp);
-				vput(ndp->ni_dvp);
+				KASSERT(searchdir != ndp->ni_vp);
+				vput(searchdir);
 				vput(ndp->ni_vp);
+				KASSERT(ndp->ni_dvp == NULL);
 				ndp->ni_vp = NULL;
 				return error;
 			}
@@ -1190,11 +1193,11 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * followed by a series of slashes.
 		 */
 		if ((foundobj->v_type != VDIR) && (cnp->cn_flags & REQUIREDIR)) {
-			KASSERT(foundobj != ndp->ni_dvp);
+			KASSERT(foundobj != searchdir);
 			vput(foundobj);
 			ndp->ni_vp = NULL;
-			if (ndp->ni_dvp) {
-				vput(ndp->ni_dvp);
+			if (searchdir) {
+				vput(searchdir);
 			}
 			state->attempt_retry = 1;
 			return ENOTDIR;
@@ -1207,13 +1210,14 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 */
 		if (!(cnp->cn_flags & ISLASTCN)) {
 			cnp->cn_nameptr = ndp->ni_next;
-			if (ndp->ni_dvp == foundobj) {
-				vrele(ndp->ni_dvp);
+			if (searchdir == foundobj) {
+				vrele(searchdir);
 			} else {
-				vput(ndp->ni_dvp);
+				vput(searchdir);
 			}
-			ndp->ni_dvp = NULL;
+			KASSERT(ndp->ni_dvp == NULL);
 			searchdir = foundobj;
+			foundobj = NULL;
 			goto dirloop;
 		}
 
@@ -1227,12 +1231,13 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			 * matches that returned for "/" and loop
 			 * forever.  So convert it to the real root.
 			 */
-			if (ndp->ni_dvp == foundobj)
+			if (searchdir == foundobj)
 				vrele(foundobj);
 			else
-				if (ndp->ni_dvp != NULL)
-					vput(ndp->ni_dvp);
-			ndp->ni_dvp = NULL;
+				if (searchdir != NULL)
+					vput(searchdir);
+			searchdir = NULL;
+			KASSERT(ndp->ni_dvp == NULL);
 			vput(foundobj);
 			foundobj = ndp->ni_rootdir;
 			vref(foundobj);
@@ -1246,7 +1251,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * and we don't have one (because this is the
 		 * root directory), then we must fail.
 		 */
-		if (ndp->ni_dvp == NULL && cnp->cn_nameiop != LOOKUP) {
+		if (searchdir == NULL && cnp->cn_nameiop != LOOKUP) {
 			switch (cnp->cn_nameiop) {
 			    case CREATE:
 				error = EEXIST;
@@ -1260,9 +1265,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			}
 			vput(foundobj);
 			foundobj = NULL;
-			if (ndp->ni_dvp) {
-				vput(ndp->ni_dvp);
-			}
+			KASSERT(ndp->ni_dvp == NULL);
+			ndp->ni_vp = NULL;
 			state->attempt_retry = 1;
 			return (error);
 		}
@@ -1274,13 +1278,14 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		if (state->rdonly &&
 		    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
 			error = EROFS;
-			if (foundobj != ndp->ni_dvp) {
+			if (foundobj != searchdir) {
 				vput(foundobj);
 			}
-			ndp->ni_vp = NULL;
-			if (ndp->ni_dvp) {
-				vput(ndp->ni_dvp);
+			if (searchdir) {
+				vput(searchdir);
 			}
+			KASSERT(ndp->ni_dvp == NULL);
+			ndp->ni_vp = NULL;
 			state->attempt_retry = 1;
 			return (error);
 		}
@@ -1298,15 +1303,16 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 	/*
 	 * If LOCKPARENT is not set, the parent directory isn't returned.
 	 */
-	if ((cnp->cn_flags & LOCKPARENT) == 0 && ndp->ni_dvp != NULL) {
-		if (ndp->ni_dvp == ndp->ni_vp) {
-			vrele(ndp->ni_dvp);
+	if ((cnp->cn_flags & LOCKPARENT) == 0 && searchdir != NULL) {
+		if (searchdir == ndp->ni_vp) {
+			vrele(searchdir);
 		} else {
-			vput(ndp->ni_dvp);
+			vput(searchdir);
 		}
-		ndp->ni_dvp = NULL;
+		searchdir = NULL;
 	}
 
+	ndp->ni_dvp = searchdir;
 	return 0;
 }
 
