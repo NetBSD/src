@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.143 2011/04/11 01:39:13 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.144 2011/04/11 01:39:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.143 2011/04/11 01:39:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.144 2011/04/11 01:39:28 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -640,9 +640,9 @@ namei_end(struct namei_state *state)
  * Check for being at a symlink.
  */
 static inline int
-namei_atsymlink(struct namei_state *state)
+namei_atsymlink(struct namei_state *state, struct vnode *foundobj)
 {
-	return (state->dp->v_type == VLNK) &&
+	return (foundobj->v_type == VLNK) &&
 		(state->cnp->cn_flags & (FOLLOW|REQUIREDIR));
 }
 
@@ -1168,7 +1168,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * over any slashes that we skipped, as we will need
 		 * them again.
 		 */
-		if (namei_atsymlink(state)) {
+		if (namei_atsymlink(state, state->dp)) {
 			ndp->ni_pathlen += state->slashes;
 			ndp->ni_next -= state->slashes;
 			cnp->cn_flags |= ISSYMLINK;
