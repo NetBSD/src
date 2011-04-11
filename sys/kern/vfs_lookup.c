@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.162 2011/04/11 02:17:28 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.163 2011/04/11 02:17:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.162 2011/04/11 02:17:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.163 2011/04/11 02:17:41 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -839,8 +839,8 @@ lookup_once(struct namei_state *state,
 	    struct vnode **newsearchdir_ret,
 	    struct vnode **foundobj_ret)
 {
-	struct vnode *foundobj;
-	struct vnode *tdp;		/* saved dp */
+	struct vnode *tmpvn;		/* scratch vnode */
+	struct vnode *foundobj;		/* result */
 	struct mount *mp;		/* mount table entry */
 	struct lwp *l = curlwp;
 	int error;
@@ -904,10 +904,10 @@ lookup_once(struct namei_state *state,
 			if ((searchdir->v_vflag & VV_ROOT) == 0 ||
 			    (cnp->cn_flags & NOCROSSMOUNT))
 				break;
-			tdp = searchdir;
+			tmpvn = searchdir;
 			searchdir = searchdir->v_mount->mnt_vnodecovered;
 			vref(searchdir);
-			vput(tdp);
+			vput(tmpvn);
 			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
 			*newsearchdir_ret = searchdir;
 		}
@@ -932,10 +932,10 @@ unionlookup:
 		if ((error == ENOENT) &&
 		    (searchdir->v_vflag & VV_ROOT) &&
 		    (searchdir->v_mount->mnt_flag & MNT_UNION)) {
-			tdp = searchdir;
+			tmpvn = searchdir;
 			searchdir = searchdir->v_mount->mnt_vnodecovered;
 			vref(searchdir);
-			vput(tdp);
+			vput(tmpvn);
 			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
 			*newsearchdir_ret = searchdir;
 			goto unionlookup;
@@ -1005,14 +1005,13 @@ unionlookup:
 		KASSERT(searchdir != foundobj);
 		VOP_UNLOCK(searchdir);
 		vput(foundobj);
-		error = VFS_ROOT(mp, &tdp);
+		error = VFS_ROOT(mp, &foundobj);
 		vfs_unbusy(mp, false, NULL);
 		if (error) {
 			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
 			return error;
 		}
-		VOP_UNLOCK(tdp);
-		foundobj = tdp;
+		VOP_UNLOCK(foundobj);
 		vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
 		vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
 	}
