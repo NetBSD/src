@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.163 2011/04/11 02:17:41 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.164 2011/04/11 02:17:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.163 2011/04/11 02:17:41 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.164 2011/04/11 02:17:54 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -592,7 +592,6 @@ namei_start(struct namei_state *state, struct vnode *forcecwd,
 	 * POSIX.1 requirement: "" is not a valid file name.
 	 */
 	if (ndp->ni_pathlen == 1) {
-		ndp->ni_vp = NULL;
 		return ENOENT;
 	}
 
@@ -1034,6 +1033,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 
 	error = namei_start(state, forcecwd, &searchdir);
 	if (error) {
+		ndp->ni_dvp = NULL;
+		ndp->ni_vp = NULL;
 		return error;
 	}
 
@@ -1057,6 +1058,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 */
 		if (searchdir->v_mount == NULL) {
 			vput(searchdir);
+			ndp->ni_dvp = NULL;
+			ndp->ni_vp = NULL;
 			return (ENOENT);
 		}
 
@@ -1374,8 +1377,8 @@ namei(struct nameidata *ndp)
 
 	if (error) {
 		/* make sure no stray refs leak out */
-		ndp->ni_dvp = NULL;
-		ndp->ni_vp = NULL;
+		KASSERT(ndp->ni_dvp == NULL);
+		KASSERT(ndp->ni_vp == NULL);
 	}
 
 	return error;
@@ -1410,8 +1413,8 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *forcecwd, int neverfollow)
 
 	if (error) {
 		/* make sure no stray refs leak out */
-		ndp->ni_dvp = NULL;
-		ndp->ni_vp = NULL;
+		KASSERT(ndp->ni_dvp == NULL);
+		KASSERT(ndp->ni_vp == NULL);
 	}
 
 	return error;
