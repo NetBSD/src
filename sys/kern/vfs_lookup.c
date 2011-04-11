@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.160 2011/04/11 02:17:01 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.161 2011/04/11 02:17:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.160 2011/04/11 02:17:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.161 2011/04/11 02:17:14 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -633,7 +633,7 @@ namei_atsymlink(struct namei_state *state, struct vnode *foundobj)
  */
 static inline int
 namei_follow(struct namei_state *state, int inhibitmagic,
-	     struct vnode *searchdir,
+	     struct vnode *searchdir, struct vnode *foundobj,
 	     struct vnode **newsearchdir_ret)
 {
 	struct nameidata *ndp = state->ndp;
@@ -649,8 +649,8 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 	if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
 		return ELOOP;
 	}
-	if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
-		error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred);
+	if (foundobj->v_mount->mnt_flag & MNT_SYMPERM) {
+		error = VOP_ACCESS(foundobj, VEXEC, cnp->cn_cred);
 		if (error != 0)
 			return error;
 	}
@@ -665,7 +665,7 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 	auio.uio_rw = UIO_READ;
 	auio.uio_resid = MAXPATHLEN;
 	UIO_SETUP_SYSSPACE(&auio);
-	error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
+	error = VOP_READLINK(foundobj, &auio, cnp->cn_cred);
 	if (error) {
 		PNBUF_PUT(cp);
 		return error;
@@ -698,7 +698,7 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 	ndp->ni_pathlen += linklen;
 	memcpy(ndp->ni_pnbuf, cp, ndp->ni_pathlen);
 	PNBUF_PUT(cp);
-	vput(ndp->ni_vp);
+	vput(foundobj);
 
 	/*
 	 * Check if root directory should replace current directory.
@@ -1173,7 +1173,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 				 * symlink in. (FUTURE)
 				 */
 				error = namei_follow(state, inhibitmagic,
-						     searchdir,
+						     searchdir, ndp->ni_vp,
 						     &searchdir);
 			}
 			if (error) {
