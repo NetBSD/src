@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.150 2011/04/11 02:12:58 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.151 2011/04/11 02:13:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.150 2011/04/11 02:12:58 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.151 2011/04/11 02:13:10 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -626,15 +626,6 @@ namei_start(struct namei_state *state, struct vnode *forcecwd,
 }
 
 /*
- * Undo namei_start: unlock and release the current lookup directory.
- */
-static void
-namei_end(struct namei_state *state)
-{
-	vput(state->namei_startdir);
-}
-
-/*
  * Check for being at a symlink.
  */
 static inline int
@@ -1077,7 +1068,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * XXX: should this also check if it's unlinked?
 		 */
 		if (state->namei_startdir->v_mount == NULL) {
-			namei_end(state);
+			vput(state->namei_startdir);
 			return (ENOENT);
 		}
 
@@ -1109,7 +1100,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			if (searchdir->v_type != VDIR) {
 				vput(searchdir);
 				ndp->ni_vp = NULL;
-				/* XXX this should use namei_end() */
 				if (ndp->ni_dvp) {
 					vput(ndp->ni_dvp);
 				}
@@ -1136,7 +1126,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			vput(searchdir);
 			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
-			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
 				vput(ndp->ni_dvp);
 			}
@@ -1148,7 +1137,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		ndp->ni_dvp = searchdir;
 		if (error) {
 			ndp->ni_vp = NULL;
-			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
 				vput(ndp->ni_dvp);
 			}
@@ -1209,7 +1197,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			KASSERT(foundobj != ndp->ni_dvp);
 			vput(foundobj);
 			ndp->ni_vp = NULL;
-			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
 				vput(ndp->ni_dvp);
 			}
@@ -1277,7 +1264,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			}
 			vput(foundobj);
 			foundobj = NULL;
-			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
 				vput(ndp->ni_dvp);
 			}
@@ -1296,7 +1282,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 				vput(foundobj);
 			}
 			ndp->ni_vp = NULL;
-			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
 				vput(ndp->ni_dvp);
 			}
