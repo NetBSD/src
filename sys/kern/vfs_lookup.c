@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.135 2011/04/11 01:35:55 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.136 2011/04/11 01:36:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.135 2011/04/11 01:35:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.136 2011/04/11 01:36:28 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1392,6 +1392,62 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *forcecwd, int neverfollow)
 	return error;
 }
 
+static int
+do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
+{
+	int error = 0;
+
+	struct componentname *cnp = state->cnp;
+	struct nameidata *ndp = state->ndp;
+	const char *cp;			/* pointer into pathname argument */
+
+	KASSERT(cnp == &ndp->ni_cnd);
+
+	cnp->cn_nameptr = ndp->ni_pnbuf;
+	state->lookup_alldone = 0;
+	state->docache = 1;
+	state->rdonly = cnp->cn_flags & RDONLY;
+	ndp->ni_dvp = NULL;
+	cnp->cn_flags &= ~ISSYMLINK;
+	state->dp = startdir;
+
+	cnp->cn_consume = 0;
+	cp = NULL;
+	cnp->cn_hash = namei_hash(cnp->cn_nameptr, &cp);
+	cnp->cn_namelen = cp - cnp->cn_nameptr;
+	KASSERT(cnp->cn_namelen <= NAME_MAX);
+	ndp->ni_pathlen -= cnp->cn_namelen;
+	ndp->ni_next = cp;
+	state->slashes = 0;
+	cnp->cn_flags &= ~REQUIREDIR;
+	cnp->cn_flags |= MAKEENTRY|ISLASTCN;
+
+	if (cnp->cn_namelen == 2 &&
+	    cnp->cn_nameptr[1] == '.' && cnp->cn_nameptr[0] == '.')
+		cnp->cn_flags |= ISDOTDOT;
+	else
+		cnp->cn_flags &= ~ISDOTDOT;
+
+	error = lookup_once(state);
+	if (error) {
+		goto bad;
+	}
+	// XXX ought to be able to avoid this case too
+	if (state->lookup_alldone) {
+		/* this should NOT be "goto terminal;" */
+		return 0;
+	}
+
+	if ((cnp->cn_flags & LOCKLEAF) == 0) {
+		VOP_UNLOCK(state->dp);
+	}
+	return (0);
+
+bad:
+	ndp->ni_vp = NULL;
+	return (error);
+}
+
 int
 lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 {
@@ -1402,6 +1458,12 @@ lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 	 * Note: the name sent in here (is not|should not be) allowed
 	 * to contain a slash.
 	 */
+	if (strlen(ndp->ni_pathbuf->pb_path) > NAME_MAX) {
+		return ENAMETOOLONG;
+	}
+	if (strchr(ndp->ni_pathbuf->pb_path, '/')) {
+		return EINVAL;
+	}
 
 	ndp->ni_pathlen = strlen(ndp->ni_pathbuf->pb_path) + 1;
 	ndp->ni_pnbuf = NULL;
@@ -1410,7 +1472,7 @@ lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 	vref(startdir);
 
 	namei_init(&state, ndp);
-	error = do_lookup(&state, startdir);
+	error = do_lookup_for_nfsd_index(&state, startdir);
 	namei_cleanup(&state);
 
 	return error;
