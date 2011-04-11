@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.172 2011/04/11 02:21:01 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.173 2011/04/11 02:21:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.172 2011/04/11 02:21:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.173 2011/04/11 02:21:17 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -317,7 +317,10 @@ pathbuf_copyin(const char *userpath, struct pathbuf **ret)
 }
 
 /*
- * XXX should not exist
+ * XXX should not exist:
+ *   1. whether a pointer is kernel or user should be statically checkable
+ *   2. copyin should be handled by the upper part of the syscall layer,
+ *      not in here.
  */
 int
 pathbuf_maybe_copyin(const char *path, enum uio_seg seg, struct pathbuf **ret)
@@ -376,7 +379,10 @@ pathbuf_stringcopy_put(struct pathbuf *pb, const char *str)
 ////////////////////////////////////////////////////////////
 
 /*
- * Convert a pathname into a pointer to a locked vnode.
+ * namei: convert a pathname into a pointer to a (maybe-locked) vnode,
+ * and maybe also its parent directory vnode, and assorted other guff.
+ * See namei(9) for the interface documentation.
+ *
  *
  * The FOLLOW flag is set when symbolic links are to be followed
  * when they occur at the end of the name translation process.
@@ -397,7 +403,47 @@ pathbuf_stringcopy_put(struct pathbuf *pb, const char *str)
  */
 
 /*
+ * Search a pathname.
+ * This is a very central and rather complicated routine.
+ *
+ * The pathname is pointed to by ni_ptr and is of length ni_pathlen.
+ * The starting directory is passed in. The pathname is descended
+ * until done, or a symbolic link is encountered. The variable ni_more
+ * is clear if the path is completed; it is set to one if a symbolic
+ * link needing interpretation is encountered.
+ *
+ * The flag argument is LOOKUP, CREATE, RENAME, or DELETE depending on
+ * whether the name is to be looked up, created, renamed, or deleted.
+ * When CREATE, RENAME, or DELETE is specified, information usable in
+ * creating, renaming, or deleting a directory entry may be calculated.
+ * If flag has LOCKPARENT or'ed into it, the parent directory is returned
+ * locked.  Otherwise the parent directory is not returned. If the target
+ * of the pathname exists and LOCKLEAF is or'ed into the flag the target
+ * is returned locked, otherwise it is returned unlocked.  When creating
+ * or renaming and LOCKPARENT is specified, the target may not be ".".
+ * When deleting and LOCKPARENT is specified, the target may be ".".
+ *
+ * Overall outline of lookup:
+ *
+ * dirloop:
+ *	identify next component of name at ndp->ni_ptr
+ *	handle degenerate case where name is null string
+ *	if .. and crossing mount points and on mounted filesys, find parent
+ *	call VOP_LOOKUP routine for next component name
+ *	    directory vnode returned in ni_dvp, locked.
+ *	    component vnode returned in ni_vp (if it exists), locked.
+ *	if result vnode is mounted on and crossing mount points,
+ *	    find mounted on vnode
+ *	if more components of name, do next level at dirloop
+ *	return the answer in ni_vp, locked if LOCKLEAF set
+ *	    if LOCKPARENT set, return locked parent in ni_dvp
+ */
+
+
+/*
  * Internal state for a namei operation.
+ *
+ * cnp is always equal to &ndp->ni_cnp.
  */
 struct namei_state {
 	struct nameidata *ndp;
@@ -527,7 +573,7 @@ namei_getstartdir(struct namei_state *state)
 /*
  * Get the directory context for the nfsd case, in parallel to
  * getstartdir. Initializes the rootdir and erootdir state and
- * returns a reference to the passed-instarting dir.
+ * returns a reference to the passed-in starting dir.
  */
 static struct vnode *
 namei_getstartdir_for_nfsd(struct namei_state *state, struct vnode *startdir)
@@ -613,7 +659,7 @@ namei_start(struct namei_state *state, struct vnode *forcecwd,
 }
 
 /*
- * Check for being at a symlink.
+ * Check for being at a symlink that we're going to follow.
  */
 static inline int
 namei_atsymlink(struct namei_state *state, struct vnode *foundobj)
@@ -624,6 +670,9 @@ namei_atsymlink(struct namei_state *state, struct vnode *foundobj)
 
 /*
  * Follow a symlink.
+ *
+ * Updates searchdir. inhibitmagic causes magic symlinks to not be
+ * interpreted; this is used by nfsd.
  */
 static inline int
 namei_follow(struct namei_state *state, int inhibitmagic,
@@ -721,42 +770,8 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 //////////////////////////////
 
 /*
- * Search a pathname.
- * This is a very central and rather complicated routine.
- *
- * The pathname is pointed to by ni_ptr and is of length ni_pathlen.
- * The starting directory is passed in. The pathname is descended
- * until done, or a symbolic link is encountered. The variable ni_more
- * is clear if the path is completed; it is set to one if a symbolic
- * link needing interpretation is encountered.
- *
- * The flag argument is LOOKUP, CREATE, RENAME, or DELETE depending on
- * whether the name is to be looked up, created, renamed, or deleted.
- * When CREATE, RENAME, or DELETE is specified, information usable in
- * creating, renaming, or deleting a directory entry may be calculated.
- * If flag has LOCKPARENT or'ed into it, the parent directory is returned
- * locked.  Otherwise the parent directory is not returned. If the target
- * of the pathname exists and LOCKLEAF is or'ed into the flag the target
- * is returned locked, otherwise it is returned unlocked.  When creating
- * or renaming and LOCKPARENT is specified, the target may not be ".".
- * When deleting and LOCKPARENT is specified, the target may be ".".
- *
- * Overall outline of lookup:
- *
- * dirloop:
- *	identify next component of name at ndp->ni_ptr
- *	handle degenerate case where name is null string
- *	if .. and crossing mount points and on mounted filesys, find parent
- *	call VOP_LOOKUP routine for next component name
- *	    directory vnode returned in ni_dvp, locked.
- *	    component vnode returned in ni_vp (if it exists), locked.
- *	if result vnode is mounted on and crossing mount points,
- *	    find mounted on vnode
- *	if more components of name, do next level at dirloop
- *	return the answer in ni_vp, locked if LOCKLEAF set
- *	    if LOCKPARENT set, return locked parent in ni_dvp
+ * Inspect the leading path component and update the state accordingly.
  */
-
 static int
 lookup_parsepath(struct namei_state *state)
 {
@@ -834,6 +849,11 @@ lookup_parsepath(struct namei_state *state)
 	return 0;
 }
 
+/*
+ * Call VOP_LOOKUP for a single lookup; return a new search directory
+ * (used when crossing mountpoints up or searching union mounts down) and 
+ * the found object, which for create operations may be NULL on success.
+ */
 static int
 lookup_once(struct namei_state *state,
 	    struct vnode *searchdir,
@@ -965,8 +985,8 @@ unionlookup:
 		/*
 		 * We return success and a NULL foundobj to indicate
 		 * that the entry doesn't currently exist, leaving a
-		 * pointer to the (possibly locked) directory vnode as
-		 * searchdir.
+		 * pointer to the (normally, locked) directory vnode
+		 * as searchdir.
 		 */
 		*foundobj_ret = NULL;
 		return (0);
@@ -1025,6 +1045,10 @@ unionlookup:
 
 //////////////////////////////
 
+/*
+ * Do a complete path search from a single root directory.
+ * (This is called up to twice if TRYEMULROOT is in effect.)
+ */
 static int
 namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 	 int neverfollow, int inhibitmagic)
@@ -1330,6 +1354,9 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 	return 0;
 }
 
+/*
+ * Do namei; wrapper layer that handles TRYEMULROOT.
+ */
 static int
 namei_tryemulroot(struct namei_state *state, struct vnode *forcecwd,
 	 int neverfollow, int inhibitmagic)
@@ -1375,6 +1402,9 @@ namei_tryemulroot(struct namei_state *state, struct vnode *forcecwd,
 	return error;
 }
 
+/*
+ * External interface.
+ */
 int
 namei(struct nameidata *ndp)
 {
@@ -1398,19 +1428,16 @@ namei(struct nameidata *ndp)
 ////////////////////////////////////////////////////////////
 
 /*
- * Externally visible interfaces used by nfsd (bletch, yuk, XXX)
+ * External interface used by nfsd. This is basically different from
+ * namei only in that it has the ability to pass in the "current
+ * directory", and uses an extra flag "neverfollow" for which there's
+ * no physical flag defined in namei.h. (There used to be a cut&paste
+ * copy of about half of namei in nfsd to allow these minor
+ * adjustments to exist.)
  *
- * The "index" version differs from the "main" version in that it's
- * called from a different place in a different context. For now I
- * want to be able to shuffle code in from one call site without
- * affecting the other.
- *
- * It turns out that the "main" version was a cut and pasted copy of
- * namei with a few changes; the "index" version on the other hand
- * always takes a single component and is an elaborate form of calling
- * VOP_LOOKUP once.
+ * XXX: the namei interface should be adjusted so nfsd can just use
+ * ordinary namei().
  */
-
 int
 lookup_for_nfsd(struct nameidata *ndp, struct vnode *forcecwd, int neverfollow)
 {
@@ -1431,6 +1458,22 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *forcecwd, int neverfollow)
 	return error;
 }
 
+/*
+ * A second external interface used by nfsd. This turns out to be a
+ * single lookup used by the WebNFS code (ha!) to get "index.html" or
+ * equivalent when asked for a directory. It should eventually evolve
+ * into some kind of namei_once() call; for the time being it's kind
+ * of a mess. XXX.
+ *
+ * dholland 20110109: I don't think it works, and I don't think it
+ * worked before I started hacking and slashing either, and I doubt
+ * anyone will ever notice.
+ */
+
+/*
+ * Internals. This calls lookup_once() after setting up the assorted
+ * pieces of state the way they ought to be.
+ */
 static int
 do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 {
@@ -1494,6 +1537,12 @@ bad:
 	return (error);
 }
 
+/*
+ * External interface. The partitioning between this function and the
+ * above isn't very clear - the above function exists mostly so code
+ * that uses "state->" can be shuffled around without having to change
+ * it to "state.".
+ */
 int
 lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 {
