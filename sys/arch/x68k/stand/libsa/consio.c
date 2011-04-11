@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.5 2007/11/11 05:20:26 isaki Exp $	*/
+/*	$NetBSD: consio.c,v 1.6 2011/04/11 13:48:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -92,8 +92,10 @@ putchar(int c)
 	switch (x68k_console_device) {
 	case ITE:
 		IOCS_B_PUTC (c);
+		break;
 	case SERIAL:
 		IOCS_OUT232C (c);
+		break;
 	}
 }
 
