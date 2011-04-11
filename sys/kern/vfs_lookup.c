@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.169 2011/04/11 02:19:42 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.170 2011/04/11 02:20:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.169 2011/04/11 02:19:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.170 2011/04/11 02:20:00 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1228,12 +1228,13 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			 * matches that returned for "/" and loop
 			 * forever.  So convert it to the real root.
 			 */
-			if (searchdir == foundobj)
-				vrele(foundobj);
-			else
-				if (searchdir != NULL)
+			if (searchdir != NULL) {
+				if (searchdir == foundobj)
+					vrele(searchdir);
+				else
 					vput(searchdir);
-			searchdir = NULL;
+				searchdir = NULL;
+			}
 			vput(foundobj);
 			foundobj = ndp->ni_rootdir;
 			vref(foundobj);
@@ -1249,6 +1250,15 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		if (cnp->cn_nameiop != LOOKUP &&
 		    (searchdir == NULL ||
 		     searchdir->v_mount != foundobj->v_mount)) {
+			if (searchdir) {
+				vput(searchdir);
+			}
+			vput(foundobj);
+			foundobj = NULL;
+			ndp->ni_dvp = NULL;
+			ndp->ni_vp = NULL;
+			state->attempt_retry = 1;
+
 			switch (cnp->cn_nameiop) {
 			    case CREATE:
 				error = EEXIST;
@@ -1260,14 +1270,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			    default:
 				KASSERT(0);
 			}
-			if (searchdir) {
-				vput(searchdir);
-			}
-			vput(foundobj);
-			foundobj = NULL;
-			ndp->ni_dvp = NULL;
-			ndp->ni_vp = NULL;
-			state->attempt_retry = 1;
 			return (error);
 		}
 
@@ -1278,12 +1280,16 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		if (state->rdonly &&
 		    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
 			error = EROFS;
-			if (foundobj != searchdir) {
-				vput(foundobj);
-			}
 			if (searchdir) {
-				vput(searchdir);
+				if (foundobj != searchdir) {
+					vput(searchdir);
+				} else {
+					vrele(searchdir);
+				}
+				searchdir = NULL;
 			}
+			vput(foundobj);
+			foundobj = NULL;
 			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
 			state->attempt_retry = 1;
