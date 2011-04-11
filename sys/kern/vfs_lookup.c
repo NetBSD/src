@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.146 2011/04/11 01:40:01 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.147 2011/04/11 01:40:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.146 2011/04/11 01:40:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.147 2011/04/11 01:40:13 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -411,7 +411,6 @@ struct namei_state {
 
 	int docache;			/* == 0 do not cache last component */
 	int rdonly;			/* lookup read-only flag bit */
-	struct vnode *dp;		/* the directory we are searching */
 	int slashes;
 
 	unsigned attempt_retry:1;	/* true if error allows emul retry */
@@ -434,7 +433,6 @@ namei_init(struct namei_state *state, struct nameidata *ndp)
 
 	state->docache = 0;
 	state->rdonly = 0;
-	state->dp = NULL;
 	state->slashes = 0;
 
 #ifdef DIAGNOSTIC
@@ -798,7 +796,8 @@ lookup_parsepath(struct namei_state *state)
 	 * the name set the SAVENAME flag. When done, they assume
 	 * responsibility for freeing the pathname buffer.
 	 *
-	 * At this point, our only vnode state is that "dp" is held and locked.
+	 * At this point, our only vnode state is that the search dir
+	 * is held and locked.
 	 */
 	cnp->cn_consume = 0;
 	cp = NULL;
@@ -856,8 +855,11 @@ lookup_parsepath(struct namei_state *state)
 }
 
 static int
-lookup_once(struct namei_state *state)
+lookup_once(struct namei_state *state,
+	    struct vnode *searchdir,
+	    struct vnode **foundobj_ret)
 {
+	struct vnode *foundobj;
 	struct vnode *tdp;		/* saved dp */
 	struct mount *mp;		/* mount table entry */
 	struct lwp *l = curlwp;
@@ -886,18 +888,20 @@ lookup_once(struct namei_state *state)
 		struct proc *p = l->l_proc;
 
 		for (;;) {
-			if (state->dp == ndp->ni_rootdir || state->dp == rootvnode) {
-				ndp->ni_dvp = state->dp;
-				ndp->ni_vp = state->dp;
-				vref(state->dp);
+			if (searchdir == ndp->ni_rootdir || searchdir == rootvnode) {
+				foundobj = searchdir;
+				vref(foundobj);
+				ndp->ni_dvp = searchdir;
+				ndp->ni_vp = foundobj;
+				*foundobj_ret = foundobj;
 				return 0;
 			}
 			if (ndp->ni_rootdir != rootvnode) {
 				int retval;
 
-				VOP_UNLOCK(state->dp);
-				retval = vn_isunder(state->dp, ndp->ni_rootdir, l);
-				vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
+				VOP_UNLOCK(searchdir);
+				retval = vn_isunder(searchdir, ndp->ni_rootdir, l);
+				vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
 				if (!retval) {
 				    /* Oops! We got out of jail! */
 				    log(LOG_WARNING,
@@ -906,35 +910,37 @@ lookup_once(struct namei_state *state)
 					p->p_pid, kauth_cred_geteuid(l->l_cred),
 					p->p_comm);
 				    /* Put us at the jail root. */
-				    vput(state->dp);
-				    state->dp = ndp->ni_rootdir;
-				    ndp->ni_dvp = state->dp;
-				    ndp->ni_vp = state->dp;
-				    vref(state->dp);
-				    vref(state->dp);
-				    vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
+				    vput(searchdir);
+				    searchdir = NULL;
+				    foundobj = ndp->ni_rootdir;
+				    vref(foundobj);
+				    vref(foundobj);
+				    ndp->ni_dvp = foundobj;
+				    ndp->ni_vp = foundobj;
+				    vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
+				    *foundobj_ret = foundobj;
 				    return 0;
 				}
 			}
-			if ((state->dp->v_vflag & VV_ROOT) == 0 ||
+			if ((searchdir->v_vflag & VV_ROOT) == 0 ||
 			    (cnp->cn_flags & NOCROSSMOUNT))
 				break;
-			tdp = state->dp;
-			state->dp = state->dp->v_mount->mnt_vnodecovered;
+			tdp = searchdir;
+			searchdir = searchdir->v_mount->mnt_vnodecovered;
 			vput(tdp);
-			vref(state->dp);
-			vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
+			vref(searchdir);
+			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
 
 	/*
 	 * We now have a segment name to search for, and a directory to search.
-	 * Again, our only vnode state is that "dp" is held and locked.
+	 * Our vnode state here is that "searchdir" is held and locked.
 	 */
 unionlookup:
-	ndp->ni_dvp = state->dp;
+	ndp->ni_dvp = searchdir;
 	ndp->ni_vp = NULL;
-	error = VOP_LOOKUP(state->dp, &ndp->ni_vp, cnp);
+	error = VOP_LOOKUP(searchdir, &ndp->ni_vp, cnp);
 	if (error != 0) {
 #ifdef DIAGNOSTIC
 		if (ndp->ni_vp != NULL)
@@ -944,13 +950,13 @@ unionlookup:
 		printf("not found\n");
 #endif /* NAMEI_DIAGNOSTIC */
 		if ((error == ENOENT) &&
-		    (state->dp->v_vflag & VV_ROOT) &&
-		    (state->dp->v_mount->mnt_flag & MNT_UNION)) {
-			tdp = state->dp;
-			state->dp = state->dp->v_mount->mnt_vnodecovered;
+		    (searchdir->v_vflag & VV_ROOT) &&
+		    (searchdir->v_mount->mnt_flag & MNT_UNION)) {
+			tdp = searchdir;
+			searchdir = searchdir->v_mount->mnt_vnodecovered;
 			vput(tdp);
-			vref(state->dp);
-			vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
+			vref(searchdir);
+			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
 			goto unionlookup;
 		}
 
@@ -980,6 +986,7 @@ unionlookup:
 		 * (possibly locked) directory vnode in ndp->ni_dvp.
 		 */
 		state->lookup_alldone = 1;
+		*foundobj_ret = NULL;
 		return (0);
 	}
 #ifdef NAMEI_DIAGNOSTIC
@@ -999,10 +1006,10 @@ unionlookup:
 			cnp->cn_flags |= ISLASTCN;
 	}
 
-	state->dp = ndp->ni_vp;
+	foundobj = ndp->ni_vp;
 
 	/*
-	 * "state->dp" and "ndp->ni_dvp" are both locked and held,
+	 * "foundobj" and "ndp->ni_dvp" are both locked and held,
 	 * and may be the same vnode.
 	 */
 
@@ -1010,16 +1017,16 @@ unionlookup:
 	 * Check to see if the vnode has been mounted on;
 	 * if so find the root of the mounted file system.
 	 */
-	while (state->dp->v_type == VDIR && (mp = state->dp->v_mountedhere) &&
+	while (foundobj->v_type == VDIR && (mp = foundobj->v_mountedhere) &&
 	       (cnp->cn_flags & NOCROSSMOUNT) == 0) {
 		error = vfs_busy(mp, NULL);
 		if (error != 0) {
-			vput(state->dp);
+			vput(foundobj);
 			return error;
 		}
-		KASSERT(ndp->ni_dvp != state->dp);
+		KASSERT(ndp->ni_dvp != foundobj);
 		VOP_UNLOCK(ndp->ni_dvp);
-		vput(state->dp);
+		vput(foundobj);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp, false, NULL);
 		if (error) {
@@ -1027,11 +1034,12 @@ unionlookup:
 			return error;
 		}
 		VOP_UNLOCK(tdp);
-		ndp->ni_vp = state->dp = tdp;
+		ndp->ni_vp = foundobj = tdp;
 		vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
 		vn_lock(ndp->ni_vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
+	*foundobj_ret = foundobj;
 	return 0;
 }
 
@@ -1138,9 +1146,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			return (error);
 		}
 
-		state->dp = searchdir;
-		error = lookup_once(state);
-		foundobj = state->dp;
+		error = lookup_once(state, searchdir, &foundobj);
 		if (error) {
 			ndp->ni_vp = NULL;
 			/* XXX this should use namei_end() */
@@ -1419,6 +1425,7 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 
 	struct componentname *cnp = state->cnp;
 	struct nameidata *ndp = state->ndp;
+	struct vnode *foundobj;
 	const char *cp;			/* pointer into pathname argument */
 
 	KASSERT(cnp == &ndp->ni_cnd);
@@ -1429,7 +1436,6 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 	state->rdonly = cnp->cn_flags & RDONLY;
 	ndp->ni_dvp = NULL;
 	cnp->cn_flags &= ~ISSYMLINK;
-	state->dp = startdir;
 
 	cnp->cn_consume = 0;
 	cp = NULL;
@@ -1448,7 +1454,7 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 	else
 		cnp->cn_flags &= ~ISDOTDOT;
 
-	error = lookup_once(state);
+	error = lookup_once(state, startdir, &foundobj);
 	if (error) {
 		goto bad;
 	}
@@ -1459,7 +1465,7 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 	}
 
 	if ((cnp->cn_flags & LOCKLEAF) == 0) {
-		VOP_UNLOCK(state->dp);
+		VOP_UNLOCK(foundobj);
 	}
 	return (0);
 
