@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.168 2011/04/11 02:19:27 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.169 2011/04/11 02:19:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.168 2011/04/11 02:19:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.169 2011/04/11 02:19:42 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -997,7 +997,8 @@ unionlookup:
 	 * Check to see if the vnode has been mounted on;
 	 * if so find the root of the mounted file system.
 	 */
-	while (foundobj->v_type == VDIR && (mp = foundobj->v_mountedhere) &&
+	while (foundobj->v_type == VDIR &&
+	       (mp = foundobj->v_mountedhere) != NULL &&
 	       (cnp->cn_flags & NOCROSSMOUNT) == 0) {
 		error = vfs_busy(mp, NULL);
 		if (error != 0) {
