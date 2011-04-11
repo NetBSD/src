@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.313 2011/04/10 16:52:36 joerg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.314 2011/04/11 23:03:38 joerg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -511,11 +511,10 @@ lib${LIB}_g.a:: ${GOBJS} __archivebuild
 
 _LIBLDOPTS=
 .if ${SHLIBDIR} != "/usr/lib"
-_LIBLDOPTS+=	-Wl,-rpath-link,=${SHLIBDIR} \
-		-Wl,-rpath,=${SHLIBDIR} \
+_LIBLDOPTS+=	-Wl,-rpath,${SHLIBDIR} \
 		-L=${SHLIBDIR}
 .elif ${SHLIBINSTALLDIR} != "/usr/lib"
-_LIBLDOPTS+=	-Wl,-rpath-link,=${SHLIBINSTALLDIR} \
+_LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
 		-L=${SHLIBINSTALLDIR}
 .endif
 
