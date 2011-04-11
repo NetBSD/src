@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.171 2011/04/11 02:20:15 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.172 2011/04/11 02:21:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.171 2011/04/11 02:20:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.172 2011/04/11 02:21:01 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1292,6 +1292,17 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			return EROFS;
 		}
 		if ((cnp->cn_flags & LOCKLEAF) == 0) {
+			/*
+			 * Note: if LOCKPARENT but not LOCKLEAF is
+			 * set, and searchdir == foundobj, this code
+			 * necessarily unlocks the parent as well as
+			 * the leaf. That is, just because you specify
+			 * LOCKPARENT doesn't mean you necessarily get
+			 * a locked parent vnode. The code in
+			 * vfs_syscalls.c, and possibly elsewhere,
+			 * that uses this combination "knows" this, so
+			 * it can't be safely changed. Feh. XXX
+			 */
 			VOP_UNLOCK(foundobj);
 		}
 
