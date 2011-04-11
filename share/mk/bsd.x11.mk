@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.96 2011/04/11 21:04:11 joerg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.97 2011/04/11 23:03:38 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -172,7 +172,7 @@ CPPFLAGS+=		-I${DESTDIR}${X11INCDIR}
 CPPFLAGS+=		-D__AMD64__
 .endif
 
-LDFLAGS+=		-Wl,-rpath,=${X11USRLIBDIR} -L=${X11USRLIBDIR}
+LDFLAGS+=		-Wl,-rpath,${X11USRLIBDIR} -L=${X11USRLIBDIR}
 
 
 #
