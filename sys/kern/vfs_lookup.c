@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.133 2011/04/11 01:33:04 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.134 2011/04/11 01:35:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.133 2011/04/11 01:33:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.134 2011/04/11 01:35:00 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -591,7 +591,7 @@ namei_ktrace(struct namei_state *state)
  * appropriate.
  */
 static int
-namei_start(struct namei_state *state, int isnfsd, struct vnode *forcecwd)
+namei_start(struct namei_state *state, struct vnode *forcecwd)
 {
 	struct nameidata *ndp = state->ndp;
 
@@ -609,7 +609,7 @@ namei_start(struct namei_state *state, int isnfsd, struct vnode *forcecwd)
 	ndp->ni_loopcnt = 0;
 
 	/* Get starting directory, set up root, and ktrace. */
-	if (isnfsd) {
+	if (forcecwd != NULL) {
 		state->namei_startdir = namei_getstartdir_for_nfsd(state,
 								   forcecwd);
 		/* no ktrace */
@@ -645,7 +645,7 @@ namei_atsymlink(struct namei_state *state)
  * Follow a symlink.
  */
 static inline int
-namei_follow(struct namei_state *state)
+namei_follow(struct namei_state *state, int inhibitmagic)
 {
 	struct nameidata *ndp = state->ndp;
 	struct componentname *cnp = state->cnp;
@@ -690,8 +690,11 @@ namei_follow(struct namei_state *state)
 	/*
 	 * Do symlink substitution, if appropriate, and
 	 * check length for potential overflow.
+	 *
+	 * Inhibit symlink substitution for nfsd.
+	 * XXX: This is how it was before; is that a bug or a feature?
 	 */
-	if ((vfs_magiclinks &&
+	if ((!inhibitmagic && vfs_magiclinks &&
 	     symlink_magic(self->l_proc, cp, &linklen)) ||
 	    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
 		PNBUF_PUT(cp);
@@ -1230,7 +1233,8 @@ bad:
 //////////////////////////////
 
 static int
-do_namei(struct namei_state *state)
+do_namei(struct namei_state *state, struct vnode *forcecwd,
+	 int neverfollow, int inhibitmagic)
 {
 	int error;
 
@@ -1253,7 +1257,7 @@ do_namei(struct namei_state *state)
 		savepath = NULL;
 	}
 
-	error = namei_start(state, 0/*not nfsd*/, NULL);
+	error = namei_start(state, forcecwd);
 	if (error) {
 		if (savepath != NULL) {
 			pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
@@ -1302,7 +1306,11 @@ do_namei(struct namei_state *state)
 		 * aren't supposed to.
 		 */
 		if (namei_atsymlink(state)) {
-			error = namei_follow(state);
+			if (neverfollow) {
+				error = EINVAL;
+			} else {
+				error = namei_follow(state, inhibitmagic);
+			}
 			if (error) {
 				KASSERT(ndp->ni_dvp != ndp->ni_vp);
 				vput(ndp->ni_dvp);
@@ -1349,7 +1357,7 @@ namei(struct nameidata *ndp)
 	int error;
 
 	namei_init(&state, ndp);
-	error = do_namei(&state);
+	error = do_namei(&state, NULL, 0/*!neverfollow*/, 0/*!inhibitmagic*/);
 	namei_cleanup(&state);
 
 	return error;
@@ -1366,122 +1374,70 @@ namei(struct nameidata *ndp)
  * affecting the other.
  */
 
+static int
+do_lookup_for_nfsd(struct namei_state *state, struct vnode *forcecwd,
+		   int neverfollow, int inhibitmagic)
+{
+	int error;
+
+	struct nameidata *ndp = state->ndp;
+	//struct componentname *cnp = state->cnp;
+
+	error = namei_start(state, forcecwd);
+	if (error) {
+		return error;
+	}
+
+    for (;;) {
+
+	error = do_lookup(state, state->namei_startdir);
+
+	if (error) {
+		if (ndp->ni_dvp) {
+			vput(ndp->ni_dvp);
+		}
+		return error;
+	}
+
+	/*
+	 * Check for encountering a symbolic link
+	 */
+	if (namei_atsymlink(state)) {
+		if (neverfollow) {
+			error = EINVAL;
+		} else {
+			error = namei_follow(state, inhibitmagic);
+		}
+		if (error) {
+			KASSERT(ndp->ni_dvp != ndp->ni_vp);
+			vput(state->ndp->ni_vp);
+			vput(state->ndp->ni_dvp);
+			state->ndp->ni_vp = NULL;
+			return error;
+		}
+	} else {
+		break;
+	}
+    }
+
+    if ((state->cnp->cn_flags & LOCKPARENT) == 0 && state->ndp->ni_dvp) {
+	    if (state->ndp->ni_dvp == state->ndp->ni_vp) {
+		    vrele(state->ndp->ni_dvp);
+	    } else {
+		    vput(state->ndp->ni_dvp);
+	    }
+    }
+    return (0);
+}
+
 int
 lookup_for_nfsd(struct nameidata *ndp, struct vnode *dp, int neverfollow)
 {
 	struct namei_state state;
 	int error;
 
-	struct iovec aiov;
-	struct uio auio;
-	int linklen;
-	char *cp;
-
 	namei_init(&state, ndp);
-
-	namei_start(&state, 1/*nfsd*/, dp);
-
-    for (;;) {
-
-	error = do_lookup(&state, dp);
-
-	if (error) {
-		/* BEGIN from nfsd */
-		if (ndp->ni_dvp) {
-			vput(ndp->ni_dvp);
-		}
-		/* END from nfsd */
-		namei_cleanup(&state);
-		return error;
-	}
-
-	/*
-	 * BEGIN wodge of code from nfsd
-	 */
-
-	/*
-	 * Check for encountering a symbolic link
-	 */
-	if ((state.cnp->cn_flags & ISSYMLINK) == 0) {
-		if ((state.cnp->cn_flags & LOCKPARENT) == 0 && state.ndp->ni_dvp) {
-			if (state.ndp->ni_dvp == state.ndp->ni_vp) {
-				vrele(state.ndp->ni_dvp);
-			} else {
-				vput(state.ndp->ni_dvp);
-			}
-		}
-		return (0);
-	} else {
-		if (neverfollow) {
-			error = EINVAL;
-			goto out;
-		}
-		if (state.ndp->ni_loopcnt++ >= MAXSYMLINKS) {
-			error = ELOOP;
-			goto out;
-		}
-		if (state.ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
-			error = VOP_ACCESS(ndp->ni_vp, VEXEC, state.cnp->cn_cred);
-			if (error != 0)
-				goto out;
-		}
-		cp = PNBUF_GET();
-		aiov.iov_base = cp;
-		aiov.iov_len = MAXPATHLEN;
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_offset = 0;
-		auio.uio_rw = UIO_READ;
-		auio.uio_resid = MAXPATHLEN;
-		UIO_SETUP_SYSSPACE(&auio);
-		error = VOP_READLINK(ndp->ni_vp, &auio, state.cnp->cn_cred);
-		if (error) {
-			PNBUF_PUT(cp);
-			goto out;
-		}
-		linklen = MAXPATHLEN - auio.uio_resid;
-		if (linklen == 0) {
-			PNBUF_PUT(cp);
-			error = ENOENT;
-			goto out;
-		}
-		if (linklen + ndp->ni_pathlen >= MAXPATHLEN) {
-			PNBUF_PUT(cp);
-			error = ENAMETOOLONG;
-			goto out;
-		}
-		if (ndp->ni_pathlen > 1) {
-			/* includes a null-terminator */
-			memcpy(cp + linklen, ndp->ni_next, ndp->ni_pathlen);
-		} else {
-			cp[linklen] = '\0';
-		}
-		state.ndp->ni_pathlen += linklen;
-		memcpy(state.ndp->ni_pnbuf, cp, state.ndp->ni_pathlen);
-		PNBUF_PUT(cp);
-		vput(state.ndp->ni_vp);
-		dp = state.ndp->ni_dvp;
-
-		/*
-		 * Check if root directory should replace current directory.
-		 */
-		if (state.ndp->ni_pnbuf[0] == '/') {
-			vput(dp);
-			dp = ndp->ni_rootdir;
-			vref(dp);
-			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
-		}
-	}
-
-    }
- out:
-	vput(state.ndp->ni_vp);
-	vput(state.ndp->ni_dvp);
-	state.ndp->ni_vp = NULL;
-
-	/*
-	 * END wodge of code from nfsd
-	 */
+	error = do_lookup_for_nfsd(&state, dp, neverfollow, 1/*inhibitmagic*/);
 	namei_cleanup(&state);
 
 	return error;
