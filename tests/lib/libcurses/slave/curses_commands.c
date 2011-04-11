@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.2 2011/04/10 23:31:30 dholland Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.3 2011/04/11 09:06:24 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -34,6 +34,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <stdarg.h>
+
 #include "slave.h"
 #include "curses_commands.h"
 
@@ -4398,6 +4400,19 @@ cmd_vline(int nargs, char **args)
 }
 
 
+static int
+internal_vw_printw(WINDOW *win, char *arg1, ...)
+{
+	va_list va;
+	int rv;
+
+	va_start(va, arg1);
+	rv = vw_printw(win, arg1, va);
+	va_end(va);
+
+	return rv;
+}
+
 void
 cmd_vw_printw(int nargs, char **args)
 {
@@ -4413,9 +4428,22 @@ cmd_vw_printw(int nargs, char **args)
 	}
 
 	report_count(1);
-	report_return(vw_printw(win, args[1], args[2]));
+	report_return(internal_vw_printw(win, args[1], args[2]));
 }
 
+
+static int
+internal_vw_scanw(WINDOW *win, char *arg1, ...)
+{
+	va_list va;
+	int rv;
+
+	va_start(va, arg1);
+	rv = vw_scanw(win, arg1, va);
+	va_end(va);
+
+	return rv;
+}
 
 void
 cmd_vw_scanw(int nargs, char **args)
@@ -4434,7 +4462,7 @@ cmd_vw_scanw(int nargs, char **args)
 
 	/* XXX - call2 */
 	report_count(2);
-	report_int(vw_scanw(win, args[1], string));
+	report_int(internal_vw_scanw(win, args[1], string));
 	report_status(string);
 }
 
