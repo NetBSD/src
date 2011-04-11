@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.263 2011/04/10 16:52:36 joerg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.264 2011/04/11 23:03:38 joerg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -162,11 +162,10 @@ _PROGLDOPTS=
 _PROGLDOPTS+=	-Wl,-dynamic-linker=${_SHLINKER}
 .endif
 .if ${SHLIBDIR} != "/usr/lib"
-_PROGLDOPTS+=	-Wl,-rpath-link,=${SHLIBDIR} \
-		-Wl,-rpath,=${SHLIBDIR} \
+_PROGLDOPTS+=	-Wl,-rpath,${SHLIBDIR} \
 		-L=${SHLIBDIR}
 .elif ${SHLIBINSTALLDIR} != "/usr/lib"
-_PROGLDOPTS+=	-Wl,-rpath-link,=${SHLIBINSTALLDIR} \
+_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
 		-L=${SHLIBINSTALLDIR}
 .endif
 
