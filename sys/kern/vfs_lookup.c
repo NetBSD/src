@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.158 2011/04/11 02:16:07 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.159 2011/04/11 02:16:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.158 2011/04/11 02:16:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.159 2011/04/11 02:16:27 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1377,6 +1377,12 @@ namei(struct nameidata *ndp)
 				  0/*!neverfollow*/, 0/*!inhibitmagic*/);
 	namei_cleanup(&state);
 
+	if (error) {
+		/* make sure no stray refs leak out */
+		ndp->ni_dvp = NULL;
+		ndp->ni_vp = NULL;
+	}
+
 	return error;
 }
 
@@ -1406,6 +1412,12 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *forcecwd, int neverfollow)
 	error = namei_tryemulroot(&state, forcecwd,
 				  neverfollow, 1/*inhibitmagic*/);
 	namei_cleanup(&state);
+
+	if (error) {
+		/* make sure no stray refs leak out */
+		ndp->ni_dvp = NULL;
+		ndp->ni_vp = NULL;
+	}
 
 	return error;
 }
