@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.134 2011/04/11 01:35:00 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.135 2011/04/11 01:35:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.134 2011/04/11 01:35:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.135 2011/04/11 01:35:55 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1372,72 +1372,21 @@ namei(struct nameidata *ndp)
  * called from a different place in a different context. For now I
  * want to be able to shuffle code in from one call site without
  * affecting the other.
+ *
+ * It turns out that the "main" version was a cut and pasted copy of
+ * namei with a few changes; the "index" version on the other hand
+ * always takes a single component and is an elaborate form of calling
+ * VOP_LOOKUP once.
  */
 
-static int
-do_lookup_for_nfsd(struct namei_state *state, struct vnode *forcecwd,
-		   int neverfollow, int inhibitmagic)
-{
-	int error;
-
-	struct nameidata *ndp = state->ndp;
-	//struct componentname *cnp = state->cnp;
-
-	error = namei_start(state, forcecwd);
-	if (error) {
-		return error;
-	}
-
-    for (;;) {
-
-	error = do_lookup(state, state->namei_startdir);
-
-	if (error) {
-		if (ndp->ni_dvp) {
-			vput(ndp->ni_dvp);
-		}
-		return error;
-	}
-
-	/*
-	 * Check for encountering a symbolic link
-	 */
-	if (namei_atsymlink(state)) {
-		if (neverfollow) {
-			error = EINVAL;
-		} else {
-			error = namei_follow(state, inhibitmagic);
-		}
-		if (error) {
-			KASSERT(ndp->ni_dvp != ndp->ni_vp);
-			vput(state->ndp->ni_vp);
-			vput(state->ndp->ni_dvp);
-			state->ndp->ni_vp = NULL;
-			return error;
-		}
-	} else {
-		break;
-	}
-    }
-
-    if ((state->cnp->cn_flags & LOCKPARENT) == 0 && state->ndp->ni_dvp) {
-	    if (state->ndp->ni_dvp == state->ndp->ni_vp) {
-		    vrele(state->ndp->ni_dvp);
-	    } else {
-		    vput(state->ndp->ni_dvp);
-	    }
-    }
-    return (0);
-}
-
 int
-lookup_for_nfsd(struct nameidata *ndp, struct vnode *dp, int neverfollow)
+lookup_for_nfsd(struct nameidata *ndp, struct vnode *forcecwd, int neverfollow)
 {
 	struct namei_state state;
 	int error;
 
 	namei_init(&state, ndp);
-	error = do_lookup_for_nfsd(&state, dp, neverfollow, 1/*inhibitmagic*/);
+	error = do_namei(&state, forcecwd, neverfollow, 1/*inhibitmagic*/);
 	namei_cleanup(&state);
 
 	return error;
@@ -1450,8 +1399,8 @@ lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 	int error;
 
 	/*
-	 * Note: the name sent in here is not/should not be allowed to
-	 * contain a slash.
+	 * Note: the name sent in here (is not|should not be) allowed
+	 * to contain a slash.
 	 */
 
 	ndp->ni_pathlen = strlen(ndp->ni_pathbuf->pb_path) + 1;
