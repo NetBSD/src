@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.139 2011/04/11 01:37:43 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.140 2011/04/11 01:38:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.139 2011/04/11 01:37:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.140 2011/04/11 01:38:10 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -593,9 +593,11 @@ namei_ktrace(struct namei_state *state)
  * appropriate.
  */
 static int
-namei_start(struct namei_state *state, struct vnode *forcecwd)
+namei_start(struct namei_state *state, struct vnode *forcecwd,
+	    struct vnode **startdir_ret)
 {
 	struct nameidata *ndp = state->ndp;
+	struct vnode *startdir;
 
 	/* length includes null terminator (was originally from copyinstr) */
 	ndp->ni_pathlen = strlen(ndp->ni_pnbuf) + 1;
@@ -612,16 +614,16 @@ namei_start(struct namei_state *state, struct vnode *forcecwd)
 
 	/* Get starting directory, set up root, and ktrace. */
 	if (forcecwd != NULL) {
-		state->namei_startdir = namei_getstartdir_for_nfsd(state,
-								   forcecwd);
+		startdir = namei_getstartdir_for_nfsd(state, forcecwd);
 		/* no ktrace */
 	} else {
-		state->namei_startdir = namei_getstartdir(state);
+		startdir = namei_getstartdir(state);
 		namei_ktrace(state);
 	}
 
-	vn_lock(state->namei_startdir, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(startdir, LK_EXCLUSIVE | LK_RETRY);
 
+	*startdir_ret = startdir;
 	return 0;
 }
 
@@ -1044,7 +1046,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 	const char *cp;
 	int error;
 
-	error = namei_start(state, forcecwd);
+	error = namei_start(state, forcecwd, &state->namei_startdir);
 	if (error) {
 		return error;
 	}
