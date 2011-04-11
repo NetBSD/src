@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcdvar.h,v 1.1 2001/09/27 10:03:28 minoura Exp $	*/
+/*	$NetBSD: sdcdvar.h,v 1.2 2011/04/11 14:00:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -30,6 +30,6 @@
 #define BLKBYTES(len)	(1 << ((len) + 8))
 
 struct boot_partinfo {
-	u_int32_t	start;	/* in blocks */
-	u_int32_t	size;	/* in blocks */
+	uint32_t	start;	/* in blocks */
+	uint32_t	size;	/* in blocks */
 };
