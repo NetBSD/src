@@ -1,7 +1,7 @@
-/* $NetBSD: term.c,v 1.11 2010/02/26 00:09:00 roy Exp $ */
+/* $NetBSD: term.c,v 1.12 2011/04/11 21:37:19 roy Exp $ */
 
 /*
- * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.11 2010/02/26 00:09:00 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.12 2011/04/11 21:37:19 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -354,7 +354,8 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 		if (tic != NULL && ticcmp(tic, name) == 0) {
 			len = _ti_flatten(&f, tic);
 			if (len != -1) {
-				r = _ti_readterm(term, (char *)f, len, flags);
+				r = _ti_readterm(term, (char *)f, (size_t)len,
+				    flags);
 				free(f);
 			}
 		}
