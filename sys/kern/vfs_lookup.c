@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.173 2011/04/11 02:21:17 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.174 2011/04/11 18:24:49 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.173 2011/04/11 02:21:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.174 2011/04/11 18:24:49 jakllsch Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -673,6 +673,8 @@ namei_atsymlink(struct namei_state *state, struct vnode *foundobj)
  *
  * Updates searchdir. inhibitmagic causes magic symlinks to not be
  * interpreted; this is used by nfsd.
+ *
+ * Unlocks foundobj on success (ugh)
  */
 static inline int
 namei_follow(struct namei_state *state, int inhibitmagic,
@@ -744,6 +746,9 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 
 	/* we're now starting from the beginning of the buffer again */
 	cnp->cn_nameptr = ndp->ni_pnbuf;
+
+	/* must unlock this before relocking searchdir */
+	VOP_UNLOCK(foundobj);
 
 	/*
 	 * Check if root directory should replace current directory.
@@ -1204,7 +1209,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 				ndp->ni_vp = NULL;
 				return error;
 			}
-			vput(foundobj);
+			/* namei_follow unlocks it (ugh) so rele, not put */
+			vrele(foundobj);
 			foundobj = NULL;
 			continue;
 		}
