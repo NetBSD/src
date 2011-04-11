@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.170 2011/04/11 02:20:00 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.171 2011/04/11 02:20:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.170 2011/04/11 02:20:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.171 2011/04/11 02:20:15 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1219,7 +1219,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		}
 
     terminal:
-		error = 0;
 		if (foundobj == ndp->ni_erootdir) {
 			/*
 			 * We are about to return the emulation root.
@@ -1261,16 +1260,14 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 
 			switch (cnp->cn_nameiop) {
 			    case CREATE:
-				error = EEXIST;
-				break;
+				return EEXIST;
 			    case DELETE:
 			    case RENAME:
-				error = EBUSY;
-				break;
+				return EBUSY;
 			    default:
-				KASSERT(0);
+				break;
 			}
-			return (error);
+			panic("Invalid nameiop\n");
 		}
 
 		/*
@@ -1279,7 +1276,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 */
 		if (state->rdonly &&
 		    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
-			error = EROFS;
 			if (searchdir) {
 				if (foundobj != searchdir) {
 					vput(searchdir);
@@ -1293,7 +1289,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
 			state->attempt_retry = 1;
-			return (error);
+			return EROFS;
 		}
 		if ((cnp->cn_flags & LOCKLEAF) == 0) {
 			VOP_UNLOCK(foundobj);
