@@ -1,7 +1,7 @@
-/* $NetBSD: compile.c,v 1.4 2010/03/02 14:11:11 roy Exp $ */
+/* $NetBSD: compile.c,v 1.5 2011/04/11 21:37:19 roy Exp $ */
 
 /*
- * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.4 2010/03/02 14:11:11 roy Exp $");
+__RCSID("$NetBSD: compile.c,v 1.5 2011/04/11 21:37:19 roy Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -344,7 +344,7 @@ encode_string(const char *term, const char *cap, TBUF *tbuf, const char *str,
 				if (ch == '?')
 					ch = '\177';
 				else if ((ch &= 037) == 0)
-					ch = 128;
+					ch = (char)128;
 			}
 			*p++ = ch;
 			last = ch;
@@ -452,7 +452,8 @@ _ti_compile(char *cap, int flags)
 {
 	char *token, *p, *e, *name, *desc, *alias;
 	signed char flag;
-	long num;
+	long cnum;
+	short num;
 	ssize_t ind;
 	size_t len;
 	TBUF buf;
@@ -564,17 +565,18 @@ _ti_compile(char *cap, int flags)
 			    _ti_find_cap(&tic->nums, 'n', ind) != NULL)
 				continue;
 
-			num = strtol(p, &e, 0);
+			cnum = strtol(p, &e, 0);
 			if (*e != '\0') {
 				dowarn(flags, "%s: %s: not a number",
 				    tic->name, token);
 				continue;
 			}
-			if (!VALID_NUMERIC(num)) {
+			if (!VALID_NUMERIC(cnum)) {
 				dowarn(flags, "%s: %s: number out of range",
 				    tic->name, token);
 				continue;
 			}
+			num = (short)cnum;
 			if (ind == -1)
 				_ti_store_extra(tic, 1, token, 'n', -1,
 				    num, NULL, 0, flags);
@@ -608,7 +610,7 @@ _ti_compile(char *cap, int flags)
 				le16enc(tic->nums.buf + tic->nums.bufpos, ind);
 				tic->nums.bufpos += sizeof(uint16_t);
 				le16enc(tic->nums.buf + tic->nums.bufpos,
-					CANCELLED_NUMERIC);
+					(uint16_t)CANCELLED_NUMERIC);
 				tic->nums.bufpos += sizeof(uint16_t);
 				tic->nums.entries++;
 				continue;
