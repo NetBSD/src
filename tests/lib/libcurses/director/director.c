@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.1 2011/04/10 09:55:09 blymn Exp $	*/
+/*	$NetBSD: director.c,v 1.2 2011/04/11 22:37:10 joerg Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -110,7 +110,8 @@ main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
-	char *termpath, *term, *slave, ch;
+	char *termpath, *term, *slave;
+	int ch;
 	pid_t slave_pid;
 	extern FILE *yyin;
 	char *arg1, *arg2, *arg3, *arg4;
