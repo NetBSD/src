@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.115 2011/03/12 23:04:16 erh Exp $
+# $NetBSD: postinstall,v 1.116 2011/04/11 20:29:50 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1461,6 +1461,29 @@ do_varrwho()
 	[ -n "$1" ] || err 3 "USAGE: do_varrwho  fix|check"
 
 	contents_owner "$1" "${DEST_DIR}/var/rwho" _rwhod _rwhod
+}
+
+
+#
+#	tcpdumpchroot
+#
+additem tcpdumpchroot "make sure /var/chroot/tcpdump/etc is populated"
+do_tcpdumpchroot()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_tcpdumpchroot  fix|check"
+
+	failed=0;
+	if [ ! -r ${DEST_DIR}/var/chroot/tcpdump/etc/protocols ]; then
+		if [ "$1" = "fix" ]; then
+			mkdir -p ${DEST_DIR}/var/chroot/tcpdump/etc
+			cp ${SRC_DIR}/etc/protocols \
+				${DEST_DIR}/var/chroot/tcpdump/etc
+			failed=$(( ${failed} + $? ))
+		else
+			failed=1
+		fi
+	fi
+	return ${failed}
 }
 
 
