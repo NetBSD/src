@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.28 2011/01/14 02:06:27 rmind Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.29 2011/04/11 04:22:30 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -104,9 +104,8 @@ int 	kdb_trap(int, db_regs_t *);
 #endif /* _KERNEL */
 
 /*
- * We use either a.out or Elf32 symbols in DDB.
+ * We use Elf32 symbols in DDB.
  */
-#define	DB_AOUT_SYMBOLS
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32
 
