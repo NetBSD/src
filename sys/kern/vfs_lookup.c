@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.149 2011/04/11 02:12:42 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.150 2011/04/11 02:12:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.149 2011/04/11 02:12:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.150 2011/04/11 02:12:58 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -857,6 +857,7 @@ lookup_parsepath(struct namei_state *state)
 static int
 lookup_once(struct namei_state *state,
 	    struct vnode *searchdir,
+	    struct vnode **newsearchdir_ret,
 	    struct vnode **foundobj_ret)
 {
 	struct vnode *foundobj;
@@ -891,7 +892,7 @@ lookup_once(struct namei_state *state,
 			if (searchdir == ndp->ni_rootdir || searchdir == rootvnode) {
 				foundobj = searchdir;
 				vref(foundobj);
-				ndp->ni_dvp = searchdir;
+				*newsearchdir_ret = searchdir;
 				*foundobj_ret = foundobj;
 				return 0;
 			}
@@ -914,8 +915,8 @@ lookup_once(struct namei_state *state,
 				    foundobj = ndp->ni_rootdir;
 				    vref(foundobj);
 				    vref(foundobj);
-				    ndp->ni_dvp = foundobj;
 				    vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
+				    *newsearchdir_ret = foundobj;
 				    *foundobj_ret = foundobj;
 				    return 0;
 				}
@@ -980,10 +981,10 @@ unionlookup:
 		/*
 		 * We return with foundobj NULL to indicate that the entry
 		 * doesn't currently exist, leaving a pointer to the
-		 * (possibly locked) directory vnode in ndp->ni_dvp.
+		 * (possibly locked) directory vnode as searchdir.
 		 */
 		state->lookup_alldone = 1;
-		ndp->ni_dvp = searchdir;
+		*newsearchdir_ret = searchdir;
 		*foundobj_ret = NULL;
 		return (0);
 	}
@@ -1035,7 +1036,7 @@ unionlookup:
 		vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
 	}
 
-	ndp->ni_dvp = searchdir;
+	*newsearchdir_ret = searchdir;
 	*foundobj_ret = foundobj;
 	return 0;
 }
@@ -1143,7 +1144,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			return (error);
 		}
 
-		error = lookup_once(state, searchdir, &foundobj);
+		error = lookup_once(state, searchdir, &searchdir, &foundobj);
+		ndp->ni_dvp = searchdir;
 		if (error) {
 			ndp->ni_vp = NULL;
 			/* XXX this should use namei_end() */
@@ -1452,7 +1454,7 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 	else
 		cnp->cn_flags &= ~ISDOTDOT;
 
-	error = lookup_once(state, startdir, &foundobj);
+	error = lookup_once(state, startdir, &ndp->ni_dvp, &foundobj);
 	if (error) {
 		goto bad;
 	}
