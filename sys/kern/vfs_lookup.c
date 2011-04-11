@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.164 2011/04/11 02:17:54 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.165 2011/04/11 02:18:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.164 2011/04/11 02:17:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.165 2011/04/11 02:18:07 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1103,7 +1103,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		if (cnp->cn_nameptr[0] == '\0') {
 			vref(searchdir);
 			foundobj = searchdir;
-			ndp->ni_vp = foundobj;
 			cnp->cn_flags |= ISLASTCN;
 
 			/* bleh */
@@ -1137,7 +1136,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			return (error);
 		}
 		KASSERT(ndp->ni_dvp == NULL);
-		ndp->ni_vp = foundobj;
 
 		if (foundobj == NULL) {
 			/*
@@ -1171,13 +1169,13 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 				 * symlink in. (FUTURE)
 				 */
 				error = namei_follow(state, inhibitmagic,
-						     searchdir, ndp->ni_vp,
+						     searchdir, foundobj,
 						     &searchdir);
 			}
 			if (error) {
-				KASSERT(searchdir != ndp->ni_vp);
+				KASSERT(searchdir != foundobj);
 				vput(searchdir);
-				vput(ndp->ni_vp);
+				vput(foundobj);
 				KASSERT(ndp->ni_dvp == NULL);
 				ndp->ni_vp = NULL;
 				return error;
@@ -1240,7 +1238,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			foundobj = ndp->ni_rootdir;
 			vref(foundobj);
 			vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
-			ndp->ni_vp = foundobj;
 		}
 
 		/*
@@ -1307,7 +1304,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 	 * If LOCKPARENT is not set, the parent directory isn't returned.
 	 */
 	if ((cnp->cn_flags & LOCKPARENT) == 0 && searchdir != NULL) {
-		if (searchdir == ndp->ni_vp) {
+		if (searchdir == foundobj) {
 			vrele(searchdir);
 		} else {
 			vput(searchdir);
@@ -1316,6 +1313,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 	}
 
 	ndp->ni_dvp = searchdir;
+	ndp->ni_vp = foundobj;
 	return 0;
 }
 
