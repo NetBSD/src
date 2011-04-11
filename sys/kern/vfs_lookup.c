@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.166 2011/04/11 02:18:20 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.167 2011/04/11 02:19:11 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.166 2011/04/11 02:18:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.167 2011/04/11 02:19:11 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -692,7 +692,9 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 	ndp->ni_pathlen += linklen;
 	memcpy(ndp->ni_pnbuf, cp, ndp->ni_pathlen);
 	PNBUF_PUT(cp);
-	vput(foundobj);
+
+	/* we're now starting from the beginning of the buffer again */
+	cnp->cn_nameptr = ndp->ni_pnbuf;
 
 	/*
 	 * Check if root directory should replace current directory.
@@ -1181,7 +1183,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 				ndp->ni_vp = NULL;
 				return error;
 			}
-			cnp->cn_nameptr = ndp->ni_pnbuf;
+			vput(foundobj);
+			foundobj = NULL;
 			continue;
 		}
 
