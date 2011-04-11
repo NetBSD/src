@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.167 2011/04/11 02:19:11 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.168 2011/04/11 02:19:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.167 2011/04/11 02:19:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.168 2011/04/11 02:19:27 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1071,12 +1071,9 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * (currently, this may consume more than one)
 		 */
 
-		ndp->ni_dvp = NULL;
 		cnp->cn_flags &= ~ISSYMLINK;
 
     dirloop:
-		KASSERT(ndp->ni_dvp == NULL);
-
 		/*
 		 * If we have a leading string of slashes, remove
 		 * them, and just make sure the current node is a
@@ -1092,7 +1089,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 
 			if (searchdir->v_type != VDIR) {
 				vput(searchdir);
-				KASSERT(ndp->ni_dvp == NULL);
+				ndp->ni_dvp = NULL;
 				ndp->ni_vp = NULL;
 				state->attempt_retry = 1;
 				return ENOTDIR;
@@ -1115,7 +1112,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		error = lookup_parsepath(state);
 		if (error) {
 			vput(searchdir);
-			KASSERT(ndp->ni_dvp == NULL);
+			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
 			state->attempt_retry = 1;
 			return (error);
@@ -1124,7 +1121,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		error = lookup_once(state, searchdir, &searchdir, &foundobj);
 		if (error) {
 			vput(searchdir);
-			KASSERT(ndp->ni_dvp == NULL);
+			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
 			/*
 			 * Note that if we're doing TRYEMULROOT we can
@@ -1138,7 +1135,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			state->attempt_retry = 1;
 			return (error);
 		}
-		KASSERT(ndp->ni_dvp == NULL);
 
 		if (foundobj == NULL) {
 			/*
@@ -1179,7 +1175,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 				KASSERT(searchdir != foundobj);
 				vput(searchdir);
 				vput(foundobj);
-				KASSERT(ndp->ni_dvp == NULL);
+				ndp->ni_dvp = NULL;
 				ndp->ni_vp = NULL;
 				return error;
 			}
@@ -1194,11 +1190,12 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 */
 		if ((foundobj->v_type != VDIR) && (cnp->cn_flags & REQUIREDIR)) {
 			KASSERT(foundobj != searchdir);
-			vput(foundobj);
-			ndp->ni_vp = NULL;
 			if (searchdir) {
 				vput(searchdir);
 			}
+			vput(foundobj);
+			ndp->ni_dvp = NULL;
+			ndp->ni_vp = NULL;
 			state->attempt_retry = 1;
 			return ENOTDIR;
 		}
@@ -1215,7 +1212,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			} else {
 				vput(searchdir);
 			}
-			KASSERT(ndp->ni_dvp == NULL);
 			searchdir = foundobj;
 			foundobj = NULL;
 			goto dirloop;
@@ -1237,7 +1233,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 				if (searchdir != NULL)
 					vput(searchdir);
 			searchdir = NULL;
-			KASSERT(ndp->ni_dvp == NULL);
 			vput(foundobj);
 			foundobj = ndp->ni_rootdir;
 			vref(foundobj);
@@ -1269,7 +1264,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			}
 			vput(foundobj);
 			foundobj = NULL;
-			KASSERT(ndp->ni_dvp == NULL);
+			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
 			state->attempt_retry = 1;
 			return (error);
@@ -1288,7 +1283,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			if (searchdir) {
 				vput(searchdir);
 			}
-			KASSERT(ndp->ni_dvp == NULL);
+			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
 			state->attempt_retry = 1;
 			return (error);
