@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.155 2011/04/11 02:15:21 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.156 2011/04/11 02:15:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.155 2011/04/11 02:15:21 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.156 2011/04/11 02:15:38 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1078,6 +1078,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		cnp->cn_flags &= ~ISSYMLINK;
 
     dirloop:
+		KASSERT(ndp->ni_dvp == NULL);
+
 		/*
 		 * If we have a leading string of slashes, remove
 		 * them, and just make sure the current node is a
@@ -1093,8 +1095,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 
 			if (searchdir->v_type != VDIR) {
 				vput(searchdir);
-				ndp->ni_vp = NULL;
 				KASSERT(ndp->ni_dvp == NULL);
+				ndp->ni_vp = NULL;
 				state->attempt_retry = 1;
 				return ENOTDIR;
 			}
@@ -1116,17 +1118,17 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		error = lookup_parsepath(state);
 		if (error) {
 			vput(searchdir);
-			ndp->ni_dvp = NULL;
+			KASSERT(ndp->ni_dvp == NULL);
 			ndp->ni_vp = NULL;
 			state->attempt_retry = 1;
 			return (error);
 		}
 
 		error = lookup_once(state, searchdir, &searchdir, &foundobj);
-		ndp->ni_dvp = searchdir;
 		if (error) {
+			vput(searchdir);
+			KASSERT(ndp->ni_dvp == NULL);
 			ndp->ni_vp = NULL;
-			vput(ndp->ni_dvp);
 			/*
 			 * Note that if we're doing TRYEMULROOT we can
 			 * retry with the normal root. Where this is
@@ -1139,6 +1141,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			state->attempt_retry = 1;
 			return (error);
 		}
+		ndp->ni_dvp = searchdir;
 		ndp->ni_vp = foundobj;
 		// XXX ought to be able to avoid this case too
 		if (state->lookup_alldone) {
