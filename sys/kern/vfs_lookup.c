@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.148 2011/04/11 02:11:32 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.149 2011/04/11 02:12:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.148 2011/04/11 02:11:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.149 2011/04/11 02:12:42 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -892,7 +892,6 @@ lookup_once(struct namei_state *state,
 				foundobj = searchdir;
 				vref(foundobj);
 				ndp->ni_dvp = searchdir;
-				ndp->ni_vp = foundobj;
 				*foundobj_ret = foundobj;
 				return 0;
 			}
@@ -916,7 +915,6 @@ lookup_once(struct namei_state *state,
 				    vref(foundobj);
 				    vref(foundobj);
 				    ndp->ni_dvp = foundobj;
-				    ndp->ni_vp = foundobj;
 				    vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
 				    *foundobj_ret = foundobj;
 				    return 0;
@@ -986,7 +984,6 @@ unionlookup:
 		 */
 		state->lookup_alldone = 1;
 		ndp->ni_dvp = searchdir;
-		ndp->ni_vp = NULL;
 		*foundobj_ret = NULL;
 		return (0);
 	}
@@ -1039,7 +1036,6 @@ unionlookup:
 	}
 
 	ndp->ni_dvp = searchdir;
-	ndp->ni_vp = foundobj;
 	*foundobj_ret = foundobj;
 	return 0;
 }
@@ -1166,6 +1162,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			state->attempt_retry = 1;
 			return (error);
 		}
+		ndp->ni_vp = foundobj;
 		// XXX ought to be able to avoid this case too
 		if (state->lookup_alldone) {
 			error = 0;
@@ -1459,6 +1456,7 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 	if (error) {
 		goto bad;
 	}
+	ndp->ni_vp = foundobj;
 	// XXX ought to be able to avoid this case too
 	if (state->lookup_alldone) {
 		/* this should NOT be "goto terminal;" */
