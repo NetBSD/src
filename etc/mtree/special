@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.135 2011/02/02 02:20:28 rmind Exp $
+#	$NetBSD: special,v 1.136 2011/04/11 20:03:45 martin Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -395,6 +395,7 @@
 ./var/chroot/pflogd		type=dir  mode=0755
 ./var/chroot/sshd		type=dir  mode=0755
 ./var/chroot/tcpdump		type=dir  mode=0755
+./var/chroot/tcpdump/etc	type=dir  mode=0755
 ./var/chroot/tftp-proxy		type=dir  mode=0755
 ./var/cron			type=dir  mode=0755
 ./var/cron/tabs			type=dir  mode=0700
