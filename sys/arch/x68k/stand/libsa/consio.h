@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.h,v 1.2 2011/04/11 13:47:16 tsutsui Exp $	*/
+/*	$NetBSD: consio.h,v 1.3 2011/04/11 14:00:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -26,13 +26,13 @@
  */
 
 #define KEYCTRL_PHYS	(0x00e8e000+7)
-#define KEYCTRL		(*((volatile unsigned char *)KEYCTRL_PHYS))
+#define KEYCTRL		(*((volatile uint8_t *)KEYCTRL_PHYS))
 
 #define MFP_TIMERC_PHYS	(0x00e88000+0x23)
-#define MFP_TIMERC	(*((volatile unsigned char *)MFP_TIMERC_PHYS))
+#define MFP_TIMERC	(*((volatile uint8_t *)MFP_TIMERC_PHYS))
 #define JOYA_PHYS	(0x00e9a000+1)
-#define JOYA		(*((volatile unsigned char *)JOYA_PHYS))
+#define JOYA		(*((volatile uint8_t *)JOYA_PHYS))
 
 #define SRAM_PHYS	0x00ed0000
 #define SERPARAM_PHYS	(SRAM_PHYS + 26)
-#define SERPARAM	(*((unsigned short *)SERPARAM_PHYS))
+#define SERPARAM	(*((uint16_t *)SERPARAM_PHYS))

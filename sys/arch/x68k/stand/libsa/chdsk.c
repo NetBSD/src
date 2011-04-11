@@ -1,4 +1,4 @@
-/*	$NetBSD: chdsk.c,v 1.3 2011/04/07 13:38:21 isaki Exp $	*/
+/*	$NetBSD: chdsk.c,v 1.4 2011/04/11 14:00:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -36,6 +36,7 @@
 int
 changedisk_hook(struct open_file *f)
 {
+
 	if (strcmp(f->f_dev->dv_name, "fd") == 0) {
 		struct fd_softc *sc = f->f_devdata;
 		int drive[2];
