@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.151 2011/04/11 02:13:10 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.152 2011/04/11 02:13:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.151 2011/04/11 02:13:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.152 2011/04/11 02:13:22 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -403,9 +403,6 @@ struct namei_state {
 	struct nameidata *ndp;
 	struct componentname *cnp;
 
-	/* used by the pieces of namei */
-	struct vnode *namei_startdir; /* The directory namei() starts from. */
-
 	/* used by the pieces of lookup */
 	int lookup_alldone;
 
@@ -426,8 +423,6 @@ namei_init(struct namei_state *state, struct nameidata *ndp)
 	state->ndp = ndp;
 	state->cnp = &ndp->ni_cnd;
 	KASSERT((state->cnp->cn_flags & INRELOOKUP) == 0);
-
-	state->namei_startdir = NULL;
 
 	state->lookup_alldone = 0;
 
@@ -459,8 +454,6 @@ static void
 namei_cleanup(struct namei_state *state)
 {
 	KASSERT(state->cnp == &state->ndp->ni_cnd);
-
-	//KASSERT(state->namei_startdir == NULL); 	// not yet
 
 	/* nothing for now */
 	(void)state;
@@ -1044,7 +1037,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 	const char *cp;
 	int error;
 
-	error = namei_start(state, forcecwd, &state->namei_startdir);
+	error = namei_start(state, forcecwd, &searchdir);
 	if (error) {
 		return error;
 	}
@@ -1067,8 +1060,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * If the directory we're on is unmounted, bail out.
 		 * XXX: should this also check if it's unlinked?
 		 */
-		if (state->namei_startdir->v_mount == NULL) {
-			vput(state->namei_startdir);
+		if (searchdir->v_mount == NULL) {
+			vput(searchdir);
 			return (ENOENT);
 		}
 
@@ -1081,7 +1074,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 
 		ndp->ni_dvp = NULL;
 		cnp->cn_flags &= ~ISSYMLINK;
-		searchdir = state->namei_startdir;
 
     dirloop:
 		/*
@@ -1173,10 +1165,16 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			if (neverfollow) {
 				error = EINVAL;
 			} else {
-				state->namei_startdir = ndp->ni_dvp;
+				/*
+				 * dholland 20110410: if we're at a
+				 * union mount it might make sense to
+				 * use the top of the union stack here
+				 * rather than the layer we found the
+				 * symlink in. (FUTURE)
+				 */
 				error = namei_follow(state, inhibitmagic,
-						     state->namei_startdir,
-						     &state->namei_startdir);
+						     searchdir,
+						     &searchdir);
 			}
 			if (error) {
 				KASSERT(ndp->ni_dvp != ndp->ni_vp);
