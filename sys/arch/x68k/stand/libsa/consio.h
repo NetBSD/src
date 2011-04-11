@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.h,v 1.1 2001/09/27 10:03:27 minoura Exp $	*/
+/*	$NetBSD: consio.h,v 1.2 2011/04/11 13:47:16 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -35,4 +35,4 @@
 
 #define SRAM_PHYS	0x00ed0000
 #define SERPARAM_PHYS	(SRAM_PHYS + 26)
-#define SERPARAM	(*((unsigned short *)KEYCTRL_PHYS))
+#define SERPARAM	(*((unsigned short *)SERPARAM_PHYS))
