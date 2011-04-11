@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD 	*/
+/*	$NetBSD: testlang_conf.l,v 1.2 2011/04/11 09:03:24 blymn Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
