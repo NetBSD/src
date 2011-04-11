@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/05/23 21:31:57 veego Exp $
+#	$NetBSD: Makefile,v 1.4 2011/04/11 22:47:50 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ PROG=	sessreg
 
 .include "../xdm/Makefile.xdm"
 
-CPPFLAGS=	-I${X11SRCDIR.${PROG}}/../include
+CPPFLAGS+=	-I${X11SRCDIR.${PROG}}/../include
 
 X11EXTRAMANDEFS+=	-e 's,__ttys_file__,/etc/ttys,g; \
 			s,__utmp_file__,${XDMPIDDIR}/utmp,g; \
