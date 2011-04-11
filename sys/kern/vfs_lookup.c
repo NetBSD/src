@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.161 2011/04/11 02:17:14 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.162 2011/04/11 02:17:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.161 2011/04/11 02:17:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.162 2011/04/11 02:17:28 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -403,9 +403,6 @@ struct namei_state {
 	struct nameidata *ndp;
 	struct componentname *cnp;
 
-	/* used by the pieces of lookup */
-	int lookup_alldone;
-
 	int docache;			/* == 0 do not cache last component */
 	int rdonly;			/* lookup read-only flag bit */
 	int slashes;
@@ -423,8 +420,6 @@ namei_init(struct namei_state *state, struct nameidata *ndp)
 	state->ndp = ndp;
 	state->cnp = &ndp->ni_cnd;
 	KASSERT((state->cnp->cn_flags & INRELOOKUP) == 0);
-
-	state->lookup_alldone = 0;
 
 	state->docache = 0;
 	state->rdonly = 0;
@@ -971,7 +966,6 @@ unionlookup:
 		 * doesn't currently exist, leaving a pointer to the
 		 * (possibly locked) directory vnode as searchdir.
 		 */
-		state->lookup_alldone = 1;
 		*foundobj_ret = NULL;
 		return (0);
 	}
@@ -1072,8 +1066,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * (currently, this may consume more than one)
 		 */
 
-		state->lookup_alldone = 0;
-
 		ndp->ni_dvp = NULL;
 		cnp->cn_flags &= ~ISSYMLINK;
 
@@ -1145,10 +1137,14 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		KASSERT(ndp->ni_dvp == NULL);
 		ndp->ni_vp = foundobj;
 
-		// XXX ought to be able to avoid this case too
-		if (state->lookup_alldone) {
-			error = 0;
-			/* break out of main loop */
+		if (foundobj == NULL) {
+			/*
+			 * Success with no object returned means we're
+			 * creating something and it isn't already
+			 * there. Break out of the main loop now so
+			 * the code below doesn't have to test for
+			 * foundobj == NULL.
+			 */
 			break;
 		}
 
@@ -1435,7 +1431,6 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 	KASSERT(cnp == &ndp->ni_cnd);
 
 	cnp->cn_nameptr = ndp->ni_pnbuf;
-	state->lookup_alldone = 0;
 	state->docache = 1;
 	state->rdonly = cnp->cn_flags & RDONLY;
 	ndp->ni_dvp = NULL;
@@ -1470,9 +1465,8 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 		goto bad;
 	}
 	ndp->ni_vp = foundobj;
-	// XXX ought to be able to avoid this case too
-	if (state->lookup_alldone) {
-		/* this should NOT be "goto terminal;" */
+
+	if (foundobj == NULL) {
 		return 0;
 	}
 
