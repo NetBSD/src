@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.153 2011/04/11 02:14:57 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.154 2011/04/11 02:15:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.153 2011/04/11 02:14:57 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.154 2011/04/11 02:15:09 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -854,6 +854,7 @@ lookup_once(struct namei_state *state,
 	struct nameidata *ndp = state->ndp;
 
 	KASSERT(cnp == &ndp->ni_cnd);
+	*newsearchdir_ret = searchdir;
 
 	/*
 	 * Handle "..": two special cases.
@@ -873,10 +874,10 @@ lookup_once(struct namei_state *state,
 		struct proc *p = l->l_proc;
 
 		for (;;) {
-			if (searchdir == ndp->ni_rootdir || searchdir == rootvnode) {
+			if (searchdir == ndp->ni_rootdir ||
+			    searchdir == rootvnode) {
 				foundobj = searchdir;
 				vref(foundobj);
-				*newsearchdir_ret = searchdir;
 				*foundobj_ret = foundobj;
 				return 0;
 			}
@@ -913,6 +914,7 @@ lookup_once(struct namei_state *state,
 			vref(searchdir);
 			vput(tdp);
 			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
+			*newsearchdir_ret = searchdir;
 		}
 	}
 
@@ -923,6 +925,7 @@ lookup_once(struct namei_state *state,
 unionlookup:
 	foundobj = NULL;
 	error = VOP_LOOKUP(searchdir, &foundobj, cnp);
+
 	if (error != 0) {
 #ifdef DIAGNOSTIC
 		if (foundobj != NULL)
@@ -939,6 +942,7 @@ unionlookup:
 			vref(searchdir);
 			vput(tdp);
 			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
+			*newsearchdir_ret = searchdir;
 			goto unionlookup;
 		}
 
@@ -968,7 +972,6 @@ unionlookup:
 		 * (possibly locked) directory vnode as searchdir.
 		 */
 		state->lookup_alldone = 1;
-		*newsearchdir_ret = searchdir;
 		*foundobj_ret = NULL;
 		return (0);
 	}
@@ -1020,7 +1023,6 @@ unionlookup:
 		vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
 	}
 
-	*newsearchdir_ret = searchdir;
 	*foundobj_ret = foundobj;
 	return 0;
 }
