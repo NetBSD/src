@@ -1,7 +1,7 @@
-/* $NetBSD: term.h,v 1.6 2010/09/22 06:10:51 roy Exp $ */
+/* $NetBSD: term.h,v 1.7 2011/04/11 21:13:09 roy Exp $ */
 
 /*
- * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -1463,10 +1463,6 @@ typedef struct {
 __BEGIN_DECLS
 
 extern TERMINAL *cur_term;
-#ifndef _TERMCAP_H
-extern short ospeed;
-extern char PC;
-#endif
 
 /* setup functions */
 int		setupterm(const char *, int, int *);
@@ -1481,12 +1477,6 @@ char *		tigetstr(const char *);
  * if the platform allows and the %pN is followed immediately by %l or %s */
 char *		tparm(const char *, long, long, long, long, long,
 		long, long, long, long);
-
-#ifndef _TERMCAP_H
-/* Output functions. */
-int		putp(const char *);
-int		tputs(const char *, int, int (*)(int));
-#endif
 
 /* Non standard functions, but provide a level of thread safety */
 int		ti_setupterm(TERMINAL **, const char *, int, int *);
@@ -1515,6 +1505,9 @@ char *		t_vparm(TERMINAL *, const char *, ...);
 /* Convert a termcap string into a terminfo string.
  * The passed string is destroyed and the return string needs to be freed. */
 char *		captoinfo(char *);
+
+/* POSIX says that term.h should also pull in our termcap definitions. */
+#include <termcap.h>
 
 __END_DECLS
 #endif
