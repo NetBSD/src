@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.140 2011/04/11 01:38:10 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.141 2011/04/11 01:38:24 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.140 2011/04/11 01:38:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.141 2011/04/11 01:38:24 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -650,7 +650,9 @@ namei_atsymlink(struct namei_state *state)
  * Follow a symlink.
  */
 static inline int
-namei_follow(struct namei_state *state, int inhibitmagic)
+namei_follow(struct namei_state *state, int inhibitmagic,
+	     struct vnode *searchdir,
+	     struct vnode **newsearchdir_ret)
 {
 	struct nameidata *ndp = state->ndp;
 	struct componentname *cnp = state->cnp;
@@ -715,26 +717,27 @@ namei_follow(struct namei_state *state, int inhibitmagic)
 	memcpy(ndp->ni_pnbuf, cp, ndp->ni_pathlen);
 	PNBUF_PUT(cp);
 	vput(ndp->ni_vp);
-	state->namei_startdir = ndp->ni_dvp;
+	searchdir = ndp->ni_dvp;
 
 	/*
 	 * Check if root directory should replace current directory.
 	 */
 	if (ndp->ni_pnbuf[0] == '/') {
-		vput(state->namei_startdir);
+		vput(searchdir);
 		/* Keep absolute symbolic links inside emulation root */
-		state->namei_startdir = ndp->ni_erootdir;
-		if (state->namei_startdir == NULL ||
+		searchdir = ndp->ni_erootdir;
+		if (searchdir == NULL ||
 		    (ndp->ni_pnbuf[1] == '.' 
 		     && ndp->ni_pnbuf[2] == '.'
 		     && ndp->ni_pnbuf[3] == '/')) {
 			ndp->ni_erootdir = NULL;
-			state->namei_startdir = ndp->ni_rootdir;
+			searchdir = ndp->ni_rootdir;
 		}
-		vref(state->namei_startdir);
-		vn_lock(state->namei_startdir, LK_EXCLUSIVE | LK_RETRY);
+		vref(searchdir);
+		vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
 	}
 
+	*newsearchdir_ret = searchdir;
 	return 0;
 }
 
@@ -1173,7 +1176,9 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			if (neverfollow) {
 				error = EINVAL;
 			} else {
-				error = namei_follow(state, inhibitmagic);
+				error = namei_follow(state, inhibitmagic,
+						     state->namei_startdir,
+						     &state->namei_startdir);
 			}
 			if (error) {
 				KASSERT(ndp->ni_dvp != ndp->ni_vp);
