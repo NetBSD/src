@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.142 2011/04/11 01:38:47 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.143 2011/04/11 01:39:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.142 2011/04/11 01:38:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.143 2011/04/11 01:39:13 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -805,8 +805,6 @@ lookup_parsepath(struct namei_state *state)
 	cnp->cn_hash = namei_hash(cnp->cn_nameptr, &cp);
 	cnp->cn_namelen = cp - cnp->cn_nameptr;
 	if (cnp->cn_namelen > NAME_MAX) {
-		vput(state->dp);
-		ndp->ni_dvp = NULL;
 		return ENAMETOOLONG;
 	}
 #ifdef NAMEI_DIAGNOSTIC
@@ -1127,6 +1125,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 
 		error = lookup_parsepath(state);
 		if (error) {
+			vput(state->dp);
+			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
 			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
