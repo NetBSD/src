@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.136 2011/04/11 01:36:28 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.137 2011/04/11 01:36:59 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.136 2011/04/11 01:36:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.137 2011/04/11 01:36:59 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -413,6 +413,8 @@ struct namei_state {
 	int rdonly;			/* lookup read-only flag bit */
 	struct vnode *dp;		/* the directory we are searching */
 	int slashes;
+
+	unsigned attempt_retry:1;	/* true if error allows emul retry */
 };
 
 
@@ -1233,35 +1235,15 @@ bad:
 //////////////////////////////
 
 static int
-do_namei(struct namei_state *state, struct vnode *forcecwd,
+namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 	 int neverfollow, int inhibitmagic)
 {
-	int error;
-
 	struct nameidata *ndp = state->ndp;
 	struct componentname *cnp = state->cnp;
-	const char *savepath = NULL;
-
-	KASSERT(cnp == &ndp->ni_cnd);
-
-	if (cnp->cn_flags & TRYEMULROOT) {
-		savepath = pathbuf_stringcopy_get(ndp->ni_pathbuf);
-	}
-
-    emul_retry:
-
-	if (savepath != NULL) {
-		/* kinda gross */
-		strcpy(ndp->ni_pathbuf->pb_path, savepath);
-		pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
-		savepath = NULL;
-	}
+	int error;
 
 	error = namei_start(state, forcecwd);
 	if (error) {
-		if (savepath != NULL) {
-			pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
-		}
 		return error;
 	}
 
@@ -1275,9 +1257,6 @@ do_namei(struct namei_state *state, struct vnode *forcecwd,
 		 * XXX: should this also check if it's unlinked?
 		 */
 		if (state->namei_startdir->v_mount == NULL) {
-			if (savepath != NULL) {
-				pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
-			}
 			namei_end(state);
 			return (ENOENT);
 		}
@@ -1292,12 +1271,16 @@ do_namei(struct namei_state *state, struct vnode *forcecwd,
 			if (ndp->ni_dvp) {
 				vput(ndp->ni_dvp);
 			}
-			if (ndp->ni_erootdir != NULL) {
-				/* Retry the whole thing from the normal root */
-				cnp->cn_flags &= ~TRYEMULROOT;
-				goto emul_retry;
-			}
-			KASSERT(savepath == NULL);
+			/*
+			 * Note that if we're doing TRYEMULROOT we can
+			 * retry with the normal root. Setting this
+			 * here matches previous practice, but the
+			 * previous practice didn't make much sense
+			 * and somebody should sit down and figure out
+			 * which cases should cause retry and which
+			 * shouldn't. XXX.
+			 */
+			state->attempt_retry = 1;
 			return (error);
 		}
 
@@ -1316,9 +1299,6 @@ do_namei(struct namei_state *state, struct vnode *forcecwd,
 				vput(ndp->ni_dvp);
 				vput(ndp->ni_vp);
 				ndp->ni_vp = NULL;
-				if (savepath != NULL) {
-					pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
-				}
 				return error;
 			}
 		}
@@ -1343,11 +1323,52 @@ do_namei(struct namei_state *state, struct vnode *forcecwd,
 		ndp->ni_dvp = NULL;
 	}
 
+	return 0;
+}
+
+static int
+namei_tryemulroot(struct namei_state *state, struct vnode *forcecwd,
+	 int neverfollow, int inhibitmagic)
+{
+	int error;
+
+	struct nameidata *ndp = state->ndp;
+	struct componentname *cnp = state->cnp;
+	const char *savepath = NULL;
+
+	KASSERT(cnp == &ndp->ni_cnd);
+
+	if (cnp->cn_flags & TRYEMULROOT) {
+		savepath = pathbuf_stringcopy_get(ndp->ni_pathbuf);
+	}
+
+    emul_retry:
+	state->attempt_retry = 0;
+
+	error = namei_oneroot(state, forcecwd, neverfollow, inhibitmagic);
+	if (error) {
+		/*
+		 * Once namei has started up, the existence of ni_erootdir
+		 * tells us whether we're working from an emulation root.
+		 * The TRYEMULROOT flag isn't necessarily authoritative.
+		 */
+		if (ndp->ni_erootdir != NULL && state->attempt_retry) {
+			/* Retry the whole thing using the normal root */
+			cnp->cn_flags &= ~TRYEMULROOT;
+			state->attempt_retry = 0;
+
+			/* kinda gross */
+			strcpy(ndp->ni_pathbuf->pb_path, savepath);
+			pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
+			savepath = NULL;
+
+			goto emul_retry;
+		}
+	}
 	if (savepath != NULL) {
 		pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
 	}
-
-	return 0;
+	return error;
 }
 
 int
@@ -1357,7 +1378,8 @@ namei(struct nameidata *ndp)
 	int error;
 
 	namei_init(&state, ndp);
-	error = do_namei(&state, NULL, 0/*!neverfollow*/, 0/*!inhibitmagic*/);
+	error = namei_tryemulroot(&state, NULL,
+				  0/*!neverfollow*/, 0/*!inhibitmagic*/);
 	namei_cleanup(&state);
 
 	return error;
@@ -1386,7 +1408,8 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *forcecwd, int neverfollow)
 	int error;
 
 	namei_init(&state, ndp);
-	error = do_namei(&state, forcecwd, neverfollow, 1/*inhibitmagic*/);
+	error = namei_tryemulroot(&state, forcecwd,
+				  neverfollow, 1/*inhibitmagic*/);
 	namei_cleanup(&state);
 
 	return error;
