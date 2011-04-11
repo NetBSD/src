@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.387 2011/02/16 16:22:13 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.388 2011/04/11 20:03:45 martin Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -301,6 +301,9 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/etc.${MACHINE}/boot.cfg ${DESTDIR}/
 .endif
+	${_MKMSG_INSTALL} ${DESTDIR}/var/chroot/tcpdump/etc/protocols
+	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    protocols ${DESTDIR}/var/chroot/tcpdump/etc
 	${_MKMSG_INSTALL} ${DESTDIR}/dev/MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
