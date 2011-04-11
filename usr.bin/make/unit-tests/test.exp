@@ -128,6 +128,7 @@ path='/bin':'/tmp':'/':'/no/such/dir'
 path_/usr/xbin=/opt/xbin/
 paths=/bin /tmp / /no/such/dir /opt/xbin
 PATHS=/BIN /TMP / /NO/SUCH/DIR /OPT/XBIN
+The answer is 42
 LIST      = one two three four five six seven eight nine ten
 LIST:O    = eight five four nine one seven six ten three two
 LIST:Ox   = Ok

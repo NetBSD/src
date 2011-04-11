@@ -1,4 +1,4 @@
-# $Id: modmisc,v 1.6 2010/04/23 15:43:28 sjg Exp $
+# $Id: modmisc,v 1.7 2011/04/11 15:10:15 sjg Exp $
 #
 # miscellaneous modifier tests
 
@@ -15,7 +15,10 @@ MOD_HOMES=S,/home/,/homes/,
 MOD_OPT=@d@$${exists($$d):?$$d:$${d:S,/usr,/opt,}}@
 MOD_SEP=S,:, ,g
 
-all:	modvar modvarloop
+all:	modvar modvarloop modsysv
+
+modsysv:
+	@echo "The answer is ${libfoo.a:L:libfoo.a=42}"
 
 modvar:
 	@echo "path='${path}'"
