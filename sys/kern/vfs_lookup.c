@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.159 2011/04/11 02:16:27 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.160 2011/04/11 02:17:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.159 2011/04/11 02:16:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.160 2011/04/11 02:17:01 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1458,7 +1458,14 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 	else
 		cnp->cn_flags &= ~ISDOTDOT;
 
-	error = lookup_once(state, startdir, &ndp->ni_dvp, &foundobj);
+	/*
+	 * Because lookup_once can change the startdir, we need our
+	 * own reference to it to avoid consuming the caller's.
+	 */
+	vref(startdir);
+	vn_lock(startdir, LK_EXCLUSIVE | LK_RETRY);
+	error = lookup_once(state, startdir, &startdir, &foundobj);
+	vput(startdir);
 	if (error) {
 		goto bad;
 	}
@@ -1469,6 +1476,7 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 		return 0;
 	}
 
+	KASSERT((cnp->cn_flags & LOCKPARENT) == 0);
 	if ((cnp->cn_flags & LOCKLEAF) == 0) {
 		VOP_UNLOCK(foundobj);
 	}
@@ -1499,8 +1507,6 @@ lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 	ndp->ni_pathlen = strlen(ndp->ni_pathbuf->pb_path) + 1;
 	ndp->ni_pnbuf = NULL;
 	ndp->ni_cnd.cn_nameptr = NULL;
-
-	vref(startdir);
 
 	namei_init(&state, ndp);
 	error = do_lookup_for_nfsd_index(&state, startdir);
