@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.165 2011/04/11 02:18:07 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.166 2011/04/11 02:18:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.165 2011/04/11 02:18:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.166 2011/04/11 02:18:20 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -574,8 +574,8 @@ namei_ktrace(struct namei_state *state)
 }
 
 /*
- * Start up namei. Copy the path, find the root dir and cwd, establish
- * the starting directory for lookup, and lock it. Also calls ktrace when
+ * Start up namei. Find the root dir and cwd, establish the starting
+ * directory for lookup, and lock it. Also calls ktrace when
  * appropriate.
  */
 static int
@@ -961,9 +961,10 @@ unionlookup:
 		}
 
 		/*
-		 * We return with foundobj NULL to indicate that the entry
-		 * doesn't currently exist, leaving a pointer to the
-		 * (possibly locked) directory vnode as searchdir.
+		 * We return success and a NULL foundobj to indicate
+		 * that the entry doesn't currently exist, leaving a
+		 * pointer to the (possibly locked) directory vnode as
+		 * searchdir.
 		 */
 		*foundobj_ret = NULL;
 		return (0);
