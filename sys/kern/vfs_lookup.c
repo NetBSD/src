@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.152 2011/04/11 02:13:22 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.153 2011/04/11 02:14:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.152 2011/04/11 02:13:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.153 2011/04/11 02:14:57 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -910,8 +910,8 @@ lookup_once(struct namei_state *state,
 				break;
 			tdp = searchdir;
 			searchdir = searchdir->v_mount->mnt_vnodecovered;
-			vput(tdp);
 			vref(searchdir);
+			vput(tdp);
 			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
@@ -936,8 +936,8 @@ unionlookup:
 		    (searchdir->v_mount->mnt_flag & MNT_UNION)) {
 			tdp = searchdir;
 			searchdir = searchdir->v_mount->mnt_vnodecovered;
-			vput(tdp);
 			vref(searchdir);
+			vput(tdp);
 			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
 			goto unionlookup;
 		}
