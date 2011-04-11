@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2011/02/20 07:48:35 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2011/04/11 23:12:41 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2011/02/20 07:48:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2011/04/11 23:12:41 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -108,12 +108,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2011/02/20 07:48:35 matt Exp $");
 #include "ksyms.h"
 
 #if NKSYMS || defined(DDB) || defined(LKM)
-#include <machine/db_machdep.h>
+#include <mips/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/psl.h>
+#include <mips/cpu.h>
+#include <mips/psl.h>
+#include <mips/cache.h>
+#include <mips/mips_opcode.h>
 
 #include "com.h"
 #if NCOM == 0
@@ -228,6 +230,7 @@ void rmixl_get_wakeup_info(struct rmixl_config *);
 static void rmixl_wakeup_info_print(volatile rmixlfw_cpu_wakeup_info_t *);
 #endif	/* MACHDEP_DEBUG */
 #endif	/* MULTIPROCESSOR */
+static void rmixl_fixup_curcpu(void);
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -414,6 +417,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 		:: "r"(&cpu_info_store), "n"(MIPS_COP_0_OSSCRATCH));
 	mips_fixup_exceptions(rmixl_fixup_cop0_oscratch);
 #endif
+	rmixl_fixup_curcpu();
 }
 
 /*
@@ -481,6 +485,43 @@ rmixl_fixup_cop0_oscratch(int32_t load_addr, uint32_t new_insns[2])
 	return true;
 }
 #endif /* MULTIPROCESSOR */
+
+/*
+ * The following changes all	lX	rN, L_CPU(MIPS_CURLWP) [curlwp->l_cpu]
+ * to			     	[d]mfc0	rN, $22 [MIPS_COP_0_OSSCRATCH]
+ *
+ * the mfc0 is 3 cycles shorter than the load.
+ */
+#define	LOAD_CURCPU_0	((MIPS_CURLWP_REG << 21) | offsetof(lwp_t, l_cpu))
+#define	MFC0_CURCPU_0	((OP_COP0 << 26) | (MIPS_COP_0_OSSCRATCH << 11))
+#ifdef _LP64
+#define	LOAD_CURCPU	((uint32_t)(OP_LD << 26) | LOAD_CURCPU_0)
+#define	MFC0_CURCPU	((uint32_t)(OP_DMF << 21) | MFC0_CURCPU_0)
+#else
+#define	LOAD_CURCPU	((uint32_t)(OP_LW << 26) | LOAD_CURCPU_0)
+#define	MFC0_CURCPU	((uint32_t)(OP_MF << 21) | MFC0_CURCPU_0)
+#endif
+#define	LOAD_CURCPU_MASK	0xffe0ffff
+
+static void
+rmixl_fixup_curcpu(void)
+{
+	extern uint32_t _ftext[];
+	extern uint32_t _etext[];
+
+	for (uint32_t *insnp = _ftext; insnp < _etext; insnp++) {
+		const uint32_t insn = *insnp;
+		if (__predict_false((insn & LOAD_CURCPU_MASK) == LOAD_CURCPU)) {
+			/*
+			 * Since the register to loaded is located in bits
+			 * 16-20 for the mfc0 and the load instruction we can
+			 * just change the instruction bits around it.
+			 */
+			*insnp = insn ^ LOAD_CURCPU ^ MFC0_CURCPU;
+			mips_icache_sync_range((vaddr_t)insnp, 4);
+		}
+	}
+}
 
 /*
  * ram_seg_resv - cut reserved regions out of segs, fragmenting as needed
