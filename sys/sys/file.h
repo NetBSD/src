@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.71 2009/12/24 19:01:12 elad Exp $	*/
+/*	$NetBSD: file.h,v 1.72 2011/04/11 22:31:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -109,15 +109,6 @@ struct file {
 	kmutex_t	f_lock;		/* lock on structure */
 	int		f_flag;		/* see fcntl.h */
 	u_int		f_marker;	/* traversal marker (sysctl) */
-#define	DTYPE_VNODE	1		/* file */
-#define	DTYPE_SOCKET	2		/* communications endpoint */
-#define	DTYPE_PIPE	3		/* pipe */
-#define	DTYPE_KQUEUE	4		/* event queue */
-#define	DTYPE_MISC	5		/* misc file descriptor type */
-#define	DTYPE_CRYPTO	6		/* crypto */
-#define	DTYPE_MQUEUE	7		/* message queue */
-#define DTYPE_NAMES \
-    "0", "file", "socket", "pipe", "kqueue", "misc", "crypto", "mqueue"
 	u_int		f_type;		/* descriptor type */
 	u_int		f_advice;	/* access pattern hint; UVM_ADV_* */
 	u_int		f_count;	/* reference count */
@@ -125,6 +116,23 @@ struct file {
 	u_int		f_unpcount;	/* deferred close: see uipc_usrreq.c */
 	SLIST_ENTRY(file) f_unplist;	/* deferred close: see uipc_usrreq.c */
 };
+
+/*
+ * Descriptor types.
+ */
+
+#define	DTYPE_VNODE	1		/* file */
+#define	DTYPE_SOCKET	2		/* communications endpoint */
+#define	DTYPE_PIPE	3		/* pipe */
+#define	DTYPE_KQUEUE	4		/* event queue */
+#define	DTYPE_MISC	5		/* misc file descriptor type */
+#define	DTYPE_CRYPTO	6		/* crypto */
+#define	DTYPE_MQUEUE	7		/* message queue */
+#define	DTYPE_SEM	8		/* semaphore */
+
+#define DTYPE_NAMES	\
+    "0", "file", "socket", "pipe", "kqueue", "misc", "crypto", "mqueue", \
+    "semaphore"
 
 /*
  * Flags for fo_read and fo_write and do_fileread/write/v
