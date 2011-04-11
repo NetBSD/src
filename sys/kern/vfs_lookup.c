@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.157 2011/04/11 02:15:54 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.158 2011/04/11 02:16:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.157 2011/04/11 02:15:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.158 2011/04/11 02:16:07 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1246,12 +1246,14 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		}
 
 		/*
-		 * If the caller requested the parent node
-		 * (i.e.  it's a CREATE, DELETE, or RENAME),
-		 * and we don't have one (because this is the
-		 * root directory), then we must fail.
+		 * If the caller requested the parent node (i.e. it's
+		 * a CREATE, DELETE, or RENAME), and we don't have one
+		 * (because this is the root directory, or we crossed
+		 * a mount point), then we must fail.
 		 */
-		if (searchdir == NULL && cnp->cn_nameiop != LOOKUP) {
+		if (cnp->cn_nameiop != LOOKUP &&
+		    (searchdir == NULL ||
+		     searchdir->v_mount != foundobj->v_mount)) {
 			switch (cnp->cn_nameiop) {
 			    case CREATE:
 				error = EEXIST;
@@ -1262,6 +1264,9 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 				break;
 			    default:
 				KASSERT(0);
+			}
+			if (searchdir) {
+				vput(searchdir);
 			}
 			vput(foundobj);
 			foundobj = NULL;
