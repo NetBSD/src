@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.147 2011/04/11 01:40:13 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.148 2011/04/11 02:11:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.147 2011/04/11 01:40:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.148 2011/04/11 02:11:32 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -938,12 +938,11 @@ lookup_once(struct namei_state *state,
 	 * Our vnode state here is that "searchdir" is held and locked.
 	 */
 unionlookup:
-	ndp->ni_dvp = searchdir;
-	ndp->ni_vp = NULL;
-	error = VOP_LOOKUP(searchdir, &ndp->ni_vp, cnp);
+	foundobj = NULL;
+	error = VOP_LOOKUP(searchdir, &foundobj, cnp);
 	if (error != 0) {
 #ifdef DIAGNOSTIC
-		if (ndp->ni_vp != NULL)
+		if (foundobj != NULL)
 			panic("leaf `%s' should be empty", cnp->cn_nameptr);
 #endif /* DIAGNOSTIC */
 #ifdef NAMEI_DIAGNOSTIC
@@ -981,11 +980,13 @@ unionlookup:
 		}
 
 		/*
-		 * We return with ni_vp NULL to indicate that the entry
+		 * We return with foundobj NULL to indicate that the entry
 		 * doesn't currently exist, leaving a pointer to the
 		 * (possibly locked) directory vnode in ndp->ni_dvp.
 		 */
 		state->lookup_alldone = 1;
+		ndp->ni_dvp = searchdir;
+		ndp->ni_vp = NULL;
 		*foundobj_ret = NULL;
 		return (0);
 	}
@@ -1006,10 +1007,8 @@ unionlookup:
 			cnp->cn_flags |= ISLASTCN;
 	}
 
-	foundobj = ndp->ni_vp;
-
 	/*
-	 * "foundobj" and "ndp->ni_dvp" are both locked and held,
+	 * "foundobj" and "searchdir" are both locked and held,
 	 * and may be the same vnode.
 	 */
 
@@ -1024,21 +1023,23 @@ unionlookup:
 			vput(foundobj);
 			return error;
 		}
-		KASSERT(ndp->ni_dvp != foundobj);
-		VOP_UNLOCK(ndp->ni_dvp);
+		KASSERT(searchdir != foundobj);
+		VOP_UNLOCK(searchdir);
 		vput(foundobj);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp, false, NULL);
 		if (error) {
-			vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
+			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
 			return error;
 		}
 		VOP_UNLOCK(tdp);
-		ndp->ni_vp = foundobj = tdp;
-		vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
-		vn_lock(ndp->ni_vp, LK_EXCLUSIVE | LK_RETRY);
+		foundobj = tdp;
+		vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
 	}
 
+	ndp->ni_dvp = searchdir;
+	ndp->ni_vp = foundobj;
 	*foundobj_ret = foundobj;
 	return 0;
 }
