@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.154 2011/04/11 02:15:09 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.155 2011/04/11 02:15:21 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.154 2011/04/11 02:15:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.155 2011/04/11 02:15:21 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1094,9 +1094,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			if (searchdir->v_type != VDIR) {
 				vput(searchdir);
 				ndp->ni_vp = NULL;
-				if (ndp->ni_dvp) {
-					vput(ndp->ni_dvp);
-				}
+				KASSERT(ndp->ni_dvp == NULL);
 				state->attempt_retry = 1;
 				return ENOTDIR;
 			}
@@ -1120,9 +1118,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			vput(searchdir);
 			ndp->ni_dvp = NULL;
 			ndp->ni_vp = NULL;
-			if (ndp->ni_dvp) {
-				vput(ndp->ni_dvp);
-			}
 			state->attempt_retry = 1;
 			return (error);
 		}
@@ -1131,9 +1126,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		ndp->ni_dvp = searchdir;
 		if (error) {
 			ndp->ni_vp = NULL;
-			if (ndp->ni_dvp) {
-				vput(ndp->ni_dvp);
-			}
+			vput(ndp->ni_dvp);
 			/*
 			 * Note that if we're doing TRYEMULROOT we can
 			 * retry with the normal root. Where this is
