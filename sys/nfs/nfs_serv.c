@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.157 2011/03/19 01:34:24 dholland Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.158 2011/04/11 01:33:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.157 2011/03/19 01:34:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.158 2011/04/11 01:33:05 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,9 +427,6 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			ind = nd;
 			VOP_UNLOCK(nd.ni_vp);
 			ind.ni_pathbuf = ipb;
-			ind.ni_pathlen = strlen(nfs_pub.np_index);
-			ind.ni_pnbuf = NULL;
-			ind.ni_cnd.cn_nameptr = NULL;
 
 			error = lookup_for_nfsd_index(&ind, nd.ni_vp);
 			if (!error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.132 2011/03/22 15:16:23 pooka Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.133 2011/04/11 01:33:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.132 2011/03/22 15:16:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.133 2011/04/11 01:33:04 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -415,9 +415,6 @@ struct namei_state {
 	int slashes;
 };
 
-/* XXX reorder things to make this decl unnecessary */
-static int do_lookup(struct namei_state *state, struct vnode *startdir);
-
 
 /*
  * Initialize the namei working state.
@@ -437,6 +434,21 @@ namei_init(struct namei_state *state, struct nameidata *ndp)
 	state->rdonly = 0;
 	state->dp = NULL;
 	state->slashes = 0;
+
+#ifdef DIAGNOSTIC
+	if (!state->cnp->cn_cred)
+		panic("namei: bad cred/proc");
+	if (state->cnp->cn_nameiop & (~OPMASK))
+		panic("namei: nameiop contaminated with flags");
+	if (state->cnp->cn_flags & OPMASK)
+		panic("namei: flags contaminated with nameiops");
+#endif
+
+	/*
+	 * The buffer for name translation shall be the one inside the
+	 * pathbuf.
+	 */
+	state->ndp->ni_pnbuf = state->ndp->ni_pathbuf->pb_path;
 }
 
 /*
@@ -457,42 +469,131 @@ namei_cleanup(struct namei_state *state)
 //////////////////////////////
 
 /*
- * Start up namei. Early portion.
- *
- * This is divided from namei_start2 by the emul_retry: point.
+ * Get the directory context.
+ * Initializes the rootdir and erootdir state and returns a reference
+ * to the starting dir.
  */
-static void
-namei_start1(struct namei_state *state)
+static struct vnode *
+namei_getstartdir(struct namei_state *state)
 {
+	struct nameidata *ndp = state->ndp;
+	struct componentname *cnp = state->cnp;
+	struct cwdinfo *cwdi;		/* pointer to cwd state */
+	struct lwp *self = curlwp;	/* thread doing namei() */
+	struct vnode *rootdir, *erootdir, *curdir, *startdir;
 
-#ifdef DIAGNOSTIC
-	if (!state->cnp->cn_cred)
-		panic("namei: bad cred/proc");
-	if (state->cnp->cn_nameiop & (~OPMASK))
-		panic("namei: nameiop contaminated with flags");
-	if (state->cnp->cn_flags & OPMASK)
-		panic("namei: flags contaminated with nameiops");
-#endif
+	cwdi = self->l_proc->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
+
+	/* root dir */
+	if (cwdi->cwdi_rdir == NULL || (cnp->cn_flags & NOCHROOT)) {
+		rootdir = rootvnode;
+	} else {
+		rootdir = cwdi->cwdi_rdir;
+	}
+
+	/* emulation root dir, if any */
+	if ((cnp->cn_flags & TRYEMULROOT) == 0) {
+		/* if we don't want it, don't fetch it */
+		erootdir = NULL;
+	} else if (cnp->cn_flags & EMULROOTSET) {
+		/* explicitly set emulroot; "/../" doesn't override this */
+		erootdir = ndp->ni_erootdir;
+	} else if (!strncmp(ndp->ni_pnbuf, "/../", 4)) {
+		/* explicit reference to real rootdir */
+		erootdir = NULL;
+	} else {
+		/* may be null */
+		erootdir = cwdi->cwdi_edir;
+	}
+
+	/* current dir */
+	curdir = cwdi->cwdi_cdir;
+
+	if (ndp->ni_pnbuf[0] != '/') {
+		startdir = curdir;
+		erootdir = NULL;
+	} else if (cnp->cn_flags & TRYEMULROOT && erootdir != NULL) {
+		startdir = erootdir;
+	} else {
+		startdir = rootdir;
+		erootdir = NULL;
+	}
+
+	state->ndp->ni_rootdir = rootdir;
+	state->ndp->ni_erootdir = erootdir;
 
 	/*
-	 * The buffer for name translation shall be the one inside the
-	 * pathbuf.
+	 * Get a reference to the start dir so we can safely unlock cwdi.
+	 *
+	 * XXX: should we hold references to rootdir and erootdir while
+	 * we're running? What happens if a multithreaded process chroots
+	 * during namei?
 	 */
-	state->ndp->ni_pnbuf = state->ndp->ni_pathbuf->pb_path;
+	vref(startdir);
+
+	rw_exit(&cwdi->cwdi_lock);
+	return startdir;
+}
+
+/*
+ * Get the directory context for the nfsd case, in parallel to
+ * getstartdir. Initializes the rootdir and erootdir state and
+ * returns a reference to the passed-instarting dir.
+ */
+static struct vnode *
+namei_getstartdir_for_nfsd(struct namei_state *state, struct vnode *startdir)
+{
+	/* always use the real root, and never set an emulation root */
+	state->ndp->ni_rootdir = rootvnode;
+	state->ndp->ni_erootdir = NULL;
+
+	vref(startdir);
+	return startdir;
+}
+
+
+/*
+ * Ktrace the namei operation.
+ */
+static void
+namei_ktrace(struct namei_state *state)
+{
+	struct nameidata *ndp = state->ndp;
+	struct componentname *cnp = state->cnp;
+	struct lwp *self = curlwp;	/* thread doing namei() */
+	const char *emul_path;
+
+	if (ktrpoint(KTR_NAMEI)) {
+		if (ndp->ni_erootdir != NULL) {
+			/*
+			 * To make any sense, the trace entry need to have the
+			 * text of the emulation path prepended.
+			 * Usually we can get this from the current process,
+			 * but when called from emul_find_interp() it is only
+			 * in the exec_package - so we get it passed in ni_next
+			 * (this is a hack).
+			 */
+			if (cnp->cn_flags & EMULROOTSET)
+				emul_path = ndp->ni_next;
+			else
+				emul_path = self->l_proc->p_emul->e_path;
+			ktrnamei2(emul_path, strlen(emul_path),
+			    ndp->ni_pnbuf, ndp->ni_pathlen);
+		} else
+			ktrnamei(ndp->ni_pnbuf, ndp->ni_pathlen);
+	}
 }
 
 /*
  * Start up namei. Copy the path, find the root dir and cwd, establish
- * the starting directory for lookup, and lock it.
+ * the starting directory for lookup, and lock it. Also calls ktrace when
+ * appropriate.
  */
 static int
-namei_start2(struct namei_state *state)
+namei_start(struct namei_state *state, int isnfsd, struct vnode *forcecwd)
 {
 	struct nameidata *ndp = state->ndp;
-	struct componentname *cnp = state->cnp;
-
-	struct cwdinfo *cwdi;		/* pointer to cwd state */
-	struct lwp *self = curlwp;	/* thread doing namei() */
 
 	/* length includes null terminator (was originally from copyinstr) */
 	ndp->ni_pathlen = strlen(ndp->ni_pnbuf) + 1;
@@ -507,69 +608,14 @@ namei_start2(struct namei_state *state)
 
 	ndp->ni_loopcnt = 0;
 
-	/*
-	 * Get root directory for the translation.
-	 */
-	cwdi = self->l_proc->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	state->namei_startdir = cwdi->cwdi_rdir;
-	if (state->namei_startdir == NULL)
-		state->namei_startdir = rootvnode;
-	ndp->ni_rootdir = state->namei_startdir;
-
-	/*
-	 * Check if starting from root directory or current directory.
-	 */
-	if (ndp->ni_pnbuf[0] == '/') {
-		if (cnp->cn_flags & TRYEMULROOT) {
-			if (cnp->cn_flags & EMULROOTSET) {
-				/* Called from (eg) emul_find_interp() */
-				state->namei_startdir = ndp->ni_erootdir;
-			} else {
-				if (cwdi->cwdi_edir == NULL
-				    || (ndp->ni_pnbuf[1] == '.' 
-					   && ndp->ni_pnbuf[2] == '.' 
-					   && ndp->ni_pnbuf[3] == '/')) {
-					ndp->ni_erootdir = NULL;
-				} else {
-					state->namei_startdir = cwdi->cwdi_edir;
-					ndp->ni_erootdir = state->namei_startdir;
-				}
-			}
-		} else {
-			ndp->ni_erootdir = NULL;
-			if (cnp->cn_flags & NOCHROOT)
-				state->namei_startdir = ndp->ni_rootdir = rootvnode;
-		}
+	/* Get starting directory, set up root, and ktrace. */
+	if (isnfsd) {
+		state->namei_startdir = namei_getstartdir_for_nfsd(state,
+								   forcecwd);
+		/* no ktrace */
 	} else {
-		state->namei_startdir = cwdi->cwdi_cdir;
-		ndp->ni_erootdir = NULL;
-	}
-	vref(state->namei_startdir);
-	rw_exit(&cwdi->cwdi_lock);
-
-	/*
-	 * Ktrace it.
-	 */
-	if (ktrpoint(KTR_NAMEI)) {
-		if (ndp->ni_erootdir != NULL) {
-			/*
-			 * To make any sense, the trace entry need to have the
-			 * text of the emulation path prepended.
-			 * Usually we can get this from the current process,
-			 * but when called from emul_find_interp() it is only
-			 * in the exec_package - so we get it passed in ni_next
-			 * (this is a hack).
-			 */
-			const char *emul_path;
-			if (cnp->cn_flags & EMULROOTSET)
-				emul_path = ndp->ni_next;
-			else
-				emul_path = self->l_proc->p_emul->e_path;
-			ktrnamei2(emul_path, strlen(emul_path),
-			    ndp->ni_pnbuf, ndp->ni_pathlen);
-		} else
-			ktrnamei(ndp->ni_pnbuf, ndp->ni_pathlen);
+		state->namei_startdir = namei_getstartdir(state);
+		namei_ktrace(state);
 	}
 
 	vn_lock(state->namei_startdir, LK_EXCLUSIVE | LK_RETRY);
@@ -578,8 +624,7 @@ namei_start2(struct namei_state *state)
 }
 
 /*
- * Undo namei_start: unlock and release the current lookup directory,
- * and discard the path buffer.
+ * Undo namei_start: unlock and release the current lookup directory.
  */
 static void
 namei_end(struct namei_state *state)
@@ -1053,6 +1098,8 @@ do_lookup(struct namei_state *state, struct vnode *startdir)
 
 	KASSERT(cnp == &ndp->ni_cnd);
 
+	cnp->cn_nameptr = ndp->ni_pnbuf;
+
 	error = lookup_start(state, startdir);
 	if (error) {
 		goto bad;
@@ -1193,8 +1240,6 @@ do_namei(struct namei_state *state)
 
 	KASSERT(cnp == &ndp->ni_cnd);
 
-	namei_start1(state);
-
 	if (cnp->cn_flags & TRYEMULROOT) {
 		savepath = pathbuf_stringcopy_get(ndp->ni_pathbuf);
 	}
@@ -1208,7 +1253,7 @@ do_namei(struct namei_state *state)
 		savepath = NULL;
 	}
 
-	error = namei_start2(state);
+	error = namei_start(state, 0/*not nfsd*/, NULL);
 	if (error) {
 		if (savepath != NULL) {
 			pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
@@ -1216,17 +1261,27 @@ do_namei(struct namei_state *state)
 		return error;
 	}
 
-	/* Loop through symbolic links */
+	/*
+	 * Keep going until we run out of path components.
+	 */
 	for (;;) {
+
+		/*
+		 * If the directory we're on is unmounted, bail out.
+		 * XXX: should this also check if it's unlinked?
+		 */
 		if (state->namei_startdir->v_mount == NULL) {
-			/* Give up if the directory is no longer mounted */
 			if (savepath != NULL) {
 				pathbuf_stringcopy_put(ndp->ni_pathbuf, savepath);
 			}
 			namei_end(state);
 			return (ENOENT);
 		}
-		cnp->cn_nameptr = ndp->ni_pnbuf;
+
+		/*
+		 * Look up the next path component.
+		 * (currently, this may consume more than one)
+		 */
 		error = do_lookup(state, state->namei_startdir);
 		if (error != 0) {
 			/* XXX this should use namei_end() */
@@ -1243,7 +1298,8 @@ do_namei(struct namei_state *state)
 		}
 
 		/*
-		 * Check for symbolic link
+		 * If we've reached a symbolic link, follow it, unless we
+		 * aren't supposed to.
 		 */
 		if (namei_atsymlink(state)) {
 			error = namei_follow(state);
@@ -1264,15 +1320,19 @@ do_namei(struct namei_state *state)
 	}
 
 	/*
-	 * Done
+	 * Done.
 	 */
 
-	if ((cnp->cn_flags & LOCKPARENT) == 0 && ndp->ni_dvp) {
+	/*
+	 * If LOCKPARENT is not set, the parent directory isn't returned.
+	 */
+	if ((cnp->cn_flags & LOCKPARENT) == 0 && ndp->ni_dvp != NULL) {
 		if (ndp->ni_dvp == ndp->ni_vp) {
 			vrele(ndp->ni_dvp);
 		} else {
 			vput(ndp->ni_dvp);
 		}
+		ndp->ni_dvp = NULL;
 	}
 
 	if (savepath != NULL) {
@@ -1317,25 +1377,14 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *dp, int neverfollow)
 	int linklen;
 	char *cp;
 
-	ndp->ni_pnbuf = ndp->ni_pathbuf->pb_path;
 	namei_init(&state, ndp);
 
-	/*
-	 * BEGIN wodge of code from nfsd
-	 */
-
-	vref(dp);
-	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+	namei_start(&state, 1/*nfsd*/, dp);
 
     for (;;) {
 
-	state.cnp->cn_nameptr = state.ndp->ni_pnbuf;
-
-	/*
-	 * END wodge of code from nfsd
-	 */
-
 	error = do_lookup(&state, dp);
+
 	if (error) {
 		/* BEGIN from nfsd */
 		if (ndp->ni_dvp) {
@@ -1444,10 +1493,16 @@ lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 	struct namei_state state;
 	int error;
 
-	vref(startdir);
+	/*
+	 * Note: the name sent in here is not/should not be allowed to
+	 * contain a slash.
+	 */
 
-	ndp->ni_pnbuf = ndp->ni_pathbuf->pb_path;
-	ndp->ni_cnd.cn_nameptr = ndp->ni_pnbuf;
+	ndp->ni_pathlen = strlen(ndp->ni_pathbuf->pb_path) + 1;
+	ndp->ni_pnbuf = NULL;
+	ndp->ni_cnd.cn_nameptr = NULL;
+
+	vref(startdir);
 
 	namei_init(&state, ndp);
 	error = do_lookup(&state, startdir);
