@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.60 2011/04/11 04:22:32 mrg Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.61 2011/04/11 04:26:18 mrg Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.60 2011/04/11 04:22:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.61 2011/04/11 04:26:18 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -46,7 +46,8 @@ static void		db_symsplit(char *, char **, char **);
 #ifndef _KERNEL
 #define	TBLNAME	"netbsd"
 
-static int use_ksyms = true;
+#define use_ksyms 0
+
 const db_symformat_t *db_symformat;
 static db_forall_func_t db_sift;
 extern db_symformat_t db_symformat_aout;
@@ -66,10 +67,8 @@ ddb_init(int symsize, void *vss, void *vse)
 	ksyms_addsyms_elf(symsize, vss, vse);	/* Will complain if necessary */
 #else	/* _KERNEL */
 	db_symformat = &db_symformat_elf;
-	if ((*db_symformat->sym_init)(symsize, vss, vse, TBLNAME) == true) {
-		use_ksyms = false;
-		return;
-	}
+	if ((*db_symformat->sym_init)(symsize, vss, vse, TBLNAME) != true)
+		printf("sym_init failed");
 #endif	/* _KERNEL */
 }
 
