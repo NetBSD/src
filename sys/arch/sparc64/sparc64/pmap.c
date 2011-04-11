@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.259.2.3 2011/03/05 20:52:08 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.259.2.4 2011/04/11 04:35:27 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259.2.3 2011/03/05 20:52:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259.2.4 2011/04/11 04:35:27 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1335,16 +1335,12 @@ pmap_growkernel(vaddr_t maxkvaddr)
 {
 	struct pmap *pm = pmap_kernel();
 	paddr_t pa;
-	bool took_lock;
 
 	if (maxkvaddr >= KERNEND) {
 		printf("WARNING: cannot extend kernel pmap beyond %p to %p\n",
 		       (void *)KERNEND, (void *)maxkvaddr);
 		return (kbreak);
 	}
-	took_lock = lock_available;
-	if (__predict_true(took_lock))
-		mutex_enter(&pmap_lock);
 	DPRINTF(PDB_GROW, ("pmap_growkernel(%lx...%lx)\n", kbreak, maxkvaddr));
 	/* Align with the start of a page table */
 	for (kbreak &= (-1 << PDSHIFT); kbreak < maxkvaddr;
@@ -1362,8 +1358,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			ENTER_STAT(ptpneeded);
 		}
 	}
-	if (__predict_true(took_lock))
-		mutex_exit(&pmap_lock);
 	return (kbreak);
 }
 
@@ -2103,7 +2097,6 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		return;
 	}
 
-	mutex_enter(&pmap_lock);
 	sva = trunc_page(sva);
 	for (; sva < eva; sva += PAGE_SIZE) {
 #ifdef DEBUG
@@ -2163,7 +2156,6 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		tlb_flush_pte(sva, pm);
 	}
 	pv_check();
-	mutex_exit(&pmap_lock);
 }
 
 /*
@@ -2250,7 +2242,6 @@ pmap_kprotect(vaddr_t va, vm_prot_t prot)
 	int64_t data;
 	int rv;
 
-	mutex_enter(&pmap_lock);
 	data = pseg_get(pm, va);
 	KASSERT(data & TLB_V);
 	if (prot & VM_PROT_WRITE) {
@@ -2264,7 +2255,6 @@ pmap_kprotect(vaddr_t va, vm_prot_t prot)
 	KASSERT(pmap_ctx(pm)>=0);
 	tsb_invalidate(va, pm);
 	tlb_flush_pte(va, pm);
-	mutex_exit(&pmap_lock);
 }
 
 /*
@@ -2811,7 +2801,6 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 		return;
 	}
 #endif
-	mutex_enter(&pmap_lock);
 	data = pseg_get(pmap, va & PV_VAMASK);
 	KASSERT(data & TLB_V);
 	data &= ~TLB_TSB_LOCK;
@@ -2819,7 +2808,6 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	if (rv & 1)
 		panic("pmap_unwire: pseg_set needs spare! rv=%d\n", rv);
 	pv_check();
-	mutex_exit(&pmap_lock);
 }
 
 /*
@@ -3057,7 +3045,7 @@ pmap_count_wired(struct pmap *pm)
 	int i, j, k, n;
 
 	/* Don't want one of these pages reused while we're reading it. */
-	mutex_enter(&pmap_lock);
+	mutex_enter(&pmap_lock);	/* XXX uvmplock */
 	n = 0;
 	for (i = 0; i < STSZ; i++) {
 		pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i],
@@ -3079,12 +3067,11 @@ pmap_count_wired(struct pmap *pm)
 			}
 		}
 	}
-	mutex_exit(&pmap_lock);
+	mutex_exit(&pmap_lock);	/* XXX uvmplock */
 
 	if (pm->pm_stats.wired_count != n)
 		printf("pmap_count_wired: pm_stats = %ld, counted: %d\n",
 		    pm->pm_stats.wired_count, n);
-
 
 	return n;
 }
