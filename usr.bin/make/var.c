@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.163 2011/04/07 01:40:01 joerg Exp $	*/
+/*	$NetBSD: var.c,v 1.164 2011/04/11 01:44:15 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.163 2011/04/07 01:40:01 joerg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.164 2011/04/11 01:44:15 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.163 2011/04/07 01:40:01 joerg Exp $");
+__RCSID("$NetBSD: var.c,v 1.164 2011/04/11 01:44:15 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2366,6 +2366,21 @@ VarChangeCase(char *str, int upper)
    return Buf_Destroy(&buf, FALSE);
 }
 
+static char *
+VarStrftime(const char *fmt, int zulu)
+{
+    char buf[BUFSIZ];
+    time_t utc;
+
+    time(&utc);
+    if (!*fmt)
+	fmt = "%c";
+    strftime(buf, sizeof(buf), fmt, zulu ? gmtime(&utc) : localtime(&utc));
+    
+    buf[sizeof(buf) - 1] = '\0';
+    return bmake_strdup(buf);
+}
+
 /*
  * Now we need to apply any modifiers the user wants applied.
  * These are:
@@ -2450,6 +2465,10 @@ VarChangeCase(char *str, int upper)
  *	  ::!=<cmd>	Assigns output of <cmd> as the new value of
  *			variable.
  */
+
+/* we now have some modifiers with long names */
+#define STRMOD_MATCH(s, want, n) \
+    (strncmp(s, want, n) == 0 && (s[n] == endc || s[n] == ':'))
 
 static char *
 ApplyModifiers(char *nstr, const char *tstr,
@@ -2896,12 +2915,31 @@ ApplyModifiers(char *nstr, const char *tstr,
 		}
 
 	    }
+	case 'g':
+	    cp = tstr + 1;	/* make sure it is set */
+	    if (STRMOD_MATCH(tstr, "gmtime", 6)) {
+		newStr = VarStrftime(nstr, 1);
+		cp = tstr + 6;
+		termc = *cp;
+	    } else {
+		goto bad_modifier;
+	    }
+	    break;
 	case 'h':
 	    cp = tstr + 1;	/* make sure it is set */
-	    if (strncmp(tstr, "hash", 4) == 0 &&
-		(tstr[4] == endc || tstr[4] == ':')) {
+	    if (STRMOD_MATCH(tstr, "hash", 4)) {
 		newStr = VarHash(nstr);
 		cp = tstr + 4;
+		termc = *cp;
+	    } else {
+		goto bad_modifier;
+	    }
+	    break;
+	case 'l':
+	    cp = tstr + 1;	/* make sure it is set */
+	    if (STRMOD_MATCH(tstr, "localtime", 9)) {
+		newStr = VarStrftime(nstr, 0);
+		cp = tstr + 9;
 		termc = *cp;
 	    } else {
 		goto bad_modifier;
