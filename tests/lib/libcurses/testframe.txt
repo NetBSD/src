@@ -71,7 +71,7 @@ call, call2, call3, call4:
       parameters, the window, a pointer to storage for y and a pointer
       to storage for x would be called like this:
 
-      	 	 call OK 4 5 getyx $win1
+      	 	 call3 OK 4 5 getyx $win1
 
       Which calls getyx, the first (and possibly only) return is the
       return status of the function call, in this case we expect "OK"
