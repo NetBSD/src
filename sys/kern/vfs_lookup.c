@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.138 2011/04/11 01:37:14 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.139 2011/04/11 01:37:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.138 2011/04/11 01:37:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.139 2011/04/11 01:37:43 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -415,7 +415,6 @@ struct namei_state {
 	int slashes;
 
 	unsigned attempt_retry:1;	/* true if error allows emul retry */
-	unsigned lookup_terminal:1;	/* flag returned from lookup */
 };
 
 
@@ -641,7 +640,8 @@ namei_end(struct namei_state *state)
 static inline int
 namei_atsymlink(struct namei_state *state)
 {
-	return (state->cnp->cn_flags & ISSYMLINK) != 0;
+	return (state->dp->v_type == VLNK) &&
+		(state->cnp->cn_flags & (FOLLOW|REQUIREDIR));
 }
 
 /*
@@ -774,67 +774,6 @@ namei_follow(struct namei_state *state, int inhibitmagic)
  *	return the answer in ni_vp, locked if LOCKLEAF set
  *	    if LOCKPARENT set, return locked parent in ni_dvp
  */
-
-/*
- * Begin lookup().
- */
-static int
-lookup_start(struct namei_state *state, struct vnode *startdir)
-{
-	const char *cp;			/* pointer into pathname argument */
-
-	struct componentname *cnp = state->cnp;
-	struct nameidata *ndp = state->ndp;
-
-	KASSERT(cnp == &ndp->ni_cnd);
-
-	state->lookup_alldone = 0;
-	state->dp = NULL;
-
-	/*
-	 * Setup: break out flag bits into variables.
-	 */
-	state->docache = (cnp->cn_flags & NOCACHE) ^ NOCACHE;
-	if (cnp->cn_nameiop == DELETE)
-		state->docache = 0;
-	state->rdonly = cnp->cn_flags & RDONLY;
-	ndp->ni_dvp = NULL;
-	cnp->cn_flags &= ~ISSYMLINK;
-	state->dp = startdir;
-
-	/*
-	 * If we have a leading string of slashes, remove them, and just make
-	 * sure the current node is a directory.
-	 */
-	cp = cnp->cn_nameptr;
-	if (*cp == '/') {
-		do {
-			cp++;
-		} while (*cp == '/');
-		ndp->ni_pathlen -= cp - cnp->cn_nameptr;
-		cnp->cn_nameptr = cp;
-
-		if (state->dp->v_type != VDIR) {
-			vput(state->dp);
-			return ENOTDIR;
-		}
-
-		/*
-		 * If we've exhausted the path name, then just return the
-		 * current node.
-		 */
-		if (cnp->cn_nameptr[0] == '\0') {
-			ndp->ni_vp = state->dp;
-			cnp->cn_flags |= ISLASTCN;
-
-			/* bleh */
-			state->lookup_alldone = 1;
-			return 0;
-		}
-	}
-
-	return 0;
-}
 
 static int
 lookup_parsepath(struct namei_state *state)
@@ -1102,6 +1041,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 {
 	struct nameidata *ndp = state->ndp;
 	struct componentname *cnp = state->cnp;
+	const char *cp;
 	int error;
 
 	error = namei_start(state, forcecwd);
@@ -1110,8 +1050,17 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 	}
 
 	/*
+	 * Setup: break out flag bits into variables.
+	 */
+	state->docache = (cnp->cn_flags & NOCACHE) ^ NOCACHE;
+	if (cnp->cn_nameiop == DELETE)
+		state->docache = 0;
+	state->rdonly = cnp->cn_flags & RDONLY;
+
+	/*
 	 * Keep going until we run out of path components.
 	 */
+	cnp->cn_nameptr = ndp->ni_pnbuf;
 	for (;;) {
 
 		/*
@@ -1127,190 +1076,98 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * Look up the next path component.
 		 * (currently, this may consume more than one)
 		 */
-		cnp->cn_nameptr = ndp->ni_pnbuf;
 
-		error = lookup_start(state, state->namei_startdir);
+		state->lookup_alldone = 0;
+
+		ndp->ni_dvp = NULL;
+		cnp->cn_flags &= ~ISSYMLINK;
+		state->dp = state->namei_startdir;
+
+    dirloop:
+		/*
+		 * If we have a leading string of slashes, remove
+		 * them, and just make sure the current node is a
+		 * directory.
+		 */
+		cp = cnp->cn_nameptr;
+		if (*cp == '/') {
+			do {
+				cp++;
+			} while (*cp == '/');
+			ndp->ni_pathlen -= cp - cnp->cn_nameptr;
+			cnp->cn_nameptr = cp;
+
+			if (state->dp->v_type != VDIR) {
+				vput(state->dp);
+				ndp->ni_vp = NULL;
+				/* XXX this should use namei_end() */
+				if (ndp->ni_dvp) {
+					vput(ndp->ni_dvp);
+				}
+				state->attempt_retry = 1;
+				return ENOTDIR;
+			}
+		}
+
+		/*
+		 * If we've exhausted the path name, then just return the
+		 * current node.
+		 */
+		if (cnp->cn_nameptr[0] == '\0') {
+			ndp->ni_vp = state->dp;
+			cnp->cn_flags |= ISLASTCN;
+
+			/* bleh */
+			goto terminal;
+		}
+
+		error = lookup_parsepath(state);
 		if (error) {
 			ndp->ni_vp = NULL;
+			/* XXX this should use namei_end() */
+			if (ndp->ni_dvp) {
+				vput(ndp->ni_dvp);
+			}
+			state->attempt_retry = 1;
 			return (error);
 		}
 
-		// XXX: this case should not be necessary given proper handling
-		// of slashes elsewhere.
-		if (state->lookup_alldone) {
-			state->lookup_terminal = 1;
-			error = 0;
-		} else {
-
-	    dirloop:
-			error = lookup_parsepath(state);
-			if (error) {
-				state->lookup_terminal = 0;
-				ndp->ni_vp = NULL;
-				goto lookup_out;
-			}
-
-			error = lookup_once(state);
-			if (error) {
-				state->lookup_terminal = 0;
-				ndp->ni_vp = NULL;
-				goto lookup_out;
-			}
-			// XXX ought to be able to avoid this case too
-			if (state->lookup_alldone) {
-				/* this should NOT set lookup_terminal */
-				state->lookup_terminal = 0;
-				error = 0;
-				goto lookup_out;
-			}
-
-			/*
-			 * Check for symbolic link.  Back up over any
-			 * slashes that we skipped, as we will need
-			 * them again.
-			 */
-			if ((state->dp->v_type == VLNK) && (cnp->cn_flags & (FOLLOW|REQUIREDIR))) {
-				ndp->ni_pathlen += state->slashes;
-				ndp->ni_next -= state->slashes;
-				cnp->cn_flags |= ISSYMLINK;
-				state->lookup_terminal = 0;
-				error = 0;
-				goto lookup_out;
-			}
-
-			/*
-			 * Check for directory, if the component was
-			 * followed by a series of slashes.
-			 */
-			if ((state->dp->v_type != VDIR) && (cnp->cn_flags & REQUIREDIR)) {
-				error = ENOTDIR;
-				KASSERT(state->dp != ndp->ni_dvp);
-				vput(state->dp);
-				state->lookup_terminal = 0;
-				ndp->ni_vp = NULL;
-				goto lookup_out;
-			}
-
-			/*
-			 * Not a symbolic link.  If this was not the
-			 * last component, then continue at the next
-			 * component, else return.
-			 */
-			if (!(cnp->cn_flags & ISLASTCN)) {
-				cnp->cn_nameptr = ndp->ni_next;
-				if (ndp->ni_dvp == state->dp) {
-					vrele(ndp->ni_dvp);
-				} else {
-					vput(ndp->ni_dvp);
-				}
-				goto dirloop;
-			}
-
-			state->lookup_terminal = 1;
-			error = 0;
-			goto lookup_out;
-	    lookup_out:
-			;
-		}
-		if (error != 0) {
+		error = lookup_once(state);
+		if (error) {
+			ndp->ni_vp = NULL;
 			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
 				vput(ndp->ni_dvp);
 			}
 			/*
 			 * Note that if we're doing TRYEMULROOT we can
-			 * retry with the normal root. Setting this
-			 * here matches previous practice, but the
-			 * previous practice didn't make much sense
-			 * and somebody should sit down and figure out
-			 * which cases should cause retry and which
-			 * shouldn't. XXX.
+			 * retry with the normal root. Where this is
+			 * currently set matches previous practice,
+			 * but the previous practice didn't make much
+			 * sense and somebody should sit down and
+			 * figure out which cases should cause retry
+			 * and which shouldn't. XXX.
 			 */
 			state->attempt_retry = 1;
 			return (error);
 		}
-		if (state->lookup_terminal) {
-
-			if (state->dp == ndp->ni_erootdir) {
-				/*
-				 * We are about to return the
-				 * emulation root.  This isn't a good
-				 * idea because code might repeatedly
-				 * lookup ".." until the file matches
-				 * that returned for "/" and loop
-				 * forever.  So convert it to the real
-				 * root.
-				 */
-				if (ndp->ni_dvp == state->dp)
-					vrele(state->dp);
-				else
-					if (ndp->ni_dvp != NULL)
-						vput(ndp->ni_dvp);
-				ndp->ni_dvp = NULL;
-				vput(state->dp);
-				state->dp = ndp->ni_rootdir;
-				vref(state->dp);
-				vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
-				ndp->ni_vp = state->dp;
-			}
-
-			/*
-			 * If the caller requested the parent node
-			 * (i.e.  it's a CREATE, DELETE, or RENAME),
-			 * and we don't have one (because this is the
-			 * root directory), then we must fail.
-			 */
-			if (ndp->ni_dvp == NULL && cnp->cn_nameiop != LOOKUP) {
-				switch (cnp->cn_nameiop) {
-				    case CREATE:
-					error = EEXIST;
-					break;
-				    case DELETE:
-				    case RENAME:
-					error = EBUSY;
-					break;
-				    default:
-					KASSERT(0);
-				}
-				vput(state->dp);
-				ndp->ni_vp = NULL;
-				goto lookup_terminal_fail;
-			}
-
-			/*
-			 * Disallow directory write attempts on
-			 * read-only lookups. Prefers EEXIST over
-			 * EROFS for the CREATE case.
-			 */
-			if (state->rdonly &&
-			    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
-				error = EROFS;
-				if (state->dp != ndp->ni_dvp) {
-					vput(state->dp);
-				}
-				ndp->ni_vp = NULL;
-				goto lookup_terminal_fail;
-			}
-			if ((cnp->cn_flags & LOCKLEAF) == 0) {
-				VOP_UNLOCK(state->dp);
-			}
-
-			if (0) {
-		    lookup_terminal_fail:
-				/* XXX this should use namei_end() */
-				if (ndp->ni_dvp) {
-					vput(ndp->ni_dvp);
-				}
-				state->attempt_retry = 1;
-				return (error);
-			}
+		// XXX ought to be able to avoid this case too
+		if (state->lookup_alldone) {
+			error = 0;
+			/* break out of main loop */
+			break;
 		}
 
 		/*
-		 * If we've reached a symbolic link, follow it, unless we
-		 * aren't supposed to.
+		 * Check for symbolic link. If we've reached one,
+		 * follow it, unless we aren't supposed to. Back up
+		 * over any slashes that we skipped, as we will need
+		 * them again.
 		 */
 		if (namei_atsymlink(state)) {
+			ndp->ni_pathlen += state->slashes;
+			ndp->ni_next -= state->slashes;
+			cnp->cn_flags |= ISSYMLINK;
 			if (neverfollow) {
 				error = EINVAL;
 			} else {
@@ -1323,10 +1180,116 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 				ndp->ni_vp = NULL;
 				return error;
 			}
+			cnp->cn_nameptr = ndp->ni_pnbuf;
+			continue;
 		}
-		else {
-			break;
+
+		/*
+		 * Check for directory, if the component was
+		 * followed by a series of slashes.
+		 */
+		if ((state->dp->v_type != VDIR) && (cnp->cn_flags & REQUIREDIR)) {
+			KASSERT(state->dp != ndp->ni_dvp);
+			vput(state->dp);
+			ndp->ni_vp = NULL;
+			/* XXX this should use namei_end() */
+			if (ndp->ni_dvp) {
+				vput(ndp->ni_dvp);
+			}
+			state->attempt_retry = 1;
+			return ENOTDIR;
 		}
+
+		/*
+		 * Not a symbolic link.  If this was not the
+		 * last component, then continue at the next
+		 * component, else return.
+		 */
+		if (!(cnp->cn_flags & ISLASTCN)) {
+			cnp->cn_nameptr = ndp->ni_next;
+			if (ndp->ni_dvp == state->dp) {
+				vrele(ndp->ni_dvp);
+			} else {
+				vput(ndp->ni_dvp);
+			}
+			ndp->ni_dvp = NULL;
+			goto dirloop;
+		}
+
+    terminal:
+		error = 0;
+		if (state->dp == ndp->ni_erootdir) {
+			/*
+			 * We are about to return the emulation root.
+			 * This isn't a good idea because code might
+			 * repeatedly lookup ".." until the file
+			 * matches that returned for "/" and loop
+			 * forever.  So convert it to the real root.
+			 */
+			if (ndp->ni_dvp == state->dp)
+				vrele(state->dp);
+			else
+				if (ndp->ni_dvp != NULL)
+					vput(ndp->ni_dvp);
+			ndp->ni_dvp = NULL;
+			vput(state->dp);
+			state->dp = ndp->ni_rootdir;
+			vref(state->dp);
+			vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
+			ndp->ni_vp = state->dp;
+		}
+
+		/*
+		 * If the caller requested the parent node
+		 * (i.e.  it's a CREATE, DELETE, or RENAME),
+		 * and we don't have one (because this is the
+		 * root directory), then we must fail.
+		 */
+		if (ndp->ni_dvp == NULL && cnp->cn_nameiop != LOOKUP) {
+			switch (cnp->cn_nameiop) {
+			    case CREATE:
+				error = EEXIST;
+				break;
+			    case DELETE:
+			    case RENAME:
+				error = EBUSY;
+				break;
+			    default:
+				KASSERT(0);
+			}
+			vput(state->dp);
+			ndp->ni_vp = NULL;
+			/* XXX this should use namei_end() */
+			if (ndp->ni_dvp) {
+				vput(ndp->ni_dvp);
+			}
+			state->attempt_retry = 1;
+			return (error);
+		}
+
+		/*
+		 * Disallow directory write attempts on read-only lookups.
+		 * Prefers EEXIST over EROFS for the CREATE case.
+		 */
+		if (state->rdonly &&
+		    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
+			error = EROFS;
+			if (state->dp != ndp->ni_dvp) {
+				vput(state->dp);
+			}
+			ndp->ni_vp = NULL;
+			/* XXX this should use namei_end() */
+			if (ndp->ni_dvp) {
+				vput(ndp->ni_dvp);
+			}
+			state->attempt_retry = 1;
+			return (error);
+		}
+		if ((cnp->cn_flags & LOCKLEAF) == 0) {
+			VOP_UNLOCK(state->dp);
+		}
+
+		break;
 	}
 
 	/*
