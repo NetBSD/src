@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.222 2011/04/11 20:03:45 martin Exp $
+# $NetBSD: mi,v 1.223 2011/04/11 22:09:56 martin Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -332,7 +332,6 @@
 ./root/.profile					etc-root-root
 ./root/.shrc					etc-root-root
 ./var/at/at.deny				etc-cron-root
-./var/chroot/tcpdump/etc/protocols		etc-sys-etc
 ./var/crash/minfree				etc-sys-root
 ./var/cron/tabs/root				etc-cron-root
 ./var/db/locate.database			etc-sys-root
