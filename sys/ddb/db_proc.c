@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.4 2011/04/10 20:59:22 christos Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.5 2011/04/12 17:46:38 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.4 2011/04/10 20:59:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.5 2011/04/12 17:46:38 nakayama Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -283,7 +283,7 @@ db_show_proc(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 
 	switch (*mode) {
 	case 'a':
-		lp = (lwp_t *)addr;
+		lp = (lwp_t *)(uintptr_t)addr;
 		db_printf("lwp_t %lx\n", (long)lp);
 		db_read_bytes((db_addr_t)lp, sizeof(l), (char *)&l);
 		pp = l.l_proc;
