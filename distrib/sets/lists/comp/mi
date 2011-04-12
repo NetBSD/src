@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1613 2011/04/10 09:58:00 jruoho Exp $
+#	$NetBSD: mi,v 1.1614 2011/04/12 08:22:48 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8596,6 +8596,7 @@
 ./usr/share/man/cat3/timespecsub.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timeval.0			comp-c-catman		.cat
 ./usr/share/man/cat3/timezone.0			comp-c-catman		.cat
+./usr/share/man/cat3/tm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tmpfile.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tmpnam.0			comp-c-catman		.cat
 ./usr/share/man/cat3/toascii.0			comp-c-catman		.cat
@@ -14603,6 +14604,7 @@
 ./usr/share/man/html3/timespecsub.html		comp-c-htmlman		html
 ./usr/share/man/html3/timeval.html		comp-c-htmlman		html
 ./usr/share/man/html3/timezone.html		comp-c-htmlman		html
+./usr/share/man/html3/tm.html			comp-c-htmlman		html
 ./usr/share/man/html3/tmpfile.html		comp-c-htmlman		html
 ./usr/share/man/html3/tmpnam.html		comp-c-htmlman		html
 ./usr/share/man/html3/toascii.html		comp-c-htmlman		html
@@ -20678,6 +20680,7 @@
 ./usr/share/man/man3/timespecsub.3		comp-c-man		.man
 ./usr/share/man/man3/timeval.3			comp-c-man		.man
 ./usr/share/man/man3/timezone.3			comp-c-man		.man
+./usr/share/man/man3/tm.3			comp-c-man		.man
 ./usr/share/man/man3/tmpfile.3			comp-c-man		.man
 ./usr/share/man/man3/tmpnam.3			comp-c-man		.man
 ./usr/share/man/man3/toascii.3			comp-c-man		.man
