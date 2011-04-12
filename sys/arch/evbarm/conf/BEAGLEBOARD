@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.18 2011/03/06 17:08:22 bouyer Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.19 2011/04/12 18:09:11 ahoka Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -189,6 +189,9 @@ omapnand0	at gpmc? addr 0x30000000
 
 # NAND layer
 nand0		at nandbus?
+
+# use the bad block table
+options NAND_BBT
 
 # Define flash partitions for board
 flash0		at nand0 offset 0x0 size 0x80000 readonly 1
