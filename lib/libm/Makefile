@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.104 2011/02/06 00:44:09 christos Exp $
+#  $NetBSD: Makefile,v 1.105 2011/04/12 07:29:50 jruoho Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -203,7 +203,7 @@ COPTS.s_tanh.c+= -O0
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 frexp.3 hypot.3 ieee.3 \
 	ieee_test.3 isinff.3 j0.3 ldexp.3 lgamma.3 lrint.3 \
-	math.3 modf.3 rint.3 round.3 sin.3 sinh.3 \
+	math.3 modf.3 nextafter.3 rint.3 round.3 sin.3 sinh.3 \
 	sqrt.3 tan.3 tanh.3 trunc.3 fmax.3 fdim.3
 
 # fenv.h interface
@@ -244,8 +244,6 @@ MLINKS+=hypot.3 hypotf.3
 MLINKS+=ieee.3 copysign.3 ieee.3 copysignf.3 ieee.3 copysignl.3 	\
 	ieee.3 finite.3 ieee.3 finitef.3 				\
 	ieee.3 ilogb.3 ieee.3 ilogbf.3					\
-	ieee.3 nextafter.3 ieee.3 nextafterf.3 ieee.3 nextafterl.3	\
-	ieee.3 nexttoward.3						\
 	ieee.3 remainder.3 ieee.3 remainderf.3 				\
 	ieee.3 remquo.3 ieee.3 remquof.3				\
 	ieee.3 scalbn.3 ieee.3 scalbnf.3
@@ -258,6 +256,9 @@ MLINKS+=j0.3 j0f.3 j0.3 j1.3 j0.3 j1f.3 j0.3 jn.3 j0.3 jnf.3 \
 MLINKS+=lgamma.3 lgammaf.3 lgamma.3 lgamma_r.3 lgamma.3 lgammaf_r.3 \
 	lgamma.3 gamma.3 lgamma.3 gammaf.3 lgamma.3 gamma_r.3 \
 	lgamma.3 gammaf_r.3
+MLINKS+=nextafter.3 nextafterf.3 \
+	nextafter.3 nextafterl.3 \
+	nextafter.3 nexttoward.3
 MLINKS+=lrint.3 lrintf.3 lrint.3 llrint.3 lrint.3 llrintf.3
 MLINKS+=rint.3 rintf.3
 MLINKS+=sin.3 sinf.3
