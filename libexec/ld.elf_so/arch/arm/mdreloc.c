@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.35 2011/03/25 18:07:05 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.36 2011/04/12 16:40:04 matt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.35 2011/03/25 18:07:05 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.36 2011/04/12 16:40:04 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -178,6 +178,61 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			}
 			rdbg(("COPY (avoid in main)"));
 			break;
+
+#ifdef __HAVE_TLS_VARIANT_I
+		case R_TYPE(TLS_DTPOFF32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			tmp = (Elf_Addr)(def->st_value);
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				*where = tmp;
+			else
+				store_ptr(where, tmp);
+
+			rdbg(("TLS_DTPOFF32 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)tmp));
+
+			break;
+		case R_TYPE(TLS_DTPMOD32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			tmp = (Elf_Addr)(defobj->tlsindex);
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				*where = tmp;
+			else
+				store_ptr(where, tmp);
+
+			rdbg(("TLS_DTPMOD32 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)tmp));
+
+			break;
+
+		case R_TYPE(TLS_TPOFF32):
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+
+			if (!defobj->tls_done &&
+			    _rtld_tls_offset_allocate(obj))
+				return -1;
+
+			tmp = (Elf_Addr)def->st_value + defobj->tlsoffset +
+			    sizeof(struct tls_tcb);
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				*where = tmp;
+			else
+				store_ptr(where, tmp);
+			rdbg(("TLS_TPOFF32 %s in %s --> %p",
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)tmp));
+			break;
+#endif /* __HAVE_TLS_VARIANT_I */
 
 		default:
 			rdbg(("sym = %lu, type = %lu, offset = %p, "
