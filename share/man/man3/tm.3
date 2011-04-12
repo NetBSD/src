@@ -1,4 +1,4 @@
-.\" $NetBSD: tm.3,v 1.1 2011/04/12 08:22:49 jruoho Exp $
+.\" $NetBSD: tm.3,v 1.2 2011/04/12 08:39:26 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -82,6 +82,34 @@ and
 .Va tm_zone
 are defined in
 .St -p1003.1-2008 .
+.Ss NetBSD Extensions
+The
+.Va tm_zone
+and
+.Va tm_gmtoff
+fields exist, and are filled in by applicable library routines,
+only if arrangements to do so were made when the library containing
+these functions was created.
+There is no guarantee that these fields will continue to exist
+in this form in future releases of
+. Nx .
+.Pp
+The
+.Fa tm_gmtoff
+field denotes the offset (in seconds) of the time represented
+from UTC, with positive values indicating east
+of the Prime Meridian.
+The
+.Vt tm_zone
+field will become invalid and point to freed storage if the corresponding
+.Va "struct tm"
+was returned by
+.Xr localtime_rz 3
+and the
+.Ft "const timezone_t"
+.Fa tz
+argument has been freed by
+.Xr tzfree 3 .
 .Sh SEE ALSO
 .Xr timeval 3
 .Sh STANDARDS

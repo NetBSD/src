@@ -1,5 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.38 2011/01/24 19:37:35 njoly Exp $
-.Dd December 14, 2010
+.\" $NetBSD: ctime.3,v 1.39 2011/04/12 08:39:26 jruoho Exp $
+.\"
+.\" XXX: Lincense missing?
+.\"
+.Dd April 12, 2011
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -103,7 +106,8 @@ corrects for the time zone and any time zone adjustments
 (such as Daylight Saving Time in the U.S.A.).
 After filling in the
 .Va tm
-structure,
+structure described in
+.Xr tm 3 ,
 .Fn localtime
 sets the
 .Fa tm_isdst Ns 'th
@@ -250,52 +254,6 @@ frees the
 .Fa tz
 argument previously returned by
 .Fa tzalloc .
-.Pp
-The structure (of type)
-.Va "struct tm"
-includes the following fields:
-.Bd -literal -offset indent
-int tm_sec;	/* seconds after the minute [0,61] */
-int tm_min;	/* minutes after the hour [0,59] */
-int tm_hour;	/* hours since midnight [0,23] */
-int tm_mday;	/* day of the month [1,31] */
-int tm_mon;	/* months since January [0,11] */
-int tm_year;	/* years since 1900 */
-int tm_wday;	/* day of week [0,6] (Sunday = 0) */
-int tm_yday;	/* day of year [0,365] (Jan 1 = 0) */
-int tm_isdst;	/* daylight savings flag */
-long tm_gmtoff;	/* offset from UTC in seconds */
-char *tm_zone;	/* abbreviation of timezone name */
-.Ed
-.Pp
-The
-.Fa tm_zone
-and
-.Fa tm_gmtoff
-fields exist, and are filled in, only if arrangements to do
-so were made when the library containing these functions was
-created.
-There is no guarantee that these fields will continue to exist
-in this form in future releases of this code.
-The
-.Fa tm_zone
-field will become invalid and point to freed storage if the corresponding
-.Va "struct tm"
-was returned by
-.Fn localtime_rz
-and the
-.Ft "const timezone_t"
-.Fa tz
-argument has been freed by
-.Fn tzfree .
-.Pp
-.Fa tm_isdst
-is non-zero if summer time is in effect.
-.Pp
-.Fa tm_gmtoff
-is the offset (in seconds) of the time represented
-from UTC, with positive values indicating east
-of the Prime Meridian.
 .Sh RETURN VALUES
 On success the
 .Fn asctime
@@ -401,6 +359,7 @@ and
 .Xr getenv 3 ,
 .Xr strftime 3 ,
 .Xr time 3 ,
+.Xr tm 3 ,
 .Xr tzset 3 ,
 .Xr tzfile 5
 .Sh STANDARDS
