@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
-.\"	$NetBSD: ieee.3,v 1.22 2011/02/06 00:44:10 christos Exp $
+.\"	$NetBSD: ieee.3,v 1.23 2011/04/12 07:29:50 jruoho Exp $
 .\"
-.Dd February 25, 1994
+.Dd April 12, 2011
 .Dt IEEE 3
 .Os
 .Sh NAME
@@ -39,10 +39,6 @@
 .Nm finitef ,
 .Nm ilogb ,
 .Nm ilogbf ,
-.Nm nextafter ,
-.Nm nextafterf ,
-.Nm nextafterl ,
-.Nm nexttoward ,
 .Nm remainder ,
 .Nm remainderf ,
 .Nm scalbn ,
@@ -66,14 +62,6 @@
 .Fn ilogb "double x"
 .Ft int
 .Fn ilogbf "float x"
-.Ft double
-.Fn nextafter "double x" "double y"
-.Ft float
-.Fn nextafterf "float x" "float y"
-.Ft long double
-.Fn nextafterl "long double x" "long double y"
-.Ft double
-.Fn nexttoward "double x" "long double y"
 .Ft double
 .Fn remainder "double x" "double y"
 .Ft float
@@ -121,24 +109,6 @@ and
 .Fn ilogb 0
 returns
 .Dv INT_MIN .
-.Pp
-.Fn nextafter
-returns the next machine representable number from
-.Fa x
-in direction
-.Fa y .
-.Pp
-.Fn nexttoward
-is equivalent to
-.Fn nextafter ,
-except that the second parameter has type
-.Ft long double
-and the function returns
-.Dv y
-converted to the type of the function if
-.Dv x
-equals
-.Dv y .
 .Pp
 .Fn remainder
 returns the remainder
@@ -199,7 +169,8 @@ returns
 .Fa x Ns \(**(2** Ns Fa n )
 computed by exponent manipulation.
 .Sh SEE ALSO
-.Xr math 3
+.Xr math 3 ,
+.Xr nextafter 3
 .Sh STANDARDS
 .St -ieee754
 .Sh HISTORY
