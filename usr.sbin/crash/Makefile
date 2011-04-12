@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/04/11 04:22:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2011/04/12 01:47:20 mrg Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -9,7 +9,8 @@ DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 
 # some ddb kernel components need limited modifications.  for now,
 # punt if not noted as implemented here.
-.if !empty(${MACHINE:C/(amd64|i386)//})
+.if    ${MACHINE} != "amd64" \
+    && ${MACHINE} != "i386"
 SRCS+=	unsupported.c
 .else
 
