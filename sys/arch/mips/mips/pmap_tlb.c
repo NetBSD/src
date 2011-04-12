@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.4 2011/04/06 05:35:37 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.5 2011/04/12 18:39:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.4 2011/04/06 05:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.5 2011/04/12 18:39:38 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -812,15 +812,8 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 	 */
 	if (pm != pmap_kernel() && pm->pm_onproc != 0) {
 		struct cpu_info * const ci = curcpu();
-		struct pmap_tlb_info * const ti = ci->ci_tlb_info;
 		const uint32_t cpu_mask = 1 << cpu_index(ci);
-		int s = splhigh();
 		KASSERT(!cpu_intr_p());
-		KASSERT(ti->ti_cpu_mask & cpu_mask);
-		TLBINFO_LOCK(ti);
-		KASSERTMSG(ci->ci_mtx_count < 0,
-		    ("%s: cpu%d mtx count (%d) >= 0",
-		    __func__, cpu_index(ci), ci->ci_mtx_count));
 		KASSERTMSG(ci->ci_cpl >= IPL_SCHED,
 		    ("%s: cpl (%d) < IPL_SCHED (%d)",
 		    __func__, ci->ci_cpl, IPL_SCHED));
@@ -832,10 +825,6 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 		 * be changed while this TLBs lock is held.
 		 */
 		atomic_and_32(&pm->pm_onproc, ~cpu_mask);
-		KASSERT(curcpu() == ci);
-		KASSERT(curcpu()->ci_tlb_info == ti);
-		TLBINFO_UNLOCK(ti);
-		splx(s);
 		atomic_and_ulong(&ci->ci_flags, ~CPUF_USERPMAP);
 	}
 #elif defined(DEBUG)
