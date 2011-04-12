@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.308 2011/04/11 10:55:26 martin Exp $
+# $NetBSD: mi,v 1.309 2011/04/12 17:10:51 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -375,11 +375,11 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_round.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp/t_subnormal.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype1			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype2			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbtowc			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcstod			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctomb			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype1.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_ctype2.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_mbtowc.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcstod.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctomb.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/inet				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/inet/t_inet_network.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net				tests-lib-debug
@@ -459,6 +459,9 @@
 ./usr/libdata/debug/usr/tests/lib/libc/time				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/time/t_mktime.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/time/t_strptime.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libcurses				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libcurses/director.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libcurses/slave.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libdes				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libdes/t_des.debug			tests-lib-debug		debug,atf,crypto
 ./usr/libdata/debug/usr/tests/lib/semaphore				tests-lib-debug
