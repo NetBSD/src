@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.98 2011/03/15 07:39:22 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.99 2011/04/12 22:50:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -124,6 +124,14 @@
 	.set	noreorder
 	.set	mips3
 
+#ifdef _LP64
+#define	_MFC0	dmfc0
+#define	_MTC0	dmtc0
+#else
+#define	_MFC0	mfc0
+#define	_MTC0	mtc0
+#endif
+
 	.text
 
 /*----------------------------------------------------------------------------
@@ -224,7 +232,11 @@ END(mips3_cp0_config_write)
 
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	.set push
+#ifdef _LP64
+	.set mips64
+#else
 	.set mips32
+#endif
 /*
  * uint32_t mipsNN_cp0_config1_read(void)
  *
@@ -268,15 +280,134 @@ LEAF(mipsNN_cp0_config3_read)
 	 nop
 END(mipsNN_cp0_config3_read)
 
+/*
+ * uintptr_t mipsNN_cp0_watchlo_read(u_int sel)
+ *
+ *	Return the current value of the selected CP0 Watchlo register.
+ */
+LEAF(mipsNN_cp0_watchlo_read)
+	sll	a0, 2
+	PTR_LA	t9, 1f
+	PTR_ADDU t9, a0
+	jr	t9
+	 nop
+1:
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 0
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 1
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 2
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 3
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 4
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 5
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 6
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 7
+END(mipsNN_cp0_watchlo_read)
+
+/*
+ * void mipsNN_cp0_watchlo_write(u_int sel, uintptr_t val)
+ *
+ *	Set the current value of the selected CP0 WatchLo register.
+ */
+LEAF(mipsNN_cp0_watchlo_write)
+	sll	a0, 2
+	PTR_LA	t9, 1f
+	PTR_ADDU t9, a0
+	jr	t9
+	 nop
+1:
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 0
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 1
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 2
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 3
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 4
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 5
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 6
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 7
+END(mipsNN_cp0_watchlo_write)
+
+/*
+ * uint32_t mipsNN_cp0_watchhi_read(u_int sel)
+ *
+ *	Return the current value of the selected CP0 WatchHi register.
+ */
+LEAF(mipsNN_cp0_watchhi_read)
+	sll	a0, 2
+	PTR_LA	t9, 1f
+	PTR_ADDU t9, a0
+	jr	t9
+	 nop
+1:
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 0
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 1
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 2
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 3
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 4
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 5
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 6
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 7
+END(mipsNN_cp0_watchhi_read)
+
+/*
+ * void mipsNN_cp0_watchhi_write(u_int sel, uint32_t val)
+ *
+ *	Set the current value of the selected CP0 WatchHi register.
+ */
+LEAF(mipsNN_cp0_watchhi_write)
+	sll	a0, 2
+	PTR_LA	t9, 1f
+	PTR_ADDU t9, a0
+	jr	t9
+	 nop
+1:
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 0
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 1
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 2
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 3
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 4
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 5
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 6
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 7
+END(mipsNN_cp0_watchhi_write)
+
 #if (MIPS32R2 + MIPS64R2) > 0
 /*
  * void mipsNN_cp0_userlocal_write(void *);
  *	Set the value of the CP0 USERLOCAL (TLB_CONTEXT, select 2) register.
  */
 LEAF(mipsNN_cp0_hwrena_write)
-	mtc0	a0, MIPS_COP_0_HWRENA
 	j	ra
-	 nop
+	 mtc0	a0, MIPS_COP_0_HWRENA
 END(mipsNN_cp0_hwrena_write)
 
 /*
@@ -284,15 +415,8 @@ END(mipsNN_cp0_hwrena_write)
  *	Set the value of the CP0 USERLOCAL (TLB_CONTEXT, select 2) register.
  */
 LEAF(mipsNN_cp0_userlocal_write)
-#if defined(_LP64)
-	.set	mips64r2
-	dmtc0	a0, MIPS_COP_0_TLB_CONTEXT, 2
-#else
-	.set	mips32r2
-	mtc0	a0, MIPS_COP_0_TLB_CONTEXT, 2
-#endif
 	j	ra
-	 nop
+	 _MTC0	a0, MIPS_COP_0_TLB_CONTEXT, 2
 END(mipsNN_cp0_userlocal_write)
 #endif /* (MIPS32R2 + MIPS64R2) > 0 */
 	.set	pop
