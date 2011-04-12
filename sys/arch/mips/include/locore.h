@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.86 2011/04/06 05:43:11 matt Exp $ */
+/* $NetBSD: locore.h,v 1.87 2011/04/12 22:54:31 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -147,6 +147,11 @@ uint32_t mipsNN_cp0_config1_read(void);
 void	mipsNN_cp0_config1_write(uint32_t);
 uint32_t mipsNN_cp0_config2_read(void);
 uint32_t mipsNN_cp0_config3_read(void);
+
+uintptr_t mipsNN_cp0_watchlo_read(u_int);
+void	mipsNN_cp0_watchlo_write(u_int, uintptr_t);
+uint32_t mipsNN_cp0_watchhi_read(u_int);
+void	mipsNN_cp0_watchhi_write(u_int, uint32_t);
 
 #if (MIPS32R2 + MIPS64R2) > 0
 void	mipsNN_cp0_hwrena_write(uint32_t);
