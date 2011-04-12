@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.7 2011/04/11 14:00:02 tsutsui Exp $	*/
+/*	$NetBSD: consio.c,v 1.8 2011/04/12 14:07:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -134,20 +134,6 @@ awaitkey_1sec(void)
 		getchar();
 
 	return c;
-}
-
-__dead void
-panic(const char *fmt,...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-
-	printf(fmt, ap);
-	printf("\n");
-	va_end(ap);
-
-	exit(1);
 }
 
 extern void put_image(int, int);

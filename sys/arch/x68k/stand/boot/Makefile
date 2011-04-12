@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2011/01/22 19:19:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2011/04/12 14:07:35 tsutsui Exp $
 
 NOMAN=		# defined
 
@@ -44,12 +44,14 @@ CFLAGS=		-Wno-main -Os -m68020-60
 LINKFLAGS=	-N -static -T ${.CURDIR}/boot.ldscript
 LIBIOCS!=	cd $M/stand/libiocs && ${PRINTOBJDIR}
 LIBSA!=		cd $M/stand/libsa && ${PRINTOBJDIR}
-LDLIBS=		-L${LIBSA} -lsa -L${LIBIOCS} -liocs
+L=		${LIBSA}/lib
+LDLIBS= 	${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
+LDLIBS+=	${LIBIOCS}/libiocs.a
 
 .include "../Makefile.booters"
 
 realall: ${PROG}
-${PROG}:	${OBJS} ${LIBSA}/libsa.a ${LIBIOCS}/libiocs.a
+${PROG}:	${OBJS} ${LDLIBS}
 	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${PROG}.sym ${OBJS} ${LDLIBS}
 	${STRIP} -F ${BFDNAME} -o ${PROG} ${PROG}.sym
