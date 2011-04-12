@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.5 2011/04/10 10:23:45 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.6 2011/04/12 02:52:20 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.5 2011/04/10 10:23:45 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.6 2011/04/12 02:52:20 jruoho Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -106,18 +106,9 @@ ATF_TC_BODY(strtod_inf, tc)
 {
 #ifndef __vax__
 
-	const char *m_arch;
 	long double ld;
 	double d;
 	float f;
-
-	m_arch = atf_config_get("atf_arch");
-
-	if (strcmp(m_arch, "x86_64") == 0)
-		atf_tc_expect_fail("PR lib/33262");
-
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
-		atf_tc_expect_fail("PR lib/33262");
 
 	d = strtod("INF", NULL);
 	ATF_REQUIRE(isinf(d) != 0);
