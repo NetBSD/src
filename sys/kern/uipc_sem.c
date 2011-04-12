@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.30 2011/04/11 22:31:43 rmind Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.31 2011/04/12 20:37:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.30 2011/04/11 22:31:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.31 2011/04/12 20:37:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,7 +448,8 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 		if ((oflag & O_CREAT) == 0) {
 			mutex_exit(&ksem_lock);
 			KASSERT(ksnew == NULL);
-			return ENOENT;
+			error = ENOENT;
+			goto err;
 		}
 
 		/* Check for the limit locked. */
@@ -549,9 +550,10 @@ sys__ksem_unlink(struct lwp *l, const struct sys__ksem_unlink_args *uap,
 		return error;
 	}
 
-	/* Remove and destroy if no referenes. */
+	/* Remove from the global list. */
 	LIST_REMOVE(ks, ks_entry);
 	nsems--;
+	mutex_exit(&ksem_lock);
 
 	refcnt = ks->ks_ref;
 	if (refcnt) {
@@ -559,7 +561,6 @@ sys__ksem_unlink(struct lwp *l, const struct sys__ksem_unlink_args *uap,
 		ks->ks_flags |= KS_UNLINKED;
 	}
 	mutex_exit(&ks->ks_lock);
-	mutex_exit(&ksem_lock);
 
 	if (refcnt == 0) {
 		ksem_free(ks);
