@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.6 2011/04/12 02:52:20 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.7 2011/04/12 02:56:20 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.6 2011/04/12 02:52:20 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.7 2011/04/12 02:56:20 jruoho Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -110,6 +110,9 @@ ATF_TC_BODY(strtod_inf, tc)
 	double d;
 	float f;
 
+	/*
+	 * See old PR lib/33262.
+	 */
 	d = strtod("INF", NULL);
 	ATF_REQUIRE(isinf(d) != 0);
 
