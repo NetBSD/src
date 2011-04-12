@@ -1,4 +1,4 @@
-/* $NetBSD: t_log.c,v 1.1 2011/04/10 06:11:47 jruoho Exp $ */
+/* $NetBSD: t_log.c,v 1.2 2011/04/12 03:06:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_log.c,v 1.1 2011/04/10 06:11:47 jruoho Exp $");
+__RCSID("$NetBSD: t_log.c,v 1.2 2011/04/12 03:06:21 jruoho Exp $");
 
 #include <math.h>
 
@@ -51,10 +51,9 @@ ATF_TC_BODY(log_nan, tc)
 	/*
 	 * If the argument is negative,
 	 * the result should be NaN and
-	 * a domain error should follow
+	 * a domain error should follow.
+	 * Refer to the old PR lib/41931.
 	 */
-	atf_tc_expect_fail("PR lib/41931");
-
 	d = log(-1);
 	ATF_REQUIRE(isnan(d) != 0);
 
