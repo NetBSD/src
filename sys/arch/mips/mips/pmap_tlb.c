@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.5 2011/04/12 18:39:38 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.6 2011/04/12 18:53:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.5 2011/04/12 18:39:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.6 2011/04/12 18:53:23 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -814,9 +814,6 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 		struct cpu_info * const ci = curcpu();
 		const uint32_t cpu_mask = 1 << cpu_index(ci);
 		KASSERT(!cpu_intr_p());
-		KASSERTMSG(ci->ci_cpl >= IPL_SCHED,
-		    ("%s: cpl (%d) < IPL_SCHED (%d)",
-		    __func__, ci->ci_cpl, IPL_SCHED));
 		KASSERTMSG(pm->pm_onproc & cpu_mask,
 		    ("%s: pmap %p onproc %#x doesn't include cpu %d (%p)",
 		    __func__, pm, pm->pm_onproc, cpu_index(ci), ci));
