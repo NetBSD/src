@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.1 2001/09/27 10:14:49 minoura Exp $	*/
+/*	$NetBSD: srt0.S,v 1.2 2011/04/12 14:07:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Minoura Makoto
@@ -48,7 +48,7 @@ start0:
 	movl		%d6,%sp@-
 	jbsr		_C_LABEL(bootmain)
 
-ENTRY_NOPROFILE(exit)
+ENTRY_NOPROFILE(_rtt)
 	pea		%pc@(reboot_msg)
 	jbsr		_C_LABEL(printf)
 	jbsr		_C_LABEL(getchar)
