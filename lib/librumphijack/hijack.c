@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.86 2011/03/14 15:15:47 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.87 2011/04/12 19:49:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.86 2011/03/14 15:15:47 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.87 2011/04/12 19:49:48 christos Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -1972,6 +1972,7 @@ FDCALL(int, shutdown, DUALCALL_SHUTDOWN, 				\
 
 #if _FORTIFY_SOURCE > 0
 #define STUB(fun) __ssp_weak_name(fun)
+ssize_t STUB(readlink)(const char * __restrict, char * __restrict, size_t);
 ssize_t _sys_readlink(const char * __restrict, char * __restrict, size_t);
 ssize_t
 STUB(readlink)(const char * __restrict path, char * __restrict buf,
@@ -1980,6 +1981,7 @@ STUB(readlink)(const char * __restrict path, char * __restrict buf,
 	return _sys_readlink(path, buf, bufsiz);
 }
 
+char *STUB(getcwd)(char *, size_t);
 char *_sys_getcwd(char *, size_t);
 char *
 STUB(getcwd)(char *buf, size_t size)
@@ -2130,7 +2132,7 @@ PATHCALL(int, symlink, DUALCALL_SYMLINK,				\
 	(const char *, const char *),					\
 	(target, path))
 
-PATHCALL(ssize_t, readlink, DUALCALL_READLINK,				\
+PATHCALL(ssize_t, _sys_readlink, DUALCALL_READLINK,			\
 	(const char *path, char *buf, size_t bufsiz),			\
 	(const char *, char *, size_t),					\
 	(path, buf, bufsiz))
