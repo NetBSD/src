@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sec_context.c,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: init_sec_context.c,v 1.2 2011/04/13 18:30:04 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -424,10 +424,6 @@ init_auth
 	goto failure;
     }
 
-    ret = _gss_DES3_get_mic_compat(minor_status, ctx, context);
-    if (ret)
-	goto failure;
-
 
     /*
      * This is hideous glue for (NFS) clients that wants to limit the
@@ -470,6 +466,10 @@ init_auth
 	goto failure;
 
     ctx->lifetime = ctx->kcred->times.endtime;
+
+    ret = _gss_DES3_get_mic_compat(minor_status, ctx, context);
+    if (ret)
+	goto failure;
 
     ret = _gsskrb5_lifetime_left(minor_status,
 				 context,
