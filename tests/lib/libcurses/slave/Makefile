@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/04/10 09:55:10 blymn Exp $
+#	$NetBSD: Makefile,v 1.2 2011/04/13 09:46:38 he Exp $
 #
 .include <bsd.own.mk>
 
@@ -12,6 +12,6 @@ NOMAN=	"true"
 SRCS=	slave.c commands.c curses_commands.c
 
 CPPFLAGS+=	-g -I${.CURDIR} -I. -I${.CURDIR}/../director
-LDADD+=		-lcurses
+LDADD+=		-lcurses -lterminfo
 
 .include <bsd.test.mk>
