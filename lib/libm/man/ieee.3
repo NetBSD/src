@@ -26,21 +26,16 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
-.\"	$NetBSD: ieee.3,v 1.23 2011/04/12 07:29:50 jruoho Exp $
+.\"	$NetBSD: ieee.3,v 1.24 2011/04/13 04:57:10 jruoho Exp $
 .\"
 .Dd April 12, 2011
 .Dt IEEE 3
 .Os
 .Sh NAME
-.Nm copysign ,
-.Nm copysignf ,
-.Nm copysignl ,
 .Nm finite ,
 .Nm finitef ,
 .Nm ilogb ,
 .Nm ilogbf ,
-.Nm remainder ,
-.Nm remainderf ,
 .Nm scalbn ,
 .Nm scalbnf
 .Nd functions for IEEE arithmetic
@@ -48,12 +43,6 @@
 .Lb libm
 .Sh SYNOPSIS
 .In math.h
-.Ft double
-.Fn copysign "double x" "double y"
-.Ft float
-.Fn copysignf "float x" "float y"
-.Ft long double
-.Fn copysignl "long double x" "long double y"
 .Ft int
 .Fn finite "double x"
 .Ft int
@@ -63,26 +52,12 @@
 .Ft int
 .Fn ilogbf "float x"
 .Ft double
-.Fn remainder "double x" "double y"
-.Ft float
-.Fn remainderf "float x" "float y"
-.Ft double
-.Fn remquo "double x" "double y" "int *quo"
-.Ft float
-.Fn remquof "float x" "float y" "int *quo"
-.Ft double
 .Fn scalbn "double x" "int n"
 .Ft float
 .Fn scalbnf "float x" "int n"
 .Sh DESCRIPTION
 These functions are required or recommended by
 .St -ieee754 .
-.Pp
-.Fn copysign
-returns
-.Fa x
-with its sign changed to
-.Fa y Ns 's .
 .Pp
 .Fn finite
 returns the value 1 just when
@@ -109,60 +84,7 @@ and
 .Fn ilogb 0
 returns
 .Dv INT_MIN .
-.Pp
-.Fn remainder
-returns the remainder
-.Fa r
-:=
-.Fa x
-\-
-.Fa n\(**y
-where
-.Fa n
-is the integer nearest the exact value of
-.Bk -words
-.Fa x Ns / Ns Fa y ;
-.Ek
-moreover if
-.Pf \*(Ba Fa n
-\-
-.Sm off
-.Fa x No / Fa y No \*(Ba
-.Sm on
-=
-1/2
-then
-.Fa n
 is even.
-Consequently the remainder is computed exactly and
-.Sm off
-.Pf \*(Ba Fa r No \*(Ba
-.Sm on
-\*(Le
-.Sm off
-.Pf \*(Ba Fa y No \*(Ba/2 .
-.Sm on
-But
-.Fn remainder x 0
-and
-.Fn remainder \*(If 0
-are invalid operations that produce a \*(Na.
-.Pp
-.Fn remquo
-is the same as
-.Fn remainder
-but also stores the last
-.Va k
-bits of
-.Fa n
-in the location pointed to by
-.Fa quo ,
-provided that
-.Fa n
-exists.
-The number of bits
-.Va k
-is platform-specific, but is guaranteed to be at least 3.
 .Pp
 .Fn scalbn
 returns
