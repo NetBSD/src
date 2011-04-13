@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: heimdal2netbsd,v 1.1 2011/04/13 19:04:40 elric Exp $
+#	$NetBSD: heimdal2netbsd,v 1.2 2011/04/13 22:16:52 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # heimdal2netbsd:  convert a heimdal source tree into a
-# netbsd amd source tree, under src/crypto/external/bsd/heimdal/dist
+# netbsd heimdal source tree, under src/crypto/external/bsd/heimdal/dist
 # based on bind2netbsd by Bernd Ernesti and changes by Simon Burge
 #
 # Rough instructions for importing new heimdal release from their git
@@ -56,16 +56,18 @@
 #	- check makefiles to see if any extra sources have been added.
 #	- update distrib/sets if necessary.
 
-if [ $# -ne 2 ]; then echo "heimdal2netbsd src dest"; exit 1; fi
-
+prog="$(basename "$0")"
 r=$1
 d=$2/src/crypto/external/bsd/heimdal/dist
+
+if [ $# -ne 2 ]; then echo "${prog} src dest"; exit 1; fi
+
 
 case "$d" in
 	/*)
 		;;
 	*)
-		d=`/bin/pwd`/$d
+		d="$(pwd)/$d"
 		;;
 esac
 
@@ -73,7 +75,7 @@ case "$r" in
 	/*)
 		;;
 	*)
-		r=`/bin/pwd`/$r
+		r=$(pwd)/$r
 		;;
 esac
 
@@ -211,26 +213,26 @@ done
 ### Add our NetBSD RCS Id
 find $d -type f -name '*.[chly]' -print | while read c; do
 	sed 1q < $c | grep -q '\$NetBSD' || (
-echo "/*	\$NetBSD\$	*/" >/tmp/amd3n$$
-echo "" >>/tmp/amd3n$$
-cat $c  >> /tmp/amd3n$$
-mv /tmp/amd3n$$ $c && echo added NetBSD RCS tag to $c
+echo "/*	\$NetBSD\$	*/" >/tmp/${prog}3n$$
+echo "" >>/tmp/${prog}3n$$
+cat $c  >> /tmp/${prog}3n$$
+mv /tmp/${prog}3n$$ $c && echo added NetBSD RCS tag to $c
 	)
 done
 
 find $d -type f -name '*.[0-9]' -print | while read m; do
 	sed 1q < $m | grep -q '\$NetBSD' || (
-echo ".\\\"	\$NetBSD\$" >/tmp/amd2m$$
-echo ".\\\"" >>/tmp/amd2m$$
-cat $m >> /tmp/amd2m$$
-mv /tmp/amd2m$$ $m && echo added NetBSD RCS tag to $m
+echo ".\\\"	\$NetBSD\$" >/tmp/${prog}2m$$
+echo ".\\\"" >>/tmp/${prog}2m$$
+cat $m >> /tmp/${prog}2m$$
+mv /tmp/${prog}2m$$ $m && echo added NetBSD RCS tag to $m
 	)
 done
 
 find $d -type f -name '*.texi' -print | while read t; do
         sed "2 s/^/@c \$NetBSD\$\\
-/" < $t > /tmp/amd4t$$
-	mv /tmp/amd4t$$ $t && echo added NetBSD RCS tag to $t
+/" < $t > /tmp/${prog}4t$$
+	mv /tmp/${prog}4t$$ $t && echo added NetBSD RCS tag to $t
 done
 
 echo done
