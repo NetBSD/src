@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.32 2011/04/07 01:20:31 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.33 2011/04/13 16:22:09 plunky Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.32 2011/04/07 01:20:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.33 2011/04/13 16:22:09 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -968,7 +968,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 				bus_space_write_8(sc->sc_iot, sc->sc_reh,
 				    CRIME_RE_TLB_A + tlbptr + lptr, 
 				    reg);
-				DPRINTF("%04x: %016llx\n", tlbptr + lptr, reg);
+				DPRINTF("%04x: %016"PRIx64"\n", tlbptr + lptr, reg);
 				reg = 0;
 				lptr += 8;
 			}
@@ -977,7 +977,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 		if (shift != 64) {
 			bus_space_write_8(sc->sc_iot, sc->sc_reh,
 			    CRIME_RE_TLB_A + tlbptr + lptr, reg);
-			DPRINTF("%04x: %016llx\n", tlbptr + lptr, reg);
+			DPRINTF("%04x: %016"PRIx64"\n", tlbptr + lptr, reg);
 		}
 		tlbptr += 32;
 	}
