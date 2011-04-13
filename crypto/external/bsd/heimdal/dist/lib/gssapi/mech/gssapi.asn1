@@ -1,0 +1,12 @@
+-- $Id: gssapi.asn1,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $
+
+GSS-API DEFINITIONS ::= BEGIN
+
+IMPORTS heim_any_set FROM heim;
+
+GSSAPIContextToken ::= [APPLICATION 0] IMPLICIT SEQUENCE {
+	thisMech OBJECT IDENTIFIER,
+	innerContextToken heim_any_set
+}
+
+END
