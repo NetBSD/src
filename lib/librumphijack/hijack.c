@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.87 2011/04/12 19:49:48 christos Exp $	*/
+/*      $NetBSD: hijack.c,v 1.88 2011/04/13 12:40:54 he Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.87 2011/04/12 19:49:48 christos Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.88 2011/04/13 12:40:54 he Exp $");
 
 #define __ssp_weak_name(fun) _hijack_ ## fun
 
@@ -1970,10 +1970,11 @@ FDCALL(int, shutdown, DUALCALL_SHUTDOWN, 				\
 	(int, int),							\
 	(fd, how))
 
+ssize_t _sys_readlink(const char * __restrict, char * __restrict, size_t);
+
 #if _FORTIFY_SOURCE > 0
 #define STUB(fun) __ssp_weak_name(fun)
 ssize_t STUB(readlink)(const char * __restrict, char * __restrict, size_t);
-ssize_t _sys_readlink(const char * __restrict, char * __restrict, size_t);
 ssize_t
 STUB(readlink)(const char * __restrict path, char * __restrict buf,
     size_t bufsiz)
