@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.44 2010/07/01 02:38:27 rmind Exp $ */
+/*	$NetBSD: db_trace.c,v 1.45 2011/04/13 03:29:03 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.44 2010/07/01 02:38:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.45 2011/04/13 03:29:03 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -61,21 +61,21 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
  	void		(*pr) (const char *, ...);
 {
 	vaddr_t		frame;
-	bool		kernel_only = TRUE;
-	bool		trace_thread = FALSE;
-	bool		lwpaddr = FALSE;
+	bool		kernel_only = true;
+	bool		trace_thread = false;
+	bool		lwpaddr = false;
 	char		c;
 	const char	*cp = modif;
 
 	while ((c = *cp++) != 0) {
 		if (c == 'a') {
-			lwpaddr = TRUE;
-			trace_thread = TRUE;
+			lwpaddr = true;
+			trace_thread = true;
 		}
 		if (c == 't')
-			trace_thread = TRUE;
+			trace_thread = true;
 		if (c == 'u')
-			kernel_only = FALSE;
+			kernel_only = false;
 	}
 
 	if (!have_addr)
@@ -282,13 +282,13 @@ db_dump_stack(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif
 {
 	int		i;
 	uint64_t	frame, oldframe;
-	bool		kernel_only = TRUE;
+	bool		kernel_only = true;
 	char		c;
 	const char	*cp = modif;
 
 	while ((c = *cp++) != 0)
 		if (c == 'u')
-			kernel_only = FALSE;
+			kernel_only = false;
 
 	if (count == -1)
 		count = 65535;
