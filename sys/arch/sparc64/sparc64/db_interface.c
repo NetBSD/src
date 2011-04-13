@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.126 2011/01/14 02:06:32 rmind Exp $ */
+/*	$NetBSD: db_interface.c,v 1.127 2011/04/13 03:29:03 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.126 2011/01/14 02:06:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.127 2011/04/13 03:29:03 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -491,12 +491,12 @@ kdb_trap(int type, struct trapframe64 *tf)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(true);
 	/* Need to do spl stuff till cnpollc works */
 	db_dump_ts(0, 0, 0, 0);
 	db_trap(type, 0/*code*/);
 	ddb_restore_state();
-	cnpollc(FALSE);
+	cnpollc(false);
 	db_active--;
 
 	splx(s);
@@ -1370,7 +1370,7 @@ db_inst_branch(int inst)
     insn.i_int = inst;
 
     if (insn.i_any.i_op != IOP_OP2)
-	return FALSE;
+	return false;
 
     switch (insn.i_op2.i_op2) {
       case IOP2_BPcc:
@@ -1379,10 +1379,10 @@ db_inst_branch(int inst)
       case IOP2_FBPfcc:
       case IOP2_FBfcc:
       case IOP2_CBccc:
-	return TRUE;
+	return true;
 
       default:
-	return FALSE;
+	return false;
     }
 }
 
@@ -1396,13 +1396,13 @@ db_inst_call(int inst)
 
     switch (insn.i_any.i_op) {
       case IOP_CALL:
-	return TRUE;
+	return true;
 
       case IOP_reg:
 	return (insn.i_op3.i_op3 == IOP3_JMPL) && !db_inst_return(inst);
 
       default:
-	return FALSE;
+	return false;
     }
 }
 
@@ -1415,10 +1415,10 @@ db_inst_unconditional_flow_transfer(int inst)
     insn.i_int = inst;
 
     if (db_inst_call(inst))
-	return TRUE;
+	return true;
 
     if (insn.i_any.i_op != IOP_OP2)
-	return FALSE;
+	return false;
 
     switch (insn.i_op2.i_op2)
     {
@@ -1430,7 +1430,7 @@ db_inst_unconditional_flow_transfer(int inst)
 	return insn.i_branch.i_cond == Icc_A;
 
       default:
-	return FALSE;
+	return false;
     }
 }
 
