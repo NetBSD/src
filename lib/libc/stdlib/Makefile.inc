@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.76 2011/04/13 06:56:50 jruoho Exp $
+#	$NetBSD: Makefile.inc,v 1.77 2011/04/13 07:12:52 jruoho Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -43,9 +43,9 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	exit.3 \
 	getenv.3 getopt.3 getopt_long.3 getsubopt.3 grantpt.3 \
 	hcreate.3 \
-	imaxdiv.3 insque.3 \
+	insque.3 \
 	jemalloc.3 \
-	ldiv.3 lldiv.3 lsearch.3 \
+	lsearch.3 \
 	malloc.3 memory.3 mi_vector_hash.3 \
 	posix_memalign.3 posix_openpt.3 ptsname.3 \
 	qabs.3 qdiv.3 qsort.3 \
@@ -59,6 +59,9 @@ MLINKS+=a64l.3 l64a_r.3
 MLINKS+=abs.3 labs.3 \
 	abs.3 llabs.3 \
 	abs.3 imaxabs.3
+MLINKS+=div.3 ldiv.3 \
+	div.3 lldiv.3 \
+	div.3 imaxdiv.3
 MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
 MLINKS+=getenv.3 getenv_r.3
 MLINKS+=hcreate.3 hdestroy.3 hcreate.3 hsearch.3
