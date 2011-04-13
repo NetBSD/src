@@ -1,0 +1,8 @@
+@c $Id: programming.texi,v 1.1.1.1 2011/04/13 18:14:34 elric Exp $
+@c $NetBSD: programming.texi,v 1.1.1.1 2011/04/13 18:14:34 elric Exp $
+
+@node Programming with Kerberos, Migration, Windows compatibility, Top
+@chapter Programming with Kerberos
+
+See the Kerberos 5 API introduction and documentation on the Heimdal
+webpage.

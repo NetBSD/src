@@ -1,0 +1,18 @@
+#!/bin/sh 
+# $Id: slapd-stop,v 1.1.1.1 2011/04/13 18:16:02 elric Exp $
+
+echo stoping slapd
+
+# kill of old slapd
+if [ -f slapd.pid ]; then
+    kill `cat slapd.pid`
+    sleep 5
+fi
+if [ -f slapd.pid ]; then
+    kill -9 `cat slapd.pid`
+    rm -f slapd.pid
+    sleep 5
+fi
+
+exit 0
+
