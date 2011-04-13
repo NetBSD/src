@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.302 2011/03/08 12:39:29 pooka Exp $	*/
+/*	$NetBSD: proc.h,v 1.303 2011/04/13 08:45:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -534,6 +534,20 @@ _proclist_skipmarker(struct proc *p0)
 #define	tsleep(chan, pri, wmesg, timo)					\
 	ltsleep(chan, pri, wmesg, timo, NULL)
 
+#ifdef KSTACK_CHECK_MAGIC
+void	kstack_setup_magic(const struct lwp *);
+void	kstack_check_magic(const struct lwp *);
+#else
+#define	kstack_setup_magic(x)
+#define	kstack_check_magic(x)
+#endif
+
+extern struct emul emul_netbsd;
+
+#endif	/* _KERNEL */
+
+#if defined(_KMEMUSER) || defined(_KERNEL)
+
 /*
  * Kernel stack parameters.
  *
@@ -551,15 +565,6 @@ _proclist_skipmarker(struct proc *p0)
 #define	KSTACK_SIZE		(USPACE - ALIGN(sizeof(struct pcb)))
 #endif
 
-#ifdef KSTACK_CHECK_MAGIC
-void	kstack_setup_magic(const struct lwp *);
-void	kstack_check_magic(const struct lwp *);
-#else
-#define	kstack_setup_magic(x)
-#define	kstack_check_magic(x)
-#endif
+#endif	/* _KMEMUSER || _KERNEL */
 
-extern struct emul emul_netbsd;
-
-#endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */
