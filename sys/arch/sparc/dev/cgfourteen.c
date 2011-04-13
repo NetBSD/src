@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.65 2010/08/31 21:14:57 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.66 2011/04/13 23:31:25 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -477,20 +477,10 @@ cgfourteenioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	case CG14_SET_PIXELMODE: {
 		int depth = *(int *)data;
 
-		switch (depth) {
-		case 8:
-			bus_space_write_1(sc->sc_bustag, sc->sc_regh,
-			    CG14_MCTL, CG14_MCTL_ENABLEVID | 
-			    CG14_MCTL_PIXMODE_8 | CG14_MCTL_POWERCTL);
-			break;
-		case 32:
-			bus_space_write_1(sc->sc_bustag, sc->sc_regh,
-			    CG14_MCTL, CG14_MCTL_ENABLEVID | 
-			    CG14_MCTL_PIXMODE_32 | CG14_MCTL_POWERCTL);
-			break;
-		default:
+		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
 			return EINVAL;
-		}
+
+		cg14_set_depth(sc, depth);
 		}
 		break;
 	default:
@@ -586,6 +576,7 @@ cgfourteenpoll(dev_t dev, int events, struct lwp *l)
 static void
 cg14_init(struct cgfourteen_softc *sc)
 {
+#if 0
 	volatile uint32_t *clut;
 	volatile uint8_t  *xlut;
 	int i;
@@ -613,12 +604,16 @@ cg14_init(struct cgfourteen_softc *sc)
 	 */
 	sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID | CG14_MCTL_PIXMODE_8 |
 		CG14_MCTL_POWERCTL;
+#else
+	cg14_set_depth(sc, 32);
+#endif
 }
 
 static void
 /* Restore the state saved on cg14_init */
 cg14_reset(struct cgfourteen_softc *sc)
 {
+#if 0
 	volatile uint32_t *clut;
 	volatile uint8_t  *xlut;
 	int i;
@@ -646,6 +641,9 @@ cg14_reset(struct cgfourteen_softc *sc)
 		clut[i] = sc->sc_saveclut.cm_chip[i];
 		xlut[i] = sc->sc_savexlut[i];
 	}
+#else
+	cg14_set_depth(sc, 8);
+#endif
 }
 
 /* Enable/disable video display; power down monitor if DPMS-capable */
@@ -932,10 +930,12 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 						bus_space_write_1(sc->sc_bustag,
 						    sc->sc_regh,
 						    CG14_CURSOR_CONTROL, 0);
+
 						cg14_set_depth(sc, 8);
 						cg14_init_cmap(sc);
 						vcons_redraw_screen(ms);
 					} else {
+
 						cg14_set_depth(sc, 32);
 					}
 				}
@@ -1038,6 +1038,7 @@ cg14_set_depth(struct cgfourteen_softc *sc, int depth)
 
 	if (sc->sc_depth == depth)
 		return;
+
 	switch (depth) {
 		case 8:
 			bus_space_write_1(sc->sc_bustag, sc->sc_regh,
