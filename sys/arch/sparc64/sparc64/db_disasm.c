@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.15 2008/11/25 15:41:12 nakayama Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.16 2011/04/13 03:25:35 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -32,16 +32,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.15 2008/11/25 15:41:12 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16 2011/04/13 03:25:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
 #include <machine/instr.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_user.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
 #include <ddb/db_access.h>
+
+#ifndef _KERNEL
+#include <stdlib.h>
+#endif
 
 #ifndef V9
 #define V9
