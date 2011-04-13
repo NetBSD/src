@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.29 2010/05/24 09:49:17 martin Exp $ */
+/*	$NetBSD: intr.h,v 1.30 2011/04/13 03:24:28 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _SPARC64_INTR_H_
 #define _SPARC64_INTR_H_
+
+#ifdef _KERNEL
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
@@ -75,6 +77,8 @@ int	mp_cpu_is_paused (sparc64_cpuset_t);
 void	mp_resume_cpu(int);
 #endif	/* _LOCORE */
 #endif
+
+#endif /* _KERNEL */
 
 #define IPI_EVCNT_TLB_PTE	0
 #define IPI_EVCNT_FPU_SYNCH	1
