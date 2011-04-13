@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.1.2.7 2010/09/20 19:42:31 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.1.2.8 2011/04/13 21:10:11 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.7 2010/09/20 19:42:31 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.8 2011/04/13 21:10:11 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -315,6 +315,8 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tmsk = obio->obio_tmsk;
 
 	aprint_normal(": RMI XLR PCI-X Interface\n");
+
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_HIGH);
 
 	rmixl_pcix_intcfg(sc);
 
