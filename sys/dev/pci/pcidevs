@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1070 2011/04/04 17:59:59 bouyer Exp $
+$NetBSD: pcidevs,v 1.1071 2011/04/13 22:24:12 wiz Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1414,6 +1414,7 @@ product ATI RS690_PPB_7913	0x7913	RS690 PCI to PCI-Express Port 0 Bridge
 product ATI RS690_PPB_7915	0x7915	RS690 PCI to PCI-Express Port 1 Bridge
 product ATI RS690_PPB_7916	0x7916	RS690 PCI to PCI-Express Port 2 Bridge
 product ATI RS690_PPB_7917	0x7917	RS690 PCI to PCI-Express Port 3 Bridge
+product ATI RADEON_HD4650	0x9498 	Radeon HD4650
 product ATI RADEON_HD2600_XT	0x9588 	Radeon HD2600 XT GDDR3
 product ATI RADEON_HD4250_S	0x95C5	Radeon HD4250 GPU (RV610) Secondary
 product ATI RADEON_HD4200	0x9712	Radeon HD4200 Mobility
