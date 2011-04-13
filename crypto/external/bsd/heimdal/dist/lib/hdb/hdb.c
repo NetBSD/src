@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb.c,v 1.1.1.1 2011/04/13 18:14:42 elric Exp $	*/
+/*	$NetBSD: hdb.c,v 1.2 2011/04/13 18:23:42 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -80,7 +80,9 @@ static struct hdb_method methods[] = {
     { HDB_INTERFACE_VERSION, "ldap:",	hdb_ldap_create},
     { HDB_INTERFACE_VERSION, "ldapi:",	hdb_ldapi_create},
 #endif
+#ifdef SQLITE3
     { HDB_INTERFACE_VERSION, "sqlite:", hdb_sqlite_create},
+#endif
     {0, NULL,	NULL}
 };
 
