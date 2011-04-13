@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.94 2011/01/24 10:04:28 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.95 2011/04/13 03:35:19 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
 #define	CPU_ARCH		4	/* integer: cpu architecture version */
 #define	CPU_MAXID		5	/* number of valid machdep ids */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 /*
  * Exported definitions unique to SPARC cpu support.
  */
@@ -66,11 +66,13 @@
 #include <machine/reg.h>
 #include <machine/pte.h>
 #include <machine/intr.h>
+#if defined(_KERNEL)
 #include <machine/cpuset.h>
-#include <sparc64/sparc64/intreg.h>
+#endif
 
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
+
 /*
  * The cpu_info structure is part of a 64KB structure mapped both the kernel
  * pmap and a single locked TTE a CPUINFO_VA for that particular processor.
@@ -171,6 +173,10 @@ struct cpu_info {
 
 	volatile void		*ci_ddb_regs;	/* DDB regs */
 };
+
+#endif /* _KERNEL || _KMEMUSER */
+
+#ifdef _KERNEL
 
 #define CPUF_PRIMARY	1
 
@@ -380,6 +386,16 @@ void kgdb_panic(void);
 /* emul.c */
 int	fixalign(struct lwp *, struct trapframe64 *);
 int	emulinstr(vaddr_t, struct trapframe64 *);
+
+#else /* _KERNEL */
+
+/*
+ * XXX: provide some definitions for crash(8), probably can share
+ */
+#if defined(_KMEMUSER)
+#define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
+#define curlwp		curcpu()->ci_curlwp
+#endif
 
 #endif /* _KERNEL */
 #endif /* _CPU_H_ */
