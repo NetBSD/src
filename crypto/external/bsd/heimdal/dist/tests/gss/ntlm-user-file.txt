@@ -1,0 +1,2 @@
+# $Id: ntlm-user-file.txt,v 1.1.1.1 2011/04/13 18:16:01 elric Exp $
+TEST:user1:u1
