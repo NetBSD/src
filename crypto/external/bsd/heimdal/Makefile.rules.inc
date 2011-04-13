@@ -1,0 +1,92 @@
+# $NetBSD: Makefile.rules.inc,v 1.1 2011/04/13 19:16:44 elric Exp $
+
+SRCS+= ${HEIMSRCS:N*.et:N*.in:N*.asn1}
+
+.for et_src in ${HEIMSRCS:M*.et}
+CLEANFILES+=		${et_src:.et=.c} ${et_src:.et=.h}
+DPSRCS+=		${et_src:.et=.c} ${et_src:.et=.h}
+COMPILE_ET_INCS+=	${et_src:.et=.h}
+OBJS+=			${et_src:.et=.o}
+
+${et_src:.et=.c} ${et_src:.et=.h}: ${et_src} ${TOOL_COMPILE_ET}
+	${TOOL_COMPILE_ET} ${.ALLSRC:[1]}
+
+.endfor
+
+.for src in ${HEIMSRCS:M*.asn1}
+ASN1_FILES.${src}	?= asn1_${src:.asn1=_asn1.x}
+
+.if ${ASN1_FILES.${src}:[\#]} == 1
+ASN1_OPTS.${src} ?= --one-code-file
+.endif
+
+CLEANFILES+=				\
+	${src:.asn1=_asn1_files}	\
+	${ASN1_FILES.${src}}		\
+	${ASN1_FILES.${src}:.x=.c}	\
+	${src:.asn1=_asn1.h}		\
+	${src:.asn1=_asn1.hx}		\
+	${src:.asn1=_asn1-priv.h}	\
+	${src:.asn1=_asn1-priv.hx}
+
+ASN1_INCS += ${src:.asn1=_asn1.h}
+
+DPSRCS +=	${src:.asn1=_asn1.h} ${src:.asn1=_asn1-priv.h}
+DPSRCS +=	${src:.asn1=_asn1.hx} ${src:.asn1=_asn1-priv.hx}
+OBJS +=		${ASN1_FILES.${src}:.x=.o}
+
+.if exists(${src:.asn1=.opt})
+${ASN1_FILES.${src}} ${src:.asn1=_asn1.hx} ${src:.asn1=_asn1-priv.hx}: ${src} \
+					${src:.asn1=.opt} ${TOOL_ASN1_COMPILE}
+	${TOOL_ASN1_COMPILE}			\
+		${ASN1_OPTS.${src}}		\
+		--option-file=${.ALLSRC:[2]}	\
+		${.ALLSRC:[1]} ${src:.asn1=_asn1}
+
+.else
+${ASN1_FILES.${src}} ${src:.asn1=_asn1.hx} ${src:.asn1=_asn1-priv.hx}: ${src} \
+							${TOOL_ASN1_COMPILE}
+	${TOOL_ASN1_COMPILE}			\
+		${ASN1_OPTS.${src}}		\
+		${.ALLSRC:[1]} ${src:.asn1=_asn1}
+
+.endif
+
+${src:.asn1=_asn1.h}: ${src:.asn1=_asn1.hx}
+	@2>/dev/null < ${src:.asn1=_asn1.hx} > ${src:.asn1=_asn1.h}	\
+	    sed -E							\
+		-e 's,#include <(.*)_asn1\.h>,#include <krb5/\1_asn1.h>,'
+
+${src:.asn1=_asn1-priv.h}: ${src:.asn1=_asn1-priv.hx}
+	@2> /dev/null							   \
+	    cmp -s ${src:.asn1=_asn1-priv.hx} ${src:.asn1=_asn1-priv.h} || \
+	    cp ${src:.asn1=_asn1-priv.hx} ${src:.asn1=_asn1-priv.h}
+
+.for x2c in ${ASN1_FILES.${src}}
+${x2c:.x=.c}: ${x2c}
+	@cmp -s ${x2c} ${x2c:.x=.c} 2> /dev/null || cp ${x2c} ${x2c:.x=.c}
+
+.endfor
+
+.endfor
+
+#
+# and for slc:
+
+.for slc_src in ${HEIMSRCS:M*.in}
+CLEANFILES+=	${slc_src:.in=.c} ${slc_src:.in=.h}
+DPSRCS+=	${slc_src:.in=.c} ${slc_src:.in=.h}
+OBJS+=		${slc_src:.in=.o}
+SLC_INCS+=	${slc_src:.in=.h}
+
+${slc_src:.in=.c} ${slc_src:.in=.h}: ${slc_src}
+	${TOOL_SLC} ${.ALLSRC}
+
+.endfor
+
+#
+# And a tiny bit of logic for bsd.prog.mk:
+
+.if defined(PROG) && defined(OBJS)
+OBJS.${PROG} += ${OBJS}
+.endif
