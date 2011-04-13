@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.95 2011/04/13 03:35:19 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.96 2011/04/13 03:40:00 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,6 +68,7 @@
 #include <machine/intr.h>
 #if defined(_KERNEL)
 #include <machine/cpuset.h>
+#include <sparc64/sparc64/intreg.h>
 #endif
 
 #include <sys/cpu_data.h>
