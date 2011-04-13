@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.13 2011/04/09 19:56:20 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.14 2011/04/13 18:32:21 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -83,15 +83,16 @@ static struct brdprop brdlist[] = {
 	"synology",
 	"Synology DS",
 	BRD_SYNOLOGY,
-	33164691,	/* from Synology/Linux source */
-	/* 33168000,		XXX better precision? */
+	33164691,	/* from Synology/Linux source            */
+			/* XXX should be 33165343 for the CS-406 */
 	"eumb", 0x4500, 115200,
 	NULL, synobrdfix, NULL, synoreset },
     {
 	"qnap",
 	"QNAP TS",
 	BRD_QNAPTS,
-	0,
+	33164691,	/* Linux source says 33000000, but the Synology  */
+			/* clock value delivers a much better precision. */
 	"eumb", 0x4500, 115200,
 	NULL, qnapbrdfix, NULL, qnapreset },
     {
