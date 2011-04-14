@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.71 2011/02/01 20:06:06 he Exp $
+# $NetBSD: md.sparc,v 1.72 2011/04/14 10:07:49 mrg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -93,6 +93,7 @@
 ./usr/include/sparc64/ieee.h			comp-c-include
 ./usr/include/sparc64/ieeefp.h			comp-c-include
 ./usr/include/sparc64/instr.h			comp-c-include
+./usr/include/sparc64/intr.h			comp-c-include
 ./usr/include/sparc64/int_const.h		comp-c-include
 ./usr/include/sparc64/int_fmtio.h		comp-c-include
 ./usr/include/sparc64/int_limits.h		comp-c-include
