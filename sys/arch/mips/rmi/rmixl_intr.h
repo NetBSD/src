@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.h,v 1.2 2011/02/20 07:48:37 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.h,v 1.3 2011/04/14 05:16:28 cliff Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,12 @@
 /*
  * vectors (0 <= vec < 8)  are CAUSE[8..15] (including softintrs and count/compare)
  * vectors (8 <= vec < 31) are for other non-IRT based interrupts
+ * we use one for FMN, and each IPI currently gets own vector;
+ * if NIPIS >= (32 - 8 - 1), then redesign so IPIs share vector(s)
  */
+#if NIPIS >= 23
+# error too many IPIs
+#endif
 #define RMIXL_INTRVEC_IPI	8
 #define RMIXL_INTRVEC_FMN	(RMIXL_INTRVEC_IPI + NIPIS)
 
