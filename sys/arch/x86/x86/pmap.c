@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118 2011/02/11 23:08:38 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.119 2011/04/14 16:00:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2011/02/11 23:08:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2011/04/14 16:00:21 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4212,11 +4212,8 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 		kpreempt_enable();
 	} else {
 		/* XXX */
-		PMAP_SUBOBJ_LOCK(kpm, level - 1);
-		ptp = uvm_pagealloc(&kpm->pm_obj[level - 1],
-				    ptp_va2o(va, level), NULL,
+		ptp = uvm_pagealloc(NULL, 0, NULL,
 				    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
-		PMAP_SUBOBJ_UNLOCK(kpm, level - 1);
 		if (ptp == NULL)
 			panic("pmap_get_physpage: out of memory");
 		ptp->flags &= ~PG_BUSY;
