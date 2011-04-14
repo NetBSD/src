@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.170 2011/03/21 20:39:32 matt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.171 2011/04/14 16:08:53 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.170 2011/03/21 20:39:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.171 2011/04/14 16:08:53 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -960,9 +960,7 @@ again:
 			 * stack (rather than big-small-big-small-...).
 			 */
 #ifdef INET6
-#if IPV6_MAXPACKET != IP_MAXPACKET
-#error IPV6_MAXPACKET != IP_MAXPACKET
-#endif
+			CTASSERT(IPV6_MAXPACKET == IP_MAXPACKET);
 #endif
 			len = (min(len, IP_MAXPACKET) / txsegsize) * txsegsize;
 			if (len <= txsegsize) {
