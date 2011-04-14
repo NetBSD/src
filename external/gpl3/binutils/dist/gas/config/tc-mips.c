@@ -6031,6 +6031,43 @@ macro (struct mips_cl_insn *ip)
 	macro_build (NULL, ADDRESS_ADD_INSN, "d,v,t", treg, tempreg, breg);
       break;
 
+    case M_MSGSND:
+      {
+	unsigned long temp = (treg << 16) | (0x01);
+	macro_build (NULL, "c2", "C", temp);
+      }
+      /* AT is not used, just return */
+      return;
+
+    case M_MSGLD:
+      {
+	unsigned long temp = (0x02);
+	macro_build (NULL, "c2", "C", temp);
+      }
+      /* AT is not used, just return */
+      return;
+
+    case M_MSGLD_T:
+      {
+	unsigned long temp = (treg << 16) | (0x02);
+	macro_build (NULL, "c2", "C", temp);
+      }
+      /* AT is not used, just return */
+      return;
+
+    case M_MSGWAIT:
+      macro_build (NULL, "c2", "C", 3);
+      /* AT is not used, just return */
+      return;
+
+    case M_MSGWAIT_T:
+      {
+	unsigned long temp = (treg << 16) | 0x03;
+	macro_build (NULL, "c2", "C", temp);
+      }
+      /* AT is not used, just return */
+      return;
+
     case M_J_A:
       /* The j instruction may not be used in PIC code, since it
 	 requires an absolute address.  We convert it to a b
@@ -15173,6 +15210,9 @@ static const struct mips_cpu_info mips_cpu_info_table[] =
 
   /* Cavium Networks Octeon CPU core */
   { "octeon",	      0,      ISA_MIPS64R2,   CPU_OCTEON },
+
+  /* RMI Xlr */
+  { "xlr",	      0,      ISA_MIPS64,     CPU_XLR },
 
   /* End marker */
   { NULL, 0, 0, 0 }

@@ -364,6 +364,8 @@ mips_arch_create sb1 	64	mips64	{ mips3d } \
 mips_arch_create octeon 64	mips64r2 {} \
 			{ -march=octeon -mtune=octeon } { -mmips:octeon } \
 			{ mips64octeon*-*-* }
+mips_arch_create xlr 	64	mips64	{} \
+			{ -march=xlr -mtune=xlr } { -mmips:xlr }
 
 #
 # And now begin the actual tests!  VxWorks uses RELA rather than REL
@@ -588,6 +590,7 @@ if { [istarget mips*-*-vxworks*] } {
 	run_dump_test "mips64-mdmx"
 	run_dump_test "sb1-ext-mdmx"
 	run_dump_test "sb1-ext-ps"
+	run_dump_test "xlr-ext"
     }
 
     run_dump_test "relax"
