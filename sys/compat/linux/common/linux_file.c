@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.102 2011/04/10 15:49:56 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.103 2011/04/14 00:59:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,13 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.102 2011/04/10 15:49:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.103 2011/04/14 00:59:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
@@ -619,6 +620,25 @@ linux_sys_pwrite(struct lwp *l, const struct linux_sys_pwrite_args *uap, registe
 	SCARG(&pra, offset) = SCARG(uap, offset);
 
 	return sys_pwrite(l, &pra, retval);
+}
+
+int
+linux_sys_dup3(struct lwp *l, const struct linux_sys_dup3_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) from;
+		syscallarg(int) to;
+		syscallarg(int) flags;
+	} */
+	int error;
+	if ((error = sys_dup2(l, (const struct sys_dup2_args *)uap, retval)))
+		return error;
+
+	if (SCARG(uap, flags) & LINUX_O_CLOEXEC)
+		fd_set_exclose(l, SCARG(uap, to), true);
+
+	return 0;
 }
 
 #define LINUX_NOT_SUPPORTED(fun) \
