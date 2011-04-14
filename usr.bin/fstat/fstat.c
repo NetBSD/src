@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.89 2009/05/24 21:41:44 ad Exp $	*/
+/*	$NetBSD: fstat.c,v 1.90 2011/04/14 00:35:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.89 2009/05/24 21:41:44 ad Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.90 2011/04/14 00:35:35 rmind Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,6 +407,7 @@ ftrans(fdfile_t *fp, int i)
 	case DTYPE_KQUEUE:
 	case DTYPE_CRYPTO:
 	case DTYPE_MQUEUE:
+	case DTYPE_SEM:
 		if (checkfile == 0)
 			misctrans(&file);
 		break;
