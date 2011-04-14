@@ -1,4 +1,4 @@
-.\"	$NetBSD: kpasswdd.8,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $
+.\"	$NetBSD: kpasswdd.8,v 1.2 2011/04/14 19:19:19 elric Exp $
 .\"
 .\" Copyright (c) 1997, 2000 - 2005 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden). 
@@ -66,20 +66,14 @@ the database directly and should thus only run on the master KDC.
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl -addresses= Ns Ar address
-.Xc
+.It Fl -addresses= Ns Ar address
 For each till the argument is given, add the address to what kpasswdd
 should listen too.
-.It Xo
-.Fl -check-library= Ns Ar library
-.Xc
+.It Fl -check-library= Ns Ar library
 If your system has support for dynamic loading of shared libraries,
 you can use an external function to check password quality. This
 option specifies which library to load.
-.It Xo
-.Fl -check-function= Ns Ar function
-.Xc
+.It Fl -check-function= Ns Ar function
 This is the function to call in the loaded library. The function
 should look like this:
 .Pp
@@ -94,20 +88,11 @@ is the one who tries to change passwords, and
 is the new password. Note that the password (in
 .Fa password->data )
 is not zero terminated.
-.It Xo
-.Fl k Ar kspec ,
-.Fl -keytab= Ns Ar kspec
-.Xc
+.It Fl k Ar kspec , Fl -keytab= Ns Ar kspec
 Keytab to get authentication key from.
-.It Xo
-.Fl r Ar realm ,
-.Fl -realm= Ns Ar realm
-.Xc
+.It Fl r Ar realm , Fl -realm= Ns Ar realm
 Default realm.
-.It Xo
-.Fl p Ar string ,
-.Fl -port= Ns Ar string
-.Xc
+.It Fl p Ar string , Fl -port= Ns Ar string
 Port to listen on (default service kpasswd - 464).
 .El
 .Sh DIAGNOSTICS
