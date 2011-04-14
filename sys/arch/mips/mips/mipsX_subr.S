@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.43 2011/04/06 14:04:32 tsutsui Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.44 2011/04/14 05:51:27 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2569,12 +2569,13 @@ _C_LABEL(MIPSX(locore_vec)):
 
 	.globl _C_LABEL(MIPSX(locoresw))
 _C_LABEL(MIPSX(locoresw)):
-	PTR_WORD _C_LABEL(MIPSX(wbflush)) # wbflush
-	PTR_WORD _C_LABEL(nullop)	# cpu_idle
-	PTR_WORD _C_LABEL(nullop)	# send ipi
-	PTR_WORD _C_LABEL(nullop)	# cpu_offline_md
-	PTR_WORD _C_LABEL(nullop)	# cpu_init_md
-	PTR_WORD _C_LABEL(nullop)	# lsw_bus_error
+	PTR_WORD _C_LABEL(MIPSX(wbflush))	# lsw_wbflush
+	PTR_WORD _C_LABEL(nullop)		# lsw_cpu_idle
+	PTR_WORD _C_LABEL(nullop)		# lsw_send_ipi
+	PTR_WORD _C_LABEL(nullop)		# lsw_cpu_offline_md
+	PTR_WORD _C_LABEL(nullop)		# lsw_cpu_init
+	PTR_WORD _C_LABEL(nullop)		# lsw_cpu_run
+	PTR_WORD _C_LABEL(nullop)		# lsw_bus_error
 
 MIPSX(excpt_sw):
 	####
