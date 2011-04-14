@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.3 2011/04/14 05:14:23 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.4 2011/04/14 06:12:21 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.3 2011/04/14 05:14:23 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.4 2011/04/14 06:12:21 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -199,7 +199,8 @@ cpucore_rmixl_print(void *aux, const char *pnp)
 
 /*
  * cpucore_rmixl_run
- *	called from cpu_rmixl_hatch for each cpu
+ *	called from cpucore_rmixl_attach for primary core
+ *	and called from cpu_rmixl_run for each hatched cpu
  *	the first call for each cpucore causes init of per-core features:
  *	- disable unused threads
  *	- set Fine-grained (Round Robin) thread scheduling mode
