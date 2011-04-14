@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.3 2011/02/20 07:48:37 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.4 2011/04/14 05:16:00 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.3 2011/02/20 07:48:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.4 2011/04/14 05:16:00 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -292,15 +292,15 @@ static const char * const rmixl_vecnames_common[NINTRVECS] = {
 	"vec 5",		/*  5 */
 	"vec 6",		/*  6 */
 	"vec 7",		/*  7 */
-	"vec 8 (ipi)",		/*  8 */
-	"vec 9 (ipi)",		/*  9 */
-	"vec 10 (ipi)",		/* 10 */
-	"vec 11 (ipi)",		/* 11 */
-	"vec 12 (ipi)",		/* 12 */
-	"vec 13 (ipi)",		/* 13 */
-	"vec 14 (ipi)",		/* 14 */
-	"vec 15 (ipi)",		/* 15 */
-	"vec 16 (fmn)",		/* 16 */
+	"vec 8 (ipi 0)",	/*  8 */
+	"vec 9 (ipi 1)",	/*  9 */
+	"vec 10 (ipi 2)",	/* 10 */
+	"vec 11 (ipi 3)",	/* 11 */
+	"vec 12 (ipi 4)",	/* 12 */
+	"vec 13 (ipi 5)",	/* 13 */
+	"vec 14 (ipi 6)",	/* 14 */
+	"vec 15 (fmn)",		/* 15 */
+	"vec 16",		/* 16 */
 	"vec 17",		/* 17 */
 	"vec 18",		/* 18 */
 	"vec 19",		/* 19 */
@@ -920,18 +920,10 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 		KASSERT ((vecbit & RMIXL_EIRR_PRESERVE_MASK) == 0);
 
 		/*
-		 * ack in EIRR the irq we are about to handle
-		 * disable all interrupt to prevent a race that would allow
-		 * e.g. softints set from a higher interrupt getting
-		 * clobbered by the EIRR read-modify-write 
+		 * ack in EIRR, and in PIC if needed,
+		 * the irq we are about to handle
 		 */
-		asm volatile("dmtc0 $0, $9, 7;");
-		asm volatile("dmfc0 %0, $9, 6;" : "=r"(eirr));
-		eirr &= RMIXL_EIRR_PRESERVE_MASK;
-		eirr |= vecbit;
-		asm volatile("dmtc0 %0, $9, 6;" :: "r"(eirr));
-		asm volatile("dmtc0 %0, $9, 7;" :: "r"(eimr));
-
+		rmixl_eirr_ack(eimr, vecbit, RMIXL_EIRR_PRESERVE_MASK);
 		if (RMIXL_VECTOR_IS_IRT(vec))
 			RMIXL_PICREG_WRITE(RMIXL_PIC_INTRACK,
 				1 << RMIXL_VECTOR_IRT(vec));
@@ -993,12 +985,14 @@ static int
 rmixl_ipi_intr(void *arg)
 {
 	struct cpu_info * const ci = curcpu();
+	const uint64_t ipi_mask = 1 << (uintptr_t)arg;
 
 	KASSERT(ci->ci_cpl >= IPL_SCHED);
-
 	KASSERT((uintptr_t)arg < NIPIS);
-	const uint64_t ipi_mask = 1 << (uintptr_t)arg;
-	KASSERT((ci->ci_request_ipis & ipi_mask) != 0);
+
+	/* if the request is clear, it was previously processed */
+	if ((ci->ci_request_ipis & ipi_mask) == 0)
+		return 0;
 
 	atomic_or_64(&ci->ci_active_ipis, ipi_mask);
 	atomic_and_64(&ci->ci_request_ipis, ~ipi_mask);
