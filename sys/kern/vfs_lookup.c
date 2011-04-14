@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.174 2011/04/11 18:24:49 jakllsch Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.175 2011/04/14 15:29:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.174 2011/04/11 18:24:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.175 2011/04/14 15:29:25 yamt Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -691,6 +691,8 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 	size_t linklen;
 	int error;
 
+	KASSERT(VOP_ISLOCKED(searchdir) == LK_EXCLUSIVE);
+	KASSERT(VOP_ISLOCKED(foundobj) == LK_EXCLUSIVE);
 	if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
 		return ELOOP;
 	}
@@ -769,6 +771,7 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 	}
 
 	*newsearchdir_ret = searchdir;
+	KASSERT(VOP_ISLOCKED(searchdir) == LK_EXCLUSIVE);
 	return 0;
 }
 
@@ -875,6 +878,7 @@ lookup_once(struct namei_state *state,
 	struct nameidata *ndp = state->ndp;
 
 	KASSERT(cnp == &ndp->ni_cnd);
+	KASSERT(VOP_ISLOCKED(searchdir) == LK_EXCLUSIVE);
 	*newsearchdir_ret = searchdir;
 
 	/*
@@ -900,7 +904,8 @@ lookup_once(struct namei_state *state,
 				foundobj = searchdir;
 				vref(foundobj);
 				*foundobj_ret = foundobj;
-				return 0;
+				error = 0;
+				goto done;
 			}
 			if (ndp->ni_rootdir != rootvnode) {
 				int retval;
@@ -924,7 +929,8 @@ lookup_once(struct namei_state *state,
 				    vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
 				    *newsearchdir_ret = foundobj;
 				    *foundobj_ret = foundobj;
-				    return 0;
+				    error = 0;
+				    goto done;
 				}
 			}
 			if ((searchdir->v_vflag & VV_ROOT) == 0 ||
@@ -968,7 +974,7 @@ unionlookup:
 		}
 
 		if (error != EJUSTRETURN)
-			return error;
+			goto done;
 
 		/*
 		 * If this was not the last component, or there were trailing
@@ -976,7 +982,8 @@ unionlookup:
 		 * then the name must exist.
 		 */
 		if ((cnp->cn_flags & (REQUIREDIR | CREATEDIR)) == REQUIREDIR) {
-			return ENOENT;
+			error = ENOENT;
+			goto done;
 		}
 
 		/*
@@ -984,7 +991,8 @@ unionlookup:
 		 * allowing file to be created.
 		 */
 		if (state->rdonly) {
-			return EROFS;
+			error = EROFS;
+			goto done;
 		}
 
 		/*
@@ -994,7 +1002,8 @@ unionlookup:
 		 * as searchdir.
 		 */
 		*foundobj_ret = NULL;
-		return (0);
+		error = 0;
+		goto done;
 	}
 #ifdef NAMEI_DIAGNOSTIC
 	printf("found\n");
@@ -1028,7 +1037,7 @@ unionlookup:
 		error = vfs_busy(mp, NULL);
 		if (error != 0) {
 			vput(foundobj);
-			return error;
+			goto done;
 		}
 		KASSERT(searchdir != foundobj);
 		VOP_UNLOCK(searchdir);
@@ -1037,7 +1046,7 @@ unionlookup:
 		vfs_unbusy(mp, false, NULL);
 		if (error) {
 			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
-			return error;
+			goto done;
 		}
 		VOP_UNLOCK(foundobj);
 		vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
@@ -1045,7 +1054,15 @@ unionlookup:
 	}
 
 	*foundobj_ret = foundobj;
-	return 0;
+	error = 0;
+done:
+	KASSERT(VOP_ISLOCKED(*newsearchdir_ret) == LK_EXCLUSIVE);
+	/*
+	 * *foundobj_ret is valid only if error == 0.
+	 */
+	KASSERT(error != 0 || *foundobj_ret == NULL ||
+	    VOP_ISLOCKED(*foundobj_ret) == LK_EXCLUSIVE);
+	return error;
 }
 
 //////////////////////////////
