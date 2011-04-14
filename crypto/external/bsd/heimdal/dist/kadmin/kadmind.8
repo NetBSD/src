@@ -1,4 +1,4 @@
-.\"	$NetBSD: kadmind.8,v 1.1.1.2 2011/04/14 14:08:10 elric Exp $
+.\"	$NetBSD: kadmind.8,v 1.2 2011/04/14 19:19:19 elric Exp $
 .\"
 .\" Copyright (c) 2002 - 2004 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden). 
@@ -120,34 +120,17 @@ glob-style pattern.
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl c Ar file ,
-.Fl -config-file= Ns Ar file
-.Xc
+.It Fl c Ar file , Fl -config-file= Ns Ar file
 location of config file
-.It Xo
-.Fl k Ar file ,
-.Fl -key-file= Ns Ar file
-.Xc
+.It Fl k Ar file , Fl -key-file= Ns Ar file
 location of master key file
-.It Xo
-.Fl -keytab= Ns Ar keytab
-.Xc
+.It Fl -keytab= Ns Ar keytab
 what keytab to use
-.It Xo
-.Fl r Ar realm ,
-.Fl -realm= Ns Ar realm
-.Xc
+.It Fl r Ar realm , Fl -realm= Ns Ar realm
 realm to use
-.It Xo
-.Fl d ,
-.Fl -debug
-.Xc
+.It Fl d , Fl -debug
 enable debugging
-.It Xo
-.Fl p Ar port ,
-.Fl -ports= Ns Ar port
-.Xc
+.It Fl p Ar port , Fl -ports= Ns Ar port
 ports to listen to. By default, if run as a daemon, it listens to port
 749, but you can add any number of ports with this option. The port
 string is a whitespace separated list of port specifications, with the

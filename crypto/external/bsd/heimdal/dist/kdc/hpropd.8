@@ -1,4 +1,4 @@
-.\"	$NetBSD: hpropd.8,v 1.1.1.2 2011/04/14 14:08:12 elric Exp $
+.\"	$NetBSD: hpropd.8,v 1.2 2011/04/14 19:19:19 elric Exp $
 .\"
 .\" Copyright (c) 1997, 2000 - 2003 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden). 
@@ -75,34 +75,17 @@ are accepted.
 .Pp
 Options supported:
 .Bl -tag -width Ds
-.It Xo
-.Fl d Ar file ,
-.Fl -database= Ns Ar file
-.Xc
+.It Fl d Ar file , Fl -database= Ns Ar file
 database
-.It Xo
-.Fl n ,
-.Fl -stdin
-.Xc
+.It Fl n , Fl -stdin
 read from stdin
-.It Xo
-.Fl -print
-.Xc
+.It Fl -print
 print dump to stdout
-.It Xo
-.Fl i ,
-.Fl -no-inetd
-.Xc
+.It Fl i , Fl -no-inetd
 not started from inetd
-.It Xo
-.Fl k Ar keytab ,
-.Fl -keytab= Ns Ar keytab
-.Xc
+.It Fl k Ar keytab , Fl -keytab= Ns Ar keytab
 keytab to use for authentication
-.It Xo
-.Fl 4 ,
-.Fl -v4dump
-.Xc
+.It Fl 4 , Fl -v4dump
 create v4 type DB
 .El
 .Sh SEE ALSO
