@@ -1,4 +1,4 @@
-/*	$NetBSD: asn1parse.y,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $	*/
+/*	$NetBSD: asn1parse.y,v 1.1.1.2 2011/04/14 14:08:19 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: asn1parse.y,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $ */
+/* Id */
 
 %{
 
@@ -49,7 +49,7 @@
 #include "gen_locl.h"
 #include "der.h"
 
-__RCSID("$NetBSD: asn1parse.y,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $");
+__RCSID("$NetBSD: asn1parse.y,v 1.1.1.2 2011/04/14 14:08:19 elric Exp $");
 
 static Type *new_type (Typetype t);
 static struct constraint_spec *new_constraint_spec(enum ctype);

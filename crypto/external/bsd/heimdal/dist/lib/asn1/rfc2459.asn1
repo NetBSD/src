@@ -1,4 +1,4 @@
--- $Id: rfc2459.asn1,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $ --
+-- Id --
 -- Definitions from rfc2459/rfc3280
 
 RFC2459 DEFINITIONS ::= BEGIN

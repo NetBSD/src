@@ -1,4 +1,4 @@
-dnl $Id: largefile.m4,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $
+dnl Id
 dnl
 dnl Figure out what flags we need for 64-bit file access, and also set
 dnl them on the command line.

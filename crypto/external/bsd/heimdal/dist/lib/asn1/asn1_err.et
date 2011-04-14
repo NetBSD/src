@@ -3,7 +3,7 @@
 #
 # This might look like a com_err file, but is not
 #
-id "$Id: asn1_err.et,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $"
+id "Id"
 
 error_table asn1
 prefix ASN1

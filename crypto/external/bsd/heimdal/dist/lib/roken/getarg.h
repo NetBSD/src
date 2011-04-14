@@ -1,4 +1,4 @@
-/*	$NetBSD: getarg.h,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $	*/
+/*	$NetBSD: getarg.h,v 1.1.1.2 2011/04/14 14:09:29 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: getarg.h,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $ */
+/* Id */
 
 #ifndef __GETARG_H__
 #define __GETARG_H__

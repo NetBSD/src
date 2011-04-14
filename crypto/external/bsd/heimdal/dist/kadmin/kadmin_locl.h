@@ -1,4 +1,4 @@
-/*	$NetBSD: kadmin_locl.h,v 1.1.1.1 2011/04/13 18:14:35 elric Exp $	*/
+/*	$NetBSD: kadmin_locl.h,v 1.1.1.2 2011/04/14 14:08:10 elric Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
@@ -34,7 +34,7 @@
  */
 
 /*
- * $Id: kadmin_locl.h,v 1.1.1.1 2011/04/13 18:14:35 elric Exp $
+ * Id
  */
 
 #ifndef __ADMIN_LOCL_H__

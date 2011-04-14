@@ -1,6 +1,6 @@
-/*	$NetBSD: asn1-common.h,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $	*/
+/*	$NetBSD: asn1-common.h,v 1.1.1.2 2011/04/14 14:08:19 elric Exp $	*/
 
-/* $Id: asn1-common.h,v 1.1.1.1 2011/04/13 18:14:39 elric Exp $ */
+/* Id */
 
 #include <stddef.h>
 #include <time.h>
