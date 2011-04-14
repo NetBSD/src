@@ -1,4 +1,4 @@
-.\"	$NetBSD: kgetcred.1,v 1.1.1.2 2011/04/14 14:08:18 elric Exp $
+.\"	$NetBSD: kgetcred.1,v 1.2 2011/04/14 19:19:19 elric Exp $
 .\"
 .\" Copyright (c) 1999, 2001 - 2002 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden). 
@@ -63,30 +63,16 @@ ticket or of a special type.
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl -canonicalize
-.Xc
+.It Fl -canonicalize
 requests that the KDC canonicalize the principal.
-.It Xo
-.Fl c Ar cache ,
-.Fl -cache= Ns Ar cache
-.Xc
+.It Fl c Ar cache , Fl -cache= Ns Ar cache
 the credential cache to use.
-.It Xo
-.Fl e Ar enctype ,
-.Fl -enctype= Ns Ar enctype
-.Xc
+.It Fl e Ar enctype , Fl -enctype= Ns Ar enctype
 encryption type to use.
-.It Xo
-.Fl -no-transit-check
-.Xc
-requests that the KDC doesn't do trasnit checking.
-.It Xo
-.Fl -version
-.Xc
-.It Xo
-.Fl -help
-.Xc
+.It Fl -no-transit-check
+requests that the KDC doesn't do transit checking.
+.It Fl -version
+.It Fl -help
 .El
 .Sh SEE ALSO
 .Xr kinit 1 ,
