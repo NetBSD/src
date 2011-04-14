@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.3 2011/02/20 16:38:13 rmind Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.4 2011/04/14 16:58:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.3 2011/02/20 16:38:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.4 2011/04/14 16:58:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -124,7 +124,7 @@ ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
 		ipi_shootdown(ci);
 	}
 	if (ipi_mask & __BIT(IPI_SYNCICACHE)) {
-		ci->ci_evcnt_per_ipi[IPI_NOP].ev_count++;
+		ci->ci_evcnt_per_ipi[IPI_SYNCICACHE].ev_count++;
 		ipi_syncicache(ci);
 	}
 	if (ipi_mask & __BIT(IPI_SUSPEND)) {
