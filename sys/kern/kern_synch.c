@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.286 2011/01/03 13:22:32 pooka Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.287 2011/04/14 05:33:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.286 2011/01/03 13:22:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.287 2011/04/14 05:33:20 matt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -739,6 +739,9 @@ mi_switch(lwp_t *l)
 		 * of the last lock - we must remain at IPL_SCHED during
 		 * the context switch.
 		 */
+		KASSERTMSG(ci->ci_mtx_count == -1,
+		    ("%s: cpu%u: ci_mtx_count (%d) != -1",
+		     __func__, cpu_index(ci), ci->ci_mtx_count));
 		oldspl = MUTEX_SPIN_OLDSPL(ci);
 		ci->ci_mtx_count--;
 		lwp_unlock(l);
