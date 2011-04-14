@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.8 2011/04/14 05:54:24 cliff Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.9 2011/04/14 06:54:57 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.8 2011/04/14 05:54:24 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.9 2011/04/14 06:54:57 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1014,6 +1014,8 @@ cpu_lwp_setprivate(lwp_t *l, void *v)
 }
 
 
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+
 #if (CPUWATCH_MAX != 8)
 # error CPUWATCH_MAX
 #endif
@@ -1145,3 +1147,4 @@ cpuwatch_clr(cpu_watchpoint_t *cwp)
 	mipsNN_cp0_watchlo_write(cwnum, 0);
 }
 
+#endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
