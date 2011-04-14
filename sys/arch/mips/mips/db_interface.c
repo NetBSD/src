@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.72 2011/04/14 09:25:05 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.73 2011/04/14 17:43:07 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.72 2011/04/14 09:25:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.73 2011/04/14 17:43:07 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -466,19 +466,12 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	for (int i=0; i < curcpu()->ci_cpuwatch_count; i++) {
-		uint32_t r = mipsNN_cp0_watchlo_read(i);
-		printf("  %s%d:%*s %#x\n", "watchlo", i, FLDWIDTH - 8, "", r);
-	}
-	for (int i=0; i < curcpu()->ci_cpuwatch_count; i++) {
-		if (CPUIS64BITS) {
-			uint32_t r = mipsNN_cp0_watchhi_read(i);
-			printf("  %s%d:%*s %#x\n",
-				"watchhi", i, FLDWIDTH - 8, "", r);
-		} else {
-			uint64_t r = mipsNN_cp0_watchhi_read(i);
-			printf("  %s%d:%*s %#" PRIx64 "\n",
-				"watchhi", i, FLDWIDTH - 8, "", r);
-		}
+		const intptr_t lo = mipsNN_cp0_watchlo_read(i);
+		const uint32_t hi = mipsNN_cp0_watchhi_read(i);
+		printf("  %s%d:%*s %#" PRIxPTR "\t",
+		    "watchlo", i, FLDWIDTH - 8, "", lo);
+		printf("  %s%d:%*s %#" PRIx32 "\n",
+		    "watchhi", i, FLDWIDTH - 8, "", hi);
 	}
 #endif
 

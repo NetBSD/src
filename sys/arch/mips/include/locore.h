@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.88 2011/04/14 05:08:22 cliff Exp $ */
+/* $NetBSD: locore.h,v 1.89 2011/04/14 17:43:07 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -148,8 +148,8 @@ void	mipsNN_cp0_config1_write(uint32_t);
 uint32_t mipsNN_cp0_config2_read(void);
 uint32_t mipsNN_cp0_config3_read(void);
 
-uintptr_t mipsNN_cp0_watchlo_read(u_int);
-void	mipsNN_cp0_watchlo_write(u_int, uintptr_t);
+intptr_t mipsNN_cp0_watchlo_read(u_int);
+void	mipsNN_cp0_watchlo_write(u_int, intptr_t);
 uint32_t mipsNN_cp0_watchhi_read(u_int);
 void	mipsNN_cp0_watchhi_write(u_int, uint32_t);
 
