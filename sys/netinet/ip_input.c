@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.293 2010/12/13 14:18:50 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.294 2011/04/14 20:32:04 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.293 2010/12/13 14:18:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.294 2011/04/14 20:32:04 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -221,7 +221,6 @@ int	ip_checkinterface = 0;
 
 struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
-int	ipqmaxlen = IFQ_MAXLEN;
 u_long	in_ifaddrhash;				/* size of hash table - 1 */
 int	in_ifaddrentries;			/* total number of addrs */
 struct in_ifaddrhead in_ifaddrhead;
@@ -319,7 +318,7 @@ ip_init(void)
 	ip_ids = ip_id_init();
 	ip_id = time_second & 0xfffff;
 
-	ipintrq.ifq_maxlen = ipqmaxlen;
+	ipintrq.ifq_maxlen = IFQ_MAXLEN;
 
 	TAILQ_INIT(&in_ifaddrhead);
 	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
@@ -366,7 +365,6 @@ ipintr(void)
 	struct ifqueue lcl_intrq;
 
 	memset(&lcl_intrq, 0, sizeof(lcl_intrq));
-	ipintrq.ifq_maxlen = ipqmaxlen;
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
