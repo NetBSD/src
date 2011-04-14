@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.238 2011/04/06 05:50:39 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.239 2011/04/14 05:10:04 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.238 2011/04/06 05:50:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.239 2011/04/14 05:10:04 cliff Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -187,6 +187,10 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.238 2011/04/06 05:50:39 matt Exp 
 int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 int	cpu_dump(void);
+
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+static void mips_watchpoint_init(void);
+#endif
 
 #if defined(MIPS3_PLUS)
 uint32_t mips3_cp0_tlb_page_mask_probe(void);
@@ -784,6 +788,8 @@ mips32_vector_init(const struct splsw *splsw)
 
 	/* Clear BEV in SR so we start handling our own exceptions */
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
+
+	mips_watchpoint_init();
 }
 #endif /* MIPS32 */
 
@@ -849,6 +855,8 @@ mips32r2_vector_init(const struct splsw *splsw)
 
 	/* Clear BEV in SR so we start handling our own exceptions */
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
+
+	mips_watchpoint_init();
 }
 #endif /* MIPS32R2 */
 
@@ -902,6 +910,8 @@ mips64_vector_init(const struct splsw *splsw)
 
 	/* Clear BEV in SR so we start handling our own exceptions */
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
+
+	mips_watchpoint_init();
 }
 #endif /* MIPS64 */
 
@@ -972,6 +982,8 @@ mips64r2_vector_init(const struct splsw *splsw)
 
 	/* Clear BEV in SR so we start handling our own exceptions */
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
+
+	mips_watchpoint_init();
 }
 #endif /* MIPS64R2 */
 
@@ -2196,3 +2208,14 @@ std_splsw_test(void)
 	KASSERT(ci->ci_cpl == IPL_NONE);
 }
 #endif /* PARANOIA */
+
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+static void
+mips_watchpoint_init(void)
+{
+	/*
+	 * determine number of CPU watchpoints
+	 */
+	curcpu()->ci_cpuwatch_count = cpuwatch_discover();
+}
+#endif
