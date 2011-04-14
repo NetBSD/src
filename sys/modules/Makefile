@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.69 2011/03/04 05:02:47 jruoho Exp $
+#	$NetBSD: Makefile,v 1.70 2011/04/14 15:45:27 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -94,7 +94,7 @@ SUBDIR+=	est
 SUBDIR+=	odcm
 SUBDIR+=	powernow
 SUBDIR+=	tprof_pmi
-#SUBDIR+=	tprof_amdpmi
+SUBDIR+=	tprof_amdpmi
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
