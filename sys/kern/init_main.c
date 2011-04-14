@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.427 2011/01/28 18:44:44 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.428 2011/04/14 16:20:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.427 2011/01/28 18:44:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.428 2011/04/14 16:20:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -1008,7 +1008,7 @@ start_init(void *arg)
 }
 
 /*
- * calculate cache size from physmem and vm_map size.
+ * calculate cache size (in bytes) from physmem and vm_map size.
  */
 vaddr_t
 calc_cache_size(struct vm_map *map, int pct, int va_pct)
