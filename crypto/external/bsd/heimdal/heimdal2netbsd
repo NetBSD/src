@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: heimdal2netbsd,v 1.2 2011/04/13 22:16:52 christos Exp $
+#	$NetBSD: heimdal2netbsd,v 1.3 2011/04/14 18:16:21 elric Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -198,7 +198,7 @@ find $d -type f -print | xargs egrep -l \
 	    -e 's/\$\(Author.*\) \$/\1/' \
 	    -e 's/\$\(Date.*\) \$/\1/' \
 	    -e 's/\$\(Header.*\) \$/\1/' \
-	    -e 's/\$\(Id.*\) \$/\1/' \
+	    -e 's/\$\(Id.*\)\$/\1/' \
 	    -e 's/\$\(Locker.*\) \$/\1/' \
 	    -e 's/\$\(Log.*\) \$/\1/' \
 	    -e 's/\$\(Name.*\) \$/\1/' \
