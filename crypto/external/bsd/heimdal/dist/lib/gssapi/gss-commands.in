@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE. 
  */
-/* $Id: gss-commands.in,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $ */
+/* Id */
 
 command = {
 	name = "supported-mechanisms"

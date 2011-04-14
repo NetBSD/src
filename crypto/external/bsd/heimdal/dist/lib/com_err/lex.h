@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.h,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $	*/
+/*	$NetBSD: lex.h,v 1.1.1.2 2011/04/14 14:08:23 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: lex.h,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $ */
+/* Id */
 
 void _lex_error_message (const char *, ...)
 __attribute__ ((format (printf, 1, 2)));

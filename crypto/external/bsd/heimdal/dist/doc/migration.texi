@@ -1,5 +1,5 @@
-@c $Id: migration.texi,v 1.1.1.1 2011/04/13 18:14:33 elric Exp $
-@c $NetBSD: migration.texi,v 1.1.1.1 2011/04/13 18:14:33 elric Exp $
+@c Id
+@c $NetBSD: migration.texi,v 1.1.1.2 2011/04/14 14:08:08 elric Exp $
 
 @node Migration, Acknowledgments, Programming with Kerberos, Top
 @chapter Migration

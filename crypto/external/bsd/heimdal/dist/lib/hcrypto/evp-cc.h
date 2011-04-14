@@ -1,4 +1,4 @@
-/*	$NetBSD: evp-cc.h,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: evp-cc.h,v 1.1.1.2 2011/04/14 14:08:31 elric Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: evp-cc.h,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $ */
+/* Id */
 
 #ifndef HEIM_EVP_CC_H
 #define HEIM_EVP_CC_H 1

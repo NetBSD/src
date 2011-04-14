@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_locl.h,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: gen_locl.h,v 1.1.1.2 2011/04/14 14:08:21 elric Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: gen_locl.h,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $ */
+/* Id */
 
 #ifndef __GEN_LOCL_H__
 #define __GEN_LOCL_H__

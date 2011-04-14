@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.h,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: utils.h,v 1.1.1.2 2011/04/14 14:08:28 elric Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  *
  *	$FreeBSD: src/lib/libgssapi/utils.h,v 1.1 2005/12/29 14:40:20 dfr Exp $
- *	$Id: utils.h,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $
+ *	Id
  */
 
 OM_uint32 _gss_free_oid(OM_uint32 *, gss_OID);

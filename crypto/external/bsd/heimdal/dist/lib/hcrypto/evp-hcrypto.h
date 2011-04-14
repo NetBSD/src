@@ -1,4 +1,4 @@
-/*	$NetBSD: evp-hcrypto.h,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: evp-hcrypto.h,v 1.1.1.2 2011/04/14 14:08:32 elric Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: evp-hcrypto.h,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $ */
+/* Id */
 
 #ifndef HEIM_EVP_HCRYPTO_H
 #define HEIM_EVP_HCRYPTO_H 1

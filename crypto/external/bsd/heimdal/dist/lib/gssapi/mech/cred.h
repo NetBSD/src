@@ -1,4 +1,4 @@
-/*	$NetBSD: cred.h,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: cred.h,v 1.1.1.2 2011/04/14 14:08:27 elric Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  *
  *	$FreeBSD: src/lib/libgssapi/cred.h,v 1.1 2005/12/29 14:40:20 dfr Exp $
- *	$Id: cred.h,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $
+ *	Id
  */
 
 struct _gss_mechanism_cred {

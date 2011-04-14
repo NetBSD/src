@@ -1,5 +1,5 @@
 -- From RFC 3369 --
--- $Id: cms.asn1,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $ --
+-- Id --
 
 CMS DEFINITIONS ::= BEGIN
 

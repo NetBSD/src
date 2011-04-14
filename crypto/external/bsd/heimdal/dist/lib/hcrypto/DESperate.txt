@@ -1,7 +1,7 @@
 The hunt for getting a DES with plain BSD license w/o advertisement clause
 ==========================================================================
 
-$Id: DESperate.txt,v 1.1.1.1 2011/04/13 18:14:48 elric Exp $
+Id
 
 This all feels very silly given that DES is about 30 years old and now
 is deprecated.
