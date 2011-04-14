@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.100 2011/04/06 05:42:21 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.101 2011/04/14 05:07:30 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,6 +56,30 @@
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
 
+typedef struct cpu_watchpoint {
+	register_t	cw_addr;
+	register_t	cw_mask;
+	uint32_t	cw_asid;
+	uint32_t	cw_mode;
+} cpu_watchpoint_t;
+/* (abstract) mode bits */
+#define CPUWATCH_WRITE	__BIT(0)
+#define CPUWATCH_READ	__BIT(1)
+#define CPUWATCH_EXEC	__BIT(2)
+#define CPUWATCH_MASK	__BIT(3)
+#define CPUWATCH_ASID	__BIT(4)
+#define CPUWATCH_RWX	(CPUWATCH_EXEC|CPUWATCH_READ|CPUWATCH_WRITE)
+
+#define CPUWATCH_MAX	8	/* max possible number of watchpoints */
+
+u_int		  cpuwatch_discover(void);
+void		  cpuwatch_free(cpu_watchpoint_t *);
+cpu_watchpoint_t *cpuwatch_alloc(void);
+void		  cpuwatch_set_all(void);
+void		  cpuwatch_clr_all(void);
+void		  cpuwatch_set(cpu_watchpoint_t *);
+void		  cpuwatch_clr(cpu_watchpoint_t *);
+
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct cpu_info *ci_next;	/* Next CPU in list */
@@ -96,6 +120,8 @@ struct cpu_info {
 	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */
 #endif
 
+	u_int ci_cpuwatch_count;	/* number of watchpoints on this CPU */
+	cpu_watchpoint_t ci_cpuwatch_tab[CPUWATCH_MAX];
 
 #ifdef MULTIPROCESSOR
 	volatile u_long ci_flags;
