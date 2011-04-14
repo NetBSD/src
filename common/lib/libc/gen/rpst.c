@@ -1,4 +1,4 @@
-/*	$NetBSD: rpst.c,v 1.9 2009/05/26 22:39:15 yamt Exp $	*/
+/*	$NetBSD: rpst.c,v 1.10 2011/04/14 15:35:44 yamt Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -42,11 +42,11 @@
 
 #include <sys/cdefs.h>
 
-#if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.9 2009/05/26 22:39:15 yamt Exp $");
+#if defined(_KERNEL) || defined(_STANDALONE)
+__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.10 2011/04/14 15:35:44 yamt Exp $");
 #include <sys/param.h>
-#else /* defined(_KERNEL) */
-__RCSID("$NetBSD: rpst.c,v 1.9 2009/05/26 22:39:15 yamt Exp $");
+#else /* defined(_KERNEL) || defined(_STANDALONE) */
+__RCSID("$NetBSD: rpst.c,v 1.10 2011/04/14 15:35:44 yamt Exp $");
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: rpst.c,v 1.9 2009/05/26 22:39:15 yamt Exp $");
 #else
 #define	KASSERT(a)
 #endif
-#endif /* defined(_KERNEL) */
+#endif /* defined(_KERNEL) || defined(_STANDALONE) */
 
 #include <sys/rpst.h>
 
