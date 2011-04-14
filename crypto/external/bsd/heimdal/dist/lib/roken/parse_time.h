@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_time.h,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: parse_time.h,v 1.1.1.2 2011/04/14 14:09:31 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: parse_time.h,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $ */
+/* Id */
 
 #ifndef __PARSE_TIME_H__
 #define __PARSE_TIME_H__

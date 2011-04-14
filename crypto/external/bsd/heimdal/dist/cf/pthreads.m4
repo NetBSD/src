@@ -1,4 +1,4 @@
-Dnl $Id: pthreads.m4,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $
+Dnl Id
 
 AC_DEFUN([KRB_PTHREADS], [
 AC_MSG_CHECKING(if compiling threadsafe libraries)

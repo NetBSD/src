@@ -1,4 +1,4 @@
-# $Id: heimdal-gssapi.pc.in,v 1.1.1.1 2011/04/13 18:16:02 elric Exp $
+# Id
 prefix=@prefix@
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib

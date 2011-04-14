@@ -1,4 +1,4 @@
-/*	$NetBSD: aes.h,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: aes.h,v 1.1.1.2 2011/04/14 14:08:30 elric Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: aes.h,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $ */
+/* Id */
 
 #ifndef HEIM_AES_H
 #define HEIM_AES_H 1

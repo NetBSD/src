@@ -1,5 +1,5 @@
-@c $Id: kerberos4.texi,v 1.1.1.1 2011/04/13 18:14:33 elric Exp $
-@c $NetBSD: kerberos4.texi,v 1.1.1.1 2011/04/13 18:14:33 elric Exp $
+@c Id
+@c $NetBSD: kerberos4.texi,v 1.1.1.2 2011/04/14 14:08:08 elric Exp $
 
 @node Kerberos 4 issues, Windows compatibility, Things in search for a better place, Top
 @comment  node-name,  next,  previous,  up

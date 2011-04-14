@@ -1,4 +1,4 @@
-/*	$NetBSD: rc4.h,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: rc4.h,v 1.1.1.2 2011/04/14 14:08:33 elric Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: rc4.h,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $ */
+/* Id */
 
 /* symbol renaming */
 #define RC4_set_key hc_RC4_set_key

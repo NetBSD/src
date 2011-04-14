@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_krb5.h,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $	*/
+/*	$NetBSD: gssapi_krb5.h,v 1.1.1.2 2011/04/14 14:08:25 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: gssapi_krb5.h,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $ */
+/* Id */
 
 #ifndef GSSAPI_KRB5_H_
 #define GSSAPI_KRB5_H_

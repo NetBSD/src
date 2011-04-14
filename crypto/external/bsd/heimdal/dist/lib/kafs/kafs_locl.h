@@ -1,4 +1,4 @@
-/*	$NetBSD: kafs_locl.h,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: kafs_locl.h,v 1.1.1.2 2011/04/14 14:09:18 elric Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kafs_locl.h,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $ */
+/* Id */
 
 #ifndef __KAFS_LOCL_H__
 #define __KAFS_LOCL_H__

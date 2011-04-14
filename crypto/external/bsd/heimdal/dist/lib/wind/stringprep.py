@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 # -*- coding: iso-8859-1 -*-
 
-# $Id: stringprep.py,v 1.1.1.1 2011/04/13 18:15:58 elric Exp $
+# Id
 
 # Copyright (c) 2008 Kungliga Tekniska Högskolan
 # (Royal Institute of Technology, Stockholm, Sweden). 
