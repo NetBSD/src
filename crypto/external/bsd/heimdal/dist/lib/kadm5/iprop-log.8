@@ -1,4 +1,4 @@
-.\"	$NetBSD: iprop-log.8,v 1.1.1.2 2011/04/14 14:09:16 elric Exp $
+.\"	$NetBSD: iprop-log.8,v 1.2 2011/04/14 19:19:20 elric Exp $
 .\"
 .\" Id
 .\" 
@@ -85,28 +85,17 @@ maintain the iprop log file
 .Sh DESCRIPTION
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl -version
-.Xc
-.It Xo
-.Fl h ,
-.Fl -help
-.Xc
+.It Fl -version
+.It Fl h , Fl -help
 .El
 .Pp
 command can be one of the following:
 .Bl -tag -width truncate
 .It truncate
 .Bl -tag -width Ds
-.It Xo
-.Fl c Ar file ,
-.Fl -config-file= Ns Ar file
-.Xc
+.It Fl c Ar file , Fl -config-file= Ns Ar file
 configuration file
-.It Xo
-.Fl r Ar string ,
-.Fl -realm= Ns Ar string
-.Xc
+.It Fl r Ar string , Fl -realm= Ns Ar string
 realm
 .El
 .Pp
@@ -115,38 +104,22 @@ last entry of the old log.  If the log is truncted by emptying the
 file, the log will start over at the first version (0).
 .It dump
 .Bl -tag -width Ds
-.It Xo
-.Fl c Ar file ,
-.Fl -config-file= Ns Ar file
-.Xc
+.It Fl c Ar file , Fl -config-file= Ns Ar file
 configuration file
-.It Xo
-.Fl r Ar string ,
-.Fl -realm= Ns Ar string
-.Xc
+.It Fl r Ar string , Fl -realm= Ns Ar string
 realm
 .El
 .Pp
 Print out all entires in the log to standard output.
 .It replay
 .Bl -tag -width Ds
-.It Xo
-.Fl -start-version= Ns Ar version-number
-.Xc
+.It Fl -start-version= Ns Ar version-number
 start replay with this version
-.It Xo
-.Fl -end-version= Ns Ar version-number
-.Xc
+.It Fl -end-version= Ns Ar version-number
 end replay with this version
-.It Xo
-.Fl c Ar file ,
-.Fl -config-file= Ns Ar file
-.Xc
+.It Fl c Ar file , Fl -config-file= Ns Ar file
 configuration file
-.It Xo
-.Fl r Ar string ,
-.Fl -realm= Ns Ar string
-.Xc
+.It Fl r Ar string , Fl -realm= Ns Ar string
 realm
 .El
 .Pp
@@ -154,15 +127,9 @@ Replay the changes from specified entries (or all if none is
 specified) in the transaction log to the database.
 .It last-version
 .Bl -tag -width Ds
-.It Xo
-.Fl c Ar file ,
-.Fl -config-file= Ns Ar file
-.Xc
+.It Fl c Ar file , Fl -config-file= Ns Ar file
 configuration file
-.It Xo
-.Fl r Ar string ,
-.Fl -realm= Ns Ar string
-.Xc
+.It Fl r Ar string , Fl -realm= Ns Ar string
 realm
 .El
 .Pp

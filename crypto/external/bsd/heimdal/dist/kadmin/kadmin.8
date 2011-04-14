@@ -1,4 +1,4 @@
-.\"	$NetBSD: kadmin.8,v 1.1.1.2 2011/04/14 14:08:10 elric Exp $
+.\"	$NetBSD: kadmin.8,v 1.2 2011/04/14 19:19:19 elric Exp $
 .\"
 .\" Copyright (c) 2000 - 2007 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -42,34 +42,13 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Oo Fl p Ar string \*(Ba Xo
-.Fl -principal= Ns Ar string
-.Xc
-.Oc
-.Oo Fl K Ar string \*(Ba Xo
-.Fl -keytab= Ns Ar string
-.Xc
-.Oc
-.Oo Fl c Ar file \*(Ba Xo
-.Fl -config-file= Ns Ar file
-.Xc
-.Oc
-.Oo Fl k Ar file \*(Ba Xo
-.Fl -key-file= Ns Ar file
-.Xc
-.Oc
-.Oo Fl r Ar realm \*(Ba Xo
-.Fl -realm= Ns Ar realm
-.Xc
-.Oc
-.Oo Fl a Ar host \*(Ba Xo
-.Fl -admin-server= Ns Ar host
-.Xc
-.Oc
-.Oo Fl s Ar port number \*(Ba Xo
-.Fl -server-port= Ns Ar port number
-.Xc
-.Oc
+.Op Fl p Ar string \*(Ba Fl -principal= Ns Ar string
+.Op Fl K Ar string \*(Ba Fl -keytab= Ns Ar string
+.Op Fl c Ar file \*(Ba Fl -config-file= Ns Ar file
+.Op Fl k Ar file \*(Ba Fl -key-file= Ns Ar file
+.Op Fl r Ar realm \*(Ba Fl -realm= Ns Ar realm
+.Op Fl a Ar host \*(Ba Fl -admin-server= Ns Ar host
+.Op Fl s Ar port number \*(Ba Fl -server-port= Ns Ar port number
 .Op Fl l | Fl -local
 .Op Fl h | Fl -help
 .Op Fl v | Fl -version
@@ -86,45 +65,21 @@ option).
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl p Ar string ,
-.Fl -principal= Ns Ar string
-.Xc
+.It Fl p Ar string , Fl -principal= Ns Ar string
 principal to authenticate as
-.It Xo
-.Fl K Ar string ,
-.Fl -keytab= Ns Ar string
-.Xc
+.It Fl K Ar string , Fl -keytab= Ns Ar string
 keytab for authentication principal
-.It Xo
-.Fl c Ar file ,
-.Fl -config-file= Ns Ar file
-.Xc
+.It Fl c Ar file , Fl -config-file= Ns Ar file
 location of config file
-.It Xo
-.Fl k Ar file ,
-.Fl -key-file= Ns Ar file
-.Xc
+.It Fl k Ar file , Fl -key-file= Ns Ar file
 location of master key file
-.It Xo
-.Fl r Ar realm ,
-.Fl -realm= Ns Ar realm
-.Xc
+.It Fl r Ar realm , Fl -realm= Ns Ar realm
 realm to use
-.It Xo
-.Fl a Ar host ,
-.Fl -admin-server= Ns Ar host
-.Xc
+.It Fl a Ar host , Fl -admin-server= Ns Ar host
 server to contact
-.It Xo
-.Fl s Ar port number ,
-.Fl -server-port= Ns Ar port number
-.Xc
+.It Fl s Ar port number , Fl -server-port= Ns Ar port number
 port to use
-.It Xo
-.Fl l ,
-.Fl -local
-.Xc
+.It Fl l , Fl -local
 local admin mode
 .El
 .Pp
@@ -150,10 +105,7 @@ Commands include:
 .Nm add
 .Op Fl r | Fl -random-key
 .Op Fl -random-password
-.Oo Fl p Ar string \*(Ba Xo
-.Fl -password= Ns Ar string
-.Xc
-.Oc
+.Op Fl p Ar string \*(Ba Fl -password= Ns Ar string
 .Op Fl -key= Ns Ar string
 .Op Fl -max-ticket-life= Ns Ar lifetime
 .Op Fl -max-renewable-life= Ns Ar lifetime
