@@ -1,4 +1,4 @@
-.\"	$NetBSD: klist.1,v 1.1.1.2 2011/04/14 14:08:19 elric Exp $
+.\"	$NetBSD: klist.1,v 1.2 2011/04/14 19:19:19 elric Exp $
 .\"
 .\" Copyright (c) 2000 - 2005 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden). 
@@ -62,27 +62,14 @@ known as the ticket file).
 .Pp
 Options supported:
 .Bl -tag -width Ds
-.It Xo
-.Fl c Ar cache ,
-.Fl -cache= Ns Ar cache
-.Xc
+.It Fl c Ar cache , Fl -cache= Ns Ar cache
 credential cache to list
-.It Xo
-.Fl s ,
-.Fl t ,
-.Fl -test
-.Xc
+.It Fl s , Fl t , Fl -test
 Test for there being an active and valid TGT for the local realm of
 the user in the credential cache.
-.It Xo
-.Fl T ,
-.Fl -tokens
-.Xc
+.It Fl T , Fl -tokens
 display AFS tokens
-.It Xo
-.Fl 5 ,
-.Fl -v5
-.Xc
+.It Fl 5 , Fl -v5
 display v5 cred cache (this is the default)
 .It Fl f
 Include ticket flags in short form, each character stands for a
@@ -115,10 +102,7 @@ hardware authenticated
 This information is also output with the
 .Fl -verbose
 option, but in a more verbose way.
-.It Xo
-.Fl v ,
-.Fl -verbose
-.Xc
+.It Fl v , Fl -verbose
 Verbose output. Include all possible information:
 .Bl -tag -width XXXX -offset indent
 .It Server
@@ -143,10 +127,7 @@ the flags set on the ticket
 .It Addresses
 the set of addresses from which this ticket is valid
 .El
-.It Xo
-.Fl l ,
-.Fl -list-caches
-.Xc
+.It Fl l , Fl -list-caches
 List the credential caches for the current users, not all cache types
 supports listing multiple caches.
 .Pp
