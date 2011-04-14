@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.307 2011/03/09 00:44:23 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.308 2011/04/14 15:48:48 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.307 2011/03/09 00:44:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.308 2011/04/14 15:48:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1685,7 +1685,7 @@ after_listen:
 		 * Calculate the RTT from the returned time stamp and the
 		 * connection's time base.  If the time stamp is later than
 		 * the current time, or is extremely old, fall back to non-1323
-		 * RTT calculation.  Since ts_ecr is unsigned, we can test both
+		 * RTT calculation.  Since ts_rtt is unsigned, we can test both
 		 * at the same time.
 		 */
 		ts_rtt = TCP_TIMESTAMP(tp) - opti.ts_ecr + 1;
@@ -2989,6 +2989,13 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 	return (0);
 }
 #endif
+
+/*
+ * tcp_dooptions: parse and process tcp options.
+ *
+ * returns -1 if this segment should be dropped.  (eg. wrong signature)
+ * otherwise returns 0.
+ */
 
 static int
 tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
