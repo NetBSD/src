@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.6 2011/04/06 05:53:27 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.7 2011/04/14 05:08:51 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.6 2011/04/06 05:53:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.7 2011/04/14 05:08:51 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -101,7 +101,6 @@ volatile __cpuset_t cpus_halted = 0;
 static int  cpu_ipi_wait(volatile __cpuset_t *, u_long);
 static void cpu_ipi_error(const char *, __cpuset_t, __cpuset_t);
 
-
 static struct cpu_info *cpu_info_last = &cpu_info_store;
 
 struct cpu_info *
@@ -151,6 +150,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
         ci->ci_cycles_per_hz = cpu_info_store.ci_cycles_per_hz;
         ci->ci_divisor_delay = cpu_info_store.ci_divisor_delay;
         ci->ci_divisor_recip = cpu_info_store.ci_divisor_recip;
+        ci->ci_cpuwatch_count = cpu_info_store.ci_cpuwatch_count;
 
 	/*
 	 * Attach its TLB info (which must be direct-mapped)
@@ -785,9 +785,6 @@ cpu_pause(struct reg *regsp)
 #endif
 		break;
 	}
-#if defined(DDB) && defined(MIPS_DDB_WATCH)
-	db_mach_watch_set_all();
-#endif
 
 	splx(s);
 }
@@ -848,6 +845,7 @@ cpu_is_paused(int index)
 	return CPUSET_HAS_P(cpus_paused, index);
 }
 
+#ifdef DDB
 void
 cpu_debug_dump(void)
 {
@@ -871,6 +869,7 @@ cpu_debug_dump(void)
 			ci->ci_active_ipis, ci->ci_request_ipis);
 	}
 }
+#endif
 
 void
 cpu_hatch(struct cpu_info *ci)
@@ -932,6 +931,13 @@ cpu_hatch(struct cpu_info *ci)
 	ci->ci_next_cp0_clk_intr = ci->ci_data.cpu_cc_skew + ci->ci_cycles_per_hz;
 	mips3_cp0_compare_write(ci->ci_next_cp0_clk_intr);
 	ci->ci_data.cpu_cc_skew = 0;
+
+	/*
+	 * Let this CPU do its own post-running initialization
+	 * (for things that have to be done on the local CPU).
+	 */
+	if (mips_locoresw.lsw_cpu_run != NULL)
+		(*mips_locoresw.lsw_cpu_run)(ci);
 
 	/*
 	 * Now turn on interrupts.
@@ -1007,3 +1013,136 @@ cpu_lwp_setprivate(lwp_t *l, void *v)
 #endif
 	return 0;
 }
+
+
+#if (CPUWATCH_MAX != 8)
+# error CPUWATCH_MAX
+#endif
+
+/*
+ * cpuwatch_discover - determine how many COP0 watchpoints this CPU supports
+ */
+u_int
+cpuwatch_discover(void)
+{
+	int i;
+
+	for (i=0; i < CPUWATCH_MAX; i++) {
+		uint32_t watchhi = mipsNN_cp0_watchhi_read(i);
+		if ((watchhi & __BIT(31)) == 0)	/* test 'M' bit */
+			break;
+	}
+	return i + 1;
+}
+
+void
+cpuwatch_free(cpu_watchpoint_t *cwp)
+{
+#ifdef DIAGNOSTIC
+	struct cpu_info * const ci = curcpu();
+	KASSERT(cwp >= &ci->ci_cpuwatch_tab[0] &&
+		cwp <= &ci->ci_cpuwatch_tab[ci->ci_cpuwatch_count-1]);
+#endif
+	cwp->cw_mode = 0;
+	cwp->cw_asid = 0;
+	cwp->cw_addr = 0;
+	cpuwatch_clr(cwp);
+}
+
+/*
+ * cpuwatch_alloc
+ * 	find an empty slot
+ *	no locking for the table since it is CPU private
+ */
+cpu_watchpoint_t *
+cpuwatch_alloc(void)
+{
+	struct cpu_info * const ci = curcpu();
+	cpu_watchpoint_t *cwp;
+
+	for (int i=0; i < ci->ci_cpuwatch_count; i++) {
+		cwp = &ci->ci_cpuwatch_tab[i];
+		if ((cwp->cw_mode & CPUWATCH_RWX) == 0)
+			return cwp;
+	}
+	return NULL;
+}
+
+
+void
+cpuwatch_set_all(void)
+{
+	struct cpu_info * const ci = curcpu();
+	cpu_watchpoint_t *cwp;
+	int i;
+
+	for (i=0; i < ci->ci_cpuwatch_count; i++) {
+		cwp = &ci->ci_cpuwatch_tab[i];
+		if ((cwp->cw_mode & CPUWATCH_RWX) != 0)
+			cpuwatch_set(cwp);
+	}
+}
+
+void
+cpuwatch_clr_all(void)
+{
+	struct cpu_info * const ci = curcpu();
+	cpu_watchpoint_t *cwp;
+	int i;
+
+	for (i=0; i < ci->ci_cpuwatch_count; i++) {
+		cwp = &ci->ci_cpuwatch_tab[i];
+		if ((cwp->cw_mode & CPUWATCH_RWX) != 0)
+			cpuwatch_clr(cwp);
+	}
+}
+
+/*
+ * cpuwatch_set - establish a MIPS COP0 watchpoint
+ */
+void
+cpuwatch_set(cpu_watchpoint_t *cwp)
+{
+	struct cpu_info * const ci = curcpu();
+	uint32_t watchhi;
+	register_t watchlo;
+	int cwnum = cwp - &ci->ci_cpuwatch_tab[0];
+
+	KASSERT(cwp >= &ci->ci_cpuwatch_tab[0] &&
+		cwp <= &ci->ci_cpuwatch_tab[ci->ci_cpuwatch_count-1]);
+
+	watchlo = cwp->cw_addr;
+	if (cwp->cw_mode & CPUWATCH_WRITE)
+		watchlo |= __BIT(0);
+	if (cwp->cw_mode & CPUWATCH_READ)
+		watchlo |= __BIT(1);
+	if (cwp->cw_mode & CPUWATCH_EXEC)
+		watchlo |= __BIT(2);
+
+	if (cwp->cw_mode & CPUWATCH_ASID)
+		watchhi = cwp->cw_asid << 16;	/* addr qualified by asid */
+	else
+		watchhi = __BIT(30);		/* addr not qual. by asid (Global) */
+	if (cwp->cw_mode & CPUWATCH_MASK)
+		watchhi |= cwp->cw_mask;	/* set "dont care" addr match bits */
+
+	mipsNN_cp0_watchhi_write(cwnum, watchhi);
+	mipsNN_cp0_watchlo_write(cwnum, watchlo);
+}
+
+/*
+ * cpuwatch_clr - disestablish a MIPS COP0 watchpoint
+ */
+void
+cpuwatch_clr(cpu_watchpoint_t *cwp)
+{
+	struct cpu_info * const ci = curcpu();
+	int cwnum = cwp - &ci->ci_cpuwatch_tab[0];
+
+	KASSERT(cwp >= &ci->ci_cpuwatch_tab[0] &&
+		cwp <= &ci->ci_cpuwatch_tab[ci->ci_cpuwatch_count-1]);
+
+	mipsNN_cp0_watchhi_write(cwnum, 0);
+	mipsNN_cp0_watchlo_write(cwnum, 0);
+}
+
