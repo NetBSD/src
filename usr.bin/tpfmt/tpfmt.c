@@ -1,4 +1,4 @@
-/*	$NetBSD: tpfmt.c,v 1.2 2010/11/24 13:17:56 christos Exp $	*/
+/*	$NetBSD: tpfmt.c,v 1.3 2011/04/14 16:27:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 YAMAMOTO Takashi,
@@ -28,27 +28,38 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tpfmt.c,v 1.2 2010/11/24 13:17:56 christos Exp $");
+__RCSID("$NetBSD: tpfmt.c,v 1.3 2011/04/14 16:27:17 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/rbtree.h>
 
+#include <dev/tprof/tprof_types.h>
+
 #include <assert.h>
 #include <err.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <util.h>
 
 #include "sym.h"
 
 static const char ksyms[] = "/dev/ksyms";
 
+static bool filter_by_pid;
+static pid_t target_pid;
+
 struct addr {
 	struct rb_node node;
 	uint64_t addr;		/* address */
+	uint32_t pid;		/* process id */
+	uint32_t lwpid;		/* lwp id */
+	uint32_t cpuid;		/* cpu id */
+	bool in_kernel;		/* if addr is in the kernel address space */
 	unsigned int nsamples;	/* number of samples taken for the address */
 };
 
@@ -59,12 +70,32 @@ static signed int
 addrtree_compare_key(void *ctx, const void *n1, const void *keyp)
 {
 	const struct addr *a1 = n1;
-	const uint64_t key = *(const uint64_t *)keyp;
+	const struct addr *a2 = (const struct addr *)keyp;
 
-	if (a1->addr > key) {
+	if (a1->addr > a2->addr) {
 		return 1;
-	} else if (a1->addr < key) {
+	} else if (a1->addr < a2->addr) {
 		return -1;
+	}
+	if (a1->pid > a2->pid) {
+		return -1;
+	} else if (a1->pid < a2->pid) {
+		return 1;
+	}
+	if (a1->lwpid > a2->lwpid) {
+		return -1;
+	} else if (a1->lwpid < a2->lwpid) {
+		return 1;
+	}
+	if (a1->cpuid > a2->cpuid) {
+		return -1;
+	} else if (a1->cpuid < a2->cpuid) {
+		return 1;
+	}
+	if (a1->in_kernel > a2->in_kernel) {
+		return -1;
+	} else if (a1->in_kernel < a2->in_kernel) {
+		return 1;
 	}
 	return 0;
 }
@@ -74,7 +105,7 @@ addrtree_compare_nodes(void *ctx, const void *n1, const void *n2)
 {
 	const struct addr *a2 = n2;
 
-	return addrtree_compare_key(ctx, n1, &a2->addr);
+	return addrtree_compare_key(ctx, n1, a2);
 }
 
 static const rb_tree_ops_t addrtree_ops = {
@@ -104,6 +135,47 @@ main(int argc, char *argv[])
 	struct addr **l;
 	struct addr **p;
 	size_t naddrs, i;
+	int ch;
+	bool distinguish_processes = true;
+	bool distinguish_cpus = true;
+	bool distinguish_lwps = true;
+	bool kernel_only = false;
+	extern char *optarg;
+	extern int optind;
+
+	while ((ch = getopt(argc, argv, "CkLPp:")) != -1) {
+		uintmax_t val;
+		char *ep;
+
+		switch (ch) {
+		case 'C':	/* don't distinguish cpus */
+			distinguish_cpus = false;
+			break;
+		case 'k':	/* kernel only */
+			kernel_only = true;
+			break;
+		case 'L':	/* don't distinguish lwps */
+			distinguish_lwps = false;
+			break;
+		case 'p':	/* only for the process for the given pid */
+			errno = 0;
+			val = strtoumax(optarg, &ep, 10);
+			if (optarg[0] == 0 || *ep != 0 ||
+			    val > INT32_MAX) {
+				errx(EXIT_FAILURE, "invalid p option");
+			}
+			target_pid = val;
+			filter_by_pid = true;
+			break;
+		case 'P':	/* don't distinguish processes */
+			distinguish_processes = false;
+			break;
+		default:
+			errx(EXIT_FAILURE, "unknown option %c", ch);
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
 	ksymload(ksyms);
 	rb_tree_init(&addrtree, &addrtree_ops);
@@ -115,8 +187,9 @@ main(int argc, char *argv[])
 	naddrs = 0;
 	while (/*CONSTCOND*/true) {
 		struct addr *o;
-		uintptr_t sample;
+		tprof_sample_t sample;
 		size_t n = fread(&sample, sizeof(sample), 1, stdin);
+		bool in_kernel;
 
 		if (n == 0) {
 			if (feof(stdin)) {
@@ -126,11 +199,39 @@ main(int argc, char *argv[])
 				err(EXIT_FAILURE, "fread");
 			}
 		}
+		if (filter_by_pid && (pid_t)sample.s_pid != target_pid) {
+			continue;
+		}
+		in_kernel = (sample.s_flags & TPROF_SAMPLE_INKERNEL) != 0;
+		if (kernel_only && !in_kernel) {
+			continue;
+		}
 		a = emalloc(sizeof(*a));
-		a->addr = (uint64_t)sample;
+		a->addr = (uint64_t)sample.s_pc;
+		if (distinguish_processes) {
+			a->pid = sample.s_pid;
+		} else {
+			a->pid = 0;
+		}
+		if (distinguish_lwps) {
+			a->lwpid = sample.s_lwpid;
+		} else {
+			a->lwpid = 0;
+		}
+		if (distinguish_cpus) {
+			a->cpuid = sample.s_cpuid;
+		} else {
+			a->cpuid = 0;
+		}
+		a->in_kernel = in_kernel;
 		a->nsamples = 1;
 		o = rb_tree_insert_node(&addrtree, a);
 		if (o != a) {
+			assert(a->addr == o->addr);
+			assert(a->pid == o->pid);
+			assert(a->lwpid == o->lwpid);
+			assert(a->cpuid == o->cpuid);
+			assert(a->in_kernel == o->in_kernel);
 			free(a);
 			o->nsamples++;
 		} else {
@@ -161,7 +262,11 @@ main(int argc, char *argv[])
 		uint64_t offset;
 
 		a = l[i];
-		name = ksymlookup(a->addr, &offset);
+		if (a->in_kernel) {
+			name = ksymlookup(a->addr, &offset);
+		} else {
+			name = NULL;
+		}
 		if (name == NULL) {
 			(void)snprintf(buf, sizeof(buf), "<%016" PRIx64 ">",
 			    a->addr);
@@ -171,7 +276,10 @@ main(int argc, char *argv[])
 			    offset);
 			name = buf;
 		}
-		printf("%8u %016" PRIx64 " %s\n", a->nsamples, a->addr, name);
+		printf("%8u %6" PRIu32 " %4" PRIu32 " %2" PRIu32 " %u %016"
+		    PRIx64 " %s\n",
+		    a->nsamples, a->pid, a->lwpid, a->cpuid, a->in_kernel,
+		    a->addr, name);
 	}
 	return EXIT_SUCCESS;
 }
