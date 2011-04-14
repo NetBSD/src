@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.1 2011/02/22 21:31:15 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.2 2011/04/14 15:42:02 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -40,14 +40,14 @@
 
 #include <sys/cdefs.h>
 
-#if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.1 2011/02/22 21:31:15 yamt Exp $");
+#if defined(_KERNEL) || defined(_STANDALONE)
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.2 2011/04/14 15:42:02 yamt Exp $");
 #include <sys/param.h>
 #include <sys/null.h>
 #include <sys/pool.h>
 #include <sys/radixtree.h>
-#else /* defined(_KERNEL) */
-__RCSID("$NetBSD: radixtree.c,v 1.1 2011/02/22 21:31:15 yamt Exp $");
+#else /* defined(_KERNEL) || defined(_STANDALONE) */
+__RCSID("$NetBSD: radixtree.c,v 1.2 2011/04/14 15:42:02 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -57,20 +57,16 @@ __RCSID("$NetBSD: radixtree.c,v 1.1 2011/02/22 21:31:15 yamt Exp $");
 #else
 #define KASSERT(a)	/* nothing */
 #endif
-/* XXX */
-#if !defined(CTASSERT)
-#define	CTASSERT(x)	/* nothing */
-#endif
-#endif /* defined(_KERNEL) */
+#endif /* defined(_KERNEL) || defined(_STANDALONE) */
 
 #include <sys/radixtree.h>
 
 #define	RADIX_TREE_BITS_PER_HEIGHT	4	/* XXX tune */
 #define	RADIX_TREE_PTR_PER_NODE		(1 << RADIX_TREE_BITS_PER_HEIGHT)
 #define	RADIX_TREE_MAX_HEIGHT		(64 / RADIX_TREE_BITS_PER_HEIGHT)
-CTASSERT((64 % RADIX_TREE_BITS_PER_HEIGHT) == 0);
+__CTASSERT((64 % RADIX_TREE_BITS_PER_HEIGHT) == 0);
 
-CTASSERT(((1 << RADIX_TREE_TAG_ID_MAX) & (sizeof(int) - 1)) == 0);
+__CTASSERT(((1 << RADIX_TREE_TAG_ID_MAX) & (sizeof(int) - 1)) == 0);
 #define	RADIX_TREE_TAG_MASK	((1 << RADIX_TREE_TAG_ID_MAX) - 1)
 
 static inline void *
@@ -209,7 +205,7 @@ radix_tree_fini_tree(struct radix_tree *t)
 }
 
 #if defined(_KERNEL)
-pool_cache_t radix_tree_node_cache;
+pool_cache_t radix_tree_node_cache __read_mostly;
 
 static int
 radix_tree_node_ctor(void *dummy, void *item, int flags)
