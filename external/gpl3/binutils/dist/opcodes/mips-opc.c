@@ -123,6 +123,7 @@
 #define N54	INSN_5400
 #define N55	INSN_5500
 #define IOCT	INSN_OCTEON
+#define XLR     INSN_XLR
 
 #define G1      (T3             \
                  )
@@ -559,6 +560,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"daddiu",  "t,r,j",	0x64000000, 0xfc000000, WR_t|RD_s,		0,		I3	},
 {"daddu",   "d,v,t",	0x0000002d, 0xfc0007ff, WR_d|RD_s|RD_t,		0,		I3	},
 {"daddu",   "t,r,I",	0,    (int) M_DADDU_I,	INSN_MACRO,		0,		I3	},
+{"daddwc",  "d,s,t", 	0x70000038, 0xfc0007ff, WR_d|RD_s|RD_t|WR_C0|RD_C0,	0,	XLR	},
 {"dbreak",  "",		0x7000003f, 0xffffffff,	0,			0,		N5	},
 {"dclo",    "U,s",      0x70000025, 0xfc0007ff, RD_s|WR_d|WR_t, 	0,		I64|N55 },
 {"dclz",    "U,s",      0x70000024, 0xfc0007ff, RD_s|WR_d|WR_t, 	0,		I64|N55 },
@@ -747,6 +749,9 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"ld",	    "t,o(b)",   0xdc000000, 0xfc000000, WR_t|RD_b,		0,		I3	},
 {"ld",      "t,o(b)",	0,    (int) M_LD_OB,	INSN_MACRO,		0,		I1	},
 {"ld",      "t,A(b)",	0,    (int) M_LD_AB,	INSN_MACRO,		0,		I1	},
+{"ldaddw",  "t,b",	0x70000010, 0xfc00ffff,	SM|RD_t|WR_t|RD_b,	0,		XLR	},
+{"ldaddwu", "t,b",	0x70000011, 0xfc00ffff,	SM|RD_t|WR_t|RD_b,	0,		XLR	},
+{"ldaddd",  "t,b",	0x70000012, 0xfc00ffff,	SM|RD_t|WR_t|RD_b,	0,		XLR	},
 {"ldc1",    "T,o(b)",	0xd4000000, 0xfc000000, CLD|RD_b|WR_T|FP_D,	0,		I2	},
 {"ldc1",    "E,o(b)",	0xd4000000, 0xfc000000, CLD|RD_b|WR_T|FP_D,	0,		I2	},
 {"ldc1",    "T,A(b)",	0,    (int) M_LDC1_AB,	INSN_MACRO,		INSN2_M_FP_D,	I2	},
@@ -881,6 +886,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"mflo",    "d",	0x00000012, 0xffff07ff,	WR_d|RD_LO,		0,		I1	},
 {"mflo",    "d,9",	0x00000012, 0xff9f07ff, WR_d|RD_LO,		0,		D32	},
 {"mflhxu",  "d",	0x00000052, 0xffff07ff,	WR_d|MOD_HILO,		0,		SMT	},
+{"mfcr",    "t,s",	0x70000018, 0xfc00ffff, WR_t,			0,		XLR 	},
 {"min.ob",  "X,Y,Q",	0x78000006, 0xfc20003f,	WR_D|RD_S|RD_T|FP_D,	0,		MX|SB1	},
 {"min.ob",  "D,S,T",	0x4ac00006, 0xffe0003f,	WR_D|RD_S|RD_T,		0,		N54	},
 {"min.ob",  "D,S,T[e]",	0x48000006, 0xfe20003f,	WR_D|RD_S|RD_T,		0,		N54	},
@@ -923,6 +929,11 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"msachiu", "d,s,t",	0x000003d9, 0xfc0007ff,	RD_s|RD_t|WR_HILO|WR_d,	0,		N5	},
 /* move is at the top of the table.  */
 {"msgn.qh", "X,Y,Q",	0x78200000, 0xfc20003f,	WR_D|RD_S|RD_T|FP_D,	0,		MX	},
+{"msgsnd",  "t",	0,    (int) M_MSGSND,	INSN_MACRO,		0,             XLR	},
+{"msgld",   "", 	0,    (int) M_MSGLD,	INSN_MACRO,		0,             XLR	},
+{"msgld",   "t",	0,    (int) M_MSGLD_T,	INSN_MACRO,		0,             XLR	},
+{"msgwait", "", 	0,    (int) M_MSGWAIT,	INSN_MACRO,		0,             XLR	},
+{"msgwait", "t",	0,    (int) M_MSGWAIT_T,INSN_MACRO,		0,             XLR	},
 {"msub.d",  "D,R,S,T",	0x4c000029, 0xfc00003f, RD_R|RD_S|RD_T|WR_D|FP_D, 0,		I4_33	},
 {"msub.d",	"D,S,T",	0x46200019,	0xffe0003f,	RD_S|RD_T|WR_D|FP_D,	0,	IL2E	},
 {"msub.d",	"D,S,T",	0x72200019,	0xffe0003f,	RD_S|RD_T|WR_D|FP_D,	0,	IL2F	},
@@ -958,6 +969,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"mtlo",    "s",	0x00000013, 0xfc1fffff,	RD_s|WR_LO,		0,		I1	},
 {"mtlo",    "s,7",	0x00000013, 0xfc1fe7ff, RD_s|WR_LO,		0,		D32	},
 {"mtlhx",   "s",	0x00000053, 0xfc1fffff,	RD_s|MOD_HILO,		0,		SMT	},
+{"mtcr",    "t,s",      0x70000019, 0xfc00ffff, RD_t,			0,		XLR	},
 {"mtm0",    "s",	0x70000008, 0xfc1fffff, RD_s,			0,		IOCT	},
 {"mtm1",    "s",	0x7000000c, 0xfc1fffff, RD_s,			0,		IOCT	},
 {"mtm2",    "s",	0x7000000d, 0xfc1fffff, RD_s,			0,		IOCT	},
@@ -1300,6 +1312,9 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"suxc1",   "S,t(b)",   0x4c00000d, 0xfc0007ff, SM|RD_S|RD_t|RD_b,	0,		I5_33|N55},
 {"sw",      "t,o(b)",	0xac000000, 0xfc000000,	SM|RD_t|RD_b,		0,		I1	},
 {"sw",      "t,A(b)",	0,    (int) M_SW_AB,	INSN_MACRO,		0,		I1	},
+{"swapw",   "t,b",	0x70000014, 0xfc00ffff, SM|RD_t|WR_t|RD_b,	0,		XLR	},
+{"swapwu",  "t,b",	0x70000015, 0xfc00ffff, SM|RD_t|WR_t|RD_b,	0,		XLR	},
+{"swapd",   "t,b",	0x70000016, 0xfc00ffff, SM|RD_t|WR_t|RD_b,	0,		XLR	},
 {"swc0",    "E,o(b)",	0xe0000000, 0xfc000000,	SM|RD_C0|RD_b,		0,		I1	},
 {"swc0",    "E,A(b)",	0,    (int) M_SWC0_AB,	INSN_MACRO,		0,		I1	},
 {"swc1",    "T,o(b)",	0xe4000000, 0xfc000000,	SM|RD_T|RD_b|FP_S,	0,		I1	},
@@ -1508,11 +1523,6 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"mthc2",   "t,G",	0x48e00000, 0xffe007ff,	COD|RD_t|WR_C2|WR_CC,	0,		I33	},
 {"mthc2",   "t,G,H",	0x48e00000, 0xffe007f8,	COD|RD_t|WR_C2|WR_CC,	0,		I33	},
 {"mthc2",   "t,i",	0x48e00000, 0xffe00000,	COD|RD_t|WR_C2|WR_CC,	0,		I33	},
-
-/* NetLogic XL[PRS] Coprocessor 2 ops */
-{"msgsnd",  "t",	0x4a000001, 0xffe0ffff, COD|RD_t|WR_C2,		0,		I64	},
-{"msgld",   "t",	0x4a000002, 0xffe0ffff, COD|RD_t|WR_C2,		0,		I64	},
-{"msgwait", "t",	0x4a000003, 0xffe0ffff, COD|RD_t|WR_C2,		0,		I64	},
 
 /* Coprocessor 3 move/branch operations overlap with MIPS IV COP1X 
    instructions, so they are here for the latters to take precedence.  */
