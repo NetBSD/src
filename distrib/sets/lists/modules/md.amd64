@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.19 2011/03/04 05:02:48 jruoho Exp $
+# $NetBSD: md.amd64,v 1.20 2011/04/14 15:45:27 yamt Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -67,8 +67,8 @@
 ./@MODULEDIR@/powernow/powernow.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad				base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad/thinkpad.kmod		base-kernel-modules	kmod
-#./@MODULEDIR@/tprof_amdpmi			base-kernel-modules	kmod
-#./@MODULEDIR@/tprof_amdpmi/tprof_amdpmi.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/tprof_amdpmi			base-kernel-modules	kmod
+./@MODULEDIR@/tprof_amdpmi/tprof_amdpmi.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/tprof_pmi				base-kernel-modules	kmod
 ./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/wmidell				base-kernel-modules	kmod
