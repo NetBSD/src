@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.7 2011/04/14 05:08:51 cliff Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.8 2011/04/14 05:54:24 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.7 2011/04/14 05:08:51 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.8 2011/04/14 05:54:24 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -936,8 +936,7 @@ cpu_hatch(struct cpu_info *ci)
 	 * Let this CPU do its own post-running initialization
 	 * (for things that have to be done on the local CPU).
 	 */
-	if (mips_locoresw.lsw_cpu_run != NULL)
-		(*mips_locoresw.lsw_cpu_run)(ci);
+	(*mips_locoresw.lsw_cpu_run)(ci);
 
 	/*
 	 * Now turn on interrupts.
