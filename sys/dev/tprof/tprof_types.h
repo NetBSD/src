@@ -1,7 +1,7 @@
-/*	$NetBSD: tprof_types.h,v 1.1 2011/02/05 14:04:40 yamt Exp $	*/
+/*	$NetBSD: tprof_types.h,v 1.2 2011/04/14 16:23:59 yamt Exp $	*/
 
 /*-
- * Copyright (c)2010 YAMAMOTO Takashi,
+ * Copyright (c)2010,2011 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,8 @@
 
 typedef struct {
 	uint32_t s_pid;		/* process id */
+	uint32_t s_lwpid;	/* lwp id */
+	uint32_t s_cpuid;	/* cpu id */
 	uint32_t s_flags;	/* flags */
 	uintptr_t s_pc;		/* program counter */
 } tprof_sample_t;
