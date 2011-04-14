@@ -1,4 +1,4 @@
-.\" $NetBSD: tm.3,v 1.3 2011/04/12 13:48:29 jruoho Exp $
+.\" $NetBSD: tm.3,v 1.4 2011/04/14 05:45:34 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 12, 2011
+.Dd April 14, 2011
 .Dt TM 3
 .Os
 .Sh NAME
@@ -35,38 +35,22 @@
 .Sh DESCRIPTION
 The
 .In time.h
-header defines the following structure:
-.Bd -literal -offset indent
-struct tm {
-	int		 tm_sec;
-	int		 tm_min;
-	int		 tm_hour;
-	int		 tm_mday;
-	int		 tm_mon;
-	int		 tm_year;
-	int		 tm_wday;
-	int		 tm_yday;
-	int		 tm_isdst;
-	long		 tm_gmtoff;
-	__aconst char	*tm_zone;
-};
-.Ed
-.Pp
-The members are:
+header defines the
+.Vt tm
+structure that contains calendar dates and time broken down into components.
+The following standards-compliant fields are present:
 .Bl -column -offset indent \
-"Member  " "Months since January 1     "  "Range "
-.It Sy Member Ta Sy Represents Ta Sy Range
-.It Va tm_sec Ta Seconds Ta [0, 61]
-.It Va tm_min Ta Minutes Ta [0, 59]
-.It Va tm_hour Ta Hours since midnight Ta [0, 23]
-.It Va tm_mday Ta Day of the month Ta [1, 31]
-.It Va tm_mon Ta Months since January Ta [0, 11]
-.It Va tm_year Ta Years since 1900 Ta
-.It Va tm_wday Ta Days since Sunday Ta [0,  6]
-.It Va tm_yday Ta Days since January 1 Ta [0, 365]
-.It Va tm_isdt Ta Positive if daylight savings Ta >= 0
-.It Va tm_gmtoff Ta Offset from UTC in seconds Ta
-.It Va tm_zone Ta Timezone abbreviation
+"Type" "Field  " "Months since January 1     "  "Range "
+.It Sy Type Ta Sy Field Ta Sy Represents Ta Sy Range
+.It Vt int Ta Va tm_sec Ta Seconds Ta [0, 61]
+.It Vt int Ta Va tm_min Ta Minutes Ta [0, 59]
+.It Vt int Ta Va tm_hour Ta Hours since midnight Ta [0, 23]
+.It Vt int Ta Va tm_mday Ta Day of the month Ta [1, 31]
+.It Vt int Ta Va tm_mon Ta Months since January Ta [0, 11]
+.It Vt int Ta Va tm_year Ta Years since 1900 Ta
+.It Vt int Ta Va tm_wday Ta Days since Sunday Ta [0,  6]
+.It Vt int Ta Va tm_yday Ta Days since January 1 Ta [0, 365]
+.It Vt int Ta Va tm_isdt Ta Positive if daylight savings Ta >= 0
 .El
 .Pp
 The
@@ -76,13 +60,18 @@ structure is used by various common library routines such as
 .Xr localtime 3 ,
 and
 .Xr strptime 3 .
-All except
-.Va tm_gmtoff
-and
-.Va tm_zone
-are defined in
-.St -p1003.1-2008 .
+All fields described above are defined in the
+.St -p1003.1-2008
+standard.
 .Ss NetBSD Extensions
+In addition, the following NetBSD-specific fields are available:
+.Bl -column -offset indent \
+"Type         " "Field  " "Months since January 1"
+.It Sy Type Ta Sy Field Ta Sy Represents
+.It Vt int Ta Va tm_gmtoff Ta Offset from UTC in seconds
+.It Vt __aconst char Ta Va tm_zone Ta Timezone abbreviation
+.El
+.Pp
 The
 .Va tm_zone
 and
@@ -112,9 +101,12 @@ argument has been freed by
 .Xr tzfree 3 .
 .Sh SEE ALSO
 .Xr asctime 3 ,
-.Xr timeval 3
+.Xr offtime 3 ,
+.Xr timeval 3 ,
+.Xr wcsftime 3
 .Sh STANDARDS
 The
 .Vt tm
 structure conforms to
-.St -p1003.1-2008 .
+.St -p1003.1-2008
+with respect to the described standard structure members.
