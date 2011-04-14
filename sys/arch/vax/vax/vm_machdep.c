@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.114 2011/02/10 14:46:48 pooka Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.115 2011/04/14 08:17:27 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.114 2011/02/10 14:46:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.115 2011/04/14 08:17:27 matt Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
@@ -171,6 +171,13 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	tf->r0 = l1->l_proc->p_pid; /* parent pid. (shouldn't be needed) */
 	tf->r1 = 1;
 	tf->psl = PSL_U|PSL_PREVU;
+}
+
+vaddr_t
+cpu_lwp_pc(struct lwp *l)
+{
+	struct pcb * const pcb = lwp_getpcb(l);
+	return pcb->PC;
 }
 
 #if KERN_SA > 0
