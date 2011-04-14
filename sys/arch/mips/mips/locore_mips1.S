@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.77 2011/04/06 14:12:36 tsutsui Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.78 2011/04/14 05:50:43 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1697,12 +1697,13 @@ _C_LABEL(MIPSX(locore_vec)):
 
 	.globl _C_LABEL(MIPSX(locoresw))
 _C_LABEL(MIPSX(locoresw)):
-	PTR_WORD _C_LABEL(MIPSX(wbflush))		# wbflush
-	PTR_WORD _C_LABEL(nullop)			# idle
-	PTR_WORD _C_LABEL(nullop)			# send ipi
-	PTR_WORD _C_LABEL(nullop)			# cpu_offline_md
-	PTR_WORD _C_LABEL(nullop)			# spare
-	PTR_WORD _C_LABEL(nullop)			# spare
+	PTR_WORD _C_LABEL(MIPSX(wbflush))		# lsw_wbflush
+	PTR_WORD _C_LABEL(nullop)			# lsw_cpu_idle
+	PTR_WORD _C_LABEL(nullop)			# lsw_send_ipi
+	PTR_WORD _C_LABEL(nullop)			# lsw_cpu_offline_md
+	PTR_WORD _C_LABEL(nullop)			# lsw_cpu_init
+	PTR_WORD _C_LABEL(nullop)			# lsw_cpu_run
+	PTR_WORD _C_LABEL(nullop)			# lsw_bus_error
 
 MIPSX(excpt_sw):
 	####
