@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/04/12 01:47:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2011/04/14 08:21:06 mrg Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -9,10 +9,15 @@ DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 
 # some ddb kernel components need limited modifications.  for now,
 # punt if not noted as implemented here.
-.if    ${MACHINE} != "amd64" \
-    && ${MACHINE} != "i386"
-SRCS+=	unsupported.c
+.if    ${MACHINE} == "amd64" \
+    || ${MACHINE} == "i386" \
+    || ${MACHINE} == "sparc64"
+REALCRASH=yes
 .else
+REALCRASH=no
+.endif
+
+.if ${REALCRASH} != "no"	# {
 
 S=		${.CURDIR}/../../sys
 
@@ -28,11 +33,17 @@ SRCS+=	db_expr.c db_lex.c db_output.c db_print.c
 SRCS+=	db_sym.c db_variables.c db_write_cmd.c
 
 .PATH:	${S}/arch/${MACHINE}/${MACHINE}
-SRCS+=	db_machdep.c db_disasm.c
+SRCS+=	db_disasm.c
 
-. if empty(${MACHINE:C/(amd64|i386)//})
+. if    ${MACHINE} == "amd64" \
+     || ${MACHINE} == "i386"
 .PATH:	${S}/arch/x86/x86
 SRCS+=	db_trace.c
+SRCS+=	db_machdep.c
+. endif
+
+. if ${MACHINE} == "sparc64"
+SRCS+=	db_trace.c db_interface.c
 . endif
 
 # crash main source
@@ -52,7 +63,11 @@ vers.c:	${S}/conf/newvers.sh
 	${HOST_SH} ${S}/conf/newvers.sh -r
 CLEANFILES+=	vers.c version
 
-.endif
+.else				# } {
+
+SRCS+=	unsupported.c
+
+.endif				# }
 
 .include <bsd.prog.mk>
 .include <bsd.klinks.mk>
