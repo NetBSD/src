@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.31 2011/04/12 20:37:25 rmind Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.32 2011/04/14 00:32:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.31 2011/04/12 20:37:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.32 2011/04/14 00:32:23 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,7 +460,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 		}
 
 		/*
-		 * Finally, insert semaphore into the hash.
+		 * Finally, insert semaphore into the list.
 		 * Note: it already has the initial reference.
 		 */
 		ks = ksnew;
@@ -676,7 +676,6 @@ sys__ksem_destroy(struct lwp *l, const struct sys__ksem_destroy_args *uap,
 		intptr_t id;
 	} */
 	int fd = (int)SCARG(uap, id), error;
-	struct sys_close_args cuap;
 	ksem_t *ks;
 
 	error = ksem_get(fd, &ks);
@@ -697,10 +696,9 @@ sys__ksem_destroy(struct lwp *l, const struct sys__ksem_destroy_args *uap,
 	}
 out:
 	mutex_exit(&ks->ks_lock);
-	fd_putfile(fd);
 	if (error) {
+		fd_putfile(fd);
 		return error;
 	}
-	SCARG(&cuap, fd) = fd;
-	return sys_close(l, (const void *)&cuap, retval);
+	return fd_close(fd);
 }
