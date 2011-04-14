@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.44 2011/04/14 05:51:27 cliff Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.45 2011/04/14 09:25:05 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1440,11 +1440,14 @@ NESTED_NOPROFILE(MIPSX(cache_exception), KERNFRAME_SIZ, ra)
 	PTR_LA	k0, panic			# return to panic
 	PTR_LA	a0, 9f				# panicstr
 	_MFC0	a1, MIPS_COP_0_ERROR_PC
-#if defined(MIPS64_XLS)
+#if defined(MIPS64_XLS) && defined(MIPS64)
+	.set	push
+	.set	arch=xlr
 	li	k1, 0x309	/* L1D_CACHE_ERROR_LOG */
 	mfcr	a2, k1
 	li	k1, 0x30b	/* L1D_CACHE_INTERRUPT */
 	mfcr	a3, k1
+	.set	pop
 #if defined(__mips_o32)
 #error O32 not supported.
 #endif
