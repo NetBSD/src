@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.35 2011/03/27 08:52:25 mlelstv Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.36 2011/04/14 06:37:13 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.35 2011/03/27 08:52:25 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.36 2011/04/14 06:37:13 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.35 2011/03/27 08:52:25 mlelstv E
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_ecvar.h>
+#include <dev/acpi/acpi_power.h>
 
 #include <dev/isa/isareg.h>
 
@@ -51,6 +52,7 @@ typedef struct thinkpad_softc {
 	device_t		sc_dev;
 	device_t		sc_ecdev;
 	struct acpi_devnode	*sc_node;
+	ACPI_HANDLE		sc_powhdl;
 	ACPI_HANDLE		sc_cmoshdl;
 	bool			sc_cmoshdl_valid;
 
@@ -170,8 +172,9 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	ACPI_INTEGER val;
 	int i;
 
-	sc->sc_node = aa->aa_node;
 	sc->sc_dev = self;
+	sc->sc_powhdl = NULL;
+	sc->sc_node = aa->aa_node;
 	sc->sc_display_state = THINKPAD_DISPLAY_LCD;
 
 	aprint_naive("\n");
@@ -217,6 +220,14 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	(void)acpi_register_notify(sc->sc_node, thinkpad_notify_handler);
+
+	/*
+	 * Obtain a handle to the power resource available on many models.
+	 * Since pmf(9) is not yet integrated with the ACPI power resource
+	 * code, this must be turned on manually upon resume. Otherwise the
+	 * system may, for instance, resume from S3 with usb(4) powered down.
+	 */
+	(void)AcpiGetHandle(NULL, "\\_SB.PCI0.LPC.EC.PUBS", &sc->sc_powhdl);
 
 	/* Register power switches with sysmon */
 	psw = sc->sc_smpsw;
@@ -633,17 +644,12 @@ thinkpad_cmos(thinkpad_softc_t *sc, uint8_t cmd)
 static bool
 thinkpad_resume(device_t dv, const pmf_qual_t *qual)
 {
-	ACPI_STATUS rv;
-	ACPI_HANDLE pubs;
+	thinkpad_softc_t *sc = device_private(dv);
 
-	rv = AcpiGetHandle(NULL, "\\_SB.PCI0.LPC.EC.PUBS", &pubs);
-	if (ACPI_FAILURE(rv))
-		return true;	/* not fatal */
+	if (sc->sc_powhdl == NULL)
+		return true;
 
-	rv = AcpiEvaluateObject(pubs, "_ON", NULL, NULL);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(dv, "failed to execute PUBS._ON: %s\n",
-		    AcpiFormatException(rv));
+	(void)acpi_power_res(sc->sc_powhdl, sc->sc_node->ad_handle, true);
 
 	return true;
 }
