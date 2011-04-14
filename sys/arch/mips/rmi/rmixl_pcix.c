@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.4 2011/04/13 21:06:30 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.5 2011/04/14 05:22:47 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.4 2011/04/13 21:06:30 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.5 2011/04/14 05:22:47 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -797,7 +797,7 @@ rmixl_pcix_intr_string(void *v, pci_intr_handle_t pih)
 		panic("%s: cpu %#x not supported\n",
 			__func__, mips_options.mips_cpu_id);
 
-	return rmixl_intr_string(irq);
+	return rmixl_intr_string(RMIXL_IRT_VECTOR(irq));
 }
 
 const struct evcnt *
@@ -925,6 +925,7 @@ rmixl_pcix_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	dip->irq = irq;
 	dip->func = func;
 	dip->arg = arg;
+	dip->counts = RMIXL_PCIX_EVCNT(sc, bitno, 0);
 #if NEVER
 	snprintf(dip->count_name, sizeof(dip->count_name),
 		"pin %d", bitno + 1);
@@ -989,6 +990,8 @@ rmixl_pcix_pip_add_1(rmixl_pcix_softc_t *sc, int irq, int ipl)
 #endif
 		return NULL;
 	}
+
+	memset(pip_new, 0, size);
 
 	if (pip_old == NULL) {
 		/* initialize the interrupt struct */
