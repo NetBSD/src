@@ -1,4 +1,4 @@
-# Id: Makefile.am 20739 2007-05-31 16:53:21Z lha
+# Id: Makefile.am 20739 2007-05-31 16:53:21Z lha 
 
 include $(top_srcdir)/Makefile.am.common
 

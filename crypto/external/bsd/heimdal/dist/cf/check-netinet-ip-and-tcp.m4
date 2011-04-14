@@ -1,5 +1,5 @@
 dnl
-dnl $Id: check-netinet-ip-and-tcp.m4,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $
+dnl Id
 dnl
 
 dnl extra magic check for netinet/{ip.h,tcp.h} because on irix 6.5.3

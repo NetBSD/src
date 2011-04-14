@@ -1,4 +1,4 @@
-# $Id: nist-data,v 1.1.1.1 2011/04/13 18:15:27 elric Exp $
+# Id
 # id verify cert hxtool-verify-arguments...
 # p(ass) f(ail)
 # Those id's that end with i are invariants of the orignal test

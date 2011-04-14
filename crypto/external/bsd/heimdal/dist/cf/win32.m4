@@ -1,4 +1,4 @@
-dnl $Id: win32.m4,v 1.1.1.1 2011/04/13 18:14:33 elric Exp $
+dnl Id
 dnl rk_WIN32_EXPORT buildsymbol symbol-that-export
 AC_DEFUN([rk_WIN32_EXPORT],[AH_TOP([#ifdef $1
 #ifndef $2

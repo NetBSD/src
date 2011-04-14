@@ -32,7 +32,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
 # SUCH DAMAGE. 
 #
-# $Id: kdc-log-analyze.pl,v 1.1.1.1 2011/04/13 18:16:02 elric Exp $
+# Id
 #
 # kdc-log-analyze - Analyze a KDC log file and give a report on the contents
 #

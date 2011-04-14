@@ -1,4 +1,4 @@
-/*	$NetBSD: sha.h,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: sha.h,v 1.1.1.2 2011/04/14 14:08:33 elric Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: sha.h,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $ */
+/* Id */
 
 #ifndef HEIM_SHA_H
 #define HEIM_SHA_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpi.h,v 1.1.1.1 2011/04/13 18:15:07 elric Exp $	*/
+/*	$NetBSD: mpi.h,v 1.1.1.2 2011/04/14 14:08:52 elric Exp $	*/
 
 /*
     mpi.h
@@ -8,7 +8,7 @@
 
     Arbitrary precision integer arithmetic library
 
-    Id: mpi.h,v 1.2 2005/05/05 14:38:47 tom Exp
+    Id: mpi.h,v 1.2 2005/05/05 14:38:47 tom Exp 
  */
 
 #ifndef _H_MPI_

@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.h,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: md5.h,v 1.1.1.2 2011/04/14 14:08:32 elric Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: md5.h,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $ */
+/* Id */
 
 #ifndef HEIM_MD5_H
 #define HEIM_MD5_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: md2.h,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: md2.h,v 1.1.1.2 2011/04/14 14:08:32 elric Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: md2.h,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $ */
+/* Id */
 
 #ifndef HEIM_MD2_H
 #define HEIM_MD2_H 1
