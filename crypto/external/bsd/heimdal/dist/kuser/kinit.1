@@ -1,4 +1,4 @@
-.\"	$NetBSD: kinit.1,v 1.1.1.2 2011/04/14 14:08:19 elric Exp $
+.\"	$NetBSD: kinit.1,v 1.2 2011/04/14 19:19:19 elric Exp $
 .\"
 .\" Copyright (c) 1998 - 2003, 2006 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden). 
@@ -98,41 +98,23 @@ can later be used to obtain tickets for other services.
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl c Ar cachename
-.Fl -cache= Ns Ar cachename
-.Xc
+.It Fl c Ar cachename Fl -cache= Ns Ar cachename
 The credentials cache to put the acquired ticket in, if other than
 default.
-.It Xo
-.Fl f
-.Fl -no-forwardable
-.Xc
+.It Fl f Fl -no-forwardable
 Get ticket that can be forwarded to another host, or if the negative
 flags use, don't get a forwardable flag.
-.It Xo
-.Fl t Ar keytabname ,
-.Fl -keytab= Ns Ar keytabname
-.Xc
+.It Fl t Ar keytabname , Fl -keytab= Ns Ar keytabname
 Don't ask for a password, but instead get the key from the specified
 keytab.
-.It Xo
-.Fl l Ar time ,
-.Fl -lifetime= Ns Ar time
-.Xc
+.It Fl l Ar time , Fl -lifetime= Ns Ar time
 Specifies the lifetime of the ticket.
 The argument can either be in seconds, or a more human readable string
 like
 .Sq 1h .
-.It Xo
-.Fl p ,
-.Fl -proxiable
-.Xc
+.It Fl p , Fl -proxiable
 Request tickets with the proxiable flag set.
-.It Xo
-.Fl R ,
-.Fl -renew
-.Xc
+.It Fl R , Fl -renew
 Try to renew ticket.
 The ticket must have the
 .Sq renewable
@@ -141,46 +123,26 @@ flag set, and must not be expired.
 The same as
 .Fl -renewable-life ,
 with an infinite time.
-.It Xo
-.Fl r Ar time ,
-.Fl -renewable-life= Ns Ar time
-.Xc
+.It Fl r Ar time , Fl -renewable-life= Ns Ar time
 The max renewable ticket life.
-.It Xo
-.Fl S Ar principal ,
-.Fl -server= Ns Ar principal
-.Xc
+.It Fl S Ar principal , Fl -server= Ns Ar principal
 Get a ticket for a service other than krbtgt/LOCAL.REALM.
-.It Xo
-.Fl s Ar time ,
-.Fl -start-time= Ns Ar time
-.Xc
+.It Fl s Ar time , Fl -start-time= Ns Ar time
 Obtain a ticket that starts to be valid
 .Ar time
 (which can really be a generic time specification, like
 .Sq 1h )
 seconds into the future.
-.It Xo
-.Fl k ,
-.Fl -use-keytab
-.Xc
+.It Fl k , Fl -use-keytab
 The same as
 .Fl -keytab ,
 but with the default keytab name (normally
 .Ar FILE:/etc/krb5.keytab ) .
-.It Xo
-.Fl v ,
-.Fl -validate
-.Xc
+.It Fl v , Fl -validate
 Try to validate an invalid ticket.
-.It Xo
-.Fl e ,
-.Fl -enctypes= Ns Ar enctypes
-.Xc
+.It Fl e , Fl -enctypes= Ns Ar enctypes
 Request tickets with this particular enctype.
-.It Xo
-.Fl -password-file= Ns Ar filename
-.Xc
+.It Fl -password-file= Ns Ar filename
 read the password from the first line of
 .Ar filename .
 If the
@@ -188,15 +150,10 @@ If the
 is
 .Ar STDIN ,
 the password will be read from the standard input.
-.It Xo
-.Fl -fcache-version= Ns Ar version-number
-.Xc
+.It Fl -fcache-version= Ns Ar version-number
 Create a credentials cache of version
 .Ar version-number .
-.It Xo
-.Fl a ,
-.Fl -extra-addresses= Ns Ar enctypes
-.Xc
+.It Fl a , Fl -extra-addresses= Ns Ar enctypes
 Adds a set of addresses that will, in addition to the systems local
 addresses, be put in the ticket.
 This can be useful if all addresses a client can use can't be
@@ -206,20 +163,13 @@ Also settable via
 .Li libdefaults/extra_addresses
 in
 .Xr krb5.conf 5 .
-.It Xo
-.Fl A ,
-.Fl -no-addresses
-.Xc
+.It Fl A , Fl -no-addresses
 Request a ticket with no addresses.
-.It Xo
-.Fl -anonymous
-.Xc
+.It Fl -anonymous
 Request an anonymous ticket (which means that the ticket will be
 issued to an anonymous principal, typically
 .Dq anonymous@REALM ) .
-.It Xo
-.Fl -enterprise
-.Xc
+.It Fl -enterprise
 Parse principal as a enterprise (KRB5-NT-ENTERPRISE) name. Enterprise
 names are email like principals that are stored in the name part of
 the principal, and since there are two @ characters the parser needs

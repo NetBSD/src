@@ -1,4 +1,4 @@
-.\"	$NetBSD: kcm.8,v 1.1.1.2 2011/04/14 14:08:10 elric Exp $
+.\"	$NetBSD: kcm.8,v 1.2 2011/04/14 19:19:19 elric Exp $
 .\"
 .\" Copyright (c) 2005 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden). 
@@ -129,91 +129,42 @@ the ticket itself.
 .Pp
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl -cache-name= Ns Ar cachename
-.Xc
+.It Fl -cache-name= Ns Ar cachename
 system cache name
-.It Xo
-.Fl c Ar file ,
-.Fl -config-file= Ns Ar file
-.Xc
+.It Fl c Ar file , Fl -config-file= Ns Ar file
 location of config file
-.It Xo
-.Fl g Ar group ,
-.Fl -group= Ns Ar group
-.Xc
+.It Fl g Ar group , Fl -group= Ns Ar group
 system cache group
-.It Xo
-.Fl -max-request= Ns Ar size
-.Xc
+.It Fl -max-request= Ns Ar size
 max size for a kcm-request
-.It Xo
-.Fl -disallow-getting-krbtgt
-.Xc
+.It Fl -disallow-getting-krbtgt
 disallow extracting any krbtgt from the
 .Nm kcm
 daemon.
-.It Xo
-.Fl -detach
-.Xc
+.It Fl -detach
 detach from console
-.It Xo
-.Fl h ,
-.Fl -help
-.Xc
-.It Xo
-.Fl k Ar principal ,
-.Fl -system-principal= Ns Ar principal
-.Xc
+.It Fl h , Fl -help
+.It Fl k Ar principal , Fl -system-principal= Ns Ar principal
 system principal name
-.It Xo
-.Fl l Ar time ,
-.Fl -lifetime= Ns Ar time
-.Xc
+.It Fl l Ar time , Fl -lifetime= Ns Ar time
 lifetime of system tickets
-.It Xo
-.Fl m Ar mode ,
-.Fl -mode= Ns Ar mode
-.Xc
+.It Fl m Ar mode , Fl -mode= Ns Ar mode
 octal mode of system cache
-.It Xo
-.Fl n ,
-.Fl -no-name-constraints
-.Xc
+.It Fl n , Fl -no-name-constraints
 disable credentials cache name constraints
-.It Xo
-.Fl r Ar time ,
-.Fl -renewable-life= Ns Ar time
-.Xc
+.It Fl r Ar time , Fl -renewable-life= Ns Ar time
 renewable lifetime of system tickets
-.It Xo
-.Fl s Ar path ,
-.Fl -socket-path= Ns Ar path
-.Xc
+.It Fl s Ar path , Fl -socket-path= Ns Ar path
 path to kcm domain socket
-.It Xo
-.Fl -door-path= Ns Ar path
-.Xc
+.It Fl -door-path= Ns Ar path
 path to kcm door socket
-.It Xo
-.Fl S Ar principal ,
-.Fl -server= Ns Ar principal
-.Xc
+.It Fl S Ar principal , Fl -server= Ns Ar principal
 server to get system ticket for
-.It Xo
-.Fl t Ar keytab ,
-.Fl -keytab= Ns Ar keytab
-.Xc
+.It Fl t Ar keytab , Fl -keytab= Ns Ar keytab
 system keytab name
-.It Xo
-.Fl u Ar user ,
-.Fl -user= Ns Ar user
-.Xc
+.It Fl u Ar user , Fl -user= Ns Ar user
 system cache owner
-.It Xo
-.Fl v ,
-.Fl -version
-.Xc
+.It Fl v , Fl -version
 .El
 .\".Sh ENVIRONMENT
 .\".Sh FILES
