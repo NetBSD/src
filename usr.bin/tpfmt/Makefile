@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/11/24 13:17:56 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2011/04/14 16:25:58 yamt Exp $
 
 PROG=	tpfmt
 NOMAN=	
@@ -6,10 +6,8 @@ NOMAN=
 CPPFLAGS+= -I${NETBSDSRCDIR}/sys/
 SRCS=	tpfmt.c sym.c
 
-LDADD+= -lpthread
 LDADD+= -lelf
 LDADD+= -lutil
-DPADD+= ${LIBPTHREAD}
 DPADD+= ${LIBELF}
 DPADD+= ${LIBUTIL}
 
