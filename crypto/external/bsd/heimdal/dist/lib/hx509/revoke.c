@@ -1,4 +1,4 @@
-/*	$NetBSD: revoke.c,v 1.1.1.1 2011/04/13 18:15:12 elric Exp $	*/
+/*	$NetBSD: revoke.c,v 1.2 2011/04/14 18:22:35 elric Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -1057,8 +1057,13 @@ static char *
 printable_time(time_t t)
 {
     static char s[128];
-    strlcpy(s, ctime(&t)+ 4, sizeof(s));
-    s[20] = 0;
+    char *p;
+    if ((p = ctime(&t)) == NULL)
+       strlcpy(s, "?", sizeof(s));
+    else {
+       strlcpy(s, p + 4, sizeof(s));
+       s[20] = 0;
+    }
     return s;
 }
 
