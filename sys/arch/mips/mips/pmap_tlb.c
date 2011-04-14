@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.6 2011/04/12 18:53:23 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.7 2011/04/14 17:41:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.6 2011/04/12 18:53:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.7 2011/04/14 17:41:32 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -266,11 +266,11 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 		}
 #ifdef MULTIPROCESSOR
 		const u_int icache_way_pages =
-			mips_cache_info.mci_picache_way_size >> PGSHIFT; 
+			mips_cache_info.mci_picache_way_size >> PGSHIFT;
 		KASSERT(icache_way_pages <= 8*sizeof(pmap_tlb_synci_page_mask));
 		pmap_tlb_synci_page_mask = icache_way_pages - 1;
 		pmap_tlb_synci_map_mask = ~(~0 << icache_way_pages);
-		printf("tlb0: synci page mask %#x and map mask %#x used for %u pages\n", 
+		printf("tlb0: synci page mask %#x and map mask %#x used for %u pages\n",
 		    pmap_tlb_synci_page_mask, pmap_tlb_synci_map_mask,
 		    icache_way_pages);
 #endif
@@ -818,8 +818,9 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 		    ("%s: pmap %p onproc %#x doesn't include cpu %d (%p)",
 		    __func__, pm, pm->pm_onproc, cpu_index(ci), ci));
 		/*
-		 * The bits in pm_onproc that belong to this TLB can only
-		 * be changed while this TLBs lock is held.
+		 * The bits in pm_onproc that belong to this TLB can
+		 * be changed while this TLBs lock is not held as long
+		 * as we use atomic ops.
 		 */
 		atomic_and_32(&pm->pm_onproc, ~cpu_mask);
 		atomic_and_ulong(&ci->ci_flags, ~CPUF_USERPMAP);
