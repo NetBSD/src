@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.2 2011/04/11 04:22:31 mrg Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.3 2011/04/14 16:05:59 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.2 2011/04/11 04:22:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.3 2011/04/14 16:05:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,8 +217,7 @@ db_nextframe(
 	static struct trapframe tf;
 	static struct i386tss tss;
 	struct i386_frame *fp;
-	struct intrframe *ifp;
-	int traptype, trapno, err, i;
+	int traptype;
 	uintptr_t ptr;
 
 	switch (is_trap) {
@@ -256,24 +255,23 @@ db_nextframe(
 	    case INTERRUPT:
 	    default:
 		/* The only argument to trap() or syscall() is the trapframe. */
-		ptr = db_get_value((int)argp, 4, false);
-		db_read_bytes((db_addr_t)ptr, sizeof(tf), (char *)&tf);
 		switch (is_trap) {
 		case TRAP:
+			ptr = db_get_value((int)argp, 4, false);
+			db_read_bytes((db_addr_t)ptr, sizeof(tf), (char *)&tf);
 			(*pr)("--- trap (number %d) ---\n", tf.tf_trapno);
 			break;
 		case SYSCALL:
+			ptr = db_get_value((int)argp, 4, false);
+			db_read_bytes((db_addr_t)ptr, sizeof(tf), (char *)&tf);
 			(*pr)("--- syscall (number %d) ---\n", tf.tf_eax);
 			break;
 		case INTERRUPT:
 			(*pr)("--- interrupt ---\n");
 			/*
-			 * Get intrframe address as saved when switching
-			 * to interrupt stack, and convert to trapframe
-			 * (add 4).  See frame.h.
+			 * see the "XXX -1 here is a hack" comment below.
 			 */
-			ptr = db_get_value((int)(argp - 1) + 4, 4, false);
-			db_read_bytes((db_addr_t)ptr, sizeof(tf), (char *)&tf);
+			db_read_bytes((db_addr_t)argp, sizeof(tf), (char *)&tf);
 			break;
 		}
 		*ip = (db_addr_t)tf.tf_eip;
@@ -295,16 +293,32 @@ db_nextframe(
 	if (db_frame_info(*nextframe, (db_addr_t)*ip, NULL, NULL, &traptype,
 	    NULL) != (db_sym_t)0
 	    && traptype == INTERRUPT) {
-		for (i = 0; i < 4; i++) {
-			ifp = (struct intrframe *)(argp + i);
-			err = db_get_value((int)&ifp->__if_err, 4, false);
-			trapno = db_get_value((int)&ifp->__if_trapno, 4, false);
-			if ((err == 0 || err == IREENT_MAGIC) && trapno == T_ASTFLT) {
-				*nextframe = (long *)ifp - 1;
-				break;
-			}
-		}
-		if (i == 4) {
+		struct intrframe *ifp;
+		int trapno;
+		int err;
+
+		/*
+		 * 2nd argument of interrupt handlers is a pointer to intrframe.
+		 */
+		ifp = (struct intrframe *)
+		    db_get_value((db_addr_t)(argp + 1), sizeof(ifp), false);
+		/*
+		 * check if it's a valid intrframe.
+		 */
+		err = db_get_value((db_addr_t)&ifp->__if_err,
+		    sizeof(ifp->__if_err), false);
+		trapno = db_get_value((db_addr_t)&ifp->__if_trapno,
+		    sizeof(ifp->__if_trapno), false);
+		if ((err == 0 || err == IREENT_MAGIC) && trapno == T_ASTFLT) {
+			/*
+			 * found seemingly valid intrframe.
+			 *
+			 * XXX -1 here is a hack.
+			 * for the next frame, we will be called with
+			 * argp = *nextframe + 2.  (long *)if - 1 + 2 = &tf.
+			 */
+			*nextframe = (long *)ifp - 1;
+		} else {
 			(*pr)("DDB lost frame for ");
 			db_printsym(*ip, DB_STGY_ANY, pr);
 			(*pr)(", trying %p\n",argp);
