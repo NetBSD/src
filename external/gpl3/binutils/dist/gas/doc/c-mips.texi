@@ -274,7 +274,8 @@ sb1,
 sb1a,
 loongson2e,
 loongson2f,
-octeon
+octeon,
+xlr
 @end quotation
 
 For compatibility reasons, @samp{@var{n}x} and @samp{@var{b}fx} are
