@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.71 2011/04/14 05:09:34 cliff Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.72 2011/04/14 09:25:05 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.71 2011/04/14 05:09:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.72 2011/04/14 09:25:05 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -675,7 +675,7 @@ db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	/* value = CR[addr] */
 	__asm volatile(							\
 		".set push 			\n\t"			\
-		".set mips64			\n\t"			\
+		".set arch=xlr			\n\t"			\
 		".set noat			\n\t"			\
 		"mfcr %0,%1			\n\t"			\
 		".set pop 			\n\t"			\
@@ -705,7 +705,7 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	/* CR[addr] = value */
 	__asm volatile(							\
 		".set push 			\n\t"			\
-		".set mips64			\n\t"			\
+		".set arch=xlr			\n\t"			\
 		".set noat			\n\t"			\
 		"mtcr %0,%1			\n\t"			\
 		".set pop 			\n\t"			\

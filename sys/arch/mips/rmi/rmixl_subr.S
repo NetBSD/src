@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_subr.S,v 1.4 2011/04/14 05:20:08 cliff Exp $	*/
+/*	$NetBSD: rmixl_subr.S,v 1.5 2011/04/14 09:25:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,17 +37,16 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: rmixl_subr.S,v 1.4 2011/04/14 05:20:08 cliff Exp $");
+RCSID("$NetBSD: rmixl_subr.S,v 1.5 2011/04/14 09:25:05 matt Exp $");
 
 #include "assym.h"
 
 #define RMIXL_COP_0_EIRR	_(9), 6
 #define RMIXL_COP_0_EIMR	_(9), 7
 
-	.set	push
-        .set    noreorder
-        .set    mips64
-        .text
+	.set    noreorder
+	.set	arch=xlr
+	.text
 
 /*
  * read XLS Processor Control register
@@ -179,6 +178,3 @@ NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
 END(rmixl_cpu_trampoline)
 
 #endif	/* MULTIPROCESSOR */
-
-	.set	pop
-
