@@ -1,4 +1,4 @@
-# $Id: nist-result2,v 1.1.1.1 2011/04/13 18:15:27 elric Exp $
+# Id
 # id FAIL
 4.2.8 EITHER	depeneds on if time_t is 64 bit or not
 4.3.5 FAIL

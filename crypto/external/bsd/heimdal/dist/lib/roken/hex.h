@@ -1,4 +1,4 @@
-/*	$NetBSD: hex.h,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $	*/
+/*	$NetBSD: hex.h,v 1.1.1.2 2011/04/14 14:09:30 elric Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: hex.h,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $ */
+/* Id */
 
 #ifndef _rk_HEX_H_
 #define _rk_HEX_H_ 1

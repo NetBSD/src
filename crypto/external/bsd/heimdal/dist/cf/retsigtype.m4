@@ -1,5 +1,5 @@
 dnl
-dnl $Id: retsigtype.m4,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $
+dnl Id
 dnl
 dnl Figure out return type of signal handlers, and define SIGRETURN macro
 dnl that can be used to return from one

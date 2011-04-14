@@ -1,4 +1,4 @@
-/*	$NetBSD: xdbm.h,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $	*/
+/*	$NetBSD: xdbm.h,v 1.1.1.2 2011/04/14 14:09:32 elric Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xdbm.h,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $ */
+/* Id */
 
 /* Generic *dbm include file */
 
