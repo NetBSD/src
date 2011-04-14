@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.36 2011/04/14 06:37:13 jruoho Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.37 2011/04/14 07:06:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.36 2011/04/14 06:37:13 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.37 2011/04/14 07:06:52 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,7 +54,6 @@ typedef struct thinkpad_softc {
 	struct acpi_devnode	*sc_node;
 	ACPI_HANDLE		sc_powhdl;
 	ACPI_HANDLE		sc_cmoshdl;
-	bool			sc_cmoshdl_valid;
 
 #define	TP_PSW_SLEEP		0
 #define	TP_PSW_HIBERNATE	1
@@ -174,20 +173,12 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_dev = self;
 	sc->sc_powhdl = NULL;
+	sc->sc_cmoshdl = NULL;
 	sc->sc_node = aa->aa_node;
 	sc->sc_display_state = THINKPAD_DISPLAY_LCD;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
-
-	/* T61 uses \UCMS method for issuing CMOS commands */
-	rv = AcpiGetHandle(NULL, "\\UCMS", &sc->sc_cmoshdl);
-	if (ACPI_FAILURE(rv))
-		sc->sc_cmoshdl_valid = false;
-	else {
-		aprint_debug_dev(self, "using CMOS at \\UCMS\n");
-		sc->sc_cmoshdl_valid = true;
-	}
 
 	sc->sc_ecdev = NULL;
 	for (curdev = deviter_first(&di, DEVITER_F_ROOT_FIRST);
@@ -220,6 +211,11 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	(void)acpi_register_notify(sc->sc_node, thinkpad_notify_handler);
+
+	/*
+	 * Obtain a handle for CMOS commands. This is used by T61.
+	 */
+	(void)AcpiGetHandle(NULL, "\\UCMS", &sc->sc_cmoshdl);
 
 	/*
 	 * Obtain a handle to the power resource available on many models.
@@ -614,6 +610,7 @@ thinkpad_brightness_up(device_t self)
 
 	if (thinkpad_brightness_read(sc) == 7)
 		return;
+
 	thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_UP);
 }
 
@@ -624,6 +621,7 @@ thinkpad_brightness_down(device_t self)
 
 	if (thinkpad_brightness_read(sc) == 0)
 		return;
+
 	thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_DOWN);
 }
 
@@ -632,12 +630,13 @@ thinkpad_cmos(thinkpad_softc_t *sc, uint8_t cmd)
 {
 	ACPI_STATUS rv;
 
-	if (sc->sc_cmoshdl_valid == false)
+	if (sc->sc_cmoshdl == NULL)
 		return;
 
 	rv = acpi_eval_set_integer(sc->sc_cmoshdl, NULL, cmd);
+
 	if (ACPI_FAILURE(rv))
-		aprint_error_dev(sc->sc_dev, "couldn't evalute CMOS: %s\n",
+		aprint_error_dev(sc->sc_dev, "couldn't evaluate CMOS: %s\n",
 		    AcpiFormatException(rv));
 }
 
