@@ -1,4 +1,4 @@
-.\"	$NetBSD: offsetof.3,v 1.4 2011/04/01 05:24:37 jruoho Exp $
+.\"	$NetBSD: offsetof.3,v 1.5 2011/04/14 06:56:28 wiz Exp $
 .\"
 .\"	$OpenBSD: offsetof.3,v 1.2 2010/02/18 18:30:19 jmc Exp $
 .\"
@@ -59,7 +59,7 @@ x = offsetof(struct example, x);
 y = offsetof(struct example, y);
 z = offsetof(struct example, z);
 
-(void)printf(\*[q]%zu %zu %zu\en\*[q], x, y, z);
+(void)printf("%zu %zu %zu\en", x, y, z);
 .Ed
 .Sh SEE ALSO
 .Xr __alignof__ 3 ,
