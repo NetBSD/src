@@ -1,4 +1,4 @@
-/*	$NetBSD: print_version.c,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $	*/
+/*	$NetBSD: print_version.c,v 1.2 2011/04/14 18:23:23 elric Exp $	*/
 
 /*
  * Copyright (c) 1998 - 2006 Kungliga Tekniska Högskolan
@@ -54,5 +54,7 @@ print_version(const char *progname)
 	package_list = "no version information";
     fprintf(stderr, "%s (%s)\n", progname, package_list);
     fprintf(stderr, "Copyright 1995-2011 Kungliga Tekniska Högskolan\n");
+#ifdef PACKAGE_BUGREPORT
     fprintf(stderr, "Send bug-reports to %s\n", PACKAGE_BUGREPORT);
+#endif
 }
