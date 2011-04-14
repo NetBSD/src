@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.13 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.14 2011/04/14 01:03:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.13 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.14 2011/04/14 01:03:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,12 +40,15 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.13 2008/04/28 20:23:42 martin Exp $
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/filedesc.h>
+#include <sys/fcntl.h>
 
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_fcntl.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -62,9 +65,43 @@ linux_sys_pipe(struct lwp *l, const void *v, register_t *retval)
 {
 	int error;
 
-	if ((error = sys_pipe(l, 0, retval)))
+	if ((error = pipe1(l, retval, 0)))
 		return error;
 
 	(l->l_md.md_tf)->tf_regs[FRAME_A4] = retval[1];
+	return 0;
+}
+
+int
+linux_sys_pipe2(struct lwp *l, const linux_sys_pipe2_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int *) pfds;
+		syscallarg(int) flags;
+	} */
+	int error;
+	int flag = 0;
+
+	switch (SCARG(uap, flags)) {
+	case LINUX_O_CLOEXEC:
+		break;
+	case LINUX_O_NONBLOCK:
+	case LINUX_O_NONBLOCK|LINUX_O_CLOEXEC:
+		flag = O_NONBLOCK;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if ((error = pipe1(l, retval, flag)))
+		return error;
+
+	(l->l_md.md_tf)->tf_regs[FRAME_A4] = retval[1];
+
+	if (SCARG(uap, flags) & LINUX_O_CLOEXEC) {
+		fd_set_exclose(l, retval[0], true);
+		fd_set_exclose(l, retval[1], true);
+	}       
 	return 0;
 }
