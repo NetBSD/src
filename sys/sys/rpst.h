@@ -1,4 +1,4 @@
-/*	$NetBSD: rpst.h,v 1.2 2009/05/25 14:54:06 yamt Exp $	*/
+/*	$NetBSD: rpst.h,v 1.3 2011/04/14 15:31:20 yamt Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -29,11 +29,11 @@
 #if !defined(_SYS_RPST_H_)
 #define	_SYS_RPST_H_
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/types.h>
-#else /* defined(_KERNEL) */
+#else /* defined(_KERNEL) || defined(_STANDALONE) */
 #include <stdint.h>
-#endif /* defined(_KERNEL) */
+#endif /* defined(_KERNEL) || defined(_STANDALONE) */
 
 struct rpst_tree {
 	struct rpst_node *t_root;
