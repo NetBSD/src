@@ -1,4 +1,4 @@
-dnl $Id: test-package.m4,v 1.1.1.1 2011/04/13 18:14:33 elric Exp $
+dnl Id
 dnl
 dnl rk_TEST_PACKAGE(package,headers,libraries,extra libs,
 dnl			default locations, conditional, config-program, headers)

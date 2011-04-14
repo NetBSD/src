@@ -1,4 +1,4 @@
-/*	$NetBSD: gsskrb5_locl.h,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $	*/
+/*	$NetBSD: gsskrb5_locl.h,v 1.1.1.2 2011/04/14 14:08:26 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: gsskrb5_locl.h,v 1.1.1.1 2011/04/13 18:14:45 elric Exp $ */
+/* Id */
 
 #ifndef GSSKRB5_LOCL_H
 #define GSSKRB5_LOCL_H

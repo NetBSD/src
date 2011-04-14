@@ -1,4 +1,4 @@
-dnl $Id: krb-prog-yacc.m4,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $
+dnl Id
 dnl
 dnl
 dnl We prefer byacc or yacc because they do not use `alloca'

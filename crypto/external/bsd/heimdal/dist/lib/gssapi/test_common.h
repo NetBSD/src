@@ -1,4 +1,4 @@
-/*	$NetBSD: test_common.h,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $	*/
+/*	$NetBSD: test_common.h,v 1.1.1.2 2011/04/14 14:08:24 elric Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -33,6 +33,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: test_common.h,v 1.1.1.1 2011/04/13 18:14:43 elric Exp $ */
+/* Id */
 
 char * gssapi_err(OM_uint32, OM_uint32, gss_OID);

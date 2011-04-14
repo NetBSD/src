@@ -1,4 +1,4 @@
-/*	$NetBSD: kadm5_locl.h,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: kadm5_locl.h,v 1.1.1.2 2011/04/14 14:09:17 elric Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kadm5_locl.h,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $ */
+/* Id */
 
 #ifndef __KADM5_LOCL_H__
 #define __KADM5_LOCL_H__

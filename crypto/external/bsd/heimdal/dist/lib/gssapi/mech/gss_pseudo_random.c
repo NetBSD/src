@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_pseudo_random.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: gss_pseudo_random.c,v 1.1.1.2 2011/04/14 14:08:28 elric Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: gss_pseudo_random.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $ */
+/* Id */
 
 #include "mech_locl.h"
 

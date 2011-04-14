@@ -1,4 +1,4 @@
-/*	$NetBSD: slc.h,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $	*/
+/*	$NetBSD: slc.h,v 1.1.1.2 2011/04/14 14:09:33 elric Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: slc.h,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $ */
+/* Id */
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: slc-lex.l,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $	*/
+/*	$NetBSD: slc-lex.l,v 1.1.1.2 2011/04/14 14:09:33 elric Exp $	*/
 
 %{
 /*
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: slc-lex.l,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $ */
+/* Id */
 
 #undef ECHO
 

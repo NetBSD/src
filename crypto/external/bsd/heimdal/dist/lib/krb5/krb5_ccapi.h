@@ -1,4 +1,4 @@
-/*	$NetBSD: krb5_ccapi.h,v 1.1.1.1 2011/04/13 18:15:35 elric Exp $	*/
+/*	$NetBSD: krb5_ccapi.h,v 1.1.1.2 2011/04/14 14:09:23 elric Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: krb5_ccapi.h,v 1.1.1.1 2011/04/13 18:15:35 elric Exp $ */
+/* Id */
 
 #ifndef KRB5_CCAPI_H
 #define KRB5_CCAPI_H 1
