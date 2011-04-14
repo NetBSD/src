@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.9 2011/02/25 22:35:38 yamt Exp $	*/
+/*	$NetBSD: tprof.c,v 1.10 2011/04/14 16:23:59 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.9 2011/02/25 22:35:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.10 2011/04/14 16:23:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ typedef struct tprof_buf {
 
 typedef struct {
 	tprof_buf_t *c_buf;
+	uint32_t c_cpuid;
 	struct work c_work;
 	callout_t c_callout;
 } __aligned(CACHE_LINE_SIZE) tprof_cpu_t;
@@ -394,7 +395,10 @@ tprof_backend_lookup(const char *name)
  * tprof_sample: record a sample on the per-cpu buffer.
  *
  * be careful; can be called in NMI context.
- * we are bluntly assuming that curcpu() and curlwp->l_proc->p_pid are safe.
+ * we are bluntly assuming the followings are safe.
+ *	curcpu()
+ *	curlwp->l_lid
+ *	curlwp->l_proc->p_pid
  */
 
 void
@@ -404,6 +408,7 @@ tprof_sample(tprof_backend_cookie_t *cookie, const tprof_frame_info_t *tfi)
 	tprof_buf_t * const buf = c->c_buf;
 	tprof_sample_t *sp;
 	const uintptr_t pc = tfi->tfi_pc;
+	const lwp_t * const l = curlwp;
 	u_int idx;
 
 	idx = buf->b_used;
@@ -412,7 +417,9 @@ tprof_sample(tprof_backend_cookie_t *cookie, const tprof_frame_info_t *tfi)
 		return;
 	}
 	sp = &buf->b_data[idx];
-	sp->s_pid = curlwp->l_proc->p_pid;
+	sp->s_pid = l->l_proc->p_pid;
+	sp->s_lwpid = l->l_lid;
+	sp->s_cpuid = c->c_cpuid;
 	sp->s_flags = (tfi->tfi_inkernel) ? TPROF_SAMPLE_INKERNEL : 0;
 	sp->s_pc = pc;
 	buf->b_used = idx + 1;
@@ -660,6 +667,7 @@ MODULE(MODULE_CLASS_DRIVER, tprof, NULL);
 static void
 tprof_driver_init(void)
 {
+	unsigned int i;
 
 	mutex_init(&tprof_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&tprof_reader_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -667,6 +675,12 @@ tprof_driver_init(void)
 	cv_init(&tprof_cv, "tprof");
 	cv_init(&tprof_reader_cv, "tprof_rd");
 	STAILQ_INIT(&tprof_list);
+	for (i = 0; i < __arraycount(tprof_cpus); i++) {
+		tprof_cpu_t * const c = &tprof_cpus[i];
+
+		c->c_buf = NULL;
+		c->c_cpuid = i;
+	}
 }
 
 static void
