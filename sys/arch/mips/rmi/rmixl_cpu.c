@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.2 2011/02/20 07:48:37 matt Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.3 2011/04/14 05:12:58 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.2 2011/02/20 07:48:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.3 2011/04/14 05:12:58 cliff Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -78,6 +78,7 @@ static int	cpu_fmn_intr(void *, rmixl_fmn_rxmsg_t *);
 
 #ifdef MULTIPROCESSOR
 void		cpu_rmixl_hatch(struct cpu_info *);
+void		cpu_rmixl_run(struct cpu_info *);
 #if 0
 static void	cpu_setup_trampoline_ipi(struct device *, struct cpu_info *);
 #endif
@@ -98,19 +99,25 @@ CFATTACH_DECL_NEW(cpu_rmixl, sizeof(struct rmixl_cpu_softc),
 static struct rmixl_cpu_trampoline_args rmixl_cpu_trampoline_args;
 #endif
 
-#if defined(DDB) && defined(MIPS_DDB_WATCH)
 /*
  * cpu_rmixl_db_watch_init - initialize COP0 watchpoint stuff
  *
  * clear IEU_DEFEATURE[DBE] to ensure T_WATCH on watchpoint exception
  * set COP0 watchhi and watchlo
+ *
+ * disable all watchpoints
  */
 static void
 cpu_rmixl_db_watch_init(void)
 {
-	db_mach_watch_set_all();
+	uint32_t r;
+
+	r = rmixl_mfcr(RMIXL_PCR_IEU_DEFEATURE);
+	r &= ~__BIT(7);		/* DBE */
+	rmixl_mtcr(RMIXL_PCR_IEU_DEFEATURE, r);
+
+	cpuwatch_clr_all();
 }
-#endif	/* DDB && MIPS_DDB_WATCH */
 
 /*
  * cpu_xls616_erratum
@@ -186,6 +193,7 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 
 #ifdef MULTIPROCESSOR
 		mips_locoresw.lsw_cpu_init = cpu_rmixl_hatch;
+		mips_locoresw.lsw_cpu_run = cpu_rmixl_run;
 	} else {
 		struct cpucore_attach_args *ca = aux;
 		struct cpucore_softc * const ccsc = device_private(parent);
@@ -255,9 +263,7 @@ cpu_rmixl_attach_primary(struct rmixl_cpu_softc * const sc)
 	asm volatile("dmfc0 %0, $15, 1;" : "=r"(ebase));
 	ci->ci_cpuid = ebase & __BITS(9,0);
 
-#if defined(DDB) && defined(MIPS_DDB_WATCH)
 	cpu_rmixl_db_watch_init();
-#endif
 
 	rmixl_fmn_init();
 
@@ -295,6 +301,18 @@ cpu_fmn_intr(void *arg, rmixl_fmn_rxmsg_t *rxmsg)
 
 #ifdef MULTIPROCESSOR
 /*
+ * cpu_rmixl_run
+ *
+ * - chip-specific post-running code called from cpu_hatch via lsw_cpu_run
+ */
+void
+cpu_rmixl_run(struct cpu_info *ci)
+{
+	struct rmixl_cpu_softc * const sc = (void *)ci->ci_softc;
+	cpucore_rmixl_run(device_parent(sc->sc_dev));
+}
+
+/*
  * cpu_rmixl_hatch
  *
  * - chip-specific hatch code called from cpu_hatch via lsw_cpu_init
@@ -318,9 +336,7 @@ cpu_rmixl_hatch(struct cpu_info *ci)
 
 	cpucore_rmixl_hatch(device_parent(sc->sc_dev));
 
-#if defined(DDB) && defined(MIPS_DDB_WATCH)
 	cpu_rmixl_db_watch_init();
-#endif
 }
 
 static int
@@ -359,8 +375,8 @@ cpu_setup_trampoline_common(struct cpu_info *ci, struct rmixl_cpu_trampoline_arg
 	 *   RMI firmware only passes the lower 32-bit half of 'ta'
 	 *   to rmixl_cpu_trampoline (the upper half is clear)
 	 *   so rmixl_cpu_trampoline must reconstruct the missing upper half
-	 *   rmixl_cpu_trampoline "knows" to use MIPS_KSEG0_START
-	 *   to reconstruct upper half of 'ta'.
+	 *   rmixl_cpu_trampoline "knows" 'ta' is a KSEG0 address
+	 *   and sign-extends to make an LP64 KSEG0 address.
 	 */
 	KASSERT(MIPS_KSEG0_P(ta));
 
