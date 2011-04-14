@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.4 2011/04/14 16:58:58 matt Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.5 2011/04/14 17:42:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.4 2011/04/14 16:58:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.5 2011/04/14 17:42:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -47,9 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.4 2011/04/14 16:58:58 matt Exp $");
 #include <mips/db_machdep.h>
 #endif
 
-
 static void ipi_halt(void) __dead;
-
 
 static const char * const ipi_names[] = {
 	[IPI_NOP]	= "ipi nop",
@@ -97,8 +95,8 @@ ipi_kpreempt(struct cpu_info *ci)
 static void
 ipi_halt(void)
 {
-	const int my_cpu = cpu_number();
-	printf("cpu%d: shutting down\n", my_cpu);
+	const u_int my_cpu = cpu_number();
+	printf("cpu%u: shutting down\n", my_cpu);
 	CPUSET_ADD(cpus_halted, my_cpu);
 	splhigh();
 	for (;;)
