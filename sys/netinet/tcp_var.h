@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.162 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.163 2011/04/14 15:55:46 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -191,6 +191,12 @@ struct tcpcb {
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
 	uint32_t t_rxtcur;		/* current retransmit value */
 	short	t_dupacks;		/* consecutive dup acks recd */
+	/*
+	 * t_partialacks:
+	 *	<0	not in fast recovery.
+	 *	==0	in fast recovery.  has not received partial acks
+	 *	>0	in fast recovery.  has received partial acks
+	 */
 	short	t_partialacks;		/* partials acks during fast rexmit */
 	u_short	t_peermss;		/* peer's maximum segment size */
 	u_short	t_ourmss;		/* our's maximum segment size */
@@ -233,8 +239,18 @@ struct tcpcb {
 	tcp_seq	snd_wl2;		/* window update seg ack number */
 	tcp_seq	iss;			/* initial send sequence number */
 	u_long	snd_wnd;		/* send window */
-	tcp_seq snd_recover;		/* for use in fast recovery */
-	tcp_seq	snd_high;		/* NewReno false fast rexmit seq */
+/*
+ * snd_recover
+ * 	it's basically same as the "recover" variable in RFC 2852 (NewReno).
+ * 	when entering fast retransmit, it's set to snd_max.
+ * 	newreno uses this to detect partial ack.
+ * snd_high
+ * 	it's basically same as the "send_high" variable in RFC 2852 (NewReno).
+ * 	on each RTO, it's set to snd_max.
+ * 	newreno uses this to avoid false fast retransmits.
+ */
+	tcp_seq snd_recover;
+	tcp_seq	snd_high;
 /* receive sequence variables */
 	u_long	rcv_wnd;		/* receive window */
 	tcp_seq	rcv_nxt;		/* receive next */
@@ -245,10 +261,16 @@ struct tcpcb {
  */
 /* receive variables */
 	tcp_seq	rcv_adv;		/* advertised window */
-/* retransmit variables */
-	tcp_seq	snd_max;		/* highest sequence number sent;
-					 * used to recognize retransmits
-					 */
+
+/*
+ * retransmit variables
+ *
+ * snd_max
+ * 	the highest sequence number we've ever sent.
+ *	used to recognize retransmits.
+ */
+	tcp_seq	snd_max;
+
 /* congestion control (for slow start, source quench, retransmit after loss) */
 	u_long	snd_cwnd;		/* congestion-controlled window */
 	u_long	snd_ssthresh;		/* snd_cwnd size threshhold for
