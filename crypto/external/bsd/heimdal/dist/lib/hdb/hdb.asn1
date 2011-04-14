@@ -1,4 +1,4 @@
--- $Id: hdb.asn1,v 1.1.1.1 2011/04/13 18:14:42 elric Exp $
+-- Id
 HDB DEFINITIONS ::=
 BEGIN
 

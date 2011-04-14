@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: gen-req.sh,v 1.1.1.1 2011/04/13 18:15:27 elric Exp $
+# Id
 #
 # This script need openssl 0.9.8a or newer, so it can parse the
 # otherName section for pkinit certificates.

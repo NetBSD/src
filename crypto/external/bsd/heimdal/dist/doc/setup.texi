@@ -1,5 +1,5 @@
-@c $Id: setup.texi,v 1.1.1.1 2011/04/13 18:14:34 elric Exp $
-@c $NetBSD: setup.texi,v 1.1.1.1 2011/04/13 18:14:34 elric Exp $
+@c Id
+@c $NetBSD: setup.texi,v 1.1.1.2 2011/04/14 14:08:09 elric Exp $
 
 @node Setting up a realm, Applications, Building and Installing, Top
 

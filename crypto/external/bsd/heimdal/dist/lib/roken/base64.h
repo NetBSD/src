@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.h,v 1.1.1.1 2011/04/13 18:15:40 elric Exp $	*/
+/*	$NetBSD: base64.h,v 1.1.1.2 2011/04/14 14:09:29 elric Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: base64.h,v 1.1.1.1 2011/04/13 18:15:40 elric Exp $ */
+/* Id */
 
 #ifndef _BASE64_H_
 #define _BASE64_H_

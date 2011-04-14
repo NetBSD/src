@@ -1,4 +1,4 @@
-# $Id: roken.awk,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $
+# Id
 
 BEGIN {
 	print "#include <config.h>"

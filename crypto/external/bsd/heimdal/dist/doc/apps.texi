@@ -1,5 +1,5 @@
-@c $Id: apps.texi,v 1.1.1.1 2011/04/13 18:14:33 elric Exp $
-@c $NetBSD: apps.texi,v 1.1.1.1 2011/04/13 18:14:33 elric Exp $
+@c Id
+@c $NetBSD: apps.texi,v 1.1.1.2 2011/04/14 14:08:08 elric Exp $
 
 @node Applications, Things in search for a better place, Setting up a realm, Top
 

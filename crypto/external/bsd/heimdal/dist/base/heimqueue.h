@@ -1,7 +1,7 @@
-/*	$NetBSD: heimqueue.h,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $	*/
+/*	$NetBSD: heimqueue.h,v 1.1.1.2 2011/04/14 14:08:07 elric Exp $	*/
 
 /*	NetBSD: queue.h,v 1.38 2004/04/18 14:12:05 lukem Exp	*/
-/*	$Id: heimqueue.h,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $ */
+/*	Id */
 
 /*
  * Copyright (c) 1991, 1993

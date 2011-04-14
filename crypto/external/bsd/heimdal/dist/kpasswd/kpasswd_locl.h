@@ -1,4 +1,4 @@
-/*	$NetBSD: kpasswd_locl.h,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: kpasswd_locl.h,v 1.1.1.2 2011/04/14 14:08:18 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kpasswd_locl.h,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $ */
+/* Id */
 
 #ifndef __KPASSWD_LOCL_H__
 #define __KPASSWD_LOCL_H__

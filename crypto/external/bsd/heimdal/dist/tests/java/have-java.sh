@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
 # SUCH DAMAGE. 
 #
-# $Id: have-java.sh,v 1.1.1.1 2011/04/13 18:16:01 elric Exp $
+# Id
 #
 
 echo "Checking for java and javac"

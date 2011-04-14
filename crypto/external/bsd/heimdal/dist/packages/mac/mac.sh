@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: mac.sh,v 1.1.1.1 2011/04/13 18:16:00 elric Exp $
+# Id
 
 dbase=`dirname $0`
 base=`cd $dbase && pwd`

@@ -1,4 +1,4 @@
-/*	$NetBSD: roken_rename.h,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $	*/
+/*	$NetBSD: roken_rename.h,v 1.1.1.2 2011/04/14 14:09:33 elric Exp $	*/
 
 /*
  * Copyright (c) 1998 - 2001 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken_rename.h,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $ */
+/* Id */
 
 #ifndef __roken_rename_h__
 #define __roken_rename_h__

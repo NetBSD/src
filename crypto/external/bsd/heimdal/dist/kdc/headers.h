@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.h,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: headers.h,v 1.1.1.2 2011/04/14 14:08:12 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -34,7 +34,7 @@
  */
 
 /*
- * $Id: headers.h,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $
+ * Id
  */
 
 #ifndef __HEADERS_H__

@@ -1,7 +1,7 @@
 \input texinfo @c -*- texinfo -*-
-@c $NetBSD: hx509.texi,v 1.1.1.1 2011/04/13 18:14:33 elric Exp $
+@c $NetBSD: hx509.texi,v 1.1.1.2 2011/04/14 14:08:08 elric Exp $
 @c %**start of header
-@c $Id: hx509.texi,v 1.1.1.1 2011/04/13 18:14:33 elric Exp $
+@c Id
 @setfilename hx509.info
 @settitle HX509
 @iftex

@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.h,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $	*/
+/*	$NetBSD: symbol.h,v 1.1.1.2 2011/04/14 14:08:22 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: symbol.h,v 1.1.1.1 2011/04/13 18:14:41 elric Exp $ */
+/* Id */
 
 #ifndef _SYMBOL_H
 #define _SYMBOL_H

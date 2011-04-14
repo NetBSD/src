@@ -1,5 +1,5 @@
 
-dnl $Id: misc.m4,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $
+dnl Id
 dnl
 AC_DEFUN([upcase],[`echo $1 | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ`])dnl
 AC_DEFUN([rk_LIBOBJ],[AC_LIBOBJ([$1])])dnl

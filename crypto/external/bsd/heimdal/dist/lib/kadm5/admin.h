@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.h,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $	*/
+/*	$NetBSD: admin.h,v 1.1.1.2 2011/04/14 14:09:16 elric Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: admin.h,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $ */
+/* Id */
 
 #ifndef __KADM5_ADMIN_H__
 #define __KADM5_ADMIN_H__

@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_netlogon.h,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $	*/
+/*	$NetBSD: gssapi_netlogon.h,v 1.1.1.2 2011/04/14 14:08:25 elric Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2009 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: gssapi_netlogon.h,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $ */
+/* Id */
 
 #ifndef GSSAPI_NETLOGON_H_
 #define GSSAPI_NETLOGON_H_

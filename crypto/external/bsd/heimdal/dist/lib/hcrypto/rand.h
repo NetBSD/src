@@ -1,4 +1,4 @@
-/*	$NetBSD: rand.h,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: rand.h,v 1.1.1.2 2011/04/14 14:08:33 elric Exp $	*/
 
 
 /*
@@ -35,7 +35,7 @@
  */
 
 /*
- * $Id: rand.h,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $
+ * Id
  */
 
 #ifndef _HEIM_RAND_H

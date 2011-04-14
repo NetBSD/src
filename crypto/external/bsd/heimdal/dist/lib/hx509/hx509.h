@@ -1,4 +1,4 @@
-/*	$NetBSD: hx509.h,v 1.1.1.1 2011/04/13 18:15:11 elric Exp $	*/
+/*	$NetBSD: hx509.h,v 1.1.1.2 2011/04/14 14:08:56 elric Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: hx509.h,v 1.1.1.1 2011/04/13 18:15:11 elric Exp $ */
+/* Id */
 
 #ifndef HEIMDAL_HX509_H
 #define HEIMDAL_HX509_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: kafs.h,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: kafs.h,v 1.1.1.2 2011/04/14 14:09:18 elric Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2001, 2003 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kafs.h,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $ */
+/* Id */
 
 #ifndef __KAFS_H
 #define __KAFS_H

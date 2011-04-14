@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc_locl.h,v 1.1.1.1 2011/04/13 18:14:37 elric Exp $	*/
+/*	$NetBSD: kdc_locl.h,v 1.1.1.2 2011/04/14 14:08:12 elric Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -34,7 +34,7 @@
  */
 
 /*
- * $Id: kdc_locl.h,v 1.1.1.1 2011/04/13 18:14:37 elric Exp $
+ * Id
  */
 
 #ifndef __KDC_LOCL_H__

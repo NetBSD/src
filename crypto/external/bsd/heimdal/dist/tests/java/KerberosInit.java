@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE. 
  *
- * $Id: KerberosInit.java,v 1.1.1.1 2011/04/13 18:16:01 elric Exp $
+ * Id
  */
 
 import javax.security.auth.login.*;

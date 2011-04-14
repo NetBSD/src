@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE. 
  */
-/* $Id: iprop-commands.in,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $ */
+/* Id */
 
 command = {
 	name = "dump"

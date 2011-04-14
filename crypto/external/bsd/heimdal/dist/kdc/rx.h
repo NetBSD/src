@@ -1,4 +1,4 @@
-/*	$NetBSD: rx.h,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $	*/
+/*	$NetBSD: rx.h,v 1.1.1.2 2011/04/14 14:08:18 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: rx.h,v 1.1.1.1 2011/04/13 18:14:38 elric Exp $ */
+/* Id */
 
 #ifndef __RX_H__
 #define __RX_H__

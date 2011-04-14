@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi.h,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $	*/
+/*	$NetBSD: gssapi.h,v 1.1.1.2 2011/04/14 14:08:25 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: gssapi.h,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $ */
+/* Id */
 
 #ifndef GSSAPI_GSSAPI_H_
 #define GSSAPI_GSSAPI_H_

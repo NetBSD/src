@@ -1,4 +1,4 @@
-/*	$NetBSD: heimntlm.h,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $	*/
+/*	$NetBSD: heimntlm.h,v 1.1.1.2 2011/04/14 14:09:27 elric Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: heimntlm.h,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $ */
+/* Id */
 
 #ifndef HEIM_NTLM_H
 #define HEIM_NTLM_H

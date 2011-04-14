@@ -3,7 +3,7 @@
 #
 # This might look like a com_err file, but is not
 #
-id "$Id: krb5_err.et,v 1.1.1.1 2011/04/13 18:15:35 elric Exp $"
+id "Id"
 
 error_table krb5
 
@@ -116,7 +116,7 @@ error_code INVALID_ITERATION_COUNT, "Invalid OTP iteration count"
 
 index 128
 prefix
-error_code KRB5_ERR_RCSID,	"$Id: krb5_err.et,v 1.1.1.1 2011/04/13 18:15:35 elric Exp $"
+error_code KRB5_ERR_RCSID,	"Id"
 
 error_code KRB5_LIBOS_BADLOCKFLAG,	"Invalid flag for file lock mode"
 error_code KRB5_LIBOS_CANTREADPWD,	"Cannot read password"

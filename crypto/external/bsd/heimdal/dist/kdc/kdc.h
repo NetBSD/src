@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc.h,v 1.1.1.1 2011/04/13 18:14:37 elric Exp $	*/
+/*	$NetBSD: kdc.h,v 1.1.1.2 2011/04/14 14:08:12 elric Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
  */
 
 /*
- * $Id: kdc.h,v 1.1.1.1 2011/04/13 18:14:37 elric Exp $
+ * Id
  */
 
 #ifndef __KDC_H__

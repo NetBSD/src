@@ -1,4 +1,4 @@
-# $Id: version-script.map,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $
+# Id
 
 HEIMDAL_NTLM_1.0 {
 	global:

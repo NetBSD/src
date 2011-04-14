@@ -431,7 +431,7 @@ msgstr ""
 #. 127
 #. 128
 #: ../lib/krb5/krb5_err.c:139
-msgid "$Id: sv_SE.po,v 1.1.1.1 2011/04/13 18:16:00 elric Exp $"
+msgid "Id"
 msgstr ""
 
 #. 129

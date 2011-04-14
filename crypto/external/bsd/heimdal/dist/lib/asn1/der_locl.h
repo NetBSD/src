@@ -1,4 +1,4 @@
-/*	$NetBSD: der_locl.h,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $	*/
+/*	$NetBSD: der_locl.h,v 1.1.1.2 2011/04/14 14:08:21 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002, 2004 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: der_locl.h,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $ */
+/* Id */
 
 #ifndef __DER_LOCL_H__
 #define __DER_LOCL_H__

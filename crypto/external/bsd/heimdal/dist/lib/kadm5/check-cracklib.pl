@@ -29,7 +29,7 @@
 #     	policies = builtin:external-check
 #     	external_program = <your-path>/check-cracklib.pl
 #
-# $Id: check-cracklib.pl,v 1.1.1.1 2011/04/13 18:15:29 elric Exp $
+# Id
 
 use strict;
 use Crypt::Cracklib;

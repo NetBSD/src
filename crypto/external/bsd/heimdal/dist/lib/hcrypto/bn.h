@@ -1,4 +1,4 @@
-/*	$NetBSD: bn.h,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: bn.h,v 1.1.1.2 2011/04/14 14:08:30 elric Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -34,7 +34,7 @@
  */
 
 /*
- * $Id: bn.h,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $
+ * Id
  */
 
 #ifndef _HEIM_BN_H

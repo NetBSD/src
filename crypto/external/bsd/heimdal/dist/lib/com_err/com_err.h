@@ -1,4 +1,4 @@
-/*	$NetBSD: com_err.h,v 1.1.1.1 2011/04/13 18:14:42 elric Exp $	*/
+/*	$NetBSD: com_err.h,v 1.1.1.2 2011/04/14 14:08:23 elric Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: com_err.h,v 1.1.1.1 2011/04/13 18:14:42 elric Exp $ */
+/* Id */
 
 /* MIT compatible com_err library */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd_dlg.h,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: passwd_dlg.h,v 1.1.1.2 2011/04/14 14:08:32 elric Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -38,7 +38,7 @@
  * Date:	June 1996
  */
 
-/* $Id: passwd_dlg.h,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $ */
+/* Id */
 
 #ifndef PASSWD_DLG_H
 #define PASSWD_DLG_H

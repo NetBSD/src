@@ -1,4 +1,4 @@
-/*	$NetBSD: rtbl.h,v 1.1.1.1 2011/04/13 18:15:43 elric Exp $	*/
+/*	$NetBSD: rtbl.h,v 1.1.1.2 2011/04/14 14:09:31 elric Exp $	*/
 
 /*
  * Copyright (c) 2000,2004 Kungliga Tekniska Högskolan
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: rtbl.h,v 1.1.1.1 2011/04/13 18:15:43 elric Exp $ */
+/* Id */
 
 #ifndef __rtbl_h__
 #define __rtbl_h__

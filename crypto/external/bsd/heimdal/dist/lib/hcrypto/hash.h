@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: hash.h,v 1.1.1.2 2011/04/14 14:08:32 elric Exp $	*/
 
 /*
  * Copyright (c) 1999 Kungliga Tekniska Högskolan
@@ -32,7 +32,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* $Id: hash.h,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $ */
+/* Id */
 
 /* stuff in common between md4, md5, and sha1 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: randi.h,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: randi.h,v 1.1.1.2 2011/04/14 14:08:33 elric Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -34,7 +34,7 @@
  */
 
 /*
- * $Id: randi.h,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $
+ * Id
  */
 
 #ifndef _HEIM_RANDI_H

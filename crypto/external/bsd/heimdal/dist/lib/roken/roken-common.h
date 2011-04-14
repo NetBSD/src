@@ -1,4 +1,4 @@
-/*	$NetBSD: roken-common.h,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: roken-common.h,v 1.1.1.2 2011/04/14 14:09:31 elric Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2005 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken-common.h,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $ */
+/* Id */
 
 #ifndef __ROKEN_COMMON_H__
 #define __ROKEN_COMMON_H__

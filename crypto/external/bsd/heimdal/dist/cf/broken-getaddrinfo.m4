@@ -1,4 +1,4 @@
-dnl $Id: broken-getaddrinfo.m4,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $
+dnl Id
 dnl
 dnl test if getaddrinfo can handle numeric services
 

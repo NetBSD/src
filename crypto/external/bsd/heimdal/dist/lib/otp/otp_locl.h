@@ -1,4 +1,4 @@
-/*	$NetBSD: otp_locl.h,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $	*/
+/*	$NetBSD: otp_locl.h,v 1.1.1.2 2011/04/14 14:09:28 elric Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: otp_locl.h,v 1.1.1.1 2011/04/13 18:15:39 elric Exp $ */
+/* Id */
 
 #include <stdio.h>
 #include <stdlib.h>
