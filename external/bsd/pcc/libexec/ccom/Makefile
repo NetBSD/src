@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2010/06/03 19:17:22 plunky Exp $
+#	$NetBSD: Makefile,v 1.7 2011/04/14 09:31:25 plunky Exp $
 
 WARNS?=	2
 
@@ -31,10 +31,12 @@ CPPFLAGS+=	-I${PCC_DIST}/cc/ccom
 
 DPSRCS=	external.c external.h
 
-external.c external.h: mkext.c table.c common.c
-	${HOST_CC} ${CFLAGS} ${CPPFLAGS} -DMKEXT -o ${.OBJDIR}/mkext ${.ALLSRC}
-	${.OBJDIR}/mkext
+MKEXTDIR!=	cd ../mkext && ${PRINTOBJDIR}
 
-CLEANFILES+=	external.c external.h mkext
+external.c external.h:	${MKEXTDIR}/mkext
+	${_MKTARGET_CREATE}
+	${MKEXTDIR}/mkext
+
+CLEANFILES+=	external.c external.h
 
 .include <bsd.prog.mk>
