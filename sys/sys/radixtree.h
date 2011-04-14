@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.h,v 1.1 2011/02/22 21:31:15 yamt Exp $	*/
+/*	$NetBSD: radixtree.h,v 1.2 2011/04/14 15:34:43 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -34,12 +34,12 @@ struct radix_tree {
 	unsigned int t_height;
 };
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/types.h>
-#else /* defined(_KERNEL) */
+#else /* defined(_KERNEL) || defined(_STANDALONE) */
 #include <stdbool.h>
 #include <stdint.h>
-#endif /* defined(_KERNEL) */
+#endif /* defined(_KERNEL) || defined(_STANDALONE) */
 
 /*
  * subsystem
