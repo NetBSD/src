@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.49 2011/04/11 19:11:08 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.50 2011/04/14 08:17:42 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -57,6 +57,7 @@ define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_STAT		offsetof(struct lwp, l_stat)
 define	L_PROC		offsetof(struct lwp, l_proc)
 define	L_CTXSWTCH	offsetof(struct lwp, l_ctxswtch)
+define	L_PRIVATE	offsetof(struct lwp, l_private)
 
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
