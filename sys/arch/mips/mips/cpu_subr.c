@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.9 2011/04/14 06:54:57 cliff Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.10 2011/04/14 15:44:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.9 2011/04/14 06:54:57 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.10 2011/04/14 15:44:39 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1006,7 +1006,8 @@ int
 cpu_lwp_setprivate(lwp_t *l, void *v)
 {
 #if (MIPS32R2 + MIPS64R2) > 0
-	if (mips_options.mips_cpu->cpu_cp0flags & MIPS_CP0FL_USERLOCAL) {
+	if (l == curlwp
+	    && (mips_options.mips_cpu->cpu_cp0flags & MIPS_CP0FL_USERLOCAL)) {
 		mipsNN_cp0_userlocal_write(v);
 	}
 #endif
