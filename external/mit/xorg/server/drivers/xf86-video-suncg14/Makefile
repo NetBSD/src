@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2010/03/14 01:13:16 macallan Exp $
+#	$NetBSD: Makefile,v 1.2 2011/04/14 16:50:05 macallan Exp $
 
 DRIVER=		xf86-video-suncg14
 DRIVER_NAME=	suncg14_drv
 
-SRCS=		cg14_driver.c
+SRCS=		cg14_driver.c cg14_cursor.c
 MAN=		suncg14.4
 
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/../include
