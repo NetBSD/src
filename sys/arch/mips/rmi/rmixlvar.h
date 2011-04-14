@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.4 2011/03/18 00:58:54 cliff Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.5 2011/04/14 05:21:22 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -164,6 +164,7 @@ extern int  rmixl_addr_error_check(void);
 
 extern uint64_t rmixl_mfcr(u_int);
 extern void rmixl_mtcr(uint64_t, u_int);
+extern void rmixl_eirr_ack(uint64_t, uint64_t, uint64_t);
 
 
 /*
