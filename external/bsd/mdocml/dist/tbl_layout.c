@@ -1,4 +1,4 @@
-/*	$Vendor-Id: tbl_layout.c,v 1.13 2011/01/09 05:38:23 joerg Exp $ */
+/*	$Vendor-Id: tbl_layout.c,v 1.18 2011/04/04 23:04:38 kristaps Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -104,7 +104,8 @@ mod:
 			(*pos)++;
 			goto mod;
 		}
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, 
+				tbl->parse, ln, *pos, NULL);
 		return(0);
 	}
 
@@ -121,12 +122,13 @@ mod:
 		/* No greater than 4 digits. */
 
 		if (4 == i) {
-			TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+			mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+					ln, *pos, NULL);
 			return(0);
 		}
 
 		*pos += i;
-		cp->spacing = atoi(buf);
+		cp->spacing = (size_t)atoi(buf);
 
 		goto mod;
 		/* NOTREACHED */
@@ -160,7 +162,8 @@ mod:
 		(*pos)--;
 		break;
 	default:
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos - 1);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+				ln, *pos - 1, NULL);
 		return(0);
 	}
 
@@ -175,7 +178,8 @@ mod:
 		break;
 	}
 
-	TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos - 1);
+	mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+			ln, *pos - 1, NULL);
 	return(0);
 }
 
@@ -193,7 +197,8 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 			break;
 
 	if (KEYS_MAX == i) {
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse, 
+				ln, *pos, NULL);
 		return(0);
 	}
 
@@ -201,11 +206,38 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 
 	/*
 	 * If a span cell is found first, raise a warning and abort the
-	 * parse.  FIXME: recover from this somehow?
+	 * parse.  If a span cell is found and the last layout element
+	 * isn't a "normal" layout, bail.
+	 *
+	 * FIXME: recover from this somehow?
 	 */
 
-	if (NULL == rp->first && TBL_CELL_SPAN == c) {
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos);
+	if (TBL_CELL_SPAN == c) {
+		if (NULL == rp->first) {
+			mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+					ln, *pos, NULL);
+			return(0);
+		} else if (rp->last)
+			switch (rp->last->pos) {
+			case (TBL_CELL_VERT):
+			case (TBL_CELL_DVERT):
+			case (TBL_CELL_HORIZ):
+			case (TBL_CELL_DHORIZ):
+				mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse,
+						ln, *pos, NULL);
+				return(0);
+			default:
+				break;
+			}
+	}
+
+	/*
+	 * If a vertical spanner is found, we may not be in the first
+	 * row.
+	 */
+
+	if (TBL_CELL_DOWN == c && rp == tbl->first_row) {
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse, ln, *pos, NULL);
 		return(0);
 	}
 
@@ -223,7 +255,7 @@ cell(struct tbl_node *tbl, struct tbl_row *rp,
 	if (rp->last && (TBL_CELL_VERT == c || TBL_CELL_DVERT == c) &&
 			(TBL_CELL_VERT == rp->last->pos || 
 			 TBL_CELL_DVERT == rp->last->pos)) {
-		TBL_MSG(tbl, MANDOCERR_TBLLAYOUT, ln, *pos - 1);
+		mandoc_msg(MANDOCERR_TBLLAYOUT, tbl->parse, ln, *pos - 1, NULL);
 		return(0);
 	}
 
@@ -264,7 +296,8 @@ cell:
 	if ('.' == p[*pos]) {
 		tbl->part = TBL_PART_DATA;
 		if (NULL == tbl->first_row) 
-			TBL_MSG(tbl, MANDOCERR_TBLNOLAYOUT, ln, *pos);
+			mandoc_msg(MANDOCERR_TBLNOLAYOUT, tbl->parse, 
+					ln, *pos, NULL);
 		(*pos)++;
 		return;
 	}
