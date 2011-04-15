@@ -1,11 +1,15 @@
 /* include/config.h.  Generated from config.h.in by configure.  */
 /* include/config.h.in.  Generated from configure.ac by autoheader.  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #ifndef RCSID
 #define RCSID(msg) \
 static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #endif
-
+ 
 /* Maximum values on all known systems */
 #define MaxHostNameLen (64+4)
 #define MaxPathLen (1024+4)
