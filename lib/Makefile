@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.165 2011/03/24 17:05:43 bouyer Exp $
+#	$NetBSD: Makefile,v 1.166 2011/04/15 18:05:44 elric Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -31,11 +31,6 @@ SUBDIR+=	libarch \
 		libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
 		librumpclient libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
-
-.if (${MKKERBEROS} != "no")
-SUBDIR+=	libcom_err
-SUBDIR+=	libvers
-.endif
 
 .if (${MKSKEY} != "no")
 SUBDIR+=	libskey
@@ -79,11 +74,6 @@ SUBDIR+=	../gnu/lib/libobjc4
 #==================== 1st library dependency barrier ====================
 SUBDIR+=	.WAIT
 
-.if (${MKKERBEROS} != "no")
-SUBDIR+=	libasn1		# depends on libcom_err
-SUBDIR+=	libroken	# depends on libutil, libcrypt
-.endif
-
 SUBDIR+=	libcurses	# depends on libterminfo
 SUBDIR+=	libdm		# depends on libprop
 SUBDIR+=	libedit		# depends on libterminfo
@@ -126,9 +116,8 @@ SUBDIR+=	.WAIT
 SUBDIR+=	libform		# depends on libcurses
 
 .if (${MKKERBEROS} != "no")
-SUBDIR+=	libhx509	# depends on libcrypto, libasn1, libroken
-SUBDIR+=	libsl		# depends on libedit, libterminfo
-SUBDIR+=	libss		# depends on libedit, libterminfo, ...
+SUBDIR+=	../crypto/external/bsd/heimdal/lib	# depends on libcrypto
+							# libedit, libterminfo,
 .endif
 
 SUBDIR+=	libmenu		# depends on libcurses
@@ -152,10 +141,6 @@ SUBDIR+=	librumphijack
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
-.if (${MKKERBEROS} != "no")
-SUBDIR+=	libkrb5		# depends on libhx509, libcrypto, libasn1, ...
-.endif
-
 SUBDIR+=	librumpdev	# depends on librump
 SUBDIR+=	librumpnet	# depends on librump
 SUBDIR+=	librumpvfs	# depends on librump
@@ -163,22 +148,10 @@ SUBDIR+=	librumpvfs	# depends on librump
 #==================== 4th library dependency barrier ====================
 SUBDIR+=	.WAIT
 
-.if (${MKKERBEROS} != "no")
-SUBDIR+=	libhdb		# depends on libkrb5, libasn1, libroken
-SUBDIR+=	libheimntlm	# depends on libkrb5, libasn1, libroken
-SUBDIR+=	libkafs		# depends on libkrb5, libroken
-.endif
-
 SUBDIR+=	libukfs		# depends on librumpvfs, librump
 
 #==================== 5th library dependency barrier ====================
 SUBDIR+=	.WAIT
-
-.if (${MKKERBEROS} != "no")
-SUBDIR+=	libgssapi	# depends on libheimntlm
-SUBDIR+=	libkadm5clnt	# depends on libhdb, libkrb5, libroken
-SUBDIR+=	libkadm5srv	# depends on libhdb, libkrb5, libroken
-.endif
 
 SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
 
