@@ -1,0 +1,132 @@
+.\"	$Vendor-Id: mandoc-db.1,v 1.1 2011/04/04 10:53:15 kristaps Exp $
+.\"
+.\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd April 4, 2011
+.Dt MANDOC-DB 1
+.Os
+.Sh NAME
+.Nm mandoc-db
+.Nd index UNIX manuals
+.Sh SYNOPSIS
+.Nm
+.Op Fl d Ar dir
+.Ar
+.Sh DESCRIPTION
+The
+.Nm
+utility extracts keywords from
+.Ux
+manuals and indexes them for fast retrieval.
+The arguments are as follows:
+.Bl -tag -width Ds
+.It Fl d Ar dir
+The directory into which to write the keyword and index databases.
+.It Ar
+Read input from zero or more files in
+.Xr mdoc 7
+or
+.Xr man 7
+.Ux
+manual format.
+.El
+.Pp
+By default,
+.Nm
+constructs the
+.Sx Index Database
+and
+.Sx Keyword Database
+in the current working directory.
+.Pp
+If fatal parse errors are encountered, the offending file is printed to
+stderr, omitted from the index, and the parse continues with the next
+input file.
+.Ss Index Database
+The index database,
+.Pa mandoc.index ,
+is a
+.Xr recno 3
+database of nil-terminated filenames (record length is non-zero string
+length plus one) passed to
+.Nm .
+Entries are sequentially-numbered, but the filenames are unordered.
+.Ss Keyword Database
+The keyword database,
+.Pa mandoc.db ,
+is a
+.Xr btree 3
+database of nil-terminated keywords (record length is non-zero string
+length plus one) mapping to a 8-byte binary field consisting of the
+keyword type and source
+.Sx Index Database
+record number.
+The type, an unsigned 32-bit integer in host order, is one of the
+following:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Li 0x01
+The name of a manual page as given in the NAME section.
+.It Li 0x02
+A function prototype name as given in the SYNOPSIS section.
+.It Li 0x03
+A utility name as given in the SYNOPSIS section.
+.It Li 0x04
+An include file as given in the SYNOPSIS section.
+.It Li 0x05
+A variable name as given in the SYNOPSIS section.
+.El
+.Pp
+If a value is encountered outside of this range, the database is
+corrupt.
+.Pp
+The latter four bytes are a host-ordered record number within the
+.Sx Index Database .
+.Pp
+The
+.Nm
+utility is
+.Ud
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa mandoc.db
+A
+.Xr btree 3
+keyword database mapping keywords to a type and file reference in
+.Pa mandoc.index .
+.It Pa mandoc.db~
+Working copy of
+.Pa mandoc.db .
+.It Pa mandoc.index
+A
+.Xr recno 3
+database of indexed file-names.
+.It Pa mandoc.index~
+Working copy of
+.Pa mandoc.index .
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh SEE ALSO
+.Xr mandoc 1
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An Kristaps Dzonsons Aq kristaps@bsd.lv .
+.Sh CAVEATS
+Only
+.Xr mdoc 7
+manuals are processed.

@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.c,v 1.36 2011/01/03 22:42:37 schwarze Exp $ */
+/*	$Vendor-Id: mandoc.c,v 1.44 2011/03/28 23:52:13 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -31,8 +31,10 @@
 #include "mandoc.h"
 #include "libmandoc.h"
 
-static	int	 a2time(time_t *, const char *, const char *);
+#define DATESIZE 32
 
+static	int	 a2time(time_t *, const char *, const char *);
+static	char	*time2a(time_t);
 
 int
 mandoc_special(char *p)
@@ -294,7 +296,7 @@ mandoc_strdup(const char *ptr)
  * or to the null byte terminating the argument line.
  */
 char *
-mandoc_getarg(char **cpp, mandocmsg msg, void *data, int ln, int *pos)
+mandoc_getarg(struct mparse *parse, char **cpp, int ln, int *pos)
 {
 	char	 *start, *cp;
 	int	  quoted, pairs, white;
@@ -341,8 +343,8 @@ mandoc_getarg(char **cpp, mandocmsg msg, void *data, int ln, int *pos)
 	}
 
 	/* Quoted argument without a closing quote. */
-	if (1 == quoted && msg)
-		(*msg)(MANDOCERR_BADQUOTE, data, ln, *pos, NULL);
+	if (1 == quoted)
+		mandoc_msg(MANDOCERR_BADQUOTE, parse, ln, *pos, NULL);
 
 	/* Null-terminate this argument and move to the next one. */
 	if (pairs)
@@ -352,15 +354,14 @@ mandoc_getarg(char **cpp, mandocmsg msg, void *data, int ln, int *pos)
 		while (' ' == *cp)
 			cp++;
 	}
-	*pos += (cp - start) + (quoted ? 1 : 0);
+	*pos += (int)(cp - start) + (quoted ? 1 : 0);
 	*cpp = cp;
 
-	if ('\0' == *cp && msg && (white || ' ' == cp[-1]))
-		(*msg)(MANDOCERR_EOLNSPACE, data, ln, *pos, NULL);
+	if ('\0' == *cp && (white || ' ' == cp[-1]))
+		mandoc_msg(MANDOCERR_EOLNSPACE, parse, ln, *pos, NULL);
 
 	return(start);
 }
-
 
 static int
 a2time(time_t *t, const char *fmt, const char *p)
@@ -379,41 +380,61 @@ a2time(time_t *t, const char *fmt, const char *p)
 	return(0);
 }
 
-
-/*
- * Convert from a manual date string (see mdoc(7) and man(7)) into a
- * date according to the stipulated date type.
- */
-time_t
-mandoc_a2time(int flags, const char *p)
+static char *
+time2a(time_t t)
 {
-	time_t		 t;
+	struct tm	 tm;
+	char		*buf, *p;
+	size_t		 ssz;
+	int		 isz;
 
-	if (MTIME_MDOCDATE & flags) {
-		if (0 == strcmp(p, "$" "Mdocdate$"))
-			return(time(NULL));
-		if (a2time(&t, "$" "Mdocdate: %b %d %Y $", p))
-			return(t);
-	}
+	localtime_r(&t, &tm);
 
-	if (MTIME_CANONICAL & flags || MTIME_REDUCED & flags) 
-		if (a2time(&t, "%b %d, %Y", p))
-			return(t);
+	/*
+	 * Reserve space:
+	 * up to 9 characters for the month (September) + blank
+	 * up to 2 characters for the day + comma + blank
+	 * 4 characters for the year and a terminating '\0'
+	 */
+	p = buf = mandoc_malloc(10 + 4 + 4 + 1);
 
-	if (MTIME_ISO_8601 & flags) 
-		if (a2time(&t, "%Y-%m-%d", p))
-			return(t);
+	if (0 == (ssz = strftime(p, 10 + 1, "%B ", &tm)))
+		goto fail;
+	p += (int)ssz;
 
-	if (MTIME_REDUCED & flags) {
-		if (a2time(&t, "%d, %Y", p))
-			return(t);
-		if (a2time(&t, "%Y", p))
-			return(t);
-	}
+	if (-1 == (isz = snprintf(p, 4 + 1, "%d, ", tm.tm_mday)))
+		goto fail;
+	p += isz;
 
-	return(0);
+	if (0 == strftime(p, 4 + 1, "%Y", &tm))
+		goto fail;
+	return(buf);
+
+fail:
+	free(buf);
+	return(NULL);
 }
 
+char *
+mandoc_normdate(struct mparse *parse, char *in, int ln, int pos)
+{
+	char		*out;
+	time_t		 t;
+
+	if (NULL == in || '\0' == *in ||
+	    0 == strcmp(in, "$" "Mdocdate$")) {
+		mandoc_msg(MANDOCERR_NODATE, parse, ln, pos, NULL);
+		time(&t);
+	}
+	else if (!a2time(&t, "$" "Mdocdate: %b %d %Y $", in) &&
+	    !a2time(&t, "%b %d, %Y", in) &&
+	    !a2time(&t, "%Y-%m-%d", in)) {
+		mandoc_msg(MANDOCERR_BADDATE, parse, ln, pos, NULL);
+		t = 0;
+	}
+	out = t ? time2a(t) : NULL;
+	return(out ? out : mandoc_strdup(in));
+}
 
 int
 mandoc_eos(const char *p, size_t sz, int enclosed)
@@ -458,7 +479,6 @@ mandoc_eos(const char *p, size_t sz, int enclosed)
 	return(found && !enclosed);
 }
 
-
 int
 mandoc_hyph(const char *start, const char *c)
 {
@@ -483,5 +503,31 @@ mandoc_hyph(const char *start, const char *c)
 	if ('\\' == *(c - 1))
 		return(0);
 
+	return(1);
+}
+
+/*
+ * Find out whether a line is a macro line or not.  If it is, adjust the
+ * current position and return one; if it isn't, return zero and don't
+ * change the current position.
+ */
+int
+mandoc_getcontrol(const char *cp, int *ppos)
+{
+	int		pos;
+
+	pos = *ppos;
+
+	if ('\\' == cp[pos] && '.' == cp[pos + 1])
+		pos += 2;
+	else if ('.' == cp[pos] || '\'' == cp[pos])
+		pos++;
+	else
+		return(0);
+
+	while (' ' == cp[pos] || '\t' == cp[pos])
+		pos++;
+
+	*ppos = pos;
 	return(1);
 }

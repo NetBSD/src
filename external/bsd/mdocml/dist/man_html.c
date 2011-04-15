@@ -1,6 +1,6 @@
-/*	$Vendor-Id: man_html.c,v 1.62 2011/01/07 13:20:58 kristaps Exp $ */
+/*	$Vendor-Id: man_html.c,v 1.70 2011/03/07 01:35:51 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -67,7 +67,7 @@ static	int		  man_ign_pre(MAN_ARGS);
 static	int		  man_in_pre(MAN_ARGS);
 static	int		  man_literal_pre(MAN_ARGS);
 static	void		  man_root_post(MAN_ARGS);
-static	int		  man_root_pre(MAN_ARGS);
+static	void		  man_root_pre(MAN_ARGS);
 static	int		  man_B_pre(MAN_ARGS);
 static	int		  man_HP_pre(MAN_ARGS);
 static	int		  man_I_pre(MAN_ARGS);
@@ -100,7 +100,7 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_I_pre, NULL }, /* I */
 	{ man_alt_pre, NULL }, /* IR */
 	{ man_alt_pre, NULL }, /* RI */
-	{ NULL, NULL }, /* na */
+	{ man_ign_pre, NULL }, /* na */
 	{ man_br_pre, NULL }, /* sp */
 	{ man_literal_pre, NULL }, /* nf */
 	{ man_literal_pre, NULL }, /* fi */
@@ -180,39 +180,73 @@ print_man_node(MAN_ARGS)
 {
 	int		 child;
 	struct tag	*t;
+	struct htmlpair	 tag;
 
 	child = 1;
 	t = h->tags.head;
-
 	bufinit(h);
-
-	/*
-	 * FIXME: embedded elements within next-line scopes (e.g., `br'
-	 * within an empty `B') will cause formatting to be forgotten
-	 * due to scope closing out.
-	 */
 
 	switch (n->type) {
 	case (MAN_ROOT):
-		child = man_root_pre(m, n, mh, h);
+		man_root_pre(m, n, mh, h);
 		break;
 	case (MAN_TEXT):
+		/*
+		 * If we have a blank line, output a vertical space.
+		 * If we have a space as the first character, break
+		 * before printing the line's data.
+		 */
+		if ('\0' == *n->string) {
+			print_otag(h, TAG_P, 0, NULL);
+			return;
+		} else if (' ' == *n->string && MAN_LINE & n->flags)
+			print_otag(h, TAG_BR, 0, NULL);
+
 		print_text(h, n->string);
-		if (MANH_LITERAL & mh->fl)
+
+		/*
+		 * If we're in a literal context, make sure that words
+		 * togehter on the same line stay together.  This is a
+		 * POST-printing call, so we check the NEXT word.  Since
+		 * -man doesn't have nested macros, we don't need to be
+		 * more specific than this.
+		 */
+		if (MANH_LITERAL & mh->fl &&
+				(NULL == n->next ||
+				 n->next->line > n->line))
 			print_otag(h, TAG_BR, 0, NULL);
 		return;
-	case (MAN_TBL):
-		print_tbl(h, n->span);
+	case (MAN_EQN):
+		PAIR_CLASS_INIT(&tag, "eqn");
+		print_otag(h, TAG_SPAN, 1, &tag);
+		print_text(h, n->eqn->data);
 		break;
+	case (MAN_TBL):
+		/*
+		 * This will take care of initialising all of the table
+		 * state data for the first table, then tearing it down
+		 * for the last one.
+		 */
+		print_tbl(h, n->span);
+		return;
 	default:
 		/* 
 		 * Close out scope of font prior to opening a macro
-		 * scope.  Assert that the metafont is on the top of the
-		 * stack (it's never nested).
+		 * scope.
 		 */
 		if (HTMLFONT_NONE != h->metac) {
 			h->metal = h->metac;
 			h->metac = HTMLFONT_NONE;
+		}
+
+		/*
+		 * Close out the current table, if it's open, and unset
+		 * the "meta" table state.  This will be reopened on the
+		 * next table element.
+		 */
+		if (h->tblt) {
+			print_tblclose(h);
+			t = h->tags.head;
 		}
 		if (mans[n->tok].pre)
 			child = (*mans[n->tok].pre)(m, n, mh, h);
@@ -231,7 +265,7 @@ print_man_node(MAN_ARGS)
 	case (MAN_ROOT):
 		man_root_post(m, n, mh, h);
 		break;
-	case (MAN_TBL):
+	case (MAN_EQN):
 		break;
 	default:
 		if (mans[n->tok].post)
@@ -255,7 +289,7 @@ a2width(const struct man_node *n, struct roffsu *su)
 
 
 /* ARGSUSED */
-static int
+static void
 man_root_pre(MAN_ARGS)
 {
 	struct htmlpair	 tag[3];
@@ -309,7 +343,6 @@ man_root_pre(MAN_ARGS)
 
 	print_text(h, title);
 	print_tagq(h, t);
-	return(1);
 }
 
 
@@ -319,12 +352,6 @@ man_root_post(MAN_ARGS)
 {
 	struct htmlpair	 tag[3];
 	struct tag	*t, *tt;
-	char		 b[DATESIZ];
-
-	if (m->rawdate)
-		strlcpy(b, m->rawdate, DATESIZ);
-	else
-		time2a(m->date, b, DATESIZ);
 
 	PAIR_SUMMARY_INIT(&tag[0], "Document Footer");
 	PAIR_CLASS_INIT(&tag[1], "foot");
@@ -342,7 +369,7 @@ man_root_post(MAN_ARGS)
 	PAIR_CLASS_INIT(&tag[0], "foot-date");
 	print_otag(h, TAG_TD, 1, tag);
 
-	print_text(h, b);
+	print_text(h, m->date);
 	print_stagq(h, tt);
 
 	PAIR_CLASS_INIT(&tag[0], "foot-os");
@@ -638,7 +665,7 @@ man_literal_pre(MAN_ARGS)
 	} else
 		mh->fl &= ~MANH_LITERAL;
 
-	return(1);
+	return(0);
 }
 
 

@@ -1,7 +1,7 @@
-/*	$Vendor-Id: term.c,v 1.176 2011/01/04 13:14:26 kristaps Exp $ */
+/*	$Vendor-Id: term.c,v 1.183 2011/04/04 21:14:12 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,7 +29,6 @@
 #include <string.h>
 
 #include "mandoc.h"
-#include "chars.h"
 #include "out.h"
 #include "term.h"
 #include "main.h"
@@ -80,12 +79,7 @@ term_alloc(enum termenc enc)
 {
 	struct termp	*p;
 
-	p = calloc(1, sizeof(struct termp));
-	if (NULL == p) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
-
+	p = mandoc_calloc(1, sizeof(struct termp));
 	p->enc = enc;
 	return(p);
 }
@@ -353,6 +347,17 @@ term_vspace(struct termp *p)
 
 
 static void
+numbered(struct termp *p, const char *word, size_t len)
+{
+	const char	*rhs;
+
+	rhs = chars_num2char(word, len);
+	if (rhs) 
+		encode(p, rhs, 1);
+}
+
+
+static void
 spec(struct termp *p, enum roffdeco d, const char *word, size_t len)
 {
 	const char	*rhs;
@@ -451,35 +456,9 @@ term_fontpop(struct termp *p)
 void
 term_word(struct termp *p, const char *word)
 {
-	const char	*sv, *seq;
+	const char	*seq;
 	size_t		 ssz;
 	enum roffdeco	 deco;
-
-	sv = word;
-
-	if (word[0] && '\0' == word[1])
-		switch (word[0]) {
-		case('.'):
-			/* FALLTHROUGH */
-		case(','):
-			/* FALLTHROUGH */
-		case(';'):
-			/* FALLTHROUGH */
-		case(':'):
-			/* FALLTHROUGH */
-		case('?'):
-			/* FALLTHROUGH */
-		case('!'):
-			/* FALLTHROUGH */
-		case(')'):
-			/* FALLTHROUGH */
-		case(']'):
-			if ( ! (TERMP_IGNDELIM & p->flags))
-				p->flags |= TERMP_NOSPACE;
-			break;
-		default:
-			break;
-		}
 
 	if ( ! (TERMP_NOSPACE & p->flags)) {
 		if ( ! (TERMP_KEEP & p->flags)) {
@@ -503,7 +482,7 @@ term_word(struct termp *p, const char *word)
 		if ((ssz = strcspn(word, "\\")) > 0)
 			encode(p, word, ssz);
 
-		word += ssz;
+		word += (int)ssz;
 		if ('\\' != *word)
 			continue;
 
@@ -511,6 +490,9 @@ term_word(struct termp *p, const char *word)
 		word += a2roffdeco(&deco, &seq, &ssz);
 
 		switch (deco) {
+		case (DECO_NUMBERED):
+			numbered(p, seq, ssz);
+			break;
 		case (DECO_RESERVED):
 			res(p, seq, ssz);
 			break;
@@ -538,21 +520,6 @@ term_word(struct termp *p, const char *word)
 		if (DECO_NOSPACE == deco && '\0' == *word)
 			p->flags |= TERMP_NOSPACE;
 	}
-
-	/* 
-	 * Note that we don't process the pipe: the parser sees it as
-	 * punctuation, but we don't in terms of typography.
-	 */
-	if (sv[0] && '\0' == sv[1])
-		switch (sv[0]) {
-		case('('):
-			/* FALLTHROUGH */
-		case('['):
-			p->flags |= TERMP_NOSPACE;
-			break;
-		default:
-			break;
-		}
 }
 
 
@@ -565,11 +532,7 @@ adjbuf(struct termp *p, size_t sz)
 	while (sz >= p->maxcols)
 		p->maxcols <<= 2;
 
-	p->buf = realloc(p->buf, p->maxcols);
-	if (NULL == p->buf) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	p->buf = mandoc_realloc(p->buf, p->maxcols);
 }
 
 

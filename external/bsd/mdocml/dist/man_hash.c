@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_hash.c,v 1.23 2010/07/31 23:52:58 schwarze Exp $ */
+/*	$Vendor-Id: man_hash.c,v 1.24 2011/03/22 14:33:05 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "man.h"
 #include "mandoc.h"
 #include "libman.h"
 
