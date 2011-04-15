@@ -291,7 +291,11 @@ mini_inetd (int, rk_socket_t *);
 
 
 
+#ifdef HAVE_NBTOOL_CONFIG_H
+#define rk_random() 0
+#else
 #define rk_random() arc4random()
+#endif
 
 
 
