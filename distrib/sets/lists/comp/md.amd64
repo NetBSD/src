@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.105 2011/03/30 19:57:15 roy Exp $
+# $NetBSD: md.amd64,v 1.106 2011/04/15 13:42:22 joerg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -67,7 +67,12 @@
 ./usr/include/amd64/varargs.h			comp-c-include
 ./usr/include/amd64/vmparam.h			comp-c-include
 ./usr/include/amd64/wchar_limits.h		comp-c-include
-./usr/include/emmintrin.h			comp-c-include		gcccmds
+./usr/include/emmintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-4.1/emmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/mm_malloc.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/mmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/pmmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/xmmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/ansi.h			comp-c-include
 ./usr/include/i386/aout_machdep.h		comp-c-include
@@ -139,9 +144,9 @@
 ./usr/include/i386/vmparam.h			comp-c-include
 ./usr/include/i386/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
-./usr/include/mm_malloc.h			comp-c-include		gcccmds,gcc=4
-./usr/include/mmintrin.h			comp-c-include		gcccmds
-./usr/include/pmmintrin.h			comp-c-include		gcccmds,gcc=4
+./usr/include/mm_malloc.h			comp-obsolete		obsolete
+./usr/include/mmintrin.h			comp-obsolete		obsolete
+./usr/include/pmmintrin.h			comp-obsolete		obsolete
 ./usr/include/x64_64				comp-obsolete		obsolete
 ./usr/include/x64_64/ansi.h			comp-obsolete		obsolete
 ./usr/include/x64_64/aout_machdep.h		comp-obsolete		obsolete
@@ -232,7 +237,7 @@
 ./usr/include/xen				comp-c-include
 ./usr/include/xen/xenio.h			comp-c-include
 ./usr/include/xen/xenio3.h			comp-c-include
-./usr/include/xmmintrin.h			comp-c-include		gcccmds
+./usr/include/xmmintrin.h			comp-obsolete		obsolete
 ./usr/lib/i386/crt0.o				comp-c-lib		compat
 ./usr/lib/i386/crtbegin.o			comp-c-lib		compat
 ./usr/lib/i386/crtbeginS.o			comp-c-lib		compat,pic

@@ -60,7 +60,7 @@ Boston, MA 02110-1301, USA.  */
 #define GPLUSPLUS_BACKWARD_INCLUDE_DIR "/usr/include/g++/backward"
 
 #undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include"
+#define GCC_INCLUDE_DIR "/usr/include/gcc-4.1"
 
 #undef INCLUDE_DEFAULTS
 #define INCLUDE_DEFAULTS				\
@@ -68,6 +68,7 @@ Boston, MA 02110-1301, USA.  */
     { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1, 1 },		\
     { GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1, 1 },	\
     { GCC_INCLUDE_DIR, "GCC", 0, 0, 1 },		\
+    { "/usr/include", "GCC", 0, 0, 1 },			\
     { 0, 0, 0, 0 }					\
   }
 

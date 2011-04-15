@@ -1,5 +1,10 @@
-# $NetBSD: md.i386,v 1.115 2010/12/20 04:29:29 christos Exp $
-./usr/include/emmintrin.h			comp-c-include		gcccmds
+# $NetBSD: md.i386,v 1.116 2011/04/15 13:42:22 joerg Exp $
+./usr/include/emmintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-4.1/emmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/mmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/mm_malloc.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/pmmintrin.h		comp-c-include		gcccmds,gcc=4
+./usr/include/gcc-4.1/xmmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
 ./usr/include/i386/ansi.h			comp-c-include
@@ -79,10 +84,10 @@
 ./usr/include/i386/vmparam.h			comp-c-include
 ./usr/include/i386/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
-./usr/include/mmintrin.h			comp-c-include		gcccmds
-./usr/include/mm_malloc.h			comp-c-include		gcccmds,gcc=4
+./usr/include/mmintrin.h			comp-obsolete		obsolete
+./usr/include/mm_malloc.h			comp-obsolete		obsolete
 ./usr/include/pmc.h				comp-c-include
-./usr/include/pmmintrin.h			comp-c-include		gcccmds,gcc=4
+./usr/include/pmmintrin.h			comp-obsolete		obsolete
 ./usr/include/x86				comp-c-include
 ./usr/include/x86/aout_machdep.h		comp-c-include
 ./usr/include/x86/autoconf.h			comp-obsolete		obsolete
@@ -114,7 +119,7 @@
 ./usr/include/xen				comp-c-include
 ./usr/include/xen/xenio.h			comp-c-include
 ./usr/include/xen/xenio3.h			comp-c-include
-./usr/include/xmmintrin.h			comp-c-include		gcccmds
+./usr/include/xmmintrin.h			comp-obsolete		obsolete
 ./usr/lib/libi386.a				comp-c-lib
 ./usr/lib/libi386_g.a				-unknown-		debuglib
 ./usr/lib/libi386_p.a				comp-c-proflib		profile
