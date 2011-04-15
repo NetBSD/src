@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.929 2011/04/15 13:42:22 joerg Exp $
+# $NetBSD: mi,v 1.930 2011/04/15 18:05:42 elric Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -395,7 +395,7 @@
 ./usr/bin/colrm					base-util-bin
 ./usr/bin/column				base-util-bin
 ./usr/bin/comm					base-util-bin
-./usr/bin/compile_et				base-krb5-bin		kerberos
+./usr/bin/compile_et				base-obsolete		obsolete
 ./usr/bin/compress				base-util-bin
 ./usr/bin/cpio					base-util-bin
 ./usr/bin/cpp					base-util-bin		gcccmds
@@ -419,7 +419,8 @@
 ./usr/bin/error					base-util-bin
 ./usr/bin/ex					base-util-bin
 ./usr/bin/expand				base-util-bin
-./usr/bin/gss					base-krb5-bin		kerberos
+./usr/bin/gss					base-obsolete		obsolete
+./usr/bin/gsstool				base-krb5-bin		kerberos
 ./usr/bin/false					base-util-bin
 ./usr/bin/fgrep					base-util-bin
 ./usr/bin/file					base-util-bin
@@ -465,6 +466,7 @@
 ./usr/bin/ipcs					base-util-bin
 ./usr/bin/join					base-util-bin
 ./usr/bin/jot					base-util-bin
+./usr/bin/kcc					base-krb5-bin		kerberos
 ./usr/bin/kdestroy				base-krb5-bin		kerberos
 ./usr/bin/kdump					base-debug-bin
 ./usr/bin/kf					base-obsolete		obsolete
@@ -523,7 +525,7 @@
 ./usr/bin/mesg					base-util-bin
 ./usr/bin/midiplay				base-audio-bin
 ./usr/bin/mixerctl				base-audio-bin
-./usr/bin/mk_cmds				base-krb5-bin		kerberos
+./usr/bin/mk_cmds				base-obsolete		obsolete
 ./usr/bin/mkcsmapper				base-util-bin
 ./usr/bin/mkdep					base-c-bin
 ./usr/bin/mkesdb				base-util-bin
@@ -976,6 +978,7 @@
 ./usr/libexec/ching				base-games-usr
 ./usr/libexec/comsat				base-mail-bin
 ./usr/libexec/cpp0				base-obsolete		obsolete
+./usr/libexec/digest-service			base-krb5-bin		kerberos
 ./usr/libexec/dnskeygen				base-obsolete		obsolete
 ./usr/libexec/fingerd				base-netutil-bin
 ./usr/libexec/ftp-proxy				base-obsolete		obsolete
