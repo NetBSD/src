@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-serv-krb5.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: gss-serv-krb5.c,v 1.3 2011/04/15 14:51:22 elric Exp $	*/
 /* $OpenBSD: gss-serv-krb5.c,v 1.7 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv-krb5.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: gss-serv-krb5.c,v 1.3 2011/04/15 14:51:22 elric Exp $");
 #ifdef GSSAPI
 #ifdef KRB5
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: gss-serv-krb5.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 extern ServerOptions options;
 
 #ifdef HEIMDAL
-# include <krb5.h>
+# include <gssapi/gssapi_krb5.h>
 #else
 # ifdef HAVE_GSSAPI_KRB5_H
 #  include <gssapi_krb5.h>
