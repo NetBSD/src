@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.72 2010/07/07 01:30:33 chs Exp $
+	$NetBSD: syscalls.master,v 1.73 2011/04/15 13:04:52 he Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -734,8 +734,8 @@
 484	UNIMPL		signalfd4
 485	UNIMPL		eventfd2
 486	UNIMPL		epoll_create1
-487	UNIMPL		dup3
-488	UNIMPL		pipe2
+487	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
+488	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
 489	UNIMPL		inotify_init1
 490	UNIMPL		preadv
 491	UNIMPL		pwritev
