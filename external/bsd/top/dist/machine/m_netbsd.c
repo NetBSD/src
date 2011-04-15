@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.14 2010/05/31 18:14:59 rmind Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.15 2011/04/15 02:05:53 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.14 2010/05/31 18:14:59 rmind Exp $
+ * $Id: m_netbsd.c,v 1.15 2011/04/15 02:05:53 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.14 2010/05/31 18:14:59 rmind Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.15 2011/04/15 02:05:53 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -105,14 +105,14 @@ static char Proc_header[] =
 /* 0123456   -- field to fill in starts at header+6 */
 #define PROC_UNAME_START 6
 #define Proc_format \
-	"%5d %-8.8s %3d %4d%7s %5s %-8.8s%7s %5.*f%% %5.*f%% %.12s"
+	"%5d %-8.8s %3d %4d%7s %5s %-8.8s%7s %5.*f%% %5.*f%% %s"
 
 static char Thread_header[] =
-  "  PID   LID X        PRI STATE      TIME   WCPU    CPU COMMAND      NAME";
+  "  PID   LID X        PRI STATE      TIME   WCPU    CPU NAME      COMMAND";
 /* 0123456   -- field to fill in starts at header+6 */
 #define THREAD_UNAME_START 12
 #define Thread_format \
-        "%5d %5d %-8.8s %3d %-8.8s%7s %5.2f%% %5.2f%% %-12.12s %.12s"
+        "%5d %5d %-8.8s %3d %-8.8s%7s %5.2f%% %5.2f%% %-9.9s %s"
 
 /* 
  * Process state names for the "STATE" column of the display.
@@ -939,8 +939,8 @@ format_next_lwp(caddr_t handle, char *(*get_userid)(int))
 	    format_time(cputime),
 	    100.0 * weighted_cpu(l_, pct, pl),
 	    100.0 * pct,
-	    get_command(hp->sel, pp),
-	    printable(pl->l_name));
+	    printable(pl->l_name),
+	    get_command(hp->sel, pp));
 
 	/* return the result */
 	return(fmt);
