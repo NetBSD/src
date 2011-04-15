@@ -1,5 +1,5 @@
 /* krb5-types.h -- this file was generated for x86_64-unknown-netbsd5.99.41 by
-                   $Id: krb5-types.h,v 1.1 2011/04/13 19:03:58 elric Exp $ */
+                   $Id: krb5-types.h,v 1.2 2011/04/15 12:18:22 elric Exp $ */
 
 #ifndef __krb5_types_h__
 #define __krb5_types_h__
@@ -14,6 +14,8 @@ typedef socklen_t krb5_socklen_t;
 typedef ssize_t krb5_ssize_t;
 
 typedef int krb5_socket_t;
+
+#define HEIMDAL_DEPRECATED
 
 #ifndef HEIMDAL_DEPRECATED
 #if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))
