@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:49 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/04/15 19:41:11 elric Exp $
 
 NOMAN=		# defined
 
@@ -47,7 +47,7 @@ print_version.h: make-print-version
 
 CLEANFILES+=	print_version.h make-print-version make-print-version.lo
 
-.BEGIN:
+beforedepend:
 	[ -h krb5 ] || ln -sf . krb5
 	ln -sf ${HEIMBASE}/include/roken.h
 	ln -sf ${HEIMBASE}/dist/lib/roken/roken-common.h
