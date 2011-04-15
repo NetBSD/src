@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.46 2011/04/13 03:32:28 mrg Exp $ */
+/*	$NetBSD: db_trace.c,v 1.47 2011/04/15 08:43:12 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.46 2011/04/13 03:32:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.47 2011/04/15 08:43:12 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -120,7 +120,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 #else
 				(*pr)("no proc_find_raw() in crash\n");
 				return;
-				
 #endif
 			}
 			(*pr)("lid %d ", l->l_lid);
