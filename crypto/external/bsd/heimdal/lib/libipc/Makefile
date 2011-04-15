@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:52 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/04/15 20:56:51 elric Exp $
 
 NOLINT=		# defined
 
@@ -12,11 +12,11 @@ LIB=		ipc
 LIBDPLIBS+=	util ${NETBSDSRCDIR}/lib/libutil \
 		crypt ${NETBSDSRCDIR}/lib/libcrypt
 
-INSTALL=/usr/bin/true
-
 SRCS= common.c client.c server.c
 
 HOST_CPPFLAGS+=	-I${HEIMBASE}/include -DHAVE_CONFIG_H
+
+libinstall::
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>
