@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.106 2011/04/15 13:42:22 joerg Exp $
+# $NetBSD: md.amd64,v 1.107 2011/04/15 18:05:43 elric Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -533,6 +533,11 @@
 ./usr/lib/i386/libhdb_g.a			comp-c-proflib		compat,debuglib,kerberos
 ./usr/lib/i386/libhdb_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/i386/libhdb_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libheimbase.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libheimbase.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libheimbase_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libheimbase_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libheimbase_pic.a		comp-c-proflib		compat,pic,kerberos
 ./usr/lib/i386/libheimntlm.a			comp-c-lib		compat,kerberos
 ./usr/lib/i386/libheimntlm.so			comp-sys-shlib		compat,pic,kerberos
 ./usr/lib/i386/libheimntlm_g.a			comp-c-proflib		compat,debuglib,kerberos
@@ -602,6 +607,11 @@
 ./usr/lib/i386/libkafs_g.a			comp-c-proflib		compat,debuglib,kerberos
 ./usr/lib/i386/libkafs_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/i386/libkafs_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libkdc.a				comp-c-lib		compat,kerberos
+./usr/lib/i386/libkdc.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libkdc_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libkdc_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libkdc_pic.a			comp-c-proflib		compat,pic,kerberos
 ./usr/lib/i386/libkrb5.a			comp-c-lib		compat,kerberos
 ./usr/lib/i386/libkrb5.so			comp-sys-shlib		compat,pic,kerberos
 ./usr/lib/i386/libkrb5_g.a			comp-c-proflib		compat,debuglib,kerberos
@@ -835,11 +845,11 @@
 ./usr/lib/i386/libsl_g.a			comp-c-proflib		compat,debuglib,kerberos
 ./usr/lib/i386/libsl_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/i386/libsl_pic.a			comp-c-piclib		compat,pic,kerberos
-./usr/lib/i386/libss.a				comp-c-lib		compat,kerberos
-./usr/lib/i386/libss.so				comp-sys-shlib		compat,pic,kerberos
-./usr/lib/i386/libss_g.a			comp-c-proflib		compat,debuglib,kerberos
-./usr/lib/i386/libss_p.a			comp-c-proflib		compat,profile,kerberos
-./usr/lib/i386/libss_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/i386/libss.a				comp-obsolete		obsolete
+./usr/lib/i386/libss.so				comp-obsolete		obsolete
+./usr/lib/i386/libss_g.a			comp-obsolete		obsolete
+./usr/lib/i386/libss_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libss_pic.a			comp-obsolete		obsolete
 ./usr/lib/i386/libssh.a				comp-c-lib		compat
 ./usr/lib/i386/libssh.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libssh_g.a			comp-c-proflib		compat,debuglib
@@ -891,6 +901,11 @@
 ./usr/lib/i386/libvers_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libvers_p.a			comp-obsolete		obsolete
 ./usr/lib/i386/libvers_pic.a			comp-obsolete		obsolete
+./usr/lib/i386/libwind.a			comp-c-lib		compat,kerberos
+./usr/lib/i386/libwind.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/i386/libwind_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/i386/libwind_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/i386/libwind_pic.a			comp-c-piclib		compat,pic,kerberos
 ./usr/lib/i386/libwrap.a			comp-c-lib		compat
 ./usr/lib/i386/libwrap.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libwrap_g.a			comp-c-proflib		compat,debuglib
