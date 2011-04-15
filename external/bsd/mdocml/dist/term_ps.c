@@ -1,4 +1,4 @@
-/*	$Vendor-Id: term_ps.c,v 1.45 2010/09/27 23:03:44 schwarze Exp $ */
+/*	$Vendor-Id: term_ps.c,v 1.48 2011/03/17 08:49:34 kristaps Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -366,14 +366,9 @@ ps_growbuf(struct termp *p, size_t sz)
 
 	p->engine.ps.psmargsz += sz;
 
-	p->engine.ps.psmarg = realloc
+	p->engine.ps.psmarg = mandoc_realloc
 		(p->engine.ps.psmarg,
 		 p->engine.ps.psmargsz);
-	
-	if (NULL == p->engine.ps.psmarg) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
 }
 
 static	double		  ps_hspan(const struct termp *,
@@ -428,8 +423,7 @@ pspdf_alloc(char *outopts)
 	const char	*pp;
 	char		*v;
 
-	if (NULL == (p = term_alloc(TERMENC_ASCII)))
-		return(NULL);
+	p = term_alloc(TERMENC_ASCII);
 
 	p->advance = ps_advance;
 	p->begin = ps_begin;
@@ -789,7 +783,6 @@ ps_begin(struct termp *p)
 
 	if (TERMTYPE_PS == p->type) {
 		ps_printf(p, "%%!PS-Adobe-3.0\n");
-		ps_printf(p, "%%%%Creator: mandoc-%s\n", VERSION);
 		ps_printf(p, "%%%%CreationDate: %s", ctime(&t));
 		ps_printf(p, "%%%%DocumentData: Clean7Bit\n");
 		ps_printf(p, "%%%%Orientation: Portrait\n");
@@ -809,7 +802,6 @@ ps_begin(struct termp *p)
 		ps_printf(p, "%%PDF-1.1\n");
 		pdf_obj(p, 1);
 		ps_printf(p, "<<\n");
-		ps_printf(p, "/Creator mandoc-%s\n", VERSION);
 		ps_printf(p, ">>\n");
 		ps_printf(p, "endobj\n");
 

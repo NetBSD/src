@@ -1,4 +1,4 @@
-/* $Vendor-Id: example.style.css,v 1.41 2011/01/05 13:00:11 kristaps Exp $ */
+/* $Vendor-Id: example.style.css,v 1.42 2011/02/09 09:52:47 kristaps Exp $ */
 
 /*
  * This is an example style-sheet provided for mandoc(1) and the -Thtml
@@ -140,6 +140,10 @@ li.list-item	{ }
 
 ol.list-enum	{ padding-left: 2em; }
 li.list-enum	{ }
+
+/* Equation modes.  See eqn(7). */
+
+span.eqn	{ }
 
 /* Table modes.  See tbl(7). */
 
