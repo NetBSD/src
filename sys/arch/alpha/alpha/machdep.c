@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.331 2011/04/15 20:52:36 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.332 2011/04/15 21:24:00 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.331 2011/04/15 20:52:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.332 2011/04/15 21:24:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -870,9 +870,9 @@ cpu_startup(void)
 	/*
 	 * Initialize some trap event counters.
 	 */
-	evcnt_attach_dynamic(&fpevent_use, EVCNT_TYPE_MISC, NULL,
+	evcnt_attach_dynamic_nozero(&fpevent_use, EVCNT_TYPE_MISC, NULL,
 	    "FP", "proc use");
-	evcnt_attach_dynamic(&fpevent_reuse, EVCNT_TYPE_MISC, NULL,
+	evcnt_attach_dynamic_nozero(&fpevent_reuse, EVCNT_TYPE_MISC, NULL,
 	    "FP", "proc re-use");
 }
 
