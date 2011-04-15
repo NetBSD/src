@@ -1,5 +1,4 @@
-/* krb5-types.h -- this file was generated for x86_64-unknown-netbsd5.99.41 by
-                   $Id: krb5-types.h,v 1.2 2011/04/15 12:18:22 elric Exp $ */
+/*	$NetBSD: krb5-types.h,v 1.3 2011/04/15 12:19:20 elric Exp $	*/
 
 #ifndef __krb5_types_h__
 #define __krb5_types_h__
