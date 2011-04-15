@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.42 2011/02/06 23:25:17 jmcneill Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.43 2011/04/15 21:47:39 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.42 2011/02/06 23:25:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.43 2011/04/15 21:47:39 dyoung Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 8
 
@@ -464,7 +464,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 	/* enable memory and IO access */
 	screg = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
-	screg |= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	screg |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
 	pci_conf_write(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG, screg);
 
 	/*
