@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_hash.c,v 1.16 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_hash.c,v 1.17 2011/03/22 14:33:05 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "mdoc.h"
 #include "mandoc.h"
 #include "libmdoc.h"
 

@@ -1,6 +1,7 @@
-/*	$Vendor-Id: html.c,v 1.124 2010/12/27 21:41:05 schwarze Exp $ */
+/*	$Vendor-Id: html.c,v 1.131 2011/03/22 14:05:45 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,7 +32,6 @@
 
 #include "mandoc.h"
 #include "out.h"
-#include "chars.h"
 #include "html.h"
 #include "main.h"
 
@@ -90,8 +90,10 @@ static	const char	*const htmlattrs[ATTR_MAX] = {
 	"id", /* ATTR_ID */
 	"summary", /* ATTR_SUMMARY */
 	"align", /* ATTR_ALIGN */
+	"colspan", /* ATTR_COLSPAN */
 };
 
+static	void		  print_num(struct html *, const char *, size_t);
 static	void		  print_spec(struct html *, enum roffdeco,
 				const char *, size_t);
 static	void		  print_res(struct html *, const char *, size_t);
@@ -117,11 +119,7 @@ ml_alloc(char *outopts, enum htmltype type)
 	toks[2] = "includes";
 	toks[3] = NULL;
 
-	h = calloc(1, sizeof(struct html));
-	if (NULL == h) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	h = mandoc_calloc(1, sizeof(struct html));
 
 	h->type = type;
 	h->tags.head = NULL;
@@ -211,6 +209,16 @@ print_gen_head(struct html *h)
 	}
 }
 
+/* ARGSUSED */
+static void
+print_num(struct html *h, const char *p, size_t len)
+{
+	const char	*rhs;
+
+	rhs = chars_num2char(p, len);
+	if (rhs)
+		putchar((int)*rhs);
+}
 
 static void
 print_spec(struct html *h, enum roffdeco d, const char *p, size_t len)
@@ -332,6 +340,9 @@ print_encode(struct html *h, const char *p, int norecurse)
 		len = a2roffdeco(&deco, &seq, &sz);
 
 		switch (deco) {
+		case (DECO_NUMBERED):
+			print_num(h, seq, sz);
+			break;
 		case (DECO_RESERVED):
 			print_res(h, seq, sz);
 			break;
@@ -384,11 +395,7 @@ print_otag(struct html *h, enum htmltag tag,
 	/* Push this tags onto the stack of open scopes. */
 
 	if ( ! (HTML_NOSTACK & htmltags[tag].flags)) {
-		t = malloc(sizeof(struct tag));
-		if (NULL == t) {
-			perror(NULL);
-			exit((int)MANDOCLEVEL_SYSERR);
-		}
+		t = mandoc_malloc(sizeof(struct tag));
 		t->tag = tag;
 		t->next = h->tags.head;
 		h->tags.head = t;
@@ -501,34 +508,9 @@ print_doctype(struct html *h)
 			name, doctype, dtd);
 }
 
-
 void
 print_text(struct html *h, const char *word)
 {
-
-	if (word[0] && '\0' == word[1])
-		switch (word[0]) {
-		case('.'):
-			/* FALLTHROUGH */
-		case(','):
-			/* FALLTHROUGH */
-		case(';'):
-			/* FALLTHROUGH */
-		case(':'):
-			/* FALLTHROUGH */
-		case('?'):
-			/* FALLTHROUGH */
-		case('!'):
-			/* FALLTHROUGH */
-		case(')'):
-			/* FALLTHROUGH */
-		case(']'):
-			if ( ! (HTML_IGNDELIM & h->flags))
-				h->flags |= HTML_NOSPACE;
-			break;
-		default:
-			break;
-		}
 
 	if ( ! (HTML_NOSPACE & h->flags)) {
 		/* Manage keeps! */
@@ -557,21 +539,6 @@ print_text(struct html *h, const char *word)
 	}
 
 	h->flags &= ~HTML_IGNDELIM;
-
-	/* 
-	 * Note that we don't process the pipe: the parser sees it as
-	 * punctuation, but we don't in terms of typography.
-	 */
-	if (word[0] && '\0' == word[1])
-		switch (word[0]) {
-		case('('):
-			/* FALLTHROUGH */
-		case('['):
-			h->flags |= HTML_NOSPACE;
-			break;
-		default:
-			break;
-		}
 }
 
 
@@ -581,8 +548,14 @@ print_tagq(struct html *h, const struct tag *until)
 	struct tag	*tag;
 
 	while ((tag = h->tags.head) != NULL) {
+		/* 
+		 * Remember to close out and nullify the current
+		 * meta-font and table, if applicable.
+		 */
 		if (tag == h->metaf)
 			h->metaf = NULL;
+		if (tag == h->tblt)
+			h->tblt = NULL;
 		print_ctag(h, tag->tag);
 		h->tags.head = tag->next;
 		free(tag);
@@ -600,8 +573,14 @@ print_stagq(struct html *h, const struct tag *suntil)
 	while ((tag = h->tags.head) != NULL) {
 		if (suntil && tag == suntil)
 			return;
+		/* 
+		 * Remember to close out and nullify the current
+		 * meta-font and table, if applicable.
+		 */
 		if (tag == h->metaf)
 			h->metaf = NULL;
+		if (tag == h->tblt)
+			h->tblt = NULL;
 		print_ctag(h, tag->tag);
 		h->tags.head = tag->next;
 		free(tag);

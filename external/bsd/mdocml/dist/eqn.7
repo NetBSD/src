@@ -1,0 +1,92 @@
+.\"	$Vendor-Id: eqn.7,v 1.2 2011/03/17 15:12:42 kristaps Exp $
+.\"
+.\" Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd March 17, 2011
+.Dt EQN 7
+.Os
+.Sh NAME
+.Nm eqn
+.Nd eqn language reference for mandoc
+.Sh DESCRIPTION
+The
+.Nm eqn
+language is a equation-formatting language.
+It is used within
+.Xr mdoc 7
+and
+.Xr man 7
+.Ux
+manual pages.
+This manual describes the subset of the
+.Nm
+language accepted by the
+.Xr mandoc 1
+utility.
+.Pp
+Equations within
+.Xr mdoc 7
+or
+.Xr man 7
+are enclosed by the
+.Sq EQ
+and
+.Sq EN
+macro tags, whose precise syntax is documented in
+.Xr roff 7 .
+Equations consist of multi-line equation data.
+.Pp
+For the time being,
+.Xr mandoc 1
+reproduces the contents of
+.Nm
+equations verbatim in its output.
+.Pp
+The
+.Nm
+implementation in
+.Xr mandoc 1
+is
+.Ud
+.Sh SEE ALSO
+.Xr mandoc 1 ,
+.Xr man 7 ,
+.Xr mandoc_char 7 ,
+.Xr mdoc 7 ,
+.Xr roff 7
+.Rs
+.%A Brian W. Kernighan
+.%A Lorinda L. Cherry
+.%T System for Typesetting Mathematics
+.%J Communications of the ACM
+.%V 18
+.%P 151\(en157
+.%D March, 1975
+.Re
+.\" .Sh HISTORY
+.\" The tbl utility, a preprocessor for troff, was originally written by M.
+.\" E. Lesk at Bell Labs in 1975.
+.\" The GNU reimplementation of tbl, part of the groff package, was released
+.\" in 1990 by James Clark.
+.\" A standalone tbl implementation was written by Kristaps Dzonsons in
+.\" 2010.
+.\" This formed the basis of the implementation that is part of the
+.\" .Xr mandoc 1
+.\" utility.
+.Sh AUTHORS
+This partial
+.Nm
+reference was written by
+.An Kristaps Dzonsons Aq kristaps@bsd.lv .

@@ -1,6 +1,6 @@
-.\"	$Vendor-Id: mdoc.7,v 1.174 2011/01/04 23:32:21 kristaps Exp $
+.\"	$Vendor-Id: mdoc.7,v 1.184 2011/04/01 19:50:49 kristaps Exp $
 .\"
-.\" Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 4, 2011
+.Dd April 1, 2011
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -52,9 +52,9 @@ Other lines are interpreted within the current state.
 .Nm
 documents may contain only graphable 7-bit ASCII characters, the space
 character, and, in certain circumstances, the tab character.
-All manuals must have
-.Ux
-line terminators.
+.Pp
+If the first character of a line is a space, that line is printed
+with a leading newline.
 .Ss Comments
 Text following a
 .Sq \e\*q ,
@@ -65,12 +65,14 @@ A macro line with only a control character and comment escape,
 is also ignored.
 Macro lines with only a control character and optional whitespace are
 stripped from input.
-.Ss Reserved Characters
-Within a macro line, the following characters are reserved:
+.Ss Reserved Terms
+Within a macro line, the following terms are reserved:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It \&.
 .Pq period
+.It \e.
+.Pq escaped period
 .It \&,
 .Pq comma
 .It \&:
@@ -91,14 +93,15 @@ Within a macro line, the following characters are reserved:
 .Pq exclamation
 .It \&|
 .Pq vertical bar
+.It \e*(Ba
+.Pq reserved-word vertical bar
 .El
 .Pp
-Use of reserved characters is described in
+Use of reserved terms is described in
 .Sx MACRO SYNTAX .
-For general use in macro lines, these characters can either be escaped
-with a non-breaking space
-.Pq Sq \e&
-or, if applicable, an appropriate escape sequence can be used.
+For general use in macro lines, these can be escaped with a non-breaking
+space
+.Pq Sq \e& .
 .Ss Special Characters
 Special characters may occur in both macro and free-form lines.
 Sequences begin with the escape character
@@ -197,34 +200,6 @@ Thus, the following produces
 .Ed
 .Pp
 In free-form mode, quotes are regarded as opaque text.
-.Ss Dates
-There are several macros in
-.Nm
-that require a date argument.
-The canonical form for dates is the American format:
-.Pp
-.D1 Cm Month Day , Year
-.Pp
-The
-.Cm Day
-value is an optionally zero-padded numeral.
-The
-.Cm Month
-value is the full month name.
-The
-.Cm Year
-value is the full four-digit year.
-.Pp
-Reduced form dates are broken-down canonical form dates:
-.Pp
-.D1 Cm Month , Year
-.D1 Cm Year
-.Pp
-Some examples of valid dates follow:
-.Pp
-.D1 "May, 2009" Pq reduced form
-.D1 "2009" Pq reduced form
-.D1 "May 20, 2009" Pq canonical form
 .Ss Scaling Widths
 Many macros support scaled widths for their arguments, such as
 stipulating a two-inch list indentation with the following:
@@ -283,11 +258,13 @@ a line.
 By doing so, front-ends will be able to apply the proper amount of
 spacing after the end of sentence (unescaped) period, exclamation mark,
 or question mark followed by zero or more non-sentence closing
-delimiters (
-.Ns Sq \&) ,
+delimiters
+.Po
+.Sq \&) ,
 .Sq \&] ,
 .Sq \&' ,
-.Sq \&" ) .
+.Sq \&"
+.Pc .
 .Pp
 The proper spacing is also intelligently preserved if a sentence ends at
 the boundary of a macro line.
@@ -732,7 +709,7 @@ and/or tail
 .El
 .Ss Block partial-implicit
 Like block full-implicit, but with single-line scope closed by
-.Sx Reserved Characters
+.Sx Reserved Terms
 or end of line.
 .Bd -literal -offset indent
 \&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBbody...\(rB \(lBres...\(rB
@@ -765,7 +742,7 @@ section line, else it is
 .Sx In-line .
 .Ss In-line
 Closed by
-.Sx Reserved Characters ,
+.Sx Reserved Terms ,
 end of line, fixed argument lengths, and/or subsequent macros.
 In-line macros have only text children.
 If a number (or inequality) of arguments is
@@ -795,8 +772,8 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&%T  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&%U  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&%V  Ta    \&No     Ta    \&No     Ta    >0
-.It Sx \&Ad  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&An  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Ad  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&An  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Ap  Ta    Yes      Ta    Yes      Ta    0
 .It Sx \&Ar  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&At  Ta    Yes      Ta    Yes      Ta    1
@@ -804,31 +781,31 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&Bt  Ta    \&No     Ta    \&No     Ta    0
 .It Sx \&Bx  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Cd  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&Cm  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Cm  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Db  Ta    \&No     Ta    \&No     Ta    1
 .It Sx \&Dd  Ta    \&No     Ta    \&No     Ta    n
 .It Sx \&Dt  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Dv  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Dv  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Dx  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Em  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&En  Ta    \&No     Ta    \&No     Ta    0
 .It Sx \&Er  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Es  Ta    \&No     Ta    \&No     Ta    0
-.It Sx \&Ev  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Ev  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Ex  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Fa  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Fa  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Fd  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&Fl  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Fn  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Fr  Ta    \&No     Ta    \&No     Ta    n
-.It Sx \&Ft  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Ft  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Fx  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&Hf  Ta    \&No     Ta    \&No     Ta    n
 .It Sx \&Ic  Ta    Yes      Ta    Yes      Ta    >0
-.It Sx \&In  Ta    \&No     Ta    \&No     Ta    n
+.It Sx \&In  Ta    \&No     Ta    \&No     Ta    1
 .It Sx \&Lb  Ta    \&No     Ta    \&No     Ta    1
-.It Sx \&Li  Ta    Yes      Ta    Yes      Ta    n
-.It Sx \&Lk  Ta    Yes      Ta    Yes      Ta    n
+.It Sx \&Li  Ta    Yes      Ta    Yes      Ta    >0
+.It Sx \&Lk  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Lp  Ta    \&No     Ta    \&No     Ta    0
 .It Sx \&Ms  Ta    Yes      Ta    Yes      Ta    >0
 .It Sx \&Mt  Ta    Yes      Ta    Yes      Ta    >0
@@ -884,8 +861,10 @@ block.
 Publication date of an
 .Sx \&Rs
 block.
-This should follow the reduced or canonical form syntax described in
-.Sx Dates .
+Recommended formats of arguments are
+.Ar month day , year
+or just
+.Ar year .
 .Ss \&%I
 Publisher or issuer name of an
 .Sx \&Rs
@@ -1467,17 +1446,36 @@ This is the mandatory first macro of any
 manual.
 Its syntax is as follows:
 .Pp
-.D1 Pf \. Sx \&Dd Op Ar date
+.D1 Pf \. Sx \&Dd Ar month day , year
 .Pp
 The
-.Ar date
-may be either
-.Ar $\&Mdocdate$ ,
-which signifies the current manual revision date dictated by
+.Ar month
+is the full English month name, the
+.Ar day
+is an optionally zero-padded numeral, and the
+.Ar year
+is the full four-digit year.
+.Pp
+Other arguments are not portable; the
+.Xr mandoc 1
+utility handles them as follows:
+.Bl -dash -offset 3n -compact
+.It
+To have the date automatically filled in by the
+.Ox
+version of
 .Xr cvs 1 ,
-or instead a valid canonical date as specified by
-.Sx Dates .
-If a date does not conform or is empty, the current date is used.
+the special string
+.Dq $\&Mdocdate$
+can be given as an argument.
+.It
+A few alternative date formats are accepted as well
+and converted to the standard form.
+.It
+If a date string cannot be parsed, it is used verbatim.
+.It
+If no date string is given, the current date is used.
+.El
 .Pp
 Examples:
 .Dl \&.Dd $\&Mdocdate$
@@ -1863,8 +1861,8 @@ are delimited by commas.
 If no arguments are specified, blank parenthesis are output.
 .Pp
 Examples:
-.Dl \&.Fn "int funcname" "int arg0" "int arg1"
-.Dl \&.Fn funcname "int arg0"
+.Dl \&.Fn \*qint funcname\*q \*qint arg0\*q \*qint arg1\*q
+.Dl \&.Fn funcname \*qint arg0\*q
 .Dl \&.Fn funcname arg0
 .Bd -literal -offset indent -compact
 \&.Ft functype
@@ -1894,7 +1892,7 @@ Invocations usually occur in the following context:
 .br
 .Pf \. Sx \&Fa Oo Cm argtype Oc Cm argname
 .br
-\.\.\.
+\&.\.\.
 .br
 .Pf \. Sx \&Fc
 .Ed
@@ -2202,6 +2200,8 @@ Examples:
 Suppress a space.
 Following invocation, text is interpreted as free-form text until a
 macro is encountered.
+.Pp
+This has no effect when invoked at the start of a macro line.
 .Pp
 Examples:
 .Dl \&.Fl o \&Ns \&Ar output
@@ -2767,9 +2767,12 @@ does not start a new line.
 \*[hist]
 .It
 .Sx \&Dd
-without an argument prints
-.Dq Epoch .
-In mandoc, it resolves to the current date.
+with non-standard arguments behaves very strangely.
+When there are three arguments, they are printed verbatim.
+Any other number of arguments is replaced by the current date,
+but without any arguments the string
+.Dq Epoch
+is printed.
 .It
 .Sx \&Fl
 does not print a dash for an empty argument.
@@ -2903,6 +2906,7 @@ This is not supported by mandoc.
 .Sh SEE ALSO
 .Xr man 1 ,
 .Xr mandoc 1 ,
+.Xr eqn 7 ,
 .Xr man 7 ,
 .Xr mandoc_char 7
 .Xr roff 7 ,

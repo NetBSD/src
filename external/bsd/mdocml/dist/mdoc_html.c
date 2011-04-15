@@ -1,6 +1,6 @@
-/*	$Vendor-Id: mdoc_html.c,v 1.142 2011/01/07 13:20:58 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_html.c,v 1.163 2011/04/04 22:38:26 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -410,6 +410,7 @@ print_mdoc_node(MDOC_ARGS)
 {
 	int		 child;
 	struct tag	*t;
+	struct htmlpair	 tag;
 
 	child = 1;
 	t = h->tags.head;
@@ -420,12 +421,47 @@ print_mdoc_node(MDOC_ARGS)
 		child = mdoc_root_pre(m, n, h);
 		break;
 	case (MDOC_TEXT):
+		/* No tables in this mode... */
+		assert(NULL == h->tblt);
+
+		/*
+		 * Make sure that if we're in a literal mode already
+		 * (i.e., within a <PRE>) don't print the newline.
+		 */
+		if (' ' == *n->string && MDOC_LINE & n->flags)
+			if ( ! (HTML_LITERAL & h->flags))
+				print_otag(h, TAG_BR, 0, NULL);
+		if (MDOC_DELIMC & n->flags)
+			h->flags |= HTML_NOSPACE;
 		print_text(h, n->string);
+		if (MDOC_DELIMO & n->flags)
+			h->flags |= HTML_NOSPACE;
 		return;
-	case (MDOC_TBL):
-		print_tbl(h, n->span);
+	case (MDOC_EQN):
+		PAIR_CLASS_INIT(&tag, "eqn");
+		print_otag(h, TAG_SPAN, 1, &tag);
+		print_text(h, n->eqn->data);
 		break;
+	case (MDOC_TBL):
+		/*
+		 * This will take care of initialising all of the table
+		 * state data for the first table, then tearing it down
+		 * for the last one.
+		 */
+		print_tbl(h, n->span);
+		return;
 	default:
+		/*
+		 * Close out the current table, if it's open, and unset
+		 * the "meta" table state.  This will be reopened on the
+		 * next table element.
+		 */
+		if (h->tblt) {
+			print_tblclose(h);
+			t = h->tags.head;
+		}
+
+		assert(NULL == h->tblt);
 		if (mdocs[n->tok].pre && ENDBODY_NOT == n->end)
 			child = (*mdocs[n->tok].pre)(m, n, h);
 		break;
@@ -453,7 +489,7 @@ print_mdoc_node(MDOC_ARGS)
 	case (MDOC_ROOT):
 		mdoc_root_post(m, n, h);
 		break;
-	case (MDOC_TBL):
+	case (MDOC_EQN):
 		break;
 	default:
 		if (mdocs[n->tok].post && ENDBODY_NOT == n->end)
@@ -468,9 +504,6 @@ mdoc_root_post(MDOC_ARGS)
 {
 	struct htmlpair	 tag[3];
 	struct tag	*t, *tt;
-	char		 b[DATESIZ];
-
-	time2a(m->date, b, DATESIZ);
 
 	PAIR_SUMMARY_INIT(&tag[0], "Document Footer");
 	PAIR_CLASS_INIT(&tag[1], "foot");
@@ -490,7 +523,7 @@ mdoc_root_post(MDOC_ARGS)
 	PAIR_CLASS_INIT(&tag[0], "foot-date");
 	print_otag(h, TAG_TD, 1, tag);
 
-	print_text(h, b);
+	print_text(h, m->date);
 	print_stagq(h, tt);
 
 	PAIR_CLASS_INIT(&tag[0], "foot-os");
@@ -718,8 +751,7 @@ mdoc_nm_pre(MDOC_ARGS)
 static int
 mdoc_xr_pre(MDOC_ARGS)
 {
-	struct htmlpair	 	 tag[2];
-	const struct mdoc_node	*nn;
+	struct htmlpair	 tag[2];
 
 	if (NULL == n->child)
 		return(0);
@@ -735,16 +767,16 @@ mdoc_xr_pre(MDOC_ARGS)
 	} else
 		print_otag(h, TAG_A, 1, tag);
 
-	nn = n->child;
-	print_text(h, nn->string);
+	n = n->child;
+	print_text(h, n->string);
 
-	if (NULL == (nn = nn->next))
+	if (NULL == (n = n->next))
 		return(0);
 
 	h->flags |= HTML_NOSPACE;
 	print_text(h, "(");
 	h->flags |= HTML_NOSPACE;
-	print_text(h, nn->string);
+	print_text(h, n->string);
 	h->flags |= HTML_NOSPACE;
 	print_text(h, ")");
 	return(0);
@@ -756,7 +788,8 @@ static int
 mdoc_ns_pre(MDOC_ARGS)
 {
 
-	h->flags |= HTML_NOSPACE;
+	if ( ! (MDOC_LINE & n->flags))
+		h->flags |= HTML_NOSPACE;
 	return(1);
 }
 
@@ -779,6 +812,7 @@ mdoc_xx_pre(MDOC_ARGS)
 {
 	const char	*pp;
 	struct htmlpair	 tag;
+	int		 flags;
 
 	switch (n->tok) {
 	case (MDOC_Bsx):
@@ -805,8 +839,15 @@ mdoc_xx_pre(MDOC_ARGS)
 
 	PAIR_CLASS_INIT(&tag, "unix");
 	print_otag(h, TAG_SPAN, 1, &tag);
+
 	print_text(h, pp);
-	return(1);
+	if (n->child) {
+		flags = h->flags;
+		h->flags |= HTML_KEEP;
+		print_text(h, n->child->string);
+		h->flags = flags;
+	}
+	return(0);
 }
 
 
@@ -814,19 +855,27 @@ mdoc_xx_pre(MDOC_ARGS)
 static int
 mdoc_bx_pre(MDOC_ARGS)
 {
-	const struct mdoc_node	*nn;
-	struct htmlpair		 tag;
+	struct htmlpair	 tag;
 
 	PAIR_CLASS_INIT(&tag, "unix");
 	print_otag(h, TAG_SPAN, 1, &tag);
 
-	for (nn = n->child; nn; nn = nn->next)
-		print_mdoc_node(m, nn, h);
-
-	if (n->child)
+	if (NULL != (n = n->child)) {
+		print_text(h, n->string);
 		h->flags |= HTML_NOSPACE;
+		print_text(h, "BSD");
+	} else {
+		print_text(h, "BSD");
+		return(0);
+	}
 
-	print_text(h, "BSD");
+	if (NULL != (n = n->next)) {
+		h->flags |= HTML_NOSPACE;
+		print_text(h, "-");
+		h->flags |= HTML_NOSPACE;
+		print_text(h, n->string);
+	}
+
 	return(0);
 }
 
@@ -1037,9 +1086,9 @@ mdoc_bl_pre(MDOC_ARGS)
 static int
 mdoc_ex_pre(MDOC_ARGS)
 {
-	const struct mdoc_node	*nn;
-	struct tag		*t;
-	struct htmlpair		 tag;
+	struct tag	*t;
+	struct htmlpair	 tag;
+	int		 nchild;
 
 	if (n->prev)
 		print_otag(h, TAG_BR, 0, NULL);
@@ -1047,22 +1096,25 @@ mdoc_ex_pre(MDOC_ARGS)
 	PAIR_CLASS_INIT(&tag, "utility");
 
 	print_text(h, "The");
-	for (nn = n->child; nn; nn = nn->next) {
+
+	nchild = n->nchild;
+	for (n = n->child; n; n = n->next) {
+		assert(MDOC_TEXT == n->type);
+
 		t = print_otag(h, TAG_B, 1, &tag);
-		print_text(h, nn->string);
+		print_text(h, n->string);
 		print_tagq(h, t);
 
-		h->flags |= HTML_NOSPACE;
-
-		if (nn->next && NULL == nn->next->next)
-			print_text(h, ", and");
-		else if (nn->next)
+		if (nchild > 2 && n->next) {
+			h->flags |= HTML_NOSPACE;
 			print_text(h, ",");
-		else
-			h->flags &= ~HTML_NOSPACE;
+		}
+
+		if (n->next && NULL == n->next->next)
+			print_text(h, "and");
 	}
 
-	if (n->child && n->child->next)
+	if (nchild > 1)
 		print_text(h, "utilities exit");
 	else
 		print_text(h, "utility exits");
@@ -1118,14 +1170,13 @@ mdoc_d1_pre(MDOC_ARGS)
 static int
 mdoc_sx_pre(MDOC_ARGS)
 {
-	struct htmlpair		 tag[2];
-	const struct mdoc_node	*nn;
-	char			 buf[BUFSIZ];
+	struct htmlpair	 tag[2];
+	char		 buf[BUFSIZ];
 
 	strlcpy(buf, "#", BUFSIZ);
-	for (nn = n->child; nn; nn = nn->next) {
-		html_idcat(buf, nn->string, BUFSIZ);
-		if (nn->next)
+	for (n = n->child; n; n = n->next) {
+		html_idcat(buf, n->string, BUFSIZ);
+		if (n->next)
 			html_idcat(buf, " ", BUFSIZ);
 	}
 
@@ -1143,7 +1194,7 @@ static int
 mdoc_bd_pre(MDOC_ARGS)
 {
 	struct htmlpair	 	 tag[2];
-	int		 	 comp;
+	int		 	 comp, sv;
 	const struct mdoc_node	*nn;
 	struct roffsu		 su;
 
@@ -1182,6 +1233,11 @@ mdoc_bd_pre(MDOC_ARGS)
 	PAIR_CLASS_INIT(&tag[1], "lit display");
 	print_otag(h, TAG_PRE, 2, tag);
 
+	/* This can be recursive: save & set our literal state. */
+
+	sv = h->flags & HTML_LITERAL;
+	h->flags |= HTML_LITERAL;
+
 	for (nn = n->child; nn; nn = nn->next) {
 		print_mdoc_node(m, nn, h);
 		/*
@@ -1217,6 +1273,9 @@ mdoc_bd_pre(MDOC_ARGS)
 
 		h->flags |= HTML_NOSPACE;
 	}
+
+	if (0 == sv)
+		h->flags &= ~HTML_LITERAL;
 
 	return(0);
 }
@@ -1327,12 +1386,16 @@ mdoc_fa_pre(MDOC_ARGS)
 		t = print_otag(h, TAG_I, 1, &tag);
 		print_text(h, nn->string);
 		print_tagq(h, t);
-		if (nn->next)
+		if (nn->next) {
+			h->flags |= HTML_NOSPACE;
 			print_text(h, ",");
+		}
 	}
 
-	if (n->child && n->next && n->next->tok == MDOC_Fa)
+	if (n->child && n->next && n->next->tok == MDOC_Fa) {
+		h->flags |= HTML_NOSPACE;
 		print_text(h, ",");
+	}
 
 	return(0);
 }
@@ -1342,13 +1405,61 @@ mdoc_fa_pre(MDOC_ARGS)
 static int
 mdoc_fd_pre(MDOC_ARGS)
 {
-	struct htmlpair	 tag;
+	struct htmlpair	 tag[2];
+	char		 buf[BUFSIZ];
+	size_t		 sz;
+	int		 i;
+	struct tag	*t;
 
 	synopsis_pre(h, n);
 
-	PAIR_CLASS_INIT(&tag, "macro");
-	print_otag(h, TAG_B, 1, &tag);
-	return(1);
+	if (NULL == (n = n->child))
+		return(0);
+
+	assert(MDOC_TEXT == n->type);
+
+	if (strcmp(n->string, "#include")) {
+		PAIR_CLASS_INIT(&tag[0], "macro");
+		print_otag(h, TAG_B, 1, tag);
+		return(1);
+	}
+
+	PAIR_CLASS_INIT(&tag[0], "includes");
+	print_otag(h, TAG_B, 1, tag);
+	print_text(h, n->string);
+
+	if (NULL != (n = n->next)) {
+		assert(MDOC_TEXT == n->type);
+		strlcpy(buf, '<' == *n->string || '"' == *n->string ? 
+				n->string + 1 : n->string, BUFSIZ);
+
+		sz = strlen(buf);
+		if (sz && ('>' == buf[sz - 1] || '"' == buf[sz - 1]))
+			buf[sz - 1] = '\0';
+
+		PAIR_CLASS_INIT(&tag[0], "link-includes");
+		bufinit(h);
+		
+		i = 1;
+		if (h->base_includes) {
+			buffmt_includes(h, buf);
+			PAIR_HREF_INIT(&tag[i], h->buf);
+			i++;
+		} 
+
+		t = print_otag(h, TAG_A, i, tag);
+		print_text(h, n->string);
+		print_tagq(h, t);
+
+		n = n->next;
+	}
+
+	for ( ; n; n = n->next) {
+		assert(MDOC_TEXT == n->type);
+		print_text(h, n->string);
+	}
+
+	return(0);
 }
 
 
@@ -1389,13 +1500,13 @@ mdoc_ft_pre(MDOC_ARGS)
 static int
 mdoc_fn_pre(MDOC_ARGS)
 {
-	struct tag		*t;
-	struct htmlpair	 	 tag[2];
-	const struct mdoc_node	*nn;
-	char			 nbuf[BUFSIZ];
-	const char		*sp, *ep;
-	int			 sz, i;
+	struct tag	*t;
+	struct htmlpair	 tag[2];
+	char		 nbuf[BUFSIZ];
+	const char	*sp, *ep;
+	int		 sz, i, pretty;
 
+	pretty = MDOC_SYNPRETTY & n->flags;
 	synopsis_pre(h, n);
 
 	/* Split apart into type and name. */
@@ -1447,26 +1558,33 @@ mdoc_fn_pre(MDOC_ARGS)
 
 	h->flags |= HTML_NOSPACE;
 	print_text(h, "(");
+	h->flags |= HTML_NOSPACE;
 
 	bufinit(h);
 	PAIR_CLASS_INIT(&tag[0], "farg");
 	bufcat_style(h, "white-space", "nowrap");
 	PAIR_STYLE_INIT(&tag[1], h);
 
-	for (nn = n->child->next; nn; nn = nn->next) {
+	for (n = n->child->next; n; n = n->next) {
 		i = 1;
 		if (MDOC_SYNPRETTY & n->flags)
 			i = 2;
 		t = print_otag(h, TAG_I, i, tag);
-		print_text(h, nn->string);
+		print_text(h, n->string);
 		print_tagq(h, t);
-		if (nn->next)
+		if (n->next) {
+			h->flags |= HTML_NOSPACE;
 			print_text(h, ",");
+		}
 	}
 
+	h->flags |= HTML_NOSPACE;
 	print_text(h, ")");
-	if (MDOC_SYNPRETTY & n->flags)
+
+	if (pretty) {
+		h->flags |= HTML_NOSPACE;
 		print_text(h, ";");
+	}
 
 	return(0);
 }
@@ -1537,20 +1655,22 @@ mdoc_sp_pre(MDOC_ARGS)
 static int
 mdoc_lk_pre(MDOC_ARGS)
 {
-	const struct mdoc_node	*nn;
-	struct htmlpair		 tag[2];
+	struct htmlpair	 tag[2];
 
-	nn = n->child;
+	if (NULL == (n = n->child))
+		return(0);
+
+	assert(MDOC_TEXT == n->type);
 
 	PAIR_CLASS_INIT(&tag[0], "link-ext");
-	PAIR_HREF_INIT(&tag[1], nn->string);
+	PAIR_HREF_INIT(&tag[1], n->string);
+
 	print_otag(h, TAG_A, 2, tag);
 
-	if (NULL == nn || NULL == nn->next) 
-		return(1);
-
-	for (nn = nn->next; nn; nn = nn->next) 
-		print_text(h, nn->string);
+	for (n = n->next; n; n = n->next) {
+		assert(MDOC_TEXT == n->type);
+		print_text(h, n->string);
+	}
 
 	return(0);
 }
@@ -1560,19 +1680,21 @@ mdoc_lk_pre(MDOC_ARGS)
 static int
 mdoc_mt_pre(MDOC_ARGS)
 {
-	struct htmlpair	 	 tag[2];
-	struct tag		*t;
-	const struct mdoc_node	*nn;
+	struct htmlpair	 tag[2];
+	struct tag	*t;
 
 	PAIR_CLASS_INIT(&tag[0], "link-mail");
 
-	for (nn = n->child; nn; nn = nn->next) {
+	for (n = n->child; n; n = n->next) {
+		assert(MDOC_TEXT == n->type);
+
 		bufinit(h);
 		bufcat(h, "mailto:");
-		bufcat(h, nn->string);
+		bufcat(h, n->string);
+
 		PAIR_HREF_INIT(&tag[1], h->buf);
 		t = print_otag(h, TAG_A, 2, tag);
-		print_text(h, nn->string);
+		print_text(h, n->string);
 		print_tagq(h, t);
 	}
 	
@@ -1617,7 +1739,9 @@ mdoc_fo_post(MDOC_ARGS)
 
 	if (MDOC_BODY != n->type)
 		return;
+	h->flags |= HTML_NOSPACE;
 	print_text(h, ")");
+	h->flags |= HTML_NOSPACE;
 	print_text(h, ";");
 }
 
@@ -1626,15 +1750,21 @@ mdoc_fo_post(MDOC_ARGS)
 static int
 mdoc_in_pre(MDOC_ARGS)
 {
-	const struct mdoc_node	*nn;
-	struct tag		*t;
-	struct htmlpair		 tag[2];
-	int			 i;
+	struct tag	*t;
+	struct htmlpair	 tag[2];
+	int		 i;
 
 	synopsis_pre(h, n);
 
 	PAIR_CLASS_INIT(&tag[0], "includes");
 	print_otag(h, TAG_B, 1, tag);
+
+	/*
+	 * The first argument of the `In' gets special treatment as
+	 * being a linked value.  Subsequent values are printed
+	 * afterward.  groff does similarly.  This also handles the case
+	 * of no children.
+	 */
 
 	if (MDOC_SYNPRETTY & n->flags && MDOC_LINE & n->flags)
 		print_text(h, "#include");
@@ -1642,22 +1772,34 @@ mdoc_in_pre(MDOC_ARGS)
 	print_text(h, "<");
 	h->flags |= HTML_NOSPACE;
 
-	for (nn = n->child; nn; nn = nn->next) {
+	if (NULL != (n = n->child)) {
+		assert(MDOC_TEXT == n->type);
+
 		PAIR_CLASS_INIT(&tag[0], "link-includes");
-		i = 1;
 		bufinit(h);
+
+		i = 1;
+
 		if (h->base_includes) {
-			buffmt_includes(h, nn->string);
+			buffmt_includes(h, n->string);
 			PAIR_HREF_INIT(&tag[i], h->buf);
 			i++;
-		}
+		} 
+
 		t = print_otag(h, TAG_A, i, tag);
-		print_mdoc_node(m, nn, h);
+		print_text(h, n->string);
 		print_tagq(h, t);
+
+		n = n->next;
 	}
 
 	h->flags |= HTML_NOSPACE;
 	print_text(h, ">");
+
+	for ( ; n; n = n->next) {
+		assert(MDOC_TEXT == n->type);
+		print_text(h, n->string);
+	}
 
 	return(0);
 }
@@ -1679,31 +1821,38 @@ mdoc_ic_pre(MDOC_ARGS)
 static int
 mdoc_rv_pre(MDOC_ARGS)
 {
-	const struct mdoc_node	*nn;
-	struct htmlpair		 tag;
-	struct tag		*t;
+	struct htmlpair	 tag;
+	struct tag	*t;
+	int		 nchild;
 
 	if (n->prev)
 		print_otag(h, TAG_BR, 0, NULL);
 
+	PAIR_CLASS_INIT(&tag, "fname");
+
 	print_text(h, "The");
 
-	for (nn = n->child; nn; nn = nn->next) {
-		PAIR_CLASS_INIT(&tag, "fname");
+	nchild = n->nchild;
+	for (n = n->child; n; n = n->next) {
+		assert(MDOC_TEXT == n->type);
+
 		t = print_otag(h, TAG_B, 1, &tag);
-		print_text(h, nn->string);
+		print_text(h, n->string);
 		print_tagq(h, t);
 
 		h->flags |= HTML_NOSPACE;
-		if (nn->next && NULL == nn->next->next)
-			print_text(h, "(), and");
-		else if (nn->next)
-			print_text(h, "(),");
-		else
-			print_text(h, "()");
+		print_text(h, "()");
+
+		if (nchild > 2 && n->next) {
+			h->flags |= HTML_NOSPACE;
+			print_text(h, ",");
+		}
+
+		if (n->next && NULL == n->next->next)
+			print_text(h, "and");
 	}
 
-	if (n->child && n->child->next)
+	if (nchild > 1)
 		print_text(h, "functions return");
 	else
 		print_text(h, "function returns");
@@ -1978,6 +2127,7 @@ mdoc__x_post(MDOC_ARGS)
 	if (NULL == n->parent || MDOC_Rs != n->parent->tok)
 		return;
 
+	h->flags |= HTML_NOSPACE;
 	print_text(h, n->next ? "," : ".");
 }
 

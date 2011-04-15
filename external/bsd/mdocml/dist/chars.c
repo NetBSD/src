@@ -1,6 +1,7 @@
-/*	$Vendor-Id: chars.c,v 1.31 2011/01/02 10:10:57 kristaps Exp $ */
+/*	$Vendor-Id: chars.c,v 1.34 2011/03/22 10:13:01 kristaps Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +25,7 @@
 #include <string.h>
 
 #include "mandoc.h"
-#include "chars.h"
+#include "out.h"
 
 #define	PRINT_HI	 126
 #define	PRINT_LO	 32
@@ -91,17 +92,8 @@ chars_init(enum chars type)
 	 * (they're in-line re-ordered during lookup).
 	 */
 
-	tab = malloc(sizeof(struct ctab));
-	if (NULL == tab) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
-
-	htab = calloc(PRINT_HI - PRINT_LO + 1, sizeof(struct ln **));
-	if (NULL == htab) {
-		perror(NULL);
-		exit((int)MANDOCLEVEL_SYSERR);
-	}
+	tab = mandoc_malloc(sizeof(struct ctab));
+	htab = mandoc_calloc(PRINT_HI - PRINT_LO + 1, sizeof(struct ln **));
 
 	for (i = 0; i < LINES_MAX; i++) {
 		hash = (int)lines[i].code[0] - PRINT_LO;
@@ -149,6 +141,27 @@ chars_res2cp(void *arg, const char *p, size_t sz)
 	if (NULL == ln)
 		return(-1);
 	return(ln->unicode);
+}
+
+
+/*
+ * Numbered character to literal character,
+ * represented as a null-terminated string for additional safety.
+ */
+const char *
+chars_num2char(const char *p, size_t sz)
+{
+	int		  i;
+	static char	  c[2];
+
+	if (sz > 3)
+		return(NULL);
+	i = atoi(p);
+	if (i < 0 || i > 255)
+		return(NULL);
+	c[0] = (char)i;
+	c[1] = '\0';
+	return(c);
 }
 
 

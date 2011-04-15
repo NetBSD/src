@@ -1,0 +1,333 @@
+.\"	$Vendor-Id: mandoc.3,v 1.2 2011/03/28 21:49:42 kristaps Exp $
+.\"
+.\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd March 28, 2011
+.Dt MANDOC 3
+.Os
+.Sh NAME
+.Nm mandoc ,
+.Nm man_meta ,
+.Nm man_node ,
+.Nm mdoc_meta ,
+.Nm mdoc_node ,
+.Nm mparse_alloc ,
+.Nm mparse_free ,
+.Nm mparse_readfd ,
+.Nm mparse_reset ,
+.Nm mparse_result ,
+.Nm mparse_strerror ,
+.Nm mparse_strlevel
+.Nd mandoc macro compiler library
+.Sh SYNOPSIS
+.In man.h
+.In mdoc.h
+.In mandoc.h
+.Ft "const struct man_meta *"
+.Fo man_meta
+.Fa "const struct man *man"
+.Fc
+.Ft "const struct man_node *"
+.Fo man_node
+.Fa "const struct man *man"
+.Fc
+.Ft "const struct mdoc_meta *"
+.Fo mdoc_meta
+.Fa "const struct mdoc *mdoc"
+.Fc
+.Ft "const struct mdoc_node *"
+.Fo mdoc_node
+.Fa "const struct mdoc *mdoc"
+.Fc
+.Ft void
+.Fo mparse_alloc
+.Fa "enum mparset type"
+.Fa "enum mandoclevel wlevel"
+.Fa "mandocmsg msg"
+.Fa "void *msgarg"
+.Fc
+.Ft void
+.Fo mparse_free
+.Fa "struct mparse *parse"
+.Fc
+.Ft "enum mandoclevel"
+.Fo mparse_readfd
+.Fa "struct mparse *parse"
+.Fa "int fd"
+.Fa "const char *fname"
+.Fc
+.Ft void
+.Fo mparse_reset
+.Fa "struct mparse *parse"
+.Fc
+.Ft void
+.Fo mparse_result
+.Fa "struct mparse *parse"
+.Fa "struct mdoc **mdoc"
+.Fa "struct man **man"
+.Fc
+.Ft "const char *"
+.Fo mparse_strerror
+.Fa "enum mandocerr"
+.Fc
+.Ft "const char *"
+.Fo mparse_strlevel
+.Fa "enum mandoclevel"
+.Fc
+.Vt extern const char * const * man_macronames;
+.Vt extern const char * const * mdoc_argnames;
+.Vt extern const char * const * mdoc_macronames;
+.Sh DESCRIPTION
+The
+.Nm mandoc
+library parses a
+.Ux
+manual into an abstract syntax tree (AST).
+.Ux
+manuals are composed of
+.Xr mdoc 7
+or
+.Xr man 7 ,
+and may be mixed with
+.Xr roff 7 ,
+.Xr tbl 7 ,
+and
+.Xr eqn 7
+invocations.
+.Pp
+The following describes a general parse sequence:
+.Bl -enum
+.It
+initiate a parsing sequence with
+.Fn mparse_alloc ;
+.It
+parse files or file descriptors with
+.Fn mparse_readfd ;
+.It
+retrieve a parsed syntax tree, if the parse was successful, with
+.Fn mparse_result ;
+.It
+iterate over parse nodes with
+.Fn mdoc_node
+or
+.Fn man_node ;
+.It
+free all allocated memory with
+.Fn mparse_free ,
+or invoke
+.Fn mparse_reset
+and parse new files.
+.El
+.Sh IMPLEMENTATION NOTES
+This section consists of structural documentation for
+.Xr mdoc 7
+and
+.Xr man 7
+syntax trees.
+.Ss Man Abstract Syntax Tree
+This AST is governed by the ontological rules dictated in
+.Xr man 7
+and derives its terminology accordingly.
+.Pp
+The AST is composed of
+.Vt struct man_node
+nodes with element, root and text types as declared by the
+.Va type
+field.
+Each node also provides its parse point (the
+.Va line ,
+.Va sec ,
+and
+.Va pos
+fields), its position in the tree (the
+.Va parent ,
+.Va child ,
+.Va next
+and
+.Va prev
+fields) and some type-specific data.
+.Pp
+The tree itself is arranged according to the following normal form,
+where capitalised non-terminals represent nodes.
+.Pp
+.Bl -tag -width "ELEMENTXX" -compact
+.It ROOT
+\(<- mnode+
+.It mnode
+\(<- ELEMENT | TEXT | BLOCK
+.It BLOCK
+\(<- HEAD BODY
+.It HEAD
+\(<- mnode*
+.It BODY
+\(<- mnode*
+.It ELEMENT
+\(<- ELEMENT | TEXT*
+.It TEXT
+\(<- [[:alpha:]]*
+.El
+.Pp
+The only elements capable of nesting other elements are those with
+next-lint scope as documented in
+.Xr man 7 .
+.Ss Mdoc Abstract Syntax Tree
+This AST is governed by the ontological
+rules dictated in
+.Xr mdoc 7
+and derives its terminology accordingly.
+.Qq In-line
+elements described in
+.Xr mdoc 7
+are described simply as
+.Qq elements .
+.Pp
+The AST is composed of
+.Vt struct mdoc_node
+nodes with block, head, body, element, root and text types as declared
+by the
+.Va type
+field.
+Each node also provides its parse point (the
+.Va line ,
+.Va sec ,
+and
+.Va pos
+fields), its position in the tree (the
+.Va parent ,
+.Va child ,
+.Va nchild ,
+.Va next
+and
+.Va prev
+fields) and some type-specific data, in particular, for nodes generated
+from macros, the generating macro in the
+.Va tok
+field.
+.Pp
+The tree itself is arranged according to the following normal form,
+where capitalised non-terminals represent nodes.
+.Pp
+.Bl -tag -width "ELEMENTXX" -compact
+.It ROOT
+\(<- mnode+
+.It mnode
+\(<- BLOCK | ELEMENT | TEXT
+.It BLOCK
+\(<- HEAD [TEXT] (BODY [TEXT])+ [TAIL [TEXT]]
+.It ELEMENT
+\(<- TEXT*
+.It HEAD
+\(<- mnode*
+.It BODY
+\(<- mnode* [ENDBODY mnode*]
+.It TAIL
+\(<- mnode*
+.It TEXT
+\(<- [[:printable:],0x1e]*
+.El
+.Pp
+Of note are the TEXT nodes following the HEAD, BODY and TAIL nodes of
+the BLOCK production: these refer to punctuation marks.
+Furthermore, although a TEXT node will generally have a non-zero-length
+string, in the specific case of
+.Sq \&.Bd \-literal ,
+an empty line will produce a zero-length string.
+Multiple body parts are only found in invocations of
+.Sq \&Bl \-column ,
+where a new body introduces a new phrase.
+.Pp
+The
+.Xr mdoc 7
+syntax tree accomodates for broken block structures as well.
+The ENDBODY node is available to end the formatting associated
+with a given block before the physical end of that block.
+It has a non-null
+.Va end
+field, is of the BODY
+.Va type ,
+has the same
+.Va tok
+as the BLOCK it is ending, and has a
+.Va pending
+field pointing to that BLOCK's BODY node.
+It is an indirect child of that BODY node
+and has no children of its own.
+.Pp
+An ENDBODY node is generated when a block ends while one of its child
+blocks is still open, like in the following example:
+.Bd -literal -offset indent
+\&.Ao ao
+\&.Bo bo ac
+\&.Ac bc
+\&.Bc end
+.Ed
+.Pp
+This example results in the following block structure:
+.Bd -literal -offset indent
+BLOCK Ao
+    HEAD Ao
+    BODY Ao
+        TEXT ao
+        BLOCK Bo, pending -> Ao
+            HEAD Bo
+            BODY Bo
+                TEXT bo
+                TEXT ac
+                ENDBODY Ao, pending -> Ao
+                TEXT bc
+TEXT end
+.Ed
+.Pp
+Here, the formatting of the
+.Sq \&Ao
+block extends from TEXT ao to TEXT ac,
+while the formatting of the
+.Sq \&Bo
+block extends from TEXT bo to TEXT bc.
+It renders as follows in
+.Fl T Ns Cm ascii
+mode:
+.Pp
+.Dl <ao [bo ac> bc] end
+.Pp
+Support for badly-nested blocks is only provided for backward
+compatibility with some older
+.Xr mdoc 7
+implementations.
+Using badly-nested blocks is
+.Em strongly discouraged ;
+for example, the
+.Fl T Ns Cm html
+and
+.Fl T Ns Cm xhtml
+front-ends to
+.Xr mandoc 1
+are unable to render them in any meaningful way.
+Furthermore, behaviour when encountering badly-nested blocks is not
+consistent across troff implementations, especially when using  multiple
+levels of badly-nested blocks.
+.Sh SEE ALSO
+.Xr mandoc 1 ,
+.Xr eqn 7 ,
+.Xr man 7 ,
+.Xr mdoc 7 ,
+.Xr roff 7 ,
+.Xr tbl 7
+.Sh AUTHORS
+The
+.Nm
+library was written by
+.An Kristaps Dzonsons Aq kristaps@bsd.lv .

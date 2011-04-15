@@ -1,4 +1,4 @@
-/*	$Vendor-Id: tree.c,v 1.31 2011/01/03 13:59:21 kristaps Exp $ */
+/*	$Vendor-Id: tree.c,v 1.37 2011/03/23 12:33:01 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -92,6 +92,9 @@ print_mdoc(const struct mdoc_node *n, int indent)
 	case (MDOC_TBL):
 		t = "tbl";
 		break;
+	case (MDOC_EQN):
+		t = "eqn";
+		break;
 	default:
 		abort();
 		/* NOTREACHED */
@@ -127,6 +130,9 @@ print_mdoc(const struct mdoc_node *n, int indent)
 		}
 		break;
 	case (MDOC_TBL):
+		break;
+	case (MDOC_EQN):
+		p = n->eqn->data;
 		break;
 	case (MDOC_ROOT):
 		p = "root";
@@ -195,8 +201,14 @@ print_man(const struct man_node *n, int indent)
 	case (MAN_BODY):
 		t = "block-body";
 		break;
+	case (MAN_TAIL):
+		t = "block-tail";
+		break;
 	case (MAN_TBL):
 		t = "tbl";
+		break;
+	case (MAN_EQN):
+		t = "eqn";
 		break;
 	default:
 		abort();
@@ -215,6 +227,8 @@ print_man(const struct man_node *n, int indent)
 		/* FALLTHROUGH */
 	case (MAN_HEAD):
 		/* FALLTHROUGH */
+	case (MAN_TAIL):
+		/* FALLTHROUGH */
 	case (MAN_BODY):
 		p = man_macronames[n->tok];
 		break;
@@ -222,6 +236,9 @@ print_man(const struct man_node *n, int indent)
 		p = "root";
 		break;
 	case (MAN_TBL):
+		break;
+	case (MAN_EQN):
+		p = n->eqn->data;
 		break;
 	default:
 		abort();
@@ -254,8 +271,6 @@ print_span(const struct tbl_span *sp, int indent)
 	for (i = 0; i < indent; i++)
 		putchar('\t');
 
-	printf("tbl: ");
-
 	switch (sp->pos) {
 	case (TBL_SPAN_HORIZ):
 		putchar('-');
@@ -282,8 +297,14 @@ print_span(const struct tbl_span *sp, int indent)
 		default:
 			break;
 		}
-		printf("[%s%s]", dp->string, dp->layout ?  "" : "*");
-		if (dp->next)
-			putchar(' ');
+		printf("[\"%s\"", dp->string ? dp->string : "");
+		if (dp->spans)
+			printf("(%d)", dp->spans);
+		if (NULL == dp->layout)
+			putchar('*');
+		putchar(']');
+		putchar(' ');
 	}
+
+	printf("(tbl) %d:1", sp->line);
 }
