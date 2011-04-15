@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.rules.inc,v 1.2 2011/04/15 12:16:31 elric Exp $
+# $NetBSD: Makefile.rules.inc,v 1.3 2011/04/15 14:39:32 elric Exp $
 
 SRCS+= ${HEIMSRCS:N*.et:N*.in:N*.asn1}
 
@@ -91,7 +91,7 @@ ${slc_src:.in=.c} ${slc_src:.in=.h}: ${slc_src}
 OBJS.${PROG} += ${OBJS}
 .endif
 
-.if defined(LIB) && exists(version-script.map)
+.if defined(LIB) && exists(version-script.map) && !defined(NO_VERSION_SCRIPT)
 version-script.map:
 
 LDFLAGS.lib${LIB} += -Wl,--version-script=${version-script.map:P}

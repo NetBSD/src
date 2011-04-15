@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:52 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/04/15 14:39:32 elric Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -37,6 +37,7 @@ SRCS =			\
 	rename_c.c	\
 	send_recv.c
 
+NO_VERSION_SCRIPT=
 
 INCSDIR=	/usr/include/kadm5
 INCS=		admin.h			\
