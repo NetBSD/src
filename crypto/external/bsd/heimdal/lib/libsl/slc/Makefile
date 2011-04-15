@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/04/15 19:41:11 elric Exp $
+# $NetBSD: Makefile,v 1.3 2011/04/15 21:02:47 elric Exp $
 
 NOMAN=		# defined
 
@@ -13,8 +13,6 @@ SRCS+=	slc-gram.y slc-lex.l getarg.c rand.c get_window_size.c \
 	strupr.c print_version.c
 
 YHEADER=	# defined
-
-LDADD=-lfl -ly
 
 HOST_CPPFLAGS+= -I.			\
 	-I${HEIMBASE}/include		\
