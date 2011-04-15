@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.107 2011/04/15 18:05:43 elric Exp $
+# $NetBSD: md.amd64,v 1.108 2011/04/15 19:31:06 joerg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -67,6 +67,15 @@
 ./usr/include/amd64/varargs.h			comp-c-include
 ./usr/include/amd64/vmparam.h			comp-c-include
 ./usr/include/amd64/wchar_limits.h		comp-c-include
+./usr/include/clang-3.0/avxintrin.h		comp-c-include		llvm
+./usr/include/clang-3.0/emmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.0/immintrin.h		comp-c-include		llvm
+./usr/include/clang-3.0/mm_malloc.h		comp-c-include		llvm
+./usr/include/clang-3.0/mmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.0/pmmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.0/smmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.0/tmmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.0/xmmintrin.h		comp-c-include		llvm
 ./usr/include/emmintrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.1/emmintrin.h		comp-c-include		gcccmds,gcc=4
 ./usr/include/gcc-4.1/mm_malloc.h		comp-c-include		gcccmds,gcc=4
