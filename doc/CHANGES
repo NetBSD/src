@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1538 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1539 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -987,4 +987,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[phx 20110404]
 	sandpoint: QNAP support. [phx 20110405]
 	dhcpcd(8): Import dhcpcd-5.2.12. [roy 20110406]
-	sparc64: Add EDID support to ffb(4). [jdc 20110408]
+	sparc64: Add EDID (Extended Display Identification Data) reading,
+		and video mode setting support, to ffb(4). [jdc 20110408]
