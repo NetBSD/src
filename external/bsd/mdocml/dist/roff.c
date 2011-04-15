@@ -277,10 +277,6 @@ roffnode_pop(struct roff *r)
 	assert(r->last);
 	p = r->last; 
 
-	if (ROFF_el == p->tok)
-		if (r->rstackpos > -1)
-			r->rstackpos--;
-
 	r->last = r->last->parent;
 	free(p->name);
 	free(p->end);
@@ -976,29 +972,20 @@ roff_cond(ROFF_ARGS)
 	int		 sv;
 	enum roffrule	 rule;
 
-	/* Stack overflow! */
+	/* 
+	 * An `.el' has no conditional body: it will consume the value
+	 * of the current rstack entry set in prior `ie' calls or
+	 * defaults to DENY.  
+	 *
+	 * If we're not an `el', however, then evaluate the conditional.
+	 */
 
-	if (ROFF_ie == tok && r->rstackpos == RSTACK_MAX - 1) {
-		mandoc_msg(MANDOCERR_MEM, r->parse, ln, ppos, NULL);
-		return(ROFF_ERR);
-	}
-
-	/* First, evaluate the conditional. */
-
-	if (ROFF_el == tok) {
-		/* 
-		 * An `.el' will get the value of the current rstack
-		 * entry set in prior `ie' calls or defaults to DENY.
-	 	 */
-		if (r->rstackpos < 0)
-			rule = ROFFRULE_DENY;
-		else
-			rule = r->rstack[r->rstackpos];
-	} else
-		rule = roff_evalcond(*bufp, &pos);
+	rule = ROFF_el == tok ?
+		(r->rstackpos < 0 ? 
+		 ROFFRULE_DENY : r->rstack[r->rstackpos--]) :
+		roff_evalcond(*bufp, &pos);
 
 	sv = pos;
-
 	while (' ' == (*bufp)[pos])
 		pos++;
 
@@ -1018,16 +1005,20 @@ roff_cond(ROFF_ARGS)
 
 	r->last->rule = rule;
 
+	/*
+	 * An if-else will put the NEGATION of the current evaluated
+	 * conditional into the stack of rules.
+	 */
+
 	if (ROFF_ie == tok) {
-		/*
-		 * An if-else will put the NEGATION of the current
-		 * evaluated conditional into the stack.
-		 */
-		r->rstackpos++;
-		if (ROFFRULE_DENY == r->last->rule)
-			r->rstack[r->rstackpos] = ROFFRULE_ALLOW;
-		else
-			r->rstack[r->rstackpos] = ROFFRULE_DENY;
+		if (r->rstackpos == RSTACK_MAX - 1) {
+			mandoc_msg(MANDOCERR_MEM, 
+				r->parse, ln, ppos, NULL);
+			return(ROFF_ERR);
+		}
+		r->rstack[++r->rstackpos] = 
+			ROFFRULE_DENY == r->last->rule ?
+			ROFFRULE_ALLOW : ROFFRULE_DENY;
 	}
 
 	/* If the parent has false as its rule, then so do we. */
