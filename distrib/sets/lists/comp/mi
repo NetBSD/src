@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1614 2011/04/12 08:22:48 jruoho Exp $
+#	$NetBSD: mi,v 1.1615 2011/04/15 14:36:28 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7348,7 +7348,8 @@
 ./usr/share/man/cat3/makecontext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/makedev.0			comp-c-catman		.cat
 ./usr/share/man/cat3/malloc.0			comp-c-catman		.cat
-./usr/share/man/cat3/man.0			comp-mdocml-catman	.cat
+./usr/share/man/cat3/man.0			comp-obsolete		obsolete
+./usr/share/man/cat3/mandoc.0			comp-mdocml-catman	.cat
 ./usr/share/man/cat3/math.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mblen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mbrlen.0			comp-c-catman		.cat
@@ -7361,7 +7362,7 @@
 ./usr/share/man/cat3/md4.0			comp-c-catman		.cat
 ./usr/share/man/cat3/md5.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mdc2.0			comp-obsolete		obsolete
-./usr/share/man/cat3/mdoc.0			comp-mdocml-catman	.cat
+./usr/share/man/cat3/mdoc.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/membar_consumer.0		comp-c-catman		.cat
 ./usr/share/man/cat3/membar_enter.0		comp-c-catman		.cat
 ./usr/share/man/cat3/membar_exit.0		comp-c-catman		.cat
@@ -13400,7 +13401,8 @@
 ./usr/share/man/html3/makecontext.html		comp-c-htmlman		html
 ./usr/share/man/html3/makedev.html		comp-c-htmlman		html
 ./usr/share/man/html3/malloc.html		comp-c-htmlman		html
-./usr/share/man/html3/man.html			comp-mdocml-htmlman	html
+./usr/share/man/html3/man.html			comp-obsolete		obsolete
+./usr/share/man/html3/mandoc.html		comp-mdocml-htmlman	html
 ./usr/share/man/html3/math.html			comp-c-htmlman		html
 ./usr/share/man/html3/mblen.html		comp-c-htmlman		html
 ./usr/share/man/html3/mbrlen.html		comp-c-htmlman		html
@@ -13412,7 +13414,7 @@
 ./usr/share/man/html3/md2.html			comp-c-htmlman		html
 ./usr/share/man/html3/md4.html			comp-c-htmlman		html
 ./usr/share/man/html3/md5.html			comp-c-htmlman		html
-./usr/share/man/html3/mdoc.html			comp-mdocml-htmlman	html
+./usr/share/man/html3/mdoc.html			comp-obsolete		obsolete
 ./usr/share/man/html3/membar_consumer.html	comp-c-htmlman		html
 ./usr/share/man/html3/membar_enter.html		comp-c-htmlman		html
 ./usr/share/man/html3/membar_exit.html		comp-c-htmlman		html
@@ -19436,7 +19438,8 @@
 ./usr/share/man/man3/makecontext.3		comp-c-man		.man
 ./usr/share/man/man3/makedev.3			comp-c-man		.man
 ./usr/share/man/man3/malloc.3			comp-c-man		.man
-./usr/share/man/man3/man.3			comp-mdocml-man		.man
+./usr/share/man/man3/man.3			comp-obsolete		obsolete
+./usr/share/man/man3/mandoc.3			comp-mdocml-man		.man
 ./usr/share/man/man3/math.3			comp-c-man		.man
 ./usr/share/man/man3/mblen.3			comp-c-man		.man
 ./usr/share/man/man3/mbrlen.3			comp-c-man		.man
@@ -19449,7 +19452,7 @@
 ./usr/share/man/man3/md4.3			comp-c-man		.man
 ./usr/share/man/man3/md5.3			comp-c-man		.man
 ./usr/share/man/man3/mdc2.3			comp-obsolete		obsolete
-./usr/share/man/man3/mdoc.3			comp-mdocml-man		.man
+./usr/share/man/man3/mdoc.3			comp-obsolete		obsolete
 ./usr/share/man/man3/membar_consumer.3		comp-c-man		.man
 ./usr/share/man/man3/membar_enter.3		comp-c-man		.man
 ./usr/share/man/man3/membar_exit.3		comp-c-man		.man
