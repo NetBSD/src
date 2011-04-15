@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.43 2011/02/20 08:13:29 matt Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.44 2011/04/15 13:07:37 he Exp $ */
 
 /*
  * System call argument lists.
@@ -922,6 +922,19 @@ struct linux_sys_get_robust_list_args {
 };
 check_syscall_args(linux_sys_get_robust_list)
 
+struct linux_sys_dup3_args {
+	syscallarg(int) from;
+	syscallarg(int) to;
+	syscallarg(int) flags;
+};
+check_syscall_args(linux_sys_dup3)
+
+struct linux_sys_pipe2_args {
+	syscallarg(int *) pfds;
+	syscallarg(int) flags;
+};
+check_syscall_args(linux_sys_pipe2)
+
 /*
  * System call prototypes.
  */
@@ -1333,5 +1346,9 @@ int	linux_sys_set_thread_area(struct lwp *, const struct linux_sys_set_thread_ar
 int	linux_sys_set_robust_list(struct lwp *, const struct linux_sys_set_robust_list_args *, register_t *);
 
 int	linux_sys_get_robust_list(struct lwp *, const struct linux_sys_get_robust_list_args *, register_t *);
+
+int	linux_sys_dup3(struct lwp *, const struct linux_sys_dup3_args *, register_t *);
+
+int	linux_sys_pipe2(struct lwp *, const struct linux_sys_pipe2_args *, register_t *);
 
 #endif /* _LINUX_SYS_SYSCALLARGS_H_ */

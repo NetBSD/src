@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.47 2010/07/07 01:31:52 chs Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.48 2011/04/15 13:07:37 he Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.47 2010/07/07 01:31:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.48 2011/04/15 13:07:37 he Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -752,10 +752,10 @@ struct sysent linux_sysent[] = {
 	    linux_sys_nosys },			/* 356 = unimplemented eventfd2 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 357 = unimplemented epoll_create1 */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 358 = unimplemented dup3 */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 359 = unimplemented pipe2 */
+	{ ns(struct linux_sys_dup3_args), 0,
+	    (sy_call_t *)linux_sys_dup3 },	/* 358 = dup3 */
+	{ ns(struct linux_sys_pipe2_args), 0,
+	    (sy_call_t *)linux_sys_pipe2 },	/* 359 = pipe2 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 360 = unimplemented inotify_init1 */
 	{ 0, 0, 0,

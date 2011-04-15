@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.74 2010/07/07 01:31:53 chs Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.75 2011/04/15 13:07:37 he Exp $ */
 
 /*
  * System call argument lists.
@@ -27,7 +27,7 @@
 	}
 
 #undef check_syscall_args
-#define check_syscall_args(call) \
+#define check_syscall_args(call) /*LINTED*/ \
 	typedef char call##_check_args[sizeof (struct call##_args) \
 		<= LINUX_SYS_MAXSYSARGS * sizeof (register_t) ? 1 : -1];
 
@@ -953,6 +953,19 @@ struct linux_sys_sched_getaffinity_args {
 };
 check_syscall_args(linux_sys_sched_getaffinity)
 
+struct linux_sys_dup3_args {
+	syscallarg(int) from;
+	syscallarg(int) to;
+	syscallarg(int) flags;
+};
+check_syscall_args(linux_sys_dup3)
+
+struct linux_sys_pipe2_args {
+	syscallarg(int *) pfds;
+	syscallarg(int) flags;
+};
+check_syscall_args(linux_sys_pipe2)
+
 /*
  * System call prototypes.
  */
@@ -1362,5 +1375,9 @@ int	linux_sys_get_robust_list(struct lwp *, const struct linux_sys_get_robust_li
 int	linux_sys_sched_setaffinity(struct lwp *, const struct linux_sys_sched_setaffinity_args *, register_t *);
 
 int	linux_sys_sched_getaffinity(struct lwp *, const struct linux_sys_sched_getaffinity_args *, register_t *);
+
+int	linux_sys_dup3(struct lwp *, const struct linux_sys_dup3_args *, register_t *);
+
+int	linux_sys_pipe2(struct lwp *, const struct linux_sys_pipe2_args *, register_t *);
 
 #endif /* _LINUX_SYS_SYSCALLARGS_H_ */
