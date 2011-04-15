@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_validate.c,v 1.151 2011/01/03 23:53:51 schwarze Exp $ */
+/*	$Vendor-Id: mdoc_validate.c,v 1.166 2011/04/03 09:53:50 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,6 +33,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "mdoc.h"
 #include "mandoc.h"
 #include "libmdoc.h"
 #include "libmandoc.h"
@@ -74,11 +75,12 @@ static	void	 check_args(struct mdoc *, struct mdoc_node *);
 
 static	int	 concat(struct mdoc *, char *, 
 			const struct mdoc_node *, size_t);
+static	enum mdoc_sec	a2sec(const char *);
+static	size_t		macro2len(enum mdoct);
 
 static	int	 ebool(POST_ARGS);
 static	int	 berr_ge1(POST_ARGS);
 static	int	 bwarn_ge1(POST_ARGS);
-static	int	 eerr_ge1(POST_ARGS);
 static	int	 ewarn_eq0(POST_ARGS);
 static	int	 ewarn_eq1(POST_ARGS);
 static	int	 ewarn_ge1(POST_ARGS);
@@ -96,6 +98,7 @@ static	int	 post_bl_block(POST_ARGS);
 static	int	 post_bl_block_width(POST_ARGS);
 static	int	 post_bl_block_tag(POST_ARGS);
 static	int	 post_bl_head(POST_ARGS);
+static	int	 post_bx(POST_ARGS);
 static	int	 post_dd(POST_ARGS);
 static	int	 post_dt(POST_ARGS);
 static	int	 post_defaults(POST_ARGS);
@@ -104,6 +107,7 @@ static	int	 post_eoln(POST_ARGS);
 static	int	 post_it(POST_ARGS);
 static	int	 post_lb(POST_ARGS);
 static	int	 post_nm(POST_ARGS);
+static	int	 post_ns(POST_ARGS);
 static	int	 post_os(POST_ARGS);
 static	int	 post_ignpar(POST_ARGS);
 static	int	 post_prol(POST_ARGS);
@@ -135,10 +139,11 @@ static	v_post	 posts_bd[] = { post_literal, hwarn_eq0, bwarn_ge1, NULL };
 static	v_post	 posts_bf[] = { hwarn_le1, post_bf, NULL };
 static	v_post	 posts_bk[] = { hwarn_eq0, bwarn_ge1, NULL };
 static	v_post	 posts_bl[] = { bwarn_ge1, post_bl, NULL };
+static	v_post	 posts_bx[] = { post_bx, NULL };
 static	v_post	 posts_bool[] = { ebool, NULL };
 static	v_post	 posts_eoln[] = { post_eoln, NULL };
 static	v_post	 posts_defaults[] = { post_defaults, NULL };
-static	v_post	 posts_dd[] = { ewarn_ge1, post_dd, post_prol, NULL };
+static	v_post	 posts_dd[] = { post_dd, post_prol, NULL };
 static	v_post	 posts_dl[] = { post_literal, bwarn_ge1, NULL };
 static	v_post	 posts_dt[] = { post_dt, post_prol, NULL };
 static	v_post	 posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
@@ -147,6 +152,7 @@ static	v_post	 posts_lb[] = { post_lb, NULL };
 static	v_post	 posts_nd[] = { berr_ge1, NULL };
 static	v_post	 posts_nm[] = { post_nm, NULL };
 static	v_post	 posts_notext[] = { ewarn_eq0, NULL };
+static	v_post	 posts_ns[] = { post_ns, NULL };
 static	v_post	 posts_os[] = { post_os, post_prol, NULL };
 static	v_post	 posts_rs[] = { post_rs, NULL };
 static	v_post	 posts_sh[] = { post_ignpar, hwarn_ge1, bwarn_ge1, post_sh, NULL };
@@ -154,11 +160,10 @@ static	v_post	 posts_sp[] = { ewarn_le1, NULL };
 static	v_post	 posts_ss[] = { post_ignpar, hwarn_ge1, bwarn_ge1, NULL };
 static	v_post	 posts_st[] = { post_st, NULL };
 static	v_post	 posts_std[] = { post_std, NULL };
-static	v_post	 posts_text[] = { eerr_ge1, NULL };
+static	v_post	 posts_text[] = { ewarn_ge1, NULL };
 static	v_post	 posts_text1[] = { ewarn_eq1, NULL };
 static	v_post	 posts_vt[] = { post_vt, NULL };
 static	v_post	 posts_wline[] = { bwarn_ge1, NULL };
-static	v_post	 posts_wtext[] = { ewarn_ge1, NULL };
 static	v_pre	 pres_an[] = { pre_an, NULL };
 static	v_pre	 pres_bd[] = { pre_display, pre_bd, pre_literal, pre_par, NULL };
 static	v_pre	 pres_bl[] = { pre_bl, pre_par, NULL };
@@ -175,7 +180,7 @@ static	v_pre	 pres_sh[] = { pre_sh, NULL };
 static	v_pre	 pres_ss[] = { pre_ss, NULL };
 static	v_pre	 pres_std[] = { pre_std, NULL };
 
-const	struct valids mdoc_valids[MDOC_MAX] = {
+static	const struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Ap */
 	{ pres_dd, posts_dd },			/* Dd */
 	{ pres_dt, posts_dt },			/* Dt */
@@ -190,21 +195,21 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ pres_bl, posts_bl },			/* Bl */ 
 	{ NULL, NULL },				/* El */
 	{ pres_it, posts_it },			/* It */
-	{ NULL, posts_text },			/* Ad */ 
+	{ NULL, NULL },				/* Ad */ 
 	{ pres_an, posts_an },			/* An */ 
 	{ NULL, posts_defaults },		/* Ar */
-	{ NULL, posts_text },			/* Cd */ 
+	{ NULL, NULL },				/* Cd */ 
 	{ NULL, NULL },				/* Cm */
 	{ NULL, NULL },				/* Dv */ 
-	{ pres_er, posts_text },		/* Er */ 
+	{ pres_er, NULL },			/* Er */ 
 	{ NULL, NULL },				/* Ev */ 
 	{ pres_std, posts_std },		/* Ex */ 
 	{ NULL, NULL },				/* Fa */ 
-	{ pres_fd, posts_wtext },		/* Fd */
+	{ pres_fd, posts_text },		/* Fd */
 	{ NULL, NULL },				/* Fl */
-	{ NULL, posts_text },			/* Fn */ 
-	{ NULL, posts_wtext },			/* Ft */ 
-	{ NULL, posts_text },			/* Ic */ 
+	{ NULL, NULL },				/* Fn */ 
+	{ NULL, NULL },				/* Ft */ 
+	{ NULL, NULL },				/* Ic */ 
 	{ NULL, posts_text1 },			/* In */ 
 	{ NULL, posts_defaults },		/* Li */
 	{ NULL, posts_nd },			/* Nd */
@@ -216,10 +221,10 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_st },			/* St */ 
 	{ NULL, NULL },				/* Va */
 	{ NULL, posts_vt },			/* Vt */ 
-	{ NULL, posts_wtext },			/* Xr */ 
+	{ NULL, posts_text },			/* Xr */ 
 	{ NULL, posts_text },			/* %A */
 	{ NULL, posts_text },			/* %B */ /* FIXME: can be used outside Rs/Re. */
-	{ NULL, posts_text },			/* %D */ /* FIXME: check date with mandoc_a2time(). */
+	{ NULL, posts_text },			/* %D */
 	{ NULL, posts_text },			/* %I */
 	{ NULL, posts_text },			/* %J */
 	{ NULL, posts_text },			/* %N */
@@ -237,7 +242,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Bo */
 	{ NULL, NULL },				/* Bq */
 	{ NULL, NULL },				/* Bsx */
-	{ NULL, NULL },				/* Bx */
+	{ NULL, posts_bx },			/* Bx */
 	{ NULL, posts_bool },			/* Db */
 	{ NULL, NULL },				/* Dc */
 	{ NULL, NULL },				/* Do */
@@ -247,9 +252,9 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Em */ 
 	{ NULL, NULL },				/* Eo */
 	{ NULL, NULL },				/* Fx */
-	{ NULL, posts_text },			/* Ms */ 
+	{ NULL, NULL },				/* Ms */ 
 	{ NULL, posts_notext },			/* No */
-	{ NULL, posts_notext },			/* Ns */
+	{ NULL, posts_ns },			/* Ns */
 	{ NULL, NULL },				/* Nx */
 	{ NULL, NULL },				/* Ox */
 	{ NULL, NULL },				/* Pc */
@@ -266,9 +271,9 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* So */
 	{ NULL, NULL },				/* Sq */
 	{ NULL, posts_bool },			/* Sm */ 
-	{ NULL, posts_text },			/* Sx */
-	{ NULL, posts_text },			/* Sy */
-	{ NULL, posts_text },			/* Tn */
+	{ NULL, NULL },				/* Sx */
+	{ NULL, NULL },				/* Sy */
+	{ NULL, NULL },				/* Tn */
 	{ NULL, NULL },				/* Ux */
 	{ NULL, NULL },				/* Xc */
 	{ NULL, NULL },				/* Xo */
@@ -284,7 +289,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_eoln },			/* Ud */
 	{ NULL, posts_lb },			/* Lb */
 	{ NULL, posts_notext },			/* Lp */ 
-	{ NULL, posts_text },			/* Lk */ 
+	{ NULL, NULL },				/* Lk */ 
 	{ NULL, posts_defaults },		/* Mt */ 
 	{ NULL, NULL },				/* Brq */ 
 	{ NULL, NULL },				/* Bro */ 
@@ -319,6 +324,30 @@ static	const enum mdoct rsord[RSORD_MAX] = {
 	MDOC__U
 };
 
+static	const char * const secnames[SEC__MAX] = {
+	NULL,
+	"NAME",
+	"LIBRARY",
+	"SYNOPSIS",
+	"DESCRIPTION",
+	"IMPLEMENTATION NOTES",
+	"RETURN VALUES",
+	"ENVIRONMENT",
+	"FILES",
+	"EXIT STATUS",
+	"EXAMPLES",
+	"DIAGNOSTICS",
+	"COMPATIBILITY",
+	"ERRORS",
+	"SEE ALSO",
+	"STANDARDS",
+	"HISTORY",
+	"AUTHORS",
+	"CAVEATS",
+	"BUGS",
+	"SECURITY CONSIDERATIONS",
+	NULL
+};
 
 int
 mdoc_valid_pre(struct mdoc *mdoc, struct mdoc_node *n)
@@ -335,6 +364,8 @@ mdoc_valid_pre(struct mdoc *mdoc, struct mdoc_node *n)
 		check_text(mdoc, line, pos, tp);
 		/* FALLTHROUGH */
 	case (MDOC_TBL):
+		/* FALLTHROUGH */
+	case (MDOC_EQN):
 		/* FALLTHROUGH */
 	case (MDOC_ROOT):
 		return(1);
@@ -364,6 +395,8 @@ mdoc_valid_post(struct mdoc *mdoc)
 
 	switch (mdoc->last->type) {
 	case (MDOC_TEXT):
+		/* FALLTHROUGH */
+	case (MDOC_EQN):
 		/* FALLTHROUGH */
 	case (MDOC_TBL):
 		return(1);
@@ -414,10 +447,10 @@ check_count(struct mdoc *m, enum mdoc_type type,
 	}
 
 	t = lvl == CHECK_WARN ? MANDOCERR_ARGCWARN : MANDOCERR_ARGCOUNT;
-
-	return(mdoc_vmsg(m, t, m->last->line, m->last->pos,
+	mandoc_vmsg(t, m->parse, m->last->line, m->last->pos,
 			"want %s%d children (have %d)",
-			p, val, m->last->nchild));
+			p, val, m->last->nchild);
+	return(1);
 }
 
 static int
@@ -431,12 +464,6 @@ static int
 bwarn_ge1(POST_ARGS)
 {
 	return(check_count(mdoc, MDOC_BODY, CHECK_WARN, CHECK_GT, 0));
-}
-
-static int
-eerr_ge1(POST_ARGS)
-{
-	return(check_count(mdoc, MDOC_ELEM, CHECK_ERROR, CHECK_GT, 0));
 }
 
 static int
@@ -555,10 +582,9 @@ check_parent(PRE_ARGS, enum mdoct tok, enum mdoc_type t)
 			(t == n->parent->type))
 		return(1);
 
-	mdoc_vmsg(mdoc, MANDOCERR_SYNTCHILD,
-				n->line, n->pos, "want parent %s",
-				MDOC_ROOT == t ? "<root>" : 
-					mdoc_macronames[tok]);
+	mandoc_vmsg(MANDOCERR_SYNTCHILD, mdoc->parse, n->line, 
+			n->pos, "want parent %s", MDOC_ROOT == t ? 
+			"<root>" : mdoc_macronames[tok]);
 	return(0);
 }
 
@@ -919,7 +945,7 @@ static int
 pre_dt(PRE_ARGS)
 {
 
-	if (0 == mdoc->meta.date || mdoc->meta.os)
+	if (NULL == mdoc->meta.date || mdoc->meta.os)
 		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOGOOO);
 
 	if (mdoc->meta.title)
@@ -932,7 +958,7 @@ static int
 pre_os(PRE_ARGS)
 {
 
-	if (NULL == mdoc->meta.title || 0 == mdoc->meta.date)
+	if (NULL == mdoc->meta.title || NULL == mdoc->meta.date)
 		mdoc_nmsg(mdoc, n, MANDOCERR_PROLOGOOO);
 
 	if (mdoc->meta.os)
@@ -1079,12 +1105,11 @@ post_vt(POST_ARGS)
 	/*
 	 * The Vt macro comes in both ELEM and BLOCK form, both of which
 	 * have different syntaxes (yet more context-sensitive
-	 * behaviour).  ELEM types must have a child; BLOCK types,
+	 * behaviour).  ELEM types must have a child, which is already
+	 * guaranteed by the in_line parsing routine; BLOCK types,
 	 * specifically the BODY, should only have TEXT children.
 	 */
 
-	if (MDOC_ELEM == mdoc->last->type)
-		return(eerr_ge1(mdoc));
 	if (MDOC_BODY != mdoc->last->type)
 		return(1);
 	
@@ -1228,19 +1253,12 @@ post_an(POST_ARGS)
 	struct mdoc_node *np;
 
 	np = mdoc->last;
-	if (AUTH__NONE != np->norm->An.auth && np->child) {
+	if (AUTH__NONE == np->norm->An.auth) {
+		if (0 == np->child)
+			check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_GT, 0);
+	} else if (np->child)
 		check_count(mdoc, MDOC_ELEM, CHECK_WARN, CHECK_EQ, 0);
-		return(1);
-	}
 
-	/* 
-	 * FIXME: make this ewarn and make sure that the front-ends
-	 * don't print the arguments.
-	 */
-	if (AUTH__NONE != np->norm->An.auth || np->child)
-		return(1);
-
-	mdoc_nmsg(mdoc, np, MANDOCERR_NOARGS);
 	return(1);
 }
 
@@ -1248,7 +1266,7 @@ post_an(POST_ARGS)
 static int
 post_it(POST_ARGS)
 {
-	int		  i, cols, rc;
+	int		  i, cols;
 	enum mdoc_list	  lt;
 	struct mdoc_node *n, *c;
 	enum mandocerr	  er;
@@ -1314,10 +1332,10 @@ post_it(POST_ARGS)
 		else
 			er = MANDOCERR_SYNTARGCOUNT;
 
-		rc = mdoc_vmsg(mdoc, er, 
-				mdoc->last->line, mdoc->last->pos, 
+		mandoc_vmsg(er, mdoc->parse, mdoc->last->line, 
+				mdoc->last->pos, 
 				"columns == %d (have %d)", cols, i);
-		return(rc);
+		return(MANDOCERR_ARGCOUNT == er);
 	default:
 		break;
 	}
@@ -1378,7 +1396,7 @@ post_bl_block_width(POST_ARGS)
 		width = 6;
 	else if (MDOC_MAX == (tok = mdoc_hash_find(n->norm->Bl.width)))
 		return(1);
-	else if (0 == (width = mdoc_macro2len(tok)))  {
+	else if (0 == (width = macro2len(tok)))  {
 		mdoc_nmsg(mdoc, n, MANDOCERR_BADWIDTH);
 		return(1);
 	}
@@ -1435,7 +1453,7 @@ post_bl_block_tag(POST_ARGS)
 			break;
 		}
 
-		if (0 != (ssz = mdoc_macro2len(nn->tok)))
+		if (0 != (ssz = macro2len(nn->tok)))
 			sz = ssz;
 
 		break;
@@ -1681,8 +1699,8 @@ post_rs(POST_ARGS)
 				break;
 
 		if (i < RSORD_MAX) {
-			if (MDOC__J == rsord[i])
-				mdoc->last->norm->Rs.child_J = nn;
+			if (MDOC__J == rsord[i] || MDOC__B == rsord[i])
+				mdoc->last->norm->Rs.quote_T++;
 			next = nn->next;
 			continue;
 		}
@@ -1758,6 +1776,15 @@ post_rs(POST_ARGS)
 }
 
 static int
+post_ns(POST_ARGS)
+{
+
+	if (MDOC_LINE & mdoc->last->flags)
+		mdoc_nmsg(mdoc, mdoc->last, MANDOCERR_IGNNS);
+	return(1);
+}
+
+static int
 post_sh(POST_ARGS)
 {
 
@@ -1820,7 +1847,7 @@ post_sh_head(POST_ARGS)
 	if ( ! concat(mdoc, buf, mdoc->last->child, BUFSIZ))
 		return(0);
 
-	sec = mdoc_str2sec(buf);
+	sec = a2sec(buf);
 
 	/* The NAME should be first. */
 
@@ -1970,23 +1997,21 @@ post_dd(POST_ARGS)
 	char		  buf[DATESIZE];
 	struct mdoc_node *n;
 
-	n = mdoc->last;
+	if (mdoc->meta.date)
+		free(mdoc->meta.date);
 
-	if (NULL == n->child) {
-		mdoc->meta.date = time(NULL);
+	n = mdoc->last;
+	if (NULL == n->child || '\0' == n->child->string[0]) {
+		mdoc->meta.date = mandoc_normdate
+			(mdoc->parse, NULL, n->line, n->pos);
 		return(1);
 	}
 
 	if ( ! concat(mdoc, buf, n->child, DATESIZE))
 		return(0);
 
-	mdoc->meta.date = mandoc_a2time
-		(MTIME_MDOCDATE | MTIME_CANONICAL, buf);
-
-	if (0 == mdoc->meta.date) {
-		mdoc_nmsg(mdoc, n, MANDOCERR_BADDATE);
-		mdoc->meta.date = time(NULL);
-	}
+	mdoc->meta.date = mandoc_normdate
+		(mdoc->parse, buf, n->line, n->pos);
 
 	return(1);
 }
@@ -2116,6 +2141,25 @@ post_prol(POST_ARGS)
 }
 
 static int
+post_bx(POST_ARGS)
+{
+	struct mdoc_node	*n;
+
+	/* 
+	 * Make `Bx's second argument always start with an uppercase
+	 * letter.  Groff checks if it's an "accepted" term, but we just
+	 * uppercase blindly.
+	 */
+
+	n = mdoc->last->child;
+	if (n && NULL != (n = n->next))
+		*n->string = (char)toupper
+			((unsigned char)*n->string);
+
+	return(1);
+}
+
+static int
 post_os(POST_ARGS)
 {
 	struct mdoc_node *n;
@@ -2150,7 +2194,7 @@ post_os(POST_ARGS)
 			return(0);
 		}
 #else /*!OSNAME */
-		if (uname(&utsname)) {
+		if (-1 == uname(&utsname)) {
 			mdoc_nmsg(mdoc, n, MANDOCERR_UNAME);
                         mdoc->meta.os = mandoc_strdup("UNKNOWN");
                         return(post_prol(mdoc));
@@ -2237,3 +2281,107 @@ concat(struct mdoc *m, char *p, const struct mdoc_node *n, size_t sz)
 	return(1);
 }
 
+static enum mdoc_sec 
+a2sec(const char *p)
+{
+	int		 i;
+
+	for (i = 0; i < (int)SEC__MAX; i++) 
+		if (secnames[i] && 0 == strcmp(p, secnames[i]))
+			return((enum mdoc_sec)i);
+
+	return(SEC_CUSTOM);
+}
+
+static size_t
+macro2len(enum mdoct macro)
+{
+
+	switch (macro) {
+	case(MDOC_Ad):
+		return(12);
+	case(MDOC_Ao):
+		return(12);
+	case(MDOC_An):
+		return(12);
+	case(MDOC_Aq):
+		return(12);
+	case(MDOC_Ar):
+		return(12);
+	case(MDOC_Bo):
+		return(12);
+	case(MDOC_Bq):
+		return(12);
+	case(MDOC_Cd):
+		return(12);
+	case(MDOC_Cm):
+		return(10);
+	case(MDOC_Do):
+		return(10);
+	case(MDOC_Dq):
+		return(12);
+	case(MDOC_Dv):
+		return(12);
+	case(MDOC_Eo):
+		return(12);
+	case(MDOC_Em):
+		return(10);
+	case(MDOC_Er):
+		return(17);
+	case(MDOC_Ev):
+		return(15);
+	case(MDOC_Fa):
+		return(12);
+	case(MDOC_Fl):
+		return(10);
+	case(MDOC_Fo):
+		return(16);
+	case(MDOC_Fn):
+		return(16);
+	case(MDOC_Ic):
+		return(10);
+	case(MDOC_Li):
+		return(16);
+	case(MDOC_Ms):
+		return(6);
+	case(MDOC_Nm):
+		return(10);
+	case(MDOC_No):
+		return(12);
+	case(MDOC_Oo):
+		return(10);
+	case(MDOC_Op):
+		return(14);
+	case(MDOC_Pa):
+		return(32);
+	case(MDOC_Pf):
+		return(12);
+	case(MDOC_Po):
+		return(12);
+	case(MDOC_Pq):
+		return(12);
+	case(MDOC_Ql):
+		return(16);
+	case(MDOC_Qo):
+		return(12);
+	case(MDOC_So):
+		return(12);
+	case(MDOC_Sq):
+		return(12);
+	case(MDOC_Sy):
+		return(6);
+	case(MDOC_Sx):
+		return(16);
+	case(MDOC_Tn):
+		return(10);
+	case(MDOC_Va):
+		return(12);
+	case(MDOC_Vt):
+		return(12);
+	case(MDOC_Xr):
+		return(10);
+	default:
+		break;
+	};
+	return(0);
+}
