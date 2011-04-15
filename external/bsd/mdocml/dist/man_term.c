@@ -1,6 +1,6 @@
-/*	$Vendor-Id: man_term.c,v 1.94 2011/01/04 01:23:18 schwarze Exp $ */
+/*	$Vendor-Id: man_term.c,v 1.105 2011/03/22 10:13:01 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -31,7 +31,6 @@
 #include "out.h"
 #include "man.h"
 #include "term.h"
-#include "chars.h"
 #include "main.h"
 
 #define	INDENT		  7
@@ -126,7 +125,7 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ pre_I, NULL, 0 }, /* I */
 	{ pre_alternate, NULL, 0 }, /* IR */
 	{ pre_alternate, NULL, 0 }, /* RI */
-	{ NULL, NULL, MAN_NOTEXT }, /* na */
+	{ pre_ign, NULL, MAN_NOTEXT }, /* na */
 	{ pre_sp, NULL, MAN_NOTEXT }, /* sp */
 	{ pre_literal, NULL, 0 }, /* nf */
 	{ pre_literal, NULL, 0 }, /* fi */
@@ -212,6 +211,9 @@ print_bvspace(struct termp *p, const struct man_node *n)
 {
 	term_newln(p);
 
+	if (n->body && n->body->child && MAN_TBL == n->body->child->type)
+		return;
+
 	if (NULL == n->prev)
 		return;
 
@@ -255,7 +257,7 @@ pre_literal(DECL_ARGS)
 	else
 		mt->fl &= ~MANT_LITERAL;
 
-	return(1);
+	return(0);
 }
 
 /* ARGSUSED */
@@ -396,6 +398,11 @@ pre_in(DECL_ARGS)
 		p->offset += v;
 	else 
 		p->offset = v;
+
+	/* Don't let this creep beyond the right margin. */
+
+	if (p->offset > p->rmargin)
+		p->offset = p->rmargin;
 
 	return(0);
 }
@@ -850,20 +857,31 @@ print_man_node(DECL_ARGS)
 	size_t		 rm, rmax;
 	int		 c;
 
-	c = 1;
-
 	switch (n->type) {
 	case(MAN_TEXT):
-		if (0 == *n->string) {
+		/*
+		 * If we have a blank line, output a vertical space.
+		 * If we have a space as the first character, break
+		 * before printing the line's data.
+		 */
+		if ('\0' == *n->string) {
 			term_vspace(p);
-			break;
-		}
+			return;
+		} else if (' ' == *n->string && MAN_LINE & n->flags)
+			term_newln(p);
 
 		term_word(p, n->string);
 
-		/* FIXME: this means that macro lines are munged!  */
-
-		if (MANT_LITERAL & mt->fl) {
+		/*
+		 * If we're in a literal context, make sure that words
+		 * togehter on the same line stay together.  This is a
+		 * POST-printing call, so we check the NEXT word.  Since
+		 * -man doesn't have nested macros, we don't need to be
+		 * more specific than this.
+		 */
+		if (MANT_LITERAL & mt->fl && 
+				(NULL == n->next || 
+				 n->next->line > n->line)) {
 			rm = p->rmargin;
 			rmax = p->maxrmargin;
 			p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
@@ -873,35 +891,40 @@ print_man_node(DECL_ARGS)
 			p->rmargin = rm;
 			p->maxrmargin = rmax;
 		}
-		break;
+
+		if (MAN_EOS & n->flags)
+			p->flags |= TERMP_SENTENCE;
+		return;
+	case (MAN_EQN):
+		term_word(p, n->eqn->data);
+		return;
 	case (MAN_TBL):
+		/*
+		 * Tables are preceded by a newline.  Then process a
+		 * table line, which will cause line termination,
+		 */
 		if (TBL_SPAN_FIRST & n->span->flags) 
 			term_newln(p);
 		term_tbl(p, n->span);
-		break;
+		return;
 	default:
-		if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
-			term_fontrepl(p, TERMFONT_NONE);
-		if (termacts[n->tok].pre)
-			c = (*termacts[n->tok].pre)(p, mt, n, m);
 		break;
 	}
+
+	if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
+		term_fontrepl(p, TERMFONT_NONE);
+
+	c = 1;
+	if (termacts[n->tok].pre)
+		c = (*termacts[n->tok].pre)(p, mt, n, m);
 
 	if (c && n->child)
 		print_man_nodelist(p, mt, n->child, m);
 
-	switch (n->type) {
-	case (MAN_TEXT):
-		/* FALLTHROUGH */
-	case (MAN_TBL):
-		break;
-	default:
-		if (termacts[n->tok].post)
-			(*termacts[n->tok].post)(p, mt, n, m);
-		if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
-			term_fontrepl(p, TERMFONT_NONE);
-		break;
-	}
+	if (termacts[n->tok].post)
+		(*termacts[n->tok].post)(p, mt, n, m);
+	if ( ! (MAN_NOTEXT & termacts[n->tok].flags))
+		term_fontrepl(p, TERMFONT_NONE);
 
 	if (MAN_EOS & n->flags)
 		p->flags |= TERMP_SENTENCE;
@@ -922,24 +945,18 @@ print_man_nodelist(DECL_ARGS)
 static void
 print_man_foot(struct termp *p, const void *arg)
 {
-	char		buf[DATESIZ];
 	const struct man_meta *meta;
 
 	meta = (const struct man_meta *)arg;
 
 	term_fontrepl(p, TERMFONT_NONE);
 
-	if (meta->rawdate)
-		strlcpy(buf, meta->rawdate, DATESIZ);
-	else
-		time2a(meta->date, buf, DATESIZ);
-
 	term_vspace(p);
 	term_vspace(p);
 	term_vspace(p);
 
 	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
-	p->rmargin = p->maxrmargin - term_strlen(p, buf);
+	p->rmargin = p->maxrmargin - term_strlen(p, meta->date);
 	p->offset = 0;
 
 	/* term_strlen() can return zero. */
@@ -957,7 +974,7 @@ print_man_foot(struct termp *p, const void *arg)
 	p->rmargin = p->maxrmargin;
 	p->flags &= ~TERMP_NOBREAK;
 
-	term_word(p, buf);
+	term_word(p, meta->date);
 	term_flushln(p);
 }
 
