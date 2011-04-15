@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.199 2011/01/20 18:47:19 pooka Exp $
+#	$NetBSD: Makefile,v 1.200 2011/04/15 18:05:46 elric Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -44,11 +44,6 @@ SUBDIR+= gzip
 
 .if (${MKHESIOD} != "no")
 SUBDIR+= hesinfo
-.endif
-
-.if (${MKKERBEROS} != "no")
-SUBDIR+= compile_et kdestroy kgetcred kinit klist mk_cmds string2key
-SUBDIR+= hxtool verify_krb5_conf gss krb5-config
 .endif
 
 .if (${MKSKEY} != "no")
