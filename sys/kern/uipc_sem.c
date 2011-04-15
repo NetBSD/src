@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.32 2011/04/14 00:32:23 rmind Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.33 2011/04/15 00:01:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.32 2011/04/14 00:32:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.33 2011/04/15 00:01:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,9 +490,12 @@ sys__ksem_close(struct lwp *l, const struct sys__ksem_close_args *uap,
 	/* {
 		intptr_t id;
 	} */
-	struct sys_close_args cuap;
-	SCARG(&cuap, fd) = SCARG(uap, id);
-	return sys_close(l, (const void *)&cuap, retval);
+	int fd = (int)SCARG(uap, id);
+
+	if (fd_getfile(fd) == NULL) {
+		return EBADF;
+	}
+	return fd_close(fd);
 }
 
 static int
