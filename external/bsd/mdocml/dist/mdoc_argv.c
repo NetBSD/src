@@ -652,40 +652,40 @@ args_checkpunct(struct mdoc *m, const char *buf, int i, int ln, int fl)
 static enum mdocargt
 argv_a2arg(enum mdoct tok, const char *p)
 {
-	const enum mdocargt *args;
+	const enum mdocargt *argsp;
 
-	args = NULL;
+	argsp = NULL;
 
 	switch (tok) {
 	case (MDOC_An):
-		args = args_An;
+		argsp = args_An;
 		break;
 	case (MDOC_Bd):
-		args = args_Bd;
+		argsp = args_Bd;
 		break;
 	case (MDOC_Bf):
-		args = args_Bf;
+		argsp = args_Bf;
 		break;
 	case (MDOC_Bk):
-		args = args_Bk;
+		argsp = args_Bk;
 		break;
 	case (MDOC_Bl):
-		args = args_Bl;
+		argsp = args_Bl;
 		break;
 	case (MDOC_Rv):
 		/* FALLTHROUGH */
 	case (MDOC_Ex):
-		args = args_Ex;
+		argsp = args_Ex;
 		break;
 	default:
 		return(MDOC_ARG_MAX);
 	}
 
-	assert(args);
+	assert(argsp);
 
-	for ( ; MDOC_ARG_MAX != *args ; args++)
-		if (0 == strcmp(p, mdoc_argnames[*args]))
-			return(*args);
+	for ( ; MDOC_ARG_MAX != *argsp ; argsp++)
+		if (0 == strcmp(p, mdoc_argnames[*argsp]))
+			return(*argsp);
 
 	return(MDOC_ARG_MAX);
 }
