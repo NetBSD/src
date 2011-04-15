@@ -1,4 +1,4 @@
-/*	$NetBSD: krb5-types.h,v 1.3 2011/04/15 12:19:20 elric Exp $	*/
+/*	$NetBSD: krb5-types.h,v 1.4 2011/04/15 14:41:11 elric Exp $	*/
 
 #ifndef __krb5_types_h__
 #define __krb5_types_h__
@@ -15,6 +15,8 @@ typedef ssize_t krb5_ssize_t;
 typedef int krb5_socket_t;
 
 #define HEIMDAL_DEPRECATED
+#define GSSAPI_DEPRECATED
+#define KRB5_DEPRECATED
 
 #ifndef HEIMDAL_DEPRECATED
 #if defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1 )))
