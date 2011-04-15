@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2010/02/03 15:34:43 roy Exp $
+#	$NetBSD: Makefile,v 1.47 2011/04/15 18:05:45 elric Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 WARNS?=	2		# XXX: const issues in sys_term.c
@@ -31,9 +31,7 @@ LDADD+= -lpam ${PAM_STATIC_LDADD}
 DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 
-VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
-
-LDADD+=	 -ldes -lcom_err -L${VERS} -lvers -lroken
+LDADD+=	 -ldes -lcom_err -lroken
 DPADD+=	${LIBDES} ${LIBCOM_ERR} ${LIBROKEN}
 
 .endif

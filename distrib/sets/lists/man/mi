@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1308 2011/04/09 19:37:13 jdc Exp $
+# $NetBSD: mi,v 1.1309 2011/04/15 18:05:44 elric Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -107,7 +107,7 @@
 ./usr/share/man/cat1/colrm.0			man-util-catman		.cat
 ./usr/share/man/cat1/column.0			man-util-catman		.cat
 ./usr/share/man/cat1/comm.0			man-util-catman		.cat
-./usr/share/man/cat1/compile_et.0		man-krb5-catman		kerberos,.cat
+./usr/share/man/cat1/compile_et.0		man-obsolete		obsolete
 ./usr/share/man/cat1/compress.0			man-util-catman		.cat
 ./usr/share/man/cat1/cp.0			man-util-catman		.cat
 ./usr/share/man/cat1/cpio.0			man-util-catman		.cat
@@ -219,7 +219,7 @@
 ./usr/share/man/cat1/kf.0			man-obsolete		obsolete
 ./usr/share/man/cat1/kgetcred.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/kill.0			man-util-catman		.cat
-./usr/share/man/cat1/kimpersonate.0		man-krb5-catman		kerberos,.cat
+./usr/share/man/cat1/kimpersonate.0		man-obsolete		obsolete
 ./usr/share/man/cat1/kinit.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/klist.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/kpasswd.0			man-krb5-catman		use_kerberos,.cat
@@ -2351,6 +2351,7 @@
 ./usr/share/man/cat8/kdc.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kerberos.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kfd.0			man-obsolete		obsolete
+./usr/share/man/cat8/kimpersonate.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kpasswdd.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kstash.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/ktutil.0			man-krb5-catman		kerberos,.cat
@@ -2969,7 +2970,7 @@
 ./usr/share/man/html1/colrm.html		man-util-htmlman	html
 ./usr/share/man/html1/column.html		man-util-htmlman	html
 ./usr/share/man/html1/comm.html			man-util-htmlman	html
-./usr/share/man/html1/compile_et.html		man-krb5-htmlman	kerberos,html
+./usr/share/man/html1/compile_et.html		man-obsolete		obsolete
 ./usr/share/man/html1/compress.html		man-util-htmlman	html
 ./usr/share/man/html1/cp.html			man-util-htmlman	html
 ./usr/share/man/html1/cpio.html			man-util-htmlman	html
@@ -3066,7 +3067,7 @@
 ./usr/share/man/html1/kdump.html		man-debug-htmlman	html
 ./usr/share/man/html1/kgetcred.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html1/kill.html			man-util-htmlman	html
-./usr/share/man/html1/kimpersonate.html		man-krb5-htmlman	kerberos,html
+./usr/share/man/html1/kimpersonate.html		man-obsolete		obsolete
 ./usr/share/man/html1/kinit.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html1/klist.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html1/kpasswd.html		man-krb5-htmlman	use_kerberos,html
@@ -4943,6 +4944,7 @@
 ./usr/share/man/html8/kcm.html			man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kdc.html			man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kerberos.html		man-krb5-htmlman	kerberos,html
+./usr/share/man/html8/kimpersonate.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kpasswdd.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kstash.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/ktutil.html		man-krb5-htmlman	kerberos,html
@@ -5444,7 +5446,7 @@
 ./usr/share/man/man1/colrm.1			man-util-man		.man
 ./usr/share/man/man1/column.1			man-util-man		.man
 ./usr/share/man/man1/comm.1			man-util-man		.man
-./usr/share/man/man1/compile_et.1		man-krb5-man		kerberos,.man
+./usr/share/man/man1/compile_et.1		man-obsolete		obsolete
 ./usr/share/man/man1/compress.1			man-util-man		.man
 ./usr/share/man/man1/cp.1			man-util-man		.man
 ./usr/share/man/man1/cpio.1			man-util-man		.man
@@ -5556,7 +5558,7 @@
 ./usr/share/man/man1/kf.1			man-obsolete		obsolete
 ./usr/share/man/man1/kgetcred.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/kill.1			man-util-man		.man
-./usr/share/man/man1/kimpersonate.1		man-krb5-man		kerberos,.man
+./usr/share/man/man1/kimpersonate.1		man-obsolete		obsolete
 ./usr/share/man/man1/kinit.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/klist.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/kpasswd.1			man-krb5-man		use_kerberos,.man
@@ -7688,6 +7690,7 @@
 ./usr/share/man/man8/kdc.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kerberos.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kfd.8			man-obsolete		obsolete
+./usr/share/man/man8/kimpersonate.8		man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kpasswdd.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kstash.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/ktutil.8			man-krb5-man		kerberos,.man

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.165 2011/03/31 08:25:31 pooka Exp $
+# $NetBSD: shl.mi,v 1.166 2011/04/15 18:05:44 elric Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -44,6 +44,7 @@
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libhdb_pic.a				comp-c-piclib		kerberos
+./usr/lib/libheimbase_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libheimntlm_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libhx509_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libintl_pic.a				comp-c-piclib
@@ -58,6 +59,7 @@
 ./usr/lib/libkadm_pic.a				comp-obsolete		obsolete
 ./usr/lib/libkafs_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libkdb_pic.a				comp-obsolete		obsolete
+./usr/lib/libkdc_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libkrb5_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libkrb_pic.a				comp-obsolete		obsolete
 ./usr/lib/libkstream_pic.a			comp-obsolete		obsolete
@@ -178,7 +180,7 @@
 ./usr/lib/libsdp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libskey_pic.a				comp-c-piclib		skey
 ./usr/lib/libsl_pic.a				comp-c-piclib		kerberos
-./usr/lib/libss_pic.a				comp-c-piclib		kerberos
+./usr/lib/libss_pic.a				comp-obsolete		obsolete
 ./usr/lib/libssh_pic.a				comp-c-piclib		crypto
 ./usr/lib/libssl_pic.a				comp-c-piclib		crypto
 ./usr/lib/libssp_pic.a				comp-obsolete		obsolete
@@ -191,6 +193,7 @@
 ./usr/lib/libusbhid_pic.a			comp-c-piclib
 ./usr/lib/libutil_pic.a				comp-c-piclib
 ./usr/lib/libuutil_pic.a			comp-zfs-piclib		zfs
+./usr/lib/libwind_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libwrap_pic.a				comp-c-piclib
 ./usr/lib/libz_pic.a				comp-c-piclib
 ./usr/lib/libzfs_pic.a				comp-zfs-piclib		zfs

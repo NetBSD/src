@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/02/12 22:23:11 matt Exp $
+# $NetBSD: Makefile,v 1.4 2011/04/15 18:05:42 elric Exp $
 
 .include <bsd.own.mk>
 
@@ -39,7 +39,7 @@ INCSDIR=/usr/include
 
 LIBDPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libssl
 .if (${MKKERBEROS} != "no")
-LIBDPLIBS+= gssapi ${NETBSDSRCDIR}/lib/libgssapi
+LIBDPLIBS+= gssapi ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libgssapi
 .endif
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.254 2011/03/17 02:35:28 joerg Exp $
+#	$NetBSD: Makefile,v 1.255 2011/04/15 18:05:46 elric Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -25,10 +25,6 @@ SUBDIR=	ac accton acpitools altq apm apmd arp bad144 bootp \
 	usbdevs user videomode vipw veriexecgen vnconfig wake wiconfig \
 	wlanctl \
 	wsconscfg wsfontload wsmoused wsmuxctl zdump zic
-
-.if (${MKKERBEROS} != "no")
-SUBDIR+= hprop kadmin kdc kstash ktutil iprop-log kdigest kimpersonate kcm
-.endif
 
 .if (${MKYP} != "no")
 SUBDIR+= rpc.yppasswdd ypbind yppoll ypserv ypset
