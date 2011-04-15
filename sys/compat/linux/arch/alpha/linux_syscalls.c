@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.79 2010/07/07 01:31:51 chs Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.80 2011/04/15 13:07:37 he Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.79 2010/07/07 01:31:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.80 2011/04/15 13:07:37 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -543,11 +543,29 @@ const char *const linux_syscallnames[] = {
 	/* 484 */	"#484 (unimplemented signalfd4)",
 	/* 485 */	"#485 (unimplemented eventfd2)",
 	/* 486 */	"#486 (unimplemented epoll_create1)",
-	/* 487 */	"#487 (unimplemented dup3)",
-	/* 488 */	"#488 (unimplemented pipe2)",
+	/* 487 */	"dup3",
+	/* 488 */	"pipe2",
 	/* 489 */	"#489 (unimplemented inotify_init1)",
 	/* 490 */	"#490 (unimplemented preadv)",
 	/* 491 */	"#491 (unimplemented pwritev)",
 	/* 492 */	"#492 (unimplemented rt_tgsigqueueinfo)",
 	/* 493 */	"#493 (unimplemented perf_counter_open)",
+	/* 494 */	"# filler",
+	/* 495 */	"# filler",
+	/* 496 */	"# filler",
+	/* 497 */	"# filler",
+	/* 498 */	"# filler",
+	/* 499 */	"# filler",
+	/* 500 */	"# filler",
+	/* 501 */	"# filler",
+	/* 502 */	"# filler",
+	/* 503 */	"# filler",
+	/* 504 */	"# filler",
+	/* 505 */	"# filler",
+	/* 506 */	"# filler",
+	/* 507 */	"# filler",
+	/* 508 */	"# filler",
+	/* 509 */	"# filler",
+	/* 510 */	"# filler",
+	/* 511 */	"# filler",
 };
