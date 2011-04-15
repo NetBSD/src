@@ -1,26 +1,25 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:52 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/04/15 19:31:07 joerg Exp $
 
 .include <bsd.init.mk>
 
 .PATH:	${CLANG_SRCDIR}/lib/Headers
 
-#INCS=	${INCS.x86}
-INCSDIR=	/usr/include
-
-INCS.x86= \
-  emmintrin.h \
-  immintrin.h \
-  mm_malloc.h \
-  mmintrin.h \
-  pmmintrin.h \
-  smmintrin.h \
-  tmmintrin.h \
-  xmmintrin.h
-
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+INCS=	avxintrin.h \
+	emmintrin.h \
+	immintrin.h \
+	mm_malloc.h \
+	mmintrin.h \
+	pmmintrin.h \
+	smmintrin.h \
+	tmmintrin.h \
+	xmmintrin.h
+.elif ${MACHINE_ARCH} == "powerpc"
+INCS=	altivec.h
+.endif
+INCSDIR=	/usr/include/clang-3.0
 
 HEADER=	\
-  altivec.h \
-  avxintrin.h \
   float.h \
   iso646.h \
   limits.h \
