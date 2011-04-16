@@ -1,4 +1,4 @@
-/*	$NetBSD: baselocl.h,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $	*/
+/*	$NetBSD: baselocl.h,v 1.2 2011/04/16 17:45:44 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan
@@ -56,7 +56,17 @@
 #include <dispatch/dispatch.h>
 #endif
 
-#if defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH)
+#if defined(USE_ATOMIC_INCDEC)
+
+#include <sys/atomic.h>
+#define heim_base_atomic_inc(x) atomic_inc_32_nv((x))
+#define heim_base_atomic_dec(x) atomic_dec_32_nv((x))
+#define heim_base_atomic_type	uint32_t
+#define heim_base_atomic_max    UINT32_MAX
+
+#define heim_base_exchange_pointer(t,v) atomic_swap_ptr((t), (v))
+
+#elif defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH)
 
 #define heim_base_atomic_inc(x) __sync_add_and_fetch((x), 1)
 #define heim_base_atomic_dec(x) __sync_sub_and_fetch((x), 1)

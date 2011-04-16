@@ -1276,8 +1276,15 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the `__progname' variable. */
 #define HAVE___PROGNAME 1
 
+/*
+ * Not all NetBSD platforms have __sync_add_and_fetch, but NetBSD provides
+ * the standard <sys/atomic.h> API everywhere.
+ */
+#define USE_ATOMIC_INCDEC	1
 /* have __sync_add_and_fetch */
-#define HAVE___SYNC_ADD_AND_FETCH 1
+/*
+ * #define HAVE___SYNC_ADD_AND_FETCH 1
+ */
 
 /* Define if you want support for weak crypto */
 #define HEIM_WEAK_CRYPTO 1
