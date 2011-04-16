@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.82 2011/04/15 19:31:07 joerg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.83 2011/04/16 17:16:12 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -854,6 +854,7 @@
 ./usr/share/man/man8/acorn32
 ./usr/share/man/man8/algor
 ./usr/share/man/man8/alpha
+./usr/share/man/man8/amd64
 ./usr/share/man/man8/amiga
 ./usr/share/man/man8/arc
 ./usr/share/man/man8/atari
@@ -898,7 +899,7 @@
 ./usr/share/man/man8/sun3
 ./usr/share/man/man8/vax
 ./usr/share/man/man8/x68k
-./usr/share/man/man8/amd64
+./usr/share/man/man8/x86
 ./usr/share/man/man9
 ./usr/share/man/man9/acorn26
 ./usr/share/man/man9/alpha
