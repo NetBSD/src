@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1616 2011/04/15 18:05:43 elric Exp $
+#	$NetBSD: mi,v 1.1617 2011/04/16 09:51:57 nakayama Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6966,7 +6966,7 @@
 ./usr/share/man/cat3/krb5_padata_add.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_parse.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_parse_address.0	comp-obsolete		obsolete
-./usr/share/man/cat3/krb5_parse_name.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_parse_name.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_parse_name_flags.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_parse_nametype.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_passwd_result_to_string.0	comp-krb5-catman	kerberos,.cat
@@ -19057,7 +19057,7 @@
 ./usr/share/man/man3/krb5_padata_add.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_parse.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_parse_address.3	comp-obsolete		obsolete
-./usr/share/man/man3/krb5_parse_name.3		comp-krb5-man		kerberos
+./usr/share/man/man3/krb5_parse_name.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_parse_name_flags.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_parse_nametype.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_passwd_result_to_string.3	comp-krb5-man		kerberos,.man
