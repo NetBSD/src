@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.931 2011/04/15 19:31:06 joerg Exp $
+# $NetBSD: mi,v 1.932 2011/04/16 22:00:34 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3412,6 +3412,7 @@
 ./usr/share/man/cat8/vax			base-man-share
 ./usr/share/man/cat8/walnut			base-obsolete		obsolete
 ./usr/share/man/cat8/x68k			base-man-share
+./usr/share/man/cat8/x86			base-man-share
 ./usr/share/man/cat8/x86_64			base-obsolete		obsolete
 ./usr/share/man/cat9				base-man-share
 ./usr/share/man/cat9/acorn26			base-man-share
@@ -3536,6 +3537,7 @@
 ./usr/share/man/html8/vax			base-man-share
 ./usr/share/man/html8/walnut			base-obsolete		obsolete
 ./usr/share/man/html8/x68k			base-man-share
+./usr/share/man/html8/x86			base-man-share
 ./usr/share/man/html8/x86_64			base-obsolete		obsolete
 ./usr/share/man/html9				base-man-share
 ./usr/share/man/html9/acorn26			base-man-share
@@ -3663,6 +3665,7 @@
 ./usr/share/man/man8/vax			base-man-share
 ./usr/share/man/man8/walnut			base-obsolete		obsolete
 ./usr/share/man/man8/x68k			base-man-share
+./usr/share/man/man8/x86			base-man-share
 ./usr/share/man/man8/x86_64			base-obsolete		obsolete
 ./usr/share/man/man9				base-man-share
 ./usr/share/man/man9/acorn26			base-man-share
