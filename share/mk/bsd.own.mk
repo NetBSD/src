@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.656 2011/04/15 18:05:45 elric Exp $
+#	$NetBSD: bsd.own.mk,v 1.657 2011/04/16 21:41:24 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -207,8 +207,10 @@ FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-f77
 OBJC=		false
 .endif
 
-CPPFLAGS+=	${!defined(HOSTPROG) && !defined(HOSTLIB) && defined(DESTDIR) :? --sysroot=${DESTDIR} :}
-LDFLAGS+=	${!defined(HOSTPROG) && !defined(HOSTLIB) && defined(DESTDIR) :? --sysroot=${DESTDIR} :}
+.if !defined(HOSTPROG) && !defined(HOSTLIB) && defined(DESTDIR)
+CPPFLAGGS+=	--sysroot=${DESTDIR}
+LDFLAGS+=	--sysroot=${DESTDIR}
+.endif
 .endif	# EXTERNAL_TOOLCHAIN						# }
 
 HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
