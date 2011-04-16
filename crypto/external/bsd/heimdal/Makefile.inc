@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2011/04/13 19:16:44 elric Exp $
+# $NetBSD: Makefile.inc,v 1.2 2011/04/16 18:41:58 he Exp $
 
 HEIMBASE?=	${NETBSDSRCDIR}/crypto/external/bsd/heimdal
 HEIMDIST=	${HEIMBASE}/dist
@@ -10,7 +10,11 @@ LIBVERS=	${LIBVERSDIR}/libvers.a
 
 LIBIPCDIR!=	cd ${HEIMBASE}/lib/libipc && ${PRINTOBJDIR}
 LIBIPC=		${LIBIPCDIR}/libipc.a
+.if ${MKPICLIB} != "yes"
+LIBIPC_PIC=	${LIBIPCDIR}/libipc.a
+.else
 LIBIPC_PIC=	${LIBIPCDIR}/libipc_pic.a
+.endif
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=     cd ${HEIMBASE}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
