@@ -26,15 +26,17 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ceil.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: ceil.3,v 1.17 2003/08/07 16:44:47 agc Exp $
+.\"	$NetBSD: ceil.3,v 1.18 2011/04/16 05:48:50 jruoho Exp $
 .\"
-.Dd March 10, 1994
+.Dd April 16, 2011
 .Dt CEIL 3
 .Os
 .Sh NAME
 .Nm ceil ,
-.Nm ceilf
-.Nd "round to smallest integral value greater than or equal to x"
+.Nm ceilf ,
+.Nm floor ,
+.Nm floorf
+.Nd ceiling and floor
 .Sh LIBRARY
 .Lb libm
 .Sh SYNOPSIS
@@ -43,6 +45,10 @@
 .Fn ceil "double x"
 .Ft float
 .Fn ceilf "float x"
+.Ft double
+.Fn floor "double x"
+.Ft float
+.Fn floorf "float x"
 .Sh DESCRIPTION
 The
 .Fn ceil
@@ -51,15 +57,23 @@ and
 functions return the smallest integral value
 greater than or equal to
 .Fa x .
+Conversely, the
+.Fn floor
+and
+.Fn floorf
+functions return the largest integral value
+less than or equal to
+.Fa x .
 .Sh SEE ALSO
 .Xr abs 3 ,
 .Xr fabs 3 ,
-.Xr floor 3 ,
-.Xr ieee 3 ,
 .Xr math 3 ,
+.Xr nextafter 3 ,
 .Xr rint 3
 .Sh STANDARDS
+The described functions conform to
+.St -isoC-99 .
+.Sh BUGS
 The
-.Fn ceil
-function conforms to
-.St -ansiC .
+.Vt long double
+variants of the functions are not yet supported.
