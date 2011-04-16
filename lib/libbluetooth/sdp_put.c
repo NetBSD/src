@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_put.c,v 1.5 2011/04/05 18:19:04 plunky Exp $	*/
+/*	$NetBSD: sdp_put.c,v 1.6 2011/04/16 07:19:36 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_put.c,v 1.5 2011/04/05 18:19:04 plunky Exp $");
+__RCSID("$NetBSD: sdp_put.c,v 1.6 2011/04/16 07:19:36 plunky Exp $");
 
 #include <bluetooth.h>
 #include <limits.h>
@@ -65,6 +65,7 @@ sdp_put_attr(sdp_data_t *data, uint16_t attr, sdp_data_t *value)
 	sdp_data_t d = *data;
 
 	if (!sdp_put_uint16(&d, attr)
+	    || sdp_data_size(value) != (value->end - value->next)
 	    || !sdp_put_data(&d, value))
 		return false;
 
