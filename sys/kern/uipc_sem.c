@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.33 2011/04/15 00:01:48 rmind Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.34 2011/04/16 20:39:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,11 +60,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.33 2011/04/15 00:01:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.34 2011/04/16 20:39:18 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
+
+#include <sys/atomic.h>
 #include <sys/proc.h>
 #include <sys/ksem.h>
 #include <sys/syscall.h>
@@ -104,6 +105,7 @@ typedef struct ksem {
 
 static kmutex_t		ksem_lock	__cacheline_aligned;
 static LIST_HEAD(,ksem)	ksem_head	__cacheline_aligned;
+static u_int		nsems_total	__cacheline_aligned;
 static u_int		nsems		__cacheline_aligned;
 
 static int		ksem_sysinit(void);
@@ -141,9 +143,10 @@ ksem_sysinit(void)
 {
 	int error;
 
-	nsems = 0;
 	mutex_init(&ksem_lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&ksem_head);
+	nsems_total = 0;
+	nsems = 0;
 
 	error = syscall_establish(NULL, ksem_syscalls);
 	if (error) {
@@ -162,7 +165,11 @@ ksem_sysfini(bool interface)
 		if (error != 0) {
 			return error;
 		}
-		if (nsems != 0) {
+		/*
+		 * Make sure that no semaphores are in use.  Note: semops
+		 * must be unused at this point.
+		 */
+		if (nsems_total) {
 			error = syscall_establish(NULL, ksem_syscalls);
 			KASSERT(error == 0);
 			return EBUSY;
@@ -296,6 +303,7 @@ ksem_create(lwp_t *l, const char *name, ksem_t **ksret, mode_t mode, u_int val)
 	ks->ks_uid = kauth_cred_geteuid(uc);
 	ks->ks_gid = kauth_cred_getegid(uc);
 
+	atomic_inc_uint(&nsems_total);
 	*ksret = ks;
 	return 0;
 }
@@ -304,6 +312,9 @@ static void
 ksem_free(ksem_t *ks)
 {
 
+	KASSERT(ks->ks_ref == 0);
+	KASSERT(!cv_has_waiters(&ks->ks_cv));
+
 	if (ks->ks_name) {
 		KASSERT(ks->ks_namelen > 0);
 		kmem_free(ks->ks_name, ks->ks_namelen);
@@ -311,6 +322,8 @@ ksem_free(ksem_t *ks)
 	mutex_destroy(&ks->ks_lock);
 	cv_destroy(&ks->ks_cv);
 	kmem_free(ks, sizeof(ksem_t));
+
+	atomic_dec_uint(&nsems_total);
 }
 
 int
