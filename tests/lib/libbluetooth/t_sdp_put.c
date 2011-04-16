@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sdp_put.c,v 1.2 2011/04/07 08:29:50 plunky Exp $	*/
+/*	$NetBSD: t_sdp_put.c,v 1.3 2011/04/16 07:32:27 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -81,10 +81,13 @@ ATF_TC_BODY(check_sdp_put_attr, tc)
 	uint8_t buf[256];
 	sdp_data_t test = { buf, buf + sizeof(buf) };
 	uint8_t data[] = {
+		0x00,			// nil
 		0x19, 0x33, 0x44,	// uuid16	0x3344
 	};
 	sdp_data_t value = { data, data + sizeof(data) };
 
+	ATF_REQUIRE_EQ(sdp_put_attr(&test, 0xabcd, &value), false);
+	value.next += 1; // skip "nil"
 	ATF_REQUIRE(sdp_put_attr(&test, 0x1337, &value));
 	test.end = test.next;
 	test.next = buf;
