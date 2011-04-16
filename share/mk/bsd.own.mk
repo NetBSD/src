@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.657 2011/04/16 21:41:24 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.658 2011/04/16 22:45:23 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -210,6 +210,9 @@ OBJC=		false
 .if !defined(HOSTPROG) && !defined(HOSTLIB) && defined(DESTDIR)
 CPPFLAGGS+=	--sysroot=${DESTDIR}
 LDFLAGS+=	--sysroot=${DESTDIR}
+.else
+CPPFLAGGS+=	--sysroot=/
+LDFLAGS+=	--sysroot=/
 .endif
 .endif	# EXTERNAL_TOOLCHAIN						# }
 
