@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.133 2010/12/13 17:47:40 pooka Exp $ */
+/*	$NetBSD: sysctl.c,v 1.134 2011/04/16 01:15:54 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.133 2010/12/13 17:47:40 pooka Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.134 2011/04/16 01:15:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,10 +123,12 @@ __RCSID("$NetBSD: sysctl.c,v 1.133 2010/12/13 17:47:40 pooka Exp $");
 /*
  * generic routines
  */
-static const struct handlespec *findhandler(const char *, int);
+static const struct handlespec *findhandler(const char *, int, regex_t *,
+    size_t *);
 static void canonicalize(const char *, char *);
 static void purge_tree(struct sysctlnode *);
-static void print_tree(int *, u_int, struct sysctlnode *, u_int, int);
+static void print_tree(int *, u_int, struct sysctlnode *, u_int, int, regex_t *,
+    size_t *);
 static void write_number(int *, u_int, struct sysctlnode *, char *);
 static void write_string(int *, u_int, struct sysctlnode *, char *);
 static void display_number(const struct sysctlnode *, const char *,
@@ -137,7 +139,7 @@ static void display_struct(const struct sysctlnode *, const char *,
 			   const void *, size_t, int);
 static void hex_dump(const unsigned char *, size_t);
 static void usage(void);
-static void parse(char *);
+static void parse(char *, regex_t *, size_t *);
 static void parse_create(char *);
 static void parse_destroy(char *);
 static void parse_describe(char *);
@@ -270,7 +272,10 @@ main(int argc, char *argv[])
 {
 	int name[CTL_MAXNAME];
 	int ch;
+	size_t lastcompiled = 0;
+	regex_t *re;
 
+	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, "Aabdef:Mnqrwx")) != -1) {
 		switch (ch) {
 		case 'A':
@@ -334,8 +339,12 @@ main(int argc, char *argv[])
 		warnfp = stdout;
 	stale = req = 0;
 
+	if ((re = malloc(sizeof(*re) * __arraycount(handlers))) == NULL)
+		err(1, "malloc regex");
+
 	if (aflag) {
-		print_tree(&name[0], 0, NULL, CTLTYPE_NODE, 1);
+		print_tree(&name[0], 0, NULL, CTLTYPE_NODE, 1,
+		    re, &lastcompiled);
 		/* if (argc == 0) */
 		return (0);
 	}
@@ -352,7 +361,7 @@ main(int argc, char *argv[])
 			while ((l = fparseln(fp, NULL, &nr, NULL, 0)) != NULL)
 			{
 				if (*l) {
-					parse(l);
+					parse(l, re, &lastcompiled);
 					free(l);
 				}
 			}
@@ -365,7 +374,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while (argc-- > 0)
-		parse(*argv++);
+		parse(*argv++, re, &lastcompiled);
 
 	return errs ? 1 : 0;
 }
@@ -377,38 +386,38 @@ main(int argc, char *argv[])
  * ********************************************************************
  */
 static const struct handlespec *
-findhandler(const char *s, int w)
+findhandler(const char *s, int w, regex_t *re, size_t *lastcompiled)
 {
 	const struct handlespec *p;
-	regex_t re;
-	int i, j, l;
+	size_t i, l;
+	int j;
 	char eb[64];
-	regmatch_t match[1];
+	regmatch_t match;
 
 	p = &handlers[0];
 	l = strlen(s);
 	for (i = 0; p[i].ps_re != NULL; i++) {
-		j = regcomp(&re, p[i].ps_re, REG_EXTENDED);
-		if (j != 0) {
-			regerror(j, &re, eb, sizeof(eb));
-			errx(1, "regcomp: %s: %s", p[i].ps_re, eb);
-		}
-		j = regexec(&re, s, 1, match, 0);
-		if (j == 0) {
-			if (match[0].rm_so == 0 && match[0].rm_eo == l &&
-			    (w ? p[i].ps_w : p[i].ps_p) != NULL) {
-				regfree(&re);
-				return (&p[i]);
+		if (i >= *lastcompiled) {
+			j = regcomp(&re[i], p[i].ps_re, REG_EXTENDED);
+			if (j != 0) {
+				regerror(j, &re[i], eb, sizeof(eb));
+				errx(1, "regcomp: %s: %s", p[i].ps_re, eb);
 			}
+			*lastcompiled = i + 1;
+		}
+		j = regexec(&re[i], s, 1, &match, 0);
+		if (j == 0) {
+			if (match.rm_so == 0 && match.rm_eo == (int)l &&
+			    (w ? p[i].ps_w : p[i].ps_p) != NULL)
+				return &p[i];
 		}
 		else if (j != REG_NOMATCH) {
-			regerror(j, &re, eb, sizeof(eb));
+			regerror(j, &re[i], eb, sizeof(eb));
 			errx(1, "regexec: %s: %s", p[i].ps_re, eb);
 		}
-		regfree(&re);
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -552,7 +561,7 @@ purge_tree(struct sysctlnode *rnode)
  */
 static void
 print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
-	   int add)
+   int add, regex_t *re, size_t *lastcompiled)
 {
 	struct sysctlnode *node;
 	int rc;
@@ -651,7 +660,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 	}
 
 	canonicalize(gsname, canonname);
-	p = findhandler(canonname, 0);
+	p = findhandler(canonname, 0, re, lastcompiled);
 	if (type != CTLTYPE_NODE && p != NULL) {
 		(*p->ps_p)(gsname, gdname, NULL, name, namelen, pnode, type,
 			   __UNCONST(p->ps_d));
@@ -704,7 +713,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 					continue;
 				print_tree(name, namelen + 1, &node[ni],
 					   SYSCTL_TYPE(node[ni].sysctl_flags),
-					   1);
+					   1, re, lastcompiled);
 			}
 		}
 		break;
@@ -797,7 +806,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
  * ********************************************************************
  */
 static void
-parse(char *l)
+parse(char *l, regex_t *re, size_t *lastcompiled)
 {
 	struct sysctlnode *node;
 	const struct handlespec *w;
@@ -870,7 +879,7 @@ parse(char *l)
 	if (value == NULL) {
 		if (dodesc)
 			dflag = 1;
-		print_tree(&name[0], namelen, node, type, 0);
+		print_tree(&name[0], namelen, node, type, 0, re, lastcompiled);
 		if (dodesc)
 			dflag = 0;
 		gsname[0] = '\0';
@@ -886,7 +895,8 @@ parse(char *l)
 	}
 
 	canonicalize(gsname, canonname);
-	if (type != CTLTYPE_NODE && (w = findhandler(canonname, 1)) != NULL) {
+	if (type != CTLTYPE_NODE && (w = findhandler(canonname, 1, re,
+	    lastcompiled)) != NULL) {
 		(*w->ps_w)(gsname, gdname, value, name, namelen, node, type,
 			   __UNCONST(w->ps_d));
 		gsname[0] = '\0';
@@ -898,7 +908,8 @@ parse(char *l)
 		/*
 		 * XXX old behavior is to print.  should we error instead?
 		 */
-		print_tree(&name[0], namelen, node, CTLTYPE_NODE, 1);
+		print_tree(&name[0], namelen, node, CTLTYPE_NODE, 1, re,
+		    lastcompiled);
 		break;
 	case CTLTYPE_INT:
 	case CTLTYPE_BOOL:
@@ -913,7 +924,7 @@ parse(char *l)
 		 * XXX old behavior is to print.  should we error instead?
 		 */
 		/* fprintf(warnfp, "you can't write to %s\n", gsname); */
-		print_tree(&name[0], namelen, node, type, 0);
+		print_tree(&name[0], namelen, node, type, 0, re, lastcompiled);
 		break;
 	}
 }
