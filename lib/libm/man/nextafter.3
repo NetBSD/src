@@ -1,4 +1,4 @@
-.\" $NetBSD: nextafter.3,v 1.1 2011/04/12 07:29:50 jruoho Exp $
+.\" $NetBSD: nextafter.3,v 1.2 2011/04/16 23:58:01 christos Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -93,6 +93,7 @@ converted to the type of the function, provided that
 .Fa x
 equals
 .Fa y .
+.El
 .Sh RETURN VALUES
 Upon successful completion, the described functions return
 the next representable floating-point value as described above.
@@ -100,10 +101,10 @@ If
 .Fa x
 is finite but an overflow would occur,
 a range error follows and the functions return
-.Dv \*(Pm\* HUGE_VAL ,
-.Dv  \*(Pm\* HUGE_VALF ,
+.Dv \*(Pm\*HHUGE_VAL ,
+.Dv  \*(Pm\*HHUGE_VALF ,
 or
-.Dv  \*(Pm\* HUGE_VALL
+.Dv  \*(Pm\*HHUGE_VALL
 with the same sign as
 .Fa x .
 When either
