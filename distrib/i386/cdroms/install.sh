@@ -1,5 +1,5 @@
-#! /bin/sh
-# $NetBSD: install.sh,v 1.1 2010/04/19 04:41:36 martin Exp $
+#! /bin/sh -m
+# $NetBSD: install.sh,v 1.2 2011/04/17 12:18:20 martin Exp $
 #
 # -
 #  Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,17 +34,23 @@
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 
+termfile=/tmp/sysinst.term
+
 # Check if we are on a framebuffer or on serial console and default
 # the terminal type accordingly.
 # There is no /var/db/dev.db, so sysctl might not map the devicename properly;
 # ttyE0 is 90,0 -> 0x5a00
 case $(sysctl -nx kern.consdev) in
  002f000000000000)
-   TERM=wsvt25
-   ;;
+    TERM=wsvt25
+    ;;
  *)
-   TERM=vt220
-   ;;
+    if [ -r ${termfile} ]; then
+	. ${termfile}
+    else
+	TERM=vt220
+    fi
+    ;;
 esac
 
 export TERM
@@ -54,6 +60,8 @@ BLOCKSIZE=1k
 export BLOCKSIZE
 EDITOR=ed
 export EDITOR
+SHELL=/bin/sh
+export SHELL
 
 umask 022
 
@@ -78,8 +86,30 @@ EOM
 fi
 
 # run the installation or upgrade script.
-/sysinst || {
-	    echo "Oops, something went wrong - we will try again"; exit; }
+cd /
+cmd=./sysinst
 
+while [ -n "${cmd}" ]
+do
+	${cmd}
+	if [ $? = 4 ]; then
+		echo "Oops, something went wrong - we will try again"
+		exit
+	else
+		if [ -n "$(jobs)" ]; then
+			tput clear
+			echo "You have stopped sysinst, return to it by" \
+				"typing 'exit' or ^D."
+			${SHELL} -i
+			cmd="fg"
+		else
+			cmd=""
+		fi
+	fi
+done
+
+# remember terminal type, now that we know it for sure
+echo "TERM=${TERM}" > ${termfile}
+echo
 echo "To return to the installer, quit this shell by typing 'exit' or ^D."
-exec /bin/sh
+exec ${SHELL}

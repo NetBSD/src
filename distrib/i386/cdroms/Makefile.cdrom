@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.23 2011/01/27 15:34:38 gdt Exp $
+# $NetBSD: Makefile.cdrom,v 1.24 2011/04/17 12:18:20 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -34,6 +34,7 @@ CDRUNTIME+=	./usr/bin/progress
 CDRUNTIME+=	./usr/bin/sed
 CDRUNTIME+=	./usr/bin/sort
 CDRUNTIME+=	./usr/bin/tip
+CDRUNTIME+=	./usr/bin/tput
 CDRUNTIME+=	./usr/bin/vmstat
 CDRUNTIME+=	./usr/lib/libbz2.so*
 CDRUNTIME+=	./usr/lib/libc.so*
