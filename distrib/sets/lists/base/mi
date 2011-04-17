@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.932 2011/04/16 22:00:34 christos Exp $
+# $NetBSD: mi,v 1.933 2011/04/17 13:04:50 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4843,8 +4843,8 @@
 ./var/chroot/spamd				base-obsolete		obsolete
 ./var/chroot/sshd				base-sys-root
 ./var/chroot/tcpdump				base-sys-root
-./var/chroot/tcpdump/etc			base-sys-root
-./var/chroot/tcpdump/etc/protocols		base-sys-root
+./var/chroot/tcpdump/etc			base-obsolete		obsolete
+./var/chroot/tcpdump/etc/protocols		base-obsolete		obsolete
 ./var/chroot/tftp-proxy				base-sys-root
 ./var/crash					base-sys-root
 ./var/cron					base-cron-root
