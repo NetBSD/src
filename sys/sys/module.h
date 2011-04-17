@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.25 2010/08/21 13:17:32 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.26 2011/04/17 05:16:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -157,6 +157,7 @@ void	module_print(const char *, ...)
 
 #define MODULE_BASE_SIZE 64
 extern char	module_base[MODULE_BASE_SIZE];
+extern char	*module_machine;
 
 #else	/* _KERNEL */
 
