@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2cvar.h,v 1.3 2011/01/12 18:05:18 phx Exp $ */
+/* $NetBSD: motoi2cvar.h,v 1.4 2011/04/17 15:14:59 phx Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@ struct motoi2c_softc {
 	bus_space_handle_t	sc_ioh;
 	struct i2c_controller	sc_i2c;
 	kmutex_t		sc_buslock;
-	bool			sc_start;
 	motoi2c_iord_t		sc_iord;
 	motoi2c_iowr_t		sc_iowr;
 };
