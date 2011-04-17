@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.53 2010/08/07 21:58:34 cegger Exp $ */
+/* $NetBSD: hypervisor.c,v 1.54 2011/04/17 23:54:05 jym Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.53 2010/08/07 21:58:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.54 2011/04/17 23:54:05 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,16 +224,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	memset(&hac, 0, sizeof(hac));
 	hac.hac_xencons.xa_device = "xencons";
 	config_found_ia(self, "xendevbus", &hac.hac_xencons, hypervisor_print);
-#endif
-#if NXENNET_HYPERVISOR > 0
-	memset(&hac, 0, sizeof(hac));
-	hac.hac_xennet.xa_device = "xennet";
-	xennet_scan(self, &hac.hac_xennet, hypervisor_print);
-#endif
-#if NXBD_HYPERVISOR > 0
-	memset(&hac, 0, sizeof(hac));
-	hac.hac_xbd.xa_device = "xbd";
-	xbd_scan(self, &hac.hac_xbd, hypervisor_print);
 #endif
 #if NNPX > 0
 	memset(&hac, 0, sizeof(hac));
