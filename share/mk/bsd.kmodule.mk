@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.27 2011/01/02 19:24:47 matt Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.28 2011/04/17 09:47:40 mrg Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -36,6 +36,29 @@ CFLAGS+=	-mlong-calls
 CFLAGS+=	-mlongcall
 .endif
 
+# evbppc needs some special help
+.if ${MACHINE} == "evbppc"
+
+. ifndef PPC_INTR_IMPL
+PPC_INTR_IMPL=\"powerpc/intr.h\"
+. endif
+. ifndef PPC_PCI_MACHDEP_IMPL
+PPC_PCI_MACHDEP_IMPL=\"powerpc/pci_machdep.h\"
+. endif
+CPPFLAGS+=      -DPPC_INTR_IMPL=${PPC_INTR_IMPL}
+CPPFLAGS+=      -DPPC_PCI_MACHDEP_IMPL=${DPPC_PCI_MACHDEP_IMPL}
+
+. ifdef PPC_IBM4XX
+CPPFLAGS+=      -DPPC_IBM4XX
+. elifdef PPC_BOOKE
+CPPFLAGS+=      -DPPC_BOOKE
+. else
+CPPFLAGS+=      -DPPC_OEA
+. endif
+
+.endif
+
+
 _YKMSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 DPSRCS+=	${_YKMSRCS}
 CLEANFILES+=	${_YKMSRCS}
@@ -64,10 +87,11 @@ ${PROG}: ${OBJS} ${DPADD}
 .if !defined(KMODULEDIR)
 _OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh
 # Ensure these are recorded properly in METALOG on unprived installes:
-_INST_DIRS=	${DESTDIR}/stand/${MACHINE}
-_INST_DIRS+=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}
-_INST_DIRS+=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}/modules
-KMODULEDIR=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}/modules/${KMOD}
+KMODULEARCHDIR?= ${MACHINE}
+_INST_DIRS=	${DESTDIR}/stand/${KMODULEARCHDIR}
+_INST_DIRS+=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}
+_INST_DIRS+=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}/modules
+KMODULEDIR=	${DESTDIR}/stand/${KMODULEARCHDIR}/${_OSRELEASE}/modules/${KMOD}
 .endif
 _PROG:=		${KMODULEDIR}/${PROG} # installed path
 
