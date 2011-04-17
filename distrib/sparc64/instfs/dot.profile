@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.5 2010/03/13 14:05:39 martin Exp $
+# $NetBSD: dot.profile,v 1.6 2011/04/17 12:18:20 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -56,6 +56,8 @@ BLOCKSIZE=1k
 export BLOCKSIZE
 EDITOR=ed
 export EDITOR
+SHELL=/bin/sh
+export SHELL
 
 umask 022
 
@@ -96,6 +98,12 @@ EOM
 	mount -t ffs -u /kern/rootdev /
 
 	# run the installation or upgrade script.
-	sysinst || {
-	    echo "Oops, something went wrong - we will try again"; exit; }
+	sysinst
+	if [ $? = 4 ]; then
+		echo "Oops, something went wrong - we will try again"
+		exit
+	fi
+	echo
+	echo "To return to the installer, quit this shell by typing 'exit'" \
+		"or ^D."
 fi
