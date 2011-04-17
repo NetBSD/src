@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.56 2011/04/04 08:30:13 mbalmer Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.57 2011/04/17 12:33:42 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -934,6 +934,7 @@ message Upgrade_NetBSD_on_a_hard_disk {Aktualisierung einer bestehenden NetBSD-I
 message Re_install_sets_or_install_additional_sets {Erneute Installation oder zusätzliche Pakete installieren}
 message Reboot_the_computer {Computer neu starten}
 message Utility_menu {Extras}
+message exit_utility_menu {Zurück zum Hauptmenü}
 message NetBSD_VERSION_Utilities {NetBSD-@@VERSION@@ Extras}
 message Run_bin_sh {Ausführen von /bin/sh}
 message Set_timezone {Setzen der Zeitzone}
