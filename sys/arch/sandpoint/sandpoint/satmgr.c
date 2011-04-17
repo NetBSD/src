@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.9 2011/04/10 16:30:32 phx Exp $ */
+/* $NetBSD: satmgr.c,v 1.10 2011/04/17 14:05:59 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -120,6 +120,7 @@ static void qreboot(struct satmgr_softc *);
 static void kpwroff(struct satmgr_softc *);
 static void spwroff(struct satmgr_softc *);
 static void qpwroff(struct satmgr_softc *);
+static void dpwroff(struct satmgr_softc *);
 static void kbutton(struct satmgr_softc *, int);
 static void sbutton(struct satmgr_softc *, int);
 static void qbutton(struct satmgr_softc *, int);
@@ -136,7 +137,7 @@ struct satops {
 };
 
 static struct satops satmodel[] = {
-    { "dlink",    NULL, NULL, NULL, dbutton },
+    { "dlink",    NULL, NULL, dpwroff, dbutton },
     { "kurobox",  NULL, kreboot, kpwroff, kbutton },
     { "qnap",     qinit, qreboot, qpwroff, qbutton },
     { "synology", sinit, sreboot, spwroff, sbutton }
@@ -726,6 +727,17 @@ qbutton(struct satmgr_softc *sc, int ch)
 	case 'h':	/* USB copy button */
 		break;
 	}
+}
+
+static void
+dpwroff(struct satmgr_softc *sc)
+{
+
+	/*
+	 * The DSM-G600 has no hardware-shutdown, but we turn all LEDs off,
+	 * to indicated that we powered down.
+	 */
+	send_sat(sc, "TSC\nTSC\n");
 }
 
 static void
