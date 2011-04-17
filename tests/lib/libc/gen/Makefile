@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2011/04/10 06:27:21 jruoho Exp $
+# $NetBSD: Makefile,v 1.19 2011/04/17 06:18:23 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,7 @@ TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
 
 LDADD.t_ldexp+=		-lm
+LDADD.t_nice+=		-lpthread
 LDADD.t_syslog_pthread+=-lpthread
 
 .include <bsd.test.mk>
