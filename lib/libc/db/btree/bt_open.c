@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.24 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.25 2011/04/17 23:12:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_open.c,v 1.24 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.25 2011/04/17 23:12:38 christos Exp $");
 
 /*
  * Implementation of btree access method for 4.4BSD.
@@ -391,7 +391,7 @@ static int
 tmp(void)
 {
 	sigset_t set, oset;
-	size_t len;
+	int len;
 	int fd;
 	char *envtmp;
 	char path[PATH_MAX];
@@ -403,8 +403,10 @@ tmp(void)
 
 	len = snprintf(path,
 	    sizeof(path), "%s/bt.XXXXXX", envtmp ? envtmp : _PATH_TMP);
-	if (len >= sizeof(path))
+	if (len < 0 || (size_t)len >= sizeof(path)) {
+		errno = ENAMETOOLONG;
 		return -1;
+	}
 	
 	(void)sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
