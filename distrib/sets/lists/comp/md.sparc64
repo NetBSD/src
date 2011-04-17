@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.91 2011/04/13 03:24:28 mrg Exp $
+# $NetBSD: md.sparc64,v 1.92 2011/04/17 09:01:57 mrg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -373,6 +373,11 @@
 ./usr/lib/sparc/libheimntlm.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/sparc/libheimntlm_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/sparc/libheimntlm_pic.a		comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libheimbase.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libheimbase.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libheimbase_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/sparc/libheimbase_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libheimbase_pic.a		comp-c-proflib		compat,pic,kerberos
 ./usr/lib/sparc/libhx509.a			comp-c-lib		compat,kerberos
 ./usr/lib/sparc/libhx509.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/sparc/libhx509_p.a			comp-c-proflib		compat,profile,kerberos
@@ -421,6 +426,11 @@
 ./usr/lib/sparc/libkafs.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/sparc/libkafs_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/sparc/libkafs_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libkdc.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libkdc.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libkdc_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/sparc/libkdc_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libkdc_pic.a			comp-c-proflib		compat,pic,kerberos
 ./usr/lib/sparc/libkrb5.a			comp-c-lib		compat,kerberos
 ./usr/lib/sparc/libkrb5.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/sparc/libkrb5_p.a			comp-c-proflib		compat,profile,kerberos
@@ -608,10 +618,10 @@
 ./usr/lib/sparc/libsl.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/sparc/libsl_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/sparc/libsl_pic.a			comp-c-piclib		compat,pic,kerberos
-./usr/lib/sparc/libss.a				comp-c-lib		compat,kerberos
-./usr/lib/sparc/libss.so			base-sys-shlib		compat,pic,kerberos
-./usr/lib/sparc/libss_p.a			comp-c-proflib		compat,profile,kerberos
-./usr/lib/sparc/libss_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/sparc/libss.a				comp-c-lib		obsolete
+./usr/lib/sparc/libss.so			base-sys-shlib		obsolete
+./usr/lib/sparc/libss_p.a			comp-c-proflib		obsolete
+./usr/lib/sparc/libss_pic.a			comp-c-piclib		obsolete
 ./usr/lib/sparc/libssh.a			comp-c-lib		compat,crypto
 ./usr/lib/sparc/libssh.so			base-sys-shlib		compat,pic,crypto
 ./usr/lib/sparc/libssh_p.a			comp-c-proflib		compat,profile,crypto
@@ -654,6 +664,11 @@
 ./usr/lib/sparc/libvers.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libvers_p.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libvers_pic.a			comp-obsolete		obsolete
+./usr/lib/sparc/libwind.a			comp-c-lib		compat,kerberos
+./usr/lib/sparc/libwind.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/sparc/libwind_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/sparc/libwind_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/sparc/libwind_pic.a			comp-c-piclib		compat,pic,kerberos
 ./usr/lib/sparc/libwrap.a			comp-c-lib		compat
 ./usr/lib/sparc/libwrap.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libwrap_p.a			comp-c-proflib		compat,profile
@@ -719,7 +734,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libgssapi.so.9.0.debug		comp-compat-shlib	compat,pic,debug,kerberos
 ./usr/libdata/debug/usr/lib/sparc/libhdb.so.13.0.debug			comp-compat-shlib	compat,pic,debug,kerberos
 ./usr/libdata/debug/usr/lib/sparc/libheimntlm.so.3.0.debug		comp-compat-shlib	compat,pic,debug,kerberos
-./usr/libdata/debug/usr/lib/sparc/libhx509.so.4.0.debug			comp-compat-shlib	compat,pic,debug,kerberos
+./usr/libdata/debug/usr/lib/sparc/libhx509.so.5.0.debug			comp-compat-shlib	compat,pic,debug,kerberos
 ./usr/libdata/debug/usr/lib/sparc/libintl.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libipsec.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libisc.so.5.3.debug			comp-compat-shlib	compat,pic,debug
@@ -775,7 +790,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libsaslc.so.0.0.debug			comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/sparc/libskey.so.2.0.debug			comp-compat-shlib	compat,pic,debug,skey
 ./usr/libdata/debug/usr/lib/sparc/libsl.so.4.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libss.so.6.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libss.so.6.0.debug			comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/sparc/libssh.so.16.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libssl.so.8.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.0.debug		comp-compat-shlib	compat,pic,debug
