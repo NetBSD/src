@@ -34,7 +34,7 @@ The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/tcpdump.c,v 1.283 2008-09-25 21:45:50 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: tcpdump.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.3 2011/04/17 11:45:40 martin Exp $");
 #endif
 #endif
 
@@ -469,6 +469,7 @@ droproot(const char *username, const char *chroot_dir)
 	pw = getpwnam(username);
 	if (pw) {
 		if (chroot_dir) {
+			setprotoent(1);
 			if (chroot(chroot_dir) != 0 || chdir ("/") != 0) {
 				fprintf(stderr, "tcpdump: Couldn't chroot/chdir to '%.64s': %s\n",
 				    chroot_dir, pcap_strerror(errno));
