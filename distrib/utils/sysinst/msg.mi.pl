@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.73 2011/04/04 08:30:13 mbalmer Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.74 2011/04/17 12:33:42 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -868,6 +868,7 @@ message Upgrade_NetBSD_on_a_hard_disk {Zaktualizuj NetBSD na twardym dysku}
 message Re_install_sets_or_install_additional_sets {Przeinstaluj albo zainstaluj dodatkowe pakiety}
 message Reboot_the_computer {Zrestartuj komputer}
 message Utility_menu {Menu Narzedziowe}
+message exit_utility_menu {Exit}
 message NetBSD_VERSION_Utilities {Narzedzia NetBSD-@@VERSION@@}
 message Run_bin_sh {Uruchom /bin/sh}
 message Set_timezone {Ustaw strefe czasowa}

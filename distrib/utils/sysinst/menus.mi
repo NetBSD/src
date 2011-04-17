@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.41 2011/04/08 15:53:44 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.42 2011/04/17 12:33:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -163,7 +163,8 @@ menu netbsd, title MSG_NetBSD_VERSION_Install_System, y=-1,
 		action (endwin) { system("/sbin/reboot -q"); };
 	option MSG_Utility_menu, sub menu utility;
 
-menu utility, title MSG_NetBSD_VERSION_Utilities, exit;
+menu utility, title MSG_NetBSD_VERSION_Utilities, exit,
+		exitstring MSG_exit_utility_menu;
 	display action  { toplevel(); };
 	option MSG_Run_bin_sh,
 		action (endwin) { system("/bin/sh"); };
