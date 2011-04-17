@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.25 2011/02/10 00:23:14 jym Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.26 2011/04/17 09:50:33 mrg Exp $	*/
 
 /*
  *
@@ -29,7 +29,10 @@
 
 #ifndef _XEN_XENPMAP_H_
 #define _XEN_XENPMAP_H_
+
+#ifdef _KERNEL_OPT
 #include "opt_xen.h"
+#endif
 
 #define	INVALID_P2M_ENTRY	(~0UL)
 
