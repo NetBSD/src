@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1617 2011/04/16 09:51:57 nakayama Exp $
+#	$NetBSD: mi,v 1.1618 2011/04/17 09:01:57 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2908,7 +2908,7 @@
 ./usr/lib/libsl_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libsm.a				comp-obsolete		obsolete
 ./usr/lib/libss.a				comp-obsolete		obsolete
-./usr/lib/libss_g.a				-unknown-		kerberos,debuglib
+./usr/lib/libss_g.a				-unknown-		obsolete
 ./usr/lib/libss_p.a				comp-obsolete		obsolete
 ./usr/lib/libssh.a				comp-c-lib		crypto
 ./usr/lib/libssh_g.a				-unknown-		debuglib
