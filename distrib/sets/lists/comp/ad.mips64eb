@@ -1,5 +1,5 @@
-# $NetBSD: ad.mips64eb,v 1.26 2011/03/24 17:05:41 bouyer Exp $
-./usr/bin/elf2aout				comp-obsolete	obsolete
+# $NetBSD: ad.mips64eb,v 1.27 2011/04/17 09:01:57 mrg Exp $
+./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
 ./usr/include/mips/ansi.h			comp-c-include
@@ -296,6 +296,11 @@
 ./usr/lib/64/libhdb.so				base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libhdb_p.a				comp-c-proflib		compat,profile,kerberos
 ./usr/lib/64/libhdb_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/64/libheimbase.a			comp-c-lib		compat,kerberos
+./usr/lib/64/libheimbase.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/64/libheimbase_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/64/libheimbase_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/64/libheimbase_pic.a			comp-c-proflib		compat,pic,kerberos
 ./usr/lib/64/libheimntlm.a			comp-c-lib		compat,kerberos
 ./usr/lib/64/libheimntlm.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libheimntlm_p.a			comp-c-proflib		compat,profile,kerberos
@@ -347,6 +352,11 @@
 ./usr/lib/64/libkafs.so				base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libkafs_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/64/libkafs_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/64/libkdc.a				comp-c-lib		compat,kerberos
+./usr/lib/64/libkdc.so				comp-sys-shlib		compat,pic,kerberos
+./usr/lib/64/libkdc_g.a				comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/64/libkdc_p.a				comp-c-proflib		compat,profile,kerberos
+./usr/lib/64/libkdc_pic.a			comp-c-proflib		compat,pic,kerberos
 ./usr/lib/64/libkrb5.a				comp-c-lib		compat,kerberos
 ./usr/lib/64/libkrb5.so				base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libkrb5_p.a			comp-c-proflib		compat,profile,kerberos
@@ -497,7 +507,7 @@
 ./usr/lib/64/librumpclient.a			comp-c-lib		compat
 ./usr/lib/64/librumpclient.so			base-sys-shlib		compat,pic
 ./usr/lib/64/librumpclient_p.a			comp-c-proflib		compat,profile
-./usr/lib/64/librumpclient_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/librumpclient_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/64/librumpcrypto.a			comp-obsolete		obsolete
 ./usr/lib/64/librumpcrypto.so			base-obsolete		obsolete
 ./usr/lib/64/librumpcrypto_p.a			comp-obsolete		obsolete
@@ -536,10 +546,10 @@
 ./usr/lib/64/libsl.so				base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libsl_p.a				comp-c-proflib		compat,profile,kerberos
 ./usr/lib/64/libsl_pic.a			comp-c-piclib		compat,pic,kerberos
-./usr/lib/64/libss.a				comp-c-lib		compat,kerberos
-./usr/lib/64/libss.so				base-sys-shlib		compat,pic,kerberos
-./usr/lib/64/libss_p.a				comp-c-proflib		compat,profile,kerberos
-./usr/lib/64/libss_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/64/libss.a				comp-c-lib		obsolete
+./usr/lib/64/libss.so				base-sys-shlib		obsolete
+./usr/lib/64/libss_p.a				comp-c-proflib		obsolete
+./usr/lib/64/libss_pic.a			comp-c-piclib		obsolete
 ./usr/lib/64/libssh.a				comp-c-lib		compat,crypto
 ./usr/lib/64/libssh.so				base-sys-shlib		compat,crypto,pic
 ./usr/lib/64/libssh_p.a				comp-c-proflib		compat,crypto,profile
@@ -582,6 +592,11 @@
 ./usr/lib/64/libvers.a				comp-obsolete		obsolete
 ./usr/lib/64/libvers_p.a			comp-obsolete		obsolete
 ./usr/lib/64/libvers_pic.a			comp-obsolete		obsolete
+./usr/lib/64/libwind.a				comp-c-lib		compat,kerberos
+./usr/lib/64/libwind.so				comp-sys-shlib		compat,pic,kerberos
+./usr/lib/64/libwind_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/64/libwind_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/64/libwind_pic.a			comp-c-piclib		compat,pic,kerberos
 ./usr/lib/64/libwrap.a				comp-c-lib		compat
 ./usr/lib/64/libwrap.so				base-sys-shlib		compat,pic
 ./usr/lib/64/libwrap_p.a			comp-c-proflib		compat,profile
@@ -830,6 +845,11 @@
 ./usr/lib/o32/libhdb.so				base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libhdb_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/o32/libhdb_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/o32/libheimbase.a			comp-c-lib		compat,kerberos
+./usr/lib/o32/libheimbase.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/o32/libheimbase_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/o32/libheimbase_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/o32/libheimbase_pic.a			comp-c-proflib		compat,pic,kerberos
 ./usr/lib/o32/libheimntlm.a			comp-c-lib		compat,kerberos
 ./usr/lib/o32/libheimntlm.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libheimntlm_p.a			comp-c-proflib		compat,profile,kerberos
@@ -865,10 +885,10 @@
 ./usr/lib/o32/libiscsi.so			base-sys-shlib		compat,pic,iscsi
 ./usr/lib/o32/libiscsi_p.a			comp-c-proflib		compat,profile,iscsi
 ./usr/lib/o32/libiscsi_pic.a			comp-c-piclib		compat,pic,iscsi
-./usr/lib/o32/libisns.a		comp-c-lib	compat
-./usr/lib/o32/libisns.so		comp-sys-shlib	compat
-./usr/lib/o32/libisns_p.a		comp-c-proflib	compat,profile
-./usr/lib/o32/libisns_pic.a		comp-c-piclib	compat,pic
+./usr/lib/o32/libisns.a				comp-c-lib		compat
+./usr/lib/o32/libisns.so			comp-sys-shlib		compat
+./usr/lib/o32/libisns_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/libisns_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libkadm5clnt.a			comp-c-lib		compat,kerberos
 ./usr/lib/o32/libkadm5clnt.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libkadm5clnt_p.a			comp-c-proflib		compat,profile,kerberos
@@ -881,6 +901,11 @@
 ./usr/lib/o32/libkafs.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libkafs_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/o32/libkafs_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/o32/libkdc.a				comp-c-lib		compat,kerberos
+./usr/lib/o32/libkdc.so				comp-sys-shlib		compat,pic,kerberos
+./usr/lib/o32/libkdc_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/o32/libkdc_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/o32/libkdc_pic.a			comp-c-proflib		compat,pic,kerberos
 ./usr/lib/o32/libkrb5.a				comp-c-lib		compat,kerberos
 ./usr/lib/o32/libkrb5.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libkrb5_p.a			comp-c-proflib		compat,profile,kerberos
@@ -1031,7 +1056,7 @@
 ./usr/lib/o32/librumpclient.a			comp-c-lib		compat
 ./usr/lib/o32/librumpclient.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/librumpclient_p.a			comp-c-proflib		compat,profile
-./usr/lib/o32/librumpclient_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/librumpclient_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/o32/librumpcrypto.a			comp-obsolete		obsolete
 ./usr/lib/o32/librumpcrypto.so			base-obsolete		obsolete
 ./usr/lib/o32/librumpcrypto_p.a			comp-obsolete		obsolete
@@ -1070,10 +1095,10 @@
 ./usr/lib/o32/libsl.so				base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libsl_p.a				comp-c-proflib		compat,profile,kerberos
 ./usr/lib/o32/libsl_pic.a			comp-c-piclib		compat,pic,kerberos
-./usr/lib/o32/libss.a				comp-c-lib		compat,kerberos
-./usr/lib/o32/libss.so				base-sys-shlib		compat,pic,kerberos
-./usr/lib/o32/libss_p.a				comp-c-proflib		compat,profile,kerberos
-./usr/lib/o32/libss_pic.a			comp-c-piclib		compat,pic,kerberos
+./usr/lib/o32/libss.a				comp-c-lib		obsolete
+./usr/lib/o32/libss.so				base-sys-shlib		obsolete
+./usr/lib/o32/libss_p.a				comp-c-proflib		obsolete
+./usr/lib/o32/libss_pic.a			comp-c-piclib		obsolete
 ./usr/lib/o32/libssh.a				comp-c-lib		compat,crypto
 ./usr/lib/o32/libssh.so				base-sys-shlib		compat,crypto,pic
 ./usr/lib/o32/libssh_p.a			comp-c-proflib		compat,crypto,profile
@@ -1116,6 +1141,11 @@
 ./usr/lib/o32/libvers.a				comp-obsolete		obsolete
 ./usr/lib/o32/libvers_p.a			comp-obsolete		obsolete
 ./usr/lib/o32/libvers_pic.a			comp-obsolete		obsolete
+./usr/lib/o32/libwind.a				comp-c-lib		compat,kerberos
+./usr/lib/o32/libwind.so			comp-sys-shlib		compat,pic,kerberos
+./usr/lib/o32/libwind_g.a			comp-c-proflib		compat,debuglib,kerberos
+./usr/lib/o32/libwind_p.a			comp-c-proflib		compat,profile,kerberos
+./usr/lib/o32/libwind_pic.a			comp-c-piclib		compat,pic,kerberos
 ./usr/lib/o32/libwrap.a				comp-c-lib		compat
 ./usr/lib/o32/libwrap.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libwrap_p.a			comp-c-proflib		compat,profile
@@ -1185,7 +1215,7 @@
 ./usr/libdata/debug/usr/lib/64/libgssapi.so.9.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/64/libhdb.so.13.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/64/libheimntlm.so.3.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/64/libhx509.so.4.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/64/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/64/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libipsec.so.3.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libisc.so.5.3.debug		comp-bind-debug	debug,compat
@@ -1307,7 +1337,7 @@
 ./usr/libdata/debug/usr/lib/64/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libskey.so.2.0.debug	comp-sys-debug	skey,debug,compat
 ./usr/libdata/debug/usr/lib/64/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/64/libss.so.6.0.debug		comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/64/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/64/libssh.so.16.0.debug	comp-secsh-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libssl.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat
@@ -1378,7 +1408,7 @@
 ./usr/libdata/debug/usr/lib/o32/libgssapi.so.9.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libhdb.so.13.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libheimntlm.so.3.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/o32/libhx509.so.4.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/o32/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libipsec.so.3.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libisc.so.5.3.debug		comp-bind-debug	debug,compat
@@ -1500,7 +1530,7 @@
 ./usr/libdata/debug/usr/lib/o32/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libskey.so.2.0.debug	comp-sys-debug	skey,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/o32/libss.so.6.0.debug		comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/o32/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/o32/libssh.so.16.0.debug	comp-secsh-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libssl.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat
