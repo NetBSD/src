@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.6 2010/06/30 03:28:01 mrg Exp $
+$NetBSD: README,v 1.7 2011/04/17 01:29:06 mrg Exp $
 
 
 Building multi- ABI libraries for NetBSD platforms.
@@ -11,7 +11,7 @@ the mips64 port to support all three of old-style 32-bit ("o32"), the
 new 32-bit (default, "n32", 64-bit CPU required) or the 64-bit ABI.
 
 
-The basic premise is to re-set $MAKEOBJDIRPREFIX to fresh subdirectory
+The basic premise is to re-set $MAKEOBJDIR to fresh subdirectory
 underneath src/compat and rebuild the libraries with a different set
 of options.  Each platform wanting support should create their port
 subdirectory directly in src/compat, and then one subdirectory in here
