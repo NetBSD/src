@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2010/06/19 23:11:10 riz Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile,v 1.3 2011/04/17 12:52:26 tron Exp $
 
 HOSTLIB=dwarf
+
+.include <bsd.own.mk>
 
 SRCS=	dwarf_abbrev.c		\
 	dwarf_attr.c		\
