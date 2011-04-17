@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.34 2011/04/16 20:39:18 rmind Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.35 2011/04/17 20:37:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.34 2011/04/16 20:39:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.35 2011/04/17 20:37:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -312,7 +312,6 @@ static void
 ksem_free(ksem_t *ks)
 {
 
-	KASSERT(ks->ks_ref == 0);
 	KASSERT(!cv_has_waiters(&ks->ks_cv));
 
 	if (ks->ks_name) {
