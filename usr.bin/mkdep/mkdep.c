@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.35 2010/05/26 18:07:34 christos Exp $ */
+/* $NetBSD: mkdep.c,v 1.36 2011/04/17 22:35:22 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: mkdep.c,v 1.35 2010/05/26 18:07:34 christos Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.36 2011/04/17 22:35:22 christos Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: mkdep.c,v 1.35 2010/05/26 18:07:34 christos Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <getopt.h>
 #include <locale.h>
 #include <paths.h>
 #include <stdio.h>
@@ -183,6 +184,11 @@ read_fname(void)
 	return fbuf;
 }
 
+static struct option longopt[] = {
+	{ "sysroot", 1, NULL, 'R' },
+	{ NULL, 0, NULL, '\0' },
+};
+
 int
 main(int argc, char **argv)
 {
@@ -214,7 +220,7 @@ main(int argc, char **argv)
 	opterr = 0;	/* stop getopt() bleating about errors. */
 	for (;;) {
 		ok_ind = optind;
-		ch = getopt(argc, argv, "aDdf:opqs:");
+		ch = getopt_long(argc, argv, "aDdf:opqRs:", longopt, NULL);
 		switch (ch) {
 		case -1:
 			ok_ind = optind;
@@ -241,6 +247,9 @@ main(int argc, char **argv)
 			continue;
 		case 'q':	/* Quiet */
 			qflag = 1;
+			continue;
+		case 'R':
+			/* sysroot = optarg */
 			continue;
 		case 's':	/* Suffix list */
 			suffixes = optarg;
