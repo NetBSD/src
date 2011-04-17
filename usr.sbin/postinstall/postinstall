@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.116 2011/04/11 20:29:50 martin Exp $
+# $NetBSD: postinstall,v 1.117 2011/04/17 13:16:59 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1467,17 +1467,17 @@ do_varrwho()
 #
 #	tcpdumpchroot
 #
-additem tcpdumpchroot "make sure /var/chroot/tcpdump/etc is populated"
+additem tcpdumpchroot "remove /var/chroot/tcpdump/etc/protocols"
 do_tcpdumpchroot()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_tcpdumpchroot  fix|check"
 
 	failed=0;
-	if [ ! -r ${DEST_DIR}/var/chroot/tcpdump/etc/protocols ]; then
+	if [ -r ${DEST_DIR}/var/chroot/tcpdump/etc/protocols ]; then
 		if [ "$1" = "fix" ]; then
-			mkdir -p ${DEST_DIR}/var/chroot/tcpdump/etc
-			cp ${SRC_DIR}/etc/protocols \
-				${DEST_DIR}/var/chroot/tcpdump/etc
+			rm ${DEST_DIR}/var/chroot/tcpdump/etc/protocols
+			failed=$(( ${failed} + $? ))
+			rmdir  ${DEST_DIR}/var/chroot/tcpdump/etc
 			failed=$(( ${failed} + $? ))
 		else
 			failed=1
