@@ -1,4 +1,4 @@
-/*	$NetBSD: t_nice.c,v 1.4 2011/04/10 10:59:13 jruoho Exp $ */
+/*	$NetBSD: t_nice.c,v 1.5 2011/04/17 06:18:23 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nice.c,v 1.4 2011/04/10 10:59:13 jruoho Exp $");
+__RCSID("$NetBSD: t_nice.c,v 1.5 2011/04/17 06:18:23 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -37,8 +37,28 @@ __RCSID("$NetBSD: t_nice.c,v 1.4 2011/04/10 10:59:13 jruoho Exp $");
 #include <atf-c.h>
 #include <errno.h>
 #include <limits.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+static void	*threadfunc(void *);
+
+static void *
+threadfunc(void *arg)
+{
+	int pri, val;
+
+	val = *(int *)arg;
+
+	errno = 0;
+	pri = getpriority(PRIO_PROCESS, 0);
+	ATF_REQUIRE(errno == 0);
+
+	if (pri != val)
+		atf_tc_fail("nice(3) value was not propagated to threads");
+
+	return NULL;
+}
 
 ATF_TC(nice_err);
 ATF_TC_HEAD(nice_err, tc)
@@ -137,12 +157,42 @@ ATF_TC_BODY(nice_root, tc)
 	}
 }
 
+ATF_TC(nice_thread);
+ATF_TC_HEAD(nice_thread, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test nice(3) with threads");
+}
+
+ATF_TC_BODY(nice_thread, tc)
+{
+	pthread_t tid[5];
+	int rv, val;
+	size_t i;
+
+	/*
+	 * Test that the scheduling priority is
+	 * propagated to all system scope threads.
+	 */
+	for (i = 0; i < __arraycount(tid); i++) {
+
+		val = nice(i);
+		ATF_REQUIRE(val != -1);
+
+		rv = pthread_create(&tid[i], NULL, threadfunc, &val);
+		ATF_REQUIRE(rv == 0);
+
+		rv = pthread_join(tid[i], NULL);
+		ATF_REQUIRE(rv == 0);
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, nice_err);
 	ATF_TP_ADD_TC(tp, nice_priority);
 	ATF_TP_ADD_TC(tp, nice_root);
+	ATF_TP_ADD_TC(tp, nice_thread);
 
 	return atf_no_error();
 }
