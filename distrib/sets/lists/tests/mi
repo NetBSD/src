@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.309 2011/04/12 17:10:51 matt Exp $
+# $NetBSD: mi,v 1.310 2011/04/17 06:26:02 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -594,6 +594,7 @@
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_dup.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_fsync.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_getgroups.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_getpid.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_getrusage.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_getsid.debug			tests-syscall-debug	debug,atf
@@ -2265,6 +2266,7 @@
 ./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
 ./usr/tests/syscall/t_dup			tests-syscall-tests	atf
 ./usr/tests/syscall/t_fsync			tests-syscall-tests	atf
+./usr/tests/syscall/t_getgroups			tests-syscall-tests	atf
 ./usr/tests/syscall/t_getpid			tests-syscall-tests	atf
 ./usr/tests/syscall/t_getrusage			tests-syscall-tests	atf
 ./usr/tests/syscall/t_getsid			tests-syscall-tests	atf
