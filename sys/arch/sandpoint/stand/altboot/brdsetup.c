@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.14 2011/04/13 18:32:21 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.15 2011/04/17 13:09:30 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ static struct brdprop brdlist[] = {
 	"dlink",
 	"D-Link DSM-G600",
 	BRD_DLINKDSM,
-	0,
+	33000000,
 	"eumb", 0x4500, 9600,
 	NULL, dlinkbrdfix, NULL, NULL },
     {
