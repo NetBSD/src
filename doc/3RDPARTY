@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.831 2011/04/16 06:39:02 jruoho Exp $
+#	$NetBSD: 3RDPARTY,v 1.832 2011/04/18 08:36:14 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -503,7 +503,7 @@ among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	less
 Version:	less394
-Current Vers:	less436
+Current Vers:	less443
 Maintainer:	Mark Nudelman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
@@ -645,7 +645,7 @@ Notes:
 The sources were integrated into src/sys/external/apache2/mDNSResponder/dist.
 
 Package:	mdocml
-Version:	1.10.9
+Version:	1.11.1
 Current Vers:	1.11.1
 Maintainer:	Kristaps Džonsons
 Archive Site:	http://mdocml.bsd.lv/snapshots/
