@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.175 2011/04/14 15:29:25 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.176 2011/04/18 00:40:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.175 2011/04/14 15:29:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.176 2011/04/18 00:40:53 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -226,7 +226,7 @@ namei_hash(const char *name, const char **ep)
  *
  * System-call-layer level code that is going to call namei should
  * first create a pathbuf and adjust all the bells and whistles on it
- * as needed by context
+ * as needed by context.
  */
 
 struct pathbuf {
@@ -318,7 +318,7 @@ pathbuf_copyin(const char *userpath, struct pathbuf **ret)
 
 /*
  * XXX should not exist:
- *   1. whether a pointer is kernel or user should be statically checkable
+ *   1. whether a pointer is kernel or user should be statically checkable.
  *   2. copyin should be handled by the upper part of the syscall layer,
  *      not in here.
  */
@@ -1118,8 +1118,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * (currently, this may consume more than one)
 		 */
 
-		cnp->cn_flags &= ~ISSYMLINK;
-
     dirloop:
 		/*
 		 * If we have a leading string of slashes, remove
@@ -1203,7 +1201,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		if (namei_atsymlink(state, foundobj)) {
 			ndp->ni_pathlen += state->slashes;
 			ndp->ni_next -= state->slashes;
-			cnp->cn_flags |= ISSYMLINK;
 			if (neverfollow) {
 				error = EINVAL;
 			} else {
@@ -1513,7 +1510,6 @@ do_lookup_for_nfsd_index(struct namei_state *state, struct vnode *startdir)
 	state->docache = 1;
 	state->rdonly = cnp->cn_flags & RDONLY;
 	ndp->ni_dvp = NULL;
-	cnp->cn_flags &= ~ISSYMLINK;
 
 	cnp->cn_consume = 0;
 	cp = NULL;
@@ -1617,7 +1613,6 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, int d
 	 * Setup: break out flag bits into variables.
 	 */
 	rdonly = cnp->cn_flags & RDONLY;
-	cnp->cn_flags &= ~ISSYMLINK;
 
 	/*
 	 * Search a new directory.
