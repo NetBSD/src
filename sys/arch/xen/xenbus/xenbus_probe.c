@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.31 2011/04/12 05:09:32 cegger Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.32 2011/04/18 01:36:25 jym Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.31 2011/04/12 05:09:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.32 2011/04/18 01:36:25 jym Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -54,10 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.31 2011/04/12 05:09:32 cegger Exp
 #include <xen/xenbus.h>
 #include <xen/evtchn.h>
 #include <xen/shutdown_xenbus.h>
-
-#ifdef XEN_BALLOON
-#include <xen/balloon.h>
-#endif
 
 #include "xenbus_comms.h"
 
@@ -384,6 +380,8 @@ xenbus_print(void *aux, const char *pnp)
 			aprint_normal("xbd");
 		else if (strcmp(xa->xa_type, "vif") == 0)
 			aprint_normal("xennet");
+		else if (strcmp(xa->xa_type, "balloon") == 0)
+			aprint_normal("balloon");
 		else
 			aprint_normal("unknown type %s", xa->xa_type);
 		aprint_normal(" at %s", pnp);
@@ -509,6 +507,11 @@ int xenstored_ready = 0;
 void
 xenbus_probe(void *unused)
 {
+	struct xenbusdev_attach_args balloon_xa = {
+		.xa_id = 0,
+		.xa_type = "balloon"
+	};
+
 	KASSERT((xenstored_ready > 0)); 
 
 	/* Enumerate devices in xenstore. */
@@ -524,11 +527,11 @@ xenbus_probe(void *unused)
 	strcpy(be_watch.node, "backend");
 	be_watch.xbw_callback = backend_changed;
 	register_xenbus_watch(&be_watch);
-	shutdown_xenbus_setup();
 
-#ifdef XEN_BALLOON
-	balloon_xenbus_setup();
-#endif
+	/* attach balloon. */
+	config_found_ia(xenbus_dev, "xenbus", &balloon_xa, xenbus_print);
+
+	shutdown_xenbus_setup();
 
 	/* Notify others that xenstore is up */
 	//notifier_call_chain(&xenstore_chain, 0, NULL);

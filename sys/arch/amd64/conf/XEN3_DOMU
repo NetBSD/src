@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.27 2011/03/06 17:08:19 bouyer Exp $
+# $NetBSD: XEN3_DOMU,v 1.28 2011/04/18 01:36:24 jym Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -13,7 +13,6 @@ maxusers	32		# estimated number of users
 #
 options 	MAXPHYS=32768   #xbd doesn't handle 64k transfers
 #options 	DOM0OPS
-#options         XEN_BALLOON	# Xen memory ballooning - Experimental
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
@@ -158,6 +157,7 @@ vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus*		at hypervisor?		# Xen virtual bus
 xennet*		at xenbus?		# Xen virtual network interface
 xbd*		at xenbus?		# Xen virtual block device
+#balloon*	at xenbus?		# Xen balloon device
 
 xencons*	at hypervisor?		# Xen virtual console
 
