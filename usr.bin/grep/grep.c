@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.7 2011/04/18 17:18:03 joerg Exp $	*/
+/*	$NetBSD: grep.c,v 1.8 2011/04/18 22:46:48 joerg Exp $	*/
 /* 	$FreeBSD: head/usr.bin/grep/grep.c 211519 2010-08-19 22:55:17Z delphij $	*/
 /*	$OpenBSD: grep.c,v 1.42 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grep.c,v 1.7 2011/04/18 17:18:03 joerg Exp $");
+__RCSID("$NetBSD: grep.c,v 1.8 2011/04/18 22:46:48 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -68,10 +68,10 @@ const char	*errstr[] = {
 /* 1*/	"(standard input)",
 /* 2*/	"cannot read bzip2 compressed file",
 /* 3*/	"unknown %s option",
-/* 4*/	"usage: %s [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZ] [-A num] [-B num] [-C[num]]\n",
+/* 4*/	"usage: %s [-abcDEFGHhIiJLlmnOoPqRSsUVvwxZz] [-A num] [-B num] [-C[num]]\n",
 /* 5*/	"\t[-e pattern] [-f file] [--binary-files=value] [--color=when]\n",
 /* 6*/	"\t[--context[=num]] [--directories=action] [--label] [--line-buffered]\n",
-/* 7*/	"\t[--null] [pattern] [file ...]\n",
+/* 7*/	"\t[pattern] [file ...]\n",
 /* 8*/	"Binary file %s matches\n",
 /* 9*/	"%s (BSD grep) %s\n",
 };
@@ -118,6 +118,8 @@ bool	 wflag;		/* -w: pattern must start and end on word boundaries */
 bool	 xflag;		/* -x: pattern must match entire line */
 bool	 lbflag;	/* --line-buffered */
 bool	 nullflag;	/* --null */
+bool	 nulldataflag;	/* --null-data */
+unsigned char line_sep = '\n';	/* 0 for --null-data */
 char	*label;		/* --label */
 const char *color;	/* --color */
 int	 grepbehave = GREP_BASIC;	/* -EFGP: type of the regex */
@@ -133,11 +135,11 @@ bool	 fexclude, finclude;	/* --exclude and --include */
 enum {
 	BIN_OPT = CHAR_MAX + 1,
 	COLOR_OPT,
+	DECOMPRESS_OPT,
 	HELP_OPT,
 	MMAP_OPT,
 	LINEBUF_OPT,
 	LABEL_OPT,
-	NULL_OPT,
 	R_EXCLUDE_OPT,
 	R_INCLUDE_OPT,
 	R_DEXCLUDE_OPT,
@@ -166,16 +168,17 @@ usage(void)
 	exit(2);
 }
 
-static const char	*optstr = "0123456789A:B:C:D:EFGHIJLOPSRUVZabcd:e:f:hilm:nopqrsuvwxy";
+static const char optstr[] =
+    "0123456789A:B:C:D:EFGHIJLOPSRUVZabcd:e:f:hilm:nopqrsuvwxyz";
 
 struct option long_options[] =
 {
 	{"binary-files",	required_argument,	NULL, BIN_OPT},
+	{"decompress",          no_argument,            NULL, DECOMPRESS_OPT},
 	{"help",		no_argument,		NULL, HELP_OPT},
 	{"mmap",		no_argument,		NULL, MMAP_OPT},
 	{"line-buffered",	no_argument,		NULL, LINEBUF_OPT},
 	{"label",		required_argument,	NULL, LABEL_OPT},
-	{"null",		no_argument,		NULL, NULL_OPT},
 	{"color",		optional_argument,	NULL, COLOR_OPT},
 	{"colour",		optional_argument,	NULL, COLOR_OPT},
 	{"exclude",		required_argument,	NULL, R_EXCLUDE_OPT},
@@ -214,7 +217,8 @@ struct option long_options[] =
 	{"version",		no_argument,		NULL, 'V'},
 	{"word-regexp",		no_argument,		NULL, 'w'},
 	{"line-regexp",		no_argument,		NULL, 'x'},
-	{"decompress",          no_argument,            NULL, 'Z'},
+	{"null",		no_argument,		NULL, 'Z'},
+	{"null-data",		no_argument,		NULL, 'z'},
 	{NULL,			no_argument,		NULL, 0}
 };
 
@@ -563,7 +567,11 @@ main(int argc, char *argv[])
 			xflag = true;
 			break;
 		case 'Z':
-			filebehave = FILE_GZIP;
+			nullflag = true;
+			break;
+		case 'z':
+			nulldataflag = true;
+			line_sep = '\0';
 			break;
 		case BIN_OPT:
 			if (strcasecmp("binary", optarg) == 0)
@@ -595,14 +603,14 @@ main(int argc, char *argv[])
 			    strcasecmp("no", optarg) != 0)
 				errx(2, getstr(3), "--color");
 			break;
+		case DECOMPRESS_OPT:
+			filebehave = FILE_GZIP;
+			break;
 		case LABEL_OPT:
 			label = optarg;
 			break;
 		case LINEBUF_OPT:
 			lbflag = true;
-			break;
-		case NULL_OPT:
-			nullflag = true;
 			break;
 		case R_INCLUDE_OPT:
 			finclude = true;
