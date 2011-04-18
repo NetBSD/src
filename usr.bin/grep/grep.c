@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.8 2011/04/18 22:46:48 joerg Exp $	*/
+/*	$NetBSD: grep.c,v 1.9 2011/04/18 23:22:42 joerg Exp $	*/
 /* 	$FreeBSD: head/usr.bin/grep/grep.c 211519 2010-08-19 22:55:17Z delphij $	*/
 /*	$OpenBSD: grep.c,v 1.42 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grep.c,v 1.8 2011/04/18 22:46:48 joerg Exp $");
+__RCSID("$NetBSD: grep.c,v 1.9 2011/04/18 23:22:42 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -323,7 +323,7 @@ main(int argc, char *argv[])
 	char **aargv, **eargv, *eopts;
 	char *ep;
 	unsigned long long l;
-	unsigned int aargc, eargc, i;
+	unsigned int aargc, eargc, i, j;
 	int c, lastc, needpattern, newarg, prevoptind;
 
 	setlocale(LC_ALL, "");
@@ -374,7 +374,7 @@ main(int argc, char *argv[])
 		char *str;
 
 		/* make an estimation of how many extra arguments we have */
-		for (unsigned int j = 0; j < strlen(eopts); j++)
+		for (j = 0; j < strlen(eopts); j++)
 			if (eopts[j] == ' ')
 				eargc++;
 
@@ -391,7 +391,7 @@ main(int argc, char *argv[])
 		aargv[0] = argv[0];
 		for (i = 0; i < eargc; i++)
 			aargv[i + 1] = eargv[i];
-		for (int j = 1; j < argc; j++, i++)
+		for (j = 1; j < (unsigned int)argc; j++, i++)
 			aargv[i + 1] = argv[j];
 
 		aargc = eargc + argc;
