@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.5 2011/04/18 03:27:40 joerg Exp $	*/
+/*	$NetBSD: grep.c,v 1.6 2011/04/18 03:48:23 joerg Exp $	*/
 /* 	$FreeBSD: head/usr.bin/grep/grep.c 211519 2010-08-19 22:55:17Z delphij $	*/
 /*	$OpenBSD: grep.c,v 1.42 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grep.c,v 1.5 2011/04/18 03:27:40 joerg Exp $");
+__RCSID("$NetBSD: grep.c,v 1.6 2011/04/18 03:48:23 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -292,11 +292,15 @@ read_patterns(const char *fn)
 	FILE *f;
 	char *line;
 	size_t len;
+	ssize_t rlen;
 
 	if ((f = fopen(fn, "r")) == NULL)
 		err(2, "%s", fn);
-	while ((line = fgetln(f, &len)) != NULL)
-		add_pattern(line, *line == '\n' ? 0 : len);
+	line = NULL;
+	len = 0;
+	while ((rlen = getline(&line, &len, f)) != -1)
+		add_pattern(line, *line == '\n' ? 0 : (size_t)rlen);
+	free(line);
 	if (ferror(f))
 		err(2, "%s", fn);
 	fclose(f);
