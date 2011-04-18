@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.180 2011/04/18 00:46:14 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.181 2011/04/18 00:46:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.180 2011/04/18 00:46:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.181 2011/04/18 00:46:39 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1184,11 +1184,11 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			/*
 			 * Success with no object returned means we're
 			 * creating something and it isn't already
-			 * there. Jump out of the main loop now so
+			 * there. Break out of the main loop now so
 			 * the code below doesn't have to test for
 			 * foundobj == NULL.
 			 */
-			goto alldone;
+			break;
 		}
 
 		/*
@@ -1262,6 +1262,10 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		}
 
 		break;
+	}
+
+	if (foundobj == NULL) {
+		goto alldone;
 	}
 
 	{
