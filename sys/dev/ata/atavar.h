@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.80 2009/10/19 18:41:12 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.81 2011/04/18 01:47:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -107,12 +107,6 @@ struct atabus_initq {
 	TAILQ_ENTRY(atabus_initq) atabus_initq;
 	struct atabus_softc *atabus_sc;
 };
-
-#ifdef _KERNEL
-TAILQ_HEAD(atabus_initq_head, atabus_initq);
-extern struct atabus_initq_head atabus_initq_head;
-extern struct simplelock atabus_interlock;
-#endif /* _KERNEL */
 
 /* High-level functions and structures used by both ATA and ATAPI devices */
 struct ataparams;
