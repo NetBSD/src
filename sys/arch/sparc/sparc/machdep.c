@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.307 2011/03/04 22:25:28 joerg Exp $ */
+/*	$NetBSD: machdep.c,v 1.308 2011/04/18 00:26:11 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.307 2011/03/04 22:25:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.308 2011/04/18 00:26:11 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -383,7 +383,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		}
 		l->l_md.md_fpu = NULL;
 		FPU_UNLOCK(s);
-		free((void *)fs, M_SUBPROC);
+		kmem_free(fs, sizeof(struct fpstate));
 		l->l_md.md_fpstate = NULL;
 	}
 	memset((void *)tf, 0, sizeof *tf);
