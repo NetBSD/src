@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.11 2011/04/18 17:18:04 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.12 2011/04/18 22:46:48 joerg Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/util.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: util.c,v 1.39 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.11 2011/04/18 17:18:04 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.12 2011/04/18 22:46:48 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -231,7 +231,7 @@ procfile(const char *fn)
 			else
 				break;
 		}
-		if (ln.len > 0 && ln.dat[ln.len - 1] == '\n')
+		if (ln.len > 0 && ln.dat[ln.len - 1] == line_sep)
 			--ln.len;
 		ln.line_no++;
 
@@ -260,12 +260,12 @@ procfile(const char *fn)
 	if (cflag) {
 		if (!hflag)
 			printf("%s:", ln.file);
-		printf("%u\n", c);
+		printf("%u%c", c, line_sep);
 	}
 	if (lflag && !qflag && c != 0)
-		printf("%s\n", fn);
+		printf("%s%c", fn, line_sep);
 	if (Lflag && !qflag && c == 0)
-		printf("%s\n", fn);
+		printf("%s%c", fn, line_sep);
 	if (c && !cflag && !lflag && !Lflag &&
 	    binbehave == BINFILE_BIN && f->binary && !qflag)
 		printf(getstr(8), fn);
@@ -498,10 +498,10 @@ printline(struct str *line, int sep, regmatch_t *matches, int m)
 		if (!oflag) {
 			if (line->len - a > 0)
 				fwrite(line->dat + a, line->len - a, 1, stdout);
-			putchar('\n');
+			putchar(line_sep);
 		}
 	} else {
 		fwrite(line->dat, line->len, 1, stdout);
-		putchar('\n');
+		putchar(line_sep);
 	}
 }
