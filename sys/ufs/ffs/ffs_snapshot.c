@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.111 2011/03/06 17:08:38 bouyer Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.112 2011/04/18 07:36:13 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.111 2011/03/06 17:08:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.112 2011/04/18 07:36:13 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -405,7 +405,7 @@ out:
 static int
 snapshot_setup(struct mount *mp, struct vnode *vp)
 {
-	int error, n, len, loc;
+	int error, n, len, loc, cg;
 	daddr_t blkno, numblks;
 	struct buf *ibp, *nbp;
 	struct fs *fs = VFSTOUFS(mp)->um_fs;
@@ -501,6 +501,28 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 		if (error)
 			goto out;
 		bawrite(nbp);
+		if (wbreak > 0 && (++n % wbreak) == 0) {
+			UFS_WAPBL_END(mp);
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error)
+				return error;
+		}
+	}
+	/*
+	 * Allocate all cylinder group blocks.
+	 */
+	for (cg = 0; cg < fs->fs_ncg; cg++) {
+		error = ffs_balloc(vp, lfragtosize(fs, cgtod(fs, cg)),
+		    fs->fs_bsize, l->l_cred, 0, &nbp);
+		if (error)
+			goto out;
+		bawrite(nbp);
+		if (wbreak > 0 && (++n % wbreak) == 0) {
+			UFS_WAPBL_END(mp);
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error)
+				return error;
+		}
 	}
 
 out:
