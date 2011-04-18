@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.46 2010/12/06 10:22:43 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.47 2011/04/18 15:53:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.46 2010/12/06 10:22:43 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.47 2011/04/18 15:53:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.46 2010/12/06 10:22:43 uebayasi Exp $
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
 #include <miscfs/specfs/specdev.h>
+#include <miscfs/syncfs/syncfs.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pager.h>
