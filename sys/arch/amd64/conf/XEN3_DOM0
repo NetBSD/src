@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.65 2011/03/06 17:08:19 bouyer Exp $
+# $NetBSD: XEN3_DOM0,v 1.66 2011/04/18 01:36:24 jym Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,7 +12,6 @@ maxusers	32		# estimated number of users
 
 #
 options 	DOM0OPS
-#options         XEN_BALLOON     # Xen memory ballooning - Experimental
 
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
@@ -204,6 +203,7 @@ vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus*		at hypervisor?		# Xen virtual bus
 
 xencons*	at hypervisor?		# Xen virtual console
+#balloon*	at xenbus?		# Xen balloon device
 
 acpi0 		at hypervisor?
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
