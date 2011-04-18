@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.179 2011/04/18 00:45:53 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.180 2011/04/18 00:46:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.179 2011/04/18 00:45:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.180 2011/04/18 00:46:14 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1150,7 +1150,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			cnp->cn_flags |= ISLASTCN;
 
 			/* bleh */
-			goto terminal;
+			break;
 		}
 
 		error = lookup_parsepath(state);
@@ -1264,7 +1264,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		break;
 	}
 
-    terminal:
 	{
 		if (foundobj == ndp->ni_erootdir) {
 			/*
