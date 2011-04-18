@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.115 2011/04/11 08:56:17 cegger Exp $
+#	$NetBSD: files.xen,v 1.116 2011/04/18 01:36:25 jym Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -217,6 +217,11 @@ device xpci: pcibus
 attach xpci at xenbus with xpci_xenbus
 file	arch/xen/xen/xpci_xenbus.c	xpci_xenbus
 
+# Xen Balloon driver
+device	balloon
+attach	balloon at xenbus
+file	arch/xen/xen/balloon.c		balloon
+
 # Non-Xen specific devices and options
 
 include	"dev/pckbport/files.pckbport"
@@ -400,7 +405,7 @@ endif
 include	"dev/pcmcia/files.pcmcia"
 
 # Domain-0 operations
-defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001 XEN_BALLOON
+defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
 file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops
@@ -410,7 +415,6 @@ file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 file	arch/xen/xen/xennetback_xenbus.c xvif
 file	arch/xen/xen/xennet_checksum.c	xvif | xennet
 file	arch/xen/xen/xbdback_xenbus.c xbdback
-file    arch/xen/xen/balloon.c          hypervisor
 
 ifdef i386
 include "arch/i386/conf/majors.i386"
