@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.c,v 1.2 2011/02/16 01:31:33 joerg Exp $	*/
+/*	$NetBSD: queue.c,v 1.3 2011/04/18 03:27:40 joerg Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/queue.c 211496 2010-08-19 09:28:59Z des $	*/
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -31,8 +31,12 @@
  * Dodge.  It is used in place of <sys/queue.h> to get a better performance.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: queue.c,v 1.2 2011/02/16 01:31:33 joerg Exp $");
+__RCSID("$NetBSD: queue.c,v 1.3 2011/04/18 03:27:40 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>

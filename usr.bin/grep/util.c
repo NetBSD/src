@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.9 2011/02/27 17:33:37 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.10 2011/04/18 03:27:40 joerg Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/util.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: util.c,v 1.39 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -29,8 +29,12 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.9 2011/02/27 17:33:37 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.10 2011/04/18 03:27:40 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
