@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.h,v 1.6 2011/04/18 17:18:04 joerg Exp $	*/
+/*	$NetBSD: grep.h,v 1.7 2011/04/18 22:46:48 joerg Exp $	*/
 /*	$OpenBSD: grep.h,v 1.15 2010/04/05 03:03:55 tedu Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/grep.h 211496 2010-08-19 09:28:59Z des $	*/
 
@@ -113,7 +113,8 @@ extern int	 cflags, eflags;
 extern bool	 Eflag, Fflag, Gflag, Hflag, Lflag,
 		 bflag, cflag, hflag, iflag, lflag, mflag, nflag, oflag,
 		 qflag, sflag, vflag, wflag, xflag;
-extern bool	 dexclude, dinclude, fexclude, finclude, lbflag, nullflag;
+extern bool	 dexclude, dinclude, fexclude, finclude, lbflag, nullflag, nulldataflag;
+extern unsigned char line_sep;
 extern unsigned long long Aflag, Bflag, mcount;
 extern char	*label;
 extern const char *color;

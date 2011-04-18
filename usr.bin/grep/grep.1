@@ -1,4 +1,4 @@
-.\"	$NetBSD: grep.1,v 1.2 2011/02/16 01:31:33 joerg Exp $
+.\"	$NetBSD: grep.1,v 1.3 2011/04/18 22:46:48 joerg Exp $
 .\"	$FreeBSD: head/usr.bin/grep/grep.1 210652 2010-07-30 14:05:20Z joel $
 .\"	$OpenBSD: grep.1,v 1.38 2010/04/05 06:30:59 jmc Exp $
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)grep.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd July 28, 2010
+.Dd April 19, 2011
 .Dt GREP 1
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .Nm grep
 .Bk -words
-.Op Fl abcdDEFGHhIiJLlmnOopqRSsUVvwxZ
+.Op Fl abcdDEFGHhIiJLlmnOopqRSsUVvwxZz
 .Op Fl A Ar num
 .Op Fl B Ar num
 .Op Fl C Ns Op Ar num
@@ -50,9 +50,9 @@
 .Op Fl Fl color Ns Op = Ns Ar when
 .Op Fl Fl colour Ns Op = Ns Ar when
 .Op Fl Fl context Ns Op = Ns Ar num
+.Op Fl Fl decompress
 .Op Fl Fl label
 .Op Fl Fl line-buffered
-.Op Fl Fl null
 .Op Ar pattern
 .Op Ar
 .Ek
@@ -318,8 +318,6 @@ or
 .Fl q
 is
 specified.
-.It Fl Fl null
-Prints a zero-byte after the file name.
 .It Fl O
 If
 .Fl R
@@ -372,11 +370,10 @@ expression are considered to be matching lines.
 Equivalent to
 .Fl i .
 Obsoleted.
-.It Fl Z , Fl z , Fl Fl decompress
-Force
-.Nm grep
-to behave as
-.Nm zgrep .
+.It Fl Z , Fl Fl null
+Prints a zero-byte after the file name.
+.It Fl z , Fl Fl null-data
+Use the zero byte (ASCII NUL) as line separator.
 .It Fl Fl binary-files Ns = Ns Ar value
 Controls searching and printing of binary files.
 Options are
@@ -387,13 +384,16 @@ do not search binary files;
 and
 .Ar text :
 treat all files as text.
-.Sm off
-.It Fl Fl context Op = Ar num
-.Sm on
-Print
-.Ar num
-lines of leading and trailing context.
-The default is 2.
+.It Fl Fl decompress
+Detect input files compressed with
+.Xr bzip2 1
+or
+.Xr gzip 1
+and decompress them dynamically.
+This makes
+.Nm grep
+behave like
+.Nm zgrep .
 .It Fl Fl line-buffered
 Force output to be line buffered.
 By default, output is line buffered when standard output is a terminal
