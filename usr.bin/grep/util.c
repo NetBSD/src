@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.12 2011/04/18 22:46:48 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.13 2011/04/18 23:22:42 joerg Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/util.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: util.c,v 1.39 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.12 2011/04/18 22:46:48 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.13 2011/04/18 23:22:42 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -64,13 +64,14 @@ bool
 file_matching(const char *fname)
 {
 	char *fname_base, *fname_copy;
+	unsigned int i;
 	bool ret;
 
 	ret = finclude ? false : true;
 	fname_copy = grep_strdup(fname);
 	fname_base = basename(fname_copy);
 
-	for (unsigned int i = 0; i < fpatterns; ++i) {
+	for (i = 0; i < fpatterns; ++i) {
 		if (fnmatch(fpattern[i].pat, fname, 0) == 0 ||
 		    fnmatch(fpattern[i].pat, fname_base, 0) == 0) {
 			if (fpattern[i].mode == EXCL_PAT)
@@ -86,11 +87,12 @@ file_matching(const char *fname)
 static inline bool
 dir_matching(const char *dname)
 {
+	unsigned int i;
 	bool ret;
 
 	ret = dinclude ? false : true;
 
-	for (unsigned int i = 0; i < dpatterns; ++i) {
+	for (i = 0; i < dpatterns; ++i) {
 		if (dname != NULL &&
 		    fnmatch(dname, dpattern[i].pat, 0) == 0) {
 			if (dpattern[i].mode == EXCL_PAT)
