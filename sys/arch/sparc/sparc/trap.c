@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.186 2011/01/14 02:06:31 rmind Exp $ */
+/*	$NetBSD: trap.c,v 1.187 2011/04/18 00:26:12 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.186 2011/01/14 02:06:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.187 2011/04/18 00:26:12 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.186 2011/01/14 02:06:31 rmind Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/resource.h>
 #include <sys/signal.h>
@@ -419,7 +418,7 @@ badtrap:
 #endif
 
 		if (fs == NULL) {
-			fs = malloc(sizeof *fs, M_SUBPROC, M_WAITOK);
+			fs = kmem_alloc(sizeof(struct fpstate), KM_SLEEP);
 			*fs = initfpstate;
 			l->l_md.md_fpstate = fs;
 		}
