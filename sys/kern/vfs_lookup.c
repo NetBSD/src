@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.176 2011/04/18 00:40:53 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.177 2011/04/18 00:45:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.176 2011/04/18 00:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.177 2011/04/18 00:45:07 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1118,7 +1118,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * (currently, this may consume more than one)
 		 */
 
-    dirloop:
 		/*
 		 * If we have a leading string of slashes, remove
 		 * them, and just make sure the current node is a
@@ -1259,7 +1258,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			}
 			searchdir = foundobj;
 			foundobj = NULL;
-			goto dirloop;
+			continue;
 		}
 
     terminal:
