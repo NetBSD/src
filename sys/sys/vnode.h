@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.227 2011/04/03 01:19:36 rmind Exp $	*/
+/*	$NetBSD: vnode.h,v 1.228 2011/04/18 15:53:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -398,10 +398,6 @@ VN_KNOTE(struct vnode *vp, long hint)
 extern struct vnode	*rootvnode;	/* root (i.e. "/") vnode */
 extern int		desiredvnodes;	/* number of vnodes desired */
 extern u_int		numvnodes;	/* current number of vnodes */
-extern time_t		syncdelay;	/* max time to delay syncing data */
-extern time_t		filedelay;	/* time to delay syncing files */
-extern time_t		dirdelay;	/* time to delay syncing directories */
-extern time_t		metadelay;	/* time to delay syncing metadata */
 
 /*
  * Macro/function to check for client cache inconsistency w.r.t. leasing.
