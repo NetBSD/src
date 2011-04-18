@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.4 2011/02/16 01:31:33 joerg Exp $	*/
+/*	$NetBSD: grep.c,v 1.5 2011/04/18 03:27:40 joerg Exp $	*/
 /* 	$FreeBSD: head/usr.bin/grep/grep.c 211519 2010-08-19 22:55:17Z delphij $	*/
 /*	$OpenBSD: grep.c,v 1.42 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -29,8 +29,12 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grep.c,v 1.4 2011/02/16 01:31:33 joerg Exp $");
+__RCSID("$NetBSD: grep.c,v 1.5 2011/04/18 03:27:40 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
