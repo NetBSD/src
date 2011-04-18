@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.6 2011/04/18 03:48:23 joerg Exp $	*/
+/*	$NetBSD: grep.c,v 1.7 2011/04/18 17:18:03 joerg Exp $	*/
 /* 	$FreeBSD: head/usr.bin/grep/grep.c 211519 2010-08-19 22:55:17Z delphij $	*/
 /*	$OpenBSD: grep.c,v 1.42 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grep.c,v 1.6 2011/04/18 03:48:23 joerg Exp $");
+__RCSID("$NetBSD: grep.c,v 1.7 2011/04/18 17:18:03 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -147,8 +147,6 @@ enum {
 static inline const char	*init_color(const char *);
 
 /* Housekeeping */
-bool	 first = true;	/* flag whether we are processing the first match */
-bool	 prev;		/* flag whether or not the previous line matched */
 int	 tail;		/* lines left to print */
 bool	 notfound;	/* file not found */
 

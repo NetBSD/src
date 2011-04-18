@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.10 2011/04/18 03:27:40 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.11 2011/04/18 17:18:04 joerg Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/util.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: util.c,v 1.39 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.10 2011/04/18 03:27:40 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.11 2011/04/18 17:18:04 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -55,7 +55,9 @@ __RCSID("$NetBSD: util.c,v 1.10 2011/04/18 03:27:40 joerg Exp $");
 
 #include "grep.h"
 
-static int	 linesqueued;
+static bool	 first, first_global = true;
+static unsigned long long since_printed;
+
 static int	 procline(struct str *l, int);
 
 bool
@@ -218,11 +220,10 @@ procfile(const char *fn)
 	strcpy(ln.file, fn);
 	ln.line_no = 0;
 	ln.len = 0;
-	linesqueued = 0;
 	tail = 0;
 	ln.off = -1;
 
-	for (c = 0;  c == 0 || !(lflag || qflag); ) {
+	for (first = true, c = 0;  c == 0 || !(lflag || qflag); ) {
 		ln.off += ln.len + 1;
 		if ((ln.dat = grep_fgetln(f, &ln.len)) == NULL || ln.len == 0) {
 			if (ln.line_no == 0 && matchall)
@@ -242,10 +243,7 @@ procfile(const char *fn)
 			return (0);
 		}
 		/* Process the file line-by-line */
-		if ((t = procline(&ln, f->binary)) == 0 && Bflag > 0) {
-			enqueue(&ln);
-			linesqueued++;
-		}
+		t = procline(&ln, f->binary);
 		c += t;
 
 		/* Count the matches if we have a match limit */
@@ -374,28 +372,25 @@ procline(struct str *l, int nottext)
 	/* Dealing with the context */
 	if ((tail || c) && !cflag && !qflag && !lflag && !Lflag) {
 		if (c) {
-			if (!first && !prev && !tail && Aflag)
+			if ((Aflag || Bflag) && !first_global &&
+			    (first || since_printed > Bflag))
 				printf("--\n");
 			tail = Aflag;
-			if (Bflag > 0) {
-				if (!first && !prev)
-					printf("--\n");
+			if (Bflag > 0)
 				printqueue();
-			}
-			linesqueued = 0;
 			printline(l, ':', matches, m);
 		} else {
 			printline(l, '-', matches, m);
 			tail--;
 		}
-	}
-
-	if (c) {
-		prev = true;
 		first = false;
-	} else
-		prev = false;
-
+		first_global = false;
+		since_printed = 0;
+	} else {
+		if (Bflag)
+			enqueue(l);
+		since_printed++;
+	}
 	return (c);
 }
 
