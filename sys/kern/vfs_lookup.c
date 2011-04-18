@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.181 2011/04/18 00:46:39 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.182 2011/04/18 00:47:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.181 2011/04/18 00:46:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.182 2011/04/18 00:47:04 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1264,11 +1264,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		break;
 	}
 
-	if (foundobj == NULL) {
-		goto alldone;
-	}
-
-	{
+	if (foundobj != NULL) {
 		if (foundobj == ndp->ni_erootdir) {
 			/*
 			 * We are about to return the emulation root.
@@ -1356,8 +1352,6 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 			VOP_UNLOCK(foundobj);
 		}
 	}
-
- alldone:
 
 	/*
 	 * Done.
