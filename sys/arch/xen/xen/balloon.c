@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.7 2011/04/18 01:36:25 jym Exp $ */
+/* $NetBSD: balloon.c,v 1.8 2011/04/18 03:04:31 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define BALLOONDEBUG 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.7 2011/04/18 01:36:25 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.8 2011/04/18 03:04:31 rmind Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -229,11 +229,7 @@ balloon_xenbus_attach(device_t parent, device_t self, void *aux)
 	sysctl_kern_xen_balloon_setup(sc);
 
 	/* List of MFNs passed from/to balloon for inflating/deflating */
-	mfn_list = kmem_alloc(BALLOON_DELTA * sizeof(*mfn_list), KM_NOSLEEP);
-	if (mfn_list == NULL) {
-		aprint_error_dev(self, "could not allocate mfn_list\n");
-		goto error;
-	}
+	mfn_list = kmem_alloc(BALLOON_DELTA * sizeof(*mfn_list), KM_SLEEP);
 	sc->sc_mfn_list = mfn_list;
 
 	/* Setup xenbus node watch callback */
