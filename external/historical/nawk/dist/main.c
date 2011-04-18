@@ -42,6 +42,7 @@ extern	char	**environ;
 extern	int	nfields;
 
 int	dbg	= 0;
+unsigned int srand_seed;
 char	*cmdname;	/* gets argv[0] for error messages */
 extern	FILE	*yyin;	/* lex input file */
 char	*lexprog;	/* points to program argument if it exists */
@@ -122,6 +123,10 @@ int main(int argc, char *argv[])
 #else
 	(void)signal(SIGFPE, fpecatch);
 #endif
+	/* Set and keep track of the random seed */
+	srand_seed = 1;
+	srand(srand_seed);
+
 	yyin = NULL;
 	symtab = makesymtab(NSYMTAB/NSYMTAB);
 	while (argc > 1 && argv[1][0] == '-' && argv[1][1] != '\0') {
