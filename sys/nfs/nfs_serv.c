@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.158 2011/04/11 01:33:05 dholland Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.159 2011/04/18 00:38:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.158 2011/04/11 01:33:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.159 2011/04/18 00:38:33 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1527,18 +1527,6 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			if (error) {
 				nfsm_reply(0);
 			}
-			if (nd.ni_cnd.cn_flags & ISSYMLINK) {
-				vput(nd.ni_vp);
-				vrele(nd.ni_dvp);
-				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-				if (nd.ni_pathbuf != NULL) {
-					pathbuf_destroy(nd.ni_pathbuf);
-					nd.ni_pathbuf = NULL;
-				}
-				error = EINVAL;
-				abort = 0;
-				nfsm_reply(0);
-			}
 		} else {
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			if (nd.ni_pathbuf != NULL) {
@@ -1743,11 +1731,6 @@ abort:
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 		if (error)
 			goto out;
-		if (nd.ni_cnd.cn_flags & ISSYMLINK) {
-			vput(nd.ni_vp);
-			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-			error = EINVAL;
-		}
 	}
 out:
 	vp = nd.ni_vp;
