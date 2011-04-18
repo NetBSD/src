@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.182 2011/04/18 00:47:04 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.183 2011/04/18 00:47:24 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.182 2011/04/18 00:47:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.183 2011/04/18 00:47:24 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1229,6 +1229,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		}
 
 		/*
+		 * Not a symbolic link.
+		 *
 		 * Check for directory, if the component was
 		 * followed by a series of slashes.
 		 */
@@ -1245,23 +1247,23 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		}
 
 		/*
-		 * Not a symbolic link.  If this was not the
-		 * last component, then continue at the next
-		 * component, else return.
+		 * Stop if we've reached the last component.
 		 */
-		if (!(cnp->cn_flags & ISLASTCN)) {
-			cnp->cn_nameptr = ndp->ni_next;
-			if (searchdir == foundobj) {
-				vrele(searchdir);
-			} else {
-				vput(searchdir);
-			}
-			searchdir = foundobj;
-			foundobj = NULL;
-			continue;
+		if (cnp->cn_flags & ISLASTCN) {
+			break;
 		}
 
-		break;
+		/*
+		 * Continue with the next component.
+		 */
+		cnp->cn_nameptr = ndp->ni_next;
+		if (searchdir == foundobj) {
+			vrele(searchdir);
+		} else {
+			vput(searchdir);
+		}
+		searchdir = foundobj;
+		foundobj = NULL;
 	}
 
 	if (foundobj != NULL) {
