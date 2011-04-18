@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.303 2011/04/13 08:45:00 mrg Exp $	*/
+/*	$NetBSD: proc.h,v 1.304 2011/04/18 00:26:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -413,7 +413,6 @@ struct proclist_desc {
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_EMULDATA);
-MALLOC_DECLARE(M_SUBPROC);	/* XXX - only used by sparc/sparc64 */
 
 /*
  * We use process IDs <= PID_MAX until there are > 16k processes.
