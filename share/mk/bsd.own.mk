@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.661 2011/04/17 15:03:37 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.662 2011/04/18 02:16:55 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -207,12 +207,21 @@ FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-f77
 OBJC=		false
 .endif
 
-.if !defined(HOSTPROG) && !defined(HOSTLIB) && defined(DESTDIR)
+#
+# Make sure DESTDIR is set, so that builds with these tools always
+# get appropriate -nostdinc, -nostdlib, etc. handling.  The default is
+# <empty string>, meaning start from /, the root directory.
+#
+DESTDIR?=
+
+.if !defined(HOSTPROG) && !defined(HOSTLIB)
+.  if ${DESTDIR} != ""
 CPPFLAGS+=	--sysroot=${DESTDIR}
 LDFLAGS+=	--sysroot=${DESTDIR}
-.else
+.  else
 CPPFLAGS+=	--sysroot=/
 LDFLAGS+=	--sysroot=/
+.  endif
 .endif
 .endif	# EXTERNAL_TOOLCHAIN						# }
 
@@ -410,16 +419,6 @@ check_RELEASEDIR: .PHONY .NOTMAIN
 	@true
 .endif
 .endif
-
-
-.if ${USETOOLS} == "yes"						# {
-#
-# Make sure DESTDIR is set, so that builds with these tools always
-# get appropriate -nostdinc, -nostdlib, etc. handling.  The default is
-# <empty string>, meaning start from /, the root directory.
-#
-DESTDIR?=
-.endif									# }
 
 #
 # Build a dynamically linked /bin and /sbin, with the necessary shared
