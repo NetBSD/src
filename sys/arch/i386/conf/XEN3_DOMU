@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.30 2011/04/04 19:57:31 dyoung Exp $
+# $NetBSD: XEN3_DOMU,v 1.31 2011/04/18 01:36:25 jym Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -13,7 +13,6 @@ maxusers	32		# estimated number of users
 #
 options 	XEN
 #options 	DOM0OPS
-#options         XEN_BALLOON     # Xen memory ballooning - Experimental
 
 makeoptions 	CPUFLAGS="-march=i686"
 
@@ -186,6 +185,7 @@ xencons*	at hypervisor?		# Xen virtual console
 xenbus* 	at hypervisor?		# Xen virtual bus
 xennet* 	at xenbus?		# Xen virtual network interface
 xbd*		at xenbus?		# Xen virtual block device
+#balloon*	at xenbus?		# Xen balloon device
 
 cinclude "arch/i386/conf/GENERIC.local"
 
