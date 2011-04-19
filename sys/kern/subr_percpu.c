@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.11 2011/04/14 05:53:53 matt Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.12 2011/04/19 07:12:59 martin Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.11 2011/04/14 05:53:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.12 2011/04/19 07:12:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -90,7 +90,7 @@ percpu_cpu_swap(void *p1, void *p2)
 	percpu_cpu_t * const newpcc = p2;
 	percpu_cpu_t * const pcc = cpu_percpu(ci);
 
-	KASSERT(ci == curcpu());
+	KASSERT(ci == curcpu() || !mp_online);
 
 	/*
 	 * swap *pcc and *newpcc unless anyone has beaten us.
