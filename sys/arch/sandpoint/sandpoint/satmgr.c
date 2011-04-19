@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.10 2011/04/17 14:05:59 phx Exp $ */
+/* $NetBSD: satmgr.c,v 1.11 2011/04/19 18:16:03 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -704,14 +704,14 @@ static void
 qreboot(struct satmgr_softc *sc)
 {
 
-	send_sat(sc, "Pf");
+	send_sat(sc, "Pf");	/* beep and reboot */
 }
 
 static void
 qpwroff(struct satmgr_softc *sc)
 {
 
-	send_sat(sc, "PA");
+	send_sat(sc, "PA");	/* beep and power off */
 }
 
 static void
@@ -720,7 +720,7 @@ qbutton(struct satmgr_softc *sc, int ch)
 
 	switch (ch) {
 	case '@':
-		/* power button, notified after 5 seconds guard time */
+		/* power button, notified after 2 seconds guard time */
 		sysmon_task_queue_sched(0, sched_sysmon_pbutton, sc);
 		break;
 	case 'j':	/* reset to default button */
@@ -734,10 +734,12 @@ dpwroff(struct satmgr_softc *sc)
 {
 
 	/*
-	 * The DSM-G600 has no hardware-shutdown, but we turn all LEDs off,
-	 * to indicated that we powered down.
+	 * The DSM-G600 has no hardware-shutdown, so we flash the power LED
+	 * to indicate that the device can be switched off.
 	 */
-	send_sat(sc, "TSC\nTSC\n");
+	send_sat(sc, "SYN\nSYN\n");
+
+	/* drops into default power-off handling (looping forever) */
 }
 
 static void
