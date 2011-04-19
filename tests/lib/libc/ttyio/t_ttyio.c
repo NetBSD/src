@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ttyio.c,v 1.1 2011/01/07 02:47:41 pgoyette Exp $ */
+/*	$NetBSD: t_ttyio.c,v 1.2 2011/04/19 20:07:53 martin Exp $ */
 
 /*
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ttyio.c,v 1.1 2011/01/07 02:47:41 pgoyette Exp $");
+__RCSID("$NetBSD: t_ttyio.c,v 1.2 2011/04/19 20:07:53 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -85,8 +85,15 @@ ATF_TC_BODY(ioctl, tc)
 	/* unbuffer stdout */
 	setbuf(stdout, NULL);
 
-	/* get terminal settings for later use */
-	REQUIRE_ERRNO(tcgetattr(STDIN_FILENO, &term), -1);
+	/*
+	 * Create default termios settings for later use
+	 */
+	memset(&term, 0, sizeof(term));
+	term.c_iflag = TTYDEF_IFLAG;
+	term.c_oflag = TTYDEF_OFLAG;
+	term.c_cflag = TTYDEF_CFLAG;
+	term.c_lflag = TTYDEF_LFLAG;
+	cfsetspeed(&term, TTYDEF_SPEED);
 
 	/* get a tty */
 	REQUIRE_ERRNO(openpty(&m, &s, name, &term, NULL), -1);
