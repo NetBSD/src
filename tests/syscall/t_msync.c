@@ -1,4 +1,4 @@
-/* $NetBSD: t_msync.c,v 1.1 2011/04/07 17:38:02 jruoho Exp $ */
+/* $NetBSD: t_msync.c,v 1.2 2011/04/19 10:21:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msync.c,v 1.1 2011/04/07 17:38:02 jruoho Exp $");
+__RCSID("$NetBSD: t_msync.c,v 1.2 2011/04/19 10:21:51 martin Exp $");
 
 #include <sys/mman.h>
 
@@ -89,7 +89,8 @@ msync_sync(const char *garbage, int flags)
 		tot += rv;
 	}
 
-	map = mmap(NULL, page, PROT_READ | PROT_WRITE, MAP_FILE, fd, 0);
+	map = mmap(NULL, page, PROT_READ | PROT_WRITE, MAP_FILE|MAP_PRIVATE,
+	     fd, 0);
 
 	if (map == MAP_FAILED) {
 		str = "failed to map";

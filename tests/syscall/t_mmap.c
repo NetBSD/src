@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.2 2011/04/04 10:30:29 jruoho Exp $ */
+/* $NetBSD: t_mmap.c,v 1.3 2011/04/19 10:21:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.2 2011/04/04 10:30:29 jruoho Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.3 2011/04/19 10:21:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -81,19 +81,19 @@ ATF_TC_BODY(mmap_err, tc)
 	void *map;
 
 	errno = 0;
-	map = mmap(NULL, 3, PROT_READ, MAP_FILE, -1, 0);
+	map = mmap(NULL, 3, PROT_READ, MAP_FILE|MAP_PRIVATE, -1, 0);
 
 	ATF_REQUIRE(map == MAP_FAILED);
 	ATF_REQUIRE(errno == EBADF);
 
 	errno = 0;
-	map = mmap(&addr, page, PROT_READ, MAP_FIXED, -1, 0);
+	map = mmap(&addr, page, PROT_READ, MAP_FIXED|MAP_PRIVATE, -1, 0);
 
 	ATF_REQUIRE(map == MAP_FAILED);
 	ATF_REQUIRE(errno == EINVAL);
 
 	errno = 0;
-	map = mmap(NULL, page, PROT_READ, MAP_ANON, INT_MAX, 0);
+	map = mmap(NULL, page, PROT_READ, MAP_ANON|MAP_PRIVATE, INT_MAX, 0);
 
 	ATF_REQUIRE(map == MAP_FAILED);
 	ATF_REQUIRE(errno == EINVAL);
@@ -121,10 +121,10 @@ ATF_TC_BODY(mmap_prot_1, tc)
 
 	ATF_REQUIRE(write(fd, "XXX", 3) == 3);
 
-	map = mmap(NULL, 3, PROT_READ, MAP_FILE, fd, 0);
+	map = mmap(NULL, 3, PROT_READ, MAP_FILE|MAP_PRIVATE, fd, 0);
 	map_check(map, 1);
 
-	map = mmap(NULL, 3, PROT_WRITE, MAP_FILE, fd, 0);
+	map = mmap(NULL, 3, PROT_WRITE, MAP_FILE|MAP_PRIVATE, fd, 0);
 	map_check(map, 0);
 
 	ATF_REQUIRE(close(fd) == 0);
@@ -152,7 +152,7 @@ ATF_TC_BODY(mmap_prot_2, tc)
 	 * Make a PROT_NONE mapping and try to access it.
 	 * If we catch a SIGSEGV, all works as expected.
 	 */
-	map = mmap(NULL, page, PROT_NONE, MAP_ANON, -1, 0);
+	map = mmap(NULL, page, PROT_NONE, MAP_ANON|MAP_PRIVATE, -1, 0);
 	ATF_REQUIRE(map != MAP_FAILED);
 
 	pid = fork();
@@ -248,7 +248,8 @@ ATF_TC_BODY(mmap_truncate, tc)
 	 */
 	ATF_REQUIRE(ftruncate(fd, page) == 0);
 
-	map = mmap(NULL, page, PROT_READ | PROT_WRITE, MAP_FILE, fd, 0);
+	map = mmap(NULL, page, PROT_READ | PROT_WRITE, MAP_FILE|MAP_PRIVATE,
+	     fd, 0);
 	ATF_REQUIRE(map != MAP_FAILED);
 
 	for (i = 0; i < page; i++)
