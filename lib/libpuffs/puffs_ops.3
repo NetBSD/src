@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.27 2010/12/13 09:06:51 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.28 2011/04/19 10:35:24 manu Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -372,17 +372,17 @@ the dev_t for the entry should be set using
 .Pp
 The type of operation is found from
 .Va pcn-\*[Gt]pcn_nameiop :
-.Bl -tag -width XPUFFSLOOKUP_LOOKUPX
-.It Dv PUFFSLOOKUP_LOOKUP
+.Bl -tag -width XNAMEI_LOOKUPX
+.It Dv NAMEI_LOOKUP
 Normal lookup operation.
-.It Dv PUFFSLOOKUP_CREATE
+.It Dv NAMEI_CREATE
 Lookup to create a node.
-.It Dv PUFFSLOOKUP_DELETE
+.It Dv NAMEI_DELETE
 Lookup for node deletion.
-.It Dv PUFFSLOOKUP_RENAME
+.It Dv NAMEI_RENAME
 Lookup for the target of a rename operation (source will be looked
 up using
-.Dv PUFFSLOOKUP_DELETE ) .
+.Dv NAMEI_DELETE ) .
 .El
 .Pp
 The final component from a pathname lookup usually requires special
@@ -400,9 +400,9 @@ an errno.
 As a special case,
 .Er ENOENT
 signals "success" for cases where the lookup operation is
-.Dv PUFFSLOOKUP_CREATE
+.Dv NAMEI_CREATE
 or
-.Dv PUFFSLOOKUP_RENAME .
+.Dv NAMEI_RENAME .
 Failure in these cases can be signalled by returning another appropriate
 error code, for example
 .Er EACCESS .
