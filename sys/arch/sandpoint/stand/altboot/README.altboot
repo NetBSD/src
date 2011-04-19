@@ -1,6 +1,6 @@
 /// notes about altboot ///
 
-$NetBSD: README.altboot,v 1.3 2011/04/08 08:29:07 phx Exp $
+$NetBSD: README.altboot,v 1.4 2011/04/19 14:12:54 phx Exp $
 
 Altboot is a functional bridge to fill the gap between a NAS product
 custom bootloader and the NetBSD kernel startup environment.  Altboot
@@ -57,5 +57,48 @@ kernel.
   value.
 - product family indication.
 - preloaded kernel module names (under development).
+
+When no arguments are given, altboot defaults to boot a kernel called
+"netbsd" from the root partition of the first disk in multiuser mode.
+
+Boot arguments may be passed in three ways:
+- On the command line, directly after the "go 0x1000000" command.
+- From the U-Boot "bootargs" environment variable, when started by "bootm".
+- By entering the interactive mode.
+
+The following boot arguments are recognized:
+- multi			boot into multiuser
+- auto			boot into multiuser
+- single		boot into singleuser
+- ask			ask for boot device
+- ddb			drop into the kernel debugger
+- userconf		change configured devices
+
+The following boot flags are recognized:
+- norm			boot normally
+- quiet			boot quietly
+- verb			boot verbosely
+- silent		boot silently
+- debug			boot with debug output
+
+Additionally the special argument "altboot" is recognized, which replaces
+the actually running altboot program with the loaded binary file and
+restarts itself. Mainly useful for altboot testing.
+
+Multiple arguments may be specified at once, although not all combinations
+make sense. The format of an altboot command line is:
+
+  [[<bootargs> ...] <devicename>:[<bootfile>]]
+
+The following device names are supported:
+- tftp			boot from TFTP (address retrieved by DHCP)
+- nfs			boot from NFS (address retrieved by DHCP)
+- wd[N[P]]		boot from disk N, partition P, defaults to wd0a
+- mem			boot from memory
+
+For tftp and nfs the bootfile is determined by DHCP, when missing.
+For wd it defaults to "netbsd".
+For mem the bootfile is actually a hexadecimal address to load from and
+is mandatory.
 
                              ### ### ###
