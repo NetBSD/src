@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.2 2011/04/11 22:37:10 joerg Exp $	*/
+/*	$NetBSD: director.c,v 1.3 2011/04/19 20:13:55 martin Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -190,8 +190,15 @@ main(int argc, char *argv[])
 		exit(2);
 	}
 
-	if (tcgetattr(0, &term_attr) < 0)
-		err(2, "Failed to get term attributes");
+	/*
+	 * Create default termios settings for later use
+	 */
+	memset(&term_attr, 0, sizeof(term_attr));
+	term_attr.c_iflag = TTYDEF_IFLAG;
+	term_attr.c_oflag = TTYDEF_OFLAG;
+	term_attr.c_cflag = TTYDEF_CFLAG;
+	term_attr.c_lflag = TTYDEF_LFLAG;
+	cfsetspeed(&term_attr, TTYDEF_SPEED);
 
 	if ((slave_pid = forkpty(&master, NULL, &term_attr, NULL)) < 0) {
 		fprintf(stderr, "Fork of pty for slave failed\n");
