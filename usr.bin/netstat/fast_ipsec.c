@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.12 2009/04/12 16:08:37 lukem Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.13 2011/04/19 18:34:39 drochner Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.12 2009/04/12 16:08:37 lukem Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.13 2011/04/19 18:34:39 drochner Exp $");
 #endif
 #endif /* not lint*/
 
@@ -309,14 +309,14 @@ fast_ipsec_stats(u_long off, const char *name)
 
 	IPCOMP(ipcs[IPCOMP_STAT_HDROPS],"packets too short for header length");
 	IPCOMP(ipcs[IPCOMP_STAT_NOPF],	"protocol family not supported");
-	IPCOMP(ipcs[IPCOMP_STAT_NOTDB],	"not db");
+	IPCOMP(ipcs[IPCOMP_STAT_NOTDB],	"packets with no SA");
 	IPCOMP(ipcs[IPCOMP_STAT_BADKCR],"packets dropped by crypto returning NULL mbuf");
 	IPCOMP(ipcs[IPCOMP_STAT_QFULL],	"queue full");
         IPCOMP(ipcs[IPCOMP_STAT_NOXFORM],"no support for transform");
 	IPCOMP(ipcs[IPCOMP_STAT_WRAP],  "packets dropped for replay counter wrap");
 	IPCOMP(ipcs[IPCOMP_STAT_INPUT],	"input IPcomp packets");
 	IPCOMP(ipcs[IPCOMP_STAT_OUTPUT],"output IPcomp packets");
-	IPCOMP(ipcs[IPCOMP_STAT_INVALID],"specified an invalid TDB");
+	IPCOMP(ipcs[IPCOMP_STAT_INVALID],"packets with an invalid SA");
 	IPCOMP(ipcs[IPCOMP_STAT_TOOBIG],"packets decompressed as too big");
 	IPCOMP(ipcs[IPCOMP_STAT_MINLEN], "packets too short to be compressed");
 	IPCOMP(ipcs[IPCOMP_STAT_USELESS],"packet for which compression was useless");
