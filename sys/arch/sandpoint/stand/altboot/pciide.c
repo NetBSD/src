@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.5 2011/03/10 21:11:49 phx Exp $ */
+/* $NetBSD: pciide.c,v 1.6 2011/04/19 17:49:38 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ pciide_match(unsigned tag, void *data)
 	case PCI_DEVICE(0x10ad, 0x0105): /* Symphony Labs 82C105 IDE */
 	case PCI_DEVICE(0x10b8, 0x5229): /* ALi IDE */
 	case PCI_DEVICE(0x1191, 0x0008): /* ACARD ATP865 */
+	case PCI_DEVICE(0x1191, 0x0009): /* ACARD ATP865A */
 		myops = &defaultops;
 		return 1;
 	}
