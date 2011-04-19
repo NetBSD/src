@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 2011/03/12 16:49:16 phx Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 2011/04/19 18:06:19 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2011/03/12 16:49:16 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2011/04/19 18:06:19 phx Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -183,9 +183,13 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	cn_tab = &kcomcons;
 	(*cn_tab->cn_init)(&kcomcons);
 
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#endif
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
+#endif
 #endif
 
 	/* Initialize bus_space */
