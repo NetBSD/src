@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.36 2010/09/24 22:51:52 rmind Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.37 2011/04/20 19:40:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -523,8 +523,8 @@ _prop_dictionary_equals(prop_object_t v1, prop_object_t v2,
 	*stored_pointer1 = (void *)(idx + 1);
 	*stored_pointer2 = (void *)(idx + 1);
 
-	*next_obj1 = &dict1->pd_array[idx].pde_objref;
-	*next_obj2 = &dict2->pd_array[idx].pde_objref;
+	*next_obj1 = dict1->pd_array[idx].pde_objref;
+	*next_obj2 = dict2->pd_array[idx].pde_objref;
 
 	if (!prop_dictionary_keysym_equals(dict1->pd_array[idx].pde_key,
 					   dict2->pd_array[idx].pde_key))
