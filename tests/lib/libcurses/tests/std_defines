@@ -2,6 +2,12 @@
 # Define some standard symbols for curses so tests can reference things
 # symbolically instead of using magic numbers.
 #
+#
+# boolean
+#
+assign TRUE	0x01
+assign FALSE	0x00
+#
 # colours
 #
 assign COLOR_BLACK     0x00
