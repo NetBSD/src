@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.309 2011/04/20 13:35:51 gdt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.310 2011/04/20 14:08:07 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.309 2011/04/20 13:35:51 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.310 2011/04/20 14:08:07 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3283,7 +3283,7 @@ tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
 		/*
 		 * As with srtt, this should never happen.  There is
 		 * no support in RFC2988 for this operation.  But 1/4s
-		 * as rttvar when faced with someting arguably wrong
+		 * as rttvar when faced with something arguably wrong
 		 * is ok.
 		 */
 		if ((tp->t_rttvar += delta) <= 0)
@@ -3294,7 +3294,7 @@ tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
 		 * set rtt=R and srtt=R/2.
 		 * For srtt, storage representation is 1/32 ticks,
 		 * so shift left by 5.
-		 * For rttvar, storage representatnio is 1/16 ticks,
+		 * For rttvar, storage representation is 1/16 ticks,
 		 * So shift left by 4, but then right by 1 to halve.
 		 */
 		tp->t_srtt = rtt << (TCP_RTT_SHIFT + 2);
