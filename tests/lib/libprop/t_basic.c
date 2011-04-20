@@ -1,4 +1,4 @@
-/* $NetBSD: t_basic.c,v 1.3 2011/04/06 17:41:27 jruoho Exp $ */
+/* $NetBSD: t_basic.c,v 1.4 2011/04/20 20:02:58 martin Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_basic.c,v 1.3 2011/04/06 17:41:27 jruoho Exp $");
+__RCSID("$NetBSD: t_basic.c,v 1.4 2011/04/20 20:02:58 martin Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -171,7 +171,12 @@ ATF_TC_BODY(prop_dictionary_equals, tc)
 {
 	prop_dictionary_t c, d;
 
+	/*
+	 * Fixed, should not fail any more...
+	 *
 	atf_tc_expect_death("PR lib/43964");
+	 *
+	 */
 
 	d = prop_dictionary_internalize(compare1);
 
