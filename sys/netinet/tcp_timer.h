@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.26 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.27 2011/04/20 13:35:52 gdt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@
 
 /*
  * Time constants.
+ * All TCPTV_* constants are in units of slow ticks (typically 500 ms).
  */
 #define	TCPTV_MSL	( 30*PR_SLOWHZ)		/* max seg lifetime (hah!) */
 #define	TCPTV_SRTTBASE	0			/* base roundtrip time;
@@ -149,6 +150,10 @@ const char *tcptimers[] =
 	callout_setfunc(&(tp)->t_timer[(timer)],			\
 	    tcp_timer_funcs[(timer)], (tp))
 
+/*
+ * nticks is given in units of slow timeouts,
+ * typically 500 ms (with PR_SLOWHZ at 2).
+ */
 #define	TCP_TIMER_ARM(tp, timer, nticks)				\
 	callout_schedule(&(tp)->t_timer[(timer)],			\
 	    (nticks) * (hz / PR_SLOWHZ))

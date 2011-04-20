@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.308 2011/04/14 15:48:48 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.309 2011/04/20 13:35:51 gdt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.308 2011/04/14 15:48:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.309 2011/04/20 13:35:51 gdt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1687,6 +1687,18 @@ after_listen:
 		 * the current time, or is extremely old, fall back to non-1323
 		 * RTT calculation.  Since ts_rtt is unsigned, we can test both
 		 * at the same time.
+		 *
+		 * Note that ts_rtt is in units of slow ticks (500
+		 * ms).  Since most earthbound RTTs are < 500 ms,
+		 * observed values will have large quantization noise.
+		 * Our smoothed RTT is then the fraction of observed
+		 * samples that are 1 tick instead of 0 (times 500
+		 * ms).
+		 *
+		 * ts_rtt is increased by 1 to denote a valid sample,
+		 * with 0 indicating an invalid measurement.  This
+		 * extra 1 must be removed when ts_rtt is used, or
+		 * else an an erroneous extra 500 ms will result.
 		 */
 		ts_rtt = TCP_TIMESTAMP(tp) - opti.ts_ecr + 1;
 		if (ts_rtt > TCP_PAWS_IDLE)
@@ -3223,6 +3235,9 @@ tcp_pulloutofband(struct socket *so, struct tcphdr *th,
 /*
  * Collect new round-trip time estimate
  * and update averages and current timeout.
+ *
+ * rtt is in units of slow ticks (typically 500 ms) -- essentially the
+ * difference of two timestamps.
  */
 void
 tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
@@ -3232,35 +3247,55 @@ tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
 	TCP_STATINC(TCP_STAT_RTTUPDATED);
 	if (tp->t_srtt != 0) {
 		/*
-		 * srtt is stored as fixed point with 3 bits after the
-		 * binary point (i.e., scaled by 8).  The following magic
-		 * is equivalent to the smoothing algorithm in rfc793 with
-		 * an alpha of .875 (srtt = rtt/8 + srtt*7/8 in fixed
-		 * point).  Adjust rtt to origin 0.
+		 * Compute the amount to add to srtt for smoothing,
+		 * *alpha, or 2^(-TCP_RTT_SHIFT).  Because
+		 * srtt is stored in 1/32 slow ticks, we conceptually
+		 * shift left 5 bits, subtract srtt to get the
+		 * diference, and then shift right by TCP_RTT_SHIFT
+		 * (3) to obtain 1/8 of the difference.
 		 */
 		delta = (rtt << 2) - (tp->t_srtt >> TCP_RTT_SHIFT);
+		/* 
+		 * This can never happen, because delta's lowest
+		 * possible value is 1/8 of t_srtt.  But if it does,
+		 * set srtt to some reasonable value, here chosen
+		 * as 1/8 tick.
+		 */
 		if ((tp->t_srtt += delta) <= 0)
 			tp->t_srtt = 1 << 2;
 		/*
-		 * We accumulate a smoothed rtt variance (actually, a
-		 * smoothed mean difference), then set the retransmit
-		 * timer to smoothed rtt + 4 times the smoothed variance.
-		 * rttvar is stored as fixed point with 2 bits after the
-		 * binary point (scaled by 4).  The following is
-		 * equivalent to rfc793 smoothing with an alpha of .75
-		 * (rttvar = rttvar*3/4 + |delta| / 4).  This replaces
-		 * rfc793's wired-in beta.
+		 * RFC2988 requires that rttvar be updated first.
+		 * This code is compliant because "delta" is the old
+		 * srtt minus the new observation (scaled).
+		 *
+		 * RFC2988 says:
+		 *   rttvar = (1-beta) * rttvar + beta * |srtt-observed|
+		 *
+		 * delta is in units of 1/32 ticks, and has then been
+		 * divided by 8.  This is equivalent to being in 1/16s
+		 * units and divided by 4.  Subtract from it 1/4 of
+		 * the existing rttvar to form the (signed) amount to
+		 * adjust.
 		 */
 		if (delta < 0)
 			delta = -delta;
 		delta -= (tp->t_rttvar >> TCP_RTTVAR_SHIFT);
+		/*
+		 * As with srtt, this should never happen.  There is
+		 * no support in RFC2988 for this operation.  But 1/4s
+		 * as rttvar when faced with someting arguably wrong
+		 * is ok.
+		 */
 		if ((tp->t_rttvar += delta) <= 0)
 			tp->t_rttvar = 1 << 2;
 	} else {
 		/*
-		 * No rtt measurement yet - use the unsmoothed rtt.
-		 * Set the variance to half the rtt (so our first
-		 * retransmit happens at 3*rtt).
+		 * This is the first measurement.  Per RFC2988, 2.2,
+		 * set rtt=R and srtt=R/2.
+		 * For srtt, storage representation is 1/32 ticks,
+		 * so shift left by 5.
+		 * For rttvar, storage representatnio is 1/16 ticks,
+		 * So shift left by 4, but then right by 1 to halve.
 		 */
 		tp->t_srtt = rtt << (TCP_RTT_SHIFT + 2);
 		tp->t_rttvar = rtt << (TCP_RTTVAR_SHIFT + 2 - 1);
