@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.163 2011/04/14 15:55:46 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.164 2011/04/20 13:35:52 gdt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -546,19 +546,45 @@ struct syn_cache_head {
 #endif
 
 /*
- * The smoothed round-trip time and estimated variance
- * are stored as fixed point numbers scaled by the values below.
- * For convenience, these scales are also used in smoothing the average
- * (smoothed = (1/scale)sample + ((scale-1)/scale)smoothed).
- * With these scales, srtt has 3 bits to the right of the binary point,
- * and thus an "ALPHA" of 0.875.  rttvar has 2 bits to the right of the
- * binary point, and is smoothed with an ALPHA of 0.75.
+ * See RFC2988 for a discussion of RTO calculation; comments assume
+ * familiarity with that document.
+ *
+ * The smoothed round-trip time and estimated variance are stored as
+ * fixed point numbers.  Historically, srtt was scaled by
+ * TCP_RTT_SHIFT bits, and rttvar by TCP_RTTVAR_SHIFT bits.  Because
+ * the values coincide with the alpha and beta parameters suggested
+ * for RTO calculation (1/8 for srtt, 1/4 for rttvar), the combination
+ * of computing 1/8 of the new value and transforming it to the
+ * fixed-point representation required zero instructions.  However,
+ * the storage representations no longer coincide with the alpha/beta
+ * shifts; instead, more fractional bits are present.
+ *
+ * The storage representation of srtt is 1/32 slow ticks, or 1/64 s.
+ * (The assumption that a slow tick is 500 ms should not be present in
+ * the code.)
+ *
+ * The storage representation of rttvar is 1/16 slow ticks, or 1/32 s.
+ * There may be some confusion about this in the code.
+ *
+ * For historical reasons, these scales are also used in smoothing the
+ * average (smoothed = (1/scale)sample + ((scale-1)/scale)smoothed).
+ * This results in alpha of 0.125 and beta of 0.25, following RFC2988
+ * section 2.3
  */
 #define	TCP_RTT_SHIFT		3	/* shift for srtt; 3 bits frac. */
 #define	TCP_RTTVAR_SHIFT	2	/* multiplier for rttvar; 2 bits */
 
 /*
- * The initial retransmission should happen at rtt + 4 * rttvar.
+ * Compute TCP retransmission timer, following RFC2988.
+ * This macro returns a value in slow timeout ticks.
+ *
+ * Section 2.2 requires that the RTO value be
+ *  srtt + max(G, 4*RTTVAR)
+ * where G is the clock granularity.
+ *
+ * This comment has not necessarily been updated for the new storage
+ * representation:
+ *
  * Because of the way we do the smoothing, srtt and rttvar
  * will each average +1/2 tick of bias.  When we compute
  * the retransmit timer, we want 1/2 tick of rounding and
@@ -569,6 +595,11 @@ struct syn_cache_head {
  * the minimum feasible timer (which is 2 ticks).
  * This macro assumes that the value of 1<<TCP_RTTVAR_SHIFT
  * is the same as the multiplier for rttvar.
+ *
+ * This macro appears to be wrong; it should be checking rttvar*4 in
+ * ticks and making sure we use 1 instead if rttvar*4 rounds to 0.  It
+ * appears to be treating srtt as being in the old storage
+ * representation, resulting in a factor of 4 extra.
  */
 #define	TCP_REXMTVAL(tp) \
 	((((tp)->t_srtt >> TCP_RTT_SHIFT) + (tp)->t_rttvar) >> 2)
