@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1618 2011/04/17 09:01:57 mrg Exp $
+#	$NetBSD: mi,v 1.1619 2011/04/20 18:55:53 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3236,7 +3236,8 @@
 ./usr/libdata/debug/usr/bin/grolj4.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/grops.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/grotty.debug	comp-groff-debug	groff,debug
-./usr/libdata/debug/usr/bin/gss.debug		comp-krb5-debug		kerberos,debug
+./usr/libdata/debug/usr/bin/gss.debug		comp-krb5-debug		kerberos,debug,obsolete
+./usr/libdata/debug/usr/bin/gsstool.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/gzip.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/head.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/hesinfo.debug	comp-hesiod-debug	hesiod,debug
@@ -3259,11 +3260,13 @@
 ./usr/libdata/debug/usr/bin/ipcs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/join.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/jot.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/kcc.debug		comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/kdestroy.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/kdump.debug		comp-debug-debug	debug
 ./usr/libdata/debug/usr/bin/kgetcred.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/kinit.debug		comp-krb5-debug		kerberos,debug
-./usr/libdata/debug/usr/bin/klist.debug		comp-krb5-debug		kerberos,debug
+./usr/libdata/debug/usr/bin/klist.debug		comp-krb5-debug		kerberos,debug,obsolete
+./usr/libdata/debug/usr/bin/kpasswd.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/ktrace.debug	comp-debug-debug	debug
 ./usr/libdata/debug/usr/bin/ktruss.debug	comp-debug-debug	debug
 ./usr/libdata/debug/usr/bin/lam.debug		comp-util-debug		debug
@@ -3576,6 +3579,7 @@
 ./usr/libdata/debug/usr/libexec/comsat.debug	comp-mail-debug		debug
 ./usr/libdata/debug/usr/libexec/cpp.debug	comp-obsolete		pcccmds,obsolete
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-fortran-debug	gcc=3,gcccmds,debug
+./usr/libdata/debug/usr/libexec/digest-service.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-obsolete		gcc=4,obsolete
 ./usr/libdata/debug/usr/libexec/fingerd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/ftp-proxy.debug	comp-obsolete		obsolete
