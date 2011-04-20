@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.39 2011/04/09 19:31:15 jdc Exp $	*/
+/*	$NetBSD: ffb.c,v 1.40 2011/04/20 09:57:59 martin Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.39 2011/04/09 19:31:15 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.40 2011/04/20 09:57:59 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -374,7 +374,6 @@ ffb_attach(struct ffb_softc *sc)
 void
 ffb_attach_i2c(struct ffb_softc *sc)
 {
-	struct i2cbus_attach_args iba;
 
 	/* Fill in the i2c tag */
 	sc->sc_i2c.ic_cookie = sc;
@@ -386,10 +385,6 @@ ffb_attach_i2c(struct ffb_softc *sc)
 	sc->sc_i2c.ic_read_byte = ffb_i2c_read_byte;
 	sc->sc_i2c.ic_write_byte = ffb_i2c_write_byte;
 	sc->sc_i2c.ic_exec = NULL;
-
-	/* Attach I2C bus */
-	bzero(&iba, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
 }
 
 int
