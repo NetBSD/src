@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.26 2009/03/30 07:42:51 haad Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.27 2011/04/20 20:00:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -1158,6 +1158,8 @@ prop_object_equals_with_error(prop_object_t obj1, prop_object_t obj2,
 		if (!_prop_stack_pop(&stack, &obj1, &obj2,
 				     &stored_pointer1, &stored_pointer2))
 			return true;
+		po1 = obj1;
+		po2 = obj2;
 		goto continue_subtree;
 	}
 	_PROP_ASSERT(ret == _PROP_OBJECT_EQUALS_RECURSE);
