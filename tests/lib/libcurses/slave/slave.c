@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.1 2011/04/10 09:55:10 blymn Exp $	*/
+/*	$NetBSD: slave.c,v 1.2 2011/04/21 10:23:50 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -100,15 +100,19 @@ process_commands(WINDOW *mainscr)
 					    "failed");
 
 				args = tmpargs;
-				args[argslen] = malloc(len + 1);
+				if (type != ret_null)
+					args[argslen] = malloc(len + 1);
 
 				if (args[argslen] == NULL)
 					err(1, "slave alloc of %d bytes for"
 					    " args failed", len);
 
-				if (len == 0)
-					args[argslen][0] = '\0';
-				else {
+				if (len == 0) {
+					if (type == ret_null)
+						args[argslen] = NULL;
+					else
+						args[argslen][0] = '\0';
+				} else {
 					read(cmdpipe[READ_PIPE], args[argslen],
 					     len);
 					if (type != ret_byte)
