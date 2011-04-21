@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.2.4.2 2011/03/05 20:51:34 rmind Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.2.4.3 2011/04/21 01:41:19 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -610,15 +610,20 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
 
-	mii_attach(miiself, &sc->sc_mii, 0xffffffff,
-	    sc->sc_phy_addr, MII_OFFSET_ANY, MIIF_DOPAUSE);
+	if (sc->sc_phy_addr < 32) {
+		mii_attach(miiself, &sc->sc_mii, 0xffffffff,
+		    sc->sc_phy_addr, MII_OFFSET_ANY, MIIF_DOPAUSE);
 
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+			ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+			ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+		} else {
+			callout_schedule(&sc->sc_mii_callout, hz);
+			ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		}
 	} else {
-		callout_schedule(&sc->sc_mii_callout, hz);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_1000_T|IFM_FDX, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_1000_T|IFM_FDX);
 	}
 
 	ec->ec_capabilities = ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING

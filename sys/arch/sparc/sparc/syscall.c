@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.22.2.1 2011/03/05 20:52:03 rmind Exp $ */
+/*	$NetBSD: syscall.c,v 1.22.2.2 2011/04/21 01:41:25 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.22.2.1 2011/03/05 20:52:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.22.2.2 2011/04/21 01:41:25 rmind Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -108,8 +108,8 @@ void syscall_fancy(register_t, struct trapframe *, register_t);
 static inline int
 handle_new(struct trapframe *tf, register_t *code)
 {
-	int new = *code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
-	*code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
+	int new = *code & (SYSCALL_G7RFLAG|SYSCALL_G2RFLAG|SYSCALL_G5RFLAG);
+	*code &= ~(SYSCALL_G7RFLAG|SYSCALL_G2RFLAG|SYSCALL_G5RFLAG);
 	return new;
 }
 
@@ -249,8 +249,14 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 		tf->tf_out[0] = rval.o[0];
 		tf->tf_out[1] = rval.o[1];
 		if (new) {
-			/* jmp %g2 (or %g7, deprecated) on success */
-			i = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
+			/* jmp %g5, (or %g2 or %g7, deprecated) on success */
+			if (__predict_true((new & SYSCALL_G5RFLAG)
+						== SYSCALL_G5RFLAG))
+				i = tf->tf_global[5];
+			else if (new & SYSCALL_G2RFLAG)
+				i = tf->tf_global[2];
+			else
+				i = tf->tf_global[7];
 			if (i & 3) {
 				error = EINVAL;
 				goto bad;
@@ -334,8 +340,14 @@ out:
 		tf->tf_out[0] = rval.o[0];
 		tf->tf_out[1] = rval.o[1];
 		if (new) {
-			/* jmp %g2 (or %g7, deprecated) on success */
-			i = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
+			/* jmp %g5, (or %g2 or %g7, deprecated) on success */
+			if (__predict_true((new & SYSCALL_G5RFLAG) ==
+					SYSCALL_G5RFLAG))
+				i = tf->tf_global[5];
+			else if (new & SYSCALL_G2RFLAG)
+				i = tf->tf_global[2];
+			else
+				i = tf->tf_global[7];
 			if (i & 3) {
 				error = EINVAL;
 				goto bad;

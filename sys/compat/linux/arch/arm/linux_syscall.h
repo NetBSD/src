@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.46.4.1 2011/03/05 20:52:43 rmind Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.46.4.2 2011/04/21 01:41:38 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -648,6 +648,12 @@
 
 /* syscall: "get_robust_list" ret: "int" args: "int" "struct linux_robust_list_head **" "size_t *" */
 #define	LINUX_SYS_get_robust_list	339
+
+/* syscall: "dup3" ret: "int" args: "int" "int" "int" */
+#define	LINUX_SYS_dup3	358
+
+/* syscall: "pipe2" ret: "int" args: "int *" "int" */
+#define	LINUX_SYS_pipe2	359
 
 /* syscall: "breakpoint" ret: "int" args: */
 #define	LINUX_SYS_breakpoint	385

@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.55 2010/01/31 10:54:10 mlelstv Exp $	*/
+/*	$NetBSD: fs.h,v 1.55.4.1 2011/04/21 01:42:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -336,7 +336,11 @@ struct fs {
 	uint8_t	 fs_journal_reserved[2];/* reserved for future use */
 	uint32_t fs_journal_flags;	/* journal flags */
 	uint64_t fs_journallocs[4];	/* location info for journal */
-	int64_t	 fs_sparecon64[12];	/* reserved for future use */
+	uint32_t fs_quota_magic;	/* see quota2.h */
+	uint8_t  fs_quota_flags;	/* see quota2.h */
+	uint8_t  fs_quota_reserved[3];	
+	uint64_t fs_quotafile[2];	/* pointer to quota inodes */
+	int64_t	 fs_sparecon64[9];	/* reserved for future use */
 	int64_t	 fs_sblockloc;		/* byte offset of standard superblock */
 	struct	csum_total fs_cstotal;	/* cylinder summary information */
 	int64_t  fs_time;		/* last time written */
@@ -424,9 +428,10 @@ struct fs {
 #define	FS_GJOURNAL	0x40	/* gjournaled file system */
 #define	FS_FLAGS_UPDATED 0x80	/* flags have been moved to new location */
 #define	FS_DOWAPBL	0x100	/* Write ahead physical block logging */
+#define	FS_DOQUOTA2	0x200	/* in-filesystem quotas */
 
 /* File system flags that are ok for NetBSD if set in fs_flags */
-#define	FS_KNOWN_FLAGS	(FS_DOSOFTDEP | FS_DOWAPBL)
+#define	FS_KNOWN_FLAGS	(FS_DOSOFTDEP | FS_DOWAPBL | FS_DOQUOTA2)
 
 /*
  * File system internal flags, also in fs_flags.

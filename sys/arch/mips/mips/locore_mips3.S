@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.96.4.1 2011/03/05 20:51:07 rmind Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.96.4.2 2011/04/21 01:41:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -110,11 +110,6 @@
  *	mtc0/mfc0	one integer op before and after
  *	tlbp		-- one integer op afterwards
  * Obvious solution is to take least common denominator.
- *
- * For the Toshiba R5900, TX79:
- *	mtc0		following sync.p
- *	tlbw[ri], tlbp	following sync.p or eret
- * for those CPU, define COP0_SYNC as sync.p
  */
 
 /*
@@ -128,6 +123,14 @@
  */
 	.set	noreorder
 	.set	mips3
+
+#ifdef _LP64
+#define	_MFC0	dmfc0
+#define	_MTC0	dmtc0
+#else
+#define	_MFC0	mfc0
+#define	_MTC0	mtc0
+#endif
 
 	.text
 
@@ -149,15 +152,16 @@
  */
 LEAF(mips3_wbflush)
 XLEAF(mips32_wbflush)
+XLEAF(mips32r2_wbflush)
 XLEAF(mips64_wbflush)
+XLEAF(mips64r2_wbflush)
 	nop
 	sync
 	j	ra
-	nop
+	 nop
 END(mips3_wbflush)
 
 
-#if defined(MIPS3) || defined(MIPS32) || defined(MIPS64)
 /*
  * mips_wait_idle:
  *
@@ -168,10 +172,10 @@ LEAF(mips_wait_idle)
 	mfc0	v0, MIPS_COP_0_STATUS
 	andi	v1, v0, MIPS_SR_INT_IE
 	beqz	v1, 1f
-	nop
+	 nop
 	andi	v1, v0, MIPS_INT_MASK
 	bnez	v1, 2f
-	nop
+	 nop
 1:
 	move	a1, v0
 	PANIC("mips_wait_idle: interrupts disabled status=%#x")
@@ -181,9 +185,8 @@ LEAF(mips_wait_idle)
 	nop
 	nop
 	j	ra
-	nop
+	 nop
 END(mips_wait_idle)
-#endif /* MIPS3 || MIPS32 || MIPS64 */
 
 /*
  * uint32_t mips3_cp0_compare_read(void)
@@ -193,7 +196,7 @@ END(mips_wait_idle)
 LEAF(mips3_cp0_compare_read)
 	mfc0	v0, MIPS_COP_0_COMPARE
 	j	ra
-	nop
+	 nop
 END(mips3_cp0_compare_read)
 
 /*
@@ -203,11 +206,7 @@ END(mips3_cp0_compare_read)
  */
 LEAF(mips3_cp0_compare_write)
 	mtc0	a0, MIPS_COP_0_COMPARE
-	COP0_SYNC
-	nop
-	nop
-	j	ra
-	nop
+	JR_HB_RA
 END(mips3_cp0_compare_write)
 
 /*
@@ -218,7 +217,7 @@ END(mips3_cp0_compare_write)
 LEAF(mips3_cp0_config_read)
 	mfc0	v0, MIPS_COP_0_CONFIG
 	j	ra
-	nop
+	 nop
 END(mips3_cp0_config_read)
 
 /*
@@ -228,41 +227,35 @@ END(mips3_cp0_config_read)
  */
 LEAF(mips3_cp0_config_write)
 	mtc0	a0, MIPS_COP_0_CONFIG
-	COP0_SYNC
-	nop
-	nop
-	j	ra
-	nop
+	JR_HB_RA
 END(mips3_cp0_config_write)
 
-#if defined(MIPS32) || defined(MIPS64)
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+	.set push
+#ifdef _LP64
+	.set mips64
+#else
+	.set mips32
+#endif
 /*
  * uint32_t mipsNN_cp0_config1_read(void)
  *
  *	Return the current value of the CP0 Config (Select 1) register.
  */
 LEAF(mipsNN_cp0_config1_read)
-	.set push
-	.set mips32
 	mfc0	v0, MIPS_COP_0_CONFIG, 1
 	j	ra
-	nop
-	.set pop
+	 nop
 END(mipsNN_cp0_config1_read)
 
 /*
  * uint32_t mipsNN_cp0_config1_write(uint32_t)
  *
- *	Return the current value of the CP0 Config (Select 1) register.
+ *	Set the current value of the CP0 Config (Select 1) register.
  */
 LEAF(mipsNN_cp0_config1_write)
-	.set push
-	.set mips32
 	mtc0	v0, MIPS_COP_0_CONFIG, 1
-	nop
-	j	ra
-	nop
-	.set pop
+	JR_HB_RA
 END(mipsNN_cp0_config1_write)
 
 /*
@@ -271,12 +264,9 @@ END(mipsNN_cp0_config1_write)
  *	Return the current value of the CP0 Config (Select 2) register.
  */
 LEAF(mipsNN_cp0_config2_read)
-	.set push
-	.set mips32
 	mfc0	v0, MIPS_COP_0_CONFIG, 2
 	j	ra
-	nop
-	.set pop
+	 nop
 END(mipsNN_cp0_config2_read)
 
 /*
@@ -285,14 +275,152 @@ END(mipsNN_cp0_config2_read)
  *	Return the current value of the CP0 Config (Select 3) register.
  */
 LEAF(mipsNN_cp0_config3_read)
-	.set push
-	.set mips32
 	mfc0	v0, MIPS_COP_0_CONFIG, 3
 	j	ra
-	nop
-	.set pop
+	 nop
 END(mipsNN_cp0_config3_read)
-#endif /* MIPS32 || MIPS64 */
+
+/*
+ * uintptr_t mipsNN_cp0_watchlo_read(u_int sel)
+ *
+ *	Return the current value of the selected CP0 Watchlo register.
+ */
+LEAF(mipsNN_cp0_watchlo_read)
+	sll	a0, 2
+	PTR_LA	t9, 1f
+	PTR_ADDU t9, a0
+	jr	t9
+	 nop
+1:
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 0
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 1
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 2
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 3
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 4
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 5
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 6
+	jr	ra
+	 _MFC0	v0, MIPS_COP_0_WATCH_LO, 7
+END(mipsNN_cp0_watchlo_read)
+
+/*
+ * void mipsNN_cp0_watchlo_write(u_int sel, uintptr_t val)
+ *
+ *	Set the current value of the selected CP0 WatchLo register.
+ */
+LEAF(mipsNN_cp0_watchlo_write)
+	sll	a0, 2
+	PTR_LA	t9, 1f
+	PTR_ADDU t9, a0
+	jr	t9
+	 nop
+1:
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 0
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 1
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 2
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 3
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 4
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 5
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 6
+	jr	ra
+	 _MTC0	a1, MIPS_COP_0_WATCH_LO, 7
+END(mipsNN_cp0_watchlo_write)
+
+/*
+ * uint32_t mipsNN_cp0_watchhi_read(u_int sel)
+ *
+ *	Return the current value of the selected CP0 WatchHi register.
+ */
+LEAF(mipsNN_cp0_watchhi_read)
+	sll	a0, 2
+	PTR_LA	t9, 1f
+	PTR_ADDU t9, a0
+	jr	t9
+	 nop
+1:
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 0
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 1
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 2
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 3
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 4
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 5
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 6
+	jr	ra
+	 mfc0	v0, MIPS_COP_0_WATCH_HI, 7
+END(mipsNN_cp0_watchhi_read)
+
+/*
+ * void mipsNN_cp0_watchhi_write(u_int sel, uint32_t val)
+ *
+ *	Set the current value of the selected CP0 WatchHi register.
+ */
+LEAF(mipsNN_cp0_watchhi_write)
+	sll	a0, 2
+	PTR_LA	t9, 1f
+	PTR_ADDU t9, a0
+	jr	t9
+	 nop
+1:
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 0
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 1
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 2
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 3
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 4
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 5
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 6
+	jr	ra
+	 mtc0	a1, MIPS_COP_0_WATCH_HI, 7
+END(mipsNN_cp0_watchhi_write)
+
+#if (MIPS32R2 + MIPS64R2) > 0
+/*
+ * void mipsNN_cp0_userlocal_write(void *);
+ *	Set the value of the CP0 USERLOCAL (TLB_CONTEXT, select 2) register.
+ */
+LEAF(mipsNN_cp0_hwrena_write)
+	j	ra
+	 mtc0	a0, MIPS_COP_0_HWRENA
+END(mipsNN_cp0_hwrena_write)
+
+/*
+ * void mipsNN_cp0_userlocal_write(void *);
+ *	Set the value of the CP0 USERLOCAL (TLB_CONTEXT, select 2) register.
+ */
+LEAF(mipsNN_cp0_userlocal_write)
+	j	ra
+	 _MTC0	a0, MIPS_COP_0_TLB_CONTEXT, 2
+END(mipsNN_cp0_userlocal_write)
+#endif /* (MIPS32R2 + MIPS64R2) > 0 */
+	.set	pop
+#endif /* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 
 /*
  * uint32_t mips3_cp0_count_read(void)
@@ -302,7 +430,7 @@ END(mipsNN_cp0_config3_read)
 LEAF(mips3_cp0_count_read)
 	mfc0	v0, MIPS_COP_0_COUNT
 	j	ra
-	nop
+	 nop
 END(mips3_cp0_count_read)
 WEAK_ALIAS(cpu_counter32, mips3_cp0_count_read)
 
@@ -313,11 +441,7 @@ WEAK_ALIAS(cpu_counter32, mips3_cp0_count_read)
  */
 LEAF(mips3_cp0_count_write)
 	mtc0	a0, MIPS_COP_0_COUNT
-	COP0_SYNC
-	nop
-	nop
-	j	ra
-	nop
+	JR_HB_RA
 END(mips3_cp0_count_write)
 
 /*
@@ -328,7 +452,7 @@ END(mips3_cp0_count_write)
 LEAF(mips3_cp0_wired_read)
 	mfc0	v0, MIPS_COP_0_TLB_WIRED
 	j	ra
-	nop
+	 nop
 END(mips3_cp0_wired_read)
 
 /*
@@ -338,11 +462,7 @@ END(mips3_cp0_wired_read)
  */
 LEAF(mips3_cp0_wired_write)
 	mtc0	a0, MIPS_COP_0_TLB_WIRED
-	COP0_SYNC
-	nop
-	nop
-	j	ra
-	nop
+	JR_HB_RA
 END(mips3_cp0_wired_write)
 
 /*
@@ -352,11 +472,7 @@ END(mips3_cp0_wired_write)
  */
 LEAF(mips3_cp0_pg_mask_write)
 	mtc0	a0, MIPS_COP_0_TLB_PG_MASK
-	COP0_SYNC
-	nop
-	nop
-	j	ra
-	nop
+	JR_HB_RA
 END(mips3_cp0_pg_mask_write)
 
 LEAF(mips3_ld)
@@ -365,9 +481,6 @@ LEAF(mips3_ld)
 	and	t1, t0, ~(MIPS_SR_INT_IE)
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
-	nop
-	nop
-	nop
 
 	ld	v0, 0(a0)
 #if defined(_MIPS_BSD_API) && \
@@ -386,14 +499,12 @@ LEAF(mips3_ld)
 #endif
 
 	mtc0	t0, MIPS_COP_0_STATUS		# restore intr status.
-	COP0_SYNC
-	nop
+	JR_HB_RA
 #else /* !__mips_o32 */
 	ld	v0, 0(a0)
-#endif /* !__mips_o32 */
-
 	jr	ra
-	nop
+	 nop
+#endif /* !__mips_o32 */
 END(mips3_ld)
 
 LEAF(mips3_sd)
@@ -402,9 +513,6 @@ LEAF(mips3_sd)
 	and	t1, t0, ~(MIPS_SR_INT_IE)
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
-	nop
-	nop
-	nop
 
 #if defined(_MIPS_BSD_API) && \
     (_MIPS_BSD_API == _MIPS_BSD_API_N32 || _MIPS_BSD_API == _MIPS_BSD_API_LP64)
@@ -426,14 +534,13 @@ LEAF(mips3_sd)
 	sd	a1, 0(a0)
 
 	mtc0	t0, MIPS_COP_0_STATUS		# restore intr status.
-	COP0_SYNC
-	nop
+	JR_HB_RA
 #else /* !__mips_o32 */
 	sd	a1, 0(a0)
+	jr	ra
+	 nop
 #endif /* !__mips_o32 */
 
-	jr	ra
-	nop
 END(mips3_sd)
 
 /*
@@ -470,17 +577,17 @@ LEAF(badaddr64)
 #endif /* __mips_o32 */
 
 	bne	a1, 1, 2f
-	PTR_S	v0, PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	b	9f
 	 lbu	v0, (a0)
 2:
 	bne	a1, 2, 4f
-	nop
+	 nop
 	b	9f
 	 lhu	v0, (a0)
 4:
 	bne	a1, 4, 8f
-	nop
+	 nop
 	b	9f
 	 INT_L	v0, (a0)
 8:
@@ -489,8 +596,6 @@ LEAF(badaddr64)
 	sync
 	mtc0	t0, MIPS_COP_0_STATUS           # Restore KX
 	COP0_SYNC
-	nop
-	nop
 	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
 	 move	v0, zero			# made it w/o errors
@@ -517,8 +622,6 @@ LEAF(mips3_cp0_tlb_entry_hi_probe)
 	dsrl	v0, v0, 2
 	dmtc0	v0, MIPS_COP_0_TLB_HI
 	COP0_SYNC
-	nop
-	nop
 	dmfc0	v0, MIPS_COP_0_TLB_HI
 	dmtc0	t0, MIPS_COP_0_TLB_HI
 	COP0_SYNC
@@ -549,14 +652,10 @@ LEAF(mips3_cp0_tlb_entry_lo_probe)
 	li	v0, -64		/* all 1s except low 6 bits */
 	dmtc0	v0, MIPS_COP_0_TLB_LO0
 	COP0_SYNC
-	nop
-	nop
 	dmfc0	v0, MIPS_COP_0_TLB_LO0
 	dmtc0	t0, MIPS_COP_0_TLB_LO0
 	COP0_SYNC
-	nop
 #ifdef __mips_o32
-	nop
 #if BYTE_ORDER == BIG_ENDIAN
 	srl	v1, v0, 0
 	dsra	v0, v0, 32
@@ -582,14 +681,9 @@ LEAF(mips3_cp0_tlb_page_mask_probe)
 	srl	v0, v0, 3
 	mtc0	v0, MIPS_COP_0_TLB_PG_MASK
 	COP0_SYNC
-	nop
-	nop
 	mfc0	v0, MIPS_COP_0_TLB_PG_MASK
 	mtc0	t0, MIPS_COP_0_TLB_PG_MASK
-	COP0_SYNC
-	nop
-	j	ra
-	 nop
+	JR_HB_RA
 END(mips3_cp0_tlb_page_mask_probe)
 
 #ifdef MULTIPROCESSOR

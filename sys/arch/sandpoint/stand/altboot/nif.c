@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.2.2.2 2011/03/05 20:51:47 rmind Exp $ */
+/* $NetBSD: nif.c,v 1.2.2.3 2011/04/21 01:41:22 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,17 +47,18 @@ struct nifdv {
 	void *(*init)(unsigned, void *);
 	int (*send)(void *, char *, unsigned);
 	int (*recv)(void *, char *, unsigned, unsigned);
-	int (*halt)(void *, int);
+	void (*shutdown)(void *);
 	void *priv;
 };
 
 static struct iodesc netdesc;
 
 static struct nifdv lnifdv[] = {
-	{ "fxp", fxp_match, fxp_init, fxp_send, fxp_recv },
-	{ "tlp", tlp_match, tlp_init, tlp_send, tlp_recv },
-	{ "re",  rge_match, rge_init, rge_send, rge_recv },
-	{ "sk",  skg_match, skg_init, skg_send, skg_recv },
+	{ "fxp",  fxp_match, fxp_init, fxp_send, fxp_recv },
+	{ "tlp",  tlp_match, tlp_init, tlp_send, tlp_recv },
+	{ "re",   rge_match, rge_init, rge_send, rge_recv },
+	{ "sk",   skg_match, skg_init, skg_send, skg_recv },
+	{ "stge", stg_match, stg_init, stg_send, stg_recv, stg_shutdown },
 };
 static int nnifdv = sizeof(lnifdv)/sizeof(lnifdv[0]);
 
@@ -79,6 +80,7 @@ netif_init(void *self)
 		if ((*dv->match)(tag, NULL) > 0)
 			goto found;
 	}
+	pci->drv = NULL;
 	return 0;
   found:
 	pci->drv = dv->priv = (*dv->init)(tag, enaddr);
@@ -94,9 +96,23 @@ netif_init(void *self)
 	return 1;
 }
 
+void
+netif_shutdown_all(void)
+{
+	struct nifdv *dv;
+
+	/* currently there can be only one NIF */
+	dv = netdesc.io_netif;
+	if (dv != NULL)
+		if (dv->shutdown != NULL)
+			(*dv->shutdown)(dv->priv);
+	memset(&netdesc, 0, sizeof(netdesc));
+}
+
 int
 netif_open(void *cookie)
 {
+
 	/* single action */
 	return 0;
 }
@@ -104,6 +120,7 @@ netif_open(void *cookie)
 int
 netif_close(int sock)
 {
+
 	/* nothing to do for the HW */
 	return 0;
 }

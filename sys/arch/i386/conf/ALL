@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.249.2.3 2011/03/05 20:50:37 rmind Exp $
+# $NetBSD: ALL,v 1.249.2.4 2011/04/21 01:41:05 rmind Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.249.2.3 $"
+#ident 		"ALL-$Revision: 1.249.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -194,7 +194,8 @@ file-system 	ADOSFS		# AmigaDOS file system
 file-system	NILFS		# experimental - NTT's NiLFS(2)
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -486,6 +487,7 @@ piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 iic*	at viapcib?
+rdcpcib* at pci? dev ? function ?	# RDC Vortex86/PMX-1000 PCI-ISA w/
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
@@ -508,6 +510,7 @@ isa0	at ichlpcib?
 isa0	at piixpcib?
 isa0	at gscpcib?
 isa0	at viapcib?
+isa0	at rdcpcib?
 isa0	at mainbus?
 isa0	at pceb?
 isa0	at pcib?
@@ -899,6 +902,7 @@ piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
+rdcide* 	at pci? dev ? function ?	# RDC PMX-1000 IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 schide* 	at pci? dev ? function ? 	# Intel SCH IDE controllers
 siisata*	at pci? dev ? function ?	# SiI SteelVine controllers

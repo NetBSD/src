@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.15 2010/02/15 22:32:04 pgoyette Exp $	*/
+/*	$NetBSD: power.h,v 1.15.2.1 2011/04/21 01:42:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -43,6 +43,10 @@
 #define	_SYS_POWER_H_
 
 #include <sys/ioccom.h>
+
+#ifndef _KERNEL
+#include <stdint.h>
+#endif
 
 /*
  * Power Switches:

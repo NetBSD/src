@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.214.2.4 2011/03/05 20:56:26 rmind Exp $	*/
+/*	$NetBSD: vnode.h,v 1.214.2.5 2011/04/21 01:42:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -343,8 +343,6 @@ extern const int	vttoif_tab[];
 #define	UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
 #define	UPDATE_CLOSE	0x0004		/* update: clean up on close */
 
-extern kmutex_t	vnode_free_list_lock;
-
 void holdrelel(struct vnode *);
 void vholdl(struct vnode *);
 void vref(struct vnode *);
@@ -400,10 +398,6 @@ VN_KNOTE(struct vnode *vp, long hint)
 extern struct vnode	*rootvnode;	/* root (i.e. "/") vnode */
 extern int		desiredvnodes;	/* number of vnodes desired */
 extern u_int		numvnodes;	/* current number of vnodes */
-extern time_t		syncdelay;	/* max time to delay syncing data */
-extern time_t		filedelay;	/* time to delay syncing files */
-extern time_t		dirdelay;	/* time to delay syncing directories */
-extern time_t		metadelay;	/* time to delay syncing metadata */
 
 /*
  * Macro/function to check for client cache inconsistency w.r.t. leasing.
@@ -435,8 +429,6 @@ extern time_t		metadelay;	/* time to delay syncing metadata */
 #define	VDESC_VP1_WILLPUT	0x00000202
 #define	VDESC_VP2_WILLPUT	0x00000404
 #define	VDESC_VP3_WILLPUT	0x00000808
-#define	VDESC_NOMAP_VPP		0x00010000
-#define	VDESC_VPP_WILLRELE	0x00020000
 
 /*
  * VDESC_NO_OFFSET is used to identify the end of the offset list
@@ -467,11 +459,6 @@ struct vnodeop_desc {
 #ifdef _KERNEL
 
 /*
- * A list of all the operation descs.
- */
-extern struct vnodeop_desc	*vnodeop_descs[];
-
-/*
  * Interlock for scanning list of vnodes attached to a mountpoint
  */
 extern kmutex_t		mntvnode_lock;
@@ -482,19 +469,10 @@ extern kmutex_t		mntvnode_lock;
 extern int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
 
 /*
- * This macro is very helpful in defining those offsets in the vdesc struct.
- *
- * This is stolen from X11R4.  I ingored all the fancy stuff for
- * Crays, so if you decide to port this to such a serious machine,
- * you might want to consult Intrisics.h's XtOffset{,Of,To}.
+ * Macros for offsets in the vdesc struct.
  */
-#define	VOPARG_OFFSET(p_type,field) \
-	((int) (((char *) (&(((p_type)NULL)->field))) - ((char *) NULL)))
-#define	VOPARG_OFFSETOF(s_type,field) \
-	VOPARG_OFFSET(s_type*,field)
-#define	VOPARG_OFFSETTO(S_TYPE,S_OFFSET,STRUCT_P) \
-	((S_TYPE)(((char*)(STRUCT_P))+(S_OFFSET)))
-
+#define	VOPARG_OFFSETOF(type, member)	offsetof(type, member)
+#define	VOPARG_OFFSETTO(type,offset,sp)	((type)(((char *)(sp)) + (offset)))
 
 /*
  * This structure is used to configure the new vnodeops vector.
@@ -503,6 +481,7 @@ struct vnodeopv_entry_desc {
 	const struct vnodeop_desc *opve_op;	/* which operation this is */
 	int (*opve_impl)(void *);	/* code implementing this operation */
 };
+
 struct vnodeopv_desc {
 			/* ptr to the ptr to the vector where op should go */
 	int (***opv_desc_vector_p)(void *);
@@ -562,6 +541,7 @@ struct vattr;
 struct vnode;
 
 /* see vnode(9) */
+void	vfs_vnode_sysinit(void);
 int 	bdevvp(dev_t, struct vnode **);
 int 	cdevvp(dev_t, struct vnode **);
 int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
@@ -582,14 +562,13 @@ void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, kmutex_t *, struct lwp *);
 void 	vrele(struct vnode *);
 void 	vrele_async(struct vnode *);
+void	vrele_flush(void);
 int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
 void	vwait(struct vnode *, int);
 void	vclean(struct vnode *, int);
 void	vrevoke(struct vnode *);
 void	vrelel(struct vnode *, int);
-#define VRELEL_NOINACTIVE	0x01
-#define VRELEL_ONHEAD 		0x02
 #define VRELEL_ASYNC_RELE	0x03
 struct vnode *
 	vnalloc(struct mount *);
@@ -597,7 +576,7 @@ void	vnfree(struct vnode *);
 void	vmark(struct vnode *, struct vnode *);
 struct vnode *
 	vunmark(struct vnode *);
-void	vn_init1(void);
+void	vremfree(struct vnode *);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);
@@ -636,7 +615,7 @@ uint8_t	vtype2dt(enum vtype);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);
-int	vfs_drainvnodes(long target, struct lwp *);
+int	vfs_drainvnodes(long);
 void	vfs_timestamp(struct timespec *);
 #if defined(DDB) || defined(DEBUGPRINT)
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));

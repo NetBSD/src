@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.172.4.1 2011/03/05 20:51:06 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.172.4.2 2011/04/21 01:41:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,6 +66,12 @@
 
 #include "assym.h"
 
+#if defined(MIPS1) || defined(MIPS2)
+#define	NOP_L		nop
+#else
+#define	NOP_L		/* nothing */
+#endif
+
 	.set	noreorder
 
 	.globl	start
@@ -131,12 +137,8 @@ _C_LABEL(kernel_text):
 	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
 	COP0_HAZARD_FPUENABLE
 #endif
-	nop
-	nop
 	mfc0	t0, MIPS_COP_0_PRID		# read product revision ID
-	nop					# XXX r4000 pipeline:
-	nop					# wait for new SR
-	nop					# to be effective
+	COP0_SYNC
 	nop
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	add	t1, zero, zero
@@ -147,7 +149,7 @@ _C_LABEL(kernel_text):
 	INT_S	t1, _C_LABEL(mips_options)+MO_FPU_ID # save FPU ID register
 	PTR_LA	MIPS_CURLWP, _C_LABEL(lwp0)	# set curlwp
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
-	nop
+	 nop
 
 	# XXXuvm_lwp_getuarea
 	PTR_L	sp, L_PCB(MIPS_CURLWP)		# switch to lwp0 stack
@@ -216,6 +218,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_S	s5, PCB_CONTEXT+SF_REG_S5(a2)
 	REG_S	s6, PCB_CONTEXT+SF_REG_S6(a2)
 	REG_S	s7, PCB_CONTEXT+SF_REG_S7(a2)
+	#REG_S	t8, PCB_CONTEXT+SF_REG_T8(a2)	# no reason to save MIPS_CURLWP
 	REG_S	sp, PCB_CONTEXT+SF_REG_SP(a2)
 	REG_S	s8, PCB_CONTEXT+SF_REG_S8(a2)
 	REG_S	ra, PCB_CONTEXT+SF_REG_RA(a2)
@@ -252,6 +255,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	PTR_L	a0, L_PROC(MIPS_CURLWP)		# argument to ras_lookup
 	PTR_L	s5, L_PCB(MIPS_CURLWP)		# XXXuvm_lwp_getuarea
 	PTR_L	v1, P_RASLIST(a0)		# get raslist
+	NOP_L					# load delay
 	beqz	v1, 1f				#   skip call if empty
 	 nop
 	jal	_C_LABEL(ras_lookup)		# ras_lookup(p, pc)
@@ -289,16 +293,16 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_L	s8, PCB_CONTEXT+SF_REG_S8(a0)
 	REG_EPILOGUE
 	mtc0	t0, MIPS_COP_0_STATUS
-	COP0_SYNC
 #ifdef PARANOIA
+	COP0_SYNC
 	/*
 	 * Verify interrupt configuration still matches IPL_SCHED
 	 */
 	j	_C_LABEL(splcheck)
+	 nop
 #else
-	j	ra
+	JR_HB_RA
 #endif /* PARANOIA */
-	nop
 END(cpu_switchto)
 
 #ifdef __HAVE_FAST_SOFTINTS
@@ -316,11 +320,14 @@ softint_cleanup:
 	 nop
 #endif /* PARANOIA */
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	NOP_L					# load delay
 	INT_L	t1, CPU_INFO_MTX_COUNT(t0)
+	NOP_L					# load delay
 	INT_ADDU t1, 1
 	INT_S	t1, CPU_INFO_MTX_COUNT(t0)
 	REG_L	ra, CALLFRAME_RA(sp)
 	REG_L	v0, CALLFRAME_S0(sp)		# get softint lwp
+	NOP_L					# load delay
 	PTR_S	zero, L_CTXSWITCH(v0)		# clear l_ctxswtch
 #if IPL_SCHED != IPL_HIGH
 	j	_C_LABEL(splhigh_noprof)
@@ -361,7 +368,7 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	REG_S	s5, PCB_CONTEXT+SF_REG_S5(t0)
 	REG_S	s6, PCB_CONTEXT+SF_REG_S6(t0)
 	REG_S	s7, PCB_CONTEXT+SF_REG_S7(t0)
-	REG_S	t8, PCB_CONTEXT+SF_REG_T8(t0) # MIPS_CURLWP
+	#REG_S	t8, PCB_CONTEXT+SF_REG_T8(t0)	# no reason to save MIPS_CURLWP
 	REG_S	sp, PCB_CONTEXT+SF_REG_SP(t0)
 	REG_S	s8, PCB_CONTEXT+SF_REG_S8(t0)
 	REG_S	t2, PCB_CONTEXT+SF_REG_RA(t0)
@@ -379,7 +386,7 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	move	s0, MIPS_CURLWP				# remember current lwp
 	move	MIPS_CURLWP, a0				# switch to softint lwp
 	PTR_L	s1, L_CPU(MIPS_CURLWP)			# get curcpu()
-	nop		# patchable load delay slot
+	nop					# patchable load delay slot
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ...
 	move	s2, sp					# remember sp
 	move	s3, t0					# remember curpcb
@@ -419,6 +426,7 @@ LEAF(lwp_oncpu)
 	PTR_LA	t1, 1f				# load addr of cleanup
 	PTR_S	t1, PCB_ONFAULT(t0)		# save onfault handler
 	PTR_L	t2, L_CPU(a0)			# grab cpu of supplied lwp
+	NOP_L					# load delay
 	PTR_L	t3, CPU_INFO_CURLWP(t2)		# grab curlwp of that cpu
 	li	v0, ESRCH			# assume the lwp isn't curlwp
 	bne	a0, t3, 1f			# branch if true (not equal)
@@ -433,7 +441,7 @@ END(lwp_oncpu)
 	
 
 /*
- * savectx(struct pcb *)
+ * void savectx(struct pcb *)
  */
 LEAF(savectx)
 #ifdef PARANOIA
@@ -451,7 +459,7 @@ LEAF(savectx)
 	REG_S	s5, PCB_CONTEXT+SF_REG_S5(a0)
 	REG_S	s6, PCB_CONTEXT+SF_REG_S6(a0)
 	REG_S	s7, PCB_CONTEXT+SF_REG_S7(a0)
-	REG_S	t8, PCB_CONTEXT+SF_REG_T8(a0)
+	REG_S	t8, PCB_CONTEXT+SF_REG_T8(a0)	# MIPS_CURLWP
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, PCB_CONTEXT+SF_REG_GP(a0)
 #endif
@@ -480,7 +488,7 @@ LEAF(setjmp)
 	REG_S	s5, SF_REG_S5(a0)
 	REG_S	s6, SF_REG_S6(a0)
 	REG_S	s7, SF_REG_S7(a0)
-	REG_S	t8, SF_REG_T8(a0)
+	#REG_S	t8, SF_REG_T8(a0)		# no reason to save MIPS_CURLWP
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, SF_REG_GP(a0)
 #endif
@@ -506,7 +514,7 @@ LEAF(longjmp)
 	REG_L	s5, SF_REG_S5(a0)
 	REG_L	s6, SF_REG_S6(a0)
 	REG_L	s7, SF_REG_S7(a0)
-	REG_L	t8, SF_REG_T8(a0)
+	#REG_L	t8, SF_REG_T8(a0)		# no reason to load MIPS_CURLWP
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_L	gp, SF_REG_GP(a0)
 #endif
@@ -516,7 +524,7 @@ LEAF(longjmp)
 	mtc0	v0, MIPS_COP_0_STATUS
 	COP0_SYNC
 	j	ra
-	li	v0, 1
+	 li	v0, 1
 END(longjmp)
 #endif
 
@@ -531,7 +539,7 @@ END(longjmp)
 LEAF_NOPROFILE(mips_cp0_cause_read)
 	mfc0	v0, MIPS_COP_0_CAUSE
 	j	ra
-	nop
+	 nop
 END(mips_cp0_cause_read)
 
 /*
@@ -541,11 +549,7 @@ END(mips_cp0_cause_read)
  */
 LEAF(mips_cp0_cause_write)
 	mtc0	a0, MIPS_COP_0_CAUSE
-	COP0_SYNC
-	nop
-	nop
-	j	ra
-	nop
+	JR_HB_RA
 END(mips_cp0_cause_write)
 
 
@@ -557,7 +561,7 @@ END(mips_cp0_cause_write)
 LEAF(mips_cp0_status_read)
 	mfc0	v0, MIPS_COP_0_STATUS
 	j	ra
-	nop
+	 nop
 END(mips_cp0_status_read)
 
 /*
@@ -571,11 +575,7 @@ END(mips_cp0_status_read)
  */
 LEAF(mips_cp0_status_write)
 	mtc0	a0, MIPS_COP_0_STATUS
-	COP0_SYNC
-	nop
-	nop
-	j	ra
-	nop
+	JR_HB_RA
 END(mips_cp0_status_write)
 
 #if !defined(NOFPU) || defined(FPEMUL)
@@ -627,19 +627,11 @@ XNESTED(mips_fpu_trap)
  * We check whether it's an unimplemented FP instruction here rather
  * than invoking mips_emul_inst(), since it is faster.
  */
-	bgez		a2, 1f			# Check the branch delay bit.
-	 nop
-/*
- * The instruction is in the branch delay slot.
- */
-	b		2f
-	 INT_L		a0, 4(a0)		# a0 = coproc instruction
-/*
- * This is not in the branch delay slot.
- */
-1:
+	srl		v1, a2, 31		# move branch delay bit to LSB
+	sll		v1, 2			# shift it left by 2 (mult by 4)
+	PTR_ADDU	a0, v1			# add to a0
 	INT_L		a0, 0(a0)		# a0 = coproc instruction
-2:
+	NOP_L					# load delay
 
 /*
  * Check to see if the instruction to be emulated is a floating-point
@@ -690,7 +682,7 @@ XNESTED(mips_fpu_trap)
 
 /*
  * Finally, we can call
- * mips_emul_fp(uint32_t instr, struct trapframe *tf, uint32_t cause).
+ * mips_emul_fp(uint32_t insn, struct trapframe *tf, uint32_t cause).
  */
 4:
 	jal		_C_LABEL(mips_emul_fp)
@@ -746,7 +738,7 @@ END(mips_pagecopy)
 LEAF(mips_pagezero)
 /* We can always safely store a 64-bit zero on MIPS3,4,64 */
 	.set	push
-#if !defined(MIPS1) && !defined(MIPS32)
+#if (MIPS1 + MIPS32 + MIPS32R2) == 0
 	.set	mips3
 #endif
 	li		a1, PAGE_SIZE / (8*SZREG)

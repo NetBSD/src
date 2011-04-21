@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.29.4.1 2011/03/05 20:53:36 rmind Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.29.4.2 2011/04/21 01:41:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.29.4.1 2011/03/05 20:53:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.29.4.2 2011/04/21 01:41:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,17 +44,19 @@ static void cmdide_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(cmdide, sizeof(struct pciide_softc),
     cmdide_match, cmdide_attach, pciide_detach, NULL);
 
-static void cmd_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void cmd0643_9_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void cmd_chip_map(struct pciide_softc*, const struct pci_attach_args*);
+static void cmd0643_9_chip_map(struct pciide_softc*,
+			       const struct pci_attach_args*);
 static void cmd0643_9_setup_channel(struct ata_channel*);
-static void cmd_channel_map(struct pci_attach_args *, struct pciide_softc *,
-			    int);
+static void cmd_channel_map(const struct pci_attach_args *,
+			    struct pciide_softc *, int);
 static int  cmd_pci_intr(void *);
 static void cmd646_9_irqack(struct ata_channel *);
-static void cmd680_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void cmd680_chip_map(struct pciide_softc*,
+			    const struct pci_attach_args*);
 static void cmd680_setup_channel(struct ata_channel*);
-static void cmd680_channel_map(struct pci_attach_args *, struct pciide_softc *,
-			       int);
+static void cmd680_channel_map(const struct pci_attach_args *,
+			       struct pciide_softc *, int);
 
 static const struct pciide_product_desc pciide_cmd_products[] =  {
 	{ PCI_PRODUCT_CMDTECH_640,
@@ -120,7 +122,7 @@ cmdide_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-cmd_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
+cmd_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
     int channel)
 {
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
@@ -230,7 +232,7 @@ cmd_pci_intr(void *arg)
 }
 
 static void
-cmd_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+cmd_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	int channel;
 
@@ -266,7 +268,7 @@ cmd_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-cmd0643_9_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+cmd0643_9_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	int channel;
 	pcireg_t rev = PCI_REVISION(pa->pa_class);
@@ -456,7 +458,7 @@ cmd646_9_irqack(struct ata_channel *chp)
 }
 
 static void
-cmd680_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+cmd680_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	int channel;
 
@@ -494,7 +496,7 @@ cmd680_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-cmd680_channel_map(struct pci_attach_args *pa, struct pciide_softc *sc,
+cmd680_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
     int channel)
 {
 	struct pciide_channel *cp = &sc->pciide_channels[channel];

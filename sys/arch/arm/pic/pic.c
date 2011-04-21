@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.4.6.1 2011/03/05 20:49:39 rmind Exp $	*/
+/*	$NetBSD: pic.c,v 1.4.6.2 2011/04/21 01:40:53 rmind Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.4.6.1 2011/03/05 20:49:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.4.6.2 2011/04/21 01:40:53 rmind Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -158,7 +158,14 @@ pic_find_pending_irqs_by_ipl(struct pic_softc *pic, size_t irq_base,
 			return ipl_irq_mask;
 
 		irq_mask = __BIT(irq);
-		KASSERT(pic->pic_sources[irq_base + irq] != NULL);
+#if 1
+    		KASSERT(pic->pic_sources[irq_base + irq] != NULL);
+#else
+		if (pic->pic_sources[irq_base + irq] == NULL) {
+			aprint_error("stray interrupt? irq_base=%zu irq=%d\n",
+			    irq_base, irq);
+		} else
+#endif
 		if (pic->pic_sources[irq_base + irq]->is_ipl == ipl)
 			ipl_irq_mask |= irq_mask;
 
@@ -519,47 +526,6 @@ pic_disestablish_source(struct intrsource *is)
 	evcnt_detach(&is->is_ev);
 
 	free(is, M_INTRSOURCE);
-}
-
-int
-_splraise(int newipl)
-{
-	struct cpu_info * const ci = curcpu();
-	const int oldipl = ci->ci_cpl;
-	KASSERT(newipl < NIPL);
-	if (newipl > ci->ci_cpl)
-		ci->ci_cpl = newipl;
-	return oldipl;
-}
-int
-_spllower(int newipl)
-{
-	struct cpu_info * const ci = curcpu();
-	const int oldipl = ci->ci_cpl;
-	KASSERT(panicstr || newipl <= ci->ci_cpl);
-	if (newipl < ci->ci_cpl) {
-		register_t psw = disable_interrupts(I32_bit);
-		ci->ci_intr_depth++;
-		pic_do_pending_ints(psw, newipl, NULL);
-		ci->ci_intr_depth--;
-		restore_interrupts(psw);
-	}
-	return oldipl;
-}
-
-void
-splx(int savedipl)
-{
-	struct cpu_info * const ci = curcpu();
-	KASSERT(savedipl < NIPL);
-	if (savedipl < ci->ci_cpl) {
-		register_t psw = disable_interrupts(I32_bit);
-		ci->ci_intr_depth++;
-		pic_do_pending_ints(psw, savedipl, NULL);
-		ci->ci_intr_depth--;
-		restore_interrupts(psw);
-	}
-	ci->ci_cpl = savedipl;
 }
 
 void *

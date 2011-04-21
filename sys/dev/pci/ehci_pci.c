@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.47.2.1 2011/03/05 20:53:36 rmind Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.47.2.2 2011/04/21 01:41:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.47.2.1 2011/03/05 20:53:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.47.2.2 2011/04/21 01:41:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ struct ehci_pci_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-static int ehci_sb700_match(struct pci_attach_args *pa);
+static int ehci_sb700_match(const struct pci_attach_args *pa);
 static int ehci_apply_amd_quirks(struct ehci_pci_softc *sc);
 enum ehci_pci_quirk_flags ehci_pci_lookup_quirkdata(pci_vendor_id_t,
 	pci_product_id_t);
@@ -282,10 +282,12 @@ ehci_pci_detach(device_t self, int flags)
 	struct ehci_pci_softc *sc = device_private(self);
 	int rv;
 
-	pmf_device_deregister(self);
 	rv = ehci_detach(&sc->sc, flags);
 	if (rv)
 		return rv;
+
+	pmf_device_deregister(self);
+	ehci_shutdown(self, flags);
 
 	/* disable interrupts */
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
@@ -445,7 +447,7 @@ ehci_pci_resume(device_t dv, const pmf_qual_t *qual)
 }
 
 static int
-ehci_sb700_match(struct pci_attach_args *pa)
+ehci_sb700_match(const struct pci_attach_args *pa)
 {
 	if (!(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB600_SMB))

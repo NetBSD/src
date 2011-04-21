@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.27.2.2 2011/03/05 20:50:11 rmind Exp $
+#	$NetBSD: ALCHEMY,v 1.27.2.3 2011/04/21 01:40:59 rmind Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.27.2.2 $"
+#ident 		"ALCHEMY-$Revision: 1.27.2.3 $"
 
 maxusers	32
 
@@ -46,7 +46,7 @@ options 	DEBUG		# extra kernel debugging support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=470000	# size for embedded symbol table
+options 	SYMTAB_SPACE=480000	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries
@@ -86,7 +86,8 @@ file-system	FDESC		# user file descriptor filesystem
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.4.2.2 2011/03/05 20:51:47 rmind Exp $ */
+/* $NetBSD: pci.c,v 1.4.2.3 2011/04/21 01:41:22 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -190,25 +190,26 @@ deviceinit(int bus, int dev, int func, unsigned long data)
 	/* 0x00 */
 #ifdef DEBUG
 	printf("%02d:%02d:%02d:", bus, dev, func);
-	val = cfgread(bus, dev, func, 0x00);
+	val = cfgread(bus, dev, func, PCI_ID_REG);
 	printf(" chip %04x.%04x", val & 0xffff, val>>16);
 	val = cfgread(bus, dev, func, 0x2c);
 	printf(" card %04x.%04x", val & 0xffff, val>>16);
-	val = cfgread(bus, dev, func, 0x08);
+	val = cfgread(bus, dev, func, PCI_CLASS_REG);
 	printf(" rev %02x class %02x.%02x.%02x",
-		val & 0xff, (val>>24), (val>>16) & 0xff, (val>>8) & 0xff);
-	val = cfgread(bus, dev, func, 0x0c);
+	    PCI_REVISION(val), (val>>24), (val>>16) & 0xff,
+	    PCI_INTERFACE(val));
+	val = cfgread(bus, dev, func, PCI_BHLC_REG);
 	printf(" hdr %02x\n", (val>>16) & 0xff);
 #endif
 
 	/* 0x04 */
-	val = cfgread(bus, dev, func, 0x04);
+	val = cfgread(bus, dev, func, PCI_COMMAND_STATUS_REG);
 	val |= 0xffff0107; /* enable IO,MEM,MASTER,SERR */
 	cfgwrite(bus, dev, func, 0x04, val);
 
 	/* 0x0c */
 	val = 0x80 << 8 | 0x08 /* 32B cache line */;
-	cfgwrite(bus, dev, func, 0x0c, val);
+	cfgwrite(bus, dev, func, PCI_BHLC_REG, val);
 
 	/* 0x3c */
 	val = cfgread(bus, dev, func, 0x3c) & ~0xff;
@@ -217,13 +218,13 @@ deviceinit(int bus, int dev, int func, unsigned long data)
 
 	/* skip legacy mode IDE controller BAR assignment */
 	val = cfgread(bus, dev, func, PCI_CLASS_REG);
-	if ((val >> 16) == PCI_CLASS_IDE && ((val >> 8) & 0x05) == 0)
+	if (PCI_CLASS(val) == PCI_CLASS_IDE && (PCI_INTERFACE(val) & 0x05) == 0)
 		return 0;
 
 	memassign(bus, dev, func);
 
 	/* descending toward PCI-PCI bridge */
-	if ((cfgread(bus, dev, func, 0x08) >> 16) == PCI_CLASS_PPB) {
+	if ((cfgread(bus, dev, func, PCI_CLASS_REG) >> 16) == PCI_CLASS_PPB) {
 		unsigned new;
 
 		/* 0x18 */
@@ -336,7 +337,7 @@ clsmatch(int bus, int dev, int func, unsigned long data)
 	unsigned class;
 
 	class = cfgread(bus, dev, func, PCI_CLASS_REG);
-	return ((class >> 16) == (unsigned)data);
+	return PCI_CLASS(class) == (unsigned)data;
 }
 
 static int
@@ -352,7 +353,7 @@ _pcilookup(int bus, int (*match)(int, int, int, unsigned long), unsigned long da
 		if (PCI_VENDOR(pciid) == 0)
 			continue;
 		class = cfgread(bus, device, 0, PCI_CLASS_REG);
-		if ((class >> 16) == PCI_CLASS_PPB) {
+		if (PCI_CLASS(class) == PCI_CLASS_PPB) {
 			/* exploring bus beyond PCI-PCI bridge */
 			index = _pcilookup(bus + 1,
 				    match, data, list, index, limit);

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.87.4.2 2011/03/05 20:52:16 rmind Exp $      */
+/*      $NetBSD: cpu.h,v 1.87.4.3 2011/04/21 01:41:29 rmind Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -202,6 +202,8 @@ extern char vax_mp_tramp;
  */
 #define	IOSPSZ	((64*1024) / VAX_NBPG)	/* 64k == 128 pages */
 
+#define	LWP_PC(l)	cpu_lwp_pc(l)
+
 struct device;
 struct buf;
 struct pte;
@@ -215,6 +217,7 @@ void	cpu_boot_secondary_processors(void);
 void	cpu_send_ipi(int, int);
 void	cpu_handle_ipi(void);
 #endif
+vaddr_t	cpu_lwp_pc(struct lwp *);
 int	badaddr(volatile void *, int);
 void	dumpconf(void);
 void	dumpsys(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.17.4.2 2011/03/05 20:55:21 rmind Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.17.4.3 2011/04/21 01:42:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.17.4.2 2011/03/05 20:55:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.17.4.3 2011/04/21 01:42:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,7 +315,6 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	int fd, i, tmp, error, cmd, newmin;
 	filedesc_t *fdp;
 	file_t *fp;
-	fdfile_t *ff;
 	struct flock fl;
 
 	fd = SCARG(uap, fd);
@@ -358,7 +357,6 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 
 	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
-	ff = fdp->fd_dt->dt_ff[fd];
 
 	if ((cmd & F_FSCTL)) {
 		error = fcntl_forfs(fd, fp, cmd, SCARG(uap, arg));
@@ -380,16 +378,12 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 		break;
 
 	case F_GETFD:
-		*retval = ff->ff_exclose;
+		*retval = fdp->fd_dt->dt_ff[fd]->ff_exclose;
 		break;
 
 	case F_SETFD:
-		if ((long)SCARG(uap, arg) & FD_CLOEXEC) {
-			ff->ff_exclose = true;
-			fdp->fd_exclose = true;
-		} else {
-			ff->ff_exclose = false;
-		}
+		fd_set_exclose(l, fd,
+		    ((long)SCARG(uap, arg) & FD_CLOEXEC) != 0);
 		break;
 
 	case F_GETFL:

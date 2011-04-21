@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.98.4.2 2011/03/05 20:52:47 rmind Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.98.4.3 2011/04/21 01:41:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,13 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.98.4.2 2011/03/05 20:52:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.98.4.3 2011/04/21 01:41:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
@@ -102,6 +103,7 @@ linux_to_bsd_ioflags(int lflags)
 	res |= cvtto_bsd_mask(lflags, LINUX_FASYNC, O_ASYNC);
 	res |= cvtto_bsd_mask(lflags, LINUX_O_APPEND, O_APPEND);
 	res |= cvtto_bsd_mask(lflags, LINUX_O_DIRECTORY, O_DIRECTORY);
+	res |= cvtto_bsd_mask(lflags, LINUX_O_CLOEXEC, O_CLOEXEC);
 
 	return res;
 }
@@ -123,6 +125,7 @@ bsd_to_linux_ioflags(int bflags)
 	res |= cvtto_linux_mask(bflags, O_ASYNC, LINUX_FASYNC);
 	res |= cvtto_linux_mask(bflags, O_APPEND, LINUX_O_APPEND);
 	res |= cvtto_linux_mask(bflags, O_DIRECTORY, LINUX_O_DIRECTORY);
+	res |= cvtto_linux_mask(bflags, O_CLOEXEC, LINUX_O_CLOEXEC);
 
 	return res;
 }
@@ -617,6 +620,25 @@ linux_sys_pwrite(struct lwp *l, const struct linux_sys_pwrite_args *uap, registe
 	SCARG(&pra, offset) = SCARG(uap, offset);
 
 	return sys_pwrite(l, &pra, retval);
+}
+
+int
+linux_sys_dup3(struct lwp *l, const struct linux_sys_dup3_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) from;
+		syscallarg(int) to;
+		syscallarg(int) flags;
+	} */
+	int error;
+	if ((error = sys_dup2(l, (const struct sys_dup2_args *)uap, retval)))
+		return error;
+
+	if (SCARG(uap, flags) & LINUX_O_CLOEXEC)
+		fd_set_exclose(l, SCARG(uap, to), true);
+
+	return 0;
 }
 
 #define LINUX_NOT_SUPPORTED(fun) \

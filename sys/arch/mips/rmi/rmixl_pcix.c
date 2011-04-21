@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.2.2.2 2011/03/05 20:51:11 rmind Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.2.2.3 2011/04/21 01:41:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.2.2.2 2011/03/05 20:51:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.2.2.3 2011/04/21 01:41:13 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -242,7 +242,7 @@ static int	rmixl_pcix_conf_setup(rmixl_pcix_softc_t *,
 static pcireg_t	rmixl_pcix_conf_read(void *, pcitag_t, int);
 static void	rmixl_pcix_conf_write(void *, pcitag_t, int, pcireg_t);
 
-static int	rmixl_pcix_intr_map(struct pci_attach_args *,
+static int	rmixl_pcix_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 static const char *
 		rmixl_pcix_intr_string(void *, pci_intr_handle_t);
@@ -315,6 +315,8 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tmsk = obio->obio_tmsk;
 
 	aprint_normal(": RMI XLR PCI-X Interface\n");
+
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_HIGH);
 
 	rmixl_pcix_intcfg(sc);
 
@@ -765,7 +767,7 @@ rmixl_pcix_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 }
 
 int
-rmixl_pcix_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
+rmixl_pcix_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *pih)
 {
 	const u_int irq = 16;	/* PCIX index in IRT */
 
@@ -795,7 +797,7 @@ rmixl_pcix_intr_string(void *v, pci_intr_handle_t pih)
 		panic("%s: cpu %#x not supported\n",
 			__func__, mips_options.mips_cpu_id);
 
-	return rmixl_intr_string(irq);
+	return rmixl_intr_string(RMIXL_IRT_VECTOR(irq));
 }
 
 const struct evcnt *
@@ -923,6 +925,7 @@ rmixl_pcix_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	dip->irq = irq;
 	dip->func = func;
 	dip->arg = arg;
+	dip->counts = RMIXL_PCIX_EVCNT(sc, bitno, 0);
 #if NEVER
 	snprintf(dip->count_name, sizeof(dip->count_name),
 		"pin %d", bitno + 1);
@@ -987,6 +990,8 @@ rmixl_pcix_pip_add_1(rmixl_pcix_softc_t *sc, int irq, int ipl)
 #endif
 		return NULL;
 	}
+
+	memset(pip_new, 0, size);
 
 	if (pip_old == NULL) {
 		/* initialize the interrupt struct */

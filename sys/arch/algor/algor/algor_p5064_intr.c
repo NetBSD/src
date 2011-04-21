@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.23.20.1 2011/03/05 20:49:07 rmind Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.23.20.2 2011/04/21 01:40:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.23.20.1 2011/03/05 20:49:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.23.20.2 2011/04/21 01:40:45 rmind Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -290,14 +290,15 @@ const char * const p5064_intrgroups[NINTRS] = {
 void	*algor_p5064_intr_establish(int, int (*)(void *), void *);
 void	algor_p5064_intr_disestablish(void *);
 
-int	algor_p5064_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int	algor_p5064_pci_intr_map(const struct pci_attach_args *,
+	    pci_intr_handle_t *);
 const char *algor_p5064_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *algor_p5064_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*algor_p5064_pci_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *);
 void	algor_p5064_pci_intr_disestablish(void *, void *);
 void	*algor_p5064_pciide_compat_intr_establish(void *, device_t,
-	    struct pci_attach_args *, int, int (*)(void *), void *);
+	    const struct pci_attach_args *, int, int (*)(void *), void *);
 void	algor_p5064_pci_conf_interrupt(void *, int, int, int, int, int *);
 
 const struct evcnt *algor_p5064_isa_intr_evcnt(void *, int);
@@ -573,7 +574,7 @@ algor_p5064_iointr(int ipl, vaddr_t pc, uint32_t ipending)
  *****************************************************************************/
 
 int
-algor_p5064_pci_intr_map(struct pci_attach_args *pa,
+algor_p5064_pci_intr_map(const struct pci_attach_args *pa,
     pci_intr_handle_t *ihp)
 {
 	static const int pciirqmap[6/*device*/][4/*pin*/] = {
@@ -667,7 +668,7 @@ algor_p5064_pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz,
 
 void *
 algor_p5064_pciide_compat_intr_establish(void *v, device_t dev,
-    struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
+    const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc; 
 	void *cookie;

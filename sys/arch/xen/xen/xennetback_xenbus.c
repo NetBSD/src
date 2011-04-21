@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.33.4.2 2011/03/05 20:52:35 rmind Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.33.4.3 2011/04/21 01:41:35 rmind Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -271,7 +271,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 
 	ifp = &xneti->xni_if;
 	ifp->if_softc = xneti;
-	snprintf(ifp->if_xname, IFNAMSIZ, "xvif%d.%d",
+	snprintf(ifp->if_xname, IFNAMSIZ, "xvif%di%d",
 	    (int)domid, (int)handle);
 
 	/* read mac address */
@@ -433,6 +433,7 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 	netif_tx_sring_t *tx_ring;
 	netif_rx_sring_t *rx_ring;
 	struct gnttab_map_grant_ref op;
+	struct gnttab_unmap_grant_ref uop;
 	evtchn_op_t evop;
 	u_long tx_ring_ref, rx_ring_ref;
 	u_long revtchn, rx_copy;
@@ -538,7 +539,7 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 		if (err) {
 			printf("%s: can't get event channel: %d\n",
 			    xneti->xni_if.if_xname, err);
-			goto err2;
+			goto err3;
 		}
 		xneti->xni_evtchn = evop.u.bind_interdomain.local_port;
 		xen_wmb();
@@ -570,6 +571,26 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 		break;
 	}
 	return;
+
+err3:
+	uop.dev_bus_addr = 0;
+
+	uop.host_addr = xneti->xni_rx_ring_va;
+	uop.handle = xneti->xni_rx_ring_handle;
+	err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
+	    &uop, 1);
+	if (err)
+		aprint_error_ifnet(&xneti->xni_if,
+			"unmap_grant_ref failed: %d\n", err);
+
+	uop.host_addr = xneti->xni_tx_ring_va;
+	uop.handle = xneti->xni_tx_ring_handle;
+	err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
+	    &uop, 1);
+	if (err)
+		aprint_error_ifnet(&xneti->xni_if,
+			"unmap_grant_ref failed: %d\n", err);
+
 err2:
 	uvm_km_free(kernel_map, xneti->xni_rx_ring_va,
 	    PAGE_SIZE, UVM_KMF_VAONLY);

@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5312.h,v 1.2 2008/12/11 05:30:29 alc Exp $
+ * $Id: ar5312.h,v 1.2.14.1 2011/04/21 01:42:05 rmind Exp $
  */
 #ifndef _ATH_AR5312_H_
 #define _ATH_AR5312_H_
@@ -41,14 +41,16 @@
 extern  HAL_BOOL ar5312IsInterruptPending(struct ath_hal *ah);
 
 /* AR5312 */
-extern	HAL_BOOL ar5312GpioCfgOutput(struct ath_hal *, uint32_t gpio);
+extern	HAL_BOOL ar5312GpioCfgOutput(struct ath_hal *, uint32_t gpio,
+		HAL_GPIO_MUX_TYPE);
 extern	HAL_BOOL ar5312GpioCfgInput(struct ath_hal *, uint32_t gpio);
 extern	HAL_BOOL ar5312GpioSet(struct ath_hal *, uint32_t gpio, uint32_t val);
 extern	uint32_t ar5312GpioGet(struct ath_hal *ah, uint32_t gpio);
 extern	void ar5312GpioSetIntr(struct ath_hal *ah, u_int, uint32_t ilevel);
 
 /* AR2315+ */
-extern	HAL_BOOL ar5315GpioCfgOutput(struct ath_hal *, uint32_t gpio);
+extern	HAL_BOOL ar5315GpioCfgOutput(struct ath_hal *, uint32_t gpio,
+		HAL_GPIO_MUX_TYPE);
 extern	HAL_BOOL ar5315GpioCfgInput(struct ath_hal *, uint32_t gpio);
 extern	HAL_BOOL ar5315GpioSet(struct ath_hal *, uint32_t gpio, uint32_t val);
 extern	uint32_t ar5315GpioGet(struct ath_hal *ah, uint32_t gpio);

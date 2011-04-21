@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.69 2008/11/07 00:20:18 dyoung Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.69.8.1 2011/04/21 01:42:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.69 2008/11/07 00:20:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.69.8.1 2011/04/21 01:42:15 rmind Exp $");
 
 #include "opt_eon.h"
 
@@ -191,8 +191,6 @@ eonioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCINITIFADDR:
-		if (ifa == NULL)
-			break;
 		ifp->if_flags |= IFF_UP;
 		if (ifa->ifa_addr->sa_family != AF_LINK)
 			ifa->ifa_rtrequest = eonrtrequest;

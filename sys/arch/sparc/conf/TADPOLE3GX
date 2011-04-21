@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.48.4.2 2011/03/05 20:52:00 rmind Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.48.4.3 2011/04/21 01:41:24 rmind Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -167,7 +167,8 @@ file-system	PTYFS		# /dev/pts/N support
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
-options 	QUOTA		# FFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

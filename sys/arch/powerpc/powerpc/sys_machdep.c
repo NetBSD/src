@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.9.32.1 2011/03/05 20:51:42 rmind Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.9.32.2 2011/04/21 01:41:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9.32.1 2011/03/05 20:51:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9.32.2 2011/04/21 01:41:20 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -49,14 +49,4 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	 * Currently no special system calls
 	 */
 	return (ENOSYS);
-}
-
-int
-cpu_lwp_setprivate(lwp_t *l, void *addr)
-{
-	struct trapframe *tf;
-
-	tf = trapframe(l);
-	tf->tf_fixreg[2] = (register_t)addr;
-	return 0;
 }

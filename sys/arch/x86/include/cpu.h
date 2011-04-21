@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20.4.3 2011/03/05 20:52:27 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20.4.4 2011/04/21 01:41:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,12 @@
 
 #ifndef _X86_CPU_H_
 #define _X86_CPU_H_
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/types.h>
+#else
+#include <stdbool.h>
+#endif /* _KERNEL || _STANDALONE */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #if defined(_KERNEL_OPT)
@@ -434,12 +440,6 @@ void x86_bus_space_mallocok(void);
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
 #endif /* _KERNEL || __KMEMUSER */
-
-#if defined(_KERNEL) || defined(_STANDALONE)
-#include <sys/types.h>
-#else
-#include <stdbool.h>
-#endif /* _KERNEL || _STANDALONE */
 
 /*
  * CTL_MACHDEP definitions.

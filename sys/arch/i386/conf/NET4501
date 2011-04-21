@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.71.4.1 2010/05/30 05:16:53 rmind Exp $
+# $NetBSD: NET4501,v 1.71.4.2 2011/04/21 01:41:05 rmind Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.71.4.1 $"
+#ident 		"NET4501-$Revision: 1.71.4.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -123,7 +123,8 @@ file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# Efficient memory file-system
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	NFSSERVER	# Network File System server

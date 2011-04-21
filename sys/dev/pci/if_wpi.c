@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.46.2.2 2011/03/05 20:53:45 rmind Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.46.2.3 2011/04/21 01:41:51 rmind Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.46.2.2 2011/03/05 20:53:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.46.2.3 2011/04/21 01:41:51 rmind Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -1147,7 +1147,7 @@ wpi_cache_firmware(struct wpi_softc *sc)
 	}
 
 	/* load firmware image from disk */
-	if ((error = firmware_open("if_wpi","iwlwifi-3945.ucode", &fw) != 0)) {
+	if ((error = firmware_open("if_wpi","iwlwifi-3945.ucode", &fw)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not read firmware file\n");
 		goto fail1;
 	}

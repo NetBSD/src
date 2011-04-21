@@ -1,4 +1,4 @@
-/*	$Id: rmixl_fmnvar.h,v 1.2.2.2 2011/03/05 20:51:10 rmind Exp $	*/
+/*	$Id: rmixl_fmnvar.h,v 1.2.2.3 2011/04/21 01:41:13 rmind Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -102,7 +102,7 @@ do {									\
 									\
 	__asm volatile(							\
 		".set push"			"\n\t"			\
-		".set mips64"			"\n\t"			\
+		".set arch=xlr"			"\n\t"			\
 		"mfc2 %0,$%1,%2"		"\n\t"			\
 		".set pop"			"\n\t"			\
 	    : "=r"(__val) : "n"(regnum), "n"(sel));			\
@@ -115,7 +115,7 @@ do {									\
 									\
 	__asm volatile(							\
 		".set push"			"\n\t"			\
-		".set mips64"			"\n\t"			\
+		".set arch=xlr"			"\n\t"			\
 		"mtc2 %0,$%1,%2"		"\n\t"			\
 		".set pop"			"\n\t"			\
 	    :: "r"(__val), "n"(regnum), "n"(sel));			\
@@ -150,7 +150,7 @@ rmixl_msgsnd(uint32_t desc)
 	__asm__ volatile (
 		".set push"		"\n\t"
 		".set noreorder"	"\n\t"
-		".set mips64"		"\n\t"
+		".set arch=xlr"		"\n\t"
 		"sync"			"\n\t"
 		"msgsnd %0"		"\n\t"
 		".set pop"		"\n\t"
@@ -163,7 +163,7 @@ rmixl_msgld(uint32_t bucket)
 	__asm__ volatile (
 		".set push"		"\n\t"
 		".set noreorder"	"\n\t"
-		".set mips64"		"\n\t"
+		".set arch=xlr"		"\n\t"
 		"msgld %0"		"\n\t"
 		".set pop"		"\n\t"
 			:: "r"(bucket));
@@ -179,7 +179,7 @@ rmixl_fmn_msgwait(u_int mask)
 	__asm__ volatile (
 		".set push"		"\n\t"
 		".set noreorder"	"\n\t"
-		".set mips64"		"\n\t"
+		".set arch=xlr"		"\n\t"
 		"addu %0,%0,0"		"\n\t"
 		"msgwait %0"		"\n\t"
 		".set pop"		"\n\t"

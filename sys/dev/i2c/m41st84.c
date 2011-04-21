@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.15.4.1 2011/03/05 20:53:10 rmind Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.15.4.2 2011/04/21 01:41:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.15.4.1 2011/03/05 20:53:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.15.4.2 2011/04/21 01:41:46 rmind Exp $");
 
 #include "opt_strtc.h"
 
@@ -105,9 +105,13 @@ strtc_attach(device_t parent, device_t self, void *arg)
 	struct strtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 
+#ifndef STRTC_NO_USERRAM
 	aprint_naive(": Real-time Clock/NVRAM\n");
 	aprint_normal(": M41ST84 Real-time Clock/NVRAM\n");
-
+#else
+	aprint_naive(": Real-time Clock\n");
+	aprint_normal(": M41T8x Real-time Clock\n");
+#endif
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
 	sc->sc_dev = self;

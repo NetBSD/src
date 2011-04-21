@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.25 2007/07/10 09:50:08 hannken Exp $	*/
+/*	$NetBSD: quota.h,v 1.25.56.1 2011/04/21 01:42:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,16 +38,9 @@
 #define	_UFS_UFS_QUOTA_H_
 
 /*
- * Definitions for disk quotas imposed on the average user
- * (big brother finally hits UNIX).
- *
- * The following constants define the amount of time given a user before the
- * soft limits are treated as hard limits (usually resulting in an allocation
- * failure). The timer is started when the user crosses their soft limit, it
- * is reset when they go below their soft limit.
+ * These definitions are common to the original disk quota implementation
+ * (quota1) and the newer implementation (quota2)
  */
-#define	MAX_IQ_TIME	(7*24*60*60)	/* seconds in 1 week */
-#define	MAX_DQ_TIME	(7*24*60*60)	/* seconds in 1 week */
 
 /*
  * The following constants define the usage of the quota file array in the
@@ -60,50 +53,35 @@
 #define	USRQUOTA	0	/* element used for user quotas */
 #define	GRPQUOTA	1	/* element used for group quotas */
 
-/*
- * Definitions for the default names of the quotas files.
- */
-#define INITQFNAMES { \
-	"user",		/* USRQUOTA */ \
-	"group",	/* GRPQUOTA */ \
-	"undefined", \
+
+#if !defined(HAVE_NBTOOL_CONFIG_H)
+#include <quota/quotaprop.h>
+__inline static int __unused
+ufsclass2qtype(int class)
+{
+	switch(class) {
+	case QUOTA_CLASS_USER:
+		return USRQUOTA;
+	case QUOTA_CLASS_GROUP:
+		return GRPQUOTA;
+	default:
+		return -1;
+	}
 }
-#define	QUOTAFILENAME	"quota"
-#define	QUOTAGROUP	"operator"
 
-/*
- * Command definitions for the 'quotactl' system call.  The commands are
- * broken into a main command defined below and a subcommand that is used
- * to convey the type of quota that is being manipulated (see above).
- */
-#define SUBCMDMASK	0x00ff
-#define SUBCMDSHIFT	8
-#define	QCMD(cmd, type)	(((cmd) << SUBCMDSHIFT) | ((type) & SUBCMDMASK))
-
-#define	Q_QUOTAON	0x0100	/* enable quotas */
-#define	Q_QUOTAOFF	0x0200	/* disable quotas */
-#define	Q_GETQUOTA	0x0300	/* get limits and usage */
-#define	Q_SETQUOTA	0x0400	/* set limits and usage */
-#define	Q_SETUSE	0x0500	/* set usage */
-#define	Q_SYNC		0x0600	/* sync disk copy of a filesystems quotas */
-
-/*
- * The following structure defines the format of the disk quota file
- * (as it appears on disk) - the file is an array of these structures
- * indexed by user or group number.  The setquota system call establishes
- * the vnode for each quota file (a pointer is retained in the ufsmount
- * structure).
- */
-struct dqblk {
-	u_int32_t dqb_bhardlimit;	/* absolute limit on disk blks alloc */
-	u_int32_t dqb_bsoftlimit;	/* preferred limit on disk blks */
-	u_int32_t dqb_curblocks;	/* current block count */
-	u_int32_t dqb_ihardlimit;	/* maximum # allocated inodes + 1 */
-	u_int32_t dqb_isoftlimit;	/* preferred inode limit */
-	u_int32_t dqb_curinodes;	/* current # allocated inodes */
-	int32_t	  dqb_btime;		/* time limit for excessive disk use */
-	int32_t	  dqb_itime;		/* time limit for excessive files */
-};
+static __inline int __unused
+qtype2ufsclass(int type)
+{
+	switch(type) {
+	case USRQUOTA:
+		return QUOTA_CLASS_USER;
+	case GRPQUOTA:
+		return QUOTA_CLASS_GROUP;
+	default:
+		return -1;
+	}
+}
+#endif /* !defined(HAVE_NBTOOL_CONFIG_H) */
 
 #ifdef _KERNEL
 
@@ -113,10 +91,6 @@ __BEGIN_DECLS
 void	dqinit(void);
 void	dqreinit(void);
 void	dqdone(void);
-__END_DECLS
-#else
-__BEGIN_DECLS
-int quotactl(const char *, int , int, void *);
 __END_DECLS
 #endif /* _KERNEL */
 

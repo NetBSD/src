@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36 2010/03/02 21:07:21 pooka Exp $
+	$NetBSD: syscalls.master,v 1.36.2.1 2011/04/21 01:41:36 rmind Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -402,7 +402,7 @@
 146	EXCL		compat_43_sys_killpg
 #endif
 147	NOARGS		{ int|sys||setsid(void); }
-148	NOARGS		{ int|sys||quotactl(const char *path, \
+148	NOARGS		{ int|compat_50_sys||quotactl(const char *path, \
 			    int cmd, int uid, void *arg); }
 #if defined(COMPAT_43) || !defined(_KERNEL)
 149	NOARGS		{ int|compat_43_sys||quota(void); } oquota

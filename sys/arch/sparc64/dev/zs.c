@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.69 2009/10/26 19:55:11 martin Exp $	*/
+/*	$NetBSD: zs.c,v 1.69.4.1 2011/04/21 01:41:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.69 2009/10/26 19:55:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.69.4.1 2011/04/21 01:41:27 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.69 2009/10/26 19:55:11 martin Exp $");
 #include <dev/sun/kbd_ms_ttyvar.h>
 #include <ddb/db_output.h>
 
+#include <dev/sbus/sbusvar.h>
 #include <sparc64/dev/cons.h>
 
 #include "ioconf.h"

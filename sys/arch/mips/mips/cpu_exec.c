@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.59.4.1 2011/03/05 20:51:05 rmind Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.59.4.2 2011/04/21 01:41:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.59.4.1 2011/03/05 20:51:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.59.4.2 2011/04/21 01:41:11 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -282,6 +282,10 @@ mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	case EF_MIPS_ARCH_64:
 		if (!CPUISMIPSNN)
 			return ENOEXEC;
+	case EF_MIPS_ARCH_32R2:
+	case EF_MIPS_ARCH_64R2:
+		if (!CPUISMIPS32R2 && !CPUISMIPS64R2)
+			return ENOEXEC;
 		break;
 	}
 
@@ -322,8 +326,12 @@ coredump_elf32_setup(struct lwp *l, void *eh0)
 	/*
 	 * Mark the type of CPU that the dump happened on.
 	 */
-	if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS64) {
+	if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS64R2) {
+		eh->e_flags |= EF_MIPS_ARCH_64R2;
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS64) {
 		eh->e_flags |= EF_MIPS_ARCH_64;
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS32R2) {
+		eh->e_flags |= EF_MIPS_ARCH_32R2;
 	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS32) {
 		eh->e_flags |= EF_MIPS_ARCH_32;
 	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS5) {
@@ -379,9 +387,14 @@ mips_netbsd_elf64_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_32:
+	case EF_MIPS_ARCH_32R2:
 		return ENOEXEC;
 	case EF_MIPS_ARCH_64:
-		if (!CPUISMIPS64)
+		if (!CPUISMIPS64 && !CPUISMIPS64R2)
+			return ENOEXEC;
+		break;
+	case EF_MIPS_ARCH_64R2:
+		if (!CPUISMIPS64R2)
 			return ENOEXEC;
 		break;
 	}

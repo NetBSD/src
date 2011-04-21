@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.32.2.1 2010/05/30 05:17:21 rmind Exp $	*/
+/*	$NetBSD: athvar.h,v 1.32.2.2 2011/04/21 01:41:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -571,8 +571,8 @@ extern int ath_txbuf;
 #define	ath_hal_gettxintrtxqs(_ah, _txqs) \
 	((*(_ah)->ah_getTxIntrQueue)((_ah), (_txqs)))
 
-#define ath_hal_gpioCfgOutput(_ah, _gpio) \
-        ((*(_ah)->ah_gpioCfgOutput)((_ah), (_gpio)))
+#define ath_hal_gpioCfgOutput(_ah, _gpio, _type) \
+        ((*(_ah)->ah_gpioCfgOutput)((_ah), (_gpio), (_type)))
 #define ath_hal_gpioset(_ah, _gpio, _b) \
         ((*(_ah)->ah_gpioSet)((_ah), (_gpio), (_b)))
 

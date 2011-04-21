@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: modelines2c.awk,v 1.4 2006/10/26 23:19:50 bjh21 Exp $
+#	$NetBSD: modelines2c.awk,v 1.4.76.1 2011/04/21 01:42:03 rmind Exp $
 #
 # Copyright (c) 2006 Itronix Inc.
 # All rights reserved.
@@ -104,8 +104,9 @@ NR == 1 {
 		ifactor = 2.0;
 	}
 
-	# why the additional .1 to vrefresh?  well it seems that awk likes to
-	# make some "rounding errors", and this will compensate
+	# We truncate the vrefresh figure, but some mode descriptions rely
+	# on rounding, so we can't win here.  Adding an additional .1
+	# compensates to some extent.
 
 	hrefresh= (dotclock * 1000000) / htotal;
 	vrefresh= int(((hrefresh * ifactor) / vtotal) + .1);

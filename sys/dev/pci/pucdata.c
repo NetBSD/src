@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.59.4.2 2011/03/05 20:53:57 rmind Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.59.4.3 2011/04/21 01:42:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.59.4.2 2011/03/05 20:53:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.59.4.3 2011/04/21 01:42:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -903,6 +903,26 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
 		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	/*
+	 * Two 1-port and one 2-port found on a 4-port
+	 * card sold as Sunsway/ST Lab I-430.
+	 */
+	{   "NetMos NM9865 1S",
+	    {	0x9710, 0x9865, 0xa000, 0x1000 },
+	    {	0xffff, 0xffff, 0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+	{   "NetMos NM9865 2S",
+	    {	0x9710, 0x9865, 0xa000, 0x3002 },
+	    {	0xffff, 0xffff, 0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 	    },
 	},
 

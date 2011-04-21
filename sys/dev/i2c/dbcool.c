@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.18.2.2 2011/03/05 20:53:10 rmind Exp $ */
+/*	$NetBSD: dbcool.c,v 1.18.2.3 2011/04/21 01:41:46 rmind Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -44,12 +44,13 @@
  *	http://www.onsemi.com/pub/Collateral/ADT7475-D.PDF
  *	http://www.onsemi.com/pub/Collateral/ADT7476-D.PDF
  *	http://www.onsemi.com/pub/Collateral/ADT7490-D.PDF
+ *	http://www.smsc.com/media/Downloads_Public/Data_Sheets/6d103s.pdf
  *
  * (URLs are correct as of October 5, 2008)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.18.2.2 2011/03/05 20:53:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.18.2.3 2011/04/21 01:41:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -598,6 +599,68 @@ struct dbcool_power_control ADM1031_power_table[] = {
 	  "fan_control_2" },
 	{ { 0, 0, 0, 0 }, NULL }
 };
+
+struct dbcool_sensor EMC6D103S_sensor_table[] = {
+	{ DBC_TEMP, {	DBCOOL_LOCAL_TEMP,
+			DBCOOL_LOCAL_HIGHLIM,
+			DBCOOL_LOCAL_LOWLIM },		0, 0, 0 },
+	{ DBC_TEMP, {	DBCOOL_REMOTE1_TEMP,
+			DBCOOL_REMOTE1_HIGHLIM,
+			DBCOOL_REMOTE1_LOWLIM },	1, 0, 0 },
+	{ DBC_TEMP, {	DBCOOL_REMOTE2_TEMP,
+			DBCOOL_REMOTE2_HIGHLIM,
+			DBCOOL_REMOTE2_LOWLIM },	2, 0, 0 },
+	{ DBC_VOLT, {	DBCOOL_VCCP,
+			DBCOOL_VCCP_HIGHLIM,
+			DBCOOL_VCCP_LOWLIM },		3, 0, 1 },
+	{ DBC_VOLT, {	DBCOOL_VCC,
+			DBCOOL_VCC_HIGHLIM,
+			DBCOOL_VCC_LOWLIM },		4, 0, 0 },
+	{ DBC_VOLT, {	DBCOOL_25VIN,
+			DBCOOL_25VIN_HIGHLIM,
+			DBCOOL_25VIN_LOWLIM },		11, 0, 2 },
+	{ DBC_VOLT, {	DBCOOL_5VIN,
+			DBCOOL_5VIN_HIGHLIM,
+			DBCOOL_5VIN_LOWLIM },		12, 0, 3 },
+	{ DBC_VOLT, {	DBCOOL_12VIN,
+			DBCOOL_12VIN_HIGHLIM,
+			DBCOOL_12VIN_LOWLIM },		13, 0, 4 },
+	{ DBC_FAN,  {	DBCOOL_FAN1_TACH_LSB,
+			DBCOOL_NO_REG,
+			DBCOOL_TACH1_MIN_LSB },		5, 0, 0 },
+	{ DBC_FAN,  {	DBCOOL_FAN2_TACH_LSB,
+			DBCOOL_NO_REG,
+			DBCOOL_TACH2_MIN_LSB },		6, 0, 0 },
+	{ DBC_FAN,  {	DBCOOL_FAN3_TACH_LSB,
+			DBCOOL_NO_REG,
+			DBCOOL_TACH3_MIN_LSB },		7, 0, 0 },
+	{ DBC_FAN,  {	DBCOOL_FAN4_TACH_LSB,
+			DBCOOL_NO_REG,
+			DBCOOL_TACH4_MIN_LSB },		8, 0, 0 },
+	{ DBC_VID,  {	DBCOOL_VID_REG,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		16, 0, 0 },
+	{ DBC_CTL,  {	DBCOOL_LOCAL_TMIN,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		0, 5, 0 },
+	{ DBC_CTL,  {	DBCOOL_LOCAL_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		0, 6, 0 },
+	{ DBC_CTL,  {	DBCOOL_REMOTE1_TMIN,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		1, 5, 0 },
+	{ DBC_CTL,  {	DBCOOL_REMOTE1_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		1, 6, 0 },
+	{ DBC_CTL,  {	DBCOOL_REMOTE2_TMIN,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		2, 5, 0 },
+	{ DBC_CTL,  {	DBCOOL_REMOTE2_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		2, 6, 0 },
+	{ DBC_EOF,  { 0, 0, 0 }, 0, 0, 0 }
+};
+
 struct chip_id chip_table[] = {
 	{ DBCOOL_COMPANYID, ADT7490_DEVICEID, ADT7490_REV_ID,
 		ADT7490_sensor_table, ADT7475_power_table,
@@ -649,6 +712,10 @@ struct chip_id chip_table[] = {
 		ADM1031_sensor_table, ADM1030_power_table,
 		DBCFLAG_ADM1030 | DBCFLAG_NO_READBYTE,
 		11250 * 60, "ADM1031" },
+	{ SMSC_COMPANYID, EMC6D103S_DEVICEID, EMC6D103S_REV_ID,
+		EMC6D103S_sensor_table, ADT7475_power_table,
+		DBCFLAG_4BIT_VER,
+		90000 * 60, "EMC6D103S" },
 	{ 0, 0, 0, NULL, NULL, 0, 0, NULL }
 };
 
@@ -702,9 +769,16 @@ dbcool_attach(device_t parent, device_t self, void *aux)
 
 	ver = sc->sc_dc.dc_readreg(&sc->sc_dc, DBCOOL_REVISION_REG);
 	if (sc->sc_dc.dc_chip->flags & DBCFLAG_4BIT_VER)
-		aprint_normal_dev(self, "%s dBCool(tm) Controller "
-			"(rev 0x%02x, stepping 0x%02x)\n", sc->sc_dc.dc_chip->name,
-			ver >> 4, ver & 0x0f);
+	        if (sc->sc_dc.dc_chip->company == SMSC_COMPANYID)
+	        {
+		        aprint_normal_dev(self, "SMSC %s Controller "
+			        "(rev 0x%02x, stepping 0x%02x)\n", sc->sc_dc.dc_chip->name,
+        			ver >> 4, ver & 0x0f);
+	        } else {
+		        aprint_normal_dev(self, "%s dBCool(tm) Controller "
+			        "(rev 0x%02x, stepping 0x%02x)\n", sc->sc_dc.dc_chip->name,
+        			ver >> 4, ver & 0x0f);
+                }
 	else
 		aprint_normal_dev(self, "%s dBCool(tm) Controller "
 			"(rev 0x%04x)\n", sc->sc_dc.dc_chip->name, ver);
@@ -804,7 +878,7 @@ dbcool_writereg(struct dbcool_chipset *dc, uint8_t reg, uint8_t val)
 	(void)iic_smbus_write_byte(dc->dc_tag, dc->dc_addr, reg, val, 0);
 
 	iic_release_bus(dc->dc_tag, 0);
-}       
+}
 
 static bool
 dbcool_islocked(struct dbcool_softc *sc)
@@ -1760,7 +1834,27 @@ dbcool_chip_ident(struct dbcool_chipset *dc)
 	c_id = dc->dc_readreg(dc, DBCOOL_COMPANYID_REG);
 	d_id = dc->dc_readreg(dc, DBCOOL_DEVICEID_REG);
 	r_id = dc->dc_readreg(dc, DBCOOL_REVISION_REG);
-    
+
+	/* The EMC6D103S only supports read_byte and since dc->dc_chip is
+	 * NULL when we call dc->dc_readreg above we use
+	 * send_byte/receive_byte which doesn't work.
+	 *
+	 * So if we only get 0's back then try again with dc->dc_chip
+	 * set to the EMC6D103S_DEVICEID and which doesn't have
+	 * DBCFLAG_NO_READBYTE set so read_byte will be used
+	 */
+	if ((c_id == 0) && (d_id == 0) && (r_id == 0)) {
+		for (i = 0; chip_table[i].company != 0; i++)
+			if ((SMSC_COMPANYID == chip_table[i].company) &&
+			    (EMC6D103S_DEVICEID == chip_table[i].device)) {
+				dc->dc_chip = &chip_table[i];
+				break;
+			}
+		c_id = dc->dc_readreg(dc, DBCOOL_COMPANYID_REG);
+ 		d_id = dc->dc_readreg(dc, DBCOOL_DEVICEID_REG);
+ 		r_id = dc->dc_readreg(dc, DBCOOL_REVISION_REG);
+	}
+ 
 	for (i = 0; chip_table[i].company != 0; i++)
 		if ((c_id == chip_table[i].company) &&
 		    (d_id == chip_table[i].device ||

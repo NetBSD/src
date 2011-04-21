@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.49.4.2 2011/03/05 20:53:44 rmind Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.49.4.3 2011/04/21 01:41:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.49.4.2 2011/03/05 20:53:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.49.4.3 2011/04/21 01:41:51 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.49.4.2 2011/03/05 20:53:44 rmind Exp $
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_stgereg.h>
+
+#include <prop/proplib.h>
 
 /* #define	STGE_CU_BUG			1 */
 #define	STGE_VLAN_UNTAG			1
@@ -379,6 +381,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	bus_dma_segment_t seg;
+	prop_data_t data;
 	int ioh_valid, memh_valid;
 	int i, rseg, error;
 	const struct stge_product *sp;
@@ -557,13 +560,27 @@ stge_attach(device_t parent, device_t self, void *aux)
 		    STGE_StationAddress2) >> 8;
 		sc->sc_stge1023 = 0;
 	} else {
-		uint16_t myaddr[ETHER_ADDR_LEN / 2];
-		for (i = 0; i <ETHER_ADDR_LEN / 2; i++) {
-			stge_read_eeprom(sc, STGE_EEPROM_StationAddress0 + i, 
-			    &myaddr[i]);
-			myaddr[i] = le16toh(myaddr[i]);
+		data = prop_dictionary_get(device_properties(self),
+		    "mac-address");
+		if (data != NULL) {
+			/*
+			 * Try to get the station address from device
+			 * properties first, in case the EEPROM is missing.
+			 */
+			KASSERT(prop_object_type(data) == PROP_TYPE_DATA);
+			KASSERT(prop_data_size(data) == ETHER_ADDR_LEN);
+			(void)memcpy(enaddr, prop_data_data_nocopy(data),
+			    ETHER_ADDR_LEN);
+		} else {
+			uint16_t myaddr[ETHER_ADDR_LEN / 2];
+			for (i = 0; i <ETHER_ADDR_LEN / 2; i++) {
+				stge_read_eeprom(sc, 
+				    STGE_EEPROM_StationAddress0 + i,
+				    &myaddr[i]);
+				myaddr[i] = le16toh(myaddr[i]);
+			}
+			(void)memcpy(enaddr, myaddr, sizeof(enaddr));
 		}
-		(void)memcpy(enaddr, myaddr, sizeof(enaddr));
 		sc->sc_stge1023 = 1;
 	}
 
@@ -737,7 +754,7 @@ stge_shutdown(device_t self, int howto)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	stge_stop(ifp, 1);
-
+	stge_reset(sc);
 	return true;
 }
 

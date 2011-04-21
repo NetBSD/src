@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.9 2009/03/14 14:45:54 dsl Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.9.4.1 2011/04/21 01:40:48 rmind Exp $	*/
 
 /* 
  * Mach Operating System
@@ -44,6 +44,13 @@ typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
+
+struct x86_64_frame {
+	struct x86_64_frame	*f_frame;
+	long			f_retaddr;
+	long			f_arg0;
+};
+
 #ifndef MULTIPROCESSOR
 extern db_regs_t ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
@@ -125,10 +132,12 @@ void		db_task_name(/* task_t */);
 
 int kdb_trap(int, int, db_regs_t *);
 
+#ifdef _KERNEL
 /*
  * We define some of our own commands
  */
 #define DB_MACHINE_COMMANDS
+#endif
 
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	64

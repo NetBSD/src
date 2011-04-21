@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.28.4.1 2011/03/05 20:51:41 rmind Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.28.4.2 2011/04/21 01:41:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28.4.1 2011/03/05 20:51:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28.4.2 2011/04/21 01:41:20 rmind Exp $");
 
 #include "opt_altivec.h"
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28.4.1 2011/03/05 20:51:41 rmi
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
-	struct trapframe * const tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 
 	memcpy(regs->fixreg, tf->tf_fixreg, sizeof(regs->fixreg));
 	regs->lr = tf->tf_lr;
@@ -67,7 +67,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
-	struct trapframe * const tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 
 	memcpy(tf->tf_fixreg, regs->fixreg, sizeof(regs->fixreg));
 	tf->tf_lr = regs->lr;
@@ -121,7 +121,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
 int
 process_set_pc(struct lwp *l, void *addr)
 {
-	struct trapframe * const tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 	
 	tf->tf_srr0 = (register_t)addr;
 
@@ -131,7 +131,7 @@ process_set_pc(struct lwp *l, void *addr)
 int
 process_sstep(struct lwp *l, int sstep)
 {
-	struct trapframe *tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 	
 	if (sstep)
 		tf->tf_srr1 |= PSL_SE;

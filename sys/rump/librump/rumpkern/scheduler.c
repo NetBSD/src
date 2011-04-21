@@ -1,7 +1,7 @@
-/*      $NetBSD: scheduler.c,v 1.9.6.2 2011/03/05 20:56:15 rmind Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.9.6.3 2011/04/21 01:42:17 rmind Exp $	*/
 
 /*
- * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.9.6.2 2011/03/05 20:56:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.9.6.3 2011/04/21 01:42:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>

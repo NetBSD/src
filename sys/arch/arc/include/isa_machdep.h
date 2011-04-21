@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.14 2009/08/19 15:09:56 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.14.4.1 2011/04/21 01:40:50 rmind Exp $	*/
 /*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*
@@ -45,7 +45,7 @@ typedef struct arc_isa_bus *isa_chipset_tag_t;
  */
 #define isa_outb(x,y)   outb(arc_bus_io.bs_vbase + (x)- arc_bus_io.bs_start, y)
 #define isa_inb(x)      inb(arc_bus_io.bs_vbase + (x) - arc_bus_io.bs_start)
- 
+
 struct arc_isa_bus {
         void    *ic_data;
 

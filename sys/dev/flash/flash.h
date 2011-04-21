@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.h,v 1.1.4.2 2011/03/05 20:53:09 rmind Exp $	*/
+/*	$NetBSD: flash.h,v 1.1.4.3 2011/04/21 01:41:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -73,9 +73,9 @@ device_t flash_get_device(dev_t);
  * @state: the erase operation's result
  */
 struct flash_erase_instruction {
-	flash_addr_t ei_addr;
-	flash_addr_t ei_len;
-	void (*ei_callback) (struct flash_erase_instruction *);
+	flash_off_t ei_addr;
+	flash_off_t ei_len;
+	void (*ei_callback)(struct flash_erase_instruction *);
 	u_long ei_priv;
 	u_char ei_state;
 };
@@ -86,8 +86,8 @@ enum {
 };
 
 struct flash_partition {
-	flash_addr_t part_offset;
-	flash_addr_t part_size;
+	flash_off_t part_offset;
+	flash_off_t part_size;
 	int part_flags;
 };
 
@@ -106,12 +106,12 @@ struct flash_partition {
  * @block_isbad: checks if a block is bad on flash
  */
 struct flash_interface {
-	int (*erase) (device_t, struct flash_erase_instruction *);
-	int (*read) (device_t, off_t, size_t, size_t *, uint8_t *);
-	int (*write) (device_t, off_t, size_t, size_t *, const uint8_t *);
-	int (*block_markbad)(device_t, uint64_t);
-	int (*block_isbad)(device_t, uint64_t);
-	int (*sync) (device_t);
+	int (*erase)(device_t, struct flash_erase_instruction *);
+	int (*read)(device_t, flash_off_t, size_t, size_t *, uint8_t *);
+	int (*write)(device_t, flash_off_t, size_t, size_t *, const uint8_t *);
+	int (*block_markbad)(device_t, flash_off_t);
+	int (*block_isbad)(device_t, flash_off_t, bool *);
+	int (*sync)(device_t);
 
 	int (*submit)(device_t, struct buf *);
 
@@ -119,7 +119,7 @@ struct flash_interface {
 	struct flash_partition partition;
 
 	/* total size of mtd */
-	flash_addr_t size;	 
+	flash_size_t size;	 
 	uint32_t page_size;
 	uint32_t erasesize;
 	uint32_t writesize;
@@ -132,16 +132,16 @@ struct flash_interface {
  */
 struct flash_cache {
 	size_t fc_len;
-	flash_addr_t fc_block;
+	flash_off_t fc_block;
 	uint8_t *fc_data;
 };
 
 /* flash operations should be used through these */
 int flash_erase(device_t, struct flash_erase_instruction *);
-int flash_read(device_t, off_t, size_t, size_t *, uint8_t *);
-int flash_write(device_t, off_t, size_t, size_t *, const uint8_t *);
-int flash_block_markbad(device_t, uint64_t);
-int flash_block_isbad(device_t, uint64_t);
+int flash_read(device_t, flash_off_t, size_t, size_t *, uint8_t *);
+int flash_write(device_t, flash_off_t, size_t, size_t *, const uint8_t *);
+int flash_block_markbad(device_t, flash_off_t);
+int flash_block_isbad(device_t, flash_off_t, bool *);
 int flash_sync(device_t);
 
 /*
@@ -159,7 +159,7 @@ check_pattern(const void *buf, uint8_t patt, size_t offset, size_t size)
 {
 	size_t i;
 	for (i = offset; i < size; i++) {
-		if (((const uint8_t *) buf)[i] != patt)
+		if (((const uint8_t *)buf)[i] != patt)
 			return 0;
 	}
 	return 1;

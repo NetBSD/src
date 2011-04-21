@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.42.4.1 2011/03/05 20:51:04 rmind Exp $	*/
+/*	$NetBSD: cache.c,v 1.42.4.2 2011/04/21 01:41:11 rmind Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.42.4.1 2011/03/05 20:51:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.42.4.2 2011/04/21 01:41:11 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.42.4.1 2011/03/05 20:51:04 rmind Exp $")
 #endif
 #endif
 
-#if defined(MIPS32) || defined(MIPS64)
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 #include <mips/mipsNN.h>		/* MIPS32/MIPS64 registers */
 #include <mips/cache_mipsNN.h>
 #endif
@@ -123,7 +123,7 @@ void	mips4_get_cache_config(int);
 static void mips_config_cache_prehistoric(void);
 static void mips_config_cache_emips(void);
 #endif
-#if defined(MIPS32) || defined(MIPS64)
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 static void mips_config_cache_modern(void);
 #endif
 
@@ -182,7 +182,7 @@ mips_config_cache(void)
 	else if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_MICROSOFT)
 		mips_config_cache_emips();
 #endif
-#if defined(MIPS32) || defined(MIPS64)
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	if (MIPS_PRID_CID(cpu_id) != MIPS_PRID_CID_PREHISTORIC)
 		mips_config_cache_modern();
 #endif
@@ -197,7 +197,7 @@ mips_config_cache(void)
 		if (!mco->mco_icache_sync_range_index)
 			panic("no icache_sync_range_index cache op");
 	}
-	if (mci->mci_pdcache_size || 1) {	/* XXX- must have primary Icache */
+	if (mci->mci_pdcache_size || 1) {	/* XXX- must have primary Dcache */
 		if (!mco->mco_pdcache_wbinv_all)
 			panic("no pdcache_wbinv_all");
 		if (!mco->mco_pdcache_wbinv_range)
@@ -1005,9 +1005,9 @@ mips4_get_cache_config(int csizebase)
 #endif /* MIPS3 || MIPS4 */
 #endif /* MIPS1 || MIPS3 || MIPS4 */
 
-#if defined(MIPS32) || defined(MIPS64)
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 
-static void cache_noop(void) __attribute__((__unused__));
+static void cache_noop(void) __unused;
 static void cache_noop(void) {}
 
 static void
@@ -1222,4 +1222,4 @@ mips_config_cache_modern(void)
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 	}
 }
-#endif /* MIPS32 || MIPS64 */
+#endif /* MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 > 0 */

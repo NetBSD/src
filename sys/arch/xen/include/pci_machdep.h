@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.17 2010/03/14 20:19:06 dyoung Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.17.2.1 2011/04/21 01:41:33 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -68,13 +68,15 @@ typedef struct xen_intr_handle pci_intr_handle_t;
 
 #ifndef DOM0OPS
 int		xpci_enumerate_bus(struct pci_softc *, const int *,
-		   int (*)(struct pci_attach_args *), struct pci_attach_args *);
+		   int (*)(const struct pci_attach_args *),
+		   struct pci_attach_args *);
 #define PCI_MACHDEP_ENUMERATE_BUS xpci_enumerate_bus
 #endif
 
 /* functions provided to MI PCI */
 
 int		xen_pci_enumerate_bus(struct pci_softc *, const int *,
-		   int (*)(struct pci_attach_args *), struct pci_attach_args *);
+		   int (*)(const struct pci_attach_args *),
+		   struct pci_attach_args *);
 
 #endif /* _XEN_PCI_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.124.4.1 2011/03/05 20:55:21 rmind Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.124.4.2 2011/04/21 01:42:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.124.4.1 2011/03/05 20:55:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.124.4.2 2011/04/21 01:42:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,20 +522,17 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 	} */
 	struct file	*fp;
 	proc_t		*p;
-	struct filedesc	*fdp;
 	u_long		com;
 	int		error;
 	size_t		size, alloc_size;
 	void 		*data, *memp;
 #define	STK_PARAMS	128
 	u_long		stkbuf[STK_PARAMS/sizeof(u_long)];
-	fdfile_t	*ff;
 
 	memp = NULL;
 	alloc_size = 0;
 	error = 0;
 	p = l->l_proc;
-	fdp = p->p_fd;
 
 	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
 		return (EBADF);
@@ -546,15 +543,10 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 		goto out;
 	}
 
-	ff = fdp->fd_dt->dt_ff[SCARG(uap, fd)];
 	switch (com = SCARG(uap, com)) {
 	case FIONCLEX:
-		ff->ff_exclose = false;
-		goto out;
-
 	case FIOCLEX:
-		ff->ff_exclose = true;
-		fdp->fd_exclose = true;
+		fd_set_exclose(l, SCARG(uap, fd), com == FIOCLEX);
 		goto out;
 	}
 

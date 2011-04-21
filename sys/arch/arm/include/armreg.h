@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.41.16.2 2011/03/05 20:49:35 rmind Exp $	*/
+/*	$NetBSD: armreg.h,v 1.41.16.3 2011/04/21 01:40:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -196,6 +196,7 @@
 #define CPU_ID_ARM1020E		0x4115a200 /* (AKA arm10 rev 1) */
 #define CPU_ID_ARM1022ES	0x4105a220
 #define CPU_ID_ARM1026EJS	0x4106a260
+#define CPU_ID_ARM11MPCORE	0x410fb020
 #define CPU_ID_ARM1136JS	0x4107b360
 #define CPU_ID_ARM1136JSR1	0x4117b360
 #define CPU_ID_ARM1176JS	0x410fb760
@@ -299,6 +300,12 @@
 #define CPU_CONTROL_FI_ENABLE	0x00200000 /* FI: Low interrupt latency */
 #define CPU_CONTROL_UNAL_ENABLE	0x00400000 /* U: unaligned data access */
 #define CPU_CONTROL_XP_ENABLE	0x00800000 /* XP: extended page table */
+#define	CPU_CONTROL_V_ENABLE	0x01000000 /* VE: Interrupt vectors enable */
+#define	CPU_CONTROL_EX_BEND	0x02000000 /* EE: exception endianness */
+#define	CPU_CONTROL_NMFI	0x08000000 /* NMFI: Non maskable FIQ */
+#define	CPU_CONTROL_TR_ENABLE	0x10000000 /* TRE: */
+#define	CPU_CONTROL_AF_ENABLE	0x20000000 /* AFE: Access flag enable */
+#define	CPU_CONTROL_TE_ENABLE	0x40000000 /* TE: Thumb Exception enable */
 
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
 
@@ -317,6 +324,14 @@
 #define	XSCALE_AUXCTL_MD_WB_RWA	0x00000010 /* mini-D$ wb, read/write-allocate */
 #define	XSCALE_AUXCTL_MD_WT	0x00000020 /* mini-D$ wt, read-allocate */
 #define	XSCALE_AUXCTL_MD_MASK	0x00000030
+
+/* ARM11 MPCore Auxillary Control Register (CP15 register 1, opcode2 1) */
+#define	MPCORE_AUXCTL_RS	0x00000001 /* return stack */
+#define	MPCORE_AUXCTL_DB	0x00000002 /* dynamic branch prediction */
+#define	MPCORE_AUXCTL_SB	0x00000004 /* static branch prediction */
+#define	MPCORE_AUXCTL_F 	0x00000008 /* instruction folding enable */
+#define	MPCORE_AUXCTL_EX	0x00000010 /* exclusive L1/L2 cache */
+#define	MPCORE_AUXCTL_SA	0x00000020 /* SMP/AMP */
 
 /* Marvell Feroceon Extra Features Register (CP15 register 1, opcode2 0) */
 #define FC_DCACHE_REPL_LOCK	0x80000000 /* Replace DCache Lock */

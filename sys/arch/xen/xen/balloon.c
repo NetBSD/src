@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.6.6.2 2011/03/05 20:52:34 rmind Exp $ */
+/* $NetBSD: balloon.c,v 1.6.6.3 2011/04/21 01:41:34 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,40 +31,59 @@
  */
 
 /*
- * The Xen balloon driver enables growing and shrinking PV
- * domains on the fly, by allocating and freeing memory directly.
+ * The Xen balloon driver enables growing and shrinking PV domains
+ * memory on the fly, by allocating and freeing memory pages directly.
+ * This management needs domain cooperation to work properly, especially
+ * during balloon_inflate() operation where a domain gives back memory to
+ * the hypervisor.
+ *
+ * Shrinking memory on a live system is a difficult task, and may render
+ * it unstable or lead to crash. The driver takes a conservative approach
+ * there by doing memory operations in smal steps of a few MiB each time. It
+ * will also refuse to decrease reservation below a certain threshold
+ * (XEN_RESERVATION_MIN), so as to avoid a complete kernel memory exhaustion.
+ *
+ * The user can intervene at two different levels to manage the ballooning
+ * of a domain:
+ * - directly within the domain using a sysctl(9) interface.
+ * - through the Xentools, by modifying the memory/target entry associated
+ *   to a domain. This is usually done in dom0.
+ *
+ * Modification of the reservation is signaled by writing inside the 
+ * memory/target node in Xenstore. Writing new values will fire the xenbus
+ * watcher, and wakeup the balloon thread to inflate or deflate balloon.
+ *
+ * Both sysctl(9) nodes and memory/target entry assume that the values passed
+ * to them are in KiB. Internally, the driver will convert this value in
+ * pages (assuming a page is PAGE_SIZE bytes), and issue the correct hypercalls
+ * to decrease/increase domain's reservation accordingly.
+ *
+ * XXX Pages used by balloon are tracked through entries stored in a SLIST.
+ * This allows driver to conveniently add/remove wired pages from memory
+ * without the need to support these "memory gaps" inside uvm(9). Still, the
+ * driver does not currently "plug" new pages into uvm(9) when more memory
+ * is available than originally managed by balloon. For example, deflating
+ * balloon with a total number of pages above physmem is not supported for
+ * now. See balloon_deflate() for more details.
+ *
  */
 
-#define BALLOONDEBUG 1
-
-/*
- * sysctl TODOs:
- * xen.balloon
- * xen.balloon.current: DONE
- * xen.balloon.target: DONE
- * xen.balloon.low-balloon: In Progress
- * xen.balloon.high-balloon: In Progress
- * xen.balloon.limit: XXX
- *
- * sysctl labels = { 'current'      : 'Current allocation',
- *           'target'       : 'Requested target',
- *           'low-balloon'  : 'Low-mem balloon',
- *           'high-balloon' : 'High-mem balloon',
- *           'limit'        : 'Xen hard limit' }
- *
- */
+#define BALLOONDEBUG 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.6.6.2 2011/03/05 20:52:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.6.6.3 2011/04/21 01:41:34 rmind Exp $");
 
 #include <sys/inttypes.h>
+#include <sys/device.h>
 #include <sys/param.h>
 
+#include <sys/atomic.h>
 #include <sys/condvar.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/mutex.h>
+#include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>
 
@@ -76,68 +95,178 @@ __KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.6.6.2 2011/03/05 20:52:34 rmind Exp $"
 #include <uvm/uvm.h>
 #include <xen/xenpmap.h>
 
-#define BALLOONINTERVALMS 100 /* milliseconds */
+#include "locators.h"
 
-#define BALLOON_DELTA 1024 /* The maximum increments allowed in a
-			    * single call of balloon_inflate() or
-			    * balloon_deflate
-			    */
-#define BALLOON_RETRIES 4  /* Number of time every (in|de)flate of
-			    * BALLOON_DELTA or less, occurs
-			    */
+/*
+ * Number of MFNs stored in the array passed back and forth between domain
+ * and balloon/hypervisor, during balloon_inflate() / balloon_deflate(). These
+ * should fit in a page, for performance reasons.
+ */
+#define BALLOON_DELTA (PAGE_SIZE / sizeof(xen_pfn_t))
 
-/* XXX: fix limits */
-#define BALLOON_BALLAST 256 /* In pages */
+/*
+ * Safeguard value. Refuse to go below this threshold, so that domain
+ * can keep some free pages for its own use. Value is arbitrary, and may
+ * evolve with time.
+ */
+#define BALLOON_BALLAST 256 /* In pages - 1MiB */
 #define XEN_RESERVATION_MIN (uvmexp.freemin + BALLOON_BALLAST) /* In pages */
-#define XEN_RESERVATION_MAX nkmempages /* In pages */
 
 /* KB <-> PAGEs */
-#define BALLOON_PAGES_TO_KB(_pg) (_pg * PAGE_SIZE / 1024)
-#define BALLOON_KB_TO_PAGES(_kb) (_kb * 1024 / PAGE_SIZE)
-#define BALLOON_PAGE_FLOOR(_kb) (_kb & PAGE_MASK)
+#define PAGE_SIZE_KB (PAGE_SIZE >> 10) /* page size in KB */
+#define BALLOON_PAGES_TO_KB(_pg) ((uint64_t)_pg * PAGE_SIZE_KB)
+#define BALLOON_KB_TO_PAGES(_kb) (roundup(_kb, PAGE_SIZE_KB) / PAGE_SIZE_KB)
 
-/* Forward declaration */
-static void xenbus_balloon_watcher(struct xenbus_watch *, const char **,
-				   unsigned int);
-
+/*
+ * A balloon page entry. Needed to track pages put/reclaimed from balloon
+ */
 struct balloon_page_entry {
 	struct vm_page *pg;
 	SLIST_ENTRY(balloon_page_entry) entry;
 };
 
-static struct balloon_conf {
-	kmutex_t flaglock; /* Protects condvar (below) */
-	kcondvar_t cv_memchanged; /* Notifier flag for target (below) */
+struct balloon_xenbus_softc {
+	device_t sc_dev;
+	struct sysctllog *sc_log;
 
-	kmutex_t tgtlock; /* Spin lock, protects .target, below */
-	size_t target; /* Target VM reservation size, in pages. */
+	kmutex_t balloon_mtx;   /* Protects condvar and target (below) */
+	kcondvar_t balloon_cv;  /* Condvar variable for target (below) */
+	size_t balloon_target;  /* Target domain reservation size in pages. */
+	xen_pfn_t *sc_mfn_list; /* List of MFNs passed from/to balloon */
 
-	/* The following are not protected by above locks */
+	pool_cache_t bpge_pool; /* pool cache for balloon page entries */
+	/* linked list for tracking pages used by balloon */
 	SLIST_HEAD(, balloon_page_entry) balloon_page_entries;
 	size_t balloon_num_page_entries;
 
-	/* Balloon limits */
-	size_t xen_res_min;
-	size_t xen_res_max;
-} balloon_conf;
-
-static struct xenbus_watch xenbus_balloon_watch = {
-	.node = __UNCONST("memory/target"),
-	.xbw_callback = xenbus_balloon_watcher,
+	/* Minimum amount of memory reserved by domain, in KiB */
+	uint64_t balloon_res_min;
 };
 
-static uint64_t sysctl_current;
-static uint64_t sysctl_target;
+static size_t xenmem_get_currentreservation(void);
+static size_t xenmem_get_maxreservation(void);
 
-/* List of MFNs for inflating/deflating balloon */
-static xen_pfn_t *mfn_lista;
+static int  bpge_ctor(void *, void *, int);
+static void bpge_dtor(void *, void *);
 
-/* Returns zero, on error */
+static void   balloon_thread(void *);
+static size_t balloon_deflate(struct balloon_xenbus_softc*, size_t);
+static size_t balloon_inflate(struct balloon_xenbus_softc*, size_t);
+
+static void sysctl_kern_xen_balloon_setup(struct balloon_xenbus_softc *);
+static void balloon_xenbus_watcher(struct xenbus_watch *, const char **,
+				   unsigned int);
+
+static int  balloon_xenbus_match(device_t, cfdata_t, void *);
+static void balloon_xenbus_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(balloon, sizeof(struct balloon_xenbus_softc),
+    balloon_xenbus_match, balloon_xenbus_attach, NULL, NULL);
+
+static struct xenbus_watch balloon_xenbus_watch = {
+	.node = __UNCONST("memory/target"),
+	.xbw_callback = balloon_xenbus_watcher,
+};
+
+static struct balloon_xenbus_softc *balloon_sc;
+
+static int
+balloon_xenbus_match(device_t parent, cfdata_t match, void *aux)
+{
+	struct xenbusdev_attach_args *xa = aux;
+
+	if (strcmp(xa->xa_type, "balloon") != 0)
+		return 0;
+
+	if (match->cf_loc[XENBUSCF_ID] != XENBUSCF_ID_DEFAULT &&
+	    match->cf_loc[XENBUSCF_ID] != xa->xa_id)
+		return 0;
+
+	return 1;
+}
+
+static void
+balloon_xenbus_attach(device_t parent, device_t self, void *aux)
+{
+	xen_pfn_t *mfn_list;
+	size_t currentpages;
+	struct balloon_xenbus_softc *sc = balloon_sc = device_private(self);
+
+	aprint_normal(": Xen Balloon driver\n");
+	sc->sc_dev = self;
+
+	/* Initialize target mutex and condvar */
+	mutex_init(&sc->balloon_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->balloon_cv, "xen_balloon");
+
+	SLIST_INIT(&sc->balloon_page_entries);
+	sc->balloon_num_page_entries = 0;
+
+	/* Get current number of pages */
+	currentpages = xenmem_get_currentreservation();
+
+	KASSERT(currentpages > 0);
+
+	/* Update initial target value - no need to lock for initialization */
+	sc->balloon_target = currentpages;
+
+	/* Set the values used by sysctl */
+	sc->balloon_res_min =
+	    BALLOON_PAGES_TO_KB(XEN_RESERVATION_MIN);
+
+	aprint_normal_dev(self, "current reservation: %"PRIu64" KiB\n",
+	    BALLOON_PAGES_TO_KB(currentpages));
+#if BALLOONDEBUG
+	aprint_normal_dev(self, "min reservation: %"PRIu64" KiB\n",
+	    sc->balloon_res_min);
+	aprint_normal_dev(self, "max reservation: %"PRIu64" KiB\n",
+	    BALLOON_PAGES_TO_KB(xenmem_get_maxreservation()));
+#endif
+
+	sc->bpge_pool = pool_cache_init(sizeof(struct balloon_page_entry),
+	    0, 0, 0, "xen_bpge", NULL, IPL_NONE, bpge_ctor, bpge_dtor, NULL);
+
+	sysctl_kern_xen_balloon_setup(sc);
+
+	/* List of MFNs passed from/to balloon for inflating/deflating */
+	mfn_list = kmem_alloc(BALLOON_DELTA * sizeof(*mfn_list), KM_SLEEP);
+	sc->sc_mfn_list = mfn_list;
+
+	/* Setup xenbus node watch callback */
+	if (register_xenbus_watch(&balloon_xenbus_watch)) {
+		aprint_error_dev(self, "unable to watch memory/target\n");
+		goto error;
+	}
+
+	/* Setup kernel thread to asynchronously (in/de)-flate the balloon */
+	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, balloon_thread,
+	    sc, NULL, "xen_balloon")) {
+		aprint_error_dev(self, "unable to create balloon thread\n");
+		unregister_xenbus_watch(&balloon_xenbus_watch);
+		goto error;
+	}
+
+	return;
+
+error:
+	sysctl_teardown(&sc->sc_log);
+	cv_destroy(&sc->balloon_cv);
+	mutex_destroy(&sc->balloon_mtx);
+	return;
+
+}
+
+/*
+ * Returns maximum memory reservation available to current domain. In Xen
+ * with DOMID_SELF, this hypercall never fails: return value should be
+ * interpreted as unsigned.
+ * 
+ */
 static size_t
 xenmem_get_maxreservation(void)
 {
-#if 0   /* XXX: Fix this call */
-	int s, ret;
+	int s;
+	unsigned int ret;
 
 	s = splvm();
 	ret = HYPERVISOR_memory_op(XENMEM_maximum_reservation, 
@@ -145,18 +274,15 @@ xenmem_get_maxreservation(void)
 
 	splx(s);
 
-	if (ret < 0) {
-		panic("Could not obtain hypervisor max reservation for VM\n");
-		return 0;
+	if (ret == 0) {
+		/* well, a maximum reservation of 0 is really bogus */
+		panic("%s failed, maximum reservation returned 0", __func__);
 	}
 
 	return ret;
-#else
-	return nkmempages;
-#endif
 }
 
-/* Returns zero, on error */
+/* Returns current reservation, in pages */
 static size_t
 xenmem_get_currentreservation(void)
 {
@@ -168,216 +294,148 @@ xenmem_get_currentreservation(void)
 	splx(s);
 
 	if (ret < 0) {
-		panic("Could not obtain hypervisor current "
-		    "reservation for VM\n");
-		return 0;
+		panic("%s failed: %d", __func__, ret);
 	}
 
 	return ret;
 }
 
-/* 
- * The target value is managed in 3 variables:
- * a) Incoming xenbus copy, maintained by the hypervisor.
- * b) sysctl_target: This is an incoming target value via the
- *    sysctl(9) interface.
- * c) balloon_conf.target
- *    This is the canonical current target that the driver tries to
- *    attain.
- *
+/*
+ * Get value (in KiB) of memory/target in XenStore for current domain
+ * A return value of 0 can be considered as bogus.
  */
-
-
-static size_t
-xenbus_balloon_read_target(void)
+static unsigned long long
+balloon_xenbus_read_target(void)
 {
 	unsigned long long new_target;
 
 	if (0 != xenbus_read_ull(NULL, "memory", "target", &new_target, 0)) {
-		printf("error, couldn't read xenbus target node\n");
+		device_printf(balloon_sc->sc_dev,
+		    "error, couldn't read xenbus target node\n");
 		return 0;
 	}
-
-	/* Returned in KB */
 
 	return new_target;
 }
 
+/* Set memory/target value (in KiB) in XenStore for current domain */
 static void
-xenbus_balloon_write_target(unsigned long long new_target)
+balloon_xenbus_write_target(unsigned long long new_target)
 {
-
-	/* new_target is in KB */
 	if (0 != xenbus_printf(NULL, "memory", "target", "%llu", new_target)) {
-		printf("error, couldn't write xenbus target node\n");
+		device_printf(balloon_sc->sc_dev,
+		    "error, couldn't write xenbus target node\n");
 	}
 
 	return;
 }
 
-static size_t
-balloon_get_target(void)
+static int
+bpge_ctor(void *arg, void *obj, int flags)
 {
-	size_t target;
+	struct balloon_page_entry *bpge = obj;
 
-	mutex_spin_enter(&balloon_conf.tgtlock);
-	target = balloon_conf.target;
-	mutex_spin_exit(&balloon_conf.tgtlock);
+	bpge->pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
+	if (bpge->pg == NULL)
+		return ENOMEM;
 
-	return target;
+	return 0;
 
 }
 
 static void
-balloon_set_target(size_t target)
+bpge_dtor(void *arg, void *obj)
 {
+	struct balloon_page_entry *bpge = obj;
 
-	mutex_spin_enter(&balloon_conf.tgtlock);
-	balloon_conf.target = target;
-	mutex_spin_exit(&balloon_conf.tgtlock);
-
-	return;
-
+	uvm_pagefree(bpge->pg);
 }
 
 /*
- * This is the special case where, due to the driver not reaching
- * current balloon_conf.target, a new value is internally calculated
- * and fed back to both the sysctl and the xenbus interfaces,
- * described above.
+ * Inflate balloon. Pages are moved out of domain's memory towards balloon.
  */
-static void
-balloon_feedback_target(size_t newtarget)
-{
-	/* Notify XenStore. */
-	xenbus_balloon_write_target(BALLOON_PAGES_TO_KB(newtarget));
-	/* Update sysctl value XXX: Locking ? */
-	sysctl_target = BALLOON_PAGES_TO_KB(newtarget);
-
-	/* Finally update our private copy */
-	balloon_set_target(newtarget);
-}
-
-
-/* Number of pages currently used up by balloon */
 static size_t
-balloon_reserve(void)
+balloon_inflate(struct balloon_xenbus_softc *sc, size_t tpages)
 {
-	return balloon_conf.balloon_num_page_entries;
-}
-
-static size_t
-reserve_pages(size_t npages, xen_pfn_t *mfn_list)
-{
-
-	int s;
-
-	struct vm_page *pg;
-	struct balloon_page_entry *bpg_entry;
-	size_t rpages;
+	int rpages, s, ret;
 	paddr_t pa;
+	struct balloon_page_entry *bpg_entry;
+	xen_pfn_t *mfn_list = sc->sc_mfn_list;
 
-	for (rpages = 0; rpages < npages; rpages++) {
-		
-		pg = uvm_pagealloc(NULL, 0, NULL,
-				   UVM_PGA_ZERO);
+	struct xen_memory_reservation reservation = {
+		.address_bits = 0,
+		.extent_order = 0,
+		.domid        = DOMID_SELF
+	};
 
-		if (pg == NULL) {
+	KASSERT(tpages > 0);
+	KASSERT(tpages <= BALLOON_DELTA);
+	
+	memset(mfn_list, 0, BALLOON_DELTA * sizeof(*mfn_list));
+
+	/* allocate pages that will be given to Hypervisor */
+	for (rpages = 0; rpages < tpages; rpages++) {
+
+		bpg_entry = pool_cache_get(sc->bpge_pool, PR_WAITOK);
+		if (bpg_entry == NULL) {
+			/* failed reserving a page for balloon */
 			break;
 		}
 
-		pa = VM_PAGE_TO_PHYS(pg);
-		
+		pa = VM_PAGE_TO_PHYS(bpg_entry->pg);
+
 		mfn_list[rpages] = xpmap_ptom(pa) >> PAGE_SHIFT;
 
 		s = splvm();
 
 		/* Invalidate pg */
 		xpmap_phys_to_machine_mapping[
-			(pa - XPMAP_OFFSET) >>	PAGE_SHIFT
+			(pa - XPMAP_OFFSET) >> PAGE_SHIFT
 			] = INVALID_P2M_ENTRY;
 
 		splx(s);
 
-		/* Save mfn */
-		/* 
-		 * XXX: We don't keep a copy, but just save a pointer
-		 * to the uvm pg handle. Is this ok ?
-		 */
-
-		bpg_entry = kmem_alloc(sizeof *bpg_entry, KM_SLEEP);
-
-		if (bpg_entry == NULL) {
-			uvm_pagefree(pg);
-			break;
-		}
-
-		bpg_entry->pg = pg;
-
-		SLIST_INSERT_HEAD(&balloon_conf.balloon_page_entries, 
+		SLIST_INSERT_HEAD(&balloon_sc->balloon_page_entries, 
 				  bpg_entry, entry);
-		balloon_conf.balloon_num_page_entries++;
+		balloon_sc->balloon_num_page_entries++;
 	}
 
+	/* Hand over pages to Hypervisor */
+	xenguest_handle(reservation.extent_start) = mfn_list;
+	reservation.nr_extents = rpages;
+
+	s = splvm();
+	ret = HYPERVISOR_memory_op(XENMEM_decrease_reservation,
+				   &reservation);
+	splx(s);
+
+	if (ret != rpages) {
+		/*
+		 * we are in bad shape: the operation failed for certain
+		 * MFNs. As the API does not allow us to know which frame
+		 * numbers were erroneous, we cannot really recover safely.
+		 */
+		panic("%s: decrease reservation failed: was %d, "
+		    "returned %d", device_xname(sc->sc_dev), rpages, ret);
+	}
+
+#if BALLOONDEBUG
+	device_printf(sc->sc_dev, "inflate %zu => inflated by %d\n",
+	    tpages, rpages);
+#endif
 	return rpages;
 }
 
+/*
+ * Deflate balloon. Pages are given back to domain's memory.
+ */
 static size_t
-unreserve_pages(size_t ret, xen_pfn_t *mfn_list)
+balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 {
-
-	int s;
-	size_t npages;
+	int rpages, s, ret; 
 	paddr_t pa;
-	struct vm_page *pg;
 	struct balloon_page_entry *bpg_entry;
-		
-	for (npages = 0; npages < ret; npages++) {
-
-		if (SLIST_EMPTY(&balloon_conf.balloon_page_entries)) {
-			/*
-			 * XXX: This is the case where extra "hot-plug"
-			 * mem w.r.t boot comes in 
-			 */
-			printf("Balloon is empty. can't be collapsed further!");
-			break;
-		}
-
-		bpg_entry = SLIST_FIRST(&balloon_conf.balloon_page_entries);
-		SLIST_REMOVE_HEAD(&balloon_conf.balloon_page_entries, entry);
-		balloon_conf.balloon_num_page_entries--;
-
-		pg = bpg_entry->pg;
-
-		kmem_free(bpg_entry, sizeof *bpg_entry);
-
-		s = splvm();
-
-		/* Update P->M */
-		pa = VM_PAGE_TO_PHYS(pg);
-		xpmap_phys_to_machine_mapping[
-		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn_list[npages];
-
-		xpq_queue_machphys_update(
-		    ((paddr_t) (mfn_list[npages])) << PAGE_SHIFT, pa);
-
-		xpq_flush_queue();
-
-		/* Free it to UVM */
-		uvm_pagefree(pg);
-
-		splx(s);
-	}
-
-	return npages;
-}
-
-static void
-balloon_inflate(size_t tpages)
-{
-
-	int s, ret;
-	size_t npages, respgcnt;
+	xen_pfn_t *mfn_list = sc->sc_mfn_list;
 
 	struct xen_memory_reservation reservation = {
 		.address_bits = 0,
@@ -385,485 +443,331 @@ balloon_inflate(size_t tpages)
 		.domid        = DOMID_SELF
 	};
 
-
-	npages = xenmem_get_currentreservation();
-	KASSERT (npages > tpages);
-	npages -= tpages;
-
-
-	KASSERT(npages > 0);
-	KASSERT(npages <= BALLOON_DELTA);
-
-	memset(mfn_lista, 0, BALLOON_DELTA * sizeof *mfn_lista);
-
-	/* 
-	 * There's a risk that npages might overflow ret. 
-	 * Do this is smaller steps then.
-	 * See: HYPERVISOR_memory_op(...) below....
-	 */
-
-	if (npages > XEN_RESERVATION_MAX) {
-		return;
-	}
-
-	respgcnt = reserve_pages(npages, mfn_lista);
-
-	if (respgcnt == 0) {
-		return;
-	}
-	/* Hand over pages to Hypervisor */
-	xenguest_handle(reservation.extent_start) = mfn_lista;
-	reservation.nr_extents = respgcnt;
-
-	s = splvm();
-	ret = HYPERVISOR_memory_op(XENMEM_decrease_reservation, &reservation);
-	splx(s);
-
-	if (ret > 0 && ret != respgcnt) {
-#if BALLOONDEBUG
-		printf("decrease reservation incomplete\n");
-#endif
-		/* Unroll loop and release page frames back to the OS. */
-		KASSERT(respgcnt > ret);
-		if ((respgcnt - ret) !=
-		    unreserve_pages(respgcnt - ret, mfn_lista + ret)) {
-			panic("Could not unreserve balloon pages in "
-			    "inflate incomplete path!");
-		}
-
-		return;
-	}
-
-#if BALLOONDEBUG
-	printf("inflated by %d\n", ret);
-#endif
-	return;
-}
-
-static void
-balloon_deflate(size_t tpages)
-{
-
-	int s, ret; 
-	size_t npages, pgmax, pgcur;
-
-	struct xen_memory_reservation reservation = {
-		.address_bits = 0,
-		.extent_order = 0,
-		.domid        = DOMID_SELF
-	};
-
-
-	/* 
-	 * Trim npages, if it has exceeded the hard limit 
-	 */
- 	pgmax = xenmem_get_maxreservation();
-
-	KASSERT(pgmax > 0);
-
-	pgcur = xenmem_get_currentreservation();
-
-	KASSERT(pgcur > 0);
-
-	pgmax -= pgcur;
-
-	KASSERT(tpages > pgcur);
-	npages = tpages - pgcur;
-
-	/* 
-	 * There's a risk that npages might overflow ret. 
-	 * Do this in smaller steps then.
-	 * See: HYPERVISOR_memory_op(...) below....
-	 */
-
-	KASSERT(npages > 0);
-	KASSERT(npages <= BALLOON_DELTA);
+	KASSERT(tpages > 0);
+	KASSERT(tpages <= BALLOON_DELTA);
 	
-	memset(mfn_lista, 0, BALLOON_DELTA * sizeof *mfn_lista);
-
-	if (npages > XEN_RESERVATION_MAX) {
-		return;
-	}
-
- 	if (npages > pgmax) {
-		return;
- 	}
+	memset(mfn_list, 0, BALLOON_DELTA * sizeof(*mfn_list));
 
 	/* 
-	 * Check to see if we're deflating beyond empty. 
-	 * This is currently unsupported. XXX: See if we can
-	 * "hot-plug" these extra pages into uvm(9)
+	 * If the list is empty, we are deflating balloon beyond empty. This
+	 * is currently unsupported as this would require to dynamically add
+	 * new memory pages inside uvm(9) and instruct pmap(9) on how to
+	 * handle them. For now, we clip reservation up to the point we
+	 * can manage them, eg. the remaining bpg entries in the SLIST.
+	 * XXX find a way to hotplug memory through uvm(9)/pmap(9).
 	 */
-	   
-	if (npages > balloon_reserve()) {
-		npages = balloon_reserve();
-
-#if BALLOONDEBUG
-		printf("\"hot-plug\" memory unsupported - clipping "
-		    "reservation to %zd pages.\n", pgcur + npages);
-#endif
-		if (!npages) { /* Nothing to do */
-			return;
-		}
+	if (tpages > sc->balloon_num_page_entries) {
+		device_printf(sc->sc_dev,
+		    "memory 'hot-plug' unsupported - clipping "
+		    "reservation %zu => %zu pages.\n",
+		    tpages, sc->balloon_num_page_entries);
+		tpages = sc->balloon_num_page_entries;
 	}
 
-	xenguest_handle(reservation.extent_start) = mfn_lista;
-	reservation.nr_extents = npages;
+	/* reclaim pages from balloon */
+	xenguest_handle(reservation.extent_start) = mfn_list;
+	reservation.nr_extents = tpages;
 
 	s = splvm();
 	ret = HYPERVISOR_memory_op(XENMEM_increase_reservation, &reservation);
 	splx(s);
 
-	if (ret <= 0) {
-		printf("%s: Increase reservation failed.\n",
-			__FILE__);
-
-		return;
+	if (ret < 0) {
+		panic("%s: increase reservation failed, ret %d",
+		    device_xname(sc->sc_dev), ret);
 	}
 
-	npages = unreserve_pages(ret, mfn_lista);
+	if (ret != tpages) {
+		device_printf(sc->sc_dev,
+		    "increase reservation incomplete: was %zu, "
+		    "returned %d\n", tpages, ret);
+	}
 
-#if BALLOONDEBUG
-	printf("deflated by %zu\n", npages);
+	/* plug pages back into memory through bpge entries */
+	for (rpages = 0; rpages < ret; rpages++) {
+
+#ifdef noyet
+		if (sc->balloon_num_page_entries == 0) {
+			/*
+			 * XXX This is the case where extra "hot-plug"
+			 * mem w.r.t boot comes in 
+			 */
+			device_printf(sc->sc_dev,
+			    "List empty. Cannot be collapsed further!\n");
+			break;
+		}
 #endif
 
-	return;
+		bpg_entry = SLIST_FIRST(&balloon_sc->balloon_page_entries);
+		SLIST_REMOVE_HEAD(&balloon_sc->balloon_page_entries, entry);
+		balloon_sc->balloon_num_page_entries--;
 
+		/* Update P->M */
+		pa = VM_PAGE_TO_PHYS(bpg_entry->pg);
+
+		s = splvm();
+
+		xpmap_phys_to_machine_mapping[
+		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn_list[rpages];
+
+		xpq_queue_machphys_update(
+		    ((paddr_t) (mfn_list[rpages])) << PAGE_SHIFT, pa);
+
+		splx(s);
+
+		pool_cache_put(sc->bpge_pool, bpg_entry);
+	}
+
+	xpq_flush_queue();
+
+#if BALLOONDEBUG
+	device_printf(sc->sc_dev, "deflate %zu => deflated by %d\n",
+	    tpages, rpages);
+#endif
+	return rpages;
 }
 
 /*
- * Synchronous call that resizes reservation
+ * The balloon thread is responsible for handling inflate/deflate balloon
+ * requests for the current domain given the new "target" value.
  */
 static void
-balloon_resize(size_t targetpages)
+balloon_thread(void *cookie)
 {
-
-	size_t currentpages;
-
-	/* Get current number of pages */
-	currentpages = xenmem_get_currentreservation();
-
-	KASSERT(currentpages > 0);
-
-	if (targetpages == currentpages) {
-		return;
-	}
-
-#if BALLOONDEBUG
-	printf("Current pages == %zu\n", currentpages);
-#endif
-
-	/* Increase or decrease, accordingly */
-	if (targetpages > currentpages) {
-		balloon_deflate(targetpages);
-	} else {
-		balloon_inflate(targetpages);
-	}
-
-	return;
-}
-
-static void
-balloon_thread(void *ignore)
-{
-
-	int i = 0, deltachunk = 0, pollticks;
-	size_t current, tgtcache;
-	ssize_t delta = 0; /* The balloon increment size */
-
-	pollticks = mstohz(BALLOONINTERVALMS);
-
-	/* 
-	 * Get target. This will ensure that the wait loop (below)
-	 * won't break out until the target is set properly for the
-	 * first time. The value of targetinprogress is probably
-	 * rubbish.
-	 */
+	int ret;
+	size_t current, diff, target;
+	struct balloon_xenbus_softc *sc = cookie;
 
 	for/*ever*/ (;;) {
-
-		mutex_enter(&balloon_conf.flaglock);
-
-		while (!(delta = balloon_get_target() - 
-			 (current = xenmem_get_currentreservation()))) {
-
-			if (EWOULDBLOCK == 
-			    cv_timedwait(&balloon_conf.cv_memchanged,
-					 &balloon_conf.flaglock, 
-					 pollticks)) {
-				/*
-				 * Get a bit more lethargic. Rollover
-				 * is ok.
-				 */
-				pollticks += mstohz(BALLOONINTERVALMS);
-
-			} else { /* activity! Poll fast! */
-				pollticks = mstohz(BALLOONINTERVALMS);
-			}
-		}
-
-		KASSERT(delta <= INT_MAX && delta >= INT_MIN); /* int abs(int); */
-		KASSERT(abs(delta) < XEN_RESERVATION_MAX);
-
-		if (delta >= 0) {
-                        deltachunk = MIN(BALLOON_DELTA, delta);
-                } else {
-                        deltachunk = MAX(-BALLOON_DELTA, delta);
-                }
-
-		tgtcache = current + deltachunk;
-
-		if (deltachunk && i >= BALLOON_RETRIES) {
-			tgtcache = xenmem_get_currentreservation();
-			balloon_feedback_target(tgtcache);
-			if (i > BALLOON_RETRIES) {
-				/* Perhaps the "feedback" failed ? */
-				panic("Multiple Balloon retry resets.\n");
-			}
-
-#if BALLOONDEBUG
-			printf("Aborted new target at %d tries\n", i);
-			printf("Fed back new target value %zu\n", tgtcache);
-			printf("delta == %zd\n", delta);
-			printf("deltachunk == %d\n", deltachunk);
-#endif			
-
-		} else {
-
-#if BALLOONDEBUG
-			printf("new target ==> %zu\n", tgtcache);
-#endif
-			balloon_resize(tgtcache);
-		}
-
 		current = xenmem_get_currentreservation();
 
-		/* 
-		 * Every deltachunk gets a fresh set of
-		 * BALLOON_RETRIES
+		/*
+		 * We assume that balloon_xenbus_watcher() and
+		 * sysctl(9) handlers checked the sanity of the
+		 * new target value.
 		 */
-		i = (current != tgtcache) ? i + 1 : 0; 
+		mutex_enter(&sc->balloon_mtx);
+		target = sc->balloon_target;
+		if (current != target) {
+			/*
+			 * There is work to do. Inflate/deflate in
+			 * increments of BALLOON_DELTA pages at maximum. The
+			 * risk of integer wrapping is mitigated by
+			 * BALLOON_DELTA, which is the upper bound.
+			 */
+			mutex_exit(&sc->balloon_mtx);
+			diff = MIN(target - current, BALLOON_DELTA);
+			if (current < target)
+				ret = balloon_deflate(sc, diff);
+			else
+				ret = balloon_inflate(sc, diff);
 
-		mutex_exit(&balloon_conf.flaglock);
-
+			if (ret != diff) {
+				/*
+				 * Something went wrong during operation.
+				 * Log error then feedback current value in
+				 * target so that thread gets back to waiting
+				 * for the next iteration
+				 */
+				device_printf(sc->sc_dev,
+				    "WARNING: balloon could not reach target "
+				    "%zu (current %zu)\n",
+				    target, current);
+				current = xenmem_get_currentreservation();
+				mutex_enter(&sc->balloon_mtx);
+				sc->balloon_target = current;
+				mutex_exit(&sc->balloon_mtx);
+			}
+		} else {
+			/* no need for change -- wait for a signal */
+			cv_wait(&sc->balloon_cv, &sc->balloon_mtx);
+			mutex_exit(&sc->balloon_mtx);
+		}
 	}
-
 }
 
+/*
+ * Handler called when memory/target value changes inside Xenstore.
+ * All sanity checks must also happen in this handler, as it is the common
+ * entry point where controller domain schedules balloon operations.
+ */
 static void
-xenbus_balloon_watcher(struct xenbus_watch *watch, const char **vec,
+balloon_xenbus_watcher(struct xenbus_watch *watch, const char **vec,
 		       unsigned int len)
 {
-	size_t new_target; /* In KB */
+	size_t new_target;
+	uint64_t target_kb  = balloon_xenbus_read_target();
+	uint64_t target_min = balloon_sc->balloon_res_min;
+	uint64_t target_max = BALLOON_PAGES_TO_KB(xenmem_get_maxreservation());
 
-	if (0 == (new_target = (size_t) xenbus_balloon_read_target())) {
-		/* Don't update target value */
+	if (target_kb == 0) {
+		/* bogus -- just return */
 		return;
 	}
 
-	new_target = BALLOON_PAGE_FLOOR(new_target);
-
-#if BALLOONDEBUG 
-	if (new_target < BALLOON_KB_TO_PAGES(balloon_conf.xen_res_min) ||
-	    new_target > BALLOON_KB_TO_PAGES(balloon_conf.xen_res_max)) {
-		printf("Requested target is unacceptable.\n");
+	if (target_kb < target_min) {
+		device_printf(balloon_sc->sc_dev,
+		    "new target %"PRIu64" is below min %"PRIu64"\n",
+		    target_kb, target_min);
 		return;
 	}
-#endif
-
-	/* 
-	 * balloon_set_target() calls
-	 * xenbus_balloon_write_target(). Not sure if this is racy 
-	 */
-	balloon_set_target(BALLOON_KB_TO_PAGES(new_target));
-
-#if BALLOONDEBUG
-	printf("Setting target to %zu\n", new_target);
-	printf("Current reservation is %zu\n", xenmem_get_currentreservation());
-#endif
-
-	/* Notify balloon thread, if we can. */
-	if (mutex_tryenter(&balloon_conf.flaglock)) {
-		cv_signal(&balloon_conf.cv_memchanged);
-		mutex_exit(&balloon_conf.flaglock);
+	if (target_kb > target_max) {
+		/*
+		 * Should not happen. Hypervisor should block balloon
+		 * requests above mem-max.
+		 */
+		device_printf(balloon_sc->sc_dev,
+		    "new target %"PRIu64" is above max %"PRIu64"\n",
+		    target_kb, target_max);
+		return;
 	}
+
+	new_target = BALLOON_KB_TO_PAGES(target_kb);
+
+	device_printf(balloon_sc->sc_dev,
+	    "current reservation: %zu pages => target: %zu pages\n",
+	    xenmem_get_currentreservation(), new_target);
+
+	/* Only update target if its value changes */
+	mutex_enter(&balloon_sc->balloon_mtx);
+	if (balloon_sc->balloon_target != new_target) {
+		balloon_sc->balloon_target = new_target;
+		cv_signal(&balloon_sc->balloon_cv);
+	}
+	mutex_exit(&balloon_sc->balloon_mtx);
 	
 	return;
 }
-
-void
-balloon_xenbus_setup(void)
-{
-
-	size_t currentpages;
-
-	/* Allocate list of MFNs for inflating/deflating balloon */
-	mfn_lista = kmem_alloc(BALLOON_DELTA * sizeof *mfn_lista, KM_NOSLEEP);
-	if (mfn_lista == NULL) {
-		aprint_error("%s: could not allocate mfn_lista\n", __func__);
-		return;
-	}
-
-	/* Setup flaglocks, condvars et. al */
-	mutex_init(&balloon_conf.flaglock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&balloon_conf.tgtlock, MUTEX_DEFAULT, IPL_HIGH);
-	cv_init(&balloon_conf.cv_memchanged, "balloon");
-
-	SLIST_INIT(&balloon_conf.balloon_page_entries);
-	balloon_conf.balloon_num_page_entries = 0;
-
-	/* Deliberately not-constified for future extensibility */
-	balloon_conf.xen_res_min = XEN_RESERVATION_MIN;
-	balloon_conf.xen_res_max = XEN_RESERVATION_MAX;	
-
-#if BALLOONDEBUG
-	printf("uvmexp.freemin == %d\n", uvmexp.freemin);
-	printf("xen_res_min == %zu\n", balloon_conf.xen_res_min);
-	printf("xen_res_max == %zu\n", balloon_conf.xen_res_max);
-#endif
-	/* Get current number of pages */
-	currentpages = xenmem_get_currentreservation();
-
-	KASSERT(currentpages > 0);
-
-	/* Update initial target value */
-	balloon_set_target(currentpages);
-
-	/* 
-	 * Initialise the sysctl_xxx copies of target and current
-	 * as above, because sysctl inits before balloon_xenbus_setup()
-	 */
-	sysctl_current = currentpages;
-	sysctl_target = BALLOON_PAGES_TO_KB(currentpages);
-
-	/* Setup xenbus node watch callback */
-	if (register_xenbus_watch(&xenbus_balloon_watch)) {
-		aprint_error("%s: unable to watch memory/target\n", __func__);
-		cv_destroy(&balloon_conf.cv_memchanged);
-		mutex_destroy(&balloon_conf.tgtlock);
-		mutex_destroy(&balloon_conf.flaglock);
-		kmem_free(mfn_lista, BALLOON_DELTA * sizeof *mfn_lista);
-		mfn_lista = NULL;
-		return;
-
-	}
-
-	/* Setup kernel thread to asynchronously (in/de)-flate the balloon */
-	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, balloon_thread,
-		NULL /* arg */, NULL, "balloon")) {
-		aprint_error("%s: unable to create balloon thread\n", __func__);
-		unregister_xenbus_watch(&xenbus_balloon_watch);
-		cv_destroy(&balloon_conf.cv_memchanged);
-		mutex_destroy(&balloon_conf.tgtlock);
-		mutex_destroy(&balloon_conf.flaglock);
-	}
-
-	return;
-
-}
-
-#if DOM0OPS
 
 /* 
  * sysctl(9) stuff 
  */
 
-/* sysctl helper routine */
+/* routine to control the minimum memory reserved for the domain */
 static int
-sysctl_kern_xen_balloon(SYSCTLFN_ARGS)
+sysctl_kern_xen_balloon_min(SYSCTLFN_ARGS)
 {
-
 	struct sysctlnode node;
-
-	/* 
-	 * Assumes SIZE_T_MAX <= ((uint64_t) -1) see createv() in
-	 * SYSCTL_SETUP(...) below
-	 */
-
+	u_quad_t newval;
 	int error;
-	int64_t node_val;
 
-	KASSERT(rnode != NULL);
 	node = *rnode;
+	node.sysctl_data = &newval;
+	newval = *(u_quad_t *)rnode->sysctl_data;
 
-	if (strcmp(node.sysctl_name, "current") == 0) {
-		node_val = BALLOON_PAGES_TO_KB(xenmem_get_currentreservation());
-		node.sysctl_data = &node_val;
-		return sysctl_lookup(SYSCTLFN_CALL(&node));
-#ifndef XEN_BALLOON /* Read only, if balloon is disabled */
-	} else if (strcmp(node.sysctl_name, "target") == 0) {
-		if (newp != NULL || newlen != 0) {
-			return (EPERM);
-		}
-		node_val = BALLOON_PAGES_TO_KB(xenmem_get_currentreservation());
-		node.sysctl_data = &node_val;
-		error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
 		return error;
+
+	/* Safeguard value: refuse to go below. */
+	if (newval < XEN_RESERVATION_MIN) {
+		device_printf(balloon_sc->sc_dev,
+		    "cannot set min below minimum safe value (%d)\n",
+		    XEN_RESERVATION_MIN);
+		return EPERM;
 	}
-#else
-	} else if (strcmp(node.sysctl_name, "target") == 0) {
-		node_val = * (int64_t *) rnode->sysctl_data;
-		node_val = BALLOON_PAGE_FLOOR(node_val);
-		node.sysctl_data = &node_val;
-		error = sysctl_lookup(SYSCTLFN_CALL(&node));
-		if (error != 0) {
-			return error;
-		}
 
-		/* Sanity check new size */
-		if (node_val < BALLOON_PAGES_TO_KB(XEN_RESERVATION_MIN) || 
-   		    node_val > BALLOON_PAGES_TO_KB(XEN_RESERVATION_MAX) ) {
-#if BALLOONDEBUG
-			printf("node_val out of range.\n");
-			printf("node_val = %"PRIu64"\n", node_val);
-#endif
-			return EINVAL;
-		}
+	if (*(u_quad_t *)rnode->sysctl_data != newval)
+		atomic_swap_64((u_quad_t *)rnode->sysctl_data, newval);
 
-#if BALLOONDEBUG
-		printf("node_val = %"PRIu64"\n", node_val);
-#endif
-
-		if (node_val != BALLOON_PAGES_TO_KB(balloon_get_target())) {
-			* (int64_t *) rnode->sysctl_data = node_val;
-
-#if BALLOONDEBUG
-			printf("setting to %" PRIu64"\n", node_val);
-#endif
-
-			balloon_set_target(BALLOON_KB_TO_PAGES(node_val));
-
-			/* Notify balloon thread, if we can. */
-			if (mutex_tryenter(&balloon_conf.flaglock)) {
-				cv_signal(&balloon_conf.cv_memchanged);
-				mutex_exit(&balloon_conf.flaglock);
-			}
-
-			/* Notify XenStore. */
-			xenbus_balloon_write_target(node_val);
-		}
-
-		return 0;
-	}
-#endif /* XEN_BALLOON */
-
-	return EINVAL;
+	return 0;
 }
 
-/* Setup nodes. */
-SYSCTL_SETUP(sysctl_kern_xen_balloon_setup, "sysctl kern.xen.balloon setup")
+/* Returns the current memory reservation of the domain */
+static int
+sysctl_kern_xen_balloon_max(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	u_quad_t node_val;
+
+	node = *rnode;
+
+	node_val = BALLOON_PAGES_TO_KB(xenmem_get_maxreservation());
+	node.sysctl_data = &node_val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+/* Returns the current memory reservation of the domain */
+static int
+sysctl_kern_xen_balloon_current(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	u_quad_t node_val;
+
+	node = *rnode;
+
+	node_val = BALLOON_PAGES_TO_KB(xenmem_get_currentreservation());
+	node.sysctl_data = &node_val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+/*
+ * Returns the target memory reservation of the domain
+ * When reading, this sysctl will return the value of the balloon_target
+ * variable, converted into KiB
+ * When used for writing, it will update the new memory/target value
+ * in XenStore, but will not update the balloon_target variable directly.
+ * This will be done by the Xenbus watch handler, balloon_xenbus_watcher().
+ */
+static int
+sysctl_kern_xen_balloon_target(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	u_quad_t newval, res_min, res_max;
+	int error;
+
+	node = *rnode;
+	node.sysctl_data = &newval;
+	/* we are just reading the value of target, no lock needed */
+	newval = BALLOON_PAGES_TO_KB(*(u_quad_t*)rnode->sysctl_data);
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (newp == NULL || error != 0) {
+		return error;
+	}
+
+	/*
+	 * Sanity check new size
+	 * We should not balloon below the minimum reservation
+	 * set by the domain, nor above the maximum reservation set
+	 * by domain controller.
+	 * Note: domain is not supposed to receive balloon requests when
+	 * they are above maximum reservation, but better be safe than
+	 * sorry.
+	 */
+	res_max = BALLOON_PAGES_TO_KB(xenmem_get_maxreservation());
+	res_min = balloon_sc->balloon_res_min;
+	if (newval < res_min || newval > res_max) {
+#if BALLOONDEBUG
+		device_printf(balloon_sc->sc_dev,
+		    "new value out of bounds: %"PRIu64"\n", newval);
+		device_printf(balloon_sc->sc_dev,
+		    "min %"PRIu64", max %"PRIu64"\n", res_min, res_max);
+#endif
+		return EPERM;
+	}
+
+	/*
+	 * Write new value inside Xenstore. This will fire the memory/target
+	 * watch handler, balloon_xenbus_watcher().
+	 */
+	balloon_xenbus_write_target(newval);
+
+	return 0;
+}
+
+/* sysctl(9) nodes creation */
+static void
+sysctl_kern_xen_balloon_setup(struct balloon_xenbus_softc *sc)
 {
 	const struct sysctlnode *node = NULL;
+	struct sysctllog **clog = &sc->sc_log;
 
 	sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "kern", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_KERN, CTL_EOL);
-
-	if (node == NULL) {
-		printf("sysctl create failed\n");
-	}
 
 	sysctl_createv(clog, 0, &node, &node,
 	    CTLFLAG_PERMANENT,
@@ -880,20 +784,37 @@ SYSCTL_SETUP(sysctl_kern_xen_balloon_setup, "sysctl kern.xen.balloon setup")
 	    CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &node, NULL,
-	    CTLFLAG_PERMANENT,
+	    CTLFLAG_PERMANENT | CTLFLAG_READONLY,
 	    CTLTYPE_QUAD, "current",
-	    SYSCTL_DESCR("current memory reservation from "
-		"hypervisor, in pages."),
-	    sysctl_kern_xen_balloon, 0, &sysctl_current, 0,
+	    SYSCTL_DESCR("Domain's current memory reservation from "
+		"hypervisor, in KiB."),
+	    sysctl_kern_xen_balloon_current, 0,
+	    NULL, 0,
 	    CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_QUAD, "target",
-	    SYSCTL_DESCR("Target memory reservation to adjust "
-		"balloon size to, in pages"),
-	    sysctl_kern_xen_balloon, 0, &sysctl_target, 0,
+	    SYSCTL_DESCR("Target memory reservation for domain, in KiB."),
+	    sysctl_kern_xen_balloon_target, 0,
+	    &sc->balloon_target, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_QUAD, "min",
+	    SYSCTL_DESCR("Minimum amount of memory the domain "
+		"reserves, in KiB."),
+	    sysctl_kern_xen_balloon_min, 0, 
+	    &sc->balloon_res_min, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READONLY,
+	    CTLTYPE_QUAD, "max",
+	    SYSCTL_DESCR("Maximum amount of memory the domain "
+		"can use, in KiB."),
+	    sysctl_kern_xen_balloon_max, 0,
+	    NULL, 0,
 	    CTL_CREATE, CTL_EOL);
 }
-
-#endif /* DOM0OPS */

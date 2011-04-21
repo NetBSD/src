@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.47.4.2 2011/03/05 20:50:03 rmind Exp $
+#	$NetBSD: IQ31244,v 1.47.4.3 2011/04/21 01:40:57 rmind Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -45,7 +45,8 @@ file-system	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental
@@ -135,7 +136,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=370000
+options 	SYMTAB_SPACE=390000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs
@@ -149,8 +150,8 @@ cpu0		at mainbus?
 
 # On-board device support
 obio*		at mainbus?
-com0		at obio? addr 0xfe800000 xint 1	# on-board TI 165C50 UART
-# Default setting of J7 is open, which means that the interrupt is not 
+com0		at obio? addr 0xfe800000 xint 1	# on-board TI 16C550 UART
+# Default setting of J7 is open, which means that the interrupt is not
 # connected
 wdc0		at obio? addr 0xfe8f0000 width 16 # on-board CF reader
 #wdc0		at obio? addr 0xfe8f0000 width 16 xint 1 # on-board CF reader

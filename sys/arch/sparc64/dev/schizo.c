@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.16.2.1 2011/03/05 20:52:06 rmind Exp $	*/
+/*	$NetBSD: schizo.c,v 1.16.2.2 2011/04/21 01:41:27 rmind Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -100,7 +100,8 @@ static paddr_t schizo_bus_mmap(bus_space_tag_t t, bus_addr_t paddr,
                                off_t off, int prot, int flags);
 static void *schizo_intr_establish(bus_space_tag_t, int, int, int (*)(void *),
 	void *, void(*)(void));
-static int schizo_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int schizo_pci_intr_map(const struct pci_attach_args *,
+    pci_intr_handle_t *);
 static void *schizo_pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
                                        int, int (*)(void *), void *);
 static int schizo_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
@@ -299,21 +300,20 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_safari_error, sc,
 	    SCZ_SERR_INO, "safari");
 
-#if 0
 	if (sc->sc_tomatillo) {
 		/*
-		 * We should enable the IOCACHE here.
+		 * Enable the IOCACHE.
 		 */
 		uint64_t iocache_csr;
-		char bits[128];
 
-		iocache_csr = schizo_pbm_read(pbm, SCZ_PCI_IOCACHE_CSR);
+		iocache_csr = TOM_IOCACHE_CSR_WRT_PEN |
+			      (1 << TOM_IOCACHE_CSR_POFFSET_SHIFT) |
+			      TOM_IOCACHE_CSR_PEN_RDM |
+			      TOM_IOCACHE_CSR_PEN_ONE |
+			      TOM_IOCACHE_CSR_PEN_LINE;
 
-		snprintb(bits, sizeof(bits), TOM_IOCACHE_CSR_BITS, iocache_csr);
-		printf("IOCACHE_CSR=%s\n", bits);
-		printf("IOCACHE_CSR=%" PRIx64 "\n", iocache_csr);
+		schizo_pbm_write(pbm, SCZ_PCI_IOCACHE_CSR, iocache_csr);
 	}
-#endif
 
 	config_found(&sc->sc_dv, &pba, schizo_print);
 }
@@ -424,7 +424,7 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 	is->is_bustag = pbm->sp_regt;
 	bus_space_subregion(is->is_bustag, pbm->sp_regh,
 		offsetof(struct schizo_pbm_regs, iommu),
-		sizeof(struct schizo_iommureg),
+		sizeof(struct iommureg2),
 		&is->is_iommu);
 
 	/*
@@ -721,7 +721,7 @@ schizo_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
  * Set the IGN for this schizo into the handle.
  */
 int
-schizo_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+schizo_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct schizo_pbm *pbm = pa->pa_pc->cookie;
 	struct schizo_softc *sc = pbm->sp_sc;

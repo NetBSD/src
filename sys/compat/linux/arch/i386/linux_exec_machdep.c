@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.14.4.2 2011/03/05 20:52:43 rmind Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.14.4.3 2011/04/21 01:41:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.14.4.2 2011/03/05 20:52:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.14.4.3 2011/04/21 01:41:38 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.14.4.2 2011/03/05 20:52:43 
 #include <compat/linux/common/linux_hdio.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_errno.h>
-#include <compat/linux//linux_syscallargs.h>
+#include <compat/linux/linux_syscallargs.h>
 
 int
 linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)

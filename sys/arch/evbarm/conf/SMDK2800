@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.40.4.2 2011/03/05 20:50:03 rmind Exp $
+#	$NetBSD: SMDK2800,v 1.40.4.3 2011/04/21 01:40:57 rmind Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -52,7 +52,8 @@ file-system	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental

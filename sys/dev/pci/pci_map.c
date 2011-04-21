@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.24.16.1 2010/05/30 05:17:36 rmind Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.24.16.2 2011/04/21 01:41:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.24.16.1 2010/05/30 05:17:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.24.16.2 2011/04/21 01:41:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.24.16.1 2010/05/30 05:17:36 rmind Exp 
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+
+static int pci_mapreg_submap(const struct pci_attach_args *, int, pcireg_t, int,
+    bus_size_t, bus_size_t, bus_space_tag_t *, bus_space_handle_t *, 
+    bus_addr_t *, bus_size_t *);
 
 static int
 pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
@@ -267,7 +271,7 @@ pci_mapreg_info(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 }
 
 int
-pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type,
+pci_mapreg_map(const struct pci_attach_args *pa, int reg, pcireg_t type,
     int busflags, bus_space_tag_t *tagp, bus_space_handle_t *handlep,
     bus_addr_t *basep, bus_size_t *sizep)
 {
@@ -275,8 +279,8 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type,
 	    handlep, basep, sizep);
 }
 
-int
-pci_mapreg_submap(struct pci_attach_args *pa, int reg, pcireg_t type,
+static int
+pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
     int busflags, bus_size_t maxsize, bus_size_t offset, bus_space_tag_t *tagp,
 	bus_space_handle_t *handlep, bus_addr_t *basep, bus_size_t *sizep)
 {
@@ -339,7 +343,7 @@ pci_mapreg_submap(struct pci_attach_args *pa, int reg, pcireg_t type,
 }
 
 int
-pci_find_rom(struct pci_attach_args *pa, bus_space_tag_t bst,
+pci_find_rom(const struct pci_attach_args *pa, bus_space_tag_t bst,
     bus_space_handle_t bsh, int type, bus_space_handle_t *romh, bus_size_t *sz)
 {
 	bus_size_t	romsz, offset = 0, imagesz;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.3.4.2 2011/03/05 20:53:18 rmind Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.3.4.3 2011/04/21 01:41:47 rmind Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.3.4.2 2011/03/05 20:53:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.3.4.3 2011/04/21 01:41:47 rmind Exp $");
 
 #include "opt_mvsata.h"
 
@@ -575,7 +575,7 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 		    mvport->port_sata_scontrol, mvport->port_sata_sstatus);
 	}
 
-	for (i = 0; MVSATA_EDMAQ_LEN; i++) {
+	for (i = 0; i < MVSATA_EDMAQ_LEN; i++) {
 		xfer = mvport->port_reqtbl[i].xfer;
 		if (xfer == NULL)
 			continue;

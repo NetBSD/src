@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.40.2.2 2011/03/05 20:50:20 rmind Exp $
+# $NetBSD: INSTALL,v 1.40.2.3 2011/04/21 01:41:02 rmind Exp $
 #
 # INSTALL machine description file
 #
@@ -80,7 +80,8 @@ file-system	MFS		# Memory-based filesystem
 #file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
-#options 	QUOTA		# User and group quotas in FFS
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network filesystem server

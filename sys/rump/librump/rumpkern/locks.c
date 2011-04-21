@@ -1,10 +1,7 @@
-/*	$NetBSD: locks.c,v 1.38.4.3 2011/03/05 20:56:14 rmind Exp $	*/
+/*	$NetBSD: locks.c,v 1.38.4.4 2011/04/21 01:42:17 rmind Exp $	*/
 
 /*
- * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by the
- * Finnish Cultural Foundation.
+ * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.38.4.3 2011/03/05 20:56:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.38.4.4 2011/04/21 01:42:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -283,7 +280,7 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 	struct lwp *l = curlwp;
 	int rv;
 
-	if (__predict_false(l->l_flag & LW_RUMP_DYING)) {
+	if (__predict_false(l->l_flag & LW_RUMP_QEXIT)) {
 		/*
 		 * yield() here, someone might want the cpu
 		 * to set a condition.  otherwise we'll just
@@ -305,32 +302,34 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 		rumpuser_cv_wait(RUMPCV(cv), RUMPMTX(mtx));
 	}
 
+	LOCKED(mtx, false);
+
 	/*
-	 * Check for DYING.  if so, we need to wait here until we
+	 * Check for QEXIT.  if so, we need to wait here until we
 	 * are allowed to exit.
 	 */
-	if (__predict_false(l->l_flag & LW_RUMP_DYING)) {
+	if (__predict_false(l->l_flag & LW_RUMP_QEXIT)) {
 		struct proc *p = l->l_proc;
 
+		UNLOCKED(mtx, false);
 		mutex_exit(mtx); /* drop and retake later */
 
 		mutex_enter(p->p_lock);
-		while (p->p_stat != SDYING) {
+		while ((p->p_sflag & PS_RUMP_LWPEXIT) == 0) {
 			/* avoid recursion */
 			rumpuser_cv_wait(RUMPCV(&p->p_waitcv),
 			    RUMPMTX(p->p_lock));
 		}
-		KASSERT(p->p_stat == SDYING);
+		KASSERT(p->p_sflag & PS_RUMP_LWPEXIT);
 		mutex_exit(p->p_lock);
 
 		/* ok, we can exit and remove "reference" to l->private */
 
 		mutex_enter(mtx);
+		LOCKED(mtx, false);
 		rv = EINTR;
 	}
 	l->l_private = NULL;
-
-	LOCKED(mtx, false);
 
 	return rv;
 }

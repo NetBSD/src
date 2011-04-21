@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_ioctl.h,v 1.1.40.1 2011/03/05 20:54:09 rmind Exp $	*/
+/*	$NetBSD: tprof_ioctl.h,v 1.1.40.2 2011/04/21 01:42:02 rmind Exp $	*/
 
 /*-
  * Copyright (c)2008,2010 YAMAMOTO Takashi,
@@ -37,7 +37,7 @@
 
 #include <dev/tprof/tprof_types.h>
 
-#define	TPROF_VERSION	2
+#define	TPROF_VERSION	3	/* kernel-userland ABI version */
 
 #define	TPROF_IOC_GETVERSION	_IOR('T', 1, int)
 

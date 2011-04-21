@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.25.22.1 2011/03/05 20:50:34 rmind Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.25.22.2 2011/04/21 01:41:04 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.25.22.1 2011/03/05 20:50:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.25.22.2 2011/04/21 01:41:04 rmind Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -206,7 +206,7 @@ void	tx39_intr_decode(int, int *, int *);
 void	tx39_irqhigh_disestablish(tx_chipset_tag_t, int, int, int);
 void	tx39_irqhigh_establish(tx_chipset_tag_t, int, int, int, 
 	    int (*)(void *), void *);
-void	tx39_irqhigh_intr(uint32_t, uint32_t, uint32_t);
+void	tx39_irqhigh_intr(uint32_t, vaddr_t, uint32_t);
 int	tx39_irqhigh(int, int);
 
 CFATTACH_DECL(tx39icu, sizeof(struct tx39icu_softc),
@@ -434,7 +434,7 @@ tx39_irqhigh(int set, int bit)
 }
 
 void
-tx39_irqhigh_intr(uint32_t ipending, uint32_t pc, uint32_t status)
+tx39_irqhigh_intr(uint32_t ipending, vaddr_t pc, uint32_t status)
 {
 	struct txintr_high_entry *he;
 	struct tx39icu_softc *sc;

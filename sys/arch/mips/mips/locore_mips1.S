@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.67.4.1 2011/03/05 20:51:06 rmind Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.67.4.2 2011/04/21 01:41:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -205,10 +205,12 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	.mask	0x80000000, -4
 #ifdef PARANOIA
 	PTR_L	k0, L_PCB(MIPS_CURLWP)
+	nop
 	slt	k0, k0, sp		# k0 = L_PCB(MIPS_CURLWP) < sp
 1:	beqz	k0, 1b			# loop forever if false
 	 nop
 	PTR_L	k0, L_PCB(MIPS_CURLWP)
+	nop
 	PTR_ADDU k0, USPACE
 	slt	k0, sp, k0		# k0 = sp < L_PCB(MIPS_CURLWP) + USPACE
 2:	beqz	k0, 2b			# loop forever if false
@@ -270,7 +272,9 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	 * save PPL in trapframe
 	 */
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	nop
 	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
+	nop
 	INT_S	t1, TF_BASE+TF_PPL(sp)		# save priority level
 #endif /* PARANOIA */
 
@@ -297,6 +301,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	 * Restore registers and return from the exception.
 	 */
 	REG_L	a0, TF_BASE+TF_REG_SR(sp)
+	nop
 	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 
 	/*
@@ -313,7 +318,9 @@ MIPSX(kern_return):
 #ifdef PARANOIA
 	INT_L	t2, TF_BASE+TF_PPL(sp)		# get saved priority level
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	nop
 	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
+	nop
 11:	bne	t2, t1, 11b			# loop forever if unequal
 	 nop
 
@@ -384,16 +391,20 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	.mask	0x80000000, -4
 #ifdef PARANOIA
 	PTR_L	k0, L_PCB(MIPS_CURLWP)
+	nop
 	slt	k0, k0, sp			# k0 = L_PCB(MIPS_CURLWP) < sp
 1:	beqz	k0, 1b				# loop forever if false
 	 nop
 	PTR_L	k0, L_PCB(MIPS_CURLWP)
+	nop
 	PTR_ADDU k0, USPACE
 	slt	k0, sp, k0			# k0 = sp < L_PCB(MIPS_CURLWP) + USPACE
 2:	beqz	k0, 2b				# loop forever if false
 	 nop
 	PTR_L	k0, L_CPU(MIPS_CURLWP)
+	nop
 	INT_L	k0, CPU_INFO_IDEPTH(k0)		# grab interrupt depth
+	nop
 	sltu	k0, k0, 3			# must be < 3
 3:	beqz	k0, 3b				# loop forever if false
 	 nop
@@ -434,12 +445,12 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 /*
  * Call the interrupt handler.
  */
-	_MFC0	ra, MIPS_COP_0_EXC_PC		# grab exception PC
+	_MFC0	ta0, MIPS_COP_0_EXC_PC		# grab exception PC
 	PTR_L	s2, L_CPU(MIPS_CURLWP)		# delay slot
-	REG_S	ra, TF_BASE+TF_REG_EPC(sp)	# and save it
+	REG_S	ta0, TF_BASE+TF_REG_EPC(sp)	# and save it
 
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
-	REG_S	ra, KERNFRAME_RA(sp)		# for debugging
+	REG_S	ta0, KERNFRAME_RA(sp)		# for debugging
 #endif
 
 #ifdef PARANOIA
@@ -495,7 +506,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	/*
 	 * Now hard interrupts can be processed.
 	 */
-	move	a1, ra				# 2nd arg is exception PC
+	move	a1, ta0				# 2nd arg is exception PC
 	move	a2, s1				# 3rd arg is status
 	jal	_C_LABEL(cpu_intr)		# cpu_intr(ppl, pc, status)
 	 srl	a0, s0, 8			# 1st arg is previous pri level
@@ -709,7 +720,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
  */
 	PTR_L	k1, CPUVAR(CURLWP)
 	nop
-	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
+	PTR_L	k0, L_PCB(k1)				# XXXuvm_lwp_getuarea
 	nop
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
 	REG_S	AT, CALLFRAME_SIZ+TF_REG_AST(k0)	# $1
@@ -739,15 +750,15 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	REG_S	sp, CALLFRAME_SIZ+TF_REG_SP(k0)		# $29
 	REG_S	ra, CALLFRAME_SIZ+TF_REG_RA(k0)		# $31
 	REG_S	s1, CALLFRAME_SIZ+TF_REG_SR(k0)
-	_MFC0	ra, MIPS_COP_0_EXC_PC
+	_MFC0	ta0, MIPS_COP_0_EXC_PC
 	REG_S	v0, CALLFRAME_SIZ+TF_REG_MULLO(k0)
 	REG_S	v1, CALLFRAME_SIZ+TF_REG_MULHI(k0)
-	REG_S	ra, CALLFRAME_SIZ+TF_REG_EPC(k0)
+	REG_S	ta0, CALLFRAME_SIZ+TF_REG_EPC(k0)
 	REG_S	t0, CALLFRAME_SIZ+TF_REG_CAUSE(k0)
 	move	sp, k0				# switch to kernel SP
 	move	MIPS_CURLWP, k1			# set curlwp reg (t8)
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
-	REG_S	ra, CALLFRAME_RA(sp)		# for debugging
+	REG_S	ta0, CALLFRAME_RA(sp)		# for debugging
 #endif
 #ifdef __GP_SUPPORT__
 	PTR_LA	gp, _C_LABEL(_gp)		# switch to kernel GP
@@ -786,7 +797,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	/*
 	 * Now hard interrupts can be processed.
 	 */
-	move	a1, ra				# 2nd arg is exception pc
+	move	a1, ta0				# 2nd arg is exception pc
 	move	a2, s1				# 3rd arg is status
 	jal	_C_LABEL(cpu_intr)		# cpu_intr(ppl, pc, status)
 	 move	a0, s0				# 1st arg is previous pri level
@@ -795,6 +806,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	 * Interrupt depth is now back to 0.
 	 */
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	nop
 	INT_S	zero, CPU_INFO_IDEPTH(t0)
 
 #ifdef __HAVE_FAST_SOFTINTS
@@ -975,7 +987,7 @@ END(MIPSX(systemcall))
 
 /*----------------------------------------------------------------------------
  *
- * mipsN_kernel_tlb_miss --
+ * mipsN_kern_tlb_miss --
  *
  *	Handle a TLB miss exception from kernel mode in kernel space.
  *	The BaddVAddr, Context, and EntryHi registers contain the failed
@@ -989,7 +1001,7 @@ END(MIPSX(systemcall))
  *
  *----------------------------------------------------------------------------
  */
-LEAF_NOPROFILE(MIPSX(kernel_tlb_miss))
+LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
@@ -1014,7 +1026,7 @@ LEAF_NOPROFILE(MIPSX(kernel_tlb_miss))
 	tlbwr					# write random TLB
 	j	k1
 	rfe
-END(MIPSX(kernel_tlb_miss))
+END(MIPSX(kern_tlb_miss))
 
 #if 0
 /*----------------------------------------------------------------------------
@@ -1151,17 +1163,16 @@ LEAF(MIPSX(tlb_read_indexed))
 	tlbr					# Read from the TLB
 	mfc0	t2, MIPS_COP_0_TLB_HI		# fetch the hi entry
 	mfc0	t3, MIPS_COP_0_TLB_LOW		# fetch the low entry
+
+	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore proper PID
+						# (before touching memory)
+	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+
 	PTR_S	t2, TLBMASK_HI(a1)
 	INT_S	t3, TLBMASK_LO0(a1)
 	INT_S	zero, TLBMASK_LO1(a1)
-	INT_S	zero, TLBMASK_MASK(a1)
-
-	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore proper PID
- 						# (before touching memory)
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-	sw	t2, 0(a1)			# Write results back
 	j	ra
-	 mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+	 INT_S	zero, TLBMASK_MASK(a1)
 END(MIPSX(tlb_read_indexed))
 
 /*--------------------------------------------------------------------------
@@ -1194,7 +1205,7 @@ LEAF(MIPSX(tlb_write_indexed))
 
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+	 mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(MIPSX(tlb_write_indexed))
 
 /*
@@ -1214,6 +1225,7 @@ LEAF(MIPSX(tlb_invalidate_addr))
 	mfc0	a0, MIPS_COP_0_TLB_INDEX	# see what we got
 	li	t1, MIPS_KSEG0_START		# load invalid address
 	bltz	a0, 1f				# index < 0 then skip
+	 nop
 	mtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entryLo
 	nop
@@ -1221,7 +1233,7 @@ LEAF(MIPSX(tlb_invalidate_addr))
 1:
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# restore the status register
+	 mtc0	v1, MIPS_COP_0_STATUS		# restore the status register
 END(MIPSX(tlb_invalidate_addr))
 
 /*
@@ -1273,7 +1285,7 @@ LEAF(MIPSX(tlb_invalidate_asids))
 	mtc0	t3, MIPS_COP_0_TLB_HI		# restore entryHi
 
 	j	ra				# new TLBpid will be set soon
-	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
+	 mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 END(MIPSX(tlb_invalidate_asids))
 
 /*
@@ -1685,12 +1697,13 @@ _C_LABEL(MIPSX(locore_vec)):
 
 	.globl _C_LABEL(MIPSX(locoresw))
 _C_LABEL(MIPSX(locoresw)):
-	PTR_WORD _C_LABEL(MIPSX(wbflush))		# wbflush
-	PTR_WORD _C_LABEL(nullop)			# idle
-	PTR_WORD _C_LABEL(nullop)			# send ipi
-	PTR_WORD _C_LABEL(nullop)			# cpu_offline_md
-	PTR_WORD _C_LABEL(nullop)			# spare
-	PTR_WORD _C_LABEL(nullop)			# spare
+	PTR_WORD _C_LABEL(MIPSX(wbflush))		# lsw_wbflush
+	PTR_WORD _C_LABEL(nullop)			# lsw_cpu_idle
+	PTR_WORD _C_LABEL(nullop)			# lsw_send_ipi
+	PTR_WORD _C_LABEL(nullop)			# lsw_cpu_offline_md
+	PTR_WORD _C_LABEL(nullop)			# lsw_cpu_init
+	PTR_WORD _C_LABEL(nullop)			# lsw_cpu_run
+	PTR_WORD _C_LABEL(nullop)			# lsw_bus_error
 
 MIPSX(excpt_sw):
 	####
@@ -1698,8 +1711,8 @@ MIPSX(excpt_sw):
 	####
 	PTR_WORD _C_LABEL(MIPSX(kern_intr))	# 0 external interrupt
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 1 TLB modification
-	PTR_WORD _C_LABEL(MIPSX(kernel_tlb_miss))	# 2 TLB miss (LW/I-fetch)
-	PTR_WORD _C_LABEL(MIPSX(kernel_tlb_miss))	# 3 TLB miss (SW)
+	PTR_WORD _C_LABEL(MIPSX(kern_tlb_miss))	# 2 TLB miss (LW/I-fetch)
+	PTR_WORD _C_LABEL(MIPSX(kern_tlb_miss))	# 3 TLB miss (SW)
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 4 address error (LW/I-fetch)
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 5 address error (SW)
 	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))# 6 bus error (I-fetch)

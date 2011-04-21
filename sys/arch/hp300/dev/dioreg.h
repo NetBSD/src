@@ -1,4 +1,4 @@
-/*	$NetBSD: dioreg.h,v 1.7 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: dioreg.h,v 1.7.22.1 2011/04/21 01:41:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -23,7 +23,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -60,9 +60,9 @@
  * e.g. a display framebuffer.
  *
  * DIO-II ranges from select codes 132-255 at physical addresses given by:
- *	0x1000000 + (sc - 132) * 0x400000 
+ *	0x1000000 + (sc - 132) * 0x400000
  * The address range of DIO-II space is thus [0x1000000-0x20000000).
- * 
+ *
  * DIO/DIO-II space is too large to map in its entirety, instead devices
  * are mapped into kernel virtual address space allocated from a range
  * of EIOMAPSIZE pages (vmparam.h) starting at ``extiobase''.

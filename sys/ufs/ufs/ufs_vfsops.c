@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.40 2009/05/07 19:26:09 elad Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.40.4.1 2011/04/21 01:42:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.40 2009/05/07 19:26:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.40.4.1 2011/04/21 01:42:21 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.40 2009/05/07 19:26:09 elad Exp $")
 #ifdef UFS_DIRHASH
 #include <ufs/ufs/dirhash.h>
 #endif
+#include <quota/quotaprop.h>
 
 /* how many times ufs_init() was called */
 static int ufs_initcount = 0;
@@ -99,29 +100,53 @@ ufs_root(struct mount *mp, struct vnode **vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg)
+ufs_quotactl(struct mount *mp, prop_dictionary_t dict)
 {
 	struct lwp *l = curlwp;
 
-#ifndef QUOTA
+#if !defined(QUOTA) && !defined(QUOTA2)
 	(void) mp;
-	(void) cmds;
-	(void) uid;
-	(void) arg;
+	(void) dict;
 	(void) l;
 	return (EOPNOTSUPP);
 #else
-	int cmd, type, error;
-
-	if (uid == -1)
-		uid = kauth_cred_getuid(l->l_cred);
-	cmd = cmds >> SUBCMDSHIFT;
+	int  error;
+	prop_dictionary_t cmddict;
+	prop_array_t commands;
+	prop_object_iterator_t iter;
 
 	/* Mark the mount busy, as we're passing it to kauth(9). */
 	error = vfs_busy(mp, NULL);
 	if (error)
 		return (error);
 
+	error = quota_get_cmds(dict, &commands);
+	if (error)
+		goto out_vfs;
+	iter = prop_array_iterator(commands);
+	if (iter == NULL) {
+		error = ENOMEM;
+		goto out_vfs;
+	}
+		
+		
+	mutex_enter(&mp->mnt_updating);
+	while ((cmddict = prop_object_iterator_next(iter)) != NULL) {
+		if (prop_object_type(cmddict) != PROP_TYPE_DICTIONARY)
+			continue;
+		error = quota_handle_cmd(mp, l, cmddict);
+		if (error)
+			break;
+	}
+	prop_object_iterator_release(iter);
+	mutex_exit(&mp->mnt_updating);
+out_vfs:
+	vfs_unbusy(mp, false, NULL);
+	return (error);
+#endif
+}
+	
+#if 0
 	switch (cmd) {
 	case Q_SYNC:
 		break;
@@ -201,7 +226,6 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg)
 	vfs_unbusy(mp, false, NULL);
 	return (error);
 #endif
-}
 
 /*
  * This is the generic part of fhtovp called after the underlying
@@ -241,7 +265,7 @@ ufs_init(void)
 	    "ufsdir", NULL, IPL_NONE, NULL, NULL, NULL);
 
 	ufs_ihashinit();
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	dqinit();
 #endif
 #ifdef UFS_DIRHASH
@@ -256,7 +280,7 @@ void
 ufs_reinit(void)
 {
 	ufs_ihashreinit();
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	dqreinit();
 #endif
 }
@@ -271,7 +295,7 @@ ufs_done(void)
 		return;
 
 	ufs_ihashdone();
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	dqdone();
 #endif
 	pool_cache_destroy(ufs_direct_cache);

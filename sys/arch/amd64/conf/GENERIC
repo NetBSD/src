@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.271.2.3 2011/03/05 20:49:16 rmind Exp $
+# $NetBSD: GENERIC,v 1.271.2.4 2011/04/21 01:40:47 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.271.2.3 $"
+#ident 		"GENERIC-$Revision: 1.271.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -79,7 +79,7 @@ options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # CPU features
-#acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
+acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
 coretemp*	at cpu?		# Intel on-die thermal sensor
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 #odcm0		at cpu0		# On-demand clock modulation
@@ -160,7 +160,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	NILFS		# experimental - NTT's NiLFS(2)
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.

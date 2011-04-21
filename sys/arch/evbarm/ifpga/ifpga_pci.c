@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.13 2009/07/21 16:04:16 dyoung Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.13.4.1 2011/04/21 01:40:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.13 2009/07/21 16:04:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.13.4.1 2011/04/21 01:40:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ void		ifpga_pci_decompose_tag (void *, pcitag_t, int *, int *,
 		    int *);
 pcireg_t	ifpga_pci_conf_read (void *, pcitag_t, int);
 void		ifpga_pci_conf_write (void *, pcitag_t, int, pcireg_t);
-int		ifpga_pci_intr_map (struct pci_attach_args *,
+int		ifpga_pci_intr_map (const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 const char	*ifpga_pci_intr_string (void *, pci_intr_handle_t);
 const struct evcnt *ifpga_pci_intr_evcnt (void *, pci_intr_handle_t);
@@ -296,7 +296,7 @@ ifpga_pci_conf_write(void *pcv, pcitag_t tag, int reg, pcireg_t data)
 }
 
 int
-ifpga_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+ifpga_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int line = pa->pa_intrline;
 

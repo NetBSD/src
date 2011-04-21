@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.59 2009/08/27 07:28:42 mouse Exp $	*/
+/*	$NetBSD: stat.h,v 1.59.4.1 2011/04/21 01:42:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -195,6 +195,7 @@ struct stat {
 /*	SF_NOUNLINK	0x00100000	   [NOT IMPLEMENTED] */
 #define	SF_SNAPSHOT	0x00200000	/* snapshot inode */
 #define	SF_LOG		0x00400000	/* WAPBL log file inode */
+#define	SF_SNAPINVAL	0x00800000	/* snapshot is invalid */
 
 #ifdef _KERNEL
 /*

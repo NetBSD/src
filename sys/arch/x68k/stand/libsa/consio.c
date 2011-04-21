@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.5 2007/11/11 05:20:26 isaki Exp $	*/
+/*	$NetBSD: consio.c,v 1.5.40.1 2011/04/21 01:41:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -42,12 +42,13 @@ enum {
 int
 consio_init(int device)
 {
+
 	if (device < 0) {	/* undetemined yet */
 		if (KEYCTRL & 8)
 			device = ITE;
 		else {
-			IOCS_B_PRINT ("No keyboard; "
-				      "switching to serial console...");
+			IOCS_B_PRINT("No keyboard; "
+				     "switching to serial console...");
 			device = SERIAL;
 		}
 	}
@@ -56,12 +57,12 @@ consio_init(int device)
 	case ITE:
 		x68k_console_device = ITE;
 		/* set palette here */
-		IOCS_OS_CURON ();
+		IOCS_OS_CURON();
 		break;
 	case SERIAL:
 		x68k_console_device = SERIAL;
-		IOCS_OS_CUROF ();
-		IOCS_SET232C (SERPARAM);
+		IOCS_OS_CUROF();
+		IOCS_SET232C(SERPARAM);
 	}
 
 	return x68k_console_device;
@@ -74,10 +75,10 @@ getchar(void)
 
 	switch (x68k_console_device) {
 	case ITE:
-		while ((r = IOCS_B_KEYINP () & 0xff) == 0);
+		while ((r = IOCS_B_KEYINP() & 0xff) == 0);
 		return r;
 	case SERIAL:
-		while ((r = IOCS_INP232C () & 0xff) == 0);
+		while ((r = IOCS_INP232C() & 0xff) == 0);
 		return r;
 	}
 
@@ -87,24 +88,28 @@ getchar(void)
 void
 putchar(int c)
 {
+
 	if (c == '\n')
 		putchar('\r');
 	switch (x68k_console_device) {
 	case ITE:
-		IOCS_B_PUTC (c);
+		IOCS_B_PUTC(c);
+		break;
 	case SERIAL:
-		IOCS_OUT232C (c);
+		IOCS_OUT232C(c);
+		break;
 	}
 }
 
 int
 check_getchar(void)
 {
+
 	switch (x68k_console_device) {
 	case ITE:
-		return IOCS_B_KEYSNS () & 0xff;
+		return IOCS_B_KEYSNS() & 0xff;
 	case SERIAL:
-		return IOCS_ISNS232C () & 0xff;
+		return IOCS_ISNS232C() & 0xff;
 	}
 
 	return -1;
@@ -129,20 +134,6 @@ awaitkey_1sec(void)
 		getchar();
 
 	return c;
-}
-
-__dead void
-panic(const char *fmt,...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-
-	printf(fmt, ap);
-	printf("\n");
-	va_end(ap);
-
-	exit(1);
 }
 
 extern void put_image(int, int);

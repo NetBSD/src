@@ -1,10 +1,10 @@
-#	$NetBSD: MERAKI,v 1.10.4.2 2011/03/05 20:50:11 rmind Exp $
+#	$NetBSD: MERAKI,v 1.10.4.3 2011/04/21 01:40:59 rmind Exp $
 
 include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MERAKI-$Revision: 1.10.4.2 $"
+#ident 		"MERAKI-$Revision: 1.10.4.3 $"
 
 maxusers	32
 
@@ -83,7 +83,8 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

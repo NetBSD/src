@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.2.6.1 2011/03/05 20:51:10 rmind Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.2.6.2 2011/04/21 01:41:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.2.6.1 2011/03/05 20:51:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.2.6.2 2011/04/21 01:41:13 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -188,7 +188,7 @@ static int	rmixl_pcie_conf_setup(struct rmixl_pcie_softc *,
 static pcireg_t	rmixl_pcie_conf_read(void *, pcitag_t, int);
 static void	rmixl_pcie_conf_write(void *, pcitag_t, int, pcireg_t);
 
-static int	rmixl_pcie_intr_map(struct pci_attach_args *,
+static int	rmixl_pcie_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 static const char *
 		rmixl_pcie_intr_string(void *, pci_intr_handle_t);
@@ -1031,7 +1031,7 @@ rmixl_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 }
 
 int
-rmixl_pcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
+rmixl_pcie_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *pih)
 {
 	int device;
 	u_int link;
@@ -1112,7 +1112,7 @@ rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 		switch (irq) {
 		case 26:
 		case 27:
-			name = rmixl_intr_string(irq);
+			name = rmixl_intr_string(RMIXL_IRT_VECTOR(irq));
 			break;
 		}
 		break;
@@ -1123,7 +1123,7 @@ rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 		case 24:
 		case 26:
 		case 27:
-			name = rmixl_intr_string(irq);
+			name = rmixl_intr_string(RMIXL_IRT_VECTOR(irq));
 			break;
 		}
 		break;
@@ -1137,7 +1137,7 @@ rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 		case 27:
 		case 28:
 		case 29:
-			name = rmixl_intr_string(irq);
+			name = rmixl_intr_string(RMIXL_IRT_VECTOR(irq));
 			break;
 		}
 		break;

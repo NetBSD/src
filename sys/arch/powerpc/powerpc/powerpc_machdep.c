@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.42.4.3 2011/03/05 20:51:41 rmind Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.42.4.4 2011/04/21 01:41:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.42.4.3 2011/03/05 20:51:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.42.4.4 2011/04/21 01:41:20 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -71,9 +71,9 @@ char *booted_kernel;
 void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
-	struct proc *p = l->l_proc;
-	struct trapframe *tf = trapframe(l);
-	struct pcb *pcb = lwp_getpcb(l);
+	struct proc * const p = l->l_proc;
+	struct trapframe * const tf = l->l_md.md_utf;
+	struct pcb * const pcb = lwp_getpcb(l);
 	struct ps_strings arginfo;
 
 	memset(tf, 0, sizeof *tf);
@@ -285,9 +285,7 @@ void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct trapframe *tf;
-
-	tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 
 	/*
 	 * Build context to run handler in.

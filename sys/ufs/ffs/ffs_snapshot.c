@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.97.4.3 2011/03/05 20:56:27 rmind Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.97.4.4 2011/04/21 01:42:20 rmind Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,10 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.97.4.3 2011/03/05 20:56:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.97.4.4 2011/04/21 01:42:20 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
+#include "opt_quota.h"
 #endif
 
 #include <sys/param.h>
@@ -196,7 +197,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	/*
 	 * If the vnode already is a snapshot, return.
 	 */
-	if (VTOI(vp)->i_flags & SF_SNAPSHOT) {
+	if ((VTOI(vp)->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) == SF_SNAPSHOT) {
 		if (ctime) {
 			ctime->tv_sec = DIP(VTOI(vp), mtime);
 			ctime->tv_nsec = DIP(VTOI(vp), mtimensec);
@@ -217,12 +218,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	error = snapshot_setup(mp, vp);
 	if (error)
 		goto out;
-	/*
-	 * Change inode to snapshot type file.
-	 */
-	ip->i_flags |= SF_SNAPSHOT;
-	DIP_ASSIGN(ip, flags, ip->i_flags);
-	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+
 	/*
 	 * Copy all the cylinder group maps. Although the
 	 * filesystem is still active, we hope that only a few
@@ -234,6 +230,14 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	error = cgaccount(vp, 1, NULL);
 	if (error)
 		goto out;
+
+	/*
+	 * snapshot is now valid
+	 */
+	ip->i_flags &= ~SF_SNAPINVAL;
+	DIP_ASSIGN(ip, flags, ip->i_flags);
+	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+
 	/*
 	 * Ensure that the snapshot is completely on disk.
 	 * Since we have marked it as a snapshot it is safe to
@@ -401,12 +405,13 @@ out:
 static int
 snapshot_setup(struct mount *mp, struct vnode *vp)
 {
-	int error, n, len, loc;
+	int error, n, len, loc, cg;
 	daddr_t blkno, numblks;
 	struct buf *ibp, *nbp;
 	struct fs *fs = VFSTOUFS(mp)->um_fs;
 	struct lwp *l = curlwp;
 	const int wbreak = blocks_in_journal(fs)/8;
+	struct inode *ip = VTOI(vp);
 
 	/*
 	 * Check mount, exclusive reference and owner.
@@ -425,6 +430,22 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 		if (error)
 			return error;
 	}
+
+	/* Change inode to snapshot type file. */
+	error = UFS_WAPBL_BEGIN(mp);
+	if (error)
+		return error;
+#if defined(QUOTA) || defined(QUOTA2)
+	/* shapshot inodes are not accounted in quotas */
+	chkiq(ip, -1, l->l_cred, 0);
+#endif
+	ip->i_flags |= (SF_SNAPSHOT | SF_SNAPINVAL);
+	DIP_ASSIGN(ip, flags, ip->i_flags);
+	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+	ffs_update(vp, NULL, NULL, UPDATE_WAIT);
+	UFS_WAPBL_END(mp);
+
+	KASSERT(ip->i_flags & SF_SNAPSHOT);
 	/*
 	 * Write an empty list of preallocated blocks to the end of
 	 * the snapshot to set size to at least that of the filesystem.
@@ -480,6 +501,28 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 		if (error)
 			goto out;
 		bawrite(nbp);
+		if (wbreak > 0 && (++n % wbreak) == 0) {
+			UFS_WAPBL_END(mp);
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error)
+				return error;
+		}
+	}
+	/*
+	 * Allocate all cylinder group blocks.
+	 */
+	for (cg = 0; cg < fs->fs_ncg; cg++) {
+		error = ffs_balloc(vp, lfragtosize(fs, cgtod(fs, cg)),
+		    fs->fs_bsize, l->l_cred, 0, &nbp);
+		if (error)
+			goto out;
+		bawrite(nbp);
+		if (wbreak > 0 && (++n % wbreak) == 0) {
+			UFS_WAPBL_END(mp);
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error)
+				return error;
+		}
 	}
 
 out:
@@ -1033,22 +1076,28 @@ expunge(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 	if (fs->fs_magic == FS_UFS1_MAGIC) {
 		dip1 = (struct ufs1_dinode *)bp->b_data +
 		    ino_to_fsbo(fs, cancelip->i_number);
+		if (cancelip->i_flags & SF_SNAPSHOT) {
+			dip1->di_flags =
+			    ufs_rw32(ufs_rw32(dip1->di_flags, ns) |
+			    SF_SNAPINVAL, ns);
+		}
 		if (expungetype == BLK_NOCOPY || cancelip->i_nlink == 0)
 			dip1->di_mode = 0;
 		dip1->di_size = 0;
 		dip1->di_blocks = 0;
-		dip1->di_flags =
-		    ufs_rw32(ufs_rw32(dip1->di_flags, ns) & ~SF_SNAPSHOT, ns);
 		memset(&dip1->di_db[0], 0, (NDADDR + NIADDR) * sizeof(int32_t));
 	} else {
 		dip2 = (struct ufs2_dinode *)bp->b_data +
 		    ino_to_fsbo(fs, cancelip->i_number);
+		if (cancelip->i_flags & SF_SNAPSHOT) {
+			dip2->di_flags =
+			    ufs_rw32(ufs_rw32(dip2->di_flags, ns) |
+			    SF_SNAPINVAL, ns);
+		}
 		if (expungetype == BLK_NOCOPY || cancelip->i_nlink == 0)
 			dip2->di_mode = 0;
 		dip2->di_size = 0;
 		dip2->di_blocks = 0;
-		dip2->di_flags =
-		    ufs_rw32(ufs_rw32(dip2->di_flags, ns) & ~SF_SNAPSHOT, ns);
 		memset(&dip2->di_db[0], 0, (NDADDR + NIADDR) * sizeof(int64_t));
 	}
 	bdwrite(bp);
@@ -1458,9 +1507,13 @@ ffs_snapremove(struct vnode *vp)
 	/*
 	 * Clear snapshot flag and drop reference.
 	 */
-	ip->i_flags &= ~SF_SNAPSHOT;
+	ip->i_flags &= ~(SF_SNAPSHOT | SF_SNAPINVAL);
 	DIP_ASSIGN(ip, flags, ip->i_flags);
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+#if defined(QUOTA) || defined(QUOTA2)
+	chkdq(ip, DIP(ip, blocks), l->l_cred, FORCE);
+	chkiq(ip, 1, l->l_cred, FORCE);
+#endif
 }
 
 /*
@@ -1700,7 +1753,8 @@ ffs_snapshot_mount(struct mount *mp)
 			continue;
 		}
 		ip = VTOI(vp);
-		if ((ip->i_flags & SF_SNAPSHOT) == 0) {
+		if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) !=
+		    SF_SNAPSHOT) {
 			printf("ffs_snapshot_mount: non-snapshot inode %d\n",
 			    fs->fs_snapinum[snaploc]);
 			vput(vp);

@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.15.4.1 2011/03/05 20:51:12 rmind Exp $ */
+/* $NetBSD: sbtimer.c,v 1.15.4.2 2011/04/21 01:41:14 rmind Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.15.4.1 2011/03/05 20:51:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.15.4.2 2011/04/21 01:41:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 
 #include <mips/locore.h>
 
@@ -175,6 +176,7 @@ sbtimer_clockintr(void *arg, uint32_t status, vaddr_t pc)
 
 	cf.pc = pc;
 	cf.sr = status;
+	cf.intr = (curcpu()->ci_idepth > 1);
 
 	hardclock(&cf);
 

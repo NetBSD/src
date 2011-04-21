@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.37.2.3 2011/03/06 00:27:00 rmind Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.37.2.4 2011/04/21 01:41:45 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -210,6 +210,7 @@ struct acpicpu_softc {
 	uint64_t		 sc_pstate_aperf;	/* ACPICPU_FLAG_P_HW */
 	uint64_t		 sc_pstate_mperf;	/* ACPICPU_FLAG_P_HW*/
 	uint32_t		 sc_pstate_current;
+	uint32_t		 sc_pstate_saved;
 	uint32_t		 sc_pstate_count;
 	uint32_t		 sc_pstate_max;
 	uint32_t		 sc_pstate_min;
@@ -223,7 +224,6 @@ struct acpicpu_softc {
 	uint32_t		 sc_tstate_max;
 	uint32_t		 sc_tstate_min;
 
-	__cpu_simple_lock_t	 sc_lock;
 	kmutex_t		 sc_mtx;
 	uint32_t		 sc_cap;
 	uint32_t		 sc_ncpus;
@@ -234,16 +234,16 @@ struct acpicpu_softc {
 void		 acpicpu_cstate_attach(device_t);
 int		 acpicpu_cstate_detach(device_t);
 void		 acpicpu_cstate_start(device_t);
-bool		 acpicpu_cstate_suspend(device_t);
-bool		 acpicpu_cstate_resume(device_t);
+void		 acpicpu_cstate_suspend(void *);
+void		 acpicpu_cstate_resume(void *);
 void		 acpicpu_cstate_callback(void *);
 void		 acpicpu_cstate_idle(void);
 
 void		 acpicpu_pstate_attach(device_t);
 int		 acpicpu_pstate_detach(device_t);
 void		 acpicpu_pstate_start(device_t);
-bool		 acpicpu_pstate_suspend(device_t);
-bool		 acpicpu_pstate_resume(device_t);
+void		 acpicpu_pstate_suspend(void *);
+void		 acpicpu_pstate_resume(void *);
 void		 acpicpu_pstate_callback(void *);
 int		 acpicpu_pstate_get(struct cpu_info *, uint32_t *);
 void		 acpicpu_pstate_set(struct cpu_info *, uint32_t);
@@ -251,8 +251,8 @@ void		 acpicpu_pstate_set(struct cpu_info *, uint32_t);
 void		 acpicpu_tstate_attach(device_t);
 int		 acpicpu_tstate_detach(device_t);
 void		 acpicpu_tstate_start(device_t);
-bool		 acpicpu_tstate_suspend(device_t);
-bool		 acpicpu_tstate_resume(device_t);
+void		 acpicpu_tstate_suspend(void *);
+void		 acpicpu_tstate_resume(void *);
 void		 acpicpu_tstate_callback(void *);
 int		 acpicpu_tstate_get(struct cpu_info *, uint32_t *);
 void		 acpicpu_tstate_set(struct cpu_info *, uint32_t);
@@ -269,7 +269,7 @@ void		 acpicpu_md_cstate_enter(int, int);
 int		 acpicpu_md_pstate_start(struct acpicpu_softc *);
 int		 acpicpu_md_pstate_stop(void);
 int		 acpicpu_md_pstate_init(struct acpicpu_softc *);
-uint8_t		 acpicpu_md_pstate_percent(struct cpu_info *);
+uint8_t		 acpicpu_md_pstate_hwf(struct cpu_info *);
 int		 acpicpu_md_pstate_get(struct acpicpu_softc *, uint32_t *);
 int		 acpicpu_md_pstate_set(struct acpicpu_pstate *);
 int		 acpicpu_md_tstate_get(struct acpicpu_softc *, uint32_t *);

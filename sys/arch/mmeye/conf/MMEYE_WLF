@@ -1,4 +1,4 @@
-# $NetBSD: MMEYE_WLF,v 1.1.4.2 2011/03/05 20:51:14 rmind Exp $
+# $NetBSD: MMEYE_WLF,v 1.1.4.3 2011/04/21 01:41:14 rmind Exp $
 #
 # MMEYE_WLF -- Brains Inc. MMEYE-WLF platforms kernel
 #
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1.4.2 $"
+#ident 		"GENERIC-$Revision: 1.1.4.3 $"
 
 maxusers	16		# estimated number of users
 
@@ -196,9 +196,24 @@ pcmcia*	at mmeyepcmcia? controller ? socket ?
 com*	at pcmcia? function ?		# Modems and serial cards
 wdc*	at pcmcia? function ?
 wi*	at pcmcia? function ?		# Lucent/Intersil WaveLAN/IEEE (802.11)
+slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 atabus* at ata?
 wd*	at atabus? drive ?			# the drives themselves
+
+usb*	at slhci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at scsi?
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+
+# USB Generic driver
+ugen*	at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at bcsp?

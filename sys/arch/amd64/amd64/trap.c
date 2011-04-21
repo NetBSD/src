@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.61.2.2 2011/03/05 20:49:15 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.61.2.3 2011/04/21 01:40:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61.2.2 2011/03/05 20:49:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61.2.3 2011/04/21 01:40:47 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -98,9 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61.2.2 2011/03/05 20:49:15 rmind Exp $");
 #include <machine/reg.h>
 #include <machine/trap.h>
 #include <machine/userret.h>
-#ifdef DDB
 #include <machine/db_machdep.h>
-#endif
 
 #include <x86/nmi.h>
 
@@ -108,9 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61.2.2 2011/03/05 20:49:15 rmind Exp $");
 #include "isa.h"
 #endif
 
-#ifdef KGDB
 #include <sys/kgdb.h>
-#endif
 
 #ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>
@@ -283,24 +279,17 @@ trap(struct trapframe *frame)
 		       " %lx cpl %x rsp %lx\n",
 		    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
 		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
-#ifdef DDB
 		if (kdb_trap(type, 0, frame))
 			return;
-#endif
-#ifdef KGDB
 		if (kgdb_trap(type, frame))
 			return;
-		else {
-			/*
-			 * If this is a breakpoint, don't panic
-			 * if we're not connected.
-			 */
-			if (type == T_BPTFLT) {
-				printf("kgdb: ignored %s\n", trap_type[type]);
-				return;
-			}
+		/*
+		 * If this is a breakpoint, don't panic if we're not connected.
+		 */
+		if (type == T_BPTFLT && kgdb_disconnected()) {
+			printf("kgdb: ignored %s\n", trap_type[type]);
+			return;
 		}
-#endif
 		panic("trap");
 		/*NOTREACHED*/
 
@@ -675,32 +664,17 @@ faultcommon:
 		break;
 
 	case T_NMI:
-#if !defined(XEN)
 		if (nmi_dispatch(frame))
 			return;
-#endif /* !defined(XEN) */
-#if	NISA > 0
-#if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
-		printf ("NMI ... going to debugger\n");
-#ifdef KGDB
-
 		if (kgdb_trap(type, frame))
 			return;
-#endif
-#ifdef DDB
 		if (kdb_trap(type, 0, frame))
 			return;
-#endif
-#endif /* KGDB || DDB */
 		/* machine/parity/power fail/"kitchen sink" faults */
 
-		if (x86_nmi() != 0)
-			goto we_re_toast;
-		else
-			return;
-#endif /* NISA > 0 */
-		;	/* avoid a label at end of compound statement */
+		x86_nmi();
+		return;
 	}
 
 	if ((type & T_USER) == 0)

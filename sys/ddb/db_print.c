@@ -1,4 +1,4 @@
-/*	$NetBSD: db_print.c,v 1.27 2009/03/07 22:02:17 ad Exp $	*/
+/*	$NetBSD: db_print.c,v 1.27.4.1 2011/04/21 01:41:44 rmind Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.27 2009/03/07 22:02:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.27.4.1 2011/04/21 01:41:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 
 #include <ddb/ddb.h>
 

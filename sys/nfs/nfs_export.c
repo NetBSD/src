@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.48.4.1 2011/03/05 20:56:03 rmind Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.48.4.2 2011/04/21 01:42:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.48.4.1 2011/03/05 20:56:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.48.4.2 2011/04/21 01:42:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -561,7 +561,7 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		 */
 		DOMAIN_FOREACH(dom) {
 			if (dom->dom_family == i && dom->dom_rtattach) {
-				dom->dom_rtattach((void **)&nep->ne_rtable[i],
+				rn_inithead((void **)&nep->ne_rtable[i],
 					dom->dom_rtoffset);
 				break;
 			}

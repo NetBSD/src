@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.13.2.3 2011/03/05 20:55:12 rmind Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.13.2.4 2011/04/21 01:42:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.13.2.3 2011/03/05 20:55:12 rmind Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.13.2.4 2011/04/21 01:42:06 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -936,5 +936,6 @@ netbsd_elf_probe(struct lwp *l, struct exec_package *epp, void *eh, char *itp,
 #elif defined(ELF_INTERP_NON_RELOCATABLE)
 	*pos = ELF_LINK_ADDR;
 #endif
+	epp->ep_flags |= EXEC_FORCEAUX;
 	return 0;
 }

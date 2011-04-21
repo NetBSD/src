@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.14 2008/12/02 17:56:06 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.14.8.1 2011/04/21 01:41:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.14 2008/12/02 17:56:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.14.8.1 2011/04/21 01:41:06 rmind Exp $");
 
 #include "opt_xen.h"
 
@@ -351,7 +351,7 @@ END(fxrstor)
 ENTRY(fldummy)
 	movl	4(%esp), %eax
 	ffree	%st(7)
-	fld	(%eax)
+	flds	(%eax)
 	ret
 END(fldummy)
 

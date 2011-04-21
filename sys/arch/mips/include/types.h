@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.45.4.3 2011/03/05 20:51:04 rmind Exp $	*/
+/*	$NetBSD: types.h,v 1.45.4.4 2011/04/21 01:41:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,20 +53,20 @@
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 typedef __uint64_t	paddr_t;
 typedef __uint64_t	psize_t;
-#define PRIxPADDR	PRIx64
-#define PRIxPSIZE	PRIx64
-#define PRIdPSIZE	PRId64
+#define	PRIxPADDR	PRIx64
+#define	PRIxPSIZE	PRIx64
+#define	PRIdPSIZE	PRId64
 #else
 typedef __uint32_t	paddr_t;
 typedef __uint32_t	psize_t;
-#define PRIxPADDR	PRIx32
-#define PRIxPSIZE	PRIx32
-#define PRIdPSIZE	PRId32
+#define	PRIxPADDR	PRIx32
+#define	PRIxPSIZE	PRIx32
+#define	PRIdPSIZE	PRId32
 #endif
 #ifdef _LP64
 typedef __uint64_t	vaddr_t;
 typedef __uint64_t	vsize_t;
-#define PRIxVADDR	PRIx64
+#define	PRIxVADDR	PRIx64
 #define PRIxVSIZE	PRIx64
 #define PRIdVSIZE	PRId64
 #else
@@ -142,15 +142,17 @@ typedef	volatile unsigned int	__cpu_simple_lock_t;
 #define	__HAVE_AST_PERPROC
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_PROCESS_XFPREGS
+#define	__HAVE_CPU_LWP_SETPRIVATE
 #define	__HAVE_CPU_DATA_FIRST
-#define __HAVE_MD_CPU_OFFLINE
+#define	__HAVE_MD_CPU_OFFLINE
 #ifdef MIPS3_PLUS	/* XXX bogus! */
 #define	__HAVE_CPU_COUNTER
 #endif
-#define __HAVE_CPU_UAREA_ROUTINES
-#if 0
-#define	__HAVE___LWP_GETPRIVATE_FAST
-#endif
+#define	__HAVE_CPU_UAREA_ROUTINES
+#define	__HAVE_COMMON___TLS_GET_ADDR
+#define	__HAVE___LWP_GETTCB_FAST
+#define	__HAVE___LWP_SETTCB
+#define	__HAVE_TLS_VARIANT_I
 
 #if !defined(__mips_o32)
 #define	__HAVE_ATOMIC64_OPS
@@ -159,7 +161,7 @@ typedef	volatile unsigned int	__cpu_simple_lock_t;
 #if defined(_KERNEL)
 #define	__HAVE_RAS
 #if defined(_LP64)
-#define __HAVE_CPU_VMSPACE_EXEC
+#define	__HAVE_CPU_VMSPACE_EXEC
 #endif
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.20.22.1 2011/03/05 20:51:33 rmind Exp $	*/
+/*	$NetBSD: start.S,v 1.20.22.2 2011/04/21 01:41:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -113,44 +113,39 @@ start:
 	j	_C_LABEL(prom_restart)		# restart...
 	 nop
 
+	.set	reorder		# make as(1) handle hazard and BDslot
 LEAF(prom_restart)
 XLEAF(_rtt)
 	lw	v0, _C_LABEL (callv)
-	nop
 	lw	v0, 0x9C(v0)			/* halt */
 	move	a0, zero			/* Don't print anything. */
+	move	a1, zero
 	j	v0
-	 move	a1, zero
 END(prom_restart)
 
 LEAF(prom_open)
 	li	v0, DEC_PROM_OPEN
 	j	v0
-	 nop
 END(prom_open)
 
 #ifndef LIBSA_NO_DEV_CLOSE
 LEAF(prom_close)
 	li	v0, DEC_PROM_CLOSE
 	j	v0
-	 nop
 END(prom_close)
 #endif
 
 LEAF(prom_lseek)
 	li	v0, DEC_PROM_LSEEK
 	j	v0
-	 nop
 END(prom_lseek)
 
 LEAF(prom_read)
 	li	v0, DEC_PROM_READ
 	j	v0
-	 nop
 END(prom_read)
 
 LEAF(prom_write)
 	li	v0, DEC_PROM_WRITE
 	j	v0
-	 nop
 END(prom_write)

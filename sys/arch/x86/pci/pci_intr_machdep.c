@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.16.2.2 2011/03/05 20:52:29 rmind Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.16.2.3 2011/04/21 01:41:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.16.2.2 2011/03/05 20:52:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.16.2.3 2011/04/21 01:41:32 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,7 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.16.2.2 2011/03/05 20:52:29 rm
 #define	MPSAFE_MASK	0x80000000
 
 int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;

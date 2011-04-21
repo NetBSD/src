@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.3.4.1 2010/05/30 05:17:14 rmind Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.3.4.2 2011/04/21 01:41:35 rmind Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.3.4.1 2010/05/30 05:17:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.3.4.2 2011/04/21 01:41:35 rmind Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -561,7 +561,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 
 int
 xpci_enumerate_bus(struct pci_softc *sc, const int *locators,
-    int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
+    int (*match)(const struct pci_attach_args *), struct pci_attach_args *pap)
 {
 #if 0
 	char *string;

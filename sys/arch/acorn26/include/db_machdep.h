@@ -1,9 +1,8 @@
-/* $NetBSD: db_machdep.h,v 1.7 2009/01/14 23:14:48 bjh21 Exp $ */
+/* $NetBSD: db_machdep.h,v 1.7.6.1 2011/04/21 01:40:44 rmind Exp $ */
 
 #include <arm/db_machdep.h>
 
 /* acorn26 uses ELF */
-#undef DB_AOUT_SYMBOLS
 #define DB_ELF_SYMBOLS
 #define DB_ELFSIZE 32
 

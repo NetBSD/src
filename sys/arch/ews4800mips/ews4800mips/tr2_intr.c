@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2_intr.c,v 1.10.22.1 2011/03/05 20:50:19 rmind Exp $	*/
+/*	$NetBSD: tr2_intr.c,v 1.10.22.2 2011/04/21 01:41:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.10.22.1 2011/03/05 20:50:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.10.22.2 2011/04/21 01:41:01 rmind Exp $");
 
 #define	__INTR_PRIVATE
 #include <sys/param.h>
@@ -154,7 +154,7 @@ tr2_intr(int ppl, vaddr_t pc, uint32_t status)
 		if (ipending & MIPS_INT_MASK_5) {	/* CLOCK */
 			cf.pc = pc;
 			cf.sr = status;
-			cf.intr = (curcpu()->ci_idepth > 0);
+			cf.intr = (curcpu()->ci_idepth > 1);
 
 			*PICNIC_INT5_STATUS_REG = 0;
 			r = *PICNIC_INT5_STATUS_REG;

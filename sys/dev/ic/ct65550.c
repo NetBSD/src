@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.1.4.2 2011/03/05 20:53:14 rmind Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.1.4.3 2011/04/21 01:41:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.1.4.2 2011/03/05 20:53:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.1.4.3 2011/04/21 01:41:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,13 +130,13 @@ struct wsdisplay_accessops chipsfb_accessops = {
 static inline void
 chipsfb_write32(struct chipsfb_softc *sc, uint32_t reg, uint32_t val)
 {
-	bus_space_write_4(sc->sc_fbt, sc->sc_fbh, reg, val);
+	bus_space_write_4(sc->sc_memt, sc->sc_mmregh, reg, val);
 }
 
 static inline uint32_t
 chipsfb_read32(struct chipsfb_softc *sc, uint32_t reg)
 {
-	return bus_space_read_4(sc->sc_fbt, sc->sc_fbh, reg);
+	return bus_space_read_4(sc->sc_memt, sc->sc_mmregh, reg);
 }
 
 static inline void
@@ -203,10 +203,8 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 #ifdef CHIPSFB_DEBUG
 	printf(prop_dictionary_externalize(dict));
 #endif
-
 	chipsfb_init(sc);
 
-	/* we should read these from the chip instead of depending on OF */
 	width = height = -1;
 
 	/* detect panel size */
@@ -218,7 +216,12 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 	height |= (chipsfb_read_indexed(sc, CT_FP_INDEX, FP_VERT_OVERFLOW_1)
 	    & 0x0f) << 8;
 	height++;
-	aprint_verbose("Panel size: %d x %d\n", width, height);
+	if ((width < 640) || ( width > 1280) || (height < 480) ||
+	    (height > 1024)) {
+		/* no sane values in the panel registers */
+		width = height = -1;
+	} else
+		aprint_verbose("Panel size: %d x %d\n", width, height);
 
 	if (!prop_dictionary_get_uint32(dict, "width", &sc->width))
 		sc->width = width;
@@ -255,9 +258,6 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 		 * since we're not the console we can postpone the rest
 		 * until someone actually allocates a screen for us
 		 */
-#ifdef notyet
-		chipsfb_set_videomode(sc, &videomode_list[0]);
-#endif
 	}
 
 	rasops_unpack_attr(defattr, &fg, &bg, &ul);
@@ -269,7 +269,7 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 
 	aprint_normal_dev(sc->sc_dev, "%d MB aperture, %d MB VRAM at 0x%08x\n",
 	    (u_int)(sc->sc_fbsize >> 20),
-	    sc->memsize >> 20, (u_int)sc->sc_fb);
+	    (int)sc->memsize >> 20, (u_int)sc->sc_fb);
 #ifdef CHIPSFB_DEBUG
 	aprint_debug("fb: %08lx\n", (ulong)ri->ri_bits);
 #endif
@@ -644,7 +644,7 @@ chipsfb_feed(struct chipsfb_softc *sc, int count, uint8_t *data)
 		bork = data[i];
 		latch |= (bork << shift);
 		if (shift == 24) {
-			chipsfb_write32(sc, CT_OFF_DATA, latch);
+			chipsfb_write32(sc, CT_OFF_DATA - CT_OFF_BITBLT, latch);
 			latch = 0;
 			shift = 0;
 		} else
@@ -652,12 +652,12 @@ chipsfb_feed(struct chipsfb_softc *sc, int count, uint8_t *data)
 	}
 
 	if (shift != 0) {
-		chipsfb_write32(sc, CT_OFF_DATA, latch);
+		chipsfb_write32(sc, CT_OFF_DATA - CT_OFF_BITBLT, latch);
 	}
 
 	/* apparently the chip wants 64bit-aligned data or it won't go idle */
 	if ((count + 3) & 0x04) {
-		chipsfb_write32(sc, CT_OFF_DATA, 0);
+		chipsfb_write32(sc, CT_OFF_DATA - CT_OFF_BITBLT, 0);
 	}
 #ifdef CHIPSFB_WAIT
 	chipsfb_wait_idle(sc);
@@ -760,10 +760,13 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct chipsfb_softc *sc = vd->cookie;
 	paddr_t pa;
 
+	if (sc->sc_mmap != NULL)
+		return sc->sc_mmap(v, vs, offset, prot);
+
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->memsize) {
-		pa = bus_space_mmap(sc->sc_fbt, offset, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 		return pa;
 	}
 
@@ -809,7 +812,7 @@ chipsfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = sc->width;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 
-	ri->ri_bits = bus_space_vaddr(sc->sc_fbt, sc->sc_fbh);
+	ri->ri_bits = bus_space_vaddr(sc->sc_memt, sc->sc_fbh);
 
 #ifdef CHIPSFB_DEBUG
 	aprint_debug("addr: %08lx\n", (ulong)ri->ri_bits);
@@ -866,14 +869,14 @@ chipsfb_probe_vram(struct chipsfb_softc *sc)
 	 * if what we wrote to 0 is left untouched. Max. fb size is 4MB so
 	 * we voluntarily stop there.
 	 */
-	chipsfb_write32(sc, 0, 0xf0f0f0f0);
-	chipsfb_write32(sc, ofs, 0x0f0f0f0f);
-	while ((chipsfb_read32(sc, 0) == 0xf0f0f0f0) &&
-	    (chipsfb_read32(sc, ofs) == 0x0f0f0f0f) &&
+	bus_space_write_4(sc->sc_memt, sc->sc_fbh, 0, 0xf0f0f0f0);
+	bus_space_write_4(sc->sc_memt, sc->sc_fbh, ofs, 0x0f0f0f0f);
+	while ((bus_space_read_4(sc->sc_memt, sc->sc_fbh, 0) == 0xf0f0f0f0) &&
+	    (bus_space_read_4(sc->sc_memt, sc->sc_fbh, ofs) == 0x0f0f0f0f) &&
 	    (ofs < 0x00400000)) {
 
 		ofs += 0x00080000;
-		chipsfb_write32(sc, ofs, 0x0f0f0f0f);
+		bus_space_write_4(sc->sc_memt, sc->sc_fbh, ofs, 0x0f0f0f0f);
 	}
 
 	return ofs;

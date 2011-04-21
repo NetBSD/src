@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.205 2009/07/17 22:02:54 minskim Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.205.4.1 2011/04/21 01:42:14 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.205 2009/07/17 22:02:54 minskim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.205.4.1 2011/04/21 01:42:14 rmind Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -826,11 +826,13 @@ spd_done:
 		if (__predict_true(
 		    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0 ||
 		    (ifp->if_capenable & IFCAP_TSOv4) != 0)) {
+			KERNEL_LOCK(1, NULL);
 			error =
 			    (*ifp->if_output)(ifp, m,
 				(m->m_flags & M_MCAST) ?
 				    sintocsa(rdst) : sintocsa(dst),
 				rt);
+			KERNEL_UNLOCK_ONE(NULL);
 		} else {
 			error =
 			    ip_tso_output(ifp, m,
@@ -902,10 +904,12 @@ spd_done:
 			{
 				KASSERT((m->m_pkthdr.csum_flags &
 				    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
+				KERNEL_LOCK(1, NULL);
 				error = (*ifp->if_output)(ifp, m,
 				    (m->m_flags & M_MCAST) ?
 					sintocsa(rdst) : sintocsa(dst),
 				    rt);
+				KERNEL_UNLOCK_ONE(NULL);
 			}
 		} else
 			m_freem(m);
@@ -1026,13 +1030,19 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	ip->ip_len = htons((u_int16_t)m->m_pkthdr.len);
 	ip->ip_off |= htons(IP_MF);
 	ip->ip_sum = 0;
-	if (sw_csum & M_CSUM_IPv4) {
-		ip->ip_sum = in_cksum(m, hlen);
-		m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
-	} else {
-		KASSERT(m->m_pkthdr.csum_flags & M_CSUM_IPv4);
-		KASSERT(M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data) >=
-			sizeof(struct ip));
+	/*
+	 * We may not use checksums on loopback interfaces
+	 */
+	if (__predict_false(ifp == NULL) ||
+	    IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4)) {
+		if (sw_csum & M_CSUM_IPv4) {
+			ip->ip_sum = in_cksum(m, hlen);
+			m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
+		} else {
+			KASSERT(m->m_pkthdr.csum_flags & M_CSUM_IPv4);
+			KASSERT(M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data) >=
+				sizeof(struct ip));
+		}
 	}
 sendorfree:
 	/*

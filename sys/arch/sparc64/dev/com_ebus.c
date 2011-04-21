@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.30 2010/01/03 17:02:03 jdc Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.30.4.1 2011/04/21 01:41:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.30 2010/01/03 17:02:03 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.30.4.1 2011/04/21 01:41:26 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,6 +83,7 @@ com_ebus_match(device_t parent, cfdata_t match, void *aux)
 		/* Could be anything. */
 		compat = prom_getpropstring(ea->ea_node, "compatible");
 		if (strcmp(compat, "su16550") == 0 ||
+		    strcmp(compat, "su16552") == 0 ||
 		    strcmp(compat, "su") == 0) {
 			return (1);
 		}

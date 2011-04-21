@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.74.4.1 2011/03/05 20:51:31 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.74.4.2 2011/04/21 01:41:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.74.4.1 2011/03/05 20:51:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.74.4.2 2011/04/21 01:41:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,9 @@ cpu_configure(void)
 
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
+
+	/* Interrupt initialization. */
+	intr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.55.4.2 2011/03/05 20:50:34 rmind Exp $	*/
+/*	$NetBSD: vr.c,v 1.55.4.3 2011/04/21 01:41:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.55.4.2 2011/03/05 20:50:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.55.4.3 2011/04/21 01:41:04 rmind Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -141,7 +141,7 @@ const struct ipl_sr_map __ipl_sr_map_vr = {
 				| MIPS_INT_MASK_0
 				| MIPS_INT_MASK_1,
 	[IPL_DDB] =		MIPS_INT_MASK,
-	[IPL_VM] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
     },
 };
 
@@ -164,7 +164,7 @@ STATIC void vr_reboot(int, char *);
  * CPU interrupt dispatch table (HwInt[0:3])
  */
 STATIC int vr_null_handler(void *, uint32_t, uint32_t);
-STATIC int (*vr_intr_handler[4])(void *, uint32_t, uint32_t) = 
+STATIC int (*vr_intr_handler[4])(void *, vaddr_t, uint32_t) = 
 {
 	vr_null_handler,
 	vr_null_handler,
@@ -504,7 +504,7 @@ vr_reboot(int howto, char *bootstr)
 	 */
 	if (howto & RB_HALT) {
 #if NVRIP_COMMON > 0
-		_spllower(~MIPS_INT_MASK_0);
+		vrip_splpiu();
 		vrip_intr_suspend();
 #else
 		splhigh();
@@ -548,7 +548,7 @@ VR_INTR(int ppl, vaddr_t pc, uint32_t status)
 		}
 
 		if (ipending & MIPS_INT_MASK_1) {
-			(*vr_intr_handler[1])(vr_intr_arg[1], pc, ipending);
+			(*vr_intr_handler[1])(vr_intr_arg[1], pc, status);
 		}
 
 		if (ipending & MIPS_INT_MASK_0) {
@@ -558,7 +558,7 @@ VR_INTR(int ppl, vaddr_t pc, uint32_t status)
 }
 
 void *
-vr_intr_establish(int line, int (*ih_fun)(void *, uint32_t, uint32_t),
+vr_intr_establish(int line, int (*ih_fun)(void *, vaddr_t, uint32_t),
     void *ih_arg)
 {
 
@@ -580,7 +580,7 @@ vr_intr_disestablish(void *ih)
 }
 
 int
-vr_null_handler(void *arg, uint32_t pc, uint32_t status)
+vr_null_handler(void *arg, vaddr_t pc, uint32_t status)
 {
 
 	printf("vr_null_handler\n");

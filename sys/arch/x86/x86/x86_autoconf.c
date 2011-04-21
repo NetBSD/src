@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.50.2.1 2011/03/05 20:52:32 rmind Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.50.2.2 2011/04/21 01:41:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.50.2.1 2011/03/05 20:52:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.50.2.2 2011/04/21 01:41:33 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -676,6 +676,9 @@ device_register(device_t dev, void *aux)
 		if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY) {
 #if NWSDISPLAY > 0 && NGENFB > 0
 			extern struct vcons_screen x86_genfb_console_screen;
+			struct rasops_info *ri;
+
+			ri = &x86_genfb_console_screen.scr_ri;
 #endif
 
 			fbinfo = lookup_bootinfo(BTINFO_FRAMEBUFFER);
@@ -695,8 +698,15 @@ device_register(device_t dev, void *aux)
 				prop_dictionary_set_uint16(dict, "linebytes",
 				    fbinfo->stride);
 
+				prop_dictionary_set_uint64(dict, "address",
+				    fbinfo->physaddr);
+#if NWSDISPLAY > 0 && NGENFB > 0
+				if (ri->ri_bits != NULL) {
 					prop_dictionary_set_uint64(dict,
-					    "address", fbinfo->physaddr);
+					    "virtual_address",
+					    (vaddr_t)ri->ri_bits);
+				}
+#endif
 				}
 #if notyet
 				prop_dictionary_set_bool(dict, "splash",

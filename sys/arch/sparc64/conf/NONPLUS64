@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.30.4.2 2011/03/05 20:52:05 rmind Exp $
+# 	$NetBSD: NONPLUS64,v 1.30.4.3 2011/04/21 01:41:26 rmind Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.30.4.2 $"
+#ident		"NONPLUS64-$Revision: 1.30.4.3 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -150,7 +150,8 @@ file-system	PTYFS		# /dev/pts/N support
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
-options 	QUOTA		# FFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

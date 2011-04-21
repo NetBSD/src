@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_ras.S,v 1.1.4.2 2011/03/05 20:51:06 rmind Exp $	*/
+/*	$NetBSD: lock_stubs_ras.S,v 1.1.4.3 2011/04/21 01:41:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -377,6 +377,7 @@ END(ras_mutex_spin_enter)
  */
 LEAF(ras_mutex_spin_exit)
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
+	nop
 #if defined(DIAGNOSTIC)
 	INT_L	t0, MTX_LOCK(a0)
 	nop
@@ -392,7 +393,6 @@ LEAF(ras_mutex_spin_exit)
 	 */
 #ifdef PARANOIA
 	INT_L	a2, MTX_IPL(a0)
-	nop
 #endif
 	INT_L	a0, CPU_INFO_MTX_OLDSPL(t2)
 
@@ -408,6 +408,7 @@ LEAF(ras_mutex_spin_exit)
 	 * If the IPL doesn't change, nothing to do
 	 */
 	INT_L	a1, CPU_INFO_CPL(t2)
+	nop
 
 #ifdef PARANOIA
 	sltu	v0, a1, a2		# v0 = cpl < mtx_ipl

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.23.100.1 2011/03/05 20:51:32 rmind Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.23.100.2 2011/04/21 01:41:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -168,7 +168,7 @@ END(dec_mips1_wbflush)
 NESTED(promcall, CALLFRAME_SIZ, ra)
 	PTR_SUBU sp, CALLFRAME_SIZ
 	REG_S	ra, CALLFRAME_RA(sp)
-	REG_S	s0, CALLFRAME_S0(sp)
+	REG_S	s0, CALLFRAME_SP(sp)
 
 	move	s0, t8			/* save MIPS_CURLWP */
 
@@ -183,7 +183,7 @@ NESTED(promcall, CALLFRAME_SIZ, ra)
 	move	t8, s0			/* restore MIPS_CURLWP */
 
 	REG_L	ra, CALLFRAME_RA(sp)
-	REG_L	s0, CALLFRAME_S0(sp)
+	REG_L	s0, CALLFRAME_SP(sp)
 
 	jr	ra
 	 PTR_ADDU sp, CALLFRAME_SIZ

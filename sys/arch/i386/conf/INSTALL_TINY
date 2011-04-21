@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.129.2.2 2011/03/05 20:50:38 rmind Exp $
+#	$NetBSD: INSTALL_TINY,v 1.129.2.3 2011/04/21 01:41:05 rmind Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -107,7 +107,8 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system	TMPFS		# Efficient memory file-system
 
 # Filesystem options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	NFSSERVER	# Network File System server
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

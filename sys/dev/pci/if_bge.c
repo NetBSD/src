@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.180.4.3 2011/03/05 20:53:38 rmind Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.180.4.4 2011/04/21 01:41:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.4.3 2011/03/05 20:53:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.4.4 2011/04/21 01:41:50 rmind Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -1866,7 +1866,7 @@ bge_chipinit(struct bge_softc *sc)
 	 */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS |
 	    BGE_MODECTL_MAC_ATTN_INTR | BGE_MODECTL_HOST_SEND_BDS |
-	    BGE_MODECTL_TX_NO_PHDR_CSUM | BGE_MODECTL_RX_NO_PHDR_CSUM);
+	    BGE_MODECTL_TX_NO_PHDR_CSUM);
 
 	/*
 	 * BCM5701 B5 have a bug causing data corruption when using
@@ -3447,7 +3447,7 @@ bge_rxeof(struct bge_softc *sc)
 			    cur_rx->bge_tcp_udp_csum;
 			m->m_pkthdr.csum_flags |=
 			    (M_CSUM_TCPv4|M_CSUM_UDPv4|
-			     M_CSUM_DATA|M_CSUM_NO_PSEUDOHDR);
+			     M_CSUM_DATA);
 		}
 
 		/*

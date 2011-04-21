@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.36.4.1 2011/03/05 20:50:56 rmind Exp $
+#	$NetBSD: SMALLRAM,v 1.36.4.2 2011/04/21 01:41:09 rmind Exp $
 #
 # This is an example of how to configure a small, efficient kernel for
 # a system with limited RAM. Even so it's capable of doing quite a
@@ -65,6 +65,7 @@ no file-system	PTYFS
 no file-system	TMPFS
 
 no options 	QUOTA
+no options 	QUOTA2
 no options 	WAPBL
 no options 	NFSSERVER
 

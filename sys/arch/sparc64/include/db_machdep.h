@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.26.8.1 2011/03/05 20:52:07 rmind Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.26.8.2 2011/04/21 01:41:27 rmind Exp $ */
 
 /*
  * Mach Operating System
@@ -32,6 +32,8 @@
 /*
  * Machine-dependent defines for new kernel debugger.
  */
+
+#include <sys/types.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -124,18 +126,15 @@ db_addr_t	db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
 int kdb_trap(int, struct trapframe64 *);
 
 /*
- * We will use elf symbols in DDB when they work.
+ * We use elf symbols in DDB.
  */
-#if 1
 #define	DB_ELF_SYMBOLS
 #ifdef __arch64__
 #define DB_ELFSIZE	64
 #else
 #define DB_ELFSIZE	32
 #endif
-#else
-#define DB_AOUT_SYMBOLS
-#endif
+
 /*
  * KGDB definitions
  */

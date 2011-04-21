@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.70.4.2 2010/07/03 01:19:29 rmind Exp $
+#	$NetBSD: files.x68k,v 1.70.4.3 2011/04/21 01:41:30 rmind Exp $
 #
 # new style config file for x68k architecture
 #
@@ -209,5 +209,8 @@ include "compat/ossaudio/files.ossaudio"
 
 # USB support
 include "dev/usb/files.usb"
+
+# ATA and ATAPI support
+include "dev/ata/files.ata"
 
 include "arch/x68k/conf/majors.x68k"

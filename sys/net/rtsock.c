@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.127.4.3 2011/03/05 20:55:54 rmind Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.127.4.4 2011/04/21 01:42:13 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.127.4.3 2011/03/05 20:55:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.127.4.4 2011/04/21 01:42:13 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -231,19 +231,6 @@ COMPATNAME(route_usrreq)(struct socket *so, int req, struct mbuf *m, struct mbuf
 	return error;
 }
 
-static const struct sockaddr *
-intern_netmask(const struct sockaddr *mask)
-{
-	struct radix_node *rn;
-	extern struct radix_node_head *mask_rnhead;
-
-	if (mask != NULL &&
-	    (rn = rn_search(mask, mask_rnhead->rnh_treetop)))
-		mask = (const struct sockaddr *)rn->rn_key;
-
-	return mask;
-}
-
 /*ARGSUSED*/
 int
 COMPATNAME(route_output)(struct mbuf *m, ...)
@@ -351,20 +338,12 @@ COMPATNAME(route_output)(struct mbuf *m, ...)
 		if (error != 0)
 			senderr(error);
 		if (rtm->rtm_type != RTM_GET) {/* XXX: too grotty */
-			struct radix_node *rn;
-
 			if (memcmp(info.rti_info[RTAX_DST], rt_getkey(rt),
 			    info.rti_info[RTAX_DST]->sa_len) != 0)
 				senderr(ESRCH);
-			info.rti_info[RTAX_NETMASK] = intern_netmask(
-			    info.rti_info[RTAX_NETMASK]);
-			for (rn = rt->rt_nodes; rn; rn = rn->rn_dupedkey)
-				if (info.rti_info[RTAX_NETMASK] ==
-				    (const struct sockaddr *)rn->rn_mask)
-					break;
-			if (rn == NULL)
+			if (info.rti_info[RTAX_NETMASK] == NULL &&
+			    rt_mask(rt) != NULL)
 				senderr(ETOOMANYREFS);
-			rt = (struct rtentry *)rn;
 		}
 
 		switch (rtm->rtm_type) {

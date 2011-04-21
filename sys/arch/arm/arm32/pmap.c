@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.212.2.4 2011/03/05 20:49:31 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.212.2.5 2011/04/21 01:40:51 rmind Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212.2.4 2011/03/05 20:49:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212.2.5 2011/04/21 01:40:51 rmind Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -6363,6 +6363,90 @@ pmap_uarea(vaddr_t va)
 	cpu_cpwait();
 }
 #endif /* ARM_MMU_XSCALE == 1 */
+
+
+#if defined(CPU_ARM11MPCORE)
+
+void
+pmap_pte_init_arm11mpcore(void)
+{
+
+	/* cache mode is controlled by 5 bits (B, C, TEX) */
+	pte_l1_s_cache_mask = L1_S_CACHE_MASK_armv6;
+	pte_l2_l_cache_mask = L2_L_CACHE_MASK_armv6;
+#if defined(ARM11MPCORE_COMPAT_MMU) || defined(ARMV6_EXTENDED_SMALL_PAGE)
+	/* use extended small page (without APn, with TEX) */
+	pte_l2_s_cache_mask = L2_XS_CACHE_MASK_armv6;
+#else
+	pte_l2_s_cache_mask = L2_S_CACHE_MASK_armv6c;
+#endif
+
+	/* write-back, write-allocate */
+	pte_l1_s_cache_mode = L1_S_C | L1_S_B | L1_S_V6_TEX(0x01);
+	pte_l2_l_cache_mode = L2_C | L2_B | L2_V6_L_TEX(0x01);
+#if defined(ARM11MPCORE_COMPAT_MMU) || defined(ARMV6_EXTENDED_SMALL_PAGE)
+	pte_l2_s_cache_mode = L2_C | L2_B | L2_V6_XS_TEX(0x01);
+#else
+	/* no TEX. read-allocate */
+	pte_l2_s_cache_mode = L2_C | L2_B;
+#endif
+	/*
+	 * write-back, write-allocate for page tables.
+	 */
+	pte_l1_s_cache_mode_pt = L1_S_C | L1_S_B | L1_S_V6_TEX(0x01);
+	pte_l2_l_cache_mode_pt = L2_C | L2_B | L2_V6_L_TEX(0x01);
+#if defined(ARM11MPCORE_COMPAT_MMU) || defined(ARMV6_EXTENDED_SMALL_PAGE)
+	pte_l2_s_cache_mode_pt = L2_C | L2_B | L2_V6_XS_TEX(0x01);
+#else
+	pte_l2_s_cache_mode_pt = L2_C | L2_B;
+#endif
+
+	pte_l1_s_prot_u = L1_S_PROT_U_armv6;
+	pte_l1_s_prot_w = L1_S_PROT_W_armv6;
+	pte_l1_s_prot_ro = L1_S_PROT_RO_armv6;
+	pte_l1_s_prot_mask = L1_S_PROT_MASK_armv6;
+
+#if defined(ARM11MPCORE_COMPAT_MMU) || defined(ARMV6_EXTENDED_SMALL_PAGE)
+	pte_l2_s_prot_u = L2_S_PROT_U_armv6n;
+	pte_l2_s_prot_w = L2_S_PROT_W_armv6n;
+	pte_l2_s_prot_ro = L2_S_PROT_RO_armv6n;
+	pte_l2_s_prot_mask = L2_S_PROT_MASK_armv6n;
+
+#else
+	/* with AP[0..3] */
+	pte_l2_s_prot_u = L2_S_PROT_U_generic;
+	pte_l2_s_prot_w = L2_S_PROT_W_generic;
+	pte_l2_s_prot_ro = L2_S_PROT_RO_generic;
+	pte_l2_s_prot_mask = L2_S_PROT_MASK_generic;
+#endif
+
+#ifdef	ARM11MPCORE_COMPAT_MMU
+	/* with AP[0..3] */
+	pte_l2_l_prot_u = L2_L_PROT_U_generic;
+	pte_l2_l_prot_w = L2_L_PROT_W_generic;
+	pte_l2_l_prot_ro = L2_L_PROT_RO_generic;
+	pte_l2_l_prot_mask = L2_L_PROT_MASK_generic;
+
+	pte_l1_s_proto = L1_S_PROTO_armv6;
+	pte_l1_c_proto = L1_C_PROTO_armv6;
+	pte_l2_s_proto = L2_S_PROTO_armv6c;
+#else
+	pte_l2_l_prot_u = L2_L_PROT_U_armv6n;
+	pte_l2_l_prot_w = L2_L_PROT_W_armv6n;
+	pte_l2_l_prot_ro = L2_L_PROT_RO_armv6n;
+	pte_l2_l_prot_mask = L2_L_PROT_MASK_armv6n;
+
+	pte_l1_s_proto = L1_S_PROTO_armv6;
+	pte_l1_c_proto = L1_C_PROTO_armv6;
+	pte_l2_s_proto = L2_S_PROTO_armv6n;
+#endif
+
+	pmap_copy_page_func = pmap_copy_page_generic;
+	pmap_zero_page_func = pmap_zero_page_generic;
+	pmap_needs_pte_sync = 1;
+}
+#endif	/* CPU_ARM11MPCORE */
+
 
 #if ARM_MMU_V7 == 1
 void

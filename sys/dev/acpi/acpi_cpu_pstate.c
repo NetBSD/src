@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.45.2.3 2011/03/06 00:27:00 rmind Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.45.2.4 2011/04/21 01:41:45 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.45.2.3 2011/03/06 00:27:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.45.2.4 2011/04/21 01:41:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -56,7 +56,6 @@ static void		 acpicpu_pstate_reset(struct acpicpu_softc *);
 static void		 acpicpu_pstate_bios(void);
 static void		 acpicpu_pstate_set_xcall(void *, void *);
 
-static uint32_t acpicpu_pstate_saved = 0;
 extern struct acpicpu_softc **acpicpu_sc;
 
 void
@@ -211,19 +210,24 @@ fail:
 	aprint_error_dev(self, "failed to start P-states (err %d)\n", rv);
 }
 
-bool
-acpicpu_pstate_suspend(device_t self)
+void
+acpicpu_pstate_suspend(void *aux)
 {
-	struct acpicpu_softc *sc = device_private(self);
 	struct acpicpu_pstate *ps = NULL;
+	struct acpicpu_softc *sc;
+	struct cpu_info *ci;
+	device_t self = aux;
+	uint64_t xc;
 	int32_t i;
 
+	sc = device_private(self);
+	ci = sc->sc_ci;
+
+	/*
+	 * Reset any dynamic limits.
+	 */
 	mutex_enter(&sc->sc_mtx);
 	acpicpu_pstate_reset(sc);
-	mutex_exit(&sc->sc_mtx);
-
-	if (acpicpu_pstate_saved != 0)
-		return true;
 
 	/*
 	 * Following design notes for Windows, we set the highest
@@ -233,6 +237,8 @@ acpicpu_pstate_suspend(device_t self)
 	 *	Microsoft Corporation: Windows Native Processor
 	 *	Performance Control. Version 1.1a, November, 2002.
 	 */
+	sc->sc_pstate_saved = sc->sc_pstate_current;
+
 	for (i = sc->sc_pstate_count - 1; i >= 0; i--) {
 
 		if (sc->sc_pstate[i].ps_freq != 0) {
@@ -241,32 +247,35 @@ acpicpu_pstate_suspend(device_t self)
 		}
 	}
 
-	if (__predict_false(ps == NULL))
-		return true;
-
-	mutex_enter(&sc->sc_mtx);
-	acpicpu_pstate_saved = sc->sc_pstate_current;
-	mutex_exit(&sc->sc_mtx);
-
-	if (acpicpu_pstate_saved == ps->ps_freq)
-		return true;
-
-	acpicpu_pstate_set(sc->sc_ci, ps->ps_freq);
-
-	return true;
-}
-
-bool
-acpicpu_pstate_resume(device_t self)
-{
-	struct acpicpu_softc *sc = device_private(self);
-
-	if (acpicpu_pstate_saved != 0) {
-		acpicpu_pstate_set(sc->sc_ci, acpicpu_pstate_saved);
-		acpicpu_pstate_saved = 0;
+	if (__predict_false(ps == NULL)) {
+		mutex_exit(&sc->sc_mtx);
+		return;
 	}
 
-	return true;
+	if (sc->sc_pstate_saved == ps->ps_freq) {
+		mutex_exit(&sc->sc_mtx);
+		return;
+	}
+
+	mutex_exit(&sc->sc_mtx);
+
+	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &ps->ps_freq, NULL, ci);
+	xc_wait(xc);
+}
+
+void
+acpicpu_pstate_resume(void *aux)
+{
+	struct acpicpu_softc *sc;
+	device_t self = aux;
+	uint32_t freq;
+	uint64_t xc;
+
+	sc = device_private(self);
+	freq = sc->sc_pstate_saved;
+
+	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &freq, NULL, sc->sc_ci);
+	xc_wait(xc);
 }
 
 void
@@ -274,29 +283,28 @@ acpicpu_pstate_callback(void *aux)
 {
 	struct acpicpu_softc *sc;
 	device_t self = aux;
-	uint32_t old, new;
+	uint32_t freq;
+	uint64_t xc;
 
 	sc = device_private(self);
 
 	mutex_enter(&sc->sc_mtx);
-
-	old = sc->sc_pstate_max;
 	acpicpu_pstate_change(sc);
-	new = sc->sc_pstate_max;
 
-	if (old == new) {
-		mutex_exit(&sc->sc_mtx);
-		return;
+	freq = sc->sc_pstate[sc->sc_pstate_max].ps_freq;
+
+	if (sc->sc_pstate_saved == 0)
+		sc->sc_pstate_saved = sc->sc_pstate_current;
+
+	if (sc->sc_pstate_saved <= freq) {
+		freq = sc->sc_pstate_saved;
+		sc->sc_pstate_saved = 0;
 	}
 
 	mutex_exit(&sc->sc_mtx);
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "maximum frequency "
-		"changed from P%u (%u MHz) to P%u (%u MHz)\n",
-		old, sc->sc_pstate[old].ps_freq, new,
-		sc->sc_pstate[sc->sc_pstate_max].ps_freq));
-
-	acpicpu_pstate_set(sc->sc_ci, sc->sc_pstate[new].ps_freq);
+	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &freq, NULL, sc->sc_ci);
+	xc_wait(xc);
 }
 
 ACPI_STATUS

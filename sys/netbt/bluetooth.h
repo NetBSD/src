@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.8.16.1 2010/05/30 05:18:02 rmind Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.8.16.2 2011/04/21 01:42:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -124,14 +124,18 @@ struct btproto {
  */
 #ifdef BLUETOOTH_DEBUG
 extern int bluetooth_debug;
-# define DPRINTF(fmt, args...)	do {			\
-	if (bluetooth_debug)				\
-		printf("%s: "fmt, __func__ , ##args);	\
+# define DPRINTF(...)	do {			\
+	if (bluetooth_debug) {			\
+		printf("%s: ", __func__);	\
+		printf(__VA_ARGS__);		\
+	}					\
 } while (/* CONSTCOND */0)
 
-# define DPRINTFN(n, fmt, args...)	do {		\
-	if (bluetooth_debug > (n))			\
-		printf("%s: "fmt, __func__ , ##args);	\
+# define DPRINTFN(n, ...)	do {		\
+	if (bluetooth_debug > (n)) {		\
+		printf("%s: ", __func__);	\
+		printf(__VA_ARGS__);		\
+	}					\
 } while (/* CONSTCOND */0)
 
 # define UNKNOWN(value)			\

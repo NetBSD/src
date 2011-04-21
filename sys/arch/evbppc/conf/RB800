@@ -1,4 +1,4 @@
-#	$NetBSD: RB800,v 1.2.4.2 2011/03/05 20:50:15 rmind Exp $
+#	$NetBSD: RB800,v 1.2.4.3 2011/04/21 01:41:01 rmind Exp $
 #
 #	RB800 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB800-$Revision: 1.2.4.2 $"
+ident 		"RB800-$Revision: 1.2.4.3 $"
 
 maxusers	32
 
@@ -88,7 +88,8 @@ file-system 	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server
@@ -191,6 +192,8 @@ pci*		at pq3pci?
 
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb?
+
+alc*		at pci? dev ? function ?
 
 #ehci*		at pci? dev ? function ?
 #ohci*		at pci? dev ? function ?

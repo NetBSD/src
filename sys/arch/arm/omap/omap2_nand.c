@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_nand.c,v 1.1.4.2 2011/03/05 20:49:38 rmind Exp $	*/
+/*	$NetBSD: omap2_nand.c,v 1.1.4.3 2011/04/21 01:40:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.1.4.2 2011/03/05 20:49:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.1.4.3 2011/04/21 01:40:53 rmind Exp $");
 
 #include "opt_omap.h"
 #include "opt_flash.h"
@@ -249,7 +249,8 @@ omap2_nand_attach(device_t parent, device_t self, void *aux)
 		panic("invalid buswidth reported by config1");
 	}
 
-	sc->sc_nand_if.select = &nand_default_select;
+	nand_init_interface(&sc->sc_nand_if);
+
 	sc->sc_nand_if.command = &omap2_nand_command;
 	sc->sc_nand_if.address = &omap2_nand_address;
 	sc->sc_nand_if.read_buf_byte = &omap2_nand_read_buf_byte;
@@ -271,12 +272,8 @@ omap2_nand_attach(device_t parent, device_t self, void *aux)
 	sc->sc_nand_if.ecc.necc_block_size = 512;
 	sc->sc_nand_if.ecc.necc_type = NAND_ECC_TYPE_HW;
 #else
-	sc->sc_nand_if.ecc_compute = &nand_default_ecc_compute;
-	sc->sc_nand_if.ecc_correct = &nand_default_ecc_correct;
-	sc->sc_nand_if.ecc_prepare = NULL;
 	sc->sc_nand_if.ecc.necc_code_size = 3;
 	sc->sc_nand_if.ecc.necc_block_size = 256;
-	sc->sc_nand_if.ecc.necc_type = NAND_ECC_TYPE_SW;
 #endif	/* OMAP2_NAND_HARDWARE_ECC */
 
 	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, NULL))

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.16.4.2 2011/03/05 20:49:35 rmind Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.16.4.3 2011/04/21 01:40:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,6 +40,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_cputypes.h"
+#include "opt_cpuoptions.h"
 #endif /* _KERNEL_OPT */
 
 #if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
@@ -71,6 +72,7 @@
 			 defined(CPU_ARM11) +				\
 			 defined(CPU_ARM1136) +				\
 			 defined(CPU_ARM1176) +				\
+			 defined(CPU_ARM11MPCORE) +			\
 			 defined(CPU_CORTEX) +				\
 			 defined(CPU_CORTEXA8) +			\
 			 defined(CPU_CORTEXA9) +			\
@@ -124,7 +126,7 @@
 #define	ARM_ARCH_5	0
 #endif
 
-#if defined(CPU_ARM11) || defined(CPU_CORTEXA8)
+#if defined(CPU_ARM11) || defined(CPU_CORTEXA8) || defined(CPU_ARM11MPCORE)
 #define ARM_ARCH_6	1
 #else
 #define ARM_ARCH_6	0
@@ -165,9 +167,18 @@
  *				MMU, but also has several extensions which
  *				require different PTE layout to use.
  *
- *	ARM_MMU_V6		ARM v6 MMU.  Compatible with generic ARM
- *				MMU, but also has several extensions which
+ *	ARM_MMU_V6C		ARM v6 MMU in backward compatible mode.
+ *                              Compatible with generic ARM MMU, but
+ *                              also has several extensions which
  *				require different PTE layouts to use.
+ *                              XP bit in CP15 control reg is cleared.
+ *
+ *	ARM_MMU_V6N		ARM v6 MMU with XP bit of CP15 control reg
+ *                              set.  New features such as shared-bit
+ *                              and excute-never bit are available.
+ *                              Multiprocessor support needs this mode.
+ *
+ *	ARM_MMU_V7		ARM v7 MMU.
  */
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
@@ -202,11 +213,25 @@
 #endif
 
 #if !defined(_KERNEL_OPT) ||						\
-	 defined(CPU_ARM11)
-#define	ARM_MMU_V6		1
+	defined(CPU_ARM11MPCORE) && defined(ARM11MPCORE_COMPAT_MMU) ||	\
+	defined(CPU_ARM1136) || \
+	defined(CPU_ARM1176) || \
+	defined(CPU_ARM11) && \
+	!defined(CPU_CORTEX) && !defined(CPU_ARM11MPCORE)
+#define	ARM_MMU_V6C		1
 #else
-#define	ARM_MMU_V6		0
+#define	ARM_MMU_V6C		0
 #endif
+
+#if !defined(_KERNEL_OPT) ||						\
+	defined(CPU_ARM11MPCORE) && !defined(ARM11MPCORE_COMPAT_MMU)
+#define	ARM_MMU_V6N		1
+#else
+#define	ARM_MMU_V6N		0
+#endif
+
+#define	ARM_MMU_V6	(ARM_MMU_V6C + ARM_MMU_V6N)
+
 
 #if !defined(_KERNEL_OPT) ||						\
 	 defined(CPU_CORTEX)
@@ -217,7 +242,7 @@
 
 #define	ARM_NMMUS		(ARM_MMU_MEMC + ARM_MMU_GENERIC +	\
 				 ARM_MMU_SA1 + ARM_MMU_XSCALE +		\
-				 ARM_MMU_V6 + ARM_MMU_V7)
+				 ARM_MMU_V6N + ARM_MMU_V6C + ARM_MMU_V7)
 #if ARM_NMMUS == 0
 #error ARM_NMMUS is 0
 #endif

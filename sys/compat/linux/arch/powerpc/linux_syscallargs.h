@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.49.4.1 2011/03/05 20:52:46 rmind Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.49.4.2 2011/04/21 01:41:40 rmind Exp $ */
 
 /*
  * System call argument lists.
@@ -27,7 +27,7 @@
 	}
 
 #undef check_syscall_args
-#define check_syscall_args(call) \
+#define check_syscall_args(call) /*LINTED*/ \
 	typedef char call##_check_args[sizeof (struct call##_args) \
 		<= LINUX_SYS_MAXSYSARGS * sizeof (register_t) ? 1 : -1];
 
@@ -889,6 +889,19 @@ struct linux_sys_get_robust_list_args {
 };
 check_syscall_args(linux_sys_get_robust_list)
 
+struct linux_sys_dup3_args {
+	syscallarg(int) from;
+	syscallarg(int) to;
+	syscallarg(int) flags;
+};
+check_syscall_args(linux_sys_dup3)
+
+struct linux_sys_pipe2_args {
+	syscallarg(int *) pfds;
+	syscallarg(int) flags;
+};
+check_syscall_args(linux_sys_pipe2)
+
 /*
  * System call prototypes.
  */
@@ -1274,5 +1287,9 @@ int	linux_sys_fstatfs64(struct lwp *, const struct linux_sys_fstatfs64_args *, r
 int	linux_sys_set_robust_list(struct lwp *, const struct linux_sys_set_robust_list_args *, register_t *);
 
 int	linux_sys_get_robust_list(struct lwp *, const struct linux_sys_get_robust_list_args *, register_t *);
+
+int	linux_sys_dup3(struct lwp *, const struct linux_sys_dup3_args *, register_t *);
+
+int	linux_sys_pipe2(struct lwp *, const struct linux_sys_pipe2_args *, register_t *);
 
 #endif /* _LINUX_SYS_SYSCALLARGS_H_ */

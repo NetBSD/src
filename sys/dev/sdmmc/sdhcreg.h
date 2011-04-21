@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.1 2009/04/21 03:00:30 nonaka Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.1.12.1 2011/04/21 01:42:02 rmind Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -87,6 +87,8 @@
 #define SDHC_CLOCK_CTL			0x2c
 #define  SDHC_SDCLK_DIV_SHIFT		8
 #define  SDHC_SDCLK_DIV_MASK		0xff
+#define  SDHC_SDCLK_DVS_SHIFT		4
+#define  SDHC_SDCLK_DVS_MASK		0xf
 #define  SDHC_SDCLK_ENABLE		(1<<2)
 #define  SDHC_INTCLK_STABLE		(1<<1)
 #define  SDHC_INTCLK_ENABLE		(1<<0)
@@ -136,6 +138,7 @@
 #define  SDHC_MAX_BLK_LEN_512		0
 #define  SDHC_MAX_BLK_LEN_1024		1
 #define  SDHC_MAX_BLK_LEN_2048		2
+#define  SDHC_MAX_BLK_LEN_4096		3
 #define  SDHC_MAX_BLK_LEN_SHIFT		16
 #define  SDHC_MAX_BLK_LEN_MASK		0x3
 #define  SDHC_BASE_FREQ_SHIFT		8

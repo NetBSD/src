@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.44 2010/03/11 04:00:36 mrg Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.44.2.1 2011/04/21 01:41:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.44 2010/03/11 04:00:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.44.2.1 2011/04/21 01:41:51 rmind Exp $");
 
 #include "ehci.h"
 
@@ -186,10 +186,13 @@ ohci_pci_detach(device_t self, int flags)
 	struct ohci_pci_softc *sc = device_private(self);
 	int rv;
 
-	pmf_device_deregister(self);
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return rv;
+
+	pmf_device_deregister(self);
+
+	ohci_shutdown(self, flags);
 
 	if (sc->sc.sc_size) {
 		/* Disable interrupts, so we don't get any spurious ones. */

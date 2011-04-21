@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.34.8.2 2011/03/05 20:52:20 rmind Exp $ */
+/*	$NetBSD: sbi.c,v 1.34.8.3 2011/04/21 01:41:30 rmind Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.34.8.2 2011/03/05 20:52:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.34.8.3 2011/04/21 01:41:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ sbi_print(void *aux, const char *name)
 		case NEX_CI:
 			aprint_naive("ci at %s", name);
 			aprint_normal("ci at %s", name);
-			unsupp++;
+			unsupp = true;
 			break;
 		default:
 			aprint_naive("unknown device 0x%x at %s",

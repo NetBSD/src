@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.h,v 1.5 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: tcp_congctl.h,v 1.5.22.1 2011/04/21 01:42:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,17 +44,40 @@ struct tcp_congctlent {
  * Congestion control function table.
  */
 struct tcp_congctl {
+	/*
+	 * fast_retransmit: called on tcprexmtthresh'th dup ACKs.
+	 * this actually retransmits packets by calling tcp_output()
+	 * if appropriate.
+	 * returns 0 if entering fast recovery.  otherwise returns non-0.
+	 */
 	int  (*fast_retransmit)(struct tcpcb *, const struct tcphdr *);
+
+	/*
+	 * slow_retransmit: called on RTO to adjust parameters like cwnd.
+	 */
 	void (*slow_retransmit)(struct tcpcb *);
+
+	/*
+	 * fast_retransmit_newack: called when new data is acked.
+	 * ie. when advancing SND.UNA
+	 * not called if TCP_SACK_ENABLED.
+	 */
 	void (*fast_retransmit_newack)(struct tcpcb *, const struct tcphdr *);
+
+	/*
+	 * newack: called when new data is acked.  ie. when advancing SND.UNA
+	 * it's called before updating tp->snd_una.
+	 */
 	void (*newack)(struct tcpcb *, const struct tcphdr *);
+
+	/*
+	 * cong_exp: called when congestion is detected.  eg. by ECN
+	 */
 	void (*cong_exp)(struct tcpcb *);
 };
 
 extern const struct tcp_congctl tcp_reno_ctl;
 extern const struct tcp_congctl tcp_newreno_ctl;
-
-extern struct simplelock tcp_congctl_slock;
 
 /* currently selected global congestion control */
 extern char tcp_congctl_global_name[TCPCC_MAXLEN];

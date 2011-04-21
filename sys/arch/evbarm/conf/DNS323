@@ -1,4 +1,4 @@
-#	$NetBSD: DNS323,v 1.2.8.2 2011/03/05 20:50:02 rmind Exp $
+#	$NetBSD: DNS323,v 1.2.8.3 2011/04/21 01:40:56 rmind Exp $
 #
 #  DNS323 -- D-Link. DNS-323 platform kernel
 #
@@ -24,7 +24,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=500000
+options 	SYMTAB_SPACE=710000
 #options 	AUDIO_DEBUG=2
 
 

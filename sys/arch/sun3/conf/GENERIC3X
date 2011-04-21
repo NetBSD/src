@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.105.6.2 2011/03/05 20:52:11 rmind Exp $
+# $NetBSD: GENERIC3X,v 1.105.6.3 2011/04/21 01:41:29 rmind Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -7,7 +7,7 @@ include 	"arch/sun3/conf/std.sun3x"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC3X-$Revision: 1.105.6.2 $"
+#ident		"GENERIC3X-$Revision: 1.105.6.3 $"
 
 makeoptions	COPTS="-Os"	# bootloader has size limit (~2MB)
 
@@ -91,7 +91,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# nfs server support
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

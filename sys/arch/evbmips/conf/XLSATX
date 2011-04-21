@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.1.6.1 2011/03/05 20:50:12 rmind Exp $
+#	$NetBSD: XLSATX,v 1.1.6.2 2011/04/21 01:40:59 rmind Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.1.6.1 $"
+#ident 		"XLSATX-$Revision: 1.1.6.2 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -11,13 +11,13 @@ maxusers	32
 #
 # MEMSIZE can be used to limit memory amount used
 #
-##options		MEMSIZE=0x10000000		# 256MB 
+#options  	MEMSIZE=0x10000000		# 256MB 
 
 #
 # MEMLIMIT can be used to limit memory address used
 #
 defparam opt_memsize.h MEMLIMIT
-##options	MEMLIMIT=0x10000000			# 256MB 
+#options 	MEMLIMIT=0x10000000			# 256MB 
 
 options 	NOFPU		# No FPU
 #options 	FPEMUL		# emulate FPU insn
@@ -39,12 +39,11 @@ options 	MSGBUFSIZE=65536 # kernel dmesg buffer
 options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger
-options		MIPS_DDB_WATCH	# enable T_WATCH (see IEU_DEFAUTURE[DBE])
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
 options 	SYMTAB_SPACE=500000	# size for embedded symbol table
-#options	DDB_COMMANDONENTER="trace;show registers"
-options		DB_MAX_LINE=-1
+#options 	DDB_COMMANDONENTER="trace;show registers"
+options 	DB_MAX_LINE=-1
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries
@@ -140,16 +139,25 @@ config	netbsd-sd0a	root on sd0a type ffs
 
 
 mainbus0 	at root
-cpunode*	at mainbus? node ?
-cpucore*	at cpunode? core ?
+cpunode* 	at mainbus? node ?
+cpucore* 	at cpunode? core ?
 cpu*		at cpucore? thread ?
 obio0		at cpunode?
 com0		at obio0	addr 0x14000 intr 9
 com1		at obio0	addr 0x15000 intr 10
-options		COM_REGMAP
-rmixl_pcix0	at obio0
+options 	COM_REGMAP
+rmixl_gpio0 	at obio0	addr 0x18000 intr 14
+gpio*		at rmixl_gpio?
+rmixl_iobus0 	at obio0	addr 0x19000
+rmixl_nand* 	at rmixl_iobus?	addr 0x01800000
+#rmixl_nand* 	at rmixl_iobus?	cs 2
+nand*		at rmixl_nand?
+flash*		at nand?
+#rmixl_pcic* 	at rmixl_iobus?	cs 6 addr 0x01000000
+#pcmcia* 	at rmixl_pcic
+rmixl_pcix0 	at obio0
 pci*		at rmixl_pcix0
-rmixl_pcie0	at obio0
+rmixl_pcie0 	at obio0
 pci*		at rmixl_pcie0
 ppb*		at pci?
 pci*		at ppb?
@@ -160,11 +168,11 @@ mskc*		at pci? dev ? function ?
 msk*		at mskc?
 makphy*		at mii? phy ?			# Marvell 88E1000 PHYs
 ukphy*		at mii? phy ?			# unknown PHY
-rmixl_usbi0	at obio0	addr 0x25000 intr 31
+rmixl_usbi0 	at obio0	addr 0x25000 intr 31
 ohci0		at rmixl_usbi0	addr 0x24400 size 0x400 intr 0
 ohci1		at rmixl_usbi0	addr 0x24800 size 0x400 intr 1
 ehci0		at rmixl_usbi0	addr 0x24000 size 0x400 intr 2
-siisata*	at pci? dev ? function ?
+siisata* 	at pci? dev ? function ?
 atabus*		at ata?
 wd*		at atabus? drive ? flags 0x0000
 
@@ -175,7 +183,7 @@ uhub*		at usb?
 uhub*		at uhub? port ?
 umass*		at uhub? port ? configuration ? interface ?
 wd*		at umass?
-scsibus*	at umass? channel ?
+scsibus* 	at umass? channel ?
 sd*		at scsibus? target ? lun ?
 
 

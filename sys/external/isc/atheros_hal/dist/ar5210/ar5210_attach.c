@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5210_attach.c,v 1.1.1.1.14.1 2011/03/05 20:54:59 rmind Exp $
+ * $Id: ar5210_attach.c,v 1.1.1.1.14.2 2011/04/21 01:42:04 rmind Exp $
  */
 #include "opt_ah.h"
 
@@ -382,6 +382,11 @@ ar5210FillCapabilityInfo(struct ath_hal *ah)
 	}
 
 	pCap->halTstampPrecision = 15;		/* NB: s/w extended from 13 */
+	pCap->halIntrMask = (HAL_INT_COMMON - HAL_INT_BNR)
+			| HAL_INT_RX
+			| HAL_INT_TX
+			| HAL_INT_FATAL
+			;
 
 	ahpriv->ah_rxornIsFatal = AH_TRUE;
 	return AH_TRUE;

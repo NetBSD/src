@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.46.4.2 2011/03/05 20:52:55 rmind Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.46.4.3 2011/04/21 01:41:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.46.4.2 2011/03/05 20:52:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.46.4.3 2011/04/21 01:41:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,6 @@ netbsd32_from_u_long(u_long *p, netbsd32_u_long *s32p, u_long cmd)
 
 	*s32p = (netbsd32_u_long)*p;
 }
-
 
 /*
  * main ioctl syscall.

@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS3X,v 1.48 2009/03/06 20:31:53 joerg Exp $
+# $NetBSD: DISKLESS3X,v 1.48.4.1 2011/04/21 01:41:29 rmind Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/80)
@@ -74,7 +74,8 @@ file-system	NFS		# Sun NFS client support
 #file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER	# nfs server support
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 
 # Networking options

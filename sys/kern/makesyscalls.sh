@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.94.2.2 2011/03/05 20:55:17 rmind Exp $
+#	$NetBSD: makesyscalls.sh,v 1.94.2.3 2011/04/21 01:42:09 rmind Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -220,15 +220,17 @@ NR == 1 {
 	printf "#include <sys/param.h>\n" > rumpcalls
 	printf "#include <sys/fstypes.h>\n" > rumpcalls
 	printf "#include <sys/proc.h>\n" > rumpcalls
-	printf "#include <sys/syscall.h>\n" > rumpcalls
-	printf "#include <sys/syscallargs.h>\n\n" > rumpcalls
 	printf "#ifdef RUMP_CLIENT\n" > rumpcalls
+	printf "#include <srcsys/syscall.h>\n" > rumpcalls
+	printf "#include <srcsys/syscallargs.h>\n\n" > rumpcalls
 	printf "#include <errno.h>\n" > rumpcalls
 	printf "#include <rump/rumpclient.h>\n\n" > rumpcalls
 	printf "#define rsys_syscall(num, data, dlen, retval)\t\\\n" > rumpcalls
 	printf "    rumpclient_syscall(num, data, dlen, retval)\n" > rumpcalls
 	printf "#define rsys_seterrno(error) errno = error\n" > rumpcalls
 	printf "#define rsys_alias(a,b)\n#else\n" > rumpcalls
+	printf "#include <sys/syscall.h>\n" > rumpcalls
+	printf "#include <sys/syscallargs.h>\n\n" > rumpcalls
 	printf "#include <sys/syscallvar.h>\n\n" > rumpcalls
 	printf "#include <rump/rumpuser.h>\n" > rumpcalls
 	printf "#include \"rump_private.h\"\n\n" > rumpcalls

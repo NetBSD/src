@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.982.2.3 2011/03/05 20:52:58 rmind Exp $
+#	$NetBSD: files,v 1.982.2.4 2011/04/21 01:41:44 rmind Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -225,7 +225,7 @@ defparam			SB_MAX
 
 # file system options
 #
-defflag				QUOTA			# XXX files.ufs?
+defflag	opt_quota.h		QUOTA QUOTA2		# XXX files.ufs?
 defflag				VNODE_LOCKDEBUG
 defflag				MAGICLINKS
 
@@ -1117,7 +1117,7 @@ defflag	opt_chipsfb.h	CHIPSFB_WAIT
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
-file	dev/ic/sti.c		sti & (sti_pci | sti_gedoens)
+file	dev/ic/sti.c		sti
 
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
@@ -1153,17 +1153,19 @@ defparam USB_MEM_RESERVE
 define	usbroothub
 file	dev/usb/usbroothub_subr.c	usbroothub
 
-device	uhci: usbus, usbroothub
+define	usb_dma
+
+device	uhci: usbus, usbroothub, usb_dma
 file	dev/usb/uhci.c			uhci			needs-flag
 
 # OHCI USB controller
 #
-device	ohci: usbus, usbroothub
+device	ohci: usbus, usbroothub, usb_dma
 file	dev/usb/ohci.c			ohci			needs-flag
 
 # EHCI USB controller
 #
-device	ehci: usbus, usbroothub
+device	ehci: usbus, usbroothub, usb_dma
 file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
@@ -1592,9 +1594,11 @@ file	kern/vfs_hooks.c
 file	kern/vfs_init.c
 file	kern/vfs_lockf.c
 file	kern/vfs_lookup.c
+file	kern/vfs_mount.c
 file	kern/vfs_subr.c
 file	kern/vfs_syscalls.c
 file	kern/vfs_trans.c
+file	kern/vfs_vnode.c
 file	kern/vfs_vnops.c
 file	kern/vfs_wapbl.c		wapbl
 file	kern/vfs_xattr.c
@@ -1652,6 +1656,7 @@ file	net/radix.c
 file	net/raw_cb.c
 file	net/raw_usrreq.c
 file	net/route.c
+file	net/rtbl.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression

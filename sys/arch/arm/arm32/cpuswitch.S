@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.60.4.1 2011/03/05 20:49:30 rmind Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.60.4.2 2011/04/21 01:40:51 rmind Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.60.4.1 2011/03/05 20:49:30 rmind Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.60.4.2 2011/04/21 01:40:51 rmind Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -258,7 +258,7 @@ ENTRY(cpu_switchto)
 	 */
 	ldr	r0, [r7, #(PCB_USER_PID_RW)]
 	mcr	p15, 0, r0, c13, c0, 2
-	ldr	r0, [r7, #(PCB_USER_PID_RO)]
+	ldr	r0, [r6, #(L_PRIVATE)]
 	mcr	p15, 0, r0, c13, c0, 3
 #endif
 

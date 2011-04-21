@@ -1,4 +1,4 @@
-#	$NetBSD: std.obs266,v 1.1.4.2 2010/05/30 05:16:43 rmind Exp $
+#	$NetBSD: std.obs266,v 1.1.4.3 2011/04/21 01:41:01 rmind Exp $
 #
 # Standard/required options for obs266.
 
@@ -7,5 +7,8 @@ include		"arch/evbppc/conf/std.obs405"
 makeoptions	PRDCTTYPE="obs266"
 makeoptions	TEXTADDR=0x25000
 options 	KERNBASE=0x25000
+
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"
 
 include		"arch/evbppc/conf/files.obs266"

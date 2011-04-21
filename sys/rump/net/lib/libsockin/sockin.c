@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.21.4.2 2011/03/05 20:56:21 rmind Exp $	*/
+/*	$NetBSD: sockin.c,v 1.21.4.3 2011/04/21 01:42:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.21.4.2 2011/03/05 20:56:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.21.4.3 2011/04/21 01:42:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -93,7 +93,7 @@ struct domain sockindomain = {
 	.dom_dispose = NULL,
 	.dom_protosw = sockinsw,
 	.dom_protoswNPROTOSW = &sockinsw[__arraycount(sockinsw)],
-	.dom_rtattach = rn_inithead,
+	.dom_rtattach = rt_inithead,
 	.dom_rtoffset = 32,
 	.dom_maxrtkey = sizeof(struct sockaddr_in),
 	.dom_ifattach = NULL,

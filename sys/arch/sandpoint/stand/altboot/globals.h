@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.6.2.2 2011/03/05 20:51:47 rmind Exp $ */
+/* $NetBSD: globals.h,v 1.6.2.3 2011/04/21 01:41:22 rmind Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -17,7 +17,7 @@ extern int brdtype;
 #define BRD_SANDPOINTX3		3
 #define BRD_ENCOREPP1		10
 #define BRD_KUROBOX		100
-#define BRD_QNAPTS101		101
+#define BRD_QNAPTS		101
 #define BRD_SYNOLOGY		102
 #define BRD_STORCENTER		103
 #define BRD_DLINKDSM		104
@@ -42,6 +42,7 @@ extern uint32_t cpuclock, busclock;
 
 /* board specific support code */
 struct brdprop *brd_lookup(int);
+int tstchar(void);
 unsigned mpc107memsize(void);
 void read_mac_from_flash(uint8_t *);
 
@@ -80,14 +81,19 @@ unsigned pcicfgread(unsigned, int);
 void  pcicfgwrite(unsigned, int, unsigned);
 
 #define PCI_ID_REG			0x00
-#define PCI_COMMAND_STATUS_REG		0x04
 #define  PCI_VENDOR(id)			((id) & 0xffff)
 #define  PCI_PRODUCT(id)		(((id) >> 16) & 0xffff)
 #define  PCI_VENDOR_INVALID		0xffff
 #define  PCI_DEVICE(v,p)		((v) | ((p) << 16))
+#define PCI_COMMAND_STATUS_REG		0x04
 #define PCI_CLASS_REG			0x08
+#define  PCI_CLASS(v)			(((v) >> 16) & 0xffff)
+#define  PCI_SUBCLASS(v)		(((v) >> 16) & 0xff)
+#define  PCI_INTERFACE(v)		(((v) & 0xff00) >> 8)
+#define  PCI_REVISION(v)		((v) & 0xff)
 #define  PCI_CLASS_PPB			0x0604
 #define  PCI_CLASS_ETH			0x0200
+#define  PCI_CLASS_SCSI			0x0100
 #define  PCI_CLASS_IDE			0x0101
 #define  PCI_CLASS_RAID			0x0104
 #define  PCI_CLASS_SATA			0x0106
@@ -116,6 +122,9 @@ void _wb(uint32_t, uint32_t);
 void _wbinv(uint32_t, uint32_t);
 void _inv(uint32_t, uint32_t);
 
+/* parsing */
+uint32_t read_hex(const char *);
+
 /* heap */
 void *allocaligned(size_t, size_t);
 
@@ -125,6 +134,7 @@ int net_close(struct open_file *);
 int net_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 
 int netif_init(void *);
+void netif_shutdown_all(void);
 int netif_open(void *); 
 int netif_close(int); 
 
@@ -132,12 +142,14 @@ int netif_close(int);
     int xxx ## _match(unsigned, void *); \
     void * xxx ## _init(unsigned, void *); \
     int xxx ## _send(void *, char *, unsigned); \
-    int xxx ## _recv(void *, char *, unsigned, unsigned)
+    int xxx ## _recv(void *, char *, unsigned, unsigned); \
+    void xxx ## _shutdown(void *)
 
 NIF_DECL(fxp);
 NIF_DECL(tlp);
 NIF_DECL(rge);
 NIF_DECL(skg);
+NIF_DECL(stg);
 
 /* DSK support */
 int dskdv_init(void *);
@@ -146,6 +158,13 @@ int dsk_open(struct open_file *, ...);
 int dsk_close(struct open_file *);
 int dsk_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 struct fs_ops *dsk_fsops(struct open_file *);
+
+#define DSK_DECL(xxx) \
+    int xxx ## _match(unsigned, void *); \
+    void * xxx ## _init(unsigned, void *)
+
+DSK_DECL(pciide);
+DSK_DECL(siisata);
 
 /* status */
 #define ATA_STS_BUSY		0x80

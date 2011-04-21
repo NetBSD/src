@@ -1,9 +1,7 @@
-/*	$NetBSD: rumpuser.h,v 1.38.2.3 2011/03/05 20:56:12 rmind Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.38.2.4 2011/04/21 01:42:16 rmind Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +34,7 @@
 #include <stdint.h>
 #endif
 
-#define RUMPUSER_VERSION 13
+#define RUMPUSER_VERSION 14
 int rumpuser_getversion(void);
 
 int rumpuser_daemonize_begin(void);
@@ -218,7 +216,7 @@ struct rumpuser_sp_ops {
 	int (*spop_lwproc_newlwp)(pid_t);
 	struct lwp * (*spop_lwproc_curlwp)(void);
 	int (*spop_syscall)(int, void *, register_t *);
-	void (*spop_procexit)(void);
+	void (*spop_lwpexit)(void);
 	void (*spop_execnotify)(const char *);
 	pid_t (*spop_getpid)(void);
 };

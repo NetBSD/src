@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.16.20.2 2011/03/06 00:26:56 rmind Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.16.20.3 2011/04/21 01:40:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.16.20.2 2011/03/06 00:26:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.16.20.3 2011/04/21 01:40:45 rmind Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -175,7 +175,8 @@ const char * const p6032_cpuintrnames[NINTRS] = {
 void	*algor_p6032_intr_establish(int, int (*)(void *), void *);
 void	algor_p6032_intr_disestablish(void *);
 
-int	algor_p6032_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int	algor_p6032_pci_intr_map(const struct pci_attach_args *,
+	    pci_intr_handle_t *);
 const char *algor_p6032_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *algor_p6032_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*algor_p6032_pci_intr_establish(void *, pci_intr_handle_t, int,
@@ -419,7 +420,7 @@ algor_p6032_iointr(int ipl, vaddr_t pc, uint32_t ipending)
  *****************************************************************************/
 
 int
-algor_p6032_pci_intr_map(struct pci_attach_args *pa,
+algor_p6032_pci_intr_map(const struct pci_attach_args *pa,
     pci_intr_handle_t *ihp)
 {
 	static const int pciirqmap[6/*device*/][4/*pin*/] = {

@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.42.2.2 2011/03/05 20:50:14 rmind Exp $
+#	$NetBSD: EV64260,v 1.42.2.3 2011/04/21 01:41:00 rmind Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -57,7 +57,7 @@ options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
-options 	SYMTAB_SPACE=300000	# size for embedded symbol table
+options 	SYMTAB_SPACE=320000	# size for embedded symbol table
 
 #makeoptions	DEFCOPTS="-g"	# compile full symbol table
 makeoptions	DEBUG="-g"
@@ -98,7 +98,8 @@ file-system 	MSDOSFS		# MS-DOS file system
 #file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network File System server

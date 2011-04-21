@@ -1,4 +1,4 @@
-/*	$NetBSD: nandemulator.c,v 1.1.4.2 2011/03/05 20:53:33 rmind Exp $	*/
+/*	$NetBSD: nandemulator.c,v 1.1.4.3 2011/04/21 01:41:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.1.4.2 2011/03/05 20:53:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.1.4.3 2011/04/21 01:41:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -182,7 +182,8 @@ nandemulator_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	sc->sc_nand_if.select = &nand_default_select;
+	nand_init_interface(&sc->sc_nand_if);
+
 	sc->sc_nand_if.command = &nandemulator_command;
 	sc->sc_nand_if.address = &nandemulator_address;
 	sc->sc_nand_if.read_buf_byte = &nandemulator_read_buf_byte;
@@ -195,12 +196,8 @@ nandemulator_attach(device_t parent, device_t self, void *aux)
 	sc->sc_nand_if.write_word = &nandemulator_write_word;
 	sc->sc_nand_if.busy = &nandemulator_busy;
 
-	sc->sc_nand_if.ecc_compute = &nand_default_ecc_compute;
-	sc->sc_nand_if.ecc_correct = &nand_default_ecc_correct;
-	sc->sc_nand_if.ecc_prepare = NULL;
 	sc->sc_nand_if.ecc.necc_code_size = 3;
 	sc->sc_nand_if.ecc.necc_block_size = 256;
-	sc->sc_nand_if.ecc.necc_type = NAND_ECC_TYPE_SW;
 
 	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, NULL))
 		aprint_error_dev(sc->sc_dev,
@@ -309,6 +306,8 @@ nandemulator_device_reset(device_t self)
 {
 	struct nandemulator_softc *sc = device_private(self);
 
+	DPRINTF(("device reset\n"));
+
 	sc->sc_command = 0;
 	sc->sc_register_writable = false;
 	sc->sc_io_len = 0;
@@ -324,6 +323,9 @@ nandemulator_address_chip(device_t self)
 {
 	struct nandemulator_softc *sc = device_private(self);
 	size_t page, offset;
+
+	KASSERT(sc->sc_address_counter ==
+	    sc->sc_column_cycles + sc->sc_row_cycles);
 	
 	if (sc->sc_address_counter !=
 	    sc->sc_column_cycles + sc->sc_row_cycles) {
@@ -339,6 +341,8 @@ nandemulator_address_chip(device_t self)
 	DPRINTF(("READ/PROGRAM; page: 0x%jx (row addr: 0x%jx)\n",
 		(uintmax_t )page,
 		(uintmax_t )offset));
+
+	KASSERT(offset < sc->sc_device_size);
 
 	if (offset >= sc->sc_device_size) {
 		aprint_error_dev(self, "address > device size!\n");
@@ -403,6 +407,8 @@ nandemulator_command(device_t self, uint8_t command)
 		KASSERT(offset %
 		    (sc->sc_block_size * sc->sc_page_size) == 0);
 
+		KASSERT(offset < sc->sc_device_size);
+
 		if (offset >= sc->sc_device_size) {
 			aprint_error_dev(self, "address > device size!\n");
 		} else {
@@ -426,6 +432,7 @@ nandemulator_command(device_t self, uint8_t command)
 	default:
 		aprint_error_dev(self,
 		    "invalid nand command (0x%hhx)\n", command);
+		KASSERT(false);
 		sc->sc_io_len = 0;
 	}
 };
@@ -434,6 +441,8 @@ static void
 nandemulator_address(device_t self, uint8_t address)
 {
 	struct nandemulator_softc *sc = device_private(self);
+
+	DPRINTF(("nandemulator_address: %hhx\n", address));
 
 	/**
 	 * we have to handle read id/parameter page here,
@@ -500,6 +509,8 @@ nandemulator_read_byte(device_t self, uint8_t *data)
 {
 	struct nandemulator_softc *sc = device_private(self);
 
+	KASSERT(sc->sc_io_len > 0);
+
 	if (sc->sc_io_len > 0) {
 		*data = *sc->sc_io_pointer;
 
@@ -516,11 +527,15 @@ nandemulator_write_byte(device_t self, uint8_t data)
 {
 	struct nandemulator_softc *sc = device_private(self);
 
+	KASSERT(sc->sc_register_writable);
+
 	if (!sc->sc_register_writable) {
 		aprint_error_dev(self,
 		    "trying to write read only location without effect\n");
 		return;
 	}
+
+	KASSERT(sc->sc_io_len > 0);
 
 	if (sc->sc_io_len > 0) {
 		*sc->sc_io_pointer = data;
@@ -537,11 +552,15 @@ nandemulator_read_word(device_t self, uint16_t *data)
 {
 	struct nandemulator_softc *sc = device_private(self);
 
+	KASSERT(sc->sc_buswidth == NANDEMULATOR_16BIT);
+
 	if (sc->sc_buswidth != NANDEMULATOR_16BIT) {
 		aprint_error_dev(self,
 		    "trying to read a word on an 8bit chip\n");
 		return;
 	}
+
+	KASSERT(sc->sc_io_len > 1);
 
 	if (sc->sc_io_len > 1) {
 		*data = *(uint16_t *)sc->sc_io_pointer;
@@ -559,17 +578,23 @@ nandemulator_write_word(device_t self, uint16_t data)
 {
 	struct nandemulator_softc *sc = device_private(self);
 
+	KASSERT(sc->sc_register_writable);
+
 	if (!sc->sc_register_writable) {
 		aprint_error_dev(self,
 		    "trying to write read only location without effect\n");
 		return;
 	}
 
+	KASSERT(sc->sc_buswidth == NANDEMULATOR_16BIT);
+
 	if (sc->sc_buswidth != NANDEMULATOR_16BIT) {
 		aprint_error_dev(self,
 		    "trying to write a word to an 8bit chip");
 		return;
 	}
+
+	KASSERT(sc->sc_io_len > 1);
 
 	if (sc->sc_io_len > 1) {
 		*(uint16_t *)sc->sc_io_pointer = data;

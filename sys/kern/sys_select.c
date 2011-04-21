@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.21.4.2 2011/03/05 20:55:23 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.21.4.3 2011/04/21 01:42:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.21.4.2 2011/03/05 20:55:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.21.4.3 2011/04/21 01:42:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ sel_do_scan(const int op, void *fds, const int nf, const size_t ni,
 
 	l->l_selret = 0;
 	if (op == SELOP_SELECT) {
-		l->l_selbits = (char *)fds + ni * 3;
+		l->l_selbits = fds;
 		l->l_selni = ni;
 	} else {
 		l->l_selbits = NULL;
@@ -612,10 +612,11 @@ selrecord(lwp_t *selector, struct selinfo *sip)
  * sel_setevents: a helper function for selnotify(), to set the events
  * for LWP sleeping in selcommon() or pollcommon().
  */
-static inline void
+static inline bool
 sel_setevents(lwp_t *l, struct selinfo *sip, const int events)
 {
 	const int oflag = l->l_selflag;
+	int ret = 0;
 
 	/*
 	 * If we require re-scan or it was required by somebody else,
@@ -623,32 +624,45 @@ sel_setevents(lwp_t *l, struct selinfo *sip, const int events)
 	 */
 	if (__predict_false(events == 0 || oflag == SEL_RESET)) {
 		l->l_selflag = SEL_RESET;
-		return;
+		return true;
 	}
 	/*
 	 * Direct set.  Note: select state of LWP is locked.  First,
 	 * determine whether it is selcommon() or pollcommon().
 	 */
 	if (l->l_selbits != NULL) {
-		fd_mask *fds = (fd_mask *)l->l_selbits;
 		const size_t ni = l->l_selni;
-		const int fd = sip->sel_fdinfo;
+		fd_mask *fds = (fd_mask *)l->l_selbits;
+		fd_mask *ofds = (fd_mask *)((char *)fds + ni * 3);
+		const int fd = sip->sel_fdinfo, fbit = 1 << (fd & __NFDMASK);
 		const int idx = fd >> __NFDSHIFT;
 		int n;
 
 		for (n = 0; n < 3; n++) {
-			if (sel_flag[n] & events) {
-				fds[idx] |= 1 << (fd & __NFDMASK);
+			if ((fds[idx] & fbit) != 0 && (sel_flag[n] & events)) {
+				ofds[idx] |= fbit;
+				ret++;
 			}
 			fds = (fd_mask *)((char *)fds + ni);
+			ofds = (fd_mask *)((char *)ofds + ni);
 		}
 	} else {
 		struct pollfd *pfd = (void *)sip->sel_fdinfo;
-		pfd->revents |= events;
+		int revents = events & (pfd->events | POLLERR | POLLHUP);
+
+		if (revents) {
+			pfd->revents |= revents;
+			ret = 1;
+		}
+	}
+	/* Check whether there are any events to return. */
+	if (!ret) {
+		return false;
 	}
 	/* Indicate direct set and note the event (cluster lock is held). */
 	l->l_selflag = SEL_EVENT;
-	l->l_selret++;
+	l->l_selret += ret;
+	return true;
 }
 
 /*
@@ -688,7 +702,11 @@ selnotify(struct selinfo *sip, int events, long knhint)
 			l = sip->sel_lwp;
 			oflag = l->l_selflag;
 #ifndef NO_DIRECT_SELECT
-			sel_setevents(l, sip, events);
+			if (!sel_setevents(l, sip, events)) {
+				/* No events to return. */
+				mutex_spin_exit(lock);
+				return;
+			}
 #else
 			l->l_selflag = SEL_RESET;
 #endif

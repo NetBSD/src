@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.c,v 1.17.4.1 2011/03/05 20:53:12 rmind Exp $ */
+/*	$NetBSD: ath_netbsd.c,v 1.17.4.2 2011/04/21 01:41:46 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.17.4.1 2011/03/05 20:53:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.17.4.2 2011/04/21 01:41:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -183,7 +183,8 @@ ath_sysctl_softled(SYSCTLFN_ARGS)
 	if (softled != sc->sc_softled) {
 		if (softled) {
 			/* NB: handle any sc_ledpin change */
-			ath_hal_gpioCfgOutput(sc->sc_ah, sc->sc_ledpin);
+			ath_hal_gpioCfgOutput(sc->sc_ah, sc->sc_ledpin,
+			    HAL_GPIO_MUX_MAC_NETWORK_LED);
 			ath_hal_gpioset(sc->sc_ah, sc->sc_ledpin,
 				!sc->sc_ledon);
 		}

@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_attach.c,v 1.1.1.1.14.1 2011/03/05 20:55:01 rmind Exp $
+ * $Id: ar5212_attach.c,v 1.1.1.1.14.2 2011/04/21 01:42:05 rmind Exp $
  */
 #include "opt_ah.h"
 
@@ -843,13 +843,27 @@ ar5212FillCapabilityInfo(struct ath_hal *ah)
 	ahpriv->ah_rxornIsFatal =
 	    (AH_PRIVATE(ah)->ah_macVersion < AR_SREV_VERSION_VENICE);
 
-	/* h/w phy counters first appeared in Hainan */
-	pCap->halHwPhyCounterSupport =
-	    (AH_PRIVATE(ah)->ah_macVersion == AR_SREV_VERSION_VENICE &&
+	/* enable features that first appeared in Hainan */
+	if ((AH_PRIVATE(ah)->ah_macVersion == AR_SREV_VERSION_VENICE &&
 	     AH_PRIVATE(ah)->ah_macRev == AR_SREV_HAINAN) ||
-	    AH_PRIVATE(ah)->ah_macVersion > AR_SREV_VERSION_VENICE;
+	    AH_PRIVATE(ah)->ah_macVersion > AR_SREV_VERSION_VENICE) {
+		/* h/w phy counters */
+		pCap->halHwPhyCounterSupport = AH_TRUE;
+		/* bssid match disable */
+		pCap->halBssidMatchSupport = AH_TRUE;
+	}
 
 	pCap->halTstampPrecision = 15;
+	pCap->halIntrMask = HAL_INT_COMMON
+			| HAL_INT_RX
+			| HAL_INT_TX
+			| HAL_INT_FATAL
+			| HAL_INT_BNR
+			| HAL_INT_BMISC
+			;
+
+	if (AH_PRIVATE(ah)->ah_macVersion < AR_SREV_VERSION_GRIFFIN)
+		pCap->halIntrMask &= ~HAL_INT_TBTT;
 
 	return AH_TRUE;
 #undef IS_COBRA

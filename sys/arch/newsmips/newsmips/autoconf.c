@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32.32.1 2011/03/05 20:51:25 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32.32.2 2011/04/21 01:41:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32.32.1 2011/03/05 20:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32.32.2 2011/04/21 01:41:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,19 +94,14 @@ cpu_configure(void)
 	/*
 	 * Kick off autoconfiguration
 	 */
-	spl0();		/* enable all interrupts */
-	splhigh();	/* ...then disable device interrupts */
-
-	if (systype == NEWS3400) {
-		*(char *)INTEN0 = INTEN0_BERR;	/* only buserr occurs */
-		*(char *)INTEN1 = 0;
-	}
+	(*disable_intr)();
+	(void)splhigh();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
 	/* Enable hardware interrupt registers. */
-	enable_intr();
+	(*enable_intr)();
 
 	/* Configuration is finished, turn on interrupts. */
 	spl0();		/* enable all source forcing SOFT_INTs cleared */

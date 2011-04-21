@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.91.4.1 2011/03/05 20:50:39 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.91.4.2 2011/04/21 01:41:06 rmind Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.91.4.1 2011/03/05 20:50:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.91.4.2 2011/04/21 01:41:06 rmind Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1023,7 +1023,7 @@ ENTRY(cpu_switchto)
 	/* Switch I/O bitmap */
 	movl	PCB_IOMAP(%ebx),%eax
 	orl	%eax,%eax
-	jnz,pn	.Lcopy_iobitmap
+	jnz	.Lcopy_iobitmap
 	movl	$(IOMAP_INVALOFF << 16),CPUVAR(IOBASE)
 .Liobitmap_done:
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.43.2.2 2011/03/05 20:51:58 rmind Exp $
+#	$NetBSD: INSTALL,v 1.43.2.3 2011/04/21 01:41:24 rmind Exp $
 #
 #	Shark installation kernel
 #
@@ -56,7 +56,8 @@ file-system	KERNFS		# /kern
 #file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

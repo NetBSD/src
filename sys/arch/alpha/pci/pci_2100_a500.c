@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.9 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.9.22.1 2011/04/21 01:40:46 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.9 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.9.22.1 2011/04/21 01:40:46 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,10 +60,10 @@ static bus_space_handle_t pic_elcr_ioh;
 
 static const int pic_slave_to_master[4] = { 1, 3, 4, 5 };
 
-int	dec_2100_a500_pic_intr_map(struct pci_attach_args *,
+int	dec_2100_a500_pic_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
 
-int	dec_2100_a500_icic_intr_map(struct pci_attach_args *,
+int	dec_2100_a500_icic_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
 
 const char *dec_2100_a500_intr_string(void *, pci_intr_handle_t);
@@ -267,7 +267,7 @@ pci_2100_a500_isa_pickintr(pci_chipset_tag_t pc, isa_chipset_tag_t ic)
  *****************************************************************************/
 
 int
-dec_2100_a500_pic_intr_map(struct pci_attach_args *pa,
+dec_2100_a500_pic_intr_map(const struct pci_attach_args *pa,
     pci_intr_handle_t *ihp)
 {
 	/*
@@ -368,7 +368,8 @@ dec_2100_a500_pic_intr_map(struct pci_attach_args *pa,
 }
 
 int
-dec_2100_a500_icic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+dec_2100_a500_icic_intr_map(const struct pci_attach_args *pa,
+    pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;

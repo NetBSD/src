@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.296.2.2 2011/03/05 20:56:24 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.296.2.3 2011/04/21 01:42:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -367,6 +367,7 @@ struct proc {
 #define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
 #define	PS_NOSA 	0x40000000 /* Do not enable SA */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
+#define	PS_RUMP_LWPEXIT PS_SA      /* LWPs in rump kernel should exit for g/c */
 
 /*
  * These flags are kept in p_sflag and are protected by the proc_lock
@@ -412,7 +413,6 @@ struct proclist_desc {
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_EMULDATA);
-MALLOC_DECLARE(M_SUBPROC);	/* XXX - only used by sparc/sparc64 */
 
 /*
  * We use process IDs <= PID_MAX until there are > 16k processes.
@@ -533,6 +533,20 @@ _proclist_skipmarker(struct proc *p0)
 #define	tsleep(chan, pri, wmesg, timo)					\
 	ltsleep(chan, pri, wmesg, timo, NULL)
 
+#ifdef KSTACK_CHECK_MAGIC
+void	kstack_setup_magic(const struct lwp *);
+void	kstack_check_magic(const struct lwp *);
+#else
+#define	kstack_setup_magic(x)
+#define	kstack_check_magic(x)
+#endif
+
+extern struct emul emul_netbsd;
+
+#endif	/* _KERNEL */
+
+#if defined(_KMEMUSER) || defined(_KERNEL)
+
 /*
  * Kernel stack parameters.
  *
@@ -550,15 +564,6 @@ _proclist_skipmarker(struct proc *p0)
 #define	KSTACK_SIZE		(USPACE - ALIGN(sizeof(struct pcb)))
 #endif
 
-#ifdef KSTACK_CHECK_MAGIC
-void	kstack_setup_magic(const struct lwp *);
-void	kstack_check_magic(const struct lwp *);
-#else
-#define	kstack_setup_magic(x)
-#define	kstack_check_magic(x)
-#endif
+#endif	/* _KMEMUSER || _KERNEL */
 
-extern struct emul emul_netbsd;
-
-#endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

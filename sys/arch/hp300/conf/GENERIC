@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.152.2.2 2011/03/05 20:50:20 rmind Exp $
+# $NetBSD: GENERIC,v 1.152.2.3 2011/04/21 01:41:02 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.152.2.2 $"
+#ident 		"GENERIC-$Revision: 1.152.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -119,7 +119,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # Filesystem options
-options 	QUOTA		# User and group quotas in FFS
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

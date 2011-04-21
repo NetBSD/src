@@ -1,4 +1,4 @@
-/*	$NetBSD: syncfs.h,v 1.11 2007/02/09 21:55:36 ad Exp $	*/
+/*	$NetBSD: syncfs.h,v 1.11.68.1 2011/04/21 01:42:12 rmind Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -47,17 +47,21 @@ int	sync_print(void *);
 #define sync_islocked	genfs_noislocked
 #define sync_putpages	genfs_null_putpages
 
-void sched_sync(void *);
-void vn_initialize_syncerd(void);
-int vfs_allocate_syncvnode(struct mount *);
-void vfs_deallocate_syncvnode(struct mount *);
+void	sched_sync(void *);
+void	vn_initialize_syncerd(void);
+int	vfs_allocate_syncvnode(struct mount *);
+void	vfs_deallocate_syncvnode(struct mount *);
 
 extern int (**sync_vnodeop_p)(void *);
 
-#define SYNCER_MAXDELAY       32
+#define	SYNCER_MAXDELAY		32
 
-extern int syncer_maxdelay;	/* maximum delay time */
-extern kmutex_t syncer_mutex;	/* lock to freeze syncer during unmount */
-TAILQ_HEAD(synclist, vnode);
+extern int	syncer_maxdelay;
+extern kmutex_t	syncer_mutex;
+
+extern time_t	syncdelay;
+extern time_t	filedelay;
+extern time_t	dirdelay;
+extern time_t	metadelay;
 
 #endif /* _MISCFS_SYNCFS_SYNCFS_H_ */

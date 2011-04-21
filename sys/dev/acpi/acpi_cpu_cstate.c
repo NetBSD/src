@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.50.2.2 2011/03/05 20:53:02 rmind Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.50.2.3 2011/04/21 01:41:45 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.50.2.2 2011/03/05 20:53:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.50.2.3 2011/04/21 01:41:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -134,22 +134,16 @@ acpicpu_cstate_start(device_t self)
 	(void)acpicpu_md_cstate_start(sc);
 }
 
-bool
-acpicpu_cstate_suspend(device_t self)
+void
+acpicpu_cstate_suspend(void *aux)
 {
-	return true;
+	/* Nothing. */
 }
 
-bool
-acpicpu_cstate_resume(device_t self)
+void
+acpicpu_cstate_resume(void *aux)
 {
-	static const ACPI_OSD_EXEC_CALLBACK func = acpicpu_cstate_callback;
-	struct acpicpu_softc *sc = device_private(self);
-
-	if ((sc->sc_flags & ACPICPU_FLAG_C_FADT) == 0)
-		(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, func, sc->sc_dev);
-
-	return true;
+	acpicpu_cstate_callback(aux);
 }
 
 void
@@ -345,6 +339,11 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm, int i)
 
 		case ACPI_STATE_C1:
 
+			/*
+			 * If ACPI wants native access (FFH), but the
+			 * MD code does not support MONITOR/MWAIT, use
+			 * HLT for C1 and error out for higher C-states.
+			 */
 			if ((sc->sc_flags & ACPICPU_FLAG_C_FFH) == 0)
 				state.cs_method = ACPICPU_C_STATE_HALT;
 

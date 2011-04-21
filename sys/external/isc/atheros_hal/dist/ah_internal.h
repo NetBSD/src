@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_internal.h,v 1.3.6.1 2011/03/05 20:54:59 rmind Exp $
+ * $Id: ah_internal.h,v 1.3.6.2 2011/04/21 01:42:04 rmind Exp $
  */
 #ifndef _ATH_AH_INTERAL_H_
 #define _ATH_AH_INTERAL_H_
@@ -57,6 +57,11 @@ typedef struct {
 	uint16_t	end;		/* ending register or zero */
 } HAL_REGRANGE;
 
+typedef struct {
+	uint32_t	addr;		/* register address/offset */
+	uint32_t	value;		/* value to write */
+} HAL_REGWRITE;
+
 /*
  * Transmit power scale factor.
  *
@@ -87,12 +92,12 @@ struct ath_hal_chip {
 };
 #ifndef AH_CHIP
 #define	AH_CHIP(_name, _probe, _attach)				\
-static struct ath_hal_chip name##_chip = {			\
+static struct ath_hal_chip _name##_chip = {			\
 	.name		= #_name,				\
 	.probe		= _probe,				\
 	.attach		= _attach				\
 };								\
-OS_DATA_SET(ah_chips, name##_chip)
+OS_DATA_SET(ah_chips, _name##_chip)
 #endif
 
 /*
@@ -184,7 +189,8 @@ typedef struct {
 			halExtChanDfsSupport		: 1,
 			halForcePpmSupport		: 1,
 			halEnhancedPmSupport		: 1,
-			halMbssidAggrSupport		: 1;
+			halMbssidAggrSupport		: 1,
+			halBssidMatchSupport		: 1;
 	uint32_t	halWirelessModes;
 	uint16_t	halTotalQueues;
 	uint16_t	halKeyCacheSize;
@@ -197,6 +203,7 @@ typedef struct {
 	uint8_t		halNumGpioPins;
 	uint8_t		halNumAntCfg2GHz;
 	uint8_t		halNumAntCfg5GHz;
+	uint32_t	halIntrMask;
 } HAL_CAPABILITIES;
 
 /*
@@ -231,7 +238,8 @@ struct ath_hal_private {
 				uint16_t *data);
 	HAL_BOOL	(*ah_eepromWrite)(struct ath_hal *, u_int off,
 				uint16_t data);
-	HAL_BOOL	(*ah_gpioCfgOutput)(struct ath_hal *, uint32_t gpio);
+	HAL_BOOL	(*ah_gpioCfgOutput)(struct ath_hal *,
+				uint32_t gpio, HAL_GPIO_MUX_TYPE);
 	HAL_BOOL	(*ah_gpioCfgInput)(struct ath_hal *, uint32_t gpio);
 	uint32_t	(*ah_gpioGet)(struct ath_hal *, uint32_t gpio);
 	HAL_BOOL	(*ah_gpioSet)(struct ath_hal *,
@@ -308,8 +316,8 @@ struct ath_hal_private {
 	AH_PRIVATE(_ah)->ah_eepromRead(_ah, _off, _data)
 #define	ath_hal_eepromWrite(_ah, _off, _data) \
 	AH_PRIVATE(_ah)->ah_eepromWrite(_ah, _off, _data)
-#define	ath_hal_gpioCfgOutput(_ah, _gpio) \
-	AH_PRIVATE(_ah)->ah_gpioCfgOutput(_ah, _gpio)
+#define	ath_hal_gpioCfgOutput(_ah, _gpio, _type) \
+	AH_PRIVATE(_ah)->ah_gpioCfgOutput(_ah, _gpio, _type)
 #define	ath_hal_gpioCfgInput(_ah, _gpio) \
 	AH_PRIVATE(_ah)->ah_gpioCfgInput(_ah, _gpio)
 #define	ath_hal_gpioGet(_ah, _gpio) \
@@ -328,6 +336,8 @@ struct ath_hal_private {
 	(_ah)->ah_configPCIE(_ah, _reset)
 #define	ath_hal_disablePCIE(_ah) \
 	(_ah)->ah_disablePCIE(_ah)
+#define	ath_hal_setInterrupts(_ah, _mask) \
+	(_ah)->ah_setInterrupts(_ah, _mask)
 
 #define	ath_hal_eepromDetach(_ah)			\
 do {							\

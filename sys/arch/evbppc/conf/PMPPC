@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.13.2.2 2011/03/05 20:50:15 rmind Exp $
+#	$NetBSD: PMPPC,v 1.13.2.3 2011/04/21 01:41:00 rmind Exp $
 #
 #	PMPPC
 #
@@ -51,7 +51,7 @@ options 	SYMTAB_SPACE=580000	# size for embedded symbol table
 #options 	COMPAT_20	# NetBSD 2.0,
 #options 	COMPAT_30	# NetBSD 3.0,
 #options 	COMPAT_40	# NetBSD 4.0,
-#options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -77,7 +77,8 @@ file-system 	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network File System server

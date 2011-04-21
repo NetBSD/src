@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.55.2.3 2011/03/06 00:26:58 rmind Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.55.2.4 2011/04/21 01:41:31 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.55.2.3 2011/03/06 00:26:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.55.2.4 2011/04/21 01:41:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,10 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.55.2.3 2011/03/06 00:26:58 rmind E
 static char	  native_idle_text[16];
 void		(*native_idle)(void) = NULL;
 
-static u_long	 acpicpu_md_lock(struct acpicpu_softc *);
-static void	 acpicpu_md_unlock(struct acpicpu_softc *, u_long);
-static int	 acpicpu_md_quirk_piix4(struct pci_attach_args *);
-static void	 acpicpu_md_pstate_percent_reset(struct cpu_info *);
+static int	 acpicpu_md_quirk_piix4(const struct pci_attach_args *);
+static void	 acpicpu_md_pstate_hwf_reset(void *, void *);
 static int	 acpicpu_md_pstate_fidvid_get(struct acpicpu_softc *,
                                               uint32_t *);
 static int	 acpicpu_md_pstate_fidvid_set(struct acpicpu_pstate *);
@@ -140,24 +138,6 @@ acpicpu_md_attach(device_t parent, device_t self, void *aux)
 	struct cpufeature_attach_args *cfaa = aux;
 
 	return cfaa->ci;
-}
-
-static u_long
-acpicpu_md_lock(struct acpicpu_softc *sc)
-{
-	const u_long flags = x86_read_psl();
-
-	x86_disable_intr();
-	__cpu_simple_lock(&sc->sc_lock);
-
-	return flags;
-}
-
-static void
-acpicpu_md_unlock(struct acpicpu_softc *sc, u_long flags)
-{
-	__cpu_simple_unlock(&sc->sc_lock);
-	x86_write_psl(flags);
 }
 
 uint32_t
@@ -383,7 +363,7 @@ acpicpu_md_flags(void)
 }
 
 static int
-acpicpu_md_quirk_piix4(struct pci_attach_args *pa)
+acpicpu_md_quirk_piix4(const struct pci_attach_args *pa)
 {
 
 	/*
@@ -495,6 +475,16 @@ acpicpu_md_cstate_enter(int method, int state)
 int
 acpicpu_md_pstate_start(struct acpicpu_softc *sc)
 {
+	uint64_t xc;
+
+	/*
+	 * Reset the APERF and MPERF counters.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_P_HWF) != 0) {
+		xc = xc_broadcast(0, acpicpu_md_pstate_hwf_reset, NULL, NULL);
+		xc_wait(xc);
+	}
+
 	return acpicpu_md_pstate_sysctl_init();
 }
 
@@ -510,8 +500,8 @@ acpicpu_md_pstate_stop(void)
 int
 acpicpu_md_pstate_init(struct acpicpu_softc *sc)
 {
+	struct cpu_info *ci = sc->sc_ci;
 	struct acpicpu_pstate *ps, msr;
-	struct cpu_info *ci = curcpu();
 	uint32_t family, i = 0;
 	uint64_t val;
 
@@ -595,7 +585,6 @@ acpicpu_md_pstate_init(struct acpicpu_softc *sc)
 			break;
 
 		default:
-
 			/*
 			 * If we have an unknown AMD CPU, rely on XPSS.
 			 */
@@ -637,14 +626,6 @@ acpicpu_md_pstate_init(struct acpicpu_softc *sc)
 		i++;
 	}
 
-	/*
-	 * Reset the APERF and MPERF counters.
-	 *
-	 * XXX: Should be with xc_unicast(9).
-	 */
-	if ((sc->sc_flags & ACPICPU_FLAG_P_HWF) != 0)
-		acpicpu_md_pstate_percent_reset(sc->sc_ci);
-
 	return 0;
 }
 
@@ -671,12 +652,11 @@ acpicpu_md_pstate_init(struct acpicpu_softc *sc)
  *	2.4.5, Revision 3.48, April 2010.
  */
 uint8_t
-acpicpu_md_pstate_percent(struct cpu_info *ci)
+acpicpu_md_pstate_hwf(struct cpu_info *ci)
 {
 	struct acpicpu_softc *sc;
 	uint64_t aperf, mperf;
 	uint8_t rv = 0;
-	u_long flags;
 
 	sc = acpicpu_sc[ci->ci_acpiid];
 
@@ -686,13 +666,15 @@ acpicpu_md_pstate_percent(struct cpu_info *ci)
 	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_P_HWF) == 0))
 		return 0;
 
-	flags = acpicpu_md_lock(sc);
-
 	aperf = sc->sc_pstate_aperf;
 	mperf = sc->sc_pstate_mperf;
 
+	x86_disable_intr();
+
 	sc->sc_pstate_aperf = rdmsr(MSR_APERF);
 	sc->sc_pstate_mperf = rdmsr(MSR_MPERF);
+
+	x86_enable_intr();
 
 	aperf = sc->sc_pstate_aperf - aperf;
 	mperf = sc->sc_pstate_mperf - mperf;
@@ -700,31 +682,29 @@ acpicpu_md_pstate_percent(struct cpu_info *ci)
 	if (__predict_true(mperf != 0))
 		rv = (aperf * 100) / mperf;
 
-	acpicpu_md_unlock(sc, flags);
-
 	return rv;
 }
 
 static void
-acpicpu_md_pstate_percent_reset(struct cpu_info *ci)
+acpicpu_md_pstate_hwf_reset(void *arg1, void *arg2)
 {
+	struct cpu_info *ci = curcpu();
 	struct acpicpu_softc *sc;
-	u_long flags;
 
 	sc = acpicpu_sc[ci->ci_acpiid];
 
 	if (__predict_false(sc == NULL))
 		return;
 
-	flags = acpicpu_md_lock(sc);
+	x86_disable_intr();
 
 	wrmsr(MSR_APERF, 0);
 	wrmsr(MSR_MPERF, 0);
 
+	x86_enable_intr();
+
 	sc->sc_pstate_aperf = 0;
 	sc->sc_pstate_mperf = 0;
-
-	acpicpu_md_unlock(sc, flags);
 }
 
 int

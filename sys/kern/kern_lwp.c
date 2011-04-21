@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.141.2.3 2011/03/05 20:55:15 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.141.2.4 2011/04/21 01:42:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.141.2.3 2011/03/05 20:55:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.141.2.4 2011/04/21 01:42:08 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -240,12 +240,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.141.2.3 2011/03/05 20:55:15 rmind Exp
 #include <sys/filedesc.h>
 #include <sys/dtrace_bsd.h>
 #include <sys/sdt.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
 
 static pool_cache_t	lwp_cache	__read_mostly;
 struct lwplist		alllwp		__cacheline_aligned;
+
+static void		lwp_dtor(void *, void *);
 
 /* DTrace proc provider probes */
 SDT_PROBE_DEFINE(proc,,,lwp_create,
@@ -293,7 +296,7 @@ lwpinit(void)
 	lwpinit_specificdata();
 	lwp_sys_init();
 	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
-	    "lwppl", NULL, IPL_NONE, NULL, NULL, NULL);
+	    "lwppl", NULL, IPL_NONE, NULL, lwp_dtor, NULL);
 }
 
 void
@@ -316,6 +319,26 @@ lwp0_init(void)
 	lwp_initspecific(l);
 
 	SYSCALL_TIME_LWP_INIT(l);
+}
+
+static void
+lwp_dtor(void *arg, void *obj)
+{
+	lwp_t *l = obj;
+	uint64_t where;
+	(void)l;
+
+	/*
+	 * Provide a barrier to ensure that all mutex_oncpu() and rw_oncpu()
+	 * calls will exit before memory of LWP is returned to the pool, where
+	 * KVA of LWP structure might be freed and re-used for other purposes.
+	 * Kernel preemption is disabled around mutex_oncpu() and rw_oncpu()
+	 * callers, therefore cross-call to all CPUs will do the job.  Also,
+	 * the value of l->l_cpu must be still valid at this point.
+	 */
+	KASSERT(l->l_cpu != NULL);
+	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
+	xc_wait(where);
 }
 
 /*

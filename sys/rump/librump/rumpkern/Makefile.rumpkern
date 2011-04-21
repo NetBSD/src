@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.rumpkern,v 1.74.2.3 2011/03/05 20:56:14 rmind Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.74.2.4 2011/04/21 01:42:17 rmind Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
+
+.include <bsd.own.mk>
 
 LIB=		rump
 

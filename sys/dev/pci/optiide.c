@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.17.22.1 2011/03/05 20:53:47 rmind Exp $	*/
+/*	$NetBSD: optiide.c,v 1.17.22.2 2011/04/21 01:41:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.17.22.1 2011/03/05 20:53:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.17.22.2 2011/04/21 01:41:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.17.22.1 2011/03/05 20:53:47 rmind Exp 
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_opti_reg.h>
 
-static void opti_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void opti_chip_map(struct pciide_softc*, const struct pci_attach_args*);
 static void opti_setup_channel(struct ata_channel*);
 
 static int  optiide_match(device_t, cfdata_t, void *);
@@ -101,7 +101,7 @@ optiide_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+opti_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface;

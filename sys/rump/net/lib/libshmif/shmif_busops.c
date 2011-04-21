@@ -1,7 +1,7 @@
-/*	$NetBSD: shmif_busops.c,v 1.8.6.2 2011/03/05 20:56:21 rmind Exp $	*/
+/*	$NetBSD: shmif_busops.c,v 1.8.6.3 2011/04/21 01:42:18 rmind Exp $	*/
 
 /*
- * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by The Nokia Foundation.
  *
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.8.6.2 2011/03/05 20:56:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.8.6.3 2011/04/21 01:42:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>

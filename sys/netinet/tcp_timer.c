@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.84 2008/11/10 01:06:43 uebayasi Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.84.8.1 2011/04/21 01:42:14 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.84 2008/11/10 01:06:43 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.84.8.1 2011/04/21 01:42:14 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -387,6 +387,14 @@ tcp_timer_rexmt(void *arg)
 		if (tp->t_in6pcb)
 			in6_losing(tp->t_in6pcb);
 #endif
+		/*
+		 * This operation is not described in RFC2988.  The
+		 * point is to keep srtt+4*rttvar constant, so we
+		 * should shift right 2 bits to divide by 4, and then
+		 * shift right one bit because the storage
+		 * representation of rttvar is 1/16s vs 1/32s for
+		 * srtt.
+		 */
 		tp->t_rttvar += (tp->t_srtt >> TCP_RTT_SHIFT);
 		tp->t_srtt = 0;
 	}

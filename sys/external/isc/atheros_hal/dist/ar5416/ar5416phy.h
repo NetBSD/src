@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416phy.h,v 1.1.1.1.14.1 2011/03/05 20:55:02 rmind Exp $
+ * $Id: ar5416phy.h,v 1.1.1.1.14.2 2011/04/21 01:42:06 rmind Exp $
  */
 #ifndef _DEV_ATH_AR5416PHY_H_
 #define _DEV_ATH_AR5416PHY_H_
@@ -48,6 +48,7 @@
 #define AR_PHY_FC_SHORT_GI_40       0x00000080      /* allow short GI for HT 40 */
 #define AR_PHY_FC_WALSH             0x00000100      /* walsh spatial spreading for 2 chains,2 streams TX */
 #define AR_PHY_FC_SINGLE_HT_LTF1    0x00000200      /* single length (4us) 1st HT long training symbol */
+#define	AR_PHY_FC_ENABLE_DAC_FIFO   0x00000800
 
 #define AR_PHY_TIMING2      0x9810      /* Timing Control 2 */
 #define AR_PHY_TIMING2_USE_FORCE    0x00001000
@@ -109,6 +110,9 @@
 #define AR_PHY_HALFGI_DSC_EXP_S 0
 
 #define AR_PHY_HEAVY_CLIP_ENABLE    0x99E0
+
+#define AR_PHY_HEAVY_CLIP_FACTOR_RIFS	0x99ec
+#define AR_PHY_RIFS_INIT_DELAY		0x03ff0000
 
 #define AR_PHY_M_SLEEP      0x99f0      /* sleep control registers */
 #define AR_PHY_REFCLKDLY    0x99f4
@@ -221,6 +225,9 @@
 #define	AR_PHY_TPCRG1_PD_GAIN_3		0x00300000
 #define	AR_PHY_TPCRG1_PD_GAIN_3_S	20
 
+#define	AR_PHY_TPCRG1_PD_CAL_ENABLE	0x00400000
+#define	AR_PHY_TPCRG1_PD_CAL_ENABLE_S	22
+
 #define AR_PHY_VIT_MASK2_M_46_61 0xa3a0
 #define AR_PHY_MASK2_M_31_45     0xa3a4
 #define AR_PHY_MASK2_M_16_30     0xa3a8
@@ -261,4 +268,5 @@
 
 #define	AR_PHY_CL_CAL_CTL	0xA358		/* carrier leak cal control */
 #define	AR_PHY_CL_CAL_ENABLE	0x00000002
+#define	AR_PHY_PARALLEL_CAL_ENABLE	0x00000001
 #endif /* _DEV_ATH_AR5416PHY_H_ */

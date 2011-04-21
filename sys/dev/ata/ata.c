@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.112.2.1 2010/05/30 05:17:18 rmind Exp $	*/
+/*	$NetBSD: ata.c,v 1.112.2.2 2011/04/21 01:41:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.112.2.1 2010/05/30 05:17:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.112.2.2 2011/04/21 01:41:45 rmind Exp $");
 
 #include "opt_ata.h"
 
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.112.2.1 2010/05/30 05:17:18 rmind Exp $");
 #include <sys/errno.h>
 #include <sys/ataio.h>
 #include <sys/kmem.h>
-#include <sys/simplelock.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
 #include <sys/once.h>
@@ -74,18 +73,18 @@ int atadebug_mask = 0;
 #define ATADEBUG_PRINT(args, level)
 #endif
 
+static ONCE_DECL(ata_init_ctrl);
 static struct pool ata_xfer_pool;
 
 /*
  * A queue of atabus instances, used to ensure the same bus probe order
- * for a given hardware configuration at each boot.
+ * for a given hardware configuration at each boot.  Kthread probing
+ * devices on a atabus.  Only one probing at once. 
  */
-struct atabus_initq_head atabus_initq_head =
-    TAILQ_HEAD_INITIALIZER(atabus_initq_head);
-struct simplelock atabus_interlock = SIMPLELOCK_INITIALIZER;
-
-/* kernel thread probing devices on a atabus. Only one probing at once */
-struct lwp *atabus_configlwp;
+static TAILQ_HEAD(, atabus_initq)	atabus_initq_head;
+static kmutex_t				atabus_qlock;
+static kcondvar_t			atabus_qcv;
+static lwp_t *				atabus_cfg_lwp;
 
 /*****************************************************************************
  * ATA bus layer.
@@ -109,6 +108,23 @@ static void atabus_childdetached(device_t, device_t);
 static bool atabus_resume(device_t, const pmf_qual_t *);
 static bool atabus_suspend(device_t, const pmf_qual_t *);
 static void atabusconfig_thread(void *);
+
+/*
+ * atabus_init:
+ *
+ *	Initialize ATA subsystem structures.
+ */
+static int
+atabus_init(void)
+{
+
+	pool_init(&ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0,
+	    "ataspl", NULL, IPL_BIO);
+	TAILQ_INIT(&atabus_initq_head);
+	mutex_init(&atabus_qlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&atabus_qcv, "atainitq");
+	return 0;
+}
 
 /*
  * atabusprint:
@@ -196,15 +212,14 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	splx(s);
 
 	/* Make sure the devices probe in atabus order to avoid jitter. */
-	simple_lock(&atabus_interlock);
-	while(1) {
+	mutex_enter(&atabus_qlock);
+	for (;;) {
 		atabus_initq = TAILQ_FIRST(&atabus_initq_head);
 		if (atabus_initq->atabus_sc == atabus_sc)
 			break;
-		ltsleep(&atabus_initq_head, PRIBIO, "ata_initq", 0,
-		    &atabus_interlock);
+		cv_wait(&atabus_qcv, &atabus_qlock);
 	}
-	simple_unlock(&atabus_interlock);
+	mutex_exit(&atabus_qlock);
 
 	/* If no drives, abort here */
 	for (i = 0; i < chp->ch_ndrive; i++)
@@ -219,19 +234,19 @@ atabusconfig(struct atabus_softc *atabus_sc)
 
 
 	if ((error = kthread_create(PRI_NONE, 0, NULL, atabusconfig_thread,
-	    atabus_sc, &atabus_configlwp,
+	    atabus_sc, &atabus_cfg_lwp,
 	    "%scnf", device_xname(atac->atac_dev))) != 0)
 		aprint_error_dev(atac->atac_dev,
 		    "unable to create config thread: error %d\n", error);
 	return;
 
  out:
-	simple_lock(&atabus_interlock);
+	mutex_enter(&atabus_qlock);
 	TAILQ_REMOVE(&atabus_initq_head, atabus_initq, atabus_initq);
-	simple_unlock(&atabus_interlock);
+	cv_broadcast(&atabus_qcv);
+	mutex_exit(&atabus_qlock);
 
 	free(atabus_initq, M_DEVBUF);
-	wakeup(&atabus_initq_head);
 
 	ata_delref(chp);
 
@@ -248,13 +263,15 @@ atabusconfig_thread(void *arg)
 	struct atabus_softc *atabus_sc = arg;
 	struct ata_channel *chp = atabus_sc->sc_chan;
 	struct atac_softc *atac = chp->ch_atac;
-	int i, s;
 	struct atabus_initq *atabus_initq = NULL;
+	int i, s;
 
-	simple_lock(&atabus_interlock);
+	/* XXX seems wrong */
+	mutex_enter(&atabus_qlock);
 	atabus_initq = TAILQ_FIRST(&atabus_initq_head);
-	simple_unlock(&atabus_interlock);
 	KASSERT(atabus_initq->atabus_sc == atabus_sc);
+	mutex_exit(&atabus_qlock);
+
 	/*
 	 * Attach an ATAPI bus, if needed.
 	 */
@@ -326,12 +343,12 @@ atabusconfig_thread(void *arg)
 	}
 	splx(s);
 
-	simple_lock(&atabus_interlock);
+	mutex_enter(&atabus_qlock);
 	TAILQ_REMOVE(&atabus_initq_head, atabus_initq, atabus_initq);
-	simple_unlock(&atabus_interlock);
+	cv_broadcast(&atabus_qcv);
+	mutex_exit(&atabus_qlock);
 
 	free(atabus_initq, M_DEVBUF);
-	wakeup(&atabus_initq_head);
 
 	ata_delref(chp);
 
@@ -424,15 +441,6 @@ atabus_match(device_t parent, cfdata_t cf, void *aux)
 	return (1);
 }
 
-static int
-atabus_xferpool_init(void)
-{
-
-	pool_init(&ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0, "ataspl",
-	    NULL, IPL_BIO);
-	return 0;
-}
-
 /*
  * atabus_attach:
  *
@@ -444,7 +452,6 @@ atabus_attach(device_t parent, device_t self, void *aux)
 	struct atabus_softc *sc = device_private(self);
 	struct ata_channel *chp = aux;
 	struct atabus_initq *initq;
-	static ONCE_DECL(poolinit_ctrl);
 	int error;
 
 	sc->sc_chan = chp;
@@ -457,7 +464,7 @@ atabus_attach(device_t parent, device_t self, void *aux)
 	if (ata_addref(chp))
 		return;
 
-	RUN_ONCE(&poolinit_ctrl, atabus_xferpool_init);
+	RUN_ONCE(&ata_init_ctrl, atabus_init);
 
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;

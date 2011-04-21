@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.29.2.1 2011/03/05 20:54:20 rmind Exp $ */
+/*	$NetBSD: genfb.c,v 1.29.2.2 2011/04/21 01:42:03 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.29.2.1 2011/03/05 20:54:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.29.2.2 2011/04/21 01:42:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ void
 genfb_init(struct genfb_softc *sc)
 {
 	prop_dictionary_t dict;
-	uint64_t cmap_cb, pmf_cb, mode_cb, bl_cb;
+	uint64_t cmap_cb, pmf_cb, mode_cb, bl_cb, fbaddr;
 	uint32_t fboffset;
 	bool console;
 
@@ -132,6 +132,11 @@ genfb_init(struct genfb_softc *sc)
 	}
 
 	sc->sc_fboffset = fboffset;
+
+	sc->sc_fbaddr = NULL;
+	if (prop_dictionary_get_uint64(dict, "virtual_address", &fbaddr)) {
+		sc->sc_fbaddr = (void *)(uintptr_t)fbaddr;
+	}
 
 	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_stride))
 		sc->sc_stride = (sc->sc_width * sc->sc_depth) >> 3;

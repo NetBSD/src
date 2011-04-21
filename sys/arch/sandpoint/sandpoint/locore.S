@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19.2.1 2011/03/05 20:51:46 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.19.2.2 2011/04/21 01:41:22 rmind Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -150,7 +150,8 @@ _C_LABEL(jump_to_ppc_reset_entry):
 	mfmsr	3
 	ori	3,3,PSL_IP@l
 	mtmsr	3
-	b	0xFFF00100
+	isync
+	ba	0xFFF00100
 
 /*
  * Include common switch / setfault code

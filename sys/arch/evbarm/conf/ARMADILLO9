@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.26.4.2 2011/03/05 20:50:02 rmind Exp $
+#	$NetBSD: ARMADILLO9,v 1.26.4.3 2011/04/21 01:40:56 rmind Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -38,7 +38,8 @@ file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

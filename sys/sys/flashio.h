@@ -1,4 +1,4 @@
-/*	$NetBSD: flashio.h,v 1.1.4.2 2011/03/05 20:56:23 rmind Exp $	*/
+/*	$NetBSD: flashio.h,v 1.1.4.3 2011/04/21 01:42:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -59,7 +59,8 @@ enum {
 /* public userspace API */
 
 /* common integer type to address flash */
-typedef int64_t flash_addr_t;
+typedef int64_t flash_off_t;
+typedef uint64_t flash_size_t;
 
 /**
  * struct erase_params - for ioctl erase call
@@ -67,25 +68,25 @@ typedef int64_t flash_addr_t;
  * @len: length of the erase
  */
 struct flash_erase_params {
-	flash_addr_t ep_addr;
-	flash_addr_t ep_len;
+	flash_off_t ep_addr;
+	flash_off_t ep_len;
 };
 
 struct flash_badblock_params {
-	flash_addr_t bbp_addr;
+	flash_off_t bbp_addr;
 	bool bbp_isbad;
 };
 
 struct flash_info_params {
-	flash_addr_t ip_flash_size;
-	size_t ip_page_size;
-	size_t ip_erase_size;
+	flash_off_t ip_flash_size;
+	flash_size_t ip_page_size;
+	flash_size_t ip_erase_size;
 	uint8_t ip_flash_type;
 };
 
 struct flash_dump_params {
-	flash_addr_t dp_block;
-	flash_addr_t dp_len;
+	flash_off_t dp_block;
+	flash_off_t dp_len;
 	uint8_t *dp_buf;
 };
 

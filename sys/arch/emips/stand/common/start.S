@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1.4.2 2011/03/05 20:50:01 rmind Exp $	*/
+/*	$NetBSD: start.S,v 1.1.4.3 2011/04/21 01:40:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -99,8 +99,7 @@ EXPORT(start)
  * But to test interrupts should be enough
  */
      .org 0x00000080
-VECTOR(ExceptionHandler,0)
-	.frame sp,SIZEOF_CXTINFO,$31
+NESTED_NOPROFILE(ExceptionHandler,SIZEOF_CXTINFO,$31)
     la     k1, UserInterruptHandler
     lw     k1,0(k1)
     bne    k1,zero,Dispatch
@@ -216,7 +215,7 @@ EXPORT(Dispatch)
     rfe
     .set at
 
-VECTOR_END(ExceptionHandler)
+END(ExceptionHandler)
 
      .org 0x00000200
 EXPORT(real_start)

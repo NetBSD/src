@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.2.6.1 2011/03/05 20:51:11 rmind Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.2.6.2 2011/04/21 01:41:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -262,7 +262,7 @@
 #define RMIXL_IO_DEV_I2C_1	0x16000	/* I2C_1 */
 #define RMIXL_IO_DEV_I2C_2	0x17000	/* I2C_2 */
 #define RMIXL_IO_DEV_GPIO	0x18000	/* GPIO */
-#define RMIXL_IO_DEV_FLASH	0x19000	/* Flash ROM */
+#define RMIXL_IO_DEV_FLASH	0x19000	/* Peripherals IO Bus, to Flash memory &etc. */
 #define RMIXL_IO_DEV_DMA	0x1a000	/* DMA */
 #define RMIXL_IO_DEV_L2		0x1b000	/* L2 Cache */
 #define RMIXL_IO_DEV_TB		0x1c000	/* Trace Buffer */
@@ -303,9 +303,11 @@
 #define RMIXL_SBC_DRAM_CHNBD_DTR(n)	_RMIXL_OFFSET(0x010 + (n))
 					/* DRAM Region Channels B,D Address Translation Regs[0-7] */
 #define RMIXL_SBC_DRAM_BRIDGE_CFG	_RMIXL_OFFSET(0x18)	/* SBC DRAM config reg */
+
+#define RMIXL_SBC_IO_BAR		_RMIXL_OFFSET(0x19)	/* I/O Config Base Addr reg */
+#define RMIXL_SBC_FLASH_BAR		_RMIXL_OFFSET(0x1a)	/* Flash Memory Base Addr reg */
+
 #if defined(MIPS64_XLR)
-#define RMIXLR_SBC_IO_BAR		_RMIXL_OFFSET(0x19)	/* I/O Config Base Addr reg */
-#define RMIXLR_SBC_FLASH_BAR		_RMIXL_OFFSET(0x1a)	/* Flash Memory Base Addr reg */
 #define RMIXLR_SBC_SRAM_BAR		_RMIXL_OFFSET(0x1b)	/* SRAM Base Addr reg */
 #define RMIXLR_SBC_HTMEM_BAR		_RMIXL_OFFSET(0x1c)	/* HyperTransport Mem Base Addr reg */
 #define RMIXLR_SBC_HTINT_BAR		_RMIXL_OFFSET(0x1d)	/* HyperTransport Interrupt Base Addr reg */
@@ -319,8 +321,6 @@
 #define RMIXLR_SBC_SYS2IO_CREDITS	_RMIXL_OFFSET(0x35)	/* System Bridge I/O Transaction Credits register */
 #endif	/* MIPS64_XLR */
 #if defined(MIPS64_XLS)
-#define RMIXLS_SBC_IO_BAR		_RMIXL_OFFSET(0x19)	/* I/O Config Base Addr reg */
-#define RMIXLS_SBC_FLASH_BAR		_RMIXL_OFFSET(0x20)	/* Flash Memory Base Addr reg */
 #define RMIXLS_SBC_PCIE_CFG_BAR		_RMIXL_OFFSET(0x40)	/* PCI Configuration BAR */
 #define RMIXLS_SBC_PCIE_ECFG_BAR	_RMIXL_OFFSET(0x41)	/* PCI Extended Configuration BAR */
 #define RMIXLS_SBC_PCIE_MEM_BAR		_RMIXL_OFFSET(0x42)	/* PCI Memory region BAR */
@@ -348,6 +348,19 @@
 #define RMIXL_ADDR_ERR_SBE_COUNTS	_RMIXL_OFFSET(0x32)	/* Single Bit Error Counts */
 #define RMIXL_ADDR_ERR_DBE_COUNTS	_RMIXL_OFFSET(0x33)	/* Double Bit Error Counts */
 #define RMIXL_ADDR_ERR_BITERR_INT_EN	_RMIXL_OFFSET(0x33)	/* Bit Error intr enable */
+
+/*
+ * RMIXL_SBC_FLASH_BAR bit defines
+ */
+#define RMIXL_FLASH_BAR_BASE		__BITS(31,16)	/* phys address bits 39:24 */
+#define RMIXL_FLASH_BAR_TO_BA(r)	\
+		(((r) & RMIXL_FLASH_BAR_BASE) << (24 - 16))
+#define RMIXL_FLASH_BAR_MASK		__BITS(15,5)	/* phys address mask bits 34:24 */
+#define RMIXL_FLASH_BAR_TO_MASK(r)	\
+		(((((r) & RMIXL_FLASH_BAR_MASK)) << (24 - 5)) | __BITS(23, 0))
+#define RMIXL_FLASH_BAR_RESV		__BITS(4,1)	/* (reserved) */
+#define RMIXL_FLASH_BAR_ENB		__BIT(0)	/* 1=Enable */
+#define RMIXL_FLASH_BAR_MASK_MAX	RMIXL_FLASH_BAR_TO_MASK(RMIXL_FLASH_BAR_MASK)
 
 /*
  * RMIXL_SBC_DRAM_BAR bit defines
@@ -428,7 +441,6 @@
 #define RMIXL_PCIX_IO_BAR_ENB		__BIT(0)	/* 1=Enable */
 #define RMIXL_PCIX_IO_BAR(ba, en)	\
 		((uint32_t)(((ba) >> (26 - 18)) | ((en) ? RMIXL_PCIX_IO_BAR_ENB : 0)))
-
 
 /*
  * RMIXLS_SBC_PCIE_CFG_BAR bit defines
@@ -563,18 +575,92 @@
 
 /*
  * GPIO Controller registers
+ * bit number is same as GPIO pin number for the GPIO masks below
  */
+
+#define RMIXL_GPIO_NSIGNALS		25			/* 25 GPIO signals supported in HW */
 
 /* GPIO Signal Registers */
 #define RMIXL_GPIO_INT_ENB		_RMIXL_OFFSET(0x0)	/* Interrupt Enable register */
 #define RMIXL_GPIO_INT_INV		_RMIXL_OFFSET(0x1)	/* Interrupt Inversion register */
 #define RMIXL_GPIO_IO_DIR		_RMIXL_OFFSET(0x2)	/* I/O Direction register */
 #define RMIXL_GPIO_OUTPUT		_RMIXL_OFFSET(0x3)	/* Output Write register */
-#define RMIXL_GPIO_INPUT		_RMIXL_OFFSET(0x4)	/* Intput Read register */
-#define RMIXL_GPIO_INT_CLR		_RMIXL_OFFSET(0x5)	/* Interrupt Inversion register */
-#define RMIXL_GPIO_INT_STS		_RMIXL_OFFSET(0x6)	/* Interrupt Status register */
+#define RMIXL_GPIO_INPUT		_RMIXL_OFFSET(0x4)	/* Intput Read register *//* ro */
+#define RMIXL_GPIO_INT_CLR		_RMIXL_OFFSET(0x5)	/* Interrupt Clear register */
+#define RMIXL_GPIO_INT_STS		_RMIXL_OFFSET(0x6)	/* Interrupt Status register *//* ro */
 #define RMIXL_GPIO_INT_TYP		_RMIXL_OFFSET(0x7)	/* Interrupt Type register */
-#define RMIXL_GPIO_RESET		_RMIXL_OFFSET(0x8)	/* XLS Soft Reset register */
+#define RMIXL_GPIO_RESET		_RMIXL_OFFSET(0x8)	/* XLR/XLS Soft Reset register */
+
+
+/*
+ * common GPIO bit masks
+ */
+#define RMIXL_GPIO_PGM_MASK		(__BITS(13,0) | __BITS(22,20) | __BIT(24))	/* programmable pins */
+#define RMIXL_GPIO_INTR_MASK		(__BITS(13,0) | __BITS(24,20))			/* intr-capable pins */
+
+/*
+ * never-programmable fixed-function GPIO signals
+ * bit number is same as GPIO pin
+ */
+#define RMIXL_GPIO_FLASH_CPUID		__BITS(16,14)		/* Flash CPU ID, output only */
+#define RMIXL_GPIO_FLASH_CPUID_SHFT	14
+#define RMIXL_GPIO_FLASH_RDY		__BIT(17)		/* Flash memory ready, input only */
+#define RMIXL_GPIO_FLASH_ADV		__BIT(18)		/* Flash memory address valid, output only */
+#define RMIXL_GPIO_FLASH_RESET_N	__BIT(19)		/* Flash memory reset, output only */
+#define RMIXL_GPIO_THERMAL_INTRPT	__BIT(23)		/* Thermal interrupt, interrupt only */
+
+/*
+ * RMIXL_GPIO_INT_ENB bits
+ */
+#define RMIXL_GPIO_INT_ENB_MASK		RMIXL_GPIO_INTR_MASK
+
+/*
+ * RMIXL_GPIO_INT_INV bits
+ * inversion control is possible only on the programmable pins
+ */
+#define RMIXL_GPIO_INT_INV_MASK		RMIXL_GPIO_PGM_MASK
+
+/*
+ * RMIXL_GPIO_IO_DIR bits
+ * direction control is possible only on the programmable pins
+ */
+#define RMIXL_GPIO_IO_DIR_MASK		RMIXL_GPIO_PGM_MASK
+
+/*
+ * RMIXL_GPIO_OUTPUT bits
+ * output is possible only on the programmable pins and fixed-function outputs
+ */
+#define RMIXL_GPIO_OUTPUT_MASK		(RMIXL_GPIO_PGM_MASK \
+					| RMIXL_GPIO_FLASH_ADV \
+					| RMIXL_GPIO_FLASH_RESET_N)
+
+/*
+ * RMIXL_GPIO_INPUT bits
+ * input is possible only on the programmable pins and fixed-function inputs & interrupts
+ */
+#define RMIXL_GPIO_INPUT_MASK		(RMIXL_GPIO_PGM_MASK \
+					| RMIXL_GPIO_FLASH_RDY \
+					| RMIXL_GPIO_THERMAL_INTRPT)
+
+/*
+ * RMIXL_GPIO_INT_CLR bits
+ */
+#define RMIXL_GPIO_INT_CLR_MASK		RMIXL_GPIO_INTR_MASK
+
+/*
+ * RMIXL_GPIO_INT_STS bits
+ */
+#define RMIXL_GPIO_INT_STS_INT_HI_L	__BIT(25)			/* INT_HI_L (input) requested */
+#define RMIXL_GPIO_INT_STS_INT_LO_L	__BIT(26)			/* INT_LO_L (input) requested */
+#define RMIXL_GPIO_INT_STS_MASK		(RMIXL_GPIO_INTR_MASK \
+					| RMIXL_GPIO_INT_STS_INT_LO_L \
+					| RMIXL_GPIO_INT_STS_INT_HI_L)
+
+/*
+ * RMIXL_GPIO_INT_TYP bits
+ *  0=Edge, 1=Level
+ */
+#define RMIXL_GPIO_INT_TYP_MASK		RMIXL_GPIO_INTR_MASK
 
 /*
  * RMIXL_GPIO_RESET bits
@@ -632,7 +718,7 @@
 								 */
 #define RMIXL_GPIO_RESET_CFG_BIST_DIAG_EN	__BIT(18)	/* BIST Diagnostics enable */
 #define RMIXL_GPIO_RESET_CFG_BIST_RUN_EN	__BIT(18)	/* BIST Run enable */
-#define RMIXL_GPIO_RESET_CFG_NOOT_NAND		__BIT(16)	/* Enable boot from NAND Flash */
+#define RMIXL_GPIO_RESET_CFG_BOOT_NAND		__BIT(16)	/* Enable boot from NAND Flash */
 #define RMIXL_GPIO_RESET_CFG_BOOT_PCMCIA	__BIT(15)	/* Enable boot from PCMCIA */
 #define RMIXL_GPIO_RESET_CFG_FLASH_CFG		__BIT(14)	/* Flash 32-bit Data Configuration:
 								 *  0 = 32-bit address / 16-bit data
@@ -643,6 +729,15 @@
 #define RMIXL_GPIO_RESET_CFG_BIGEND		__BIT(11)	/* Big Endian Mode Enable Status */
 #define RMIXL_GPIO_RESET_CFG_PLL1_OUT_DIV	__BITS(10,8)	/* PLL1 (Core PLL) Output Divider */
 #define RMIXL_GPIO_RESET_CFG_PLL1_FB_DIV	__BITS(7,0)	/* PLL1 Feedback Divider */
+
+/*
+ * RMIXL_GPIO_EXT_INT bits
+ */
+#define RMIXL_GPIO_EXT_INT_RESV			__BITS(31,4)
+#define RMIXL_GPIO_EXT_INT_HI_MASK		__BIT(3)	/* mask (input) INT_HI_L */
+#define RMIXL_GPIO_EXT_INT_LO_MASK		__BIT(2)	/* mask (input) INT_HI_L */
+#define RMIXL_GPIO_EXT_INT_HI_CTL		__BIT(1)	/* generate (output) INT_HI_L */
+#define RMIXL_GPIO_EXT_INT_LO_CTL		__BIT(0)	/* generate (output) INT_LO_L */
 
 /*
  * RMIXL_GPIO_LOW_PWR_DIS bits
@@ -666,6 +761,85 @@
 								 */
 #define RMIXL_GPIO_LOW_PWR_DIS_RESV		__BITS(31,9)
 
+/*
+ * Peripheral I/O bus (Flash/PCMCIA) controller registers
+ */
+#define RMIXL_FLASH_NCS			10			/* number of chip selects */
+#define RMIXL_FLASH_CS_BOOT		0			/* CS0 is boot flash */
+#define RMIXL_FLASH_CS_PCMCIA_CF	6			/* CS6 is PCMCIA compact flash */
+#define RMIXL_FLASH_CSBASE_ADDRn(n)	_RMIXL_OFFSET(0x00+(n))	/* CSn Base Address reg */
+#define RMIXL_FLASH_CSADDR_MASKn(n)	_RMIXL_OFFSET(0x10+(n))	/* CSn Address Mask reg */
+#define RMIXL_FLASH_CSDEV_PARMn(n)	_RMIXL_OFFSET(0x20+(n))	/* CSn Device Parameter reg */
+#define RMIXL_FLASH_CSTIME_PARMAn(n)	_RMIXL_OFFSET(0x30+(n))	/* CSn Timing Parameters A reg */
+#define RMIXL_FLASH_CSTIME_PARMBn(n)	_RMIXL_OFFSET(0x40+(n))	/* CSn Timing Parameters B reg */
+#define RMIXL_FLASH_INT_MASK		_RMIXL_OFFSET(0x50)	/* Flash Interrupt Mask reg */
+#define RMIXL_FLASH_INT_STATUS		_RMIXL_OFFSET(0x60)	/* Flash Interrupt Status reg */
+#define RMIXL_FLASH_ERROR_STATUS	_RMIXL_OFFSET(0x70)	/* Flash Error Status reg */
+#define RMIXL_FLASH_ERROR_ADDR		_RMIXL_OFFSET(0x80)	/* Flash Error Address reg */
+
+/*
+ * RMIXL_FLASH_CSDEV_PARMn bits
+ */
+#define RMIXL_FLASH_CSDEV_RESV		__BITS(31,16)
+#define RMIXL_FLASH_CSDEV_BFN		__BIT(15)		/* Boot From Nand
+								 *  0=Boot from NOR or
+								 *    PCCard Type 1 Flash
+								 *  1=Boot from NAND
+								 */
+#define RMIXL_FLASH_CSDEV_NANDEN	__BIT(14)		/* NAND Flash Enable
+								 *  0=NOR
+								 *  1=NAND
+								 */
+#define RMIXL_FLASH_CSDEV_ADVTYPE	__BIT(13)		/* Add Valid Sensing Type
+								 *  0=level
+								 *  1=pulse
+								 */
+#define RMIXL_FLASH_CSDEV_PARITY_TYPE	__BIT(12)		/* Parity Type
+								 *  0=even
+								 *  1=odd
+								 */
+#define RMIXL_FLASH_CSDEV_PARITY_EN	__BIT(11)		/* Parity Enable */
+#define RMIXL_FLASH_CSDEV_GENIF_EN	__BIT(10)		/* Generic PLD/FPGA interface mode
+								 *  if this bit is set, then
+								 *  GPIO[13:10] cannot be used
+								 *  for interrupts
+								 */
+#define RMIXL_FLASH_CSDEV_PCMCIA_EN	__BIT(9)		/* PCMCIA Interface mode */
+#define RMIXL_FLASH_CSDEV_DWIDTH	__BITS(8,7)		/* Data Bus Width:
+								 *  00: 8 bit
+								 *  01: 16 bit
+								 *  10: 32 bit
+								 *  11: 8 bit
+								 */
+#define RMIXL_FLASH_CSDEV_DWIDTH_SHFT	7
+#define RMIXL_FLASH_CSDEV_MX_ADDR	__BIT(6)		/* Multiplexed Address
+								 *  0: non-muxed
+								 *      AD[31:24] = Data,
+								 *	AD[23:0] = Addr
+								 *  1: muxed
+								 *      External latch required
+								 */
+#define RMIXL_FLASH_CSDEV_WAIT_POL	__BIT(5)		/* WAIT polarity
+								 *  0: Active high
+								 *  1: Active low
+								 */
+#define RMIXL_FLASH_CSDEV_WAIT_EN	__BIT(4)		/* Enable External WAIT Ack mode */
+#define RMIXL_FLASH_CSDEV_BURST		__BITS(3,1)		/* Burst Length:
+								 *  000: 2x
+								 *  001: 4x
+								 *  010: 8x
+								 *  011: 16x
+								 *  100: 32x
+								 */
+#define RMIXL_FLASH_CSDEV_BURST_SHFT	1
+#define RMIXL_FLASH_CSDEV_BURST_EN	__BITS(0)		/* Burst Enable */
+
+
+/*
+ * NAND Flash Memory Control registers
+ */
+#define RMIXL_NAND_CLEn(n)		_RMIXL_OFFSET(0x90+(n))	/* CSn 8-bit CLE command value reg */
+#define RMIXL_NAND_ALEn(n)		_RMIXL_OFFSET(0xa0+(n))	/* CSn 8-bit ALE address phase reg */
 
 /*
  * PCIE Interface Controller registers

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.3 2009/03/09 06:07:05 mrg Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.3.10.1 2011/04/21 01:41:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.3 2009/03/09 06:07:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.3.10.1 2011/04/21 01:41:44 rmind Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -129,8 +129,8 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 	if (mode == NULL || *mode == 'm') {
 		db_printf("usage: show all procs [/a] [/l] [/n] [/w]\n");
 		db_printf("\t/a == show process address info\n");
-		db_printf("\t/l == show LWP info\n");
-		db_printf("\t/n == show normal process info [default]\n");
+		db_printf("\t/l == show LWP info [default]\n");
+		db_printf("\t/n == show normal process info\n");
 		db_printf("\t/w == show process wait/emul info\n");
 		return;
 	}
@@ -257,3 +257,86 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 	}
 }
 
+void
+db_show_proc(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
+{
+	static proc_t p;
+	static lwp_t l;
+	const char *mode;
+	proc_t *pp;
+	lwp_t *lp;
+	char db_nbuf[MAXCOMLEN + 1], wbuf[MAXCOMLEN + 1];
+	bool run;
+	int cpuno;
+
+	if (modif[0] == 0)
+		mode = "p";			/* default == by pid */
+	else
+		mode = strchr("ap", modif[0]);
+
+	if (mode == NULL || !haddr) {
+		db_printf("usage: show proc [/a] [/p] address|pid\n");
+		db_printf("\t/a == argument is an address of any lwp\n");
+		db_printf("\t/p == argument is a pid [default]\n");
+		return;
+	}
+
+	switch (*mode) {
+	case 'a':
+		lp = (lwp_t *)(uintptr_t)addr;
+		db_printf("lwp_t %lx\n", (long)lp);
+		db_read_bytes((db_addr_t)lp, sizeof(l), (char *)&l);
+		pp = l.l_proc;
+		break;
+	default:
+	case 'p':
+		pp = db_proc_find((pid_t)addr);
+		lp = NULL;
+		break;
+	}
+
+	if (pp == NULL) {
+		db_printf("bad address\n");
+		return;
+	}
+
+	db_read_bytes((db_addr_t)pp, sizeof(p), (char *)&p);
+	if (lp == NULL)
+		lp = p.p_lwps.lh_first;
+
+	db_printf("%s: pid %d proc %lx vmspace/map %lx flags %x\n",
+	    p.p_comm, p.p_pid, (long)pp, (long)p.p_vmspace, p.p_flag);
+
+	while (lp != NULL) {
+		db_read_bytes((db_addr_t)lp, sizeof(l), (char *)&l);
+
+		run = (l.l_stat == LSONPROC ||
+		    (l.l_pflag & LP_RUNNING) != 0);
+
+		db_printf("%slwp %d", (run ? "> " : "  "), l.l_lid);
+		if (l.l_name != NULL) {
+			db_read_bytes((db_addr_t)l.l_name,
+			    MAXCOMLEN, db_nbuf);
+			db_printf(" [%s]", db_nbuf);
+		}
+		db_printf(" %lx pcb %lx\n", (long)lp, (long)l.l_addr);
+
+		if (l.l_cpu != NULL) {
+			db_read_bytes((db_addr_t)
+			    &l.l_cpu->ci_data.cpu_index,
+			    sizeof(cpuno), (char *)&cpuno);
+		} else
+			cpuno = -1;
+		db_printf("    stat %d flags %x cpu %d pri %d \n",
+		    l.l_stat, l.l_flag, cpuno, l.l_priority);
+
+		if (l.l_wchan && l.l_wmesg) {
+			db_read_bytes((db_addr_t)l.l_wmesg,
+			    sizeof(wbuf), (char *)wbuf);
+			db_printf("    wmesg %s wchan %lx\n",
+			    wbuf, (long)l.l_wchan);
+		}
+
+		lp = LIST_NEXT(&l, l_sibling);
+	}
+}

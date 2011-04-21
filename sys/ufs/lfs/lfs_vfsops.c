@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.286.2.2 2010/07/03 01:20:05 rmind Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.286.2.3 2011/04/21 01:42:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.286.2.2 2010/07/03 01:20:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.286.2.3 2011/04/21 01:42:20 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1123,21 +1123,8 @@ lfs_unmount(struct mount *mp, int mntflags)
 	mutex_exit(&lfs_lock);
 
 #ifdef QUOTA
-	if (mp->mnt_flag & MNT_QUOTA) {
-		int i;
-		error = vflush(mp, fs->lfs_ivnode, SKIPSYSTEM|flags);
-		if (error)
-			return (error);
-		for (i = 0; i < MAXQUOTAS; i++) {
-			if (ump->um_quotas[i] == NULLVP)
-				continue;
-			quotaoff(l, mp, i);
-		}
-		/*
-		 * Here we fall through to vflush again to ensure
-		 * that we have gotten rid of all the system vnodes.
-		 */
-	}
+        if ((error = quota1_umount(mp, flags)) != 0)
+		return (error);
 #endif
 	if ((error = vflush(mp, fs->lfs_ivnode, flags)) != 0)
 		return (error);

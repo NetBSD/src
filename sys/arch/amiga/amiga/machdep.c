@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.225.2.3 2011/03/05 20:49:19 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.225.2.4 2011/04/21 01:40:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225.2.3 2011/03/05 20:49:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225.2.4 2011/04/21 01:40:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,6 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	char pbuf[9];
 	u_int i;
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -238,15 +237,6 @@ cpu_startup(void)
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-
 	minaddr = 0;
 
 	/*
@@ -255,11 +245,14 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
+	/*
+	 * Good {morning,afternoon,evening,night}.
+	 */
+	banner();
+
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
 
 	/*
 	 * display memory configuration passed from loadbsd

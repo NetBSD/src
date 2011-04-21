@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.36.4.1 2011/03/05 20:51:41 rmind Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.36.4.2 2011/04/21 01:41:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.36.4.1 2011/03/05 20:51:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.36.4.2 2011/04/21 01:41:20 rmind Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -147,7 +147,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 {
-	const struct trapframe * const tf = trapframe(l);
+	const struct trapframe * const tf = l->l_md.md_utf;
 	__greg_t * const gr = mcp->__gregs;
 #if defined(PPC_HAVE_FPU)
 	struct pcb * const pcb = lwp_getpcb(l);
@@ -188,7 +188,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
-	struct trapframe * const tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 	const __greg_t * const gr = mcp->__gregs;
 
 	/* Restore GPR context, if any. */

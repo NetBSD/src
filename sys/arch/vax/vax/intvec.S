@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.17.4.2 2011/03/05 20:52:18 rmind Exp $   */
+/*	$NetBSD: intvec.S,v 1.17.4.3 2011/04/21 01:41:30 rmind Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -105,9 +105,9 @@ _C_LABEL(rpb):
 	NOVEC;			 	# Unused, 38
 	NOVEC;			 	# Unused, 3C
 	INTVEC(syscall, KSTACK)		# main syscall trap, chmk, 40
-	INTVEC(resopflt, KSTACK)	# chme, 44
-	INTVEC(resopflt, KSTACK)	# chms, 48
-	INTVEC(resopflt, KSTACK)	# chmu, 4C
+	INTVEC(chmx, KSTACK)		# chme, 44
+	INTVEC(chmx, KSTACK)		# chms, 48
+	INTVEC(chmu, KSTACK)		# chmu, 4C
 	NOVEC;				# System Backplane Exception/BIerror, 50
 	INTVEC(cmrerr, ISTACK)		# Corrected Memory Read, 54
 	NOVEC;				# System Backplane Alert/RXCD, 58
@@ -222,6 +222,27 @@ SCBENTRY(privinflt)	# Privileged/unimplemented instruction
 	TRAPCALL(xfcflt, T_XFCFLT);
 	TRAPCALL(resopflt, T_RESOPFLT)
 	TRAPCALL(resadflt, T_RESADFLT)
+
+/*
+ * Use chmu to implement a "fast" _lwp_getprivate.
+ */
+SCBENTRY(chmu)
+	cmpl	(%sp), $1
+	bneq	1f
+	mfpr	$PR_SSP, %r0		# get curlwp
+	movl	L_PRIVATE(%r0), %r0	# get l_private
+	addl2	%sp, 4
+	rei
+1:
+	brw	Xchmx
+
+/*
+ * default handler for CHME and CHMS
+ */
+SCBENTRY(chmx)
+	clrl	(%sp)			# CHM code already on stack
+	pushl	$T_RESOPFLT
+	jbr	Xtrap
 
 /*
  * Translation fault, used only when simulating page reference bit.

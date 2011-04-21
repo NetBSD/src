@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcivar.h,v 1.2 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: ahcivar.h,v 1.2.22.1 2011/04/21 01:41:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -71,7 +71,7 @@
 
 struct ahci_xfer {
 	usbd_xfer_handle sx_xfer;
-	usb_callout_t sx_callout_t;
+	callout_t sx_callout_t;
 };
 
 struct ahci_softc {
@@ -91,7 +91,7 @@ struct ahci_softc {
 #define INTR_ON 	(1)
 #define INTR_OFF	(0)
 
-	device_ptr_t		 sc_child;
+	device_t		 sc_child;
 
 	struct device		*sc_parent;	/* parent device */
 
@@ -102,7 +102,7 @@ struct ahci_softc {
 	/* Information for the root hub interrupt pipe */
 	int			 sc_interval;
 	usbd_xfer_handle	 sc_intr_xfer;
-	usb_callout_t		 sc_poll_handle;
+	callout_t		 sc_poll_handle;
 
 	int				 sc_flags;
 #define AHCDF_RESET	(0x01)

@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.39.4.2 2011/03/05 20:51:26 rmind Exp $
+# $NetBSD: SLAB,v 1.39.4.3 2011/04/21 01:41:17 rmind Exp $
 #
 # deberg's development machine
 #
@@ -86,7 +86,8 @@ file-system 	NULLFS		# loopback file system
 file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER	# nfs server support
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

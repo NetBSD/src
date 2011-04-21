@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_subr.S,v 1.2.6.1 2011/03/05 20:51:11 rmind Exp $	*/
+/*	$NetBSD: rmixl_subr.S,v 1.2.6.2 2011/04/21 01:41:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,14 +37,16 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetSBD$")
+RCSID("$NetBSD: rmixl_subr.S,v 1.2.6.2 2011/04/21 01:41:13 rmind Exp $");
 
 #include "assym.h"
 
-	.set	push
-        .set    noreorder
-        .set    mips64
-        .text
+#define RMIXL_COP_0_EIRR	_(9), 6
+#define RMIXL_COP_0_EIMR	_(9), 7
+
+	.set    noreorder
+	.set	arch=xlr
+	.text
 
 /*
  * read XLS Processor Control register
@@ -56,7 +58,7 @@ LEAF(rmixl_mfcr)
 #error O32 not supported
 #endif
 	j	ra
-	mfcr	v0, a0
+	 mfcr	v0, a0
 END(rmixl_mfcr)
 
 /*
@@ -69,8 +71,28 @@ LEAF(rmixl_mtcr)
 #error O32 not supported
 #endif
 	j	ra
-	mtcr	a1, a0
+	 mtcr	a1, a0
 END(rmixl_mtcr)
+
+/*
+ * void rmixl_eirr_ack(uint64_t eimr, uint64_t vecbit, uint64_t preserve)
+ *
+ *	ack in EIRR the irq we are about to handle
+ *	disable all interrupts to prevent a race that would allow
+ *	e.g. softints set from a higher interrupt getting
+ *	clobbered by the EIRR read-modify-write 
+ */
+LEAF(rmixl_eirr_ack)
+	dmtc0	zero, RMIXL_COP_0_EIMR	/* EIMR = 0 */
+	COP0_SYNC
+	dmfc0	a3, RMIXL_COP_0_EIRR	/* a3 = EIRR */
+	and	a3, a2			/* a3 &= preserve */
+	or	a3, a1			/* a3 |= vecbit */
+	dmtc0	a3, RMIXL_COP_0_EIRR	/* EIRR = a3 */
+	COP0_SYNC
+	dmtc0	a0, RMIXL_COP_0_EIMR	/* EIMR = eimr */
+	JR_HB_RA
+END(rmixl_eirr_ack)
 
 #ifdef MULTIPROCESSOR
 /*
@@ -111,13 +133,13 @@ END(rmixlfw_wakeup_cpu)
  */
 NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
 #ifdef _LP64
-	li		t0, MIPS_SR_KX
-#if 0
-	li		t1, MIPS_KSEG0_START	/* reconstruct presumed upper half ... */
-	or		s0, a0, t1		/* ... of trampoline args addr */
-#else
+	/*
+	 * reconstruct trampoline args addr:
+	 * sign-extend 32 bit KSEG0 address in a0
+	 * to make proper 64 bit KSEG0 addr
+	 */
 	sll		s0, a0, 0
-#endif
+	li		t0, MIPS_SR_KX
 #else
 	li		t0, 0
 #endif
@@ -130,18 +152,6 @@ NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
 	mfc0		t0, $15, 1	/* MIPS_COP_0_EBASE */
 	and		t0, t0, 0x3ff
 	mtc0		t0, $15, 1	/* MIPS_COP_0_EBASE */
-
-	/*
-	 * Set up a watch exception if we try to execute from cpu_info.
-	 */     
-	lui		t0, %hi(0x40000000)	/* global bit */
-	ori		t0, PAGE_SIZE-1
-	mtc0		t0, MIPS_COP_0_WATCH_HI 
-
-	REG_L		t0, 2*SZREG(s0)		/* XXX ta_cpuinfo */
-	dmtc0		t0, $22, 1
-	ori		t0, 4
-	dmtc0		t0, MIPS_COP_0_WATCH_LO
 
 	/*
 	 * load our stack pointer from trampoline args
@@ -168,6 +178,3 @@ NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
 END(rmixl_cpu_trampoline)
 
 #endif	/* MULTIPROCESSOR */
-
-	.set	pop
-

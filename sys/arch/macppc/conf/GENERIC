@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.279.2.2 2011/03/05 20:50:58 rmind Exp $
+# $NetBSD: GENERIC,v 1.279.2.3 2011/04/21 01:41:09 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.279.2.2 $"
+#ident 		"GENERIC-$Revision: 1.279.2.3 $"
 
 maxusers	32
 
@@ -110,7 +110,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -518,6 +519,7 @@ ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel at76c50x 802.11b
+otus*	at uhub? port ?		# Atheros AR9001U
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 #zyd*	at uhub? port ?		# Zydas ZD1211

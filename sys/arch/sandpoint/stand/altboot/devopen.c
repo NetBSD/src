@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.1.2.2 2011/03/05 20:51:47 rmind Exp $ */
+/* $NetBSD: devopen.c,v 1.1.2.3 2011/04/21 01:41:22 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <lib/libkern/libkern.h>
 
 #include "globals.h"
+#include "memfs.h"
 
 struct devsw devnet = { "net", net_strategy, net_open, net_close, noioctl };
 struct devsw devdsk = { "dsk", dsk_strategy, dsk_open, dsk_close, noioctl };
@@ -50,6 +51,7 @@ struct fs_ops fs_nfs   = FS_OPS(nfs);
 struct fs_ops fs_tftp  = FS_OPS(tftp);
 struct fs_ops fs_ffsv2 = FS_OPS(ffsv2);
 struct fs_ops fs_ffsv1 = FS_OPS(ffsv1);
+struct fs_ops fs_mem   = FS_OPS(mem);
 extern char *fsmod;
 
 static void parseunit(const char *, int *, int *, char **);
@@ -64,6 +66,13 @@ devopen(struct open_file *of, const char *name, char **file)
 	if (of->f_flags != F_READ)
 		return EPERM;
 
+	if (strncmp("mem:", name, 4) == 0) {
+		of->f_dev = NULL;
+		of->f_flags |= F_NODEV;
+		file_system[0] = fs_mem;
+		*file = (char *)&name[4];
+		return 0;		/* MEM */
+	}
 	if (strncmp("net:", name, 4) == 0 || strncmp("nfs:", name, 4) == 0) {
 		of->f_dev = &devnet;
 		if ((error = net_open(of, &name[4], "nfs")) != 0)

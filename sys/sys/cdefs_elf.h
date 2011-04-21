@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.30.16.2 2011/03/05 20:56:23 rmind Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.30.16.3 2011/04/21 01:42:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -196,7 +196,7 @@
     __attribute__((__section__(".data.read_mostly")))
 
 #define	__cacheline_aligned					\
-    __attribute__((__aligned__(COHERENCY_UNIT)			\
+    __attribute__((__aligned__(COHERENCY_UNIT),			\
 		 __section__(".data.cacheline_aligned")))
 
 #endif /* _KERNEL */

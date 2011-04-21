@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.11.4.1 2011/03/05 20:51:03 rmind Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.11.4.2 2011/04/21 01:41:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -186,15 +186,41 @@ typedef struct {
 #error O64 is not supported
 #endif
 
-#ifndef __ASSEMBLER__
-static __inline void *
-__lwp_getprivate_fast(void)
-{
-	register void *__tcb;
+#if defined(_LIBC_SOURCE) || defined(_RTLD_SOURCE) || defined(__LIBPTHREAD_SOURCE__)
+#define	TLS_TP_OFFSET	0x7000
+#define	TLS_DTV_OFFSET	0x8000
 
-	__asm volatile(".set push; .set mips32r2; "
-		"rdhwr %0, $29; .set pop" : "=v"(__tcb));
+#include <sys/tls.h>
+
+__CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x8000);
+__CTASSERT(TLS_TP_OFFSET % sizeof(struct tls_tcb) == 0);
+
+static __inline struct tls_tcb *
+__lwp_gettcb_fast(void)
+{
+	struct tls_tcb *__tcb;
+
+	/*
+	 * Only emit a rdhwr $3, $29 so the kernel can quickly emulate it.
+	 */
+	__asm __volatile(".set push; .set mips32r2; "
+		"rdhwr $3,$29; .set pop;"
+#ifdef _LP64
+		"daddiu %[__tcb],$3,%1"
+#else
+		"addiu %[__tcb],$3,%1"
+#endif
+	    : [__tcb]"=r"(__tcb)
+	    : [__offset]"n"(-(TLS_TP_OFFSET + sizeof(*__tcb)))
+	    : "v1");
 	return __tcb;
+}
+
+static inline void
+__lwp_settcb(struct tls_tcb *__tcb)
+{
+	__tcb += TLS_TP_OFFSET / sizeof(*__tcb) + 1;
+	_lwp_setprivate(__tcb);
 }
 #endif
 

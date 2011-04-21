@@ -48,9 +48,9 @@ static drm_pci_id_list_t mga_pciidlist[] = {
 };
 
 #ifdef __NetBSD__
-static int mgadev_match(struct pci_attach_args *pa);
+static int mgadev_match(const struct pci_attach_args *pa);
 static int
-mgadev_match(struct pci_attach_args *pa)
+mgadev_match(const struct pci_attach_args *pa)
 {
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HINT &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.72.4.2 2011/03/05 20:49:29 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.72.4.3 2011/04/21 01:40:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72.4.2 2011/03/05 20:49:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72.4.3 2011/04/21 01:40:51 rmind Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -411,6 +411,9 @@ const struct cpuidtab cpuids[] = {
 	  pN_steppings },
 	{ CPU_ID_ARM1176JS,	CPU_CLASS_ARM11J,	"ARM1176J-S r0",
 	  pN_steppings },
+
+	{ CPU_ID_ARM11MPCORE,	CPU_CLASS_ARM11J, 	"ARM11 MPCore",
+	  generic_steppings },
 
 	{ CPU_ID_CORTEXA8R1,	CPU_CLASS_CORTEX,	"Cortex-A8 r1",
 	  pN_steppings },

@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212.h,v 1.1.1.1.14.1 2011/03/05 20:55:01 rmind Exp $
+ * $Id: ar5212.h,v 1.1.1.1.14.2 2011/04/21 01:42:05 rmind Exp $
  */
 #ifndef _ATH_AR5212_H_
 #define _ATH_AR5212_H_
@@ -400,7 +400,8 @@ struct ath_hal_5212 {
 		(_chan)->channelFlags &= ~CHANNEL_CCK;		\
 		(_chan)->channelFlags |= CHANNEL_OFDM;		\
 		(_flag) = AH_TRUE;				\
-	}							\
+	} else							\
+		(_flag) = AH_FALSE;				\
 } while (0)
 #define RESTORE_CCK(_ah, _chan, _flag) do {                     \
 	if ((IS_2425(_ah) || IS_2417(_ah)) && (_flag) == AH_TRUE) {\
@@ -451,7 +452,8 @@ extern	HAL_BOOL ar5212SetRegulatoryDomain(struct ath_hal *ah,
 		uint16_t regDomain, HAL_STATUS *stats);
 extern	u_int ar5212GetWirelessModes(struct ath_hal *ah);
 extern	void ar5212EnableRfKill(struct ath_hal *);
-extern	HAL_BOOL ar5212GpioCfgOutput(struct ath_hal *, uint32_t gpio);
+extern	HAL_BOOL ar5212GpioCfgOutput(struct ath_hal *, uint32_t gpio,
+		HAL_GPIO_MUX_TYPE);
 extern	HAL_BOOL ar5212GpioCfgInput(struct ath_hal *, uint32_t gpio);
 extern	HAL_BOOL ar5212GpioSet(struct ath_hal *, uint32_t gpio, uint32_t val);
 extern	uint32_t ar5212GpioGet(struct ath_hal *ah, uint32_t gpio);
@@ -601,4 +603,7 @@ extern	void ar5212AniPoll(struct ath_hal *, const HAL_NODE_STATS *,
 			     HAL_CHANNEL *);
 extern	void ar5212AniReset(struct ath_hal *, HAL_CHANNEL_INTERNAL *,
 		HAL_OPMODE, int);
+
+extern HAL_BOOL ar5212IsNFCalInProgress(struct ath_hal *ah);
+extern HAL_BOOL ar5212WaitNFCalComplete(struct ath_hal *ah, int i);
 #endif	/* _ATH_AR5212_H_ */

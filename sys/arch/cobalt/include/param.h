@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16.4.1 2011/03/05 20:49:49 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.16.4.2 2011/04/21 01:40:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,10 +37,10 @@
 #ifndef	_COBALT_PARAM_H_
 #define	_COBALT_PARAM_H_
 
-#include <mips/mips_param.h>
-
 #define	_MACHINE	cobalt
 #define	MACHINE		"cobalt"
+
+#include <mips/mips_param.h>
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */

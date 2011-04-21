@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.26.2.2 2011/03/05 20:53:10 rmind Exp $
+#	$NetBSD: files.i2c,v 1.26.2.3 2011/04/21 01:41:46 rmind Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -57,6 +57,11 @@ file	dev/i2c/pcf8563.c			pcf8563rtc
 device	pcfrtc
 attach	pcfrtc at iic
 file	dev/i2c/pcf8583.c			pcfrtc
+
+# Seiko Instruments S-xx390A Real Time Clock
+device	s390rtc
+attach	s390rtc at iic
+file	dev/i2c/s390.c				s390rtc
 
 # Atmel/Microchip 24Cxx Serial EEPROM
 define	at24cxx_eeprom

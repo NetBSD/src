@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.20.4.2 2011/03/05 20:53:36 rmind Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.20.4.3 2011/04/21 01:41:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.20.4.2 2011/03/05 20:53:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.20.4.3 2011/04/21 01:41:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,9 @@ chipsfb_pci_attach(device_t parent, device_t self, void *aux)
 
 	screg = pci_conf_read(scp->sc_pc, scp->sc_pcitag,
 	    PCI_COMMAND_STATUS_REG);
-	screg |= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-	pci_conf_write(scp->sc_pc, scp->sc_pcitag,PCI_COMMAND_STATUS_REG, screg);
+	screg |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	pci_conf_write(scp->sc_pc, scp->sc_pcitag, PCI_COMMAND_STATUS_REG, 
+	    screg);
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
@@ -111,12 +112,23 @@ chipsfb_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_ioctl = chipsfb_pci_ioctl;
+	sc->sc_mmap = NULL;
 	
 	/* the framebuffer */
-	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM,
-	    BUS_SPACE_MAP_LINEAR,
-	    &sc->sc_fbt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		aprint_error_dev(sc->sc_dev, "failed to map the frame buffer.\n");
+	sc->sc_fb = (pci_conf_read(scp->sc_pc, scp->sc_pcitag, PCI_BAR0) & 
+	    ~PCI_MAPREG_MEM_TYPE_MASK);
+	sc->sc_fbsize = 0x01000000;	/* 16MB aperture */
+
+	if (bus_space_map(sc->sc_memt, sc->sc_fb, 0x400000,
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_fbh)) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to map the frame buffer.\n");
+	}
+
+	if (bus_space_map(sc->sc_memt, sc->sc_fb + CT_OFF_BITBLT, 0x20000,
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_mmregh)) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to map MMIO registers.\n");
 	}
 
 	/* IO-mapped registers */

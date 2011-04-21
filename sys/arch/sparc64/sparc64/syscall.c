@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.36.4.1 2010/05/30 05:17:09 rmind Exp $ */
+/*	$NetBSD: syscall.c,v 1.36.4.2 2011/04/21 01:41:28 rmind Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.36.4.1 2010/05/30 05:17:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.36.4.2 2011/04/21 01:41:28 rmind Exp $");
 
 #include "opt_sa.h"
 
@@ -127,12 +127,19 @@ void syscall_fancy(struct trapframe64 *, register_t, register_t);
 static inline int
 handle_old(struct trapframe64 *tf, register_t *code)
 {
-	int new = *code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
-	*code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
-	if (new)
-		tf->tf_pc = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
-	else
+	int new = *code & (SYSCALL_G7RFLAG|SYSCALL_G2RFLAG|SYSCALL_G5RFLAG);
+	*code &= ~(SYSCALL_G7RFLAG|SYSCALL_G2RFLAG|SYSCALL_G5RFLAG);
+	if (new) {
+		/* note that G5RFLAG is multiple bits! */
+		if (__predict_true((new & SYSCALL_G5RFLAG) == SYSCALL_G5RFLAG))
+			tf->tf_pc = tf->tf_global[5];
+		else if (new & SYSCALL_G7RFLAG)
+			tf->tf_pc = tf->tf_global[7];
+		else
+			tf->tf_pc = tf->tf_global[2];
+	} else {
 		tf->tf_pc = tf->tf_npc;
+	}
 	return new;
 }
 

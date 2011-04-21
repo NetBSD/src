@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.225.4.5 2011/03/05 20:51:08 rmind Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.225.4.6 2011/04/21 01:41:12 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225.4.5 2011/03/05 20:51:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225.4.6 2011/04/21 01:41:12 rmind Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -156,6 +156,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225.4.5 2011/03/05 20:51:08 rmind
 #include <mips/cache.h>
 #include <mips/frame.h>
 #include <mips/regnum.h>
+#include <mips/mips_opcode.h>
 
 #include <mips/cpu.h>
 #include <mips/locore.h>
@@ -167,14 +168,30 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225.4.5 2011/03/05 20:51:08 rmind
 #include <machine/bootinfo.h>
 #endif
 
-#if defined(MIPS32) || defined(MIPS64)
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 #include <mips/mipsNN.h>		/* MIPS32/MIPS64 registers */
+
+#define	_MKINSN(a,b,c,d,e) ((uint32_t)(((a) << 26)|((b) << 21)|((c) << 16)|((d) << 11)|(e)))
+
+#ifdef _LP64
+#define	_LOAD_V0_L_PRIVATE_A0	_MKINSN(OP_LD, _R_A0, _R_V0, 0, offsetof(lwp_t, l_private))
+#define	_MTC0_V0_USERLOCAL	_MKINSN(OP_COP0, OP_DMT, _R_V0, MIPS_COP_0_TLB_CONTEXT, 2)
+#else
+#define	_LOAD_V0_L_PRIVATE_A0	_MKINSN(OP_LW, _R_A0, _R_V0, 0, offsetof(lwp_t, l_private))
+#define	_MTC0_V0_USERLOCAL	_MKINSN(OP_COP0, OP_MT, _R_V0, MIPS_COP_0_TLB_CONTEXT, 2)
+#endif
+#define	JR_RA			_MKINSN(OP_SPECIAL, _R_RA, 0, 0, OP_JR)
+
 #endif
 
 /* Internal routines. */
 int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 int	cpu_dump(void);
+
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+static void mips_watchpoint_init(void);
+#endif
 
 #if defined(MIPS3_PLUS)
 uint32_t mips3_cp0_tlb_page_mask_probe(void);
@@ -194,21 +211,37 @@ int safepri = IPL_SOFTSERIAL;
 #if defined(MIPS1)
 static void	mips1_vector_init(const struct splsw *);
 extern const struct locoresw mips1_locoresw;
+extern const mips_locore_jumpvec_t mips1_locore_vec;
 #endif
 
 #if defined(MIPS3)
 static void	mips3_vector_init(const struct splsw *);
 extern const struct locoresw mips3_locoresw;
+extern const mips_locore_jumpvec_t mips3_locore_vec;
 #endif
 
 #if defined(MIPS32)
 static void	mips32_vector_init(const struct splsw *);
 extern const struct locoresw mips32_locoresw;
+extern const mips_locore_jumpvec_t mips32_locore_vec;
+#endif
+
+#if defined(MIPS32R2)
+static void	mips32r2_vector_init(const struct splsw *);
+extern const struct locoresw mips32r2_locoresw;
+extern const mips_locore_jumpvec_t mips32r2_locore_vec;
 #endif
 
 #if defined(MIPS64)
 static void	mips64_vector_init(const struct splsw *);
 extern const struct locoresw mips64_locoresw;
+extern const mips_locore_jumpvec_t mips64_locore_vec;
+#endif
+
+#if defined(MIPS64R2)
+static void	mips64r2_vector_init(const struct splsw *);
+extern const struct locoresw mips64r2_locoresw;
+extern const mips_locore_jumpvec_t mips64r2_locore_vec;
 #endif
 
 #if defined(PARANOIA)
@@ -453,6 +486,13 @@ static const struct pridtab cputab[] = {
 	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
 	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG6 | MIPS_CP0FL_CONFIG7,
 	  0, "74K" },
+	{ MIPS_PRID_CID_MTI, MIPS_1004K, -1, -1,	-1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
+	  MIPS_CP0FL_USE |
+	  MIPS_CP0FL_EBASE | MIPS_CP0FL_USERLOCAL | MIPS_CP0FL_HWRENA |
+	  MIPS_CP0FL_CONFIG | MIPS_CP0FL_CONFIG1 | MIPS_CP0FL_CONFIG2 |
+	  MIPS_CP0FL_CONFIG3 | MIPS_CP0FL_CONFIG6 | MIPS_CP0FL_CONFIG7,
+	  0, "1004K" },
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1000, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT, 0, 0,
@@ -630,7 +670,6 @@ static const char * const cidnames[] = {
 static void
 mips1_vector_init(const struct splsw *splsw)
 {
-	extern const mips_locore_jumpvec_t mips1_locore_vec;
 	extern char mips1_utlb_miss[], mips1_utlb_miss_end[];
 	extern char mips1_exception[], mips1_exception_end[];
 
@@ -661,7 +700,6 @@ mips1_vector_init(const struct splsw *splsw)
 static void
 mips3_vector_init(const struct splsw *splsw)
 {
-	extern const mips_locore_jumpvec_t mips3_locore_vec;
 	/* r4000 exception handler address and end */
 	extern char mips3_exception[], mips3_exception_end[];
 
@@ -709,9 +747,6 @@ mips3_vector_init(const struct splsw *splsw)
 static void
 mips32_vector_init(const struct splsw *splsw)
 {
-	/* MIPS32 locore function vector */
-	extern const mips_locore_jumpvec_t mips32_locore_vec;
-
 	/* r4000 exception handler address */
 	extern char mips32_exception[];
 
@@ -754,16 +789,82 @@ mips32_vector_init(const struct splsw *splsw)
 
 	/* Clear BEV in SR so we start handling our own exceptions */
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
+
+	mips_watchpoint_init();
 }
 #endif /* MIPS32 */
+
+#if defined(MIPS32R2)
+static void
+mips32r2_vector_init(const struct splsw *splsw)
+{
+	/* r4000 exception handler address */
+	extern char mips32r2_exception[];
+
+	/* TLB miss handler addresses */
+	extern char mips32r2_tlb_miss[];
+
+	/* Cache error handler */
+	extern char mips32r2_cache[];
+
+	/* MIPS32 interrupt exception handler */
+	extern char mips32r2_intr[], mips32r2_intr_end[];
+
+	/*
+	 * Copy down exception vector code.
+	 */
+	if (mips32r2_cache - mips32r2_tlb_miss != 0x100)
+		panic("startup: %s vector code not 128 bytes in length",
+		    "UTLB");
+	if (mips32r2_exception - mips32r2_cache != 0x80)
+		panic("startup: %s vector code not 128 bytes in length",
+		    "Cache error");
+	if (mips32r2_intr - mips32r2_exception != 0x80)
+		panic("startup: %s vector code not 128 bytes in length",
+		    "General exception");
+	if (mips32r2_intr_end - mips32r2_intr > 0x80)
+		panic("startup: %s vector code too large",
+		    "interrupt exception");
+
+	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips32r2_tlb_miss,
+	      mips32r2_intr_end - mips32r2_tlb_miss);
+
+	/*
+	 * If this CPU doesn't have a COP0 USERLOCAL register, at the end
+	 * of cpu_switch resume overwrite the instructions which update it.
+	 */
+	if (!(mips_options.mips_cpu->cpu_cp0flags & MIPS_CP0FL_USERLOCAL)) {
+		extern uint32_t mips32r2_cpu_switch_resume[];
+		for (uint32_t *insnp = mips32r2_cpu_switch_resume;; insnp++) {
+			KASSERT(insnp[0] != JR_RA);
+			if (insnp[0] == _LOAD_V0_L_PRIVATE_A0
+			    && insnp[1] == _MTC0_V0_USERLOCAL) {
+				insnp[0] = JR_RA;
+				insnp[1] = 0;		/* NOP */
+				break;
+			}
+		}
+	}
+
+	/*
+	 * Copy locore-function vector.
+	 */
+	mips_locore_jumpvec = mips32r2_locore_vec;
+
+	mips_icache_sync_all();
+	mips_dcache_wbinv_all();
+
+	/* Clear BEV in SR so we start handling our own exceptions */
+	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
+
+	mips_watchpoint_init();
+}
+#endif /* MIPS32R2 */
 
 #if defined(MIPS64)
 static void
 mips64_vector_init(const struct splsw *splsw)
 {
-	/* MIPS64 locore function vector */
-	extern const mips_locore_jumpvec_t mips64_locore_vec;
-
 	/* r4000 exception handler address */
 	extern char mips64_exception[];
 
@@ -810,8 +911,82 @@ mips64_vector_init(const struct splsw *splsw)
 
 	/* Clear BEV in SR so we start handling our own exceptions */
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
+
+	mips_watchpoint_init();
 }
 #endif /* MIPS64 */
+
+#if defined(MIPS64R2)
+static void
+mips64r2_vector_init(const struct splsw *splsw)
+{
+	/* r4000 exception handler address */
+	extern char mips64r2_exception[];
+
+	/* TLB miss handler addresses */
+	extern char mips64r2_tlb_miss[];
+	extern char mips64r2_xtlb_miss[];
+
+	/* Cache error handler */
+	extern char mips64r2_cache[];
+
+	/* MIPS64 interrupt exception handler */
+	extern char mips64r2_intr[], mips64r2_intr_end[];
+
+	/*
+	 * Copy down exception vector code.
+	 */
+
+	if (mips64r2_xtlb_miss - mips64r2_tlb_miss != 0x80)
+		panic("startup: %s vector code not 128 bytes in length",
+		    "UTLB");
+	if (mips64r2_cache - mips64r2_xtlb_miss != 0x80)
+		panic("startup: %s vector code not 128 bytes in length",
+		    "XTLB");
+	if (mips64r2_exception - mips64r2_cache != 0x80)
+		panic("startup: %s vector code not 128 bytes in length",
+		    "Cache error");
+	if (mips64r2_intr - mips64r2_exception != 0x80)
+		panic("startup: %s vector code not 128 bytes in length",
+		    "General exception");
+	if (mips64r2_intr_end - mips64r2_intr > 0x80)
+		panic("startup: %s vector code too large",
+		    "interrupt exception");
+
+	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips64r2_tlb_miss,
+	      mips64r2_intr_end - mips64r2_tlb_miss);
+
+	/*
+	 * If this CPU doesn't have a COP0 USERLOCAL register, at the end
+	 * of cpu_switch resume overwrite the instructions which update it.
+	 */
+	if (!(mips_options.mips_cpu->cpu_cp0flags & MIPS_CP0FL_USERLOCAL)) {
+		extern uint32_t mips64r2_cpu_switch_resume[];
+		for (uint32_t *insnp = mips64r2_cpu_switch_resume;; insnp++) {
+			KASSERT(insnp[0] != JR_RA);
+			if (insnp[0] == _LOAD_V0_L_PRIVATE_A0
+			    && insnp[1] == _MTC0_V0_USERLOCAL) {
+				insnp[0] = JR_RA;
+				insnp[1] = 0;		/* NOP */
+				break;
+			}
+		}
+	}
+
+	/*
+	 * Copy locore-function vector.
+	 */
+	mips_locore_jumpvec = mips64r2_locore_vec;
+
+	mips_icache_sync_all();
+	mips_dcache_wbinv_all();
+
+	/* Clear BEV in SR so we start handling our own exceptions */
+	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
+
+	mips_watchpoint_init();
+}
+#endif /* MIPS64R2 */
 
 /*
  * Do all the stuff that locore normally does before calling main(),
@@ -860,7 +1035,7 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 	if (opts->mips_cpu == NULL)
 		panic("CPU type (0x%x) not supported", cpu_id);
 
-#if defined(MIPS32) || defined(MIPS64)
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	if (MIPS_PRID_CID(cpu_id) != 0) {
 		/* MIPS32/MIPS64, use coprocessor 0 config registers */
 		uint32_t cfg, cfg1;
@@ -884,7 +1059,9 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 
 		switch (MIPSNN_GET(CFG_AR, cfg)) {
 		case MIPSNN_CFG_AR_REV1:
+			break;
 		case MIPSNN_CFG_AR_REV2:
+			opts->mips_cpu_arch += CPU_ARCH_MIPS32R2 - CPU_ARCH_MIPS32;
 			break;
 		default:
 			printf("WARNING: MIPS32/64 arch revision %d "
@@ -905,7 +1082,7 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 			    MIPSNN_GET(CFG_MT, cfg));
 		}
 	}
-#endif /* defined(MIPS32) || defined(MIPS64) */
+#endif /* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 
 	if (opts->mips_cpu_arch < 1)
 		panic("Unknown CPU ISA for CPU type 0x%x", cpu_id);
@@ -983,7 +1160,7 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 	switch (opts->mips_cpu_arch) {
 #if defined(MIPS1)
 	case CPU_ARCH_MIPS1:
-		mips1_tlb_invalidate_all();
+		(*mips1_locore_vec.ljv_tlb_invalidate_all)();
 		mips1_vector_init(splsw);
 		mips_locoresw = mips1_locoresw;
 		break;
@@ -999,7 +1176,7 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 #endif
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
 		mips3_cp0_wired_write(0);
-		mips3_tlb_invalidate_all();
+		(*mips3_locore_vec.ljv_tlb_invalidate_all)();
 		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 		mips3_vector_init(splsw);
 		mips_locoresw = mips3_locoresw;
@@ -1010,10 +1187,21 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 		mips3_tlb_probe();
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
 		mips3_cp0_wired_write(0);
-		mips32_tlb_invalidate_all();
+		(*mips32_locore_vec.ljv_tlb_invalidate_all)();
 		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 		mips32_vector_init(splsw);
 		mips_locoresw = mips32_locoresw;
+		break;
+#endif
+#if defined(MIPS32R2)
+	case CPU_ARCH_MIPS32R2:
+		mips3_tlb_probe();
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
+		mips3_cp0_wired_write(0);
+		(*mips32r2_locore_vec.ljv_tlb_invalidate_all)();
+		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
+		mips32r2_vector_init(splsw);
+		mips_locoresw = mips32r2_locoresw;
 		break;
 #endif
 #if defined(MIPS64)
@@ -1021,10 +1209,22 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 		mips3_tlb_probe();
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
 		mips3_cp0_wired_write(0);
-		mips64_tlb_invalidate_all();
+		(*mips64_locore_vec.ljv_tlb_invalidate_all)();
 		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 		mips64_vector_init(splsw);
 		mips_locoresw = mips64_locoresw;
+		break;
+	}
+#endif
+#if defined(MIPS64R2)
+	case CPU_ARCH_MIPS64R2: {
+		mips3_tlb_probe();
+		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_TO_MASK(PAGE_SIZE));
+		mips3_cp0_wired_write(0);
+		(*mips64r2_locore_vec.ljv_tlb_invalidate_all)();
+		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
+		mips64r2_vector_init(splsw);
+		mips_locoresw = mips64r2_locoresw;
 		break;
 	}
 #endif
@@ -1041,14 +1241,14 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 	extern uint32_t _etext[];
 	mips_fixup_stubs(_ftext, _etext);
 
-#if defined(MIPS3) || defined(MIPS32) || defined(MIPS64)
+#if (MIPS3 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	/*
 	 * Install power-saving idle routines.
 	 */
 	if ((opts->mips_cpu_flags & CPU_MIPS_USE_WAIT) &&
 	    !(opts->mips_cpu_flags & CPU_MIPS_NO_WAIT))
 		mips_locoresw.lsw_cpu_idle = mips_wait_idle;
-#endif /* MIPS3 || MIPS32 || MIPS64 */
+#endif /* (MIPS3 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 }
 
 void
@@ -1180,11 +1380,13 @@ cpu_identify(device_t dev)
 			    wtnames[mci->mci_pdcache_write_through]);
 		break;
 #endif /* MIPS1 */
-#if defined(MIPS3) || defined(MIPS32) || defined(MIPS64)
+#if (MIPS3 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	case CPU_ARCH_MIPS3:
 	case CPU_ARCH_MIPS4:
 	case CPU_ARCH_MIPS32:
-	case CPU_ARCH_MIPS64: {
+	case CPU_ARCH_MIPS32R2:
+	case CPU_ARCH_MIPS64:
+	case CPU_ARCH_MIPS64R2: {
 		const char *sufx = "KMGTPE";
 		uint32_t pg_mask;
 		aprint_normal_dev(dev, "%d TLB entries", opts->mips_num_tlb_entries);
@@ -1235,7 +1437,7 @@ cpu_identify(device_t dev)
 			    mci->mci_scache_unified ? "unified" : "data");
 		break;
 	}
-#endif /* MIPS3 */
+#endif /* (MIPS3 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 	default:
 		panic("cpu_identify: impossible");
 	}
@@ -1252,7 +1454,7 @@ void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
-	struct pcb *pcb = lwp_getpcb(l);
+	struct pcb * const pcb = lwp_getpcb(l);
 	struct proc * const p = l->l_proc;
 
 	memset(tf, 0, sizeof(struct trapframe));
@@ -1264,7 +1466,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	/*
 	 * allow 64bit ops in userland for non-O32 ABIs
 	 */
-	if (p->p_md.md_abi == _MIPS_BSD_API_N32 && CPUISMIPS64) {
+	if (p->p_md.md_abi == _MIPS_BSD_API_N32
+	    && (CPUISMIPS64 || CPUISMIPS64R2)) {
 		tf->tf_regs[_R_SR] |= MIPS_SR_PX;
 	} else if (p->p_md.md_abi != _MIPS_BSD_API_O32) {
 		tf->tf_regs[_R_SR] |= MIPS_SR_UX;
@@ -1875,8 +2078,8 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 void
 startlwp(void *arg)
 {
-	ucontext_t *uc = arg;
-	lwp_t *l = curlwp;
+	ucontext_t * const uc = arg;
+	lwp_t * const l = curlwp;
 	int error;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
@@ -1893,8 +2096,8 @@ startlwp(void *arg)
 void
 startlwp32(void *arg)
 {
-	ucontext32_t *uc = arg;
-	lwp_t *l = curlwp;
+	ucontext32_t * const uc = arg;
+	lwp_t * const l = curlwp;
 	int error;
 
 	error = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
@@ -2064,3 +2267,14 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 	*handled = false;
 	return 0;
 }
+
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+static void
+mips_watchpoint_init(void)
+{
+	/*
+	 * determine number of CPU watchpoints
+	 */
+	curcpu()->ci_cpuwatch_count = cpuwatch_discover();
+}
+#endif

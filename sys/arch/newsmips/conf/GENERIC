@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.109.4.1 2010/05/30 05:17:00 rmind Exp $
+# $NetBSD: GENERIC,v 1.109.4.2 2011/04/21 01:41:16 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.109.4.1 $"
+#ident 		"GENERIC-$Revision: 1.109.4.2 $"
 
 maxusers	16
 
@@ -92,7 +92,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
-options 	QUOTA		# FFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

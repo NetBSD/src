@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.2.6.2 2011/03/05 20:49:34 rmind Exp $
+#	$NetBSD: files.imx51,v 1.2.6.3 2011/04/21 01:40:52 rmind Exp $
 #
 # Configuration info for the Freescale i.MX51
 #
@@ -18,7 +18,7 @@ file	arch/arm/imx/imx51_axi.c		axi
 
 # iMX51 TrustZone Interrupt Controller
 include "arch/arm/pic/files.pic"
-device	tzic: pic
+device	tzic: pic, pic_splfuncs
 attach	tzic at axi
 file	arch/arm/imx/imx51_tzic.c		tzic	needs-flag
 file	arch/arm/arm32/irq_dispatch.S

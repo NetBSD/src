@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.126.2.2 2011/03/05 20:56:22 rmind Exp $
+#	$NetBSD: Makefile,v 1.126.2.3 2011/04/21 01:42:18 rmind Exp $
 
 .include <bsd.sys.mk>
 
@@ -26,7 +26,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	namei.h null.h \
 	param.h pcu.h pipe.h pmc.h poll.h pool.h power.h proc.h \
 	protosw.h pset.h ptrace.h ptree.h \
-	queue.h \
+	queue.h quota.h \
 	ras.h rbtree.h reboot.h radioio.h resource.h resourcevar.h rmd160.h \
 	rnd.h rwlock.h sa.h satypes.h \
 	scanio.h sched.h scsiio.h sdt.h select.h selinfo.h sem.h sha1.h \
@@ -36,7 +36,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	syscall.h syscallargs.h sysctl.h stdint.h swap.h \
 	syncobj.h syslimits.h syslog.h \
 	tape.h termios.h time.h timeb.h timepps.h times.h \
-	timex.h trace.h tree.h tty.h ttychars.h ttycom.h \
+	timex.h tls.h trace.h tree.h tty.h ttychars.h ttycom.h \
 	ttydefaults.h ttydev.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h uuid.h \
 	vadvise.h verified_exec.h videoio.h vmmeter.h vnode.h vnode_if.h \

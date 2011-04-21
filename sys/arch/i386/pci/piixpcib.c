@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.18.2.1 2011/03/05 20:50:42 rmind Exp $ */
+/* $NetBSD: piixpcib.c,v 1.18.2.2 2011/04/21 01:41:07 rmind Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.18.2.1 2011/03/05 20:50:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.18.2.2 2011/04/21 01:41:07 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,7 +83,7 @@ static bool piixpcib_suspend(device_t, const pmf_qual_t *);
 static bool piixpcib_resume(device_t, const pmf_qual_t *);
 
 static void speedstep_configure(struct piixpcib_softc *,
-				struct pci_attach_args *);
+				const struct pci_attach_args *);
 static int speedstep_sysctl_helper(SYSCTLFN_ARGS);
 
 static struct piixpcib_softc *speedstep_cookie;	/* XXX */
@@ -322,7 +322,7 @@ piixpcib_set(struct piixpcib_softc *sc, int state)
 
 static void
 speedstep_configure(struct piixpcib_softc *sc,
-    struct pci_attach_args *pa)
+    const struct pci_attach_args *pa)
 {
 	const struct sysctlnode	*node, *ssnode;
 	int sig, smicmd, cmd, smidata, flags;

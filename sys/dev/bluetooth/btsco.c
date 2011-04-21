@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.23 2009/05/12 12:10:46 cegger Exp $	*/
+/*	$NetBSD: btsco.c,v 1.23.4.1 2011/04/21 01:41:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.23 2009/05/12 12:10:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.23.4.1 2011/04/21 01:41:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -66,14 +66,18 @@ __KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.23 2009/05/12 12:10:46 cegger Exp $");
 
 #ifdef BTSCO_DEBUG
 int btsco_debug = BTSCO_DEBUG;
-#define DPRINTF(fmt, args...)		do {		\
-	if (btsco_debug)				\
-		printf("%s: "fmt, __func__ , ##args);	\
+#define DPRINTF(...)		do {		\
+	if (btsco_debug) {			\
+		printf("%s: ", __func__);	\
+		printf(__VA_ARGS__);		\
+	}					\
 } while (/* CONSTCOND */0)
 
-#define DPRINTFN(n, fmt, args...)	do {		\
-	if (btsco_debug > (n))				\
-		printf("%s: "fmt, __func__ , ##args);	\
+#define DPRINTFN(n, ...)	do {		\
+	if (btsco_debug > (n)) {		\
+		printf("%s: ", __func__);	\
+		printf(__VA_ARGS__);		\
+	}					\
 } while (/* CONSTCOND */0)
 #else
 #define DPRINTF(...)

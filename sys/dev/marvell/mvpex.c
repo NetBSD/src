@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.3.2.2 2011/03/05 20:53:26 rmind Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.3.2.3 2011/04/21 01:41:48 rmind Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.3.2.2 2011/03/05 20:53:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.3.2.3 2011/04/21 01:41:48 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -598,7 +598,7 @@ mvpex_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, pcireg_t id)
 }
 
 int
-mvpex_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+mvpex_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 
 	switch (pa->pa_intrpin) {

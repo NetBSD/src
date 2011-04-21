@@ -1,9 +1,9 @@
-/*	$NetBSD: desktech.h,v 1.4 2003/05/03 18:10:44 wiz Exp $	*/
+/*	$NetBSD: desktech.h,v 1.4.130.1 2011/04/21 01:40:49 rmind Exp $	*/
 /*	$OpenBSD: desktech.h,v 1.6 1999/01/30 22:39:38 imp Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -68,7 +68,7 @@
 
 /*
  * Deskstation rPC44 I/O map.  We map these into one TLB of size 16M.
- * Note: We really have EISA here, but no one has EISA cards yet to 
+ * Note: We really have EISA here, but no one has EISA cards yet to
  * justify implmeneting EISA.
  */
 #define RPC44_P_ISA_IO		(0x10000000LL)		/* ISA I/O control */

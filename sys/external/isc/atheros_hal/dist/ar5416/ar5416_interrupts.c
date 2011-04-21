@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416_interrupts.c,v 1.1.1.1 2008/12/11 04:46:48 alc Exp $
+ * $Id: ar5416_interrupts.c,v 1.1.1.1.14.1 2011/04/21 01:42:06 rmind Exp $
  */
 #include "opt_ah.h"
 
@@ -104,7 +104,7 @@ ar5416GetPendingInterrupts(struct ath_hal *ah, HAL_INT *masked)
 		isr = OS_REG_READ(ah, AR_ISR_RAC);
 		if (isr == 0xffffffff) {
 			*masked = 0;
-			return AH_FALSE;;
+			return AH_FALSE;
 		}
 
 		*masked = isr & HAL_INT_COMMON;
@@ -118,6 +118,13 @@ ar5416GetPendingInterrupts(struct ath_hal *ah, HAL_INT *masked)
 			isr1 = OS_REG_READ(ah, AR_ISR_S1_S);
 			ahp->ah_intrTxqs |= MS(isr1, AR_ISR_S1_QCU_TXERR);
 			ahp->ah_intrTxqs |= MS(isr1, AR_ISR_S1_QCU_TXEOL);
+		}
+
+		if (AR_SREV_MERLIN(ah) || AR_SREV_KITE(ah)) {
+			uint32_t isr5;
+			isr5 = OS_REG_READ(ah, AR_ISR_S5_S);
+			if (isr5 & AR_ISR_S5_TIM_TIMER)
+				*masked |= HAL_INT_TIM_TIMER;
 		}
 
 		/* Interrupt Mitigation on AR5416 */
@@ -167,7 +174,7 @@ ar5416SetInterrupts(struct ath_hal *ah, HAL_INT ints)
 {
 	struct ath_hal_5212 *ahp = AH5212(ah);
 	uint32_t omask = ahp->ah_maskReg;
-	uint32_t mask,mask2;
+	uint32_t mask, mask2;
 
 	HALDEBUG(ah, HAL_DEBUG_INTERRUPT, "%s: 0x%x => 0x%x\n",
 	    __func__, omask, ints);

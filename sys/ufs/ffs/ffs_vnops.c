@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.113.4.3 2011/03/05 20:56:32 rmind Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.113.4.4 2011/04/21 01:42:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.113.4.3 2011/03/05 20:56:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.113.4.4 2011/04/21 01:42:20 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -282,19 +282,18 @@ ffs_fsync(void *v)
 	int bsize;
 	daddr_t blk_high;
 	struct vnode *vp;
-#ifdef WAPBL
 	struct mount *mp;
-#endif
 
 	vp = ap->a_vp;
+	mp = vp->v_mount;
 
-	fstrans_start(vp->v_mount, FSTRANS_LAZY);
+	fstrans_start(mp, FSTRANS_LAZY);
 	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || (vp->v_type != VREG)) {
 		error = ffs_full_fsync(vp, ap->a_flags);
 		goto out;
 	}
 
-	bsize = vp->v_mount->mnt_stat.f_iosize;
+	bsize = mp->mnt_stat.f_iosize;
 	blk_high = ap->a_offhi / bsize;
 	if (ap->a_offhi % bsize != 0)
 		blk_high++;
@@ -312,7 +311,7 @@ ffs_fsync(void *v)
 	}
 
 #ifdef WAPBL
-	mp = wapbl_vptomp(vp);
+	KASSERT(vp->v_type == VREG);
 	if (mp->mnt_wapbl) {
 		/*
 		 * Don't bother writing out metadata if the syncer is
@@ -321,7 +320,7 @@ ffs_fsync(void *v)
 		 * VFS_SYNC().
 		 */
 		if ((ap->a_flags & (FSYNC_DATAONLY | FSYNC_LAZY)) != 0) {
-			fstrans_done(vp->v_mount);
+			fstrans_done(mp);
 			return 0;
 		}
 		error = 0;
@@ -330,7 +329,7 @@ ffs_fsync(void *v)
 				 IN_MODIFIED | IN_ACCESSED)) {
 			error = UFS_WAPBL_BEGIN(mp);
 			if (error) {
-				fstrans_done(vp->v_mount);
+				fstrans_done(mp);
 				return error;
 			}
 			error = ffs_update(vp, NULL, NULL, UPDATE_CLOSE |
@@ -338,11 +337,11 @@ ffs_fsync(void *v)
 			UFS_WAPBL_END(mp);
 		}
 		if (error || (ap->a_flags & FSYNC_NOLOG) != 0) {
-			fstrans_done(vp->v_mount);
+			fstrans_done(mp);
 			return error;
 		}
 		error = wapbl_flush(mp->mnt_wapbl, 0);
-		fstrans_done(vp->v_mount);
+		fstrans_done(mp);
 		return error;
 	}
 #endif /* WAPBL */
@@ -389,7 +388,7 @@ ffs_fsync(void *v)
 	}
 
 out:
-	fstrans_done(vp->v_mount);
+	fstrans_done(mp);
 	return error;
 }
 

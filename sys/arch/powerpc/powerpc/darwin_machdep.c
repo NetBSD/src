@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.28.4.1 2011/03/05 20:51:40 rmind Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.28.4.2 2011/04/21 01:41:20 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.28.4.1 2011/03/05 20:51:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.28.4.2 2011/04/21 01:41:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,10 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.28.4.1 2011/03/05 20:51:40 rmin
 void
 darwin_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct sigacts *ps = p->p_sigacts;
-	struct trapframe *tf;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct sigacts * const ps = p->p_sigacts;
+	struct trapframe * const tf = l->l_md.md_utf;
 	struct darwin_sigframe *sfp, sf;
 	int onstack;
 	size_t stack_size;
@@ -77,7 +77,6 @@ darwin_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sig;
 	int error;
 
-	tf = trapframe(l);
 
 	sig = ksi->ksi_signo;
 	catcher = SIGACTION(p, sig).sa_handler;
@@ -191,7 +190,7 @@ darwin_sys_sigreturn_x2(struct lwp *l, const struct darwin_sys_sigreturn_x2_args
 	} */
 	struct darwin_ucontext uctx;
 	struct darwin_mcontext mctx;
-	struct trapframe *tf;
+	struct trapframe * const tf = l->l_md.md_utf;
 	sigset_t mask;
 	size_t mcsize;
 	int error;
@@ -213,9 +212,8 @@ darwin_sys_sigreturn_x2(struct lwp *l, const struct darwin_sys_sigreturn_x2_args
 		return (error);
 
 	/* Check for security abuse */
-	tf = trapframe(l);
 	if (!PSL_USEROK_P(mctx.ss.srr1)) {
-		DPRINTF(("uctx.ss.srr1 = 0x%08x, rf->srr1 = 0x%08lx\n",
+		DPRINTF(("uctx.ss.srr1 = 0x%08x, tf->srr1 = 0x%08lx\n",
 		    mctx.ss.srr1, tf->tf_srr1));
 		return (EINVAL);
 	}
@@ -284,7 +282,7 @@ darwin_fork_child_return(void *arg)
 {
 	struct lwp * const l = arg;
 	struct proc * const p = l->l_proc;
-	struct trapframe * const tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 
 	child_return(arg);
 

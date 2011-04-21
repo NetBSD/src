@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.7.6.2 2011/03/05 20:50:03 rmind Exp $
+#	$NetBSD: OVERO,v 1.7.6.3 2011/04/21 01:40:57 rmind Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo platforms kernel
 #
@@ -58,7 +58,8 @@ file-system	PTYFS		# /dev/pts/N support
 #file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

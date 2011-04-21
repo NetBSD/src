@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_DFC,v 1.9.2.2 2011/03/05 20:50:15 rmind Exp $
+#	$NetBSD: VIRTEX_DFC,v 1.9.2.3 2011/04/21 01:41:01 rmind Exp $
 #
 # VIRTEX_DFC
 #
@@ -93,7 +93,8 @@ file-system	PTYFS		# /dev/pts/N support
 file-system 	TMPFS 		# virtual memory file system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network File System server

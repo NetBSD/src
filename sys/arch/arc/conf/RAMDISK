@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.78 2009/12/07 08:50:01 he Exp $
+#	$NetBSD: RAMDISK,v 1.78.4.1 2011/04/21 01:40:49 rmind Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -44,6 +44,7 @@ no file-system	TMPFS
 no file-system	PTYFS
 
 no options 	QUOTA
+no options 	QUOTA2
 no options 	NFSSERVER
 no options 	PPP_FILTER
 no options 	NETATALK

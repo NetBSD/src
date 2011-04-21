@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.56.4.3 2011/03/05 20:55:09 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.56.4.4 2011/04/21 01:42:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56.4.3 2011/03/05 20:55:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56.4.4 2011/04/21 01:42:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -163,6 +163,10 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	case VLNK:
 		KASSERT(strlen(target) < MAXPATHLEN);
 		nnode->tn_size = strlen(target);
+		if (nnode->tn_size == 0) {
+			nnode->tn_spec.tn_lnk.tn_link = NULL;
+			break;
+		}
 		nnode->tn_spec.tn_lnk.tn_link =
 		    tmpfs_strname_alloc(tmp, nnode->tn_size);
 		if (nnode->tn_spec.tn_lnk.tn_link == NULL) {
@@ -224,8 +228,9 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 
 	switch (node->tn_type) {
 	case VLNK:
-		tmpfs_strname_free(tmp, node->tn_spec.tn_lnk.tn_link,
-		    node->tn_size);
+		if (node->tn_size > 0)
+			tmpfs_strname_free(tmp, node->tn_spec.tn_lnk.tn_link,
+			    node->tn_size);
 		break;
 	case VREG:
 		/*

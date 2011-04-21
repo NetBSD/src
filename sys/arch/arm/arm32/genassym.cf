@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.42.4.1 2011/03/05 20:49:30 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.42.4.2 2011/04/21 01:40:51 rmind Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -108,6 +108,7 @@ define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
+define	L_PRIVATE		offsetof(struct lwp, l_private)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 
 define	PCB_TF			offsetof(struct pcb, pcb_tf)
@@ -121,7 +122,6 @@ define	PCB_SP			offsetof(struct pcb, pcb_un.un_32.pcb32_sp)
 define	PCB_LR			offsetof(struct pcb, pcb_un.un_32.pcb32_lr)
 define	PCB_PC			offsetof(struct pcb, pcb_un.un_32.pcb32_pc)
 define	PCB_USER_PID_RW		offsetof(struct pcb, pcb_un.un_32.pcb32_user_pid_rw)
-define	PCB_USER_PID_RO		offsetof(struct pcb, pcb_un.un_32.pcb32_user_pid_ro)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_NOALIGNFLT		PCB_NOALIGNFLT
 

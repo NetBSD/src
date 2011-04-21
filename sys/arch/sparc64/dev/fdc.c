@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.33 2010/02/24 22:37:55 dyoung Exp $	*/
+/*	$NetBSD: fdc.c,v 1.33.2.1 2011/04/21 01:41:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.33 2010/02/24 22:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.33.2.1 2011/04/21 01:41:26 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -141,7 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.33 2010/02/24 22:37:55 dyoung Exp $");
 #elif SUN4U
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
-/* #include <sparc/sparc/auxreg.h> */
+#include <dev/sbus/sbusvar.h>
 #include <sparc64/dev/auxioreg.h>
 #include <sparc64/dev/auxiovar.h>
 #include <sparc64/dev/fdcreg.h>

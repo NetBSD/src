@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.S,v 1.6.4.1 2011/03/05 20:51:33 rmind Exp $	*/
+/*	$NetBSD: printf.S,v 1.6.4.2 2011/04/21 01:41:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,12 +33,10 @@
 #include <mips/cpuregs.h>
 #include <machine/dec_prom.h>
 
-	.set	noreorder
+	.set	reorder		# make as(1) handle hazard and BDslot
 LEAF(printf)
 	lw	v0, _C_LABEL(callv)	# get pointer to call back vectors
-	nop
 	lw	t9, 0x30(v0)	# offset for callv->_printf
-	nop
 #ifdef __mips_n32
 	/*
 	 * If someone calls printf with more than 4 args on n32,
@@ -52,12 +50,10 @@ LEAF(printf)
 	sw	a7, 28(sp)
 	sw	ra, 44(sp)
 	jalr	t9		# call PROM printf
-	 nop
 	lw	ra, 44(sp)
+	addu	sp, sp, 48
 	j	ra
-	 addu	sp, sp, 48
 #else
 	j	t9		# call PROM printf
-	 nop
 #endif
 END(printf)
