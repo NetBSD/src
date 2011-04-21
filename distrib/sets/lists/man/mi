@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1310 2011/04/21 14:26:34 joerg Exp $
+# $NetBSD: mi,v 1.1311 2011/04/21 20:59:38 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -24,7 +24,7 @@
 ./usr/share/info/gdbint.info			man-debug-info		gdb,info
 ./usr/share/info/gettext.info			man-sys-info		info
 ./usr/share/info/gprof.info			man-debug-info		binutils,info
-./usr/share/info/grep.info			man-util-info		info,gnugrep
+./usr/share/info/grep.info			man-util-info		info,! bsdgrep
 ./usr/share/info/groff.info			man-groff-info		info,groff
 ./usr/share/info/gzip.info			man-obsolete		obsolete
 ./usr/share/info/heimdal.info			man-krb5-info		kerberos,info
