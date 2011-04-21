@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.33 2011/04/21 08:17:00 martin Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.34 2011/04/21 13:38:14 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -29,8 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Disable namespace mangling, Fortification is useless here anyway. */
+#undef _FORTIFY_SOURCE
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.33 2011/04/21 08:17:00 martin Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.34 2011/04/21 13:38:14 joerg Exp $");
 
 #ifndef lint
 
@@ -49,8 +52,6 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.33 2011/04/21 08:17:00 martin Exp $")
  * XXX intimate with libc already.
  */
 #define __LIBC12_SOURCE__
-
-#define __ssp_weak_name(fun)	_cancelstub_ ## fun
 
 #include <sys/msg.h>
 #include <sys/types.h>
@@ -465,40 +466,6 @@ pwrite(int d, const void *buf, size_t nbytes, off_t offset)
 	self = pthread__self();
 	TESTCANCEL(self);
 	retval = _sys_pwrite(d, buf, nbytes, offset);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-#if _FORTIFY_SOURCE > 0
-#define STUB(fun) __ssp_weak_name(fun)
-ssize_t _sys_readlink(const char * __restrict, char * __restrict, size_t);
-ssize_t
-STUB(readlink)(const char * __restrict path, char * __restrict buf,
-    size_t bufsiz)
-{
-	return _sys_readlink(path, buf, bufsiz);
-}
-
-char *_sys_getcwd(char *, size_t);
-char *
-STUB(getcwd)(char *buf, size_t size)
-{
-	return _sys_getcwd(buf, size);
-}
-#else
-#define STUB(fun) fun
-#endif
-
-ssize_t
-STUB(read)(int d, void *buf, size_t nbytes)
-{
-	ssize_t retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = _sys_read(d, buf, nbytes);
 	TESTCANCEL(self);
 
 	return retval;
