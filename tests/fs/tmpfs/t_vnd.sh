@@ -1,4 +1,4 @@
-# $NetBSD: t_vnd.sh,v 1.7 2011/03/24 21:52:51 jmmv Exp $
+# $NetBSD: t_vnd.sh,v 1.8 2011/04/21 22:26:46 haad Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,12 +46,12 @@ basic_body() {
 	atf_check -s eq:0 -o empty -e empty mount /dev/vnd3a mnt
 
 	echo "Creating test files"
-	for f in $(jot 100); do
+	for f in $(jot -w %u 100 | uniq); do
 		jot 1000 >mnt/${f} || atf_fail "Failed to create file ${f}"
 	done
 
 	echo "Verifying created files"
-	for f in $(jot 100); do
+	for f in $(jot -w %u 100 | uniq); do
 		[ $(md5 mnt/${f} | cut -d ' ' -f 4) = \
 		    53d025127ae99ab79e8502aae2d9bea6 ] || \
 		    atf_fail "Invalid checksum for file ${f}"
