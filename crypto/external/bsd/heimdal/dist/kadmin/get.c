@@ -1,4 +1,4 @@
-/*	$NetBSD: get.c,v 1.1.1.1 2011/04/13 18:14:35 elric Exp $	*/
+/*	$NetBSD: get.c,v 1.2 2011/04/21 17:58:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
@@ -66,7 +66,7 @@ static struct field_name {
     { "password", KADM5_TL_DATA, KRB5_TL_PASSWORD, KADM5_KEY_DATA, "Password", "Password", 0 },
     { "pkinit-acl", KADM5_TL_DATA, KRB5_TL_PKINIT_ACL, 0, "PK-INIT ACL", "PK-INIT ACL", 0 },
     { "aliases", KADM5_TL_DATA, KRB5_TL_ALIASES, 0, "Aliases", "Aliases", 0 },
-    { NULL }
+    { .fieldname = NULL }
 };
 
 struct field_info {
@@ -112,9 +112,9 @@ add_column(struct get_entry_data *data, struct field_name *ff, const char *heade
 static int
 cmp_salt (const krb5_salt *salt, const krb5_key_data *k)
 {
-    if (salt->salttype != k->key_data_type[1])
+    if (salt->salttype != (size_t)k->key_data_type[1])
 	return 1;
-    if (salt->saltvalue.length != k->key_data_length[1])
+    if (salt->saltvalue.length != (size_t)k->key_data_length[1])
 	return 1;
     return memcmp (salt->saltvalue.data, k->key_data_contents[1],
 		   salt->saltvalue.length);
@@ -247,7 +247,7 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 	krb5_tl_data *tl;
 
 	for (tl = princ->tl_data; tl != NULL; tl = tl->tl_data_next)
-	    if (tl->tl_data_type == subfield)
+	    if ((unsigned)tl->tl_data_type == subfield)
 		break;
 	if (tl == NULL) {
 	    strlcpy(buf, "", buf_len);
@@ -263,7 +263,8 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 	case KRB5_TL_PKINIT_ACL: {
 	    HDB_Ext_PKINIT_acl acl;
 	    size_t size;
-	    int i, ret;
+	    int ret;
+	    size_t i;
 
 	    ret = decode_HDB_Ext_PKINIT_acl(tl->tl_data_contents,
 					    tl->tl_data_length,
@@ -295,7 +296,8 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 	case KRB5_TL_ALIASES: {
 	    HDB_Ext_Aliases alias;
 	    size_t size;
-	    int i, ret;
+	    int ret;
+	    size_t i;
 
 	    ret = decode_HDB_Ext_Aliases(tl->tl_data_contents,
 					 tl->tl_data_length,
@@ -311,7 +313,7 @@ format_field(kadm5_principal_ent_t princ, unsigned int field,
 		ret = krb5_unparse_name(context, &alias.aliases.val[i], &p);
 		if (ret)
 		    break;
-		if (i < 0)
+		if (i > 0)
 		    strlcat(buf, " ", buf_len);
 		strlcat(buf, p, buf_len);
 		free(p);
