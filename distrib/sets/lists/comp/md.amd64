@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.110 2011/04/21 09:09:33 haad Exp $
+# $NetBSD: md.amd64,v 1.111 2011/04/21 09:45:55 haad Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1008,6 +1008,7 @@
 ./usr/libdata/debug/usr/lib/i386/libkadm5srv.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libkafs.so.11.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libkafs.so.12.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libkdc.so.2.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libkrb5.so.24.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libkrb5.so.26.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libkvm.so.6.0.debug	comp-compat-shlib	compat,pic,debug
