@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.19 2011/03/26 22:18:06 phx Exp $
+$NetBSD: README.NAS,v 1.20 2011/04/21 13:39:54 phx Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -27,7 +27,7 @@ re.15	satalink.13	QNAP TS-101(V200), QNAP TS-201, LevelOne FNS-5000B
 re.15	viaide.13	IOMEGA StorCenter 250/500/1T
 
 			>> Board type BRD_DLINKDSM <<
-stge.15	acardide.16	D-Link DSM-G600 (Rev.B only!)
+stge.15	acardide.16	D-Link DSM-G600 (Rev.B only!), Conceptronic CH3WNAS
 
 			>> Board type BRD_NH230NAS <<
 re.15	iteide.16	Netronix NH-230, Allnet ALL6250, Encore ENNHD-1000,
