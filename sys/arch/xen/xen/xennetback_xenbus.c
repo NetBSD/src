@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.41 2011/04/20 20:32:38 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.42 2011/04/21 13:06:20 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -496,7 +496,7 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 		if (xneti->xni_tx_ring_va == 0) {
 			xenbus_dev_fatal(xbusd, ENOMEM,
 			    "can't get VA for tx ring", xbusd->xbusd_otherend);
-			break;
+			goto err0;
 		}
 		tx_ring = (void *)xneti->xni_tx_ring_va;
 		xneti->xni_rx_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
@@ -597,6 +597,8 @@ err2:
 err1:
 	uvm_km_free(kernel_map, xneti->xni_tx_ring_va,
 	    PAGE_SIZE, UVM_KMF_VAONLY);
+err0:
+	softint_disestablish(xneti->xni_softintr);
 }
 
 /* lookup a xneti based on domain id and interface handle */
