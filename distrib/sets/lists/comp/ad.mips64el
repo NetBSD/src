@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.27 2011/04/17 10:06:49 mrg Exp $
+# $NetBSD: ad.mips64el,v 1.28 2011/04/21 09:09:33 haad Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -1184,7 +1184,8 @@
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug,compat
 ./usr/libdata/debug/usr/lib/64/libamu.so.4.0.debug		comp-amd-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libasn1.so.8.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/64/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/64/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/64/libbfd.so.11.0.debug	comp-sys-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/64/libbind9.so.5.3.debug	comp-bind-debug	debug,compat
@@ -1192,7 +1193,8 @@
 ./usr/libdata/debug/usr/lib/64/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libc.so.12.177.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libcom_err.so.6.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/64/libcom_err.so.6.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/64/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libcrypto.so.6.1.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
@@ -1212,9 +1214,13 @@
 ./usr/libdata/debug/usr/lib/64/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug,compat
 ./usr/libdata/debug/usr/lib/64/libgcc_s.so.1.0.debug	comp-sys-debug	gcc,debug,compat
 ./usr/libdata/debug/usr/lib/64/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libgssapi.so.9.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/64/libhdb.so.13.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/64/libheimntlm.so.3.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/64/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/64/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/64/libhdb.so.13.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/64/libhdb.so.14.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/64/libheimbase.so.1.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/64/libheimntlm.so.3.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/64/libheimntlm.so.4.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/64/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libipsec.so.3.0.debug	comp-net-debug	debug,compat
@@ -1223,10 +1229,14 @@
 ./usr/libdata/debug/usr/lib/64/libisccfg.so.5.3.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/64/libisns.so.0.0.debug	comp-isns-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libkadm5clnt.so.12.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/64/libkadm5srv.so.13.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/64/libkafs.so.11.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/64/libkrb5.so.24.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/64/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/64/libkadm5clnt.so.13.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/64/libkadm5srv.so.13.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/64/libkadm5srv.so.14.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/64/libkafs.so.11.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/64/libkafs.so.12.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/64/libkrb5.so.24.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/64/libkrb5.so.26.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libkvm.so.6.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/liblber.so.3.2.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/64/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
@@ -1259,7 +1269,8 @@
 ./usr/libdata/debug/usr/lib/64/libradius.so.4.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/librefuse.so.2.0.debug	comp-refuse-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libresolv.so.2.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libroken.so.14.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/64/libroken.so.14.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/64/libroken.so.19.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/librpcsvc.so.1.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/librt.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/librump.so.0.0.debug	comp-rump-debug	debug,compat
@@ -1348,6 +1359,7 @@
 ./usr/libdata/debug/usr/lib/64/libusbhid.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libutil.so.7.17.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libuutil.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug,compat
+./usr/libdata/debug/usr/lib/64/libwind.so.0.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libwrap.so.1.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libz.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libzfs.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
@@ -1377,7 +1389,8 @@
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug,compat
 ./usr/libdata/debug/usr/lib/o32/libamu.so.4.0.debug		comp-amd-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libasn1.so.8.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/o32/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/o32/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbfd.so.11.0.debug	comp-sys-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbind9.so.5.3.debug	comp-bind-debug	debug,compat
@@ -1385,7 +1398,8 @@
 ./usr/libdata/debug/usr/lib/o32/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libc.so.12.177.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libcom_err.so.6.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/o32/libcom_err.so.6.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/o32/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libcrypto.so.6.1.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
@@ -1405,9 +1419,13 @@
 ./usr/libdata/debug/usr/lib/o32/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libgcc_s.so.1.0.debug	comp-sys-debug	gcc,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libgssapi.so.9.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/o32/libhdb.so.13.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/o32/libheimntlm.so.3.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/o32/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/o32/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/o32/libhdb.so.13.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/o32/libhdb.so.14.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/o32/libheimbase.so.1.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/o32/libheimntlm.so.3.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/o32/libheimntlm.so.4.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libipsec.so.3.0.debug	comp-net-debug	debug,compat
@@ -1416,10 +1434,14 @@
 ./usr/libdata/debug/usr/lib/o32/libisccfg.so.5.3.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libisns.so.0.0.debug	comp-isns-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libkadm5clnt.so.12.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/o32/libkadm5srv.so.13.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/o32/libkafs.so.11.0.debug	comp-krb5-debug	kerberos,debug,compat
-./usr/libdata/debug/usr/lib/o32/libkrb5.so.24.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/o32/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/o32/libkadm5clnt.so.13.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/o32/libkadm5srv.so.13.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/o32/libkadm5srv.so.14.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/o32/libkafs.so.11.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/o32/libkafs.so.12.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/o32/libkrb5.so.24.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/o32/libkrb5.so.26.0.debug		 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libkvm.so.6.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/liblber.so.3.2.debug	comp-ldap-debug	ldap,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libldap.so.4.2.debug	comp-ldap-debug	ldap,debug,compat
@@ -1452,7 +1474,8 @@
 ./usr/libdata/debug/usr/lib/o32/libradius.so.4.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/librefuse.so.2.0.debug	comp-refuse-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libresolv.so.2.0.debug	comp-net-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libroken.so.14.0.debug	comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/o32/libroken.so.14.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/o32/libroken.so.19.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/librpcsvc.so.1.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/librt.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/librump.so.0.0.debug	comp-rump-debug	debug,compat
@@ -1541,6 +1564,7 @@
 ./usr/libdata/debug/usr/lib/o32/libusbhid.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libutil.so.7.17.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libuutil.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug,compat
+./usr/libdata/debug/usr/lib/o32/libwind.so.0.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libwrap.so.1.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libz.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libzfs.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
