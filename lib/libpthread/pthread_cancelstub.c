@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.32 2011/04/12 19:52:04 christos Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.33 2011/04/21 08:17:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.32 2011/04/12 19:52:04 christos Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.33 2011/04/21 08:17:00 martin Exp $");
 
 #ifndef lint
 
@@ -472,10 +472,7 @@ pwrite(int d, const void *buf, size_t nbytes, off_t offset)
 
 #if _FORTIFY_SOURCE > 0
 #define STUB(fun) __ssp_weak_name(fun)
-
-ssize_t STUB(readlink)(const char * __restrict, char * __restrict, size_t);
 ssize_t _sys_readlink(const char * __restrict, char * __restrict, size_t);
-
 ssize_t
 STUB(readlink)(const char * __restrict path, char * __restrict buf,
     size_t bufsiz)
@@ -483,16 +480,15 @@ STUB(readlink)(const char * __restrict path, char * __restrict buf,
 	return _sys_readlink(path, buf, bufsiz);
 }
 
-char *STUB(getcwd)(char *, size_t);
 char *_sys_getcwd(char *, size_t);
-
 char *
 STUB(getcwd)(char *buf, size_t size)
 {
 	return _sys_getcwd(buf, size);
 }
-
-ssize_t STUB(read)(int, void *, size_t);
+#else
+#define STUB(fun) fun
+#endif
 
 ssize_t
 STUB(read)(int d, void *buf, size_t nbytes)
@@ -507,9 +503,6 @@ STUB(read)(int d, void *buf, size_t nbytes)
 
 	return retval;
 }
-#else
-#define STUB(fun) fun
-#endif
 
 ssize_t
 readv(int d, const struct iovec *iov, int iovcnt)
