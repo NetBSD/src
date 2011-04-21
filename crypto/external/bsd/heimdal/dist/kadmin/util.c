@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1.1.1 2011/04/13 18:14:35 elric Exp $	*/
+/*	$NetBSD: util.c,v 1.2 2011/04/21 17:56:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -67,7 +67,7 @@ struct units kdb_attrs[] = {
     { "disallow-tgt-based",	KRB5_KDB_DISALLOW_TGT_BASED },
     { "disallow-forwardable",	KRB5_KDB_DISALLOW_FORWARDABLE },
     { "disallow-postdated",	KRB5_KDB_DISALLOW_POSTDATED },
-    { NULL }
+    { NULL, 0 }
 };
 
 /*
@@ -190,7 +190,7 @@ str2time_t (const char *str, time_t *t)
     if (str[0] == '+') {
 	str++;
 	*t = parse_time(str, "month");
-	if (t < 0)
+	if (*t < 0)
 	    return -1;
 	*t += time(NULL);
 	return 0;
@@ -432,7 +432,7 @@ edit_entry(kadm5_principal_ent_t ent, int *mask,
  */
 
 int
-set_entry(krb5_context context,
+set_entry(krb5_context contextp,
 	  kadm5_principal_ent_t ent,
 	  int *mask,
 	  const char *max_ticket_life,
@@ -444,14 +444,14 @@ set_entry(krb5_context context,
     if (max_ticket_life != NULL) {
 	if (parse_deltat (max_ticket_life, &ent->max_life,
 			  mask, KADM5_MAX_LIFE)) {
-	    krb5_warnx (context, "unable to parse `%s'", max_ticket_life);
+	    krb5_warnx (contextp, "unable to parse `%s'", max_ticket_life);
 	    return 1;
 	}
     }
     if (max_renewable_life != NULL) {
 	if (parse_deltat (max_renewable_life, &ent->max_renewable_life,
 			  mask, KADM5_MAX_RLIFE)) {
-	    krb5_warnx (context, "unable to parse `%s'", max_renewable_life);
+	    krb5_warnx (contextp, "unable to parse `%s'", max_renewable_life);
 	    return 1;
 	}
     }
@@ -459,21 +459,21 @@ set_entry(krb5_context context,
     if (expiration) {
 	if (parse_timet (expiration, &ent->princ_expire_time,
 			mask, KADM5_PRINC_EXPIRE_TIME)) {
-	    krb5_warnx (context, "unable to parse `%s'", expiration);
+	    krb5_warnx (contextp, "unable to parse `%s'", expiration);
 	    return 1;
 	}
     }
     if (pw_expiration) {
 	if (parse_timet (pw_expiration, &ent->pw_expiration,
 			 mask, KADM5_PW_EXPIRATION)) {
-	    krb5_warnx (context, "unable to parse `%s'", pw_expiration);
+	    krb5_warnx (contextp, "unable to parse `%s'", pw_expiration);
 	    return 1;
 	}
     }
     if (attributes != NULL) {
 	if (parse_attributes (attributes, &ent->attributes,
 			      mask, KADM5_ATTRIBUTES)) {
-	    krb5_warnx (context, "unable to parse `%s'", attributes);
+	    krb5_warnx (contextp, "unable to parse `%s'", attributes);
 	    return 1;
 	}
     }
