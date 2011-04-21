@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.85 2011/04/17 13:07:18 martin Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.86 2011/04/21 14:26:34 joerg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1036,13 +1036,23 @@
 ./usr/share/nls/cs
 ./usr/share/nls/de
 ./usr/share/nls/es
+./usr/share/nls/es_ES.ISO8859-1
 ./usr/share/nls/fi
 ./usr/share/nls/fr
+./usr/share/nls/gl_ES.ISO8859-1
+./usr/share/nls/hu_HU.ISO8859-2
+./usr/share/nls/ja_JP.SJIS
+./usr/share/nls/ja_JP.UTF-8
+./usr/share/nls/ja_JP.eucJP
 ./usr/share/nls/nl
 ./usr/share/nls/no
 ./usr/share/nls/pl
+./usr/share/nls/pt_BR.ISO8859-1
+./usr/share/nls/ru_RU.KOI8-R
 ./usr/share/nls/sk
 ./usr/share/nls/sv
+./usr/share/nls/uk_UA.UTF-8
+./usr/share/nls/zh_CN.UTF-8
 ./usr/share/nvi
 ./usr/share/nvi/catalog
 ./usr/share/tabset
