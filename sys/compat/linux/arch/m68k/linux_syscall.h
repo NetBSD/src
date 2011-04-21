@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.74.4.1 2011/03/05 20:52:44 rmind Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.74.4.2 2011/04/21 01:41:39 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -647,6 +647,12 @@
 
 /* syscall: "sched_getaffinity" ret: "int" args: "pid_t" "unsigned int" "unsigned long *" */
 #define	LINUX_SYS_sched_getaffinity	312
+
+/* syscall: "dup3" ret: "int" args: "int" "int" "int" */
+#define	LINUX_SYS_dup3	326
+
+/* syscall: "pipe2" ret: "int" args: "int *" "int" */
+#define	LINUX_SYS_pipe2	327
 
 #define	LINUX_SYS_MAXSYSCALL	337
 #define	LINUX_SYS_NSYSENT	512

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.26.2.1 2011/03/05 20:49:26 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.26.2.2 2011/04/21 01:40:50 rmind Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -44,6 +44,9 @@
 /*
  * Machine-dependent constants (VM, etc) common across MIPS cpus
  */
+#define	_MACHINE	arc
+#define	MACHINE		"arc"
+
 #include <mips/mips_param.h>
 
 /*
@@ -53,11 +56,6 @@
  *	Deskstation Tyne
  *	Etc
  */
-#define	_MACHINE_ARCH	mipsel
-#define	MACHINE_ARCH	"mipsel"
-#define	_MACHINE	arc
-#define	MACHINE		"arc"
-
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 

@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416.h,v 1.1.1.1.14.1 2011/03/05 20:55:01 rmind Exp $
+ * $Id: ar5416.h,v 1.1.1.1.14.2 2011/04/21 01:42:05 rmind Exp $
  */
 #ifndef _ATH_AR5416_H_
 #define _ATH_AR5416_H_
@@ -45,6 +45,7 @@ typedef struct {
 #define	AR5416_CCA_MAX_GOOD_VALUE	-85
 #define	AR5416_CCA_MAX_HIGH_VALUE	-62
 #define	AR5416_CCA_MIN_BAD_VALUE	-140
+#define	AR5416_CCA_MIN_GOOD_VALUE	-118
 
 #define AR5416_SPUR_RSSI_THRESH		40
 
@@ -68,6 +69,7 @@ struct ath_hal_5416 {
 			    HAL_CHANNEL_INTERNAL *);
 
 	u_int       	ah_globaltxtimeout;	/* global tx timeout */
+	u_int		ah_gpioMask;
 	int		ah_hangs;		/* h/w hangs state */
 	uint8_t		ah_keytype[AR5416_KEYTABLE_SIZE];
 	/*
@@ -131,7 +133,8 @@ extern	HAL_BOOL ar5416IsInterruptPending(struct ath_hal *ah);
 extern	HAL_BOOL ar5416GetPendingInterrupts(struct ath_hal *, HAL_INT *masked);
 extern	HAL_INT ar5416SetInterrupts(struct ath_hal *ah, HAL_INT ints);
 
-extern	HAL_BOOL ar5416GpioCfgOutput(struct ath_hal *, uint32_t gpio);
+extern	HAL_BOOL ar5416GpioCfgOutput(struct ath_hal *, uint32_t gpio,
+		HAL_GPIO_MUX_TYPE);
 extern	HAL_BOOL ar5416GpioCfgInput(struct ath_hal *, uint32_t gpio);
 extern	HAL_BOOL ar5416GpioSet(struct ath_hal *, uint32_t gpio, uint32_t val);
 extern	uint32_t ar5416GpioGet(struct ath_hal *ah, uint32_t gpio);

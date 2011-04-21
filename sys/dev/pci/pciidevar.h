@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.40.4.1 2011/03/05 20:53:56 rmind Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.40.4.2 2011/04/21 01:42:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -168,7 +168,7 @@ struct pciide_product_desc {
 	int ide_flags;
 	const char *ide_name;
 	/* map and setup chip, probe drives */
-	void (*chip_map)(struct pciide_softc*, struct pci_attach_args*);
+	void (*chip_map)(struct pciide_softc*, const struct pci_attach_args*);
 };
 
 /* Flags for ide_flags */
@@ -199,7 +199,7 @@ pciide_pci_write(pci_chipset_tag_t pc, pcitag_t pa, int reg, uint8_t val)
 	pci_conf_write(pc, pa, (reg & ~0x03), pcival);
 }
 
-void default_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void default_chip_map(struct pciide_softc*, const struct pci_attach_args*);
 void sata_setup_channel(struct ata_channel*);
 
 void pciide_channel_dma_setup(struct pciide_channel *);
@@ -220,7 +220,7 @@ void pciide_irqack(struct ata_channel *);
 /* Attach compat interrupt handler, returning handle or NULL if failed. */
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 void	*pciide_machdep_compat_intr_establish(device_t,
-	    struct pci_attach_args *, int, int (*)(void *), void *);
+	    const struct pci_attach_args *, int, int (*)(void *), void *);
 #endif
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_DISESTABLISH
 void	pciide_machdep_compat_intr_disestablish(device_t,
@@ -229,22 +229,23 @@ void	pciide_machdep_compat_intr_disestablish(device_t,
 
 const struct pciide_product_desc* pciide_lookup_product
 	(u_int32_t, const struct pciide_product_desc *);
-void	pciide_common_attach(struct pciide_softc *, struct pci_attach_args *,
+void	pciide_common_attach(struct pciide_softc *,
+		const struct pci_attach_args *,
 		const struct pciide_product_desc *);
 int	pciide_common_detach(struct pciide_softc *, int);
 int	pciide_detach(device_t, int);
 
-int	pciide_chipen(struct pciide_softc *, struct pci_attach_args *);
-void	pciide_mapregs_compat(struct pci_attach_args *,
+int	pciide_chipen(struct pciide_softc *, const struct pci_attach_args *);
+void	pciide_mapregs_compat(const struct pci_attach_args *,
 	    struct pciide_channel *, int);
-void	pciide_mapregs_native(struct pci_attach_args *,
+void	pciide_mapregs_native(const struct pci_attach_args *,
 	    struct pciide_channel *, int (*pci_intr)(void *));
 void	pciide_mapreg_dma(struct pciide_softc *,
-	    struct pci_attach_args *);
+	    const struct pci_attach_args *);
 int	pciide_chansetup(struct pciide_softc *, int, pcireg_t);
-void	pciide_mapchan(struct pci_attach_args *,
+void	pciide_mapchan(const struct pci_attach_args *,
 	    struct pciide_channel *, pcireg_t, int (*pci_intr)(void *));
-void	pciide_map_compat_intr(struct pci_attach_args *,
+void	pciide_map_compat_intr(const struct pci_attach_args *,
 	    struct pciide_channel *, int);
 void	pciide_unmap_compat_intr(pci_chipset_tag_t,
 	    struct pciide_channel *, int);

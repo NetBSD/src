@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.6.22.1 2011/03/05 20:49:35 rmind Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.6.22.2 2011/04/21 01:40:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -108,5 +108,13 @@ typedef struct {
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #define	__UCONTEXT_SIZE	256
+
+static __inline void *
+__lwp_getprivate_fast(void)
+{
+	void *rv;
+	__asm("mrc p15, 0, %0, c13, c0, 3" : "=r"(rv));
+	return rv;
+}
 
 #endif	/* !_ARM_MCONTEXT_H_ */

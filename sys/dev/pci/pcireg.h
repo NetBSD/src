@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.66.2.2 2011/03/05 20:53:56 rmind Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.66.2.3 2011/04/21 01:42:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -369,7 +369,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_BAR4		0x20
 #define PCI_BAR5		0x24
 
-#define	PCI_BAR(__n)		(0x10 + 4 * (__n))
+#define	PCI_BAR(__n)		(PCI_MAPREG_START + 4 * (__n))
 
 #define	PCI_MAPREG_TYPE(mr)						\
 	    ((mr) & PCI_MAPREG_TYPE_MASK)

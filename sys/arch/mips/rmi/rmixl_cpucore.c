@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.1.6.1 2011/03/05 20:51:10 rmind Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.1.6.2 2011/04/21 01:41:13 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.6.1 2011/03/05 20:51:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.6.2 2011/04/21 01:41:13 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -145,25 +145,44 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 		(u_int)(rcp->rc_psb_info.userapp_cpu_map >> core_shft) & thread_mask;
 	u_int threads_dis = (~threads_enb) & thread_mask;
 
+	sc->sc_threads_dis = threads_dis;
 	if (threads_dis != 0) {
 		aprint_normal_dev(self, "threads");
-		while (threads_dis != 0) {
-			u_int t = ffs(threads_dis) - 1;
-			threads_dis ^= (1 << t);
-			aprint_normal(" %d%s",
-				t, (threads_dis==0) ? "" : ",");
+		u_int d = threads_dis;
+		while (d != 0) {
+			u_int t = ffs(d) - 1;
+			d ^= (1 << t);
+			aprint_normal(" %d%s", t, (d==0) ? "" : ",");
 		}
 		aprint_normal(" offline (disabled by firmware)\n");
 	}
 
-	while (threads_enb != 0) {
-		u_int t = ffs(threads_enb) - 1;
-		threads_enb ^= (1 << t);
+	u_int threads_try_attach = threads_enb;
+	while (threads_try_attach != 0) {
+		u_int t = ffs(threads_try_attach) - 1;
+		threads_try_attach ^= (1 << t);
 		ca.ca_name = "cpu";
 		ca.ca_thread = t;
 		ca.ca_core = sc->sc_core;
-		config_found(self, &ca, cpucore_rmixl_print);
+		if (config_found(self, &ca, cpucore_rmixl_print) == NULL) {
+			/*
+			 * thread did not attach, e.g. not configured
+			 * arrange to have it disabled in THREADEN PCR
+			 */
+			u_int bit = 1 << t;
+			threads_enb ^= bit;
+			threads_dis |= bit;
+		}
 	}
+	sc->sc_threads_enb = threads_enb;
+	sc->sc_threads_dis = threads_dis;
+
+	/*
+	 * when attaching the core of the primary cpu,
+	 * do the post-running initialization here
+	 */
+	if (sc->sc_core == RMIXL_CPU_CORE((curcpu()->ci_cpuid)))
+		cpucore_rmixl_run(self);
 }
 
 static int
@@ -176,6 +195,26 @@ cpucore_rmixl_print(void *aux, const char *pnp)
 	aprint_normal(" thread %d", ca->ca_thread);
 
 	return (UNCONF);
+}
+
+/*
+ * cpucore_rmixl_run
+ *	called from cpucore_rmixl_attach for primary core
+ *	and called from cpu_rmixl_run for each hatched cpu
+ *	the first call for each cpucore causes init of per-core features:
+ *	- disable unused threads
+ *	- set Fine-grained (Round Robin) thread scheduling mode
+ */
+void
+cpucore_rmixl_run(device_t self)
+{
+	struct cpucore_softc * const sc = device_private(self);
+
+	if (sc->sc_running == false) {
+		sc->sc_running = true;
+		rmixl_mtcr(RMIXL_PCR_THREADEN, sc->sc_threads_enb);
+		rmixl_mtcr(RMIXL_PCR_SCHEDULING, 0);
+	}
 }
 
 #ifdef MULTIPROCESSOR

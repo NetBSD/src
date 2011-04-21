@@ -1,4 +1,4 @@
-/* $NetBSD: entry.S,v 1.2.2.2 2011/03/05 20:51:47 rmind Exp $ */
+/* $NetBSD: entry.S,v 1.2.2.3 2011/04/21 01:41:22 rmind Exp $ */
 
 #include <powerpc/psl.h>
 #include <powerpc/spr.h>
@@ -24,25 +24,12 @@ _start:
 	 * U-Boot/PPCBoot forgets to flush the cache when using the "bootm"
 	 * command, so we have to do that now.
 	 */
-	lis	3,_start@ha
-	addi	3,3,_start@l
-	andi.	3,3,~31@l
-	lis	4,(_edata+31)@ha
-	addi	4,4,(_edata+31)@l
-	mr	5,3
-10:
-	dcbst	0,5
-	addi	5,5,32
-	cmplw	5,4
-	ble	10b
-	sync
-11:
-	icbi	0,3
-	addi	3,3,32
-	cmplw	3,4
-	ble	11b
-	sync
-	isync
+	lis	11,_start@ha
+	addi	11,11,_start@l
+	andi.	11,11,~31@l
+	lis	12,(_edata+31)@ha
+	addi	12,12,(_edata+31)@l
+	bl	syncicache
 
 	mfspr	11,SPR_HID0
 	andi.	0,11,HID0_DCE
@@ -167,6 +154,46 @@ dbat_sanity_check:
 run:
 	mtctr	7 	/* hat trick jump to entry point */
 	bctr
+
+/*
+ * newaltboot(argc, argv, altboot_base, altboot_len)
+ * To be executed in a safe memory region. Copies the new altboot from
+ * altboot_base to 0x1000000 and starts it there.
+ */
+	.globl	newaltboot
+newaltboot:
+	lis	7,0x1000000@h
+	mr	11,7
+	subi	7,7,4
+	subi	5,5,4
+	add	12,11,6
+	addi	6,6,3
+	srawi	6,6,2
+	mtctr	6
+1:	lwzu	8,4(5)
+	stwu	8,4(7)
+	bdnz+	1b
+	mtctr	11
+	addi	12,12,31
+	bl	syncicache
+	bctr
+syncicache:
+/* r11=start, r12=end, r10=scratch */
+	mr	10,11
+2:	dcbst	0,10
+	addi	10,10,32
+	cmplw	10,12
+	ble	2b
+	sync
+3:	icbi	0,11
+	addi	11,11,32
+	cmplw	11,12
+	ble	3b
+	sync
+	isync
+	blr
+	.globl	newaltboot_end
+newaltboot_end:
 
 /*
  * reverse endian access to mimic outw/outl/inw/inl

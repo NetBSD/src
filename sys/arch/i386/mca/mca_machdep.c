@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.38.4.1 2010/05/30 05:16:54 rmind Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.38.4.2 2011/04/21 01:41:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.38.4.1 2010/05/30 05:16:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.38.4.2 2011/04/21 01:41:07 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -236,7 +236,7 @@ mca_intr_disestablish(mca_chipset_tag_t mc, void *cookie)
  * Handle a NMI.
  * return true to panic system, false to ignore.
  */
-int
+void
 mca_nmi(void)
 {
 	/*
@@ -272,9 +272,8 @@ mca_nmi(void)
    out:
 	if (!mcanmi) {
 		/* no CHCK bits asserted, assume ISA NMI */
-		return (x86_nmi());
-	} else
-		return(0);
+		x86_nmi();
+	}
 }
 
 /*

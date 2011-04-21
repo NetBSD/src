@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.1.2.4 2011/03/06 00:27:00 rmind Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.1.2.5 2011/04/21 01:41:48 rmind Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.1.2.4 2011/03/06 00:27:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.1.2.5 2011/04/21 01:41:48 rmind Exp $");
 
 #include "rnd.h"
 
@@ -184,7 +184,6 @@ struct mvgbe_ring_data {
 
 struct mvgbec_softc {
 	device_t sc_dev;
-	int sc_unit;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -355,16 +354,14 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_iot = mva->mva_iot;
-	sc->sc_unit = mva->mva_unit;
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh, mva->mva_offset,
 	    mva->mva_size, &sc->sc_ioh)) {
 		aprint_error_dev(self, "Cannot map registers\n");
 		return;
 	}
 
-	if (sc->sc_unit == 0) {
+	if (mvgbec0 == NULL)
 		mvgbec0 = self;
-	}
 		
 	phyaddr = 0;
 	MVGBE_WRITE(sc, MVGBE_PHYADDR, phyaddr);
@@ -622,7 +619,6 @@ static void
 mvgbe_attach(device_t parent, device_t self, void *aux)
 {
 	struct mvgbe_softc *sc = device_private(self);
-	struct mvgbec_softc *csc = device_private(parent);
 	struct marvell_attach_args *mva = aux;
 	struct mvgbe_txmap_entry *entry;
 	struct ifnet *ifp;
@@ -770,7 +766,7 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0,
 	    mvgbe_mediachange, mvgbe_mediastatus);
 	mii_attach(self, &sc->sc_mii, 0xffffffff,
-	    csc->sc_unit, MII_OFFSET_ANY, 0);
+	    MII_PHY_ANY, parent == mvgbec0 ? 0 : 1, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
 		ifmedia_add(&sc->sc_mii.mii_media,

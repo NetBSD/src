@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.1.4.1 2011/03/05 20:51:07 rmind Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.1.4.2 2011/04/21 01:41:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.4.1 2011/03/05 20:51:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.4.2 2011/04/21 01:41:12 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_mips3_wired.h"
@@ -233,7 +233,12 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 {
 #ifdef DEBUG
 	size_t fixups_done = 0;
-	uint32_t cycles = (CPUISMIPS3 ? mips3_cp0_count_read() : 0);
+	uint32_t cycles =
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+	    (CPUISMIPS3 ? mips3_cp0_count_read() : 0);
+#else
+	    0;
+#endif
 #endif
 	extern uint32_t __stub_start[], __stub_end[];
 
@@ -330,8 +335,10 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 		    sizeof(uint32_t [end - start]));
 
 #ifdef DEBUG
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	if (CPUISMIPS3)
 		cycles = mips3_cp0_count_read() - cycles;
+#endif
 	printf("%s: %zu fixup%s done in %u cycles\n", __func__,
 	    fixups_done, fixups_done == 1 ? "" : "s",
 	    cycles);

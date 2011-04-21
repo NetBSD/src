@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120,v 1.5.4.1 2011/03/05 20:50:11 rmind Exp $
+#	$NetBSD: ADM5120,v 1.5.4.2 2011/04/21 01:40:59 rmind Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.5.4.1 $"
+#ident 		"GENERIC-$Revision: 1.5.4.2 $"
 
 maxusers	32
 
@@ -74,7 +74,8 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.

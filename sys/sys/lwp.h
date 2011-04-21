@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.128.2.3 2011/03/05 20:56:23 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.128.2.4 2011/04/21 01:42:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -234,7 +234,7 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
 #define	LW_SA_YIELD	0x40000000 /* LWP on VP is yielding */
 #define	LW_SA_IDLE	0x80000000 /* VP is idle */
 #define	LW_RUMP_CLEAR	LW_SA_IDLE /* clear curlwp in rump scheduler */
-#define	LW_RUMP_DYING	LW_SA_YIELD/* lwp is part of a dying process */
+#define	LW_RUMP_QEXIT	LW_SA_YIELD/* lwp should exit ASAP */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */

@@ -1,8 +1,10 @@
-# $NetBSD: XLSATX32,v 1.1.6.1 2011/03/05 20:50:12 rmind Exp $
+# $NetBSD: XLSATX32,v 1.1.6.2 2011/04/21 01:40:59 rmind Exp $
 #
+
+#ident 		"XLSATX32-$Revision: 1.1.6.2 $"
 
 include "arch/evbmips/conf/XLSATX"
 
-#ident 		"XLSATX32-$Revision: 1.1.6.1 $"
+options 	MEMLIMIT=0x20000000                     # 512MB 
 
 makeoptions	LP64="no"

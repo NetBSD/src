@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.47.4.1 2010/05/30 05:16:40 rmind Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.47.4.2 2011/04/21 01:40:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.47.4.1 2010/05/30 05:16:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.47.4.2 2011/04/21 01:40:54 rmind Exp $");
 
 #include "opt_mbtype.h"
 
@@ -616,7 +616,7 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
 }
 
 int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int line = pa->pa_intrline;
 

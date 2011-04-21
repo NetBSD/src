@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.61.4.4 2011/03/05 20:55:05 rmind Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.61.4.5 2011/04/21 01:42:06 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.61.4.4 2011/03/05 20:55:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.61.4.5 2011/04/21 01:42:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,6 +554,7 @@ msdosfs_write(void *v)
 	u_long count;
 	vsize_t bytelen;
 	off_t oldoff;
+	size_t rem;
 	struct uio *uio = ap->a_uio;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
@@ -623,6 +624,10 @@ msdosfs_write(void *v)
 		dep->de_FileSize = uio->uio_offset + resid;
 		/* hint uvm to not read in extended part */
 		uvm_vnp_setwritesize(vp, dep->de_FileSize);
+		/* zero out the remainder of the last page */
+		rem = round_page(dep->de_FileSize) - dep->de_FileSize;
+		if (rem > 0)
+			uvm_vnp_zerorange(vp, (off_t)dep->de_FileSize, rem);
 		extended = 1;
 	}
 
@@ -935,11 +940,11 @@ abortit:
 		 */
 		vref(tdvp);
 		if ((error = doscheckpath(ip, dp)) != 0)
-			goto out;
+			goto bad;
 		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = relookup(tdvp, &tvp, tcnp, 0)) != 0) {
 			VOP_UNLOCK(tdvp);
-			goto out;
+			goto bad;
 		}
 		dp = VTODE(tdvp);
 		xp = tvp ? VTODE(tvp) : NULL;
@@ -1114,7 +1119,6 @@ bad:
 	if (tvp)
 		vput(tvp);
 	vrele(tdvp);
-out:
 	ip->de_flag &= ~DE_RENAME;
 	vrele(fdvp);
 	vrele(fvp);

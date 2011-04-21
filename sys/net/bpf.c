@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.156.2.2 2011/03/05 20:55:50 rmind Exp $	*/
+/*	$NetBSD: bpf.c,v 1.156.2.3 2011/04/21 01:42:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.156.2.2 2011/03/05 20:55:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.156.2.3 2011/04/21 01:42:13 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1178,6 +1178,7 @@ bpf_stat(struct file *fp, struct stat *st)
 	st->st_ctimespec = st->st_birthtimespec = d->bd_btime;
 	st->st_uid = kauth_cred_geteuid(fp->f_cred);
 	st->st_gid = kauth_cred_getegid(fp->f_cred);
+	st->st_mode = S_IFCHR;
 	KERNEL_UNLOCK_ONE(NULL);
 	return 0;
 }
@@ -1607,10 +1608,10 @@ static int
 bpf_allocbufs(struct bpf_d *d)
 {
 
-	d->bd_fbuf = malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	d->bd_fbuf = malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK | M_CANFAIL);
 	if (!d->bd_fbuf)
 		return (ENOBUFS);
-	d->bd_sbuf = malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	d->bd_sbuf = malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK | M_CANFAIL);
 	if (!d->bd_sbuf) {
 		free(d->bd_fbuf, M_DEVBUF);
 		return (ENOBUFS);

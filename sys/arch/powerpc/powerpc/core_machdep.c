@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.4.4.1 2011/03/05 20:51:40 rmind Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.4.4.2 2011/04/21 01:41:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4.4.1 2011/03/05 20:51:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4.4.2 2011/04/21 01:41:20 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -76,7 +76,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 		return 0;
 	}
 
-	md_core.frame = *trapframe(l);
+	md_core.frame = *l->l_md.md_utf;
 	if (l->l_md.md_flags & MDLWP_OWNFPU) {
 #ifdef PPC_HAVE_FPU
 		fpu_save_lwp(l, FPU_SAVE);

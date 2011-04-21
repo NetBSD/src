@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.23 2007/02/22 04:38:06 matt Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.23.66.1 2011/04/21 01:41:44 rmind Exp $	*/
 
 /*
  * Mach Operating System
@@ -38,9 +38,10 @@ typedef int		db_strategy_t;	/* search strategy */
 #define DB_STGY_XTRN	(KSYMS_EXTERN|KSYMS_CLOSEST) /* only external symbols */
 #define DB_STGY_PROC	(KSYMS_PROC|KSYMS_CLOSEST)   /* only procedures */
 
-#ifdef DB_AOUT_SYMBOLS
+#ifndef _KERNEL
 /*
- * This struct is unused.
+ * These structures and functions are not used in the kernel, but only
+ * in crash(8).
  */
 typedef struct {
 	const char	*name;		/* symtab name */
@@ -80,7 +81,6 @@ typedef struct {
 	void		(*sym_forall)(db_symtab_t *,
 			    db_forall_func_t *db_forall_func, void *);
 } db_symformat_t;
-
 #endif
 
 extern unsigned int db_maxoff;		/* like gdb's "max-symbolic-offset" */

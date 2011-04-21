@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.3.2.2 2011/03/05 20:51:35 rmind Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.3.2.3 2011/04/21 01:41:19 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.3.2.2 2011/03/05 20:51:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.3.2.3 2011/04/21 01:41:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -83,9 +83,9 @@ __KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.3.2.2 2011/03/05 20:51:35 rmind Exp $")
     TRUTH_ENCODE(SVR_MPC8572v1, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##MPC8572##_##value, PORDEVSR_##field), result)
 #define	PORDEVSR_P20x0_TRUTH_ENCODE(inst, field, value, result) \
-    TRUTH_ENCODE(SVR_P2020, inst, PORDEVSR_##field, \
+    TRUTH_ENCODE(SVR_P2020v2, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result), \
-    TRUTH_ENCODE(SVR_P2010, inst, PORDEVSR_##field, \
+    TRUTH_ENCODE(SVR_P2010v2, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result)
 
 #define	PORDEVSR_TRUTH_ENCODE(svr, inst, field, value, result) \
@@ -1159,7 +1159,8 @@ pq3pci_intr_source_lookup(struct pq3pci_softc *sc, pci_intr_handle_t handle)
 }
 
 static pci_intr_handle_t
-pq3pci_intr_handle_lookup(struct pq3pci_softc *sc, struct pci_attach_args *pa)
+pq3pci_intr_handle_lookup(struct pq3pci_softc *sc,
+    const struct pci_attach_args *pa)
 {
 	prop_dictionary_t entry;
 
@@ -1216,7 +1217,7 @@ pq3pci_intr_handle_lookup(struct pq3pci_softc *sc, struct pci_attach_args *pa)
 }
 
 static int
-pq3pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *handlep)
+pq3pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *handlep)
 {
 	struct pq3pci_softc * const sc = pa->pa_pc->pc_intr_v;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.4.2.2 2011/03/05 20:51:47 rmind Exp $ */
+/* $NetBSD: dsk.c,v 1.4.2.3 2011/04/21 01:41:22 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -56,13 +56,6 @@
 #define CSR_WRITE_4(r,v)	out32rb(r,v)
 #define CSR_READ_1(r)		*(volatile uint8_t *)(r)
 #define CSR_WRITE_1(r,v)	*(volatile uint8_t *)(r)=(v)
-
-#define DSK_DECL(xxx) \
-    int xxx ## _match(unsigned, void *); \
-    void * xxx ## _init(unsigned, void *)
-
-DSK_DECL(pciide);
-DSK_DECL(siisata);
 
 struct dskdv {
 	char *name;

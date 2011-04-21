@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.52.2.1 2011/03/05 20:52:06 rmind Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.52.2.2 2011/04/21 01:41:27 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -210,6 +210,14 @@
 #else
 #define	CPU_UPAID	UPA_CR_MID(ldxa(0, ASI_MID_REG))
 #endif
+  
+/* Get the CPU's Fireplane agent ID */
+#define FIREPLANE_CR_AID(x)	(((x) >> 17) & 0x3ff)
+#define CPU_FIREPLANEID		FIREPLANE_CR_AID(ldxa(0, ASI_MID_REG))
+
+/* Get the CPU's Jupiter Bus interrupt target ID */
+#define JUPITER_CR_ITID(x)	((x) & 0x3ff)
+#define CPU_JUPITERID		JUPITER_CR_ITID(ldxa(0, ASI_MID_REG))
 
 /*
  * [4u] MMU and Cache Control Register (MCCR)

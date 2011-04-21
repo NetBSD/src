@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.176.2.2 2011/03/05 20:55:14 rmind Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.176.2.3 2011/04/21 01:42:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.176.2.2 2011/03/05 20:55:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.176.2.3 2011/04/21 01:42:07 rmind Exp $");
 
 #include "opt_ktrace.h"
 
@@ -425,6 +425,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	lwp_create(l1, p2, uaddr, (flags & FORK_PPWAIT) ? LWP_VFORK : 0,
 	    stack, stacksize, (func != NULL) ? func : child_return, arg, &l2,
 	    l1->l_class);
+	lwp_setprivate(l2, l1->l_private);
 
 	/*
 	 * If emulation has a process fork hook, call it now.

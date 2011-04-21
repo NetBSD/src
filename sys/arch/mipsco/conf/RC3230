@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.37.4.1 2010/05/30 05:16:59 rmind Exp $
+# 	$NetBSD: RC3230,v 1.37.4.2 2011/04/21 01:41:14 rmind Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -65,7 +65,8 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	PTYFS		# /dev/pts/N support
 #
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
-options 	QUOTA		# FFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

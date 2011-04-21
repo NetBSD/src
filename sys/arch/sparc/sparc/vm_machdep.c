@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.101.4.1 2011/03/05 20:52:03 rmind Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.101.4.2 2011/04/21 01:41:25 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101.4.1 2011/03/05 20:52:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101.4.2 2011/04/21 01:41:25 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -57,11 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101.4.1 2011/03/05 20:52:03 rmind E
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/core.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
-#include <sys/simplelock.h>
 #include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
@@ -220,8 +219,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 		struct cpu_info *cpi;
 		int s;
 
-		l2->l_md.md_fpstate = malloc(sizeof(struct fpstate),
-		    M_SUBPROC, M_WAITOK);
+		l2->l_md.md_fpstate =
+		    kmem_alloc(sizeof(struct fpstate), KM_SLEEP);
 
 		FPU_LOCK(s);
 		if ((cpi = l1->l_md.md_fpu) != NULL) {
@@ -325,7 +324,7 @@ cpu_lwp_free2(struct lwp *l)
 	struct fpstate *fs;
 
 	if ((fs = l->l_md.md_fpstate) != NULL)
-		free((void *)fs, M_SUBPROC);
+		kmem_free(fs, sizeof(struct fpstate));
 }
 
 void

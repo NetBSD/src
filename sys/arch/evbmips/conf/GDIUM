@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.8.2.2 2011/03/05 20:50:11 rmind Exp $
+# $NetBSD: GDIUM,v 1.8.2.3 2011/04/21 01:40:59 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.8.2.2 $"
+#ident 		"GDIUM-$Revision: 1.8.2.3 $"
 
 maxusers	16
 
@@ -85,7 +85,8 @@ file-system	PTYFS		# /dev/pts/N support
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.36 2010/02/08 09:54:27 skrll Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.36.2.1 2011/04/21 01:42:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.36 2010/02/08 09:54:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.36.2.1 2011/04/21 01:42:08 rmind Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -223,46 +223,39 @@ rw_destroy(krwlock_t *rw)
 }
 
 /*
- * rw_onproc:
+ * rw_oncpu:
  *
  *	Return true if an rwlock owner is running on a CPU in the system.
  *	If the target is waiting on the kernel big lock, then we must
  *	release it.  This is necessary to avoid deadlock.
- *
- *	Note that we can't use the rwlock owner field as an LWP pointer.  We
- *	don't have full control over the timing of our execution, and so the
- *	pointer could be completely invalid by the time we dereference it.
  */
-static int
-rw_onproc(uintptr_t owner, struct cpu_info **cip)
+static bool
+rw_oncpu(uintptr_t owner)
 {
 #ifdef MULTIPROCESSOR
-	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	lwp_t *l;
 
-	if ((owner & (RW_WRITE_LOCKED|RW_HAS_WAITERS)) != RW_WRITE_LOCKED)
-		return 0;
+	KASSERT(kpreempt_disabled());
+
+	if ((owner & (RW_WRITE_LOCKED|RW_HAS_WAITERS)) != RW_WRITE_LOCKED) {
+		return false;
+	}
+
+	/*
+	 * See lwp_dtor() why dereference of the LWP pointer is safe.
+	 * We must have kernel preemption disabled for that.
+	 */
 	l = (lwp_t *)(owner & RW_THREAD);
+	ci = l->l_cpu;
 
-	/* See if the target is running on a CPU somewhere. */
-	if ((ci = *cip) != NULL && ci->ci_curlwp == l)
-		goto run;
-	for (CPU_INFO_FOREACH(cii, ci))
-		if (ci->ci_curlwp == l)
-			goto run;
-
-	/* No: it may be safe to block now. */
-	*cip = NULL;
-	return 0;
-
- run:
- 	/* Target is running; do we need to block? */
- 	*cip = ci;
-	return ci->ci_biglock_wanted != l;
-#else
-	return 0;
-#endif	/* MULTIPROCESSOR */
+	if (ci && ci->ci_curlwp == l) {
+		/* Target is running; do we need to block? */
+		return (ci->ci_biglock_wanted != l);
+	}
+#endif
+	/* Not running.  It may be safe to block now. */
+	return false;
 }
 
 /*
@@ -274,7 +267,6 @@ void
 rw_vector_enter(krwlock_t *rw, const krw_t op)
 {
 	uintptr_t owner, incr, need_wait, set_wait, curthread, next;
-	struct cpu_info *ci;
 	turnstile_t *ts;
 	int queue;
 	lwp_t *l;
@@ -319,7 +311,8 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 
 	LOCKSTAT_ENTER(lsflag);
 
-	for (ci = NULL, owner = rw->rw_owner;;) {
+	KPREEMPT_DISABLE(curlwp);
+	for (owner = rw->rw_owner; ;) {
 		/*
 		 * Read the lock owner field.  If the need-to-wait
 		 * indicator is clear, then try to acquire the lock.
@@ -340,23 +333,26 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			owner = next;
 			continue;
 		}
-
-		if (__predict_false(panicstr != NULL))
+		if (__predict_false(panicstr != NULL)) {
+			kpreempt_enable();
 			return;
-		if (__predict_false(RW_OWNER(rw) == curthread))
+		}
+		if (__predict_false(RW_OWNER(rw) == curthread)) {
 			rw_abort(rw, __func__, "locking against myself");
-
+		}
 		/*
 		 * If the lock owner is running on another CPU, and
 		 * there are no existing waiters, then spin.
 		 */
-		if (rw_onproc(owner, &ci)) {
+		if (rw_oncpu(owner)) {
 			LOCKSTAT_START_TIMER(lsflag, spintime);
 			u_int count = SPINLOCK_BACKOFF_MIN;
 			do {
+				kpreempt_enable();
 				SPINLOCK_BACKOFF(count);
+				kpreempt_disable();
 				owner = rw->rw_owner;
-			} while (rw_onproc(owner, &ci));
+			} while (rw_oncpu(owner));
 			LOCKSTAT_STOP_TIMER(lsflag, spintime);
 			LOCKSTAT_COUNT(spincnt, 1);
 			if ((owner & need_wait) == 0)
@@ -376,7 +372,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		 * spun on the turnstile chain lock.
 		 */
 		owner = rw->rw_owner;
-		if ((owner & need_wait) == 0 || rw_onproc(owner, &ci)) {
+		if ((owner & need_wait) == 0 || rw_oncpu(owner)) {
 			turnstile_exit(rw);
 			continue;
 		}
@@ -399,6 +395,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		if (op == RW_READER || (rw->rw_owner & RW_THREAD) == curthread)
 			break;
 	}
+	KPREEMPT_ENABLE(curlwp);
 
 	LOCKSTAT_EVENT(lsflag, rw, LB_RWLOCK |
 	    (op == RW_WRITER ? LB_SLEEP1 : LB_SLEEP2), slpcnt, slptime);

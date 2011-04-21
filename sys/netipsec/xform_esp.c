@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.22.4.1 2011/03/05 20:56:00 rmind Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.22.4.2 2011/04/21 01:42:15 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.22.4.1 2011/03/05 20:56:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.22.4.2 2011/04/21 01:42:15 rmind Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -1001,8 +1001,8 @@ esp_output_cb(struct cryptop *crp)
 		 */
 		esph = sav->tdb_authalgxform;
 		if (esph !=  NULL) {
-			m_copyback(m, m->m_pkthdr.len - esph->authlen,
-			    esph->authlen, ipseczeroes);
+			m_copyback(m, m->m_pkthdr.len - esph->authsize,
+			    esph->authsize, ipseczeroes);
 		}
 	}
 #endif

@@ -2586,11 +2586,10 @@ alc_init_smb(struct alc_softc *sc)
 static void
 alc_rxvlan(struct alc_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint32_t reg;
 
 	reg = CSR_READ_4(sc, ALC_MAC_CFG);
-	if (ifp->if_capabilities & ETHERCAP_VLAN_HWTAGGING)
+	if (sc->sc_ec.ec_capenable & ETHERCAP_VLAN_HWTAGGING)
 		reg |= MAC_CFG_VLAN_TAG_STRIP;
 	else
 		reg &= ~MAC_CFG_VLAN_TAG_STRIP;

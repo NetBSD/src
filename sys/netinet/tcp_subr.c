@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.238 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.238.4.1 2011/04/21 01:42:14 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.238 2009/09/16 15:23:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.238.4.1 2011/04/21 01:42:14 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -164,7 +164,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.238 2009/09/16 15:23:05 pooka Exp $")
 
 
 struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
-u_int32_t tcp_now;		/* for RFC 1323 timestamps */
+u_int32_t tcp_now;		/* slow ticks, for RFC 1323 timestamps */
 
 percpu_t *tcpstat_percpu;
 

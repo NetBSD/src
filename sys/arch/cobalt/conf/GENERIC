@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123.4.2 2011/03/05 20:49:48 rmind Exp $
+# $NetBSD: GENERIC,v 1.123.4.3 2011/04/21 01:40:55 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.123.4.2 $"
+#ident 		"GENERIC-$Revision: 1.123.4.3 $"
 
 maxusers	32
 
@@ -93,7 +93,8 @@ file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
-options 	QUOTA		# FFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

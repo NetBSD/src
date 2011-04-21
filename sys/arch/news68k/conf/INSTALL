@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.49.6.2 2011/03/05 20:51:22 rmind Exp $
+# 	$NetBSD: INSTALL,v 1.49.6.3 2011/04/21 01:41:15 rmind Exp $
 
 #	config for bootable floppy kernel
 #
@@ -18,7 +18,7 @@ options 	CPU_SINGLE		# Will IOP be supported eventually?
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=3000	# 1.50 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=3200	# 1.60 Megabytes
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # Standard system options
@@ -66,7 +66,8 @@ file-system	MSDOSFS		# MS-DOS FAT file system
 
 # Filesystem options
 #options 	NFSSERVER	# nfs server support
-#options 	QUOTA		# ffs quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# ffs endian independent support
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.1.4.2 2011/03/05 20:53:45 rmind Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.1.4.3 2011/04/21 01:41:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.1.4.2 2011/03/05 20:53:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.1.4.3 2011/04/21 01:41:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	/* Reset the ethernet controller. */
 	vte_reset(sc);
 
-	if ((error = vte_dma_alloc(sc) != 0))
+	if ((error = vte_dma_alloc(sc)) != 0)
 		return;
 
 	/* Load station address. */

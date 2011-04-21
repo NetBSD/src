@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550reg.h,v 1.1.4.2 2011/03/05 20:53:14 rmind Exp $	*/
+/*	$NetBSD: ct65550reg.h,v 1.1.4.3 2011/04/21 01:41:47 rmind Exp $	*/
 
 /*
  * Copyright 2006 by Michael Lorenz.
@@ -62,15 +62,15 @@
 #define CT_OFF_BE	0x00800000
 
 /* blitter registers */
-#define CT_BLT_STRIDE	CT_OFF_BITBLT
+#define CT_BLT_STRIDE	0x00000000
 	/* 
 	 * upper 16 bit are destination stride in bytes
 	 * lower 16 bit are source stride in bytes
 	 */
 	 
-#define CT_BLT_BG	CT_OFF_BITBLT + 0x04
-#define CT_BLT_FG	CT_OFF_BITBLT + 0x08
-#define CT_BLT_EXPCTL	CT_OFF_BITBLT + 0x0c	/* expansion control */
+#define CT_BLT_BG	0x04
+#define CT_BLT_FG	0x08
+#define CT_BLT_EXPCTL	0x0c	/* expansion control */
 	#define LEFT_CLIPPING_MSK	0x0000003f
 	#define MONO_RIGHT_CLIPPING_MSK	0x00003f00
 	#define MONO_INITIAL_DISCARD	0x003f0000
@@ -82,7 +82,7 @@
 	#define MONO_SRC_ALIGN_LONGLONG	0x05000000
 	#define MONO_SELECT_ALT_FG_BG	0x08000000 /* use CT_SRC_EXP_* */
 	
-#define CT_BLT_CONTROL	CT_OFF_BITBLT + 0x10
+#define CT_BLT_CONTROL	0x10
 	#define BLT_ROP_MASK		0x000000ff
 	#define BLT_START_RIGHT		0x00000100 /* 0 for start left */
 	#define BLT_START_BOTTOM	0x00000200 /* 0 for start top */
@@ -101,18 +101,18 @@
 #define ROP_NOT_DST	0x55
 #define ROP_PAT		0xf0
 
-#define CT_BLT_PATTERN	CT_OFF_BITBLT + 0x14 /* address in vram */
-#define CT_BLT_SRCADDR	CT_OFF_BITBLT + 0x18
-#define CT_BLT_DSTADDR	CT_OFF_BITBLT + 0x1c
+#define CT_BLT_PATTERN	0x14 /* address in vram */
+#define CT_BLT_SRCADDR	0x18
+#define CT_BLT_DSTADDR	0x1c
 
-#define CT_BLT_SIZE	CT_OFF_BITBLT + 0x20	/* width and height */
+#define CT_BLT_SIZE	0x20	/* width and height */
 /*
  * upper 16 bit are destination height
  * lower 16 bit are destination width in bytes
  */
 
-#define CT_SRC_EXP_BG	CT_OFF_BITBLT + 0x24
-#define CT_SRC_EXP_FG	CT_OFF_BITBLT + 0x28
+#define CT_SRC_EXP_BG	0x24
+#define CT_SRC_EXP_FG	0x28
 
 /* extension registers ( via CT_CONF */
 #define XR_VENDOR_LO		0x00

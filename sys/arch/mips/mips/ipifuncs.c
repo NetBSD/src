@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.1.4.1 2011/03/05 20:51:06 rmind Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.1.4.2 2011/04/21 01:41:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.4.1 2011/03/05 20:51:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.4.2 2011/04/21 01:41:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -47,9 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.4.1 2011/03/05 20:51:06 rmind Exp $
 #include <mips/db_machdep.h>
 #endif
 
-
 static void ipi_halt(void) __dead;
-
 
 static const char * const ipi_names[] = {
 	[IPI_NOP]	= "ipi nop",
@@ -97,8 +95,8 @@ ipi_kpreempt(struct cpu_info *ci)
 static void
 ipi_halt(void)
 {
-	const int my_cpu = cpu_number();
-	printf("cpu%d: shutting down\n", my_cpu);
+	const u_int my_cpu = cpu_number();
+	printf("cpu%u: shutting down\n", my_cpu);
 	CPUSET_ADD(cpus_halted, my_cpu);
 	splhigh();
 	for (;;)
@@ -124,7 +122,7 @@ ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
 		ipi_shootdown(ci);
 	}
 	if (ipi_mask & __BIT(IPI_SYNCICACHE)) {
-		ci->ci_evcnt_per_ipi[IPI_NOP].ev_count++;
+		ci->ci_evcnt_per_ipi[IPI_SYNCICACHE].ev_count++;
 		ipi_syncicache(ci);
 	}
 	if (ipi_mask & __BIT(IPI_SUSPEND)) {

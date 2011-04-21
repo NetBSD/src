@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.290.2.5 2011/03/05 20:56:36 rmind Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.290.2.6 2011/04/21 01:42:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.290.2.5 2011/03/05 20:56:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.290.2.6 2011/04/21 01:42:22 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3408,11 +3408,12 @@ uvm_map_willneed(struct vm_map *map, vaddr_t start, vaddr_t end)
 		KASSERT(entry != &map->header);
 		KASSERT(start < entry->end);
 		/*
-		 * XXX IMPLEMENT ME.
-		 * Should invent a "weak" mode for uvm_fault()
-		 * which would only do the PGO_LOCKED pgo_get().
+		 * For now, we handle only the easy but commonly-requested case.
+		 * ie. start prefetching of backing uobj pages.
 		 *
-		 * for now, we handle only the easy but common case.
+		 * XXX It might be useful to pmap_enter() the already-in-core
+		 * pages by inventing a "weak" mode for uvm_fault() which would
+		 * only do the PGO_LOCKED pgo_get().
 		 */
 		if (UVM_ET_ISOBJ(entry) && amap == NULL && uobj != NULL) {
 			off_t offset;

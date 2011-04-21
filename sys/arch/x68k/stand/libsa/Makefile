@@ -1,43 +1,11 @@
-#	$NetBSD: Makefile,v 1.25 2009/03/19 10:19:33 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.25.4.1 2011/04/21 01:41:31 rmind Exp $
 
 S=		${.CURDIR}/../../../..
-LIBSADIR=	$S/lib/libsa
-LIBKERNDIR=	$S/lib/libkern
-LIBZDIR=	$S/lib/libz
-LIBZDIST=	$S/../common/dist/zlib
 
-LIB=		sa
-
-SRCS+=		alloc.c bcopy.c bzero.c errno.c getfile.c gets.c
-SRCS+=		memcmp.c memcpy.c memmove.c memset.c panic.c
-SRCS+=		printf.c snprintf.c sprintf.c subr_prf.c twiddle.c vsprintf.c
-
-SRCS+=		close.c closeall.c cread.c dev.c fstat.c ioctl.c lseek.c
-SRCS+=		open.c read.c stat.c
-SRCS+=		loadfile.c loadfile_aout.c loadfile_elf32.c
-SRCS+=		cd9660.c lfsv1.c lfsv2.c nfs.c ufs.c ufs_ls.c ustarfs.c
-SRCS+=		globals.c
-#SRCS+=		arp.c ether.c in_cksum.c net.c netif.c rpc.c udp.c
-#SRCS+=		bootp.c
-
-SRCS+=		ashldi3.c ashrdi3.c divdi3.c moddi3.c qdivrem.c
-SRCS+=		strcat.c strchr.c strcmp.c strcpy.c strerror.c strlen.c
-SRCS+=		strncmp.c strrchr.c
-
-SRCS+=		adler32.c crc32.c inffast.c
-SRCS+=		inflate.c inftrees.c uncompr.c
-
-SRCS+=		consio.c devopen.c parseutils.c sdcd.c fd.c fdsub.S chdsk.c
-SRCS+=		putimage.S
-
-NOPROFILE=	# defined
-NOPIC=		# defined
-NOLINT=		# defined
-
-CPPFLAGS+=	-I${.OBJDIR} -I${LIBSADIR} -I$S -I${LIBZDIR} -I${LIBZDIST}
+CPPFLAGS+=	-nostdinc -I${.OBJDIR} -I. -I${S}
 CPPFLAGS+=	-I${.CURDIR}/../libiocs -I${.CURDIR}/../common
 CPPFLAGS+=	-D_STANDALONE
-CPPFLAGS+=	-DHEAP_VARIABLE -D__INTERNAL_LIBSA_CREAD
+CPPFLAGS+=	-DHEAP_VARIABLE
 CPPFLAGS+=	-DHAVE_CHANGEDISK_HOOK
 CPPFLAGS+=	-DUSTAR_SECT_PER_CYL=16
 #CPPFLAGS+=	-DDEBUG
@@ -45,11 +13,33 @@ CPPFLAGS+=	-DUSTAR_SECT_PER_CYL=16
 .PATH:	${LIBSADIR} ${LIBKERNDIR} ${LIBZDIR} ${LIBZDIST}
 
 .include "../Makefile.booters"
-.include "${S}/../common/lib/libc/Makefile.inc"
 
 # only needed during build
 libinstall::
 
-.include <bsd.own.mk>
-.undef DESTDIR
-.include <bsd.lib.mk>
+.include <bsd.prog.mk>
+
+### find out what to use for libkern
+KERN_AS= library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN= ${KERNLIB}
+
+### find out what to use for libz
+Z_AS= library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ= ${ZLIB}
+
+### find out what to use for libsa
+SA_AS= library
+SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes SA_EXTRADIR=${.CURDIR}
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA= ${SALIB}
+
+LIBS= ${LIBKERN} ${LIBZ} ${LIBSA}
+
+all realall: ${LIBS}
+
+cleandir distclean: .WAIT cleanlibdir
+
+cleanlibdir:
+	-rm -rf lib

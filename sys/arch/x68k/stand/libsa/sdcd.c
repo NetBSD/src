@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.8 2007/11/18 05:00:08 isaki Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.8.40.1 2011/04/21 01:41:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -126,8 +126,8 @@ readdisklabel(int id)
 	if (error)
 		return error;
 	if (current_blklen > 4) {
-		printf ("FATAL: Unsupported block size %d.\n",
-			256 << current_blklen);
+		printf("FATAL: Unsupported block size %d.\n",
+		    256 << current_blklen);
 		return ERDLAB;
 	}
 
@@ -268,6 +268,7 @@ sdopen(struct open_file *f, ...)
 int
 sdclose(struct open_file *f)
 {
+
 	dealloc(f->f_devdata, sizeof(struct sdcd_softc));
 	return 0;
 }
@@ -277,7 +278,7 @@ sdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
            void *buf, size_t *rsize)
 {
 	struct sdcd_softc *sc = arg;
-	u_int32_t	start = sc->sc_partinfo.start + dblk;
+	uint32_t	start = sc->sc_partinfo.start + dblk;
 	size_t		nblks;
 	int		error;
 
@@ -347,6 +348,7 @@ cdopen(struct open_file *f, ...)
 int
 cdclose(struct open_file *f)
 {
+
 	dealloc(f->f_devdata, sizeof(struct sdcd_softc));
 	return 0;
 }

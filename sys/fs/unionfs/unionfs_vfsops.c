@@ -371,7 +371,7 @@ unionfs_root(struct mount *mp, struct vnode **vpp)
 }
 
 int
-unionfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg)
+unionfs_quotactl(struct mount *mp, prop_dictionary_t dict)
 {
 	struct unionfs_mount *ump;
 
@@ -380,7 +380,7 @@ unionfs_quotactl(struct mount *mp, int cmd, uid_t uid, void *arg)
 	/*
 	 * Writing is always performed to upper vnode.
 	 */
-	return (VFS_QUOTACTL(ump->um_uppervp->v_mount, cmd, uid, arg));
+	return (VFS_QUOTACTL(ump->um_uppervp->v_mount, dict));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.19 2007/02/21 22:59:52 thorpej Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.19.68.1 2011/04/21 01:41:25 rmind Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -32,16 +32,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19 2007/02/21 22:59:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19.68.1 2011/04/21 01:41:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
 #include <machine/instr.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_user.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
 #include <ddb/db_access.h>
+
+#ifndef _KERNEL
+#include <stdlib.h>
+#endif
 
 /* Sign extend values */
 #define	SIGNEX(v,width)		({					\

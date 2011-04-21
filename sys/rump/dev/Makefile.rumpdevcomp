@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.rumpdevcomp,v 1.5.6.2 2011/03/05 20:56:05 rmind Exp $
+#	$NetBSD: Makefile.rumpdevcomp,v 1.5.6.3 2011/04/21 01:42:16 rmind Exp $
 #
 
-RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb pad putter	\
-		raidframe rnd scsipi scsitest sysmon wscons
+RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb pad pud	\
+		putter raidframe rnd scsipi scsitest sysmon wscons
 
 RUMPUSBDEVS=	ubt ucom ugenhc ulpt umass usb
 

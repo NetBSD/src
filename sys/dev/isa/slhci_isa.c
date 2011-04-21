@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_isa.c,v 1.11 2009/05/12 09:10:16 cegger Exp $	*/
+/*	$NetBSD: slhci_isa.c,v 1.11.4.1 2011/04/21 01:41:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Kiyoshi Ikehara. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.11 2009/05/12 09:10:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.11.4.1 2011/04/21 01:41:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ slhci_isa_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 
 	sc->sc_dev = self;
-	sc->sc_bus.hci_private = self;
+	sc->sc_bus.hci_private = sc;
 
 	printf("\n"); /* XXX still needed? */
 

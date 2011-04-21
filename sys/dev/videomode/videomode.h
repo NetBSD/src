@@ -1,4 +1,4 @@
-/*	$NetBSD: videomode.h,v 1.1.98.1 2010/05/30 05:17:46 rmind Exp $	*/
+/*	$NetBSD: videomode.h,v 1.1.98.2 2011/04/21 01:42:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -68,5 +68,6 @@ extern const int videomode_count;
 
 const struct videomode *pick_mode_by_dotclock(int, int, int);
 const struct videomode *pick_mode_by_ref(int, int, int);
+void sort_modes(struct videomode *, struct videomode **, int);
 
 #endif /* _DEV_VIDEOMODE_H */

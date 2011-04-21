@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.24.2.1 2011/03/05 20:53:37 rmind Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.24.2.2 2011/04/21 01:41:49 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.24.2.1 2011/03/05 20:53:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.24.2.2 2011/04/21 01:41:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,14 +131,22 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (bus_space_map(sc->sc_memt, sc->sc_gen.sc_fboffset,
-	    sc->sc_gen.sc_fbsize,
-	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
-	    &sc->sc_memh) != 0) {
-		aprint_error_dev(self, "unable to map the framebuffer\n");
-		return;
-	}
-	sc->sc_gen.sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
+	/*
+	 * if some MD code handed us a framebuffer VA we use that instead of
+	 * mapping our own
+	 */
+	if (sc->sc_gen.sc_fbaddr == NULL) {
+		if (bus_space_map(sc->sc_memt, sc->sc_gen.sc_fboffset,
+		    sc->sc_gen.sc_fbsize,
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
+		    &sc->sc_memh) != 0) {
+			aprint_error_dev(self, "unable to map the framebuffer\n");
+			return;
+		}
+		sc->sc_gen.sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
+	} else
+		aprint_debug("%s: recycling existing fb mapping at %lx\n",
+		    device_xname(sc->sc_gen.sc_dev), (unsigned long)sc->sc_gen.sc_fbaddr);
 
 	/* mmap()able bus ranges */
 	idx = 0;

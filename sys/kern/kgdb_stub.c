@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.23 2009/01/11 10:20:53 cegger Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.23.6.1 2011/04/21 01:42:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.23 2009/01/11 10:20:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.23.6.1 2011/04/21 01:42:09 rmind Exp $");
 
 #include "opt_kgdb.h"
 
@@ -93,6 +93,16 @@ static kgdb_reg_t gdb_regs[KGDB_NUMREGS];
  * is shared with DDB.
  */
 void (*db_trap_callback)(int);
+
+void kgdb_voidop(void);
+
+__weak_alias(kgdb_entry_notice, kgdb_voidop);
+
+void
+kgdb_voidop(void)
+{
+	return;
+}
 
 /*
  * This little routine exists simply so that bcopy() can be debugged.
@@ -321,6 +331,8 @@ kgdb_trap(int type, db_regs_t *regs)
 	size_t len;
 	u_char *p;
 
+	kgdb_entry_notice(type, regs);
+
 	if (kgdb_dev == NODEV || kgdb_getc == NULL) {
 		/* not debugging */
 		return (0);
@@ -526,4 +538,10 @@ kgdb_trap(int type, db_regs_t *regs)
 	if (db_trap_callback) db_trap_callback(0);
 	kgdb_recover = 0;
 	return (1);
+}
+
+int
+kgdb_disconnected(void)
+{
+	return 1;
 }

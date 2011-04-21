@@ -1,4 +1,4 @@
-/*	$NetBSD: vripvar.h,v 1.11 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: vripvar.h,v 1.11.100.1 2011/04/21 01:41:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -70,5 +70,5 @@ void vrip_intr_suspend(void);
 void vrip_intr_resume(void);
 int vripmatch(struct device *, struct cfdata *, void *);
 void vripattach_common(struct device *, struct device *, void *);
-
+void vrip_splpiu(void);
 #endif /* !_VRIPVAR_H_ */

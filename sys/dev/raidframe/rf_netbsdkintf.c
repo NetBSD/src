@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.273.2.1 2011/03/05 20:54:03 rmind Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.273.2.2 2011/04/21 01:42:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.273.2.1 2011/03/05 20:54:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.273.2.2 2011/04/21 01:42:01 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -295,7 +295,7 @@ void rf_buildroothack(RF_ConfigSet_t *);
 RF_AutoConfig_t *rf_find_raid_components(void);
 RF_ConfigSet_t *rf_create_auto_sets(RF_AutoConfig_t *);
 static int rf_does_it_fit(RF_ConfigSet_t *,RF_AutoConfig_t *);
-static int rf_reasonable_label(RF_ComponentLabel_t *);
+static int rf_reasonable_label(RF_ComponentLabel_t *, uint64_t);
 void rf_create_configuration(RF_AutoConfig_t *,RF_Config_t *, RF_Raid_t *);
 int rf_set_autoconfig(RF_Raid_t *, int);
 int rf_set_rootpartition(RF_Raid_t *, int);
@@ -2948,9 +2948,8 @@ oomem:
 
 	if (!raidread_component_label(secsize, dev, vp, clabel)) {
 		/* Got the label.  Does it look reasonable? */
-		if (rf_reasonable_label(clabel) && 
+		if (rf_reasonable_label(clabel, numsecs) && 
 		    (rf_component_label_partitionsize(clabel) <= size)) {
-			rf_fix_old_label_size(clabel, numsecs);
 #ifdef DEBUG
 			printf("Component on: %s: %llu\n",
 				cname, (unsigned long long)size);
@@ -3135,7 +3134,7 @@ rf_find_raid_components(void)
 
 
 static int
-rf_reasonable_label(RF_ComponentLabel_t *clabel)
+rf_reasonable_label(RF_ComponentLabel_t *clabel, uint64_t numsecs)
 {
 
 	if (((clabel->version==RF_COMPONENT_LABEL_VERSION_1) ||
@@ -3155,7 +3154,11 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel)
 	     * rf_fix_old_label_size() will fix it.
 	     */
 	    rf_component_label_numblocks(clabel) > 0) {
-		/* label looks reasonable enough... */
+		/*
+		 * label looks reasonable enough...
+		 * let's make sure it has no old garbage.
+		 */
+		rf_fix_old_label_size(clabel, numsecs);
 		return(1);
 	}
 	return(0);
@@ -3167,15 +3170,28 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel)
  * the newer numBlocksHi region, and this causes lossage.  Since those
  * disks will also have numsecs set to less than 32 bits of sectors,
  * we can determine when this corruption has occured, and fix it.
+ *
+ * The exact same problem, with the same unknown reason, happens to
+ * the partitionSizeHi member as well.
  */
 static void
 rf_fix_old_label_size(RF_ComponentLabel_t *clabel, uint64_t numsecs)
 {
 
-	if (clabel->numBlocksHi && numsecs < ((uint64_t)1 << 32)) {
-		printf("WARNING: total sectors < 32 bits, yet numBlocksHi set\n"
-		       "WARNING: resetting numBlocksHi to zero.\n");
-		clabel->numBlocksHi = 0;
+	if (numsecs < ((uint64_t)1 << 32)) {
+		if (clabel->numBlocksHi) {
+			printf("WARNING: total sectors < 32 bits, yet "
+			       "numBlocksHi set\n"
+			       "WARNING: resetting numBlocksHi to zero.\n");
+			clabel->numBlocksHi = 0;
+		}
+
+		if (clabel->partitionSizeHi) {
+			printf("WARNING: total sectors < 32 bits, yet "
+			       "partitionSizeHi set\n"
+			       "WARNING: resetting partitionSizeHi to zero.\n");
+			clabel->partitionSizeHi = 0;
+		}
 	}
 }
 

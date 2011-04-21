@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.41 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.41.4.1 2011/04/21 01:42:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.41 2009/10/19 18:41:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.41.4.1 2011/04/21 01:42:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,16 +470,12 @@ ext2fs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 		}
 	}
 	i = start + len - loc;
-	map = ibp[i];
-	ipref = i * NBBY;
-	for (i = 1; i < (1 << NBBY); i <<= 1, ipref++) {
-		if ((map & i) == 0) {
-			goto gotit;
-		}
+	map = ibp[i] ^ 0xff;
+	if (map == 0) {
+		printf("fs = %s\n", fs->e2fs_fsmnt);
+		panic("ext2fs_nodealloccg: block not in map");
 	}
-	printf("fs = %s\n", fs->e2fs_fsmnt);
-	panic("ext2fs_nodealloccg: block not in map");
-	/* NOTREACHED */
+	ipref = i * NBBY + ffs(map) - 1;
 gotit:
 	setbit(ibp, ipref);
 	fs->e2fs.e2fs_ficount--;
@@ -595,7 +591,6 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 static daddr_t
 ext2fs_mapsearch(struct m_ext2fs *fs, char *bbp, daddr_t bpref)
 {
-	daddr_t bno;
 	int start, len, loc, i, map;
 
 	/*
@@ -620,15 +615,12 @@ ext2fs_mapsearch(struct m_ext2fs *fs, char *bbp, daddr_t bpref)
 		}
 	}
 	i = start + len - loc;
-	map = bbp[i];
-	bno = i * NBBY;
-	for (i = 1; i < (1 << NBBY); i <<= 1, bno++) {
-		if ((map & i) == 0)
-			return (bno);
+	map = bbp[i] ^ 0xff;
+	if (map == 0) {
+		printf("fs = %s\n", fs->e2fs_fsmnt);
+		panic("ext2fs_mapsearch: block not in map");
 	}
-	printf("fs = %s\n", fs->e2fs_fsmnt);
-	panic("ext2fs_mapsearch: block not in map");
-	/* NOTREACHED */
+	return i * NBBY + ffs(map) - 1;
 }
 
 /*

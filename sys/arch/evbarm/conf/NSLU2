@@ -1,4 +1,4 @@
-#	$NetBSD: NSLU2,v 1.16.4.1 2011/03/05 20:50:03 rmind Exp $
+#	$NetBSD: NSLU2,v 1.16.4.2 2011/04/21 01:40:57 rmind Exp $
 #
 #	Linksys NSLU2 "Slug" NAS Device
 #
@@ -50,7 +50,8 @@ file-system	NFS		# Network file system
 #file-system	UNION		# union file system
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 

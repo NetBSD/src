@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.25.2.1 2011/03/05 20:50:27 rmind Exp $ */
+/*	$NetBSD: dino.c,v 1.25.2.2 2011/04/21 01:41:03 rmind Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.25.2.1 2011/03/05 20:50:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.25.2.2 2011/04/21 01:41:03 rmind Exp $");
 
 /* #include "cardbus.h" */
 
@@ -149,7 +149,7 @@ void dino_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t dino_conf_read(void *, pcitag_t, int);
 void dino_conf_write(void *, pcitag_t, int, pcireg_t);
 
-int dino_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int dino_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 const char *dino_intr_string(void *, pci_intr_handle_t);
 void *dino_intr_establish(void *, pci_intr_handle_t, int,
     int (*)(void *), void *);
@@ -376,7 +376,7 @@ dino_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 }
 
 int
-dino_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+dino_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int line = pa->pa_intrline;
 
@@ -1667,7 +1667,6 @@ dinoattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ih = hp700_intr_establish(IPL_NONE, NULL, &sc->sc_ir,
 	    &ir_cpu, ca->ca_irq);
-
 
 	/* TODO establish the bus error interrupt */
 

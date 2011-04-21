@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.6.78.1 2011/03/05 20:52:07 rmind Exp $ */
+/*	$NetBSD: trap.h,v 1.6.78.2 2011/04/21 01:41:27 rmind Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -142,6 +142,7 @@
 /* flags to system call (flags in %g1 along with syscall number) */
 #define	SYSCALL_G2RFLAG	0x400	/* on success, return to %g2 rather than npc */
 #define	SYSCALL_G7RFLAG	0x800	/* use %g7 as above (deprecated) */
+#define	SYSCALL_G5RFLAG	0xc00	/* use %g5 as above (only ABI compatible way) */
 
 /*
  * `software trap' macros to keep people happy (sparc v8 manual says not

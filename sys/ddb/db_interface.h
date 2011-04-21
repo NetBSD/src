@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.25 2009/02/18 13:31:59 yamt Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.25.4.1 2011/04/21 01:41:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@ void		db_show_files_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/kern_proc.c */
 void		db_kill_proc(db_expr_t, bool, db_expr_t, const char *);
+void		db_show_proc(db_expr_t, bool, db_expr_t, const char *);
 void		db_show_all_procs(db_expr_t, bool, db_expr_t, const char *);
 void		db_show_all_pools(db_expr_t, bool, db_expr_t, const char *);
 void		db_show_sched_qs(db_expr_t, bool, db_expr_t, const char *);

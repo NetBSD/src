@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.50.4.1 2011/03/05 20:51:31 rmind Exp $ */
+/* $NetBSD: dec_3max.c,v 1.50.4.2 2011/04/21 01:41:18 rmind Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.50.4.1 2011/03/05 20:51:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.50.4.2 2011/04/21 01:41:18 rmind Exp $");
 
 #include "dzkbd.h"
 
@@ -271,6 +271,7 @@ dec_3max_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 			"r"(MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK)));
 		cf.pc = pc;
 		cf.sr = status;
+		cf.intr = (curcpu()->ci_idepth > 1);
 		hardclock(&cf);
 		pmax_clock_evcnt.ev_count++;
 

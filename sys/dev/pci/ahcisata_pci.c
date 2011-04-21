@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.19.2.1 2011/03/05 20:53:34 rmind Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.19.2.2 2011/04/21 01:41:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.19.2.1 2011/03/05 20:53:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.19.2.2 2011/04/21 01:41:48 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -240,6 +240,8 @@ ahci_pci_detach(device_t dv, int flags)
 
 	if ((rv = ahci_detach(sc, flags)))
 		return rv;
+
+	pmf_device_deregister(dv);
 
 	if (psc->sc_ih != NULL)
 		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);

@@ -43,7 +43,8 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental
@@ -185,7 +186,7 @@ sackbc0 at sacc0 addr 0x0a00 intr 21
 sackbc1 at sacc0 addr 0x0c00 intr 18
 
 # PS/2 controller of SA-1111 doesn't have "slot"; One device is attached
-# to one controller.  However, pckbd driver requires "slot 0" and pms driver 
+# to one controller.  However, pckbd driver requires "slot 0" and pms driver
 # requires "slot 1"
 pckbd*	at sackbc0 slot 0
 wskbd* 		at pckbd? # console ?

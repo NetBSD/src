@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.53 2010/02/08 19:02:27 joerg Exp $
+# $NetBSD: GENERIC,v 1.53.2.1 2011/04/21 01:40:55 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -78,7 +78,8 @@ file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
 options 	FIFO		# POSIX fifo support (in all filesystems)
-#options 	QUOTA		# User and group quotas in FFS
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	NFSSERVER	# Network filesystem server
 
 # Networking options

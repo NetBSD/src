@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123.2.2 2011/03/05 20:52:05 rmind Exp $
+# $NetBSD: GENERIC,v 1.123.2.3 2011/04/21 01:41:25 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.123.2.2 $"
+#ident 		"GENERIC-$Revision: 1.123.2.3 $"
 
 maxusers	64
 
@@ -184,7 +184,8 @@ file-system	TMPFS		# Efficient memory file-system
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
-options 	QUOTA		# FFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -239,10 +240,13 @@ cpu* 		at mainbus0		# declare additional CPUs
 sbus*	at mainbus0				# SBus-based systems
 psycho*	at mainbus0				# PCI-based systems
 schizo*	at mainbus?
+pyro*	at mainbus?
 pci*	at psycho?
 pci*	at schizo?
+pci*	at pyro?
 pci*	at ppb?
 ppb*	at pci?					# `APB' support.
+ebus*	at mainbus0				# ebus devices
 ebus*	at pci?					# ebus devices
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?		# PCI "universal" comm. cards
@@ -498,6 +502,7 @@ esh*	at pci? dev ? function ?	# Essential HIPPI card UT
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
+gem*	at sbus? slot ? offset ?
 # XXX lacks bus_dmamap_sync()
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 # XXX uses vtophys()

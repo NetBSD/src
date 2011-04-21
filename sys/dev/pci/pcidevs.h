@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1022.2.4 2011/03/06 00:27:01 rmind Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1022.2.5 2011/04/21 01:41:52 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1067 2011/03/05 15:36:27 matt Exp
+ *	NetBSD: pcidevs,v 1.1071 2011/04/13 22:24:12 wiz Exp
  */
 
 /*
@@ -1421,6 +1421,7 @@
 #define	PCI_PRODUCT_ATI_RS690_PPB_7915	0x7915		/* RS690 PCI to PCI-Express Port 1 Bridge */
 #define	PCI_PRODUCT_ATI_RS690_PPB_7916	0x7916		/* RS690 PCI to PCI-Express Port 2 Bridge */
 #define	PCI_PRODUCT_ATI_RS690_PPB_7917	0x7917		/* RS690 PCI to PCI-Express Port 3 Bridge */
+#define	PCI_PRODUCT_ATI_RADEON_HD4650	0x9498		/* Radeon HD4650 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_XT	0x9588		/* Radeon HD2600 XT GDDR3 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250_S	0x95C5		/* Radeon HD4250 GPU (RV610) Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_HD4200	0x9712		/* Radeon HD4200 Mobility */
@@ -2066,6 +2067,10 @@
 #define	PCI_PRODUCT_FREESCALE_MPC8572	0x0041		/* MPC8572 */
 #define	PCI_PRODUCT_FREESCALE_MPC8536E	0x0050		/* MPC8536E */
 #define	PCI_PRODUCT_FREESCALE_MPC8536	0x0051		/* MPC8536 */
+#define	PCI_PRODUCT_FREESCALE_P2020E	0x0070		/* P2020E */
+#define	PCI_PRODUCT_FREESCALE_P2020	0x0071		/* P2020 */
+#define	PCI_PRODUCT_FREESCALE_P2010E	0x0078		/* P2010E */
+#define	PCI_PRODUCT_FREESCALE_P2010	0x0079		/* P2010 */
 
 /* Marvell products */
 #define	PCI_PRODUCT_MARVELL_GT64010A	0x0146		/* GT-64010A System Controller */
@@ -3917,6 +3922,8 @@
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
 
 /* RDC Semiconductor products */
+#define	PCI_PRODUCT_RDC_IDE	0x1011		/* RDC IDE controller */
+#define	PCI_PRODUCT_RDC_PCIB	0x6036		/* RDC PCI-ISA bridge */
 #define	PCI_PRODUCT_RDC_R6040	0x6040		/* RDC R6040 10/100 Ethernet */
 
 /* Realtek products */

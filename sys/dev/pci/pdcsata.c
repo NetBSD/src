@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.18.4.1 2011/03/05 20:53:56 rmind Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.18.4.2 2011/04/21 01:42:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.18.4.1 2011/03/05 20:53:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.18.4.2 2011/04/21 01:42:00 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -56,7 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.18.4.1 2011/03/05 20:53:56 rmind Exp $
 #define	PDC205_SCONTROL(ch)	PDC205_REGADDR(0x408,ch)
 #define	PDC205_MULTIPLIER(ch)	PDC205_REGADDR(0x4e8,ch)
 
-static void pdcsata_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void pdcsata_chip_map(struct pciide_softc *,
+    const struct pci_attach_args *);
 static void pdc203xx_setup_channel(struct ata_channel *);
 static void pdc203xx_irqack(struct ata_channel *);
 static int  pdc203xx_dma_init(void *, int, int, void *, size_t, int);
@@ -220,7 +221,7 @@ pdcsata_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;

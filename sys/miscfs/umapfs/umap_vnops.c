@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.48.4.2 2011/03/05 20:55:34 rmind Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.48.4.3 2011/04/21 01:42:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.48.4.2 2011/03/05 20:55:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.48.4.3 2011/04/21 01:42:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,17 +269,7 @@ umap_bypass(void *v)
 	 * (Assumes that the lower layer always returns
 	 * a VREF'ed vpp unless it gets an error.)
 	 */
-	if (descp->vdesc_vpp_offset != VDESC_NO_OFFSET &&
-	    !(descp->vdesc_flags & VDESC_NOMAP_VPP) &&
-	    !error) {
-		/*
-		 * XXX - even though some ops have vpp returned vp's,
-		 * several ops actually vrele this before returning.
-		 * We must avoid these ops.
-		 * (This should go away when these ops are regularized.)
-		 */
-		if (descp->vdesc_flags & VDESC_VPP_WILLRELE)
-			goto out;
+	if (descp->vdesc_vpp_offset != VDESC_NO_OFFSET && !error) {
 		vppp = VOPARG_OFFSETTO(struct vnode***,
 				 descp->vdesc_vpp_offset, ap);
 		/*
@@ -297,7 +287,6 @@ umap_bypass(void *v)
 		}
 	}
 
- out:
 	/*
 	 * Free duplicate cred structure and restore old one.
 	 */

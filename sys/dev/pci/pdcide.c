@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.27.4.1 2011/03/05 20:53:56 rmind Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.27.4.2 2011/04/21 01:42:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.27.4.1 2011/03/05 20:53:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.27.4.2 2011/04/21 01:42:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.27.4.1 2011/03/05 20:53:56 rmind Exp $"
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_pdc202xx_reg.h>
 
-static void pdc202xx_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void pdc202xx_chip_map(struct pciide_softc *,
+    const struct pci_attach_args *);
 static void pdc202xx_setup_channel(struct ata_channel *);
 static void pdc20268_setup_channel(struct ata_channel *);
 static int  pdc202xx_pci_intr(void *);
@@ -176,7 +177,7 @@ pdcide_attach(device_t parent, device_t self, void *aux)
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20277)
 
 static void
-pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+pdc202xx_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;

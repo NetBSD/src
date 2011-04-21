@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.15.2.2 2011/03/05 20:56:15 rmind Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.15.2.3 2011/04/21 01:42:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.15.2.2 2011/03/05 20:56:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.15.2.3 2011/04/21 01:42:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -229,9 +229,6 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 
 	l->l_lid = p->p_nlwpid++;
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
-	mutex_exit(p->p_lock);
-
-	lwp_update_creds(l);
 
 	l->l_fd = p->p_fd;
 	l->l_cpu = rump_cpu;
@@ -239,7 +236,9 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 	l->l_stat = LSRUN;
 	l->l_mutex = &unruntime_lock;
 	TAILQ_INIT(&l->l_ld_locks);
+	mutex_exit(p->p_lock);
 
+	lwp_update_creds(l);
 	lwp_initspecific(l);
 
 	if (doswitch) {
@@ -270,6 +269,7 @@ rump__lwproc_alloclwp(struct proc *p)
 	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 
 	mutex_enter(p->p_lock);
+	KASSERT((p->p_sflag & PS_RUMP_LWPEXIT) == 0);
 	lwproc_makelwp(p, l, false, newproc);
 
 	return l;
@@ -290,6 +290,12 @@ rump_lwproc_newlwp(pid_t pid)
 		return ESRCH;
 	}
 	mutex_enter(p->p_lock);
+	if (p->p_sflag & PS_RUMP_LWPEXIT) {
+		mutex_exit(proc_lock);
+		mutex_exit(p->p_lock);
+		kmem_free(l, sizeof(*l));
+		return EBUSY;
+	}
 	mutex_exit(proc_lock);
 	lwproc_makelwp(p, l, true, false);
 
@@ -309,6 +315,7 @@ rump_lwproc_rfork(int flags)
 	p = lwproc_newproc(curproc, flags);
 	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 	mutex_enter(p->p_lock);
+	KASSERT((p->p_sflag & PS_RUMP_LWPEXIT) == 0);
 	lwproc_makelwp(p, l, true, true);
 
 	return 0;

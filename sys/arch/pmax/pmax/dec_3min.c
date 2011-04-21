@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.66.4.1 2011/03/05 20:51:31 rmind Exp $ */
+/* $NetBSD: dec_3min.c,v 1.66.4.2 2011/04/21 01:41:18 rmind Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.66.4.1 2011/03/05 20:51:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.66.4.2 2011/04/21 01:41:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,6 +369,7 @@ dec_3min_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 
 				cf.pc = pc;
 				cf.sr = status;
+				cf.intr = (curcpu()->ci_idepth > 1);
 				hardclock(&cf);
 				pmax_clock_evcnt.ev_count++;
 			}
@@ -468,9 +469,6 @@ dec_3min_tc_init(void)
 
 	if (MIPS_HAS_CLOCK) {
 		tc.tc_frequency = mips_options.mips_cpu_mhz * 1000000;
-		if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
-			tc.tc_frequency /= 2;
-		}
 
 		tc_init(&tc);
 	}

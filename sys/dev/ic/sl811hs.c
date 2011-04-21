@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.25.4.1 2010/05/30 05:17:25 rmind Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.25.4.2 2011/04/21 01:41:47 rmind Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.25.4.1 2010/05/30 05:17:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.25.4.2 2011/04/21 01:41:47 rmind Exp $");
 
 #include "opt_slhci.h"
 
@@ -2801,7 +2801,7 @@ slhci_drain(struct slhci_softc *sc)
 	/* Cancel all pipes.  Note that not all of these may be on the 
 	 * callback queue yet; some could be in slhci_start, for example. */
 	FOREACH_AP(q, t, spipe) {
-		spipe->pflags = PF_GONE;
+		spipe->pflags |= PF_GONE;
 		spipe->pipe.repeat = 0;
 		spipe->pipe.aborting = 1;
 		if (spipe->xfer != NULL)
@@ -2828,6 +2828,8 @@ void
 slhci_reset(struct slhci_softc *sc)
 {
 	struct slhci_transfers *t;
+	struct slhci_pipe *spipe;
+	struct gcq *q;
 	uint8_t r, pol, ctrl;
 
 	t = &sc->sc_transfers;
@@ -2914,6 +2916,10 @@ slhci_reset(struct slhci_softc *sc)
 
 	t->flags &= ~(F_UDISABLED|F_RESET);
 	t->flags |= F_CRESET|F_ROOTINTR;
+	FOREACH_AP(q, t, spipe) {
+		spipe->pflags &= ~PF_GONE;
+		spipe->pipe.aborting = 0;
+	}
 	DLOG(D_MSG, "RESET done flags %#x", t->flags, 0,0,0);
 }
 

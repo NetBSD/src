@@ -1,4 +1,4 @@
-#	$NetBSD: files.gemini,v 1.10 2008/12/14 01:57:02 matt Exp $
+#	$NetBSD: files.gemini,v 1.10.10.1 2011/04/21 01:40:51 rmind Exp $
 #
 # Configuration info for GEMINI CPU support
 # Based on omap/files.omap2
@@ -38,7 +38,7 @@ file	arch/arm/gemini/gemini_dma.c
 ##file	arch/arm/gemini/gemini_nobyteacc_io.S		obio
 
 # GEMINI interrupt controller
-device	geminiicu: pic
+device	geminiicu: pic, pic_splfuncs
 attach	geminiicu at obio with geminiicu
 file	arch/arm/gemini/gemini_icu.c		geminiicu needs-flag
 

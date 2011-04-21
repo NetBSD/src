@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.80.4.2 2011/03/05 20:54:05 rmind Exp $	*/
+/*	$NetBSD: if_se.c,v 1.80.4.3 2011/04/21 01:42:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.80.4.2 2011/03/05 20:54:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.80.4.3 2011/04/21 01:42:01 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -946,7 +946,7 @@ se_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		ifp->if_flags |= IFF_UP;
 
-		if ((error = se_set_media(sc, CMEDIA_AUTOSENSE) != 0))
+		if ((error = se_set_media(sc, CMEDIA_AUTOSENSE)) != 0)
 			break;
 
 		switch (ifa->ifa_addr->sa_family) {

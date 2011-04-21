@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.52.2.3 2011/03/05 20:49:16 rmind Exp $
+# $NetBSD: XEN3_DOM0,v 1.52.2.4 2011/04/21 01:40:47 rmind Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,7 +12,6 @@ maxusers	32		# estimated number of users
 
 #
 options 	DOM0OPS
-#options         XEN_BALLOON     # Xen memory ballooning - Experimental
 
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
@@ -105,7 +104,8 @@ file-system 	PTYFS		# /dev/pts/N support
 file-system 	TMPFS		# Efficient memory file-system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options		WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -203,6 +203,7 @@ vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus*		at hypervisor?		# Xen virtual bus
 
 xencons*	at hypervisor?		# Xen virtual console
+#balloon*	at xenbus?		# Xen balloon device
 
 acpi0 		at hypervisor?
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices

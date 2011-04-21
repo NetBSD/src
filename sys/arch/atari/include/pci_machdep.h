@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.13 2009/07/08 12:23:10 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.13.4.1 2011/04/21 01:40:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -73,7 +73,8 @@ void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
 		    int *);
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int		pci_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,

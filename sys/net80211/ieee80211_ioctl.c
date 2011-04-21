@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.54 2009/04/18 14:58:05 tsutsui Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.54.4.1 2011/04/21 01:42:13 rmind Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.54 2009/04/18 14:58:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.54.4.1 2011/04/21 01:42:13 rmind Exp $");
 #endif
 
 /*
@@ -2615,7 +2615,7 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 		if ((error = kauth_authorize_network(curlwp->l_cred,
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
-		    NULL) != 0))
+		    NULL)) != 0)
 			break;
 		error = ieee80211_ioctl_set80211(ic, cmd,
 				(struct ieee80211req *) data);

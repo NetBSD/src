@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49.4.2 2011/03/05 20:51:46 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49.4.3 2011/04/21 01:41:22 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49.4.2 2011/03/05 20:51:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49.4.3 2011/04/21 01:41:22 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -183,9 +183,13 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	cn_tab = &kcomcons;
 	(*cn_tab->cn_init)(&kcomcons);
 
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#endif
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
+#endif
 #endif
 
 	/* Initialize bus_space */
@@ -353,7 +357,9 @@ consinit(void)
 void
 cpu_reboot(int howto, char *what)
 {
+	extern void jump_to_ppc_reset_entry(void);	/* from locore.S */
 	static int syncing;
+	register_t msr;
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && syncing == 0) {
@@ -383,11 +389,21 @@ cpu_reboot(int howto, char *what)
 		howto = RB_AUTOBOOT;
 	}
 
-	if (md_reboot != NULL) {
+	if (md_reboot != NULL)
 		(*md_reboot)(howto);
-		/* should not come here */
-	}
-	while (1) ; /* may practice PPC processor reset sequence here */
+
+	/*
+	 * No reboot method defined. So we disable the MMU and jump
+	 * through the firmware's reset vector.
+	 */
+	msr = mfmsr();
+	msr &= ~PSL_EE;
+	mtmsr(msr);
+	__asm volatile("mtspr %0,%1" : : "K"(81), "r"(0));
+	msr &= ~(PSL_ME | PSL_DR | PSL_IR);
+	mtmsr(msr);
+	jump_to_ppc_reset_entry();
+	for (;;);
 }
 
 #ifdef MODULAR
