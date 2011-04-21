@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.57 2010/12/07 22:02:52 joerg Exp $	*/
+/*	$NetBSD: getch.c,v 1.58 2011/04/21 08:10:49 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.57 2010/12/07 22:02:52 joerg Exp $");
+__RCSID("$NetBSD: getch.c,v 1.58 2011/04/21 08:10:49 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -365,14 +365,11 @@ delete_key_sequence(keymap_t *current, int key_type)
 				_cursesi_free_keymap(key->value.next);
 		} else if ((key->type == KEYMAP_LEAF)
 			   && (key->value.symbol == key_type)) {
-			  /*
-			   * delete the mapping by negating the current
-			   * index - this "holds" the position in the
-			   * allocation just in case we later re-add
-			   * the key for that mapping.
-			   */
-			current->mapping[i] = - current->mapping[i];
-			current->count--;
+#ifdef DEBUG
+		__CTRACE(__CTRACE_INPUT, "delete_key_sequence: found keysym %d, deleting\n",
+		    key_type);
+#endif
+			key->enable = FALSE;
 		}
 	}
 }
@@ -783,9 +780,13 @@ define_key(char *sequence, int symbol)
 	if (symbol <= 0)
 		return ERR;
 
-	if (sequence == NULL)
+	if (sequence == NULL) {
+#ifdef DEBUG
+		__CTRACE(__CTRACE_INPUT, "define_key: deleting keysym %d\n",
+		    symbol);
+#endif
 		delete_key_sequence(_cursesi_screen->base_keymap, symbol);
-	else
+	} else
 		add_key_sequence(_cursesi_screen, sequence, symbol);
 
 	return OK;
