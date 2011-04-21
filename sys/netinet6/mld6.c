@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.51 2009/08/04 22:04:23 dyoung Exp $	*/
+/*	$NetBSD: mld6.c,v 1.52 2011/04/21 06:58:31 dholland Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.51 2009/08/04 22:04:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.52 2011/04/21 06:58:31 dholland Exp $");
 
 #include "opt_inet.h"
 
@@ -324,7 +324,7 @@ mld_stop_listening(struct in6_multi *in6m)
 void
 mld_input(struct mbuf *m, int off)
 {
-	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+	struct ip6_hdr *ip6;
 	struct mld_hdr *mldh;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct in6_multi *in6m = NULL;
