@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.1 2011/04/10 09:55:09 blymn Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.2 2011/04/21 10:23:50 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -73,11 +73,12 @@ char *returns_enum_names[] = {
 typedef enum {
 	arg_static,
 	arg_byte,
-	arg_var
+	arg_var,
+	arg_null
 } args_state_t;
 
 static char *args_enum_names[] = {
-	"static", "byte", "var"
+	"static", "byte", "var", "NULL"
 };
 
 typedef struct {
@@ -399,6 +400,7 @@ args		: /* empty */
 		| FILENAME { assign_arg(arg_static, $1); } args
 		| VARNAME { assign_arg(arg_static, $1); } args
 		| VARIABLE  { assign_arg(arg_var, $1); } args
+		| NULL_RET { assign_arg(arg_null, $1); } args
 		;
 
 eol		: EOL
@@ -525,31 +527,36 @@ assign_arg(args_state_t arg_type, void *arg)
 		       command.function, arg, args_enum_names[arg_type]);
 
 	cur.arg_type = arg_type;
-	if (arg_type != arg_var) {
-		if (arg_type != arg_byte) {
-			str = arg;
-			cur.arg_len = strlen(str);
-			cur.arg_string = malloc(cur.arg_len + 1);
-			if (cur.arg_string == NULL)
-				err(1,
-				    "Could not malloc memory for arg string");
-			strcpy(cur.arg_string, arg);
-		} else {
-			ret = arg;
-			cur.arg_len = ret->return_len;
-			cur.arg_string = malloc(cur.arg_len);
-			if (cur.arg_string == NULL)
-				err(1,
-				    "Could not malloc memory for arg bytes");
-			memcpy(cur.arg_string, ret->return_value,
-			       cur.arg_len);
-		}
-	} else {
+	switch (arg_type) {
+	case arg_var:
 		cur.var_index = find_var_index(arg);
 		if (cur.var_index < 0)
 			err(1, "Invalid variable %s at line %d of file %s",
 			    arg, line, cur_file);
 		cur.arg_type = ret_string;
+		break;
+
+	case arg_byte:
+		ret = arg;
+		cur.arg_len = ret->return_len;
+		cur.arg_string = malloc(cur.arg_len);
+		if (cur.arg_string == NULL)
+			err(1, "Could not malloc memory for arg bytes");
+		memcpy(cur.arg_string, ret->return_value, cur.arg_len);
+		break;
+
+	case arg_null:
+		cur.arg_len = 0;
+		cur.arg_string = NULL;
+		break;
+
+	default:
+		str = arg;
+		cur.arg_len = strlen(str);
+		cur.arg_string = malloc(cur.arg_len + 1);
+		if (cur.arg_string == NULL)
+			err(1, "Could not malloc memory for arg string");
+		strcpy(cur.arg_string, arg);
 	}
 
 	temp = realloc(command.args, sizeof(args_t) * (command.nargs + 1));
@@ -1296,21 +1303,29 @@ write_cmd_pipe_args(args_state_t type, void *data)
 	void *cmd;
 
 	arg_data = data;
-	if (type != arg_var) {
+	switch (type) {
+	case arg_var:
+		var_data = data;
+		len = var_data->len;
+		cmd = var_data->value;
+		if (var_data->type == arg_byte)
+			send_type = ret_byte;
+		else
+			send_type = ret_string;
+		break;
+
+	case arg_null:
+		send_type = ret_null;
+		len = 0;
+		break;
+
+	default:
 		if ((arg_data->arg_len == 0) && (arg_data->arg_string == NULL))
 			len = -1;
 		else
 			len = arg_data->arg_len;
 		cmd = arg_data->arg_string;
 		if (type == arg_byte)
-			send_type = ret_byte;
-		else
-			send_type = ret_string;
-	} else {
-		var_data = data;
-		len = var_data->len;
-		cmd = var_data->value;
-		if (var_data->type == arg_byte)
 			send_type = ret_byte;
 		else
 			send_type = ret_string;
