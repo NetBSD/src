@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.418.4.5 2011/03/06 01:38:45 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.418.4.6 2011/04/21 01:42:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.4.5 2011/03/06 01:38:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.4.6 2011/04/21 01:42:06 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -1010,7 +1010,7 @@ start_init(void *arg)
 }
 
 /*
- * calculate cache size from physmem and vm_map size.
+ * calculate cache size (in bytes) from physmem and vm_map size.
  */
 vaddr_t
 calc_cache_size(struct vm_map *map, int pct, int va_pct)

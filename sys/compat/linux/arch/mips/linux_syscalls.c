@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.41.4.1 2011/03/05 20:52:45 rmind Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.41.4.2 2011/04/21 01:41:40 rmind Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.41.4.1 2011/03/05 20:52:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.41.4.2 2011/04/21 01:41:40 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <sys/param.h>
@@ -355,8 +355,8 @@ const char *const linux_syscallnames[] = {
 	/* 324 */	"#324 (unimplemented signalfd4)",
 	/* 325 */	"#325 (unimplemented eventfd2)",
 	/* 326 */	"#326 (unimplemented epoll_create1)",
-	/* 327 */	"#327 (unimplemented dup3)",
-	/* 328 */	"#328 (unimplemented pipe2)",
+	/* 327 */	"dup3",
+	/* 328 */	"pipe2",
 	/* 329 */	"#329 (unimplemented inotify_init1)",
 	/* 330 */	"#330 (unimplemented preadv)",
 	/* 331 */	"#331 (unimplemented pwritev)",

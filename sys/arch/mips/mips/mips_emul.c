@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.17.4.2 2011/03/05 20:51:07 rmind Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.17.4.3 2011/04/21 01:41:12 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.17.4.2 2011/03/05 20:51:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.17.4.3 2011/04/21 01:41:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ mips_emul_inst(uint32_t status, uint32_t cause, vaddr_t opc,
 #endif
 	default:
 #ifdef DEBUG
-		printf("pid %d (%s): trap: bad insn %#"PRIxVADDR" cause %#x insn %#x\n", curproc->p_pid, curproc->p_comm, opc, cause, inst);
+		printf("pid %d (%s): trap: bad insn @ %#"PRIxVADDR" cause %#x insn %#x code %d\n", curproc->p_pid, curproc->p_comm, opc, cause, inst, code);
 #endif
 		tf->tf_regs[_R_CAUSE] = cause;
 		tf->tf_regs[_R_BADVADDR] = opc;

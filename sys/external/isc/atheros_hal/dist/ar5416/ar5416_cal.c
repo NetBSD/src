@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416_cal.c,v 1.1.1.1 2008/12/11 04:46:47 alc Exp $
+ * $Id: ar5416_cal.c,v 1.1.1.1.14.1 2011/04/21 01:42:06 rmind Exp $
  */
 #include "opt_ah.h"
 
@@ -23,6 +23,8 @@
 #include "ah_devid.h"
 
 #include "ah_eeprom_v14.h"
+
+#include "ar5212/ar5212.h"	/* for NF cal related declarations */
 
 #include "ar5416/ar5416.h"
 #include "ar5416/ar5416reg.h"
@@ -218,7 +220,17 @@ ar5416InitCal(struct ath_hal *ah, HAL_CHANNEL *chan)
 	 * higher than normal value if DC offset and noise floor cal are
 	 * triggered at the same time.
 	 */
+	/* XXX this actually kicks off a NF calibration -adrian */
 	OS_REG_SET_BIT(ah, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_NF);
+	/*
+	 * Try to make sure the above NF cal completes, just so
+	 * it doesn't clash with subsequent percals - adrian
+	 */
+	if (!ar5212WaitNFCalComplete(ah, 10000)) {
+		HALDEBUG(ah, HAL_DEBUG_ANY, "%s: initial NF calibration did "
+		    "not complete in time; noisy environment?\n", __func__);
+		return AH_FALSE;
+	}
 
 	/* Initialize list pointers */
 	cal->cal_list = cal->cal_last = cal->cal_curr = AH_NULL;
@@ -395,6 +407,13 @@ ar5416PerCalibrationN(struct ath_hal *ah,  HAL_CHANNEL *chan,
 
 	*isCalDone = AH_TRUE;
 
+	/*
+	 * Since ath_hal calls the PerCal method with rxchainmask=0x1;
+	 * override it with the current chainmask. The upper levels currently
+	 * doesn't know about the chainmask.
+	 */
+	rxchainmask = AH5416(ah)->ah_rx_chainmask;
+
 	/* Invalid channel check */
 	ichan = ath_hal_checkchannel(ah, chan);
 	if (ichan == AH_NULL) {
@@ -443,12 +462,6 @@ ar5416PerCalibrationN(struct ath_hal *ah,  HAL_CHANNEL *chan,
 
 		/* start NF calibration, without updating BB NF register*/
 		ar5416StartNFCal(ah);
-
-		if ((ichan->channelFlags & CHANNEL_CW_INT) != 0) {
-			/* report up and clear internal state */
-			chan->channelFlags |= CHANNEL_CW_INT;
-			ichan->channelFlags &= ~CHANNEL_CW_INT;
-		}
 	}
 	return AH_TRUE;
 }
@@ -523,7 +536,7 @@ ar5416LoadNF(struct ath_hal *ah, HAL_CHANNEL_INTERNAL *chan)
 		AR_PHY_CH2_EXT_CCA
 	};
 	struct ar5212NfCalHist *h;
-	int i, j;
+	int i;
 	int32_t val;
 	uint8_t chainmask;
 
@@ -559,10 +572,21 @@ ar5416LoadNF(struct ath_hal *ah, HAL_CHANNEL_INTERNAL *chan)
 	OS_REG_SET_BIT(ah, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_NF);
 
 	/* Wait for load to complete, should be fast, a few 10s of us. */
-	for (j = 0; j < 1000; j++) {
-		if ((OS_REG_READ(ah, AR_PHY_AGC_CONTROL) & AR_PHY_AGC_CONTROL_NF) == 0)
-			break;
-		OS_DELAY(10);
+	if (! ar5212WaitNFCalComplete(ah, 10000)) {
+		/*
+		 * We timed out waiting for the noisefloor to load, probably due
+		 * to an in-progress rx. Simply return here and allow the load
+		 * plenty of time to complete before the next calibration
+		 * interval. We need to avoid trying to load -50 (which happens
+		 * below) while the previous load is still in progress as this
+		 * can cause rx deafness. Instead by returning here, the
+		 * baseband nf cal will just be capped by our present
+		 * noisefloor until the next calibration timer.
+		 */
+		HALDEBUG(ah, HAL_DEBUG_ANY, "Timeout while waiting for nf "
+		    "to load: AR_PHY_AGC_CONTROL=0x%x\n",
+		    OS_REG_READ(ah, AR_PHY_AGC_CONTROL));
+		return;
 	}
 
 	/*

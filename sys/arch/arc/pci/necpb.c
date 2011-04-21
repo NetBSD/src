@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.32.18.1 2011/03/05 20:49:27 rmind Exp $	*/
+/*	$NetBSD: necpb.c,v 1.32.18.2 2011/04/21 01:40:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.32.18.1 2011/03/05 20:49:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.32.18.2 2011/04/21 01:40:50 rmind Exp $");
 
 #include "opt_pci.h"
 
@@ -110,7 +110,8 @@ static void	necpb_decompose_tag(pci_chipset_tag_t, pcitag_t, int *,
 		    int *, int *);
 static pcireg_t	necpb_conf_read(pci_chipset_tag_t, pcitag_t, int);
 static void	necpb_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-static int	necpb_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int	necpb_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 static const char *necpb_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 static void	*necpb_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*func)(void *), void *);
@@ -334,7 +335,7 @@ necpb_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 }
 
 static int
-necpb_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+necpb_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t intrtag = pa->pa_intrtag;

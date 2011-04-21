@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.28.2.2 2011/03/05 20:53:04 rmind Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.28.2.3 2011/04/21 01:41:45 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.28.2.2 2011/03/05 20:53:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.28.2.3 2011/04/21 01:41:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.28.2.2 2011/03/05 20:53:04 rmind
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_ecvar.h>
+#include <dev/acpi/acpi_power.h>
 
 #include <dev/isa/isareg.h>
 
@@ -51,8 +52,8 @@ typedef struct thinkpad_softc {
 	device_t		sc_dev;
 	device_t		sc_ecdev;
 	struct acpi_devnode	*sc_node;
+	ACPI_HANDLE		sc_powhdl;
 	ACPI_HANDLE		sc_cmoshdl;
-	bool			sc_cmoshdl_valid;
 
 #define	TP_PSW_SLEEP		0
 #define	TP_PSW_HIBERNATE	1
@@ -170,21 +171,14 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	ACPI_INTEGER val;
 	int i;
 
-	sc->sc_node = aa->aa_node;
 	sc->sc_dev = self;
+	sc->sc_powhdl = NULL;
+	sc->sc_cmoshdl = NULL;
+	sc->sc_node = aa->aa_node;
 	sc->sc_display_state = THINKPAD_DISPLAY_LCD;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
-
-	/* T61 uses \UCMS method for issuing CMOS commands */
-	rv = AcpiGetHandle(NULL, "\\UCMS", &sc->sc_cmoshdl);
-	if (ACPI_FAILURE(rv))
-		sc->sc_cmoshdl_valid = false;
-	else {
-		aprint_debug_dev(self, "using CMOS at \\UCMS\n");
-		sc->sc_cmoshdl_valid = true;
-	}
 
 	sc->sc_ecdev = NULL;
 	for (curdev = deviter_first(&di, DEVITER_F_ROOT_FIRST);
@@ -217,6 +211,19 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	(void)acpi_register_notify(sc->sc_node, thinkpad_notify_handler);
+
+	/*
+	 * Obtain a handle for CMOS commands. This is used by T61.
+	 */
+	(void)AcpiGetHandle(NULL, "\\UCMS", &sc->sc_cmoshdl);
+
+	/*
+	 * Obtain a handle to the power resource available on many models.
+	 * Since pmf(9) is not yet integrated with the ACPI power resource
+	 * code, this must be turned on manually upon resume. Otherwise the
+	 * system may, for instance, resume from S3 with usb(4) powered down.
+	 */
+	(void)AcpiGetHandle(NULL, "\\_SB.PCI0.LPC.EC.PUBS", &sc->sc_powhdl);
 
 	/* Register power switches with sysmon */
 	psw = sc->sc_smpsw;
@@ -582,6 +589,7 @@ thinkpad_wireless_toggle(thinkpad_softc_t *sc)
 {
 	/* Ignore return value, as the hardware may not support bluetooth */
 	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "BTGL", NULL, NULL);
+	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "GWAN", NULL, NULL);
 }
 
 static uint8_t
@@ -602,6 +610,7 @@ thinkpad_brightness_up(device_t self)
 
 	if (thinkpad_brightness_read(sc) == 7)
 		return;
+
 	thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_UP);
 }
 
@@ -612,6 +621,7 @@ thinkpad_brightness_down(device_t self)
 
 	if (thinkpad_brightness_read(sc) == 0)
 		return;
+
 	thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_DOWN);
 }
 
@@ -620,29 +630,25 @@ thinkpad_cmos(thinkpad_softc_t *sc, uint8_t cmd)
 {
 	ACPI_STATUS rv;
 
-	if (sc->sc_cmoshdl_valid == false)
+	if (sc->sc_cmoshdl == NULL)
 		return;
 
 	rv = acpi_eval_set_integer(sc->sc_cmoshdl, NULL, cmd);
+
 	if (ACPI_FAILURE(rv))
-		aprint_error_dev(sc->sc_dev, "couldn't evalute CMOS: %s\n",
+		aprint_error_dev(sc->sc_dev, "couldn't evaluate CMOS: %s\n",
 		    AcpiFormatException(rv));
 }
 
 static bool
 thinkpad_resume(device_t dv, const pmf_qual_t *qual)
 {
-	ACPI_STATUS rv;
-	ACPI_HANDLE pubs;
+	thinkpad_softc_t *sc = device_private(dv);
 
-	rv = AcpiGetHandle(NULL, "\\_SB.PCI0.LPC.EC.PUBS", &pubs);
-	if (ACPI_FAILURE(rv))
-		return true;	/* not fatal */
+	if (sc->sc_powhdl == NULL)
+		return true;
 
-	rv = AcpiEvaluateObject(pubs, "_ON", NULL, NULL);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(dv, "failed to execute PUBS._ON: %s\n",
-		    AcpiFormatException(rv));
+	(void)acpi_power_res(sc->sc_powhdl, sc->sc_node->ad_handle, true);
 
 	return true;
 }

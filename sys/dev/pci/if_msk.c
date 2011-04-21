@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.33.2.1 2010/05/30 05:17:34 rmind Exp $ */
+/* $NetBSD: if_msk.c,v 1.33.2.2 2011/04/21 01:41:51 rmind Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.33.2.1 2010/05/30 05:17:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.33.2.2 2011/04/21 01:41:51 rmind Exp $");
 
 #include "rnd.h"
 
@@ -1227,6 +1227,10 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_dmatag = pa->pa_dmat;
+
+	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	command |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
 	sc->sk_type = sk_win_read_1(sc, SK_CHIPVER);
 	sc->sk_rev = (sk_win_read_1(sc, SK_CONFIG) >> 4);

@@ -1,4 +1,4 @@
-/* $NetBSD: printf.c,v 1.3.2.2 2011/03/05 20:51:47 rmind Exp $ */
+/* $NetBSD: printf.c,v 1.3.2.3 2011/04/21 01:41:22 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -255,7 +255,7 @@ mkdigit(unsigned long long llval, int base, char *s)
 	t = ptmp;
 	*t++ = '\0';
 	do {
-		int d = (int)llval % base;
+		int d = llval % base;
 		*t++ = hexdigit[d];
 		llval /= base;
 	} while (llval != 0 && ++n < sizeof(ptmp));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3gpio.c,v 1.2.4.2 2011/03/05 20:51:35 rmind Exp $	*/
+/*	$NetBSD: pq3gpio.c,v 1.2.4.3 2011/04/21 01:41:19 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -285,6 +285,40 @@ pq3gpio_mpc8548_attach(device_t self, bus_space_tag_t bst,
 }
 #endif /* MPC8548 */
 
+#ifdef P2020
+static void
+pq3gpio_p20x0_attach(device_t self, bus_space_tag_t bst,
+	bus_space_handle_t bsh, u_int svr)
+{
+	static const uint32_t gpio2pmuxcr_map[][2] = {
+		{ __BIT(10), PMUXCR_TSEC3_TS|PMUXCR_USB },
+		{ __BIT(11), PMUXCR_TSEC3_TS|PMUXCR_USB },
+		{ __BIT(12), PMUXCR_TSEC1_TS },
+		{ __BIT(13), PMUXCR_TSEC1_TS },
+		{ __BIT(14), PMUXCR_TSEC2_TS },
+		{ __BIT(15), PMUXCR_TSEC2_TS },
+	};
+	
+	uint32_t pinmask = ~0;	/* assume all bits are valid */
+	size_t pincnt = 32;
+	const uint32_t pmuxcr = bus_space_read_4(bst, bsh, PMUXCR);
+	for (size_t i = 0; i < __arraycount(gpio2pmuxcr_map); i++) {
+		if (pmuxcr & gpio2pmuxcr_map[i][1]) {
+			pinmask &= ~gpio2pmuxcr_map[i][0];
+			pincnt--;
+		}
+	}
+
+	/*
+	 * Create GPIO pin groups
+	 */
+	aprint_normal_dev(self, "%zu input pins, %zu output pins\n",
+	    pincnt, pincnt);
+	pq3gpio_group_create(self, bst, bsh, GPINDR, pinmask, GPIO_PIN_INPUT);
+	pq3gpio_group_create(self, bst, bsh, GPOUTDR, pinmask, GPIO_PIN_OUTPUT);
+}
+#endif /* P2020 */
+
 static const struct {
 	uint16_t svr;
 	void (*attach)(device_t, bus_space_tag_t, bus_space_handle_t, u_int);
@@ -300,6 +334,9 @@ static const struct {
 #endif
 #ifdef MPC8536
 	{ SVR_MPC8536v1 >> 16, pq3gpio_mpc8536_attach },
+#endif
+#ifdef P2020
+	{ SVR_P2020v2 >> 16, pq3gpio_p20x0_attach },
 #endif
 };
 

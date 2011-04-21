@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5312_reset.c,v 1.1.1.1 2008/12/11 04:46:46 alc Exp $
+ * $Id: ar5312_reset.c,v 1.1.1.1.14.1 2011/04/21 01:42:05 rmind Exp $
  */
 #include "opt_ah.h"
 
@@ -597,7 +597,7 @@ ar5312Reset(struct ath_hal *ah, HAL_OPMODE opmode,
 	return AH_TRUE;
 bad:
 	OS_MARK(ah, AH_MARK_RESET_DONE, ecode);
-	if (*status)
+	if (status != NULL)
 		*status = ecode;
 	return AH_FALSE;
 #undef FAIL

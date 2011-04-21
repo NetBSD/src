@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.104.4.1 2010/03/16 15:38:14 rmind Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.104.4.2 2011/04/21 01:42:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.104.4.1 2010/03/16 15:38:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.104.4.2 2011/04/21 01:42:20 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -519,7 +519,7 @@ done:
 	genfs_node_unlock(ovp);
 	oip->i_flag |= IN_CHANGE;
 	UFS_WAPBL_UPDATE(ovp, NULL, NULL, 0);
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif
 	KASSERT(ovp->v_type != VREG || ovp->v_size == oip->i_size);

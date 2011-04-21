@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.76.4.3 2011/03/05 20:51:50 rmind Exp $
+# $NetBSD: GENERIC,v 1.76.4.4 2011/04/21 01:41:23 rmind Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.76.4.3 $"
+#ident 		"GENERIC-$Revision: 1.76.4.4 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -74,7 +74,8 @@ file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
-options 	QUOTA		# FFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental

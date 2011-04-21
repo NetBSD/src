@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.21.4.2 2011/03/05 20:49:16 rmind Exp $
+# $NetBSD: XEN3_DOMU,v 1.21.4.3 2011/04/21 01:40:48 rmind Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -13,7 +13,6 @@ maxusers	32		# estimated number of users
 #
 options 	MAXPHYS=32768   #xbd doesn't handle 64k transfers
 #options 	DOM0OPS
-#options         XEN_BALLOON	# Xen memory ballooning - Experimental
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
@@ -92,7 +91,8 @@ file-system 	PTYFS		# /dev/pts/N support
 file-system 	TMPFS		# Efficient memory file-system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options		WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -157,6 +157,7 @@ vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus*		at hypervisor?		# Xen virtual bus
 xennet*		at xenbus?		# Xen virtual network interface
 xbd*		at xenbus?		# Xen virtual block device
+#balloon*	at xenbus?		# Xen balloon device
 
 xencons*	at hypervisor?		# Xen virtual console
 

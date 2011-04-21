@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_power.c,v 1.12.2.4 2011/03/05 20:53:03 rmind Exp $ */
+/* $NetBSD: acpi_power.c,v 1.12.2.5 2011/04/21 01:41:45 rmind Exp $ */
 
 /*-
- * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.12.2.4 2011/03/05 20:53:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.12.2.5 2011/04/21 01:41:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -74,27 +74,15 @@ ACPI_MODULE_NAME			("acpi_power")
 #define	ACPI_STA_POW_OFF		0x00
 #define	ACPI_STA_POW_ON			0x01
 
-/*
- * References.
- */
-struct acpi_power_ref {
-	ACPI_HANDLE			ref_handle;
-
-	SIMPLEQ_ENTRY(acpi_power_ref)	ref_list;
-};
-
-/*
- * Resources.
- */
 struct acpi_power_res {
 	ACPI_HANDLE			res_handle;
 	ACPI_INTEGER			res_level;
 	ACPI_INTEGER			res_order;
+	ACPI_HANDLE			res_ref[5];
 	char				res_name[5];
 	kmutex_t			res_mutex;
 
 	TAILQ_ENTRY(acpi_power_res)	res_list;
-	SIMPLEQ_HEAD(, acpi_power_ref)	ref_head;
 };
 
 static TAILQ_HEAD(, acpi_power_res) res_head =
@@ -128,6 +116,7 @@ acpi_power_res_init(ACPI_HANDLE hdl)
 	ACPI_OBJECT *obj;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
+	size_t i;
 
 	rv = acpi_eval_struct(hdl, NULL, &buf);
 
@@ -155,7 +144,9 @@ acpi_power_res_init(ACPI_HANDLE hdl)
 	(void)strlcpy(res->res_name,
 	    acpi_xname(hdl), sizeof(res->res_name));
 
-	SIMPLEQ_INIT(&res->ref_head);
+	for (i = 0; i < __arraycount(res->res_ref); i++)
+		res->res_ref[i] = NULL;
+
 	mutex_init(&res->res_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
@@ -481,8 +472,13 @@ acpi_power_res(ACPI_HANDLE hdl, ACPI_HANDLE ref, bool on)
 	if (res == NULL)
 		return AE_NOT_FOUND;
 
+	if (ref == NULL)
+		return AE_BAD_PARAMETER;
+
 	/*
-	 * (De)reference the resource.
+	 * Adjust the reference counting. This is
+	 * necessary since a single power resource
+	 * can be shared by multiple devices.
 	 */
 	switch (on) {
 
@@ -510,82 +506,70 @@ acpi_power_res(ACPI_HANDLE hdl, ACPI_HANDLE ref, bool on)
 }
 
 static ACPI_STATUS
-acpi_power_res_ref(struct acpi_power_res *res, ACPI_HANDLE hdl)
+acpi_power_res_ref(struct acpi_power_res *res, ACPI_HANDLE ref)
 {
-	struct acpi_power_ref *ref, *tmp;
-
-	ref = kmem_zalloc(sizeof(*ref), KM_SLEEP);
-
-	if (ref == NULL)
-		return AE_NO_MEMORY;
+	size_t i, j = SIZE_MAX;
 
 	mutex_enter(&res->res_mutex);
 
-	SIMPLEQ_FOREACH(tmp, &res->ref_head, ref_list) {
+	for (i = 0; i < __arraycount(res->res_ref); i++) {
 
-		if (tmp->ref_handle == hdl)
-			goto out;
+		/*
+		 * Do not error out if the handle
+		 * has already been referenced.
+		 */
+		if (res->res_ref[i] == ref) {
+			mutex_exit(&res->res_mutex);
+			return AE_OK;
+		}
+
+		if (j == SIZE_MAX && res->res_ref[i] == NULL)
+			j = i;
 	}
 
-	ref->ref_handle = hdl;
-	SIMPLEQ_INSERT_TAIL(&res->ref_head, ref, ref_list);
+	if (j == SIZE_MAX) {
+		mutex_exit(&res->res_mutex);
+		return AE_LIMIT;
+	}
+
+	res->res_ref[j] = ref;
 	mutex_exit(&res->res_mutex);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s referenced "
-		"by %s\n", res->res_name, acpi_xname(hdl)));
-
-	return AE_OK;
-
-out:
-	mutex_exit(&res->res_mutex);
-	kmem_free(ref, sizeof(*ref));
-
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s already referenced "
-		"by %s?\n", res->res_name, acpi_xname(hdl)));
+		"by %s\n", res->res_name, acpi_xname(ref)));
 
 	return AE_OK;
 }
 
 static ACPI_STATUS
-acpi_power_res_deref(struct acpi_power_res *res, ACPI_HANDLE hdl)
+acpi_power_res_deref(struct acpi_power_res *res, ACPI_HANDLE ref)
 {
-	struct acpi_power_ref *ref;
+	size_t i;
 
 	mutex_enter(&res->res_mutex);
 
-	if (SIMPLEQ_EMPTY(&res->ref_head) != 0) {
+	for (i = 0; i < __arraycount(res->res_ref); i++) {
+
+		if (res->res_ref[i] != ref)
+			continue;
+
+		res->res_ref[i] = NULL;
 		mutex_exit(&res->res_mutex);
+
+		ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s dereferenced "
+			"by %s\n", res->res_name, acpi_xname(ref)));
+
 		return AE_OK;
 	}
 
-	SIMPLEQ_FOREACH(ref, &res->ref_head, ref_list) {
-
-		if (ref->ref_handle == hdl) {
-			SIMPLEQ_REMOVE(&res->ref_head,
-			    ref, acpi_power_ref, ref_list);
-			mutex_exit(&res->res_mutex);
-			kmem_free(ref, sizeof(*ref));
-			mutex_enter(&res->res_mutex);
-			break;
-		}
-	}
-
 	/*
-	 * If the queue remains non-empty,
+	 * If the array remains to be non-empty,
 	 * something else is using the resource
 	 * and hence it can not be turned off.
 	 */
-	if (SIMPLEQ_EMPTY(&res->ref_head) == 0) {
-		mutex_exit(&res->res_mutex);
-		return AE_ABORT_METHOD;
-	}
-
 	mutex_exit(&res->res_mutex);
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s dereferenced "
-		"by %s\n", res->res_name, acpi_xname(hdl)));
-
-	return AE_OK;
+	return AE_ABORT_METHOD;
 }
 
 static ACPI_STATUS

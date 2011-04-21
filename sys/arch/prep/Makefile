@@ -1,22 +1,25 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/25 22:27:38 apb Exp $
+#	$NetBSD: Makefile,v 1.3.16.1 2011/04/21 01:41:20 rmind Exp $
 
-# Makefile for tags file
+.include <../powerpc/Makefile.inc>
 
-TPREP=	../prep/tags
-SPREP=	../prep/prep/*.[ch] ../prep/include/*.h ../prep/isa/*.[ch] \
-	../prep/pci/*.[ch]
-APREP=	../prep/prep/*.[sS]
+TPREP=	${SYSDIR}/arch/prep/tags
+SPREP=	${SYSDIR}/arch/prep/prep/*.[ch] \
+	${SYSDIR}/arch/prep/isa/*.[ch] \
+	${SYSDIR}/arch/prep/pci/*.[ch] \
+	${SYSDIR}/arch/prep/include/*.h
+APREP=	${SYSDIR}/arch/prep/prep/*.S
 
-# Directories in which to place tags links
-DPREP=       include
+DPREP=	include
 
 .include "../../kern/Make.tags.inc"
 
 tags:
-	-ctags -wdtf ${TPREP} ${SPREP} ${COMM}
-	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${APREP} | \
+	-rm -f ${TPREP}
+	-echo ${SPREP} ${SPPC} | xargs ctags -wadtf ${TPREP}
+	-${FINDCOMM} | xargs ctags -wadtf ${TPREP}
+	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${APREP} ${APPC} | \
 	    ${TOOL_SED} -e \
-		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 	    >> ${TPREP}
 	sort -o ${TPREP} ${TPREP}
 

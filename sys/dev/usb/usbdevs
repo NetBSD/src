@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.547.2.3 2011/03/05 20:54:17 rmind Exp $
+$NetBSD: usbdevs,v 1.547.2.4 2011/04/21 01:42:03 rmind Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2688,6 +2688,7 @@ product TOPFIELD TF5000PVR	0x1000	TF5000PVR Digital Video Recorder
 
 /* Toshiba Corporation products */
 product TOSHIBA POCKETPC_E740	0x0706	PocketPC e740
+product TOSHIBA HSDPA_MODEM_EU870DT1	0x1302	HSDPA 3G Modem Card
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive

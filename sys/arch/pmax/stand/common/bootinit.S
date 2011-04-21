@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinit.S,v 1.5.22.1 2011/03/05 20:51:33 rmind Exp $	*/
+/*	$NetBSD: bootinit.S,v 1.5.22.2 2011/04/21 01:41:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,12 +33,9 @@
 #include <mips/cpuregs.h>
 #include <machine/dec_prom.h>
 
-	.set	noreorder
+	.set	reorder		# make as(1) handle hazard and BDslot
 LEAF(bootinit)
 	lw	v0, _C_LABEL(callv)	# get pointer to call back vectors
-	nop
 	lw	v0, 0x54(v0)	# offset for callv->_bootinit
-	nop
 	j	v0		# call PROM bootinit
-	 nop
 END(bootinit)

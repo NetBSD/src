@@ -1,21 +1,21 @@
-/* $NetBSD: opms_jazzio.c,v 1.9 2008/09/13 16:15:38 tsutsui Exp $ */
+/* $NetBSD: opms_jazzio.c,v 1.9.16.1 2011/04/21 01:40:50 rmind Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms_jazzio.c,v 1.9 2008/09/13 16:15:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms_jazzio.c,v 1.9.16.1 2011/04/21 01:40:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

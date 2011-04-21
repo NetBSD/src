@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.8.22.1 2011/03/05 20:51:39 rmind Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.8.22.2 2011/04/21 01:41:19 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.8.22.1 2011/03/05 20:51:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.8.22.2 2011/04/21 01:41:19 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,7 +150,7 @@ genppc_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 }
 
 int
-genppc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+genppc_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;

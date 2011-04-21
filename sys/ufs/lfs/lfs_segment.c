@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.215.2.3 2011/03/05 20:56:32 rmind Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.215.2.4 2011/04/21 01:42:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.215.2.3 2011/03/05 20:56:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.215.2.4 2011/04/21 01:42:20 rmind Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -107,9 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.215.2.3 2011/03/05 20:56:32 rmind 
 #include <uvm/uvm_extern.h>
 
 MALLOC_JUSTDEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
-
-extern int count_lock_queue(void);
-extern kmutex_t vnode_free_list_lock;		/* XXX */
 
 static void lfs_generic_callback(struct buf *, void (*)(struct buf *));
 static void lfs_free_aiodone(struct buf *);
@@ -2767,7 +2764,7 @@ lfs_vunref(struct vnode *vp)
 
 	/* does not call inactive */
 	mutex_enter(vp->v_interlock);
-	vrelel(vp, VRELEL_NOINACTIVE);
+	vrelel(vp, 0);
 }
 
 /*
@@ -2786,7 +2783,7 @@ lfs_vunref_head(struct vnode *vp)
 
 	/* does not call inactive, inserts non-held vnode at head of freelist */
 	mutex_enter(vp->v_interlock);
-	vrelel(vp, VRELEL_NOINACTIVE | VRELEL_ONHEAD);
+	vrelel(vp, 0);
 }
 
 

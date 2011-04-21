@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.13.4.1 2011/03/05 20:51:04 rmind Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.13.4.2 2011/04/21 01:41:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -267,12 +267,6 @@ typedef union {
  * Values for the 'func' field when 'op' == OP_SPECIAL3.
  */
 #define OP_RDHWR	073		/* MIPS32/64 r2 */
-
-
-/*
- * Values for the 'func' field when 'op' == OP_SPECIAL3.
- */
-#define OP_RDHWR	073		/* MIPS32r2 */
 
 /*
  * Values for the 'func' field when 'op' == OP_BCOND.

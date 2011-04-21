@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.7.2.2 2011/03/05 20:51:47 rmind Exp $ */
+/* $NetBSD: main.c,v 1.7.2.3 2011/04/21 01:41:22 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -54,7 +54,8 @@ static const struct bootarg {
 	{ "quiet",	AB_QUIET },
 	{ "verb",	AB_VERBOSE },
 	{ "silent",	AB_SILENT },
-	{ "debug",	AB_DEBUG }
+	{ "debug",	AB_DEBUG },
+	{ "altboot",	-1 }
 };
 
 void *bootinfo; /* low memory reserved to pass bootinfo structures */
@@ -89,7 +90,9 @@ void module_load(char *);
 int module_open(struct boot_module *);
 
 void main(int, char **, char *, char *);
+
 extern char bootprog_name[], bootprog_rev[];
+extern char newaltboot[], newaltboot_end[];
 
 struct pcidev lata[2];
 struct pcidev lnif[1];
@@ -100,10 +103,11 @@ int brdtype;
 uint32_t busclock, cpuclock;
 
 static int check_bootname(char *);
+static int input_cmdline(char **, int);
 static int parse_cmdline(char **, int, char *, char *);
 static int is_space(char);
 
-#define	BNAME_DEFAULT "nfs:"
+#define	BNAME_DEFAULT "wd0:"
 #define MAX_ARGS 10
 
 void
@@ -112,6 +116,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	struct brdprop *brdprop;
 	unsigned long marks[MARK_MAX];
 	char *new_argv[MAX_ARGS];
+	ssize_t len;
 	int n, i, fd, howto;
 	char *bname;
 
@@ -125,6 +130,8 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	nata = pcilookup(PCI_CLASS_IDE, lata, 2);
 	if (nata == 0)
 		nata = pcilookup(PCI_CLASS_MISCSTORAGE, lata, 2);
+	if (nata == 0)
+		nata = pcilookup(PCI_CLASS_SCSI, lata, 2);
 	nnif = pcilookup(PCI_CLASS_ETH, lnif, 1);
 	nusb = pcilookup(PCI_CLASS_USB, lusb, 3);
 
@@ -177,11 +184,34 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	 * "bootm".
 	 */
 	if (argc > MAX_ARGS) {
-		/* parse Linux bootargs */
-		argv = new_argv;
-		argc = parse_cmdline(argv, MAX_ARGS, bootargs_start,
-		    bootargs_end);
+		if (argv != NULL) {
+			/*
+			 * initrd image was loaded: assume extremely
+			 * restricted firmware and boot default
+			 */
+			argc = 0;
+		} else {
+			/* parse standard Linux bootargs */
+			argc = parse_cmdline(new_argv, MAX_ARGS,
+			    bootargs_start, bootargs_end);
+			argv = new_argv;
+		}
 	}
+
+	/* wait 2s for user to enter interactive mode */
+	for (n = 200; n >= 0; n--) {
+		if (n % 100 == 0)
+			printf("Hit any key to enter interactive mode: %d\r",
+			    n / 100);
+		if (tstchar()) {
+			(void)getchar();
+			argv = new_argv;
+			argc = input_cmdline(argv, MAX_ARGS);
+			break;
+		}
+		delay(10000);
+	}
+	putchar('\n');
 
 	howto = RB_AUTOBOOT;		/* default is autoboot = 0 */
 
@@ -214,7 +244,22 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	}
 	printf("loading \"%s\" ", bi_path.bootpath);
 	marks[MARK_START] = 0;
-	if (fdloadfile(fd, marks, LOAD_KERNEL) < 0)
+
+	if (howto == -1) {
+		/* load another altboot binary and replace ourselves */
+		len = read(fd, (void *)0x100000, 0x1000000 - 0x100000);
+		if (len == -1)
+			goto loadfail;
+		close(fd);
+		netif_shutdown_all();
+
+		memcpy((void *)0xf0000, newaltboot,
+		    newaltboot_end - newaltboot);
+		__syncicache((void *)0xf0000, newaltboot_end - newaltboot);
+		printf("Restarting...\n");
+		run((void *)1, argv, (void *)0x100000, (void *)len,
+		    (void *)0xf0000);
+	} else if (fdloadfile(fd, marks, LOAD_KERNEL) < 0)
 		goto loadfail;
 	close(fd);
 
@@ -231,8 +276,8 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	bi_add(&bi_path, BTINFO_BOOTPATH, sizeof(bi_path));
 	bi_add(&bi_rdev, BTINFO_ROOTDEVICE, sizeof(bi_rdev));
 	bi_add(&bi_fam, BTINFO_PRODFAMILY, sizeof(bi_fam));
-	if (brdtype == BRD_SYNOLOGY) {
-		/* need to set MAC address for Marvell-SKnet */
+	if (brdtype == BRD_SYNOLOGY || brdtype == BRD_DLINKDSM) {
+		/* need to set this MAC address in kernel driver later */
 		bi_add(&bi_net, BTINFO_NET, sizeof(bi_net));
 	}
 
@@ -247,6 +292,8 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 			bi_add(btinfo_modulelist, BTINFO_MODULELIST,
 			    btinfo_modulelist_size);
 	}
+
+	netif_shutdown_all();
 
 	__syncicache((void *)marks[MARK_ENTRY],
 	    (u_int)marks[MARK_SYM] - (u_int)marks[MARK_ENTRY]);
@@ -480,6 +527,31 @@ allocaligned(size_t size, size_t align)
 	return (void *)((p + align) & ~align);
 }
 
+static int hex2nibble(char c)
+{
+
+	if (c >= 'a')
+		c &= ~0x20;
+	if (c >= 'A' && c <= 'F')
+		c -= 'A' - ('9' + 1);
+	else if (c < '0' || c > '9')
+		return -1;
+
+	return c - '0';
+}
+
+uint32_t
+read_hex(const char *s)
+{
+	int n;
+	uint32_t val;
+
+	val = 0;
+	while ((n = hex2nibble(*s++)) >= 0)
+		val = (val << 4) | n;
+	return val;
+}
+
 static int
 check_bootname(char *s)
 {
@@ -489,12 +561,12 @@ check_bootname(char *s)
 	 * tftp:
 	 * tftp:<bootfile>
 	 * wd[N[P]]:<bootfile>
+	 * mem:<address>
 	 *
 	 * net is a synonym of nfs.
 	 */
-	if (strncmp(s, "nfs:", 4) == 0 || strncmp(s, "net:", 4) == 0)
-		return 1;
-	if (strncmp(s, "tftp:", 5) == 0)
+	if (strncmp(s, "nfs:", 4) == 0 || strncmp(s, "net:", 4) == 0 ||
+	    strncmp(s, "tftp:", 5) == 0 || strncmp(s, "mem:", 4) == 0)
 		return 1;
 	if (s[0] == 'w' && s[1] == 'd') {
 		s += 2;
@@ -506,6 +578,18 @@ check_bootname(char *s)
 		return *s == ':';
 	}
 	return 0;
+}
+
+static int input_cmdline(char **argv, int maxargc)
+{
+	char *cmdline;
+
+	printf("\nbootargs> ");
+	cmdline = alloc(256);
+	gets(cmdline);
+
+	return parse_cmdline(argv, maxargc, cmdline,
+	    cmdline + strlen(cmdline));
 }
 
 static int

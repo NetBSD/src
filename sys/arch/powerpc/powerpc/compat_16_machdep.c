@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.14.4.1 2011/03/05 20:51:40 rmind Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.14.4.2 2011/04/21 01:41:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.14.4.1 2011/03/05 20:51:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.14.4.2 2011/04/21 01:41:20 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -61,18 +61,17 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.14.4.1 2011/03/05 20:51:40 r
 void
 sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct sigacts *ps = p->p_sigacts;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct sigacts * const ps = p->p_sigacts;
 	struct sigcontext *fp, frame;
-	struct trapframe *tf;
-	struct utrapframe *utf = &frame.sc_frame;
+	struct trapframe * const tf = l->l_md.md_utf;
+	struct utrapframe * const utf = &frame.sc_frame;
 	int onstack, error;
 	int sig = ksi->ksi_signo;
 	u_long code = KSI_TRAPCODE(ksi);
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = trapframe(l);
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -196,7 +195,7 @@ compat_16_sys___sigreturn14(struct lwp *l,
 		return (error);
 
 	/* Restore the register context. */
-	struct trapframe * const tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 
 	/*
 	 * Make sure SRR1 hasn't been maliciously tampered with.

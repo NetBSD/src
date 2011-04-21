@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.127.2.3 2011/03/05 20:53:47 rmind Exp $	*/
+/*	$NetBSD: pci.c,v 1.127.2.4 2011/04/21 01:41:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.127.2.3 2011/03/05 20:53:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.127.2.4 2011/04/21 01:41:52 rmind Exp $");
 
 #include "opt_pci.h"
 
@@ -67,7 +67,7 @@ int	pciprint(void *, const char *);
 #define pci_enumerate_bus PCI_MACHDEP_ENUMERATE_BUS
 #else
 int pci_enumerate_bus(struct pci_softc *, const int *,
-    int (*)(struct pci_attach_args *), struct pci_attach_args *);
+    int (*)(const struct pci_attach_args *), struct pci_attach_args *);
 #endif
 
 /*
@@ -268,7 +268,8 @@ pciprint(void *aux, const char *pnp)
 
 int
 pci_probe_device(struct pci_softc *sc, pcitag_t tag,
-    int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
+    int (*match)(const struct pci_attach_args *),
+    struct pci_attach_args *pap)
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	struct pci_attach_args pa;
@@ -302,9 +303,15 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	    sizeof(sc->PCI_SC_DEVICESC(device, function).c_range));
 	i = 0;
 	switch (PCI_HDRTYPE_TYPE(bhlcr)) {
-	case PCI_HDRTYPE_PPB: endbar = PCI_MAPREG_PPB_END; break;
-	case PCI_HDRTYPE_PCB: endbar = PCI_MAPREG_PCB_END; break;
-	default: endbar = PCI_MAPREG_END; break;
+	case PCI_HDRTYPE_PPB:
+		endbar = PCI_MAPREG_PPB_END;
+		break;
+	case PCI_HDRTYPE_PCB:
+		endbar = PCI_MAPREG_PCB_END;
+		break;
+	default:
+		endbar = PCI_MAPREG_END;
+		break;
 	}
 	for (bar = PCI_MAPREG_START; bar < endbar; bar += width) {
 		struct pci_range *r;
@@ -324,7 +331,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 			    &r->r_offset, &r->r_size, &r->r_flags) != 0)
 				break;
 			if ((PCI_VENDOR(id) == PCI_VENDOR_ATI) && (bar == 0x10)
-			    && (r->r_size = 0x1000000)) {
+			    && (r->r_size == 0x1000000)) {
 				struct pci_range *nr;
 				/*
 				 * this has to be a mach64
@@ -372,9 +379,10 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	 * If the cache line size is not configured, then
 	 * clear the MRL/MRM/MWI command-ok flags.
 	 */
-	if (PCI_CACHELINE(bhlcr) == 0)
+	if (PCI_CACHELINE(bhlcr) == 0) {
 		pa.pa_flags &= ~(PCI_FLAGS_MRL_OKAY|
 		    PCI_FLAGS_MRM_OKAY|PCI_FLAGS_MWI_OKAY);
+	}
 
 	if (sc->sc_bridgetag == NULL) {
 		pa.pa_intrswiz = 0;
@@ -504,7 +512,7 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 
 int
 pci_find_device(struct pci_attach_args *pa,
-		int (*match)(struct pci_attach_args *))
+		int (*match)(const struct pci_attach_args *))
 {
 	extern struct cfdriver pci_cd;
 	device_t pcidev;
@@ -531,7 +539,7 @@ pci_find_device(struct pci_attach_args *pa,
  */
 int
 pci_enumerate_bus(struct pci_softc *sc, const int *locators,
-    int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
+    int (*match)(const struct pci_attach_args *), struct pci_attach_args *pap)
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	int device, function, nfunctions, ret;
@@ -677,7 +685,7 @@ pci_vpd_write(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
 }
 
 int
-pci_dma64_available(struct pci_attach_args *pa)
+pci_dma64_available(const struct pci_attach_args *pa)
 {
 #ifdef _PCI_HAVE_DMA64
 	if (BUS_DMA_TAG_VALID(pa->pa_dmat64))

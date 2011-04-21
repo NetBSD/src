@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_xmit.c,v 1.1.1.1.14.1 2011/03/05 20:55:01 rmind Exp $
+ * $Id: ar5212_xmit.c,v 1.1.1.1.14.2 2011/04/21 01:42:05 rmind Exp $
  */
 #include "opt_ah.h"
 
@@ -54,7 +54,7 @@ ar5212UpdateTxTrigLevel(struct ath_hal *ah, HAL_BOOL bIncTrigLevel)
 	/*
 	 * Disable interrupts while futzing with the fifo level.
 	 */
-	omask = ar5212SetInterrupts(ah, ahp->ah_maskReg &~ HAL_INT_GLOBAL);
+	omask = ath_hal_setInterrupts(ah, ahp->ah_maskReg &~ HAL_INT_GLOBAL);
 
 	txcfg = OS_REG_READ(ah, AR_TXCFG);
 	curLevel = MS(txcfg, AR_FTRIG);
@@ -72,7 +72,7 @@ ar5212UpdateTxTrigLevel(struct ath_hal *ah, HAL_BOOL bIncTrigLevel)
 	ahp->ah_txTrigLev = newLevel;
 
 	/* re-enable chip interrupts */
-	ar5212SetInterrupts(ah, omask);
+	ath_hal_setInterrupts(ah, omask);
 
 	return (newLevel != curLevel);
 }

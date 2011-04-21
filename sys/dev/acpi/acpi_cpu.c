@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.37.2.3 2011/03/06 00:26:59 rmind Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.37.2.4 2011/04/21 01:41:45 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.37.2.3 2011/03/06 00:26:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.37.2.4 2011/04/21 01:41:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -187,8 +187,6 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	KASSERT(sc->sc_node->ad_device == NULL);
 
 	sc->sc_node->ad_device = self;
-
-	__cpu_simple_lock_init(&sc->sc_lock);
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	acpicpu_cstate_attach(self);
@@ -695,17 +693,18 @@ static bool
 acpicpu_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct acpicpu_softc *sc = device_private(self);
+	static const int handler = OSL_NOTIFY_HANDLER;
 
 	sc->sc_cold = false;
 
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
-		(void)acpicpu_cstate_resume(self);
+		(void)AcpiOsExecute(handler, acpicpu_cstate_resume, self);
 
 	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
-		(void)acpicpu_pstate_resume(self);
+		(void)AcpiOsExecute(handler, acpicpu_pstate_resume, self);
 
 	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
-		(void)acpicpu_tstate_resume(self);
+		(void)AcpiOsExecute(handler, acpicpu_tstate_resume, self);
 
 	return true;
 }

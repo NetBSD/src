@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.40.4.2 2011/03/05 20:52:34 rmind Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.40.4.3 2011/04/21 01:41:34 rmind Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.40.4.2 2011/03/05 20:52:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.40.4.3 2011/04/21 01:41:34 rmind Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -961,7 +961,7 @@ again:
 		}
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (__predict_false(m == NULL)) {
-			printf("xennet: rx no mbuf\n");
+			printf("%s: rx no mbuf\n", ifp->if_xname);
 			ifp->if_ierrors++;
 			xennet_rx_mbuf_free(NULL, (void *)va, PAGE_SIZE, req);
 			continue;

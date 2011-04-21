@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.15 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.15.22.1 2011/04/21 01:42:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.15 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.15.22.1 2011/04/21 01:42:14 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -617,6 +617,7 @@ const struct tcp_congctl tcp_reno_ctl = {
 static int
 tcp_newreno_fast_retransmit(struct tcpcb *tp, const struct tcphdr *th)
 {
+
 	if (SEQ_LT(th->th_ack, tp->snd_high)) {
 		/*
 		 * False fast retransmit after timeout.
@@ -624,14 +625,11 @@ tcp_newreno_fast_retransmit(struct tcpcb *tp, const struct tcphdr *th)
 		 */
 		tp->t_dupacks = 0;
 		return 1;
-	} else {
-		/*
-		 * Fast retransmit is same as reno.
-		 */
-		return tcp_reno_fast_retransmit(tp, th);
 	}
-
-	return 0;
+	/*
+	 * Fast retransmit is same as reno.
+	 */
+	return tcp_reno_fast_retransmit(tp, th);
 }
 
 /*

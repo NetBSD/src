@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.h,v 1.6.4.1 2011/03/05 20:56:05 rmind Exp $ */
+/*	$NetBSD: deflate.h,v 1.6.4.2 2011/04/21 01:42:16 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.h,v 1.3 2002/03/14 01:26:51 millert Exp $ */
 
@@ -42,16 +42,8 @@
 #define Z_METHOD	8
 #define Z_MEMLEVEL	8
 #define MINCOMP		2	/* won't be used, but must be defined */
-#define ZBUF		10
 
 u_int32_t deflate_global(u_int8_t *, u_int32_t, int, u_int8_t **, int);
 u_int32_t gzip_global(u_int8_t *, u_int32_t, int, u_int8_t **, int);
-void *z_alloc(void *, u_int, u_int);
-void z_free(void *, void *);
-
-struct deflate_buf {
-	u_int8_t *out;
-	u_int32_t size;
-};
 
 #endif /* _CRYPTO_DEFLATE_H_ */

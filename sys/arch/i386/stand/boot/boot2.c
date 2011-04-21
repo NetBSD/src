@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.48.2.1 2011/03/05 20:50:43 rmind Exp $	*/
+/*	$NetBSD: boot2.c,v 1.48.2.2 2011/04/21 01:41:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -311,8 +311,12 @@ boot2(int biosdev, uint64_t biossector)
 	default_filename = DEFFILENAME;
 
 #ifndef SMALL
-	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF))
+	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
 		parsebootconf(BOOTCONF);
+	} else {
+		bootconf.timeout = boot_params.bp_timeout;
+	}
+	
 
 	/*
 	 * If console set in boot.cfg, switch to it.

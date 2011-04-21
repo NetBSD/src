@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.31.2.3 2011/03/05 20:50:38 rmind Exp $
+#	$NetBSD: XEN3_DOM0,v 1.31.2.4 2011/04/21 01:41:05 rmind Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -23,7 +23,6 @@ options 	DOM0OPS
 # making MCLBYTES = PAGE_SIZE avoids a copy when a mbuf cluster is sent
 # to a domU, at the expense of a higher memory usage by the network stack.
 #options 	MCLSHIFT=12
-#options         XEN_BALLOON     # Xen memory ballooning - Experimental
 
 makeoptions 	CPUFLAGS="-march=i686"
 
@@ -131,7 +130,8 @@ file-system 	PTYFS		# /dev/pts/N support
 file-system 	TMPFS		# Efficient memory file-system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -220,6 +220,7 @@ npx0		at hypervisor?		# x86 math coprocessor
 
 xencons*	at hypervisor?		# Xen virtual console
 #xennet* 	at hypervisor?		# Xen virtual network interface
+#balloon*	at xenbus?		# Xen balloon device
 
 #xbd*		at hypervisor?		# Xen virtual block device
 #wd*		at hypervisor?		# Xen vbd (wd identity)

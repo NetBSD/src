@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.167.4.3 2011/03/05 20:54:16 rmind Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.167.4.4 2011/04/21 01:42:03 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167.4.3 2011/03/05 20:54:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167.4.4 2011/04/21 01:42:03 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -67,6 +67,10 @@ extern int usbdebug;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+MALLOC_DEFINE(M_USB, "USB", "USB misc. memory");
+MALLOC_DEFINE(M_USBDEV, "USB device", "USB device driver");
+MALLOC_DEFINE(M_USBHC, "USB HC", "USB host controller");
 
 Static usbd_status usbd_set_config(usbd_device_handle, int);
 Static void usbd_devinfo(usbd_device_handle, int, char *, size_t);

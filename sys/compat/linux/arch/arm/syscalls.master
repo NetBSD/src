@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.43.4.1 2011/03/05 20:52:43 rmind Exp $
+	$NetBSD: syscalls.master,v 1.43.4.2 2011/04/21 01:41:38 rmind Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -538,8 +538,8 @@
 355	UNIMPL		signalfd4
 356	UNIMPL		eventfd2
 357	UNIMPL		epoll_create1
-358	UNIMPL		dup3
-359	UNIMPL		pipe2
+358	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
+359	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
 360	UNIMPL		inotify_init1
 361	UNIMPL		preadv
 362	UNIMPL		pwritev

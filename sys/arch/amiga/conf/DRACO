@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.131.4.2 2011/03/05 20:49:19 rmind Exp $
+# $NetBSD: DRACO,v 1.131.4.3 2011/04/21 01:40:48 rmind Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.131.4.2 $"
+#ident 		"GENERIC-$Revision: 1.131.4.3 $"
 
 
 maxusers	8
@@ -115,7 +115,8 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 
-options 	QUOTA		# User and group quotas in FFS
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server side code
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

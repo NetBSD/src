@@ -1,9 +1,9 @@
-/*	$NetBSD: isadma.c,v 1.11 2008/07/05 08:46:25 tsutsui Exp $	*/
+/*	$NetBSD: isadma.c,v 1.11.18.1 2011/04/21 01:40:50 rmind Exp $	*/
 /*	$OpenBSD: isadma.c,v 1.2 1996/11/23 21:45:34 kstailey Exp $	*/
 /*	NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp 	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.11 2008/07/05 08:46:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.11.18.1 2011/04/21 01:40:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ isadma_cascade(int chan)
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
-		panic("%s: impossible request", __func__); 
+		panic("%s: impossible request", __func__);
 #endif
 
 	/* set dma channel mode, and set dma channel mode */
@@ -146,7 +146,7 @@ isadma_start(void *addr, bus_size_t nbytes, int chan, int flags)
 	    ((flags & DMAMODE_LOOP) != 0) != 1) ||
 	    ((chan & 4) ? (nbytes >= (1<<17) || nbytes & 1 || (u_int)addr & 1) :
 	    (nbytes >= (1<<16))))
-		panic("%s: impossible request", __func__); 
+		panic("%s: impossible request", __func__);
 #endif
 
 	di = dma_info+chan;

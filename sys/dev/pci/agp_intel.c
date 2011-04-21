@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.34.2.2 2011/03/05 20:53:34 rmind Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.34.2.3 2011/04/21 01:41:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.34.2.2 2011/03/05 20:53:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.34.2.3 2011/04/21 01:41:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ static struct agp_methods agp_intel_methods = {
 };
 
 static int
-agp_intel_vgamatch(struct pci_attach_args *pa)
+agp_intel_vgamatch(const struct pci_attach_args *pa)
 {
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_82855GM_AGP:

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.34 2009/03/18 10:22:29 cegger Exp $	*/
+/*	$NetBSD: vrip.c,v 1.34.4.1 2011/04/21 01:41:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.34 2009/03/18 10:22:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.34.4.1 2011/04/21 01:41:04 rmind Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -81,7 +81,7 @@ void	vripattach(struct device *, struct device *, void *);
 int	vrip_print(void *, const char *);
 int	vrip_search(struct device *, struct cfdata *,
 		    const int *, void *);
-int	vrip_intr(void *, u_int32_t, u_int32_t);
+int	vrip_intr(void *, vaddr_t, u_int32_t);
 
 int __vrip_power(vrip_chipset_tag_t, int, int);
 vrip_intr_handle_t __vrip_intr_establish(vrip_chipset_tag_t, int, int,
@@ -238,7 +238,7 @@ vripattach_common(struct device *parent, struct device *self, void *aux)
 	/*
 	 *  Level 1 interrupts are redirected to HwInt0
 	 */
-	vr_intr_establish(VR_INTR0, vrip_intr, self);
+	vr_intr_establish(VR_INTR0, vrip_intr, sc);
 	the_vrip_sc = sc;
 	/*
 	 *  Attach each devices
@@ -491,9 +491,9 @@ __vrip_intr_setmask2(vrip_chipset_tag_t vc, vrip_intr_handle_t handle,
 }
 
 int
-vrip_intr(void *arg, u_int32_t pc, u_int32_t statusReg)
+vrip_intr(void *arg, vaddr_t pc, u_int32_t status)
 {
-	struct vrip_softc *sc = (struct vrip_softc*)arg;
+	struct vrip_softc *sc = (struct vrip_softc *)arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;

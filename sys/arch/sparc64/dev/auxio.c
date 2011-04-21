@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.20 2008/06/13 13:10:49 cegger Exp $	*/
+/*	$NetBSD: auxio.c,v 1.20.18.1 2011/04/21 01:41:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.20 2008/06/13 13:10:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.20.18.1 2011/04/21 01:41:26 rmind Exp $");
 
 #include "opt_auxio.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.20 2008/06/13 13:10:49 cegger Exp $");
 
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
-#include <sparc64/dev/sbusvar.h>
+#include <dev/sbus/sbusvar.h>
 #include <sparc64/dev/auxioreg.h>
 #include <sparc64/dev/auxiovar.h>
 

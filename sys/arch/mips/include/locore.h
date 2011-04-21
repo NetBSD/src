@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.81.2.1 2011/03/05 20:51:03 rmind Exp $ */
+/* $NetBSD: locore.h,v 1.81.2.2 2011/04/21 01:41:11 rmind Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -135,31 +135,28 @@ void	mips1_tlb_invalidate_all(void);
 uint32_t tx3900_cp0_config_read(void);
 #endif
 
-#if defined(MIPS3) || defined(MIPS4)
-void	mips3_tlb_invalidate_all(void);
-void	mips3_pagezero(void *dst);
-#endif /* MIPS3 || MIPS4 */
-
-#ifdef MIPS32
-void	mips32_tlb_invalidate_all(void);
-#endif
-
-#ifdef MIPS64
-void	mips64_tlb_invalidate_all(void);
-void	mips64_pagezero(void *dst);
-#endif
-
-#if defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 uint32_t mips3_cp0_compare_read(void);
 void	mips3_cp0_compare_write(uint32_t);
 
 uint32_t mips3_cp0_config_read(void);
 void	mips3_cp0_config_write(uint32_t);
-#if defined(MIPS32) || defined(MIPS64)
+
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 uint32_t mipsNN_cp0_config1_read(void);
 void	mipsNN_cp0_config1_write(uint32_t);
 uint32_t mipsNN_cp0_config2_read(void);
 uint32_t mipsNN_cp0_config3_read(void);
+
+intptr_t mipsNN_cp0_watchlo_read(u_int);
+void	mipsNN_cp0_watchlo_write(u_int, intptr_t);
+uint32_t mipsNN_cp0_watchhi_read(u_int);
+void	mipsNN_cp0_watchhi_write(u_int, uint32_t);
+
+#if (MIPS32R2 + MIPS64R2) > 0
+void	mipsNN_cp0_hwrena_write(uint32_t);
+void	mipsNN_cp0_userlocal_write(void *);
+#endif
 #endif
 
 uint32_t mips3_cp0_count_read(void);
@@ -236,13 +233,11 @@ mips3_sd(volatile uint64_t *va, uint64_t v)
 uint64_t mips3_ld(volatile uint64_t *va);
 void	mips3_sd(volatile uint64_t *, uint64_t);
 #endif	/* __GNUC__ */
-#endif	/* MIPS3 || MIPS4 || MIPS32 || MIPS64 */
+#endif	/* (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 
-#if defined(MIPS3) || defined(MIPS4) || defined(MIPS64)
-static __inline uint32_t	mips3_lw_a64(uint64_t addr)
-		    __attribute__((__unused__));
-static __inline void	mips3_sw_a64(uint64_t addr, uint32_t val)
-		    __attribute__ ((__unused__));
+#if (MIPS3 + MIPS4 + MIPS64 + MIPS64R2) > 0
+static __inline uint32_t	mips3_lw_a64(uint64_t addr) __unused;
+static __inline void	mips3_sw_a64(uint64_t addr, uint32_t val) __unused;
 
 static __inline uint32_t
 mips3_lw_a64(uint64_t addr)
@@ -318,7 +313,7 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
 #error unknown ABI
 #endif
 }
-#endif	/* MIPS3 || MIPS4 || MIPS64 */
+#endif	/* (MIPS3 + MIPS4 + MIPS64 + MIPS64R2) > 0 */
 
 /*
  * A vector with an entry for each mips-ISA-level dependent
@@ -367,6 +362,7 @@ struct locoresw {
 	int		(*lsw_send_ipi)(struct cpu_info *, int);
 	void		(*lsw_cpu_offline_md)(void);
 	void		(*lsw_cpu_init)(struct cpu_info *);
+	void		(*lsw_cpu_run)(struct cpu_info *);
 	int		(*lsw_bus_error)(unsigned int);
 };
 

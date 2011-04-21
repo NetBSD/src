@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.19.4.1 2011/03/05 20:56:00 rmind Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.19.4.2 2011/04/21 01:42:15 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.19.4.1 2011/03/05 20:56:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.19.4.2 2011/04/21 01:42:15 rmind Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -326,6 +326,14 @@ ipcomp_input_cb(struct cryptop *crp)
 	/* Keep the next protocol field */
 	addr = (uint8_t*) mtod(m, struct ip *) + skip;
 	nproto = ((struct ipcomp *) addr)->comp_nxt;
+	if (nproto == IPPROTO_IPCOMP || nproto == IPPROTO_AH || nproto == IPPROTO_ESP) {
+		IPCOMP_STATINC(IPCOMP_STAT_HDROPS);
+		DPRINTF(("ipcomp_input_cb: nested ipcomp, IPCA %s/%08lx\n",
+			 ipsec_address(&sav->sah->saidx.dst),
+			 (u_long) ntohl(sav->spi)));
+		error = EINVAL;
+		goto bad;
+	}
 
 	/* Remove the IPCOMP header */
 	error = m_striphdr(m, skip, hlen);

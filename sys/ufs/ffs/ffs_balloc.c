@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.52 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.52.4.1 2011/04/21 01:42:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.52 2009/02/22 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.52.4.1 2011/04/21 01:42:20 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -501,7 +501,7 @@ fail:
 		deallocated += fs->fs_bsize;
 	}
 	if (deallocated) {
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 		/*
 		 * Restore user's disk quota because allocation failed.
 		 */
@@ -1029,7 +1029,7 @@ fail:
 		deallocated += fs->fs_bsize;
 	}
 	if (deallocated) {
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 		/*
 		 * Restore user's disk quota because allocation failed.
 		 */

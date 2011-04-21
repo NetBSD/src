@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8536DS,v 1.2.4.2 2011/03/05 20:50:14 rmind Exp $
+#	$NetBSD: MPC8536DS,v 1.2.4.3 2011/04/21 01:41:00 rmind Exp $
 #
 #	MPC8536DS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8536DS-$Revision: 1.2.4.2 $"
+ident 		"MPC8536DS-$Revision: 1.2.4.3 $"
 
 maxusers	32
 
@@ -89,7 +89,8 @@ file-system 	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server

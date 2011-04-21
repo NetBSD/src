@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.5.4.2 2011/03/05 20:56:04 rmind Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.5.4.3 2011/04/21 01:42:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.5.4.2 2011/03/05 20:56:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.5.4.3 2011/04/21 01:42:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -246,13 +246,8 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 		error = ENOMEM;
 		goto out;
 	}
-	ndp->ni_pathlen = (tocp - path) + 1;
-	/*ndp->ni_segflg = UIO_SYSSPACE; - obsolete */
-	ndp->ni_rootdir = rootvnode;
-	ndp->ni_erootdir = NULL;
 
 	if (pubflag) {
-		ndp->ni_loopcnt = 0;
 		if (path[0] == '/')
 			dp = rootvnode;
 	} else {
@@ -276,6 +271,7 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 out:
 	if (ndp->ni_pathbuf != NULL) {
 		pathbuf_destroy(ndp->ni_pathbuf);
+		ndp->ni_pathbuf = NULL;
 	} else {
 		PNBUF_PUT(path);
 	}

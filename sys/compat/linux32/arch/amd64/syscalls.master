@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.55.4.1 2011/03/05 20:52:52 rmind Exp $
+	$NetBSD: syscalls.master,v 1.55.4.2 2011/04/21 01:41:41 rmind Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -513,8 +513,8 @@
 327	UNIMPL	signalfd4
 328	UNIMPL	eventfd2
 329	UNIMPL	epoll_create1
-330	UNIMPL	dup3
-331	UNIMPL	pipe2
+330	STD	{ int|linux32_sys||dup3(int from, int to, int flags); }
+331     STD	{ int|linux32_sys||pipe2(netbsd32_intp fd, int flags); }
 332	UNIMPL	inotify_init1
 333	UNIMPL	preadv
 334	UNIMPL	pwritev

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.232.2.3 2011/03/05 20:55:23 rmind Exp $
+	$NetBSD: syscalls.master,v 1.232.2.4 2011/04/21 01:42:10 rmind Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -282,7 +282,7 @@
 			    const struct orlimit *rlp); } osetrlimit
 146	COMPAT_43 MODULAR { int|sys||killpg(int pgid, int signum); } okillpg
 147	STD 	RUMP 	{ int|sys||setsid(void); }
-148	STD 		{ int|sys||quotactl(const char *path, int cmd, \
+148	COMPAT_50 MODULAR { int|sys||quotactl(const char *path, int cmd, \
 			    int uid, void *arg); }
 149	COMPAT_43 MODULAR { int|sys||quota(void); } oquota
 150	COMPAT_43 MODULAR { int|sys||getsockname(int fdec, void *asa, \
@@ -884,3 +884,5 @@
 			    dev_t dev); }
 451	STD  RUMP 	{ int|sys|50|fhstat(const void *fhp, \
 			    size_t fh_size, struct stat *sb); }
+452	STD  RUMP	{ int|sys|50|quotactl(const char *path, \
+			    struct plistref *pref); }

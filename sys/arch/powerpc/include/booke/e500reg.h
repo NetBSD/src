@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.4.2.2 2011/03/05 20:51:37 rmind Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.4.2.3 2011/04/21 01:41:19 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -361,7 +361,7 @@
 #define	IOSEL_P20x0_PCIE12_X1_3_X2	2
 #define	IOSEL_P20x0_PCIE13_X2		4
 #define	IOSEL_P20x0_PCIE1_X4		6
-#define	IOSEL_P20x0_PCIE1_X1_SRIO12500_1X	13
+#define	IOSEL_P20x0_PCIE1_X1_SRIO2500_1X	13
 #define	IOSEL_P20x0_PCIE12_X1_SGMII23	14
 #define	IOSEL_P20x0_PCIE1_X2_SGMII23	15
 #define	PORDEVSR_PCI2_ARB	__PPCBIT(13)
@@ -404,9 +404,13 @@
 #define	PMUXCR_SDHC_CD	__PPCBIT(1)
 #define	PMUXCR_SDHC_WP	__PPCBIT(2)
 #define	PMUXCR_PCI_REQGNT3 __PPCBIT(3)
+#define	PMUXCR_TSEC1_TS __PPCBIT(3)
 #define	PMUXCR_PCI_REQGNT4 __PPCBIT(4)
+#define	PMUXCR_TSEC2_TS __PPCBIT(4)
 #define	PMUXCR_USB1	__PPCBIT(5)
+#define	PMUXCR_TSEC3_TS __PPCBIT(5)
 #define	PMUXCR_USB2	__PPCBIT(6)
+#define	PMUXCR_USB	 __PPCBIT(6)
 #define	PMUXCR_DMA0	__PPCBIT(14)
 #define	PMUXCR_DMA2	__PPCBIT(15)
 #define	PMUXCR_DMA1	__PPCBIT(30)

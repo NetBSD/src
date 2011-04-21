@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.17.4.1 2011/03/05 20:51:40 rmind Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.17.4.2 2011/04/21 01:41:20 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.17.4.1 2011/03/05 20:51:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.17.4.2 2011/04/21 01:41:20 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -58,9 +58,9 @@ compat_13_sys_sigreturn(struct lwp *l,
 	/* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */
-	struct proc *p = l->l_proc;
+	struct proc * const p = l->l_proc;
+	struct trapframe * const tf = l->l_md.md_utf;
 	struct sigcontext13 sc;
-	struct trapframe *tf;
 	int error;
 	sigset_t mask;
 
@@ -72,8 +72,6 @@ compat_13_sys_sigreturn(struct lwp *l,
 	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
 		return (error);
 
-	/* Restore the register context. */
-	tf = trapframe(l);
 	if (!PSL_USEROK_P(sc.sc_frame.srr1))
 		return (EINVAL);
 

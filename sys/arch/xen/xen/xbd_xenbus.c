@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.44 2009/10/19 18:41:11 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.44.4.1 2011/04/21 01:41:34 rmind Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.44 2009/10/19 18:41:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.44.4.1 2011/04/21 01:41:34 rmind Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -87,8 +87,8 @@ struct xbd_req {
 		void *req_data; /* pointer to the data buffer */
 	    } req_rw;
 	    struct {
-		    int s_error;
-		    volatile int s_done;
+		int s_error;
+		volatile int s_done;
 	    } req_sync;
 	} u;
 };

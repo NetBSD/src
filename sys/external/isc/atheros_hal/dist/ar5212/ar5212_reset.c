@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_reset.c,v 1.2.14.1 2011/03/05 20:55:01 rmind Exp $
+ * $Id: ar5212_reset.c,v 1.2.14.2 2011/04/21 01:42:05 rmind Exp $
  */
 #include "opt_ah.h"
 
@@ -692,7 +692,7 @@ bad:
 	RESTORE_CCK(ah, chan, isBmode);
 
 	OS_MARK(ah, AH_MARK_RESET_DONE, ecode);
-	if (*status)
+	if (status != AH_NULL)
 		*status = ecode;
 	return AH_FALSE;
 #undef FAIL

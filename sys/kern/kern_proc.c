@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.163.2.2 2011/03/05 20:55:15 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.163.2.3 2011/04/21 01:42:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.163.2.2 2011/03/05 20:55:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.163.2.3 2011/04/21 01:42:08 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -205,7 +205,6 @@ int maxuprc = MAXUPRC;
 int cmask = CMASK;
 
 MALLOC_DEFINE(M_EMULDATA, "emuldata", "Per-process emulation data");
-MALLOC_DEFINE(M_SUBPROC, "subproc", "Proc sub-structures");
 
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
@@ -1940,8 +1939,11 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		goto out_locked;
 	}
 
-	rw_enter(&p->p_reflock, RW_READER);
+	error = rw_tryenter(&p->p_reflock, RW_READER) ? 0 : EBUSY;
 	mutex_exit(p->p_lock);
+	if (error) {
+		goto out_locked;
+	}
 	mutex_exit(proc_lock);
 
 	if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV) {

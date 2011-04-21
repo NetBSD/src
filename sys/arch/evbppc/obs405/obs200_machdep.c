@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_machdep.c,v 1.10.2.2 2011/03/05 20:50:16 rmind Exp $	*/
+/*	$NetBSD: obs200_machdep.c,v 1.10.2.3 2011/04/21 01:41:01 rmind Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.10.2.2 2011/03/05 20:50:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.10.2.3 2011/04/21 01:41:01 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -334,7 +334,7 @@ pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 }
 
 int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	/*
 	 * We need to map the interrupt pin to the interrupt bit

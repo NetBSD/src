@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416_reset.c,v 1.2.14.1 2011/03/05 20:55:01 rmind Exp $
+ * $Id: ar5416_reset.c,v 1.2.14.2 2011/04/21 01:42:06 rmind Exp $
  */
 #include "opt_ah.h"
 
@@ -100,7 +100,6 @@ ar5416Reset(struct ath_hal *ah, HAL_OPMODE opmode,
 #define	FAIL(_code)	do { ecode = _code; goto bad; } while (0)
 	struct ath_hal_5212 *ahp = AH5212(ah);
 	HAL_CHANNEL_INTERNAL *ichan;
-	uint32_t softLedCfg;
 	uint32_t saveDefAntenna, saveLedState;
 	uint32_t macStaId1;
 	uint16_t rfXpdGain[2];
@@ -185,7 +184,6 @@ ar5416Reset(struct ath_hal *ah, HAL_OPMODE opmode,
 	saveLedState = OS_REG_READ(ah, AR_MAC_LED) &
 		(AR_MAC_LED_ASSOC | AR_MAC_LED_MODE |
 		 AR_MAC_LED_BLINK_THRESH_SEL | AR_MAC_LED_BLINK_SLOW);
-	softLedCfg = OS_REG_READ(ah, AR_GPIO_INTR_OUT);	
 
 	if (!ar5416ChipReset(ah, chan)) {
 		HALDEBUG(ah, HAL_DEBUG_ANY, "%s: chip reset failed\n", __func__);
@@ -196,11 +194,20 @@ ar5416Reset(struct ath_hal *ah, HAL_OPMODE opmode,
 	OS_REG_WRITE(ah, AR_RSSI_THR, rssiThrReg);
 
 	OS_MARK(ah, AH_MARK_RESET_LINE, __LINE__);
+	if (AR_SREV_MERLIN_10_OR_LATER(ah))
+		OS_REG_SET_BIT(ah, AR_GPIO_INPUT_EN_VAL, AR_GPIO_JTAG_DISABLE);
+
+	if (AR_SREV_KITE(ah)) {
+		uint32_t val;
+		val = OS_REG_READ(ah, AR_PHY_HEAVY_CLIP_FACTOR_RIFS);
+		val &= ~AR_PHY_RIFS_INIT_DELAY;
+		OS_REG_WRITE(ah, AR_PHY_HEAVY_CLIP_FACTOR_RIFS, val);
+	}
 
 	AH5416(ah)->ah_writeIni(ah, (HAL_CHANNEL_INTERNAL *)chan);
 
 	/* Setup 11n MAC/Phy mode registers */
-	ar5416Set11nRegs(ah,chan);	
+	ar5416Set11nRegs(ah, chan);	
 
 	OS_MARK(ah, AH_MARK_RESET_LINE, __LINE__);
 
@@ -281,9 +288,6 @@ ar5416Reset(struct ath_hal *ah, HAL_OPMODE opmode,
 
 	/* Restore previous led state */
 	OS_REG_WRITE(ah, AR_MAC_LED, OS_REG_READ(ah, AR_MAC_LED) | saveLedState);
-	/* Restore soft Led state to GPIO */
-	OS_REG_WRITE(ah, AR_GPIO_INTR_OUT, softLedCfg);
-
 	/* Restore previous antenna */
 	OS_REG_WRITE(ah, AR_DEF_ANTENNA, saveDefAntenna);
 
@@ -372,7 +376,7 @@ ar5416Reset(struct ath_hal *ah, HAL_OPMODE opmode,
 	return AH_TRUE;
 bad:
 	OS_MARK(ah, AH_MARK_RESET_DONE, ecode);
-	if (*status)
+	if (status != AH_NULL)
 		*status = ecode;
 	return AH_FALSE;
 #undef FAIL
@@ -1082,6 +1086,8 @@ ar5416SetResetPowerOn(struct ath_hal *ah)
     OS_REG_WRITE(ah, AR_RC, AR_RC_AHB);
     OS_REG_WRITE(ah, AR_RTC_RESET, 0);
     OS_DELAY(20);
+    OS_REG_WRITE(ah, AR_RC, 0);
+
     OS_REG_WRITE(ah, AR_RTC_RESET, 1);
 
     /*

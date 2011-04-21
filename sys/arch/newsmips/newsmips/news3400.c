@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.19.40.1 2011/03/05 20:51:25 rmind Exp $	*/
+/*	$NetBSD: news3400.c,v 1.19.40.2 2011/04/21 01:41:16 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.19.40.1 2011/03/05 20:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.19.40.2 2011/04/21 01:41:16 rmind Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -59,6 +59,27 @@ static volatile int badaddr_flag;
 #define INT_MASK_FPU MIPS_INT_MASK_3
 
 /*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given interrupt priority level.
+ */
+static const struct ipl_sr_map news3400_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1,
+	[IPL_SCHED] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1
+				| MIPS_INT_MASK_2,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
+};
+
+/*
  * Handle news3400 interrupts.
  */
 void
@@ -81,7 +102,7 @@ news3400_intr(int ppl, uint32_t pc, uint32_t status)
 				struct clockframe cf = {
 					.pc = pc,
 					.sr = status,
-					.intr = (curcpu()->ci_idepth > 0),
+					.intr = (curcpu()->ci_idepth > 1),
 				};
 				hardclock(&cf);
 				intrcnt[HARDCLOCK_INTR]++;
@@ -179,10 +200,16 @@ news3400_level1_intr(void)
 int
 news3400_badaddr(void *addr, u_int size)
 {
+	uint32_t cause;
 	volatile u_int x;
+	volatile uint8_t *intclr0 = (void *)INTCLR0;
 
 	badaddr_flag = 0;
 
+	/* clear bus error interrupt */
+	*intclr0 = INTCLR0_BERR;
+
+	/* bus error will cause INT4 */
 	switch (size) {
 	case 1:
 		x = *(volatile uint8_t *)addr;
@@ -193,6 +220,15 @@ news3400_badaddr(void *addr, u_int size)
 	case 4:
 		x = *(volatile uint32_t *)addr;
 		break;
+	}
+
+	/* also check CPU INT4 here for bus errors during splhigh() */
+	if (badaddr_flag == 0) {
+		cause = mips_cp0_cause_read();
+		if ((cause & MIPS_INT_MASK_4) != 0) {
+			badaddr_flag = 1;
+			*intclr0 = INTCLR0_BERR;
+		}
 	}
 
 	return badaddr_flag;
@@ -233,7 +269,8 @@ news3400_disable_intr(void)
 	volatile uint8_t *inten0 = (void *)INTEN0;
 	volatile uint8_t *inten1 = (void *)INTEN1;
 
-	*inten0 = 0;
+	/* always enable bus error check so that news3400_badaddr() works */
+	*inten0 = INTEN0_BERR;
 	*inten1 = 0;
 }
 
@@ -263,6 +300,8 @@ extern struct idrom idrom;
 void
 news3400_init(void)
 {
+
+	ipl_sr_map = news3400_ipl_sr_map;
 
 	enable_intr = news3400_enable_intr;
 	disable_intr = news3400_disable_intr;

@@ -1,9 +1,7 @@
-/*	$NetBSD: intr.h,v 1.16.6.1 2011/03/05 20:56:12 rmind Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.6.2 2011/04/21 01:42:16 rmind Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

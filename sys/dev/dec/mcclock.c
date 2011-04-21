@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.24.4.1 2010/05/30 05:17:19 rmind Exp $ */
+/* $NetBSD: mcclock.c,v 1.24.4.2 2011/04/21 01:41:46 rmind Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.24.4.1 2010/05/30 05:17:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.24.4.2 2011/04/21 01:41:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -219,7 +219,8 @@ mcclock_set(todr_chip_handle_t tch, struct timeval *tvp)
 
 #ifdef DEBUG
 	if (dt.dt_year != 1972)
-		printf("resettodr: botch (%d, %ld)\n", yearsecs, time_second);
+		printf("resettodr: botch (%d, %" PRId64 ")\n",
+		    yearsecs, time_second);
 #endif
 
 	s = splclock();

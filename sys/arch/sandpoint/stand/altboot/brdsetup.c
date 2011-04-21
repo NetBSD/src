@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.5.2.2 2011/03/05 20:51:47 rmind Exp $ */
+/* $NetBSD: brdsetup.c,v 1.5.2.3 2011/04/21 01:41:22 rmind Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 
+#include <powerpc/psl.h>
 #include <powerpc/oea/spr.h>
 
 #include <lib/libsa/stand.h>
@@ -82,20 +83,21 @@ static struct brdprop brdlist[] = {
 	"synology",
 	"Synology DS",
 	BRD_SYNOLOGY,
-	33164691,	/* from Synology/Linux source */
-	/* 33168000,		XXX better precision? */
+	33164691,	/* from Synology/Linux source            */
+			/* XXX should be 33165343 for the CS-406 */
 	"eumb", 0x4500, 115200,
 	NULL, synobrdfix, NULL, synoreset },
     {
 	"qnap",
-	"QNAP TS-101",
-	BRD_QNAPTS101,
-	0,
+	"QNAP TS",
+	BRD_QNAPTS,
+	33164691,	/* Linux source says 33000000, but the Synology  */
+			/* clock value delivers a much better precision. */
 	"eumb", 0x4500, 115200,
-	NULL, qnapbrdfix, NULL, NULL },
+	NULL, qnapbrdfix, NULL, qnapreset },
     {
 	"iomega",
-	"IOMEGA StorCenter",
+	"IOMEGA StorCenter G2",
 	BRD_STORCENTER,
 	0,
 	"eumb", 0x4500, 115200,
@@ -104,7 +106,7 @@ static struct brdprop brdlist[] = {
 	"dlink",
 	"D-Link DSM-G600",
 	BRD_DLINKDSM,
-	0,
+	33000000,
 	"eumb", 0x4500, 9600,
 	NULL, dlinkbrdfix, NULL, NULL },
     {
@@ -128,6 +130,8 @@ static uint32_t ticks_per_sec, ns_per_tick;
 
 static void brdfixup(void);
 static void setup(void);
+static inline uint32_t mfmsr(void);
+static inline void mtmsr(uint32_t);
 static inline uint32_t cputype(void);
 static inline u_quad_t mftb(void);
 static void init_uart(unsigned, unsigned, uint8_t);
@@ -138,6 +142,7 @@ const unsigned dcache_range_size = 4 * 1024;	/* 16KB / 4-way */
 
 unsigned uart1base;	/* console */
 unsigned uart2base;	/* optional satellite processor */
+#define RBR		0
 #define THR		0
 #define DLB		0
 #define DMB		1
@@ -153,6 +158,7 @@ unsigned uart2base;	/* optional satellite processor */
 #define  MCR_DTR	0x01
 #define LSR		5
 #define  LSR_THRE	0x20
+#define  LSR_DRDY	0x01
 #define DCR		0x11
 #define UART_READ(base, r)	*(volatile char *)(base + (r))
 #define UART_WRITE(base, r, v)	*(volatile char *)(base + (r)) = (v)
@@ -211,7 +217,7 @@ brdsetup(void)
 		/* VIA 686B southbridge at dev 22 */
 		brdtype = BRD_ENCOREPP1;
 	}
-	else if ((pcicfgread(dev11, PCI_CLASS_REG) >> 16) == PCI_CLASS_ETH) {
+	else if (PCI_CLASS(pcicfgread(dev11, PCI_CLASS_REG)) == PCI_CLASS_ETH) {
 		/* ADMtek AN985 (tlp) or RealTek 8169S (re) at dev 11 */
 		brdtype = BRD_KUROBOX;
 	}
@@ -219,9 +225,10 @@ brdsetup(void)
 		/* SKnet/Marvell (sk) at dev 15 */
 		brdtype = BRD_SYNOLOGY;
 	}
-	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x8086) {
-		/* Intel (wm) at dev 15 */
-		brdtype = BRD_QNAPTS101;
+	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x8086
+	    || PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x10ec) {
+		/* Intel (wm) or RealTek (re) at dev 15 */
+		brdtype = BRD_QNAPTS;
 	}
 	else if (PCI_VENDOR(pcicfgread(dev13, PCI_ID_REG)) == 0x1106) {
 		/* VIA 6410 (viaide) at dev 13 */
@@ -232,7 +239,7 @@ brdsetup(void)
 		brdtype = BRD_DLINKDSM;
 	}
 	else if (PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1283
-		   || PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1095) {
+	    || PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1095) {
 		/* ITE (iteide) or SiI (satalink) at dev 16 */
 		brdtype = BRD_NH230NAS;
 	}
@@ -252,7 +259,7 @@ brdsetup(void)
 			busclock = (extclk *
 			    pci_to_memclk[(val >> 19) & 0x1f] + 10) / 10;
 			/* PLLRATIO from HID1 */
-			__asm ("mfspr %0,1009" : "=r"(val));
+			asm volatile ("mfspr %0,1009" : "=r"(val));
 			cpuclock = ((uint64_t)busclock *
 			    mem_to_cpuclk[val >> 27] + 10) / 10;
 		} else
@@ -660,14 +667,24 @@ synoreset()
 {
 
 	send_sat("C");
-	/*NOTRECHED*/
+	/*NOTREACHED*/
 }
 
 void
 qnapbrdfix(struct brdprop *brd)
 {
 
-	/* illuminate LEDs */
+	init_uart(uart2base, 19200, LCR_8BITS | LCR_PNONE);
+	/* beep, status LED red */
+	send_sat("PW");
+}
+
+void
+qnapreset()
+{
+
+	send_sat("f");
+	/*NOTREACHED*/
 }
 
 void
@@ -683,7 +700,8 @@ dlinkbrdfix(struct brdprop *brd)
 {
 
 	init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
-	/* illuminate LEDs */
+	send_sat("SYN\n");
+	send_sat("ZWO\n");	/* power LED solid on */
 }
 
 void
@@ -696,11 +714,23 @@ nhnasbrdfix(struct brdprop *brd)
 void
 _rtt(void)
 {
+	uint32_t msr;
+
+	netif_shutdown_all();
 
 	if (brdprop->reset != NULL)
 		(*brdprop->reset)();
-	else
+	else {
+		msr = mfmsr();
+		msr &= ~PSL_EE;
+		mtmsr(msr);
+		asm volatile ("sync; isync");
+		asm volatile("mtspr %0,%1" : : "K"(81), "r"(0));
+		msr &= ~(PSL_ME | PSL_DR | PSL_IR);
+		mtmsr(msr);
+		asm volatile ("sync; isync");
 		run(0, 0, 0, 0, (void *)0xFFF00100); /* reset entry */
+	}
 	/*NOTREACHED*/
 }
 
@@ -785,11 +815,26 @@ _inv(uint32_t adr, uint32_t siz)
 }
 
 static inline uint32_t
+mfmsr(void)
+{
+	uint32_t msr;
+
+	asm volatile ("mfmsr %0" : "=r"(msr));
+	return msr;
+}
+
+static inline void
+mtmsr(uint32_t msr)
+{
+	asm volatile ("mtmsr %0" : : "r"(msr));
+}
+
+static inline uint32_t
 cputype(void)
 {
 	uint32_t pvr;
 
-	__asm volatile ("mfpvr %0" : "=r"(pvr));
+	asm volatile ("mfpvr %0" : "=r"(pvr));
 	return pvr >> 16;
 }
 
@@ -801,7 +846,7 @@ mftb(void)
 
 	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 	    : "=r"(tb), "=r"(scratch));
-	return (tb);
+	return tb;
 }
 
 static void
@@ -846,6 +891,23 @@ putchar(int c)
 	} while (timo-- > 0 && (lsr & LSR_THRE) == 0);
 	if (timo > 0)
 		UART_WRITE(uart1base, THR, c);
+}
+
+int
+getchar(void)
+{
+	unsigned lsr;
+
+	do {
+		lsr = UART_READ(uart1base, LSR);
+	} while ((lsr & LSR_DRDY) == 0);
+	return UART_READ(uart1base, RBR);
+}
+
+int
+tstchar(void)
+{
+	return (UART_READ(uart1base, LSR) & LSR_DRDY) != 0;
 }
 
 unsigned
@@ -959,24 +1021,39 @@ redboot_fis_lookup(const char *filename)
 	return NULL;
 }
 
+static void
+read_mac_string(uint8_t *mac, char *p)
+{
+	int i;
+
+	for (i = 0; i < 6; i++, p += 3)
+		*mac++ = read_hex(p);
+}
+
 /*
- * For cost saving reasons some NAS boxes are missing the ROM for the
- * NIC's ethernet address and keep it in their Flash memory.
+ * For cost saving reasons some NAS boxes lack SEEPROM for NIC's
+ * ethernet address and keep it in their Flash memory instead.
  */
 void
 read_mac_from_flash(uint8_t *mac)
 {
 	uint8_t *p;
 
-	if (brdtype == BRD_SYNOLOGY) {
+	switch (brdtype) {
+	case BRD_SYNOLOGY:
 		p = redboot_fis_lookup("vendor");
-		if (p != NULL) {
-			memcpy(mac, p, 6);
-			return;
-		}
-	} else
+		if (p == NULL)
+			break;
+		memcpy(mac, p, 6);
+		return;
+	case BRD_DLINKDSM:
+		read_mac_string(mac, (char *)0xfff0ff80);
+		return;
+	default:
 		printf("Warning: This board has no known method defined "
 		    "to determine its MAC address!\n");
+		break;
+	}
 
 	/* set to 00:00:00:00:00:00 in case of error */
 	memset(mac, 0, 6);

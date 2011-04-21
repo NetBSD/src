@@ -1,4 +1,4 @@
-#	$NetBSD: TOASTER,v 1.2 2005/12/11 12:17:06 christos Exp $
+#	$NetBSD: TOASTER,v 1.2.102.1 2011/04/21 01:40:57 rmind Exp $
 #
 #	TOASTER - kernel for the NetBSD/toaster demo first unveiled during
 #       LinuxWorld Expo 2005
@@ -8,7 +8,7 @@ include	"arch/evbarm/conf/TS7200"
 
 toastersensors*	at tspld?
 wskbd*	at toastersensors? console ? mux 1
- 
+
 toasterlcd*	at tsdio0
 toaster*	at tsdio0
 wsdisplay*	at toasterlcd? console ?

@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.2.6.1 2011/03/05 20:51:03 rmind Exp $
+#	$NetBSD: files.rmixl,v 1.2.6.2 2011/04/21 01:41:10 rmind Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -41,6 +41,11 @@ attach com at obio with com_rmixl
 file	arch/mips/rmi/rmixl_com.c		com_rmixl
 defparam opt_com.h				CONSADDR CONSFREQ CONSPEED CONMODE
 
+# GPIO
+device	rmixl_gpio: gpiobus
+attach	rmixl_gpio at obio
+file	arch/mips/rmi/rmixl_gpio.c		rmixl_gpio
+
 # PCIe
 device  rmixl_pcie: pcibus
 attach  rmixl_pcie at obio
@@ -50,6 +55,23 @@ file    arch/mips/rmi/rmixl_pcie.c		rmixl_pcie	needs-flag
 device  rmixl_pcix: pcibus
 attach  rmixl_pcix at obio
 file    arch/mips/rmi/rmixl_pcix.c		rmixl_pcix	needs-flag
+
+# RMI Periperal IO Bus to Flash, PCMCIA memory controllers
+define	rmixl_iobus { [cs=-1], [addr=-1], [size=-1], [intr=-1] }
+device	rmixl_iobus: rmixl_iobus
+attach  rmixl_iobus at obio                        
+file    arch/mips/rmi/rmixl_iobus_space.c	rmixl_iobus
+file    arch/mips/rmi/rmixl_iobus.c		rmixl_iobus
+
+# NAND flash controller
+device	rmixl_nand: nandbus 
+attach  rmixl_nand at rmixl_iobus                        
+file    arch/mips/rmi/rmixl_nand.c		rmixl_nand
+
+# PCMCIA controller
+device	rmixl_pcic: pcmciabus 
+attach  rmixl_pcic at rmixl_iobus                        
+file    arch/mips/rmi/rmixl_pcic.c		rmixl_pcic
 
 # On-chip USB interface
 define rmixl_usbi { [addr=-1], [size=-1], [intr=-1] }

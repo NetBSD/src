@@ -1,9 +1,9 @@
-/*	$NetBSD: rd94.h,v 1.7 2003/01/19 03:36:58 tsutsui Exp $	*/
+/*	$NetBSD: rd94.h,v 1.7.130.1 2011/04/21 01:40:50 rmind Exp $	*/
 /*	$OpenBSD: pica.h,v 1.4 1996/09/14 15:58:28 pefo Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Per Fogelstrom
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:

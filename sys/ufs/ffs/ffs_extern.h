@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.75 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.75.4.1 2011/04/21 01:42:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -99,7 +99,6 @@ int	ffs_blkalloc_ump(struct ufsmount *, daddr_t, long);
 void	ffs_blkfree(struct fs *, struct vnode *, daddr_t, long, ino_t);
 void	ffs_blkfree_snap(struct fs *, struct vnode *, daddr_t, long, ino_t);
 int	ffs_vfree(struct vnode *, ino_t, int);
-void	ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
 int	ffs_checkfreefile(struct fs *, struct vnode *, ino_t);
 int	ffs_freefile(struct mount *, ino_t, int);
 int	ffs_freefile_snap(struct fs *, struct vnode *, ino_t, int);
@@ -200,6 +199,10 @@ void	ffs_clrblock(struct fs *, u_char *, int32_t);
 void	ffs_setblock(struct fs *, u_char *, int32_t);
 void	ffs_itimes(struct inode *, const struct timespec *,
     const struct timespec *, const struct timespec *);
+void	ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
+
+/* ffs_quota2.c */
+int	ffs_quota2_mount(struct mount *);
 
 __END_DECLS
 

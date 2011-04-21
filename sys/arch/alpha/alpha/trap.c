@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.121.4.2 2011/03/05 20:49:10 rmind Exp $ */
+/* $NetBSD: trap.c,v 1.121.4.3 2011/04/21 01:40:46 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121.4.2 2011/03/05 20:49:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121.4.3 2011/04/21 01:40:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,17 +149,6 @@ trap_init(void)
 	 */
 	alpha_pal_wrmces(alpha_pal_rdmces() &
 	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
-
-	/*
-	 * If this is the primary processor, initialize some trap
-	 * event counters.
-	 */
-	if (cpu_number() == hwrpb->rpb_primary_cpu_id) {
-		evcnt_attach_dynamic(&fpevent_use, EVCNT_TYPE_MISC, NULL,
-		    "FP", "proc use");
-		evcnt_attach_dynamic(&fpevent_reuse, EVCNT_TYPE_MISC, NULL,
-		    "FP", "proc re-use");
-	}
 }
 
 static void

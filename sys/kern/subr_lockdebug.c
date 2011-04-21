@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.41.4.1 2011/03/05 20:55:18 rmind Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.41.4.2 2011/04/21 01:42:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.41.4.1 2011/03/05 20:55:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.41.4.2 2011/04/21 01:42:09 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -572,9 +572,6 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 				    "not held by current LWP", true);
 				return;
 			}
-			ld->ld_flags &= ~LD_LOCKED;
-			ld->ld_unlocked = where;
-			ld->ld_lwp = NULL;
 			TAILQ_REMOVE(&l->l_ld_locks, ld, ld_chain);
 		} else {
 			if (ld->ld_cpu != (uint16_t)cpu_index(curcpu())) {
@@ -582,12 +579,12 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 				    "not held by current CPU", true);
 				return;
 			}
-			ld->ld_flags &= ~LD_LOCKED;
-			ld->ld_unlocked = where;		
-			ld->ld_lwp = NULL;
 			TAILQ_REMOVE(&curcpu()->ci_data.cpu_ld_locks, ld,
 			    ld_chain);
 		}
+		ld->ld_flags &= ~LD_LOCKED;
+		ld->ld_unlocked = where;		
+		ld->ld_lwp = NULL;
 	}
 	__cpu_simple_unlock(&ld->ld_spinlock);
 	splx(s);
@@ -733,12 +730,15 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...))
 		    "shares wanted: %18u exclusive: %18u\n"
 		    "current cpu  : %18u last held: %18u\n"
 		    "current lwp  : %#018lx last held: %#018lx\n"
-		    "last locked  : %#018lx unlocked : %#018lx\n",
+		    "last locked%c : %#018lx unlocked%c: %#018lx\n",
 		    (unsigned)ld->ld_shares, ((ld->ld_flags & LD_LOCKED) != 0),
 		    (unsigned)ld->ld_shwant, (unsigned)ld->ld_exwant,
 		    (unsigned)cpu_index(curcpu()), (unsigned)ld->ld_cpu,
 		    (long)curlwp, (long)ld->ld_lwp,
-		    (long)ld->ld_locked, (long)ld->ld_unlocked);
+		    ((ld->ld_flags & LD_LOCKED) ? '*' : ' '),
+		    (long)ld->ld_locked,
+		    ((ld->ld_flags & LD_LOCKED) ? ' ' : '*'),
+		    (long)ld->ld_unlocked);
 	}
 
 	if (ld->ld_lockops->lo_dump != NULL)

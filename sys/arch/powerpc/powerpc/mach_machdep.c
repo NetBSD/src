@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.28.4.1 2011/03/05 20:51:41 rmind Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.28.4.2 2011/04/21 01:41:20 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.28.4.1 2011/03/05 20:51:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.28.4.2 2011/04/21 01:41:20 rmind Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -81,17 +81,14 @@ mach_host_basic_info(struct mach_host_basic_info *info)
 void
 mach_create_thread_child(void *arg)
 {
-	struct mach_create_thread_child_args *mctc;
-	struct lwp *l;
-	struct trapframe *tf;
+	struct mach_create_thread_child_args * const mctc = arg;
+	struct lwp * const l = mctc->mctc_lwp;
+	struct trapframe * const tf = l->l_md.md_utf;
 	struct exec_macho_powerpc_thread_state *regs;
 
 #ifdef DEBUG_MACH
 	printf("entering mach_create_thread_child\n");
 #endif
-
-	mctc = (struct mach_create_thread_child_args *)arg;
-	l = mctc->mctc_lwp;
 
 	if (mctc->mctc_flavor != MACHO_POWERPC_THREAD_STATE) {
 		mctc->mctc_child_done = 1;
@@ -101,7 +98,6 @@ mach_create_thread_child(void *arg)
 		mutex_exit(proc_lock);
 	}
 	
-	tf = trapframe(l);
 	regs = (struct exec_macho_powerpc_thread_state *)mctc->mctc_state;
 
 	/* 

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1.6.1 2011/03/05 20:51:09 rmind Exp $	*/
+/*	$NetBSD: spl.S,v 1.1.6.2 2011/04/21 01:41:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,27 +38,14 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.1.6.1 2011/03/05 20:51:09 rmind Exp $")
+RCSID("$NetBSD: spl.S,v 1.1.6.2 2011/04/21 01:41:13 rmind Exp $")
 
 #include "assym.h"
 
-#if defined(MIPS1) || defined(MIPS2)
-#define	NOP_L		nop
+#if (MIPS1 + MIPS2) > 0
+#define	NOP_L	nop
 #else
-#define	NOP_L		/* nothing */
-#endif
-
-#undef COP0_SYNC
-#if defined(MIPS3) || defined(MIPS4)
-#define	COP0_SYNC	sll $0,$0,1; sll $0,$0,1; sll $0,$0,3 /* ssnop; ssnop; ehb */
-#elif defined(MIPS32) || defined(MIPS64)
-#define	COP0_SYNC	sll $0,$0,1; sll $0,$0,1	/* ssnop; ssnop */
-#elif defined(MIPS32R2) || defined(MIPS64R2)
-#define	COP0_SYNC	sll $0,$0,3		/* ehb */
-#elif defined(MIPS1) || defined(MIPS2)
-#define	COP0_SYNC	nop
-#else
-#error missing one of MIPS1, MIPS2, MIPS3, MIPS4, MIPS32, MIPS32R2, MIPS64, MIPS64R2
+#define	NOP_L	/* nothing */
 #endif
 
 	.data
@@ -88,8 +75,9 @@ _splraise:
 	 * Can only use a0-a3 and v0-v1
 	 */
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
-	NOP_L
+	NOP_L					# load delay
 	INT_L	v0, CPU_INFO_CPL(a3)		# get current IPL from cpu_info
+	NOP_L					# load delay
 	sltu	v1, a1, v0			# newipl < curipl
 	bnez	v1, 1f				# yes, don't change.
 	 nop					#  branch delay
@@ -132,6 +120,7 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	PTR_L	a3, L_CPU(MIPS_CURLWP)		# get cpu_info
 	NOP_L					# load delay
 	INT_L	a2, CPU_INFO_CPL(a3)		# get IPL from cpu_info
+	NOP_L					# load delay
 	beq	a0, a2, 2f			# if same, nothing to do
 	 nop					#  branch delay
 #ifdef PARANOIA
@@ -143,7 +132,6 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	sll	a2, a0, INT_SCALESHIFT		# convert IPL to array offset
 	PTR_ADDU v1, a2				# add to table addr
 	INT_L	a1, (v1)			# load SR bits for this IPL
-	NOP_L					# load delay
 1:
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
 	NOP_L					# load delay
@@ -156,7 +144,7 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 	mtc0	v1, MIPS_COP_0_STATUS		## store back
 	COP0_SYNC
 #ifdef PARANOIA
-	j	ra
+	jr	ra
 	 nop					#  branch delay
 #endif /* PARANOIA */
 2:
@@ -171,7 +159,7 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 3:	bne	a1, v1, 3b
 	 nop					#  branch delay
 #endif /* PARANOIA */
-	j	ra
+	jr	ra
 	 nop					#  branch delay
 END(_splsw_splx)
 
@@ -193,9 +181,7 @@ STATIC_LEAF(_splsw_spl0)
 #error IPL_NONE != 0
 #endif
 	mtc0	v0, MIPS_COP_0_STATUS		## enable all sources
-	COP0_SYNC
-	j	ra				# return
-	 nop					#  branch delay
+	JR_HB_RA				# return (clear hazards)
 END(_splsw_spl0)
 
 STATIC_LEAF(_splsw_setsoftintr)
@@ -208,9 +194,7 @@ STATIC_LEAF(_splsw_setsoftintr)
 	mtc0	v0, MIPS_COP_0_CAUSE		# store back
 	COP0_SYNC
 	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
-	COP0_SYNC
-	j	ra
-	 nop
+	JR_HB_RA				# return (clear hazards)
 END(_splsw_setsoftintr)
 
 STATIC_LEAF(_splsw_clrsoftintr)
@@ -223,9 +207,7 @@ STATIC_LEAF(_splsw_clrsoftintr)
 	mtc0	v0, MIPS_COP_0_CAUSE		# store back
 	COP0_SYNC
 	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
-	COP0_SYNC
-	j	ra
-	 nop					#  branch delay
+	JR_HB_RA				# return (clear hazards)
 END(_splsw_clrsoftintr)
 
 STATIC_LEAF(_splsw_splraise)
@@ -258,7 +240,7 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 #endif
 	INT_S	a1, CPU_INFO_CPL(a3)		## save IPL in cpu_info
 #ifdef PARANOIA
-	j	ra				## return
+	jr	ra				## return
 	 nop					#  branch delay
 #endif /* PARANOIA */
 1:
@@ -268,7 +250,7 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 2:	bnez	v1, 2b				# loop forever.
 	 nop					# branch delay
 #endif /* PARANOIA */
-	j	ra				## return
+	jr	ra				## return
 	 nop					# branch delay
 END(_splsw_splhigh)
 
@@ -352,7 +334,7 @@ STATIC_LEAF(_splsw_splintr)
 	 move	v1, ta2				# whittle down pending intrs
 
 2:
-	j	ra
+	jr	ra
 	 INT_S	v1, (a0)			# return a new pending mask
 END(_splsw_splintr)
 
@@ -374,7 +356,7 @@ STATIC_LEAF(_splsw_splcheck)
 1:	bne	t0, t3, 1b			# loop forever if not equal
 	 nop					#  branch delay
 #endif /* PARANOIA */
-	j	ra
+	jr	ra
 	 nop					#  branch delay
 END(_splsw_splcheck)
 

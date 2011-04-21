@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.68.4.2 2011/03/05 20:49:16 rmind Exp $
+#	$NetBSD: files.amd64,v 1.68.4.3 2011/04/21 01:40:48 rmind Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -34,9 +34,9 @@ file	arch/amd64/amd64/busfunc.S
 file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/amd64/amd64/cpufunc.S
 file	arch/amd64/amd64/db_disasm.c		ddb
-file	arch/amd64/amd64/db_interface.c	ddb
+file	arch/amd64/amd64/db_interface.c		ddb
+file	arch/amd64/amd64/db_machdep.c		ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
-file	arch/amd64/amd64/db_trace.c		ddb
 file	arch/amd64/amd64/kobj_machdep.c		modular
 file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk

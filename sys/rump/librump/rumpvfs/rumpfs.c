@@ -1,7 +1,7 @@
-/*	$NetBSD: rumpfs.c,v 1.37.2.4 2011/03/05 20:56:16 rmind Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.37.2.5 2011/04/21 01:42:18 rmind Exp $	*/
 
 /*
- * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.37.2.4 2011/03/05 20:56:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.37.2.5 2011/04/21 01:42:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1219,6 +1219,8 @@ etread(struct rumpfs_node *rn, struct uio *uio)
 	int error = 0;
 
 	bufsize = uio->uio_resid;
+	if (bufsize == 0)
+		return 0;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
 	if ((n = rumpuser_pread(rn->rn_readfd, buf, bufsize,
 	    uio->uio_offset + rn->rn_offset, &error)) == -1)
@@ -1275,6 +1277,8 @@ etwrite(struct rumpfs_node *rn, struct uio *uio)
 	int error = 0;
 
 	bufsize = uio->uio_resid;
+	if (bufsize == 0)
+		return 0;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
 	error = uiomove(buf, bufsize, uio);
 	if (error)

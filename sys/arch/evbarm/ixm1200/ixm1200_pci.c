@@ -1,4 +1,4 @@
-/*      $NetBSD: ixm1200_pci.c,v 1.7 2009/10/21 14:15:51 rmind Exp $ */
+/*      $NetBSD: ixm1200_pci.c,v 1.7.4.1 2011/04/21 01:40:58 rmind Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2002, 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.7 2009/10/21 14:15:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.7.4.1 2011/04/21 01:40:58 rmind Exp $");
 
 /*
  * IXM1200 PCI interrupt support.
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.7 2009/10/21 14:15:51 rmind Exp $"
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
-int ixm1200_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int ixm1200_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 const char *ixm1200_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *ixm1200_pci_intr_evcnt(void *, pci_intr_handle_t);
 void *ixm1200_pci_intr_establish(void *, pci_intr_handle_t, int,
@@ -71,7 +71,7 @@ ixm1200_pci_init(pci_chipset_tag_t pc, void *cookie)
 }
 
 int
-ixm1200_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+ixm1200_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 #ifdef PCI_DEBUG
 	void *v = pa->pa_pc;

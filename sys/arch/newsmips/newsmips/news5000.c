@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.17.40.1 2011/03/05 20:51:25 rmind Exp $	*/
+/*	$NetBSD: news5000.c,v 1.17.40.2 2011/04/21 01:41:16 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.17.40.1 2011/03/05 20:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.17.40.2 2011/04/21 01:41:16 rmind Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -53,6 +53,27 @@ static void news5000_tc_init(void);
 static uint32_t news5000_getfreerun(struct timecounter *);
 
 /*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given interrupt priority level.
+ */
+static const struct ipl_sr_map news5000_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1,
+	[IPL_SCHED] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1
+				| MIPS_INT_MASK_2,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
+};
+
+/*
  * Handle news5000 interrupts.
  */
 void
@@ -68,7 +89,6 @@ news5000_intr(int ppl, vaddr_t pc, uint32_t status)
 			static int l2cnt = 0;
 #endif
 			uint32_t int2stat;
-			struct clockframe cf;
 
 			int2stat = *(volatile uint32_t *)NEWS5000_INTST2;
 
@@ -84,11 +104,12 @@ news5000_intr(int ppl, vaddr_t pc, uint32_t status)
 #endif
 
 			if (int2stat & NEWS5000_INT2_TIMER0) {
+				struct clockframe cf = {
+					.pc = pc,
+					.sr = status,
+					.intr = (curcpu()->ci_idepth > 1),
+				};
 				*(volatile uint32_t *)NEWS5000_TIMER0 = 1;
-
-				cf.pc = pc;
-				cf.sr = status;
-
 				hardclock(&cf);
 				intrcnt[HARDCLOCK_INTR]++;
 			}
@@ -258,6 +279,8 @@ extern struct idrom idrom;
 void
 news5000_init(void)
 {
+
+	ipl_sr_map = news5000_ipl_sr_map;
 
 	enable_intr = news5000_enable_intr;
 	disable_intr = news5000_disable_intr;

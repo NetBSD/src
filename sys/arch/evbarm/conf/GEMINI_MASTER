@@ -1,5 +1,5 @@
 #
-#	GEMINI -- 
+#	GEMINI --
 #
 
 include	"arch/evbarm/conf/std.gemini"
@@ -41,7 +41,8 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 #options 	WAPBL		# File system journaling support - Experimental
@@ -220,7 +221,7 @@ geminigpio2	at obio0 addr 0x4f000000 intrbase 96  intr 24
 
 # USB
 ##ehci0	at obio? addr 0x68000000 size 0x400 intr 10 # 30?
-##ehci1	at obio? addr 0x69000000 size 0x400 intr 11 # 31? 
+##ehci1	at obio? addr 0x69000000 size 0x400 intr 11 # 31?
 
 ##usb* at ehci?
 ##uhub* at usb?
@@ -229,7 +230,7 @@ geminigpio2	at obio0 addr 0x4f000000 intrbase 96  intr 24
 
 # PCI
 ##pci0	at obio? bus ?
-##options PCI_NETBSD_CONFIGURE		# set up the PCI bus 
+##options PCI_NETBSD_CONFIGURE		# set up the PCI bus
 ##options	PCIVERBOSE
 ##options PCI_CONFIG_DUMP
 

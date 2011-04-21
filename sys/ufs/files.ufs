@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.24 2010/03/02 19:59:09 pooka Exp $
+#	$NetBSD: files.ufs,v 1.24.2.1 2011/04/21 01:42:19 rmind Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -33,6 +33,7 @@ file	ufs/ffs/ffs_vfsops.c		ffs | lfs | mfs | ext2fs
 file	ufs/ffs/ffs_vnops.c		ffs | lfs | mfs | ext2fs
 file	ufs/ffs/ffs_wapbl.c		ffs & wapbl
 file	ufs/ffs/ffs_appleufs.c		ffs & apple_ufs
+file	ufs/ffs/ffs_quota2.c		quota2 & (ffs | lfs | mfs | ext2fs)
 
 file	ufs/lfs/lfs_alloc.c		lfs
 file	ufs/lfs/lfs_balloc.c		lfs
@@ -58,7 +59,11 @@ file	ufs/ufs/ufs_extattr.c		(ffs | mfs) & ufs_extattr
 file	ufs/ufs/ufs_ihash.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_inode.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs
-file	ufs/ufs/ufs_quota.c		quota & (ffs | lfs | mfs | ext2fs)
+file	ufs/ufs/ufs_quota.c		(quota | quota2) & (ffs | lfs | mfs | ext2fs)
+file	ufs/ufs/ufs_quota1.c		quota & (ffs | lfs | mfs | ext2fs)
+file	ufs/ufs/ufs_quota2.c		quota2 & (ffs | lfs | mfs | ext2fs)
+file	ufs/ufs/quota1_subr.c
+file	ufs/ufs/quota2_subr.c		quota2 & (ffs | lfs | mfs | ext2fs)
 file	ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_wapbl.c		ffs & wapbl

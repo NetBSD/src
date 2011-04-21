@@ -1,4 +1,4 @@
-/* $NetBSD: pci_axppci_33.c,v 1.33.4.1 2011/03/05 20:49:13 rmind Exp $ */
+/* $NetBSD: pci_axppci_33.c,v 1.33.4.2 2011/04/21 01:40:46 rmind Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.33.4.1 2011/03/05 20:49:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.33.4.2 2011/04/21 01:40:46 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.33.4.1 2011/03/05 20:49:13 rmind
 
 #include "sio.h"
 
-int     dec_axppci_33_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int     dec_axppci_33_intr_map(const struct pci_attach_args *,
+	    pci_intr_handle_t *);
 const char *dec_axppci_33_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *dec_axppci_33_intr_evcnt(void *, pci_intr_handle_t);
 void    *dec_axppci_33_intr_establish(void *, pci_intr_handle_t,
@@ -97,7 +98,7 @@ pci_axppci_33_pickintr(struct lca_config *lcp)
 }
 
 int
-dec_axppci_33_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+dec_axppci_33_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;

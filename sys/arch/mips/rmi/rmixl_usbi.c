@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_usbi.c,v 1.1.6.1 2011/03/05 20:51:11 rmind Exp $	*/
+/*	$NetBSD: rmixl_usbi.c,v 1.1.6.2 2011/04/21 01:41:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.6.1 2011/03/05 20:51:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.6.2 2011/04/21 01:41:13 rmind Exp $");
 
 #include "locators.h"
 
@@ -148,10 +148,10 @@ rmixl_usbi_attach(device_t parent, device_t self, void *aux)
         r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_BIST_EACH_STS);
 	aprint_normal(": BIST status=");
 	if ((r & __BIT(18)) == 0) {			/* XXX USB_BIST */
-		aprint_normal("FAIL\n");
-		return;
+		aprint_normal("FAIL,");
+	} else {
+		aprint_normal("OK,");
 	}
-	aprint_normal("OK");
 
 	/*
 	 * set BYTESWAP_EN register nonzero when software is little endian

@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.22.4.1 2011/03/05 20:49:49 rmind Exp $	*/
+/*	$NetBSD: gt.c,v 1.22.4.2 2011/04/21 01:40:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.22.4.1 2011/03/05 20:49:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.22.4.2 2011/04/21 01:40:55 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -135,7 +135,6 @@ gt_attach(device_t parent, device_t self, void *aux)
 #endif
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.58.2.2 2011/03/05 20:50:51 rmind Exp $
+#	$NetBSD: GENERIC,v 1.58.2.3 2011/04/21 01:41:08 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.58.2.2 $"
+#ident 		"GENERIC-$Revision: 1.58.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -87,7 +87,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=400000
+options 	SYMTAB_SPACE=580000
 options 	PERFCTRS	# performance counters
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -138,7 +138,8 @@ file-system 	MSDOSFS		# MS-DOS file system
 file-system     FILECORE        # Acorn filecore file system
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.

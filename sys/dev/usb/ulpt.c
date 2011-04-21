@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.84.4.1 2011/03/05 20:54:15 rmind Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.84.4.2 2011/04/21 01:42:02 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.84.4.1 2011/03/05 20:54:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.84.4.2 2011/04/21 01:42:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,10 +524,8 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 	error = 0;
 	sc->sc_refcnt++;
 
-#if 0 /* XXX causes some printers to disconnect */
 	if ((flags & ULPT_NOPRIME) == 0)
 		ulpt_reset(sc);
-#endif
 
 	for (spin = 0; (ulpt_status(sc) & LPS_SELECT) == 0; spin += STEP) {
 		DPRINTFN(2, ("ulpt_open: waiting a while\n"));

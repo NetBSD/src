@@ -1,7 +1,7 @@
-/*	$NetBSD: vm.c,v 1.70.4.4 2011/03/05 20:56:15 rmind Exp $	*/
+/*	$NetBSD: vm.c,v 1.70.4.5 2011/04/21 01:42:17 rmind Exp $	*/
 
 /*
- * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by
  * The Finnish Cultural Foundation and the Research Foundation of
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70.4.4 2011/03/05 20:56:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70.4.5 2011/04/21 01:42:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>

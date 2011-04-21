@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.94.4.2 2010/05/30 05:18:09 rmind Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.94.4.3 2011/04/21 01:42:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.94.4.2 2010/05/30 05:18:09 rmind Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.94.4.3 2011/04/21 01:42:21 rmind Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -106,7 +106,7 @@ READ(void *v)
 		return (0);
 
 #ifndef LFS_READWRITE
-	if ((ip->i_flags & SF_SNAPSHOT))
+	if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) == SF_SNAPSHOT)
 		return ffs_snapshot_read(vp, uio, ioflag);
 #endif /* !LFS_READWRITE */
 

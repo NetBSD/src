@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.41.2.2 2011/03/05 20:50:04 rmind Exp $
+#	$NetBSD: TS7200,v 1.41.2.3 2011/04/21 01:40:57 rmind Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -51,7 +51,8 @@ file-system	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental

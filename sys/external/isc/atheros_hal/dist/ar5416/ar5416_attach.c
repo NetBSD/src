@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416_attach.c,v 1.1.1.1.14.1 2011/03/05 20:55:01 rmind Exp $
+ * $Id: ar5416_attach.c,v 1.1.1.1.14.2 2011/04/21 01:42:06 rmind Exp $
  */
 #include "opt_ah.h"
 
@@ -263,6 +263,13 @@ ar5416Attach(uint16_t devid, HAL_SOFTC sc,
 		HAL_INI_VAL((struct ini *)&AH5416(ah)->ah_ini_addac, 31, 1) = 0;
 	}
 
+	HAL_INI_INIT(&AH5416(ah)->ah_ini_pcieserdes, ar5416PciePhy, 2);
+	ar5416AttachPCIE(ah);
+
+	ecode = ath_hal_v14EepromAttach(ah);
+	if (ecode != HAL_OK)
+		goto bad;
+
 	if (!ar5416ChipReset(ah, AH_NULL)) {	/* reset chip */
 		HALDEBUG(ah, HAL_DEBUG_ANY, "%s: chip reset failed\n",
 		    __func__);
@@ -315,13 +322,6 @@ ar5416Attach(uint16_t devid, HAL_SOFTC sc,
 		goto bad;
 #endif
 	}
-
-	HAL_INI_INIT(&AH5416(ah)->ah_ini_pcieserdes, ar5416PciePhy, 2);
-	ar5416AttachPCIE(ah);
-
-	ecode = ath_hal_v14EepromAttach(ah);
-	if (ecode != HAL_OK)
-		goto bad;
 
 	/*
 	 * Got everything we need now to setup the capabilities.
@@ -790,6 +790,17 @@ ar5416FillCapabilityInfo(struct ath_hal *ah)
 
 	pCap->halTstampPrecision = 32;
 	pCap->halHwPhyCounterSupport = AH_TRUE;
+	pCap->halIntrMask = HAL_INT_COMMON
+			| HAL_INT_RX
+			| HAL_INT_TX
+			| HAL_INT_FATAL
+			| HAL_INT_BNR
+			| HAL_INT_BMISC
+			| HAL_INT_DTIMSYNC
+			| HAL_INT_TSFOOR
+			| HAL_INT_CST
+			| HAL_INT_GTT
+			;
 
 	pCap->halFastCCSupport = AH_TRUE;
 	pCap->halNumGpioPins = 6;
@@ -809,6 +820,7 @@ ar5416FillCapabilityInfo(struct ath_hal *ah)
 	pCap->halMbssidAggrSupport = AH_TRUE;
 	pCap->halForcePpmSupport = AH_TRUE;
 	pCap->halEnhancedPmSupport = AH_TRUE;
+	pCap->halBssidMatchSupport = AH_TRUE;
 
 	if (ath_hal_eepromGetFlag(ah, AR_EEP_RFKILL) &&
 	    ath_hal_eepromGet(ah, AR_EEP_RFSILENT, &ahpriv->ah_rfsilent) == HAL_OK) {

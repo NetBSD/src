@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR_FC,v 1.27.4.2 2011/03/05 20:50:04 rmind Exp $
+#	$NetBSD: TEAMASA_NPWR_FC,v 1.27.4.3 2011/04/21 01:40:57 rmind Exp $
 #
 #	TeamASA NPWR-FC, i80321-based SBC
 #
@@ -46,7 +46,8 @@ file-system	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental
@@ -136,7 +137,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=335000
+options 	SYMTAB_SPACE=380000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs

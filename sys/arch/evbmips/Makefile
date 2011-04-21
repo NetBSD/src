@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2008/10/25 22:27:37 apb Exp $
+#	$NetBSD: Makefile,v 1.7.16.1 2011/04/21 01:40:59 rmind Exp $
 
 # Makefile for evbmips tags file and boot blocks
 
@@ -7,9 +7,15 @@
 
 # XXX !  fix this
 TEVBMIPS=	${SYSDIR}/arch/evbmips/tags
-SEVBMIPS=	${SYSDIR}/arch/evbmips/evbmips/*.[ch] \
-		${SYSDIR}/arch/evbmips/include/*.h \
-		${SYSDIR}/arch/evbmips/isa/*.[ch]
+SEVBMIPS=	${SYSDIR}/arch/evbmips/adm5120/*.[ch]
+SEVBMIPS+=	${SYSDIR}/arch/evbmips/alchemy/*.[ch]
+SEVBMIPS+=	${SYSDIR}/arch/evbmips/atheros/*.[ch]
+SEVBMIPS+=	${SYSDIR}/arch/evbmips/evbmips/*.[ch]
+SEVBMIPS+=	${SYSDIR}/arch/evbmips/gdium/*.[ch]
+SEVBMIPS+=	${SYSDIR}/arch/evbmips/include/*.h
+SEVBMIPS+=	${SYSDIR}/arch/evbmips/isa/*.[ch]
+SEVBMIPS+=	${SYSDIR}/arch/evbmips/malta/*.[ch]
+SEVBMIPS+=	${SYSDIR}/arch/evbmips/rmixl/*.[ch]
 AEVBMIPS=	${SYSDIR}/arch/evbmips/evbmips/*.S
 
 # Directories in which to place tags links
@@ -23,7 +29,7 @@ tags:
 	-${FINDCOMM} | xargs ctags -wadtf ${TEVBMIPS}
 	egrep "^LEAF(.*)|^[AN]LEAF(.*)|^NON_LEAF(.*)" ${AEVBMIPS} ${AMIPS} | \
 	    ${TOOL_SED} -e \
-		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 	    >> ${TEVBMIPS}
 	sort -o ${TEVBMIPS} ${TEVBMIPS}
 

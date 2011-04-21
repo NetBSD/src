@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.78.4.2 2011/03/05 20:50:43 rmind Exp $
+#	$NetBSD: Makefile.booters,v 1.78.4.3 2011/04/21 01:41:08 rmind Exp $
 
 .include <bsd.own.mk>
 
@@ -113,7 +113,7 @@ ${BASE}.rom: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.rom.tmp
 	${GENPROM} ${ROM_SIZE} < ${BASE}.rom.tmp > ${BASE}.rom || \
-	    rm -f ${BASE}.rom
+	    ( rm -f ${BASE}.rom && false )
 	rm -f ${BASE}.rom.tmp
 
 CLEANFILES+= ${BASE}.com

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.48 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.48.26.1 2011/04/21 01:42:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.48 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.48.26.1 2011/04/21 01:42:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,11 +164,13 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		 * return a request for a zeroed out buffer if attempts
 		 * are made to read a BLK_NOCOPY or BLK_SNAP block.
 		 */
-		if ((ip->i_flags & SF_SNAPSHOT) && daddr > 0 &&
+		if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) == SF_SNAPSHOT
+		    && daddr > 0 &&
 		    daddr < ump->um_seqinc) {
 			*bnp = -1;
 		} else if (*bnp == 0) {
-			if (ip->i_flags & SF_SNAPSHOT) {
+			if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL))
+			    == SF_SNAPSHOT) {
 				*bnp = blkptrtodb(ump, bn * ump->um_seqinc);
 			} else {
 				*bnp = -1;
@@ -305,14 +307,15 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	 * return a request for a zeroed out buffer if attempts are made
 	 * to read a BLK_NOCOPY or BLK_SNAP block.
 	 */
-	if ((ip->i_flags & SF_SNAPSHOT) && daddr > 0 &&
-	    daddr < ump->um_seqinc) {
+	if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) == SF_SNAPSHOT
+	    && daddr > 0 && daddr < ump->um_seqinc) {
 		*bnp = -1;
 		return (0);
 	}
 	*bnp = blkptrtodb(ump, daddr);
 	if (*bnp == 0) {
-		if (ip->i_flags & SF_SNAPSHOT) {
+		if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL))
+		    == SF_SNAPSHOT) {
 			*bnp = blkptrtodb(ump, bn * ump->um_seqinc);
 		} else {
 			*bnp = -1;

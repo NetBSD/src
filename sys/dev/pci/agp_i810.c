@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.66.2.3 2011/03/05 20:53:34 rmind Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.66.2.4 2011/04/21 01:41:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.66.2.3 2011/03/05 20:53:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.66.2.4 2011/04/21 01:41:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ agp_i810_write_gtt_entry(struct agp_i810_softc *isc, off_t off, bus_addr_t v)
 
 /* XXXthorpej -- duplicated code (see arch/x86/pci/pchb.c) */
 static int
-agp_i810_vgamatch(struct pci_attach_args *pa)
+agp_i810_vgamatch(const struct pci_attach_args *pa)
 {
 
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||

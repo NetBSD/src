@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109.2.1 2011/03/05 20:51:25 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109.2.2 2011/04/21 01:41:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109.2.1 2011/03/05 20:51:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109.2.2 2011/04/21 01:41:16 rmind Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -137,27 +137,6 @@ void to_monitor(int) __attribute__((__noreturn__));
 /* stacktrace code violates prototypes to get callee's registers */
 extern void stacktrace(void); /*XXX*/
 #endif
-
-/*
- * This is a mask of bits to clear in the SR when we go to a
- * given interrupt priority level.
- */
-const struct ipl_sr_map newsmips_ipl_sr_map = {
-    .sr_bits = {
-	[IPL_NONE] =		0,
-	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
-	[IPL_VM] =		MIPS_SOFT_INT_MASK
-				| MIPS_INT_MASK_0
-				| MIPS_INT_MASK_1,
-	[IPL_SCHED] =		MIPS_SOFT_INT_MASK
-				| MIPS_INT_MASK_0
-				| MIPS_INT_MASK_1
-				| MIPS_INT_MASK_2,
-	[IPL_DDB] =		MIPS_INT_MASK,
-	[IPL_HIGH] =		MIPS_INT_MASK,
-    },
-};
 
 extern u_long bootdev;
 extern char edata[], end[];
@@ -284,7 +263,6 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	ipl_sr_map = newsmips_ipl_sr_map;
 	mips_vector_init(NULL, false);
 
 	/*

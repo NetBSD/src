@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.21.4.1 2011/03/05 20:51:53 rmind Exp $	*/
+/*	$NetBSD: int.c,v 1.21.4.2 2011/04/21 01:41:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.21.4.1 2011/03/05 20:51:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.21.4.2 2011/04/21 01:41:23 rmind Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -639,6 +639,7 @@ int_8254_intr0(vaddr_t pc, uint32_t status, uint32_t ipending)
 
 	cf.pc = pc;
 	cf.sr = status;
+	cf.intr = (curcpu()->ci_idepth > 1);
 
 	hardclock(&cf);
 
