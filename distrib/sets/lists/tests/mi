@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.310 2011/04/17 06:26:02 jruoho Exp $
+# $NetBSD: mi,v 1.311 2011/04/22 00:53:44 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -393,6 +393,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/rpc				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/rpc/t_xdr.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/setjmp/t_threadjmp.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp/t_setjmp.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ssp				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/ssp/h_fgets.debug		tests-lib-debug		debug,atf,ssp
@@ -1873,6 +1874,7 @@
 ./usr/tests/lib/libc/rpc/t_xdr			tests-lib-tests		atf
 ./usr/tests/lib/libc/setjmp			tests-lib-tests
 ./usr/tests/lib/libc/setjmp/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/setjmp/t_threadjmp		tests-lib-tests		atf
 ./usr/tests/lib/libc/setjmp/t_setjmp		tests-lib-tests		atf
 ./usr/tests/lib/libc/ssp			tests-lib-tests
 ./usr/tests/lib/libc/ssp/Atffile		tests-lib-tests		atf,ssp
