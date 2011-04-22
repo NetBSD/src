@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.34 2011/04/21 13:38:14 joerg Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.35 2011/04/22 14:18:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.34 2011/04/21 13:38:14 joerg Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.35 2011/04/22 14:18:34 joerg Exp $");
 
 #ifndef lint
 
@@ -466,6 +466,20 @@ pwrite(int d, const void *buf, size_t nbytes, off_t offset)
 	self = pthread__self();
 	TESTCANCEL(self);
 	retval = _sys_pwrite(d, buf, nbytes, offset);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+ssize_t
+read(int d, void *buf, size_t nbytes)
+{
+	ssize_t retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_read(d, buf, nbytes);
 	TESTCANCEL(self);
 
 	return retval;
