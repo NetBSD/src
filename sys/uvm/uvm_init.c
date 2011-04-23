@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.39 2011/02/02 15:13:34 chuck Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.40 2011/04/23 18:14:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.39 2011/02/02 15:13:34 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.40 2011/04/23 18:14:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.39 2011/02/02 15:13:34 chuck Exp $");
 #include <sys/resourcevar.h>
 #include <sys/kmem.h>
 #include <sys/mman.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 
 #include <uvm/uvm.h>
