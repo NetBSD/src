@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.72 2011/04/11 22:31:43 rmind Exp $	*/
+/*	$NetBSD: file.h,v 1.73 2011/04/23 18:57:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -143,7 +143,6 @@ struct file {
 LIST_HEAD(filelist, file);
 extern struct filelist	filehead;	/* head of list of open files */
 extern u_int		maxfiles;	/* kernel limit on # of open files */
-extern u_int		nfiles;		/* actual number of open files */
 
 extern const struct fileops vnops;	/* vnode operations for files */
 
