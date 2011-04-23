@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.44 2009/11/17 18:54:26 jld Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.45 2011/04/23 06:29:05 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.44 2009/11/17 18:54:26 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.45 2011/04/23 06:29:05 mrg Exp $");
 
 #include <sys/errno.h>
 
@@ -236,7 +236,9 @@ rf_State_LastState(RF_RaidAccessDesc_t *desc)
 	((RF_Raid_t *) desc->raidPtr)->openings++;
 	RF_UNLOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
 
-	wakeup(&(desc->raidPtr->iodone));
+	mutex_enter(&desc->raidPtr->iodone_lock);
+	cv_signal(&desc->raidPtr->iodone_cv);
+	mutex_exit(&desc->raidPtr->iodone_lock);
 
 	/*
 	 * The parity_map hook has to go here, because the iodone
