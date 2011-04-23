@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.38 2009/11/17 18:54:26 jld Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.39 2011/04/23 06:29:05 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -161,8 +161,9 @@ struct RF_Raid_s {
 	   a kernel thread deal with calling rf_DiskIOComplete and any
 	   callback functions. */
 	TAILQ_HEAD(iodone_q,RF_DiskQueueData_s) iodone;
-	/* and a lock to protect it */
-	struct simplelock iodone_lock;
+	/* and a lock/cv to protect it */
+	kmutex_t iodone_lock;
+	kcondvar_t iodone_cv;
 
 
 	RF_VoidPointerListElem_t *iobuf;       /* I/O buffer free list */
