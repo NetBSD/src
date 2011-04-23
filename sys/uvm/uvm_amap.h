@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.35 2011/02/02 15:13:33 chuck Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.36 2011/04/23 18:14:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -208,7 +208,7 @@ struct vm_amap {
  * of this VM is actually used.  since the stack is anonymous memory
  * it makes sense for it to live in an amap, but if we allocated an
  * amap for the entire stack range we could end up wasting a large
- * amount of malloc'd KVM.
+ * amount of allocated KVM.
  *
  * for example, on the i386 at boot time we allocate two amaps for the stack
  * of /sbin/init:
