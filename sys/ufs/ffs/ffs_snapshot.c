@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.112 2011/04/18 07:36:13 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.113 2011/04/23 08:23:52 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.112 2011/04/18 07:36:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.113 2011/04/23 08:23:52 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -197,7 +197,9 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	/*
 	 * If the vnode already is a snapshot, return.
 	 */
-	if ((VTOI(vp)->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) == SF_SNAPSHOT) {
+	if ((VTOI(vp)->i_flags & SF_SNAPSHOT)) {
+		if ((VTOI(vp)->i_flags & SF_SNAPINVAL))
+			return EINVAL;
 		if (ctime) {
 			ctime->tv_sec = DIP(VTOI(vp), mtime);
 			ctime->tv_nsec = DIP(VTOI(vp), mtimensec);
