@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.41 2010/09/13 08:43:06 drochner Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.42 2011/04/23 06:29:05 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.41 2010/09/13 08:43:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.42 2011/04/23 06:29:05 mrg Exp $");
 
 #include <sys/errno.h>
 
@@ -103,17 +103,16 @@ rf_ShutdownEngine(void *arg)
 	raidPtr = (RF_Raid_t *) arg;
 
 	/* Tell the rf_RaidIOThread to shutdown */
-	simple_lock(&(raidPtr->iodone_lock));
+	mutex_enter(&raidPtr->iodone_lock);
 
 	raidPtr->shutdown_raidio = 1;
-	wakeup(&(raidPtr->iodone));
+	cv_signal(&raidPtr->iodone_cv);
 
 	/* ...and wait for it to tell us it has finished */
 	while (raidPtr->shutdown_raidio)
- 		ltsleep(&(raidPtr->shutdown_raidio), PRIBIO, "raidshutdown", 0,
-			&(raidPtr->iodone_lock));
+		cv_wait(&raidPtr->iodone_cv, &raidPtr->iodone_lock);
 
-	simple_unlock(&(raidPtr->iodone_lock));
+	mutex_exit(&raidPtr->iodone_lock);
 
  	/* Now shut down the DAG execution engine. */
  	DO_LOCK(raidPtr);
@@ -848,44 +847,43 @@ rf_RaidIOThread(RF_ThreadArg_t arg)
 	raidPtr = (RF_Raid_t *) arg;
 
 	s = splbio();
-	simple_lock(&(raidPtr->iodone_lock));
+	mutex_enter(&raidPtr->iodone_lock);
 
 	while (!raidPtr->shutdown_raidio) {
 		/* if there is nothing to do, then snooze. */
 		if (TAILQ_EMPTY(&(raidPtr->iodone)) &&
 		    rf_buf_queue_check(raidPtr->raidid)) {
-			ltsleep(&(raidPtr->iodone), PRIBIO, "raidiow", 0,
-				&(raidPtr->iodone_lock));
+			cv_wait(&raidPtr->iodone_cv, &raidPtr->iodone_lock);
 		}
 
 		/* Check for deferred parity-map-related work. */
 		if (raidPtr->parity_map != NULL) {
-			simple_unlock(&(raidPtr->iodone_lock));
+			mutex_exit(&raidPtr->iodone_lock);
 			rf_paritymap_checkwork(raidPtr->parity_map);
-			simple_lock(&(raidPtr->iodone_lock));
+			mutex_enter(&raidPtr->iodone_lock);
 		}
 
 		/* See what I/Os, if any, have arrived */
 		while ((req = TAILQ_FIRST(&(raidPtr->iodone))) != NULL) {
 			TAILQ_REMOVE(&(raidPtr->iodone), req, iodone_entries);
-			simple_unlock(&(raidPtr->iodone_lock));
+			mutex_exit(&raidPtr->iodone_lock);
 			rf_DiskIOComplete(req->queue, req, req->error);
 			(req->CompleteFunc) (req->argument, req->error);
-			simple_lock(&(raidPtr->iodone_lock));
+			mutex_enter(&raidPtr->iodone_lock);
 		}
 
 		/* process any pending outgoing IO */
-		simple_unlock(&(raidPtr->iodone_lock));
+		mutex_exit(&raidPtr->iodone_lock);
 		raidstart(raidPtr);
-		simple_lock(&(raidPtr->iodone_lock));
+		mutex_enter(&raidPtr->iodone_lock);
 
 	}
 
 	/* Let rf_ShutdownEngine know that we're done... */
 	raidPtr->shutdown_raidio = 0;
-	wakeup(&(raidPtr->shutdown_raidio));
+	cv_signal(&raidPtr->iodone_cv);
 
-	simple_unlock(&(raidPtr->iodone_lock));
+	mutex_exit(&raidPtr->iodone_lock);
 	splx(s);
 
 	kthread_exit(0);

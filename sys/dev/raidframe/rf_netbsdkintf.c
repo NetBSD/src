@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.284 2011/03/18 23:53:26 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.285 2011/04/23 06:29:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.284 2011/03/18 23:53:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.285 2011/04/23 06:29:05 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -829,8 +829,6 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 void
 raidstrategy(struct buf *bp)
 {
-	int s;
-
 	unsigned int raidID = raidunit(bp->b_dev);
 	RF_Raid_t *raidPtr;
 	struct raid_softc *rs = &raid_softc[raidID];
@@ -880,7 +878,8 @@ raidstrategy(struct buf *bp)
 			goto done;
 		}
 	}
-	s = splbio();
+
+	mutex_enter(&raidPtr->iodone_lock);
 
 	bp->b_resid = 0;
 
@@ -888,9 +887,9 @@ raidstrategy(struct buf *bp)
 	bufq_put(rs->buf_queue, bp);
 
 	/* scheduled the IO to happen at the next convenient time */
-	wakeup(&(raidPtrs[raidID]->iodone));
+	cv_signal(&raidPtr->iodone_cv);
+	mutex_exit(&raidPtr->iodone_lock);
 
-	splx(s);
 	return;
 
 done:
@@ -2160,13 +2159,14 @@ KernelWakeupFunc(struct buf *bp)
 {
 	RF_DiskQueueData_t *req = NULL;
 	RF_DiskQueue_t *queue;
-	int s;
 
-	s = splbio();
 	db1_printf(("recovering the request queue:\n"));
+
 	req = bp->b_private;
 
 	queue = (RF_DiskQueue_t *) req->queue;
+
+	mutex_enter(&queue->raidPtr->iodone_lock);
 
 #if RF_ACC_TRACE > 0
 	if (req->tracerec) {
@@ -2209,22 +2209,16 @@ KernelWakeupFunc(struct buf *bp)
 	}
 
 	/* Fill in the error value */
-
 	req->error = bp->b_error;
-
-	simple_lock(&queue->raidPtr->iodone_lock);
 
 	/* Drop this one on the "finished" queue... */
 	TAILQ_INSERT_TAIL(&(queue->raidPtr->iodone), req, iodone_entries);
 
 	/* Let the raidio thread know there is work to be done. */
-	wakeup(&(queue->raidPtr->iodone));
+	cv_signal(&queue->raidPtr->iodone_cv);
 
-	simple_unlock(&queue->raidPtr->iodone_lock);
-
-	splx(s);
+	mutex_exit(&queue->raidPtr->iodone_lock);
 }
-
 
 
 /*

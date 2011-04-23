@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.122 2009/11/17 18:54:26 jld Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.123 2011/04/23 06:29:05 mrg Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.122 2009/11/17 18:54:26 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.123 2011/04/23 06:29:05 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -240,6 +240,9 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 		       "rfreshutdown",0);
 	}
 
+	mutex_destroy(&raidPtr->iodone_lock);
+	cv_destroy(&raidPtr->iodone_cv);
+
 	raidPtr->valid = 0;
 
 	if (raidPtr->parity_map != NULL)
@@ -351,7 +354,8 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	raidPtr->reconControl = NULL;
 
 	TAILQ_INIT(&(raidPtr->iodone));
-	simple_lock_init(&(raidPtr->iodone_lock));
+	mutex_init(&raidPtr->iodone_lock, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&raidPtr->iodone_cv, "raidiow");
 
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureEngine);
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureStripeLocks);
