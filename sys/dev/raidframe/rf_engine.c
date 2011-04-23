@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.42 2011/04/23 06:29:05 mrg Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.43 2011/04/23 22:22:46 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.42 2011/04/23 06:29:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.43 2011/04/23 22:22:46 mrg Exp $");
 
 #include <sys/errno.h>
 
@@ -120,12 +120,21 @@ rf_ShutdownEngine(void *arg)
   	DO_SIGNAL(raidPtr);
  	DO_UNLOCK(raidPtr);
 
+	mutex_destroy(&raidPtr->iodone_lock);
+	cv_destroy(&raidPtr->iodone_cv);
 }
 
 int
 rf_ConfigureEngine(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		   RF_Config_t *cfgPtr)
 {
+
+	/*
+	 * Initialise iodone for the IO thread.
+	 */
+	TAILQ_INIT(&(raidPtr->iodone));
+	mutex_init(&raidPtr->iodone_lock, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&raidPtr->iodone_cv, "raidiow");
 
 	rf_mutex_init(&raidPtr->node_queue_mutex);
 	raidPtr->node_queue = NULL;
