@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.6 2011/04/07 02:19:28 matt Exp $	*/
+/*	$NetBSD: tls.c,v 1.7 2011/04/23 16:40:08 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.6 2011/04/07 02:19:28 matt Exp $");
+__RCSID("$NetBSD: tls.c,v 1.7 2011/04/23 16:40:08 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -243,7 +243,7 @@ _rtld_tls_offset_allocate(Obj_Entry *obj)
 	if (_rtld_tls_static_space) {
 		if (obj->tlsinitsize) {
 			_rtld_error("%s: Use of initialized "
-			    "Thread Locale Storage with model initial-exec "
+			    "Thread Local Storage with model initial-exec "
 			    "and dlopen is not supported",
 			    obj->path);
 			return -1;
