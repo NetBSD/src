@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.153 2010/11/19 06:44:47 dholland Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.154 2011/04/23 18:14:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.153 2010/11/19 06:44:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.154 2011/04/23 18:14:13 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -307,9 +307,9 @@ uvm_swap_init(void)
  * swaplist_insert: insert swap device "sdp" into the global list
  *
  * => caller must hold both swap_syscall_lock and uvm_swap_data_lock
- * => caller must provide a newly malloc'd swappri structure (we will
- *	FREE it if we don't need it... this it to prevent malloc blocking
- *	here while adding swap)
+ * => caller must provide a newly allocated swappri structure (we will
+ *	FREE it if we don't need it... this it to prevent allocation
+ *	blocking here while adding swap)
  */
 static void
 swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)

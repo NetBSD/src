@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.60 2011/02/12 14:45:31 jmcneill Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.61 2011/04/23 18:14:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.60 2011/02/12 14:45:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.61 2011/04/23 18:14:12 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -210,7 +210,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 		}
 
 		/*
-		 * did not find it on main list.   need to malloc a new one.
+		 * Did not find it on main list.  Need to allocate a new one.
 		 */
 
 		mutex_exit(&udv_lock);

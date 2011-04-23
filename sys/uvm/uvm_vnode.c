@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.94 2011/02/02 20:07:25 chuck Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.95 2011/04/23 18:14:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,15 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.94 2011/02/02 20:07:25 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.95 2011/04/23 18:14:13 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>

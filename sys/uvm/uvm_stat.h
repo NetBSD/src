@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.48 2011/02/02 15:13:34 chuck Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.49 2011/04/23 18:14:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -37,7 +37,6 @@
 #include <sys/queue.h>
 #ifdef UVMHIST
 #include <sys/cpu.h>
-#include <sys/malloc.h>
 #endif
 
 /*
@@ -65,7 +64,7 @@ struct uvm_history {
 	LIST_ENTRY(uvm_history) list;	/* link on list of all histories */
 	unsigned int n;			/* number of entries */
 	unsigned int f;			/* next free one */
-	struct uvm_history_ent *e;	/* the malloc'd entries */
+	struct uvm_history_ent *e;	/* the allocated entries */
 };
 
 LIST_HEAD(uvm_history_head, uvm_history);
@@ -102,6 +101,7 @@ LIST_HEAD(uvm_history_head, uvm_history);
 #else
 #include <sys/kernel.h>		/* for "cold" variable */
 #include <sys/atomic.h>
+#include <sys/kmem.h>
 
 extern	struct uvm_history_head uvm_histories;
 
@@ -114,9 +114,7 @@ do { \
 	(NAME).n = (N); \
 	(NAME).f = 0; \
 	(NAME).e = (struct uvm_history_ent *) \
-		malloc(sizeof(struct uvm_history_ent) * (N), M_TEMP, \
-		    M_WAITOK); \
-	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (N)); \
+		kmem_zalloc(sizeof(struct uvm_history_ent) * (N), KM_SLEEP); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
 } while (/*CONSTCOND*/ 0)
 
