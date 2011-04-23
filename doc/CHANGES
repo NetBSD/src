@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1539 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1540 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -963,8 +963,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[bouyer 20110306]
 	tmux(1): First import of tmux (version 1.4).  [jmmv 20110310]
 	powerpc: add TLS (thread local storage) support.  [matt 20110311]
-	sh3: add TLS (thread locale storage) support.  [joerg 20110312]
-	x86: add TLS (thread locale storage) support.  [joerg 20110312]
+	sh3: add TLS (thread local storage) support.  [joerg 20110312]
+	x86: add TLS (thread local storage) support.  [joerg 20110312]
 	mips: add TLS (thread local storage) support.  [matt 20110314]
 	mips: add MIPS32R2 and MIPS64R2 support.  [matt 20110314]
 	shmif_dumpbus(1): Make endian-independent.  [pooka 20110314]
@@ -973,9 +973,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	sandpoint: D-Link DSM-G600 support. [phx 20110319]
 	shark: chipsfb now works on shark. [macallan 20110323]
 	postfix(1): Import version 2.8.2 [tron 20110323]
-	sparc: add TLS (thread locale storage) support.  [martin 20110330]
-	sparc64: add TLS (thread locale storage) support.  [martin 20110330]
-	alpha: add TLS (thread locale storage) support.  [skrll 20110331]
+	sparc: add TLS (thread local storage) support.  [martin 20110330]
+	sparc64: add TLS (thread local storage) support.  [martin 20110330]
+	alpha: add TLS (thread local storage) support.  [skrll 20110331]
 	atf(7): Import 0.13.  [jmmv 20110331]
 	ssh-askpass: Updated to 1.2.0. [mbalmer 20110403]
 	rdcide(4): add a driver for the IDE controller found in RDC's
