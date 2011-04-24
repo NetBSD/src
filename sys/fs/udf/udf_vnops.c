@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.62 2011/01/02 05:09:30 dholland Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.63 2011/04/24 21:35:30 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.62 2011/01/02 05:09:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.63 2011/04/24 21:35:30 rmind Exp $");
 #endif /* not lint */
 
 
@@ -1481,15 +1481,9 @@ udf_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	int error;
 
 	DPRINTF(CALL, ("udf_link called\n"));
-	error = 0;
-
-	/* some quick checks */
-	if (vp->v_type == VDIR)
-		return EPERM;		/* can't link a directory */
-	if (dvp->v_mount != vp->v_mount)
-		return EXDEV;		/* can't link across devices */
-	if (dvp == vp)
-		return EPERM;		/* can't be the same */
+	KASSERT(dvp != vp);
+	KASSERT(vp->v_type != VDIR);
+	KASSERT(dvp->v_mount == vp->v_mount);
 
 	/* lock node */
 	error = vn_lock(vp, LK_EXCLUSIVE);
