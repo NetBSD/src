@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.173.4.8 2011/03/29 19:47:37 riz Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.173.4.9 2011/04/24 16:23:49 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.173.4.8 2011/03/29 19:47:37 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.173.4.9 2011/04/24 16:23:49 riz Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -321,13 +321,13 @@ nfs_connect(nmp, rep, l)
 		so->so_snd.sb_timeo = 0;
 	}
 	if (nmp->nm_sotype == SOCK_DGRAM) {
-		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR) * 2;
+		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR) * 3;
 		rcvreserve = (max(nmp->nm_rsize, nmp->nm_readdirsize) +
 		    NFS_MAXPKTHDR) * 2;
 	} else if (nmp->nm_sotype == SOCK_SEQPACKET) {
-		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR) * 2;
+		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR) * 3;
 		rcvreserve = (max(nmp->nm_rsize, nmp->nm_readdirsize) +
-		    NFS_MAXPKTHDR) * 2;
+		    NFS_MAXPKTHDR) * 3;
 	} else {
 		sounlock(so);
 		if (nmp->nm_sotype != SOCK_STREAM)
@@ -343,9 +343,9 @@ nfs_connect(nmp, rep, l)
 			    sizeof(val));
 		}
 		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR +
-		    sizeof (u_int32_t)) * 2;
+		    sizeof (u_int32_t)) * 3;
 		rcvreserve = (nmp->nm_rsize + NFS_MAXPKTHDR +
-		    sizeof (u_int32_t)) * 2;
+		    sizeof (u_int32_t)) * 3;
 		solock(so);
 	}
 	error = soreserve(so, sndreserve, rcvreserve);
