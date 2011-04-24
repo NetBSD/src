@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.73 2011/04/23 18:57:28 rmind Exp $	*/
+/*	$NetBSD: file.h,v 1.74 2011/04/24 18:46:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@
 #include <sys/unistd.h>
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
