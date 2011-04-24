@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.107 2011/04/09 23:03:59 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.108 2011/04/24 18:46:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.107 2011/04/09 23:03:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.108 2011/04/24 18:46:23 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.107 2011/04/09 23:03:59 christos 
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>

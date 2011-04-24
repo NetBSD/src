@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.20 2010/09/12 16:06:08 drochner Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.21 2011/04/24 18:46:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -29,14 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.20 2010/09/12 16:06:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.21 2011/04/24 18:46:23 rmind Exp $");
 
 #include "opt_userconf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/time.h>
 
 #include <dev/cons.h>
