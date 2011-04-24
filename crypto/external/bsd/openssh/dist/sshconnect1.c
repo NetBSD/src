@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.3 2011/04/24 14:01:46 elric Exp $	*/
 /* $OpenBSD: sshconnect1.c,v 1.70 2006/11/06 21:25:28 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect1.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: sshconnect1.c,v 1.3 2011/04/24 14:01:46 elric Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -466,6 +466,7 @@ try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context)
 	int type;
 	krb5_ap_rep_enc_part *reply = NULL;
 	int ret;
+	const char *errtxt;
 
 	memset(&ap, 0, sizeof(ap));
 
@@ -488,8 +489,14 @@ try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context)
 
 	problem = krb5_cc_default(*context, &ccache);
 	if (problem) {
-		debug("Kerberos v5: krb5_cc_default failed: %s",
-		    krb5_get_err_text(*context, problem));
+		errtxt = krb5_get_error_message(*context, problem);
+		if (errtxt != NULL) {
+			debug("Kerberos v5: krb5_cc_default failed: %s",
+			    errtxt);
+			krb5_free_error_message(*context, errtxt);
+		} else
+			debug("Kerberos v5: krb5_cc_default failed: %d",
+			    problem);
 		ret = 0;
 		goto out;
 	}
@@ -499,8 +506,12 @@ try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context)
 	problem = krb5_mk_req(*context, auth_context, AP_OPTS_MUTUAL_REQUIRED,
 	    "host", remotehost, NULL, ccache, &ap);
 	if (problem) {
-		debug("Kerberos v5: krb5_mk_req failed: %s",
-		    krb5_get_err_text(*context, problem));
+		errtxt = krb5_get_error_message(*context, problem);
+		if (errtxt != NULL) {
+			debug("Kerberos v5: krb5_mk_req failed: %s", errtxt);
+			krb5_free_error_message(*context, errtxt);
+		} else
+			debug("Kerberos v5: krb5_mk_req failed: %d", problem);
 		ret = 0;
 		goto out;
 	}
@@ -566,6 +577,7 @@ send_krb5_tgt(krb5_context context, krb5_auth_context auth_context)
 	krb5_creds creds;
 	krb5_kdc_flags flags;
 	const char *remotehost;
+	const char *errtxt;
 
 	memset(&creds, 0, sizeof(creds));
 	memset(&outbuf, 0, sizeof(outbuf));
@@ -623,9 +635,14 @@ send_krb5_tgt(krb5_context context, krb5_auth_context auth_context)
 	return;
 
  out:
-	if (problem)
-		debug("Kerberos v5 TGT forwarding failed: %s",
-		    krb5_get_err_text(context, problem));
+	if (problem) {
+		errtxt = krb5_get_error_message(context, problem);
+		if (errtxt != NULL) {
+			debug("Kerberos v5 TGT forwarding failed: %s", errtxt);
+			krb5_free_error_message(context, errtxt);
+		} else
+			debug("Kerberos v5 TGT forwarding failed: %d", problem);
+	}
 	if (creds.client)
 		krb5_free_principal(context, creds.client);
 	if (creds.server)
