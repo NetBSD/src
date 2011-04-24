@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.6 2011/01/03 18:55:41 stacktic Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.7 2011/04/24 14:01:46 elric Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.183 2010/04/26 22:28:24 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.6 2011/01/03 18:55:41 stacktic Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.7 2011/04/24 14:01:46 elric Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -1805,6 +1805,7 @@ ssh_krb5_helper(krb5_data *ap)
 	krb5_ccache ccache = NULL;
 	const char *remotehost;
 	int ret;
+	const char *errtxt;
 
 	memset(ap, 0, sizeof(*ap));
 
@@ -1830,8 +1831,14 @@ ssh_krb5_helper(krb5_data *ap)
 
 	problem = krb5_cc_default(*context, &ccache);
 	if (problem) {
-		debug("Kerberos v5: krb5_cc_default failed: %s",
-		    krb5_get_err_text(*context, problem));
+		errtxt = krb5_get_error_message(*context, problem);
+		if (errtxt != NULL) {
+			debug("Kerberos v5: krb5_cc_default failed: %s",
+			    errtxt);
+			krb5_free_error_message(*context, errtxt);
+		} else
+			debug("Kerberos v5: krb5_cc_default failed: %d",
+			    problem);
 		ret = 0;
 		goto out;
 	}
@@ -1841,8 +1848,12 @@ ssh_krb5_helper(krb5_data *ap)
 	problem = krb5_mk_req(*context, auth_context, AP_OPTS_MUTUAL_REQUIRED,
 	    "host", remotehost, NULL, ccache, ap);
 	if (problem) {
-		debug("Kerberos v5: krb5_mk_req failed: %s",
-		    krb5_get_err_text(*context, problem));
+		errtxt = krb5_get_error_message(*context, problem);
+		if (errtxt != NULL) {
+			debug("Kerberos v5: krb5_mk_req failed: %s", errtxt);
+			krb5_free_error_message(*context, errtxt);
+		} else
+			debug("Kerberos v5: krb5_mk_req failed: %d", problem);
 		ret = 0;
 		goto out;
 	}
