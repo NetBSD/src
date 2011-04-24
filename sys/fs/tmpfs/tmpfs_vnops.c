@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.76 2011/01/13 13:35:12 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.77 2011/04/24 21:35:29 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.76 2011/01/13 13:35:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.77 2011/04/24 21:35:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -737,43 +737,33 @@ out:
 	return error;
 }
 
-/* --------------------------------------------------------------------- */
-
+/*
+ * tmpfs:link: create hard link.
+ */
 int
 tmpfs_link(void *v)
 {
-	struct vnode *dvp = ((struct vop_link_args *)v)->a_dvp;
-	struct vnode *vp = ((struct vop_link_args *)v)->a_vp;
-	struct componentname *cnp = ((struct vop_link_args *)v)->a_cnp;
-
-	int error;
+	struct vop_link_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode *vp = ap->a_vp;
+	struct componentname *cnp = ap->a_cnp;;
+	struct tmpfs_node *dnode, *node;
 	struct tmpfs_dirent *de;
-	struct tmpfs_node *dnode;
-	struct tmpfs_node *node;
+	int error;
 
+	KASSERT(dvp != vp);
 	KASSERT(VOP_ISLOCKED(dvp));
-	KASSERT(dvp != vp); /* XXX When can this be false? */
+	KASSERT(vp->v_type != VDIR);
+	KASSERT(dvp->v_mount == vp->v_mount);
 
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_NODE(vp);
 
-	/* Lock vp because we will need to run tmpfs_update over it, which
-	 * needs the vnode to be locked. */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-
-	/* XXX: Why aren't the following two tests done by the caller? */
-
-	/* Hard links of directories are forbidden. */
-	if (vp->v_type == VDIR) {
-		error = EPERM;
-		goto out;
-	}
-
-	/* Cannot create cross-device links. */
-	if (dvp->v_mount != vp->v_mount) {
-		error = EXDEV;
-		goto out;
-	}
 
 	/* Ensure that we do not overflow the maximum number of links imposed
 	 * by the system. */

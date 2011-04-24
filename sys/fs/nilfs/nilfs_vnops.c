@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.9 2010/11/30 10:43:03 dholland Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.10 2011/04/24 21:35:29 rmind Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.9 2010/11/30 10:43:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.10 2011/04/24 21:35:29 rmind Exp $");
 #endif /* not lint */
 
 
@@ -1159,15 +1159,9 @@ nilfs_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	int error;
 
 	DPRINTF(VFSCALL, ("nilfs_link called\n"));
-	error = 0;
-
-	/* some quick checks */
-	if (vp->v_type == VDIR)
-		return EPERM;		/* can't link a directory */
-	if (dvp->v_mount != vp->v_mount)
-		return EXDEV;		/* can't link across devices */
-	if (dvp == vp)
-		return EPERM;		/* can't be the same */
+	KASSERT(dvp != vp);
+	KASSERT(vp->v_type != VDIR);
+	KASSERT(dvp->v_mount == vp->v_mount);
 
 	/* lock node */
 	error = vn_lock(vp, LK_EXCLUSIVE);

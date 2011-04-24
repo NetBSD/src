@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.187 2011/03/06 17:08:39 bouyer Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.188 2011/04/24 21:35:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.187 2011/03/06 17:08:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.188 2011/04/24 21:35:30 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -786,7 +786,7 @@ ufs_remove(void *v)
 }
 
 /*
- * link vnode call
+ * ufs_link: create hard link.
  */
 int
 ufs_link(void *v)
@@ -796,28 +796,20 @@ ufs_link(void *v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	struct vnode		*vp, *dvp;
-	struct componentname	*cnp;
-	struct inode		*ip;
-	struct direct		*newdir;
-	int			error;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode *vp = ap->a_vp;
+	struct componentname *cnp = ap->a_cnp;
+	struct inode *ip;
+	struct direct *newdir;
+	int error;
 
-	dvp = ap->a_dvp;
-	vp = ap->a_vp;
-	cnp = ap->a_cnp;
+	KASSERT(dvp != vp);
+	KASSERT(vp->v_type != VDIR);
+	KASSERT(dvp->v_mount == vp->v_mount);
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-	if (vp->v_type == VDIR) {
-		VOP_ABORTOP(dvp, cnp);
-		error = EPERM;
-		goto out2;
-	}
-	if (dvp->v_mount != vp->v_mount) {
-		VOP_ABORTOP(dvp, cnp);
-		error = EXDEV;
-		goto out2;
-	}
-	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE))) {
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error) {
 		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
@@ -855,8 +847,7 @@ ufs_link(void *v)
 	}
 	UFS_WAPBL_END(vp->v_mount);
  out1:
-	if (dvp != vp)
-		VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp);
  out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);

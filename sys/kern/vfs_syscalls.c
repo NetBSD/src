@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.422 2011/04/10 15:45:33 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.423 2011/04/24 21:35:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.422 2011/04/10 15:45:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.423 2011/04/24 21:35:29 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1767,9 +1767,12 @@ sys_link(struct lwp *l, const struct sys_link_args *uap, register_t *retval)
 		error = EEXIST;
 		goto abortop;
 	}
-	/*
-	 * Prevent cross-mount operation.
-	 */
+	/* Prevent hard links on directories. */
+	if (vp->v_type == VDIR) {
+		error = EPERM;
+		goto abortop;
+	}
+	/* Prevent cross-mount operation. */
 	if (nd.ni_dvp->v_mount != vp->v_mount) {
 		error = EXDEV;
 		goto abortop;
