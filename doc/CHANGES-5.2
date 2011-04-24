@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.75 2011/04/24 15:42:45 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.76 2011/04/24 16:31:01 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5004,4 +5004,29 @@ lib/libc/gen/glob.c				1.28-1.29 via patch
 
 	Prevent resource DoS from brace expansion.
 	[spz, ticket #1597]
+
+sys/arch/xen/xenbus/xenbus_probe.c		1.30
+
+	Continue scanning for other frontends when initialization
+	of one frontend failed.
+	[cegger, ticket #1598]
+
+sys/arch/xen/xenbus/xenbus_probe.c		1.31 via patch
+
+	Fix probe so NetBSD DomU can boot on Linux Dom0 with xl.
+	[cegger, ticket #1599]
+
+sys/nfs/nfs_socket.c				1.189
+
+	Change socket buffer reservations for NFS send/receive
+	to 3 times max RPC size, to avoid nasty TCP stalls.
+	Will require increase to sbmax via sysctl for those running really
+	huge NFS rsize/wsize (>64K).
+	[tls, ticket #1600]
+
+sys/dev/pci/if_bge.c				1.194
+
+	Perform hardware checksum over the entire packet, as other OS
+	drivers do.  PR#40018.
+	[buhrow, ticket #1601]
 
