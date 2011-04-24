@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2008/04/06 09:54:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.50 2011/04/24 21:42:06 elric Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -45,7 +45,7 @@ DPADD+= ${LIBKAFS}
 LDADD+= -lkafs
 .endif
 
-CPPFLAGS+=-DKERBEROS5 -I${DESTDIR}/usr/include/krb5
+CPPFLAGS+=-DKERBEROS5
 DPADD+=	${LIBKRB5} ${LIBASN1}
 LDADD+= -lkrb5 -lasn1
 
