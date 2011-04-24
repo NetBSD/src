@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.78 2008/06/11 12:59:10 tsutsui Exp $ */
+/*	$NetBSD: ser.c,v 1.79 2011/04/24 16:26:52 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.78 2008/06/11 12:59:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.79 2011/04/24 16:26:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.78 2008/06/11 12:59:10 tsutsui Exp $");
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
@@ -257,7 +256,7 @@ serattach(struct device *pdp, struct device *dp, void *auxp)
 	if (0 == serconsole)
 		serconsinit = 0;
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = (void (*) (struct tty *)) serstart;
 	tp->t_param = serparam;
 	tp->t_hwiflow = serhwiflow;
@@ -419,7 +418,7 @@ ser_shutdown(struct ser_softc *sc)
 #if not_yet
 	if (tp != &ser_cons) {
 		remove_vbl_function(&ser_vbl_node);
-		ttyfree(tp);
+		tty_free(tp);
 		ser_tty = (struct tty *) NULL;
 	}
 #endif

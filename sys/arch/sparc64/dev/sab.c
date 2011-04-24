@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.45 2010/03/11 04:19:56 mrg Exp $	*/
+/*	$NetBSD: sab.c,v 1.46 2011/04/24 16:26:57 rmind Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.45 2010/03/11 04:19:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.46 2011/04/24 16:26:57 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -384,7 +384,7 @@ sabtty_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	if (!is_kgdb) {
-		sc->sc_tty = ttymalloc();
+		sc->sc_tty = tty_alloc();
 		if (sc->sc_tty == NULL) {
 			aprint_normal(": failed to allocate tty\n");
 			return;

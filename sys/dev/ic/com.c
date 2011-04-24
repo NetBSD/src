@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.299 2011/01/22 16:59:26 tsutsui Exp $ */
+/* $NetBSD: com.c,v 1.300 2011/04/24 16:26:59 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.299 2011/01/22 16:59:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.300 2011/04/24 16:26:59 rmind Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -501,7 +501,7 @@ fifodelay:
 
 fifodone:
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = comstart;
 	tp->t_param = comparam;
 	tp->t_hwiflow = comhwiflow;
@@ -670,7 +670,7 @@ com_detach(device_t self, int flags)
 		 * Ring buffer allocation failed in the com_attach_subr,
 		 * only the tty is allocated, and nothing else.
 		 */
-		ttyfree(sc->sc_tty);
+		tty_free(sc->sc_tty);
 		return 0;
 	}
 
@@ -679,7 +679,7 @@ com_detach(device_t self, int flags)
 
 	/* Detach and free the tty. */
 	tty_detach(sc->sc_tty);
-	ttyfree(sc->sc_tty);
+	tty_free(sc->sc_tty);
 
 	/* Unhook the soft interrupt handler. */
 	softint_disestablish(sc->sc_si);
