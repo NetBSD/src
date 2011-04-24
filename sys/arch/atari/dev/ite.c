@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.69 2011/02/08 20:20:10 rmind Exp $	*/
+/*	$NetBSD: ite.c,v 1.70 2011/04/24 16:26:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69 2011/02/08 20:20:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.70 2011/04/24 16:26:54 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -386,7 +386,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 		return (ENXIO);
 
 	if (ip->tp == NULL) {
-		tp = ip->tp = ttymalloc();
+		tp = ip->tp = tty_alloc();
 		tty_attach(tp);
 	}
 	else

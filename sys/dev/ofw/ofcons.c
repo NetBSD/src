@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.41 2009/05/29 20:10:39 rjs Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.42 2011/04/24 16:27:00 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.41 2009/05/29 20:10:39 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.42 2011/04/24 16:27:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -122,7 +122,7 @@ ofcons_open(dev_t dev, int flag, int mode, struct lwp *l)
 	if (!sc)
 		return ENXIO;
 	if (!(tp = sc->of_tty))
-		sc->of_tty = tp = ttymalloc();
+		sc->of_tty = tp = tty_alloc();
 	tp->t_oproc = ofcons_start;
 	tp->t_param = ofcons_param;
 	tp->t_dev = dev;
