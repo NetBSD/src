@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
+/*	$NetBSD: session.c,v 1.6 2011/04/24 14:09:39 elric Exp $	*/
 /* $OpenBSD: session.c,v 1.256 2010/06/25 07:20:04 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: session.c,v 1.6 2011/04/24 14:09:39 elric Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -88,7 +88,7 @@ __RCSID("$NetBSD: session.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
 #include "sftp.h"
 
 #ifdef KRB5
-#include <kafs.h>
+#include <krb5/kafs.h>
 #endif
 
 #define IS_INTERNAL_SFTP(c) \
