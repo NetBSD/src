@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.54 2009/09/17 16:39:48 tsutsui Exp $	*/
+/*	$NetBSD: magma.c,v 1.55 2011/04/24 16:27:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.54 2009/09/17 16:39:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.55 2011/04/24 16:27:01 rmind Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -842,8 +842,10 @@ mtty_attach(device_t parent, device_t dev, void *args)
 			chan = 1; /* skip channel 0 if parmode */
 		mp->mp_channel = chan;
 
-		tp = ttymalloc();
-		if (tp == NULL) break;
+		tp = tty_alloc();
+		if (tp == NULL) {
+			break;
+		}
 		tty_attach(tp);
 		tp->t_oproc = mtty_start;
 		tp->t_param = mtty_param;

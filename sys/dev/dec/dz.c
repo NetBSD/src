@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.39 2010/05/09 22:29:26 hans Exp $	*/
+/*	$NetBSD: dz.c,v 1.40 2011/04/24 16:26:59 rmind Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.39 2010/05/09 22:29:26 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.40 2011/04/24 16:26:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 	for (n = 0; n < sc->sc_type; n++) {
 		sc->sc_dz[n].dz_sc = sc;
 		sc->sc_dz[n].dz_line = n;
-		sc->sc_dz[n].dz_tty = ttymalloc();
+		sc->sc_dz[n].dz_tty = tty_alloc();
 	}
 
 	evcnt_attach_dynamic(&sc->sc_rintrcnt, EVCNT_TYPE_INTR, parent_evcnt,

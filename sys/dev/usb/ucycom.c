@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.32 2010/11/15 06:01:07 uebayasi Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.33 2011/04/24 16:27:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.32 2010/11/15 06:01:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.33 2011/04/24 16:27:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ ucycom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_msr = sc->sc_mcr = 0;
 
 	/* set up tty */
-	sc->sc_tty = ttymalloc();
+	sc->sc_tty = tty_alloc();
 	sc->sc_tty->t_sc = sc;
 	sc->sc_tty->t_oproc = ucycomstart;
 	sc->sc_tty->t_param = ucycomparam;
@@ -263,7 +263,7 @@ ucycom_detach(device_t self, int flags)
 	if (tp != NULL) {
 		DPRINTF(("ucycom_detach: tty_detach %p\n", tp));
 		tty_detach(tp);
-		ttyfree(tp);
+		tty_free(tp);
 		sc->sc_tty = NULL;
 	}
 

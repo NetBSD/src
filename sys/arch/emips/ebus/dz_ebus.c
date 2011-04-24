@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $	*/
+/*	$NetBSD: dz_ebus.c,v 1.2 2011/04/24 16:26:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.2 2011/04/24 16:26:55 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -653,9 +653,9 @@ dz_ebus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Initialize our softc structure. Should be done in open? */
 
-    sc->sc_dz.dz_sc = sc;
-    sc->sc_dz.dz_line = 0;
-    sc->sc_dz.dz_tty = ttymalloc();
+	sc->sc_dz.dz_sc = sc;
+	sc->sc_dz.dz_line = 0;
+	sc->sc_dz.dz_tty = tty_alloc();
 
 	evcnt_attach_dynamic(&sc->sc_rintrcnt, EVCNT_TYPE_INTR, NULL,
 		sc->sc_dev.dv_xname, "rintr");

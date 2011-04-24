@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.26 2011/02/01 06:13:08 matt Exp $ */
+/* $NetBSD: sbjcn.c,v 1.27 2011/04/24 16:26:56 rmind Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.26 2011/02/01 06:13:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.27 2011/04/24 16:26:56 rmind Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -304,7 +304,7 @@ sbjcn_attach_channel(struct sbjcn_softc *sc, int chan, int intr)
 		SET(ch->ch_swflags, TIOCFLAG_SOFTCAR);
 	}
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = sbjcn_start;
 	tp->t_param = sbjcn_param;
 	tp->t_hwiflow = sbjcn_hwiflow;

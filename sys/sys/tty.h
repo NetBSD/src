@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.86 2009/01/22 20:40:20 drochner Exp $	*/
+/*	$NetBSD: tty.h,v 1.87 2011/04/24 16:26:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -289,8 +289,8 @@ void	 tty_attach(struct tty *);
 void	 tty_detach(struct tty *);
 void	 tty_init(void);
 struct tty
-	*ttymalloc(void);
-void	 ttyfree(struct tty *);
+	*tty_alloc(void);
+void	 tty_free(struct tty *);
 u_char	*firstc(struct clist *, int *);
 bool	 ttypull(struct tty *);
 

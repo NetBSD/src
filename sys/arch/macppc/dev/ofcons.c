@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.24 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.25 2011/04/24 16:26:56 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.24 2009/03/14 14:46:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.25 2011/04/24 16:26:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -129,7 +129,7 @@ ofcopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (!sc)
 		return ENXIO;
 	if (!(tp = sc->of_tty))
-		sc->of_tty = tp = ttymalloc();
+		sc->of_tty = tp = tty_alloc();
 	tp->t_oproc = ofcstart;
 	tp->t_param = ofcparam;
 	tp->t_dev = dev;

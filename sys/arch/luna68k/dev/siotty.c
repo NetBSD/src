@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.29 2009/11/23 00:11:44 rmind Exp $ */
+/* $NetBSD: siotty.c,v 1.30 2011/04/24 16:26:56 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.29 2009/11/23 00:11:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.30 2011/04/24 16:26:56 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -346,9 +346,9 @@ sioopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sc == NULL)
 		return ENXIO;
 	if ((tp = sc->sc_tty) == NULL) {
-		tp = sc->sc_tty = ttymalloc();
+		tp = sc->sc_tty = tty_alloc();
 		tty_attach(tp);
-	}		
+	}
 
 	tp->t_oproc = siostart;
 	tp->t_param = sioparam;
