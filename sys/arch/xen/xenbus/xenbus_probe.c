@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.26.2.1 2009/01/16 01:17:49 snj Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.26.2.2 2011/04/24 16:16:51 riz Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.26.2.1 2009/01/16 01:17:49 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.26.2.2 2011/04/24 16:16:51 riz Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -284,6 +284,7 @@ xenbus_probe_device_type(const char *path, const char *type,
 		return err;
 
 	for (i = 0; i < dir_n; i++) {
+		err = 0;
 		/*
 		 * add size of path to size of xenbus_device. xenbus_device
 		 * already has room for one char in xbusd_path.
