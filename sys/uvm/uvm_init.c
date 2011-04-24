@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.40 2011/04/23 18:14:12 rmind Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.41 2011/04/24 03:56:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.40 2011/04/23 18:14:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.41 2011/04/24 03:56:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,12 +144,6 @@ uvm_init(void)
 	uvm_pager_init();
 
 	/*
-	 * step 8: init the uvm_loan() facility.
-	 */
-
-	uvm_loan_init();
-
-	/*
 	 * Initialize pools.  This must be done before anyone manipulates
 	 * any vm_maps because we use a pool for some map entry structures.
 	 */
@@ -161,6 +155,12 @@ uvm_init(void)
 	 */
 
 	kmem_init();
+
+	/*
+	 * Initialize the uvm_loan() facility.
+	 */
+
+	uvm_loan_init();
 
 	/*
 	 * init emap subsystem.
