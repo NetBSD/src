@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.213 2011/04/23 18:57:27 rmind Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.214 2011/04/24 20:30:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.213 2011/04/23 18:57:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.214 2011/04/24 20:30:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ fd_unused(filedesc_t *fdp, unsigned fd)
  * Look up the file structure corresponding to a file descriptor
  * and return the file, holding a reference on the descriptor.
  */
-inline file_t *
+file_t *
 fd_getfile(unsigned fd)
 {
 	filedesc_t *fdp;
