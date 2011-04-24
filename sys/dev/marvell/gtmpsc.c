@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.42 2010/11/14 03:49:53 uebayasi Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.43 2011/04/24 16:27:00 rmind Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.42 2010/11/14 03:49:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.43 2011/04/24 16:27:00 rmind Exp $");
 
 #include "opt_kgdb.h"
 
@@ -328,7 +328,7 @@ gtmpscattach(device_t parent, device_t self, void *aux)
 	gtmpsc_txdesc_init(sc);
 	gtmpsc_rxdesc_init(sc);
 
-	sc->sc_tty = tp = ttymalloc();
+	sc->sc_tty = tp = tty_alloc();
 	tp->t_oproc = gtmpscstart;
 	tp->t_param = gtmpscparam;
 	tty_attach(tp);

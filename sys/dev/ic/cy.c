@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.57 2009/11/23 02:13:46 rmind Exp $	*/
+/*	$NetBSD: cy.c,v 1.58 2011/04/24 16:27:00 rmind Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.57 2009/11/23 02:13:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.58 2011/04/24 16:27:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -290,7 +290,7 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	s = spltty();
 	if (cy->cy_tty == NULL) {
-		if ((cy->cy_tty = ttymalloc()) == NULL) {
+		if ((cy->cy_tty = tty_alloc()) == NULL) {
 			splx(s);
 			aprint_error_dev(sc->sc_dev,
 			    "port %d: can't allocate tty\n",

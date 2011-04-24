@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.51 2010/11/13 13:52:10 uebayasi Exp $	*/
+/*	$NetBSD: qd.c,v 1.52 2011/04/24 16:27:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.51 2010/11/13 13:52:10 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.52 2011/04/24 16:27:00 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -826,7 +826,7 @@ qdopen(dev_t dev, int flag, int mode, struct proc *p)
 
 		/* If not done already, allocate tty structure */
 		if (qd_tty[minor_dev] == NULL)
-			qd_tty[minor_dev] = ttymalloc();
+			qd_tty[minor_dev] = tty_alloc();
 
 		if (qd_tty[minor_dev] == NULL)
 			return ENXIO;

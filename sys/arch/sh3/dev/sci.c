@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.52 2009/03/14 15:36:13 dsl Exp $ */
+/* $NetBSD: sci.c,v 1.53 2011/04/24 16:26:57 rmind Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.52 2009/03/14 15:36:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.53 2011/04/24 16:26:57 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -402,7 +402,7 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, scisoft, sc);
 	SET(sc->sc_hwflags, SCI_HW_DEV_OK);
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = scistart;
 	tp->t_param = sciparam;
 	tp->t_hwiflow = NULL;

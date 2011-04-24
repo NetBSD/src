@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.27 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.28 2011/04/24 16:26:59 rmind Exp $	*/
 
 /* XXXad does this even compile? */
 
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.27 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.28 2011/04/24 16:26:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -328,7 +328,7 @@ cdtty_attach(struct cd18xx_softc *sc, int port)
 	/* XXX no console or kgdb support yet! */
 
 	/* get a tty structure */
-	p->p_tty = ttymalloc();
+	p->p_tty = tty_alloc();
 	p->p_tty->t_oproc = cdttystart;
 	p->p_tty->t_param = cdttyparam;
 	p->p_tty->t_hwiflow = cdttyhwiflow;
