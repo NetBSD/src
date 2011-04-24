@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.5 2008/08/05 16:47:42 matt Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.6 2011/04/24 11:32:36 tron Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -12,8 +12,10 @@
 
 #if defined(_NETBSD_SOURCE) || defined(_ISOC99_SOURCE)
 
+#if !defined(__sparc64__)
 typedef int fenv_t;
 typedef int fexcept_t;
+#endif
 
 #define	FE_INEXACT	0x01	/* imprecise (loss of precision) */
 #define	FE_DIVBYZERO	0x02	/* divide-by-zero exception */
