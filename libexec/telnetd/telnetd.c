@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.51 2008/07/20 01:09:07 lukem Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.52 2011/04/24 21:18:24 elric Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.51 2008/07/20 01:09:07 lukem Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.52 2011/04/24 21:18:24 elric Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ __RCSID("$NetBSD: telnetd.c,v 1.51 2008/07/20 01:09:07 lukem Exp $");
 #define	Authenticator	k5_Authenticator
 #include <krb5.h>
 #undef	Authenticator
-#include <com_err.h>
+#include <krb5/com_err.h>
 #endif
 
 #ifdef AUTHENTICATION
