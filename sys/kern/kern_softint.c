@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.34 2011/04/11 19:13:54 rmind Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.35 2011/04/24 18:46:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,10 +176,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.34 2011/04/11 19:13:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.35 2011/04/24 18:46:22 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/intr.h>
 #include <sys/mutex.h>
