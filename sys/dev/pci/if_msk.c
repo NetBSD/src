@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.37 2011/04/16 14:03:28 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.38 2011/04/24 18:53:02 plunky Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.37 2011/04/16 14:03:28 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.38 2011/04/24 18:53:02 plunky Exp $");
 
 #include "rnd.h"
 
@@ -105,7 +105,6 @@ void msk_attach(device_t, device_t, void *);
 int mskcprint(void *, const char *);
 int msk_intr(void *);
 void msk_intr_yukon(struct sk_if_softc *);
-__inline int msk_rxvalid(struct sk_softc *, u_int32_t, u_int32_t);
 void msk_rxeof(struct sk_if_softc *, u_int16_t, u_int32_t);
 void msk_txeof(struct sk_if_softc *, int);
 int msk_encap(struct sk_if_softc *, struct mbuf *, u_int32_t *);
@@ -1677,7 +1676,7 @@ mskc_resume(device_t dv, const pmf_qual_t *qual)
 	return true;
 }
 
-__inline int
+static __inline int
 msk_rxvalid(struct sk_softc *sc, u_int32_t stat, u_int32_t len)
 {
 	if ((stat & (YU_RXSTAT_CRCERR | YU_RXSTAT_LONGERR |
