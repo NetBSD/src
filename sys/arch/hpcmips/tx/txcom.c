@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.44 2010/07/20 15:03:53 tsutsui Exp $ */
+/*	$NetBSD: txcom.c,v 1.45 2011/04/24 16:26:56 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.44 2010/07/20 15:03:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.45 2011/04/24 16:26:56 rmind Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -230,7 +230,7 @@ txcom_attach(struct device *parent, struct device *self, void *aux)
 	}
 	memset(sc->sc_rbuf, 0, TXCOM_RING_SIZE);
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = txcomstart;
 	tp->t_param = txcomparam;
 	tp->t_hwiflow = NULL;
