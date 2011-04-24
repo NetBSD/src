@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.214 2011/04/02 08:11:31 mbalmer Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.215 2011/04/24 18:46:22 rmind Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.214 2011/04/02 08:11:31 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.215 2011/04/24 18:46:22 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.214 2011/04/02 08:11:31 mbalmer 
 #include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

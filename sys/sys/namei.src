@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.23 2011/04/18 00:40:54 dholland Exp $	*/
+/*	$NetBSD: namei.src,v 1.24 2011/04/24 18:46:24 rmind Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -176,7 +176,7 @@ NAMEIFL	PARAMASK	0x0eee300	/* mask of parameter descriptors */
 /*
  * This structure describes the elements in the cache of recent
  * names looked up by namei. NCHNAMLEN is sized to make structure
- * size a power of two to optimize malloc's. Minimum reasonable
+ * size a power of two to optimize allocations.  Minimum reasonable
  * size is 15.
  */
 
@@ -205,7 +205,6 @@ struct	namecache {
 };
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
 #include <sys/pool.h>
 
 struct mount;

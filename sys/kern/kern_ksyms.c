@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.62 2011/01/04 01:40:19 matt Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.63 2011/04/24 18:46:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.62 2011/01/04 01:40:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.63 2011/04/24 18:46:22 rmind Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -280,7 +280,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	char *str;
 	int nsyms = symsize / sizeof(Elf_Sym);
 
-	/* sanity check for pre-malloc map table used during startup */
+	/* Sanity check for pre-allocated map table used during startup. */
 	if ((nmap == ksyms_nmap) && (nsyms >= KSYMS_MAX_ID)) {
 		printf("kern_ksyms: ERROR %d > %d, increase KSYMS_MAX_ID\n",
 		    nsyms, KSYMS_MAX_ID);
