@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2010/11/21 19:19:21 adam Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2011/04/24 14:09:39 elric Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual
 
@@ -23,8 +23,8 @@ CPPFLAGS+=-DSKEY
 .endif	# USE_PAM == no
 
 .if (${USE_KERBEROS} != "no")
-CPPFLAGS+=-DGSSAPI -I${DESTDIR}/usr/include/gssapi
-CPPFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/krb5 -DHEIMDAL
+CPPFLAGS+=-DGSSAPI
+CPPFLAGS+=-DKRB5 -DHEIMDAL
 .endif
 
 .if (${USE_LDAP} != "no")
