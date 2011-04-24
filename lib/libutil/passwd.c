@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.50 2010/08/18 08:32:02 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.51 2011/04/24 01:56:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.50 2010/08/18 08:32:02 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.51 2011/04/24 01:56:44 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -172,7 +172,7 @@ pw_mkdb(username, secureonly)
 	}
 	if (WIFEXITED(pstat)) {
 		if (WEXITSTATUS(pstat) != 0) {
-			warnx("pwd_mkdb exited with static %d",
+			warnx("pwd_mkdb exited with status %d",
 			    WEXITSTATUS(pstat));
 			return -1;
 		}
