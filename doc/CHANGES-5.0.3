@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.38 2011/04/07 17:25:47 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.39 2011/04/24 15:41:55 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2722,4 +2722,9 @@ dist/dhcp/client/dhclient.c			1.21
 	CVE-2011-0997 dhclient: insufficient sanitization of certain DHCP
 	response values.
 	[spz, ticket #1595]
+
+lib/libc/gen/glob.c				1.28-1.29 via patch
+
+	Prevent resource DoS from brace expansion.
+	[spz, ticket #1597]
 
