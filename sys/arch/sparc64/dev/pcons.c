@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.29 2008/06/13 13:10:49 cegger Exp $	*/
+/*	$NetBSD: pcons.c,v 1.30 2011/04/24 16:26:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.29 2008/06/13 13:10:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.30 2011/04/24 16:26:57 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -130,7 +130,7 @@ pconsopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (!sc)
 		return ENXIO;
 	if (!(tp = sc->of_tty))
-		sc->of_tty = tp = ttymalloc();
+		sc->of_tty = tp = tty_alloc();
 	tp->t_oproc = pconsstart;
 	tp->t_param = pconsparam;
 	tp->t_dev = dev;

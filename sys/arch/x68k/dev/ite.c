@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.58 2011/02/08 20:20:25 rmind Exp $	*/
+/*	$NetBSD: ite.c,v 1.59 2011/04/24 16:26:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.58 2011/02/08 20:20:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.59 2011/04/24 16:26:58 rmind Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -352,7 +352,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	if (unit >= ite_cd.cd_ndevs || (ip = getitesp(dev)) == NULL)
 		return (ENXIO);
 	if (!ite_tty[unit]) {
-		tp = ite_tty[unit] = ttymalloc();
+		tp = ite_tty[unit] = tty_alloc();
 		tty_attach(tp);
 	} else
 		tp = ite_tty[unit];
@@ -396,7 +396,7 @@ iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 	ttyclose(tp);
 	iteoff(dev, 0);
 #if 0
-	ttyfree(tp);
+	tty_free(tp);
 	ite_tty[UNIT(dev)] = (struct tty *)0;
 #endif
 	return(0);
