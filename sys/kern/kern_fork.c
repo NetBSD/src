@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.180 2011/03/23 13:57:40 joerg Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.181 2011/04/24 20:17:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.180 2011/03/23 13:57:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.181 2011/04/24 20:17:53 rmind Exp $");
 
 #include "opt_ktrace.h"
 
@@ -348,6 +348,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_fd = fd_init(NULL);
 	else
 		p2->p_fd = fd_copy();
+
+	/* XXX racy */
+	p2->p_mqueue_cnt = p1->p_mqueue_cnt;
 
 	if (flags & FORK_SHARECWD)
 		cwdshare(p2);
