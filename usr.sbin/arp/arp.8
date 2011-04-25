@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.8,v 1.20 2008/01/10 14:16:26 seanb Exp $
+.\"	$NetBSD: arp.8,v 1.21 2011/04/25 22:20:29 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,7 +80,7 @@ A super-user may delete an entry for the host called
 .Ar hostname
 with the
 .Fl d
-flag. 
+flag.
 If the
 .Cm proxy
 keyword is specified, only the published
@@ -131,7 +131,8 @@ act as an
 server,
 responding to requests for
 .Ar hostname
-even though the host address is not its own.  If the word
+even though the host address is not its own.
+If the word
 .Ar proxy
 is also given, the published entry will be a
 .Dq proxy only
