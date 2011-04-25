@@ -1,4 +1,4 @@
-.\"	$NetBSD: kpause.9,v 1.5 2008/08/06 07:08:31 skrll Exp $
+.\"	$NetBSD: kpause.9,v 1.6 2011/04/25 22:08:18 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,24 +102,24 @@ It returns an error number.
 .\" ------------------------------------------------------------
 .Sh ERRORS
 .Bl -tag -width Er
-.It Bq Er EWOULDBLOCK
-The timeout expired.
-.It Bq Er ERESTART
-.Fn kpause
-returned as a result of a signal with
-.Dv SA_RESTART
-property.
 .It Bq Er EINTR
 .Fn kpause
 returned due to other reasons.
 Typically as a result of a signal without
 .Dv SA_RESTART
 property.
+.It Bq Er ERESTART
+.Fn kpause
+returned as a result of a signal with
+.Dv SA_RESTART
+property.
+.It Bq Er EWOULDBLOCK
+The timeout expired.
 .El
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr sigaction 2 ,
-.Xr errno 9 ,
 .Xr condvar 9 ,
-.Xr mstohz 9 ,
-.Xr hz 9
+.Xr errno 9 ,
+.Xr hz 9 ,
+.Xr mstohz 9
