@@ -1,4 +1,4 @@
-.\"	$NetBSD: ttyname.3,v 1.21 2008/06/25 11:47:29 ad Exp $
+.\"	$NetBSD: ttyname.3,v 1.22 2011/04/25 22:38:34 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -169,11 +169,11 @@ The
 .Fn ttyname_r
 function will also fail if:
 .Bl -tag -width Er
-.It Bq Er ERANGE
-The buffer provided is not large enough to fit the result.
 .It Bq Er ENOENT
 The terminal device is not found.
 This can happen if the device node has been removed after it was opened.
+.It Bq Er ERANGE
+The buffer provided is not large enough to fit the result.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
