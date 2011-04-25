@@ -1,4 +1,4 @@
-.\"	$NetBSD: altq.conf.5,v 1.13 2009/03/15 12:30:09 joerg Exp $
+.\"	$NetBSD: altq.conf.5,v 1.14 2011/04/25 22:45:31 wiz Exp $
 .\"	$KAME: altq.conf.5,v 1.15 2002/11/17 02:51:49 kjc Exp $
 .\"
 .\" Copyright (C) 2000
@@ -178,10 +178,10 @@ Filter matching is performed from a filter with a larger ruleno.
 Default is 0.
 .El
 .Pp
-.Ar filter_value
+.Ar filter_values
 should be in the following format:
 .Bl -tag -width filter -offset indent
-.It filter_values :
+.It Ar filter_values :
 .Ad dst_addr Op Cm netmask Ar mask
 .Ar dport
 .Ad src_addr Op Cm netmask Ar mask
