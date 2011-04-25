@@ -1,4 +1,4 @@
-/*	$NetBSD: t_netdb.c,v 1.1 2011/04/10 10:49:44 jruoho Exp $ */
+/*	$NetBSD: t_netdb.c,v 1.2 2011/04/25 20:51:14 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_netdb.c,v 1.1 2011/04/10 10:49:44 jruoho Exp $");
+__RCSID("$NetBSD: t_netdb.c,v 1.2 2011/04/25 20:51:14 njoly Exp $");
 
 #include <atf-c.h>
 #include <netdb.h>
@@ -56,7 +56,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("AI_PASSIVE not defined");
+		atf_tc_fail_nonfatal("AI_PASSIVE not defined");
 
 	fail = true;
 
@@ -64,7 +64,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("AI_CANONNAME not defined");
+		atf_tc_fail_nonfatal("AI_CANONNAME not defined");
 
 	fail = true;
 
@@ -72,7 +72,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("AI_NUMERICHOST not defined");
+		atf_tc_fail_nonfatal("AI_NUMERICHOST not defined");
 
 	fail = true;
 
@@ -80,7 +80,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("AI_NUMERICSERV not defined");
+		atf_tc_fail_nonfatal("AI_NUMERICSERV not defined");
 
 	fail = true;
 
@@ -88,7 +88,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("AI_V4MAPPED not defined");
+		atf_tc_fail_nonfatal("AI_V4MAPPED not defined");
 
 	fail = true;
 
@@ -96,7 +96,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("AI_ALL not defined");
+		atf_tc_fail_nonfatal("AI_ALL not defined");
 
 	fail = true;
 
@@ -104,7 +104,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("AI_ADDRCONFIG not defined");
+		atf_tc_fail_nonfatal("AI_ADDRCONFIG not defined");
 
 	fail = true;
 
@@ -112,7 +112,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("NI_NOFQDN not defined");
+		atf_tc_fail_nonfatal("NI_NOFQDN not defined");
 
 	fail = true;
 
@@ -120,7 +120,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("NI_NUMERICHOST not defined");
+		atf_tc_fail_nonfatal("NI_NUMERICHOST not defined");
 
 	fail = true;
 
@@ -128,7 +128,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("NI_NAMEREQD not defined");
+		atf_tc_fail_nonfatal("NI_NAMEREQD not defined");
 
 	fail = true;
 
@@ -136,7 +136,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("NI_NUMERICSERV not defined");
+		atf_tc_fail_nonfatal("NI_NUMERICSERV not defined");
 
 	fail = true;
 
@@ -144,7 +144,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("NI_NUMERICSCOPE not defined");
+		atf_tc_fail_nonfatal("NI_NUMERICSCOPE not defined");
 
 	fail = true;
 
@@ -152,7 +152,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("NI_DGRAM not defined");
+		atf_tc_fail_nonfatal("NI_DGRAM not defined");
 
 	fail = true;
 
@@ -160,7 +160,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("EAI_AGAIN not defined");
+		atf_tc_fail_nonfatal("EAI_AGAIN not defined");
 
 	fail = true;
 
@@ -168,7 +168,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("EAI_BADFLAGS not defined");
+		atf_tc_fail_nonfatal("EAI_BADFLAGS not defined");
 
 	fail = true;
 
@@ -176,7 +176,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("EAI_FAIL not defined");
+		atf_tc_fail_nonfatal("EAI_FAIL not defined");
 
 	fail = true;
 
@@ -184,7 +184,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("EAI_FAMILY not defined");
+		atf_tc_fail_nonfatal("EAI_FAMILY not defined");
 
 	fail = true;
 
@@ -192,7 +192,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("EAI_MEMORY not defined");
+		atf_tc_fail_nonfatal("EAI_MEMORY not defined");
 
 	fail = true;
 
@@ -200,7 +200,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("EAI_NONAME not defined");
+		atf_tc_fail_nonfatal("EAI_NONAME not defined");
 
 	fail = true;
 
@@ -208,7 +208,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("EAI_SERVICE not defined");
+		atf_tc_fail_nonfatal("EAI_SERVICE not defined");
 
 	fail = true;
 
@@ -216,7 +216,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("EAI_SOCKTYPE not defined");
+		atf_tc_fail_nonfatal("EAI_SOCKTYPE not defined");
 
 	fail = true;
 
@@ -224,7 +224,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("EAI_SYSTEM not defined");
+		atf_tc_fail_nonfatal("EAI_SYSTEM not defined");
 
 	fail = true;
 
@@ -232,7 +232,7 @@ ATF_TC_BODY(netdb_constants, tc)
 	fail = false;
 #endif
 	if (fail != false)
-		atf_tc_fail("EAI_OVERFLOW not defined");
+		atf_tc_fail_nonfatal("EAI_OVERFLOW not defined");
 }
 
 ATF_TP_ADD_TCS(tp)
