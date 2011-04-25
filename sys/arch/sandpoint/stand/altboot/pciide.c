@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.6 2011/04/19 17:49:38 phx Exp $ */
+/* $NetBSD: pciide.c,v 1.7 2011/04/25 18:30:18 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ pciide_match(unsigned tag, void *data)
 		return 1;
 	case PCI_DEVICE(0x1283, 0x8211): /* ITE 8211 IDE */
 	case PCI_DEVICE(0x1106, 0x1571): /* VIA 82C586 IDE */
+	case PCI_DEVICE(0x1106, 0x3164): /* VIA VT6410 */
 	case PCI_DEVICE(0x10ad, 0x0105): /* Symphony Labs 82C105 IDE */
 	case PCI_DEVICE(0x10b8, 0x5229): /* ALi IDE */
 	case PCI_DEVICE(0x1191, 0x0008): /* ACARD ATP865 */
