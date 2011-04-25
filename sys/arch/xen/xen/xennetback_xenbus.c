@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.43 2011/04/25 00:14:06 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.44 2011/04/25 00:22:37 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -24,6 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.44 2011/04/25 00:22:37 jym Exp $");
 
 #include "opt_xen.h"
 
