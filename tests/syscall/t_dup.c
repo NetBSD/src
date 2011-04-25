@@ -1,4 +1,4 @@
-/* $NetBSD: t_dup.c,v 1.3 2011/04/08 15:35:49 jruoho Exp $ */
+/* $NetBSD: t_dup.c,v 1.4 2011/04/25 22:29:35 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dup.c,v 1.3 2011/04/08 15:35:49 jruoho Exp $");
+__RCSID("$NetBSD: t_dup.c,v 1.4 2011/04/25 22:29:35 njoly Exp $");
 
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: t_dup.c,v 1.3 2011/04/08 15:35:49 jruoho Exp $");
 
 #include <atf-c.h>
 
-static char	 path[] = "/tmp/dup";
+static char	 path[] = "dup";
 
 ATF_TC(dup_err);
 ATF_TC_HEAD(dup_err, tc)

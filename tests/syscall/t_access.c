@@ -1,4 +1,4 @@
-/* $NetBSD: t_access.c,v 1.3 2011/04/04 07:16:29 jruoho Exp $ */
+/* $NetBSD: t_access.c,v 1.4 2011/04/25 22:29:35 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_access.c,v 1.3 2011/04/04 07:16:29 jruoho Exp $");
+__RCSID("$NetBSD: t_access.c,v 1.4 2011/04/25 22:29:35 njoly Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: t_access.c,v 1.3 2011/04/04 07:16:29 jruoho Exp $");
 
 #include <atf-c.h>
 
-static const char path[] = "/tmp/access";
+static const char path[] = "access";
 static const int mode[4] = { R_OK, W_OK, X_OK, F_OK };
 
 ATF_TC_WITH_CLEANUP(access_access);
