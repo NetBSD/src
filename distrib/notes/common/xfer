@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.68 2010/05/03 15:14:24 tsutsui Exp $
+.\"	$NetBSD: xfer,v 1.69 2011/04/25 22:13:45 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,7 @@ directory of the
 .Nx
 distribution.
 .Pp
-Booting from CD is not currently available.
+Booting from CD is currently not supported.
 .Pp
 .\} \" \n[hp700]
 .
