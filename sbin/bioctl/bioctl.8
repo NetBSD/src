@@ -1,4 +1,4 @@
-.\"	$NetBSD: bioctl.8,v 1.16 2008/05/25 20:09:55 mhitch Exp $
+.\"	$NetBSD: bioctl.8,v 1.17 2011/04/25 22:09:29 wiz Exp $
 .\"	$OpenBSD: bioctl.8,v 1.43 2007/03/20 06:12:11 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Juan Romero Pardines
@@ -136,7 +136,7 @@ Volume Status       Size         Device/Label   RAID Level Stripe
 .Ed
 .Pp
 To create a RAID 5 volume on the SCSI 0:15.0 location on the disks
-0, 1, 2 and 3, with stripe size of 64Kb on the first volume ID,
+0, 1, 2, and 3, with stripe size of 64Kb on the first volume ID,
 using all available free space on the disks:
 .Pp
 .Dl $ bioctl arcmsr0 create volume 0 0-3 64 5 0:15.0
