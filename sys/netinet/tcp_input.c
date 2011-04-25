@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.310 2011/04/20 14:08:07 wiz Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.311 2011/04/25 22:12:43 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.310 2011/04/20 14:08:07 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.311 2011/04/25 22:12:43 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1006,7 +1006,8 @@ tcp_input(struct mbuf *m, ...)
 	struct tcpcb *tp = 0;
 	int tiflags;
 	struct socket *so = NULL;
-	int todrop, dupseg, acked, ourfinisacked, needoutput = 0;
+	int todrop, acked, ourfinisacked, needoutput = 0;
+	bool dupseg;
 #ifdef TCP_DEBUG
 	short ostate = 0;
 #endif
@@ -1057,15 +1058,14 @@ tcp_input(struct mbuf *m, ...)
 	 * Note: IP leaves IP header in first mbuf.
 	 */
 	ip = mtod(m, struct ip *);
-#ifdef INET6
-	ip6 = NULL;
-#endif
 	switch (ip->ip_v) {
 #ifdef INET
 	case 4:
+#ifdef INET6
+		ip6 = NULL;
+#endif
 		af = AF_INET;
 		iphlen = sizeof(struct ip);
-		ip = mtod(m, struct ip *);
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
 			sizeof(struct tcphdr));
 		if (th == NULL) {
