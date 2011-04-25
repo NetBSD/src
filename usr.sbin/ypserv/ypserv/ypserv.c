@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.23 2009/10/20 00:51:15 snj Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.24 2011/04/25 22:54:05 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.23 2009/10/20 00:51:15 snj Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.24 2011/04/25 22:54:05 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -438,9 +438,9 @@ usage(void)
 {
 
 #ifdef LIBWRAP
-#define	USAGESTR	"Usage: %s [-d] [-l] [-p <port>]\n"
+#define	USAGESTR	"Usage: %s [-dfl] [-p <port>]\n"
 #else
-#define	USAGESTR	"Usage: %s [-d] [-p <port>]\n"
+#define	USAGESTR	"Usage: %s [-df] [-p <port>]\n"
 #endif
 
 	(void)fprintf(stderr, USAGESTR, getprogname());
