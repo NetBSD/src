@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.260 2011/04/18 01:47:28 rmind Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.261 2011/04/25 14:14:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.260 2011/04/18 01:47:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.261 2011/04/25 14:14:22 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,6 +269,8 @@ scsibusdetach(device_t self, int flags)
 			periph = scsipi_lookup_periph(chan, ctarget, clun);
 			if (periph == NULL)
 				continue;
+			if ((flags & DETACH_SHUTDOWN) != 0)
+				return EBUSY;
 			TAILQ_FOREACH(xs, &periph->periph_xferq, device_q) {
 				callout_stop(&xs->xs_callout);
 				xs->error = XS_DRIVER_STUFFUP;
