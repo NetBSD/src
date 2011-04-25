@@ -1,7 +1,7 @@
-/*  $NetBSD: subr.c,v 1.10 2010/10/11 05:37:58 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.11 2011/04/25 04:54:53 manu Exp $ */
 
 /*-
- *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
+ *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
  * 
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -77,8 +77,7 @@ perfuse_new_pn(pu, name, parent)
 }
 
 void
-perfuse_destroy_pn(pu, pn)
-	struct puffs_usermount *pu;
+perfuse_destroy_pn(pn)
 	struct puffs_node *pn;
 {
 	struct perfuse_node_data *pnd;
