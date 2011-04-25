@@ -1,4 +1,4 @@
-/* $NetBSD: t_umask.c,v 1.1 2011/04/04 16:32:41 jruoho Exp $ */
+/* $NetBSD: t_umask.c,v 1.2 2011/04/25 22:29:35 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_umask.c,v 1.1 2011/04/04 16:32:41 jruoho Exp $");
+__RCSID("$NetBSD: t_umask.c,v 1.2 2011/04/25 22:29:35 njoly Exp $");
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: t_umask.c,v 1.1 2011/04/04 16:32:41 jruoho Exp $");
 #include <string.h>
 #include <unistd.h>
 
-static const char path[] = "/tmp/umask";
+static const char path[] = "umask";
 static const mode_t mask[] = {
 	S_IRWXU,
 	S_IRUSR,
