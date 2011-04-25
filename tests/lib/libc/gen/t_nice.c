@@ -1,4 +1,4 @@
-/*	$NetBSD: t_nice.c,v 1.5 2011/04/17 06:18:23 jruoho Exp $ */
+/*	$NetBSD: t_nice.c,v 1.6 2011/04/25 20:55:06 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nice.c,v 1.5 2011/04/17 06:18:23 jruoho Exp $");
+__RCSID("$NetBSD: t_nice.c,v 1.6 2011/04/25 20:55:06 njoly Exp $");
 
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -83,10 +83,7 @@ ATF_TC_BODY(nice_err, tc)
 
 		errno = 0;
 
-		ATF_REQUIRE(nice(i) == -1);
-
-		if (errno != EPERM)
-			atf_tc_fail("wrong errno");
+		ATF_REQUIRE_ERRNO(EPERM, nice(i) == -1);
 	}
 }
 
