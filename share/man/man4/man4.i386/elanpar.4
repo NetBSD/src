@@ -1,4 +1,4 @@
-.\"	$NetBSD: elanpar.4,v 1.5 2011/04/05 08:26:08 wiz Exp $
+.\"	$NetBSD: elanpar.4,v 1.6 2011/04/25 22:27:20 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 2008 David Young.  All rights reserved.
@@ -70,8 +70,17 @@ bytes of the kernel text.
 .Xr elansc 4 ,
 .Xr dmesg 8 ,
 .Xr syslogd 8
+.Sh HISTORY
+The
+.Nm
+device first appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An David Young Aq dyoung@NetBSD.org .
 .Sh BUGS
-.Pp
 .Nm
 leaves as many as 65535 bytes unprotected at the beginning and
 end of kernel text.
@@ -86,13 +95,3 @@ using
 .Ic drvctl Fl d Ar elanpar0
 before setting a breakpoint with
 .Xr ddb 4 .
-.Sh HISTORY
-The
-.Nm
-device first appeared in
-.Nx 5.0 .
-.Sh AUTHORS
-The
-.Nm
-driver was written by
-.An David Young Aq dyoung@NetBSD.org .
