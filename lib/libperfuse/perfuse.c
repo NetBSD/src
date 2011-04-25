@@ -1,7 +1,7 @@
-/*  $NetBSD: perfuse.c,v 1.11 2010/10/11 05:37:58 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.12 2011/04/25 04:54:53 manu Exp $ */
 
 /*-
- *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
+ *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
  * 
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -43,14 +43,17 @@
 #include "perfuse_priv.h"
 
 int perfuse_diagflags = 0; /* global used only in DPRINTF/DERR/DWARN */
+extern char **environ;
 
 static struct perfuse_state *init_state(void);
 static int get_fd(const char *);
+
 
 static struct perfuse_state *
 init_state(void)
 {
 	struct perfuse_state *ps;
+	char opts[1024];
 
 	if ((ps = malloc(sizeof(*ps))) == NULL)
 		DERR(EX_OSERR, "malloc failed");
@@ -58,6 +61,40 @@ init_state(void)
 	(void)memset(ps, 0, sizeof(*ps));
 	ps->ps_max_write = UINT_MAX;
 	ps->ps_max_readahead = UINT_MAX;
+	
+	/*
+	 * Most of the time, access() is broken because the filesystem
+	 * performs the check with root privileges. glusterfs will do that 
+	 * if the Linux-specific setfsuid() is missing, for instance.
+	 */
+	ps->ps_flags |= PS_NO_ACCESS;
+
+	/*
+	 * This is a temporary way to toggle access and creat usage.
+	 * It would be nice if that could be provided as mount options,
+	 * but that will not be obvious to do.
+ 	 */
+	if (getenv_r("PERFUSE_OPTIONS", opts, sizeof(opts)) != -1) {
+		char *optname; 
+		char *last;
+
+		 for ((optname = strtok_r(opts, ",", &last));
+		      optname != NULL;
+		      (optname = strtok_r(NULL, ",", &last))) {
+			if (strcmp(optname, "enable_access") == 0)
+				ps->ps_flags &= ~PS_NO_ACCESS;
+
+			if (strcmp(optname, "disable_access") == 0)
+				ps->ps_flags |= PS_NO_ACCESS;
+
+			if (strcmp(optname, "enable_creat") == 0)
+				ps->ps_flags &= ~PS_NO_CREAT;
+
+			if (strcmp(optname, "disable_creat") == 0)
+				ps->ps_flags |= PS_NO_CREAT;
+		}
+	}
+	
 	
 	return ps;
 }
@@ -109,8 +146,8 @@ perfuse_open(path, flags, mode)
 	char minus_i[] = "-i";
 	char fdstr[16];
 	char *const argv[] = { progname, minus_i, fdstr, NULL};
-	char *const envp[] = { NULL };
 	uint32_t opt;
+	uint32_t optlen;
 
 	if (strcmp(path, _PATH_FUSE) != 0)
 		return open(path, flags, mode);
@@ -127,11 +164,13 @@ perfuse_open(path, flags, mode)
 	 * will fit.
 	 */
 	opt = FUSE_BUFSIZE;
-	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) != 0)
+	optlen = sizeof(opt);
+	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
 
 	opt = FUSE_BUFSIZE;
-	if (setsockopt(sv[0], SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) != 0)
+	optlen = sizeof(opt);
+	if (setsockopt(sv[0], SOL_SOCKET, SO_RCVBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
 
 	sa = (struct sockaddr *)(void *)&sun;
@@ -159,19 +198,23 @@ perfuse_open(path, flags, mode)
 	 * will fit.
 	 */
 	opt = FUSE_BUFSIZE;
-	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) != 0)
+	optlen = sizeof(opt);
+	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
 
 	opt = FUSE_BUFSIZE;
-	if (setsockopt(sv[0], SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) != 0)
+	optlen = sizeof(opt);
+	if (setsockopt(sv[0], SOL_SOCKET, SO_RCVBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
 
 	opt = FUSE_BUFSIZE;
-	if (setsockopt(sv[1], SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) != 0)
+	optlen = sizeof(opt);
+	if (setsockopt(sv[1], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
 
 	opt = FUSE_BUFSIZE;
-	if (setsockopt(sv[1], SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) != 0)
+	optlen = sizeof(opt);
+	if (setsockopt(sv[1], SOL_SOCKET, SO_RCVBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
 
 	/*
@@ -179,7 +222,8 @@ perfuse_open(path, flags, mode)
 	 * frame is sent.
 	 */
 	opt = 1;
-	if (setsockopt(sv[1], 0, LOCAL_CREDS, &opt, sizeof(opt)) != 0)
+	optlen = sizeof(opt);
+	if (setsockopt(sv[1], 0, LOCAL_CREDS, &opt, optlen) != 0)
 		DWARN("%s: setsockopt LOCAL_CREDS failed", __func__);
 
 	(void)sprintf(fdstr, "%d", sv[1]);
@@ -193,7 +237,7 @@ perfuse_open(path, flags, mode)
 		/* NOTREACHED */
 		break;
 	case 0:
-		(void)execve(argv[0], argv, envp);
+		(void)execve(argv[0], argv, environ);
 #ifdef PERFUSE_DEBUG
 		DWARN("%s:%d: execve failed", __func__, __LINE__);
 #endif
@@ -277,7 +321,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 	}
 
 	pmo = (struct perfuse_mount_out *)(void *)frame;
-	pmo->pmo_len = len;
+	pmo->pmo_len = (uint32_t)len;
 	pmo->pmo_error = 0;
 	pmo->pmo_unique = (uint64_t)-1;
 	(void)strcpy(pmo->pmo_magic, PERFUSE_MOUNT_MAGIC);
@@ -288,7 +332,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 	    filesystemtype ? (uint32_t)strlen(filesystemtype) + 1 : 0;
 	pmo->pmo_mountflags = (uint32_t)mountflags;
 	pmo->pmo_data_len = data ? (uint32_t)strlen(data) + 1 : 0;
-	pmo->pmo_sock_len = sock_len;
+	pmo->pmo_sock_len = (uint32_t)sock_len;
 	
 	cp = (char *)(void *)(pmo + 1);
 
@@ -317,7 +361,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 		cp += pmo->pmo_sock_len;
 	}
 
-	if (send(s, frame, len, MSG_NOSIGNAL) != len) {
+	if (send(s, frame, len, MSG_NOSIGNAL) != (ssize_t)len) {
 #ifdef PERFUSE_DEBUG
 		DWARN("%s:%d sendto failed", __func__, __LINE__);
 #endif
