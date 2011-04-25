@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.185 2011/01/12 15:30:40 tsutsui Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.186 2011/04/25 22:14:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.185 2011/01/12 15:30:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.186 2011/04/25 22:14:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1368,7 +1368,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	/*
 	 * Verify that we have valid Ethernet multicast addresses.
 	 */
-	if ((addrlo[0] & 0x01) != 1 || (addrhi[0] & 0x01) != 1) {
+	if (!ETHER_IS_MULTICAST(addrlo) || !ETHER_IS_MULTICAST(addrhi)) {
 		splx(s);
 		return EINVAL;
 	}
