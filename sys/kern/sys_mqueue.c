@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.32 2011/04/24 20:17:53 rmind Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.33 2011/04/25 11:39:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,10 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.32 2011/04/24 20:17:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.33 2011/04/25 11:39:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/atomic.h>
 
 #include <sys/file.h>
 #include <sys/filedesc.h>
