@@ -1,4 +1,4 @@
-.\"	$NetBSD: dosboot.8,v 1.20 2009/05/18 14:46:51 wiz Exp $
+.\"	$NetBSD: dosboot.8,v 1.21 2011/04/25 22:26:29 wiz Exp $
 .\"
 .\" Copyright (c) 1997
 .\" 	Matthias Drochner.  All rights reserved.
@@ -69,9 +69,9 @@ Enter interactive mode.
 .Nm
 will present a prompt, allowing input of commands (see below).
 .It Fl u
-Boot from a UFS filesystem instead of an
+Boot from a UFS file system instead of an
 .Tn MS-DOS
-filesystem.
+file system.
 .It Ar path
 Specifies the kernel file.
 In
@@ -85,10 +85,10 @@ or after a
 .Ic mode ufs
 command), a path in a
 .Nx
-filesystem is expected.
+file system is expected.
 By default, the file is looked up in partition
 .Sq a
-of the first harddisk.
+of the first hard disk.
 Another device or partition can be specified
 by prepending a block device name in terms of
 .Nx ,
@@ -116,7 +116,7 @@ in
 .Xr boot 8
 for full details.
 .It Ic dev Op device
-Set the default device and partition for subsequent filesystem operations.
+Set the default device and partition for subsequent file system operations.
 Without an operand, print the current setting.
 This setting doesn't apply to
 .Tn MS-DOS
@@ -131,7 +131,7 @@ This command works in UFS mode only.
 .Pa path
 can contain a device specification.
 .It Ic mode Va fstype
-Switch filesystem type;
+Switch file system type;
 .Va fstype
 should be one of
 .Ar dos
