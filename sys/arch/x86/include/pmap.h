@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.36 2011/04/25 22:24:00 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.37 2011/04/25 22:24:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -78,6 +78,8 @@
 
 /*
  * pl*_i: generate index into pde/pte arrays in virtual space
+ *
+ * pl_i(va, X) == plX_i(va) <= pl_i_roundup(va, X)
  */
 #define pl1_i(VA)	(((VA_SIGN_POS(VA)) & L1_FRAME) >> L1_SHIFT)
 #define pl2_i(VA)	(((VA_SIGN_POS(VA)) & L2_FRAME) >> L2_SHIFT)
