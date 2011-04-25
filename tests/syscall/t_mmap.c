@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.3 2011/04/19 10:21:51 martin Exp $ */
+/* $NetBSD: t_mmap.c,v 1.4 2011/04/25 22:29:35 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.3 2011/04/19 10:21:51 martin Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.4 2011/04/25 22:29:35 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: t_mmap.c,v 1.3 2011/04/19 10:21:51 martin Exp $");
 #include <atf-c.h>
 
 static long	page = 0;
-static char	path[] = "/tmp/mmap";
+static char	path[] = "mmap";
 static void	map_check(void *, int);
 static void	map_sighandler(int);
 

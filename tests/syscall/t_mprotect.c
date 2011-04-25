@@ -1,4 +1,4 @@
-/* $NetBSD: t_mprotect.c,v 1.3 2011/04/04 10:30:29 jruoho Exp $ */
+/* $NetBSD: t_mprotect.c,v 1.4 2011/04/25 22:29:35 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mprotect.c,v 1.3 2011/04/04 10:30:29 jruoho Exp $");
+__RCSID("$NetBSD: t_mprotect.c,v 1.4 2011/04/25 22:29:35 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: t_mprotect.c,v 1.3 2011/04/04 10:30:29 jruoho Exp $");
 static long	page = 0;
 static int	pax_global = -1;
 static int	pax_enabled = -1;
-static char	path[] = "/tmp/mmap";
+static char	path[] = "mmap";
 
 static void	sighandler(int);
 static bool	paxinit(void);
