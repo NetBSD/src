@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.4 2011/02/02 02:20:25 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.5 2011/04/25 22:16:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.4 2011/02/02 02:20:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.5 2011/04/25 22:16:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,6 +59,7 @@ MODULE(MODULE_CLASS_MISC, npf, NULL);
 
 void		npfattach(int);
 
+static int	npf_fini(void);
 static int	npf_dev_open(dev_t, int, int, lwp_t *);
 static int	npf_dev_close(dev_t, int, int, lwp_t *);
 static int	npf_dev_ioctl(dev_t, u_long, void *, int, lwp_t *);
