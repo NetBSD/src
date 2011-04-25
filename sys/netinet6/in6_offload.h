@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_offload.h,v 1.6 2010/12/11 22:37:47 matt Exp $	*/
+/*	$NetBSD: in6_offload.h,v 1.7 2011/04/25 22:20:59 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -37,5 +37,16 @@ int tcp6_segment(struct mbuf *, int (*)(void *, struct mbuf *), void *);
 int ip6_tso_output(struct ifnet *, struct ifnet *, struct mbuf *,
     const struct sockaddr_in6 *, struct rtentry *);
 void ip6_undefer_csum(struct mbuf *, size_t, int);
+
+extern int tcp_do_loopback_cksum; /* do TCP checksum on loopback? */
+extern int udp_do_loopback_cksum; /* do UDP checksum on loopback? */
+
+#define	IN6_LOOPBACK_NEED_CHECKSUM(csum_flags) \
+	((((csum_flags) & M_CSUM_UDPv6) != 0 && udp_do_loopback_cksum) || \
+	(((csum_flags) & M_CSUM_TCPv6) != 0 && tcp_do_loopback_cksum))
+
+#define	IN6_NEED_CHECKSUM(ifp, csum_flags) \
+	(__predict_true(((ifp)->if_flags & IFF_LOOPBACK) == 0 || \
+	IN6_LOOPBACK_NEED_CHECKSUM(csum_flags)))
 
 #endif /* !defined(_NETINET6_IN6_OFFLOAD_H_) */

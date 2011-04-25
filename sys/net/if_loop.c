@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.72 2010/04/05 07:22:23 joerg Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.73 2011/04/25 22:20:59 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.72 2010/04/05 07:22:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.73 2011/04/25 22:20:59 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.72 2010/04/05 07:22:23 joerg Exp $");
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
+#include <netinet/in_offload.h>
 #include <netinet/ip.h>
 #endif
 
@@ -102,9 +103,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.72 2010/04/05 07:22:23 joerg Exp $");
 #include <netinet/in.h>
 #endif
 #include <netinet6/in6_var.h>
+#include <netinet6/in6_offload.h>
 #include <netinet/ip6.h>
 #endif
-
 
 #ifdef IPX
 #include <netipx/ipx.h>
@@ -212,6 +213,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 {
 	int s, isr;
 	struct ifqueue *ifq = NULL;
+	int csum_flags;
 
 	MCLAIM(m, ifp->if_mowner);
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -264,12 +266,25 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 #ifdef INET
 	case AF_INET:
+		csum_flags = m->m_pkthdr.csum_flags;
+		KASSERT((csum_flags & ~(M_CSUM_IPv4|M_CSUM_UDPv4)) == 0);
+		if (csum_flags != 0 && IN_LOOPBACK_NEED_CHECKSUM(csum_flags)) {
+			ip_undefer_csum(m, 0, csum_flags);
+		}
+		m->m_pkthdr.csum_flags = 0;
 		ifq = &ipintrq;
 		isr = NETISR_IP;
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
+		csum_flags = m->m_pkthdr.csum_flags;
+		KASSERT((csum_flags & ~M_CSUM_UDPv6) == 0);
+		if (csum_flags != 0 &&
+		    IN6_LOOPBACK_NEED_CHECKSUM(csum_flags)) {
+			ip6_undefer_csum(m, 0, csum_flags);
+		}
+		m->m_pkthdr.csum_flags = 0;
 		m->m_flags |= M_LOOP;
 		ifq = &ip6intrq;
 		isr = NETISR_IPV6;
