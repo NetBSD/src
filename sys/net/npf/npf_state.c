@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state.c,v 1.3 2011/01/18 20:33:46 rmind Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.4 2011/04/25 22:16:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.3 2011/01/18 20:33:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.4 2011/04/25 22:16:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,11 +404,10 @@ npf_state_etime(const npf_state_t *nst, const int proto)
 	return expire_table[proto];
 }
 
-#if defined(DDB) || defined(_NPF_TESTING)
-
 void
 npf_state_dump(npf_state_t *nst)
 {
+#if defined(DDB) || defined(_NPF_TESTING)
 	npf_tcpstate_t *fst = &nst->nst_tcpst[0], *tst = &nst->nst_tcpst[1];
 
 	printf("\tstate (%p) %d:\n\t\t"
@@ -418,6 +417,5 @@ npf_state_dump(npf_state_t *nst)
 	    fst->nst_seqend, fst->nst_ackend, fst->nst_maxwin, fst->nst_wscale,
 	    tst->nst_seqend, tst->nst_ackend, tst->nst_maxwin, tst->nst_wscale
 	);
-}
-
 #endif
+}
