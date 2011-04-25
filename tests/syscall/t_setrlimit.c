@@ -1,4 +1,4 @@
-/* $NetBSD: t_setrlimit.c,v 1.3 2011/04/06 03:47:14 jruoho Exp $ */
+/* $NetBSD: t_setrlimit.c,v 1.4 2011/04/25 22:29:35 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.3 2011/04/06 03:47:14 jruoho Exp $");
+__RCSID("$NetBSD: t_setrlimit.c,v 1.4 2011/04/25 22:29:35 njoly Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: t_setrlimit.c,v 1.3 2011/04/06 03:47:14 jruoho Exp $");
 #include <unistd.h>
 
 static void		 sighandler(int);
-static const char	 path[] = "/tmp/setrlimit";
+static const char	 path[] = "setrlimit";
 
 static const int rlimit[] = {
 	RLIMIT_AS,
