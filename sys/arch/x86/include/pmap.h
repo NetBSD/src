@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.35 2011/02/11 23:08:38 jmcneill Exp $	*/
+/*	$NetBSD: pmap.h,v 1.36 2011/04/25 22:24:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,8 +66,6 @@
 
 #ifndef _X86_PMAP_H_
 #define	_X86_PMAP_H_
-
-#define ptei(VA)	(((VA_SIGN_POS(VA)) & L1_MASK) >> L1_SHIFT)
 
 /*
  * pl*_pi: index in the ptp page for a pde mapping a VA.
