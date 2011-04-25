@@ -1,7 +1,7 @@
-/*  $NetBSD: perfuse_priv.h,v 1.16 2010/10/11 05:37:58 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.17 2011/04/25 04:54:53 manu Exp $ */
 
 /*-
- *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
+ *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
  * 
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -46,7 +46,7 @@ struct perfuse_state {
 #define PS_NO_ACCESS	0x0001	/* access is unimplemented; */
 #define PS_NO_CREAT	0x0004	/* create is unimplemented */
 #define PS_INLOOP	0x0008	/* puffs mainloop started */
-	long ps_fsid;
+	uint64_t ps_fsid;
 	uint32_t ps_max_readahead;
 	uint32_t ps_max_write;
 	uint64_t ps_syncreads;
@@ -139,7 +139,7 @@ __BEGIN_DECLS
 
 struct puffs_node *perfuse_new_pn(struct puffs_usermount *, const char *,
     struct puffs_node *);
-void perfuse_destroy_pn(struct puffs_usermount *, struct puffs_node *);
+void perfuse_destroy_pn(struct puffs_node *);
 void perfuse_new_fh(puffs_cookie_t, uint64_t, int);
 void perfuse_destroy_fh(puffs_cookie_t, uint64_t);
 uint64_t perfuse_get_fh(puffs_cookie_t, int);

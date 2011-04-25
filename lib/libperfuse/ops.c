@@ -1,7 +1,7 @@
-/*  $NetBSD: ops.c,v 1.23 2010/10/11 05:37:58 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.24 2011/04/25 04:54:53 manu Exp $ */
 
 /*-
- *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
+ *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
  * 
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@
 #include <sysexits.h>
 #include <syslog.h>
 #include <puffs.h>
-#include <sys/vnode.h>
+#include <sys/socket.h>
 #include <sys/socket.h>
 #include <machine/vmparam.h>
 
@@ -45,7 +45,8 @@ extern int perfuse_diagflags;
 
 static int xchg_msg(struct puffs_usermount *, puffs_cookie_t, 
     perfuse_msg_t *, size_t, enum perfuse_xchg_pb_reply); 
-static int no_access(puffs_cookie_t, const struct puffs_cred *, mode_t);
+static int mode_access(puffs_cookie_t, const struct puffs_cred *, mode_t);
+static int sticky_access(struct puffs_node *, const struct puffs_cred *);
 static void fuse_attr_to_vap(struct perfuse_state *,
     struct vattr *, struct fuse_attr *);
 static int node_lookup_dir_nodot(struct puffs_usermount *,
@@ -54,6 +55,8 @@ static int node_lookup_common(struct puffs_usermount *, puffs_cookie_t,
     const char*, struct puffs_node **);
 static int node_mk_common(struct puffs_usermount *, puffs_cookie_t,
     struct puffs_newinfo *, const struct puffs_cn *pcn, perfuse_msg_t *);
+static int node_mk_common_final(struct puffs_usermount *, puffs_cookie_t,
+    struct puffs_node *, const struct puffs_cn *pcn);
 static ssize_t fuse_to_dirent(struct puffs_usermount *, puffs_cookie_t,
     struct fuse_dirent *, size_t);
 static int readdir_buffered(puffs_cookie_t, struct dirent *, off_t *, 
@@ -201,21 +204,13 @@ xchg_msg(pu, opc, pm, len, wait)
 }
 
 static int
-no_access(opc, pcr, mode)
+mode_access(opc, pcr, mode)
 	puffs_cookie_t opc;
 	const struct puffs_cred *pcr;
 	mode_t mode;
 {
 	struct puffs_node *pn;
 	struct vattr *va;
-
-	/*
-	 * pcr is NULL for self open through fsync or readdir.
-	 * In both case, access control is useless, as it was
-	 * done before, at open time.
-	 */
-	if (pcr == NULL)
-		return 0;
 
 	/*
 	 * pcr is NULL for self open through fsync or readdir.
@@ -232,6 +227,30 @@ no_access(opc, pcr, mode)
 			    mode, pcr);
 }
 
+static int 
+sticky_access(targ, pcr)
+	struct puffs_node *targ;
+	const struct puffs_cred *pcr;
+{
+	uid_t uid;
+	struct puffs_node *tdir;
+	int sticky, owner, error;
+
+	tdir = PERFUSE_NODE_DATA(targ)->pnd_parent;
+
+	if ((error = puffs_cred_getuid(pcr, &uid)) != 0)
+		return error;
+
+	sticky = puffs_pn_getvap(tdir)->va_mode & S_ISTXT;
+	owner = puffs_pn_getvap(targ)->va_uid == uid;
+
+	if (sticky && !owner)
+		error = EACCES;
+
+	return error;	
+}
+
+
 static void
 fuse_attr_to_vap(ps, vap, fa)
 	struct perfuse_state *ps;
@@ -239,7 +258,7 @@ fuse_attr_to_vap(ps, vap, fa)
 	struct fuse_attr *fa;
 {
 	vap->va_type = IFTOVT(fa->mode);
-	vap->va_mode = fa->mode;
+	vap->va_mode = fa->mode & ALLPERMS;
 	vap->va_nlink = fa->nlink;
 	vap->va_uid = fa->uid;
 	vap->va_gid = fa->gid;
@@ -395,7 +414,7 @@ out:
 
 
 /*
- * Common final code for methods that create objects:
+ * Common code for methods that create objects:
  * perfuse_node_mkdir
  * perfuse_node_mknod
  * perfuse_node_symlink
@@ -411,7 +430,6 @@ node_mk_common(pu, opc, pni, pcn, pm)
 	struct perfuse_state *ps;
 	struct puffs_node *pn;
 	struct fuse_entry_out *feo;
-	struct fuse_setattr_in *fsi;
 	int error;
 
 	ps =  puffs_getspecific(pu);
@@ -440,6 +458,36 @@ node_mk_common(pu, opc, pni, pcn, pm)
 #endif
 	ps->ps_destroy_msg(pm);
 
+	return node_mk_common_final(pu, opc, pn, pcn);
+
+out:
+	ps->ps_destroy_msg(pm);
+
+	return error;
+}
+
+/*
+ * Common final code for methods that create objects:
+ * perfuse_node_mkdir via node_mk_common
+ * perfuse_node_mknod via node_mk_common
+ * perfuse_node_symlink via node_mk_common
+ * perfuse_node_create
+ */
+static int
+node_mk_common_final(pu, opc, pn, pcn)
+	struct puffs_usermount *pu;
+	puffs_cookie_t opc;
+	struct puffs_node *pn;
+	const struct puffs_cn *pcn;
+{
+	struct perfuse_state *ps;
+	perfuse_msg_t *pm;
+	struct fuse_setattr_in *fsi;
+	struct fuse_attr_out *fao;
+	int error;
+
+	ps =  puffs_getspecific(pu);
+
 	/* 
 	 * Set owner and group
 	 */
@@ -453,11 +501,12 @@ node_mk_common(pu, opc, pni, pcn, pm)
 	fsi->gid = pn->pn_va.va_gid;
 	fsi->valid = FUSE_FATTR_UID|FUSE_FATTR_GID;
 
-	/*
-	 * A fuse_attr_out is returned, but we ignore it.
-	 */
-	error = xchg_msg(pu, (puffs_cookie_t)pn, 
-			 pm, sizeof(struct fuse_attr_out), wait_reply);
+	if ((error = xchg_msg(pu, (puffs_cookie_t)pn, pm, 
+			      sizeof(*fao), wait_reply)) != 0)
+		goto out;
+
+	fao = GET_OUTPAYLOAD(ps, pm, fuse_attr_out);
+	fuse_attr_to_vap(ps, &pn->pn_va, &fao->attr);
 
 	/*
 	 * The parent directory needs a sync
@@ -465,10 +514,12 @@ node_mk_common(pu, opc, pni, pcn, pm)
 	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
 
 out:
-	ps->ps_destroy_msg(pm);
+	if (pm != NULL)
+		ps->ps_destroy_msg(pm);
 
 	return error;
 }
+
 
 static ssize_t
 fuse_to_dirent(pu, opc, fd, fd_len)
@@ -840,9 +891,8 @@ perfuse_fs_statvfs(pu, svfsb)
 	svfsb->f_asyncreads = ps->ps_asyncreads;
 	svfsb->f_asyncwrites = ps->ps_asyncwrites;
 
-	svfsb->f_fsidx.__fsid_val[0] = (int32_t)ps->ps_fsid;
-	svfsb->f_fsidx.__fsid_val[1] = 0;
-	svfsb->f_fsid = ps->ps_fsid;
+	(void)memcpy(&svfsb->f_fsidx, &ps->ps_fsid, sizeof(ps->ps_fsid));
+	svfsb->f_fsid = (unsigned long)ps->ps_fsid;
 	svfsb->f_namemax = MAXPATHLEN;	/* XXX */
 	svfsb->f_owner = ps->ps_owner_uid;
 
@@ -936,9 +986,26 @@ perfuse_node_lookup(pu, opc, pni, pcn)
 	const struct puffs_cn *pcn;
 {
 	struct puffs_node *pn;
+	mode_t mode;
 	int error;
 
-	error = 0;
+	/*
+	 * Check permissions
+	 */
+	switch(pcn->pcn_nameiop) {
+	case NAMEI_DELETE: /* FALLTHROUGH */
+	case NAMEI_RENAME: /* FALLTHROUGH */
+	case NAMEI_CREATE:
+		mode = PUFFS_VEXEC|PUFFS_VWRITE;
+		break;
+	case NAMEI_LOOKUP: /* FALLTHROUGH */
+	default:
+		mode = PUFFS_VEXEC;
+		break;
+	}
+
+	if ((error = mode_access(opc, pcn->pcn_cred, mode)) != 0) 
+		return error;
 
 	/*
 	 * Special case for ..
@@ -948,12 +1015,38 @@ perfuse_node_lookup(pu, opc, pni, pcn)
 	else
 		error = node_lookup_common(pu, (puffs_cookie_t)opc,
 					   pcn->pcn_name, &pn);
-
 	if (error != 0)
 		return error;
 
+	/*
+	 * Removed node
+	 */
 	if (PERFUSE_NODE_DATA(pn)->pnd_flags & PND_REMOVED)
 		return ENOENT;
+
+	/*
+	 * Check for sticky bit. Unfortunately there is no way to 
+	 * do this before creating the puffs_node, since we require
+	 * this operation to get the node owner.
+	 */
+	switch (pcn->pcn_nameiop) {
+	case NAMEI_DELETE: /* FALLTHROUGH */
+	case NAMEI_RENAME:
+		error = sticky_access(pn, pcn->pcn_cred);
+		if (error != 0) {
+			/* 
+			 * kernel will never know about it and will
+			 * not reclaim it. The filesystem needs to
+			 * clean it up anyway, therefore mimick a forget.
+			 */
+			PERFUSE_NODE_DATA(pn)->pnd_flags |= PND_RECLAIMED;
+			(void)perfuse_node_reclaim(pu, (puffs_cookie_t)pn);
+			return error;
+		}
+		break;
+	default:
+		break;
+	}
 
 	/*
 	 * If that node had a pending reclaim, wipe it out.
@@ -990,15 +1083,6 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
 
-#if notyet
-	/*
-	 * XXX create needs -WX on the parent directory. No pcr is
- 	 * given here, we cannot enforce this.
-	 */
-	if (no_access(opc, pcr, PUFFS_VWRITE|PUFFS_VEXEC))
-		return EACCES;
-#endif
-
 	/*
 	 * If create is unimplemented: Check that it does not
 	 * already exists, and if not, do mknod and open
@@ -1021,18 +1105,12 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 		 * FUSE does the open at create time, while
 		 * NetBSD will open in a subsequent operation.
 		 * We need to open now, in order to retain FUSE
-		 * semantics, but we have no credentials to use
-		 * since the PUFFS interface gives no pcr here. 
-		 *
-		 * open with NULL pcr will skip permission checks.
-		 * There is no security hole, since we know we
-		 * can open this file: we just created it. The 
-		 * calling process will not get a file descriptor
-		 * before the kernel sends the open operation, 
-		 * which will have a pcr, anyway.
+		 * semantics. The calling process will not get 
+		 * a file descriptor before the kernel sends 
+		 * the open operation.
 		 */
 		opc = (puffs_cookie_t)pn;
-		error = perfuse_node_open(pu, opc, FWRITE, NULL);
+		error = perfuse_node_open(pu, opc, FWRITE, pcn->pcn_cred);
 		if (error != 0)	
 			return error;
 
@@ -1078,11 +1156,6 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 		
 	puffs_newinfo_setcookie(pni, pn);
 
-	/*
-	 * The parent directory needs a sync
-	 */
-	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
-
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & (PDF_FH|PDF_FILENAME))
 		DPRINTF("%s: opc = %p, file = \"%s\", flags = 0x%x "
@@ -1090,6 +1163,10 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 			__func__, (void *)pn, pcn->pcn_name,
 			PERFUSE_NODE_DATA(pn)->pnd_flags, feo->nodeid, foo->fh);
 #endif
+
+	ps->ps_destroy_msg(pm);
+
+	return node_mk_common_final(pu, opc, pn, pcn);
 
 out: 
 	ps->ps_destroy_msg(pm);
@@ -1129,25 +1206,16 @@ perfuse_node_mknod(pu, opc, pni, pcn, vap)
 	 * directories, files, socks, fifo and links.
 	 *
 	 * Create an object require -WX permission in the parent directory
-	 *
-	 * XXX The PUFFS interface gives us no pcr here, we cannot perfom 
-	 * access control.
 	 */
 	switch (vap->va_type) {
 	case VDIR:	/* FALLTHROUGH */
 	case VREG:	/* FALLTHROUGH */
 	case VFIFO:	/* FALLTHROUGH */
-	case VSOCK:	/* FALLTHROUGH */
-#if notyet
-		if (no_access(opc, pcr, PUFFS_VWRITE|PUFFS_VEXEC))
-			return EACCES;
-#endif
+	case VSOCK:
 		break;
 	default:	/* VNON, VBLK, VCHR, VBAD */
-#if notyet
-		if (!puffs_cred_isjuggernaut(pcr))
+		if (!puffs_cred_isjuggernaut(pcn->pcn_cred))
 			return EACCES;
-#endif
 		break;
 	}
 
@@ -1180,7 +1248,6 @@ perfuse_node_open(pu, opc, mode, pcr)
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
 	perfuse_msg_t *pm;
-	mode_t pmode;
 	mode_t fmode;
 	int op;
 	struct fuse_open_in *foi;
@@ -1197,32 +1264,22 @@ perfuse_node_open(pu, opc, mode, pcr)
 	if (pnd->pnd_flags & PND_REMOVED)
 		return ENOENT;
 
-	if (puffs_pn_getvap(pn)->va_type == VDIR) {
+	if (puffs_pn_getvap(pn)->va_type == VDIR)
 		op = FUSE_OPENDIR;
-		pmode = PUFFS_VREAD;
-	} else {
+	else
 		op = FUSE_OPEN;
-		if (mode & FWRITE)
-			pmode = PUFFS_VWRITE|PUFFS_VREAD;
-		else
-			pmode = PUFFS_VREAD;
-	}
 
 	/*
-	 * Opening a directory require R-- on the directory
-	 * Opening a file requires R-- for reading, -W- for writing
-	 * In both cases, R-- is required on the parent.
+	 * libfuse docs says
+	 * - O_CREAT should never be set.
+	 * - O_TRUNC may be used if mount option atomic_o_trunc is used XXX
+	 *
+	 * O_APPEND makes no sense since FUSE always sends
+	 * the file offset for write operations. If the 
+	 * filesystem uses pwrite(), O_APPEND would cause
+	 * the offset to be ignored and cause file corruption.
 	 */
-	if ((no_access((puffs_cookie_t)pnd->pnd_parent, pcr, PUFFS_VREAD)) ||
-	    (no_access(opc, pcr, pmode))) {
-		error = EACCES;
-		goto out;
-	}
-
-	/*
-	 * libfuse docs say O_CREAT should not be set.
-	 */
-	mode &= ~O_CREAT;
+	mode &= ~(O_CREAT|O_APPEND);
 
 	/*
 	 * Do not open twice, and do not reopen for reading
@@ -1331,64 +1388,43 @@ perfuse_node_access(pu, opc, mode, pcr)
 	/* 
 	 * If we previously detected the filesystem does not 
 	 * implement access(), short-circuit the call and skip 
-	 * to libpffs access() emulation.
+	 * to libpuffs access() emulation.
 	 */
 	ps = puffs_getspecific(pu);
 	if (ps->ps_flags & PS_NO_ACCESS) {
-		error = ENOSYS;
-	} else {
-		pm = ps->ps_new_msg(pu, opc, FUSE_ACCESS, sizeof(*fai), pcr);
-		fai = GET_INPAYLOAD(ps, pm, fuse_access_in);
-		fai->mask = mode;
+		const struct vattr *vap;
 
-		error = xchg_msg(pu, opc, pm, NO_PAYLOAD_REPLY_LEN, wait_reply);
-		ps->ps_destroy_msg(pm);
+		vap = puffs_pn_getvap((struct puffs_node *)opc);
+
+		error = puffs_access(IFTOVT(vap->va_mode), 
+				     vap->va_mode & ACCESSPERMS, 
+				     vap->va_uid, vap->va_gid,
+				     (mode_t)mode, pcr); 
+		return error;
 	}
 
+	/*
+	 * Plain access call 
+	 */
+	pm = ps->ps_new_msg(pu, opc, FUSE_ACCESS, sizeof(*fai), pcr);
+	fai = GET_INPAYLOAD(ps, pm, fuse_access_in);
+	fai->mask = 0;
+	fai->mask |= (mode & PUFFS_VREAD) ? R_OK : 0;
+	fai->mask |= (mode & PUFFS_VWRITE) ? W_OK : 0;
+	fai->mask |= (mode & PUFFS_VEXEC) ? X_OK : 0;
+
+	error = xchg_msg(pu, opc, pm, NO_PAYLOAD_REPLY_LEN, wait_reply);
+
+	ps->ps_destroy_msg(pm);
+
+	/*
+	 * If unimplemented, start over with emulation
+	 */
 	if (error == ENOSYS) {
-		struct fuse_getattr_in *fgi;
-		struct fuse_attr_out *fao;
-
 		ps->ps_flags |= PS_NO_ACCESS;
-
-		pm = ps->ps_new_msg(pu, opc, FUSE_GETATTR, 
-			      sizeof(*fgi), NULL);
-		fgi = GET_INPAYLOAD(ps, pm, fuse_getattr_in);
-		fgi->getattr_flags = 0; 
-		fgi->dummy = 0;
-		fgi->fh = 0;
-
-		if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_OPEN) {
-			fgi->fh = perfuse_get_fh(opc, FREAD);
-			fgi->getattr_flags |= FUSE_GETATTR_FH; 
-		}
-
-#ifdef PERFUSE_DEBUG
-		if (perfuse_diagflags & PDF_FH)
-			DPRINTF("%s: opc = %p, ino = %"PRId64", "
-				"fh = 0x%"PRIx64"\n", __func__, (void *)opc,
-				PERFUSE_NODE_DATA(opc)->pnd_ino, fgi->fh);
-#endif
-		if ((error = xchg_msg(pu, opc, pm, 
-				      sizeof(*fao), wait_reply)) != 0) {
-			ps->ps_destroy_msg(pm);
-			goto out;
-		}
-
-		fao = GET_OUTPAYLOAD(ps, pm, fuse_attr_out);
-
-		error = puffs_access(VREG, fao->attr.mode, fao->attr.uid,
-				     fao->attr.gid, (mode_t)mode, pcr); 
-
-		
-		fuse_attr_to_vap(ps,
-				 &((struct puffs_node *)opc)->pn_va,
-				 &fao->attr);
-
-		ps->ps_destroy_msg(pm);
+		return perfuse_node_access(pu, opc, mode, pcr);
 	}
 
-out:
 	return error;
 }
 
@@ -1407,13 +1443,6 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
-
-	/*
-	 * getattr requires --X on the parent directory 
-	 * no right is required on the object.
-	 */
-	if (no_access(PERFUSE_NODE_DATA(opc)->pnd_parent, pcr, PUFFS_VEXEC))
-		return EACCES;
 
 	ps = puffs_getspecific(pu);
 
@@ -1465,6 +1494,7 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
 	struct fuse_setattr_in *fsi;
+	struct fuse_attr_out *fao;
 	struct vattr *old_va;
 	int error;
 
@@ -1492,8 +1522,8 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	 * Check for permission to change size
 	 */
 	if ((vap->va_size != (u_quad_t)PUFFS_VNOVAL) &&
-	    no_access(opc, pcr, PUFFS_VWRITE))
-		return EACCES;
+	    (error = mode_access(opc, pcr, PUFFS_VWRITE)) != 0)
+		return error;
 
 	/*
 	 * Check for permission to change dates
@@ -1549,7 +1579,7 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	}
 
 	/*
- 	 * Setting mtime without atime or vice verse leads to
+ 	 * Setting mtime without atime or vice versa leads to
 	 * dates being reset to Epoch on glusterfs. If one
 	 * is missing, use the old value.
  	 */
@@ -1604,11 +1634,14 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 		goto out;
 	}
 
-	/*
-	 * A fuse_attr_out is returned, but we ignore it.
-	 */
-	error = xchg_msg(pu, opc, pm, sizeof(struct fuse_attr_out), wait_reply);
+	if ((error = xchg_msg(pu, opc, pm, sizeof(*fao), wait_reply)) != 0)
+		goto out;
 
+	/*
+	 * Copy back the new values 
+	 */
+	fao = GET_OUTPAYLOAD(ps, pm, fuse_attr_out);
+	fuse_attr_to_vap(ps, old_va, &fao->attr);
 out:
 
 	if (pm != NULL)
@@ -1819,18 +1852,6 @@ perfuse_node_remove(pu, opc, targ, pcn)
 	    (PERFUSE_NODE_DATA(targ)->pnd_flags & PND_REMOVED))
 		return ENOENT;
 
-#if notyet
-	/*
-	 * remove requires -WX on the parent directory 
-	 * no right required on the object.
-	 *
-	 * XXX PUFFS interface gives no pcr here
-	 */
-	if (no_access((puffs_cookie_t)pnd->pnd_parent, pcr, 
-		      PUFFS_VWRITE|PUFFS_VEXEC))
-		return EACCES;
-#endif
-
 #ifdef PERFUSE_DEBUG
 	if (targ == NULL)
 		DERRX(EX_SOFTWARE, "%s: targ is NULL", __func__);
@@ -1898,17 +1919,6 @@ perfuse_node_link(pu, opc, targ, pcn)
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
 	
-#if notyet
-	/*
-	 * Create an object require -W- permission in the parent directory
-	 *
-	 * XXX PUFFS interface gives no pcr here
-	 */
-	if (no_access(opc, pcr, PUFFS_VWRITE))
-		return EACCES;
-#endif
-
-
 	ps = puffs_getspecific(pu);
 	pn = (struct puffs_node *)targ;
 	name = pcn->pcn_name;
@@ -1951,17 +1961,6 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 	    (PERFUSE_NODE_DATA(src)->pnd_flags & PND_REMOVED) ||
 	    (PERFUSE_NODE_DATA(targ_dir)->pnd_flags & PND_REMOVED))
 		return ENOENT;
-
-#if notyet
-	/*
-	 * move requires -WX on source and destination directory 
-	 *
-	 * XXX PUFFS interface gives no pcr here
-	 */
-	if (no_access(opc, pcr_src, PUFFS_VWRITE|PUFFS_VEXEC) ||
-	    no_access(targ_dir,  pcr_targ, PUFFS_VWRITE|PUFFS_VEXEC))
-		return EACCES;
-#endif
 
 	/*
 	 * Await for all operations on the deleted node to drain, 
@@ -2056,16 +2055,6 @@ perfuse_node_mkdir(pu, opc, pni, pcn, vap)
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
 
-#if notyet
-	/*
-	 * Create an object require -WX permission in the parent directory
-	 *
-	 * XXX PUFFS interface gives no pcr here
-	 */
-	if (no_access(opc, pcrx, PUFFS_VWRITE|PUFFS_VEXEC))
-		return EACCES;
-#endif
-
 	ps = puffs_getspecific(pu);
 	path = pcn->pcn_name;
 	len = sizeof(*fmi) + pcn->pcn_namelen + 1; 
@@ -2098,19 +2087,6 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 	pnd = PERFUSE_NODE_DATA(opc);
 	if (pnd->pnd_flags & PND_REMOVED)
 		return ENOENT;
-
-
-#if notyet
-	/*
-	 * remove requires -WX on the parent directory 
-	 * no right required on the object.
-	 *
-	 * XXX PUFFS interface gives no pcr here
-	 */
-	if (no_access((puffs_cookie_t)pnd->pnd_parent, pcr,
-		      PUFFS_VWRITE|PUFFS_VEXEC))
-		return EACCES;
-#endif
 
 	/*
 	 * Await for all operations on the deleted node to drain, 
@@ -2173,16 +2149,6 @@ perfuse_node_symlink(pu, opc, pni, pcn_src, vap, link_target)
 	
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
-
-#if notyet
-	/*
-	 * Create an object require -W- permission in the parent directory
-	 *
-	 * XXX PUFFS interface gives no pcr here
-	 */
-	if (no_access(opc, pcr_src, PUFFS_VWRITE))
-		return EACCES;
-#endif
 
 	ps = puffs_getspecific(pu);
 	path = pcn_src->pcn_name;
@@ -2286,7 +2252,7 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 		fri = GET_INPAYLOAD(ps, pm, fuse_read_in);
 		fri->fh = fh;
 		fri->offset = fd_offset;
-		fri->size = fd_maxlen;
+		fri->size = (uint32_t)fd_maxlen;
 		fri->read_flags = 0;
 		fri->lock_owner = 0;
 		fri->flags = 0;
@@ -2393,14 +2359,6 @@ perfuse_node_readlink(pu, opc, pcr, linkname, linklen)
 	
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
-
-	/* 
-	 * R-- required on parent, R-- required on link
-	 */
-	if (no_access((puffs_cookie_t)PERFUSE_NODE_DATA(opc)->pnd_parent,
-	    pcr, PUFFS_VREAD) ||
-	   no_access(opc, pcr, PUFFS_VREAD))
-		return EACCES;
 
 	ps = puffs_getspecific(pu);
 
@@ -2512,7 +2470,7 @@ perfuse_node_reclaim(pu, opc)
 
 		parent_pn = pnd->pnd_parent;
 
-		perfuse_destroy_pn(pu, pn);
+		perfuse_destroy_pn(pn);
 
 		pn = parent_pn;
 	}
@@ -2774,6 +2732,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
+	struct vattr *vap;
 	perfuse_msg_t *pm;
 	struct fuse_write_in *fwi;
 	struct fuse_write_out *fwo;
@@ -2784,9 +2743,11 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
+	vap = puffs_pn_getvap((struct puffs_node *)opc);
 	written = 0;
+	pm = NULL;
 
-	if (puffs_pn_getvap((struct puffs_node *)opc)->va_type == VDIR) 
+	if (vap->va_type == VDIR) 
 		return EBADF;
 
 	/*
@@ -2798,10 +2759,15 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	pnd->pnd_flags |= PND_INWRITE;
 
 	/*
-	 * append flag: we may have to read file size first.
+	 * append flag: re-read the file size so that 
+	 * we get the latest value.
 	 */
-	if (ioflag & PUFFS_IO_APPEND)
-		offset = ((struct puffs_node *)opc)->pn_va.va_size;
+	if (ioflag & PUFFS_IO_APPEND) {
+		if ((error = perfuse_node_getattr(pu, opc, vap, pcr)) != 0)
+			goto out;
+
+		offset = vap->va_size;
+	}
 
 	pm = NULL;
 
@@ -2840,9 +2806,10 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 
 
 #ifdef PERFUSE_DEBUG
-	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
-			__func__, (void *)opc, pnd->pnd_ino, fwi->fh);
+		if (perfuse_diagflags & PDF_FH)
+			DPRINTF("%s: opc = %p, ino = %"PRId64", "
+				"fh = 0x%"PRIx64"\n", __func__, 
+				(void *)opc, pnd->pnd_ino, fwi->fh);
 #endif
 		if ((error = xchg_msg(pu, opc, pm, 
 				      sizeof(*fwo), wait_reply)) != 0)
@@ -2870,6 +2837,15 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	if (*resid != 0)
 		error = EFBIG;
 
+	/*
+	 * Update file size if we wrote beyond the end
+	 */
+	if (offset > (off_t)vap->va_size) 
+		vap->va_size = offset;
+
+	/*
+	 * Statistics
+	 */
 	if (ioflag & (IO_SYNC|IO_DSYNC))
 		ps->ps_syncwrites++;
 	else
