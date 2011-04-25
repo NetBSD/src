@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ksu.c,v 1.4 2011/04/24 18:53:55 elric Exp $	*/
+/*	$NetBSD: pam_ksu.c,v 1.5 2011/04/25 22:01:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jacques A. Vidrine <nectar@FreeBSD.org>
@@ -29,7 +29,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ksu/pam_ksu.c,v 1.5 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ksu.c,v 1.4 2011/04/24 18:53:55 elric Exp $");
+__RCSID("$NetBSD: pam_ksu.c,v 1.5 2011/04/25 22:01:04 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -51,7 +51,8 @@ static const char superuser[] = "root";
 
 #define PASSWORD_PROMPT	"%s's password:"
 
-static void	log_krb5(krb5_context, const char *, krb5_error_code);
+static void	log_krb5(krb5_context, krb5_error_code, const char *, ...)
+    __printflike(3, 4);
 static long	get_su_principal(krb5_context, const char *, const char *,
 		    char **, krb5_principal *);
 static int	auth_krb5(pam_handle_t *, krb5_context, const char *,
@@ -79,7 +80,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	PAM_LOG("Got ruser: %s", (const char *)ruser);
 	rv = krb5_init_context(&context);
 	if (rv != 0) {
-		log_krb5(context, "krb5_init_context failed: %s", rv);
+		log_krb5(context, rv, "krb5_init_context failed");
 		return (PAM_SERVICE_ERR);
 	}
 	rv = get_su_principal(context, user, ruser, &su_principal_name, &su_principal);
@@ -129,7 +130,7 @@ auth_krb5(pam_handle_t *pamh, krb5_context context, const char *su_principal_nam
 
 	rv = krb5_get_init_creds_opt_alloc(context, &gic_opt);
 	if (rv != 0) {
-		log_krb5(context, "krb5_get_init_creds_opt_alloc: %s", rv);
+		log_krb5(context, rv, "krb5_get_init_creds_opt_alloc");
 		return (PAM_SERVICE_ERR);
 	}
 	krb5_verify_init_creds_opt_init(&vic_opt);
@@ -147,7 +148,7 @@ auth_krb5(pam_handle_t *pamh, krb5_context context, const char *su_principal_nam
 	rv = krb5_get_init_creds_password(context, &creds, su_principal,
 	    pass, NULL, NULL, 0, NULL, gic_opt);
 	if (rv != 0) {
-		log_krb5(context, "krb5_get_init_creds_password: %s", rv);
+		log_krb5(context, rv, "krb5_get_init_creds_password");
 		return (PAM_AUTH_ERR);
 	}
 	krb5_verify_init_creds_opt_set_ap_req_nofail(&vic_opt, 1);
@@ -155,24 +156,33 @@ auth_krb5(pam_handle_t *pamh, krb5_context context, const char *su_principal_nam
 	    &vic_opt);
 	krb5_free_cred_contents(context, &creds);
 	if (rv != 0) {
-		log_krb5(context, "krb5_verify_init_creds: %s", rv);
+		log_krb5(context, rv, "krb5_verify_init_creds");
 		return (PAM_AUTH_ERR);
 	}
 	return (PAM_SUCCESS);
 }
 
 static void
-log_krb5(krb5_context ctx, const char *fmt, krb5_error_code err)
+log_krb5(krb5_context ctx, krb5_error_code err, const char *fmt, ...)
 {
-	const char	*errtxt;
+	char b1[1024], b2[1024];
+	const char *errtxt;
+	va_list ap;
  
-        errtxt = krb5_get_error_message(ctx, err);
+	va_start(ap, fmt);
+	vsnprintf(b1, sizeof(b1), fmt, ap);
+	va_end(ap);
+	if (ctx)
+		errtxt = krb5_get_error_message(ctx, err);
+	else
+		errtxt = NULL;
 	if (errtxt != NULL) {
-		PAM_LOG(fmt, errtxt);
 		krb5_free_error_message(ctx, errtxt);
+		snprintf(b2, sizeof(b2), "%s (%s)", b1, errtxt);
 	} else {
-		PAM_LOG(fmt, "unknown");
+		snprintf(b2, sizeof(b1), "%s (unknown %d)", b1, (int)err);
 	}
+	PAM_LOG(b2);
 }
 
 /* Determine the target principal given the current user and the target user.
@@ -199,7 +209,6 @@ get_su_principal(krb5_context context, const char *target_user, const char *curr
 	char		*principal_name, *ccname, *p;
 	long		 rv;
 	uid_t		 euid, ruid;
-	const char	*errtxt;
 
 	*su_principal = NULL;
 	default_principal = NULL;
@@ -244,7 +253,7 @@ get_su_principal(krb5_context context, const char *target_user, const char *curr
 	rv = krb5_unparse_name(context, default_principal, &principal_name);
 	krb5_free_principal(context, default_principal);
 	if (rv != 0) {
-		log_krb5(context, "krb5_unparse_name: %s", rv);
+		log_krb5(context, rv, "krb5_unparse_name");
 		return (rv);
 	}
 	PAM_LOG("Default principal name: %s", principal_name);
@@ -266,16 +275,8 @@ get_su_principal(krb5_context context, const char *target_user, const char *curr
 		return (errno);
 	rv = krb5_parse_name(context, *su_principal_name, &default_principal);
 	if (rv != 0) {
-		errtxt = krb5_get_error_message(context, rv);
-		if (errtxt != NULL) {
-			PAM_LOG("krb5_parse_name `%s': %s", *su_principal_name,
-			    errtxt);
-			krb5_free_error_message(context, errtxt);
-		} else {
-			PAM_LOG("krb5_parse_name `%s': %ld", *su_principal_name,
-			    rv);
-		}
-		free(*su_principal_name);
+		log_krb5(context, rv, "krb5_parse_name `%s'",
+		    *su_principal_name);
 		return (rv);
 	}
 	PAM_LOG("Target principal name: %s", *su_principal_name);
