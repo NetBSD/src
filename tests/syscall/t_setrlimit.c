@@ -1,4 +1,4 @@
-/* $NetBSD: t_setrlimit.c,v 1.4 2011/04/25 22:29:35 njoly Exp $ */
+/* $NetBSD: t_setrlimit.c,v 1.5 2011/04/25 22:34:16 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.4 2011/04/25 22:29:35 njoly Exp $");
+__RCSID("$NetBSD: t_setrlimit.c,v 1.5 2011/04/25 22:34:16 njoly Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>
@@ -85,7 +85,7 @@ ATF_TC_BODY(setrlimit_basic, tc)
 		if (getrlimit(rlimit[i], &res) != 0)
 			continue;
 
-		if (res.rlim_cur == RLIM_INFINITY)
+		if (res.rlim_cur == RLIM_INFINITY || res.rlim_cur == 0)
 			continue;
 
 		if (res.rlim_cur == res.rlim_max) /* An unprivileged run. */
