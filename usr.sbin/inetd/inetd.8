@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.56 2009/10/24 12:23:47 reed Exp $
+.\"	$NetBSD: inetd.8,v 1.57 2011/04/25 22:12:05 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -330,8 +330,11 @@ When omitted,
 defaults to 40.
 If it reaches this maximum spawn rate,
 .Nm
-will log the problem (via the syslogger using the LOG_DAEMON
-facility and LOG_ERR level)
+will log the problem (via the syslogger using the
+.Dv LOG_DAEMON
+facility and
+.Dv LOG_ERR
+level)
 and stop handling the specific service for ten minutes.
 .Pp
 Stream servers are usually marked as
