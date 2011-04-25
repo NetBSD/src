@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.11 2010/10/11 05:37:58 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.12 2011/04/25 04:30:59 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -365,7 +365,7 @@ parse_options(argc, argv)
 			foreground = 1;
 			break;
 		default:
-			DERR(EX_USAGE, "%s [-fs] [-d level] [-i fd]", argv[0]);
+			DERRX(EX_USAGE, "%s [-fs] [-d classes] [-i fd]", argv[0]);
 			break;
 		}
 	}

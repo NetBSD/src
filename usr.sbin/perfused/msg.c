@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.9 2010/10/11 05:37:58 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.10 2011/04/25 04:30:59 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -498,7 +498,7 @@ perfuse_readframe(pu, pufbuf, fd, done)
 	}
 
 #ifdef PERFUSE_DEBUG
-	if (readen != len)
+	if (readen != (ssize_t)len)
 		DERRX(EX_SOFTWARE, "%s: short recv %zd/%zd",
 		      __func__, readen, len);
 #endif
@@ -513,7 +513,7 @@ perfuse_readframe(pu, pufbuf, fd, done)
 
 #ifdef PERFUSE_DEBUG
 	if (len > FUSE_BUFSIZE)
-		DERRX(EX_SOFTWARE, "%s: foh.len = %d", __func__, len);
+		DERRX(EX_SOFTWARE, "%s: foh.len = %zu", __func__, len);
 #endif
 
 	/*
@@ -545,7 +545,7 @@ perfuse_readframe(pu, pufbuf, fd, done)
 	}
 
 #ifdef PERFUSE_DEBUG
-	if (readen != len)
+	if (readen != (ssize_t)len)
 		DERRX(EX_SOFTWARE, "%s: short recv %zd/%zd",
 		      __func__, readen, len);
 #endif
@@ -576,10 +576,16 @@ perfuse_writeframe(pu, pufbuf, fd, done)
 		/* NOTREACHED */
 		break;
 	case -1:
-		if (errno == EAGAIN)
+		DWARN("%s: send retunred -1, errno = %d", __func__, errno);
+		switch(errno) {
+		case EAGAIN:
+		case ENOBUFS:
 			return 0;
-		DWARN("%s: send retunred -1", __func__);
-		return errno;
+			break;
+		default:
+			return errno;
+			break;
+		}
 		/* NOTREACHED */
 		break;
 	default:
@@ -587,7 +593,7 @@ perfuse_writeframe(pu, pufbuf, fd, done)
 	}
 
 #ifdef PERFUSE_DEBUG
-	if (written != len)
+	if (written != (ssize_t)len)
 		DERRX(EX_SOFTWARE, "%s: short send %zd/%zd",
 		      __func__, written, len);
 #endif
