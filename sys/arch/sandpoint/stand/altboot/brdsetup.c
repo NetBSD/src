@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.15 2011/04/17 13:09:30 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.16 2011/04/25 18:28:47 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -225,14 +225,14 @@ brdsetup(void)
 		/* SKnet/Marvell (sk) at dev 15 */
 		brdtype = BRD_SYNOLOGY;
 	}
+	else if (PCI_VENDOR(pcicfgread(dev13, PCI_ID_REG)) == 0x1106) {
+		/* VIA 6410 (viaide) at dev 13 */
+		brdtype = BRD_STORCENTER;
+	}
 	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x8086
 	    || PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x10ec) {
 		/* Intel (wm) or RealTek (re) at dev 15 */
 		brdtype = BRD_QNAPTS;
-	}
-	else if (PCI_VENDOR(pcicfgread(dev13, PCI_ID_REG)) == 0x1106) {
-		/* VIA 6410 (viaide) at dev 13 */
-		brdtype = BRD_STORCENTER;
 	}
 	else if (PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1191) {
 		/* ACARD ATP865 (acardide) at dev 16 */
