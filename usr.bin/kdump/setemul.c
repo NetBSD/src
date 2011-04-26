@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.26 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: setemul.c,v 1.27 2011/04/26 15:51:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.26 2008/04/28 20:24:13 martin Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.27 2011/04/26 15:51:32 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,10 +87,6 @@ __RCSID("$NetBSD: setemul.c,v 1.26 2008/04/28 20:24:13 martin Exp $");
 #include "../../sys/compat/irix/irix_syscall.h"
 #include "../../sys/compat/linux/linux_syscall.h"
 #include "../../sys/compat/linux32/linux32_syscall.h"
-#include "../../sys/compat/mach/mach_syscall.h"
-#include "../../sys/compat/darwin/darwin_syscall.h"
-#include "../../sys/compat/mach/arch/powerpc/ppccalls/mach_ppccalls_syscall.h"
-#include "../../sys/compat/mach/arch/powerpc/fasttraps/mach_fasttraps_syscall.h"
 #include "../../sys/compat/osf1/osf1_syscall.h"
 #include "../../sys/compat/sunos32/sunos32_syscall.h"
 #include "../../sys/compat/sunos/sunos_syscall.h"
@@ -110,10 +106,6 @@ __RCSID("$NetBSD: setemul.c,v 1.26 2008/04/28 20:24:13 martin Exp $");
 #include "../../sys/compat/irix/irix_syscalls.c"
 #include "../../sys/compat/linux/linux_syscalls.c"
 #include "../../sys/compat/linux32/linux32_syscalls.c"
-#include "../../sys/compat/darwin/darwin_syscalls.c"
-#include "../../sys/compat/mach/mach_syscalls.c"
-#include "../../sys/compat/mach/arch/powerpc/ppccalls/mach_ppccalls_syscalls.c"
-#include "../../sys/compat/mach/arch/powerpc/fasttraps/mach_fasttraps_syscalls.c"
 #include "../../sys/compat/osf1/osf1_syscalls.c"
 #include "../../sys/compat/sunos/sunos_syscalls.c"
 #include "../../sys/compat/sunos32/sunos32_syscalls.c"
@@ -137,11 +129,6 @@ __RCSID("$NetBSD: setemul.c,v 1.26 2008/04/28 20:24:13 martin Exp $");
 /* irix uses svr4 */
 #include "../../sys/compat/osf1/osf1_signo.c"
 #include "../../sys/compat/linux/common/linux_signo.c"
-
-/* For Mach services names in MMSG traces */
-#ifndef LETS_GET_SMALL
-#include "../../sys/compat/mach/mach_services_names.c"
-#endif
 
 #define NELEM(a) (sizeof(a) / sizeof(a[0]))
 
@@ -178,24 +165,6 @@ const struct emulation emulations[] = {
 	{ "linux32",	linux32_syscallnames,	LINUX32_SYS_MAXSYSCALL,
 	  native_to_linux_errno,	NELEM(native_to_linux_errno),
 	  linux_to_native_signo,	NSIG,	EMUL_FLAG_NETBSD32 },
-
-	{ "darwin",	darwin_syscallnames,	DARWIN_SYS_MAXSYSCALL,
-	  NULL,				0,
-	  NULL,				0,	0 },
-
-	{ "mach",	mach_syscallnames,	MACH_SYS_MAXSYSCALL,
-	  NULL,				0,	
-	  NULL,				0,	0 },
-
-	{ "mach ppccalls",	mach_ppccalls_syscallnames,
-	  MACH_PPCCALLS_SYS_MAXSYSCALL,
-	  NULL,				0,	
-	  NULL,				0,	0 },
-
-	{ "mach fasttraps",	mach_fasttraps_syscallnames,
-	  MACH_FASTTRAPS_SYS_MAXSYSCALL,
-	  NULL,				0,	
-	  NULL,				0,	0 },
 
 	{ "osf1",	osf1_syscallnames,	OSF1_SYS_MAXSYSCALL,
 	  native_to_osf1_errno,		NELEM(native_to_osf1_errno),
@@ -244,10 +213,6 @@ struct emulation_ctx {
 
 const struct emulation *cur_emul;
 const struct emulation *prev_emul;
-/* Mach emulation require extra emulation contexts */
-static const struct emulation *mach;
-static const struct emulation *mach_ppccalls;
-static const struct emulation *mach_fasttraps;
 
 static const struct emulation *default_emul = &emulations[0];
 
@@ -377,78 +342,4 @@ ectx_delete(void)
 
 	if (ctx)
 		LIST_REMOVE(ctx, ctx_link);
-}
-
-/*
- * Temporarily modify code and emulations to handle Mach traps
- * XXX The define are duplicated from sys/arch/powerpc/include/mach_syscall.c
- */
-#define MACH_FASTTRAPS		0x00007ff0
-#define MACH_PPCCALLS		0x00006000
-#define MACH_ODD_SYSCALL_MASK	0x0000fff0
-int
-mach_traps_dispatch(int *code, const struct emulation **emul)
-{
-	switch (*code & MACH_ODD_SYSCALL_MASK) {
-	case MACH_FASTTRAPS:
-		*emul = mach_fasttraps;
-		*code -= MACH_FASTTRAPS;
-		return 1;
-
-	case MACH_PPCCALLS:
-		*emul = mach_ppccalls;
-		*code -= MACH_PPCCALLS;
-		return 1;
-
-	default:
-		if (*code < 0 && *code > -MACH_SYS_MAXSYSCALL) {
-			*emul = mach;
-			*code = -*code;
-			return 1;
-		}
-		return 0;
-	}
-}
-
-/*
- * Lookup Machs emulations
- */
-void
-mach_lookup_emul(void)
-{
-	const struct emulation *emul_idx;
-
-	for (emul_idx = emulations; emul_idx->name; emul_idx++) {
-		if (strcmp("mach", emul_idx->name) == 0)
-			mach = emul_idx;
-		if (strcmp("mach fasttraps", emul_idx->name) == 0)
-			mach_fasttraps = emul_idx;
-		if (strcmp("mach ppccalls", emul_idx->name) == 0)
-			mach_ppccalls = emul_idx;
-	}
-	if (mach == NULL || mach_fasttraps == NULL || mach_ppccalls == NULL) {
-		errx(1, "Cannot load mach emulations");
-		exit(1);
-	}
-	return;
-}
-
-/* 
- * Find the name of the Mach service responsible to a given message Id
- */
-const char *
-mach_service_name(id)
-	int id;
-{
-	const char *retval = NULL;
-#ifndef LETS_GET_SMALL
-	struct mach_service_name *srv;	
-
-	for (srv = mach_services_names; srv->srv_id; srv++)
-		if (srv->srv_id == id)
-			break;
-	retval = srv->srv_name;
-#endif /* LETS_GET_SMALL */
-
-	return retval;
 }
