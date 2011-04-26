@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.3 2011/04/04 14:25:09 ahoka Exp $	*/
+/*	$NetBSD: flash.c,v 1.4 2011/04/26 17:42:20 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.3 2011/04/04 14:25:09 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.4 2011/04/26 17:42:20 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -216,9 +216,7 @@ flash_detach(device_t device, int flags)
 	pmf_device_deregister(sc->sc_dev);
 
 	/* freeing flash_if is our responsibility */
-	printf("freeing flash_if...");
 	kmem_free(sc->flash_if, sizeof(*sc->flash_if));
-	printf("done!\n");
 	
 	return 0;
 }
