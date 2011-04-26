@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1030 2011/04/26 15:51:22 joerg Exp $
+# $NetBSD: GENERIC,v 1.1031 2011/04/26 16:57:40 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1030 $"
+#ident 		"GENERIC-$Revision: 1.1031 $"
 
 maxusers	64		# estimated number of users
 
@@ -152,7 +152,6 @@ options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_NDIS	# NDIS network driver
-#options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support

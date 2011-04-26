@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.305 2011/04/26 16:36:40 joerg Exp $
+# $NetBSD: ALL,v 1.306 2011/04/26 16:57:40 joerg Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.305 $"
+#ident 		"ALL-$Revision: 1.306 $"
 
 maxusers	64		# estimated number of users
 
@@ -151,7 +151,6 @@ options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 options 	COMPAT_NDIS	# NDIS network driver
-options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support
@@ -1975,7 +1974,6 @@ options DEBUG_NFS_BOOT_DHCP
 options DEBUG_P9100
 options DEBUG_PAGE0
 options DEBUG_PCI_MACHDEP
-options DEBUG_PECOFF
 options DEBUG_PGRP
 options DEBUG_POOL
 options DEBUG_PORTF
