@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.19 2011/03/06 17:08:22 bouyer Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.20 2011/04/26 15:51:22 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.19 $"
+#ident 		"GENERIC-$Revision: 1.20 $"
 
 maxusers	32		# estimated number of users
 
@@ -119,9 +119,6 @@ options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options 	COMPAT_MACH	# binary compatibility with Mach binaries
-#options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
-#options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_NDIS	# NDIS network driver
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
