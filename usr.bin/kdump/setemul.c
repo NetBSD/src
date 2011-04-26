@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.28 2011/04/26 16:36:43 joerg Exp $	*/
+/*	$NetBSD: setemul.c,v 1.29 2011/04/26 16:57:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.28 2011/04/26 16:36:43 joerg Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.29 2011/04/26 16:57:42 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -175,10 +175,6 @@ const struct emulation emulations[] = {
 	  svr4_to_native_signo,		NSIG,	EMUL_FLAG_NETBSD32 },
 
 	{ "ultrix",	ultrix_syscallnames,	ULTRIX_SYS_MAXSYSCALL,
-	  NULL,				0,
-	  NULL,				0,	0 },
-
-	{ "pecoff",	syscallnames,		SYS_MAXSYSCALL,
 	  NULL,				0,
 	  NULL,				0,	0 },
 
