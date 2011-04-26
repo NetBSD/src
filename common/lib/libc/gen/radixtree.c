@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.2 2011/04/14 15:42:02 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.3 2011/04/26 20:53:53 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,13 +41,17 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.2 2011/04/14 15:42:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.3 2011/04/26 20:53:53 yamt Exp $");
 #include <sys/param.h>
-#include <sys/null.h>
+#include <sys/errno.h>
 #include <sys/pool.h>
 #include <sys/radixtree.h>
+#include <lib/libkern/libkern.h>
+#if defined(_STANDALONE)
+#include <lib/libsa/stand.h>
+#endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.2 2011/04/14 15:42:02 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.3 2011/04/26 20:53:53 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -204,6 +208,13 @@ radix_tree_fini_tree(struct radix_tree *t)
 	KASSERT(t->t_height == 0);
 }
 
+static void
+radix_tree_node_init(struct radix_tree_node *n)
+{
+
+	memset(n, 0, sizeof(*n));
+}
+
 #if defined(_KERNEL)
 pool_cache_t radix_tree_node_cache __read_mostly;
 
@@ -213,7 +224,7 @@ radix_tree_node_ctor(void *dummy, void *item, int flags)
 	struct radix_tree_node *n = item;
 
 	KASSERT(dummy == NULL);
-	memset(n, 0, sizeof(*n));
+	radix_tree_node_init(n);
 	return 0;
 }
 
@@ -258,7 +269,14 @@ radix_tree_alloc_node(void)
 #if defined(_KERNEL)
 	n = pool_cache_get(radix_tree_node_cache, PR_NOWAIT);
 #else /* defined(_KERNEL) */
-	n = calloc(1, sizeof(*n));
+#if defined(_STANDALONE)
+	n = alloc(sizeof(*n));
+#else /* defined(_STANDALONE) */
+	n = malloc(sizeof(*n));
+#endif /* defined(_STANDALONE) */
+	if (n != NULL) {
+		radix_tree_node_init(n);
+	}
 #endif /* defined(_KERNEL) */
 	KASSERT(n == NULL || radix_tree_node_clean_p(n));
 	return n;
@@ -271,9 +289,11 @@ radix_tree_free_node(struct radix_tree_node *n)
 	KASSERT(radix_tree_node_clean_p(n));
 #if defined(_KERNEL)
 	pool_cache_put(radix_tree_node_cache, n);
-#else /* defined(_KERNEL) */
+#elif defined(_STANDALONE)
+	dealloc(n, sizeof(*n));
+#else
 	free(n);
-#endif /* defined(_KERNEL) */
+#endif
 }
 
 static int
