@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.7 2011/04/26 13:38:13 ahoka Exp $	*/
+/*	$NetBSD: nand.h,v 1.8 2011/04/26 17:31:57 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -161,13 +161,6 @@ struct nand_softc {
 	kmutex_t sc_io_lock;
 	kcondvar_t sc_io_cv;
 	bool sc_io_running;
-
-	/* currently we cant automatically detach children
-	 * so keep count of attached children so we will
-	 * know, that when is safe to detach...
-	 * XXX is it a problem only as a module? (ioconf bug?)
-	 */
-	unsigned int sc_children;
 };
 
 /* structure holding the nand api */
