@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_io.c,v 1.2 2011/04/04 14:25:10 ahoka Exp $	*/
+/*	$NetBSD: nand_io.c,v 1.3 2011/04/26 13:38:13 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -51,7 +51,7 @@ extern int nand_cachesync_timeout;
 
 void nand_io_read(device_t, struct buf *);
 void nand_io_write(device_t, struct buf *);
-void nand_io_done(device_t, int error, struct buf *);
+void nand_io_done(device_t, struct buf *, int);
 int nand_io_cache_write(device_t, daddr_t, struct buf *);
 void nand_io_cache_sync(device_t);
 
@@ -147,15 +147,24 @@ nand_sync_thread_stop(device_t self)
 	kmem_free(wc->nwc_data, chip->nc_block_size);
 	
 	sc->sc_io_running = false;
+	
+	mutex_enter(&sc->sc_io_lock);
+	cv_broadcast(&sc->sc_io_cv);
+	mutex_exit(&sc->sc_io_lock);
+	
 	kthread_join(sc->sc_sync_thread);
 
 	bufq_free(wc->nwc_bufq);
-
-	mutex_destroy(&sc->sc_io_lock);
-	mutex_destroy(&sc->sc_waitq_lock);
 	mutex_destroy(&wc->nwc_lock);
 
+#ifdef DIAGNOSTIC
+	mutex_enter(&sc->sc_io_lock);
+	KASSERT(!cv_has_waiters(&sc->sc_io_cv));
+	mutex_exit(&sc->sc_io_lock);
+#endif
+	
 	cv_destroy(&sc->sc_io_cv);
+	mutex_destroy(&sc->sc_io_lock);
 }
 
 int
@@ -165,6 +174,11 @@ nand_io_submit(device_t self, struct buf *bp)
 	struct nand_write_cache *wc = &sc->sc_cache;
 
 	DPRINTF(("submitting job to nand io thread: %p\n", bp));
+
+	if (__predict_false(!sc->sc_io_running)) {
+		nand_io_done(self, bp, ENODEV);
+		return ENODEV;
+	}
 
 	if (BUF_ISREAD(bp)) {
 		DPRINTF(("we have a read job\n"));
@@ -274,7 +288,7 @@ nand_io_cache_sync(device_t self)
 
 out:
 	while ((bp = bufq_get(wc->nwc_bufq)) != NULL)
-		nand_io_done(self, error, bp);
+		nand_io_done(self, bp, error);
 	
 	wc->nwc_block = -1;
 	wc->nwc_write_pending = false;
@@ -332,7 +346,7 @@ nand_io_read(device_t self, struct buf *bp)
 	error = nand_flash_read(self, offset, bp->b_resid,
 	    &retlen, bp->b_data);
 	
-	nand_io_done(self, error, bp);
+	nand_io_done(self, bp, error);
 }
 
 void
@@ -360,7 +374,7 @@ nand_io_write(device_t self, struct buf *bp)
 }
 
 void
-nand_io_done(device_t self, int error, struct buf *bp)
+nand_io_done(device_t self, struct buf *bp, int error)
 {
 	DPRINTF(("io done: %p\n", bp));
 	

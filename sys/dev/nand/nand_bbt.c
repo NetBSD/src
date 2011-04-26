@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_bbt.c,v 1.2 2011/04/04 14:25:10 ahoka Exp $	*/
+/*	$NetBSD: nand_bbt.c,v 1.3 2011/04/26 13:38:13 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -58,9 +58,7 @@ nand_bbt_detach(device_t self)
 	struct nand_softc *sc = device_private(self);
 	struct nand_bbt *bbt = &sc->sc_bbt;
 
-	printf("freeing bbt bitmap...");
 	kmem_free(bbt->nbbt_bitmap, bbt->nbbt_size);
-	printf("done!\n");
 }
 
 void
