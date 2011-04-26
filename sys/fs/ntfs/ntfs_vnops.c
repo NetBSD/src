@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.47 2010/06/24 13:03:10 hannken Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.48 2011/04/26 11:32:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.47 2010/06/24 13:03:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.48 2011/04/26 11:32:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -756,9 +756,7 @@ ntfs_fsync(void *v)
 	}
 
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
-	vflushbuf(vp, wait);
-
-	return 0;
+	return vflushbuf(vp, wait);
 }
 
 /*
