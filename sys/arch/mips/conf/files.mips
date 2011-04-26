@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.68 2011/04/14 05:07:00 cliff Exp $
+#	$NetBSD: files.mips,v 1.69 2011/04/26 16:36:40 joerg Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
@@ -94,6 +94,3 @@ include "compat/linux/files.linux"
 include "compat/linux/arch/mips/files.linux_mips"
 file arch/mips/mips/linux_trap.c		compat_linux
 file arch/mips/mips/linux_syscall.c		compat_linux
-
-# IRIX compatibility (COMPAT_IRIX)	XXX even more experimental
-include "compat/irix/files.irix"
