@@ -1,4 +1,4 @@
-/*	$NetBSD: rpst.c,v 1.10 2011/04/14 15:35:44 yamt Exp $	*/
+/*	$NetBSD: rpst.c,v 1.11 2011/04/26 20:53:34 yamt Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -43,10 +43,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.10 2011/04/14 15:35:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.11 2011/04/26 20:53:34 yamt Exp $");
 #include <sys/param.h>
+#include <lib/libkern/libkern.h>
+#if defined(_STANDALONE)
+#include <lib/libsa/stand.h>
+#endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: rpst.c,v 1.10 2011/04/14 15:35:44 yamt Exp $");
+__RCSID("$NetBSD: rpst.c,v 1.11 2011/04/26 20:53:34 yamt Exp $");
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
