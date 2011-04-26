@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.31 2011/02/17 19:27:13 matt Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.32 2011/04/26 17:40:38 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.31 2011/02/17 19:27:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.32 2011/04/26 17:40:38 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ kthread_join(lwp_t *l)
 	KASSERT((l->l_flag & LW_SYSTEM) != 0);
 	KASSERT((l->l_prflag & LPR_DETACHED) == 0);
 	
-	p = l->l_proc;
+	p = curlwp->l_proc;
 
 	mutex_enter(p->p_lock);
 	error = lwp_wait1(curlwp, l->l_lid, &departed, LWPWAIT_EXITCONTROL);
