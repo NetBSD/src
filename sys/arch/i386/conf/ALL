@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.303 2011/04/04 17:09:39 bouyer Exp $
+# $NetBSD: ALL,v 1.304 2011/04/26 15:51:22 joerg Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.303 $"
+#ident 		"ALL-$Revision: 1.304 $"
 
 maxusers	64		# estimated number of users
 
@@ -150,9 +150,6 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-options 	COMPAT_MACH	# binary compatibility with Mach binaries
-options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
-options 	EXEC_MACHO	# exec MACH-O binaries
 options 	COMPAT_NDIS	# NDIS network driver
 options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -1944,7 +1941,6 @@ options DEBUG_CLOCK
 options DEBUG_COFF
 options DEBUG_CP0_ACCESS
 options DEBUG_CURSOR
-options DEBUG_DARWIN
 options DEBUG_DDB
 options DEBUG_DR
 options DEBUG_EMUL
@@ -1972,12 +1968,6 @@ options DEBUG_KGDB
 options DEBUG_LED
 options DEBUG_LINUX
 options DEBUG_LINUX_FUTEX
-options DEBUG_MACH
-options DEBUG_MACHFB 
-options DEBUG_MACHO
-options DEBUG_MACH_MSG
-options DEBUG_MACH_RIGHT
-options DEBUG_MACH_VM
 options DEBUG_MEMLOAD
 options DEBUG_MEMORY_LIST
 options DEBUG_MEMSIZE

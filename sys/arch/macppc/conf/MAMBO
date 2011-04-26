@@ -6,7 +6,7 @@ include		"arch/macppc/conf/std.macppc.g5"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.12 $"
+#ident 		"GENERIC-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -61,11 +61,6 @@ options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_43	# and 4.3BSD
 
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	COMPAT_DARWIN	# Darwin binary compatibility (experimental)
-#options 	COMPAT_MACH	# Mach compatibility, needed for COMPAT_DARWIN 
-#options 	EXEC_MACHO	# Mach-O binary support, needed for COMPAT_MACH
-#options 	DEBUG_DARWIN	# COMPAT_DARWIN debugging
-#options 	DEBUG_MACH	# COMPAT_MACH debugging
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
