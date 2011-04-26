@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1540 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1541 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -989,3 +989,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.2.12. [roy 20110406]
 	sparc64: Add EDID (Extended Display Identification Data) reading,
 		and video mode setting support, to ffb(4). [jdc 20110408]
+	kernel: Support for Darwin, Mach, IRIX and PECOFF emulation was
+		retired. [joerg 20110426]
