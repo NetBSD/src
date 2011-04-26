@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.16 2011/04/25 18:28:47 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.17 2011/04/26 08:08:39 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -229,11 +229,6 @@ brdsetup(void)
 		/* VIA 6410 (viaide) at dev 13 */
 		brdtype = BRD_STORCENTER;
 	}
-	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x8086
-	    || PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x10ec) {
-		/* Intel (wm) or RealTek (re) at dev 15 */
-		brdtype = BRD_QNAPTS;
-	}
 	else if (PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1191) {
 		/* ACARD ATP865 (acardide) at dev 16 */
 		brdtype = BRD_DLINKDSM;
@@ -242,6 +237,11 @@ brdsetup(void)
 	    || PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1095) {
 		/* ITE (iteide) or SiI (satalink) at dev 16 */
 		brdtype = BRD_NH230NAS;
+	}
+	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x8086
+	    || PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x10ec) {
+		/* Intel (wm) or RealTek (re) at dev 15 */
+		brdtype = BRD_QNAPTS;
 	}
 
 	brdprop = brd_lookup(brdtype);
