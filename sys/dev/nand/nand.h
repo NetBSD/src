@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.6 2011/04/10 12:48:09 ahoka Exp $	*/
+/*	$NetBSD: nand.h,v 1.7 2011/04/26 13:38:13 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -45,11 +45,9 @@
 #include <dev/flash/flash.h>
 
 #ifdef NAND_DEBUG
-#define DPRINTF(x)	if (nanddebug) printf x
-#define DPRINTFN(n,x)	if (nanddebug>(n)) printf x
+#define DPRINTF(x)	printf x
 #else
 #define DPRINTF(x)
-#define DPRINTFN(n,x)
 #endif
 
 //#define NAND_VERBOSE
@@ -161,9 +159,15 @@ struct nand_softc {
 	struct lwp *sc_sync_thread;
 	struct nand_write_cache sc_cache;
 	kmutex_t sc_io_lock;
-	kmutex_t sc_waitq_lock;
 	kcondvar_t sc_io_cv;
 	bool sc_io_running;
+
+	/* currently we cant automatically detach children
+	 * so keep count of attached children so we will
+	 * know, that when is safe to detach...
+	 * XXX is it a problem only as a module? (ioconf bug?)
+	 */
+	unsigned int sc_children;
 };
 
 /* structure holding the nand api */
