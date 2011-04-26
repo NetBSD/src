@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.9 2011/04/26 13:38:13 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.10 2011/04/26 17:31:57 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.9 2011/04/26 13:38:13 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.10 2011/04/26 17:31:57 ahoka Exp $");
 
 #include "locators.h"
 
@@ -58,7 +58,6 @@ int nand_match(device_t, cfdata_t, void *);
 void nand_attach(device_t, device_t, void *);
 int nand_detach(device_t, int);
 bool nand_shutdown(device_t, int);
-void nand_childdet(device_t, device_t);
 
 int nand_print(void *, const char *);
 
@@ -69,12 +68,8 @@ static int nand_fill_chip_structure(device_t, struct nand_chip *);
 static int nand_scan_media(device_t, struct nand_chip *);
 static bool nand_check_wp(device_t);
 
-CFATTACH_DECL2_NEW(nand, sizeof(struct nand_softc),
-    nand_match, nand_attach, nand_detach,
-    NULL, NULL, nand_childdet);
-
-//CFATTACH_DECL_NEW(nand, sizeof(struct nand_softc),
-//    nand_match, nand_attach, nand_detach, NULL);
+CFATTACH_DECL_NEW(nand, sizeof(struct nand_softc),
+    nand_match, nand_attach, nand_detach, NULL);
 
 #ifdef NAND_DEBUG
 int	nanddebug = NAND_DEBUG;
@@ -131,8 +126,6 @@ nand_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->controller_dev = parent;
 	sc->nand_if = naa->naa_nand_if;
-
-	sc->sc_children = 0;
 
 	aprint_naive("\n");
 
@@ -220,7 +213,6 @@ nand_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	if (config_match(parent, cf, &faa)) {
 		if (config_attach(parent, cf, &faa, nand_print) != NULL) {
-			atomic_inc_uint(&sc->sc_children);
 			return 0;
 		} else {
 			return 1;
@@ -237,10 +229,11 @@ nand_detach(device_t self, int flags)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	int ret = 0;
+	int error = 0;
 
-	if (sc->sc_children != 0) {
-		return EBUSY;
+	error = config_detach_children(self, flags);
+	if (error) {
+		return error;
 	}
 
 	nand_sync_thread_stop(self);
@@ -256,16 +249,7 @@ nand_detach(device_t self, int flags)
 
 	pmf_device_deregister(sc->sc_dev);
 
-	return ret;
-}
-
-void
-nand_childdet(device_t self, device_t child)
-{
-	struct nand_softc *sc = device_private(self);
-
-	atomic_dec_uint(&sc->sc_children);
-	KASSERT(sc->sc_children >= 0);
+	return error;
 }
 
 int
