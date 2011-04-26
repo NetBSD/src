@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1311 2011/04/21 20:59:38 joerg Exp $
+# $NetBSD: mi,v 1.1312 2011/04/26 16:57:38 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2147,21 +2147,21 @@
 ./usr/share/man/cat8/cobalt/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/cobalt/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_30.0		man-sys-catman		.cat
-./usr/share/man/cat8/compat_darwin.0		man-sys-catman		.cat
+./usr/share/man/cat8/compat_darwin.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_freebsd.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_hpux.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_ibcs2.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_linux.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_netbsd32.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_osf1.0		man-sys-catman		.cat
-./usr/share/man/cat8/compat_pecoff.0		man-sys-catman		.cat
+./usr/share/man/cat8/compat_pecoff.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_sco.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_solaris.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_sunos.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_svr4.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_svr4_32.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_ultrix.0		man-sys-catman		.cat
-./usr/share/man/cat8/compat_win32.0		man-sys-catman		.cat
+./usr/share/man/cat8/compat_win32.0		man-obsolete		obsolete
 ./usr/share/man/cat8/compat_xenix.0		man-sys-catman		.cat
 ./usr/share/man/cat8/comsat.0			man-man-catman		.cat
 ./usr/share/man/cat8/cpuctl.0			man-sysutil-catman	.cat
@@ -2562,7 +2562,7 @@
 ./usr/share/man/cat8/pcictl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pcnfsd.0			man-nfsserver-catman	.cat
 ./usr/share/man/cat8/pdisk.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/peace.0			man-sys-catman		.cat
+./usr/share/man/cat8/peace.0			man-obsolete		obsolete
 ./usr/share/man/cat8/pfctl.0			man-pf-catman		pf,.cat
 ./usr/share/man/cat8/pflogd.0			man-pf-catman		pf,.cat
 ./usr/share/man/cat8/pfs.0				man-pf-catman		pf,.cat
@@ -4789,20 +4789,20 @@
 ./usr/share/man/html8/cnwctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/cobalt/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_30.html		man-sys-htmlman		html
-./usr/share/man/html8/compat_darwin.html	man-sys-htmlman		html
+./usr/share/man/html8/compat_darwin.html	man-obsolete		obsolete
 ./usr/share/man/html8/compat_freebsd.html	man-sys-htmlman		html
 ./usr/share/man/html8/compat_ibcs2.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_linux.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_netbsd32.html	man-sys-htmlman		html
 ./usr/share/man/html8/compat_osf1.html		man-sys-htmlman		html
-./usr/share/man/html8/compat_pecoff.html	man-sys-htmlman		html
+./usr/share/man/html8/compat_pecoff.html	man-obsolete		obsolete
 ./usr/share/man/html8/compat_sco.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_solaris.html	man-sys-htmlman		html
 ./usr/share/man/html8/compat_sunos.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_svr4.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_svr4_32.html	man-sys-htmlman		html
 ./usr/share/man/html8/compat_ultrix.html	man-sys-htmlman		html
-./usr/share/man/html8/compat_win32.html		man-sys-htmlman		html
+./usr/share/man/html8/compat_win32.html		man-obsolete		obsolete
 ./usr/share/man/html8/compat_xenix.html		man-sys-htmlman		html
 ./usr/share/man/html8/comsat.html		man-man-htmlman		html
 ./usr/share/man/html8/cpuctl.html		man-sysutil-htmlman	html
@@ -5113,7 +5113,7 @@
 ./usr/share/man/html8/pcictl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/pcnfsd.html		man-nfsserver-htmlman	html
 ./usr/share/man/html8/pdisk.html		man-sysutil-htmlman	html
-./usr/share/man/html8/peace.html		man-sys-htmlman		html
+./usr/share/man/html8/peace.html		man-obsolete		obsolete
 ./usr/share/man/html8/pfctl.html		man-pf-htmlman		pf,html
 ./usr/share/man/html8/pflogd.html		man-pf-htmlman		pf,html
 ./usr/share/man/html8/pfs.html			man-pf-htmlman		pf,html
@@ -7492,14 +7492,14 @@
 ./usr/share/man/man8/compat_linux.8		man-sys-man		.man
 ./usr/share/man/man8/compat_netbsd32.8		man-sys-man		.man
 ./usr/share/man/man8/compat_osf1.8		man-sys-man		.man
-./usr/share/man/man8/compat_pecoff.8		man-sys-man		.man
+./usr/share/man/man8/compat_pecoff.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_sco.8		man-sys-man		.man
 ./usr/share/man/man8/compat_solaris.8		man-sys-man		.man
 ./usr/share/man/man8/compat_sunos.8		man-sys-man		.man
 ./usr/share/man/man8/compat_svr4.8		man-sys-man		.man
 ./usr/share/man/man8/compat_svr4_32.8		man-sys-man		.man
 ./usr/share/man/man8/compat_ultrix.8		man-sys-man		.man
-./usr/share/man/man8/compat_win32.8		man-sys-man		.man
+./usr/share/man/man8/compat_win32.8		man-obsolete		obsolete
 ./usr/share/man/man8/compat_xenix.8		man-sys-man		.man
 ./usr/share/man/man8/comsat.8			man-man-man		.man
 ./usr/share/man/man8/cpuctl.8			man-sysutil-man		.man
@@ -7901,7 +7901,7 @@
 ./usr/share/man/man8/pcictl.8			man-sysutil-man		.man
 ./usr/share/man/man8/pcnfsd.8			man-nfsserver-man	.man
 ./usr/share/man/man8/pdisk.8			man-sysutil-man		.man
-./usr/share/man/man8/peace.8			man-sys-man		.man
+./usr/share/man/man8/peace.8			man-obsolete		obsolete
 ./usr/share/man/man8/pfctl.8			man-pf-man		pf,.man
 ./usr/share/man/man8/pflogd.8			man-pf-man		pf,.man
 ./usr/share/man/man8/pfs.8				man-pf-man		pf,.man
