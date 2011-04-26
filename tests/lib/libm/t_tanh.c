@@ -1,4 +1,4 @@
-/* $NetBSD: t_tanh.c,v 1.2 2011/04/08 06:37:50 jruoho Exp $ */
+/* $NetBSD: t_tanh.c,v 1.3 2011/04/26 20:20:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_tanh.c,v 1.2 2011/04/08 06:37:50 jruoho Exp $");
+__RCSID("$NetBSD: t_tanh.c,v 1.3 2011/04/26 20:20:16 martin Exp $");
 
 #include <math.h>
 
@@ -56,8 +56,10 @@ ATF_TC_BODY(tanh_sign, tc)
 	d = tanh(-0.0);
 	f = tanhf(-0.0);
 
-	ATF_REQUIRE(signbit(d) != 0);
-	ATF_REQUIRE(signbit(f) != 0);
+	ATF_REQUIRE_MSG(signbit(d) != 0,
+	    "compiler bug, waiting for newer gcc import, see PR lib/44057");
+	ATF_REQUIRE_MSG(signbit(f) != 0,
+	    "compiler bug, waiting for newer gcc import, see PR lib/44057");
 #endif
 }
 
