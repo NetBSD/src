@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.313 2011/03/14 20:12:40 jakllsch Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.314 2011/04/26 16:36:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.313 2011/03/14 20:12:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.314 2011/04/26 16:36:42 joerg Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -486,7 +486,6 @@ exec_autoload(void)
 		"compat_aoutm68k",
 		"compat_freebsd",
 		"compat_ibcs2",
-		"compat_irix",
 		"compat_linux",
 		"compat_linux32",
 		"compat_netbsd32",

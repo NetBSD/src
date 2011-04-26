@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.181 2011/04/24 20:17:53 rmind Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.182 2011/04/26 16:36:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.181 2011/04/24 20:17:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.182 2011/04/26 16:36:42 joerg Exp $");
 
 #include "opt_ktrace.h"
 
@@ -360,9 +360,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * p_limit (rlimit stuff) is usually copy-on-write, so we just need
 	 * to bump pl_refcnt.
-	 * However in some cases (see compat irix, and plausibly from clone)
-	 * the parent and child share limits - in which case nothing else
-	 * must have a copy of the limits (PL_SHAREMOD is set).
+	 * However in some cases like clone the parent and child
+	 * share limits - in which case nothing else must have a copy
+	 * of the limits (PL_SHAREMOD is set).
 	 */
 	if (__predict_false(flags & FORK_SHARELIMIT))
 		lim_privatise(p1, 1);
