@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.109 2011/04/10 16:06:59 pgoyette Exp $	*/
+/*	$NetBSD: kdump.c,v 1.110 2011/04/26 15:51:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.109 2011/04/10 16:06:59 pgoyette Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.110 2011/04/26 15:51:32 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,6 @@ main(int argc, char **argv)
 		usage();
 
 	setemul(emul_name, 0, 0);
-	mach_lookup_emul();
 
 	m = malloc(size = 1024);
 	if (m == NULL)
@@ -508,8 +507,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 	emul_changed = 0;
 
 	if (numeric ||
-	    ((ktr->ktr_code >= emul->nsysnames || ktr->ktr_code < 0) &&
-	    mach_traps_dispatch(&ktr->ktr_code, &emul) == 0)) {
+	    ((ktr->ktr_code >= emul->nsysnames || ktr->ktr_code < 0))) {
 		sys_name = "?";
 		(void)printf("[%d]", ktr->ktr_code);
 	} else {
@@ -625,8 +623,7 @@ ktrsysret(struct ktr_sysret *ktr, int len)
 	} else
 		emul = cur_emul;
 
-	if (numeric || ((code >= emul->nsysnames || code < 0 || plain > 1) &&
-	    mach_traps_dispatch(&code, &emul) == 0))
+	if (numeric || ((code >= emul->nsysnames || code < 0 || plain > 1)))
 		(void)printf("[%d] ", code);
 	else
 		(void)printf("%s ", emul->sysnames[code]);
@@ -1035,7 +1032,6 @@ ktruser(struct ktr_user *usr, int len)
 static void
 ktrmmsg(struct ktr_mmsg *mmsg, int len)
 {
-	const char *service_name;
 	const char *reply;
 	int id;
 
@@ -1047,10 +1043,7 @@ ktrmmsg(struct ktr_mmsg *mmsg, int len)
 		reply = "";
 	}
 
-	if ((service_name = mach_service_name(id)) != NULL)
-		printf("%s%s [%d]\n", service_name, reply, mmsg->ktr_id);
-	else
-		printf("unknown service%s [%d]\n", reply, mmsg->ktr_id);
+	printf("unknown service%s [%d]\n", reply, mmsg->ktr_id);
 
 	hexdump_buf(mmsg, len, word_size ? word_size : 4);
 }

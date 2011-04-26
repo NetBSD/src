@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.47 2011/03/16 21:15:30 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.48 2011/04/26 15:51:25 joerg Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -64,7 +64,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.47 2011/03/16 21:15:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.48 2011/04/26 15:51:25 joerg Exp $");
 
 void
 child_return(void *arg)
@@ -113,9 +113,6 @@ EMULNAME(syscall_plain)(struct trapframe *tf)
 		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
 #endif
 
-#ifdef COMPAT_MACH
-	if ((callp = mach_syscall_dispatch(&code)) == NULL)
-#endif /* COMPAT_MACH */
 	{
 		switch (code) {
 		case EMULNAMEU(SYS_syscall):
@@ -163,15 +160,6 @@ EMULNAME(syscall_plain)(struct trapframe *tf)
 		tf->tf_fixreg[FIRSTARG] = rval[0];
 		tf->tf_fixreg[FIRSTARG + 1] = rval[1];
 		tf->tf_cr &= ~0x10000000;
-#ifdef COMPAT_MACH
-		/* 
-		 * For regular system calls, on success,
-		 * the next instruction is skipped 
-		 */
-		if ((tf->tf_fixreg[0] < p->p_emul->e_nsysent)
-		    && (tf->tf_fixreg[0] >= 0))
-			tf->tf_srr0 += 4;
-#endif /* COMPAT_MACH */
 		break;
 	case ERESTART:
 		/*
@@ -225,9 +213,6 @@ EMULNAME(syscall_fancy)(struct trapframe *tf)
 #endif
 
 	realcode = code;
-#ifdef COMPAT_MACH
-	if ((callp = mach_syscall_dispatch(&code)) == NULL)
-#endif /* COMPAT_MACH */
 	{
 		switch (code) {
 		case EMULNAMEU(SYS_syscall):
@@ -279,15 +264,6 @@ out:
 		tf->tf_fixreg[FIRSTARG] = rval[0];
 		tf->tf_fixreg[FIRSTARG + 1] = rval[1];
 		tf->tf_cr &= ~0x10000000;
-#ifdef COMPAT_MACH
-		/* 
-		 * For regular system calls, on success,
-		 * the next instruction is skipped 
-		 */
-		if ((tf->tf_fixreg[0] < p->p_emul->e_nsysent)
-		    && (tf->tf_fixreg[0] >= 0))
-			tf->tf_srr0 += 4;
-#endif /* COMPAT_MACH */
 		break;
 	case ERESTART:
 		/*

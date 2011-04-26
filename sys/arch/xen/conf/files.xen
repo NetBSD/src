@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.116 2011/04/18 01:36:25 jym Exp $
+#	$NetBSD: files.xen,v 1.117 2011/04/26 15:51:25 joerg Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -327,18 +327,6 @@ include	"compat/svr4/files.svr4"
 file	arch/i386/i386/svr4_machdep.c		compat_svr4
 file	arch/i386/i386/svr4_sigcode.S		compat_svr4
 file	arch/i386/i386/svr4_syscall.c		compat_svr4
-
-# MACH binary compatibility (COMPAT_MACH)
-include	"compat/mach/files.mach"
-file	arch/i386/i386/mach_machdep.c		compat_mach | compat_darwin
-file	arch/i386/i386/mach_sigcode.S		compat_mach | compat_darwin
-file	arch/i386/i386/mach_syscall.c		compat_mach | compat_darwin
-file    arch/i386/i386/darwin_commpage_machdep.S compat_darwin
-file	arch/i386/i386/macho_machdep.c		exec_macho
-
-# DARWIN binary compatibility (COMPAT_DARWIN)
-include	"compat/darwin/files.darwin"
-file	arch/i386/i386/darwin_machdep.c		compat_darwin
 
 # iBCS-2 binary compatibility (COMPAT_IBCS2)
 include	"compat/ibcs2/files.ibcs2"

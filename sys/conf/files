@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1007 2011/04/02 04:28:56 rmind Exp $
+#	$NetBSD: files,v 1.1008 2011/04/26 15:51:31 joerg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -79,7 +79,7 @@ defparam opt_poollog.h		POOL_LOGSIZE
 defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 
 defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
-				EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT
+				EXEC_ELF64 EXEC_SCRIPT
 				EXEC_ELF_NOTELESS
 
 defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
@@ -148,8 +148,6 @@ defflag				COMPAT_ULTRIX: COMPAT_50
 defflag				COMPAT_NETBSD32
 defflag				COMPAT_AOUT_M68K: COMPAT_40
 defflag				COMPAT_M68K4K
-defflag				COMPAT_MACH
-defflag				COMPAT_DARWIN
 defflag				COMPAT_VAX1K
 defflag				COMPAT_43
 defflag				COMPAT_PECOFF
@@ -1437,14 +1435,12 @@ file	kern/bufq_priocscan.c		bufq_priocscan
 file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
-file	kern/core_netbsd.c		exec_aout | exec_coff |
-					exec_ecoff | exec_macho
+file	kern/core_netbsd.c		exec_aout | exec_coff | exec_ecoff
 file	kern/cnmagic.c
 file	kern/exec_aout.c		exec_aout
 file	kern/exec_ecoff.c		exec_ecoff
 file	kern/exec_elf32.c		exec_elf32
 file	kern/exec_elf64.c		exec_elf64
-file	kern/exec_macho.c		exec_macho
 file	kern/exec_script.c		exec_script
 file	kern/exec_subr.c
 file	kern/init_main.c

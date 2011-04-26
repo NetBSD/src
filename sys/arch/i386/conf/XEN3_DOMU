@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.31 2011/04/18 01:36:25 jym Exp $
+# $NetBSD: XEN3_DOMU,v 1.32 2011/04/26 15:51:23 joerg Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -80,9 +80,6 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options 	COMPAT_MACH	# binary compatibility with Mach binaries
-#options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
-#options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

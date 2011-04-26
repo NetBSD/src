@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.192 2011/01/29 17:35:23 matt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.193 2011/04/26 15:51:32 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1004,8 +1004,6 @@ struct evcnt_sysctl {
  */
 #define	EMUL_LINUX	1
 #define	EMUL_IRIX	2
-#define	EMUL_DARWIN	3
-#define	EMUL_MACH	4
 #define	EMUL_LINUX32	5
 
 #define	EMUL_MAXID	6
@@ -1013,8 +1011,6 @@ struct evcnt_sysctl {
 	{ 0, 0 }, \
 	{ "linux", CTLTYPE_NODE }, \
 	{ "irix", CTLTYPE_NODE }, \
-	{ "darwin", CTLTYPE_NODE }, \
-	{ "mach", CTLTYPE_NODE }, \
 	{ "linux32", CTLTYPE_NODE }, \
 }
 
