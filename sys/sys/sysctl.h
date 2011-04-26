@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.194 2011/04/26 16:36:43 joerg Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.195 2011/04/26 21:27:44 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1006,11 +1006,6 @@ struct evcnt_sysctl {
 #define	EMUL_LINUX32	5
 
 #define	EMUL_MAXID	6
-#define	CTL_EMUL_NAMES { \
-	{ 0, 0 }, \
-	{ "linux", CTLTYPE_NODE }, \
-	{ "linux32", CTLTYPE_NODE }, \
-}
 
 #ifdef _KERNEL
 
