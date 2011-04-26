@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.264 2011/04/11 23:03:38 joerg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.265 2011/04/26 08:22:17 he Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -89,7 +89,8 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	archive asn1 bluetooth bsdmalloc bz2 c c_pic cdk com_err compat \
 	crypt crypto crypto_idea crypto_mdc2 crypto_rc5 \
 	curses dbm des edit event \
-	fetch form fl g2c gcc gnumalloc gssapi hdb heimntlm hx509 intl ipsec \
+	fetch form fl g2c gcc gnumalloc gssapi hdb heimbase heimntlm hx509 \
+	intl ipsec \
 	kadm5clnt kadm5srv kafs krb5 kvm l lber ldap ldap_r lua \
 	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
 	puffs radius resolv rmt roken rpcsvc rt rump rumpuser saslc skey sl ss \
@@ -97,7 +98,8 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	\
 	rumpfs_cd9660fs rumpfs_efs rumpfs_ext2fs rumpfs_ffs rumpfs_hfs \
 	rumpfs_lfs rumpfs_msdosfs rumpfs_nfs rumpfs_ntfs rumpfs_syspuffs \
-	rumpfs_tmpfs rumpfs_udf rumpfs_ufs
+	rumpfs_tmpfs rumpfs_udf rumpfs_ufs \
+	wind
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
@@ -116,9 +118,10 @@ PAM_STATIC_LDADD+= -lssh
 PAM_STATIC_DPADD+= ${LIBSSH}
 .endif
 .if (${MKKERBEROS} != "no")
-PAM_STATIC_LDADD+= -lkafs -lkrb5 -lhx509 -lasn1 -lroken -lcom_err -lcrypto
-PAM_STATIC_DPADD+= ${LIBKAFS} ${LIBKRB5} ${LIBHX509} ${LIBASN1} ${LIBROKEN} \
-	${LIBCOM_ERR} ${LIBCRYPTO}
+PAM_STATIC_LDADD+= -lkafs -lkrb5 -lhx509 -lwind -lasn1 \
+	-lroken -lcom_err -lheimbase -lcrypto
+PAM_STATIC_DPADD+= ${LIBKAFS} ${LIBKRB5} ${LIBHX509} ${LIBWIND} ${LIBASN1} \
+	${LIBROKEN} ${LIBCOM_ERR} ${LIBHEIMBASE} ${LIBCRYPTO}
 .endif
 .if (${MKSKEY} != "no")
 PAM_STATIC_LDADD+= -lskey
