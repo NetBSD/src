@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_io.c,v 1.3 2011/04/26 13:38:13 ahoka Exp $	*/
+/*	$NetBSD: nand_io.c,v 1.4 2011/04/26 17:27:52 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -141,17 +141,17 @@ nand_sync_thread_stop(device_t self)
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
 	struct nand_write_cache *wc = &sc->sc_cache;
-	
+
 	DPRINTF(("stopping nand io thread\n"));
-	
+
 	kmem_free(wc->nwc_data, chip->nc_block_size);
-	
+
 	sc->sc_io_running = false;
-	
+
 	mutex_enter(&sc->sc_io_lock);
 	cv_broadcast(&sc->sc_io_cv);
 	mutex_exit(&sc->sc_io_lock);
-	
+
 	kthread_join(sc->sc_sync_thread);
 
 	bufq_free(wc->nwc_bufq);
@@ -162,7 +162,7 @@ nand_sync_thread_stop(device_t self)
 	KASSERT(!cv_has_waiters(&sc->sc_io_cv));
 	mutex_exit(&sc->sc_io_lock);
 #endif
-	
+
 	cv_destroy(&sc->sc_io_cv);
 	mutex_destroy(&sc->sc_io_lock);
 }
