@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.49 2011/04/26 15:51:22 joerg Exp $
+#	$NetBSD: XEN3_DOM0,v 1.50 2011/04/26 16:57:40 joerg Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -94,7 +94,6 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support

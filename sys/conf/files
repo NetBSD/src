@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1009 2011/04/26 16:36:42 joerg Exp $
+#	$NetBSD: files,v 1.1010 2011/04/26 16:57:42 joerg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -149,7 +149,6 @@ defflag				COMPAT_AOUT_M68K: COMPAT_40
 defflag				COMPAT_M68K4K
 defflag				COMPAT_VAX1K
 defflag				COMPAT_43
-defflag				COMPAT_PECOFF
 defflag	opt_compat_netbsd.h	COMPAT_NOMID
 
 #
