@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.27 2011/04/26 15:51:32 joerg Exp $	*/
+/*	$NetBSD: setemul.c,v 1.28 2011/04/26 16:36:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.27 2011/04/26 15:51:32 joerg Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.28 2011/04/26 16:36:43 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -84,7 +84,6 @@ __RCSID("$NetBSD: setemul.c,v 1.27 2011/04/26 15:51:32 joerg Exp $");
 #include "../../sys/compat/netbsd32/netbsd32_syscall.h"
 #include "../../sys/compat/freebsd/freebsd_syscall.h"
 #include "../../sys/compat/ibcs2/ibcs2_syscall.h"
-#include "../../sys/compat/irix/irix_syscall.h"
 #include "../../sys/compat/linux/linux_syscall.h"
 #include "../../sys/compat/linux32/linux32_syscall.h"
 #include "../../sys/compat/osf1/osf1_syscall.h"
@@ -103,7 +102,6 @@ __RCSID("$NetBSD: setemul.c,v 1.27 2011/04/26 15:51:32 joerg Exp $");
 #include "../../sys/compat/netbsd32/netbsd32_syscalls.c"
 #include "../../sys/compat/freebsd/freebsd_syscalls.c"
 #include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
-#include "../../sys/compat/irix/irix_syscalls.c"
 #include "../../sys/compat/linux/linux_syscalls.c"
 #include "../../sys/compat/linux32/linux32_syscalls.c"
 #include "../../sys/compat/osf1/osf1_syscalls.c"
@@ -118,7 +116,6 @@ __RCSID("$NetBSD: setemul.c,v 1.27 2011/04/26 15:51:32 joerg Exp $");
 
 #include "../../sys/compat/svr4/svr4_errno.c"
 #include "../../sys/compat/ibcs2/ibcs2_errno.c"
-#include "../../sys/compat/irix/irix_errno.c"
 #include "../../sys/compat/osf1/osf1_errno.c"
 #include "../../sys/compat/linux/common/linux_errno.c"
 #undef KTRACE
@@ -126,7 +123,6 @@ __RCSID("$NetBSD: setemul.c,v 1.27 2011/04/26 15:51:32 joerg Exp $");
 #define SIGRTMIN	33	/* XXX */
 #include "../../sys/compat/svr4/svr4_signo.c"
 #include "../../sys/compat/ibcs2/ibcs2_signo.c"
-/* irix uses svr4 */
 #include "../../sys/compat/osf1/osf1_signo.c"
 #include "../../sys/compat/linux/common/linux_signo.c"
 
@@ -149,14 +145,6 @@ const struct emulation emulations[] = {
 	{ "ibcs2",	ibcs2_syscallnames,	IBCS2_SYS_MAXSYSCALL,
 	  native_to_ibcs2_errno,	NELEM(native_to_ibcs2_errno),
 	  ibcs2_to_native_signo,	NSIG,	0 },
-
-	{ "irix o32",	irix_syscallnames,	IRIX_SYS_MAXSYSCALL,
-	  native_to_irix_errno,		NELEM(native_to_irix_errno),
-	  svr4_to_native_signo,		NSIG,	0 },
-
-	{ "irix n32",	irix_syscallnames,	IRIX_SYS_MAXSYSCALL,
-	  native_to_irix_errno,		NELEM(native_to_irix_errno),
-	  svr4_to_native_signo,		NSIG,	0 },
 
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL,
 	  native_to_linux_errno,	NELEM(native_to_linux_errno),

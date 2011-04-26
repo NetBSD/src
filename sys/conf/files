@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1008 2011/04/26 15:51:31 joerg Exp $
+#	$NetBSD: files,v 1.1009 2011/04/26 16:36:42 joerg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -138,7 +138,6 @@ defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10, COMPAT_NETBSD
 defflag				COMPAT_OSSAUDIO
 defflag				COMPAT_FREEBSD: COMPAT_30
 defflag				COMPAT_IBCS2
-defflag				COMPAT_IRIX
 defflag				COMPAT_LINUX: COMPAT_16
 defflag				COMPAT_LINUX32 : COMPAT_LINUX
 defflag				COMPAT_OSF1
@@ -1300,8 +1299,6 @@ defpseudodev etherip:	ifnet, ether, arp
 
 defpseudo sequencer
 defpseudo clockctl
-defpseudo irix_kmem
-defpseudo irix_usema
 
 #
 # Accept filters.  XXX should use another registration/initialization method.

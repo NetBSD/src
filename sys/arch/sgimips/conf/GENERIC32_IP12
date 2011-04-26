@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.10 2011/03/06 17:08:30 bouyer Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.11 2011/04/26 16:36:41 joerg Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -32,7 +32,7 @@ makeoptions	TEXTADDR=0x80002000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.10 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.11 $"
 
 maxusers	32
 
@@ -86,7 +86,6 @@ options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
-#options 	COMPAT_IRIX	# binary compatibility with IRIX
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -282,10 +281,6 @@ pseudo-device	wsfont
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
-
-# pseudo devices used for IRIX binary compatibility
-#pseudo-device	irix_kmem		# IRIX /dev/kmem
-#pseudo-device	irix_usema		# IRIX /dev/usema
 
 # Veriexec
 #
