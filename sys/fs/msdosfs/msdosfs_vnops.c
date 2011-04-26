@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.74 2011/03/20 12:21:28 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.75 2011/04/26 11:32:38 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.74 2011/03/20 12:21:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.75 2011/04/26 11:32:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1800,10 +1800,8 @@ msdosfs_fsync(void *v)
 
 	fstrans_start(vp->v_mount, FSTRANS_LAZY);
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
-	vflushbuf(vp, wait);
-	if ((ap->a_flags & FSYNC_DATAONLY) != 0)
-		error = 0;
-	else
+	error = vflushbuf(vp, wait);
+	if (error == 0 && (ap->a_flags & FSYNC_DATAONLY) == 0)
 		error = msdosfs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
