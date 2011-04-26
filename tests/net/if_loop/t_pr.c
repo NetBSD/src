@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.5 2011/04/10 11:31:48 martin Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.6 2011/04/26 18:42:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_pr.c,v 1.5 2011/04/10 11:31:48 martin Exp $");
+__RCSID("$NetBSD: t_pr.c,v 1.6 2011/04/26 18:42:08 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: t_pr.c,v 1.5 2011/04/10 11:31:48 martin Exp $");
 #include "../../h_macros.h"
 
 /*
- * Prepare rump server, configure interface and route to cause fragmentation
+ * Prepare rump, configure interface and route to cause fragmentation
  */
 static void
 setup(void)
@@ -68,13 +68,10 @@ setup(void)
 	struct ifreq ifr;
 	int s;
 
-	static bool init_done = false;
-	if (init_done) return;
-
-	strcpy(ifname, "lo0");
 	rump_init();
 
 	/* first, config lo0 & route */
+	strcpy(ifname, "lo0");
 	netcfg_rump_if(ifname, "127.0.0.1", "255.0.0.0");
 	netcfg_rump_route("127.0.0.1", "255.0.0.0", "127.0.0.1");
 
@@ -110,8 +107,6 @@ setup(void)
 	if (rump_sys_write(s, &m_rtmsg, sizeof(m_rtmsg)) != sizeof(m_rtmsg))
 		atf_tc_fail_errno("set route mtu");
 	rump_sys_close(s);
-
-	init_done = true;
 }
 
 /*
