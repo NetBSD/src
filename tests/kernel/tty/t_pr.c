@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.5 2011/04/09 11:55:59 martin Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.6 2011/04/26 18:50:53 martin Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -12,17 +12,6 @@
 #include <errno.h>
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
-
-static bool init_done = false;
-
-static void
-init(void)
-{
-	if (init_done)
-		return;
-	rump_init();
-	init_done = true;
-}
 
 static int
 sendsome(int from, int to)
@@ -89,7 +78,7 @@ ATF_TC_BODY(client_first, tc)
 {
 	int master, slave, error, v;
 
-	init();
+	rump_init();
 	slave =  rump_sys_open("/dev/ttyp1", O_RDWR|O_NONBLOCK);
 	ATF_CHECK(slave != -1);
 
@@ -117,7 +106,7 @@ ATF_TC_BODY(master_first, tc)
 {
 	int master, slave, error;
 
-	init();
+	rump_init();
 	master = rump_sys_open("/dev/ptyp1", O_RDWR);
 	ATF_CHECK(master != -1);
 
@@ -144,7 +133,7 @@ ATF_TC_BODY(ptyioctl, tc)
 	struct termios tio;
 	int fd;
 
-	init();
+	rump_init();
 	fd = rump_sys_open("/dev/ptyp1", O_RDWR);
 	ATF_CHECK(fd != -1);
 
