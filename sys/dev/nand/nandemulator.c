@@ -1,4 +1,4 @@
-/*	$NetBSD: nandemulator.c,v 1.3 2011/04/10 10:56:37 ahoka Exp $	*/
+/*	$NetBSD: nandemulator.c,v 1.4 2011/04/26 13:38:13 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.3 2011/04/10 10:56:37 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.4 2011/04/26 13:38:13 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -785,6 +785,7 @@ nandemulator_modcmd(modcmd_t cmd, void *arg)
 		(void)config_attach_pseudo(nandemulator_cfdata);
 
 		return 0;
+
 	case MODULE_CMD_FINI:
 		error = config_cfdata_detach(nandemulator_cfdata);
 		if (error) {
@@ -796,6 +797,11 @@ nandemulator_modcmd(modcmd_t cmd, void *arg)
 		config_cfdriver_detach(&nandemulator_cd);
 
 		return 0;
+
+	case MODULE_CMD_AUTOUNLOAD:
+		/* prevent auto-unload */
+		return EBUSY;
+
 	default:
 		return ENOTTY;
 	}
