@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.935 2011/04/21 20:59:38 joerg Exp $
+# $NetBSD: mi,v 1.936 2011/04/27 20:06:46 mbalmer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1705,6 +1705,9 @@
 ./usr/share/i18n/csmapper/BIG5/UCS@BMP%HKSCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/BIG5/UCS@SIP%ETen.mps		base-sysutil-share	nls
 ./usr/share/i18n/csmapper/BIG5/UCS@SIP%HKSCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CBM			base-sysutil-share
+./usr/share/i18n/csmapper/CBM/CBMINT%UCS.mps		base-sysutil-share
+./usr/share/i18n/csmapper/CBM/UCS%CBMINT.mps		base-sysutil-share
 ./usr/share/i18n/csmapper/CNS			base-sysutil-share
 ./usr/share/i18n/csmapper/CNS/CNS11643-1%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CNS/CNS11643-2%UCS.mps	base-sysutil-share	nls
@@ -2158,6 +2161,8 @@
 ./usr/share/i18n/esdb/BIG5/Big5-HKSCS.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/BIG5/Big5-IBM.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/BIG5/Big5-Plus.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/CBM			base-sysutil-share
+./usr/share/i18n/esdb/CBM/CBMINT.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP			base-sysutil-share
 ./usr/share/i18n/esdb/CP/CP037.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP038.esdb		base-sysutil-share	nls
