@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.155 2010/11/19 06:44:42 dholland Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.156 2011/04/27 00:00:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.155 2010/11/19 06:44:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.156 2011/04/27 00:00:46 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -960,39 +960,6 @@ ktr_kuser(const char *id, void *addr, size_t len)
 	strlcpy(ktp->ktr_id, id, KTR_USER_MAXIDLEN);
 
 	memcpy(ktp + 1, addr, len);
-
-	ktraddentry(l, kte, KTA_WAITOK);
-}
-
-void
-ktr_mmsg(const void *msgh, size_t size)
-{
-	lwp_t *l = curlwp;
-
-	if (!KTRPOINT(l->l_proc, KTR_MMSG))
-		return;
-
-	ktr_kmem(l, KTR_MMSG, msgh, size);
-}
-
-void
-ktr_mool(const void *kaddr, size_t size, const void *uaddr)
-{
-	struct ktrace_entry *kte;
-	struct ktr_mool *kp;
-	struct ktr_mool *bf;
-	lwp_t *l = curlwp;
-
-	if (!KTRPOINT(l->l_proc, KTR_MOOL))
-		return;
-
-	if (ktealloc(&kte, (void *)&kp, l, KTR_MOOL, size + sizeof(*kp)))
-		return;
-
-	kp->uaddr = uaddr;
-	kp->size = size;
-	bf = kp + 1; /* Skip uaddr and size */
-	(void)memcpy(bf, kaddr, size);
 
 	ktraddentry(l, kte, KTA_WAITOK);
 }

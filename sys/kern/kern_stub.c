@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.30 2011/01/31 23:07:16 dyoung Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.31 2011/04/27 00:00:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.30 2011/01/31 23:07:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.31 2011/04/27 00:00:46 joerg Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -107,9 +107,7 @@ __weak_alias(ktr_saupcall,nullop);
 __weak_alias(ktr_syscall,nullop);
 __weak_alias(ktr_sysret,nullop);
 __weak_alias(ktr_kuser,nullop);
-__weak_alias(ktr_mmsg,nullop);
 __weak_alias(ktr_mib,nullop);
-__weak_alias(ktr_mool,nullop);
 __weak_alias(ktr_execarg,nullop);
 __weak_alias(ktr_execenv,nullop);
 
