@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.24 2007/12/05 08:39:53 ad Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.25 2011/04/27 07:55:15 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -53,40 +53,47 @@
 
 #include <dev/raidframe/raidframevar.h>
 
-#define decl_simple_lock_data(a,b) a struct simplelock b;
 
+/* Old school simple_lock */
 typedef struct lwp *RF_Thread_t;
 typedef void *RF_ThreadArg_t;
 
-#define RF_DECLARE_MUTEX(_m_)           decl_simple_lock_data(,(_m_))
-#define RF_DECLARE_STATIC_MUTEX(_m_)    decl_simple_lock_data(static,(_m_))
-#define RF_DECLARE_EXTERN_MUTEX(_m_)    decl_simple_lock_data(extern,(_m_))
+#define RF_DECLARE_MUTEX(_m_)           struct simplelock _m_;
 
 #define RF_DECLARE_COND(_c_)            int _c_;
 
 #define RF_LOCK_MUTEX(_m_)              simple_lock(&(_m_))
 #define RF_UNLOCK_MUTEX(_m_)            simple_unlock(&(_m_))
 
+#define RF_WAIT_COND(_c_,_m_)		\
+	ltsleep(&(_c_), PRIBIO, "rfwcond", 0, &(_m_))
+#define RF_SIGNAL_COND(_c_)            wakeup_one(&(_c_))
+#define RF_BROADCAST_COND(_c_)         wakeup(&(_c_))
 
-/* non-spinlock */
-#define decl_lock_data(a,b) a kmutex_t b;
 
-#define RF_DECLARE_LKMGR_MUTEX(_m_)           decl_lock_data(,(_m_))
-#define RF_DECLARE_LKMGR_STATIC_MUTEX(_m_)    decl_lock_data(static,(_m_))
-#define RF_DECLARE_LKMGR_EXTERN_MUTEX(_m_)    decl_lock_data(extern,(_m_))
+/* Modern mutex */
+/* Note that rf_declare_{mutex,cond}2() do _NOT_ append the ; */
+#define rf_declare_mutex2(_m_)     kmutex_t _m_
+#define rf_declare_cond2(_c_)      kcondvar_t _c_
 
-#define RF_LOCK_LKMGR_MUTEX(_m_)        mutex_enter(&(_m_))
-#define RF_UNLOCK_LKMGR_MUTEX(_m_)      mutex_exit(&(_m_))
+#define rf_lock_mutex2(_m_)        mutex_enter(&(_m_))
+#define rf_unlock_mutex2(_m_)      mutex_exit(&(_m_))
 
+#define rf_init_mutex2(_m_, _p_)   mutex_init(&(_m_), MUTEX_DEFAULT, (_p_))
+#define rf_destroy_mutex2(_m_)     mutex_destroy(&(_m_))
+
+#define rf_init_cond2(_c_, _w_)    cv_init(&(_c_), (_w_))
+#define rf_destroy_cond2(_c_)      cv_destroy(&(_c_))
+
+#define rf_wait_cond2(_c_,_m_)     cv_wait(&(_c_), &(_m_))
+#define rf_signal_cond2(_c_)       cv_signal(&(_c_))
+#define rf_broadcast_cond2(_c_)    cv_broadcast(&(_c_))
 
 /*
  * In NetBSD, kernel threads are simply processes which share several
  * substructures and never run in userspace.
  */
-#define RF_WAIT_COND(_c_,_m_)		\
-	ltsleep(&(_c_), PRIBIO, "rfwcond", 0, &(_m_))
-#define RF_SIGNAL_COND(_c_)            wakeup_one(&(_c_))
-#define RF_BROADCAST_COND(_c_)         wakeup(&(_c_))
+
 #define	RF_CREATE_THREAD(_handle_, _func_, _arg_, _name_) \
 	kthread_create(PRI_NONE, 0, NULL, (void (*)(void *))(_func_), \
 	    (void *)(_arg_), &(_handle_), _name_)

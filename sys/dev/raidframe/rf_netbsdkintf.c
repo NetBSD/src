@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.285 2011/04/23 06:29:05 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.286 2011/04/27 07:55:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.285 2011/04/23 06:29:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.286 2011/04/27 07:55:15 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -162,7 +162,7 @@ int     rf_kdebug_level = 0;
 static RF_Raid_t **raidPtrs;	/* global raid device descriptors */
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
-RF_DECLARE_STATIC_MUTEX(rf_sparet_wait_mutex)
+static RF_DECLARE_MUTEX(rf_sparet_wait_mutex)
 
 static RF_SparetWait_t *rf_sparet_wait_queue;	/* requests to install a
 						 * spare table */
@@ -879,7 +879,7 @@ raidstrategy(struct buf *bp)
 		}
 	}
 
-	mutex_enter(&raidPtr->iodone_lock);
+	rf_lock_mutex2(raidPtr->iodone_lock);
 
 	bp->b_resid = 0;
 
@@ -887,8 +887,8 @@ raidstrategy(struct buf *bp)
 	bufq_put(rs->buf_queue, bp);
 
 	/* scheduled the IO to happen at the next convenient time */
-	cv_signal(&raidPtr->iodone_cv);
-	mutex_exit(&raidPtr->iodone_lock);
+	rf_signal_cond2(raidPtr->iodone_cv);
+	rf_unlock_mutex2(raidPtr->iodone_lock);
 
 	return;
 
@@ -2166,7 +2166,7 @@ KernelWakeupFunc(struct buf *bp)
 
 	queue = (RF_DiskQueue_t *) req->queue;
 
-	mutex_enter(&queue->raidPtr->iodone_lock);
+	rf_lock_mutex2(queue->raidPtr->iodone_lock);
 
 #if RF_ACC_TRACE > 0
 	if (req->tracerec) {
@@ -2215,9 +2215,9 @@ KernelWakeupFunc(struct buf *bp)
 	TAILQ_INSERT_TAIL(&(queue->raidPtr->iodone), req, iodone_entries);
 
 	/* Let the raidio thread know there is work to be done. */
-	cv_signal(&queue->raidPtr->iodone_cv);
+	rf_signal_cond2(queue->raidPtr->iodone_cv);
 
-	mutex_exit(&queue->raidPtr->iodone_lock);
+	rf_unlock_mutex2(queue->raidPtr->iodone_lock);
 }
 
 

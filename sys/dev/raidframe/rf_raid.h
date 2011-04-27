@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.39 2011/04/23 06:29:05 mrg Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.40 2011/04/27 07:55:15 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -162,8 +162,8 @@ struct RF_Raid_s {
 	   callback functions. */
 	TAILQ_HEAD(iodone_q,RF_DiskQueueData_s) iodone;
 	/* and a lock/cv to protect it */
-	kmutex_t iodone_lock;
-	kcondvar_t iodone_cv;
+	rf_declare_mutex2(iodone_lock);
+	rf_declare_cond2(iodone_cv);
 
 
 	RF_VoidPointerListElem_t *iobuf;       /* I/O buffer free list */
@@ -216,7 +216,8 @@ struct RF_Raid_s {
 	/*
          * Engine thread control
          */
-	RF_DECLARE_MUTEX(node_queue_mutex)
+	rf_declare_mutex2(node_queue_mutex);
+	rf_declare_cond2(node_queue_cv);
 	RF_DagNode_t *node_queue;
 	RF_Thread_t parity_rewrite_thread;
 	RF_Thread_t copyback_thread;
