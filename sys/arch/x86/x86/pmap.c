@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.119 2011/04/14 16:00:21 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.120 2011/04/27 07:42:11 plunky Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2011/04/14 16:00:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 2011/04/27 07:42:11 plunky Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -767,7 +767,7 @@ pmap_unmap_apdp(void)
  *	Add a reference to the specified pmap.
  */
 
-inline void
+void
 pmap_reference(struct pmap *pmap)
 {
 
