@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.124 2011/04/23 22:22:46 mrg Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.125 2011/04/27 07:55:14 mrg Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.124 2011/04/23 22:22:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.125 2011/04/27 07:55:14 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -145,8 +145,8 @@ RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
 static int configureCount = 0;	/* number of active configurations */
 static int isconfigged = 0;	/* is basic raidframe (non per-array)
 				 * stuff configured */
-RF_DECLARE_LKMGR_STATIC_MUTEX(configureMutex)	/* used to lock the configuration
-					 * stuff */
+static rf_declare_mutex2(configureMutex); /* used to lock the configuration
+					   * stuff */
 static RF_ShutdownList_t *globalShutdown;	/* non array-specific
 						 * stuff */
 
@@ -162,7 +162,7 @@ rf_BootRaidframe(void)
 	if (raidframe_booted)
 		return (EBUSY);
 	raidframe_booted = 1;
-	mutex_init(&configureMutex, MUTEX_DEFAULT, IPL_NONE);
+	rf_init_mutex2(configureMutex, IPL_NONE);
  	configureCount = 0;
 	isconfigged = 0;
 	globalShutdown = NULL;
@@ -176,7 +176,7 @@ static void
 rf_UnconfigureArray(void)
 {
 
-	RF_LOCK_LKMGR_MUTEX(configureMutex);
+	rf_lock_mutex2(configureMutex);
 	if (--configureCount == 0) {	/* if no active configurations, shut
 					 * everything down */
 		isconfigged = 0;
@@ -191,7 +191,7 @@ rf_UnconfigureArray(void)
 			rf_print_unfreed();
 #endif
 	}
-	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
+	rf_unlock_mutex2(configureMutex);
 }
 
 /*
@@ -265,7 +265,7 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 		RF_ERRORMSG2("RAIDFRAME: failed %s with %d\n", RF_STRING(f), rc); \
 		rf_ShutdownList(&globalShutdown); \
 		configureCount--; \
-		RF_UNLOCK_LKMGR_MUTEX(configureMutex); \
+		rf_unlock_mutex2(configureMutex); \
 		return(rc); \
 	} \
 }
@@ -296,7 +296,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	RF_RowCol_t col;
 	int rc;
 
-	RF_LOCK_LKMGR_MUTEX(configureMutex);
+	rf_lock_mutex2(configureMutex);
 	configureCount++;
 	if (isconfigged == 0) {
 		rf_mutex_init(&rf_printf_mutex);
@@ -329,7 +329,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 		DO_INIT_CONFIGURE(rf_ConfigurePSStatus);
 		isconfigged = 1;
 	}
-	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
+	rf_unlock_mutex2(configureMutex);
 
 	DO_RAID_MUTEX(&raidPtr->mutex);
 	/* set up the cleanup list.  Do this after ConfigureDebug so that
