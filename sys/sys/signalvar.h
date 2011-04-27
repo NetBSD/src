@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.78 2011/01/14 02:06:34 rmind Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.79 2011/04/27 00:38:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -120,7 +120,7 @@ typedef struct sigstore {
 
 #include <sys/systm.h>			/* for copyin_t/copyout_t */
 
-extern sigset_t contsigmask, stopsigmask, sigcantmask;
+extern sigset_t contsigmask, sigcantmask;
 
 struct vnode;
 
