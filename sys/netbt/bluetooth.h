@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.10 2011/03/16 21:35:30 plunky Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.11 2011/04/27 00:36:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -103,6 +103,7 @@ struct sockaddr_bt {
 
 #ifdef _KERNEL
 
+#include <sys/mallocvar.h>
 MALLOC_DECLARE(M_BLUETOOTH);
 
 /*
