@@ -1,4 +1,4 @@
-/*	$NetBSD: longjmp.c,v 1.2 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: longjmp.c,v 1.3 2011/04/27 21:08:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stddef.h>
 
 #define __LIBC12_SOURCE__
 #include <setjmp.h>
@@ -44,6 +45,13 @@
 typedef struct {
 	__greg_t	__glob[5];
 } __jmp_buf_regs_t;
+
+/*
+ * setjmp.S uses hard coded offsets into the jump_buf,
+ * make sure any changes cause a compile failure here
+ */
+__CTASSERT(0x68 == offsetof(__jmp_buf_regs_t,__glob[4])+
+	sizeof(struct sigcontext));
 
 void
 __longjmp14(jmp_buf env, int val)
@@ -72,7 +80,7 @@ __longjmp14(jmp_buf env, int val)
 	/* Fill other registers */
 	uc.uc_mcontext.__gregs[_REG_CCR] = sc->sc_tstate;
 	uc.uc_mcontext.__gregs[_REG_PC] = sc->sc_pc;
-	uc.uc_mcontext.__gregs[_REG_nPC] = sc->sc_npc;
+	uc.uc_mcontext.__gregs[_REG_nPC] = sc->sc_pc+4;
 	uc.uc_mcontext.__gregs[_REG_G1] = sc->sc_g1;
 	uc.uc_mcontext.__gregs[_REG_G2] = sc->sc_o0;
 	uc.uc_mcontext.__gregs[_REG_G3] = r->__glob[0];
@@ -81,6 +89,7 @@ __longjmp14(jmp_buf env, int val)
 	uc.uc_mcontext.__gregs[_REG_G6] = r->__glob[3];
 	uc.uc_mcontext.__gregs[_REG_G7] = r->__glob[4];
 	uc.uc_mcontext.__gregs[_REG_O6] = sc->sc_sp;
+
 
 	/* Make return value non-zero */
 	if (val == 0)
