@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.37 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.38 2011/04/27 08:32:42 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.37 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.38 2011/04/27 08:32:42 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -163,7 +163,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
  *
  *	Insert an LWP into the sleep queue, optionally sorting by priority.
  */
-inline void
+void
 sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 {
 	lwp_t *l2;
