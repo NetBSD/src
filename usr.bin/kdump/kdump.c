@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.110 2011/04/26 15:51:32 joerg Exp $	*/
+/*	$NetBSD: kdump.c,v 1.111 2011/04/27 00:00:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.110 2011/04/26 15:51:32 joerg Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.111 2011/04/27 00:00:47 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,8 +114,6 @@ static void	ktrgenio(struct ktr_genio *, int);
 static void	ktrpsig(void *, int);
 static void	ktrcsw(struct ktr_csw *);
 static void	ktruser(struct ktr_user *, int);
-static void	ktrmmsg(struct ktr_mmsg *, int);
-static void	ktrmool(struct ktr_mool *, int);
 static void	ktrmib(int *, int);
 static void	usage(void) __dead;
 static void	eprint(int);
@@ -292,12 +290,6 @@ main(int argc, char **argv)
 		case KTR_USER:
 			ktruser(m, ktrlen);
 			break;
-		case KTR_MMSG:
-			ktrmmsg(m, ktrlen);
-			break;
-		case KTR_MOOL:
-			ktrmool(m, ktrlen);
-			break;
 		case KTR_EXEC_ARG:
 		case KTR_EXEC_ENV:
 			visdump_buf(m, ktrlen, col);
@@ -364,12 +356,6 @@ dumpheader(struct ktr_header *kth)
 		break;
 	case KTR_USER:
 		type = "MISC";
-		break;
-	case KTR_MMSG:
-		type = "MMSG";
-		break;
-	case KTR_MOOL:
-		type = "MOOL";
 		break;
 	case KTR_EXEC_ENV:
 		type = "ENV";
@@ -1027,36 +1013,6 @@ ktruser(struct ktr_user *usr, int len)
 	for (i = 0; i < len; i++)
 		printf("%02x", (unsigned int) dta[i]);
 	printf("\n");
-}
-
-static void
-ktrmmsg(struct ktr_mmsg *mmsg, int len)
-{
-	const char *reply;
-	int id;
-
-	id = mmsg->ktr_id;
-	if ((id / 100) % 2) {  /* Message reply */
-		reply = " reply";
-		id -= 100;
-	} else {
-		reply = "";
-	}
-
-	printf("unknown service%s [%d]\n", reply, mmsg->ktr_id);
-
-	hexdump_buf(mmsg, len, word_size ? word_size : 4);
-}
-
-static void
-ktrmool(struct ktr_mool *mool, int len)
-{
-	size_t size = mool->size;
-
-	printf("%ld/0x%lx bytes at %p\n",
-	    (u_long)size, (u_long)size, mool->uaddr);
-	mool++;
-	hexdump_buf(mool, size, word_size ? word_size : 4);
 }
 
 static void
