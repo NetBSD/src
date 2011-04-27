@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.132 2011/04/26 11:32:39 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.133 2011/04/27 09:46:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.132 2011/04/26 11:32:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.133 2011/04/27 09:46:27 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -865,7 +865,7 @@ spec_fsync(void *v)
 
 	if (vp->v_type == VBLK) {
 		if ((mp = vp->v_specmountpoint) != NULL) {
-			error = VFS_FSYNC(mp, vp, ap->a_flags | FSYNC_VFS);
+			error = VFS_FSYNC(mp, vp, ap->a_flags);
 			if (error != EOPNOTSUPP)
 				return error;
 		}

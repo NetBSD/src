@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.229 2011/04/26 11:32:39 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.230 2011/04/27 09:46:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -337,7 +337,6 @@ extern const int	vttoif_tab[];
 #define	FSYNC_LAZY	0x0008		/* fsync: lazy sync (trickle) */
 #define	FSYNC_NOLOG	0x0010		/* fsync: do not flush the log */
 #define	FSYNC_CACHE	0x0100		/* fsync: flush disk caches too */
-#define	FSYNC_VFS	0x0200		/* fsync: via FSYNC_VFS() */
 
 #define	UPDATE_WAIT	0x0001		/* update: wait for completion */
 #define	UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
