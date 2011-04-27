@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.175 2011/04/18 00:26:11 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.176 2011/04/27 00:36:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.175 2011/04/18 00:26:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.176 2011/04/27 00:36:47 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -203,8 +203,6 @@ kauth_cred_t cred0;
 int nofile = NOFILE;
 int maxuprc = MAXUPRC;
 int cmask = CMASK;
-
-MALLOC_DEFINE(M_EMULDATA, "emuldata", "Per-process emulation data");
 
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
