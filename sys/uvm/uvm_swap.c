@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.154 2011/04/23 18:14:13 rmind Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.155 2011/04/27 00:35:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.154 2011/04/23 18:14:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.155 2011/04/27 00:35:52 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.154 2011/04/23 18:14:13 rmind Exp $")
  *  [2] SWAP_STATS: given a pointer to an array of swapent structures
  *	(passed in via "arg") of a size passed in via "misc" ... we load
  *	the current swap config into the array. The actual work is done
- *	in the uvm_swap_stats(9) function.
+ *	in the uvm_swap_stats() function.
  *  [3] SWAP_ON: given a pathname in arg (could be device or file) and a
  *	priority in "misc", start swapping on it.
  *  [4] SWAP_OFF: as SWAP_ON, but stops swapping to a device
@@ -238,7 +238,7 @@ static void		 swaplist_trim(void);
 static int swap_on(struct lwp *, struct swapdev *);
 static int swap_off(struct lwp *, struct swapdev *);
 
-static void uvm_swap_stats_locked(int, struct swapent *, int, register_t *);
+static void uvm_swap_stats(int, struct swapent *, int, register_t *);
 
 static void sw_reg_strategy(struct swapdev *, struct buf *, int);
 static void sw_reg_biodone(struct buf *);
@@ -513,7 +513,7 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 			len = sizeof(struct swapent) * misc;
 		sep = (struct swapent *)malloc(len, M_TEMP, M_WAITOK);
 
-		uvm_swap_stats_locked(SCARG(uap, cmd), sep, misc, retval);
+		uvm_swap_stats(SCARG(uap, cmd), sep, misc, retval);
 		error = copyout(sep, SCARG(uap, arg), len);
 
 		free(sep, M_TEMP);
@@ -723,7 +723,7 @@ out:
 }
 
 /*
- * swap_stats: implements swapctl(SWAP_STATS). The function is kept
+ * uvm_swap_stats: implements swapctl(SWAP_STATS). The function is kept
  * away from sys_swapctl() in order to allow COMPAT_* swapctl()
  * emulation to use it directly without going through sys_swapctl().
  * The problem with using sys_swapctl() there is that it involves
@@ -731,17 +731,8 @@ out:
  * is not known at build time. Hence it would not be possible to
  * ensure it would fit in the stackgap in any case.
  */
-void
-uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
-{
-
-	rw_enter(&swap_syscall_lock, RW_READER);
-	uvm_swap_stats_locked(cmd, sep, sec, retval);
-	rw_exit(&swap_syscall_lock);
-}
-
 static void
-uvm_swap_stats_locked(int cmd, struct swapent *sep, int sec, register_t *retval)
+uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
 {
 	struct swappri *spp;
 	struct swapdev *sdp;

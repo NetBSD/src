@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.103 2010/11/08 02:56:12 dholland Exp $
+.\"	$NetBSD: uvm.9,v 1.104 2011/04/27 00:35:53 rmind Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -772,8 +772,6 @@ and should match what was used for previous call to
 .Fn uvn_findpages "struct uvm_object *uobj" "voff_t offset" "int *npagesp" "struct vm_page **pps" "int flags" ;
 .It Ft void
 .Fn uvm_vnp_setsize "struct vnode *vp" "voff_t newsize" ;
-.It Ft void
-.Fn uvm_swap_stats "int cmd" "struct swapent *sep" "int sec" "register_t *retval" ;
 .El
 .Pp
 The
@@ -894,26 +892,6 @@ to
 Caller must hold a reference to the vnode.
 If the vnode shrinks, pages no longer used are discarded.
 .Pp
-.Fn uvm_swap_stats
-implements the
-.Dv SWAP_STATS
-and
-.Dv SWAP_OSTATS
-operation of the
-.Xr swapctl 2
-system call.
-.Fa cmd
-is the requested command,
-.Dv SWAP_STATS
-or
-.Dv SWAP_OSTATS .
-The function will copy no more than
-.Fa sec
-entries in the array pointed by
-.Fa sep .
-On return,
-.Fa retval
-holds the actual number of entries copied in the array.
 .Sh SYSCTL
 UVM provides support for the
 .Dv CTL_VM
