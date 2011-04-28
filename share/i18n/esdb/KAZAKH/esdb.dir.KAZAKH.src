@@ -1,4 +1,4 @@
-# $NetBSD: esdb.dir.KAZAKH.src,v 1.1 2007/03/13 16:34:39 tnozaki Exp $
+# $NetBSD: esdb.dir.KAZAKH.src,v 1.2 2011/04/28 07:09:00 mbalmer Exp $
 
-KZ1048				MISC/KZ1048.esdb
-PTCP154				MISC/PTCP154.esdb
+KZ1048				KAZAKH/KZ1048.esdb
+PTCP154				KAZAKH/PTCP154.esdb
