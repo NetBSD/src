@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtadvd.8,v 1.21 2006/03/05 23:47:08 rpaulo Exp $
+.\"	$NetBSD: rtadvd.8,v 1.22 2011/04/28 12:12:47 wiz Exp $
 .\"	$KAME: rtadvd.8,v 1.24 2002/05/31 16:16:08 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -171,8 +171,6 @@ In this case,
 will transmit router advertisement with router lifetime 0
 to all the interfaces
 .Pq in accordance with RFC 2461 6.2.5 .
-.Sh EXIT STATUS
-.Ex -std rtadvd
 .Sh FILES
 .Bl -tag -width /var/run/rtadvd.dumpXX -compact
 .It Pa /etc/rtadvd.conf
@@ -185,6 +183,8 @@ The file in which
 .Nm
 dumps its internal state.
 .El
+.Sh EXIT STATUS
+.Ex -std rtadvd
 .Sh SEE ALSO
 .Xr rtadvd.conf 5 ,
 .Xr rtsol 8
