@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.39 2010/05/13 18:08:37 dholland Exp $
+#	$NetBSD: airport,v 1.40 2011/04/28 07:32:36 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -6872,7 +6872,7 @@ SCK:Stockton Metropolitan Airport, CA, USA
 SCL:Santiago, Chile
 SCM:Scammon Bay Airport, AK, USA
 SCN:Saarbrucken (Ensheim), Germany
-SCO:Aqtan (Shevchenko), Mangghystan, Kazakhstan
+SCO:Aktau (Shevchenko), Mangystau, Kazakhstan
 SCP:St.-Crepin, France
 SCQ:Santiago de Compostela (Santiago), Spain
 SCR:Scranton Municipal Airport, PA, USA
