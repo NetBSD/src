@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.23 2009/10/14 23:40:05 joerg Exp $
+.\"	$NetBSD: login.conf.5,v 1.24 2011/04/28 12:18:30 wiz Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -195,8 +195,8 @@ Maximum number of open file descriptors per process.
 .\"XX Length of time a password may be expired but not quite dead yet.
 .\"XX When set (for both the client and remote server machine when doing
 .\"XX remote authentication), a user is allowed to log in just one more
-.\"XX time after their password (but not account) has expired.  This allows
-.\"XX a grace period for updating their password.
+.\"XX time after their password (but not account) has expired.
+.\"XX This allows a grace period for updating their password.
 .\"
 .sp
 .It Sy passwordtime Ta time Ta "" Ta
@@ -323,7 +323,8 @@ Path name to a text file.
 A comma or whitespace separated list of values.
 .\"
 .It Sy number
-A number.  A leading
+A number.
+A leading
 .Li 0x
 implies the number is expressed in hexadecimal.
 A leading
