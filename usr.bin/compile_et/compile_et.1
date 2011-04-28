@@ -1,4 +1,4 @@
-.\"     $NetBSD: compile_et.1,v 1.5 2010/04/05 21:33:09 pgoyette Exp $
+.\"     $NetBSD: compile_et.1,v 1.6 2011/04/28 15:01:27 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,8 +35,8 @@
 .Nd error table compiler
 .Sh SYNOPSIS
 .Nm
-.Op Ar --version
-.Op Ar --help
+.Op Fl Fl help
+.Op Fl Fl version
 .Ar file
 .Sh DESCRIPTION
 The
@@ -46,7 +46,8 @@ associated messages in the file
 .Ar file
 and generates a C source file suitable for use with the
 .Xr com_err 3
-library.  The source file
+library.
+The source file
 .Ar file
 must end with a suffix of
 .Dq .et
@@ -59,23 +60,26 @@ defined in the error table and a C source file
 .Pa file.c
 which should be compiled and linked with the executable.
 .Pp
-The source file is a plain ASCII text file.  A
+The source file is a plain ASCII text file.
+A
 .Dq \&#
 in the source file
 is treated as a comment character, and all remaining text to the end
-of the source line will be ignored.  The source file consists of the
-following declarations:
+of the source line will be ignored.
+The source file consists of the following declarations:
 .Bl -tag -offset indent -width XXXXXX
 .It id [ Em base ] Em string
 Defines an identification string (such as a version string) which is
-recorded in the generated files.  It is mandatory and must be the
-first declaration in the source file.
+recorded in the generated files.
+It is mandatory and must be the first declaration in the source
+file.
 .It et Em name
 Specifies the name of the error table to be
 .Em name .
 It is mandatory and must be declared after the id declaration and
-before all other declarations.  The name of table is limited to four
-ASCII characters.  The optional argument
+before all other declarations.
+The name of table is limited to four ASCII characters.
+The optional argument
 .Em base
 specifies the base value of error codes the table.
 .Pp
@@ -83,13 +87,14 @@ The name of the table is used to construct the name of a function
 .Fn initialize_<name>_error_table
 which must be called to register the error table with the
 .Xr com_err 3
-library.  A re-entrant (thread-safe) version called
+library.
+A re-entrant (thread-safe) version called
 .Fn initialize_<name>_error_table_r
 is also defined.
 .It prefix Op Em string
-Defines a prefix to be applied to all error code names.  If no string
-is specified, the prefix is not defined.  It is an optional
-declaration and can appear more than once.
+Defines a prefix to be applied to all error code names.
+If no string is specified, the prefix is not defined.
+It is an optional declaration and can appear more than once.
 .It index Em val
 Specifies the index
 .Em val
@@ -101,8 +106,8 @@ Defines an error code with the name
 .Em cname
 and its associated error message
 .Em msg .
-The error codes are assigned sequentially increasing numbers.  The
-name is placed into the C header file as an enumerated type.
+The error codes are assigned sequentially increasing numbers.
+The name is placed into the C header file as an enumerated type.
 .It end
 Indicates the end of the error table.
 .El
@@ -133,8 +138,13 @@ will create a C header file
 .Pa test_err.h
 containing the enumerated type
 .Va test_error_number
-with values TEST_PERM, TEST_IO, TEST_NOMEM and
-TEST_INVAL, and a C source file
+with values
+.Dv TEST_PERM ,
+.Dv TEST_IO ,
+.Dv TEST_NOMEM
+and
+.Dv TEST_INVAL ,
+and a C source file
 .Pa test_err.c
 containing the
 .Xr com_err 3
