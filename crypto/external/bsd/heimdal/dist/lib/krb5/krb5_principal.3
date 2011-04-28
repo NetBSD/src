@@ -1,4 +1,4 @@
-.\"	$NetBSD: krb5_principal.3,v 1.1.1.2 2011/04/14 14:09:23 elric Exp $
+.\"	$NetBSD: krb5_principal.3,v 1.2 2011/04/28 14:40:42 wiz Exp $
 .\"
 .\" Copyright (c) 2003 - 2007 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -157,12 +157,12 @@ takes an extra
 argument the following flags can be passed in
 .Bl -tag -width Ds
 .It Dv KRB5_PRINCIPAL_PARSE_NO_REALM
-requries the input string to be without a realm, and no realm is
+requires the input string to be without a realm, and no realm is
 stored in the
 .Fa principal
 return argument.
 .It Dv KRB5_PRINCIPAL_PARSE_REQUIRE_REALM
-requries the input string to with a realm.
+requires the input string to with a realm.
 .El
 .Pp
 .Fn krb5_unparse_name
