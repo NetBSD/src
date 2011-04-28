@@ -1,4 +1,4 @@
-.\"     $NetBSD: hashinit.9,v 1.7 2008/07/01 15:37:04 pooka Exp $
+.\"     $NetBSD: hashinit.9,v 1.8 2011/04/28 17:08:29 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,8 +67,10 @@ or
 .Dv HASH_TAILQ
 as
 .Fa htype
-to indicate which. Each slot will be initialized as the head of an empty
-chain of the proper type. Because different data structures from
+to indicate which.
+Each slot will be initialized as the head of an empty chain of the
+proper type.
+Because different data structures from
 .Xr queue 3
 can define head structures of different sizes, the total size of the
 allocated table can vary with the choice of
