@@ -1,4 +1,4 @@
-.\"     $NetBSD: getiobuf.9,v 1.4 2009/03/12 12:46:17 joerg Exp $
+.\"     $NetBSD: getiobuf.9,v 1.5 2011/04/28 17:09:19 wiz Exp $
 .\"
 .\" Copyright (c)2006,2008 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -57,10 +57,10 @@ If true,
 can sleep until enough memory is available.
 Otherwise, it returns
 .Dv NULL
-immediately if enough memory is not available.
+immediately if not enough memory is available.
 .El
 .Pp
-Note that the allocated buffer doesn't belong to buffer cache.
+Note that the allocated buffer doesn't belong to the buffer cache.
 To free it,
 .Fn putiobuf
 should be used.
