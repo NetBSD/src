@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.4,v 1.26 2010/03/22 18:58:31 joerg Exp $
+.\"	$NetBSD: tty.4,v 1.27 2011/04/28 12:15:35 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,12 +60,13 @@ use (see
 .Pp
 The
 .Pa /dev/dtyXX
-special file is a SunOS-compatible dial-out device.  Unlike
-the dial-in device, opening the dial-out device never blocks.  If the
-corresponding dial-in device is already opened (not blocked in the open waiting
-for carrier), then the dial-out open will fail immediately; otherwise it will
-succeed immediately.  While the dial-out device is open, the dial-in device may
-not be opened.  If the dial-in open is blocking, it will wait until the dial-out
+special file is a SunOS-compatible dial-out device.
+Unlike the dial-in device, opening the dial-out device never blocks.
+If the corresponding dial-in device is already opened (not blocked
+in the open waiting for carrier), then the dial-out open will fail
+immediately; otherwise it will succeed immediately.
+While the dial-out device is open, the dial-in device may not be opened.
+If the dial-in open is blocking, it will wait until the dial-out
 device is closed (and carrier is detected); otherwise it will fail immediately.
 .Pp
 There is also a special case of a terminal file that connects not to
@@ -82,10 +83,10 @@ for example.)  Even in these cases the details of how the terminal
 file was opened and set up is already handled by special software
 in the system.
 Thus, users do not normally need to worry about the details of
-how these lines are opened or used.  Also, these lines are often used
-for dialing out of a system (through an out-calling modem), but again
-the system provides programs that hide the details of accessing
-these terminal special files (see
+how these lines are opened or used.
+Also, these lines are often used for dialing out of a system (through
+an out-calling modem), but again the system provides programs that
+hide the details of accessing these terminal special files (see
 .Xr tip 1 ) .
 .Pp
 When an interactive user logs in, the system prepares the line to
@@ -95,20 +96,22 @@ the particular details of which is described in
 .Xr stty 1
 at the command level, and in
 .Xr termios 4
-at the programming level.  A user may be concerned with changing
-settings associated with his particular login terminal and should refer
-to the preceding man pages for the common cases.  The remainder of
-this man page is concerned
+at the programming level.
+A user may be concerned with changing settings associated with his
+particular login terminal and should refer to the preceding man
+pages for the common cases.
+The remainder of this man page is concerned
 with describing details of using and controlling terminal devices
 at a low level, such as that possibly required by a program wishing
 to provide features similar to those provided by the system.
 .Ss Line disciplines
 A terminal file is used like any other file in the system in that
-it can be opened, read, and written to using standard system
-calls.  For each existing terminal file, there is a software processing module
+it can be opened, read, and written to using standard system calls.
+For each existing terminal file, there is a software processing module
 called a
 .Em line discipline
-associated with it.  The
+associated with it.
+The
 .Em line discipline
 essentially glues the low level device driver code with the high
 level generic interface routines (such as
@@ -116,14 +119,15 @@ level generic interface routines (such as
 and
 .Xr write 2 ) ,
 and is responsible for implementing the semantics associated
-with the device.  When a terminal file is first opened by a program,
-the default
+with the device.
+When a terminal file is first opened by a program, the default
 .Em line discipline
 called the
 .Dv termios
-line discipline is associated with the file.  This is the primary
-line discipline that is used in most cases and provides the semantics
-that users normally associate with a terminal.  When the
+line discipline is associated with the file.
+This is the primary line discipline that is used in most cases and
+provides the semantics that users normally associate with a terminal.
+When the
 .Dv termios
 line discipline is in effect, the terminal file behaves and is
 operated according to the rules described in
@@ -142,8 +146,8 @@ hardware (or lack thereof, as in the case of ptys).
 .Ss Terminal File Operations
 All of the following operations are invoked using the
 .Xr ioctl 2
-system call.  Refer to that man page for a description of
-the
+system call.
+Refer to that man page for a description of the
 .Em request
 and
 .Em argp
@@ -157,11 +161,11 @@ specific to it (actually
 .Xr termios 4
 defines them as function calls, not ioctl
 .Em requests . )
-The following section lists the available ioctl requests.  The
-name of the request, a description of its purpose, and the typed
+The following section lists the available ioctl requests.
+The name of the request, a description of its purpose, and the typed
 .Em argp
-parameter (if any)
-are listed.  For example, the first entry says
+parameter (if any) are listed.
+For example, the first entry says
 .Pp
 .D1 Em TIOCSLINED char name[32]
 .Pp
@@ -235,20 +239,22 @@ Place the current number of characters in the output queue in the
 integer pointed to by
 .Fa num .
 .It Dv TIOCSTI Fa char *cp
-Simulate typed input.  Pretend as if the terminal received the
-character pointed to by
+Simulate typed input.
+Pretend as if the terminal received the character pointed to by
 .Fa cp .
 .It Dv TIOCNOTTY Fa void
-This call is obsolete but left for compatibility.  In the past, when
-a process that didn't have a controlling terminal (see
+This call is obsolete but left for compatibility.
+In the past, when a process that didn't have a controlling terminal
+(see
 .Em The Controlling Terminal
 in
 .Xr termios 4 )
 first opened a terminal device, it acquired that terminal as its
-controlling terminal.  For some programs this was a hazard as they
-didn't want a controlling terminal in the first place, and this
-provided a mechanism to disassociate the controlling terminal from
-the calling process.  It
+controlling terminal.
+For some programs this was a hazard as they didn't want a controlling
+terminal in the first place, and this provided a mechanism to
+disassociate the controlling terminal from the calling process.
+It
 .Em must
 be called by opening the file
 .Pa /dev/tty
@@ -268,9 +274,9 @@ In addition, a program can
 and call the
 .Fn setsid
 system call which will place the process into its own session - which
-has the effect of disassociating it from the controlling terminal.  This
-is the new and preferred method for programs to lose their controlling
-terminal.
+has the effect of disassociating it from the controlling terminal.
+This is the new and preferred method for programs to lose their
+controlling terminal.
 .It Dv TIOCSTOP Fa void
 Stop output on the terminal (like typing ^S at the keyboard).
 .It Dv TIOCSTART Fa void
@@ -281,12 +287,14 @@ must not currently have a controlling terminal).
 .It Dv TIOCDRAIN Fa void
 Wait until all output is drained.
 .It Dv TIOCEXCL Fa void
-Set exclusive use on the terminal.  No further opens are permitted
-except by root.  Of course, this means that programs that are run by
-root (or setuid) will not obey the exclusive setting - which limits
-the usefulness of this feature.
+Set exclusive use on the terminal.
+No further opens are permitted except by root.
+Of course, this means that programs that are run by root (or setuid)
+will not obey the exclusive setting - which limits the usefulness
+of this feature.
 .It Dv TIOCNXCL Fa void
-Clear exclusive use of the terminal.  Further opens are permitted.
+Clear exclusive use of the terminal.
+Further opens are permitted.
 .It Dv TIOCFLUSH Fa int *what
 If the value of the int pointed to by
 .Fa what
@@ -294,11 +302,11 @@ contains the
 .Dv FREAD
 bit as defined in
 .In sys/fcntl.h ,
-then all characters in the input queue are cleared.  If it contains
-the
+then all characters in the input queue are cleared.
+If it contains the
 .Dv FWRITE
-bit, then all characters in the output queue are cleared.  If the
-value of the integer is zero, then it behaves as if both the
+bit, then all characters in the output queue are cleared.
+If the value of the integer is zero, then it behaves as if both the
 .Dv FREAD
 and
 .Dv FWRITE
@@ -309,9 +317,10 @@ Put the window size information associated with the terminal in the
 structure pointed to by
 .Fa ws .
 The window size structure contains the number of rows and columns (and pixels
-if appropriate) of the devices attached to the terminal.  It is set by user software
-and is the means by which most full\&-screen oriented programs determine the
-screen size.  The
+if appropriate) of the devices attached to the terminal.
+It is set by user software and is the means by which most full\&-screen
+oriented programs determine the screen size.
+The
 .Va winsize
 structure is defined in
 .In sys/ioctl.h .
@@ -330,7 +339,8 @@ to this terminal.
 If
 .Fa on
 points to a zero integer, redirect kernel console output back to the normal
-console.  This is usually used on workstations to redirect kernel messages
+console.
+This is usually used on workstations to redirect kernel messages
 to a particular window.
 .It Dv TIOCMSET Fa int *state
 The integer pointed to by
@@ -418,9 +428,9 @@ above in the integer pointed to by
 .Fa state .
 .El
 .Sh COMPATIBILITY
-Two ioctls are maintained for backwards compatibility.  They provide
-methods to get and set the current line discipline, but are not
-extensible.
+Two ioctls are maintained for backwards compatibility.
+They provide methods to get and set the current line discipline,
+but are not extensible.
 .Bl -tag -width TIOCGWINSZ
 .It Dv TIOCSETD Fa int *ldisc
 Change to the new line discipline pointed to by
@@ -458,6 +468,8 @@ Return the current line discipline in the integer pointed to by
 .Xr getty 8 ,
 .Xr linedisc 9
 .Sh HISTORY
-Separate dial-out device files were implemented in SunOS 4.  They were cloned
-by Charles M. Hannum for
+Separate dial-out device files were implemented in SunOS 4.
+They were cloned by
+.An Charles M. Hannum
+for
 .Nx 1.4 .
