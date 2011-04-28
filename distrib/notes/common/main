@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.474 2011/04/27 18:51:14 mspo Exp $
+.\"	$NetBSD: main,v 1.475 2011/04/28 21:39:34 alnsn Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1267,6 +1267,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Zolt\('an Arnold NAGY Ta Mt zoltan@NetBSD.org
 .It Ta Ken Nakata Ta Mt kenn@NetBSD.org
 .It Ta Takeshi Nakayama Ta Mt nakayama@NetBSD.org
+.It Ta Alexander Nasonov Ta Mt alnsn@NetBSD.org
 .It Ta Phil Nelson Ta Mt phil@NetBSD.org
 .It Ta John Nemeth Ta Mt jnemeth@NetBSD.org
 .It Ta NISHIMURA Takeshi Ta Mt nsmrtks@NetBSD.org
