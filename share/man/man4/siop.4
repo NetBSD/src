@@ -1,4 +1,4 @@
-.\"	$NetBSD: siop.4,v 1.17 2009/10/19 18:41:09 bouyer Exp $
+.\"	$NetBSD: siop.4,v 1.18 2011/04/28 16:11:37 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Manuel Bouyer.
 .\"
@@ -79,8 +79,9 @@ and
 .Tn SCSI )
 .El
 The SIOP_SYMLED option causes the driver to report SCSI activity on the GPIO
-pin 1, which is connected to the activity LED on some adapters. At this time
-only the 53c895 based Symbios and Tekram adapters are known to require this.
+pin 1, which is connected to the activity LED on some adapters.
+At this time only the 53c895 based Symbios and Tekram adapters are
+known to require this.
 .Pp
 If both
 .Nm
@@ -113,6 +114,7 @@ for
 .Nx .
 .Sh BUGS
 .Nm
-supports the 53c1010-33 in Ultra2-wide mode only. Use
+supports the 53c1010-33 in Ultra2-wide mode only.
+Use
 .Xr esiop 4
 for Ultra160 support.
