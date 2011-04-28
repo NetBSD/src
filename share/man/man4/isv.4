@@ -1,4 +1,4 @@
-.\"	$NetBSD: isv.4,v 1.4 2009/10/19 23:29:40 dyoung Exp $
+.\"	$NetBSD: isv.4,v 1.5 2011/04/28 16:08:21 wiz Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd April 1, 2008
-.Dt isv 4
+.Dt ISV 4
 .Os
 .Sh NAME
 .Nm isv
@@ -56,9 +56,8 @@ Theoretically, a frame rate of approximately 10 frames per second
 is possible.
 .Nm
 achieves a frame rate of approximately 6 frames per second.
-.Pp
 .Sh SEE ALSO
-.Xr isvctl 8
+.\".Xr isvctl 8
 .Rs
 .%R Programming the Supervision/16 Image Capture Board
 .%Q IDEC
@@ -75,7 +74,6 @@ The
 driver was written by
 .An David Young Aq dyoung@NetBSD.org .
 .Sh BUGS
-.Pp
 Synchronizing with the hardware and reading frames from it is very
 CPU-intensive.
 .Pp
