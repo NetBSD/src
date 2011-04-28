@@ -1,4 +1,4 @@
-.\" $NetBSD: at.1,v 1.24 2009/03/09 14:26:44 joerg Exp $
+.\" $NetBSD: at.1,v 1.25 2011/04/28 13:54:13 wiz Exp $
 .\" $OpenBSD: at.1,v 1.6 1998/06/05 00:47:46 deraadt Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd March 10, 2008
@@ -106,8 +106,8 @@ where the time-units can be
 .Sq minutes ,
 .Sq hours ,
 .Sq days ,
-.Sq weeks,
-.Sq months,
+.Sq weeks ,
+.Sq months ,
 or
 .Sq years
 and you can tell
@@ -156,7 +156,7 @@ shell will retain the current userid.
 The user will be mailed standard error and standard output from his
 commands, if any.
 Mail will be sent using the command
-.Xr sendmail 8 .
+.Xr sendmail 1 .
 If
 .Nm
 is executed from a
@@ -297,11 +297,11 @@ Job-creation lock file.
 .El
 .Sh SEE ALSO
 .Xr nice 1 ,
+.Xr sendmail 1 ,
 .Xr sh 1 ,
 .Xr umask 2 ,
 .Xr atrun 8 ,
-.Xr cron 8 ,
-.Xr sendmail 8
+.Xr cron 8
 .Sh STANDARDS
 The
 .Nm
