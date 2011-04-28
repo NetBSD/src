@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.36 2011/04/28 11:23:57 wiz Exp $
+.\" $NetBSD: veriexecctl.8,v 1.37 2011/04/28 12:01:58 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.36 2011/04/28 11:23:57 wiz Exp $
+.\"	$Id: veriexecctl.8,v 1.37 2011/04/28 12:01:58 wiz Exp $
 .\"
 .Dd August 31, 2008
 .Dt VERIEXECCTL 8
@@ -42,7 +42,7 @@ subsystem
 .Sh SYNOPSIS
 .Nm
 .Op Fl ekv
-.Cm load Op file
+.Cm load Op Ar file
 .Nm
 .Cm delete Ar file | mount_point
 .Nm
@@ -61,7 +61,7 @@ the
 file integrity subsystem.
 .Ss Commands
 .Bl -tag -width XXXX
-.It Cm load Op file
+.It Cm load Op Ar file
 Load the fingerprint entries contained in
 .Ar file ,
 if specified, or the default signatures file otherwise.
