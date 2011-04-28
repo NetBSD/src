@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck.8,v 1.37 2010/02/18 06:57:17 wiz Exp $
+.\"	$NetBSD: fsck.8,v 1.38 2011/04/28 12:16:10 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
 .\"
@@ -128,6 +128,11 @@ Causes
 to assume yes
 as the answer to all operator questions.
 .El
+.Sh FILES
+.Bl -tag -width /etc/fstab -compact
+.It Pa /etc/fstab
+file system table
+.El
 .Sh EXIT STATUS
 .Nm
 exits with
@@ -149,7 +154,8 @@ Re-running
 on the filesystem(s) is required.
 .It Dv 4
 The root filesystem was changed in the process of checking, and updating the
-mount was unsuccessful. A reboot (without sync) is required.
+mount was unsuccessful.
+A reboot (without sync) is required.
 .It Dv 8
 The filesystem check has failed, and a subsequent check is required
 that will require human intervention.
@@ -160,11 +166,6 @@ exited because of the result of a signal (usually
 or
 .Dv SIGQUIT
 from the terminal).
-.El
-.Sh FILES
-.Bl -tag -width /etc/fstab -compact
-.It Pa /etc/fstab
-file system table
 .El
 .Sh SEE ALSO
 .Xr fstab 5 ,
