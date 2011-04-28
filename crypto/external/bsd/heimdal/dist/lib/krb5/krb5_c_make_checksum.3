@@ -1,4 +1,4 @@
-.\"	$NetBSD: krb5_c_make_checksum.3,v 1.1.1.2 2011/04/14 14:09:22 elric Exp $
+.\"	$NetBSD: krb5_c_make_checksum.3,v 1.2 2011/04/28 14:34:33 wiz Exp $
 .\"
 .\" Copyright (c) 2003 - 2006 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -281,14 +281,14 @@ is a keyed checksum type.
 .Fn krb5_c_is_coll_proof_cksum
 returns true if
 .Fa ctype
-is a collition proof checksum type.
+is a collision proof checksum type.
 .Pp
 .Fn krb5_c_keylengths
-return the minimum length (
-.Fa inlength )
+return the minimum length
+.Fa ( inlength )
 bytes needed to create a key and the
-length (
-.Fa keylength )
+length
+.Fa ( keylength )
 of the resulting key
 for the
 .Fa enctype .
