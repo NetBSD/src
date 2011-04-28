@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.34 2008/03/09 20:59:13 dholland Exp $
+.\"	$NetBSD: mt.1,v 1.35 2011/04/28 13:51:47 wiz Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -172,11 +172,11 @@ Not all tape drives support this feature.
 is ignored.)
 .It Cm setspos
 Set the logical block position of the tape to
-.Ar count.
+.Ar count .
 Not all tape drives support this feature.
 .It Cm sethpos
 Set the hardware block position of the tape to
-.Ar count.
+.Ar count .
 Not all tape drives support this feature.
 .It Cm compress
 If
@@ -192,6 +192,37 @@ is not set, then
 .Nm
 uses the device
 .Pa /dev/nrst0 .
+.Sh ENVIRONMENT
+If the following environment variables exist, they are used by
+.Nm .
+.Bl -tag -width Fl
+.It Ev TAPE
+.Nm
+uses device filename given in the
+.Ev TAPE
+environment variable if the
+.Ar tapename
+argument is not given.
+.It Ev RCMD_CMD
+.Nm
+will use
+.Ev RCMD_CMD
+rather than
+.Pa /usr/bin/rsh
+to invoke
+.Xr rmt 8
+on a remote machine.
+The full path name must be specified.
+.El
+.Sh FILES
+.Bl -tag -width /dev/rst* -compact
+.It Pa /dev/rst*
+Raw
+.Tn SCSI
+tape device
+.It Pa /dev/rmt*
+Raw magnetic tape device
+.El
 .Sh EXIT STATUS
 .Nm
 returns a 0 exit status when the operation(s) were successful,
@@ -225,37 +256,6 @@ Note that many tape drive vendors also define model-specific codes.
 .It Li 36 Ta DDS-2
 .It Li 37 Ta DDS-3
 .It Li 38 Ta DDS-4
-.El
-.Sh ENVIRONMENT
-If the following environment variables exist, they are used by
-.Nm .
-.Bl -tag -width Fl
-.It Ev TAPE
-.Nm
-uses device filename given in the
-.Ev TAPE
-environment variable if the
-.Ar tapename
-argument is not given.
-.It Ev RCMD_CMD
-.Nm
-will use
-.Ev RCMD_CMD
-rather than
-.Pa /usr/bin/rsh
-to invoke
-.Xr rmt 8
-on a remote machine.
-The full path name must be specified.
-.El
-.Sh FILES
-.Bl -tag -width /dev/rst* -compact
-.It Pa /dev/rst*
-Raw
-.Tn SCSI
-tape device
-.It Pa /dev/rmt*
-Raw magnetic tape device
 .El
 .Sh SEE ALSO
 .Xr dd 1 ,
