@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.1.2.1 2009/08/27 16:51:27 matt Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.1.2.2 2011/04/29 07:48:34 matt Exp $	*/
 
 /* This is a derivative work. */
 
@@ -42,7 +42,9 @@ the `FLOAT128' macro and the quadruple-precision format `float128'.
 -------------------------------------------------------------------------------
 */
 /* #define FLOATX80 */
-/* #define FLOAT128 */
+#if defined(__mips_n32) || defined(__mips_n64)
+#define FLOAT128
+#endif
 
 #include <machine/ieeefp.h>
 
@@ -133,9 +135,9 @@ float64 int64_to_float64( long long );
 #ifdef FLOATX80
 floatx80 int64_to_floatx80( long long );
 #endif
+#endif
 #ifdef FLOAT128
 float128 int64_to_float128( long long );
-#endif
 #endif
 
 /*
@@ -315,6 +317,7 @@ int float128_eq_signaling( float128, float128 );
 int float128_le_quiet( float128, float128 );
 int float128_lt_quiet( float128, float128 );
 int float128_is_signaling_nan( float128 );
+flag float128_is_nan( float128 );
 
 #endif
 
