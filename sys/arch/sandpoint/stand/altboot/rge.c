@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.4 2011/04/04 16:41:34 phx Exp $ */
+/* $NetBSD: rge.c,v 1.5 2011/04/29 22:21:36 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -217,8 +217,9 @@ rge_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
 	volatile struct desc *txd;
-	unsigned loop;
+	unsigned loop, ret;
 
+	ret = len;
 	if (len < 60) {
 		memset(buf + len, 0, 60 - len);
 		len = 60; /* RTL does not stretch <60 Tx frame */
@@ -241,7 +242,7 @@ rge_send(void *dev, char *buf, unsigned len)
 	return -1;
   done:
 	l->tx ^= 1;
-	return len;
+	return ret;
 }
 
 int
