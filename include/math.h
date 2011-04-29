@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.47.16.1 2010/04/21 05:26:00 matt Exp $	*/
+/*	$NetBSD: math.h,v 1.47.16.2 2011/04/29 07:40:46 matt Exp $	*/
 
 /*
  * ====================================================
@@ -98,8 +98,12 @@ extern const union __long_double_u __infinityl;
 
 /* 7.12#5 NAN: a quiet NaN, if supported */
 #ifdef __HAVE_NANF
+#if __GNUC_PREREQ__(3,3)
+#define NAN     __builtin_nanf("")
+#else
 extern const union __float_u __nanf;
 #define	NAN		__nanf.__val
+#endif
 #endif /* __HAVE_NANF */
 
 /* 7.12#6 number classification macros */
