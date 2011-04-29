@@ -1,2 +1,4 @@
-# $NetBSD: charset.pivot.CBM.src,v 1.1 2011/04/27 20:05:56 mbalmer Exp $
+# $NetBSD: charset.pivot.CBM.src,v 1.2 2011/04/29 09:57:49 mbalmer Exp $
 
+CMBINT			UCS			1
+UCS			CBMINT			1
