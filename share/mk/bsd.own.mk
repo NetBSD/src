@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.542.2.9.4.5 2010/04/21 05:26:47 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.542.2.9.4.6 2011/04/29 07:48:36 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -641,6 +641,13 @@ MKCOMPAT?=	yes
 .else
 # Don't let this build where it really isn't supported.
 MKCOMPAT:=	no
+.endif
+
+#
+# Default mips64 to softfloat now.
+#
+.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+MKSOFTFLOAT?=   yes
 .endif
 
 #
