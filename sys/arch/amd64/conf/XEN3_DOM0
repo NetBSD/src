@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.66 2011/04/18 01:36:24 jym Exp $
+# $NetBSD: XEN3_DOM0,v 1.67 2011/04/29 01:51:53 jym Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -203,7 +203,7 @@ vcpu*		at hypervisor?		# Xen virtual CPUs
 xenbus*		at hypervisor?		# Xen virtual bus
 
 xencons*	at hypervisor?		# Xen virtual console
-#balloon*	at xenbus?		# Xen balloon device
+balloon*	at xenbus?		# Xen balloon device
 
 acpi0 		at hypervisor?
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
