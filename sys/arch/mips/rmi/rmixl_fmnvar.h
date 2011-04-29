@@ -1,4 +1,4 @@
-/*	$Id: rmixl_fmnvar.h,v 1.3 2011/04/14 09:25:05 matt Exp $	*/
+/*	$Id: rmixl_fmnvar.h,v 1.4 2011/04/29 21:55:43 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -102,7 +102,7 @@ do {									\
 									\
 	__asm volatile(							\
 		".set push"			"\n\t"			\
-		".set arch=xlr"			"\n\t"			\
+		".set mips64"			"\n\t"			\
 		"mfc2 %0,$%1,%2"		"\n\t"			\
 		".set pop"			"\n\t"			\
 	    : "=r"(__val) : "n"(regnum), "n"(sel));			\
@@ -115,7 +115,7 @@ do {									\
 									\
 	__asm volatile(							\
 		".set push"			"\n\t"			\
-		".set arch=xlr"			"\n\t"			\
+		".set mips64"			"\n\t"			\
 		"mtc2 %0,$%1,%2"		"\n\t"			\
 		".set pop"			"\n\t"			\
 	    :: "r"(__val), "n"(regnum), "n"(sel));			\
