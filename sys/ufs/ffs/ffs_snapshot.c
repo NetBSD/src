@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.113 2011/04/23 08:23:52 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.114 2011/04/29 09:45:15 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.113 2011/04/23 08:23:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.114 2011/04/29 09:45:15 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -177,7 +177,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	return EOPNOTSUPP;
 }
 #else /* defined(FFS_NO_SNAPSHOT) */
-	bool suspended = false;
+	bool suspended = false, snapshot_locked = false;
 	int error, redo = 0, snaploc;
 	void *sbbuf = NULL;
 	daddr_t *snaplist = NULL, snaplistsize = 0;
@@ -310,6 +310,24 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	DIP_ASSIGN(ip, mtimensec, ts.tv_nsec);
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	/*
+	 * Lock the snapshot and resume file system.
+	 */
+	mutex_enter(&si->si_snaplock);
+	mutex_enter(&si->si_lock);
+	si->si_owner = curlwp;
+	mutex_exit(&si->si_lock);
+	snapshot_locked = true;
+	KASSERT(suspended);
+	vfs_resume(vp->v_mount);
+	suspended = false;
+#ifdef DEBUG
+	getmicrotime(&endtime);
+	timersub(&endtime, &starttime, &endtime);
+	printf("%s: suspended %lld.%03d sec, redo %d of %d\n",
+	    mp->mnt_stat.f_mntonname, (long long)endtime.tv_sec,
+	    endtime.tv_usec / 1000, redo, fs->fs_ncg);
+#endif
+	/*
 	 * Copy allocation information from all snapshots and then
 	 * expunge them from our view.
 	 */
@@ -381,15 +399,13 @@ out:
 	si->si_gen++;
 	mutex_exit(&si->si_lock);
 
-	if (suspended) {
+	if (suspended)
 		vfs_resume(vp->v_mount);
-#ifdef DEBUG
-		getmicrotime(&endtime);
-		timersub(&endtime, &starttime, &endtime);
-		printf("%s: suspended %lld.%03d sec, redo %d of %d\n",
-		    mp->mnt_stat.f_mntonname, (long long)endtime.tv_sec,
-		    endtime.tv_usec / 1000, redo, fs->fs_ncg);
-#endif
+	if (snapshot_locked) {
+		mutex_enter(&si->si_lock);
+		si->si_owner = NULL;
+		mutex_exit(&si->si_lock);
+		mutex_exit(&si->si_snaplock);
 	}
 	if (error) {
 		if (!UFS_WAPBL_BEGIN(mp)) {
