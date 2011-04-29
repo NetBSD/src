@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.41 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.42 2011/04/29 22:14:59 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.41 2011/02/20 07:45:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.42 2011/04/29 22:14:59 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -182,6 +182,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		}	
 		l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
 	}
+
 	pcb = lwp_getpcb(l);
 	(*pr)("at %p\n", pcb);
 
