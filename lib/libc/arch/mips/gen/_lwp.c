@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.5.14.1 2011/04/29 08:01:50 matt Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.5.14.2 2011/04/29 08:03:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.5.14.1 2011/04/29 08:01:50 matt Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.5.14.2 2011/04/29 08:03:55 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: _lwp.c,v 1.5.14.1 2011/04/29 08:01:50 matt Exp $");
 #if defined(__mips_o32) || defined(__mips_o64)
 #define CALLFRAME_SIZ	(6 * sizeof(void *))
 #else
-#define CALLFRAME_SIZ	(4 * sizeof(void *))
+#define CALLFRAME_SIZ	(4 * sizeof(uint64_t))
 #endif
 
 void
