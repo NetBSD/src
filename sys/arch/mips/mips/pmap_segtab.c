@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.2 2011/02/20 07:45:48 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.3 2011/04/29 22:10:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.2 2011/02/20 07:45:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.3 2011/04/29 22:10:22 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -111,7 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.2 2011/02/20 07:45:48 matt Exp $")
  * These warnings probably applies to other files under sys/arch/mips.
  */
 
-#include "opt_multiprocessor.h"
 #include "opt_sysv.h"
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
