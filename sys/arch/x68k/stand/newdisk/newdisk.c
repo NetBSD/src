@@ -1,4 +1,4 @@
-/*	$NetBSD: newdisk.c,v 1.7 2011/04/29 05:59:53 isaki Exp $	*/
+/*	$NetBSD: newdisk.c,v 1.8 2011/04/29 06:00:33 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999 Minoura Makoto
@@ -116,7 +116,7 @@ main(int argc, char *argv[])
 		err(1, "reading %s", dev);
 	if (strncmp(buf, "X68SCSI1", 8) == 0 && !force)
 		errx(1, "%s is already marked.  "
-		        "Use -f to overwrite the existing mark.");
+		        "Use -f to overwrite the existing mark.", dev);
 	if (check_only)
 		return 0;
 
