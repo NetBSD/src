@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.33.96.3 2010/01/26 21:19:25 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.33.96.4 2011/04/29 08:26:23 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.33.96.3 2010/01/26 21:19:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.33.96.4 2011/04/29 08:26:23 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.33.96.3 2010/01/26 21:19:25 matt Exp $")
 #endif
 #endif
 
-#if defined(MIPS32) || defined(MIPS64)
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 #include <mips/mipsNN.h>		/* MIPS32/MIPS64 registers */
 #include <mips/cache_mipsNN.h>
 #endif
@@ -110,9 +110,6 @@ void	tx39_cache_config_write_through(void);
 #endif /* MIPS1 */
 
 #if defined(MIPS3) || defined(MIPS4)
-#ifdef MIPS3_5900
-#include <mips/cache_r5900.h>
-#endif /* MIPS3_5900 */
 void	mips3_get_cache_config(int);
 #ifdef ENABLE_MIPS4_CACHE_R10K
 void	mips4_get_cache_config(int);
@@ -122,7 +119,7 @@ void	mips4_get_cache_config(int);
 #if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
 static void mips_config_cache_prehistoric(void);
 #endif
-#if defined(MIPS32) || defined(MIPS64)
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 static void mips_config_cache_modern(void);
 #endif
 
@@ -169,7 +166,7 @@ mips_config_cache(void)
 	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_PREHISTORIC)
 		mips_config_cache_prehistoric();
 #endif
-#if defined(MIPS32) || defined(MIPS64)
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	if (MIPS_PRID_CID(cpu_id) != MIPS_PRID_CID_PREHISTORIC)
 		mips_config_cache_modern();
 #endif
@@ -184,7 +181,7 @@ mips_config_cache(void)
 		if (!mco->mco_icache_sync_range_index)
 			panic("no icache_sync_range_index cache op");
 	}
-	if (mci->mci_pdcache_size || 1) {	/* XXX- must have primary Icache */
+	if (mci->mci_pdcache_size || 1) {	/* XXX- must have primary Dcache */
 		if (!mco->mco_pdcache_wbinv_all)
 			panic("no pdcache_wbinv_all");
 		if (!mco->mco_pdcache_wbinv_range)
@@ -541,39 +538,6 @@ primary_cache_is_2way:
 
 		/* Virtually-indexed cache; no use for colors. */
 		break;
-#ifdef MIPS3_5900
-	case MIPS_R5900:
-		/* cache spec */
-		mci->mci_picache_ways = 2;
-		mci->mci_pdcache_ways = 2;
-		mci->mci_picache_size = CACHE_R5900_SIZE_I;
-		mci->mci_picache_line_size = CACHE_R5900_LSIZE_I;
-		mci->mci_pdcache_size = CACHE_R5900_SIZE_D;
-		mci->mci_pdcache_line_size = CACHE_R5900_LSIZE_D;
-		mci->mci_cache_alias_mask =
-		    ((mci->mci_pdcache_size / mci->mci_pdcache_ways) - 1) & ~PAGE_MASK;
-		mci->mci_cache_prefer_mask =
-		    max(mci->mci_pdcache_size, mci->mci_picache_size) - 1;
-		mci->mci_cache_virtual_alias = true;
-		/* cache ops */
-		mco->mco_icache_sync_all =
-		    r5900_icache_sync_all_64;
-		mco->mco_icache_sync_range =
-		    r5900_icache_sync_range_64;
-		mco->mco_icache_sync_range_index =
-		    r5900_icache_sync_range_index_64;
-		mco->mco_pdcache_wbinv_all =
-		    r5900_pdcache_wbinv_all_64;
-		mco->mco_pdcache_wbinv_range =
-		    r5900_pdcache_wbinv_range_64;
-		mco->mco_pdcache_wbinv_range_index =
-		    r5900_pdcache_wbinv_range_index_64;
-		mco->mco_pdcache_inv_range =
-		    r5900_pdcache_inv_range_64;
-		mco->mco_pdcache_wb_range =
-		    r5900_pdcache_wb_range_64;
-		break;
-#endif /* MIPS3_5900 */
 #ifdef ENABLE_MIPS4_CACHE_R10K
 	case MIPS_R10000:
 	case MIPS_R12000:
@@ -865,6 +829,7 @@ mips3_get_cache_config(int csizebase)
 	    ((mci->mci_pdcache_size / mci->mci_pdcache_ways) - 1) & ~PAGE_MASK;
 	mci->mci_cache_prefer_mask =
 	    max(mci->mci_pdcache_size, mci->mci_picache_size) - 1;
+	uvmexp.ncolors = (mci->mci_cache_alias_mask >> PAGE_SHIFT) + 1;
 
 	switch(MIPS_PRID_IMPL(cpu_id)) {
 #ifndef ENABLE_MIPS_R3NKK
@@ -920,9 +885,9 @@ mips4_get_cache_config(int csizebase)
 #endif /* MIPS3 || MIPS4 */
 #endif /* MIPS1 || MIPS3 || MIPS4 */
 
-#if defined(MIPS32) || defined(MIPS64)
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 
-static void cache_noop(void) __attribute__((__unused__));
+static void cache_noop(void) __unused;
 static void cache_noop(void) {}
 
 static void
@@ -1137,4 +1102,4 @@ mips_config_cache_modern(void)
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 	}
 }
-#endif /* MIPS32 || MIPS64 */
+#endif /* MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 > 0 */

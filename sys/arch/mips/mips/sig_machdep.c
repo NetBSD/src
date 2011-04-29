@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.16.14.4 2010/02/22 20:17:09 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.16.14.5 2011/04/29 08:26:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.14.4 2010/02/22 20:17:09 matt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.14.5 2011/04/29 08:26:30 matt Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.14.4 2010/02/22 20:17:09 matt E
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
@@ -55,17 +54,16 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.14.4 2010/02/22 20:17:09 matt E
 void *	
 getframe(struct lwp *l, int sig, int *onstack)
 {
-	struct proc *p = l->l_proc;
-	struct trapframe *tf = l->l_md.md_utf;
+	struct proc * const p = l->l_proc;
+	struct trapframe * const tf = l->l_md.md_utf;
  
 	/* Do we need to jump onto the signal stack? */
 	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
 		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
-	else
-		return (void *)(intptr_t)tf->tf_regs[_R_SP];
-}		
+	return (void *)(intptr_t)tf->tf_regs[_R_SP];
+}
 
 struct sigframe_siginfo {
 	siginfo_t sf_si;
@@ -78,44 +76,29 @@ struct sigframe_siginfo {
 static void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct sigacts *ps = p->p_sigacts;
-	struct trapframe *tf = l->l_md.md_utf;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct sigacts * const sa = p->p_sigacts;
+	struct trapframe * const tf = l->l_md.md_utf;
 	int onstack, error;
-	int sig = ksi->ksi_signo;
-	struct sigframe_siginfo *fp = getframe(l, sig, &onstack);
-	ucontext_t uc;
-	size_t ucsz;
-	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	const int signo = ksi->ksi_signo;
+	struct sigframe_siginfo *sf = getframe(l, signo, &onstack);
+	struct sigframe_siginfo ksf;
+	const sig_t catcher = SIGACTION(p, signo).sa_handler;
 
-	fp--;
+	sf--;
 
-        /* Build stack frame for signal trampoline. */
-        switch (ps->sa_sigdesc[sig].sd_vers) {
-        case 0:         /* handled by sendsig_sigcontext */
-        case 1:         /* handled by sendsig_sigcontext */
-        default:        /* unknown version */
-                printf("sendsig_siginfo: bad version %d\n",
-                    ps->sa_sigdesc[sig].sd_vers);
-                sigexit(l, SIGILL);
-        case 2:
-                break;
-        }
+	ksf.sf_si._info = ksi->ksi_info;
+	ksf.sf_uc.uc_flags = _UC_SIGMASK
+	    | (l->l_sigstk.ss_flags & SS_ONSTACK ? _UC_SETSTACK : _UC_CLRSTACK);
+	ksf.sf_uc.uc_sigmask = *mask;
+	ksf.sf_uc.uc_link = l->l_ctxlink;
+	memset(&ksf.sf_uc.uc_stack, 0, sizeof(ksf.sf_uc.uc_stack));
+	sendsig_reset(l, signo);
 
-        uc.uc_flags = _UC_SIGMASK
-            | ((l->l_sigstk.ss_flags & SS_ONSTACK)
-            ? _UC_SETSTACK : _UC_CLRSTACK);
-        uc.uc_sigmask = *mask;
-        uc.uc_link = l->l_ctxlink;
-        memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
-        ucsz = (char *)&uc.__uc_pad - (char *)&uc;
-        sendsig_reset(l, sig);
-        mutex_exit(p->p_lock);
-        cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
-	error = copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info));
-	if (error == 0)
-		error = copyout(&uc, &fp->sf_uc, ucsz);
+	mutex_exit(p->p_lock);
+	cpu_getmcontext(l, &ksf.sf_uc.uc_mcontext, &ksf.sf_uc.uc_flags);
+	error = copyout(&ksf, sf, sizeof(ksf));
 	mutex_enter(p->p_lock);
 
 	if (error != 0) {
@@ -132,14 +115,14 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * handler.  The return address will be set up to point
 	 * to the signal trampoline to bounce us back.
 	 */
-	tf->tf_regs[_R_A0] = sig;
-	tf->tf_regs[_R_A1] = (intptr_t)&fp->sf_si;
-	tf->tf_regs[_R_A2] = (intptr_t)&fp->sf_uc;
+	tf->tf_regs[_R_A0] = signo;
+	tf->tf_regs[_R_A1] = (intptr_t)&sf->sf_si;
+	tf->tf_regs[_R_A2] = (intptr_t)&sf->sf_uc;
 
 	tf->tf_regs[_R_PC] = (intptr_t)catcher;
 	tf->tf_regs[_R_T9] = (intptr_t)catcher;
-	tf->tf_regs[_R_SP] = (intptr_t)fp;
-	tf->tf_regs[_R_RA] = (intptr_t)ps->sa_sigdesc[sig].sd_tramp;
+	tf->tf_regs[_R_SP] = (intptr_t)sf;
+	tf->tf_regs[_R_RA] = (intptr_t)sa->sa_sigdesc[signo].sd_tramp;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -149,10 +132,22 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 void    
 sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {               
+	struct sigacts * const sa = curproc->p_sigacts;
+
+        /* Build stack frame for signal trampoline. */
+        switch (sa->sa_sigdesc[ksi->ksi_signo].sd_vers) {
 #ifdef COMPAT_16    
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
+        case 0:         /* handled by sendsig_sigcontext */
+        case 1:         /* handled by sendsig_sigcontext */
 		sendsig_sigcontext(ksi, mask);
-	else    
-#endif  
+		break;
+#endif
+        case 2:
 		sendsig_siginfo(ksi, mask);
+                break;
+        default:        /* unknown version */
+                printf("%s: bad version %d\n", __func__,
+                    sa->sa_sigdesc[ksi->ksi_signo].sd_vers);
+                sigexit(curlwp, SIGILL);
+        }
 }       

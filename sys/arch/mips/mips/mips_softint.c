@@ -27,14 +27,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.7 2011/02/03 02:39:46 cliff Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.8 2011/04/29 08:26:29 matt Exp $");
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/lwp.h>
-#include <sys/user.h>
 #include <sys/intr.h>
 #include <sys/atomic.h>
 
@@ -117,7 +116,9 @@ softint_process(uint32_t ipending)
 	KASSERT((ipending & MIPS_SOFT_INT_MASK) != 0);
 	KASSERT((ipending & ~MIPS_SOFT_INT_MASK) == 0);
 	KASSERT(ci->ci_cpl == IPL_HIGH);
-	KASSERT(ci->ci_mtx_count == 0);
+	KASSERTMSG(ci->ci_mtx_count == 0,
+	    ("%s: cpu%u (%p): ci_mtx_count (%d) != 0",
+	     __func__, cpu_index(ci), ci, ci->ci_mtx_count));
 
 	if (ipending & MIPS_SOFT_INT_MASK_0) {
 		/*

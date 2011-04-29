@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.28 2010/12/29 08:13:37 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.29 2011/04/29 08:26:21 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -20,7 +20,7 @@
 /*
  * Jump table for MIPS CPU locore functions that are implemented
  * differently on different generations, or instruction-level
- * archtecture (ISA) level, the Mips family.
+ * architecture (ISA) level, the Mips family.
  *
  * We currently provide support for MIPS I and MIPS III.
  */
@@ -32,6 +32,7 @@
 #include "opt_cputype.h"
 #endif
 
+#include <mips/mutex.h>
 #include <mips/cpuregs.h>
 #include <mips/reg.h>
 
@@ -134,36 +135,28 @@ void	mips1_tlb_invalidate_all(void);
 uint32_t tx3900_cp0_config_read(void);
 #endif
 
-#if defined(MIPS3) || defined(MIPS4)
-void	mips3_tlb_invalidate_all(void);
-void	mips3_pagezero(void *dst);
-
-#ifdef MIPS3_5900
-void	mips5900_tlb_invalidate_all(void);
-void	mips5900_pagezero(void *dst);
-#endif
-#endif /* MIPS3 || MIPS4 */
-
-#ifdef MIPS32
-void	mips32_tlb_invalidate_all(void);
-#endif
-
-#ifdef MIPS64
-void	mips64_tlb_invalidate_all(void);
-void	mips64_pagezero(void *dst);
-#endif
-
-#if defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 uint32_t mips3_cp0_compare_read(void);
 void	mips3_cp0_compare_write(uint32_t);
 
 uint32_t mips3_cp0_config_read(void);
 void	mips3_cp0_config_write(uint32_t);
-#if defined(MIPS32) || defined(MIPS64)
+
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 uint32_t mipsNN_cp0_config1_read(void);
 void	mipsNN_cp0_config1_write(uint32_t);
 uint32_t mipsNN_cp0_config2_read(void);
 uint32_t mipsNN_cp0_config3_read(void);
+
+uintptr_t mipsNN_cp0_watchlo_read(u_int);
+void	mipsNN_cp0_watchlo_write(u_int, uintptr_t);
+uint32_t mipsNN_cp0_watchhi_read(u_int);
+void	mipsNN_cp0_watchhi_write(u_int, uint32_t);
+
+#if (MIPS32R2 + MIPS64R2) > 0
+void	mipsNN_cp0_hwrena_write(uint32_t);
+void	mipsNN_cp0_userlocal_write(void *);
+#endif
 #endif
 
 uint32_t mips3_cp0_count_read(void);
@@ -240,13 +233,11 @@ mips3_sd(volatile uint64_t *va, uint64_t v)
 uint64_t mips3_ld(volatile uint64_t *va);
 void	mips3_sd(volatile uint64_t *, uint64_t);
 #endif	/* __GNUC__ */
-#endif	/* MIPS3 || MIPS4 || MIPS32 || MIPS64 */
+#endif	/* (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 
-#if defined(MIPS3) || defined(MIPS4) || defined(MIPS64)
-static __inline uint32_t	mips3_lw_a64(uint64_t addr)
-		    __attribute__((__unused__));
-static __inline void	mips3_sw_a64(uint64_t addr, uint32_t val)
-		    __attribute__ ((__unused__));
+#if (MIPS3 + MIPS4 + MIPS64 + MIPS64R2) > 0
+static __inline uint32_t	mips3_lw_a64(uint64_t addr) __unused;
+static __inline void	mips3_sw_a64(uint64_t addr, uint32_t val) __unused;
 
 static __inline uint32_t
 mips3_lw_a64(uint64_t addr)
@@ -322,7 +313,7 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
 #error unknown ABI
 #endif
 }
-#endif	/* MIPS3 || MIPS4 || MIPS64 */
+#endif	/* (MIPS3 + MIPS4 + MIPS64 + MIPS64R2) > 0 */
 
 /*
  * A vector with an entry for each mips-ISA-level dependent
@@ -345,6 +336,17 @@ typedef struct  {
 	void	(*ljv_tlb_write_indexed)(size_t, const struct tlbmask *);
 } mips_locore_jumpvec_t;
 
+typedef struct {
+	u_int	(*lav_atomic_cas_uint)(volatile u_int *, u_int, u_int);
+	u_long	(*lav_atomic_cas_ulong)(volatile u_long *, u_long, u_long);
+	int	(*lav_ucas_uint)(volatile u_int *, u_int, u_int, u_int *);
+	int	(*lav_ucas_ulong)(volatile u_long *, u_long, u_long, u_long *);
+	void	(*lav_mutex_enter)(kmutex_t *);
+	void	(*lav_mutex_exit)(kmutex_t *);
+	void	(*lav_mutex_spin_enter)(kmutex_t *);
+	void	(*lav_mutex_spin_exit)(kmutex_t *);
+} mips_locore_atomicvec_t;
+
 void	mips_set_wbflush(void (*)(void));
 void	mips_wait_idle(void);
 
@@ -360,6 +362,7 @@ struct locoresw {
 	int		(*lsw_send_ipi)(struct cpu_info *, int);
 	void		(*lsw_cpu_offline_md)(void);
 	void		(*lsw_cpu_init)(struct cpu_info *);
+	void		(*lsw_cpu_run)(struct cpu_info *);
 	int		(*lsw_bus_error)(unsigned int);
 };
 
@@ -370,11 +373,26 @@ struct mips_vmfreelist {
 };
 
 /*
- * The "active" locore-fuction vector, and
+ * The "active" locore-function vector, and
  */
+extern const mips_locore_atomicvec_t mips_llsc_locore_atomicvec;
+extern const mips_locore_atomicvec_t mips_ras_locore_atomicvec;
+
+extern mips_locore_atomicvec_t mips_locore_atomicvec;
 extern mips_locore_jumpvec_t mips_locore_jumpvec;
 extern struct locoresw mips_locoresw;
-extern void mips_vector_init(const struct splsw *);
+
+struct splsw;
+struct mips_vmfreelist;
+struct phys_ram_seg;
+
+void	mips_vector_init(const struct splsw *, bool);
+void	mips_init_msgbuf(void);
+void	mips_init_lwp0_uarea(void);
+void	mips_page_physload(vaddr_t, vaddr_t,
+	    const struct phys_ram_seg *, size_t,
+	    const struct mips_vmfreelist *, size_t);
+
 
 /*
  * CPU identification, from PRID register.
@@ -521,7 +539,15 @@ struct pridtab {
 #define  MIPS_CP0FL_EIMR	__BIT(4)
 #define  MIPS_CP0FL_EBASE	__BIT(5)
 #define  MIPS_CP0FL_CONFIG	__BIT(6)
-#define  MIPS_CP0FL_CONFIGn(n)	(__BIT(7) << ((n) & 7))
+#define  MIPS_CP0FL_CONFIG1	__BIT(7)
+#define  MIPS_CP0FL_CONFIG2	__BIT(8)
+#define  MIPS_CP0FL_CONFIG3	__BIT(9)
+#define  MIPS_CP0FL_CONFIG4	__BIT(10)
+#define  MIPS_CP0FL_CONFIG5	__BIT(11)
+#define  MIPS_CP0FL_CONFIG6	__BIT(12)
+#define  MIPS_CP0FL_CONFIG7	__BIT(13)
+#define  MIPS_CP0FL_USERLOCAL	__BIT(14)
+#define  MIPS_CP0FL_HWRENA	__BIT(15)
 
 /*
  * cpu_cidflags defines, by company
@@ -529,10 +555,10 @@ struct pridtab {
 /*
  * RMI company-specific cpu_cidflags
  */
-#define MIPS_CIDFL_RMI_TYPE     	__BITS(2,0)
-# define  CIDFL_RMI_TYPE_XLR     	0
-# define  CIDFL_RMI_TYPE_XLS     	1
-# define  CIDFL_RMI_TYPE_XLP     	2
+#define MIPS_CIDFL_RMI_TYPE		__BITS(2,0)
+# define  CIDFL_RMI_TYPE_XLR		0
+# define  CIDFL_RMI_TYPE_XLS		1
+# define  CIDFL_RMI_TYPE_XLP		2
 #define MIPS_CIDFL_RMI_THREADS_MASK	__BITS(6,3)
 # define MIPS_CIDFL_RMI_THREADS_SHIFT	3
 #define MIPS_CIDFL_RMI_CORES_MASK	__BITS(10,7)

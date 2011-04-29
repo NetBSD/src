@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.35 2011/02/08 23:04:59 cliff Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.36 2011/04/29 08:26:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,18 +45,40 @@
 
 #ifdef _KERNEL
 
-#ifndef _LOCORE
 #if defined(_KERNEL_OPT)
 #include "opt_cputype.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #endif
 
+#ifndef _LOCORE
 #include <sys/cpu_data.h>
 #include <sys/device.h>
 #include <sys/evcnt.h>
-#include <mips/reg.h>
-#include <mips/cpuset.h>
+
+typedef struct cpu_watchpoint {
+	register_t	cw_addr;
+	register_t	cw_mask;
+	uint32_t	cw_asid;
+	uint32_t	cw_mode;
+} cpu_watchpoint_t;
+/* (abstract) mode bits */
+#define CPUWATCH_WRITE	__BIT(0)
+#define CPUWATCH_READ	__BIT(1)
+#define CPUWATCH_EXEC	__BIT(2)
+#define CPUWATCH_MASK	__BIT(3)
+#define CPUWATCH_ASID	__BIT(4)
+#define CPUWATCH_RWX	(CPUWATCH_EXEC|CPUWATCH_READ|CPUWATCH_WRITE)
+
+#define CPUWATCH_MAX	8	/* max possible number of watchpoints */
+
+u_int		  cpuwatch_discover(void);
+void		  cpuwatch_free(cpu_watchpoint_t *);
+cpu_watchpoint_t *cpuwatch_alloc(void);
+void		  cpuwatch_set_all(void);
+void		  cpuwatch_clr_all(void);
+void		  cpuwatch_set(cpu_watchpoint_t *);
+void		  cpuwatch_clr(cpu_watchpoint_t *);
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
@@ -79,10 +101,13 @@ struct cpu_info {
 	int ci_idepth;			/* hardware interrupt depth */
 	int ci_cpl;			/* current [interrupt] priority level */
 	uint32_t ci_next_cp0_clk_intr;	/* for hard clock intr scheduling */
-	struct evcnt ci_count_compare_evcnt;		/* hard clock intr counter */
-	struct evcnt ci_count_compare_missed_evcnt;	/* hard clock miss counter */
+	struct evcnt ci_ev_count_compare;		/* hard clock intr counter */
+	struct evcnt ci_ev_count_compare_missed;	/* hard clock miss counter */
 	struct lwp *ci_softlwps[SOFTINT_COUNT];
-#define	ci_softints	ci_data.cpu_softints
+	volatile u_int ci_softints;
+	struct evcnt ci_ev_fpu_loads;	/* fpu load counter */
+	struct evcnt ci_ev_fpu_saves;	/* fpu save counter */
+	struct evcnt ci_ev_tlbmisses;
 
 	/*
 	 * Per-cpu pmap information
@@ -98,6 +123,8 @@ struct cpu_info {
 	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */
 #endif
 
+	u_int ci_cpuwatch_count;	/* number of watchpoints on this CPU */
+	cpu_watchpoint_t ci_cpuwatch_tab[CPUWATCH_MAX];
 
 #ifdef MULTIPROCESSOR
 	volatile u_long ci_flags;
@@ -148,21 +175,26 @@ struct cpu_info {
 #endif
 
 #ifdef _KERNEL
-#if defined(_LKM) || defined(_STANDALONE)
+#if defined(_MODULAR) || defined(_LKM) || defined(_STANDALONE)
 /* Assume all CPU architectures are valid for LKM's and standlone progs */
-#define	MIPS1	1
-#define	MIPS3	1
-#define	MIPS4	1
-#define	MIPS32	1
-#define	MIPS64	1
+#define	MIPS1		1
+#define	MIPS3		1
+#define	MIPS4		1
+#define	MIPS32		1
+#define	MIPS32R2	1
+#define	MIPS64		1
+#define	MIPS64R2	1
 #endif
 
-#if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 0
-#error at least one of MIPS1, MIPS3, MIPS4, MIPS32 or MIPS64 must be specified
+#if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 0
+#error at least one of MIPS1, MIPS3, MIPS4, MIPS32, MIPS32R2, MIPS64, or MIPS64RR2 must be specified
 #endif
 
 /* Shortcut for MIPS3 or above defined */
-#if defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)
+#if defined(MIPS3) || defined(MIPS4) \
+    || defined(MIPS32) || defined(MIPS32R2) \
+    || defined(MIPS64) || defined(MIPS64R2)
+
 #define	MIPS3_PLUS	1
 #define __HAVE_CPU_COUNTER
 #else
@@ -174,14 +206,16 @@ struct cpu_info {
  * or if possible, at compile-time.
  */
 
-#define	CPU_ARCH_MIPSx	0		/* XXX unknown */
-#define	CPU_ARCH_MIPS1	(1 << 0)
-#define	CPU_ARCH_MIPS2	(1 << 1)
-#define	CPU_ARCH_MIPS3	(1 << 2)
-#define	CPU_ARCH_MIPS4	(1 << 3)
-#define	CPU_ARCH_MIPS5	(1 << 4)
-#define	CPU_ARCH_MIPS32	(1 << 5)
-#define	CPU_ARCH_MIPS64	(1 << 6)
+#define	CPU_ARCH_MIPSx		0		/* XXX unknown */
+#define	CPU_ARCH_MIPS1		(1 << 0)
+#define	CPU_ARCH_MIPS2		(1 << 1)
+#define	CPU_ARCH_MIPS3		(1 << 2)
+#define	CPU_ARCH_MIPS4		(1 << 3)
+#define	CPU_ARCH_MIPS5		(1 << 4)
+#define	CPU_ARCH_MIPS32		(1 << 5)
+#define	CPU_ARCH_MIPS64		(1 << 6)
+#define	CPU_ARCH_MIPS32R2	(1 << 7)
+#define	CPU_ARCH_MIPS64R2	(1 << 8)
 
 /* Note: must be kept in sync with -ffixed-?? Makefile.mips. */
 #define MIPS_CURLWP             $24
@@ -197,12 +231,13 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 
 #define	curlwp			mips_curlwp
 #define	curcpu()		(curlwp->l_cpu)
-#define	curpcb			(&curlwp->l_addr->u_pcb)
+#define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 #ifdef MULTIPROCESSOR
 #define	cpu_number()		(curcpu()->ci_index)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 #else
-#define	cpu_number()		0
+#define	cpu_number()		(0)
+#define	CPU_IS_PRIMARY(ci)	(true)
 #endif
 
 /* XXX simonb
@@ -254,14 +289,16 @@ extern struct mips_options mips_options;
 
 #endif	/* !_LOCORE */
 
-#if ((MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 1) || defined(_LOCORE)
+#if ((MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 1) || defined(_LOCORE)
 
 #if defined(MIPS1)
 
 # define CPUISMIPS3		0
 # define CPUIS64BITS		0
 # define CPUISMIPS32		0
+# define CPUISMIPS32R2		0
 # define CPUISMIPS64		0
+# define CPUISMIPS64R2		0
 # define CPUISMIPSNN		0
 # define MIPS_HAS_R4K_MMU	0
 # define MIPS_HAS_CLOCK		0
@@ -273,12 +310,14 @@ extern struct mips_options mips_options;
 # define CPUISMIPS3		1
 # define CPUIS64BITS		1
 # define CPUISMIPS32		0
+# define CPUISMIPS32R2		0
 # define CPUISMIPS64		0
+# define CPUISMIPS64R2		0
 # define CPUISMIPSNN		0
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # if defined(_LOCORE)
-#  if !defined(MIPS3_5900) && !defined(MIPS3_4100)
+#  if !defined(MIPS3_4100)
 #   define MIPS_HAS_LLSC	1
 #  else
 #   define MIPS_HAS_LLSC	0
@@ -293,7 +332,23 @@ extern struct mips_options mips_options;
 # define CPUISMIPS3		1
 # define CPUIS64BITS		0
 # define CPUISMIPS32		1
+# define CPUISMIPS32R2		0
 # define CPUISMIPS64		0
+# define CPUISMIPS64R2		0
+# define CPUISMIPSNN		1
+# define MIPS_HAS_R4K_MMU	1
+# define MIPS_HAS_CLOCK		1
+# define MIPS_HAS_LLSC		1
+# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+
+#elif defined(MIPS32R2)
+
+# define CPUISMIPS3		1
+# define CPUIS64BITS		0
+# define CPUISMIPS32		0
+# define CPUISMIPS32R2		1
+# define CPUISMIPS64		0
+# define CPUISMIPS64R2		0
 # define CPUISMIPSNN		1
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
@@ -305,7 +360,23 @@ extern struct mips_options mips_options;
 # define CPUISMIPS3		1
 # define CPUIS64BITS		1
 # define CPUISMIPS32		0
+# define CPUISMIPS32R2		0
 # define CPUISMIPS64		1
+# define CPUISMIPS64R2		0
+# define CPUISMIPSNN		1
+# define MIPS_HAS_R4K_MMU	1
+# define MIPS_HAS_CLOCK		1
+# define MIPS_HAS_LLSC		1
+# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+
+#elif defined(MIPS64R2)
+
+# define CPUISMIPS3		1
+# define CPUIS64BITS		1
+# define CPUISMIPS32		0
+# define CPUISMIPS32R2		0
+# define CPUISMIPS64		0
+# define CPUISMIPS64R2		1
 # define CPUISMIPSNN		1
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
@@ -330,10 +401,12 @@ extern struct mips_options mips_options;
 #define	CPUISMIPS4	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS4) != 0)
 #define	CPUISMIPS5	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS5) != 0)
 #define	CPUISMIPS32	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS32) != 0)
+#define	CPUISMIPS32R2	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS32R2) != 0)
 #define	CPUISMIPS64	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS64) != 0)
-#define	CPUISMIPSNN	((mips_options.mips_cpu_arch & (CPU_ARCH_MIPS32 | CPU_ARCH_MIPS64)) != 0)
+#define	CPUISMIPS64R2	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS64R2) != 0)
+#define	CPUISMIPSNN	((mips_options.mips_cpu_arch & (CPU_ARCH_MIPS32 | CPU_ARCH_MIPS32R2 | CPU_ARCH_MIPS64 | CPU_ARCH_MIPS64R2)) != 0)
 #define	CPUIS64BITS	((mips_options.mips_cpu_arch & \
-	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS64)) != 0)
+	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS64 | CPU_ARCH_MIPS64R2)) != 0)
 
 #define	MIPS_HAS_CLOCK	(mips_options.mips_cpu_arch >= CPU_ARCH_MIPS3)
 
@@ -361,7 +434,7 @@ void cpu_broadcast_ipi(int);
 /*
  * Send an inter-processor interupt to CPUs in cpuset (excludes curcpu())
  */
-void cpu_multicast_ipi(mips_cpuset_t, int);
+void cpu_multicast_ipi(__cpuset_t, int);
 
 /*
  * Send an inter-processor interupt to another CPU.
@@ -414,8 +487,12 @@ struct clockframe {
 /*
  * Misc prototypes and variable declarations.
  */
+#define	LWP_PC(l)	cpu_lwp_pc(l)
+
+struct proc;
 struct lwp;
-struct user;
+struct pcb;
+struct reg;
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -460,11 +537,11 @@ void	cpu_resume_others(void);
 int	cpu_is_paused(int);
 void	cpu_debug_dump(void);
 
-extern volatile mips_cpuset_t cpus_running;
-extern volatile mips_cpuset_t cpus_hatched;
-extern volatile mips_cpuset_t cpus_paused;
-extern volatile mips_cpuset_t cpus_resumed;
-extern volatile mips_cpuset_t cpus_halted;
+extern volatile __cpuset_t cpus_running;
+extern volatile __cpuset_t cpus_hatched;
+extern volatile __cpuset_t cpus_paused;
+extern volatile __cpuset_t cpus_resumed;
+extern volatile __cpuset_t cpus_halted;
 #endif
 
 /* copy.S */
@@ -550,21 +627,15 @@ int	kdbpeek(vaddr_t);
 
 /* mips_fpu.c */
 void	fpu_init(void);
-void	fpudiscard_lwp(struct lwp *);
-void	fpuload_lwp(struct lwp *);
-void	fpusave_lwp(struct lwp *);
+void	fpu_discard(void);
+void	fpu_load(void);
+void	fpu_save(void);
+void	fpu_save_lwp(struct lwp *);
 void	fpusave_cpu(struct cpu_info *);
 
 /* mips_machdep.c */
-struct mips_vmfreelist;
-struct phys_ram_seg;
 void	dumpsys(void);
-int	savectx(struct user *);
-void	mips_init_msgbuf(void);
-void	mips_init_lwp0_uarea(void);
-void	mips_page_physload(vaddr_t, vaddr_t,
-	    const struct phys_ram_seg *, size_t,
-	    const struct mips_vmfreelist *, size_t);
+int	savectx(struct pcb *);
 void	cpu_identify(device_t);
 
 /* locore*.S */
@@ -572,6 +643,8 @@ int	badaddr(void *, size_t);
 int	badaddr64(uint64_t, size_t);
 
 /* vm_machdep.c */
+void	cpu_proc_fork(struct proc *, struct proc *);
+vaddr_t	cpu_lwp_pc(struct lwp *);
 void	cpu_uarea_remap(struct lwp *);
 
 #endif /* ! _LOCORE */

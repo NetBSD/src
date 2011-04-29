@@ -1,5 +1,5 @@
-/*	$NetBSD: cpuset.h,v 1.1.2.1 2011/02/05 06:17:41 cliff Exp $	*/
-/*	$NetBSD: cpuset.h,v 1.1.2.1 2011/02/05 06:17:41 cliff Exp $ */
+/*	$NetBSD: cpuset.h,v 1.1.2.2 2011/04/29 08:26:20 matt Exp $	*/
+/*	$NetBSD: cpuset.h,v 1.1.2.2 2011/04/29 08:26:20 matt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -32,10 +32,7 @@
 
 #include <sys/atomic.h>
 
-#define	CPUSET_MAXNUMCPU	64
-typedef	uint64_t mips_cpuset_t;
-
-#define	CPUSET_SINGLE(cpu)		((mips_cpuset_t)1 << (cpu))
+#define	CPUSET_SINGLE(cpu)		((__cpuset_t)1 << (cpu))
 
 #define	CPUSET_ADD(set, cpu)		atomic_or_64((volatile uint64_t *)&(set), CPUSET_SINGLE(cpu))
 #define	CPUSET_DEL(set, cpu)		atomic_and_64((volatile uint64_t *)&(set), ~CPUSET_SINGLE(cpu))
@@ -43,12 +40,12 @@ typedef	uint64_t mips_cpuset_t;
 
 #define	CPUSET_EXCEPT(set, cpu)		((set) & ~CPUSET_SINGLE(cpu))
 
-#define	CPUSET_HAS(set, cpu)		((set) & CPUSET_SINGLE(cpu))
+#define	CPUSET_HAS_P(set, cpu)		(((set) & CPUSET_SINGLE(cpu)) != 0)
 #define	CPUSET_NEXT(set)		(ffs(set) - 1)
 
-#define	CPUSET_EMPTY(set)		((set) == (mips_cpuset_t)0)
-#define	CPUSET_EQUAL(set1, set2)	((set1) == (set2))
-#define	CPUSET_CLEAR(set)		((set) = (mips_cpuset_t)0)
+#define	CPUSET_EMPTY_P(set)		((set) == (__cpuset_t)0)
+#define	CPUSET_EQUAL_P(set1, set2)	((set1) == (set2))
+#define	CPUSET_CLEAR(set)		((set) = (__cpuset_t)0)
 #define	CPUSET_ASSIGN(set1, set2)	((set1) = (set2))
 
 #endif /* _MIPS_CPUSET_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.58.24.13 2011/02/05 06:01:23 cliff Exp $
+#	$NetBSD: files.mips,v 1.58.24.14 2011/04/29 08:26:19 matt Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
@@ -6,9 +6,8 @@ defflag	opt_cputype.h		NOFPU FPEMUL
 				MIPS64_XLP MIPS64_XLR MIPS64_XLS
 					# and the rest...
 					# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
-					# MIPS32 MIPS64
+					# MIPS32 MIPS32R2 MIPS64 MIPS64R2
 					# MIPS3_4100
-					# MIPS3_5900
 					# ENABLE_MIPS_TX3900
 					# ENABLE_MIPS_R4700
 					# ENABLE_MIPS_R3NKK
@@ -20,14 +19,16 @@ defflag	opt_ddb.h		DDB_TRACE
 defflag	opt_ddb.h		MIPS_DDB_WATCH
 
 file	arch/mips/mips/locore_mips1.S		mips1
-file	arch/mips/mips/locore_mips3.S		mips3 | mips4 | mips32 | mips64
-file	arch/mips/mips/mips3_subr.S		(mips3 | mips4) & !mips3_5900
-file	arch/mips/mips/mips5900_subr.S		mips3 & mips3_5900
+file	arch/mips/mips/locore_mips3.S		mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/mips3_subr.S		mips3|mips4
 file	arch/mips/mips/mips32_subr.S		mips32
+file	arch/mips/mips/mips32r2_subr.S		mips32r2
 file	arch/mips/mips/mips64_subr.S		mips64
+file	arch/mips/mips/mips64r2_subr.S		mips64r2
 file	arch/mips/mips/sigcode.S
 file	arch/mips/mips/copy.S
-file	arch/mips/mips/lock_stubs.S
+file	arch/mips/mips/lock_stubs_llsc.S	multiprocessor
+file	arch/mips/mips/lock_stubs_ras.S
 file	arch/mips/mips/spl.S
 file	arch/mips/mips/spl_stubs.c
 
@@ -52,7 +53,7 @@ file	arch/mips/mips/sys_machdep.c
 file	arch/mips/mips/vm_machdep.c
 file	arch/mips/mips/process_machdep.c
 file	arch/mips/mips/cpu_exec.c
-file	arch/mips/mips/wired_map.c (mips3|mips4|mips32|mips64) & enable_mips3_wired_map
+file	arch/mips/mips/wired_map.c (mips3|mips4|mips32|mips32r2|mips64|mips64r2) & enable_mips3_wired_map
 
 file	arch/mips/mips/cache.c
 file	arch/mips/mips/cache_r3k.c		mips1
@@ -62,9 +63,8 @@ file	arch/mips/mips/cache_tx39_subr.S	mips1 & enable_mips_tx3900
 file	arch/mips/mips/cache_r4k.c		mips3 | mips4
 file	arch/mips/mips/cache_r5k.c		mips3 | mips4
 file	arch/mips/mips/cache_r5k_subr.S		mips3 | mips4
-file	arch/mips/mips/cache_r5900.c		mips3 & mips3_5900
 file	arch/mips/mips/cache_r10k.c	(mips3|mips4) & enable_mips4_cache_r10k
-file	arch/mips/mips/cache_mipsNN.c		mips32 | mips64
+file	arch/mips/mips/cache_mipsNN.c		mips32|mips32r2|mips64|mips64r2
 
 file	arch/mips/mips/mips_fputrap.c		!nofpu | fpemul
 file	arch/mips/mips/mips_emul.c

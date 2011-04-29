@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.1.2.8 2011/04/13 21:10:11 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.1.2.9 2011/04/29 08:26:33 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.8 2011/04/13 21:10:11 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.9 2011/04/29 08:26:33 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -797,7 +797,7 @@ rmixl_pcix_intr_string(void *v, pci_intr_handle_t pih)
 		panic("%s: cpu %#x not supported\n",
 			__func__, mips_options.mips_cpu_id);
 
-	return rmixl_intr_string(irq);
+	return rmixl_intr_string(RMIXL_IRT_VECTOR(irq));
 }
 
 const struct evcnt *
@@ -925,6 +925,7 @@ rmixl_pcix_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	dip->irq = irq;
 	dip->func = func;
 	dip->arg = arg;
+	dip->counts = RMIXL_PCIX_EVCNT(sc, bitno, 0);
 #if NEVER
 	snprintf(dip->count_name, sizeof(dip->count_name),
 		"pin %d", bitno + 1);
@@ -982,7 +983,7 @@ rmixl_pcix_pip_add_1(rmixl_pcix_softc_t *sc, int irq, int ipl)
 	 * allocate and initialize softc intr struct
 	 * with one or more dispatch handles
 	 */
-	pip_new = malloc(size, M_DEVBUF, M_NOWAIT);
+	pip_new = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (pip_new == NULL) {
 #ifdef DIAGNOSTIC
 		printf("%s: cannot malloc\n", __func__);

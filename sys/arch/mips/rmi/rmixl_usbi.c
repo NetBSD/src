@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_usbi.c,v 1.1.2.6 2011/02/05 06:13:16 cliff Exp $	*/
+/*	$NetBSD: rmixl_usbi.c,v 1.1.2.7 2011/04/29 08:26:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.6 2011/02/05 06:13:16 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.7 2011/04/29 08:26:34 matt Exp $");
 
 #include "locators.h"
 
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.6 2011/02/05 06:13:16 cliff Exp
 #define RMIXL_USBI_GEN_READ(o)     le32toh(*RMIXL_USBI_GEN_VADDR(o))
 #define RMIXL_USBI_GEN_WRITE(o,v)  *RMIXL_USBI_GEN_VADDR(o) = htole32(v)
 
-static const char *rmixl_usbi_intrnames[RMIXL_UB_INTERRUPT_MAX+1] = {
+static const char rmixl_usbi_intrnames[RMIXL_UB_INTERRUPT_MAX+1][16] = {
 	"int 0 (ohci0)",
 	"int 1 (ohci1)",
 	"int 2 (ehci)",
@@ -69,23 +69,6 @@ static const char *rmixl_usbi_intrnames[RMIXL_UB_INTERRUPT_MAX+1] = {
 	"int 4 (phy)",
 	"int 5 (force)"
 };
-
-typedef struct rmixl_usbi_dispatch {
-	int (*func)(void *);
-	void *arg; 
-	struct evcnt count;
-} rmixl_usbi_dispatch_t;
-
-typedef struct rmixl_usbi_softc {
-	device_t		sc_dev;
-	bus_space_tag_t		sc_eb_bst;
-	bus_space_tag_t		sc_el_bst;
-	bus_addr_t		sc_addr;
-	bus_size_t		sc_size;
-	bus_dma_tag_t		sc_dmat;
-	rmixl_usbi_dispatch_t	sc_dispatch[RMIXL_UB_INTERRUPT_MAX + 1];
-} rmixl_usbi_softc_t;
-
 
 static int	rmixl_usbi_match(device_t, cfdata_t, void *);
 static void	rmixl_usbi_attach(device_t, device_t, void *);
@@ -146,12 +129,8 @@ rmixl_usbi_attach(device_t parent, device_t self, void *aux)
 	 * fail attach if USB interface BIST failed
 	 */
         r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_BIST_EACH_STS);
-	aprint_normal(": BIST status=");
-	if ((r & __BIT(18)) == 0) {			/* XXX USB_BIST */
-		aprint_normal("FAIL\n");
-		return;
-	}
-	aprint_normal("OK");
+	aprint_normal(": BIST status=%s,",
+	    (r & __BIT(18)) ? "OK" : "FAIL");		/* XXX USB_BIST */
 
 	/*
 	 * set BYTESWAP_EN register nonzero when software is little endian

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.25 2010/12/29 00:43:22 matt Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.26 2011/04/29 08:26:25 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -78,12 +78,12 @@ include <sys/param.h>
 include <sys/buf.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
-include <sys/user.h>
 include <sys/mutex.h>
 include <sys/cpu.h>
 
 include <uvm/uvm.h>
 
+include <mips/pcb.h>
 include <mips/cache.h>
 include <mips/regnum.h>
 include <mips/vmparam.h>
@@ -107,32 +107,29 @@ define	MIPS_XKSEG_START	MIPS_XKSEG_START
 
 # Important offsets into the lwp and proc structs & associated constants
 define	L_CPU			offsetof(struct lwp, l_cpu)
-define	L_ADDR			offsetof(struct lwp, l_addr)
-define	L_PRIORITY		offsetof(struct lwp, l_priority)
-define	L_WCHAN			offsetof(struct lwp, l_wchan)
-define	L_STAT			offsetof(struct lwp, l_stat)
-define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_CTXSWITCH		offsetof(struct lwp, l_ctxswtch)
-
-# Process status constants
+define	L_PCB			offsetof(struct lwp, l_addr)
+define	L_PRIORITY		offsetof(struct lwp, l_priority)
+define	L_PRIVATE		offsetof(struct lwp, l_private)
+define	L_PROC			offsetof(struct lwp, l_proc)
+define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_MD_UTF		offsetof(struct lwp, l_md.md_utf)
 define	L_MD_UPTE_0		offsetof(struct lwp, l_md.md_upte[0])
 define	L_MD_UPTE_1		offsetof(struct lwp, l_md.md_upte[1])
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
+define	L_WCHAN			offsetof(struct lwp, l_wchan)
 
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
-define	U_PCB_FPREGS		offsetof(struct user, u_pcb.pcb_fpregs)
-define	U_PCB_CONTEXT		offsetof(struct user, u_pcb.pcb_context)
-define	U_PCB_ONFAULT		offsetof(struct user, u_pcb.pcb_onfault)
-define	U_PCB_PPL		offsetof(struct user, u_pcb.pcb_ppl)
+define	PCB_FPREGS		offsetof(struct pcb, pcb_fpregs)
+define	PCB_CONTEXT		offsetof(struct pcb, pcb_context)
+define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_PPL			offsetof(struct pcb, pcb_ppl)
 
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
 define	VM_MAX_KERNEL_ADDRESS	VM_MAX_KERNEL_ADDRESS
-
-define	UVMEXP_SWTCH		offsetof(struct uvmexp, swtch)
 
 define	SIGFPE		 	SIGFPE
 define	SIGILL		 	SIGILL
@@ -246,8 +243,6 @@ define	FRAME_FP29		sizeof(mips_fpreg_t) * 29
 define	FRAME_FP30		sizeof(mips_fpreg_t) * 30
 define	FRAME_FP31		sizeof(mips_fpreg_t) * 31
 
-
-#define	KERNFRAME_SIZ	(sizeof(register_t) * (6 + 2 ) + sizeof(mips_reg_t) * (17 + 5))
 define	KERNFRAME_SIZ	sizeof(struct kernframe)
 if defined(__mips_o32) || defined(__mips_o64)
 define	KERNFRAME_ARG5	offsetof(struct kernframe, cf_args[4])
@@ -284,9 +279,7 @@ define	CPU_INFO_CPL		offsetof(struct cpu_info, ci_cpl)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
-ifndef NOFPU
-define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
-endif
+define	CPU_INFO_EV_TLBMISSES	offsetof(struct cpu_info, ci_ev_tlbmisses.ev_count)
 define	CPU_INFO_PMAP_SEG0TAB	offsetof(struct cpu_info, ci_pmap_seg0tab)
 ifdef _LP64
 define	CPU_INFO_PMAP_SEGTAB	offsetof(struct cpu_info, ci_pmap_segtab)
@@ -324,5 +317,3 @@ define	MO_FPU_ID		offsetof(struct mips_options, mips_fpu_id)
 define	MO_NUM_TLB_ENTRIES	offsetof(struct mips_options, mips_num_tlb_entries)
 
 define	MCI_SDCACHE_SIZE	offsetof(struct mips_cache_info, mci_sdcache_size)
-
-define	SPLSW_SPLCHECK		offsetof(struct splsw, splsw_splcheck)

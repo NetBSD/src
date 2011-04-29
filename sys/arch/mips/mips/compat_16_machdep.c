@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.12.14.6 2010/02/28 23:45:06 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.12.14.7 2011/04/29 08:26:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,17 +45,19 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.14.6 2010/02/28 23:45:06 matt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.14.7 2011/04/29 08:26:23 matt Exp $"); 
 
+#ifdef _KERNEL_OPT
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
+#include <sys/cpu.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
@@ -64,11 +66,11 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.14.6 2010/02/28 23:45:06 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
 
-#include <machine/cpu.h>
-
 #include <mips/regnum.h>
 #include <mips/frame.h>
 #include <mips/locore.h>
+#include <mips/pcb.h>
+#include <mips/reg.h>
 
 #if !defined(__mips_o32)
 #define	fpreg		fpreg_oabi
@@ -89,13 +91,14 @@ void
 sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 {
 	int sig = ksi->ksi_signo;
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct sigacts *ps = p->p_sigacts;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct sigacts * const ps = p->p_sigacts;
+	struct pcb * const pcb = lwp_getpcb(l);
 	int onstack, error;
 	struct sigcontext *scp = getframe(l, sig, &onstack);
 	struct sigcontext ksc;
-	struct trapframe *tf = l->l_md.md_utf;
+	struct trapframe * const tf = l->l_md.md_utf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 #if !defined(__mips_o32)
@@ -128,14 +131,14 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 #endif
 
 	/* Save the FP state, if necessary, then copy it. */
-#if defined(FPEMUL) || !defined(NOFPU)
-	ksc.sc_fpused = l->l_md.md_flags & MDP_FPUSED;
+	ksc.sc_fpused = fpu_used_p(l);
+#if !defined(NOFPU)
 	if (ksc.sc_fpused) {
 		/* if FPU has current state, save it first */
-		fpusave_lwp(l);
+		fpu_save();
 	}
 #endif
-	*(struct fpreg *)ksc.sc_fpregs = *(struct fpreg *)&l->l_addr->u_pcb.pcb_fpregs;
+	*(struct fpreg *)ksc.sc_fpregs = *(struct fpreg *)&pcb->pcb_fpregs;
 
 	/* Save signal stack. */
 	ksc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
@@ -233,8 +236,9 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */
 	struct sigcontext *scp, ksc;
-	struct trapframe *tf = l->l_md.md_utf;
-	struct proc *p = l->l_proc;
+	struct trapframe * const tf = l->l_md.md_utf;
+	struct proc * const p = l->l_proc;
+	struct pcb * const pcb = lwp_getpcb(l);
 	int error;
 
 #if !defined(__mips_o32)
@@ -269,11 +273,12 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	for (size_t i = 1; i < __arraycount(tf->tf_regs); i++)
 		tf->tf_regs[i] = ksc.sc_regs[i];
 #endif
-#if defined(FPEMUL) || !defined(NOFPU)
-	if (scp->sc_fpused)
-		fpudiscard_lwp(l);
+#if !defined(NOFPU)
+	if (scp->sc_fpused) {
+		fpu_discard();
+	}
 #endif
-	*(struct fpreg *)&l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+	*(struct fpreg *)&pcb->pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 
 	mutex_enter(p->p_lock);
 	/* Restore signal stack. */

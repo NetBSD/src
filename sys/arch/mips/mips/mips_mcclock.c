@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.c,v 1.16.28.1 2010/01/20 09:04:35 matt Exp $ */
+/* $NetBSD: mips_mcclock.c,v 1.16.28.2 2011/04/29 08:26:29 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.16.28.1 2010/01/20 09:04:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.16.28.2 2011/04/29 08:26:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,7 @@ unsigned mips_mcclock_to_mhz(unsigned iters);
  * polling function.
  */
 unsigned
-mc_cpuspeed(mcclock_addr, cpuintmask)
-	vaddr_t mcclock_addr;
-    	int cpuintmask;
+mc_cpuspeed(vaddr_t mcclock_addr, int cpuintmask)
 {
 	return mips_mc_cpuspeed((void *)mcclock_addr, cpuintmask,
 	           mips_mcclock_tickloop);
@@ -79,10 +77,7 @@ mc_cpuspeed(mcclock_addr, cpuintmask)
  * before the clock is attached, so we can't use the normal clock driver.
  */
 unsigned
-mips_mc_cpuspeed(mcclock_addr, clockmask, tickpollfn)
-	void *mcclock_addr;
-	int clockmask;
-	int (*tickpollfn)(void *mcclock_addr, int clockmask);
+mips_mc_cpuspeed(void *mcclock_addr, int clockmask, int (*tickpollfn)(void *mcclock_addr, int clockmask))
 {
 	int s;
 	int iters = 0;
@@ -143,9 +138,7 @@ mips_mc_cpuspeed(mcclock_addr, clockmask, tickpollfn)
  */
 
 int
-mips_mcclock_tickloop(mcclock_addr, clockmask)
-	void *mcclock_addr;
-	int clockmask;
+mips_mcclock_tickloop(void *mcclock_addr, int clockmask)
 {
 	int iters;
 	volatile int junk;

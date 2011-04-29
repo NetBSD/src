@@ -1,4 +1,4 @@
-/*	$NetBSD: bds_emul.S,v 1.1.2.1 2010/12/29 00:40:41 matt Exp $	*/
+/*	$NetBSD: bds_emul.S,v 1.1.2.2 2011/04/29 08:26:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -621,9 +621,8 @@ bcemul_sigill:
 	REG_EPILOGUE
 
 	move	ra, t3				# restore ra
-	move	a2, a0				# code = instruction
+	move	a1, a0				# code = instruction
 	move	a0, MIPS_CURLWP			# get current process
-	li	a1, SIGILL
-	j	_C_LABEL(fpemul_trapsignal)
+	j	_C_LABEL(mips_fpuillinst)
 
 END(mips_emul_branchdelayslot)

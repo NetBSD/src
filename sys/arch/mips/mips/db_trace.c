@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.35.38.4 2010/02/01 04:16:19 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.35.38.5 2011/04/29 08:26:25 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35.38.4 2010/02/01 04:16:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35.38.5 2011/04/29 08:26:25 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35.38.4 2010/02/01 04:16:19 matt Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/cpu.h>
 
 #include <mips/mips_opcode.h>
@@ -144,6 +143,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	struct pcb *pcb;
 	struct proc *p;
 	struct lwp *l;
+	const char *cp = modif;
+	char c;
+	bool lwpaddr = false;
 
 	if (!have_addr) {
 		struct reg * regs = &ddb_regs;
@@ -160,20 +162,32 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		return;
 	}
 
-	/* "trace/t" */
-	(*pr)("pid %d ", (int)addr);
-	p = p_find(addr, PFIND_LOCKED);
-	if (p == NULL) {
-		(*pr)("not found\n");
-		return;
-	}	
-	l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
-	if (!(l->l_flag & LW_INMEM)) {
-		(*pr)("swapped out\n");
-		return;
+	while ((c = *cp++) != 0) {
+		if (c == 'a') {
+			lwpaddr = true;
+		}
 	}
 
-	pcb = &(l->l_addr->u_pcb);
+	if (lwpaddr) {
+		l = (struct lwp *)addr;
+		(*pr)("pid %d.%d ", l->l_proc->p_pid, l->l_lid);
+	} else {
+		/* "trace/t" */
+
+		(*pr)("pid %d ", (int)addr);
+		p = p_find(addr, PFIND_LOCKED);
+		if (p == NULL) {
+			(*pr)("not found\n");
+			return;
+		}	
+		l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
+		if (!(l->l_flag & LW_INMEM)) {
+			(*pr)("swapped out\n");
+			return;
+		}
+	}
+
+	pcb = lwp_getpcb(l);
 	(*pr)("at %p\n", pcb);
 
 	stacktrace_subr(0,0,0,0,	/* no args known */
