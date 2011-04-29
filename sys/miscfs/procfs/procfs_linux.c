@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.54.14.2 2011/02/05 06:00:15 cliff Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.54.14.3 2011/04/29 08:12:08 matt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,9 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.54.14.2 2011/02/05 06:00:15 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.54.14.3 2011/04/29 08:12:08 matt Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
