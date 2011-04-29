@@ -1,4 +1,4 @@
-# $NetBSD: t_exit.sh,v 1.1 2009/10/20 21:58:35 jmmv Exp $
+# $NetBSD: t_exit.sh,v 1.2 2011/04/29 12:49:36 jmmv Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,8 +62,33 @@ trap_subshell_body() {
 	    '( trap "echo exiting" EXIT; /usr/bin/true )'
 }
 
+atf_test_case trap_zero__implicit_exit
+trap_zero__implicit_exit_body() {
+	echo '( trap "echo exiting" 0 )' >helper.sh
+	atf_check -s eq:0 -o match:exiting -e empty /bin/sh helper.sh
+	atf_expect_fail "PR bin/6764: sh works but ksh does not"
+	atf_check -s eq:0 -o match:exiting -e empty /bin/ksh helper.sh
+}
+
+atf_test_case trap_zero__explicit_exit
+trap_zero__explicit_exit_body() {
+	echo '( trap "echo exiting" 0; exit )' >helper.sh
+	atf_check -s eq:0 -o match:exiting -e empty /bin/sh helper.sh
+	atf_check -s eq:0 -o match:exiting -e empty /bin/ksh helper.sh
+}
+
+atf_test_case trap_zero__explicit_return
+trap_zero__explicit_return_body() {
+	echo '( trap "echo exiting" 0; return )' >helper.sh
+	atf_check -s eq:0 -o match:exiting -e empty /bin/sh helper.sh
+	atf_check -s eq:0 -o match:exiting -e empty /bin/ksh helper.sh
+}
+
 atf_init_test_cases() {
 	atf_add_test_case function
 	atf_add_test_case readout
 	atf_add_test_case trap_subshell
+	atf_add_test_case trap_zero__implicit_exit
+	atf_add_test_case trap_zero__explicit_exit
+	atf_add_test_case trap_zero__explicit_return
 }
