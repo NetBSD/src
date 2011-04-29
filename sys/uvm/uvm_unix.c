@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.40.28.1 2009/08/23 06:38:07 matt Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.40.28.2 2011/04/29 08:15:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.40.28.1 2009/08/23 06:38:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.40.28.2 2011/04/29 08:15:09 matt Exp $");
 
 #include "opt_pax.h"
 
@@ -118,7 +118,7 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 				UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 		if (error) {
 #ifndef PRIdVSIZE
-#define	PRIdVSIZE	"%ld"
+#define	PRIdVSIZE	"ld"
 #endif
 			uprintf("sbrk: grow %"PRIdVSIZE" failed, error = %d\n",
 				new - old, error);
