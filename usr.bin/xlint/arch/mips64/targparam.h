@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.1 2006/08/25 23:35:04 matt Exp $	*/
+/*	$NetBSD: targparam.h,v 1.1.30.1 2011/04/29 09:35:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -49,6 +49,6 @@
 
 #define	FLOAT_SIZE		(4 * CHAR_BIT)
 #define	DOUBLE_SIZE		(8 * CHAR_BIT)
-#define	LDOUBLE_SIZE		(8 * CHAR_BIT)
+#define	LDOUBLE_SIZE		(16 * CHAR_BIT)
 
 #define	ENUM_SIZE		(4 * CHAR_BIT)
