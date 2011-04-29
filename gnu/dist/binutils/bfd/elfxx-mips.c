@@ -4669,6 +4669,9 @@ _bfd_elf_mips_mach (flagword flags)
     case E_MIPS_MACH_SB1:
       return bfd_mach_mips_sb1;
 
+    case E_MIPS_MACH_XLR:
+      return bfd_mach_mips_xlr;
+
     default:
       switch (flags & EF_MIPS_ARCH)
 	{
@@ -7955,6 +7958,10 @@ mips_set_isa_flags (bfd *abfd)
       val = E_MIPS_ARCH_64 | E_MIPS_MACH_SB1;
       break;
 
+    case bfd_mach_mips_xlr:
+      val = E_MIPS_ARCH_64 | E_MIPS_MACH_XLR;
+      break;
+
     case bfd_mach_mipsisa32:
       val = E_MIPS_ARCH_32;
       break;
@@ -9614,6 +9621,7 @@ static const struct mips_mach_extension mips_mach_extensions[] = {
   /* MIPS64 extensions.  */
   { bfd_mach_mipsisa64r2, bfd_mach_mipsisa64 },
   { bfd_mach_mips_sb1, bfd_mach_mipsisa64 },
+  { bfd_mach_mips_xlr, bfd_mach_mipsisa64 },
 
   /* MIPS V extensions.  */
   { bfd_mach_mipsisa64, bfd_mach_mips5 },

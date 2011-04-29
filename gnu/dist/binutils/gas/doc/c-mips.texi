@@ -191,7 +191,8 @@ rm9000,
 10000,
 12000,
 mips32-4k,
-sb1
+sb1,
+xlr
 @end quotation
 
 @item -mtune=@var{cpu}

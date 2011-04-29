@@ -410,6 +410,9 @@ struct mips_opcode
 #define INSN_ISA32R2              0x00000080
 #define INSN_ISA64R2              0x00000100
 
+/* Masks used for Chip specific instructions.  */
+#define INSN_CHIP_MASK		  0xc3ff0820
+
 /* Masks used for MIPS-defined ASEs.  */
 #define INSN_ASE_MASK		  0x0000f000
 
@@ -442,6 +445,8 @@ struct mips_opcode
 #define INSN_5400		  0x01000000
 /* NEC VR5500 instruction.  */
 #define INSN_5500		  0x02000000
+/* RMI Xlr instruction.  */
+#define INSN_XLR		  0x00000020
 
 /* MIPS ISA defines, use instead of hardcoding ISA level.  */
 
@@ -489,6 +494,8 @@ struct mips_opcode
 #define CPU_MIPS64      64
 #define CPU_MIPS64R2	65
 #define CPU_SB1         12310201        /* octal 'SB', 01.  */
+#define CPU_XLR		887682		/* decimal 'XLR'   */
+
 
 /* Test for membership in an ISA including chip specific ISAs.  INSN
    is pointer to an element of the opcode table; ISA is the specified
@@ -510,6 +517,7 @@ struct mips_opcode
      || (cpu == CPU_VR4120 && ((insn)->membership & INSN_4120) != 0)	\
      || (cpu == CPU_VR5400 && ((insn)->membership & INSN_5400) != 0)	\
      || (cpu == CPU_VR5500 && ((insn)->membership & INSN_5500) != 0)	\
+     || (cpu == CPU_XLR && ((insn)->membership & INSN_XLR) != 0)	\
      || 0)	/* Please keep this term for easier source merging.  */
 
 /* This is a list of macro expanded instructions.
@@ -640,6 +648,11 @@ enum
   M_LWR_A,
   M_LWR_AB,
   M_LWU_AB,
+  M_MSGSND,
+  M_MSGLD,
+  M_MSGLD_T,
+  M_MSGWAIT,
+  M_MSGWAIT_T,
   M_MOVE,
   M_MUL,
   M_MUL_I,

@@ -382,7 +382,8 @@ mips_arch_create vr5400	64	mips4	{ ror } \
 mips_arch_create sb1 	64	mips64	{ mips3d } \
 			{ -march=sb1 -mtune=sb1 } { -mmips:sb1 } \
 			{ mipsisa64sb1-*-* mipsisa64sb1el-*-* }
-
+mips_arch_create xlr	64	mips64 {} \
+			{ -march=xlr -mtune=xlr } { -mmips:xlr }
 
 #
 # And now begin the actual tests!
@@ -575,6 +576,7 @@ if { [istarget mips*-*-*] } then {
 	run_dump_test "mips64-mdmx"
 	run_dump_test "sb1-ext-mdmx"
 	run_dump_test "sb1-ext-ps"
+	run_dump_test "xlr-ext"
     }
 
     run_dump_test "relax"
