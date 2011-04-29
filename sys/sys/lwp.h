@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.114.4.1.4.2 2011/02/05 06:31:06 cliff Exp $	*/
+/*	$NetBSD: lwp.h,v 1.114.4.1.4.3 2011/04/29 08:20:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -203,6 +203,13 @@ extern struct lwplist alllwp;		/* List of all LWPs. */
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
 
 extern lwp_t lwp0;			/* LWP for proc0 */
+
+static inline void *
+lwp_getpcb(lwp_t *l)
+{
+
+	return l->l_addr;
+}
 #endif
 
 /* These flags are kept in l_flag. */
@@ -311,6 +318,7 @@ lwp_t *lwp_find(proc_t *, int);
 void	lwp_userret(lwp_t *);
 void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
+int	lwp_setprivate(lwp_t *, void *);
 void	lwp_sys_init(void);
 u_int	lwp_unsleep(lwp_t *, bool);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.280.4.3.4.2 2010/08/19 07:23:24 matt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.280.4.3.4.3 2011/04/29 08:20:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.4.3.4.2 2010/08/19 07:23:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.4.3.4.3 2011/04/29 08:20:14 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1029,6 +1029,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	(*pack.ep_esch->es_emul->e_setregs)(l, &pack, (u_long) stack);
 	if (pack.ep_esch->es_setregs)
 		(*pack.ep_esch->es_setregs)(l, &pack, (u_long) stack);
+
+	/* Provide a consistent LWP private setting */
+	(void)lwp_setprivate(l, NULL);
 
 	/* map the process's signal trampoline code */
 	if ((error = exec_sigcode_map(p, pack.ep_esch->es_emul)) != 0) {
