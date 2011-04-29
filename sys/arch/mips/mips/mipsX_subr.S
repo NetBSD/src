@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.45 2011/04/14 09:25:05 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.46 2011/04/29 22:16:49 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -162,11 +162,14 @@
 #if (MIPS3 + MIPS64 + MIPS64R2) > 0
 #define	USE_64BIT_INSTRUCTIONS
 #define	USE_64BIT_CP0_FUNCTIONS
+#elif (MIPS32 + MIPS32R2) > 0
+#ifdef _LP64
+#error	MIPS32 and MIPS32R2 can't run 64-bit kernels.
 #endif
-
-#if (MIPS32 + MIPS32R2) > 0
 #undef	USE_64BIT_INSTRUCTIONS
 #undef	USE_64BIT_CP0_FUNCTIONS
+#else
+#error	One of MIPS{3,32,32R2,64,64R2} must be defined
 #endif
 
 #ifdef _LP64
@@ -355,20 +358,19 @@ MIPSX(tlb_miss_common):
 	_SLL	k1, WIRED_SHIFT			#14: chop top 2 bits (part 2a)
 	_SRL	k1, WIRED_SHIFT			#15: chop top 2 bits (part 2b)
 	_MTC0	k1, MIPS_COP_0_TLB_LO1		#16: lo1 is loaded
-	nop					#17: standard nop
+	sll	$0, $0, 3			#17: standard nop (ehb)
+#ifdef MIPS3
 	nop					#18: extra nop for QED5230
-	tlbwr					#19: write to tlb
-#ifdef MIPS64
-	lui	k1, %hi(CPUVAR(EV_TLBMISSES))	#01: k1=hi of tlbmisses
-	REG_L	k0, %lo(CPUVAR(EV_TLBMISSES))(k1)
-	REG_ADDU k0, 1
-	REG_S	k0, %lo(CPUVAR(EV_TLBMISSES))(k1)
-#else
-	nop					#1a: standard nop
-	nop					#1b: needed by R4000/4400
-	nop					#1c: needed by R4000/4400
 #endif
-	eret					#1d: return from exception
+	tlbwr					#19: write to tlb
+	sll	$0, $0, 3			#1a: standard nop (ehb)
+#if (MIPS3 + MIPS64 + MIPS64R2) > 0
+	lui	k1, %hi(CPUVAR(EV_TLBMISSES))	#1b: k1=hi of tlbmisses
+	REG_L	k0, %lo(CPUVAR(EV_TLBMISSES))(k1) #1c
+	REG_ADDU k0, 1				#1d
+	REG_S	k0, %lo(CPUVAR(EV_TLBMISSES))(k1) #1e
+#endif
+	eret					#1f: return from exception
 	.set	at
 _VECTOR_END(MIPSX(tlb_miss))
 
@@ -1586,7 +1588,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	dsll32	k1, k1, 0
 #endif
 	bgez	k0, _C_LABEL(MIPSX(kern_gen_exception))	# full trap processing
-	 nop		
+	 nop					# - delay slot -
 	PTR_SUBU k0, k1
 	INT_L	k1, _C_LABEL(Sysmapsize)	# index within range?
 	PTR_SRL	k0, PGSHIFT
@@ -1604,7 +1606,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	nop
 #endif
 	bltz	k0, _C_LABEL(MIPSX(kern_gen_exception)) # ASSERT(TLB entry exists)
-	 nop		
+	 nop					# - delay slot -
 
 	and	k0, k1, 4			# check even/odd page
 #ifdef MIPS3
@@ -1614,7 +1616,6 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	 nop
 
 	INT_L	k0, 0(k1)			# get PTE entry
-
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of "wired" bit
 	_SRL	k0, k0, WIRED_SHIFT
 	_MTC0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
@@ -1624,7 +1625,8 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	nop					# required for QED5230
 #endif
 	beqz	k0, _C_LABEL(MIPSX(kern_gen_exception))	# PTE invalid
-	 nop		
+	 nop					# - delay slot -
+
 	INT_L	k0, 4(k1)			# get odd PTE entry
 	_SLL	k0, k0, WIRED_SHIFT
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
@@ -1647,7 +1649,6 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 
 MIPSX(kern_tlbi_odd):
 	INT_L	k0, 0(k1)			# get PTE entry
-
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of wired bit
 	_SRL	k0, k0, WIRED_SHIFT
 	_MTC0	k0, MIPS_COP_0_TLB_LO1		# save PTE entry
@@ -1657,7 +1658,8 @@ MIPSX(kern_tlbi_odd):
 	nop					# required for QED5230
 #endif
 	beqz	k0, _C_LABEL(MIPSX(kern_gen_exception))	# PTE invalid
-	 nop
+	 nop					# - delay slot -
+
 	INT_L	k0, -4(k1)			# get even PTE entry
 	_SLL	k0, k0, WIRED_SHIFT
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
@@ -1766,7 +1768,6 @@ LEAF(MIPSX(tlb_update))
 #ifdef MIPS3
 	nop					# required for QED5230
 #endif
-
 	tlbr					# read the entry first
 	COP0_SYNC
 	_MTC0	a1, MIPS_COP_0_TLB_LO1		# init low reg1.
@@ -1841,7 +1842,6 @@ LEAF(MIPSX(tlb_read_indexed))
 	_MFC0	ta0, MIPS_COP_0_TLB_LO0		# See what we got
 	_MFC0	ta1, MIPS_COP_0_TLB_LO1		# See what we got
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID
-	COP0_SYNC
 	mtc0	ta2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
@@ -1874,8 +1874,6 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	tlbp					# probe the entry in question
 	COP0_SYNC
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# see what we got
-	#nop					# -slip-
-	#nop					# -slip-
 	bltz	v0, 1f				# index < 0 then skip
 	 li	t1, MIPS_KSEG0_START		# invalid address
 	PTR_SLL	v0, PGSHIFT + 1			# PAGE_SHIFT + 1
@@ -1883,20 +1881,21 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	_MTC0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	_MTC0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
 	_MTC0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
-	COP0_SYNC
-#if 1
-	nop
-#else
+#if 0
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# zero out pageMask
 #endif
 	COP0_SYNC
+#ifdef MIPS3
 	nop
 	nop
+#endif
 
 	tlbwi
 	COP0_SYNC
+#ifdef MIPS3
 	nop
 	nop
+#endif
 1:
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore current ASID
 	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
@@ -2049,6 +2048,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore ASID
 	mtc0	t2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
+	COP0_SYNC
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	JR_HB_RA
 END(MIPSX(tlb_invalidate_all))
@@ -2143,6 +2143,7 @@ LEAF(MIPSX(tlb_enter))
 	and	t3, a2, MIPS3_PG_G		# make prototype tlb_lo1
 
 	tlbp					# is va in TLB?
+	COP0_SYNC
 
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# was it in the TLB?
 	bltz	v0, 1f				# nope
@@ -2170,9 +2171,8 @@ LEAF(MIPSX(tlb_enter))
 	COP0_SYNC
 
 	and	t0, a2, MIPS3_PG_G		# make prototype tlb_lo
-	mtc0	t0, MIPS_COP_0_TLB_LO0		# use an invalid tlb_lo
-	COP0_SYNC
-	mtc0	t0, MIPS_COP_0_TLB_LO1		# use an invalid tlb_lo
+	mtc0	t0, MIPS_COP_0_TLB_LO0		# use an invalid tlb_lo0
+	mtc0	t0, MIPS_COP_0_TLB_LO1		# use an invalid tlb_lo1
 	COP0_SYNC
 
 	tlbwi					# now write the invalid TLB
