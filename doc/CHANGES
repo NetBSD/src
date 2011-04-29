@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1542 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1543 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -887,6 +887,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	rump(3): Rework rump syscall compat.  The interface provided
 		by a newer NetBSD version is now always compatible
 		with a client compiled on an older version.  [pooka 20110117]
+	powerpc: Added support for Book E Freescale MPC85xx (e500 core)
+		processors.  Added "fast" software interrupts support and
+		SOFTFLOAT for PowerPC (Book E only), reworked FPU/VEC support
+		for e500 SPE, other improvements. [matt 20110118]
 	atactl(8): Fix mislabelled S.M.A.R.T. lifetime temperature record
 		reading. [nisimura 20110119]
 	rump.dhcpclient(1): Add a very simple DHCP client for rump kernels.
@@ -925,6 +929,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	hp700: Add support for HIL devices. From OpenBSD. [tsutsui 20110215]
 	bind: Update to 9.8.0rc1: Response policy zones (RPZ) and DNS64 support.
 		[christos 20110215]
+	kernel: Add PCU (Per-CPU Unit) interface to unify synchronization of
+		per CPU context, like lazy FPU management. [rmind 20110217]
 	acpi(4): Updated ACPICA to 20110211. [jruoho 20110217]
 	rumphijack(3): Support hijacking of pathname-based system calls.
 		[pooka 20110217]
@@ -937,6 +943,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		more efficient, added "fast" software interrupts and kernel
 		preemption.  Added support for RMI (NetLogic) XLS/XLR models.
 		Major clean up for MIPS port. [matt 20110220]
+	mips: Converted MIPS to use PCU. [matt 20110220]
 	ath(4): Add support for AR9285 devices. [cegger 20110221]
 	libsaslc(3): Complete integration of libsaslc written for GSoC 2010
 		by Mateusz Kocielski, improved and integrated with Postfix
