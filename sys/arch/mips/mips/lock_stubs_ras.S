@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_ras.S,v 1.2 2011/03/08 15:01:02 tsutsui Exp $	*/
+/*	$NetBSD: lock_stubs_ras.S,v 1.3 2011/04/29 22:04:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -446,8 +446,8 @@ LEAF(ras_mutex_spin_exit)
 END(ras_mutex_spin_exit)
 #endif	/* !LOCKDEBUG */
 
-	.rdata
-EXPORT(mips_ras_locore_atomicvec)
+	.data
+EXPORT(mips_locore_atomicvec)
 	PTR_WORD 	ras_atomic_cas_uint
 	PTR_WORD 	ras_atomic_cas_ulong
 	PTR_WORD	ras_ucas_uint
