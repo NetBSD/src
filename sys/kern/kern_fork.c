@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.171 2008/10/11 13:40:57 pooka Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.171.10.1 2011/04/29 08:20:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.171 2008/10/11 13:40:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.171.10.1 2011/04/29 08:20:15 matt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -293,9 +293,11 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * The p_stats and p_sigacts substructs are set in uvm_fork().
 	 * Inherit flags we want to keep.  The flags related to SIGCHLD
 	 * handling are important in order to keep a consistent behaviour
-	 * for the child after the fork.
+	 * for the child after the fork.  If we are a 32-bit process, the
+	 * child will be too. 
 	 */
-	p2->p_flag = p1->p_flag & (PK_SUGID | PK_NOCLDWAIT | PK_CLDSIGIGN);
+	p2->p_flag =
+	    p1->p_flag & (PK_SUGID | PK_NOCLDWAIT | PK_CLDSIGIGN | PK_32);
 	p2->p_emul = p1->p_emul;
 	p2->p_execsw = p1->p_execsw;
 
@@ -433,6 +435,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	lwp_create(l1, p2, uaddr, inmem, (flags & FORK_PPWAIT) ? LWP_VFORK : 0,
 	    stack, stacksize, (func != NULL) ? func : child_return, arg, &l2,
 	    l1->l_class);
+	lwp_setprivate(l2, l1->l_private);
 
 	/*
 	 * It's now safe for the scheduler and other processes to see the

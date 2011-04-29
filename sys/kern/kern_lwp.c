@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.126.2.2.4.1 2011/02/05 06:00:13 cliff Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.126.2.2.4.2 2011/04/29 08:20:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.126.2.2.4.1 2011/02/05 06:00:13 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.126.2.2.4.2 2011/04/29 08:20:15 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1719,6 +1719,21 @@ lwp_ctl_exit(void)
 	mutex_destroy(&lp->lp_lock);
 	kmem_free(lp, sizeof(*lp));
 	p->p_lwpctl = NULL;
+}
+
+/*      
+ * Set an LWP's private data pointer.
+ */     
+int             
+lwp_setprivate(lwp_t *l, void *ptr)
+{               
+	int error = 0;  
+
+	l->l_private = ptr;
+#ifdef __HAVE_CPU_LWP_SETPRIVATE
+	error = cpu_lwp_setprivate(l, ptr); 
+#endif  
+	return error;
 }
 
 #if defined(DDB)
