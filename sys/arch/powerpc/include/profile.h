@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.7 2006/07/07 21:28:03 ross Exp $	*/
+/*	$NetBSD: profile.h,v 1.8 2011/04/29 21:42:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
 
 #define	_MCOUNT_DECL	void __mcount
 
@@ -122,6 +126,12 @@ __asm("	.globl	_mcount			\n" \
 #endif
 
 #ifdef _KERNEL
+#ifdef PPC_BOOKE
+#include <powerpc/booke/cpuvar.h>
+
+#define MCOUNT_ENTER	do s = wrtee(0); while (/*CONSTCOND*/ 0)
+#define MCOUNT_EXIT	wrtee(s)
+#else
 #define MCOUNT_ENTER						\
 	__asm volatile("mfmsr %0" : "=r"(s));			\
 	if ((s & (PSL_IR | PSL_DR)) != (PSL_IR | PSL_DR))	\
@@ -131,4 +141,6 @@ __asm("	.globl	_mcount			\n" \
 
 #define MCOUNT_EXIT						\
 	__asm volatile("mtmsr %0" :: "r"(s))
+#endif
+
 #endif
