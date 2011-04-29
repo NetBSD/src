@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.55.14.1 2010/01/23 19:54:04 matt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.55.14.2 2011/04/29 08:16:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -255,6 +255,9 @@ extern bool vm_page_zero_enable;
 /*
  * physical memory config is stored in vm_physmem.
  */
+#define	VM_PHYSMEM_PTR(i)	(&vm_physmem[i])
+#define	VM_PHYSMEM_PTR_SWAP(i, j) \
+	do { vm_physmem[(i)] = vm_physmem[(j)]; } while (0)
 
 extern struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
 extern int vm_nphysseg;
@@ -304,6 +307,10 @@ static int vm_physseg_find(paddr_t, int *);
 	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)
 
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
+
+#ifdef __HAVE_VM_PAGE_MD
+#define VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
+#endif
 
 /*
  * Compute the page color bucket for a given page.
