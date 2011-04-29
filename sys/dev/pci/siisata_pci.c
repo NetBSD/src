@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.1.14.1.4.1 2010/04/21 00:27:49 matt Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.1.14.1.4.2 2011/04/29 08:21:25 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -91,6 +91,12 @@ struct siisata_pci_board {
 };
 
 static const struct siisata_pci_board siisata_pci_boards[] = {
+	{
+		.spb_vend = PCI_VENDOR_CMDTECH,
+		.spb_prod = PCI_PRODUCT_CMDTECH_3114,
+		.spb_port = 4,
+		.spb_chip = 3114,
+	},
 	{
 		.spb_vend = PCI_VENDOR_CMDTECH,
 		.spb_prod = PCI_PRODUCT_CMDTECH_3124,
