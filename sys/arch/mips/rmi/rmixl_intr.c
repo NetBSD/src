@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.4 2011/04/14 05:16:00 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.5 2011/04/29 21:58:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.4 2011/04/14 05:16:00 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.5 2011/04/29 21:58:27 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -471,7 +471,6 @@ rmixl_intr_init_clk(void)
 void
 rmixl_intr_init_ipi(void)
 {
-
 	mutex_enter(&rmixl_intr_lock);
 
 	for (u_int ipi = 0; ipi < NIPIS; ipi++) {
@@ -482,9 +481,9 @@ rmixl_intr_init_ipi(void)
 			panic("%s: establish ipi %d at vec %d failed",
 				__func__, ipi, vec);
 	}
- 
+
 	mips_locoresw.lsw_send_ipi = rmixl_send_ipi;
- 
+
 	mutex_exit(&rmixl_intr_lock);
 }
 #endif 	/* MULTIPROCESSOR */
@@ -730,7 +729,7 @@ rmixl_vec_establish(int vec, int cpumask, int ipl,
 
 	KASSERT(mutex_owned(&rmixl_intr_lock));
 
-	DPRINTF(("%s: vec %d cpumask %#x ipl %d func %p arg %p mpsage %d\n",
+	DPRINTF(("%s: vec %d cpumask %#x ipl %d func %p arg %p mpsafe %d\n",
 			__func__, vec, cpumask, ipl, func, arg, mpsafe));
 #ifdef DIAGNOSTIC
 	if (rmixl_pic_init_done == 0)
@@ -848,9 +847,7 @@ void
 rmixl_intr_disestablish(void *cookie)
 {
 	rmixl_intrhand_t *ih = cookie;
-	int vec;
-
-	vec = ih->ih_vec;
+	const int vec = ih->ih_vec;
 
 	KASSERT(vec < NINTRVECS);
 	KASSERT(ih == &rmixl_intrhand[vec]);
@@ -876,7 +873,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 {
 	struct rmixl_cpu_softc *sc = (void *)curcpu()->ci_softc;
 
-	DPRINTF(("%s: cpu%ld: ipl %d, pc %#"PRIxVADDR", pending %#x\n",
+	DPRINTF(("%s: cpu%u: ipl %d, pc %#"PRIxVADDR", pending %#x\n",
 		__func__, cpu_number(), ipl, pc, pending));
 
 	/*
@@ -896,7 +893,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 		asm volatile("dmfc0 %0, $9, 7;" : "=r"(eimr));
 
 #ifdef IOINTR_DEBUG
-		printf("%s: cpu%ld: eirr %#"PRIx64", eimr %#"PRIx64", mask %#"PRIx64"\n",
+		printf("%s: cpu%u: eirr %#"PRIx64", eimr %#"PRIx64", mask %#"PRIx64"\n",
 			__func__, cpu_number(), eirr, eimr, ipl_eimr_map[ipl-1]);
 #endif	/* IOINTR_DEBUG */
 
