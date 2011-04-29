@@ -4,5 +4,5 @@
 
 #include "version.h"
 const char version[] = "6.5";
-const char host_name[] = "mipsel--netbsd";
-const char target_name[] = "mipsel--netbsd";
+const char host_name[] = "mips64el--netbsd";
+const char target_name[] = "mips64el--netbsd";
