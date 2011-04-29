@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.5 2011/04/14 05:22:47 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.6 2011/04/29 21:59:09 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.5 2011/04/14 05:22:47 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.6 2011/04/29 21:59:09 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -983,15 +983,13 @@ rmixl_pcix_pip_add_1(rmixl_pcix_softc_t *sc, int irq, int ipl)
 	 * allocate and initialize softc intr struct
 	 * with one or more dispatch handles
 	 */
-	pip_new = malloc(size, M_DEVBUF, M_NOWAIT);
+	pip_new = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (pip_new == NULL) {
 #ifdef DIAGNOSTIC
 		printf("%s: cannot malloc\n", __func__);
 #endif
 		return NULL;
 	}
-
-	memset(pip_new, 0, size);
 
 	if (pip_old == NULL) {
 		/* initialize the interrupt struct */
