@@ -185,6 +185,7 @@ static const char * const mips_cp0_names_mips3264r2[32] = {
 
 static const struct mips_cp0sel_name mips_cp0sel_names_mips3264r2[] = {
   {  4, 1, "c0_contextconfig"	},
+  {  4, 2, "c0_userlocal"	},
   {  5, 1, "c0_pagegrain"	},
   { 12, 1, "c0_intctl"		},
   { 12, 2, "c0_srsctl"		},
@@ -272,6 +273,63 @@ static const struct mips_cp0sel_name mips_cp0sel_names_sb1[] = {
   { 29, 2, "c0_taghi_d"		},
   { 29, 3, "c0_datahi_d"	},
 };
+ 
+/* Xlr cop0 register names.  */
+static const char * const mips_cp0_names_xlr[32] = {
+  "c0_index",     "c0_random",    "c0_entrylo0",  "c0_entrylo1",
+  "c0_context",   "c0_pagemask",  "c0_wired",     "c0_hwrena",
+  "c0_badvaddr",  "c0_count",     "c0_entryhi",   "c0_compare",
+  "c0_status",    "c0_cause",     "c0_epc",       "c0_prid",
+  "c0_config",    "c0_lladdr",    "c0_watchlo",   "c0_watchhi",
+  "c0_xcontext",  "$21",          "c0_osscratch", "c0_debug",
+  "c0_depc",      "c0_perfcnt",   "c0_errctl",    "c0_cacheerr_i",
+  "c0_taglo_i",   "c0_taghi_i",   "c0_errorepc",  "c0_desave",
+};
+
+/* XLR's CP0 Select Registers.  */
+
+static const struct mips_cp0sel_name mips_cp0sel_names_xlr[] = {
+  {  9, 6, "c0_extintreq"       },
+  {  9, 7, "c0_extintmask"      },
+  { 15, 1, "c0_ebase"           },
+  { 16, 1, "c0_config1"         },
+  { 16, 2, "c0_config2"         },
+  { 16, 3, "c0_config3"         },
+  { 16, 7, "c0_procid2"         },
+  { 18, 1, "c0_watchlo,1"       },
+  { 18, 2, "c0_watchlo,2"       },
+  { 18, 3, "c0_watchlo,3"       },
+  { 18, 4, "c0_watchlo,4"       },
+  { 18, 5, "c0_watchlo,5"       },
+  { 18, 6, "c0_watchlo,6"       },
+  { 18, 7, "c0_watchlo,7"       },
+  { 19, 1, "c0_watchhi,1"       },
+  { 19, 2, "c0_watchhi,2"       },
+  { 19, 3, "c0_watchhi,3"       },
+  { 19, 4, "c0_watchhi,4"       },
+  { 19, 5, "c0_watchhi,5"       },
+  { 19, 6, "c0_watchhi,6"       },
+  { 19, 7, "c0_watchhi,7"       },
+  { 22, 1, "c0_osscratch,1"     },
+  { 22, 2, "c0_osscratch,2"     },
+  { 22, 3, "c0_osscratch,3"     },
+  { 22, 4, "c0_osscratch,4"     },
+  { 22, 5, "c0_osscratch,5"     },
+  { 22, 6, "c0_osscratch,6"     },
+  { 22, 7, "c0_osscratch,7"     },
+  { 25, 1, "c0_perfcnt,1"       },
+  { 25, 2, "c0_perfcnt,2"       },
+  { 25, 3, "c0_perfcnt,3"       },
+  { 25, 4, "c0_perfcnt,4"       },
+  { 25, 5, "c0_perfcnt,5"       },
+  { 25, 6, "c0_perfcnt,6"       },
+  { 25, 7, "c0_perfcnt,7"       },
+  { 27, 1, "c0_cacheerr,1"      },
+  { 27, 2, "c0_cacheerr,2"      },
+  { 27, 3, "c0_cacheerr,3"      },
+  { 28, 1, "c0_datalo"          },
+  { 29, 1, "c0_datahi"          }
+};
 
 static const char * const mips_hwr_names_numeric[32] = {
   "$0",   "$1",   "$2",   "$3",   "$4",   "$5",   "$6",   "$7",
@@ -285,7 +343,7 @@ static const char * const mips_hwr_names_mips3264r2[32] = {
   "$4",          "$5",            "$6",           "$7",
   "$8",   "$9",   "$10",  "$11",  "$12",  "$13",  "$14",  "$15",
   "$16",  "$17",  "$18",  "$19",  "$20",  "$21",  "$22",  "$23",
-  "$24",  "$25",  "$26",  "$27",  "$28",  "$29",  "$30",  "$31"
+  "$24",  "$25",  "$26",  "$27",  "$28",  "hwr_userlocal",  "$30",  "$31"
 };
 
 struct mips_abi_choice {
@@ -394,6 +452,12 @@ const struct mips_arch_choice mips_arch_choices[] = {
     ISA_MIPS64 | INSN_MIPS3D | INSN_SB1,
     mips_cp0_names_sb1,
     mips_cp0sel_names_sb1, ARRAY_SIZE (mips_cp0sel_names_sb1),
+    mips_hwr_names_numeric },
+
+  { "xlr", 1, bfd_mach_mips_xlr, CPU_XLR,
+    ISA_MIPS64 | INSN_XLR,
+    mips_cp0_names_xlr,
+    mips_cp0sel_names_xlr, ARRAY_SIZE (mips_cp0sel_names_xlr),
     mips_hwr_names_numeric },
 
   /* This entry, mips16, is here only for ISA/processor selection; do
