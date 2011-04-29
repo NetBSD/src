@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.50 2011/03/15 07:33:36 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.51 2011/04/29 22:00:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -67,14 +67,14 @@ typedef __uint32_t	psize_t;
 typedef __uint64_t	vaddr_t;
 typedef __uint64_t	vsize_t;
 #define	PRIxVADDR	PRIx64
-#define PRIxVSIZE	PRIx64
-#define PRIdVSIZE	PRId64
+#define	PRIxVSIZE	PRIx64
+#define	PRIdVSIZE	PRId64
 #else
 typedef __uint32_t	vaddr_t;
 typedef __uint32_t	vsize_t;
-#define PRIxVADDR	PRIx32
-#define PRIxVSIZE	PRIx32
-#define PRIdVSIZE	PRId32
+#define	PRIxVADDR	PRIx32
+#define	PRIxVSIZE	PRIx32
+#define	PRIdVSIZE	PRId32
 #endif
 #endif
 
@@ -92,8 +92,8 @@ typedef __int32_t	register_t;
 typedef __uint32_t	uregister_t;
 typedef __int32_t	mips_reg_t;		/* do not use */
 typedef __uint32_t	mips_ureg_t;		/* do not use */
-#define PRIxREGISTER	PRIx32
-#define PRIxUREGISTER	PRIx32
+#define	PRIxREGISTER	PRIx32
+#define	PRIxUREGISTER	PRIx32
 #else
 typedef __int64_t	register_t;
 typedef __uint64_t	uregister_t;
@@ -101,8 +101,8 @@ typedef __int64_t	mips_reg_t;		/* do not use */
 typedef __uint64_t	mips_ureg_t;		/* do not use */
 typedef __int64_t	register32_t;
 typedef __uint64_t	uregister32_t;
-#define PRIxREGISTER	PRIx64
-#define PRIxUREGISTER	PRIx64
+#define	PRIxREGISTER	PRIx64
+#define	PRIxUREGISTER	PRIx64
 #endif /* __mips_o32 */
 
 #if defined(_KERNEL) || defined(_NETBSD_SOURCE)
