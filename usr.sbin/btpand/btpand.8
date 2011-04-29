@@ -1,4 +1,4 @@
-.\" $NetBSD: btpand.8,v 1.4 2009/10/24 12:22:24 reed Exp $
+.\" $NetBSD: btpand.8,v 1.5 2011/04/29 10:31:02 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Iain Hibbert
 .\" All rights reserved.
@@ -80,7 +80,7 @@ Note, the only differences between NAP and GN services as implemented by
 .Nm
 are in the SDP service record.
 The bridging of packets by the NAP must be configured separately with
-.Xr brconfig 4 .
+.Xr brconfig 8 .
 .Pp
 The options are as follows:
 .Bl -tag -width ".Fl a Ar address"
@@ -178,8 +178,6 @@ After
 has set up the client or server connection and opened the
 .Xr tap 4
 interface, it will create a pid file and detach.
-.Sh EXIT STATUS
-.Ex -std
 .Sh FILES
 .Bl -tag -compact
 .It Pa /dev/tap
@@ -187,6 +185,8 @@ interface, it will create a pid file and detach.
 .It Pa /var/run/sdp
 .It Pa /var/run/tap Ns Em N Ns No .pid
 .El
+.Sh EXIT STATUS
+.Ex -std
 .Sh EXAMPLES
 .Dl ifconfig tap1 create
 .Dl btpand -a host -d ubt0 -s NAP -m encrypt -i tap1
@@ -205,10 +205,10 @@ the GN service with the local SDP server.
 .Sh SEE ALSO
 .Xr bluetooth 3 ,
 .Xr bluetooth 4 ,
-.Xr tap 4 ,
 .Xr bridge 4 ,
-.Xr btconfig 8 ,
+.Xr tap 4 ,
 .Xr brconfig 8 ,
+.Xr btconfig 8 ,
 .Xr dhclient 8 ,
 .Xr dhcpd 8 ,
 .Xr ifconfig 8 ,
