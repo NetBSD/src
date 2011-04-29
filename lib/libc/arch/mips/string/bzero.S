@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.8.46.2 2009/08/18 06:55:09 matt Exp $	*/
+/*	$NetBSD: bzero.S,v 1.8.46.3 2011/04/29 08:01:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 	RCSID("from: @(#)bzero.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: bzero.S,v 1.8.46.2 2009/08/18 06:55:09 matt Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.8.46.3 2011/04/29 08:01:51 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ LEAF(bzero)
 	REG_SLLV	a2, a2, a3	# we want to keep the LSB bytes
 #endif
 	nor		a2, zero, a2	# complement the mask
-	REL_L		v0, -SZREG(a0)	# load the word to partially clear
+	REG_L		v0, -SZREG(a0)	# load the word to partially clear
 	and		v0, v0, a2	# clear the bytes
 	REG_S		v0, -SZREG(a0)	# store it back
 #endif
