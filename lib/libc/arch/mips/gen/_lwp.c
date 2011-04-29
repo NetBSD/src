@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.7 2011/03/15 07:40:18 matt Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.8 2011/04/29 08:05:22 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.7 2011/03/15 07:40:18 matt Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.8 2011/04/29 08:05:22 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -40,7 +40,11 @@ __RCSID("$NetBSD: _lwp.c,v 1.7 2011/03/15 07:40:18 matt Exp $");
 #include <lwp.h>
 #include <stdlib.h>
 
-#define CALLFRAME_SIZ	24
+#if defined(__mips_o32) || defined(__mips_o64)
+#define CALLFRAME_SIZ	(6 * sizeof(void *))
+#else
+#define CALLFRAME_SIZ	(4 * sizeof(uint64_t))
+#endif
 
 void
 _lwp_makecontext(ucontext_t *u, void (*start)(void *),
