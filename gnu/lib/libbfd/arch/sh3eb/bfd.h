@@ -1604,6 +1604,7 @@ enum bfd_architecture
 #define bfd_mach_mips16                16
 #define bfd_mach_mips5                 5
 #define bfd_mach_mips_sb1              12310201 /* octal 'SB', 01 */
+#define bfd_mach_mips_xlr              887682   /* decimal 'XLR'  */
 #define bfd_mach_mipsisa32             32
 #define bfd_mach_mipsisa32r2           33
 #define bfd_mach_mipsisa64             64
