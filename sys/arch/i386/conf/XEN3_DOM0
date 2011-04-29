@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.50 2011/04/26 16:57:40 joerg Exp $
+#	$NetBSD: XEN3_DOM0,v 1.51 2011/04/29 01:51:52 jym Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -216,7 +216,7 @@ npx0		at hypervisor?		# x86 math coprocessor
 
 xencons*	at hypervisor?		# Xen virtual console
 #xennet* 	at hypervisor?		# Xen virtual network interface
-#balloon*	at xenbus?		# Xen balloon device
+balloon*	at xenbus?		# Xen balloon device
 
 #xbd*		at hypervisor?		# Xen virtual block device
 #wd*		at hypervisor?		# Xen vbd (wd identity)
