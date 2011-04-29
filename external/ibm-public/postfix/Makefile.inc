@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2011/02/15 23:17:02 tron Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2011/04/29 15:21:44 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -27,14 +27,6 @@ LDADD+= -lsaslc -lssl
 DPADD+= ${LIBGSSAPI}
 LDADD+= -lgssapi
 . endif
-.endif
-
-# XXX: Use only if you have cyrus-sasl installed; never part of a normal build!
-.if defined(HAVE_CYRUS_SASL)
-PKGROOT?= /usr/pkg
-CPPFLAGS+= -DUSE_SASL_AUTH -DUSE_CYRUS_SASL \
-	-I${PKGROOT}/include/sasl
-LDADD+= -L${PKGROOT}/lib -Wl,-R${PKGROOT}/lib -lsasl2 
 .endif
 
 .if defined(HAVE_PCC)
