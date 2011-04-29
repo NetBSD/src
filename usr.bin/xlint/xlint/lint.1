@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.34 2009/03/10 13:44:02 joerg Exp $
+.\" $NetBSD: lint.1,v 1.35 2011/04/29 09:23:29 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,73 +38,31 @@
 .Nd a C program verifier
 .Sh SYNOPSIS
 .Nm
-.Op Fl abceghpPrvwxzHFV
-.Bk -words
-.Op Fl s | Fl t
-.Ek
-.Bk -words
+.Op Fl abceFgHhPprVvwxz
 .Op Fl i | Fl nu
-.Ek
-.Bk -words
-.Op Fl MD
-.Ek
-.Bk -words
-.Op Fl D Ar name Ns Op =def
-.Ek
-.Bk -words
-.Op Fl U Ar name
-.Ek
-.Bk -words
-.Op Fl I Ar directory
-.Ek
-.Bk -words
-.Op Fl d Ar directory
-.Ek
-.Bk -words
-.Op Fl L Ar directory
-.Ek
-.Bk -words
-.Op Fl l Ar library
-.Ek
-.Bk -words
-.Op Fl o Ar outputfile
-.Ek
-.Bk -words
+.Op Fl S | Fl s | Fl t
 .Op Fl B Ar directory
-.Ek
-.Bk -words
+.Op Fl D Ar name Ns Op =def
+.Op Fl d Ar directory
+.Op Fl I Ar directory
+.Op Fl L Ar directory
+.Op Fl MD
+.Op Fl l Ar library
+.Op Fl o Ar outputfile
+.Op Fl U Ar name
 .Op Fl X Ar id Ns Op ,id ...
-.Ek
 .Ar
 .Nm lint
-.Op Fl abceghprvwzHFV
-.Bk -words
-.Op Fl s | Fl t | Fl S
-.Ek
-.Bk -words
-.Op Fl MD
-.Ek
-.Bk -words
+.Op Fl abceFgHhprVvwz
+.Op Fl S | Fl s | Fl t
 .Fl C Ar library
-.Ek
-.Bk -words
-.Op Fl D Ar name Ns Op =def
-.Ek
-.Bk -words
-.Op Fl U Ar name
-.Ek
-.Bk -words
-.Op Fl I Ar directory
-.Ek
-.Bk -words
-.Op Fl d Ar directory
-.Ek
-.Bk -words
 .Op Fl B Ar directory
-.Ek
-.Bk -words
+.Op Fl D Ar name Ns Op =def
+.Op Fl d Ar directory
+.Op Fl I Ar directory
+.Op Fl MD
+.Op Fl U Ar name
 .Op Fl X Ar id Ns Op ,id ...
-.Ek
 .Ar
 .Sh DESCRIPTION
 .Nm
@@ -222,7 +180,7 @@ is named as one of the input files, the
 flag must also be specified to provide an output file name.
 .Pp
 .Sy Options
-.Bl -tag -width Fl
+.Bl -tag -width XoXoutputfileXXX
 .It Fl a
 Report assignments of
 .Sy long
@@ -235,6 +193,10 @@ report
 .Em all
 assignments of integer values to other integer values which
 cause implicit narrowing conversion.
+.It Fl B Ns Ar path
+Path to use when looking for the lint1 and lint2 binaries.
+Defaults to
+.Pa /usr/libexec .
 .It Fl b
 Report
 .Sy break
@@ -244,8 +206,41 @@ This is not the default because, unfortunately, most
 and many
 .Xr yacc 1
 outputs produce many such complaints.
+.It Fl C Ns Ar library
+Create a
+.Nm
+library with the name
+.Pa llib-l Ns Ar library Ns Pa .ln .
+This library is built from all
+.Pa \&.c
+and
+.Pa \&.ln
+input files.
+After all global definitions of functions and
+variables in these files are written to the newly created library,
+.Nm
+checks all input files, including libraries specified with the
+.Fl l
+option, for mutual compatibility.
 .It Fl c
 Complain about casts which have questionable portability.
+.It Fl D Ns Ar name Ns Op =def
+Define
+.Ar name
+for
+.Xr cpp 1 ,
+as if by a
+.Li #define
+directive.
+If no definition is given,
+.Ar name
+is defined as 1.
+.It Fl d Ns Ar directory
+Use
+.Ar directory
+instead of
+.Pa /usr/include
+as the default place to find include files.
 .It Fl e
 Complain about unusual operations on
 .Sy enum Ns -Types
@@ -253,6 +248,10 @@ and combinations of
 .Sy enum Ns -
 and
 .Sy integer Ns -Types .
+.It Fl F
+Print pathnames of files.
+.Nm
+normally prints the filename without the path.
 .It Fl g
 Don't print warnings for some extensions of
 .Xr gcc 1
@@ -276,9 +275,18 @@ and
 and
 .Sy inline
 are always available).
+.It Fl H
+If a complaint stems from an included file
+.Nm
+prints the name of the included file instead of the source file name
+followed by a question mark.
 .It Fl h
 Apply a number of heuristic tests to attempt to intuit
 bugs, improve style, and reduce waste.
+.It Fl I Ns Ar directory
+Add
+.Ar directory
+to the list of directories in which to search for include files.
 .It Fl i
 Produce a
 .Pa \&.ln
@@ -291,121 +299,15 @@ files are the product of
 .Nm Ns 's
 first pass only, and are not checked for compatibility
 between functions.
-.It Fl n
-Do not check compatibility against the standard library.
-.It Fl p
-Attempt to check portability of code to other dialects of C.
-.It Fl P
-Enable more portability warnings: Enum comparisons, sign extension issues
-when assigning to wider integer types, overflow warnings when assigning
-to wider types.
-.It Fl r
-In case of redeclarations report the position of the
-previous declaration.
-.It Fl s
-Strict ANSI C mode.
-Issue warnings and errors required by ANSI C.
-Also do not produce warnings for constructs which behave
-differently in traditional C and ANSI C.
-With the
-.Fl s
-flag,
-.Li __STRICT_ANSI__
-is a predefined preprocessor macro.
-.It Fl S
-C9X mode. Currently not fully implemented.
-.It Fl t
-Traditional C mode.
-.Li __STDC__
-is not predefined in this mode.
-Warnings are printed for constructs not allowed in traditional C.
-Warnings for constructs which behave differently in traditional C
-and ANSI C are suppressed.
-Preprocessor macros describing the machine type (e.g.
-.Li sun3 )
-and machine architecture (e.g.
-.Li m68k )
-are defined without leading and trailing underscores.
-The keywords
-.Sy const ,
-.Sy volatile
-and
-.Sy signed
-are not available in traditional C mode (although the alternative
-keywords with leading underscores still are).
-.It Fl u
-Do not complain about functions and external variables used
-and not defined, or defined and not used (this is suitable
-for running
-.Nm
-on a subset of files comprising part of a larger program).
-.It Fl v
-Suppress complaints about unused arguments in functions.
-.It Fl x
-Report variables referred to by
-.Sy extern
-declarations, but never used.
-.It Fl z
-Do not complain about structures that are never defined
-(for example, using a structure pointer without knowing
-its contents).
-.It Fl B Ns Ar path
-Path to use when looking for the lint1 and lint2 binaries.
-Defaults to
-.Pa /usr/libexec .
-.It Fl C Ns Ar library
-Create a
-.Nm
-library with the name
-.Pa llib-l Ns Ar library Ns Pa .ln .
-This library is built from all
-.Pa \&.c
-and
-.Pa \&.ln
-input files.
-After all global definitions of functions and
-variables in these files are written to the newly created library,
-.Nm
-checks all input files, including libraries specified with the
-.Fl l
-option, for mutual compatibility.
-.It Fl D Ns Ar name Ns Op =def
-Define
-.Ar name
-for
-.Xr cpp 1 ,
-as if by a
-.Li #define
-directive.
-If no definition is given,
-.Ar name
-is defined as 1.
-.It Fl I Ns Ar directory
-Add
-.Ar directory
-to the list of directories in which to search for include files.
-.It Fl d Ns Ar directory
-Use
-.Ar directory
-instead of /usr/include as the default place to find include files.
-.It Fl l Ns Ar library
-Include the lint library
-.Pa llib-l Ns Ar library Ns Pa \&.ln .
 .It Fl L Ns Ar directory
 Search for lint libraries in
 .Ar directory
 and
 .Ar directory Ns Pa /lint
 before searching the standard place.
-.It Fl F
-Print pathnames of files.
-.Nm
-normally prints the filename without the path.
-.It Fl H
-If a complaint stems from an included file
-.Nm
-prints the name of the included file instead of the source file name
-followed by a question mark.
+.It Fl l Ns Ar library
+Include the lint library
+.Pa llib-l Ns Ar library Ns Pa \&.ln .
 .It Fl MD
 Pass
 .Fl MD
@@ -413,6 +315,8 @@ to
 .Xr cpp 1
 causing cpp to create files containing dependency information for
 each source file.
+.It Fl n
+Do not check compatibility against the standard library.
 .It Fl o Ns Ar outputfile
 Name the output file
 .Ar outputfile .
@@ -434,21 +338,78 @@ The
 .Fl v
 option is useful if the source file(s) for the lint library
 are just external interfaces.
+.It Fl P
+Enable more portability warnings: Enum comparisons, sign extension issues
+when assigning to wider integer types, overflow warnings when assigning
+to wider types.
+.It Fl p
+Attempt to check portability of code to other dialects of C.
+.It Fl r
+In case of redeclarations report the position of the
+previous declaration.
+.It Fl S
+C9X mode.
+Currently not fully implemented.
+.It Fl s
+Strict ANSI C mode.
+Issue warnings and errors required by ANSI C.
+Also do not produce warnings for constructs which behave
+differently in traditional C and ANSI C.
+With the
+.Fl s
+flag,
+.Li __STRICT_ANSI__
+is a predefined preprocessor macro.
+.It Fl t
+Traditional C mode.
+.Li __STDC__
+is not predefined in this mode.
+Warnings are printed for constructs not allowed in traditional C.
+Warnings for constructs which behave differently in traditional C
+and ANSI C are suppressed.
+Preprocessor macros describing the machine type (e.g.
+.Li sun3 )
+and machine architecture (e.g.
+.Li m68k )
+are defined without leading and trailing underscores.
+The keywords
+.Sy const ,
+.Sy volatile
+and
+.Sy signed
+are not available in traditional C mode (although the alternative
+keywords with leading underscores still are).
 .It Fl U Ns Ar name
 Remove any initial definition of
 .Ar name
 for the preprocessor.
+.It Fl u
+Do not complain about functions and external variables used
+and not defined, or defined and not used (this is suitable
+for running
+.Nm
+on a subset of files comprising part of a larger program).
 .It Fl V
 Print the command lines constructed by the controller program to
 run the C preprocessor and
 .Nm Ns 's
 first and second pass.
+.It Fl v
+Suppress complaints about unused arguments in functions.
 .It Fl w
 Treat warnings as errors.
 .It Fl X Ar id Ns Op ,id ...
 Suppress error messages identified by the list of ids.
 A list of messages and ids can be found in
 .Xr lint 7 .
+.It Fl x
+Report variables referred to by
+.Sy extern
+declarations, but never used.
+.It Fl z
+Do not complain about structures that are never defined
+(for example, using a structure pointer without knowing
+its contents).
 .El
 .Pp
 .Sy Input Grammar
@@ -611,7 +572,7 @@ temporaries
 .Xr make 1 ,
 .Xr lint 7
 .Sh AUTHORS
-Jochen Pohl
+.An Jochen Pohl
 .Sh BUGS
 The routines
 .Xr exit 3 ,
