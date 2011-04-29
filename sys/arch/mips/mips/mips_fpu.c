@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.3 2011/02/20 16:38:13 rmind Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.4 2011/04/29 22:18:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.3 2011/02/20 16:38:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.4 2011/04/29 22:18:16 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -86,7 +86,7 @@ fpu_used_p(lwp_t *l)
 	return pcu_used(&mips_fpu_ops, l);
 }
 
-static void
+void
 mips_fpu_state_save(lwp_t *l, bool release)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
@@ -115,7 +115,7 @@ mips_fpu_state_save(lwp_t *l, bool release)
 		"cfc1	%1, $31"	"\n\t"
 		"cfc1	%1, $31"	"\n\t"
 		".set reorder"		"\n\t"
-		".set at" 
+		".set at"
 	    :	"=&r" (status), "=r"(fpcsr)
 	    :	"r"(tf->tf_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR|MIPS_SR_KX|MIPS_SR_INT_IE)),
 		"n"(MIPS_COP_0_STATUS));
@@ -217,7 +217,7 @@ mips_fpu_state_save(lwp_t *l, bool release)
 }
 
 void
-mips_fpu_state_load(struct lwp *l, bool used)
+mips_fpu_state_load(lwp_t *l, bool used)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct pcb * const pcb = lwp_getpcb(l);
