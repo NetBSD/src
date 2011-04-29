@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.1.2.5 2010/04/30 16:11:53 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.1.2.6 2011/04/29 08:26:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.1.2.5 2010/04/30 16:11:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.1.2.6 2011/04/29 08:26:29 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sa.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.1.2.5 2010/04/30 16:11:53 mat
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/exec.h>
+#include <sys/cpu.h>
 #include <sys/core.h>
 #include <sys/file.h>
 #include <sys/time.h>
@@ -50,26 +51,24 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.1.2.5 2010/04/30 16:11:53 mat
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
-#include <sys/user.h>
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
-#include <mips/cpu.h>
 #include <mips/cache.h>
 #include <mips/sysarch.h>
 #include <mips/cachectl.h>
 #include <mips/locore.h>
 #include <mips/frame.h>
 #include <mips/regnum.h>
-#include <mips/reg.h>
+#include <mips/pcb.h>
 
 #include <uvm/uvm_extern.h>
 
-char machine32[] = MACHINE;
-char machine_arch32[] = MACHINE32_ARCH;
+const char machine32[] = MACHINE;
+const char machine_arch32[] = MACHINE32_ARCH;
 
 #if 0
 cpu_coredump32
@@ -263,6 +262,8 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mc32, unsigned int *flagsp)
 	if (*flagsp & _UC_FPU)
 		memcpy(&mco32->__fpregs, &mc.__fpregs,
 		    sizeof(struct fpreg_oabi));
+	mco32->_mc_tlsbase = mc._mc_tlsbase;
+	*flagsp |= _UC_TLSBASE;
 }
 
 int
@@ -280,6 +281,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mc32, unsigned int flags)
 	if (flags & _UC_FPU)
 		memcpy(&mc.__fpregs, &mco32->__fpregs,
 		    sizeof(struct fpreg_oabi));
+	mc._mc_tlsbase = mco32->_mc_tlsbase;
 	return cpu_setmcontext(l, &mc, flags);
 }
 
@@ -306,11 +308,11 @@ cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 		return 0;
 	}
 
-	if (l->l_md.md_flags & MDP_FPUSED)
-		fpusave_lwp(l);
+	fpu_save_lwp(l);
 
+	struct pcb * const pcb = lwp_getpcb(l);
 	cpustate.frame = *l->l_md.md_utf;
-	cpustate.fpregs = l->l_addr->u_pcb.pcb_fpregs;
+	cpustate.fpregs = pcb->pcb_fpregs;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;

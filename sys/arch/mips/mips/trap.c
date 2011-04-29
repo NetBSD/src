@@ -1,6 +1,7 @@
-/*	$NetBSD: trap.c,v 1.217.12.34 2011/02/05 06:08:12 cliff Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.35 2011/04/29 08:26:30 matt Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,63 +37,23 @@
  *
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah Hdr: trap.c 1.32 91/04/06
- *
- *	@(#)trap.c	8.5 (Berkeley) 1/11/94
- */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.35 2011/04/29 08:26:30 matt Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.34 2011/02/05 06:08:12 cliff Exp $");
-
-#include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/ktrace.h>
 #include <sys/sa.h>
@@ -105,12 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.34 2011/02/05 06:08:12 cliff Exp $
 #include <mips/locore.h>
 #include <mips/mips_opcode.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
-#include <machine/cpu.h>
 #include <mips/trap.h>
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
+#include <mips/pcb.h>
 #include <mips/pte.h>
 #include <mips/psl.h>
 #include <mips/userret.h>
@@ -124,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.34 2011/02/05 06:08:12 cliff Exp $
 #include <sys/kgdb.h>
 #endif
 
-const char * const trap_type[] = {
+const char * const trap_names[] = {
 	"external interrupt",
 	"TLB modification",
 	"TLB miss (load or instr. fetch)",
@@ -199,14 +160,16 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	struct lwp * const l = curlwp;
 	struct proc * const p = curproc;
 	struct trapframe * const utf = l->l_md.md_utf;
-	struct cpu_info * ci = curcpu();
+	struct pcb * const pcb = lwp_getpcb(l);
 	vm_prot_t ftype;
 	ksiginfo_t ksi;
 	extern void fswintrberr(void);
+	void *onfault;
+	int rv;
 
 	KSI_INIT_TRAP(&ksi);
 
-	ci->ci_data.cpu_ntrap++;
+	curcpu()->ci_data.cpu_ntrap++;
 	type = TRAPTYPE(cause);
 	if (USERMODE(status)) {
 		tf = utf;
@@ -229,7 +192,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		sz -= n; 
 		str += n;
 		n = snprintf(str, sz, "trap: cpu%d, %s in %s mode\n",
-			cpu_index(ci), trap_type[TRAPTYPE(cause)],
+			cpu_number(), trap_names[TRAPTYPE(cause)],
 			USERMODE(status) ? "user" : "kernel");
 		sz -= n; 
 		str += n;
@@ -326,8 +289,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			return; /* KERN */
 		}
 		/*FALLTHROUGH*/
-	case T_TLB_MOD+T_USER:
-	    {
+	case T_TLB_MOD+T_USER: {
 		pt_entry_t *pte;
 		uint32_t pt_entry;
 		paddr_t pa;
@@ -368,7 +330,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		if (type & T_USER)
 			userret(l);
 		return; /* GEN */
-	    }
+	}
 	case T_TLB_LD_MISS:
 	case T_TLB_ST_MISS:
 		ftype = (type == T_TLB_LD_MISS) ? VM_PROT_READ : VM_PROT_WRITE;
@@ -378,11 +340,12 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		 * It is an error for the kernel to access user space except
 		 * through the copyin/copyout routines.
 		 */
-		if (l->l_addr->u_pcb.pcb_onfault == NULL)
+		if (pcb->pcb_onfault == NULL) {
 			goto dopanic;
+		}
 		/* check for fuswintr() or suswintr() getting a page fault */
-		if (l->l_addr->u_pcb.pcb_onfault == (void *)fswintrberr) {
-			tf->tf_regs[_R_PC] = (intptr_t)l->l_addr->u_pcb.pcb_onfault;
+		if (pcb->pcb_onfault == (void *)fswintrberr) {
+			tf->tf_regs[_R_PC] = (intptr_t)pcb->pcb_onfault;
 			return; /* KERN */
 		}
 		goto pagefault;
@@ -391,15 +354,13 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		goto pagefault;
 	case T_TLB_ST_MISS+T_USER:
 		ftype = VM_PROT_WRITE;
-	pagefault: ;
-	    {
+	pagefault: {
 		const vaddr_t va = trunc_page(vaddr);
 		struct vmspace * const vm = p->p_vmspace;
 		struct vm_map * const map = &vm->vm_map;
 #ifdef PMAP_FAULTINFO
-		struct pcb_faultinfo * const pfi = &curpcb->pcb_faultinfo;
+		struct pcb_faultinfo * const pfi = &pcb->pcb_faultinfo;
 #endif
-		int rv = 0;
 
 		kpreempt_disable();
 #ifdef _LP64
@@ -410,7 +371,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		 * cpu's cpu_info but not other cpu's) so we need to detect
 		 * and fix this here.
 		 */
-		ci = curcpu();
+		struct cpu_info * const ci = curcpu();
 		if ((va >> XSEGSHIFT) == 0 &&
 		    __predict_false(ci->ci_pmap_seg0tab == NULL
 				&& ci->ci_pmap_segtab->seg_seg[0] != NULL)) {
@@ -422,7 +383,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			return; /* GEN */
 		}
 #endif
-		KASSERT(va < 0 || ci->ci_pmap_asid_cur != 0);
+		KASSERT(va < 0 || curcpu()->ci_pmap_asid_cur != 0);
 		pmap_tlb_asid_check();
 		kpreempt_enable();
 
@@ -432,7 +393,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 				register_t tlb_hi;
 				pt_entry_t *pte = pfi->pfi_faultpte;
 				__asm("dmfc0 %0,$%1" : "=r"(tlb_hi) : "n"(MIPS_COP_0_TLB_HI));
-				printf("trap: fault #%u (%s/%s) for %#"PRIxVADDR" (%#"PRIxVADDR") at pc %#"PRIxVADDR" curpid=%u/%u pte@%p=%#x)\n", pfi->pfi_repeats, trap_type[TRAPTYPE(cause)], trap_type[pfi->pfi_faulttype], va, vaddr, pc, map->pmap->pm_pai[0].pai_asid, (uint8_t)tlb_hi, pte, pte ? pte->pt_entry : 0);
+				printf("trap: fault #%u (%s/%s) for %#"PRIxVADDR" (%#"PRIxVADDR") at pc %#"PRIxVADDR" curpid=%u/%u pte@%p=%#x)\n", pfi->pfi_repeats, trap_names[TRAPTYPE(cause)], trap_names[pfi->pfi_faulttype], va, vaddr, pc, map->pmap->pm_pai[0].pai_asid, (uint8_t)tlb_hi, pte, pte ? pte->pt_entry : 0);
 				if (pfi->pfi_repeats >= 4) {
 					cpu_Debugger();
 				} else {
@@ -453,10 +414,13 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 
+		onfault = pcb->pcb_onfault;
+		pcb->pcb_onfault = NULL;
 		if (p->p_emul->e_fault)
 			rv = (*p->p_emul->e_fault)(p, va, ftype);
 		else
 			rv = uvm_fault(map, va, ftype);
+		pcb->pcb_onfault = onfault;
 
 #ifdef VMFAULT_TRACE
 		printf(
@@ -512,25 +476,28 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)vaddr;
 		break; /* SIGNAL */
-	    }
-	kernelfault: ;
-	    {
-		vaddr_t va;
-		int rv;
+	}
+	kernelfault: {
+		onfault = pcb->pcb_onfault;
 
-		va = trunc_page(vaddr);
-		rv = uvm_fault(kernel_map, va, ftype);
+		pcb->pcb_onfault = NULL;
+		rv = uvm_fault(kernel_map, trunc_page(vaddr), ftype);
+		pcb->pcb_onfault = onfault;
 		if (rv == 0)
 			return; /* KERN */
-		/*FALLTHROUGH*/
-	    }
+		goto copyfault;
+	}
 	case T_ADDR_ERR_LD:	/* misaligned access */
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to CPU */
+		onfault = pcb->pcb_onfault;
+		rv = EFAULT;
 	copyfault:
-		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
+		if (onfault == NULL) {
 			goto dopanic;
-		tf->tf_regs[_R_PC] = (intptr_t)l->l_addr->u_pcb.pcb_onfault;
+		}
+		tf->tf_regs[_R_PC] = (intptr_t)onfault;
+		tf->tf_regs[_R_V0] = rv;
 		return; /* KERN */
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
@@ -552,7 +519,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		}
 		break; /* SIGNAL */
 
-	case T_WATCH:	/* XXX */
+	case T_WATCH:
 	case T_BREAK:
 #if defined(DDB)
 		kdb_trap(type, &tf->tf_registers);
@@ -574,7 +541,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			PC_BREAK_ADVANCE(regs);
 			if (!kgdb_trap(type, regs))
 				printf("kgdb: ignored %s\n",
-				       trap_type[TRAPTYPE(cause)]);
+				       trap_names[TRAPTYPE(cause)]);
 			else
 				tf->tf_regs[_R_PC] = regs->r_regs[_R_PC];
 
@@ -583,17 +550,14 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 #else
 		goto dopanic;
 #endif
-	case T_BREAK+T_USER:
-	    {
-		vaddr_t va;
+	case T_BREAK+T_USER: {
 		uint32_t instr;
-		int rv;
 
 		/* compute address of break instruction */
-		va = (cause & MIPS_CR_BR_DELAY) ? pc + sizeof(int) : pc;
+		vaddr_t va = pc + (cause & MIPS_CR_BR_DELAY ? sizeof(int) : 0);
 
 		/* read break instruction */
-		instr = fuiword((void *)va);
+		instr = ufetch_uint32((void *)va);
 
 		if (l->l_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
 			ksi.ksi_trap = type & ~T_USER;
@@ -631,12 +595,12 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		ksi.ksi_addr = (void *)va;
 		ksi.ksi_code = TRAP_BRKPT;
 		break; /* SIGNAL */
-	    }
+	}
 	case T_RES_INST+T_USER:
 	case T_COP_UNUSABLE+T_USER:
 #if !defined(FPEMUL) && !defined(NOFPU)
 		if ((cause & MIPS_CR_COP_ERR) == 0x10000000) {
-			fpuload_lwp(l);          	/* load FPA */
+			fpu_load();          	/* load FPA */
 			l->l_md.md_flags |= MDP_FPUSED;
 		} else
 #endif
@@ -649,6 +613,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 #if defined(FPEMUL)
 		mips_emul_inst(status, cause, pc, utf);
 #elif !defined(NOFPU)
+		utf->tf_regs[_R_CAUSE] = cause;
 		mips_fpu_trap(pc, utf);
 #endif
 		userret(l);
@@ -697,17 +662,20 @@ void
 ast(void)
 {
 	struct lwp * const l = curlwp;
-	struct cpu_info * const ci = l->l_cpu;
 	u_int astpending;
 
 	while ((astpending = l->l_md.md_astpending) != 0) {
-		uvmexp.softs++;
+		//uvmexp.softs++;
 		l->l_md.md_astpending = 0;
 
 #ifdef MULTIPROCESSOR
-		if (ci->ci_tlb_info->ti_synci_page_bitmap != 0)
-			pmap_tlb_syncicache_ast(ci);
-		KASSERT(ci->ci_tlb_info->ti_synci_page_bitmap == 0 || l->l_md.md_astpending);
+		{
+			kpreempt_disable();
+			struct cpu_info * const ci = l->l_cpu;
+			if (ci->ci_tlb_info->ti_synci_page_bitmap != 0)
+				pmap_tlb_syncicache_ast(ci);
+			kpreempt_enable();
+		}
 #endif
 
 		if (l->l_pflag & LP_OWEUPC) {
@@ -717,7 +685,7 @@ ast(void)
 
 		userret(l);
 
-		if (ci->ci_want_resched) {
+		if (l->l_cpu->ci_want_resched) {
 			/*
 			 * We are being preempted.
 			 */
@@ -737,7 +705,6 @@ mips_singlestep(struct lwp *l)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct proc * const p = l->l_proc;
-	struct pcb * const pcb = &l->l_addr->u_pcb;
 	vaddr_t pc, va;
 	int rv;
 
@@ -747,10 +714,12 @@ mips_singlestep(struct lwp *l)
 		return EFAULT;
 	}
 	pc = (vaddr_t)tf->tf_regs[_R_PC];
-	if (ufetch_uint32((void *)pc) != 0) /* not a NOP instruction */
+	if (ufetch_uint32((void *)pc) != 0) { /* not a NOP instruction */
+		struct pcb * const pcb = lwp_getpcb(l);
 		va = mips_emul_branch(tf, pc, PCB_FSR(pcb), true);
-	else
+	} else {
 		va = pc + sizeof(int);
+	}
 
 	/*
 	 * We can't single-step into a RAS.  Check if we're in
@@ -762,7 +731,7 @@ mips_singlestep(struct lwp *l)
 	}
 
 	l->l_md.md_ss_addr = va;
-	l->l_md.md_ss_instr = fuiword((void *)va);
+	l->l_md.md_ss_instr = ufetch_uint32((void *)va);
 	rv = ustore_uint32_isync((void *)va, MIPS_BREAK_SSTEP);
 	if (rv < 0) {
 		vaddr_t sa, ea;
@@ -846,13 +815,6 @@ extern char mips3_kern_intr[];
 extern char mips3_user_intr[];
 extern char mips3_systemcall[];
 #endif
-#ifdef MIPS3_5900
-extern char mips3_5900_kern_gen_exception[];
-extern char mips3_5900_user_gen_exception[];
-extern char mips3_5900_kern_intr[];
-extern char mips3_5900_user_intr[];
-extern char mips3_5900_systemcall[];
-#endif
 #ifdef MIPS32
 extern char mips32_kern_gen_exception[];
 extern char mips32_user_gen_exception[];
@@ -860,12 +822,26 @@ extern char mips32_kern_intr[];
 extern char mips32_user_intr[];
 extern char mips32_systemcall[];
 #endif
+#ifdef MIPS32R2
+extern char mips32r2_kern_gen_exception[];
+extern char mips32r2_user_gen_exception[];
+extern char mips32r2_kern_intr[];
+extern char mips32r2_user_intr[];
+extern char mips32r2_systemcall[];
+#endif
 #ifdef MIPS64
 extern char mips64_kern_gen_exception[];
 extern char mips64_user_gen_exception[];
 extern char mips64_kern_intr[];
 extern char mips64_user_intr[];
 extern char mips64_systemcall[];
+#endif
+#ifdef MIPS64R2
+extern char mips64r2_kern_gen_exception[];
+extern char mips64r2_user_gen_exception[];
+extern char mips64r2_kern_intr[];
+extern char mips64r2_user_intr[];
+extern char mips64r2_systemcall[];
 #endif
 
 int main(void *);	/* XXX */
@@ -899,6 +875,11 @@ stacktrace_subr(mips_reg_t a0, mips_reg_t a1, mips_reg_t a2, mips_reg_t a3,
 	int more, stksize;
 	unsigned int frames =  0;
 	int foundframesize = 0;
+	mips_reg_t regs[32] = {
+		[_R_ZERO] = 0,
+		[_R_A0] = a0, [_R_A1] = a1, [_R_A2] = a2, [_R_A3] = a3,
+		[_R_RA] = ra,
+	};
 #ifdef DDB
 	db_expr_t diff;
 	db_sym_t sym;
@@ -908,6 +889,7 @@ stacktrace_subr(mips_reg_t a0, mips_reg_t a1, mips_reg_t a2, mips_reg_t a3,
 loop:
 	stksize = 0;
 	subr = 0;
+	mask = 1;
 	if (frames++ > 100) {
 		(*printfn)("\nstackframe count exceeded\n");
 		/* return breaks stackframe-size heuristics with gcc -O2 */
@@ -915,7 +897,7 @@ loop:
 	}
 
 	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || (intptr_t)sp >= 0) {
+	if ((sp & (sizeof(sp)-1)) || (intptr_t)sp >= 0) {
 		(*printfn)("SP 0x%x: not in kernel\n", sp);
 		ra = 0;
 		subr = 0;
@@ -983,7 +965,7 @@ mips3_eret:
 	/* scan forwards to find stack size and any saved registers */
 	stksize = 0;
 	more = 3;
-	mask = 0;
+	mask &= 0x40ff0001;	/* if s0-s8 are valid, leave then as valid */
 	foundframesize = 0;
 	for (va = subr; more; va += sizeof(int),
 			      more = (more == 3) ? 3 : more - 1) {
@@ -1000,10 +982,27 @@ mips3_eret:
 				more = 2; /* stop after next instruction */
 				break;
 
+			case OP_ADD:
+			case OP_ADDU:
+			case OP_DADD:
+			case OP_DADDU:
+				if (!(mask & (1 << i.RType.rd))
+				    || !(mask & (1 << i.RType.rt)))
+					break;
+				if (i.RType.rd != _R_ZERO)
+					break;
+				mask |= (1 << i.RType.rs);
+				regs[i.RType.rs] = regs[i.RType.rt];
+				if (i.RType.func >= OP_DADD)
+					break;
+				regs[i.RType.rs] = (int32_t)regs[i.RType.rs];
+				break;
+
 			case OP_SYSCALL:
 			case OP_BREAK:
 				more = 1; /* stop now */
-			};
+				break;
+			}
 			break;
 
 		case OP_BCOND:
@@ -1035,35 +1034,27 @@ mips3_eret:
 			size_t size = (i.JType.op == OP_SW) ? 4 : 8;
 
 			/* look for saved registers on the stack */
-			if (i.IType.rs != 29)
+			if (i.IType.rs != _R_SP)
 				break;
-			/* only restore the first one */
-			if (mask & (1 << i.IType.rt))
-				break;
-			mask |= (1 << i.IType.rt);
 			switch (i.IType.rt) {
-			case 4: /* a0 */
-				a0 = kdbrpeek(sp + (short)i.IType.imm, size);
+			case _R_A0: /* a0 */
+			case _R_A1: /* a1 */
+			case _R_A2: /* a2 */
+			case _R_A3: /* a3 */
+			case _R_S0: /* s0 */
+			case _R_S1: /* s1 */
+			case _R_S2: /* s2 */
+			case _R_S3: /* s3 */
+			case _R_S4: /* s4 */
+			case _R_S5: /* s5 */
+			case _R_S6: /* s6 */
+			case _R_S7: /* s7 */
+			case _R_S8: /* s8 */
+			case _R_RA: /* ra */
+				regs[i.IType.rt] =
+				    kdbrpeek(sp + (int16_t)i.IType.imm, size);
+				mask |= (1 << i.IType.rt);
 				break;
-
-			case 5: /* a1 */
-				a1 = kdbrpeek(sp + (short)i.IType.imm, size);
-				break;
-
-			case 6: /* a2 */
-				a2 = kdbrpeek(sp + (short)i.IType.imm, size);
-				break;
-
-			case 7: /* a3 */
-				a3 = kdbrpeek(sp + (short)i.IType.imm, size);
-				break;
-
-			case 30: /* fp */
-				fp = kdbrpeek(sp + (short)i.IType.imm, size);
-				break;
-
-			case 31: /* ra */
-				ra = kdbrpeek(sp + (short)i.IType.imm, size);
 			}
 			break;
 		}
@@ -1075,18 +1066,23 @@ mips3_eret:
 		case OP_DADDIU:
 #endif
 			/* look for stack pointer adjustment */
-			if (i.IType.rs != 29 || i.IType.rt != 29)
+			if (i.IType.rs != _R_SP || i.IType.rt != _R_SP)
 				break;
 			/* don't count pops for mcount */
 			if (!foundframesize) {
 				stksize = - ((short)i.IType.imm);
 				foundframesize = 1;
 			}
+			break;
 		}
 	}
 done:
-	(*printfn)("%s+%"PRIxVADDR" (%"PRIxREGISTER",%"PRIxREGISTER",%"PRIxREGISTER",%"PRIxREGISTER") ra %"PRIxVADDR" sz %d\n",
-		fn_name(subr), pc - subr, a0, a1, a2, a3, ra, stksize);
+	if (mask & (1 << _R_RA))
+		ra = regs[_R_RA];
+	(*printfn)("%#"PRIxVADDR": %s+%"PRIxVADDR" (%"PRIxREGISTER",%"PRIxREGISTER",%"PRIxREGISTER",%"PRIxREGISTER") ra %"PRIxVADDR" sz %d\n",
+		sp, fn_name(subr), pc - subr,
+		regs[_R_A0], regs[_R_A1], regs[_R_A2], regs[_R_A3],
+		ra, stksize);
 
 	if (ra) {
 		if (pc == ra && stksize == 0)
@@ -1099,22 +1095,15 @@ done:
 		}
 	} else {
 finish:
-		if (curlwp)
-			(*printfn)("User-level: pid %d.%d\n", 
-			    curlwp->l_proc->p_pid, curlwp->l_lid);
-		else
-			(*printfn)("User-level: curlwp NULL\n");
+		(*printfn)("User-level: pid %d.%d\n", 
+		    curlwp->l_proc->p_pid, curlwp->l_lid);
 	}
 }
 
 /*
  * Functions ``special'' enough to print by name
  */
-#ifdef __STDC__
 #define Name(_fn)  { (void*)_fn, # _fn }
-#else
-#define Name(_fn) { _fn, "_fn"}
-#endif
 const static struct { void *addr; const char *name;} names[] = {
 	Name(stacktrace),
 	Name(stacktrace_subr),
@@ -1137,14 +1126,6 @@ const static struct { void *addr; const char *name;} names[] = {
 	Name(mips3_user_intr),
 #endif	/* MIPS3 */
 
-#if defined(MIPS3_5900)			/* r5900 family (mips-III CPU) */
-	Name(mips5900_kern_gen_exception),
-	Name(mips5900_user_gen_exception),
-	Name(mips5900_systemcall),
-	Name(mips5900_kern_intr),
-	Name(mips5900_user_intr),
-#endif	/* MIPS3_5900 */
-
 #if defined(MIPS32)			/* MIPS32 family (mips-III CPU) */
 	Name(mips32_kern_gen_exception),
 	Name(mips32_user_gen_exception),
@@ -1153,6 +1134,14 @@ const static struct { void *addr; const char *name;} names[] = {
 	Name(mips32_user_intr),
 #endif	/* MIPS32 */
 
+#if defined(MIPS32R2)			/* MIPS32R2 family (mips-III CPU) */
+	Name(mips32r2_kern_gen_exception),
+	Name(mips32r2_user_gen_exception),
+	Name(mips32r2_systemcall),
+	Name(mips32r2_kern_intr),
+	Name(mips32r2_user_intr),
+#endif	/* MIPS32R2 */
+
 #if defined(MIPS64)			/* MIPS64 family (mips-III CPU) */
 	Name(mips64_kern_gen_exception),
 	Name(mips64_user_gen_exception),
@@ -1160,6 +1149,14 @@ const static struct { void *addr; const char *name;} names[] = {
 	Name(mips64_kern_intr),
 	Name(mips64_user_intr),
 #endif	/* MIPS64 */
+
+#if defined(MIPS64R2)			/* MIPS64R2 family (mips-III CPU) */
+	Name(mips64r2_kern_gen_exception),
+	Name(mips64r2_user_gen_exception),
+	Name(mips64r2_systemcall),
+	Name(mips64r2_kern_intr),
+	Name(mips64r2_user_intr),
+#endif	/* MIPS64R2 */
 
 	Name(cpu_idle),
 	Name(cpu_switchto),

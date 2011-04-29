@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.22.62.3 2011/02/08 19:18:22 cliff Exp $ */
+/* $NetBSD: db_machdep.h,v 1.22.62.4 2011/04/29 08:26:21 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -38,7 +38,7 @@
 #include <mips/trap.h>			/* T_BREAK */
 #include <mips/reg.h>			/* register state */
 #include <mips/regnum.h>		/* symbolic register indices */
-#include <mips/proc.h>			/* register state */
+#include <mips/pcb.h>			/* register state */
 
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
@@ -114,11 +114,8 @@ db_addr_t branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
 db_addr_t next_instr_address(db_addr_t pc, bool bd);
 
 bool ddb_running_on_this_cpu_p(void);
-bool ddb_running_on_any_cpu(void);
+bool ddb_running_on_any_cpu_p(void);
 void db_resume_others(void);
-#ifdef MIPS_DDB_WATCH
-void db_mach_watch_set_all(void);
-#endif
 
 /*
  * We have machine-dependent commands.

@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.1.2.4 2011/02/05 06:00:13 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.1.2.5 2011/04/29 08:26:28 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -41,15 +41,15 @@ __KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.1.2.4 2011/02/05 06:00:13 cliff Exp $
 #include <sys/proc.h>
 #endif
 #include <sys/lwp.h>
-#include <sys/user.h>
 
 #include <mips/locore.h>
 #include <mips/regnum.h>
-#ifdef DIAGNOSTIC
-#include <mips/cpu.h>
-#endif
+#include <mips/pcb.h>
 
 #ifndef NOFPU
+static void mips_fpu_state_save(lwp_t *, bool);
+static void mips_fpu_state_load(lwp_t *, bool);
+
 static struct {
 	kmutex_t fpx_mutex;
 #ifdef MULTIPROCESSOR
@@ -79,32 +79,24 @@ fpu_init(void)
 static struct cpu_info *
 fp_lock(void)
 {
-	struct lwp * const l = curlwp;
 	mutex_enter(&fp_mutex);
+	kpreempt_disable();
 
-	if ((l->l_flag & (LW_SINTR | LW_SYSTEM)) == 0) {
-		KASSERT((l->l_pflag & LP_BOUND) == 0);
-		l->l_pflag |= LP_BOUND;
-	}
-
-	return l->l_cpu;
+	return curcpu();
 }
 
 static inline void
 fp_unlock(void)
 {
-	struct lwp * const l = curlwp;
-	if ((l->l_flag & (LW_SINTR | LW_SYSTEM)) == 0) {
-		KASSERT(l->l_pflag & LP_BOUND);
-		l->l_pflag ^= LP_BOUND;
-	}
 	mutex_exit(&fp_mutex);
+	kpreempt_enable();
 }
 
 static void
-fpcpu_acquire(struct lwp *l)
+fpcpu_acquire(lwp_t *l)
 {
 	struct cpu_info * const ci = curcpu();
+	KASSERT(kpreempt_disabled());
 	KASSERT(mutex_owned(&fp_mutex));
 	KASSERT(l == curlwp);
 	KASSERT(l->l_cpu == ci);
@@ -124,6 +116,7 @@ fpcpu_acquire(struct lwp *l)
 static void
 fpcpu_release(struct cpu_info *ci)
 {
+	KASSERT(kpreempt_disabled());
 	KASSERT(mutex_owned(&fp_mutex));
 	KASSERT(ci->ci_data.cpu_idlelwp->l_fpcpu == NULL);
 	/*
@@ -137,17 +130,160 @@ fpcpu_release(struct cpu_info *ci)
 	cv_broadcast(&fp_cv);
 #endif
 }
+#endif /* !NOFPU */
 
-static void
-fpusave(struct lwp *l)
+void
+fpu_discard(void)
+{
+#ifndef NOFPU
+	lwp_t * const l = curlwp;
+	if (l->l_fpcpu != NULL) {
+		fp_lock();
+		if (__predict_true(l->l_fpcpu != NULL)) {
+			KASSERT(l->l_fpcpu->ci_fpcurlwp == l);
+			l->l_md.md_utf->tf_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
+			fpcpu_release(l->l_fpcpu);
+		}
+		fp_unlock();
+	}
+#endif
+}
+
+void
+fpu_load(void)
+{
+#ifndef NOFPU
+	lwp_t * const l = curlwp;
+	struct trapframe * const tf = l->l_md.md_utf;
+	struct cpu_info *ci;
+
+	KASSERT(l == curlwp);
+
+	ci = fp_lock();
+
+	/*
+	 * Does this CPU already have our FPU state loaded?
+	 */
+	if (l->l_fpcpu == ci) {
+		KASSERT(ci->ci_fpcurlwp == l);
+		tf->tf_regs[_R_SR] |= MIPS_SR_COP_1_BIT;
+		fp_unlock();
+		return;
+	}
+#ifdef MULTIPROCESSOR
+	/*
+	 * While another CPU has our FPU state, keep asking for it to free it.
+	 */
+	if (l->l_cpu != NULL) {
+		kpreempt_enable();
+		while (l->l_fpcpu != NULL) {
+			cpu_send_ipi(l->l_fpcpu, IPI_FPSAVE);
+			cv_wait(&fp_cv, &fp_mutex);
+		}
+		kpreempt_disable();
+		ci = curcpu();
+	}
+#endif /* MULTIPROCESSOR */
+	KASSERT(ci->ci_fpcurlwp != l);
+
+	/*
+	 * Save the current FPU state, if any.
+	 */
+	if (ci->ci_fpcurlwp->l_fpcpu == ci) {
+		mips_fpu_state_save(ci->ci_fpcurlwp, true);
+	}
+
+	/*
+	 * Now acquire this CPU's FPU for this lwp.
+	 */
+	fpcpu_acquire(l);
+
+	/*
+	 * Now load the FPU
+	 */
+	mips_fpu_state_load(l, fpu_used_p(l));
+
+	fp_unlock();
+#endif /* !NOFPU */
+}
+
+void
+fpu_save(void)
+{
+#ifndef NOFPU
+	fpu_save_lwp(curlwp);
+#endif
+}
+
+void
+fpu_save_lwp(lwp_t *l)
+{
+#ifndef NOFPU
+	if (!fpu_used_p(l) || l->l_fpcpu == NULL)
+		return;
+
+	struct cpu_info *ci = fp_lock();
+
+	/*
+	 * If the FPU state is on this CPU, save it to the PCB.  However
+	 * we leave the FPU attached to this LWP since this might just be
+	 * an inquiry.
+	 */
+	if (l->l_fpcpu == ci) {
+		KASSERT(ci->ci_fpcurlwp == l);
+		mips_fpu_state_save(l, false);
+		fp_unlock();
+		return;
+	}
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Our FP state is on another CPU so we need send it an IPI
+	 * to get it to save it.  That CPU will broadcast when it has
+	 * saved the FP state and released the FPU.
+	 */
+	kpreempt_enable();
+	while (l->l_fpcpu != NULL) {
+		cpu_send_ipi(l->l_fpcpu, IPI_FPSAVE);
+		cv_wait(&fp_cv, &fp_mutex);
+	}
+	kpreempt_disable();
+#endif /* MULTIPROCESSOR */
+
+	fp_unlock();
+#endif /* !NOFPU */
+}
+
+void
+fpusave_cpu(struct cpu_info *ci)
+{
+#ifndef NOFPU
+	fp_lock();
+
+	/*
+	 * If the current FPU is dirty, save it.
+	 */
+	if (ci->ci_fpcurlwp->l_fpcpu == ci) {
+		mips_fpu_state_save(ci->ci_fpcurlwp, true);
+
+		/*
+		 * Release the FPU
+		 */
+		fpcpu_release(ci);
+	}
+
+	fp_unlock();
+#endif /* !NOFPU */
+}
+
+#ifndef NOFPU
+void
+mips_fpu_state_save(lwp_t *l, bool release)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
-	mips_fpreg_t * const fp = l->l_addr->u_pcb.pcb_fpregs.r_regs;
+	struct pcb * const pcb = lwp_getpcb(l);
+	mips_fpreg_t * const fp = pcb->pcb_fpregs.r_regs;
 	uint32_t status, fpcsr;
-
-#ifdef LOCKDEBUG
-	KASSERT(mutex_locked(&fp_mutex));
-#endif
 
 	/*
 	 * Don't do anything if the FPU is already off.
@@ -155,12 +291,7 @@ fpusave(struct lwp *l)
 	if ((tf->tf_regs[_R_SR] & MIPS_SR_COP_1_BIT) == 0)
 		return;
 
-	/*
-	 * this thread yielded the FPA.
-	 */
-	KASSERT(l->l_fpcpu == curcpu());
-	KASSERT(l->l_fpcpu->ci_fpcurlwp == l);
-	KASSERT(tf->tf_regs[_R_SR] & MIPS_SR_COP_1_BIT);	/* it should be on */
+	l->l_cpu->ci_ev_fpu_saves.ev_count++;
 
 	/*
 	 * enable COP1 to read FPCSR register.
@@ -175,7 +306,7 @@ fpusave(struct lwp *l)
 		"cfc1	%1, $31"	"\n\t"
 		"cfc1	%1, $31"	"\n\t"
 		".set reorder"		"\n\t"
-		".set at" 
+		".set at"
 	    :	"=&r" (status), "=r"(fpcsr)
 	    :	"r"(tf->tf_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR|MIPS_SR_KX|MIPS_SR_INT_IE)),
 		"n"(MIPS_COP_0_STATUS));
@@ -183,7 +314,9 @@ fpusave(struct lwp *l)
 	/*
 	 * Make sure we don't reenable FP when we return to userspace.
 	 */
-	tf->tf_regs[_R_SR] ^= MIPS_SR_COP_1_BIT;
+	if (release) {
+		tf->tf_regs[_R_SR] ^= MIPS_SR_COP_1_BIT;
+	}
 
 	/*
 	 * save FPCSR and FP register values.
@@ -273,49 +406,24 @@ fpusave(struct lwp *l)
 	 */
 	__asm volatile ("mtc0 %0, $%1" :: "r"(status), "n"(MIPS_COP_0_STATUS));
 }
-#endif /* !NOFPU */
 
 void
-fpuload_lwp(struct lwp *l)
+mips_fpu_state_load(lwp_t *l, bool used)
 {
-#ifndef NOFPU
 	struct trapframe * const tf = l->l_md.md_utf;
-	mips_fpreg_t * const fp = l->l_addr->u_pcb.pcb_fpregs.r_regs;
+	struct pcb * const pcb = lwp_getpcb(l);
+	mips_fpreg_t * const fp = pcb->pcb_fpregs.r_regs;
 	uint32_t status;
 	uint32_t fpcsr;
 
-	KASSERT(l == curlwp);
-
-	struct cpu_info * const ci = fp_lock();
-	/*
-	 * Does this CPU already have our FPU state loaded?
-	 */
-	if (l->l_fpcpu == ci) {
-		KASSERT(ci->ci_fpcurlwp == l);
-		tf->tf_regs[_R_SR] |= MIPS_SR_COP_1_BIT;
-		fp_unlock();
-		return;
-	}
-#ifdef MULTIPROCESSOR
-	/*
-	 * While another CPU has our FPU state, keep asking for it to free it.
-	 */
-	while (l->l_fpcpu != NULL) {
-		cpu_send_ipi(l->l_fpcpu, IPI_FPSAVE);
-		cv_wait(&fp_cv, &fp_mutex);
-	}
-#endif /* MULTIPROCESSOR */
-	KASSERT(ci->ci_fpcurlwp != l);
-	/*
-	 * Save the current FPU state, if any.
-	 */
-	if (ci->ci_fpcurlwp->l_fpcpu == ci)
-		fpusave(ci->ci_fpcurlwp);
+	l->l_cpu->ci_ev_fpu_loads.ev_count++;
 
 	/*
-	 * Now acquire this CPU's FPU for this lwp.
+	 * If this is the first time the state is being loaded, zero it first.
 	 */
-	fpcpu_acquire(l);
+	if (__predict_false(!used)) {
+		memset(&pcb->pcb_fpregs, 0, sizeof(pcb->pcb_fpregs));
+	}
 
 	/*
 	 * Enable the FP when this lwp return to userspace.
@@ -434,82 +542,5 @@ fpuload_lwp(struct lwp *l)
 		".set at"
 	    ::	"r"(fpcsr &~ MIPS_FPU_EXCEPTION_BITS), "r"(status),
 		"n"(MIPS_COP_0_STATUS));
-
-	fp_unlock();
+}
 #endif /* !NOFPU */
-}
-
-void
-fpudiscard_lwp(struct lwp *l)
-{
-#ifndef NOFPU
-	if (l->l_fpcpu != NULL) {
-		fp_lock();
-		KASSERT(l->l_fpcpu->ci_fpcurlwp == l);
-		l->l_md.md_utf->tf_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
-		fpcpu_release(l->l_fpcpu);
-		fp_unlock();
-	}
-#endif
-}
-
-void
-fpusave_lwp(struct lwp *l)
-{
-#ifndef NOFPU
-	struct cpu_info *ci;
-
-	if (l->l_fpcpu == NULL)
-		return;
-
-	ci = fp_lock();
-
-	/*
-	 * If the FPU state is on this CPU, save it to the PCB.  However
-	 * we leave the FPU attached to this LWP since this might just be
-	 * an inquiry.
-	 */
-	if (l->l_fpcpu == ci) {
-		KASSERT(ci->ci_fpcurlwp == l);
-		fpusave(l);
-		fp_unlock();
-		return;
-	}
-
-#ifdef MULTIPROCESSOR
-	/*
-	 * Our FP state is on another CPU so we need send it an IPI
-	 * to get it to save it.  That CPU will broadcast when it has
-	 * saved the FP state and released the FPU.
-	 */
-	do {
-		cpu_send_ipi(l->l_fpcpu, IPI_FPSAVE);
-		cv_wait(&fp_cv, &fp_mutex);
-	} while (l->l_fpcpu != NULL);
-#endif /* MULTIPROCESSOR */
-
-	fp_unlock();
-#endif /* !NOFPU */
-}
-
-void
-fpusave_cpu(struct cpu_info *ci)
-{
-#ifndef NOFPU
-	fp_lock();
-
-	/*
-	 * If the current FPU is dirty, save it.
-	 */
-	if (ci->ci_fpcurlwp->l_fpcpu == ci) {
-		fpusave(ci->ci_fpcurlwp);
-
-		/*
-		 * Release the FPU
-		 */
-		fpcpu_release(ci);
-	}
-
-	fp_unlock();
-#endif /* !NOFPU */
-}

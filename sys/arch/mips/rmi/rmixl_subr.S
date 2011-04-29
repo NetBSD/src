@@ -1,4 +1,5 @@
-/*	$NetBSD: rmixl_subr.S,v 1.1.2.7 2010/04/13 18:15:16 cliff Exp $	*/
+/*	$NetBSD: rmixl_subr.S,v 1.1.2.8 2011/04/29 08:26:34 matt Exp $	*/
+
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,12 +37,16 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
+RCSID("$NetBSD: rmixl_subr.S,v 1.1.2.8 2011/04/29 08:26:34 matt Exp $");
+
 #include "assym.h"
 
-	.set	push
-        .set    noreorder
-        .set    mips64
-        .text
+#define RMIXL_COP_0_EIRR	_(9), 6
+#define RMIXL_COP_0_EIMR	_(9), 7
+
+	.set    noreorder
+	.set	arch=xlr
+	.text
 
 /*
  * read XLS Processor Control register
@@ -53,7 +58,7 @@ LEAF(rmixl_mfcr)
 #error O32 not supported
 #endif
 	j	ra
-	mfcr	v0, a0
+	 mfcr	v0, a0
 END(rmixl_mfcr)
 
 /*
@@ -66,8 +71,28 @@ LEAF(rmixl_mtcr)
 #error O32 not supported
 #endif
 	j	ra
-	mtcr	a1, a0
+	 mtcr	a1, a0
 END(rmixl_mtcr)
+
+/*
+ * void rmixl_eirr_ack(uint64_t eimr, uint64_t vecbit, uint64_t preserve)
+ *
+ *	ack in EIRR the irq we are about to handle
+ *	disable all interrupts to prevent a race that would allow
+ *	e.g. softints set from a higher interrupt getting
+ *	clobbered by the EIRR read-modify-write 
+ */
+LEAF(rmixl_eirr_ack)
+	dmtc0	zero, RMIXL_COP_0_EIMR	/* EIMR = 0 */
+	COP0_SYNC
+	dmfc0	a3, RMIXL_COP_0_EIRR	/* a3 = EIRR */
+	and	a3, a2			/* a3 &= preserve */
+	or	a3, a1			/* a3 |= vecbit */
+	dmtc0	a3, RMIXL_COP_0_EIRR	/* EIRR = a3 */
+	COP0_SYNC
+	dmtc0	a0, RMIXL_COP_0_EIMR	/* EIMR = eimr */
+	JR_HB_RA
+END(rmixl_eirr_ack)
 
 #ifdef MULTIPROCESSOR
 /*
@@ -108,9 +133,13 @@ END(rmixlfw_wakeup_cpu)
  */
 NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
 #ifdef _LP64
+	/*
+	 * reconstruct trampoline args addr:
+	 * sign-extend 32 bit KSEG0 address in a0
+	 * to make proper 64 bit KSEG0 addr
+	 */
+	sll		s0, a0, 0
 	li		t0, MIPS_SR_KX
-	li		t1, MIPS_KSEG0_START	/* reconstruct presumed upper half ... */
-	or		a0, a0, t1		/* ... of trampoline args addr */
 #else
 	li		t0, 0
 #endif
@@ -127,27 +156,25 @@ NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
 	/*
 	 * load our stack pointer from trampoline args
 	 */
-	REG_L		sp, 0*SZREG(a0)		/* XXX ta_sp */
+	REG_L		sp, 0*SZREG(s0)		/* XXX ta_sp */
 
 	/*
 	 * load our (idle) lwp from trampoline args
 	 * save in t8 reg dedicated as 'mips_curlwp'
 	 */
-	REG_L		t8, 1*SZREG(a0)		/* XXX ta_lwp */
+	REG_L		t8, 1*SZREG(s0)		/* XXX ta_lwp */
 
 	/*
 	 * load our ta_cpuinfo from trampoline args and pass in a1
 	 * jump to common mips cpu_trampoline
 	 */
-	REG_L		a1, 2*SZREG(a0)		/* XXX ta_cpuinfo */
+	REG_L		a1, 2*SZREG(s0)		/* XXX ta_cpuinfo */
+	dmtc0		a1, $22, 0		/* MIPS_COP_0_OSSCRATCH */
 	j		cpu_trampoline
-	 mtc0		a1, $22, 0		/* MIPS_COP_0_OSSCRATCH */
+	 nop
 
 	/* NOTREACHED */
 
 END(rmixl_cpu_trampoline)
 
 #endif	/* MULTIPROCESSOR */
-
-	.set	pop
-

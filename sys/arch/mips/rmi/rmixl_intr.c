@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.29 2011/02/08 22:37:36 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.30 2011/04/29 08:26:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,10 +64,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.29 2011/02/08 22:37:36 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.30 2011/04/29 08:26:32 matt Exp $");
 
-#include "opt_multiprocessor.h"
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 #define	__INTR_PRIVATE
 
 #include <sys/param.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.29 2011/02/08 22:37:36 cliff Ex
 #include <machine/intr.h>
 
 #include <mips/cpu.h>
+#include <mips/cpuset.h>
 #include <mips/locore.h>
 
 #include <mips/rmi/rmixlreg.h>
@@ -95,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.29 2011/02/08 22:37:36 cliff Ex
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
+//#define IOINTR_DEBUG 1
 #ifdef IOINTR_DEBUG
 int iointr_debug = IOINTR_DEBUG;
 # define DPRINTF(x)	do { if (iointr_debug) printf x ; } while(0)
@@ -290,15 +292,15 @@ static const char * const rmixl_vecnames_common[NINTRVECS] = {
 	"vec 5",		/*  5 */
 	"vec 6",		/*  6 */
 	"vec 7",		/*  7 */
-	"vec 8 (ipi)",		/*  8 */
-	"vec 9 (ipi)",		/*  9 */
-	"vec 10 (ipi)",		/* 10 */
-	"vec 11 (ipi)",		/* 11 */
-	"vec 12 (ipi)",		/* 12 */
-	"vec 13 (ipi)",		/* 13 */
-	"vec 14 (ipi)",		/* 14 */
-	"vec 15 (ipi)",		/* 15 */
-	"vec 16 (fmn)",		/* 16 */
+	"vec 8 (ipi 0)",	/*  8 */
+	"vec 9 (ipi 1)",	/*  9 */
+	"vec 10 (ipi 2)",	/* 10 */
+	"vec 11 (ipi 3)",	/* 11 */
+	"vec 12 (ipi 4)",	/* 12 */
+	"vec 13 (ipi 5)",	/* 13 */
+	"vec 14 (ipi 6)",	/* 14 */
+	"vec 15 (fmn)",		/* 15 */
+	"vec 16",		/* 16 */
 	"vec 17",		/* 17 */
 	"vec 18",		/* 18 */
 	"vec 19",		/* 19 */
@@ -350,14 +352,13 @@ static const char * const rmixl_vecnames_common[NINTRVECS] = {
 
 /*
  * mask of CPUs attached
- * while CPUs are attaching, we cast to volatile;
- * once they are attached, it's read-only so mp safe
+ * once they are attached, this var is read-only so mp safe
  */
 static uint32_t cpu_present_mask;
 
-static kmutex_t *rmixl_ipi_lock;  /* covers RMIXL_PIC_IPIBASE */
-static kmutex_t *rmixl_intr_lock; /* covers rest of PIC, and rmixl_intrhand[] */
-static rmixl_intrhand_t rmixl_intrhand[NINTRVECS];
+kmutex_t *rmixl_ipi_lock;  /* covers RMIXL_PIC_IPIBASE */
+kmutex_t *rmixl_intr_lock; /* covers rest of PIC, and rmixl_intrhand[] */
+rmixl_intrhand_t rmixl_intrhand[NINTRVECS];
 
 #ifdef DIAGNOSTIC
 static int rmixl_pic_init_done;
@@ -419,8 +420,9 @@ evbmips_intr_init(void)
 	/*
 	 * initialize (zero) all IRT Entries in the PIC
 	 */
-	for (int i=0; i < NIRTS; i++)
+	for (u_int i = 0; i < NIRTS; i++) {
 		rmixl_irt_init(i);
+	}
 
 	/*
 	 * disable watchdog NMI, timers
@@ -449,7 +451,7 @@ evbmips_intr_init(void)
 void
 rmixl_intr_init_clk(void)
 {
-	int vec = ffs(MIPS_INT_MASK_5 >> MIPS_INT_MASK_SHIFT) - 1;
+	const int vec = ffs(MIPS_INT_MASK_5 >> MIPS_INT_MASK_SHIFT) - 1;
 
 	mutex_enter(rmixl_intr_lock);
 
@@ -458,7 +460,6 @@ rmixl_intr_init_clk(void)
 		panic("%s: establish vec %d failed", __func__, vec);
 
 	mutex_exit(rmixl_intr_lock);
-	
 }
 
 #ifdef MULTIPROCESSOR
@@ -468,14 +469,11 @@ rmixl_intr_init_clk(void)
 void
 rmixl_intr_init_ipi(void)
 {
-	u_int ipi, vec;
-	void *ih;
-
 	mutex_enter(rmixl_intr_lock);
 
-	for (ipi=0; ipi < NIPIS; ipi++) {
-		vec = RMIXL_INTRVEC_IPI + ipi;
-		ih = rmixl_vec_establish(vec, -1, IPL_SCHED,
+	for (u_int ipi = 0; ipi < NIPIS; ipi++) {
+		const u_int vec = RMIXL_INTRVEC_IPI + ipi;
+		void * const ih = rmixl_vec_establish(vec, -1, IPL_SCHED,
 			rmixl_ipi_intr, (void *)(uintptr_t)ipi, true);
 		if (ih == NULL)
 			panic("%s: establish ipi %d at vec %d failed",
@@ -485,7 +483,6 @@ rmixl_intr_init_ipi(void)
 	mips_locoresw.lsw_send_ipi = rmixl_send_ipi;
 
 	mutex_exit(rmixl_intr_lock);
-
 }
 #endif 	/* MULTIPROCESSOR */
 
@@ -698,20 +695,24 @@ rmixl_irt_establish(int irt, int vec, int cpumask, rmixl_intr_trigger_t trigger,
 
 	irtc1  = RMIXL_PIC_IRTENTRYC1_VALID;
 	irtc1 |= RMIXL_PIC_IRTENTRYC1_GL;	/* local */
+	KASSERT((irtc1 & RMIXL_PIC_IRTENTRYC1_NMI) == 0);
 
 	if (trigger == RMIXL_TRIG_LEVEL)
 		irtc1 |= RMIXL_PIC_IRTENTRYC1_TRG;
+	KASSERT((irtc1 & RMIXL_PIC_IRTENTRYC1_NMI) == 0);
 
 	if ((polarity == RMIXL_POLR_FALLING) || (polarity == RMIXL_POLR_LOW))
 		irtc1 |= RMIXL_PIC_IRTENTRYC1_P;
+	KASSERT((irtc1 & RMIXL_PIC_IRTENTRYC1_NMI) == 0);
 
 	irtc1 |= vec;			/* vector in EIRR */
+	KASSERT((irtc1 & RMIXL_PIC_IRTENTRYC1_NMI) == 0);
 
 	/*
 	 * write IRT Entry to PIC
 	 */
-	DPRINTF(("%s: irt %d, irtc0 %#x, irtc1 %#x\n",
-		__func__, irt, irtc0, irtc1));
+	DPRINTF(("%s: vec %d (%#x), irt %d, irtc0 %#x, irtc1 %#x\n",
+		__func__, vec, vec, irt, irtc0, irtc1));
 	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC0(irt), irtc0);	/* low  word */
 	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC1(irt), irtc1);	/* high word */
 }
@@ -726,8 +727,8 @@ rmixl_vec_establish(int vec, int cpumask, int ipl,
 
 	KASSERT(mutex_owned(rmixl_intr_lock));
 
-	DPRINTF(("%s: vec %d, cpumask %#x, ipl %d, func %p, arg %p\n"
-			__func__, vec, cpumask, ipl, func, arg));
+	DPRINTF(("%s: vec %d cpumask %#x ipl %d func %p arg %p mpsafe %d\n",
+			__func__, vec, cpumask, ipl, func, arg, mpsafe));
 #ifdef DIAGNOSTIC
 	if (rmixl_pic_init_done == 0)
 		panic("%s: called before evbmips_intr_init", __func__);
@@ -844,9 +845,7 @@ void
 rmixl_intr_disestablish(void *cookie)
 {
 	rmixl_intrhand_t *ih = cookie;
-	int vec;
-
-	vec = ih->ih_vec;
+	const int vec = ih->ih_vec;
 
 	KASSERT(vec < NINTRVECS);
 	KASSERT(ih == &rmixl_intrhand[vec]);
@@ -872,7 +871,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 {
 	struct rmixl_cpu_softc *sc = (void *)curcpu()->ci_softc;
 
-	DPRINTF(("%s: cpu%ld: ipl %d, pc %#"PRIxVADDR", pending %#x\n",
+	DPRINTF(("%s: cpu%u: ipl %d, pc %#"PRIxVADDR", pending %#x\n",
 		__func__, cpu_number(), ipl, pc, pending));
 
 	/*
@@ -892,8 +891,8 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 		asm volatile("dmfc0 %0, $9, 7;" : "=r"(eimr));
 
 #ifdef IOINTR_DEBUG
-		printf("%s: eirr %#"PRIx64", eimr %#"PRIx64", mask %#"PRIx64"\n",
-			__func__, eirr, eimr, ipl_eimr_map[ipl-1]);
+		printf("%s: cpu%u: eirr %#"PRIx64", eimr %#"PRIx64", mask %#"PRIx64"\n",
+			__func__, cpu_number(), eirr, eimr, ipl_eimr_map[ipl-1]);
 #endif	/* IOINTR_DEBUG */
 
 		/*
@@ -916,18 +915,10 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 		KASSERT ((vecbit & RMIXL_EIRR_PRESERVE_MASK) == 0);
 
 		/*
-		 * ack in EIRR the irq we are about to handle
-		 * disable all interrupt to prevent a race that would allow
-		 * e.g. softints set from a higher interrupt getting
-		 * clobbered by the EIRR read-modify-write 
+		 * ack in EIRR, and in PIC if needed,
+		 * the irq we are about to handle
 		 */
-		asm volatile("dmtc0 $0, $9, 7;");
-		asm volatile("dmfc0 %0, $9, 6;" : "=r"(eirr));
-		eirr &= RMIXL_EIRR_PRESERVE_MASK;
-		eirr |= vecbit;
-		asm volatile("dmtc0 %0, $9, 6;" :: "r"(eirr));
-		asm volatile("dmtc0 %0, $9, 7;" :: "r"(eimr));
-
+		rmixl_eirr_ack(eimr, vecbit, RMIXL_EIRR_PRESERVE_MASK);
 		if (RMIXL_VECTOR_IS_IRT(vec))
 			RMIXL_PICREG_WRITE(RMIXL_PIC_INTRACK,
 				1 << RMIXL_VECTOR_IRT(vec));
@@ -937,6 +928,10 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 			if (ih->ih_mpsafe) {
 				(void)(*ih->ih_func)(ih->ih_arg);
 			} else {
+				KASSERTMSG(ipl == IPL_VM,
+				    ("%s: %s: ipl (%d) != IPL_VM for KERNEL_LOCK",
+				    __func__, sc->sc_vec_evcnts[vec].ev_name,
+				    ipl));
 				KERNEL_LOCK(1, NULL);
 				(void)(*ih->ih_func)(ih->ih_arg);
 				KERNEL_UNLOCK_ONE(NULL);
@@ -945,6 +940,11 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 			(void)(*ih->ih_func)(ih->ih_arg);
 #endif /* MULTIPROCESSOR */
 		}
+		KASSERT(ipl == ih->ih_ipl);
+		KASSERTMSG(curcpu()->ci_cpl >= ipl,
+		    ("%s: after %s: cpl (%d) < ipl %d",
+		    __func__, sc->sc_vec_evcnts[vec].ev_name,
+		    ipl, curcpu()->ci_cpl));
 		sc->sc_vec_evcnts[vec].ev_count++;
 	}
 }
@@ -958,9 +958,8 @@ rmixl_send_ipi(struct cpu_info *ci, int tag)
 	uint32_t thread = (uint32_t)(cpuid & __BITS(1,0));
 	uint64_t req = 1 << tag;
 	uint32_t r;
-	extern volatile mips_cpuset_t cpus_running;
 
-	if (! CPUSET_HAS(cpus_running, cpu_index(ci)))
+	if (! CPUSET_HAS_P(cpus_running, cpu_index(ci)))
 		return -1;
 
 	KASSERT((tag >= 0) && (tag < NIPIS));
@@ -981,11 +980,14 @@ static int
 rmixl_ipi_intr(void *arg)
 {
 	struct cpu_info * const ci = curcpu();
-	uint64_t ipi_mask;
+	const uint64_t ipi_mask = 1 << (uintptr_t)arg;
 
+	KASSERT(ci->ci_cpl >= IPL_SCHED);
 	KASSERT((uintptr_t)arg < NIPIS);
-	ipi_mask = 1 << (uintptr_t)arg;
-	KASSERT((ci->ci_request_ipis & ipi_mask) != 0);
+
+	/* if the request is clear, it was previously processed */
+	if ((ci->ci_request_ipis & ipi_mask) == 0)
+		return 0;
 
 	atomic_or_64(&ci->ci_active_ipis, ipi_mask);
 	atomic_and_64(&ci->ci_request_ipis, ~ipi_mask);

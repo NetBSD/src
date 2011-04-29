@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.14 2011/02/03 02:39:46 cliff Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.15 2011/04/29 08:26:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -65,49 +66,10 @@
  *
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah Hdr: trap.c 1.32 91/04/06
- *
- *	@(#)trap.c	8.5 (Berkeley) 1/11/94
- */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.14 2011/02/03 02:39:46 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.15 2011/04/29 08:26:30 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -117,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.14 2011/02/03 02:39:46 cliff Exp
 #include <sys/systm.h>
 #include <sys/endian.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
@@ -175,7 +136,9 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 	int code, error;
 #if defined(__mips_o32)
 	const int abi = _MIPS_BSD_API_O32;
-	KASSERTMSG(p->p_md.md_abi == abi, ("pid %d(%p): md_abi(%d) != abi(%d)", p->p_pid, p, p->p_md.md_abi, abi));
+	KASSERTMSG(p->p_md.md_abi == abi,
+	    ("pid %d(%p): md_abi(%d) != abi(%d)",
+	    p->p_pid, p, p->p_md.md_abi, abi));
 	size_t nregs = 4;
 #else
 	const int abi = p->p_md.md_abi;
@@ -420,6 +383,9 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 
 	if (__predict_false(p->p_trace_enabled))
 		trace_exit(code, &reg->r_regs[_R_V0], error);
+
+	KASSERT(l->l_blcnt == 0);
+	KASSERT(curcpu()->ci_biglock_count == 0);
 
 	userret(l);
 }

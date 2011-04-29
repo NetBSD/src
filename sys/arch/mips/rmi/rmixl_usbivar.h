@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_usbivar.h,v 1.1.2.1 2009/12/14 07:21:41 cliff Exp $	*/
+/*	$NetBSD: rmixl_usbivar.h,v 1.1.2.2 2011/04/29 08:26:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -44,7 +44,27 @@ struct rmixl_usbi_attach_args {
 	bus_dma_tag_t	usbi_dmat;
 };
 
-extern void *rmixl_usbi_intr_establish(void *, u_int, int (*)(void *), void *);
-extern void  rmixl_usbi_intr_disestablish(void *, void *);
+typedef struct rmixl_usbi_dispatch {
+	int (*func)(void *);
+	void *arg; 
+	struct evcnt count;
+} rmixl_usbi_dispatch_t;
+
+typedef struct rmixl_usbi_softc {
+	device_t		sc_dev;
+	bus_space_tag_t		sc_eb_bst;
+	bus_space_tag_t		sc_el_bst;
+	bus_addr_t		sc_addr;
+	bus_size_t		sc_size;
+	bus_dma_tag_t		sc_dmat;
+	device_t		sc_ohci_devs[2];
+	rmixl_usbi_dispatch_t	sc_dispatch[RMIXL_UB_INTERRUPT_MAX + 1];
+} rmixl_usbi_softc_t;
+
+
+#ifdef _KERNEL
+void *rmixl_usbi_intr_establish(void *, u_int, int (*)(void *), void *);
+void  rmixl_usbi_intr_disestablish(void *, void *);
+#endif
 
 #endif /* _MIPS_RMI_RMIXL_USBIVAR_H_ */

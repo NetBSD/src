@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.17 2010/04/20 22:08:39 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.18 2011/04/29 08:26:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.17 2010/04/20 22:08:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.18 2011/04/29 08:26:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.17 2010/04/20 22:08:39 matt Exp 
 #include <sys/mbuf.h>
 #include <sys/evcnt.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <mips/cache.h>
 #ifdef _LP64

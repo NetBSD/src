@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.8.96.1 2010/05/15 20:27:48 matt Exp $ */
+/*	$NetBSD: sysarch.h,v 1.8.96.2 2011/04/29 08:26:22 matt Exp $ */
 
 #ifndef _MIPS_SYSARCH_H_
 #define _MIPS_SYSARCH_H_
@@ -8,7 +8,6 @@
  */
 #define MIPS_CACHEFLUSH	0
 #define MIPS_CACHECTL	1
-#define MIPS_TINFOSET	2
 
 struct mips_cacheflush_args {
 	vaddr_t va;

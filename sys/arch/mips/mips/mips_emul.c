@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14.78.12 2010/12/29 00:50:29 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.14.78.13 2011/04/29 08:26:28 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,19 +27,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.12 2010/12/29 00:50:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.13 2011/04/29 08:26:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <mips/locore.h>
 #include <mips/mips_opcode.h>
 
-#include <machine/cpu.h>
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
+#include <mips/pcb.h>
 #include <mips/vmparam.h>			/* for VM_MAX_ADDRESS */
 #include <mips/trap.h>
 
@@ -239,7 +239,7 @@ mips_emul_inst(uint32_t status, uint32_t cause, vaddr_t opc,
 #endif
 	default:
 #ifdef DEBUG
-		printf("pid %d (%s): trap: bad insn %#"PRIxVADDR" cause %#x insn %#x\n", curproc->p_pid, curproc->p_comm, opc, cause, inst);
+		printf("pid %d (%s): trap: bad insn @ %#"PRIxVADDR" cause %#x insn %#x code %d\n", curproc->p_pid, curproc->p_comm, opc, cause, inst, code);
 #endif
 		tf->tf_regs[_R_CAUSE] = cause;
 		tf->tf_regs[_R_BADVADDR] = opc;
@@ -372,7 +372,9 @@ void
 mips_emul_special(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	ksiginfo_t ksi;
-	switch (((InstFmt)inst).RType.func) {
+	const InstFmt instfmt = { .word = inst };
+
+	switch (instfmt.RType.func) {
 	case OP_SYNC:
 		/* nothing */
 		break;
@@ -395,12 +397,13 @@ void
 mips_emul_special3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	ksiginfo_t ksi;
-	switch (((InstFmt)inst).RType.func) {
+	const InstFmt instfmt = { .word = inst };
+	switch (instfmt.RType.func) {
 	case OP_RDHWR:
-		switch (((InstFmt)inst).RType.rd) {
+		switch (instfmt.RType.rd) {
 		case 29:
-			tf->tf_regs[((InstFmt)inst).RType.rt] =
-			    curlwp->l_md.md_tinfo;
+			tf->tf_regs[instfmt.RType.rt] =
+			    (mips_reg_t)(intptr_t)curlwp->l_private;
 			break;
 		}
 		/* FALLTHROUGH */
@@ -413,7 +416,7 @@ mips_emul_special3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (void *)(intptr_t)tf->tf_regs[_R_PC];
 		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
-		break;
+		return;
 	}
 
 	update_pc(tf, cause);

@@ -28,11 +28,10 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.10 2011/04/29 08:26:28 matt Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.9 2011/02/05 06:00:13 cliff Exp $");
-
-#include "opt_multiprocessor.h"
 #include "opt_mips3_wired.h"
+#include "opt_multiprocessor.h"
 #include <sys/param.h>
 
 #include <uvm/uvm_extern.h>
@@ -44,9 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.9 2011/02/05 06:00:13 cliff Exp
 
 #define	INSN_LUI_P(insn)	(((insn) >> 26) == 017)
 #define	INSN_LW_P(insn)		(((insn) >> 26) == 043)
+#define	INSN_SW_P(insn)		(((insn) >> 26) == 053)
 #define	INSN_LD_P(insn)		(((insn) >> 26) == 067)
+#define	INSN_SD_P(insn)		(((insn) >> 26) == 077)
 
 #define INSN_LOAD_P(insn)	(INSN_LD_P(insn) || INSN_LW_P(insn))
+#define INSN_STORE_P(insn)	(INSN_SD_P(insn) || INSN_SW_P(insn))
 
 bool
 mips_fixup_exceptions(mips_fixup_callback_t callback)
@@ -65,10 +67,11 @@ mips_fixup_exceptions(mips_fixup_callback_t callback)
 	 * to compensate for using a negative offset for the lower half of
 	 * the value.
 	 */
-	const int32_t upper_addr = (addr & ~0xffff) + ((addr << 1) & 0x10000);
+	const int32_t upper_addr = (addr + 32768) & ~0xffff;
 
 	KASSERT((addr & ~0xfff) == ((addr + size - 1) & ~0xfff));
 
+	uint32_t lui_insn = 0;
 	for (uint32_t *insnp = start; insnp < end; insnp++) {
 		const uint32_t insn = *insnp;
 		if (INSN_LUI_P(insn)) {
@@ -79,40 +82,53 @@ mips_fixup_exceptions(mips_fixup_callback_t callback)
 			    __func__, (int32_t)(intptr_t)insnp,
 			    insn, lui_reg, offset);
 #endif
+			KASSERT(lui_reg == _R_K0 || lui_reg == _R_K1);
 			if (upper_addr == offset) {
 				lui_insnp = insnp;
+				lui_insn = insn;
 #ifdef DEBUG_VERBOSE
 				printf(" (maybe)");
 #endif
 			} else {
 				lui_insnp = NULL;
+				lui_insn = 0;
 			}
 #ifdef DEBUG_VERBOSE
 			printf("\n");
 #endif
-		} else if (lui_insnp != NULL && INSN_LOAD_P(insn)) {
+		} else if (lui_insn != 0
+			   && (INSN_LOAD_P(insn) || INSN_STORE_P(insn))) {
 			size_t base = (insn >> 21) & 31;
+#if defined(DIAGNOSTIC) || defined(DEBUG_VERBOSE)
 			size_t rt = (insn >> 16) & 31;
+#endif
 			int32_t load_addr = upper_addr + (int16_t)insn;
 			if (addr <= load_addr
 			    && load_addr < addr + size
-			    && base == lui_reg
-			    && rt == lui_reg) {
+			    && base == lui_reg) {
+				KASSERT(rt == _R_K0 || rt == _R_K1);
 #ifdef DEBUG_VERBOSE
 				printf("%s: %#x: insn %08x: %s r%zu, %%lo(%08x)(r%zu)\n",
 				    __func__, (int32_t)(intptr_t)insnp,
-				    insn, INSN_LW_P(insn) ? "lw" : "ld",
+				    insn,
+				    INSN_LOAD_P(insn)
+					? INSN_LW_P(insn) ? "lw" : "ld"
+					: INSN_SW_P(insn) ? "sw" : "sd",
 				    rt, load_addr, base);
 #endif
-				new_insns[0] = *lui_insnp;
+				new_insns[0] = lui_insn;
 				new_insns[1] = *insnp;
 				if ((callback)(load_addr, new_insns)) {
-					*lui_insnp = new_insns[0];
-					*insnp = new_insns[1];
+					if (lui_insnp) {
+						*lui_insnp = new_insns[0];
+						*insnp = new_insns[1];
+					} else if (new_insns[1] == 0) {
+						*insnp = new_insns[0];
+					} else {
+						*insnp = new_insns[1];
+					}
 					fixed = true;
 				}
-				lui_insnp = NULL;
-			} else if (rt == lui_reg) {
 				lui_insnp = NULL;
 			}
 		}
@@ -150,7 +166,9 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2])
 #ifdef DEBUG_VERBOSE
 	printf("%s: %08x: insn#1 %08x: %s r%u, %d(r%u)\n",
 	    __func__, (int32_t)load_addr, new_insns[0],
-	    INSN_LW_P(new_insns[0]) ? "lw" : "ld",
+	    INSN_LOAD_P(new_insns[0])
+		? INSN_LW_P(new_insns[0]) ? "lw" : "ld"
+		: INSN_LW_P(new_insns[0]) ? "sw" : "sd",
 	    (new_insns[0] >> 16) & 31,
 	    (int16_t)new_insns[0],
 	    (new_insns[0] >> 21) & 31);
@@ -212,7 +230,12 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 {
 #ifdef DEBUG
 	size_t fixups_done = 0;
-	uint32_t cycles = (CPUISMIPS3 ? mips3_cp0_count_read() : 0);
+	uint32_t cycles =
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+	    (CPUISMIPS3 ? mips3_cp0_count_read() : 0);
+#else
+	    0;
+#endif
 #endif
 	extern uint32_t __stub_start[], __stub_end[];
 
@@ -309,8 +332,10 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 		    sizeof(uint32_t [end - start]));
 
 #ifdef DEBUG
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 	if (CPUISMIPS3)
 		cycles = mips3_cp0_count_read() - cycles;
+#endif
 	printf("%s: %zu fixup%s done in %u cycles\n", __func__,
 	    fixups_done, fixups_done == 1 ? "" : "s",
 	    cycles);
@@ -329,9 +354,8 @@ u_int	tlb_record_asids(u_long *, uint32_t)		__stub;
 int	tlb_update(vaddr_t, uint32_t)			__stub;
 void	tlb_enter(size_t, vaddr_t, uint32_t)		__stub;
 void	tlb_read_indexed(size_t, struct tlbmask *)	__stub;
-#if defined(ENABLE_MIPS3_WIRED_MAP)
 void	tlb_write_indexed(size_t, const struct tlbmask *) __stub;
-#endif
+
 /*
  * wbflush isn't a stub since it gets overridden quite late
  * (after mips_vector_init returns).
@@ -398,16 +422,107 @@ tlb_read_indexed(size_t tlbno, struct tlbmask *tlb)
         (*mips_locore_jumpvec.ljv_tlb_read_indexed)(tlbno, tlb);
 }
 
-#if defined(ENABLE_MIPS3_WIRED_MAP)
 void
 tlb_write_indexed(size_t tlbno, const struct tlbmask *tlb)
 {
         (*mips_locore_jumpvec.ljv_tlb_write_indexed)(tlbno, tlb);
 }
-#endif
 
 void
 wbflush(void)
 {
         (*mips_locoresw.lsw_wbflush)();
 }
+
+#ifndef LOCKDEBUG
+void mutex_enter(kmutex_t *mtx)				__stub;
+void mutex_exit(kmutex_t *mtx)				__stub;
+void mutex_spin_enter(kmutex_t *mtx)			__stub;
+void mutex_spin_exit(kmutex_t *mtx)			__stub;
+
+void
+mutex_enter(kmutex_t *mtx)
+{
+
+	(*mips_locore_atomicvec.lav_mutex_enter)(mtx);
+}
+
+void
+mutex_exit(kmutex_t *mtx)
+{
+
+	(*mips_locore_atomicvec.lav_mutex_exit)(mtx);
+}
+
+void
+mutex_spin_enter(kmutex_t *mtx)
+{
+
+	(*mips_locore_atomicvec.lav_mutex_spin_enter)(mtx);
+}
+
+void
+mutex_spin_exit(kmutex_t *mtx)
+{
+
+	(*mips_locore_atomicvec.lav_mutex_spin_exit)(mtx);
+}
+#endif	/* !LOCKDEBUG */
+
+u_int _atomic_cas_uint(volatile u_int *, u_int, u_int)		__stub;
+u_long _atomic_cas_ulong(volatile u_long *, u_long, u_long)	__stub;
+
+u_int
+_atomic_cas_uint(volatile u_int *ptr, u_int old, u_int new)
+{
+
+	return (*mips_locore_atomicvec.lav_atomic_cas_uint)(ptr, old, new);
+}
+
+u_long
+_atomic_cas_ulong(volatile u_long *ptr, u_long old, u_long new)
+{
+
+	return (*mips_locore_atomicvec.lav_atomic_cas_ulong)(ptr, old, new);
+}
+
+__strong_alias(atomic_cas_uint, _atomic_cas_uint)
+__strong_alias(atomic_cas_uint_ni, _atomic_cas_uint)
+__strong_alias(_atomic_cas_32, _atomic_cas_uint)
+__strong_alias(_atomic_cas_32_ni, _atomic_cas_uint)
+__strong_alias(atomic_cas_32, _atomic_cas_uint)
+__strong_alias(atomic_cas_32_ni, _atomic_cas_uint)
+__strong_alias(atomic_cas_ptr, _atomic_cas_ulong)
+__strong_alias(atomic_cas_ptr_ni, _atomic_cas_ulong)
+__strong_alias(atomic_cas_ulong, _atomic_cas_ulong)
+__strong_alias(atomic_cas_ulong_ni, _atomic_cas_ulong)
+#ifdef _LP64
+__strong_alias(atomic_cas_64, _atomic_cas_ulong)
+__strong_alias(atomic_cas_64_ni, _atomic_cas_ulong)
+__strong_alias(_atomic_cas_64, _atomic_cas_ulong)
+__strong_alias(_atomic_cas_64_ni, _atomic_cas_ulong)
+#endif
+
+int	ucas_uint(volatile u_int *, u_int, u_int, u_int *)	__stub;
+int	ucas_ulong(volatile u_long *, u_long, u_long, u_long *)	__stub;
+
+int
+ucas_uint(volatile u_int *ptr, u_int old, u_int new, u_int *retp)
+{
+
+	return (*mips_locore_atomicvec.lav_ucas_uint)(ptr, old, new, retp);
+}
+__strong_alias(ucas_32, ucas_uint);
+__strong_alias(ucas_int, ucas_uint);
+
+int
+ucas_ulong(volatile u_long *ptr, u_long old, u_long new, u_long *retp)
+{
+
+	return (*mips_locore_atomicvec.lav_ucas_ulong)(ptr, old, new, retp);
+}
+__strong_alias(ucas_ptr, ucas_ulong);
+__strong_alias(ucas_long, ucas_ulong);
+#ifdef _LP64
+__strong_alias(ucas_64, ucas_ulong);
+#endif

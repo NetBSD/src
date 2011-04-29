@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ohci.c,v 1.1.2.4 2010/03/21 21:24:48 cliff Exp $	*/
+/*	$NetBSD: rmixl_ohci.c,v 1.1.2.5 2011/04/29 08:26:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.1.2.4 2010/03/21 21:24:48 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.1.2.5 2011/04/29 08:26:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,9 @@ rmixl_ohci_match(device_t parent, cfdata_t match, void *aux)
 void
 rmixl_ohci_attach(device_t parent, device_t self, void *aux)
 {
-	ohci_softc_t *sc = device_private(self);
-	struct rmixl_usbi_attach_args *usbi = aux;
+	ohci_softc_t * const sc = device_private(self);
+	rmixl_usbi_softc_t * const psc = device_private(parent);
+	struct rmixl_usbi_attach_args * const usbi = aux;
 	void *ih = NULL;
 	uint32_t r;
 	usbd_status status;
@@ -126,7 +127,14 @@ rmixl_ohci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	if (psc->sc_ohci_devs[0] == NULL) {
+		psc->sc_ohci_devs[0] = self;
+	} else if (psc->sc_ohci_devs[1] == NULL) {
+		psc->sc_ohci_devs[1] = self;
+	} else {
+		panic("%s: too many ohci devices", __func__);
+	}
+
 	/* Attach USB device */
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
 }
-

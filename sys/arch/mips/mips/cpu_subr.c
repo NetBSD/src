@@ -28,32 +28,33 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.17 2011/04/29 08:26:24 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.16 2011/02/08 19:18:22 cliff Exp $");
-
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/atomic.h>
+#include <sys/device.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/bitops.h>
 #include <sys/idle.h>
+#include <sys/xcall.h>
 #ifdef KERN_SA
 #include <sys/sa.h>
 #include <sys/savar.h>
 #endif
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <mips/locore.h>
 #include <mips/regnum.h>
+#include <mips/pcb.h>
 #include <mips/cache.h>
 #include <mips/frame.h>
 #include <mips/userret.h>
@@ -92,20 +93,19 @@ struct cpu_info cpu_info_store
 
 #ifdef MULTIPROCESSOR
 
-volatile mips_cpuset_t cpus_running = 1;
-volatile mips_cpuset_t cpus_hatched = 1;
-volatile mips_cpuset_t cpus_paused = 0;
-volatile mips_cpuset_t cpus_resumed = 0;
-volatile mips_cpuset_t cpus_halted = 0;
+volatile __cpuset_t cpus_running = 1;
+volatile __cpuset_t cpus_hatched = 1;
+volatile __cpuset_t cpus_paused = 0;
+volatile __cpuset_t cpus_resumed = 0;
+volatile __cpuset_t cpus_halted = 0;
 
-static int  cpu_ipi_wait(volatile mips_cpuset_t *, u_long);
-static void cpu_ipi_error(const char *, mips_cpuset_t, mips_cpuset_t);
-
+static int  cpu_ipi_wait(volatile __cpuset_t *, u_long);
+static void cpu_ipi_error(const char *, __cpuset_t, __cpuset_t);
 
 static struct cpu_info *cpu_info_last = &cpu_info_store;
 
 struct cpu_info *
-cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_node_id,
+cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	cpuid_t cpu_core_id, cpuid_t cpu_smt_id)
 {
 	vaddr_t cpu_info_offset = (vaddr_t)&cpu_info_store & PAGE_MASK; 
@@ -143,7 +143,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_node_id,
 	}
 
 	ci->ci_cpuid = cpu_id;
-	ci->ci_data.cpu_node_id = cpu_node_id;
+	ci->ci_data.cpu_package_id = cpu_package_id;
 	ci->ci_data.cpu_core_id = cpu_core_id;
 	ci->ci_data.cpu_smt_id = cpu_smt_id;
 	ci->ci_cpu_freq = cpu_info_store.ci_cpu_freq;
@@ -151,6 +151,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_node_id,
         ci->ci_cycles_per_hz = cpu_info_store.ci_cycles_per_hz;
         ci->ci_divisor_delay = cpu_info_store.ci_divisor_delay;
         ci->ci_divisor_recip = cpu_info_store.ci_divisor_recip;
+	ci->ci_cpuwatch_count = cpu_info_store.ci_cpuwatch_count;
 
 	/*
 	 * Attach its TLB info (which must be direct-mapped)
@@ -191,9 +192,33 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_node_id,
 }
 #endif /* MULTIPROCESSOR */
 
+static void
+cpu_hwrena_setup(void)
+{
+#if (MIPS32R2 + MIPS64R2) > 0
+	const int cp0flags = mips_options.mips_cpu->cpu_cp0flags;
+	if ((cp0flags & MIPS_CP0FL_USE) == 0)
+		return;
+
+	if (cp0flags & MIPS_CP0FL_HWRENA) {
+		mipsNN_cp0_hwrena_write(
+		    MIPS_HWRENA_UL
+		    |MIPS_HWRENA_CCRES
+		    |MIPS_HWRENA_CC
+		    |MIPS_HWRENA_SYNCI_STEP
+		    |MIPS_HWRENA_CPUNUM);
+		if (cp0flags & MIPS_CP0FL_USERLOCAL) {
+			mipsNN_cp0_userlocal_write(curlwp->l_private);
+		}
+	}
+#endif
+}
+
 void
 cpu_attach_common(device_t self, struct cpu_info *ci)
 {
+	const char * const xname = device_xname(self);
+
 	/*
 	 * Cross link cpu_info and its device together
 	 */
@@ -201,12 +226,24 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 	self->dv_private = ci;
 	KASSERT(ci->ci_idepth == 0);
 
-	evcnt_attach_dynamic(&ci->ci_count_compare_evcnt,
-		EVCNT_TYPE_INTR, NULL, device_xname(self),
+	evcnt_attach_dynamic(&ci->ci_ev_count_compare,
+		EVCNT_TYPE_INTR, NULL, xname,
 		"int 5 (clock)");
-	evcnt_attach_dynamic(&ci->ci_count_compare_missed_evcnt,
-		EVCNT_TYPE_INTR, NULL, device_xname(self),
+	evcnt_attach_dynamic(&ci->ci_ev_count_compare_missed,
+		EVCNT_TYPE_INTR, NULL, xname,
 		"int 5 (clock) missed");
+	evcnt_attach_dynamic(&ci->ci_ev_fpu_loads,
+		EVCNT_TYPE_MISC, NULL, xname,
+		"fpu loads");
+	evcnt_attach_dynamic(&ci->ci_ev_fpu_saves,
+		EVCNT_TYPE_MISC, NULL, xname,
+		"fpu saves");
+	evcnt_attach_dynamic(&ci->ci_ev_tlbmisses,
+		EVCNT_TYPE_TRAP, NULL, xname,
+		"tlb misses");
+
+	if (ci == &cpu_info_store)
+		pmap_tlb_info_evcnt_attach(ci->ci_tlb_info);
 
 #ifdef MULTIPROCESSOR
 	if (ci != &cpu_info_store) {
@@ -219,16 +256,16 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 		cpu_info_last = ci;
 	}
 	evcnt_attach_dynamic(&ci->ci_evcnt_synci_activate_rqst,
-	    EVCNT_TYPE_MISC, NULL, device_xname(self),
+	    EVCNT_TYPE_MISC, NULL, xname,
 	    "syncicache activate request");
 	evcnt_attach_dynamic(&ci->ci_evcnt_synci_deferred_rqst,
-	    EVCNT_TYPE_MISC, NULL, device_xname(self),
+	    EVCNT_TYPE_MISC, NULL, xname,
 	    "syncicache deferred request");
 	evcnt_attach_dynamic(&ci->ci_evcnt_synci_ipi_rqst,
-	    EVCNT_TYPE_MISC, NULL, device_xname(self),
+	    EVCNT_TYPE_MISC, NULL, xname,
 	    "syncicache ipi request");
 	evcnt_attach_dynamic(&ci->ci_evcnt_synci_onproc_rqst,
-	    EVCNT_TYPE_MISC, NULL, device_xname(self),
+	    EVCNT_TYPE_MISC, NULL, xname,
 	    "syncicache onproc request");
 
 	/*
@@ -253,6 +290,10 @@ cpu_startup_common(void)
 	char pbuf[9];	/* "99999 MB" */
 
 	fpu_init();
+
+	pmap_tlb_info_evcnt_attach(&pmap_tlb0_info);
+
+	cpu_hwrena_setup();
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -362,21 +403,27 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	gr[_REG_CAUSE] = tf->tf_regs[_R_CAUSE];
 	gr[_REG_EPC]   = tf->tf_regs[_R_PC];
 	gr[_REG_SR]    = tf->tf_regs[_R_SR];
+#ifdef __HAVE_CPU_LWP_SETPRIVATE
+	mcp->_mc_tlsbase = (intptr_t)l->l_private;
+#endif
 
 	if ((ras_pc = (intptr_t)ras_lookup(l->l_proc,
 	    (void *) (intptr_t)gr[_REG_EPC])) != -1)
 		gr[_REG_EPC] = ras_pc;
 
 	*flags |= _UC_CPU;
+#ifdef __HAVE_CPU_LWP_SETPRIVATE
+	*flags |= _UC_TLSBASE;
+#endif
 
 	/* Save floating point register context, if any. */
-	if (l->l_md.md_flags & MDP_FPUSED) {
+	if (fpu_used_p(l)) {
 		size_t fplen;
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
 		 */
-		fpusave_lwp(l);
+		fpu_save_lwp(l);
 
 		/*
 		 * The PCB FP regs struct includes the FP CSR, so use the
@@ -391,7 +438,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 			fplen = sizeof(struct fpreg_oabi);
 		}
 #endif
-		memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_fpregs, fplen);
+		struct pcb * const pcb = lwp_getpcb(l);
+		memcpy(&mcp->__fpregs, &pcb->pcb_fpregs, fplen);
 		*flags |= _UC_FPU;
 	}
 }
@@ -427,12 +475,20 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		/* Do not restore SR. */
 	}
 
+#ifdef __HAVE_CPU_LWP_SETPRIVATE
+	/* Restore the private thread context */
+	if (flags & _UC_TLSBASE) {
+		lwp_setprivate(l, (void *)(intptr_t)mcp->_mc_tlsbase);
+	}
+#endif
+
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
 		size_t fplen;
 
 		/* Disable the FPU contents. */
-		fpudiscard_lwp(l);
+		KASSERT(curlwp == l);
+		fpu_discard();
 
 #if !defined(__mips_o32)
 		if (_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi)) {
@@ -447,7 +503,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		 * The PCB FP regs struct includes the FP CSR, so use the
 		 * proper size of fpreg when copying.
 		 */
-		memcpy(&l->l_addr->u_pcb.pcb_fpregs, &mcp->__fpregs, fplen);
+		struct pcb * const pcb = lwp_getpcb(l);
+		memcpy(&pcb->pcb_fpregs, &mcp->__fpregs, fplen);
 	}
 
 	mutex_enter(p->p_lock);
@@ -556,23 +613,27 @@ cpu_kpreempt_enter(uintptr_t where, int s)
 {
         KASSERT(kpreempt_disabled());
 
-	if (where == 0) {
+#if 0
+	if (where == (intptr_t)-2) {
+		KASSERT(curcpu()->ci_mtx_count == 0);
 		/*
-		 * We are called from KPREEMPT_ENABLE().  If we are at IPL_NONE,
-		 * of course we can be preempted.  If we aren't, ask for a
-		 * softint so that kern_intr can call kpreempt.
+		 * We must be called via kern_intr (which already checks for
+		 * IPL_NONE so of course we call be preempted).
 		 */
-		if (s == IPL_NONE)
-			return true;
-		softint_trigger(SOFTINT_KPREEMPT);
-		return false;
+		return true;
 	}
-
 	/*
-	 * We must be called via kern_intr (which already checks for IPL_NONE
-	 * so of course we call be preempted).
+	 * We are called from KPREEMPT_ENABLE().  If we are at IPL_NONE,
+	 * of course we can be preempted.  If we aren't, ask for a
+	 * softint so that kern_intr can call kpreempt.
 	 */
-	return true;
+	if (s == IPL_NONE) {
+		KASSERT(curcpu()->ci_mtx_count == 0);
+		return true;
+	}
+	softint_trigger(SOFTINT_KPREEMPT);
+#endif
+	return false;
 }
 
 void
@@ -603,6 +664,9 @@ cpu_idle(void)
 	struct cpu_info * const ci = curcpu();
 
 	while (!ci->ci_want_resched) {
+#ifdef __HAVE_FAST_SOFTINTS
+		KASSERT(ci->ci_data.cpu_softints == 0);
+#endif
 		(*mach_idle)();
 	}
 }
@@ -627,17 +691,17 @@ cpu_broadcast_ipi(int tag)
 }
 
 void
-cpu_multicast_ipi(mips_cpuset_t cpuset, int tag)
+cpu_multicast_ipi(__cpuset_t cpuset, int tag)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
 	CPUSET_DEL(cpuset, cpu_index(curcpu()));
-	if (CPUSET_EMPTY(cpuset))
+	if (CPUSET_EMPTY_P(cpuset))
 		return;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (CPUSET_HAS(cpuset, cpu_index(ci))) {
+		if (CPUSET_HAS_P(cpuset, cpu_index(ci))) {
 			CPUSET_DEL(cpuset, cpu_index(ci));
 			(void)cpu_send_ipi(ci, tag);
 		}
@@ -652,22 +716,22 @@ cpu_send_ipi(struct cpu_info *ci, int tag)
 }
 
 static void
-cpu_ipi_error(const char *s, mips_cpuset_t succeeded, mips_cpuset_t expected)
+cpu_ipi_error(const char *s, __cpuset_t succeeded, __cpuset_t expected)
 {
 	CPUSET_SUB(expected, succeeded);
-	if (!CPUSET_EMPTY(expected)) {
+	if (!CPUSET_EMPTY_P(expected)) {
 		printf("Failed to %s:", s);
 		do {
 			int index = CPUSET_NEXT(expected);
 			CPUSET_DEL(expected, index);
 			printf(" cpu%d", index);
-		} while(!CPUSET_EMPTY(expected));
+		} while (!CPUSET_EMPTY_P(expected));
 		printf("\n");
 	}
 }
 
 static int
-cpu_ipi_wait(volatile mips_cpuset_t *watchset, u_long mask)
+cpu_ipi_wait(volatile __cpuset_t *watchset, u_long mask)
 {
 	u_long limit = curcpu()->ci_cpu_freq;	/* some finite amount of time */
 
@@ -700,14 +764,14 @@ cpu_halt(void)
 void
 cpu_halt_others(void)
 {
-	mips_cpuset_t cpumask, cpuset;
+	__cpuset_t cpumask, cpuset;
 
 	CPUSET_ASSIGN(cpuset, cpus_running);
 	CPUSET_DEL(cpuset, cpu_index(curcpu()));
 	CPUSET_ASSIGN(cpumask, cpuset);
 	CPUSET_SUB(cpuset, cpus_halted);
 
-	if (CPUSET_EMPTY(cpuset))
+	if (CPUSET_EMPTY_P(cpuset))
 		return;
 
 	cpu_multicast_ipi(cpuset, IPI_HALT);
@@ -735,20 +799,17 @@ cpu_pause(struct reg *regsp)
 		CPUSET_ADD(cpus_paused, index);
 		do {
 			;
-		} while(CPUSET_HAS(cpus_paused, index));
+		} while (CPUSET_HAS_P(cpus_paused, index));
 		CPUSET_ADD(cpus_resumed, index);
 
 #if defined(DDB)
 		if (ddb_running_on_this_cpu_p())
 			cpu_Debugger();
-		if (ddb_running_on_any_cpu())
+		if (ddb_running_on_any_cpu_p())
 			continue;
 #endif
 		break;
 	}
-#if defined(DDB) && defined(MIPS_DDB_WATCH)
-	db_mach_watch_set_all();
-#endif
 
 	splx(s);
 }
@@ -759,12 +820,12 @@ cpu_pause(struct reg *regsp)
 void
 cpu_pause_others(void)
 {
-	mips_cpuset_t cpuset;
+	__cpuset_t cpuset;
 
 	CPUSET_ASSIGN(cpuset, cpus_running);
 	CPUSET_DEL(cpuset, cpu_index(curcpu()));
 
-	if (CPUSET_EMPTY(cpuset))
+	if (CPUSET_EMPTY_P(cpuset))
 		return;
 
 	cpu_multicast_ipi(cpuset, IPI_SUSPEND);
@@ -791,7 +852,7 @@ cpu_resume(int index)
 void
 cpu_resume_others(void)
 {
-	mips_cpuset_t cpuset;
+	__cpuset_t cpuset;
 
 	CPUSET_CLEAR(cpus_resumed);
 	CPUSET_ASSIGN(cpuset, cpus_paused);
@@ -806,9 +867,10 @@ int
 cpu_is_paused(int index)
 {
 
-	return CPUSET_HAS(cpus_paused, index);
+	return CPUSET_HAS_P(cpus_paused, index);
 }
 
+#ifdef DDB
 void
 cpu_debug_dump(void)
 {
@@ -818,11 +880,11 @@ cpu_debug_dump(void)
 
 	db_printf("CPU CPUID STATE CPUINFO            CPL INT MTX IPIS\n");
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		hatched = (CPUSET_HAS(cpus_hatched, cpu_index(ci)) ? 'H' : '-');
-		running = (CPUSET_HAS(cpus_running, cpu_index(ci)) ? 'R' : '-');
-		paused  = (CPUSET_HAS(cpus_paused,  cpu_index(ci)) ? 'P' : '-');
-		resumed = (CPUSET_HAS(cpus_resumed, cpu_index(ci)) ? 'r' : '-');
-		halted  = (CPUSET_HAS(cpus_halted,  cpu_index(ci)) ? 'h' : '-');
+		hatched = (CPUSET_HAS_P(cpus_hatched, cpu_index(ci)) ? 'H' : '-');
+		running = (CPUSET_HAS_P(cpus_running, cpu_index(ci)) ? 'R' : '-');
+		paused  = (CPUSET_HAS_P(cpus_paused,  cpu_index(ci)) ? 'P' : '-');
+		resumed = (CPUSET_HAS_P(cpus_resumed, cpu_index(ci)) ? 'r' : '-');
+		halted  = (CPUSET_HAS_P(cpus_halted,  cpu_index(ci)) ? 'h' : '-');
 		db_printf("%3d 0x%03lx %c%c%c%c%c %p "
 			"%3d %3d %3d "
 			"0x%02" PRIx64 "/0x%02" PRIx64 "\n",
@@ -832,6 +894,7 @@ cpu_debug_dump(void)
 			ci->ci_active_ipis, ci->ci_request_ipis);
 	}
 }
+#endif
 
 void
 cpu_hatch(struct cpu_info *ci)
@@ -845,6 +908,11 @@ cpu_hatch(struct cpu_info *ci)
 	mips3_cp0_wired_write(0);
 	tlb_invalidate_all();
 	mips3_cp0_wired_write(ti->ti_wired);
+
+	/*
+	 * Setup HWRENA and USERLOCAL COP0 registers (MIPSxxR2).
+	 */
+	cpu_hwrena_setup();
 
 	/*
 	 * If we are using register zero relative addressing to access cpu_info
@@ -876,7 +944,7 @@ cpu_hatch(struct cpu_info *ci)
 	/*
 	 * Now wait to be set free!
 	 */
-	while (! CPUSET_HAS(cpus_running, cpu_index(ci))) {
+	while (! CPUSET_HAS_P(cpus_running, cpu_index(ci))) {
 		/* spin, spin, spin */
 	}
 
@@ -888,6 +956,12 @@ cpu_hatch(struct cpu_info *ci)
 	ci->ci_next_cp0_clk_intr = ci->ci_data.cpu_cc_skew + ci->ci_cycles_per_hz;
 	mips3_cp0_compare_write(ci->ci_next_cp0_clk_intr);
 	ci->ci_data.cpu_cc_skew = 0;
+
+	/*
+	 * Let this CPU do its own post-running initialization
+	 * (for things that have to be done on the local CPU).
+	 */
+	(*mips_locoresw.lsw_cpu_run)(ci);
 
 	/*
 	 * Now turn on interrupts.
@@ -912,7 +986,7 @@ cpu_boot_secondary_processors(void)
 		/*
 		 * Skip this CPU if it didn't sucessfully hatch.
 		 */
-		if (! CPUSET_HAS(cpus_hatched, cpu_index(ci)))
+		if (! CPUSET_HAS_P(cpus_hatched, cpu_index(ci)))
 			continue;
 
 		ci->ci_data.cpu_cc_skew = mips3_cp0_count_read();
@@ -945,3 +1019,153 @@ cpu_vmspace_exec(lwp_t *l, vaddr_t start, vaddr_t end)
 	}
 }
 #endif
+
+#ifdef __HAVE_CPU_LWP_SETPRIVATE
+int
+cpu_lwp_setprivate(lwp_t *l, void *v)
+{
+#if (MIPS32R2 + MIPS64R2) > 0
+	if (l == curlwp
+	    && (mips_options.mips_cpu->cpu_cp0flags & MIPS_CP0FL_USERLOCAL)) {
+		mipsNN_cp0_userlocal_write(v);
+	}
+#endif
+	return 0;
+}
+#endif
+
+
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+
+#if (CPUWATCH_MAX != 8)
+# error CPUWATCH_MAX
+#endif
+
+/*
+ * cpuwatch_discover - determine how many COP0 watchpoints this CPU supports
+ */
+u_int
+cpuwatch_discover(void)
+{
+	int i;
+
+	for (i=0; i < CPUWATCH_MAX; i++) {
+		uint32_t watchhi = mipsNN_cp0_watchhi_read(i);
+		if ((watchhi & __BIT(31)) == 0)	/* test 'M' bit */
+			break;
+	}
+	return i + 1;
+}
+
+void
+cpuwatch_free(cpu_watchpoint_t *cwp)
+{
+#ifdef DIAGNOSTIC
+	struct cpu_info * const ci = curcpu();
+	KASSERT(cwp >= &ci->ci_cpuwatch_tab[0] &&
+		cwp <= &ci->ci_cpuwatch_tab[ci->ci_cpuwatch_count-1]);
+#endif
+	cwp->cw_mode = 0;
+	cwp->cw_asid = 0;
+	cwp->cw_addr = 0;
+	cpuwatch_clr(cwp);
+}
+
+/*
+ * cpuwatch_alloc
+ * 	find an empty slot
+ *	no locking for the table since it is CPU private
+ */
+cpu_watchpoint_t *
+cpuwatch_alloc(void)
+{
+	struct cpu_info * const ci = curcpu();
+	cpu_watchpoint_t *cwp;
+
+	for (int i=0; i < ci->ci_cpuwatch_count; i++) {
+		cwp = &ci->ci_cpuwatch_tab[i];
+		if ((cwp->cw_mode & CPUWATCH_RWX) == 0)
+			return cwp;
+	}
+	return NULL;
+}
+
+
+void
+cpuwatch_set_all(void)
+{
+	struct cpu_info * const ci = curcpu();
+	cpu_watchpoint_t *cwp;
+	int i;
+
+	for (i=0; i < ci->ci_cpuwatch_count; i++) {
+		cwp = &ci->ci_cpuwatch_tab[i];
+		if ((cwp->cw_mode & CPUWATCH_RWX) != 0)
+			cpuwatch_set(cwp);
+	}
+}
+
+void
+cpuwatch_clr_all(void)
+{
+	struct cpu_info * const ci = curcpu();
+	cpu_watchpoint_t *cwp;
+	int i;
+
+	for (i=0; i < ci->ci_cpuwatch_count; i++) {
+		cwp = &ci->ci_cpuwatch_tab[i];
+		if ((cwp->cw_mode & CPUWATCH_RWX) != 0)
+			cpuwatch_clr(cwp);
+	}
+}
+
+/*
+ * cpuwatch_set - establish a MIPS COP0 watchpoint
+ */
+void
+cpuwatch_set(cpu_watchpoint_t *cwp)
+{
+	struct cpu_info * const ci = curcpu();
+	uint32_t watchhi;
+	register_t watchlo;
+	int cwnum = cwp - &ci->ci_cpuwatch_tab[0];
+
+	KASSERT(cwp >= &ci->ci_cpuwatch_tab[0] &&
+		cwp <= &ci->ci_cpuwatch_tab[ci->ci_cpuwatch_count-1]);
+
+	watchlo = cwp->cw_addr;
+	if (cwp->cw_mode & CPUWATCH_WRITE)
+		watchlo |= __BIT(0);
+	if (cwp->cw_mode & CPUWATCH_READ)
+		watchlo |= __BIT(1);
+	if (cwp->cw_mode & CPUWATCH_EXEC)
+		watchlo |= __BIT(2);
+
+	if (cwp->cw_mode & CPUWATCH_ASID)
+		watchhi = cwp->cw_asid << 16;	/* addr qualified by asid */
+	else
+		watchhi = __BIT(30);		/* addr not qual. by asid (Global) */
+	if (cwp->cw_mode & CPUWATCH_MASK)
+		watchhi |= cwp->cw_mask;	/* set "dont care" addr match bits */
+
+	mipsNN_cp0_watchhi_write(cwnum, watchhi);
+	mipsNN_cp0_watchlo_write(cwnum, watchlo);
+}
+
+/*
+ * cpuwatch_clr - disestablish a MIPS COP0 watchpoint
+ */
+void
+cpuwatch_clr(cpu_watchpoint_t *cwp)
+{
+	struct cpu_info * const ci = curcpu();
+	int cwnum = cwp - &ci->ci_cpuwatch_tab[0];
+
+	KASSERT(cwp >= &ci->ci_cpuwatch_tab[0] &&
+		cwp <= &ci->ci_cpuwatch_tab[ci->ci_cpuwatch_count-1]);
+
+	mipsNN_cp0_watchhi_write(cwnum, 0);
+	mipsNN_cp0_watchlo_write(cwnum, 0);
+}
+
+#endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */

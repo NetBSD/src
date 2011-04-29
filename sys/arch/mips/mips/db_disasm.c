@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.19.62.2 2009/11/14 21:52:08 matt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.19.62.3 2011/04/29 08:26:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19.62.2 2009/11/14 21:52:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19.62.3 2011/04/29 08:26:24 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -134,11 +134,11 @@ static const char * const c0_opname[64] = {
 
 static const char * const c0_reg[32] = {
 	"index",    "random",   "tlblo0",  "tlblo1",
-	"context",  "pagemask", "wired",   "cp0r7",
+	"context",  "pagemask", "wired",   "hwrena",
 	"badvaddr", "count",    "tlbhi",   "compare",
 	"status",   "cause",    "epc",     "prid",
 	"config",   "lladdr",   "watchlo", "watchhi",
-	"xcontext", "cp0r21",   "cp0r22",  "debug",
+	"xcontext", "cp0r21",   "osscratch",  "debug",
 	"depc",     "perfcnt",  "ecc",     "cacheerr",
 	"taglo",    "taghi",    "errepc",  "desave"
 };
@@ -397,11 +397,99 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			    i.RType.rd);
 			break;
 
+		case OP_DMT:
+			db_printf("dmtc1\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_DMF:
+			db_printf("dmfc1\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_MTH:
+			db_printf("mthc1\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_MFH:
+			db_printf("mfhc1\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
 		default:
 			db_printf("%s.%s\tf%d,f%d,f%d",
 			    cop1_name[i.FRType.func],
 			    fmt_name[i.FRType.fmt],
 			    i.FRType.fd, i.FRType.fs, i.FRType.ft);
+		}
+		break;
+
+	case OP_COP2:
+		switch (i.RType.rs) {
+		case OP_BCx:
+		case OP_BCy:
+			db_printf("bc2%c\t",
+			    "ft"[i.RType.rt & COPz_BC_TF_MASK]);
+			goto pr_displ;
+
+		case OP_MT:
+			db_printf("mtc2\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_MF:
+			db_printf("mfc2\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_CT:
+			db_printf("ctc2\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_CF:
+			db_printf("cfc2\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_DMT:
+			db_printf("dmtc2\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_DMF:
+			db_printf("dmfc2\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_MTH:
+			db_printf("mthc2\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		case OP_MFH:
+			db_printf("mfhc2\t%s,f%d",
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
+			break;
+
+		default:
+			db_printf("%s\t%s,%s,%d", op_name[i.IType.op],
+			    reg_name[i.IType.rt],
+			    reg_name[i.IType.rs],
+			    (short)i.IType.imm);
 		}
 		break;
 
