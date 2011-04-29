@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.27.16.1 2010/05/09 20:25:45 rmind Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.27.16.2 2011/04/29 08:13:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ struct cpu_data {
 	lwp_t		*cpu_onproc;		/* bottom level LWP */
 	CIRCLEQ_ENTRY(cpu_info) cpu_qchain;	/* circleq of all CPUs */
 
-	cpuid_t		cpu_node_id;
+	cpuid_t		cpu_package_id;
 	cpuid_t		cpu_core_id;
 	cpuid_t		cpu_smt_id;
 
