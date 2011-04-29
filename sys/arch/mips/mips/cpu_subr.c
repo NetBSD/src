@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.10 2011/04/14 15:44:39 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.11 2011/04/29 22:13:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.10 2011/04/14 15:44:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.11 2011/04/29 22:13:49 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -150,7 +150,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
         ci->ci_cycles_per_hz = cpu_info_store.ci_cycles_per_hz;
         ci->ci_divisor_delay = cpu_info_store.ci_divisor_delay;
         ci->ci_divisor_recip = cpu_info_store.ci_divisor_recip;
-        ci->ci_cpuwatch_count = cpu_info_store.ci_cpuwatch_count;
+	ci->ci_cpuwatch_count = cpu_info_store.ci_cpuwatch_count;
 
 	/*
 	 * Attach its TLB info (which must be direct-mapped)
