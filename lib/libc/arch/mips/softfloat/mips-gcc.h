@@ -1,4 +1,4 @@
-/* $NetBSD: mips-gcc.h,v 1.1.2.1 2009/08/27 16:51:27 matt Exp $ */
+/* $NetBSD: mips-gcc.h,v 1.1.2.2 2011/04/29 07:48:34 matt Exp $ */
 
 /*
 -------------------------------------------------------------------------------
@@ -85,11 +85,16 @@ to be `static'.
 
 /*
 -------------------------------------------------------------------------------
-The ARM FPA is odd in that it stores doubles high-order word first, no matter
+The MIPS FPA is odd in that it stores doubles high-order word first, no matter
 what the endianness of the CPU.  VFP is sane.
 -------------------------------------------------------------------------------
 */
 #if defined(SOFTFLOAT_FOR_GCC)
+#if defined(__MIPSEB__)
 #define FLOAT64_DEMANGLE(a)	(a)
 #define FLOAT64_MANGLE(a)	(a)
+#else
+#define FLOAT64_DEMANGLE(a)	(((a) << 32) | ((a) >> 32))
+#define FLOAT64_MANGLE(a)	FLOAT64_DEMANGLE(a)
+#endif
 #endif
