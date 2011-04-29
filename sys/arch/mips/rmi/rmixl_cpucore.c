@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.4 2011/04/14 06:12:21 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.5 2011/04/29 22:00:03 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,9 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.4 2011/04/14 06:12:21 cliff Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.5 2011/04/29 22:00:03 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -93,7 +91,7 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_core = na->na_core;
-	sc->sc_hatched = false;
+	KASSERT(sc->sc_hatched == false);
 
 #if 0
 #ifdef MULTIPROCESSOR
@@ -150,7 +148,7 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "threads");
 		u_int d = threads_dis;
 		while (d != 0) {
-			u_int t = ffs(d) - 1;
+			const u_int t = ffs(d) - 1;
 			d ^= (1 << t);
 			aprint_normal(" %d%s", t, (d==0) ? "" : ",");
 		}
@@ -159,8 +157,9 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 
 	u_int threads_try_attach = threads_enb;
 	while (threads_try_attach != 0) {
-		u_int t = ffs(threads_try_attach) - 1;
-		threads_try_attach ^= (1 << t);
+		const u_int t = ffs(threads_try_attach) - 1;
+		const u_int bit = 1 << t;
+		threads_try_attach ^= bit;
 		ca.ca_name = "cpu";
 		ca.ca_thread = t;
 		ca.ca_core = sc->sc_core;
@@ -169,11 +168,11 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 			 * thread did not attach, e.g. not configured
 			 * arrange to have it disabled in THREADEN PCR
 			 */
-			u_int bit = 1 << t;
 			threads_enb ^= bit;
 			threads_dis |= bit;
 		}
 	}
+
 	sc->sc_threads_enb = threads_enb;
 	sc->sc_threads_dis = threads_dis;
 
