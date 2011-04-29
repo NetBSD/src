@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ehci.c,v 1.1.2.4 2010/03/21 21:24:48 cliff Exp $	*/
+/*	$NetBSD: rmixl_ehci.c,v 1.1.2.5 2011/04/29 08:26:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.1.2.4 2010/03/21 21:24:48 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.1.2.5 2011/04/29 08:26:32 matt Exp $");
 
 #include "locators.h"
 
@@ -76,8 +76,9 @@ rmixl_ehci_match(device_t parent, cfdata_t match, void *aux)
 void
 rmixl_ehci_attach(device_t parent, device_t self, void *aux)
 {
-	ehci_softc_t *sc = device_private(self);
-	struct rmixl_usbi_attach_args *usbi = aux;
+	ehci_softc_t * const sc = device_private(self);
+	rmixl_usbi_softc_t * const psc = device_private(parent);
+	struct rmixl_usbi_attach_args * const usbi = aux;
 	void *ih = NULL;
 	uint32_t r;
 	usbd_status status;
@@ -96,6 +97,18 @@ rmixl_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_size = usbi->usbi_size;
 	sc->sc_bus.dmatag = usbi->usbi_dmat;
 	sc->sc_bus.usbrev = USBREV_1_0;
+
+	/*
+	 * Grab the companion OHCI devices from our parent.
+	 */
+	if (psc->sc_ohci_devs[1] != NULL) {
+		sc->sc_comps[0] = psc->sc_ohci_devs[0];
+		sc->sc_comps[1] = psc->sc_ohci_devs[1];
+		sc->sc_ncomp = 2;
+	} else {
+		sc->sc_comps[0] = psc->sc_ohci_devs[0];
+		sc->sc_ncomp = 1;
+	}
 
 	if (bus_space_map(sc->iot, usbi->usbi_addr, sc->sc_size, 0, &sc->ioh)) {
 		aprint_error_dev(self, "unable to map registers\n");

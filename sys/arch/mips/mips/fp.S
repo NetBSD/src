@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.33.38.12 2010/12/29 00:49:39 matt Exp $	*/
+/*	$NetBSD: fp.S,v 1.33.38.13 2011/04/29 08:26:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,9 +137,9 @@ NESTED(mips_emul_fp, CALLFRAME_SIZ, ra)
 	srl	v0, a0, 21 - PTR_SCALESHIFT	# get FMT field
 	andi	v0, v0, 0x1F << PTR_SCALESHIFT	# mask FMT field
 #ifdef FPEMUL
-	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	PTR_L	a3, fmt_tbl(v0)			# switch on FUNC & FMT
-	INT_L	a2, U_PCB_FPREGS+FRAME_FSR(t0)
+	INT_L	a2, PCB_FPREGS+FRAME_FSR(t0)
 #else
 	cfc1	a2, MIPS_FPU_CSR		# get exception register
 	PTR_L	a3, fmt_tbl(v0)			# switch on FUNC & FMT
@@ -647,11 +647,11 @@ func_paired_single_tbl:
 #ifdef FPEMUL
 mfromc1:
 	srl	t1, a0, 11-FPX_SCALESHIFT	# fs is in bits 15:11
-	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of lwp
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	t1, t1, FPX_REGMASK
 	PTR_ADDU t0, t0, t1
 
-	FPX_L	v0, U_PCB_FPREGS+FRAME_FP0(t0)
+	FPX_L	v0, PCB_FPREGS+FRAME_FP0(t0)
 
 	srl	t0, a0, 16-REG_SCALESHIFT
 	andi	t0, t0, REG_REGMASK
@@ -673,22 +673,22 @@ mtoc1:
 	REG_EPILOGUE
 
 	srl	t1, a0, 11-FPX_SCALESHIFT
-	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	t1, t1, FPX_REGMASK
 	PTR_ADDU t0, t0, t1
 
-	FPX_S	v0, U_PCB_FPREGS+FRAME_FP0(t0)
+	FPX_S	v0, PCB_FPREGS+FRAME_FP0(t0)
 
 	b	done
 
 #if defined(FPEMUL) && (defined(__mips_n32) || defined(__mips_n64))
 dmfromc1:
 	srl	t1, a0, 11-DFPX_SCALESHIFT	# fs is in bits 15:11
-	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	t1, t1,  DFPX_REGMASK
 	PTR_ADDU t0, t0, t1
 
-	DFPX_L	v0, U_PCB_FPREGS+FRAME_FP0(t0)
+	DFPX_L	v0, PCB_FPREGS+FRAME_FP0(t0)
 
 	srl	t0, a0, 16-REG_SCALESHIFT
 	andi	t0, t0, REG_REGMASK
@@ -710,24 +710,24 @@ dmtoc1:
 	REG_EPILOGUE
 
 	srl	t1, a0, 11-DFPX_SCALESHIFT
-	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	t1, t1, DFPX_REGMASK
 	PTR_ADDU t0, t0, t1
 
-	DFPX_S	v0, U_PCB_FPREGS+FRAME_FP0(t0)
+	DFPX_S	v0, PCB_FPREGS+FRAME_FP0(t0)
 
 	b	done
 #endif /* FPEMUL && (__mips_n32 || __mips_n64) */
 
 cfromc1:
 	srl	t1, a0, 11
-	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	t1, t1, 0x001F
 	li	t2, 0x1F
 	move	v0, zero
 	bne	t1, t2, cfinvalid
 
-	INT_L	v0, U_PCB_FPREGS+FRAME_FSR(t0)
+	INT_L	v0, PCB_FPREGS+FRAME_FSR(t0)
 
 cfinvalid:
 
@@ -757,9 +757,9 @@ ctoc1:
 	REG_PROLOGUE
 	REG_L	v0, TF_REG_ZERO(v0)
 	REG_EPILOGUE
-	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	v0, U_PCB_FPREGS+FRAME_FSR(t0)
+	INT_S	v0, PCB_FPREGS+FRAME_FSR(t0)
 
 	b	done
 
@@ -1314,9 +1314,9 @@ div_s:
 	and	v0, a2, MIPS_FPU_ENABLE_DIV0	# trap enabled?
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
-	PTR_L	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t1, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(t1)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(t1)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -1394,9 +1394,9 @@ div_d:
 	and	v0, a2, MIPS_FPU_ENABLE_DIV0	# trap enabled?
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
-	PTR_L	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t1, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(t1)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(t1)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -1827,6 +1827,8 @@ cvt_d_s:
 	beq	t2, zero, result_fs_d		# is FS zero?
 	jal	_C_LABEL(renorm_fs_s)
 	move	t9, zero
+	sll	t3, t2, 32 - 3			# convert S fraction to D
+	srl	t2, t2, 3
 	b	norm_d
 2:
 	addu	t1, t1, DEXP_BIAS - SEXP_BIAS	# bias exponent correctly
@@ -2032,9 +2034,9 @@ inexact_w:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2144,9 +2146,9 @@ set_cond:
 	or	a2, a2, MIPS_FPU_COND_BIT	# set condition bit
 2:
 #ifdef FPEMUL
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save condition bit
 #endif
@@ -2167,9 +2169,9 @@ unordered:
 	bne	v0, zero, fpe_trap
 1:
 #ifdef FPEMUL
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save condition bit
 #endif
@@ -2308,9 +2310,9 @@ inexact_nobias_s:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2431,9 +2433,9 @@ underflow_s:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2590,9 +2592,9 @@ inexact_nobias_d:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2737,9 +2739,9 @@ underflow_d:
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2754,9 +2756,9 @@ invalid_s:					# trap invalid operation
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2775,9 +2777,9 @@ invalid_d:					# trap invalid operation
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2797,9 +2799,9 @@ invalid_w:					# trap invalid operation
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2815,43 +2817,37 @@ invalid_w:					# trap invalid operation
  */
 fpe_trap:
 #ifdef FPEMUL
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	/*
 	 * ctc1 with fpe bits set causes FPE in kernel mode panic on 5231.
 	 */
 	REG_S	a2, CALLFRAME_SIZ + 3*SZREG(sp)
-#ifdef MULTIPROCESSOR
-	PTR_L	v0, L_CPU(MIPS_CURLWP)
-	#nop
-	PTR_L	a0, CPU_INFO_FPCURLWP(v0)
-#else
-	PTR_L	a0, CPUVAR(FPCURLWP)
-#endif
-	jal	_C_LABEL(fpusave_lwp)		# on RM5231
+	jal	_C_LABEL(fpu_save)		# on RM5231
 
 	REG_L	a2, CALLFRAME_SIZ + 3*SZREG(sp)
 
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #endif
-	REG_L	a1, CALLFRAME_SIZ + 1*SZREG(sp)	# frame
-	REG_L	a2, CALLFRAME_SIZ + 2*SZREG(sp)	# cause
+	move	a3, a2				# fpustat
+	REG_L	a1, CALLFRAME_FRAME(sp)		# frame
+	REG_L	a2, CALLFRAME_CAUSE(sp)		# cause
 	REG_L	ra, CALLFRAME_RA(sp)
 	PTR_ADDU sp, CALLFRAME_SIZ
 	j	_C_LABEL(fpemul_sigfpe)
 
 /*
- * Send an illegal instruction signal to the current process.
+ * Send an illegal instruction signal to the current lwp.
  */
 ill:
 #ifdef FPEMUL
-	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
-	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
+	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
@@ -2935,11 +2931,11 @@ END(mips_emul_fp)
 STATIC_LEAF(get_fs_int)
 #ifdef FPEMUL
 	srl	t2, a0, 11 - FPX_SCALESHIFT
-	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	t2, t2, FPX_REGEVENMASK		# Even regs only
 	PTR_ADDU t0, t0, t2
 
-	lw	t2, U_PCB_FPREGS+FRAME_FP0(t0)
+	lw	t2, PCB_FPREGS+FRAME_FP0(t0)
 
 	srl	t0, t2, 31		# init the sign bit
 	bge	t2, zero, 1f
@@ -3048,11 +3044,11 @@ END(get_fs_int)
 STATIC_LEAF(get_ft_fs_s)
 #ifdef FPEMUL
 	srl	ta0, a0, 16 - FPX_SCALESHIFT
-	PTR_L	ta1, L_ADDR(MIPS_CURLWP)	# get pcb of current process
+	PTR_L	ta1, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	ta0, ta0, FPX_REGEVENMASK	# Even regs only
 	PTR_ADDU ta1, ta1, ta0
 
-	lw	ta0, U_PCB_FPREGS+FRAME_FP0(ta1)
+	lw	ta0, PCB_FPREGS+FRAME_FP0(ta1)
 
 	srl	ta1, ta0, 23			# get exponent
 	and	ta1, ta1, 0xFF
@@ -3165,11 +3161,11 @@ get_ft_s_done:
 STATIC_XLEAF(get_fs_s)
 #ifdef FPEMUL
 	srl	t0, a0, 11 - FPX_SCALESHIFT
-	PTR_L	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t1, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	t0, t0, FPX_REGEVENMASK		# Even regs only
 	PTR_ADDU t1, t1, t0
 
-	lw	t0, U_PCB_FPREGS+FRAME_FP0(t1)
+	lw	t0, PCB_FPREGS+FRAME_FP0(t1)
 
 	srl	t1, t0, 23			# get exponent
 	and	t1, t1, 0xFF
@@ -3288,17 +3284,17 @@ END(get_ft_fs_s)
 STATIC_LEAF(get_ft_fs_d)
 #ifdef FPEMUL
 	srl	ta3, a0, 16 - FPX_SCALESHIFT
-	PTR_L	ta0, L_ADDR(MIPS_CURLWP)	# get pcb of current process
+	PTR_L	ta0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	ta3, ta3, FPX_REGEVENMASK	# Even regs only
 	PTR_ADDU ta0, ta3
 
 #if defined(__mips_n32) || defined(__mips_n64)
-	FPX_L	ta3, U_PCB_FPREGS+FRAME_FP0(ta0)
+	FPX_L	ta3, PCB_FPREGS+FRAME_FP0(ta0)
 	dsrl	ta0, ta3, 32
 	srl	ta3, ta3, 0
 #else
-	lw	ta3, U_PCB_FPREGS+FRAME_FP0(ta0)
-	lw	ta0, U_PCB_FPREGS+FRAME_FP0+SZFPREG(ta0)
+	lw	ta3, PCB_FPREGS+FRAME_FP0(ta0)
+	lw	ta0, PCB_FPREGS+FRAME_FP0+SZFPREG(ta0)
 #endif
 
 	srl	ta1, ta0, 20			# get exponent
@@ -3429,17 +3425,17 @@ get_ft_d_done:
 STATIC_XLEAF(get_fs_d)
 #ifdef FPEMUL
 	srl	t3, a0, 11 - FPX_SCALESHIFT
-	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	t3, t3, FPX_REGEVENMASK		# Even regs only
 	PTR_ADDU t0, t3
 
 #if defined(__mips_n32) || defined(__mips_n64)
-	FPX_L	t3, U_PCB_FPREGS+FRAME_FP0(t0)
+	FPX_L	t3, PCB_FPREGS+FRAME_FP0(t0)
 	dsrl	t0, t3, 32
 	srl	t3, t3, 0
 #else
-	lw	t3, U_PCB_FPREGS+FRAME_FP0(t0)
-	lw	t0, U_PCB_FPREGS+FRAME_FP0+SZFPREG(t0)
+	lw	t3, PCB_FPREGS+FRAME_FP0(t0)
+	lw	t0, PCB_FPREGS+FRAME_FP0+SZFPREG(t0)
 #endif
 
 	srl	t1, t0, 20			# get exponent
@@ -3573,11 +3569,11 @@ END(get_ft_fs_d)
 STATIC_LEAF(get_cmp_s)
 #ifdef FPEMUL
 	srl	t1, a0, 11 - FPX_SCALESHIFT
-	PTR_L	ta2, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	ta2, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	t1, t1, FPX_REGEVENMASK			# Even regs only
 	PTR_ADDU t0, ta2, t1
 
-	lw	t0, U_PCB_FPREGS+FRAME_FP0(t0)
+	lw	t0, PCB_FPREGS+FRAME_FP0(t0)
 
 	srl	t1, t0, 23			# get exponent
 	and	t1, t1, 0xFF
@@ -3588,7 +3584,7 @@ STATIC_LEAF(get_cmp_s)
 	andi	ta0, ta0, FPX_REGEVENMASK			# Even regs only
 	PTR_ADDU ta2, ta0
 
-	lw	ta0, U_PCB_FPREGS+FRAME_FP0(ta2)
+	lw	ta0, PCB_FPREGS+FRAME_FP0(ta2)
 
 	srl	ta1, ta0, 23			# get exponent
 	and	ta1, ta1, 0xFF
@@ -3777,17 +3773,17 @@ END(get_cmp_s)
 STATIC_LEAF(get_cmp_d)
 #ifdef FPEMUL
 	srl	t1, a0, 11-FPX_SCALESHIFT
-	PTR_L	ta2, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	ta2, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	t1, t1, FPX_REGEVENMASK			# Even regs only
 	PTR_ADDU t0, ta2, t1
 
 #if defined(__mips_n32) || defined(__mips_n64)
-	FPX_L	t3, U_PCB_FPREGS+FRAME_FP0(t0)
+	FPX_L	t3, PCB_FPREGS+FRAME_FP0(t0)
 	dsrl	t0, t3, 32
 	srl	t3, t3, 0
 #else
-	FPX_L	t3, U_PCB_FPREGS+FRAME_FP0(t0)
-	FPX_L	t0, U_PCB_FPREGS+FRAME_FP0+SZFPREG(t0)
+	FPX_L	t3, PCB_FPREGS+FRAME_FP0(t0)
+	FPX_L	t0, PCB_FPREGS+FRAME_FP0+SZFPREG(t0)
 #endif
 
 	srl	t1, t0, 20			# get exponent
@@ -3800,12 +3796,12 @@ STATIC_LEAF(get_cmp_d)
 	PTR_ADDU ta2, ta2, ta0
 
 #if defined(__mips_n32) || defined(__mips_n64)
-	FPX_L	ta3, U_PCB_FPREGS+FRAME_FP0(ta2)
+	FPX_L	ta3, PCB_FPREGS+FRAME_FP0(ta2)
 	dsrl	ta0, ta3, 32
 	srl	ta3, ta3, 0
 #else
-	lw	ta3, U_PCB_FPREGS+FRAME_FP0(ta2)
-	lw	ta0, U_PCB_FPREGS+FRAME_FP0+SZFPREG(ta2)
+	lw	ta3, PCB_FPREGS+FRAME_FP0(ta2)
+	lw	ta0, PCB_FPREGS+FRAME_FP0+SZFPREG(ta2)
 #endif
 
 	srl	ta1, ta0, 20			# get exponent
@@ -4036,11 +4032,11 @@ STATIC_LEAF(set_fd_s)
 STATIC_XLEAF(set_fd_word)
 #ifdef FPEMUL
 	srl	t1, a0, 6 - FPX_SCALESHIFT
-	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	t1, t1, FPX_REGEVENMASK		# Even regs only
 	PTR_ADDU t0, t0, t1
 
-	FPX_S	t2, U_PCB_FPREGS+FRAME_FP0(t0)
+	FPX_S	t2, PCB_FPREGS+FRAME_FP0(t0)
 	j	ra
 #else
 	srl	a3, a0, 6 + 1 - PTR_SCALESHIFT	# get FD field (even regs only)
@@ -4142,17 +4138,17 @@ STATIC_LEAF(set_fd_d)
 	or	t0, t0, t2			# set fraction
 
 	srl	t1, a0, 6-FPX_SCALESHIFT
-	PTR_L	t2, L_ADDR(MIPS_CURLWP)		# get pcb of current process
-
+	PTR_L	t2, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	andi	t1, t1, FPX_REGEVENMASK
 	PTR_ADDU t2, t2, t1
+
 #if defined(__mips_n32) || defined(__mips_n64)
 	dsll	t0, t0, 32
 	or	t0, t0, t3
-	FPX_S	t0, U_PCB_FPREGS+FRAME_FP0(t2)
+	FPX_S	t0, PCB_FPREGS+FRAME_FP0(t2)
 #else
-	FPX_S	t3, U_PCB_FPREGS+FRAME_FP0(t2)
-	FPX_S	t0, U_PCB_FPREGS+FRAME_FP0+4(t2)
+	FPX_S	t3, PCB_FPREGS+FRAME_FP0(t2)
+	FPX_S	t0, PCB_FPREGS+FRAME_FP0+4(t2)
 #endif
 	j	ra
 #else
@@ -4564,10 +4560,9 @@ STATIC_LEAF(fpemul_sigill)
 	REG_S	a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
-	move	a2, a0				# code = instruction
-	move	a0, MIPS_CURLWP			# get current process
-	li	a1, SIGILL
-	j	_C_LABEL(fpemul_trapsignal)
+	move	a1, a0				# code = instruction
+	move	a0, MIPS_CURLWP			# get current lwp
+	j	_C_LABEL(mips_fpuillinst)
 END(fpemul_sigill)
 
 STATIC_LEAF(fpemul_sigfpe)
@@ -4578,10 +4573,9 @@ STATIC_LEAF(fpemul_sigfpe)
 	REG_S	a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
-	move	a2, a0				# code = instruction
-	move	a0, MIPS_CURLWP			# get current process
-	li	a1, SIGFPE
-	j	_C_LABEL(fpemul_trapsignal)
+	move	a1, a3				# fpustat
+	move	a0, MIPS_CURLWP			# get current lwp
+	j	_C_LABEL(mips_fpuexcept)
 END(fpemul_sigfpe)
 
 #ifdef FPEMUL
@@ -4593,9 +4587,8 @@ STATIC_LEAF(mips_emul_sigfpe)
 	REG_S	a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
-	move	a2, a0				# code = instruction
-	move	a0, MIPS_CURLWP			# get current process
-	li	a1, SIGFPE
-	j	_C_LABEL(fpemul_trapsignal)
+	move	a1, a3				# fpustat
+	move	a0, MIPS_CURLWP			# get current lwp
+	j	_C_LABEL(mips_fpuexcept)
 END(mips_emul_sigfpe)
 #endif

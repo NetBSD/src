@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.2.3 2010/06/10 00:43:06 cliff Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.4 2011/04/29 08:26:18 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.2.3 2010/06/10 00:43:06 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.2.4 2011/04/29 08:26:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,31 +83,34 @@ extern int	netboot;
 static void
 findroot(void)
 {
-	device_t dv;
-
 	if (booted_device)
 		return;
 
-	if ((booted_device == NULL) && netboot == 0)
-		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-		     dv = TAILQ_NEXT(dv, dv_list))
-			if (device_class(dv) == DV_DISK &&
-			    (device_is_a(dv, "wd") || device_is_a(dv, "sd")))
-				    booted_device = dv;
+	if ((booted_device == NULL) && netboot == 0) {
+		device_t dv;
+		deviter_t di;
+
+		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
+		    dv = deviter_next(&di)) {
+			if (device_class(dv) == DV_DISK
+			    && (device_is_a(dv, "wd")
+				|| device_is_a(dv, "sd")
+				|| device_is_a(dv, "ld")))
+				booted_device = dv;
+		}
+		deviter_release(&di);
+	}
 
 	/*
 	 * XXX Match up MBR boot specification with BSD disklabel for root?
 	 */
 	booted_partition = 0;
-
-	return;
 }
 
 void
-device_register(dev, aux)
-	device_t dev;
-	void *aux;
+device_register(device_t dev, void *aux)
 {
+
 	if ((booted_device == NULL) && (netboot == 1))
 		if (device_class(dev) == DV_IFNET)
 			booted_device = dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.5.38.6 2009/12/11 17:17:51 matt Exp $	*/
+/*	$NetBSD: copy.S,v 1.5.38.7 2011/04/29 08:26:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,23 +70,24 @@
 LEAF(copystr)
 	move	t0, a2
 	beq	a2, zero, 4f
+	 nop
 1:
 	lbu	v0, 0(a0)
 	PTR_SUBU a2, a2, 1
 	beq	v0, zero, 2f
-	sb	v0, 0(a1)			# each byte until NIL
+	 sb	v0, 0(a1)			# each byte until NIL
 	PTR_ADDU a0, a0, 1
 	bne	a2, zero, 1b			# less than maxlen
-	PTR_ADDU a1, a1, 1
+	 PTR_ADDU a1, a1, 1
 4:
 	li	v0, ENAMETOOLONG		# run out of space
 2:
 	beq	a3, zero, 3f			# return num. of copied bytes
-	PTR_SUBU a2, t0, a2			# if the 4th arg was non-NULL
+	 PTR_SUBU a2, t0, a2			# if the 4th arg was non-NULL
 	PTR_S	a2, 0(a3)
 3:
 	j	ra				# v0 is 0 or ENAMETOOLONG
-	nop
+	 nop
 END(copystr)
 
 /*
@@ -97,10 +98,10 @@ END(copystr)
  * else return 0 or EFAULT.
  */
 LEAF(copyinstr)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(copystrerr)
-	blt	a0, zero, _C_LABEL(copystrerr)
-	 PTR_S	v0, U_PCB_ONFAULT(v1)
+	blt	a0, zero, _C_LABEL(copystrefault)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	move	t0, a2
 	beq	a2, zero, 4f
 	 nop
@@ -120,7 +121,7 @@ LEAF(copyinstr)
 	PTR_S	a2, 0(a3)
 3:
 	j	ra				# v0 is 0 or ENAMETOOLONG
-	 PTR_S	zero, U_PCB_ONFAULT(v1)
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(copyinstr)
 
 /*
@@ -131,36 +132,41 @@ END(copyinstr)
  * else return 0 or EFAULT.
  */
 LEAF(copyoutstr)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(copystrerr)
-	blt	a1, zero, _C_LABEL(copystrerr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	blt	a1, zero, _C_LABEL(copystrefault)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	move	t0, a2
 	beq	a2, zero, 4f
+	 nop
 1:
 	lbu	v0, 0(a0)
 	PTR_SUBU a2, a2, 1
 	beq	v0, zero, 2f
-	sb	v0, 0(a1)
+	 sb	v0, 0(a1)
 	PTR_ADDU a0, a0, 1
 	bne	a2, zero, 1b
-	PTR_ADDU a1, a1, 1
+	 PTR_ADDU a1, a1, 1
 4:
 	li	v0, ENAMETOOLONG
 2:
 	beq	a3, zero, 3f
-	PTR_SUBU a2, t0, a2
+	 PTR_SUBU a2, t0, a2
 	PTR_S	a2, 0(a3)
 3:
 	j	ra				# v0 is 0 or ENAMETOOLONG
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(copyoutstr)
 
 LEAF(copystrerr)
-	PTR_S	zero, U_PCB_ONFAULT(v1)
 	j	ra
-	li	v0, EFAULT			# return EFAULT
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(copystrerr)
+
+LEAF(copystrefault)
+	b	copystrerr
+	 li	v0, EFAULT
+END(copystrefault)
 
 /*
  * kcopy(const void *src, void *dst, size_t len);
@@ -181,29 +187,28 @@ NESTED(kcopy, 2*CALLFRAME_SIZ, ra)
 	move	v0, a0				# swap a0, a1 for call to memcpy
 	move	a0, a1
 	move	a1, v0
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)		# set up fault handler
+	PTR_L	v1, L_PCB(MIPS_CURLWP)		# set up fault handler
 	PTR_LA	v0, _C_LABEL(kcopyerr)
-	PTR_L	s0, U_PCB_ONFAULT(v1)		# save old handler
+	PTR_L	s0, PCB_ONFAULT(v1)		# save old handler
 	jal	memcpy
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)		# restore the old handler
+	PTR_L	v1, L_PCB(MIPS_CURLWP)		# restore the old handler
 	REG_L	ra, CALLFRAME_SIZ+CALLFRAME_RA(sp)	# restore ra
-	PTR_S	s0, U_PCB_ONFAULT(v1)
+	PTR_S	s0, PCB_ONFAULT(v1)
 	REG_L	s0, CALLFRAME_SIZ+CALLFRAME_S0(sp)	# restore s0
 	PTR_ADDU sp, sp, 2*CALLFRAME_SIZ	# kill stack frame
 	j	ra
-	move	v0, zero			# success!
+	 move	v0, zero			# success!
 END(kcopy)
 
 LEAF(kcopyerr)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)		# restore the old handler
+	PTR_L	v1, L_PCB(MIPS_CURLWP)		# restore the old handler
 	REG_L	ra, CALLFRAME_SIZ+CALLFRAME_RA(sp) 	# restore ra
-	PTR_S	s0, U_PCB_ONFAULT(v1)
+	PTR_S	s0, PCB_ONFAULT(v1)
 	REG_L	s0, CALLFRAME_SIZ+CALLFRAME_S0(sp) 	# restore s0
-	PTR_ADDU sp, sp, 2*CALLFRAME_SIZ	# kill stack frame
 	j	ra
-	li	v0, EFAULT			# return EFAULT
+	 PTR_ADDU sp, sp, 2*CALLFRAME_SIZ	# kill stack frame
 END(kcopyerr)
 
 /*
@@ -216,21 +221,21 @@ NESTED(copyin, CALLFRAME_SIZ, ra)
 	PTR_SUBU sp, sp, CALLFRAME_SIZ
 	.mask	0x80000000, -4
 	REG_S	ra, CALLFRAME_RA(sp)
-	blt	a0, zero, _C_LABEL(copyerr)
-	move	v0, a0				# swap a0, a1 for call to memcpy
+	blt	a0, zero, _C_LABEL(copyefault)
+	 move	v0, a0				# swap a0, a1 for call to memcpy
 	move	a0, a1
 	move	a1, v0
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(copyerr)
 	jal	memcpy
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	REG_L	ra, CALLFRAME_RA(sp)
 	PTR_ADDU sp, sp, CALLFRAME_SIZ
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
-	move	v0, zero
+	 move	v0, zero
 END(copyin)
 
 /*
@@ -243,31 +248,35 @@ NESTED(copyout, CALLFRAME_SIZ, ra)
 	PTR_SUBU sp, sp, CALLFRAME_SIZ
 	.mask	0x80000000, -4
 	REG_S	ra, CALLFRAME_RA(sp)
-	blt	a1, zero, _C_LABEL(copyerr)
-	move	v0, a0				# swap a0, a1 for call to memcpy
+	blt	a1, zero, _C_LABEL(copyefault)
+	 move	v0, a0				# swap a0, a1 for call to memcpy
 	move	a0, a1
 	move	a1, v0
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(copyerr)
 	jal	memcpy
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	REG_L	ra, CALLFRAME_RA(sp)
 	PTR_ADDU sp, sp, CALLFRAME_SIZ
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
-	move	v0, zero
+	 move	v0, zero
 END(copyout)
 
 LEAF(copyerr)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	REG_L	ra, CALLFRAME_RA(sp)
 	PTR_ADDU sp, sp, CALLFRAME_SIZ
-	PTR_S	zero, U_PCB_ONFAULT(v1)
 	j	ra
-	li	v0, EFAULT			# return EFAULT
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(copyerr)
+
+LEAF(copyefault)
+	b	copyerr
+	 li	v0, EFAULT
+END(copyefault)
 
 /*
  * int fuswintr(void *)
@@ -275,14 +284,14 @@ END(copyerr)
  * This function is safe to call during an interrupt context.
  */
 LEAF(fuswintr)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswintrberr)
-	PTR_L	a2, U_PCB_ONFAULT(v1)
+	PTR_L	a2, PCB_ONFAULT(v1)
 	blt	a0, zero, _C_LABEL(fswintrberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	lhu	v0, 0(a0)			# fetch short
 	j	ra
-	PTR_S	a2, U_PCB_ONFAULT(v1)
+	 PTR_S	a2, PCB_ONFAULT(v1)
 END(fuswintr)
 
 /*
@@ -291,15 +300,15 @@ END(fuswintr)
  * This function is safe to call during an interrupt context.
  */
 LEAF(suswintr)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswintrberr)
-	PTR_L	a2, U_PCB_ONFAULT(v1)
+	PTR_L	a2, PCB_ONFAULT(v1)
 	blt	a0, zero, _C_LABEL(fswintrberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	sh	a1, 0(a0)			# store short
-	PTR_S	a2, U_PCB_ONFAULT(v1)
+	PTR_S	a2, PCB_ONFAULT(v1)
 	j	ra
-	move	v0, zero
+	 move	v0, zero
 END(suswintr)
 
 /*
@@ -307,13 +316,13 @@ END(suswintr)
  * Fetches a 32-bit datum from the user-space address.
  */
 LEAF(ufetch_uint32)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	INT_L	v0, 0(a0)			# fetch int
 	j	ra
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(ufetch_uint32)
 STRONG_ALIAS(ufetch_int32, ufetch_uint32)
 STRONG_ALIAS(ufetch_int, ufetch_uint32)
@@ -339,13 +348,13 @@ STRONG_ALIAS(fuiword, ufetch_uint32)
  * Fetches a 64-bit datum from the user-space address.
  */
 LEAF(ufetch_uint64)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	LONG_L	v0, 0(a0)			# fetch 64-bit datum
 	j	ra
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(ufetch_uint64)
 STRONG_ALIAS(ufetch_int64, ufetch_uint64)
 STRONG_ALIAS(ufetch_ptr, ufetch_uint64)
@@ -364,13 +373,13 @@ STRONG_ALIAS(fuiword, ufetch_uint64)
  * Fetches an unsigned 16-bit datum from the user-space address.
  */
 LEAF(ufetch_uint16)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	lhu	v0, 0(a0)			# fetch short
 	j	ra
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(ufetch_uint16)
 STRONG_ALIAS(ufetch_ushort, ufetch_uint16)
 STRONG_ALIAS(ufetch_uint16_intrsafe, ufetch_uint16)
@@ -383,13 +392,13 @@ STRONG_ALIAS(fuisword, ufetch_uint16)
  * Fetches a signed 16-bit datum from the user-space address.
  */
 LEAF(ufetch_int16)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	lh	v0, 0(a0)			# fetch short
 	j	ra
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(ufetch_int16)
 STRONG_ALIAS(ufetch_short, ufetch_int16)
 STRONG_ALIAS(ufetch_int16_intrsafe, ufetch_int16)
@@ -400,13 +409,13 @@ STRONG_ALIAS(ufetch_short_intrsafe, ufetch_int16)
  * Fetch a byte from the user's address space.
  */
 LEAF(ufetch_uint8)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	lbu	v0, 0(a0)			# fetch byte
 	j	ra
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(ufetch_uint8)
 STRONG_ALIAS(ufetch_uchar, ufetch_uint8)
 STRONG_ALIAS(ufetch_uint8_intrsafe, ufetch_uint8)
@@ -419,13 +428,13 @@ STRONG_ALIAS(fuibyte, ufetch_uint8)
  * Fetch a byte from the user's address space.
  */
 LEAF(ufetch_int8)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	lb	v0, 0(a0)			# fetch byte
 	j	ra
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(ufetch_int8)
 STRONG_ALIAS(ufetch_char, ufetch_int8)
 STRONG_ALIAS(ufetch_int8_intrsafe, ufetch_int8)
@@ -436,14 +445,14 @@ STRONG_ALIAS(ufetch_char_intrsafe, ufetch_int8)
  * Stores a 32-bit datum to the user-space address.
  */
 LEAF(ustore_uint32)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	INT_S	a1, 0(a0)			# store word
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
-	move	v0, zero
+	 move	v0, zero
 END(ustore_uint32)
 STRONG_ALIAS(ustore_int32, ustore_uint32)
 STRONG_ALIAS(ustore_int, ustore_uint32)
@@ -467,16 +476,16 @@ STRONG_ALIAS(suword, ustore_uint32)
  * Have to flush instruction cache afterwards.
  */
 LEAF(ustore_uint32_isync)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	INT_S	a1, 0(a0)			# store word
-	PTR_S	zero, U_PCB_ONFAULT(v1)
-	move	v0, zero
+	PTR_S	zero, PCB_ONFAULT(v1)
 	PTR_L	v1, _C_LABEL(mips_cache_ops) + MIPSX_FLUSHICACHE
+	move	v0, zero
 	j	v1				# NOTE: must not clobber v0!
-	li	a1, 4				# size of word
+	 li	a1, 4				# size of word
 END(ustore_uint32_isync)
 
 #ifdef _LP64
@@ -485,14 +494,14 @@ END(ustore_uint32_isync)
  * Stores a 64-bit datum to the user-space address.
  */
 LEAF(ustore_uint64)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	LONG_S	a1, 0(a0)			# store word
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
-	move	v0, zero
+	 move	v0, zero
 END(ustore_uint64)
 STRONG_ALIAS(ustore_int64, ustore_uint64)
 STRONG_ALIAS(ustore_int, ustore_uint64)
@@ -514,14 +523,14 @@ STRONG_ALIAS(suword, ustore_uint64)
  * Stores a short word of data to the user-space address.
  */
 LEAF(ustore_uint16)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	sh	a1, 0(a0)			# store short
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
-	move	v0, zero
+	 move	v0, zero
 END(ustore_uint16)
 STRONG_ALIAS(ustore_int16, ustore_uint16)
 STRONG_ALIAS(ustore_uint16_intrsafe, ustore_uint16)
@@ -534,14 +543,14 @@ STRONG_ALIAS(suisword, ustore_uint16)
  * Stores a byte of data to the user-space address.
  */
 LEAF(ustore_uint8)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(fswberr)
 	blt	a0, zero, _C_LABEL(fswberr)
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	sb	a1, 0(a0)			# store byte
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
-	move	v0, zero
+	 move	v0, zero
 END(ustore_uint8)
 STRONG_ALIAS(ustore_int8, ustore_uint8)
 STRONG_ALIAS(ustore_uint8_intrsafe, ustore_uint8)
@@ -555,23 +564,23 @@ STRONG_ALIAS(suibyte, ustore_uint8)
  * len is length of access (1=byte, 2=short, 4=long)
  */
 LEAF(badaddr)
-	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(baderr)
 	bne	a1, 1, 2f
-	PTR_S	v0, U_PCB_ONFAULT(v1)
+	 PTR_S	v0, PCB_ONFAULT(v1)
 	b	5f
-	lbu	v0, (a0)
+	 lbu	v0, (a0)
 2:
 	bne	a1, 2, 4f
-	nop
+	 nop
 	b	5f
-	lhu	v0, (a0)
+	 lhu	v0, (a0)
 4:
 	INT_L	v0, (a0)
 5:
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
-	move	v0, zero		# made it w/o errors
+	 move	v0, zero		# made it w/o errors
 END(badaddr)
 
 /*
@@ -582,14 +591,14 @@ END(badaddr)
  */
 LEAF(fswintrberr)
 	nop
-	PTR_S	a2, U_PCB_ONFAULT(v1)
+	PTR_S	a2, PCB_ONFAULT(v1)
 	j	ra
-	li	v0, -1
+	 li	v0, -1
 END(fswintrberr)
 
 LEAF(fswberr)
 XLEAF(baderr)
-	PTR_S	zero, U_PCB_ONFAULT(v1)
+	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
-	li	v0, -1
+	 li	v0, -1
 END(fswberr)

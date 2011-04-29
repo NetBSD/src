@@ -1,6 +1,7 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.18 2010/12/29 00:39:40 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.19 2011/04/29 08:26:31 matt Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,173 +37,129 @@
  *
  *	@(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah Hdr: vm_machdep.c 1.21 91/04/06
- *
- *	@(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
- */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.19 2011/04/29 08:26:31 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
-
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.18 2010/12/29 00:39:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
 #include <sys/vnode.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <mips/cache.h>
+#include <mips/pcb.h>
 #include <mips/regnum.h>
 #include <mips/locore.h>
 #include <mips/pte.h>
 #include <mips/psl.h>
-#include <machine/cpu.h>
 
 paddr_t kvtophys(vaddr_t);	/* XXX */
 
 /*
- * Finish a fork operation, with lwp l2 nearly set up.
+ * cpu_lwp_fork: Finish a fork operation, with lwp l2 nearly set up.
  * Copy and update the pcb and trapframe, making the child ready to run.
  *
- * Rig the child's kernel stack so that it will start out in
- * lwp_trampoline() and call child_return() with l2 as an
- * argument. This causes the newly-created child process to go
- * directly to user level with an apparent return value of 0 from
- * fork(), while the parent process returns normally.
+ * First LWP (l1) is the lwp being forked.  If it is &lwp0, then we are
+ * creating a kthread, where return path and argument are specified
+ * with `func' and `arg'.
  *
- * l1 is the process being forked; if l1 == &lwp0, we are creating
- * a kernel thread, and the return path and argument are specified with
- * `func' and `arg'.
+ * Rig the child's kernel stack so that it will start out in lwp_trampoline()
+ * and call child_return() with l2 as an argument. This causes the
+ * newly-created child process to go directly to user level with an apparent
+ * return value of 0 from fork(), while the parent process returns normally.
  *
  * If an alternate user-level stack is requested (with non-zero values
- * in both the stack and stacksize args), set up the user stack pointer
- * accordingly.
+ * in both the stack and stacksize arguments), then set up the user stack
+ * pointer accordingly.
  */
 void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb;
+	struct pcb * const pcb1 = lwp_getpcb(l1);
+	struct pcb * const pcb2 = lwp_getpcb(l2);
 	struct trapframe *tf;
-	pt_entry_t *pte;
-	int i, x;
+
+	KASSERT(l1 == curlwp || l1 == &lwp0);
 
 	l2->l_md.md_ss_addr = 0;
 	l2->l_md.md_ss_instr = 0;
 	l2->l_md.md_astpending = 0;
 
-#ifdef DIAGNOSTIC
-	/*
-	 * If l1 != curlwp && l1 == &lwp0, we're creating a kernel thread.
-	 */
-	if (l1 != curlwp && l1 != &lwp0)
-		panic("cpu_lwp_fork: curlwp");
-#endif
 #ifndef NOFPU
-	if (l1->l_md.md_flags & MDP_FPUSED)
-		fpusave_lwp(l1);
+	/* If parent LWP was using FPU, then save the FPU h/w state. */
+	fpu_save_lwp(l1);
 #endif
 
+	/* Copy the PCB from parent. */
+	*pcb2 = *pcb1;
+
 	/*
-	 * Copy pcb from lwp l1 to l2.
-	 * Copy l1 trapframe atop on l2 stack space, so return to user mode
+	 * Copy the trapframe from parent, so that return to userspace
 	 * will be to right address, with correct registers.
 	 */
-	l2->l_addr->u_pcb = l1->l_addr->u_pcb;
-	tf = (struct trapframe *)((char *)l2->l_addr + USPACE) - 1;
+	vaddr_t ua2 = (vaddr_t)l2->l_addr;
+	tf = (struct trapframe *)(ua2 + USPACE) - 1;
 	*tf = *l1->l_md.md_utf;
 
-	/*
-	 * If specified, give the child a different stack.
-	 */
+	/* If specified, set a different user stack for a child. */
 	if (stack != NULL)
 		tf->tf_regs[_R_SP] = (intptr_t)stack + stacksize;
 
 	l2->l_md.md_utf = tf;
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
-	x = (MIPS_HAS_R4K_MMU) ?
-	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
-	    MIPS1_PG_G;
-	pte = kvtopte(l2->l_addr);
-	for (i = 0; i < UPAGES; i++)
-		l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
 
-	pcb = &l2->l_addr->u_pcb;
-	pcb->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
-	pcb->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
-	pcb->pcb_context.val[MIPS_CURLWP_LABEL] = (intptr_t)l2;		/* T8 */
-	pcb->pcb_context.val[_L_SP] = (intptr_t)tf;			/* SP */
-	pcb->pcb_context.val[_L_RA] =
-	    mips_locore_jumpvec.ljv_lwp_trampoline;			/* RA */
+	bool direct_mapped_p = MIPS_KSEG0_P(ua2);
 #ifdef _LP64
-	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_KX);
+	direct_mapped_p = direct_mapped_p || MIPS_XKPHYS_P(ua2);
 #endif
-	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_INT_IE);
+	if (!direct_mapped_p) {
+		pt_entry_t * const pte = kvtopte(ua2);
+		const uint32_t x = (MIPS_HAS_R4K_MMU) ?
+		    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) : MIPS1_PG_G;
+
+		for (u_int i = 0; i < UPAGES; i++) {
+			l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
+		}
+	}
+
+	cpu_setfunc(l2, func, arg);
 }
 
-/*
- * Set the given LWP to start at the given function via the
- * lwp_trampoline.
- */
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
-	struct trapframe *tf = l->l_md.md_utf;
+	struct pcb * const pcb = lwp_getpcb(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 
 	KASSERT(tf == (struct trapframe *)((char *)l->l_addr + USPACE) - 1);
+
+	/*
+	 * Rig kernel stack so that it would start out in lwp_trampoline()
+	 * and call child_return() with l as an argument.  This causes the
+	 * newly-created child process to go directly to user level with a
+	 * parent return value of 0 from fork(), while the parent process
+	 * returns normally.
+	 */
 
 	pcb->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
 	pcb->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
 	pcb->pcb_context.val[MIPS_CURLWP_LABEL] = (intptr_t)l;		/* T8 */
 	pcb->pcb_context.val[_L_SP] = (intptr_t)tf;			/* SP */
 	pcb->pcb_context.val[_L_RA] =
-	   mips_locore_jumpvec.ljv_setfunc_trampoline;			/* RA */
+	   mips_locore_jumpvec.ljv_lwp_trampoline;			/* RA */
 #ifdef _LP64
 	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_KX);
 #endif
@@ -217,9 +174,6 @@ void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
 	p2->p_md.md_abi = p1->p_md.md_abi;
-#ifdef _LP64
-	p2->p_flag |= p1->p_flag & PK_32;
-#endif
 }
 
 static struct evcnt uarea_remapped = 
@@ -235,6 +189,7 @@ cpu_uarea_remap(struct lwp *l)
 	bool uarea_ok;
 	vaddr_t va;
 	paddr_t pa;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	/*
 	 * Grab the starting physical address of the uarea.
@@ -261,7 +216,7 @@ cpu_uarea_remap(struct lwp *l)
 	 */
 	uarea_ok = uarea_ok && (pa + USPACE - 1 <= MIPS_PHYS_MASK);
 #endif
-	KASSERT((vaddr_t)l->l_addr->u_pcb.pcb_context.val[_L_SP] == (vaddr_t)l->l_md.md_utf);
+	KASSERT(pcb->pcb_context.val[_L_SP] == (vaddr_t)l->l_md.md_utf);
 
 	if (!uarea_ok) {
 		struct pglist pglist;
@@ -303,7 +258,7 @@ cpu_uarea_remap(struct lwp *l)
 		 * Copy the trapframe and pcb from the old uarea to the new.
 		 */
 		((struct trapframe *)(va + USPACE))[-1] = *l->l_md.md_utf;
-		((struct user *)va)->u_pcb = l->l_addr->u_pcb;
+		*(struct pcb *)va = *pcb;
 		/*
 		 * Discard the old uarea.
 		 */
@@ -313,7 +268,8 @@ cpu_uarea_remap(struct lwp *l)
 
 	l->l_addr = (struct user *)va;
 	l->l_md.md_utf = (struct trapframe *)(va + USPACE) - 1;
-	l->l_addr->u_pcb.pcb_context.val[_L_SP] = (vaddr_t)l->l_md.md_utf;
+	pcb = lwp_getpcb(l);
+	pcb->pcb_context.val[_L_SP] = (vaddr_t)l->l_md.md_utf;
 	uarea_remapped.ev_count++;
 }
 
@@ -344,14 +300,20 @@ cpu_swapin(struct lwp *l)
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-
-	if (l->l_md.md_flags & MDP_FPUSED)
-		fpudiscard_lwp(l);
+	KASSERT(l == curlwp);
 
 #ifndef NOFPU
+	fpu_discard();
+
 	KASSERT(l->l_fpcpu == NULL);
 	KASSERT(curcpu()->ci_fpcurlwp != l);
 #endif
+}
+
+vaddr_t
+cpu_lwp_pc(struct lwp *l)
+{
+	return l->l_md.md_utf->tf_regs[_R_PC];
 }
 
 void
@@ -384,11 +346,11 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 		return 0;
 	}
 
-	if (l->l_md.md_flags & MDP_FPUSED)
-		fpusave_lwp(l);
+	fpu_save_lwp(l);
 
+	struct pcb * const pcb = lwp_getpcb(l);
 	cpustate.frame = *l->l_md.md_utf;
-	cpustate.fpregs = l->l_addr->u_pcb.pcb_fpregs;
+	cpustate.fpregs = pcb->pcb_fpregs;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;

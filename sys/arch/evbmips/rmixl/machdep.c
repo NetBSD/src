@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.33 2011/02/05 06:02:51 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,6 +36,7 @@
  */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -71,48 +72,9 @@
  *	@(#)machdep.c   8.3 (Berkeley) 1/12/94
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department, The Mach Operating System project at
- * Carnegie-Mellon University and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)machdep.c   8.3 (Berkeley) 1/12/94
- *	from: Utah Hdr: machdep.c 1.63 91/04/24
- */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.33 2011/02/05 06:02:51 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -129,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.33 2011/02/05 06:02:51 cliff Exp $
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
@@ -147,12 +108,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.33 2011/02/05 06:02:51 cliff Exp $
 #include "ksyms.h"
 
 #if NKSYMS || defined(DDB) || defined(LKM)
-#include <machine/db_machdep.h>
+#include <mips/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/psl.h>
+#include <mips/cpu.h>
+#include <mips/psl.h>
+#include <mips/cache.h>
+#include <mips/mips_opcode.h>
 
 #include "com.h"
 #if NCOM == 0
@@ -268,13 +231,7 @@ void rmixl_get_wakeup_info(struct rmixl_config *);
 static void rmixl_wakeup_info_print(volatile rmixlfw_cpu_wakeup_info_t *);
 #endif	/* MACHDEP_DEBUG */
 #endif	/* MULTIPROCESSOR */
-
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait during
- * autoconfiguration or after a panic.  Used as an argument to splx().
- */
-int	safepri = MIPS1_PSL_LOWIPL;
+static void rmixl_fixup_curcpu(void);
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -304,7 +261,11 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	 *
 	 * specify chip-specific EIRR/EIMR based spl functions
 	 */
-	mips_vector_init(&rmixl_splsw);
+#ifdef MULTIPROCESSOR
+	mips_vector_init(&rmixl_splsw, true);
+#else
+	mips_vector_init(&rmixl_splsw, false);
+#endif
 
 	/* mips_vector_init initialized mips_options */
 	strcpy(cpu_model, mips_options.mips_cpu->cpu_name);
@@ -440,7 +401,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for proc0's USPACE.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
 	mips_init_lwp0_uarea();
 
@@ -455,15 +416,16 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-#ifdef MULTIPROCESSOR
 	/*
 	 * store (cpu#0) curcpu in COP0 OSSCRATCH0
 	 * used in exception vector
 	 */
 	__asm __volatile("dmtc0 %0,$%1"
 		:: "r"(&cpu_info_store), "n"(MIPS_COP_0_OSSCRATCH));
+#ifdef MULTIPROCESSOR
 	mips_fixup_exceptions(rmixl_fixup_cop0_oscratch);
 #endif
+	rmixl_fixup_curcpu();
 }
 
 /*
@@ -525,12 +487,49 @@ rmixl_fixup_cop0_oscratch(int32_t load_addr, uint32_t new_insns[2])
 	    | (new_insns[0] & 0x001f0000)
 	    | (MIPS_COP_0_OSSCRATCH << 11) | (0 << 0);
 
-	/* [1] = l[dw] rX, offset(rX) */
+	/* [1] = [ls][dw] rX, offset(rX) */
 	new_insns[1] = (new_insns[1] & 0xffff0000) | offset;
 
 	return true;
 }
 #endif /* MULTIPROCESSOR */
+
+/*
+ * The following changes all	lX	rN, L_CPU(MIPS_CURLWP) [curlwp->l_cpu]
+ * to			     	[d]mfc0	rN, $22 [MIPS_COP_0_OSSCRATCH]
+ *
+ * the mfc0 is 3 cycles shorter than the load.
+ */
+#define	LOAD_CURCPU_0	((MIPS_CURLWP_REG << 21) | offsetof(lwp_t, l_cpu))
+#define	MFC0_CURCPU_0	((OP_COP0 << 26) | (MIPS_COP_0_OSSCRATCH << 11))
+#ifdef _LP64
+#define	LOAD_CURCPU	((uint32_t)(OP_LD << 26) | LOAD_CURCPU_0)
+#define	MFC0_CURCPU	((uint32_t)(OP_DMF << 21) | MFC0_CURCPU_0)
+#else
+#define	LOAD_CURCPU	((uint32_t)(OP_LW << 26) | LOAD_CURCPU_0)
+#define	MFC0_CURCPU	((uint32_t)(OP_MF << 21) | MFC0_CURCPU_0)
+#endif
+#define	LOAD_CURCPU_MASK	0xffe0ffff
+
+static void
+rmixl_fixup_curcpu(void)
+{
+	extern uint32_t _ftext[];
+	extern uint32_t _etext[];
+
+	for (uint32_t *insnp = _ftext; insnp < _etext; insnp++) {
+		const uint32_t insn = *insnp;
+		if (__predict_false((insn & LOAD_CURCPU_MASK) == LOAD_CURCPU)) {
+			/*
+			 * Since the register to loaded is located in bits
+			 * 16-20 for the mfc0 and the load instruction we can
+			 * just change the instruction bits around it.
+			 */
+			*insnp = insn ^ LOAD_CURCPU ^ MFC0_CURCPU;
+			mips_icache_sync_range((vaddr_t)insnp, 4);
+		}
+	}
+}
 
 /*
  * ram_seg_resv - cut reserved regions out of segs, fragmenting as needed
@@ -1030,13 +1029,11 @@ cpu_startup()
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	savectx(curlwp->l_addr);
+	savectx(lwp_getpcb(curlwp));
 
 	if (cold) {
 		howto |= RB_HALT;

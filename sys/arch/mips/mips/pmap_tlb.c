@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.16 2011/02/03 02:36:41 cliff Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.17 2011/04/29 08:26:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.16 2011/02/03 02:36:41 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.17 2011/04/29 08:26:30 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.16 2011/02/03 02:36:41 cliff Exp 
 #include "opt_sysv.h"
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,8 +216,8 @@ pmap_pai_reset(struct pmap_tlb_info *ti, struct pmap_asid_info *pai,
 #endif /* MULTIPROCESSOR */
 }
 
-static void
-pmap_tlb_attach_evcnt(struct pmap_tlb_info *ti)
+void
+pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *ti)
 {
 #ifdef MULTIPROCESSOR
 	evcnt_attach_dynamic(&ti->ti_evcnt_synci_desired,
@@ -238,6 +239,9 @@ pmap_tlb_attach_evcnt(struct pmap_tlb_info *ti)
 	    EVCNT_TYPE_MISC, &ti->ti_evcnt_synci_desired,
 	    ti->ti_name, "icache pages deferred");
 #endif /* MULTIPROCESSOR */
+	evcnt_attach_dynamic(&ti->ti_evcnt_asid_reinits,
+	    EVCNT_TYPE_MISC, NULL,
+	    ti->ti_name, "asid pool reinit");
 }
 
 void
@@ -262,15 +266,14 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 		}
 #ifdef MULTIPROCESSOR
 		const u_int icache_way_pages =
-			mips_cache_info.mci_picache_way_size >> PGSHIFT; 
+			mips_cache_info.mci_picache_way_size >> PGSHIFT;
 		KASSERT(icache_way_pages <= 8*sizeof(pmap_tlb_synci_page_mask));
 		pmap_tlb_synci_page_mask = icache_way_pages - 1;
 		pmap_tlb_synci_map_mask = ~(~0 << icache_way_pages);
-		printf("tlb0: synci page mask %#x and map mask %#x used for %u pages\n", 
+		printf("tlb0: synci page mask %#x and map mask %#x used for %u pages\n",
 		    pmap_tlb_synci_page_mask, pmap_tlb_synci_map_mask,
 		    icache_way_pages);
 #endif
-		pmap_tlb_attach_evcnt(ti);
 		return;
 #ifdef MULTIPROCESSOR
 	}
@@ -289,7 +292,8 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 	ti->ti_index = pmap_ntlbs++;
 	snprintf(ti->ti_name, sizeof(ti->ti_name), "tlb%u", ti->ti_index);
 
-	pmap_tlb_attach_evcnt(ti);
+	KASSERT(ti != &pmap_tlb0_info);
+	pmap_tlb_info_evcnt_attach(ti);
 
 	/*
 	 * If we are reserving a tlb slot for mapping cpu_info,
@@ -434,6 +438,10 @@ pmap_tlb_shootdown_process(void)
 	struct pmap * const curpmap = curlwp->l_proc->p_vmspace->vm_map.pmap;
 #endif
 
+	KASSERT(cpu_intr_p());
+	KASSERTMSG(ci->ci_cpl >= IPL_SCHED,
+	    ("%s: cpl (%d) < IPL_SCHED (%d)",
+	    __func__, ci->ci_cpl, IPL_SCHED));
 	TLBINFO_LOCK(ti);
 
 	switch (ti->ti_tlbinvop) {
@@ -798,18 +806,23 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 #ifdef MULTIPROCESSOR
 	/*
 	 * The kernel pmap is aways onproc and active and must never have
-	 * those bits cleared.
+	 * those bits cleared.  If pmap_remove_all was called, it has already
+	 * deactivated the pmap and thusly onproc will be 0 so there's nothing
+	 * to do.
 	 */
-	if (pm != pmap_kernel()) {
+	if (pm != pmap_kernel() && pm->pm_onproc != 0) {
 		struct cpu_info * const ci = curcpu();
-		struct pmap_tlb_info * const ti = ci->ci_tlb_info;
-		TLBINFO_LOCK(ti);
+		const uint32_t cpu_mask = 1 << cpu_index(ci);
+		KASSERT(!cpu_intr_p());
+		KASSERTMSG(pm->pm_onproc & cpu_mask,
+		    ("%s: pmap %p onproc %#x doesn't include cpu %d (%p)",
+		    __func__, pm, pm->pm_onproc, cpu_index(ci), ci));
 		/*
-		 * The bits in pm_onproc belonging to this TLB can only
-		 * be changed while this TLBs lock is held.
+		 * The bits in pm_onproc that belong to this TLB can
+		 * be changed while this TLBs lock is not held as long
+		 * as we use atomic ops.
 		 */
-		atomic_and_32(&pm->pm_onproc, ~(1 << cpu_index(ci)));
-		TLBINFO_UNLOCK(ti);
+		atomic_and_32(&pm->pm_onproc, ~cpu_mask);
 		atomic_and_ulong(&ci->ci_flags, ~CPUF_USERPMAP);
 	}
 #elif defined(DEBUG)
@@ -823,6 +836,7 @@ void
 pmap_tlb_asid_release_all(struct pmap *pm)
 {
 	KASSERT(pm != pmap_kernel());
+	KASSERT(kpreempt_disabled());
 #ifdef MULTIPROCESSOR
 	KASSERT(pm->pm_onproc == 0);
 	for (u_int i = 0; pm->pm_active != 0; i++) {
@@ -1009,11 +1023,13 @@ void
 pmap_tlb_asid_check(void)
 {
 #ifdef DEBUG
+	kpreempt_disable();
 	uint32_t tlb_hi;
 	__asm("mfc0 %0,$%1" : "=r"(tlb_hi) : "n"(MIPS_COP_0_TLB_HI));
 	uint32_t asid = (tlb_hi & MIPS_TLB_PID) >> MIPS_TLB_PID_SHIFT;
-	KASSERTMSG(asid == curcpu()->ci_pmap_asid_cur,
+	KDASSERTMSG(asid == curcpu()->ci_pmap_asid_cur,
 	   ("tlb_hi (%#x) asid (%#x) != current asid (%#x)",
 	    tlb_hi, asid, curcpu()->ci_pmap_asid_cur));
+	kpreempt_enable();
 #endif
 }

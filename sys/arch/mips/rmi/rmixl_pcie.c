@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.16 2010/09/20 19:42:31 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.17 2011/04/29 08:26:33 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.16 2010/09/20 19:42:31 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.17 2011/04/29 08:26:33 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -1112,7 +1112,7 @@ rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 		switch (irq) {
 		case 26:
 		case 27:
-			name = rmixl_intr_string(irq);
+			name = rmixl_intr_string(RMIXL_IRT_VECTOR(irq));
 			break;
 		}
 		break;
@@ -1123,7 +1123,7 @@ rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 		case 24:
 		case 26:
 		case 27:
-			name = rmixl_intr_string(irq);
+			name = rmixl_intr_string(RMIXL_IRT_VECTOR(irq));
 			break;
 		}
 		break;
@@ -1137,7 +1137,7 @@ rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 		case 27:
 		case 28:
 		case 29:
-			name = rmixl_intr_string(irq);
+			name = rmixl_intr_string(RMIXL_IRT_VECTOR(irq));
 			break;
 		}
 		break;

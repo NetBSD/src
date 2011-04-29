@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28.10.8 2010/03/21 17:38:34 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.10.9 2011/04/29 08:26:18 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.8 2010/03/21 17:38:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.9 2011/04/29 08:26:18 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -128,6 +128,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.8 2010/03/21 17:38:34 cliff Exp 
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/lwp.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -183,12 +184,6 @@ void	configure(void);
 void	mach_init(int, char **, yamon_env_var *, u_long);
 
 /*
- * safepri is a safe priority for sleep to set for a spin-wait during
- * autoconfiguration or after a panic.  Used as an argument to splx().
- */
-int	safepri = MIPS1_PSL_LOWIPL;
-
-/*
  * Do all the stuff that locore normally does before calling main().
  */
 void
@@ -228,7 +223,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * first printf() after that is called).
 	 * Also clears the I+D caches.
 	 */
-	mips_vector_init(NULL);
+	mips_vector_init(NULL, false);
 
 	/* set the VM page size */
 	uvm_setpagesize();
@@ -376,7 +371,7 @@ cpu_reboot(howto, bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	savectx(curlwp->l_addr);
+	savectx(lwp_getpcb(curlwp));
 
 	if (cold) {
 		howto |= RB_HALT;

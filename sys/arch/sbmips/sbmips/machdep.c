@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.38.10.9 2010/06/10 00:35:18 cliff Exp $ */
+/* $NetBSD: machdep.c,v 1.38.10.10 2011/04/29 08:26:35 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.9 2010/06/10 00:35:18 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.10 2011/04/29 08:26:35 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"       /* for SYMTAB_SPACE */
@@ -145,12 +145,6 @@ int mem_cluster_cnt;
 void	configure(void);
 void	mach_init(long, long, long, long);
 
-/*
- * safepri is a safe priority for sleep to set for a spin-wait during
- * autoconfiguration or after a panic.  Used as an argument to splx().
- */
-int	safepri = MIPS_INT_MASK | MIPS_SR_INT_IE;
-
 extern void *esym;
 extern struct user *proc0paddr;
 
@@ -219,7 +213,11 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init(NULL);
+#ifdef MULTIPROCESSOR
+	mips_vector_init(NULL, true);
+#else
+	mips_vector_init(NULL, false);
+#endif
 
 	mips_locoresw.lsw_bus_error = sibyte_bus_watch_check;
 
@@ -375,7 +373,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	savectx(curlwp->l_addr);
+	savectx(lwp_getpcb(curlwp));
 
 	if (cold) {
 		howto |= RB_HALT;

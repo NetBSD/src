@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.12.96.2 2010/12/29 00:34:44 matt Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.12.96.3 2011/04/29 08:26:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -294,12 +294,14 @@ typedef union {
  */
 #define OP_MF		000
 #define OP_DMF		001		/* MIPS-II, for r4000 port */
+#define	OP_CF		002
+#define	OP_MFH		003
 #define OP_MT		004
 #define OP_DMT		005		/* MIPS-II, for r4000 port */
+#define	OP_CT		006
+#define	OP_MTH		007
 #define OP_BCx		010
 #define OP_BCy		014
-#define OP_CF		002
-#define OP_CT		006
 
 /*
  * Values for the 'rt' field when 'op' == OP_COPz.

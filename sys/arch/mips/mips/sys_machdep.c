@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.33.28.1 2010/05/15 20:27:48 matt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.33.28.2 2011/04/29 08:26:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.33.28.1 2010/05/15 20:27:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.33.28.2 2011/04/29 08:26:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,10 +84,6 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 		if (error != 0)
 			return (error);
 		error = mips_user_cachectl(p, ccua.va, ccua.nbytes, ccua.ctl);
-		break;
-	}
-	case MIPS_TINFOSET: {
-		curlwp->l_md.md_tinfo = (intptr_t)SCARG(uap, parms);
 		break;
 	}
 	default:

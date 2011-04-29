@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.21.36.9 2010/06/09 14:20:00 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.21.36.10 2011/04/29 08:26:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,11 +53,10 @@ struct mdlwp {
 #define	l_fpcpu l_md.md_fpcpu
 #endif
 	int	md_flags;		/* machine-dependent flags */
-	int	md_upte[UPAGES];	/* ptes for mapping u page */
 	vaddr_t	md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
-	volatile u_int md_astpending;	/* AST pending on return to userland */
-	register_t md_tinfo;		/* thread info (TLS) */
+	volatile int md_astpending;	/* AST pending on return to userland */
+	int	md_upte[USPACE/4096];	/* ptes for mapping u page */
 };
 
 struct mdproc {
@@ -71,12 +70,13 @@ struct mdproc {
 
 #ifdef _KERNEL
 struct lwp;
-struct proc;
+
 /* kernel single-step emulation */
 int	mips_singlestep(struct lwp *);
-void	cpu_proc_fork(struct proc *, struct proc *);
 
 #define	LWP0_CPU_INFO	&cpu_info_store	/* staticly set in lwp0 */
+
+#define	fpu_used_p(l)	(((l)->l_md.md_flags & MDP_FPUSED) != 0)
 #endif /* _KERNEL */
 
 #endif /* _MIPS_PROC_H_ */

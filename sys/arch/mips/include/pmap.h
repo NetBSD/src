@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.17 2011/02/05 06:31:05 cliff Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.18 2011/04/29 08:26:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -217,9 +217,9 @@ struct pmap_tlb_info {
 #else
 #define tlbinfo_index(ti)	(0)
 #endif
+	struct evcnt ti_evcnt_asid_reinits;
 	u_long ti_asid_bitmap[256 / (sizeof(u_long) * 8)];
 };
-
 
 #ifdef	_KERNEL
 
@@ -265,14 +265,13 @@ void	pmap_tlb_syncicache_wanted(struct cpu_info *);
 void	pmap_tlb_syncicache(vaddr_t, uint32_t);
 #endif
 void	pmap_tlb_info_init(struct pmap_tlb_info *);
+void	pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *);
 void	pmap_tlb_asid_acquire(pmap_t pmap, struct lwp *l);
 void	pmap_tlb_asid_deactivate(pmap_t pmap);
 void	pmap_tlb_asid_check(void);
 void	pmap_tlb_asid_release_all(pmap_t pmap);
 int	pmap_tlb_update_addr(pmap_t pmap, vaddr_t, uint32_t, bool);
 void	pmap_tlb_invalidate_addr(pmap_t pmap, vaddr_t);
-
-uint16_t pmap_pvlist_lock(struct vm_page *, bool);
 
 /*
  * pmap_prefer() helps reduce virtual-coherency exceptions in
@@ -314,6 +313,8 @@ struct vm_page *mips_pmap_alloc_poolpage(int);
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 #define PMAP_NOCACHE	0x4000000000000000ULL
 #endif
+
+uint16_t pmap_pvlist_lock(struct vm_page_md *, bool);
 
 #endif	/* _KERNEL */
 #endif	/* _MIPS_PMAP_H_ */

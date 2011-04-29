@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.19 2010/12/29 00:33:32 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.20 2011/04/29 08:26:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,7 +132,24 @@
 #define	CCA_CACHEABLE		3	/* cacheable non-coherent */
 
 /* CPU dependent mtc0 hazard hook */
-#define	COP0_SYNC		/* nothing */
+#if (MIPS32R2 + MIPS64R2) > 0
+# if (MIPS1 + MIPS3 + MIPS32 + MIPS64) == 0
+#  define COP0_SYNC		sll $0,$0,3	/* EHB */
+#  define JR_HB_RA		.set push; .set mips32r2; jr.hb ra; nop; .set pop
+# else
+#  define COP0_SYNC		sll $0,$0,1; sll $0,$0,1; sll $0,$0,3
+#  define JR_HB_RA		sll $0,$0,1; sll $0,$0,1; jr ra; sll $0,$0,3
+# endif
+#elif (MIPS32 + MIPS64) > 0
+# define COP0_SYNC		sll $0,$0,1; sll $0,$0,1; sll $0,$0,1
+# define JR_HB_RA		sll $0,$0,1; sll $0,$0,1; jr ra; sll $0,$0,1
+#elif MIPS3 > 0
+# define COP0_SYNC		nop; nop; nop
+# define JR_HB_RA		nop; nop; jr ra; nop
+#else
+# define COP0_SYNC		nop
+# define JR_HB_RA		jr ra; nop
+#endif
 #define	COP0_HAZARD_FPUENABLE	nop; nop; nop; nop;
 
 /*
@@ -147,7 +164,7 @@
  *	MIPS_CR_EXC_CODE	The exception type (see exception codes below).
  *
  * Differences:
- *  r3k has 4 bits of execption type, r4k has 5 bits.
+ *  r3k has 4 bits of exception type, r4k has 5 bits.
  */
 #define	MIPS_CR_BR_DELAY	0x80000000
 #define	MIPS_CR_COP_ERR		0x30000000
@@ -249,7 +266,6 @@
 #define	MIPS3_SR_DIAG_CH	0x00040000
 #define	MIPS3_SR_DIAG_CE	0x00020000
 #define	MIPS3_SR_DIAG_PE	0x00010000
-#define	MIPS3_SR_EIE		0x00010000		/* TX79/R5900 */
 #define	MIPS3_SR_KX		0x00000080
 #define	MIPS3_SR_SX		0x00000040
 #define	MIPS3_SR_UX		0x00000020
@@ -259,11 +275,6 @@
 #define	MIPS3_SR_KSU_KERNEL	0x00000000
 #define	MIPS3_SR_ERL		0x00000004
 #define	MIPS3_SR_EXL		0x00000002
-
-#ifdef MIPS3_5900
-#undef MIPS_SR_INT_IE
-#define	MIPS_SR_INT_IE		0x00010001		/* XXX */
-#endif
 
 #define	MIPS_SR_SOFT_RESET	MIPS3_SR_SOFT_RESET
 #define	MIPS_SR_DIAG_CH		MIPS3_SR_DIAG_CH
@@ -447,12 +458,6 @@
 #define	MIPS3_GEN_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0180)
 
 /*
- * TX79 (R5900) exception vectors
- */
-#define MIPS_R5900_COUNTER_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0080)
-#define MIPS_R5900_DEBUG_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0100)
-
-/*
  * MIPS32/MIPS64 (and some MIPS3) dedicated interrupt vector.
  */
 #define	MIPS3_INTR_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0200)
@@ -468,21 +473,28 @@
  *  2	MIPS_COP_0_TLB_LO0	.636 r4k TLB entry low.
  *  3	MIPS_COP_0_TLB_LO1	.636 r4k TLB entry low, extended.
  *  4	MIPS_COP_0_TLB_CONTEXT	3636 TLB Context.
+ *  4/2	MIPS_COP_0_USERLOCAL	..36 UserLocal.
  *  5	MIPS_COP_0_TLB_PG_MASK	.333 TLB Page Mask register.
  *  6	MIPS_COP_0_TLB_WIRED	.333 Wired TLB number.
+ *  7	MIPS_COP_0_HWRENA	..33 rdHWR Enable.
  *  8	MIPS_COP_0_BAD_VADDR	3636 Bad virtual address.
  *  9	MIPS_COP_0_COUNT	.333 Count register.
  * 10	MIPS_COP_0_TLB_HI	3636 TLB entry high.
  * 11	MIPS_COP_0_COMPARE	.333 Compare (against Count).
  * 12	MIPS_COP_0_STATUS	3333 Status register.
+ * 12/1	MIPS_COP_0_INTCTL	..33 Interrupt Control.
+ * 12/2	MIPS_COP_0_SRSCTL	..33 Shadow Register Set Selectors.
+ * 12/3	MIPS_COP_0_SRSMAP	..33 Shadow Set Map.
  * 13	MIPS_COP_0_CAUSE	3333 Exception cause register.
  * 14	MIPS_COP_0_EXC_PC	3636 Exception PC.
  * 15	MIPS_COP_0_PRID		3333 Processor revision identifier.
- * 15/1	MIPS_COP_0_EBASE	..33 Exception Base
+ * 15/1	MIPS_COP_0_EBASE	..33 Exception Base.
  * 16	MIPS_COP_0_CONFIG	3333 Configuration register.
  * 16/1	MIPS_COP_0_CONFIG1	..33 Configuration register 1.
  * 16/2	MIPS_COP_0_CONFIG2	..33 Configuration register 2.
  * 16/3	MIPS_COP_0_CONFIG3	..33 Configuration register 3.
+ * 16/6	MIPS_COP_0_CONFIG6	..33 Configuration register 6.
+ * 16/7	MIPS_COP_0_CONFIG7	..33 Configuration register 7.
  * 17	MIPS_COP_0_LLADDR	.336 Load Linked Address.
  * 18	MIPS_COP_0_WATCH_LO	.336 WatchLo register.
  * 19	MIPS_COP_0_WATCH_HI	.333 WatchHi register.
@@ -548,6 +560,7 @@
 #define	MIPS_COP_0_ERROR_PC	_(30)
 
 /* MIPS32/64 */
+#define	MIPS_COP_0_HWRENA	_(7)
 #define	MIPS_COP_0_OSSCRATCH	_(22)
 #define	MIPS_COP_0_DEBUG	_(23)
 #define	MIPS_COP_0_DEPC		_(24)
@@ -710,15 +723,13 @@
 
 /* XXX simonb: this is before MIPS3_PLUS is defined (and is ugly!) */
 
-#if !(defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)) \
-    && defined(MIPS1)				/* XXX simonb must be neater! */
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 0 && MIPS1 != 0
 #define	MIPS_TLB_PID_SHIFT		MIPS1_TLB_PID_SHIFT
 #define	MIPS_TLB_PID			MIPS1_TLB_PID
 #define	MIPS_TLB_NUM_PIDS		MIPS1_TLB_NUM_PIDS
 #endif
 
-#if (defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)) \
-    && !defined(MIPS1)				/* XXX simonb must be neater! */
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) != 0 && MIPS1 == 0
 #define	MIPS_TLB_PID_SHIFT		0
 #define	MIPS_TLB_PID			MIPS3_TLB_PID
 #define	MIPS_TLB_NUM_PIDS		MIPS3_TLB_NUM_ASIDS
@@ -735,6 +746,17 @@
 #define	MIPS_TLB_NUM_PIDS \
     ((MIPS_HAS_R4K_MMU) ? MIPS3_TLB_NUM_ASIDS : MIPS1_TLB_NUM_PIDS)
 #endif
+
+/*
+ * Bits defined for for the HWREna (CP0 register 7, select 0).
+ */
+#define	MIPS_HWRENA_IMPL31		__BIT(31)
+#define	MIPS_HWRENA_IMPL30		__BIT(30)
+#define	MIPS_HWRENA_UL			__BIT(29)	/* Userlocal */
+#define	MIPS_HWRENA_CCRES		__BIT(3)
+#define	MIPS_HWRENA_CC			__BIT(2)
+#define	MIPS_HWRENA_SYNCI_STEP		__BIT(1)
+#define	MIPS_HWRENA_CPUNUM		__BIT(0)
 
 /*
  * Hints for the prefetch instruction
@@ -851,6 +873,7 @@
 #define	MIPS_34K	0x95	/* MIPS 34K			ISA 32  R2 MT */
 #define	MIPS_24KE	0x96	/* MIPS 24KEc			ISA 32  Rel 2 */
 #define	MIPS_74K	0x97	/* MIPS 74Kc/74Kf		ISA 32  Rel 2 */
+#define	MIPS_1004K	0x99	/* MIPS 1004Kc/1004Kf		ISA 32  Rel 2 */
 
 /*
  * Alchemy (company ID 3) use the processor ID field to donote the CPU core
@@ -923,9 +946,6 @@
 
 #ifdef ENABLE_MIPS_TX3900
 #include <mips/r3900regs.h>
-#endif
-#ifdef MIPS3_5900
-#include <mips/r5900regs.h>
 #endif
 #ifdef MIPS64_SB1
 #include <mips/sb1regs.h>

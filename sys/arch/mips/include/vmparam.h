@@ -1,6 +1,7 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.19 2011/02/05 06:31:05 cliff Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.20 2011/04/29 08:26:22 matt Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -17,45 +18,6 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah Hdr: vmparam.h 1.16 91/01/18
- *
- *	@(#)vmparam.h	8.2 (Berkeley) 4/22/94
- */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -227,6 +189,17 @@
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define	VM_PHYSSEG_NOADD	/* can add RAM after vm_mem_init */
 
+#ifndef VM_NFREELIST
+#define	VM_NFREELIST		16	/* 16 distinct memory segments */
+#define VM_FREELIST_DEFAULT	0
+#define VM_FREELIST_MAX		1
+#endif
+
+#ifdef _KERNEL
+#define	UVM_KM_VMFREELIST	mips_poolpage_vmfreelist
+extern int mips_poolpage_vmfreelist;
+#endif
+
 #define	__HAVE_VM_PAGE_MD
 
 /*
@@ -249,55 +222,41 @@ typedef struct pv_entry {
 #define	PG_MD_POOLPAGE		0x0008	/* page is used as a poolpage */
 #define	PG_MD_EXECPAGE		0x0010	/* page is exec mapped */
 
-#define	PG_MD_CACHED_P(pg)	(((pg)->mdpage.pvh_attrs & PG_MD_UNCACHED) == 0)
-#define	PG_MD_UNCACHED_P(pg)	(((pg)->mdpage.pvh_attrs & PG_MD_UNCACHED) != 0)
-#define	PG_MD_MODIFIED_P(pg)	(((pg)->mdpage.pvh_attrs & PG_MD_MODIFIED) != 0)
-#define	PG_MD_REFERENCED_P(pg)	(((pg)->mdpage.pvh_attrs & PG_MD_REFERENCED) != 0)
-#define	PG_MD_POOLPAGE_P(pg)	(((pg)->mdpage.pvh_attrs & PG_MD_POOLPAGE) != 0)
-#define	PG_MD_EXECPAGE_P(pg)	(((pg)->mdpage.pvh_attrs & PG_MD_EXECPAGE) != 0)
+#define	PG_MD_CACHED_P(md)	(((md)->pvh_attrs & PG_MD_UNCACHED) == 0)
+#define	PG_MD_UNCACHED_P(md)	(((md)->pvh_attrs & PG_MD_UNCACHED) != 0)
+#define	PG_MD_MODIFIED_P(md)	(((md)->pvh_attrs & PG_MD_MODIFIED) != 0)
+#define	PG_MD_REFERENCED_P(md)	(((md)->pvh_attrs & PG_MD_REFERENCED) != 0)
+#define	PG_MD_POOLPAGE_P(md)	(((md)->pvh_attrs & PG_MD_POOLPAGE) != 0)
+#define	PG_MD_EXECPAGE_P(md)	(((md)->pvh_attrs & PG_MD_EXECPAGE) != 0)
 
 struct vm_page_md {
 	struct pv_entry pvh_first;	/* pv_entry first */
 #ifdef MULTIPROCESSOR
 	volatile u_int pvh_attrs;	/* page attributes */
 	kmutex_t *pvh_lock;		/* pv list lock */
-#define	VM_PAGE_PVLIST_LOCK_INIT(pg) 		\
-	(pg)->mdpage.pvh_lock = NULL
-#define	VM_PAGE_PVLIST_LOCKED_P(pg)		\
-	(mutex_owner((pg)->mdpage.pvh_lock) != 0)
-#define	VM_PAGE_PVLIST_LOCK(pg, list_change)	\
-	pmap_pvlist_lock(pg, list_change)
-#define	VM_PAGE_PVLIST_UNLOCK(pg)		\
-	mutex_spin_exit((pg)->mdpage.pvh_lock);
-#define	VM_PAGE_PVLIST_GEN(pg)		((uint16_t)(pg->mdpage.pvh_attrs >> 16))
+#define	PG_MD_PVLIST_LOCK_INIT(md) 	((md)->pvh_lock = NULL)
+#define	PG_MD_PVLIST_LOCKED_P(md)	(mutex_owner((md)->pvh_lock) != 0)
+#define	PG_MD_PVLIST_LOCK(md, lc)	pmap_pvlist_lock((md), (lc))
+#define	PG_MD_PVLIST_UNLOCK(md)		mutex_spin_exit((md)->pvh_lock)
+#define	PG_MD_PVLIST_GEN(md)		((uint16_t)((md)->pvh_attrs >> 16))
 #else
 	u_int pvh_attrs;		/* page attributes */
-#define	VM_PAGE_PVLIST_LOCK_INIT(pg)	do { } while (/*CONSTCOND*/ 0)
-#define	VM_PAGE_PVLIST_LOCKED_P(pg)	true
-#define	VM_PAGE_PVLIST_LOCK(pg, lc)	(mutex_spin_enter(&pmap_pvlist_mutex), 0)
-#define	VM_PAGE_PVLIST_UNLOCK(pg)	mutex_spin_exit(&pmap_pvlist_mutex)
-#define	VM_PAGE_PVLIST_GEN(pg)		(0)
+#define	PG_MD_PVLIST_LOCK_INIT(md)	do { } while (/*CONSTCOND*/ 0)
+#define	PG_MD_PVLIST_LOCKED_P(md)	true
+#define	PG_MD_PVLIST_LOCK(md, lc)	(mutex_spin_enter(&pmap_pvlist_mutex), 0)
+#define	PG_MD_PVLIST_UNLOCK(md)		mutex_spin_exit(&pmap_pvlist_mutex)
+#define	PG_MD_PVLIST_GEN(md)		(0)
 #endif
 };
 
-#define VM_MDPAGE_INIT(pg)						\
-do {									\
-	(pg)->mdpage.pvh_first.pv_next = NULL;				\
-	(pg)->mdpage.pvh_first.pv_pmap = NULL;				\
-	(pg)->mdpage.pvh_first.pv_va = (pg)->phys_addr;			\
-	VM_PAGE_PVLIST_LOCK_INIT(pg);					\
-	(pg)->mdpage.pvh_attrs = 0;					\
+#define VM_MDPAGE_INIT(pg)					\
+do {								\
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);	\
+	(md)->pvh_first.pv_next = NULL;				\
+	(md)->pvh_first.pv_pmap = NULL;				\
+	(md)->pvh_first.pv_va = VM_PAGE_TO_PHYS(pg);		\
+	PG_MD_PVLIST_LOCK_INIT(md);				\
+	(md)->pvh_attrs = 0;					\
 } while (/* CONSTCOND */ 0)
-
-#ifndef VM_NFREELIST
-#define	VM_NFREELIST		16	/* 16 distinct memory segments */
-#define VM_FREELIST_DEFAULT	0
-#define VM_FREELIST_MAX		1
-#endif
-
-#ifdef _KERNEL
-#define	UVM_KM_VMFREELIST	mips_poolpage_vmfreelist
-extern int mips_poolpage_vmfreelist;
-#endif
 
 #endif /* ! _MIPS_VMPARAM_H_ */

@@ -30,23 +30,22 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.5 2011/02/05 06:07:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.6 2011/04/29 08:26:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <mips/cache.h>
+#include <mips/cpuset.h>
 #ifdef DDB
 #include <mips/db_machdep.h>
 #endif
 
-
-static void ipi_halt(void) __attribute__((__noreturn__));
-
+static void ipi_halt(void) __dead;
 
 static const char * const ipi_names[] = {
 	[IPI_NOP]	= "ipi nop",
@@ -107,9 +106,9 @@ ipi_kpreempt(struct cpu_info *ci)
 static void
 ipi_halt(void)
 {
-	int index = cpu_index(curcpu());
-	printf("cpu%d: shutting down\n", index);
-	CPUSET_ADD(cpus_halted, index);
+	const u_int my_cpu = cpu_number();
+	printf("cpu%u: shutting down\n", my_cpu);
+	CPUSET_ADD(cpus_halted, my_cpu);
 	splhigh();
 	for (;;)
 		;
@@ -130,15 +129,15 @@ ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
 		ipi_nop(ci);
 	}
 	if (ipi_mask & __BIT(IPI_SHOOTDOWN)) {
-		ci->ci_evcnt_per_ipi[IPI_NOP].ev_count++;
+		ci->ci_evcnt_per_ipi[IPI_SHOOTDOWN].ev_count++;
 		ipi_shootdown(ci);
 	}
 	if (ipi_mask & __BIT(IPI_FPSAVE)) {
-		ci->ci_evcnt_per_ipi[IPI_NOP].ev_count++;
+		ci->ci_evcnt_per_ipi[IPI_FPSAVE].ev_count++;
 		ipi_fpsave(ci);
 	}
 	if (ipi_mask & __BIT(IPI_SYNCICACHE)) {
-		ci->ci_evcnt_per_ipi[IPI_NOP].ev_count++;
+		ci->ci_evcnt_per_ipi[IPI_SYNCICACHE].ev_count++;
 		ipi_syncicache(ci);
 	}
 	if (ipi_mask & __BIT(IPI_SUSPEND)) {
