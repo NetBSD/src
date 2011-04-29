@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.832 2011/04/18 08:36:14 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.833 2011/04/29 08:26:33 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -309,7 +309,7 @@ Only double-precision addressed at this time.
 
 Package:	file
 Version:	5.03
-Current Vers:	5.03
+Current Vers:	5.06
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:
