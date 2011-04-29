@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.114 2008/10/19 22:05:23 apb Exp $
+#	$NetBSD: Makefile,v 1.114.8.1 2011/04/29 08:11:22 matt Exp $
 
 .include <bsd.sys.mk>
 
@@ -33,7 +33,7 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h atomic.h audioio.h \
 	syscall.h syscallargs.h sysctl.h stdint.h swap.h \
 	syncobj.h syslimits.h syslog.h \
 	tape.h termios.h time.h timeb.h timepps.h times.h \
-	timex.h trace.h tree.h tty.h ttychars.h ttycom.h \
+	timex.h tls.h trace.h tree.h tty.h ttychars.h ttycom.h \
 	ttydefaults.h ttydev.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h uuid.h \
 	vadvise.h verified_exec.h videoio.h vmmeter.h vnode.h vnode_if.h \
