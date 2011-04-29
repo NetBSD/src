@@ -1,4 +1,4 @@
-/*	$NetBSD: newdisk.c,v 1.6 2011/04/29 05:43:51 isaki Exp $	*/
+/*	$NetBSD: newdisk.c,v 1.7 2011/04/29 05:59:53 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999 Minoura Makoto
@@ -48,7 +48,6 @@
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 
-char *prog;
 char *mboot = MBOOT;
 char dev[MAXPATHLEN];
 char buf[4096 + 1];
@@ -65,7 +64,7 @@ usage(void)
 {
 	fprintf(stderr,
 		"Usage: %s [-v] [-n] [-f] [-c] [-m /usr/mdec/mboot] "
-		"/dev/rsdXc\n", prog);
+		"/dev/rsdXc\n", getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
@@ -73,12 +72,10 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	extern int optind;
 	int ch;
 	int fd;
 	struct disklabel label;
 
-	prog = argv[0];
 	while ((ch = getopt(argc, argv, "vnfcm:p")) != -1) {
 		switch (ch) {
 		case 'v':
