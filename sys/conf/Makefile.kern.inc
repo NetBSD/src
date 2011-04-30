@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.130 2011/02/17 18:47:13 matt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.131 2011/04/30 19:21:09 plunky Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -115,7 +115,7 @@ COPTS.${j}+=-g
 . endfor
 .endfor
 
-# Always compile subr_debug_info.c with debug informations.
+# Always compile debugsyms.c with debug information.
 # This allows gdb to use type informations.
 #
 COPTS.debugsyms.c+=	-g
