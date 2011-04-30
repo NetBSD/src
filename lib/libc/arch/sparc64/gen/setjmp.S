@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.8 2011/04/27 21:08:48 martin Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.9 2011/04/30 19:39:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.8 2011/04/27 21:08:48 martin Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.9 2011/04/30 19:39:38 martin Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -124,11 +124,9 @@ ENTRY(__setjmp14)
 	/* 0x38: 4x32bit */		/* sc.sc_mask was already saved above */
 
 	/* save additional registers needed to fill a complete mcontext */
-	stx	%l3, [%i0 + 0x48]
-	stx	%l4, [%i0 + 0x50]	/* adjust asserts in longjmp.c */
-	stx	%l5, [%i0 + 0x58]	/* if you change any of these */
-	stx	%l6, [%i0 + 0x60]	/* offsets! */
-	stx	%l7, [%i0 + 0x68]
+	stx	%l3, [%i0 + 0x48]	/* adjust asserts in longjmp.c */
+	stx	%l6, [%i0 + 0x50]	/* if you change any of these */
+	stx	%l7, [%i0 + 0x58]	/* offsets! */
 
 	ret				/* return 0 */
 	 restore %g0, 0, %o0

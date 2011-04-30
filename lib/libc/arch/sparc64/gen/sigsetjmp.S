@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.9 2011/04/27 21:08:48 martin Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.10 2011/04/30 19:39:38 martin Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -35,14 +35,14 @@
 /*
  * We use the sc_npc field inside the sigcontext to store the save mask
  */
-#define	MASK_OFFSET	0x18
+#define	MASK_OFFSET	0x68
 
 #ifdef PIC
 #ifdef BIGPIC
 	
 ENTRY(__sigsetjmp14)
 	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE
-	st	%o1,[%o0+MASK_OFFSET]	! jmp_buf.sc.sc_npc
+	st	%o1,[%o0+MASK_OFFSET]	! end of jmpbuf
 	sethi	%hi(_C_LABEL(__setjmp14)), %o2
 	sethi	%hi(_C_LABEL(_setjmp)), %o3
 	or	%o2, %lo(_C_LABEL(__setjmp14)), %o2
@@ -56,7 +56,7 @@ ENTRY(__sigsetjmp14)
 	
 ENTRY(__siglongjmp14)
 	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE
-	ld	[%o0+MASK_OFFSET], %o2	! jmp_buf.sc.sc_npc
+	ld	[%o0+MASK_OFFSET], %o2	! end of jmpbuf
 	sethi	%hi(_C_LABEL(__longjmp14)), %o3 
 	sethi	%hi(_C_LABEL(_longjmp)), %o4
 	or	%o3, %lo(_C_LABEL(__longjmp14)), %o3
@@ -73,7 +73,7 @@ ENTRY(__siglongjmp14)
 ENTRY(__sigsetjmp14)
 	PIC_PROLOGUE(%g1,%o2)			! %g1 = _GLOBAL_OFFSET_TABLE
 	cmp	%o1,0
-	st	%o1,[%o0+MASK_OFFSET]		! jmp_buf.sc.sc_npc
+	st	%o1,[%o0+MASK_OFFSET]		! end of jmpbuf
 	bne,a	1f
 	 ldx	[%g1+_C_LABEL(__setjmp14)], %g1	! if (%o1 != 0) goto __setjmp;
 	ldx	[%g1+_C_LABEL(_setjmp)], %g1	! else goto _setjmp;
@@ -83,7 +83,7 @@ ENTRY(__sigsetjmp14)
 
 ENTRY(__siglongjmp14)
 	PIC_PROLOGUE(%g1,%o2)			! %g1 = _GLOBAL_OFFSET_TABLE
-	ld	[%o0+MASK_OFFSET],%o2		! jmp_buf.sc.sc_npc
+	ld	[%o0+MASK_OFFSET],%o2		! end of jmpbuf
 	cmp	%o2,0
 	bne,a	1f
 	 ldx	[%g1+_C_LABEL(__longjmp14)], %g1 ! if (%o2 != 0) goto __longjmp;
@@ -98,7 +98,7 @@ ENTRY(__siglongjmp14)
 ENTRY(__sigsetjmp14)
 	cmp	%o1,0
 	be	_C_LABEL(_setjmp)
-	 st	%o1,[%o0+MASK_OFFSET]	! jmp_buf.sc.sc_npc
+	 st	%o1,[%o0+MASK_OFFSET]	! end of jmpbuf
 	ba,a	_C_LABEL(__setjmp14)
 	unimp 0
 
