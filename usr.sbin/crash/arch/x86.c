@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.1 2009/03/07 22:08:08 ad Exp $	*/
+/*	$NetBSD: x86.c,v 1.1 2011/04/30 16:57:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.1 2009/03/07 22:08:08 ad Exp $");
+__RCSID("$NetBSD: x86.c,v 1.1 2011/04/30 16:57:58 christos Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: i386.c,v 1.1 2009/03/07 22:08:08 ad Exp $");
 
 #include <machine/frame.h>
 #include <machine/pcb.h>
+#include <x86/db_machdep.h>
 
 #include "extern.h"
 
@@ -64,9 +65,9 @@ db_mach_init(kvm_t *kd)
 	    sizeof(pcb)) {
 		errx(EXIT_FAILURE, "cannot read dumppcb: %s", kvm_geterr(kd));
 	}
-        ddb_regs.tf_esp = pcb.pcb_esp;
-        ddb_regs.tf_ebp = pcb.pcb_ebp;
-        if (ddb_regs.tf_ebp != 0 && ddb_regs.tf_esp != 0) {
+        ddb_regs.tf_sp = pcb.pcb_sp;
+        ddb_regs.tf_bp = pcb.pcb_bp;
+        if (ddb_regs.tf_bp != 0 && ddb_regs.tf_sp != 0) {
         	printf("Backtrace from time of crash is available.\n");
 	}
 }
