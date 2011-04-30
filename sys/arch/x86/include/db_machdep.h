@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.2 2011/04/10 20:38:37 christos Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.3 2011/04/30 16:58:35 christos Exp $	*/
 
 #ifndef _X86_DB_MACHDEP_H_
 #define _X86_DB_MACHDEP_H_
@@ -21,12 +21,14 @@ struct db_variable;
 #define	tf_ip		tf_rip
 #define	tf_bp		tf_rbp
 #define	pcb_bp		pcb_rbp
+#define	pcb_sp		pcb_rsp
 #define	x86_frame	x86_64_frame
 #else
 #define	tf_sp		tf_esp
 #define	tf_ip		tf_eip
 #define	tf_bp		tf_ebp
 #define	pcb_bp		pcb_ebp
+#define	pcb_sp		pcb_esp
 #define	x86_frame	i386_frame
 #endif
 
