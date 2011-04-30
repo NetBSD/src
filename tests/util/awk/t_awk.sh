@@ -1,4 +1,4 @@
-# $NetBSD: t_awk.sh,v 1.4 2011/04/28 23:28:23 alnsn Exp $
+# $NetBSD: t_awk.sh,v 1.5 2011/04/30 01:10:07 alnsn Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -94,6 +94,7 @@ period_body()
 {
 	export LANG=ru_RU.KOI8-R
 
+	atf_expect_fail "PR/42320"
 	h_check period -v x=0.5
 }
 
