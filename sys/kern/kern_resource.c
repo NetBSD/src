@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.157 2010/07/01 02:38:30 rmind Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.158 2011/04/30 23:41:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.157 2010/07/01 02:38:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.158 2011/04/30 23:41:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,121 +775,101 @@ sysctl_proc_findproc(lwp_t *l, pid_t pid, proc_t **p2)
 }
 
 /*
- * sysctl helper routine for setting a process's specific corefile
- * name.  picks the process based on the given pid and checks the
- * correctness of the new value.
+ * sysctl_proc_corename: helper routine to get or set the core file name
+ * for a process specified by PID.
  */
 static int
 sysctl_proc_corename(SYSCTLFN_ARGS)
 {
-	struct proc *ptmp;
+	struct proc *p;
 	struct plimit *lim;
-	char *cname, *ocore, *tmp;
+	char *cnbuf, *cname;
 	struct sysctlnode node;
-	int error = 0, len;
+	size_t len;
+	int error;
 
-	/*
-	 * is this all correct?
-	 */
-	if (namelen != 0)
-		return (EINVAL);
-	if (name[-1] != PROC_PID_CORENAME)
-		return (EINVAL);
+	/* First, validate the request. */
+	if (namelen != 0 || name[-1] != PROC_PID_CORENAME)
+		return EINVAL;
 
 	/* Find the process.  Hold a reference (p_reflock), if found. */
-	error = sysctl_proc_findproc(l, (pid_t)name[-2], &ptmp);
+	error = sysctl_proc_findproc(l, (pid_t)name[-2], &p);
 	if (error)
 		return error;
 
 	/* XXX-elad */
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, ptmp,
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, p,
 	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 	if (error) {
-		rw_exit(&ptmp->p_reflock);
+		rw_exit(&p->p_reflock);
 		return error;
 	}
 
+	cnbuf = PNBUF_GET();
+
 	if (newp == NULL) {
+		/* Get case: copy the core name into the buffer. */
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CORENAME, ptmp,
+		    KAUTH_PROCESS_CORENAME, p,
 		    KAUTH_ARG(KAUTH_REQ_PROCESS_CORENAME_GET), NULL, NULL);
 		if (error) {
-			rw_exit(&ptmp->p_reflock);
-			return error;
+			goto done;
+		}
+		lim = p->p_limit;
+		mutex_enter(&lim->pl_lock);
+		strlcpy(cnbuf, lim->pl_corename, MAXPATHLEN);
+		mutex_exit(&lim->pl_lock);
+	} else {
+		/* Set case: just use the temporary buffer. */
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_CORENAME, p,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CORENAME_SET), cnbuf, NULL);
+		if (error) {
+			goto done;
 		}
 	}
 
-	/*
-	 * let them modify a temporary copy of the core name
-	 */
-	cname = PNBUF_GET();
-	lim = ptmp->p_limit;
-	mutex_enter(&lim->pl_lock);
-	strlcpy(cname, lim->pl_corename, MAXPATHLEN);
-	mutex_exit(&lim->pl_lock);
-
 	node = *rnode;
-	node.sysctl_data = cname;
+	node.sysctl_data = cnbuf;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
-	/*
-	 * if that failed, or they have nothing new to say, or we've
-	 * heard it before...
-	 */
-	if (error || newp == NULL)
-		goto done;
-	lim = ptmp->p_limit;
-	mutex_enter(&lim->pl_lock);
-	error = strcmp(cname, lim->pl_corename);
-	mutex_exit(&lim->pl_lock);
-	if (error == 0) {
-		/* Unchanged */
-		goto done;
-	}
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CORENAME,
-	    ptmp, KAUTH_ARG(KAUTH_REQ_PROCESS_CORENAME_SET), cname, NULL);
-	if (error)
-		goto done;
-
-	/*
-	 * no error yet and cname now has the new core name in it.
-	 * let's see if it looks acceptable.  it must be either "core"
-	 * or end in ".core" or "/core".
-	 */
-	len = strlen(cname);
-	if (len < 4) {
-		error = EINVAL;
-	} else if (strcmp(cname + len - 4, "core") != 0) {
-		error = EINVAL;
-	} else if (len > 4 && cname[len - 5] != '/' && cname[len - 5] != '.') {
-		error = EINVAL;
-	}
-	if (error != 0) {
+	/* Return if error, or if we are only retrieving the core name. */
+	if (error || newp == NULL) {
 		goto done;
 	}
 
 	/*
-	 * hmm...looks good.  now...where do we put it?
+	 * Validate new core name.  It must be either "core", "/core",
+	 * or end in ".core".
 	 */
-	tmp = malloc(len + 1, M_TEMP, M_WAITOK|M_CANFAIL);
-	if (tmp == NULL) {
+	len = strlen(cnbuf);
+	if ((len < 4 || strcmp(cnbuf + len - 4, "core") != 0) ||
+	    (len > 4 && cnbuf[len - 5] != '/' && cnbuf[len - 5] != '.')) {
+		error = EINVAL;
+		goto done;
+	}
+
+	/* Allocate, copy and set the new core name for plimit structure. */
+	cname = malloc(++len, M_TEMP, M_WAITOK | M_CANFAIL);
+	if (cname == NULL) {
 		error = ENOMEM;
 		goto done;
 	}
-	memcpy(tmp, cname, len + 1);
+	memcpy(cname, cnbuf, len);
 
-	lim_privatise(ptmp, false);
-	lim = ptmp->p_limit;
+	char *ocname;
+	lim_privatise(p, false);
+	lim = p->p_limit;
 	mutex_enter(&lim->pl_lock);
-	ocore = lim->pl_corename;
-	lim->pl_corename = tmp;
+	ocname = lim->pl_corename;
+	lim->pl_corename = cname;
 	mutex_exit(&lim->pl_lock);
-	if (ocore != defcorename)
-		free(ocore, M_TEMP);
+	if (ocname != defcorename)
+		free(ocname, M_TEMP);
 
 done:
-	rw_exit(&ptmp->p_reflock);
-	PNBUF_PUT(cname);
+	rw_exit(&p->p_reflock);
+	PNBUF_PUT(cnbuf);
 	return error;
 }
 
