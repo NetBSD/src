@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.30 2009/03/15 17:17:23 cegger Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.31 2011/04/30 01:44:36 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.30 2009/03/15 17:17:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.31 2011/04/30 01:44:36 mrg Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -658,7 +658,7 @@ PrintLockedStripes(RF_LockTableEntry_t *lockTable)
 	RF_StripeLockDesc_t *p;
 	RF_LockReqDesc_t *q;
 
-	RF_LOCK_MUTEX(rf_printf_mutex);
+	rf_lock_mutex2(rf_printf_mutex);
 	printf("Locked stripes:\n");
 	for (i = 0; i < rf_lockTableSize; i++)
 		if (lockTable[i].descList) {
@@ -714,6 +714,6 @@ PrintLockedStripes(RF_LockTableEntry_t *lockTable)
 		printf("(none)\n");
 	else
 		printf("\n");
-	RF_UNLOCK_MUTEX(rf_printf_mutex);
+	rf_unlock_mutex2(rf_printf_mutex);
 }
 #endif
