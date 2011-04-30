@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/04/14 08:21:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2011/04/30 16:57:58 christos Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -37,9 +37,12 @@ SRCS+=	db_disasm.c
 
 . if    ${MACHINE} == "amd64" \
      || ${MACHINE} == "i386"
+MACHINE_FAMILY = x86
 .PATH:	${S}/arch/x86/x86
 SRCS+=	db_trace.c
 SRCS+=	db_machdep.c
+. else
+MACHINE_FAMILY = ${MACHINE}
 . endif
 
 . if ${MACHINE} == "sparc64"
@@ -51,8 +54,8 @@ SRCS+=	crash.c
 
 # arch.c
 .PATH:	${.CURDIR}/arch
-. if (exists(${.CURDIR}/arch/${MACHINE_ARCH}.c))
-SRCS+=	${MACHINE_ARCH}.c
+. if (exists(${.CURDIR}/arch/${MACHINE_FAMILY}.c))
+SRCS+=	${MACHINE_FAMILY}.c
 . else
 SRCS+=	generic.c
 . endif
