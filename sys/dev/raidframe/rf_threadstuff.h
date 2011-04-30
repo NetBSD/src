@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.25 2011/04/27 07:55:15 mrg Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.26 2011/04/30 01:44:36 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -70,6 +70,8 @@ typedef void *RF_ThreadArg_t;
 #define RF_SIGNAL_COND(_c_)            wakeup_one(&(_c_))
 #define RF_BROADCAST_COND(_c_)         wakeup(&(_c_))
 
+#define rf_mutex_init(m)               simple_lock_init(m)
+
 
 /* Modern mutex */
 /* Note that rf_declare_{mutex,cond}2() do _NOT_ append the ; */
@@ -101,7 +103,5 @@ typedef void *RF_ThreadArg_t;
 #define	RF_CREATE_ENGINE_THREAD(_handle_, _func_, _arg_, _fmt_, _fmt_arg_) \
 	kthread_create(PRI_NONE, 0, NULL, (void (*)(void *))(_func_), \
 	    (void *)(_arg_), &(_handle_), _fmt_, _fmt_arg_)
-
-#define rf_mutex_init(m) simple_lock_init(m)
 
 #endif				/* !_RF__RF_THREADSTUFF_H_ */

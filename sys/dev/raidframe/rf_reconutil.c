@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.28 2007/03/04 06:02:39 christos Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.29 2011/04/30 01:44:36 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.28 2007/03/04 06:02:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.29 2011/04/30 01:44:36 mrg Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -125,13 +125,13 @@ rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc,
 	}
 
 	/* initialize the event queue */
-	simple_lock_init(&reconCtrlPtr->eq_mutex);
+	rf_mutex_init(&reconCtrlPtr->eq_mutex);
 
 	reconCtrlPtr->eventQueue = NULL;
 	reconCtrlPtr->eq_count = 0;
 
 	/* make the floating recon buffers and append them to the free list */
-	simple_lock_init(&reconCtrlPtr->rb_mutex);
+	rf_mutex_init(&reconCtrlPtr->rb_mutex);
 
 	reconCtrlPtr->fullBufferList = NULL;
 	reconCtrlPtr->floatingRbufs = NULL;

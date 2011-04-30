@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.22 2009/03/15 17:17:23 cegger Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.23 2011/04/30 01:44:36 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.22 2009/03/15 17:17:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.23 2011/04/30 01:44:36 mrg Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -75,7 +75,7 @@ rf_AllocMCPair(void)
 	RF_MCPair_t *t;
 
 	t = pool_get(&rf_pools.mcpair, PR_WAITOK);
-	simple_lock_init(&t->mutex);
+	rf_mutex_init(&t->mutex);
 	t->cond = 0;
 	t->flag = 0;
 
