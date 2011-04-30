@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.81 2011/04/18 01:47:28 rmind Exp $	*/
+/*	$NetBSD: atavar.h,v 1.82 2011/04/30 00:34:03 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -331,6 +331,7 @@ struct ata_channel {
 #define	ATACH_DISABLED 0x80	/* channel is disabled */
 #define ATACH_TH_RUN   0x100	/* the kernel thread is working */
 #define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
+#define ATACH_TH_RESCAN 0x400	/* rescan requested */
 	u_int8_t ch_status;	/* copy of status register */
 	u_int8_t ch_error;	/* copy of error register */
 

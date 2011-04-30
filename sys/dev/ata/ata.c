@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.114 2011/04/18 01:47:28 rmind Exp $	*/
+/*	$NetBSD: ata.c,v 1.115 2011/04/30 00:34:03 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.114 2011/04/18 01:47:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.115 2011/04/30 00:34:03 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -105,6 +105,7 @@ const struct cdevsw atabus_cdevsw = {
 extern struct cfdriver atabus_cd;
 
 static void atabus_childdetached(device_t, device_t);
+static int atabus_rescan(device_t, const char *, const int *);
 static bool atabus_resume(device_t, const pmf_qual_t *);
 static bool atabus_suspend(device_t, const pmf_qual_t *);
 static void atabusconfig_thread(void *);
@@ -396,6 +397,10 @@ atabus_thread(void *arg)
 		if (chp->ch_flags & ATACH_SHUTDOWN) {
 			break;
 		}
+		if (chp->ch_flags & ATACH_TH_RESCAN) {
+			atabusconfig(sc);
+			chp->ch_flags &= ~ATACH_TH_RESCAN;
+		}
 		if (chp->ch_flags & ATACH_TH_RESET) {
 			/*
 			 * ata_reset_channel() will freeze 2 times, so
@@ -585,7 +590,7 @@ atabus_childdetached(device_t self, device_t child)
 }
 
 CFATTACH_DECL3_NEW(atabus, sizeof(struct atabus_softc),
-    atabus_match, atabus_attach, atabus_detach, NULL, NULL,
+    atabus_match, atabus_attach, atabus_detach, NULL, atabus_rescan,
     atabus_childdetached, DVF_DETACH_SHUTDOWN);
 
 /*****************************************************************************
@@ -1559,4 +1564,40 @@ atabus_resume(device_t dv, const pmf_qual_t *qual)
 	splx(s);
 
 	return true;
+}
+
+static int
+atabus_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct atabus_softc *sc = device_private(self);
+	struct ata_channel *chp = sc->sc_chan;
+	struct atabus_initq *initq;
+	int i;
+	int s;
+
+	if (chp->atapibus != NULL) {
+		return EBUSY;
+	}
+
+	for (i = 0; i < ATA_MAXDRIVES; i++) {
+		if (chp->ata_drives[i] != NULL) {
+			return EBUSY;
+		}
+	}
+
+	s = splbio();
+	for (i = 0; i < ATA_MAXDRIVES; i++) {
+		chp->ch_drive[i].drive_flags = 0;
+	}
+	splx(s);
+
+	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
+	initq->atabus_sc = sc;
+	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
+	config_pending_incr();
+
+	chp->ch_flags |= ATACH_TH_RESCAN;
+	wakeup(&chp->ch_thread);
+
+	return 0;
 }
