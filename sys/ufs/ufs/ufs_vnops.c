@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.188 2011/04/24 21:35:30 rmind Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.189 2011/04/30 14:24:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.188 2011/04/24 21:35:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.189 2011/04/30 14:24:27 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -211,8 +211,8 @@ ufs_mknod(void *v)
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
-	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
+	VOP_UNLOCK(*vpp);
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
 out:
