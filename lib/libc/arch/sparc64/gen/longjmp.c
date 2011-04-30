@@ -1,4 +1,4 @@
-/*	$NetBSD: longjmp.c,v 1.4 2011/04/30 19:39:38 martin Exp $	*/
+/*	$NetBSD: longjmp.c,v 1.5 2011/04/30 23:30:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@ typedef struct {
  * make sure any changes cause a compile failure here
  */
 __CTASSERT(0x68 == offsetof(__jmp_buf_regs_t,save_mask)+
+	sizeof(struct sigcontext));
+__CTASSERT(sizeof(jmp_buf) >= sizeof(__jmp_buf_regs_t) +
 	sizeof(struct sigcontext));
 
 void
