@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.311 2011/04/22 00:53:44 joerg Exp $
+# $NetBSD: mi,v 1.312 2011/04/30 00:35:03 alnsn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2316,6 +2316,9 @@
 ./usr/tests/util/awk/d_end2.awk			tests-util-tests
 ./usr/tests/util/awk/d_end2.in			tests-util-tests
 ./usr/tests/util/awk/d_end2.out			tests-util-tests
+./usr/tests/util/awk/d_period.awk		tests-util-tests
+./usr/tests/util/awk/d_period.in		tests-util-tests
+./usr/tests/util/awk/d_period.out		tests-util-tests
 ./usr/tests/util/awk/d_string1.awk		tests-util-tests
 ./usr/tests/util/awk/d_string1.out		tests-util-tests
 ./usr/tests/util/awk/d_tolower.awk		tests-util-tests
