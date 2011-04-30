@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/02/13 05:19:51 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2011/04/30 11:24:14 alnsn Exp $
 
 NOMAN=		# defined
 
@@ -18,6 +18,9 @@ FILES+=		d_end1.out
 FILES+=		d_end2.awk
 FILES+=		d_end2.in
 FILES+=		d_end2.out
+FILES+=		d_period.awk
+FILES+=		d_period.in
+FILES+=		d_period.out
 FILES+=		d_string1.awk
 FILES+=		d_string1.out
 FILES+=		d_tolower.awk
