@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.125 2011/04/27 07:55:14 mrg Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.126 2011/04/30 01:44:36 mrg Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.125 2011/04/27 07:55:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.126 2011/04/30 01:44:36 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -118,7 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.125 2011/04/27 07:55:14 mrg Exp $");
 #endif
 
 /* rad == RF_RaidAccessDesc_t */
-RF_DECLARE_MUTEX(rf_rad_lock)
 #define RF_MAX_FREE_RAD 128
 #define RF_MIN_FREE_RAD  32
 
@@ -134,7 +133,7 @@ static void rf_UnconfigureArray(void);
 static void rf_ShutdownRDFreeList(void *);
 static int rf_ConfigureRDFreeList(RF_ShutdownList_t **);
 
-RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
+rf_declare_mutex2(rf_printf_mutex);	/* debug only:  avoids interleaved
 					 * printfs by different stripes */
 
 #define SIGNAL_QUIESCENT_COND(_raid_)  wakeup(&((_raid_)->accesses_suspended))
@@ -213,16 +212,16 @@ rf_Shutdown(RF_Raid_t *raidPtr)
          * cuts down on the amount of serialization we've got going
          * on.
          */
-	RF_LOCK_MUTEX(rf_rad_lock);
+	rf_lock_mutex2(raidPtr->rad_lock);
 	if (raidPtr->waitShutdown) {
-		RF_UNLOCK_MUTEX(rf_rad_lock);
+		rf_unlock_mutex2(raidPtr->rad_lock);
 		return (EBUSY);
 	}
 	raidPtr->waitShutdown = 1;
 	while (raidPtr->nAccOutstanding) {
-		RF_WAIT_COND(raidPtr->outstandingCond, rf_rad_lock);
+		rf_wait_cond2(raidPtr->outstandingCond, raidPtr->rad_lock);
 	}
-	RF_UNLOCK_MUTEX(rf_rad_lock);
+	rf_unlock_mutex2(raidPtr->rad_lock);
 
 	/* Wait for any parity re-writes to stop... */
 	while (raidPtr->parity_rewrite_in_progress) {
@@ -252,6 +251,9 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 	rf_FreeEmergBuffers(raidPtr);
 
 	rf_ShutdownList(&raidPtr->shutdownList);
+
+	rf_destroy_cond2(raidPtr->outstandingCond);
+	rf_destroy_mutex2(raidPtr->rad_lock);
 
 	rf_UnconfigureArray();
 
@@ -299,7 +301,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	rf_lock_mutex2(configureMutex);
 	configureCount++;
 	if (isconfigged == 0) {
-		rf_mutex_init(&rf_printf_mutex);
+		rf_init_mutex2(rf_printf_mutex, IPL_VM);
 
 		/* initialize globals */
 
@@ -353,7 +355,8 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureEngine);
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureStripeLocks);
 
-	raidPtr->outstandingCond = 0;
+	rf_init_cond2(raidPtr->outstandingCond, "rfocond");
+	rf_init_mutex2(raidPtr->rad_lock, IPL_VM);
 
 	raidPtr->nAccOutstanding = 0;
 	raidPtr->waitShutdown = 0;
@@ -544,7 +547,6 @@ rf_ConfigureRDFreeList(RF_ShutdownList_t **listp)
 	rf_pool_init(&rf_pools.rad, sizeof(RF_RaidAccessDesc_t),
 		     "rf_rad_pl", RF_MIN_FREE_RAD, RF_MAX_FREE_RAD);
 	rf_ShutdownCreate(listp, rf_ShutdownRDFreeList, NULL);
-	simple_lock_init(&rf_rad_lock);
 	return (0);
 }
 
@@ -558,20 +560,20 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 
 	desc = pool_get(&rf_pools.rad, PR_WAITOK);
 
-	RF_LOCK_MUTEX(rf_rad_lock);
+	rf_lock_mutex2(raidPtr->rad_lock);
 	if (raidPtr->waitShutdown) {
 		/*
 	         * Actually, we're shutting the array down. Free the desc
 	         * and return NULL.
 	         */
 
-		RF_UNLOCK_MUTEX(rf_rad_lock);
+		rf_unlock_mutex2(raidPtr->rad_lock);
 		pool_put(&rf_pools.rad, desc);
 		return (NULL);
 	}
 	raidPtr->nAccOutstanding++;
 
-	RF_UNLOCK_MUTEX(rf_rad_lock);
+	rf_unlock_mutex2(raidPtr->rad_lock);
 
 	desc->raidPtr = (void *) raidPtr;
 	desc->type = type;
@@ -628,12 +630,12 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
 	}
 
 	pool_put(&rf_pools.rad, desc);
-	RF_LOCK_MUTEX(rf_rad_lock);
+	rf_lock_mutex2(raidPtr->rad_lock);
 	raidPtr->nAccOutstanding--;
 	if (raidPtr->waitShutdown) {
-		RF_SIGNAL_COND(raidPtr->outstandingCond);
+		rf_signal_cond2(raidPtr->outstandingCond);
 	}
-	RF_UNLOCK_MUTEX(rf_rad_lock);
+	rf_unlock_mutex2(raidPtr->rad_lock);
 }
 /*********************************************************************
  * Main routine for performing an access.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.40 2011/04/27 07:55:15 mrg Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.41 2011/04/30 01:44:36 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -249,7 +249,8 @@ struct RF_Raid_s {
          * for a per-array piece of data, but otherwise, it'd be an extra
          * per-array lock, and that'd only be less efficient...)
          */
-	RF_DECLARE_COND(outstandingCond)
+	rf_declare_mutex2(rad_lock);
+	rf_declare_cond2(outstandingCond);
 	int     waitShutdown;
 	int     nAccOutstanding;
 
