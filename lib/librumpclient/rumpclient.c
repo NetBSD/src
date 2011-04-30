@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.44 2011/03/15 09:35:05 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.45 2011/04/30 12:25:05 alnsn Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.44 2011/03/15 09:35:05 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.45 2011/04/30 12:25:05 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -589,6 +589,7 @@ dupgood(int myfd, int mustchange)
 {
 	int ofds[4];
 	int i;
+	int sverrno;
 
 	for (i = 0; (myfd <= 2 || mustchange) && myfd != -1; i++) {
 		assert(i < __arraycount(ofds));
@@ -600,9 +601,16 @@ dupgood(int myfd, int mustchange)
 		}
 	}
 
+	sverrno = 0;
+	if (myfd == -1 && i > 0)
+		sverrno = errno;
+
 	for (i--; i >= 0; i--) {
 		host_close(ofds[i]);
 	}
+
+	if (sverrno)
+		errno = sverrno;
 
 	return myfd;
 }
@@ -673,7 +681,7 @@ doconnect(void)
 		return -1;
 	}
 
-	if ((n = host_read(s, banner, sizeof(banner)-1)) < 0) {
+	if ((n = host_read(s, banner, sizeof(banner)-1)) <= 0) {
 		ERRLOG(("rump_sp: failed to read banner\n"));
 		return -1;
 	}
@@ -683,7 +691,7 @@ doconnect(void)
 		return -1;
 	}
 	banner[n] = '\0';
-	/* parse the banner some day */
+	/* XXX parse the banner some day */
 
 	flags = host_fcntl(s, F_GETFL, 0);
 	if (host_fcntl(s, F_SETFL, flags | O_NONBLOCK) == -1) {
