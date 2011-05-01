@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.177 2011/05/01 00:11:52 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.178 2011/05/01 00:22:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.177 2011/05/01 00:11:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.178 2011/05/01 00:22:36 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1337,20 +1337,11 @@ proc_crmod_enter(void)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	struct plimit *lim;
 	kauth_cred_t oc;
-	char *cn;
 
 	/* Reset what needs to be reset in plimit. */
 	if (p->p_limit->pl_corename != defcorename) {
-		lim_privatise(p, false);
-		lim = p->p_limit;
-		mutex_enter(&lim->pl_lock);
-		cn = lim->pl_corename;
-		lim->pl_corename = defcorename;
-		mutex_exit(&lim->pl_lock);
-		if (cn != defcorename)
-			free(cn, M_TEMP);
+		lim_setcorename(p, defcorename, 0);
 	}
 
 	mutex_enter(p->p_lock);
