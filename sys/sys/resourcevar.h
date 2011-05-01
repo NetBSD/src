@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.50 2011/05/01 00:22:36 rmind Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.51 2011/05/01 01:15:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -63,25 +63,20 @@ struct pstats {
 #ifdef _KERNEL
 
 /*
- * Kernel shareable process resource limits.  Because this structure
- * is moderately large but changes infrequently, it is normally
- * shared copy-on-write after forks.  If a group of processes
- * ("threads") share modifications, the PL_SHAREMOD flag is set,
- * and a copy must be made for the child of a new fork that isn't
- * sharing modifications to the limits.
+ * Process resource limits.  Since this structure is moderately large,
+ * but changes infrequently, it is shared copy-on-write after forks.
  *
- * The PL_xxx flags are never cleared, once either is set p->p_limit
- * will never be changed again.
+ * When a separate copy is created, then 'pl_writeable' is set to true,
+ * and 'pl_sv_limit' is pointed to the old proc_t::p_limit structure.
  */
 struct plimit {
 	struct rlimit	pl_rlimit[RLIM_NLIMITS];
 	char *		pl_corename;
-#define	PL_SHAREMOD	0x01		/* modifications are shared */
-#define	PL_WRITEABLE	0x02		/* private to this process */
-	int		pl_flags;
-	int		pl_refcnt;	/* number of references */
-	kmutex_t	pl_lock;	/* mutex for pl_refcnt */
-	struct plimit *	pl_sv_limit;	/* saved when PL_WRITEABLE set */
+	size_t		pl_cnlen;
+	u_int		pl_refcnt;
+	bool		pl_writeable;
+	kmutex_t	pl_lock;
+	struct plimit *	pl_sv_limit;
 };
 
 /* add user profiling from AST XXXSMP */
@@ -107,9 +102,9 @@ void	addupc_task(struct lwp *, u_long, u_int);
 void	calcru(struct proc *, struct timeval *, struct timeval *,
 	    struct timeval *, struct timeval *);
 
-struct plimit *lim_copy(struct plimit *lim);
-void	lim_addref(struct plimit *lim);
-void	lim_privatise(struct proc *p, bool set_shared);
+struct plimit *lim_copy(struct plimit *);
+void	lim_addref(struct plimit *);
+void	lim_privatise(struct proc *);
 void	lim_setcorename(struct proc *, char *, size_t);
 void	lim_free(struct plimit *);
 
