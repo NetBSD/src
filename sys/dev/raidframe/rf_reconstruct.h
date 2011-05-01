@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.24 2008/05/19 19:49:55 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.25 2011/05/01 10:01:01 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -137,7 +137,7 @@ struct RF_ReconCtrl_s {
 	/* reconstruction event queue */
 	RF_ReconEvent_t *eventQueue;	/* queue of pending reconstruction
 					 * events */
-        RF_DECLARE_MUTEX(eq_mutex)	/* mutex for locking event
+	rf_declare_mutex2(eq_mutex);	/* mutex for locking event
 					 * queue */
 	int     eq_count;	/* debug only */
 
