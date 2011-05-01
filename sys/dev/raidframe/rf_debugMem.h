@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.h,v 1.12 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_debugMem.h,v 1.13 2011/05/01 06:49:43 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -80,7 +80,7 @@
   }
 #endif
 
-void    rf_record_malloc(void *p, int size, int line, char *filen);
+void    rf_record_malloc(void *p, int size, int line, const char *filen);
 void    rf_unrecord_malloc(void *p, int sz);
 void    rf_print_unfreed(void);
 int     rf_ConfigureDebugMem(RF_ShutdownList_t ** listp);
