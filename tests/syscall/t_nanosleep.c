@@ -1,4 +1,4 @@
-/* $NetBSD: t_nanosleep.c,v 1.3 2011/05/01 09:19:12 jruoho Exp $ */
+/* $NetBSD: t_nanosleep.c,v 1.4 2011/05/01 09:44:26 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nanosleep.c,v 1.3 2011/05/01 09:19:12 jruoho Exp $");
+__RCSID("$NetBSD: t_nanosleep.c,v 1.4 2011/05/01 09:44:26 jruoho Exp $");
 
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -58,61 +58,24 @@ ATF_TC_HEAD(nanosleep_basic, tc)
 
 ATF_TC_BODY(nanosleep_basic, tc)
 {
-	static const size_t maxiter = 10;
+	static const size_t maxiter = 100;
 	struct timespec ts1, ts2, tsn;
-	pid_t pid;
 	size_t i;
-	int sta;
 
-	/*
-	 * Fork a child, suspend the execution of it,
-	 * and verify that it was actually suspended.
-	 */
-	for (i = 1; i < maxiter; i++) {
+	for (i = 0; i < maxiter; i++) {
 
-		pid = fork();
-		ATF_REQUIRE(pid >= 0);
+		tsn.tv_sec = 0;
+		tsn.tv_nsec = 1;
 
-		if (pid == 0) {
+		(void)memset(&ts1, 0, sizeof(struct timespec));
+		(void)memset(&ts2, 0, sizeof(struct timespec));
 
-			tsn.tv_sec = 0;
-			tsn.tv_nsec = i;
+		ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &ts1) == 0);
+		ATF_REQUIRE(nanosleep(&tsn, NULL) == 0);
+		ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &ts2) == 0);
 
-			(void)memset(&ts1, 0, sizeof(struct timespec));
-			(void)memset(&ts2, 0, sizeof(struct timespec));
-
-			if (clock_gettime(CLOCK_MONOTONIC, &ts1) != 0)
-				_exit(EX_OSERR);
-
-			if (nanosleep(&tsn, NULL) != 0)
-				_exit(EX_OSERR);
-
-			if (clock_gettime(CLOCK_MONOTONIC, &ts2) != 0)
-				_exit(EX_OSERR);
-
-			(void)fprintf(stderr,
-			    "tsn: sec = %lu, nsec = %lu\n\t"
-			    "ts1: sec = %lu, nsec = %lu\n\t"
-			    "ts2: sec = %lu, nsec = %lu\n",
-			    tsn.tv_sec, tsn.tv_nsec,
-			    ts1.tv_sec, ts1.tv_nsec,
-			    ts2.tv_sec, ts2.tv_nsec);
-
-			if (timespeccmp(&ts2, &ts1, <) != 0)
-				_exit(EX_DATAERR);
-
-			_exit(EXIT_SUCCESS);
-		}
-
-		(void)wait(&sta);
-
-		if (WIFEXITED(sta) == 0 || WEXITSTATUS(sta) != EXIT_SUCCESS) {
-
-			if (WEXITSTATUS(sta) == EX_DATAERR)
-				atf_tc_fail("inaccuracies in sleep time");
-
-			atf_tc_fail("system call failed");
-		}
+		if (timespeccmp(&ts2, &ts1, <) != 0)
+			atf_tc_fail("inaccuracies in sleep time");
 	}
 }
 
