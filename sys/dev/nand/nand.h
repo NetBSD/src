@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.8 2011/04/26 17:31:57 ahoka Exp $	*/
+/*	$NetBSD: nand.h,v 1.9 2011/05/01 14:48:11 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -141,6 +141,9 @@ struct nand_write_cache {
 	daddr_t nwc_block;
 	kmutex_t nwc_lock;
 	bool nwc_write_pending;
+	struct lwp *nwc_thread;
+	kcondvar_t nwc_cv;
+	bool nwc_exiting;
 };
 
 /* driver softc for nand */
@@ -154,13 +157,7 @@ struct nand_softc {
 	size_t sc_part_offset;
 	size_t sc_part_size;
 	kmutex_t sc_device_lock; /* serialize access to chip */
-
-	/* for the i/o thread */
-	struct lwp *sc_sync_thread;
 	struct nand_write_cache sc_cache;
-	kmutex_t sc_io_lock;
-	kcondvar_t sc_io_cv;
-	bool sc_io_running;
 };
 
 /* structure holding the nand api */
