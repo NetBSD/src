@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ttyname.c,v 1.2 2011/04/08 15:25:00 jruoho Exp $ */
+/*	$NetBSD: t_ttyname.c,v 1.3 2011/05/01 18:14:01 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,12 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ttyname.c,v 1.2 2011/04/08 15:25:00 jruoho Exp $");
+__RCSID("$NetBSD: t_ttyname.c,v 1.3 2011/05/01 18:14:01 jruoho Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+static long ttymax = 0;
 
 ATF_TC(ttyname_err);
 ATF_TC_HEAD(ttyname_err, tc)
@@ -44,8 +48,7 @@ ATF_TC_HEAD(ttyname_err, tc)
 
 ATF_TC_BODY(ttyname_err, tc)
 {
-	char buf[0];
-	int fd, rv;
+	int fd;
 
 	fd = open("XXX", O_RDONLY);
 
@@ -76,12 +79,80 @@ ATF_TC_BODY(ttyname_err, tc)
 		ATF_REQUIRE(ttyname(fd) == NULL);
 		ATF_REQUIRE(errno == ENOTTY);
 	}
+}
+
+ATF_TC(ttyname_r_err);
+ATF_TC_HEAD(ttyname_r_err, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test errors in ttyname_r(3)");
+}
+
+ATF_TC_BODY(ttyname_r_err, tc)
+{
+	char sbuf[0];
+	char *buf;
+	int fd;
+	int rv;
+
+	buf = malloc(ttymax + 1);
+
+	if (buf == NULL)
+		return;
+
+	(void)memset(buf, '\0', ttymax + 1);
 
 	if (isatty(STDIN_FILENO) != 0) {
 
-		rv = ttyname_r(STDIN_FILENO, buf, sizeof(buf));
+		rv = ttyname_r(STDIN_FILENO, sbuf, sizeof(sbuf));
 		ATF_REQUIRE(rv == ERANGE);
 	}
+
+	rv = ttyname_r(-1, buf, ttymax);
+	ATF_REQUIRE(rv == EBADF);
+
+	fd = open("/etc/passwd", O_RDONLY);
+
+	if (fd >= 0) {
+		rv = ttyname_r(fd, buf, ttymax);
+		ATF_REQUIRE(rv == ENOTTY);
+		ATF_REQUIRE(close(fd) == 0);
+	}
+
+	free(buf);
+}
+
+ATF_TC(ttyname_r_stdin);
+ATF_TC_HEAD(ttyname_r_stdin, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test ttyname_r(3) with stdin(3)");
+}
+
+ATF_TC_BODY(ttyname_r_stdin, tc)
+{
+	const char *str;
+	char *buf;
+	int rv;
+
+	if (isatty(STDIN_FILENO) == 0)
+		return;
+
+	buf = malloc(ttymax + 1);
+
+	if (buf == NULL)
+		return;
+
+	(void)memset(buf, '\0', ttymax + 1);
+
+	str = ttyname(STDIN_FILENO);
+	rv = ttyname_r(STDIN_FILENO, buf, ttymax);
+
+	ATF_REQUIRE(rv == 0);
+	ATF_REQUIRE(str != NULL);
+
+	if (strcmp(str, buf) != 0)
+		atf_tc_fail("ttyname(3) and ttyname_r(3) conflict");
+
+	free(buf);
 }
 
 ATF_TC(ttyname_stdin);
@@ -105,7 +176,12 @@ ATF_TC_BODY(ttyname_stdin, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ttymax = sysconf(_SC_TTY_NAME_MAX);
+	ATF_REQUIRE(ttymax >= 0);
+
 	ATF_TP_ADD_TC(tp, ttyname_err);
+	ATF_TP_ADD_TC(tp, ttyname_r_err);
+	ATF_TP_ADD_TC(tp, ttyname_r_stdin);
 	ATF_TP_ADD_TC(tp, ttyname_stdin);
 
 	return atf_no_error();
