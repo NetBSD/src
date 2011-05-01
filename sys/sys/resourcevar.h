@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.49 2011/05/01 00:11:52 rmind Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.50 2011/05/01 00:22:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -110,6 +110,7 @@ void	calcru(struct proc *, struct timeval *, struct timeval *,
 struct plimit *lim_copy(struct plimit *lim);
 void	lim_addref(struct plimit *lim);
 void	lim_privatise(struct proc *p, bool set_shared);
+void	lim_setcorename(struct proc *, char *, size_t);
 void	lim_free(struct plimit *);
 
 void	resource_init(void);
