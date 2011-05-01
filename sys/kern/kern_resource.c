@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.161 2011/05/01 01:15:18 rmind Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.162 2011/05/01 02:46:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.161 2011/05/01 01:15:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.162 2011/05/01 02:46:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,9 +233,9 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 		p = who ? proc_find(who) : curp;
 		if (p != NULL) {
 			mutex_enter(p->p_lock);
+			found++;
 			error = donice(l, p, SCARG(uap, prio));
 			mutex_exit(p->p_lock);
-			found++;
 		}
 		break;
 
@@ -248,9 +248,11 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 			break;
 		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 			mutex_enter(p->p_lock);
+			found++;
 			error = donice(l, p, SCARG(uap, prio));
 			mutex_exit(p->p_lock);
-			found++;
+			if (error)
+				break;
 		}
 		break;
 	}
@@ -262,10 +264,12 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 			mutex_enter(p->p_lock);
 			if (kauth_cred_geteuid(p->p_cred) ==
 			    (uid_t)SCARG(uap, who)) {
-				error = donice(l, p, SCARG(uap, prio));
 				found++;
+				error = donice(l, p, SCARG(uap, prio));
 			}
 			mutex_exit(p->p_lock);
+			if (error)
+				break;
 		}
 		break;
 
@@ -275,8 +279,8 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 	}
 	mutex_exit(proc_lock);
 	if (found == 0)
-		return (ESRCH);
-	return (error);
+		return ESRCH;
+	return error;
 }
 
 /*
