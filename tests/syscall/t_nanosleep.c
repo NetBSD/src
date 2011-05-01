@@ -1,4 +1,4 @@
-/* $NetBSD: t_nanosleep.c,v 1.1 2011/05/01 09:09:35 jruoho Exp $ */
+/* $NetBSD: t_nanosleep.c,v 1.2 2011/05/01 09:15:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nanosleep.c,v 1.1 2011/05/01 09:09:35 jruoho Exp $");
+__RCSID("$NetBSD: t_nanosleep.c,v 1.2 2011/05/01 09:15:14 jruoho Exp $");
 
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -58,7 +58,7 @@ ATF_TC_HEAD(nanosleep_basic, tc)
 
 ATF_TC_BODY(nanosleep_basic, tc)
 {
-	static const size_t maxiter = 1; /* XXX */
+	static const size_t maxiter = 10;
 	struct timespec ts1, ts2, tsn;
 	pid_t pid;
 	size_t i;
@@ -68,15 +68,15 @@ ATF_TC_BODY(nanosleep_basic, tc)
 	 * Fork a child, suspend the execution of it,
 	 * and verify that it was actually suspended.
 	 */
-	for (i = 0; i < maxiter; i++) {
+	for (i = 1; i < maxiter; i++) {
 
 		pid = fork();
 		ATF_REQUIRE(pid >= 0);
 
 		if (pid == 0) {
 
-			tsn.tv_sec = 1;
-			tsn.tv_nsec = i * 10000;
+			tsn.tv_sec = 0;
+			tsn.tv_nsec = i * 1000;
 
 			(void)memset(&ts1, 0, sizeof(struct timespec));
 			(void)memset(&ts2, 0, sizeof(struct timespec));
@@ -98,13 +98,7 @@ ATF_TC_BODY(nanosleep_basic, tc)
 			    ts1.tv_sec, ts1.tv_nsec,
 			    ts2.tv_sec, ts2.tv_nsec);
 
-			/*
-			 * Assume accuracy of the resolution in seconds.
-			 */
-			if (ts2.tv_sec - tsn.tv_sec != ts1.tv_sec)
-				_exit(EX_DATAERR);
-
-			if (ts2.tv_nsec - tsn.tv_nsec < ts1.tv_nsec)
+			if (timespeccmp(&ts2, &ts1, <) != 0)
 				_exit(EX_DATAERR);
 
 			_exit(EXIT_SUCCESS);
