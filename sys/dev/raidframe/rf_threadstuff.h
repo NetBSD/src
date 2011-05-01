@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.26 2011/04/30 01:44:36 mrg Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.27 2011/05/01 10:01:01 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -90,6 +90,8 @@ typedef void *RF_ThreadArg_t;
 #define rf_wait_cond2(_c_,_m_)     cv_wait(&(_c_), &(_m_))
 #define rf_signal_cond2(_c_)       cv_signal(&(_c_))
 #define rf_broadcast_cond2(_c_)    cv_broadcast(&(_c_))
+
+#define rf_sleep(_w_,_t_,_m_)      kpause((_w_), false, (_t_), &(_m_))
 
 /*
  * In NetBSD, kernel threads are simply processes which share several
