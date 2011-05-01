@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.287 2011/05/01 05:44:47 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.288 2011/05/01 06:22:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.287 2011/05/01 05:44:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.288 2011/05/01 06:22:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2175,11 +2175,11 @@ KernelWakeupFunc(struct buf *bp)
 	if (req->tracerec) {
 		RF_ETIMER_STOP(req->tracerec->timer);
 		RF_ETIMER_EVAL(req->tracerec->timer);
-		RF_LOCK_MUTEX(rf_tracing_mutex);
+		rf_lock_mutex2(rf_tracing_mutex);
 		req->tracerec->diskwait_us += RF_ETIMER_VAL_US(req->tracerec->timer);
 		req->tracerec->phys_io_us += RF_ETIMER_VAL_US(req->tracerec->timer);
 		req->tracerec->num_phys_ios++;
-		RF_UNLOCK_MUTEX(rf_tracing_mutex);
+		rf_unlock_mutex2(rf_tracing_mutex);
 	}
 #endif
 
