@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.45 2011/02/19 07:11:09 enami Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.46 2011/05/01 01:09:05 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.45 2011/02/19 07:11:09 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.46 2011/05/01 01:09:05 mrg Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -350,17 +350,17 @@ rf_CopybackOne(RF_CopybackDesc_t *desc, int typ, RF_RaidAddr_t addr,
 	 * pair to complete. in the simulator, just return, since everything
 	 * will happen as callbacks */
 
-	RF_LOCK_MUTEX(desc->mcpair->mutex);
+	RF_LOCK_MCPAIR(desc->mcpair);
 	desc->mcpair->flag = 0;
-	RF_UNLOCK_MUTEX(desc->mcpair->mutex);
+	RF_UNLOCK_MCPAIR(desc->mcpair);
 
 	rf_DiskIOEnqueue(&raidPtr->Queues[spCol], desc->readreq, RF_IO_NORMAL_PRIORITY);
 
-	RF_LOCK_MUTEX(desc->mcpair->mutex);
+	RF_LOCK_MCPAIR(desc->mcpair);
 	while (!desc->mcpair->flag) {
 		RF_WAIT_MCPAIR(desc->mcpair);
 	}
-	RF_UNLOCK_MUTEX(desc->mcpair->mutex);
+	RF_UNLOCK_MCPAIR(desc->mcpair);
 	rf_FreeDiskQueueData(desc->readreq);
 	rf_FreeDiskQueueData(desc->writereq);
 
