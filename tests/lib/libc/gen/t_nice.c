@@ -1,4 +1,4 @@
-/*	$NetBSD: t_nice.c,v 1.6 2011/04/25 20:55:06 njoly Exp $ */
+/*	$NetBSD: t_nice.c,v 1.7 2011/05/01 06:42:29 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nice.c,v 1.6 2011/04/25 20:55:06 njoly Exp $");
+__RCSID("$NetBSD: t_nice.c,v 1.7 2011/05/01 06:42:29 jruoho Exp $");
 
 #include <sys/resource.h>
 #include <sys/wait.h>
@@ -74,11 +74,9 @@ ATF_TC_BODY(nice_err, tc)
 	/*
 	 * The call should fail with EPERM if the
 	 * supplied parameter is negative and the
-	 * caller does not have privileges. Note
-	 * that the errno is thus "wrong" in NetBSD.
+	 * caller does not have privileges; see
+	 * the closed PR lib/42587.
 	 */
-	atf_tc_expect_fail("PR lib/42587");
-
 	for (i = -20; i < 0; i++) {
 
 		errno = 0;
