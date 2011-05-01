@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_io.c,v 1.5 2011/05/01 13:20:28 rmind Exp $	*/
+/*	$NetBSD: nand_io.c,v 1.6 2011/05/01 14:48:11 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_io.c,v 1.5 2011/05/01 13:20:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_io.c,v 1.6 2011/05/01 14:48:11 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -109,31 +109,27 @@ nand_sync_thread_start(device_t self)
 
 	sc->sc_cache.nwc_data = kmem_alloc(chip->nc_block_size, KM_SLEEP);
 
-	mutex_init(&sc->sc_io_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&wc->nwc_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&sc->sc_io_cv, "nandcv");
+	cv_init(&wc->nwc_cv, "nandcv");
 
 	error = bufq_alloc(&wc->nwc_bufq, "fcfs", BUFQ_SORT_RAWBLOCK);
 	if (error)
 		goto err_bufq;
 
-	sc->sc_io_running = true;
+	wc->nwc_exiting = false;
 	wc->nwc_write_pending = false;
 
 	/* arrange to allocate the kthread */
 	error = kthread_create(PRI_NONE, KTHREAD_JOINABLE | KTHREAD_MPSAFE,
-	    NULL, nand_sync_thread, self, &sc->sc_sync_thread, "nandio");
+	    NULL, nand_sync_thread, self, &wc->nwc_thread, "nandio");
 
 	if (!error)
 		return 0;
 
 	bufq_free(wc->nwc_bufq);
 err_bufq:
-	cv_destroy(&sc->sc_io_cv);
-
-	mutex_destroy(&sc->sc_io_lock);
+	cv_destroy(&wc->nwc_cv);
 	mutex_destroy(&wc->nwc_lock);
-	
 	kmem_free(sc->sc_cache.nwc_data, chip->nc_block_size);
 
 	return error;
@@ -148,27 +144,17 @@ nand_sync_thread_stop(device_t self)
 
 	DPRINTF(("stopping nand io thread\n"));
 
+	mutex_enter(&wc->nwc_lock);
+	wc->nwc_exiting = true;
+	cv_broadcast(&wc->nwc_cv);
+	mutex_exit(&wc->nwc_lock);
+
+	kthread_join(wc->nwc_thread);
+
 	kmem_free(wc->nwc_data, chip->nc_block_size);
-
-	sc->sc_io_running = false;
-
-	mutex_enter(&sc->sc_io_lock);
-	cv_broadcast(&sc->sc_io_cv);
-	mutex_exit(&sc->sc_io_lock);
-
-	kthread_join(sc->sc_sync_thread);
-
 	bufq_free(wc->nwc_bufq);
 	mutex_destroy(&wc->nwc_lock);
-
-#ifdef DIAGNOSTIC
-	mutex_enter(&sc->sc_io_lock);
-	KASSERT(!cv_has_waiters(&sc->sc_io_cv));
-	mutex_exit(&sc->sc_io_lock);
-#endif
-
-	cv_destroy(&sc->sc_io_cv);
-	mutex_destroy(&sc->sc_io_lock);
+	cv_destroy(&wc->nwc_cv);
 }
 
 int
@@ -179,7 +165,7 @@ nand_io_submit(device_t self, struct buf *bp)
 
 	DPRINTF(("submitting job to nand io thread: %p\n", bp));
 
-	if (__predict_false(!sc->sc_io_running)) {
+	if (__predict_false(wc->nwc_exiting)) {
 		nand_io_done(self, bp, ENODEV);
 		return ENODEV;
 	}
@@ -211,6 +197,7 @@ nand_io_cache_write(device_t self, daddr_t block, struct buf *bp)
 	daddr_t base, offset;
 	int error;
 
+	KASSERT(mutex_owned(&wc->nwc_lock));
 	KASSERT(chip->nc_block_size != 0);
 
 	base = block * chip->nc_block_size;
@@ -247,7 +234,6 @@ nand_io_cache_write(device_t self, daddr_t block, struct buf *bp)
 	return 0;
 }
 
-/* must be called with nwc_lock hold */
 void
 nand_io_cache_sync(device_t self)
 {
@@ -259,6 +245,8 @@ nand_io_cache_sync(device_t self)
 	size_t retlen;
 	daddr_t base;
 	int error;
+
+	KASSERT(mutex_owned(&wc->nwc_lock));
 
 	if (!wc->nwc_write_pending) {
 		DPRINTF(("trying to sync with an invalid buffer\n"));
@@ -305,18 +293,12 @@ nand_sync_thread(void * arg)
 	struct nand_write_cache *wc = &sc->sc_cache;
 	struct bintime now;
 
-	/* sync thread waking in every seconds */
-	while (sc->sc_io_running) {
-		mutex_enter(&sc->sc_io_lock);
-		cv_timedwait_sig(&sc->sc_io_cv, &sc->sc_io_lock, hz / 4);
-		mutex_exit(&sc->sc_io_lock);
-
-		mutex_enter(&wc->nwc_lock);
+	mutex_enter(&wc->nwc_lock);
+	while (!wc->nwc_exiting) {
+		cv_timedwait_sig(&wc->nwc_cv, &wc->nwc_lock, hz / 4);
 		if (!wc->nwc_write_pending) {
-			mutex_exit(&wc->nwc_lock);
 			continue;
 		}
-
 		/* see if the cache is older than 3 seconds (safety limit),
 		 * or if we havent touched the cache since more than 1 ms
 		 */
@@ -328,8 +310,8 @@ nand_sync_thread(void * arg)
 			printf("syncing write cache after timeout\n");
 			nand_io_cache_sync(self);
 		}
-		mutex_exit(&wc->nwc_lock);
 	}
+	mutex_exit(&wc->nwc_lock);
 	kthread_exit(0);
 }
 
