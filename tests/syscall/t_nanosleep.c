@@ -1,4 +1,4 @@
-/* $NetBSD: t_nanosleep.c,v 1.2 2011/05/01 09:15:14 jruoho Exp $ */
+/* $NetBSD: t_nanosleep.c,v 1.3 2011/05/01 09:19:12 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nanosleep.c,v 1.2 2011/05/01 09:15:14 jruoho Exp $");
+__RCSID("$NetBSD: t_nanosleep.c,v 1.3 2011/05/01 09:19:12 jruoho Exp $");
 
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -76,7 +76,7 @@ ATF_TC_BODY(nanosleep_basic, tc)
 		if (pid == 0) {
 
 			tsn.tv_sec = 0;
-			tsn.tv_nsec = i * 1000;
+			tsn.tv_nsec = i;
 
 			(void)memset(&ts1, 0, sizeof(struct timespec));
 			(void)memset(&ts2, 0, sizeof(struct timespec));
