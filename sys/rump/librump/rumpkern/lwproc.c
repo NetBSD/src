@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.17 2011/03/08 12:39:29 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.18 2011/05/01 02:52:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.17 2011/03/08 12:39:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.18 2011/05/01 02:52:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -66,7 +66,7 @@ lwproc_proc_free(struct proc *p)
 	if (rump_proc_vfs_release)
 		rump_proc_vfs_release(p);
 
-	limfree(p->p_limit);
+	lim_free(p->p_limit);
 	pstatsfree(p->p_stats);
 	kauth_cred_free(p->p_cred);
 	proc_finispecific(p);
