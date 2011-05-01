@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.286 2011/04/27 07:55:15 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.287 2011/05/01 05:44:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.286 2011/04/27 07:55:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.287 2011/05/01 05:44:47 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -162,7 +162,9 @@ int     rf_kdebug_level = 0;
 static RF_Raid_t **raidPtrs;	/* global raid device descriptors */
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
-static RF_DECLARE_MUTEX(rf_sparet_wait_mutex)
+static rf_declare_mutex2(rf_sparet_wait_mutex):
+static rf_declare_cond2(rf_sparet_wait_cv);
+static rf_declare_cond2(rf_sparet_resp_cv);
 
 static RF_SparetWait_t *rf_sparet_wait_queue;	/* requests to install a
 						 * spare table */
@@ -339,7 +341,9 @@ raidattach(int num)
 	}
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
-	rf_mutex_init(&rf_sparet_wait_mutex);
+	rf_init_mutex2(&rf_sparet_wait_mutex);
+	rf_init_cond2(&rf_sparet_wait_cv, "sparetw");
+	rf_init_cond2(&rf_sparet_resp_cv, "rfgst");
 
 	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
 #endif
@@ -1688,12 +1692,12 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * character device) for delivering the table     -- XXX */
 #if 0
 	case RAIDFRAME_SPARET_WAIT:
-		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_lock_mutex2(rf_sparet_wait_mutex);
 		while (!rf_sparet_wait_queue)
-			mpsleep(&rf_sparet_wait_queue, (PZERO + 1) | PCATCH, "sparet wait", 0, (void *) simple_lock_addr(rf_sparet_wait_mutex), MS_LOCK_SIMPLE);
+			rf_wait_cond2(rf_sparet_wait_cv, rf_sparet_wait_mutex);
 		waitreq = rf_sparet_wait_queue;
 		rf_sparet_wait_queue = rf_sparet_wait_queue->next;
-		RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_unlock_mutex2(rf_sparet_wait_mutex);
 
 		/* structure assignment */
 		*((RF_SparetWait_t *) data) = *waitreq;
@@ -1706,11 +1710,11 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case RAIDFRAME_ABORT_SPARET_WAIT:
 		RF_Malloc(waitreq, sizeof(*waitreq), (RF_SparetWait_t *));
 		waitreq->fcol = -1;
-		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_lock_mutex2(rf_sparet_wait_mutex);
 		waitreq->next = rf_sparet_wait_queue;
 		rf_sparet_wait_queue = waitreq;
-		RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
-		wakeup(&rf_sparet_wait_queue);
+		rf_broadcast_conf2(rf_sparet_wait_cv);
+		rf_unlock_mutex2(rf_sparet_wait_mutex);
 		return (0);
 
 		/* used by the spare table daemon to deliver a spare table
@@ -1724,11 +1728,11 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * table installation is passed in the "fcol" field */
 		RF_Malloc(waitreq, sizeof(*waitreq), (RF_SparetWait_t *));
 		waitreq->fcol = retcode;
-		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_lock_mutex2(rf_sparet_wait_mutex);
 		waitreq->next = rf_sparet_resp_queue;
 		rf_sparet_resp_queue = waitreq;
-		wakeup(&rf_sparet_resp_queue);
-		RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_broadcast_cond2(rf_sparet_resp_cv);
+		rf_unlock_mutex2(rf_sparet_wait_mutex);
 
 		return (retcode);
 #endif
@@ -1923,19 +1927,18 @@ rf_GetSpareTableFromDaemon(RF_SparetWait_t *req)
 {
 	int     retcode;
 
-	RF_LOCK_MUTEX(rf_sparet_wait_mutex);
+	rf_lock_mutex2(rf_sparet_wait_mutex);
 	req->next = rf_sparet_wait_queue;
 	rf_sparet_wait_queue = req;
-	wakeup(&rf_sparet_wait_queue);
+	rf_broadcast_conf2(rf_sparet_wait_cv);
 
 	/* mpsleep unlocks the mutex */
 	while (!rf_sparet_resp_queue) {
-		tsleep(&rf_sparet_resp_queue, PRIBIO,
-		    "raidframe getsparetable", 0);
+		cv_wait(rf_sparet_resp_cv, rf_sparet_resp_mutex);
 	}
 	req = rf_sparet_resp_queue;
 	rf_sparet_resp_queue = req->next;
-	RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
+	rf_unlock_mutex2(rf_sparet_wait_mutex);
 
 	retcode = req->fcol;
 	RF_Free(req, sizeof(*req));	/* this is not the same req as we
