@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.158 2011/04/30 23:41:17 rmind Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.159 2011/05/01 00:11:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.158 2011/04/30 23:41:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.159 2011/05/01 00:11:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -680,7 +680,7 @@ lim_privatise(struct proc *p, bool set_shared)
 	if (p->p_limit->pl_flags & PL_WRITEABLE) {
 		/* Someone crept in while we were busy */
 		mutex_exit(p->p_lock);
-		limfree(newlim);
+		lim_free(newlim);
 		if (set_shared)
 			p->p_limit->pl_flags |= PL_SHAREMOD;
 		return;
@@ -699,15 +699,17 @@ lim_privatise(struct proc *p, bool set_shared)
 }
 
 void
-limfree(struct plimit *lim)
+lim_free(struct plimit *lim)
 {
 	struct plimit *sv_lim;
 
 	do {
-		if (atomic_dec_uint_nv(&lim->pl_refcnt) > 0)
+		if (atomic_dec_uint_nv(&lim->pl_refcnt) > 0) {
 			return;
-		if (lim->pl_corename != defcorename)
+		}
+		if (lim->pl_corename != defcorename) {
 			free(lim->pl_corename, M_TEMP);
+		}
 		sv_lim = lim->pl_sv_limit;
 		mutex_destroy(&lim->pl_lock);
 		pool_cache_put(plimit_cache, lim);
