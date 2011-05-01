@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.317 2011/05/01 16:36:37 jruoho Exp $
+# $NetBSD: mi,v 1.318 2011/05/01 17:07:05 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -284,6 +284,7 @@
 ./usr/libdata/debug/usr/tests/include/sys/t_bitops.debug		tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_bootblock.debug		tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/t_bitstring.debug			tests-ipf-tests		debug,atf
+./usr/libdata/debug/usr/tests/include/t_errno.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/t_glob.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/t_inttypes.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/include/t_limits.debug			tests-ipf-tests		debug,atf
@@ -1382,6 +1383,7 @@
 ./usr/tests/include/sys/t_bitops		tests-include-tests	atf
 ./usr/tests/include/sys/t_bootblock		tests-include-tests	atf
 ./usr/tests/include/t_bitstring			tests-include-tests	atf
+./usr/tests/include/t_errno			tests-include-tests	atf
 ./usr/tests/include/t_glob			tests-include-tests	atf
 ./usr/tests/include/t_inttypes			tests-include-tests	atf
 ./usr/tests/include/t_limits			tests-include-tests	atf
