@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.182 2011/04/26 16:36:42 joerg Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.183 2011/05/01 01:15:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.182 2011/04/26 16:36:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.183 2011/05/01 01:15:18 rmind Exp $");
 
 #include "opt_ktrace.h"
 
@@ -358,20 +358,15 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_cwdi = cwdinit();
 
 	/*
-	 * p_limit (rlimit stuff) is usually copy-on-write, so we just need
-	 * to bump pl_refcnt.
-	 * However in some cases like clone the parent and child
-	 * share limits - in which case nothing else must have a copy
-	 * of the limits (PL_SHAREMOD is set).
+	 * Note: p_limit (rlimit stuff) is copy-on-write, so normally
+	 * we just need increase pl_refcnt.
 	 */
-	if (__predict_false(flags & FORK_SHARELIMIT))
-		lim_privatise(p1, 1);
 	p1_lim = p1->p_limit;
-	if (p1_lim->pl_flags & PL_WRITEABLE && !(flags & FORK_SHARELIMIT))
-		p2->p_limit = lim_copy(p1_lim);
-	else {
+	if (!p1_lim->pl_writeable) {
 		lim_addref(p1_lim);
 		p2->p_limit = p1_lim;
+	} else {
+		p2->p_limit = lim_copy(p1_lim);
 	}
 
 	p2->p_lflag = ((flags & FORK_PPWAIT) ? PL_PPWAIT : 0);

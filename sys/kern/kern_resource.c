@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.160 2011/05/01 00:22:36 rmind Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.161 2011/05/01 01:15:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.160 2011/05/01 00:22:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.161 2011/05/01 01:15:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,7 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 	if (error)
 		return (error);
 
-	lim_privatise(p, false);
+	lim_privatise(p);
 	/* p->p_limit is now unchangeable */
 	alimp = &p->p_rlimit[which];
 
@@ -598,12 +598,9 @@ rulwps(proc_t *p, struct rusage *ru)
 }
 
 /*
- * Make a copy of the plimit structure.
- * We share these structures copy-on-write after fork,
- * and copy when a limit is changed.
+ * lim_copy: make a copy of the plimit structure.
  *
- * Unfortunately (due to PL_SHAREMOD) it is possibly for the structure
- * we are copying to change beneath our feet!
+ * We use copy-on-write after fork, and copy when a limit is changed.
  */
 struct plimit *
 lim_copy(struct plimit *lim)
@@ -614,7 +611,7 @@ lim_copy(struct plimit *lim)
 
 	newlim = pool_cache_get(plimit_cache, PR_WAITOK);
 	mutex_init(&newlim->pl_lock, MUTEX_DEFAULT, IPL_NONE);
-	newlim->pl_flags = 0;
+	newlim->pl_writeable = false;
 	newlim->pl_refcnt = 1;
 	newlim->pl_sv_limit = NULL;
 
@@ -622,30 +619,38 @@ lim_copy(struct plimit *lim)
 	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
 	    sizeof(struct rlimit) * RLIM_NLIMITS);
 
+	/*
+	 * Note: the common case is a use of default core name.
+	 */
 	alen = 0;
 	corename = NULL;
 	for (;;) {
 		if (lim->pl_corename == defcorename) {
 			newlim->pl_corename = defcorename;
+			newlim->pl_cnlen = 0;
 			break;
 		}
-		len = strlen(lim->pl_corename) + 1;
-		if (len <= alen) {
+		len = lim->pl_cnlen;
+		if (len == alen) {
 			newlim->pl_corename = corename;
+			newlim->pl_cnlen = len;
 			memcpy(corename, lim->pl_corename, len);
 			corename = NULL;
 			break;
 		}
 		mutex_exit(&lim->pl_lock);
-		if (corename != NULL)
-			free(corename, M_TEMP);
+		if (corename) {
+			kmem_free(corename, alen);
+		}
 		alen = len;
-		corename = malloc(alen, M_TEMP, M_WAITOK);
+		corename = kmem_alloc(alen, KM_SLEEP);
 		mutex_enter(&lim->pl_lock);
 	}
 	mutex_exit(&lim->pl_lock);
-	if (corename != NULL)
-		free(corename, M_TEMP);
+
+	if (corename) {
+		kmem_free(corename, alen);
+	}
 	return newlim;
 }
 
@@ -656,44 +661,33 @@ lim_addref(struct plimit *lim)
 }
 
 /*
- * Give a process it's own private plimit structure.
- * This will only be shared (in fork) if modifications are to be shared.
+ * lim_privatise: give a process its own private plimit structure.
  */
 void
-lim_privatise(struct proc *p, bool set_shared)
+lim_privatise(proc_t *p)
 {
-	struct plimit *lim, *newlim;
+	struct plimit *lim = p->p_limit, *newlim;
 
-	lim = p->p_limit;
-	if (lim->pl_flags & PL_WRITEABLE) {
-		if (set_shared)
-			lim->pl_flags |= PL_SHAREMOD;
+	if (lim->pl_writeable) {
 		return;
 	}
-
-	if (set_shared && lim->pl_flags & PL_SHAREMOD)
-		return;
 
 	newlim = lim_copy(lim);
 
 	mutex_enter(p->p_lock);
-	if (p->p_limit->pl_flags & PL_WRITEABLE) {
-		/* Someone crept in while we were busy */
+	if (p->p_limit->pl_writeable) {
+		/* Other thread won the race. */
 		mutex_exit(p->p_lock);
 		lim_free(newlim);
-		if (set_shared)
-			p->p_limit->pl_flags |= PL_SHAREMOD;
 		return;
 	}
 
 	/*
-	 * Since most accesses to p->p_limit aren't locked, we must not
-	 * delete the old limit structure yet.
+	 * Since p->p_limit can be accessed without locked held,
+	 * old limit structure must not be deleted yet.
 	 */
 	newlim->pl_sv_limit = p->p_limit;
-	newlim->pl_flags |= PL_WRITEABLE;
-	if (set_shared)
-		newlim->pl_flags |= PL_SHAREMOD;
+	newlim->pl_writeable = true;
 	p->p_limit = newlim;
 	mutex_exit(p->p_lock);
 }
@@ -703,17 +697,20 @@ lim_setcorename(proc_t *p, char *name, size_t len)
 {
 	struct plimit *lim;
 	char *oname;
+	size_t olen;
 
-	lim_privatise(p, false);
+	lim_privatise(p);
 	lim = p->p_limit;
 
 	mutex_enter(&lim->pl_lock);
 	oname = lim->pl_corename;
+	olen = lim->pl_cnlen;
 	lim->pl_corename = name;
+	lim->pl_cnlen = len;
 	mutex_exit(&lim->pl_lock);
 
 	if (oname != defcorename) {
-		free(oname, M_TEMP);
+		kmem_free(oname, olen);
 	}
 }
 
@@ -727,7 +724,7 @@ lim_free(struct plimit *lim)
 			return;
 		}
 		if (lim->pl_corename != defcorename) {
-			free(lim->pl_corename, M_TEMP);
+			kmem_free(lim->pl_corename, lim->pl_cnlen);
 		}
 		sv_lim = lim->pl_sv_limit;
 		mutex_destroy(&lim->pl_lock);
@@ -871,7 +868,7 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	}
 
 	/* Allocate, copy and set the new core name for plimit structure. */
-	cname = malloc(++len, M_TEMP, M_WAITOK | M_CANFAIL);
+	cname = kmem_alloc(++len, KM_NOSLEEP);
 	if (cname == NULL) {
 		error = ENOMEM;
 		goto done;

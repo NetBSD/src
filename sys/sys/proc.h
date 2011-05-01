@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.305 2011/04/27 00:36:48 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.306 2011/05/01 01:15:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -432,7 +432,6 @@ struct proclist_desc {
 #define	FORK_NOWAIT	0x0020		/* Make init the parent of the child */
 #define	FORK_CLEANFILES	0x0040		/* Start with a clean descriptor set */
 #define	FORK_SYSTEM	0x0080		/* Fork a kernel thread */
-#define	FORK_SHARELIMIT	0x0100		/* Share rlimit values */
 
 extern struct proc	proc0;		/* Process slot for swapper */
 extern u_int		nprocs;		/* Current number of procs */

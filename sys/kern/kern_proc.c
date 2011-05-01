@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.178 2011/05/01 00:22:36 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.179 2011/05/01 01:15:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.178 2011/05/01 00:22:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.179 2011/05/01 01:15:18 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -453,8 +453,11 @@ proc0_init(void)
 	rlim[RLIMIT_MEMLOCK].rlim_max = lim;
 	rlim[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
 
+	/* Note that default core name has zero length. */
 	limit0.pl_corename = defcorename;
+	limit0.pl_cnlen = 0;
 	limit0.pl_refcnt = 1;
+	limit0.pl_writeable = false;
 	limit0.pl_sv_limit = NULL;
 
 	/* Configure virtual memory system, set vm rlimits. */
