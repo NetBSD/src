@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.315 2011/05/01 09:09:35 jruoho Exp $
+# $NetBSD: mi,v 1.316 2011/05/01 11:39:37 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -441,6 +441,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_context.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigqueue.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/termios				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/termios/t_tcsetpgrp.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/tls				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/tls/t_tls_static.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/ttyio				tests-lib-debug
@@ -1933,6 +1935,8 @@
 ./usr/tests/lib/libc/sys/t_context		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_cerror		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_sigqueue		tests-lib-tests		atf
+./usr/tests/lib/libc/termios			tests-lib-tests
+./usr/tests/lib/libc/termios/t_tcsetpgrp	tests-lib-tests		atf
 ./usr/tests/lib/libc/tls			tests-lib-tests
 ./usr/tests/lib/libc/tls/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/tls/t_tls_static		tests-lib-tests		atf
