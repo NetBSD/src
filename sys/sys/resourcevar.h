@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.48 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.49 2011/05/01 00:11:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -60,6 +60,8 @@ struct pstats {
 	struct	timeval p_start;	/* starting time */
 };
 
+#ifdef _KERNEL
+
 /*
  * Kernel shareable process resource limits.  Because this structure
  * is moderately large but changes infrequently, it is normally
@@ -72,14 +74,14 @@ struct pstats {
  * will never be changed again.
  */
 struct plimit {
-	struct	rlimit pl_rlimit[RLIM_NLIMITS];
-	char	*pl_corename;
+	struct rlimit	pl_rlimit[RLIM_NLIMITS];
+	char *		pl_corename;
 #define	PL_SHAREMOD	0x01		/* modifications are shared */
 #define	PL_WRITEABLE	0x02		/* private to this process */
-	int	pl_flags;
-	int	pl_refcnt;		/* number of references */
-	kmutex_t pl_lock;		/* mutex for pl_refcnt */
-	struct plimit *pl_sv_limit;	/* saved when PL_WRITEABLE set */
+	int		pl_flags;
+	int		pl_refcnt;	/* number of references */
+	kmutex_t	pl_lock;	/* mutex for pl_refcnt */
+	struct plimit *	pl_sv_limit;	/* saved when PL_WRITEABLE set */
 };
 
 /* add user profiling from AST XXXSMP */
@@ -92,7 +94,6 @@ struct plimit {
 		_p->p_stats->p_prof.pr_ticks = 0;			\
 	} while (/* CONSTCOND */ 0)
 
-#ifdef _KERNEL
 extern char defcorename[];
 
 extern int security_setidcore_dump;
@@ -109,7 +110,7 @@ void	calcru(struct proc *, struct timeval *, struct timeval *,
 struct plimit *lim_copy(struct plimit *lim);
 void	lim_addref(struct plimit *lim);
 void	lim_privatise(struct proc *p, bool set_shared);
-void	limfree(struct plimit *);
+void	lim_free(struct plimit *);
 
 void	resource_init(void);
 void	ruadd(struct rusage *, struct rusage *);
@@ -118,5 +119,7 @@ struct	pstats *pstatscopy(struct pstats *);
 void 	pstatsfree(struct pstats *);
 extern rlim_t maxdmap;
 extern rlim_t maxsmap;
+
 #endif
+
 #endif	/* !_SYS_RESOURCEVAR_H_ */

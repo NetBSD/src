@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.176 2011/04/27 00:36:47 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.177 2011/05/01 00:11:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.176 2011/04/27 00:36:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.177 2011/05/01 00:11:52 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -399,6 +399,7 @@ proc0_init(void)
 {
 	struct proc *p;
 	struct pgrp *pg;
+	struct rlimit *rlim;
 	rlim_t lim;
 	int i;
 
@@ -434,24 +435,26 @@ proc0_init(void)
 
 	/* Create the limits structures. */
 	mutex_init(&limit0.pl_lock, MUTEX_DEFAULT, IPL_NONE);
-	for (i = 0; i < __arraycount(limit0.pl_rlimit); i++)
-		limit0.pl_rlimit[i].rlim_cur =	 
-		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
 
-	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = maxfiles;
-	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur =
-	    maxfiles < nofile ? maxfiles : nofile;
+	rlim = limit0.pl_rlimit;
+	for (i = 0; i < __arraycount(limit0.pl_rlimit); i++) {
+		rlim[i].rlim_cur = RLIM_INFINITY;
+		rlim[i].rlim_max = RLIM_INFINITY;
+	}
 
-	limit0.pl_rlimit[RLIMIT_NPROC].rlim_max = maxproc;
-	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur =
-	    maxproc < maxuprc ? maxproc : maxuprc;
+	rlim[RLIMIT_NOFILE].rlim_max = maxfiles;
+	rlim[RLIMIT_NOFILE].rlim_cur = maxfiles < nofile ? maxfiles : nofile;
+
+	rlim[RLIMIT_NPROC].rlim_max = maxproc;
+	rlim[RLIMIT_NPROC].rlim_cur = maxproc < maxuprc ? maxproc : maxuprc;
 
 	lim = MIN(VM_MAXUSER_ADDRESS, ctob((rlim_t)uvmexp.free));
-	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
-	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
-	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
-	limit0.pl_corename = defcorename;	 
-	limit0.pl_refcnt = 1;	 
+	rlim[RLIMIT_RSS].rlim_max = lim;
+	rlim[RLIMIT_MEMLOCK].rlim_max = lim;
+	rlim[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
+
+	limit0.pl_corename = defcorename;
+	limit0.pl_refcnt = 1;
 	limit0.pl_sv_limit = NULL;
 
 	/* Configure virtual memory system, set vm rlimits. */
@@ -1358,7 +1361,6 @@ proc_crmod_enter(void)
 		l->l_cred = p->p_cred;
 		kauth_cred_free(oc);
 	}
-
 }
 
 /*
