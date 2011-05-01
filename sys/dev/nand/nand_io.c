@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_io.c,v 1.4 2011/04/26 17:27:52 ahoka Exp $	*/
+/*	$NetBSD: nand_io.c,v 1.5 2011/05/01 13:20:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -31,9 +31,13 @@
  * SUCH DAMAGE.
  */
 
-/* Inspired by the similar code in the NetBSD SPI driver, but I
+/*
+ * Inspired by the similar code in the NetBSD SPI driver, but I
  * decided to do a rewrite from scratch to be suitable for NAND.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nand_io.c,v 1.5 2011/05/01 13:20:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -108,11 +112,11 @@ nand_sync_thread_start(device_t self)
 	mutex_init(&sc->sc_io_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&wc->nwc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_io_cv, "nandcv");
-	
+
 	error = bufq_alloc(&wc->nwc_bufq, "fcfs", BUFQ_SORT_RAWBLOCK);
 	if (error)
 		goto err_bufq;
-	
+
 	sc->sc_io_running = true;
 	wc->nwc_write_pending = false;
 
@@ -122,11 +126,11 @@ nand_sync_thread_start(device_t self)
 
 	if (!error)
 		return 0;
-	
+
 	bufq_free(wc->nwc_bufq);
 err_bufq:
 	cv_destroy(&sc->sc_io_cv);
-	
+
 	mutex_destroy(&sc->sc_io_lock);
 	mutex_destroy(&wc->nwc_lock);
 	
@@ -182,19 +186,18 @@ nand_io_submit(device_t self, struct buf *bp)
 
 	if (BUF_ISREAD(bp)) {
 		DPRINTF(("we have a read job\n"));
-		
+
 		mutex_enter(&wc->nwc_lock);
 		if (wc->nwc_write_pending)
 			nand_io_cache_sync(self);
 		mutex_exit(&wc->nwc_lock);
-			
+
 		nand_io_read(self, bp);
 	} else {
 		DPRINTF(("we have a write job\n"));
 
 		nand_io_write(self, bp);
 	}
-	
 	return 0;
 }
 
@@ -209,12 +212,12 @@ nand_io_cache_write(device_t self, daddr_t block, struct buf *bp)
 	int error;
 
 	KASSERT(chip->nc_block_size != 0);
-	
+
 	base = block * chip->nc_block_size;
 	offset = bp->b_rawblkno * DEV_BSIZE - base;
-	
+
 	DPRINTF(("io cache write, offset: %jd\n", (intmax_t )offset));
-	
+
 	if (!wc->nwc_write_pending) {
 		wc->nwc_block = block;
 		/*
@@ -289,7 +292,7 @@ nand_io_cache_sync(device_t self)
 out:
 	while ((bp = bufq_get(wc->nwc_bufq)) != NULL)
 		nand_io_done(self, bp, error);
-	
+
 	wc->nwc_block = -1;
 	wc->nwc_write_pending = false;
 }
@@ -309,12 +312,11 @@ nand_sync_thread(void * arg)
 		mutex_exit(&sc->sc_io_lock);
 
 		mutex_enter(&wc->nwc_lock);
-	
 		if (!wc->nwc_write_pending) {
 			mutex_exit(&wc->nwc_lock);
 			continue;
 		}
-		
+
 		/* see if the cache is older than 3 seconds (safety limit),
 		 * or if we havent touched the cache since more than 1 ms
 		 */
@@ -328,10 +330,9 @@ nand_sync_thread(void * arg)
 		}
 		mutex_exit(&wc->nwc_lock);
 	}
-
 	kthread_exit(0);
 }
-	
+
 void
 nand_io_read(device_t self, struct buf *bp)
 {
@@ -342,10 +343,9 @@ nand_io_read(device_t self, struct buf *bp)
 	DPRINTF(("nand io read\n"));
 
 	offset = bp->b_rawblkno * DEV_BSIZE;
-	
+
 	error = nand_flash_read(self, offset, bp->b_resid,
 	    &retlen, bp->b_data);
-	
 	nand_io_done(self, bp, error);
 }
 
@@ -360,16 +360,13 @@ nand_io_write(device_t self, struct buf *bp)
 
 	block = nand_io_getblock(self, bp);
 	DPRINTF(("write to block %jd\n", (intmax_t )block));
-	
-	mutex_enter(&wc->nwc_lock);
 
+	mutex_enter(&wc->nwc_lock);
 	if (wc->nwc_write_pending && wc->nwc_block != block) {
 		DPRINTF(("writing to new block, syncing caches\n"));
 		nand_io_cache_sync(self);
 	}
-	
 	nand_io_cache_write(self, block, bp);
-	
 	mutex_exit(&wc->nwc_lock);
 }
 
@@ -377,11 +374,10 @@ void
 nand_io_done(device_t self, struct buf *bp, int error)
 {
 	DPRINTF(("io done: %p\n", bp));
-	
+
 	if (error == 0)
 		bp->b_resid = 0;
-	
+
 	bp->b_error = error;
-	
 	biodone(bp);
 }
