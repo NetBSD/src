@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.159 2011/05/01 00:11:52 rmind Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.160 2011/05/01 00:22:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.159 2011/05/01 00:11:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.160 2011/05/01 00:22:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,6 +699,25 @@ lim_privatise(struct proc *p, bool set_shared)
 }
 
 void
+lim_setcorename(proc_t *p, char *name, size_t len)
+{
+	struct plimit *lim;
+	char *oname;
+
+	lim_privatise(p, false);
+	lim = p->p_limit;
+
+	mutex_enter(&lim->pl_lock);
+	oname = lim->pl_corename;
+	lim->pl_corename = name;
+	mutex_exit(&lim->pl_lock);
+
+	if (oname != defcorename) {
+		free(oname, M_TEMP);
+	}
+}
+
+void
 lim_free(struct plimit *lim)
 {
 	struct plimit *sv_lim;
@@ -858,17 +877,7 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 		goto done;
 	}
 	memcpy(cname, cnbuf, len);
-
-	char *ocname;
-	lim_privatise(p, false);
-	lim = p->p_limit;
-	mutex_enter(&lim->pl_lock);
-	ocname = lim->pl_corename;
-	lim->pl_corename = cname;
-	mutex_exit(&lim->pl_lock);
-	if (ocname != defcorename)
-		free(ocname, M_TEMP);
-
+	lim_setcorename(p, cname, len);
 done:
 	rw_exit(&p->p_reflock);
 	PNBUF_PUT(cnbuf);
