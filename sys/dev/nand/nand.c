@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.10 2011/04/26 17:31:57 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.11 2011/05/01 13:20:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.10 2011/04/26 17:31:57 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.11 2011/05/01 13:20:28 rmind Exp $");
 
 #include "locators.h"
 
@@ -343,7 +343,7 @@ nand_fill_chip_structure_legacy(device_t self, struct nand_chip *chip)
 	default:
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -375,9 +375,9 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 	if (onfi_signature[0] != 'O' || onfi_signature[1] != 'N' ||
 	    onfi_signature[2] != 'F' || onfi_signature[3] != 'I') {
 		chip->nc_isonfi = false;
-		
+
 		aprint_normal(": Legacy NAND Flash\n");
-		
+
 		nand_read_id(self, &chip->nc_manf_id, &chip->nc_dev_id);
 
 		if (nand_fill_chip_structure_legacy(self, chip)) {
@@ -391,11 +391,10 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 		aprint_normal(": ONFI NAND Flash\n");
 
 		nand_read_id(self, &chip->nc_manf_id, &chip->nc_dev_id);
-		
+
 		if (nand_fill_chip_structure(self, chip)) {
 			aprint_error_dev(self,
 			    "can't read device parameters\n");
-			
 			return 1;
 		}
 	}
@@ -488,10 +487,10 @@ nand_read_id(device_t self, uint8_t *manf, uint8_t *dev)
 	nand_select(self, true);
 	nand_command(self, ONFI_READ_ID);
 	nand_address(self, 0x00);
-	
+
 	nand_read_byte(self, manf);
 	nand_read_byte(self, dev);
-	
+
 	nand_select(self, false);
 }
 
@@ -1300,9 +1299,7 @@ nand_flash_read_unaligned(device_t self, size_t offset,
 
 		addr += chip->nc_page_size;
 	}
-
 	KASSERT(*retlen == len);
-
 out:
 	mutex_exit(&sc->sc_device_lock);
 
@@ -1341,7 +1338,6 @@ nand_flash_read(device_t self, flash_off_t offset, size_t len, size_t *retlen,
 	if (len < chip->nc_page_size)
 		panic("TODO page size is larger than read size");
 #endif
-	
 
 	if (len % chip->nc_page_size != 0 ||
 	    offset % chip->nc_page_size != 0) {
@@ -1369,7 +1365,6 @@ nand_flash_read(device_t self, flash_off_t offset, size_t len, size_t *retlen,
 		addr += chip->nc_page_size;
 		*retlen += chip->nc_page_size;
 	}
-
 out:
 	mutex_exit(&sc->sc_device_lock);
 
@@ -1402,7 +1397,7 @@ nand_flash_isbad(device_t self, flash_off_t ofs, bool *isbad)
 	mutex_exit(&sc->sc_device_lock);
 
 	*isbad = result;
-	
+
 	return 0;
 }
 
@@ -1473,7 +1468,6 @@ nand_flash_erase(device_t self,
 		if (nand_isbad(self, addr)) {
 			aprint_error_dev(self, "bad block encountered\n");
 			ei->ei_state = FLASH_ERASE_FAILED;
-			
 			error = EIO;
 			goto out;
 		}
@@ -1481,7 +1475,6 @@ nand_flash_erase(device_t self,
 		error = nand_erase_block(self, addr);
 		if (error) {
 			ei->ei_state = FLASH_ERASE_FAILED;
-			
 			goto out;
 		}
 
