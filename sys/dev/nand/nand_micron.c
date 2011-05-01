@@ -1,4 +1,5 @@
-/*	$NetBSD: nand_micron.c,v 1.3 2011/03/18 16:46:04 ahoka Exp $	*/
+/*	$NetBSD: nand_micron.c,v 1.4 2011/05/01 13:20:28 rmind Exp $	*/
+
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
  *		      University of Szeged, Hungary
@@ -36,6 +37,9 @@
  * Currently supported:
  * MT29F2G08AACWP, MT29F4G08BACWP, MT29F8G08FACWP
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nand_micron.c,v 1.4 2011/05/01 13:20:28 rmind Exp $");
 
 #include "nand.h"
 #include "onfi.h"
