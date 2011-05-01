@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.20 2009/03/18 10:22:41 cegger Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.21 2011/05/01 06:49:43 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.20 2009/03/18 10:22:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.21 2011/05/01 06:49:43 mrg Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.20 2009/03/18 10:22:41 cegger Exp 
 #include "rf_options.h"
 #include "rf_debugMem.h"
 #include "rf_general.h"
+#include "rf_shutdown.h"
 
 #if RF_DEBUG_MEM
 
@@ -52,26 +53,26 @@ struct mh_struct {
 	void   *address;
 	int     size;
 	int     line;
-	char   *filen;
+	const char *filen;
 	char    allocated;
 	struct mh_struct *next;
 };
 static struct mh_struct *mh_table[RF_MH_TABLESIZE];
-RF_DECLARE_MUTEX(rf_debug_mem_mutex)
+static rf_declare_mutex2(rf_debug_mem_mutex);
 static int mh_table_initialized = 0;
 
-static void memory_hash_insert(void *addr, int size, int line, char *filen);
+static void memory_hash_insert(void *addr, int size, int line, const char *filen);
 static int memory_hash_remove(void *addr, int sz);
 
 void
-rf_record_malloc(void *p, int size, int line, char *filen)
+rf_record_malloc(void *p, int size, int line, const char *filen)
 {
 	RF_ASSERT(size != 0);
 
-	/* RF_LOCK_MUTEX(rf_debug_mem_mutex); */
+	/* rf_lock_mutex2(rf_debug_mem_mutex); */
 	memory_hash_insert(p, size, line, filen);
 	tot_mem_in_use += size;
-	/* RF_UNLOCK_MUTEX(rf_debug_mem_mutex); */
+	/* rf_unlock_mutex2(rf_debug_mem_mutex); */
 	if ((long) p == rf_memDebugAddress) {
 		printf("Allocate: debug address allocated from line %d file %s\n", line, filen);
 	}
@@ -82,10 +83,10 @@ rf_unrecord_malloc(void *p, int sz)
 {
 	int     size;
 
-	/* RF_LOCK_MUTEX(rf_debug_mem_mutex); */
+	/* rf_lock_mutex2(rf_debug_mem_mutex); */
 	size = memory_hash_remove(p, sz);
 	tot_mem_in_use -= size;
-	/* RF_UNLOCK_MUTEX(rf_debug_mem_mutex); */
+	/* rf_unlock_mutex2(rf_debug_mem_mutex); */
 	if ((long) p == rf_memDebugAddress) {
 		printf("Free: Found debug address\n");	/* this is really only a
 							 * flag line for gdb */
@@ -114,18 +115,27 @@ rf_print_unfreed(void)
 }
 #endif /* RF_DEBUG_MEM */
 
+#if RF_DEBUG_MEM
+static void
+rf_ShutdownDebugMem(void *unused)
+{
+	rf_destroy_mutex2(rf_debug_mem_mutex);
+}
+#endif
+
 int
 rf_ConfigureDebugMem(RF_ShutdownList_t **listp)
 {
 #if RF_DEBUG_MEM
 	int     i;
 
-	rf_mutex_init(&rf_debug_mem_mutex);
+	rf_init_mutex2(rf_debug_mem_mutex, IPL_VM);
 	if (rf_memDebug) {
 		for (i = 0; i < RF_MH_TABLESIZE; i++)
 			mh_table[i] = NULL;
 		mh_table_initialized = 1;
 	}
+	rf_ShutdownCreate(listp, rf_ShutdownDebugMem, NULL);
 #endif
 	return (0);
 }
@@ -135,7 +145,7 @@ rf_ConfigureDebugMem(RF_ShutdownList_t **listp)
 #define HASHADDR(_a_)      ( (((unsigned long) _a_)>>3) % RF_MH_TABLESIZE )
 
 static void
-memory_hash_insert(void *addr, int size, int line, char *filen)
+memory_hash_insert(void *addr, int size, int line, const char *filen)
 {
 	unsigned long bucket = HASHADDR(addr);
 	struct mh_struct *p;
