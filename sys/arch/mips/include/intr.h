@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4 2011/02/20 07:45:47 matt Exp $ */
+/* $NetBSD: intr.h,v 1.5 2011/05/02 00:17:35 matt Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -68,7 +68,8 @@
 #define	IPI_KPREEMPT	4		/* schedule a kernel preemption */
 #define	IPI_SUSPEND	5		/* DDB suspend signaling */
 #define	IPI_HALT	6		/* halt cpu */
-#define	NIPIS		7
+#define	IPI_XCALL	7		/* xcall */
+#define	NIPIS		8
 
 #ifdef __INTR_PRIVATE
 struct splsw {
