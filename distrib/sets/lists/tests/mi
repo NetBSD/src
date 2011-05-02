@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.318 2011/05/01 17:07:05 jruoho Exp $
+# $NetBSD: mi,v 1.319 2011/05/02 08:32:21 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1940,6 +1940,7 @@
 ./usr/tests/lib/libc/sys/t_cerror		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_sigqueue		tests-lib-tests		atf
 ./usr/tests/lib/libc/termios			tests-lib-tests
+./usr/tests/lib/libc/termios/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/termios/t_tcsetpgrp	tests-lib-tests		atf
 ./usr/tests/lib/libc/tls			tests-lib-tests
 ./usr/tests/lib/libc/tls/Atffile		tests-lib-tests		atf
