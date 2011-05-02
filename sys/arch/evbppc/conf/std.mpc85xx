@@ -1,4 +1,4 @@
-#	$NetBSD: std.mpc85xx,v 1.2 2011/01/18 01:10:25 matt Exp $
+#	$NetBSD: std.mpc85xx,v 1.3 2011/05/02 01:45:26 matt Exp $
 #
 # Standard/required options for NetBSD/mpc85xx.
 
@@ -7,6 +7,7 @@ include		"conf/std"	# MI standard options
 
 # standard ("mandatory") kernel options.
 options 	PPC_BOOKE	# Freescale e500 family
+options 	EVBPPC_HAS_MBR	# Use MBR format (needed for SDCARD booting)
 
 # Executable support:
 options 	EXEC_ELF32	# (native) ELF32 binary support
