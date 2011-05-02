@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.26 2011/05/01 10:01:01 mrg Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.27 2011/05/02 00:39:37 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.26 2011/05/01 10:01:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.27 2011/05/02 00:39:37 mrg Exp $");
 
 #include <sys/errno.h>
 
@@ -81,7 +81,7 @@ rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc)
 	RF_ReconEvent_t *event;
 	int stall_count;
 
-	rf_lock_mutex2(rctrl->eq_mutex);
+	RF_LOCK_MUTEX(rctrl->eq_mutex);
 	/* q null and count==0 must be equivalent conditions */
 	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));
 
@@ -114,8 +114,9 @@ rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc)
 			reconDesc->numReconExecDelays++;
 #endif				/* RF_RECON_STATS > 0 */
 
-			status = rf_sleep("rfrecond", RECON_TIMO,
-					  rctrl->eq_mutex);
+			status = ltsleep(&reconDesc->reconExecTicks, PRIBIO,
+					 "recon delay", RECON_TIMO,
+					 &rctrl->eq_mutex);
 			RF_ASSERT(status == EWOULDBLOCK);
 			reconDesc->reconExecTicks = 0;
 		}
@@ -127,7 +128,8 @@ rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc)
 		reconDesc->numReconEventWaits++;
 #endif				/* RF_RECON_STATS > 0 */
 
-		rf_sleep("rfevq", RF_EVENTQ_WAIT, rctrl->eq_mutex);
+		ltsleep(&(rctrl)->eventQueue, PRIBIO,  "raidframe eventq",
+			RF_EVENTQ_WAIT, &((rctrl)->eq_mutex));
 
 		stall_count++;
 
@@ -153,7 +155,7 @@ rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc)
 
 	/* q null and count==0 must be equivalent conditions */
 	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));
-	rf_unlock_mutex2(rctrl->eq_mutex);
+	RF_UNLOCK_MUTEX(rctrl->eq_mutex);
 	return (event);
 }
 /* enqueues a reconstruction event on the indicated queue */
@@ -168,13 +170,13 @@ rf_CauseReconEvent(RF_Raid_t *raidPtr, RF_RowCol_t col, void *arg,
 		RF_ASSERT(col != rctrl->fcol);
 	}
 	RF_ASSERT(col >= 0 && col <= raidPtr->numCol);
-	rf_lock_mutex2(rctrl->eq_mutex);
+	RF_LOCK_MUTEX(rctrl->eq_mutex);
 	/* q null and count==0 must be equivalent conditions */
 	RF_ASSERT((rctrl->eventQueue == NULL) == (rctrl->eq_count == 0));
 	event->next = rctrl->eventQueue;
 	rctrl->eventQueue = event;
 	rctrl->eq_count++;
-	rf_unlock_mutex2(rctrl->eq_mutex);
+	RF_UNLOCK_MUTEX(rctrl->eq_mutex);
 
 	wakeup(&(rctrl)->eventQueue);
 }
@@ -204,7 +206,7 @@ rf_DrainReconEventQueue(RF_RaidReconDesc_t *reconDesc)
 	RF_ReconCtrl_t *rctrl = reconDesc->raidPtr->reconControl;
 	RF_ReconEvent_t *event;
 
-	rf_lock_mutex2(rctrl->eq_mutex);
+	RF_LOCK_MUTEX(rctrl->eq_mutex);
 	while (rctrl->eventQueue!=NULL) {
 
 		event = rctrl->eventQueue;
@@ -214,7 +216,7 @@ rf_DrainReconEventQueue(RF_RaidReconDesc_t *reconDesc)
 		/* dump it */
 		rf_FreeReconEventDesc(event);
 	}
-	rf_unlock_mutex2(rctrl->eq_mutex);
+	RF_UNLOCK_MUTEX(rctrl->eq_mutex);
 }
 
 void
