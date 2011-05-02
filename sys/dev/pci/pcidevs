@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1072 2011/05/02 14:00:09 manu Exp $
+$NetBSD: pcidevs,v 1.1073 2011/05/02 14:06:50 manu Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -626,7 +626,7 @@ vendor EVE		0x1adb	EVE
 vendor QUMRANET		0x1af4	Qumranet
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
-vendor SUNIX		0x1fd4	SUNIX Co
+vendor SUNIX2		0x1fd4	SUNIX Co
 vendor HINT		0x3388	HiNT
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
