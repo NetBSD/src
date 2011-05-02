@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.47 2011/03/16 21:15:30 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.48 2011/05/02 02:01:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.47 2011/03/16 21:15:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.48 2011/05/02 02:01:33 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
+#include "opt_ppcarch.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -51,8 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.47 2011/03/16 21:15:30 matt Ex
 #include <sys/cpu.h>
 #include <sys/module.h>
 #include <sys/device.h>
+#include <sys/pcu.h>
 
-#include <machine/pcb.h>
+#include <powerpc/pcb.h>
+#include <powerpc/fpu.h>
+#if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
+#include <powerpc/altivec.h>
+#endif
 
 int cpu_timebase;
 int cpu_printfataltraps = 1;
@@ -62,6 +68,15 @@ extern int powersave;
 
 /* exported variable to be filled in by the bootloaders */
 char *booted_kernel;
+
+const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
+#if defined(PPC_HAVE_FPU)
+	[PCU_FPU] = &fpu_ops,
+#endif
+#if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
+	[PCU_VEC] = &vec_ops,
+#endif
+};
 
 /*
  * Set set up registers on exec.
@@ -110,6 +125,10 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_vrsave = 0;
 #endif
 	pcb->pcb_flags = PSL_FE_DFLT;
+	memset(&pcb->pcb_fpu, 0, sizeof(&pcb->pcb_fpu));
+#if defined(ALTIVEC) || defined(PPC_SAVE_SPE)
+	memset(&pcb->pcb_vr, 0, sizeof(&pcb->pcb_vr));
+#endif
 }
 
 /*

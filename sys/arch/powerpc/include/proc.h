@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.10 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.11 2011/05/02 02:01:33 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,14 +39,10 @@
  */
 struct mdlwp {
 	volatile int md_flags;
-	struct cpu_info * volatile md_fpucpu;	/* last cpu FP was used on */
-	struct cpu_info * volatile md_veccpu;	/* last cpu VEC was used on */
 	struct trapframe *md_utf;		/* user trampframe */
 };
-#define MDLWP_USEDFPU	0x0001	/* this thread has used the FPU */
-#define MDLWP_OWNFPU	0x0002	/* this thread is using the FPU */
-#define	MDLWP_USEDVEC	0x0010	/* this thread has used the VEC */
-#define	MDLWP_OWNVEC	0x0020	/* this thread is using the VEC */
+#define MDLWP_USEDFPU	__BIT(PCU_FPU)	/* this thread has used the FPU */
+#define	MDLWP_USEDVEC	__BIT(PCU_VEC)	/* this thread has used the VEC */
 
 struct trapframe;
 
@@ -58,8 +54,6 @@ struct mdproc {
 #define	LWP0_CPU_INFO	&cpu_info[0]
 #define	LWP0_MD_INITIALIZER {	\
 		.md_flags = 0, \
-		.md_fpucpu = LWP0_CPU_INFO, \
-		.md_veccpu = LWP0_CPU_INFO, \
 		.md_utf = (void *)0xdeadbeef, \
 	}
 #endif /* _KERNEL */
