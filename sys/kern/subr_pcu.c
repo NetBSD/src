@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.5 2011/05/02 01:43:37 matt Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.6 2011/05/02 06:33:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.5 2011/05/02 01:43:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.6 2011/05/02 06:33:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -125,7 +125,8 @@ pcu_do_op(const pcu_ops_t *pcu, lwp_t * const l, const int flags)
 }
 
 /*
- * pcu_cpu_op: helper routine to call pcu_do_op() via xcall(9).
+ * pcu_cpu_op: helper routine to call pcu_do_op() via xcall(9) or
+ * by pcu_load.
  */
 static void
 pcu_cpu_op(const pcu_ops_t *pcu, const int flags)
@@ -133,7 +134,7 @@ pcu_cpu_op(const pcu_ops_t *pcu, const int flags)
 	const u_int id = pcu->pcu_id;
 	lwp_t * const l = curcpu()->ci_pcu_curlwp[id];
 
-	KASSERT(cpu_softintr_p());
+	//KASSERT(cpu_softintr_p());
 
 	/* If no state - nothing to do. */
 	if (l == NULL) {
@@ -164,7 +165,9 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, int flags)
 		/*
 		 * State is on the current CPU - just perform the operations.
 		 */
-		KASSERT(ci->ci_pcu_curlwp[id] == l);
+		KASSERTMSG(ci->ci_pcu_curlwp[id] == l,
+		    ("%s: cpu%u: pcu_curlwp[%u] (%p) != l (%p)",
+		     __func__, cpu_index(ci), id, ci->ci_pcu_curlwp[id], l));
 		pcu_do_op(pcu, l, flags);
 		splx(s);
 		return;
@@ -227,7 +230,7 @@ pcu_load(const pcu_ops_t *pcu)
 	KASSERT(l->l_pcu_cpu[id] == NULL);
 
 	/* Save the PCU state on the current CPU, if there is any. */
-	pcu_do_op(pcu, l, PCU_SAVE | PCU_RELEASE);
+	pcu_cpu_op(pcu, PCU_SAVE | PCU_RELEASE);
 	KASSERT(curci->ci_pcu_curlwp[id] == NULL);
 
 	/*
