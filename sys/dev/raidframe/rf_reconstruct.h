@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.27 2011/05/02 01:07:24 mrg Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.28 2011/05/02 07:29:18 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -142,8 +142,8 @@ struct RF_ReconCtrl_s {
 	int     eq_count;	/* debug only */
 
 	/* reconstruction buffer management */
-	RF_DECLARE_MUTEX(rb_mutex)	        /* mutex for messing around
-						 * with recon buffers */
+	rf_declare_mutex2(rb_mutex);	        /* mutex/cv for messing */
+	rf_declare_cond2(rb_cv);		/* around with recon buffers */
 	int rb_lock;                            /* 1 if someone is mucking
 						   with recon buffers,
 						   0 otherwise */
