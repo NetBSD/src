@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.75 2011/04/26 15:51:24 joerg Exp $
+#	$NetBSD: files.powerpc,v 1.76 2011/05/02 02:01:32 matt Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -35,6 +35,7 @@ file	arch/powerpc/powerpc/db_memrw.c			ddb | kgdb
 file	arch/powerpc/powerpc/db_disasm.c		ddb
 file	arch/powerpc/powerpc/db_interface.c		ddb | kgdb
 file	arch/powerpc/powerpc/db_trace.c			ddb
+file	arch/powerpc/powerpc/fpu.c
 
 # IBM 4xx Family files (40x)
 file	arch/powerpc/ibm4xx/pmap.c			ppc_ibm4xx
@@ -53,7 +54,6 @@ file	arch/powerpc/oea/pmap.c				ppc_oea | ppc_oea601
 file	arch/powerpc/oea/pmap64.c			ppc_oea64
 file	arch/powerpc/oea/pmap64_bridge.c		ppc_oea64_bridge
 file	arch/powerpc/oea/pmap_kernel.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
-file	arch/powerpc/powerpc/fpu.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 file	arch/powerpc/powerpc/trap.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 
 # PPC BookE (MPC85xx) Family files
