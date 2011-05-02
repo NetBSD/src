@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.19 2011/02/19 19:18:11 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.20 2011/05/02 02:01:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,50 +50,21 @@
 static __inline void
 userret(struct lwp *l, struct trapframe *tf)
 {
-#if defined(PPC_HAVE_FPU) || defined(ALTIVEC) || defined(PPC_HAVE_SPE)
-	struct cpu_info * const ci = curcpu();
-#endif
-
 	KASSERTMSG((tf == trapframe(curlwp)),
-	    ("tf=%p, trapframe(curlwp)=%p\n", tf, trapframe(curlwp)));
+	   ("tf=%p, trapframe(curlwp)=%p\n", tf, trapframe(curlwp)));
 
 	/* Invoke MI userret code */
 	mi_userret(l);
 
 	tf->tf_srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
 
-	/*
-	 * If someone stole the fp or vector unit while we were away,
-	 * disable it.  Note that if the PSL FP/VEC bits aren't set, then
-	 * we don't own it.
-	 */
-#ifdef PPC_HAVE_FPU
-	if ((tf->tf_srr1 & PSL_FP) &&
-	    (l != ci->ci_fpulwp || l->l_md.md_fpucpu != ci)) {
-		tf->tf_srr1 &= ~(PSL_FP|PSL_FE0|PSL_FE1);
-	}
-#endif
 #ifdef ALTIVEC
 	/*
 	 * We need to manually restore PSL_VEC each time we return
-	 * to user mode since PSL_VEC is not preserved in SRR1.
+	 * to user mode since PSL_VEC isn't always preserved in SRR1.
+	 * We keep a copy of it in md_flags to make restoring easier.
 	 */
-	if (tf->tf_srr1 & PSL_VEC) {
-		if (l != ci->ci_veclwp)
-			tf->tf_srr1 &= ~PSL_VEC;
-	} else {
-		if (l == ci->ci_veclwp)
-			tf->tf_srr1 |= PSL_VEC;
-	}
-
-	/*
-	 * If the new process isn't the current AltiVec process on this
-	 * CPU, we need to stop any data streams that are active (since
-	 * it will be a different address space).
-	 */
-	if (ci->ci_veclwp != &lwp0 && ci->ci_veclwp != l) {
-		__asm volatile("dssall;sync");
-	}
+	tf->tf_srr1 |= l->l_md.md_flags & PSL_VEC;
 #endif
 #ifdef PPC_BOOKE
 	/*
@@ -105,20 +76,6 @@ userret(struct lwp *l, struct trapframe *tf)
 	if (__predict_false(tf->tf_srr1 & PSL_SE)) {
 		extern void booke_sstep(struct trapframe *); /* ugly */
 		booke_sstep(tf);
-	}
-#endif
-#ifdef PPC_HAVE_SPE
-	/*
-	 * We need to manually restore PSL_SPV each time we return
-	 * to user mode since PSL_SPV is not preserved in SRR1 since
-	 * we don't include it in PSL_USERSRR1 to control its setting.
-	 */
-	if (tf->tf_srr1 & PSL_SPV) {
-		if (l != ci->ci_veclwp)
-			tf->tf_srr1 &= ~PSL_SPV;
-	} else {
-		if (l == ci->ci_veclwp)
-			tf->tf_srr1 |= PSL_SPV;
 	}
 #endif
 }

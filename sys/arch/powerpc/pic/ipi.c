@@ -1,4 +1,4 @@
-/* $NetBSD: ipi.c,v 1.7 2011/01/18 02:25:42 matt Exp $ */
+/* $NetBSD: ipi.c,v 1.8 2011/05/02 02:01:33 matt Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.7 2011/01/18 02:25:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.8 2011/05/02 02:01:33 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_pic.h"
@@ -67,14 +67,6 @@ ppcipi_intr(void *v)
 
 	if (ipi == PPC_IPI_NOMESG)
 		return 1;
-
-	if (ipi & PPC_IPI_FLUSH_FPU)
-		fpu_save_cpu(FPU_SAVE_AND_RELEASE);
-
-#ifdef ALTIVEC
-	if (ipi & PPC_IPI_FLUSH_VEC)
-		vec_save_cpu(VEC_SAVE_AND_RELEASE);
-#endif
 
 	if (ipi & PPC_IPI_XCALL)
 		xc_ipi_handler();

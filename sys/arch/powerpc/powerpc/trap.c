@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.139 2011/03/16 21:15:30 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.140 2011/05/02 02:01:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2011/03/16 21:15:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.140 2011/05/02 02:01:33 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -343,7 +343,7 @@ trap(struct trapframe *tf)
 
 	case EXC_FPU|EXC_USER:
 		ci->ci_ev_fpu.ev_count++;
-		fpu_enable();
+		fpu_load();
 		break;
 
 	case EXC_AST|EXC_USER:
@@ -383,7 +383,7 @@ trap(struct trapframe *tf)
 	case EXC_VEC|EXC_USER:
 		ci->ci_ev_vec.ev_count++;
 #ifdef ALTIVEC
-		vec_enable();
+		vec_load();
 		break;
 #else
 		if (cpu_printfataltraps) {
@@ -746,22 +746,23 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 			 * the PCB.
 			 */
 
-			if ((l->l_md.md_flags & MDLWP_USEDFPU) == 0) {
+			KASSERT(l == curlwp);
+			if (!fpu_used_p(l)) {
 				memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
-				l->l_md.md_flags |= MDLWP_USEDFPU;
+				fpu_mark_used(l);
+			} else {
+				fpu_save();
 			}
 			if (indicator == EXC_ALI_LFD) {
-				fpu_save_lwp(l, FPU_SAVE_AND_RELEASE);
 				if (copyin((void *)tf->tf_dar, fpreg,
 				    sizeof(double)) != 0)
 					return -1;
 			} else {
-				fpu_save_lwp(l, FPU_SAVE);
 				if (copyout(fpreg, (void *)tf->tf_dar,
 				    sizeof(double)) != 0)
 					return -1;
 			}
-			fpu_enable();
+			fpu_load();
 			return 0;
 		}
 		break;
@@ -786,11 +787,11 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 		struct pcb * const pcb = lwp_getpcb(l);
 		register_t msr = tf->tf_srr1 & PSL_USERSRR1;
 
-		if (l->l_md.md_flags & MDLWP_USEDFPU)
+		if (fpu_used_p(l))
 			msr |= PSL_FP;
 		msr |= (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
 #ifdef ALTIVEC
-		if (l->l_md.md_flags & MDLWP_USEDVEC)
+		if (vec_used_p(l))
 			msr |= PSL_VEC;
 #endif
 		tf->tf_fixreg[OPC_MFMSR_REG(opcode)] = msr;
