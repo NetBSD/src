@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.6 2011/03/16 21:15:30 matt Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.7 2011/05/02 02:01:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.6 2011/03/16 21:15:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.7 2011/05/02 02:01:33 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -77,17 +77,19 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	}
 
 	md_core.frame = *l->l_md.md_utf;
-	if (l->l_md.md_flags & MDLWP_OWNFPU) {
+	if (fpu_used_p(l)) {
 #ifdef PPC_HAVE_FPU
-		fpu_save_lwp(l, FPU_SAVE);
+		KASSERT(l == curlwp);
+		fpu_save();
 #endif
 		md_core.fpstate = pcb->pcb_fpu;
 	} else
 		memset(&md_core.fpstate, 0, sizeof(md_core.fpstate));
 
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
-	if (l->l_md.md_flags & MDLWP_OWNVEC) {
-		vec_save_lwp(l, VEC_SAVE);
+	if (vec_used_p(l)) {
+		KASSERT(l == curlwp);
+		vec_save();
 		md_core.vstate = pcb->pcb_vr;
 	} else
 #endif
