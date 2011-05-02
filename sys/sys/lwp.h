@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.150 2011/03/08 12:39:29 pooka Exp $	*/
+/*	$NetBSD: lwp.h,v 1.151 2011/05/02 02:28:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -44,7 +44,6 @@
 #include <sys/specificdata.h>
 #include <sys/syncobj.h>
 #include <sys/resource.h>
-#include <sys/pcu.h>
 
 #if defined(_KERNEL)
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
@@ -68,6 +67,9 @@
  * of cache hits) and by size (to reduce dead space in the structure).
  */
 #if defined(_KERNEL) || defined(_KMEMUSER)
+
+#include <sys/pcu.h>
+
 struct lockdebug;
 struct sadata_vp;
 struct sysent;
