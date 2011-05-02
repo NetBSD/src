@@ -1,4 +1,4 @@
-/*	$NetBSD: spe.c,v 1.3 2011/05/02 02:01:32 matt Exp $	*/
+/*	$NetBSD: spe.c,v 1.4 2011/05/02 06:43:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.3 2011/05/02 02:01:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.4 2011/05/02 06:43:16 matt Exp $");
 
 #include "opt_altivec.h"
 
@@ -101,6 +101,7 @@ vec_state_load(lwp_t *l, bool used)
 	 * Note that vector has now been used.
 	 */
 	l->l_md.md_flags |= MDLWP_USEDVEC;
+	l->l_md.md_utf->tf_srr1 |= PSL_SPV;
 }
 
 void

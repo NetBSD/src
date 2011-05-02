@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.22 2011/05/02 02:01:33 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.23 2011/05/02 06:43:16 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.22 2011/05/02 02:01:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.23 2011/05/02 06:43:16 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -105,6 +105,7 @@ vec_state_load(lwp_t *l, bool used)
 	 * Mark vector registers as modified.
 	 */
 	l->l_md.md_flags |= MDLWP_USEDVEC;
+	l->l_md.md_utf->tf_srr1 |= PSL_VEC;
 }
 
 void
