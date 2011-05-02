@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1068 2011/04/13 22:24:45 wiz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1069 2011/05/02 14:23:24 manu Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1071 2011/04/13 22:24:12 wiz Exp
+ *	NetBSD: pcidevs,v 1.1073 2011/05/02 14:06:50 manu Exp
  */
 
 /*
@@ -633,6 +633,7 @@
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_SUNIX2	0x1fd4		/* SUNIX Co */
 #define	PCI_VENDOR_HINT	0x3388		/* HiNT */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
@@ -4245,6 +4246,10 @@
 #define	PCI_PRODUCT_SUNDANCETI_ST201	0x0201		/* ST201 10/100 Ethernet */
 #define	PCI_PRODUCT_SUNDANCETI_ST1023	0x1023		/* ST1023 Gigabit Ethernet */
 #define	PCI_PRODUCT_SUNDANCETI_ST2021	0x2021		/* ST2021 Gigabit Ethernet */
+
+/* SUNIX products */
+#define	PCI_PRODUCT_SUNIX_0001	0x0001		/* Matrix serial adapter */
+#define	PCI_PRODUCT_SUNIX_1999	0x1999		/* 1999 multiport adapter */
 
 /* Surecom Technology products */
 #define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* NE-34 Ethernet */
