@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.306 2011/05/01 01:15:18 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.307 2011/05/02 22:27:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -194,15 +194,14 @@ struct emul {
  * which might be addressible only on a processor on which the process
  * is running.
  *
- * Field markings and the corresponding locks (not yet fully implemented,
- * more a statement of intent):
+ * Field markings and the corresponding locks:
  *
  * a:	p_auxlock
  * k:	ktrace_mutex
  * l:	proc_lock
  * t:	p_stmutex
  * p:	p_lock
- * q:	mqlist_mtx
+ * (:	updated atomically
  * ::	unlocked, stable
  */
 struct proc {
@@ -224,7 +223,7 @@ struct proc {
 	struct vmspace	*p_vmspace;	/* :: Address space */
 	struct sigacts	*p_sigacts;	/* :: Process sigactions */
 	struct aioproc	*p_aio;		/* p: Asynchronous I/O data */
-	u_int		p_mqueue_cnt;	/* q: Count of open mqueues */
+	u_int		p_mqueue_cnt;	/* (: Count of open message queues */
 	specificdata_reference
 			p_specdataref;	/*    subsystem proc-specific data */
 
