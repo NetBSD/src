@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.5 2011/04/14 17:42:00 matt Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.6 2011/05/02 00:17:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,12 +32,13 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.5 2011/04/14 17:42:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.6 2011/05/02 00:17:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/intr.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -57,6 +58,7 @@ static const char * const ipi_names[] = {
 	[IPI_KPREEMPT]	= "ipi kpreempt",
 	[IPI_SUSPEND]	= "ipi suspend",
 	[IPI_HALT]	= "ipi halt",
+	[IPI_XCALL]	= "ipi xcall",
 };
 
 static void
@@ -132,6 +134,10 @@ ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
 	if (ipi_mask & __BIT(IPI_HALT)) {
 		ci->ci_evcnt_per_ipi[IPI_HALT].ev_count++;
 		ipi_halt();
+	}
+	if (ipi_mask & __BIT(IPI_XCALL)) {
+		ci->ci_evcnt_per_ipi[IPI_XCALL].ev_count++;
+		xc_ipi_handler();
 	}
 }
 

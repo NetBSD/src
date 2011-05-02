@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.11 2011/04/29 22:13:49 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.12 2011/05/02 00:17:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.11 2011/04/29 22:13:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.12 2011/05/02 00:17:35 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -974,7 +974,7 @@ void
 xc_send_ipi(struct cpu_info *ci)
 {
 
-	(*mips_locoresw.lsw_send_ipi)(ci, IPI_NOP);
+	(*mips_locoresw.lsw_send_ipi)(ci, IPI_XCALL);
 }
 #endif /* MULTIPROCESSOR */
 
