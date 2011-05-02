@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11.24.3 2011/03/28 23:04:32 jym Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.11.24.4 2011/05/02 22:49:54 jym Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,10 +33,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.11.24.3 2011/03/28 23:04:32 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.11.24.4 2011/05/02 22:49:54 jym Exp $");
 
 #ifndef _KERNEL
-#include "stubs.h"
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/ksyms.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscide.c,v 1.7.18.1 2011/01/10 00:37:31 jym Exp $	*/
+/*	$NetBSD: gcscide.c,v 1.7.18.2 2011/05/02 22:49:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.7.18.1 2011/01/10 00:37:31 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.7.18.2 2011/05/02 22:49:56 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.7.18.1 2011/01/10 00:37:31 jym Exp $")
 static int	gcscide_match(device_t, cfdata_t, void *);
 static void	gcscide_attach(device_t, device_t, void *);
 
-static void	gcscide_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void	gcscide_chip_map(struct pciide_softc *, const struct pci_attach_args *);
 static void	gcscide_setup_channel(struct ata_channel *);
 
 /* PIO Format 1 settings */
@@ -150,7 +150,7 @@ gcscide_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-gcscide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+gcscide_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	pcireg_t interface;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.62.8.3 2010/10/24 22:48:00 jym Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.62.8.4 2011/05/02 22:49:55 jym Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.62.8.3 2010/10/24 22:48:00 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.62.8.4 2011/05/02 22:49:55 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -182,9 +182,11 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	regs->tf_err &= ~TC_FLAGMASK;
 
 	switch (type) {
+	case T_NMI:	/* NMI */
+		printf("NMI ... going to debugger\n");
+		/*FALLTHROUGH*/
 	case T_BPTFLT:	/* breakpoint */
 	case T_TRCTRAP:	/* single_step */
-	case T_NMI:	/* NMI */
 	case -1:	/* keyboard interrupt */
 		break;
 	default:

@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.11.4.5 2011/03/29 20:42:58 jym Exp $
+#	$NetBSD: XEN3_DOM0,v 1.11.4.6 2011/05/02 22:49:55 jym Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -23,7 +23,6 @@ options 	DOM0OPS
 # making MCLBYTES = PAGE_SIZE avoids a copy when a mbuf cluster is sent
 # to a domU, at the expense of a higher memory usage by the network stack.
 #options 	MCLSHIFT=12
-#options         XEN_BALLOON     # Xen memory ballooning - Experimental
 
 makeoptions 	CPUFLAGS="-march=i686"
 
@@ -95,10 +94,6 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options 	COMPAT_MACH	# binary compatibility with Mach binaries
-#options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
-#options 	EXEC_MACHO	# exec MACH-O binaries
-#options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support
@@ -221,6 +216,7 @@ npx0		at hypervisor?		# x86 math coprocessor
 
 xencons*	at hypervisor?		# Xen virtual console
 #xennet* 	at hypervisor?		# Xen virtual network interface
+balloon*	at xenbus?		# Xen balloon device
 
 #xbd*		at hypervisor?		# Xen virtual block device
 #wd*		at hypervisor?		# Xen vbd (wd identity)

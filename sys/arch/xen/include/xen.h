@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.30.8.4 2009/11/01 21:43:28 jym Exp $	*/
+/*	$NetBSD: xen.h,v 1.30.8.5 2011/05/02 22:49:58 jym Exp $	*/
 
 /*
  *
@@ -27,7 +27,10 @@
 
 #ifndef _XEN_H
 #define _XEN_H
+
+#ifdef _KERNEL_OPT
 #include "opt_xen.h"
+#endif
 
 
 #ifndef _LOCORE
