@@ -1,4 +1,4 @@
-/*	$NetBSD: pcu.h,v 1.5 2011/05/02 00:29:53 rmind Exp $	*/
+/*	$NetBSD: pcu.h,v 1.6 2011/05/02 02:28:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _SYS_PCU_H_
 #define _SYS_PCU_H_
 
-#if !defined(_KERNEL)
+#if !defined(_KERNEL) && !defined(_KMEMUSER)
 #error "not supposed to be exposed to userland"
 #endif
 
