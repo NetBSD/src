@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 2011/02/18 16:40:50 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79 2011/05/02 01:49:23 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2011/02/18 16:40:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2011/05/02 01:49:23 matt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -745,12 +745,10 @@ pmap_pte_create(struct pte *pt, const struct pmap *pm, vaddr_t va, register_t pt
 	pt->pte_hi = (va_to_vsid(pm, va) << PTE_VSID_SHFT)
 	    | (((va & ADDR_PIDX) >> (ADDR_API_SHFT - PTE_API_SHFT)) & PTE_API);
 	pt->pte_lo = pte_lo;
-#elif defined (PMAP_OEA64_BRIDGE)
+#elif defined (PMAP_OEA64_BRIDGE) || defined (PMAP_OEA64)
 	pt->pte_hi = ((u_int64_t)va_to_vsid(pm, va) << PTE_VSID_SHFT)
 	    | (((va & ADDR_PIDX) >> (ADDR_API_SHFT - PTE_API_SHFT)) & PTE_API);
 	pt->pte_lo = (u_int64_t) pte_lo;
-#elif defined (PMAP_OEA64)
-#error PMAP_OEA64 not supported
 #endif /* PMAP_OEA */
 }
 
