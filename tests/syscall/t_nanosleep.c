@@ -1,4 +1,4 @@
-/* $NetBSD: t_nanosleep.c,v 1.4 2011/05/01 09:44:26 jruoho Exp $ */
+/* $NetBSD: t_nanosleep.c,v 1.5 2011/05/02 07:02:09 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nanosleep.c,v 1.4 2011/05/01 09:44:26 jruoho Exp $");
+__RCSID("$NetBSD: t_nanosleep.c,v 1.5 2011/05/02 07:02:09 jruoho Exp $");
 
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -58,14 +58,14 @@ ATF_TC_HEAD(nanosleep_basic, tc)
 
 ATF_TC_BODY(nanosleep_basic, tc)
 {
-	static const size_t maxiter = 100;
+	static const size_t maxiter = 10;
 	struct timespec ts1, ts2, tsn;
 	size_t i;
 
-	for (i = 0; i < maxiter; i++) {
+	for (i = 1; i < maxiter; i++) {
 
 		tsn.tv_sec = 0;
-		tsn.tv_nsec = 1;
+		tsn.tv_nsec = i;
 
 		(void)memset(&ts1, 0, sizeof(struct timespec));
 		(void)memset(&ts2, 0, sizeof(struct timespec));
@@ -74,8 +74,22 @@ ATF_TC_BODY(nanosleep_basic, tc)
 		ATF_REQUIRE(nanosleep(&tsn, NULL) == 0);
 		ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &ts2) == 0);
 
-		if (timespeccmp(&ts2, &ts1, <) != 0)
-			atf_tc_fail("inaccuracies in sleep time");
+		/*
+		 * Verify that we slept at least one nanosecond.
+		 */
+		if (timespeccmp(&ts2, &ts1, <=) != 0) {
+
+			(void)fprintf(stderr,
+			    "sleep time:: sec %lu, nsec %lu\n\t\t"
+			    "ts1: sec %lu, nsec %lu\n\t\t"
+			    "ts2: sec %lu, nsec %lu\n",
+			    tsn.tv_sec, tsn.tv_nsec,
+			    ts1.tv_sec, ts1.tv_nsec,
+			    ts2.tv_sec, ts2.tv_nsec);
+
+			atf_tc_fail_nonfatal("inaccuracies in sleep time "
+			    "(resolution = %lu nsec)", tsn.tv_nsec);
+		}
 	}
 }
 
