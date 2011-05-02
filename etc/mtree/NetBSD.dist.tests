@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.40 2011/05/02 08:11:41 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.41 2011/05/02 11:55:15 njoly Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -63,6 +63,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib
 ./usr/libdata/debug/usr/tests/lib/libc/string
 ./usr/libdata/debug/usr/tests/lib/libc/sys
+./usr/libdata/debug/usr/tests/lib/libc/termios
 ./usr/libdata/debug/usr/tests/lib/libc/tls
 ./usr/libdata/debug/usr/tests/lib/libc/ttyio
 ./usr/libdata/debug/usr/tests/lib/libc/time
