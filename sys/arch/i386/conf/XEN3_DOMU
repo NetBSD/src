@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.11.4.6 2011/03/29 20:42:58 jym Exp $
+# $NetBSD: XEN3_DOMU,v 1.11.4.7 2011/05/02 22:49:55 jym Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -13,7 +13,6 @@ maxusers	32		# estimated number of users
 #
 options 	XEN
 #options 	DOM0OPS
-#options         XEN_BALLOON     # Xen memory ballooning - Experimental
 
 makeoptions 	CPUFLAGS="-march=i686"
 
@@ -88,10 +87,6 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options 	COMPAT_MACH	# binary compatibility with Mach binaries
-#options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
-#options 	EXEC_MACHO	# exec MACH-O binaries
-#options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
@@ -193,6 +188,7 @@ xencons*	at hypervisor?		# Xen virtual console
 xenbus* 	at hypervisor?		# Xen virtual bus
 xennet* 	at xenbus?		# Xen virtual network interface
 xbd*		at xenbus?		# Xen virtual block device
+balloon*	at xenbus?		# Xen balloon device
 
 cinclude "arch/i386/conf/GENERIC.local"
 
@@ -263,6 +259,6 @@ options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 
 # PCI pass-through support: 
-#xpci* at xenbus ?			#Xen3 PCI front end driver
-#pci* at xpci ?
+xpci* at xenbus ?			#Xen3 PCI front end driver
+pci* at xpci ?
 # you then need to add your PCI devices drivers below.

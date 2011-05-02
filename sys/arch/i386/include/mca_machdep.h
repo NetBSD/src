@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.h,v 1.12.52.2 2009/11/01 13:58:34 jym Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.12.52.3 2011/05/02 22:49:56 jym Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ extern struct x86_bus_dma_tag mca_bus_dma_tag;
 /* set to 1 if MCA bus is detected */
 extern int MCA_system;
 
-int	mca_nmi(void);
+void	mca_nmi(void);
 
 /*
  * Types provided to machine-independent MCA code.

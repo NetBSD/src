@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.58.2.5 2011/03/28 23:04:52 jym Exp $	*/
+/*	$NetBSD: intr.c,v 1.58.2.6 2011/05/02 22:49:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.58.2.5 2011/03/28 23:04:52 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.58.2.6 2011/05/02 22:49:57 jym Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -222,12 +222,11 @@ intr_default_setup(void)
  * Handle a NMI, possibly a machine check.
  * return true to panic system, false to ignore.
  */
-int
+void
 x86_nmi(void)
 {
 
 	log(LOG_CRIT, "NMI port 61 %x, port 70 %x\n", inb(0x61), inb(0x70));
-	return(0);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36.4.3 2011/03/28 23:04:38 jym Exp $
+#	$NetBSD: Makefile,v 1.36.4.4 2011/05/02 22:49:55 jym Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -18,6 +18,11 @@ SI386+=	${SYSDIR}/arch/x86/x86/*.[ch] \
 	${SYSDIR}/arch/x86/acpi/*.[ch] \
 	${SYSDIR}/arch/x86/include/*.h \
 	${SYSDIR}/arch/x86/isa/*.[ch] \
+	${SYSDIR}/arch/xen/include/*.h \
+	${SYSDIR}/arch/xen/i386/*.[ch] \
+	${SYSDIR}/arch/xen/x86/*.[ch] \
+	${SYSDIR}/arch/xen/xen/*.[ch] \
+	${SYSDIR}/arch/xen/xenbus/*.[ch] \
 	${SYSDIR}/arch/x86/pci/*.[ch]
 AI386=	${SYSDIR}/arch/i386/i386/*.S
 
@@ -29,7 +34,7 @@ DI386=	i386 eisa isa include pci
 tags:
 	-rm -f ${TI386}
 	-echo ${SI386} | xargs ctags -wadtf ${TI386}
-	-find -H ${SYSDIR}/external/intel-public/acpica/dist/ -name '*.[ch]' | \
+	-find -H ${SYSDIR}/external/bsd/acpica/dist/ -name '*.[ch]' | \
 	    sort -t / -u | xargs ctags -wadtf ${TI386}
 	-${FINDCOMM} | xargs ctags -wadtf ${TI386}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AI386} | \

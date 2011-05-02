@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.42.10.5 2011/03/28 23:58:10 jym Exp $	*/
+/*	$NetBSD: vector.S,v 1.42.10.6 2011/05/02 22:49:56 jym Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.10.5 2011/03/28 23:58:10 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.10.6 2011/05/02 22:49:56 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -435,8 +435,9 @@ IDTVEC(intr_ ## name ## num)						;\
 	addl	$1,IS_EVCNTLO(%ebp)	/* inc event counter */		;\
 	adcl	$0,IS_EVCNTHI(%ebp)					;\
 1:									\
-	pushl	%esi							;\
+	pushl	%esi			/* if_ppi */			;\
 	movl	%ebx,CPUVAR(ILEVEL)					;\
+	/* switch stack if necessary, and push a ptr to our intrframe */ \
 	IDEPTH_INCR							;\
 	sti								;\
 	movl	IS_HANDLERS(%ebp),%ebx					;\

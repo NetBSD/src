@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.92.2.6 2011/03/28 23:04:55 jym Exp $
+#	$NetBSD: files.xen,v 1.92.2.7 2011/05/02 22:49:58 jym Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -42,8 +42,8 @@ file	arch/i386/i386/cpu_in_cksum.S   (inet | inet6) & cpu_in_cksum
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
+file	arch/i386/i386/db_machdep.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
-file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/dumpsys.c
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
@@ -72,9 +72,9 @@ file	arch/amd64/amd64/busfunc.S
 file	arch/amd64/amd64/cpufunc.S
 file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/amd64/amd64/db_disasm.c		ddb
-file	arch/amd64/amd64/db_interface.c	 ddb
+file	arch/amd64/amd64/db_interface.c		ddb
+file	arch/amd64/amd64/db_machdep.c		ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
-file	arch/amd64/amd64/db_trace.c		ddb
 file	arch/amd64/amd64/kgdb_machdep.c	 kgdb
 file	arch/amd64/amd64/kobj_machdep.c	 	modular
 file	arch/amd64/amd64/gdt.c
@@ -88,6 +88,7 @@ file	arch/amd64/amd64/mptramp.S		multiprocessor
 endif
 
 file	kern/subr_disk_mbr.c		disk
+file	arch/x86/x86/db_trace.c		ddb
 file	arch/xen/x86/hypervisor_machdep.c
 # file 	arch/x86/x86/mtrr_i686.c	mtrr
 file	arch/x86/x86/syscall.c
@@ -216,6 +217,11 @@ device xpci: pcibus
 attach xpci at xenbus with xpci_xenbus
 file	arch/xen/xen/xpci_xenbus.c	xpci_xenbus
 
+# Xen Balloon driver
+device	balloon
+attach	balloon at xenbus
+file	arch/xen/xen/balloon.c		balloon
+
 # Non-Xen specific devices and options
 
 include	"dev/pckbport/files.pckbport"
@@ -255,6 +261,9 @@ file	arch/x86/x86/mpacpi.c		acpi
 file	arch/x86/x86/acpi_machdep.c	acpi
 file	arch/x86/x86/i8259.c
 
+# Stubs for x86 routines not included in the system
+file	arch/x86/x86/x86_stub.c
+
 # MP configuration using Intel SMP specification 1.4
 file	arch/x86/x86/mpbios.c		mpbios
 
@@ -265,6 +274,7 @@ file	arch/x86/pci/pci_bus_fixup.c	pci_bus_fixup
 file	arch/x86/pci/pci_addr_fixup.c	pci_addr_fixup
 
 file	arch/x86/x86/apic.c		ioapic
+file	arch/x86/x86/nmi.c
 
 device ioapic
 attach ioapic at ioapicbus
@@ -318,18 +328,6 @@ file	arch/i386/i386/svr4_machdep.c		compat_svr4
 file	arch/i386/i386/svr4_sigcode.S		compat_svr4
 file	arch/i386/i386/svr4_syscall.c		compat_svr4
 
-# MACH binary compatibility (COMPAT_MACH)
-include	"compat/mach/files.mach"
-file	arch/i386/i386/mach_machdep.c		compat_mach | compat_darwin
-file	arch/i386/i386/mach_sigcode.S		compat_mach | compat_darwin
-file	arch/i386/i386/mach_syscall.c		compat_mach | compat_darwin
-file    arch/i386/i386/darwin_commpage_machdep.S compat_darwin
-file	arch/i386/i386/macho_machdep.c		exec_macho
-
-# DARWIN binary compatibility (COMPAT_DARWIN)
-include	"compat/darwin/files.darwin"
-file	arch/i386/i386/darwin_machdep.c		compat_darwin
-
 # iBCS-2 binary compatibility (COMPAT_IBCS2)
 include	"compat/ibcs2/files.ibcs2"
 file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
@@ -348,9 +346,6 @@ include	"compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
 file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
-
-# Win32 binary compatibility (COMPAT_PECOFF)
-include	"compat/pecoff/files.pecoff"
 
 elifdef amd64
 # NetBSD/i386 32-bit binary compatibility (COMPAT_NETBSD32)
@@ -395,7 +390,7 @@ endif
 include	"dev/pcmcia/files.pcmcia"
 
 # Domain-0 operations
-defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001 XEN_BALLOON
+defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
 file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops
@@ -405,7 +400,6 @@ file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 file	arch/xen/xen/xennetback_xenbus.c xvif
 file	arch/xen/xen/xennet_checksum.c	xvif | xennet
 file	arch/xen/xen/xbdback_xenbus.c xbdback
-file    arch/xen/xen/balloon.c          hypervisor
 
 ifdef i386
 include "arch/i386/conf/majors.i386"

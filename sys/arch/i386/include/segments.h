@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.50.8.3 2009/11/01 13:58:34 jym Exp $	*/
+/*	$NetBSD: segments.h,v 1.50.8.4 2011/05/02 22:49:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -307,7 +307,6 @@ void idt_vec_free(int);
 #define	GUDATA_SEL	4	/* User data descriptor */
 #define	GLDT_SEL	5	/* Default LDT descriptor */
 #define GCPU_SEL	6	/* per-CPU segment */
-#define	GMACHCALLS_SEL	7	/* Darwin (mach trap) system call gate */
 #define	GEXTBIOSDATA_SEL 8	/* magic to catch BIOS refs to EBDA */
 #define	GAPM32CODE_SEL	9	/* 3 APM segments must be consecutive */
 #define	GAPM16CODE_SEL	10	/* and in the specified order: code32 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.26.60.2 2009/11/01 13:58:34 jym Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.26.60.3 2011/05/02 22:49:56 jym Exp $	*/
 
 /* 
  * Mach Operating System
@@ -44,6 +44,13 @@ typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
+
+struct i386_frame {
+	struct i386_frame	*f_frame;
+	int			f_retaddr;
+	int			f_arg0;
+};
+
 #ifndef MULTIPROCESSOR
 extern db_regs_t ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
@@ -132,14 +139,16 @@ int kdb_trap(int, int, db_regs_t *);
 #endif
 
 /*
- * We use either a.out or Elf32 symbols in DDB.
+ * We use Elf32 symbols in DDB.
  */
-#define	DB_AOUT_SYMBOLS
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32
 
 extern void db_machine_init(void);
 
 extern void cpu_debug_dump(void);
+
+/* i386/db_machdep.c */
+bool db_intrstack_p(const void *);
 
 #endif	/* _I386_DB_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.38.2.8 2011/03/30 23:15:06 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.38.2.9 2011/05/02 22:49:59 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.8 2011/03/30 23:15:06 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.9 2011/05/02 22:49:59 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.13.2.3 2010/10/24 22:47:59 jym Exp $ */
+/*	$NetBSD: apmbios.c,v 1.13.2.4 2011/05/02 22:49:55 jym Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.13.2.3 2010/10/24 22:47:59 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.13.2.4 2011/05/02 22:49:55 jym Exp $");
 
 #include "opt_apm.h"
-#include "opt_compat_mach.h"	/* Needed to get the right segment def */
 
 #ifdef APM_NOIDLE
 #error APM_NOIDLE option deprecated; use APM_NO_IDLE instead

@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.7.10.2 2009/11/01 13:58:47 jym Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.7.10.3 2011/05/02 22:49:59 jym Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.10.2 2009/11/01 13:58:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.10.3 2011/05/02 22:49:59 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,9 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.10.2 2009/11/01 13:58:47 jy
 #endif
 
 int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	pcireg_t intr;
 	int pin;
 	int line;
 
@@ -74,9 +73,8 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	int bus, dev, func;
 #endif
 
-	intr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_INTERRUPT_REG);
 	pin = pa->pa_intrpin;
-	pa->pa_intrline = line = PCI_INTERRUPT_LINE(intr);
+	line = pa->pa_intrline;
 #if 0 /* XXXX why is it always 0 ? */
 	if (pin == 0) {
 		/* No IRQ used */

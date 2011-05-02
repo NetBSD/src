@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.925.2.5 2011/03/29 20:42:58 jym Exp $
+# $NetBSD: GENERIC,v 1.925.2.6 2011/05/02 22:49:55 jym Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.925.2.5 $"
+#ident 		"GENERIC-$Revision: 1.925.2.6 $"
 
 maxusers	64		# estimated number of users
 
@@ -38,7 +38,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	PAE		# PAE mode (36 bits physical addressing)
 
 # CPU features
-#acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
+acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
 coretemp*	at cpu?		# Intel on-die thermal sensor
 est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 #odcm0		at cpu0		# On-demand clock modulation
@@ -151,11 +151,7 @@ options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options 	COMPAT_MACH	# binary compatibility with Mach binaries
-#options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
-#options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_NDIS	# NDIS network driver
-#options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support
@@ -467,6 +463,8 @@ gpio* 	at gcscpcib?			# timecounter, watchdog and GPIO
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 iic*	at viapcib?
+rdcpcib* at pci? dev ? function ?	# RDC Vortex86/PMX-1000 PCI-ISA w/
+					# watchdog
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
@@ -489,6 +487,7 @@ isa0	at ichlpcib?
 #isa0	at piixpcib?
 #isa0	at gscpcib?
 isa0	at viapcib?
+isa0	at rdcpcib?
 isa0	at mainbus?
 isa0	at pceb?
 isa0	at pcib?
@@ -847,6 +846,7 @@ piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
+rdcide* 	at pci? dev ? function ?	# RDC PMX-1000 IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 schide* 	at pci? dev ? function ?	# Intel SCH IDE controllers
 siisata*	at pci? dev ? function ?	# SiI SteelVine controllers

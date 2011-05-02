@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.35.12.3 2010/10/24 22:48:16 jym Exp $	*/
+/*	$NetBSD: intr.h,v 1.35.12.4 2011/05/02 22:49:57 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ struct cpu_info;
 struct pcibus_attach_args;
 
 void intr_default_setup(void);
-int x86_nmi(void);
+void x86_nmi(void);
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
 void intr_disestablish(struct intrhand *);
 void intr_add_pcibus(struct pcibus_attach_args *);

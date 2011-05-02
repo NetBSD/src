@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.33.2.8 2011/03/30 23:15:06 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.33.2.9 2011/05/02 22:49:59 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33.2.8 2011/03/30 23:15:06 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33.2.9 2011/05/02 22:49:59 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -223,6 +223,7 @@ static void xennet_free_rx_buffer(struct xennet_xenbus_softc *);
 static void xennet_tx_complete(struct xennet_xenbus_softc *);
 static void xennet_rx_mbuf_free(struct mbuf *, void *, size_t, void *);
 static int  xennet_handler(void *);
+static int  xennet_talk_to_backend(struct xennet_xenbus_softc *);
 #ifdef XENNET_DEBUG_DUMP
 static void xennet_hex_dump(const unsigned char *, size_t, const char *, int);
 #endif
@@ -397,7 +398,6 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
-
 }
 
 static int
@@ -460,14 +460,11 @@ xennet_xenbus_detach(device_t self, int flags)
 static bool
 xennet_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 {
-	struct xennet_xenbus_softc *sc = device_private(dev);
-	struct xenbus_transaction *xbt;
-	unsigned long rx_copy;
+	struct xennet_xenbus_softc *sc = p;
 	int error;
 	netif_tx_sring_t *tx_ring;
 	netif_rx_sring_t *rx_ring;
 	paddr_t ma;
-	const char *errmsg;
 
 	/* invalidate the RX and TX rings */
 	if (sc->sc_backend_status == BEST_SUSPENDED) {
@@ -505,6 +502,17 @@ xennet_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 	    sc->sc_evtchn);
 	event_set_handler(sc->sc_evtchn, &xennet_handler, sc,
 	    IPL_NET, device_xname(dev));
+
+	return 0;
+}
+
+static int
+xennet_talk_to_backend(struct xennet_xenbus_softc *sc)
+{
+	int error;
+	unsigned long rx_copy;
+	struct xenbus_transaction *xbt;
+	const char *errmsg;
 
 	error = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
 	    "feature-rx-copy", &rx_copy, 10);
@@ -635,7 +643,9 @@ static void xennet_backend_changed(void *arg, XenbusState new_state)
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
 		break;
 	case XenbusStateInitWait:
-		if (xennet_xenbus_resume(sc->sc_dev, PMF_Q_NONE) == 0)
+		if (sc->sc_backend_status == BEST_CONNECTED)
+			break;
+		if (xennet_talk_to_backend(sc) == 0)
 			xenbus_switch_state(sc->sc_xbusd, NULL,
 			    XenbusStateConnected);
 		break;
