@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.3 2011/02/19 20:19:54 matt Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.4 2011/05/02 00:29:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.3 2011/02/19 20:19:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.4 2011/05/02 00:29:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -70,42 +70,76 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.3 2011/02/19 20:19:54 matt Exp $");
 #define	PCU_SAVE		0x01	/* Save PCU state to the LWP. */
 #define	PCU_RELEASE		0x02	/* Release PCU state on the CPU. */
 
-#if 0
-/*
- * pcu_init_lwp: initialize PCU structures for LWP.
- */
+/* XXX */
+extern const pcu_ops_t * const	pcu_ops_md_defs[];
+
 void
-pcu_init_lwp(lwp_t *l)
+pcu_switchpoint(lwp_t *l)
 {
+	const uint32_t pcu_inuse = l->l_pcu_used;
+	u_int id;
+	/* int s; */
 
-	memset(l->l_pcu_cpu, 0, sizeof(uint32_t) * PCU_UNIT_COUNT);
-	l->l_pcu_used = 0;
+	KASSERT(l == curlwp);
+
+	if (__predict_true(pcu_inuse == 0)) {
+		/* PCUs are not in use. */
+		return;
+	}
+	/* s = splsoftclock(); */
+	for (id = 0; id < PCU_UNIT_COUNT; id++) {
+		if ((pcu_inuse & (1 << id)) == 0) {
+			continue;
+		}
+		struct cpu_info *pcu_ci = l->l_pcu_cpu[id];
+		if (pcu_ci == NULL || pcu_ci == l->l_cpu) {
+			continue;
+		}
+		const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
+		pcu->pcu_state_release(l);
+	}
+	/* splx(s); */
 }
-#endif
 
 /*
- * pcu_cpu_op: save/release PCU state on the current CPU.
+ * pcu_do_op: save/release PCU state on the current CPU.
  *
  * => Must be called at IPL_SOFTCLOCK or from the soft-interrupt.
+ */
+static inline void
+pcu_do_op(const pcu_ops_t *pcu, lwp_t * const l, const int flags)
+{
+	struct cpu_info * const ci = curcpu();
+	const u_int id = pcu->pcu_id;
+
+	KASSERT(l->l_cpu == ci);
+
+	if (flags & PCU_SAVE) {
+		pcu->pcu_state_save(l);
+	}
+	if (flags & PCU_RELEASE) {
+		pcu->pcu_state_release(l);
+		ci->ci_pcu_curlwp[id] = NULL;
+		l->l_pcu_cpu[id] = NULL;
+	}
+}
+
+/*
+ * pcu_cpu_op: helper routine to call pcu_do_op() via xcall(9).
  */
 static void
 pcu_cpu_op(const pcu_ops_t *pcu, const int flags)
 {
 	const u_int id = pcu->pcu_id;
-	struct cpu_info *ci = curcpu();
-	lwp_t *l = ci->ci_pcu_curlwp[id];
+	lwp_t * const l = curcpu()->ci_pcu_curlwp[id];
+
+	KASSERT(cpu_softintr_p());
 
 	/* If no state - nothing to do. */
 	if (l == NULL) {
 		return;
 	}
-	if (flags & PCU_SAVE) {
-		pcu->pcu_state_save(l, (flags & PCU_RELEASE) != 0);
-	}
-	if (flags & PCU_RELEASE) {
-		ci->ci_pcu_curlwp[id] = NULL;
-		l->l_pcu_cpu[id] = NULL;
-	}
+	pcu_do_op(pcu, l, flags);
 }
 
 /*
@@ -131,14 +165,7 @@ pcu_lwp_op(const pcu_ops_t *pcu, lwp_t *l, int flags)
 		 * State is on the current CPU - just perform the operations.
 		 */
 		KASSERT(ci->ci_pcu_curlwp[id] == l);
-
-		if (flags & PCU_SAVE) {
-			pcu->pcu_state_save(l, (flags & PCU_RELEASE) != 0);
-		}
-		if (flags & PCU_RELEASE) {
-			ci->ci_pcu_curlwp[id] = NULL;
-			l->l_pcu_cpu[id] = NULL;
-		}
+		pcu_do_op(pcu, l, flags);
 		splx(s);
 		return;
 	}
@@ -200,7 +227,7 @@ pcu_load(const pcu_ops_t *pcu)
 	KASSERT(l->l_pcu_cpu[id] == NULL);
 
 	/* Save the PCU state on the current CPU, if there is any. */
-	pcu_cpu_op(pcu, PCU_SAVE | PCU_RELEASE);
+	pcu_do_op(pcu, l, PCU_SAVE | PCU_RELEASE);
 	KASSERT(curci->ci_pcu_curlwp[id] == NULL);
 
 	/*
@@ -236,9 +263,10 @@ pcu_discard(const pcu_ops_t *pcu)
  * pcu_save_lwp: save PCU state to the given LWP.
  */
 void
-pcu_save_lwp(const pcu_ops_t *pcu, lwp_t *l)
+pcu_save(const pcu_ops_t *pcu)
 {
 	const u_int id = pcu->pcu_id;
+	lwp_t * const l = curlwp;
 
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
@@ -252,9 +280,10 @@ pcu_save_lwp(const pcu_ops_t *pcu, lwp_t *l)
  * pcu_used: return true if PCU was used (pcu_load() case) by the LWP.
  */
 bool
-pcu_used(const pcu_ops_t *pcu, lwp_t *l)
+pcu_used_p(const pcu_ops_t *pcu)
 {
 	const u_int id = pcu->pcu_id;
+	lwp_t * const l = curlwp;
 
 	return l->l_pcu_used & (1 << id);
 }

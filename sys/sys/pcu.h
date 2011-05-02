@@ -1,4 +1,4 @@
-/*	$NetBSD: pcu.h,v 1.4 2011/02/19 20:19:54 matt Exp $	*/
+/*	$NetBSD: pcu.h,v 1.5 2011/05/02 00:29:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,6 +32,10 @@
 #ifndef _SYS_PCU_H_
 #define _SYS_PCU_H_
 
+#if !defined(_KERNEL)
+#error "not supposed to be exposed to userland"
+#endif
+
 /*
  * Default: no PCU for MD.
  */
@@ -39,19 +43,24 @@
 #define	PCU_UNIT_COUNT		0
 #endif
 
-#if defined(_KERNEL)
+#if PCU_UNIT_COUNT > 0
 
 typedef struct {
 	u_int	pcu_id;
-	void	(*pcu_state_save)(lwp_t *, bool);
+	void	(*pcu_state_save)(lwp_t *);
 	void	(*pcu_state_load)(lwp_t *, bool);
+	void	(*pcu_state_release)(lwp_t *);
 } pcu_ops_t;
 
-void	pcu_load(const pcu_ops_t *);
-void	pcu_save_lwp(const pcu_ops_t *, lwp_t *);
-void	pcu_discard(const pcu_ops_t *);
-bool	pcu_used(const pcu_ops_t *, lwp_t *);
+void	pcu_switchpoint(lwp_t *);
 
+void	pcu_load(const pcu_ops_t *);
+void	pcu_save(const pcu_ops_t *);
+void	pcu_discard(const pcu_ops_t *);
+bool	pcu_used_p(const pcu_ops_t *);
+
+#else
+#define	pcu_switchpoint(l)
 #endif
 
 #endif

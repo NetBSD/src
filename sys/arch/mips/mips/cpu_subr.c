@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.12 2011/05/02 00:17:35 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.13 2011/05/02 00:29:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.12 2011/05/02 00:17:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.13 2011/05/02 00:29:54 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -395,7 +395,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	*flags |= _UC_CPU | _UC_TLSBASE;
 
 	/* Save floating point register context, if any. */
-	if (fpu_used_p(l)) {
+	KASSERT(l == curlwp);
+	if (fpu_used_p()) {
 		size_t fplen;
 		/*
 		 * If this process is the current FP owner, dump its

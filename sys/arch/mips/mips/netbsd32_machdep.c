@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.6 2011/02/24 04:28:47 joerg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.7 2011/05/02 00:29:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.6 2011/02/24 04:28:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7 2011/05/02 00:29:54 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sa.h"
@@ -308,7 +308,8 @@ cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 		return 0;
 	}
 
-	fpu_save_lwp(l);
+	KASSERT(l == curlwp);
+	fpu_save();
 
 	struct pcb * const pcb = lwp_getpcb(l);
 	cpustate.frame = *l->l_md.md_utf;

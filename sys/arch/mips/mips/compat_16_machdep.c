@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.19 2011/04/29 22:11:15 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.20 2011/05/02 00:29:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.19 2011/04/29 22:11:15 matt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20 2011/05/02 00:29:54 rmind Exp $"); 
 
 #ifdef _KERNEL_OPT
 #include "opt_cputype.h"
@@ -131,7 +131,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 #endif
 
 	/* Save the FP state, if necessary, then copy it. */
-	ksc.sc_fpused = fpu_used_p(l);
+	ksc.sc_fpused = fpu_used_p();
 #if !defined(NOFPU)
 	if (ksc.sc_fpused) {
 		/* if FPU has current state, save it first */

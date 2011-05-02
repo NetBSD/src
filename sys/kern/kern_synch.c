@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.287 2011/04/14 05:33:20 matt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.288 2011/05/02 00:29:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.287 2011/04/14 05:33:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.288 2011/05/02 00:29:53 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -790,6 +790,7 @@ mi_switch(lwp_t *l)
 		 */
 		pmap_activate(l);
 		uvm_emap_switch(l);
+		pcu_switchpoint(l);
 
 		if (prevlwp != NULL) {
 			/* Normalize the count of the spin-mutexes */
