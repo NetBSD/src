@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.4 2011/04/29 22:18:16 matt Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.5 2011/05/02 00:29:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.4 2011/04/29 22:18:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.5 2011/05/02 00:29:54 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -46,20 +46,26 @@ __KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.4 2011/04/29 22:18:16 matt Exp $");
 #include <mips/regnum.h>
 #include <mips/pcb.h>
 
-static void mips_fpu_state_save(lwp_t *, bool);
+static void mips_fpu_state_save(lwp_t *);
 static void mips_fpu_state_load(lwp_t *, bool);
+static void mips_fpu_state_release(lwp_t *);
 
 static const pcu_ops_t mips_fpu_ops = {
 	.pcu_id = PCU_FPU,
 	.pcu_state_save = mips_fpu_state_save,
 	.pcu_state_load = mips_fpu_state_load,
+	.pcu_state_release = mips_fpu_state_release
+};
+
+/* XXX */
+const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
+	[PCU_FPU] = &mips_fpu_ops
 };
 
 void
 fpu_discard(void)
 {
 	pcu_discard(&mips_fpu_ops);
-	curlwp->l_md.md_utf->tf_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 }
 
 void
@@ -71,23 +77,17 @@ fpu_load(void)
 void
 fpu_save(void)
 {
-	pcu_save_lwp(&mips_fpu_ops, curlwp);
-}
-
-void
-fpu_save_lwp(lwp_t *l)
-{
-	pcu_save_lwp(&mips_fpu_ops, l);
+	pcu_save(&mips_fpu_ops);
 }
 
 bool
-fpu_used_p(lwp_t *l)
+fpu_used_p(void)
 {
-	return pcu_used(&mips_fpu_ops, l);
+	return pcu_used_p(&mips_fpu_ops);
 }
 
 void
-mips_fpu_state_save(lwp_t *l, bool release)
+mips_fpu_state_save(lwp_t *l)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct pcb * const pcb = lwp_getpcb(l);
@@ -119,13 +119,6 @@ mips_fpu_state_save(lwp_t *l, bool release)
 	    :	"=&r" (status), "=r"(fpcsr)
 	    :	"r"(tf->tf_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR|MIPS_SR_KX|MIPS_SR_INT_IE)),
 		"n"(MIPS_COP_0_STATUS));
-
-	/*
-	 * Make sure we don't reenable FP when we return to userspace.
-	 */
-	if (release) {
-		tf->tf_regs[_R_SR] ^= MIPS_SR_COP_1_BIT;
-	}
 
 	/*
 	 * save FPCSR and FP register values.
@@ -351,4 +344,12 @@ mips_fpu_state_load(lwp_t *l, bool used)
 		".set at"
 	    ::	"r"(fpcsr &~ MIPS_FPU_EXCEPTION_BITS), "r"(status),
 		"n"(MIPS_COP_0_STATUS));
+}
+
+void
+mips_fpu_state_release(lwp_t *l)
+{
+
+	KASSERT(l == curlwp);
+	l->l_md.md_utf->tf_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 }
