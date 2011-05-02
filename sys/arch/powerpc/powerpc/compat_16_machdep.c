@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.17 2011/03/16 21:15:29 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.18 2011/05/02 02:01:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.17 2011/03/16 21:15:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.18 2011/05/02 02:01:33 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -54,6 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.17 2011/03/16 21:15:29 matt 
 
 #include <powerpc/pcb.h>
 #include <powerpc/fpu.h>
+#if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
+#include <powerpc/altivec.h>
+#endif
 
 /*
  * Send a signal to process.
@@ -100,7 +103,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	utf->srr1 |= pcb->pcb_flags & (PCB_FE0|PCB_FE1);
 #endif
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
-	utf->srr1 |= l->l_md.md_flags & MDLWP_USEDVEC ? PSL_VEC : 0;
+	utf->srr1 |= vec_used_p(l) ? PSL_VEC : 0;
 #endif
 #ifdef PPC_OEA
 	utf->vrsave = tf->tf_vrsave;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.17 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: fpu.h,v 1.18 2011/05/02 02:01:33 matt Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -73,24 +73,47 @@
 #include "opt_multiprocessor.h"
 #endif
 
+#include <sys/pcu.h>
+#include <powerpc/mcontext.h>
+
+struct lwp;
+bool	fpu_used_p(struct lwp *);
+void	fpu_mark_used(struct lwp *);
+
+void	fpu_restore_from_mcontext(struct lwp *, const mcontext_t *);
+bool	fpu_save_to_mcontext(struct lwp *, mcontext_t *, unsigned int *);
+
+extern const pcu_ops_t fpu_ops;
+
 /* List of PowerPC architectures that support FPUs. */
 #if defined(PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #define PPC_HAVE_FPU
 
-struct lwp;
 struct fpreg;
-enum fpu_op { FPU_SAVE, FPU_DISCARD, FPU_SAVE_AND_RELEASE };
 
-void	fpu_enable(void);
-void	fpu_save_cpu(enum fpu_op);
-void	fpu_save_lwp(struct lwp *, enum fpu_op);
-void	fpu_restore_from_mcontext(struct lwp *, const mcontext_t *);
-bool	fpu_save_to_mcontext(struct lwp *, mcontext_t *, unsigned int *);
+static inline void
+fpu_load(void)
+{
+	pcu_load(&fpu_ops);
+}
 
-int	fpu_get_fault_code(void);
+static inline void
+fpu_save(void)
+{
+	pcu_save(&fpu_ops);
+}
+
+static inline void
+fpu_discard(void)
+{
+	pcu_discard(&fpu_ops);
+}
 
 void	fpu_load_from_fpreg(const struct fpreg *);
 void	fpu_unload_to_fpreg(struct fpreg *);
+
+int	fpu_get_fault_code(void);
+
 #endif /* PPC_HAVE_FPU */
 #endif /* _KERNEL */
 
