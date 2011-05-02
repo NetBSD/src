@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.75.2.4 2011/03/28 23:04:52 jym Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.75.2.5 2011/05/02 22:49:57 jym Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.75.2.4 2011/03/28 23:04:52 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.75.2.5 2011/05/02 22:49:57 jym Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -786,6 +786,11 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		    mpr->mpr_bus);
 
 	mpb = &mp_busses[mpr->mpr_bus];
+
+	if (mpb->mb_name != NULL)
+		printf("mpacpi: PCI bus %d int routing already done!\n",
+		    mpr->mpr_bus);
+
 	mpb->mb_intrs = NULL;
 	mpb->mb_name = "pci";
 	mpb->mb_idx = mpr->mpr_bus;

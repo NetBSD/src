@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77.2.9 2011/03/28 23:04:53 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.2.10 2011/05/02 22:49:57 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.9 2011/03/28 23:04:53 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.10 2011/05/02 22:49:57 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -908,7 +908,7 @@ pmap_unmap_apdp(void)
  *	Add a reference to the specified pmap.
  */
 
-inline void
+void
 pmap_reference(struct pmap *pmap)
 {
 
@@ -1735,9 +1735,9 @@ pmap_bootstrap(vaddr_t kva_start)
 void
 pmap_prealloc_lowmem_ptps(void)
 {
-#ifdef XEN
 	int level;
 	paddr_t newp;
+#ifdef XEN
 	paddr_t pdes_pa;
 
 	pdes_pa = pmap_pdirpa(pmap_kernel(), 0);
@@ -1747,7 +1747,7 @@ pmap_prealloc_lowmem_ptps(void)
 		avail_start += PAGE_SIZE;
 		HYPERVISOR_update_va_mapping ((vaddr_t)early_zerop,
 		    xpmap_ptom_masked(newp) | PG_u | PG_V | PG_RW, UVMF_INVLPG);
-		memset((void *)early_zerop, 0, PAGE_SIZE);
+		memset(early_zerop, 0, PAGE_SIZE);
 		/* Mark R/O before installing */
 		HYPERVISOR_update_va_mapping ((vaddr_t)early_zerop,
 		    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
@@ -1755,9 +1755,10 @@ pmap_prealloc_lowmem_ptps(void)
 			HYPERVISOR_update_va_mapping (newp + KERNBASE,
 			    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
 		xpq_queue_pte_update (
-			xpmap_ptom_masked(pdes_pa)
-			+ (pl_i(0, level) * sizeof (pd_entry_t)),
-			xpmap_ptom_masked(newp) | PG_RW | PG_u | PG_V);
+		    xpmap_ptom_masked(pdes_pa)
+		    + (pl_i(0, level) * sizeof (pd_entry_t)),
+		    xpmap_ptom_masked(newp) | PG_RW | PG_u | PG_V);
+		pmap_pte_flush();
 		level--;
 		if (level <= 1)
 			break;
@@ -1765,15 +1766,14 @@ pmap_prealloc_lowmem_ptps(void)
 	}
 #else /* XEN */
 	pd_entry_t *pdes;
-	int level;
-	paddr_t newp;
 
 	pdes = pmap_kernel()->pm_pdir;
 	level = PTP_LEVELS;
 	for (;;) {
 		newp = avail_start;
 		avail_start += PAGE_SIZE;
-		*early_zero_pte = (newp & PG_FRAME) | PG_V | PG_RW;
+		pmap_pte_set(early_zero_pte, (newp & PG_FRAME) | PG_V | PG_RW);
+		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
 		pdes[pl_i(0, level)] = (newp & PG_FRAME) | PG_V | PG_RW;
@@ -4353,11 +4353,8 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 		kpreempt_enable();
 	} else {
 		/* XXX */
-		PMAP_SUBOBJ_LOCK(kpm, level - 1);
-		ptp = uvm_pagealloc(&kpm->pm_obj[level - 1],
-				    ptp_va2o(va, level), NULL,
+		ptp = uvm_pagealloc(NULL, 0, NULL,
 				    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
-		PMAP_SUBOBJ_UNLOCK(kpm, level - 1);
 		if (ptp == NULL)
 			panic("pmap_get_physpage: out of memory");
 		ptp->flags &= ~PG_BUSY;

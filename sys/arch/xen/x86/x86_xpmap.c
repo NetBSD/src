@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.12.4.13 2011/03/30 23:15:05 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.12.4.14 2011/05/02 22:49:58 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.13 2011/03/30 23:15:05 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.12.4.14 2011/05/02 22:49:58 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"

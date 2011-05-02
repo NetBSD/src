@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.11.10.3 2010/10/24 22:48:22 jym Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.11.10.4 2011/05/02 22:49:59 jym Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.11.10.3 2010/10/24 22:48:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.11.10.4 2011/05/02 22:49:59 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.11.10.3 2010/10/24 22:48:22 jym
 
 void *
 pciide_machdep_compat_intr_establish(device_t dev,
-	struct pci_attach_args *pa, int chan,
+	const struct pci_attach_args *pa, int chan,
 	int (*func)(void *), void *arg)
 {
 	struct pintrhand *ih;

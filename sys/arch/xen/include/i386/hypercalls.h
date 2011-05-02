@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.8.4.4 2011/03/30 23:15:05 jym Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.8.4.5 2011/05/02 22:49:58 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.

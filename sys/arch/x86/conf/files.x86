@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.44.8.4 2011/03/29 20:43:00 jym Exp $
+#	$NetBSD: files.x86,v 1.44.8.5 2011/05/02 22:49:57 jym Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -67,6 +67,7 @@ file	arch/x86/x86/bus_space.c
 file	arch/x86/x86/consinit.c
 file	arch/x86/x86/core_machdep.c	coredump
 file	arch/x86/x86/cpu_topology.c
+file	arch/x86/x86/db_trace.c		ddb
 file	arch/x86/x86/errata.c
 file	arch/x86/x86/genfb_machdep.c
 file	arch/x86/x86/identcpu.c
@@ -107,6 +108,9 @@ file	arch/x86/x86/acpi_machdep.c	acpi
 file	arch/x86/acpi/acpi_wakeup.c	acpi
 
 file	arch/x86/isa/isa_machdep.c	isa
+
+# Stubs for x86 routines not included in the system
+file	arch/x86/x86/x86_stub.c
 
 # IPMI device
 device	ipmi: sysmon_envsys, sysmon_wdog
