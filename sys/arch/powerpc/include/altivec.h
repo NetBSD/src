@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.14 2011/05/02 02:01:32 matt Exp $	*/
+/*	$NetBSD: altivec.h,v 1.15 2011/05/02 06:29:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ vec_load(void)
 static inline void
 vec_save(void)
 {
-	pcu_load(&vec_ops);
+	pcu_save(&vec_ops);
 }
 
 static inline void
