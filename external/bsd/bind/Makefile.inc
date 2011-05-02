@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2010/12/15 07:36:51 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2011/05/02 19:04:54 christos Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -35,13 +35,12 @@ LOCALSTATEDIR=/var
 
 CPPFLAGS+=-I${BIND_SRCDIR}/include \
 	-I${IDIST} \
-	-I${IDIST}/lib/dns/include -I${IDIST}/lib/dns/unix/include \
+	-I${IDIST}/lib/dns/include \
 	-I${IDIST}/lib/isc/include -I${IDIST}/lib/isc/unix/include \
 	-I${IDIST}/lib/bind9/include \
 	-I${IDIST}/lib/isccfg/include \
 	-I${IDIST}/lib/isccc/include \
 	-I${IDIST}/lib/lwres/include -I${IDIST}/lib/lwres/unix/include \
-	-I${IDIST}/lib/dns/sec/dst/include \
 	-DNS_LOCALSTATEDIR=\"${LOCALSTATEDIR}\" \
 	-DNS_SYSCONFDIR=\"${SYSCONFDIR}\" \
 	-DSESSION_KEYFILE=\"${LOCALSTATEDIR}/run/named/session.key\" \
