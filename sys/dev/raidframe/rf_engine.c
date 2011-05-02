@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.44 2011/04/27 07:55:15 mrg Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.45 2011/05/02 01:14:06 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.44 2011/04/27 07:55:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.45 2011/05/02 01:14:06 mrg Exp $");
 
 #include <sys/errno.h>
 
@@ -138,7 +138,7 @@ rf_ConfigureEngine(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	rf_init_cond2(raidPtr->iodone_cv, "raidiow");
 
 	rf_init_mutex2(raidPtr->node_queue_mutex, IPL_VM);
-	rf_init_cond2(raidPtr->node_queue_cv, "rfwcond");
+	rf_init_cond2(raidPtr->node_queue_cv, "rfnodeq");
 	raidPtr->node_queue = NULL;
 	raidPtr->dags_in_flight = 0;
 
