@@ -1,4 +1,4 @@
-/* $NetBSD: t_nanosleep.c,v 1.5 2011/05/02 07:02:09 jruoho Exp $ */
+/* $NetBSD: t_nanosleep.c,v 1.6 2011/05/02 11:14:29 gson Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_nanosleep.c,v 1.5 2011/05/02 07:02:09 jruoho Exp $");
+__RCSID("$NetBSD: t_nanosleep.c,v 1.6 2011/05/02 11:14:29 gson Exp $");
 
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -80,12 +80,12 @@ ATF_TC_BODY(nanosleep_basic, tc)
 		if (timespeccmp(&ts2, &ts1, <=) != 0) {
 
 			(void)fprintf(stderr,
-			    "sleep time:: sec %lu, nsec %lu\n\t\t"
-			    "ts1: sec %lu, nsec %lu\n\t\t"
-			    "ts2: sec %lu, nsec %lu\n",
-			    tsn.tv_sec, tsn.tv_nsec,
-			    ts1.tv_sec, ts1.tv_nsec,
-			    ts2.tv_sec, ts2.tv_nsec);
+			    "sleep time:: sec %llu, nsec %lu\n\t\t"
+			    "ts1: sec %llu, nsec %lu\n\t\t"
+			    "ts2: sec %llu, nsec %lu\n",
+			    (unsigned long long)tsn.tv_sec, tsn.tv_nsec,
+			    (unsigned long long)ts1.tv_sec, ts1.tv_nsec,
+			    (unsigned long long)ts2.tv_sec, ts2.tv_nsec);
 
 			atf_tc_fail_nonfatal("inaccuracies in sleep time "
 			    "(resolution = %lu nsec)", tsn.tv_nsec);
