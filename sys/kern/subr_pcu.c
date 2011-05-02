@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.4 2011/05/02 00:29:53 rmind Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.5 2011/05/02 01:43:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.4 2011/05/02 00:29:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.5 2011/05/02 01:43:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -91,7 +91,7 @@ pcu_switchpoint(lwp_t *l)
 		if ((pcu_inuse & (1 << id)) == 0) {
 			continue;
 		}
-		struct cpu_info *pcu_ci = l->l_pcu_cpu[id];
+		struct cpu_info * const pcu_ci = l->l_pcu_cpu[id];
 		if (pcu_ci == NULL || pcu_ci == l->l_cpu) {
 			continue;
 		}
@@ -195,7 +195,7 @@ pcu_load(const pcu_ops_t *pcu)
 {
 	const u_int id = pcu->pcu_id;
 	struct cpu_info *ci, *curci;
-	lwp_t *l = curlwp;
+	lwp_t * const l = curlwp;
 	uint64_t where;
 	int s;
 
@@ -248,7 +248,7 @@ void
 pcu_discard(const pcu_ops_t *pcu)
 {
 	const u_int id = pcu->pcu_id;
-	lwp_t *l = curlwp;
+	lwp_t * const l = curlwp;
 
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
