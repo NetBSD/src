@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.71 2011/03/11 20:22:53 he Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.72 2011/05/02 14:00:09 manu Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.71 2011/03/11 20:22:53 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.72 2011/05/02 14:00:09 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1141,6 +1141,116 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 10},
 		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 10},
 		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 10},
+	    },
+	},
+
+	{   "SUNIX 5008 1P",
+	    {	0x1fd4,	0x1999,	0x1fd4,	0x0100 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 5016 8S",
+	    {	0x1fd4,	0x1999,	0x1fd4,	0x0010 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x18, COM_FREQ * 8},
+/*
+ * PUC_MAX_PORTS needs to be raised in order to reach these ports
+ */
+#if PUC_MAX_PORTS >= 16
+		{ PUC_PORT_TYPE_COM, 0x14, 0x20, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x28, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x30, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x38, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x40, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x48, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x50, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x58, COM_FREQ * 8},
+#endif /* PUC_MAX_PORTS >= 16 */
+	    },
+	},
+
+	{   "SUNIX 5027 1S",
+	    {	0x1fd4,	0x1999,	0x1fd4,	0x0001 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 5037 2S",
+	    {	0x1fd4,	0x1999,	0x1fd4,	0x0002 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 5056 4S",
+	    {	0x1fd4,	0x1999,	0x1fd4,	0x0004 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 5066 8S",
+	    {	0x1fd4,	0x1999,	0x1fd4,	0x0008 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x18, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 5069 1S / 1P",
+	    {	0x1fd4,	0x1999,	0x1fd4,	0x0101 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 5079 2S / 1P",
+	    {	0x1fd4,	0x1999,	0x1fd4,	0x0102 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 5099 4S / 1P",
+	    {	0x1fd4,	0x1999,	0x1fd4,	0x0104 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
 	    },
 	},
 
