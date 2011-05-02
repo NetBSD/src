@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199 2011/04/29 22:18:53 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.200 2011/05/02 15:31:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.199 2011/04/29 22:18:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.200 2011/05/02 15:31:01 tsutsui Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2346,6 +2346,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 			pmap_page_cache(pg, true);
 	}
 #endif
+#endif	/* MIPS3_PLUS */
 
 	pmap_check_pvlist(md);
 	PG_MD_PVLIST_UNLOCK(md);
@@ -2372,6 +2373,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 			PMAP_COUNT(exec_synced_remove);
 		}
 	}
+#ifdef MIPS3_PLUS	/* XXX mmu XXX */
 	if (MIPS_HAS_R4K_MMU && last)	/* XXX why */
 		mips_dcache_wbinv_range_index(va, PAGE_SIZE);
 #endif	/* MIPS3_PLUS */
