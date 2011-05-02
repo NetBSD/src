@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.34 2011/04/29 22:09:08 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.35 2011/05/02 00:29:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.34 2011/04/29 22:09:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.35 2011/05/02 00:29:54 rmind Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -144,7 +144,8 @@ process_read_xfpregs(struct lwp *l, struct fpreg *regs, size_t *regslen_p)
 		*regslen_p = sizeof(struct fpreg_oabi);
 #endif
 
-	fpu_save_lwp(l);
+	KASSERT(l == curlwp);
+	fpu_save();
 	memcpy(regs, &pcb->pcb_fpregs, sizeof(*regs));
 	return 0;
 }
