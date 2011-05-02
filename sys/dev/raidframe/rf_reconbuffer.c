@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.24 2007/03/04 06:02:39 christos Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.25 2011/05/02 07:29:18 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.24 2007/03/04 06:02:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.25 2011/05/02 07:29:18 mrg Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -140,12 +140,12 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 
 	RF_LOCK_PSS_MUTEX(raidPtr, rbuf->parityStripeID);
 
-	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_lock_mutex2(reconCtrlPtr->rb_mutex);
 	while(reconCtrlPtr->rb_lock) {
-		ltsleep(&reconCtrlPtr->rb_lock, PRIBIO, "reconctlcnmhs", 0, &reconCtrlPtr->rb_mutex);
+		rf_wait_cond2(reconCtrlPtr->rb_cv, reconCtrlPtr->rb_mutex);
 	}
 	reconCtrlPtr->rb_lock = 1;
-	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_unlock_mutex2(reconCtrlPtr->rb_mutex);
 
 	pssPtr = rf_LookupRUStatus(raidPtr, reconCtrlPtr->pssTable, rbuf->parityStripeID, rbuf->which_ru, RF_PSS_NONE, NULL);
 	RF_ASSERT(pssPtr);	/* if it didn't exist, we wouldn't have gotten
@@ -193,10 +193,10 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 		}
 		if (keep_it) {
 			RF_UNLOCK_PSS_MUTEX(raidPtr, rbuf->parityStripeID);
-			RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+			rf_lock_mutex2(reconCtrlPtr->rb_mutex);
 			reconCtrlPtr->rb_lock = 0;
-			wakeup(&reconCtrlPtr->rb_lock);
-			RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
+			rf_broadcast_cond2(reconCtrlPtr->rb_cv);
+			rf_unlock_mutex2(reconCtrlPtr->rb_mutex);
 			rf_FreeReconBuffer(rbuf);
 			return (retcode);
 		}
@@ -286,10 +286,10 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 
 out:
 	RF_UNLOCK_PSS_MUTEX(raidPtr, rbuf->parityStripeID);
-	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_lock_mutex2(reconCtrlPtr->rb_mutex);
 	reconCtrlPtr->rb_lock = 0;
-	wakeup(&reconCtrlPtr->rb_lock);
-	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_broadcast_cond2(reconCtrlPtr->rb_cv);
+	rf_unlock_mutex2(reconCtrlPtr->rb_mutex);
 	return (retcode);
 }
 /* pssPtr - the pss descriptor for this parity stripe */
@@ -339,21 +339,21 @@ rf_GetFullReconBuffer(RF_ReconCtrl_t *reconCtrlPtr)
 {
 	RF_ReconBuffer_t *p;
 
-	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_lock_mutex2(reconCtrlPtr->rb_mutex);
 	while(reconCtrlPtr->rb_lock) {
-		ltsleep(&reconCtrlPtr->rb_lock, PRIBIO, "reconctlcnmhs", 0, &reconCtrlPtr->rb_mutex);
+		rf_wait_cond2(reconCtrlPtr->rb_cv, reconCtrlPtr->rb_mutex);
 	}
 	reconCtrlPtr->rb_lock = 1;
-	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_unlock_mutex2(reconCtrlPtr->rb_mutex);
 
 	if ((p = reconCtrlPtr->fullBufferList) != NULL) {
 		reconCtrlPtr->fullBufferList = p->next;
 		p->next = NULL;
 	}
-	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_lock_mutex2(reconCtrlPtr->rb_mutex);
 	reconCtrlPtr->rb_lock = 0;
-	wakeup(&reconCtrlPtr->rb_lock);
-	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_broadcast_cond2(reconCtrlPtr->rb_cv);
+	rf_unlock_mutex2(reconCtrlPtr->rb_mutex);
 	return (p);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.111 2011/02/19 07:11:09 enami Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.112 2011/05/02 07:29:18 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.111 2011/02/19 07:11:09 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.112 2011/05/02 07:29:18 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -952,26 +952,26 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 		    rbuf->failedDiskSectorOffset, rbuf->failedDiskSectorOffset + sectorsPerRU - 1);
 		rf_RemoveFromActiveReconTable(raidPtr, rbuf->parityStripeID, rbuf->which_ru);
 
-		RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+		rf_lock_mutex2(raidPtr->reconControl->rb_mutex);
 		raidPtr->reconControl->pending_writes--;
-		RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+		rf_unlock_mutex2(raidPtr->reconControl->rb_mutex);
 
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING) {
-			RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+			rf_lock_mutex2(raidPtr->reconControl->rb_mutex);
 			while(raidPtr->reconControl->rb_lock) {
-				ltsleep(&raidPtr->reconControl->rb_lock, PRIBIO, "reconctrlpre1", 0,
-					&raidPtr->reconControl->rb_mutex);
+				rf_wait_cond2(raidPtr->reconControl->rb_cv,
+					      raidPtr->reconControl->rb_mutex);
 			}
 			raidPtr->reconControl->rb_lock = 1;
-			RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+			rf_unlock_mutex2(raidPtr->reconControl->rb_mutex);
 
 			raidPtr->numFullReconBuffers--;
 			rf_ReleaseFloatingReconBuffer(raidPtr, rbuf);
 
-			RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+			rf_lock_mutex2(raidPtr->reconControl->rb_mutex);
 			raidPtr->reconControl->rb_lock = 0;
-			wakeup(&raidPtr->reconControl->rb_lock);
-			RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+			rf_broadcast_cond2(raidPtr->reconControl->rb_cv);
+			rf_unlock_mutex2(raidPtr->reconControl->rb_mutex);
 		} else
 			if (rbuf->type == RF_RBUF_TYPE_FORCED)
 				rf_FreeReconBuffer(rbuf);
@@ -1056,9 +1056,9 @@ ProcessReconEvent(RF_Raid_t *raidPtr, RF_ReconEvent_t *event)
 
 		/* This is an error, but it was a pending write.
 		   Account for it. */
-		RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+		rf_lock_mutex2(raidPtr->reconControl->rb_mutex);
 		raidPtr->reconControl->pending_writes--;
-		RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+		rf_unlock_mutex2(raidPtr->reconControl->rb_mutex);
 
 		rbuf = (RF_ReconBuffer_t *) event->arg;
 
@@ -1442,9 +1442,9 @@ IssueNextWriteRequest(RF_Raid_t *raidPtr)
 	    (void *) raidPtr, 0, NULL, PR_WAITOK);
 
 	rbuf->arg = (void *) req;
-	RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+	rf_lock_mutex2(raidPtr->reconControl->rb_mutex);
 	raidPtr->reconControl->pending_writes++;
-	RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+	rf_unlock_mutex2(raidPtr->reconControl->rb_mutex);
 	rf_DiskIOEnqueue(&raidPtr->Queues[rbuf->spCol], req, RF_IO_RECON_PRIORITY);
 
 	return (0);
@@ -1531,12 +1531,12 @@ CheckForNewMinHeadSep(RF_Raid_t *raidPtr, RF_HeadSepLimit_t hsCtr)
 								 * of a minimum */
 
 
-	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_lock_mutex2(reconCtrlPtr->rb_mutex);
 	while(reconCtrlPtr->rb_lock) {
-		ltsleep(&reconCtrlPtr->rb_lock, PRIBIO, "reconctlcnmhs", 0, &reconCtrlPtr->rb_mutex);
+		rf_wait_cond2(reconCtrlPtr->rb_cv, reconCtrlPtr->rb_mutex);
 	}
 	reconCtrlPtr->rb_lock = 1;
-	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_unlock_mutex2(reconCtrlPtr->rb_mutex);
 
 	new_min = ~(1L << (8 * sizeof(long) - 1));	/* 0x7FFF....FFF */
 	for (i = 0; i < raidPtr->numCol; i++)
@@ -1559,10 +1559,10 @@ CheckForNewMinHeadSep(RF_Raid_t *raidPtr, RF_HeadSepLimit_t hsCtr)
 		}
 
 	}
-	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_lock_mutex2(reconCtrlPtr->rb_mutex);
 	reconCtrlPtr->rb_lock = 0;
-	wakeup(&reconCtrlPtr->rb_lock);
-	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_broadcast_cond2(reconCtrlPtr->rb_cv);
+	rf_unlock_mutex2(reconCtrlPtr->rb_mutex);
 }
 
 /*
@@ -1594,12 +1594,12 @@ CheckHeadSeparation(RF_Raid_t *raidPtr, RF_PerDiskReconCtrl_t *ctrl,
 	 * separation before we'll wake up.
 	 *
 	 */
-	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_lock_mutex2(reconCtrlPtr->rb_mutex);
 	while(reconCtrlPtr->rb_lock) {
-		ltsleep(&reconCtrlPtr->rb_lock, PRIBIO, "reconctlchs", 0, &reconCtrlPtr->rb_mutex);
+		rf_wait_cond2(reconCtrlPtr->rb_cv, reconCtrlPtr->rb_mutex);
 	}
 	reconCtrlPtr->rb_lock = 1;
-	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_unlock_mutex2(reconCtrlPtr->rb_mutex);
 	if ((raidPtr->headSepLimit >= 0) &&
 	    ((ctrl->headSepCounter - reconCtrlPtr->minHeadSepCounter) > raidPtr->headSepLimit)) {
 		Dprintf5("raid%d: RECON: head sep stall: col %d hsCtr %ld minHSCtr %ld limit %ld\n",
@@ -1632,10 +1632,10 @@ CheckHeadSeparation(RF_Raid_t *raidPtr, RF_PerDiskReconCtrl_t *ctrl,
 		ctrl->reconCtrl->reconDesc->hsStallCount++;
 #endif				/* RF_RECON_STATS > 0 */
 	}
-	RF_LOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_lock_mutex2(reconCtrlPtr->rb_mutex);
 	reconCtrlPtr->rb_lock = 0;
-	wakeup(&reconCtrlPtr->rb_lock);
-	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
+	rf_broadcast_cond2(reconCtrlPtr->rb_cv);
+	rf_unlock_mutex2(reconCtrlPtr->rb_mutex);
 
 	return (retval);
 }
@@ -1878,14 +1878,14 @@ rf_WakeupHeadSepCBWaiters(RF_Raid_t *raidPtr)
 {
 	RF_CallbackDesc_t *p;
 
-	RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+	rf_lock_mutex2(raidPtr->reconControl->rb_mutex);
 	while(raidPtr->reconControl->rb_lock) {
-		ltsleep(&raidPtr->reconControl->rb_lock, PRIBIO, 
-			"rf_wakeuphscbw", 0, &raidPtr->reconControl->rb_mutex);
+		rf_wait_cond2(raidPtr->reconControl->rb_cv,
+			      raidPtr->reconControl->rb_mutex);
 	}
 	
 	raidPtr->reconControl->rb_lock = 1;
-	RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+	rf_unlock_mutex2(raidPtr->reconControl->rb_mutex);
 	
 	while (raidPtr->reconControl->headSepCBList) {
 		p = raidPtr->reconControl->headSepCBList;
@@ -1894,10 +1894,10 @@ rf_WakeupHeadSepCBWaiters(RF_Raid_t *raidPtr)
 		rf_CauseReconEvent(raidPtr, p->col, NULL, RF_REVENT_HEADSEPCLEAR);
 		rf_FreeCallbackDesc(p);
 	}
-	RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+	rf_lock_mutex2(raidPtr->reconControl->rb_mutex);
 	raidPtr->reconControl->rb_lock = 0;
-	wakeup(&raidPtr->reconControl->rb_lock);
-	RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+	rf_broadcast_cond2(raidPtr->reconControl->rb_cv);
+	rf_unlock_mutex2(raidPtr->reconControl->rb_mutex);
 	
 }
 
