@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.30 2011/05/01 10:01:01 mrg Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.31 2011/05/02 00:39:37 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.30 2011/05/01 10:01:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.31 2011/05/02 00:39:37 mrg Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -125,7 +125,7 @@ rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc,
 	}
 
 	/* initialize the event queue */
-	rf_init_mutex2(reconCtrlPtr->eq_mutex, IPL_VM);
+	rf_mutex_init(&reconCtrlPtr->eq_mutex);
 
 	reconCtrlPtr->eventQueue = NULL;
 	reconCtrlPtr->eq_count = 0;
@@ -170,8 +170,6 @@ rf_FreeReconControl(RF_Raid_t *raidPtr)
 		rf_FreeReconBuffer(t);
 		t = reconCtrlPtr->floatingRbufs;
 	}
-
-	rf_destroy_mutex2(reconCtrlPtr->eq_mutex);
 
 	rf_FreeReconMap(reconCtrlPtr->reconMap);
 	rf_FreeParityStripeStatusTable(raidPtr, reconCtrlPtr->pssTable);
