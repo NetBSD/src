@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.194 2011/04/18 22:05:39 buhrow Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.195 2011/05/02 09:03:10 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.194 2011/04/18 22:05:39 buhrow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.195 2011/05/02 09:03:10 jym Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -2959,9 +2959,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 		    sc->bge_flags |= BGE_PHY_FIBER_TBI;
 	}
 
-	/* set phyflags before mii_attach() */
+	/* set phyflags and chipid before mii_attach() */
 	dict = device_properties(self);
 	prop_dictionary_set_uint32(dict, "phyflags", sc->bge_flags);
+	prop_dictionary_set_uint32(dict, "chipid", sc->bge_chipid);
 
 	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,
