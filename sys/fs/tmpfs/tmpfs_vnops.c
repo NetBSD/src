@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.77 2011/04/24 21:35:29 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.78 2011/05/02 23:42:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.77 2011/04/24 21:35:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.78 2011/05/02 23:42:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -738,7 +738,7 @@ out:
 }
 
 /*
- * tmpfs:link: create hard link.
+ * tmpfs_link: create hard link.
  */
 int
 tmpfs_link(void *v)
@@ -1395,25 +1395,29 @@ tmpfs_advlock(void *v)
 	return lf_advlock(v, &node->tn_lockf, node->tn_size);
 }
 
-/* --------------------------------------------------------------------- */
-
 int
 tmpfs_getpages(void *v)
 {
-	struct vnode *vp = ((struct vop_getpages_args *)v)->a_vp;
-	voff_t offset = ((struct vop_getpages_args *)v)->a_offset;
-	struct vm_page **m = ((struct vop_getpages_args *)v)->a_m;
-	int *count = ((struct vop_getpages_args *)v)->a_count;
-	int centeridx = ((struct vop_getpages_args *)v)->a_centeridx;
-	vm_prot_t access_type = ((struct vop_getpages_args *)v)->a_access_type;
-	int advice = ((struct vop_getpages_args *)v)->a_advice;
-	int flags = ((struct vop_getpages_args *)v)->a_flags;
-
-	int error;
-	int i;
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ * const ap = v;
+	struct vnode *vp = ap->a_vp;
+	const voff_t offset = ap->a_offset;
+	struct vm_page **pgs = ap->a_m;
+	const int centeridx = ap->a_centeridx;
+	const vm_prot_t access_type = ap->a_access_type;
+	const int advice = ap->a_advice;
+	const int flags = ap->a_flags;
+	int error, npages = *ap->a_count;
 	struct tmpfs_node *node;
 	struct uvm_object *uobj;
-	int npages = *count;
 
 	KASSERT(vp->v_type == VREG);
 	KASSERT(mutex_owned(&vp->v_interlock));
@@ -1421,8 +1425,9 @@ tmpfs_getpages(void *v)
 	node = VP_TO_TMPFS_NODE(vp);
 	uobj = node->tn_spec.tn_reg.tn_aobj;
 
-	/* We currently don't rely on PGO_PASTEOF. */
-
+	/*
+	 * Currently, PGO_PASTEOF is not supported.
+	 */
 	if (vp->v_size <= offset + (centeridx << PAGE_SHIFT)) {
 		if ((flags & PGO_LOCKED) == 0)
 			mutex_exit(&vp->v_interlock);
@@ -1447,47 +1452,44 @@ tmpfs_getpages(void *v)
 	mutex_exit(&vp->v_interlock);
 
 	/*
-	 * Make sure that the array on which we will store the
-	 * gotten pages is clean.  Otherwise uao_get (pointed to by
-	 * the pgo_get below) gets confused and does not return the
-	 * appropriate pages.
+	 * Invoke the pager.
 	 *
-	 * XXX This shall be revisited when kern/32166 is addressed
-	 * because the loop to clean m[i] will most likely be redundant
-	 * as well as the PGO_ALLPAGES flag.
+	 * Clean the array of pages before.  XXX: PR/32166
+	 * Note that vnode lock is shared with underlying UVM object.
 	 */
-	if (m != NULL)
-		for (i = 0; i < npages; i++)
-			m[i] = NULL;
+	if (pgs) {
+		memset(pgs, 0, sizeof(struct vm_pages *) * npages);
+	}
 	mutex_enter(&uobj->vmobjlock);
-	error = (*uobj->pgops->pgo_get)(uobj, offset, m, &npages, centeridx,
+	error = (*uobj->pgops->pgo_get)(uobj, offset, pgs, &npages, centeridx,
 	    access_type, advice, flags | PGO_ALLPAGES);
+
 #if defined(DEBUG)
-	{
-		/* Make sure that all the pages we return are valid. */
-		int dbgi;
-		if (error == 0 && m != NULL)
-			for (dbgi = 0; dbgi < npages; dbgi++)
-				KASSERT(m[dbgi] != NULL);
+	if (!error && pgs) {
+		for (int i = 0; i < npages; i++) {
+			KASSERT(pgs[i] != NULL);
+		}
 	}
 #endif
-
 	return error;
 }
-
-/* --------------------------------------------------------------------- */
 
 int
 tmpfs_putpages(void *v)
 {
-	struct vnode *vp = ((struct vop_putpages_args *)v)->a_vp;
-	voff_t offlo = ((struct vop_putpages_args *)v)->a_offlo;
-	voff_t offhi = ((struct vop_putpages_args *)v)->a_offhi;
-	int flags = ((struct vop_putpages_args *)v)->a_flags;
-
-	int error;
+	struct vop_putpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offlo;
+		voff_t a_offhi;
+		int a_flags;
+	} */ * const ap = v;
+	struct vnode *vp = ap->a_vp;
+	const voff_t offlo = ap->a_offlo;
+	const voff_t offhi = ap->a_offhi;
+	const int flags = ap->a_flags;
 	struct tmpfs_node *node;
 	struct uvm_object *uobj;
+	int error;
 
 	KASSERT(mutex_owned(&vp->v_interlock));
 
