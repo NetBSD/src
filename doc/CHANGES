@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1543 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1544 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -943,7 +943,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		more efficient, added "fast" software interrupts and kernel
 		preemption.  Added support for RMI (NetLogic) XLS/XLR models.
 		Major clean up for MIPS port. [matt 20110220]
-	mips: Converted MIPS to use PCU. [matt 20110220]
+	mips: Converted MIPS to use PCU to manage FPU. [matt 20110220]
 	ath(4): Add support for AR9285 devices. [cegger 20110221]
 	libsaslc(3): Complete integration of libsaslc written for GSoC 2010
 		by Mateusz Kocielski, improved and integrated with Postfix
@@ -996,7 +996,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.2.12. [roy 20110406]
 	sparc64: Add EDID (Extended Display Identification Data) reading,
 		and video mode setting support, to ffb(4). [jdc 20110408]
+	kernel: Bug fixes and improvements to POSIX semaphore. [rmind 20110411]
 	kernel: Support for Darwin, Mach, IRIX and PECOFF emulation was
 		retired. [joerg 20110426]
 	balloon(4): Balloon driver now enabled for all Xen kernels.
 		[jym 20110429]
+	powerpc: Converted PowerPC to use PCU to manage FPU/AltiVec/SPE.
+		[matt 20110502]
