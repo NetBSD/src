@@ -1,4 +1,4 @@
-#	$NetBSD: sshd_config,v 1.5 2010/11/21 18:59:04 adam Exp $
+#	$NetBSD: sshd_config,v 1.6 2011/05/03 13:04:00 jruoho Exp $
 #	$OpenBSD: sshd_config,v 1.81 2009/10/08 14:03:41 markus Exp $
 
 # This is the sshd server system-wide configuration file.  See
@@ -54,7 +54,7 @@ LoginGraceTime 600
 # Don't read the user's ~/.rhosts and ~/.shosts files
 #IgnoreRhosts yes
 
-# To disable tunneled clear text passwords, change to no here!
+# To disable password authentication, set this and UsePam to no
 #PasswordAuthentication yes
 #PermitEmptyPasswords no
 
