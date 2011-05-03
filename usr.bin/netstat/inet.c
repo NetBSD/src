@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.95 2011/03/02 19:52:03 dyoung Exp $	*/
+/*	$NetBSD: inet.c,v 1.96 2011/05/03 18:28:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.95 2011/03/02 19:52:03 dyoung Exp $");
+__RCSID("$NetBSD: inet.c,v 1.96 2011/05/03 18:28:46 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ __RCSID("$NetBSD: inet.c,v 1.95 2011/03/02 19:52:03 dyoung Exp $");
 #include <netinet/udp.h>
 #include <netinet/ip_carp.h>
 #include <netinet/udp_var.h>
+#include <netinet/tcp_vtw.h>
 
 #include <arpa/inet.h>
 #include <kvm.h>
@@ -86,10 +87,13 @@ __RCSID("$NetBSD: inet.c,v 1.95 2011/03/02 19:52:03 dyoung Exp $");
 #include <stdlib.h>
 #include <err.h>
 #include "netstat.h"
+#include "vtw.h"
 #include "prog_ops.h"
 
 char	*inetname(struct in_addr *);
 void	inetprint(struct in_addr *, u_int16_t, const char *, int);
+
+void	print_vtw_v4(const vtw_t *);
 
 /*
  * Print a summary of connections related to an Internet
@@ -100,6 +104,9 @@ void	inetprint(struct in_addr *, u_int16_t, const char *, int);
 static int width;
 static int compact;
 
+/* VTW-related variables. */
+static struct timeval now;
+
 static void
 protoprhdr(void)
 {
@@ -109,18 +116,19 @@ protoprhdr(void)
 	putchar('\n');
 	if (Aflag)
 		printf("%-8.8s ", "PCB");
-	printf("%-5.5s %-6.6s %-6.6s %s%-*.*s %-*.*s %s\n",
+	printf("%-5.5s %-6.6s %-6.6s %s%-*.*s %-*.*s %-13.13s%s\n",
 		"Proto", "Recv-Q", "Send-Q", compact ? "" : " ",
 		width, width, "Local Address",
 		width, width, "Foreign Address",
-		"State");
+		"State", Vflag ? " Expires" : "");
 }
 
 static void
 protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 	 struct in_addr *laddr, u_int16_t lport,
 	 struct in_addr *faddr, u_int16_t fport,
-	 short t_state, const char *name, int inp_flags)
+	 short t_state, const char *name, int inp_flags,
+	 const struct timeval *expires)
 {
 	static const char *shorttcpstates[] = {
 		"CLOSED",	"LISTEN",	"SYNSEN",	"SYSRCV",
@@ -153,7 +161,59 @@ protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 			printf(" %s", compact ? shorttcpstates[t_state] :
 			       tcpstates[t_state]);
 	}
+	if (Vflag && expires != NULL) {
+		if (expires->tv_sec != 0 || expires->tv_usec != -1) {
+			struct timeval delta;
+
+			timersub(expires, &now, &delta);
+			printf(" %.3fms",
+			    delta.tv_sec * 1000.0 + delta.tv_usec / 1000.0);
+		} else
+			printf(" expired");
+	}
 	putchar('\n');
+}
+
+static void
+dbg_printf(const char *fmt, ...)
+{
+	return;
+}
+
+void 
+print_vtw_v4(const vtw_t *vtw)
+{
+	const vtw_v4_t *v4 = (const vtw_v4_t *)vtw;
+	struct timeval delta;
+	struct in_addr la, fa;
+	char buf[2][32];
+
+	la.s_addr = v4->laddr;
+	fa.s_addr = v4->faddr;
+
+	snprintf(&buf[0][0], 32, "%s", inet_ntoa(la));
+	snprintf(&buf[1][0], 32, "%s", inet_ntoa(fa));
+
+	timersub(&vtw->expire, &now, &delta);
+
+	if (vtw->expire.tv_sec == 0 && vtw->expire.tv_usec == -1) {
+		dbg_printf("%15.15s:%d %15.15s:%d expired\n"
+		    ,buf[0], ntohs(v4->lport)
+		    ,buf[1], ntohs(v4->fport));
+		if (!(Vflag && vflag))
+			return;
+	} else if (vtw->expire.tv_sec == 0)
+		return;
+	else {
+		dbg_printf("%15.15s:%d %15.15s:%d expires in %.3fms\n"
+		    ,buf[0], ntohs(v4->lport)
+		    ,buf[1], ntohs(v4->fport)
+		    ,delta.tv_sec * 1000.0 + delta.tv_usec / 1000.0);
+	}
+	protopr0(0, 0, 0,
+		 &la, v4->lport,
+		 &fa, v4->fport,
+		 TCPS_TIME_WAIT, "tcp", 0, &vtw->expire);
 }
 
 void
@@ -164,7 +224,7 @@ protopr(u_long off, const char *name)
 	struct inpcb inpcb;
 	struct tcpcb tcpcb;
 	struct socket sockb;
-	int istcp;
+	int istcp = strcmp(name, "tcp") == 0;
 	static int first = 1;
 
 	compact = 0;
@@ -228,16 +288,15 @@ protopr(u_long off, const char *name)
 				 &src.sin_addr, src.sin_port,
 				 &dst.sin_addr, dst.sin_port,
 				 pcblist[i].ki_tstate, name,
-				 pcblist[i].ki_pflags);
+				 pcblist[i].ki_pflags, NULL);
 		}
 
 		free(pcblist);
-		return;
+		goto end;
 	}
 
 	if (off == 0)
 		return;
-	istcp = strcmp(name, "tcp") == 0;
 	kread(off, (char *)&table, sizeof table);
 	prev = head =
 	    (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
@@ -273,7 +332,12 @@ protopr(u_long off, const char *name)
 			 sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc,
 			 &inpcb.inp_laddr, inpcb.inp_lport,
 			 &inpcb.inp_faddr, inpcb.inp_fport,
-			 tcpcb.t_state, name, inpcb.inp_flags);
+			 tcpcb.t_state, name, inpcb.inp_flags, NULL);
+	}
+end:
+	if (istcp) {
+		gettimeofday(&now, NULL);
+		show_vtw_v4(print_vtw_v4);
 	}
 }
 
@@ -400,6 +464,7 @@ tcp_stats(u_long off, const char *name)
 #undef p2
 #undef p2s
 #undef p3
+	show_vtw_stats();
 }
 
 /*
