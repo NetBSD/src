@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.77 2010/12/13 21:15:30 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.78 2011/05/03 18:28:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.77 2010/12/13 21:15:30 pooka Exp $");
+__RCSID("$NetBSD: main.c,v 1.78 2011/05/03 18:28:46 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -347,28 +347,49 @@ static void print_softintrq __P((void));
 static void usage __P((void));
 static struct protox *name2protox __P((const char *));
 static struct protox *knownname __P((const char *));
-static void prepare(char *, char *, struct protox *tp);
+static void prepare(const char *, const char *, struct protox *tp);
+static kvm_t *prepare_kvmd(const char *, const char *);
 
-kvm_t *kvmd;
+kvm_t *kvmd = NULL;
 gid_t egid;
 int interval;	/* repeat interval for i/f stats */
+static const char *nlistf = NULL, *memf = NULL;
 
-void
-prepare(char *nlistf, char *memf, struct protox *tp)
+kvm_t *
+get_kvmd(void)
+{
+	return prepare_kvmd(nlistf, memf);
+}
+
+static kvm_t *
+prepare_kvmd(const char *nf, const char *mf)
 {
 	char buf[_POSIX2_LINE_MAX];
 
+	if (kvmd != NULL)
+		return kvmd;
+	(void)setegid(egid);
+	kvmd = kvm_openfiles(nf, mf, NULL, O_RDONLY, buf);
+	(void)setgid(getgid());
+	if (kvmd == NULL)
+		err(1, "kvm error: %s", buf);
+	return kvmd;
+}
+
+void
+prepare(const char *nf, const char *mf, struct protox *tp)
+{
 	/*
 	 * Try to figure out if we can use sysctl or not.
 	 */
-	if (nlistf != NULL && memf != NULL) {
+	if (nf != NULL && mf != NULL) {
 		/* Of course, we can't use sysctl with dumps. */
 		if (force_sysctl)
 			errx(EXIT_FAILURE, "can't use sysctl with dumps");
 
 		/* If we have -M and -N, we're not dealing with live memory. */
 		use_sysctl = 0;
-	} else if (qflag ||
+	} else if (true || qflag ||
 		   rflag ||
 		   iflag ||
 #ifndef SMALL
@@ -395,15 +416,11 @@ prepare(char *nlistf, char *memf, struct protox *tp)
 	}
 
 	if (!use_sysctl) {
-		(void)setegid(egid);
-		kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf);
-		(void)setgid(getgid());
-		if (kvmd == NULL)
-			err(1, "kvm error: %s", buf);
-	
+		kvmd = prepare_kvmd(nf, mf);
+
 		if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
-			if (nlistf)
-				errx(1, "%s: no namelist", nlistf);
+			if (nf)
+				errx(1, "%s: no namelist", nf);
 			else
 				errx(1, "no namelist");
 		}
@@ -419,7 +436,6 @@ main(argc, argv)
 	struct protoent *p;
 	struct protox *tp;	/* for printing cblocks & stats */
 	int ch;
-	char *nlistf = NULL, *memf = NULL;
 	char *cp;
 	u_long pcbaddr;
 
@@ -436,7 +452,7 @@ main(argc, argv)
 	pcbaddr = 0;
 
 	while ((ch = getopt(argc, argv,
-	    "AabBdf:ghI:LliM:mN:nP:p:qrsStTuvw:X")) != -1)
+	    "AabBdf:ghI:LliM:mN:nP:p:qrsStTuVvw:X")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -542,6 +558,9 @@ main(argc, argv)
 			break;
 		case 'u':
 			af = AF_LOCAL;
+			break;
+		case 'V':
+			Vflag++;
 			break;
 		case 'v':
 			vflag++;
