@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.165 2011/05/03 17:44:31 dyoung Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.166 2011/05/03 18:28:45 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -358,6 +358,7 @@ struct tcpcb {
 	u_int	t_keepcnt;
 	u_int	t_maxidle;		/* t_keepcnt * t_keepintvl */
 
+	u_int	t_msl;			/* MSL to use for this connexion */
 };
 
 /*
@@ -810,6 +811,17 @@ extern int tcp_sack_globalmaxholes;	/* Max holes per system. */
 extern int tcp_sack_globalholes;	/* Number of holes present. */
 extern int tcp_do_abc;			/* RFC3465 ABC enabled/disabled? */
 extern int tcp_abc_aggressive;		/* 1: L=2*SMSS  0: L=1*SMSS */
+
+extern int tcp_msl_enable;		/* enable TIME_WAIT truncation	*/
+extern int tcp_msl_loop;		/* MSL for loopback		*/
+extern int tcp_msl_local;		/* MSL for 'local'		*/
+extern int tcp_msl_remote;		/* MSL otherwise		*/
+extern int tcp_msl_remote_threshold;	/* RTT threshold		*/
+extern int tcp_rttlocal;		/* Use RTT to decide who's 'local' */
+extern int tcp4_vtw_enable;
+extern int tcp6_vtw_enable;
+extern int tcp_vtw_was_enabled;
+extern int tcp_vtw_entries;
 
 extern	int tcp_rst_ppslim;
 extern	int tcp_ackdrop_ppslim;
