@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1619 2011/04/20 18:55:53 haad Exp $
+#	$NetBSD: mi,v 1.1620 2011/05/03 18:28:44 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1614,6 +1614,7 @@
 ./usr/include/netinet/tcp_seq.h			comp-c-include
 ./usr/include/netinet/tcp_timer.h		comp-c-include
 ./usr/include/netinet/tcp_var.h			comp-c-include
+./usr/include/netinet/tcp_vtw.h			comp-c-include
 ./usr/include/netinet/tcpip.h			comp-c-include
 ./usr/include/netinet/udp.h			comp-c-include
 ./usr/include/netinet/udp_var.h			comp-c-include
