@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.41 2010/06/27 06:52:37 kefren Exp $	*/
+/*	$NetBSD: netstat.h,v 1.42 2011/05/03 18:28:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,6 +32,7 @@
  */
 
 #include <sys/cdefs.h>
+#include <kvm.h>
 
 int	Aflag;		/* show addresses of protocol control block */
 int	aflag;		/* show all sockets (including servers) */
@@ -56,6 +57,7 @@ int	rflag;		/* show routing tables (or routing stats) */
 int	sflag;		/* show protocol statistics */
 int	tagflag;	/* show route tags */
 int	tflag;		/* show i/f watchdog timers */
+int	Vflag;		/* show Vestigial TIME_WAIT (VTW) information */
 int	vflag;		/* verbose route information or don't truncate names */
 
 char	*interface;	/* desired i/f for stats, or NULL for all i/fs */
@@ -170,5 +172,7 @@ void	mrt_stats __P((u_long, u_long));
 
 void	bpf_stats(void);
 void	bpf_dump(const char *);
+
+kvm_t *get_kvmd(void);
 
 #define PLEN    (LONG_BIT / 4 + 2)
