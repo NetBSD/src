@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.324 2011/05/03 07:56:42 jruoho Exp $
+# $NetBSD: mi,v 1.325 2011/05/03 08:36:15 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2304,16 +2304,21 @@
 ./usr/tests/syscall/t_setuid			tests-syscall-tests	atf
 ./usr/tests/syscall/t_timer			tests-syscall-tests	atf
 ./usr/tests/syscall/t_umask			tests-syscall-tests	atf
-./usr/tests/toolchain	tests-syscall-tests	atf
-./usr/tests/toolchain/Atffile	tests-syscall-tests	atf
-./usr/tests/toolchain/cc	tests-syscall-tests	atf
-./usr/tests/toolchain/cc/Atffile	tests-syscall-tests	atf
-./usr/tests/toolchain/cc/t_hello	tests-syscall-tests	atf
+./usr/tests/toolchain				tests-syscall-tests	atf
+./usr/tests/toolchain/Atffile			tests-syscall-tests	atf
+./usr/tests/toolchain/cc			tests-syscall-tests	atf
+./usr/tests/toolchain/cc/Atffile		tests-syscall-tests	atf
+./usr/tests/toolchain/cc/t_hello		tests-syscall-tests	atf
 ./usr/tests/usr.bin				tests-util-tests
 ./usr/tests/usr.bin/Atffile			tests-sbin-tests	atf
+./usr/tests/usr.bin/pr				tests-util-tests
+./usr/tests/usr.bin/pr/Atffile			tests-util-tests	atf
+./usr/tests/usr.bin/pr/d_basic.in		tests-util-tests	atf
+./usr/tests/usr.bin/pr/d_basic.out		tests-util-tests	atf
+./usr/tests/usr.bin/pr/t_basic			tests-util-tests	atf
 ./usr/tests/usr.bin/rump_server			tests-util-tests
 ./usr/tests/usr.bin/rump_server/Atffile		tests-util-tests	atf
-./usr/tests/usr.bin/rump_server/t_disk	tests-util-tests	atf
+./usr/tests/usr.bin/rump_server/t_disk		tests-util-tests	atf
 ./usr/tests/usr.bin				tests-util-tests
 ./usr/tests/usr.bin/shmif_dumpbus			tests-util-tests
 ./usr/tests/usr.bin/shmif_dumpbus/Atffile		tests-util-tests	atf

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.44 2011/05/03 07:56:42 jruoho Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.45 2011/05/03 08:36:15 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -238,6 +238,7 @@
 ./usr/tests/toolchain
 ./usr/tests/toolchain/cc
 ./usr/tests/usr.bin
+./usr/tests/usr.bin/pr
 ./usr/tests/usr.bin/rump_server
 ./usr/tests/usr.bin/shmif_dumpbus
 ./usr/tests/usr.bin/unifdef
