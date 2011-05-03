@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.90 2011/03/31 19:40:52 dyoung Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.91 2011/05/03 17:44:30 dyoung Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.90 2011/03/31 19:40:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.91 2011/05/03 17:44:30 dyoung Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -193,8 +193,9 @@ const struct ip6protosw inet6sw[] = {
 {	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_IPV6,
 	.pr_init = ip6_init,
+	.pr_fasttimo = frag6_fasttimo,
 	.pr_slowtimo = frag6_slowtimo,
-	.pr_drain = frag6_drain,
+	.pr_drain = frag6_drainstub,
 },
 {	.pr_type = SOCK_DGRAM,
 	.pr_domain = &inet6domain,
@@ -216,8 +217,9 @@ const struct ip6protosw inet6sw[] = {
 	.pr_usrreq = tcp_usrreq,
 #ifndef INET	/* don't call initialization and timeout routines twice */
 	.pr_init = tcp_init,
+	.pr_fasttimo = tcp_fasttimo,
 	.pr_slowtimo = tcp_slowtimo,
-	.pr_drain = tcp_drain,
+	.pr_drain = tcp_drainstub,
 #endif
 },
 {	.pr_type = SOCK_RAW,

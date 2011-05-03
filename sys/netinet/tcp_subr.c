@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.239 2011/04/20 13:35:51 gdt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.240 2011/05/03 17:44:31 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.239 2011/04/20 13:35:51 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.240 2011/05/03 17:44:31 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -233,6 +233,8 @@ void	tcp6_mtudisc(struct in6pcb *, int);
 #endif
 
 static struct pool tcpcb_pool;
+
+static int tcp_drainwanted;
 
 #ifdef TCP_CSUM_COUNTERS
 #include <sys/device.h>
@@ -1290,6 +1292,21 @@ tcp_freeq(struct tcpcb *tp)
 	tp->t_segqlen = 0;
 	KASSERT(TAILQ_EMPTY(&tp->timeq));
 	return (rv);
+}
+
+void
+tcp_fasttimo(void)
+{
+	if (tcp_drainwanted) {
+		tcp_drain();
+		tcp_drainwanted = 0;
+	}
+}
+
+void
+tcp_drainstub(void)
+{
+	tcp_drainwanted = 1;
 }
 
 /*
