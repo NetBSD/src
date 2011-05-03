@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.29 2011/04/04 20:37:47 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.30 2011/05/03 09:15:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.29 2011/04/04 20:37:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.30 2011/05/03 09:15:20 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -267,7 +267,7 @@ pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, pcireg_t id)
 	if (bus == 0 && dev == 31)
 		return 0;
 
-	/* Don't configure the bridge and PCI probe. */ 
+	/* Don't configure the bridge and PCI probe. */
 	if (PCI_VENDOR(id) == PCI_VENDOR_MARVELL &&
 	    PCI_PRODUCT(id) == PCI_PRODUCT_MARVELL_GT64011)
 	        return 0;

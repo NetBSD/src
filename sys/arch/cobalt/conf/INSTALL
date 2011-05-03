@@ -1,16 +1,16 @@
-# $NetBSD: INSTALL,v 1.43 2011/03/06 17:08:21 bouyer Exp $
+# $NetBSD: INSTALL,v 1.44 2011/05/03 09:15:20 tsutsui Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
 # This kernel should be derived from GENERIC with most features
 # commented out to shoehorn into Cobalt kernel size limitations.
-# 
+#
 
 include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.43 $"
+#ident 		"INSTALL-$Revision: 1.44 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -32,7 +32,7 @@ maxusers	32
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
