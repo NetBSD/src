@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.325 2011/05/03 08:36:15 jruoho Exp $
+# $NetBSD: mi,v 1.326 2011/05/03 15:13:51 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2311,6 +2311,11 @@
 ./usr/tests/toolchain/cc/t_hello		tests-syscall-tests	atf
 ./usr/tests/usr.bin				tests-util-tests
 ./usr/tests/usr.bin/Atffile			tests-sbin-tests	atf
+./usr/tests/usr.bin/diff			tests-util-tests
+./usr/tests/usr.bin/diff/Atffile		tests-util-tests	atf
+./usr/tests/usr.bin/diff/d_mallocv1.in		tests-util-tests	atf
+./usr/tests/usr.bin/diff/d_mallocv2.in		tests-util-tests	atf
+./usr/tests/usr.bin/diff/t_diff			tests-util-tests	atf
 ./usr/tests/usr.bin/pr				tests-util-tests
 ./usr/tests/usr.bin/pr/Atffile			tests-util-tests	atf
 ./usr/tests/usr.bin/pr/d_basic.in		tests-util-tests	atf
