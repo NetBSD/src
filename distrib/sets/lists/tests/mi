@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.323 2011/05/03 07:23:19 jruoho Exp $
+# $NetBSD: mi,v 1.324 2011/05/03 07:56:42 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2273,8 +2273,11 @@
 ./usr/tests/sbin/resize_ffs/t_shrink_swapped	tests-sbin-tests	atf
 ./usr/tests/sbin/resize_ffs/testdata.md5	tests-sbin-tests	atf
 ./usr/tests/sbin/resize_ffs/testdata.tar.gz.base64	tests-sbin-tests	atf
-./usr/tests/sys				tests-sys-tests
-./usr/tests/sys/Atffile			tests-sys-tests	atf
+./usr/tests/sbin/route				tests-sbin-tests
+./usr/tests/sbin/route/Atffile			tests-sbin-tests	atf
+./usr/tests/sbin/route/t_missing		tests-sbin-tests	atf
+./usr/tests/sys					tests-sys-tests
+./usr/tests/sys/Atffile				tests-sys-tests	atf
 ./usr/tests/sys/rc				tests-sys-tests
 ./usr/tests/sys/rc/Atffile			tests-sys-tests	atf
 ./usr/tests/sys/rc/h_args			tests-sys-tests	atf
