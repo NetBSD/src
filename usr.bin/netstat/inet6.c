@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.54 2011/05/03 18:28:46 dyoung Exp $	*/
+/*	$NetBSD: inet6.c,v 1.55 2011/05/03 23:36:26 dyoung Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.54 2011/05/03 18:28:46 dyoung Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.55 2011/05/03 23:36:26 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,14 +217,15 @@ ip6protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 #endif
 	}
 	if (Vflag && expires != NULL) {
-		if (expires->tv_sec != 0 || expires->tv_usec != -1) {
+		if (expires->tv_sec == 0 && expires->tv_usec == -1)
+			printf(" reclaimed");
+		else {
 			struct timeval delta;
 
 			timersub(expires, &now, &delta);
 			printf(" %.3fms",
 			    delta.tv_sec * 1000.0 + delta.tv_usec / 1000.0);
-		} else
-			printf(" expired");
+		}
 	}
 	putchar('\n');
 }
@@ -241,6 +242,7 @@ print_vtw_v6(const vtw_t *vtw)
 	const vtw_v6_t *v6 = (const vtw_v6_t *)vtw;
 	struct timeval delta;
 	char buf[2][128];
+	static const struct timeval zero = {.tv_sec = 0, .tv_usec = 0};
 
 	inet_ntop(AF_INET6, &v6->laddr, buf[0], sizeof(buf[0]));
 	inet_ntop(AF_INET6, &v6->faddr, buf[1], sizeof(buf[1]));
@@ -248,14 +250,19 @@ print_vtw_v6(const vtw_t *vtw)
 	timersub(&vtw->expire, &now, &delta);
 
 	if (vtw->expire.tv_sec == 0 && vtw->expire.tv_usec == -1) {
-		dbg_printf("%15.15s:%d %15.15s:%d expired\n"
+		dbg_printf("%15.15s:%d %15.15s:%d reclaimed\n"
 		    ,buf[0], ntohs(v6->lport)
 		    ,buf[1], ntohs(v6->fport));
 		if (!(Vflag && vflag))
 			return;
 	} else if (vtw->expire.tv_sec == 0)
 		return;
-	else {
+	else if (timercmp(&delta, &zero, <) && !(Vflag && vflag)) {
+		dbg_printf("%15.15s:%d %15.15s:%d expired\n"
+		    ,buf[0], ntohs(v6->lport)
+		    ,buf[1], ntohs(v6->fport));
+		return;
+	} else {
 		dbg_printf("%15.15s:%d %15.15s:%d expires in %.3fms\n"
 		    ,buf[0], ntohs(v6->lport)
 		    ,buf[1], ntohs(v6->fport)
