@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.69 2011/01/17 21:56:38 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.70 2011/05/03 09:36:24 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,14 +31,14 @@
 .Nm acpi
 .Nd Advanced Configuration and Power Interface
 .Sh SYNOPSIS
-.Cd "acpi0	at mainbus0"
+.Cd acpi0	at mainbus0
 .Pp
-.Cd "options	ACPI_DEBUG"
-.Cd "options	ACPIVERBOSE"
-.Cd "options	ACPI_ACTIVATE_DEV"
-.Cd "options	ACPI_DSDT_OVERRIDE"
-.Cd "options	ACPI_DSDT_FILE=\*[q]\*[q]"
-.Cd "options	ACPI_BLACKLIST_YEAR=2000"
+.Cd options	ACPI_DEBUG
+.Cd options	ACPIVERBOSE
+.Cd options	ACPI_ACTIVATE_DEV
+.Cd options	ACPI_DSDT_OVERRIDE
+.Cd options	ACPI_DSDT_FILE=""
+.Cd options	ACPI_BLACKLIST_YEAR=2000
 .Sh DESCRIPTION
 .Nx
 provides machine-independent bus support for
