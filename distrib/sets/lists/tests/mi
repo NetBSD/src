@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.322 2011/05/03 06:13:06 jruoho Exp $
+# $NetBSD: mi,v 1.323 2011/05/03 07:23:19 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2320,6 +2320,11 @@
 ./usr/tests/usr.bin/shmif_dumpbus/d_pkthdrs.out.bz2.uue		tests-util-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus/shmbus.bz2.uue		tests-util-tests	atf
 ./usr/tests/usr.bin/shmif_dumpbus/t_basic		tests-util-tests	atf
+./usr/tests/usr.bin/unifdef			tests-util-tests
+./usr/tests/usr.bin/unifdef/Atffile		tests-util-tests	atf
+./usr/tests/usr.bin/unifdef/d_basic.in		tests-util-tests	atf
+./usr/tests/usr.bin/unifdef/d_basic.out		tests-util-tests	atf
+./usr/tests/usr.bin/unifdef/t_basic		tests-util-tests	atf
 ./usr/tests/usr.sbin				tests-util-tests
 ./usr/tests/usr.sbin/Atffile			tests-sbin-tests	atf
 ./usr/tests/usr.sbin/traceroute			tests-util-tests
