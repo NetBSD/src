@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.24 2011/04/25 04:54:53 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.25 2011/05/03 13:19:50 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -2579,7 +2579,10 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 	int fop;
 	perfuse_msg_t *pm;
 	struct fuse_lk_in *fli;
+	struct fuse_out_header *foh;
 	struct fuse_lk_out *flo;
+	uint32_t owner;
+	size_t len;
 	int error;
 	
 	ps = puffs_getspecific(pu);
@@ -2599,6 +2602,8 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 	fli->lk.pid = fl->l_pid;
 	fli->lk_flags = (flags & F_FLOCK) ? FUSE_LK_FLOCK : 0;
 
+	owner = fl->l_pid;
+
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
 		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
@@ -2606,27 +2611,48 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 			PERFUSE_NODE_DATA(opc)->pnd_ino, fli->fh);
 #endif
 
-	if ((error = xchg_msg(pu, opc, pm, sizeof(*flo), wait_reply)) != 0)
+	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
 		goto out;
 
-	flo = GET_OUTPAYLOAD(ps, pm, fuse_lk_out);
-	fl->l_start = flo->lk.start;
-	fl->l_len = flo->lk.end - flo->lk.start;
-	fl->l_pid = flo->lk.pid;
-	fl->l_type = flo->lk.type;
-	fl->l_whence = SEEK_SET;	/* libfuse hardcodes it */
+	foh = GET_OUTHDR(ps, pm);
+	len = foh->len - sizeof(*foh);
 
 	/*
 	 * Save or clear the lock
 	 */
 	switch (op) {
-	case F_SETLK:
+	case F_GETLK:
+		if (len != sizeof(*flo))
+			DERRX(EX_SOFTWARE, 
+			      "%s: Unexpected lock reply len %zd",
+			      __func__, len);
+
+		flo = GET_OUTPAYLOAD(ps, pm, fuse_lk_out);
+		fl->l_start = flo->lk.start;
+		fl->l_len = flo->lk.end - flo->lk.start;
+		fl->l_pid = flo->lk.pid;
+		fl->l_type = flo->lk.type;
+		fl->l_whence = SEEK_SET;	/* libfuse hardcodes it */
+
 		PERFUSE_NODE_DATA(opc)->pnd_lock_owner = flo->lk.pid;
 		break;
 	case F_UNLCK:
-		PERFUSE_NODE_DATA(opc)->pnd_lock_owner = 0;
+		owner = 0;
+		/* FALLTHROUGH */
+	case F_SETLK: 
+		/* FALLTHROUGH */
+	case F_SETLKW: 
+		if (error != 0)
+			PERFUSE_NODE_DATA(opc)->pnd_lock_owner = owner;
+
+		if (len != 0)
+			DERRX(EX_SOFTWARE, 
+			      "%s: Unexpected unlock reply len %zd",
+			      __func__, len);
+
 		break;
 	default:
+		DERRX(EX_SOFTWARE, "%s: Unexpected op %d", __func__, op);
 		break;
 	}
 	
