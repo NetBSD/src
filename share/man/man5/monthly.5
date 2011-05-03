@@ -1,4 +1,4 @@
-.\"	$NetBSD: monthly.5,v 1.1 2011/05/03 16:12:23 jruoho Exp $
+.\"	$NetBSD: monthly.5,v 1.2 2011/05/03 16:25:19 jruoho Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -24,18 +24,15 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 6, 2007
-.Dt MONTHLY.CONF 5
+.Dd May 3, 2011
+.Dt MONTHLY 5
 .Os
 .Sh NAME
+.Nm monthly ,
 .Nm monthly.conf
-.Nd monthly maintenance configuration file
+.Nd monthly maintenance
 .Sh DESCRIPTION
 The
-.Nm
-file specifies which of the standard
-.Pa /etc/monthly
-services are performed.  The
 .Pa /etc/monthly
 script is normally run in the morning of the 1st of every month, on a
 .Nx
@@ -43,6 +40,11 @@ system.
 Note: this is disabled (commented out) in the default root's
 .Xr crontab 5
 file.
+The
+.Pa /etc/monthly.conf
+file specifies which of the standard
+.Nm
+services are performed.
 .Pp
 There are currently no monthly tasks.
 .Sh FILES
@@ -56,10 +58,10 @@ local site additions to
 .Pa /etc/monthly
 .El
 .Sh SEE ALSO
-.Xr daily.conf 5 ,
-.Xr weekly.conf 5
+.Xr daily 5 ,
+.Xr weekly 5
 .Sh HISTORY
 The
-.Nm
+.Pa /etc/monthly.conf
 file appeared in
 .Nx 1.3 .
