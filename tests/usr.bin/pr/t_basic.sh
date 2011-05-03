@@ -1,6 +1,6 @@
 #! /usr/bin/atf-sh
 #
-# $NetBSD: t_basic.sh,v 1.1 2011/05/03 08:36:15 jruoho Exp $
+# $NetBSD: t_basic.sh,v 1.2 2011/05/03 14:26:11 jruoho Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,7 +31,7 @@
 #
 
 atf_test_case basic
-nonexistent_head() {
+basic_head() {
 	atf_set "descr" "A basic test of pr(1)"
 }
 
