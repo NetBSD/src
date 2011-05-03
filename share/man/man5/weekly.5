@@ -1,4 +1,4 @@
-.\"	$NetBSD: weekly.5,v 1.1 2011/05/03 16:12:23 jruoho Exp $
+.\"	$NetBSD: weekly.5,v 1.2 2011/05/03 16:25:19 jruoho Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -24,22 +24,24 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 15, 2007
-.Dt WEEKLY.CONF 5
+.Dd May 3, 2011
+.Dt WEEKLY 5
 .Os
 .Sh NAME
+.Nm weekly ,
 .Nm weekly.conf
-.Nd weekly maintenance configuration file
+.Nd weekly maintenance
 .Sh DESCRIPTION
 The
-.Nm
-file specifies which of the standard
-.Pa /etc/weekly
-services are performed.  The
 .Pa /etc/weekly
 script is run, by default, every Saturday morning on a
 .Nx
 system.
+The
+.Pa /etc/weekly.conf
+file specifies which of the standar
+.Nm
+services are performed.
 .Pp
 The variables described below can be set to
 .Dq YES
@@ -56,19 +58,22 @@ file.
 directly, as it is often replaced during system upgrades.)
 .Bl -tag -width rebuild_locatedb
 .It Sy rebuild_locatedb
-This rebuilds the locate database,
+This rebuilds the
+.Xr locate 1
+database,
 .Pa /var/db/locate.database ,
 which must also exist, in order to be rebuilt.
 .It Sy rebuild_whatisdb
-This rebuilds the whatis database(s).
+This rebuilds the
+.Xr whatis 1
+database(s).
 Note that
 .Nx
 provides a default whatis.db for the system manual pages and
 this may not be needed.
 (Adjust your
 .Pa /etc/man.conf
-as necessary.
-See
+as necessary; see
 .Xr man.conf 5
 for details.)
 .El
@@ -87,6 +92,10 @@ local site additions to
 .Xr monthly.conf 5
 .Sh HISTORY
 The
-.Nm
-file appeared in
+.Pa /etc/weekly
+script first appeared in
+.Bx 4.3 .
+The
+.Pa /etc/weekly.conf
+configuration file appeared in
 .Nx 1.3 .
