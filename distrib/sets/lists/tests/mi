@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.321 2011/05/03 04:50:30 jruoho Exp $
+# $NetBSD: mi,v 1.322 2011/05/03 06:13:06 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2258,6 +2258,9 @@
 ./usr/tests/sbin/fsck_ffs/Atffile		tests-sbin-tests	atf
 ./usr/tests/sbin/fsck_ffs/t_check_quotas	tests-sbin-tests	atf
 ./usr/tests/sbin/fsck_ffs/t_enable_quotas	tests-sbin-tests	atf
+./usr/tests/sbin/ifconfig			tests-sbin-tests
+./usr/tests/sbin/ifconfig/Atffile		tests-sbin-tests	atf
+./usr/tests/sbin/ifconfig/t_nonexistent		tests-sbin-tests	atf
 ./usr/tests/sbin/newfs				tests-sbin-tests
 ./usr/tests/sbin/newfs/Atffile			tests-sbin-tests	atf
 ./usr/tests/sbin/newfs/t_enable_quotas		tests-sbin-tests	atf

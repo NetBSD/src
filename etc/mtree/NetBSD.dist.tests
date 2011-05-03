@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.41 2011/05/02 11:55:15 njoly Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.42 2011/05/03 06:13:06 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -228,6 +228,7 @@
 ./usr/tests/rump/rumpvfs
 ./usr/tests/sbin
 ./usr/tests/sbin/fsck_ffs
+./usr/tests/sbin/ifconfig
 ./usr/tests/sbin/newfs
 ./usr/tests/sbin/resize_ffs
 ./usr/tests/sys
