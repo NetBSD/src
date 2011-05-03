@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.24 2011/02/19 13:34:38 jmcneill Exp $	*/
+/*	$NetBSD: i386.c,v 1.25 2011/05/03 09:06:22 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.24 2011/02/19 13:34:38 jmcneill Exp $");
+__RCSID("$NetBSD: i386.c,v 1.25 2011/05/03 09:06:22 jruoho Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -961,6 +961,16 @@ amd_amd64_name(struct cpu_info *ci)
 		switch (model) {
 			case 0x02:
 				ret = "Family 10h";
+				break;
+			default:
+				ret = "Unknown AMD64 CPU";
+				break;
+		}
+		break;
+	case 0x02:
+		switch (model) {
+			case 0x03:
+				ret = "Family 11h";
 				break;
 			default:
 				ret = "Unknown AMD64 CPU";
