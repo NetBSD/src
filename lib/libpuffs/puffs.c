@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.115 2010/12/06 14:50:34 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.116 2011/05/03 13:16:47 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.115 2010/12/06 14:50:34 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.116 2011/05/03 13:16:47 manu Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -98,6 +98,7 @@ fillvnopmask(struct puffs_ops *pops, struct puffs_kargs *pa)
 	FILLOP(print,    PRINT);
 	FILLOP(read,     READ);
 	FILLOP(write,    WRITE);
+	FILLOP(advlock,  ADVLOCK);
 	FILLOP(abortop,  ABORTOP);
 	FILLOP(pathconf, PATHCONF);
 
