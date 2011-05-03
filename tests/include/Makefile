@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2011/05/01 17:07:06 jruoho Exp $
+# $NetBSD: Makefile,v 1.7 2011/05/03 04:50:31 jruoho Exp $
 
 NOMAN=		# defined
 
@@ -8,6 +8,7 @@ TESTSDIR=	${TESTSBASE}/include
 TESTS_SUBDIRS=	sys
 
 TESTS_C=	t_bitstring
+TESTS_C+=	t_bswap
 TESTS_C+=	t_errno
 TESTS_C+=	t_glob
 TESTS_C+=	t_inttypes
