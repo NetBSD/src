@@ -360,21 +360,17 @@ void vtw_del(vtw_ctl_t *, vtw_t *);
 int vtw_lookup_v4(const struct ip *ip, const struct tcphdr *th,
 		  uint32_t faddr, uint16_t fport,
 		  uint32_t laddr, uint16_t lport);
-#ifdef INET6
 struct ip6_hdr;
 struct in6_addr;
 
 int vtw_lookup_v6(const struct ip6_hdr *ip, const struct tcphdr *th,
 		  const struct in6_addr *faddr, uint16_t fport,
 		  const struct in6_addr *laddr, uint16_t lport);
-#endif
 
 typedef struct vestigial_inpcb {
 	union {
 		struct in_addr	v4;
-#ifdef INET6
 		struct in6_addr	v6;
-#endif
 	} faddr, laddr;
 	uint16_t		fport, lport;
 	uint32_t		valid		: 1;
@@ -401,9 +397,7 @@ typedef struct sin_either {
 	uint16_t	sin_port;
 	union {
 		struct in_addr	v4;
-#ifdef INET6
 		struct in6_addr	v6;
-#endif
 	}		sin_addr;
 } sin_either_t;
 
