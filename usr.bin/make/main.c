@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.196 2011/02/20 23:12:09 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.197 2011/05/04 20:38:31 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.196 2011/02/20 23:12:09 joerg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.197 2011/05/04 20:38:31 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.196 2011/02/20 23:12:09 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.197 2011/05/04 20:38:31 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -687,7 +687,7 @@ ReadAllMakefiles(const void *p, const void *q)
 	return (ReadMakefile(p, q) == 0);
 }
 
-static int
+int
 str2Lst_Append(Lst lp, char *str, const char *sep)
 {
     char *cp;
