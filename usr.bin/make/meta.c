@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.16 2011/03/31 06:50:43 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.17 2011/05/04 20:38:32 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -55,6 +55,7 @@
 #endif
 
 static BuildMon Mybm;			/* for compat */
+static Lst metaBailiwick;			/* our scope of control */
 
 Boolean useMeta = FALSE;
 static Boolean useFilemon = FALSE;
@@ -574,6 +575,14 @@ meta_init(const char *make_mode)
 	return;
     once = 1;
     memset(&Mybm, 0, sizeof(Mybm));
+    /*
+     * We consider ourselves master of all within ${.MAKE.META.BAILIWICK}
+     */
+    metaBailiwick = Lst_Init(FALSE);
+    cp = Var_Subst(NULL, "${.MAKE.META.BAILIWICK:O:u:tA}", VAR_GLOBAL, 0);
+    if (cp) {
+	str2Lst_Append(metaBailiwick, cp, NULL);
+    }
 }
 
 /*
@@ -773,6 +782,26 @@ fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
     return 0;
 }
 
+static int
+prefix_match(void *p, void *q)
+{
+    const char *prefix = p;
+    const char *path = q;
+    size_t n = strlen(prefix);
+
+    return (0 == strncmp(path, prefix, n));
+}
+
+static int
+string_match(const void *p, const void *q)
+{
+    const char *p1 = p;
+    const char *p2 = q;
+
+    return strcmp(p1, p2);
+}
+
+
 /*
  * When running with 'meta' functionality, a target can be out-of-date
  * if any of the references in it's meta data file is more recent.
@@ -796,9 +825,12 @@ meta_oodate(GNode *gn, Boolean oodate)
     static size_t tmplen = 0;
     FILE *fp;
     Boolean ignoreOODATE = FALSE;
-
+    Lst missingFiles;
+    
     if (oodate)
 	return oodate;		/* we're done */
+
+    missingFiles = Lst_Init(FALSE);
 
     /*
      * We need to check if the target is out-of-date. This includes
@@ -962,6 +994,73 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    strlcpy(latestdir, p, sizeof(latestdir));
 		    break;
 
+		case 'M':		/* renaMe */
+		    if (Lst_IsEmpty(missingFiles))
+			break;
+		    /* 'L' and 'M' put single quotes around the args */
+		    if (*p == '\'') {
+			char *ep;
+
+			p++;
+			if ((ep = strchr(p, '\'')))
+			    *ep = '\0';
+		    }
+		    /* FALLTHROUGH */
+		case 'D':		/* unlink */
+		    if (*p == '/' && !Lst_IsEmpty(missingFiles)) {
+			/* remove p from the missingFiles list if present */
+			if ((ln = Lst_Find(missingFiles, p, string_match)) != NULL) {
+			    char *tp = Lst_Datum(ln);
+			    Lst_Remove(missingFiles, ln);
+			    free(tp);
+			}
+		    }
+		    break;
+		case 'L':		/* Link */
+		    /* we want the target */
+		    if (strsep(&p, " ") == NULL)
+			continue;
+		    /* 'L' and 'M' put single quotes around the args */
+		    if (*p == '\'') {
+			char *ep;
+
+			p++;
+			if ((ep = strchr(p, '\'')))
+			    *ep = '\0';
+		    }
+		    /* FALLTHROUGH */
+		case 'W':		/* Write */
+		    /*
+		     * If a file we generated within our bailiwick
+		     * but outside of .OBJDIR is missing,
+		     * we need to do it again. 
+		     */
+		    /* ignore non-absolute paths */
+		    if (*p != '/')
+			break;
+
+		    if (Lst_IsEmpty(metaBailiwick))
+			break;
+
+		    /* ignore cwd - normal dependencies handle those */
+		    if (strncmp(p, cwd, cwdlen) == 0)
+			break;
+
+		    if (!Lst_ForEach(metaBailiwick, prefix_match, p))
+			break;
+
+		    /* tmpdir might be within */
+		    if (tmplen > 0 && strncmp(p, tmpdir, tmplen) == 0)
+			break;
+
+		    /* ignore anything containing the string "tmp" */
+		    if ((strstr("tmp", p)))
+			break;
+
+		    if (stat(p, &fs) < 0) {
+			Lst_AtEnd(missingFiles, bmake_strdup(p));
+		    }
+		    break;
 		case 'R':		/* Read */
 		case 'E':		/* Exec */
 		    /*
@@ -1131,6 +1230,13 @@ meta_oodate(GNode *gn, Boolean oodate)
 	}
 
 	fclose(fp);
+	if (!Lst_IsEmpty(missingFiles)) {
+	    if (DEBUG(META))
+		fprintf(debug_file, "%s: missing files: %s...\n",
+			fname, (char *)Lst_Datum(Lst_First(missingFiles)));
+	    oodate = TRUE;
+	    Lst_Destroy(missingFiles, (FreeProc *)free);
+	}
     }
     if (oodate && ignoreOODATE) {
 	/*

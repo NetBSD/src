@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.85 2011/02/20 23:12:09 joerg Exp $	*/
+/*	$NetBSD: make.h,v 1.86 2011/05/04 20:38:32 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -463,6 +463,7 @@ void PrintOnError(GNode *, const char *);
 void Main_ExportMAKEFLAGS(Boolean);
 Boolean Main_SetObjdir(const char *);
 int mkTempFile(const char *, char **);
+int str2Lst_Append(Lst, char *, const char *);
 
 #ifdef __GNUC__
 #define UNCONST(ptr)	({ 		\
