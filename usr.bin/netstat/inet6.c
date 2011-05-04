@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.55 2011/05/03 23:36:26 dyoung Exp $	*/
+/*	$NetBSD: inet6.c,v 1.56 2011/05/04 00:55:19 dyoung Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.55 2011/05/03 23:36:26 dyoung Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.56 2011/05/04 00:55:19 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -1123,7 +1123,7 @@ void
 icmp6_stats(u_long off, const char *name)
 {
 	uint64_t icmp6stat[ICMP6_NSTATS];
-	register int i, first;
+	int i, first;
 
 	if (use_sysctl) {
 		size_t size = sizeof(icmp6stat);
@@ -1386,7 +1386,7 @@ do {\
 char *
 inet6name(const struct in6_addr *in6p)
 {
-	register char *cp;
+	char *cp;
 	static char line[NI_MAXHOST];
 	struct hostent *hp;
 	static char domain[MAXHOSTNAMELEN + 1];
