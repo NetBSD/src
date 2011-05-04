@@ -1,4 +1,4 @@
-/*	$NetBSD: vtw.c,v 1.2 2011/05/04 01:30:01 dyoung Exp $	*/
+/*	$NetBSD: vtw.c,v 1.3 2011/05/04 01:31:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: vtw.c,v 1.2 2011/05/04 01:30:01 dyoung Exp $");
+__RCSID("$NetBSD: vtw.c,v 1.3 2011/05/04 01:31:40 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ snarf(const void *addr, void *buf, size_t len)
 	cc = kvm_read(get_kvmd(), (unsigned long) addr, buf, len);
 
 	if (cc != len) {
-		warnx("%s: short read at %p, len %x cc %zu\n", __func__, addr,
+		warnx("%s: short read at %p, len %x cc %zx\n", __func__, addr,
 		    len, cc);
 	}
 }
