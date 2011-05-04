@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.189 2011/05/04 20:38:32 sjg Exp $
+.\"	$NetBSD: make.1,v 1.190 2011/05/04 21:14:56 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2019,6 +2019,21 @@ The way that .for loop variables are substituted changed after
 so that they still appear to be variable expansions.
 In particular this stops them being treated as syntax, and removes some
 obscure problems using them in .if statements.
+.Pp
+Unlike other
+.Nm
+programs, this implementation by default executes all commands for a given
+target using a single shell invocation.
+This is done for both efficiency and to simplify error handling in remote
+command invocations.
+Typically this is transparent to the user, unless the target commands change
+the current working directory using
+.Dq cd
+or
+.Dq chdir .
+To be compatible with Makefiles that do this, one can use
+.Fl B
+to disable this behavior.
 .Sh SEE ALSO
 .Xr mkdep 1
 .Sh HISTORY
@@ -2026,6 +2041,13 @@ A
 .Nm
 command appeared in
 .At v7 .
+This
+.Nm
+implementation is based on Adam De Boor's pmake program which was written
+for Sprint at Berkeley.
+It was designed to be a parallel distributed make running jobs on different
+machines using a daemon called 
+.Dq customs .
 .Sh BUGS
 The
 .Nm
