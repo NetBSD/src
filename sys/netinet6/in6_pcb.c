@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.113 2011/05/03 18:28:45 dyoung Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.114 2011/05/04 01:45:48 dyoung Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.113 2011/05/03 18:28:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.114 2011/05/04 01:45:48 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1120,6 +1120,9 @@ in6_pcblookup_connect(struct inpcbtable *table, const struct in6_addr *faddr6,
 	struct inpcb_hdr *inph;
 	struct in6pcb *in6p;
 	u_int16_t fport = fport_arg, lport = lport_arg;
+
+	if (vp)
+		vp->valid = 0;
 
 	head = IN6PCBHASH_CONNECT(table, faddr6, fport, laddr6, lport);
 	LIST_FOREACH(inph, head, inph_hash) {
