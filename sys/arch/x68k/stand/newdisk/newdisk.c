@@ -1,4 +1,4 @@
-/*	$NetBSD: newdisk.c,v 1.8 2011/04/29 06:00:33 isaki Exp $	*/
+/*	$NetBSD: newdisk.c,v 1.9 2011/05/04 11:44:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Minoura Makoto
@@ -41,14 +41,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <util.h>
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
+#include <sys/ioctl.h>
 
-char *mboot = MBOOT;
+const char *mboot = MBOOT;
 char dev[MAXPATHLEN];
 char buf[4096 + 1];
 
