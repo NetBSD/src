@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.31 2010/12/13 21:15:30 pooka Exp $	*/
+/*	$NetBSD: unix.c,v 1.32 2011/05/04 01:11:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.31 2010/12/13 21:15:30 pooka Exp $");
+__RCSID("$NetBSD: unix.c,v 1.32 2011/05/04 01:11:29 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,6 @@ static	void unixdomainpr(struct socket *, void *);
 
 static struct	file *file, *fileNFILE;
 static int	ns_nfiles;
-extern	kvm_t *kvmd;
 
 static void
 unixdomainprhdr(void)
@@ -210,9 +209,9 @@ unixpr(off)
 			goto again;
 		}
 	} else {
-		filebuf = (char *)kvm_getfiles(kvmd, KERN_FILE, 0, &ns_nfiles);
+		filebuf = (char *)kvm_getfiles(get_kvmd(), KERN_FILE, 0, &ns_nfiles);
 		if (filebuf == 0) {
-			printf("file table read error: %s", kvm_geterr(kvmd));
+			printf("file table read error: %s", kvm_geterr(get_kvmd()));
 			return;
 		}
 		file = (struct file *)(filebuf + sizeof(fp));
