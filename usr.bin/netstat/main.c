@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.78 2011/05/03 18:28:46 dyoung Exp $	*/
+/*	$NetBSD: main.c,v 1.79 2011/05/04 01:13:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.78 2011/05/03 18:28:46 dyoung Exp $");
+__RCSID("$NetBSD: main.c,v 1.79 2011/05/04 01:13:35 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -348,9 +348,9 @@ static void usage __P((void));
 static struct protox *name2protox __P((const char *));
 static struct protox *knownname __P((const char *));
 static void prepare(const char *, const char *, struct protox *tp);
-static kvm_t *prepare_kvmd(const char *, const char *);
+static kvm_t *prepare_kvmd(const char *, const char *, char *);
 
-kvm_t *kvmd = NULL;
+static kvm_t *kvmd = NULL;
 gid_t egid;
 int interval;	/* repeat interval for i/f stats */
 static const char *nlistf = NULL, *memf = NULL;
@@ -358,27 +358,30 @@ static const char *nlistf = NULL, *memf = NULL;
 kvm_t *
 get_kvmd(void)
 {
-	return prepare_kvmd(nlistf, memf);
-}
-
-static kvm_t *
-prepare_kvmd(const char *nf, const char *mf)
-{
 	char buf[_POSIX2_LINE_MAX];
 
 	if (kvmd != NULL)
 		return kvmd;
-	(void)setegid(egid);
-	kvmd = kvm_openfiles(nf, mf, NULL, O_RDONLY, buf);
-	(void)setgid(getgid());
-	if (kvmd == NULL)
+	if ((kvmd = prepare_kvmd(nlistf, memf, buf)) == NULL)
 		err(1, "kvm error: %s", buf);
 	return kvmd;
+}
+
+static kvm_t *
+prepare_kvmd(const char *nf, const char *mf, char *errbuf)
+{
+	kvm_t *k;
+
+	(void)setegid(egid);
+	k = kvm_openfiles(nf, mf, NULL, O_RDONLY, errbuf);
+	(void)setgid(getgid());
+	return k;
 }
 
 void
 prepare(const char *nf, const char *mf, struct protox *tp)
 {
+	char buf[_POSIX2_LINE_MAX];
 	/*
 	 * Try to figure out if we can use sysctl or not.
 	 */
@@ -389,7 +392,7 @@ prepare(const char *nf, const char *mf, struct protox *tp)
 
 		/* If we have -M and -N, we're not dealing with live memory. */
 		use_sysctl = 0;
-	} else if (true || qflag ||
+	} else if (qflag ||
 		   rflag ||
 		   iflag ||
 #ifndef SMALL
@@ -415,9 +418,12 @@ prepare(const char *nf, const char *mf, struct protox *tp)
 		use_sysctl = 1;
 	}
 
-	if (!use_sysctl) {
-		kvmd = prepare_kvmd(nf, mf);
+	kvmd = prepare_kvmd(nf, mf, buf);
 
+	if (!use_sysctl) {
+
+		if (kvmd == NULL)
+			err(1, "kvm error: %s", buf);
 		if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
 			if (nf)
 				errx(1, "%s: no namelist", nf);
