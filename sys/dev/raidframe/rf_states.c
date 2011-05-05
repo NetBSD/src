@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.46 2011/04/27 07:55:15 mrg Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.47 2011/05/05 07:12:58 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.46 2011/04/27 07:55:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.47 2011/05/05 07:12:58 mrg Exp $");
 
 #include <sys/errno.h>
 
@@ -267,9 +267,9 @@ rf_State_IncrAccessCount(RF_RaidAccessDesc_t *desc)
 	raidPtr = desc->raidPtr;
 	/* Bummer. We have to do this to be 100% safe w.r.t. the increment
 	 * below */
-	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
+	rf_lock_mutex2(raidPtr->access_suspend_mutex);
 	raidPtr->accs_in_flight++;	/* used to detect quiescence */
-	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
+	rf_unlock_mutex2(raidPtr->access_suspend_mutex);
 
 	desc->state++;
 	return RF_FALSE;
@@ -282,12 +282,12 @@ rf_State_DecrAccessCount(RF_RaidAccessDesc_t *desc)
 
 	raidPtr = desc->raidPtr;
 
-	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
+	rf_lock_mutex2(raidPtr->access_suspend_mutex);
 	raidPtr->accs_in_flight--;
 	if (raidPtr->accesses_suspended && raidPtr->accs_in_flight == 0) {
 		rf_SignalQuiescenceLock(raidPtr);
 	}
-	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
+	rf_unlock_mutex2(raidPtr->access_suspend_mutex);
 
 	desc->state++;
 	return RF_FALSE;
@@ -316,12 +316,12 @@ rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 	used_cb = 0;
 	cb = NULL;
 
-	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
+	rf_lock_mutex2(raidPtr->access_suspend_mutex);
 	/* Do an initial check to see if we might need a callback structure */
 	if (raidPtr->accesses_suspended) {
 		need_cb = 1;
 	}
-	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
+	rf_unlock_mutex2(raidPtr->access_suspend_mutex);
 
 	if (need_cb) {
 		/* create a callback if we might need it...
@@ -329,7 +329,7 @@ rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 		cb = rf_AllocCallbackDesc();
 	}
 
-	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
+	rf_lock_mutex2(raidPtr->access_suspend_mutex);
 	if (raidPtr->accesses_suspended) {
 		cb->callbackFunc = (void (*) (RF_CBParam_t)) rf_ContinueRaidAccess;
 		cb->callbackArg.p = (void *) desc;
@@ -338,7 +338,7 @@ rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 		suspended = RF_TRUE;
 		used_cb = 1;
 	}
-	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
+	rf_unlock_mutex2(raidPtr->access_suspend_mutex);
 
 	if ((need_cb == 1) && (used_cb == 0)) {
 		rf_FreeCallbackDesc(cb);
