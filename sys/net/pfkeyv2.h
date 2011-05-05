@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.27 2010/09/05 06:52:53 spz Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.28 2011/05/05 17:46:48 drochner Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -370,6 +370,8 @@ struct sadb_x_nat_t_frag {
 #define SADB_X_EALG_RIJNDAELCBC	12
 #define SADB_X_EALG_AES		12
 #define SADB_X_EALG_AESCTR	13
+/* private allocations - based on RFC4312/IANA assignment */
+#define SADB_X_EALG_CAMELLIACBC	22
 /* private allocations should use 249-255 (RFC2407) */
 #define SADB_X_EALG_SKIPJACK    250
 
