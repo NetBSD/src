@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.21 2011/03/09 11:43:36 drochner Exp $ */
+/*	$NetBSD: xform.c,v 1.22 2011/05/05 17:42:17 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.21 2011/03/09 11:43:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.22 2011/05/05 17:42:17 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -128,6 +128,11 @@ const struct enc_xform enc_xform_rijndael128 = {
 const struct enc_xform enc_xform_arc4 = {
 	CRYPTO_ARC4, "ARC4",
 	1, 1, 32
+};
+
+const struct enc_xform enc_xform_camellia = {
+	CRYPTO_CAMELLIA_CBC, "Camellia",
+	16, 8, 32
 };
 
 /* Authentication instances */
