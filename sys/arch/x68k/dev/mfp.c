@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.24 2011/05/04 12:27:03 tsutsui Exp $	*/
+/*	$NetBSD: mfp.c,v 1.25 2011/05/05 13:44:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.24 2011/05/04 12:27:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.25 2011/05/05 13:44:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ mfp_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	mfp_attached = 1;
 
+	/* mfp_init() is already called via early config_console() */
 	sc->sc_bst = ia->ia_bst;
 	sc->sc_intr = ia->ia_intr;
 	ia->ia_size = 0x30;
