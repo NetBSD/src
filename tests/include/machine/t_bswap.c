@@ -1,4 +1,4 @@
-/* $NetBSD: t_bswap.c,v 1.1 2011/05/03 04:50:31 jruoho Exp $ */
+/* $NetBSD: t_bswap.c,v 1.1 2011/05/05 05:39:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bswap.c,v 1.1 2011/05/03 04:50:31 jruoho Exp $");
+__RCSID("$NetBSD: t_bswap.c,v 1.1 2011/05/05 05:39:11 jruoho Exp $");
 
 #include <sys/types.h>
 #include <machine/bswap.h>
