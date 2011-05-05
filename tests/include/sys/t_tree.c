@@ -1,7 +1,7 @@
-/* $NetBSD: t_rbstress.c,v 1.2 2011/04/07 18:14:08 jruoho Exp $ */
+/* $NetBSD: t_tree.c,v 1.1 2011/05/05 13:36:05 jruoho Exp $ */
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,10 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <atf-c.h>
-
 #include <sys/cdefs.h>
 #include <sys/tree.h>
+
+#include <atf-c.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -93,14 +93,14 @@ test(void)
 	return fail;
 }
 
-ATF_TC(rbstress);
-ATF_TC_HEAD(rbstress, tc)
+ATF_TC(tree_rbstress);
+ATF_TC_HEAD(tree_rbstress, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "rb-tree stress test");
 }
 
-ATF_TC_BODY(rbstress, tc)
+ATF_TC_BODY(tree_rbstress, tc)
 {
 	int i, fail, f;
 
@@ -118,7 +118,7 @@ ATF_TC_BODY(rbstress, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, rbstress);
+	ATF_TP_ADD_TC(tp, tree_rbstress);
 
 	return atf_no_error();
 }
