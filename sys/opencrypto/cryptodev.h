@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.19 2011/02/25 20:13:10 drochner Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.20 2011/05/05 17:42:17 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -137,6 +137,7 @@
 #define CRYPTO_DEFLATE_COMP_NOGROW 23 /* Deflate, fail if not compressible */
 #define CRYPTO_SHA2_384_HMAC	24
 #define CRYPTO_SHA2_512_HMAC	25
+#define CRYPTO_CAMELLIA_CBC	26
 #define CRYPTO_ALGORITHM_MAX	26 /* Keep updated - see below */
 
 /* Algorithm flags */
