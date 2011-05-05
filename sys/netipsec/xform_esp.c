@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.32 2011/05/05 17:48:29 drochner Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.33 2011/05/05 20:15:14 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.32 2011/05/05 17:48:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.33 2011/05/05 20:15:14 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -516,7 +516,7 @@ esp_input_cb(struct cryptop *crp)
 	saidx = &sav->sah->saidx;
 	IPSEC_ASSERT(saidx->dst.sa.sa_family == AF_INET ||
 		saidx->dst.sa.sa_family == AF_INET6,
-		("ah_input_cb: unexpected protocol family %u",
+		("esp_input_cb: unexpected protocol family %u",
 		 saidx->dst.sa.sa_family));
 
 	esph = sav->tdb_authalgxform;
