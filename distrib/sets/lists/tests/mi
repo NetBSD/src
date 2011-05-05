@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.327 2011/05/05 05:24:45 jruoho Exp $
+# $NetBSD: mi,v 1.328 2011/05/05 05:28:52 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -279,20 +279,20 @@
 ./usr/libdata/debug/usr/tests/fs/vfs/t_unpriv.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vfsops.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vnops.debug			tests-fs-debug		debug,atf
-./usr/libdata/debug/usr/tests/include					tests-ipf-tests
-./usr/libdata/debug/usr/tests/include/sys				tests-ipf-tests
-./usr/libdata/debug/usr/tests/include/sys/t_bitops.debug		tests-ipf-tests		debug,atf
-./usr/libdata/debug/usr/tests/include/sys/t_bootblock.debug		tests-ipf-tests		debug,atf
-./usr/libdata/debug/usr/tests/include/sys/t_types.debug			tests-ipf-tests		debug,atf
-./usr/libdata/debug/usr/tests/include/t_bitstring.debug			tests-ipf-tests		debug,atf
-./usr/libdata/debug/usr/tests/include/t_bswap.debug			tests-ipf-tests		debug,atf
-./usr/libdata/debug/usr/tests/include/t_errno.debug			tests-ipf-tests		debug,atf
-./usr/libdata/debug/usr/tests/include/t_glob.debug			tests-ipf-tests		debug,atf
-./usr/libdata/debug/usr/tests/include/t_inttypes.debug			tests-ipf-tests		debug,atf
-./usr/libdata/debug/usr/tests/include/t_limits.debug			tests-ipf-tests		debug,atf
-./usr/libdata/debug/usr/tests/include/t_netdb.debug			tests-ipf-tests		debug,atf
-./usr/libdata/debug/usr/tests/include/t_paths.debug			tests-ipf-tests		debug,atf
-./usr/libdata/debug/usr/tests/include/t_stdint.debug			tests-ipf-tests		debug,atf
+./usr/libdata/debug/usr/tests/include					tests-include-tests
+./usr/libdata/debug/usr/tests/include/sys				tests-include-tests
+./usr/libdata/debug/usr/tests/include/sys/t_bitops.debug		tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/sys/t_bootblock.debug		tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/sys/t_types.debug			tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/t_bitstring.debug			tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/t_bswap.debug			tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/t_errno.debug			tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/t_glob.debug			tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/t_inttypes.debug			tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/t_limits.debug			tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/t_netdb.debug			tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/t_paths.debug			tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/t_stdint.debug			tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/t_types.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests
