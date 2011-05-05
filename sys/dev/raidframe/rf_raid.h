@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.41 2011/04/30 01:44:36 mrg Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.42 2011/05/05 07:12:58 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -195,7 +195,8 @@ struct RF_Raid_s {
 	/*
          * Array-quiescence stuff
          */
-	RF_DECLARE_MUTEX(access_suspend_mutex)
+	rf_declare_mutex2(access_suspend_mutex);
+	rf_declare_cond2(access_suspend_cv);
 	RF_IoCount_t accesses_suspended;
 	RF_IoCount_t accs_in_flight;
 	int     access_suspend_release;
