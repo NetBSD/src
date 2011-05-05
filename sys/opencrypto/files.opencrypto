@@ -1,4 +1,4 @@
-#	$NetBSD: files.opencrypto,v 1.21 2011/02/19 16:26:34 drochner Exp $
+#	$NetBSD: files.opencrypto,v 1.22 2011/05/05 17:44:39 drochner Exp $
 #
 #
 
@@ -15,7 +15,7 @@ file	opencrypto/crypto.c		opencrypto
 # Pseudo-device that provides software implementations of various cryptographic
 # algorithms.
 defpseudo swcrypto: opencrypto,
-		blowfish, des, cast128, rijndael, skipjack
+		blowfish, des, cast128, rijndael, skipjack, camellia
 file	opencrypto/cryptosoft.c		swcrypto
 file	opencrypto/deflate.c		swcrypto	# wrapper around zlib
 
