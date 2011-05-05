@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.328 2011/05/05 05:28:52 jruoho Exp $
+# $NetBSD: mi,v 1.329 2011/05/05 05:39:11 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -280,12 +280,14 @@
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vfsops.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vnops.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/include					tests-include-tests
+./usr/libdata/debug/usr/tests/include/machine				tests-include-tests
+./usr/libdata/debug/usr/tests/include/machine/t_bswap.debug		tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys				tests-include-tests
 ./usr/libdata/debug/usr/tests/include/sys/t_bitops.debug		tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_bootblock.debug		tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/sys/t_types.debug			tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/t_bitstring.debug			tests-include-tests	debug,atf
-./usr/libdata/debug/usr/tests/include/t_bswap.debug			tests-include-tests	debug,atf
+./usr/libdata/debug/usr/tests/include/t_bswap.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/include/t_errno.debug			tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/t_glob.debug			tests-include-tests	debug,atf
 ./usr/libdata/debug/usr/tests/include/t_inttypes.debug			tests-include-tests	debug,atf
@@ -1381,13 +1383,16 @@
 ./usr/tests/include/d_bitstring_64.out		tests-include-tests	atf
 ./usr/tests/include/d_bitstring_67.out		tests-include-tests	atf
 ./usr/tests/include/d_bitstring_8.out		tests-include-tests	atf
+./usr/tests/include/machine			tests-include-tests
+./usr/tests/include/machine/Atffile		tests-include-tests	atf
+./usr/tests/include/machine/t_bswap		tests-include-tests	atf
 ./usr/tests/include/sys				tests-include-tests
 ./usr/tests/include/sys/Atffile			tests-include-tests	atf
 ./usr/tests/include/sys/t_bitops		tests-include-tests	atf
 ./usr/tests/include/sys/t_bootblock		tests-include-tests	atf
 ./usr/tests/include/sys/t_types			tests-include-tests	atf
 ./usr/tests/include/t_bitstring			tests-include-tests	atf
-./usr/tests/include/t_bswap			tests-include-tests	atf
+./usr/tests/include/t_bswap			tests-obsolete		obsolete
 ./usr/tests/include/t_errno			tests-include-tests	atf
 ./usr/tests/include/t_glob			tests-include-tests	atf
 ./usr/tests/include/t_inttypes			tests-include-tests	atf
