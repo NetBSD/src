@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1010 2011/04/26 16:57:42 joerg Exp $
+#	$NetBSD: files,v 1.1011 2011/05/05 17:38:35 drochner Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -162,6 +162,7 @@ include "crypto/blowfish/files.blowfish"
 include "crypto/cast128/files.cast128"
 include "crypto/rijndael/files.rijndael"
 include "crypto/skipjack/files.skipjack"
+include "crypto/camellia/files.camellia"
 
 # General-purpose crypto processing framework.
 include "opencrypto/files.opencrypto"
