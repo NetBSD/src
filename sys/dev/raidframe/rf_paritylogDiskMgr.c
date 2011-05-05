@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.23 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.24 2011/05/05 04:20:51 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.23 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.24 2011/05/05 04:20:51 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -338,7 +338,7 @@ FlushLogsToDisk(
 	RF_PhysDiskAddr_t *fwr_pda;
 
 	fwr_mcpair = rf_AllocMCPair();
-	RF_LOCK_MUTEX(fwr_mcpair->mutex);
+	RF_LOCK_MCPAIR(fwr_mcpair);
 
 	RF_ASSERT(logList);
 	log = logList;
@@ -354,7 +354,7 @@ FlushLogsToDisk(
 
 		/* wait for the DAG to complete */
 		while (!fwr_mcpair->flag)
-			RF_WAIT_COND(fwr_mcpair->cond, fwr_mcpair->mutex);
+			RF_WAIT_MCPAIR(fwr_mcpair);
 		if (fwr_dag_h->status != rf_enable) {
 			RF_ERRORMSG1("Unable to write core log to disk (region %d)\n", regionID);
 			RF_ASSERT(0);
@@ -366,7 +366,7 @@ FlushLogsToDisk(
 
 		log = log->next;
 	}
-	RF_UNLOCK_MUTEX(fwr_mcpair->mutex);
+	RF_UNLOCK_MCPAIR(fwr_mcpair);
 	rf_FreeMCPair(fwr_mcpair);
 	rf_ReleaseParityLogs(raidPtr, logList);
 }
@@ -402,7 +402,7 @@ ReintegrateRegion(
 		printf("[initiating read of parity for region %d]\n",regionID);
 	parityBuffer = AcquireReintBuffer(&raidPtr->parityBufferPool);
 	prd_mcpair = rf_AllocMCPair();
-	RF_LOCK_MUTEX(prd_mcpair->mutex);
+	RF_LOCK_MCPAIR(prd_mcpair);
 	prd_mcpair->flag = RF_FALSE;
 	ReadRegionParity(regionID, prd_mcpair, parityBuffer, raidPtr,
 			 &prd_dag_h, &prd_alloclist, &prd_pda);
@@ -414,16 +414,16 @@ ReintegrateRegion(
 			       regionID);
 		regionBuffer = AcquireReintBuffer(&raidPtr->regionBufferPool);
 		rrd_mcpair = rf_AllocMCPair();
-		RF_LOCK_MUTEX(rrd_mcpair->mutex);
+		RF_LOCK_MCPAIR(rrd_mcpair);
 		rrd_mcpair->flag = RF_FALSE;
 		ReadRegionLog(regionID, rrd_mcpair, regionBuffer, raidPtr,
 			      &rrd_dag_h, &rrd_alloclist, &rrd_pda);
 	}
 	/* wait on read of region parity to complete */
 	while (!prd_mcpair->flag) {
-		RF_WAIT_COND(prd_mcpair->cond, prd_mcpair->mutex);
+		RF_WAIT_MCPAIR(prd_mcpair);
 	}
-	RF_UNLOCK_MUTEX(prd_mcpair->mutex);
+	RF_UNLOCK_MCPAIR(prd_mcpair);
 	if (prd_dag_h->status != rf_enable) {
 		RF_ERRORMSG("Unable to read parity from disk\n");
 		/* add code to fail the parity disk */
@@ -435,8 +435,8 @@ ReintegrateRegion(
 	if (raidPtr->regionInfo[regionID].diskCount > 0) {
 		/* wait on read of region log to complete */
 		while (!rrd_mcpair->flag)
-			RF_WAIT_COND(rrd_mcpair->cond, rrd_mcpair->mutex);
-		RF_UNLOCK_MUTEX(rrd_mcpair->mutex);
+			RF_WAIT_MCPAIR(rrd_mcpair);
+		RF_UNLOCK_MCPAIR(rrd_mcpair);
 		if (rrd_dag_h->status != rf_enable) {
 			RF_ERRORMSG("Unable to read region log from disk\n");
 			/* add code to fail the log disk */
@@ -457,13 +457,13 @@ ReintegrateRegion(
 		printf("[initiating write of parity for region %d]\n",
 		       regionID);
 	pwr_mcpair = rf_AllocMCPair();
-	RF_LOCK_MUTEX(pwr_mcpair->mutex);
+	RF_LOCK_MCPAIR(pwr_mcpair);
 	pwr_mcpair->flag = RF_FALSE;
 	WriteRegionParity(regionID, pwr_mcpair, parityBuffer, raidPtr,
 			  &pwr_dag_h, &pwr_alloclist, &pwr_pda);
 	while (!pwr_mcpair->flag)
-		RF_WAIT_COND(pwr_mcpair->cond, pwr_mcpair->mutex);
-	RF_UNLOCK_MUTEX(pwr_mcpair->mutex);
+		RF_WAIT_MCPAIR(pwr_mcpair);
+	RF_UNLOCK_MCPAIR(pwr_mcpair);
 	if (pwr_dag_h->status != rf_enable) {
 		RF_ERRORMSG("Unable to write parity to disk\n");
 		/* add code to fail the parity disk */
