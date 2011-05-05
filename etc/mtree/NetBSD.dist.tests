@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.46 2011/05/03 15:13:50 jruoho Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.47 2011/05/05 05:39:11 jruoho Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -36,6 +36,7 @@
 ./usr/libdata/debug/usr/tests/fs/union
 ./usr/libdata/debug/usr/tests/fs/vfs
 ./usr/libdata/debug/usr/tests/include
+./usr/libdata/debug/usr/tests/include/machine
 ./usr/libdata/debug/usr/tests/include/sys
 ./usr/libdata/debug/usr/tests/ipf
 ./usr/libdata/debug/usr/tests/kernel
@@ -150,6 +151,7 @@
 ./usr/tests/fs/zfs
 ./usr/tests/games
 ./usr/tests/include
+./usr/tests/include/machine
 ./usr/tests/include/sys
 ./usr/tests/ipf
 ./usr/tests/ipf/expected
