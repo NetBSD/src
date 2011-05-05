@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.30 2011/05/03 08:18:43 mrg Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.31 2011/05/05 08:21:09 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -68,7 +68,6 @@ typedef void *RF_ThreadArg_t;
 #define RF_WAIT_COND(_c_,_m_)		\
 	ltsleep(&(_c_), PRIBIO, "rfwcond", 0, &(_m_))
 #define RF_SIGNAL_COND(_c_)            wakeup_one(&(_c_))
-#define RF_BROADCAST_COND(_c_)         wakeup(&(_c_))
 
 #define rf_mutex_init(m)               simple_lock_init(m)
 
