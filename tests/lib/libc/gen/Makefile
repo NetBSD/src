@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.19 2011/04/17 06:18:23 jruoho Exp $
+# $NetBSD: Makefile,v 1.20 2011/05/05 13:22:56 jruoho Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/gen
 
+TESTS_C+=	t_alarm
 TESTS_C+=	t_basedirname
 TESTS_C+=	t_dir
 TESTS_C+=	t_fmtcheck
