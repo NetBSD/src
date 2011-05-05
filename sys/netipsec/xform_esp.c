@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.31 2011/03/27 21:56:57 spz Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.32 2011/05/05 17:48:29 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.31 2011/03/27 21:56:57 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.32 2011/05/05 17:48:29 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -128,6 +128,8 @@ esp_algorithm_lookup(int alg)
 		return &enc_xform_cast5;
 	case SADB_X_EALG_SKIPJACK:
 		return &enc_xform_skipjack;
+	case SADB_X_EALG_CAMELLIACBC:
+		return &enc_xform_camellia;
 	case SADB_EALG_NULL:
 		return &enc_xform_null;
 	}
@@ -1049,6 +1051,7 @@ esp_attach(void)
 	MAXIV(enc_xform_blf);		/* SADB_X_EALG_BLOWFISHCBC */
 	MAXIV(enc_xform_cast5);		/* SADB_X_EALG_CAST128CBC */
 	MAXIV(enc_xform_skipjack);	/* SADB_X_EALG_SKIPJACK */
+	MAXIV(enc_xform_camellia);	/* SADB_X_EALG_CAMELLIACBC */
 	MAXIV(enc_xform_null);		/* SADB_EALG_NULL */
 
 	xform_register(&esp_xformsw);
