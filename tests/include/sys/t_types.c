@@ -1,4 +1,4 @@
-/*	$NetBSD: t_types.c,v 1.2 2011/04/10 08:11:34 jruoho Exp $ */
+/*	$NetBSD: t_types.c,v 1.1 2011/05/05 05:24:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_types.c,v 1.2 2011/04/10 08:11:34 jruoho Exp $");
+__RCSID("$NetBSD: t_types.c,v 1.1 2011/05/05 05:24:45 jruoho Exp $");
 
 #include <sys/types.h>
 
