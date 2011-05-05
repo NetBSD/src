@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.126 2011/04/30 01:44:36 mrg Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.127 2011/05/05 07:12:58 mrg Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.126 2011/04/30 01:44:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.127 2011/05/05 07:12:58 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -136,10 +136,11 @@ static int rf_ConfigureRDFreeList(RF_ShutdownList_t **);
 rf_declare_mutex2(rf_printf_mutex);	/* debug only:  avoids interleaved
 					 * printfs by different stripes */
 
-#define SIGNAL_QUIESCENT_COND(_raid_)  wakeup(&((_raid_)->accesses_suspended))
+#define SIGNAL_QUIESCENT_COND(_raid_) \
+	rf_broadcast_cond2((_raid_)->access_suspend_cv)
 #define WAIT_FOR_QUIESCENCE(_raid_) \
-	ltsleep(&((_raid_)->accesses_suspended), PRIBIO, \
-		"raidframe quiesce", 0, &((_raid_)->access_suspend_mutex))
+	rf_wait_cond2((_raid_)->access_suspend_cv, \
+		      (_raid_)->access_suspend_mutex)
 
 static int configureCount = 0;	/* number of active configurations */
 static int isconfigged = 0;	/* is basic raidframe (non per-array)
@@ -252,6 +253,9 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 
 	rf_ShutdownList(&raidPtr->shutdownList);
 
+	rf_destroy_mutex2(raidPtr->access_suspend_mutex);
+	rf_destroy_cond2(raidPtr->access_suspend_cv);
+
 	rf_destroy_cond2(raidPtr->outstandingCond);
 	rf_destroy_mutex2(raidPtr->rad_lock);
 
@@ -286,10 +290,6 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 		DO_RAID_FAIL(); \
 		return(rc); \
 	} \
-}
-
-#define DO_RAID_MUTEX(_m_) { \
-	rf_mutex_init((_m_)); \
 }
 
 int
@@ -333,7 +333,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	}
 	rf_unlock_mutex2(configureMutex);
 
-	DO_RAID_MUTEX(&raidPtr->mutex);
+	rf_mutex_init(&raidPtr->mutex);
 	/* set up the cleanup list.  Do this after ConfigureDebug so that
 	 * value of memDebug will be set */
 
@@ -361,7 +361,8 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	raidPtr->nAccOutstanding = 0;
 	raidPtr->waitShutdown = 0;
 
-	DO_RAID_MUTEX(&raidPtr->access_suspend_mutex);
+	rf_init_mutex2(raidPtr->access_suspend_mutex, IPL_VM);
+	rf_init_cond2(raidPtr->access_suspend_cv, "rfquiesce");
 
 	raidPtr->waitForReconCond = 0;
 
@@ -788,7 +789,7 @@ rf_SuspendNewRequestsAndWait(RF_Raid_t *raidPtr)
 	if (rf_quiesceDebug)
 		printf("raid%d: Suspending new reqs\n", raidPtr->raidid);
 #endif
-	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
+	rf_lock_mutex2(raidPtr->access_suspend_mutex);
 	raidPtr->accesses_suspended++;
 	raidPtr->waiting_for_quiescence = (raidPtr->accs_in_flight == 0) ? 0 : 1;
 
@@ -807,7 +808,7 @@ rf_SuspendNewRequestsAndWait(RF_Raid_t *raidPtr)
 	printf("raid%d: Quiescence reached..\n", raidPtr->raidid);
 #endif
 
-	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
+	rf_unlock_mutex2(raidPtr->access_suspend_mutex);
 	return (raidPtr->waiting_for_quiescence);
 }
 /* wake up everyone waiting for quiescence to be released */
@@ -821,14 +822,14 @@ rf_ResumeNewRequests(RF_Raid_t *raidPtr)
 		printf("raid%d: Resuming new requests\n", raidPtr->raidid);
 #endif
 
-	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
+	rf_lock_mutex2(raidPtr->access_suspend_mutex);
 	raidPtr->accesses_suspended--;
 	if (raidPtr->accesses_suspended == 0)
 		cb = raidPtr->quiesce_wait_list;
 	else
 		cb = NULL;
 	raidPtr->quiesce_wait_list = NULL;
-	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
+	rf_unlock_mutex2(raidPtr->access_suspend_mutex);
 
 	while (cb) {
 		t = cb;
