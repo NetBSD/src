@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.288 2011/05/01 06:22:54 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.289 2011/05/05 04:20:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.288 2011/05/01 06:22:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.289 2011/05/05 04:20:51 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -162,7 +162,7 @@ int     rf_kdebug_level = 0;
 static RF_Raid_t **raidPtrs;	/* global raid device descriptors */
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
-static rf_declare_mutex2(rf_sparet_wait_mutex):
+static rf_declare_mutex2(rf_sparet_wait_mutex);
 static rf_declare_cond2(rf_sparet_wait_cv);
 static rf_declare_cond2(rf_sparet_resp_cv);
 
@@ -341,9 +341,9 @@ raidattach(int num)
 	}
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
-	rf_init_mutex2(&rf_sparet_wait_mutex);
-	rf_init_cond2(&rf_sparet_wait_cv, "sparetw");
-	rf_init_cond2(&rf_sparet_resp_cv, "rfgst");
+	rf_init_mutex2(rf_sparet_wait_mutex, IPL_VM);
+	rf_init_cond2(rf_sparet_wait_cv, "sparetw");
+	rf_init_cond2(rf_sparet_resp_cv, "rfgst");
 
 	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
 #endif
@@ -1930,11 +1930,11 @@ rf_GetSpareTableFromDaemon(RF_SparetWait_t *req)
 	rf_lock_mutex2(rf_sparet_wait_mutex);
 	req->next = rf_sparet_wait_queue;
 	rf_sparet_wait_queue = req;
-	rf_broadcast_conf2(rf_sparet_wait_cv);
+	rf_broadcast_cond2(rf_sparet_wait_cv);
 
 	/* mpsleep unlocks the mutex */
 	while (!rf_sparet_resp_queue) {
-		cv_wait(rf_sparet_resp_cv, rf_sparet_resp_mutex);
+		rf_wait_cond2(rf_sparet_resp_cv, rf_sparet_wait_mutex);
 	}
 	req = rf_sparet_resp_queue;
 	rf_sparet_resp_queue = req->next;
