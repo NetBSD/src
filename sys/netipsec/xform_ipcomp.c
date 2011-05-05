@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.26 2011/04/01 08:29:29 spz Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.27 2011/05/05 20:15:15 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.26 2011/04/01 08:29:29 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.27 2011/05/05 20:15:15 drochner Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -273,7 +273,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	saidx = &sav->sah->saidx;
 	IPSEC_ASSERT(saidx->dst.sa.sa_family == AF_INET ||
 		saidx->dst.sa.sa_family == AF_INET6,
-		("ah_input_cb: unexpected protocol family %u",
+		("ipcomp_input_cb: unexpected protocol family %u",
 		 saidx->dst.sa.sa_family));
 
 	/* Check for crypto errors */
