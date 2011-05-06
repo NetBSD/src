@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.55 2011/02/19 16:26:34 drochner Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.56 2011/05/06 21:48:46 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.55 2011/02/19 16:26:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.56 2011/05/06 21:48:46 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,11 +296,13 @@ mbail:
 		fcr->mtime = fcr->atime;
 		ses = *(u_int32_t *)data;
 		cse = csefind(fcr, ses);
-		if (cse == NULL)
+		if (cse == NULL) {
+			mutex_spin_exit(&crypto_mtx);
 			return EINVAL;
+		}
 		csedelete(fcr, cse);
-		error = csefree(cse);
 		mutex_spin_exit(&crypto_mtx);
+		error = csefree(cse);
 		break;
 	case CIOCNFSESSION:
 		mutex_spin_enter(&crypto_mtx);
@@ -922,7 +924,9 @@ cryptof_close(struct file *fp)
 	mutex_spin_enter(&crypto_mtx);
 	while ((cse = TAILQ_FIRST(&fcr->csessions))) {
 		TAILQ_REMOVE(&fcr->csessions, cse, next);
+		mutex_spin_exit(&crypto_mtx);
 		(void)csefree(cse);
+		mutex_spin_enter(&crypto_mtx);
 	}
 	seldestroy(&fcr->sinfo);
 	fp->f_data = NULL;
@@ -969,19 +973,18 @@ csedelete(struct fcrypt *fcr, struct csession *cse_del)
 	return ret;
 }
 
-/* cseadd: call with crypto_mtx held. */
 static struct csession *
 cseadd(struct fcrypt *fcr, struct csession *cse)
 {
-	KASSERT(mutex_owned(&crypto_mtx));
+	mutex_spin_enter(&crypto_mtx);
 	/* don't let session ID wrap! */
 	if (fcr->sesn + 1 == 0) return NULL;
 	TAILQ_INSERT_TAIL(&fcr->csessions, cse, next);
 	cse->ses = fcr->sesn++;
+	mutex_spin_exit(&crypto_mtx);
 	return cse;
 }
 
-/* csecreate: call with crypto_mtx held. */
 static struct csession *
 csecreate(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
     void *mackey, u_int64_t mackeylen, u_int32_t cipher, u_int32_t mac,
@@ -990,7 +993,6 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
 {
 	struct csession *cse;
 
-	KASSERT(mutex_owned(&crypto_mtx));
 	cse = pool_get(&csepl, PR_NOWAIT);
 	if (cse == NULL)
 		return NULL;
@@ -1020,7 +1022,6 @@ csefree(struct csession *cse)
 {
 	int error;
 
-	KASSERT(mutex_owned(&crypto_mtx));
 	error = crypto_freesession(cse->sid);
 	if (cse->key)
 		free(cse->key, M_XDATA);
@@ -1648,8 +1649,6 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		}
 	}
 
-	/* crypto_newsession requires that we hold the mutex. */
-	mutex_spin_enter(&crypto_mtx);
 	error = crypto_newsession(&sid, crihead, crypto_devallowsoft);
 	if (!error) {
 		DPRINTF(("cyrptodev_session: got session %d\n", (uint32_t)sid));
@@ -1667,7 +1666,6 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		DPRINTF(("SIOCSESSION violates kernel parameters %d\n",
 		    error));
 	}
-	mutex_spin_exit(&crypto_mtx);
 bail:
 	if (error) {
 		if (crie.cri_key) {
@@ -1716,7 +1714,9 @@ cryptodev_msessionfin(struct fcrypt *fcr, int count, u_int32_t *sesid)
 		if (cse == NULL)
 			continue;
 		csedelete(fcr, cse);
+		mutex_spin_exit(&crypto_mtx);
 		error = csefree(cse);
+		mutex_spin_enter(&crypto_mtx);
 	}
 	mutex_spin_exit(&crypto_mtx);
 	return 0;
