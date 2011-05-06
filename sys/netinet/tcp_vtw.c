@@ -77,11 +77,10 @@
 #include <machine/stdarg.h>
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.1 2011/05/03 18:28:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.2 2011/05/06 12:52:43 drochner Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
-static void k_vtw(int c, char **v);
 static void vtw_debug_init(void);
 
 fatp_ctl_t fat_tcpv4;
@@ -170,8 +169,6 @@ static void
 fatp_init(fatp_ctl_t *fat, uint32_t n, uint32_t m)
 {
 	fatp_t	*fp;
-
-	k_vtw(0,0);
 
 	KASSERT(n <= FATP_MAX / 2);
 
@@ -2417,9 +2414,3 @@ vtw_debug_init(void)
 	return;
 }
 #endif /* !VTW_DEBUG */
-
-static void
-k_vtw(int c, char **v)
-{
-	return;
-}
