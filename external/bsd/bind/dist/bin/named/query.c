@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.3 2011/05/06 15:28:19 taca Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -4089,9 +4089,15 @@ rpz_find(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qnamef,
 			if (dns_rdataset_isassociated(*rdatasetp))
 				dns_rdataset_disassociate(*rdatasetp);
 			dns_db_detachnode(*dbp, nodep);
-			result = dns_db_find(*dbp, qnamef, version, qtype, 0,
-					     client->now, nodep, found,
-					     *rdatasetp, NULL);
+
+			if (qtype == dns_rdatatype_rrsig ||
+			    qtype == dns_rdatatype_sig)
+				result = DNS_R_NXRRSET;
+			else 
+				result = dns_db_find(*dbp, qnamef, version,
+						     qtype, 0, client->now,
+						     nodep, found, *rdatasetp,
+						     NULL);
 		}
 	}
 	switch (result) {
