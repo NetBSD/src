@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.38 2011/02/24 19:35:46 drochner Exp $ */
+/*	$NetBSD: crypto.c,v 1.39 2011/05/06 21:48:46 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.38 2011/02/24 19:35:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.39 2011/05/06 21:48:46 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -303,7 +303,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 	u_int32_t hid, lid;
 	int err = EINVAL;
 
-	KASSERT(mutex_owned(&crypto_mtx));
+	mutex_spin_enter(&crypto_mtx);
 
 	if (crypto_drivers == NULL)
 		goto done;
@@ -366,6 +366,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 		}
 	}
 done:
+	mutex_spin_exit(&crypto_mtx);
 	return err;
 }
 
@@ -379,7 +380,7 @@ crypto_freesession(u_int64_t sid)
 	u_int32_t hid;
 	int err = 0;
 
-	KASSERT(mutex_owned(&crypto_mtx));
+	mutex_spin_enter(&crypto_mtx);
 
 	if (crypto_drivers == NULL) {
 		err = EINVAL;
@@ -414,6 +415,7 @@ crypto_freesession(u_int64_t sid)
 		memset(&crypto_drivers[hid], 0, sizeof(struct cryptocap));
 
 done:
+	mutex_spin_exit(&crypto_mtx);
 	return err;
 }
 

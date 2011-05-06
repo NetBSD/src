@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.27 2011/05/05 20:15:15 drochner Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.28 2011/05/06 21:48:46 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.27 2011/05/05 20:15:15 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.28 2011/05/06 21:48:46 drochner Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -126,9 +126,7 @@ ipcomp_init(struct secasvar *sav, const struct xformsw *xsp)
 	memset(&cric, 0, sizeof (cric));
 	cric.cri_alg = sav->tdb_compalgxform->type;
 
-	mutex_spin_enter(&crypto_mtx);
 	ses = crypto_newsession(&sav->tdb_cryptoid, &cric, crypto_support);
-	mutex_spin_exit(&crypto_mtx);
 	return ses;
 }
 
@@ -140,9 +138,7 @@ ipcomp_zeroize(struct secasvar *sav)
 {
 	int err;
 
-	mutex_spin_enter(&crypto_mtx);
 	err = crypto_freesession(sav->tdb_cryptoid);
-	mutex_spin_exit(&crypto_mtx);
 	sav->tdb_cryptoid = 0;
 	return err;
 }
