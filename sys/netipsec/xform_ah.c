@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.31 2011/02/18 20:40:58 drochner Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.32 2011/05/06 21:48:46 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.31 2011/02/18 20:40:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.32 2011/05/06 21:48:46 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -234,12 +234,9 @@ ah_init(struct secasvar *sav, const struct xformsw *xsp)
 	int error;
 
 	error = ah_init0(sav, xsp, &cria);
-	if (!error) {
-		mutex_spin_enter(&crypto_mtx);
+	if (!error)
 		error = crypto_newsession(&sav->tdb_cryptoid,
 					   &cria, crypto_support);
-		mutex_spin_exit(&crypto_mtx);
-	}
 	return error;
 }
 
@@ -256,9 +253,7 @@ ah_zeroize(struct secasvar *sav)
 	if (sav->key_auth)
 		memset(_KEYBUF(sav->key_auth), 0, _KEYLEN(sav->key_auth));
 
-	mutex_spin_enter(&crypto_mtx);
 	err = crypto_freesession(sav->tdb_cryptoid);
-	mutex_spin_exit(&crypto_mtx);
 	sav->tdb_cryptoid = 0;
 	sav->tdb_authalgxform = NULL;
 	sav->tdb_xform = NULL;
