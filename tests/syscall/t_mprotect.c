@@ -1,4 +1,4 @@
-/* $NetBSD: t_mprotect.c,v 1.4 2011/04/25 22:29:35 njoly Exp $ */
+/* $NetBSD: t_mprotect.c,v 1.5 2011/05/06 21:51:19 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mprotect.c,v 1.4 2011/04/25 22:29:35 njoly Exp $");
+__RCSID("$NetBSD: t_mprotect.c,v 1.5 2011/05/06 21:51:19 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -236,11 +236,11 @@ ATF_TC_BODY(mprotect_write, tc)
 	int sta;
 
 	/*
-	 * Map a page write-only, change the protection
+	 * Map a page read/write, change the protection
 	 * to read-only with mprotect(2), and try to write
 	 * to the page. This should generate a SIGSEGV.
 	 */
-	map = mmap(NULL, page, PROT_WRITE, MAP_ANON, -1, 0);
+	map = mmap(NULL, page, PROT_WRITE|PROT_READ, MAP_ANON, -1, 0);
 
 	if (map == MAP_FAILED)
 		return;
