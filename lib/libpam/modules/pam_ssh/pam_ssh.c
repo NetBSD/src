@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.16 2010/11/21 20:41:36 adam Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.17 2011/05/06 17:22:09 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.16 2010/11/21 20:41:36 adam Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.17 2011/05/06 17:22:09 drochner Exp $");
 #endif
 
 #include <sys/param.h>
@@ -107,13 +107,13 @@ pam_ssh_load_key(struct passwd *pwd, const char *kfn, const char *passphrase)
 	comment = NULL;
 	key = key_load_private(fn, passphrase, &comment);
 	if (key == NULL) {
-		openpam_log(PAM_LOG_DEBUG, "failed to load key from %s\n", fn);
+		openpam_log(PAM_LOG_DEBUG, "failed to load key from %s", fn);
 		if (comment != NULL)
 			free(comment);
 		return (NULL);
 	}
 
-	openpam_log(PAM_LOG_DEBUG, "loaded '%s' from %s\n", comment, fn);
+	openpam_log(PAM_LOG_DEBUG, "loaded '%s' from %s", comment, fn);
 	if ((psk = malloc(sizeof(*psk))) == NULL) {
 		key_free(key);
 		free(comment);
