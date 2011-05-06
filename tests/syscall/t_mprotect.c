@@ -1,4 +1,4 @@
-/* $NetBSD: t_mprotect.c,v 1.5 2011/05/06 21:51:19 njoly Exp $ */
+/* $NetBSD: t_mprotect.c,v 1.6 2011/05/06 22:24:41 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mprotect.c,v 1.5 2011/05/06 21:51:19 njoly Exp $");
+__RCSID("$NetBSD: t_mprotect.c,v 1.6 2011/05/06 22:24:41 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -116,9 +116,7 @@ ATF_TC_BODY(mprotect_access, tc)
 	int fd;
 
 	fd = open(path, O_RDONLY | O_CREAT);
-
-	if (fd < 0)
-		return;
+	ATF_REQUIRE(fd >= 0);
 
 	/*
 	 * The call should fail with EACCES if we try to mark
@@ -241,9 +239,7 @@ ATF_TC_BODY(mprotect_write, tc)
 	 * to the page. This should generate a SIGSEGV.
 	 */
 	map = mmap(NULL, page, PROT_WRITE|PROT_READ, MAP_ANON, -1, 0);
-
-	if (map == MAP_FAILED)
-		return;
+	ATF_REQUIRE(map != MAP_FAILED);
 
 	ATF_REQUIRE(strlcpy(map, "XXX", 3) == 3);
 	ATF_REQUIRE(mprotect(map, page, PROT_READ) == 0);
