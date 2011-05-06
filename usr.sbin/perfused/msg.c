@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.10 2011/04/25 04:30:59 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.11 2011/05/06 13:45:35 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -314,7 +314,7 @@ perfuse_xchg_pb(pu, pm, expected_len, reply)
 		DPRINTF("< unique = %"PRId64", nodeid = %"PRId64", "
 			"opcode = %s (%d), "
 			"error = %d\n", unique_out, nodeid, 
-			perfuse_opname(opcode), opcode, error);
+			perfuse_opname(opcode), opcode, foh->error);
 
 	if (perfuse_diagflags & PDF_DUMP)
 		perfuse_hexdump((char *)foh, foh->len);
