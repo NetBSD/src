@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.47 2011/05/07 17:52:43 tsutsui Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.48 2011/05/07 18:16:54 tsutsui Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2054,19 +2054,18 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 END(MIPSX(tlb_invalidate_all))
 
 /*
- * u_int mipsN_tlb_record_asids(u_long *bitmap, uint32_t asid_mask);
+ * u_int mipsN_tlb_record_asids(u_long *bitmap, uint32_t asid_mask)
  *
  * Record all the ASIDs in use in the TLB and return the number of different
  * ASIDs present.
  */
 LEAF_NOPROFILE(MIPSX(tlb_record_asids))
-
 	_MFC0	a3, MIPS_COP_0_TLB_HI		# Save the current PID.
 	mfc0	ta0, MIPS_COP_0_TLB_WIRED
 	INT_L	ta1, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
 	move	ta2, zero
 	li	ta3, 1
-	move	v0, zero
+	move	v0, zero			# start at zero ASIDs
 
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 #ifdef _LP64
@@ -2088,6 +2087,7 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	and	t0, MIPS3_PG_G			# check to see it has G bit
 	bnez	t0, 4f				# yep, skip this one.
 	 nop
+
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# get VA and ASID
 	and	t0, a1				# focus on ASID
 
@@ -2097,26 +2097,27 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 
 	PTR_ADDU a2, a0				# index into the bitmap
 	beq	a2, ta2, 3f			# is the desired cell loaded?
-	 nop					#    yes, don't reload it
+	 nop					#   yes, don't reload it
 	beqz	ta2, 2f				# have we ever loaded it?
-	 nop					#   nope, so don't save it.
+	 nop					#   nope, so don't save it
 
 	LONG_S	t2, 0(ta2)			# save the updated value.
 2:
 	move	ta2, a2				# remember the new cell's addr
 	LONG_L	t2, 0(ta2)			# and load it
 3:
-	and	t1, t2, t0			# t1 = t2 & t0
+	and	t1, t2, t0			# see if this asid was recorded
 	sltu	t1, t1, ta3			# t1 = t1 < 1 (aka t1 == 0)
 	addu	v0, t1				# v0 += t1
 	or	t2, t0				# or in the new ASID bits
+
 4:
 	addu	ta0, 1				# increment TLB entry #
 	bne	ta0, ta1, 1b			# keep lookup if not limit
 	 nop
 
 	beqz	ta2, 5f				# do we have a cell to write?
-	 nop					#   nope.  nothing
+	 nop					#   nope, nothing.
 
 	LONG_S	t2, 0(ta2)			# save the updated value.
 5:
