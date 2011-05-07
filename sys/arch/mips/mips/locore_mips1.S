@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.79 2011/05/07 17:47:34 tsutsui Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.80 2011/05/07 17:52:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ VECTOR(MIPSX(utlb_miss), unknown)
 	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#01: k1=hi of seg0tab
 	bltz	k0, 1f				# R3000 chip bug
 	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2)#03: k0=seg offset (almost)
-	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1) #04: k1=seg0tab 
+	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1) #04: k1=seg0tab
 	andi	k0, (NBPG-(1<<PTR_SCALESHIFT))	#07: k0=seg offset (mask 0x3)
 	PTR_ADDU k1, k0				#08: k1=seg entry address
 	PTR_L	k1, 0(k1)			#09: k1=seg entry
@@ -979,9 +979,9 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 END(MIPSX(systemcall))
 
 /*----------------------------------------------------------------------------
- *      
+ *
  *	R3000 TLB exception handlers
- *      
+ *
  *----------------------------------------------------------------------------
  */
 
@@ -1198,9 +1198,9 @@ LEAF(MIPSX(tlb_write_indexed))
 	sll	a0, MIPS1_TLB_INDEX_SHIFT
 	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index register
 	nop
-	mtc0	t2, MIPS_COP_0_TLB_HI		
-	mtc0	t3, MIPS_COP_0_TLB_LOW		
-	
+	mtc0	t2, MIPS_COP_0_TLB_HI
+	mtc0	t3, MIPS_COP_0_TLB_LOW
+
 	tlbwi					# Write to the TLB entry
 
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
@@ -1370,7 +1370,7 @@ LEAF(MIPSX(tlb_record_asids))
 3:
 	and	t1, t2, t0			# see if this asid was recorded
 	sltu	t1, t1, ta3			# t1 = t1 < 1 (aka t1 == 0)
-	addu	v0, t1				# v0 += t1 
+	addu	v0, t1				# v0 += t1
 	or	t2, t0				# or in the new ASID bit
 
 4:
@@ -1393,7 +1393,7 @@ END(MIPSX(tlb_record_asids))
  *
  * mipsN_tlb_enter --
  *
- *	Entr the 
+ *	Entr the
  *
  *	mipsN_tlb_enter(size_t tlb_index, vaddr_t va_asid, uint32_t tlb_lo)
  *
@@ -1467,7 +1467,7 @@ LEAF(MIPSX(lwp_trampoline))
 	 move	a1, MIPS_CURLWP
 
 	# Call the routine specified by cpu_setfunc()
-	jalr	s0			
+	jalr	s0
 	 move	a0, s1
 
 	# Return to user (won't happen if a kernel thread)
@@ -1526,7 +1526,7 @@ LEAF(MIPSX(setfunc_trampoline))
 
 	# Call the routine specified by cpu_setfunc()
 	PTR_LA	ra, MIPSX(user_return)
-	jr	s0			
+	jr	s0
 	 move	a0, s1
 END(MIPSX(setfunc_trampoline))
 
@@ -1627,20 +1627,20 @@ END(MIPSX(wbflush))
 #else /* !ENABLE_MIPS_TX3900 */
 /*
  *	The differences between R3900 and R3000.
- *	1. Cache system 
- *		Physical-index physical-tag	
+ *	1. Cache system
+ *		Physical-index physical-tag
  *		fixed line-size
  *		refil-size 4/8/16/32 words (set in config register)
- *		TX3912 
+ *		TX3912
  *		       Write-through
  *		       I-cache 4KB/16B direct mapped (256line)
  *		       D-cache 1KB/4B 2-way sa (128line)
- *		       Cache snoop	
+ *		       Cache snoop
  *		TX3922
  *		       Write-through/write-back (set in config register)
- *		       I-cache 16KB/16B 2-way sa 
+ *		       I-cache 16KB/16B 2-way sa
  *		       D-cache 8KB/16B 2-way sa
- *		       Cache snoop	
+ *		       Cache snoop
  *
  *	2. Coprocessor1
  *	2.1	cache operation.
@@ -1669,7 +1669,7 @@ END(tx3900_cp0_config_read)
 LEAF(MIPSX(wbflush))
 	.set push
 	.set mips2
-	sync	
+	sync
 	.set pop
 	j	ra
 	nop
