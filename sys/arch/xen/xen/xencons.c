@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.31.2.8 2011/05/02 22:49:59 jym Exp $	*/
+/*	$NetBSD: xencons.c,v 1.31.2.9 2011/05/07 17:39:47 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.8 2011/05/02 22:49:59 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.9 2011/05/07 17:39:47 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -216,7 +216,6 @@ xencons_suspend(device_t dev, const pmf_qual_t *qual) {
 
 		aprint_verbose_dev(dev, "removed event channel %d\n", evtch);
 	}
-
 
 	return true;
 }
