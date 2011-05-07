@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77.2.10 2011/05/02 22:49:57 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.2.11 2011/05/07 17:52:26 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.10 2011/05/02 22:49:57 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.2.11 2011/05/07 17:52:26 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -729,24 +729,6 @@ pmap_is_active(struct pmap *pmap, struct cpu_info *ci, bool kernel)
 	    (kernel && (pmap->pm_kernel_cpus & ci->ci_cpumask) != 0));
 }
 
-/*
- * Flush the content of APDP_PDE
- */
-static inline
-void pmap_unmap_apdp_pde(void) {
-
-	int i;
-
-	for (i = 0; i < PDP_SIZE; i++) {
-		pmap_pte_set(&APDP_PDE[i], 0);
-#ifdef PAE
-		/* clear current pmap shadow entries too */
-    		pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
-#endif
-	}
-
-}
-
 #ifdef XEN
 /*
  * Flush all APDP entries found in pmaps
@@ -762,16 +744,7 @@ pmap_unmap_all_apdp_pdes(void) {
 
 	s = splvm();
 
-#ifdef PAE
-	/*
-	 * For PAE, there are two places where alternative recursive mappings
-	 * could be found: in the L2 shadow pages, and the "real" L2 kernel
-	 * page (pmap_kl2pd), which is unique and static.
-	 * We first clear the APDP for the current pmap. As L2 kernel page is
-	 * unique, we only need to do it once for all pmaps.
-	 */
-	pmap_unmap_apdp_pde();
-#endif
+	pmap_unmap_apdp();
 
 	mutex_enter(&pmaps_lock);
 	/*
@@ -898,7 +871,15 @@ pmap_unmap_apdp(void)
 	for (i = 0; i < PDP_SIZE; i++) {
 		pmap_pte_set(APDP_PDE+i, 0);
 #if defined (XEN) && defined (PAE)
-		/* clear shadow entries too */
+		/*
+		 * For PAE, there are two places where alternative recursive
+		 * mappings could be found with Xen:
+		 * - in the L2 shadow pages
+		 * - the "real" L2 kernel page (pmap_kl2pd), which is unique
+		 * and static.
+		 * We first clear the APDP for the current pmap. As L2 kernel
+		 * page is unique, we only need to do it once for all pmaps.
+		 */
 		pmap_pte_set(APDP_PDE_SHADOW+i, 0);
 #endif
 	}
