@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.80 2011/05/07 17:52:43 tsutsui Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.81 2011/05/07 18:16:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1355,13 +1355,13 @@ LEAF(MIPSX(tlb_record_asids))
 
 	srl	a2, t0, 3 + LONG_SCALESHIFT	# drop low 5 bits
 	sll	a2, LONG_SCALESHIFT		# make an index for the bitmap
-	sllv	t0, ta3, t0			# t0 is mask (ta3 = 1)
+	sllv	t0, ta3, t0			# t0 is mask (ta3 == 1)
 
 	PTR_ADDU a2, a0				# index into the bitmap
 	beq	a2, ta2, 3f			# is the desired cell loaded?
 	 nop					#   yes, don't reload it
-	beqz	ta2, 2f				# have we ever been loaded?
-	 nop					#   nope, so don't have it
+	beqz	ta2, 2f				# have we ever loaded it?
+	 nop					#   nope, so don't save it
 
 	LONG_S	t2, 0(ta2)			# save the updated value.
 2:
@@ -1371,11 +1371,11 @@ LEAF(MIPSX(tlb_record_asids))
 	and	t1, t2, t0			# see if this asid was recorded
 	sltu	t1, t1, ta3			# t1 = t1 < 1 (aka t1 == 0)
 	addu	v0, t1				# v0 += t1
-	or	t2, t0				# or in the new ASID bit
+	or	t2, t0				# or in the new ASID bits
 
 4:
 	addu	ta0, 1 << MIPS1_TLB_INDEX_SHIFT	# increment TLB entry #
-	bne	ta0, ta1, 1b			# keep looking if not at limit
+	bne	ta0, ta1, 1b			# keep lookup if not limit
 	 nop
 
 	beqz	ta2, 5f				# do we have a cell to write?
