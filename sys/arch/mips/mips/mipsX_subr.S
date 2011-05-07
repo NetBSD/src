@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.46 2011/04/29 22:16:49 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.47 2011/05/07 17:52:43 tsutsui Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -935,7 +935,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	 * Interrupts handled, restore registers and return from the interrupt.
 	 * First, clear interrupt enable
 	 */
-	mfc0	v0, MIPS_COP_0_STATUS		# read it 
+	mfc0	v0, MIPS_COP_0_STATUS		# read it
 	xor	v0, MIPS_SR_INT_IE		# disable interrupts
 	mtc0	v0, MIPS_COP_0_STATUS		# write it
 	COP0_SYNC
@@ -1225,7 +1225,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 #else
 	lui	v0, %hi(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
 	addiu	v0, %lo(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
-	and	v0, v1 
+	and	v0, v1
 #endif
 	mtc0	v0, MIPS_COP_0_STATUS		# write new status
 	COP0_SYNC
@@ -1307,7 +1307,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	REG_S	s6, CALLFRAME_SIZ+TF_REG_S6(sp)	# $22
 	REG_S	s7, CALLFRAME_SIZ+TF_REG_S7(sp)	# $23
 	REG_S	s8, CALLFRAME_SIZ+TF_REG_S8(sp)	# $30
-	mfc0	t0, MIPS_COP_0_STATUS		# 
+	mfc0	t0, MIPS_COP_0_STATUS		#
 	or	t0, MIPS_SR_INT_IE 		# enable interrupts
 	DYNAMIC_STATUS_MASK(t0, t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts (spl0)
@@ -2095,7 +2095,7 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	sll	a2, LONG_SCALESHIFT		# make an index for the bitmap
 	_SLLV	t0, ta3, t0			# t0 is mask (ta3 == 1)
 
-	PTR_ADDU a2, a0				# index into the bitmap 
+	PTR_ADDU a2, a0				# index into the bitmap
 	beq	a2, ta2, 3f			# is the desired cell loaded?
 	 nop					#    yes, don't reload it
 	beqz	ta2, 2f				# have we ever loaded it?
@@ -2159,7 +2159,7 @@ LEAF(MIPSX(tlb_enter))
 	 * If it's already where we want, no reason to invalidate it.
 	 */
 	beq	v0, a0, 2f			# already where we want it?
-	 nop					
+	 nop
 
 	/*
 	 * Make an
@@ -2225,7 +2225,7 @@ LEAF(MIPSX(lwp_trampoline))
 	 move	a1, MIPS_CURLWP
 
 	# Call the routine specified by cpu_setfunc()
-	jalr	s0			
+	jalr	s0
 	 move	a0, s1
 
 	#
@@ -2303,7 +2303,7 @@ LEAF(MIPSX(setfunc_trampoline))
 	# Call the routine specified by cpu_setfunc()
 	# and return directly to user_return
 	PTR_LA	ra, MIPSX(user_return)
-	jr	s0			
+	jr	s0
 	 move	a0, s1
 END(MIPSX(setfunc_trampoline))
 
