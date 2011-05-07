@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.78 2011/04/14 05:50:43 cliff Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.79 2011/05/07 17:47:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -944,10 +944,10 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	move	ra, a3
 	REG_S	ra, CALLFRAME_RA(sp)
 #endif
+	PTR_L	t9, P_MD_SYSCALL(t0)		# t9 = syscall
 	/*
 	 * Turn off FPU
 	 */
-	PTR_L	t9, P_MD_SYSCALL(t0)		# t1 = syscall
 #ifdef NOFPU
 	li	t0, MIPS_SR_INT_IE
 #else
@@ -1360,10 +1360,10 @@ LEAF(MIPSX(tlb_record_asids))
 	PTR_ADDU a2, a0				# index into the bitmap
 	beq	a2, ta2, 3f			# is the desired cell loaded?
 	 nop					#   yes, don't reload it
-	beqz	ta2, 2f				# has is ever been loaded?
+	beqz	ta2, 2f				# have we ever been loaded?
 	 nop					#   nope, so don't have it
 
-	LONG_S	t2, 0(ta2)			# save the updated value
+	LONG_S	t2, 0(ta2)			# save the updated value.
 2:
 	LONG_L	t2, 0(a2)			# and load it
 	 move	ta2, a2				# remember the new cell's addr
@@ -1381,7 +1381,7 @@ LEAF(MIPSX(tlb_record_asids))
 	beqz	ta2, 5f				# do we have a cell to write?
 	 nop					#   nope, nothing.
 
-	LONG_S	t2, 0(ta2)			# save the updated valu.
+	LONG_S	t2, 0(ta2)			# save the updated value.
 5:
 	mtc0	a3, MIPS_COP_0_TLB_HI		# restore entryHi
 
@@ -1473,15 +1473,15 @@ LEAF(MIPSX(lwp_trampoline))
 	# Return to user (won't happen if a kernel thread)
 	.set	noat
 MIPSX(user_return):
-	REG_L	s0, CALLFRAME_SIZ+TF_REG_S0(sp)	# $16
-	REG_L	s1, CALLFRAME_SIZ+TF_REG_S1(sp)	# $16
-	REG_L	s2, CALLFRAME_SIZ+TF_REG_S2(sp)	# $16
-	REG_L	s3, CALLFRAME_SIZ+TF_REG_S3(sp)	# $16
-	REG_L	s4, CALLFRAME_SIZ+TF_REG_S4(sp)	# $16
-	REG_L	s5, CALLFRAME_SIZ+TF_REG_S5(sp)	# $16
-	REG_L	s6, CALLFRAME_SIZ+TF_REG_S6(sp)	# $16
-	REG_L	s7, CALLFRAME_SIZ+TF_REG_S7(sp)	# $16
-	REG_L	s8, CALLFRAME_SIZ+TF_REG_S8(sp)	# $30
+	REG_L	s0, CALLFRAME_SIZ+TF_REG_S0(sp)		# $16
+	REG_L	s1, CALLFRAME_SIZ+TF_REG_S1(sp)		# $17
+	REG_L	s2, CALLFRAME_SIZ+TF_REG_S2(sp)		# $18
+	REG_L	s3, CALLFRAME_SIZ+TF_REG_S3(sp)		# $19
+	REG_L	s4, CALLFRAME_SIZ+TF_REG_S4(sp)		# $20
+	REG_L	s5, CALLFRAME_SIZ+TF_REG_S5(sp)		# $21
+	REG_L	s6, CALLFRAME_SIZ+TF_REG_S6(sp)		# $22
+	REG_L	s7, CALLFRAME_SIZ+TF_REG_S7(sp)		# $23
+	REG_L	s8, CALLFRAME_SIZ+TF_REG_S8(sp)		# $30
 MIPSX(user_intr_return):
 	REG_L	a0, CALLFRAME_SIZ+TF_REG_SR(sp)
 	REG_L	t0, CALLFRAME_SIZ+TF_REG_MULLO(sp)
