@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.475 2011/04/28 21:39:34 alnsn Exp $
+.\"	$NetBSD: main,v 1.476 2011/05/07 11:12:48 cheusov Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1117,6 +1117,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Dave Carrel Ta Mt carrel@NetBSD.org
 .It Ta James Chacon Ta Mt jmc@NetBSD.org
 .It Ta Mihai Chelaru Ta Mt kefren@NetBSD.org
+.It Ta Aleksey Cheusov Ta Mt cheusov@NetBSD.org
 .It Ta Bill Coldwell Ta Mt billc@NetBSD.org
 .It Ta Julian Coleman Ta Mt jdc@NetBSD.org
 .It Ta Marcus Comstedt Ta Mt marcus@NetBSD.org
