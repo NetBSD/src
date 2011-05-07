@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.43.2.6 2011/05/02 22:49:59 jym Exp $ */
+/* $NetBSD: hypervisor.c,v 1.43.2.7 2011/05/07 17:39:47 jym Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.6 2011/05/02 22:49:59 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.7 2011/05/07 17:39:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,8 +304,8 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-hypervisor_suspend(device_t dev, const pmf_qual_t *qual) {
-
+hypervisor_suspend(device_t dev, const pmf_qual_t *qual)
+{
 	events_suspend();
 	xengnt_suspend();
 	
@@ -313,8 +313,8 @@ hypervisor_suspend(device_t dev, const pmf_qual_t *qual) {
 }
 
 static bool
-hypervisor_resume(device_t dev, const pmf_qual_t *qual) {
-
+hypervisor_resume(device_t dev, const pmf_qual_t *qual)
+{
 	hypervisor_machdep_resume();
 
 	xengnt_resume();

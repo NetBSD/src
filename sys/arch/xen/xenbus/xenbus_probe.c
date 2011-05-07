@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.27.2.7 2011/05/02 22:49:59 jym Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.27.2.8 2011/05/07 17:39:47 jym Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.27.2.7 2011/05/02 22:49:59 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.27.2.8 2011/05/07 17:39:47 jym Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -122,8 +122,8 @@ xenbus_attach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-xenbus_suspend(device_t dev, const pmf_qual_t *qual) {
-
+xenbus_suspend(device_t dev, const pmf_qual_t *qual)
+{
 	xs_suspend();
 	xb_suspend_comms(dev);
 
@@ -131,8 +131,8 @@ xenbus_suspend(device_t dev, const pmf_qual_t *qual) {
 }
 
 static bool
-xenbus_resume(device_t dev, const pmf_qual_t *qual) {
-
+xenbus_resume(device_t dev, const pmf_qual_t *qual)
+{
 	xb_init_comms(dev);
 	xs_resume();
 
