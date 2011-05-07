@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 2011/04/25 22:24:36 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.38 2011/05/07 23:59:13 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -372,13 +372,11 @@ bool	sse2_idlezero_page(void *);
 
 #ifdef XEN
 
+#include <sys/bitops.h>
+
 #define XPTE_MASK	L1_FRAME
-/* XPTE_SHIFT = L1_SHIFT - log2(sizeof(pt_entry_t)) */
-#if defined(__x86_64__) || defined(PAE)
-#define XPTE_SHIFT	9
-#else
-#define XPTE_SHIFT	10
-#endif
+/* Selects the index of a PTE in (A)PTE_BASE */
+#define XPTE_SHIFT	(L1_SHIFT - ilog2(sizeof(pt_entry_t)))
 
 /* PTE access inline fuctions */
 
