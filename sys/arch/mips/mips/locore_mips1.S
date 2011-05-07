@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.81 2011/05/07 18:16:54 tsutsui Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.82 2011/05/07 19:15:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1325,7 +1325,7 @@ END(MIPSX(tlb_invalidate_all))
  * number of new unique ASIDs encountered.
  */
 LEAF(MIPSX(tlb_record_asids))
-	mfc0	ta3, MIPS_COP_0_TLB_HI		# save EntryHi
+	mfc0	a3, MIPS_COP_0_TLB_HI		# save EntryHi
 	li	ta0, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
 	INT_L	ta1, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
 	move	ta2, zero
