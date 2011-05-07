@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.200 2011/05/02 15:31:01 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.201 2011/05/07 14:37:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.200 2011/05/02 15:31:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.201 2011/05/07 14:37:46 tsutsui Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2015,7 +2015,7 @@ pmap_clear_modify(struct vm_page *pg)
 		if (pte->pt_entry == pt_entry) {
 			continue;
 		}
-		KASSERT(pt_entry & MIPS3_PG_V);
+		KASSERT(mips_pg_v(pt_entry));
 		/*
 		 * Why? Why?
 		 */
