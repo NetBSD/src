@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.33.2.9 2011/05/02 22:49:59 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.33.2.10 2011/05/07 17:42:09 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33.2.9 2011/05/02 22:49:59 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33.2.10 2011/05/07 17:42:09 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -392,9 +392,8 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	    RND_TYPE_NET, 0);
 #endif
 
-	if (!pmf_device_register(self,
-				 xennet_xenbus_suspend,
-				 xennet_xenbus_resume))
+	if (!pmf_device_register(self, xennet_xenbus_suspend,
+	    xennet_xenbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
@@ -460,7 +459,7 @@ xennet_xenbus_detach(device_t self, int flags)
 static bool
 xennet_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 {
-	struct xennet_xenbus_softc *sc = p;
+	struct xennet_xenbus_softc *sc = device_private(dev);
 	int error;
 	netif_tx_sring_t *tx_ring;
 	netif_rx_sring_t *rx_ring;
@@ -503,7 +502,7 @@ xennet_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 	event_set_handler(sc->sc_evtchn, &xennet_handler, sc,
 	    IPL_NET, device_xname(dev));
 
-	return 0;
+	return true;
 }
 
 static int
