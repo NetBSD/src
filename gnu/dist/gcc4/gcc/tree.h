@@ -2680,6 +2680,11 @@ struct tree_decl_non_common GTY(())
 #define DECL_NO_INSTRUMENT_FUNCTION_ENTRY_EXIT(NODE) \
   (FUNCTION_DECL_CHECK (NODE)->function_decl.no_instrument_function_entry_exit)
 
+/* Used in FUNCTION_DECLs to indicate that the function should not be stack
+   protected */
+#define DECL_NO_STACK_PROTECTOR_FUNCTION(NODE) \
+  (FUNCTION_DECL_CHECK (NODE)->function_decl.no_stack_protector_function)
+
 /* Used in FUNCTION_DECLs to indicate that limit-stack-* should be
    disabled in this function.  */
 #define DECL_NO_LIMIT_STACK(NODE) \
@@ -2746,6 +2751,7 @@ struct tree_function_decl GTY(())
   unsigned regdecl_flag : 1;
   unsigned inline_flag : 1;
   unsigned no_instrument_function_entry_exit : 1;
+  unsigned no_stack_protector_function : 1;
   unsigned no_limit_stack : 1;
   ENUM_BITFIELD(built_in_class) built_in_class : 2;
 
