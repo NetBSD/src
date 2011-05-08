@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.19 2006/11/03 20:18:49 christos Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.19.2.1 2011/05/08 17:26:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
 #else
-__RCSID("$NetBSD: hash_page.c,v 1.19 2006/11/03 20:18:49 christos Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.19.2.1 2011/05/08 17:26:13 bouyer Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -880,15 +880,19 @@ open_temp(hashp)
 	sigset_t set, oset;
 	char *envtmp;
 	char namestr[PATH_MAX];
+	int len;
 
 	if (issetugid())
 		envtmp = NULL;
 	else
 		envtmp = getenv("TMPDIR");
 
-	if (-1 == snprintf(namestr, sizeof(namestr), "%s/_hashXXXXXX",
-	    envtmp ? envtmp : _PATH_TMP))
+	len = snprintf(namestr, sizeof(namestr), "%s/_hashXXXXXX",
+	    envtmp ? envtmp : _PATH_TMP);
+	if (len < 0 || (size_t)len >= sizeof(namestr)) {
+		errno = ENAMETOOLONG;
 		return -1;
+	}
 
 	/* Block signals; make sure file goes away at process exit. */
 	(void)sigfillset(&set);
