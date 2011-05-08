@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.222 2011/04/07 17:34:14 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.223 2011/05/08 17:32:20 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4427,4 +4427,27 @@ dist/dhcp/client/dhclient.c			1.21
 	CVE-2011-0997 dhclient: insufficient sanitization of certain DHCP
 	response values.
 	[christos, ticket #1427]
+
+distrib/sets/lists/man/mi			1.1304
+share/man/man4/Makefile				1.556
+share/man/man4/gtp.4				1.1
+share/man/man4/mr.4				delete
+
+	The mr(4) driver was replaced by gtp(4) in 2002, but the documentation
+	did not follow; fix PR kern/40070
+	[fair, ticket #1422]
+
+distrib/sets/lists/man/mi			1.1305 via patch
+
+	I missed the .0 and .html changes for mr.4 replacement by gtp.4 in PR
+	kern/40070.  Now corrected.
+	[fair, ticket #1423]
+
+lib/libc/db/btree/bt_open.c			1.25
+lib/libc/db/hash/hash_page.c			1.24
+
+	Correct check for snprintf() overflow via Maksymilian Arciemowicz
+	from FreeBSD.  (the bt one was ok, but set errno and make it the
+	same for consistency).
+	[christos, ticket #1428]
 
