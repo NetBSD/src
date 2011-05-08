@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955.2.23 2009/06/05 17:19:27 snj Exp $
+# $NetBSD: mi,v 1.955.2.24 2011/05/08 17:18:19 bouyer Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -3278,6 +3278,7 @@
 ./usr/share/man/man4/gpioow.4			man-sys-man		.man
 ./usr/share/man/man4/gre.4			man-sys-man		.man
 ./usr/share/man/man4/gsip.4			man-sys-man		.man
+./usr/share/man/man4/gtp.4			man-sys-man		.man
 ./usr/share/man/man4/gus.4			man-sys-man		.man
 ./usr/share/man/man4/guspnp.4			man-sys-man		.man
 ./usr/share/man/man4/hcide.4			man-sys-man		.man
@@ -3508,7 +3509,7 @@
 ./usr/share/man/man4/mly.4			man-sys-man		.man
 ./usr/share/man/man4/mpt.4			man-sys-man		.man
 ./usr/share/man/man4/mpu.4			man-sys-man		.man
-./usr/share/man/man4/mr.4			man-sys-man		.man
+./usr/share/man/man4/mr.4			man-obsolete		obsolete
 ./usr/share/man/man4/msk.4			man-sys-man		.man
 ./usr/share/man/man4/mskc.4			man-sys-man		.man
 ./usr/share/man/man4/mtd.4			man-sys-man		.man
