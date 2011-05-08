@@ -862,6 +862,9 @@ stack_protect_decl_phase (tree decl)
   unsigned int bits = stack_protect_classify_type (TREE_TYPE (decl));
   int ret = 0;
 
+  if (DECL_NO_STACK_PROTECTOR_FUNCTION(decl))
+      return ret;
+
   if (bits & SPCT_HAS_SMALL_CHAR_ARRAY)
     has_short_buffer = true;
 
@@ -939,6 +942,7 @@ static void
 expand_used_vars (void)
 {
   tree t, outer_block = DECL_INITIAL (current_function_decl);
+  bool stack_protect_func = !DECL_NO_STACK_PROTECTOR_FUNCTION (current_function_decl);
 
   /* Compute the phase of the stack frame for this function.  */
   {
@@ -1008,7 +1012,7 @@ expand_used_vars (void)
 
       /* If stack protection is enabled, we don't share space between 
 	 vulnerable data and non-vulnerable data.  */
-      if (flag_stack_protect)
+      if (flag_stack_protect && stack_protect_func)
 	add_stack_protection_conflicts ();
 
       /* Now that we have collected all stack variables, and have computed a 
@@ -1020,7 +1024,8 @@ expand_used_vars (void)
 
   /* There are several conditions under which we should create a
      stack guard: protect-all, alloca used, protected decls present.  */
-  if (flag_stack_protect == 2
+  if (stack_protect_func)
+    if (flag_stack_protect == 2
       || (flag_stack_protect
 	  && (current_function_calls_alloca || has_protected_decls)))
     create_stack_guard ();
@@ -1595,7 +1600,8 @@ tree_expand_cfg (void)
   expand_used_vars ();
 
   /* Honor stack protection warnings.  */
-  if (warn_stack_protect)
+  if (warn_stack_protect &&
+      !DECL_NO_STACK_PROTECTOR_FUNCTION (current_function_decl))
     {
       if (current_function_calls_alloca)
 	warning (0, "not protecting local variables: variable length buffer");
