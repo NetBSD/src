@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.130 2009/12/23 18:50:40 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.131 2011/05/08 14:22:16 pgoyette Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.130 2009/12/23 18:50:40 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.131 2011/05/08 14:22:16 pgoyette Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -418,8 +418,8 @@ main(int argc, char *argv[])
 				b_cyl = MAXCYL;
 			break;
 		case 'A':	/* Partition alignment[/offset] */
-			if (sscanf(optarg, "%u/%u%n", &ptn_alignment,
-				    &ptn_0_offset, &n) < 1
+			if (sscanf(optarg, "%u%n/%u%n", &ptn_alignment,
+				    &n, &ptn_0_offset, &n) < 1
 			    || optarg[n] != 0
 			    || ptn_0_offset > ptn_alignment)
 				errx(1, "Bad argument to the -A flag.");
