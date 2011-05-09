@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbreg.h,v 1.7 2011/04/09 19:31:15 jdc Exp $	*/
+/*	$NetBSD: ffbreg.h,v 1.8 2011/05/09 08:44:22 jdc Exp $	*/
 /*	$OpenBSD: creatorreg.h,v 1.5 2002/07/29 06:21:45 jason Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
 
 /* 0x5001 DAC control */
 #define	FFB_DAC_DAC_CTRL_SYNC_G		0x0020	/* enable sync on green */
-#define FFB_DAC_DAC_CTRL_PED_ENABLE	0x0030	/* enable pedestal */
+#define FFB_DAC_DAC_CTRL_PED_ENABLE	0x0040	/* enable pedestal */
 #define FFB_DAC_DAC_CTRL_VSYNC_REV	0x0080	/* reverse vsync (BT497A) */
 #define FFB_DAC_DAC_CTRL_POS_SYNC	0x0100	/* enable pos. sync (BT497A) */
 
