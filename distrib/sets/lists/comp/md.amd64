@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.111 2011/04/21 09:45:55 haad Exp $
+# $NetBSD: md.amd64,v 1.112 2011/05/09 08:51:08 manu Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -734,6 +734,11 @@
 ./usr/lib/i386/libpci_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libpci_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libpci_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libperfuse.a			comp-c-lib		compat,perfuse
+./usr/lib/i386/libperfuse.so			comp-sys-shlib		compat,pic,perfuse
+./usr/lib/i386/libperfuse_g.a			comp-c-proflib		compat,debuglib,perfuse
+./usr/lib/i386/libperfuse_p.a			comp-c-proflib		compat,profile,perfuse
+./usr/lib/i386/libperfuse_pic.a			comp-c-piclib		compat,pic,perfuse
 ./usr/lib/i386/libposix.a			comp-c-lib		compat
 ./usr/lib/i386/libposix.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libposix_g.a			comp-c-proflib		compat,debuglib
@@ -1032,6 +1037,7 @@
 ./usr/libdata/debug/usr/lib/i386/libpam.so.3.0.debug	comp-compat-shlib	compat,pic,pam,debug
 ./usr/libdata/debug/usr/lib/i386/libpcap.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libpci.so.2.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug,perfuse
 ./usr/libdata/debug/usr/lib/i386/libposix.so.0.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libprop.so.1.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libpthread.so.1.0.debug	comp-compat-shlib	compat,pic,debug
