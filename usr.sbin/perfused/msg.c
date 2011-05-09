@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.11 2011/05/06 13:45:35 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.12 2011/05/09 08:51:18 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -617,11 +617,11 @@ perfuse_cmpframe(pu, pb1, pb2, match)
 	size_t len;
 
 	len = sizeof(*fih);
-	PUFFS_FRAMEBUF_GETWINDOW(pb1, 0, (void **)&fih, &len);
+	PUFFS_FRAMEBUF_GETWINDOW(pb1, 0, (void **)(void *)&fih, &len);
 	unique_in = fih->unique;
 
 	len = sizeof(*foh);
-	PUFFS_FRAMEBUF_GETWINDOW(pb2, 0, (void **)&foh, &len);
+	PUFFS_FRAMEBUF_GETWINDOW(pb2, 0, (void **)(void *)&foh, &len);
 	unique_out = foh->unique;
 
 	return unique_in != unique_out;
@@ -637,7 +637,7 @@ perfuse_gotframe(pu, pb)
 	size_t len;
 
 	len = sizeof(*foh);
-	PUFFS_FRAMEBUF_GETWINDOW(pb, 0, (void **)&foh, &len);
+	PUFFS_FRAMEBUF_GETWINDOW(pb, 0, (void **)(void *)&foh, &len);
 
 	DWARNX("Unexpected frame: unique = %"PRId64", error = %d", 
 	       foh->unique, foh->error);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.166 2011/04/15 18:05:44 elric Exp $
+#	$NetBSD: Makefile,v 1.167 2011/05/09 08:51:18 manu Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -79,6 +79,7 @@ SUBDIR+=	libdm		# depends on libprop
 SUBDIR+=	libedit		# depends on libterminfo
 SUBDIR+=	libquota	# depends on libprop and librpcsvc
 SUBDIR+=	librefuse	# depends on libpuffs
+SUBDIR+=	libperfuse	# depends on libpuffs
 SUBDIR+=	librumpuser	# depends on libpthread
 
 .if (${MKNPF} != "no")

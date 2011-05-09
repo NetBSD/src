@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.29 2011/04/21 09:45:55 haad Exp $
+# $NetBSD: ad.mips64eb,v 1.30 2011/05/09 08:51:08 manu Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -449,6 +449,11 @@
 ./usr/lib/64/libpci.so				base-sys-shlib		compat,pic
 ./usr/lib/64/libpci_p.a				comp-c-proflib		compat,profile
 ./usr/lib/64/libpci_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/libperfuse.a			comp-c-lib		compat,perfuse
+./usr/lib/64/libperfuse.so			base-sys-shlib		compat,pic,perfuse
+./usr/lib/64/libperfuse_g.a			comp-c-proflib		compat,debuglib,perfuse
+./usr/lib/64/libperfuse_p.a			comp-c-proflib		compat,profile,perfuse
+./usr/lib/64/libperfuse_pic.a			comp-c-piclib		compat,pic,perfuse
 ./usr/lib/64/libposix.a				comp-c-lib		compat
 ./usr/lib/64/libposix.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libposix_p.a			comp-c-proflib		compat,profile
@@ -998,6 +1003,11 @@
 ./usr/lib/o32/libpci.so				base-sys-shlib		compat,pic
 ./usr/lib/o32/libpci_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/libpci_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/libperfuse.a			comp-c-lib		compat,perfuse
+./usr/lib/o32/libperfuse.so			base-sys-shlib		compat,pic,perfuse
+./usr/lib/o32/libperfuse_g.a			comp-c-proflib		compat,debuglib,perfuse
+./usr/lib/o32/libperfuse_p.a			comp-c-proflib		compat,profile,perfuse
+./usr/lib/o32/libperfuse_pic.a			comp-c-piclib		compat,pic,perfuse
 ./usr/lib/o32/libposix.a			comp-c-lib		compat
 ./usr/lib/o32/libposix.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libposix_p.a			comp-c-proflib		compat,profile
@@ -1261,6 +1271,7 @@
 ./usr/libdata/debug/usr/lib/64/libpam.so.3.0.debug		comp-sys-debug	pam,debug,compat
 ./usr/libdata/debug/usr/lib/64/libpcap.so.4.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libpci.so.2.0.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/64/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug,perfuse
 ./usr/libdata/debug/usr/lib/64/libposix.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libprop.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libpthread.so.1.0.debug	comp-sys-debug	debug,compat
@@ -1467,6 +1478,7 @@
 ./usr/libdata/debug/usr/lib/o32/libpam.so.3.0.debug		comp-sys-debug	pam,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libpcap.so.4.0.debug	comp-net-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libpci.so.2.0.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/o32/libperfuse.so.0.0.debug	comp-compat-shlib	compat,pic,debug,perfuse
 ./usr/libdata/debug/usr/lib/o32/libposix.so.0.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libprop.so.1.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libpthread.so.1.0.debug	comp-sys-debug	debug,compat

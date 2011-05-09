@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1544 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1545 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1003,3 +1003,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[jym 20110429]
 	powerpc: Converted PowerPC to use PCU to manage FPU/AltiVec/SPE.
 		[matt 20110502]
+	perfuse: Add the PUFFS RElay to FUSE library, which bridges the kernel
+		 level API for FUSE filesystems with native PUFFS. 
+		 [manu 20110509]
