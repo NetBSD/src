@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.40 2011/04/20 09:57:59 martin Exp $	*/
+/*	$NetBSD: ffb.c,v 1.41 2011/05/09 09:06:28 jdc Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.40 2011/04/20 09:57:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.41 2011/05/09 09:06:28 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1362,10 +1362,10 @@ ffb_set_vmode(struct ffb_softc *sc, struct videomode *mode, int btype,
 		}
 	}
 #define EDID_VID_INP	sc->sc_edid_info.edid_video_input
-	if (!(EDID_VID_INP & EDID_VIDEO_INPUT_COMPOSITE_SYNC) &&
-	    (EDID_VID_INP & EDID_VIDEO_INPUT_SYNC_ON_GRN)) {
+	if (!(EDID_VID_INP & EDID_VIDEO_INPUT_COMPOSITE_SYNC)) {
 		dcl |= FFB_DAC_DAC_CTRL_SYNC_G;
-		tgc |= FFB_DAC_TGC_VSYNC_DISABLE;
+		if (EDID_VID_INP & EDID_VIDEO_INPUT_SEPARATE_SYNCS)
+			tgc |= FFB_DAC_TGC_VSYNC_DISABLE;
 	}
 	if (EDID_VID_INP & EDID_VIDEO_INPUT_BLANK_TO_BLACK)
 		dcl |= FFB_DAC_DAC_CTRL_PED_ENABLE;
