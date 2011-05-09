@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.44 2011/04/17 09:01:57 mrg Exp $
+# $NetBSD: ad.mips64el,v 1.45 2011/05/09 08:51:08 manu Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -179,6 +179,8 @@
 ./usr/lib/64/libpcap.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libpci.so.2			base-compat-shlib	compat,pic
 ./usr/lib/64/libpci.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/64/libperfuse.so.0			base-compat-shlib	compat,pic,perfuse
+./usr/lib/64/libperfuse.so.0.0			base-compat-shlib	compat,pic,perfuse
 ./usr/lib/64/libposix.so.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libposix.so.0.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libprop.so.1			base-compat-shlib	compat,pic
@@ -454,6 +456,8 @@
 ./usr/lib/o32/libpcap.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libpci.so.2			base-compat-shlib	compat,pic
 ./usr/lib/o32/libpci.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libperfuse.so.0			base-compat-shlib	compat,pic,perfuse
+./usr/lib/o32/libperfuse.so.0.0			base-compat-shlib	compat,pic,perfuse
 ./usr/lib/o32/libposix.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libposix.so.0.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libprop.so.1			base-compat-shlib	compat,pic
