@@ -1,4 +1,4 @@
-/* $NetBSD: t_strerror.c,v 1.1 2011/05/09 06:04:14 jruoho Exp $ */
+/* $NetBSD: t_strerror.c,v 1.2 2011/05/09 06:05:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strerror.c,v 1.1 2011/05/09 06:04:14 jruoho Exp $");
+__RCSID("$NetBSD: t_strerror.c,v 1.2 2011/05/09 06:05:54 jruoho Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -41,6 +41,17 @@ ATF_TC(strerror_basic);
 ATF_TC_HEAD(strerror_basic, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "A basic test of strerror(3)");
+}
+
+ATF_TC_BODY(strerror_basic, tc)
+{
+	int i;
+
+	for (i = 1; i < sys_nerr; i++)
+		ATF_REQUIRE(strstr(strerror(i), "Unknown error:") == NULL);
+
+	for (; i < sys_nerr + 10; i++)
+		ATF_REQUIRE(strstr(strerror(i), "Unknown error:") != NULL);
 }
 
 ATF_TC(strerror_err);
@@ -61,17 +72,6 @@ ATF_TC_BODY(strerror_err, tc)
 
 	ATF_REQUIRE(strstr(strerror(INT_MIN), "Unknown error:") != NULL);
 	ATF_REQUIRE(errno == EINVAL);
-}
-
-ATF_TC_BODY(strerror_basic, tc)
-{
-	int i;
-
-	for (i = 1; i < sys_nerr; i++)
-		ATF_REQUIRE(strstr(strerror(i), "Unknown error:") == NULL);
-
-	for (; i < sys_nerr + 10; i++)
-		ATF_REQUIRE(strstr(strerror(i), "Unknown error:") != NULL);
 }
 
 ATF_TC(strerror_r_basic);
