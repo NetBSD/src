@@ -1,4 +1,4 @@
-/*	$NetBSD: t_raise.c,v 1.3 2011/04/05 14:04:42 jruoho Exp $ */
+/*	$NetBSD: t_raise.c,v 1.4 2011/05/09 09:27:37 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_raise.c,v 1.3 2011/04/05 14:04:42 jruoho Exp $");
+__RCSID("$NetBSD: t_raise.c,v 1.4 2011/05/09 09:27:37 jruoho Exp $");
 
 #include <atf-c.h>
 
@@ -39,11 +39,12 @@ __RCSID("$NetBSD: t_raise.c,v 1.3 2011/04/05 14:04:42 jruoho Exp $");
 #include <unistd.h>
 
 static bool	fail;
-static void	handler(int);
+static void	handler_err(int);
+static void	handler_ret(int);
 static int	sig[] = { SIGALRM, SIGIO, SIGUSR1, SIGUSR2, SIGPWR };
 
 static void
-handler(int signo)
+handler_err(int signo)
 {
 	size_t i;
 
@@ -54,6 +55,15 @@ handler(int signo)
 			break;
 		}
 	}
+}
+
+static void
+handler_ret(int signo)
+{
+
+	(void)sleep(1);
+
+	fail = false;
 }
 
 ATF_TC(raise_err);
@@ -72,6 +82,33 @@ ATF_TC_BODY(raise_err, tc)
 
 		i++;
 	}
+}
+
+ATF_TC(raise_ret);
+ATF_TC_HEAD(raise_ret, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test return order of raise(3)");
+}
+
+ATF_TC_BODY(raise_ret, tc)
+{
+	struct sigaction sa;
+
+	fail = true;
+
+	sa.sa_flags = 0;
+	sa.sa_handler = handler_ret;
+
+	/*
+	 * Verify that raise(3) does not return
+	 * before the signal handler returns.
+	 */
+	ATF_REQUIRE(sigemptyset(&sa.sa_mask) == 0);
+	ATF_REQUIRE(sigaction(SIGUSR1, &sa, 0) == 0);
+	ATF_REQUIRE(raise(SIGUSR1) == 0);
+
+	if (fail != false)
+		atf_tc_fail("raise(3) returned before signal handler");
 }
 
 ATF_TC(raise_sig);
@@ -96,7 +133,7 @@ ATF_TC_BODY(raise_sig, tc)
 		tv.tv_nsec = 2;
 
 		sa.sa_flags = 0;
-		sa.sa_handler = handler;
+		sa.sa_handler = handler_err;
 
 		ATF_REQUIRE(sigemptyset(&sa.sa_mask) == 0);
 		ATF_REQUIRE(sigaction(sig[i], &sa, 0) == 0);
@@ -112,6 +149,7 @@ ATF_TC_BODY(raise_sig, tc)
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, raise_err);
+	ATF_TP_ADD_TC(tp, raise_ret);
 	ATF_TP_ADD_TC(tp, raise_sig);
 
 	return atf_no_error();
