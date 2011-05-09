@@ -1,4 +1,4 @@
-/* $NetBSD: t_closefrom.c,v 1.1 2011/05/09 05:17:12 jruoho Exp $ */
+/* $NetBSD: t_closefrom.c,v 1.2 2011/05/09 10:50:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_closefrom.c,v 1.1 2011/05/09 05:17:12 jruoho Exp $");
+__RCSID("$NetBSD: t_closefrom.c,v 1.2 2011/05/09 10:50:02 jruoho Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -61,8 +61,6 @@ ATF_TC_BODY(closefrom_basic, tc)
 
 	ATF_REQUIRE(cur2 >= 0);
 	ATF_REQUIRE(cur1 - 1 == cur2);
-
-	ATF_REQUIRE(close(fd) == 0);
 	ATF_REQUIRE(unlink(path) == 0);
 }
 
