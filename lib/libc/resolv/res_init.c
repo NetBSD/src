@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.8.4.3 2011/01/23 21:47:51 bouyer Exp $	*/
+/*	$NetBSD: res_init.c,v 1.8.4.4 2011/05/09 19:37:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -77,7 +77,7 @@ static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.16.18.7 2007/07/09 01:52:58 mar
 ka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.8.4.3 2011/01/23 21:47:51 bouyer Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.8.4.4 2011/05/09 19:37:30 bouyer Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -194,8 +194,6 @@ __res_vinit(res_state statp, int preinit) {
 	int maxns = MAXNS;
 
 	RES_SET_H_ERRNO(statp, 0);
-	if (statp->_u._ext.ext != NULL)
-		res_ndestroy(statp);
 
 	if (!preinit) {
 		statp->retrans = RES_TIMEOUT;
