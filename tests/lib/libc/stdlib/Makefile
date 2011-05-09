@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2011/04/05 08:24:28 jruoho Exp $
+# $NetBSD: Makefile,v 1.12 2011/05/09 07:31:51 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ TESTSDIR=	${TESTSBASE}/lib/libc/stdlib
 TESTS_C+=	t_div
 TESTS_C+=	t_environment
 TESTS_C+=	t_environment_pth
+TESTS_C+=	t_exit
 TESTS_C+=	t_hsearch
 TESTS_C+=	t_mi_vector_hash
 TESTS_C+=	t_posix_memalign
