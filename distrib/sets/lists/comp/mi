@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1621 2011/05/09 08:51:08 manu Exp $
+#	$NetBSD: mi,v 1.1622 2011/05/09 11:55:33 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3812,7 +3812,7 @@
 ./usr/libdata/debug/usr/sbin/pac.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/paxctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pcictl.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/perfuse.debug	comp-perfuse-debug	debug,perfuse
+./usr/libdata/debug/usr/sbin/perfused.debug	comp-perfuse-debug	debug,perfuse
 ./usr/libdata/debug/usr/sbin/pkg_add.debug	comp-pkgutil-debug	debug,crypto
 ./usr/libdata/debug/usr/sbin/pkg_admin.debug	comp-pkgutil-debug	debug,crypto
 ./usr/libdata/debug/usr/sbin/pkg_create.debug	comp-pkgutil-debug	debug,crypto
