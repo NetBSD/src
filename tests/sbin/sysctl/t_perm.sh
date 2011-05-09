@@ -1,6 +1,6 @@
 #! /usr/bin/atf-sh
 #
-# $NetBSD: t_perm.sh,v 1.1 2011/05/09 17:53:54 jruoho Exp $
+# $NetBSD: t_perm.sh,v 1.2 2011/05/09 17:55:37 jruoho Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -100,7 +100,7 @@ sysctl_hw_cleanup() {
 
 # kern.
 #
-atf_test_case sysctl_kern #cleanup
+atf_test_case sysctl_kern cleanup
 sysctl_kern_head() {
 	atf_set "require.user" "unprivileged"
 	atf_set "descr" "Test writing to 'kern' sysctl node as an user"
