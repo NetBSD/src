@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.169 2011/05/09 08:51:08 manu Exp $
+# $NetBSD: shl.mi,v 1.170 2011/05/09 17:13:20 manu Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -88,7 +88,7 @@
 ./usr/lib/libpcap_pic.a				comp-c-piclib
 ./usr/lib/libpcc_pic.a				comp-c-piclib		pcc
 ./usr/lib/libpci_pic.a				comp-c-piclib
-./usr/lib/libperfuse_pic.a			comp-perfuse-piclib	perfuse
+./usr/lib/libperfuse_pic.a			comp-perfuse-piclib
 ./usr/lib/libposix_pic.a			comp-c-piclib
 ./usr/lib/libprop_pic.a				comp-c-piclib
 ./usr/lib/libpthread_dbg_pic.a			comp-c-piclib
@@ -300,7 +300,7 @@
 ./usr/libdata/debug/usr/lib/libpam.so.3.0.debug		comp-sys-debug	pam,debug
 ./usr/libdata/debug/usr/lib/libpcap.so.4.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/libpci.so.2.0.debug		comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libperfuse.so.0.0.debug	comp-perfuse-debug	debug,perfuse
+./usr/libdata/debug/usr/lib/libperfuse.so.0.0.debug	comp-perfuse-debug	debug
 ./usr/libdata/debug/usr/lib/libposix.so.0.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libprop.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libpthread.so.1.0.debug	comp-sys-debug	debug
