@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.937 2011/05/09 08:51:08 manu Exp $
+# $NetBSD: mi,v 1.938 2011/05/09 17:13:19 manu Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1307,7 +1307,7 @@
 ./usr/sbin/pac					base-sysutil-bin
 ./usr/sbin/paxctl				base-sysutil-bin
 ./usr/sbin/pcictl				base-sysutil-bin
-./usr/sbin/perfused				base-perfuse-bin	perfuse
+./usr/sbin/perfused				base-perfuse-bin
 ./usr/sbin/pfspamdb				base-obsolete		obsolete
 ./usr/sbin/pim6dd				base-obsolete		obsolete
 ./usr/sbin/pim6sd				base-obsolete		obsolete
