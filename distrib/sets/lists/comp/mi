@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1622 2011/05/09 11:55:33 njoly Exp $
+#	$NetBSD: mi,v 1.1623 2011/05/09 17:13:20 manu Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1863,7 +1863,7 @@
 ./usr/include/pcap/pcap.h			comp-c-include
 ./usr/include/pci.h				comp-c-include
 ./usr/include/poll.h				comp-c-include
-./usr/include/perfuse.h				comp-c-include		perfuse
+./usr/include/perfuse.h				comp-c-include
 ./usr/include/prop/plistref.h			comp-c-include
 ./usr/include/prop/prop_array.h			comp-c-include
 ./usr/include/prop/prop_bool.h			comp-c-include
@@ -2633,9 +2633,9 @@
 ./usr/lib/libpci.a				comp-c-lib
 ./usr/lib/libpci_g.a				-unknown-		debuglib
 ./usr/lib/libpci_p.a				comp-c-proflib		profile
-./usr/lib/libperfuse.a				comp-perfuse-lib	perfuse
-./usr/lib/libperfuse_g.a			comp-perfuse-lib	debuglib,perfuse 
-./usr/lib/libperfuse_p.a			comp-perfuse-proflib	profile,perfuse
+./usr/lib/libperfuse.a				comp-perfuse-lib
+./usr/lib/libperfuse_g.a			comp-perfuse-lib	debuglib
+./usr/lib/libperfuse_p.a			comp-perfuse-proflib	profile
 ./usr/lib/libposix.a				comp-c-lib
 ./usr/lib/libposix_g.a				-unknown-		debuglib
 ./usr/lib/libposix_p.a				comp-c-proflib		profile
@@ -3812,7 +3812,7 @@
 ./usr/libdata/debug/usr/sbin/pac.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/paxctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pcictl.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/perfused.debug	comp-perfuse-debug	debug,perfuse
+./usr/libdata/debug/usr/sbin/perfused.debug	comp-perfuse-debug	debug
 ./usr/libdata/debug/usr/sbin/pkg_add.debug	comp-pkgutil-debug	debug,crypto
 ./usr/libdata/debug/usr/sbin/pkg_admin.debug	comp-pkgutil-debug	debug,crypto
 ./usr/libdata/debug/usr/sbin/pkg_create.debug	comp-pkgutil-debug	debug,crypto
@@ -3999,7 +3999,7 @@
 ./usr/libdata/lint/llib-lp2k.ln			comp-puffs-lintlib	lint
 ./usr/libdata/lint/llib-lpam.ln			comp-c-lintlib		lint,pam
 ./usr/libdata/lint/llib-lpcap.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lperfuse.ln		comp-perfuse-lintlib	lint,perfuse
+./usr/libdata/lint/llib-lperfuse.ln		comp-perfuse-lintlib	lint
 ./usr/libdata/lint/llib-lpcc.ln			comp-c-lintlib		lint,pcc
 ./usr/libdata/lint/llib-lpci.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lposix.ln		comp-c-lintlib		lint
@@ -7703,7 +7703,7 @@
 ./usr/share/man/cat3/pcidev_conf_write.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pclose.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pechochar.0		comp-c-catman		.cat
-./usr/share/man/cat3/libperfuse.0		comp-perfuse-catman	.cat,perfuse
+./usr/share/man/cat3/libperfuse.0		comp-perfuse-catman	.cat
 ./usr/share/man/cat3/perror.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pidfile.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pidlock.0			comp-c-catman		.cat
@@ -13754,7 +13754,7 @@
 ./usr/share/man/html3/pcidev_conf_write.html	comp-c-htmlman		html
 ./usr/share/man/html3/pclose.html		comp-c-htmlman		html
 ./usr/share/man/html3/pechochar.html		comp-c-htmlman		html
-./usr/share/man/html3/libperfuse.html		comp-perfuse-htmlman	html,perfuse
+./usr/share/man/html3/libperfuse.html		comp-perfuse-htmlman	html
 ./usr/share/man/html3/perror.html		comp-c-htmlman		html
 ./usr/share/man/html3/pidfile.html		comp-c-htmlman		html
 ./usr/share/man/html3/pidlock.html		comp-c-htmlman		html
@@ -19796,7 +19796,7 @@
 ./usr/share/man/man3/pcidev_conf_write.3	comp-c-man		.man
 ./usr/share/man/man3/pclose.3			comp-c-man		.man
 ./usr/share/man/man3/pechochar.3		comp-c-man		.man
-./usr/share/man/man3/libperfuse.3		comp-perfuse-man	.man,perfuse
+./usr/share/man/man3/libperfuse.3		comp-perfuse-man	.man
 ./usr/share/man/man3/perror.3			comp-c-man		.man
 ./usr/share/man/man3/pidfile.3			comp-c-man		.man
 ./usr/share/man/man3/pidlock.3			comp-c-man		.man
