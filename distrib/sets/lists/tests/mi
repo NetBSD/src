@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.335 2011/05/09 17:53:54 jruoho Exp $
+# $NetBSD: mi,v 1.336 2011/05/10 13:03:05 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -360,6 +360,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_humanize_number.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_ldexp.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_nice.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_pause.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_raise.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_randomid.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_rbstress.debug		tests-obsolete		obsolete
@@ -1789,6 +1790,7 @@
 ./usr/tests/lib/libc/gen/t_humanize_number	tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_ldexp		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_nice			tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_pause		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_raise		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_randomid		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_rbstress		tests-obsolete		obsolete
