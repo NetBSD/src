@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.47 2011/05/05 07:12:58 mrg Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.48 2011/05/10 07:04:17 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.47 2011/05/05 07:12:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.48 2011/05/10 07:04:17 mrg Exp $");
 
 #include <sys/errno.h>
 
@@ -217,10 +217,9 @@ rf_State_LastState(RF_RaidAccessDesc_t *desc)
 	callbackArg.p = desc->callbackArg;
 
 	/*
-	 * If this is not an async request, wake up the caller
+	 * We don't support non-async IO.
 	 */
-	if (desc->async_flag == 0)
-		wakeup(desc->bp);
+	KASSERT(desc->async_flag);
 
 	/*
 	 * That's all the IO for this one... unbusy the 'disk'.
