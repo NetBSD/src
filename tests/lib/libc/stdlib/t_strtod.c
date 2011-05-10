@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.8 2011/05/10 15:20:19 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.9 2011/05/10 19:18:19 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,10 +32,9 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.8 2011/05/10 15:20:19 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.9 2011/05/10 19:18:19 jruoho Exp $");
 
 #include <errno.h>
-#include <fenv.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,6 +42,10 @@ __RCSID("$NetBSD: t_strtod.c,v 1.8 2011/05/10 15:20:19 jruoho Exp $");
 
 #include <atf-c.h>
 #include <atf-c/config.h>
+
+#if defined(__i386__) || defined(__amd64__) || defined(__sparc__)
+#include <fenv.h>
+#endif
 
 ATF_TC(strtod_basic);
 ATF_TC_HEAD(strtod_basic, tc)
@@ -133,7 +136,7 @@ ATF_TC_HEAD(strtod_round, tc)
 
 ATF_TC_BODY(strtod_round, tc)
 {
-#ifndef __vax__
+#if defined(__i386__) || defined(__amd64__) || defined(__sparc__)
 
 	const char *val;
 	double d1, d2;
