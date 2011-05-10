@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2011/03/05 19:04:58 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2011/05/10 14:45:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2011/03/05 19:04:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2011/05/10 14:45:28 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -210,9 +210,6 @@ next68k_init(void)
 				BOOT_FLAG(*p, boothowto);
 		}
 	}
-
-	/* Initialize the interrupt handlers. */
-	isrinit();
 
 	/* Calibrate the delay loop. */
 	next68k_calibrate_delay();
