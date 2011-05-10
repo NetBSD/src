@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.49 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.50 2011/05/10 18:31:33 dyoung Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.49 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.50 2011/05/10 18:31:33 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -267,12 +267,14 @@ pciide_chipen(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	pcireg_t csr;
 
 	if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0) {
-		csr = pci_conf_read(sc->sc_pc, sc->sc_tag,
-		    PCI_COMMAND_STATUS_REG);
 		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-		    "device disabled (at %s)\n",
-		   (csr & PCI_COMMAND_IO_ENABLE) == 0 ?
-		   "device" : "bridge");
+		    "I/O access disabled at bridge\n");
+		return 0;
+	}
+	csr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
+	if ((csr & PCI_COMMAND_IO_ENABLE) == 0) {
+		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "I/O access disabled at device\n");
 		return 0;
 	}
 	return 1;

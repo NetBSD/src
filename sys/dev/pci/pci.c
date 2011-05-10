@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.138 2011/04/05 23:10:52 dyoung Exp $	*/
+/*	$NetBSD: pci.c,v 1.139 2011/05/10 18:31:33 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.138 2011/04/05 23:10:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.139 2011/05/10 18:31:33 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -370,10 +370,6 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	 * as appropriate.
 	 */
 	pa.pa_flags = sc->sc_flags;
-	if ((csr & PCI_COMMAND_IO_ENABLE) == 0)
-		pa.pa_flags &= ~PCI_FLAGS_IO_ENABLED;
-	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0)
-		pa.pa_flags &= ~PCI_FLAGS_MEM_ENABLED;
 
 	/*
 	 * If the cache line size is not configured, then

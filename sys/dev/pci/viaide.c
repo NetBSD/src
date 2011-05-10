@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.73 2011/04/10 15:02:01 jakllsch Exp $	*/
+/*	$NetBSD: viaide.c,v 1.74 2011/05/10 18:31:33 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.73 2011/04/10 15:02:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.74 2011/05/10 18:31:33 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -837,6 +837,7 @@ pio:		/* setup PIO mode */
 static int
 via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
+	pcireg_t csr;
 	int maptype, ret;
 
 	if (pciide_chipen(sc, pa) == 0)
@@ -877,12 +878,11 @@ via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 		/*
 		 * Enable memory-space access if it isn't already there.
 		 */
-		if ((pa->pa_flags & PCI_FLAGS_MEM_ENABLED) == 0) {
-			pcireg_t csr;
+		csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
+		if ((csr & PCI_COMMAND_MEM_ENABLE) == 0 &&
+		    (pa->pa_flags & PCI_FLAGS_MEM_ENABLED) != 0) {
 
-			pa->pa_flags |= PCI_FLAGS_MEM_ENABLED;
-			csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    PCI_COMMAND_STATUS_REG);
 			pci_conf_write(pa->pa_pc, pa->pa_tag,
 			    PCI_COMMAND_STATUS_REG,
 			    csr | PCI_COMMAND_MEM_ENABLE);
