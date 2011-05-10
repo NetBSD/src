@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.28 2007/03/04 06:02:39 christos Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.29 2011/05/10 07:04:17 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.28 2007/03/04 06:02:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.29 2011/05/10 07:04:17 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -637,8 +637,9 @@ rf_ShutdownParityLoggingDiskQueue(RF_ThreadArg_t arg)
 	}
 	while (raidPtr->parityLogDiskQueue.freeCommonList) {
 		c = raidPtr->parityLogDiskQueue.freeCommonList;
-		raidPtr->parityLogDiskQueue.freeCommonList =
-			raidPtr->parityLogDiskQueue.freeCommonList->next;
+		raidPtr->parityLogDiskQueue.freeCommonList = c->next;
+		/* init is in rf_paritylog.c */
+		rf_destroy_mutex2(c->mutex);
 		RF_Free(c, sizeof(RF_CommonLogData_t));
 	}
 }
