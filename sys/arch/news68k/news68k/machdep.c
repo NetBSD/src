@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 2011/03/06 14:54:47 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 2011/05/10 14:41:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2011/03/06 14:54:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2011/05/10 14:41:55 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -185,8 +185,6 @@ news68k_init(void)
 	default:
 		panic("impossible system type");
 	}
-
-	isrinit();
 
 	/*
 	 * Initialize error message buffer (at end of core).
