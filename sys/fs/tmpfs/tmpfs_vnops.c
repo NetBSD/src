@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.79 2011/05/08 00:03:35 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.80 2011/05/10 00:34:26 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.79 2011/05/08 00:03:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.80 2011/05/10 00:34:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1466,8 +1466,7 @@ tmpfs_getpages(void *v)
 
 #if defined(DEBUG)
 	if (!error && pgs) {
-		int i;
-		for (i = 0; i < npages; i++) {
+		for (int i = 0; i < npages; i++) {
 			KASSERT(pgs[i] != NULL);
 		}
 	}
