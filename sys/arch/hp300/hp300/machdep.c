@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.219 2011/03/04 22:25:25 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.220 2011/05/10 14:38:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219 2011/03/04 22:25:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220 2011/05/10 14:38:08 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -202,9 +202,6 @@ hp300_init(void)
 	 */
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
-
-	/* Initialize the interrupt handlers. */
-	intr_init();
 
 	/* Calibrate the delay loop. */
 	hp300_calibrate_delay();
