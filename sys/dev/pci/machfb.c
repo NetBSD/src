@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.64 2011/05/04 23:36:21 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.65 2011/05/10 18:31:33 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.64 2011/05/04 23:36:21 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.65 2011/05/10 18:31:33 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -521,6 +521,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	int setmode, width, height;
 	pcireg_t screg;
 	uint32_t reg;
+	const pcireg_t enables = PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_IO_ENABLE;
 
 	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;
@@ -543,9 +544,8 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	
 	/* enable memory and disable IO access */
 	screg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
-	if ((screg & PCI_FLAGS_MEM_ENABLED) == 0) {
-		screg |= PCI_FLAGS_IO_ENABLED;
-		screg |= PCI_FLAGS_MEM_ENABLED;
+	if ((screg & enables) != enables) {
+		screg |= enables;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
 		    PCI_COMMAND_STATUS_REG, screg);
 	}
