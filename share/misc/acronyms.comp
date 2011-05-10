@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.124 2011/03/26 12:40:07 dholland Exp $
+$NetBSD: acronyms.comp,v 1.125 2011/05/10 23:33:07 enami Exp $
 
 3WHS	three-way handshake
 AA	anti-aliasing
@@ -456,7 +456,7 @@ HVM	hardware virtual machine
 HZ	Hertz
 I2O	intelligent input/output
 IA	information assurance
-IANA	Internet assigned number authority
+IANA	Internet assigned numbers authority
 IBC	iterated block cipher
 IBM	International Business Machines
 IBS	instruction based sampling
