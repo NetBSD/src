@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2010/12/15 00:09:41 pooka Exp $	
-
-WARNS?=	1	# XXX: out of date third-party program 
+#	$NetBSD: Makefile,v 1.18 2011/05/10 01:52:49 christos Exp $	
 
 USE_FORT?= yes	# network client
 
