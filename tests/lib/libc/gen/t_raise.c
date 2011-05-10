@@ -1,4 +1,4 @@
-/*	$NetBSD: t_raise.c,v 1.4 2011/05/09 09:27:37 jruoho Exp $ */
+/*	$NetBSD: t_raise.c,v 1.5 2011/05/10 12:43:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_raise.c,v 1.4 2011/05/09 09:27:37 jruoho Exp $");
+__RCSID("$NetBSD: t_raise.c,v 1.5 2011/05/10 12:43:42 jruoho Exp $");
 
 #include <atf-c.h>
 
@@ -39,9 +39,17 @@ __RCSID("$NetBSD: t_raise.c,v 1.4 2011/05/09 09:27:37 jruoho Exp $");
 #include <unistd.h>
 
 static bool	fail;
+static int	count;
 static void	handler_err(int);
 static void	handler_ret(int);
+static void	handler_stress(int);
 static int	sig[] = { SIGALRM, SIGIO, SIGUSR1, SIGUSR2, SIGPWR };
+
+static void
+handler_stress(int signo)
+{
+	count++;
+}
 
 static void
 handler_err(int signo)
@@ -146,11 +154,37 @@ ATF_TC_BODY(raise_sig, tc)
 	}
 }
 
+ATF_TC(raise_stress);
+ATF_TC_HEAD(raise_stress, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic stress test with raise(3)");
+}
+
+ATF_TC_BODY(raise_stress, tc)
+{
+	static const int maxiter = 1000 * 10;
+	struct sigaction sa;
+	int i;
+
+	sa.sa_flags = 0;
+	sa.sa_handler = handler_stress;
+
+	ATF_REQUIRE(sigemptyset(&sa.sa_mask) == 0);
+	ATF_REQUIRE(sigaction(SIGUSR1, &sa, 0) == 0);
+
+	for (count = i = 0; i < maxiter; i++)
+		(void)raise(SIGUSR1);
+
+	if (count != maxiter)
+		atf_tc_fail("not all signals were catched");
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, raise_err);
 	ATF_TP_ADD_TC(tp, raise_ret);
 	ATF_TP_ADD_TC(tp, raise_sig);
+	ATF_TP_ADD_TC(tp, raise_stress);
 
 	return atf_no_error();
 }
