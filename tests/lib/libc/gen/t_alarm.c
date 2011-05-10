@@ -1,4 +1,4 @@
-/* $NetBSD: t_alarm.c,v 1.1 2011/05/05 13:22:56 jruoho Exp $ */
+/* $NetBSD: t_alarm.c,v 1.2 2011/05/10 06:58:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_alarm.c,v 1.1 2011/05/05 13:22:56 jruoho Exp $");
+__RCSID("$NetBSD: t_alarm.c,v 1.2 2011/05/10 06:58:17 jruoho Exp $");
 
 #include <sys/wait.h>
 
@@ -52,7 +52,7 @@ handler(int signo)
 ATF_TC(alarm_basic);
 ATF_TC_HEAD(alarm_basic, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "A basic test of alarm(2)");
+	atf_tc_set_md_var(tc, "descr", "A basic test of alarm(3)");
 }
 
 ATF_TC_BODY(alarm_basic, tc)
@@ -110,7 +110,7 @@ ATF_TC_BODY(alarm_fork, tc)
 ATF_TC(alarm_previous);
 ATF_TC_HEAD(alarm_previous, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test return value from alarm(2)");
+	atf_tc_set_md_var(tc, "descr", "Test return value from alarm(3)");
 }
 
 ATF_TC_BODY(alarm_previous, tc)
@@ -118,7 +118,7 @@ ATF_TC_BODY(alarm_previous, tc)
 	unsigned int rv;
 
 	/*
-	 * See that alarm(2) returns the amount
+	 * See that alarm(3) returns the amount
 	 * left on the timer from the previous call.
 	*/
 	rv = alarm(60);
@@ -136,7 +136,7 @@ ATF_TC_BODY(alarm_previous, tc)
 	return;
 
 fail:
-	atf_tc_fail("invalid return value from alarm(2)");
+	atf_tc_fail("invalid return value from alarm(3)");
 }
 
 ATF_TP_ADD_TCS(tp)
