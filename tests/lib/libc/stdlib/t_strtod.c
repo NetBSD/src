@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.7 2011/04/12 02:56:20 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.8 2011/05/10 15:20:19 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,9 +32,10 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.7 2011/04/12 02:56:20 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.8 2011/05/10 15:20:19 jruoho Exp $");
 
 #include <errno.h>
+#include <fenv.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,6 +125,38 @@ ATF_TC_BODY(strtod_inf, tc)
 #endif
 }
 
+ATF_TC(strtod_round);
+ATF_TC_HEAD(strtod_round, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test rouding in strtod(3)");
+}
+
+ATF_TC_BODY(strtod_round, tc)
+{
+#ifndef __vax__
+
+	const char *val;
+	double d1, d2;
+
+	/*
+	 * Test that strtod(3) honors the current rounding mode.
+	 *
+	 * The used value is somewhere near 1 + DBL_EPSILON + FLT_EPSILON.
+	 */
+	val = "1.00000011920928977282585492503130808472633361816406";
+
+	(void)fesetround(FE_UPWARD);
+
+	d1 = strtod(val, NULL);
+
+	(void)fesetround(FE_DOWNWARD);
+
+	d2 = strtod(val, NULL);
+
+	ATF_REQUIRE(fabs(d1 - d2) > 0.0);
+#endif
+}
+
 ATF_TC(strtod_underflow);
 ATF_TC_HEAD(strtod_underflow, tc)
 {
@@ -158,6 +191,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, strtod_basic);
 	ATF_TP_ADD_TC(tp, strtod_hex);
 	ATF_TP_ADD_TC(tp, strtod_inf);
+	ATF_TP_ADD_TC(tp, strtod_round);
 	ATF_TP_ADD_TC(tp, strtod_underflow);
 
 	return atf_no_error();
