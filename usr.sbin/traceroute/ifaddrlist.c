@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrlist.c,v 1.7 2003/05/15 14:47:49 itojun Exp $	*/
+/*	$NetBSD: ifaddrlist.c,v 1.8 2011/05/10 01:52:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: ifaddrlist.c,v 1.2 97/04/22 13:31:05 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: ifaddrlist.c,v 1.7 2003/05/15 14:47:49 itojun Exp $");
+__RCSID("$NetBSD: ifaddrlist.c,v 1.8 2011/05/10 01:52:49 christos Exp $");
 #endif
 #endif
 
@@ -94,9 +94,9 @@ ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, int buflen)
 	struct sockaddr_in *sin;
 	struct ifaddrs *ifap, *ifa;
 	struct ifaddrlist *al;
-	static struct ifaddrlist ifaddrlist[MAX_IPADDR];
+	static struct ifaddrlist xifaddrlist[MAX_IPADDR];
 
-	al = ifaddrlist;
+	al = xifaddrlist;
 	nipaddr = 0;
 
 	if (getifaddrs(&ifap) != 0) {
@@ -126,7 +126,7 @@ ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, int buflen)
 		++al;
 		++nipaddr;
 	}
-	*ipaddrp = ifaddrlist;
+	*ipaddrp = xifaddrlist;
 	freeifaddrs(ifap);
 	return (nipaddr);
 }
