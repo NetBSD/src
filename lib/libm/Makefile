@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.107 2011/04/16 05:48:50 jruoho Exp $
+#  $NetBSD: Makefile,v 1.108 2011/05/10 06:38:33 jruoho Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -204,7 +204,7 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 \
 	ceil.3 copysign.3 cos.3 cosh.3 \
 	erf.3 exp.3 \
 	fabs.3 fmod.3 frexp.3 hypot.3 ieee.3 \
-	ieee_test.3 isinff.3 j0.3 ldexp.3 lgamma.3 lrint.3 \
+	ieee_test.3 ilogb.3 isinff.3 j0.3 ldexp.3 lgamma.3 lrint.3 \
 	math.3 modf.3 nextafter.3 \
 	remainder.3 rint.3 round.3 \
 	sin.3 sinh.3 sqrt.3 \
@@ -249,11 +249,11 @@ MLINKS+=fabs.3 fabsf.3
 MLINKS+=fmod.3 fmodf.3
 MLINKS+=hypot.3 hypotf.3
 MLINKS+=ieee.3 finite.3 ieee.3 finitef.3 				\
-	ieee.3 ilogb.3 ieee.3 ilogbf.3					\
 	ieee.3 scalbn.3 ieee.3 scalbnf.3
 MLINKS+=ieee_test.3 logb.3 ieee_test.3 logbf.3
 MLINKS+=ieee_test.3 scalb.3 ieee_test.3 scalbf.3
 MLINKS+=ieee_test.3 significand.3 ieee_test.3 significandf.3
+MLINKS+=ilogb.3 ilogbf.3					\
 MLINKS+=isinff.3 isnanf.3
 MLINKS+=j0.3 j0f.3 j0.3 j1.3 j0.3 j1f.3 j0.3 jn.3 j0.3 jnf.3 \
 	j0.3 y0.3 j0.3 y0f.3 j0.3 y1.3 j0.3 y1f.3 j0.3 yn.3 j0.3 ynf.3
