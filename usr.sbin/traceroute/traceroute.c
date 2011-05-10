@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.76 2010/12/15 00:09:41 pooka Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.77 2011/05/10 01:52:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: traceroute.c,v 1.76 2010/12/15 00:09:41 pooka Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.77 2011/05/10 01:52:49 christos Exp $");
 #endif
 #endif
 
@@ -323,57 +323,57 @@ struct mpls_header {
 #endif
 };
 
-u_char	packet[512];		/* last inbound (icmp) packet */
+static u_char	packet[512];		/* last inbound (icmp) packet */
 
-struct ip *outip;		/* last output (udp) packet */
-struct udphdr *outudp;		/* last output (udp) packet */
-void *outmark;			/* packed location of struct outdata */
-struct outdata outsetup;	/* setup and copy for alignment */
+static struct ip *outip;		/* last output (udp) packet */
+static struct udphdr *outudp;		/* last output (udp) packet */
+static void *outmark;			/* packed location of struct outdata */
+static struct outdata outsetup;	/* setup and copy for alignment */
 
-struct icmp *outicmp;		/* last output (icmp) packet */
+static struct icmp *outicmp;		/* last output (icmp) packet */
 
 /* loose source route gateway list (including room for final destination) */
-u_int32_t gwlist[NGATEWAYS + 1];
+static u_int32_t gwlist[NGATEWAYS + 1];
 
-int s;				/* receive (icmp) socket file descriptor */
-int sndsock;			/* send (udp/icmp) socket file descriptor */
+static int s;				/* receive (icmp) socket file descriptor */
+static int sndsock;			/* send (udp/icmp) socket file descriptor */
 
-struct sockaddr whereto;	/* Who to try to reach */
-struct sockaddr_in wherefrom;	/* Who we are */
-int packlen;			/* total length of packet */
-int minpacket;			/* min ip packet size */
-int maxpacket = 32 * 1024;	/* max ip packet size */
-int printed_ttl = 0;
+static struct sockaddr whereto;	/* Who to try to reach */
+static struct sockaddr_in wherefrom;	/* Who we are */
+static int packlen;			/* total length of packet */
+static int minpacket;			/* min ip packet size */
+static int maxpacket = 32 * 1024;	/* max ip packet size */
+static int printed_ttl = 0;
 
-const char *prog;
-char *source;
-char *hostname;
-char *device;
+static const char *prog;
+static char *source;
+static char *hostname;
+static char *device;
 
-int nprobes = 3;
-int max_ttl = 30;
-int first_ttl = 1;
-u_int16_t ident;
-in_port_t port = 32768 + 666;	/* start udp dest port # for probe packets */
+static int nprobes = 3;
+static int max_ttl = 30;
+static int first_ttl = 1;
+static u_int16_t ident;
+static in_port_t port = 32768 + 666;	/* start udp dest port # for probe packets */
 
-int options;			/* socket options */
-int verbose;
-int waittime = 5;		/* time to wait for response (in seconds) */
-int nflag;			/* print addresses numerically */
-int dump;
-int Mflag;			/* show MPLS labels if any */
-int as_path;			/* print as numbers for each hop */
-char *as_server = NULL;
-void *asn;
-int useicmp = 0;		/* use icmp echo instead of udp packets */
+static int options;			/* socket options */
+static int verbose;
+static int waittime = 5;		/* time to wait for response (in seconds) */
+static int nflag;			/* print addresses numerically */
+static int dump;
+static int Mflag;			/* show MPLS labels if any */
+static int as_path;			/* print as numbers for each hop */
+static char *as_server = NULL;
+static void *asn;
+static int useicmp = 0;		/* use icmp echo instead of udp packets */
 #ifdef CANT_HACK_CKSUM
-int docksum = 0;		/* don't calculate checksums */
+static int docksum = 0;		/* don't calculate checksums */
 #else
-int docksum = 1;		/* calculate checksums */
+static int docksum = 1;		/* calculate checksums */
 #endif
-int optlen;			/* length of ip options */
+static int optlen;			/* length of ip options */
 
-int mtus[] = {
+static int mtus[] = {
         17914,
          8166,
          4464,  
@@ -395,40 +395,35 @@ int mtus[] = {
            68, 
             0
 };      
-int *mtuptr = &mtus[0];
-int mtudisc = 0;
-int nextmtu;   /* from ICMP error, set by packet_ok(), might be 0 */
-
-extern int optind;
-extern int opterr;
-extern char *optarg;
+static int *mtuptr = &mtus[0];
+static int mtudisc = 0;
+static int nextmtu;   /* from ICMP error, set by packet_ok(), might be 0 */
 
 /* Forwards */
-double	deltaT(struct timeval *, struct timeval *);
-void	freehostinfo(struct hostinfo *);
-void	getaddr(u_int32_t *, char *);
-struct	hostinfo *gethostinfo(char *);
-u_int16_t in_cksum(u_int16_t *, int);
-u_int16_t in_cksum2(u_int16_t, u_int16_t *, int);
-char	*inetname(struct in_addr);
-int	main(int, char **);
-int	packet_ok(u_char *, int, struct sockaddr_in *, int);
-char	*pr_type(u_char);
-void	print(u_char *, int, struct sockaddr_in *);
-void	resize_packet(void);
-void	dump_packet(void);
-void	send_probe(int, int, struct timeval *);
-void	setsin(struct sockaddr_in *, u_int32_t);
-int	str2val(const char *, const char *, int, int);
-void	tvsub(struct timeval *, struct timeval *);
-__dead	void usage(void);
-int	wait_for_reply(int, struct sockaddr_in *, struct timeval *);
-void	decode_extensions(unsigned char *buf, int ip_len);
-void	frag_err(void);
-int	find_local_ip(struct sockaddr_in *, struct sockaddr_in *);
+static double deltaT(struct timeval *, struct timeval *);
+static void freehostinfo(struct hostinfo *);
+static void getaddr(u_int32_t *, char *);
+static struct hostinfo *gethostinfo(char *);
+static u_int16_t in_cksum(u_int16_t *, int);
+static u_int16_t in_cksum2(u_int16_t, u_int16_t *, int);
+static char *inetname(struct in_addr);
+static int packet_ok(u_char *, ssize_t, struct sockaddr_in *, int);
+static const char *pr_type(u_char);
+static void print(u_char *, int, struct sockaddr_in *);
+static void resize_packet(void);
+static void dump_packet(void);
+static void send_probe(int, int, struct timeval *);
+static void setsin(struct sockaddr_in *, u_int32_t);
+static int str2val(const char *, const char *, int, int);
+static void tvsub(struct timeval *, struct timeval *);
+static void usage(void) __attribute__((__noreturn__));
+static ssize_t wait_for_reply(int, struct sockaddr_in *, struct timeval *);
+static void decode_extensions(unsigned char *buf, int ip_len);
+static void frag_err(void);
+static int find_local_ip(struct sockaddr_in *, struct sockaddr_in *);
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
-int	setpolicy(int so, char *policy);
+static int setpolicy(int, const char *);
 #endif
 #endif
 
@@ -1083,12 +1078,12 @@ again:
 	exit(0);
 }
 
-int
+static ssize_t
 wait_for_reply(int sock, struct sockaddr_in *fromp, struct timeval *tp)
 {
 	struct pollfd set[1];
 	struct timeval now, wait;
-	int cc = 0;
+	ssize_t cc = 0;
 	socklen_t fromlen = sizeof(*fromp);
 	int retval;
 
@@ -1116,10 +1111,10 @@ wait_for_reply(int sock, struct sockaddr_in *fromp, struct timeval *tp)
 			    (struct sockaddr *)fromp, &fromlen);
 	}
 
-	return(cc);
+	return cc;
 }
 
-void
+static void
 decode_extensions(unsigned char *buf, int ip_len)
 {
         struct icmp_ext_cmn_hdr *cmn_hdr;
@@ -1128,13 +1123,13 @@ decode_extensions(unsigned char *buf, int ip_len)
                 struct mpls_header mpls;
                 uint32_t mpls_h;
         } mpls;
-        int datalen, obj_len;
+        size_t datalen, obj_len;
         struct ip *ip;
 
         ip = (struct ip *)buf;
 
-        if (ip_len < (ip->ip_hl << 2) + ICMP_EXT_OFFSET +
-	    sizeof(struct icmp_ext_cmn_hdr)) {
+        if (ip_len < (int)((ip->ip_hl << 2) + ICMP_EXT_OFFSET +
+	    sizeof(struct icmp_ext_cmn_hdr))) {
 		/*
 		 * No support for ICMP extensions on this host
 		 */
@@ -1233,8 +1228,8 @@ decode_extensions(unsigned char *buf, int ip_len)
 	}
 }
 
-void
-dump_packet()
+static void
+dump_packet(void)
 {
 	u_char *p;
 	int i;
@@ -1348,7 +1343,7 @@ again:
 		if (packlen & 1) {
 			if ((i % 8) == 0)
 				Printf("\n\t");
-			Printf(" %02x", *(u_char *)sp);
+			Printf(" %02x", *(const u_char *)sp);
 		}
 		Printf("]\n");
 	}
@@ -1409,7 +1404,7 @@ again:
 	
 }
 
-double
+static double
 deltaT(struct timeval *t1p, struct timeval *t2p)
 {
 	double dt;
@@ -1422,10 +1417,10 @@ deltaT(struct timeval *t1p, struct timeval *t2p)
 /*
  * Convert an ICMP "type" field to a printable string.
  */
-char *
+static const char *
 pr_type(u_char t)
 {
-	static char *ttab[] = {
+	static const char *ttab[] = {
 	"Echo Reply",	"ICMP 1",	"ICMP 2",	"Dest Unreachable",
 	"Source Quench", "Redirect",	"ICMP 6",	"ICMP 7",
 	"Echo",		"ICMP 9",	"ICMP 10",	"Time Exceeded",
@@ -1434,13 +1429,13 @@ pr_type(u_char t)
 	};
 
 	if (t > 16)
-		return("OUT-OF-RANGE");
+		return "OUT-OF-RANGE";
 
-	return(ttab[t]);
+	return ttab[t];
 }
 
-int
-packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq)
+static int
+packet_ok(u_char *buf, ssize_t cc, struct sockaddr_in *from, int seq)
 {
 	struct icmp *icp;
 	u_char type, code;
@@ -1452,7 +1447,7 @@ packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq)
 	hlen = ip->ip_hl << 2;
 	if (cc < hlen + ICMP_MINLEN) {
 		if (verbose)
-			Printf("packet too short (%d bytes) from %s\n", cc,
+			Printf("packet too short (%zd bytes) from %s\n", cc,
 				inet_ntoa(from->sin_addr));
 		return (0);
 	}
@@ -1503,7 +1498,7 @@ packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq)
 		int i;
 		u_int32_t *lp = (u_int32_t *)&icp->icmp_ip;
 
-		Printf("\n%d bytes from %s to ", cc, inet_ntoa(from->sin_addr));
+		Printf("\n%zd bytes from %s to ", cc, inet_ntoa(from->sin_addr));
 		Printf("%s: icmp type %d (%s) code %d\n",
 		    inet_ntoa(ip->ip_dst), type, pr_type(type), icp->icmp_code);
 		for (i = 4; i < cc ; i += sizeof(*lp))
@@ -1513,7 +1508,8 @@ packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq)
 	return(0);
 }
 
-void resize_packet(void)
+static void
+resize_packet(void)
 {
 	if (useicmp) {
 		outicmp->icmp_cksum = 0;
@@ -1527,30 +1523,32 @@ void resize_packet(void)
 	}
 }
 
-void
+static void
 print(u_char *buf, int cc, struct sockaddr_in *from)
 {
 	struct ip *ip;
 	int hlen;
+	char addr[INET_ADDRSTRLEN];
 
 	ip = (struct ip *) buf;
 	hlen = ip->ip_hl << 2;
 	cc -= hlen;
 
+	strlcpy(addr, inet_ntoa(from->sin_addr), sizeof(addr));
+
 	if (as_path)
-		Printf(" [AS%d]", as_lookup(asn, &from->sin_addr));
+		Printf(" [AS%u]", as_lookup(asn, addr, AF_INET));
 
 	if (nflag)
-		Printf(" %s", inet_ntoa(from->sin_addr));
+		Printf(" %s", addr);
 	else
-		Printf(" %s (%s)", inetname(from->sin_addr),
-		    inet_ntoa(from->sin_addr));
+		Printf(" %s (%s)", inetname(from->sin_addr), addr);
 
 	if (verbose)
 		Printf(" %d bytes to %s", cc, inet_ntoa (ip->ip_dst));
 }
 
-u_int16_t
+static u_int16_t
 in_cksum(u_int16_t *addr, int len)
 {
 
@@ -1560,7 +1558,7 @@ in_cksum(u_int16_t *addr, int len)
 /*
  * Checksum routine for Internet Protocol family headers (C Version)
  */
-u_int16_t
+static u_int16_t
 in_cksum2(u_int16_t seed, u_int16_t *addr, int len)
 {
 	int nleft = len;
@@ -1602,7 +1600,7 @@ in_cksum2(u_int16_t seed, u_int16_t *addr, int len)
  * Subtract 2 timeval structs:  out = out - in.
  * Out is assumed to be >= in.
  */
-void
+static void
 tvsub(struct timeval *out, struct timeval *in)
 {
 
@@ -1618,7 +1616,7 @@ tvsub(struct timeval *out, struct timeval *in)
  * If the nflag has been supplied, give
  * numeric value, otherwise try for symbolic name.
  */
-char *
+static char *
 inetname(struct in_addr in)
 {
 	char *cp;
@@ -1649,8 +1647,8 @@ inetname(struct in_addr in)
 	return (inet_ntoa(in));
 }
 
-struct hostinfo *
-gethostinfo(char *hostname)
+static struct hostinfo *
+gethostinfo(char *hname)
 {
 	int n;
 	struct hostent *hp;
@@ -1664,8 +1662,8 @@ gethostinfo(char *hostname)
 		Fprintf(stderr, "%s: calloc %s\n", prog, strerror(errno));
 		exit(1);
 	}
-	if (inet_aton(hostname, &addr) != 0) {
-		hi->name = strdup(hostname);
+	if (inet_aton(hname, &addr) != 0) {
+		hi->name = strdup(hname);
 		if (!hi->name) {
 			Fprintf(stderr, "%s: strdup %s\n", prog,
 			    strerror(errno));
@@ -1682,13 +1680,13 @@ gethostinfo(char *hostname)
 		return (hi);
 	}
 
-	hp = gethostbyname(hostname);
+	hp = gethostbyname(hname);
 	if (hp == NULL) {
-		Fprintf(stderr, "%s: unknown host %s\n", prog, hostname);
+		Fprintf(stderr, "%s: unknown host %s\n", prog, hname);
 		exit(1);
 	}
 	if (hp->h_addrtype != AF_INET || hp->h_length != 4) {
-		Fprintf(stderr, "%s: bad host %s\n", prog, hostname);
+		Fprintf(stderr, "%s: bad host %s\n", prog, hname);
 		exit(1);
 	}
 	hi->name = strdup(hp->h_name);
@@ -1709,7 +1707,7 @@ gethostinfo(char *hostname)
 	return (hi);
 }
 
-void
+static void
 freehostinfo(struct hostinfo *hi)
 {
 	if (hi->name != NULL) {
@@ -1720,17 +1718,17 @@ freehostinfo(struct hostinfo *hi)
 	free((char *)hi);
 }
 
-void
-getaddr(u_int32_t *ap, char *hostname)
+static void
+getaddr(u_int32_t *ap, char *hname)
 {
 	struct hostinfo *hi;
 
-	hi = gethostinfo(hostname);
+	hi = gethostinfo(hname);
 	*ap = hi->addrs[0];
 	freehostinfo(hi);
 }
 
-void
+static void
 setsin(struct sockaddr_in *sin, u_int32_t addr)
 {
 
@@ -1743,7 +1741,7 @@ setsin(struct sockaddr_in *sin, u_int32_t addr)
 }
 
 /* String to value with optional min and max. Handles decimal and hex. */
-int
+static int
 str2val(const char *str, const char *what, int mi, int ma)
 {
 	const char *cp;
@@ -1863,10 +1861,8 @@ find_local_ip(struct sockaddr_in *from, struct sockaddr_in *to)
 
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
-int
-setpolicy(so, policy)
-	int so;
-	char *policy;
+static int
+setpolicy(int so, const char *policy)
 {
 	char *buf;
 
