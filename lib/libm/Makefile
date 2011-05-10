@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.108 2011/05/10 06:38:33 jruoho Exp $
+#  $NetBSD: Makefile,v 1.109 2011/05/10 09:07:51 jruoho Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -253,7 +253,7 @@ MLINKS+=ieee.3 finite.3 ieee.3 finitef.3 				\
 MLINKS+=ieee_test.3 logb.3 ieee_test.3 logbf.3
 MLINKS+=ieee_test.3 scalb.3 ieee_test.3 scalbf.3
 MLINKS+=ieee_test.3 significand.3 ieee_test.3 significandf.3
-MLINKS+=ilogb.3 ilogbf.3					\
+MLINKS+=ilogb.3 ilogbf.3
 MLINKS+=isinff.3 isnanf.3
 MLINKS+=j0.3 j0f.3 j0.3 j1.3 j0.3 j1f.3 j0.3 jn.3 j0.3 jnf.3 \
 	j0.3 y0.3 j0.3 y0f.3 j0.3 y1.3 j0.3 y1f.3 j0.3 yn.3 j0.3 ynf.3
