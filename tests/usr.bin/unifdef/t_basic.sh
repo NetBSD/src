@@ -1,6 +1,6 @@
 #! /usr/bin/atf-sh
 #
-# $NetBSD: t_basic.sh,v 1.2 2011/05/03 12:54:48 jruoho Exp $
+# $NetBSD: t_basic.sh,v 1.3 2011/05/10 19:02:27 njoly Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,6 +33,7 @@
 atf_test_case basic
 basic_head() {
 	atf_set "descr" "A basic test of unifdef(1)"
+	atf_set "require.progs" "unifdef"
 }
 
 basic_body() {
