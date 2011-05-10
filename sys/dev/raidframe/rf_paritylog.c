@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.c,v 1.13 2007/03/04 06:02:38 christos Exp $	*/
+/*	$NetBSD: rf_paritylog.c,v 1.14 2011/05/10 07:04:17 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.13 2007/03/04 06:02:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.14 2011/05/10 07:04:17 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -75,7 +75,8 @@ AllocParityLogCommonData(RF_Raid_t * raidPtr)
 	} else {
 		RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
 		RF_Malloc(common, sizeof(RF_CommonLogData_t), (RF_CommonLogData_t *));
-		rf_mutex_init(&common->mutex);
+		/* destroy is in rf_paritylogging.c */
+		rf_init_mutex2(common->mutex, IPL_VM);
 	}
 	common->next = NULL;
 	return (common);
@@ -815,13 +816,13 @@ rf_ParityLogAppend(
 			/* Processed this item completely, decrement count of
 			 * items to be processed. */
 			RF_ASSERT(item->diskAddress.numSector == 0);
-			RF_LOCK_MUTEX(item->common->mutex);
+			rf_lock_mutex2(item->common->mutex);
 			item->common->cnt--;
 			if (item->common->cnt == 0)
 				itemDone = RF_TRUE;
 			else
 				itemDone = RF_FALSE;
-			RF_UNLOCK_MUTEX(item->common->mutex);
+			rf_unlock_mutex2(item->common->mutex);
 			if (itemDone) {
 				/* Finished processing all log data for this
 				 * IO Return structs to free list and invoke

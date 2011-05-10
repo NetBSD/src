@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.h,v 1.5 2007/03/04 06:02:38 christos Exp $	*/
+/*	$NetBSD: rf_paritylog.h,v 1.6 2011/05/10 07:04:17 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -46,8 +46,8 @@ typedef enum RF_ParityRecordType_e {
 }       RF_ParityRecordType_t;
 
 struct RF_CommonLogData_s {
-	RF_DECLARE_MUTEX(mutex)	/* protects cnt */
-	int     cnt;		/* when 0, time to call wakeFunc */
+	rf_declare_mutex2(mutex);	/* protects cnt */
+	int     cnt;			/* when 0, time to call wakeFunc */
 	RF_Raid_t *raidPtr;
 /*   int                    (*wakeFunc)(struct buf *); */
 	int     (*wakeFunc) (RF_DagNode_t * node, int status);
