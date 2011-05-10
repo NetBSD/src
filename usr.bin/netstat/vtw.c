@@ -1,4 +1,4 @@
-/*	$NetBSD: vtw.c,v 1.4 2011/05/04 03:43:30 pgoyette Exp $	*/
+/*	$NetBSD: vtw.c,v 1.5 2011/05/10 04:40:16 enami Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: vtw.c,v 1.4 2011/05/04 03:43:30 pgoyette Exp $");
+__RCSID("$NetBSD: vtw.c,v 1.5 2011/05/10 04:40:16 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,7 +251,7 @@ show_vtw_v4(void (*print)(const vtw_t *))
 	for (i = 0; i < VTW_NCLASS; ++i) {
 		vtw_v4_t *kbase, *klim;
 		vtw_v4_t *ubase, *ulim;
-		int delta;
+		ptrdiff_t delta;
 
 		kbase = vtw_tcpv4[i].base.v4;
 		klim = vtw_tcpv4[i].lim.v4;
@@ -354,7 +354,7 @@ show_vtw_v6(void (*print)(const vtw_t *))
 	for (i = 0; i < VTW_NCLASS; ++i) {
 		vtw_v6_t *kbase, *klim;
 		vtw_v6_t *ubase, *ulim;
-		int delta;
+		ptrdiff_t delta;
 
 		kbase = vtw_tcpv6[i].base.v6;
 		klim = vtw_tcpv6[i].lim.v6;
