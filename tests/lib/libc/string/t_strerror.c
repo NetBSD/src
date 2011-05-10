@@ -1,4 +1,4 @@
-/* $NetBSD: t_strerror.c,v 1.2 2011/05/09 06:05:54 jruoho Exp $ */
+/* $NetBSD: t_strerror.c,v 1.3 2011/05/10 06:55:27 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strerror.c,v 1.2 2011/05/09 06:05:54 jruoho Exp $");
+__RCSID("$NetBSD: t_strerror.c,v 1.3 2011/05/10 06:55:27 jruoho Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -77,7 +77,7 @@ ATF_TC_BODY(strerror_err, tc)
 ATF_TC(strerror_r_basic);
 ATF_TC_HEAD(strerror_r_basic, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "A basic test of strerrorr_(3)");
+	atf_tc_set_md_var(tc, "descr", "A basic test of strerror_r(3)");
 }
 
 ATF_TC_BODY(strerror_r_basic, tc)
