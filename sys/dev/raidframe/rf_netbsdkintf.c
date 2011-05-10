@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.289 2011/05/05 04:20:51 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.290 2011/05/10 05:08:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.289 2011/05/05 04:20:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.290 2011/05/10 05:08:51 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -961,6 +961,8 @@ raid_detach_unlocked(struct raid_softc *rs)
 	dkwedge_delall(&rs->sc_dkdev);
 	disk_detach(&rs->sc_dkdev);
 	disk_destroy(&rs->sc_dkdev);
+
+	aprint_normal_dev(rs->sc_dev, "detached\n");
 
 	return 0;
 }
