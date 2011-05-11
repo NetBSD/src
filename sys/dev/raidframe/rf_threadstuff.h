@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.31 2011/05/05 08:21:09 mrg Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.32 2011/05/11 05:14:07 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -82,6 +82,8 @@ typedef void *RF_ThreadArg_t;
 
 #define rf_init_mutex2(_m_, _p_)         mutex_init(&(_m_), MUTEX_DEFAULT, (_p_))
 #define rf_destroy_mutex2(_m_)           mutex_destroy(&(_m_))
+
+#define rf_owned_mutex2(_m_)             mutex_owned(&(_m_))
 
 #define rf_init_cond2(_c_, _w_)          cv_init(&(_c_), (_w_))
 #define rf_destroy_cond2(_c_)            cv_destroy(&(_c_))

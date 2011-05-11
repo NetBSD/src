@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.31 2011/05/11 03:38:32 mrg Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.32 2011/05/11 05:14:07 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.31 2011/05/11 03:38:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.32 2011/05/11 05:14:07 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -410,7 +410,7 @@ rf_ConfigureParityLogging(
 			  rf_ShutdownParityLoggingDiskQueue,
 			  raidPtr);
 	for (i = 0; i < rf_numParityRegions; i++) {
-		rf_mutex_init(&raidPtr->regionInfo[i].mutex);
+		rf_init_mutex2(raidPtr->regionInfo[i].mutex, IPL_VM);
 		rf_init_mutex2(raidPtr->regionInfo[i].reintMutex, IPL_VM);
 		raidPtr->regionInfo[i].reintInProgress = RF_FALSE;
 		raidPtr->regionInfo[i].regionStartAddr =
@@ -500,7 +500,6 @@ FreeRegionInfo(
     RF_Raid_t * raidPtr,
     RF_RegionId_t regionID)
 {
-	RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
 	RF_Free(raidPtr->regionInfo[regionID].diskMap,
 		(raidPtr->regionInfo[regionID].capacity *
 		 sizeof(RF_DiskMap_t)));
@@ -512,8 +511,8 @@ FreeRegionInfo(
 		RF_ASSERT(raidPtr->regionInfo[regionID].coreLog == NULL);
 		RF_ASSERT(raidPtr->regionInfo[regionID].diskCount == 0);
 	}
-	RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
 	rf_destroy_mutex2(raidPtr->regionInfo[regionID].reintMutex);
+	rf_destroy_mutex2(raidPtr->regionInfo[regionID].mutex);
 }
 
 
