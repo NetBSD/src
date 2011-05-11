@@ -948,6 +948,7 @@ dict_open.o: dict_thash.h
 dict_open.o: dict_unix.h
 dict_open.o: htable.h
 dict_open.o: msg.h
+dict_open.o: myflock.h
 dict_open.o: mymalloc.h
 dict_open.o: split_at.h
 dict_open.o: stringops.h
@@ -1309,7 +1310,6 @@ mask_addr.o: msg.h
 mask_addr.o: sys_defs.h
 match_list.o: argv.h
 match_list.o: dict.h
-match_list.o: htable.h
 match_list.o: match_list.c
 match_list.o: match_list.h
 match_list.o: match_ops.h
@@ -1324,8 +1324,6 @@ match_list.o: vstring_vstream.h
 match_ops.o: argv.h
 match_ops.o: cidr_match.h
 match_ops.o: dict.h
-match_ops.o: htable.h
-match_ops.o: match_list.h
 match_ops.o: match_ops.c
 match_ops.o: match_ops.h
 match_ops.o: msg.h
@@ -1788,6 +1786,8 @@ vstring_vstream.o: vstream.h
 vstring_vstream.o: vstring.h
 vstring_vstream.o: vstring_vstream.c
 vstring_vstream.o: vstring_vstream.h
+watchdog.o: events.h
+watchdog.o: iostuff.h
 watchdog.o: killme_after.h
 watchdog.o: msg.h
 watchdog.o: mymalloc.h
