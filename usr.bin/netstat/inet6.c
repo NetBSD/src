@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.57 2011/05/11 15:08:59 drochner Exp $	*/
+/*	$NetBSD: inet6.c,v 1.58 2011/05/11 22:21:59 dyoung Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.57 2011/05/11 15:08:59 drochner Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.58 2011/05/11 22:21:59 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,11 +173,12 @@ ip6protoprhdr(void)
 		printf("%-8.8s ", "PCB");
 		width = 18;
 	}
-	printf( "%-5.5s %-6.6s %-6.6s  %*.*s %*.*s %-13.13s%s\n",
+	printf(
+	    Vflag ? "%-5.5s %-6.6s %-6.6s  %*.*s %*.*s %-13.13s Expires\n"
+	          : "%-5.5s %-6.6s %-6.6s  %*.*s %*.*s %s\n",
 	    "Proto", "Recv-Q", "Send-Q",
 	    -width, width, "Local Address",
-	    -width, width, "Foreign Address",
-	    "(state)", Vflag ? " Expires" : "");
+	    -width, width, "Foreign Address", "(state)");
 }
 
 static void
