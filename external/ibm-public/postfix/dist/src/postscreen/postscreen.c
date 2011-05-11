@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen.c,v 1.1.1.1 2011/03/02 19:32:26 tron Exp $	*/
+/*	$NetBSD: postscreen.c,v 1.1.1.2 2011/05/11 09:11:07 tron Exp $	*/
 
 /*++
 /* NAME
@@ -825,7 +825,8 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
      * 
      * Start the cache maintenance pseudo thread after dropping privileges.
      */
-#define PSC_DICT_OPEN_FLAGS (DICT_FLAG_DUP_REPLACE | DICT_FLAG_SYNC_UPDATE)
+#define PSC_DICT_OPEN_FLAGS (DICT_FLAG_DUP_REPLACE | DICT_FLAG_SYNC_UPDATE | \
+	    DICT_FLAG_OPEN_LOCK)
 
     if (*var_psc_cache_map)
 	psc_cache_map =
