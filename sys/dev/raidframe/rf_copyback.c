@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.46 2011/05/01 01:09:05 mrg Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.47 2011/05/11 18:13:12 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.46 2011/05/01 01:09:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.47 2011/05/11 18:13:12 mrg Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -205,11 +205,11 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 	rf_SuspendNewRequestsAndWait(raidPtr);
 
 	/* adjust state of the array and of the disks */
-	RF_LOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
 	raidPtr->Disks[desc->fcol].status = rf_ds_optimal;
 	raidPtr->status = rf_rs_optimal;
 	rf_copyback_in_progress = 1;	/* debug only */
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_unlock_mutex2(raidPtr->mutex);
 
 	RF_GETTIME(desc->starttime);
 	rf_ContinueCopyback(desc);
@@ -404,14 +404,14 @@ rf_CopybackComplete(RF_CopybackDesc_t *desc, int status)
 	struct timeval t, diff;
 
 	if (!status) {
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
 			RF_ASSERT(raidPtr->Layout.map->parityConfig == 'D');
 			rf_FreeSpareTable(raidPtr);
 		} else {
 			raidPtr->Disks[desc->spCol].status = rf_ds_spare;
 		}
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		RF_GETTIME(t);
 		RF_TIMEVAL_DIFF(&desc->starttime, &t, &diff);

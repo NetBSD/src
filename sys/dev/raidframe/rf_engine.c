@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.45 2011/05/02 01:14:06 mrg Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.46 2011/05/11 18:13:12 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.45 2011/05/02 01:14:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.46 2011/05/11 18:13:12 mrg Exp $");
 
 #include <sys/errno.h>
 
@@ -86,7 +86,7 @@ static void rf_RaidIOThread(RF_ThreadArg_t arg);
 	rf_wait_cond2((_r_)->node_queue_cv, (_r_)->node_queue_mutex)
 
 #define	DO_SIGNAL(_r_) \
-	rf_broadcast_cond2((_r_)->node_queue_cv)	/* XXX RF_SIGNAL_COND? */
+	rf_broadcast_cond2((_r_)->node_queue_cv)	/* XXX rf_signal_cond2? */
 
 static void
 rf_ShutdownEngine(void *arg)

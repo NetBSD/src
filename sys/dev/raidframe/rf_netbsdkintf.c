@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.290 2011/05/10 05:08:51 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.291 2011/05/11 18:13:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.290 2011/05/10 05:08:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.291 2011/05/11 18:13:12 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1392,7 +1392,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return(EINVAL);
 		}
 
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		if ((raidPtr->Disks[column].status == rf_ds_optimal) &&
 		    (raidPtr->numFailures > 0)) {
 			/* XXX 0 above shouldn't be constant!!! */
@@ -1403,7 +1403,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			       raidPtr->raidid);
 			printf("raid%d:     Col: %d   Too many failures.\n",
 			       raidPtr->raidid, column);
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[column].status ==
@@ -1412,14 +1412,14 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			       raidPtr->raidid);
 			printf("raid%d:    Col: %d   Reconstruction already occuring!\n", raidPtr->raidid, column);
 
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[column].status == rf_ds_spared) {
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		RF_Malloc(rrcopy, sizeof(*rrcopy), (struct rf_recon_req *));
 		if (rrcopy == NULL)
@@ -1532,26 +1532,26 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return (EINVAL);
 
 
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		if (raidPtr->status == rf_rs_reconstructing) {
 			/* you can't fail a disk while we're reconstructing! */
 			/* XXX wrong for RAID6 */
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if ((raidPtr->Disks[rr->col].status ==
 		     rf_ds_optimal) && (raidPtr->numFailures > 0)) {
 			/* some other component has failed.  Let's not make
 			   things worse. XXX wrong for RAID6 */
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[rr->col].status == rf_ds_spared) {
 			/* Can't fail a spared disk! */
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		/* make a copy of the recon request so that we don't rely on
 		 * the user's buffer */
@@ -1974,18 +1974,18 @@ raidstart(RF_Raid_t *raidPtr)
 	rs = &raid_softc[unit];
 
 	/* quick check to see if anything has died recently */
-	RF_LOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
 	if (raidPtr->numNewFailures > 0) {
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 		rf_update_component_labels(raidPtr,
 					   RF_NORMAL_COMPONENT_UPDATE);
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		raidPtr->numNewFailures--;
 	}
 
 	/* Check to see if we're at the limit... */
 	while (raidPtr->openings > 0) {
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		/* get the next item, if any, from the queue */
 		if ((bp = bufq_get(rs->buf_queue)) == NULL) {
@@ -2026,7 +2026,7 @@ raidstart(RF_Raid_t *raidPtr)
 			bp->b_error = ENOSPC;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
-			RF_LOCK_MUTEX(raidPtr->mutex);
+			rf_lock_mutex2(raidPtr->mutex);
 			continue;
 		}
 		/*
@@ -2037,16 +2037,16 @@ raidstart(RF_Raid_t *raidPtr)
 			bp->b_error = EINVAL;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
-			RF_LOCK_MUTEX(raidPtr->mutex);
+			rf_lock_mutex2(raidPtr->mutex);
 			continue;
 
 		}
 		db1_printf(("Calling DoAccess..\n"));
 
 
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		raidPtr->openings--;
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		/*
 		 * Everything is async.
@@ -2073,9 +2073,9 @@ raidstart(RF_Raid_t *raidPtr)
 			/* continue loop */
 		}
 
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 	}
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_unlock_mutex2(raidPtr->mutex);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.32 2011/05/11 05:14:07 mrg Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.33 2011/05/11 18:13:12 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,26 +54,9 @@
 #include <dev/raidframe/raidframevar.h>
 
 
-/* Old school simple_lock */
 typedef struct lwp *RF_Thread_t;
 typedef void *RF_ThreadArg_t;
 
-#define RF_DECLARE_MUTEX(_m_)           struct simplelock _m_;
-
-#define RF_DECLARE_COND(_c_)            int _c_;
-
-#define RF_LOCK_MUTEX(_m_)              simple_lock(&(_m_))
-#define RF_UNLOCK_MUTEX(_m_)            simple_unlock(&(_m_))
-
-#define RF_WAIT_COND(_c_,_m_)		\
-	ltsleep(&(_c_), PRIBIO, "rfwcond", 0, &(_m_))
-#define RF_SIGNAL_COND(_c_)            wakeup_one(&(_c_))
-
-#define rf_mutex_init(m)               simple_lock_init(m)
-
-
-/* Modern mutex */
-/* Note that rf_declare_{mutex,cond}2() do _NOT_ append the ; */
 #define rf_declare_mutex2(_m_)           kmutex_t _m_
 #define rf_declare_cond2(_c_)            kcondvar_t _c_
 
