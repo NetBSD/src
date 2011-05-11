@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.33 2011/05/02 07:29:18 mrg Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.34 2011/05/11 18:13:12 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.33 2011/05/02 07:29:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.34 2011/05/11 18:13:12 mrg Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -274,7 +274,7 @@ rf_CheckFloatingRbufCount(RF_Raid_t *raidPtr, int dolock)
 	pssTable = raidPtr->reconControl->pssTable;
 
 	for (i = 0; i < raidPtr->pssTableSize; i++) {
-		RF_LOCK_MUTEX(pssTable[i].mutex);
+		rf_lock_mutex2(pssTable[i].mutex);
 		for (p = pssTable[i].chain; p; p = p->next) {
 			rbuf = (RF_ReconBuffer_t *) p->rbuf;
 			if (rbuf && rbuf->type == RF_RBUF_TYPE_FLOATING)
@@ -291,7 +291,7 @@ rf_CheckFloatingRbufCount(RF_Raid_t *raidPtr, int dolock)
 					sum++;
 			}
 		}
-		RF_UNLOCK_MUTEX(pssTable[i].mutex);
+		rf_unlock_mutex2(pssTable[i].mutex);
 	}
 
 	for (rbuf = raidPtr->reconControl->floatingRbufs; rbuf;
