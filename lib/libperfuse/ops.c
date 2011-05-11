@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.25 2011/05/03 13:19:50 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.26 2011/05/11 14:52:48 jakllsch Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -808,7 +808,7 @@ perfuse_fs_init(pu)
 	fii = GET_INPAYLOAD(ps, pm, fuse_init_in);
 	fii->major = FUSE_KERNEL_VERSION;
 	fii->minor = FUSE_KERNEL_MINOR_VERSION;
-	fii->max_readahead = 32 * PAGE_SIZE; 
+	fii->max_readahead = 32 * sysconf(_SC_PAGESIZE); 
 	fii->flags = (FUSE_ASYNC_READ|FUSE_POSIX_LOCKS|FUSE_ATOMIC_O_TRUNC);
 
 	if ((error = xchg_msg(pu, 0, pm, sizeof(*fio), wait_reply)) != 0)
@@ -2801,15 +2801,15 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 		size_t max_write;
 		/*
 		 * There is a writepage flag when data
-		 * is PAGE_SIZE-aligned. Use it for
+		 * is aligned to page size. Use it for
 		 * everything but the data after the last
 		 * page boundary.
 		 */
 		max_write = ps->ps_max_write - sizeof(*fwi); 
 
 		data_len = MIN(*resid, max_write);
-		if (data_len > PAGE_SIZE)
-			data_len = data_len & ~(PAGE_SIZE - 1);
+		if (data_len > (size_t)sysconf(_SC_PAGESIZE))
+			data_len = data_len & ~(sysconf(_SC_PAGESIZE) - 1);
 
 		payload_len = data_len + sizeof(*fwi);
 
@@ -2823,7 +2823,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 		fwi->fh = perfuse_get_fh(opc, FWRITE);
 		fwi->offset = offset;
 		fwi->size = (uint32_t)data_len;
-		fwi->write_flags = (fwi->size % PAGE_SIZE) ? 0 : 1;
+		fwi->write_flags = (fwi->size % sysconf(_SC_PAGESIZE)) ? 0 : 1;
 		fwi->lock_owner = pnd->pnd_lock_owner;
 		fwi->flags = 0;
 		fwi->flags |= (fwi->lock_owner != 0) ? FUSE_WRITE_LOCKOWNER : 0;
