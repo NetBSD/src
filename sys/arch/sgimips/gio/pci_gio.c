@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.6 2011/02/20 07:59:50 matt Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.7 2011/05/11 17:49:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.6 2011/02/20 07:59:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.7 2011/05/11 17:49:31 dyoung Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -80,7 +80,8 @@ static int	giopci_bus_maxdevs(pci_chipset_tag_t, int);
 static pcireg_t	giopci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 static void	giopci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 static int	giopci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
-static int	giopci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int	giopci_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 static const char *
 		giopci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 static void    *giopci_intr_establish(int, int, int (*)(void *), void *);
@@ -290,7 +291,7 @@ giopci_conf_hook(pci_chipset_tag_t pc, int bus, int device, int function,
 }
 
 static int
-giopci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+giopci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct giopci_softc *sc = pa->pa_pc->cookie;
 
