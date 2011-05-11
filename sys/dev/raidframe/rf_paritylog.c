@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.c,v 1.17 2011/05/11 05:14:07 mrg Exp $	*/
+/*	$NetBSD: rf_paritylog.c,v 1.18 2011/05/11 06:03:06 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.17 2011/05/11 05:14:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.18 2011/05/11 06:03:06 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -436,7 +436,7 @@ AcquireParityLog(
 	/* Grab a log buffer from the pool and return it. If no buffers are
 	 * available, return NULL. NON-BLOCKING */
 	raidPtr = logData->common->raidPtr;
-	RF_LOCK_MUTEX(raidPtr->parityLogPool.mutex);
+	rf_lock_mutex2(raidPtr->parityLogPool.mutex);
 	if (raidPtr->parityLogPool.parityLogs) {
 		log = raidPtr->parityLogPool.parityLogs;
 		raidPtr->parityLogPool.parityLogs = raidPtr->parityLogPool.parityLogs->next;
@@ -457,7 +457,7 @@ AcquireParityLog(
 		else
 			EnqueueParityLogData(logData, &raidPtr->parityLogDiskQueue.logBlockHead, &raidPtr->parityLogDiskQueue.logBlockTail);
 	}
-	RF_UNLOCK_MUTEX(raidPtr->parityLogPool.mutex);
+	rf_unlock_mutex2(raidPtr->parityLogPool.mutex);
 	return (log);
 }
 
@@ -480,7 +480,7 @@ rf_ReleaseParityLogs(
 	/* Before returning logs to global free list, service all requests
 	 * which are blocked on logs.  Holding mutexes for parityLogPool and
 	 * parityLogDiskQueue forces synchronization with AcquireParityLog(). */
-	RF_LOCK_MUTEX(raidPtr->parityLogPool.mutex);
+	rf_lock_mutex2(raidPtr->parityLogPool.mutex);
 	rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 	logDataList = DequeueMatchingLogData(raidPtr, &raidPtr->parityLogDiskQueue.logBlockHead, &raidPtr->parityLogDiskQueue.logBlockTail);
 	log = firstLog;
@@ -489,7 +489,7 @@ rf_ReleaseParityLogs(
 	log->numRecords = 0;
 	log->next = NULL;
 	while (logDataList && log) {
-		RF_UNLOCK_MUTEX(raidPtr->parityLogPool.mutex);
+		rf_unlock_mutex2(raidPtr->parityLogPool.mutex);
 		rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 		rf_ParityLogAppend(logDataList, RF_TRUE, &log, RF_FALSE);
 		if (rf_parityLogDebug)
@@ -502,7 +502,7 @@ rf_ReleaseParityLogs(
 				log->next = NULL;
 			}
 		}
-		RF_LOCK_MUTEX(raidPtr->parityLogPool.mutex);
+		rf_lock_mutex2(raidPtr->parityLogPool.mutex);
 		rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 		if (log)
 			logDataList = DequeueMatchingLogData(raidPtr, &raidPtr->parityLogDiskQueue.logBlockHead, &raidPtr->parityLogDiskQueue.logBlockTail);
@@ -531,7 +531,7 @@ rf_ReleaseParityLogs(
 		}
 		RF_ASSERT(cnt + raidPtr->logsInUse == raidPtr->numParityLogs);
 	}
-	RF_UNLOCK_MUTEX(raidPtr->parityLogPool.mutex);
+	rf_unlock_mutex2(raidPtr->parityLogPool.mutex);
 	rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 }
 
