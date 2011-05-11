@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.56 2011/05/04 00:55:19 dyoung Exp $	*/
+/*	$NetBSD: inet6.c,v 1.57 2011/05/11 15:08:59 drochner Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.56 2011/05/04 00:55:19 dyoung Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.57 2011/05/11 15:08:59 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -397,7 +397,10 @@ ip6protopr(u_long off, const char *name)
 	}
 end:
 	if (istcp) {
+		struct timeval t;
+		timebase(&t);
 		gettimeofday(&now, NULL);
+		timersub(&now, &t, &now);
 		show_vtw_v6(print_vtw_v6);
 	}
 }

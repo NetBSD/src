@@ -77,7 +77,7 @@
 #include <machine/stdarg.h>
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.2 2011/05/06 12:52:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.3 2011/05/11 15:08:59 drochner Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -1430,7 +1430,7 @@ vtw_alloc(vtw_ctl_t *ctl)
 
 	/* mark expiration
 	 */
-	microtime(&vtw->expire);
+	getmicrouptime(&vtw->expire);
 
 	/* Move expiration into the future.
 	 */
@@ -1516,7 +1516,7 @@ vtw_tick(void *arg)
 	struct timeval now;
 	int i, cnt = 0;
 
-	microtime(&now);
+	getmicrouptime(&now);
 
 	db_trace(KTR_VTW, (arg, "vtk: tick - now %8.8x:%8.8x"
 			   , now.tv_sec, now.tv_usec));
