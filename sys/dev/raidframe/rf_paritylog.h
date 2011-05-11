@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.h,v 1.9 2011/05/11 05:14:07 mrg Exp $	*/
+/*	$NetBSD: rf_paritylog.h,v 1.10 2011/05/11 06:03:06 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -89,7 +89,7 @@ struct RF_ParityLog_s {
 };
 
 struct RF_ParityLogQueue_s {
-	RF_DECLARE_MUTEX(mutex)
+	rf_declare_mutex2(mutex);
 	RF_ParityLog_t *parityLogs;
 };
 

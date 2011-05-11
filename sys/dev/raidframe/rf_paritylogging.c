@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.32 2011/05/11 05:14:07 mrg Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.33 2011/05/11 06:03:06 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.32 2011/05/11 05:14:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.33 2011/05/11 06:03:06 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -234,7 +234,7 @@ rf_ConfigureParityLogging(
 	if (raidPtr->parityLogBufferHeap == NULL)
 		return (ENOMEM);
 	lHeapPtr = raidPtr->parityLogBufferHeap;
-	rf_mutex_init(&raidPtr->parityLogPool.mutex);
+	rf_init_mutex2(raidPtr->parityLogPool.mutex, IPL_VM);
 	for (i = 0; i < raidPtr->numParityLogs; i++) {
 		if (i == 0) {
 			RF_Malloc(raidPtr->parityLogPool.parityLogs,
@@ -517,14 +517,11 @@ FreeRegionInfo(
 
 
 static void
-FreeParityLogQueue(
-    RF_Raid_t * raidPtr,
-    RF_ParityLogQueue_t * queue)
+FreeParityLogQueue(RF_Raid_t * raidPtr)
 {
 	RF_ParityLog_t *l1, *l2;
 
-	RF_LOCK_MUTEX(queue->mutex);
-	l1 = queue->parityLogs;
+	l1 = raidPtr->parityLogPool.parityLogs;
 	while (l1) {
 		l2 = l1;
 		l1 = l2->next;
@@ -532,7 +529,7 @@ FreeParityLogQueue(
 				      sizeof(RF_ParityLogRecord_t)));
 		RF_Free(l2, sizeof(RF_ParityLog_t));
 	}
-	RF_UNLOCK_MUTEX(queue->mutex);
+	rf_destroy_mutex2(raidPtr->parityLogPool.mutex);
 }
 
 
@@ -581,7 +578,7 @@ rf_ShutdownParityLoggingPool(RF_ThreadArg_t arg)
 		printf("raid%d: ShutdownParityLoggingPool\n", raidPtr->raidid);
 	}
 	/* free contents of parityLogPool */
-	FreeParityLogQueue(raidPtr, &raidPtr->parityLogPool);
+	FreeParityLogQueue(raidPtr);
 	RF_Free(raidPtr->parityLogBufferHeap, raidPtr->numParityLogs *
 		raidPtr->numSectorsPerLog * raidPtr->bytesPerSector);
 }
