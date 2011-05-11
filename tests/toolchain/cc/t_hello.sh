@@ -1,5 +1,4 @@
-#! /usr/bin/atf-sh
-#	$NetBSD: t_hello.sh,v 1.3 2011/04/05 09:53:10 martin Exp $
+#	$NetBSD: t_hello.sh,v 1.4 2011/05/11 22:08:12 njoly Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.

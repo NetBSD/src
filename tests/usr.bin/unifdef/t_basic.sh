@@ -1,6 +1,4 @@
-#! /usr/bin/atf-sh
-#
-# $NetBSD: t_basic.sh,v 1.3 2011/05/10 19:02:27 njoly Exp $
+# $NetBSD: t_basic.sh,v 1.4 2011/05/11 22:08:12 njoly Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.

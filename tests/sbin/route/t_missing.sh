@@ -1,6 +1,4 @@
-#! /usr/bin/atf-sh
-#
-# $NetBSD: t_missing.sh,v 1.1 2011/05/03 07:56:42 jruoho Exp $
+# $NetBSD: t_missing.sh,v 1.2 2011/05/11 22:08:12 njoly Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
