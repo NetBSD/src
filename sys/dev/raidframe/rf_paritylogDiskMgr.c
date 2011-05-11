@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.26 2011/05/11 03:38:32 mrg Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.27 2011/05/11 05:14:07 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.26 2011/05/11 03:38:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.27 2011/05/11 05:14:07 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -534,13 +534,13 @@ ReintegrateLogs(
 			/* Enable flushing for this region.  Holding both
 			 * locks provides a synchronization barrier with
 			 * DumpParityLogToDisk */
-			RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
+			rf_lock_mutex2(raidPtr->regionInfo[regionID].mutex);
 			rf_lock_mutex2(raidPtr->regionInfo[regionID].reintMutex);
 			/* XXXmrg: don't need this? */
 			rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 			raidPtr->regionInfo[regionID].diskCount = 0;
 			raidPtr->regionInfo[regionID].reintInProgress = RF_FALSE;
-			RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
+			rf_unlock_mutex2(raidPtr->regionInfo[regionID].mutex);
 			rf_unlock_mutex2(raidPtr->regionInfo[regionID].reintMutex);	/* flushing is now
 											 * enabled */
 			/* XXXmrg: don't need this? */
@@ -573,13 +573,13 @@ rf_ShutdownLogging(RF_Raid_t * raidPtr)
 	 * regions. */
 	if (rf_forceParityLogReint) {
 		for (regionID = 0; regionID < rf_numParityRegions; regionID++) {
-			RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
+			rf_lock_mutex2(raidPtr->regionInfo[regionID].mutex);
 			raidPtr->regionInfo[regionID].loggingEnabled =
 				RF_FALSE;
 			log = raidPtr->regionInfo[regionID].coreLog;
 			raidPtr->regionInfo[regionID].coreLog = NULL;
 			diskCount = raidPtr->regionInfo[regionID].diskCount;
-			RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
+			rf_unlock_mutex2(raidPtr->regionInfo[regionID].mutex);
 			if (diskCount > 0 || log != NULL)
 				ReintegrateRegion(raidPtr, regionID, log);
 			if (log != NULL)
