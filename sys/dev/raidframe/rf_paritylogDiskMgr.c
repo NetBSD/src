@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.24 2011/05/05 04:20:51 mrg Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.25 2011/05/11 03:23:26 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.24 2011/05/05 04:20:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.25 2011/05/11 03:23:26 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -510,7 +510,7 @@ ReintegrateLogs(
 
 		/* remove all items which are blocked on reintegration of this
 		 * region */
-		RF_LOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+		rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 		logData = rf_SearchAndDequeueParityLogData(raidPtr, regionID,
 			   &raidPtr->parityLogDiskQueue.reintBlockHead,
 			   &raidPtr->parityLogDiskQueue.reintBlockTail,
@@ -524,7 +524,7 @@ ReintegrateLogs(
 					 RF_TRUE);
 			logData = logData->next;
 		}
-		RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+		rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 
 		/* process blocked log data and clear reintInProgress flag for
 		 * this region */
@@ -536,13 +536,15 @@ ReintegrateLogs(
 			 * DumpParityLogToDisk */
 			RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
 			RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].reintMutex);
-			RF_LOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+			/* XXXmrg: don't need this? */
+			rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 			raidPtr->regionInfo[regionID].diskCount = 0;
 			raidPtr->regionInfo[regionID].reintInProgress = RF_FALSE;
 			RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
 			RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].reintMutex);	/* flushing is now
 											 * enabled */
-			RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+			/* XXXmrg: don't need this? */
+			rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 		}
 		/* if log wasn't used, attach it to the list of logs to be
 		 * returned */
@@ -607,7 +609,7 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 
 	s = splbio();
 
-	RF_LOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+	rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 
 	/*
          * Inform our creator that we're running. Don't bother doing the
@@ -615,7 +617,7 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
          * below with nothing to do, yet.
          */
 	raidPtr->parityLogDiskQueue.threadState |= RF_PLOG_RUNNING;
-	RF_SIGNAL_COND(raidPtr->parityLogDiskQueue.cond);
+	rf_signal_cond2(raidPtr->parityLogDiskQueue.cond);
 
 	/* empty the work queues */
 	flushQueue = raidPtr->parityLogDiskQueue.flushQueue;
@@ -640,7 +642,7 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 			 * are reintegrated are not opened for general use
 			 * until the append queue has been emptied. */
 
-			RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+			rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 
 			/* empty flushQueue, using free'd log buffers to
 			 * process bufTail */
@@ -651,7 +653,7 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 			if (reintQueue)
 				ReintegrateLogs(raidPtr, reintQueue);
 
-			RF_LOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+			rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 			flushQueue = raidPtr->parityLogDiskQueue.flushQueue;
 			raidPtr->parityLogDiskQueue.flushQueue = NULL;
 			reintQueue = raidPtr->parityLogDiskQueue.reintQueue;
@@ -663,15 +665,15 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 			/* shutdown parity logging 1. disable parity logging
 			 * in all regions 2. reintegrate all regions */
 			done = RF_TRUE;	/* thread disabled, no work needed */
-			RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+			rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 			rf_ShutdownLogging(raidPtr);
 		}
 		if (!done) {
 			/* thread enabled, no work needed, so sleep */
 			if (rf_parityLogDebug)
 				printf("[parity logging disk manager sleeping]\n");
-			RF_WAIT_COND(raidPtr->parityLogDiskQueue.cond,
-				     raidPtr->parityLogDiskQueue.mutex);
+			rf_wait_cond2(raidPtr->parityLogDiskQueue.cond,
+				      raidPtr->parityLogDiskQueue.mutex);
 			if (rf_parityLogDebug)
 				printf("[parity logging disk manager just woke up]\n");
 			flushQueue = raidPtr->parityLogDiskQueue.flushQueue;
@@ -684,10 +686,10 @@ rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
 	/*
          * Announce that we're done.
          */
-	RF_LOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+	rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 	raidPtr->parityLogDiskQueue.threadState |= RF_PLOG_SHUTDOWN;
-	RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
-	RF_SIGNAL_COND(raidPtr->parityLogDiskQueue.cond);
+	rf_signal_cond2(raidPtr->parityLogDiskQueue.cond);
+	rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 
 	splx(s);
 
