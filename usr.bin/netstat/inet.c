@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.98 2011/05/11 15:08:59 drochner Exp $	*/
+/*	$NetBSD: inet.c,v 1.99 2011/05/11 22:21:59 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.98 2011/05/11 15:08:59 drochner Exp $");
+__RCSID("$NetBSD: inet.c,v 1.99 2011/05/11 22:21:59 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,11 +116,13 @@ protoprhdr(void)
 	putchar('\n');
 	if (Aflag)
 		printf("%-8.8s ", "PCB");
-	printf("%-5.5s %-6.6s %-6.6s %s%-*.*s %-*.*s %-13.13s%s\n",
+	printf(
+	    Vflag ? "%-5.5s %-6.6s %-6.6s %s%-*.*s %-*.*s %-13.13s Expires\n"
+	          : "%-5.5s %-6.6s %-6.6s %s%-*.*s %-*.*s %s\n",
 		"Proto", "Recv-Q", "Send-Q", compact ? "" : " ",
 		width, width, "Local Address",
 		width, width, "Foreign Address",
-		"State", Vflag ? " Expires" : "");
+		"State");
 }
 
 static void
