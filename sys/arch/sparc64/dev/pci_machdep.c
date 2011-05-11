@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.71 2011/04/04 20:37:54 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.72 2011/05/11 22:26:46 macallan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.71 2011/04/04 20:37:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.72 2011/05/11 22:26:46 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -173,6 +173,7 @@ pci_make_tag(pci_chipset_tag_t pc, int b, int d, int f)
 #endif
 	}
 #endif	
+	node = prom_firstchild(node);
 	/*
 	 * Now traverse all peers until we find the node or we find
 	 * the right bridge. 
