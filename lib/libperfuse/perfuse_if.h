@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.10 2010/10/11 05:37:58 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.11 2011/05/11 14:52:48 jakllsch Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -175,7 +175,7 @@ struct perfuse_mount_info {
  */
 #ifndef FUSE_BUFSIZE
 #define FUSE_MIN_BUFSIZE 0x21000
-#define FUSE_PREF_BUFSIZE (PAGE_SIZE + 0x1000)
+#define FUSE_PREF_BUFSIZE (sysconf(_SC_PAGESIZE) + 0x1000)
 #define FUSE_BUFSIZE MAX(FUSE_PREF_BUFSIZE /* CONSTCOND */, FUSE_MIN_BUFSIZE)
 #endif /* FUSE_BUFSIZE */
 
