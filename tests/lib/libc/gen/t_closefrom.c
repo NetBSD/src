@@ -1,4 +1,4 @@
-/* $NetBSD: t_closefrom.c,v 1.3 2011/05/09 11:05:36 jruoho Exp $ */
+/* $NetBSD: t_closefrom.c,v 1.4 2011/05/11 08:11:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_closefrom.c,v 1.3 2011/05/09 11:05:36 jruoho Exp $");
+__RCSID("$NetBSD: t_closefrom.c,v 1.4 2011/05/11 08:11:36 jruoho Exp $");
+
+#include <sys/wait.h>
 
 #include <atf-c.h>
 #include <errno.h>
@@ -49,19 +51,19 @@ ATF_TC_BODY(closefrom_basic, tc)
 {
 	int fd, cur1, cur2;
 
+	(void)closefrom(STDERR_FILENO + 1);
+
 	fd = open(path, O_RDONLY | O_CREAT, 0400);
 	ATF_REQUIRE(fd >= 0);
 
 	cur1 = fcntl(0, F_MAXFD);
 
-	ATF_REQUIRE(cur1 > 0);
+	ATF_REQUIRE(cur1 == STDERR_FILENO + 1);
 	ATF_REQUIRE(closefrom(cur1) == 0);
 
 	cur2 = fcntl(0, F_MAXFD);
 
-	ATF_REQUIRE(cur2 >= 0);
 	ATF_REQUIRE(cur1 - 1 == cur2);
-
 	ATF_REQUIRE(close(fd) == -1);
 	ATF_REQUIRE(unlink(path) == 0);
 }
@@ -127,12 +129,45 @@ ATF_TC_BODY(closefrom_err, tc)
 	ATF_REQUIRE_ERRNO(EBADF, closefrom(-INT_MAX) == -1);
 }
 
+ATF_TC(closefrom_one);
+ATF_TC_HEAD(closefrom_one, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test closefrom(1)");
+}
+
+ATF_TC_BODY(closefrom_one, tc)
+{
+	pid_t pid;
+	int sta;
+
+	pid = fork();
+	ATF_REQUIRE(pid >= 0);
+
+	if (pid == 0) {
+
+		if (closefrom(1) != 0)
+			_exit(10);
+
+		_exit(fcntl(0, F_MAXFD));
+	}
+
+
+	(void)wait(&sta);
+
+	/*
+	 * STDIN_FILENO sould still be open; WEXITSTATUS(1) == 0.
+	 */
+	if (WIFEXITED(sta) == 0 || WEXITSTATUS(sta) != 0)
+		atf_tc_fail("not all descriptors were closed");
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, closefrom_basic);
 	ATF_TP_ADD_TC(tp, closefrom_buffer);
 	ATF_TP_ADD_TC(tp, closefrom_err);
+	ATF_TP_ADD_TC(tp, closefrom_one);
 
 	return atf_no_error();
 }
