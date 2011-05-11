@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.97 2011/05/03 23:36:26 dyoung Exp $	*/
+/*	$NetBSD: inet.c,v 1.98 2011/05/11 15:08:59 drochner Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.97 2011/05/03 23:36:26 dyoung Exp $");
+__RCSID("$NetBSD: inet.c,v 1.98 2011/05/11 15:08:59 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -343,7 +343,10 @@ protopr(u_long off, const char *name)
 	}
 end:
 	if (istcp) {
+		struct timeval t;
+		timebase(&t);
 		gettimeofday(&now, NULL);
+		timersub(&now, &t, &now);
 		show_vtw_v4(print_vtw_v4);
 	}
 }
