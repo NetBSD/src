@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.101 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.102 2011/05/11 14:17:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -898,9 +898,6 @@ Lenab1:
 	movl	#_C_LABEL(vectab),%d0	| set Vector Base Register
 	movc	%d0,%vbr
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-/* detect FPU type */
-	jbsr	_C_LABEL(fpu_probe)
-	movl	%d0,_C_LABEL(fputype)
 /* call final pmap setup */
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
@@ -909,6 +906,9 @@ Lenab1:
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 
+/* detect FPU type */
+	jbsr	_C_LABEL(fpu_probe)
+	movl	%d0,_C_LABEL(fputype)
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
 	clrl	%a1@(PCB_FPCTX)		| ensure null FP context
