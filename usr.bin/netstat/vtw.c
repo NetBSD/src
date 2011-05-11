@@ -1,4 +1,4 @@
-/*	$NetBSD: vtw.c,v 1.5 2011/05/10 04:40:16 enami Exp $	*/
+/*	$NetBSD: vtw.c,v 1.6 2011/05/11 15:08:59 drochner Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: vtw.c,v 1.5 2011/05/10 04:40:16 enami Exp $");
+__RCSID("$NetBSD: vtw.c,v 1.6 2011/05/11 15:08:59 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,6 +165,19 @@ lookup(const char *name)
 	}
 
 	return NULL;
+}
+
+void
+timebase(struct timeval *tv)
+{
+	void *p;
+	struct bintime timebasebin;
+
+	p = lookup("timebasebin");
+	if (!p)
+		return;
+	snarf(p, &timebasebin, sizeof(timebasebin));
+	bintime2timeval(&timebasebin, tv);
 }
 
 static void 
