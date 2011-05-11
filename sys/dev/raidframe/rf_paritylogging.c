@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.33 2011/05/11 06:03:06 mrg Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.34 2011/05/11 06:20:33 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.33 2011/05/11 06:03:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.34 2011/05/11 06:20:33 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -293,8 +293,8 @@ rf_ConfigureParityLogging(
 	}
 	rf_ShutdownCreate(listp, rf_ShutdownParityLoggingPool, raidPtr);
 	/* build pool of region buffers */
-	rf_mutex_init(&raidPtr->regionBufferPool.mutex);
-	raidPtr->regionBufferPool.cond = 0;
+	rf_init_mutex2(raidPtr->regionBufferPool.mutex, IPL_VM);
+	rf_init_cond2(raidPtr->regionBufferPool.cond, "rfrbpl");
 	raidPtr->regionBufferPool.bufferSize = raidPtr->regionLogCapacity *
 		raidPtr->bytesPerSector;
 	printf("regionBufferPool.bufferSize %d\n",
@@ -342,8 +342,8 @@ rf_ConfigureParityLogging(
 			  raidPtr);
 	/* build pool of parity buffers */
 	parityBufferCapacity = maxRegionParityRange;
-	rf_mutex_init(&raidPtr->parityBufferPool.mutex);
-	raidPtr->parityBufferPool.cond = 0;
+	rf_init_mutex2(raidPtr->parityBufferPool.mutex, IPL_VM);
+	rf_init_cond2(raidPtr->parityBufferPool.cond, "rfpbpl");
 	raidPtr->parityBufferPool.bufferSize = parityBufferCapacity *
 		raidPtr->bytesPerSector;
 	printf("parityBufferPool.bufferSize %d\n",
@@ -392,7 +392,7 @@ rf_ConfigureParityLogging(
 			  raidPtr);
 	/* initialize parityLogDiskQueue */
 	rf_init_mutex2(raidPtr->parityLogDiskQueue.mutex, IPL_VM);
-	rf_init_cond2(raidPtr->parityLogDiskQueue.cond, "rfdskq");
+	rf_init_cond2(raidPtr->parityLogDiskQueue.cond, "rfpldq");
 	raidPtr->parityLogDiskQueue.flushQueue = NULL;
 	raidPtr->parityLogDiskQueue.reintQueue = NULL;
 	raidPtr->parityLogDiskQueue.bufHead = NULL;
@@ -538,7 +538,6 @@ FreeRegionBufferQueue(RF_RegionBufferQueue_t * queue)
 {
 	int     i;
 
-	RF_LOCK_MUTEX(queue->mutex);
 	if (queue->availableBuffers != queue->totalBuffers) {
 		printf("Attempt to free region queue which is still in use!\n");
 		RF_ASSERT(0);
@@ -546,7 +545,8 @@ FreeRegionBufferQueue(RF_RegionBufferQueue_t * queue)
 	for (i = 0; i < queue->totalBuffers; i++)
 		RF_Free(queue->buffers[i], queue->bufferSize);
 	RF_Free(queue->buffers, queue->totalBuffers * sizeof(void *));
-	RF_UNLOCK_MUTEX(queue->mutex);
+	rf_destroy_mutex2(queue->mutex);
+	rf_destroy_cond2(queue->cond);
 }
 
 static void

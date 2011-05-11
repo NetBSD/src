@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.27 2011/05/11 05:14:07 mrg Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.28 2011/05/11 06:20:33 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.27 2011/05/11 05:14:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.28 2011/05/11 06:20:33 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -67,18 +67,18 @@ AcquireReintBuffer(RF_RegionBufferQueue_t *pool)
 	/* Return a region buffer from the free list (pool). If the free list
 	 * is empty, WAIT. BLOCKING */
 
-	RF_LOCK_MUTEX(pool->mutex);
+	rf_lock_mutex2(pool->mutex);
 	if (pool->availableBuffers > 0) {
 		bufPtr = pool->buffers[pool->availBuffersIndex];
 		pool->availableBuffers--;
 		pool->availBuffersIndex++;
 		if (pool->availBuffersIndex == pool->totalBuffers)
 			pool->availBuffersIndex = 0;
-		RF_UNLOCK_MUTEX(pool->mutex);
+		rf_unlock_mutex2(pool->mutex);
 	} else {
 		RF_PANIC();	/* should never happen in correct config,
 				 * single reint */
-		RF_WAIT_COND(pool->cond, pool->mutex);
+		rf_wait_cond2(pool->cond, pool->mutex);
 	}
 	return (bufPtr);
 }
@@ -91,15 +91,18 @@ ReleaseReintBuffer(
 	/* Insert a region buffer (bufPtr) into the free list (pool).
 	 * NON-BLOCKING */
 
-	RF_LOCK_MUTEX(pool->mutex);
+	rf_lock_mutex2(pool->mutex);
 	pool->availableBuffers++;
 	pool->buffers[pool->emptyBuffersIndex] = bufPtr;
 	pool->emptyBuffersIndex++;
 	if (pool->emptyBuffersIndex == pool->totalBuffers)
 		pool->emptyBuffersIndex = 0;
 	RF_ASSERT(pool->availableBuffers <= pool->totalBuffers);
-	RF_UNLOCK_MUTEX(pool->mutex);
-	RF_SIGNAL_COND(pool->cond);
+	/*
+	 * XXXmrg this signal goes with the above "shouldn't happen" wait?
+	 */
+	rf_signal_cond2(pool->cond);
+	rf_unlock_mutex2(pool->mutex);
 }
 
 
