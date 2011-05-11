@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrlist.h,v 1.2 1998/07/04 20:47:24 mrg Exp $	*/
+/*	$NetBSD: ifaddrlist.h,v 1.3 2011/05/11 00:38:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -24,8 +24,8 @@
  */
 
 struct ifaddrlist {
-	u_int32_t addr;
+	uint32_t addr;
 	char *device;
 };
 
-int	ifaddrlist(struct ifaddrlist **, char *, int);
+ssize_t	ifaddrlist(struct ifaddrlist **, char *, size_t);
