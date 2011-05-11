@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.29 2011/05/10 07:04:17 mrg Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.30 2011/05/11 03:23:26 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.29 2011/05/10 07:04:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.30 2011/05/11 03:23:26 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -391,8 +391,8 @@ rf_ConfigureParityLogging(
 			  rf_ShutdownParityLoggingParityBufferPool,
 			  raidPtr);
 	/* initialize parityLogDiskQueue */
-	rf_mutex_init(&raidPtr->parityLogDiskQueue.mutex);
-	raidPtr->parityLogDiskQueue.cond = 0;
+	rf_init_mutex2(raidPtr->parityLogDiskQueue.mutex, IPL_VM);
+	rf_init_cond2(raidPtr->parityLogDiskQueue.cond, "rfdskq");
 	raidPtr->parityLogDiskQueue.flushQueue = NULL;
 	raidPtr->parityLogDiskQueue.reintQueue = NULL;
 	raidPtr->parityLogDiskQueue.bufHead = NULL;
@@ -472,12 +472,12 @@ rf_ConfigureParityLogging(
 		return (ENOMEM);
 	}
 	/* wait for thread to start */
-	RF_LOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+	rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 	while (!(raidPtr->parityLogDiskQueue.threadState & RF_PLOG_RUNNING)) {
-		RF_WAIT_COND(raidPtr->parityLogDiskQueue.cond,
-			     raidPtr->parityLogDiskQueue.mutex);
+		rf_wait_cond2(raidPtr->parityLogDiskQueue.cond,
+			      raidPtr->parityLogDiskQueue.mutex);
 	}
-	RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+	rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 
 	rf_ShutdownCreate(listp, rf_ShutdownParityLogging, raidPtr);
 	if (rf_parityLogDebug) {
@@ -642,6 +642,9 @@ rf_ShutdownParityLoggingDiskQueue(RF_ThreadArg_t arg)
 		rf_destroy_mutex2(c->mutex);
 		RF_Free(c, sizeof(RF_CommonLogData_t));
 	}
+
+	rf_destroy_mutex2(raidPtr->parityLogDiskQueue.mutex);
+	rf_destroy_cond2(raidPtr->parityLogDiskQueue.cond);
 }
 
 static void
@@ -658,20 +661,20 @@ rf_ShutdownParityLogging(RF_ThreadArg_t arg)
 	 * reintegrated.  This is necessary since all parity log maps are
 	 * currently held in volatile memory. */
 
-	RF_LOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+	rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 	raidPtr->parityLogDiskQueue.threadState |= RF_PLOG_TERMINATE;
-	RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
-	RF_SIGNAL_COND(raidPtr->parityLogDiskQueue.cond);
+	rf_signal_cond2(raidPtr->parityLogDiskQueue.cond);
+	rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 	/*
          * pLogDiskThread will now terminate when queues are cleared
          * now wait for it to be done
          */
-	RF_LOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+	rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 	while (!(raidPtr->parityLogDiskQueue.threadState & RF_PLOG_SHUTDOWN)) {
-		RF_WAIT_COND(raidPtr->parityLogDiskQueue.cond,
-			     raidPtr->parityLogDiskQueue.mutex);
+		rf_wait_cond2(raidPtr->parityLogDiskQueue.cond,
+			      raidPtr->parityLogDiskQueue.mutex);
 	}
-	RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
+	rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 	if (rf_parityLogDebug) {
 		printf("raid%d: ShutdownParityLogging done (thread completed)\n", raidPtr->raidid);
 	}

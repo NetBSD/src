@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.h,v 1.6 2011/05/10 07:04:17 mrg Exp $	*/
+/*	$NetBSD: rf_paritylog.h,v 1.7 2011/05/11 03:23:26 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -109,8 +109,8 @@ struct RF_RegionBufferQueue_s {
 #define RF_PLOG_SHUTDOWN  (1<<3)/* thread is aware and exiting/exited */
 
 struct RF_ParityLogDiskQueue_s {
-	RF_DECLARE_MUTEX(mutex)	/* protects all vars in this struct */
-	RF_DECLARE_COND(cond)
+	rf_declare_mutex2(mutex);/* protects all vars in this struct */
+	rf_declare_cond2(cond);
 	int     threadState;	/* is thread running, should it shutdown  (see
 				 * above) */
 	RF_ParityLog_t *flushQueue;	/* list of parity logs to be flushed
