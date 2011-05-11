@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.h,v 1.10 2011/05/11 06:03:06 mrg Exp $	*/
+/*	$NetBSD: rf_paritylog.h,v 1.11 2011/05/11 06:20:33 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -94,8 +94,8 @@ struct RF_ParityLogQueue_s {
 };
 
 struct RF_RegionBufferQueue_s {
-	RF_DECLARE_MUTEX(mutex)
-	RF_DECLARE_COND(cond)
+	rf_declare_mutex2(mutex);
+	rf_declare_cond2(cond);
 	int     bufferSize;
 	int     totalBuffers;	/* size of array 'buffers' */
 	int     availableBuffers;	/* num available 'buffers' */
