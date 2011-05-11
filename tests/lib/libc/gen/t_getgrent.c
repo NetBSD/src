@@ -1,4 +1,4 @@
-/*	$NetBSD: t_getgrent.c,v 1.1 2011/04/05 06:15:31 jruoho Exp $ */
+/*	$NetBSD: t_getgrent.c,v 1.2 2011/05/11 19:06:45 njoly Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getgrent.c,v 1.1 2011/04/05 06:15:31 jruoho Exp $");
+__RCSID("$NetBSD: t_getgrent.c,v 1.2 2011/05/11 19:06:45 njoly Exp $");
 
 #include <sys/wait.h>
 
@@ -96,7 +96,7 @@ ATF_TC_BODY(getgrent_loop, tc)
 		j++;
 
 	if (i != j)
-		atf_tc_fail("sequantial getgrent(3) failed");
+		atf_tc_fail("sequential getgrent(3) failed");
 
 	/*
 	 * Close the database and reopen it.
