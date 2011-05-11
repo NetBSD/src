@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.10 2011/02/20 07:59:51 matt Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.11 2011/05/11 17:49:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.10 2011/02/20 07:59:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.11 2011/05/11 17:49:31 dyoung Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -76,7 +76,8 @@ static void	macepci_attach(struct device *, struct device *, void *);
 static int	macepci_bus_maxdevs(pci_chipset_tag_t, int);
 static pcireg_t	macepci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 static void	macepci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-static int	macepci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int	macepci_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 static const char *
 		macepci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 static int	macepci_intr(void *);
@@ -207,7 +208,7 @@ macepci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 }
 
 int
-macepci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+macepci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t intrtag = pa->pa_intrtag;
