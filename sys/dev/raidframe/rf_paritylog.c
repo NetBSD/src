@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.c,v 1.16 2011/05/11 03:38:32 mrg Exp $	*/
+/*	$NetBSD: rf_paritylog.c,v 1.17 2011/05/11 05:14:07 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.16 2011/05/11 03:38:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.17 2011/05/11 05:14:07 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -605,6 +605,8 @@ DumpParityLogToDisk(
 	 *
 	 * NON-BLOCKING */
 
+	RF_ASSERT(rf_owned_mutex2(raidPtr->regionInfo[regionID].mutex));
+
 	if (rf_parityLogDebug)
 		printf("[dumping parity log to disk, region %d]\n", regionID);
 	log = raidPtr->regionInfo[regionID].coreLog;
@@ -689,7 +691,7 @@ rf_ParityLogAppend(
 	/* lock the region for the first item in logData */
 	RF_ASSERT(logData != NULL);
 	regionID = logData->regionID;
-	RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
+	rf_lock_mutex2(raidPtr->regionInfo[regionID].mutex);
 	RF_ASSERT(raidPtr->regionInfo[regionID].loggingEnabled);
 
 	if (clearReintFlag) {
@@ -719,9 +721,9 @@ rf_ParityLogAppend(
 
 		/* see if we moved to a new region */
 		if (regionID != item->regionID) {
-			RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
+			rf_unlock_mutex2(raidPtr->regionInfo[regionID].mutex);
 			regionID = item->regionID;
-			RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
+			rf_lock_mutex2(raidPtr->regionInfo[regionID].mutex);
 			RF_ASSERT(raidPtr->regionInfo[regionID].loggingEnabled);
 		}
 		punt = RF_FALSE;/* Set to RF_TRUE if work is blocked.  This
@@ -845,7 +847,7 @@ rf_ParityLogAppend(
 				FreeParityLogData(item);
 		}
 	}
-	RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
+	rf_unlock_mutex2(raidPtr->regionInfo[regionID].mutex);
 	if (rf_parityLogDebug)
 		printf("[exiting ParityLogAppend]\n");
 	return (0);
@@ -858,9 +860,9 @@ rf_EnableParityLogging(RF_Raid_t * raidPtr)
 	int     regionID;
 
 	for (regionID = 0; regionID < rf_numParityRegions; regionID++) {
-		RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
+		rf_lock_mutex2(raidPtr->regionInfo[regionID].mutex);
 		raidPtr->regionInfo[regionID].loggingEnabled = RF_TRUE;
-		RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
+		rf_unlock_mutex2(raidPtr->regionInfo[regionID].mutex);
 	}
 	if (rf_parityLogDebug)
 		printf("[parity logging enabled]\n");
