@@ -1,6 +1,6 @@
 #! /usr/bin/atf-sh
 #
-# $NetBSD: t_perm.sh,v 1.2 2011/05/09 17:55:37 jruoho Exp $
+# $NetBSD: t_perm.sh,v 1.3 2011/05/11 07:07:41 jruoho Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,41 +29,45 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+file="/tmp/d_sysctl.out"
+
 clean() {
 
-	if [ -f /tmp/d_sysctl.out ]; then
-		rm /tmp/d_sysctl.out
+	if [ -f $file ]; then
+		rm $file
 	fi
 }
 
 sysctl_write() {
 
-
 	deadbeef="3735928559"
-	file="/tmp/d_sysctl.out"
 
-	sysctl "$1" | cut -d= -f1 > $file
+	sysctl $1 | cut -d= -f1 > $file
 
 	if [ ! -f $file ]; then
-		atf_fail "sysctl -a failed"
+		atf_fail "sysctl failed"
 	fi
 
-	# This should probably include a functional verification
-	# that $deadbeef was not actually written to the node...
-	#
 	while read line; do
 
-		node="$(echo $line)"
+		node=$(echo $line)
 
-		case "$node" in
+		case $node in
 
 		"$1."*)
 			atf_check -s not-exit:0 -e ignore \
-				-x sysctl -w "$node=$deadbeef"
+				-x sysctl -w $node=$deadbeef
 			;;
 		esac
 
 	done < $file
+
+	# A functional verification that $deadbeef
+	# was not actually written to the node.
+	#
+	if [ ! -z $(sysctl $1 | grep $deadbeef) ]; then
+		atf_fail "value was written"
+	fi
 }
 
 # ddb.
