@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.h,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: dict.h,v 1.1.1.2 2011/05/11 09:11:22 tron Exp $	*/
 
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
@@ -69,6 +69,7 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_FOLD_FIX	(1<<14)	/* case-fold key with fixed-case map */
 #define DICT_FLAG_FOLD_MUL	(1<<15)	/* case-fold key with multi-case map */
 #define DICT_FLAG_FOLD_ANY	(DICT_FLAG_FOLD_FIX | DICT_FLAG_FOLD_MUL)
+#define DICT_FLAG_OPEN_LOCK	(1<<16)	/* open file with exclusive lock */
 
  /* IMPORTANT: Update the dict_mask[] table when the above changes */
 

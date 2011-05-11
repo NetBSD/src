@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.1.1.3 2011/03/02 19:32:24 tron Exp $	*/
+/*	$NetBSD: postconf.c,v 1.1.1.4 2011/05/11 09:11:06 tron Exp $	*/
 
 /*++
 /* NAME
@@ -79,7 +79,7 @@
 /*	With Postfix version 2.8 and later, the \fB-e\fR is no
 /*	longer needed.
 /* .IP \fB-h\fR
-/*	Show parameter values only, not the "\fIname = " label
+/*	Show parameter values only, not the "\fIname = \fR" label
 /*	that normally precedes the value.
 /* .IP \fB-l\fR
 /*	List the names of all supported mailbox locking methods.
