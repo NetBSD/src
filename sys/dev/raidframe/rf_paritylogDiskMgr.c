@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.25 2011/05/11 03:23:26 mrg Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.26 2011/05/11 03:38:32 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.25 2011/05/11 03:23:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.26 2011/05/11 03:38:32 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -535,13 +535,13 @@ ReintegrateLogs(
 			 * locks provides a synchronization barrier with
 			 * DumpParityLogToDisk */
 			RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
-			RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].reintMutex);
+			rf_lock_mutex2(raidPtr->regionInfo[regionID].reintMutex);
 			/* XXXmrg: don't need this? */
 			rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 			raidPtr->regionInfo[regionID].diskCount = 0;
 			raidPtr->regionInfo[regionID].reintInProgress = RF_FALSE;
 			RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
-			RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].reintMutex);	/* flushing is now
+			rf_unlock_mutex2(raidPtr->regionInfo[regionID].reintMutex);	/* flushing is now
 											 * enabled */
 			/* XXXmrg: don't need this? */
 			rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);

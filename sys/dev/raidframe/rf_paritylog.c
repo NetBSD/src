@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.c,v 1.15 2011/05/11 03:23:26 mrg Exp $	*/
+/*	$NetBSD: rf_paritylog.c,v 1.16 2011/05/11 03:38:32 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.15 2011/05/11 03:23:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.16 2011/05/11 03:38:32 mrg Exp $");
 
 #include "rf_archs.h"
 
@@ -548,7 +548,7 @@ ReintLog(
 	 * specified region (regionID) to indicate that reintegration is in
 	 * progress for this region. NON-BLOCKING */
 
-	RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].reintMutex);
+	rf_lock_mutex2(raidPtr->regionInfo[regionID].reintMutex);
 	raidPtr->regionInfo[regionID].reintInProgress = RF_TRUE;	/* cleared when reint
 									 * complete */
 
@@ -558,7 +558,7 @@ ReintLog(
 	rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 	log->next = raidPtr->parityLogDiskQueue.reintQueue;
 	raidPtr->parityLogDiskQueue.reintQueue = log;
-	RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].reintMutex);
+	rf_unlock_mutex2(raidPtr->regionInfo[regionID].reintMutex);
 	rf_signal_cond2(raidPtr->parityLogDiskQueue.cond);
 	rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 }
@@ -612,7 +612,7 @@ DumpParityLogToDisk(
 	RF_ASSERT(log->next == NULL);
 
 	/* if reintegration is in progress, must queue work */
-	RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].reintMutex);
+	rf_lock_mutex2(raidPtr->regionInfo[regionID].reintMutex);
 	if (raidPtr->regionInfo[regionID].reintInProgress) {
 		/* Can not proceed since this region is currently being
 		 * reintegrated. We can not block, so queue remaining work and
@@ -625,10 +625,10 @@ DumpParityLogToDisk(
 			RequeueParityLogData(logData, &raidPtr->parityLogDiskQueue.reintBlockHead, &raidPtr->parityLogDiskQueue.reintBlockTail);
 		else
 			EnqueueParityLogData(logData, &raidPtr->parityLogDiskQueue.reintBlockHead, &raidPtr->parityLogDiskQueue.reintBlockTail);
-		RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].reintMutex);
+		rf_unlock_mutex2(raidPtr->regionInfo[regionID].reintMutex);
 		return (1);	/* relenquish control of this thread */
 	}
-	RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].reintMutex);
+	rf_unlock_mutex2(raidPtr->regionInfo[regionID].reintMutex);
 	raidPtr->regionInfo[regionID].coreLog = NULL;
 	if ((raidPtr->regionInfo[regionID].diskCount) < raidPtr->regionInfo[regionID].capacity)
 		/* IMPORTANT!! this loop bound assumes region disk holds an
@@ -695,13 +695,13 @@ rf_ParityLogAppend(
 	if (clearReintFlag) {
 		/* Enable flushing for this region.  Holding both locks
 		 * provides a synchronization barrier with DumpParityLogToDisk */
-		RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].reintMutex);
+		rf_lock_mutex2(raidPtr->regionInfo[regionID].reintMutex);
 		/* XXXmrg need this? */
 		rf_lock_mutex2(raidPtr->parityLogDiskQueue.mutex);
 		RF_ASSERT(raidPtr->regionInfo[regionID].reintInProgress == RF_TRUE);
 		raidPtr->regionInfo[regionID].diskCount = 0;
 		raidPtr->regionInfo[regionID].reintInProgress = RF_FALSE;
-		RF_UNLOCK_MUTEX(raidPtr->regionInfo[regionID].reintMutex);	/* flushing is now
+		rf_unlock_mutex2(raidPtr->regionInfo[regionID].reintMutex);	/* flushing is now
 										 * enabled */
 		/* XXXmrg need this? */
 		rf_unlock_mutex2(raidPtr->parityLogDiskQueue.mutex);

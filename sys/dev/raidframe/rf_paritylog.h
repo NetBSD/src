@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.h,v 1.7 2011/05/11 03:23:26 mrg Exp $	*/
+/*	$NetBSD: rf_paritylog.h,v 1.8 2011/05/11 03:38:32 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -146,7 +146,7 @@ struct RF_DiskMap_s {
 struct RF_RegionInfo_s {
 	RF_DECLARE_MUTEX(mutex)	/* protects: diskCount, diskMap,
 				 * loggingEnabled, coreLog */
-	RF_DECLARE_MUTEX(reintMutex)	/* protects: reintInProgress */
+	rf_declare_mutex2(reintMutex);	/* protects: reintInProgress */
 	int     reintInProgress;/* flag used to suspend flushing operations */
 	RF_SectorCount_t capacity;	/* capacity of this region in sectors */
 	RF_SectorNum_t regionStartAddr;	/* starting disk address for this
