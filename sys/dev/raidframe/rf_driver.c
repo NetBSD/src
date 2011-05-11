@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.127 2011/05/05 07:12:58 mrg Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.128 2011/05/11 18:13:12 mrg Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.127 2011/05/05 07:12:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.128 2011/05/11 18:13:12 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -233,12 +233,13 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 	}
 
 	/* Wait for any reconstruction to stop... */
+	rf_lock_mutex2(raidPtr->mutex);
 	while (raidPtr->reconInProgress) {
 		printf("raid%d: Waiting for reconstruction to stop...\n",
 		       raidPtr->raidid);
-		tsleep(&raidPtr->waitForReconCond, PRIBIO,
-		       "rfreshutdown",0);
+		rf_wait_cond2(raidPtr->waitForReconCond, raidPtr->mutex);
 	}
+	rf_unlock_mutex2(raidPtr->mutex);
 
 	raidPtr->valid = 0;
 
@@ -253,11 +254,16 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 
 	rf_ShutdownList(&raidPtr->shutdownList);
 
+	rf_destroy_cond2(raidPtr->waitForReconCond);
+	rf_destroy_cond2(raidPtr->adding_hot_spare_cv);
+
 	rf_destroy_mutex2(raidPtr->access_suspend_mutex);
 	rf_destroy_cond2(raidPtr->access_suspend_cv);
 
 	rf_destroy_cond2(raidPtr->outstandingCond);
 	rf_destroy_mutex2(raidPtr->rad_lock);
+
+	rf_destroy_mutex2(raidPtr->mutex);
 
 	rf_UnconfigureArray();
 
@@ -333,7 +339,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	}
 	rf_unlock_mutex2(configureMutex);
 
-	rf_mutex_init(&raidPtr->mutex);
+	rf_init_mutex2(raidPtr->mutex, IPL_VM);
 	/* set up the cleanup list.  Do this after ConfigureDebug so that
 	 * value of memDebug will be set */
 
@@ -364,7 +370,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	rf_init_mutex2(raidPtr->access_suspend_mutex, IPL_VM);
 	rf_init_cond2(raidPtr->access_suspend_cv, "rfquiesce");
 
-	raidPtr->waitForReconCond = 0;
+	rf_init_cond2(raidPtr->waitForReconCond, "rfrcnw");
 
 	if (ac!=NULL) {
 		/* We have an AutoConfig structure..  Don't do the
@@ -397,6 +403,9 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	raidPtr->parity_rewrite_in_progress = 0;
 	raidPtr->adding_hot_spare = 0;
 	raidPtr->recon_in_progress = 0;
+
+	rf_init_cond2(raidPtr->adding_hot_spare_cv, "raidhs");
+
 	raidPtr->maxOutstanding = cfgPtr->maxOutstandingDiskReqs;
 
 	/* autoconfigure and root_partition will actually get filled in
@@ -703,7 +712,7 @@ rf_SetReconfiguredMode(RF_Raid_t *raidPtr, int col)
 		printf("Can't set reconfigured mode in dedicated-spare array\n");
 		RF_PANIC();
 	}
-	RF_LOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
 	raidPtr->numFailures++;
 	raidPtr->Disks[col].status = rf_ds_dist_spared;
 	raidPtr->status = rf_rs_reconfigured;
@@ -712,7 +721,7 @@ rf_SetReconfiguredMode(RF_Raid_t *raidPtr, int col)
 	 * architecture. */
 	if (raidPtr->Layout.map->flags & RF_BD_DECLUSTERED)
 		rf_InstallSpareTable(raidPtr, col);
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_unlock_mutex2(raidPtr->mutex);
 	return (0);
 }
 #endif
@@ -727,7 +736,7 @@ rf_FailDisk(RF_Raid_t *raidPtr, int fcol, int initRecon)
 
 	rf_SuspendNewRequestsAndWait(raidPtr);
 
-	RF_LOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
 	if (raidPtr->Disks[fcol].status != rf_ds_failed) {
 		/* must be failing something that is valid, or else it's
 		   already marked as failed (in which case we don't
@@ -736,7 +745,7 @@ rf_FailDisk(RF_Raid_t *raidPtr, int fcol, int initRecon)
 		raidPtr->Disks[fcol].status = rf_ds_failed;
 		raidPtr->status = rf_rs_degraded;
 	}
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_unlock_mutex2(raidPtr->mutex);
 
 	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 
@@ -746,14 +755,14 @@ rf_FailDisk(RF_Raid_t *raidPtr, int fcol, int initRecon)
 	rf_close_component(raidPtr, raidPtr->raid_cinfo[fcol].ci_vp,
 			   raidPtr->Disks[fcol].auto_configured);
 
-	RF_LOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
 	raidPtr->raid_cinfo[fcol].ci_vp = NULL;
 
 	/* Need to mark the component as not being auto_configured
 	   (in case it was previously). */
 
 	raidPtr->Disks[fcol].auto_configured = 0;
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_unlock_mutex2(raidPtr->mutex);
 	/* now we can allow IO to continue -- we'll be suspending it
 	   again in rf_ReconstructFailedDisk() if we have to.. */
 

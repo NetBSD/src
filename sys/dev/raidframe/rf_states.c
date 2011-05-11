@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.48 2011/05/10 07:04:17 mrg Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.49 2011/05/11 18:13:12 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.48 2011/05/10 07:04:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.49 2011/05/11 18:13:12 mrg Exp $");
 
 #include <sys/errno.h>
 
@@ -231,9 +231,9 @@ rf_State_LastState(RF_RaidAccessDesc_t *desc)
 	 * Wakeup any requests waiting to go.
 	 */
 
-	RF_LOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
-	((RF_Raid_t *) desc->raidPtr)->openings++;
-	RF_UNLOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
+	rf_lock_mutex2(desc->raidPtr->mutex);
+	desc->raidPtr->openings++;
+	rf_unlock_mutex2(desc->raidPtr->mutex);
 
 	rf_lock_mutex2(desc->raidPtr->iodone_lock);
 	rf_signal_cond2(desc->raidPtr->iodone_cv);
