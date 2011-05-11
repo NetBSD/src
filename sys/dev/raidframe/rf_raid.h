@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.42 2011/05/05 07:12:58 mrg Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.43 2011/05/11 18:13:12 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -84,7 +84,7 @@ struct RF_CumulativeStats_s {
 };
 
 struct RF_ThroughputStats_s {
-	RF_DECLARE_MUTEX(mutex)	/* a mutex used to lock the configuration
+	rf_declare_mutex2(mutex);/* a mutex used to lock the configuration
 				 * stuff */
 	struct timeval start;	/* timer started when numOutstandingRequests
 				 * moves from 0 to 1 */
@@ -124,7 +124,7 @@ struct RF_Raid_s {
 	 * local copy of this pointer for the actual accesses. */
 	/* The remainder of the structure can change, and therefore requires
 	 * locking on reads and updates */
-	RF_DECLARE_MUTEX(mutex)	/* mutex used to serialize access to
+	rf_declare_mutex2(mutex);/* mutex used to serialize access to
 				 * the fields below */
 	RF_RowStatus_t status;	/* the status of each row in the array */
 	int     valid;		/* indicates successful configuration */
@@ -187,7 +187,7 @@ struct RF_Raid_s {
 	RF_HeadSepLimit_t headSepLimit;
 	int     numFloatingReconBufs;
 	int     reconInProgress;
-	RF_DECLARE_COND(waitForReconCond)
+	rf_declare_cond2(waitForReconCond);	/* goes with raidPtr->mutex */
 	RF_RaidReconDesc_t *reconDesc;	/* reconstruction descriptor */
 	RF_ReconCtrl_t *reconControl;	/* reconstruction control structure
 					 * pointers for each row in the array */
@@ -213,6 +213,8 @@ struct RF_Raid_s {
 	int     parity_rewrite_in_progress;
 	int     copyback_in_progress;
 	int     adding_hot_spare;
+
+	rf_declare_cond2(adding_hot_spare_cv);
 
 	/*
          * Engine thread control
