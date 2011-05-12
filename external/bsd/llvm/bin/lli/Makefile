@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/03/28 11:41:48 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/05/12 14:56:23 joerg Exp $
 
 PROG_CXX=	lli
 NOMAN=		yes
@@ -20,8 +20,10 @@ LLVM_LIBS+= \
 	BitReader \
 	JIT \
 	MCJIT \
+	RuntimeDyld \
 	Interpreter \
 	ExecutionEngine \
+	Object \
 	SelectionDAG \
 	CodeGen \
 	Target \

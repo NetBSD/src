@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/05/12 14:56:24 joerg Exp $
 
 LIB=	clangBasic
 
@@ -18,7 +18,8 @@ SRCS+=	Builtins.cpp \
 	TargetInfo.cpp \
 	Targets.cpp \
 	TokenKinds.cpp \
-	Version.cpp
+	Version.cpp \
+	VersionTuple.cpp
 
 CPPFLAGS.version.cpp=	-DSVN_REVISON=\"${CLANG_REVISION}\"
 

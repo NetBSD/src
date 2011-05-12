@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/05/12 14:56:23 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -26,6 +26,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	GCStrategy.cpp \
 	IfConversion.cpp \
 	InlineSpiller.cpp \
+	InterferenceCache.cpp \
 	IntrinsicLowering.cpp \
 	LLVMTargetMachine.cpp \
 	LatencyPriorityQueue.cpp \
@@ -103,6 +104,8 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
+# Crashes some versions of GCC
+CPPFLAGS.RenderMachineFunction.cpp+= -O0
 .else
 .include <bsd.lib.mk>
 .endif

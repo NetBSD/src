@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/05/12 14:56:23 joerg Exp $
 
 LIB=	LLVMMCDisassembler
 
@@ -6,7 +6,8 @@ LIB=	LLVMMCDisassembler
 
 .PATH: ${LLVM_SRCDIR}/lib/MC/MCDisassembler
 
-SRCS+=	EDDisassembler.cpp \
+SRCS+=	Disassembler.cpp \
+	EDDisassembler.cpp \
 	EDOperand.cpp \
 	EDInst.cpp \
 	EDToken.cpp
