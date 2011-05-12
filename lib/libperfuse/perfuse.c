@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.12 2011/04/25 04:54:53 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.13 2011/05/12 10:32:41 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -391,7 +391,8 @@ perfuse_init(pc, pmi)
 	struct perfuse_state *ps;
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
-	char name[] = "perfuse";
+	const char *source = _PATH_PUFFS;
+	char *fstype;
 	unsigned int puffs_flags;
 	struct puffs_node *pn_root;
 	struct puffs_pathobj *po_root;
@@ -399,11 +400,33 @@ perfuse_init(pc, pmi)
 	ps = init_state();
 	ps->ps_owner_uid = pmi->pmi_uid;
 
-	if (pmi->pmi_source)
-		ps->ps_source = strdup(pmi->pmi_source);
-	if (pmi->pmi_filesystemtype)
+	if (pmi->pmi_source) {
+		if ((ps->ps_source = strdup(pmi->pmi_source)) == NULL)
+			DERR(EX_OSERR, "strdup failed");
+
+		source = ps->ps_source;
+	}
+
+	if (pmi->pmi_filesystemtype) {
+		size_t len;
+
 		ps->ps_filesystemtype = strdup(pmi->pmi_filesystemtype);
-	ps->ps_target = strdup(pmi->pmi_target);
+		if (ps->ps_filesystemtype == NULL)
+			DERR(EX_OSERR, "strdup failed");
+
+		len = sizeof("perfuse|") + strlen(ps->ps_filesystemtype) + 1;
+		if ((fstype = malloc(len)) == NULL)
+			DERR(EX_OSERR, "malloc failed");
+
+		(void)sprintf(fstype, "perfuse|%s", ps->ps_filesystemtype);
+	} else {
+		if ((fstype = strdup("perfuse")) == NULL)
+			DERR(EX_OSERR, "strdup failed");
+	}
+
+	if ((ps->ps_target = strdup(pmi->pmi_target)) == NULL)
+		DERR(EX_OSERR, "strdup failed");
+
 	ps->ps_mountflags = pmi->pmi_mountflags;
 
 	/*
@@ -450,7 +473,7 @@ perfuse_init(pc, pmi)
 	if (perfuse_diagflags & PDF_PUFFS)
 		puffs_flags |= PUFFS_FLAG_OPDUMP;
 
-	if ((pu = puffs_init(pops, _PATH_PUFFS, name, ps, puffs_flags)) == NULL)
+	if ((pu = puffs_init(pops, source, fstype, ps, puffs_flags)) == NULL)
 		DERR(EX_OSERR, "puffs_init failed");
 
 	ps->ps_pu = pu;
