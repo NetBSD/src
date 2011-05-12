@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.270 2011/02/24 08:42:30 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.271 2011/05/12 05:44:09 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.270 2011/02/24 08:42:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.271 2011/05/12 05:44:09 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2334,7 +2334,7 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t blkno)
 
 	/* Fill in MD segment header (interpreted by MD part of libkvm) */
 	kcpu = (cpu_kcore_hdr_t *)((long)bp + ALIGN(sizeof(kcore_seg_t)));
-	kcpu->cputype = CPU_SUN4U;
+	kcpu->cputype = cputyp;
 	kcpu->kernbase = (uint64_t)KERNBASE;
 	kcpu->cpubase = (uint64_t)CPUINFO_VA;
 
@@ -3345,6 +3345,14 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 	pv_entry_t pv;
 	vaddr_t va;
 	int rv;
+
+#if 0
+	/*
+	 * Why is this?
+	 */
+	if (CPU_ISSUN4US || CPU_ISSUN4V)
+		return;
+#endif
 
 	KASSERT(mutex_owned(&pmap_lock));
 
