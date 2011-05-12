@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.18 2010/03/28 05:24:00 mrg Exp $ */
+/*	$NetBSD: cache.h,v 1.19 2011/05/12 05:42:42 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -93,6 +93,8 @@ void	cache_flush_phys_usiii(paddr_t, psize_t, int);
 static __inline__ void
 dcache_flush_page(paddr_t pa)
 {
+	if (CPU_ISSUN4US || CPU_ISSUN4V)
+		return;
 	if (CPU_IS_USIII_UP())
 		dcache_flush_page_usiii(pa);
 	else
@@ -111,6 +113,8 @@ cache_flush_phys(paddr_t pa, psize_t size, int ecache)
 static __inline__ void
 blast_icache(void)
 {
+	if (CPU_ISSUN4US || CPU_ISSUN4V)
+		return;
 	if (CPU_IS_USIII_UP())
 		blast_icache_usiii();
 	else
@@ -154,6 +158,12 @@ void smp_blast_dcache(sparc64_cpuset_t);
 #define	tlb_flush_pte(va,pm)		sp_tlb_flush_pte(va, (pm)->pm_ctx[0])
 #define	dcache_flush_page_all(pa)	dcache_flush_page(pa)
 #define	dcache_flush_page_cpuset(pa,cs)	dcache_flush_page(pa)
-#define	blast_dcache()			sp_blast_dcache(dcache_size, \
-							dcache_line_size)
+
+static __inline__ void
+blast_dcache(void)
+{
+	if (CPU_ISSUN4US || CPU_ISSUN4V)
+		return;
+	sp_blast_dcache(dcache_size, dcache_line_size);
+}
 #endif
