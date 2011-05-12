@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.19 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.20 2011/05/12 08:14:36 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ splraiseipl(ipl_cookie_t icookie)
 
 #include <sys/spl.h>
 
-#define	spl0()			spllower(0)
+#define	spl0()			spllower(IPL_NONE)
 
 #endif /* !_LOCORE */
 #endif /* !_IBM4XX_INTR_H_ */
