@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.53 2011/05/12 15:07:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -124,8 +124,8 @@ extern int astpending;		/* need to trap before returning to user mode */
 
 #ifdef _KERNEL
 extern int machineid;
-extern char *intiobase;
-extern char *intiolimit;
+extern uint8_t *intiobase;
+extern uint8_t *intiolimit;
 
 /* fpu.c functions */
 int	fpu_probe(void);
