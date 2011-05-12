@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.1.1.2 2011/05/12 20:46:53 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: fsmagic.c,v 1.59 2009/02/03 20:27:51 christos Exp $")
+FILE_RCSID("@(#)$File: fsmagic.c,v 1.62 2010/09/20 20:16:08 rrt Exp $")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.1.1.2 2011/05/12 20:46:53 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: fsmagic.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $");
 # define minor(dev)  ((dev) & 0xff)
 #endif
 #undef HAVE_MAJOR
-
+#ifdef	S_IFLNK
 private int
 bad_link(struct magic_set *ms, int err, char *buf)
 {
@@ -89,7 +89,7 @@ bad_link(struct magic_set *ms, int err, char *buf)
 	}
 	return 1;
 }
-
+#endif
 private int
 handle_mime(struct magic_set *ms, int mime, const char *str)
 {
@@ -112,7 +112,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 	int mime = ms->flags & MAGIC_MIME;
 #ifdef	S_IFLNK
 	char buf[BUFSIZ+4];
-	int nch;
+	ssize_t nch;
 	struct stat tstatbuf;
 #endif
 
@@ -140,7 +140,8 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 		if (file_printf(ms, "cannot open `%s' (%s)",
 		    fn, strerror(errno)) == -1)
 			return -1;
-		return 1;
+		ms->event_flags |= EVENT_HAD_ERR;
+		return -1;
 	}
 
 	if (!mime) {

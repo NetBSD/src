@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf_time.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $	*/
+/*	$NetBSD: cdf_time.c,v 1.1.1.2 2011/05/12 20:46:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf_time.c,v 1.6 2009/03/10 11:44:29 christos Exp $")
+FILE_RCSID("@(#)$File: cdf_time.c,v 1.10 2011/02/10 17:03:16 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf_time.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $");
+__RCSID("$NetBSD: cdf_time.c,v 1.1.1.2 2011/05/12 20:46:55 christos Exp $");
 #endif
 #endif
 
@@ -114,22 +114,22 @@ cdf_timestamp_to_timespec(struct timespec *ts, cdf_timestamp_t t)
 	ts->tv_nsec = (t % CDF_TIME_PREC) * 100;
 
 	t /= CDF_TIME_PREC;
-	tm.tm_sec = t % 60;
+	tm.tm_sec = (int)(t % 60);
 	t /= 60;
 
-	tm.tm_min = t % 60;
+	tm.tm_min = (int)(t % 60);
 	t /= 60;
 
-	tm.tm_hour = t % 24;
+	tm.tm_hour = (int)(t % 24);
 	t /= 24;
 
 	// XXX: Approx
-	tm.tm_year = CDF_BASE_YEAR + (t / 365);
+	tm.tm_year = (int)(CDF_BASE_YEAR + (t / 365));
 
 	rdays = cdf_getdays(tm.tm_year);
 	t -= rdays;
-	tm.tm_mday = cdf_getday(tm.tm_year, t);
-	tm.tm_mon = cdf_getmonth(tm.tm_year, t);
+	tm.tm_mday = cdf_getday(tm.tm_year, (int)t);
+	tm.tm_mon = cdf_getmonth(tm.tm_year, (int)t);
 	tm.tm_wday = 0;
 	tm.tm_yday = 0;
 	tm.tm_isdst = 0;
@@ -149,10 +149,13 @@ cdf_timestamp_to_timespec(struct timespec *ts, cdf_timestamp_t t)
 }
 
 int
+/*ARGSUSED*/
 cdf_timespec_to_timestamp(cdf_timestamp_t *t, const struct timespec *ts)
 {
+#ifndef __lint__
 	(void)&t;
 	(void)&ts;
+#endif
 #ifdef notyet
 	struct tm tm;
 	if (gmtime_r(&ts->ts_sec, &tm) == NULL) {
@@ -168,6 +171,18 @@ cdf_timespec_to_timestamp(cdf_timestamp_t *t, const struct timespec *ts)
 	return 0;
 }
 
+char *
+cdf_ctime(const time_t *sec)
+{
+	static char ctbuf[26];
+	char *ptr = ctime(sec);
+	if (ptr != NULL)
+		return ptr;
+	(void)snprintf(ctbuf, sizeof(ctbuf), "*Bad* 0x%16.16llx\n",
+	    (long long)*sec);
+	return ctbuf;
+}
+
 
 #ifdef TEST
 int
@@ -179,7 +194,7 @@ main(int argc, char *argv[])
 	char *p, *q;
 
 	cdf_timestamp_to_timespec(&ts, tst);
-	p = ctime(&ts.tv_sec);
+	p = cdf_ctime(&ts.tv_sec);
 	if ((q = strchr(p, '\n')) != NULL)
 		*q = '\0';
 	if (strcmp(ref, p) != 0)
