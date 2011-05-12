@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.176 2010/08/11 19:14:26 macallan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.177 2011/05/12 05:42:22 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.176 2010/08/11 19:14:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.177 2011/05/12 05:42:22 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -136,6 +136,9 @@ void *bootinfo = 0;
 #ifdef KGDB
 int kgdb_break_at_attach;
 #endif
+
+/* Default to sun4u */
+int cputyp = CPU_SUN4U;
 
 #define	OFPATHLEN	128
 #define	OFNODEKEY	"OFpnode"
@@ -254,6 +257,7 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 {
 	void *bi;
 	long bmagic;
+	char buf[32];
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	struct btinfo_symtab *bi_sym;
@@ -328,6 +332,13 @@ die_old_boot_loader:
 #endif
 #endif
 #endif
+
+	if (OF_getprop(findroot(), "compatible", buf, sizeof(buf)) > 0) {
+		if (strcmp(buf, "sun4us") == 0)
+			cputyp = CPU_SUN4US;
+		else if (strcmp(buf, "sun4v") == 0)
+			cputyp = CPU_SUN4V;
+	}
 
 	LOOKUP_BOOTINFO(bi_count, BTINFO_DTLB_SLOTS);
 	kernel_tlb_slots = bi_count->count;
