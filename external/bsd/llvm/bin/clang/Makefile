@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/02/23 03:09:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/05/12 14:56:22 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -48,6 +48,7 @@ LLVM_LIBS+= \
 	CodeGen \
 	Target \
 	InstCombine \
+	Instrumentation \
 	ScalarOpts \
 	Analysis \
 	MCDisassembler \

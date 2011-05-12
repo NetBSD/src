@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.4 2011/03/28 11:41:48 joerg Exp $
+# $NetBSD: Makefile,v 1.5 2011/05/12 14:56:23 joerg Exp $
+
+.include <bsd.own.mk>
 
 .include <bsd.own.mk>
 
@@ -11,6 +13,7 @@ SUBDIR=	\
 	libLLVMCodeGen \
 	libLLVMCore \
 	libLLVMInstCombine \
+	libLLVMInstrumentation \
 	libLLVMipa \
 	libLLVMipo \
 	libLLVMMC \
@@ -41,12 +44,12 @@ SUBDIR+= \
 	libLLVMCppBackendInfo \
 	libLLVMExecutionEngine \
 	libLLVMHello \
-	libLLVMInstrumentation \
 	libLLVMInterpreter \
 	libLLVMJIT \
 	libLLVMLinker \
 	libLLVMMCJIT \
-	libLLVMObject
+	libLLVMObject \
+	libLLVMRuntimeDyld
 .endif
 
 SUBDIR+= \
