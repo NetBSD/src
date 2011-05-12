@@ -1,10 +1,11 @@
 
 #------------------------------------------------------------------------------
+# $File: printer,v 1.24 2011/05/08 16:34:51 christos Exp $
 # printer:  file(1) magic for printer-formatted files
 #
 
 # PostScript, updated by Daniel Quinlan (quinlan@yggdrasil.com)
-0	string		%!		PostScript document text
+0	string/t		%!		PostScript document text
 !:mime	application/postscript
 !:apple	ASPSTEXT
 >2	string		PS-Adobe-	conforming
@@ -62,6 +63,10 @@
 >>>>&0	string		>\0			%s		
 #>15	string		\ ENTER\ LANGUAGE\ =
 #>31	string		PostScript		PostScript
+
+# From: Stefan Thurner <thurners@nicsys.de>
+0	string		\033%-12345X@PJL
+>&0	search/10000	%!			PJL encapsulated PostScript document text
 
 # HP Printer Control Language, Daniel Quinlan (quinlan@yggdrasil.com)
 0	string		\033E\033	HP PCL printer data

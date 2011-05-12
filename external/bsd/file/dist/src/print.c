@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.1.1.2 2011/05/12 20:46:53 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: print.c,v 1.66 2009/02/03 20:27:51 christos Exp $")
+FILE_RCSID("@(#)$File: print.c,v 1.69 2010/07/21 16:47:18 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.1.1.1 2009/05/08 16:35:06 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.1.1.2 2011/05/12 20:46:53 christos Exp $");
 #endif
 #endif  /* lint */
 
@@ -83,10 +83,10 @@ file_mdump(struct magic *m)
 	if (IS_STRING(m->type)) {
 		if (m->str_flags) {
 			(void) fputc('/', stderr);
-			if (m->str_flags & STRING_COMPACT_BLANK) 
-				(void) fputc(CHAR_COMPACT_BLANK, stderr);
-			if (m->str_flags & STRING_COMPACT_OPTIONAL_BLANK) 
-				(void) fputc(CHAR_COMPACT_OPTIONAL_BLANK,
+			if (m->str_flags & STRING_COMPACT_WHITESPACE) 
+				(void) fputc(CHAR_COMPACT_WHITESPACE, stderr);
+			if (m->str_flags & STRING_COMPACT_OPTIONAL_WHITESPACE) 
+				(void) fputc(CHAR_COMPACT_OPTIONAL_WHITESPACE,
 				    stderr);
 			if (m->str_flags & STRING_IGNORE_LOWERCASE) 
 				(void) fputc(CHAR_IGNORE_LOWERCASE, stderr);
@@ -126,7 +126,7 @@ file_mdump(struct magic *m)
 		case FILE_BEQUAD:
 		case FILE_LEQUAD:
 		case FILE_QUAD:
-			(void) fprintf(stderr, "%lld",
+			(void) fprintf(stderr, "%" INT64_T_FORMAT "d",
 			    (unsigned long long)m->value.q);
 			break;
 		case FILE_PSTRING:
@@ -224,7 +224,7 @@ file_fmttime(uint32_t v, int local)
 			(void)time(&now);
 			tm1 = localtime(&now);
 			if (tm1 == NULL)
-				return "*Invalid time*";
+				goto out;
 			daylight = tm1->tm_isdst;
 		}
 #endif /* HAVE_TM_ISDST */
@@ -233,10 +233,14 @@ file_fmttime(uint32_t v, int local)
 			t += 3600;
 		tm = gmtime(&t);
 		if (tm == NULL)
-			return "*Invalid time*";
+			goto out;
 		pp = asctime(tm);
 	}
 
+	if (pp == NULL)
+		goto out;
 	pp[strcspn(pp, "\n")] = '\0';
 	return pp;
+out:
+	return "*Invalid time*";
 }
