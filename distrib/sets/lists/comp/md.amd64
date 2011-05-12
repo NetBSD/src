@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.113 2011/05/09 17:13:20 manu Exp $
+# $NetBSD: md.amd64,v 1.114 2011/05/12 14:56:22 joerg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -70,8 +70,9 @@
 ./usr/include/clang-3.0/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/emmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/immintrin.h		comp-c-include		llvm
-./usr/include/clang-3.0/mm_malloc.h		comp-c-include		llvm
+./usr/include/clang-3.0/mm3dnow.h		comp-c-include		llvm
 ./usr/include/clang-3.0/mmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.0/mm_malloc.h		comp-c-include		llvm
 ./usr/include/clang-3.0/pmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/smmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.0/tmmintrin.h		comp-c-include		llvm

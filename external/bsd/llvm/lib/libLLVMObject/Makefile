@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:14:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/05/12 14:56:23 joerg Exp $
 
 LIB=	LLVMObject
 NOGCCERROR=	yes
@@ -10,6 +10,8 @@ NOGCCERROR=	yes
 SRCS+=	COFFObjectFile.cpp \
 	ELFObjectFile.cpp \
 	MachOObject.cpp \
+	MachOObjectFile.cpp \
+	Object.cpp \
 	ObjectFile.cpp
 
 .include <bsd.lib.mk>
