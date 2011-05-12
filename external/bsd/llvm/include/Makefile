@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/04/15 19:31:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/05/12 14:56:23 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -8,8 +8,9 @@
 INCS=	avxintrin.h \
 	emmintrin.h \
 	immintrin.h \
-	mm_malloc.h \
+	mm3dnow.h \
 	mmintrin.h \
+	mm_malloc.h \
 	pmmintrin.h \
 	smmintrin.h \
 	tmmintrin.h \
@@ -64,7 +65,8 @@ TABLEGEN_OUTPUT.Diagnostic.td= \
 	clang/Basic/DiagnosticLexKinds.inc|-gen-clang-diags-defs^-clang-component=Lex \
 	clang/Basic/DiagnosticParseKinds.inc|-gen-clang-diags-defs^-clang-component=Parse \
 	clang/Basic/DiagnosticSemaKinds.inc|-gen-clang-diags-defs^-clang-component=Sema \
-	clang/Basic/DiagnosticGroups.inc|-gen-clang-diag-groups
+	clang/Basic/DiagnosticGroups.inc|-gen-clang-diag-groups \
+	clang/Basic/DiagnosticIndexName.inc|-gen-clang-diags-index-name
 
 TABLEGEN_OUTPUT.arm_neon.td= \
 	clang/Basic/arm_neon.inc|-gen-arm-neon-sema \
