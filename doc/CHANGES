@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1547 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1548 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1008,3 +1008,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		 level API for FUSE filesystems with native PUFFS. 
 		 [manu 20110509]
 	postfix(1): Import version 2.8.3 [tron 20110511]
+	file(1): Import 5.07 (christos 20110512)
