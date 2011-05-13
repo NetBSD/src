@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.22 2011/02/26 23:27:49 njoly Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.23 2011/05/13 23:11:00 christos Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.22 2011/02/26 23:27:49 njoly Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.23 2011/05/13 23:11:00 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -3325,6 +3325,7 @@ malloc_init_hard(void)
 	ssize_t linklen;
 	char buf[PATH_MAX + 1];
 	const char *opts = "";
+	int serrno;
 
 	malloc_mutex_lock(&init_lock);
 	if (malloc_initialized) {
@@ -3371,6 +3372,7 @@ malloc_init_hard(void)
 		/* Get runtime configuration. */
 		switch (i) {
 		case 0:
+			serrno = errno;
 			if ((linklen = readlink("/etc/malloc.conf", buf,
 						sizeof(buf) - 1)) != -1) {
 				/*
@@ -3380,6 +3382,7 @@ malloc_init_hard(void)
 				buf[linklen] = '\0';
 				opts = buf;
 			} else {
+				errno = serrno;
 				/* No configuration specified. */
 				buf[0] = '\0';
 				opts = buf;
