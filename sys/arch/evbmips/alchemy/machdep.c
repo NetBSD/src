@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.37.10.5 2010/03/21 17:38:33 cliff Exp $ */
+/* $NetBSD: machdep.c,v 1.37.10.6 2011/05/13 17:30:43 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.10.5 2010/03/21 17:38:33 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.10.6 2011/05/13 17:30:43 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -212,7 +212,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * functions called during startup.
 	 * Also clears the I+D caches.
 	 */
-	mips_vector_init(NULL);
+	mips_vector_init(NULL, false);
 
 	/*
 	 * Set the VM page size.
@@ -426,7 +426,7 @@ cpu_reboot(int howto, char *bootstr)
 	const struct alchemy_board *board;
 
 	/* Take a snapshot before clobbering any registers. */
-	savectx(curlwp->l_addr);
+	savectx(lwp_getpcb(curlwp));
 
 	board = board_info();
 	KASSERT(board != NULL);
