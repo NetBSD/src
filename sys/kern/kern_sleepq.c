@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.38 2011/04/27 08:32:42 plunky Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.39 2011/05/13 22:19:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.38 2011/04/27 08:32:42 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.39 2011/05/13 22:19:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.38 2011/04/27 08:32:42 plunky Exp 
 
 #include "opt_sa.h"
 
-int	sleepq_sigtoerror(lwp_t *, int);
+static int	sleepq_sigtoerror(lwp_t *, int);
 
 /* General purpose sleep table, used by ltsleep() and condition variables. */
-sleeptab_t	sleeptab;
+sleeptab_t	sleeptab	__cacheline_aligned;
 
 /*
  * sleeptab_init:
@@ -378,7 +378,7 @@ sleepq_timeout(void *arg)
  *
  *	Given a signal number, interpret and return an error code.
  */
-int
+static int
 sleepq_sigtoerror(lwp_t *l, int sig)
 {
 	struct proc *p = l->l_proc;
