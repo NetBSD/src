@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1073 2011/05/02 14:06:50 manu Exp $
+$NetBSD: pcidevs,v 1.1074 2011/05/13 01:33:10 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2488,6 +2488,8 @@ product INTEL 82870P2_PPB	0x1460	82870P2 P64H2 PCI-PCI Bridge
 product INTEL 82870P2_IOxAPIC	0x1461	82870P2 P64H2 IOxAPIC
 product INTEL 82870P2_HPLUG	0x1462	82870P2 P64H2 Hot Plug Controller
 product INTEL 82801I_82567V_3	0x1501	i82567V-3 LAN Controller
+product INTEL PCH2_LV_LM	0x1502	82579LM Gigabit Network Connection
+product INTEL PCH2_LV_V		0x1503	82579V Gigabit Network Connection
 product INTEL 82583V		0x150c	i82583V 1000baseT Ethernet
 product INTEL 82576_NS 		0x150a	82576 gigabit Ethernet
 product INTEL 82576_SERDES_QUAD	0x150d	82576 quad-gigabit Ethernet (SERDES)
