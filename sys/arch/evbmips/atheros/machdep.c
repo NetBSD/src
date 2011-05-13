@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13.10.6 2010/03/21 17:38:34 cliff Exp $ */
+/* $NetBSD: machdep.c,v 1.13.10.7 2011/05/13 17:30:43 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.6 2010/03/21 17:38:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.7 2011/05/13 17:30:43 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -240,7 +240,7 @@ mach_init(void)
 	 * functions called during startup.
 	 * Also clears the I+D caches.
 	 */
-	mips_vector_init(NULL);
+	mips_vector_init(NULL, false);
 
 	/*
 	 * Calibrate timers.
@@ -393,7 +393,7 @@ cpu_reboot(int howto, char *bootstr)
 	static int waittime = -1;
 
 	/* Take a snapshot before clobbering any registers. */
-	savectx(curlwp->l_addr);
+	savectx(lwp_getpcb(curlwp));
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)
