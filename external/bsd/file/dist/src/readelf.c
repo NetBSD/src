@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.2 2009/05/08 17:28:01 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.3 2011/05/13 01:52:13 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readelf.c,v 1.81 2008/11/04 16:38:28 christos Exp $")
+FILE_RCSID("@(#)$File: readelf.c,v 1.86 2010/07/21 16:47:18 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.2 2009/05/08 17:28:01 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.3 2011/05/13 01:52:13 christos Exp $");
 #endif
 #endif
 
@@ -292,6 +292,7 @@ private const char os_style_names[][8] = {
 #define FLAGS_DID_CORE		1
 #define FLAGS_DID_NOTE		2
 #define FLAGS_DID_CORE_STYLE	4
+#define FLAGS_IS_CORE		8
 
 private int
 dophn_core(struct magic_set *ms, int clazz, int swap, int fd, off_t off,
@@ -682,7 +683,7 @@ core:
 		break;
 
 	default:
-		if (xnh_type == NT_PRPSINFO) {
+		if (xnh_type == NT_PRPSINFO && *flags & FLAGS_IS_CORE) {
 			size_t i, j;
 			unsigned char c;
 			/*
@@ -699,6 +700,7 @@ core:
 				unsigned char *cname, *cp;
 				size_t reloffset = prpsoffsets(i);
 				size_t noffset = doff + reloffset;
+				size_t k;
 				for (j = 0; j < 16; j++, noffset++,
 				    reloffset++) {
 					/*
@@ -744,6 +746,24 @@ core:
 				/*
 				 * Well, that worked.
 				 */
+
+				/*
+				 * Try next offsets, in case this match is
+				 * in the middle of a string.
+				 */
+				for (k = i + 1 ; k < NOFFSETS ; k++) {
+					size_t no;
+					int adjust = 1;
+					if (prpsoffsets(k) >= prpsoffsets(i))
+						continue;
+					for (no = doff + prpsoffsets(k);
+					     no < doff + prpsoffsets(i); no++)
+						adjust = adjust
+						         && isprint(nbuf[no]);
+					if (adjust)
+						i = k;
+				}
+
 				cname = (unsigned char *)
 				    &nbuf[doff + prpsoffsets(i)];
 				for (cp = cname; *cp && isprint(*cp); cp++)
@@ -915,7 +935,7 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 				Elf64_Cap cap64;
 				char cbuf[/*CONSTCOND*/
 				    MAX(sizeof cap32, sizeof cap64)];
-				if ((coff += xcap_sizeof) >= (off_t)xsh_size)
+				if ((coff += xcap_sizeof) > (off_t)xsh_size)
 					break;
 				if (read(fd, cbuf, (size_t)xcap_sizeof) !=
 				    (ssize_t)xcap_sizeof) {
@@ -935,7 +955,8 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 				default:
 					if (file_printf(ms,
 					    ", with unknown capability "
-					    "0x%llx = 0x%llx",
+					    "0x%" INT64_T_FORMAT "x = 0x%"
+					    INT64_T_FORMAT "x",
 					    (unsigned long long)xcap_tag,
 					    (unsigned long long)xcap_val) == -1)
 						return -1;
@@ -983,12 +1004,13 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 			}
 			if (cap_hw1)
 				if (file_printf(ms,
-				    " unknown hardware capability 0x%llx",
+				    " unknown hardware capability 0x%"
+				    INT64_T_FORMAT "x",
 				    (unsigned long long)cap_hw1) == -1)
 					return -1;
 		} else {
 			if (file_printf(ms,
-			    " hardware capability 0x%llx",
+			    " hardware capability 0x%" INT64_T_FORMAT "x",
 			    (unsigned long long)cap_hw1) == -1)
 				return -1;
 		}
@@ -1004,7 +1026,8 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 		cap_sf1 &= ~SF1_SUNW_MASK;
 		if (cap_sf1)
 			if (file_printf(ms,
-			    ", with unknown software capability 0x%llx",
+			    ", with unknown software capability 0x%"
+			    INT64_T_FORMAT "x",
 			    (unsigned long long)cap_sf1) == -1)
 				return -1;
 	}
