@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.5 2011/04/04 02:46:57 rmind Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.6 2011/05/13 22:16:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.5 2011/04/04 02:46:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.6 2011/05/13 22:16:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -115,20 +115,20 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.5 2011/04/04 02:46:57 rmind Exp $");
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
 
-u_int			numvnodes;
+u_int			numvnodes		__cacheline_aligned;
 
-static pool_cache_t	vnode_cache;
-static kmutex_t		vnode_free_list_lock;
+static pool_cache_t	vnode_cache		__read_mostly;
+static kmutex_t		vnode_free_list_lock	__cacheline_aligned;
 
-static vnodelst_t	vnode_free_list;
-static vnodelst_t	vnode_hold_list;
-static vnodelst_t	vrele_list;
+static vnodelst_t	vnode_free_list		__cacheline_aligned;
+static vnodelst_t	vnode_hold_list		__cacheline_aligned;
+static vnodelst_t	vrele_list		__cacheline_aligned;
 
-static kmutex_t		vrele_lock;
-static kcondvar_t	vrele_cv;
-static lwp_t *		vrele_lwp;
-static int		vrele_pending;
-static int		vrele_gen;
+static kmutex_t		vrele_lock		__cacheline_aligned;
+static kcondvar_t	vrele_cv		__cacheline_aligned;
+static lwp_t *		vrele_lwp		__cacheline_aligned;
+static int		vrele_pending		__cacheline_aligned;
+static int		vrele_gen		__cacheline_aligned;
 
 static vnode_t *	getcleanvnode(void);
 static void		vrele_thread(void *);
