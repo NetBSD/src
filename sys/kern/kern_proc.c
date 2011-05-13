@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.179 2011/05/01 01:15:18 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.180 2011/05/13 22:22:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.179 2011/05/01 01:15:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.180 2011/05/13 22:22:03 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -110,13 +110,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.179 2011/05/01 01:15:18 rmind Exp $"
 #endif
 
 /*
- * Other process lists
+ * Process lists.
  */
 
-struct proclist allproc;
-struct proclist zombproc;	/* resources have been freed */
+struct proclist		allproc		__cacheline_aligned;
+struct proclist		zombproc	__cacheline_aligned;
 
-kmutex_t	*proc_lock;
+kmutex_t *		proc_lock	__cacheline_aligned;
 
 /*
  * pid to proc lookup is done by indexing the pid_table array.
@@ -144,15 +144,22 @@ static inline uint p2u(struct proc *p) { return (uint)(uintptr_t)p; }
 #define P_NEXT(p) (p2u(p) >> 1)
 #define P_FREE(pid) ((struct proc *)(uintptr_t)((pid) << 1 | 1))
 
-#define INITIAL_PID_TABLE_SIZE	(1 << 5)
-static struct pid_table *pid_table;
-static uint pid_tbl_mask = INITIAL_PID_TABLE_SIZE - 1;
-static uint pid_alloc_lim;	/* max we allocate before growing table */
-static uint pid_alloc_cnt;	/* number of allocated pids */
+/*
+ * Table of process IDs (PIDs).
+ */
+static struct pid_table *pid_table	__read_mostly;
 
-/* links through free slots - never empty! */
-static uint next_free_pt, last_free_pt;
-static pid_t pid_max = PID_MAX;		/* largest value we allocate */
+#define	INITIAL_PID_TABLE_SIZE		(1 << 5)
+
+/* Table mask, threshold for growing and number of allocated PIDs. */
+static u_int		pid_tbl_mask	__read_mostly;
+static u_int		pid_alloc_lim	__read_mostly;
+static u_int		pid_alloc_cnt	__cacheline_aligned;
+
+/* Next free, last free and maximum PIDs. */
+static u_int		next_free_pt	__cacheline_aligned;
+static u_int		last_free_pt	__cacheline_aligned;
+static pid_t		pid_max		__read_mostly;
 
 /* Components of the first process -- never freed. */
 
@@ -200,9 +207,9 @@ struct proc proc0 = {
 };
 kauth_cred_t cred0;
 
-int nofile = NOFILE;
-int maxuprc = MAXUPRC;
-int cmask = CMASK;
+static const int	nofile	= NOFILE;
+static const int	maxuprc	= MAXUPRC;
+static const int	cmask	= CMASK;
 
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
@@ -317,6 +324,8 @@ procinit(void)
 	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	pid_table = kmem_alloc(INITIAL_PID_TABLE_SIZE
 	    * sizeof(struct pid_table), KM_SLEEP);
+	pid_tbl_mask = INITIAL_PID_TABLE_SIZE - 1;
+	pid_max = PID_MAX;
 
 	/* Set free list running through table...
 	   Preset 'use count' above PID_MAX so we allocate pid 1 next. */
