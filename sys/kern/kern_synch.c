@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.288 2011/05/02 00:29:53 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.289 2011/05/13 22:16:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.288 2011/05/02 00:29:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.289 2011/05/13 22:16:43 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -128,13 +128,15 @@ syncobj_t sched_syncobj = {
 	syncobj_noowner,
 };
 
-unsigned	sched_pstats_ticks;
-kcondvar_t	lbolt;			/* once a second sleep address */
+/* "Lightning bolt": once a second sleep address. */
+kcondvar_t		lbolt			__cacheline_aligned;
 
-/* Preemption event counters */
-static struct evcnt kpreempt_ev_crit;
-static struct evcnt kpreempt_ev_klock;
-static struct evcnt kpreempt_ev_immed;
+u_int			sched_pstats_ticks	__cacheline_aligned;
+
+/* Preemption event counters. */
+static struct evcnt	kpreempt_ev_crit	__cacheline_aligned;
+static struct evcnt	kpreempt_ev_klock	__cacheline_aligned;
+static struct evcnt	kpreempt_ev_immed	__cacheline_aligned;
 
 /*
  * During autoconfiguration or after a panic, a sleep will simply lower the
