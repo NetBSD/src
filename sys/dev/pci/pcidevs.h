@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1069 2011/05/02 14:23:24 manu Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1070 2011/05/13 01:34:05 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1073 2011/05/02 14:06:50 manu Exp
+ *	NetBSD: pcidevs,v 1.1074 2011/05/13 01:33:10 msaitoh Exp
  */
 
 /*
@@ -2495,6 +2495,8 @@
 #define	PCI_PRODUCT_INTEL_82870P2_IOxAPIC	0x1461		/* 82870P2 P64H2 IOxAPIC */
 #define	PCI_PRODUCT_INTEL_82870P2_HPLUG	0x1462		/* 82870P2 P64H2 Hot Plug Controller */
 #define	PCI_PRODUCT_INTEL_82801I_82567V_3	0x1501		/* i82567V-3 LAN Controller */
+#define	PCI_PRODUCT_INTEL_PCH2_LV_LM	0x1502		/* 82579LM Gigabit Network Connection */
+#define	PCI_PRODUCT_INTEL_PCH2_LV_V	0x1503		/* 82579V Gigabit Network Connection */
 #define	PCI_PRODUCT_INTEL_82583V	0x150c		/* i82583V 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82576_NS	0x150a		/* 82576 gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82576_SERDES_QUAD	0x150d		/* 82576 quad-gigabit Ethernet (SERDES) */
