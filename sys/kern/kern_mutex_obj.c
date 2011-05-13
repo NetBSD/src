@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex_obj.c,v 1.2 2010/03/31 19:59:39 ad Exp $	*/
+/*	$NetBSD: kern_mutex_obj.c,v 1.3 2011/05/13 22:16:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.2 2010/03/31 19:59:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.3 2011/05/13 22:16:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -47,7 +47,7 @@ struct kmutexobj {
 
 static int	mutex_obj_ctor(void *, void *, int);
 
-static pool_cache_t	mutex_obj_cache;
+static pool_cache_t	mutex_obj_cache		__read_mostly;
 
 /*
  * mutex_obj_init:
