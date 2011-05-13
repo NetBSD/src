@@ -1,4 +1,4 @@
-/* $NetBSD: ip.c,v 1.1 2011/05/11 16:23:40 zoltan Exp $ */
+/* $NetBSD: ip.c,v 1.2 2011/05/13 23:35:09 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -106,7 +106,7 @@ sendip(struct iodesc * d, void *pkt, size_t len, u_int8_t proto)
 	if (cc == -1)
 		return -1;
 	if ((size_t) cc != len)
-		panic("sendip: bad write (%d != %d)", cc, len);
+		panic("sendip: bad write (%zd != %zu)", cc, len);
 	return (cc - (sizeof(*ip)));
 }
 
