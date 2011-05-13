@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.17 2011/04/29 08:26:30 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.18 2011/05/13 17:36:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.17 2011/04/29 08:26:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.18 2011/05/13 17:36:39 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.17 2011/04/29 08:26:30 matt Exp $
  * CPUs, we try to avoid sending an IPI if at all possible.  For instance, if
  * we are updating a PTE and that PTE previously was invalid and therefore
  * couldn't support an active mapping, there's no need for an IPI since there
- * can be no TLB entry to invalidate.  The other case is when we change a PTE
+ * can't be a TLB entry to invalidate.  The other case is when we change a PTE
  * to be modified we just update the local TLB.  If another TLB has a stale
  * entry, a TLB MOD exception will be raised and that will cause the local TLB
  * to be updated.
