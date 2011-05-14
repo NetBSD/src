@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1070 2011/05/13 01:34:05 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1071 2011/05/14 21:58:48 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1074 2011/05/13 01:33:10 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1075 2011/05/14 21:57:52 martin Exp
  */
 
 /*
@@ -638,6 +638,7 @@
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron Technology */
+#define	PCI_VENDOR_QINHENG	0x4348		/* Nanjing QinHeng Electronics */
 #define	PCI_VENDOR_ICOMPRESSION	0x4444		/* Conexant (iCompression) */
 #define	PCI_VENDOR_INDCOMPSRC	0x494f		/* Industrial Computer Source */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
