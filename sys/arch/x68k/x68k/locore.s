@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.102 2011/05/11 14:17:29 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.103 2011/05/14 10:49:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -930,6 +930,7 @@ Lenab3:
 /* final setup for C code */
 	movl	%d7,_C_LABEL(boothowto)	| save reboot flags
 	movl	%d6,_C_LABEL(bootdev)	|   and boot device
+	jbsr	_C_LABEL(x68k_init)	| additional pre-main initialization
 
 /*
  * Create a fake exception frame so that cpu_lwp_fork() can copy it.
