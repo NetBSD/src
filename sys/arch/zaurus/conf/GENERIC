@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.35 2011/05/05 09:07:59 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.36 2011/05/14 15:02:29 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -178,9 +178,9 @@ cpu0 at mainbus?
 # integrated peripherals
 pxaip0 at mainbus?
 
-pxaintc0 at pxaip?			# interrupt controller
-pxagpio0 at pxaip?			# GPIO
-pxartc0 at pxaip? addr 0x40900000	# RTC
+pxaintc0 at pxaip?				# interrupt controller
+pxagpio0 at pxaip?				# GPIO
+pxartc0 at pxaip? addr 0x40900000 size 0x10	# RTC
 
 # DMAC support
 pxadmac0 at pxaip? addr 0x40000000 intr 25
