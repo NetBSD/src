@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.17 2011/03/27 14:22:02 plunky Exp $
+# $NetBSD: bsd.test.mk,v 1.18 2011/05/14 17:47:28 jmmv Exp $
 #
 
 .include <bsd.init.mk>
@@ -139,6 +139,7 @@ test:
 	@echo
 	@set -e; \
 	cd ${DESTDIR}${TESTSDIR}; \
+	rm -f ${_TESTS_FIFO}; \
 	mkfifo ${_TESTS_FIFO}; \
 	cat ${_TESTS_FIFO} | tee ${_TESTS_LOG} | \
 	    ${TESTS_ENV} ${DESTDIR}/usr/bin/atf-report & \
