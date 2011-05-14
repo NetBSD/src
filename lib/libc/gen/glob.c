@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.29 2011/01/22 16:24:44 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.30 2011/05/14 22:44:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.29 2011/01/22 16:24:44 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.30 2011/05/14 22:44:06 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -789,7 +789,7 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		readdirfunc = pglob->gl_readdir;
 	else
-		readdirfunc = (struct dirent *(*)__P((void *))) readdir;
+		readdirfunc = (struct dirent *(*)(void *)) readdir;
 	while ((dp = (*readdirfunc)(dirp)) != NULL) {
 		u_char *sc;
 		Char *dc;
@@ -799,7 +799,8 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
 			errno = 0;
 			*pathend++ = SEP;
 			*pathend = EOS;
-			return GLOB_NOSPACE;
+			error = GLOB_NOSPACE;
+			break;
 		}
 
 		/*
