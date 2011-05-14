@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.81 2011/03/06 17:20:28 wiz Exp $
+.\"	$NetBSD: newfs.8,v 1.82 2011/05/14 19:46:10 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd January 13, 2011
+.Dd May 14, 2011
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -212,19 +212,25 @@ Select the filesystem-format.
 .It 0
 4.3BSD; This option is primarily used to build root file systems that can be
 understood by older boot ROMs.
+This generates an FFSv1 file system with level 1 format.
 .It 1
-FFSv1; normal fast-filesystem (default).
-This is also known as
+FFSv1; normal Fast File System, level 4 format.
+Also known as
 .Sq FFS ,
 .Sq UFS ,
 or
 .Sq UFS1 .
+This is the default.
 .It 2
-FFSv2; enhanced fast-filesystem (suited for more than 1 Terabyte capacity,
-access control lists).
+FFSv2; enhanced Fast File System, suited for more than 1 Terabyte capacity.
+.\" Supports access control lists.
 This is also known as
 .Sq UFS2 .
 .El
+See
+.Xr fsck_ffs 8
+for more information about format levels.
+.Pp
 To create an LFS filesystem see
 .Xr newfs_lfs 8 .
 To create a Linux ext2 filesystem see
