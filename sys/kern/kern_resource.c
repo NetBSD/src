@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.162 2011/05/01 02:46:19 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.163 2011/05/14 17:12:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.162 2011/05/01 02:46:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.163 2011/05/14 17:12:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/file.h>
 #include <sys/resourcevar.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/namei.h>
 #include <sys/pool.h>
@@ -763,10 +762,6 @@ pstatsfree(struct pstats *ps)
 }
 
 /*
- * sysctl interface in five parts
- */
-
-/*
  * sysctl_proc_findproc: a routine for sysctl proc subtree helpers that
  * need to pick a valid process by PID.
  *
@@ -855,7 +850,7 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	node.sysctl_data = cnbuf;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
-	/* Return if error, or if we are only retrieving the core name. */
+	/* Return if error, or if caller is only getting the core name. */
 	if (error || newp == NULL) {
 		goto done;
 	}
@@ -886,129 +881,137 @@ done:
 }
 
 /*
- * sysctl helper routine for checking/setting a process's stop flags,
- * one for fork and one for exec.
+ * sysctl_proc_stop: helper routine for checking/setting the stop flags.
  */
 static int
 sysctl_proc_stop(SYSCTLFN_ARGS)
 {
-	struct proc *ptmp;
-	int i, f, error = 0;
+	struct proc *p;
+	int isset, flag, error = 0;
 	struct sysctlnode node;
 
 	if (namelen != 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/* Find the process.  Hold a reference (p_reflock), if found. */
-	error = sysctl_proc_findproc(l, (pid_t)name[-2], &ptmp);
+	error = sysctl_proc_findproc(l, (pid_t)name[-2], &p);
 	if (error)
 		return error;
 
 	/* XXX-elad */
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, ptmp,
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, p,
 	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
-	if (error)
+	if (error) {
 		goto out;
+	}
 
+	/* Determine the flag. */
 	switch (rnode->sysctl_num) {
 	case PROC_PID_STOPFORK:
-		f = PS_STOPFORK;
+		flag = PS_STOPFORK;
 		break;
 	case PROC_PID_STOPEXEC:
-		f = PS_STOPEXEC;
+		flag = PS_STOPEXEC;
 		break;
 	case PROC_PID_STOPEXIT:
-		f = PS_STOPEXIT;
+		flag = PS_STOPEXIT;
 		break;
 	default:
 		error = EINVAL;
 		goto out;
 	}
-
-	i = (ptmp->p_flag & f) ? 1 : 0;
+	isset = (p->p_flag & flag) ? 1 : 0;
 	node = *rnode;
-	node.sysctl_data = &i;
+	node.sysctl_data = &isset;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		goto out;
 
-	mutex_enter(ptmp->p_lock);
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_STOPFLAG,
-	    ptmp, KAUTH_ARG(f), NULL, NULL);
-	if (!error) {
-		if (i) {
-			ptmp->p_sflag |= f;
-		} else {
-			ptmp->p_sflag &= ~f;
-		}
+	/* Return if error, or if callers is only getting the flag. */
+	if (error || newp == NULL) {
+		goto out;
 	}
-	mutex_exit(ptmp->p_lock);
+
+	/* Check if caller can set the flags. */
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_STOPFLAG,
+	    p, KAUTH_ARG(flag), NULL, NULL);
+	if (error) {
+		goto out;
+	}
+	mutex_enter(p->p_lock);
+	if (isset) {
+		p->p_sflag |= flag;
+	} else {
+		p->p_sflag &= ~flag;
+	}
+	mutex_exit(p->p_lock);
 out:
-	rw_exit(&ptmp->p_reflock);
+	rw_exit(&p->p_reflock);
 	return error;
 }
 
 /*
- * sysctl helper routine for a process's rlimits as exposed by sysctl.
+ * sysctl_proc_plimit: helper routine to get/set rlimits of a process.
  */
 static int
 sysctl_proc_plimit(SYSCTLFN_ARGS)
 {
-	struct proc *ptmp;
+	struct proc *p;
 	u_int limitno;
 	int which, error = 0;
         struct rlimit alim;
 	struct sysctlnode node;
 
 	if (namelen != 0)
-		return (EINVAL);
+		return EINVAL;
 
 	which = name[-1];
 	if (which != PROC_PID_LIMIT_TYPE_SOFT &&
 	    which != PROC_PID_LIMIT_TYPE_HARD)
-		return (EINVAL);
+		return EINVAL;
 
 	limitno = name[-2] - 1;
 	if (limitno >= RLIM_NLIMITS)
-		return (EINVAL);
+		return EINVAL;
 
 	if (name[-3] != PROC_PID_LIMIT)
-		return (EINVAL);
+		return EINVAL;
 
 	/* Find the process.  Hold a reference (p_reflock), if found. */
-	error = sysctl_proc_findproc(l, (pid_t)name[-4], &ptmp);
+	error = sysctl_proc_findproc(l, (pid_t)name[-4], &p);
 	if (error)
 		return error;
 
 	/* XXX-elad */
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, ptmp,
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, p,
 	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 	if (error)
 		goto out;
 
-	/* Check if we can view limits. */
+	/* Check if caller can retrieve the limits. */
 	if (newp == NULL) {
 		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RLIMIT,
-		    ptmp, KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_GET), &alim,
+		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_GET), &alim,
 		    KAUTH_ARG(which));
 		if (error)
 			goto out;
 	}
 
+	/* Retrieve the limits. */
 	node = *rnode;
-	memcpy(&alim, &ptmp->p_rlimit[limitno], sizeof(alim));
-	if (which == PROC_PID_LIMIT_TYPE_HARD)
+	memcpy(&alim, &p->p_rlimit[limitno], sizeof(alim));
+	if (which == PROC_PID_LIMIT_TYPE_HARD) {
 		node.sysctl_data = &alim.rlim_max;
-	else
+	} else {
 		node.sysctl_data = &alim.rlim_cur;
-
+	}
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	/* Return if error, or if we are only retrieving the limits. */
 	if (error || newp == NULL) {
 		goto out;
 	}
-	error = dosetrlimit(l, ptmp, limitno, &alim);
+	error = dosetrlimit(l, p, limitno, &alim);
 out:
-	rw_exit(&ptmp->p_reflock);
+	rw_exit(&p->p_reflock);
 	return error;
 }
 
