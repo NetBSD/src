@@ -12,3 +12,9 @@ GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes
 NO_SMALL_DATA=yes
 SEPARATE_GOTPLT=12
+
+case "$target" in
+  x86_64-*-netbsd*)
+    LIB_PATH='=/usr/lib/i386'
+    ;;
+esac
