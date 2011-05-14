@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1074 2011/05/13 01:33:10 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1075 2011/05/14 21:57:52 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -631,6 +631,7 @@ vendor HINT		0x3388	HiNT
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
 vendor ADDTRON		0x4033	Addtron Technology
+vendor QINHENG		0x4348	Nanjing QinHeng Electronics
 vendor ICOMPRESSION	0x4444	Conexant (iCompression)
 vendor INDCOMPSRC	0x494f	Industrial Computer Source
 vendor NETVIN		0x4a14	NetVin
