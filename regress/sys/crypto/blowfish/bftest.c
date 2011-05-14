@@ -1,4 +1,4 @@
-/*	$NetBSD: bftest.c,v 1.5 2005/02/06 06:05:19 perry Exp $	*/
+/*	$NetBSD: bftest.c,v 1.6 2011/05/14 16:26:23 christos Exp $	*/
 /*	$KAME: bftest.c,v 1.3 2000/11/08 05:58:24 itojun Exp $	*/
 
 /*
@@ -97,7 +97,7 @@
 
 #include <crypto/blowfish/blowfish.h>
 
-static char *bf_key[2]={
+static const char *bf_key[2]={
 	"abcdefghijklmnopqrstuvwxyz",
 	"Who is John Galt?"
 };
@@ -165,7 +165,8 @@ main(argc, argv)
 	printf("testing blowfish in raw ecb mode\n");
 again:
 	for (n = 0; n < 2; n++) {
-		BF_set_key(&key, strlen(bf_key[n]), (unsigned char *)bf_key[n]);
+		BF_set_key(&key, strlen(bf_key[n]),
+		    (const unsigned char *)bf_key[n]);
 
 		hex2bin((u_int8_t *)plain, bf_plain[n]);
 		hex2bin((u_int8_t *)cipher, bf_cipher[n]);
