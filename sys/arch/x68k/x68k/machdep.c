@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.173 2011/03/04 22:25:30 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.174 2011/05/14 10:49:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 2011/03/04 22:25:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.174 2011/05/14 10:49:06 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -142,6 +142,7 @@ static void setmemrange(void);
 #endif
 
 /* functions called from locore.s */
+void	x68k_init(void);
 void	dumpsys(void);
 void    straytrap(int, u_short);
 void	nmihand(struct frame);
@@ -166,6 +167,33 @@ static int cpuspeed;		/* MPU clock (in MHz) */
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
 static callout_t candbtimer_ch;
+
+void
+x68k_init(void)
+{
+	u_int i;
+
+	/*
+	 * Tell the VM system about available physical memory.
+	 */
+	uvm_page_physload(atop(avail_start), atop(avail_end),
+	    atop(avail_start), atop(avail_end),
+	    VM_FREELIST_DEFAULT);
+#ifdef EXTENDED_MEMORY
+	setmemrange();
+#endif
+
+	/*
+	 * Initialize error message buffer (at end of core).
+	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
+	 */
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
+		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	pmap_update(pmap_kernel());
+	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
+}
 
 /*
  * Console initialization: called early on from main,
@@ -196,16 +224,6 @@ consinit(void)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-
-	/*
-	 * Tell the VM system about available physical memory.
-	 */
-	uvm_page_physload(atop(avail_start), atop(avail_end),
-			atop(avail_start), atop(avail_end),
-			VM_FREELIST_DEFAULT);
-#ifdef EXTENDED_MEMORY
-	setmemrange();
-#endif
 }
 
 /*
@@ -217,7 +235,6 @@ cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-	u_int i;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -227,17 +244,6 @@ cpu_startup(void)
 
 	if (fputype != FPU_NONE)
 		m68k_make_fpu_idle_frame();
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
-	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update(pmap_kernel());
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
 	 * Initialize the kernel crash dump header.
