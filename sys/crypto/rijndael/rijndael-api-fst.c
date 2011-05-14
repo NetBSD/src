@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.23 2011/05/14 16:27:49 jmmv Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.24 2011/05/14 16:46:55 jmmv Exp $	*/
 
 /**
  * rijndael-api-fst.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.23 2011/05/14 16:27:49 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.24 2011/05/14 16:46:55 jmmv Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -54,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.23 2011/05/14 16:27:49 jmmv E
 
 static void xor16(uint8_t *d, const uint8_t *a, const uint8_t* b)
 {
-	size_t i;
-
-	for (i = 0; i < 4; i++) {
+	for (size_t i = 0; i < 4; i++) {
 		*d++ = *a++ ^ *b++;
 		*d++ = *a++ ^ *b++;
 		*d++ = *a++ ^ *b++;
