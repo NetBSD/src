@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.72 2011/03/17 13:25:54 tsutsui Exp $
+#	$NetBSD: files.x68k,v 1.73 2011/05/14 10:19:58 tsutsui Exp $
 #
 # new style config file for x68k architecture
 #
@@ -24,7 +24,6 @@ file	arch/x68k/x68k/mainbus.c
 define	event {}
 file	arch/x68k/dev/event.c		event
 
-file	arch/x68k/x68k/x68k_init.c
 file	arch/x68k/x68k/autoconf.c
 file	arch/x68k/x68k/conf.c
 file	arch/x68k/x68k/disksubr.c	disk
