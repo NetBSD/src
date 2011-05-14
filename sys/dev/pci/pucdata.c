@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.73 2011/05/02 14:23:24 manu Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.74 2011/05/14 22:07:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.73 2011/05/02 14:23:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.74 2011/05/14 22:07:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1293,6 +1293,35 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
+
+	/*
+	 * Nanjing QinHeng Electronics 
+	 * Products based on CH353 chip which can be
+	 * configured to provide various combinations
+	 * including 2 serial ports and a parallel port
+	 * or 4 serial ports (using a CH432 parallel to
+	 * 2 serial port converter. Product codes from
+	 * documentation (and physical 2 port serial card)
+	 */
+	{   "Nanjing QinHeng Electronics 2S",
+	    {	PCI_VENDOR_QINHENG, 0x3253, PCI_VENDOR_QINHENG, 0x3253	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics 2S, 1P",
+	    {	PCI_VENDOR_QINHENG, 0x7053, PCI_VENDOR_QINHENG, 0x7053	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
 
 	/* VScom PCI-200: 2S */
 	{   "VScom PCI-200",
