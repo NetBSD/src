@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.163 2011/05/14 17:12:28 rmind Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.164 2011/05/14 17:57:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.163 2011/05/14 17:12:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.164 2011/05/14 17:57:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,15 +62,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.163 2011/05/14 17:12:28 rmind Ex
  * Maximum process data and stack limits.
  * They are variables so they are patchable.
  */
-rlim_t maxdmap = MAXDSIZ;
-rlim_t maxsmap = MAXSSIZ;
+const rlim_t		maxdmap = MAXDSIZ;
+const rlim_t		maxsmap = MAXSSIZ;
 
-static pool_cache_t	plimit_cache;
-static pool_cache_t	pstats_cache;
+static pool_cache_t	plimit_cache	__read_mostly;
+static pool_cache_t	pstats_cache	__read_mostly;
 
 static kauth_listener_t	resource_listener;
+static struct sysctllog	*proc_sysctllog;
 
-static void sysctl_proc_setup(void);
+static int	donice(struct lwp *, struct proc *, int);
+static void	sysctl_proc_setup(void);
 
 static int
 resource_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -85,12 +87,12 @@ resource_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	switch (action) {
 	case KAUTH_PROCESS_NICE:
 		if (kauth_cred_geteuid(cred) != kauth_cred_geteuid(p->p_cred) &&
-                    kauth_cred_getuid(cred) != kauth_cred_geteuid(p->p_cred)) {
-                        break;
-                }
+		    kauth_cred_getuid(cred) != kauth_cred_geteuid(p->p_cred)) {
+			break;
+		}
 
-                if ((u_long)arg1 >= p->p_nice)
-                        result = KAUTH_RESULT_ALLOW;
+		if ((u_long)arg1 >= p->p_nice)
+			result = KAUTH_RESULT_ALLOW;
 
 		break;
 
@@ -163,8 +165,8 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 		syscallarg(id_t) who;
 	} */
 	struct proc *curp = l->l_proc, *p;
+	id_t who = SCARG(uap, who);
 	int low = NZERO + PRIO_MAX + 1;
-	int who = SCARG(uap, who);
 
 	mutex_enter(proc_lock);
 	switch (SCARG(uap, which)) {
@@ -202,17 +204,17 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 
 	default:
 		mutex_exit(proc_lock);
-		return (EINVAL);
+		return EINVAL;
 	}
 	mutex_exit(proc_lock);
 
-	if (low == NZERO + PRIO_MAX + 1)
-		return (ESRCH);
+	if (low == NZERO + PRIO_MAX + 1) {
+		return ESRCH;
+	}
 	*retval = low - NZERO;
-	return (0);
+	return 0;
 }
 
-/* ARGSUSED */
 int
 sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
     register_t *retval)
@@ -223,8 +225,8 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 		syscallarg(int) prio;
 	} */
 	struct proc *curp = l->l_proc, *p;
+	id_t who = SCARG(uap, who);
 	int found = 0, error = 0;
-	int who = SCARG(uap, who);
 
 	mutex_enter(proc_lock);
 	switch (SCARG(uap, which)) {
@@ -277,9 +279,8 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 		return EINVAL;
 	}
 	mutex_exit(proc_lock);
-	if (found == 0)
-		return ESRCH;
-	return error;
+
+	return (found == 0) ? ESRCH : error;
 }
 
 /*
@@ -287,7 +288,7 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
  *
  * Call with the target process' credentials locked.
  */
-int
+static int
 donice(struct lwp *l, struct proc *chgp, int n)
 {
 	kauth_cred_t cred = l->l_cred;
@@ -297,21 +298,25 @@ donice(struct lwp *l, struct proc *chgp, int n)
 	if (kauth_cred_geteuid(cred) && kauth_cred_getuid(cred) &&
 	    kauth_cred_geteuid(cred) != kauth_cred_geteuid(chgp->p_cred) &&
 	    kauth_cred_getuid(cred) != kauth_cred_geteuid(chgp->p_cred))
-		return (EPERM);
+		return EPERM;
 
-	if (n > PRIO_MAX)
+	if (n > PRIO_MAX) {
 		n = PRIO_MAX;
-	if (n < PRIO_MIN)
+	}
+	if (n < PRIO_MIN) {
 		n = PRIO_MIN;
+	}
 	n += NZERO;
+
 	if (kauth_authorize_process(cred, KAUTH_PROCESS_NICE, chgp,
-	    KAUTH_ARG(n), NULL, NULL))
-		return (EACCES);
+	    KAUTH_ARG(n), NULL, NULL)) {
+		return EACCES;
+	}
+
 	sched_nice(chgp, n);
-	return (0);
+	return 0;
 }
 
-/* ARGSUSED */
 int
 sys_setrlimit(struct lwp *l, const struct sys_setrlimit_args *uap,
     register_t *retval)
@@ -320,14 +325,14 @@ sys_setrlimit(struct lwp *l, const struct sys_setrlimit_args *uap,
 		syscallarg(int) which;
 		syscallarg(const struct rlimit *) rlp;
 	} */
-	int which = SCARG(uap, which);
+	int error, which = SCARG(uap, which);
 	struct rlimit alim;
-	int error;
 
 	error = copyin(SCARG(uap, rlp), &alim, sizeof(struct rlimit));
-	if (error)
-		return (error);
-	return (dosetrlimit(l, l->l_proc, which, &alim));
+	if (error) {
+		return error;
+	}
+	return dosetrlimit(l, l->l_proc, which, &alim);
 }
 
 int
@@ -337,14 +342,14 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 	int error;
 
 	if ((u_int)which >= RLIM_NLIMITS)
-		return (EINVAL);
+		return EINVAL;
 
 	if (limp->rlim_cur > limp->rlim_max) {
 		/*
 		 * This is programming error. According to SUSv2, we should
 		 * return error in this case.
 		 */
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	alimp = &p->p_rlimit[which];
@@ -356,7 +361,7 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RLIMIT,
 	    p, KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_SET), limp, KAUTH_ARG(which));
 	if (error)
-		return (error);
+		return error;
 
 	lim_privatise(p);
 	/* p->p_limit is now unchangeable */
@@ -383,9 +388,9 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 		 * moment it would try to access anything on it's current stack.
 		 * This conforms to SUSv2.
 		 */
-		if (limp->rlim_cur < p->p_vmspace->vm_ssize * PAGE_SIZE
-		    || limp->rlim_max < p->p_vmspace->vm_ssize * PAGE_SIZE) {
-			return (EINVAL);
+		if (limp->rlim_cur < p->p_vmspace->vm_ssize * PAGE_SIZE ||
+		    limp->rlim_max < p->p_vmspace->vm_ssize * PAGE_SIZE) {
+			return EINVAL;
 		}
 
 		/*
@@ -439,10 +444,9 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 	mutex_enter(&p->p_limit->pl_lock);
 	*alimp = *limp;
 	mutex_exit(&p->p_limit->pl_lock);
-	return (0);
+	return 0;
 }
 
-/* ARGSUSED */
 int
 sys_getrlimit(struct lwp *l, const struct sys_getrlimit_args *uap,
     register_t *retval)
@@ -456,7 +460,7 @@ sys_getrlimit(struct lwp *l, const struct sys_getrlimit_args *uap,
 	struct rlimit rl;
 
 	if ((u_int)which >= RLIM_NLIMITS)
-		return (EINVAL);
+		return EINVAL;
 
 	mutex_enter(p->p_lock);
 	memcpy(&rl, &p->p_rlimit[which], sizeof(rl));
@@ -537,7 +541,6 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 	}
 }
 
-/* ARGSUSED */
 int
 sys___getrusage50(struct lwp *l, const struct sys___getrusage50_args *uap,
     register_t *retval)
@@ -738,20 +741,18 @@ lim_free(struct plimit *lim)
 struct pstats *
 pstatscopy(struct pstats *ps)
 {
+	struct pstats *nps;
+	size_t len;
 
-	struct pstats *newps;
+	nps = pool_cache_get(pstats_cache, PR_WAITOK);
 
-	newps = pool_cache_get(pstats_cache, PR_WAITOK);
+	len = (char *)&nps->pstat_endzero - (char *)&nps->pstat_startzero;
+	memset(&nps->pstat_startzero, 0, len);
 
-	memset(&newps->pstat_startzero, 0,
-	(unsigned) ((char *)&newps->pstat_endzero -
-		    (char *)&newps->pstat_startzero));
-	memcpy(&newps->pstat_startcopy, &ps->pstat_startcopy,
-	((char *)&newps->pstat_endcopy -
-	 (char *)&newps->pstat_startcopy));
+	len = (char *)&nps->pstat_endcopy - (char *)&nps->pstat_startcopy;
+	memcpy(&nps->pstat_startcopy, &ps->pstat_startcopy, len);
 
-	return (newps);
-
+	return nps;
 }
 
 void
@@ -1015,13 +1016,11 @@ out:
 	return error;
 }
 
-static struct sysctllog *proc_sysctllog;
-
 /*
- * and finally, the actually glue that sticks it to the tree
+ * Setup sysctl nodes.
  */
 static void
-sysctl_proc_setup()
+sysctl_proc_setup(void)
 {
 
 	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,

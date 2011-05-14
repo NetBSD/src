@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.51 2011/05/01 01:15:18 rmind Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.52 2011/05/14 17:57:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -33,6 +33,10 @@
 
 #ifndef	_SYS_RESOURCEVAR_H_
 #define	_SYS_RESOURCEVAR_H_
+
+#if !defined(_KERNEL) && !defined(_KMEMUSER)
+#error "not supposed to be exposed to userland"
+#endif
 
 #include <sys/mutex.h>
 
@@ -112,9 +116,9 @@ void	resource_init(void);
 void	ruadd(struct rusage *, struct rusage *);
 void	rulwps(proc_t *, struct rusage *);
 struct	pstats *pstatscopy(struct pstats *);
-void 	pstatsfree(struct pstats *);
-extern rlim_t maxdmap;
-extern rlim_t maxsmap;
+void	pstatsfree(struct pstats *);
+extern const rlim_t maxdmap;
+extern const rlim_t maxsmap;
 
 #endif
 
