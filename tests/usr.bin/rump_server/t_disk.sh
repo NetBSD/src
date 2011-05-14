@@ -1,4 +1,4 @@
-#	$NetBSD: t_disk.sh,v 1.3 2011/02/17 16:08:48 pooka Exp $
+#	$NetBSD: t_disk.sh,v 1.4 2011/05/14 17:42:28 jmmv Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,7 +76,7 @@ test_case data -d key=/img,hostpath=the.img,size=8k,offset=16k
 data()
 {
 	echo 'test string' | dd of=testfile ibs=512 count=1 conv=sync
-	atf_check -s exit:0 -e ignore sh -c \
+	atf_check -s exit:0 -e ignore -x \
 	    "dd if=testfile | rump.dd of=/img bs=512 count=1"
 
 	# cheap fsync
