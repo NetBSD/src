@@ -1,4 +1,4 @@
-#	$NetBSD: t_raid.sh,v 1.7 2011/03/01 22:52:54 riz Exp $
+#	$NetBSD: t_raid.sh,v 1.8 2011/05/14 17:42:28 jmmv Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -96,7 +96,7 @@ raid1_compfail_body()
 	# put some data there
 	atf_check -s exit:0 -e ignore \
 	    dd if=$(atf_get_srcdir)/t_raid of=testfile count=4
-	atf_check -s exit:0 -e ignore sh -c \
+	atf_check -s exit:0 -e ignore -x \
 	    "dd if=testfile | rump.dd of=${rawraid} conv=sync"
 
 	# restart server with failed component
@@ -183,7 +183,7 @@ raid5_compfail_body()
 	# put some data there
 	atf_check -s exit:0 -e ignore \
 	    dd if=$(atf_get_srcdir)/t_raid of=testfile count=4
-	atf_check -s exit:0 -e ignore sh -c \
+	atf_check -s exit:0 -e ignore -x \
 	    "dd if=testfile | rump.dd of=${rawraid} conv=sync"
 
 	# restart server with failed component

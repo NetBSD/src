@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgd.sh,v 1.8 2011/03/22 16:16:30 jmmv Exp $
+#	$NetBSD: t_cgd.sh,v 1.9 2011/05/14 17:42:28 jmmv Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,9 +45,9 @@ basic_body()
 	    ${cgdserver} -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
 
 	export RUMP_SERVER=unix://csock
-	atf_check -s exit:0 sh -c "echo 12345 | \
+	atf_check -s exit:0 -x "echo 12345 | \
 	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
-	atf_check -s exit:0 -e ignore sh -c \
+	atf_check -s exit:0 -e ignore -x \
 	    "dd if=${d}/t_cgd count=2 | rump.dd of=${rawcgd}"
 	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd of=testfile count=2
 	atf_check -s exit:0 -e ignore -o file:testfile \
@@ -76,14 +76,14 @@ wrongpass_body()
 	    ${cgdserver} -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
 
 	export RUMP_SERVER=unix://csock
-	atf_check -s exit:0 sh -c "echo 12345 | \
+	atf_check -s exit:0 -x "echo 12345 | \
 	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
-	atf_check -s exit:0 -e ignore sh -c \
+	atf_check -s exit:0 -e ignore -x \
 	    "dd if=${d}/t_cgd | rump.dd of=${rawcgd} count=2"
 
 	# unconfig and reconfig cgd
 	atf_check -s exit:0 rump.cgdconfig -u cgd0
-	atf_check -s exit:0 sh -c "echo 54321 | \
+	atf_check -s exit:0 -x "echo 54321 | \
 	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
 
 	atf_check -s exit:0 -e ignore dd if=${d}/t_cgd of=testfile count=2
@@ -112,11 +112,11 @@ non512_body()
 	    ${cgdserver} -d key=/dev/dk,hostpath=dk.img,size=1m unix://csock
 
 	export RUMP_SERVER=unix://csock
-	atf_check -s exit:0 sh -c "echo 12345 | \
+	atf_check -s exit:0 -x "echo 12345 | \
 	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
 
 	atf_expect_fail "PR kern/44515"
-	atf_check -s exit:0 -e ignore sh -c \
+	atf_check -s exit:0 -e ignore -x \
 	    "echo die hard | rump.dd of=${rawcgd} bs=123 conv=sync"
 }
 

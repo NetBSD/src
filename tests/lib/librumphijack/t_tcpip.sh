@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.10 2011/03/29 16:03:32 jmmv Exp $
+#       $NetBSD: t_tcpip.sh,v 1.11 2011/05/14 17:42:28 jmmv Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -173,12 +173,12 @@ test_nfs()
 	atf_check -s exit:0 mkdir /rump/etc
 	atf_check -s exit:0 mkdir /rump/export
 
-	atf_check -s exit:0 sh -c	\
+	atf_check -s exit:0 -x \
 	    'echo "/export -noresvport -noresvmnt 10.1.1.100" | \
 		dd of=/rump/etc/exports 2> /dev/null'
 
 	atf_check -s exit:0 -e ignore mount_ffs /dk /rump/export
-	atf_check -s exit:0 sh -c "echo ${magicstr} > /rump/export/im_alive"
+	atf_check -s exit:0 -x "echo ${magicstr} > /rump/export/im_alive"
 
 	# start rpcbind.  we want /var/run/rpcbind.sock
 	export RUMPHIJACK='blanket=/var/run,socket=all' 
