@@ -58,6 +58,7 @@ char *build =  "stty";
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "gkermit.h"
 
 /* Forward declarations of functions used within this module... */
