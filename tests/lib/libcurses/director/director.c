@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.3 2011/04/19 20:13:55 martin Exp $	*/
+/*	$NetBSD: director.c,v 1.4 2011/05/15 23:56:28 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -31,13 +31,17 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <termios.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
+#include <err.h>
 #include "returns.h"
 
+void yyparse(void);
 #define DEF_TERMPATH "."
 #define DEF_TERM "atf"
 #define DEF_SLAVE "./slave"

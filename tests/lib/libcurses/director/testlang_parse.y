@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.2 2011/04/21 10:23:50 blymn Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.3 2011/05/15 23:56:28 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -32,6 +32,8 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <err.h>
+#include <unistd.h>
 #include <poll.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -49,6 +51,8 @@ extern int master;
 extern struct pollfd readfd;
 extern char *check_path;
 extern char *cur_file;		/* from director.c */
+
+int yylex(void);
 
 size_t line;
 
@@ -777,7 +781,7 @@ compare_streams(char *filename, bool discard)
 			 */
 			result = read(check_fd, &drain, 1);
 			if (result == -1)
-				err("read of data file failed");
+				err(1, "read of data file failed");
 
 			if (result > 0) {
 				fprintf(stderr, "Error: excess data "
