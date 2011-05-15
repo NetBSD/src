@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.10 2008/09/02 08:00:24 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.11 2011/05/15 14:35:47 christos Exp $	*/
 
 /* terminal.c -- how to handle the physical terminal for Info.
    Id: terminal.c,v 1.3 2004/04/11 17:56:46 karl Exp
@@ -27,6 +27,7 @@
 #include "termdep.h"
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <signal.h>
 
 /* The Unix termcap interface code. */
