@@ -68,6 +68,10 @@ int status (int argc, char **argv);
 int tag (int argc, char **argv);
 int update (int argc, char **argv);
 
+#if defined AUTH_CLIENT_SUPPORT || defined HAVE_KERBEROS || defined HAVE_GSSAPI
+static int connect_to(char *, unsigned int);
+#endif
+
 static size_t try_read_from_server (char *, size_t);
 
 static void auth_server (cvsroot_t *, struct buffer *, struct buffer *,
@@ -5151,7 +5155,7 @@ send_init_command (void)
 
 #if defined AUTH_CLIENT_SUPPORT || defined HAVE_KERBEROS || defined HAVE_GSSAPI
 
-int
+static int
 connect_to(char *hostname, unsigned int port)
 {
     struct addrinfo hints, *res, *res0 = NULL;
