@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220 2011/05/10 14:38:08 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.221 2011/05/15 16:57:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220 2011/05/10 14:38:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221 2011/05/15 16:57:08 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -320,7 +320,7 @@ cpu_startup(void)
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
+	    VM_PHYS_SIZE, 0, false, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
@@ -587,16 +587,16 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "machdep", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "console_device", NULL,
-		       sysctl_consdev, 0, NULL, sizeof(dev_t),
-		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_STRUCT, "console_device", NULL,
+	    sysctl_consdev, 0, NULL, sizeof(dev_t),
+	    CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
 int	waittime = -1;
@@ -657,7 +657,7 @@ cpu_reboot(int howto, char *bootstr)
 	printf("rebooting...\n");
 	DELAY(1000000);
 	doboot();
-	/*NOTREACHED*/
+	/* NOTREACHED */
 }
 
 /*
@@ -943,13 +943,13 @@ badaddr(void *addr)
 	int i;
 	label_t	faultbuf;
 
-	nofault = (int *) &faultbuf;
+	nofault = (int *)&faultbuf;
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
+		nofault = (int *)0;
 		return 1;
 	}
 	i = *(volatile short *)addr;
-	nofault = (int *) 0;
+	nofault = (int *)0;
 	return 0;
 }
 
@@ -959,9 +959,9 @@ badbaddr(void *addr)
 	int i;
 	label_t	faultbuf;
 
-	nofault = (int *) &faultbuf;
+	nofault = (int *)&faultbuf;
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
+		nofault = (int *)0;
 		return 1;
 	}
 	i = *(volatile char *)addr;
@@ -1056,14 +1056,14 @@ parityenable(void)
 {
 	label_t	faultbuf;
 
-	nofault = (int *) &faultbuf;
+	nofault = (int *)&faultbuf;
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
+		nofault = (int *)0;
 		printf("Parity detection disabled\n");
 		return;
 	}
 	*PARREG = 1;
-	nofault = (int *) 0;
+	nofault = (int *)0;
 	gotparmem = 1;
 }
 
@@ -1088,7 +1088,7 @@ parityerror(struct frame *fp)
 	else if (USERMODE(fp->f_sr)) {
 		printf("pid %d: parity error\n", curproc->p_pid);
 		uprintf("sorry, pid %d killed due to memory parity error\n",
-			curproc->p_pid);
+		    curproc->p_pid);
 		psignal(curproc, SIGKILL);
 #ifdef DEBUG
 	} else if (ignorekperr) {
@@ -1159,7 +1159,7 @@ parityerrorfind(void)
 	 */
 	printf("Couldn't locate parity error\n");
 	found = 0;
-done:
+ done:
 	looking = 0;
 	pmap_remove(pmap_kernel(), (vaddr_t)vmmap, (vaddr_t)&vmmap[PAGE_SIZE]);
 	pmap_update(pmap_kernel());
