@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/10/15 22:54:45 macallan Exp $
+#	$NetBSD: Makefile,v 1.6 2011/05/15 22:55:01 christos Exp $
 
 DRIVER=		xf86-video-chips
 DRIVER_NAME=	chips_drv
@@ -12,7 +12,7 @@ MAN=		chips.4
 CPPFLAGS+=		-DHAVE_ISA
 .endif
 
-CPPFLAGS.ct_driver.c=	-DVERSION=${PACKAGE_MAJOR}
+CPPFLAGS.ct_driver.c=	-DVERSION=${PACKAGE_MAJOR} -I${X11SRCDIR.xorg-server}
 CPPFLAGS.ct_accelmm.c=	-DCHIPS_MMIO -I${X11SRCDIR.${DRIVER}}/src
 CPPFLAGS.ct_accelhi.c=	-DCHIPS_MMIO -DCHIPS_HIQV -I${X11SRCDIR.${DRIVER}}/src
 
