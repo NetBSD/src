@@ -77,6 +77,9 @@
 #include <setjmp.h>			/* Longjumps */
 #include <sys/stat.h>			/* File exist, file size */
 #include <errno.h>			/* Error symbols */
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include "gkermit.h"			/* gkermit definitions */
 
 /* All versions of HP-UX need Xon/Xoff */
