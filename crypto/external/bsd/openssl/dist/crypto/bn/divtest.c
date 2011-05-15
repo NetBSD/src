@@ -1,7 +1,7 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 
-static int Rand(n)
+static int Rand(void)
 {
     unsigned char x[2];
     RAND_pseudo_bytes(x,2);
@@ -19,6 +19,7 @@ static void bug(char *m, BIGNUM *a, BIGNUM *b)
     exit(1);
 }
 
+int
 main(int argc, char *argv[])
 {
     BIGNUM *a=BN_new(), *b=BN_new(), *c=BN_new(), *d=BN_new(),
