@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.40 2011/05/10 01:58:58 christos Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.41 2011/05/15 00:06:23 wiz Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.40 2011/05/10 01:58:58 christos Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.41 2011/05/15 00:06:23 wiz Exp $");
 #endif
 #endif
 
@@ -1300,8 +1300,8 @@ usage(void)
 {
 
 	fprintf(stderr,
-"Usage: %s [-dIlnrv] [-f firsthop] [-g gateway] [-m hoplimit]\n"
-"\t%s [-p port] [-q probes] [-s src] [-w waittime] target [datalen]\n",
-	getprogname(), getprogname());
+"Usage: %s [-adIlnrv] [-A as_server] [-f firsthop] [-g gateway]\n"
+"\t[-m hoplimit] [-p port] [-q probes] [-s src] [-w waittime] target [datalen]\n",
+	getprogname());
 	exit(1);
 }
