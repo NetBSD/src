@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.c,v 1.2 2006/01/14 09:18:17 apb Exp $	*/
+/*	$NetBSD: diff.c,v 1.3 2011/05/15 13:55:21 christos Exp $	*/
 
 /* diff - compare files line by line
 
@@ -38,6 +38,7 @@
 #include <regex.h>
 #include <setmode.h>
 #include <xalloc.h>
+#include <posixver.h>
 
 static char const authorship_msgid[] =
   N_("Written by Paul Eggert, Mike Haertel, David Hayes,\n\
