@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.22 2011/03/14 15:50:36 vanhu Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.23 2011/05/15 17:13:23 christos Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -372,10 +372,7 @@ xauth_reply_stub(sc)
 }
 
 int
-xauth_reply(iph1, port, id, res)
-	struct ph1handle *iph1;
-	int port;
-	int id;
+xauth_reply(struct ph1handle *iph1, int port, int id, int res)
 {
 	struct xauth_state *xst = &iph1->mode_cfg->xauth;
 	char *usr = xst->authdata.generic.usr;
