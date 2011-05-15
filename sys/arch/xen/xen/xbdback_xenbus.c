@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.35 2011/05/15 07:24:15 jym Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.36 2011/05/15 20:58:54 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.35 2011/05/15 07:24:15 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.36 2011/05/15 20:58:54 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -144,7 +144,7 @@ struct xbdback_instance {
 	grant_handle_t xbdi_ring_handle; /* to unmap the ring */
 	vaddr_t xbdi_ring_va; /* to unmap the ring */
 	/* disconnection must be postponed until all I/O is done */
-	volatile unsigned int xbdi_refcnt;
+	int xbdi_refcnt;
 	/* 
 	 * State for I/O processing/coalescing follows; this has to
 	 * live here instead of on the stack because of the
@@ -171,8 +171,7 @@ struct xbdback_instance {
 #define xbdi_get(xbdip) atomic_inc_uint(&(xbdip)->xbdi_refcnt)
 #define xbdi_put(xbdip)                                      \
 do {                                                         \
-	atomic_dec_uint(&(xbdip)->xbdi_refcnt);              \
-	if (0 == (xbdip)->xbdi_refcnt)                       \
+	if (atomic_dec_uint_nv(&(xbdip)->xbdi_refcnt) == 0)  \
                xbdback_finish_disconnect(xbdip);             \
 } while (/* CONSTCOND */ 0)
 
