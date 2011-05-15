@@ -1,4 +1,4 @@
-/*	$NetBSD: rcs.c,v 1.5 2006/03/26 22:35:07 christos Exp $	*/
+/*	$NetBSD: rcs.c,v 1.6 2011/05/15 14:33:12 christos Exp $	*/
 
 /* Change RCS file attributes.  */
 
@@ -31,6 +31,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcs.c,v $
+ * Revision 1.6  2011/05/15 14:33:12  christos
+ * register c -> int c
+ *
  * Revision 1.5  2006/03/26 22:35:07  christos
  * Coverity CID 927: Check for NULL before de-referencing.
  *
@@ -736,8 +739,8 @@ getaccessor(opt, command)
 
 
 {
-        register c;
-	register char *sp;
+        int c;
+	char *sp;
 
 	sp = opt;
 	while ((c = *++sp) == ' ' || c == '\n' || c == '\t' || c == ',')
@@ -796,7 +799,7 @@ char    *sp;
 {
 	char const *temp;
         struct  Status  *pt;
-        register        c;
+        int c;
 
 	while ((c = *++sp) ==' ' || c == '\t' || c == '\n')
 	    continue;
