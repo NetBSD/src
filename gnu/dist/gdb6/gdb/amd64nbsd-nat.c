@@ -27,6 +27,9 @@
 #include "nbsd-nat.h"
 #include "amd64-tdep.h"
 #include "amd64-nat.h"
+#include "regcache.h"
+#include "gdbcore.h"
+#include "bsd-kvm.h"
 
 #include <machine/frame.h>
 #include <machine/pcb.h>
