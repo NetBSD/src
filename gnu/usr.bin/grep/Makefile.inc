@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2003/01/26 23:53:44 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2011/05/15 14:57:56 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ WARNS=	0
 IDIST=	${NETBSDSRCDIR}/gnu/dist/grep
 
 CPPFLAGS+=	-DLOCALEDIR=\"/usr/share/locale\" -DHAVE_CONFIG_H \
-		-I${.CURDIR}/../include -I${IDIST}/lib
+		-I${.CURDIR}/../include -I${IDIST}/lib -I${IDIST}/src
 
 DOBJDIR!=	cd $(.CURDIR)/../lib && ${PRINTOBJDIR}
 
