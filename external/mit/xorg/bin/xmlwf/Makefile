@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/05 17:43:04 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2011/05/15 21:32:47 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ PROG=	xmlwf
 .PATH:	${X11SRCDIR.expat}/xmlwf ${X11SRCDIR.expat}/doc
 
 SRCS=	codepage.c unixfilemap.c xmlfile.c xmlwf.c
+CPPFLAGS+=-DHAVE_UNISTD_H
 
 LDADD+=	-lexpat
 DPADD+=	${LIBEXPAT}
