@@ -1,4 +1,4 @@
-/*	$NetBSD: savedir.c,v 1.1.1.1 2003/01/26 23:15:13 wiz Exp $	*/
+/*	$NetBSD: savedir.c,v 1.2 2011/05/15 14:57:35 christos Exp $	*/
 
 /* savedir.c -- save the list of files in a directory in a string
    Copyright (C) 1990, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
@@ -70,6 +70,7 @@ char *stpcpy ();
 
 #include <fnmatch.h>
 #include "savedir.h"
+#include "system.h"
 
 char *path;
 size_t pathlen;
