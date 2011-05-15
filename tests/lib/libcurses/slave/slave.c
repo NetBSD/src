@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.2 2011/04/21 10:23:50 blymn Exp $	*/
+/*	$NetBSD: slave.c,v 1.3 2011/05/15 23:59:03 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -30,6 +30,8 @@
  */
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
