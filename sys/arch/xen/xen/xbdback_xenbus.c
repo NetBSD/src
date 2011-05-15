@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.34 2011/04/29 22:58:46 jym Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.35 2011/05/15 07:24:15 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.34 2011/04/29 22:58:46 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.35 2011/05/15 07:24:15 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.34 2011/04/29 22:58:46 jym Exp 
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -143,7 +144,7 @@ struct xbdback_instance {
 	grant_handle_t xbdi_ring_handle; /* to unmap the ring */
 	vaddr_t xbdi_ring_va; /* to unmap the ring */
 	/* disconnection must be postponed until all I/O is done */
-	volatile unsigned xbdi_refcnt;
+	volatile unsigned int xbdi_refcnt;
 	/* 
 	 * State for I/O processing/coalescing follows; this has to
 	 * live here instead of on the stack because of the
@@ -167,13 +168,11 @@ struct xbdback_instance {
 	uint xbdi_pendingreqs; /* number of I/O in fly */
 };
 /* Manipulation of the above reference count. */
-/* XXXjld@panix.com: not MP-safe, and move the i386 asm elsewhere. */
-#define xbdi_get(xbdip) (++(xbdip)->xbdi_refcnt)
+#define xbdi_get(xbdip) atomic_inc_uint(&(xbdip)->xbdi_refcnt)
 #define xbdi_put(xbdip)                                      \
 do {                                                         \
-	__asm volatile("decl %0"                           \
-	    : "=m"((xbdip)->xbdi_refcnt) : "m"((xbdip)->xbdi_refcnt)); \
-	if (0 == (xbdip)->xbdi_refcnt)                            \
+	atomic_dec_uint(&(xbdip)->xbdi_refcnt);              \
+	if (0 == (xbdip)->xbdi_refcnt)                       \
                xbdback_finish_disconnect(xbdip);             \
 } while (/* CONSTCOND */ 0)
 
