@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.rules.inc,v 1.3 2011/04/15 14:39:32 elric Exp $
+# $NetBSD: Makefile.rules.inc,v 1.4 2011/05/15 15:10:12 tsutsui Exp $
 
 SRCS+= ${HEIMSRCS:N*.et:N*.in:N*.asn1}
 
@@ -53,13 +53,13 @@ ${ASN1_FILES.${src}} ${src:.asn1=_asn1.hx} ${src:.asn1=_asn1-priv.hx}: ${src} \
 .endif
 
 ${src:.asn1=_asn1.h}: ${src:.asn1=_asn1.hx}
-	@2>/dev/null < ${src:.asn1=_asn1.hx} > ${src:.asn1=_asn1.h}	\
-	    sed -E							\
-		-e 's,#include <(.*)_asn1\.h>,#include <krb5/\1_asn1.h>,'
+	@${TOOL_SED} -E 						\
+	    -e 's,#include <(.*)_asn1\.h>,#include <krb5/\1_asn1.h>,'	\
+	    2> /dev/null < ${src:.asn1=_asn1.hx} > ${src:.asn1=_asn1.h}
 
 ${src:.asn1=_asn1-priv.h}: ${src:.asn1=_asn1-priv.hx}
-	@2> /dev/null							   \
-	    cmp -s ${src:.asn1=_asn1-priv.hx} ${src:.asn1=_asn1-priv.h} || \
+	@cmp -s ${src:.asn1=_asn1-priv.hx} ${src:.asn1=_asn1-priv.h}	\
+	    2> /dev/null ||						\
 	    cp ${src:.asn1=_asn1-priv.hx} ${src:.asn1=_asn1-priv.h}
 
 .for x2c in ${ASN1_FILES.${src}}
