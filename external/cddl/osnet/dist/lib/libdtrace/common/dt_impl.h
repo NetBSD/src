@@ -586,6 +586,7 @@ extern void dt_free(dtrace_hdl_t *, void *);
 extern void dt_difo_free(dtrace_hdl_t *, dtrace_difo_t *);
 
 extern int dt_gmatch(const char *, const char *);
+extern int gmatch(const char *, const char *);
 extern char *dt_basename(char *);
 
 extern ulong_t dt_popc(ulong_t);

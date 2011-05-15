@@ -34,6 +34,8 @@
 #define	LINK(l, r)	dt_node_link(l, r)
 #define	DUP(s)		strdup(s)
 
+int yylex(void);
+
 %}
 
 %union {
