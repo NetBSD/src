@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2011/05/10 14:41:55 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 2011/05/15 16:51:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2011/05/10 14:41:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2011/05/15 16:51:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -307,16 +307,16 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "machdep", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "console_device", NULL,
-		       sysctl_consdev, 0, NULL, sizeof(dev_t),
-		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_STRUCT, "console_device", NULL,
+	    sysctl_consdev, 0, NULL, sizeof(dev_t),
+	    CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
 int	waittime = -1;
@@ -1027,8 +1027,8 @@ consinit(void)
 	dipsw &= ~SW_CONSOLE;
 
 	switch (dipsw & SW_CONSOLE) {
-	    default: /* XXX no fb support yet */
-	    case 0:
+	default: /* XXX no fb support yet */
+	case 0:
 		tty00_is_console = 1;
 		cn_tab = &consdev_zs;
 		(*cn_tab->cn_init)(cn_tab);
@@ -1036,7 +1036,7 @@ consinit(void)
 	}
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
-		    (void *)&end, esym);
+	    (void *)&end, esym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
