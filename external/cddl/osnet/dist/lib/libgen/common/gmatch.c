@@ -43,6 +43,7 @@
 #include <libgen.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <ctype.h>
 #if defined(sun)
 #include <widec.h>
 #include "_range.h"
