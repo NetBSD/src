@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsdiff.c,v 1.6 2009/11/06 22:02:35 enami Exp $	*/
+/*	$NetBSD: rcsdiff.c,v 1.7 2011/05/15 14:33:12 christos Exp $	*/
 
 /* Compare RCS revisions.  */
 
@@ -31,6 +31,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsdiff.c,v $
+ * Revision 1.7  2011/05/15 14:33:12  christos
+ * register c -> int c
+ *
  * Revision 1.6  2009/11/06 22:02:35  enami
  * Accept -U num.  Nowadays, diff(1) rejects -u0 etc by default.
  *
@@ -190,7 +193,7 @@ mainProg(rcsdiffId, "rcsdiff", "Id: rcsdiff.c,v 5.19 1995/06/16 06:19:24 eggert 
     struct hshentry * target;
     char *a, *dcp, **newargv;
     int no_diff_means_no_output;
-    register c;
+    int c;
 
     exitstatus = DIFF_SUCCESS;
 

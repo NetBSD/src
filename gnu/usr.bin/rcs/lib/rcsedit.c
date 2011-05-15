@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsedit.c,v 1.8 1997/03/25 13:56:38 lukem Exp $	*/
+/*	$NetBSD: rcsedit.c,v 1.9 2011/05/15 14:31:13 christos Exp $	*/
 
 /* RCS stream editor */
 
@@ -38,6 +38,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsedit.c,v $
+ * Revision 1.9  2011/05/15 14:31:13  christos
+ * register c -> int c
+ *
  * Revision 1.8  1997/03/25 13:56:38  lukem
  * Add "#define has_mkstemp 1" (which needs "#define has_mktemp 1"),
  * and hack to use mkstemp() instead of mktemp(). This *does* cause the
@@ -633,7 +636,7 @@ copystring()
  * editline is incremented by the number of lines copied.
  * Assumption: next character read is first string character.
  */
-{	register c;
+{	int c;
 	declarecache;
 	register FILE *frew, *fcop;
 	register int amidline;
@@ -878,7 +881,7 @@ expandline(infile, outfile, delta, delimstuffed, frewfile, dolog)
  * 2 if a complete line is copied; adds 1 to yield if expansion occurred.
  */
 {
-	register c;
+	int c;
 	declarecache;
 	register FILE *out, *frew;
 	register char * tp;
