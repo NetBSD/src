@@ -27,6 +27,7 @@
 #include "symtab.h"
 
 #include "gdb_assert.h"
+#include "gdb_string.h"
 
 #include "amd64-tdep.h"
 #include "nbsd-tdep.h"
