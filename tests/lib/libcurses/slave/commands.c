@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.1 2011/04/10 09:55:10 blymn Exp $	*/
+/*	$NetBSD: commands.c,v 1.2 2011/05/15 23:59:03 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include "returns.h"
 #include "slave.h"
