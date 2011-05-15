@@ -1,4 +1,4 @@
-/*      $NetBSD: dev.c,v 1.2 2009/10/16 21:00:41 joerg Exp $        */
+/*      $NetBSD: dev.c,v 1.3 2011/05/15 01:16:29 christos Exp $        */
 
 /*
  * NetBSD specific device routines are added to this file.
@@ -11,6 +11,7 @@
 
 #include <dirent.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
