@@ -1,4 +1,4 @@
-/*	$NetBSD: rlog.c,v 1.4 1996/10/15 07:00:50 veego Exp $	*/
+/*	$NetBSD: rlog.c,v 1.5 2011/05/15 14:33:12 christos Exp $	*/
 
 /* Print log messages and other information about RCS files.  */
 
@@ -31,6 +31,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rlog.c,v $
+ * Revision 1.5  2011/05/15 14:33:12  christos
+ * register c -> int c
+ *
  * Revision 1.4  1996/10/15 07:00:50  veego
  * Merge rcs 5.7.
  *
@@ -776,7 +779,7 @@ char   *argv;
 /*              and store in authorlist                   */
 
 {
-        register    c;
+        int    c;
         struct     authors  * newauthor;
 
         argv--;
