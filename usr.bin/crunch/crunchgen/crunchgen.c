@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.78 2010/04/24 17:58:40 christos Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.79 2011/05/15 21:28:51 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.78 2010/04/24 17:58:40 christos Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.79 2011/05/15 21:28:51 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -855,9 +855,10 @@ gen_output_cfile(void)
 	fprintf(outcf, "%s\n", *cp);
 
     for (p = progs; p != NULL; p = p->next)
-	fprintf(outcf, "extern int _crunched_%s_stub();\n", p->ident);
+	fprintf(outcf, "extern int _crunched_%s_stub(int, char **, char **);\n",
+	    p->ident);
 
-    fprintf(outcf, "\nstruct stub entry_points[] = {\n");
+    fprintf(outcf, "\nstatic const struct stub entry_points[] = {\n");
     for (p = progs; p != NULL; p = p->next) {
 	fprintf(outcf, "\t{ \"%s\", _crunched_%s_stub },\n",
 		p->name, p->ident);

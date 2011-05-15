@@ -1,4 +1,4 @@
-/*	$NetBSD: crunched_main.c,v 1.4 2006/05/10 21:34:20 mrg Exp $	*/
+/*	$NetBSD: crunched_main.c,v 1.5 2011/05/15 21:28:51 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunched_main.c,v 1.4 2006/05/10 21:34:20 mrg Exp $");
+__RCSID("$NetBSD: crunched_main.c,v 1.5 2011/05/15 21:28:51 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -42,68 +42,67 @@ __RCSID("$NetBSD: crunched_main.c,v 1.4 2006/05/10 21:34:20 mrg Exp $");
 #include <stdlib.h>
 
 struct stub {
-    char *name;
-    int (*f)();
+	const char *name;
+	int (*f)(int, char **, char **);
 };
 
-extern struct stub entry_points[];
+static const struct stub entry_points[];
 
-int main(int argc, char **argv, char **envp)
+static int crunched_main(int , char **, char **);
+static int crunched_usage(void) __attribute__((__noreturn__));
+
+int
+main(int argc, char **argv, char **envp)
 {
-    char *slash, *basename;
-    struct stub *ep;
+	const char *basename;
+	const struct stub *ep;
 
-    if(argv[0] == NULL || *argv[0] == '\0')
-	crunched_usage();
+	if (argv[0] == NULL || *argv[0] == '\0')
+		crunched_usage();
 
-    slash = strrchr(argv[0], '/');
-    basename = slash? slash+1 : argv[0];
+	basename = strrchr(argv[0], '/');
+	basename = basename ? basename + 1 : argv[0];
 
-    for(ep=entry_points; ep->name != NULL; ep++)
-	if(!strcmp(basename, ep->name)) break;
+	for (ep = entry_points; ep->name != NULL; ep++)
+		if (strcmp(basename, ep->name) == 0)
+			return ep->f(argc, argv, envp);
 
-    if(ep->name)
-	return ep->f(argc, argv, envp);
-    else {
 	fprintf(stderr, "%s: %s not compiled in\n", EXECNAME, basename);
 	crunched_usage();
-    }
 }
 
 
-int crunched_main(int argc, char **argv, char **envp)
+static int
+crunched_main(int argc, char **argv, char **envp)
 {
-    struct stub *ep;
-    int columns, len;
+	if(argc <= 1) 
+		crunched_usage();
 
-    if(argc <= 1) 
-	crunched_usage();
-
-    return main(--argc, ++argv, envp);
+	return main(--argc, ++argv, envp);
 }
 
 
-int crunched_usage()
+static int
+crunched_usage(void)
 {
-    int columns, len;
-    struct stub *ep;
+	size_t columns, len;
+	const struct stub *ep;
 
-    fprintf(stderr, "Usage: %s <prog> <args> ..., where <prog> is one of:\n",
-	    EXECNAME);
-    columns = 0;
-    for(ep=entry_points; ep->name != NULL; ep++) {
-	len = strlen(ep->name) + 1;
-	if(columns+len < 80)
-	    columns += len;
-	else {
-	    fprintf(stderr, "\n");
-	    columns = len;
+	fprintf(stderr, "Usage: %s <prog> <args> ..., "
+	    "where <prog> is one of:\n", EXECNAME);
+	columns = 0;
+	for (ep = entry_points; ep->name != NULL; ep++) {
+		len = strlen(ep->name) + 1;
+		if (columns + len < 80)
+			columns += len;
+		else {
+			fprintf(stderr, "\n");
+			columns = len;
+		}
+		fprintf(stderr, " %s", ep->name);
 	}
-	fprintf(stderr, " %s", ep->name);
-    }
-    fprintf(stderr, "\n");
-    exit(1);
+	fprintf(stderr, "\n");
+	exit(1);
 }
 
 /* end of crunched_main.c */
-
