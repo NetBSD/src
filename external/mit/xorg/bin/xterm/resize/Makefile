@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/06/30 04:58:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/05/15 21:35:58 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ PROG=	resize
 SRCS=	resize.c xstrings.c
 
 CPPFLAGS+=-I${X11SRCDIR.xterm}
+CPPFLAGS+=-DHAVE_TERMCAP_H
 
 .PATH:	${X11SRCDIR.xterm}
 
