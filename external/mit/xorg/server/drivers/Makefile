@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2011/02/09 13:37:48 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.54 2011/05/15 23:42:01 christos Exp $
 
 # xf86-input drivers
 
@@ -60,8 +60,9 @@ SUBDIR+= \
 	xf86-video-trident \
 	xf86-video-tseng \
 	xf86-video-vmware \
-	xf86-video-vesa \
-	xf86-video-wsfb
+	xf86-video-vesa 
+
+#	xf86-video-wsfb 	# broken no xf86LoaderReqSymbols anymore
 #	xf86-video-rendition
 
 .if ${MACHINE_ARCH} == "i386"
