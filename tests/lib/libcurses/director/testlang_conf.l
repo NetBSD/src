@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.2 2011/04/11 09:03:24 blymn Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.3 2011/05/15 23:56:28 christos Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -31,6 +31,7 @@
  */
 
 #include <curses.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
