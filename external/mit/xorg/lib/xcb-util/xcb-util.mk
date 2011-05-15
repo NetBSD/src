@@ -1,10 +1,11 @@
-#	$NetBSD: xcb-util.mk,v 1.1 2010/07/18 07:01:38 mrg Exp $
+#	$NetBSD: xcb-util.mk,v 1.2 2011/05/15 21:19:20 christos Exp $
 
 # define XCBUTIL to something before including this
 
 LIB=	xcb-${XCBUTIL}
 
 CPPFLAGS+=	-I${X11SRCDIR.xcb-util}/${XCBUTIL}
+CPPFLAGS+=	-DHAVE_VASPRINTF
 
 LIBDPLIBS=\
 	xcb	${.CURDIR}/../../libxcb/libxcb \
