@@ -1,4 +1,4 @@
-/*	$NetBSD: sigtramp.c,v 1.3 2008/04/28 20:23:07 martin Exp $	*/
+/*	$NetBSD: sigtramp.c,v 1.4 2011/05/16 21:51:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,14 +31,16 @@
  * I&D-caches after copying out the signal trampoline code.
  */
 #include <signal.h>
+#include <unistd.h>
 
-void catch(sig)
-int sig;
+static void
+catch(int sig)
 {
 	return;
 }
 
-main()
+int
+main(void)
 {
 	static struct sigaction sa;
 
