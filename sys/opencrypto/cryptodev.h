@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.20 2011/05/05 17:42:17 drochner Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.21 2011/05/16 10:18:52 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -623,9 +623,6 @@ void	crypto_init(void);
  * XXX these don't really belong here; but for now they're
  *     kept apart from the rest of the system.
  */
-struct mbuf;
-struct	mbuf	*m_getptr(struct mbuf *, int, int *);
-
 struct uio;
 extern	void cuio_copydata(struct uio* uio, int off, int len, void *cp);
 extern	void cuio_copyback(struct uio* uio, int off, int len, void *cp);
