@@ -1,4 +1,4 @@
-/* $NetBSD: t_rename.c,v 1.1 2010/07/16 13:56:31 jmmv Exp $ */
+/* $NetBSD: t_rename.c,v 1.2 2011/05/16 00:03:36 christos Exp $ */
 
 /*
  * Copyright (c) 2001, 2008, 2010 The NetBSD Foundation, Inc.
@@ -25,11 +25,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+#define _NETBSD_SOURCE	/* strlcat/random */
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_rename.c,v 1.1 2010/07/16 13:56:31 jmmv Exp $");
+__RCSID("$NetBSD: t_rename.c,v 1.2 2011/05/16 00:03:36 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
