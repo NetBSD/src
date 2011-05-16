@@ -61,7 +61,8 @@
 #include <openssl/conf.h>
 #include <openssl/err.h>
 
-main()
+int
+main(void)
 	{
 	LHASH_OF(CONF_VALUE) *conf;
 	long eline;
