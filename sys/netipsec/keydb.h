@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.8 2011/02/18 20:40:58 drochner Exp $	*/
+/*	$NetBSD: keydb.h,v 1.9 2011/05/16 10:02:30 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -106,7 +106,7 @@ struct secasvar {
 	size_t schedlen;
 
 	struct secreplay *replay;	/* replay prevention */
-	long created;			/* for lifetime */
+	time_t created;			/* for lifetime */
 
 	struct sadb_lifetime *lft_c;	/* CURRENT lifetime, it's constant. */
 	struct sadb_lifetime *lft_h;	/* HARD lifetime */
@@ -159,7 +159,7 @@ struct secacq {
 	struct secasindex saidx;
 
 	u_int32_t seq;		/* sequence number */
-	long created;		/* for lifetime */
+	time_t created;		/* for lifetime */
 	int count;		/* for lifetime */
 };
 #endif
