@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.183 2011/04/18 00:47:24 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.184 2011/05/16 15:09:31 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.183 2011/04/18 00:47:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.184 2011/05/16 15:09:31 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1145,8 +1145,8 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
 		 * current node.
 		 */
 		if (cnp->cn_nameptr[0] == '\0') {
-			vref(searchdir);
 			foundobj = searchdir;
+			searchdir = NULL;
 			cnp->cn_flags |= ISLASTCN;
 
 			/* bleh */
