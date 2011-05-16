@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.9 2006/10/27 19:39:11 drochner Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.10 2011/05/16 10:45:56 drochner Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.9 2006/10/27 19:39:11 drochner Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.10 2011/05/16 10:45:56 drochner Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: bcrypt.c,v 1.9 2006/10/27 19:39:11 drochner Exp $");
 
 #define BCRYPT_VERSION '2'
 #define BCRYPT_MAXSALT 16	/* Precomputation is just so nice */
-#define BCRYPT_MAXSALTLEN 	(BCRYPT_MAXSALT * 4 / 3 + 1)
+#define BCRYPT_MAXSALTLEN 	(7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1)
 #define BCRYPT_BLOCKS 6		/* Ciphertext blocks */
 #define BCRYPT_MINROUNDS 16	/* we have log2(rounds) in salt */
 
@@ -175,13 +175,10 @@ __gensalt_blowfish(char *salt, size_t saltlen, const char *option)
 	if (errno == ERANGE && nrounds == ULONG_MAX)
 		return -1;
 
-	if (nrounds > 255) {
-		errno = EINVAL;
-		return -1;
-	}
-
 	if (nrounds < 4)
 		nrounds = 4;
+	else if (nrounds > 31)
+		nrounds = 31;
 
 	for (i = 0; i < BCRYPT_MAXSALT; i++) {
 		if (i % 4 == 0)
@@ -225,6 +222,7 @@ __bcrypt(key, salt)
 	u_int8_t ciphertext[4 * BCRYPT_BLOCKS] = "OrpheanBeholderScryDoubt";
 	u_int8_t csalt[BCRYPT_MAXSALT];
 	u_int32_t cdata[BCRYPT_BLOCKS];
+	int n;
 
 	/* Discard "$" identifier */
 	salt++;
@@ -256,7 +254,11 @@ __bcrypt(key, salt)
 		return error;
 
 	/* Computer power doesn't increase linear, 2^x should be fine */
-	if ((rounds = (u_int32_t) 1 << (logr = atoi(salt))) < BCRYPT_MINROUNDS)
+	n = atoi(salt);
+	if (n > 31 || n < 0)
+		return error;
+	logr = (u_int8_t)n;
+	if ((rounds = (u_int32_t) 1 << logr) < BCRYPT_MINROUNDS)
 		return error;
 
 	/* Discard num rounds + "$" identifier */
@@ -311,6 +313,7 @@ __bcrypt(key, salt)
 	encode_base64((u_int8_t *) encrypted + i + 3, csalt, BCRYPT_MAXSALT);
 	encode_base64((u_int8_t *) encrypted + strlen(encrypted), ciphertext,
 	    4 * BCRYPT_BLOCKS - 1);
+	memset(&state, 0, sizeof(state));
 	return encrypted;
 }
 
