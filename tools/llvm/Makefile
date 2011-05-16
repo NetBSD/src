@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/03/21 02:10:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/05/16 19:27:47 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -21,7 +21,9 @@ config/config.status: ${LLVM_SRCDIR}/configure
 	mkdir -p config
 	cd config && ${LLVM_SRCDIR}/configure --prefix=/usr \
 	    --enable-targets=x86 --host=x86_64--netbsd \
+	    --with-c-include-dirs=/usr/include/clang-3.0:/usr/include \
 	    --enable-optimized --disable--assertions
+
 need-dl:
 	printf '#include <dlfcn.h>\nint main(void){void *p; return dladdr(p, p);}' > need-dl.c
 	if ${HOST_CC} -o need-dl.out -D_GNU_SOURCE need-dl.c > /dev/null 2>&1; then \
