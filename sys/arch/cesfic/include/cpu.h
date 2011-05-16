@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 2011/02/08 20:20:10 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 2011/05/16 13:22:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -117,11 +117,7 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define	M68K_MMU_MOTOROLA
 #endif /* ! M68K_MMU_MOTOROLA */
 
-struct fpframe;
-
 /* locore.s functions */
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
 int	suline(void *, void *);
 void	loadustp(int);
 
