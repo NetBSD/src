@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/05/12 14:56:23 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2011/05/16 19:27:48 joerg Exp $
 
 LIB=	LLVMAsmPrinter
 
@@ -15,7 +15,6 @@ SRCS+=	ARMException.cpp \
 	DwarfCompileUnit.cpp \
 	DwarfDebug.cpp \
 	DwarfException.cpp \
-	DwarfTableException.cpp \
 	OcamlGCPrinter.cpp
 
 .if defined(HOSTLIB)
