@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.65 2011/05/10 18:31:33 dyoung Exp $	*/
+/*	$NetBSD: machfb.c,v 1.66 2011/05/16 00:59:37 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.65 2011/05/10 18:31:33 dyoung Exp $");
+	"$NetBSD: machfb.c,v 1.66 2011/05/16 00:59:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -827,8 +827,11 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_flg = RI_CENTER;
 	set_address(ri, sc->sc_aperture);
 
+#ifdef VCONS_DRAW_INTR
+	scr->scr_flags |= VCONS_DONT_READ;
+#endif
+
 	if (existing) {
-		ri->ri_flg |= RI_CLEAR;
 		if (setmode && mach64_set_screentype(sc, scr->scr_type)) {
 			panic("%s: failed to switch video mode",
 			    device_xname(sc->sc_dev));
@@ -838,7 +841,6 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	rasops_init(ri, sc->sc_my_mode->vdisplay / 8,
 	    sc->sc_my_mode->hdisplay / 8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
-
 	rasops_reconfig(ri, sc->sc_my_mode->vdisplay / ri->ri_font->fontheight,
 		    sc->sc_my_mode->hdisplay / ri->ri_font->fontwidth);
 	
@@ -1119,8 +1121,8 @@ mach64_init_engine(struct mach64_softc *sc)
 	regw(sc, SC_BOTTOM, sc->sc_my_mode->vdisplay - 1);
 	regw(sc, SC_RIGHT, pitch_value - 1);
 
-	regw(sc, DP_BKGD_CLR, 0);
-	regw(sc, DP_FRGD_CLR, 0xffffffff);
+	regw(sc, DP_BKGD_CLR, WS_DEFAULT_BG);
+	regw(sc, DP_FRGD_CLR, WS_DEFAULT_FG);
 	regw(sc, DP_WRITE_MASK, 0xffffffff);
 	regw(sc, DP_MIX, (MIX_SRC << 16) | MIX_DST);
 
