@@ -61,7 +61,8 @@
 #include <string.h>
 #include <openssl/lhash.h>
 
-main()
+int
+main(void)
 	{
 	_LHASH *conf;
 	char buf[256];
