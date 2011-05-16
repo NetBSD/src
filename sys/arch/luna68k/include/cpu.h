@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.29 2011/02/08 20:20:16 rmind Exp $ */
+/* $NetBSD: cpu.h,v 1.30 2011/05/16 13:22:53 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,11 +122,8 @@ void	dumpconf(void);
 void	dumpsys(void);
 
 /* locore.s functions */
-struct fpframe;
 int	suline(void *, void *);
 void	loadustp(int);
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
 
 /* machdep.c functions */
 int	badaddr(void *, int);

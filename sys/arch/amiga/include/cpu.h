@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.78 2011/02/08 20:20:08 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.79 2011/05/16 13:22:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -152,15 +152,9 @@ void	drsc_handler(void);
 /*
  * Prototypes from locore.s
  */
-struct fpframe;
-
 void	clearseg(vm_offset_t);
 void	doboot(void) __attribute__((__noreturn__));
 void	loadustp(int);
-#ifdef FPCOPROC
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
-#endif
 void	physcopyseg(vm_offset_t, vm_offset_t);
 u_int	probeva(u_int, u_int);
 
