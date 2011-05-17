@@ -239,7 +239,7 @@ typedef struct vtw_ctl		vtw_ctl_t;
 typedef struct fatp_ctl		fatp_ctl_t;
 
 /*
- * The vestigeal time waits are kept in a contiguous chunk.
+ * The vestigial time waits are kept in a contiguous chunk.
  * Allocation and free pointers run as clock hands thru this array.
  */
 struct vtw_ctl {
