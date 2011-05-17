@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.132 2011/05/11 16:03:56 jakllsch Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.133 2011/05/17 07:16:02 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -133,18 +133,18 @@ COMPILE_CTFCONVERT=	${_MKSHECHO}
 # NOPROF and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 NORMAL_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< && \
-		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< && \
+		${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< && \
+		${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< && \
 		${COMPILE_CTFCONVERT}
 NOPROF_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${CC} ${CFLAGS} ${CPPFLAGS} -c $< && \
-		${CC} ${CFLAGS} ${CPPFLAGS} -c $< && \
+		${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} -c $< && \
+		${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} -c $< && \
 		${COMPILE_CTFCONVERT}
 NORMAL_S?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${CC} ${AFLAGS} ${CPPFLAGS} -c $< && \
-		${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+		${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} -c $< && \
+		${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} -c $<
 
 ##
 ## (3) libkern and compat
