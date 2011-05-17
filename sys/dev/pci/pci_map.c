@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.28 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.29 2011/05/17 17:34:54 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.28 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.29 2011/05/17 17:34:54 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,14 +291,14 @@ pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
 	int flags;
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
-		if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0)
+		if ((pa->pa_flags & PCI_FLAGS_IO_OKAY) == 0)
 			return 1;
 		if (pci_io_find(pa->pa_pc, pa->pa_tag, reg, type, &base,
 		    &size, &flags))
 			return 1;
 		tag = pa->pa_iot;
 	} else {
-		if ((pa->pa_flags & PCI_FLAGS_MEM_ENABLED) == 0)
+		if ((pa->pa_flags & PCI_FLAGS_MEM_OKAY) == 0)
 			return 1;
 		if (pci_mem_find(pa->pa_pc, pa->pa_tag, reg, type, &base,
 		    &size, &flags))
