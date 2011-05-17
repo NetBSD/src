@@ -2781,6 +2781,11 @@ krb5_kt_get_type (
 	char */*prefix*/,
 	size_t /*prefixsize*/);
 
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+krb5_kt_have_content (
+	krb5_context /*context*/,
+        krb5_keytab /*id*/);
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_next_entry (
 	krb5_context /*context*/,
@@ -3860,6 +3865,9 @@ krb5_sockaddr2port (
 
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_sockaddr_uninteresting (const struct sockaddr */*sa*/);
+
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+krb5_sockaddr_is_loopback (const struct sockaddr */*sa*/);
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_std_usage (
