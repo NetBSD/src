@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.139 2011/05/10 18:31:33 dyoung Exp $	*/
+/*	$NetBSD: pci.c,v 1.140 2011/05/17 17:34:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.139 2011/05/10 18:31:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.140 2011/05/17 17:34:54 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -148,8 +148,8 @@ pciattach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	io_enabled = (pba->pba_flags & PCI_FLAGS_IO_ENABLED);
-	mem_enabled = (pba->pba_flags & PCI_FLAGS_MEM_ENABLED);
+	io_enabled = (pba->pba_flags & PCI_FLAGS_IO_OKAY);
+	mem_enabled = (pba->pba_flags & PCI_FLAGS_MEM_OKAY);
 	mrl_enabled = (pba->pba_flags & PCI_FLAGS_MRL_OKAY);
 	mrm_enabled = (pba->pba_flags & PCI_FLAGS_MRM_OKAY);
 	mwi_enabled = (pba->pba_flags & PCI_FLAGS_MWI_OKAY);
@@ -247,8 +247,8 @@ pciprint(void *aux, const char *pnp)
 		    (long)pa->pa_intrswiz, (long)pa->pa_intrpin);
 #endif
 		printf(", i/o %s, mem %s,",
-		    pa->pa_flags & PCI_FLAGS_IO_ENABLED ? "on" : "off",
-		    pa->pa_flags & PCI_FLAGS_MEM_ENABLED ? "on" : "off");
+		    pa->pa_flags & PCI_FLAGS_IO_OKAY ? "on" : "off",
+		    pa->pa_flags & PCI_FLAGS_MEM_OKAY ? "on" : "off");
 		qd = pci_lookup_quirkdata(PCI_VENDOR(pa->pa_id),
 		    PCI_PRODUCT(pa->pa_id));
 		if (qd == NULL) {

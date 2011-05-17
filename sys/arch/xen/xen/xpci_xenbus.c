@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.5 2011/04/04 20:37:55 dyoung Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.6 2011/05/17 17:34:53 dyoung Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.5 2011/04/04 20:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.6 2011/05/17 17:34:53 dyoung Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -390,7 +390,7 @@ xpci_attach_pcibus(int domain, int busn)
 #else
 	pba.pba_dmat64 = NULL;
 #endif /* _LP64 */
-	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED |
+	pba.pba_flags = PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	pba.pba_bridgetag = NULL;
 	pba.pba_bus = busn;
