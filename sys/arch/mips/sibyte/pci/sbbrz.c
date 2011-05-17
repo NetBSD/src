@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz.c,v 1.2 2011/02/17 14:24:12 matt Exp $ */
+/* $NetBSD: sbbrz.c,v 1.3 2011/05/17 17:34:51 dyoung Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -199,7 +199,7 @@ sbbrz_attach(device_t parent, device_t self, void *aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	config_found(self, &pba, sbbrz_print);
 }

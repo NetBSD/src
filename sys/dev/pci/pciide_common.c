@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.50 2011/05/10 18:31:33 dyoung Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.51 2011/05/17 17:34:54 dyoung Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.50 2011/05/10 18:31:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.51 2011/05/17 17:34:54 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -266,7 +266,7 @@ pciide_chipen(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	pcireg_t csr;
 
-	if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0) {
+	if ((pa->pa_flags & PCI_FLAGS_IO_OKAY) == 0) {
 		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "I/O access disabled at bridge\n");
 		return 0;

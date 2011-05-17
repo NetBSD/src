@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.14 2011/04/04 20:37:46 dyoung Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.15 2011/05/17 17:34:48 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.14 2011/04/04 20:37:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.15 2011/05/17 17:34:48 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,7 +325,7 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 	pci_pba.pba_memt = &sspci_mem_tag;
 	pci_pba.pba_dmat = pci_dma_tag;
 	pci_pba.pba_dmat64 = NULL;
-	pci_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pci_pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pci_pba.pba_bus = 0;
 	pci_pba.pba_bridgetag = NULL;
 
