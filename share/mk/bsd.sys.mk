@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.193 2010/12/25 18:56:45 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.194 2011/05/17 01:12:34 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -8,6 +8,13 @@ _BSD_SYS_MK_=1
 .if ${MKREPRO:Uno} == "yes"
 CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
 CPPFLAGS+=	-Wp,-iremap,${DESTDIR}/:/
+.endif
+
+# Enable c99 mode by default.
+# This has the side effect of complaining for missing prototypes
+# implicit type declarations and missing return statements.
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 3
+CFLAGS+=	-std=gnu99
 .endif
 
 .if defined(WARNS)
@@ -47,7 +54,6 @@ CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
 .endif
 .if ${WARNS} > 3 && defined(HAVE_GCC) && ${HAVE_GCC} >= 3
 CFLAGS+=	-Wsign-compare
-CFLAGS+=	-std=gnu99
 .endif
 .endif
 
