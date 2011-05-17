@@ -1,10 +1,10 @@
-#	$NetBSD: MERAKI,v 1.14 2011/03/06 17:08:23 bouyer Exp $
+#	$NetBSD: MERAKI,v 1.15 2011/05/17 22:19:38 dyoung Exp $
 
 include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MERAKI-$Revision: 1.14 $"
+#ident 		"MERAKI-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -45,7 +45,7 @@ options 	DIAGNOSTIC	# extra kernel sanity checking
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=300000	# size for embedded symbol table
+options 	SYMTAB_SPACE=360000	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries
