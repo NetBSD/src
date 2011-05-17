@@ -1,3 +1,4 @@
+/*	$NetBSD: in6_src.c,v 1.51 2011/05/17 04:39:57 dholland Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -65,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.50 2011/05/03 18:28:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.51 2011/05/17 04:39:57 dholland Exp $");
 
 #include "opt_inet.h"
 
