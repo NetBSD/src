@@ -1,9 +1,9 @@
-#	$NetBSD: files.uvm,v 1.19 2010/12/09 01:48:05 uebayasi Exp $
+#	$NetBSD: files.uvm,v 1.20 2011/05/17 05:32:31 mrg Exp $
 
 #
 # UVM options
 # 
-defflag opt_uvmhist.h		UVMHIST UVMHIST_PRINT
+defflag opt_uvmhist.h		UVMHIST UVMHIST_PRINT: KERNHIST
 defflag opt_uvm.h		USE_TOPDOWN_VM UVMMAP_COUNTERS
 defflag opt_vmswap.h		VMSWAP
 defflag opt_readahead.h		READAHEAD_STATS
