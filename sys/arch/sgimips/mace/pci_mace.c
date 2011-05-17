@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.11 2011/05/11 17:49:31 dyoung Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.12 2011/05/17 17:34:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.11 2011/05/11 17:49:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.12 2011/05/17 17:34:52 dyoung Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -158,13 +158,13 @@ macepci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	pba.pba_pc = pc;
 
 #ifdef MACEPCI_IO_WAS_BUGGY
 	if (rev == 0)
-		pba.pba_flags &= ~PCI_FLAGS_IO_ENABLED;		/* Buggy? */
+		pba.pba_flags &= ~PCI_FLAGS_IO_OKAY;		/* Buggy? */
 #endif
 
 	cpu_intr_establish(maa->maa_intr, IPL_NONE, macepci_intr, sc);

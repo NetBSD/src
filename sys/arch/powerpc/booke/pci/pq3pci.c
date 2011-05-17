@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.5 2011/04/04 20:37:52 dyoung Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.6 2011/05/17 17:34:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.5 2011/04/04 20:37:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.6 2011/05/17 17:34:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -413,7 +413,7 @@ pq3pci_owin_setup(struct pq3pci_softc *sc, u_int winnum,
 	}
 	aprint_debug_dev(sc->sc_dev, "bus space %s created\n", bs->bs_name);
 	sc->sc_pba_flags |=
-	    io_win ? PCI_FLAGS_IO_ENABLED : PCI_FLAGS_MEM_ENABLED;
+	    io_win ? PCI_FLAGS_IO_OKAY : PCI_FLAGS_MEM_OKAY;
 	return true;
 }
 
@@ -874,9 +874,9 @@ pq3pci_cpunode_attach(device_t parent, device_t self, void *aux)
 
 	pba.pba_flags = sc->sc_pba_flags | PCI_FLAGS_MSI_OKAY
 	    | PCI_FLAGS_MSIX_OKAY;
-	if (pba.pba_flags & PCI_FLAGS_IO_ENABLED)
+	if (pba.pba_flags & PCI_FLAGS_IO_OKAY)
 		pba.pba_iot = pc->pc_iot;
-	if (pba.pba_flags & PCI_FLAGS_MEM_ENABLED)
+	if (pba.pba_flags & PCI_FLAGS_MEM_OKAY)
 		pba.pba_memt = pc->pc_memt;
 	pba.pba_dmat = cna->cna_dmat;
 	pba.pba_pc = pc;
