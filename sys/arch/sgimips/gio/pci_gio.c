@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.7 2011/05/11 17:49:31 dyoung Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.8 2011/05/17 17:34:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.7 2011/05/11 17:49:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.8 2011/05/17 17:34:52 dyoung Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -223,7 +223,7 @@ giopci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt	= SGIMIPS_BUS_SPACE_MEM;
 	pba.pba_dmat	= ga->ga_dmat;
 	pba.pba_pc	= pc;
-	pba.pba_flags	= PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags	= PCI_FLAGS_MEM_OKAY;
 	/* NB: do not set PCI_FLAGS_{MRL,MRM,MWI}_OKAY  -- true ?! */
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);

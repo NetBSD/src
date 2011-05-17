@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.74 2011/05/10 18:31:33 dyoung Exp $	*/
+/*	$NetBSD: viaide.c,v 1.75 2011/05/17 17:34:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.74 2011/05/10 18:31:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.75 2011/05/17 17:34:54 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -881,7 +881,7 @@ via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 		csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
 		    PCI_COMMAND_STATUS_REG);
 		if ((csr & PCI_COMMAND_MEM_ENABLE) == 0 &&
-		    (pa->pa_flags & PCI_FLAGS_MEM_ENABLED) != 0) {
+		    (pa->pa_flags & PCI_FLAGS_MEM_OKAY) != 0) {
 
 			pci_conf_write(pa->pa_pc, pa->pa_tag,
 			    PCI_COMMAND_STATUS_REG,
