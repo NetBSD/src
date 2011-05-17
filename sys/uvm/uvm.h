@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.61 2011/02/02 17:53:42 chuck Exp $	*/
+/*	$NetBSD: uvm.h,v 1.62 2011/05/17 04:18:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -39,7 +39,9 @@
 
 #include <uvm/uvm_extern.h>
 
+#ifdef _KERNEL
 #include <uvm/uvm_stat.h>
+#endif
 
 /*
  * pull in prototypes
