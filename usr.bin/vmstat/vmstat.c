@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.180 2011/02/16 12:58:38 nakayama Exp $ */
+/* $NetBSD: vmstat.c,v 1.181 2011/05/17 04:18:07 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.180 2011/02/16 12:58:38 nakayama Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.181 2011/05/17 04:18:07 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.180 2011/02/16 12:58:38 nakayama Exp $");
 #include <sys/time.h>
 #include <sys/user.h>
 #include <sys/queue.h>
+#include <sys/kernhist.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_stat.h>
@@ -236,12 +237,12 @@ struct nlist hashnl[] =
 };
 
 /*
- * Namelist for UVM histories
+ * Namelist for kernel histories
  */
 struct nlist histnl[] =
 {
-	{ .n_name = "_uvm_histories" },
-#define	X_UVM_HISTORIES		0
+	{ .n_name = "_kern_histories" },
+#define	X_KERN_HISTORIES		0
 	{ .n_name = NULL },
 };
 
@@ -319,7 +320,7 @@ void	usage(void);
 void	doforkst(void);
 
 void	hist_traverse(int, const char *);
-void	hist_dodump(struct uvm_history *);
+void	hist_dodump(struct kern_history *);
 
 int	main(int, char **);
 char	**choosedrives(char **);
@@ -1752,34 +1753,34 @@ deref_kptr(const void *kptr, void *ptr, size_t len, const char *msg)
 }
 
 /*
- * Traverse the UVM history buffers, performing the requested action.
+ * Traverse the kernel history buffers, performing the requested action.
  *
  * Note, we assume that if we're not listing, we're dumping.
  */
 void
 hist_traverse(int todo, const char *histname)
 {
-	struct uvm_history_head histhead;
-	struct uvm_history hist, *histkva;
+	struct kern_history_head histhead;
+	struct kern_history hist, *histkva;
 	char *name = NULL;
 	size_t namelen = 0;
 
 	getnlist(todo);
 	if (histnl[0].n_value == 0) {
-		warnx("UVM history is not compiled into the kernel.");
+		warnx("kernel history is not compiled into the kernel.");
 		return;
 	}
 
-	deref_kptr((void *)histnl[X_UVM_HISTORIES].n_value, &histhead,
-	    sizeof(histhead), histnl[X_UVM_HISTORIES].n_name);
+	deref_kptr((void *)histnl[X_KERN_HISTORIES].n_value, &histhead,
+	    sizeof(histhead), histnl[X_KERN_HISTORIES].n_name);
 
 	if (histhead.lh_first == NULL) {
-		warnx("No active UVM history logs.");
+		warnx("No active kernel history logs.");
 		return;
 	}
 
 	if (todo & HISTLIST)
-		(void)printf("Active UVM histories:");
+		(void)printf("Active kernel histories:");
 
 	for (histkva = LIST_FIRST(&histhead); histkva != NULL;
 	    histkva = LIST_NEXT(&hist, list)) {
@@ -1804,7 +1805,7 @@ hist_traverse(int todo, const char *histname)
 			if (histname == NULL || strcmp(histname, name) == 0) {
 				if (histname == NULL)
 					(void)printf(
-					    "\nUVM history `%s':\n", name);
+					    "\nkernel history `%s':\n", name);
 				hist_dodump(&hist);
 			}
 		}
@@ -1821,15 +1822,15 @@ hist_traverse(int todo, const char *histname)
  * Actually dump the history buffer at the specified KVA.
  */
 void
-hist_dodump(struct uvm_history *histp)
+hist_dodump(struct kern_history *histp)
 {
-	struct uvm_history_ent *histents, *e;
+	struct kern_history_ent *histents, *e;
 	size_t histsize;
 	char *fmt = NULL, *fn = NULL;
 	size_t fmtlen = 0, fnlen = 0;
 	unsigned i;
 
-	histsize = sizeof(struct uvm_history_ent) * histp->n;
+	histsize = sizeof(struct kern_history_ent) * histp->n;
 
 	if ((histents = malloc(histsize)) == NULL)
 		err(1, "malloc history entries");

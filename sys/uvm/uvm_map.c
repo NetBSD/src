@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.296 2011/04/08 10:38:36 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.297 2011/05/17 04:18:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.296 2011/04/08 10:38:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.297 2011/05/17 04:18:07 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1013,8 +1013,8 @@ void
 uvm_map_init(void)
 {
 #if defined(UVMHIST)
-	static struct uvm_history_ent maphistbuf[100];
-	static struct uvm_history_ent pdhistbuf[100];
+	static struct kern_history_ent maphistbuf[100];
+	static struct kern_history_ent pdhistbuf[100];
 #endif
 
 	/*
