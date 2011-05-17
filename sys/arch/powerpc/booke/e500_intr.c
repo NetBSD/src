@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.5 2011/03/21 19:55:04 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.6 2011/05/17 17:42:46 dyoung Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -504,7 +504,9 @@ e500_splset(struct cpu_info *ci, int ipl)
 	u_int ctpr = (ipl >= IPL_VM ? 15 : ipl);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == old_ctpr);
 #else
+#ifdef DIAGNOSTIC
 	u_int old_ctpr = IPL2CTPR(ci->ci_cpl);
+#endif
 	u_int ctpr = IPL2CTPR(ipl);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == old_ctpr);
 #endif
@@ -908,7 +910,9 @@ e500_extintr(struct trapframe *tf)
 			    __func__, tf, __LINE__, old_ipl, 
 			    15 - IPL_HIGH, openpic_read(cpu, OPENPIC_CTPR));
 		const uint32_t iack = openpic_read(cpu, OPENPIC_IACK);
+#ifdef DIAGNOSTIC
 		const int ipl = iack & 0xf;
+#endif
 		const int irq = (iack >> 4) - 1;
 #if 0
 		printf("%s: iack=%d ipl=%d irq=%d <%s>\n",
