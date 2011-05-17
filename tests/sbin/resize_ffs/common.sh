@@ -44,6 +44,9 @@ test_case_xfail()
 	local check_function="${1}"; shift
 
 	atf_test_case "${name}" cleanup
+	eval "${name}_head() { \
+		atf_set "require.user" "root" ; \
+	}"
 	eval "${name}_body() { \
 		atf_expect_fail "${reason}" ; \
 		${check_function} " "${@}" "; \
