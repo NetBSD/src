@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.66 2011/02/21 22:28:18 drochner Exp $	*/
+/*	$NetBSD: key.c,v 1.67 2011/05/17 18:43:02 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.66 2011/02/21 22:28:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.67 2011/05/17 18:43:02 drochner Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -152,13 +152,17 @@ static LIST_HEAD(_acqtree, secacq) acqtree;		/* acquiring list */
 static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 
 /* search order for SAs */
-static const u_int saorder_state_valid[] = {
-	SADB_SASTATE_DYING, SADB_SASTATE_MATURE,
 	/*
 	 * This order is important because we must select the oldest SA
 	 * for outbound processing.  For inbound, This is not important.
 	 */
+static const u_int saorder_state_valid_prefer_old[] = {
+	SADB_SASTATE_DYING, SADB_SASTATE_MATURE,
 };
+static const u_int saorder_state_valid_prefer_new[] = {
+	SADB_SASTATE_MATURE, SADB_SASTATE_DYING,
+};
+
 static const u_int saorder_state_alive[] = {
 	/* except DEAD */
 	SADB_SASTATE_MATURE, SADB_SASTATE_DYING, SADB_SASTATE_LARVAL
@@ -885,6 +889,8 @@ key_allocsa_policy(const struct secasindex *saidx)
 	struct secashead *sah;
 	struct secasvar *sav;
 	u_int stateidx, state;
+	const u_int *saorder_state_valid;
+	int arraysize;
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
@@ -897,9 +903,21 @@ key_allocsa_policy(const struct secasindex *saidx)
 
     found:
 
+	/*
+	 * search a valid state list for outbound packet.
+	 * This search order is important.
+	 */
+	if (key_prefered_oldsa) {
+		saorder_state_valid = saorder_state_valid_prefer_old;
+		arraysize = _ARRAYLEN(saorder_state_valid_prefer_old);
+	} else {
+		saorder_state_valid = saorder_state_valid_prefer_new;
+		arraysize = _ARRAYLEN(saorder_state_valid_prefer_new);
+	}
+
 	/* search valid state */
 	for (stateidx = 0;
-	     stateidx < _ARRAYLEN(saorder_state_valid);
+	     stateidx < arraysize;
 	     stateidx++) {
 
 		state = saorder_state_valid[stateidx];
@@ -1075,6 +1093,8 @@ key_allocsa(
 	struct secashead *sah;
 	struct secasvar *sav;
 	u_int stateidx, state;
+	const u_int *saorder_state_valid;
+	int arraysize;
 	int s;
 	int chkport = 0;
 
@@ -1119,11 +1139,16 @@ key_allocsa(
 	 * encrypted so we can't check internal IP header.
 	 */
 	s = splsoftnet();	/*called from softclock()*/
+	if (key_prefered_oldsa) {
+		saorder_state_valid = saorder_state_valid_prefer_old;
+		arraysize = _ARRAYLEN(saorder_state_valid_prefer_old);
+	} else {
+		saorder_state_valid = saorder_state_valid_prefer_new;
+		arraysize = _ARRAYLEN(saorder_state_valid_prefer_new);
+	}
 	LIST_FOREACH(sah, &sahtree, chain) {
 		/* search valid state */
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_valid);
-		     stateidx++) {
+		for (stateidx = 0; stateidx < arraysize; stateidx++) {
 			state = saorder_state_valid[stateidx];
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				/* sanity check */
