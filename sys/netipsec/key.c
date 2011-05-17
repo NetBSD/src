@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.67 2011/05/17 18:43:02 drochner Exp $	*/
+/*	$NetBSD: key.c,v 1.68 2011/05/17 18:57:02 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.67 2011/05/17 18:43:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.68 2011/05/17 18:57:02 drochner Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -991,7 +991,7 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 		 * permanent.
 		 */
 		if (d->lft_c->sadb_lifetime_addtime != 0) {
-			struct mbuf *m, *result;
+			struct mbuf *m, *result = 0;
 			uint8_t satype;
 
 			key_sa_chgstate(d, SADB_SASTATE_DEAD);
@@ -1046,10 +1046,12 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 			mtod(result, struct sadb_msg *)->sadb_msg_len =
 				PFKEY_UNIT64(result->m_pkthdr.len);
 
-			if (key_sendup_mbuf(NULL, result,
-					KEY_SENDUP_REGISTERED))
-				goto msgfail;
+			key_sendup_mbuf(NULL, result,
+					KEY_SENDUP_REGISTERED);
+			result = 0;
 		 msgfail:
+			if (result)
+				m_freem(result);
 			KEY_FREESAV(&d);
 		}
 	}
@@ -3578,32 +3580,24 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 		switch (dumporder[i]) {
 		case SADB_EXT_SA:
 			m = key_setsadbsa(sav);
-			if (!m)
-				goto fail;
 			break;
 
 		case SADB_X_EXT_SA2:
 			m = key_setsadbxsa2(sav->sah->saidx.mode,
 					sav->replay ? sav->replay->count : 0,
 					sav->sah->saidx.reqid);
-			if (!m)
-				goto fail;
 			break;
 
 		case SADB_EXT_ADDRESS_SRC:
 			m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
 			    &sav->sah->saidx.src.sa,
 			    FULLMASK, IPSEC_ULPROTO_ANY);
-			if (!m)
-				goto fail;
 			break;
 
 		case SADB_EXT_ADDRESS_DST:
 			m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
 			    &sav->sah->saidx.dst.sa,
 			    FULLMASK, IPSEC_ULPROTO_ANY);
-			if (!m)
-				goto fail;
 			break;
 
 		case SADB_EXT_KEY_AUTH:
@@ -3643,22 +3637,23 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 
 #ifdef IPSEC_NAT_T
 		case SADB_X_EXT_NAT_T_TYPE:
-			if ((m = key_setsadbxtype(sav->natt_type)) == NULL)
-				goto fail;
+			m = key_setsadbxtype(sav->natt_type);
 			break;
 		
 		case SADB_X_EXT_NAT_T_DPORT:
-			if ((m = key_setsadbxport(
+			if (sav->natt_type == 0)
+				continue;
+			m = key_setsadbxport(
 				key_portfromsaddr(&sav->sah->saidx.dst),
-				SADB_X_EXT_NAT_T_DPORT)) == NULL)
-				goto fail;
+				SADB_X_EXT_NAT_T_DPORT);
 			break;
 
 		case SADB_X_EXT_NAT_T_SPORT:
-			if ((m = key_setsadbxport(
+			if (sav->natt_type == 0)
+				continue;
+			m = key_setsadbxport(
 				key_portfromsaddr(&sav->sah->saidx.src),
-				SADB_X_EXT_NAT_T_SPORT)) == NULL)
-				goto fail;
+				SADB_X_EXT_NAT_T_SPORT);
 			break;
 
 		case SADB_X_EXT_NAT_T_OAI:
@@ -3676,7 +3671,8 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 			continue;
 		}
 
-		if ((!m && !p) || (m && p))
+		KASSERT(!(m && p));
+		if (!m && !p)
 			goto fail;
 		if (p && tres) {
 			M_PREPEND(tres, l, M_DONTWAIT);
@@ -3698,6 +3694,7 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 	}
 
 	m_cat(result, tres);
+	tres = NULL; /* avoid free on error below */
 
 	if (result->m_len < sizeof(struct sadb_msg)) {
 		result = m_pullup(result, sizeof(struct sadb_msg));
