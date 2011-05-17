@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1012 2011/05/17 04:18:06 mrg Exp $
+#	$NetBSD: files,v 1.1013 2011/05/17 05:32:31 mrg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1379,16 +1379,15 @@ include "nfs/files.nfs"
 include "ufs/files.ufs"
 
 #
-# UVM (virtual memory)
-#
-include "uvm/files.uvm"
-
-#
 # Kernel history/tracing. Old UVMHIST depends upon this.
-# XXXMRG can't make UVMHIST depend properly on KERNHIST?
 #
 defflag opt_kernhist.h			KERNHIST KERNHIST_PRINT
 file	kern/kern_history.c		kernhist
+
+#
+# UVM (virtual memory)
+#
+include "uvm/files.uvm"
 
 #
 # Security models
