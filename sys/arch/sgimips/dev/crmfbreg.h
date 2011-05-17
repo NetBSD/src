@@ -1,4 +1,4 @@
-/* $NetBSD: crmfbreg.h,v 1.14 2011/04/07 01:20:31 macallan Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.15 2011/05/17 22:26:33 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -166,8 +166,9 @@
 #define		CRMFB_OVR_CONTROL_DMAEN_SHIFT	0
 
 #define CRMFB_FRM_TILESIZE	0x00030000
-#define		CRMFB_FRM_TILESIZE_RHS_SHIFT	0
-#define		CRMFB_FRM_TILESIZE_WIDTH_SHIFT	5
+#define		CRMFB_FRM_TILESIZE_RHS_SHIFT	0 /* width of a partial tile
+						   * on the right in 32 BYTES */
+#define		CRMFB_FRM_TILESIZE_WIDTH_SHIFT	5 /* width in tiles */
 #define		CRMFB_FRM_TILESIZE_DEPTH_SHIFT	13
 #define			CRMFB_FRM_TILESIZE_DEPTH_8	0
 #define			CRMFB_FRM_TILESIZE_DEPTH_16	1
@@ -193,6 +194,9 @@
 #define CRMFB_MODE		0x00048000
 #define		CRMFB_MODE_TYP_SHIFT		2
 #define			CRMFB_MODE_TYP_I8	0
+#define			CRMFB_MODE_TYP_I12	1
+#define			CRMFB_MODE_TYP_RG3B2	2
+#define			CRMFB_MODE_TYP_RGB4	3
 #define			CRMFB_MODE_TYP_ARGB5	4
 #define			CRMFB_MODE_TYP_RGB8	5
 #define		CRMFB_MODE_BUF_SHIFT		0
