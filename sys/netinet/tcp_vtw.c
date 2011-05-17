@@ -77,7 +77,7 @@
 #include <machine/stdarg.h>
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.3 2011/05/11 15:08:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.4 2011/05/17 05:42:40 dholland Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -662,7 +662,7 @@ vtw_del(vtw_ctl_t *ctl, vtw_t *vtw)
 	ctl->oldest.v = vtw_next(ctl, vtw);
 }
 
-/*!\brief	insert vestigeal timewait in hash chain
+/*!\brief	insert vestigial timewait in hash chain
  */
 static void
 vtw_inshash_v4(vtw_ctl_t *ctl, vtw_t *vtw)
@@ -701,7 +701,7 @@ vtw_inshash_v4(vtw_ctl_t *ctl, vtw_t *vtw)
 	vtw->hashed = 1;
 }
 
-/*!\brief	insert vestigeal timewait in hash chain
+/*!\brief	insert vestigial timewait in hash chain
  */
 static void
 vtw_inshash_v6(vtw_ctl_t *ctl, vtw_t *vtw)

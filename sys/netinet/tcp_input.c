@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.312 2011/05/03 18:28:45 dyoung Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.313 2011/05/17 05:40:24 dholland Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.312 2011/05/03 18:28:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.313 2011/05/17 05:40:24 dholland Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2248,7 +2248,7 @@ after_listen:
 			TCP_STATINC(TCP_STAT_CONNECTS);
 			/*
 			 * move tcp_established before soisconnected
-			 * becasue upcall handler can drive tcp_output
+			 * because upcall handler can drive tcp_output
 			 * functionality.
 			 * XXX we might call soisconnected at the end of
 			 * all processing
