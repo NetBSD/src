@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.24 2011/04/15 21:03:31 dyoung Exp $	*/
+/*	$NetBSD: gt.c,v 1.25 2011/05/17 17:34:48 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.24 2011/04/15 21:03:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.25 2011/05/17 17:34:48 dyoung Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -137,7 +137,7 @@ gt_attach(device_t parent, device_t self, void *aux)
 	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 		PCI_FLAGS_MRL_OKAY | /*PCI_FLAGS_MRM_OKAY|*/ PCI_FLAGS_MWI_OKAY;
 	pba.pba_pc = pc;
 	config_found_ia(self, "pcibus", &pba, gt_print);
