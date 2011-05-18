@@ -70,7 +70,7 @@
 #include <sys/bus.h>
 #include <sys/uio.h>
 #include <sys/poll.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/rman.h>
 #include <machine/resource.h>
 #include <sys/proc.h>
