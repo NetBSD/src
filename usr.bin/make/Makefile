@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2011/05/17 21:56:51 dsl Exp $
+#	$NetBSD: Makefile,v 1.53 2011/05/18 06:36:48 dsl Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -38,14 +38,12 @@ SUBDIR+= unit-tests
 CPPFLAGS+= -DMAKE_NATIVE
 COPTS.var.c+= -Wno-cast-qual
 
-.if 0
 .ifdef TOOLDIR
 # this is a native netbsd build, 
 # use libutil rather than the local emalloc etc.
 CPPFLAGS+= -DUSE_EMALLOC
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
-.endif
 .endif
 
 # A simple unit-test driver to help catch regressions
