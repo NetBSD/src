@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.31 2011/05/18 03:51:41 christos Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.32 2011/05/18 14:48:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.31 2011/05/18 03:51:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.32 2011/05/18 14:48:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,10 +229,8 @@ sel_do_scan(const int op, void *fds, const int nf, const size_t ni,
 		return EINVAL;
 	}
 
-	if (__predict_false(mask)) {
-		sigminusset(&sigcantmask, mask);
+	if (__predict_false(mask))
 		sigsuspendsetup(l, mask);
-	}
 
 	sc = curcpu()->ci_data.cpu_selcluster;
 	lock = sc->sc_lock;
