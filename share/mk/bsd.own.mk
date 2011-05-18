@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.664 2011/05/09 14:36:48 haad Exp $
+#	$NetBSD: bsd.own.mk,v 1.665 2011/05/18 13:08:14 adam Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -47,7 +47,7 @@ NEED_OWN_INSTALL_TARGET?=	yes
 TOOLCHAIN_MISSING?=	no
 
 # default to GCC4
-.if !defined(HAVE_GCC) && !defined(HAVE_PCC)
+.if !defined(HAVE_GCC) && !defined(HAVE_PCC) && !defined(HAVE_LLVM)
 HAVE_GCC=	4
 .endif
 
@@ -205,6 +205,14 @@ CPP=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-cpp
 CXX=		false
 FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-f77
 OBJC=		false
+.endif
+
+.if defined(HAVE_LLVM) && ${USETOOLS_LLVM:Uyes} == "yes"
+CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang
+CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang-cpp
+CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang++
+FC=		false
+OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang
 .endif
 
 #
