@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.10 2011/02/13 06:43:52 nonaka Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.11 2011/05/18 01:07:17 dyoung Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
 #include <sys/mutex.h>
 #include <sys/callout.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>
