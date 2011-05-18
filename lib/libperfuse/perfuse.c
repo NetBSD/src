@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.13 2011/05/12 10:32:41 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.14 2011/05/18 15:25:19 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -197,22 +197,22 @@ perfuse_open(path, flags, mode)
 	 * Set a buffer lentgh large enough so that any FUSE packet
 	 * will fit.
 	 */
-	opt = FUSE_BUFSIZE;
+	opt = 4 * FUSE_BUFSIZE;
 	optlen = sizeof(opt);
 	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
 
-	opt = FUSE_BUFSIZE;
+	opt = 4 * FUSE_BUFSIZE;
 	optlen = sizeof(opt);
 	if (setsockopt(sv[0], SOL_SOCKET, SO_RCVBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
 
-	opt = FUSE_BUFSIZE;
+	opt = 4 * FUSE_BUFSIZE;
 	optlen = sizeof(opt);
 	if (setsockopt(sv[1], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
 
-	opt = FUSE_BUFSIZE;
+	opt = 4 * FUSE_BUFSIZE;
 	optlen = sizeof(opt);
 	if (setsockopt(sv[1], SOL_SOCKET, SO_RCVBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
