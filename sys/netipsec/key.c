@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.69 2011/05/18 18:36:15 drochner Exp $	*/
+/*	$NetBSD: key.c,v 1.70 2011/05/18 18:56:02 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.69 2011/05/18 18:36:15 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.70 2011/05/18 18:56:02 drochner Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -6138,7 +6138,11 @@ key_getcomb_ah(void)
 	for (i = 1; i <= SADB_AALG_MAX; i++) {
 #if 1
 		/* we prefer HMAC algorithms, not old algorithms */
-		if (i != SADB_AALG_SHA1HMAC && i != SADB_AALG_MD5HMAC)
+		if (i != SADB_AALG_SHA1HMAC &&
+		    i != SADB_AALG_MD5HMAC &&
+		    i != SADB_X_AALG_SHA2_256 &&
+		    i != SADB_X_AALG_SHA2_384 &&
+		    i != SADB_X_AALG_SHA2_512)
 			continue;
 #endif
 		algo = ah_algorithm_lookup(i);
