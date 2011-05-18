@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pselect.c,v 1.1 2011/05/18 02:57:48 christos Exp $ */
+/*	$NetBSD: t_pselect.c,v 1.2 2011/05/18 03:15:12 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@ ATF_TC_HEAD(pselect_signal_mask, tc)
 	/* Cf. PR lib/43625. */
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks pselect's temporary mask setting");
-	atf_tc_set_md_var(tc, "timeout", "2");
 }
 
 ATF_TC_BODY(pselect_signal_mask, tc)
@@ -109,9 +108,18 @@ ATF_TC_BODY(pselect_signal_mask, tc)
 		usleep(500);
 		if (kill(pid, SIGTERM) == -1)
 			err(1, "kill");
-		if (waitpid(pid, &status, 0) == -1)
+		usleep(500);
+		switch (waitpid(pid, &status, WNOHANG)) {
+		case -1:
 			err(1, "wait");
-		break;
+		case 0:
+			if (kill(pid, SIGKILL) == -1)
+				err(1, "kill");
+			atf_tc_fail("pselect() did not receive signal");
+			break;
+		default:
+			break;
+		}
 	}
 }
 
