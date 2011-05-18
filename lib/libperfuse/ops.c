@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.26 2011/05/11 14:52:48 jakllsch Exp $ */
+/*  $NetBSD: ops.c,v 1.27 2011/05/18 15:28:12 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -262,7 +262,7 @@ fuse_attr_to_vap(ps, vap, fa)
 	vap->va_nlink = fa->nlink;
 	vap->va_uid = fa->uid;
 	vap->va_gid = fa->gid;
-	vap->va_fsid = ps->ps_fsid;
+	vap->va_fsid = (long)ps->ps_fsid;
 	vap->va_fileid = fa->ino;
 	vap->va_size = fa->size;
 	vap->va_blocksize = fa->blksize;
@@ -996,7 +996,10 @@ perfuse_node_lookup(pu, opc, pni, pcn)
 	case NAMEI_DELETE: /* FALLTHROUGH */
 	case NAMEI_RENAME: /* FALLTHROUGH */
 	case NAMEI_CREATE:
-		mode = PUFFS_VEXEC|PUFFS_VWRITE;
+		if (pcn->pcn_flags & NAMEI_ISLASTCN)
+			mode = PUFFS_VEXEC|PUFFS_VWRITE;
+		else
+			mode = PUFFS_VEXEC;
 		break;
 	case NAMEI_LOOKUP: /* FALLTHROUGH */
 	default:
@@ -1271,7 +1274,7 @@ perfuse_node_open(pu, opc, mode, pcr)
 
 	/*
 	 * libfuse docs says
-	 * - O_CREAT should never be set.
+	 * - O_CREAT and O_EXCL should never be set.
 	 * - O_TRUNC may be used if mount option atomic_o_trunc is used XXX
 	 *
 	 * O_APPEND makes no sense since FUSE always sends
@@ -1279,7 +1282,7 @@ perfuse_node_open(pu, opc, mode, pcr)
 	 * filesystem uses pwrite(), O_APPEND would cause
 	 * the offset to be ignored and cause file corruption.
 	 */
-	mode &= ~(O_CREAT|O_APPEND);
+	mode &= ~(O_CREAT|O_EXCL|O_APPEND);
 
 	/*
 	 * Do not open twice, and do not reopen for reading
