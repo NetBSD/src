@@ -1,4 +1,4 @@
-/*	$NetBSD: emuspeed.c,v 1.7 2008/04/28 20:23:06 martin Exp $	*/
+/*	$NetBSD: emuspeed.c,v 1.8 2011/05/18 18:41:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -26,6 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <err.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -38,9 +39,9 @@
 #define PRECISION 500
 
 const struct test {
-	char *name; 
+	const char *name; 
 	void (*func)(int);
-	char *comment;
+	const char *comment;
 } testlist[] = {
 	{"Illegal", illegal, "(test: unimplemented)"},
 	{"mulsl Da,Db", mul32sreg, "(test: should be native)"},
@@ -61,6 +62,7 @@ const struct test {
 
 jmp_buf jbuf;
 void illhand (int);
+int main(int, char *[]);
 
 int
 main(argc, argv)
@@ -94,7 +96,7 @@ main(argc, argv)
 			t->func(count);
 			stop = clock();
 		} while ((stop - start) < PRECISION);
-		printf("%10d/s    %s\n",
+		printf("%10lu/s    %s\n",
 		    CLOCKS_PER_SEC*(count /(stop - start)),
 		    t->comment);
 	}
