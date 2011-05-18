@@ -1,4 +1,4 @@
-/* $NetBSD: abortfixup.c,v 1.8 2008/04/28 20:23:05 martin Exp $ */
+/* $NetBSD: abortfixup.c,v 1.9 2011/05/18 19:44:18 mellon Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,13 +32,14 @@
 
 #include <sys/types.h>
 
-__RCSID("$NetBSD: abortfixup.c,v 1.8 2008/04/28 20:23:05 martin Exp $");
+__RCSID("$NetBSD: abortfixup.c,v 1.9 2011/05/18 19:44:18 mellon Exp $");
 
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <err.h>
 
 jmp_buf buf;
 
