@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.68 2011/05/17 18:57:02 drochner Exp $	*/
+/*	$NetBSD: key.c,v 1.69 2011/05/18 18:36:15 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.68 2011/05/17 18:57:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.69 2011/05/18 18:36:15 drochner Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -631,7 +631,7 @@ found:
 		KEY_CHKSPDIR(sp->spidx.dir, dir, "key_allocsp");
 
 		/* found a SPD entry */
-		sp->lastused = time_second;
+		sp->lastused = time_uptime;
 		SP_ADDREF(sp);
 	}
 	splx(s);
@@ -695,7 +695,7 @@ found:
 		KEY_CHKSPDIR(sp->spidx.dir, dir, "key_allocsp2");
 
 		/* found a SPD entry */
-		sp->lastused = time_second;
+		sp->lastused = time_uptime;
 		SP_ADDREF(sp);
 	}
 	splx(s);
@@ -772,7 +772,7 @@ key_gettunnel(const struct sockaddr *osrc,
 	sp = NULL;
 found:
 	if (sp) {
-		sp->lastused = time_second;
+		sp->lastused = time_uptime;
 		SP_ADDREF(sp);
 	}
 	splx(s);
@@ -1961,7 +1961,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	}
 #endif
 
-	newsp->created = time_second;
+	newsp->created = time_uptime;
 	newsp->lastused = newsp->created;
 	newsp->lifetime = lft ? lft->sadb_lifetime_addtime : 0;
 	newsp->validtime = lft ? lft->sadb_lifetime_usetime : 0;
@@ -1975,7 +1975,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 		struct secspacq *spacq;
 		if ((spacq = key_getspacq(&spidx)) != NULL) {
 			/* reset counter in order to deletion by timehandler. */
-			spacq->created = time_second;
+			spacq->created = time_uptime;
 			spacq->count = 0;
 		}
     	}
@@ -2793,8 +2793,8 @@ key_spdexpire(struct secpolicy *sp)
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
 	lt->sadb_lifetime_allocations = 0;
 	lt->sadb_lifetime_bytes = 0;
-	lt->sadb_lifetime_addtime = sp->created;
-	lt->sadb_lifetime_usetime = sp->lastused;
+	lt->sadb_lifetime_addtime = sp->created + time_second - time_uptime;
+	lt->sadb_lifetime_usetime = sp->lastused + time_second - time_uptime;
 	lt = (struct sadb_lifetime *)(mtod(m, char *) + len / 2);
 	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
@@ -3021,7 +3021,7 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	}
 
 	/* reset created */
-	newsav->created = time_second;
+	newsav->created = time_uptime;
 	newsav->pid = mhp->msg->sadb_msg_pid;
 
 	/* add to satree */
@@ -3366,7 +3366,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	}
 
 	/* reset created */
-	sav->created = time_second;
+	sav->created = time_uptime;
 
 	/* make lifetime for CURRENT */
 	KMALLOC(sav->lft_c, struct sadb_lifetime *,
@@ -3382,7 +3382,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	sav->lft_c->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
 	sav->lft_c->sadb_lifetime_allocations = 0;
 	sav->lft_c->sadb_lifetime_bytes = 0;
-	sav->lft_c->sadb_lifetime_addtime = time_second;
+	sav->lft_c->sadb_lifetime_addtime = time_uptime;
 	sav->lft_c->sadb_lifetime_usetime = 0;
 
 	/* lifetimes for HARD and SOFT */
@@ -3553,6 +3553,7 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 	int l = 0;
 	int i;
 	void *p;
+	struct sadb_lifetime lt;
 	int dumporder[] = {
 		SADB_EXT_SA, SADB_X_EXT_SA2,
 		SADB_EXT_LIFETIME_HARD, SADB_EXT_LIFETIME_SOFT,
@@ -3618,7 +3619,10 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 			if (!sav->lft_c)
 				continue;
 			l = PFKEY_UNUNIT64(((struct sadb_ext *)sav->lft_c)->sadb_ext_len);
-			p = sav->lft_c;
+			memcpy(&lt, sav->lft_c, sizeof(struct sadb_lifetime));
+			lt.sadb_lifetime_addtime += time_second - time_uptime;
+			lt.sadb_lifetime_usetime += time_second - time_uptime;
+			p = &lt;
 			break;
 
 		case SADB_EXT_LIFETIME_HARD:
@@ -4510,7 +4514,7 @@ key_timehandler(void* arg)
 {
 	u_int dir;
 	int s;
-	time_t now = time_second;
+	time_t now = time_uptime;
 
 	s = splsoftnet();	/*called from softclock()*/
 	mutex_enter(softnet_lock);
@@ -4992,7 +4996,7 @@ key_getspi(struct socket *so, struct mbuf *m,
 		struct secacq *acq;
 		if ((acq = key_getacqbyseq(mhp->msg->sadb_msg_seq)) != NULL) {
 			/* reset counter in order to deletion by timehandler. */
-			acq->created = time_second;
+			acq->created = time_uptime;
 			acq->count = 0;
 		}
     	}
@@ -6476,7 +6480,7 @@ key_newacq(const struct secasindex *saidx)
 	/* copy secindex */
 	memcpy(&newacq->saidx, saidx, sizeof(newacq->saidx));
 	newacq->seq = (acq_seq == ~0 ? 1 : ++acq_seq);
-	newacq->created = time_second;
+	newacq->created = time_uptime;
 	newacq->count = 0;
 
 	return newacq;
@@ -6524,7 +6528,7 @@ key_newspacq(const struct secpolicyindex *spidx)
 
 	/* copy secindex */
 	memcpy(&acq->spidx, spidx, sizeof(acq->spidx));
-	acq->created = time_second;
+	acq->created = time_uptime;
 	acq->count = 0;
 
 	return acq;
@@ -6598,7 +6602,7 @@ key_acquire2(struct socket *so, struct mbuf *m,
 		}
 
 		/* reset acq counter in order to deletion by timehander. */
-		acq->created = time_second;
+		acq->created = time_uptime;
 		acq->count = 0;
 #endif
 		m_freem(m);
@@ -6930,8 +6934,10 @@ key_expire(struct secasvar *sav)
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
 	lt->sadb_lifetime_allocations = sav->lft_c->sadb_lifetime_allocations;
 	lt->sadb_lifetime_bytes = sav->lft_c->sadb_lifetime_bytes;
-	lt->sadb_lifetime_addtime = sav->lft_c->sadb_lifetime_addtime;
-	lt->sadb_lifetime_usetime = sav->lft_c->sadb_lifetime_usetime;
+	lt->sadb_lifetime_addtime = sav->lft_c->sadb_lifetime_addtime
+		+ time_second - time_uptime;
+	lt->sadb_lifetime_usetime = sav->lft_c->sadb_lifetime_usetime
+		+ time_second - time_uptime;
 	lt = (struct sadb_lifetime *)(mtod(m, char *) + len / 2);
 	memcpy(lt, sav->lft_s, sizeof(*lt));
 	m_cat(result, m);
@@ -7953,7 +7959,7 @@ key_sa_recordxfer(struct secasvar *sav, struct mbuf *m)
 	 *	<--------------> HARD
 	 *	<-----> SOFT
 	 */
-	sav->lft_c->sadb_lifetime_usetime = time_second;
+	sav->lft_c->sadb_lifetime_usetime = time_uptime;
 	/* XXX check for expires? */
 
 	return;
