@@ -1,4 +1,4 @@
-/*	$NetBSD: sigstackalign.c,v 1.3 2008/04/28 20:23:05 martin Exp $       */
+/*	$NetBSD: sigstackalign.c,v 1.4 2011/05/18 19:45:05 mellon Exp $       */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,11 +28,13 @@
 
 #include <sys/types.h>
 
-__RCSID("$NetBSD: sigstackalign.c,v 1.3 2008/04/28 20:23:05 martin Exp $");
+__RCSID("$NetBSD: sigstackalign.c,v 1.4 2011/05/18 19:45:05 mellon Exp $");
 
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <err.h>
+#include <unistd.h>
 
 #define RANGE 16
 #define STACKALIGN 8
