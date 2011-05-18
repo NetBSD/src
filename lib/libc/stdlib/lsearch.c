@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: lsearch.c,v 1.4 2005/07/16 17:32:09 christos Exp $");
+__RCSID("$NetBSD: lsearch.c,v 1.5 2011/05/18 19:36:36 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,9 +46,9 @@ __RCSID("$NetBSD: lsearch.c,v 1.4 2005/07/16 17:32:09 christos Exp $");
 #include <string.h>
 #include <search.h>
 
-typedef int (*cmp_fn_t) __P((const void *, const void *));
-static void *linear_base __P((const void *, void *, size_t *, size_t,
-			     cmp_fn_t, int));
+typedef int (*cmp_fn_t)(const void *, const void *);
+static void *linear_base(const void *, void *, size_t *, size_t,
+			     cmp_fn_t, int);
 
 void *
 lsearch(key, base, nelp, width, compar)
