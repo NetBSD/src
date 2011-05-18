@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.32 2011/03/03 20:46:16 martin Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.33 2011/05/18 03:51:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.32 2011/03/03 20:46:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.33 2011/05/18 03:51:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -604,33 +604,39 @@ sigpending1(struct lwp *l, sigset_t *ss)
 	mutex_exit(p->p_lock);
 }
 
-int
-sigsuspend1(struct lwp *l, const sigset_t *ss)
+void
+sigsuspendsetup(struct lwp *l, const sigset_t *ss)
 {
 	struct proc *p = l->l_proc;
 
-	if (ss) {
-		/*
-		 * When returning from sigsuspend, we want
-		 * the old mask to be restored after the
-		 * signal handler has finished.  Thus, we
-		 * save it here and mark the sigctx structure
-		 * to indicate this.
-		 */
-		mutex_enter(p->p_lock);
-		l->l_sigrestore = 1;
-		l->l_sigoldmask = l->l_sigmask;
-		l->l_sigmask = *ss;
-		sigminusset(&sigcantmask, &l->l_sigmask);
+	/*
+	 * When returning from sigsuspend/pselect/pollts, we want
+	 * the old mask to be restored after the
+	 * signal handler has finished.  Thus, we
+	 * save it here and mark the sigctx structure
+	 * to indicate this.
+	 */
+	mutex_enter(p->p_lock);
+	l->l_sigrestore = 1;
+	l->l_sigoldmask = l->l_sigmask;
+	l->l_sigmask = *ss;
+	sigminusset(&sigcantmask, &l->l_sigmask);
 
-		/* Check for pending signals when sleeping. */
-		if (sigispending(l, 0)) {
-			lwp_lock(l);
-			l->l_flag |= LW_PENDSIG;
-			lwp_unlock(l);
-		}
-		mutex_exit(p->p_lock);
+	/* Check for pending signals when sleeping. */
+	if (sigispending(l, 0)) {
+		lwp_lock(l);
+		l->l_flag |= LW_PENDSIG;
+		lwp_unlock(l);
 	}
+	mutex_exit(p->p_lock);
+}
+
+int
+sigsuspend1(struct lwp *l, const sigset_t *ss)
+{
+
+	if (ss)
+		sigsuspendsetup(l, ss);
 
 	while (kpause("pause", true, 0, NULL) == 0)
 		;
