@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.53 2011/05/13 23:11:00 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.54 2011/05/18 01:59:39 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -90,7 +90,7 @@ void utrace(struct ut *, int);
 #include <sys/cdefs.h>
 #include "extern.h"
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.53 2011/05/13 23:11:00 christos Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.54 2011/05/18 01:59:39 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 int utrace(const char *, void *, size_t);
 
@@ -447,7 +447,7 @@ malloc_init(void)
     char b[64];
     size_t i;
     ssize_t j;
-    int save_errno = errno;
+    int serrno = errno;
 
     /*
      * Compute page-size related variables.
@@ -467,12 +467,9 @@ malloc_init(void)
 
     for (i = 0; i < 3; i++) {
 	if (i == 0) {
-	    int serrno = errno;
 	    j = readlink("/etc/malloc.conf", b, sizeof b - 1);
-	    if (j == -1) {
-		errno = serrno; 
+	    if (j == -1)
 		continue;
-	    }
 	    b[j] = '\0';
 	    p = b;
 	} else if (i == 1 && issetugid() == 0) {
@@ -550,7 +547,7 @@ malloc_init(void)
      */
     px = imalloc(sizeof *px);
 
-    errno = save_errno;
+    errno = serrno;
 }
 
 /*
