@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/05/28 02:35:46 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/05/18 20:55:09 plunky Exp $
 
 DRIVER=		xf86-video-geode
 DRIVER_NAME=	geode_drv
@@ -40,7 +40,7 @@ CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src/cim \
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${X11SRCDIR.${DRIVER}}/../include
 
 # XXX ugh
-CPPFLAGS+=	-Doff64_t=off_t
+CPPFLAGS+=	-Doff64_t=off_t -Dlseek64=lseek
 
 COPTS.gx_randr.c+=	-Wno-error	# XXX
 COPTS.lx_memory.c+=	-Wno-error	# XXX
