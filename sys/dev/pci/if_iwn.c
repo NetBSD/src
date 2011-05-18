@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.53 2011/05/15 13:56:20 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.54 2011/05/18 01:02:43 dyoung Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.53 2011/05/15 13:56:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.54 2011/05/18 01:02:43 dyoung Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.53 2011/05/15 13:56:20 christos Exp $")
 
 #include <dev/sysmon/sysmonvar.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/endian.h>
 #include <machine/intr.h>
 
