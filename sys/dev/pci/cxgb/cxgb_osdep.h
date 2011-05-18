@@ -41,7 +41,7 @@ typedef char *caddr_t;
 #include <dev/pci/cxgb/cxgb_version.h>
 #include <dev/pci/cxgb/cxgb_config.h>
 #include <sys/mbuf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>

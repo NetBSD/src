@@ -43,7 +43,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
