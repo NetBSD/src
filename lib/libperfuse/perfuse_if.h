@@ -1,7 +1,7 @@
-/*  $NetBSD: perfuse_if.h,v 1.11 2011/05/11 14:52:48 jakllsch Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.12 2011/05/18 15:22:54 manu Exp $ */
 
 /*-
- *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
+ *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
  * 
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -25,8 +25,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */ 
 
-#ifndef _REFUSE_PERFUSE_H
-#define _REFUSE_PERFUSE_H
+#ifndef _PERFUSE_IF_H
+#define _PERFUSE_IF_H
 
 #ifndef _PATH_PERFUSED
 #define _PATH_PERFUSED "/usr/sbin/perfused"
@@ -171,7 +171,7 @@ struct perfuse_mount_info {
 };
 
 /*
- * Duplicated fro fuse.h to avoid making it public
+ * Duplicated from fuse.h to avoid making it public
  */
 #ifndef FUSE_BUFSIZE
 #define FUSE_MIN_BUFSIZE 0x21000
@@ -210,4 +210,4 @@ void perfuse_fs_init(struct puffs_usermount *);
 int perfuse_mainloop(struct puffs_usermount *);
 int perfuse_unmount(struct puffs_usermount *);
 
-#endif /* _REFUSE_PERFUSE_H */
+#endif /* _PERFUSE_IF_H */
