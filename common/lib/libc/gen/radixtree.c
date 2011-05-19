@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.3 2011/04/26 20:53:53 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.4 2011/05/19 09:58:28 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.3 2011/04/26 20:53:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.4 2011/05/19 09:58:28 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.3 2011/04/26 20:53:53 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.3 2011/04/26 20:53:53 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.4 2011/05/19 09:58:28 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -424,6 +424,8 @@ radix_tree_lookup_ptr(struct radix_tree *t, uint64_t idx,
  *
  * note that inserting a node can involves memory allocation for intermediate
  * nodes.  if _KERNEL, it's done with non-blocking IPL_NONE memory allocation.
+ *
+ * for the newly inserted node, all tags are cleared.
  */
 
 int
@@ -441,6 +443,16 @@ radix_tree_insert_node(struct radix_tree *t, uint64_t idx, void *p)
 	*vpp = p;
 	return 0;
 }
+
+/*
+ * radix_tree_replace_node:
+ *
+ * replace a node at the given index with the given node.
+ * return the old node.
+ * it's illegal to try to replace a node which has not been inserted.
+ *
+ * this function doesn't change tags.
+ */
 
 void *
 radix_tree_replace_node(struct radix_tree *t, uint64_t idx, void *p)
@@ -686,6 +698,13 @@ radix_tree_gang_lookup_tagged_node(struct radix_tree *t, uint64_t idx,
 	return gang_lookup_scan(t, &path, results, maxresults, tagmask);
 }
 
+/*
+ * radix_tree_get_tag:
+ *
+ * return if the tag is set for the node at the given index.  (true if set)
+ * it's illegal to call this function for a node which has not been inserted.
+ */
+
 bool
 radix_tree_get_tag(struct radix_tree *t, uint64_t idx,
     radix_tree_tagid_t tagid)
@@ -709,6 +728,13 @@ radix_tree_get_tag(struct radix_tree *t, uint64_t idx,
 	return (entry_tagmask(*vpp) & tagmask) != 0;
 #endif
 }
+
+/*
+ * radix_tree_set_tag:
+ *
+ * set the tag for the node at the given index.
+ * it's illegal to call this function for a node which has not been inserted.
+ */
 
 void
 radix_tree_set_tag(struct radix_tree *t, uint64_t idx,
@@ -736,6 +762,13 @@ radix_tree_set_tag(struct radix_tree *t, uint64_t idx,
 		*pptr = (void *)((uintptr_t)entry | tagmask);
 	}
 }
+
+/*
+ * radix_tree_clear_tag:
+ *
+ * clear the tag for the node at the given index.
+ * it's illegal to call this function for a node which has not been inserted.
+ */
 
 void
 radix_tree_clear_tag(struct radix_tree *t, uint64_t idx,
