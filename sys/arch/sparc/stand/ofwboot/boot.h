@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.7 2011/05/19 03:09:47 christos Exp $	*/
+/*	$NetBSD: boot.h,v 1.8 2011/05/19 15:18:29 hauke Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ extern u_int	get_cpuid(void);
 extern void	loadfile_set_allocator(int);
 
 /* alloc.c */
-extern vois	freeall(void);
+extern void	freeall(void);
 
 /* ofdev.c */
 char *filename(char*, char*);
