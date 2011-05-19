@@ -1,4 +1,4 @@
-#	$NetBSD: t_cgd.sh,v 1.9 2011/05/14 17:42:28 jmmv Exp $
+#	$NetBSD: t_cgd.sh,v 1.10 2011/05/19 20:37:50 riastradh Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -98,14 +98,14 @@ wrongpass_cleanup()
 }
 
 
-atf_test_case non512 cleanup
-non512_head()
+atf_test_case unaligned_write cleanup
+unaligned_write_head()
 {
 
-	atf_set "descr" "Write a non-512 block to a raw cgd device"
+	atf_set "descr" "Attempt unaligned writes to a raw cgd device"
 }
 
-non512_body()
+unaligned_write_body()
 {
 	d=$(atf_get_srcdir)
 	atf_check -s exit:0 \
@@ -115,12 +115,34 @@ non512_body()
 	atf_check -s exit:0 -x "echo 12345 | \
 	    rump.cgdconfig -p cgd0 /dev/dk ${d}/paramsfile"
 
-	atf_expect_fail "PR kern/44515"
-	atf_check -s exit:0 -e ignore -x \
+	# Check that cgd rejects writes of totally bogus lengths.
+	atf_check -s not-exit:0 -e ignore -x \
 	    "echo die hard | rump.dd of=${rawcgd} bs=123 conv=sync"
+
+	# Check that cgd rejects non-sector-length writes even if they
+	# are integral multiples of the block size.
+	atf_check -s not-exit:0 -e ignore -x \
+	    "echo die hard | rump.dd of=${rawcgd} bs=64 conv=sync"
+	atf_check -s not-exit:0 -e ignore -x \
+	    "echo die hard | rump.dd of=${rawcgd} bs=256 conv=sync"
+
+	# Check that cgd rejects misaligned buffers, produced by
+	# packetizing the input on bogus boundaries and using the
+	# bizarre behaviour of `bs=N' in dd.
+	atf_check -s not-exit:0 -e ignore -x \
+	    "(echo -n x && sleep 1 && head -c 511 </dev/zero) \
+		| rump.dd of=${rawcgd} bs=512"
+
+	# Check that cgd rejects sector-length writes if they are not
+	# on sector boundaries.  Doesn't work because dd can't be
+	# persuaded to seek a non-integral multiple of the output
+	# buffer size and I can't be arsed to find the another way to
+	# do that.
+	#atf_check -s not-exit:0 -e ignore -x \
+	#    "echo die hard | rump.dd of=${rawcgd} seek=1 bs=512 conv=sync"
 }
 
-non512_cleanup()
+unaligned_write_cleanup()
 {
 	env RUMP_SERVER=unix://csock rump.halt || true
 }
@@ -130,5 +152,5 @@ atf_init_test_cases()
 
 	atf_add_test_case basic
 	atf_add_test_case wrongpass
-	atf_add_test_case non512
+	atf_add_test_case unaligned_write
 }
