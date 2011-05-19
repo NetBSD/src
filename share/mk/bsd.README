@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.280 2011/03/24 17:05:44 bouyer Exp $
+#	$NetBSD: bsd.README,v 1.281 2011/05/19 14:29:27 joerg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -445,6 +445,20 @@ CXXFLAGS.<prog>	These provide a way to specify additions to the associated
 		or PROG_CXX (if set).  For example, if COPTS.libcrypto is
 		set to "-g", "-g" will be added to COPTS only when compiling
 		the crypto library.
+
+The active compiler is selected using the following variables:
+AVAILABLE_COMPILER
+		List of available compiler suites.  Processed in order
+		for selecting the active compiler for each frontend.
+HAVE_PCC	If defined, PCC is present and enabled.
+HAVE_LLVM	If defined, LLVM/Clang is present and enabled.
+UNSUPPORTED_COMPILER.xxx
+		If defined, the support for compiler "xxx" is disabled.
+
+For the frontends (CC, CPP, CXX, FC and OBJC) the following variables exist:
+ACTIVE_CC	Active compile suite for the CC frontend.
+SUPPORTED_CC	Compile suite with support for the CC frontend.
+TOOL_CC.xxx	Path to the CC frontend for compiler "xxx"
 
 =-=-=-=-=   sys.mk   =-=-=-=-=
 
