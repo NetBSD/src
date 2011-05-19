@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.31.4.3 2011/03/05 20:55:09 rmind Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.31.4.4 2011/05/19 03:43:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.31.4.3 2011/03/05 20:55:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.31.4.4 2011/05/19 03:43:02 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -364,8 +364,8 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	mutex_exit(&mntvnode_lock);
 
 	/* Allocate v-node. */
-	if ((error = getnewvnode(VT_SYSVBFS, mp, sysvbfs_vnodeop_p, &vp)) !=
-	    0) {
+	error = getnewvnode(VT_SYSVBFS, mp, sysvbfs_vnodeop_p, NULL, &vp);
+	if (error) {
 		DPRINTF("%s: getnewvnode error.\n", __func__);
 		return error;
 	}

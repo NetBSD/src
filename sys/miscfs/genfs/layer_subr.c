@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.28.4.3 2011/03/05 20:55:30 rmind Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.28.4.4 2011/05/19 03:43:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.28.4.3 2011/03/05 20:55:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.28.4.4 2011/05/19 03:43:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,9 @@ layer_node_alloc(struct mount *mp, struct vnode *lowervp, struct vnode **vpp)
 	int error;
 	extern int (**dead_vnodeop_p)(void *);
 
-	error = getnewvnode(lmp->layerm_tag, mp, lmp->layerm_vnodeop_p, &vp);
+	/* Get a new vnode and share its interlock with underlying vnode. */
+	error = getnewvnode(lmp->layerm_tag, mp, lmp->layerm_vnodeop_p,
+	    lowervp, &vp);
 	if (error) {
 		return error;
 	}

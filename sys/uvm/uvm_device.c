@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.57.4.3 2011/03/05 20:56:35 rmind Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.57.4.4 2011/05/19 03:43:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57.4.3 2011/03/05 20:56:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57.4.4 2011/05/19 03:43:05 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -217,7 +217,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 
 		/* Note: both calls may allocate memory and sleep. */
 		udv = malloc(sizeof(*udv), M_TEMP, M_WAITOK);
-		uvm_obj_init(&udv->u_obj, &uvm_deviceops, NULL, 1);
+		uvm_obj_init(&udv->u_obj, &uvm_deviceops, true, 1);
 
 		mutex_enter(&udv_lock);
 
@@ -238,7 +238,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 
 		if (lcv) {
 			mutex_exit(&udv_lock);
-			uvm_obj_destroy(&udv->u_obj, NULL);
+			uvm_obj_destroy(&udv->u_obj, true);
 			free(udv, M_TEMP);
 			continue;
 		}
@@ -328,7 +328,7 @@ again:
 	mutex_exit(&udv_lock);
 	mutex_exit(uobj->vmobjlock);
 
-	uvm_obj_destroy(uobj, NULL);
+	uvm_obj_destroy(uobj, true);
 	free(udv, M_TEMP);
 	UVMHIST_LOG(maphist," <- done, freed uobj=0x%x", uobj,0,0,0);
 }

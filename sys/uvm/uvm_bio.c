@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.4.6 2010/07/03 01:20:06 rmind Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.4.7 2011/05/19 03:43:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.4.6 2010/07/03 01:20:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.4.7 2011/05/19 03:43:05 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -166,7 +166,7 @@ ubc_init(void)
 	 * map in ubc_object.
 	 */
 
-	uvm_obj_init(&ubc_object.uobj, &ubc_pager, NULL, UVM_OBJ_KERN);
+	uvm_obj_init(&ubc_object.uobj, &ubc_pager, true, UVM_OBJ_KERN);
 
 	ubc_object.umap = kmem_zalloc(ubc_nwins * sizeof(struct ubc_map),
 	    KM_SLEEP);
@@ -217,6 +217,7 @@ ubc_init(void)
  * ubc_fault_page: helper of ubc_fault to handle a single page.
  *
  * => Caller has UVM object locked.
+ * => Caller will perform pmap_update().
  */
 
 static inline int
@@ -395,19 +396,18 @@ again:
 	prot = VM_PROT_READ | VM_PROT_WRITE;
 #endif
 
-	/*
-	 * Note: in the common case, all returned pages would have the same
-	 * UVM object.  However, due to layered file-systems and e.g. tmpfs,
-	 * returned pages may have different objects.  We "remember" the
-	 * last object in the loop to reduce locking overhead and to perform
-	 * pmap_update() before object unlock.
-	 */
-	uobj = NULL;
-
 	va = ufi->orig_rvaddr;
 	eva = ufi->orig_rvaddr + (npages << PAGE_SHIFT);
 
 	UVMHIST_LOG(ubchist, "va 0x%lx eva 0x%lx", va, eva, 0, 0);
+
+	/*
+	 * Note: normally all returned pages would have the same UVM object.
+	 * However, layered file-systems and e.g. tmpfs, may return pages
+	 * which belong to underlying UVM object.  In such case, lock is
+	 * shared amongst the objects.
+	 */
+	mutex_enter(uobj->vmobjlock);
 	for (i = 0; va < eva; i++, va += PAGE_SIZE) {
 		struct vm_page *pg;
 
@@ -417,33 +417,23 @@ again:
 		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
-		if (__predict_false(pg->uobject != uobj)) {
-			/* Check for the first iteration and error cases. */
-			if (uobj != NULL) {
-				/* Must make VA visible before the unlock. */
-				pmap_update(ufi->orig_map->pmap);
-				mutex_exit(uobj->vmobjlock);
-			}
-			uobj = pg->uobject;
-			mutex_enter(uobj->vmobjlock);
-		}
+		KASSERT(uobj->vmobjlock == pg->uobject->vmobjlock);
 		error = ubc_fault_page(ufi, umap, pg, prot, access_type, va);
 		if (error) {
 			/*
 			 * Flush (there might be pages entered), drop the lock,
-			 * "forget" the object and perform uvm_wait().
-			 * Note: page will re-fault.
+			 * and perform uvm_wait().  Note: page will re-fault.
 			 */
 			pmap_update(ufi->orig_map->pmap);
 			mutex_exit(uobj->vmobjlock);
-			uobj = NULL;
 			uvm_wait("ubc_fault");
+			mutex_enter(uobj->vmobjlock);
 		}
 	}
-	if (__predict_true(uobj != NULL)) {
-		pmap_update(ufi->orig_map->pmap);
-		mutex_exit(uobj->vmobjlock);
-	}
+	/* Must make VA visible before the unlock. */
+	pmap_update(ufi->orig_map->pmap);
+	mutex_exit(uobj->vmobjlock);
+
 	return 0;
 }
 
@@ -504,7 +494,7 @@ again:
 		UBC_EVCNT_INCR(wincachemiss);
 		umap = TAILQ_FIRST(UBC_QUEUE(offset));
 		if (umap == NULL) {
-			kpause("ubc_alloc", false, hz,
+			kpause("ubc_alloc", false, hz >> 2,
 			    ubc_object.uobj.vmobjlock);
 			goto again;
 		}
@@ -524,8 +514,8 @@ again:
 				mutex_enter(oobj->vmobjlock);
 				pmap_remove(pmap_kernel(), va,
 				    va + ubc_winsize);
-				mutex_exit(oobj->vmobjlock);
 				pmap_update(pmap_kernel());
+				mutex_exit(oobj->vmobjlock);
 			}
 		} else {
 			KASSERT((umap->flags & UMAP_MAPPING_CACHED) == 0);
@@ -544,12 +534,10 @@ again:
 		TAILQ_REMOVE(UBC_QUEUE(offset), umap, inactive);
 	}
 
-#ifdef DIAGNOSTIC
-	if ((flags & UBC_WRITE) && (umap->writeoff || umap->writelen)) {
-		panic("ubc_alloc: concurrent writes uobj %p", uobj);
-	}
-#endif
 	if (flags & UBC_WRITE) {
+		KASSERTMSG(umap->writeoff == 0 && umap->writelen == 0,
+		    ("ubc_alloc: concurrent writes to uobj %p", uobj)
+		);
 		umap->writeoff = slot_offset;
 		umap->writelen = *lenp;
 	}
@@ -681,7 +669,6 @@ ubc_release(void *va, int flags)
 	umap->refcount--;
 	if (umap->refcount == 0) {
 		if (flags & UBC_UNMAP) {
-
 			/*
 			 * Invalidate any cached mappings if requested.
 			 * This is typically used to avoid leaving
@@ -690,9 +677,10 @@ ubc_release(void *va, int flags)
 			mutex_enter(uobj->vmobjlock);
 			pmap_remove(pmap_kernel(), umapva,
 				    umapva + ubc_winsize);
-			mutex_exit(uobj->vmobjlock);
-			umap->flags &= ~UMAP_MAPPING_CACHED;
 			pmap_update(pmap_kernel());
+			mutex_exit(uobj->vmobjlock);
+
+			umap->flags &= ~UMAP_MAPPING_CACHED;
 			LIST_REMOVE(umap, hash);
 			umap->uobj = NULL;
 			TAILQ_INSERT_HEAD(UBC_QUEUE(umap->offset), umap,

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.286.2.3 2011/04/21 01:42:20 rmind Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.286.2.4 2011/05/19 03:43:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.286.2.3 2011/04/21 01:42:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.286.2.4 2011/05/19 03:43:04 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1305,7 +1305,8 @@ retry:
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 		return (0);
 
-	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, &vp)) != 0) {
+	error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, NULL, &vp);
+	if (error) {
 		*vpp = NULL;
 		 return (error);
 	}

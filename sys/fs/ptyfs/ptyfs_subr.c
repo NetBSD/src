@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.18.4.3 2011/03/05 20:55:07 rmind Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.18.4.4 2011/05/19 03:43:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.18.4.3 2011/03/05 20:55:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.18.4.4 2011/05/19 03:43:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,8 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
 	if ((*vpp = ptyfs_used_get(type, pty, mp, LK_EXCLUSIVE)) != NULL)
 		return 0;
 
-	if ((error = getnewvnode(VT_PTYFS, mp, ptyfs_vnodeop_p, &vp)) != 0) {
+	error = getnewvnode(VT_PTYFS, mp, ptyfs_vnodeop_p, NULL, &vp);
+	if (error) {
 		*vpp = NULL;
 		return error;
 	}

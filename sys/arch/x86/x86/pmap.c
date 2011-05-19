@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105.2.14 2011/04/21 01:41:33 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.15 2011/05/19 03:42:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.14 2011/04/21 01:41:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.15 2011/05/19 03:42:59 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1212,7 +1212,9 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	kpm = pmap_kernel();
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		uvm_obj_init(&kpm->pm_obj[i], NULL, &kpm->pm_obj_lock[i], 1);
+		mutex_init(&kpm->pm_obj_lock[i], MUTEX_DEFAULT, IPL_NONE);
+		uvm_obj_init(&kpm->pm_obj[i], NULL, false, 1);
+		uvm_obj_setlock(&kpm->pm_obj[i], &kpm->pm_obj_lock[i]);
 		kpm->pm_ptphint[i] = NULL;
 	}
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
@@ -2142,7 +2144,9 @@ pmap_create(void)
 
 	/* init uvm_object */
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		uvm_obj_init(&pmap->pm_obj[i], NULL, &pmap->pm_obj_lock[i], 1);
+		mutex_init(&pmap->pm_obj_lock[i], MUTEX_DEFAULT, IPL_NONE);
+		uvm_obj_init(&pmap->pm_obj[i], NULL, false, 1);
+		uvm_obj_setlock(&pmap->pm_obj[i], &pmap->pm_obj_lock[i]);
 		pmap->pm_ptphint[i] = NULL;
 	}
 	pmap->pm_stats.wired_count = 0;
@@ -2314,7 +2318,8 @@ pmap_destroy(struct pmap *pmap)
 #endif
 
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		uvm_obj_destroy(&pmap->pm_obj[i], &pmap->pm_obj_lock[i]);
+		uvm_obj_destroy(&pmap->pm_obj[i], false);
+		mutex_destroy(&pmap->pm_obj_lock[i]);
 	}
 	pool_cache_put(&pmap_cache, pmap);
 }

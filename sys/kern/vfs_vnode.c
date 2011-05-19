@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.5.2.2 2011/04/21 01:42:12 rmind Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.5.2.3 2011/05/19 03:43:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.5.2.2 2011/04/21 01:42:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.5.2.3 2011/05/19 03:43:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -173,7 +173,7 @@ vnalloc(struct mount *mp)
 	}
 
 	memset(vp, 0, sizeof(*vp));
-	uvm_obj_init(&vp->v_uobj, &uvm_vnodeops, NULL, 0);
+	uvm_obj_init(&vp->v_uobj, &uvm_vnodeops, true, 0);
 	cv_init(&vp->v_cv, "vnode");
 	/*
 	 * Done by memset() above.
@@ -208,7 +208,11 @@ vnfree(vnode_t *vp)
 		mutex_exit(&vnode_free_list_lock);
 	}
 
-	uvm_obj_destroy(&vp->v_uobj, NULL);
+	/*
+	 * Note: the vnode interlock will either be freed, of reference
+	 * dropped (if VI_LOCKSHARE was in use).
+	 */
+	uvm_obj_destroy(&vp->v_uobj, true);
 	cv_destroy(&vp->v_cv);
 	pool_cache_put(vnode_cache, vp);
 }
@@ -304,10 +308,11 @@ try_nextlist:
  * getnewvnode: return the next vnode from the free list.
  *
  * => Returns referenced vnode, moved into the mount queue.
+ * => Shares the lock with vnode specified by 'svp', if it is not NULL.
  */
 int
 getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
-	    vnode_t **vpp)
+	    const vnode_t *svp, vnode_t **vpp)
 {
 	struct uvm_object *uobj;
 	static int toggle;
@@ -381,6 +386,17 @@ try_again:
 			*vpp = 0;
 			return ENFILE;
 		}
+		if ((vp->v_iflag & VI_LOCKSHARE) != 0 || svp) {
+			/* We must remove vnode from the old mount point. */
+			if (vp->v_mount) {
+				vfs_insmntque(vp, NULL);
+			}
+			/* Allocate a new interlock, if it was shared. */
+			if (vp->v_iflag & VI_LOCKSHARE) {
+				uvm_obj_setlock(&vp->v_uobj, NULL);
+				vp->v_iflag &= ~VI_LOCKSHARE;
+			}
+		}
 		vp->v_iflag = 0;
 		vp->v_vflag = 0;
 		vp->v_uflag = 0;
@@ -403,6 +419,15 @@ try_again:
 	KASSERT(uobj->uo_npages == 0);
 	KASSERT(TAILQ_FIRST(&uobj->memq) == NULL);
 	vp->v_size = vp->v_writesize = VSIZENOTSET;
+
+	/* Share the vnode_t::v_interlock, if requested. */
+	if (svp) {
+		/* Set the interlock and mark that it is shared. */
+		KASSERT(vp->v_mount == NULL);
+		uvm_obj_setlock(&vp->v_uobj, svp->v_interlock);
+		KASSERT(vp->v_interlock == svp->v_interlock);
+		vp->v_iflag |= VI_LOCKSHARE;
+	}
 
 	/* Finally, move vnode into the mount queue. */
 	vfs_insmntque(vp, mp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.108.4.3 2011/03/05 20:56:35 rmind Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.108.4.4 2011/05/19 03:43:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.108.4.3 2011/03/05 20:56:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.108.4.4 2011/05/19 03:43:05 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -415,7 +415,7 @@ uao_free(struct uvm_aobj *aobj)
 	 * finally free the aobj itself
 	 */
 
-	uvm_obj_destroy(&aobj->u_obj, NULL);
+	uvm_obj_destroy(&aobj->u_obj, true);
 	kmem_free(aobj, sizeof(struct uvm_aobj));
 }
 
@@ -498,11 +498,16 @@ uao_create(vsize_t size, int flags)
 	}
 
 	/*
- 	 * init aobj fields
- 	 */
+	 * Initialise UVM object.
+	 */
 
-	uvm_obj_init(&aobj->u_obj, &aobj_pager,
-	    (flags & UAO_FLAG_KERNOBJ) ? &kernel_object_lock : NULL, refs);
+	const bool kernobj = (flags & UAO_FLAG_KERNOBJ) != 0;
+	uvm_obj_init(&aobj->u_obj, &aobj_pager, !kernobj, refs);
+	if (__predict_false(kernobj)) {
+		/* Initialisation only once, for UAO_FLAG_KERNOBJ. */
+		mutex_init(&kernel_object_lock, MUTEX_DEFAULT, IPL_NONE);
+		uvm_obj_setlock(&aobj->u_obj, &kernel_object_lock);
+	}
 
 	/*
  	 * now that aobj is ready, add it to the global list

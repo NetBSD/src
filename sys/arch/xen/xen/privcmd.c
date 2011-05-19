@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.41.4.1 2010/03/16 15:38:04 rmind Exp $ */
+/* $NetBSD: privcmd.c,v 1.41.4.2 2011/05/19 03:43:00 rmind Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.41.4.1 2010/03/16 15:38:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.41.4.2 2011/05/19 03:43:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,7 +474,7 @@ privpgop_detach(struct uvm_object *uobj)
 	}
 	mutex_exit(uobj->vmobjlock);
 	kmem_free(pobj->maddr, sizeof(paddr_t) * pobj->npages);
-	uvm_obj_destroy(uobj, NULL);
+	uvm_obj_destroy(uobj, true);
 	kmem_free(pobj, sizeof(struct privcmd_object));
 	privcmd_nobjects--;
 }
@@ -563,7 +563,7 @@ privcmd_map_obj(struct vm_map *map, vaddr_t start, paddr_t *maddr,
 	}
 
 	privcmd_nobjects++;
-	uvm_obj_init(&obj->uobj, &privpgops, NULL, 1);
+	uvm_obj_init(&obj->uobj, &privpgops, true, 1);
 	mutex_enter(obj->uobj.vmobjlock);
 	obj->maddr = maddr;
 	obj->npages = npages;
