@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.62 2010/10/29 16:13:51 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.63 2011/05/19 15:07:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.62 2010/10/29 16:13:51 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.63 2011/05/19 15:07:16 riastradh Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -257,6 +257,7 @@ main(int argc, char *argv[])
 
 	pctx.nextino = 2;
 	memset(root, 0, sizeof(struct psshfs_node));
+	TAILQ_INIT(&root->pw);
 	pn_root = puffs_pn_new(pu, root);
 	if (pn_root == NULL)
 		return errno;
