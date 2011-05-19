@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.85 2011/05/19 03:11:59 rmind Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.86 2011/05/19 03:25:11 manu Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.85 2011/05/19 03:11:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.86 2011/05/19 03:25:11 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -99,13 +99,13 @@ ufs_inactive(void *v)
 	if (ip->i_mode == 0)
 		goto out;
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+#ifdef UFS_EXTATTR
+		ufs_extattr_vnode_inactive(vp, curlwp);
+#endif
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
 			goto out;
 		logged = 1;
-#ifdef UFS_EXTATTR
-		ufs_extattr_vnode_inactive(vp, curlwp);
-#endif
 		if (ip->i_size != 0) {
 			/*
 			 * When journaling, only truncate one indirect block
