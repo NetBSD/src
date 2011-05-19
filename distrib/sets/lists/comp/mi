@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1623 2011/05/09 17:13:20 manu Exp $
+#	$NetBSD: mi,v 1.1624 2011/05/19 21:39:02 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5624,6 +5624,7 @@
 ./usr/share/man/cat3/closelog_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/clrtobot.0			comp-c-catman		.cat
 ./usr/share/man/cat3/clrtoeol.0			comp-c-catman		.cat
+./usr/share/man/cat3/cmsg.0			comp-c-catman		.cat
 ./usr/share/man/cat3/color_content.0		comp-c-catman		.cat
 ./usr/share/man/cat3/color_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/com_err.0			comp-krb5-catman	kerberos,.cat
@@ -11717,6 +11718,7 @@
 ./usr/share/man/html3/closelog_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/clrtobot.html		comp-c-htmlman		html
 ./usr/share/man/html3/clrtoeol.html		comp-c-htmlman		html
+./usr/share/man/html3/cmsg.html			comp-c-htmlman		html
 ./usr/share/man/html3/color_content.html	comp-c-htmlman		html
 ./usr/share/man/html3/color_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/com_err.html		comp-krb5-htmlman	kerberos,html
@@ -17717,6 +17719,7 @@
 ./usr/share/man/man3/closelog_r.3		comp-c-man		.man
 ./usr/share/man/man3/clrtobot.3			comp-c-man		.man
 ./usr/share/man/man3/clrtoeol.3			comp-c-man		.man
+./usr/share/man/man3/cmsg.3			comp-c-man		.man
 ./usr/share/man/man3/color_content.3		comp-c-man		.man
 ./usr/share/man/man3/color_set.3		comp-c-man		.man
 ./usr/share/man/man3/com_err.3			comp-krb5-man		kerberos,.man
