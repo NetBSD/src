@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:49:59 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2011/05/19 21:26:39 tsutsui Exp $
 
+WARNS?=	4
 PROG=loadfont
 NOMAN=	# defined
 
