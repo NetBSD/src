@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.39 2011/04/24 15:41:55 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.40 2011/05/19 19:52:44 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2727,4 +2727,12 @@ lib/libc/gen/glob.c				1.28-1.29 via patch
 
 	Prevent resource DoS from brace expansion.
 	[spz, ticket #1597]
+
+lib/libc/db/btree/bt_open.c			1.25
+lib/libc/db/hash/hash_page.c			1.24
+
+	Correct check for snprintf() overflow via Maksymilian Arciemowicz
+	from FreeBSD.
+	(the bt one was ok, but set errno and make it the same for consistency).
+	[christos, ticket #1602]
 
