@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/05/19 21:06:02 joerg Exp $
 
 LIB=	LLVMCore
 
@@ -33,6 +33,7 @@ SRCS+=	AsmWriter.cpp \
 	PassManager.cpp \
 	PassRegistry.cpp \
 	PrintModulePass.cpp \
+	StandardPasses.cpp \
 	Type.cpp \
 	TypeSymbolTable.cpp \
 	Use.cpp \
