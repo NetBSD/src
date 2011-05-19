@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.4 2011/05/19 09:58:28 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.5 2011/05/19 10:00:30 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.4 2011/05/19 09:58:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.5 2011/05/19 10:00:30 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.4 2011/05/19 09:58:28 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.4 2011/05/19 09:58:28 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.5 2011/05/19 10:00:30 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -325,6 +325,25 @@ radix_tree_grow(struct radix_tree *t, unsigned int newheight)
 	return 0;
 }
 
+/*
+ * radix_tree_lookup_ptr:
+ *
+ * an internal helper function used for various exported functions.
+ *
+ * return the pointer to store the node for the given index.
+ *
+ * if alloc is true, try to allocate the storage.  (note for _KERNEL:
+ * in that case, this function can block.)  if the allocation failed or
+ * alloc is false, return NULL.
+ *
+ * if path is not NULL, fill it for the caller's investigation.
+ *
+ * if tagmask is not zero, search only for nodes with the tag set.
+ *
+ * while this function is a bit large, as it's called with some constant
+ * arguments, inlining might have benefits.  anyway, a compiler will decide.
+ */
+
 static inline void **
 radix_tree_lookup_ptr(struct radix_tree *t, uint64_t idx,
     struct radix_tree_path *path, bool alloc, const unsigned int tagmask)
@@ -336,6 +355,9 @@ radix_tree_lookup_ptr(struct radix_tree *t, uint64_t idx,
 	const uint64_t mask = (UINT64_C(1) << RADIX_TREE_BITS_PER_HEIGHT) - 1;
 	struct radix_tree_node_ref *refs = NULL;
 
+	/*
+	 * check unsupported combinations
+	 */
 	KASSERT(tagmask == 0 || !alloc);
 	KASSERT(path == NULL || !alloc);
 	vpp = &t->t_root;
