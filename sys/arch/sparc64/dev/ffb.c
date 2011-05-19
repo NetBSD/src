@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.41 2011/05/09 09:06:28 jdc Exp $	*/
+/*	$NetBSD: ffb.c,v 1.42 2011/05/19 04:43:45 macallan Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.41 2011/05/09 09:06:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.42 2011/05/19 04:43:45 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -990,11 +990,6 @@ ffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct ffb_softc *sc = scr->scr_cookie;
-	
-	/*
-	 * font operations don't use the blitter so we have to wait here
-	 * in case we were scrolling
-	 */
 	
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		void *data;
