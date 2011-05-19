@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.6 2011/05/19 10:01:21 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.7 2011/05/19 10:06:56 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.6 2011/05/19 10:01:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.7 2011/05/19 10:06:56 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.6 2011/05/19 10:01:21 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.6 2011/05/19 10:01:21 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.7 2011/05/19 10:06:56 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -127,6 +127,12 @@ struct radix_tree_node {
 	void *n_ptrs[RADIX_TREE_PTR_PER_NODE];
 	unsigned int n_nptrs;	/* # of non-NULL pointers in n_ptrs */
 };
+
+/*
+ * any_children_tagmask:
+ *
+ * return OR'ed tagmask of the given node's children.
+ */
 
 static unsigned int
 any_children_tagmask(struct radix_tree_node *n)
@@ -808,9 +814,15 @@ radix_tree_clear_tag(struct radix_tree *t, uint64_t idx,
 	KASSERT(*vpp != NULL);
 	KASSERT(path.p_lastidx == t->t_height);
 	KASSERT(vpp == path_pptr(t, &path, path.p_lastidx));
+	/*
+	 * if already cleared, nothing to do
+	 */
 	if ((entry_tagmask(*vpp) & tagmask) == 0) {
 		return;
 	}
+	/*
+	 * clear the tag only if no children have the tag.
+	 */
 	for (i = t->t_height; i >= 0; i--) {
 		void ** const pptr = (void **)path_pptr(t, &path, i);
 		void *entry;
@@ -820,7 +832,10 @@ radix_tree_clear_tag(struct radix_tree *t, uint64_t idx,
 		KASSERT((entry_tagmask(entry) & tagmask) != 0);
 		*pptr = entry_compose(entry_ptr(entry),
 		    entry_tagmask(entry) & ~tagmask);
-		if (0 < i && i < t->t_height - 1) {
+		/*
+		 * check if we should proceed to process the next level.
+		 */
+		if (0 < i) {
 			struct radix_tree_node *n = path_node(t, &path, i - 1);
 
 			if ((any_children_tagmask(n) & tagmask) != 0) {
