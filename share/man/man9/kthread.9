@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.24 2010/12/02 12:54:13 wiz Exp $
+.\"     $NetBSD: kthread.9,v 1.25 2011/05/19 03:07:30 rmind Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 13, 2010
+.Dd May 19, 2011
 .Dt KTHREAD 9
 .Os
 .Sh NAME
@@ -89,16 +89,13 @@ May be
 .Dv NULL
 if not required.
 .It Fa newlp
-A pointer to receive the new lwp structure for the kernel thread.
-May not be
-.Dv NULL
-if
+A pointer to receive the new LWP structure for the kernel thread.
+May be
+.Dv NULL ,
+unless
 .Dv KTHREAD_JOINABLE
 is specified in
-.Fa flags ;
-otherwise may be
-.Dv NULL
-if not required.
+.Fa flags .
 .It Fa fmt
 A string containing format information used to display the kernel
 thread name.
@@ -129,7 +126,7 @@ specified.
 Causes the kthread to be created in the
 .Dv SCHED_OTHER
 class (timeshared).
-The threads' priority will be dynamically adjusted by the scheduler.
+The priority of thread will be dynamically adjusted by the scheduler.
 Increased activity by the kthread will cause its priority to fall;
 decreased activity will cause its priority to rise.
 By default, kthreads are created in the
@@ -143,10 +140,11 @@ class do not have their priority dynamically
 adjusted by the scheduler.
 .It Dv KTHREAD_JOINABLE
 Requests creation of joinable kthread.
-When this flag is specified, the
+In such case
+.Fn kthread_exit
+will wait until
 .Fn kthread_join
-function can be called only once for the lwp structure returned in
-.Fa newlp .
+will be called.
 .El
 .It Fn kthread_destroy "l"
 From another thread executing in the kernel, cause a kthread to exit.
@@ -157,9 +155,13 @@ The kthread must be in the
 Exit from a kernel thread.
 Must only be called by a kernel thread.
 .It Fn kthread_join "l"
-Suspend execution of the LWP until the target kthread terminates.
+Suspend execution of calling thread until the target kthread terminates.
 Conceptually the function can be compared to the user space
-.Xr pthread_join 3 .
+.Xr pthread_join 3 ,
+however it must be called only once for kernel thread which was created using
+.Dv KTHREAD_JOIN
+flag and would wait on
+.Fa kthread_exit .
 .El
 .Sh RETURN VALUES
 Upon successful completion,

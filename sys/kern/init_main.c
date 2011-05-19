@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.428 2011/04/14 16:20:52 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.429 2011/05/19 03:07:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.428 2011/04/14 16:20:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.429 2011/05/19 03:07:29 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -304,6 +304,7 @@ main(void)
 	once_init();
 	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 	kernconfig_lock_init();
+	kthread_sysinit();
 
 	/* Initialize the device switch tables. */
 	devsw_init();
