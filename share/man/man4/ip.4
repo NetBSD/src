@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.30 2009/07/20 07:58:54 wiz Exp $
+.\"	$NetBSD: ip.4,v 1.31 2011/05/19 21:16:45 riastradh Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ip.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd July 19, 2009
+.Dd May 19, 2011
 .Dt IP 4
 .Os
 .Sh NAME
@@ -142,7 +142,7 @@ that contains a cmsghdr structure followed by the
 address.
 The cmsghdr fields have the following values:
 .Bd -literal
-cmsg_len = sizeof(struct in_addr)
+cmsg_len = CMSG_LEN(sizeof(struct in_addr))
 cmsg_level = IPPROTO_IP
 cmsg_type = IP_RECVDSTADDR
 .Ed
@@ -162,7 +162,7 @@ the msg_control field in the msghdr structure points to a buffer
 that contains a cmsghdr structure followed by the struct sockaddr_dl.
 The cmsghdr fields have the following values:
 .Bd -literal
-cmsg_len = sizeof(struct sockaddr_dl)
+cmsg_len = CMSG_LEN(sizeof(struct sockaddr_dl))
 cmsg_level = IPPROTO_IP
 cmsg_type = IP_RECVIF
 .Ed
@@ -182,7 +182,7 @@ that contains a cmsghdr structure followed by the
 value.
 The cmsghdr fields have the following values:
 .Bd -literal
-cmsg_len = sizeof(uint8_t)
+cmsg_len = CMSG_LEN(sizeof(uint8_t))
 cmsg_level = IPPROTO_IP
 cmsg_type = IP_RECVTTL
 .Ed
@@ -437,6 +437,7 @@ shorter than the minimum value or longer than the option buffer provided.
 .Xr getsockopt 2 ,
 .Xr recv 2 ,
 .Xr send 2 ,
+.Xr CMSG_DATA 3 ,
 .Xr ipsec_set_policy 3 ,
 .Xr icmp 4 ,
 .Xr inet 4 ,
