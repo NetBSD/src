@@ -1138,6 +1138,8 @@ print_string(char *s, ssize_t len, int dl, const uint8_t *data)
 		case '$':  /* FALLTHROUGH */
 		case '`':  /* FALLTHROUGH */
 		case '\\': /* FALLTHROUGH */
+		case '|':  /* FALLTHROUGH */
+		case '&':
 			if (s) {
 				if (len < 3) {
 					errno = ENOBUFS;
