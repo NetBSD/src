@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2009/08/13 06:59:37 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2011/05/19 22:55:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.17 2009/08/13 06:59:37 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2011/05/19 22:55:53 christos Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: main.c,v 1.17 2009/08/13 06:59:37 dholland Exp $");
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "error.h"
 #include "pathnames.h"
 
@@ -57,6 +58,7 @@ FILE *queryfile;     /* where the query responses from the user come from*/
 int nignored;
 char **names_ignored;
 
+size_t filelevel = 0;
 int nerrors = 0;
 Eptr er_head;
 static Eptr *errors;
@@ -81,11 +83,10 @@ const char *suffixlist = ".*";	/* initially, can touch any file */
 static int errorsort(const void *, const void *);
 static void forkvi(int, char **);
 static void try(const char *, int, char **);
+static void usage(void) __attribute__((__noreturn__));
 
 /*
- * error [-I ignorename] [-n] [-q] [-t suffixlist] [-s] [-v] [infile]
- *
- *	-T:	terse output
+ * error [-nqSsTv] [-I <ignorename>] [-t <suffixlist>] [-p <level>] <infile>
  *
  *	-I:	the following name, `ignorename' contains a list of
  *		function names that are not to be treated as hard errors.
@@ -93,16 +94,24 @@ static void try(const char *, int, char **);
  *
  *	-n:	don't touch ANY files!
  *
+ *	-p:	take the next argument as the number of levels to skip
+ *		from the filename, like perl.
+ *
  *	-q:	The user is to be queried before touching each
  *		file; if not specified, all files with hard, non
  *		ignorable errors are touched (assuming they can be).
+ *
+ *	-S:	show the errors in unsorted order
+ *		(as they come from the error file)
+ *
+ *	-s:	print a summary of the error's categories.
+ *
+ *	-T:	terse output
  *
  *	-t:	touch only files ending with the list of suffixes, each
  *		suffix preceded by a dot.
  *		eg, -t .c.y.l
  *		will touch only files ending with .c, .y or .l
- *
- *	-s:	print a summary of the error's categories.
  *
  *	-v:	after touching all files, overlay vi(1), ex(1) or ed(1)
  *		on top of error, entered in the first file with
@@ -110,25 +119,13 @@ static void try(const char *, int, char **);
  *		set up to use the "next" command to get the other
  *		files containing errors.
  *
- *	-p:	(obsolete: for older versions of pi without bug
- *		fix regarding printing out the name of the main file
- *		with an error in it)
- *		Take the following argument and use it as the name of
- *		the pascal source file, suffix .p
- *
- *	-E:	show the errors in sorted order; intended for
- *		debugging.
- *
- *	-S:	show the errors in unsorted order
- *		(as they come from the error file)
- *
  *	infile:	The error messages come from this file.
  *		Default: stdin
  */
 int
 main(int argc, char **argv)
 {
-	char *cp;
+	int c;
 	char *ignorename = 0;
 	int ed_argc;
 	char **ed_argv;		/* return from touchfiles */
@@ -137,60 +134,55 @@ main(int argc, char **argv)
 	boolean pr_summary = false;
 	boolean edit_files = false;
 
-	processname = argv[0];
+	setprogname(argv[0]);
 
 	errorfile = stdin;
-	if (argc > 1)
-		for (; argc > 1 && argv[1][0] == '-'; argc--, argv++) {
-			for (cp = argv[1] + 1; *cp; cp++)
-				switch (*cp) {
-				default:
-					fprintf(stderr, "%s: -%c: Unknown flag\n",
-						processname, *cp);
-					break;
-
-				case 'n': notouch = true; break;
-				case 'q': query = true; break;
-				case 'S': Show_Errors = true; break;
-				case 's': pr_summary = true; break;
-				case 'v': edit_files = true; break;
-				case 'T': terse = true; break;
-				case 't':
-					*cp-- = 0; argv++; argc--;
-					if (argc > 1) {
-						suffixlist = argv[1];
-					}
-					break;
-				case 'I':	/*ignore file name*/
-					*cp-- = 0;
-					argv++;
-					argc--;
-					if (argc > 1)
-						ignorename = argv[1];
-					break;
-				}
+	while ((c = getopt(argc, argv, "I:np:qSsTt:v")) != -1)
+		switch (c) {
+		case 'I':	/*ignore file name*/
+			ignorename = optarg;
+			break;
+		case 'n':
+			notouch = true;
+			break;
+		case 'p':
+			filelevel = (size_t)strtol(optarg, NULL, 0);
+			break;
+		case 'q':
+			query = true;
+			break;
+		case 'S':
+			Show_Errors = true;
+			break;
+		case 's':
+			pr_summary = true;
+			break;
+		case 'T':
+			terse = true;
+			break;
+		case 't':
+			suffixlist = optarg;
+			break;
+		case 'v':
+			edit_files = true;
+			break;
+		default:
+			usage();
 		}
+
+	argv += optind;
+	argc -= optind;
 	if (notouch)
 		suffixlist = 0;
 	if (argc > 1) {
-		if (argc > 3) {
-			fprintf(stderr, "%s: Only takes 0 or 1 arguments\n",
-				processname);
-			exit(3);
-		}
-		if ((errorfile = fopen(argv[1], "r")) == NULL) {
-			fprintf(stderr, "%s: %s: No such file or directory for reading errors.\n",
-				processname, argv[1]);
-			exit(4);
-		}
+		if (argc > 3)
+			usage();
+		if ((errorfile = fopen(argv[1], "r")) == NULL)
+			err(1, "Cannot open `%s' to read errors", argv[1]);
 	}
 	if ((queryfile = fopen(im_on, "r")) == NULL) {
-		if (query) {
-			fprintf(stderr,
-				"%s: Can't open \"%s\" to query the user.\n",
-				processname, im_on);
-			exit(9);
-		}
+		if (query)
+			err(1, "Cannot open `%s' to query the user", im_on);
 	}
 	if (signal(SIGINT, onintr) == SIG_IGN)
 		signal(SIGINT, SIG_IGN);
@@ -300,4 +292,12 @@ errorsort(const void *x1, const void *x2)
 		return (ep1->error_line - ep2->error_line);
 	}
 	return (order);
+}
+
+static void
+usage(void)
+{
+	fprintf(stderr, "Usage: %s [-nqSsTv] [-I <ignorename>] "
+	    "[-t <suffixlist>] [-p <level>] <infile>\n", getprogname());
+	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.15 2009/08/13 06:59:37 dholland Exp $	*/
+/*	$NetBSD: error.h,v 1.16 2011/05/19 22:55:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -87,6 +87,8 @@ typedef int Errorclass;
  */
 extern const char *class_table[];
 extern int class_count[];
+
+extern size_t filelevel;
 
 #define nunknown	class_count[C_UNKNOWN]
 #define nignore		class_count[C_IGNORE]

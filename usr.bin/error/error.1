@@ -1,4 +1,4 @@
-.\"	$NetBSD: error.1,v 1.14 2010/04/05 21:18:20 joerg Exp $
+.\"	$NetBSD: error.1,v 1.15 2011/05/19 22:55:53 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)error.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd May 19, 2011
 .Dt ERROR 1
 .Os
 .Sh NAME
@@ -37,12 +37,15 @@
 .Nd analyze and disperse compiler error messages
 .Sh SYNOPSIS
 .Nm
-.Op Fl n
-.Op Fl s
-.Op Fl q
-.Op Fl v
-.Op Fl t Ar suffixlist
 .Op Fl I Ar ignorefile
+.Op Fl n
+.Pp Fl p Ar filelevel
+.Op Fl q
+.Op Fl S
+.Op Fl s
+.Op Fl T
+.Op Fl t Ar suffixlist
+.Op Fl v
 .Op name
 .Sh DESCRIPTION
 .Nm
@@ -83,6 +86,8 @@ can't be found, try
 or
 .Xr \&ed 1
 from standard places.
+.It Fl T
+Terse output.
 .It Fl t
 Take the following argument as a suffix list.
 Files whose suffixes do not appear in the suffix list are not touched.
@@ -94,6 +99,12 @@ Thus the suffix list:
 allows
 .Nm
 to touch files ending with ``.c'', ``.y'', ``.foo*'' and ``.h''.
+.It Fl p Ar filelevel
+Interpret filenumber as a level of path component names to skip,
+similar to 
+.Xr patch 1 .
+.It Fl S
+Show the errors in unsorted order (as they come from the error file).
 .It Fl s
 Print out
 .Em statistics

@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.22 2009/08/13 06:59:37 dholland Exp $	*/
+/*	$NetBSD: touch.c,v 1.23 2011/05/19 22:55:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.22 2009/08/13 06:59:37 dholland Exp $");
+__RCSID("$NetBSD: touch.c,v 1.23 2011/05/19 22:55:53 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,12 +87,30 @@ static int mustwrite(const char *, unsigned, FILE *);
 static void errorprint(FILE *, Eptr, boolean);
 static int probethisfile(const char *);
 
+static const char *
+makename(const char *name, size_t level)
+{
+	const char *p;
+
+	if (level-- == 0)
+		return name;
+
+	if (*name == '/') {
+		name++;
+		if (level-- == 0)
+			return name;
+	}
+
+	while (level-- != 0 && (p = strchr(name, '/')) != NULL)
+		name = p + 1;
+
+	return name;
+}
 void
 findfiles(int my_nerrors, Eptr *my_errors, int *r_nfiles, Eptr ***r_files)
 {
 	int my_nfiles;
 	Eptr **my_files;
-
 	const char *name;
 	int ei;
 	int fi;
@@ -122,10 +140,11 @@ findfiles(int my_nerrors, Eptr *my_errors, int *r_nfiles, Eptr ***r_files)
 	name = "\1";
 	fi = 1;
 	ECITERATE(ei, errorp, ei, my_errors, my_nerrors) {
+		const char *fname = makename(errorp->error_text[0], filelevel);
 		if (errorp->error_e_class == C_NULLED
 		    || errorp->error_e_class == C_TRUE) {
-			if (strcmp(errorp->error_text[0], name) != 0) {
-				name = errorp->error_text[0];
+			if (strcmp(fname, name) != 0) {
+				name = fname;
 				touchedfiles[fi] = false;
 				my_files[fi] = &my_errors[ei];
 				fi++;
@@ -149,9 +168,11 @@ countfiles(Eptr *errors)
 	name = "\1";
 	ECITERATE(ei, errorp, 0, errors, nerrors) {
 		if (SORTABLE(errorp->error_e_class)) {
-			if (strcmp(errorp->error_text[0],name) != 0) {
+			const char *fname = makename(errorp->error_text[0],
+			    filelevel);
+			if (strcmp(fname, name) != 0) {
 				my_nfiles++;
-				name = errorp->error_text[0];
+				name = name;
 			}
 		}
 	}
@@ -195,7 +216,9 @@ filenames(int my_nfiles, Eptr **my_files)
 		if (!terse) {
 			FILEITERATE(fi, 1, my_nfiles) {
 				fprintf(stdout, "%s\"%s\" (%d)",
-					sep, (*my_files[fi])->error_text[0],
+					sep, makename(
+					(*my_files[fi])->error_text[0],
+					filelevel),
 					(int)(my_files[fi+1] - my_files[fi]));
 				sep = ", ";
 			}
@@ -241,6 +264,7 @@ nopertain(Eptr **my_files)
 	return (someerrors);
 }
 
+
 bool
 touchfiles(int my_nfiles, Eptr **my_files, int *r_edargc, char ***r_edargv)
 {
@@ -254,8 +278,9 @@ touchfiles(int my_nfiles, Eptr **my_files, int *r_edargc, char ***r_edargv)
 	int spread;
 
 	FILEITERATE(fi, 1, my_nfiles) {
-		name = (*my_files[fi])->error_text[0];
+		name = makename((*my_files[fi])->error_text[0], filelevel);
 		spread = my_files[fi+1] - my_files[fi];
+
 		fprintf(stdout, terse
 			? "\"%s\" has %d error%s, "
 			: "\nFile \"%s\" has %d error%s.\n"
@@ -501,7 +526,7 @@ static void
 execvarg(int n_pissed_on, int *r_argc, char ***r_argv)
 {
 	Eptr p;
-	const char *sep;
+	const char *sep, *name;
 	int fi;
 
 	sep = NULL;
@@ -517,11 +542,12 @@ execvarg(int n_pissed_on, int *r_argc, char ***r_argv)
 		if (!touchedfiles[fi])
 			continue;
 		p = *(files[fi]);
+		name = makename(p->error_text[0], filelevel);
 		if (!terse) {
-			fprintf(stdout,"%s\"%s\"", sep, p->error_text[0]);
+			fprintf(stdout,"%s\"%s\"", sep, name);
 			sep = ", ";
 		}
-		(*r_argv)[n_pissed_on++] = p->error_text[0];
+		(*r_argv)[n_pissed_on++] = __UNCONST(name);
 	}
 	if (!terse)
 		fprintf(stdout, "\n");
