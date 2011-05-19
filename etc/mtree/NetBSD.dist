@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.385.2.6 2011/03/08 17:38:31 riz Exp $
+#	$NetBSD: NetBSD.dist,v 1.385.2.7 2011/05/19 21:06:58 bouyer Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -715,6 +715,7 @@
 ./usr/share/i18n/csmapper/APPLE
 ./usr/share/i18n/csmapper/AST
 ./usr/share/i18n/csmapper/BIG5
+./usr/share/i18n/csmapper/CBM
 ./usr/share/i18n/csmapper/CNS
 ./usr/share/i18n/csmapper/CP
 ./usr/share/i18n/csmapper/EBCDIC
@@ -732,6 +733,7 @@
 ./usr/share/i18n/esdb/APPLE
 ./usr/share/i18n/esdb/AST
 ./usr/share/i18n/esdb/BIG5
+./usr/share/i18n/esdb/CBM
 ./usr/share/i18n/esdb/CP
 ./usr/share/i18n/esdb/DEC
 ./usr/share/i18n/esdb/EBCDIC
