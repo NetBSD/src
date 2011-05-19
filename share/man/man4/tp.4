@@ -1,4 +1,4 @@
-.\"	$NetBSD: tp.4,v 1.18 2010/03/22 18:58:31 joerg Exp $
+.\"	$NetBSD: tp.4,v 1.19 2011/05/19 21:16:45 riastradh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -204,7 +204,7 @@ The returned
 will contain
 .Dv SOL_TRANSPORT
 for the
-.Va csmg_level
+.Va cmsg_level
 and
 .Dv TPOPT_CONN_DATA
 for
@@ -229,7 +229,7 @@ The user-provided
 must contain
 .Dv SOL_TRANSPORT
 for
-.Va csmg_level
+.Va cmsg_level
 and
 .Dv TPOPT_DISC_DATA
 for
