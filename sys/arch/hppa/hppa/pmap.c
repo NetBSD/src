@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71.2.5 2011/03/09 19:13:18 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71.2.6 2011/05/19 03:42:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71.2.5 2011/03/09 19:13:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71.2.6 2011/05/19 03:42:59 rmind Exp $");
 
 #include "opt_cputype.h"
 
@@ -679,7 +679,10 @@ pmap_bootstrap(vaddr_t vstart)
 	kpm = pmap_kernel();
 	memset(kpm, 0, sizeof(*kpm));
 
-	uvm_obj_init(&kpm->pm_obj, NULL, &kpm->pm_obj_lock, 1);
+	mutex_init(&kpm->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
+	uvm_obj_init(&kpm->pm_obj, NULL, false, 1);
+	uvm_obj_setlock(&kpm->pm_obj, &kpm->pm_obj_lock);
+
 	kpm->pm_space = HPPA_SID_KERNEL;
 	kpm->pm_pid = HPPA_PID_KERNEL;
 	kpm->pm_pdir_pg = NULL;
@@ -1039,7 +1042,9 @@ pmap_create(void)
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s: pmap = %p\n", __func__, pmap));
 
-	uvm_obj_init(&pmap->pm_obj, NULL, &pmap->pm_obj_lock, 1);
+	mutex_init(&pmap->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
+	uvm_obj_init(&pmap->pm_obj, NULL, false, 1);
+	uvm_obj_setlock(&pmap->pm_obj, &pmap->pm_obj_lock);
 
 	mutex_enter(&pmaps_lock);
 
@@ -1142,8 +1147,8 @@ pmap_destroy(pmap_t pmap)
 	pmap_pagefree(pmap->pm_pdir_pg);
 	mutex_exit(pmap->pm_lock);
 
-	uvm_obj_destroy(&pmap->pm_obj, &pmap->pm_obj_lock);
-	pmap->pm_pdir_pg = NULL;
+	uvm_obj_destroy(&pmap->pm_obj, false);
+	mutex_destroy(&pmap->pm_obj_lock);
 	pool_put(&pmap_pool, pmap);
 }
 

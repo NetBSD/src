@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.35.4.2 2011/03/05 20:55:10 rmind Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.35.4.3 2011/05/19 03:43:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.35.4.2 2011/03/05 20:55:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.35.4.3 2011/05/19 03:43:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,7 +507,7 @@ loop:
 			lowersz = va.va_size;
 	hash = UNION_HASH(uppervp, lowervp);
 
-	error = getnewvnode(VT_UNION, mp, union_vnodeop_p, vpp);
+	error = getnewvnode(VT_UNION, mp, union_vnodeop_p, NULL, vpp); /* TODO */
 	if (error) {
 		if (uppervp) {
 			if (dvp == uppervp)

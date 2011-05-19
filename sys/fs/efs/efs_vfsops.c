@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.19.4.2 2011/03/05 20:55:04 rmind Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.19.4.3 2011/05/19 03:43:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.19.4.2 2011/03/05 20:55:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.19.4.3 2011/05/19 03:43:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,7 +361,7 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		if (*vpp != NULL)
 			return (0);
 
-		err = getnewvnode(VT_EFS, mp, efs_vnodeop_p, &vp);
+		err = getnewvnode(VT_EFS, mp, efs_vnodeop_p, NULL, &vp);
 		if (err)
 			return (err);
 		

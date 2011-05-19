@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.70.4.1 2010/07/03 01:19:49 rmind Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.70.4.2 2011/05/19 03:43:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.70.4.1 2010/07/03 01:19:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.70.4.2 2011/05/19 03:43:00 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -716,7 +716,8 @@ cd9660_vget_internal(struct mount *mp, ino_t ino, struct vnode **vpp,
 		return (0);
 
 	/* Allocate a new vnode/iso_node. */
-	if ((error = getnewvnode(VT_ISOFS, mp, cd9660_vnodeop_p, &vp)) != 0) {
+	error = getnewvnode(VT_ISOFS, mp, cd9660_vnodeop_p, NULL, &vp);
+	if (error) {
 		*vpp = NULLVP;
 		return (error);
 	}

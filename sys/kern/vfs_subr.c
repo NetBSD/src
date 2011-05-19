@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.398.2.5 2011/04/21 01:42:11 rmind Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.398.2.6 2011/05/19 03:43:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.398.2.5 2011/04/21 01:42:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.398.2.6 2011/05/19 03:43:02 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -479,7 +479,7 @@ getdevvp(dev_t dev, vnode_t **vpp, enum vtype type)
 		*vpp = NULL;
 		return (0);
 	}
-	error = getnewvnode(VT_NON, NULL, spec_vnodeop_p, &nvp);
+	error = getnewvnode(VT_NON, NULL, spec_vnodeop_p, NULL, &nvp);
 	if (error) {
 		*vpp = NULL;
 		return (error);

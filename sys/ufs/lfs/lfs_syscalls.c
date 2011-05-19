@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.136.2.2 2010/07/03 01:20:05 rmind Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.136.2.3 2011/05/19 03:43:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.136.2.2 2010/07/03 01:20:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.136.2.3 2011/05/19 03:43:04 rmind Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -1097,7 +1097,8 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 		*vpp = NULL;
 		return EDEADLK;
 	}
-	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, &vp)) != 0) {
+	error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, NULL, &vp);
+	if (error) {
 		*vpp = NULL;
 		return (error);
 	}

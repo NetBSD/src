@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.109.4.2 2011/03/05 20:55:29 rmind Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.109.4.3 2011/05/19 03:43:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.109.4.2 2011/03/05 20:55:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.109.4.3 2011/05/19 03:43:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ loop:
 	}
 	mutex_exit(&fdcache_lock);
 
-	error = getnewvnode(VT_FDESC, mp, fdesc_vnodeop_p, vpp);
+	error = getnewvnode(VT_FDESC, mp, fdesc_vnodeop_p, NULL, vpp);
 	if (error)
 		return error;
 

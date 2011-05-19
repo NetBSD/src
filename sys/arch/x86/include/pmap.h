@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29.2.9 2011/03/17 04:46:28 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.2.10 2011/05/19 03:42:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -135,7 +135,7 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
 struct pmap {
 	struct uvm_object pm_obj[PTP_LEVELS-1]; /* objects for lvl >= 1) */
 #define	pm_lock	pm_obj[0].vmobjlock
-	kmutex_t pm_obj_lock[PTP_LEVELS-1];	/* locks for pm_objs, XXXrmind */
+	kmutex_t pm_obj_lock[PTP_LEVELS-1];	/* locks for pm_objs */
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
 	paddr_t pm_pdirpa[PDP_SIZE];	/* PA of PDs (read-only after create) */

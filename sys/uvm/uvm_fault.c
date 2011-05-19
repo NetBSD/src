@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.173.2.6 2011/04/21 01:42:22 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.173.2.7 2011/05/19 03:43:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.173.2.6 2011/04/21 01:42:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.173.2.7 2011/05/19 03:43:05 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1685,10 +1685,7 @@ uvm_fault_lower_lookup(
 	UVMHIST_FUNC("uvm_fault_lower_lookup"); UVMHIST_CALLED(maphist);
 
 	mutex_enter(uobj->vmobjlock);
-	/* locked: maps(read), amap(if there), uobj */
-	/*
-	 * the following call to pgo_get does _not_ change locking state
-	 */
+	/* Locked: maps(read), amap(if there), uobj */
 
 	uvmexp.fltlget++;
 	gotpages = flt->npages;
@@ -1696,6 +1693,8 @@ uvm_fault_lower_lookup(
 	    ufi->entry->offset + flt->startva - ufi->entry->start,
 	    pages, &gotpages, flt->centeridx,
 	    flt->access_type & MASK(ufi->entry), ufi->entry->advice, PGO_LOCKED);
+
+	KASSERT(mutex_owned(uobj->vmobjlock));
 
 	/*
 	 * check for pages to map, if we got any
@@ -1813,9 +1812,11 @@ uvm_fault_lower_io(
 	/* update rusage counters */
 	curlwp->l_ru.ru_majflt++;
 
-	/* locked: maps(read), amap(if there), uobj */
+	/* Locked: maps(read), amap(if there), uobj */
 	uvmfault_unlockall(ufi, amap, NULL);
-	/* locked: uobj */
+
+	/* Locked: uobj */
+	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
 
 	uvmexp.fltget++;
 	gotpages = 1;
@@ -1898,14 +1899,13 @@ uvm_fault_lower_io(
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
 		}
-		if (pg->flags & PG_RELEASED) {
+		if ((pg->flags & PG_RELEASED) == 0) {
+			pg->flags &= ~(PG_BUSY | PG_WANTED);
+			UVM_PAGE_OWN(pg, NULL);
+		} else {
 			uvmexp.fltpgrele++;
 			uvm_pagefree(pg);
-			mutex_exit(uobj->vmobjlock);
-			return ERESTART;
 		}
-		pg->flags &= ~(PG_BUSY|PG_WANTED);
-		UVM_PAGE_OWN(pg, NULL);
 		mutex_exit(uobj->vmobjlock);
 		return ERESTART;
 	}

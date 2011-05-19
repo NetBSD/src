@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.162.2.6 2011/03/05 20:56:35 rmind Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.162.2.7 2011/05/19 03:43:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -702,8 +702,9 @@ int			uvm_mremap(struct vm_map *, vaddr_t, vsize_t,
 
 /* uvm_object.c */
 void			uvm_obj_init(struct uvm_object *,
-			    const struct uvm_pagerops *, kmutex_t *, u_int);
-void			uvm_obj_destroy(struct uvm_object *, kmutex_t *);
+			    const struct uvm_pagerops *, bool, u_int);
+void			uvm_obj_setlock(struct uvm_object *, kmutex_t *);
+void			uvm_obj_destroy(struct uvm_object *, bool);
 int			uvm_obj_wirepages(struct uvm_object *, off_t, off_t);
 void			uvm_obj_unwirepages(struct uvm_object *, off_t, off_t);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.7.4.5 2011/03/05 20:56:37 rmind Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.7.4.6 2011/05/19 03:43:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.5 2011/03/05 20:56:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.6 2011/05/19 03:43:06 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -57,14 +57,15 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.5 2011/03/05 20:56:37 rmind Exp
  */
 void
 uvm_obj_init(struct uvm_object *uo, const struct uvm_pagerops *ops,
-    kmutex_t *lockptr, u_int refs)
+    bool alock, u_int refs)
 {
 
-	if (lockptr == NULL) {
+	if (alock) {
+		/* Allocate and assign a lock. */
 		uo->vmobjlock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	} else {
-		uo->vmobjlock = lockptr;
-		mutex_init(uo->vmobjlock, MUTEX_DEFAULT, IPL_NONE);
+		/* The lock will need to be set via uvm_obj_setlock(). */
+		uo->vmobjlock = NULL;
 	}
 	uo->pgops = ops;
 	TAILQ_INIT(&uo->memq);
@@ -78,33 +79,50 @@ uvm_obj_init(struct uvm_object *uo, const struct uvm_pagerops *ops,
  * uvm_obj_destroy: destroy UVM memory object.
  */
 void
-uvm_obj_destroy(struct uvm_object *uo, kmutex_t *lockptr)
+uvm_obj_destroy(struct uvm_object *uo, bool dlock)
 {
-#ifdef DIAGNOSTIC
-	void *tmp = NULL;
-	KASSERT(rb_tree_find_node_geq(&uo->rb_tree, &tmp) == NULL);
-#endif
+
+	KASSERT(rb_tree_iterate(&uo->rb_tree, NULL, RB_DIR_LEFT) == NULL);
+
 	/* Purge any UBC entries with this object. */
 	if (__predict_false(!LIST_EMPTY(&uo->uo_ubc))) {
 		ubc_purge(uo);
 	}
-	/* Finally, safe to destory the lock. */
-	if (lockptr) {
-		KASSERT(uo->vmobjlock == lockptr);
-		mutex_destroy(uo->vmobjlock);
-	} else {
+	/* Destroy the lock, if requested. */
+	if (dlock) {
 		mutex_obj_free(uo->vmobjlock);
 	}
 }
 
 /*
- * uobj_wirepages: wire the pages of entire uobj
+ * uvm_obj_setlock: assign a vmobjlock to the UVM object.
+ *
+ * => Caller is responsible to ensure that UVM objects is not use.
+ * => Only dynamic lock may be previously set.  We drop the reference then.
+ */
+void
+uvm_obj_setlock(struct uvm_object *uo, kmutex_t *lockptr)
+{
+	kmutex_t *olockptr = uo->vmobjlock;
+
+	if (olockptr) {
+		/* Drop the reference on the old lock. */
+		mutex_obj_free(olockptr);
+	}
+	if (lockptr == NULL) {
+		/* If new lock is not passed - allocate default one. */
+		lockptr = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	}
+	uo->vmobjlock = lockptr;
+}
+
+/*
+ * uvm_obj_wirepages: wire the pages of entire UVM object.
  *
  * => NOTE: this function should only be used for types of objects
  *  where PG_RELEASED flag is never set (aobj objects)
  * => caller must pass page-aligned start and end values
  */
-
 int
 uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end)
 {
@@ -181,13 +199,12 @@ error:
 }
 
 /*
- * uobj_unwirepages: unwire the pages of entire uobj
+ * uvm_obj_unwirepages: unwire the pages of entire UVM object.
  *
  * => NOTE: this function should only be used for types of objects
  *  where PG_RELEASED flag is never set
  * => caller must pass page-aligned start and end values
  */
-
 void
 uvm_obj_unwirepages(struct uvm_object *uobj, off_t start, off_t end)
 {

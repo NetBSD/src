@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.4.6.3 2011/03/05 20:55:05 rmind Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.4.6.4 2011/05/19 03:43:01 rmind Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.4.6.3 2011/03/05 20:55:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.4.6.4 2011/05/19 03:43:01 rmind Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -813,7 +813,7 @@ nilfs_get_node_raw(struct nilfs_device *nilfsdev, struct nilfs_mount *ump,
 
 	/* associate with mountpoint if present*/
 	mp = ump? ump->vfs_mountp : NULL;
-	error = getnewvnode(VT_NILFS, mp, vnodeops, &nvp);
+	error = getnewvnode(VT_NILFS, mp, vnodeops, NULL, &nvp);
 	if (error)
 		return error;
 

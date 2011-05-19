@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.104.2.3 2011/03/05 20:55:10 rmind Exp $ */
+/* $NetBSD: udf_subr.c,v 1.104.2.4 2011/05/19 03:43:02 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.104.2.3 2011/03/05 20:55:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.104.2.4 2011/05/19 03:43:02 rmind Exp $");
 #endif /* not lint */
 
 
@@ -5342,8 +5342,8 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 
 	DPRINTF(NODE, ("\tget new vnode\n"));
 	/* give it a vnode */
-	error = getnewvnode(VT_UDF, ump->vfs_mountp, udf_vnodeop_p, &nvp);
-        if (error) {
+	error = getnewvnode(VT_UDF, ump->vfs_mountp, udf_vnodeop_p, NULL, &nvp);
+	if (error) {
 		pool_put(&udf_node_pool, udf_node);
 		mutex_exit(&ump->get_node_lock);
 		return error;
@@ -5799,8 +5799,8 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	*vpp = NULL;
 
 	/* allocate vnode */
-	error = getnewvnode(VT_UDF, ump->vfs_mountp, vnodeops, &nvp);
-        if (error)
+	error = getnewvnode(VT_UDF, ump->vfs_mountp, vnodeops, NULL, &nvp);
+	if (error)
 		return error;
 
 	/* lock node */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.258.2.4 2011/04/21 01:42:20 rmind Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.258.2.5 2011/05/19 03:43:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.258.2.4 2011/04/21 01:42:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.258.2.5 2011/05/19 03:43:04 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1760,7 +1760,8 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		return (0);
 
 	/* Allocate a new vnode/inode. */
-	if ((error = getnewvnode(VT_UFS, mp, ffs_vnodeop_p, &vp)) != 0) {
+	error = getnewvnode(VT_UFS, mp, ffs_vnodeop_p, NULL, &vp);
+	if (error) {
 		*vpp = NULL;
 		return (error);
 	}

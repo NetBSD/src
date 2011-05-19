@@ -94,7 +94,7 @@ unionfs_nodeget(struct mount *mp, struct vnode *uppervp,
 	unp = kmem_zalloc(sizeof(*unp), KM_SLEEP);
 	if (unp == NULL)
 		return (ENOMEM);
-	error = getnewvnode(VT_UNION, mp, unionfs_vnodeop_p, &vp);
+	error = getnewvnode(VT_UNION, mp, unionfs_vnodeop_p, NULL, &vp); /* TODO */
 	if (error != 0) {
 		kmem_free(unp, sizeof(*unp));
 		return (error);

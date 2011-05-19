@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.71.4.3 2011/03/05 20:52:37 rmind Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.71.4.4 2011/05/19 03:43:00 rmind Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.71.4.3 2011/03/05 20:52:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.71.4.4 2011/05/19 03:43:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1915,7 +1915,7 @@ make_coda_node(CodaFid *fid, struct mount *vfsp, short type)
 	cp = coda_alloc();
 	cp->c_fid = *fid;
 
-	err = getnewvnode(VT_CODA, vfsp, coda_vnodeop_p, &vp);
+	err = getnewvnode(VT_CODA, vfsp, coda_vnodeop_p, NULL, &vp);
 	if (err) {
 	    panic("coda: getnewvnode returned error %d", err);
 	}

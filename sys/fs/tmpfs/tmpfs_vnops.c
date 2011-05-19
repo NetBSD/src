@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.66.4.4 2011/03/05 20:55:09 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.66.4.5 2011/05/19 03:43:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.66.4.4 2011/03/05 20:55:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.66.4.5 2011/05/19 03:43:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1454,8 +1454,6 @@ tmpfs_getpages(void *v)
 			node->tn_status |= TMPFS_NODE_MODIFIED;
 	}
 
-	mutex_exit(vp->v_interlock);
-
 	/*
 	 * Make sure that the array on which we will store the
 	 * gotten pages is clean.  Otherwise uao_get (pointed to by
@@ -1469,7 +1467,9 @@ tmpfs_getpages(void *v)
 	if (m != NULL)
 		for (i = 0; i < npages; i++)
 			m[i] = NULL;
-	mutex_enter(uobj->vmobjlock);
+
+	KASSERT(vp->v_interlock == uobj->vmobjlock);
+
 	error = (*uobj->pgops->pgo_get)(uobj, offset, m, &npages, centeridx,
 	    access_type, advice, flags | PGO_ALLPAGES);
 #if defined(DEBUG)
@@ -1501,17 +1501,15 @@ tmpfs_putpages(void *v)
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
-	node = VP_TO_TMPFS_NODE(vp);
-
 	if (vp->v_type != VREG) {
 		mutex_exit(vp->v_interlock);
 		return 0;
 	}
 
+	node = VP_TO_TMPFS_NODE(vp);
 	uobj = node->tn_spec.tn_reg.tn_aobj;
-	mutex_exit(vp->v_interlock);
 
-	mutex_enter(uobj->vmobjlock);
+	KASSERT(vp->v_interlock == uobj->vmobjlock);
 	error = (*uobj->pgops->pgo_put)(uobj, offlo, offhi, flags);
 
 	/* XXX mtime */
