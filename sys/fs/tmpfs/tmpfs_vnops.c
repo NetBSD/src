@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.80 2011/05/10 00:34:26 matt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.81 2011/05/19 03:11:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.80 2011/05/10 00:34:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.81 2011/05/19 03:11:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1291,7 +1291,6 @@ tmpfs_reclaim(void *v)
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
 
-	cache_purge(vp);
 	tmpfs_free_vp(vp);
 
 	/* If the node referenced by this vnode was deleted by the user,

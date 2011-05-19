@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.84 2011/03/06 17:08:39 bouyer Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.85 2011/05/19 03:11:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.84 2011/03/06 17:08:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.85 2011/05/19 03:11:59 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -194,10 +194,7 @@ ufs_reclaim(struct vnode *vp)
 	 * Remove the inode from its hash chain.
 	 */
 	ufs_ihashrem(ip);
-	/*
-	 * Purge old data structures associated with the inode.
-	 */
-	cache_purge(vp);
+
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;
