@@ -1,4 +1,4 @@
-# $NetBSD: UCS%CBMINT.src,v 1.2.2.2 2011/05/19 21:06:56 bouyer Exp $
+# $NetBSD: UCS%CBMINT.src,v 1.2.2.3 2011/05/19 21:09:26 bouyer Exp $
 
 TYPE		ROWCOL
 NAME		"UCS/CBMINT"
@@ -50,6 +50,7 @@ BEGIN_MAP
 0x00BA = 0xB4
 0x00B0 = 0xB5
 0x00BD = 0xB7
+0x00A5 = 0xBA
 0x00BC = 0xBB
 0x00C3 = 0xBC
 0x00EB = 0xBD
