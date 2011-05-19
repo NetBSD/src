@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.24 2011/04/24 15:42:22 riz Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.25 2011/05/19 19:53:03 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -2400,4 +2400,25 @@ lib/libc/gen/glob.c				1.28-1.29 via patch
 
 	Prevent resource DoS from brace expansion.
 	[spz, ticket #1597]
+
+lib/libc/db/btree/bt_open.c			1.25
+lib/libc/db/hash/hash_page.c			1.24
+
+	Correct check for snprintf() overflow via Maksymilian Arciemowicz
+	from FreeBSD.
+	(the bt one was ok, but set errno and make it the same for consistency).
+	[christos, ticket #1602]
+
+external/bsd/dhcpcd/dist/dhcp.c				patch
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.8.in		patch
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.in		patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/20-resolv.conf	patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/30-hostname	patch
+
+
+	Escape | and & characters before passing the value to the shell
+	Ensure we set a valid hostname, DNS domain and NIS domain.
+	Document the need for input validation in dhcpcd-run-hooks(8).
+	Fixes CVE-2011-996
+	[spz, ticket #1603]
 
