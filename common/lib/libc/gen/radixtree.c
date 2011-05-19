@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.5 2011/05/19 10:00:30 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.6 2011/05/19 10:01:21 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.5 2011/05/19 10:00:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.6 2011/05/19 10:01:21 yamt Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.5 2011/05/19 10:00:30 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.5 2011/05/19 10:00:30 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.6 2011/05/19 10:01:21 yamt Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -112,6 +112,8 @@ static inline unsigned int
 tagid_to_mask(radix_tree_tagid_t id)
 {
 
+	KASSERT(id >= 0);
+	KASSERT(id < RADIX_TREE_TAG_ID_MAX);
 	return 1U << id;
 }
 
