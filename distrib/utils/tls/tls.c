@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.4 2010/04/02 15:34:16 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.5 2011/05/19 22:14:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -29,17 +29,19 @@
 #include <sys/stat.h>
 
 #include <dirent.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 int iflag;
 
+int main(int, char *[]);
 void show_long(char *fname);
 
-main(argc, argv)
-	int argc;
-	char **argv;
+int
+main(int argc, char *argv[])
 {
 	DIR *dfp;
 	struct dirent *d;
@@ -56,19 +58,18 @@ main(argc, argv)
 
 	dfp = opendir(".");
 	if (dfp == NULL) {
-		perror("opendir");
-		return;
+		err(EXIT_FAILURE, "opendir");
 	}
 
 	while ((d = readdir(dfp)) != NULL)
 		show_long(d->d_name);
 
 	closedir(dfp);
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 /* XXX - This is system dependent... */
-char ifmt_name[16] = {
+const char ifmt_name[16] = {
 	'?',	/* 0: nothing */
 	'P',	/* 1: fifo (pipe) */
 	'C',	/* 2: chr device */
@@ -88,8 +89,7 @@ char ifmt_name[16] = {
 };
 
 void
-show_long(fname)
-	char *fname;
+show_long(char *fname)
 {
 	struct stat st;
 	int ifmt;
@@ -105,7 +105,7 @@ show_long(fname)
 
 	if (iflag) {
 		/* inode number */
-		printf("%6d ",  st.st_ino);
+		printf("%6d ",  (int)st.st_ino);	/* assume small fs */
 	}
 
 	/* fmt/mode */
