@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.22 2010/07/21 17:52:09 hannken Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.23 2011/05/19 03:11:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.22 2010/07/21 17:52:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.23 2011/05/19 03:11:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,6 @@ filecore_reclaim(void *v)
 	/*
 	 * Purge old data structures associated with the inode.
 	 */
-	cache_purge(vp);
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.151 2011/05/03 13:16:47 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.152 2011/05/19 03:11:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.151 2011/05/03 13:16:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.152 2011/05/19 03:11:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1104,13 +1104,12 @@ puffs_vnop_reclaim(void *v)
 	mutex_enter(&pmp->pmp_lock);
 	LIST_REMOVE(pnode, pn_hashent);
 	mutex_exit(&pmp->pmp_lock);
-	if (PUFFS_USE_NAMECACHE(pmp))
-		cache_purge(vp);
 
 	if (notifyserver)
 		callreclaim(MPTOPUFFSMP(vp->v_mount), VPTOPNC(vp));
 
 	puffs_putvnode(vp);
+	vp->v_data = NULL;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.6 2011/05/13 22:16:44 rmind Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.7 2011/05/19 03:11:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.6 2011/05/13 22:16:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.7 2011/05/19 03:11:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -990,11 +990,15 @@ vclean(vnode_t *vp, int flags)
 		vpanic(vp, "vclean: cannot reclaim");
 	}
 
+	KASSERT(vp->v_data == NULL);
 	KASSERT(vp->v_uobj.uo_npages == 0);
+
 	if (vp->v_type == VREG && vp->v_ractx != NULL) {
 		uvm_ra_freectx(vp->v_ractx);
 		vp->v_ractx = NULL;
 	}
+
+	/* Purge name cache. */
 	cache_purge(vp);
 
 	/* Done with purge, notify sleepers of the grim news. */
