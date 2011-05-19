@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip6.4,v 1.27 2007/08/20 16:08:55 perry Exp $
+.\"	$NetBSD: ip6.4,v 1.28 2011/05/19 21:16:45 riastradh Exp $
 .\"	$KAME: ip6.4,v 1.23 2005/01/11 05:56:25 itojun Exp $
 .\"	$OpenBSD: ip6.4,v 1.21 2005/01/06 03:50:46 itojun Exp $
 .\"
@@ -28,7 +28,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd December 5, 2006
+.Dd May 19, 2011
 .Dt IP6 4
 .Os
 .Sh NAME
@@ -645,6 +645,7 @@ An ancillary data object was improperly formed.
 .Xr send 2 ,
 .Xr setsockopt 2 ,
 .Xr socket 2 ,
+.Xr CMSG_DATA 3 ,
 .\" .Xr inet6_option_space 3 ,
 .\" .Xr inet6_rthdr_space 3 ,
 .Xr if_nametoindex 3 ,
