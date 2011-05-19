@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_trap_subr.S,v 1.6 2011/01/18 01:02:53 matt Exp $	*/
+/*	$NetBSD: 4xx_trap_subr.S,v 1.7 2011/05/19 07:51:50 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@ s4xx_miss:
 	FRAME_SETUP(CI_TLBMISSSAVE)
 
 	/* Take an explicit fault at (kernelstack,pid) */
-	lwz	%r3, FRAMELEN(%r1)
+	lwz	%r3,FRAMELEN(%r1)
 	li	%r4,KERNEL_PID
 	bl	_C_LABEL(pmap_tlbmiss)
 	/*
@@ -135,7 +135,13 @@ s4xx_miss:
 	b	trapagain
 1:
 	FRAME_SETUP(CI_TLBMISSSAVE)
+	li	%r3,EXC_DTMISS
+	lwz	%r4,FRAME_EXC(%r1)
+	cmpw	%r3,%r4
 	lwz	%r3,FRAME_DEAR(%r1)
+	beq	2f
+	lwz	%r3,FRAME_SRR0(%r1) /* ITMISS case, TLB miss address in SRR0 */
+2:
 	lwz	%r4,FRAME_PID(%r1)
 	bl	_C_LABEL(pmap_tlbmiss)
 	mr.	%r3,%r3
