@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.25 2011/05/19 03:07:30 rmind Exp $
+.\"     $NetBSD: kthread.9,v 1.26 2011/05/19 08:55:01 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -126,7 +126,7 @@ specified.
 Causes the kthread to be created in the
 .Dv SCHED_OTHER
 class (timeshared).
-The priority of thread will be dynamically adjusted by the scheduler.
+The thread's priority will be dynamically adjusted by the scheduler.
 Increased activity by the kthread will cause its priority to fall;
 decreased activity will cause its priority to rise.
 By default, kthreads are created in the
@@ -158,7 +158,8 @@ Must only be called by a kernel thread.
 Suspend execution of calling thread until the target kthread terminates.
 Conceptually the function can be compared to the user space
 .Xr pthread_join 3 ,
-however it must be called only once for kernel thread which was created using
+however it must be called only once for kernel thread which was
+created using the
 .Dv KTHREAD_JOIN
 flag and would wait on
 .Fa kthread_exit .
