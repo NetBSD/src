@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.21 2010/03/22 18:58:31 joerg Exp $
+.\"	$NetBSD: unix.4,v 1.22 2011/05/19 21:16:45 riastradh Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)unix.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd October 30, 2006
+.Dd May 19, 2011
 .Dt UNIX 4
 .Os
 .Sh NAME
@@ -229,7 +229,7 @@ macro computes the size of the sockcred structure for a specified number
 of groups.
 The cmsghdr fields have the following values:
 .Bd -literal
-cmsg_len = sizeof(struct cmsghdr) + SOCKCREDSIZE(ngroups)
+cmsg_len = CMSG_LEN(SOCKCREDSIZE(ngroups))
 cmsg_level = SOL_SOCKET
 cmsg_type = SCM_CREDS
 .Ed
@@ -265,6 +265,7 @@ macro, the following definition is recommended:
 .Ed
 .Sh SEE ALSO
 .Xr socket 2 ,
+.Xr CMSG_DATA 3 ,
 .Xr intro 4
 .Rs
 .%T "An Introductory 4.4BSD Interprocess Communication Tutorial"
