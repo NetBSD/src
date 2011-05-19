@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.77 2011/05/19 19:52:51 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.78 2011/05/19 21:14:39 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5095,4 +5095,68 @@ external/bsd/dhcpcd/dist/dhcpcd-hooks/30-hostname	patch
 	Document the need for input validation in dhcpcd-run-hooks(8).
 	Fixes CVE-2011-996
 	[spz, ticket #1603]
+
+sys/fs/puffs/puffs_msgif.c			1.84 via patch
+
+	Apply patch from PR kern/44093 by yamt:
+
+	Interrupt server wait only on certain signals (same set at nfs -i)
+	instead of all signals.  According to the PR this helps with
+	"git clone" run on a puffs file system.
+	[manu, ticket #1604]
+
+etc/mtree/NetBSD.dist.base			1.87 via patch
+share/i18n/csmapper/CBM/CBMINT%UCS.src		1.1
+share/i18n/csmapper/CBM/Makefile.inc		1.1
+share/i18n/csmapper/CBM/UCS%CBMINT.src		1.1
+share/i18n/csmapper/CBM/charset.pivot.CBM.src	1.1
+share/i18n/csmapper/CBM/mapper.dir.CBM.src	1.1
+share/i18n/csmapper/Makefile			1.14
+share/i18n/esdb/CBM/CBMINT.src			1.1
+share/i18n/esdb/CBM/Makefile.inc		1.1
+share/i18n/esdb/CBM/esdb.alias.CBM.src		1.1
+share/i18n/esdb/CBM/esdb.dir.CBM.src		1.1
+share/i18n/esdb/Makefile			1.15
+
+	Add Japan CBM character codes.
+	[mbalmer, ticket #1605]
+
+distrib/sets/lists/base/mi			1.936
+
+	Add new files.
+	[mbalmer, ticket #1606]
+
+share/i18n/csmapper/CBM/CBMINT%UCS.src		1.2
+share/i18n/csmapper/CBM/UCS%CBMINT.src		1.2
+
+	add Yen symbol
+	[mbalmer, ticket #1607]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.49
+
+	Separate xennet(4) backend initialization code ("resume") from the part
+	that talks with Xenstore to query backend's information. Resuming is
+	now performed just after xennet(4) attachment instead of waiting for
+	backend to announce its features in Xenstore and change it state.
+
+	This fixes the race observed by Urban Boquist when the domU boots with
+	root on NFS.
+	See also http://mail-index.netbsd.org/port-xen/2011/04/18/msg006647.html
+	[jym, ticket #1608]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.50
+sys/arch/xen/xen/xennetback_xenbus.c		1.43
+
+	Check that xvif(4) is not already connected before proceeding in the
+	XenbusStateConnected mode. Under rare occasions, the xenbus watcher
+	can fire multiple times, overwriting the I/O ring memory mappings with
+	invalid values. This will lead sooner or later to dom0 panic().
+	Check status before proceeding further. Avoids spurious watch calls.
+	[jym, ticket #1609]
+
+share/i18n/csmapper/CBM/charset.pivot.CBM.src	1.2
+share/i18n/csmapper/CBM/mapper.dir.CBM.src	1.2
+
+	missing files
+	[mbalmer, ticket #1610]
 
