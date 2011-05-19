@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.39 2011/01/13 13:35:11 pooka Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.40 2011/05/19 03:21:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -298,11 +298,6 @@ struct tmpfs_mount {
 	/* Node list. */
 	kmutex_t		tm_lock;
 	struct tmpfs_node_list	tm_nodes;
-
-	char			tm_dwchan[32];
-	struct pool		tm_dirent_pool;
-	char			tm_nwchan[32];
-	struct pool		tm_node_pool;
 };
 
 /* --------------------------------------------------------------------- */
