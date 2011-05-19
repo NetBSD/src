@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.133 2011/05/17 07:16:02 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.134 2011/05/19 21:24:55 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -85,7 +85,7 @@ CWARNFLAGS+=	-Wextra -Wno-unused-parameter
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${DEBUG} ${COPTS}
-AFLAGS+=	-D_LOCORE -Wa,-fatal-warnings
+AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
 
 # XXX
 .if defined(HAVE_GCC) && ${HAVE_GCC} > 3
