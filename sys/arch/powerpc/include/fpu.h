@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.18 2011/05/02 02:01:33 matt Exp $	*/
+/*	$NetBSD: fpu.h,v 1.19 2011/05/19 08:22:38 kiyohara Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
 #define	FPSCR_VXVC	0x00080000	/* Invalid Compare Op */
 #define	FPSCR_FR	0x00040000	/* Fraction Rounded */
 #define	FPSCR_FI	0x00020000	/* Fraction Inexact */
-#define	FPSCR_FPRF	0x0001f000	
+#define	FPSCR_FPRF	0x0001f000
 #define	FPSCR_C		0x00010000	/* FP Class Descriptor */
 #define	FPSCR_FPCC	0x0000f000
 #define	FPSCR_FL	0x00008000	/* < */
