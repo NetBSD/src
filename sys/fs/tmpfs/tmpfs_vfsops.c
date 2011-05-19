@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.47 2011/04/02 14:24:53 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.48 2011/05/19 03:21:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.47 2011/04/02 14:24:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.48 2011/05/19 03:21:23 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,7 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.47 2011/04/02 14:24:53 hannken Ex
 
 MODULE(MODULE_CLASS_VFS, tmpfs, NULL);
 
-/* --------------------------------------------------------------------- */
+struct pool	tmpfs_dirent_pool;
+struct pool	tmpfs_node_pool;
 
 static int	tmpfs_mount(struct mount *, const char *, void *, size_t *);
 static int	tmpfs_start(struct mount *, int);
@@ -76,7 +77,23 @@ static void	tmpfs_done(void);
 static int	tmpfs_snapshot(struct mount *, struct vnode *,
 		    struct timespec *);
 
-/* --------------------------------------------------------------------- */
+static void
+tmpfs_init(void)
+{
+
+	pool_init(&tmpfs_dirent_pool, sizeof(struct tmpfs_dirent), 0, 0, 0,
+	    "tmpfs_dirent", &pool_allocator_nointr, IPL_NONE);
+	pool_init(&tmpfs_node_pool, sizeof(struct tmpfs_node), 0, 0, 0,
+	    "tmpfs_node", &pool_allocator_nointr, IPL_NONE);
+}
+
+static void
+tmpfs_done(void)
+{
+
+	pool_destroy(&tmpfs_dirent_pool);
+	pool_destroy(&tmpfs_node_pool);
+}
 
 static int
 tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
@@ -169,8 +186,12 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mp->mnt_iflag |= IMNT_MPSAFE;
 	vfs_getnewfsid(mp);
 
-	return set_statvfs_info(path, UIO_USERSPACE, "tmpfs", UIO_SYSSPACE,
+	error = set_statvfs_info(path, UIO_USERSPACE, "tmpfs", UIO_SYSSPACE,
 	    mp->mnt_op->vfs_name, mp, curlwp);
+	if (error) {
+		(void)tmpfs_unmount(mp, MNT_FORCE);
+	}
+	return error;
 }
 
 /* --------------------------------------------------------------------- */
@@ -182,16 +203,12 @@ tmpfs_start(struct mount *mp, int flags)
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-
-/* ARGSUSED2 */
 static int
 tmpfs_unmount(struct mount *mp, int mntflags)
 {
-	int error;
-	int flags = 0;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
+	int error, flags = 0;
 
 	/* Handle forced unmounts. */
 	if (mntflags & MNT_FORCE)
@@ -359,24 +376,6 @@ tmpfs_sync(struct mount *mp, int waitfor,
 
 	return 0;
 }
-
-/* --------------------------------------------------------------------- */
-
-static void
-tmpfs_init(void)
-{
-
-}
-
-/* --------------------------------------------------------------------- */
-
-static void
-tmpfs_done(void)
-{
-
-}
-
-/* --------------------------------------------------------------------- */
 
 static int
 tmpfs_snapshot(struct mount *mp, struct vnode *vp,
