@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.212.2.5 2011/04/21 01:40:51 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.212.2.6 2011/05/19 03:42:58 rmind Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212.2.5 2011/04/21 01:40:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212.2.6 2011/05/19 03:42:58 rmind Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2727,7 +2727,10 @@ pmap_create(void)
 
 	pm = pool_cache_get(&pmap_cache, PR_WAITOK);
 
-	uvm_obj_init(&pm->pm_obj, NULL, &pm->pm_obj_lock, 1);
+	mutex_init(&pm->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
+	uvm_obj_init(&pm->pm_obj, NULL, false, 1);
+	uvm_obj_setlock(&pm->pm_obj, &pm->pm_obj_lock);
+
 	pm->pm_stats.wired_count = 0;
 	pm->pm_stats.resident_count = 1;
 	pm->pm_cstate.cs_all = 0;
@@ -4380,9 +4383,8 @@ pmap_destroy(pmap_t pm)
 	if (pmap_recent_user == pm)
 		pmap_recent_user = NULL;
 
-	uvm_obj_destroy(&pm->pm_obj, &pm->pm_obj_lock);
-
-	/* return the pmap to the pool */
+	uvm_obj_destroy(&pm->pm_obj, false);
+	mutex_destroy(&pm->pm_obj_lock);
 	pool_cache_put(&pmap_cache, pm);
 }
 
@@ -5142,7 +5144,10 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	pm->pm_domain = PMAP_DOMAIN_KERNEL;
 	pm->pm_activated = true;
 	pm->pm_cstate.cs_all = PMAP_CACHE_STATE_ALL;
-	uvm_obj_init(&pm->pm_obj, NULL, &pm->pm_obj_lock, 1);
+
+	mutex_init(&pm->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
+	uvm_obj_init(&pm->pm_obj, NULL, false, 1);
+	uvm_obj_setlock(&pm->pm_obj, &pm->pm_obj_lock);
 
 	/*
 	 * Scan the L1 translation table created by initarm() and create

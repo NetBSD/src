@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.37.2.5 2011/04/21 01:42:18 rmind Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.37.2.6 2011/05/19 03:43:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.37.2.5 2011/04/21 01:42:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.37.2.6 2011/05/19 03:43:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -575,7 +575,7 @@ makevnode(struct mount *mp, struct rumpfs_node *rn, struct vnode **vpp)
 		vpops = rump_vnodeop_p;
 	}
 
-	rv = getnewvnode(VT_RUMP, mp, vpops, &vp);
+	rv = getnewvnode(VT_RUMP, mp, vpops, NULL, &vp);
 	if (rv)
 		return rv;
 

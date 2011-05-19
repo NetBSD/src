@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.214.2.5 2011/04/21 01:42:19 rmind Exp $	*/
+/*	$NetBSD: vnode.h,v 1.214.2.6 2011/05/19 03:43:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -208,6 +208,7 @@ typedef struct vnode vnode_t;
 #define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
 #define	VI_MARKER	0x00008000	/* Dummy marker vnode */
 #define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
+#define	VI_LOCKSHARE	0x00040000	/* v_interlock is shared */
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_INACTPEND	0x00100000	/* inactivation is pending */
 #define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
@@ -545,7 +546,7 @@ void	vfs_vnode_sysinit(void);
 int 	bdevvp(dev_t, struct vnode **);
 int 	cdevvp(dev_t, struct vnode **);
 int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
-	    struct vnode **);
+	    const struct vnode *, struct vnode **);
 void	ungetnewvnode(struct vnode *);
 int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, kauth_cred_t);
 void 	vattr_null(struct vattr *);

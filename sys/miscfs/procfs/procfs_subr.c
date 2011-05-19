@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.95.4.3 2011/03/05 20:55:33 rmind Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.95.4.4 2011/05/19 03:43:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.95.4.3 2011/03/05 20:55:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.95.4.4 2011/05/19 03:43:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,8 @@ kmutex_t pfs_ihash_lock;
  * the vnode free list.
  */
 int
-procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid, pfstype pfs_type, int fd, struct proc *p)
+procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid,
+    pfstype pfs_type, int fd, struct proc *p)
 {
 	struct pfsnode *pfs;
 	struct vnode *vp;
@@ -169,7 +170,8 @@ procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid, pfstype pfs_type
 	if (*vpp != NULL)
 		return (0);
 
-	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, &vp)) != 0) {
+	error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, NULL, &vp);
+	if (error) {
 		*vpp = NULL;
 		return (error);
 	}

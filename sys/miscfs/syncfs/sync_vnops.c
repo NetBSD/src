@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.27.4.2 2010/07/03 01:19:58 rmind Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.27.4.3 2011/05/19 03:43:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.27.4.2 2010/07/03 01:19:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.27.4.3 2011/05/19 03:43:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -114,9 +114,10 @@ vfs_allocate_syncvnode(struct mount *mp)
 	int error, vdelay;
 
 	/* Allocate a new vnode */
-	if ((error = getnewvnode(VT_VFS, mp, sync_vnodeop_p, &vp)) != 0)
-		return (error);
-
+	error = getnewvnode(VT_VFS, mp, sync_vnodeop_p, NULL, &vp);
+	if (error) {
+		return error;
+	}
 	vp->v_writecount = 1;
 	vp->v_type = VNON;
 

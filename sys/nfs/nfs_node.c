@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.110.4.3 2011/03/05 20:56:03 rmind Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.110.4.4 2011/05/19 03:43:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.110.4.3 2011/03/05 20:56:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.110.4.4 2011/05/19 03:43:03 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -186,7 +186,7 @@ loop:
 	}
 	rw_exit(&nmp->nm_rbtlock);
 
-	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, &vp);
+	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, NULL, &vp);
 	if (error) {
 		*npp = 0;
 		return (error);
