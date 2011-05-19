@@ -1,3 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1996/06/15 20:15:54 oki Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2011/05/19 21:40:11 tsutsui Exp $
 
+WARNS?=		4
 BINDIR?=	/usr/bin

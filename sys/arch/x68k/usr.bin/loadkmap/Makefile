@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 2011/05/19 21:26:39 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.13 2011/05/19 21:40:11 tsutsui Exp $
 # Makefile for loadkmap
 
-WARNS?=		4
 PROG=		loadkmap
 NOMAN=		# defined
 FILES=		ascii_kmap jis_kmap
