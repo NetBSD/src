@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.76 2011/04/24 16:31:01 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.77 2011/05/19 19:52:51 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5029,4 +5029,70 @@ sys/dev/pci/if_bge.c				1.194
 	Perform hardware checksum over the entire packet, as other OS
 	drivers do.  PR#40018.
 	[buhrow, ticket #1601]
+
+sys/dev/pci/agp.c				1.77
+sys/dev/pci/agp_via.c				1.21
+sys/sys/agpio.h					1.10
+
+	add AGP v3 support to agp_generic_enable from FreeBSD
+	[jmcneill, ticket #1560]
+
+lib/libc/locale/mbstowcs.3			1.12 via patch
+lib/libc/locale/wcstombs.3			1.13 via patch
+
+	Crosslink wcstombs(3) and mbstowcs(3).
+	[mbalmer, ticket #1579]
+
+xsrc/local/programs/x11-ssh-askpass/ChangeLog			1.2
+xsrc/local/programs/x11-ssh-askpass/Imakefile			1.8
+xsrc/local/programs/x11-ssh-askpass/README			1.2
+xsrc/local/programs/x11-ssh-askpass/SshAskpass-1337.ad		1.3
+xsrc/local/programs/x11-ssh-askpass/SshAskpass-NeXTish.ad	1.3
+xsrc/local/programs/x11-ssh-askpass/SshAskpass-default.ad	1.3
+xsrc/local/programs/x11-ssh-askpass/SshAskpass-green.ad		1.3
+xsrc/local/programs/x11-ssh-askpass/SshAskpass-motif.ad 	1.3
+xsrc/local/programs/x11-ssh-askpass/TODO			1.1
+xsrc/local/programs/x11-ssh-askpass/drawing.c			1.2
+xsrc/local/programs/x11-ssh-askpass/drawing.h			1.2
+xsrc/local/programs/x11-ssh-askpass/dynlist.c			1.2
+xsrc/local/programs/x11-ssh-askpass/dynlist.h			1.2
+xsrc/local/programs/x11-ssh-askpass/resources.c			1.2
+xsrc/local/programs/x11-ssh-askpass/resources.h			1.2
+xsrc/local/programs/x11-ssh-askpass/x11-ssh-askpass.c		1.3
+xsrc/local/programs/x11-ssh-askpass/x11-ssh-askpass.h		1.2
+xsrc/local/programs/x11-ssh-askpass/x11-ssh-askpass.man.in	1.1
+
+	Update ssh-askpass to version 1.2.0.  This adds, among other changes,
+	teh ability to display multiples lines as the message, sth openssh
+	assumes and a man page.
+	[mbalmer, ticket #1591]
+
+distrib/sets/lists/xbase/mi			1.108
+external/mit/xorg/bin/ssh-askpass/Makefile	1.3
+x11/bin/ssh-askpass/Makefile			1.7
+
+	Build the updates ssh-askpass program and add the man page to the
+	xbase set.
+	[mbalmer, ticket #1592]
+
+lib/libc/db/btree/bt_open.c			1.25
+lib/libc/db/hash/hash_page.c			1.24
+
+	Correct check for snprintf() overflow via Maksymilian Arciemowicz
+	from FreeBSD.
+	(the bt one was ok, but set errno and make it the same for consistency).
+	[christos, ticket #1602]
+
+external/bsd/dhcpcd/dist/dhcp.c				patch
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.8.in		patch
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.in		patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/20-resolv.conf	patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/30-hostname	patch
+
+
+	Escape | and & characters before passing the value to the shell
+	Ensure we set a valid hostname, DNS domain and NIS domain.
+	Document the need for input validation in dhcpcd-run-hooks(8).
+	Fixes CVE-2011-996
+	[spz, ticket #1603]
 
