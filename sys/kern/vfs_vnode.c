@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.7 2011/05/19 03:11:55 rmind Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.8 2011/05/19 03:26:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,31 +67,61 @@
  */
 
 /*
- * Note on v_usecount and locking:
+ * The vnode cache subsystem.
  *
- * At nearly all points it is known that v_usecount could be zero, the
- * vnode interlock will be held.
+ * Life-cycle
  *
- * To change v_usecount away from zero, the interlock must be held.  To
- * change from a non-zero value to zero, again the interlock must be
- * held.
+ *	Normally, there are two points where new vnodes are created:
+ *	VOP_CREATE(9) and VOP_LOOKUP(9).  The life-cycle of a vnode
+ *	starts in one of the following ways:
  *
- * There's a flag bit, VC_XLOCK, embedded in v_usecount.
- * To raise v_usecount, if the VC_XLOCK bit is set in it, the interlock
- * must be held.
- * To modify the VC_XLOCK bit, the interlock must be held.
- * We always keep the usecount (v_usecount & VC_MASK) non-zero while the
- * VC_XLOCK bit is set.
+ *	- Allocation, via getnewvnode(9) and/or vnalloc(9).
+ *	- Recycle from a free list, via getnewvnode(9) -> getcleanvnode(9).
+ *	- Reclamation of inactive vnode, via vget(9).
  *
- * Unless the VC_XLOCK bit is set, changing the usecount from a non-zero
- * value to a non-zero value can safely be done using atomic operations,
- * without the interlock held.
- * Even if the VC_XLOCK bit is set, decreasing the usecount to a non-zero
- * value can be done using atomic operations, without the interlock held.
+ *	The life-cycle ends when the last reference is dropped, usually
+ *	in VOP_REMOVE(9).  In such case, VOP_INACTIVE(9) is called to inform
+ *	the file system that vnode is inactive.  Via this call, file system
+ *	indicates whether vnode should be recycled (usually, count of links
+ *	is checked i.e. whether file was removed).
+ *
+ *	Depending on indication, vnode can be put into a free list (cache),
+ *	or cleaned via vclean(9), which calls VOP_RECLAIM(9) to disassociate
+ *	underlying file system from the vnode, and finally destroyed.
+ *
+ * Reference counting
+ *
+ *	Vnode is considered active, if reference count (vnode_t::v_usecount)
+ *	is non-zero.  It is maintained using: vref(9) and vrele(9), as well
+ *	as vput(9), routines.  Common points holding references are e.g.
+ *	file openings, current working directory, mount points, etc.  
+ *
+ * Note on v_usecount and its locking
+ *
+ *	At nearly all points it is known that v_usecount could be zero,
+ *	the vnode_t::v_interlock will be held.  To change v_usecount away
+ *	from zero, the interlock must be held.  To change from a non-zero
+ *	value to zero, again the interlock must be held.
+ *
+ *	There is a flag bit, VC_XLOCK, embedded in v_usecount.  To raise
+ *	v_usecount, if the VC_XLOCK bit is set in it, the interlock must
+ *	be held.  To modify the VC_XLOCK bit, the interlock must be held.
+ *	We always keep the usecount (v_usecount & VC_MASK) non-zero while
+ *	the VC_XLOCK bit is set.
+ *
+ *	Unless the VC_XLOCK bit is set, changing the usecount from a non-zero
+ *	value to a non-zero value can safely be done using atomic operations,
+ *	without the interlock held.
+ *
+ *	Even if the VC_XLOCK bit is set, decreasing the usecount to a non-zero
+ *	value can be done using atomic operations, without the interlock held.
+ *
+ *	Note: if VI_CLEAN is set, vnode_t::v_interlock will be released while
+ *	mntvnode_lock is still held.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.7 2011/05/19 03:11:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.8 2011/05/19 03:26:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
