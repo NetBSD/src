@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.666 2011/05/19 06:09:36 adam Exp $
+#	$NetBSD: bsd.own.mk,v 1.667 2011/05/19 14:29:27 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -172,11 +172,11 @@ RANLIB=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-ranlib
 SIZE=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-size
 STRIP=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-strip
 
-CC=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-gcc
-CPP=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-cpp
-CXX=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-c++
-FC=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-g77
-OBJC=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-gcc
+TOOL_CC.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-gcc
+TOOL_CPP.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-cpp
+TOOL_CXX.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-c++
+TOOL_FC.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-g77
+TOOL_OBJC.gcc=		${EXTERNAL_TOOLCHAIN}/bin/${MACHINE_GNU_PLATFORM}-gcc
 .else									# } {
 # Define default locations for common tools.
 .if ${USETOOLS_BINUTILS:Uyes} == "yes"					#  {
@@ -189,23 +189,24 @@ OBJDUMP=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objdump
 RANLIB=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ranlib
 SIZE=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-size
 STRIP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-strip
+
+# GCC supports C, C++, Fortran and Objective C
+TOOL_CC.gcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
+TOOL_CPP.gcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
+TOOL_CXX.gcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
+TOOL_FC.gcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
+TOOL_OBJC.gcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 .endif									#  }
 
-.if defined(HAVE_GCC) && ${USETOOLS_GCC:Uyes} == "yes"			#  {
-CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
-CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
-CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
-FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
-OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
-.endif									#  }
+# Clang supports C, C++ and Objective C
+TOOL_CC.clang=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang
+TOOL_CPP.clang=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang-cpp
+TOOL_CXX.clang=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang++
+TOOL_OBJC.clang=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-clang
 
-.if defined(HAVE_PCC) && ${USETOOLS_PCC:Uyes} == "yes"
-CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-pcc
-CPP=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-cpp
-CXX=		false
-FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-f77
-OBJC=		false
-.endif
+# PCC supports C and Fortran
+TOOL_CC.pcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-pcc
+TOOL_CPP.pcc=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-cpp
 
 #
 # Make sure DESTDIR is set, so that builds with these tools always
@@ -318,6 +319,23 @@ TOOL_ZIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}zic
 
 .else	# USETOOLS != yes						# } {
 
+# Clang supports C, C++ and Objective C
+TOOL_CC.clang=		clang
+TOOL_CPP.clang=		clang-cpp
+TOOL_CXX.clang=		clang++
+TOOL_OBJC.clang=	clang
+
+# GCC supports C, C++, Fortran and Objective C
+TOOL_CC.gcc=	gcc
+TOOL_CPP.gcc=	cpp
+TOOL_CXX.gcc=	c++
+TOOL_FC.gcc=	g77
+TOOL_OBJC.gcc=	gcc
+
+# PCC supports C and Fortran
+TOOL_CC.pcc=		pcc
+TOOL_CPP.pcc=		/usr/libexec/pcpp
+
 TOOL_AMIGAAOUT2BB=	amiga-aout2bb
 TOOL_AMIGAELF2BB=	amiga-elf2bb
 TOOL_AMIGATXLT=		amiga-txlt
@@ -396,6 +414,26 @@ TOOL_VGRIND=		vgrind -f
 TOOL_ZIC=		zic
 
 .endif	# USETOOLS != yes						# }
+
+# Fallback to ensure that all variables are defined to something
+TOOL_CC.false=		false
+TOOL_CPP.false=		false
+TOOL_CXX.false=		false
+TOOL_FC.false=		false
+TOOL_OBJC.false=	false
+
+AVAILABLE_COMPILER?=	${HAVE_PCC:Dpcc} ${HAVE_LLVM:Dclang} ${HAVE_GCC:Dgcc} false
+
+.for _t in CC CPP CXX FC OBJC
+ACTIVE_${_t}=	${AVAILABLE_COMPILER:@.c.@ ${ !defined(UNSUPPORTED_COMPILER.${.c.}) && defined(TOOL_${_t}.${.c.}) :? ${.c.} : }@:[1]}
+SUPPORTED_${_t}=${AVAILABLE_COMPILER:Nfalse:@.c.@ ${ !defined(UNSUPPORTED_COMPILER.${.c.}) && defined(TOOL_${_t}.${.c.}) :? ${.c.} : }@}
+.endfor
+# make bugs prevent moving this into the .for loop
+CC=		${TOOL_CC.${ACTIVE_CC}}
+CPP=		${TOOL_CPP.${ACTIVE_CPP}}
+CXX=		${TOOL_CXX.${ACTIVE_CXX}}
+FC=		${TOOL_FC.${ACTIVE_FC}}
+OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
 
 #
 # Targets to check if DESTDIR or RELEASEDIR is provided
