@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.476 2011/05/07 11:12:48 cheusov Exp $
+.\"	$NetBSD: main,v 1.477 2011/05/19 05:13:09 riastradh Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1113,6 +1113,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Robert Byrnes Ta Mt byrnes@NetBSD.org
 .It Ta Pavel Cahyna Ta Mt pavel@NetBSD.org
 .It Ta D'Arcy J.M. Cain Ta Mt darcy@NetBSD.org
+.It Ta Taylor R. Campbell Ta Mt riastradh@NetBSD.org
 .It Ta Daniel Carosone Ta Mt dan@NetBSD.org
 .It Ta Dave Carrel Ta Mt carrel@NetBSD.org
 .It Ta James Chacon Ta Mt jmc@NetBSD.org
