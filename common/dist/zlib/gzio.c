@@ -1,4 +1,4 @@
-/*	$NetBSD: gzio.c,v 1.2 2006/01/27 00:45:27 christos Exp $	*/
+/*	$NetBSD: gzio.c,v 1.3 2011/05/19 22:23:12 tsutsui Exp $	*/
 
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-2005 Jean-loup Gailly.
@@ -76,11 +76,15 @@ typedef struct gz_stream {
 
 
 local gzFile gz_open      OF((const char *path, const char *mode, int  fd));
+#ifndef NO_GZCOMPRESS
 local int do_flush        OF((gzFile file, int flush));
+#endif
 local int    get_byte     OF((gz_stream *s));
 local void   check_header OF((gz_stream *s));
 local int    destroy      OF((gz_stream *s));
+#ifndef NO_GZCOMPRESS
 local void   putLong      OF((FILE *file, uLong x));
+#endif
 local uLong  getLong      OF((gz_stream *s));
 
 /* ===========================================================================
@@ -917,6 +921,7 @@ int ZEXPORT gzdirect (file)
     return s->transparent;
 }
 
+#ifndef NO_GZCOMPRESS
 /* ===========================================================================
    Outputs a long in LSB order to the given file
 */
@@ -930,6 +935,7 @@ local void putLong (file, x)
         x >>= 8;
     }
 }
+#endif
 
 /* ===========================================================================
    Reads a long in LSB order from the given gz_stream. Sets z_err in case
