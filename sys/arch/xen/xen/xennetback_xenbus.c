@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.24.4.3 2010/01/30 19:14:20 snj Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.24.4.4 2011/05/19 21:13:07 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -444,6 +444,8 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 		break;
 
 	case XenbusStateConnected:
+		if (xneti->xni_status == CONNECTED)
+			break;
 		/* read comunication informations */
 		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
 		    "tx-ring-ref", &tx_ring_ref, 10);
