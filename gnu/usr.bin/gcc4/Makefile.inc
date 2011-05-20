@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2006/05/13 01:18:37 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2011/05/20 21:35:02 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -58,3 +58,6 @@ CPPFLAGS+=	-DENABLE_SHARED_LIBGCC
 CPPFLAGS+=	-DNO_SHARED_LIBGCC_MULTILIB
 .endif
 .endif
+
+# This depends on the "extern inline" mess, so downgrade to something safe.
+CFLAGS+=	-std=gnu89
