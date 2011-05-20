@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.938 2011/05/09 17:13:19 manu Exp $
+# $NetBSD: mi,v 1.939 2011/05/20 01:59:14 msaitoh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -152,6 +152,12 @@
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-6000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-6000-4.ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2a-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-6000g2a-ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-6000g2a-5.ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-6050-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-6050-ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-6050-5.ucode	base-firmware-root
 ./libdata/firmware/if_otus			base-firmware-root
 ./libdata/firmware/if_otus/otus-init		base-firmware-root
 ./libdata/firmware/if_otus/otus-license		base-firmware-root
