@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.32 2011/05/20 13:19:59 joerg Exp $
+#	$NetBSD: Makefile.amd64,v 1.33 2011/05/20 13:21:19 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -63,10 +63,10 @@ copy.o: ${AMD64}/amd64/copy.S assym.h
 spl.o: ${AMD64}/amd64/spl.S assym.h
 	${NORMAL_S}
 
-AFLAGS.locore.S=		-no-integrated-as
-AFLAGS.mptramp.S=		-no-integrated-as
-AFLAGS.linux32_sigcode.S=	-no-integrated-as
-AFLAGS.netbsd32_sigcode.S=	-no-integrated-as
+AFLAGS.locore.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:} -I${.CURDIR}
+AFLAGS.mptramp.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:} -I${.CURDIR}
+AFLAGS.linux32_sigcode.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:} -I${.CURDIR}
+AFLAGS.netbsd32_sigcode.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:} -I${.CURDIR}
 
 ##
 ## (5) link settings
