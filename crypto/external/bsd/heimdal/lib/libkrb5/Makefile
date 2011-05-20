@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:53 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/05/20 02:04:59 christos Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -17,6 +17,7 @@ LIBDPLIBS+=	hx509		${HEIMBASE}/lib/libhx509	\
 		crypto		${SSLBASE}/lib/libcrypto	\
 		asn1		${HEIMBASE}/lib/libasn1		\
 		com_err		${HEIMBASE}/lib/libcom_err	\
+		ipc		${HEIMBASE}/lib/libipc		\
 		roken		${HEIMBASE}/lib/libroken	\
 		wind		${HEIMBASE}/lib/libwind		\
 		heimbase	${HEIMBASE}/lib/libheimbase
