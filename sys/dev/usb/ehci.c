@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.154.4.2 2010/06/12 01:05:44 riz Exp $ */
+/*	$NetBSD: ehci.c,v 1.154.4.3 2011/05/20 19:31:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154.4.2 2010/06/12 01:05:44 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154.4.3 2011/05/20 19:31:46 bouyer Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2706,7 +2706,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		usb_syncmem(&cur->dma, cur->offs, sizeof(cur->qtd),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: extend chain\n"));
-		dataphys += curlen;
+		if (len)
+			dataphys += curlen;
 		cur = next;
 	}
 	cur->qtd.qtd_status |= htole32(EHCI_QTD_IOC);
