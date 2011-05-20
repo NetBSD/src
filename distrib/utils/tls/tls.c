@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.5 2011/05/19 22:14:15 tsutsui Exp $	*/
+/*	$NetBSD: tls.c,v 1.6 2011/05/20 02:12:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -26,19 +26,20 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <dirent.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <time.h>
 #include <unistd.h>
 
-int iflag;
+static int iflag;
 
-int main(int, char *[]);
-void show_long(char *fname);
+static void show_long(const char *);
 
 int
 main(int argc, char *argv[])
@@ -48,28 +49,25 @@ main(int argc, char *argv[])
 
 	/* If given an arg, just cd there first. */
 	if (argc > 1) {
-		if (chdir(argv[1])) {
-			perror(argv[1]);
-			exit(1);
-		}
+		if (chdir(argv[1]))
+			err(1, "chdir `%s'", argv[1]);
 	}
 	if (argc > 2)
 		fprintf(stderr, "extra args ignored\n");
 
 	dfp = opendir(".");
-	if (dfp == NULL) {
+	if (dfp == NULL)
 		err(EXIT_FAILURE, "opendir");
-	}
 
 	while ((d = readdir(dfp)) != NULL)
 		show_long(d->d_name);
 
 	closedir(dfp);
-	exit(EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }
 
 /* XXX - This is system dependent... */
-const char ifmt_name[16] = {
+static const char ifmt_name[16] = {
 	'?',	/* 0: nothing */
 	'P',	/* 1: fifo (pipe) */
 	'C',	/* 2: chr device */
@@ -88,8 +86,8 @@ const char ifmt_name[16] = {
 	'?' 	/* F: ? */
 };
 
-void
-show_long(char *fname)
+static void
+show_long(const char *fname)
 {
 	struct stat st;
 	int ifmt;
@@ -97,7 +95,7 @@ show_long(char *fname)
 	char *date;
 
 	if (lstat(fname, &st)) {
-		perror(fname);
+		warn("lstat `%s'", fname);
 		return;
 	}
 	ifmt = (st.st_mode >> 12) & 15;
@@ -138,12 +136,12 @@ show_long(char *fname)
 	printf("%s", fname);
 
 	if (ifmt_c == 'L') {
-		char linkto[256];
+		char linkto[MAXPATHLEN];
 		int n;
 
 		n = readlink(fname, linkto, sizeof(linkto)-1);
 		if (n < 0) {
-			perror(fname);
+			warn("readlink `%s'", fname);
 			return;
 		}
 		linkto[n] = '\0';
