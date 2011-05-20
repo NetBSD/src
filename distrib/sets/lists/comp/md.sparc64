@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.97 2011/05/13 01:56:27 christos Exp $
+# $NetBSD: md.sparc64,v 1.98 2011/05/20 21:42:48 nakayama Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -20,6 +20,7 @@
 ./usr/include/sparc/endian.h			comp-c-include
 ./usr/include/sparc/endian_machdep.h		comp-c-include
 ./usr/include/sparc/fbio.h			comp-obsolete		obsolete
+./usr/include/sparc/fenv.h			comp-c-include
 ./usr/include/sparc/float.h			comp-c-include
 ./usr/include/sparc/frame.h			comp-c-include
 ./usr/include/sparc/fsr.h			comp-c-include
