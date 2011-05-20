@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.81.10.2 2010/04/21 00:27:39 matt Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.81.10.3 2011/05/20 14:42:20 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.78.10.2 2010/04/20 22:55:48 matt Exp
+ *	NetBSD: miidevs,v 1.78.10.5 2011/05/20 14:41:01 matt Exp
  */
 
 /*-
@@ -125,6 +125,8 @@
 #define	MII_STR_ATTANSIC_L1	"L1 10/100/1000 PHY"
 #define	MII_MODEL_ATTANSIC_L2	0x0002
 #define	MII_STR_ATTANSIC_L2	"L2 10/100 PHY"
+#define	MII_MODEL_ATTANSIC_AR8316	0x0004
+#define	MII_STR_ATTANSIC_AR8316	"AR8316 Switch"
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */
