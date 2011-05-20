@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.10 2011/01/07 23:27:51 riz Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.11 2011/05/20 19:24:54 bouyer Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.10 2011/01/07 23:27:51 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.11 2011/05/20 19:24:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -851,6 +851,7 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			free(cf, M_RAIDFRAME);
 			
 			/* Detach the disk. */
+			dkwedge_delall(&rs->sc_dkdev);
 			disk_detach(&rs->sc_dkdev);
 			disk_destroy(&rs->sc_dkdev);
 		}
@@ -1201,6 +1202,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		free(cf, M_RAIDFRAME);
 
 		/* Detach the disk. */
+		dkwedge_delall(&rs->sc_dkdev);
 		disk_detach(&rs->sc_dkdev);
 		disk_destroy(&rs->sc_dkdev);
 
