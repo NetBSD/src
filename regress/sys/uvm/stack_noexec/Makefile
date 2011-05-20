@@ -1,6 +1,9 @@
-# $NetBSD: Makefile,v 1.3 2006/10/14 20:57:10 bjh21 Exp $
+# $NetBSD: Makefile,v 1.4 2011/05/20 13:36:12 joerg Exp $
 
 NOMAN=	#
+
+UNSUPPORTED_COMPILER.clang=
+UNSUPPORTED_COMPILER.pcc=
 
 .include <bsd.own.mk>
 #

@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2008/09/09 00:16:05 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.8 2011/05/20 13:36:12 joerg Exp $
+
+.include <bsd.own.mk>
 
 SUBDIR+= mmap loan1
 
-.if !defined(HAVE_PCC)
+.if !empty(SUPPORTED_CC:Mgcc)
 SUBDIR+= stack_exec
 .endif
 
@@ -12,7 +14,7 @@ SUBDIR+= stack_exec
 #
 STACKNOX_ARCHS= alpha i386 powerpc sparc sparc64 x86_64
 
-.if !defined(HAVE_PCC) && !empty(STACKNOX_ARCHS:M${MACHINE_ARCH})
+.if !empty(SUPPORTED_CC:Mgcc) && !empty(STACKNOX_ARCHS:M${MACHINE_ARCH})
 SUBDIR+= stack_noexec
 .endif
 
