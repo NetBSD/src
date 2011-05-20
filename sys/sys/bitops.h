@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.2 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: bitops.h,v 1.2.10.1 2011/05/20 19:26:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -253,7 +253,7 @@ fls64(uint64_t _n)
 	_ilog2_helper(_n,  2) \
 	_ilog2_helper(_n,  1) \
 	_ilog2_helper(_n,  0) \
-	-1) : ((sizeof(_n) >= 4 ? fls64(_n) : fls32(_n)) - 1) \
+	-1) : ((sizeof(_n) > 4 ? fls64(_n) : fls32(_n)) - 1) \
 )
 
 #endif /* _SYS_BITOPS_H_ */
