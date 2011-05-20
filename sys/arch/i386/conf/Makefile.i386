@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.169 2011/05/20 13:22:30 joerg Exp $
+#	$NetBSD: Makefile.i386,v 1.170 2011/05/20 13:22:53 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,7 @@ GENASSYM_CONF=	${I386}/i386/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-Di386
-AFLAGS+=	-x assembler-with-cpp
+
 AFLAGS.mptramp.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 ##
