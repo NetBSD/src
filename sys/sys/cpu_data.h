@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.27.16.2 2011/04/29 08:13:53 matt Exp $	*/
+/*	cpu_data.h,v 1.27.16.2 2011/04/29 08:13:53 matt Exp	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ struct cpu_data {
 #define	ci_spin_locks2		ci_data.cpu_spin_locks2
 #define	ci_lkdebug_recurse	ci_data.cpu_lkdebug_recurse
 
-#define	ci_node_id		ci_data.cpu_node_id
+#define	ci_package_id		ci_data.cpu_package_id
 #define	ci_core_id		ci_data.cpu_core_id
 #define	ci_smt_id		ci_data.cpu_smt_id
 
