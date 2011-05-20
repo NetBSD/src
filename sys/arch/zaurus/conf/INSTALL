@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.7 2011/05/05 09:07:59 nonaka Exp $
+# $NetBSD: INSTALL,v 1.8 2011/05/20 07:47:53 tsutsui Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -20,6 +20,7 @@ makeoptions		COPTS="-Os"
 
 no options 		INSECURE
 
+no file-system		KERNFS
 no file-system		NULLFS
 no file-system		PROCFS
 no file-system		PTYFS
@@ -43,8 +44,20 @@ no options 		DDB
 no options 		DDB_HISTORY_SIZE
 no options 		SYMTAB_SPACE
 
+no ztp0 at pxaip?
+no wsmouse* at ztp?
+
+no zaudio0 at pxaip?
+no audio* at zaudio?
+
+no ums* at uhidev?
+no wsmouse* at ums?
+
+no uk* at scsibus?
+
 no pseudo-device	vnd
 no options 		VND_COMPRESSION
 no pseudo-device	accf_data
 no pseudo-device	accf_http
 no pseudo-device	ksyms
+no pseudo-device	wsfont
