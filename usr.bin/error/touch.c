@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.23 2011/05/19 22:55:53 christos Exp $	*/
+/*	$NetBSD: touch.c,v 1.24 2011/05/20 02:00:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.23 2011/05/19 22:55:53 christos Exp $");
+__RCSID("$NetBSD: touch.c,v 1.24 2011/05/20 02:00:45 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -92,7 +92,7 @@ makename(const char *name, size_t level)
 {
 	const char *p;
 
-	if (level-- == 0)
+	if (level == 0)
 		return name;
 
 	if (*name == '/') {
@@ -172,7 +172,7 @@ countfiles(Eptr *errors)
 			    filelevel);
 			if (strcmp(fname, name) != 0) {
 				my_nfiles++;
-				name = name;
+				name = fname;
 			}
 		}
 	}
@@ -215,10 +215,10 @@ filenames(int my_nfiles, Eptr **my_files)
 				my_nfiles, plural(my_nfiles), verbform(my_nfiles));
 		if (!terse) {
 			FILEITERATE(fi, 1, my_nfiles) {
+				const char *fname = makename(
+				    (*my_files[fi])->error_text[0], filelevel);
 				fprintf(stdout, "%s\"%s\" (%d)",
-					sep, makename(
-					(*my_files[fi])->error_text[0],
-					filelevel),
+					sep, fname,
 					(int)(my_files[fi+1] - my_files[fi]));
 				sep = ", ";
 			}
