@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.41 2011/05/20 09:25:15 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.42 2011/05/20 21:56:46 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -54,7 +54,7 @@ file-system	FFS		# UFS
 file-system	MFS		# memory file system
 file-system	NFS		# Network File System client
 #file-system	NTFS		# Windows/NT file system (experimental)
-#file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
