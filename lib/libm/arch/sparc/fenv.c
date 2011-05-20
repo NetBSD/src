@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.c,v 1.2 2011/05/20 21:42:49 nakayama Exp $	*/
+/*	$NetBSD: fenv.c,v 1.1 2011/05/20 21:42:49 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -24,32 +24,18 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.2 2011/05/20 21:42:49 nakayama Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.1 2011/05/20 21:42:49 nakayama Exp $");
 
 #include <assert.h>
 #include <fenv.h>
 
-#ifdef __arch64__
-
-/* Load floating-point state register (all 64bits) */
-#define	__ldxfsr(__r)	__asm__	__volatile__		\
-	("ldx %0, %%fsr" : : "m" (__r))
-
-/* Save floating-point state register (all 64bits) */
-#define	__stxfsr(__r)	__asm__	__volatile__		\
-	("stx %%fsr, %0" : "=m" (*(__r)))
-
-#else /* !__arch64__ */
-
 /* Load floating-point state register (32bits) */
-#define	__ldxfsr(__r)	__asm__	__volatile__		\
+#define	__ldfsr(__r)	__asm__	__volatile__		\
 	("ld %0, %%fsr" : : "m" (__r))
 
 /* Save floating-point state register (32bits) */
-#define	__stxfsr(__r)	__asm__	__volatile__		\
+#define	__stfsr(__r)	__asm__	__volatile__		\
 	("st %%fsr, %0" : "=m" (*(__r)))
-
-#endif /* __arch64__ */
 
 /*
  * The feclearexcept() function clears the supported floating-point exceptions
@@ -65,9 +51,9 @@ feclearexcept(int excepts)
 
 	ex = excepts & FE_ALL_EXCEPT;
 
-	__stxfsr(&r);
+	__stfsr(&r);
 	r &= ~ex;
-	__ldxfsr(r);
+	__ldfsr(r);
 
 	/* Success */
 	return 0;
@@ -89,7 +75,7 @@ fegetexceptflag(fexcept_t *flagp, int excepts)
 
 	ex = excepts & FE_ALL_EXCEPT;
 
-	__stxfsr(&r);
+	__stfsr(&r);
 	*flagp = r & ex;
 
 	/* Success */
@@ -113,10 +99,10 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 
 	ex = excepts & FE_ALL_EXCEPT;
 
-	__stxfsr(&r);
+	__stfsr(&r);
 	r &= ~ex;
 	r |= *flagp & ex;
-	__ldxfsr(r);
+	__ldfsr(r);
 
 	/* Success */
 	return 0;
@@ -182,7 +168,7 @@ fetestexcept(int excepts)
 
 	_DIAGASSERT((excepts & ~FE_ALL_EXCEPT) == 0);
 
-	__stxfsr(&r);
+	__stfsr(&r);
 
 	return r & (excepts & FE_ALL_EXCEPT);
 }
@@ -195,7 +181,7 @@ fegetround(void)
 {
 	fenv_t r;
 
-	__stxfsr(&r);
+	__stfsr(&r);
 
 	return (r >> _ROUND_SHIFT) & _ROUND_MASK;
 }
@@ -214,10 +200,10 @@ fesetround(int round)
 	if (round & ~_ROUND_MASK)
 		return -1;
 
-	__stxfsr(&r);
+	__stfsr(&r);
 	r &= ~(_ROUND_MASK << _ROUND_SHIFT);
 	r |= round << _ROUND_SHIFT;
-	__ldxfsr(r);
+	__ldfsr(r);
 
 	/* Success */
 	return 0;
@@ -232,7 +218,7 @@ fegetenv(fenv_t *envp)
 {
 	_DIAGASSERT(envp != NULL);
 
-	__stxfsr(envp);
+	__stfsr(envp);
 
 	/* Success */
 	return 0;
@@ -252,10 +238,10 @@ feholdexcept(fenv_t *envp)
 
 	_DIAGASSERT(envp != NULL);
 
-	__stxfsr(&r);
+	__stfsr(&r);
 	*envp = r;
 	r &= ~(FE_ALL_EXCEPT | _ENABLE_MASK);
-	__ldxfsr(r);
+	__ldfsr(r);
 
 	/* Success */
 	return 0;
@@ -274,7 +260,7 @@ fesetenv(const fenv_t *envp)
 {
 	_DIAGASSERT(envp != NULL);
 
-	__ldxfsr(*envp);
+	__ldfsr(*envp);
 
 	/* Success */
 	return 0;
@@ -296,8 +282,8 @@ feupdateenv(const fenv_t *envp)
 
 	_DIAGASSERT(envp != NULL);
 
-	__stxfsr(&r);
-	__ldxfsr(*envp);
+	__stfsr(&r);
+	__ldfsr(*envp);
 
 	_DIAGASSERT((r & ~FE_ALL_EXCEPT) == 0);
 	feraiseexcept(r & FE_ALL_EXCEPT);
@@ -314,9 +300,9 @@ feenableexcept(int mask)
 {
 	fenv_t old_r, new_r;
 
-	__stxfsr(&old_r);
+	__stfsr(&old_r);
 	new_r = old_r | ((mask & FE_ALL_EXCEPT) << _FPUSW_SHIFT);
-	__ldxfsr(new_r);
+	__ldfsr(new_r);
 
 	return (old_r >> _FPUSW_SHIFT) & FE_ALL_EXCEPT;
 }
@@ -326,9 +312,9 @@ fedisableexcept(int mask)
 {
 	fenv_t old_r, new_r;
 
-	__stxfsr(&old_r);
+	__stfsr(&old_r);
 	new_r = old_r & ~((mask & FE_ALL_EXCEPT) << _FPUSW_SHIFT);
-	__ldxfsr(new_r);
+	__ldfsr(new_r);
 
 	return (old_r >> _FPUSW_SHIFT) & FE_ALL_EXCEPT;
 }
@@ -338,6 +324,6 @@ fegetexcept(void)
 {
 	fenv_t r;
 
-	__stxfsr(&r);
+	__stfsr(&r);
 	return (r & _ENABLE_MASK) >> _FPUSW_SHIFT;
 }
