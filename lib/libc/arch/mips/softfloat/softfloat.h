@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.1.2.2 2011/04/29 07:48:34 matt Exp $	*/
+/*	softfloat.h,v 1.1.2.2 2011/04/29 07:48:34 matt Exp	*/
 
 /* This is a derivative work. */
 
@@ -285,7 +285,7 @@ Software IEC/IEEE quadruple-precision conversion routines.
 int float128_to_int32( float128 );
 int float128_to_int32_round_to_zero( float128 );
 #if defined(SOFTFLOAT_FOR_GCC) && defined(SOFTFLOAT_NEED_FIXUNS)
-unsigned int float128_to_uint32_round_to_zero( float64 );
+unsigned int float128_to_uint32_round_to_zero( float128 );
 #endif
 long long float128_to_int64( float128 );
 long long float128_to_int64_round_to_zero( float128 );
