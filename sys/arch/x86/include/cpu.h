@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9.10.1 2010/04/21 00:33:45 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9.10.2 2011/05/20 08:11:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -304,9 +304,6 @@ struct timeval;
 
 extern int biosbasemem;
 extern int biosextmem;
-extern unsigned int cpu_feature;
-extern unsigned int cpu_feature2;
-extern unsigned int cpu_feature_padlock;
 extern int cpu;
 extern int cpuid_level;
 extern int cpu_class;

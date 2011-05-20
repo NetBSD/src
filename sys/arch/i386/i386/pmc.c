@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.17 2008/05/11 14:44:54 ad Exp $	*/
+/*	$NetBSD: pmc.c,v 1.17.16.1 2011/05/20 08:11:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.17 2008/05/11 14:44:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.17.16.1 2011/05/20 08:11:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.17 2008/05/11 14:44:54 ad Exp $");
 #include <machine/pmc.h>
 #include <machine/cpu_counter.h>
 #include <machine/cputypes.h>
+#include <machine/cpuvar.h>
 
 static int pmc_initialized;
 static int pmc_ncounters;

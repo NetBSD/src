@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.55.8.1 2010/04/21 00:33:53 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.55.8.2 2011/05/20 08:11:19 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.55.8.1 2010/04/21 00:33:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.55.8.2 2011/05/20 08:11:19 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -942,7 +942,9 @@ startlwp32(void *arg)
 static int
 check_sigcontext32(const struct netbsd32_sigcontext *scp, struct trapframe *tf)
 {
-	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+
+	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
+	    !VALID_USER_CSEL32(scp->sc_cs))
 		return EINVAL;
 	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs))
 		return EINVAL;
@@ -964,7 +966,8 @@ check_mcontext32(const mcontext32_t *mcp, struct trapframe *tf)
 
 	gr = mcp->__gregs;
 
-	if (((gr[_REG32_EFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+	if (((gr[_REG32_EFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
+	    !VALID_USER_CSEL32(gr[_REG32_CS]))
 		return EINVAL;
 	if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]))
 		return EINVAL;
