@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.168 2011/01/12 23:12:12 joerg Exp $
+#	$NetBSD: Makefile.i386,v 1.169 2011/05/20 13:22:30 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -35,6 +35,7 @@ GENASSYM_CONF=	${I386}/i386/genassym.cf
 ##
 CPPFLAGS+=	-Di386
 AFLAGS+=	-x assembler-with-cpp
+AFLAGS.mptramp.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 ##
 ## (3) libkern and compat
