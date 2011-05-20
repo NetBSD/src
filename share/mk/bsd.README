@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.281 2011/05/19 14:29:27 joerg Exp $
+#	$NetBSD: bsd.README,v 1.282 2011/05/20 16:02:23 plunky Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -281,10 +281,6 @@ MKPAM		If "no", disables building of PAM authentication
 		Default: yes
 
 MKPCC		If "no", don't build pcc(1) or any of the PCC-related
-		libraries (libpcc, libpccsoftfloat).
-		Default: no
-
-MKPCCCMDS	If "no", don't build pcc(1), but do build the PCC-related
 		libraries (libpcc, libpccsoftfloat).
 		Default: no
 
