@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.286.10.1 2009/09/13 03:32:33 cliff Exp $ */
+/* com.c,v 1.286.10.1 2009/09/13 03:32:33 cliff Exp */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.286.10.1 2009/09/13 03:32:33 cliff Exp $");
+__KERNEL_RCSID(0, "com.c,v 1.286.10.1 2009/09/13 03:32:33 cliff Exp");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1468,6 +1468,7 @@ com_loadchannelregs(struct com_softc *sc)
 	}
 	if (sc->sc_type == COM_TYPE_AU1x00) {
 		/* alchemy has single separate 16-bit clock divisor register */
+		/* XXX endian */
 		CSR_WRITE_2(regsp, COM_REG_DLBL, sc->sc_dlbl +
 		    (sc->sc_dlbh << 8));
 	} else {
@@ -2154,7 +2155,14 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 	/* frequency==-1 means leave the rate as-is */
 	if (frequency != -1) {
 		rate = comspeed(rate, frequency, type);
-		if (type != COM_TYPE_AU1x00) {
+		if (type == COM_TYPE_AU1x00) {
+			/*
+			 * alchemy has single separate
+			 * 16-bit clock divisor register
+			 * XXX endian
+			 */
+			CSR_WRITE_2(regsp, COM_REG_DLBL, rate);
+		} else {
 			/* no EFR on alchemy */ 
 			if (type != COM_TYPE_16550_NOERS) {
 				CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
@@ -2163,8 +2171,6 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 			CSR_WRITE_1(regsp, COM_REG_LCR, LCR_DLAB);
 			CSR_WRITE_1(regsp, COM_REG_DLBL, rate & 0xff);
 			CSR_WRITE_1(regsp, COM_REG_DLBH, rate >> 8);
-		} else {
-			CSR_WRITE_1(regsp, COM_REG_DLBL, rate);
 		}
 	}
 	CSR_WRITE_1(regsp, COM_REG_LCR, cflag2lcr(cflag));
