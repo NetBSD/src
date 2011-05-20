@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.37 2011/05/20 06:26:58 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.38 2011/05/20 07:49:31 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -288,6 +288,15 @@ scsibus* at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+# ATAPI bus support
+atapibus* at atapi?
+
+# ATAPI devices
+cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
+#sd*	at atapibus? drive ?		# ATAPI disk drives
+#st*	at atapibus? drive ?		# ATAPI tape drives
+#uk*	at atapibus? drive ?		# ATAPI unknown
 
 # USB audio
 #uaudio* at uhub? port ? configuration ?
