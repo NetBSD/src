@@ -9,7 +9,6 @@
 # and as a native binary for a release build by setting
 #
 #	MKPCC=yes
-#	MKPCCCMDS=yes
 #
 
 #
