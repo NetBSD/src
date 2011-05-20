@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.7 2009/05/18 11:39:30 nakayama Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.8 2011/05/20 14:49:54 he Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
