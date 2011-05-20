@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.86 2008/04/24 18:39:23 ad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.86.12.1 2011/05/20 19:28:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.86 2008/04/24 18:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.86.12.1 2011/05/20 19:28:56 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ acct_chkfree(void)
 {
 	int error;
 	struct statvfs *sb;
-	int64_t bavail;
+	fsblkcnt_t bavail;
 
 	sb = kmem_alloc(sizeof(*sb), KM_SLEEP);
 	if (sb == NULL)
@@ -185,7 +185,11 @@ acct_chkfree(void)
 		return (error);
 	}
 
-	bavail = sb->f_bfree - sb->f_bresvd;
+	if (sb->f_bfree < sb->f_bresvd) {
+		bavail = 0;
+	} else {
+		bavail = sb->f_bfree - sb->f_bresvd;
+	}
 
 	switch (acct_state) {
 	case ACCT_SUSPENDED:
