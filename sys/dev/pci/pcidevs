@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1076 2011/05/15 00:59:36 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1077 2011/05/20 00:50:19 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2502,6 +2502,8 @@ product INTEL 82580_COPPER_DUAL	0x1516	82580 dual-1000BaseT Ethernet
 product INTEL 82576_NS_SERDES 	0x1518	82576 gigabit Ethernet (SERDES)
 product INTEL 82580_ER 		0x151d	82580 1000BaseT Ethernet
 product INTEL 82580_ER_DUAL 	0x151e	82580 dual-1000BaseT Ethernet
+product INTEL 82801J_D_BM_V	0x1525	82567V LAN Controller
+product INTEL 82580_QUAD_FIBER 	0x1527	82580 quad-1000BaseX Ethernet
 product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
 product INTEL 80960RM_2		0x1962	i960 RM PCI-PCI
 product INTEL 82840_HB		0x1a21	82840 Host
@@ -3046,6 +3048,8 @@ product INTEL CP_SYS_MREGS	0xd155	Core Processor System Management Registers
 product INTEL CP_SS_REGS	0xd156	Core Processor Semaphore and Scratchpad Registers
 product INTEL CP_SCS_REGS	0xd157	Core Processor System Control and Status Registers
 product INTEL CP_MISC_REGS	0xd158	Core Processor Miscellaneous Registers
+product INTEL HANKSVILLE	0xF0FE	HANKSVILLE LAN Controller
+
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
