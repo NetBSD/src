@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.306 2011/05/02 20:48:27 rmind Exp $
+#	$NetBSD: BRANCHES,v 1.307 2011/05/20 08:12:46 matt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -423,7 +423,7 @@ Description:	Rototill the mips code to support LP64 mips and N32/N64 ABIs
 Status:		Active
 Start Date:	2009-08-01
 End Date:
-Base Tag:	netbsd-5-0-1-RELEASE
+Base Tag:	netbsd-5-1-RELEASE
 Maintainer:	Matt Thomas <matt@NetBSD.org>
 Scope:		kernel & userland
 Notes:		
