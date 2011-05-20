@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.129.10.5 2008/11/27 03:37:02 snj Exp $	*/
+/*	$NetBSD: npx.c,v 1.129.10.5.4.1 2011/05/20 08:11:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.129.10.5 2008/11/27 03:37:02 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.129.10.5.4.1 2011/05/20 08:11:21 matt Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.129.10.5 2008/11/27 03:37:02 snj Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
+#include <machine/cpuvar.h>
 #include <machine/pcb.h>
 #include <machine/trap.h>
 #include <machine/specialreg.h>

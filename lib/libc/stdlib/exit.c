@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.11 2007/10/30 17:19:59 skrll Exp $	*/
+/*	$NetBSD: exit.c,v 1.11.20.1 2011/05/20 08:11:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exit.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: exit.c,v 1.11 2007/10/30 17:19:59 skrll Exp $");
+__RCSID("$NetBSD: exit.c,v 1.11.20.1 2011/05/20 08:11:17 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,14 +45,20 @@ __RCSID("$NetBSD: exit.c,v 1.11 2007/10/30 17:19:59 skrll Exp $");
 #include "atexit.h"
 #endif
 
+#ifdef _LIBC
+extern void __libc_init(void);
+#ifndef __lint
+static void (*force_ref)(void) __used = __libc_init;
+#endif
+#endif
+
 void (*__cleanup) __P((void));
 
 /*
  * Exit, flushing stdio buffers if necessary.
  */
 void
-exit(status)
-	int status;
+exit(int status)
 {
 
 #ifdef _LIBC

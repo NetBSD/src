@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102.4.10.4.1 2010/04/21 00:33:53 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102.4.10.4.2 2011/05/20 08:11:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.10.4.1 2010/04/21 00:33:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.10.4.2 2011/05/20 08:11:19 matt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1392,9 +1392,9 @@ init_x86_64(paddr_t first_avail)
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
 	first_bt_vaddr = (vaddr_t) (first_avail + KERNBASE + PAGE_SIZE * 2);
 	__PRINTK(("first_bt_vaddr 0x%lx\n", first_bt_vaddr));
-	cpu_feature = cpu_info_primary.ci_feature_flags;
 	/* not on Xen... */
-	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
+	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR);
+	cpu_feature3 &= ~(CPUID_NOX);
 #endif /* XEN */
 
 	cpu_init_msrs(&cpu_info_primary, true);

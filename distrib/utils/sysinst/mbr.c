@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.79.20.1 2010/04/21 05:20:43 matt Exp $ */
+/*	$NetBSD: mbr.c,v 1.79.20.2 2011/05/20 08:11:15 matt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1156,8 +1156,8 @@ set_mbr_header(menudesc *m, void *arg)
 
 	msg_display(MSG_editparttable);
 
-	msg_table_add(MSG_part_header, dlsize/sizemult, multname, multname,
-	    multname, multname);
+	msg_table_add(MSG_part_header, (unsigned long)(dlsize/sizemult),
+	    multname, multname, multname, multname);
 
 	if (num_opts == 0) {
 		num_opts = 6;
@@ -1282,16 +1282,16 @@ edit_mbr(mbr_info_t *mbri)
 		return(md_mbr_use_wholedisk(mbri));
 	}
 
+	/* Default to MB, and use bios geometry for cylinder size */
+	set_sizemultname_meg();
+	current_cylsize = bhead * bsec;
+
 	mbr_menu = new_menu(NULL, NULL, 16, 0, -1, 15, 70,
 			MC_NOBOX | MC_ALWAYS_SCROLL | MC_NOCLEAR,
 			set_mbr_header, set_mbr_label, NULL,
 			NULL, MSG_Partition_table_ok);
 	if (mbr_menu == -1)
 		return 0;
-
-	/* Default to MB, and use bios geometry for cylinder size */
-	set_sizemultname_meg();
-	current_cylsize = bhead * bsec;
 
 	for (;;) {
 		ptstart = 0;
@@ -1377,6 +1377,45 @@ get_partname(int typ)
 	return unknown;
 }
 
+#ifdef BOOTSEL
+static int
+validate_and_set_names(mbr_info_t *mbri, const struct mbr_bootsel *src,
+    uint32_t ext_base)
+{
+	size_t i, l;
+	const unsigned char *p;
+
+	/*
+	 * The 16 bit magic used to detect wether mbr_bootsel is valid
+	 * or not is pretty week - collisions have been seen in the wild;
+	 * but maybe it is just foreign tools corruption reminiscents
+	 * of NetBSD MBRs. Anyway, before accepting a boot menu definition,
+	 * make sure it is kinda "sane".
+	 */
+
+	for (i = 0; i < MBR_PART_COUNT; i++) {
+		/*
+		 * Make sure the name does not contain controll chars
+		 * (not using iscntrl due to minimalistic locale support
+		 * in miniroot environments) and is properly 0-terminated.
+		 */
+		for (l = 0, p = (const unsigned char *)&src->mbrbs_nametab[i];
+		    *p != 0; l++, p++) {
+			if (l >	MBR_BS_PARTNAMESIZE)
+				return 0;
+			if (*p < ' ')	/* hacky 'iscntrl' */
+				return 0;
+		}
+	}
+
+	memcpy(&mbri->mbrb, src, sizeof(*src));
+
+	if (ext_base == 0)
+		return mbri->mbrb.mbrbs_defkey - SCAN_1;
+	return 0;
+}
+#endif
+
 int
 read_mbr(const char *disk, mbr_info_t *mbri)
 {
@@ -1434,15 +1473,14 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 #if BOOTSEL
 		if (mbrs->mbr_bootsel_magic == htole16(MBR_MAGIC)) {
 			/* old bootsel, grab bootsel info */
-			mbri->mbrb = *(struct mbr_bootsel *)
-				((uint8_t *)mbrs + MBR_BS_OLD_OFFSET);
-			if (ext_base == 0)
-				bootkey = mbri->mbrb.mbrbs_defkey - SCAN_1;
+			bootkey = validate_and_set_names(mbri, 
+				(struct mbr_bootsel *)
+				((uint8_t *)mbrs + MBR_BS_OLD_OFFSET),
+				ext_base);
 		} else if (mbrs->mbr_bootsel_magic == htole16(MBR_BS_MAGIC)) {
 			/* new location */
-			mbri->mbrb = mbrs->mbr_bootsel;
-			if (ext_base == 0)
-				bootkey = mbri->mbrb.mbrbs_defkey - SCAN_1;
+			bootkey = validate_and_set_names(mbri,
+			    &mbrs->mbr_bootsel, ext_base);
 		}
 		/* Save original flags for mbr code update tests */
 		mbri->oflags = mbri->mbrb.mbrbs_flags;
