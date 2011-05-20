@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.78.10.4 2011/05/20 14:37:49 matt Exp $
+$NetBSD: miidevs,v 1.78.10.5 2011/05/20 14:41:01 matt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
