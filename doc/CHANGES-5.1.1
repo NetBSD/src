@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.25 2011/05/19 19:53:03 bouyer Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.26 2011/05/20 19:32:58 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -2421,4 +2421,13 @@ external/bsd/dhcpcd/dist/dhcpcd-hooks/30-hostname	patch
 	Document the need for input validation in dhcpcd-run-hooks(8).
 	Fixes CVE-2011-996
 	[spz, ticket #1603]
+
+include/inttypes.h				1.7
+include/stddef.h				1.16
+include/stdlib.h				1.90
+include/wchar.h					1.28
+
+	Don't define wchar_t for c++; it is native in the language.
+	From Alexander Nasonov
+	[joerg, ticket #1611]
 
