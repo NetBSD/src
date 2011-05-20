@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.103 2011/03/09 23:10:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.104 2011/05/20 22:21:32 joerg Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -38,7 +38,7 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
      (${MACHINE_ARCH} == "vax")) &&					\
     ${MKPIC} != "no"
 
-LDFLAGS+=	-shared -symbolic -nostartfiles
+LDFLAGS+=	-shared -symbolic -nostartfiles -nodefaultlibs
 LDFLAGS+=	-Wl,-static
 LDFLAGS+=	-Wl,--warn-shared-textrel
 
