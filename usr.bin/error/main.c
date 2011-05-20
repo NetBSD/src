@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2011/05/19 22:55:53 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2011/05/20 07:09:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.18 2011/05/19 22:55:53 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2011/05/20 07:09:52 wiz Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -297,7 +297,7 @@ errorsort(const void *x1, const void *x2)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-nqSsTv] [-I <ignorename>] "
-	    "[-t <suffixlist>] [-p <level>] <infile>\n", getprogname());
+	fprintf(stderr, "Usage: %s [-nqSsTv] [-I ignorefile] "
+	    "[-p filelevel] [-t suffixlist] [name]\n", getprogname());
 	exit(1);
 }
