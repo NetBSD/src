@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.5 2008/07/08 12:39:27 sborrill Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.5.4.1 2011/05/20 19:19:57 bouyer Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.5 2008/07/08 12:39:27 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.5.4.1 2011/05/20 19:19:57 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -547,17 +547,18 @@ lii_read_macaddr(struct lii_softc *sc, uint8_t *ea)
 	}
 
 	if (found < 2) {
-		aprint_error_dev(sc->sc_dev, "error reading MAC address\n");
-		return 1;
-	}
-
-	addr0 = htole32(addr0);
-	addr1 = htole32(addr1);
-
-	if ((addr0 == 0xffffff && (addr1 & 0xffff) == 0xffff) ||
-	    (addr0 == 0 && (addr1 & 0xffff) == 0)) {
+		/* Make sure we try the BIOS method before giving up */
 		addr0 = htole32(AT_READ_4(sc, ATL2_MAC_ADDR_0));
 		addr1 = htole32(AT_READ_4(sc, ATL2_MAC_ADDR_1));
+		if ((addr0 == 0xffffff && (addr1 & 0xffff) == 0xffff) ||
+		    (addr0 == 0 && (addr1 & 0xffff) == 0)) {
+			aprint_error_dev(sc->sc_dev,
+			    "error reading MAC address\n");
+			return 1;
+		}
+	} else {
+		addr0 = htole32(addr0);
+		addr1 = htole32(addr1);
 	}
 
 	ea[0] = (addr1 & 0x0000ff00) >> 8;
