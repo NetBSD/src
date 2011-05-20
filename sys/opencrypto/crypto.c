@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.29.4.1 2008/11/20 03:22:38 snj Exp $ */
+/*	$NetBSD: crypto.c,v 1.29.4.1.4.1 2011/05/20 08:11:31 matt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.29.4.1 2008/11/20 03:22:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.29.4.1.4.1 2011/05/20 08:11:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -338,8 +338,10 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 
 		/* See if all the algorithms are supported. */
 		for (cr = cri; cr; cr = cr->cri_next)
-			if (crypto_drivers[hid].cc_alg[cr->cri_alg] == 0)
+			if (crypto_drivers[hid].cc_alg[cr->cri_alg] == 0) {
+				DPRINTF(("crypto_newsession: alg %d not supported\n", cr->cri_alg));
 				break;
+			}
 
 		if (cr == NULL) {
 			/* Ok, all algorithms are supported. */
@@ -714,6 +716,10 @@ crypto_dispatch(struct cryptop *crp)
 	int result;
 
 	mutex_spin_enter(&crypto_mtx);
+	DPRINTF(("crypto_dispatch: crp %08x, reqid 0x%x, alg %d\n",
+			(uint32_t)crp,
+			crp->crp_reqid,
+			crp->crp_desc->crd_alg));
 
 	cryptostats.cs_ops++;
 
@@ -962,6 +968,8 @@ crypto_freereq(struct cryptop *crp)
 
 	if (crp == NULL)
 		return;
+	DPRINTF(("crypto_freereq[%d]: crp %p\n",
+			(uint32_t)crp->crp_sid, crp));
 
 	/* sanity check */
 	if (crp->crp_flags & CRYPTO_F_ONRETQ) {
@@ -1021,6 +1029,8 @@ crypto_done(struct cryptop *crp)
 	if (crypto_timing)
 		crypto_tstat(&cryptostats.cs_done, &crp->crp_tstamp);
 #endif
+	DPRINTF(("crypto_done[%d]: crp %08x\n",
+			(uint32_t)crp->crp_sid, (uint32_t)crp));
 
 	/*
 	 * Normal case; queue the callback for the thread.
@@ -1067,14 +1077,18 @@ crypto_done(struct cryptop *crp)
 			 * This is an optimization to avoid
 			 * unecessary context switches.
 			 */
+			DPRINTF(("crypto_done[%d]: crp %08x CRYPTO_F_USER\n",
+				(uint32_t)crp->crp_sid, (uint32_t)crp));
 		} else {
 			wasempty = TAILQ_EMPTY(&crp_ret_q);
-			DPRINTF(("crypto_done: queueing %08x\n", (uint32_t)crp));
+			DPRINTF(("crypto_done[%d]: queueing %08x\n",
+					(uint32_t)crp->crp_sid, (uint32_t)crp));
 			crp->crp_flags |= CRYPTO_F_ONRETQ;
 			TAILQ_INSERT_TAIL(&crp_ret_q, crp, crp_next);
 			if (wasempty) {
-				DPRINTF(("crypto_done: waking cryptoret, %08x " \
-					"hit empty queue\n.", (uint32_t)crp));
+				DPRINTF(("crypto_done[%d]: waking cryptoret, crp %08x " \
+					"hit empty queue\n.",
+					(uint32_t)crp->crp_sid, (uint32_t)crp));
 				cv_signal(&cryptoret_cv);
 			}
 		}
