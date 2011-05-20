@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.40 2011/05/20 09:06:02 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.41 2011/05/20 09:25:15 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -116,6 +116,9 @@ options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
+
+# Loadable kernel module support
+#options 	MODULAR		# new style module(7) framework
 
 # Device options
 
