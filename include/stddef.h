@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.15 2006/08/21 16:58:29 thorpej Exp $	*/
+/*	$NetBSD: stddef.h,v 1.15.26.1 2011/05/20 19:18:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@ typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
 #endif
 
-#ifdef	_BSD_WCHAR_T_
+#if defined(_BSD_WCHAR_T_) && !defined(__cplusplus)
 typedef	_BSD_WCHAR_T_	wchar_t;
 #undef	_BSD_WCHAR_T_
 #endif
