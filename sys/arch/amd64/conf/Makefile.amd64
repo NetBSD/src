@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.30 2011/01/12 23:12:11 joerg Exp $
+#	$NetBSD: Makefile.amd64,v 1.31 2011/05/20 13:18:42 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -63,6 +63,11 @@ copy.o: ${AMD64}/amd64/copy.S assym.h
 
 spl.o: ${AMD64}/amd64/spl.S assym.h
 	${NORMAL_S}
+
+AFLAGS.locore.S=		-no-integrated-as
+AFLAGS.mptramp.S=		-no-integrated-as
+AFLAGS.linux32_sigcode.S=	-no-integrated-as
+AFLAGS.netbsd32_sigcode.S=	-no-integrated-as
 
 ##
 ## (5) link settings
