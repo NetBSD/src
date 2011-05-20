@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.80 2011/05/20 19:40:43 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.81 2011/05/20 21:50:08 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5095,15 +5095,6 @@ external/bsd/dhcpcd/dist/dhcpcd-hooks/30-hostname	patch
 	Document the need for input validation in dhcpcd-run-hooks(8).
 	Fixes CVE-2011-996
 	[spz, ticket #1603]
-
-sys/fs/puffs/puffs_msgif.c			1.84 via patch
-
-	Apply patch from PR kern/44093 by yamt:
-
-	Interrupt server wait only on certain signals (same set at nfs -i)
-	instead of all signals.  According to the PR this helps with
-	"git clone" run on a puffs file system.
-	[manu, ticket #1604]
 
 etc/mtree/NetBSD.dist.base			1.87 via patch
 share/i18n/csmapper/CBM/CBMINT%UCS.src		1.1
