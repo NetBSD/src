@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.124 2008/10/25 22:12:41 apb Exp $
+#	Makefile,v 1.124 2008/10/25 22:12:41 apb Exp
 
 .include <bsd.own.mk>
 
@@ -100,6 +100,11 @@ SUBDIR+=	amiga-txlt
 
 .if ${MACHINE} == "hp300"
 SUBDIR+=	hp300-mkboot
+.endif
+
+.if ${MACHINE} == "evbarm" || ${MACHINE} == "evbmips" || \
+    ${MACHINE} == "evbppc" || ${MACHINE} == "sandpoint"
+SUBDIR+=	mkubootimage
 .endif
 
 check_MKTOOLS: .PHONY .NOTMAIN
