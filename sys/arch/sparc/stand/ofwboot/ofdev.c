@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.28 2010/04/04 21:49:15 martin Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.29 2011/05/20 14:49:54 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,6 +55,7 @@
 #include <machine/promlib.h>
 
 #include "ofdev.h"
+#include "net.h"
 #include "boot.h"
 
 extern char bootdev[];
@@ -545,7 +546,7 @@ open_again:
 		if (!strncmp(*file,"/tftp:",6)) {
 			*file += 6;
 			memcpy(&file_system[0], &file_system_tftp, sizeof file_system[0]);
-			if (net_tftp_bootp(&of->f_devdata)) {
+			if (net_tftp_bootp((int**)&of->f_devdata)) {
 				net_close(&ofdev);
 				goto bad;
 			}
