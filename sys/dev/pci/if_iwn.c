@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.54 2011/05/18 01:02:43 dyoung Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.55 2011/05/20 01:59:15 msaitoh Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.54 2011/05/18 01:02:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.55 2011/05/20 01:59:15 msaitoh Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -156,7 +156,6 @@ static void	iwn5000_ict_reset(struct iwn_softc *);
 static int	iwn_read_eeprom(struct iwn_softc *);
 static void	iwn4965_read_eeprom(struct iwn_softc *);
 
-#define IWN_DEBUG 1
 #ifdef IWN_DEBUG
 static void	iwn4965_print_power_group(struct iwn_softc *, int);
 #endif
@@ -724,11 +723,11 @@ iwn5000_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		break;
 	case IWN_HW_REV_TYPE_6050:
 		sc->limits = &iwn6000_sensitivity_limits;
-		sc->fwname = "iwlwifi-6050-2.ucode";
+		sc->fwname = "iwlwifi-6050-5.ucode";
 		break;
 	case IWN_HW_REV_TYPE_6005:
 		sc->limits = &iwn6000_sensitivity_limits;
-		sc->fwname = "iwlwifi-6005-2.ucode";
+		sc->fwname = "iwlwifi-6000g2a-5.ucode";
 		break;
 	default:
 		aprint_normal(": adapter type %d not supported\n", sc->hw_type);
