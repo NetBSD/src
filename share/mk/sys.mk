@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.105 2011/04/07 01:40:32 joerg Exp $
+#	$NetBSD: sys.mk,v 1.106 2011/05/20 14:27:48 joerg Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -13,11 +13,11 @@ RANLIB?=	ranlib
 
 AS?=		as
 AFLAGS?=
-COMPILE.s?=	${CC} ${AFLAGS} -c
-LINK.s?=	${CC} ${AFLAGS} ${LDFLAGS}
+COMPILE.s?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} -c
+LINK.s?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${LDFLAGS}
 _ASM_TRADITIONAL_CPP=	-x assembler-with-cpp
-COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${_ASM_TRADITIONAL_CPP} -c
-LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
+COMPILE.S?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} ${_ASM_TRADITIONAL_CPP} -c
+LINK.S?=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} ${LDFLAGS}
 
 CC?=		cc
 .if ${MACHINE_ARCH} == "alpha" || \
