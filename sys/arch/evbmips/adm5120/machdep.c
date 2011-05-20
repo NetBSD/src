@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.6.10.5 2010/03/21 17:38:33 cliff Exp $ */
+/* machdep.c,v 1.6.10.5 2010/03/21 17:38:33 cliff Exp */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.10.5 2010/03/21 17:38:33 cliff Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.6.10.5 2010/03/21 17:38:33 cliff Exp");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -327,7 +327,7 @@ mach_init(int argc, char **argv, void *a2, void *a3)
 	 * functions called during startup.
 	 * Also clears the I+D caches.
 	 */
-	mips_vector_init(NULL);
+	mips_vector_init(NULL, false);
 
 	/*
 	 * Set the VM page size.
@@ -506,7 +506,7 @@ cpu_reboot(int howto, char *bootstr)
 	static int waittime = -1;
 
 	/* Take a snapshot before clobbering any registers. */
-	savectx(curlwp->l_addr);
+	savectx(lwp_getpcb(curlwp));
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)
