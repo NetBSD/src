@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.5 2007/11/08 21:31:04 martin Exp $ */
+/* softfloat.c,v 1.5 2007/11/08 21:31:04 martin Exp */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.5 2007/11/08 21:31:04 martin Exp $");
+__RCSID("softfloat.c,v 1.5 2007/11/08 21:31:04 martin Exp");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -4326,6 +4326,46 @@ int32 float128_to_int32_round_to_zero( float128 a )
  invalid:
         float_raise( float_flag_invalid );
         return aSign ? (sbits32) 0x80000000 : 0x7FFFFFFF;
+    }
+    if ( ( aSig0<<shiftCount ) != savedASig ) {
+        float_exception_flags |= float_flag_inexact;
+    }
+    return z;
+
+}
+
+/*
+ * just like above - but do not care for overflow of signed results
+ */
+unsigned int float128_to_uint32_round_to_zero( float128 a )
+{
+    flag aSign;
+    int32 aExp, shiftCount;
+    bits64 aSig0, aSig1, savedASig;
+    uint32 z;
+
+    aSig1 = extractFloat128Frac1( a );
+    aSig0 = extractFloat128Frac0( a );
+    aExp = extractFloat128Exp( a );
+    aSign = extractFloat128Sign( a );
+    aSig0 |= ( aSig1 != 0 );
+    if ( 0x401E < aExp ) {
+        if ( ( aExp == 0x7FFF ) && aSig0 ) aSign = 0;
+        goto invalid;
+    }
+    else if ( aExp < 0x3FFF ) {
+        if ( aExp || aSig0 ) float_exception_flags |= float_flag_inexact;
+        return 0;
+    }
+    aSig0 |= LIT64( 0x0001000000000000 );
+    shiftCount = 0x402F - aExp;
+    savedASig = aSig0;
+    aSig0 >>= shiftCount;
+    z = aSig0;
+    if ( aSign ) {
+ invalid:
+        float_raise( float_flag_invalid );
+        return 0xFFFFFFFF;
     }
     if ( ( aSig0<<shiftCount ) != savedASig ) {
         float_exception_flags |= float_flag_inexact;
