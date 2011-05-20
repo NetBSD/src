@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.39 2011/05/20 09:01:39 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.40 2011/05/20 09:06:02 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -356,7 +356,7 @@ ld* at sdmmc?				# MMC/SD/SDHC card
 
 # disk/mass storage pseudo-devices
 pseudo-device	md			# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
@@ -382,7 +382,7 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	nsmb			# experimental - SMB requester
 
 # a pseudo device needed for verified exec
-#pseudo-device  veriexec        1
+#pseudo-device  veriexec
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
