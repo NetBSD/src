@@ -1,4 +1,4 @@
-.\" Copyright 2006-2008 Roy Marples
+.\" Copyright (c) 2006-2011 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -112,3 +112,11 @@ in a lexical order and then finally
 .An Roy Marples <roy@marples.name>
 .Sh BUGS
 Please report them to http://roy.marples.name/projects/dhcpcd
+.Sh SECURITY CONSIDERATIONS 
+Little validation of DHCP options is done in dhcpcd itself. 
+Instead, it is up to the hooks to handle any validation needed. 
+To this end, some helper functions are provided, such as valid_domainname as 
+used by the 
+.Pa 20-resolv.conf 
+hook to ensure that the hostname is not set to an invalid value. 
+valid_path is also provided, but is currently unused by a stock hook script. 
