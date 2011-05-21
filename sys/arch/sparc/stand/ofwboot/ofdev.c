@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.30 2011/05/21 15:50:42 tsutsui Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.31 2011/05/21 16:32:00 nakayama Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -126,7 +126,7 @@ filename(char *str, char *ppart)
 				sizeof devtype) < 0)
 			devtype[0] = 0;
 	}
-	DPRINTF(("filename: not found\n",lp));
+	DPRINTF(("filename: not found\n"));
 	return 0;
 }
 
@@ -501,12 +501,12 @@ open_again:
 		} else {
 			part = partition ? partition - 'a' : 0;
 			ofdev.partoff = label.d_partitions[part].p_offset;
-			DPRINTF(("devopen: setting partition %d offset %x\n",
+			DPRINTF(("devopen: setting partition %d offset %lx\n",
 			       part, ofdev.partoff));
 			if (label.d_partitions[part].p_fstype == FS_RAID) {
 				ofdev.partoff += RF_PROTECTED_SECTORS;
 				DPRINTF(("devopen: found RAID partition, "
-				    "adjusting offset to %x\n", ofdev.partoff));
+				    "adjusting offset to %lx\n", ofdev.partoff));
 			}
 		}
 
