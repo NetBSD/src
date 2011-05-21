@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.30 2011/05/05 17:44:39 drochner Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.31 2011/05/21 10:04:03 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.30 2011/05/05 17:44:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.31 2011/05/21 10:04:03 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 		else {
 			/* Get random IV */
 			for (i = 0;
-			    i + sizeof (u_int32_t) < EALG_MAX_BLOCK_LEN;
+			    i + sizeof (u_int32_t) <= EALG_MAX_BLOCK_LEN;
 			    i += sizeof (u_int32_t)) {
 				u_int32_t temp = arc4random();
 
