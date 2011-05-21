@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.55 2011/05/20 01:59:15 msaitoh Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.56 2011/05/21 12:51:47 msaitoh Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.55 2011/05/20 01:59:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.56 2011/05/21 12:51:47 msaitoh Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -73,8 +73,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.55 2011/05/20 01:59:15 msaitoh Exp $");
 #include <dev/pci/if_iwnvar.h>
 
 static const pci_product_id_t iwn_devices[] = {
+	PCI_PRODUCT_INTEL_WIFI_LINK_1030_1,
+	PCI_PRODUCT_INTEL_WIFI_LINK_1030_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_4965_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_4965_2,
+	PCI_PRODUCT_INTEL_WIFI_LINK_4965_3,
+	PCI_PRODUCT_INTEL_WIFI_LINK_4965_4,
 	PCI_PRODUCT_INTEL_WIFI_LINK_5100_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_5100_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_5150_1,
@@ -93,19 +97,8 @@ static const pci_product_id_t iwn_devices[] = {
 	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_2,
-#ifdef notyet
-	/*
-	 * XXX NetBSD: the 6005A replaces the two 6005, above
-	 * (see OpenBSD rev 1.96).
-	 */
-	PCI_PRODUCT_INTEL_WIFI_LINK_6005A_2X2_1,
-	PCI_PRODUCT_INTEL_WIFI_LINK_6005A_2X2_2,
-	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_1X1_1,
-	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_1X1_2,
-	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_2X2_1,
-	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_2X2_2,
-	PCI_PRODUCT_INTEL_WIFI_LINK_6005B_2X2_3
-#endif
+	PCI_PRODUCT_INTEL_WIFI_LINK_6230_1,
+	PCI_PRODUCT_INTEL_WIFI_LINK_6230_2,
 };
 
 /*
