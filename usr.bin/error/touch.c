@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.24 2011/05/20 02:00:45 christos Exp $	*/
+/*	$NetBSD: touch.c,v 1.25 2011/05/21 00:43:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.24 2011/05/20 02:00:45 christos Exp $");
+__RCSID("$NetBSD: touch.c,v 1.25 2011/05/21 00:43:52 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: touch.c,v 1.24 2011/05/20 02:00:45 christos Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <stdarg.h>
+#include <err.h>
 #include "error.h"
 #include "pathnames.h"
 
@@ -574,8 +575,7 @@ edit(const char *name)
 
 	o_name = name;
 	if ((o_touchedfile = fopen(name, "r")) == NULL) {
-		fprintf(stderr, "%s: Can't open file \"%s\" to touch (read).\n",
-			processname, name);
+		warn("Can't open file `%s' to touch (read)", name);
 		return true;
 	}
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
@@ -584,10 +584,9 @@ edit(const char *name)
 	fd = -1;
 	if ((fd = mkstemp(n_name)) == -1 ||
 	    (n_touchedfile = fdopen(fd, "w")) == NULL) {
+		warn("Can't open file `%s' to touch (write)", name);
 		if (fd != -1)
 			close(fd);
-		fprintf(stderr,"%s: Can't open file \"%s\" to touch (write).\n",
-			processname, name);
 		return true;
 	}
 	tempfileopen = true;
@@ -647,9 +646,8 @@ writetouched(int overwrite)
 			 * Catastrophe in temporary area: file system full?
 			 */
 			botch = 1;
-			fprintf(stderr,
-			    "%s: write failure: No errors inserted in \"%s\"\n",
-			    processname, o_name);
+			warn("write failure: No errors inserted in `%s'",
+			    o_name);
 		}
 	}
 	fclose(n_touchedfile);
@@ -664,14 +662,11 @@ writetouched(int overwrite)
 		localfile = NULL;
 		temp = NULL;
 		if ((localfile = fopen(o_name, "w")) == NULL) {
-			fprintf(stderr,
-				"%s: Can't open file \"%s\" to overwrite.\n",
-				processname, o_name);
+			warn("Can't open file `%s' to overwrite", o_name);
 			botch++;
 		}
 		if ((temp = fopen(n_name, "r")) == NULL) {
-			fprintf(stderr, "%s: Can't open file \"%s\" to read.\n",
-				processname, n_name);
+			warn("Can't open file `%s' to read", n_name);
 			botch++;
 		}
 		if (!botch)
@@ -681,11 +676,9 @@ writetouched(int overwrite)
 		if (temp != NULL)
 			fclose(temp);
 	}
-	if (oktorm == 0) {
-		fprintf(stderr, "%s: Catastrophe: A copy of \"%s\": was saved in \"%s\"\n",
-			processname, o_name, n_name);
-		exit(1);
-	}
+	if (oktorm == 0)
+		errx(1, "Catastrophe: A copy of `%s': was saved in `%s'",
+		    o_name, n_name);
 	/*
 	 * Kiss the temp file good bye
 	 */
@@ -722,7 +715,7 @@ mustwrite(const char *base, unsigned n, FILE *preciousfile)
 	nwrote = fwrite(base, 1, n, preciousfile);
 	if (nwrote == n)
 		return (1);
-	perror(processname);
+	warn("write failed");
 	switch (inquire(terse
 	    ? "Botch overwriting: retry? "
 	    : "Botch overwriting the source file: retry? ")) {
