@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2011/05/20 07:09:52 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2011/05/21 00:43:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.19 2011/05/20 07:09:52 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2011/05/21 00:43:42 christos Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: main.c,v 1.19 2011/05/20 07:09:52 wiz Exp $");
 #include "pathnames.h"
 
 FILE *errorfile;     /* where error file comes from */
-FILE *queryfile;     /* where the query responses from the user come from*/
+FILE *queryfile;     /* input for the query responses from the user */
 
 int nignored;
 char **names_ignored;
@@ -70,7 +70,6 @@ int language = INCC;
 
 static char default_currentfilename[] = "????";
 char *currentfilename = default_currentfilename;
-char *processname;
 
 boolean query = false;	/* query the operator if touch files */
 boolean terse = false;	/* Terse output */
@@ -172,14 +171,22 @@ main(int argc, char **argv)
 
 	argv += optind;
 	argc -= optind;
+
+	switch (argc) {
+	case 0:
+		break;
+	case 1:
+		if ((errorfile = fopen(argv[0], "r")) == NULL)
+			err(1, "Cannot open `%s' to read errors", argv[0]);
+		break;
+	default:
+		usage();
+	}
+
 	if (notouch)
 		suffixlist = 0;
-	if (argc > 1) {
-		if (argc > 3)
-			usage();
-		if ((errorfile = fopen(argv[1], "r")) == NULL)
-			err(1, "Cannot open `%s' to read errors", argv[1]);
-	}
+
+
 	if ((queryfile = fopen(im_on, "r")) == NULL) {
 		if (query)
 			err(1, "Cannot open `%s' to query the user", im_on);
@@ -198,28 +205,35 @@ main(int argc, char **argv)
 	findfiles(nerrors, errors, &nfiles, &files);
 #define P(msg, arg) fprintf(stdout, msg, arg)
 	if (pr_summary) {
-	    if (nunknown)
-	      P("%d Errors are unclassifiable.\n", nunknown);
-	    if (nignore)
-	      P("%d Errors are classifiable, but totally discarded.\n",nignore);
-	    if (nsyncerrors)
-	      P("%d Errors are synchronization errors.\n", nsyncerrors);
-	    if (nignore)
-	      P("%d Errors are discarded because they refer to sacrosinct files.\n", ndiscard);
-	    if (nnulled)
-	      P("%d Errors are nulled because they refer to specific functions.\n", nnulled);
-	    if (nnonspec)
-	      P("%d Errors are not specific to any file.\n", nnonspec);
-	    if (nthisfile)
-	      P("%d Errors are specific to a given file, but not to a line.\n", nthisfile);
-	    if (ntrue)
-	      P("%d Errors are true errors, and can be inserted into the files.\n", ntrue);
+		if (nunknown)
+			P("%d Errors are unclassifiable.\n", nunknown);
+		if (nignore)
+			P("%d Errors are classifiable, but totally "
+			    "discarded.\n", nignore);
+		if (nsyncerrors)
+			P("%d Errors are synchronization errors.\n",
+			    nsyncerrors);
+		if (nignore)
+			P("%d Errors are discarded because they refer to "
+			    "sacrosinct files.\n", ndiscard);
+		if (nnulled)
+			P("%d Errors are nulled because they refer to specific "
+			    "functions.\n", nnulled);
+		if (nnonspec)
+			P("%d Errors are not specific to any file.\n",
+			    nnonspec);
+		if (nthisfile)
+			P("%d Errors are specific to a given file, but not "
+			    "to a line.\n", nthisfile);
+		if (ntrue)
+			P("%d Errors are true errors, and can be inserted "
+			    "into the files.\n", ntrue);
 	}
 	filenames(nfiles, files);
 	fflush(stdout);
 	if (touchfiles(nfiles, files, &ed_argc, &ed_argv) && edit_files)
 		forkvi(ed_argc, ed_argv);
-	return (0);
+	return 0;
 }
 
 static void
@@ -281,17 +295,17 @@ errorsort(const void *x1, const void *x2)
 	 */
 	ep1 = *epp1; ep2 = *epp2;
 	if (ep1 == 0 || ep2 == 0)
-		return (0);
-	if ((NOTSORTABLE(ep1->error_e_class)) ^ (NOTSORTABLE(ep2->error_e_class))) {
-		return (NOTSORTABLE(ep1->error_e_class) ? -1 : 1);
+		return 0;
+	if (NOTSORTABLE(ep1->error_e_class) ^ NOTSORTABLE(ep2->error_e_class)) {
+		return NOTSORTABLE(ep1->error_e_class) ? -1 : 1;
 	}
 	if (NOTSORTABLE(ep1->error_e_class))	/* then both are */
-		return (ep1->error_no - ep2->error_no);
+		return ep1->error_no - ep2->error_no;
 	order = strcmp(ep1->error_text[0], ep2->error_text[0]);
 	if (order == 0) {
-		return (ep1->error_line - ep2->error_line);
+		return ep1->error_line - ep2->error_line;
 	}
-	return (order);
+	return order;
 }
 
 static void
