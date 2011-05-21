@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1077 2011/05/20 00:50:19 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1078 2011/05/21 12:48:59 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2335,6 +2335,10 @@ product INTEL WIFI_LINK_1000_2	0x0084	WiFi Link 1000
 product INTEL WIFI_LINK_6005_2X2_2	0x0085	Centrino Advanced-N 6205
 product INTEL WIFI_LINK_6050_2X2_1	0x0087	Centrino Advanced-N 6250
 product INTEL WIFI_LINK_6050_2X2_2	0x0089	Centrino Advanced-N 6250
+product INTEL WIFI_LINK_1030_1	0x008a	Centrino Wireless-N 1030
+product INTEL WIFI_LINK_1030_2	0x008b	Centrino Wireless-N 1030
+product INTEL WIFI_LINK_6230_1	0x0090	Centrino Advanced-N 6230
+product INTEL WIFI_LINK_6230_2	0x0091	Centrino Advanced-N 6230
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82542		0x1000	i82542 Gigabit Ethernet
@@ -2988,8 +2992,10 @@ product INTEL PRO_WL_3945ABG_2	0x4227	PRO/Wireless LAN 3945ABG Mini-PCI Adapter
 product INTEL WIFI_LINK_4965_1	0x4229	Wireless WiFi Link 4965
 product INTEL WIFI_LINK_6000_3X3_1	0x422b	Centrino Ultimate-N 6300
 product INTEL WIFI_LINK_6000_IPA_1	0x422c	Centrino Advanced-N 6200
+product INTEL WIFI_LINK_4965_3	0x422d  Wireless WiFi Link 4965
 product INTEL WIFI_LINK_4965_2	0x4230  Wireless WiFi Link 4965
 product INTEL WIFI_LINK_5100_1	0x4232  WiFi Link 5100
+product INTEL WIFI_LINK_4965_4	0x4233  Wireless WiFi Link 4965
 product INTEL WIFI_LINK_5300_1	0x4235  WiFi Link 5300
 product INTEL WIFI_LINK_5300_2	0x4236  WiFi Link 5300
 product INTEL WIFI_LINK_5100_2	0x4237  WiFi Link 5100
