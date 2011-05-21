@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.15 2011/05/05 17:44:39 drochner Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.16 2011/05/21 13:22:45 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.15 2011/05/05 17:44:39 drochner Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.16 2011/05/21 13:22:45 drochner Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -66,7 +66,7 @@ struct swcr_enc_xform {
 	const struct enc_xform *enc_xform;
 	void (*encrypt)(void *, uint8_t *);
 	void (*decrypt)(void *, uint8_t *);
-	int  (*setkey)(uint8_t **, const uint8_t *, int len);
+	int  (*setkey)(uint8_t **, const uint8_t *, int);
 	void (*zerokey)(uint8_t **);
 };
 
@@ -555,6 +555,8 @@ rijndael128_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	int err;
 
+	if (len != 16 && len != 24 && len != 32)
+		return EINVAL;
 	*sched = malloc(sizeof(rijndael_ctx), M_CRYPTO_DATA,
 	    M_NOWAIT|M_ZERO);
 	if (*sched != NULL) {
