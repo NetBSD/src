@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.8 2011/05/20 14:49:54 he Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.9 2011/05/21 15:50:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,9 @@ static void*	ofw_memcpy(void *, const void *, size_t);
 static void*	ofw_memset(void *, int, size_t);
 static void	ofw_freeall(void);
 
+#if 0
 static int	nop_mapin(vaddr_t, vsize_t);
+#endif
 static ssize_t	nop_read(int, void *, size_t);
 static void*	nop_memcpy(void *, const void *, size_t);
 static void*	nop_memset(void *, int, size_t);

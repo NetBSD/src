@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.29 2011/05/20 14:49:54 he Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.30 2011/05/21 15:50:42 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,6 +57,7 @@
 #include "ofdev.h"
 #include "net.h"
 #include "boot.h"
+#include "net.h"
 
 extern char bootdev[];
 extern bool root_fs_quickseekable;
@@ -180,14 +181,17 @@ devclose(struct open_file *of)
 #endif
 	prom_close(op->handle);
 	op->handle = -1;
+	return 0;
 }
 
 static struct devsw ofdevsw[1] = {
-	"OpenFirmware",
-	strategy,
-	(int (*)(struct open_file *, ...))nodev,
-	devclose,
-	noioctl
+	{
+		"OpenFirmware",
+		strategy,
+		(int (*)(struct open_file *, ...))nodev,
+		devclose,
+		noioctl
+	}
 };
 int ndevs = sizeof ofdevsw / sizeof ofdevsw[0];
 
@@ -214,13 +218,6 @@ static struct of_dev ofdev = {
 char opened_name[256];
 int floppyboot;
 
-static u_long
-get_long(const void *p)
-{
-	const unsigned char *cp = p;
-
-	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
-}
 /************************************************************************
  *
  * The rest of this was taken from arch/sparc64/scsi/sun_disklabel.c
@@ -326,15 +323,9 @@ static char *
 search_label(struct of_dev *devp, u_long off, char *buf,
 	     struct disklabel *lp, u_long off0)
 {
-	size_t read;
-	struct mbr_partition *p;
-	int i;
-	u_long poff;
-	static int recursion;
-
+	size_t readsize;
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
-	int error;
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secperunit == 0)
@@ -344,8 +335,8 @@ search_label(struct of_dev *devp, u_long off, char *buf,
 		lp->d_partitions[0].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;
 
-	if (strategy(devp, F_READ, LABELSECTOR, DEV_BSIZE, buf, &read)
-	    || read != DEV_BSIZE)
+	if (strategy(devp, F_READ, LABELSECTOR, DEV_BSIZE, buf, &readsize)
+	    || readsize != DEV_BSIZE)
 		return ("Cannot read label");
 	/* Check for a NetBSD disk label. */
 	dlp = (struct disklabel *) (buf + LABELOFFSET);
@@ -379,8 +370,8 @@ devopen(struct open_file *of, const char *name, char **file)
 	} b;
 	struct disklabel label;
 	int handle, part, try = 0;
-	size_t read;
-	char *errmsg = NULL, *pp, savedpart = 0;
+	size_t readsize;
+	char *errmsg = NULL, *pp = NULL, savedpart = 0;
 	int error = 0;
 
 	if (ofdev.handle != -1)
@@ -475,8 +466,8 @@ open_again:
 		/* First try to find a disklabel without MBR partitions */
 		DPRINTF(("devopen: trying to read disklabel\n"));
 		if (strategy(&ofdev, F_READ,
-			     LABELSECTOR, DEV_BSIZE, b.buf, &read) != 0
-		    || read != DEV_BSIZE
+			     LABELSECTOR, DEV_BSIZE, b.buf, &readsize) != 0
+		    || readsize != DEV_BSIZE
 		    || (errmsg = getdisklabel(b.buf, &label))) {
 			if (errmsg) {
 				DPRINTF(("devopen: getdisklabel returned %s\n",
@@ -536,7 +527,7 @@ open_again:
 	}
 #ifdef NETBOOT
 	if (!strcmp(b.buf, "network")) {
-		if (error = net_open(&ofdev))
+		if ((error = net_open(&ofdev)) != 0)
 			goto bad;
 
 		ofdev.type = OFDEV_NET;
@@ -546,14 +537,14 @@ open_again:
 		if (!strncmp(*file,"/tftp:",6)) {
 			*file += 6;
 			memcpy(&file_system[0], &file_system_tftp, sizeof file_system[0]);
-			if (net_tftp_bootp((int**)&of->f_devdata)) {
+			if (net_tftp_bootp(of->f_devdata)) {
 				net_close(&ofdev);
 				goto bad;
 			}
 			root_fs_quickseekable = false;
 		} else {
 			memcpy(&file_system[0], &file_system_nfs, sizeof file_system[0]);
-			if (error = net_mountroot()) {
+			if ((error = net_mountroot()) != 0) {
 				net_close(&ofdev);
 				goto bad;
 			}
