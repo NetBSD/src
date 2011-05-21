@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1073 2011/05/20 00:50:47 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1074 2011/05/21 12:49:50 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1077 2011/05/20 00:50:19 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1078 2011/05/21 12:48:59 msaitoh Exp
  */
 
 /*
@@ -2342,6 +2342,10 @@
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_2	0x0085		/* Centrino Advanced-N 6205 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1	0x0087		/* Centrino Advanced-N 6250 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2	0x0089		/* Centrino Advanced-N 6250 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_1030_1	0x008a		/* Centrino Wireless-N 1030 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_1030_2	0x008b		/* Centrino Wireless-N 1030 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6230_1	0x0090		/* Centrino Advanced-N 6230 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6230_2	0x0091		/* Centrino Advanced-N 6230 */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
 #define	PCI_PRODUCT_INTEL_82542	0x1000		/* i82542 Gigabit Ethernet */
@@ -2995,8 +2999,10 @@
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_4965_1	0x4229		/* Wireless WiFi Link 4965 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_1	0x422b		/* Centrino Ultimate-N 6300 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1	0x422c		/* Centrino Advanced-N 6200 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_4965_3	0x422d		/* Wireless WiFi Link 4965 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_4965_2	0x4230		/* Wireless WiFi Link 4965 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_5100_1	0x4232		/* WiFi Link 5100 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_4965_4	0x4233		/* Wireless WiFi Link 4965 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_5300_1	0x4235		/* WiFi Link 5300 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_5300_2	0x4236		/* WiFi Link 5300 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_5100_2	0x4237		/* WiFi Link 5100 */
