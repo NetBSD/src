@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.9 2011/05/21 15:50:42 tsutsui Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.10 2011/05/21 16:32:00 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -251,7 +251,8 @@ mmu_mapin(vaddr_t rva, vsize_t len)
 			if (itlb_slot >= itlb_slot_max)
 				panic("mmu_mapin: out of itlb_slots");
 
-			DPRINTF(("mmu_mapin: %p:%p.%p\n", va, hi(pa), lo(pa)));
+			DPRINTF(("mmu_mapin: 0x%lx:0x%x.0x%x\n", va,
+			    hi(pa), lo(pa)));
 
 			data = TSB_DATA(0,		/* global */
 					PGSZ_4M,	/* 4mb page */
