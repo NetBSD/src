@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.173.2.7 2011/05/19 03:43:05 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.173.2.8 2011/05/21 21:26:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.173.2.7 2011/05/19 03:43:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.173.2.8 2011/05/21 21:26:48 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -2039,14 +2039,12 @@ uvm_fault_lower_promote(
 	int error;
 	UVMHIST_FUNC("uvm_fault_lower_promote"); UVMHIST_CALLED(maphist);
 
+	KASSERT(amap != NULL);
+
 	/*
-	 * if we are going to promote the data to an anon we
+	 * If we are going to promote the data to an anon we
 	 * allocate a blank anon here and plug it into our amap.
 	 */
-#if DIAGNOSTIC
-	if (amap == NULL)
-		panic("uvm_fault: want to promote data, but no anon");
-#endif
 	error = uvmfault_promote(ufi, NULL, uobjpage,
 	    &anon, &flt->anon_spare);
 	switch (error) {
@@ -2061,8 +2059,9 @@ uvm_fault_lower_promote(
 	pg = anon->an_page;
 
 	/*
-	 * fill in the data
+	 * Fill in the data.
 	 */
+	KASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
 
 	if (uobjpage != PGO_DONTCARE) {
 		uvmexp.flt_prcopy++;
@@ -2107,7 +2106,6 @@ uvm_fault_lower_promote(
 		    anon, pg, 0, 0);
 	}
 
-	KASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
 	return uvm_fault_lower_enter(ufi, flt, uobj, anon, pg);
 }
 
