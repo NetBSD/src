@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2011/01/23 11:29:46 nakayama Exp $
+#	$NetBSD: Makefile,v 1.29 2011/05/21 15:50:42 tsutsui Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -7,7 +7,7 @@ S=	${CURDIR}/../../../..
 # Override normal settings
 #
 
-WARNS=		0
+WARNS?=		2
 
 PROG?=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
