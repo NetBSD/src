@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.40 2011/05/19 19:52:44 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.41 2011/05/21 13:32:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2735,4 +2735,16 @@ lib/libc/db/hash/hash_page.c			1.24
 	from FreeBSD.
 	(the bt one was ok, but set errno and make it the same for consistency).
 	[christos, ticket #1602]
+
+external/bsd/dhcpcd/dist/dhcp.c				patch
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.8.in		patch
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.in		patch	
+external/bsd/dhcpcd/dist/dhcpcd-hooks/20-resolv.conf	patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/30-hostname	patch
+
+        Escape | and & characters before passing the value to the shell
+	Ensure we set a valid hostname, DNS domain and NIS domain.
+	Document the need for input validation in dhcpcd-run-hooks(8).
+	Fixes CVE-2011-996
+	[spz, ticket #1603]
 
