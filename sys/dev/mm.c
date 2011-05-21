@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.13.16.5 2011/03/06 01:38:45 rmind Exp $	*/
+/*	$NetBSD: mm.c,v 1.13.16.6 2011/05/21 03:39:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.13.16.5 2011/03/06 01:38:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.13.16.6 2011/05/21 03:39:17 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -49,9 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.13.16.5 2011/03/06 01:38:45 rmind Exp $");
 
 #include <uvm/uvm_extern.h>
 
-static void *		dev_zero_page;
-static kmutex_t		dev_mem_lock;
-static vaddr_t		dev_mem_addr;
+static void *		dev_zero_page	__read_mostly;
+static kmutex_t		dev_mem_lock	__cacheline_aligned;
+static vaddr_t		dev_mem_addr	__read_mostly;
 
 static dev_type_read(mm_readwrite);
 static dev_type_ioctl(mm_ioctl);
@@ -162,7 +162,7 @@ dev_mem_readwrite(struct uio *uio, struct iovec *iov)
 		return error;
 	}
 	offset = uio->uio_offset & PAGE_MASK;
-	len = min(uio->uio_resid, PAGE_SIZE - offset);
+	len = MIN(uio->uio_resid, PAGE_SIZE - offset);
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	/* Is physical address directly mapped?  Return VA. */
@@ -220,7 +220,7 @@ dev_kmem_readwrite(struct uio *uio, struct iovec *iov)
 	 * Otherwise, we operate in page-by-page basis.
 	 */
 	offset = uio->uio_offset & PAGE_MASK;
-	len = min(uio->uio_resid, PAGE_SIZE - offset);
+	len = MIN(uio->uio_resid, PAGE_SIZE - offset);
 	prot = (uio->uio_rw == UIO_WRITE) ? VM_PROT_WRITE : VM_PROT_READ;
 
 	md_kva = false;
@@ -273,7 +273,7 @@ dev_zero_readwrite(struct uio *uio, struct iovec *iov)
 	 * Read in page-by-page basis, caller will continue.
 	 * Cut appropriately for a single/last-iteration cases.
 	 */
-	len = min(iov->iov_len, PAGE_SIZE);
+	len = MIN(iov->iov_len, PAGE_SIZE);
 	return uiomove(dev_zero_page, len, uio);
 }
 
