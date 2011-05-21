@@ -1,4 +1,4 @@
-# $NetBSD: xorg.conf,v 1.1 2011/05/20 08:40:04 tsutsui Exp $
+# $NetBSD: xorg.conf.sample,v 1.1 2011/05/21 11:38:52 tsutsui Exp $
 
 Section "ServerLayout"
 	Identifier	"wsfb"
