@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.226.4.5 2011/05/19 03:43:05 rmind Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.226.4.6 2011/05/21 03:35:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.226.4.5 2011/05/19 03:43:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.226.4.6 2011/05/21 03:35:22 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -474,7 +474,7 @@ lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
 	if (fs->lfs_ronly)
 		return EROFS;
 	if (vpp == NULL) {
-		return lfs_set_dirop(dvp, NULL)
+		return lfs_set_dirop(dvp, NULL);
 	}
 	error = getnewvnode(VT_LFS, dvp->v_mount, lfs_vnodeop_p, NULL, vpp);
 	if (error) {
