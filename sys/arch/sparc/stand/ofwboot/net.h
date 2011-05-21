@@ -1,4 +1,4 @@
-/* $NetBSD: net.h,v 1.1 2011/05/20 14:49:54 he Exp $ */
+/* $NetBSD: net.h,v 1.2 2011/05/21 15:50:42 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,11 +32,9 @@
 #ifndef _OFWBOOT_NET_H
 #define _OFWBOOT_NET_H
 
-extern int	net_open(struct of_dev *);
-extern int	net_close(struct of_dev *);
-extern int	net_mountroot_bootparams(void);
-extern int	net_mountroot_bootp(void);
-extern int	net_tftp_bootp(int **);
-extern int	net_mountroot(void);
+int	net_open(struct of_dev *);
+int	net_close(struct of_dev *);
+int	net_tftp_bootp(struct of_dev *);
+int	net_mountroot(void);
 
 #endif /* _OFWBOOT_NET_H */
