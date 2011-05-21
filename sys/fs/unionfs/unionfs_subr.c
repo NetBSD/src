@@ -91,12 +91,13 @@ unionfs_nodeget(struct mount *mp, struct vnode *uppervp,
 			return (EINVAL);
 	}
 
-	unp = kmem_zalloc(sizeof(*unp), KM_SLEEP);
-	if (unp == NULL)
-		return (ENOMEM);
-	error = getnewvnode(VT_UNION, mp, unionfs_vnodeop_p, NULL, &vp); /* TODO */
+	/*
+	 * Get a new vnode and share the lock with upper layer vnode,
+	 * unless layers are inverted.
+	 */
+	error = getnewvnode(VT_UNION, mp, unionfs_vnodeop_p,
+	    (uppervp != NULLVP ? uppervp : lowervp), &vp);
 	if (error != 0) {
-		kmem_free(unp, sizeof(*unp));
 		return (error);
 	}
 	if (dvp != NULLVP)
@@ -106,6 +107,7 @@ unionfs_nodeget(struct mount *mp, struct vnode *uppervp,
 	if (lowervp != NULLVP)
 		vref(lowervp);
 
+	unp = kmem_zalloc(sizeof(*unp), KM_SLEEP);
 	unp->un_vnode = vp;
 	unp->un_uppervp = uppervp;
 	unp->un_lowervp = lowervp;
