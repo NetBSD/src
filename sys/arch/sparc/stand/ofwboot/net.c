@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.5 2009/05/07 00:01:31 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.6 2011/05/21 15:10:34 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -60,6 +60,8 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
+#include <lib/libsa/bootparam.h>
+#include <lib/libsa/nfs.h>
 
 #include <lib/libkern/libkern.h>
 
