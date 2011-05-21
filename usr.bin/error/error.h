@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.16 2011/05/19 22:55:53 christos Exp $	*/
+/*	$NetBSD: error.h,v 1.17 2011/05/21 00:43:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -108,7 +108,6 @@ extern size_t filelevel;
 extern FILE *errorfile;	/* where error file comes from */
 extern FILE *queryfile;	/* where the query responses from the user come from*/
 
-extern char *processname;
 extern char *scriptname;
 
 extern const char *suffixlist;
