@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.15 2010/10/27 18:51:34 christos Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.16 2011/05/22 21:51:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -286,6 +286,7 @@ typedef struct _iso9660_disk {
 	cd9660node *rr_moved_dir;
 
 	int archimedes_enabled;
+	int chrp_boot;
 
 	/* Spec breaking options */
 	u_char allow_deep_trees;
