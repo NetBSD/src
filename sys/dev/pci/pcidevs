@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1078 2011/05/21 12:48:59 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1079 2011/05/22 08:13:17 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -257,8 +257,8 @@ vendor OMRON		0x10cb	Omron
 vendor MENTOR		0x10cc	Mentor ARC
 vendor ADVSYS		0x10cd	Advanced System Products
 vendor RADIUS		0x10ce	Radius
-vendor CITICORP		0x10cf	Citicorp TTI
-vendor FUJITSU2		0x10d0	Fujitsu Limited (2nd PCI Vendor ID)
+vendor FUJITSU4		0x10cf	Fujitsu (4th PCI Vendor ID)
+vendor FUJITSU2		0x10d0	Fujitsu (2nd PCI Vendor ID)
 vendor FUTUREPLUS	0x10d1	Future+ Systems
 vendor MOLEX		0x10d2	Molex
 vendor JABIL		0x10d3	Jabil Circuit
@@ -2033,6 +2033,11 @@ product FORTEMEDIA	PCIJOY	0x0802	PCI Gameport Joystick
 
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
+
+/* Fujitsu products */
+product	FUJITSU4	PW008GE5	0x11a1	PW008GE5
+product	FUJITSU4	PW008GE4	0x11a2	PW008GE4
+product	FUJITSU4	PP250_450_LAN	0x11cc	PRIMEPOWER250/450 LAN
 
 /* FZ Juelich / ZEL products */
 product FZJZEL	GIGALINK	0x0001	Gigabit Link / STR1100
