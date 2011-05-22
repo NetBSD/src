@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.195 2011/05/22 20:24:46 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.196 2011/05/22 20:49:16 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -81,7 +81,9 @@ CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 
 .if defined(USE_SSP) && (${USE_SSP} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 .if ${HAS_SSP} == "yes"
-COPTS+=		-fstack-protector -Wstack-protector --param ssp-buffer-size=1
+COPTS+=	-fstack-protector -Wstack-protector 
+COPTS+=	${${ACTIVE_CC} == "clang":? -mllvm -stack-protector-buffer-size=1 :}
+COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .endif
 .endif
 
