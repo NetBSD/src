@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.196 2011/05/22 20:49:16 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.197 2011/05/22 20:52:12 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -72,14 +72,14 @@ HAS_SSP=	no
 HAS_SSP=	yes
 .endif
 
-.if defined(USE_FORT) && (${USE_FORT} != "no")
+.if ${USE_FORT:Uno} != "no"
 USE_SSP?=	yes
 .if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
 CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 .endif
 .endif
 
-.if defined(USE_SSP) && (${USE_SSP} != "no") && (${BINDIR:Ux} != "/usr/mdec")
+.if (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 .if ${HAS_SSP} == "yes"
 COPTS+=	-fstack-protector -Wstack-protector 
 COPTS+=	${${ACTIVE_CC} == "clang":? -mllvm -stack-protector-buffer-size=1 :}
@@ -87,12 +87,12 @@ COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .endif
 .endif
 
-.if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")
+.if ${MKSOFTFLOAT:Uno} != "no"
 COPTS+=		-msoft-float
 FOPTS+=		-msoft-float
 .endif
 
-.if defined(MKIEEEFP) && (${MKIEEEFP} != "no")
+.if ${MKIEEEFP:Uno} != "no"
 .if ${MACHINE_ARCH} == "alpha"
 CFLAGS+=	-mieee
 FFLAGS+=	-mieee
