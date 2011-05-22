@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.5.2.3 2011/05/19 03:43:03 rmind Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.5.2.4 2011/05/22 04:29:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.5.2.3 2011/05/19 03:43:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.5.2.4 2011/05/22 04:29:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -424,6 +424,7 @@ try_again:
 	if (svp) {
 		/* Set the interlock and mark that it is shared. */
 		KASSERT(vp->v_mount == NULL);
+		mutex_obj_hold(svp->v_interlock);
 		uvm_obj_setlock(&vp->v_uobj, svp->v_interlock);
 		KASSERT(vp->v_interlock == svp->v_interlock);
 		vp->v_iflag |= VI_LOCKSHARE;
