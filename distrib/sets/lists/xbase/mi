@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.69.2.6 2011/05/19 19:42:33 bouyer Exp $
+# $NetBSD: mi,v 1.69.2.7 2011/05/22 15:33:12 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -853,6 +853,7 @@
 ./usr/X11R6/man/cat1/showfont.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/showrgb.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/smproxy.0				-unknown-	.cat,x11
+./usr/X11R6/man/cat1/ssh-askpass.0			-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/startx.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/sxpm.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/texteroids.0			-unknown-	.cat,x11
@@ -973,6 +974,7 @@
 ./usr/X11R6/man/html1/showfont.html			-unknown-	html,x11
 ./usr/X11R6/man/html1/showrgb.html			-unknown-	html,x11
 ./usr/X11R6/man/html1/smproxy.html			-unknown-	html,x11
+./usr/X11R6/man/html1/ssh-askpass.html			-unknown-	html,x11
 ./usr/X11R6/man/html1/startx.html			-unknown-	html,x11
 ./usr/X11R6/man/html1/sxpm.html				-unknown-	html,x11
 ./usr/X11R6/man/html1/texteroids.html			-unknown-	html,x11
@@ -1088,6 +1090,7 @@
 ./usr/X11R6/man/man1/showfont.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/showrgb.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/smproxy.1				-unknown-	.man,x11
+./usr/X11R6/man/man1/ssh-askpass.1			-unknown-	.man,x11
 ./usr/X11R6/man/man1/startx.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/sxpm.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/texteroids.1			-unknown-	.man,x11
