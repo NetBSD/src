@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwood.c,v 1.2 2010/10/30 06:37:49 kiyohara Exp $	*/
+/*	$NetBSD: kirkwood.c,v 1.3 2011/05/22 21:52:25 mellon Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.2 2010/10/30 06:37:49 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.3 2011/05/22 21:52:25 mellon Exp $");
 
 #define _INTR_PRIVATE
 
@@ -274,6 +274,7 @@ kirkwood_getclks(bus_addr_t iobase)
 		case 0x0040000a: mvPclk = 1000 MHz; break;
 		case 0x00000012: mvPclk = 1200 MHz; break;
 		case 0x00000018: mvPclk = 1200 MHz; break;
+		case 0x00000002: mvPclk = 1200 MHz; break;
 		default:
 			panic("unknown mvPclk\n");
 		}
