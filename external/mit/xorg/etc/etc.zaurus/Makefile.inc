@@ -1,3 +1,3 @@
-# $NetBSD: Makefile.inc,v 1.1 2011/05/20 08:40:04 tsutsui Exp $
+# $NetBSD: Makefile.inc,v 1.2 2011/05/22 16:08:48 christos Exp $
 
-XORGCONF_FILES=	etc.${MACHINE}/xorg.conf
+XORGCONF_FILES=	etc.${MACHINE}/xorg.conf.sample
