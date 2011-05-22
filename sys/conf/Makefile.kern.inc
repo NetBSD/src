@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.134 2011/05/19 21:24:55 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.135 2011/05/22 20:49:46 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -93,8 +93,6 @@ CFLAGS+=	-fno-strict-aliasing
 .endif
 
 .if ${USE_SSP:Uno} == "yes"
-CFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
-LDFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 COPTS.kern_ssp.c+=	-fno-stack-protector -D__SSP__
 .endif
 
