@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.63 2011/04/01 17:40:54 hannken Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.64 2011/05/22 04:20:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.63 2011/04/01 17:40:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.64 2011/05/22 04:20:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -332,36 +332,28 @@ tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
 	tmpfs_dirent_put(tmp, de);
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Allocates a new vnode for the node node or returns a new reference to
- * an existing one if the node had already a vnode referencing it.  The
- * resulting locked vnode is returned in *vpp.
+ * tmpfs_alloc_vp: allocate or reclaim a vnode for a specified inode.
  *
- * Returns zero on success or an appropriate error code on failure.
+ * => Returns vnode (*vpp) locked.
  */
 int
 tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 {
+	vnode_t *vp;
 	int error;
-	struct vnode *vp;
-
-	/* If there is already a vnode, then lock it. */
-	for (;;) {
-		mutex_enter(&node->tn_vlock);
-		if ((vp = node->tn_vnode) != NULL) {
-			mutex_enter(&vp->v_interlock);
-			mutex_exit(&node->tn_vlock);
-			error = vget(vp, LK_EXCLUSIVE);
-			if (error == ENOENT) {
-				/* vnode was reclaimed. */
-				continue;
-			}
-			*vpp = vp;
-			return error;
+again:
+	/* If there is already a vnode, try to reclaim it. */
+	mutex_enter(&node->tn_vlock);
+	if ((vp = node->tn_vnode) != NULL) {
+		mutex_enter(&vp->v_interlock);
+		mutex_exit(&node->tn_vlock);
+		error = vget(vp, LK_EXCLUSIVE);
+		if (error == ENOENT) {
+			goto again;
 		}
-		break;
+		*vpp = vp;
+		return error;
 	}
 
 	/* Get a new vnode and associate it with our node. */
@@ -371,13 +363,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		return error;
 	}
 
-	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (error != 0) {
-		mutex_exit(&node->tn_vlock);
-		ungetnewvnode(vp);
-		return error;
-	}
-
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vp->v_type = node->tn_type;
 
 	/* Type-specific initialization. */
@@ -420,8 +406,6 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 
 	return error;
 }
-
-/* --------------------------------------------------------------------- */
 
 /*
  * Destroys the association between the vnode vp and the node it
