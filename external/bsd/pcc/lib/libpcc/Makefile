@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/01/20 11:45:55 plunky Exp $
+#	$NetBSD: Makefile,v 1.4 2011/05/22 12:01:26 plunky Exp $
 
 .include <bsd.init.mk>
 
@@ -14,5 +14,13 @@ SRCS+=	ashldi3.c ashrdi3.c lshrdi3.c
 SRCS+=	ssp.c
 
 COPTS.ssp.c+=	-Wno-error
+
+.if ${TARGET_ENDIANNESS} == "1234"
+CPPFLAGS+=      -D__LITTLE_ENDIAN__
+.elif ${TARGET_ENDIANNESS} == "4321"
+CPPFLAGS+=      -D__BIG_ENDIAN__
+.else
+ERROR!= echo "ERROR: Unknown TARGET_ENDIANNESS" >&2;echo
+.endif
 
 .include <bsd.lib.mk>
