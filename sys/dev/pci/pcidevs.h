@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1074 2011/05/21 12:49:50 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1075 2011/05/22 08:13:56 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1078 2011/05/21 12:48:59 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1079 2011/05/22 08:13:17 mrg Exp
  */
 
 /*
@@ -264,8 +264,8 @@
 #define	PCI_VENDOR_MENTOR	0x10cc		/* Mentor ARC */
 #define	PCI_VENDOR_ADVSYS	0x10cd		/* Advanced System Products */
 #define	PCI_VENDOR_RADIUS	0x10ce		/* Radius */
-#define	PCI_VENDOR_CITICORP	0x10cf		/* Citicorp TTI */
-#define	PCI_VENDOR_FUJITSU2	0x10d0		/* Fujitsu Limited (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_FUJITSU4	0x10cf		/* Fujitsu (4th PCI Vendor ID) */
+#define	PCI_VENDOR_FUJITSU2	0x10d0		/* Fujitsu (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_FUTUREPLUS	0x10d1		/* Future+ Systems */
 #define	PCI_VENDOR_MOLEX	0x10d2		/* Molex */
 #define	PCI_VENDOR_JABIL	0x10d3		/* Jabil Circuit */
@@ -2040,6 +2040,11 @@
 
 /* Future Domain products */
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */
+
+/* Fujitsu products */
+#define	PCI_PRODUCT_FUJITSU4_PW008GE5	0x11a1		/* PW008GE5 */
+#define	PCI_PRODUCT_FUJITSU4_PW008GE4	0x11a2		/* PW008GE4 */
+#define	PCI_PRODUCT_FUJITSU4_PP250_450_LAN	0x11cc		/* PRIMEPOWER250/450 LAN */
 
 /* FZ Juelich / ZEL products */
 #define	PCI_PRODUCT_FZJZEL_GIGALINK	0x0001		/* Gigabit Link / STR1100 */
