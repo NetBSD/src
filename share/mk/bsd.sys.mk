@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.194 2011/05/17 01:12:34 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.195 2011/05/22 20:24:46 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -27,7 +27,8 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # in a traditional environment' warning, as opposed to 'this code behaves
 # differently in traditional and ansi environments' which is the warning
 # we wanted, and now we don't get anymore.
-CFLAGS+=	-Wno-sign-compare -Wno-traditional
+CFLAGS+=	-Wno-sign-compare
+CFLAGS+=	${${ACTIVE_CC} != "clang":? -Wno-traditional :}
 .if !defined(NOGCCERROR)
 # Set assembler warnings to be fatal
 CFLAGS+=	-Wa,--fatal-warnings
