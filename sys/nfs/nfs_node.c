@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.110.4.4 2011/05/19 03:43:03 rmind Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.110.4.5 2011/05/22 21:52:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.110.4.4 2011/05/19 03:43:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.110.4.5 2011/05/22 21:52:12 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -346,9 +346,12 @@ nfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 {
 	int i;
 
+	mutex_enter(vp->v_interlock);
 	for (i = 0; i < npages; i++) {
 		pmap_page_protect(pgs[i], VM_PROT_READ);
 	}
+	mutex_exit(vp->v_interlock);
+
 	return genfs_gop_write(vp, pgs, npages, flags);
 }
 
