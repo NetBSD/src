@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.28 2010/11/19 15:47:32 tsutsui Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.29 2011/05/22 21:51:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.28 2010/11/19 15:47:32 tsutsui Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.29 2011/05/22 21:51:39 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -215,6 +215,7 @@ cd9660_set_defaults(void)
 	diskStructure.rr_moved_dir = 0;
 
 	diskStructure.archimedes_enabled = 0;
+	diskStructure.chrp_boot = 0;
 
 	diskStructure.include_padding_areas = 1;
 
@@ -399,6 +400,8 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 		diskStructure.rock_ridge_enabled = 1;
 	else if (CD9660_IS_COMMAND_ARG_DUAL(var, "A", "archimedes"))
 		diskStructure.archimedes_enabled = 1;
+	else if (CD9660_IS_COMMAND_ARG(var, "chrp-boot"))
+		diskStructure.chrp_boot = 1;
 	else if (CD9660_IS_COMMAND_ARG_DUAL(var, "K", "keep-bad-images"))
 		diskStructure.keep_bad_images = 1;
 	else if (CD9660_IS_COMMAND_ARG(var, "allow-deep-trees"))
