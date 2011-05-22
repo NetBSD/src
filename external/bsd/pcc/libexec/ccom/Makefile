@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/04/14 09:31:25 plunky Exp $
+#	$NetBSD: Makefile,v 1.8 2011/05/22 11:53:46 plunky Exp $
 
 WARNS?=	2
 
@@ -29,11 +29,11 @@ CPPFLAGS+=	-I${PCC_DIST}/os/${TARGOS}
 CPPFLAGS+=	-I${PCC_DIST}/arch/${TARGMACH}
 CPPFLAGS+=	-I${PCC_DIST}/cc/ccom
 
-DPSRCS=	external.c external.h
+DPSRCS=	external.c
 
 MKEXTDIR!=	cd ../mkext && ${PRINTOBJDIR}
 
-external.c external.h:	${MKEXTDIR}/mkext
+external.c:	${MKEXTDIR}/mkext
 	${_MKTARGET_CREATE}
 	${MKEXTDIR}/mkext
 
