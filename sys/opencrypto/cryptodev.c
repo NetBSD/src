@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.60 2011/05/23 13:53:59 drochner Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.61 2011/05/23 15:22:57 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.60 2011/05/23 13:53:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.61 2011/05/23 15:22:57 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -594,7 +594,8 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		if (cse->cipher == CRYPTO_ARC4) { /* XXX use flag? */
 			crde->crd_skip = 0;
 		} else {
-			crde->crd_flags |= CRD_F_IV_PRESENT;
+			if (!(crde->crd_flags & CRD_F_ENCRYPT))
+				crde->crd_flags |= CRD_F_IV_PRESENT;
 			crde->crd_skip = cse->txform->ivsize;
 			crde->crd_len -= cse->txform->ivsize;
 		}
@@ -1290,7 +1291,8 @@ cryptodev_mop(struct fcrypt *fcr,
 			if (cse->cipher == CRYPTO_ARC4) { /* XXX use flag? */
 				crde->crd_skip = 0;
 			} else {
-				crde->crd_flags |= CRD_F_IV_PRESENT;
+				if (!(crde->crd_flags & CRD_F_ENCRYPT))
+					crde->crd_flags |= CRD_F_IV_PRESENT;
 				crde->crd_skip = cse->txform->ivsize;
 				crde->crd_len -= cse->txform->ivsize;
 			}
