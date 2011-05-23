@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.34 2010/05/13 17:52:12 tnozaki Exp $	*/
+/*	$NetBSD: internals.c,v 1.35 2011/05/23 20:43:02 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.34 2010/05/13 17:52:12 tnozaki Exp $");
+__RCSID("$NetBSD: internals.c,v 1.35 2011/05/23 20:43:02 joerg Exp $");
 
 #include <limits.h>
 #include <ctype.h>
@@ -590,7 +590,7 @@ _formi_wrap_field(FIELD *field, _FORMI_FIELD_LINES *loc)
 				continue;
 			}
 			
-			if ((row->next == NULL)) {
+			if (row->next == NULL) {
 				/*
 				 * If there are no more lines and this line
 				 * is too short then our job is over.
