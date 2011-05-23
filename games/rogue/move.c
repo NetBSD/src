@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.12 2009/08/12 08:44:45 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.13 2011/05/23 23:01:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.12 2009/08/12 08:44:45 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.13 2011/05/23 23:01:17 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: move.c,v 1.12 2009/08/12 08:44:45 dholland Exp $");
 
 short m_moves = 0;
 boolean jump = 0;
-const char *you_can_move_again = "you can move again";
+const char you_can_move_again[] = "you can move again";
 
 static boolean can_turn(short, short);
 static boolean check_hunger(boolean);
@@ -405,7 +405,7 @@ check_hunger(boolean msg_only)
 					mv_mons();
 				}
 			}
-			messagef(1, you_can_move_again);
+			messagef(1, "%s", you_can_move_again);
 		}
 	}
 	if (msg_only) {
