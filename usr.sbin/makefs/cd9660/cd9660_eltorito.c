@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.15 2011/05/22 21:51:39 christos Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.16 2011/05/23 00:21:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -32,14 +32,15 @@
  * OF SUCH DAMAGE.
  */
 
-#include <sys/endian.h>
 
 #include "cd9660.h"
 #include "cd9660_eltorito.h"
 
+#include <sys/endian.h>
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.15 2011/05/22 21:51:39 christos Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.16 2011/05/23 00:21:50 christos Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
