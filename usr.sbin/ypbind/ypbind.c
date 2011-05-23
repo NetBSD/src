@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.65 2011/05/23 02:36:35 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.66 2011/05/23 02:43:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.65 2011/05/23 02:36:35 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.66 2011/05/23 02:43:10 dholland Exp $");
 #endif
 
 #include <sys/param.h>
@@ -83,8 +83,8 @@ struct _dom_binding {
 	int dom_socket;
 	CLIENT *dom_client;
 	long dom_vers;
-	time_t dom_check_t;
-	time_t dom_ask_t;
+	time_t dom_checktime;
+	time_t dom_asktime;
 	int dom_lockfd;
 	int dom_alive;
 	uint32_t dom_xid;
@@ -326,19 +326,19 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 
 #ifdef HEURISTIC
 	(void)time(&now);
-	if (now < ypdb->dom_ask_t + 5) {
+	if (now < ypdb->dom_asktime + 5) {
 		/*
 		 * Hmm. More than 2 requests in 5 seconds have indicated
 		 * that my binding is possibly incorrect.
 		 * Ok, do an immediate poll of the server.
 		 */
-		if (ypdb->dom_check_t >= now) {
+		if (ypdb->dom_checktime >= now) {
 			/* don't flood it */
-			ypdb->dom_check_t = 0;
+			ypdb->dom_checktime = 0;
 			check++;
 		}
 	}
-	ypdb->dom_ask_t = now;
+	ypdb->dom_asktime = now;
 #endif
 
 	res.ypbind_status = YPBIND_SUCC_VAL;
@@ -643,13 +643,13 @@ checkwork(void)
 
 	(void)time(&t);
 	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext) {
-		if (ypdb->dom_check_t < t) {
+		if (ypdb->dom_checktime < t) {
 			if (ypdb->dom_alive == 1)
 				(void)ping(ypdb);
 			else
 				(void)nag_servers(ypdb);
 			(void)time(&t);
-			ypdb->dom_check_t = t + 5;
+			ypdb->dom_checktime = t + 5;
 		}
 	}
 }
@@ -1134,7 +1134,7 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 			    sizeof ypdb->dom_server_addr)) {
 			ypdb->dom_alive = 1;
 			/* recheck binding in 60 sec */
-			ypdb->dom_check_t = time(NULL) + 60;
+			ypdb->dom_checktime = time(NULL) + 60;
 		}
 		return;
 	}
@@ -1142,7 +1142,7 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 	(void)memcpy(&ypdb->dom_server_addr, raddrp,
 	    sizeof ypdb->dom_server_addr);
 	/* recheck binding in 60 seconds */
-	ypdb->dom_check_t = time(NULL) + 60;
+	ypdb->dom_checktime = time(NULL) + 60;
 	ypdb->dom_vers = YPVERS;
 	ypdb->dom_alive = 1;
 
