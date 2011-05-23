@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.apply.c,v 1.10 2009/06/07 18:30:39 dholland Exp $	*/
+/*	$NetBSD: hack.apply.c,v 1.11 2011/05/23 22:53:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.apply.c,v 1.10 2009/06/07 18:30:39 dholland Exp $");
+__RCSID("$NetBSD: hack.apply.c,v 1.11 2011/05/23 22:53:25 joerg Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -383,7 +383,7 @@ dig(void)
 			digtxt = "Now what exactly was it that you were digging in?";
 		mnewsym(dpx, dpy);
 		prl(dpx, dpy);
-		pline(digtxt);	/* after mnewsym & prl */
+		pline("%s", digtxt);	/* after mnewsym & prl */
 		return (0);
 	} else {
 		if (IS_WALL(levl[dpx][dpy].typ)) {

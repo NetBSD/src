@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.options.c,v 1.10 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.options.c,v 1.11 2011/05/23 22:53:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.options.c,v 1.10 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.options.c,v 1.11 2011/05/23 22:53:25 joerg Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -271,7 +271,7 @@ doset(void)
 			if (*--eop == ',')
 				*eop = 0;
 		}
-		pline(buf);
+		pline("%s", buf);
 	} else
 		parseoptions(buf, FALSE);
 

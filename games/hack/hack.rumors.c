@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.rumors.c,v 1.7 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.rumors.c,v 1.8 2011/05/23 22:53:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.rumors.c,v 1.7 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.rumors.c,v 1.8 2011/05/23 22:53:25 joerg Exp $");
 #endif				/* not lint */
 
 #include "hack.h"	/* for RUMORFILE and BSD (strchr) */
@@ -115,7 +115,7 @@ outline(FILE *rumf)
 	if ((ep = strchr(line, '\n')) != 0)
 		*ep = 0;
 	pline("This cookie has a scrap of paper inside! It reads: ");
-	pline(line);
+	pline("%s", line);
 }
 
 void

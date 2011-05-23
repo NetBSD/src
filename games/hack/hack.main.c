@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.main.c,v 1.15 2010/02/03 15:34:38 roy Exp $	*/
+/*	$NetBSD: hack.main.c,v 1.16 2011/05/23 22:53:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.main.c,v 1.15 2010/02/03 15:34:38 roy Exp $");
+__RCSID("$NetBSD: hack.main.c,v 1.16 2011/05/23 22:53:25 joerg Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -418,8 +418,10 @@ not_recovered:
 		}
 		if (multi < 0) {
 			if (!++multi) {
-				pline(nomovemsg ? nomovemsg :
-				      "You can move again.");
+				if (nomovemsg)
+					pline("%s", nomovemsg);
+				else
+					pline("You can move again.");
 				nomovemsg = 0;
 				if (afternmv)
 					(*afternmv) ();
