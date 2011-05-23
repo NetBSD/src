@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.timeout.c,v 1.8 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.timeout.c,v 1.9 2011/05/23 22:53:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.timeout.c,v 1.8 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.timeout.c,v 1.9 2011/05/23 22:53:25 joerg Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -128,7 +128,7 @@ stoned_dialogue(void)
 	long            i = (Stoned & TIMEOUT);
 
 	if (i > 0 && i <= SIZE(stoned_texts))
-		pline(stoned_texts[SIZE(stoned_texts) - i]);
+		pline("%s", stoned_texts[SIZE(stoned_texts) - i]);
 	if (i == 5)
 		Fast = 0;
 	if (i == 3)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pager.c,v 1.14 2010/02/03 15:34:38 roy Exp $	*/
+/*	$NetBSD: hack.pager.c,v 1.15 2011/05/23 22:53:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pager.c,v 1.14 2010/02/03 15:34:38 roy Exp $");
+__RCSID("$NetBSD: hack.pager.c,v 1.15 2011/05/23 22:53:25 joerg Exp $");
 #endif				/* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -114,7 +114,7 @@ dowhatis(void)
 						buf[0] = q;
 						(void) strncpy(buf + 1, "       ", 7);
 					}
-					pline(buf);
+					pline("%s", buf);
 					if (ep[-1] == ';') {
 						pline("More info? ");
 						if (readchar() == 'y') {
@@ -302,7 +302,7 @@ cornline(int mode, const char *text)
 	}
 	/* --- now we really do it --- */
 	if (mode == 2 && linect == 1)	/* topline only */
-		pline(texthead->line_text);
+		pline("%s", texthead->line_text);
 	else if (mode == 2) {
 		int             curline, lth;
 
