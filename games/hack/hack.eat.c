@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.eat.c,v 1.9 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: hack.eat.c,v 1.10 2011/05/23 22:53:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.eat.c,v 1.9 2009/08/12 07:28:40 dholland Exp $");
+__RCSID("$NetBSD: hack.eat.c,v 1.10 2011/05/23 22:53:25 joerg Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -138,7 +138,7 @@ opentin(void)
 	useup(tin.tin);
 	r = rn2(2 * TTSZ);
 	if (r < TTSZ) {
-		pline(tintxts[r].txt);
+		pline("%s", tintxts[r].txt);
 		lesshungry(tintxts[r].nut);
 		if (r == 1) {	/* SALMON */
 			Glib = rnd(15);
