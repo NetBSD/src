@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.36 2011/05/23 13:57:52 drochner Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.37 2011/05/23 15:17:25 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.36 2011/05/23 13:57:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.37 2011/05/23 15:17:25 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -205,12 +205,6 @@ esp_init(struct secasvar *sav, const struct xformsw *xsp)
 	}
 
 	sav->ivlen = txform->ivsize;
-	sav->iv = malloc(sav->ivlen, M_SECA, M_WAITOK);
-	if (sav->iv == NULL) {
-		DPRINTF(("esp_init: no memory for IV\n"));
-		return EINVAL;
-	}
-	key_randomfill(sav->iv, sav->ivlen);	/*XXX*/
 
 	/*
 	 * Setup AH-related state.
@@ -262,7 +256,6 @@ esp_zeroize(struct secasvar *sav)
 
 	if (sav->key_enc)
 		memset(_KEYBUF(sav->key_enc), 0, _KEYLEN(sav->key_enc));
-	/* NB: sav->iv is freed elsewhere, even though we malloc it! */
 	sav->tdb_encalgxform = NULL;
 	sav->tdb_xform = NULL;
 	return error;
