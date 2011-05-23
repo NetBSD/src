@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.2 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.3 2011/05/23 23:06:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,9 +36,8 @@
 #ifndef _H_DEFS
 #define _H_DEFS
 
-#include <stdlib.h>
+#include <sys/cdefs.h>
 
-#define RCSID(id) \
-    static const char *rcsid(const char* x) { return x ? rcsid(id) : x; }
+#define RCSID(id) __RCSID(id);
 
 #endif
