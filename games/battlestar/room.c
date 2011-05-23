@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.12 2005/07/01 06:04:54 jmc Exp $	*/
+/*	$NetBSD: room.c,v 1.13 2011/05/23 22:44:18 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: room.c,v 1.12 2005/07/01 06:04:54 jmc Exp $");
+__RCSID("$NetBSD: room.c,v 1.13 2011/05/23 22:44:18 joerg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -58,7 +58,7 @@ writedes(void)
 					putchar(c);
 			} else {
 				if (c != '*')
-					printf(truedirec(compass, c));
+					printf("%s", truedirec(compass, c));
 				compass++;
 			}
 	}
