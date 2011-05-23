@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_prop.h,v 1.4 2011/03/30 08:22:01 jruoho Exp $ */
+/* $NetBSD: citrus_prop.h,v 1.5 2011/05/23 14:52:32 joerg Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -81,7 +81,7 @@ struct _citrus_prop_hint_t {
 #define _CITRUS_PROP_HINT_NUM(name, cb) \
 	{ name, _CITRUS_PROP_NUM, { .num = { cb } } }
 #define _CITRUS_PROP_HINT_END \
-	{ NULL }
+	{ .name = NULL }
 
 __BEGIN_DECLS
 int _citrus_prop_parse_variable(const _citrus_prop_hint_t * __restrict,
