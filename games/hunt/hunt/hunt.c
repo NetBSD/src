@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.38 2011/01/05 15:52:20 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.39 2011/05/23 22:56:11 joerg Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.38 2011/01/05 15:52:20 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.39 2011/05/23 22:56:11 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -764,7 +764,7 @@ leave(int eval, const char *mesg)
 	int serrno = errno;
 	fincurs();
 	errno = serrno;
-	err(eval, mesg ? mesg : "");
+	err(eval, "%s", mesg ? mesg : "");
 }
 
 /*
@@ -776,7 +776,7 @@ void
 leavex(int eval, const char *mesg)
 {
 	fincurs();
-	errx(eval, mesg ? mesg : "");
+	errx(eval, "%s", mesg ? mesg : "");
 }
 
 static long
