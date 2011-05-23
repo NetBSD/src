@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2011/05/23 02:37:58 christos Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -40,7 +40,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/amiga \
 		-I${X11SRCDIR.xc}/programs/Xserver/fb \
 		-I${X11SRCDIR.xc}/programs/Xserver/mfb \
 		-I${X11SRCDIR.xc}/programs/Xserver/cfb \
-		-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/amiga/afb \
+		-I${X11SRCDIR.xc}/programs/Xserver/afb \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${NETBSDSRCDIR}/sys/arch/amiga \
 		-I${DESTDIR}${X11INCDIR}/X11 \
