@@ -1,4 +1,4 @@
-/*	$NetBSD: throw.c,v 1.11 2009/08/12 08:44:45 dholland Exp $	*/
+/*	$NetBSD: throw.c,v 1.12 2011/05/23 23:01:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)throw.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: throw.c,v 1.11 2009/08/12 08:44:45 dholland Exp $");
+__RCSID("$NetBSD: throw.c,v 1.12 2011/05/23 23:01:17 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ throw(void)
 		return;
 	}
 	if ((weapon->in_use_flags & BEING_USED) && weapon->is_cursed) {
-		messagef(0, curse_message);
+		messagef(0, "%s", curse_message);
 		return;
 	}
 	row = rogue.row; col = rogue.col;
