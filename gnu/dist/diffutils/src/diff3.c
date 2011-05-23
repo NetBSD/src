@@ -1,4 +1,4 @@
-/*	$NetBSD: diff3.c,v 1.1.1.1 2003/01/26 00:43:17 wiz Exp $	*/
+/*	$NetBSD: diff3.c,v 1.2 2011/05/23 22:17:50 joerg Exp $	*/
 
 /* diff3 - compare three files line by line
 
@@ -1404,7 +1404,7 @@ output_diff3 (FILE *outputfile, struct diff3_block *diff,
 	      line = 0;
 	      do
 		{
-		  fprintf (outputfile, line_prefix);
+		  fprintf (outputfile, "%s", line_prefix);
 		  cp = D_RELNUM (ptr, realfile, line);
 		  length = D_RELLEN (ptr, realfile, line);
 		  fwrite (cp, sizeof (char), length, outputfile);
