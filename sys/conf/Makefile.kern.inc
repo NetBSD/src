@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.135 2011/05/22 20:49:46 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.136 2011/05/23 13:55:55 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -71,9 +71,6 @@ CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wswitch -Wshadow
 CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-unreachable-code
-# Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
-# but our sources aren't up for it yet.
-CWARNFLAGS+=	-Wno-sign-compare
 . if (defined(HAVE_GCC) && ${HAVE_GCC} > 3) || defined(HAVE_PCC)
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 .  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
@@ -81,6 +78,9 @@ CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 CWARNFLAGS+=	-Wextra -Wno-unused-parameter
 .  endif
 . endif
+# Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
+# but our sources aren't up for it yet.
+CWARNFLAGS+=	-Wno-sign-compare
 .endif
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
