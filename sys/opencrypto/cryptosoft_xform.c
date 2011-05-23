@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.16 2011/05/21 13:22:45 drochner Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.17 2011/05/23 13:46:54 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.16 2011/05/21 13:22:45 drochner Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.17 2011/05/23 13:46:54 drochner Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -68,6 +68,7 @@ struct swcr_enc_xform {
 	void (*decrypt)(void *, uint8_t *);
 	int  (*setkey)(uint8_t **, const uint8_t *, int);
 	void (*zerokey)(uint8_t **);
+	void (*reinit)(void *, const uint8_t *);
 };
 
 struct swcr_comp_algo {
@@ -140,6 +141,7 @@ static const struct swcr_enc_xform swcr_enc_xform_null = {
 	null_decrypt,
 	null_setkey,
 	null_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_des = {
@@ -148,6 +150,7 @@ static const struct swcr_enc_xform swcr_enc_xform_des = {
 	des1_decrypt,
 	des1_setkey,
 	des1_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_3des = {
@@ -155,7 +158,8 @@ static const struct swcr_enc_xform swcr_enc_xform_3des = {
 	des3_encrypt,
 	des3_decrypt,
 	des3_setkey,
-	des3_zerokey
+	des3_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_blf = {
@@ -163,7 +167,8 @@ static const struct swcr_enc_xform swcr_enc_xform_blf = {
 	blf_encrypt,
 	blf_decrypt,
 	blf_setkey,
-	blf_zerokey
+	blf_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_cast5 = {
@@ -171,7 +176,8 @@ static const struct swcr_enc_xform swcr_enc_xform_cast5 = {
 	cast5_encrypt,
 	cast5_decrypt,
 	cast5_setkey,
-	cast5_zerokey
+	cast5_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_skipjack = {
@@ -179,7 +185,8 @@ static const struct swcr_enc_xform swcr_enc_xform_skipjack = {
 	skipjack_encrypt,
 	skipjack_decrypt,
 	skipjack_setkey,
-	skipjack_zerokey
+	skipjack_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_rijndael128 = {
@@ -188,6 +195,7 @@ static const struct swcr_enc_xform swcr_enc_xform_rijndael128 = {
 	rijndael128_decrypt,
 	rijndael128_setkey,
 	rijndael128_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_arc4 = {
@@ -196,6 +204,7 @@ static const struct swcr_enc_xform swcr_enc_xform_arc4 = {
 	NULL,
 	NULL,
 	NULL,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_camellia = {
@@ -203,7 +212,8 @@ static const struct swcr_enc_xform swcr_enc_xform_camellia = {
 	cml_encrypt,
 	cml_decrypt,
 	cml_setkey,
-	cml_zerokey
+	cml_zerokey,
+	NULL
 };
 
 /* Authentication instances */
