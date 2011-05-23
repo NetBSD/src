@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.29 2009/08/12 08:56:41 dholland Exp $	*/
+/*	$NetBSD: worm.c,v 1.30 2011/05/23 23:03:38 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.29 2009/08/12 08:56:41 dholland Exp $");
+__RCSID("$NetBSD: worm.c,v 1.30 2011/05/23 23:03:38 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,9 +95,7 @@ static void setup(void);
 static void wake(int);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 
 	/* Revoke setgid privileges */
@@ -158,7 +156,7 @@ main(argc, argv)
 }
 
 static void
-life()
+life(void)
 {
 	struct body *bp, *np;
 	int i, j = 1;
@@ -193,17 +191,14 @@ life()
 }
 
 static void
-display(pos, chr)
-	const struct body *pos;
-	char chr;
+display(const struct body *pos, char chr)
 {
 	wmove(tv, pos->y, pos->x);
 	waddch(tv, chr);
 }
 
 static void
-leave(dummy)
-	int dummy;
+leave(int dummy)
 {
 	endwin();
 
@@ -215,8 +210,7 @@ leave(dummy)
 }
 
 static void
-wake(dummy)
-	int dummy __unused;
+wake(int dummy)
 {
 	signal(SIGALRM, wake);
 	fflush(stdout);
@@ -224,15 +218,13 @@ wake(dummy)
 }
 
 static int
-rnd(range)
-	int range;
+rnd(int range)
 {
 	return abs((rand()>>5)+(rand()>>5)) % range;
 }
 
 static void
-newpos(bp)
-	struct body * bp;
+newpos(struct body *bp)
 {
 	if (visible_len == (LINES-3) * (COLS-3) - 1) {
 		endwin();
@@ -249,7 +241,7 @@ newpos(bp)
 }
 
 static void
-prize()
+prize(void)
 {
 	int value;
 
@@ -260,8 +252,7 @@ prize()
 }
 
 static void
-process(ch)
-	int ch;
+process(int ch)
 {
 	int x,y;
 	struct body *nh;
@@ -355,13 +346,13 @@ process(ch)
 }
 
 static void
-crash()
+crash(void)
 {
 	leave(0);
 }
 
 static void
-setup()
+setup(void)
 {
 	clear();
 	refresh();
