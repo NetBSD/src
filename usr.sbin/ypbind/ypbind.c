@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.66 2011/05/23 02:43:10 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.67 2011/05/23 02:54:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,42 +28,43 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.66 2011/05/23 02:43:10 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.67 2011/05/23 02:54:53 dholland Exp $");
 #endif
 
-#include <sys/param.h>
 #include <sys/types.h>
+#include <sys/param.h>
+#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/signal.h>
 #include <sys/socket.h>
-#include <sys/file.h>
-#include <sys/uio.h>
-#include <sys/syslog.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <syslog.h>
-#include <stdarg.h>
+#include <sys/syslog.h>
+#include <sys/uio.h>
+#include <arpa/inet.h>
+#include <net/if.h>
 #include <ctype.h>
 #include <dirent.h>
-#include <netdb.h>
-#include <string.h>
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <ifaddrs.h>
+#include <limits.h>
+#include <netdb.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+#include <util.h>
+
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
-#include <net/if.h>
-#include <arpa/inet.h>
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_rmt.h>
-#include <unistd.h>
-#include <util.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
-#include <ifaddrs.h>
 
 #include "pathnames.h"
 
