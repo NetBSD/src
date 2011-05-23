@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1013 2011/05/17 05:32:31 mrg Exp $
+#	$NetBSD: files,v 1.1014 2011/05/23 06:50:17 mrg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -166,6 +166,12 @@ include "crypto/camellia/files.camellia"
 
 # General-purpose crypto processing framework.
 include "opencrypto/files.opencrypto"
+
+#
+# Kernel history/tracing. Old UVMHIST depends upon this.
+#
+defflag opt_kernhist.h			KERNHIST KERNHIST_PRINT
+file	kern/kern_history.c		kernhist
 
 #
 # System monitoring framework
@@ -1377,12 +1383,6 @@ include "miscfs/procfs/files.procfs"
 include "miscfs/umapfs/files.umapfs"
 include "nfs/files.nfs"
 include "ufs/files.ufs"
-
-#
-# Kernel history/tracing. Old UVMHIST depends upon this.
-#
-defflag opt_kernhist.h			KERNHIST KERNHIST_PRINT
-file	kern/kern_history.c		kernhist
 
 #
 # UVM (virtual memory)
