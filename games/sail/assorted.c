@@ -1,4 +1,4 @@
-/*	$NetBSD: assorted.c,v 1.17 2009/03/14 22:52:52 dholland Exp $	*/
+/*	$NetBSD: assorted.c,v 1.18 2011/05/23 23:02:07 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)assorted.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: assorted.c,v 1.17 2009/03/14 22:52:52 dholland Exp $");
+__RCSID("$NetBSD: assorted.c,v 1.18 2011/05/23 23:02:07 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ table(struct ship *from, struct ship *on,
 		default:
 			errx(1, "Bad Rhit = %d", Rhit);
 		}
-		makemsg(on, message);
+		makemsg(on, "%s", message);
 	} else if (roll == 6) {
 		switch (Hhit) {
 		case 0:
@@ -225,7 +225,7 @@ table(struct ship *from, struct ship *on,
 		default:
 			errx(1, "Bad Hhit = %d", Hhit);
 		}
-		makemsg(on, message);
+		makemsg(on, "%s", message);
 	}
 	/*
 	if (Chit > 1 && on->file->readyL & R_INITIAL &&
