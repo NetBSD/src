@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2011/05/23 02:35:28 christos Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -10,6 +10,7 @@ SRCS=	vidc.c rpccons.c wscons.c arm32vidcInEx.c
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/arm32vidc \
 		-I${X11SRCDIR.xc}/programs/Xserver/mfb \
 		-I${X11SRCDIR.xc}/programs/Xserver/mi \
+		-I${X11SRCDIR.xc}/programs/Xserver/cfb \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/include/fonts \
