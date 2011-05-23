@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.59 2011/05/23 13:51:10 drochner Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.60 2011/05/23 13:53:59 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.59 2011/05/23 13:51:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.60 2011/05/23 13:53:59 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1520,6 +1520,9 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		break;
 	case CRYPTO_AES_CBC:
 		txform = &enc_xform_rijndael128;
+		break;
+	case CRYPTO_CAMELLIA_CBC:
+		txform = &enc_xform_camellia;
 		break;
 	case CRYPTO_AES_CTR:
 		txform = &enc_xform_aes_ctr;
