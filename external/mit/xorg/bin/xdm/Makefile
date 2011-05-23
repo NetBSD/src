@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/12/18 17:28:47 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2011/05/23 17:44:41 dsl Exp $
 
 .include <bsd.own.mk>
 
@@ -27,7 +27,7 @@ CPPFLAGS.resource.c=	\
 	-DDEF_GREETER_LIB=\"${XDMGREETERLIB}\"
 
 LDADD+=		-lXau -lXdmcp -lXft -lXinerama -lXpm
-LDADD+=		-lXmu -lXt -lSM -lICE -lXext -lX11
+LDADD+=		-lXmu -lXt -lSM -lICE -lXext -lXrender -lX11
 LDADD+=		-lcrypt -lfreetype
 DPADD+=		${LIBXAU} ${LIBXDMCP} ${LIBXFT} ${LIBXINERAMA} ${LIBXPM}
 DPADD+=		${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}

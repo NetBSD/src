@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/05/22 02:40:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2011/05/23 17:44:41 dsl Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SRCS=	buttonmap.c feedback.c list.c property.c setint.c setmode.c \
 
 CPPFLAGS+=	-DVERSION='"1.4.0"'
 
-LDADD+=	-lXi -lm
+LDADD+=	-lXi -lX11 -lm
 DPADD+=	${LIBXI} ${LIBM}
 .PATH:	${X11SRCDIR.${PROG}}/src
 .PATH:	${X11SRCDIR.${PROG}}/man
