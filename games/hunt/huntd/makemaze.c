@@ -1,4 +1,4 @@
-/*	$NetBSD: makemaze.c,v 1.7 2009/08/12 07:42:11 dholland Exp $	*/
+/*	$NetBSD: makemaze.c,v 1.8 2011/05/23 22:58:44 joerg Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makemaze.c,v 1.7 2009/08/12 07:42:11 dholland Exp $");
+__RCSID("$NetBSD: makemaze.c,v 1.8 2011/05/23 22:58:44 joerg Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
@@ -40,8 +40,10 @@ __RCSID("$NetBSD: makemaze.c,v 1.7 2009/08/12 07:42:11 dholland Exp $");
 #define ISCLEAR(y,x)	(Maze[y][x] == SPACE)
 #define ODD(n)		((n) & 01)
 
+#if 0
 static int candig(int, int);
 static void dig(int, int);
+#endif
 static void dig_maze(int, int);
 static void remap(void);
 
@@ -67,6 +69,7 @@ makemaze(void)
 #define NPERM	24
 #define NDIR	4
 
+#if 0
 static int dirs[NPERM][NDIR] = {
 	{0,1,2,3},	{3,0,1,2},	{0,2,3,1},	{0,3,2,1},
 	{1,0,2,3},	{2,3,0,1},	{0,2,1,3},	{2,3,1,0},
@@ -79,6 +82,7 @@ static int dirs[NPERM][NDIR] = {
 static int incr[NDIR][2] = {
 	{0, 1}, {1, 0}, {0, -1}, {-1, 0}
 };
+
 
 static void
 dig(int y, int x)
@@ -133,6 +137,7 @@ candig(int y, int x)
 
 	return TRUE;			/* OK */
 }
+#endif
 
 void
 dig_maze(int x, int y)
