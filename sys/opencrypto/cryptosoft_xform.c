@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.17 2011/05/23 13:46:54 drochner Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.18 2011/05/23 13:51:10 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.17 2011/05/23 13:46:54 drochner Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.18 2011/05/23 13:51:10 drochner Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -89,6 +89,7 @@ static	int cast5_setkey(u_int8_t **, const u_int8_t *, int);
 static  int skipjack_setkey(u_int8_t **, const u_int8_t *, int);
 static  int rijndael128_setkey(u_int8_t **, const u_int8_t *, int);
 static  int cml_setkey(u_int8_t **, const u_int8_t *, int);
+static  int aes_ctr_setkey(u_int8_t **, const u_int8_t *, int);
 static	void des1_encrypt(void *, u_int8_t *);
 static	void des3_encrypt(void *, u_int8_t *);
 static	void blf_encrypt(void *, u_int8_t *);
@@ -103,6 +104,7 @@ static	void cast5_decrypt(void *, u_int8_t *);
 static	void skipjack_decrypt(void *, u_int8_t *);
 static	void rijndael128_decrypt(void *, u_int8_t *);
 static  void cml_decrypt(void *, u_int8_t *);
+static  void aes_ctr_crypt(void *, u_int8_t *);
 static	void des1_zerokey(u_int8_t **);
 static	void des3_zerokey(u_int8_t **);
 static	void blf_zerokey(u_int8_t **);
@@ -110,6 +112,8 @@ static	void cast5_zerokey(u_int8_t **);
 static	void skipjack_zerokey(u_int8_t **);
 static	void rijndael128_zerokey(u_int8_t **);
 static  void cml_zerokey(u_int8_t **);
+static  void aes_ctr_zerokey(u_int8_t **);
+static  void aes_ctr_reinit(void *, const u_int8_t *);
 
 static	void null_init(void *);
 static	int null_update(void *, const u_int8_t *, u_int16_t);
@@ -196,6 +200,15 @@ static const struct swcr_enc_xform swcr_enc_xform_rijndael128 = {
 	rijndael128_setkey,
 	rijndael128_zerokey,
 	NULL
+};
+
+static const struct swcr_enc_xform swcr_enc_xform_aes_ctr = {
+	&enc_xform_aes_ctr,
+	aes_ctr_crypt,
+	aes_ctr_crypt,
+	aes_ctr_setkey,
+	aes_ctr_zerokey,
+	aes_ctr_reinit
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_arc4 = {
@@ -623,6 +636,78 @@ cml_zerokey(u_int8_t **sched)
 	memset(*sched, 0, sizeof(camellia_ctx));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
+}
+
+#define AESCTR_NONCESIZE	4
+#define AESCTR_IVSIZE		8
+#define AESCTR_BLOCKSIZE	16
+
+struct aes_ctr_ctx {
+	/* need only encryption half */
+	u_int32_t ac_ek[4*(RIJNDAEL_MAXNR + 1)];
+	u_int8_t ac_block[AESCTR_BLOCKSIZE];
+	int ac_nr;
+};
+
+static void
+aes_ctr_crypt(void *key, u_int8_t *blk)
+{
+	struct aes_ctr_ctx *ctx;
+	u_int8_t keystream[AESCTR_BLOCKSIZE];
+	int i;
+
+	ctx = key;
+	/* increment counter */
+	for (i = AESCTR_BLOCKSIZE - 1;
+	     i >= AESCTR_NONCESIZE + AESCTR_IVSIZE; i--)
+		if (++ctx->ac_block[i]) /* continue on overflow */
+			break;
+	rijndaelEncrypt(ctx->ac_ek, ctx->ac_nr, ctx->ac_block, keystream);
+	for (i = 0; i < AESCTR_BLOCKSIZE; i++)
+		blk[i] ^= keystream[i];
+	memset(keystream, 0, sizeof(keystream));
+}
+
+int
+aes_ctr_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+{
+	struct aes_ctr_ctx *ctx;
+
+	if (len < AESCTR_NONCESIZE)
+		return EINVAL;
+
+	ctx = malloc(sizeof(struct aes_ctr_ctx), M_CRYPTO_DATA,
+		     M_NOWAIT|M_ZERO);
+	if (!ctx)
+		return ENOMEM;
+	ctx->ac_nr = rijndaelKeySetupEnc(ctx->ac_ek, (const u_char *)key,
+			(len - AESCTR_NONCESIZE) * 8);
+	if (!ctx->ac_nr) { /* wrong key len */
+		aes_ctr_zerokey((u_int8_t **)&ctx);
+		return EINVAL;
+	}
+	memcpy(ctx->ac_block, key + len - AESCTR_NONCESIZE, AESCTR_NONCESIZE);
+	*sched = (void *)ctx;
+	return 0;
+}
+
+void
+aes_ctr_zerokey(u_int8_t **sched)
+{
+
+	memset(*sched, 0, sizeof(struct aes_ctr_ctx));
+	free(*sched, M_CRYPTO_DATA);
+	*sched = NULL;
+}
+
+void
+aes_ctr_reinit(void *key, const u_int8_t *iv)
+{
+	struct aes_ctr_ctx *ctx = key;
+
+	memcpy(ctx->ac_block + AESCTR_NONCESIZE, iv, AESCTR_IVSIZE);
+	/* reset counter */
+	memset(ctx->ac_block + AESCTR_NONCESIZE + AESCTR_IVSIZE, 0, 4);
 }
 
 /*

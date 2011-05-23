@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.32 2011/05/23 13:46:54 drochner Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.33 2011/05/23 13:51:10 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.32 2011/05/23 13:46:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.33 2011/05/23 13:51:10 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -702,6 +702,9 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		case CRYPTO_CAMELLIA_CBC:
 			txf = &swcr_enc_xform_camellia;
 			goto enccommon;
+		case CRYPTO_AES_CTR:
+			txf = &swcr_enc_xform_aes_ctr;
+			goto enccommon;
 		case CRYPTO_NULL_CBC:
 			txf = &swcr_enc_xform_null;
 			goto enccommon;
@@ -889,6 +892,7 @@ swcr_freesession(void *arg, u_int64_t tid)
 		case CRYPTO_SKIPJACK_CBC:
 		case CRYPTO_RIJNDAEL128_CBC:
 		case CRYPTO_CAMELLIA_CBC:
+		case CRYPTO_AES_CTR:
 		case CRYPTO_NULL_CBC:
 			txf = swd->sw_exf;
 
@@ -1017,6 +1021,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 		case CRYPTO_SKIPJACK_CBC:
 		case CRYPTO_RIJNDAEL128_CBC:
 		case CRYPTO_CAMELLIA_CBC:
+		case CRYPTO_AES_CTR:
 			if ((crp->crp_etype = swcr_encdec(crd, sw,
 			    crp->crp_buf, type)) != 0)
 				goto done;
@@ -1084,6 +1089,7 @@ swcr_init(void)
 	REGISTER(CRYPTO_CAST_CBC);
 	REGISTER(CRYPTO_SKIPJACK_CBC);
 	REGISTER(CRYPTO_CAMELLIA_CBC);
+	REGISTER(CRYPTO_AES_CTR);
 	REGISTER(CRYPTO_NULL_CBC);
 	REGISTER(CRYPTO_MD5_HMAC);
 	REGISTER(CRYPTO_MD5_HMAC_96);
