@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.25 2011/05/23 22:47:22 joerg Exp $	*/
+/*	$NetBSD: io.c,v 1.26 2011/05/23 22:48:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.25 2011/05/23 22:47:22 joerg Exp $");
+__RCSID("$NetBSD: io.c,v 1.26 2011/05/23 22:48:52 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,13 +106,13 @@ msgcrd(CARD c, BOOLEAN brfrank, const char *mid, BOOLEAN brfsuit)
 	if (brfrank)
 		addmsg("%1.1s", rankchar[c.rank]);
 	else
-		addmsg(rankname[c.rank]);
+		addmsg("%s", rankname[c.rank]);
 	if (mid != NULL)
-		addmsg(mid);
+		addmsg("%s", mid);
 	if (brfsuit)
 		addmsg("%1.1s", suitchar[c.suit]);
 	else
-		addmsg(suitname[c.suit]);
+		addmsg("%s", suitname[c.suit]);
 	return (TRUE);
 }
 
@@ -180,7 +180,7 @@ infrom(const CARD hand[], int n, const char *prompt)
 		exit(74);
 	}
 	for (;;) {
-		msg(prompt);
+		msg("%s", prompt);
 		if (incard(&crd)) {	/* if card is full card */
 			if (!is_one(crd, hand, n))
 				msg("That's not in your hand");
@@ -330,7 +330,7 @@ number(int lo, int hi, const char *prompt)
 	int sum;
 
 	for (sum = 0;;) {
-		msg(prompt);
+		msg("%s", prompt);
 		if (!(p = get_line()) || *p == '\0') {
 			msg(quiet ? "Not a number" :
 			    "That doesn't look like a number");
