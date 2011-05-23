@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.21 2011/05/16 10:18:52 drochner Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.22 2011/05/23 13:51:10 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -138,7 +138,8 @@
 #define CRYPTO_SHA2_384_HMAC	24
 #define CRYPTO_SHA2_512_HMAC	25
 #define CRYPTO_CAMELLIA_CBC	26
-#define CRYPTO_ALGORITHM_MAX	26 /* Keep updated - see below */
+#define CRYPTO_AES_CTR		27
+#define CRYPTO_ALGORITHM_MAX	27 /* Keep updated - see below */
 
 /* Algorithm flags */
 #define	CRYPTO_ALG_FLAG_SUPPORTED	0x01 /* Algorithm is supported */
