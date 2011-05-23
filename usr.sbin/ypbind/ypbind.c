@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.64 2011/05/23 02:06:41 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.65 2011/05/23 02:36:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.64 2011/05/23 02:06:41 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.65 2011/05/23 02:36:35 dholland Exp $");
 #endif
 
 #include <sys/param.h>
@@ -109,7 +109,10 @@ ypbind_mode_t ypbindmode;
 int been_ypset;
 
 #ifdef DEBUG
+#define DPRINTF(...) (debug ? (void)printf(__VA_ARGS__) : (void)0)
 static int debug;
+#else
+#define DPRINTF(...)
 #endif
 
 static int insecure;
@@ -271,10 +274,7 @@ ypbindproc_null_2(SVCXPRT *transp, void *argp)
 {
 	static char res;
 
-#ifdef DEBUG
-	if (debug)
-		(void)printf("ypbindproc_null_2\n");
-#endif
+	DPRINTF("ypbindproc_null_2\n");
 	(void)memset(&res, 0, sizeof(res));
 	return (void *)&res;
 }
@@ -289,10 +289,7 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 	time_t now;
 	int count;
 
-#ifdef DEBUG
-	if (debug)
-		(void)printf("ypbindproc_domain_2 %s\n", arg);
-#endif
+	DPRINTF("ypbindproc_domain_2 %s\n", arg);
 	if (_yp_invalid_domain(arg))
 		return NULL;
 
@@ -318,18 +315,12 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 		ypdb->dom_pnext = ypbindlist;
 		ypbindlist = ypdb;
 		check++;
-#ifdef DEBUG
-		if (debug)
-			(void)printf("unknown domain %s\n", arg);
-#endif
+		DPRINTF("unknown domain %s\n", arg);
 		return NULL;
 	}
 
 	if (ypdb->dom_alive == 0) {
-#ifdef DEBUG
-		if (debug)
-			(void)printf("dead domain %s\n", arg);
-#endif
+		DPRINTF("dead domain %s\n", arg);
 		return NULL;
 	}
 
@@ -355,12 +346,9 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 		ypdb->dom_server_addr.sin_addr.s_addr;
 	res.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port =
 		ypdb->dom_server_addr.sin_port;
-#ifdef DEBUG
-	if (debug)
-		(void)printf("domain %s at %s/%d\n", ypdb->dom_domain,
-		    inet_ntoa(ypdb->dom_server_addr.sin_addr),
-		    ntohs(ypdb->dom_server_addr.sin_port));
-#endif
+	DPRINTF("domain %s at %s/%d\n", ypdb->dom_domain,
+		inet_ntoa(ypdb->dom_server_addr.sin_addr),
+		ntohs(ypdb->dom_server_addr.sin_port));
 	return &res;
 }
 
@@ -371,21 +359,15 @@ ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 	struct sockaddr_in *fromsin, bindsin;
 	static bool_t res;
 
-#ifdef DEBUG
-	if (debug)
-		(void)printf("ypbindproc_setdom_2 %s\n", inet_ntoa(bindsin.sin_addr));
-#endif
+	DPRINTF("ypbindproc_setdom_2 %s\n", inet_ntoa(bindsin.sin_addr));
 	(void)memset(&res, 0, sizeof(res));
 	fromsin = svc_getcaller(transp);
 
 	switch (ypbindmode) {
 	case YPBIND_SETLOCAL:
 		if (fromsin->sin_addr.s_addr != htonl(INADDR_LOOPBACK)) {
-#ifdef DEBUG
-			if (debug)
-				(void)printf("ypset from %s denied\n",
-				    inet_ntoa(fromsin->sin_addr));
-#endif
+			DPRINTF("ypset from %s denied\n",
+				inet_ntoa(fromsin->sin_addr));
 			return NULL;
 		}
 		/* FALLTHROUGH */
@@ -397,26 +379,17 @@ ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 	case YPBIND_DIRECT:
 	case YPBIND_BROADCAST:
 	default:
-#ifdef DEBUG
-		if (debug)
-			(void)printf("ypset denied\n");
-#endif
+		DPRINTF("ypset denied\n");
 		return NULL;
 	}
 
 	if (ntohs(fromsin->sin_port) >= IPPORT_RESERVED) {
-#ifdef DEBUG
-		if (debug)
-			(void)printf("ypset from unprivileged port denied\n");
-#endif
+		DPRINTF("ypset from unprivileged port denied\n");
 		return &res;
 	}
 
 	if (sd->ypsetdom_vers != YPVERS) {
-#ifdef DEBUG
-		if (debug)
-			(void)printf("ypset with wrong version denied\n");
-#endif
+		DPRINTF("ypset with wrong version denied\n");
 		return &res;
 	}
 
@@ -427,10 +400,7 @@ ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 	bindsin.sin_port = sd->ypsetdom_port;
 	rpc_received(sd->ypsetdom_domain, &bindsin, 1);
 
-#ifdef DEBUG
-	if (debug)
-		(void)printf("ypset to %s succeeded\n", inet_ntoa(bindsin.sin_addr));
-#endif
+	DPRINTF("ypset to %s succeeded\n", inet_ntoa(bindsin.sin_addr));
 	res = 1;
 	return &res;
 }
@@ -521,11 +491,8 @@ main(int argc, char *argv[])
 	(void)snprintf(pathname, sizeof(pathname), "%s/%s%s", BINDINGDIR,
 	    domainname, YPSERVERSSUFF);
 	if (stat(pathname, &st) < 0) {
-#ifdef DEBUG
-		if (debug)
-			(void)printf("%s does not exist, defaulting to "
-			    "broadcast\n", pathname);
-#endif
+		DPRINTF("%s does not exist, defaulting to broadcast\n",
+			pathname);
 		ypbindmode = YPBIND_BROADCAST;
 	} else
 		ypbindmode = YPBIND_DIRECT;
@@ -703,10 +670,7 @@ ping(struct _dom_binding *ypdb)
 
 	rpcua = authunix_create_default();
 	if (rpcua == NULL) {
-#ifdef DEBUG
-		if (debug)
-			(void)printf("cannot get unix auth\n");
-#endif
+		DPRINTF("cannot get unix auth\n");
 		return RPC_SYSTEMERROR;
 	}
 
@@ -740,11 +704,8 @@ ping(struct _dom_binding *ypdb)
 	AUTH_DESTROY(rpcua);
 
 	ypdb->dom_alive = 2;
-#ifdef DEBUG
-	if (debug)
-		(void)printf("ping %x\n",
-		    ypdb->dom_server_addr.sin_addr.s_addr);
-#endif
+	DPRINTF("ping %x\n", ypdb->dom_server_addr.sin_addr.s_addr);
+
 	if (sendto(pingsock, buf, outlen, 0, 
 	    (struct sockaddr *)(void *)&ypdb->dom_server_addr,
 	    (socklen_t)sizeof ypdb->dom_server_addr) == -1)
@@ -764,10 +725,7 @@ nag_servers(struct _dom_binding *ypdb)
 	AUTH *rpcua;
 	XDR xdr;
 
-#ifdef DEBUG
-	if (debug)
-		(void)printf("nag_servers\n");
-#endif
+	DPRINTF("nag_servers\n");
 	rmtca.xdr_args = xdr_ypdomain_wrap_string;
 	rmtca.args_ptr = (caddr_t)(void *)&dom;
 
@@ -776,10 +734,7 @@ nag_servers(struct _dom_binding *ypdb)
 
 	rpcua = authunix_create_default();
 	if (rpcua == NULL) {
-#ifdef DEBUG
-		if (debug)
-			(void)printf("cannot get unix auth\n");
-#endif
+		DPRINTF("cannot get unix auth\n");
 		return RPC_SYSTEMERROR;
 	}
 	msg.rm_direction = CALL;
@@ -892,11 +847,7 @@ broadcast(char *buf, int outlen)
 		}
 
 		bindsin.sin_addr = in;
-#ifdef DEBUG
-		if (debug)
-			(void)printf("broadcast %x\n",
-			    bindsin.sin_addr.s_addr);
-#endif
+		DPRINTF("broadcast %x\n", bindsin.sin_addr.s_addr);
 		if (sendto(rpcsock, buf, outlen, 0,
 		    (struct sockaddr *)(void *)&bindsin,
 		    (socklen_t)bindsin.sin_len) == -1)
@@ -1044,10 +995,7 @@ handle_replies(void)
 	XDR xdr;
 
 recv_again:
-#ifdef DEBUG
-	if (debug)
-		printf("handle_replies receiving\n");
-#endif
+	DPRINTF("handle_replies receiving\n");
 	(void)memset(&xdr, 0, sizeof(xdr));
 	(void)memset(&msg, 0, sizeof(msg));
 	msg.acpted_rply.ar_verf = _null_auth;
@@ -1061,11 +1009,8 @@ try_again:
 	if (inlen < 0) {
 		if (errno == EINTR)
 			goto try_again;
-#ifdef DEBUG
-		if (debug)
-			printf("handle_replies: recvfrom failed (%s)\n",
-			    strerror(errno));
-#endif
+		DPRINTF("handle_replies: recvfrom failed (%s)\n",
+			strerror(errno));
 		return RPC_CANTRECV;
 	}
 	if ((size_t)inlen < sizeof(uint32_t))
@@ -1105,10 +1050,7 @@ handle_ping(void)
 	bool_t res;
 
 recv_again:
-#ifdef DEBUG
-	if (debug)
-		printf("handle_ping receiving\n");
-#endif
+	DPRINTF("handle_ping receiving\n");
 	(void)memset(&xdr, 0, sizeof(xdr));
 	(void)memset(&msg, 0, sizeof(msg));
 	msg.acpted_rply.ar_verf = _null_auth;
@@ -1122,11 +1064,8 @@ try_again:
 	if (inlen < 0) {
 		if (errno == EINTR)
 			goto try_again;
-#ifdef DEBUG
-		if (debug)
-			printf("handle_ping: recvfrom failed (%s)\n",
-			    strerror(errno));
-#endif
+		DPRINTF("handle_ping: recvfrom failed (%s)\n",
+			strerror(errno));
 		return RPC_CANTRECV;
 	}
 	if ((size_t)inlen < sizeof(uint32_t))
@@ -1163,11 +1102,8 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 	struct ypbind_resp ybr;
 	int fd;
 
-#ifdef DEBUG
-	if (debug)
-		(void)printf("returned from %s about %s\n",
-		    inet_ntoa(raddrp->sin_addr), dom);
-#endif
+	DPRINTF("returned from %s about %s\n",
+		inet_ntoa(raddrp->sin_addr), dom);
 
 	if (dom == NULL)
 		return;
