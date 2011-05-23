@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.potion.c,v 1.8 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.potion.c,v 1.9 2011/05/23 22:53:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.potion.c,v 1.8 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.potion.c,v 1.9 2011/05/23 22:53:25 joerg Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -286,7 +286,7 @@ strange_feeling(struct obj *obj, const char *txt)
 	if (flags.beginner)
 		pline("You have a strange feeling for a moment, then it passes.");
 	else
-		pline(txt);
+		pline("%s", txt);
 	if (!objects[obj->otyp].oc_name_known && !objects[obj->otyp].oc_uname)
 		docall(obj);
 	useup(obj);
