@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.24 2010/05/15 21:22:39 joerg Exp $	*/
+/*	$NetBSD: factor.c,v 1.25 2011/05/23 22:49:59 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.24 2010/05/15 21:22:39 joerg Exp $");
+__RCSID("$NetBSD: factor.c,v 1.25 2011/05/23 22:49:59 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -263,7 +263,7 @@ BN_print_dec_fp(FILE *fp, const BIGNUM *num)
 	buf = BN_bn2dec(num);
 	if (buf == NULL)
 		return;	/* XXX do anything here? */
-	fprintf(fp, buf);
+	fprintf(fp, "%s", buf);
 	free(buf);
 }
 
