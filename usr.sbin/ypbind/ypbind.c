@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.63 2011/03/30 05:24:05 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.64 2011/05/23 02:06:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.63 2011/03/30 05:24:05 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.64 2011/05/23 02:06:41 dholland Exp $");
 #endif
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ struct _dom_binding {
 	time_t dom_ask_t;
 	int dom_lockfd;
 	int dom_alive;
-	u_int32_t dom_xid;
+	uint32_t dom_xid;
 };
 
 static char *domainname;
@@ -117,7 +117,7 @@ static int rpcsock, pingsock;
 static struct rmtcallargs rmtca;
 static struct rmtcallres rmtcr;
 static bool_t rmtcr_outval;
-static u_long rmtcr_port;
+static unsigned long rmtcr_port;
 static SVCXPRT *udptransp, *tcptransp;
 
 int	_yp_invalid_domain(const char *);		/* from libc */
@@ -139,8 +139,8 @@ static int nag_servers(struct _dom_binding *);
 static enum clnt_stat handle_replies(void);
 static enum clnt_stat handle_ping(void);
 static void rpc_received(char *, struct sockaddr_in *, int);
-static struct _dom_binding *xid2ypdb(u_int32_t);
-static u_int32_t unique_xid(struct _dom_binding *);
+static struct _dom_binding *xid2ypdb(uint32_t);
+static uint32_t unique_xid(struct _dom_binding *);
 static int broadcast(char *, int);
 static int direct(char *, int);
 static int direct_set(char *, int, struct _dom_binding *);
@@ -719,7 +719,7 @@ ping(struct _dom_binding *ypdb)
 	msg.rm_call.cb_verf = rpcua->ah_verf;
 
 	msg.rm_xid = ypdb->dom_xid;
-	xdrmem_create(&xdr, buf, (u_int)sizeof(buf), XDR_ENCODE);
+	xdrmem_create(&xdr, buf, (unsigned)sizeof(buf), XDR_ENCODE);
 	if (!xdr_callmsg(&xdr, &msg)) {
 		st = RPC_CANTENCODEARGS;
 		AUTH_DESTROY(rpcua);
@@ -791,7 +791,7 @@ nag_servers(struct _dom_binding *ypdb)
 	msg.rm_call.cb_verf = rpcua->ah_verf;
 
 	msg.rm_xid = ypdb->dom_xid;
-	xdrmem_create(&xdr, buf, (u_int)sizeof(buf), XDR_ENCODE);
+	xdrmem_create(&xdr, buf, (unsigned)sizeof(buf), XDR_ENCODE);
 	if (!xdr_callmsg(&xdr, &msg)) {
 		st = RPC_CANTENCODEARGS;
 		AUTH_DESTROY(rpcua);
@@ -1068,18 +1068,18 @@ try_again:
 #endif
 		return RPC_CANTRECV;
 	}
-	if ((size_t)inlen < sizeof(u_int32_t))
+	if ((size_t)inlen < sizeof(uint32_t))
 		goto recv_again;
 
 	/*
 	 * see if reply transaction id matches sent id.
 	 * If so, decode the results.
 	 */
-	xdrmem_create(&xdr, buf, (u_int)inlen, XDR_DECODE);
+	xdrmem_create(&xdr, buf, (unsigned)inlen, XDR_DECODE);
 	if (xdr_replymsg(&xdr, &msg)) {
 		if ((msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
 		    (msg.acpted_rply.ar_stat == SUCCESS)) {
-			raddr.sin_port = htons((u_short)rmtcr_port);
+			raddr.sin_port = htons((uint16_t)rmtcr_port);
 			ypdb = xid2ypdb(msg.rm_xid);
 			if (ypdb != NULL)
 				rpc_received(ypdb->dom_domain, &raddr, 0);
@@ -1129,14 +1129,14 @@ try_again:
 #endif
 		return RPC_CANTRECV;
 	}
-	if ((size_t)inlen < sizeof(u_int32_t))
+	if ((size_t)inlen < sizeof(uint32_t))
 		goto recv_again;
 
 	/*
 	 * see if reply transaction id matches sent id.
 	 * If so, decode the results.
 	 */
-	xdrmem_create(&xdr, buf, (u_int)inlen, XDR_DECODE);
+	xdrmem_create(&xdr, buf, (unsigned)inlen, XDR_DECODE);
 	if (xdr_replymsg(&xdr, &msg)) {
 		if ((msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
 		    (msg.acpted_rply.ar_stat == SUCCESS)) {
@@ -1244,7 +1244,7 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 }
 
 static struct _dom_binding *
-xid2ypdb(u_int32_t xid)
+xid2ypdb(uint32_t xid)
 {
 	struct _dom_binding *ypdb;
 
@@ -1254,12 +1254,12 @@ xid2ypdb(u_int32_t xid)
 	return (ypdb);
 }
 
-static u_int32_t
+static uint32_t
 unique_xid(struct _dom_binding *ypdb)
 {
-	u_int32_t tmp_xid;
+	uint32_t tmp_xid;
 
-	tmp_xid = ((u_int32_t)(u_long)ypdb) & 0xffffffff;
+	tmp_xid = ((uint32_t)(unsigned long)ypdb) & 0xffffffff;
 	while (xid2ypdb(tmp_xid) != NULL)
 		tmp_xid++;
 
