@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.21 2011/02/09 09:46:59 pooka Exp $	*/
+/*	$NetBSD: res_send.c,v 1.22 2011/05/23 14:34:29 joerg Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -93,7 +93,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.22 2009/01/22 23:49:23 tbox Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.21 2011/02/09 09:46:59 pooka Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.22 2011/05/23 14:34:29 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1065,8 +1065,6 @@ Aerror(const res_state statp, FILE *file, const char *string, int error,
 	int save = errno;
 	char hbuf[NI_MAXHOST];
 	char sbuf[NI_MAXSERV];
-
-	alen = alen;
 
 	if ((statp->options & RES_DEBUG) != 0U) {
 		if (getnameinfo(address, (socklen_t)alen, hbuf, sizeof(hbuf),
