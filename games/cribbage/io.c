@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.24 2009/08/12 05:48:04 dholland Exp $	*/
+/*	$NetBSD: io.c,v 1.25 2011/05/23 22:47:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.24 2009/08/12 05:48:04 dholland Exp $");
+__RCSID("$NetBSD: io.c,v 1.25 2011/05/23 22:47:22 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,9 +86,7 @@ static const char *const suitchar[SUITS] = {"S", "H", "D", "C"};
  *	Call msgcrd in one of two forms
  */
 int
-msgcard(c, brief)
-	CARD c;
-	BOOLEAN brief;
+msgcard(CARD c, BOOLEAN brief)
 {
 	if (brief)
 		return (msgcrd(c, TRUE, NULL, TRUE));
