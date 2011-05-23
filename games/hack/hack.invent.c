@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.invent.c,v 1.14 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: hack.invent.c,v 1.15 2011/05/23 22:53:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.invent.c,v 1.14 2009/08/12 07:28:40 dholland Exp $");
+__RCSID("$NetBSD: hack.invent.c,v 1.15 2011/05/23 22:53:25 joerg Exp $");
 #endif				/* not lint */
 
 #include <assert.h>
@@ -655,7 +655,7 @@ askchain(struct obj *objchn, char *olets, int allflag,
 		if (ckfn && !(*ckfn) (otmp))
 			continue;
 		if (!allflag) {
-			pline(xprname(otmp, ilet));
+			pline("%s", xprname(otmp, ilet));
 			addtopl(" [nyaq]? ");
 			sym = readchar();
 		} else
@@ -699,7 +699,7 @@ obj_to_let(struct obj *obj)
 void
 prinv(struct obj *obj)
 {
-	pline(xprname(obj, obj_to_let(obj)));
+	pline("%s", xprname(obj, obj_to_let(obj)));
 }
 
 static char *
