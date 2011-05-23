@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.27 2010/01/01 06:37:15 dholland Exp $	*/
+/*	$NetBSD: canfield.c,v 1.28 2011/05/23 22:46:35 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.27 2010/01/01 06:37:15 dholland Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.28 2011/05/23 22:46:35 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1613,7 +1613,7 @@ instruct(void)
 		return;
 	clear();
 	for (cp = basicinstructions; *cp != 0; cp++)
-		printw(*cp);
+		printw("%s", *cp);
 	refresh();
 	getch();
 	clear();
@@ -1626,7 +1626,7 @@ instruct(void)
 		return;
 	clear();
 	for (cp = bettinginstructions; *cp != 0; cp++)
-		printw(*cp);
+		printw("%s", *cp);
 	refresh();
 	getch();
 }
