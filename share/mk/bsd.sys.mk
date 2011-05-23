@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.197 2011/05/22 20:52:12 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.198 2011/05/23 14:32:05 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -20,6 +20,7 @@ CFLAGS+=	-std=gnu99
 .if defined(WARNS)
 .if ${WARNS} > 0
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
+CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wno-array-bounds :}
 #CFLAGS+=	-Wmissing-declarations -Wredundant-decls -Wnested-externs
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet. Also, add -Wno-traditional because
