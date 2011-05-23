@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.7 2010/08/13 19:56:34 jakllsch Exp $	*/
+/*	$NetBSD: parse.c,v 1.8 2011/05/23 15:16:27 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.7 2010/08/13 19:56:34 jakllsch Exp $");
+__RCSID("$NetBSD: parse.c,v 1.8 2011/05/23 15:16:27 joerg Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -238,7 +238,6 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 		case 2:
 			dval = *data++;
 			dval |= *data++ << 8;
-			dval = /*(int16_t)*/dval;
 			break;
 		case 4:
 			dval = *data++;
