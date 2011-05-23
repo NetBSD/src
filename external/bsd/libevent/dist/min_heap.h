@@ -1,4 +1,4 @@
-/*	$NetBSD: min_heap.h,v 1.1.1.1 2009/11/02 10:01:01 plunky Exp $	*/
+/*	$NetBSD: min_heap.h,v 1.2 2011/05/23 15:23:24 joerg Exp $	*/
 /*
  * Copyright (c) 2006 Maxim Yegorushkin <maxim.yegorushkin@gmail.com>
  * All rights reserved.
@@ -56,14 +56,14 @@ int min_heap_elem_greater(struct event *a, struct event *b)
     return evutil_timercmp(&a->ev_timeout, &b->ev_timeout, >);
 }
 
-void min_heap_ctor(min_heap_t* s) { s->p = 0; s->n = 0; s->a = 0; }
-void min_heap_dtor(min_heap_t* s) { free(s->p); }
-void min_heap_elem_init(struct event* e) { e->min_heap_idx = -1; }
-int min_heap_empty(min_heap_t* s) { return 0u == s->n; }
-unsigned min_heap_size(min_heap_t* s) { return s->n; }
-struct event* min_heap_top(min_heap_t* s) { return s->n ? *s->p : 0; }
+static inline void min_heap_ctor(min_heap_t* s) { s->p = 0; s->n = 0; s->a = 0; }
+static inline void min_heap_dtor(min_heap_t* s) { free(s->p); }
+static inline void min_heap_elem_init(struct event* e) { e->min_heap_idx = -1; }
+static inline int min_heap_empty(min_heap_t* s) { return 0u == s->n; }
+static inline unsigned min_heap_size(min_heap_t* s) { return s->n; }
+static inline struct event* min_heap_top(min_heap_t* s) { return s->n ? *s->p : 0; }
 
-int min_heap_push(min_heap_t* s, struct event* e)
+static inline int min_heap_push(min_heap_t* s, struct event* e)
 {
     if(min_heap_reserve(s, s->n + 1))
         return -1;
@@ -71,7 +71,7 @@ int min_heap_push(min_heap_t* s, struct event* e)
     return 0;
 }
 
-struct event* min_heap_pop(min_heap_t* s)
+static inline struct event* min_heap_pop(min_heap_t* s)
 {
     if(s->n)
     {
@@ -83,7 +83,7 @@ struct event* min_heap_pop(min_heap_t* s)
     return 0;
 }
 
-int min_heap_erase(min_heap_t* s, struct event* e)
+static inline int min_heap_erase(min_heap_t* s, struct event* e)
 {
     if(((unsigned int)-1) != e->min_heap_idx)
     {
