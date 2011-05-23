@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.10 2010/01/22 10:28:08 wiz Exp $
+.\"	$NetBSD: opencrypto.9,v 1.11 2011/05/23 13:46:54 drochner Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -338,8 +338,6 @@ value will be ignored and no IV will be written in the buffer.
 Otherwise, the IV used to encrypt the packet will be written
 at the location pointed to by
 .Fa crd_inject .
-The IV length is assumed to be equal to the blocksize of the
-encryption algorithm.
 Some applications that do special
 .Dq IV cooking ,
 such as the half-IV mode in

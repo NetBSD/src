@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.23 2011/05/21 13:23:36 drochner Exp $ */
+/*	$NetBSD: xform.c,v 1.24 2011/05/23 13:46:54 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.23 2011/05/21 13:23:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.24 2011/05/23 13:46:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -92,47 +92,47 @@ const u_int8_t hmac_opad_buffer[128] = {
 const struct enc_xform enc_xform_null = {
 	CRYPTO_NULL_CBC, "NULL",
 	/* NB: blocksize of 4 is to generate a properly aligned ESP header */
-	4, 0, 256 /* 2048 bits, max key */
+	4, 0, 0, 256 /* 2048 bits, max key */
 };
 
 const struct enc_xform enc_xform_des = {
 	CRYPTO_DES_CBC, "DES",
-	8, 8, 8
+	8, 8, 8, 8
 };
 
 const struct enc_xform enc_xform_3des = {
 	CRYPTO_3DES_CBC, "3DES",
-	8, 24, 24
+	8, 8, 24, 24
 };
 
 const struct enc_xform enc_xform_blf = {
 	CRYPTO_BLF_CBC, "Blowfish",
-	8, 5, 56 /* 448 bits, max key */
+	8, 8, 5, 56 /* 448 bits, max key */
 };
 
 const struct enc_xform enc_xform_cast5 = {
 	CRYPTO_CAST_CBC, "CAST-128",
-	8, 5, 16
+	8, 8, 5, 16
 };
 
 const struct enc_xform enc_xform_skipjack = {
 	CRYPTO_SKIPJACK_CBC, "Skipjack",
-	8, 10, 10
+	8, 8, 10, 10
 };
 
 const struct enc_xform enc_xform_rijndael128 = {
 	CRYPTO_RIJNDAEL128_CBC, "Rijndael-128/AES",
-	16, 16, 32
+	16, 16, 16, 32
 };
 
 const struct enc_xform enc_xform_arc4 = {
 	CRYPTO_ARC4, "ARC4",
-	1, 1, 32
+	1, 0, 1, 32
 };
 
 const struct enc_xform enc_xform_camellia = {
 	CRYPTO_CAMELLIA_CBC, "Camellia",
-	16, 8, 32
+	16, 16, 8, 32
 };
 
 /* Authentication instances */
