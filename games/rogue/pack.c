@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.11 2009/08/12 08:44:45 dholland Exp $	*/
+/*	$NetBSD: pack.c,v 1.12 2011/05/23 23:01:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pack.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pack.c,v 1.11 2009/08/12 08:44:45 dholland Exp $");
+__RCSID("$NetBSD: pack.c,v 1.12 2011/05/23 23:01:17 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: pack.c,v 1.11 2009/08/12 08:44:45 dholland Exp $");
 
 #include "rogue.h"
 
-const char *curse_message = "you can't, it appears to be cursed";
+const char curse_message[] = "you can't, it appears to be cursed";
 
 static object *check_duplicate(object *, object *);
 static boolean is_pack_letter(short *, unsigned short *);

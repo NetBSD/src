@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_hit.c,v 1.8 2008/01/14 03:50:02 dholland Exp $	*/
+/*	$NetBSD: spec_hit.c,v 1.9 2011/05/23 23:01:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)spec_hit.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: spec_hit.c,v 1.8 2008/01/14 03:50:02 dholland Exp $");
+__RCSID("$NetBSD: spec_hit.c,v 1.9 2011/05/23 23:01:17 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ freeze(object *monster)
 			}
 			killed_by(NULL, HYPOTHERMIA);
 		}
-		messagef(1, you_can_move_again);
+		messagef(1, "%s", you_can_move_again);
 		monster->m_flags &= (~FREEZING_ROGUE);
 	}
 }

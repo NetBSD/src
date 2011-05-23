@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.20 2009/08/12 08:44:45 dholland Exp $	*/
+/*	$NetBSD: rogue.h,v 1.21 2011/05/23 23:01:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -667,7 +667,7 @@ extern	char	hit_message[HIT_MESSAGE_SIZE];
 extern	char	hunger_str[HUNGER_STR_LEN];
 extern	char	login_name[MAX_OPT_LEN];
 extern	const char   *byebye_string;
-extern	const char   *curse_message;
+extern	const char   curse_message[];
 extern	const char   *error_file;
 extern	char   *fruit;
 extern	const char   *const m_names[];
@@ -676,7 +676,7 @@ extern	const char   *new_level_message;
 extern	char   *nick_name;
 extern	const char   *press_space;
 extern	char   *save_file;
-extern	const char   *you_can_move_again;
+extern	const char   you_can_move_again[];
 extern	const long	level_points[];
 extern	short	add_strength;
 extern	short	auto_search;
