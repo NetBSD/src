@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.57 2011/05/16 10:27:49 drochner Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.58 2011/05/23 13:46:54 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.57 2011/05/16 10:27:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.58 2011/05/23 13:46:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,10 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		return E2BIG;
 
 	if (cse->txform) {
-		if (cop->len == 0 || (cop->len % cse->txform->blocksize) != 0)
+		if (cop->len < cse->txform->blocksize
+		    + (cop->iv ? 0 : cse->txform->ivsize) ||
+		    (cop->len - (cop->iv ? 0 : cse->txform->ivsize))
+		    % cse->txform->blocksize != 0)
 			return EINVAL;
 	}
 
@@ -582,9 +585,9 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 			goto bail;
 		}
 		if ((error = copyin(cop->iv, cse->tmp_iv,
-		    cse->txform->blocksize)))
+		    cse->txform->ivsize)))
 			goto bail;
-		(void)memcpy(crde->crd_iv, cse->tmp_iv, cse->txform->blocksize);
+		(void)memcpy(crde->crd_iv, cse->tmp_iv, cse->txform->ivsize);
 		crde->crd_flags |= CRD_F_IV_EXPLICIT | CRD_F_IV_PRESENT;
 		crde->crd_skip = 0;
 	} else if (crde) {
@@ -592,8 +595,8 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 			crde->crd_skip = 0;
 		} else {
 			crde->crd_flags |= CRD_F_IV_PRESENT;
-			crde->crd_skip = cse->txform->blocksize;
-			crde->crd_len -= cse->txform->blocksize;
+			crde->crd_skip = cse->txform->ivsize;
+			crde->crd_len -= cse->txform->ivsize;
 		}
 	}
 
@@ -1125,8 +1128,11 @@ cryptodev_mop(struct fcrypt *fcr,
 			continue;
 		}
 		if (cse->txform) {
-			if (cnop[req].len == 0 || 
-			    (cnop[req].len % cse->txform->blocksize) != 0) { 
+			if (cnop[req].len < cse->txform->blocksize -
+			    (cnop[req].iv ? 0 : cse->txform->ivsize) ||
+			    (cnop[req].len -
+			     (cnop[req].iv ? 0 : cse->txform->ivsize))
+			    % cse->txform->blocksize) {
 				cnop[req].status = EINVAL;
 				continue;
 			}
@@ -1272,12 +1278,12 @@ cryptodev_mop(struct fcrypt *fcr,
 				goto bail;
 			}
 			if ((error = copyin(cnop[req].iv, crp->tmp_iv,
-			    cse->txform->blocksize))) {
+			    cse->txform->ivsize))) {
 				cnop[req].status = EINVAL;
 				goto bail;
 			}
 			(void)memcpy(crde->crd_iv, crp->tmp_iv,
-			    cse->txform->blocksize);
+			    cse->txform->ivsize);
 			crde->crd_flags |= CRD_F_IV_EXPLICIT | CRD_F_IV_PRESENT;
 			crde->crd_skip = 0;
 		} else if (crde) {
@@ -1285,8 +1291,8 @@ cryptodev_mop(struct fcrypt *fcr,
 				crde->crd_skip = 0;
 			} else {
 				crde->crd_flags |= CRD_F_IV_PRESENT;
-				crde->crd_skip = cse->txform->blocksize;
-				crde->crd_len -= cse->txform->blocksize;
+				crde->crd_skip = cse->txform->ivsize;
+				crde->crd_len -= cse->txform->ivsize;
 			}
 		}
 	

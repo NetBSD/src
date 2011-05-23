@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.31 2011/05/21 10:04:03 drochner Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.32 2011/05/23 13:46:54 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.31 2011/05/21 10:04:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.32 2011/05/23 13:46:54 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,11 +77,13 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 	unsigned char iv[EALG_MAX_BLOCK_LEN], blk[EALG_MAX_BLOCK_LEN], *idat;
 	unsigned char *ivp, piv[EALG_MAX_BLOCK_LEN];
 	const struct swcr_enc_xform *exf;
-	int i, k, j, blks;
+	int i, k, j, blks, ivlen;
 	int count, ind;
 
 	exf = sw->sw_exf;
 	blks = exf->enc_xform->blocksize;
+	ivlen = exf->enc_xform->ivsize;
+	KASSERT(exf->reinit ? ivlen <= blks : ivlen == blks);
 
 	/* Check for non-padded data */
 	if (crd->crd_len % blks)
@@ -91,7 +93,7 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
 		/* IV explicitly provided ? */
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
-			memcpy(iv, crd->crd_iv, blks);
+			memcpy(iv, crd->crd_iv, ivlen);
 		else {
 			/* Get random IV */
 			for (i = 0;
@@ -116,23 +118,35 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 
 		/* Do we need to write the IV */
 		if (!(crd->crd_flags & CRD_F_IV_PRESENT)) {
-			COPYBACK(outtype, buf, crd->crd_inject, blks, iv);
+			COPYBACK(outtype, buf, crd->crd_inject, ivlen, iv);
 		}
 
 	} else {	/* Decryption */
 			/* IV explicitly provided ? */
 		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
-			memcpy(iv, crd->crd_iv, blks);
+			memcpy(iv, crd->crd_iv, ivlen);
 		else {
 			/* Get IV off buf */
-			COPYDATA(outtype, buf, crd->crd_inject, blks, iv);
+			COPYDATA(outtype, buf, crd->crd_inject, ivlen, iv);
 		}
 	}
 
 	ivp = iv;
 
+	if (exf->reinit)
+		exf->reinit(sw->sw_kschedule, iv);
+
 	if (outtype == CRYPTO_BUF_CONTIG) {
-		if (crd->crd_flags & CRD_F_ENCRYPT) {
+		if (exf->reinit) {
+			for (i = crd->crd_skip;
+			     i < crd->crd_skip + crd->crd_len; i += blks) {
+				if (crd->crd_flags & CRD_F_ENCRYPT) {
+					exf->encrypt(sw->sw_kschedule, buf + i);
+				} else {
+					exf->decrypt(sw->sw_kschedule, buf + i);
+				}
+			}
+		} else if (crd->crd_flags & CRD_F_ENCRYPT) {
 			for (i = crd->crd_skip;
 			    i < crd->crd_skip + crd->crd_len; i += blks) {
 				/* XOR with the IV/previous block, as appropriate. */
@@ -183,7 +197,15 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 				m_copydata(m, k, blks, blk);
 
 				/* Actual encryption/decryption */
-				if (crd->crd_flags & CRD_F_ENCRYPT) {
+				if (exf->reinit) {
+					if (crd->crd_flags & CRD_F_ENCRYPT) {
+						exf->encrypt(sw->sw_kschedule,
+							     blk);
+					} else {
+						exf->decrypt(sw->sw_kschedule,
+							     blk);
+					}
+				} else if (crd->crd_flags & CRD_F_ENCRYPT) {
 					/* XOR with previous block */
 					for (j = 0; j < blks; j++)
 						blk[j] ^= ivp[j];
@@ -253,7 +275,15 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 			idat = mtod(m, unsigned char *) + k;
 
 			while (m->m_len >= k + blks && i > 0) {
-				if (crd->crd_flags & CRD_F_ENCRYPT) {
+				if (exf->reinit) {
+					if (crd->crd_flags & CRD_F_ENCRYPT) {
+						exf->encrypt(sw->sw_kschedule,
+							     idat);
+					} else {
+						exf->decrypt(sw->sw_kschedule,
+							     idat);
+					}
+				} else if (crd->crd_flags & CRD_F_ENCRYPT) {
 					/* XOR with previous block/IV */
 					for (j = 0; j < blks; j++)
 						idat[j] ^= ivp[j];
@@ -310,7 +340,15 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 				cuio_copydata(uio, k, blks, blk);
 
 				/* Actual encryption/decryption */
-				if (crd->crd_flags & CRD_F_ENCRYPT) {
+				if (exf->reinit) {
+					if (crd->crd_flags & CRD_F_ENCRYPT) {
+						exf->encrypt(sw->sw_kschedule,
+							     blk);
+					} else {
+						exf->decrypt(sw->sw_kschedule,
+							     blk);
+					}
+				} else if (crd->crd_flags & CRD_F_ENCRYPT) {
 					/* XOR with previous block */
 					for (j = 0; j < blks; j++)
 						blk[j] ^= ivp[j];
@@ -371,7 +409,15 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 
 			while (uio->uio_iov[ind].iov_len >= k + blks &&
 			    i > 0) {
-				if (crd->crd_flags & CRD_F_ENCRYPT) {
+				if (exf->reinit) {
+					if (crd->crd_flags & CRD_F_ENCRYPT) {
+						exf->encrypt(sw->sw_kschedule,
+							    idat);
+					} else {
+						exf->decrypt(sw->sw_kschedule,
+							    idat);
+					}
+				} else if (crd->crd_flags & CRD_F_ENCRYPT) {
 					/* XOR with previous block/IV */
 					for (j = 0; j < blks; j++)
 						idat[j] ^= ivp[j];
