@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.73 2011/02/24 09:38:57 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.74 2011/05/23 21:18:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.73 2011/02/24 09:38:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.74 2011/05/23 21:18:55 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -456,7 +456,7 @@ fss_softc_alloc(struct fss_softc *sc)
 
 	sc->sc_flags |= FSS_BS_THREAD;
 	if ((error = kthread_create(PRI_BIO, 0, NULL, fss_bs_thread, sc,
-	    &sc->sc_bs_lwp, device_xname(sc->sc_dev))) != 0) {
+	    &sc->sc_bs_lwp, "%s", device_xname(sc->sc_dev))) != 0) {
 		sc->sc_flags &= ~FSS_BS_THREAD;
 		return error;
 	}
