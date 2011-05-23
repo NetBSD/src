@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.70 2011/05/18 18:56:02 drochner Exp $	*/
+/*	$NetBSD: key.c,v 1.71 2011/05/23 15:17:25 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.70 2011/05/18 18:56:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.71 2011/05/23 15:17:25 drochner Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3094,10 +3094,6 @@ key_delsav(struct secasvar *sav)
 		KFREE(sav->lft_s);
 		sav->lft_s = NULL;
 	}
-	if (sav->iv != NULL) {
-		KFREE(sav->iv);
-		sav->iv = NULL;
-	}
 
 	KFREE(sav);
 
@@ -3216,7 +3212,6 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	sav->key_enc = NULL;
 	sav->sched = NULL;
 	sav->schedlen = 0;
-	sav->iv = NULL;
 	sav->lft_c = NULL;
 	sav->lft_h = NULL;
 	sav->lft_s = NULL;
@@ -3441,10 +3436,6 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	if (sav->sched) {
 		KFREE(sav->sched);
 		sav->sched = NULL;
-	}
-	if (sav->iv != NULL) {
-		KFREE(sav->iv);
-		sav->iv = NULL;
 	}
 	if (sav->lft_c != NULL) {
 		KFREE(sav->lft_c);
@@ -8002,15 +7993,6 @@ key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 
 	sav->state = state;
 	LIST_INSERT_HEAD(&sav->sah->savtree[state], sav, chain);
-}
-
-void
-key_sa_stir_iv(struct secasvar *sav)
-{
-
-	if (!sav->iv)
-		panic("key_sa_stir_iv called with sav == NULL");
-	key_randomfill(sav->iv, sav->ivlen);
 }
 
 /* XXX too much? */
