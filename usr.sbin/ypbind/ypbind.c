@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.85 2011/05/24 07:01:53 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.86 2011/05/24 07:02:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.85 2011/05/24 07:01:53 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.86 2011/05/24 07:02:08 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -89,8 +89,6 @@ struct domain {
 
 	char dom_name[YPMAXDOMAIN + 1];
 	struct sockaddr_in dom_server_addr;
-	int dom_socket;
-	CLIENT *dom_client;
 	long dom_vers;
 	time_t dom_checktime;
 	time_t dom_asktime;
@@ -113,6 +111,7 @@ static ypbind_mode_t default_ypbindmode;
 
 static int allow_local_ypset = 0, allow_any_ypset = 0;
 static int insecure;
+
 static int rpcsock, pingsock;
 static struct rmtcallargs rmtca;
 static struct rmtcallres rmtcr;
@@ -228,8 +227,6 @@ domain_create(const char *name)
 
 	(void)strlcpy(dom->dom_name, name, sizeof(dom->dom_name));
 	(void)memset(&dom->dom_server_addr, 0, sizeof(dom->dom_server_addr));
-	dom->dom_socket = -1;
-	dom->dom_client = NULL;
 	dom->dom_vers = YPVERS;
 	dom->dom_checktime = 0;
 	dom->dom_asktime = 0;
