@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.76 2011/05/24 06:58:54 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.77 2011/05/24 06:59:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.76 2011/05/24 06:58:54 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.77 2011/05/24 06:59:07 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ struct domain {
 
 static char *domainname;
 
-static struct domain *ypbindlist;
+static struct domain *domains;
 static int check;
 
 static ypbind_mode_t ypbindmode;
@@ -196,7 +196,7 @@ domain_find(uint32_t xid)
 {
 	struct domain *ypdb;
 
-	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext)
+	for (ypdb = domains; ypdb; ypdb = ypdb->dom_pnext)
 		if (ypdb->dom_xid == xid)
 			break;
 	return (ypdb);
@@ -335,7 +335,7 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 	if (!insecure && ntohs(raddrp->sin_port) >= IPPORT_RESERVED)
 		return;
 
-	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext)
+	for (ypdb = domains; ypdb; ypdb = ypdb->dom_pnext)
 		if (!strcmp(ypdb->dom_domain, dom))
 			break;
 
@@ -344,8 +344,8 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 			return;
 		ypdb = domain_create(dom);
 		ypdb->dom_lockfd = -1;
-		ypdb->dom_pnext = ypbindlist;
-		ypbindlist = ypdb;
+		ypdb->dom_pnext = domains;
+		domains = ypdb;
 	}
 
 	/* soft update, alive */
@@ -430,7 +430,7 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 	(void)memset(&res, 0, sizeof res);
 	res.ypbind_status = YPBIND_FAIL_VAL;
 
-	for (count = 0, ypdb = ypbindlist;
+	for (count = 0, ypdb = domains;
 	    ypdb != NULL;
 	    ypdb = ypdb->dom_pnext, count++) {
 		if (count > 100)
@@ -446,8 +446,8 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 		ypdb->dom_lockfd = -1;
 		removelock(ypdb);
 		ypdb->dom_xid = unique_xid(ypdb);
-		ypdb->dom_pnext = ypbindlist;
-		ypbindlist = ypdb;
+		ypdb->dom_pnext = domains;
+		domains = ypdb;
 		check++;
 		DPRINTF("unknown domain %s\n", arg);
 		return NULL;
@@ -1115,7 +1115,7 @@ checkwork(void)
 	check = 0;
 
 	(void)time(&t);
-	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext) {
+	for (ypdb = domains; ypdb; ypdb = ypdb->dom_pnext) {
 		if (ypdb->dom_checktime < t) {
 			if (ypdb->dom_alive == 1)
 				(void)ping(ypdb);
@@ -1210,11 +1210,11 @@ main(int argc, char *argv[])
 		errx(1, "unable to purge old bindings from %s", BINDINGDIR);
 
 	/* build initial domain binding, make it "unsuccessful" */
-	ypbindlist = domain_create(domainname);
-	ypbindlist->dom_vers = YPVERS;
-	ypbindlist->dom_alive = 0;
-	ypbindlist->dom_lockfd = -1;
-	removelock(ypbindlist);
+	domains = domain_create(domainname);
+	domains->dom_vers = YPVERS;
+	domains->dom_alive = 0;
+	domains->dom_lockfd = -1;
+	removelock(domains);
 
 	checkwork();
 
@@ -1249,7 +1249,7 @@ main(int argc, char *argv[])
 			break;
 		}
 
-		if (!evil && ypbindlist->dom_alive) {
+		if (!evil && domains->dom_alive) {
 			evil = 1;
 #ifdef DEBUG
 			if (!debug)
