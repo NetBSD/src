@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.114 2011/02/28 17:17:55 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.115 2011/05/24 18:17:24 joerg Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.114 2011/02/28 17:17:55 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.115 2011/05/24 18:17:24 joerg Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -719,7 +719,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 	if (isp->isp_dblev & ISP_LOGCONFIG) {
 		printf("\n");
 	} else {
-		printf(dstring);
+		printf("%s", dstring);
 	}
 
 	isp->isp_dmatag = pa->pa_dmat;
