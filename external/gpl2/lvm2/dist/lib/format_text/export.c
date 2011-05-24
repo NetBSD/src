@@ -1,4 +1,4 @@
-/*	$NetBSD: export.c,v 1.1.1.3 2009/12/02 00:26:29 haad Exp $	*/
+/*	$NetBSD: export.c,v 1.2 2011/05/24 15:51:00 joerg Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -346,7 +346,7 @@ static int _print_header(struct formatter *f,
 	outf(f, "creation_host = \"%s\"\t# %s %s %s %s %s", _utsname.nodename,
 	     _utsname.sysname, _utsname.nodename, _utsname.release,
 	     _utsname.version, _utsname.machine);
-	outf(f, "creation_time = %lu\t# %s", t, ctime(&t));
+	outf(f, "creation_time = %jd\t# %s", (intmax_t)t, ctime(&t));
 
 	return 1;
 }
