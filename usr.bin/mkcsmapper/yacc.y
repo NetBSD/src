@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.7 2006/09/09 14:35:17 tnozaki Exp $	*/
+/*	$NetBSD: yacc.y,v 1.8 2011/05/24 12:35:01 joerg Exp $	*/
 
 %{
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: yacc.y,v 1.7 2006/09/09 14:35:17 tnozaki Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.8 2011/05/24 12:35:01 joerg Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -718,7 +718,7 @@ main(int argc, char **argv)
 	case 1:
 		in = fopen(argv[0], "r");
 		if (!in)
-			err(EXIT_FAILURE, argv[0]);
+			err(EXIT_FAILURE, "%s", argv[0]);
 		break;
 	default:
 		usage();
