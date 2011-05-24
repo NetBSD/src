@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_conf.l,v 1.14 2009/10/29 14:49:03 christos Exp $	*/
+/*	$NetBSD: veriexecctl_conf.l,v 1.15 2011/05/24 12:06:25 joerg Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -82,6 +82,7 @@ STRING		[0-9a-zA-Z]+
 PCHAR           (\\.|[^ \t])
 
 %option nounput
+%option noinput
 
 %%
 
