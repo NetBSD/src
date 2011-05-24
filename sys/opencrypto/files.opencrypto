@@ -1,4 +1,4 @@
-#	$NetBSD: files.opencrypto,v 1.22 2011/05/05 17:44:39 drochner Exp $
+#	$NetBSD: files.opencrypto,v 1.23 2011/05/24 19:10:11 drochner Exp $
 #
 #
 
@@ -18,6 +18,7 @@ defpseudo swcrypto: opencrypto,
 		blowfish, des, cast128, rijndael, skipjack, camellia
 file	opencrypto/cryptosoft.c		swcrypto
 file	opencrypto/deflate.c		swcrypto	# wrapper around zlib
+file	opencrypto/aesxcbcmac.c		swcrypto
 
 # Pseudo-device for userspace access to opencrypto
 # (and thus crypto hardware accelerators).

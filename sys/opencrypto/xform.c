@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.26 2011/05/24 18:59:23 drochner Exp $ */
+/*	$NetBSD: xform.c,v 1.27 2011/05/24 19:10:11 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.26 2011/05/24 18:59:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.27 2011/05/24 19:10:11 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -209,6 +209,11 @@ const struct auth_hash auth_hash_hmac_sha2_384 = {
 const struct auth_hash auth_hash_hmac_sha2_512 = {
 	CRYPTO_SHA2_512_HMAC, "HMAC-SHA2-512",
 	64, 64, 32, 128
+};
+
+const struct auth_hash auth_hash_aes_xcbc_mac_96 = {
+	CRYPTO_AES_XCBC_MAC_96, "AES-XCBC-MAC-96",
+	16, 16, 12, 0
 };
 
 /* Compression instance */
