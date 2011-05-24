@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.25 2011/05/21 00:43:52 christos Exp $	*/
+/*	$NetBSD: touch.c,v 1.26 2011/05/24 12:24:22 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.25 2011/05/21 00:43:52 christos Exp $");
+__RCSID("$NetBSD: touch.c,v 1.26 2011/05/24 12:24:22 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -443,10 +443,11 @@ diverterrors(const char *name, int dest, Eptr **my_files, int ix,
 	my_nerrors = my_files[ix+1] - my_files[ix];
 
 	if (my_nerrors != nterrors && !previewed) {
-		fprintf(stdout, terse
-			? "Uninserted errors\n"
-			: ">>Uninserted errors for file \"%s\" follow.\n",
-			name);
+		if (terse)
+			printf("Uninserted errors\n");
+		else
+			printf(">>Uninserted errors for file \"%s\" follow.\n",
+			    name);
 	}
 
 	EITERATE(erpp, my_files, ix) {
