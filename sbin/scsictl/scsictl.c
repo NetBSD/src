@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.31 2008/04/28 20:23:09 martin Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.32 2011/05/24 12:04:18 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.31 2008/04/28 20:23:09 martin Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.32 2011/05/24 12:04:18 joerg Exp $");
 #endif
 
 
@@ -510,7 +510,7 @@ device_format(int argc, char *argv[])
 	    (mode_page.format_page.bytes_s[1]);
 
 	if (j != DEV_BSIZE)
-		printf("current disk sector size: %hd\n", j);
+		printf("current disk sector size: %d\n", j);
 
 	memset(&cmd, 0, sizeof(cmd));
 
