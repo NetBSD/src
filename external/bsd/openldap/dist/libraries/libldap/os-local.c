@@ -1,4 +1,4 @@
-/*	$NetBSD: os-local.c,v 1.5 2010/12/12 15:46:33 adam Exp $	*/
+/*	$NetBSD: os-local.c,v 1.6 2011/05/24 16:03:15 joerg Exp $	*/
 
 /* os-local.c -- platform-specific domain socket code */
 /* OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.44.2.10 2010/04/13 20:22:59 kurt Exp */
@@ -178,8 +178,8 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s, struct sockaddr_un *sa, int async)
 		opt_tv = &tv;
 	}
 
-	oslocal_debug(ld, "ldap_connect_timeout: fd: %d tm: %ld async: %d\n",
-		s, opt_tv ? tv.tv_sec : -1L, async);
+	oslocal_debug(ld, "ldap_connect_timeout: fd: %d tm: %jd async: %d\n",
+		s, opt_tv ? (intmax_t)tv.tv_sec : -1, async);
 
 	if ( ldap_pvt_ndelay_on(ld, s) == -1 ) return -1;
 
