@@ -432,7 +432,7 @@ static int write_all(dnssd_sock_t sd, char *buf, int len)
 			{
 			// Should never happen. If it does, it indicates some OS bug,
 			// or that the mDNSResponder daemon crashed (which should never happen).
-			syslog(LOG_WARNING, "dnssd_clientstub write_all(%d) failed %ld/%d %d %s", sd, num_written, len,
+			syslog(LOG_WARNING, "dnssd_clientstub write_all(%d) failed %zd/%d %d %s", sd, num_written, len,
 				(num_written < 0) ? dnssd_errno                 : 0,
 				(num_written < 0) ? dnssd_strerror(dnssd_errno) : "");
 			return -1;
