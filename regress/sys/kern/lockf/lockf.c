@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.c,v 1.7 2008/04/28 20:23:07 martin Exp $	*/
+/*	$NetBSD: lockf.c,v 1.8 2011/05/24 16:04:14 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ trylocks(int id)
 	fd = open (lockfile, O_RDWR, 0);
 	
 	if (fd < 0)
-		err(1, lockfile);
+		err(1, "%s", lockfile);
 	
 	printf("%d: start\n", id);
 	
