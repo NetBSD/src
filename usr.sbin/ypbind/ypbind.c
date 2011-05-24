@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.69 2011/05/24 06:56:48 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.70 2011/05/24 06:57:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.69 2011/05/24 06:56:48 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.70 2011/05/24 06:57:04 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1060,6 +1060,8 @@ main(int argc, char *argv[])
 	(void)yp_get_default_domain(&domainname);
 	if (domainname[0] == '\0')
 		errx(1, "Domainname not set. Aborting.");
+	if (_yp_invalid_domain(domainname))
+		errx(1, "Invalid domainname: %s", domainname);
 
 	/*
 	 * Per traditional ypbind(8) semantics, if a ypservers
@@ -1144,9 +1146,6 @@ main(int argc, char *argv[])
 	rmtcr.port_ptr = &rmtcr_port;
 	rmtcr.xdr_results = xdr_bool;
 	rmtcr.results_ptr = (caddr_t)(void *)&rmtcr_outval;
-
-	if (_yp_invalid_domain(domainname))
-		errx(1, "bad domainname: %s", domainname);
 
 	/* blow away old bindings in BINDINGDIR */
 	if (purge_bindingdir(BINDINGDIR) < 0)
