@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.67 2011/05/24 20:17:49 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.68 2011/05/24 23:16:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.67 2011/05/24 20:17:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.68 2011/05/24 23:16:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -212,77 +212,6 @@ tmpfs_free_node(tmpfs_mount_t *tmp, tmpfs_node_t *node)
 }
 
 /*
- * tmpfs_alloc_dirent: allocates a new directory entry for the inode.
- *
- * The link count of node is increased by one to reflect the new object
- * referencing it.  This takes care of notifying kqueue listeners about
- * this change.
- */
-int
-tmpfs_alloc_dirent(tmpfs_mount_t *tmp, tmpfs_node_t *node,
-    const char *name, uint16_t len, tmpfs_dirent_t **de)
-{
-	tmpfs_dirent_t *nde;
-
-	nde = tmpfs_dirent_get(tmp);
-	if (nde == NULL)
-		return ENOSPC;
-
-	nde->td_name = tmpfs_strname_alloc(tmp, len);
-	if (nde->td_name == NULL) {
-		tmpfs_dirent_put(tmp, nde);
-		return ENOSPC;
-	}
-	nde->td_namelen = len;
-	memcpy(nde->td_name, name, len);
-	nde->td_node = node;
-
-	if (node != TMPFS_NODE_WHITEOUT) {
-		node->tn_links++;
-		if (node->tn_links > 1 && node->tn_vnode != NULL)
-			VN_KNOTE(node->tn_vnode, NOTE_LINK);
-	}
-
-	*de = nde;
-	return 0;
-}
-
-/*
- * tmpfs_free_dirent: free a directory entry.
- *
- * => It is the caller's responsibility to destroy the referenced inode.
- * => The link count of inode is decreased by one to reflect the removal of
- * an object that referenced it.  This only happens if 'node_exists' is true;
- * otherwise the function will not access the node referred to by the
- * directory entry, as it may already have been released from the outside.
- *
- * Interested parties (kqueue) are notified of the link count change; note
- * that this can include both the node pointed to by the directory entry
- * as well as its parent.
- */
-void
-tmpfs_free_dirent(tmpfs_mount_t *tmp, tmpfs_dirent_t *de, bool node_exists)
-{
-
-	if (node_exists && de->td_node != TMPFS_NODE_WHITEOUT) {
-		tmpfs_node_t *node = de->td_node;
-
-		KASSERT(node->tn_links > 0);
-		node->tn_links--;
-		if (node->tn_vnode != NULL) {
-			VN_KNOTE(node->tn_vnode, node->tn_links == 0 ?
-			    NOTE_DELETE : NOTE_LINK);
-		}
-		if (node->tn_type == VDIR) {
-			VN_KNOTE(node->tn_spec.tn_dir.tn_parent->tn_vnode,
-			    NOTE_LINK);
-		}
-	}
-	tmpfs_strname_free(tmp, de->td_name, de->td_namelen);
-	tmpfs_dirent_put(tmp, de);
-}
-
-/*
  * tmpfs_alloc_vp: allocate or reclaim a vnode for a specified inode.
  *
  * => Returns vnode (*vpp) locked.
@@ -429,10 +358,81 @@ out:
 }
 
 /*
+ * tmpfs_alloc_dirent: allocates a new directory entry for the inode.
+ *
+ * The link count of node is increased by one to reflect the new object
+ * referencing it.  This takes care of notifying kqueue listeners about
+ * this change.
+ */
+int
+tmpfs_alloc_dirent(tmpfs_mount_t *tmp, tmpfs_node_t *node,
+    const char *name, uint16_t len, tmpfs_dirent_t **de)
+{
+	tmpfs_dirent_t *nde;
+
+	nde = tmpfs_dirent_get(tmp);
+	if (nde == NULL)
+		return ENOSPC;
+
+	nde->td_name = tmpfs_strname_alloc(tmp, len);
+	if (nde->td_name == NULL) {
+		tmpfs_dirent_put(tmp, nde);
+		return ENOSPC;
+	}
+	nde->td_namelen = len;
+	memcpy(nde->td_name, name, len);
+	nde->td_node = node;
+
+	if (node != TMPFS_NODE_WHITEOUT) {
+		node->tn_links++;
+		if (node->tn_links > 1 && node->tn_vnode != NULL)
+			VN_KNOTE(node->tn_vnode, NOTE_LINK);
+	}
+
+	*de = nde;
+	return 0;
+}
+
+/*
+ * tmpfs_free_dirent: free a directory entry.
+ *
+ * => It is the caller's responsibility to destroy the referenced inode.
+ * => The link count of inode is decreased by one to reflect the removal of
+ * an object that referenced it.  This only happens if 'node_exists' is true;
+ * otherwise the function will not access the node referred to by the
+ * directory entry, as it may already have been released from the outside.
+ *
+ * Interested parties (kqueue) are notified of the link count change; note
+ * that this can include both the node pointed to by the directory entry
+ * as well as its parent.
+ */
+void
+tmpfs_free_dirent(tmpfs_mount_t *tmp, tmpfs_dirent_t *de, bool node_exists)
+{
+
+	if (node_exists && de->td_node != TMPFS_NODE_WHITEOUT) {
+		tmpfs_node_t *node = de->td_node;
+
+		KASSERT(node->tn_links > 0);
+		node->tn_links--;
+		if (node->tn_vnode != NULL) {
+			VN_KNOTE(node->tn_vnode, node->tn_links == 0 ?
+			    NOTE_DELETE : NOTE_LINK);
+		}
+		if (node->tn_type == VDIR) {
+			VN_KNOTE(node->tn_spec.tn_dir.tn_parent->tn_vnode,
+			    NOTE_LINK);
+		}
+	}
+	tmpfs_strname_free(tmp, de->td_name, de->td_namelen);
+	tmpfs_dirent_put(tmp, de);
+}
+
+/*
  * tmpfs_dir_attach: attach the directory entry to the specified vnode.
  *
  * => The link count of inode is not changed; done by tmpfs_alloc_dirent().
- * => Triggers NOTE_WRITE ecent here.
+ * => Triggers NOTE_WRITE event here.
  */
 void
 tmpfs_dir_attach(vnode_t *vp, tmpfs_dirent_t *de)
