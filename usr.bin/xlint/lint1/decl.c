@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.51 2009/10/02 21:49:30 christos Exp $ */
+/* $NetBSD: decl.c,v 1.52 2011/05/24 12:49:11 joerg Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.51 2009/10/02 21:49:30 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.52 2011/05/24 12:49:11 joerg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -881,7 +881,7 @@ length(type_t *tp, const char *name)
 	switch (tp->t_tspec) {
 	case FUNC:
 		/* compiler takes size of function */
-		LERROR(msgs[12]);
+		LERROR("%s", msgs[12]);
 		/* NOTREACHED */
 	case STRUCT:
 	case UNION:

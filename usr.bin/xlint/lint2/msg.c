@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.10 2008/04/26 19:38:30 christos Exp $	*/
+/*	$NetBSD: msg.c,v 1.11 2011/05/24 12:49:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: msg.c,v 1.10 2008/04/26 19:38:30 christos Exp $");
+__RCSID("$NetBSD: msg.c,v 1.11 2011/05/24 12:49:11 joerg Exp $");
 #endif
 
 #include <stdio.h>
@@ -131,7 +131,7 @@ mkpos(pos_t *posp)
 	if (len > blen)
 		buf = xrealloc(buf, blen = len);
 	if (line != 0) {
-		(void)sprintf(buf, "%s%s(%hu)",
+		(void)sprintf(buf, "%s%s(%d)",
 			      fn, qm ? "?" : "", line);
 	} else {
 		(void)sprintf(buf, "%s", fn);
