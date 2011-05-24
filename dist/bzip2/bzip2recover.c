@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2recover.c,v 1.7 2008/03/18 17:35:36 christos Exp $	*/
+/*	$NetBSD: bzip2recover.c,v 1.8 2011/05/24 12:18:03 joerg Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -23,6 +23,7 @@
 /* This program is a complete hack and should be rewritten properly.
 	 It isn't very complicated. */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -38,9 +39,9 @@
    This change occurred in version 1.0.2; all prior versions have
    the 512MB limitation.
 */
-#ifdef __GNUC__
-   typedef  unsigned long long int  MaybeUInt64;
-#  define MaybeUInt64_FMT "%Lu"
+#if 1
+   typedef uint64_t  MaybeUInt64;
+#  define MaybeUInt64_FMT "%" PRIu64
 #else
 #ifdef _MSC_VER
    typedef  unsigned __int64  MaybeUInt64;
