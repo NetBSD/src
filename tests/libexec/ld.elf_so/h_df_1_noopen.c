@@ -39,7 +39,7 @@ main(void)
 
 	handle = dlopen("libpthread.so", RTLD_NOLOAD);
 	if (handle == NULL)
-		errx(1, dlerror());
+		errx(1, "%s", dlerror());
 
 	printf("libpthread loaded successfully\n");
 	return 0;
