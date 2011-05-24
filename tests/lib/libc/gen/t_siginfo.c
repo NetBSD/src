@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.10 2011/03/02 03:42:56 riz Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.11 2011/05/24 15:20:37 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ ATF_TC_BODY(sigchild_dump, tc)
 	switch ((child = fork())) {
 	case 0:
 		sleep(1);
-		*(long *)0 = 0;
+		*(volatile long *)0 = 0;
 		atf_tc_fail("Child did not segfault");
 		/* NOTREACHED */
 	case -1:
@@ -403,7 +403,7 @@ ATF_TC_BODY(sigsegv, tc)
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGSEGV, &sa, NULL);
 
-	*(long *)0 = 0;
+	*(volatile long *)0 = 0;
 	atf_tc_fail("Test did not fault as expected");
 }
 
