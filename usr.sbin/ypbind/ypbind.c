@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.75 2011/05/24 06:58:42 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.76 2011/05/24 06:58:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.75 2011/05/24 06:58:42 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.76 2011/05/24 06:58:54 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -192,7 +192,7 @@ ypservers_filename(const char *domain)
 // struct domain
 
 static struct domain *
-xid2ypdb(uint32_t xid)
+domain_find(uint32_t xid)
 {
 	struct domain *ypdb;
 
@@ -208,7 +208,7 @@ unique_xid(struct domain *ypdb)
 	uint32_t tmp_xid;
 
 	tmp_xid = ((uint32_t)(unsigned long)ypdb) & 0xffffffff;
-	while (xid2ypdb(tmp_xid) != NULL)
+	while (domain_find(tmp_xid) != NULL)
 		tmp_xid++;
 
 	return tmp_xid;
@@ -874,7 +874,7 @@ try_again:
 		if ((msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
 		    (msg.acpted_rply.ar_stat == SUCCESS)) {
 			raddr.sin_port = htons((uint16_t)rmtcr_port);
-			ypdb = xid2ypdb(msg.rm_xid);
+			ypdb = domain_find(msg.rm_xid);
 			if (ypdb != NULL)
 				rpc_received(ypdb->dom_domain, &raddr, 0);
 		}
@@ -928,7 +928,7 @@ try_again:
 	if (xdr_replymsg(&xdr, &msg)) {
 		if ((msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
 		    (msg.acpted_rply.ar_stat == SUCCESS)) {
-			ypdb = xid2ypdb(msg.rm_xid);
+			ypdb = domain_find(msg.rm_xid);
 			if (ypdb != NULL)
 				rpc_received(ypdb->dom_domain, &raddr, 0);
 		}
