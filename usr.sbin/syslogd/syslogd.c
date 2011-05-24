@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.100 2010/06/09 21:55:42 riz Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.101 2011/05/24 13:25:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.100 2010/06/09 21:55:42 riz Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.101 2011/05/24 13:25:25 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -2320,7 +2320,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 			    &f->f_un.f_pipe.f_pid)) < 0) {
 				f->f_type = F_UNUSED;
 				message_queue_freeall(f);
-				logerror(f->f_un.f_pipe.f_pname);
+				logerror("%s", f->f_un.f_pipe.f_pname);
 				break;
 			} else if (!qentry) /* prevent recursion */
 				SEND_QUEUE(f);
@@ -2350,7 +2350,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 				     &f->f_un.f_pipe.f_pid)) < 0) {
 					f->f_type = F_UNUSED;
 					message_queue_freeall(f);
-					logerror(f->f_un.f_pipe.f_pname);
+					logerror("%s", f->f_un.f_pipe.f_pname);
 					break;
 				}
 				if (writev(f->f_file, iov, v - iov) < 0) {
@@ -2367,7 +2367,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 			}
 			if (e != 0 && !error) {
 				errno = e;
-				logerror(f->f_un.f_pipe.f_pname);
+				logerror("%s", f->f_un.f_pipe.f_pname);
 			}
 		}
 		if (e == 0 && qentry) { /* sent buffered msg */
@@ -2394,7 +2394,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 				int lasterror = f->f_lasterror;
 				f->f_lasterror = e;
 				if (lasterror != e)
-					logerror(f->f_un.f_fname);
+					logerror("%s", f->f_un.f_fname);
 				error = true;	/* enqueue on return */
 			}
 			(void)close(f->f_file);
@@ -2406,7 +2406,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 				    O_WRONLY|O_APPEND, 0);
 				if (f->f_file < 0) {
 					f->f_type = F_UNUSED;
-					logerror(f->f_un.f_fname);
+					logerror("%s", f->f_un.f_fname);
 					message_queue_freeall(f);
 				} else
 					goto again;
@@ -2414,7 +2414,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 				f->f_type = F_UNUSED;
 				errno = e;
 				f->f_lasterror = e;
-				logerror(f->f_un.f_fname);
+				logerror("%s", f->f_un.f_fname);
 				message_queue_freeall(f);
 			}
 		} else {
@@ -2534,7 +2534,7 @@ wallmsg(struct filed *f, struct iovec *iov, size_t iovcnt)
 			if ((p = ttymsg(iov, iovcnt, ep->line, TTYMSGTIME))
 			    != NULL) {
 				errno = 0;	/* already in msg */
-				logerror(p);
+				logerror("%s", p);
 			}
 			continue;
 		}
@@ -2546,7 +2546,7 @@ wallmsg(struct filed *f, struct iovec *iov, size_t iovcnt)
 				if ((p = ttymsg(iov, iovcnt, ep->line,
 				    TTYMSGTIME)) != NULL) {
 					errno = 0;	/* already in msg */
-					logerror(p);
+					logerror("%s", p);
 				}
 				break;
 			}
@@ -3548,7 +3548,7 @@ init(int fd, short event, void *ev)
 
 #ifndef DISABLE_TLS
 	if (tls_status_msg) {
-		loginfo(tls_status_msg);
+		loginfo("%s", tls_status_msg);
 		free(tls_status_msg);
 	}
 	DPRINTF((D_NET|D_TLS), "Preparing sockets for TLS\n");
@@ -3788,7 +3788,7 @@ cfline(size_t linenum, const char *line, struct filed *f, const char *prog,
 		error = getaddrinfo(f->f_un.f_forw.f_hname, "syslog", &hints,
 		    &res);
 		if (error) {
-			logerror(gai_strerror(error));
+			logerror("%s", gai_strerror(error));
 			break;
 		}
 		f->f_un.f_forw.f_addr = res;
@@ -3804,7 +3804,7 @@ cfline(size_t linenum, const char *line, struct filed *f, const char *prog,
 		(void)strlcpy(f->f_un.f_fname, p, sizeof(f->f_un.f_fname));
 		if ((f->f_file = open(p, O_WRONLY|O_APPEND, 0)) < 0) {
 			f->f_type = F_UNUSED;
-			logerror(p);
+			logerror("%s", p);
 			break;
 		}
 		if (syncfile)
@@ -3941,7 +3941,7 @@ socksetup(int af, const char *hostname)
 	hints.ai_socktype = SOCK_DGRAM;
 	error = getaddrinfo(hostname, "syslog", &hints, &res);
 	if (error) {
-		logerror(gai_strerror(error));
+		logerror("%s", gai_strerror(error));
 		errno = 0;
 		die(0, 0, NULL);
 	}
@@ -4074,7 +4074,7 @@ p_open(char *prog, pid_t *rpid)
 		(void) snprintf(errmsg, sizeof(errmsg),
 		    "Warning: cannot change pipe to pid %d to "
 		    "non-blocking.", (int) pid);
-		logerror(errmsg);
+		logerror("%s", errmsg);
 	}
 	*rpid = pid;
 	return pfd[1];
@@ -4146,7 +4146,7 @@ log_deadchild(pid_t pid, int status, const char *name)
 	(void) snprintf(buf, sizeof(buf),
 	    "Logging subprocess %d (%s) exited %s %d.",
 	    pid, name, reason, code);
-	logerror(buf);
+	logerror("%s", buf);
 }
 
 struct event *
