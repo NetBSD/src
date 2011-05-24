@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.83 2011/05/24 07:01:24 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.84 2011/05/24 07:01:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.83 2011/05/24 07:01:24 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.84 2011/05/24 07:01:40 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -97,8 +97,9 @@ struct domain {
 	int dom_lockfd;
 	int dom_alive;
 	uint32_t dom_xid;
-	ypbind_mode_t dom_ypbindmode;	/* broadcast or direct */
+	FILE *dom_serversfile;		/* /var/yp/binding/foo.ypservers */
 	int dom_been_ypset;		/* ypset been done on this domain? */
+	ypbind_mode_t dom_ypbindmode;	/* broadcast or direct */
 };
 
 #define BUFSIZE		1400
@@ -235,6 +236,8 @@ domain_create(const char *name)
 	dom->dom_lockfd = -1;
 	dom->dom_alive = 0;
 	dom->dom_xid = unique_xid(dom);
+	dom->dom_been_ypset = 0;
+	dom->dom_serversfile = NULL;
 
 	/*
 	 * Per traditional ypbind(8) semantics, if a ypservers
@@ -721,15 +724,8 @@ broadcast(char *buf, int outlen)
 }
 
 static int
-direct(char *buf, int outlen)
+direct(char *buf, int outlen, struct domain *dom)
 {
-	/*
-	 * XXX I don't see how this can work if we're binding multiple domains.
-	 * Also, what if someone's editor unlinks and replaces the file?
-	 */
-	static FILE *df;
-	static char ypservers_path[MAXPATHLEN];
-
 	const char *path;
 	char line[_POSIX2_LINE_MAX];
 	char *p;
@@ -737,16 +733,26 @@ direct(char *buf, int outlen)
 	struct sockaddr_in bindsin;
 	int i, count = 0;
 
-	if (df)
-		rewind(df);
-	else {
-		path = ypservers_filename(domainname);
-		strcpy(ypservers_path, path);
-		df = fopen(ypservers_path, "r");
-		if (df == NULL) {
-			yp_log(LOG_ERR, "%s: %s", ypservers_path,
+	/*
+	 * XXX what happens if someone's editor unlinks and replaces
+	 * the servers file?
+	 */
+
+	if (dom->dom_serversfile != NULL) {
+		rewind(dom->dom_serversfile);
+	} else {
+		path = ypservers_filename(dom->dom_name);
+		dom->dom_serversfile = fopen(path, "r");
+		if (dom->dom_serversfile == NULL) {
+			/*
+			 * XXX there should be a time restriction on
+			 * this (and/or on trying the open) so we
+			 * don't flood the log. Or should we fall back
+			 * to broadcast mode?
+			 */
+			yp_log(LOG_ERR, "%s: %s", path,
 			       strerror(errno));
-			exit(1);
+			return -1;
 		}
 	}
 
@@ -755,13 +761,13 @@ direct(char *buf, int outlen)
 	bindsin.sin_len = sizeof(bindsin);
 	bindsin.sin_port = htons(PMAPPORT);
 
-	while(fgets(line, (int)sizeof(line), df) != NULL) {
+	while (fgets(line, (int)sizeof(line), dom->dom_serversfile) != NULL) {
 		/* skip lines that are too big */
 		p = strchr(line, '\n');
 		if (p == NULL) {
 			int c;
 
-			while ((c = getc(df)) != '\n' && c != EOF)
+			while ((c = getc(dom->dom_serversfile)) != '\n' && c != EOF)
 				;
 			continue;
 		}
@@ -792,7 +798,7 @@ direct(char *buf, int outlen)
 	}
 	if (!count) {
 		yp_log(LOG_WARNING, "No contactable servers found in %s",
-		    ypservers_path);
+		    ypservers_filename(dom->dom_name));
 		return -1;
 	}
 	return 0;
@@ -1049,7 +1055,7 @@ nag_servers(struct domain *dom)
 		return broadcast(buf, outlen);
 
 	case YPBIND_DIRECT:
-		return direct(buf, outlen);
+		return direct(buf, outlen, dom);
 	}
 	/*NOTREACHED*/
 	return -1;
