@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.65 2011/05/24 01:09:47 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.66 2011/05/24 14:18:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.65 2011/05/24 01:09:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.66 2011/05/24 14:18:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -201,7 +201,7 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 		}
 		break;
 	case VDIR:
-		KASSERT(TAILQ_EMPTY(&node->tn_spec.tn_dir.tn_dir));
+		/* KASSERT(TAILQ_EMPTY(&node->tn_spec.tn_dir.tn_dir)); */
 		KASSERT(node->tn_spec.tn_dir.tn_parent || node == tmp->tm_root);
 		break;
 	default:
