@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.164 2011/05/14 17:57:05 rmind Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.165 2011/05/24 01:19:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.164 2011/05/14 17:57:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.165 2011/05/24 01:19:48 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -825,7 +825,7 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 
 	cnbuf = PNBUF_GET();
 
-	if (newp == NULL) {
+	if (oldp) {
 		/* Get case: copy the core name into the buffer. */
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_CORENAME, p,
@@ -837,7 +837,8 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 		mutex_enter(&lim->pl_lock);
 		strlcpy(cnbuf, lim->pl_corename, MAXPATHLEN);
 		mutex_exit(&lim->pl_lock);
-	} else {
+	}
+	if (newp) {
 		/* Set case: just use the temporary buffer. */
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_CORENAME, p,
