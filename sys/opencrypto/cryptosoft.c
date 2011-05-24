@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.33 2011/05/23 13:51:10 drochner Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.34 2011/05/24 18:52:51 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.33 2011/05/23 13:51:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.34 2011/05/24 18:52:51 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,9 +92,13 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 	/* Initialize the IV */
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
 		/* IV explicitly provided ? */
-		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+		if (crd->crd_flags & CRD_F_IV_EXPLICIT) {
 			memcpy(iv, crd->crd_iv, ivlen);
-		else {
+			if (exf->reinit)
+				exf->reinit(sw->sw_kschedule, iv, 0);
+		} else if (exf->reinit) {
+			exf->reinit(sw->sw_kschedule, 0, iv);
+		} else {
 			/* Get random IV */
 			for (i = 0;
 			    i + sizeof (u_int32_t) <= EALG_MAX_BLOCK_LEN;
@@ -129,12 +133,11 @@ swcr_encdec(struct cryptodesc *crd, const struct swcr_data *sw, void *bufv,
 			/* Get IV off buf */
 			COPYDATA(outtype, buf, crd->crd_inject, ivlen, iv);
 		}
+		if (exf->reinit)
+			exf->reinit(sw->sw_kschedule, iv, 0);
 	}
 
 	ivp = iv;
-
-	if (exf->reinit)
-		exf->reinit(sw->sw_kschedule, iv);
 
 	if (outtype == CRYPTO_BUF_CONTIG) {
 		if (exf->reinit) {

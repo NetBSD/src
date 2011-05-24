@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.19 2011/05/23 15:37:36 drochner Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.20 2011/05/24 18:52:51 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.19 2011/05/23 15:37:36 drochner Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.20 2011/05/24 18:52:51 drochner Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -68,7 +68,7 @@ struct swcr_enc_xform {
 	void (*decrypt)(void *, uint8_t *);
 	int  (*setkey)(uint8_t **, const uint8_t *, int);
 	void (*zerokey)(uint8_t **);
-	void (*reinit)(void *, const uint8_t *);
+	void (*reinit)(void *, const uint8_t *, uint8_t *);
 };
 
 struct swcr_comp_algo {
@@ -113,7 +113,7 @@ static	void skipjack_zerokey(u_int8_t **);
 static	void rijndael128_zerokey(u_int8_t **);
 static  void cml_zerokey(u_int8_t **);
 static  void aes_ctr_zerokey(u_int8_t **);
-static  void aes_ctr_reinit(void *, const u_int8_t *);
+static  void aes_ctr_reinit(void *, const u_int8_t *, u_int8_t *);
 
 static	void null_init(void *);
 static	int null_update(void *, const u_int8_t *, u_int16_t);
@@ -638,6 +638,9 @@ struct aes_ctr_ctx {
 	u_int32_t ac_ek[4*(RIJNDAEL_MAXNR + 1)];
 	u_int8_t ac_block[AESCTR_BLOCKSIZE];
 	int ac_nr;
+	struct {
+		u_int64_t lastiv;
+	} ivgenctx;
 };
 
 static void
@@ -678,6 +681,8 @@ aes_ctr_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 		return EINVAL;
 	}
 	memcpy(ctx->ac_block, key + len - AESCTR_NONCESIZE, AESCTR_NONCESIZE);
+	/* random start value for simple counter */
+	arc4randbytes(&ctx->ivgenctx.lastiv, sizeof(ctx->ivgenctx.lastiv));
 	*sched = (void *)ctx;
 	return 0;
 }
@@ -692,10 +697,16 @@ aes_ctr_zerokey(u_int8_t **sched)
 }
 
 void
-aes_ctr_reinit(void *key, const u_int8_t *iv)
+aes_ctr_reinit(void *key, const u_int8_t *iv, u_int8_t *ivout)
 {
 	struct aes_ctr_ctx *ctx = key;
 
+	if (!iv) {
+		ctx->ivgenctx.lastiv++;
+		iv = (const u_int8_t *)&ctx->ivgenctx.lastiv;
+	}
+	if (ivout)
+		memcpy(ivout, iv, AESCTR_IVSIZE);
 	memcpy(ctx->ac_block + AESCTR_NONCESIZE, iv, AESCTR_IVSIZE);
 	/* reset counter */
 	memset(ctx->ac_block + AESCTR_NONCESIZE + AESCTR_IVSIZE, 0, 4);
