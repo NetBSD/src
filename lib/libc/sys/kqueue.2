@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.29 2010/04/13 10:45:46 wiz Exp $
+.\"	$NetBSD: kqueue.2,v 1.30 2011/05/24 02:31:11 ryo Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -508,8 +508,8 @@ main(int argc, char *argv[])
         EV_SET(\*[Am]ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
             NOTE_DELETE|NOTE_WRITE|NOTE_EXTEND|NOTE_ATTRIB|NOTE_LINK|
             NOTE_RENAME|NOTE_REVOKE, 0, 0);
-	if (kevent(kq, \*[Am]ch, 1, NULL, 0, \*[Am]tout) == -1)
-		err(1, "kevent");
+        if (kevent(kq, \*[Am]ev, 1, NULL, 0, \*[Am]tout) == -1)
+                err(1, "kevent");
         for (;;) {
                 nev = kevent(kq, NULL, 0, \*[Am]ev, 1, \*[Am]tout);
                 if (nev == -1)
