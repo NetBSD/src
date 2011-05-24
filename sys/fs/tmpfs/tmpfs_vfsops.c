@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.48 2011/05/19 03:21:23 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.49 2011/05/24 01:09:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.48 2011/05/19 03:21:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.49 2011/05/24 01:09:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -105,7 +105,9 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	ino_t nodes;
 	int error;
 
-	if (*data_len < sizeof *args)
+	/* Validate the version. */
+	if (*data_len < sizeof(*args) ||
+	    args->ta_version != TMPFS_ARGS_VERSION)
 		return EINVAL;
 
 	/* Handle retrieval of mount point arguments. */
@@ -128,17 +130,11 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	}
 
 	if (mp->mnt_flag & MNT_UPDATE) {
-		/* XXX: There is no support yet to update file system
-		 * settings.  Should be added. */
-
+		/* TODO */
 		return EOPNOTSUPP;
 	}
 
-	if (args->ta_version != TMPFS_ARGS_VERSION)
-		return EINVAL;
-
-	/* Do not allow mounts if we do not have enough memory to preserve
-	 * the minimum reserved pages. */
+	/* Prohibit mounts if there is not enough memory. */
 	if (tmpfs_mem_info(true) < TMPFS_PAGES_RESERVED)
 		return EINVAL;
 
@@ -159,7 +155,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	KASSERT(nodes >= 3);
 
 	/* Allocate the tmpfs mount structure and fill it. */
-	tmp = kmem_alloc(sizeof(struct tmpfs_mount), KM_SLEEP);
+	tmp = kmem_zalloc(sizeof(struct tmpfs_mount), KM_SLEEP);
 	if (tmp == NULL)
 		return ENOMEM;
 
@@ -193,8 +189,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	}
 	return error;
 }
-
-/* --------------------------------------------------------------------- */
 
 static int
 tmpfs_start(struct mount *mp, int flags)

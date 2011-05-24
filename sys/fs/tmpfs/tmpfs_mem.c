@@ -1,8 +1,11 @@
-/*	$NetBSD: tmpfs_mem.c,v 1.3 2011/05/19 03:21:23 rmind Exp $	*/
+/*	$NetBSD: tmpfs_mem.c,v 1.4 2011/05/24 01:09:47 rmind Exp $	*/
 
 /*
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Mindaugas Rasiukevicius.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.3 2011/05/19 03:21:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.4 2011/05/24 01:09:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -161,6 +164,10 @@ struct tmpfs_node *
 tmpfs_node_get(struct tmpfs_mount *mp)
 {
 
+	if (atomic_inc_uint_nv(&mp->tm_nodes_cnt) >= mp->tm_nodes_max) {
+		atomic_dec_uint(&mp->tm_nodes_cnt);
+		return NULL;
+	}
 	if (!tmpfs_mem_incr(mp, sizeof(struct tmpfs_node))) {
 		return NULL;
 	}
@@ -171,6 +178,7 @@ void
 tmpfs_node_put(struct tmpfs_mount *mp, struct tmpfs_node *tn)
 {
 
+	atomic_dec_uint(&mp->tm_nodes_cnt);
 	tmpfs_mem_decr(mp, sizeof(struct tmpfs_node));
 	pool_put(&tmpfs_node_pool, tn);
 }

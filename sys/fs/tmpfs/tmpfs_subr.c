@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.64 2011/05/22 04:20:50 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.65 2011/05/24 01:09:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.64 2011/05/22 04:20:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.65 2011/05/24 01:09:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -61,29 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.64 2011/05/22 04:20:50 rmind Exp $"
 #include <fs/tmpfs/tmpfs_specops.h>
 #include <fs/tmpfs/tmpfs_vnops.h>
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Allocates a new node of type 'type' inside the 'tmp' mount point, with
- * its owner set to 'uid', its group to 'gid' and its mode set to 'mode',
- * using the credentials of the process 'p'.
- *
- * If the node type is set to 'VDIR', then the parent parameter must point
- * to the parent directory of the node being created.  It may only be NULL
- * while allocating the root node.
- *
- * If the node type is set to 'VBLK' or 'VCHR', then the rdev parameter
- * specifies the device the node represents.
- *
- * If the node type is set to 'VLNK', then the parameter target specifies
- * the file name of the target file for the symbolic link that is being
- * created.
- *
- * Note that new nodes are retrieved from the available list if it has
- * items or, if it is empty, from the node pool as long as there is enough
- * space to create them.
- *
- * Returns zero on success or an appropriate error code on failure.
+ * tmpfs_alloc_node: allocate a new inode of a specified type and
+ * insert it into the list of specified mount point.
  */
 int
 tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
@@ -92,24 +72,8 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 {
 	struct tmpfs_node *nnode;
 
-	/* If the root directory of the 'tmp' file system is not yet
-	 * allocated, this must be the request to do it. */
-	KASSERT(IMPLIES(tmp->tm_root == NULL, parent == NULL && type == VDIR));
-
-	KASSERT(IFF(type == VLNK, target != NULL));
-	KASSERT(IFF(type == VBLK || type == VCHR, rdev != VNOVAL));
-
-	KASSERT(uid != VNOVAL && gid != VNOVAL && mode != VNOVAL);
-
-	nnode = NULL;
-	if (atomic_inc_uint_nv(&tmp->tm_nodes_cnt) >= tmp->tm_nodes_max) {
-		atomic_dec_uint(&tmp->tm_nodes_cnt);
-		return ENOSPC;
-	}
-
 	nnode = tmpfs_node_get(tmp);
 	if (nnode == NULL) {
-		atomic_dec_uint(&tmp->tm_nodes_cnt);
 		return ENOSPC;
 	}
 
@@ -127,26 +91,35 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	nnode->tn_status = 0;
 	nnode->tn_flags = 0;
 	nnode->tn_links = 0;
+	nnode->tn_lockf = NULL;
+	nnode->tn_vnode = NULL;
 
 	vfs_timestamp(&nnode->tn_atime);
 	nnode->tn_birthtime = nnode->tn_atime;
 	nnode->tn_ctime = nnode->tn_atime;
 	nnode->tn_mtime = nnode->tn_atime;
 
+	KASSERT(uid != VNOVAL && gid != VNOVAL && mode != VNOVAL);
 	nnode->tn_uid = uid;
 	nnode->tn_gid = gid;
 	nnode->tn_mode = mode;
-	nnode->tn_lockf = NULL;
-	nnode->tn_vnode = NULL;
 
 	/* Type-specific initialization. */
 	switch (nnode->tn_type) {
 	case VBLK:
 	case VCHR:
+		/* Character/block special device. */
+		KASSERT(rdev != VNOVAL);
 		nnode->tn_spec.tn_dev.tn_rdev = rdev;
 		break;
-
 	case VDIR:
+		/*
+		 * Directory.  Parent must be specified, unless allocating
+		 * the root inode.
+		 */
+		KASSERT(parent || tmp->tm_root == NULL);
+		KASSERT(parent != nnode);
+
 		TAILQ_INIT(&nnode->tn_spec.tn_dir.tn_dir);
 		nnode->tn_spec.tn_dir.tn_parent =
 		    (parent == NULL) ? nnode : parent;
@@ -154,14 +127,13 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		nnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 		nnode->tn_links++;
 		break;
-
 	case VFIFO:
-		/* FALLTHROUGH */
 	case VSOCK:
 		break;
-
 	case VLNK:
-		KASSERT(strlen(target) < MAXPATHLEN);
+		/* Symbolic link.  Target specifies the file name. */
+		KASSERT(target && strlen(target) < MAXPATHLEN);
+
 		nnode->tn_size = strlen(target);
 		if (nnode->tn_size == 0) {
 			nnode->tn_spec.tn_lnk.tn_link = NULL;
@@ -170,21 +142,19 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		nnode->tn_spec.tn_lnk.tn_link =
 		    tmpfs_strname_alloc(tmp, nnode->tn_size);
 		if (nnode->tn_spec.tn_lnk.tn_link == NULL) {
-			atomic_dec_uint(&tmp->tm_nodes_cnt);
 			tmpfs_node_put(tmp, nnode);
 			return ENOSPC;
 		}
 		memcpy(nnode->tn_spec.tn_lnk.tn_link, target, nnode->tn_size);
 		break;
-
 	case VREG:
+		/* Regular file.  Create an underlying UVM object. */
 		nnode->tn_spec.tn_reg.tn_aobj =
 		    uao_create(INT32_MAX - PAGE_SIZE, 0);
 		nnode->tn_spec.tn_reg.tn_aobj_pages = 0;
 		break;
-
 	default:
-		KASSERT(0);
+		KASSERT(false);
 	}
 
 	mutex_init(&nnode->tn_vlock, MUTEX_DEFAULT, IPL_NONE);
@@ -197,24 +167,9 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Destroys the node pointed to by node from the file system 'tmp'.
- * If the node does not belong to the given mount point, the results are
- * unpredicted.
- *
- * If the node references a directory; no entries are allowed because
- * their removal could need a recursive algorithm, something forbidden in
- * kernel space.  Furthermore, there is not need to provide such
- * functionality (recursive removal) because the only primitives offered
- * to the user are the removal of empty directories and the deletion of
- * individual files.
- *
- * Note that nodes are not really deleted; in fact, when a node has been
- * allocated, it cannot be deleted during the whole life of the file
- * system.  Instead, they are moved to the available list and remain there
- * until reused.
+ * tmpfs_free_node: remove the inode from a list in the mount point and
+ * destroy the inode structures.
  */
 void
 tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
@@ -224,18 +179,18 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 	mutex_enter(&tmp->tm_lock);
 	LIST_REMOVE(node, tn_entries);
 	mutex_exit(&tmp->tm_lock);
-	atomic_dec_uint(&tmp->tm_nodes_cnt);
 
 	switch (node->tn_type) {
 	case VLNK:
-		if (node->tn_size > 0)
+		if (node->tn_size > 0) {
 			tmpfs_strname_free(tmp, node->tn_spec.tn_lnk.tn_link,
 			    node->tn_size);
+		}
 		break;
 	case VREG:
 		/*
-		 * Calculate the size of node data, decrease the used-memory
-		 * counter, and destroy the memory object (if any).
+		 * Calculate the size of inode data, decrease the used-memory
+		 * counter, and destroy the unerlying UVM object (if any).
 		 */
 		objsz = PAGE_SIZE * node->tn_spec.tn_reg.tn_aobj_pages;
 		if (objsz != 0) {
@@ -245,6 +200,10 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 			uao_detach(node->tn_spec.tn_reg.tn_aobj);
 		}
 		break;
+	case VDIR:
+		KASSERT(TAILQ_EMPTY(&node->tn_spec.tn_dir.tn_dir));
+		KASSERT(node->tn_spec.tn_dir.tn_parent || node == tmp->tm_root);
+		break;
 	default:
 		break;
 	}
@@ -252,8 +211,6 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 	mutex_destroy(&node->tn_vlock);
 	tmpfs_node_put(tmp, node);
 }
-
-/* --------------------------------------------------------------------- */
 
 /*
  * Allocates a new directory entry for the node node with a name of name.
