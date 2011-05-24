@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.79 2011/05/24 06:59:53 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.80 2011/05/24 07:00:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.79 2011/05/24 06:59:53 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.80 2011/05/24 07:00:07 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -225,8 +225,23 @@ domain_create(const char *name)
 		exit(1);
 	}
 
-	(void)memset(dom, 0, sizeof *dom);
+	dom->dom_next = NULL;
+
 	(void)strlcpy(dom->dom_name, name, sizeof(dom->dom_name));
+	(void)memset(&dom->dom_server_addr, 0, sizeof(dom->dom_server_addr));
+	dom->dom_socket = -1;
+	dom->dom_client = NULL;
+	dom->dom_vers = YPVERS;
+	dom->dom_checktime = 0;
+	dom->dom_asktime = 0;
+	dom->dom_lockfd = -1;
+	dom->dom_alive = 0;
+	dom->dom_xid = unique_xid(dom);
+
+	/* add to global list */
+	dom->dom_next = domains;
+	domains = dom;
+
 	return dom;
 }
 
@@ -344,9 +359,6 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force)
 		if (force == 0)
 			return;
 		dom = domain_create(dom_name);
-		dom->dom_lockfd = -1;
-		dom->dom_next = domains;
-		domains = dom;
 	}
 
 	/* soft update, alive */
@@ -442,13 +454,7 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 
 	if (dom == NULL) {
 		dom = domain_create(arg);
-		dom->dom_vers = YPVERS;
-		dom->dom_alive = 0;
-		dom->dom_lockfd = -1;
 		removelock(dom);
-		dom->dom_xid = unique_xid(dom);
-		dom->dom_next = domains;
-		domains = dom;
 		check++;
 		DPRINTF("unknown domain %s\n", arg);
 		return NULL;
@@ -1212,9 +1218,6 @@ main(int argc, char *argv[])
 
 	/* build initial domain binding, make it "unsuccessful" */
 	domains = domain_create(domainname);
-	domains->dom_vers = YPVERS;
-	domains->dom_alive = 0;
-	domains->dom_lockfd = -1;
 	removelock(domains);
 
 	checkwork();
