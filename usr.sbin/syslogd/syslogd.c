@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.101 2011/05/24 13:25:25 joerg Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.102 2011/05/24 13:26:04 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.101 2011/05/24 13:25:25 joerg Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.102 2011/05/24 13:26:04 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -2129,7 +2129,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 	 * this enables the buffer in the else branch to be freed
 	 * --> every branch needs one NEWREF() or buf_msg_new()! */
 	if (buffer) {
-		NEWREF(buffer);
+		(void)NEWREF(buffer);
 	} else {
 		if (f->f_prevcount > 1) {
 			/* possible syslog-sign incompatibility:
