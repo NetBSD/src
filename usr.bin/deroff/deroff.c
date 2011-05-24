@@ -1,4 +1,4 @@
-/*	$NetBSD: deroff.c,v 1.7 2009/08/07 14:05:58 wiz Exp $	*/
+/*	$NetBSD: deroff.c,v 1.8 2011/05/24 12:19:11 joerg Exp $	*/
 
 /* taken from: OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp */
 
@@ -74,7 +74,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$NetBSD: deroff.c,v 1.7 2009/08/07 14:05:58 wiz Exp $";
+static const char rcsid[] = "$NetBSD: deroff.c,v 1.8 2011/05/24 12:19:11 joerg Exp $";
 #endif
 #endif /* not lint */
 
@@ -998,7 +998,7 @@ meputmac(char *cp, int constant)
 		 */
 		if (((np - cp) > constant) &&
 		    (inquote || (chars[(unsigned char)cp[0]] == LETTER))) {
-			for (cp = cp; cp < np; cp++)
+			for (; cp < np; cp++)
 				putchar(*cp);
 			last = np[-1];
 			found++;
