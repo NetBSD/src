@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.16 2006/12/14 17:09:43 christos Exp $	*/
+/*	$NetBSD: hunt.c,v 1.17 2011/05/24 12:46:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hunt.c,v 1.16 2006/12/14 17:09:43 christos Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.17 2011/05/24 12:46:16 joerg Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -76,7 +76,7 @@ hunt(char *name)
 		}
 		(void)alarm(0);
 		if (FD < 0) {
-			warn(cp);
+			warn("%s", cp);
 			deadfl = 1;
 		} else if (!deadfl) {
 			struct termios cntrl;
