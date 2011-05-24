@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.58 2011/05/11 22:21:59 dyoung Exp $	*/
+/*	$NetBSD: inet6.c,v 1.59 2011/05/24 18:07:11 spz Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.58 2011/05/11 22:21:59 dyoung Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.59 2011/05/24 18:07:11 spz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1196,6 +1196,7 @@ icmp6_stats(u_long off, const char *name)
 	p(ICMP6_STAT_BADNA, "\t%llu bad neighbor advertisement message%s\n");
 	p(ICMP6_STAT_BADRS, "\t%llu bad router solicitation message%s\n");
 	p(ICMP6_STAT_BADRA, "\t%llu bad router advertisement message%s\n");
+	p(ICMP6_STAT_DROPPED_RAROUTE, "\t%llu router advertisement route%s dropped\n");
 	p(ICMP6_STAT_BADREDIRECT, "\t%llu bad redirect message%s\n");
 	p(ICMP6_STAT_PMTUCHG, "\t%llu path MTU change%s\n");
 #undef p

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.91 2011/05/03 17:44:30 dyoung Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.92 2011/05/24 18:07:11 spz Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.91 2011/05/03 17:44:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.92 2011/05/24 18:07:11 spz Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -482,6 +482,13 @@ int	ip6_v6only = 1;
 
 int	ip6_keepfaith = 0;
 time_t	ip6_log_time = (time_t)0L;
+int	ip6_rtadv_maxroutes = 100; /* (arbitrary) initial maximum number of
+                                    * routes via rtadv expected to be
+                                    * significantly larger than common use.
+                                    * if you need to count: 3 extra initial
+                                    * routes, plus 1 per interface after the
+                                    * first one, then one per non-linklocal
+                                    * prefix */
 
 /* icmp6 */
 /*

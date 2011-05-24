@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.41 2011/05/08 18:42:53 spz Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.42 2011/05/24 18:07:11 spz Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -569,8 +569,9 @@ struct icmp6_filter {
 #define	ICMP6_STAT_BADRS	538	/* bad router solicitiation */
 #define	ICMP6_STAT_BADRA	539	/* bad router advertisement */
 #define	ICMP6_STAT_BADREDIRECT	540	/* bad redirect message */
+#define ICMP6_STAT_DROPPED_RAROUTE 541	/* discarded routes from router advertisement */
 
-#define	ICMP6_NSTATS		541
+#define	ICMP6_NSTATS		542
 
 #define	ICMP6_ERRSTAT_DST_UNREACH_NOROUTE	0
 #define	ICMP6_ERRSTAT_DST_UNREACH_ADMIN		1
