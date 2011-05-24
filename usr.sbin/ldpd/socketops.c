@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.5 2011/01/22 19:46:46 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.6 2011/05/24 13:03:19 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -752,7 +752,7 @@ recv_session_pdu(struct ldp_peer * p)
 	struct init_tlv	*itlv;
 	struct label_map_tlv *lmtlv;
 	struct fec_tlv *fectlv;
-	struct label_tlv *__packed labeltlv;
+	struct label_tlv *labeltlv;
 	struct notification_tlv *nottlv;
 	struct hello_info *hi;
 
