@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.2 2001/08/01 05:52:12 eeh Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.3 2011/05/24 22:39:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2001	Eduardo E. Horvath
@@ -46,7 +46,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: memcpy.S,v 1.2 2001/08/01 05:52:12 eeh Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.3 2011/05/24 22:39:47 christos Exp $")
 #endif  /* LIBC_SCCS and not lint */
 
 #define	EMPTY	nop
@@ -59,6 +59,10 @@
 #define ASI_STORE	ASI_BLK_COMMIT_P
 #else
 #define ASI_STORE	ASI_BLK_P
+#endif
+
+#ifndef	_ALIGN
+#define _ALIGN	.align 8
 #endif
 
 #if 1
@@ -94,6 +98,7 @@ ENTRY(bcopy) /* src, dest, size */
 	restore
 	.data
 2:	.asciz	"bcopy(%p->%p,%x)\n"
+	.align 8
 	_ALIGN
 	.text
 3:
