@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.46 2011/04/24 16:26:57 rmind Exp $	*/
+/*	$NetBSD: sab.c,v 1.47 2011/05/24 01:17:36 mrg Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.46 2011/04/24 16:26:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.47 2011/05/24 01:17:36 mrg Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -227,7 +227,8 @@ sab_match(struct device *parent, struct cfdata *match, void *aux)
 	struct ebus_attach_args *ea = aux;
 	char *compat;
 
-	if (strcmp(ea->ea_name, "se") == 0)
+	if (strcmp(ea->ea_name, "se") == 0 ||
+	    strcmp(ea->ea_name, "FJSV,se") == 0)
 		return (1);
 
 	compat = prom_getpropstring(ea->ea_node, "compatible");
