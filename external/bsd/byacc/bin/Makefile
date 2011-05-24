@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2009/10/29 00:56:35 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2011/05/24 13:48:16 joerg Exp $
 
 .include "bsd.own.mk"
 
 PROG=	yacc
 SRCS=	closure.c error.c lalr.c lr0.c main.c mkpar.c output.c reader.c \
 	skeleton.c symtab.c verbose.c warshall.c graph.c
+
+CPPFLAGS+=	-DGCC_NORETURN=__dead
 
 .include <bsd.prog.mk>
