@@ -1,4 +1,4 @@
-/*	$NetBSD: os-ip.c,v 1.4 2010/12/12 15:46:33 adam Exp $	*/
+/*	$NetBSD: os-ip.c,v 1.5 2011/05/24 16:03:15 joerg Exp $	*/
 
 /* os-ip.c -- platform-specific TCP & UDP related code */
 /* OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.20 2010/04/13 20:22:58 kurt Exp */
@@ -283,8 +283,8 @@ ldap_int_poll(
 	int		rc;
 		
 
-	osip_debug(ld, "ldap_int_poll: fd: %d tm: %ld\n",
-		s, tvp ? tvp->tv_sec : -1L, 0);
+	osip_debug(ld, "ldap_int_poll: fd: %d tm: %jd\n",
+		s, tvp ? (intmax_t)tvp->tv_sec : -1, 0);
 
 #ifdef HAVE_POLL
 	{
@@ -432,8 +432,8 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s,
 		opt_tv = &tv;
 	}
 
-	osip_debug(ld, "ldap_pvt_connect: fd: %d tm: %ld async: %d\n",
-			s, opt_tv ? tv.tv_sec : -1L, async);
+	osip_debug(ld, "ldap_pvt_connect: fd: %d tm: %jd async: %d\n",
+			s, opt_tv ? (intmax_t)tv.tv_sec : -1, async);
 
 	if ( opt_tv && ldap_pvt_ndelay_on(ld, s) == -1 )
 		return ( -1 );
