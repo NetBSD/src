@@ -1,4 +1,4 @@
-/*	$NetBSD: map_scan.l,v 1.6 2010/11/30 12:22:06 phx Exp $ */
+/*	$NetBSD: map_scan.l,v 1.7 2011/05/24 12:07:14 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ map_scan_setinput(char *str)
 %}
 
 %option noyywrap
+%option noinput
 
 %%
 
