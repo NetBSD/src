@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.54 2011/05/03 17:44:30 dyoung Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.55 2011/05/24 18:07:11 spz Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -281,6 +281,7 @@ extern int	ip6_maxfrags;	/* Maximum fragments in reassembly queue */
 extern int	ip6_sourcecheck;	/* Verify source interface */
 extern int	ip6_sourcecheck_interval; /* Interval between log messages */
 extern int	ip6_accept_rtadv;	/* Acts as a host not a router */
+extern int	ip6_rtadv_maxroutes;	/* maximum number of routes via rtadv */
 extern int	ip6_keepfaith;		/* Firewall Aided Internet Translator */
 extern int	ip6_log_interval;
 extern time_t	ip6_log_time;
