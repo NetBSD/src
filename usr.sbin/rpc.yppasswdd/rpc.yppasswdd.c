@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.yppasswdd.c,v 1.13 2009/10/20 00:51:14 snj Exp $	*/
+/*	$NetBSD: rpc.yppasswdd.c,v 1.14 2011/05/24 13:27:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.13 2009/10/20 00:51:14 snj Exp $");
+__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.14 2011/05/24 13:27:16 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,7 +93,7 @@ main(int argc, char *argv[])
 
 				arglen = strlen(argv[i]);
 				if ((len + arglen) > (int)(sizeof(make_arg) - 2))
-					errx(EXIT_FAILURE, strerror(E2BIG));
+					errx(EXIT_FAILURE, "%s", strerror(E2BIG));
 				make_arg[len++] = ' ';
 				(void)strcpy(&make_arg[len], argv[i]);
 				len += arglen;

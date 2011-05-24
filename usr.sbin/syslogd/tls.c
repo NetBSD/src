@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.5 2010/05/13 17:52:12 tnozaki Exp $	*/
+/*	$NetBSD: tls.c,v 1.6 2011/05/24 13:26:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.5 2010/05/13 17:52:12 tnozaki Exp $");
+__RCSID("$NetBSD: tls.c,v 1.6 2011/05/24 13:26:41 joerg Exp $");
 
 #ifndef DISABLE_TLS
 #include "syslogd.h"
@@ -829,7 +829,7 @@ socksetup_tls(const int af, const char *bindhostname, const char *port)
 	error = getaddrinfo(bindhostname, (port ? port : "syslog-tls"),
 	    &hints, &res);
 	if (error) {
-		logerror(gai_strerror(error));
+		logerror("%s", gai_strerror(error));
 		errno = 0;
 		die(0, 0, NULL);
 	}
@@ -989,7 +989,7 @@ tls_connect(struct tls_conn_settings *conn_info)
 	error = getaddrinfo(conn_info->hostname,
 	    (conn_info->port ? conn_info->port : "syslog-tls"), &hints, &res);
 	if (error) {
-		logerror(gai_strerror(error));
+		logerror("%s", gai_strerror(error));
 		return false;
 	}
 
