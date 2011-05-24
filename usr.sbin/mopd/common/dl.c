@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.7 2009/11/17 18:58:07 drochner Exp $	*/
+/*	$NetBSD: dl.c,v 1.8 2011/05/24 13:08:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dl.c,v 1.7 2009/11/17 18:58:07 drochner Exp $");
+__RCSID("$NetBSD: dl.c,v 1.8 2011/05/24 13:08:16 joerg Exp $");
 #endif
 
 #include "os.h"
@@ -189,7 +189,7 @@ mopDumpDL(FILE *fd, const u_char *pkt, int trans)
 		
 		tmpc = mopGetChar(pkt,&idx);	/* Error */
 		(void)fprintf(fd,"Error        :   %02x (",tmpc);
-		if ((tmpc == 0)) {
+		if (tmpc == 0) {
 			(void)fprintf(fd,"no error)\n");
 		} else {
 		  	(void)fprintf(fd,"error)\n");
