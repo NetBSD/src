@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.80 2011/05/24 07:00:07 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.81 2011/05/24 07:00:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.80 2011/05/24 07:00:07 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.81 2011/05/24 07:00:34 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -81,7 +81,7 @@ int _yp_invalid_domain(const char *);		/* XXX libc internal */
 // types and globals
 
 typedef enum {
-	YPBIND_DIRECT, YPBIND_BROADCAST, YPBIND_SETLOCAL, YPBIND_SETALL
+	YPBIND_DIRECT, YPBIND_BROADCAST,
 } ypbind_mode_t;
 
 struct domain {
@@ -109,12 +109,13 @@ static int check;
 static ypbind_mode_t ypbindmode;
 
 /*
- * If ypbindmode is YPBIND_SETLOCAL or YPBIND_SETALL, this indicates
- * whether or not we've been "ypset".  If we haven't, we behave like
- * YPBIND_BROADCAST.  If we have, we behave like YPBIND_DIRECT.
+ * This indicates whether or not we've been "ypset". If we haven't,
+ * we behave like YPBIND_BROADCAST.  If we have, we behave like
+ * YPBIND_DIRECT.
  */
 static int been_ypset;
 
+static int allow_local_ypset = 0, allow_any_ypset = 0;
 static int insecure;
 static int rpcsock, pingsock;
 static struct rmtcallargs rmtca;
@@ -504,22 +505,15 @@ ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 	(void)memset(&res, 0, sizeof(res));
 	fromsin = svc_getcaller(transp);
 
-	switch (ypbindmode) {
-	case YPBIND_SETLOCAL:
+	if (allow_any_ypset) {
+		/* nothing */
+	} else if (allow_local_ypset) {
 		if (fromsin->sin_addr.s_addr != htonl(INADDR_LOOPBACK)) {
-			DPRINTF("ypset from %s denied\n",
+			DPRINTF("ypset denied from %s\n",
 				inet_ntoa(fromsin->sin_addr));
 			return NULL;
 		}
-		/* FALLTHROUGH */
-
-	case YPBIND_SETALL:
-		been_ypset = 1;
-		break;
-
-	case YPBIND_DIRECT:
-	case YPBIND_BROADCAST:
-	default:
+	} else {
 		DPRINTF("ypset denied\n");
 		return NULL;
 	}
@@ -533,6 +527,8 @@ ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 		DPRINTF("ypset with wrong version denied\n");
 		return &res;
 	}
+
+	been_ypset = 1;
 
 	(void)memset(&bindsin, 0, sizeof bindsin);
 	bindsin.sin_family = AF_INET;
@@ -1027,13 +1023,10 @@ nag_servers(struct domain *dom)
 	}
 
 	switch (ypbindmode) {
-	case YPBIND_SETALL:
-	case YPBIND_SETLOCAL:
-		if (been_ypset)
-			return direct_set(buf, outlen, dom);
-		/* FALLTHROUGH */
-
 	case YPBIND_BROADCAST:
+		if (been_ypset) {
+			return direct_set(buf, outlen, dom);
+		}
 		return broadcast(buf, outlen);
 
 	case YPBIND_DIRECT:
@@ -1185,20 +1178,23 @@ main(int argc, char *argv[])
 
 	while (--argc) {
 		++argv;
-		if (!strcmp("-insecure", *argv))
+		if (!strcmp("-insecure", *argv)) {
 			insecure = 1;
-		else if (!strcmp("-ypset", *argv))
-			ypbindmode = YPBIND_SETALL;
-		else if (!strcmp("-ypsetme", *argv))
-			ypbindmode = YPBIND_SETLOCAL;
-		else if (!strcmp("-broadcast", *argv))
+		} else if (!strcmp("-ypset", *argv)) {
+			allow_any_ypset = 1;
+			allow_local_ypset = 1;
+		} else if (!strcmp("-ypsetme", *argv)) {
+			allow_any_ypset = 0;
+			allow_local_ypset = 1;
+		} else if (!strcmp("-broadcast", *argv)) {
 			ypbindmode = YPBIND_BROADCAST;
 #ifdef DEBUG
-		else if (!strcmp("-d", *argv))
-			debug++;
+		} else if (!strcmp("-d", *argv)) {
+			debug = 1;
 #endif
-		else
+		} else {
 			usage();
+		}
 	}
 
 	/* initialise syslog */
