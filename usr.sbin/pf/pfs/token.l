@@ -1,4 +1,4 @@
-/* $NetBSD: token.l,v 1.1 2010/05/07 17:41:58 degroote Exp $ */
+/* $NetBSD: token.l,v 1.2 2011/05/24 13:41:53 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: token.l,v 1.1 2010/05/07 17:41:58 degroote Exp $");
+__RCSID("$NetBSD: token.l,v 1.2 2011/05/24 13:41:53 joerg Exp $");
 #endif
 
 #include <stdlib.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: token.l,v 1.1 2010/05/07 17:41:58 degroote Exp $");
 %}
 
 %option nounput 
+%option noinput 
 
 %%
 
