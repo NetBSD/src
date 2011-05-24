@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.25 2011/05/23 13:51:10 drochner Exp $ */
+/*	$NetBSD: xform.c,v 1.26 2011/05/24 18:59:23 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.25 2011/05/23 13:51:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.26 2011/05/24 18:59:23 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -143,72 +143,72 @@ const struct enc_xform enc_xform_aes_ctr = {
 /* Authentication instances */
 const struct auth_hash auth_hash_null = {
 	CRYPTO_NULL_HMAC, "NULL-HMAC",
-	0, 0, 12, 64, sizeof(int)		/* NB: context isn't used */
+	0, 0, 12, 64
 };
 
 const struct auth_hash auth_hash_hmac_md5 = {
 	CRYPTO_MD5_HMAC, "HMAC-MD5",
-	16, 16, 16, 64, sizeof(MD5_CTX)
+	16, 16, 16, 64
 };
 
 const struct auth_hash auth_hash_hmac_sha1 = {
 	CRYPTO_SHA1_HMAC, "HMAC-SHA1",
-	20, 20, 20, 64, sizeof(SHA1_CTX)
+	20, 20, 20, 64
 };
 
 const struct auth_hash auth_hash_hmac_ripemd_160 = {
 	CRYPTO_RIPEMD160_HMAC, "HMAC-RIPEMD-160",
-	20, 20, 20, 64, sizeof(RMD160_CTX)
+	20, 20, 20, 64
 };
 
 const struct auth_hash auth_hash_hmac_md5_96 = {
 	CRYPTO_MD5_HMAC_96, "HMAC-MD5-96",
-	16, 16, 12, 64, sizeof(MD5_CTX)
+	16, 16, 12, 64
 };
 
 const struct auth_hash auth_hash_hmac_sha1_96 = {
 	CRYPTO_SHA1_HMAC_96, "HMAC-SHA1-96",
-	20, 20, 12, 64, sizeof(SHA1_CTX)
+	20, 20, 12, 64
 };
 
 const struct auth_hash auth_hash_hmac_ripemd_160_96 = {
 	CRYPTO_RIPEMD160_HMAC_96, "HMAC-RIPEMD-160",
-	20, 20, 12, 64, sizeof(RMD160_CTX)
+	20, 20, 12, 64
 };
 
 const struct auth_hash auth_hash_key_md5 = {
 	CRYPTO_MD5_KPDK, "Keyed MD5",
-	0, 16, 16, 0, sizeof(MD5_CTX)
+	0, 16, 16, 0
 };
 
 const struct auth_hash auth_hash_key_sha1 = {
 	CRYPTO_SHA1_KPDK, "Keyed SHA1",
-	0, 20, 20, 0, sizeof(SHA1_CTX)
+	0, 20, 20, 0
 };
 
 const struct auth_hash auth_hash_md5 = {
 	CRYPTO_MD5, "MD5",
-	0, 16, 16, 0, sizeof(MD5_CTX)
+	0, 16, 16, 0
 };
 
 const struct auth_hash auth_hash_sha1 = {
 	CRYPTO_SHA1, "SHA1",
-	0, 20, 20, 0, sizeof(SHA1_CTX)
+	0, 20, 20, 0
 };
 
 const struct auth_hash auth_hash_hmac_sha2_256 = {
 	CRYPTO_SHA2_256_HMAC, "HMAC-SHA2",
-	32, 32, 16, 64, sizeof(SHA256_CTX)
+	32, 32, 16, 64
 };
 
 const struct auth_hash auth_hash_hmac_sha2_384 = {
 	CRYPTO_SHA2_384_HMAC, "HMAC-SHA2-384",
-	48, 48, 24, 128, sizeof(SHA384_CTX)
+	48, 48, 24, 128
 };
 
 const struct auth_hash auth_hash_hmac_sha2_512 = {
 	CRYPTO_SHA2_512_HMAC, "HMAC-SHA2-512",
-	64, 64, 32, 128, sizeof(SHA512_CTX)
+	64, 64, 32, 128
 };
 
 /* Compression instance */
