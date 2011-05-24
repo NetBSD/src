@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.34 2011/05/16 10:53:19 drochner Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.35 2011/05/24 16:40:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.34 2011/05/16 10:53:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.35 2011/05/24 16:40:21 joerg Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1511,7 +1511,7 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 			bx->bx_running = true;
 			ret = kthread_create(PRI_UVIDEO, 0, NULL,
 			    uvideo_stream_recv_bulk_transfer, vs,
-			    NULL, device_xname(sc->sc_dev));
+			    NULL, "%s", device_xname(sc->sc_dev));
 			if (ret) {
 				DPRINTF(("uvideo: couldn't create kthread:"
 					 " %d\n", err));

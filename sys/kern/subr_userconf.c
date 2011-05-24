@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.21 2011/04/24 18:46:23 rmind Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.22 2011/05/24 16:41:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.21 2011/04/24 18:46:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.22 2011/05/24 16:41:23 joerg Exp $");
 
 #include "opt_userconf.h"
 
@@ -510,7 +510,7 @@ userconf_help(void)
 
 	printf("command   args                description\n");
 	while (*userconf_cmds[j] != '\0') {
-		printf(userconf_cmds[j]);
+		printf("%s", userconf_cmds[j]);
 		k = strlen(userconf_cmds[j]);
 		while (k < 10) {
 			printf(" ");
