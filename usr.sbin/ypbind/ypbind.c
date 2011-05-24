@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.72 2011/05/24 06:57:55 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.73 2011/05/24 06:58:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.72 2011/05/24 06:57:55 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.73 2011/05/24 06:58:07 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -121,6 +121,25 @@ static struct rmtcallres rmtcr;
 static bool_t rmtcr_outval;
 static unsigned long rmtcr_port;
 static SVCXPRT *udptransp, *tcptransp;
+
+////////////////////////////////////////////////////////////
+// utilities
+
+static int
+open_locked(const char *path, int flags, mode_t mode)
+{
+	int fd;
+
+	fd = open(path, flags|O_SHLOCK, mode);
+	if (fd < 0) {
+		return -1;
+	}
+#if O_SHLOCK == 0
+	/* dholland 20110522 wouldn't it be better to check this for error? */
+	(void)flock(fd, LOCK_SH);
+#endif
+	return fd;
+}
 
 ////////////////////////////////////////////////////////////
 // logging
@@ -221,15 +240,15 @@ makelock(struct _dom_binding *ypdb)
 	(void)snprintf(path, sizeof(path), "%s/%s.%ld", BINDINGDIR,
 	    ypdb->dom_domain, ypdb->dom_vers);
 
-	if ((fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644)) == -1) {
+	fd = open_locked(path, O_CREAT|O_RDWR|O_TRUNC, 0644);
+	if (fd == -1) {
 		(void)mkdir(BINDINGDIR, 0755);
-		if ((fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644)) == -1)
+		fd = open_locked(path, O_CREAT|O_RDWR|O_TRUNC, 0644);
+		if (fd == -1) {
 			return -1;
+		}
 	}
 
-#if O_SHLOCK == 0
-	(void)flock(fd, LOCK_SH);
-#endif
 	return fd;
 }
 
@@ -730,15 +749,12 @@ direct_set(char *buf, int outlen, struct _dom_binding *ypdb)
 	(void)snprintf(path, sizeof(path), "%s/%s.%ld", BINDINGDIR,
 	    ypdb->dom_domain, ypdb->dom_vers);
 
-	if ((fd = open(path, O_SHLOCK|O_RDONLY, 0644)) == -1) {
+	fd = open_locked(path, O_RDONLY, 0644);
+	if (fd == -1) {
 		yp_log(LOG_WARNING, "%s: %s", path, strerror(errno));
 		been_ypset = 0;
 		return -1;
 	}
-
-#if O_SHLOCK == 0
-	(void)flock(fd, LOCK_SH);
-#endif
 
 	/* Read the binding file... */
 	iov[0].iov_base = &(dummy_svc.xp_port);
@@ -1135,13 +1151,9 @@ main(int argc, char *argv[])
 	/* initialise syslog */
 	openlog("ypbind", LOG_PERROR | LOG_PID, LOG_DAEMON);
 
-	lockfd = open(_PATH_YPBIND_LOCK, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644);
+	lockfd = open_locked(_PATH_YPBIND_LOCK, O_CREAT|O_RDWR|O_TRUNC, 0644);
 	if (lockfd == -1)
 		err(1, "Cannot create %s", _PATH_YPBIND_LOCK);
-
-#if O_SHLOCK == 0
-	(void)flock(lockfd, LOCK_SH);
-#endif
 
 	(void)pmap_unset(YPBINDPROG, YPBINDVERS);
 
