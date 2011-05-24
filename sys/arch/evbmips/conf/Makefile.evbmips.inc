@@ -1,5 +1,13 @@
 #	Makefile.evbmips.inc,v 1.2 2005/11/24 12:54:29 dbj Exp
 
+RAMDISKDIR!=	cd ${NETBSDSRCDIR}/distrib/${THISMIPS:T}/instkernel/ramdisk && ${PRINTOBJDIR}
+
+.if defined(NEEDS_MDSETIMAGE) && exists(${RAMDISKDIR}/ramdisk.fs)
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs; \
+	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs
+.endif
+
 .if defined(NEED_SREC) && ${NEED_SREC} != "no"
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${STRIP} -O srec -o $@.srec $@; \
