@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.68 2011/05/24 06:56:16 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.69 2011/05/24 06:56:48 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.68 2011/05/24 06:56:16 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.69 2011/05/24 06:56:48 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -105,14 +105,14 @@ static char *domainname;
 static struct _dom_binding *ypbindlist;
 static int check;
 
-ypbind_mode_t ypbindmode;
+static ypbind_mode_t ypbindmode;
 
 /*
  * If ypbindmode is YPBIND_SETLOCAL or YPBIND_SETALL, this indicates
  * whether or not we've been "ypset".  If we haven't, we behave like
  * YPBIND_BROADCAST.  If we have, we behave like YPBIND_DIRECT.
  */
-int been_ypset;
+static int been_ypset;
 
 static int insecure;
 static int rpcsock, pingsock;
@@ -123,31 +123,6 @@ static unsigned long rmtcr_port;
 static SVCXPRT *udptransp, *tcptransp;
 
 ////////////////////////////////////////////////////////////
-// forward decls of functions
-
-static void usage(void);
-static void yp_log(int, const char *, ...) __printflike(2, 3);
-static struct _dom_binding *makebinding(const char *);
-static int makelock(struct _dom_binding *);
-static void removelock(struct _dom_binding *);
-static int purge_bindingdir(const char *);
-static void *ypbindproc_null_2(SVCXPRT *, void *);
-static void *ypbindproc_domain_2(SVCXPRT *, void *);
-static void *ypbindproc_setdom_2(SVCXPRT *, void *);
-static void ypbindprog_2(struct svc_req *, SVCXPRT *);
-static void checkwork(void);
-static int ping(struct _dom_binding *);
-static int nag_servers(struct _dom_binding *);
-static enum clnt_stat handle_replies(void);
-static enum clnt_stat handle_ping(void);
-static void rpc_received(char *, struct sockaddr_in *, int);
-static struct _dom_binding *xid2ypdb(uint32_t);
-static uint32_t unique_xid(struct _dom_binding *);
-static int broadcast(char *, int);
-static int direct(char *, int);
-static int direct_set(char *, int, struct _dom_binding *);
-
-////////////////////////////////////////////////////////////
 // logging
 
 #ifdef DEBUG
@@ -156,6 +131,8 @@ static int debug;
 #else
 #define DPRINTF(...)
 #endif
+
+static void yp_log(int, const char *, ...) __printflike(2, 3);
 
 static void
 yp_log(int pri, const char *fmt, ...)
@@ -298,7 +275,7 @@ purge_bindingdir(const char *dirpath)
 /*
  * LOOPBACK IS MORE IMPORTANT: PUT IN HACK
  */
-void
+static void
 rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 {
 	struct _dom_binding *ypdb;
@@ -961,7 +938,7 @@ nag_servers(struct _dom_binding *ypdb)
 	return -1;
 }
 
-int
+static int
 ping(struct _dom_binding *ypdb)
 {
 	char *dom = ypdb->dom_domain;
@@ -1031,7 +1008,7 @@ ping(struct _dom_binding *ypdb)
  * checking	timeout		ping server + broadcast	checking	5 sec
  * checking	answer		--			binding		60 sec
  */
-void
+static void
 checkwork(void)
 {
 	struct _dom_binding *ypdb;
