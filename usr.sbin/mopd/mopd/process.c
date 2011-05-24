@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.17 2009/11/17 18:58:07 drochner Exp $	*/
+/*	$NetBSD: process.c,v 1.18 2011/05/24 13:08:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: process.c,v 1.17 2009/11/17 18:58:07 drochner Exp $");
+__RCSID("$NetBSD: process.c,v 1.18 2011/05/24 13:08:17 joerg Exp $");
 #endif
 
 #include "os.h"
@@ -182,16 +182,16 @@ mopSendASV(const u_char *dst, const u_char *src, struct if_info *ii, int trans)
 	mopPutLength(pkt, trans, idx);
 	newlen = mopGetLength(pkt, trans);
 
-	if ((DebugFlag == DEBUG_ONELINE)) {
+	if (DebugFlag == DEBUG_ONELINE) {
 		mopPrintOneline(stdout, pkt, trans);
 	}
 
-	if ((DebugFlag >= DEBUG_HEADER)) {
+	if (DebugFlag >= DEBUG_HEADER) {
 		mopPrintHeader(stdout, pkt, trans);
 		mopPrintMopHeader(stdout, pkt, trans);
 	}
 	
-	if ((DebugFlag >= DEBUG_INFO)) {
+	if (DebugFlag >= DEBUG_INFO) {
 		mopDumpDL(stdout, pkt, trans);
 	}
 
@@ -287,16 +287,16 @@ mopStartLoad(const u_char *dst, const u_char *src, struct dllist *dl_rpr,
 	mopPutLength(pkt, trans, idx);
 	newlen = mopGetLength(pkt, trans);
 
-	if ((DebugFlag == DEBUG_ONELINE)) {
+	if (DebugFlag == DEBUG_ONELINE) {
 		mopPrintOneline(stdout, pkt, trans);
 	}
 
-	if ((DebugFlag >= DEBUG_HEADER)) {
+	if (DebugFlag >= DEBUG_HEADER) {
 		mopPrintHeader(stdout, pkt, trans);
 		mopPrintMopHeader(stdout, pkt, trans);
 	}
 	
-	if ((DebugFlag >= DEBUG_INFO)) {
+	if (DebugFlag >= DEBUG_INFO) {
 		mopDumpDL(stdout, pkt, trans);
 	}
 
@@ -337,7 +337,7 @@ mopNextLoad(const u_char *dst, const u_char *src, u_char new_count, int trans)
 
 	dle = &dllist[slot];
 
-	if ((new_count == ((dle->count+1) % 256))) {
+	if (new_count == ((dle->count+1) % 256)) {
 		dle->loadaddr = dllist[slot].nloadaddr;
 		dle->count    = new_count;
 	} else if (new_count != (dle->count % 256)) {
@@ -406,16 +406,16 @@ mopNextLoad(const u_char *dst, const u_char *src, u_char new_count, int trans)
 		}
 	}
 
-	if ((DebugFlag == DEBUG_ONELINE)) {
+	if (DebugFlag == DEBUG_ONELINE) {
 		mopPrintOneline(stdout, pkt, trans);
 	}
 
-	if ((DebugFlag >= DEBUG_HEADER)) {
+	if (DebugFlag >= DEBUG_HEADER) {
 		mopPrintHeader(stdout, pkt, trans);
 		mopPrintMopHeader(stdout, pkt, trans);
 	}
 	
-	if ((DebugFlag >= DEBUG_INFO)) {
+	if (DebugFlag >= DEBUG_INFO) {
 		mopDumpDL(stdout, pkt, trans);
 	}
 
@@ -439,16 +439,16 @@ mopProcessDL(FILE *fd, struct if_info *ii, const u_char *pkt, int *idx,
 	struct dllist dl,*dl_rpr;
 	u_char  rpr_pgty,load;
 
-	if ((DebugFlag == DEBUG_ONELINE)) {
+	if (DebugFlag == DEBUG_ONELINE) {
 		mopPrintOneline(stdout, pkt, trans);
 	}
 
-	if ((DebugFlag >= DEBUG_HEADER)) {
+	if (DebugFlag >= DEBUG_HEADER) {
 		mopPrintHeader(stdout, pkt, trans);
 		mopPrintMopHeader(stdout, pkt, trans);
 	}
 	
-	if ((DebugFlag >= DEBUG_INFO)) {
+	if (DebugFlag >= DEBUG_INFO) {
 		mopDumpDL(stdout, pkt, trans);
 	}
 
@@ -573,16 +573,16 @@ mopProcessRC(FILE *fd, struct if_info *ii, const u_char *pkt, int *idx,
 	u_char   mopcode;
 	struct dllist dl,*dl_rpr;
 
-	if ((DebugFlag == DEBUG_ONELINE)) {
+	if (DebugFlag == DEBUG_ONELINE) {
 		mopPrintOneline(stdout, pkt, trans);
 	}
 
-	if ((DebugFlag >= DEBUG_HEADER)) {
+	if (DebugFlag >= DEBUG_HEADER) {
 		mopPrintHeader(stdout, pkt, trans);
 		mopPrintMopHeader(stdout, pkt, trans);
 	}
 	
-	if ((DebugFlag >= DEBUG_INFO)) {
+	if (DebugFlag >= DEBUG_INFO) {
 		mopDumpRC(stdout, pkt, trans);
 	}
 
