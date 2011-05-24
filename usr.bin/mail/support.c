@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.22 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.23 2011/05/24 12:33:22 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.22 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.23 2011/05/24 12:33:22 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -733,7 +733,7 @@ cathelp(const char *fname)
 	size_t len;
 
 	if ((f = Fopen(fname, "r")) == NULL) {
-		warn(fname);
+		warn("%s", fname);
 		return;
 	}
 	while ((line = fgetln(f, &len)) != NULL) {

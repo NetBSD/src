@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_detach.c,v 1.5 2009/08/28 14:26:50 christos Exp $	*/
+/*	$NetBSD: mime_detach.c,v 1.6 2011/05/24 12:33:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_detach.c,v 1.5 2009/08/28 14:26:50 christos Exp $");
+__RCSID("$NetBSD: mime_detach.c,v 1.6 2011/05/24 12:33:22 joerg Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -166,7 +166,7 @@ detach_open_core(char *fname, const char *partstr)
 			return DETACH_RENAME;
 		}
 	}
-	warn(fname);
+	warn("%s", fname);
 	if (fd != -1)
 		(void)close(fd);
 
