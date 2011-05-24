@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.73 2011/05/24 06:58:07 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.74 2011/05/24 06:58:19 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.73 2011/05/24 06:58:07 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.74 2011/05/24 06:58:19 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -599,6 +599,51 @@ ypbindprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
 	return;
 }
 
+static void
+sunrpc_setup(void)
+{
+	int one;
+
+	(void)pmap_unset(YPBINDPROG, YPBINDVERS);
+
+	udptransp = svcudp_create(RPC_ANYSOCK);
+	if (udptransp == NULL)
+		errx(1, "Cannot create udp service.");
+
+	if (!svc_register(udptransp, YPBINDPROG, YPBINDVERS, ypbindprog_2,
+	    IPPROTO_UDP))
+		errx(1, "Unable to register (YPBINDPROG, YPBINDVERS, udp).");
+
+	tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0);
+	if (tcptransp == NULL)
+		errx(1, "Cannot create tcp service.");
+
+	if (!svc_register(tcptransp, YPBINDPROG, YPBINDVERS, ypbindprog_2,
+	    IPPROTO_TCP))
+		errx(1, "Unable to register (YPBINDPROG, YPBINDVERS, tcp).");
+
+	/* XXX use SOCK_STREAM for direct queries? */
+	if ((rpcsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+		err(1, "rpc socket");
+	if ((pingsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+		err(1, "ping socket");
+	
+	(void)fcntl(rpcsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
+	(void)fcntl(pingsock, F_SETFL, fcntl(pingsock, F_GETFL, 0) | FNDELAY);
+
+	one = 1;
+	(void)setsockopt(rpcsock, SOL_SOCKET, SO_BROADCAST, &one,
+	    (socklen_t)sizeof(one));
+	rmtca.prog = YPPROG;
+	rmtca.vers = YPVERS;
+	rmtca.proc = YPPROC_DOMAIN_NONACK;
+	rmtca.xdr_args = NULL;		/* set at call time */
+	rmtca.args_ptr = NULL;		/* set at call time */
+	rmtcr.port_ptr = &rmtcr_port;
+	rmtcr.xdr_results = xdr_bool;
+	rmtcr.results_ptr = (caddr_t)(void *)&rmtcr_outval;
+}
+
 ////////////////////////////////////////////////////////////
 // operational logic
 
@@ -1104,7 +1149,7 @@ main(int argc, char *argv[])
 	struct timeval tv;
 	fd_set fdsr;
 	int width, lockfd;
-	int evil = 0, one;
+	int evil = 0;
 	const char *pathname;
 	struct stat st;
 
@@ -1151,48 +1196,13 @@ main(int argc, char *argv[])
 	/* initialise syslog */
 	openlog("ypbind", LOG_PERROR | LOG_PID, LOG_DAEMON);
 
+	/* acquire ypbind.lock */
 	lockfd = open_locked(_PATH_YPBIND_LOCK, O_CREAT|O_RDWR|O_TRUNC, 0644);
 	if (lockfd == -1)
 		err(1, "Cannot create %s", _PATH_YPBIND_LOCK);
 
-	(void)pmap_unset(YPBINDPROG, YPBINDVERS);
-
-	udptransp = svcudp_create(RPC_ANYSOCK);
-	if (udptransp == NULL)
-		errx(1, "Cannot create udp service.");
-
-	if (!svc_register(udptransp, YPBINDPROG, YPBINDVERS, ypbindprog_2,
-	    IPPROTO_UDP))
-		errx(1, "Unable to register (YPBINDPROG, YPBINDVERS, udp).");
-
-	tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0);
-	if (tcptransp == NULL)
-		errx(1, "Cannot create tcp service.");
-
-	if (!svc_register(tcptransp, YPBINDPROG, YPBINDVERS, ypbindprog_2,
-	    IPPROTO_TCP))
-		errx(1, "Unable to register (YPBINDPROG, YPBINDVERS, tcp).");
-
-	/* XXX use SOCK_STREAM for direct queries? */
-	if ((rpcsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-		err(1, "rpc socket");
-	if ((pingsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-		err(1, "ping socket");
-	
-	(void)fcntl(rpcsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
-	(void)fcntl(pingsock, F_SETFL, fcntl(pingsock, F_GETFL, 0) | FNDELAY);
-
-	one = 1;
-	(void)setsockopt(rpcsock, SOL_SOCKET, SO_BROADCAST, &one,
-	    (socklen_t)sizeof(one));
-	rmtca.prog = YPPROG;
-	rmtca.vers = YPVERS;
-	rmtca.proc = YPPROC_DOMAIN_NONACK;
-	rmtca.xdr_args = NULL;		/* set at call time */
-	rmtca.args_ptr = NULL;		/* set at call time */
-	rmtcr.port_ptr = &rmtcr_port;
-	rmtcr.xdr_results = xdr_bool;
-	rmtcr.results_ptr = (caddr_t)(void *)&rmtcr_outval;
+	/* initialize sunrpc stuff */
+	sunrpc_setup();
 
 	/* blow away old bindings in BINDINGDIR */
 	if (purge_bindingdir(BINDINGDIR) < 0)
