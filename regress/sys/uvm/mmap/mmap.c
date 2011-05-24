@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.18 2008/04/28 20:23:07 martin Exp $	*/
+/*	$NetBSD: mmap.c,v 1.19 2011/05/24 16:11:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -433,7 +433,7 @@ check_residency(addr, npgs)
 		if (vec[i] != 0)
 			resident++;
 		if (verbose)
-			printf("page 0x%lx is %sresident\n",
+			printf("page 0x%p is %sresident\n",
 			    addr + (i * pgsize), vec[i] ? "" : "not ");
 	}
 
