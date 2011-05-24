@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.36 2011/05/03 04:27:13 mrg Exp $ */
+/* $NetBSD: pcppi.c,v 1.37 2011/05/24 09:28:03 mrg Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.36 2011/05/03 04:27:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.37 2011/05/24 09:28:03 mrg Exp $");
 
 #include "attimer.h"
 
@@ -66,6 +66,7 @@ CFATTACH_DECL3_NEW(pcppi, sizeof(struct pcppi_softc),
     DVF_DETACH_SHUTDOWN);
 
 static int pcppisearch(device_t, cfdata_t, const int *, void *);
+static void pcppi_bell_stop_unlocked(void*);
 static void pcppi_bell_stop(void*);
 
 #if NATTIMER > 0
@@ -285,7 +286,7 @@ pcppi_bell(pcppi_tag_t self, int pitch, int period, int slp)
 			cv_broadcast(&sc->sc_stop_cv);
 	}
 	if (pitch == 0 || period == 0) {
-		pcppi_bell_stop(sc);
+		pcppi_bell_stop_unlocked(sc);
 		sc->sc_bellpitch = 0;
 		mutex_exit(&sc->sc_lock);
 		return;
@@ -305,7 +306,7 @@ pcppi_bell(pcppi_tag_t self, int pitch, int period, int slp)
 	sc->sc_bellactive = 1;
 	if (slp & PCPPI_BELL_POLL) {
 		delay((period * 1000000) / hz);
-		pcppi_bell_stop(sc);
+		pcppi_bell_stop_unlocked(sc);
 	} else {
 		sc->sc_timeout = 1;
 		callout_reset(&sc->sc_bell_ch, period, pcppi_bell_stop, sc);
@@ -319,11 +320,10 @@ pcppi_bell(pcppi_tag_t self, int pitch, int period, int slp)
 }
 
 static void
-pcppi_bell_stop(void *arg)
+pcppi_bell_stop_unlocked(void *arg)
 {
 	struct pcppi_softc *sc = arg;
 
-	mutex_enter(&sc->sc_lock);
 	sc->sc_timeout = 0;
 
 	/* disable bell */
@@ -333,6 +333,15 @@ pcppi_bell_stop(void *arg)
 	sc->sc_bellactive = 0;
 	if (sc->sc_slp)
 		cv_broadcast(&sc->sc_stop_cv);
+}
+
+static void
+pcppi_bell_stop(void *arg)
+{
+	struct pcppi_softc *sc = arg;
+
+	mutex_enter(&sc->sc_lock);
+	pcppi_bell_stop_unlocked(arg);
 	mutex_exit(&sc->sc_lock);
 }
 
