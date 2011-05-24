@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.81 2011/05/24 07:00:34 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.82 2011/05/24 07:01:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.81 2011/05/24 07:00:34 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.82 2011/05/24 07:01:15 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -97,6 +97,7 @@ struct domain {
 	int dom_lockfd;
 	int dom_alive;
 	uint32_t dom_xid;
+	ypbind_mode_t dom_ypbindmode;
 };
 
 #define BUFSIZE		1400
@@ -106,7 +107,7 @@ static char *domainname;
 static struct domain *domains;
 static int check;
 
-static ypbind_mode_t ypbindmode;
+static ypbind_mode_t default_ypbindmode;
 
 /*
  * This indicates whether or not we've been "ypset". If we haven't,
@@ -219,6 +220,8 @@ static struct domain *
 domain_create(const char *name)
 {
 	struct domain *dom;
+	const char *pathname;
+	struct stat st;
 
 	dom = malloc(sizeof *dom);
 	if (dom == NULL) {
@@ -238,6 +241,25 @@ domain_create(const char *name)
 	dom->dom_lockfd = -1;
 	dom->dom_alive = 0;
 	dom->dom_xid = unique_xid(dom);
+
+	/*
+	 * Per traditional ypbind(8) semantics, if a ypservers
+	 * file does not exist, we revert to broadcast mode.
+	 *
+	 * The sysadmin can force broadcast mode by passing the
+	 * -broadcast flag. There is currently no way to fail and
+	 * reject domains for which there is no ypservers file.
+	 */
+	dom->dom_ypbindmode = default_ypbindmode;
+	if (dom->dom_ypbindmode == YPBIND_DIRECT) {
+		pathname = ypservers_filename(domainname);
+		if (stat(pathname, &st) < 0) {
+			/* XXX syslog a warning here? */
+			DPRINTF("%s does not exist, defaulting to broadcast\n",
+				pathname);
+			dom->dom_ypbindmode = YPBIND_BROADCAST;
+		}
+	}
 
 	/* add to global list */
 	dom->dom_next = domains;
@@ -1022,7 +1044,7 @@ nag_servers(struct domain *dom)
 			       strerror(errno));
 	}
 
-	switch (ypbindmode) {
+	switch (dom->dom_ypbindmode) {
 	case YPBIND_BROADCAST:
 		if (been_ypset) {
 			return direct_set(buf, outlen, dom);
@@ -1151,8 +1173,6 @@ main(int argc, char *argv[])
 	fd_set fdsr;
 	int width, lockfd;
 	int evil = 0;
-	const char *pathname;
-	struct stat st;
 
 	setprogname(argv[0]);
 	(void)yp_get_default_domain(&domainname);
@@ -1161,20 +1181,7 @@ main(int argc, char *argv[])
 	if (_yp_invalid_domain(domainname))
 		errx(1, "Invalid domainname: %s", domainname);
 
-	/*
-	 * Per traditional ypbind(8) semantics, if a ypservers
-	 * file does not exist, we default to broadcast mode.
-	 * If the file does exist, we default to direct mode.
-	 * Note that we can still override direct mode by passing
-	 * the -broadcast flag.
-	 */
-	pathname = ypservers_filename(domainname);
-	if (stat(pathname, &st) < 0) {
-		DPRINTF("%s does not exist, defaulting to broadcast\n",
-			pathname);
-		ypbindmode = YPBIND_BROADCAST;
-	} else
-		ypbindmode = YPBIND_DIRECT;
+	default_ypbindmode = YPBIND_DIRECT;
 
 	while (--argc) {
 		++argv;
@@ -1187,7 +1194,7 @@ main(int argc, char *argv[])
 			allow_any_ypset = 0;
 			allow_local_ypset = 1;
 		} else if (!strcmp("-broadcast", *argv)) {
-			ypbindmode = YPBIND_BROADCAST;
+			default_ypbindmode = YPBIND_BROADCAST;
 #ifdef DEBUG
 		} else if (!strcmp("-d", *argv)) {
 			debug = 1;
