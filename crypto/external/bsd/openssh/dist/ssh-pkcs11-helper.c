@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-pkcs11-helper.c,v 1.2 2010/11/21 18:59:04 adam Exp $	*/
+/*	$NetBSD: ssh-pkcs11-helper.c,v 1.3 2011/05/24 14:27:07 joerg Exp $	*/
 /* $OpenBSD: ssh-pkcs11-helper.c,v 1.3 2010/02/24 06:12:53 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.2 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.3 2011/05/24 14:27:07 joerg Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
@@ -270,7 +270,6 @@ main(int argc, char **argv)
 	SyslogFacility log_facility = SYSLOG_FACILITY_AUTH;
 	LogLevel log_level = SYSLOG_LEVEL_ERROR;
 	char buf[4*4096];
-	extern char *optarg;
 	extern char *__progname;
 
 	TAILQ_INIT(&pkcs11_keylist);
