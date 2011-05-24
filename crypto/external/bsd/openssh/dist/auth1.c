@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: auth1.c,v 1.4 2011/05/24 14:26:55 joerg Exp $	*/
 /* $OpenBSD: auth1.c,v 1.74 2010/06/25 08:46:17 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth1.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.4 2011/05/24 14:26:55 joerg Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -390,7 +390,7 @@ do_authloop(Authctxt *authctxt)
 					msg[len] = '\0';
 			else
 				msg = "Access denied.";
-			packet_disconnect(msg);
+			packet_disconnect("%s", msg);
 		}
 #endif
 
