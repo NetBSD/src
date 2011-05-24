@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.20 2011/05/24 18:52:51 drochner Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.21 2011/05/24 18:59:22 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.20 2011/05/24 18:52:51 drochner Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.21 2011/05/24 18:59:22 drochner Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -54,9 +54,11 @@ __KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.20 2011/05/24 18:52:51 drochn
 #include <sys/md5.h>
 #include <sys/rmd160.h>
 #include <sys/sha1.h>
+#include <sys/sha2.h>
 
 struct swcr_auth_hash {
 	const struct auth_hash *auth_hash;
+	int ctxsize;
 	void (*Init)(void *);
 	int  (*Update)(void *, const uint8_t *, uint16_t);
 	void (*Final)(uint8_t *, void *);
@@ -222,80 +224,80 @@ static const struct swcr_enc_xform swcr_enc_xform_camellia = {
 
 /* Authentication instances */
 static const struct swcr_auth_hash swcr_auth_hash_null = {
-	&auth_hash_null,
+	&auth_hash_null, sizeof(int), /* NB: context isn't used */
 	null_init, null_update, null_final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_md5 = {
-	&auth_hash_hmac_md5,
+	&auth_hash_hmac_md5, sizeof(MD5_CTX),
 	(void (*) (void *)) MD5Init, MD5Update_int,
 	(void (*) (u_int8_t *, void *)) MD5Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha1 = {
-	&auth_hash_hmac_sha1,
+	&auth_hash_hmac_sha1, sizeof(SHA1_CTX),
 	SHA1Init_int, SHA1Update_int, SHA1Final_int
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_ripemd_160 = {
-	&auth_hash_hmac_ripemd_160,
+	&auth_hash_hmac_ripemd_160, sizeof(RMD160_CTX),
 	(void (*)(void *)) RMD160Init, RMD160Update_int,
 	(void (*)(u_int8_t *, void *)) RMD160Final
 };
 static const struct swcr_auth_hash swcr_auth_hash_hmac_md5_96 = {
-	&auth_hash_hmac_md5_96,
+	&auth_hash_hmac_md5_96, sizeof(MD5_CTX),
 	(void (*) (void *)) MD5Init, MD5Update_int,
 	(void (*) (u_int8_t *, void *)) MD5Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha1_96 = {
-	&auth_hash_hmac_sha1_96,
+	&auth_hash_hmac_sha1_96, sizeof(SHA1_CTX),
 	SHA1Init_int, SHA1Update_int, SHA1Final_int
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_ripemd_160_96 = {
-	&auth_hash_hmac_ripemd_160_96,
+	&auth_hash_hmac_ripemd_160_96, sizeof(RMD160_CTX),
 	(void (*)(void *)) RMD160Init, RMD160Update_int,
 	(void (*)(u_int8_t *, void *)) RMD160Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_key_md5 = {
-	&auth_hash_key_md5,
+	&auth_hash_key_md5, sizeof(MD5_CTX),
 	(void (*)(void *)) MD5Init, MD5Update_int,
 	(void (*)(u_int8_t *, void *)) MD5Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_key_sha1 = {
-	&auth_hash_key_sha1,
+	&auth_hash_key_sha1, sizeof(SHA1_CTX),
 	SHA1Init_int, SHA1Update_int, SHA1Final_int
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_md5 = {
-	&auth_hash_md5,
+	&auth_hash_md5, sizeof(MD5_CTX),
 	(void (*) (void *)) MD5Init, MD5Update_int,
 	(void (*) (u_int8_t *, void *)) MD5Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_sha1 = {
-	&auth_hash_sha1,
+	&auth_hash_sha1, sizeof(SHA1_CTX),
 	(void (*)(void *)) SHA1Init, SHA1Update_int,
 	(void (*)(u_int8_t *, void *)) SHA1Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_256 = {
-	&auth_hash_hmac_sha2_256,
+	&auth_hash_hmac_sha2_256, sizeof(SHA256_CTX),
 	(void (*)(void *)) SHA256_Init, SHA256Update_int,
 	(void (*)(u_int8_t *, void *)) SHA256_Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_384 = {
-	&auth_hash_hmac_sha2_384,
+	&auth_hash_hmac_sha2_384, sizeof(SHA384_CTX),
 	(void (*)(void *)) SHA384_Init, SHA384Update_int,
 	(void (*)(u_int8_t *, void *)) SHA384_Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_512 = {
-	&auth_hash_hmac_sha2_384,
+	&auth_hash_hmac_sha2_512, sizeof(SHA512_CTX),
 	(void (*)(void *)) SHA512_Init, SHA512Update_int,
 	(void (*)(u_int8_t *, void *)) SHA512_Final
 };

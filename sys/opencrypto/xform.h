@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.16 2011/05/23 13:51:10 drochner Exp $ */
+/*	$NetBSD: xform.h,v 1.17 2011/05/24 18:59:23 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -26,11 +26,6 @@
 #ifndef _CRYPTO_XFORM_H_
 #define _CRYPTO_XFORM_H_
 
-#include <sys/md5.h>
-#include <sys/sha1.h>
-#include <sys/sha2.h>
-#include <sys/rmd160.h>
-
 /* Declarations */
 struct auth_hash {
 	int type;
@@ -39,7 +34,6 @@ struct auth_hash {
 	u_int16_t hashsize;
 	u_int16_t authsize;
 	u_int16_t blocksize;
-	u_int16_t ctxsize;
 };
 
 /* Provide array-limit for clients (e.g., netipsec) */

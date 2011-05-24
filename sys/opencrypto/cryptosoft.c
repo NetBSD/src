@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.34 2011/05/24 18:52:51 drochner Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.35 2011/05/24 18:59:22 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.34 2011/05/24 18:52:51 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.35 2011/05/24 18:59:22 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,7 +479,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 
 	axf = sw->sw_axf;
 
-	memcpy(&ctx, sw->sw_ictx, axf->auth_hash->ctxsize);
+	memcpy(&ctx, sw->sw_ictx, axf->ctxsize);
 
 	switch (outtype) {
 	case CRYPTO_BUF_CONTIG:
@@ -519,7 +519,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 			return EINVAL;
 
 		axf->Final(aalg, &ctx);
-		memcpy(&ctx, sw->sw_octx, axf->auth_hash->ctxsize);
+		memcpy(&ctx, sw->sw_octx, axf->ctxsize);
 		axf->Update(&ctx, aalg, axf->auth_hash->hashsize);
 		axf->Final(aalg, &ctx);
 		break;
@@ -752,14 +752,14 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			axf = &swcr_auth_hash_hmac_ripemd_160_96;
 			goto authcommon;	/* leave this for safety */
 		authcommon:
-			(*swd)->sw_ictx = malloc(axf->auth_hash->ctxsize,
+			(*swd)->sw_ictx = malloc(axf->ctxsize,
 			    M_CRYPTO_DATA, M_NOWAIT);
 			if ((*swd)->sw_ictx == NULL) {
 				swcr_freesession(NULL, i);
 				return ENOBUFS;
 			}
 
-			(*swd)->sw_octx = malloc(axf->auth_hash->ctxsize,
+			(*swd)->sw_octx = malloc(axf->ctxsize,
 			    M_CRYPTO_DATA, M_NOWAIT);
 			if ((*swd)->sw_octx == NULL) {
 				swcr_freesession(NULL, i);
@@ -796,7 +796,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		case CRYPTO_SHA1_KPDK:
 			axf = &swcr_auth_hash_key_sha1;
 		auth2common:
-			(*swd)->sw_ictx = malloc(axf->auth_hash->ctxsize,
+			(*swd)->sw_ictx = malloc(axf->ctxsize,
 			    M_CRYPTO_DATA, M_NOWAIT);
 			if ((*swd)->sw_ictx == NULL) {
 				swcr_freesession(NULL, i);
@@ -827,7 +827,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		case CRYPTO_SHA1:
 			axf = &swcr_auth_hash_sha1;
 		auth3common:
-			(*swd)->sw_ictx = malloc(axf->auth_hash->ctxsize,
+			(*swd)->sw_ictx = malloc(axf->ctxsize,
 			    M_CRYPTO_DATA, M_NOWAIT);
 			if ((*swd)->sw_ictx == NULL) {
 				swcr_freesession(NULL, i);
@@ -916,11 +916,11 @@ swcr_freesession(void *arg, u_int64_t tid)
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
-				memset(swd->sw_ictx, 0, axf->auth_hash->ctxsize);
+				memset(swd->sw_ictx, 0, axf->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
 			}
 			if (swd->sw_octx) {
-				memset(swd->sw_octx, 0, axf->auth_hash->ctxsize);
+				memset(swd->sw_octx, 0, axf->ctxsize);
 				free(swd->sw_octx, M_CRYPTO_DATA);
 			}
 			break;
@@ -930,7 +930,7 @@ swcr_freesession(void *arg, u_int64_t tid)
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx) {
-				memset(swd->sw_ictx, 0, axf->auth_hash->ctxsize);
+				memset(swd->sw_ictx, 0, axf->ctxsize);
 				free(swd->sw_ictx, M_CRYPTO_DATA);
 			}
 			if (swd->sw_octx) {
