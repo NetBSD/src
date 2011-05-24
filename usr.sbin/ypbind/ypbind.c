@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.84 2011/05/24 07:01:40 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.85 2011/05/24 07:01:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.84 2011/05/24 07:01:40 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.85 2011/05/24 07:01:53 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -401,7 +401,6 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
 	    sizeof(dom->dom_server_addr));
 	/* recheck binding in 60 seconds */
 	dom->dom_checktime = time(NULL) + 60;
-	dom->dom_vers = YPVERS;
 	dom->dom_alive = 1;
 
 	if (dom->dom_lockfd != -1)
@@ -559,7 +558,8 @@ ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 	bindsin.sin_port = sd->ypsetdom_port;
 	rpc_received(sd->ypsetdom_domain, &bindsin, 1, 1);
 
-	DPRINTF("ypset to %s succeeded\n", inet_ntoa(bindsin.sin_addr));
+	DPRINTF("ypset to %s for domain %s succeeded\n",
+		inet_ntoa(bindsin.sin_addr), sd->ypsetdom_domain);
 	res = 1;
 	return &res;
 }
