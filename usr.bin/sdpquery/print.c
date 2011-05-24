@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.7 2010/12/14 15:18:20 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.8 2011/05/24 12:44:30 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.7 2010/12/14 15:18:20 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.8 2011/05/24 12:44:30 joerg Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -1097,7 +1097,7 @@ print_supported_data_stores(sdp_data_t *data)
 
 	sep = "\n    ";
 	while (sdp_get_uint8(&list, &v)) {
-		printf(sep);
+		printf("%s", sep);
 		sep = ", ";
 
 		switch(v) {
@@ -1127,7 +1127,7 @@ print_supported_formats(sdp_data_t *data)
 
 	sep = "\n    ";
 	while (sdp_get_uint8(&list, &v)) {
-		printf(sep);
+		printf("%s", sep);
 		sep = ", ";
 
 		switch(v) {
@@ -1433,7 +1433,7 @@ print_bnep(sdp_data_t *data)
 	printf(" (v%d.%d", (v >> 8), (v & 0xff));
 	sep = "; ";
 	while (sdp_get_uint16(&seq, &v)) {
-		printf(sep);
+		printf("%s", sep);
 		sep = ", ";
 
 		switch (v) {
