@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.63 2011/05/24 19:10:09 drochner Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.64 2011/05/24 19:12:53 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.63 2011/05/24 19:10:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.64 2011/05/24 19:12:53 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -456,7 +456,8 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	/* the iov needs to be big enough to handle the uncompressed
 	 * data.... */
 	cse->uio.uio_iov[0].iov_len = iov_len;
-	cse->uio.uio_iov[0].iov_base = kmem_alloc(iov_len, KM_SLEEP);
+	if (iov_len > 0)
+		cse->uio.uio_iov[0].iov_base = kmem_alloc(iov_len, KM_SLEEP);
 	cse->uio.uio_resid = cse->uio.uio_iov[0].iov_len;
 	DPRINTF(("cryptodev_op[%u]: uio.iov_base %p malloced %d bytes\n",
 		CRYPTO_SESID2LID(cse->sid),
@@ -677,9 +678,12 @@ eagain:
 	dst_len = crp->crp_ilen;
 	/* let the user know how much data was returned */
 	if (crp->crp_olen) {
+		if (crp->crp_olen > (cop->dst_len ? cop->dst_len : cop->len)) {
+			error = ENOMEM;
+			goto bail;
+		}
 		dst_len = cop->dst_len = crp->crp_olen;
 	}
-	crp->len = dst_len;
 
 	if (cop->dst) {
 		DPRINTF(("cryptodev_op: copyout %d bytes to %p\n", dst_len, cop->dst));
