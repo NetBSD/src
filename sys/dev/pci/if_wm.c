@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.221 2011/05/20 00:57:42 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.222 2011/05/24 22:46:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.221 2011/05/20 00:57:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.222 2011/05/24 22:46:42 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -3482,6 +3482,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_ICH9:
 	case WM_T_ICH10:
 		sc->sc_pba = PBA_10K;
+		break;
 	case WM_T_PCH:
 	case WM_T_PCH2:
 		sc->sc_pba = PBA_26K;
