@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.13 2010/12/13 17:35:08 pooka Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.14 2011/05/24 11:38:56 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.13 2010/12/13 17:35:08 pooka Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.14 2011/05/24 11:38:56 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -92,9 +92,9 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 	    param->gifaddr.cmd == 0)
 		return;
 	else if (prog_ioctl(s, param->gifaddr.cmd, param->dgreq.buf) == -1)
-		err(EXIT_FAILURE, param->gifaddr.desc);
+		err(EXIT_FAILURE, "%s", param->gifaddr.desc);
 	else if (prog_ioctl(s, param->difaddr.cmd, param->dgreq.buf) == -1)
-		err(EXIT_FAILURE, param->difaddr.desc);
+		err(EXIT_FAILURE, "%s", param->difaddr.desc);
 	else
 		return;
 
@@ -157,20 +157,20 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 		if (prog_ioctl(s, param->gifaddr.cmd, param->dgreq.buf) == 0) {
 			rc = prog_ioctl(s, param->difaddr.cmd, param->dgreq.buf);
 			if (rc == -1)
-				err(EXIT_FAILURE, param->difaddr.desc);
+				err(EXIT_FAILURE, "%s", param->difaddr.desc);
 		} else if (errno == EADDRNOTAVAIL)
 			;	/* No address was assigned yet. */
 		else
-			err(EXIT_FAILURE, param->gifaddr.desc);
+			err(EXIT_FAILURE, "%s", param->gifaddr.desc);
 	} else if (delete) {
 		loadbuf(&param->dgaddr, addr);
 		if (prog_ioctl(s, param->difaddr.cmd, param->dgreq.buf) == -1)
-			err(EXIT_FAILURE, param->difaddr.desc);
+			err(EXIT_FAILURE, "%s", param->difaddr.desc);
 		return;
 	}
 	if (param->pre_aifaddr != NULL &&
 	    (*param->pre_aifaddr)(env, param) == -1)
 		err(EXIT_FAILURE, "pre-%s", param->aifaddr.desc);
 	if (prog_ioctl(s, param->aifaddr.cmd, param->req.buf) == -1)
-		err(EXIT_FAILURE, param->aifaddr.desc);
+		err(EXIT_FAILURE, "%s", param->aifaddr.desc);
 }
