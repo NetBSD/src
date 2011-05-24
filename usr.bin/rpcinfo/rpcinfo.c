@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.32 2011/02/10 00:05:52 christos Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.33 2011/05/24 12:42:25 joerg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -153,7 +153,7 @@ static void	rpcbaddrlist(const char *, int, char **);
 static void	deletereg(const char *, int, char **);
 static void	print_rmtcallstat(int, const rpcb_stat *);
 static void	print_getaddrstat(int, const rpcb_stat *);
-static void	usage(void)__attribute__((__noreturn__));
+static void	usage(void) __dead;
 static rpcprog_t	getprognum(const char *);
 static rpcvers_t	getvers(const char *);
 static const char *spaces(size_t);
@@ -1499,6 +1499,7 @@ usage(void)
 	(void)fprintf(stderr, "\t%s -b prognum versnum\n", getprogname());
 	(void)fprintf(stderr, "\t%s -d [-T netid] prognum versnum\n",
 	    getprogname());
+	exit(0);
 }
 
 static rpcprog_t
