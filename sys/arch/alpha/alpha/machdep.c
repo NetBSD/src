@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.332 2011/04/15 21:24:00 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.333 2011/05/24 20:26:34 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.332 2011/04/15 21:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.333 2011/05/24 20:26:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,7 +657,7 @@ nobootinfo:
 	 */
 	pcb0->pcb_hw.apcb_ksp = v + USPACE - sizeof(struct trapframe);
 	lwp0.l_md.md_tf = (struct trapframe *)pcb0->pcb_hw.apcb_ksp;
-	simple_lock_init(&pcb0->pcb_fpcpu_slock);
+	mutex_init(&pcb0->pcb_fpcpu_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/* Indicate that lwp0 has a CPU. */
 	lwp0.l_cpu = ci;
