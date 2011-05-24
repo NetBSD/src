@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.82 2011/05/24 07:01:15 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.83 2011/05/24 07:01:24 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.82 2011/05/24 07:01:15 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.83 2011/05/24 07:01:24 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -97,7 +97,8 @@ struct domain {
 	int dom_lockfd;
 	int dom_alive;
 	uint32_t dom_xid;
-	ypbind_mode_t dom_ypbindmode;
+	ypbind_mode_t dom_ypbindmode;	/* broadcast or direct */
+	int dom_been_ypset;		/* ypset been done on this domain? */
 };
 
 #define BUFSIZE		1400
@@ -108,13 +109,6 @@ static struct domain *domains;
 static int check;
 
 static ypbind_mode_t default_ypbindmode;
-
-/*
- * This indicates whether or not we've been "ypset". If we haven't,
- * we behave like YPBIND_BROADCAST.  If we have, we behave like
- * YPBIND_DIRECT.
- */
-static int been_ypset;
 
 static int allow_local_ypset = 0, allow_any_ypset = 0;
 static int insecure;
@@ -353,7 +347,8 @@ purge_bindingdir(const char *dirpath)
  * LOOPBACK IS MORE IMPORTANT: PUT IN HACK
  */
 static void
-rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force)
+rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force,
+	     int is_ypset)
 {
 	struct domain *dom;
 	struct iovec iov[2];
@@ -382,6 +377,10 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force)
 		if (force == 0)
 			return;
 		dom = domain_create(dom_name);
+	}
+
+	if (is_ypset) {
+		dom->dom_been_ypset = 1;
 	}
 
 	/* soft update, alive */
@@ -550,14 +549,12 @@ ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 		return &res;
 	}
 
-	been_ypset = 1;
-
 	(void)memset(&bindsin, 0, sizeof bindsin);
 	bindsin.sin_family = AF_INET;
 	bindsin.sin_len = sizeof(bindsin);
 	bindsin.sin_addr = sd->ypsetdom_addr;
 	bindsin.sin_port = sd->ypsetdom_port;
-	rpc_received(sd->ypsetdom_domain, &bindsin, 1);
+	rpc_received(sd->ypsetdom_domain, &bindsin, 1, 1);
 
 	DPRINTF("ypset to %s succeeded\n", inet_ntoa(bindsin.sin_addr));
 	res = 1;
@@ -823,7 +820,7 @@ direct_set(char *buf, int outlen, struct domain *dom)
 	fd = open_locked(path, O_RDONLY, 0644);
 	if (fd == -1) {
 		yp_log(LOG_WARNING, "%s: %s", path, strerror(errno));
-		been_ypset = 0;
+		dom->dom_been_ypset = 0;
 		return -1;
 	}
 
@@ -840,7 +837,7 @@ direct_set(char *buf, int outlen, struct domain *dom)
 			yp_log(LOG_WARNING, "%s: %s", path, strerror(errno));
 		else
 			yp_log(LOG_WARNING, "%s: short read", path);
-		been_ypset = 0;
+		dom->dom_been_ypset = 0;
 		return -1;
 	}
 
@@ -901,7 +898,7 @@ try_again:
 			raddr.sin_port = htons((uint16_t)rmtcr_port);
 			dom = domain_find(msg.rm_xid);
 			if (dom != NULL)
-				rpc_received(dom->dom_name, &raddr, 0);
+				rpc_received(dom->dom_name, &raddr, 0, 0);
 		}
 	}
 	xdr.x_op = XDR_FREE;
@@ -955,7 +952,7 @@ try_again:
 		    (msg.acpted_rply.ar_stat == SUCCESS)) {
 			dom = domain_find(msg.rm_xid);
 			if (dom != NULL)
-				rpc_received(dom->dom_name, &raddr, 0);
+				rpc_received(dom->dom_name, &raddr, 0, 0);
 		}
 	}
 	xdr.x_op = XDR_FREE;
@@ -1046,7 +1043,7 @@ nag_servers(struct domain *dom)
 
 	switch (dom->dom_ypbindmode) {
 	case YPBIND_BROADCAST:
-		if (been_ypset) {
+		if (dom->dom_been_ypset) {
 			return direct_set(buf, outlen, dom);
 		}
 		return broadcast(buf, outlen);
