@@ -13,4 +13,18 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 	${OBJCOPY} -S -O binary $@ $@.bin
 
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
+
+.if defined(NEED_UBOOTIMAGE) && ${NEED_UBOOTIMAGE} != "no"
+_OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
+MKUBOOTIMAGEARGS=       -A mips -T kernel -C none
+MKUBOOTIMAGEARGS+=      -a ${TEXTADDR:C/....$/0000/} -e $(TEXTADDR)
+MKUBOOTIMAGEARGS+=      -n "NetBSD/$(MACHINE) ${_OSRELEASE} ($(KERNEL_BUILD:T))"
+
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin $@.ub; \
+	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin $@.ub; \
+
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ub@}
 .endif
+.endif
+
