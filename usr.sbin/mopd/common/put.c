@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.6 2009/11/17 18:58:07 drochner Exp $	*/
+/*	$NetBSD: put.c,v 1.7 2011/05/24 13:08:16 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: put.c,v 1.6 2009/11/17 18:58:07 drochner Exp $");
+__RCSID("$NetBSD: put.c,v 1.7 2011/05/24 13:08:16 joerg Exp $");
 #endif
 
 #include "os.h"
@@ -79,7 +79,7 @@ mopPutTime(u_char *pkt, int *idx, time_t value)
 	time_t tnow;
 	struct tm *timenow;
 
-	if ((value == 0)) {
+	if (value == 0) {
 	  tnow = time(NULL);
 	} else {
 	  tnow = value;
