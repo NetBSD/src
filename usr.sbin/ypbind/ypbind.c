@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.71 2011/05/24 06:57:30 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.72 2011/05/24 06:57:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.71 2011/05/24 06:57:30 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.72 2011/05/24 06:57:55 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -142,9 +142,10 @@ yp_log(int pri, const char *fmt, ...)
 	va_start(ap, fmt);
 
 #if defined(DEBUG)
-	if (debug)
+	if (debug) {
 		(void)vprintf(fmt, ap);
-	else
+		(void)printf("\n");
+	} else
 #endif
 		vsyslog(pri, fmt, ap);
 	va_end(ap);
@@ -199,7 +200,7 @@ makebinding(const char *dm)
 	struct _dom_binding *ypdb;
 
 	if ((ypdb = malloc(sizeof *ypdb)) == NULL) {
-		yp_log(LOG_ERR, "makebinding");
+		yp_log(LOG_ERR, "makebinding: Out of memory");
 		exit(1);
 	}
 
@@ -298,6 +299,7 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 	struct _dom_binding *ypdb;
 	struct iovec iov[2];
 	struct ypbind_resp ybr;
+	ssize_t result;
 	int fd;
 
 	DPRINTF("returned from %s about %s\n",
@@ -368,9 +370,12 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 	ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port =
 	    raddrp->sin_port;
 
-	if ((size_t)writev(ypdb->dom_lockfd, iov, 2) !=
-	    iov[0].iov_len + iov[1].iov_len) {
-		yp_log(LOG_WARNING, "writev: %m");
+	result = writev(ypdb->dom_lockfd, iov, 2);
+	if (result < 0 || (size_t)result != iov[0].iov_len + iov[1].iov_len) {
+		if (result < 0)
+			yp_log(LOG_WARNING, "writev: %s", strerror(errno));
+		else
+			yp_log(LOG_WARNING, "writev: short count");
 		(void)close(ypdb->dom_lockfd);
 		removelock(ypdb);
 		ypdb->dom_lockfd = -1;
@@ -591,7 +596,8 @@ broadcast(char *buf, int outlen)
 	bindsin.sin_port = htons(PMAPPORT);
 
 	if (getifaddrs(&ifap) != 0) {
-		yp_log(LOG_WARNING, "broadcast: getifaddrs: %m");
+		yp_log(LOG_WARNING, "broadcast: getifaddrs: %s",
+		       strerror(errno));
 		return (-1);
 	}
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
@@ -620,7 +626,8 @@ broadcast(char *buf, int outlen)
 		if (sendto(rpcsock, buf, outlen, 0,
 		    (struct sockaddr *)(void *)&bindsin,
 		    (socklen_t)bindsin.sin_len) == -1)
-			yp_log(LOG_WARNING, "broadcast: sendto: %m");
+			yp_log(LOG_WARNING, "broadcast: sendto: %s",
+			       strerror(errno));
 	}
 	freeifaddrs(ifap);
 	return (0);
@@ -650,7 +657,8 @@ direct(char *buf, int outlen)
 		strcpy(ypservers_path, path);
 		df = fopen(ypservers_path, "r");
 		if (df == NULL) {
-			yp_log(LOG_ERR, "%s: ", ypservers_path);
+			yp_log(LOG_ERR, "%s: %s", ypservers_path,
+			       strerror(errno));
 			exit(1);
 		}
 	}
@@ -688,14 +696,15 @@ direct(char *buf, int outlen)
 			if (sendto(rpcsock, buf, outlen, 0,
 			    (struct sockaddr *)(void *)&bindsin,
 			    (socklen_t)sizeof(bindsin)) < 0) {
-				yp_log(LOG_WARNING, "direct: sendto: %m");
+				yp_log(LOG_WARNING, "direct: sendto: %s",
+				       strerror(errno));
 				continue;
 			} else
 				count++;
 		}
 	}
 	if (!count) {
-		yp_log(LOG_WARNING, "no contactable servers found in %s",
+		yp_log(LOG_WARNING, "No contactable servers found in %s",
 		    ypservers_path);
 		return -1;
 	}
@@ -722,7 +731,7 @@ direct_set(char *buf, int outlen, struct _dom_binding *ypdb)
 	    ypdb->dom_domain, ypdb->dom_vers);
 
 	if ((fd = open(path, O_SHLOCK|O_RDONLY, 0644)) == -1) {
-		yp_log(LOG_WARNING, "%s: %m", path);
+		yp_log(LOG_WARNING, "%s: %s", path, strerror(errno));
 		been_ypset = 0;
 		return -1;
 	}
@@ -738,9 +747,12 @@ direct_set(char *buf, int outlen, struct _dom_binding *ypdb)
 	iov[1].iov_len = sizeof(ybr);
 	bytes = readv(fd, iov, 2);
 	(void)close(fd);
-	if ((size_t)bytes != (iov[0].iov_len + iov[1].iov_len)) {
+	if (bytes <0 || (size_t)bytes != (iov[0].iov_len + iov[1].iov_len)) {
 		/* Binding file corrupt? */
-		yp_log(LOG_WARNING, "%s: %m", path);
+		if (bytes < 0)
+			yp_log(LOG_WARNING, "%s: %s", path, strerror(errno));
+		else
+			yp_log(LOG_WARNING, "%s: short read", path);
 		been_ypset = 0;
 		return -1;
 	}
@@ -751,7 +763,7 @@ direct_set(char *buf, int outlen, struct _dom_binding *ypdb)
 	if (sendto(rpcsock, buf, outlen, 0,
 	    (struct sockaddr *)(void *)&bindsin,
 	    (socklen_t)sizeof(bindsin)) < 0) {
-		yp_log(LOG_WARNING, "direct_set: sendto: %m");
+		yp_log(LOG_WARNING, "direct_set: sendto: %s", strerror(errno));
 		return -1;
 	}
 
@@ -941,7 +953,8 @@ nag_servers(struct _dom_binding *ypdb)
 		if (sendto(rpcsock, buf, outlen, 0,
 		    (struct sockaddr *)(void *)&bindsin,
 		    (socklen_t)sizeof bindsin) == -1)
-			yp_log(LOG_WARNING, "nag_servers: sendto: %m");
+			yp_log(LOG_WARNING, "nag_servers: sendto: %s",
+			       strerror(errno));
 	}
 
 	switch (ypbindmode) {
@@ -1016,7 +1029,7 @@ ping(struct _dom_binding *ypdb)
 	if (sendto(pingsock, buf, outlen, 0, 
 	    (struct sockaddr *)(void *)&ypdb->dom_server_addr,
 	    (socklen_t)sizeof ypdb->dom_server_addr) == -1)
-		yp_log(LOG_WARNING, "ping: sendto: %m");
+		yp_log(LOG_WARNING, "ping: sendto: %s", strerror(errno));
 	return 0;
 
 }
@@ -1200,7 +1213,7 @@ main(int argc, char *argv[])
 			checkwork();
 			break;
 		case -1:
-			yp_log(LOG_WARNING, "select: %m");
+			yp_log(LOG_WARNING, "select: %s", strerror(errno));
 			break;
 		default:
 			if (FD_ISSET(rpcsock, &fdsr))
