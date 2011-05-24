@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.78 2011/05/24 06:59:35 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.79 2011/05/24 06:59:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.78 2011/05/24 06:59:35 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.79 2011/05/24 06:59:53 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ typedef enum {
 struct domain {
 	struct domain *dom_next;
 
-	char dom_domain[YPMAXDOMAIN + 1];
+	char dom_name[YPMAXDOMAIN + 1];
 	struct sockaddr_in dom_server_addr;
 	int dom_socket;
 	CLIENT *dom_client;
@@ -226,7 +226,7 @@ domain_create(const char *name)
 	}
 
 	(void)memset(dom, 0, sizeof *dom);
-	(void)strlcpy(dom->dom_domain, name, sizeof(dom->dom_domain));
+	(void)strlcpy(dom->dom_name, name, sizeof(dom->dom_name));
 	return dom;
 }
 
@@ -240,7 +240,7 @@ makelock(struct domain *dom)
 	char path[MAXPATHLEN];
 
 	(void)snprintf(path, sizeof(path), "%s/%s.%ld", BINDINGDIR,
-	    dom->dom_domain, dom->dom_vers);
+	    dom->dom_name, dom->dom_vers);
 
 	fd = open_locked(path, O_CREAT|O_RDWR|O_TRUNC, 0644);
 	if (fd == -1) {
@@ -260,7 +260,7 @@ removelock(struct domain *dom)
 	char path[MAXPATHLEN];
 
 	(void)snprintf(path, sizeof(path), "%s/%s.%ld",
-	    BINDINGDIR, dom->dom_domain, dom->dom_vers);
+	    BINDINGDIR, dom->dom_name, dom->dom_vers);
 	(void)unlink(path);
 }
 
@@ -337,7 +337,7 @@ rpc_received(char *dom_name, struct sockaddr_in *raddrp, int force)
 		return;
 
 	for (dom = domains; dom != NULL; dom = dom->dom_next)
-		if (!strcmp(dom->dom_domain, dom_name))
+		if (!strcmp(dom->dom_name, dom_name))
 			break;
 
 	if (dom == NULL) {
@@ -436,7 +436,7 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 	    dom = dom->dom_next, count++) {
 		if (count > 100)
 			return NULL;		/* prevent denial of service */
-		if (!strcmp(dom->dom_domain, arg))
+		if (!strcmp(dom->dom_name, arg))
 			break;
 	}
 
@@ -481,7 +481,7 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 		dom->dom_server_addr.sin_addr.s_addr;
 	res.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port =
 		dom->dom_server_addr.sin_port;
-	DPRINTF("domain %s at %s/%d\n", dom->dom_domain,
+	DPRINTF("domain %s at %s/%d\n", dom->dom_name,
 		inet_ntoa(dom->dom_server_addr.sin_addr),
 		ntohs(dom->dom_server_addr.sin_port));
 	return &res;
@@ -794,7 +794,7 @@ direct_set(char *buf, int outlen, struct domain *dom)
 	 * bind again.
 	 */
 	(void)snprintf(path, sizeof(path), "%s/%s.%ld", BINDINGDIR,
-	    dom->dom_domain, dom->dom_vers);
+	    dom->dom_name, dom->dom_vers);
 
 	fd = open_locked(path, O_RDONLY, 0644);
 	if (fd == -1) {
@@ -877,7 +877,7 @@ try_again:
 			raddr.sin_port = htons((uint16_t)rmtcr_port);
 			dom = domain_find(msg.rm_xid);
 			if (dom != NULL)
-				rpc_received(dom->dom_domain, &raddr, 0);
+				rpc_received(dom->dom_name, &raddr, 0);
 		}
 	}
 	xdr.x_op = XDR_FREE;
@@ -931,7 +931,7 @@ try_again:
 		    (msg.acpted_rply.ar_stat == SUCCESS)) {
 			dom = domain_find(msg.rm_xid);
 			if (dom != NULL)
-				rpc_received(dom->dom_domain, &raddr, 0);
+				rpc_received(dom->dom_name, &raddr, 0);
 		}
 	}
 	xdr.x_op = XDR_FREE;
@@ -944,7 +944,7 @@ try_again:
 static int
 nag_servers(struct domain *dom)
 {
-	char *dom_name = dom->dom_domain;
+	char *dom_name = dom->dom_name;
 	struct rpc_msg msg;
 	char buf[BUFSIZE];
 	enum clnt_stat st;
@@ -1040,7 +1040,7 @@ nag_servers(struct domain *dom)
 static int
 ping(struct domain *dom)
 {
-	char *dom_name = dom->dom_domain;
+	char *dom_name = dom->dom_name;
 	struct rpc_msg msg;
 	char buf[BUFSIZE];
 	enum clnt_stat st;
