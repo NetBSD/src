@@ -2,7 +2,8 @@
 
 RAMDISKDIR!=	cd ${NETBSDSRCDIR}/distrib/${THISMIPS:T}/instkernel/ramdisk && ${PRINTOBJDIR}
 
-.if defined(NEEDS_MDSETIMAGE) && exists(${RAMDISKDIR}/ramdisk.fs)
+.if defined(NEED_MDSETIMAGE) && ${NEED_MDSETIMAGE} != no \
+    && exists(${RAMDISKDIR}/ramdisk.fs)
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs; \
 	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs
