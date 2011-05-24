@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.35 2011/05/24 18:59:22 drochner Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.36 2011/05/24 19:10:10 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.35 2011/05/24 18:59:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.36 2011/05/24 19:10:10 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ union authctx {
 	SHA256_CTX sha256ctx;
 	SHA384_CTX sha384ctx;
 	SHA512_CTX sha512ctx;
+	aesxcbc_ctx aesxcbcctx;
 };
 
 struct swcr_data **swcr_sessions = NULL;
@@ -536,6 +537,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	case CRYPTO_NULL_HMAC:
 	case CRYPTO_MD5:
 	case CRYPTO_SHA1:
+	case CRYPTO_AES_XCBC_MAC_96:
 		axf->Final(aalg, &ctx);
 		break;
 	}
@@ -838,6 +840,20 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_axf = axf;
 			break;
 
+		case CRYPTO_AES_XCBC_MAC_96:
+			axf = &swcr_auth_hash_aes_xcbc_mac;
+			(*swd)->sw_ictx = malloc(axf->ctxsize,
+			    M_CRYPTO_DATA, M_NOWAIT);
+			if ((*swd)->sw_ictx == NULL) {
+				swcr_freesession(NULL, i);
+				return ENOBUFS;
+			}
+			axf->Init((*swd)->sw_ictx);
+			axf->Setkey((*swd)->sw_ictx,
+				cri->cri_key, cri->cri_klen / 8);
+			(*swd)->sw_axf = axf;
+			break;
+
 		case CRYPTO_DEFLATE_COMP:
 			cxf = &swcr_comp_algo_deflate;
 			(*swd)->sw_cxf = cxf;
@@ -941,6 +957,7 @@ swcr_freesession(void *arg, u_int64_t tid)
 
 		case CRYPTO_MD5:
 		case CRYPTO_SHA1:
+		case CRYPTO_AES_XCBC_MAC_96:
 			axf = swd->sw_axf;
 
 			if (swd->sw_ictx)
@@ -1046,6 +1063,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 		case CRYPTO_SHA1_KPDK:
 		case CRYPTO_MD5:
 		case CRYPTO_SHA1:
+		case CRYPTO_AES_XCBC_MAC_96:
 			if ((crp->crp_etype = swcr_authcompute(crp, crd, sw,
 			    crp->crp_buf, type)) != 0)
 				goto done;
@@ -1108,6 +1126,7 @@ swcr_init(void)
 	REGISTER(CRYPTO_SHA1_KPDK);
 	REGISTER(CRYPTO_MD5);
 	REGISTER(CRYPTO_SHA1);
+	REGISTER(CRYPTO_AES_XCBC_MAC_96);
 	REGISTER(CRYPTO_RIJNDAEL128_CBC);
 	REGISTER(CRYPTO_DEFLATE_COMP);
 	REGISTER(CRYPTO_DEFLATE_COMP_NOGROW);
