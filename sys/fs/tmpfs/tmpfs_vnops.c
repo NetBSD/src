@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.83 2011/05/24 20:17:49 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.84 2011/05/24 23:16:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.83 2011/05/24 20:17:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.84 2011/05/24 23:16:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -132,8 +132,9 @@ tmpfs_lookup(void *v)
 	} */ *ap = v;
 	vnode_t *dvp = ap->a_dvp, **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
+	const bool lastcn = (cnp->cn_flags & ISLASTCN) != 0;
+	tmpfs_node_t *dnode, *tnode;
 	tmpfs_dirent_t *de;
-	tmpfs_node_t *dnode;
 	int error;
 
 	KASSERT(VOP_ISLOCKED(dvp));
@@ -150,8 +151,7 @@ tmpfs_lookup(void *v)
 	 * If requesting the last path component on a read-only file system
 	 * with a write operation, deny it.
 	 */
-	if ((cnp->cn_flags & ISLASTCN) &&
-	    (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
+	if (lastcn && (dvp->v_mount->mnt_flag & MNT_RDONLY) != 0 &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
 		error = EROFS;
 		goto out;
@@ -186,8 +186,7 @@ tmpfs_lookup(void *v)
 		/*
 		 * Lookup of "." case.
 		 */
-		if ((cnp->cn_flags & ISLASTCN) &&
-		    (cnp->cn_nameiop == RENAME)) {
+		if (lastcn && cnp->cn_nameiop == RENAME) {
 			error = EISDIR;
 			goto out;
 		}
@@ -207,7 +206,7 @@ tmpfs_lookup(void *v)
 		 * if we are creating or renaming an entry and are working
 		 * on the last component of the path name.
 		 */
-		if ((cnp->cn_flags & ISLASTCN) && (cnp->cn_nameiop == CREATE ||
+		if (lastcn && (cnp->cn_nameiop == CREATE ||
 		    cnp->cn_nameiop == RENAME)) {
 			error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 			if (error) {
@@ -221,53 +220,50 @@ tmpfs_lookup(void *v)
 			KASSERT(de->td_node == TMPFS_NODE_WHITEOUT);
 			cnp->cn_flags |= ISWHITEOUT;
 		}
-	} else {
-		tmpfs_node_t *tnode = de->td_node;
+		goto done;
+	}
 
-		/*
-		 * If we are not at the last path component and found a
-		 * non-directory or non-link entry (which may itself be
-		 * pointing to a directory), raise an error.
-		 */
-		if ((tnode->tn_type != VDIR && tnode->tn_type != VLNK) &&
-		    (cnp->cn_flags & ISLASTCN) == 0) {
-			error = ENOTDIR;
+	tnode = de->td_node;
+
+	/*
+	 * If it is not the last path component and found a non-directory
+	 * or non-link entry (which may itself be pointing to a directory),
+	 * raise an error.
+	 */
+	if (!lastcn && tnode->tn_type != VDIR && tnode->tn_type != VLNK) {
+		error = ENOTDIR;
+		goto out;
+	}
+
+	/* Check the permissions. */
+	if (lastcn && (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
+		kauth_action_t action = 0;
+
+		/* This is the file-system's decision. */
+		if ((dnode->tn_mode & S_ISTXT) != 0 &&
+		    kauth_cred_geteuid(cnp->cn_cred) != dnode->tn_uid &&
+		    kauth_cred_geteuid(cnp->cn_cred) != tnode->tn_uid) {
+			error = EPERM;
+		} else {
+			error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+		}
+
+		if (cnp->cn_nameiop == DELETE) {
+			action |= KAUTH_VNODE_DELETE;
+		} else {
+			KASSERT(cnp->cn_nameiop == RENAME);
+			action |= KAUTH_VNODE_RENAME;
+		}
+		error = kauth_authorize_vnode(cnp->cn_cred,
+		    action, *vpp, dvp, error);
+		if (error) {
 			goto out;
 		}
-
-		/* Check permissions. */
-		if ((cnp->cn_flags & ISLASTCN) && (cnp->cn_nameiop == DELETE ||
-		    cnp->cn_nameiop == RENAME)) {
-			kauth_action_t action = 0;
-
-			/* This is the file-system's decision. */
-			if ((dnode->tn_mode & S_ISTXT) != 0 &&
-			    kauth_cred_geteuid(cnp->cn_cred) != dnode->tn_uid &&
-			    kauth_cred_geteuid(cnp->cn_cred) != tnode->tn_uid)
-				error = EPERM;
-			else
-				error = 0;
-
-			/* Only bother if we are not already failing it. */
-			if (!error) {
-				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
-			}
-
-			if (cnp->cn_nameiop == DELETE) {
-				action |= KAUTH_VNODE_DELETE;
-			} else {
-				KASSERT(cnp->cn_nameiop == RENAME);
-				action |= KAUTH_VNODE_RENAME;
-			}
-			error = kauth_authorize_vnode(cnp->cn_cred,
-			    action, *vpp, dvp, error);
-			if (error) {
-				goto out;
-			}
-		}
-		/* Allocate a new vnode on the matching entry. */
-		error = tmpfs_alloc_vp(dvp->v_mount, tnode, vpp);
 	}
+
+	/* Allocate a new vnode on the matching entry. */
+	error = tmpfs_alloc_vp(dvp->v_mount, tnode, vpp);
+
 done:
 	/*
 	 * Cache the result, unless request was for creation (as it does
@@ -747,7 +743,7 @@ tmpfs_link(void *v)
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
-	/* CHeck for maximum number of links limit. */
+	/* Check for maximum number of links limit. */
 	KASSERT(node->tn_links <= LINK_MAX);
 	if (node->tn_links == LINK_MAX) {
 		error = EMLINK;
