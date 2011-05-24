@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.15 2011/05/23 14:29:55 drochner Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.16 2011/05/24 19:10:12 drochner Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.15 2011/05/23 14:29:55 drochner Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.16 2011/05/24 19:10:12 drochner Exp $");
 #endif
 #endif /* not lint*/
 
@@ -117,6 +117,7 @@ static const struct alg aalgs[] = {
 	{ SADB_X_AALG_SHA2_256,	"hmac-sha2-256", },
 	{ SADB_X_AALG_SHA2_384,	"hmac-sha2-384", },
 	{ SADB_X_AALG_SHA2_512,	"hmac-sha2-512", },
+	{ SADB_X_AALG_AES_XCBC_MAC, "aes-xcbc-mac", },
 };
 static const struct alg espalgs[] = {
 	{ SADB_EALG_NONE,	"none", },

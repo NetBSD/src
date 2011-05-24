@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.32 2011/05/06 21:48:46 drochner Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.33 2011/05/24 19:10:08 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.32 2011/05/06 21:48:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.33 2011/05/24 19:10:08 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -147,6 +147,8 @@ ah_algorithm_lookup(int alg)
 		return &auth_hash_hmac_sha2_384;
 	case SADB_X_AALG_SHA2_512:
 		return &auth_hash_hmac_sha2_512;
+	case SADB_X_AALG_AES_XCBC_MAC:
+		return &auth_hash_aes_xcbc_mac_96;
 	}
 	return NULL;
 }
