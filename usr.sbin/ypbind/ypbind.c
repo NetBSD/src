@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.74 2011/05/24 06:58:19 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.75 2011/05/24 06:58:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.74 2011/05/24 06:58:19 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.75 2011/05/24 06:58:42 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -84,8 +84,9 @@ typedef enum {
 	YPBIND_DIRECT, YPBIND_BROADCAST, YPBIND_SETLOCAL, YPBIND_SETALL
 } ypbind_mode_t;
 
-struct _dom_binding {
-	struct _dom_binding *dom_pnext;
+struct domain {
+	struct domain *dom_pnext;
+
 	char dom_domain[YPMAXDOMAIN + 1];
 	struct sockaddr_in dom_server_addr;
 	int dom_socket;
@@ -102,7 +103,7 @@ struct _dom_binding {
 
 static char *domainname;
 
-static struct _dom_binding *ypbindlist;
+static struct domain *ypbindlist;
 static int check;
 
 static ypbind_mode_t ypbindmode;
@@ -188,12 +189,12 @@ ypservers_filename(const char *domain)
 }
 
 ////////////////////////////////////////////////////////////
-// struct _dom_binding
+// struct domain
 
-static struct _dom_binding *
+static struct domain *
 xid2ypdb(uint32_t xid)
 {
-	struct _dom_binding *ypdb;
+	struct domain *ypdb;
 
 	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext)
 		if (ypdb->dom_xid == xid)
@@ -202,7 +203,7 @@ xid2ypdb(uint32_t xid)
 }
 
 static uint32_t
-unique_xid(struct _dom_binding *ypdb)
+unique_xid(struct domain *ypdb)
 {
 	uint32_t tmp_xid;
 
@@ -213,13 +214,13 @@ unique_xid(struct _dom_binding *ypdb)
 	return tmp_xid;
 }
 
-static struct _dom_binding *
-makebinding(const char *dm)
+static struct domain *
+domain_create(const char *dm)
 {
-	struct _dom_binding *ypdb;
+	struct domain *ypdb;
 
 	if ((ypdb = malloc(sizeof *ypdb)) == NULL) {
-		yp_log(LOG_ERR, "makebinding: Out of memory");
+		yp_log(LOG_ERR, "domain_create: Out of memory");
 		exit(1);
 	}
 
@@ -232,7 +233,7 @@ makebinding(const char *dm)
 // locks
 
 static int
-makelock(struct _dom_binding *ypdb)
+makelock(struct domain *ypdb)
 {
 	int fd;
 	char path[MAXPATHLEN];
@@ -253,7 +254,7 @@ makelock(struct _dom_binding *ypdb)
 }
 
 static void
-removelock(struct _dom_binding *ypdb)
+removelock(struct domain *ypdb)
 {
 	char path[MAXPATHLEN];
 
@@ -315,7 +316,7 @@ purge_bindingdir(const char *dirpath)
 static void
 rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 {
-	struct _dom_binding *ypdb;
+	struct domain *ypdb;
 	struct iovec iov[2];
 	struct ypbind_resp ybr;
 	ssize_t result;
@@ -341,7 +342,7 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 	if (ypdb == NULL) {
 		if (force == 0)
 			return;
-		ypdb = makebinding(dom);
+		ypdb = domain_create(dom);
 		ypdb->dom_lockfd = -1;
 		ypdb->dom_pnext = ypbindlist;
 		ypbindlist = ypdb;
@@ -417,7 +418,7 @@ static void *
 ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 {
 	static struct ypbind_resp res;
-	struct _dom_binding *ypdb;
+	struct domain *ypdb;
 	char *arg = *(char **) argp;
 	time_t now;
 	int count;
@@ -439,7 +440,7 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 	}
 
 	if (ypdb == NULL) {
-		ypdb = makebinding(arg);
+		ypdb = domain_create(arg);
 		ypdb->dom_vers = YPVERS;
 		ypdb->dom_alive = 0;
 		ypdb->dom_lockfd = -1;
@@ -776,7 +777,7 @@ direct(char *buf, int outlen)
 }
 
 static int
-direct_set(char *buf, int outlen, struct _dom_binding *ypdb)
+direct_set(char *buf, int outlen, struct domain *ypdb)
 {
 	struct sockaddr_in bindsin;
 	char path[MAXPATHLEN];
@@ -837,7 +838,7 @@ handle_replies(void)
 	char buf[BUFSIZE];
 	socklen_t fromlen;
 	ssize_t inlen;
-	struct _dom_binding *ypdb;
+	struct domain *ypdb;
 	struct sockaddr_in raddr;
 	struct rpc_msg msg;
 	XDR xdr;
@@ -891,7 +892,7 @@ handle_ping(void)
 	char buf[BUFSIZE];
 	socklen_t fromlen;
 	ssize_t inlen;
-	struct _dom_binding *ypdb;
+	struct domain *ypdb;
 	struct sockaddr_in raddr;
 	struct rpc_msg msg;
 	XDR xdr;
@@ -940,7 +941,7 @@ try_again:
 }
 
 static int
-nag_servers(struct _dom_binding *ypdb)
+nag_servers(struct domain *ypdb)
 {
 	char *dom = ypdb->dom_domain;
 	struct rpc_msg msg;
@@ -1036,7 +1037,7 @@ nag_servers(struct _dom_binding *ypdb)
 }
 
 static int
-ping(struct _dom_binding *ypdb)
+ping(struct domain *ypdb)
 {
 	char *dom = ypdb->dom_domain;
 	struct rpc_msg msg;
@@ -1108,7 +1109,7 @@ ping(struct _dom_binding *ypdb)
 static void
 checkwork(void)
 {
-	struct _dom_binding *ypdb;
+	struct domain *ypdb;
 	time_t t;
 
 	check = 0;
@@ -1209,7 +1210,7 @@ main(int argc, char *argv[])
 		errx(1, "unable to purge old bindings from %s", BINDINGDIR);
 
 	/* build initial domain binding, make it "unsuccessful" */
-	ypbindlist = makebinding(domainname);
+	ypbindlist = domain_create(domainname);
 	ypbindlist->dom_vers = YPVERS;
 	ypbindlist->dom_alive = 0;
 	ypbindlist->dom_lockfd = -1;
