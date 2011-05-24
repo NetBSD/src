@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.18 2011/03/29 20:56:35 joerg Exp $	*/
+/*	$NetBSD: ldd.c,v 1.19 2011/05/24 12:27:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.18 2011/03/29 20:56:35 joerg Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.19 2011/05/24 12:27:29 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -212,7 +212,7 @@ fmtprint(const char *libname, Obj_Entry *obj, const char *fmt1,
 
 	if (strncmp(libname, "lib", 3) == 0 &&
 	    (cp = strstr(libname, ".so")) != NULL) {
-		int i = cp - (libname + 3);
+		size_t i = cp - (libname + 3);
 
 		if (i >= sizeof(libnamebuf))
 			i = sizeof(libnamebuf) - 1;
