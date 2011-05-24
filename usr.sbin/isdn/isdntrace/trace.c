@@ -35,7 +35,7 @@
  *	trace.c - print traces of D (B) channel activity for isdn4bsd
  *	-------------------------------------------------------------
  *
- *	$Id: trace.c,v 1.10 2009/04/16 05:56:33 lukem Exp $ 
+ *	$Id: trace.c,v 1.11 2011/05/24 13:02:37 joerg Exp $ 
  *
  * $FreeBSD$
  *
@@ -121,9 +121,6 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	extern int optind;
-	extern int opterr;
-	extern char *optarg;
 	char devicename[80];
 	char headerbuf[256];
 		
