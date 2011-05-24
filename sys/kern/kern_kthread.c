@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.33 2011/05/19 03:07:29 rmind Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.34 2011/05/24 18:18:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.33 2011/05/19 03:07:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.34 2011/05/24 18:18:22 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ kthread_exit(int ecode)
 
 	/* And exit.. */
 	lwp_exit(l);
-	KASSERT(false);
+	panic("kthread_exit");
 }
 
 /*
