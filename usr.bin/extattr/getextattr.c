@@ -1,4 +1,4 @@
-/*	$NetBSD: getextattr.c,v 1.3 2006/06/17 08:32:42 elad Exp $	*/
+/*	$NetBSD: getextattr.c,v 1.4 2011/05/24 12:25:05 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Networks Associates Technology, Inc.
@@ -178,7 +178,7 @@ main(int argc, char *argv[])
 
 	error = extattr_string_to_namespace(argv[0], &attrnamespace);
 	if (error)
-		err(1, argv[0]);
+		err(1, "%s", argv[0]);
 	argc--; argv++;
 
 	if (what != EALS) {
