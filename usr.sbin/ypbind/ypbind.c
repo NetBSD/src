@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.70 2011/05/24 06:57:04 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.71 2011/05/24 06:57:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.70 2011/05/24 06:57:04 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.71 2011/05/24 06:57:30 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -148,6 +148,23 @@ yp_log(int pri, const char *fmt, ...)
 #endif
 		vsyslog(pri, fmt, ap);
 	va_end(ap);
+}
+
+////////////////////////////////////////////////////////////
+// ypservers file
+
+/*
+ * Get pathname for the ypservers file for a given domain
+ * (/var/yp/binding/DOMAIN.ypservers)
+ */
+static const char *
+ypservers_filename(const char *domain)
+{
+	static char ret[PATH_MAX];
+
+	(void)snprintf(ret, sizeof(ret), "%s/%s%s",
+			BINDINGDIR, domain, YPSERVERSSUFF);
+	return ret;
 }
 
 ////////////////////////////////////////////////////////////
@@ -612,8 +629,14 @@ broadcast(char *buf, int outlen)
 static int
 direct(char *buf, int outlen)
 {
+	/*
+	 * XXX I don't see how this can work if we're binding multiple domains.
+	 * Also, what if someone's editor unlinks and replaces the file?
+	 */
 	static FILE *df;
 	static char ypservers_path[MAXPATHLEN];
+
+	const char *path;
 	char line[_POSIX2_LINE_MAX];
 	char *p;
 	struct hostent *hp;
@@ -623,8 +646,8 @@ direct(char *buf, int outlen)
 	if (df)
 		rewind(df);
 	else {
-		(void)snprintf(ypservers_path, sizeof(ypservers_path),
-		    "%s/%s%s", BINDINGDIR, domainname, YPSERVERSSUFF);
+		path = ypservers_filename(domainname);
+		strcpy(ypservers_path, path);
 		df = fopen(ypservers_path, "r");
 		if (df == NULL) {
 			yp_log(LOG_ERR, "%s: ", ypservers_path);
@@ -1053,7 +1076,7 @@ main(int argc, char *argv[])
 	fd_set fdsr;
 	int width, lockfd;
 	int evil = 0, one;
-	char pathname[MAXPATHLEN];
+	const char *pathname;
 	struct stat st;
 
 	setprogname(argv[0]);
@@ -1070,8 +1093,7 @@ main(int argc, char *argv[])
 	 * Note that we can still override direct mode by passing
 	 * the -broadcast flag.
 	 */
-	(void)snprintf(pathname, sizeof(pathname), "%s/%s%s", BINDINGDIR,
-	    domainname, YPSERVERSSUFF);
+	pathname = ypservers_filename(domainname);
 	if (stat(pathname, &st) < 0) {
 		DPRINTF("%s does not exist, defaulting to broadcast\n",
 			pathname);
