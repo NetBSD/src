@@ -1,4 +1,4 @@
-/*	$NetBSD: flashctl.c,v 1.3 2011/04/04 18:30:07 ahoka Exp $	*/
+/*	$NetBSD: flashctl.c,v 1.4 2011/05/24 13:01:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -85,7 +85,7 @@ main(int argc, char **argv)
 		if (argc == 2) {
 			error = to_intmax(&n, argv[0]);
 			if (error) {
-				warnx(strerror(error));
+				warnx("%s", strerror(error));
 				goto out;
 			}
 			ep.ep_addr = n;
@@ -95,7 +95,7 @@ main(int argc, char **argv)
 			} else {
 				error = to_intmax(&n, argv[1]);
 				if (error) {
-					warnx(strerror(error));
+					warnx("%s", strerror(error));
 					goto out;
 				}
 				ep.ep_len = n;
@@ -198,7 +198,7 @@ main(int argc, char **argv)
 		
 		error = to_intmax(&n, argv[0]);
 		if (error) {
-			warnx(strerror(error));
+			warnx("%s", strerror(error));
 			goto out;
 		}
 
