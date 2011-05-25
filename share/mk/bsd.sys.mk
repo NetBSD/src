@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.198 2011/05/23 14:32:05 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.199 2011/05/25 15:01:08 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -58,6 +58,8 @@ CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
 CFLAGS+=	-Wsign-compare
 .endif
 .endif
+
+CWARNFLAGS+=	${CWARNFLAGS.${ACTIVE_CC}}
 
 CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
 CFLAGS+=	${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
