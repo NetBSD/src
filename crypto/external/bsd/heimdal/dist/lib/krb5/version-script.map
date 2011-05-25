@@ -760,6 +760,15 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_put_int;
 		_krb5_s4u2self_to_checksumdata;
 
+		# ipc stuff
+		heim_ipc_main;
+		heim_ipc_cred_get_uid;
+		heim_ipc_cred_get_gid;
+		heim_ipc_cred_get_pid;
+		heim_ipc_cred_get_session;
+		heim_sipc_launchd_mach_init;
+		heim_sipc_service_unix;
+
 		# kinit helper
 		krb5_get_init_creds_opt_set_pkinit_user_certs;
 		krb5_pk_enterprise_cert;

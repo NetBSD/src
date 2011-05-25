@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/05/20 20:09:37 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2011/05/25 19:21:18 he Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -20,8 +20,6 @@ LIBDPLIBS+=	hx509		${HEIMBASE}/lib/libhx509	\
 		roken		${HEIMBASE}/lib/libroken	\
 		wind		${HEIMBASE}/lib/libwind		\
 		heimbase	${HEIMBASE}/lib/libheimbase
-
-LDADD+= ${LIBIPC_PIC}
 
 HEIMSRCS= krb_err.et krb5_err.et heim_err.et k524_err.et
 
@@ -142,6 +140,10 @@ SRCS=						\
 	version.c				\
 	warn.c					\
 	write_message.c
+
+# Build the ipc library as part of this
+SRCS+=	common.c client.c server.c
+.PATH:	${HEIMDIST}/lib/ipc
 
 INCSDIR=	/usr/include/krb5
 

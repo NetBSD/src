@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:59 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:19 he Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -18,12 +18,8 @@ CPPFLAGS+= 				\
 	-I${HEIMDIST}/lib/krb5		\
 	-I${HEIMBASE}/include/krb5	\
 
-LDADD+=	-lkdc ${LIBVERS}
-#LDADD+=	-lkdc -lhdb -lkrb5 -lhx509 -lheimntlm -lcrypto -lasn1 -lcom_err \
-#	-lroken -lcrypt -lutil ${LIBVERS}
-DPADD+=	${LIBHDB} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBCRYPTO} \
-	${LIBASN1} ${LIBCOM_ERR} ${LIBVERS} ${LIBROKEN} \
-	${LIBCRYPT} ${LIBUTIL}
+LDADD+=	-lkdc -lhdb -lheimntlm -lutil
+DPADD+=	${LIBKDC} ${LIBHDB} ${LIBHEIMNTLM} ${LIBUTIL}
 
 MAN=	kdc.8
 

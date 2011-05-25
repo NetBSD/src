@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:59 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:19 he Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -27,10 +27,8 @@ SRCS= \
 
 CPPFLAGS+= -I${HEIMDIST}/lib/ipc
 
-LDADD+=	-lkafs -lkrb5 -lheimntlm -lhx509 -lcrypto -lasn1 -lcom_err \
-	${LIBIPC_PIC} ${LIBVERS} -lroken -lcrypt -lutil
-DPADD+=	${LIBKAFS} ${LIBKRB5} ${LIBHX509} ${LIBCRYPTO} ${LIBASN1} \
-	${LIBCOM_ERR} ${LIBVERS} ${LIBROKEN} ${LIBCRYPT} ${LIBUTIL}
+LDADD+=	-lkafs -lheimntlm -lutil
+DPADD+=	${LIBKAFS} ${LIBHEIMNTLM} ${LIBUTIL}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>

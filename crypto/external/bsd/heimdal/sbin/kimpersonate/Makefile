@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:17:00 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:19 he Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -9,10 +9,8 @@ PROG=	kimpersonate
 SRCS=	kimpersonate.c
 MAN=	kimpersonate.8
 
-LDADD+=	-lkafs -lkrb5 -lhx509 -lheimntlm -lcrypto \
-	-lasn1 -lcom_err ${LIBVERS} -lroken -lcrypt
-DPADD+=	${LIBKAFS} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBCRYPTO} \
-	${LIBASN1} ${LIBCOM_ERR} ${LIBVERS} ${LIBROKEN} ${LIBCRYPT}
+LDADD+= -lkafs -lheimntlm
+DPADD+= ${LIBKAFS} ${LIBHEIMNTLM}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
