@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.86 2011/05/24 07:02:08 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.87 2011/05/25 04:33:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.86 2011/05/24 07:02:08 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.87 2011/05/25 04:33:52 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -246,7 +246,7 @@ domain_create(const char *name)
 	 */
 	dom->dom_ypbindmode = default_ypbindmode;
 	if (dom->dom_ypbindmode == YPBIND_DIRECT) {
-		pathname = ypservers_filename(domainname);
+		pathname = ypservers_filename(dom->dom_name);
 		if (stat(pathname, &st) < 0) {
 			/* XXX syslog a warning here? */
 			DPRINTF("%s does not exist, defaulting to broadcast\n",
