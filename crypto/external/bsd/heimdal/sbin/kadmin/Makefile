@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:59 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:19 he Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -39,10 +39,10 @@ CPPFLAGS+= 				\
 	-I${HEIMBASE}/lib/libwind	\
 	-I${DESTDIR}/usr/include/kadm5
 
-LDADD+=	-lkadm5srv -lkadm5clnt -lkrb5 -lsl -ledit ${LIBVERS} -lroken -lutil
-DPADD+=	${LIBKADM5SRV} ${LIBHDB} ${LIBKRB5} ${LIBHX509} ${LIBCRYPTO} \
-	${LIBASN1} ${LIBCOM_ERR} ${LIBSL} ${LIBEDIT} ${LIBTERMINFO} \
-	${LIBVERS} ${LIBROKEN} ${LIBCRYPT} ${LIBUTIL}
+LDADD+=	-lkadm5srv -lhdb -lkadm5clnt -lsl
+LDADD+= -lutil -ledit -lterminfo
+DPADD+=	${LIBKADM5SRV} ${LIBHDB} ${LIBKADM5CLNT} ${LIBSL}
+DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMINFO}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>

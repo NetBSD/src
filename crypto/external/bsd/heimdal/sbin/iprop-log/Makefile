@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:58 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:19 he Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -12,12 +12,10 @@ HEIMSRCS= iprop-log.c iprop-commands.in
 
 CPPFLAGS+= -I${DESTDIR}/usr/include/kadm5
 
-LDADD+= -lkadm5srv -lhdb -lkrb5 -lhx509 -lcrypto \
-	-lasn1 -lsl -lcom_err ${LIBVERS} \
-	-lroken -lcrypt -ledit -lterminfo
-DPADD+= ${LIBKADM5SRV} ${LIBHDB} ${LIBKRB5} ${LIBHX509} ${LIBCRYPTO}	\
-	${LIBASN1} ${LIBSL} ${LIBCOM_ERR} ${LIBVERS}			\
-	${LIBROKEN} ${LIBCRYPT} ${LIBEDIT} ${LIBTERMINFO}
+LDADD+= -lkadm5srv -lhdb -lsl
+LDADD+= -ledit -lterminfo
+DPADD+= ${LIBKADM5SRV} ${LIBHDB} ${LIBSL}
+DPADD+= ${LIBEDIT} ${LIBTERMINFO}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
