@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.47 2011/05/12 05:42:05 mrg Exp $ */
+/*	$NetBSD: psl.h,v 1.48 2011/05/25 12:01:30 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -223,6 +223,9 @@
 #define VER_MAXTL	0x000000000000ff00LL
 #define VER_MAXTL_SHIFT	8
 #define VER_MAXWIN	0x000000000000001fLL
+
+#define MANUF_FUJITSU		0x04 /* Fujitsu SPARC64 */
+#define MANUF_SUN		0x17 /* Sun UltraSPARC */
 
 #define IMPL_SPARC64		0x01 /* SPARC64 */
 #define IMPL_SPARC64_II		0x02 /* SPARC64-II */
