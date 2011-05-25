@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.87 2011/05/25 04:33:52 dholland Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.88 2011/05/25 04:59:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.87 2011/05/25 04:33:52 dholland Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.88 2011/05/25 04:59:22 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -521,9 +521,9 @@ ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 	struct sockaddr_in *fromsin, bindsin;
 	static bool_t res;
 
-	DPRINTF("ypbindproc_setdom_2 %s\n", inet_ntoa(bindsin.sin_addr));
 	(void)memset(&res, 0, sizeof(res));
 	fromsin = svc_getcaller(transp);
+	DPRINTF("ypbindproc_setdom_2 from %s\n", inet_ntoa(fromsin->sin_addr));
 
 	if (allow_any_ypset) {
 		/* nothing */
