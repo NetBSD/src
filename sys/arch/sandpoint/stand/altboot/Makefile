@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/03/06 18:22:13 phx Exp $
+#	$NetBSD: Makefile,v 1.11 2011/05/25 19:26:21 phx Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -8,11 +8,11 @@ NOMAN=		# defined
 SRCS=		entry.S main.c brdsetup.c pci.c devopen.c dev_net.c memfs.c
 SRCS+=		nif.c fxp.c tlp.c rge.c skg.c stg.c
 SRCS+=		dsk.c pciide.c siisata.c
-SRCS+=		printf.c vers.c
+SRCS+=		vers.c
 CLEANFILES+=	vers.c ${PROG} ${PROG}.bin ${PROG}.img
 CFLAGS+=	-Wall -Wno-main -ffreestanding -msoft-float -mmultiple
 CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
-CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
+CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -DLIBSA_PRINTF_WIDTH_SUPPORT
 #CPPFLAGS+=	-DCONSNAME=\"com\" -DCONSPORT=0x3f8 -DCONSSPEED=115200
 #CPPFLAGS+=	-DCONSNAME=\"eumb\" -DCONSPORT=0x4600 -DCONSSPEED=57600
 CPPFLAGS+=	-nostdinc -I. -I${.OBJDIR} -I${S}
