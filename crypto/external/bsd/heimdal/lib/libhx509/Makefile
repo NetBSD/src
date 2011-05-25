@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:51 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:17 he Exp $
 
 NOLINT=		# defined
 
@@ -54,6 +54,8 @@ SRCS=				\
 	sel-lex.l		\
 	softp11.c		\
 	${BUILT_SOURCES}
+
+LPREFIX=  _hx509_sel_yy
 
 CPPFLAGS+=				\
 	-I${HEIMDIST}/lib/hx509/ref	\
