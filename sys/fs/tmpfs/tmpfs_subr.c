@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.69 2011/05/25 00:06:45 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.70 2011/05/25 02:03:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.69 2011/05/25 00:06:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.70 2011/05/25 02:03:22 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1002,7 +1002,7 @@ tmpfs_update(vnode_t *vp, const struct timespec *acc,
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 	struct timespec nowtm;
 
-	KASSERT(VOP_ISLOCKED(vp));
+	/* KASSERT(VOP_ISLOCKED(vp)); */
 
 	if (flags & UPDATE_CLOSE) {
 		/* XXX Need to do anything special? */
