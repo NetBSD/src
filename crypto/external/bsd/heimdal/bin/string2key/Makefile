@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:46 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:17 he Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -19,9 +19,6 @@ CPPFLAGS+= 				\
 	-I${HEIMBASE}/include/krb5	\
 	-I${HEIMBASE}/lib/libheimntlm	\
 	-I${HEIMBASE}/lib/libwind	\
-
-LDADD+=	-lkrb5 -lcrypto -lwind ${LIBVERS}
-DPADD+=	${LIBKRB5} ${LIBVERS}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
