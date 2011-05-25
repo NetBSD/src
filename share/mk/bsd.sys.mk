@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.199 2011/05/25 15:01:08 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.200 2011/05/25 15:02:25 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -51,8 +51,8 @@ CFLAGS+=	-Wextra -Wno-unused-parameter
 CXXFLAGS+=	-Wabi
 CXXFLAGS+=	-Wold-style-cast
 CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
-		-Wno-deprecated -Wno-non-template-friend \
-		-Woverloaded-virtual -Wno-pmf-conversions -Wsign-promo -Wsynth
+		-Wno-deprecated -Woverloaded-virtual -Wsign-promo -Wsynth
+CXXFLAGS+=	${${ACTIVE_CXX} == "gcc":? -Wno-non-template-friend -Wno-pmf-conversions :}
 .endif
 .if ${WARNS} > 3 && defined(HAVE_GCC) && ${HAVE_GCC} >= 3
 CFLAGS+=	-Wsign-compare
