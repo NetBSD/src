@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.166 2011/05/03 18:28:45 dyoung Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.167 2011/05/25 23:17:44 gdt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -571,6 +571,9 @@ struct syn_cache_head {
  * average (smoothed = (1/scale)sample + ((scale-1)/scale)smoothed).
  * This results in alpha of 0.125 and beta of 0.25, following RFC2988
  * section 2.3
+ *
+ * XXX Change SHIFT values to LGWEIGHT and REP_SHIFT, and adjust
+ * the code to use the correct ones.
  */
 #define	TCP_RTT_SHIFT		3	/* shift for srtt; 3 bits frac. */
 #define	TCP_RTTVAR_SHIFT	2	/* multiplier for rttvar; 2 bits */
