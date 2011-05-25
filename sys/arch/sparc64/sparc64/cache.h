@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.19 2011/05/12 05:42:42 mrg Exp $ */
+/*	$NetBSD: cache.h,v 1.20 2011/05/25 12:01:31 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -72,6 +72,8 @@
  * set-associative -- each bank is 8K.  No conflict there.)
  */
 
+#include <machine/psl.h>
+
 /* Various cache size/line sizes */
 extern	int	ecache_min_line_size;
 extern	int	dcache_line_size;
@@ -104,7 +106,7 @@ dcache_flush_page(paddr_t pa)
 static __inline__ void
 cache_flush_phys(paddr_t pa, psize_t size, int ecache)
 {
-	if (CPU_IS_USIII_UP())
+	if (CPU_IS_USIII_UP() || CPU_IS_SPARC64_V_UP())
 		cache_flush_phys_usiii(pa, size, ecache);
 	else
 		cache_flush_phys_us(pa, size, ecache);
@@ -131,7 +133,7 @@ void sp_tlb_flush_all_usiii(void);
 static __inline__ void
 sp_tlb_flush_pte(vaddr_t va, int ctx)
 {
-	if (CPU_IS_USIII_UP())
+	if (CPU_IS_USIII_UP() || CPU_IS_SPARC64_V_UP())
 		sp_tlb_flush_pte_usiii(va, ctx);
 	else
 		sp_tlb_flush_pte_us(va, ctx);
@@ -140,7 +142,7 @@ sp_tlb_flush_pte(vaddr_t va, int ctx)
 static __inline__ void
 sp_tlb_flush_all(void)
 {
-	if (CPU_IS_USIII_UP())
+	if (CPU_IS_USIII_UP() || CPU_IS_SPARC64_V_UP())
 		sp_tlb_flush_all_usiii();
 	else
 		sp_tlb_flush_all_us();
