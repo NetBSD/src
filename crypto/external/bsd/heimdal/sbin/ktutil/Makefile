@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:17:00 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:19 he Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -26,10 +26,8 @@ SRCS=			\
 	remove.c	\
 	rename.c
 
-LDADD+=	-lkadm5clnt -lkrb5 -lsl ${LIBVERS} -lroken -lutil
-DPADD+=	${LIBKADM5CLNT} ${LIBKRB5} ${LIBCRYPTO} \
-	${LIBASN1} ${LIBCOM_ERR} ${LIBSL} ${LIBEDIT} ${LIBTERMINFO} \
-	${LIBVERS} ${LIBROKEN} ${LIBCRYPT} ${LIBUTIL}
+LDADD+= -lkadm5clnt -lsl -ledit -lterminfo -lutil
+DPADD+= ${LIBKADM5CLNT} ${LIBSL} ${LIBEDIT} ${LIBTERMINFO} ${LIBUTIL}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>

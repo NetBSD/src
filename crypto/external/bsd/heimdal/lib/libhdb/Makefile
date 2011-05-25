@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:50 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:17 he Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -18,8 +18,6 @@ LIBDPLIBS+=	hx509		${HEIMBASE}/lib/libhx509	\
 		roken		${HEIMBASE}/lib/libroken	\
 		wind		${HEIMBASE}/lib/libwind		\
 		heimbase	${HEIMBASE}/lib/libheimbase
-
-LDADD+= ${LIBIPC_PIC}
 
 HEIMSRCS= hdb_err.et hdb.asn1
 

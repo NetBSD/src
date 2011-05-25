@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:44 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:16 he Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -13,8 +13,12 @@ HEIMSRCS=	gsstool.c gss-commands.in
 
 MAN=
 
-LDADD+=	-lgssapi -lsl ${LIBVERS}
-DPADD+=	${LIBGSSAPI} ${LIBSL} ${LIBVERS}
+LDADD+= -lgssapi -lheimntlm
+LDADD+= -lsl ${LIBVERS} 
+LDADD+= -ledit -lterminfo
+DPADD+= ${LIBGSSAPI} ${LIBHEIMNTLM}
+DPADD+= ${LIBSL}
+DPADD+= ${LIBEDIT} ${LIBTERMINFO}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/13 19:16:47 elric Exp $
+# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:17 he Exp $
 
 .include "bsd.own.mk"
 
@@ -17,7 +17,6 @@ SUBDIR = \
 	libwind		\
 	.WAIT		\
 	libhx509	\
-	libipc		\
 	.WAIT		\
 	libkrb5		\
 	.WAIT		\
