@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.28 2011/04/29 08:26:29 matt Exp $	*/
+/*	pmap.c,v 1.179.16.28 2011/04/29 08:26:29 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.28 2011/04/29 08:26:29 matt Exp $");
+__KERNEL_RCSID(0, "pmap.c,v 1.179.16.28 2011/04/29 08:26:29 matt Exp");
 
 /*
  *	Manages physical address maps.
@@ -739,15 +739,17 @@ pmap_init(void)
 	 */
 	if (mips_avail_end > MIPS_KSEG1_START - MIPS_KSEG0_START) {
 		curcpu()->ci_pmap_dstbase = uvm_km_alloc(kernel_map,
-		    uvmexp.ncolors * PAGE_SIZE, 0, UVM_KMF_VAONLY);
+		    uvmexp.ncolors * PAGE_SIZE, 0,
+		    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY);
 		KASSERT(curcpu()->ci_pmap_dstbase);
 		curcpu()->ci_pmap_srcbase = uvm_km_alloc(kernel_map,
-		    uvmexp.ncolors * PAGE_SIZE, 0, UVM_KMF_VAONLY);
+		    uvmexp.ncolors * PAGE_SIZE, 0,
+		    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY);
 		KASSERT(curcpu()->ci_pmap_srcbase);
 	}
 #endif
 
-#ifdef MIPS3
+#if defined(MIPS3) && 0
 	if (MIPS_HAS_R4K_MMU) {
 		/*
 		 * XXX
@@ -1361,9 +1363,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
 		printf("pmap_enter(%p, %#"PRIxVADDR", %#"PRIxPADDR", %x, %x)\n",
-		    pmap, va, pa, prot, wired);
+		    pmap, va, pa, prot, flags);
 #endif
 	const bool good_color = PMAP_PAGE_COLOROK_P(pa, va);
+	KASSERTMSG(good_color,
+	    ("%s(%p, %#"PRIxVADDR", %#"PRIxPADDR", %x, %x): color mismatch\n",
+	     __func__, pmap, va, pa, prot, flags));
 	if (pmap == pmap_kernel()) {
 		PMAP_COUNT(kernel_mappings);
 		if (!good_color)
@@ -1622,8 +1627,12 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		printf("pmap_kenter_pa(%#"PRIxVADDR", %#"PRIxPADDR", %x)\n", va, pa, prot);
 #endif
 	PMAP_COUNT(kenter_pa);
-	if (!PMAP_PAGE_COLOROK_P(pa, va) && managed)
+	KASSERTMSG(!managed || PMAP_PAGE_COLOROK_P(pa, va),
+	    ("%s(%#"PRIxVADDR", %#"PRIxPADDR", %x): color mismatch\n",
+	     __func__, va, pa, prot));
+	if (!PMAP_PAGE_COLOROK_P(pa, va) && managed) {
 		PMAP_COUNT(kenter_pa_bad);
+	}
 
 	if (!managed)
 		PMAP_COUNT(kenter_pa_unmanaged);

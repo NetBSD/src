@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.13.4.2.4.2 2011/05/20 08:11:28 matt Exp $	*/
+/*	genfs_io.c,v 1.13.4.2.4.2 2011/05/20 08:11:28 matt Exp	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.13.4.2.4.2 2011/05/20 08:11:28 matt Exp $");
+__KERNEL_RCSID(0, "genfs_io.c,v 1.13.4.2.4.2 2011/05/20 08:11:28 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1746,9 +1746,11 @@ genfs_do_directio(struct vmspace *vs, vaddr_t uva, size_t len, struct vnode *vp,
 	map = &vs->vm_map;
 	upm = vm_map_pmap(map);
 	kpm = vm_map_pmap(kernel_map);
-	kva = uvm_km_alloc(kernel_map, klen, 0,
-			   UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	puva = trunc_page(uva);
+
+	kva = uvm_km_alloc(kernel_map, klen, atop(puva) & uvmexp.colormask,
+	    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+
 	for (poff = 0; poff < klen; poff += PAGE_SIZE) {
 		rv = pmap_extract(upm, puva + poff, &pa);
 		KASSERT(rv);

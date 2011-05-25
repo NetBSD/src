@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.42.16.6 2010/06/01 19:04:02 matt Exp $	*/
+/*	uvm_pglist.c,v 1.42.16.6 2010/06/01 19:04:02 matt Exp	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.6 2010/06/01 19:04:02 matt Exp $");
+__KERNEL_RCSID(0, "uvm_pglist.c,v 1.42.16.6 2010/06/01 19:04:02 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,9 +353,10 @@ static int
 uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
     struct pglist *rlist)
 {
-	int todo, limit, try;
+	int todo, limit, try, color;
 	struct vm_page *pg;
-	bool second_pass;
+	bool second_pass, colorless;
+	const int colormask = uvmexp.colormask;
 #ifdef DEBUG
 	int cidx = 0;	/* XXX: GCC */
 #endif
@@ -365,6 +366,20 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 #endif
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
+
+	/*
+	 * If the pageq (rlist) is empty, then no pages have been allocated
+	 * and we can start with any color.  If it wasn't empty, then the
+	 * starting color is the last page's next color.
+	 */
+	colorless = TAILQ_EMPTY(rlist);
+	color = (ps->avail_start + ps->start_hint) & colormask;
+#ifdef DIAGNOSTIC
+	if (!colorless) {
+		pg = TAILQ_LAST(rlist, pglist);
+		KASSERT(color == ((VM_PAGE_TO_COLOR(pg) + 1) & colormask));
+	}
+#endif
 
 	low = atop(low);
 	high = atop(high);
@@ -379,7 +394,7 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			if (ps->start_hint == 0 || second_pass)
 				break;
 			second_pass = true;
-			try = max(low, ps->avail_start);
+			try = max(low, ps->avail_start) - 1;
 			limit = min(high, ps->avail_start + ps->start_hint);
 			pg = &ps->pgs[try - ps->start];
 			continue;
@@ -390,13 +405,42 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		if (cidx != (try - ps->start))
 			panic("pgalloc simple: botch2");
 #endif
-		if (VM_PAGE_IS_FREE(pg) == 0)
+		/*
+		 * If this page isn't free, then we need to skip a colors worth
+		 * of pages to get a matching color.  Note that colormask is 1
+		 * less than what we need since the loop will also increment
+		 * try and pgs.
+		 */
+		if (VM_PAGE_IS_FREE(pg) == 0) {
+			try += colormask;
+			pg += colormask;
 			continue;
+		}
+
+		/*
+		 * If this page doesn't have the right color, figure out how
+		 * many pages we need to skip until we get to the right color.
+		 * Note that skip is 1 less that what we need since the loop
+		 * will also increment try and pgs.
+		 */
+		if (!colorless && (try & colormask) != color) {
+			const int skip = (color - (try + 1)) & colormask;
+			try += skip;
+			pg += skip;
+			continue;
+		}
 
 		uvm_pglist_add(pg, rlist);
 		if (--todo == 0) {
 			break;
 		}
+
+		/*
+		 * Advance the color (use try instead of color in case we
+		 * haven't set an initial color).
+		 */
+		color = (try + 1) & colormask;
+		colorless = false;
 	}
 
 	/*

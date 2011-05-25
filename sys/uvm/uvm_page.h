@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.55.14.2 2011/04/29 08:16:42 matt Exp $	*/
+/*	uvm_page.h,v 1.55.14.2 2011/04/29 08:16:42 matt Exp	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -307,6 +307,7 @@ static int vm_physseg_find(paddr_t, int *);
 	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)
 
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
+#define VM_PAGE_TO_COLOR(entry)	(atop((entry)->phys_addr) & uvmexp.colormask)
 
 #ifdef __HAVE_VM_PAGE_MD
 #define VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)

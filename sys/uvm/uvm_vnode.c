@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.90 2008/01/02 11:49:21 ad Exp $	*/
+/*	uvm_vnode.c,v 1.90 2008/01/02 11:49:21 ad Exp	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.90 2008/01/02 11:49:21 ad Exp $");
+__KERNEL_RCSID(0, "uvm_vnode.c,v 1.90 2008/01/02 11:49:21 ad Exp");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -257,7 +257,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 				UVMHIST_LOG(ubchist, "noalloc", 0,0,0,0);
 				return 0;
 			}
-			pg = uvm_pagealloc(uobj, offset, NULL, 0);
+			pg = uvm_pagealloc(uobj, offset, NULL,
+			    UVM_FLAG_COLORMATCH);
 			if (pg == NULL) {
 				if (flags & UFP_NOWAIT) {
 					UVMHIST_LOG(ubchist, "nowait",0,0,0,0);
