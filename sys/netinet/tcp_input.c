@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.313 2011/05/17 05:40:24 dholland Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.314 2011/05/25 23:20:57 gdt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.313 2011/05/17 05:40:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.314 2011/05/25 23:20:57 gdt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2001,7 +2001,7 @@ after_listen:
 				 * this is a pure ack for outstanding data.
 				 */
 				if (ts_rtt)
-					tcp_xmit_timer(tp, ts_rtt);
+					tcp_xmit_timer(tp, ts_rtt - 1);
 				else if (tp->t_rtttime &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp,
@@ -2689,7 +2689,7 @@ after_listen:
 		 * Recompute the initial retransmit timer.
 		 */
 		if (ts_rtt)
-			tcp_xmit_timer(tp, ts_rtt);
+			tcp_xmit_timer(tp, ts_rtt - 1);
 		else if (tp->t_rtttime && SEQ_GT(th->th_ack, tp->t_rtseq))
 			tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
 
