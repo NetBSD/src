@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.18 2011/02/18 13:56:11 jmcneill Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.19 2011/05/25 06:01:38 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -136,6 +136,10 @@ struct vcons_data {
 	uint32_t rb_buffer[VCONS_RING_BUFFER_LENGTH];
 #endif
 #ifdef VCONS_DRAW_INTR
+	int cells;
+	long *attrs;
+	uint16_t *chars;
+	int cursor_offset;
 	callout_t intr;
 	int intr_valid;
 	void *intr_softint;
@@ -171,7 +175,16 @@ int	vcons_init(struct vcons_data *, void *cookie, struct wsscreen_descr *,
 int	vcons_init_screen(struct vcons_data *, struct vcons_screen *, int,
     long *);
 
+/* completely redraw the screen, clear it if RI_FULLCLEAR is set */
 void	vcons_redraw_screen(struct vcons_screen *);
+
+#ifdef VCONS_DRAW_INTR
+/* redraw all dirty character cells */
+void	vcons_update_screen(struct vcons_screen *);
+void	vcons_invalidate_cache(struct vcons_data *);
+#else
+#define vcons_update_screen vcons_redraw_screen
+#endif
 
 void	vcons_replay_msgbuf(struct vcons_screen *);
 
