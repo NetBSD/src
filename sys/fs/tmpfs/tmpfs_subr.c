@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.68 2011/05/24 23:16:16 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.69 2011/05/25 00:06:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.68 2011/05/24 23:16:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.69 2011/05/25 00:06:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -494,7 +494,7 @@ tmpfs_dir_lookup(tmpfs_node_t *node, struct componentname *cnp)
 	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		if (de->td_namelen != nlen)
 			continue;
-		if (memcmp(de->td_name, cnp->cn_nameptr, nlen) != 0)
+		if (memcmp(de->td_name, name, nlen) != 0)
 			continue;
 		break;
 	}
