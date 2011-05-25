@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.103.4.5 2009/04/04 23:36:27 snj Exp $	*/
+/*	sys_pipe.c,v 1.103.4.5 2009/04/04 23:36:27 snj Exp	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.103.4.5 2009/04/04 23:36:27 snj Exp $");
+__KERNEL_RCSID(0, "sys_pipe.c,v 1.103.4.5 2009/04/04 23:36:27 snj Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,6 +508,7 @@ again:
 
 #ifndef PIPE_NODIRECT
 		if ((rpipe->pipe_state & PIPE_DIRECTR) != 0) {
+			struct pipemapping * const rmap = &rpipe->pipe_map;
 			/*
 			 * Direct copy, bypassing a kernel buffer.
 			 */
@@ -515,20 +516,20 @@ again:
 
 			KASSERT(rpipe->pipe_state & PIPE_DIRECTW);
 
-			size = rpipe->pipe_map.cnt;
+			size = rmap->cnt;
 			if (size > uio->uio_resid)
 				size = uio->uio_resid;
 
-			va = (char *)rpipe->pipe_map.kva + rpipe->pipe_map.pos;
+			va = (char *)rmap->kva + rmap->koff + rmap->pos;
 			mutex_exit(lock);
 			error = uiomove(va, size, uio);
 			mutex_enter(lock);
 			if (error)
 				break;
 			nread += size;
-			rpipe->pipe_map.pos += size;
-			rpipe->pipe_map.cnt -= size;
-			if (rpipe->pipe_map.cnt == 0) {
+			rmap->pos += size;
+			rmap->cnt -= size;
+			if (rmap->cnt == 0) {
 				rpipe->pipe_state &= ~PIPE_DIRECTR;
 				cv_broadcast(&rpipe->pipe_wcv);
 			}
@@ -621,20 +622,19 @@ unlocked_error:
 static int
 pipe_loan_alloc(struct pipe *wpipe, int npages)
 {
-	vsize_t len;
+	struct pipemapping * const wmap = &wpipe->pipe_map;
+	const vsize_t len = ptoa(npages);
 
-	len = (vsize_t)npages << PAGE_SHIFT;
 	atomic_add_int(&amountpipekva, len);
-	wpipe->pipe_map.kva = uvm_km_alloc(kernel_map, len, 0,
-	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	if (wpipe->pipe_map.kva == 0) {
+	wmap->kva = uvm_km_alloc(kernel_map, len, 0,
+	    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	if (wmap->kva == 0) {
 		atomic_add_int(&amountpipekva, -len);
 		return (ENOMEM);
 	}
 
-	wpipe->pipe_map.npages = npages;
-	wpipe->pipe_map.pgs = kmem_alloc(npages * sizeof(struct vm_page *),
-	    KM_SLEEP);
+	wmap->npages = npages;
+	wmap->pgs = kmem_alloc(npages * sizeof(struct vm_page *), KM_SLEEP);
 	return (0);
 }
 
@@ -644,15 +644,19 @@ pipe_loan_alloc(struct pipe *wpipe, int npages)
 static void
 pipe_loan_free(struct pipe *wpipe)
 {
-	vsize_t len;
+	struct pipemapping * const wmap = &wpipe->pipe_map;
+	const vsize_t len = ptoa(wmap->npages);
 
-	len = (vsize_t)wpipe->pipe_map.npages << PAGE_SHIFT;
-	uvm_km_free(kernel_map, wpipe->pipe_map.kva, len, UVM_KMF_VAONLY);
-	wpipe->pipe_map.kva = 0;
+	uvm_km_free(kernel_map, wmap->kva, len, UVM_KMF_VAONLY);
+	wmap->kva = 0;
 	atomic_add_int(&amountpipekva, -len);
-	kmem_free(wpipe->pipe_map.pgs,
-	    wpipe->pipe_map.npages * sizeof(struct vm_page *));
-	wpipe->pipe_map.pgs = NULL;
+	kmem_free(wmap->pgs, wmap->npages * sizeof(struct vm_page *));
+	wmap->pgs = NULL;
+#if 0
+	wmap->npages = 0;
+	wmap->pos = 0;
+	wmap->cnt = 0;
+#endif
 }
 
 /*
@@ -668,15 +672,17 @@ pipe_loan_free(struct pipe *wpipe)
 static int
 pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 {
+	struct pipemapping * const wmap = &wpipe->pipe_map;
+	kmutex_t * const lock = wpipe->pipe_lock;
 	int error, npages, j;
 	struct vm_page **pgs;
 	vaddr_t bbase, kva, base, bend;
 	vsize_t blen, bcnt;
 	voff_t bpos;
-	kmutex_t *lock = wpipe->pipe_lock;
+	u_int starting_color;
 
 	KASSERT(mutex_owned(wpipe->pipe_lock));
-	KASSERT(wpipe->pipe_map.cnt == 0);
+	KASSERT(wmap->cnt == 0);
 
 	mutex_exit(lock);
 
@@ -697,18 +703,19 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 	} else {
 		bcnt = uio->uio_iov->iov_len;
 	}
-	npages = blen >> PAGE_SHIFT;
+	npages = atop(blen);
+	starting_color = atop(base) & uvmexp.colormask;
 
 	/*
 	 * Free the old kva if we need more pages than we have
 	 * allocated.
 	 */
-	if (wpipe->pipe_map.kva != 0 && npages > wpipe->pipe_map.npages)
+	if (wmap->kva != 0 && starting_color + npages > wmap->npages)
 		pipe_loan_free(wpipe);
 
 	/* Allocate new kva. */
-	if (wpipe->pipe_map.kva == 0) {
-		error = pipe_loan_alloc(wpipe, npages);
+	if (wmap->kva == 0) {
+		error = pipe_loan_alloc(wpipe, starting_color + npages);
 		if (error) {
 			mutex_enter(lock);
 			return (error);
@@ -716,7 +723,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 	}
 
 	/* Loan the write buffer memory from writer process */
-	pgs = wpipe->pipe_map.pgs;
+	pgs = wmap->pgs + starting_color;
 	error = uvm_loan(&uio->uio_vmspace->vm_map, base, blen,
 			 pgs, UVM_LOAN_TOPAGE);
 	if (error) {
@@ -726,15 +733,15 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 	}
 
 	/* Enter the loaned pages to kva */
-	kva = wpipe->pipe_map.kva;
+	kva = wmap->kva + ptoa(starting_color);
 	for (j = 0; j < npages; j++, kva += PAGE_SIZE) {
 		pmap_kenter_pa(kva, VM_PAGE_TO_PHYS(pgs[j]), VM_PROT_READ);
 	}
 	pmap_update(pmap_kernel());
 
 	/* Now we can put the pipe in direct write mode */
-	wpipe->pipe_map.pos = bpos;
-	wpipe->pipe_map.cnt = bcnt;
+	wmap->pos = bpos + ptoa(starting_color);
+	wmap->cnt = bcnt;
 
 	/*
 	 * But before we can let someone do a direct read, we
@@ -772,7 +779,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 	mutex_exit(lock);
 
 	if (pgs != NULL) {
-		pmap_kremove(wpipe->pipe_map.kva, blen);
+		pmap_kremove(wmap->kva, blen);
 		pmap_update(pmap_kernel());
 		uvm_unloan(pgs, npages, UVM_LOAN_TOPAGE);
 	}
@@ -789,13 +796,13 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 		 * will deal with the error condition, returning short
 		 * write, error, or restarting the write(2) as appropriate.
 		 */
-		if (wpipe->pipe_map.cnt == bcnt) {
-			wpipe->pipe_map.cnt = 0;
+		if (wmap->cnt == bcnt) {
+			wmap->cnt = 0;
 			cv_broadcast(&wpipe->pipe_wcv);
 			return (error);
 		}
 
-		bcnt -= wpipe->pipe_map.cnt;
+		bcnt -= wpipe->cnt;
 	}
 
 	uio->uio_resid -= bcnt;
@@ -807,7 +814,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 		uio->uio_iovcnt--;
 	}
 
-	wpipe->pipe_map.cnt = 0;
+	wmap->cnt = 0;
 	return (error);
 }
 #endif /* !PIPE_NODIRECT */
@@ -1240,7 +1247,6 @@ pipe_free_kmem(struct pipe *pipe)
 	if (pipe->pipe_map.kva != 0) {
 		pipe_loan_free(pipe);
 		pipe->pipe_map.cnt = 0;
-		pipe->pipe_map.kva = 0;
 		pipe->pipe_map.pos = 0;
 		pipe->pipe_map.npages = 0;
 	}

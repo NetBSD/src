@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.177.4.2.2.1.2.1 2010/04/21 00:28:18 matt Exp $	*/
+/*	uipc_socket.c,v 1.177.4.2.2.1.2.1 2010/04/21 00:28:18 matt Exp	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.177.4.2.2.1.2.1 2010/04/21 00:28:18 matt Exp $");
+__KERNEL_RCSID(0, "uipc_socket.c,v 1.177.4.2.2.1.2.1 2010/04/21 00:28:18 matt Exp");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -199,7 +199,7 @@ sokvaunreserve(vsize_t len)
  */
 
 vaddr_t
-sokvaalloc(vsize_t len, struct socket *so)
+sokvaalloc(vaddr_t sva, vsize_t len, struct socket *so)
 {
 	vaddr_t lva;
 
@@ -214,7 +214,8 @@ sokvaalloc(vsize_t len, struct socket *so)
 	 * allocate kva.
 	 */
 
-	lva = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	lva = uvm_km_alloc(kernel_map, len, atop(sva) & uvmexp.colormask,
+	    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (lva == 0) {
 		sokvaunreserve(len);
 		return (0);
@@ -362,7 +363,7 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 
 	KASSERT(npgs <= M_EXT_MAXPAGES);
 
-	lva = sokvaalloc(len, so);
+	lva = sokvaalloc(sva, len, so);
 	if (lva == 0)
 		return 0;
 

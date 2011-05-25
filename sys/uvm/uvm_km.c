@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.101.4.2.4.3 2010/02/06 05:28:30 matt Exp $	*/
+/*	uvm_km.c,v 1.101.4.2.4.3 2010/02/06 05:28:30 matt Exp	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2.4.3 2010/02/06 05:28:30 matt Exp $");
+__KERNEL_RCSID(0, "uvm_km.c,v 1.101.4.2.4.3 2010/02/06 05:28:30 matt Exp");
 
 #include "opt_uvmhist.h"
 
@@ -541,6 +541,8 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	KASSERT((flags & UVM_KMF_TYPEMASK) == UVM_KMF_WIRED ||
 		(flags & UVM_KMF_TYPEMASK) == UVM_KMF_PAGEABLE ||
 		(flags & UVM_KMF_TYPEMASK) == UVM_KMF_VAONLY);
+	KASSERT((flags & UVM_KMF_VAONLY) != 0 || (flags & UVM_KMF_COLORMATCH) == 0);
+	KASSERT((flags & UVM_KMF_COLORMATCH) == 0 || (flags & UVM_KMF_VAONLY) != 0);
 
 	/*
 	 * setup for call
@@ -559,7 +561,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	if (__predict_false(uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
 	    align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 	    UVM_ADV_RANDOM,
-	    (flags & (UVM_KMF_TRYLOCK | UVM_KMF_NOWAIT | UVM_KMF_WAITVA))
+	    (flags & (UVM_KMF_TRYLOCK | UVM_KMF_NOWAIT | UVM_KMF_WAITVA | UVM_KMF_COLORMATCH))
 	    | UVM_FLAG_QUANTUM)) != 0)) {
 		UVMHIST_LOG(maphist, "<- done (no VM)",0,0,0,0);
 		return(0);

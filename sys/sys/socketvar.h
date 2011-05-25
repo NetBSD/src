@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.116.4.2 2009/04/04 23:36:28 snj Exp $	*/
+/*	socketvar.h,v 1.116.4.2 2009/04/04 23:36:28 snj Exp	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -505,7 +505,7 @@ void	sblastmbufchk(struct sockbuf *, const char *);
 #endif /* SOCKBUF_DEBUG */
 
 /* sosend loan */
-vaddr_t	sokvaalloc(vsize_t, struct socket *);
+vaddr_t	sokvaalloc(vaddr_t, vsize_t, struct socket *);
 void	sokvafree(vaddr_t, vsize_t);
 void	soloanfree(struct mbuf *, void *, size_t, void *);
 

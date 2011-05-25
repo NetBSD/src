@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.18 2011/04/29 08:26:23 matt Exp $	*/
+/*	bus_dma.c,v 1.22.16.18 2011/04/29 08:26:23 matt Exp	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.18 2011/04/29 08:26:23 matt Exp $");
+__KERNEL_RCSID(0, "bus_dma.c,v 1.22.16.18 2011/04/29 08:26:23 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -934,6 +934,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 			    " address 0x%"PRIxPADDR"\n", curaddr);
 			panic("_bus_dmamem_alloc");
 		}
+		KASSERT((atop(curaddr - lastaddr) & uvmexp.colormask) == 1);
 #endif
 		if (curaddr == (lastaddr + PAGE_SIZE))
 			segs[curseg].ds_len += PAGE_SIZE;
@@ -1020,7 +1021,9 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	size = round_page(size);
 
-	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
+	va = uvm_km_alloc(kernel_map, size,
+	    atop(segs[0].ds_addr) & uvmexp.colormask,
+	    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY | kmflags);
 
 	if (va == 0)
 		return (ENOMEM);
