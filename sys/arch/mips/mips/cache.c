@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.33.96.4 2011/04/29 08:26:23 matt Exp $	*/
+/*	cache.c,v 1.33.96.4 2011/04/29 08:26:23 matt Exp	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.33.96.4 2011/04/29 08:26:23 matt Exp $");
+__KERNEL_RCSID(0, "cache.c,v 1.33.96.4 2011/04/29 08:26:23 matt Exp");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -931,7 +931,7 @@ mips_config_cache_modern(void)
 		mci->mci_pdcache_size =
 		    mci->mci_pdcache_way_size * mci->mci_pdcache_ways;
 		mci->mci_pdcache_way_mask = mci->mci_pdcache_way_size - 1;
-		uvmexp.ncolors = atop(mci->mci_pdcache_size) / mci->mci_pdcache_ways;
+		uvmexp.ncolors = atop(mci->mci_pdcache_way_size);
 		break;
 	}
 
@@ -959,6 +959,8 @@ mips_config_cache_modern(void)
 		mci->mci_picache_size =
 		    mci->mci_picache_way_size * mci->mci_picache_ways;
 		mci->mci_picache_way_mask = mci->mci_picache_way_size - 1;
+		if (uvmexp.ncolors < atop(mci->mci_picache_way_size))
+			uvmexp.ncolors = atop(mci->mci_picache_way_size);
 		break;
 	}
 

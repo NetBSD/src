@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.148.4.2.4.1 2010/01/26 21:26:28 matt Exp $	*/
+/*	uvm_extern.h,v 1.148.4.2.4.1 2010/01/26 21:26:28 matt Exp	*/
 
 /*
  *
@@ -173,6 +173,7 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #define UVM_KMF_TRYLOCK	UVM_FLAG_TRYLOCK	/* try locking only */
 #define UVM_KMF_NOWAIT	UVM_FLAG_NOWAIT		/* not allowed to sleep */
 #define UVM_KMF_WAITVA	UVM_FLAG_WAITVA		/* sleep for va */
+#define	UVM_KMF_COLORMATCH UVM_FLAG_COLORMATCH	/* start at color in align */
 
 /*
  * the following defines the strategies for uvm_pagealloc_strat()

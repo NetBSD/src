@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.104 2008/10/18 03:46:22 rmind Exp $	*/
+/*	uvm_aobj.c,v 1.104 2008/10/18 03:46:22 rmind Exp	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.104 2008/10/18 03:46:22 rmind Exp $");
+__KERNEL_RCSID(0, "uvm_aobj.c,v 1.104 2008/10/18 03:46:22 rmind Exp");
 
 #include "opt_uvmhist.h"
 
@@ -976,7 +976,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			if (ptmp == NULL && uao_find_swslot(&aobj->u_obj,
 			    current_offset >> PAGE_SHIFT) == 0) {
 				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL, UVM_PGA_ZERO);
+				    NULL, UVM_FLAG_COLORMATCH|UVM_PGA_ZERO);
 				if (ptmp) {
 					/* new page */
 					ptmp->flags &= ~(PG_FAKE);

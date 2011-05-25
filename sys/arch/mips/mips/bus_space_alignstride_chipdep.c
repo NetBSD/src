@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.12 2010/01/14 05:02:38 cliff Exp $ */
+/* bus_space_alignstride_chipdep.c,v 1.10.18.12 2010/01/14 05:02:38 cliff Exp */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.12 2010/01/14 05:02:38 cliff Exp $");
+__KERNEL_RCSID(0, "bus_space_alignstride_chipdep.c,v 1.10.18.12 2010/01/14 05:02:38 cliff Exp");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -759,8 +759,9 @@ __BS(map)(void *v, bus_addr_t addr, bus_size_t size, int flags,
 		int s;
 
 		size = round_page((addr % PAGE_SIZE) + size);
-		va = uvm_km_alloc(kernel_map, size, PAGE_SIZE,
-			UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+		va = uvm_km_alloc(kernel_map, size,
+		    atop(addr) & uvmexp.colormask,
+		    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 		if (va == 0)
 			return ENOMEM;
 
