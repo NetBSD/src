@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.18 2011/05/24 19:10:12 drochner Exp $ */
+/*	$NetBSD: xform.h,v 1.19 2011/05/26 21:50:03 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -65,6 +65,8 @@ extern const struct enc_xform enc_xform_rijndael128;
 extern const struct enc_xform enc_xform_arc4;
 extern const struct enc_xform enc_xform_camellia;
 extern const struct enc_xform enc_xform_aes_ctr;
+extern const struct enc_xform enc_xform_aes_gcm;
+extern const struct enc_xform enc_xform_aes_gmac;
 
 extern const struct auth_hash auth_hash_null;
 extern const struct auth_hash auth_hash_md5;
@@ -81,6 +83,9 @@ extern const struct auth_hash auth_hash_hmac_sha2_256;
 extern const struct auth_hash auth_hash_hmac_sha2_384;
 extern const struct auth_hash auth_hash_hmac_sha2_512;
 extern const struct auth_hash auth_hash_aes_xcbc_mac_96;
+extern const struct auth_hash auth_hash_gmac_aes_128;
+extern const struct auth_hash auth_hash_gmac_aes_192;
+extern const struct auth_hash auth_hash_gmac_aes_256;
 
 extern const struct comp_algo comp_algo_deflate;
 extern const struct comp_algo comp_algo_deflate_nogrow;

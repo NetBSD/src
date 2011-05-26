@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.16 2011/05/24 19:10:12 drochner Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.17 2011/05/26 21:50:03 drochner Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.16 2011/05/24 19:10:12 drochner Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.17 2011/05/26 21:50:03 drochner Exp $");
 #endif
 #endif /* not lint*/
 
@@ -118,6 +118,9 @@ static const struct alg aalgs[] = {
 	{ SADB_X_AALG_SHA2_384,	"hmac-sha2-384", },
 	{ SADB_X_AALG_SHA2_512,	"hmac-sha2-512", },
 	{ SADB_X_AALG_AES_XCBC_MAC, "aes-xcbc-mac", },
+	{ SADB_X_AALG_AES128GMAC, "aes-128-gmac", },
+	{ SADB_X_AALG_AES192GMAC, "aes-192-gmac", },
+	{ SADB_X_AALG_AES256GMAC, "aes-256-gmac", },
 };
 static const struct alg espalgs[] = {
 	{ SADB_EALG_NONE,	"none", },
@@ -129,6 +132,8 @@ static const struct alg espalgs[] = {
 	{ SADB_X_EALG_RIJNDAELCBC, "aes-cbc", },
 	{ SADB_X_EALG_CAMELLIACBC, "camellia-cbc", },
 	{ SADB_X_EALG_AESCTR,	"aes-ctr", },
+	{ SADB_X_EALG_AESGCM16,	"aes-gcm-16", },
+	{ SADB_X_EALG_AESGMAC, "aes-gmac", },
 };
 static const struct alg ipcompalgs[] = {
 	{ SADB_X_CALG_NONE,	"none", },
