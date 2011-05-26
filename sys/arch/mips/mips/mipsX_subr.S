@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.41 2011/05/26 01:46:40 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.42 2011/05/26 15:42:17 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1560,8 +1560,8 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 #else
 	_SLL	k1, k1, WIRED_SHIFT
 	_SRL	k1, k1, WIRED_SHIFT
-	_MTC0	k1, MIPS_COP_0_TLB_LO1		# load PTE entry
 #endif
+	_MTC0	k1, MIPS_COP_0_TLB_LO1		# load PTE entry
 	COP0_SYNC
 	tlbwr					# write random TLB
 	COP0_SYNC
