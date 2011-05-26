@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.64 2011/05/24 19:12:53 drochner Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.65 2011/05/26 20:33:24 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.64 2011/05/24 19:12:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.65 2011/05/26 20:33:24 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1620,10 +1620,10 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		DPRINTF(("tcomp->type = %d\n", tcomp->type));
 
 		crihead = &cric;
-		if (thash) {
-			cric.cri_next = &cria;
-		} else if (txform) {
+		if (txform) {
 			cric.cri_next = &crie;
+		} else if (thash) {
+			cric.cri_next = &cria;
 		}
 	}
 
@@ -1644,6 +1644,8 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		if (!crihead) {
 			crihead = &crie;
 		}
+		if (thash)
+			crie.cri_next = &cria;
 	} 
 
 	if (thash) {
@@ -1663,8 +1665,6 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 				goto bail;
 			}
 		}
-		if (txform)
-			cria.cri_next = &crie;	/* XXX forces enc then hash? */
 		if (!crihead) {
 			crihead = &cria;
 		}
