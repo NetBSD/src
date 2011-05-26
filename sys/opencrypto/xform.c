@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.27 2011/05/24 19:10:11 drochner Exp $ */
+/*	$NetBSD: xform.c,v 1.28 2011/05/26 21:50:03 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.27 2011/05/24 19:10:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.28 2011/05/26 21:50:03 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -140,6 +140,16 @@ const struct enc_xform enc_xform_aes_ctr = {
 	16, 8, 16+4, 32+4
 };
 
+const struct enc_xform enc_xform_aes_gcm = {
+	CRYPTO_AES_GCM_16, "AES-GCM",
+	4 /* ??? */, 8, 16+4, 32+4
+};
+
+const struct enc_xform enc_xform_aes_gmac = {
+	CRYPTO_AES_GMAC, "AES-GMAC",
+	4 /* ??? */, 8, 16+4, 32+4
+};
+
 /* Authentication instances */
 const struct auth_hash auth_hash_null = {
 	CRYPTO_NULL_HMAC, "NULL-HMAC",
@@ -214,6 +224,21 @@ const struct auth_hash auth_hash_hmac_sha2_512 = {
 const struct auth_hash auth_hash_aes_xcbc_mac_96 = {
 	CRYPTO_AES_XCBC_MAC_96, "AES-XCBC-MAC-96",
 	16, 16, 12, 0
+};
+
+const struct auth_hash auth_hash_gmac_aes_128 = {
+	CRYPTO_AES_128_GMAC, "GMAC-AES-128",
+	16+4, 16, 16, 16 /* ??? */
+};
+
+const struct auth_hash auth_hash_gmac_aes_192 = {
+	CRYPTO_AES_192_GMAC, "GMAC-AES-192",
+	24+4, 16, 16, 16 /* ??? */
+};
+
+const struct auth_hash auth_hash_gmac_aes_256 = {
+	CRYPTO_AES_256_GMAC, "GMAC-AES-256",
+	32+4, 16, 16, 16 /* ??? */
 };
 
 /* Compression instance */

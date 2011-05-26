@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.37 2011/05/23 15:17:25 drochner Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.38 2011/05/26 21:50:02 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.37 2011/05/23 15:17:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.38 2011/05/26 21:50:02 drochner Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -132,6 +132,10 @@ esp_algorithm_lookup(int alg)
 		return &enc_xform_camellia;
 	case SADB_X_EALG_AESCTR:
 		return &enc_xform_aes_ctr;
+	case SADB_X_EALG_AESGCM16:
+		return &enc_xform_aes_gcm;
+	case SADB_X_EALG_AESGMAC:
+		return &enc_xform_aes_gmac;
 	case SADB_EALG_NULL:
 		return &enc_xform_null;
 	}
@@ -218,6 +222,28 @@ esp_init(struct secasvar *sav, const struct xformsw *xsp)
 	/* NB: override anything set in ah_init0 */
 	sav->tdb_xform = xsp;
 	sav->tdb_encalgxform = txform;
+
+	if (sav->alg_enc == SADB_X_EALG_AESGCM16 ||
+	    sav->alg_enc == SADB_X_EALG_AESGMAC) {
+		switch (keylen) {
+		case 20:
+			sav->alg_auth = SADB_X_AALG_AES128GMAC;
+			sav->tdb_authalgxform = &auth_hash_gmac_aes_128;
+			break;
+		case 28:
+			sav->alg_auth = SADB_X_AALG_AES192GMAC;
+			sav->tdb_authalgxform = &auth_hash_gmac_aes_192;
+			break;
+		case 36:
+			sav->alg_auth = SADB_X_AALG_AES256GMAC;
+			sav->tdb_authalgxform = &auth_hash_gmac_aes_256;
+			break;
+		}
+		memset(&cria, 0, sizeof(cria));
+		cria.cri_alg = sav->tdb_authalgxform->type;
+		cria.cri_klen = _KEYBITS(sav->key_enc);
+		cria.cri_key = _KEYBUF(sav->key_enc);
+	}
 
 	/* Initialize crypto session. */
 	memset(&crie, 0, sizeof (crie));
@@ -381,12 +407,21 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 
 		/* Authentication descriptor */
 		crda->crd_skip = skip;
-		crda->crd_len = m->m_pkthdr.len - (skip + alen);
+		if (espx && espx->type == CRYPTO_AES_GCM_16)
+			crda->crd_len = hlen - sav->ivlen;
+		else
+			crda->crd_len = m->m_pkthdr.len - (skip + alen);
 		crda->crd_inject = m->m_pkthdr.len - alen;
 
 		crda->crd_alg = esph->type;
-		crda->crd_key = _KEYBUF(sav->key_auth);
-		crda->crd_klen = _KEYBITS(sav->key_auth);
+		if (espx && (espx->type == CRYPTO_AES_GCM_16 ||
+			     espx->type == CRYPTO_AES_GMAC)) {
+			crda->crd_key = _KEYBUF(sav->key_enc);
+			crda->crd_klen = _KEYBITS(sav->key_enc);
+		} else {
+			crda->crd_key = _KEYBUF(sav->key_auth);
+			crda->crd_klen = _KEYBITS(sav->key_auth);
+		}
 
 		/* Copy the authenticator */
 		if (mtag == NULL)
@@ -418,7 +453,10 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	if (espx) {
 		IPSEC_ASSERT(crde != NULL, ("esp_input: null esp crypto descriptor"));
 		crde->crd_skip = skip + hlen;
-		crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
+		if (espx->type == CRYPTO_AES_GMAC)
+			crde->crd_len = 0;
+		else
+			crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
 		crde->crd_inject = skip + hlen - sav->ivlen;
 
 		crde->crd_alg = espx->type;
@@ -856,7 +894,10 @@ esp_output(
 
 		/* Encryption descriptor. */
 		crde->crd_skip = skip + hlen;
-		crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
+		if (espx->type == CRYPTO_AES_GMAC)
+			crde->crd_len = 0;
+		else
+			crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
 		crde->crd_flags = CRD_F_ENCRYPT;
 		crde->crd_inject = skip + hlen - sav->ivlen;
 
@@ -896,13 +937,22 @@ esp_output(
 	if (esph) {
 		/* Authentication descriptor. */
 		crda->crd_skip = skip;
-		crda->crd_len = m->m_pkthdr.len - (skip + alen);
+		if (espx && espx->type == CRYPTO_AES_GCM_16)
+			crda->crd_len = hlen - sav->ivlen;
+		else
+			crda->crd_len = m->m_pkthdr.len - (skip + alen);
 		crda->crd_inject = m->m_pkthdr.len - alen;
 
 		/* Authentication operation. */
 		crda->crd_alg = esph->type;
-		crda->crd_key = _KEYBUF(sav->key_auth);
-		crda->crd_klen = _KEYBITS(sav->key_auth);
+		if (espx && (espx->type == CRYPTO_AES_GCM_16 ||
+			     espx->type == CRYPTO_AES_GMAC)) {
+			crda->crd_key = _KEYBUF(sav->key_enc);
+			crda->crd_klen = _KEYBITS(sav->key_enc);
+		} else {
+			crda->crd_key = _KEYBUF(sav->key_auth);
+			crda->crd_klen = _KEYBITS(sav->key_auth);
+		}
 	}
 
 	return crypto_dispatch(crp);
