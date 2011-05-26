@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2007/05/28 12:06:17 tls Exp $
+#	$NetBSD: Makefile,v 1.3 2011/05/26 12:56:28 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,8 @@ BUILDSYMLINKS+=	gkermit.nr gkermit.1
 
 CPPFLAGS+=	-DPOSIX
 CPPFLAGS+=	-I${DIST}
+
+CWARNFLAGS.clang+=	-Wno-unused-value
 
 .PATH: ${DIST}
 

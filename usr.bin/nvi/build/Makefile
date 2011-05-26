@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2010/02/06 23:45:26 he Exp $
+#	$NetBSD: Makefile,v 1.14 2011/05/26 12:56:33 joerg Exp $
 
 .include <bsd.own.mk>
 
 USE_WIDECHAR?=yes
+
+CWARNFLAGS.clang+=	-Wno-uninitialized -Wno-format-security
 
 CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS
 #DBG=-g

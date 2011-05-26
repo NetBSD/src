@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.11 2011/04/29 15:21:44 tron Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2011/05/26 12:56:27 joerg Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client and server
+CWARNFLAGS.clang+=	-Wno-comment -Wno-empty-body -Wno-format-extra-args
 
 WARNS?=	0
 

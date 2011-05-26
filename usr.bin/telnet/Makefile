@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2011/04/24 21:42:06 elric Exp $
+#	$NetBSD: Makefile,v 1.46 2011/05/26 12:56:33 joerg Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -35,6 +35,7 @@
 #
 
 WARNS?=	1	# XXX -Wshadow etc.  fix asap
+CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-format-security
 
 .include <bsd.own.mk>
 

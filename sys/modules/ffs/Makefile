@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/03/13 18:23:30 bouyer Exp $
+#	$NetBSD: Makefile,v 1.7 2011/05/26 12:56:31 joerg Exp $
 
 .include "../Makefile.inc"
 
@@ -6,6 +6,8 @@
 
 KMOD=	ffs
 CPPFLAGS+=      -DUFS_DIRHASH -DFFS_EI -DWAPBL -DAPPLE_UFS -DQUOTA -DQUOTA2
+
+CWARNFLAGS.clang=	-Wno-conversion
 
 .PATH:	${S}/ufs/ufs
 SRCS=	ufs_bmap.c ufs_dirhash.c ufs_extattr.c ufs_ihash.c ufs_inode.c \

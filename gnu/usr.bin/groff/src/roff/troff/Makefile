@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2010/12/16 22:54:22 joerg Exp $
+# $NetBSD: Makefile,v 1.12 2011/05/26 12:56:29 joerg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/roff/troff/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
@@ -9,6 +9,8 @@ SRCS=		dictionary.cpp div.cpp env.cpp input.cpp \
 		majorminor.cpp mtsm.cpp node.cpp number.cpp reg.cpp
 CLEANFILES=	majorminor.cpp ${MAN}
 USETBL=
+
+CWARNFLAGS.clang+=	-Wno-format-security
 
 .include <bsd.prog.mk>
 

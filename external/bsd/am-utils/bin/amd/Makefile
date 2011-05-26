@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/02/08 07:56:38 plunky Exp $
+#	$NetBSD: Makefile,v 1.6 2011/05/26 12:56:25 joerg Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -62,6 +62,8 @@ YHEADER=	1
 YPREFIX.sun_map_parse.y =	sun_map_
 LPREFIX.sun_map_tok.l =	sun_map_
 CPPFLAGS.sun_map_tok.c += -Dyylval=sun_map_lval -Dyyerror=sun_map_error
+
+CWARNFLAGS.clang+=	-Wno-unneeded-internal-declaration
 
 YPREFIX.conf_parse.y =	conf_
 LPREFIX.conf_tok.l =	conf_

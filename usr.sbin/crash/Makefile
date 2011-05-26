@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.11 2011/04/30 16:57:58 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2011/05/26 12:56:33 joerg Exp $
 
 PROG=		crash
 MAN=		crash.8
 RUMPKERNEL=	yes	# XXX: Avoid -mcmodel=kernel
+
+CWARNFLAGS.clang+=	-Wno-format
 
 LDADD+=	-lutil -lkvm -ledit -lterminfo -T${.CURDIR}/ldscript.crash
 DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}

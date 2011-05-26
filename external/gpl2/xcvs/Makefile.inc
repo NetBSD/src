@@ -1,10 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.1 2009/04/08 16:27:51 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2011/05/26 12:56:27 joerg Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client/server
 
 WARNS?=	0
+
+CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-parentheses \
+			-Wno-format-security -Wno-format
 
 BINDIR?= /usr/bin
 IDIST=	${NETBSDSRCDIR}/external/gpl2/xcvs/dist

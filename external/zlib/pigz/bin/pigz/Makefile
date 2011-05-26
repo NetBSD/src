@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.6 2010/11/09 00:11:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2011/05/26 12:56:27 joerg Exp $
 
 .include <bsd.own.mk>
 
 BINDIR=		/usr/bin
 
 USE_FORT?= yes	# data-driven bugs?
+
+CWARNFLAGS.clang+=	-Wno-format
 
 PROG=		pigz
 SRCS=		pigz.c yarn.c

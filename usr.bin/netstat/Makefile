@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2011/05/03 18:28:46 dyoung Exp $
+#	$NetBSD: Makefile,v 1.35 2011/05/26 12:56:33 joerg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -16,6 +16,8 @@ LDADD=	-lkvm
 DPADD=	${LIBKVM}
 CPPFLAGS+= -DIPSEC
 CPPFLAGS+= -I${NETBSDSRCDIR}/sys/dist/pf
+
+CWARNFLAGS.clang+=	-Wno-format
 
 .PATH:  ${.CURDIR}/../../lib/libc/gen
 .PATH:  ${.CURDIR}/../../lib/libc/net

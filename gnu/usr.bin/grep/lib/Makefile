@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/05/03 14:48:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2011/05/26 12:56:28 joerg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -15,5 +15,7 @@ SRCS=	closeout.c error.c exclude.c hard-locale.c isdir.c \
 
 COPTS.hard-locale.c = -Wno-stack-protector
 COPTS.regex.c = -Wno-stack-protector
+
+CWARNFLAGS.clang+=	-Wno-unused-value
 
 .include <bsd.lib.mk>

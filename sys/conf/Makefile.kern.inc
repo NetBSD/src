@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.136 2011/05/23 13:55:55 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.137 2011/05/26 12:56:30 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -82,6 +82,9 @@ CWARNFLAGS+=	-Wextra -Wno-unused-parameter
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare
 .endif
+
+CWARNFLAGS.clang+=	-Wno-unknown-pragmas -Wno-conversion \
+			-Wno-self-assign -Wno-array-bounds
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${DEBUG} ${COPTS}

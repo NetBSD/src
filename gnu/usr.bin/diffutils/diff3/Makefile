@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/01/26 00:40:40 wiz Exp $
+#	$NetBSD: Makefile,v 1.2 2011/05/26 12:56:27 joerg Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -10,5 +10,7 @@ SRCS=		diff3.c version.c
 
 DPADD+=		${LIBDIFFUTILS}
 LDADD+=		${LIBDIFFUTILS}
+
+CWARNFLAGS.clang+=	-Wno-unused-value
 
 .include <bsd.prog.mk>

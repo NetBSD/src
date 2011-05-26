@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.200 2011/05/25 15:02:25 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.201 2011/05/26 12:56:30 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -18,9 +18,9 @@ CFLAGS+=	-std=gnu99
 .endif
 
 .if defined(WARNS)
+CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wno-sign-compare -Wno-pointer-sign :}
 .if ${WARNS} > 0
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
-CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wno-array-bounds :}
 #CFLAGS+=	-Wmissing-declarations -Wredundant-decls -Wnested-externs
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet. Also, add -Wno-traditional because
@@ -48,6 +48,8 @@ CFLAGS+=	-Wreturn-type -Wswitch -Wshadow
 .if ${WARNS} > 2
 CFLAGS+=	-Wcast-qual -Wwrite-strings
 CFLAGS+=	-Wextra -Wno-unused-parameter
+# Readd -Wno-sign-compare to override -Wextra with clang
+CFLAGS+=	-Wno-sign-compare
 CXXFLAGS+=	-Wabi
 CXXFLAGS+=	-Wold-style-cast
 CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
@@ -56,6 +58,7 @@ CXXFLAGS+=	${${ACTIVE_CXX} == "gcc":? -Wno-non-template-friend -Wno-pmf-conversi
 .endif
 .if ${WARNS} > 3 && defined(HAVE_GCC) && ${HAVE_GCC} >= 3
 CFLAGS+=	-Wsign-compare
+CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign :}
 .endif
 .endif
 

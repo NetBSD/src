@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/03/04 22:48:29 matt Exp $
+#	$NetBSD: Makefile,v 1.8 2011/05/26 12:56:26 joerg Exp $
 
 USE_SHLIBDIR=	yes
 USE_FORT?=	no
@@ -7,6 +7,8 @@ NOLINT=		#defined
 .include "../../lvm2tools.mk"
 
 LIB=		devmapper
+
+CWARNFLAGS.clang+=	-Wno-comment -Wno-parentheses -Wno-switch
 
 CPPFLAGS+=	-I${LIBDEVMAPPER_DISTDIR} \
 		-I${LIBDEVMAPPER_DISTDIR}/misc \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/05/03 14:48:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2011/05/26 12:56:28 joerg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -13,5 +13,7 @@ SRCS=	basename.c c-stack.c cmpbuf.c error.c exclude.c exitfail.c \
 	freesoft.c \
 	hard-locale.c imaxtostr.c offtostr.c prepargs.c posixver.c quotesys.c \
 	regex.c setmode.c strftime.c umaxtostr.c xmalloc.c xstrtoumax.c
+
+CWARNFLAGS.clang+=	-Wno-unused-value -Wno-tautological-compare
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2010/12/20 04:25:03 christos Exp $
+#	$NetBSD: Makefile,v 1.29 2011/05/26 12:56:33 joerg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -12,5 +12,7 @@ DPADD=	${LIBKVM}
 LDADD=	-lkvm
 BINGRP=	kmem
 BINMODE=2555
+
+CWARNFLAGS.clang+=	-Wno-format-extra-args
 
 .include <bsd.prog.mk>

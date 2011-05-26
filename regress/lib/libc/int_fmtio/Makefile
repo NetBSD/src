@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/09/18 05:41:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2011/05/26 12:56:30 joerg Exp $
 
 NOMAN=		# defined
 
@@ -7,5 +7,7 @@ WARNS=		2 # need this!
 
 regress: ${PROG}
 	./${PROG}
+
+CWARNFLAGS.clang+=	-Wno-uninitialized
 
 .include <bsd.prog.mk>

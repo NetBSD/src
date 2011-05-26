@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/07/12 23:45:26 wiz Exp $
+#	$NetBSD: Makefile,v 1.7 2011/05/26 12:56:29 joerg Exp $
 
 PROG=		makeinfo
 SRCS=		cmds.c defun.c files.c float.c footnote.c \
@@ -7,6 +7,8 @@ SRCS=		cmds.c defun.c files.c float.c footnote.c \
 		sectioning.c toc.c xml.c xref.c
 
 CPPFLAGS+=	-I${IDIST}/makeinfo
+
+WARNS?=		0	# pointer sign issues
 
 .include <bsd.prog.mk>
 

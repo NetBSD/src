@@ -17,4 +17,6 @@ LDFLAGS+=	-g
 DPADD+=		${LIBL}
 LDADD+=		-ll -lutil -lc
 
+CWARNFLAGS.clang+=	-Wno-format -Wno-conversion
+
 .include <bsd.test.mk>

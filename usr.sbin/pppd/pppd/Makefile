@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2008/08/29 00:02:25 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.40 2011/05/26 12:56:34 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -38,5 +38,7 @@ DPADD+= ${LIBPCAP} ${LIBCRYPT} ${LIBUTIL}
 COPTS.${f}.c+=	-Wno-pointer-sign
 .endfor
 .endif
+
+CWARNFLAGS.clang+=	-Wno-tautological-compare
 
 .include <bsd.prog.mk>

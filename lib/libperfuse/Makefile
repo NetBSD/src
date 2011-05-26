@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2011/05/09 08:51:18 manu Exp $
+# $NetBSD: Makefile,v 1.4 2011/05/26 12:56:30 joerg Exp $
 
 LIB=            perfuse
 LIBDPLIBS+=     puffs	${.CURDIR}/../libpuffs
@@ -6,6 +6,8 @@ LIBDPLIBS+=     puffs	${.CURDIR}/../libpuffs
 .ifdef DEBUG
 PERFUSE_OPT_DEBUG_FLAGS=   -g -DPERFUSE_DEBUG
 .endif
+
+CWARNFLAGS.clang+=	-Wno-format-security
 
 CFLAGS+=        ${PERFUSE_OPT_DEBUG_FLAGS}
 CPPFLAGS+=	-I${.CURDIR} 
