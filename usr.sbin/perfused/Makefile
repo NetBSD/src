@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/05/09 08:51:18 manu Exp $
+# $NetBSD: Makefile,v 1.3 2011/05/26 12:56:34 joerg Exp $
 
 PROG=            perfused
 
@@ -13,5 +13,7 @@ WARNS=          4
 
 LDADD+= -lperfuse -lpuffs
 DPADD+= ${LIBPUFFS}
+
+CWARNFLAGS.clang+=	-Wno-format-security
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2009/02/14 08:31:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.27 2011/05/26 12:56:24 joerg Exp $
 
 WARNS=3
 
@@ -46,5 +46,7 @@ ksh.1: ksh.Man mkman
 	${SCRIPT_ENV} \
 	${HOST_SH} $(.CURDIR)/mkman ksh $(.CURDIR)/ksh.Man >ksh.1.tmp \
 	    && mv ksh.1.tmp ksh.1
+
+CWARNFLAGS.clang+=	-Wno-format-security
 
 .include <bsd.prog.mk>

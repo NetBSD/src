@@ -1,10 +1,13 @@
-# $NetBSD: Makefile.inc,v 1.23 2009/04/22 15:23:02 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.24 2011/05/26 12:56:33 joerg Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client/server
+CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-array-bounds \
+			-Wno-conversion -Wno-constant-logical-operand \
+			-Wno-format-security
 
 DIST=	${NETBSDSRCDIR}/dist/dhcp
 .PATH:	${DIST}/${DHCPSRCDIR}

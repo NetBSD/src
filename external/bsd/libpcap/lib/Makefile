@@ -1,8 +1,11 @@
-# $NetBSD: Makefile,v 1.2 2010/12/05 03:03:27 christos Exp $	
+# $NetBSD: Makefile,v 1.3 2011/05/26 12:56:25 joerg Exp $	
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network protocol library
+
+CWARNFLAGS.clang+=	-Wno-format-extra-args \
+			-Wno-unneeded-internal-declaration
 
 .SUFFIXES: .3 .3pcap
 

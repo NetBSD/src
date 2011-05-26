@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/04/23 08:19:15 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.8 2011/05/26 12:56:30 joerg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -10,6 +10,8 @@ BINDIR?=	/usr/sbin
 LDSTATIC?=
 .endif
 #COPTS=	-g -DDEBUG -Wall
+
+CWARNFLAGS.clang+=	-Wno-array-bounds
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>

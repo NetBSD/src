@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/12/02 01:54:20 haad Exp $
+#	$NetBSD: Makefile,v 1.5 2011/05/26 12:56:26 joerg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -8,6 +8,8 @@ NOLINT=		#defined
 .include "../../lvm2tools.mk"
 
 LIB=		lvm
+
+CWARNFLAGS+=	-Wno-parentheses
 
 CPPFLAGS+=	-I${LVM2_DISTDIR}/lib -I${LVM2_DISTDIR}/include \
 		-I. 

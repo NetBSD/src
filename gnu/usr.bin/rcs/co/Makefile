@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/18 04:42:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2011/05/26 12:56:29 joerg Exp $
 
 PROG=	co
+
+CWARNFLAGS.clang+=	-Wno-format-extra-args
 
 .include <bsd.prog.mk>
