@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.47 2011/05/26 04:25:28 uebayasi Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.48 2011/05/26 16:29:13 para Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.47 2011/05/26 04:25:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.48 2011/05/26 16:29:13 para Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
 #include "opt_splash.h"
+#include "opt_userconf.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.47 2011/05/26 04:25:28 uebayasi Ex
 #include <sys/module.h>
 #include <sys/sysctl.h>
 #include <sys/extent.h>
+
+#if defined(USERCONF)
 #include <sys/userconf.h>
+#endif /* defined(USERCONF) */
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
@@ -178,6 +182,7 @@ module_init_md(void)
 }
 #endif	/* MODULAR */
 
+#if defined(USERCONF)
 void
 userconf_bootinfo(void)
 {
@@ -197,6 +202,7 @@ userconf_bootinfo(void)
 		userconf_parse(bi->text);
 	}
 }
+#endif /* defined USERCONF) */
 
 void
 cpu_need_resched(struct cpu_info *ci, int flags)
