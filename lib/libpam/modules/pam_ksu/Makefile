@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2011/04/15 18:05:45 elric Exp $
+# $NetBSD: Makefile,v 1.11 2011/05/26 12:56:30 joerg Exp $
 # Copyright 2002 FreeBSD, Inc.
 # All rights reserved.
 #
@@ -36,5 +36,7 @@ LIBDPLIBS+= \
 	com_err	${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libcom_err \
 	crypt	${.CURDIR}/../../../libcrypt \
 	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
+
+CWARNFLAGS.clang=	-Wno-format-security
 
 .include "${.CURDIR}/../mod.mk"

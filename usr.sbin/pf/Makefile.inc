@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.7 2009/04/23 05:25:06 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2011/05/26 12:56:34 joerg Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
+CWARNFLAGS.clang+=	-Wno-tautological-compare
 
 CPPFLAGS+=	-include ${.CURDIR}/../compat_openbsd.h
 

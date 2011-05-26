@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/11/10 17:36:09 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2011/05/26 12:56:28 joerg Exp $
 
 PROG=	xgettext
 SRCS=	\
@@ -25,6 +25,8 @@ x-tcl.c \
 x-ycp.c 
 
 COPTS.xgettext.c = -Wno-stack-protector
+
+CWARNFLAGS.clang+=	-Wno-empty-body
 
 .include <bsd.prog.mk>
 .include "${.CURDIR}/../Makefile.inc.prog"
