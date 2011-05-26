@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.20 2011/04/29 08:26:20 matt Exp $	*/
+/*	cpuregs.h,v 1.74.28.20 2011/04/29 08:26:20 matt Exp	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,15 +132,15 @@
 #define	CCA_CACHEABLE		3	/* cacheable non-coherent */
 
 /* CPU dependent mtc0 hazard hook */
-#if (MIPS32R2 + MIPS64R2) > 0
-# if (MIPS1 + MIPS3 + MIPS32 + MIPS64) == 0
+#if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
+# if (MIPS1 + MIPS3 + MIPS32 + MIPS64 + MIPS64_RMIXL) == 0
 #  define COP0_SYNC		sll $0,$0,3	/* EHB */
 #  define JR_HB_RA		.set push; .set mips32r2; jr.hb ra; nop; .set pop
 # else
 #  define COP0_SYNC		sll $0,$0,1; sll $0,$0,1; sll $0,$0,3
 #  define JR_HB_RA		sll $0,$0,1; sll $0,$0,1; jr ra; sll $0,$0,3
 # endif
-#elif (MIPS32 + MIPS64) > 0
+#elif (MIPS32 + MIPS64 + MIPS64_RMIXL) > 0
 # define COP0_SYNC		sll $0,$0,1; sll $0,$0,1; sll $0,$0,1
 # define JR_HB_RA		sll $0,$0,1; sll $0,$0,1; jr ra; sll $0,$0,1
 #elif MIPS3 > 0
@@ -723,13 +723,13 @@
 
 /* XXX simonb: this is before MIPS3_PLUS is defined (and is ugly!) */
 
-#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 0 && MIPS1 != 0
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) == 0 && MIPS1 != 0
 #define	MIPS_TLB_PID_SHIFT		MIPS1_TLB_PID_SHIFT
 #define	MIPS_TLB_PID			MIPS1_TLB_PID
 #define	MIPS_TLB_NUM_PIDS		MIPS1_TLB_NUM_PIDS
 #endif
 
-#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) != 0 && MIPS1 == 0
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) != 0 && MIPS1 == 0
 #define	MIPS_TLB_PID_SHIFT		0
 #define	MIPS_TLB_PID			MIPS3_TLB_PID
 #define	MIPS_TLB_NUM_PIDS		MIPS3_TLB_NUM_ASIDS
@@ -950,7 +950,7 @@
 #ifdef MIPS64_SB1
 #include <mips/sb1regs.h>
 #endif
-#if defined(MIPS64_XLP) || defined(MIPS64_XLR) || defined(MIPS64_XLS)
+#if (MIPS64_XLR + MIPS64_XLS + MIPS64_XLP) > 0
 #include <mips/rmi/rmixlreg.h>
 #endif
 

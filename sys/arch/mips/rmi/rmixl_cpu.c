@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.21 2011/04/29 08:26:31 matt Exp $	*/
+/*	rmixl_cpu.c,v 1.1.2.21 2011/04/29 08:26:31 matt Exp	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,10 +38,12 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.21 2011/04/29 08:26:31 matt Exp $");
+__KERNEL_RCSID(0, "rmixl_cpu.c,v 1.1.2.21 2011/04/29 08:26:31 matt Exp");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
+
+#define __MUTEX_PRIVATE
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -330,11 +332,10 @@ cpu_rmixl_hatch(struct cpu_info *ci)
 
 #ifdef DEBUG
 	uint32_t ebase;
-	asm volatile("dmfc0 %0, $15, 1;" : "=r"(ebase));
+	__asm volatile("dmfc0 %0, $15, 1;" : "=r"(ebase));
 	KASSERT((ebase & __BITS(9,0)) == ci->ci_cpuid);
 	KASSERT(curcpu() == ci);
 #endif
-
 	cpucore_rmixl_hatch(device_parent(sc->sc_dev));
 
 #if defined(DDB)

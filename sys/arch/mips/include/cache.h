@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.9.96.3 2011/04/29 08:26:19 matt Exp $	*/
+/*	cache.h,v 1.9.96.3 2011/04/29 08:26:19 matt Exp	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -207,7 +207,7 @@ struct mips_cache_info {
 	u_int mci_dcache_align_mask;
 
 	u_int mci_cache_prefer_mask;
-#if (MIPS2 + MIPS3 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS2 + MIPS3 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL | MIPS64R2_RMIXL) > 0
 	u_int mci_cache_alias_mask;
 
 	bool mci_cache_virtual_alias;
