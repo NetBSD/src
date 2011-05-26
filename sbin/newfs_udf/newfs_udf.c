@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.11 2011/01/21 22:32:13 reinoud Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.12 2011/05/26 07:59:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -581,7 +581,7 @@ udf_derive_format(int req_enable, int req_disable, int force)
 		(void)printf("\tunrecognised enable/disable req.\n");
 		return EIO;
 	}
-	if ((format_flags && FORMAT_VAT) && UDF_512_TRACK)
+	if ((format_flags & FORMAT_VAT) & UDF_512_TRACK)
 		format_flags |= FORMAT_TRACK512;
 
 	/* determine partition/media access type */
