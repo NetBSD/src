@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2010/11/03 16:10:19 christos Exp $
+# $NetBSD: Makefile.inc,v 1.5 2011/05/26 12:56:32 joerg Exp $
 
 .include <bsd.own.mk>
 # Not yet
@@ -16,6 +16,8 @@ BINDIR=		${TESTSDIR}
 
 DPADD+=		${LIBCRYPTO} ${LIBCRYPT}
 LDADD+=		-lcrypto -lcrypt
+
+CWARNFLAGS.clang+=	-Wno-format
 
 CPPFLAGS+=	-DOPENSSL_FIPS
 CPPFLAGS+=	-I${OPENSSLSRC} -I${OPENSSLSRC}/crypto

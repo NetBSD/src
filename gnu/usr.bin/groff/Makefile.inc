@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.19 2011/01/12 23:03:55 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.20 2011/05/26 12:56:29 joerg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -92,6 +92,8 @@ CXXFLAGS+=	-fno-rtti -fno-exceptions
 
 # We only need -lsupc++
 USE_LIBSTDCXX=	no
+
+CWARNFLAGS.clang+=	-Wno-unused-value
 
 
 .ifdef GROFFYSRCS
