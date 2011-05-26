@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.40 2011/04/29 08:26:28 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.41 2011/05/26 01:46:40 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -181,11 +181,17 @@
 #if defined(USE_64BIT_CP0_FUNCTIONS)
 #define	_SLL		dsll
 #define	_SRL		dsrl
+#define	_EXT		dext
+#define	_INS		dins
 #define	WIRED_SHIFT	34
+#define	WIRED_POS	30
 #else
 #define	_SLL		sll
 #define	_SRL		srl
+#define	_EXT		ext
+#define	_INS		ins
 #define	WIRED_SHIFT	2
+#define	WIRED_POS	30
 #endif
 
 /*
@@ -329,7 +335,7 @@ VECTOR(MIPSX(tlb_miss), unknown)
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
 	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#01: k1=hi of seg0tab
-	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> 4f (kernel fault)
+	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> kernel fault
 	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2)#03: k0=seg offset (almost)
 	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#04: k1=seg0tab
 MIPSX(tlb_miss_common):
@@ -341,17 +347,32 @@ MIPSX(tlb_miss_common):
 	PTR_ADDU k1, k0				#08: k1=seg entry address
 	PTR_L	k1, 0(k1)			#09: k1=seg entry
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#0a: k0=bad address (again)
+#if (MIPS32R2 + MIPS64R2) > 0
+	beqz	k1, MIPSX(nopagetable)		#0b: ==0 -- no page table
+	 _EXT	k0, k0, PGSHIFT+1, PGSHIFT-3	#0c: k0=VA[13:21]
+	_INS	k1, k0, 3, PGSHIFT-3		#0d: k0=page table index
+						#0d: k1=pte address
+#else
 	beqz	k1, MIPSX(nopagetable)		#0b: ==0 -- no page table
 	 PTR_SRL k0, (PGSHIFT-2)		#0c: k0=VPN (aka va>>10)
 	andi	k0, (NBPG-8)			#0d: k0=page table offset
 	PTR_ADDU k1, k0				#0e: k1=pte address
+#endif
 	INT_L	k0, 0(k1)			#0f: k0=lo0 pte
 	INT_L	k1, 4(k1)			#10: k1=lo1 pte
+#if (MIPS32R2 + MIPS64R2) > 0
+	_EXT	k0, k0, 0, WIRED_POS
+#else
 	_SLL	k0, WIRED_SHIFT			#11: chop top 2 bits (part 1a)
 	_SRL	k0, WIRED_SHIFT			#12: chop top 2 bits (part 1b)
+#endif
 	_MTC0	k0, MIPS_COP_0_TLB_LO0		#13: lo0 is loaded
+#if (MIPS32R2 + MIPS64R2) > 0
+	_EXT	k1, k1, 0, WIRED_POS
+#else
 	_SLL	k1, WIRED_SHIFT			#14: chop top 2 bits (part 2a)
 	_SRL	k1, WIRED_SHIFT			#15: chop top 2 bits (part 2b)
+#endif
 	_MTC0	k1, MIPS_COP_0_TLB_LO1		#16: lo1 is loaded
 	sll	$0, $0, 3			#17: standard nop (ehb)
 #ifdef MIPS3
@@ -1527,13 +1548,20 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	PTR_ADDU k1, k0
 	INT_L	k0, 0(k1)			# get PTE entry
 	INT_L	k1, 4(k1)			# get odd PTE entry
+#if (MIPS32R2 + MIPS64R2) > 0
+	_EXT	k0, k0, 0, WIRED_POS		# get rid of "wired" bit
+#else
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of "wired" bit
 	_SRL	k0, k0, WIRED_SHIFT
+#endif
 	_MTC0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
-	COP0_SYNC
+#if (MIPS32R2 + MIPS64R2) > 0
+	_EXT	k1, k1, 0, WIRED_POS
+#else
 	_SLL	k1, k1, WIRED_SHIFT
 	_SRL	k1, k1, WIRED_SHIFT
 	_MTC0	k1, MIPS_COP_0_TLB_LO1		# load PTE entry
+#endif
 	COP0_SYNC
 	tlbwr					# write random TLB
 	COP0_SYNC
@@ -1607,8 +1635,12 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	 nop
 
 	INT_L	k0, 0(k1)			# get PTE entry
+#if (MIPS32R2 + MIPS64R2) > 0
+	_EXT	k0, k0, 0, WIRED_POS
+#else
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of "wired" bit
 	_SRL	k0, k0, WIRED_SHIFT
+#endif
 	_MTC0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
 	COP0_SYNC
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
@@ -1619,9 +1651,13 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	 nop					# - delay slot -
 
 	INT_L	k0, 4(k1)			# get odd PTE entry
-	_SLL	k0, k0, WIRED_SHIFT
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
+#if (MIPS32R2 + MIPS64R2) > 0
+	_EXT	k0, k0, 0, WIRED_POS
+#else
+	_SLL	k0, k0, WIRED_SHIFT
 	_SRL	k0, k0, WIRED_SHIFT
+#endif
 	sltiu	k1, k1, MIPS3_TLB_WIRED_UPAGES	# Luckily this is MIPS3_PG_G
 	or	k1, k1, k0
 	_MTC0	k0, MIPS_COP_0_TLB_LO1		# load PTE entry
@@ -1636,8 +1672,12 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 
 MIPSX(kern_tlbi_odd):
 	INT_L	k0, 0(k1)			# get PTE entry
+#if (MIPS32R2 + MIPS64R2) > 0
+	_EXT	k0, k0, 0, WIRED_POS
+#else
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of wired bit
 	_SRL	k0, k0, WIRED_SHIFT
+#endif
 	_MTC0	k0, MIPS_COP_0_TLB_LO1		# save PTE entry
 	COP0_SYNC
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
@@ -1648,9 +1688,13 @@ MIPSX(kern_tlbi_odd):
 	 nop					# - delay slot -
 
 	INT_L	k0, -4(k1)			# get even PTE entry
-	_SLL	k0, k0, WIRED_SHIFT
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
+#if (MIPS32R2 + MIPS64R2) > 0
+	_EXT	k0, k0, 0, WIRED_POS
+#else
+	_SLL	k0, k0, WIRED_SHIFT
 	_SRL	k0, k0, WIRED_SHIFT
+#endif
 	sltiu	k1, k1, MIPS3_TLB_WIRED_UPAGES	# Luckily this is MIPS3_PG_G
 	or	k1, k1, k0
 	_MTC0	k0, MIPS_COP_0_TLB_LO0		# save PTE entry
@@ -1722,8 +1766,12 @@ LEAF(MIPSX(tlb_update))
 	and	a2, a1, MIPS3_PG_G		# Copy global bit
 	tlbp					# Probe for the entry.
 	COP0_SYNC
+#if (MIPS32R2 + MIPS64R2) > 0
+	_EXT	a1, a1, 0, WIRED_POS
+#else
 	_SLL	a1, a1, WIRED_SHIFT		# Clear top 34 bits of EntryLo
 	_SRL	a1, a1, WIRED_SHIFT
+#endif
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
 	bnez	t1, 1f				# Decide even odd
 	 nop
