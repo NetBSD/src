@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.4.12.7 2011/01/10 00:37:39 jym Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.4.12.8 2011/05/26 22:32:39 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.7 2011/01/10 00:37:39 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.4.12.8 2011/05/26 22:32:39 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -321,8 +321,8 @@ xen_prepare_resume(void) {
 
 	if (xen_start_info.nr_pages != physmem) {
 		/*
-		 * XXX JYM for now, we crash - fix it with balloon when
-		 * supported
+		 * XXX JYM for now, we crash - fix it with memory
+		 * hotplug when supported
 		 */
 		DPRINTK(("xen_start_info.nr_pages != physmem"));
 		HYPERVISOR_crash();
