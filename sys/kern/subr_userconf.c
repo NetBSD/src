@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.22 2011/05/24 16:41:23 joerg Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.23 2011/05/26 04:25:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.22 2011/05/24 16:41:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.23 2011/05/26 04:25:27 uebayasi Exp $");
 
 #include "opt_userconf.h"
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.22 2011/05/24 16:41:23 joerg Exp
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/time.h>
+#include <sys/userconf.h>
 
 #include <dev/cons.h>
 
@@ -81,7 +82,7 @@ static const char *userconf_cmds[] = {
 	"",		 "",
 };
 
-static void
+void
 userconf_init(void)
 {
 	int i;
@@ -93,6 +94,10 @@ userconf_init(void)
 
 	userconf_maxdev = i - 1;
 	userconf_totdev = i - 1;
+
+#ifdef __HAVE_USERCONF_BOOTINFO
+	userconf_bootinfo();
+#endif
 }
 
 static int
@@ -681,7 +686,7 @@ userconf_add_read(char *prompt, char field, char *dev, int len, int *val)
 }
 #endif /* 0 */
 
-static int
+int
 userconf_parse(char *cmd)
 {
 	char *c, *v;
@@ -797,14 +802,11 @@ userconf_parse(char *cmd)
 	return(0);
 }
 
-extern void user_config(void);
-
 void
-user_config(void)
+userconf_prompt(void)
 {
 	const char prompt[] = "uc> ";
 
-	userconf_init();
 	printf("userconf: configure system autoconfiguration:\n");
 
 	while (1) {

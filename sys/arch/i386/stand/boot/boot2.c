@@ -1,7 +1,7 @@
-/*	$NetBSD: boot2.c,v 1.53 2011/03/18 18:24:09 jakllsch Exp $	*/
+/*	$NetBSD: boot2.c,v 1.54 2011/05/26 04:25:27 uebayasi Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -136,6 +136,7 @@ const struct bootblk_command commands[] = {
 	{ "multiboot",	command_multiboot },
 	{ "vesa",	command_vesa },
 	{ "splash",	splash_add },
+	{ "userconf",	userconf_add },
 	{ NULL,		NULL },
 };
 
@@ -395,6 +396,7 @@ command_help(char *arg)
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
+	       "userconf {command}\n"
 	       "help|?\n"
 	       "quit\n");
 }
