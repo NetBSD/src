@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2011/05/05 05:39:10 jruoho Exp $
+# $NetBSD: Makefile,v 1.10 2011/05/26 12:56:32 joerg Exp $
 
 NOMAN=		# defined
 
@@ -23,5 +23,7 @@ FILES+=		d_bitstring_49.out
 FILES+=		d_bitstring_64.out
 FILES+=		d_bitstring_67.out
 FILES+=		d_bitstring_8.out
+
+CWARNFLAGS.clang+=	-Wno-uninitialized
 
 .include <bsd.test.mk>

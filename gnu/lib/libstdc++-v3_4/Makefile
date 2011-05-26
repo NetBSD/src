@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2010/07/06 05:59:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2011/05/26 12:56:27 joerg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -9,6 +9,9 @@ LIB=		stdc++
 LDADD=		-lgcc_s
 
 LIBDPLIBS+=	m ${.CURDIR}/../../../lib/libm
+
+CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
+			-Wno-deprecated-writable-strings -Wno-parentheses
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"

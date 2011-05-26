@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/07/06 05:59:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2011/05/26 12:56:25 joerg Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -22,6 +22,7 @@ USE_FORT?=yes	# cryptographic software and network library
 
 # XXX There's a bit of work to do before we can enable warnings.
 WARNS=0
+CWARNFLAGS.clang+=	-Wno-unused-value
 
 LIB=	ssl
 CPPFLAGS+= -Dlib${LIB} -I${OPENSSLSRC} -I${OPENSSLSRC}/crypto
