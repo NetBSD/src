@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.111 2011/05/26 16:40:38 nonaka Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.112 2011/05/26 16:42:15 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -576,7 +576,7 @@ typedef struct {
 } Elf32_Move;
 
 #define	ELF32_M_SYM(info)	((info) >> 8)
-#define	ELF32_M_SIZE(info)	(info) & 0xff)
+#define	ELF32_M_SIZE(info)	((info) & 0xff)
 #define	ELF32_M_INFO(sym, size)	(((sym) << 8) + (unsigned char)(size))
 
 typedef struct {
@@ -588,7 +588,7 @@ typedef struct {
 } Elf64_Move;
 
 #define	ELF64_M_SYM(info)	((info) >> 8)
-#define	ELF64_M_SIZE(info)	(info) & 0xff)
+#define	ELF64_M_SIZE(info)	((info) & 0xff)
 #define	ELF64_M_INFO(sym, size)	(((sym) << 8) + (unsigned char)(size))
 
 /*
