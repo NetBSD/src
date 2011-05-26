@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp $	*/
+/*	machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,9 +74,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.1.2.34 2011/04/29 08:26:18 matt Exp");
 
 #define __INTR_PRIVATE
+#define __MUTEX_PRIVATE
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -423,6 +424,9 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	__asm __volatile("dmtc0 %0,$%1"
 		:: "r"(&cpu_info_store), "n"(MIPS_COP_0_OSSCRATCH));
 #ifdef MULTIPROCESSOR
+	__asm __volatile("dmtc0 %0,$%1,2"
+		:: "r"(&pmap_tlb0_info.ti_lock->mtx_lock),
+		    "n"(MIPS_COP_0_OSSCRATCH));
 	mips_fixup_exceptions(rmixl_fixup_cop0_oscratch);
 #endif
 	rmixl_fixup_curcpu();
