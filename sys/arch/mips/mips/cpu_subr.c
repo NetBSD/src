@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.17 2011/04/29 08:26:24 matt Exp $");
+__KERNEL_RCSID(0, "cpu_subr.c,v 1.1.2.17 2011/04/29 08:26:24 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -195,7 +195,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 static void
 cpu_hwrena_setup(void)
 {
-#if (MIPS32R2 + MIPS64R2) > 0
+#if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
 	const int cp0flags = mips_options.mips_cpu->cpu_cp0flags;
 	if ((cp0flags & MIPS_CP0FL_USE) == 0)
 		return;
@@ -1024,7 +1024,7 @@ cpu_vmspace_exec(lwp_t *l, vaddr_t start, vaddr_t end)
 int
 cpu_lwp_setprivate(lwp_t *l, void *v)
 {
-#if (MIPS32R2 + MIPS64R2) > 0
+#if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
 	if (l == curlwp
 	    && (mips_options.mips_cpu->cpu_cp0flags & MIPS_CP0FL_USERLOCAL)) {
 		mipsNN_cp0_userlocal_write(v);
@@ -1035,7 +1035,7 @@ cpu_lwp_setprivate(lwp_t *l, void *v)
 #endif
 
 
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 
 #if (CPUWATCH_MAX != 8)
 # error CPUWATCH_MAX
@@ -1168,4 +1168,4 @@ cpuwatch_clr(cpu_watchpoint_t *cwp)
 	mipsNN_cp0_watchlo_write(cwnum, 0);
 }
 
-#endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
+#endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0 */

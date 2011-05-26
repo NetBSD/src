@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.35 2011/04/29 08:26:30 matt Exp $	*/
+/*	trap.c,v 1.217.12.35 2011/04/29 08:26:30 matt Exp	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.35 2011/04/29 08:26:30 matt Exp $");
+__KERNEL_RCSID(0, "trap.c,v 1.217.12.35 2011/04/29 08:26:30 matt Exp");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -843,6 +843,20 @@ extern char mips64r2_kern_intr[];
 extern char mips64r2_user_intr[];
 extern char mips64r2_systemcall[];
 #endif
+#ifdef MIPS64_RMIXL
+extern char mips64_rmixl_kern_gen_exception[];
+extern char mips64_rmixl_user_gen_exception[];
+extern char mips64_rmixl_kern_intr[];
+extern char mips64_rmixl_user_intr[];
+extern char mips64_rmixl_systemcall[];
+#endif
+#ifdef MIPS64R2_RMIXL
+extern char mips64r2_rmixl_kern_gen_exception[];
+extern char mips64r2_rmixl_user_gen_exception[];
+extern char mips64r2_rmixl_kern_intr[];
+extern char mips64r2_rmixl_user_intr[];
+extern char mips64r2_rmixl_systemcall[];
+#endif
 
 int main(void *);	/* XXX */
 
@@ -1157,6 +1171,22 @@ const static struct { void *addr; const char *name;} names[] = {
 	Name(mips64r2_kern_intr),
 	Name(mips64r2_user_intr),
 #endif	/* MIPS64R2 */
+
+#if defined(MIPS64_RMIXL)		/* RMI MIPS64 family (mips-III CPU) */
+	Name(mips64_rmixl_kern_gen_exception),
+	Name(mips64_rmixl_user_gen_exception),
+	Name(mips64_rmixl_systemcall),
+	Name(mips64_rmixl_kern_intr),
+	Name(mips64_rmixl_user_intr),
+#endif	/* MIPS64_RMIXL */
+
+#if defined(MIPS64R2_RMIXL)		/* RMI MIPS64R2 family (mips-III CPU) */
+	Name(mips64r2_rmixl_kern_gen_exception),
+	Name(mips64r2_rmixl_user_gen_exception),
+	Name(mips64r2_rmixl_systemcall),
+	Name(mips64r2_rmixl_kern_intr),
+	Name(mips64r2_rmixl_user_intr),
+#endif	/* MIPS64R2_RMIXL */
 
 	Name(cpu_idle),
 	Name(cpu_switchto),

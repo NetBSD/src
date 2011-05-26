@@ -934,7 +934,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 			    " address 0x%"PRIxPADDR"\n", curaddr);
 			panic("_bus_dmamem_alloc");
 		}
-		KASSERT((atop(curaddr - lastaddr) & uvmexp.colormask) == 1);
+		KASSERT(uvmexp.colormask == 0 || (atop(curaddr - lastaddr) & uvmexp.colormask) == 1);
 #endif
 		if (curaddr == (lastaddr + PAGE_SIZE))
 			segs[curseg].ds_len += PAGE_SIZE;
