@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.37 2011/05/21 15:22:49 jym Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.38 2011/05/26 22:16:42 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.37 2011/05/21 15:22:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.38 2011/05/26 22:16:42 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1031,7 +1031,7 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 		goto end;
 	}
 
-	if (xbdi->xbdi_xen_req.operation == BLKIF_OP_WRITE) {
+	if (req->operation == BLKIF_OP_WRITE) {
 		if (xbdi->xbdi_ro) {
 			error = EROFS;
 			goto end;
