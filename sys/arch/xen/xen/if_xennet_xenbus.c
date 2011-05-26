@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.33.2.10 2011/05/07 17:42:09 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.33.2.11 2011/05/26 22:30:31 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33.2.10 2011/05/07 17:42:09 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.33.2.11 2011/05/26 22:30:31 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -375,9 +375,9 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 
 	/* alloc shared rings */
 	tx_ring = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-	     UVM_KMF_WIRED | UVM_KMF_ZERO);
+	    UVM_KMF_WIRED);
 	rx_ring = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-	    UVM_KMF_WIRED | UVM_KMF_ZERO);
+	    UVM_KMF_WIRED);
 	if (tx_ring == NULL || rx_ring == NULL)
 		panic("%s: can't alloc rings", device_xname(self));
 
@@ -481,8 +481,12 @@ xennet_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 	tx_ring = sc->sc_tx_ring.sring;
 	rx_ring = sc->sc_rx_ring.sring;
 
+	/* Initialize rings */
+	memset(tx_ring, 0, PAGE_SIZE);
 	SHARED_RING_INIT(tx_ring);
 	FRONT_RING_INIT(&sc->sc_tx_ring, tx_ring, PAGE_SIZE);
+
+	memset(rx_ring, 0, PAGE_SIZE);
 	SHARED_RING_INIT(rx_ring);
 	FRONT_RING_INIT(&sc->sc_rx_ring, rx_ring, PAGE_SIZE);
 

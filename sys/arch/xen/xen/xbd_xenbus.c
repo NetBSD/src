@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.38.2.9 2011/05/02 22:49:59 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.38.2.10 2011/05/26 22:30:31 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.9 2011/05/02 22:49:59 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.10 2011/05/26 22:30:31 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -268,8 +268,7 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_backend_status = BLKIF_STATE_DISCONNECTED;
 	sc->sc_shutdown = BLKIF_SHUTDOWN_REMOTE;
 
-	ring = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		UVM_KMF_ZERO | UVM_KMF_WIRED);
+	ring = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED);
 	if (ring == NULL)
 		panic("%s: can't alloc ring", device_xname(self));
 	sc->sc_ring.sring = ring;
@@ -372,8 +371,8 @@ xbd_xenbus_suspend(device_t dev, const pmf_qual_t *qual) {
 	s = splbio();
 	/* wait for requests to complete, then suspend device */
 	while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
-		    sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
-			tsleep(xbd_xenbus_suspend, PRIBIO, "xbdsuspend", hz/2);
+	    sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
+		tsleep(xbd_xenbus_suspend, PRIBIO, "xbdsuspend", hz/2);
 
 	hypervisor_mask_event(sc->sc_evtchn);
 	sc->sc_backend_status = BLKIF_STATE_SUSPENDED;
@@ -407,8 +406,10 @@ xbd_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 		xengnt_revoke_access(sc->sc_ring_gntref);
 	}
 	sc->sc_ring_gntref = GRANT_INVALID_REF;
-	ring = sc->sc_ring.sring;
 
+	/* Initialize ring */
+	ring = sc->sc_ring.sring;
+	memset(ring, 0, PAGE_SIZE);
 	SHARED_RING_INIT(ring);
 	FRONT_RING_INIT(&sc->sc_ring, ring, PAGE_SIZE);
 
@@ -698,9 +699,11 @@ next:
 done:
 	xen_rmb();
 	sc->sc_ring.rsp_cons = i;
+
 	RING_FINAL_CHECK_FOR_RESPONSES(&sc->sc_ring, more_to_do);
 	if (more_to_do)
 		goto again;
+
 	dk_iodone(sc->sc_di, &sc->sc_dksc);
 	if (sc->sc_xbdreq_wait)
 		wakeup(&sc->sc_xbdreq_wait);
