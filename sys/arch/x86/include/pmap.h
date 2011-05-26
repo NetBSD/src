@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21.2.9 2011/05/02 22:49:57 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21.2.10 2011/05/26 22:26:52 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -378,13 +378,11 @@ void	pmap_map_recursive_entries(void);
 void	pmap_unmap_recursive_entries(void);
 #endif /* PAE */
 
+#include <sys/bitops.h>
+
 #define XPTE_MASK	L1_FRAME
-/* XPTE_SHIFT = L1_SHIFT - log2(sizeof(pt_entry_t)) */
-#if defined(__x86_64__) || defined(PAE)
-#define XPTE_SHIFT	9
-#else
-#define XPTE_SHIFT	10
-#endif
+/* Selects the index of a PTE in (A)PTE_BASE */
+#define XPTE_SHIFT	(L1_SHIFT - ilog2(sizeof(pt_entry_t)))
 
 /* PTE access inline fuctions */
 
