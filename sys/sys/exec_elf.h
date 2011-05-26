@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.110 2011/03/04 22:25:32 joerg Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.111 2011/05/26 16:40:38 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -971,7 +971,7 @@ typedef struct {
 #define	VER_NEED_CURRENT	1
 
 /*
- * GNU Extension hidding symb
+ * GNU Extension hidding symbol
  */
 #define	VERSYM_HIDDEN		0x8000
 #define	VERSYM_VERSION		0x7fff
