@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.15 2011/01/14 02:06:30 rmind Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.16 2011/05/26 15:34:13 joerg Exp $	*/
 
 /*
  * Mach Operating System
@@ -39,6 +39,7 @@
 #include <sh3/pcb.h>
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
+#define	DDB_EXPR_FMT	"l"		/* expression is long */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
