@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.29 2011/05/26 02:29:23 jakllsch Exp $ */
+/* $NetBSD: atppc.c,v 1.30 2011/05/26 02:37:25 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.29 2011/05/26 02:29:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.30 2011/05/26 02:37:25 jakllsch Exp $");
 
 #include "opt_atppc.h"
 
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.29 2011/05/26 02:29:23 jakllsch Exp $");
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
@@ -1551,8 +1551,7 @@ atppc_add_handler(device_t dev, void (*handler)(void *), void *arg)
 			__func__, device_xname(dev)));
 		rval = EINVAL;
 	} else {
-		callback = malloc(sizeof(struct atppc_handler_node), M_DEVBUF,
-			M_NOWAIT);
+		callback = kmem_alloc(sizeof(*callback), KM_SLEEP);
 		if (callback) {
 			callback->func = handler;
 			callback->arg = arg;
@@ -1595,7 +1594,7 @@ atppc_remove_handler(device_t dev, void (*handler)(void *))
 	mutex_exit(&atppc->sc_lock);
 
 	if (rval == 0) {
-		free(callback, M_DEVBUF);
+		kmem_free(callback, sizeof(*callback));
 	}
 
 	return rval;
