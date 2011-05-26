@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.6 1997/10/22 23:14:11 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2011/05/26 12:56:29 joerg Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 2/21/94
 #
 CPPFLAGS+=-D__DBINTERFACE_PRIVATE
+
+CWARNFLAGS.clang+=	-Wno-array-bounds
 
 .include "${.CURDIR}/db/btree/Makefile.inc"
 .include "${.CURDIR}/db/db/Makefile.inc"

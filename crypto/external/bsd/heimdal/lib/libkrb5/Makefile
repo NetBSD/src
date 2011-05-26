@@ -1,8 +1,10 @@
-# $NetBSD: Makefile,v 1.4 2011/05/25 19:21:18 he Exp $
+# $NetBSD: Makefile,v 1.5 2011/05/26 12:56:24 joerg Exp $
 
 USE_FORT?= yes	# network protocol library
 
 NOLINT=		# defined
+
+CWARNFLAGS.clang=	-Wno-conversion -Wno-tautological-compare
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>

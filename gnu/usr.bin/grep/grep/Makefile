@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/02/25 20:36:44 sketch Exp $
+#	$NetBSD: Makefile,v 1.7 2011/05/26 12:56:28 joerg Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -7,6 +7,8 @@ DIST=		${IDIST}/src
 
 PROG=		grep
 SRCS=		grep.c dfa.c kwset.c search.c grepmat.c
+
+CWARNFLAGS.clang+=	-Wno-format-security -Wno-tautological-compare
 
 .ifndef HOSTPROG
 DPADD+=		${LIBGREPUTILS} ${LIBINTL}
