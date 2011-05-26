@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.22 2011/04/29 08:26:24 matt Exp $	*/
+/*	db_interface.c,v 1.64.16.22 2011/04/29 08:26:24 matt Exp	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.22 2011/04/29 08:26:24 matt Exp $");
+__KERNEL_RCSID(0, "db_interface.c,v 1.64.16.22 2011/04/29 08:26:24 matt Exp");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -72,10 +72,10 @@ volatile u_int ddb_cpu = NOCPU;
 int		db_active = 0;
 db_regs_t	ddb_regs;
 
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 static void db_watch_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void db_unwatch_cmd(db_expr_t, bool, db_expr_t, const char *);
-#endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
+#endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0 */
 
 #ifdef MULTIPROCESSOR
 static void db_mach_cpu(db_expr_t, bool, db_expr_t, const char *);
@@ -84,7 +84,7 @@ static void db_mach_cpu(db_expr_t, bool, db_expr_t, const char *);
 void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_kvtophys_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_cp0dump_cmd(db_expr_t, bool, db_expr_t, const char *);
-#ifdef MIPS64_XLS
+#if defined(MIPS64_RMIXL) || defined(MIPS64R2_RMIXL)
 void db_mfcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_mtcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
@@ -445,7 +445,7 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 			SHOW32SEL(4, 2, "userlocal");
 	} else {
 		SHOW32(MIPS_COP_0_CONFIG, "config");
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 		if (CPUISMIPSNN) {
 			uint32_t val;
 
@@ -464,7 +464,7 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		}
 	}
 
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	for (int i=0; i < curcpu()->ci_cpuwatch_count; i++) {
 		const intptr_t lo = mipsNN_cp0_watchlo_read(i);
 		const uint32_t hi = mipsNN_cp0_watchhi_read(i);
@@ -505,7 +505,7 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 }
 
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 static void
 db_watch_cmd(db_expr_t address, bool have_addr, db_expr_t count,
 		 const char *modif)
@@ -644,9 +644,9 @@ db_unwatch_cmd(db_expr_t address, bool have_addr, db_expr_t count,
 		db_printf("no watch found on address %#" PRIxREGISTER "\n",
 		    (register_t)address);
 }
-#endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
+#endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0 */
 
-#ifdef MIPS64_XLS
+#if (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 void
 db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		const char *modif)
@@ -704,7 +704,7 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	db_printf("control reg 0x%lx = 0x%lx\n", addr, value);
 }
-#endif /* MIPS64_XLS */
+#endif /* (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0 */
 
 const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
@@ -714,14 +714,14 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("cp0",	db_cp0dump_cmd,	0,
 		"Dump CP0 registers.",
 		NULL, NULL) },
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	{ DDB_ADD_CMD("watch",	db_watch_cmd,		CS_MORE,
 		"set cp0 watchpoint",
 		"address <mask> <asid> </rwxma>", NULL) },
 	{ DDB_ADD_CMD("unwatch",db_unwatch_cmd,		0,
 		"delete cp0 watchpoint",
 		"address", NULL) },
-#endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
+#endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0 */
 	{ DDB_ADD_CMD("kvtop",	db_kvtophys_cmd,	0,
 		"Print the physical address for a given kernel virtual address",
 		"address", 
@@ -729,7 +729,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,
 		"Print out TLB entries. (only works with options DEBUG)",
 		NULL, NULL) },
-#ifdef MIPS64_XLS
+#if (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	{ DDB_ADD_CMD("mfcr", 	db_mfcr_cmd,		CS_NOREPEAT,
 		"Dump processor control register",
 		NULL, NULL) },

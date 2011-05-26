@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.1.6.2 2011/04/29 08:26:26 matt Exp $	*/
+/*	lock_stubs_llsc.S,v 1.1.6.2 2011/04/29 08:26:26 matt Exp	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 	.set	mips32
 #endif
 
-#if defined(MIPS64)
+#if (MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	.set	mips64
 #endif
 

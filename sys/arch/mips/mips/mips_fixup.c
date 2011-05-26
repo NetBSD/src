@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.10 2011/04/29 08:26:28 matt Exp $");
+__KERNEL_RCSID(0, "mips_fixup.c,v 1.1.2.10 2011/04/29 08:26:28 matt Exp");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -231,7 +231,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 #ifdef DEBUG
 	size_t fixups_done = 0;
 	uint32_t cycles =
-#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	    (CPUISMIPS3 ? mips3_cp0_count_read() : 0);
 #else
 	    0;
@@ -332,7 +332,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 		    sizeof(uint32_t [end - start]));
 
 #ifdef DEBUG
-#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	if (CPUISMIPS3)
 		cycles = mips3_cp0_count_read() - cycles;
 #endif

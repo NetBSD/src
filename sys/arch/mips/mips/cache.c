@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "cache.c,v 1.33.96.4 2011/04/29 08:26:23 matt Exp");
 #endif
 #endif
 
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 #include <mips/mipsNN.h>		/* MIPS32/MIPS64 registers */
 #include <mips/cache_mipsNN.h>
 #endif
@@ -119,7 +119,7 @@ void	mips4_get_cache_config(int);
 #if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
 static void mips_config_cache_prehistoric(void);
 #endif
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 static void mips_config_cache_modern(void);
 #endif
 
@@ -166,7 +166,7 @@ mips_config_cache(void)
 	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_PREHISTORIC)
 		mips_config_cache_prehistoric();
 #endif
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	if (MIPS_PRID_CID(cpu_id) != MIPS_PRID_CID_PREHISTORIC)
 		mips_config_cache_modern();
 #endif
@@ -885,7 +885,7 @@ mips4_get_cache_config(int csizebase)
 #endif /* MIPS3 || MIPS4 */
 #endif /* MIPS1 || MIPS3 || MIPS4 */
 
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 
 static void cache_noop(void) __unused;
 static void cache_noop(void) {}
@@ -1104,4 +1104,4 @@ mips_config_cache_modern(void)
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 	}
 }
-#endif /* MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 > 0 */
+#endif /* MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL > 0 */

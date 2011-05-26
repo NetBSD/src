@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_subr.S,v 1.1.2.8 2011/04/29 08:26:34 matt Exp $	*/
+/*	rmixl_subr.S,v 1.1.2.8 2011/04/29 08:26:34 matt Exp	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: rmixl_subr.S,v 1.1.2.8 2011/04/29 08:26:34 matt Exp $");
+RCSID("rmixl_subr.S,v 1.1.2.8 2011/04/29 08:26:34 matt Exp");
 
 #include "assym.h"
 
@@ -170,6 +170,10 @@ NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
 	 */
 	REG_L		a1, 2*SZREG(s0)		/* XXX ta_cpuinfo */
 	dmtc0		a1, $22, 0		/* MIPS_COP_0_OSSCRATCH */
+	PTR_L		v1, CPU_INFO_TLB_INFO(a1)
+	PTR_L		v1, TI_LOCK(v1)
+	PTR_ADDU	v1, MTX_LOCK
+	dmtc0		v1, $22, 2
 	j		cpu_trampoline
 	 nop
 

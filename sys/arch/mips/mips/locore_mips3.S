@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.93.38.12 2011/04/29 08:26:26 matt Exp $	*/
+/*	locore_mips3.S,v 1.93.38.12 2011/04/29 08:26:26 matt Exp	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -155,6 +155,8 @@ XLEAF(mips32_wbflush)
 XLEAF(mips32r2_wbflush)
 XLEAF(mips64_wbflush)
 XLEAF(mips64r2_wbflush)
+XLEAF(mips64_rmixl_wbflush)
+XLEAF(mips64r2_rmixl_wbflush)
 	nop
 	sync
 	j	ra
@@ -230,7 +232,7 @@ LEAF(mips3_cp0_config_write)
 	JR_HB_RA
 END(mips3_cp0_config_write)
 
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
 	.set push
 #ifdef _LP64
 	.set mips64
@@ -400,7 +402,7 @@ LEAF(mipsNN_cp0_watchhi_write)
 	 mtc0	a1, MIPS_COP_0_WATCH_HI, 7
 END(mipsNN_cp0_watchhi_write)
 
-#if (MIPS32R2 + MIPS64R2) > 0
+#if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
 /*
  * void mipsNN_cp0_userlocal_write(void *);
  *	Set the value of the CP0 USERLOCAL (TLB_CONTEXT, select 2) register.
@@ -418,9 +420,9 @@ LEAF(mipsNN_cp0_userlocal_write)
 	j	ra
 	 _MTC0	a0, MIPS_COP_0_TLB_CONTEXT, 2
 END(mipsNN_cp0_userlocal_write)
-#endif /* (MIPS32R2 + MIPS64R2) > 0 */
+#endif /* (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0 */
 	.set	pop
-#endif /* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
+#endif /* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) > 0 */
 
 /*
  * uint32_t mips3_cp0_count_read(void)

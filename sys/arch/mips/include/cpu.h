@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.36 2011/04/29 08:26:20 matt Exp $	*/
+/*	cpu.h,v 1.90.16.36 2011/04/29 08:26:20 matt Exp	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -184,16 +184,19 @@ struct cpu_info {
 #define	MIPS32R2	1
 #define	MIPS64		1
 #define	MIPS64R2	1
+#define	MIPS64_RMIXL	1
+#define	MIPS64R2_RMIXL	1
 #endif
 
-#if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 0
-#error at least one of MIPS1, MIPS3, MIPS4, MIPS32, MIPS32R2, MIPS64, or MIPS64RR2 must be specified
+#if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) == 0
+#error at least one of MIPS1, MIPS3, MIPS4, MIPS32, MIPS32R2, MIPS64, MIPS64R2, MIPS64_RMIXL, or MIPS64R2_RMIXL must be specified
 #endif
 
 /* Shortcut for MIPS3 or above defined */
 #if defined(MIPS3) || defined(MIPS4) \
     || defined(MIPS32) || defined(MIPS32R2) \
-    || defined(MIPS64) || defined(MIPS64R2)
+    || defined(MIPS64) || defined(MIPS64R2) \
+    || defined(MIPS64_RMIXL) || defined(MIPS64R2_RMIXL)
 
 #define	MIPS3_PLUS	1
 #define __HAVE_CPU_COUNTER
@@ -289,7 +292,7 @@ extern struct mips_options mips_options;
 
 #endif	/* !_LOCORE */
 
-#if ((MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 1) || defined(_LOCORE)
+#if ((MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 + MIPS64_RMIXL + MIPS64R2_RMIXL) == 1) || defined(_LOCORE)
 
 #if defined(MIPS1)
 
@@ -355,7 +358,7 @@ extern struct mips_options mips_options;
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
-#elif defined(MIPS64)
+#elif defined(MIPS64) || defined(MIPS64_RMIXL)
 
 # define CPUISMIPS3		1
 # define CPUIS64BITS		1
@@ -369,7 +372,7 @@ extern struct mips_options mips_options;
 # define MIPS_HAS_LLSC		1
 # define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
-#elif defined(MIPS64R2)
+#elif defined(MIPS64R2) || defined(MIPS64R2_RMIXL)
 
 # define CPUISMIPS3		1
 # define CPUIS64BITS		1
