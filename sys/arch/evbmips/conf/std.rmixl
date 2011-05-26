@@ -1,18 +1,19 @@
-# $NetBSD: std.rmixl,v 1.1.2.4 2010/03/29 23:31:16 cliff Exp $
+# std.rmixl,v 1.1.2.4 2010/03/29 23:31:16 cliff Exp
 
 machine evbmips mips
 include		"conf/std"	# MI standard options
 
-options MIPS3_ENABLE_CLOCK_INTR
+options 	MIPS3_ENABLE_CLOCK_INTR
 
 # Platform support
-options		MIPS64
+#options 	MIPS64
 options		MIPS64_XLR
 options		MIPS64_XLS
+options		MIPS64_RMIXL
 
 
-options	EXEC_ELF32	# exec ELF32 binaries
-options	EXEC_SCRIPT	# exec #! scripts
+options 	EXEC_ELF32	# exec ELF32 binaries
+options 	EXEC_SCRIPT	# exec #! scripts
 
 makeoptions	CPUFLAGS+="-mips64"
 ##makeoptions	CFLAGS+="-mips64"
