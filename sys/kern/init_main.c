@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.429 2011/05/19 03:07:29 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.430 2011/05/26 04:25:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.429 2011/05/19 03:07:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.430 2011/05/26 04:25:26 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -729,8 +729,9 @@ configure(void)
 #endif
 
 #ifdef USERCONF
+	userconf_init();
 	if (boothowto & RB_USERCONF)
-		user_config();
+		userconf_prompt();
 #endif
 
 	if ((boothowto & (AB_SILENT|AB_VERBOSE)) == AB_SILENT) {
