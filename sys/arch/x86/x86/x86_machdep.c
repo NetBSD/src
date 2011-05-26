@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.48 2011/05/26 16:29:13 para Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.49 2011/05/26 16:38:57 para Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.48 2011/05/26 16:29:13 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.49 2011/05/26 16:38:57 para Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -202,7 +202,7 @@ userconf_bootinfo(void)
 		userconf_parse(bi->text);
 	}
 }
-#endif /* defined USERCONF) */
+#endif /* defined (USERCONF) */
 
 void
 cpu_need_resched(struct cpu_info *ci, int flags)
