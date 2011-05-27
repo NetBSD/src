@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.178 2011/03/20 17:38:11 tsutsui Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.179 2011/05/27 17:19:18 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.178 2011/03/20 17:38:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.179 2011/05/27 17:19:18 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -495,6 +495,7 @@ usbd_fill_iface_data(usbd_device_handle dev, int ifaceidx, int altidx)
 			}
 		}
 		ifc->endpoints[endpt].refcnt = 0;
+		ifc->endpoints[endpt].datatoggle = 0;
 		p += ed->bLength;
 	}
 #undef ed
@@ -1104,6 +1105,9 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	 */
 	USETW(dev->def_ep_desc.wMaxPacketSize, 64);
 	dev->def_ep_desc.bInterval = 0;
+
+	/* doesn't matter, just don't let it uninitialized */
+	dev->def_ep.datatoggle = 0;
 
 	dev->quirks = &usbd_no_quirk;
 	dev->address = USB_START_ADDR;
