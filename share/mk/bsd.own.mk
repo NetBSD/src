@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.668 2011/05/20 16:02:23 plunky Exp $
+#	$NetBSD: bsd.own.mk,v 1.669 2011/05/27 17:06:54 drochner Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -653,7 +653,7 @@ RUMPKMOD=	# defined
 TARGETS+=	all clean cleandir depend dependall includes \
 		install lint obj regress tags html
 PHONY_NOTMAIN =	all clean cleandir depend dependall distclean includes \
-		install lint obj regress tags beforedepend afterdepend \
+		install lint obj regress beforedepend afterdepend \
 		beforeinstall afterinstall realinstall realdepend realall \
 		html subdir-all subdir-install subdir-depend
 .PHONY:		${PHONY_NOTMAIN}
