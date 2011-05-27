@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.33 2011/03/07 15:37:46 jakllsch Exp $
+#	$NetBSD: ALCHEMY,v 1.34 2011/05/27 10:31:59 ryo Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.33 $"
+#ident 		"ALCHEMY-$Revision: 1.34 $"
 
 maxusers	32
 
@@ -25,7 +25,6 @@ options 	ALCHEMY_AU1550
 options 	ALCHEMY_GENERIC
 
 #options 	LOCKDEBUG
-options 	SOSEND_LOAN
 options 	SOSEND_COUNTERS
 options 	INET_CSUM_COUNTERS
 options 	TCP_CSUM_COUNTERS
