@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.128 2011/05/11 18:13:12 mrg Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.129 2011/05/27 22:48:24 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.128 2011/05/11 18:13:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.129 2011/05/27 22:48:24 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -179,6 +179,7 @@ rf_UnconfigureArray(void)
 	rf_lock_mutex2(configureMutex);
 	if (--configureCount == 0) {	/* if no active configurations, shut
 					 * everything down */
+		rf_destroy_mutex2(rf_printf_mutex);
 		isconfigged = 0;
 		rf_ShutdownList(&globalShutdown);
 
@@ -278,6 +279,7 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 		rf_ShutdownList(&globalShutdown); \
 		configureCount--; \
 		rf_unlock_mutex2(configureMutex); \
+		rf_destroy_mutex2(rf_printf_mutex); \
 		return(rc); \
 	} \
 }
