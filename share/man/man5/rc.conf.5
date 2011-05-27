@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.146 2011/03/18 16:21:46 jruoho Exp $
+.\"	$NetBSD: rc.conf.5,v 1.147 2011/05/27 09:28:42 plunky Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -1322,50 +1322,50 @@ are true.
 Passes
 .Sy statd_flags .
 .El
-.Ss Bluetooth configuration and daemons
+.Ss Bluetooth support
 .Bl -tag -width net_interfaces
-.It Sy btattach
+.It Sy bluetooth
 Boolean value.
-Attach serial bluetooth interfaces as listed in the configuration file
-.Pa /etc/bluetooth/btdevctl.conf .
-.It Sy btconfig
-Boolean value.
-Configure bluetooth devices.
-If the
-.Sy btconfig_devices
-variable below is not specified, all devices known to the system
-will be configured.
-For each device, configuration arguments are first looked for
-in the
-.Sy btconfig_{dev}
-variable, otherwise the value of the
-.Sy btconfig_args
-variable will be used, and if that is not specified the default string is
-.Sq enable .
+Configure Bluetooth support, comprising the following tasks:
+.Bl -dash -compact
+.It
+attach serial Bluetooth controllers as listed in the
+.Pa /etc/bluetooth/btdevctl.conf
+configuration file.
+.It
+enable Bluetooth controllers with useful defaults, plus
+additional options as detailed below.
+.It
+optionally, start
+.Xr bthcid 8 ,
+the Bluetooth Link Key/PIN Code manager, passing
+.Sy bthcid_flags .
+.It
+configure local Bluetooth drivers as listed in the
+.Pa /etc/bluetooth/btdevctl.conf
+configuration file.
+.It
+optionally, start
+.Xr sdpd 8 ,
+the Service Discovery server, passing
+.Sy sdpd_flags .
+.El
 .It Sy btconfig_devices
-An optional space separated list of bluetooth devices to be configured at
-boot time.
+A string.
+An optional list of Bluetooth controllers to configure.
+.It Sy btconfig_{dev}
+A string.
+Additional configuration options for specific Bluetooth controllers.
 .It Sy btconfig_args
-An optional string, containing default arguments for bluetooth devices to
-be configured.
-.It Sy btdevctl
-Boolean value.
-Configure Bluetooth devices as listed in the configuration file
-.Pa /etc/bluetooth/btdevctl.conf .
+A string.
+Additional configuration options for Bluetooth controllers without
+specific options as above.
 .It Sy bthcid
 Boolean value.
-Runs
-.Xr bthcid 8 ,
-the Bluetooth HCI daemon, which manages link keys and PIN codes for
-Bluetooth links.
-Passes
-.Sy bthcid_flags .
+If set to false, disable starting the Bluetooth Link Key/PIN Code manager.
 .It Sy sdpd
 Boolean value.
-Runs the Service Discovery Profile daemon,
-.Xr sdpd 8 .
-Passes
-.Sy sdpd_flags .
+If set to false, disable starting the Bluetooth Service Discovery server.
 .El
 .Ss Other daemons
 .Bl -tag -width net_interfaces

@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.137 2011/04/17 13:07:18 martin Exp $
+#	$NetBSD: special,v 1.138 2011/05/27 09:28:42 plunky Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -186,12 +186,9 @@
 ./etc/rc.d/altqd		type=file mode=0555
 ./etc/rc.d/amd			type=file mode=0555
 ./etc/rc.d/apmd			type=file mode=0555
+./etc/rc.d/bluetooth		type=file mode=0555
 ./etc/rc.d/bootconf.sh		type=file mode=0555
 ./etc/rc.d/bootparams		type=file mode=0555
-./etc/rc.d/btattach		type=file mode=0555
-./etc/rc.d/btconfig		type=file mode=0555
-./etc/rc.d/btdevctl		type=file mode=0555
-./etc/rc.d/bthcid		type=file mode=0555
 ./etc/rc.d/ccd			type=file mode=0555
 ./etc/rc.d/cgd			type=file mode=0555
 ./etc/rc.d/cleartmp		type=file mode=0555
@@ -268,7 +265,6 @@
 ./etc/rc.d/rwho			type=file mode=0555
 ./etc/rc.d/savecore		type=file mode=0555
 ./etc/rc.d/screenblank		type=file mode=0555
-./etc/rc.d/sdpd			type=file mode=0555
 ./etc/rc.d/securelevel		type=file mode=0555
 ./etc/rc.d/sshd			type=file mode=0555
 ./etc/rc.d/staticroute		type=file mode=0555

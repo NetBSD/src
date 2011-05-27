@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.117 2011/04/17 13:16:59 martin Exp $
+# $NetBSD: postinstall,v 1.118 2011/05/27 09:28:42 plunky Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -651,9 +651,10 @@ detect_x11()
 #
 
 #
-#	bluetooth
+#	Bluetooth
 #
-additem bluetooth "bluetooth configuration is up to date"
+
+additem bluetooth "Bluetooth configuration is up to date"
 do_bluetooth()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_bluetooth fix|check"
@@ -668,6 +669,18 @@ do_bluetooth()
 	move_file "${op}" "${DEST_DIR}/var/db/btdev.xml" \
 			"${DEST_DIR}/var/db/btdevctl.plist"
 	failed=$(( ${failed} + $? ))
+
+	notfixed=""
+	if [ "${op}" = "fix" ]; then
+		notfixed="${NOT_FIXED}"
+	fi
+	for _v in btattach btconfig btdevctl; do
+		if rcconf_is_set "${op}" "${_v}" "${_v}"; then
+			msg \
+    "${_v} is obsolete in rc.conf(5)${notfixed}: use bluetooth=YES"
+			failed=$(( ${failed} + 1 ))
+		fi
+	done
 
 	return ${failed}
 }
@@ -1070,7 +1083,7 @@ do_rc()
 	compare_dir "${op}" "${SRC_DIR}/etc/rc.d" "${DEST_DIR}/etc/rc.d" 555 \
 		DAEMON DISKS LOGIN NETWORKING SERVERS \
 		accounting altqd amd apmd \
-		bootconf.sh bootparams btattach btconfig btdevctl bthcid \
+		bluetooth bootconf.sh bootparams \
 		ccd cgd cleartmp cron \
 		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
 		fsck fsck_root ftp_proxy ftpd \
@@ -1088,7 +1101,7 @@ do_rc()
 		quota \
 		racoon rpcbind raidframe raidframeparity rarpd rbootd rndctl \
 		root route6d routed rtadvd rtclocaltime rtsold rwho \
-		savecore screenblank sdpd securelevel sshd \
+		savecore screenblank securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
 		veriexec virecover wdogctl wpa_supplicant wscons wsmoused \
@@ -1111,7 +1124,8 @@ do_rc()
 	fi
 
 		# check for obsolete rc.d files
-	for f in NETWORK btcontrol btuartd fsck.sh kerberos nfsiod servers \
+	for f in NETWORK btattach btconfig btcontrol btdevctl bthcid btuartd \
+	    fsck.sh kerberos nfsiod sdpd servers \
 	    systemfs daemon gated login poffd portmap sunndd xntpd; do
 		fd="/etc/rc.d/${f}"
 		[ -e "${DEST_DIR}${fd}" ] && echo "${fd}"
