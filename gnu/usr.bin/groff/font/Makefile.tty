@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.tty,v 1.8 2008/10/25 22:27:35 apb Exp $
+# $NetBSD: Makefile.tty,v 1.9 2011/05/27 17:23:47 drochner Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/font/Makefile.tty,v 2.7 2001/04/17 12:36:42 ru Exp $
 
@@ -34,3 +34,4 @@ DESC: DESC.proto
 	    -e "s/^vert .*$$/vert `expr $(RES) / $(LPI)`/" \
 	    -e "s/^fonts .*$$/fonts `set $(FONTS); echo $$#` $(FONTS)/" \
 	    ${.ALLSRC} >${.TARGET}
+	echo "image_generator gs" >>${.TARGET}
