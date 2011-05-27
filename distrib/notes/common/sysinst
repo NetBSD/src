@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.100 2009/12/05 16:29:10 pooka Exp $
+.\"	$NetBSD: sysinst,v 1.101 2011/05/27 17:50:41 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -666,7 +666,7 @@ Boot the system as described in the "Booting the installer" section above.
 .el \{\
 Boot your machine.
 The boot loader will start, and will print a countdown and begin booting.
-.if !\n[alpha]:\n[amd64]:\n[i386] \{
+.if !\n[alpha]:\n[amd64]:\n[i386] \{\
 .Pp
 If the boot loader messages do not appear in a reasonable
 amount of time, you either have a bad boot floppy or a
