@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.6 2011/05/17 17:42:46 dyoung Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.7 2011/05/27 15:19:43 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -134,6 +134,7 @@ static const struct e500_intr_name e500_onchip_intr_names[] = {
 	{ ISOURCE_SRIO_OMU1, "srio-omu1" },
 	{ ISOURCE_SRIO_IMU1, "srio-imu1" },
 	{ ISOURCE_SRIO_OMU2, "srio-omu2" },
+	{ ISOURCE_SRIO_IMU2, "srio-imu2" },
 	{ ISOURCE_SECURITY2, "sec2" },
 	{ ISOURCE_SPI, "spi" },
 	{ ISOURCE_ETSEC1_PTP, "etsec1-ptp" },
@@ -616,8 +617,6 @@ e500_softint_trigger(uintptr_t machdep)
 	struct cpu_info * const ci = curcpu();
 
 	atomic_or_uint(&ci->ci_data.cpu_softints, machdep);
-	if (machdep == (1 << IPL_SOFTBIO))
-		printf("%s(%u): cpl=%u\n", __func__, machdep, ci->ci_cpl);
 }
 #endif /* __HAVE_FAST_SOFTINTS */
 
