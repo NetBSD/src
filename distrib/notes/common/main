@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.477 2011/05/19 05:13:09 riastradh Exp $
+.\"	$NetBSD: main,v 1.478 2011/05/27 15:43:00 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -555,14 +555,12 @@ This set contains the
 .Dq gnu
 sources, including the source for the compiler, assembler, groff,
 and the other GNU utilities in the binary distribution sets.
-.showsize 82 422
 .It Sy sharesrc
 This set contains the
 .Dq share
 sources, which include the sources for the man pages not associated
 with any particular program; the sources for the typesettable document
 set; the dictionaries; and more.
-.showsize 7 29
 .It Sy src
 This set contains all of the base
 .Nx
@@ -571,17 +569,14 @@ This set contains all of the base
 .Sy sharesrc ,
 or
 .Sy syssrc .
-.showsize 58 284
 .It Sy syssrc
 This set contains the sources to the
 .Nx
 \*V kernel for all architectures as well as the
 .Xr config 1
 utility.
-.showsize 36 180
 .It Sy xsrc
 This set contains the sources to the X Window System.
-.showsize 133 699
 .tag)
 .Pp
 All the above source sets are located in the
