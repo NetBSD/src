@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.65 2011/05/26 20:33:24 drochner Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.66 2011/05/27 17:09:09 drochner Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.65 2011/05/26 20:33:24 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.66 2011/05/27 17:09:09 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -555,6 +555,11 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		}
 		crde->crd_len = cop->len;
 		crde->crd_inject = 0;
+
+		if (cse->cipher == CRYPTO_AES_GCM_16 && crda)
+			crda->crd_len = 0;
+		else if (cse->cipher == CRYPTO_AES_GMAC)
+			crde->crd_len = 0;
 
 		crde->crd_alg = cse->cipher;
 		crde->crd_key = cse->key;
@@ -1533,6 +1538,12 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 	case CRYPTO_AES_CTR:
 		txform = &enc_xform_aes_ctr;
 		break;
+	case CRYPTO_AES_GCM_16:
+		txform = &enc_xform_aes_gcm;
+		break;
+	case CRYPTO_AES_GMAC:
+		txform = &enc_xform_aes_gmac;
+		break;
 	case CRYPTO_NULL_CBC:
 		txform = &enc_xform_null;
 		break;
@@ -1601,6 +1612,15 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		break;
 	case CRYPTO_AES_XCBC_MAC_96:
 		thash = &auth_hash_aes_xcbc_mac_96;
+		break;
+	case CRYPTO_AES_128_GMAC:
+		thash = &auth_hash_gmac_aes_128;
+		break;
+	case CRYPTO_AES_192_GMAC:
+		thash = &auth_hash_gmac_aes_192;
+		break;
+	case CRYPTO_AES_256_GMAC:
+		thash = &auth_hash_gmac_aes_256;
 		break;
 	case CRYPTO_NULL_HMAC:
 		thash = &auth_hash_null;
