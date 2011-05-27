@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.69 2011/04/25 22:13:45 wiz Exp $
+.\"	$NetBSD: xfer,v 1.70 2011/05/27 15:27:41 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,19 +98,24 @@ system, and a comprehensive list of the possibilities is beyond the
 scope of this document.
 .Pp
 If you are using
-.Tn MS-DOS
-to write the floppy image(s) to floppy disk, you should use the
-.Ic rawrite
-utility, provided in the
+.Tn Microsoft Windows
+to write the floppy image(s) to floppy disk, you can use the
+.Ic Rawrite32
+Windows32 program.
+It can be installed by
+Pa rawr32.exe
+provieded in the
 .Pa i386/installation/misc
 directory of the
 .Nx
 distribution.
-It will write a file system image (.fs file) to a floppy disk.
 A
-.Ic rawrite32
-is also available that runs under
-.Tn MS Windows .
+.Ic rawrite
+utility for the
+.Tn MS-DOS
+environment is also available in the
+.Pa i386/installation/misc/
+directory.
 .Pp
 .\} \" \n[i386]
 .
@@ -187,28 +192,25 @@ machines) to write the floppy images to disks, you should use the
 .Xr dd 1
 command to copy the file system image(s)
 (.fs file(s)) directly to the raw floppy disk.
-It is suggested that you read the
-.Xr dd 1
-manual page or ask your system administrator to determine the correct
-set of arguments to use; it will be slightly different from system to
-system, and a comprehensive list of the possibilities is beyond the
-scope of this document.
 .Pp
 If you have an i386 machine which runs
-.Tn MS-DOS
-and use it to write the floppy image(s) to floppy disk,
-you can use the
-.Ic rawrite
-utility, provided in the
-.Pa i386/installation/misc
+.Tn Microsoft Windows
+and use it to write the floppy image(s) to floppy disk, you can use the
+.Ic Rawrite32
+Windows32 program.
+It can be installed by
+Pa rawr32.exe
+provided in the
+.Pa i386/installation/misc/
 directory of the
 .Nx
 distribution.
-It will write a file system image (.fs file) to a floppy disk.
-A
-.Ic rawrite32
-is also available that runs under
-.Tn MS Windows .
+.Ic rawrite
+utility for the
+.Tn MS-DOS
+environment is also available in the
+.Pa i386/installation/misc/
+directory.
 .Pp
 Though
 .Nx*M
