@@ -170,6 +170,8 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			second_pass = true;
 			try = roundup2(max(low, ps->avail_start), alignment);
 			limit = min(high, ps->avail_start + ps->start_hint);
+			if (limit >= ps->avail_end)
+				return 0;
 			skip = 0;
 			continue;
 		}
@@ -184,20 +186,28 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			skip = 0;
 			continue;
 		}
-#ifdef DEBUG
+
 		/*
 		 * Make sure this is a managed physical page.
 		 */
+		KDASSERTMSG(vm_physseg_find(try, &cidx) == ps - vm_physmem,
+		    ("%s: %s(%#x, &cidx) (%d) != ps - vm_physmem (%zd)",
+		     __func__, "vm_physseg_find", try,
+		    vm_physseg_find(try, &cidx), ps - vm_physmem));
 
-		if (vm_physseg_find(try, &cidx) != ps - vm_physmem)
-			panic("pgalloc contig: botch1");
-		if (cidx != try - ps->start)
-			panic("pgalloc contig: botch2");
-		if (vm_physseg_find(try + num - 1, &cidx) != ps - vm_physmem)
-			panic("pgalloc contig: botch3");
-		if (cidx != try - ps->start + num - 1)
-			panic("pgalloc contig: botch4");
-#endif
+		KDASSERTMSG(cidx == try - ps->start,
+		    ("%s: cidx (%#x) != try (%#x) - ps->start (%#"PRIxPADDR")",
+		     __func__, cidx, try, ps->start));
+
+		KDASSERTMSG(vm_physseg_find(try + num - 1, &cidx) == ps - vm_physmem,
+		    ("%s: %s(%#x + %#x - 1, &cidx) (%d) != ps - vm_physmem (%zd)",
+		     __func__, "vm_physseg_find", try, num,
+		    vm_physseg_find(try, &cidx), ps - vm_physmem));
+
+		KDASSERTMSG(cidx == try - ps->start + num - 1,
+		    ("%s: cidx (%#x) != try (%#x) - ps->start (%#"PRIxPADDR") + num (%#x) - 1",
+		     __func__, cidx, try, ps->start, num));
+
 		tryidx = try - ps->start;
 		end = tryidx + num;
 
@@ -390,21 +400,31 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	second_pass = false;
 
 	for (;; try++, pg++) {
+		KDASSERTMSG(limit <= ps->avail_end,
+		    ("%s: limit (%#x) > ps->avail_end (%#"PRIxPADDR")",
+		     __func__, limit, ps->avail_end));
+
 		if (try >= limit) {
 			if (ps->start_hint == 0 || second_pass)
 				break;
 			second_pass = true;
 			try = max(low, ps->avail_start) - 1;
 			limit = min(high, ps->avail_start + ps->start_hint);
+			if (limit >= ps->avail_end)
+				break;
 			pg = &ps->pgs[try - ps->start];
 			continue;
 		}
-#ifdef DEBUG
-		if (vm_physseg_find(try, &cidx) != ps - vm_physmem)
-			panic("pgalloc simple: botch1");
-		if (cidx != (try - ps->start))
-			panic("pgalloc simple: botch2");
-#endif
+
+		KDASSERTMSG(vm_physseg_find(try, &cidx) == ps - vm_physmem,
+		    ("%s: %s(%#x, &cidx) (%d) != ps - vm_physmem (%zd)",
+		     __func__, "vm_physseg_find", try,
+		    vm_physseg_find(try, &cidx), ps - vm_physmem));
+
+		KDASSERTMSG(cidx == try - ps->start,
+		    ("%s: cidx (%#x) != try (%#x) - ps->start (%#"PRIxPADDR")",
+		     __func__, cidx, try, ps->start));
+
 		/*
 		 * If this page isn't free, then we need to skip a colors worth
 		 * of pages to get a matching color.  Note that colormask is 1
