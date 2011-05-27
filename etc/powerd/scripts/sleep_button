@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: sleep_button,v 1.7 2010/12/31 09:36:15 jruoho Exp $
+#	$NetBSD: sleep_button,v 1.8 2011/05/27 09:28:42 plunky Exp $
 #
 # Generic script for sleep button events.
 #
@@ -11,8 +11,7 @@
 case "${2}" in
 pressed)
 
-	/etc/rc.d/btdevctl stop
-	/etc/rc.d/btconfig stop
+	/etc/rc.d/bluetooth stop
 	/etc/rc.d/ntpd stop
 	/etc/rc.d/dhclient stop
 	/etc/rc.d/network stop
@@ -36,8 +35,7 @@ pressed)
 	/etc/rc.d/dhclient start
 	/etc/rc.d/ntpdate start
 	/etc/rc.d/ntpd start
-	/etc/rc.d/btconfig start
-	/etc/rc.d/btdevctl start
+	/etc/rc.d/bluetooth start
 	;;
 
 released)
