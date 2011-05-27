@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.25 2007/05/31 05:57:01 wiz Exp $
+#	$NetBSD: inter.phone,v 1.26 2011/05/27 17:12:47 drochner Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -326,6 +326,7 @@
 221:::Senegal Republic
 224:4:Conakry:Guinea, People's Rev. Rep.
 225:::Ivory Coast Rep. of
+226:::Upper Volta (Burkina Faso)
 227:::Niger Republic
 228:::Togo, Rep. of
 229:::Benin, People's Rep. of
