@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1075 2011/05/22 08:13:56 mrg Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1076 2011/05/27 15:11:17 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1079 2011/05/22 08:13:17 mrg Exp
+ *	NetBSD: pcidevs,v 1.1080 2011/05/27 15:09:44 matt Exp
  */
 
 /*
@@ -814,6 +814,7 @@
 #define	PCI_PRODUCT_ALI_M5243	0x5243		/* M5243 PCI-AGP Bridge */
 #define	PCI_PRODUCT_ALI_M5249	0x5249		/* M5249 Hypertransport to PCI Bridge */
 #define	PCI_PRODUCT_ALI_M5261	0x5261		/* M5261 Tulip Ethernet Controller */
+#define	PCI_PRODUCT_ALI_M5288	0x5288		/* M5288 SATA/Raid Controller */
 #define	PCI_PRODUCT_ALI_M5451	0x5451		/* M5451 AC-Link Controller Audio Device */
 #define	PCI_PRODUCT_ALI_M5453	0x5453		/* M5453 AC-Link Controller Modem Device */
 #define	PCI_PRODUCT_ALI_M5455	0x5455		/* M5455 AC-Link Controller Audio Device */
