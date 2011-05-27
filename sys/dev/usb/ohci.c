@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.212 2010/12/22 01:34:19 macallan Exp $	*/
+/*	$NetBSD: ohci.c,v 1.213 2011/05/27 19:04:24 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.212 2010/12/22 01:34:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.213 2011/05/27 19:04:24 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -945,6 +945,7 @@ ohci_allocx(struct usbd_bus *bus)
 {
 	struct ohci_softc *sc = bus->hci_private;
 	usbd_xfer_handle xfer;
+	struct ohci_xfer *oxfer;
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
 	if (xfer != NULL) {
@@ -956,10 +957,12 @@ ohci_allocx(struct usbd_bus *bus)
 		}
 #endif
 	} else {
-		xfer = malloc(sizeof(struct ohci_xfer), M_USB, M_NOWAIT);
+		xfer = malloc(sizeof(*oxfer), M_USB, M_NOWAIT);
 	}
 	if (xfer != NULL) {
-		memset(xfer, 0, sizeof (struct ohci_xfer));
+		oxfer = OXFER(xfer);
+		memset(oxfer, 0, sizeof(*oxfer));
+		usb_init_task(&oxfer->abort_task, ohci_timeout_task, oxfer);
 #ifdef DIAGNOSTIC
 		xfer->busy_free = XFER_BUSY;
 #endif
@@ -971,6 +974,7 @@ void
 ohci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 {
 	struct ohci_softc *sc = bus->hci_private;
+	struct ohci_xfer *oxfer = OXFER(xfer);
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_BUSY) {
@@ -979,6 +983,7 @@ ohci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	}
 	xfer->busy_free = XFER_FREE;
 #endif
+	usb_rem_task(xfer->pipe->device, &oxfer->abort_task);
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
 }
 
@@ -1948,7 +1953,6 @@ ohci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&oxfer->abort_task, ohci_timeout_task, addr);
 	usb_add_task(oxfer->xfer.pipe->device, &oxfer->abort_task,
 	    USB_TASKQ_HC);
 }
