@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.236 2011/05/27 17:19:18 drochner Exp $	*/
+/*	$NetBSD: uhci.c,v 1.237 2011/05/27 19:04:24 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.236 2011/05/27 17:19:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.237 2011/05/27 19:04:24 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -640,6 +640,7 @@ uhci_allocx(struct usbd_bus *bus)
 {
 	struct uhci_softc *sc = bus->hci_private;
 	usbd_xfer_handle xfer;
+	struct uhci_xfer *uxfer;
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
 	if (xfer != NULL) {
@@ -651,13 +652,15 @@ uhci_allocx(struct usbd_bus *bus)
 		}
 #endif
 	} else {
-		xfer = malloc(sizeof(struct uhci_xfer), M_USB, M_NOWAIT);
+		xfer = malloc(sizeof(*uxfer), M_USB, M_NOWAIT);
 	}
 	if (xfer != NULL) {
-		memset(xfer, 0, sizeof (struct uhci_xfer));
-		UXFER(xfer)->iinfo.sc = sc;
+		uxfer = UXFER(xfer);
+		memset(uxfer, 0, sizeof(*uxfer));
+		uxfer->iinfo.sc = sc;
+		usb_init_task(&uxfer->abort_task, uhci_timeout_task, uxfer);
 #ifdef DIAGNOSTIC
-		UXFER(xfer)->iinfo.isdone = 1;
+		uxfer->iinfo.isdone = 1;
 		xfer->busy_free = XFER_BUSY;
 #endif
 	}
@@ -668,6 +671,7 @@ void
 uhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 {
 	struct uhci_softc *sc = bus->hci_private;
+	struct uhci_xfer *uxfer = UXFER(xfer);
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_BUSY) {
@@ -675,10 +679,11 @@ uhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 		       xfer->busy_free);
 	}
 	xfer->busy_free = XFER_FREE;
-	if (!UXFER(xfer)->iinfo.isdone) {
+	if (!uxfer->iinfo.isdone) {
 		printf("uhci_freex: !isdone\n");
 	}
 #endif
+	usb_rem_task(xfer->pipe->device, &uxfer->abort_task);
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
 }
 
@@ -1619,7 +1624,6 @@ uhci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&uxfer->abort_task, uhci_timeout_task, ii->xfer);
 	usb_add_task(uxfer->xfer.pipe->device, &uxfer->abort_task,
 	    USB_TASKQ_HC);
 }
