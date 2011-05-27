@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.47 2011/03/09 18:55:56 mrg Exp $	x11
+# $NetBSD: md.sparc64,v 1.48 2011/05/27 22:42:26 christos Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -401,6 +401,7 @@
 ./usr/X11R7/lib/modules/libexa.a			-unknown-	xorg
 ./usr/X11R7/lib/modules/libexa.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/libexa.so.0			-unknown-	xorg
+./usr/X11R7/lib/modules/libexa_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libexa_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb.a				-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb.so			-unknown-	xorg
