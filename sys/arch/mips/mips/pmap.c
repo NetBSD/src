@@ -630,31 +630,59 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	u_int npgs;
 	paddr_t pa;
 	vaddr_t va;
+	struct vm_physseg *maybe_seg = NULL;
+	u_int maybe_bank = vm_nphysseg;
 
 	size = round_page(size);
 	npgs = atop(size);
+
+	aprint_debug("%s: need %u pages\n", __func__, npgs);
 
 	for (u_int bank = 0; bank < vm_nphysseg; bank++) {
 		struct vm_physseg * const seg = VM_PHYSMEM_PTR(bank);
 		if (uvm.page_init_done == true)
 			panic("pmap_steal_memory: called _after_ bootstrap");
 
-		printf("%s: seg %u: %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR"\n",
+		aprint_debug("%s: seg %u: %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR"\n",
 		    __func__, bank,
 		    seg->avail_start, seg->start,
 		    seg->avail_end, seg->end);
 
 		if (seg->avail_start != seg->start
 		    || seg->avail_start >= seg->avail_end) {
-			printf("%s: seg %u: bad start\n", __func__, bank);
+			aprint_debug("%s: seg %u: bad start\n", __func__, bank);
 			continue;
 		}
 
 		if (seg->avail_end - seg->avail_start < npgs) {
-			printf("%s: seg %u: too small for %u pages\n",
+			aprint_debug("%s: seg %u: too small for %u pages\n",
 			    __func__, bank, npgs);
 			continue;
 		}
+
+#ifndef _LP64
+		if (seg->avail_start + npgs > MIPS_PHYS_MASK + 1) {
+			aprint_debug("%s: seg %u: not enough in KSEG0 for %u pages\n",
+			    __func__, bank, npgs);
+			continue;
+		}
+#endif
+
+		/*
+		 * Always try to allocate from the segment with the least
+		 * amount of space left.
+		 */
+#define VM_PHYSMEM_SPACE(s)	((s)->avail_end - (s)->avail_start)
+		if (maybe_seg == NULL 
+		    || VM_PHYSMEM_SPACE(seg) < VM_PHYSMEM_SPACE(maybe_seg)) {
+			maybe_seg = seg;
+			maybe_bank = bank;
+		}
+	}
+
+	if (maybe_seg) {
+		struct vm_physseg * const seg = maybe_seg;
+		u_int bank = maybe_bank;
 
 		/*
 		 * There are enough pages here; steal them!
@@ -670,12 +698,17 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			if (vm_nphysseg == 1)
 				panic("pmap_steal_memory: out of memory!");
 
+			aprint_debug("%s: seg %u: %u pages stolen (removed)\n",
+			    __func__, bank, npgs);
 			/* Remove this segment from the list. */
 			vm_nphysseg--;
 			for (u_int x = bank; x < vm_nphysseg; x++) {
 				/* structure copy */
 				VM_PHYSMEM_PTR_SWAP(x, x + 1);
 			}
+		} else {
+			aprint_debug("%s: seg %u: %u pages stolen (%#"PRIxPADDR" left)\n",
+			    __func__, bank, npgs, VM_PHYSMEM_SPACE(seg));
 		}
 
 #ifdef _LP64
