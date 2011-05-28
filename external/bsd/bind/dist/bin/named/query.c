@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.1.1.6 2011/02/15 19:30:14 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.1.1.7 2011/05/28 06:53:28 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: query.c,v 1.353.8.1 2011-02-03 07:39:02 marka Exp */
+/* Id: query.c,v 1.353.8.2.2.1 2011-04-27 17:06:27 each Exp */
 
 /*! \file */
 
@@ -4043,8 +4043,8 @@ rpz_find(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qnamef,
 	version = NULL;
 	result = rpz_getdb(client, rpz_type, qnamef, zonep, dbp, &version);
 	if (result != ISC_R_SUCCESS) {
-		*policyp = DNS_RPZ_POLICY_ERROR;
-		return (DNS_R_SERVFAIL);
+		*policyp = DNS_RPZ_POLICY_MISS;
+		return (DNS_R_NXDOMAIN);
 	}
 
 	dns_fixedname_init(&fixed);
@@ -4089,9 +4089,15 @@ rpz_find(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qnamef,
 			if (dns_rdataset_isassociated(*rdatasetp))
 				dns_rdataset_disassociate(*rdatasetp);
 			dns_db_detachnode(*dbp, nodep);
-			result = dns_db_find(*dbp, qnamef, version, qtype, 0,
-					     client->now, nodep, found,
-					     *rdatasetp, NULL);
+
+			if (qtype == dns_rdatatype_rrsig ||
+			    qtype == dns_rdatatype_sig)
+				result = DNS_R_NXRRSET;
+			else 
+				result = dns_db_find(*dbp, qnamef, version,
+						     qtype, 0, client->now,
+						     nodep, found, *rdatasetp,
+						     NULL);
 		}
 	}
 	switch (result) {
