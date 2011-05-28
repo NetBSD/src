@@ -1,3 +1,43 @@
+	--- 9.8.0-P2 released ---
+
+3121.   [security]      An authoritative name server sending a negative
+                        response containing a very large RRset could
+                        trigger an off-by-one error in the ncache code
+                        and crash named. [RT #24650]
+
+3120.	[bug]		Named could fail to validate zones listed in a DLV
+			that validated insecure without using DLV and had
+			DS records in the parent zone. [RT #24631]
+
+	--- 9.8.0-P1 released ---
+
+3100.	[security]	Certain response policy zone configurations could
+			trigger an INSIST when receiving a query of type
+			RRSIG. [RT #24280]
+
+	--- 9.8.0 released ---
+
+3025.	[bug]		Fixed a possible deadlock due to zone resigning.
+			[RT #22964]
+
+3024.	[func]		RTT Banding removed due to minor security increase
+			but major impact on resolver latency. [RT #23310]
+
+3023.	[bug]		Named could be left in an inconsistent state when
+			receiving multiple AXFR response messages that were
+			not all TSIG-signed. [RT #23254]
+
+3022.   [bug]           Fixed rpz SERVFAILs after failed zone transfers
+                        [RT #23246]
+
+3021.	[bug]		Change #3010 was incomplete. [RT #22296]
+
+3020.	[bug]		auto-dnssec failed to correctly update the zone when
+			changing the DNSKEY RRset. [RT #23232]
+
+3019.	[test]		Test: check apex NSEC3 records after adding DNSKEY
+			record via UPDATE. [RT #23229]
+
 	--- 9.8.0rc1 released ---
 
 3018.	[bug]		Named failed to check for the "none;" acl when deciding
@@ -158,7 +198,7 @@
 2976.	[bug]		named could die on exit after negotiating a GSS-TSIG
 			key. [RT #22573]
 
-2975.	[bug]		rbtdb.c:cleanup_dead_nodes_callback() aquired the
+2975.	[bug]		rbtdb.c:cleanup_dead_nodes_callback() acquired the
 			wrong lock which could lead to server deadlock.
 			[RT #22614]
 
@@ -1117,7 +1157,7 @@ h
 
 2695.	[func]		DHCP/DDNS - update fdwatch code for use by
 			DHCP.  Modify the api to isc_sockfdwatch_t (the
-			callback funciton for isc_socket_fdwatchcreate)
+			callback functon for isc_socket_fdwatchcreate)
 			to include information about the direction (read
 			or write) and add isc_socket_fdwatchpoke.
 			[RT #20253]
@@ -1182,7 +1222,7 @@ h
 			  sets the time when a key is no longer used for
 			  signing but is still published.
 			- The "unpublished" date (-U) is deprecated in
-			  favor of "deleted" (-D).
+			  favour of "deleted" (-D).
 			[RT #20247]
 
 2676.	[bug]		--with-export-installdir should have been
@@ -1372,11 +1412,11 @@ h
 2624.	[func]		'named-checkconf -p' will print out the parsed
 			configuration. [RT #18871]
 
-2623.	[bug]		Named started seaches for DS non-optimally. [RT #19915]
+2623.	[bug]		Named started searches for DS non-optimally. [RT #19915]
 
 2622.	[bug]		Printing of named.conf grammar was broken. [RT #19919]
 
-2621.	[doc]		Made copyright boilterplate consistent.  [RT #19833]
+2621.	[doc]		Made copyright boilerplate consistent.  [RT #19833]
 
 2620.	[bug]		Delay thawing the zone until the reload of it has
 			completed successfully.  [RT #19750]

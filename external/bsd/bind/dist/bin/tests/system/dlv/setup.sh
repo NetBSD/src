@@ -14,8 +14,8 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.6 2009-03-02 23:47:43 tbox Exp
+# Id: setup.sh,v 1.6.528.1 2011-05-27 00:57:30 each Exp
 
 ../../../tools/genrandom 400 random.data
 
-(cd ns3 && sh -e sign.sh)
+(cd ns1 && sh -e sign.sh)

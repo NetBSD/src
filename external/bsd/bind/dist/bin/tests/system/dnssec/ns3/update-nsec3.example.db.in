@@ -12,24 +12,34 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: base.db,v 1.3.130.1 2011-04-27 17:06:28 each Exp
+; Id: update-nsec3.example.db.in,v 1.2.2.2 2011-02-14 23:59:33 marka Exp
 
-; RPZ test
+$TTL 300	; 5 minutes
+@			IN SOA	mname1. . (
+				2000042407 ; serial
+				20         ; refresh (20 seconds)
+				20         ; retry (20 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+			NS	ns
+ns			A	10.53.0.3
 
-$TTL	120
-@		SOA	tld3.  hostmaster.ns.tld3. ( 1 3600 1200 604800 60 )
-@		NS	ns.utld.
+a			A	10.0.0.1
+b			A	10.0.0.2
+d			A	10.0.0.4
+z			A	10.0.0.26
+a.a.a.a.a.a.a.a.a.a.e	A	10.0.0.27
+x			CNAME	a
 
-; Poke the radix tree a little.
-128.1111.2222.3333.4444.5555.6666.7777.8888.rpz-ip	CNAME	.
-128.1111.2222.3333.4444.5555.6666.zz.rpz-ip		CNAME	.
-128.1111.2222.3333.4444.5555.zz.8888.rpz-ip		CNAME	.
-128.1111.2222.3333.4444.zz.8888.rpz-ip			CNAME	.
-128.zz.3333.4444.0.0.8888.rpz-ip			CNAME	.
-128.zz.3333.4444.0.7777.8888.rpz-ip			CNAME	.
-128.zz.3333.4444.0.8777.8888.rpz-ip			CNAME	.
-127.zz.3333.4444.0.8777.8888.rpz-ip			CNAME	.
+private			NS	ns.private
+ns.private		A	10.53.0.2
 
-; for testing rrset replacement
-redirect	IN      A       127.0.0.1
-*.redirect	IN      A       127.0.0.1
+insecure		NS	ns.insecure
+ns.insecure		A	10.53.0.2
+
+nosoa 			NS	ns.nosoa
+ns.nosoa		A	10.53.0.7
+
+normalthenrrsig		A	10.0.0.28
+rrsigonly		A	10.0.0.29
