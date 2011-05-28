@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.1076 2011/05/27 15:11:17 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1077 2011/05/28 10:45:08 ryo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -4325,6 +4325,7 @@
 
 /* System Base products */
 #define	PCI_PRODUCT_SYSTEMBASE_SB16C1054	0x0004		/* SB16C1054 UARTs */
+#define	PCI_PRODUCT_SYSTEMBASE_SB16C1058	0x0008		/* SB16C1058 UARTs */
 
 /* Schneider & Koch (really SysKonnect) products */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SKNET_FDDI	0x4000		/* SK-NET FDDI-xP */
