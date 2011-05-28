@@ -1,4 +1,4 @@
-#	$NetBSD: RB800,v 1.4 2011/03/16 21:10:35 matt Exp $
+#	$NetBSD: RB800,v 1.5 2011/05/28 00:07:56 matt Exp $
 #
 #	RB800 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB800-$Revision: 1.4 $"
+ident 		"RB800-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -22,7 +22,7 @@ options 	PPC_HAVE_SPE
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	MEMORY_DISK_ROOT_SIZE=6144	# size of memory disk, in blocks
-no makeoptions	NEEDS_MDSETIMAGE
+no makeoptions	NEED_MDSETIMAGE
 
 options 	NFS_BOOT_BOOTP
 
