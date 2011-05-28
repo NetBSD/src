@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pselect.c,v 1.2 2011/05/18 03:15:12 christos Exp $ */
+/*	$NetBSD: t_pselect.c,v 1.3 2011/05/28 15:34:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ sig_handler(int signum)
 }
 
 static void __attribute__((__noreturn__))
-child(void)
+child(const struct timespec *ts)
 {
 	struct sigaction sa;
 	sigset_t set;
@@ -76,7 +76,7 @@ child(void)
 		fd_set rset;
 		FD_ZERO(&rset);
 		FD_SET(fd, &rset);
-		if (pselect(1, &rset, NULL, NULL, NULL, &set) == -1) {
+		if (pselect(1, &rset, NULL, NULL, ts, &set) == -1) {
 			if(errno == EINTR) {
 				if (!keep_going)
 					exit(0);
@@ -85,23 +85,23 @@ child(void)
        }
 }
 
-ATF_TC(pselect_signal_mask);
-ATF_TC_HEAD(pselect_signal_mask, tc)
+ATF_TC(pselect_signal_mask_with_signal);
+ATF_TC_HEAD(pselect_signal_mask_with_signal, tc)
 {
 
 	/* Cf. PR lib/43625. */
-	atf_tc_set_md_var(tc, "descr",
-	    "Checks pselect's temporary mask setting");
+	atf_tc_set_md_var(tc, "descr", "Checks pselect's temporary mask "
+	    "setting when a signal is received");
 }
 
-ATF_TC_BODY(pselect_signal_mask, tc)
+ATF_TC_BODY(pselect_signal_mask_with_signal, tc)
 {
 	pid_t pid;
 	int status;
 
 	switch (pid = fork()) {
 	case 0:
-		child();
+		child(NULL);
 	case -1:
 		err(1, "fork");
 	default:
@@ -123,11 +123,54 @@ ATF_TC_BODY(pselect_signal_mask, tc)
 	}
 }
 
+ATF_TC(pselect_signal_mask_with_timeout);
+ATF_TC_HEAD(pselect_signal_mask_with_timeout, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks pselect's temporary mask "
+	    "setting when a timeout occurs");
+}
+ATF_TC_BODY(pselect_signal_mask_with_timeout, tc)
+{
+	pid_t pid;
+	int status;
+	sigset_t oset, nset;
+	static const struct timespec zero = { 0, 0 };
+
+	switch (pid = fork()) {
+	case 0:
+		if (sigprocmask(SIG_BLOCK, NULL, &oset) == -1)
+			err(1, "sigprocmask");
+		child(&zero);
+		if (sigprocmask(SIG_BLOCK, NULL, &nset) == -1)
+			err(1, "sigprocmask");
+		if (memcmp(&oset, &nset, sizeof(oset)) != 0)
+			atf_tc_fail("pselect() masks don't match "
+			    "after timeout");
+		break;
+	case -1:
+		err(1, "fork");
+	default:
+		usleep(500);
+		switch (waitpid(pid, &status, WNOHANG)) {
+		case -1:
+			err(1, "wait");
+		case 0:
+			if (kill(pid, SIGKILL) == -1)
+				err(1, "kill");
+			atf_tc_fail("pselect() did not receive signal");
+			break;
+		default:
+			break;
+		}
+	}
+}
 
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, pselect_signal_mask);
+	ATF_TP_ADD_TC(tp, pselect_signal_mask_with_signal);
+	ATF_TP_ADD_TC(tp, pselect_signal_mask_with_timeout);
 
 	return atf_no_error();
 }
