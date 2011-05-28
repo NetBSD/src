@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.300 2011/04/24 16:26:59 rmind Exp $ */
+/* $NetBSD: com.c,v 1.301 2011/05/28 19:30:19 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.300 2011/04/24 16:26:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.301 2011/05/28 19:30:19 matt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -803,7 +803,10 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 
 		/* Turn on interrupts. */
-		sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
+		sc->sc_ier = IER_ERXRDY | IER_ERLS;
+		if (!ISSET(tp->t_cflag, CLOCAL))
+			sc->sc_ier |= IER_EMSC;
+
 		if (sc->sc_type == COM_TYPE_PXA2x0)
 			sc->sc_ier |= IER_EUART | IER_ERXTOUT;
 		CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
@@ -2168,17 +2171,19 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 	}
 
 	rate = comspeed(rate, frequency, type);
-	if (type != COM_TYPE_AU1x00) {
-		/* no EFR on alchemy */ 
-		if (type != COM_TYPE_16550_NOERS) {
-			CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
-			CSR_WRITE_1(regsp, COM_REG_EFR, 0);
+	if (__predict_true(rate != -1)) {
+		if (type == COM_TYPE_AU1x00) {
+			CSR_WRITE_2(regsp, COM_REG_DLBL, rate);
+		} else {
+			/* no EFR on alchemy */ 
+			if (type != COM_TYPE_16550_NOERS) {
+				CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
+				CSR_WRITE_1(regsp, COM_REG_EFR, 0);
+			}
+			CSR_WRITE_1(regsp, COM_REG_LCR, LCR_DLAB);
+			CSR_WRITE_1(regsp, COM_REG_DLBL, rate & 0xff);
+			CSR_WRITE_1(regsp, COM_REG_DLBH, rate >> 8);
 		}
-		CSR_WRITE_1(regsp, COM_REG_LCR, LCR_DLAB);
-		CSR_WRITE_1(regsp, COM_REG_DLBL, rate & 0xff);
-		CSR_WRITE_1(regsp, COM_REG_DLBH, rate >> 8);
-	} else {
-		CSR_WRITE_1(regsp, COM_REG_DLBL, rate);
 	}
 	CSR_WRITE_1(regsp, COM_REG_LCR, cflag2lcr(cflag));
 	CSR_WRITE_1(regsp, COM_REG_MCR, MCR_DTR | MCR_RTS);
