@@ -1,3 +1,5 @@
+/*	$NetBSD: t_pollts.c,v 1.1 2011/05/28 16:12:56 tron Exp $	*/
+
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
