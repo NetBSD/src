@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.32 2011/05/18 14:48:04 christos Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.33 2011/05/28 15:33:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.32 2011/05/18 14:48:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.33 2011/05/28 15:33:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,6 +303,9 @@ state_check:
 		goto state_check;
 	}
 	selclear();
+
+	if (__predict_false(mask))
+		sigsuspendteardown(l);
 
 	/* select and poll are not restarted after signals... */
 	if (error == ERESTART)

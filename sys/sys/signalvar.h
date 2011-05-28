@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.80 2011/05/18 03:51:41 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.81 2011/05/28 15:33:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -149,6 +149,7 @@ int	sigaction1(struct lwp *, int, const struct sigaction *,
 int	sigprocmask1(struct lwp *, int, const sigset_t *, sigset_t *);
 void	sigpending1(struct lwp *, sigset_t *);
 void	sigsuspendsetup(struct lwp *, const sigset_t *);
+void	sigsuspendteardown(struct lwp *);
 int	sigsuspend1(struct lwp *, const sigset_t *);
 int	sigaltstack1(struct lwp *, const struct sigaltstack *,
 	    struct sigaltstack *);
