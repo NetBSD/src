@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.c,v 1.8 2009/01/10 22:06:29 bjh21 Exp $	*/
+/*	$NetBSD: iso9660_rrip.c,v 1.9 2011/05/28 11:59:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: iso9660_rrip.c,v 1.8 2009/01/10 22:06:29 bjh21 Exp $");
+__RCSID("$NetBSD: iso9660_rrip.c,v 1.9 2011/05/28 11:59:29 tsutsui Exp $");
 #endif  /* !__lint */
 
 static void cd9660_rrip_initialize_inode(cd9660node *);
@@ -444,7 +444,6 @@ cd9660_rrip_initialize_node(cd9660node *node, cd9660node *parent,
 			cd9660_rrip_PL(current,node->dot_dot_record);
 			TAILQ_INSERT_TAIL(&node->dot_dot_record->head, current,
 			    rr_ll);
-			TAILQ_INSERT_TAIL(&node->head, current, rr_ll);
 		}
 	}
 	return 1;
@@ -498,7 +497,7 @@ cd9660_rrip_CL(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *node __unused)
 int
 cd9660_rrip_RE(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *node __unused)
 {
-	p->attr.rr_entry.RE.h.length[0] = 0;
+	p->attr.rr_entry.RE.h.length[0] = 4;
 	p->attr.rr_entry.RE.h.version[0] = 1;
 	return 1;
 }
