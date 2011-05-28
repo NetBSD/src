@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.329 2011/02/11 01:59:57 jmcneill Exp $
+# $NetBSD: INSTALL,v 1.330 2011/05/28 13:01:50 ryo Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -7,12 +7,12 @@
 
 include	"arch/i386/conf/MONOLITHIC"
 
-#ident 		"INSTALL-$Revision: 1.329 $"
+#ident 		"INSTALL-$Revision: 1.330 $"
 
 no options	MEMORY_DISK_DYNAMIC
-options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
-options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=10000     # size of memory disk, in blocks
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # DRI driver
