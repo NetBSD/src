@@ -174,7 +174,7 @@ booke_cpu_startup(const char *model)
 
 	printf("%s%s", copyright, version);
 
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob((uint64_t)physmem));
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
