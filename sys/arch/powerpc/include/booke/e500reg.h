@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.6 2011/05/02 01:47:26 matt Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.7 2011/05/28 05:23:08 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,6 +45,9 @@
 #endif
 
 #define	GUR_SIZE		0x100000
+#define	GUR_BPTR		0x0020		/* Boot Page Translation */
+#define	BPTR_EN			__PPCBIT(0)	/* Boot Page Enabled */
+#define	BPTR_BOOT_PAGE		__PPCBITS(8,31)	/* high 24 bits of phys addr */
 
 #define	DDRC1_BASE		0x02000
 #define	DDRC2_BASE		0x06000
