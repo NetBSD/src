@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1080 2011/05/27 15:09:44 matt Exp $
+$NetBSD: pcidevs,v 1.1081 2011/05/28 10:44:43 ryo Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4317,7 +4317,8 @@ product SYMPHONY2	82C101	0x0001	82C101
 product SYMPHONY	83C553	0x0565	83C553 PCI-ISA Bridge
 
 /* System Base products */
-product SYSTEMBASE	SB16C1054	0x0004 SB16C1054 UARTs
+product SYSTEMBASE	SB16C1054	0x0004	SB16C1054 UARTs
+product SYSTEMBASE	SB16C1058	0x0008	SB16C1058 UARTs
 
 /* Schneider & Koch (really SysKonnect) products */
 product SCHNEIDERKOCH	SKNET_FDDI	0x4000	SK-NET FDDI-xP
