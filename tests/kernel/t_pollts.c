@@ -126,7 +126,7 @@ ATF_TC_BODY(pollts_sigmask, tc)
 	sigset_t mask;
 	int ret;
 
-	atf_tc_expect_fail("PR kern/44986");
+	/* Cf kern/44986 */
 
 	fd = open(_PATH_DEVNULL, O_RDONLY);
 	assert(fd >= 0);
