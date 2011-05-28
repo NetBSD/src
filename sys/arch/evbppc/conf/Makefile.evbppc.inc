@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.evbppc.inc,v 1.5 2011/05/28 00:06:38 matt Exp $
+#	$NetBSD: Makefile.evbppc.inc,v 1.6 2011/05/28 05:22:25 matt Exp $
 
 CPPFLAGS += -D__${BOARDTYPE}__
 
 RAMDISKDIR!=	cd ${NETBSDSRCDIR}/distrib/${THISPPC:T}/ramdisk && ${PRINTOBJDIR}
 
-.if defined(NEED_MDSETIMAGE) && ${NEED_MKDSETIMAGE} != "no" \
+.if defined(NEED_MDSETIMAGE) && $(NEED_MDSETIMAGE) != "no" \
     && exists(${RAMDISKDIR}/ramdisk.fs)
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs; \
