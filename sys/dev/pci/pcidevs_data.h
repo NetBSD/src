@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1077 2011/05/28 22:48:50 phx Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1078 2011/05/28 22:54:08 phx Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1082 2011/05/28 22:47:58 phx Exp
+ *	NetBSD: pcidevs,v 1.1083 2011/05/28 22:53:23 phx Exp
  */
 
 /*
@@ -7479,7 +7479,7 @@ static const uint16_t pci_products[] = {
 	    26358, 6527, 6253, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_SATA, 
 	    26311, 692, 8046, 6150, 0,
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6410, 
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6410_RAID, 
 	    26366, 20966, 6145, 6150, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB, 
 	    25864, 6643, 0,
