@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1078 2011/05/28 22:48:50 phx Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1079 2011/05/28 22:54:08 phx Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1082 2011/05/28 22:47:58 phx Exp
+ *	NetBSD: pcidevs,v 1.1083 2011/05/28 22:53:23 phx Exp
  */
 
 /*
@@ -4607,7 +4607,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8623	0x3123		/* VT8623 (Apollo CLE266) CPU-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8233A	0x3147		/* VT8233A PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8237_SATA	0x3149		/* VT8237 Integrated SATA Controller */
-#define	PCI_PRODUCT_VIATECH_VT6410	0x3164		/* VT6410 ATA133 RAID Controller */
+#define	PCI_PRODUCT_VIATECH_VT6410_RAID	0x3164		/* VT6410 ATA133 RAID Controller */
 #define	PCI_PRODUCT_VIATECH_K8HTB	0x3188		/* K8HTB Host */
 #define	PCI_PRODUCT_VIATECH_VT6421_RAID	0x3249		/* VT6421 Serial RAID Controller */
 #define	PCI_PRODUCT_VIATECH_VT3314_IG	0x3344		/* VT3314 CN900 UniChrome Integrated Graphics */
