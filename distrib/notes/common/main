@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.478 2011/05/27 15:43:00 tsutsui Exp $
+.\"	$NetBSD: main,v 1.479 2011/05/28 06:00:07 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -629,7 +629,7 @@ concurrent version system (CVS). For more information see:
 .\}
 .
 .
-.so ../common/contents -----------------------------------------------
+.so contents -----------------------------------------------
 .
 .
 .(Note
