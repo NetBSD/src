@@ -228,10 +228,10 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 
 	evcnt_attach_dynamic(&ci->ci_ev_count_compare,
 		EVCNT_TYPE_INTR, NULL, xname,
-		"int 5 (clock)");
+		"intr 5 (clock)");
 	evcnt_attach_dynamic(&ci->ci_ev_count_compare_missed,
 		EVCNT_TYPE_INTR, NULL, xname,
-		"int 5 (clock) missed");
+		"intr 5 (clock) missed");
 	evcnt_attach_dynamic(&ci->ci_ev_fpu_loads,
 		EVCNT_TYPE_MISC, NULL, xname,
 		"fpu loads");
