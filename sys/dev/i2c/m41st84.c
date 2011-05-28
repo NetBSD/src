@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.17 2011/04/17 14:58:26 phx Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.18 2011/05/28 13:59:31 phx Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.17 2011/04/17 14:58:26 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.18 2011/05/28 13:59:31 phx Exp $");
 
 #include "opt_strtc.h"
 
@@ -93,10 +93,16 @@ strtc_match(device_t parent, cfdata_t cf, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
 
-	if (ia->ia_addr == M41ST84_ADDR)
-		return (1);
-
-	return (0);
+	if (ia->ia_name) {
+		/* direct config - check name */
+		if (strcmp(ia->ia_name, "strtc") == 0)
+			return 1;
+	} else {
+		/* indirect config - check typical address */
+		if (ia->ia_addr == M41ST84_ADDR)
+			return 1;
+	}
+	return 0;
 }
 
 static void
