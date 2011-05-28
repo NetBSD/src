@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1081 2011/05/28 10:44:43 ryo Exp $
+$NetBSD: pcidevs,v 1.1082 2011/05/28 22:47:58 phx Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4600,6 +4600,7 @@ product VIATECH VT8623_VGA	0x3122	VT8623 (Apollo CLE266) VGA Controller
 product VIATECH VT8623		0x3123	VT8623 (Apollo CLE266) CPU-PCI Bridge
 product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
 product VIATECH VT8237_SATA	0x3149	VT8237 Integrated SATA Controller
+product VIATECH VT6410		0x3164	VT6410 ATA133 RAID Controller
 product VIATECH K8HTB		0x3188	K8HTB Host
 product VIATECH VT6421_RAID	0x3249	VT6421 Serial RAID Controller
 product	VIATECH VT3314_IG	0x3344	VT3314 CN900 UniChrome Integrated Graphics
