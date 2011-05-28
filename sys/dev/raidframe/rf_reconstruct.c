@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.114 2011/05/24 07:33:41 buhrow Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.115 2011/05/28 00:53:04 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.114 2011/05/24 07:33:41 buhrow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.115 2011/05/28 00:53:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -456,6 +456,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	   How about actually getting a vp for it? */
 
 	if ((retcode = VOP_GETATTR(vp, &va, curlwp->l_cred)) != 0) {
+		vn_close(vp, FREAD | FWRITE, kauth_cred_get());
 		rf_lock_mutex2(raidPtr->mutex);
 		raidPtr->reconInProgress--;
 		rf_signal_cond2(raidPtr->waitForReconCond);
@@ -465,6 +466,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 
 	retcode = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, curlwp->l_cred);
 	if (retcode) {
+		vn_close(vp, FREAD | FWRITE, kauth_cred_get());
 		rf_lock_mutex2(raidPtr->mutex);
 		raidPtr->reconInProgress--;
 		rf_signal_cond2(raidPtr->waitForReconCond);
