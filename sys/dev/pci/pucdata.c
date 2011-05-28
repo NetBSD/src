@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.74 2011/05/14 22:07:38 martin Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.75 2011/05/28 10:48:51 ryo Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.74 2011/05/14 22:07:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.75 2011/05/28 10:48:51 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2106,6 +2106,34 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x3e8, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x3f8, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x000, 0x00 },
+	    },
+	},
+
+	/* SystemBase SB16C1054 UARTs */
+	{   "SystemBase SB16C1054",
+	    {	PCI_VENDOR_SYSTEMBASE, PCI_PRODUCT_SYSTEMBASE_SB16C1054, 0, 0 },
+	    {	0xffff,	0xffff,						 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ },
+	    },
+	},
+
+	/* SystemBase SB16C1058 UARTs */
+	{   "SystemBase SB16C1058",
+	    {   PCI_VENDOR_SYSTEMBASE, PCI_PRODUCT_SYSTEMBASE_SB16C1058, 0, 0 },
+	    {	0xffff,	0xffff,						 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x20, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x28, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x30, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x38, COM_FREQ },
 	    },
 	},
 
