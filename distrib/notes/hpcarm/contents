@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.1 2011/05/28 06:00:08 tsutsui Exp $
+.\"	$NetBSD: contents,v 1.2 2011/05/28 06:25:43 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,12 +55,25 @@ conventions for indicating italic and bold display.
 .
 .		It Pa kernel/
 .
-.		(tag netbsd.gz -compact \" binary/kernel
+.		(tag netbsd-JORNADA720.gz -compact \" binary/kernel
 .
-.			It Pa netbsd-GENERIC.gz
+.			It Pa netbsd-IPAQ.gz
+.
 A gzipped
 .Nx
-kernel containing code for everything supported in this release.
+kernel for Compaq iPAQ H36x0.
+.
+.			It Pa netbsd-JORNADA720.gz
+.
+A gzipped
+.Nx
+kernel for HP Jornada 720.
+.
+.			It Pa netbsd-WZERO3.gz
+.
+A gzipped
+.Nx
+kernel for Willcom/Sharp W-ZERO3 smart phones.
 .
 .		tag) \" binary/kernel/
 .
@@ -73,12 +86,33 @@ see below.
 .
 .	It Pa installation/
 .
-.	(tag miniroot/ -compact \" installation/
+.	(tag netbsd-JORNADA720.gz -compact \" installation/
 .
-.		It Pa misc/
+.		It Pa hpcboot.exe
 .
-Miscellaneous \*M installation utilities; see
-installation section below.
+A boot utility to load a
+.Nx
+kernel on
+.Tm Windows CE
+or
+.Tm Windows Mobile .
+.
+.		It Pa netbsd-IPAQ.gz
+.
+A gzipped ramdisk based installation kernel for Compaq iPAQ H36x0.
+.
+.		It Pa netbsd-JORNADA720.gz
+.
+A gzipped ramdisk based installation kernel for HP Jornada 720.
+.
+.		It Pa netbsd-WZERO3.gz
+.
+A gzipped ramdisk based installation kernel for
+Willcom/Sharp W-ZERO3 smart phones.
+.
+.		It Pa miniroot/
+.
+\*M miniroot file system image including installer etc.
 .
 .	tag) \" installation/
 .
@@ -151,16 +185,15 @@ This set includes the games and their manual pages.
 .
 .\" MD kernel set(s) -------------------------------------------------
 .
-.It Sy kern-GENERIC
-This set contains a
+.It Sy kern-IPAQ, kern-JORNADA720, kern-WZERO3
+These sets contains a
 .Nx*M
 \*V
-.Li GENERIC
-kernel, named
+kernel for each supported hardware, named
 .Pa /netbsd .
 You
 .Em must
-install this distribution set.
+install the kernel that matches your hardware.
 .
 .\" ------------------------------------------------------------------
 .
