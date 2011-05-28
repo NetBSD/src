@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mpc85xx.inc,v 1.2 2011/01/18 01:10:24 matt Exp $
+#	$NetBSD: Makefile.mpc85xx.inc,v 1.3 2011/05/28 00:07:24 matt Exp $
 
 CFLAGS+=		-mmultiple
 CFLAGS+=		-mno-string -misel -Wa,-me500
@@ -11,10 +11,3 @@ TEXTADDR?=		20000
 
 SYSTEM_FIRST_OBJ=	mpc85xx_start.o
 SYSTEM_FIRST_SFILE=	${THISPPC}/mpc85xx/mpc85xx_start.S
-
-SYSTEM_LD_TAIL_EXTRA+=; \
-	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
-	${OBJCOPY} -S -O binary $@ $@.bin
-
-EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
-
