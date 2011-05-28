@@ -15,13 +15,13 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.73.14.1 2011-02-08 03:44:07 marka Exp
+# Id: tests.sh,v 1.73.14.3 2011-02-15 22:06:27 marka Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 status=0
-n=0
+n=1
 
 rm -f dig.out.*
 
@@ -1111,6 +1111,46 @@ echo "I:checking expired signatures remain with "'"allow-update { none; };"'" an
 ret=0
 $DIG $DIGOPTS +noauth expired.example. +dnssec @10.53.0.3 soa > dig.out.ns2.test$n || ret=1
 grep "RRSIG.SOA" dig.out.ns2.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that the NSEC3 record for the apex is properly signed when a DNSKEY is added via UPDATE ($n)"
+ret=0
+(
+cd ns3
+kskname=`$KEYGEN -q -3 -r ../random.data -fk update-nsec3.example`
+(
+echo zone update-nsec3.example
+echo server 10.53.0.3 5300
+grep DNSKEY ${kskname}.key | sed -e 's/^/update add /' -e 's/IN/300 IN/'
+echo send
+) | $NSUPDATE
+)
+$DIG $DIGOPTS +dnssec a update-nsec3.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.* ad[ ;]" dig.out.ns4.test$n > /dev/null || ret=1
+grep "NSEC3 .* TYPE65534" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that the NSEC record is properly generated when DNSKEY are added via auto-dnssec ($n)"
+ret=0
+$DIG $DIGOPTS +dnssec a auto-nsec.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.* ad[ ;]" dig.out.ns4.test$n > /dev/null || ret=1
+grep "IN.NSEC[^3].* TYPE65534" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that the NSEC3 record is properly generated when DNSKEY are added via auto-dnssec ($n)"
+ret=0
+$DIG $DIGOPTS +dnssec a auto-nsec3.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.* ad[ ;]" dig.out.ns4.test$n > /dev/null || ret=1
+grep "IN.NSEC3 .* TYPE65534" dig.out.ns4.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
