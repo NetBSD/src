@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.43 2011/05/26 19:21:56 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.44 2011/05/28 02:20:13 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -773,7 +773,6 @@ MIPSX(kern_return):
 	 nop
 #endif /* PARANOIA */
 
-#ifdef notyet
 	/*
 	 * Check for kernel restartable atomic sequences.
 	 */
@@ -785,7 +784,6 @@ MIPSX(kern_return):
 	jal	_C_LABEL(_restart_lock_ras)	# fix the pc (k1)
 	 nop
 1:
-#endif
 
 	_MTC0	k1, MIPS_COP_0_EXC_PC		# set return address
 	COP0_SYNC
