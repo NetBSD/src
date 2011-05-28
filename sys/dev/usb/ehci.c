@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.176 2011/05/27 19:04:24 tsutsui Exp $ */
+/*	$NetBSD: ehci.c,v 1.177 2011/05/28 15:47:17 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.176 2011/05/27 19:04:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.177 2011/05/28 15:47:17 tsutsui Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1284,7 +1284,6 @@ ehci_allocx(struct usbd_bus *bus)
 {
 	struct ehci_softc *sc = bus->hci_private;
 	usbd_xfer_handle xfer;
-	struct ehci_xfer *exfer;
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
 	if (xfer != NULL) {
@@ -1296,14 +1295,12 @@ ehci_allocx(struct usbd_bus *bus)
 		}
 #endif
 	} else {
-		xfer = malloc(sizeof(*exfer), M_USB, M_NOWAIT);
+		xfer = malloc(sizeof(struct ehci_xfer), M_USB, M_NOWAIT);
 	}
 	if (xfer != NULL) {
-		exfer = EXFER(xfer);
-		memset(exfer, 0, sizeof(*exfer));
-		usb_init_task(&exfer->abort_task, ehci_timeout_task, exfer);
+		memset(xfer, 0, sizeof(struct ehci_xfer));
 #ifdef DIAGNOSTIC
-		exfer->isdone = 1;
+		EXFER(xfer)->isdone = 1;
 		xfer->busy_free = XFER_BUSY;
 #endif
 	}
@@ -1314,7 +1311,6 @@ Static void
 ehci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 {
 	struct ehci_softc *sc = bus->hci_private;
-	struct ehci_xfer *exfer = EXFER(xfer);
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_BUSY) {
@@ -1322,11 +1318,10 @@ ehci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 		       xfer->busy_free);
 	}
 	xfer->busy_free = XFER_FREE;
-	if (!exfer->isdone) {
+	if (!EXFER(xfer)->isdone) {
 		printf("ehci_freex: !isdone\n");
 	}
 #endif
-	usb_rem_task(xfer->pipe->device, &exfer->abort_task);
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
 }
 
@@ -3155,6 +3150,7 @@ ehci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
+	usb_init_task(&exfer->abort_task, ehci_timeout_task, addr);
 	usb_add_task(exfer->xfer.pipe->device, &exfer->abort_task,
 	    USB_TASKQ_HC);
 }
