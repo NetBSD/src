@@ -114,6 +114,7 @@ extern	char	*getpssval(Cell *);     /* for print */
 extern	char	*tostring(const char *);
 extern	char	*tostringN(const char *, size_t n);
 extern	char	*qstring(const char *, int);
+extern	Cell	*catstr(Cell *, Cell *);
 
 extern	void	recinit(unsigned int);
 extern	void	initgetrec(void);
