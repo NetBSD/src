@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.7 2011/02/16 03:47:04 christos Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.8 2011/05/29 15:17:09 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbtdb.c,v 1.310 2011-01-13 09:53:04 marka Exp */
+/* Id: rbtdb.c,v 1.310.8.1 2011-02-18 23:23:08 each Exp */
 
 /*! \file */
 
@@ -394,12 +394,15 @@ typedef ISC_LIST(rbtdb_version_t)       rbtdb_versionlist_t;
 typedef struct {
 	/* Unlocked. */
 	dns_db_t                        common;
+	/* Locks the data in this struct */
 #if DNS_RBTDB_USERWLOCK
 	isc_rwlock_t                    lock;
 #else
 	isc_mutex_t                     lock;
 #endif
+	/* Locks the tree structure (prevents nodes appearing/disappearing) */
 	isc_rwlock_t                    tree_lock;
+	/* Locks for individual tree nodes */
 	unsigned int                    node_lock_count;
 	rbtdb_nodelock_t *              node_locks;
 	dns_rbtnode_t *                 origin_node;
@@ -7266,7 +7269,7 @@ getsigningtime(dns_db_t *db, dns_rdataset_t *rdataset,
 
 	REQUIRE(VALID_RBTDB(rbtdb));
 
-	RBTDB_LOCK(&rbtdb->lock, isc_rwlocktype_read);
+	RWLOCK(&rbtdb->tree_lock, isc_rwlocktype_read);
 
 	for (i = 0; i < rbtdb->node_lock_count; i++) {
 		NODE_LOCK(&rbtdb->node_locks[i].lock, isc_rwlocktype_read);
@@ -7302,7 +7305,7 @@ getsigningtime(dns_db_t *db, dns_rdataset_t *rdataset,
 	result = ISC_R_SUCCESS;
 
  unlock:
-	RBTDB_UNLOCK(&rbtdb->lock, isc_rwlocktype_read);
+	RWUNLOCK(&rbtdb->tree_lock, isc_rwlocktype_read);
 
 	return (result);
 }
@@ -7324,7 +7327,7 @@ resigned(dns_db_t *db, dns_rdataset_t *rdataset, dns_dbversion_t *version)
 	header = rdataset->private3;
 	header--;
 
-	RBTDB_LOCK(&rbtdb->lock, isc_rwlocktype_write);
+	RWLOCK(&rbtdb->tree_lock, isc_rwlocktype_write);
 	NODE_LOCK(&rbtdb->node_locks[node->locknum].lock,
 		  isc_rwlocktype_write);
 	/*
@@ -7338,7 +7341,7 @@ resigned(dns_db_t *db, dns_rdataset_t *rdataset, dns_dbversion_t *version)
 
 	NODE_UNLOCK(&rbtdb->node_locks[node->locknum].lock,
 		    isc_rwlocktype_write);
-	RBTDB_UNLOCK(&rbtdb->lock, isc_rwlocktype_write);
+	RWUNLOCK(&rbtdb->tree_lock, isc_rwlocktype_write);
 }
 
 static dns_stats_t *
