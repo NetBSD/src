@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2009/02/14 13:48:17 abs Exp $
+#	$NetBSD: Makefile,v 1.17 2011/05/29 23:00:41 christos Exp $
 
 .include "../Makefile.serverlib"
 .include <bsd.own.mk>
@@ -17,6 +17,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xc}/programs/Xserver/render \
 		-I${X11SRCDIR.xc}/programs/Xserver/lbx
+		-I${X11SRCDIR.xc}
 
 CPPFLAGS+=	-DXSERV_t -DTRANS_SERVER \
 		${X11FLAGS.CONNECTION} \
