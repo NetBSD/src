@@ -1,4 +1,4 @@
-/* $NetBSD: skg.c,v 1.2 2011/01/27 17:38:04 phx Exp $ */
+/* $NetBSD: skg.c,v 1.3 2011/05/29 18:06:45 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -211,6 +211,10 @@ skg_init(unsigned tag, void *data)
 	l = ALLOC(struct local, 32);	/* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x10)); /* use mem space */
+
+	/* make sure the descriptor bytes are not reversed */
+	i = pcicfgread(tag, 0x44);
+	pcicfgwrite(tag, 0x44, i & ~4);
 
 	/* reset the chip */
 	CSR_WRITE_2(l, SK_CSR, CSR_SW_RESET);
