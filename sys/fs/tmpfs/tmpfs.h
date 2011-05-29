@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.41 2011/05/24 20:17:49 rmind Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.42 2011/05/29 01:00:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,8 +30,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _FS_TMPFS_TMPFS_H_
-#define _FS_TMPFS_TMPFS_H_
+#ifndef _FS_TMPFS_H_
+#define _FS_TMPFS_H_
+
+#if !defined(_KERNEL) && !defined(_KMEMUSER)
+#error "not supposed to be exposed to userland"
+#endif
 
 #include <sys/dirent.h>
 #include <sys/mount.h>
@@ -197,7 +201,7 @@ LIST_HEAD(tmpfs_node_list, tmpfs_node);
     (TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED)
 
 /* White-out inode indicator. */
-#define	TMPFS_NODE_WHITEOUT	((struct tmpfs_node *)-1)
+#define	TMPFS_NODE_WHITEOUT	((tmpfs_node_t *)-1)
 
 /*
  * Internal representation of a tmpfs mount point.
@@ -237,59 +241,62 @@ typedef struct tmpfs_fid {
  * Prototypes for tmpfs_subr.c.
  */
 
-int	tmpfs_alloc_node(struct tmpfs_mount *, enum vtype,
-	    uid_t uid, gid_t gid, mode_t mode, struct tmpfs_node *,
-	    char *, dev_t, struct tmpfs_node **);
-void	tmpfs_free_node(struct tmpfs_mount *, struct tmpfs_node *);
-int	tmpfs_alloc_dirent(struct tmpfs_mount *, struct tmpfs_node *,
-	    const char *, uint16_t, struct tmpfs_dirent **);
-void	tmpfs_free_dirent(struct tmpfs_mount *, struct tmpfs_dirent *,
-	    bool);
-int	tmpfs_alloc_vp(struct mount *, struct tmpfs_node *, struct vnode **);
-void	tmpfs_free_vp(struct vnode *);
-int	tmpfs_alloc_file(struct vnode *, struct vnode **, struct vattr *,
-	    struct componentname *, char *);
-void	tmpfs_dir_attach(struct vnode *, struct tmpfs_dirent *);
-void	tmpfs_dir_detach(struct vnode *, struct tmpfs_dirent *);
-struct tmpfs_dirent *	tmpfs_dir_lookup(struct tmpfs_node *node,
-			    struct componentname *cnp);
-int	tmpfs_dir_getdotdent(struct tmpfs_node *, struct uio *);
-int	tmpfs_dir_getdotdotdent(struct tmpfs_node *, struct uio *);
-struct tmpfs_dirent *	tmpfs_dir_lookupbycookie(struct tmpfs_node *, off_t);
-int	tmpfs_dir_getdents(struct tmpfs_node *, struct uio *, off_t *);
-int	tmpfs_reg_resize(struct vnode *, off_t);
-int	tmpfs_chflags(struct vnode *, int, kauth_cred_t, struct lwp *);
-int	tmpfs_chmod(struct vnode *, mode_t, kauth_cred_t, struct lwp *);
-int	tmpfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t, struct lwp *);
-int	tmpfs_chsize(struct vnode *, u_quad_t, kauth_cred_t, struct lwp *);
-int	tmpfs_chtimes(struct vnode *, const struct timespec *,
-    const struct timespec *, const struct timespec *, int, kauth_cred_t,
-    struct lwp *);
-void	tmpfs_update(struct vnode *, const struct timespec *,
-	    const struct timespec *, const struct timespec *, int);
-int	tmpfs_truncate(struct vnode *, off_t);
+int		tmpfs_alloc_node(tmpfs_mount_t *, enum vtype, uid_t, gid_t,
+		    mode_t, tmpfs_node_t *, char *, dev_t, tmpfs_node_t **);
+void		tmpfs_free_node(tmpfs_mount_t *, tmpfs_node_t *);
+
+int		tmpfs_alloc_file(vnode_t *, vnode_t **, struct vattr *,
+		    struct componentname *, char *);
+
+int		tmpfs_alloc_vp(struct mount *, tmpfs_node_t *, vnode_t **);
+void		tmpfs_free_vp(vnode_t *);
+
+int		tmpfs_alloc_dirent(tmpfs_mount_t *, tmpfs_node_t *,
+		    const char *, uint16_t, tmpfs_dirent_t **);
+void		tmpfs_free_dirent(tmpfs_mount_t *, tmpfs_dirent_t *, bool);
+void		tmpfs_dir_attach(vnode_t *, tmpfs_dirent_t *);
+void		tmpfs_dir_detach(vnode_t *, tmpfs_dirent_t *);
+
+tmpfs_dirent_t *tmpfs_dir_lookup(tmpfs_node_t *, struct componentname *);
+int		tmpfs_dir_getdotdent(tmpfs_node_t *, struct uio *);
+int		tmpfs_dir_getdotdotdent(tmpfs_node_t *, struct uio *);
+tmpfs_dirent_t *tmpfs_dir_lookupbycookie(tmpfs_node_t *, off_t);
+int		tmpfs_dir_getdents(tmpfs_node_t *, struct uio *, off_t *);
+
+int		tmpfs_reg_resize(vnode_t *, off_t);
+int		tmpfs_truncate(vnode_t *, off_t);
+
+int		tmpfs_chflags(vnode_t *, int, kauth_cred_t, lwp_t *);
+int		tmpfs_chmod(vnode_t *, mode_t, kauth_cred_t, lwp_t *);
+int		tmpfs_chown(vnode_t *, uid_t, gid_t, kauth_cred_t, lwp_t *);
+int		tmpfs_chsize(vnode_t *, u_quad_t, kauth_cred_t, lwp_t *);
+int		tmpfs_chtimes(vnode_t *, const struct timespec *,
+		    const struct timespec *, const struct timespec *, int,
+		    kauth_cred_t, lwp_t *);
+void		tmpfs_update(vnode_t *, const struct timespec *,
+		    const struct timespec *, const struct timespec *, int);
 
 /*
  * Prototypes for tmpfs_mem.c.
  */
 
-void		tmpfs_mntmem_init(struct tmpfs_mount *, uint64_t);
-void		tmpfs_mntmem_destroy(struct tmpfs_mount *);
+void		tmpfs_mntmem_init(tmpfs_mount_t *, uint64_t);
+void		tmpfs_mntmem_destroy(tmpfs_mount_t *);
 
 size_t		tmpfs_mem_info(bool);
-uint64_t	tmpfs_bytes_max(struct tmpfs_mount *);
-size_t		tmpfs_pages_avail(struct tmpfs_mount *);
-bool		tmpfs_mem_incr(struct tmpfs_mount *, size_t);
-void		tmpfs_mem_decr(struct tmpfs_mount *, size_t);
+uint64_t	tmpfs_bytes_max(tmpfs_mount_t *);
+size_t		tmpfs_pages_avail(tmpfs_mount_t *);
+bool		tmpfs_mem_incr(tmpfs_mount_t *, size_t);
+void		tmpfs_mem_decr(tmpfs_mount_t *, size_t);
 
-struct tmpfs_dirent *tmpfs_dirent_get(struct tmpfs_mount *);
-void		tmpfs_dirent_put(struct tmpfs_mount *, struct tmpfs_dirent *);
+tmpfs_dirent_t *tmpfs_dirent_get(tmpfs_mount_t *);
+void		tmpfs_dirent_put(tmpfs_mount_t *, tmpfs_dirent_t *);
 
-struct tmpfs_node *tmpfs_node_get(struct tmpfs_mount *);
-void		tmpfs_node_put(struct tmpfs_mount *, struct tmpfs_node *);
+tmpfs_node_t *	tmpfs_node_get(tmpfs_mount_t *);
+void		tmpfs_node_put(tmpfs_mount_t *, tmpfs_node_t *);
 
-char *		tmpfs_strname_alloc(struct tmpfs_mount *, size_t);
-void		tmpfs_strname_free(struct tmpfs_mount *, char *, size_t);
+char *		tmpfs_strname_alloc(tmpfs_mount_t *, size_t);
+void		tmpfs_strname_free(tmpfs_mount_t *, char *, size_t);
 bool		tmpfs_strname_neqlen(struct componentname *, struct componentname *);
 
 /*
@@ -298,7 +305,7 @@ bool		tmpfs_strname_neqlen(struct componentname *, struct componentname *);
  */
 #define TMPFS_VALIDATE_DIR(node) \
     KASSERT((node)->tn_type == VDIR); \
-    KASSERT((node)->tn_size % sizeof(struct tmpfs_dirent) == 0); \
+    KASSERT((node)->tn_size % sizeof(tmpfs_dirent_t) == 0); \
     KASSERT((node)->tn_spec.tn_dir.tn_readdir_lastp == NULL || \
         tmpfs_dircookie((node)->tn_spec.tn_dir.tn_readdir_lastp) == \
         (node)->tn_spec.tn_dir.tn_readdir_lastn);
@@ -336,7 +343,7 @@ VP_TO_TMPFS_DIR(vnode_t *vp)
 #endif /* defined(_KERNEL) */
 
 static __inline tmpfs_node_t *
-VP_TO_TMPFS_NODE(struct vnode *vp)
+VP_TO_TMPFS_NODE(vnode_t *vp)
 {
 	tmpfs_node_t *node = vp->v_data;
 #ifdef KASSERT
@@ -345,4 +352,4 @@ VP_TO_TMPFS_NODE(struct vnode *vp)
 	return node;
 }
 
-#endif /* _FS_TMPFS_TMPFS_H_ */
+#endif /* _FS_TMPFS_H_ */
