@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.5 2011/02/16 03:47:15 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.6 2011/05/29 15:17:10 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.333.14.1 2011-02-03 05:50:07 marka Exp */
+/* Id: socket.c,v 1.333.14.2 2011-02-18 04:01:16 marka Exp */
 
 /*! \file */
 
@@ -688,6 +688,8 @@ static const isc_statscounter_t fdwatchstatsindex[] = {
 	isc_sockstatscounter_fdwatchrecvfail
 };
 
+#if defined(USE_KQUEUE) || defined(USE_EPOLL) || defined(USE_DEVPOLL) || \
+    defined(USE_WATCHER_THREAD)
 static void
 manager_log(isc__socketmgr_t *sockmgr,
 	    isc_logcategory_t *category, isc_logmodule_t *module, int level,
@@ -710,6 +712,7 @@ manager_log(isc__socketmgr_t *sockmgr,
 	isc_log_write(isc_lctx, category, module, level,
 		      "sockmgr %p: %s", sockmgr, msgbuf);
 }
+#endif
 
 static void
 socket_log(isc__socket_t *sock, isc_sockaddr_t *address,

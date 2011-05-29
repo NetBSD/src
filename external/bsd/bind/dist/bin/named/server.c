@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.8 2011/02/16 03:46:46 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.9 2011/05/29 15:17:09 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.c,v 1.599.8.3 2011-02-03 12:17:49 tbox Exp */
+/* Id: server.c,v 1.599.8.4 2011-02-16 19:46:12 each Exp */
 
 /*! \file */
 
@@ -3478,6 +3478,7 @@ add_keydata_zone(dns_view_t *view, const char *directory, isc_mem_t *mctx) {
 
 	if (pview != NULL && pview->managed_keys != NULL) {
 		dns_zone_attach(pview->managed_keys, &view->managed_keys);
+		dns_zone_setview(pview->managed_keys, view);
 		dns_view_detach(&pview);
 		return (ISC_R_SUCCESS);
 	}

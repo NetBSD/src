@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.47 2011/05/13 01:56:27 christos Exp $
+# $NetBSD: ad.mips64el,v 1.48 2011/05/29 15:17:09 spz Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -82,7 +82,7 @@
 ./usr/lib/64/libdm.so.0				base-compat-shlib	compat,pic
 ./usr/lib/64/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libdns.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/libdns.so.5.3			base-compat-shlib	compat,pic
+./usr/lib/64/libdns.so.5.4			base-compat-shlib	compat,pic
 ./usr/lib/64/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/64/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/64/libdwarf.so.0			base-compat-shlib	compat,pic
@@ -116,7 +116,7 @@
 ./usr/lib/64/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libipsec.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libisc.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/libisc.so.5.3			base-compat-shlib	compat,pic
+./usr/lib/64/libisc.so.5.4			base-compat-shlib	compat,pic
 ./usr/lib/64/libisccc.so.5			base-compat-shlib	compat,pic
 ./usr/lib/64/libisccc.so.5.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libisccfg.so.5			base-compat-shlib	compat,pic
@@ -359,7 +359,7 @@
 ./usr/lib/o32/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdns.so.5			base-compat-shlib	compat,pic
-./usr/lib/o32/libdns.so.5.3			base-compat-shlib	compat,pic
+./usr/lib/o32/libdns.so.5.4			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/o32/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/o32/libdwarf.so.0			base-compat-shlib	compat,pic
@@ -393,7 +393,7 @@
 ./usr/lib/o32/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libipsec.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libisc.so.5			base-compat-shlib	compat,pic
-./usr/lib/o32/libisc.so.5.3			base-compat-shlib	compat,pic
+./usr/lib/o32/libisc.so.5.4			base-compat-shlib	compat,pic
 ./usr/lib/o32/libisccc.so.5			base-compat-shlib	compat,pic
 ./usr/lib/o32/libisccc.so.5.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libisccfg.so.5			base-compat-shlib	compat,pic
