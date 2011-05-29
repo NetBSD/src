@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.42 2011/05/29 01:00:50 rmind Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.43 2011/05/29 01:14:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _FS_TMPFS_H_
-#define _FS_TMPFS_H_
+#ifndef _FS_TMPFS_TMPFS_H_
+#define _FS_TMPFS_TMPFS_H_
 
 #if !defined(_KERNEL) && !defined(_KMEMUSER)
 #error "not supposed to be exposed to userland"
@@ -352,4 +352,4 @@ VP_TO_TMPFS_NODE(vnode_t *vp)
 	return node;
 }
 
-#endif /* _FS_TMPFS_H_ */
+#endif /* _FS_TMPFS_TMPFS_H_ */
