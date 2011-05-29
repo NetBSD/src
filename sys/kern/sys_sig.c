@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.34 2011/05/28 15:33:40 christos Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.35 2011/05/29 22:14:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.34 2011/05/28 15:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.35 2011/05/29 22:14:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -637,9 +637,16 @@ sigsuspendteardown(struct lwp *l)
 	struct proc *p = l->l_proc;
 
 	mutex_enter(p->p_lock);
+	/* Check for pending signals when sleeping. */
 	if (l->l_sigrestore) {
-		l->l_sigrestore = 0;
-		l->l_sigmask = l->l_sigoldmask;
+		if (sigispending(l, 0)) {
+			lwp_lock(l);
+			l->l_flag |= LW_PENDSIG;
+			lwp_unlock(l);
+		} else {
+			l->l_sigrestore = 0;
+			l->l_sigmask = l->l_sigoldmask;
+		}
 	}
 	mutex_exit(p->p_lock);
 }
