@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2011/05/29 10:06:34 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2011/05/29 10:19:09 tsutsui Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -7,6 +7,8 @@ S=	${.CURDIR}/../../../..
 .if defined(SA_PROG)
 
 .include <bsd.own.mk>
+
+WARNS?=	2
 
 LIBSA!=cd ${.CURDIR}/../libsa && ${PRINTOBJDIR}
 
@@ -19,7 +21,6 @@ INCL?= -I. -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 CPUFLAGS= -mc68000 -Wa,-mc68010
 COPTS= -Os -fno-defer-pop -ffreestanding
 CFLAGS= -msoft-float
-CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
 
 SRTOBJ= ${LIBSA}/SRT0.o ${LIBSA}/SRT1.o
