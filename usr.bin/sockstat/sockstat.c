@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.16 2011/01/28 18:52:49 pooka Exp $ */
+/*	$NetBSD: sockstat.c,v 1.17 2011/05/29 04:45:08 manu Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.16 2011/01/28 18:52:49 pooka Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.17 2011/05/29 04:45:08 manu Exp $");
 #endif
 
 #include <sys/types.h>
@@ -210,6 +210,7 @@ main(int argc, char *argv[])
 
 	if (pf_list & PF_LIST_LOCAL) {
 		get_sockets("net.local.stream.pcblist");
+		get_sockets("net.local.seqpacket.pcblist");
 		get_sockets("net.local.dgram.pcblist");
 	}
 
