@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pollts.c,v 1.1 2011/05/28 16:12:56 tron Exp $	*/
+/*	$NetBSD: t_pollts.c,v 1.2 2011/05/29 12:57:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,6 @@
 
 #include <sys/time.h>
 
-#include <assert.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <poll.h>
@@ -63,7 +62,7 @@ ATF_TC_BODY(pollts, tc)
 	struct timespec timeout;
 	int ret;
 
-	assert(pipe(fds) == 0);
+	ATF_REQUIRE_EQ(pipe(fds), 0);
 
 	pfds[0].fd = fds[0];
 	pfds[0].events = POLLIN;
@@ -104,7 +103,7 @@ ATF_TC_BODY(pollts, tc)
 	    pfds[1].revents);
 
 	/* Write data to our pipe. */
-	assert(write(fds[1], "", 1) == 1);
+	ATF_REQUIRE_EQ(write(fds[1], "", 1), 1);
 
 	/* Check that both ends of our pipe are reported as ready. */
 	pfds[0].revents = -1;
@@ -116,8 +115,8 @@ ATF_TC_BODY(pollts, tc)
 	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",
 	    pfds[1].revents);
 
-	assert(close(fds[0]) == 0);
-	assert(close(fds[1]) == 0);
+	ATF_REQUIRE_EQ(close(fds[0]), 0);
+	ATF_REQUIRE_EQ(close(fds[1]), 0);
 }
 
 ATF_TC_BODY(pollts_sigmask, tc)
@@ -131,7 +130,7 @@ ATF_TC_BODY(pollts_sigmask, tc)
 	/* Cf kern/44986 */
 
 	fd = open(_PATH_DEVNULL, O_RDONLY);
-	assert(fd >= 0);
+	ATF_REQUIRE(fd >= 0);
 
 	pfd.fd = fd;
 	pfd.events = POLLIN;
@@ -141,8 +140,8 @@ ATF_TC_BODY(pollts_sigmask, tc)
 	timeout.tv_nsec = 0;
 
 	/* Unblock all signals. */
-	assert(sigfillset(&mask) == 0);
-	assert(sigprocmask(SIG_UNBLOCK, &mask, NULL) == 0);
+	ATF_REQUIRE_EQ(sigfillset(&mask), 0);
+	ATF_REQUIRE_EQ(sigprocmask(SIG_UNBLOCK, &mask, NULL), 0);
 
 	/* 
 	 * Check that pollts(2) immediately returns. We block *all*
@@ -152,11 +151,11 @@ ATF_TC_BODY(pollts_sigmask, tc)
 	    "got: %d", ret);
 
 	/* Check that signals are now longer blocked. */
-	assert(sigprocmask(SIG_SETMASK, NULL, &mask) == 0);
-	ATF_REQUIRE_MSG(sigismember(&mask, SIGUSR1) == 0,
+	ATF_REQUIRE_EQ(sigprocmask(SIG_SETMASK, NULL, &mask), 0);
+	ATF_REQUIRE_EQ_MSG(sigismember(&mask, SIGUSR1), 0,
 	    "signal mask was changed.");
 
-	assert(close(fd) == 0);
+	ATF_REQUIRE_EQ(close(fd), 0);
 }
 
 ATF_TP_ADD_TCS(tp)
