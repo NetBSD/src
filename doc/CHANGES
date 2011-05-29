@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1550 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1551 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1013,3 +1013,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		command in boot.cfg(5)/boot(8) on i386/amd64.
 		[uebayasi 20110526]
 	kernel: add SOCK_SEQPACKET for local sockets [manu 20110529]
+	bind: Update to 9.8.0-P2: Security fixes. [spz 20110529]
