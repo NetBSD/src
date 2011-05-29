@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.84 2011/05/24 23:16:16 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.85 2011/05/29 22:29:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.84 2011/05/24 23:16:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.85 2011/05/29 22:29:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -142,11 +142,12 @@ tmpfs_lookup(void *v)
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	*vpp = NULL;
 
-	/* Check accessibility of requested node as a first step. */
+	/* Check accessibility of directory. */
 	error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
 	if (error) {
 		goto out;
 	}
+
 	/*
 	 * If requesting the last path component on a read-only file system
 	 * with a write operation, deny it.
@@ -169,16 +170,33 @@ tmpfs_lookup(void *v)
 
 	if (cnp->cn_flags & ISDOTDOT) {
 		tmpfs_node_t *pnode;
+
 		/*
 		 * Lookup of ".." case.
 		 */
+		if (lastcn && cnp->cn_nameiop == RENAME) {
+			error = EINVAL;
+			goto out;
+		}
+		KASSERT(dnode->tn_type == VDIR);
 		pnode = dnode->tn_spec.tn_dir.tn_parent;
-		KASSERT(dnode->tn_type == VDIR && pnode != dnode);
+		if (pnode == NULL) {
+			error = ENOENT;
+			goto out;
+		}
+
+		/*
+		 * Lock the parent tn_vlock before releasing the vnode lock,
+		 * and thus prevents parent from disappearing.
+		 */
+		mutex_enter(&pnode->tn_vlock);
 		VOP_UNLOCK(dvp);
 
-		/* Allocate a new vnode on the matching entry. */
-		error = tmpfs_alloc_vp(dvp->v_mount, pnode, vpp);
-
+		/*
+		 * Get a vnode of the '..' entry and re-acquire the lock.
+		 * Release the tn_vlock.
+		 */
+		error = tmpfs_vnode_get(dvp->v_mount, pnode, vpp);
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		goto out;
 
@@ -261,9 +279,9 @@ tmpfs_lookup(void *v)
 		}
 	}
 
-	/* Allocate a new vnode on the matching entry. */
-	error = tmpfs_alloc_vp(dvp->v_mount, tnode, vpp);
-
+	/* Get a vnode for the matching entry. */
+	mutex_enter(&tnode->tn_vlock);
+	error = tmpfs_vnode_get(dvp->v_mount, tnode, vpp);
 done:
 	/*
 	 * Cache the result, unless request was for creation (as it does
@@ -359,13 +377,10 @@ tmpfs_close(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	vnode_t *vp = ap->a_vp;
-	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 
 	KASSERT(VOP_ISLOCKED(vp));
 
-	if (node->tn_links > 0) {
-		tmpfs_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
-	}
+	tmpfs_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
 	return 0;
 }
 
@@ -454,7 +469,7 @@ tmpfs_getattr(void *v)
 	vap->va_mtime = node->tn_mtime;
 	vap->va_ctime = node->tn_ctime;
 	vap->va_birthtime = node->tn_birthtime;
-	vap->va_gen = node->tn_gen;
+	vap->va_gen = TMPFS_NODE_GEN(node);
 	vap->va_flags = node->tn_flags;
 	vap->va_rdev = (vp->v_type == VBLK || vp->v_type == VCHR) ?
 	    node->tn_spec.tn_dev.tn_rdev : VNOVAL;
@@ -667,10 +682,8 @@ tmpfs_remove(void *v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	vnode_t *dvp = ap->a_dvp, *vp = ap->a_vp;
-	struct componentname *cnp = ap->a_cnp;
-	tmpfs_node_t *dnode, *node;
+	tmpfs_node_t *node;
 	tmpfs_dirent_t *de;
-	tmpfs_mount_t *tmp;
 	int error;
 
 	KASSERT(VOP_ISLOCKED(dvp));
@@ -688,21 +701,22 @@ tmpfs_remove(void *v)
 		goto out;
 	}
 
-	/*
-	 * Lookup and remove the entry from the directory.  Note that since
-	 * it is a file, we do not need to change the number of hard links.
-	 */
-	dnode = VP_TO_TMPFS_DIR(dvp);
-	de = tmpfs_dir_lookup(dnode, cnp);
+	/* Lookup the directory entry (check the cached hint first). */
+	de = tmpfs_dir_cached(node);
+	if (de == NULL) {
+		tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp);
+		struct componentname *cnp = ap->a_cnp;
+		de = tmpfs_dir_lookup(dnode, cnp);
+	}
 	KASSERT(de && de->td_node == node);
-	tmpfs_dir_detach(dvp, de);
 
 	/*
-	 * Free removed directory entry.  Note that the node referred by it
-	 * will not be removed until the vnode is really reclaimed.
+	 * Remove the entry from the directory (drops the link count) and
+	 * destroy it.  Note: the inode referred by it will not be destroyed
+	 * until the vnode is reclaimed/recycled.
 	 */
-	tmp = VFS_TO_TMPFS(vp->v_mount);
-	tmpfs_free_dirent(tmp, de, true);
+	tmpfs_dir_detach(dvp, de);
+	tmpfs_free_dirent(VFS_TO_TMPFS(vp->v_mount), de);
 	error = 0;
 out:
 	/* Drop the references and unlock the vnodes. */
@@ -744,11 +758,11 @@ tmpfs_link(void *v)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	/* Check for maximum number of links limit. */
-	KASSERT(node->tn_links <= LINK_MAX);
 	if (node->tn_links == LINK_MAX) {
 		error = EMLINK;
 		goto out;
 	}
+	KASSERT(node->tn_links < LINK_MAX);
 
 	/* We cannot create links of files marked immutable or append-only. */
 	if (node->tn_flags & (IMMUTABLE | APPEND)) {
@@ -756,17 +770,23 @@ tmpfs_link(void *v)
 		goto out;
 	}
 
-	/* Allocate a new directory entry to represent the node. */
-	error = tmpfs_alloc_dirent(VFS_TO_TMPFS(vp->v_mount), node,
+	/* Allocate a new directory entry to represent the inode. */
+	error = tmpfs_alloc_dirent(VFS_TO_TMPFS(vp->v_mount),
 	    cnp->cn_nameptr, cnp->cn_namelen, &de);
 	if (error) {
 		goto out;
 	}
 
-	/* Insert the new directory entry into the directory. */
-	tmpfs_dir_attach(dvp, de);
+	/* 
+	 * Insert the entry into the directory.
+	 * It will increase the inode link count.
+	 */
+	tmpfs_dir_attach(dvp, de, node);
 
-	/* Node link count has changed, so update node times. */
+	/* Update the timestamps and trigger the event. */
+	if (node->tn_vnode) {
+		VN_KNOTE(node->tn_vnode, NOTE_LINK);
+	}
 	node->tn_status |= TMPFS_NODE_CHANGED;
 	tmpfs_update(vp, NULL, NULL, NULL, 0);
 	error = 0;
@@ -774,6 +794,26 @@ out:
 	VOP_UNLOCK(vp);
 	vput(dvp);
 	return error;
+}
+
+/*
+ * tmpfs_parentcheck_p: check if 'lower' is a descendent of 'upper'.
+ *
+ * => Returns 'true' if parent, and 'false' otherwise.
+ */
+static inline bool
+tmpfs_parentcheck_p(tmpfs_node_t *lower, tmpfs_node_t *upper)
+{
+	tmpfs_node_t *un = lower;
+
+	while (un != un->tn_spec.tn_dir.tn_parent) {
+		KASSERT(un->tn_type == VDIR);
+		if (un == upper) {
+			return true;
+		}
+		un = un->tn_spec.tn_dir.tn_parent;
+	}
+	return false;
 }
 
 /*
@@ -814,6 +854,8 @@ tmpfs_rename(void *v)
 
 	KASSERT(VOP_ISLOCKED(tdvp));
 	KASSERT(tvp == NULL || VOP_ISLOCKED(tvp) == LK_EXCLUSIVE);
+	KASSERT((fcnp->cn_flags & ISDOTDOT) == 0);
+	KASSERT((tcnp->cn_flags & ISDOTDOT) == 0);
 
 	newname = NULL;
 	namelen = 0;
@@ -848,8 +890,11 @@ tmpfs_rename(void *v)
 	}
 
 	/* XXX: Lock order violation! */
-	if (fdnode != tdnode) {
+	if (fdvp != tdvp) {
 		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+	}
+	if (fvp != tvp) {
+		vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
 	/* If the inode we were renaming has scarpered, just give up. */
@@ -859,15 +904,23 @@ tmpfs_rename(void *v)
 		goto out;
 	}
 
-	/* If source and target is the same vnode, remove the source link. */
+	/*
+	 * If source and target is the same vnode - it is either invalid
+	 * rename of a directory, or a hard link.  Remove the source link,
+	 * if the later.
+	 */
 	if (fvp == tvp) {
+		if (fvp->v_type == VDIR) {
+			error = EINVAL;
+			goto out;
+		}
 		/*
 		 * Detach and free the directory entry.  Drops the link
 		 * count on the inode.
 		 */
+		KASSERT(fnode == tnode);
 		tmpfs_dir_detach(fdvp, de);
-		tmpfs_free_dirent(VFS_TO_TMPFS(fvp->v_mount), de, true);
-		VN_KNOTE(fdvp, NOTE_WRITE);
+		tmpfs_free_dirent(tmp, de);
 		goto out_ok;
 	}
 
@@ -892,32 +945,16 @@ tmpfs_rename(void *v)
 	}
 
 	/* Are we moving the inode to a different directory? */
-	if (fdnode != tdnode) {
-		/* Are we moving a directory? */
-		if (de->td_node->tn_type == VDIR) {
-			tmpfs_node_t *upnode;
-
-			/*
-			 * Ensure the target directory is not a child of the
-			 * directory being moved.  Otherwise, it would result
-			 * in stale nodes.
-			 */
-			upnode = tdnode;
-			while (upnode != upnode->tn_spec.tn_dir.tn_parent) {
-				if (upnode == fnode) {
-					error = EINVAL;
-					goto out;
-				}
-				upnode = upnode->tn_spec.tn_dir.tn_parent;
-			}
-
-			/* Adjust the parent pointer. */
-			TMPFS_VALIDATE_DIR(fnode);
-			de->td_node->tn_spec.tn_dir.tn_parent = tdnode;
-
-			/* Adjust the link counts. */
-			fdnode->tn_links--;
-			tdnode->tn_links++;
+	if (fdvp != tdvp) {
+		/*
+		 * If we are moving a directory - ensure that it is not
+		 * parent of a target directory.  Otherwise, it would
+		 * result in stale nodes.
+		 */
+		if (fnode->tn_type == VDIR && 
+		    tmpfs_parentcheck_p(tdnode, fnode)) {
+			error = EINVAL;
+			goto out;
 		}
 
 		/*
@@ -925,27 +962,30 @@ tmpfs_rename(void *v)
 		 * attach into the target directory.
 		 */
 		tmpfs_dir_detach(fdvp, de);
-		tmpfs_dir_attach(tdvp, de);
+		tmpfs_dir_attach(tdvp, de, fnode);
 
-		/* Trigger the event. */
-		VN_KNOTE(fdvp, NOTE_WRITE);
+	} else if (tvp == NULL) {
+		/* Trigger the event, if not overwriting. */
+		VN_KNOTE(tdvp, NOTE_WRITE);
 	}
 
 	/* Are we overwriting the entry? */
 	if (tvp != NULL) {
-		tmpfs_dirent_t *de2;
+		tmpfs_dirent_t *tde;
+
+		tde = tmpfs_dir_cached(tnode);
+		if (tde == NULL) {
+			tde = tmpfs_dir_lookup(tdnode, tcnp);
+		}
+		KASSERT(tde && tde->td_node == tnode);
+		KASSERT(tnode->tn_type == fnode->tn_type);
 
 		/*
-		 * Remove the old entry from the target directory.
-		 * Note: This relies on tmpfs_dir_attach() putting the new
-		 * node on the end of the target's node list.
+		 * Remove and destroy the directory entry on the target
+		 * directory, since we overwrite it.
 		 */
-		de2 = tmpfs_dir_lookup(tdnode, tcnp);
-		KASSERT(de2 && de2->td_node == tnode);
-		tmpfs_dir_detach(tdvp, de2);
-
-		/* Destroy the detached directory entry. */
-		tmpfs_free_dirent(VFS_TO_TMPFS(tvp->v_mount), de2, true);
+		tmpfs_dir_detach(tdvp, tde);
+		tmpfs_free_dirent(tmp, tde);
 	}
 
 	/* If the name has changed, update directory entry. */
@@ -962,13 +1002,15 @@ tmpfs_rename(void *v)
 		tdnode->tn_status |= TMPFS_NODE_MODIFIED;
 	}
 out_ok:
-	/* Notify listeners of source and target directories. */
-	VN_KNOTE(tdvp, NOTE_WRITE);
+	/* Trigger the rename event. */
 	VN_KNOTE(fvp, NOTE_RENAME);
 	error = 0;
 out:
-	if (fdnode != tdnode) {
+	if (fdvp != tdvp) {
 		VOP_UNLOCK(fdvp);
+	}
+	if (fvp != tvp) {
+		VOP_UNLOCK(fvp);
 	}
 out_unlocked:
 	/* Release target nodes. */
@@ -977,7 +1019,7 @@ out_unlocked:
 	} else {
 		vput(tdvp);
 	}
-	if (tvp != NULL) {
+	if (tvp) {
 		vput(tvp);
 	}
 
@@ -1019,7 +1061,6 @@ tmpfs_rmdir(void *v)
 	} */ *ap = v;
 	vnode_t *dvp = ap->a_dvp;
 	vnode_t *vp = ap->a_vp;
-	struct componentname *cnp = ap->a_cnp;
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(dvp->v_mount);
 	tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp);
 	tmpfs_node_t *node = VP_TO_TMPFS_DIR(vp);
@@ -1039,8 +1080,12 @@ tmpfs_rmdir(void *v)
 		goto out;
 	}
 
-	/* Get the directory entry associated with inode (vp). */
-	de = tmpfs_dir_lookup(dnode, cnp);
+	/* Lookup the directory entry (check the cached hint first). */
+	de = tmpfs_dir_cached(node);
+	if (de == NULL) {
+		struct componentname *cnp = ap->a_cnp;
+		de = tmpfs_dir_lookup(dnode, cnp);
+	}
 	KASSERT(de && de->td_node == node);
 
 	/* Check flags to see if we are allowed to remove the directory. */
@@ -1049,13 +1094,12 @@ tmpfs_rmdir(void *v)
 		goto out;
 	}
 
-	/* Detach the directory entry from the directory (dnode). */
+	/* Detach the directory entry from the directory. */
 	tmpfs_dir_detach(dvp, de);
 
+	/* Decrement the link count for the virtual '.' entry. */
 	node->tn_links--;
 	node->tn_status |= TMPFS_NODE_STATUSALL;
-	node->tn_spec.tn_dir.tn_parent->tn_links--;
-	node->tn_spec.tn_dir.tn_parent->tn_status |= TMPFS_NODE_STATUSALL;
 
 	/* Purge the cache for parent. */
 	cache_purge(dvp);
@@ -1064,7 +1108,7 @@ tmpfs_rmdir(void *v)
 	 * Destroy the directory entry.  Note: the inode referred by it
 	 * will not be destroyed until the vnode is reclaimed.
 	 */
-	tmpfs_free_dirent(tmp, de, true);
+	tmpfs_free_dirent(tmp, de);
 	KASSERT(node->tn_links == 0);
 out:
 	/* Release the nodes. */
@@ -1240,13 +1284,21 @@ tmpfs_reclaim(void *v)
 	vnode_t *vp = ap->a_vp;
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(vp->v_mount);
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
+	bool racing;
 
 	/* Disassociate inode from vnode. */
-	tmpfs_free_vp(vp);
-	KASSERT(vp->v_data == NULL);
+	mutex_enter(&node->tn_vlock);
+	node->tn_vnode = NULL;
+	vp->v_data = NULL;
+	/* Check if tmpfs_vnode_get() is racing with us. */
+	racing = TMPFS_NODE_RECLAIMING(node);
+	mutex_exit(&node->tn_vlock);
 
-	/* If inode is not referenced, i.e. no links, then destroy it. */
-	if (node->tn_links == 0) {
+	/*
+	 * If inode is not referenced, i.e. no links, then destroy it.
+	 * Note: if racing - inode is about to get a new vnode, leave it.
+	 */
+	if (node->tn_links == 0 && !racing) {
 		tmpfs_free_node(tmp, node);
 	}
 	return 0;
@@ -1287,7 +1339,7 @@ tmpfs_pathconf(void *v)
 		*retval = 1;
 		break;
 	case _PC_FILESIZEBITS:
-		*retval = 0; /* FIXME */
+		*retval = sizeof(off_t) * CHAR_BIT;
 		break;
 	default:
 		error = EINVAL;
@@ -1447,11 +1499,11 @@ tmpfs_whiteout(void *v)
 	case LOOKUP:
 		break;
 	case CREATE:
-		error = tmpfs_alloc_dirent(tmp, TMPFS_NODE_WHITEOUT,
-		    cnp->cn_nameptr, cnp->cn_namelen, &de);
+		error = tmpfs_alloc_dirent(tmp, cnp->cn_nameptr,
+		    cnp->cn_namelen, &de);
 		if (error)
 			return error;
-		tmpfs_dir_attach(dvp, de);
+		tmpfs_dir_attach(dvp, de, TMPFS_NODE_WHITEOUT);
 		break;
 	case DELETE:
 		cnp->cn_flags &= ~DOWHITEOUT; /* when in doubt, cargo cult */
@@ -1459,7 +1511,7 @@ tmpfs_whiteout(void *v)
 		if (de == NULL)
 			return ENOENT;
 		tmpfs_dir_detach(dvp, de);
-		tmpfs_free_dirent(tmp, de, true);
+		tmpfs_free_dirent(tmp, de);
 		break;
 	}
 	return 0;

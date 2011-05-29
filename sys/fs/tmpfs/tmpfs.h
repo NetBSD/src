@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.43 2011/05/29 01:14:31 christos Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.44 2011/05/29 22:29:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -110,11 +110,29 @@ tmpfs_dircookie(tmpfs_dirent_t *de)
 typedef struct tmpfs_node {
 	LIST_ENTRY(tmpfs_node)	tn_entries;
 
+	/*
+	 * Each inode has a corresponding vnode.  It is a bi-directional
+	 * association.  Whenever vnode is allocated, its v_data field is
+	 * set to the inode it reference, and tmpfs_node_t::tn_vnode is
+	 * set to point to the said vnode.
+	 *
+	 * Further attempts to allocate a vnode for this same node will
+	 * result in returning a new reference to the value stored in
+	 * tn_vnode.  It may be NULL when the node is unused (that is,
+	 * no vnode has been allocated or it has been reclaimed).
+	 */
+	kmutex_t		tn_vlock;
+	vnode_t *		tn_vnode;
+
+	/* Directory entry.  Only a hint, since hard link can have multiple. */
+	tmpfs_dirent_t *	tn_dirent_hint;
+
 	/* The inode type: VBLK, VCHR, VDIR, VFIFO, VLNK, VREG or VSOCK. */
 	enum vtype		tn_type;
 
-	/* Inode identifier. */
+	/* Inode identifier and generation number. */
 	ino_t			tn_id;
+	unsigned long		tn_gen;
 
 	/* Inode status flags (for operations in delayed manner). */
 	int			tn_status;
@@ -132,24 +150,9 @@ typedef struct tmpfs_node {
 	struct timespec		tn_mtime;
 	struct timespec		tn_ctime;
 	struct timespec		tn_birthtime;
-	unsigned long		tn_gen;
 
 	/* Head of byte-level lock list (used by tmpfs_advlock). */
 	struct lockf *		tn_lockf;
-
-	/*
-	 * Each inode has a corresponding vnode.  It is a bi-directional
-	 * association.  Whenever vnode is allocated, its v_data field is
-	 * set to the inode it reference, and tmpfs_node_t::tn_vnode is
-	 * set to point to the said vnode.
-	 *
-	 * Further attempts to allocate a vnode for this same node will
-	 * result in returning a new reference to the value stored in
-	 * tn_vnode.  It may be NULL when the node is unused (that is,
-	 * no vnode has been allocated or it has been reclaimed).
-	 */
-	kmutex_t		tn_vlock;
-	vnode_t *		tn_vnode;
 
 	union {
 		/* Type case: VBLK or VCHR. */
@@ -200,6 +203,19 @@ LIST_HEAD(tmpfs_node_list, tmpfs_node);
 #define	TMPFS_NODE_STATUSALL	\
     (TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED)
 
+/*
+ * Bit indicating vnode reclamation.
+ * We abuse tmpfs_node_t::tn_gen for that.
+ */
+#define	TMPFS_NODE_GEN_MASK	(~0UL >> 1)
+#define	TMPFS_RECLAIMING_BIT	(~TMPFS_NODE_GEN_MASK)
+
+#define	TMPFS_NODE_RECLAIMING(node) \
+    (((node)->tn_gen & TMPFS_RECLAIMING_BIT) != 0)
+
+#define	TMPFS_NODE_GEN(node) \
+    ((node)->tn_gen & TMPFS_NODE_GEN_MASK)
+
 /* White-out inode indicator. */
 #define	TMPFS_NODE_WHITEOUT	((tmpfs_node_t *)-1)
 
@@ -242,22 +258,23 @@ typedef struct tmpfs_fid {
  */
 
 int		tmpfs_alloc_node(tmpfs_mount_t *, enum vtype, uid_t, gid_t,
-		    mode_t, tmpfs_node_t *, char *, dev_t, tmpfs_node_t **);
+		    mode_t, char *, dev_t, tmpfs_node_t **);
 void		tmpfs_free_node(tmpfs_mount_t *, tmpfs_node_t *);
 
 int		tmpfs_alloc_file(vnode_t *, vnode_t **, struct vattr *,
 		    struct componentname *, char *);
 
-int		tmpfs_alloc_vp(struct mount *, tmpfs_node_t *, vnode_t **);
-void		tmpfs_free_vp(vnode_t *);
+int		tmpfs_vnode_get(struct mount *, tmpfs_node_t *, vnode_t **);
 
-int		tmpfs_alloc_dirent(tmpfs_mount_t *, tmpfs_node_t *,
-		    const char *, uint16_t, tmpfs_dirent_t **);
-void		tmpfs_free_dirent(tmpfs_mount_t *, tmpfs_dirent_t *, bool);
-void		tmpfs_dir_attach(vnode_t *, tmpfs_dirent_t *);
+int		tmpfs_alloc_dirent(tmpfs_mount_t *, const char *, uint16_t,
+		    tmpfs_dirent_t **);
+void		tmpfs_free_dirent(tmpfs_mount_t *, tmpfs_dirent_t *);
+void		tmpfs_dir_attach(vnode_t *, tmpfs_dirent_t *, tmpfs_node_t *);
 void		tmpfs_dir_detach(vnode_t *, tmpfs_dirent_t *);
 
 tmpfs_dirent_t *tmpfs_dir_lookup(tmpfs_node_t *, struct componentname *);
+tmpfs_dirent_t *tmpfs_dir_cached(tmpfs_node_t *);
+
 int		tmpfs_dir_getdotdent(tmpfs_node_t *, struct uio *);
 int		tmpfs_dir_getdotdotdent(tmpfs_node_t *, struct uio *);
 tmpfs_dirent_t *tmpfs_dir_lookupbycookie(tmpfs_node_t *, off_t);
