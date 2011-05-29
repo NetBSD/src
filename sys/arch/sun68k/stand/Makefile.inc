@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2009/03/20 11:42:25 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2011/05/29 10:06:34 tsutsui Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -46,3 +46,9 @@ proginstall: ${SA_PROG}.bin
 .endif	# defined(SA_PROG)
 
 .include <bsd.klinks.mk>
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
