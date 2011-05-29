@@ -1,4 +1,4 @@
-.\"	$NetBSD: sockstat.1,v 1.7 2008/05/04 19:43:06 martin Exp $
+.\"	$NetBSD: sockstat.1,v 1.8 2011/05/29 04:54:45 manu Exp $
 .\"-
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -152,7 +152,7 @@ The process ID of the command which holds the socket.
 The file descriptor number of the socket.
 .It Li PROTO
 The transport protocol associated with the socket for Internet
-sockets, or the type of socket (stream or datagram) for
+sockets, or the type of socket (stream, seqpacket or datagram) for
 .Ux
 sockets.
 .It Li LOCAL ADDRESS
