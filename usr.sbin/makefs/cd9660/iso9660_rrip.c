@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.c,v 1.9 2011/05/28 11:59:29 tsutsui Exp $	*/
+/*	$NetBSD: iso9660_rrip.c,v 1.10 2011/05/29 17:07:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: iso9660_rrip.c,v 1.9 2011/05/28 11:59:29 tsutsui Exp $");
+__RCSID("$NetBSD: iso9660_rrip.c,v 1.10 2011/05/29 17:07:58 tsutsui Exp $");
 #endif  /* !__lint */
 
 static void cd9660_rrip_initialize_inode(cd9660node *);
@@ -185,10 +185,11 @@ cd9660_rrip_finalize_node(cd9660node *node)
 			break;
 		case SUSP_ENTRY_RRIP_PL:
 			/* Look at rr_real_parent */
-			if (node->rr_real_parent == NULL)
+			if (node->parent == NULL ||
+			    node->parent->rr_real_parent == NULL)
 				return -1;
 			cd9660_bothendian_dword(
-				node->rr_real_parent->fileDataSector,
+				node->parent->rr_real_parent->fileDataSector,
 				(unsigned char *)
 				    t->attr.rr_entry.PL.dir_loc);
 			break;
@@ -398,6 +399,13 @@ cd9660_rrip_initialize_node(cd9660node *node, cd9660node *parent,
 			cd9660node_rrip_px(current, grandparent->node);
 			TAILQ_INSERT_TAIL(&node->head, current, rr_ll);
 		}
+		/* Handle PL */
+		if (parent != NULL && parent->rr_real_parent != NULL) {
+			current = cd9660node_susp_create_node(SUSP_TYPE_RRIP,
+			    SUSP_ENTRY_RRIP_PL, "PL", SUSP_LOC_DOTDOT);
+			cd9660_rrip_PL(current,node);
+			TAILQ_INSERT_TAIL(&node->head, current, rr_ll);
+		}
 	} else {
 		cd9660_rrip_initialize_inode(node);
 
@@ -437,13 +445,6 @@ cd9660_rrip_initialize_node(cd9660node *node, cd9660node *parent,
 				SUSP_ENTRY_RRIP_RE, "RE", SUSP_LOC_ENTRY);
 			cd9660_rrip_RE(current,node);
 			TAILQ_INSERT_TAIL(&node->head, current, rr_ll);
-
-			/* Handle PL */
-			current = cd9660node_susp_create_node(SUSP_TYPE_RRIP,
-				SUSP_ENTRY_RRIP_PL, "PL", SUSP_LOC_DOTDOT);
-			cd9660_rrip_PL(current,node->dot_dot_record);
-			TAILQ_INSERT_TAIL(&node->dot_dot_record->head, current,
-			    rr_ll);
 		}
 	}
 	return 1;
