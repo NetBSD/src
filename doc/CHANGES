@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1549 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1550 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1012,3 +1012,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	userconf(4), boot.cfg(5), boot(8), i386, amd64: Support userconf(4)
 		command in boot.cfg(5)/boot(8) on i386/amd64.
 		[uebayasi 20110526]
+	kernel: add SOCK_SEQPACKET for local sockets [manu 20110529]
