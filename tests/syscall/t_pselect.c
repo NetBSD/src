@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pselect.c,v 1.3 2011/05/28 15:34:49 christos Exp $ */
+/*	$NetBSD: t_pselect.c,v 1.4 2011/05/29 22:12:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/wait.h>
@@ -51,11 +52,42 @@ sig_handler(int signum)
 	keep_going = 0;
 }
 
-static void __attribute__((__noreturn__))
+static void
+sigchld(int signum)
+{
+}
+
+static char
+xtoa(uint8_t n)
+{
+	static const char xarray[] = "0123456789abcdef";
+	assert(n < sizeof(xarray));
+	return xarray[n];
+}
+
+static const char *
+prmask(const sigset_t *m, char *buf, size_t len)
+{
+	size_t j = 2;
+	assert(len >= 3 + sizeof(*m));
+	buf[0] = '0';
+	buf[1] = 'x';
+#define N(p, a)	(((p) >> ((a) * 4)) & 0xf)
+	for (size_t i = __arraycount(m->__bits); i > 0; i--) {
+		uint32_t p = m->__bits[i - 1];
+		for (size_t k = sizeof(p); k > 0; k--) 
+			buf[j++] = xtoa(N(p, k - 1)); 
+	}
+	buf[j] = '\0';
+	return buf;
+}
+
+static void 
 child(const struct timespec *ts)
 {
 	struct sigaction sa;
-	sigset_t set;
+	sigset_t set, oset, nset;
+	char obuf[sizeof(oset) + 3], nbuf[sizeof(nset) + 3];
 	int fd;
 
 	memset(&sa, 0, sizeof(sa));
@@ -68,7 +100,10 @@ child(const struct timespec *ts)
 
 	sigfillset(&set);
 	if (sigprocmask(SIG_BLOCK, &set, NULL) == -1)
-		err(1, "procmask");
+		err(1, "sigprocmask");
+
+	if (sigprocmask(SIG_BLOCK, NULL, &oset) == -1)
+		err(1, "sigprocmask");
 
 	sigemptyset(&set);
 
@@ -79,10 +114,19 @@ child(const struct timespec *ts)
 		if (pselect(1, &rset, NULL, NULL, ts, &set) == -1) {
 			if(errno == EINTR) {
 				if (!keep_going)
-					exit(0);
+					break;
 			}
 		}
-       }
+		if (ts)
+			break;
+	}
+	if (sigprocmask(SIG_BLOCK, NULL, &nset) == -1)
+		err(1, "sigprocmask");
+	if (memcmp(&oset, &nset, sizeof(oset)) != 0)
+		atf_tc_fail("pselect() masks don't match "
+		    "after timeout %s != %s",
+		    prmask(&nset, nbuf, sizeof(nbuf)),
+		    prmask(&oset, obuf, sizeof(obuf)));
 }
 
 ATF_TC(pselect_signal_mask_with_signal);
@@ -99,13 +143,15 @@ ATF_TC_BODY(pselect_signal_mask_with_signal, tc)
 	pid_t pid;
 	int status;
 
+	signal(SIGCHLD, sigchld);
+
 	switch (pid = fork()) {
 	case 0:
 		child(NULL);
 	case -1:
 		err(1, "fork");
 	default:
-		usleep(500);
+		usleep(10000);
 		if (kill(pid, SIGTERM) == -1)
 			err(1, "kill");
 		usleep(500);
@@ -130,28 +176,23 @@ ATF_TC_HEAD(pselect_signal_mask_with_timeout, tc)
 	atf_tc_set_md_var(tc, "descr", "Checks pselect's temporary mask "
 	    "setting when a timeout occurs");
 }
+
 ATF_TC_BODY(pselect_signal_mask_with_timeout, tc)
 {
 	pid_t pid;
 	int status;
-	sigset_t oset, nset;
 	static const struct timespec zero = { 0, 0 };
+
+	signal(SIGCHLD, sigchld);
 
 	switch (pid = fork()) {
 	case 0:
-		if (sigprocmask(SIG_BLOCK, NULL, &oset) == -1)
-			err(1, "sigprocmask");
 		child(&zero);
-		if (sigprocmask(SIG_BLOCK, NULL, &nset) == -1)
-			err(1, "sigprocmask");
-		if (memcmp(&oset, &nset, sizeof(oset)) != 0)
-			atf_tc_fail("pselect() masks don't match "
-			    "after timeout");
 		break;
 	case -1:
 		err(1, "fork");
 	default:
-		usleep(500);
+		usleep(5000);
 		switch (waitpid(pid, &status, WNOHANG)) {
 		case -1:
 			err(1, "wait");
