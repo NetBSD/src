@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.50 2011/05/24 20:17:49 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.51 2011/05/29 22:29:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.50 2011/05/24 20:17:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.51 2011/05/29 22:29:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -166,10 +166,17 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	/* Allocate the root node. */
 	error = tmpfs_alloc_node(tmp, VDIR, args->ta_root_uid,
-	    args->ta_root_gid, args->ta_root_mode & ALLPERMS, NULL, NULL,
+	    args->ta_root_gid, args->ta_root_mode & ALLPERMS, NULL,
 	    VNOVAL, &root);
 	KASSERT(error == 0 && root != NULL);
+
+	/*
+	 * Parent of the root inode is itself.  Also, root inode has no
+	 * directory entry (i.e. is never attached), thus hold an extra
+	 * reference (link) for it.
+	 */
 	root->tn_links++;
+	root->tn_spec.tn_dir.tn_parent = root;
 	tmp->tm_root = root;
 
 	mp->mnt_data = tmp;
@@ -224,7 +231,7 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 				tmpfs_dirent_t *nde;
 
 				nde = TAILQ_NEXT(de, td_entries);
-				tmpfs_free_dirent(tmp, de, false);
+				tmpfs_free_dirent(tmp, de);
 				node->tn_size -= sizeof(tmpfs_dirent_t);
 				de = nde;
 			}
@@ -245,8 +252,10 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 static int
 tmpfs_root(struct mount *mp, vnode_t **vpp)
 {
+	tmpfs_node_t *node = VFS_TO_TMPFS(mp)->tm_root;
 
-	return tmpfs_alloc_vp(mp, VFS_TO_TMPFS(mp)->tm_root, vpp);
+	mutex_enter(&node->tn_vlock);
+	return tmpfs_vnode_get(mp, node, vpp);
 }
 
 static int
@@ -260,31 +269,30 @@ tmpfs_vget(struct mount *mp, ino_t ino, vnode_t **vpp)
 static int
 tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
 {
-	tmpfs_mount_t *tmp;
+	tmpfs_mount_t *tmp = VFS_TO_TMPFS(mp);
 	tmpfs_node_t *node;
 	tmpfs_fid_t tfh;
-	bool found;
 
-	tmp = VFS_TO_TMPFS(mp);
-
-	if (fhp->fid_len != sizeof(tmpfs_fid_t))
+	if (fhp->fid_len != sizeof(tmpfs_fid_t)) {
 		return EINVAL;
-
+	}
 	memcpy(&tfh, fhp, sizeof(tmpfs_fid_t));
 
-	found = false;
 	mutex_enter(&tmp->tm_lock);
 	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
-		if (node->tn_id == tfh.tf_id &&
-		    node->tn_gen == tfh.tf_gen) {
-			found = true;
-			break;
+		if (node->tn_id != tfh.tf_id) {
+			continue;
 		}
+		if (TMPFS_NODE_GEN(node) != tfh.tf_gen) {
+			continue;
+		}
+		mutex_enter(&node->tn_vlock);
+		break;
 	}
 	mutex_exit(&tmp->tm_lock);
 
-	/* XXXAD nothing to prevent 'node' from being removed. */
-	return found ? tmpfs_alloc_vp(mp, node, vpp) : ESTALE;
+	/* Will release the tn_vlock. */
+	return node ? tmpfs_vnode_get(mp, node, vpp) : ESTALE;
 }
 
 static int
@@ -302,7 +310,7 @@ tmpfs_vptofh(vnode_t *vp, struct fid *fhp, size_t *fh_size)
 
 	memset(&tfh, 0, sizeof(tfh));
 	tfh.tf_len = sizeof(tmpfs_fid_t);
-	tfh.tf_gen = node->tn_gen;
+	tfh.tf_gen = TMPFS_NODE_GEN(node);
 	tfh.tf_id = node->tn_id;
 	memcpy(fhp, &tfh, sizeof(tfh));
 
