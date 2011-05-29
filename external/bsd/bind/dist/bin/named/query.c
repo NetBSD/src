@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.3 2011/05/06 15:28:19 taca Exp $	*/
+/*	$NetBSD: query.c,v 1.4 2011/05/29 15:17:09 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: query.c,v 1.353.8.1 2011-02-03 07:39:02 marka Exp */
+/* Id: query.c,v 1.353.8.2.2.1 2011-04-27 17:06:27 each Exp */
 
 /*! \file */
 
@@ -4043,8 +4043,8 @@ rpz_find(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qnamef,
 	version = NULL;
 	result = rpz_getdb(client, rpz_type, qnamef, zonep, dbp, &version);
 	if (result != ISC_R_SUCCESS) {
-		*policyp = DNS_RPZ_POLICY_ERROR;
-		return (DNS_R_SERVFAIL);
+		*policyp = DNS_RPZ_POLICY_MISS;
+		return (DNS_R_NXDOMAIN);
 	}
 
 	dns_fixedname_init(&fixed);
