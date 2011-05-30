@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.55 2011/04/04 08:30:12 mbalmer Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.56 2011/05/30 14:20:48 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -152,7 +152,7 @@ set_ptn_titles(menudesc *m, int opt, void *arg)
 
 	p = &pi->ptn_sizes[opt];
 	if (p->mount[0] == 0) {
-		wprintw(m->mw, msg_string(MSG_add_another_ptn));
+		wprintw(m->mw, "%s", msg_string(MSG_add_another_ptn));
 		return;
 	}
 	size = p->size;

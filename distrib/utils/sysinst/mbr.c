@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.86 2011/04/04 08:30:12 mbalmer Exp $ */
+/*	$NetBSD: mbr.c,v 1.87 2011/05/30 14:20:48 joerg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -475,18 +475,18 @@ set_type_label(menudesc *m, int opt, void *arg)
 {
 
 	if (opt == 0) {
-		wprintw(m->mw, msg_string(MSG_Dont_change));
+		wprintw(m->mw, "%s", msg_string(MSG_Dont_change));
 		return;
 	}
 	if (opt == 1) {
-		wprintw(m->mw, msg_string(MSG_Delete_partition));
+		wprintw(m->mw, "%s", msg_string(MSG_Delete_partition));
 		return;
 	}
 	if (part_ids[opt - 1].id == -1) {
-		wprintw(m->mw, msg_string(MSG_Other_kind));
+		wprintw(m->mw, "%s", msg_string(MSG_Other_kind));
 		return;
 	}
-	wprintw(m->mw, part_ids[opt - 1].name);
+	wprintw(m->mw, "%s", part_ids[opt - 1].name);
 }
 
 static int

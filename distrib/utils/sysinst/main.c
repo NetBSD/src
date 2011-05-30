@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.59 2011/04/08 15:53:44 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.60 2011/05/30 14:20:48 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -345,7 +345,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, msg_string(MSG_usage));
+	(void)fprintf(stderr, "%s", msg_string(MSG_usage));
 	exit(1);
 }
 
