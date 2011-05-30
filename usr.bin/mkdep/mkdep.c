@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.36 2011/04/17 22:35:22 christos Exp $ */
+/* $NetBSD: mkdep.c,v 1.37 2011/05/30 22:52:12 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: mkdep.c,v 1.36 2011/04/17 22:35:22 christos Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.37 2011/05/30 22:52:12 christos Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -65,9 +65,10 @@ struct opt {
 	char	name[4];
 };
 
-typedef struct {
+typedef struct suff_list {
 	size_t	len;
-	char	suff[12];
+	char	*suff;
+	struct suff_list *next;
 } suff_list_t;
 
 /* tree of includes for -o processing */
@@ -125,10 +126,9 @@ run_cc(int argc, char **argv, const char **fname)
 		tmpdir = _PATH_TMP;
 	(void)snprintf(tmpfilename, sizeof (tmpfilename), "%s/%s", tmpdir,
 	    "mkdepXXXXXX");
-	if ((tmpfd = mkstemp(tmpfilename)) < 0) {
-		warn("unable to create temporary file %s", tmpfilename);
-		exit(EXIT_FAILURE);
-	}
+	if ((tmpfd = mkstemp(tmpfilename)) < 0)
+		err(EXIT_FAILURE,  "Unable to create temporary file %s",
+		    tmpfilename);
 	(void)unlink(tmpfilename);
 	*fname = tmpfilename;
 
@@ -188,6 +188,22 @@ static struct option longopt[] = {
 	{ "sysroot", 1, NULL, 'R' },
 	{ NULL, 0, NULL, '\0' },
 };
+
+static void
+addsuff(suff_list_t **l, const char *s, size_t len)
+{
+	suff_list_t *p = calloc(1, sizeof(*p));
+	if (p == NULL)
+		err(1, "calloc");
+	p->suff = malloc(len + 1);
+	if (p->suff == NULL)
+		err(1, "malloc");
+	memcpy(p->suff, s, len);
+	p->suff[len] = '\0';
+	p->len = len;
+	p->next = *l;
+	*l = p;
+}
 
 int
 main(int argc, char **argv)
@@ -269,22 +285,15 @@ main(int argc, char **argv)
 		usage();
 
 	if (suffixes != NULL) {
-		/* parse list once and save names and lengths */
-		/* allocate an extra entry to mark end of list */
-		for (sz = 1, s = suffixes; *s != 0; s++)
-			if (*s == '.')
-			    sz++;
-		suff_list = calloc(sz, sizeof *suff_list);
-		if (suff_list == NULL)
-			err(2, "malloc");
-		sl = suff_list;
-		for (s = suffixes; (s = strchr(s, '.')); s += sz, sl++) {
-			sz = strcspn(s, ", ");
-			if (sz > sizeof sl->suff)
-				errx(2, "suffix too long");
-			sl->len = sz;
-			memcpy(sl->suff, s, sz);
-		}
+		if (*suffixes) {
+			for (s = suffixes; (sz = strcspn(s, ", ")) != 0;) {
+				addsuff(&suff_list, s, sz);
+				s += sz;
+				while (*s && strchr(", ", *s))
+					s++;
+			}
+		} else
+			addsuff(&suff_list, "", 0);
 	}
 
 	dependfile = open(filename, aflag, 0666);
@@ -368,8 +377,10 @@ main(int argc, char **argv)
 					errx(EXIT_FAILURE,
 					    "Corrupted file `%s'", fname);
 				/* Then look for any valid suffix */
-				for (sl = suff_list; sl->len != 0; sl++) {
-					if (!memcmp(suf - sl->len, sl->suff,
+				for (sl = suff_list; sl != NULL;
+				    sl = sl->next) {
+					if (sl->len &&
+					    !memcmp(suf - sl->len, sl->suff,
 						    sl->len))
 						break;
 				}
@@ -377,7 +388,7 @@ main(int argc, char **argv)
 				 * Not found, check for .o, since the
 				 * original file will have it.
 				 */
-				if (sl->len == 0 && suff_list->len != 0) {
+				if (sl == NULL) {
 					if (memcmp(suf - 2, ".o", 2) == 0)
 						slen = 2;
 					else
@@ -387,7 +398,8 @@ main(int argc, char **argv)
 			}
 			if (suff_list != NULL && slen != 0) {
 				suf -= slen;
-				for (sl = suff_list; sl->len != 0; sl++) {
+				for (sl = suff_list; sl != NULL; sl = sl->next)
+				{
 					if (sl != suff_list)
 						write(dependfile, " ", 1);
 					write(dependfile, line, suf - line);
