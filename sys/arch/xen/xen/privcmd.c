@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.41.4.2 2011/05/19 03:43:00 rmind Exp $ */
+/* $NetBSD: privcmd.c,v 1.41.4.3 2011/05/30 17:16:47 rmind Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.41.4.2 2011/05/19 03:43:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.41.4.3 2011/05/30 17:16:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,6 +466,7 @@ static void
 privpgop_detach(struct uvm_object *uobj)
 {
 	struct privcmd_object *pobj = (struct privcmd_object *)uobj;
+
 	mutex_enter(uobj->vmobjlock);
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
@@ -486,35 +487,30 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	struct vm_map_entry *entry = ufi->entry;
 	struct uvm_object *uobj = entry->object.uvm_obj;
 	struct privcmd_object *pobj = (struct privcmd_object*)uobj;
-	int maddr_i;
-	int i, error = 0;
+	int maddr_i, i, error = 0;
 
 	/* compute offset from start of map */
 	maddr_i = (entry->offset + (vaddr - entry->start)) >> PAGE_SHIFT;
-	if (maddr_i + npages > pobj->npages)
+	if (maddr_i + npages > pobj->npages) {
 		return EINVAL;
+	}
 	for (i = 0; i < npages; i++, maddr_i++, vaddr+= PAGE_SIZE) {
 		if ((flags & PGO_ALLPAGES) == 0 && i != centeridx)
 			continue;
 		if (pps[i] == PGO_DONTCARE)
 			continue;
 		if (pobj->maddr[maddr_i] == INVALID_PAGE) {
-			/* this has already been flagged as error */
-			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
-			    uobj, NULL);
-			pmap_update(ufi->orig_map->pmap);
-			return EFAULT;
+			/* This has already been flagged as error. */
+			error = EFAULT;
+			break;
 		}
 		error = pmap_enter_ma(ufi->orig_map->pmap, vaddr,
 		    pobj->maddr[maddr_i], 0, ufi->entry->protection,
 		    PMAP_CANFAIL | ufi->entry->protection,
 		    pobj->domid);
 		if (error == ENOMEM) {
-			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
-			    uobj, NULL);
-			pmap_update(ufi->orig_map->pmap);
-			uvm_wait("privpgop_fault");
-			return (ERESTART);
+			error = ERESTART;
+			break;
 		}
 		if (error) {
 			/* XXX for proper ptp accountings */
@@ -522,9 +518,12 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			    vaddr + PAGE_SIZE);
 		}
 	}
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 	pmap_update(ufi->orig_map->pmap);
-	return (error);
+	if (error == ERESTART) {
+		uvm_wait("privpgop_fault");
+	}
+	return error;
 }
 
 static int
