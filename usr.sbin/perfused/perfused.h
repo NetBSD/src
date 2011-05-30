@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.h,v 1.3 2010/09/15 01:51:44 manu Exp $ */
+/*  $NetBSD: perfused.h,v 1.4 2011/05/30 14:50:08 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -57,6 +57,7 @@ struct fuse_out_header *perfuse_get_outhdr(perfuse_msg_t *);
 struct fuse_in_header *perfuse_get_inhdr(perfuse_msg_t *);
 char *perfuse_get_inpayload(perfuse_msg_t *);
 char *perfuse_get_outpayload(perfuse_msg_t *);
+void perfuse_umount(struct puffs_usermount *);
 
 perfuse_msg_t *perfuse_new_pb(struct puffs_usermount *, 
     puffs_cookie_t, int, size_t, const struct puffs_cred *);

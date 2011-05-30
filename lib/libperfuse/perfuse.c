@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.14 2011/05/18 15:25:19 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.15 2011/05/30 14:50:08 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -148,15 +148,25 @@ perfuse_open(path, flags, mode)
 	char *const argv[] = { progname, minus_i, fdstr, NULL};
 	uint32_t opt;
 	uint32_t optlen;
+	int sock_type = SOCK_SEQPACKET;
 
 	if (strcmp(path, _PATH_FUSE) != 0)
 		return open(path, flags, mode);
 
-	if ((sv[0] = socket(PF_LOCAL, SOCK_DGRAM, 0)) == -1) {
+	/* 
+	 * Try SOCK_SEQPACKET then SOCK_DGRAM if unavailable
+	 */
+	if ((sv[0] = socket(PF_LOCAL, SOCK_SEQPACKET, 0)) == -1) {
+		sock_type = SOCK_DGRAM;
+                DWARNX("SEQPACKET local sockets unavailable, using less "
+		       "reliable DGRAM sockets. Expect file operation hangs.");
+
+		if ((sv[0] = socket(PF_LOCAL, SOCK_DGRAM, 0)) == -1) {
 #ifdef PERFUSE_DEBUG
-		DWARN("%s:%d socket failed: %s", __func__, __LINE__);
+			DWARN("%s:%d socket failed: %s", __func__, __LINE__);
 #endif
-		return -1;
+			return -1;
+		}
 	}
 
 	/*
@@ -178,9 +188,8 @@ perfuse_open(path, flags, mode)
 	sun.sun_family = AF_LOCAL;
 	(void)strcpy(sun.sun_path, path);
 
-	if (connect(sv[0], sa, (socklen_t)sun.sun_len) == 0) 
+	if (connect(sv[0], sa, (socklen_t)sun.sun_len) == 0)
 		return sv[0];
-
 
 	/*
 	 * Attempt to run perfused on our own
@@ -188,7 +197,7 @@ perfuse_open(path, flags, mode)
 	 * we will talk using a socketpair 
 	 * instead of /dev/fuse.
 	 */
-	if (socketpair(PF_LOCAL, SOCK_DGRAM, 0, sv) != 0) {
+	if (socketpair(PF_LOCAL, sock_type, 0, sv) != 0) {
 		DWARN("%s:%d: socketpair failed", __func__, __LINE__);
 		return -1;
 	}
@@ -510,6 +519,7 @@ perfuse_init(pc, pmi)
 	ps->ps_get_inpayload = pc->pc_get_inpayload;
 	ps->ps_get_outhdr = pc->pc_get_outhdr;
 	ps->ps_get_outpayload = pc->pc_get_outpayload;
+	ps->ps_umount = pc->pc_umount;
 
 	return pu;
 } 
@@ -558,12 +568,15 @@ perfuse_mainloop(pu)
 	ps = puffs_getspecific(pu);
 
 	ps->ps_flags |= PS_INLOOP;
-	if (puffs_mainloop(ps->ps_pu) != 0)
+	if (puffs_mainloop(ps->ps_pu) != 0) {
 		DERR(EX_OSERR, "puffs_mainloop failed");
-	DERR(EX_OSERR, "puffs_mainloop exit");
+		return -1;
+	}
 
-	/* NOTREACHED */
-	return -1;
+	/* 
+	 * Normal exit after unmount
+	 */
+	return 0;
 }
 
 /* ARGSUSED0 */

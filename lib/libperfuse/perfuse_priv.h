@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.17 2011/04/25 04:54:53 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.18 2011/05/30 14:50:08 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -65,6 +65,7 @@ struct perfuse_state {
 	perfuse_get_inpayload_fn ps_get_inpayload;
 	perfuse_get_outhdr_fn ps_get_outhdr;
 	perfuse_get_outpayload_fn ps_get_outpayload;
+	perfuse_umount_fn ps_umount;
 };
 
 

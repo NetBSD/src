@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.12 2011/05/09 08:51:18 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.13 2011/05/30 14:50:08 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -56,11 +56,22 @@ perfuse_open_sock(void)
 	struct sockaddr_un sun;
 	const struct sockaddr *sa;
 	uint32_t opt;
+	int sock_type = SOCK_SEQPACKET;
 
 	(void)unlink(_PATH_FUSE);
 
-	if ((s = socket(AF_LOCAL, SOCK_DGRAM, 0)) == -1)
-		err(EX_OSERR, "socket failed");
+	/*
+	 * Try SOCK_SEQPACKET and fallback to SOCK_DGRAM 
+	 * if unavaible
+	 */
+	if ((s = socket(PF_LOCAL, SOCK_SEQPACKET, 0)) == -1) {
+		warnx("SEQPACKET local sockets unavailable, using less "
+		      "reliable DGRAM sockets. Expect file operation hangs.");
+
+		sock_type = SOCK_DGRAM;
+		if ((s = socket(PF_LOCAL, SOCK_DGRAM, 0)) == -1)
+			err(EX_OSERR, "socket failed");
+	}
 
 	sa = (const struct sockaddr *)(void *)&sun;
 	sun.sun_len = sizeof(sun);
@@ -90,8 +101,10 @@ perfuse_open_sock(void)
 	if (bind(s, sa, (socklen_t )sun.sun_len) == -1)
 		err(EX_OSERR, "cannot open \"%s\" socket", _PATH_FUSE);
 
-	if (connect(s, sa, (socklen_t )sun.sun_len) == -1)
-		err(EX_OSERR, "cannot open \"%s\" socket", _PATH_FUSE);
+	if (sock_type == SOCK_DGRAM) {
+		if (connect(s, sa, (socklen_t )sun.sun_len) == -1)
+			err(EX_OSERR, "cannot open \"%s\" socket", _PATH_FUSE);
+	}
 
 	return s;
 }
@@ -580,6 +593,7 @@ perfuse_writeframe(pu, pufbuf, fd, done)
 		switch(errno) {
 		case EAGAIN:
 		case ENOBUFS:
+		case EMSGSIZE:
 			return 0;
 			break;
 		default:
@@ -674,5 +688,22 @@ perfuse_fdnotify(pu, fd, what)
 	exit(0);
 	
 	/* NOTREACHED */
+	return;
+}
+
+void
+perfuse_umount(pu)
+	struct puffs_usermount *pu;
+{
+	int fd;
+
+	fd = (int)(long)perfuse_getspecific(pu);
+
+	if (shutdown(fd, SHUT_RDWR) != 0)
+		DWARN("shutdown() failed");
+
+	if (perfuse_diagflags & PDF_MISC)
+		DPRINTF("unmount");
+
 	return;
 }

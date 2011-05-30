@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.12 2011/04/25 04:30:59 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.13 2011/05/30 14:50:08 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -55,7 +55,7 @@ static void new_mount(int, int);
 static int parse_debug(char *);
 static void siginfo_handler(int);
 static int parse_options(int, char **);
-static void get_mount_info(int, struct perfuse_mount_info *);
+static void get_mount_info(int, struct perfuse_mount_info *, int);
 int main(int, char **);
 
 /*
@@ -63,6 +63,7 @@ int main(int, char **);
  */
 #define  PMNT_DEVFUSE	0x0	/* We use /dev/fuse */
 #define  PMNT_SOCKPAIR	0x1	/* We use socketpair */
+#define  PMNT_DGRAM	0x2	/* We use SOCK_DGRAM sockets */
 
 
 static int
@@ -94,9 +95,10 @@ access_mount(mnt, uid, ro)
 }
 
 static void
-get_mount_info(fd, pmi)
+get_mount_info(fd, pmi, sock_type)
 	int fd;
 	struct perfuse_mount_info *pmi;
+	int sock_type;
 {
 	struct perfuse_mount_out *pmo;
 	struct sockcred cred;
@@ -178,9 +180,9 @@ get_mount_info(fd, pmi)
 	pmi->pmi_uid = cred.sc_euid;
 
 	/*
-	 * Connect to the remote socket, if provided
+	 * Connect to the remote socket if provided ans using SOCK_DGRAM
 	 */
-	if (sock) {
+	if ((sock_type == SOCK_DGRAM) && sock) {
 		const struct sockaddr *sa;
 		struct sockaddr_un sun;
 
@@ -207,6 +209,7 @@ new_mount(fd, pmnt_flags)
 	int ro_flag;
 	pid_t pid;
 	int flags;
+	int sock_type;
 
 	pid = (perfuse_diagflags & PDF_FOREGROUND) ? 0 : fork();
 	switch(pid) {
@@ -224,7 +227,8 @@ new_mount(fd, pmnt_flags)
 	/*
 	 * Mount information (source, target, mount flags...)
 	 */
-	get_mount_info(fd, &pmi);
+	sock_type = pmnt_flags & PMNT_DGRAM ? SOCK_DGRAM : SOCK_SEQPACKET;
+	get_mount_info(fd, &pmi, sock_type);
 
 	/*
 	 * Check that peer owns mountpoint and read (and write) on it?
@@ -245,6 +249,7 @@ new_mount(fd, pmnt_flags)
 	pc.pc_get_inpayload = perfuse_get_inpayload;
 	pc.pc_get_outhdr = perfuse_get_outhdr;
 	pc.pc_get_outpayload = perfuse_get_outpayload;
+	pc.pc_umount = perfuse_umount;
 
 	pu = perfuse_init(&pc, &pmi);
 	
@@ -273,11 +278,12 @@ new_mount(fd, pmnt_flags)
 	/*
 	 * Hand over control to puffs main loop.
 	 */
-	(void)perfuse_mainloop(pu);
+	if (perfuse_mainloop(pu) != 0)
+		DERRX(EX_SOFTWARE, "perfuse_mainloop exit");
 
-	DERRX(EX_SOFTWARE, "perfuse_mainloop exit");
-
-	/* NOTREACHED */
+	/*	
+	 * Normal return after unmount
+	 */
 	return;
 }
 
@@ -313,7 +319,7 @@ parse_debug(optstr)
 		else if (strcmp(opt, "filename") == 0)
 			retval |= PDF_FILENAME;
 		else
-			DERRX(EX_USAGE, "unknown debug flag \"%s\"", opt);
+			DWARNX("unknown debug flag \"%s\"", opt);
 	}
 
 	return retval;
@@ -382,6 +388,8 @@ main(argc, argv)
 	char **argv;
 {
 	int s;
+	int sock_type;
+	socklen_t len;
 
 	s = parse_options(argc, argv);
 
@@ -394,18 +402,45 @@ main(argc, argv)
 
 	if (s != -1) {
 		new_mount(s, PMNT_SOCKPAIR);
-		DERRX(EX_SOFTWARE, "new_mount exit while -i is used");
+		exit(0);
 	}
 
 	s = perfuse_open_sock();
 	
-	do {
 #ifdef PERFUSE_DEBUG
-		if (perfuse_diagflags & PDF_MISC)
-			DPRINTF("perfused ready\n");
+	if (perfuse_diagflags & PDF_MISC)
+		DPRINTF("perfused ready\n");
 #endif
-		new_mount(s, PMNT_DEVFUSE);
-	} while (1 /* CONSTCOND */);
+	len = sizeof(sock_type);
+	if (getsockopt(s, SOL_SOCKET, SO_TYPE, &sock_type, &len) != 0)
+		DERR(EX_OSERR, "getsockopt SO_TYPE failed");
+
+	switch(sock_type) {
+	case SOCK_DGRAM:
+		new_mount(s, PMNT_DEVFUSE|PMNT_DGRAM);
+		exit(0);
+		break;
+	case SOCK_SEQPACKET:
+		if (listen(s, 0) != 0)
+			DERR(EX_OSERR, "listen failed");
+
+		do {
+			int fd;
+			struct sockaddr_un sun;
+			struct sockaddr *sa;
+		
+			len = sizeof(sun);
+			sa = (struct sockaddr *)(void *)&sun;
+			if ((fd = accept(s, sa, &len)) == -1)
+				DERR(EX_OSERR, "accept failed");
+
+			new_mount(fd, PMNT_DEVFUSE);
+		} while (1 /* CONSTCOND */);
+		break;
+	default:
+		DERRX(EX_SOFTWARE, "unexpected so_type %d", sock_type);
+		break;
+	}
 		
 	/* NOTREACHED */
 	return 0;
