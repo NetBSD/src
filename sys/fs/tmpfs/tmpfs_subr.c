@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.56.4.6 2011/05/22 04:29:04 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.56.4.7 2011/05/30 14:57:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56.4.6 2011/05/22 04:29:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56.4.7 2011/05/30 14:57:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -344,6 +344,7 @@ tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
 int
 tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 {
+	struct uvm_object *uobj;
 	int error;
 	struct vnode *vp;
 
@@ -364,16 +365,18 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		break;
 	}
 
-	/* Get a new vnode and associate it with our node. */
-	error = getnewvnode(VT_TMPFS, mp, tmpfs_vnodeop_p, NULL, &vp);
+	/*
+	 * Get a new vnode and associate it with our inode.  Share the
+	 * lock with underlying UVM object.
+	 */
+	uobj = node->tn_spec.tn_reg.tn_aobj;
+	error = getnewvnode(VT_TMPFS, mp, tmpfs_vnodeop_p,
+	    uobj->vmobjlock, &vp);
 	if (error != 0) {
 		mutex_exit(&node->tn_vlock);
 		return error;
 	}
-
-	/* Set UVM object to use vnode_t::v_interlock (share it). */
-	uvm_obj_setlock(node->tn_spec.tn_reg.tn_aobj, vp->v_interlock);
-	mutex_obj_hold(vp->v_interlock);
+	KASSERT(uobj->vmobjlock == vp->v_interlock);
 
 	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0) {
