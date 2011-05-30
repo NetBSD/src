@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2009/10/19 02:31:26 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2011/05/30 14:41:26 joerg Exp $
 
 BINDIR?=	/usr/bin
 
@@ -15,5 +15,7 @@ CPPFLAGS+=	${GNUCPPFLAGS:M-D*:N-DLOCALEDIR*} ${GNUCPPFLAGS:M-I*:N-I.*} \
 		-DLOCALEDIR=\"${LOCALEDIR}\"
 LDADD+=-lz
 DPADD+=${LIBZ}
+
+NOGCCERROR=	# defined
 
 .endif # __MAKEFILE_INC_INCLUDED__
