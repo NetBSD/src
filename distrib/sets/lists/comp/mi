@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1625 2011/05/20 16:02:21 plunky Exp $
+#	$NetBSD: mi,v 1.1626 2011/05/30 02:10:25 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2837,11 +2837,12 @@
 ./usr/lib/librumpfs_union_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_union_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_zfs.a			comp-c-lib		zfs
-./usr/lib/librumpfs_zfs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_zfs_p.a			comp-c-piclib		profile,zfs
+./usr/lib/librumpfs_zfs_g.a			-unknown-		zfs,debuglib
+./usr/lib/librumpfs_zfs_p.a			comp-c-piclib		zfs,profile
+./usr/lib/librumphijack_g.a			-unknown-		debuglib
 ./usr/lib/librumpkern_crypto.a			comp-c-lib
-./usr/lib/librumpkern_crypto_g.a			-unknown-		debuglib
-./usr/lib/librumpkern_crypto_p.a			comp-c-proflib		profile
+./usr/lib/librumpkern_crypto_g.a		-unknown-		debuglib
+./usr/lib/librumpkern_crypto_p.a		comp-c-proflib		profile
 ./usr/lib/librumpkern_ksem.a			comp-c-lib
 ./usr/lib/librumpkern_ksem_g.a			-unknown-		debuglib
 ./usr/lib/librumpkern_ksem_p.a			comp-c-proflib		profile
