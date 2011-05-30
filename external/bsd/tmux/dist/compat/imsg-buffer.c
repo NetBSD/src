@@ -1,4 +1,4 @@
-/* $Id: imsg-buffer.c,v 1.1.1.1 2011/03/10 09:15:41 jmmv Exp $ */
+/* $Id: imsg-buffer.c,v 1.2 2011/05/30 16:20:58 joerg Exp $ */
 /*	$OpenBSD: imsg-buffer.c,v 1.3 2010/05/26 13:56:07 nicm Exp $	*/
 
 /*
@@ -228,7 +228,11 @@ msgbuf_write(struct msgbuf *msgbuf)
 	struct cmsghdr	*cmsg;
 	union {
 		struct cmsghdr	hdr;
+#ifdef __clang__
+		char		buf[128];
+#else
 		char		buf[CMSG_SPACE(sizeof(int))];
+#endif
 	} cmsgbuf;
 
 	bzero(&iov, sizeof(iov));
@@ -248,7 +252,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 
 	if (buf != NULL && buf->fd != -1) {
 		msg.msg_control = (caddr_t)&cmsgbuf.buf;
-		msg.msg_controllen = sizeof(cmsgbuf.buf);
+		msg.msg_controllen = CMSG_SPACE(sizeof(int));
 		cmsg = CMSG_FIRSTHDR(&msg);
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 		cmsg->cmsg_level = SOL_SOCKET;
