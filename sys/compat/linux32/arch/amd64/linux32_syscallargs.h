@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscallargs.h,v 1.61 2011/04/10 15:48:01 christos Exp $ */
+/* $NetBSD: linux32_syscallargs.h,v 1.62 2011/05/30 17:50:32 alnsn Exp $ */
 
 /*
  * System call argument lists.
@@ -801,6 +801,15 @@ struct linux32_sys_get_thread_area_args {
 };
 check_syscall_args(linux32_sys_get_thread_area)
 
+struct linux32_sys_fadvise64_args {
+	syscallarg(int) fd;
+	syscallarg(uint32_t) offlo;
+	syscallarg(uint32_t) offhi;
+	syscallarg(linux32_size_t) len;
+	syscallarg(int) advice;
+};
+check_syscall_args(linux32_sys_fadvise64)
+
 struct linux32_sys_exit_group_args {
 	syscallarg(int) error_code;
 };
@@ -857,6 +866,16 @@ struct linux32_sys_tgkill_args {
 	syscallarg(int) sig;
 };
 check_syscall_args(linux32_sys_tgkill)
+
+struct linux32_sys_fadvise64_64_args {
+	syscallarg(int) fd;
+	syscallarg(uint32_t) offlo;
+	syscallarg(uint32_t) offhi;
+	syscallarg(uint32_t) lenlo;
+	syscallarg(uint32_t) lenhi;
+	syscallarg(int) advice;
+};
+check_syscall_args(linux32_sys_fadvise64_64)
 
 struct linux32_sys_set_robust_list_args {
 	syscallarg(linux32_robust_list_headp_t) head;
@@ -1244,6 +1263,8 @@ int	linux32_sys_set_thread_area(struct lwp *, const struct linux32_sys_set_threa
 
 int	linux32_sys_get_thread_area(struct lwp *, const struct linux32_sys_get_thread_area_args *, register_t *);
 
+int	linux32_sys_fadvise64(struct lwp *, const struct linux32_sys_fadvise64_args *, register_t *);
+
 int	linux32_sys_exit_group(struct lwp *, const struct linux32_sys_exit_group_args *, register_t *);
 
 int	linux32_sys_set_tid_address(struct lwp *, const struct linux32_sys_set_tid_address_args *, register_t *);
@@ -1261,6 +1282,8 @@ int	linux32_sys_statfs64(struct lwp *, const struct linux32_sys_statfs64_args *,
 int	linux32_sys_fstatfs64(struct lwp *, const struct linux32_sys_fstatfs64_args *, register_t *);
 
 int	linux32_sys_tgkill(struct lwp *, const struct linux32_sys_tgkill_args *, register_t *);
+
+int	linux32_sys_fadvise64_64(struct lwp *, const struct linux32_sys_fadvise64_64_args *, register_t *);
 
 int	linux32_sys_set_robust_list(struct lwp *, const struct linux32_sys_set_robust_list_args *, register_t *);
 

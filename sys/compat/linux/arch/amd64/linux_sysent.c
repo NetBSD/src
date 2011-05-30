@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.39 2011/04/10 15:49:23 christos Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.40 2011/05/30 17:50:31 alnsn Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.39 2011/04/10 15:49:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.40 2011/05/30 17:50:31 alnsn Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -520,8 +520,8 @@ struct sysent linux_sysent[] = {
 	    linux_sys_nosys },			/* 219 = unimplemented restart_syscall */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 220 = unimplemented semtimedop */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 221 = unimplemented fadvise64 */
+	{ ns(struct linux_sys_fadvise64_args), 0,
+	    (sy_call_t *)linux_sys_fadvise64 },	/* 221 = fadvise64 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 222 = unimplemented timer_create */
 	{ 0, 0, 0,
