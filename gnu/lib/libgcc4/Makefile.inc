@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.22 2011/05/30 14:41:26 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2011/05/30 19:03:09 joerg Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}.mk"
 .endif
 .endif
+
+UNSUPPORTED_COMPILER.clang=	# defined
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
 GNUHOSTDIST=	${DIST}
@@ -150,6 +152,3 @@ ${FAKEHEADERS}:
 	touch ${.TARGET}
 DPSRCS+=	${FAKEHEADERS}
 CLEANFILES+=	${FAKEHEADERS}
-
-COPTS+= ${${ACTIVE_CC} == "clang":?-fheinous-gnu-extensions:}
-NOCLANGERROR=	# defined
