@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.22 2010/03/10 23:13:09 abs Exp $
+.\"	$NetBSD: install,v 1.23 2011/05/30 06:19:53 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,7 +89,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*[Gt]\*[Gt] BSD MVME147 tapeboot [$Revision: 1.22 $]
+\*[Gt]\*[Gt] BSD MVME147 tapeboot [$Revision: 1.23 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997, 1998, 1999, 2000
@@ -275,7 +275,7 @@ Here, we specify that the swap partition starts immediatedly after the
 partition and is of size 16MB.
 The length of the swap partition should be at least as large as the
 amount of RAM in your system and ideally 64MB or over.
-The remainder of the disk can be alloacted to the 
+The remainder of the disk can be allocated to the 
 .Sq Li d
 partition for the
 .Pa /usr
@@ -435,7 +435,7 @@ For all board types, the boot messages are very similar:
 .Pp
 .(disp
 Start @ 0x8000 ...
-\*[Gt]\*[Gt] BSD MVME147 netboot (via sboot) [$Revision: 1.22 $]
+\*[Gt]\*[Gt] BSD MVME147 netboot (via sboot) [$Revision: 1.23 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
