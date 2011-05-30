@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.32 2011/05/20 13:12:59 joerg Exp $
+#	$NetBSD: Makefile.xen,v 1.33 2011/05/30 15:06:32 joerg Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -57,6 +57,7 @@ KERN_AS=	obj
 
 AFLAGS.linux32_sigcode.S+=	${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.netbsd32_sigcode.S+=	${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+CWARNFLAGS.ah_regdomain.c= ${${ACTIVE_CC} == "clang":?-Wno-error:}
 
 ##
 ## (4) local objects, compile rules, and dependencies
