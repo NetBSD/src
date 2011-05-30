@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.45 2011/04/29 22:58:46 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.46 2011/05/30 14:34:58 joerg Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.45 2011/04/29 22:58:46 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.46 2011/05/30 14:34:58 joerg Exp $");
 
 #include "opt_xen.h"
 
@@ -328,7 +328,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 			goto fail;
 		}
 		err = xenbus_printf(xbt, xbusd->xbusd_path,
-		    "vifname", ifp->if_xname);
+		    "vifname", "%s", ifp->if_xname);
 		if (err) {
 			aprint_error_ifnet(ifp,
 			    "failed to write %s/vifname: %d\n",
