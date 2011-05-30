@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.39 2011/04/10 15:49:23 christos Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.40 2011/05/30 17:50:31 alnsn Exp $ */
 
 /*
  * System call numbers.
@@ -566,6 +566,9 @@
 
 /* syscall: "set_tid_address" ret: "int" args: "int *" */
 #define	LINUX_SYS_set_tid_address	218
+
+/* syscall: "fadvise64" ret: "int" args: "int" "linux_off_t" "size_t" "int" */
+#define	LINUX_SYS_fadvise64	221
 
 /* syscall: "clock_settime" ret: "int" args: "clockid_t" "struct linux_timespec *" */
 #define	LINUX_SYS_clock_settime	227

@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscall.h,v 1.61 2011/04/10 15:48:01 christos Exp $ */
+/* $NetBSD: linux32_syscall.h,v 1.62 2011/05/30 17:50:32 alnsn Exp $ */
 
 /*
  * System call numbers.
@@ -579,6 +579,9 @@
 /* syscall: "get_thread_area" ret: "int" args: "linux32_user_descp_t" */
 #define	LINUX32_SYS_get_thread_area	244
 
+/* syscall: "fadvise64" ret: "int" args: "int" "uint32_t" "uint32_t" "linux32_size_t" "int" */
+#define	LINUX32_SYS_fadvise64	250
+
 /* syscall: "exit_group" ret: "int" args: "int" */
 #define	LINUX32_SYS_exit_group	252
 
@@ -605,6 +608,9 @@
 
 /* syscall: "tgkill" ret: "int" args: "int" "int" "int" */
 #define	LINUX32_SYS_tgkill	270
+
+/* syscall: "fadvise64_64" ret: "int" args: "int" "uint32_t" "uint32_t" "uint32_t" "uint32_t" "int" */
+#define	LINUX32_SYS_fadvise64_64	272
 
 /* syscall: "set_robust_list" ret: "int" args: "linux32_robust_list_headp_t" "linux32_size_t" */
 #define	LINUX32_SYS_set_robust_list	311
