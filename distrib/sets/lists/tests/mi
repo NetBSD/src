@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.340 2011/05/28 16:12:56 tron Exp $
+# $NetBSD: mi,v 1.341 2011/05/30 18:14:11 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2344,6 +2344,9 @@
 ./usr/tests/usr.bin/diff/d_mallocv1.in		tests-util-tests	atf
 ./usr/tests/usr.bin/diff/d_mallocv2.in		tests-util-tests	atf
 ./usr/tests/usr.bin/diff/t_diff			tests-util-tests	atf
+./usr/tests/usr.bin/mkdep			tests-util-tests
+./usr/tests/usr.bin/mkdep/Atffile		tests-util-tests	atf
+./usr/tests/usr.bin/mkdep/t_mkdep		tests-util-tests	atf
 ./usr/tests/usr.bin/pr				tests-util-tests
 ./usr/tests/usr.bin/pr/Atffile			tests-util-tests	atf
 ./usr/tests/usr.bin/pr/d_basic.in		tests-util-tests	atf
