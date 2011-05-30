@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.55 2010/05/03 23:04:12 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.56 2011/05/30 14:20:48 joerg Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.55 2010/05/03 23:04:12 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.56 2011/05/30 14:20:48 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -519,7 +519,7 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 			msg_string(p->pi_flags & PIF_MOUNT ? MSG_Yes : MSG_No));
 		break;
 	case PTN_MENU_MOUNTOPT:
-		wprintw(m->mw, msg_string(MSG_mount_options_fmt));
+		wprintw(m->mw, "%s", msg_string(MSG_mount_options_fmt));
 		if (p->pi_flags & PIF_ASYNC)
 			wprintw(m->mw, "async ");
 		if (p->pi_flags & PIF_NOATIME)
