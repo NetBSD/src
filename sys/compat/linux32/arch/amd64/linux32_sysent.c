@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_sysent.c,v 1.61 2011/04/10 15:48:01 christos Exp $ */
+/* $NetBSD: linux32_sysent.c,v 1.62 2011/05/30 17:50:32 alnsn Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.61 2011/04/10 15:48:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.62 2011/05/30 17:50:32 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -539,8 +539,8 @@ struct sysent linux32_sysent[] = {
 	    linux_sys_nosys },			/* 248 = unimplemented io_submit */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 249 = unimplemented io_cancel */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 250 = unimplemented fadvise64 */
+	{ ns(struct linux32_sys_fadvise64_args), 0,
+	    (sy_call_t *)linux32_sys_fadvise64 },/* 250 = fadvise64 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 251 = unimplemented / * unused * / */
 	{ ns(struct linux32_sys_exit_group_args), 0,
@@ -583,8 +583,8 @@ struct sysent linux32_sysent[] = {
 	    (sy_call_t *)linux32_sys_tgkill },	/* 270 = tgkill */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 271 = unimplemented utimes */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 272 = unimplemented fadvise64_64 */
+	{ ns(struct linux32_sys_fadvise64_64_args), 0,
+	    (sy_call_t *)linux32_sys_fadvise64_64 },/* 272 = fadvise64_64 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 273 = unimplemented vserver */
 	{ 0, 0, 0,
