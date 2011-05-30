@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.173 2011/05/30 02:10:26 christos Exp $
+# $NetBSD: shl.mi,v 1.174 2011/05/30 09:54:30 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -223,7 +223,6 @@
 ./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug
 ./usr/libdata/debug/usr/lib/libamu.so.4.0.debug		comp-amd-debug	debug
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libasn1.so.8.0.debug	comp-krb5-debug	kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libbfd.so.11.0.debug	comp-sys-debug	binutils,debug
@@ -232,7 +231,6 @@
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libc.so.12.177.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libcom_err.so.6.0.debug	comp-krb5-debug	kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/libcom_err.so.7.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libcrypto.so.6.1.debug	comp-crypto-debug	crypto,debug
@@ -253,30 +251,22 @@
 ./usr/libdata/debug/usr/lib/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug
 ./usr/libdata/debug/usr/lib/libgcc_s.so.1.0.debug	comp-sys-debug	gcc,debug
 ./usr/libdata/debug/usr/lib/libgnumalloc.so.1.0.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libgssapi.so.9.0.debug	comp-krb5-debug	kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/libgssapi.so.10.0.debug	comp-krb5-debug	kerberos,debug
-./usr/libdata/debug/usr/lib/libhdb.so.13.0.debug	comp-krb5-debug	kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/libhdb.so.14.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libheimbase.so.1.0.debug	comp-krb5-debug	kerberos,debug
-./usr/libdata/debug/usr/lib/libheimntlm.so.3.0.debug	comp-krb5-debug	kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/libheimntlm.so.4.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libintl.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libipsec.so.3.0.debug	comp-net-debug	debug
-./usr/libdata/debug/usr/lib/libisc.so.5.4.debug		comp-bind-debug	debug,obsolete
 ./usr/libdata/debug/usr/lib/libisc.so.5.4.debug		comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libisccc.so.5.3.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libisccfg.so.5.3.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug
 ./usr/libdata/debug/usr/lib/libisns.so.0.0.debug	comp-isns-debug	debug
-./usr/libdata/debug/usr/lib/libkadm5clnt.so.12.0.debug	comp-krb5-debug	kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/libkadm5clnt.so.13.0.debug	comp-krb5-debug	kerberos,debug
-./usr/libdata/debug/usr/lib/libkadm5srv.so.13.0.debug	comp-krb5-debug	kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/libkadm5srv.so.14.0.debug	comp-krb5-debug	kerberos,debug
-./usr/libdata/debug/usr/lib/libkafs.so.11.0.debug	comp-krb5-debug	kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/libkafs.so.12.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libkdc.so.2.0.debug		comp-krb5-debug	kerberos,debug
-./usr/libdata/debug/usr/lib/libkrb5.so.24.0.debug	comp-krb5-debug	kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/libkrb5.so.26.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libkvm.so.6.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblber.so.3.2.debug	comp-ldap-debug	ldap,debug
@@ -311,12 +301,10 @@
 ./usr/libdata/debug/usr/lib/libradius.so.4.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/librefuse.so.2.0.debug	comp-refuse-debug	debug
 ./usr/libdata/debug/usr/lib/libresolv.so.2.0.debug	comp-net-debug	debug
-./usr/libdata/debug/usr/lib/libroken.so.14.0.debug	comp-krb5-debug	kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/libroken.so.19.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/librpcsvc.so.1.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/librt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/librump.so.0.0.debug	comp-rump-debug	debug
-./usr/libdata/debug/usr/lib/librumpcrypto.so.0.0.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/librumpdev.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_audio.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_bpf.so.0.0.debug	comp-rump-debug	debug
@@ -390,9 +378,7 @@
 ./usr/libdata/debug/usr/lib/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug	comp-sys-debug	skey,debug
-./usr/libdata/debug/usr/lib/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug
-./usr/libdata/debug/usr/lib/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/libssh.so.16.0.debug	comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libssl.so.8.1.debug		comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug
