@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_region.c,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: aml_region.c,v 1.2 2011/05/30 01:15:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_region.c,v 1.5 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_region.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
+__RCSID("$NetBSD: aml_region.c,v 1.2 2011/05/30 01:15:30 dyoung Exp $");
 
 /*
  * Region I/O subroutine
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: aml_region.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
 #include <sys/systm.h>
 #include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/resource.h>
 #include <sys/rman.h>
 
