@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2011/05/20 21:45:35 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2011/05/30 14:41:26 joerg Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -152,3 +152,4 @@ DPSRCS+=	${FAKEHEADERS}
 CLEANFILES+=	${FAKEHEADERS}
 
 COPTS+= ${${ACTIVE_CC} == "clang":?-fheinous-gnu-extensions:}
+NOCLANGERROR=	# defined

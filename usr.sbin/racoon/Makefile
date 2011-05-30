@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.22 2009/04/22 15:23:07 lukem Exp $
+# $NetBSD: Makefile,v 1.23 2011/05/30 14:41:27 joerg Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
+NOCLANGERROR=	# defined
 
 .include <bsd.own.mk>
 
