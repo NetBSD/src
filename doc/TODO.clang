@@ -1,0 +1,20 @@
+$NetBSD: TODO.clang,v 1.1 2011/05/30 16:25:31 joerg Exp $
+
+Hacks for the clang integration
+-------------------------------
+
+"-no-integrated-as" is src/sys/modules, src/sys/arch/amd64,
+src/sys/arch/i386 and src/sys/arch/xen to compensate for the missing
+.code16 and .code32 support in LLVM MC.
+
+ah_regdomain.c in the kernel currently requires -Wno-error due to
+http://llvm.org/bugs/show_bug.cgi?id=10030.
+
+Various places use NOCLANGERROR or CWARNFLAGS.clang to disable errors or
+warnings.
+
+Issues with CMSG_SPACE() used inside a union:
+src/external/tmux/dist/compat/imsg-buffer.c
+src/external/tmux/dist/compat/imsg.c
+src/external/ibm-public/postfix/dist/src/util/unix_recv_fd.c
+src/external/ibm-public/postfix/dist/src/util/unix_send_fd.c
