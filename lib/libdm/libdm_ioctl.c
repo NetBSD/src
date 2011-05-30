@@ -262,7 +262,7 @@ libdm_task_set_name(const char *name, libdm_task_t libdm_task)
 	if ((prop_dictionary_set_cstring(libdm_task->ldm_task,
 		    DM_IOCTL_NAME, name)) == false)
 		return ENOENT;
-
+ 
 	return 0;
 }
 
@@ -285,7 +285,7 @@ libdm_task_set_uuid(const char *uuid, libdm_task_t libdm_task)
 {
 
 	if ((prop_dictionary_set_cstring(libdm_task->ldm_task,
-	    DM_IOCTL_NAME, uuid)) == false)
+	    DM_IOCTL_UUID, uuid)) == false)
 		return ENOENT;
 
 	return 0;
