@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2009/09/03 08:24:06 skrll Exp $
+#	$NetBSD: Makefile,v 1.3 2011/05/30 14:41:26 joerg Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
 NOMAN=		# defined
 NOPROFILE=	# defined
+NOCLANGERROR=	# defined
 
 .include <bsd.own.mk>
 
