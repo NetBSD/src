@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.37 2008/09/06 21:05:15 tsutsui Exp $
+.\"	$NetBSD: install,v 1.38 2011/05/30 06:19:53 wiz Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -559,7 +559,7 @@ Firmware 2.4)
 .Pp
 You do not specify a file to load, since the
 .Sq "partition zero"
-booloader knows what to do.
+bootloader knows what to do.
 You would boot such a system if you have dumped
 the CD-R image to your drive, or if you have an already-installed
 .Nx*M
