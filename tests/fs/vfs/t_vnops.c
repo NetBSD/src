@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.23 2011/04/01 17:40:54 hannken Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.24 2011/05/30 13:10:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -175,8 +175,10 @@ dir_rmdirdotdot(const atf_tc_t *tc, const char *mp)
 		xerrno = ESTALE;
 	else
 		xerrno = ENOENT;
+	/*
 	if (FSTYPE_TMPFS(tc))
 		atf_tc_expect_signal(-1, "PR kern/44657");
+	*/
 	ATF_REQUIRE_ERRNO(xerrno, rump_sys_chdir("..") == -1);
 	FSTEST_EXIT();
 }
@@ -293,8 +295,10 @@ rename_dir(const atf_tc_t *tc, const char *mp)
 	if (! FSTYPE_MSDOS(tc))
 		ATF_CHECK_EQ(sb.st_nlink, 3);
 	RL(rump_sys_rmdir(pb3));
+	/*
 	if (FSTYPE_TMPFS(tc))
 		atf_tc_expect_signal(-1, "PR kern/44288");
+	*/
 	RL(rump_sys_rmdir(pb1));
 }
 
@@ -322,9 +326,11 @@ rename_dotdot(const atf_tc_t *tc, const char *mp)
 		atf_tc_fail_errno("self-dotdot from");
 	atf_tc_expect_pass();
 
+	/*
 	if (FSTYPE_TMPFS(tc)) {
 		atf_tc_expect_fail("PR kern/43617");
 	}
+	*/
 	if (rump_sys_rename("dir1", "dir2/..") != -1 || errno != EINVAL)
 		atf_tc_fail("other-dotdot");
 
