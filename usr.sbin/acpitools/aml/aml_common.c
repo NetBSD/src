@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_common.c,v 1.2 2009/01/18 09:46:59 lukem Exp $	*/
+/*	$NetBSD: aml_common.c,v 1.3 2011/05/30 01:15:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_common.c,v 1.6 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_common.c,v 1.2 2009/01/18 09:46:59 lukem Exp $");
+__RCSID("$NetBSD: aml_common.c,v 1.3 2011/05/30 01:15:30 dyoung Exp $");
 
 #include <sys/param.h>
 
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: aml_common.c,v 1.2 2009/01/18 09:46:59 lukem Exp $");
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
-#include <machine/bus.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #ifndef ACPI_NO_OSDFUNC_INLINE
