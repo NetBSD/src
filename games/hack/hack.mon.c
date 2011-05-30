@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mon.c,v 1.10 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.mon.c,v 1.11 2011/05/30 03:11:15 joerg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mon.c,v 1.10 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.mon.c,v 1.11 2011/05/30 03:11:15 joerg Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -196,7 +196,7 @@ justswld(struct monst *mtmp, const char *name)
 }
 
 void
-youswld(struct monst *mtmp, int dam, int die, const char *name)
+youswld(struct monst *mtmp, int dam, unsigned int die, const char *name)
 {
 	if (mtmp != u.ustuck)
 		return;
