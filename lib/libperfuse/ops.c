@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.27 2011/05/18 15:28:12 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.28 2011/05/30 14:50:08 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -844,9 +844,12 @@ perfuse_fs_unmount(pu, flags)
 			goto out;
 	}
 
-	DPRINTF("%s unmounted, exit\n", ps->ps_target);
+	ps->ps_umount(pu);
 
-	exit(0);
+	if (perfuse_diagflags & PDF_MISC)
+		DPRINTF("%s unmounted, exit\n", ps->ps_target);
+
+	return 0;
 out:
 	ps->ps_destroy_msg(pm);
 	

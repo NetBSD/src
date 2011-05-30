@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.12 2011/05/18 15:22:54 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.13 2011/05/30 14:50:08 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -134,6 +134,7 @@ typedef struct fuse_out_header *(*perfuse_get_outhdr_fn)(perfuse_msg_t *);
 typedef struct fuse_in_header *(*perfuse_get_inhdr_fn)(perfuse_msg_t *);
 typedef char *(*perfuse_get_inpayload_fn)(perfuse_msg_t *);
 typedef char *(*perfuse_get_outpayload_fn)(perfuse_msg_t *);
+typedef void (*perfuse_umount_fn)(struct puffs_usermount *);
 
 struct perfuse_callbacks {
 	perfuse_new_msg_fn pc_new_msg;
@@ -143,6 +144,7 @@ struct perfuse_callbacks {
 	perfuse_get_inpayload_fn pc_get_inpayload;
 	perfuse_get_outhdr_fn pc_get_outhdr;
 	perfuse_get_outpayload_fn pc_get_outpayload;
+	perfuse_umount_fn pc_umount;
 };
 
 /* 
