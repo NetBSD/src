@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.89 2011/04/10 15:49:23 christos Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.90 2011/05/30 17:50:31 alnsn Exp $ */
 
 /*
  * System call argument lists.
@@ -933,6 +933,14 @@ struct linux_sys_get_thread_area_args {
 };
 check_syscall_args(linux_sys_get_thread_area)
 
+struct linux_sys_fadvise64_args {
+	syscallarg(int) fd;
+	syscallarg(linux_off_t) offset;
+	syscallarg(size_t) len;
+	syscallarg(int) advice;
+};
+check_syscall_args(linux_sys_fadvise64)
+
 struct linux_sys_exit_group_args {
 	syscallarg(int) error_code;
 };
@@ -989,6 +997,14 @@ struct linux_sys_tgkill_args {
 	syscallarg(int) sig;
 };
 check_syscall_args(linux_sys_tgkill)
+
+struct linux_sys_fadvise64_64_args {
+	syscallarg(int) fd;
+	syscallarg(linux_off_t) offset;
+	syscallarg(linux_off_t) len;
+	syscallarg(int) advice;
+};
+check_syscall_args(linux_sys_fadvise64_64)
 
 struct linux_sys_set_robust_list_args {
 	syscallarg(struct linux_robust_list_head *) head;
@@ -1414,6 +1430,8 @@ int	linux_sys_set_thread_area(struct lwp *, const struct linux_sys_set_thread_ar
 
 int	linux_sys_get_thread_area(struct lwp *, const struct linux_sys_get_thread_area_args *, register_t *);
 
+int	linux_sys_fadvise64(struct lwp *, const struct linux_sys_fadvise64_args *, register_t *);
+
 int	linux_sys_exit_group(struct lwp *, const struct linux_sys_exit_group_args *, register_t *);
 
 int	linux_sys_set_tid_address(struct lwp *, const struct linux_sys_set_tid_address_args *, register_t *);
@@ -1431,6 +1449,8 @@ int	linux_sys_statfs64(struct lwp *, const struct linux_sys_statfs64_args *, reg
 int	linux_sys_fstatfs64(struct lwp *, const struct linux_sys_fstatfs64_args *, register_t *);
 
 int	linux_sys_tgkill(struct lwp *, const struct linux_sys_tgkill_args *, register_t *);
+
+int	linux_sys_fadvise64_64(struct lwp *, const struct linux_sys_fadvise64_64_args *, register_t *);
 
 int	linux_sys_set_robust_list(struct lwp *, const struct linux_sys_set_robust_list_args *, register_t *);
 

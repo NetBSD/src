@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.90 2011/04/10 15:49:23 christos Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.91 2011/05/30 17:50:31 alnsn Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.90 2011/04/10 15:49:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.91 2011/05/30 17:50:31 alnsn Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <sys/param.h>
@@ -282,7 +282,7 @@ const char *const linux_syscallnames[] = {
 	/* 247 */	"#247 (unimplemented io_getevents)",
 	/* 248 */	"#248 (unimplemented io_submit)",
 	/* 249 */	"#249 (unimplemented io_cancel)",
-	/* 250 */	"#250 (unimplemented fadvise64)",
+	/* 250 */	"fadvise64",
 	/* 251 */	"#251 (unimplemented / * unused * /)",
 	/* 252 */	"exit_group",
 	/* 253 */	"#253 (unimplemented lookup_dcookie)",
@@ -304,7 +304,7 @@ const char *const linux_syscallnames[] = {
 	/* 269 */	"fstatfs64",
 	/* 270 */	"tgkill",
 	/* 271 */	"#271 (unimplemented utimes)",
-	/* 272 */	"#272 (unimplemented fadvise64_64)",
+	/* 272 */	"fadvise64_64",
 	/* 273 */	"#273 (unimplemented vserver)",
 	/* 274 */	"#274 (unimplemented mbind)",
 	/* 275 */	"#275 (unimplemented get_mempolicy)",
