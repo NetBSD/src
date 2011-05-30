@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.201 2011/05/26 12:56:30 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.202 2011/05/30 13:47:01 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -65,7 +65,8 @@ CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wpointer-sign :}
 CWARNFLAGS+=	${CWARNFLAGS.${ACTIVE_CC}}
 
 CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
-CFLAGS+=	${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
+_NOWERROR=	${defined(NOGCCERROR) || (${ACTIVE_CC} == "clang" && defined(NOCLANGERROR)):?yes:no}
+CFLAGS+=	${CWARNFLAGS} ${${_NOWERROR} == "no" :?-Werror:}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
 .if (${MACHINE_ARCH} == "alpha") || \
