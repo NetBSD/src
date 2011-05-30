@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.66 2011/04/04 08:30:13 mbalmer Exp $	*/
+/*	$NetBSD: run.c,v 1.67 2011/05/30 14:20:19 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -482,7 +482,7 @@ launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,
 
 	for (selectfailed = 0;;) {
 		if (selectfailed) {
-			const char *mmsg = "select(2) failed but no child died?";
+			const char mmsg[] = "select(2) failed but no child died?";
 			if (logging)
 				(void)fprintf(logfp, mmsg);
 			errx(1, mmsg);
