@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.85 2011/05/29 22:29:07 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.86 2011/05/30 19:22:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.85 2011/05/29 22:29:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.86 2011/05/30 19:22:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -456,6 +456,8 @@ tmpfs_getattr(void *v)
 
 	vattr_null(vap);
 
+	tmpfs_update(vp, NULL, NULL, NULL, 0);
+
 	vap->va_type = vp->v_type;
 	vap->va_mode = node->tn_mode;
 	vap->va_nlink = node->tn_links;
@@ -478,7 +480,6 @@ tmpfs_getattr(void *v)
 	vap->va_vaflags = 0;
 	vap->va_spare = VNOVAL; /* XXX */
 
-	tmpfs_update(vp, NULL, NULL, NULL, 0);
 	return 0;
 }
 
@@ -1094,12 +1095,12 @@ tmpfs_rmdir(void *v)
 		goto out;
 	}
 
-	/* Detach the directory entry from the directory. */
-	tmpfs_dir_detach(dvp, de);
-
 	/* Decrement the link count for the virtual '.' entry. */
 	node->tn_links--;
 	node->tn_status |= TMPFS_NODE_STATUSALL;
+
+	/* Detach the directory entry from the directory. */
+	tmpfs_dir_detach(dvp, de);
 
 	/* Purge the cache for parent. */
 	cache_purge(dvp);
