@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_recv_fd.c,v 1.5 2011/05/30 16:24:13 joerg Exp $	*/
+/*	$NetBSD: unix_recv_fd.c,v 1.6 2011/05/30 18:47:27 pgoyette Exp $	*/
 
 /*++
 /* NAME
@@ -73,7 +73,7 @@ int     unix_recv_fd(int fd)
 #  ifdef __clang__
 	char    control[128];
 #  else
-	char    control[CMSG_SPACE(sizeof(newfd))]
+	char    control[CMSG_SPACE(sizeof(newfd))];
 #  endif
     }       control_un;
     struct cmsghdr *cmptr;
