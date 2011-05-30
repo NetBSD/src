@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_parse.c,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: aml_parse.c,v 1.2 2011/05/30 01:15:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_parse.c,v 1.7 2001/10/23 14:54:15 takawata Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_parse.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
+__RCSID("$NetBSD: aml_parse.c,v 1.2 2011/05/30 01:15:30 dyoung Exp $");
 
 #include <sys/param.h>
 
@@ -61,7 +61,6 @@ __RCSID("$NetBSD: aml_parse.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
 #else /* _KERNEL */
 #include <sys/systm.h>
 #include <sys/bus.h>
-#include <machine/bus.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #ifndef ACPI_NO_OSDFUNC_INLINE
