@@ -95,8 +95,9 @@ unionfs_nodeget(struct mount *mp, struct vnode *uppervp,
 	 * Get a new vnode and share the lock with upper layer vnode,
 	 * unless layers are inverted.
 	 */
+	vnode_t *svp = (uppervp != NULLVP) ? uppervp : lowervp;
 	error = getnewvnode(VT_UNION, mp, unionfs_vnodeop_p,
-	    (uppervp != NULLVP ? uppervp : lowervp), &vp);
+	    svp->v_interlock, &vp);
 	if (error != 0) {
 		return (error);
 	}
