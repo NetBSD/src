@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 2010/02/03 15:34:38 roy Exp $	*/
+/*	$NetBSD: extern.h,v 1.14 2011/05/30 03:11:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ void mkswamp(void);
 /* hack.mon.c */
 void movemon(void);
 void justswld(struct monst *, const char *);
-void youswld(struct monst *, int, int, const char *);
+void youswld(struct monst *, int, unsigned int, const char *);
 int dochug(struct monst *);
 int m_move(struct monst *, int);
 int mfndpos(struct monst *, coord[9 ], int[9 ], int);
