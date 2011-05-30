@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.35.4.4 2011/05/21 03:38:24 rmind Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.35.4.5 2011/05/30 14:57:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.35.4.4 2011/05/21 03:38:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.35.4.5 2011/05/30 14:57:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,8 +511,9 @@ loop:
 	 * Get a new vnode and share the lock with upper layer vnode,
 	 * unless layers are inverted.
 	 */
+	vnode_t *svp = (uppervp != NULLVP) ? uppervp : lowervp;
 	error = getnewvnode(VT_UNION, mp, union_vnodeop_p,
-	    (uppervp != NULLVP ? uppervp : lowervp), vpp);
+	    svp->v_interlock, vpp);
 	if (error) {
 		if (uppervp) {
 			if (dvp == uppervp)
