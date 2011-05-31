@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.58 2011/04/04 20:37:55 dyoung Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.59 2011/05/31 14:45:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.58 2011/04/04 20:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.59 2011/05/31 14:45:36 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -916,9 +916,6 @@ acpicpu_md_pstate_fidvid_set(struct acpicpu_pstate *ps)
 		if (rv != 0)
 			return rv;
 	}
-
-	if (cfid != fid || cvid != vid)
-		return EIO;
 
 	return 0;
 }
