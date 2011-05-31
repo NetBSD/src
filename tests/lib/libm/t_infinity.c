@@ -1,4 +1,4 @@
-/* $NetBSD: t_infinity.c,v 1.1 2011/04/11 10:51:36 martin Exp $ */
+/* $NetBSD: t_infinity.c,v 1.2 2011/05/31 20:17:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_infinity.c,v 1.1 2011/04/11 10:51:36 martin Exp $");
+__RCSID("$NetBSD: t_infinity.c,v 1.2 2011/05/31 20:17:36 jruoho Exp $");
 
 #include <atf-c.h>
 #include <math.h>
@@ -88,6 +88,14 @@ ATF_TC_HEAD(infinity_long_double, tc)
 
 ATF_TC_BODY(infinity_long_double, tc)
 {
+
+	/*
+	 * May fail under QEMU; cf. PR misc/44767.
+	 */
+	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+		atf_tc_expect_fail("PR misc/44767");
+
+
 #ifndef LDBL_MAX
 	atf_tc_skip("no long double support on this architecture");
 	return;
