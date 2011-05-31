@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.165 2011/05/24 01:19:48 mrg Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.166 2011/05/31 00:15:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.165 2011/05/24 01:19:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.166 2011/05/31 00:15:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -838,15 +838,6 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 		strlcpy(cnbuf, lim->pl_corename, MAXPATHLEN);
 		mutex_exit(&lim->pl_lock);
 	}
-	if (newp) {
-		/* Set case: just use the temporary buffer. */
-		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CORENAME, p,
-		    KAUTH_ARG(KAUTH_REQ_PROCESS_CORENAME_SET), cnbuf, NULL);
-		if (error) {
-			goto done;
-		}
-	}
 
 	node = *rnode;
 	node.sysctl_data = cnbuf;
@@ -858,9 +849,14 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	}
 
 	/*
-	 * Validate new core name.  It must be either "core", "/core",
-	 * or end in ".core".
+	 * Set case.  Check permission and then validate new core name.
+	 * It must be either "core", "/core", or end in ".core".
 	 */
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CORENAME,
+	    p, KAUTH_ARG(KAUTH_REQ_PROCESS_CORENAME_SET), cnbuf, NULL);
+	if (error) {
+		goto done;
+	}
 	len = strlen(cnbuf);
 	if ((len < 4 || strcmp(cnbuf + len - 4, "core") != 0) ||
 	    (len > 4 && cnbuf[len - 5] != '/' && cnbuf[len - 5] != '.')) {
