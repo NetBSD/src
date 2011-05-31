@@ -1,4 +1,4 @@
-/* $NetBSD: t_infinity.c,v 1.2 2011/05/31 20:17:36 jruoho Exp $ */
+/* $NetBSD: t_infinity.c,v 1.3 2011/05/31 22:40:35 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_infinity.c,v 1.2 2011/05/31 20:17:36 jruoho Exp $");
+__RCSID("$NetBSD: t_infinity.c,v 1.3 2011/05/31 22:40:35 alnsn Exp $");
 
 #include <atf-c.h>
 #include <math.h>
 #include <float.h>
+#include <stdlib.h>
 
 ATF_TC(infinity_float);
 ATF_TC_HEAD(infinity_float, tc)
