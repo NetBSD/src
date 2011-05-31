@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.65 2007/01/03 11:46:22 ws Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.66 2011/05/31 06:49:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.65 2007/01/03 11:46:22 ws Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.66 2011/05/31 06:49:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,39 +70,31 @@ __RCSID("$NetBSD: rcmd.c,v 1.65 2007/01/03 11:46:22 ws Exp $");
 
 #include "pathnames.h"
 
-int	orcmd __P((char **, u_int, const char *, const char *, const char *,
-	    int *));
-int	orcmd_af __P((char **, u_int, const char *, const char *, const char *,
-	    int *, int));
-int	__ivaliduser __P((FILE *, u_int32_t, const char *, const char *));
-int	__ivaliduser_sa __P((FILE *, const struct sockaddr *, socklen_t,
-	    const char *, const char *));
-static	int rshrcmd __P((char **, u_int32_t, const char *, const char *,
-	    const char *, int *, const char *));
-static	int resrcmd __P((struct addrinfo *, char **, u_int32_t, const char *,
-	    const char *, const char *, int *));
-static	int __icheckhost __P((const struct sockaddr *, socklen_t,
-	    const char *));
-static	char *__gethostloop __P((const struct sockaddr *, socklen_t));
+int	orcmd(char **, u_int, const char *, const char *, const char *, int *);
+int	orcmd_af(char **, u_int, const char *, const char *, const char *,
+    int *, int);
+int	__ivaliduser(FILE *, u_int32_t, const char *, const char *);
+int	__ivaliduser_sa(FILE *, const struct sockaddr *, socklen_t,
+    const char *, const char *);
+static	int rshrcmd(int, char **, u_int32_t, const char *,
+    const char *, const char *, int *, const char *);
+static	int resrcmd(struct addrinfo *, char **, u_int32_t, const char *,
+    const char *, const char *, int *);
+static	int __icheckhost(const struct sockaddr *, socklen_t,
+    const char *);
+static	char *__gethostloop(const struct sockaddr *, socklen_t);
 
 int
-rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
-	char **ahost;
-	u_short rport;
-	const char *locuser, *remuser, *cmd;
-	int *fd2p;
+rcmd(char **ahost, int rport, const char *locuser, const char *remuser,
+    const char *cmd, int *fd2p)
 {
 
 	return rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, AF_INET);
 }
 
 int
-rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
-	char **ahost;
-	u_short rport;
-	const char *locuser, *remuser, *cmd;
-	int *fd2p;
-	int af;
+rcmd_af(char **ahost, int rport, const char *locuser, const char *remuser,
+    const char *cmd, int *fd2p, int af)
 {
 	static char hbuf[MAXHOSTNAMELEN];
 	char pbuf[NI_MAXSERV];
@@ -124,7 +116,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 	error = getaddrinfo(*ahost, pbuf, &hints, &res);
 	if (error) {
 		warnx("%s: %s", *ahost, gai_strerror(error));	/*XXX*/
-		return (-1);
+		return -1;
 	}
 	if (res->ai_canonname) {
 		/*
@@ -142,33 +134,26 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 	 */
 	sp = getservbyname("shell", "tcp");
 	if (sp != NULL && sp->s_port == rport)
-		error = rshrcmd(ahost, (u_int32_t)rport,
+		error = rshrcmd(af, ahost, (u_int32_t)rport,
 		    locuser, remuser, cmd, fd2p, getenv("RCMD_CMD"));
 	else
 		error = resrcmd(res, ahost, (u_int32_t)rport,
 		    locuser, remuser, cmd, fd2p);
 	freeaddrinfo(res);
-	return (error);
+	return error;
 }
 
 /* this is simply a wrapper around hprcmd() that handles ahost first */
 int
-orcmd(ahost, rport, locuser, remuser, cmd, fd2p)
-	char **ahost;
-	u_int rport;
-	const char *locuser, *remuser, *cmd;
-	int *fd2p;
+orcmd(char **ahost, u_int rport, const char *locuser, const char *remuser,
+    const char *cmd, int *fd2p)
 {
 	return orcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, AF_INET);
 }
 
 int
-orcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
-	char **ahost;
-	u_int rport;
-	const char *locuser, *remuser, *cmd;
-	int *fd2p;
-	int af;
+orcmd_af(char **ahost, u_int rport, const char *locuser, const char *remuser,
+    const char *cmd, int *fd2p, int af)
 {
 	static char hbuf[MAXHOSTNAMELEN];
 	char pbuf[NI_MAXSERV];
@@ -189,7 +174,7 @@ orcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 	error = getaddrinfo(*ahost, pbuf, &hints, &res);
 	if (error) {
 		warnx("%s: %s", *ahost, gai_strerror(error));	/*XXX*/
-		return (-1);
+		return -1;
 	}
 	if (res->ai_canonname) {
 		strlcpy(hbuf, res->ai_canonname, sizeof(hbuf));
@@ -198,17 +183,13 @@ orcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 	
 	error = resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p);
 	freeaddrinfo(res);
-	return (error);
+	return error;
 }
 
 /*ARGSUSED*/
 static int
-resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
-	struct addrinfo *res;
-	char **ahost;
-	u_int32_t rport;
-	const char *locuser, *remuser, *cmd;
-	int *fd2p;
+resrcmd(struct addrinfo *res, char **ahost, u_int32_t rport,
+    const char *locuser, const char *remuser, const char *cmd, int *fd2p)
 {
 	struct addrinfo *r;
 	struct sockaddr_storage from;
@@ -246,7 +227,7 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 				continue;
 			} else {
 				(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-				return (-1);
+				return -1;
 			}
 		}
 		fcntl(s, F_SETOWN, pid);
@@ -287,7 +268,7 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 		(void)fprintf(stderr, "%s: %s\n", res->ai_canonname,
 		    strerror(errno));
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-		return (-1);
+		return -1;
 	}
 	lport--;
 	if (fd2p == 0) {
@@ -318,7 +299,8 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 			if (errno != 0)
 				warn("poll: setting up stderr");
 			else
-				warnx("poll: protocol failure in circuit setup");
+				warnx(
+				    "poll: protocol failure in circuit setup");
 			(void)close(s2);
 			goto bad;
 		}
@@ -339,7 +321,8 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 			    NULL, 0, num, sizeof(num), NI_NUMERICSERV) != 0 ||
 			    (atoi(num) >= IPPORT_RESERVED ||
 			     atoi(num) < IPPORT_RESERVED / 2)) {
-				warnx("rcmd: protocol failure in circuit setup.");
+				warnx(
+				"rcmd: protocol failure in circuit setup.");
 				goto bad2;
 			}
 			break;
@@ -364,14 +347,14 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 		goto bad2;
 	}
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-	return (s);
+	return s;
 bad2:
 	if (lport)
 		(void)close(*fd2p);
 bad:
 	(void)close(s);
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-	return (-1);
+	return -1;
 }
 
 /*
@@ -379,12 +362,8 @@ bad:
  */
 /* ARGSUSED */
 static int
-rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
-	char  	**ahost;
-	u_int32_t	rport;
-	const	char *locuser, *remuser, *cmd;
-	int	*fd2p;
-	const	char *rshcmd;
+rshrcmd(int af, char **ahost, u_int32_t rport, const char *locuser,
+    const char *remuser, const char *cmd, int *fd2p, const char *rshcmd)
 {
 	pid_t pid;
 	int sp[2], ep[2];
@@ -405,28 +384,28 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 	/* locuser must exist on this host. */
 	if (getpwnam_r(locuser, &pwres, pwbuf, sizeof(pwbuf), &pw) != 0 ||
 	    pw == NULL) {
-		warnx("rshrcmd: unknown user: %s", locuser);
-		return(-1);
+		warnx("%s: unknown user: %s", __func__, locuser);
+		return -1;
 	}
 
 	/* get a socketpair we'll use for stdin and stdout. */
 	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sp) < 0) {
-		warn("rshrcmd: socketpair");
-		return (-1);
+		warn("%s: socketpair", __func__);
+		return -1;
 	}
 	/* we will use this for the fd2 pointer */
 	if (fd2p) {
 		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, ep) < 0) {
-			warn("rshrcmd: socketpair");
-			return (-1);
+			warn("%s: socketpair", __func__);
+			return -1;
 		}
 		*fd2p = ep[0];
 	}
 	
 	pid = fork();
 	if (pid < 0) {
-		warn("rshrcmd: fork");
-		return (-1);
+		warn("%s: fork", __func__);
+		return -1;
 	}
 	if (pid == 0) {
 		/*
@@ -436,25 +415,25 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 		 */
 		(void)close(sp[0]);
 		if (dup2(sp[1], 0) < 0 || dup2(0, 1) < 0) {
-			warn("rshrcmd: dup2");
+			warn("%s: dup2", __func__);
 			_exit(1);
 		}
 		(void)close(sp[1]);
 		if (fd2p) {
 			if (dup2(ep[1], 2) < 0) {
-				warn("rshrcmd: dup2");
+				warn("%s: dup2", __func__);
 				_exit(1);
 			}
 			(void)close(ep[0]);
 			(void)close(ep[1]);
 		} else if (dup2(0, 2) < 0) {
-			warn("rshrcmd: dup2");
+			warn("%s: dup2", __func__);
 			_exit(1);
 		}
 		/* fork again to lose parent. */
 		pid = fork();
 		if (pid < 0) {
-			warn("rshrcmd: second fork");
+			warn("%s: second fork", __func__);
 			_exit(1);
 		}
 		if (pid > 0)
@@ -462,13 +441,13 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 
 		/* Orphan.  Become local user for rshprog. */
 		if (setuid(pw->pw_uid)) {
-			warn("rshrcmd: setuid(%lu)", (u_long)pw->pw_uid);
+			warn("%s: setuid(%lu)", __func__, (u_long)pw->pw_uid);
 			_exit(1);
 		}
 
 		/*
-		 * If we are rcmd'ing to "localhost" as the same user as we are,
-		 * then avoid running remote shell for efficiency.
+		 * If we are rcmd'ing to "localhost" as the same user as we
+		 * are, then avoid running remote shell for efficiency.
 		 */
 		if (strcmp(*ahost, "localhost") == 0 &&
 		    strcmp(locuser, remuser) == 0) {
@@ -479,11 +458,28 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 			p = strrchr(rshcmd, '/');
 			execlp(rshcmd, p ? p + 1 : rshcmd, "-c", cmd, NULL);
 		} else {
-			p = strrchr(rshcmd, '/');
-			execlp(rshcmd, p ? p + 1 : rshcmd, *ahost, "-l",
-			    remuser, cmd, NULL);
+			const char *program;
+			program = strrchr(rshcmd, '/');
+			program = program ? program + 1 : rshcmd;
+			switch (af) {
+			case AF_INET:
+				execlp(rshcmd, program, "-4", "-l", remuser,
+				    *ahost, cmd, NULL);
+				break;
+
+			case AF_INET6:
+				execlp(rshcmd, program, "-6", "-l", remuser,
+				    *ahost, cmd, NULL);
+				break;
+
+			default:
+				/* typically AF_UNSPEC, plus whatever */
+				execlp(rshcmd, program,       "-l", remuser,
+				    *ahost, cmd, NULL);
+				break;
+			}
 		}
-		warn("rshrcmd: exec %s", rshcmd);
+		warn("%s: exec %s", __func__, rshcmd);
 		_exit(1);
 	}
 	/* Parent */
@@ -492,12 +488,11 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 		(void)close(ep[1]);
 
 	(void)waitpid(pid, NULL, 0);
-	return (sp[0]);
+	return sp[0];
 }
 
 int
-rresvport(alport)
-	int *alport;
+rresvport(int *alport)
 {
 
 	_DIAGASSERT(alport != NULL);
@@ -506,13 +501,11 @@ rresvport(alport)
 }
 
 int
-rresvport_af(alport, family)
-	int *alport;
-	int family;
+rresvport_af(int *alport, int family)
 {
 	struct sockaddr_storage ss;
 	struct sockaddr *sa;
-	int salen;
+	socklen_t salen;
 	int s;
 	u_int16_t *portp;
 
@@ -539,12 +532,12 @@ rresvport_af(alport, family)
 #endif
 	default:
 		errno = EAFNOSUPPORT;
-		return (-1);
+		return -1;
 	}
 	sa->sa_family = family;
 	s = socket(family, SOCK_STREAM, 0);
 	if (s < 0)
-		return (-1);
+		return -1;
 #ifdef BSD4_4
 	switch (family) {
 	case AF_INET:
@@ -555,10 +548,10 @@ rresvport_af(alport, family)
 
 			(void)close(s);
 			errno = sverr;
-			return (-1);
+			return -1;
 		}
 		*alport = (int)ntohs(*portp);
-		return (s);
+		return s;
 	default:
 		/* is it necessary to try keep code for other AFs? */
 		break;
@@ -566,17 +559,17 @@ rresvport_af(alport, family)
 #endif
 	for (;;) {
 		*portp = htons((u_short)*alport);
-		if (bind(s, sa, (socklen_t)salen) >= 0)
-			return (s);
+		if (bind(s, sa, salen) >= 0)
+			return s;
 		if (errno != EADDRINUSE) {
 			(void)close(s);
-			return (-1);
+			return -1;
 		}
 		(*alport)--;
 		if (*alport == IPPORT_RESERVED/2) {
 			(void)close(s);
 			errno = EAGAIN;		/* close */
-			return (-1);
+			return -1;
 		}
 	}
 }
@@ -585,9 +578,7 @@ int	__check_rhosts_file = 1;
 const char *__rcmd_errstr;
 
 int
-ruserok(rhost, superuser, ruser, luser)
-	const char *rhost, *ruser, *luser;
-	int superuser;
+ruserok(const char *rhost, int superuser, const char *ruser, const char *luser)
 {
 	struct addrinfo hints, *res, *r;
 	int error;
@@ -601,17 +592,17 @@ ruserok(rhost, superuser, ruser, luser)
 	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 	error = getaddrinfo(rhost, "0", &hints, &res);
 	if (error)
-		return (-1);
+		return -1;
 
 	for (r = res; r; r = r->ai_next) {
 		if (iruserok_sa(r->ai_addr, (int)r->ai_addrlen, superuser,
 		    ruser, luser) == 0) {
 			freeaddrinfo(res);
-			return (0);
+			return 0;
 		}
 	}
 	freeaddrinfo(res);
-	return (-1);
+	return -1;
 }
 
 /*
@@ -624,21 +615,17 @@ ruserok(rhost, superuser, ruser, luser)
  * Returns 0 if ok, -1 if not ok.
  */
 int
-iruserok(raddr, superuser, ruser, luser)
-	u_int32_t raddr;
-	int superuser;
-	const char *ruser, *luser;
+iruserok(u_int32_t raddr, int superuser, const char *ruser, const char *luser)
 {
 	struct sockaddr_in irsin;
 
 	memset(&irsin, 0, sizeof(irsin));
 	irsin.sin_family = AF_INET;
 #ifdef BSD4_4
-	irsin.sin_len = sizeof(struct sockaddr_in);
+	irsin.sin_len = sizeof(irsin);
 #endif
 	memcpy(&irsin.sin_addr, &raddr, sizeof(irsin.sin_addr));
-	return iruserok_sa(&irsin, sizeof(struct sockaddr_in), superuser, ruser,
-		    luser);
+	return iruserok_sa(&irsin, sizeof(irsin), superuser, ruser, luser);
 }
 
 /*
@@ -646,11 +633,8 @@ iruserok(raddr, superuser, ruser, luser)
  * unistd.h and sys/socket.h.  There's no better way.
  */
 int
-iruserok_sa(raddr, rlen, superuser, ruser, luser)
-	const void *raddr;
-	int rlen;
-	int superuser;
-	const char *ruser, *luser;
+iruserok_sa(const void *raddr, int rlen, int superuser, const char *ruser,
+    const char *luser)
 {
 	const struct sockaddr *sa;
 	struct stat sbuf;
@@ -676,7 +660,7 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 		if (__ivaliduser_sa(hostf, sa, (socklen_t)rlen, luser,
 		    ruser) == 0) {
 			(void)fclose(hostf);
-			return (0);
+			return 0;
 		}
 		(void)fclose(hostf);
 	}
@@ -686,7 +670,7 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 
 		if (getpwnam_r(luser, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0
 		    || pwd == NULL)
-			return (-1);
+			return -1;
 		(void)strlcpy(pbuf, pwd->pw_dir, sizeof(pbuf));
 		(void)strlcat(pbuf, "/.rhosts", sizeof(pbuf));
 
@@ -730,7 +714,7 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 		(void)setegid(gid);
 
 	}
-	return (isvaliduser);
+	return isvaliduser;
 }
 
 /*
@@ -744,34 +728,29 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 static
 #endif
 int
-__ivaliduser(hostf, raddr, luser, ruser)
-	FILE *hostf;
-	u_int32_t raddr;
-	const char *luser, *ruser;
+__ivaliduser(FILE *hostf, u_int32_t raddr, const char *luser,
+    const char *ruser)
 {
 	struct sockaddr_in ivusin;
 
 	memset(&ivusin, 0, sizeof(ivusin));
 	ivusin.sin_family = AF_INET;
 #ifdef BSD4_4
-	ivusin.sin_len = sizeof(struct sockaddr_in);
+	ivusin.sin_len = sizeof(ivusin);
 #endif
 	memcpy(&ivusin.sin_addr, &raddr, sizeof(ivusin.sin_addr));
 	return __ivaliduser_sa(hostf, (struct sockaddr *)(void *)&ivusin,
-	    sizeof(struct sockaddr_in), luser, ruser);
+	    sizeof(ivusin), luser, ruser);
 }
 
 #ifdef notdef	/*_LIBC*/
 static
 #endif
 int
-__ivaliduser_sa(hostf, raddr, salen, luser, ruser)
-	FILE *hostf;
-	const struct sockaddr *raddr;
-	socklen_t salen;
-	const char *luser, *ruser;
+__ivaliduser_sa(FILE *hostf, const struct sockaddr *raddr, socklen_t salen,
+    const char *luser, const char *ruser)
 {
-	register char *user, *p;
+	char *user, *p;
 	int ch;
 	char buf[MAXHOSTNAMELEN + 128];		/* host + login */
 	const char *auser, *ahost;
@@ -858,7 +837,8 @@ __ivaliduser_sa(hostf, raddr, salen, luser, ruser)
 				break;
 
 			default:
-				hostok = -__icheckhost(raddr, salen, &ahost[1]);
+				hostok =
+				    -__icheckhost(raddr, salen, &ahost[1]);
 				break;
 			}
 		else
@@ -918,10 +898,7 @@ __ivaliduser_sa(hostf, raddr, salen, luser, ruser)
  * Returns "true" if match, 0 if no match.
  */
 static int
-__icheckhost(raddr, salen, lhost)
-	const struct sockaddr *raddr;
-	socklen_t salen;
-	const char *lhost;
+__icheckhost(const struct sockaddr *raddr, socklen_t salen, const char *lhost)
 {
 	struct addrinfo hints, *res, *r;
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
@@ -932,9 +909,8 @@ __icheckhost(raddr, salen, lhost)
 	_DIAGASSERT(lhost != NULL);
 
 	h1[0] = '\0';
-	if (getnameinfo(raddr, salen, h1, sizeof(h1), NULL, 0,
-	    niflags) != 0)
-		return (0);
+	if (getnameinfo(raddr, salen, h1, sizeof(h1), NULL, 0, niflags) != 0)
+		return 0;
 
 	/* Resolve laddr into sockaddr */
 	memset(&hints, 0, sizeof(hints));
@@ -943,7 +919,7 @@ __icheckhost(raddr, salen, lhost)
 	res = NULL;
 	error = getaddrinfo(lhost, "0", &hints, &res);
 	if (error)
-		return (0);
+		return 0;
 
 	/*
 	 * Try string comparisons between raddr and laddr.
@@ -955,13 +931,13 @@ __icheckhost(raddr, salen, lhost)
 			continue;
 		if (strcmp(h1, h2) == 0) {
 			freeaddrinfo(res);
-			return (1);
+			return 1;
 		}
 	}
 
 	/* No match. */
 	freeaddrinfo(res);
-	return (0);
+	return 0;
 }
 
 /*
@@ -970,9 +946,7 @@ __icheckhost(raddr, salen, lhost)
  * be found, pack the numeric IP address into the string.
  */
 static char *
-__gethostloop(raddr, salen)
-	const struct sockaddr *raddr;
-	socklen_t salen;
+__gethostloop(const struct sockaddr *raddr, socklen_t salen)
 {
 	static char remotehost[NI_MAXHOST];
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
@@ -985,10 +959,9 @@ __gethostloop(raddr, salen)
 	h1[0] = remotehost[0] = '\0';
 	if (getnameinfo(raddr, salen, remotehost, sizeof(remotehost),
 	    NULL, 0, NI_NAMEREQD) != 0)
-		return (NULL);
-	if (getnameinfo(raddr, salen, h1, sizeof(h1), NULL, 0,
-	    niflags) != 0)
-		return (NULL);
+		return NULL;
+	if (getnameinfo(raddr, salen, h1, sizeof(h1), NULL, 0, niflags) != 0)
+		return NULL;
 
 	/*
 	 * Look up the name and check that the supplied
@@ -1001,7 +974,7 @@ __gethostloop(raddr, salen)
 	res = NULL;
 	error = getaddrinfo(remotehost, "0", &hints, &res);
 	if (error)
-		return (NULL);
+		return NULL;
 
 	for (r = res; r; r = r->ai_next) {
 		h2[0] = '\0';
@@ -1010,7 +983,7 @@ __gethostloop(raddr, salen)
 			continue;
 		if (strcmp(h1, h2) == 0) {
 			freeaddrinfo(res);
-			return (remotehost);
+			return remotehost;
 		}
 	}
 
@@ -1021,5 +994,5 @@ __gethostloop(raddr, salen)
 	syslog(LOG_NOTICE, "rcmd: address %s not listed for host %s",
 	    h1, res->ai_canonname ? res->ai_canonname : remotehost);
 	freeaddrinfo(res);
-	return (NULL);
+	return NULL;
 }
