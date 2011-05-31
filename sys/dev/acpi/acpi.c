@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.240 2011/02/27 17:10:33 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.241 2011/05/31 14:27:44 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.240 2011/02/27 17:10:33 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.241 2011/05/31 14:27:44 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1300,7 +1300,12 @@ acpi_enter_sleep_state(int state)
 
 		if (state == ACPI_STATE_S1) {
 
-			/* Just enter the state. */
+			/*
+			 * Enter the state. Note that interrupts must
+			 * be off before calling AcpiEnterSleepState().
+			 * Conversely, AcpiLeaveSleepState() should
+			 * always be called with interrupts enabled.
+			 */
 			acpi_md_OsDisableInterrupt();
 			rv = AcpiEnterSleepState(state);
 
@@ -1308,7 +1313,8 @@ acpi_enter_sleep_state(int state)
 				aprint_error_dev(sc->sc_dev, "failed to "
 				    "enter S1: %s\n", AcpiFormatException(rv));
 
-			(void)AcpiLeaveSleepState(state);
+			acpi_md_OsEnableInterrupt();
+			rv = AcpiLeaveSleepState(state);
 
 		} else {
 
@@ -1323,6 +1329,9 @@ acpi_enter_sleep_state(int state)
 			(void)pmf_system_resume(PMF_Q_NONE);
 		}
 
+		/*
+		 * No wake GPEs should be enabled at runtime.
+		 */
 		acpi_wakedev_commit(sc, ACPI_STATE_S0);
 		break;
 
