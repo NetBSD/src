@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.1,v 1.19 2008/05/30 02:29:37 mrg Exp $
+.\"	$NetBSD: rcmd.1,v 1.20 2011/05/31 10:24:43 christos Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green.
 .\" All rights reserved.
@@ -63,6 +63,8 @@
 .Xr rcmd 3
 .Sh SYNOPSIS
 .Nm
+.Op Fl 46dn
+.Op Fl p Ar port
 .Op Fl l Ar username
 .Op Fl u Ar localusername
 .Ar host
@@ -84,6 +86,10 @@ command;
 normally terminates when the remote command does.
 The options are as follows:
 .Bl -tag -width flag
+.It Fl 4
+Use IPv4 addresses only.
+.It Fl 6
+Use IPv6 addresses only.
 .It Fl d
 The
 .Fl d
@@ -97,6 +103,9 @@ By default, the remote username is the same as the local username.
 The
 .Fl l
 option allows the remote name to be specified.
+Another possible way to specify the remote username
+is the notation
+.Ar user@host .
 .It Fl u
 The
 .Fl u
@@ -110,6 +119,12 @@ option redirects input from the special device
 (see the
 .Sx BUGS
 section of this manual page).
+.It Fl p Ar port
+Uses the given
+.Pa port
+instead of the one assigned to the service
+.Dq shell .
+May be given either as symbolic name or as number.
 .El
 .Pp
 Shell metacharacters which are not quoted are interpreted on local machine,
