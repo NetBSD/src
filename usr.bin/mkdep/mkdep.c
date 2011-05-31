@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.37 2011/05/30 22:52:12 christos Exp $ */
+/* $NetBSD: mkdep.c,v 1.38 2011/05/31 02:34:32 enami Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: mkdep.c,v 1.37 2011/05/30 22:52:12 christos Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.38 2011/05/31 02:34:32 enami Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -379,7 +379,7 @@ main(int argc, char **argv)
 				/* Then look for any valid suffix */
 				for (sl = suff_list; sl != NULL;
 				    sl = sl->next) {
-					if (sl->len &&
+					if (sl->len && buf <= suf - sl->len &&
 					    !memcmp(suf - sl->len, sl->suff,
 						    sl->len))
 						break;
