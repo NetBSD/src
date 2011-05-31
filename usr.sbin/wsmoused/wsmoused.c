@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.25 2009/01/19 00:53:15 christos Exp $ */
+/* $NetBSD: wsmoused.c,v 1.26 2011/05/31 03:37:02 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: wsmoused.c,v 1.25 2009/01/19 00:53:15 christos Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.26 2011/05/31 03:37:02 christos Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -95,7 +95,7 @@ static struct mode_bootstrap *Avail_Modes[] = {
  * Prototypes for functions private to this module.
  */
 
-static void usage(void);
+static void usage(void) __attribute__((__noreturn__));
 static void open_device(unsigned int);
 static void init_mouse(void);
 static void event_loop(void);
@@ -105,7 +105,8 @@ static void attach_modes(char *);
 static void detach_mode(const char *);
 static void detach_modes(void);
 static void signal_terminate(int);
-int main(int, char **);
+
+static int debug;
 
 /* --------------------------------------------------------------------- */
 
@@ -295,6 +296,11 @@ event_loop(void)
 
 		if (fds[0].revents & POLLIN) {
 			res = read(Mouse.m_statfd, &event, sizeof(event));
+			if (debug)
+				(void)fprintf(stderr, "event [type=%u,value=%d,"
+				    "time=[%lld,%ld]\n", event.type,
+				    event.value, (long long)event.time.tv_sec,
+				    (long)event.time.tv_nsec);
 			if (res != sizeof(event))
 				log_warn("failed to read from mouse stat");
 
@@ -313,6 +319,11 @@ event_loop(void)
 			if (res != sizeof(event))
 				log_warn("failed to read from mouse");
 
+			if (debug)
+				(void)fprintf(stderr, "event [type=%u,value=%d,"
+				    "time=[%lld,%ld]\n", event.type,
+				    event.value, (long long)event.time.tv_sec,
+				    (long)event.time.tv_nsec);
 			if (Mouse.m_fifofd >= 0) {
 				res = write(Mouse.m_fifofd, &event,
 				            sizeof(event));
@@ -500,8 +511,11 @@ main(int argc, char **argv)
 	nodaemon = -1;
 
 	/* Parse command line options */
-	while ((opt = getopt(argc, argv, "d:f:m:n")) != -1) {
+	while ((opt = getopt(argc, argv, "Dd:f:m:n")) != -1) {
 		switch (opt) {
+		case 'D':
+			debug++;
+			break;
 		case 'd': /* Mouse device name */
 			Mouse.m_devname = optarg;
 			break;
