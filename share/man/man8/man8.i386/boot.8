@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.57 2011/05/26 04:25:26 uebayasi Exp $
+.\"	$NetBSD: boot.8,v 1.58 2011/05/31 03:43:47 uebayasi Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -346,20 +346,6 @@ See
 .Sx Console Selection Policy
 in
 .Xr boot_console 8 .
-.It Ic vesa Bro Va modenum | Ar on | off | enabled | disabled | list Brc
-Initialise the video card to the specified resolution and bit depth.
-The
-.Va modenum
-should be in the form of
-.Ar 0x100 , 800x600 , 800x600x32 .
-The values
-.Ar enabled , on
-put the display into the default mode, and
-.Ar disabled , off
-returns the display into standard vga mode.
-The value
-.Ar list
-lists all supported modes.
 .It Ic dev Op Va device
 Set the default drive and partition for subsequent filesystem
 operations.
@@ -423,7 +409,7 @@ section in
 .Xr pxeboot 8 ) .
 .It Ic console Ns = Ns Ar dev
 Console used by DOM0 kernel during boot.
-.Ar dev 
+.Ar dev
 accepts the same values as the ones given for the
 .Cm consdev
 command.
@@ -567,6 +553,20 @@ at boot time .
 These commands are processed before the interactive
 .Xr userconf 4
 shell is executed, if requested .
+.It Ic vesa Bro Va modenum | Ar on | off | enabled | disabled | list Brc
+Initialise the video card to the specified resolution and bit depth.
+The
+.Va modenum
+should be in the form of
+.Ar 0x100 , 800x600 , 800x600x32 .
+The values
+.Ar enabled , on
+put the display into the default mode, and
+.Ar disabled , off
+returns the display into standard vga mode.
+The value
+.Ar list
+lists all supported modes.
 .El
 .Pp
 In an emergency, the bootstrap methods described in the
