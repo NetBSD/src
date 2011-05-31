@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.11 2011/05/20 21:42:49 nakayama Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.12 2011/05/31 20:17:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.11 2011/05/20 21:42:49 nakayama Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.12 2011/05/31 20:17:36 jruoho Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -115,8 +115,13 @@ ATF_TC_BODY(strtod_inf, tc)
 	float f;
 
 	/*
-	 * See old PR lib/33262.
+	 * See the closed PR lib/33262.
+	 *
+	 * This may also fail under QEMU; cf. PR misc/44767.
 	 */
+	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+		atf_tc_expect_fail("PR misc/44767");
+
 	d = strtod("INF", NULL);
 	ATF_REQUIRE(isinf(d) != 0);
 
@@ -143,9 +148,13 @@ ATF_TC_BODY(strtod_round, tc)
 
 	/*
 	 * Test that strtod(3) honors the current rounding mode.
-	 *
 	 * The used value is somewhere near 1 + DBL_EPSILON + FLT_EPSILON.
+	 *
+	 * May fail under QEMU; cf. PR misc/44767.
 	 */
+	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+		atf_tc_expect_fail("PR misc/44767");
+
 	val = "1.00000011920928977282585492503130808472633361816406";
 
 	(void)fesetround(FE_UPWARD);
