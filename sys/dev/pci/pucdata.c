@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.59.4.3 2011/04/21 01:42:00 rmind Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.59.4.4 2011/05/31 03:04:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.59.4.3 2011/04/21 01:42:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.59.4.4 2011/05/31 03:04:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1144,6 +1144,116 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	{   "SUNIX 5008 1P",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0100 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 5016 8S",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0010 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x18, COM_FREQ * 8},
+/*
+ * PUC_MAX_PORTS needs to be raised in order to reach these ports
+ */
+#if PUC_MAX_PORTS >= 16
+		{ PUC_PORT_TYPE_COM, 0x14, 0x20, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x28, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x30, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x38, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x40, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x48, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x50, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x58, COM_FREQ * 8},
+#endif /* PUC_MAX_PORTS >= 16 */
+	    },
+	},
+
+	{   "SUNIX 5027 1S",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0001 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 5037 2S",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0002 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 5056 4S",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0004 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 5066 8S",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0008 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x18, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 5069 1S / 1P",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0101 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 5079 2S / 1P",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0102 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 5099 4S / 1P",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0104 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
 	/*
 	 * XXX no entry because I have no data:
 	 * XXX Dolphin Peripherals 4006 (single parallel)
@@ -1183,6 +1293,35 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
+
+	/*
+	 * Nanjing QinHeng Electronics 
+	 * Products based on CH353 chip which can be
+	 * configured to provide various combinations
+	 * including 2 serial ports and a parallel port
+	 * or 4 serial ports (using a CH432 parallel to
+	 * 2 serial port converter. Product codes from
+	 * documentation (and physical 2 port serial card)
+	 */
+	{   "Nanjing QinHeng Electronics 2S",
+	    {	PCI_VENDOR_QINHENG, 0x3253, PCI_VENDOR_QINHENG, 0x3253	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics 2S, 1P",
+	    {	PCI_VENDOR_QINHENG, 0x7053, PCI_VENDOR_QINHENG, 0x7053	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
 
 	/* VScom PCI-200: 2S */
 	{   "VScom PCI-200",
@@ -1967,6 +2106,34 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x3e8, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x3f8, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x000, 0x00 },
+	    },
+	},
+
+	/* SystemBase SB16C1054 UARTs */
+	{   "SystemBase SB16C1054",
+	    {	PCI_VENDOR_SYSTEMBASE, PCI_PRODUCT_SYSTEMBASE_SB16C1054, 0, 0 },
+	    {	0xffff,	0xffff,						 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ },
+	    },
+	},
+
+	/* SystemBase SB16C1058 UARTs */
+	{   "SystemBase SB16C1058",
+	    {   PCI_VENDOR_SYSTEMBASE, PCI_PRODUCT_SYSTEMBASE_SB16C1058, 0, 0 },
+	    {	0xffff,	0xffff,						 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x20, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x28, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x30, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x38, COM_FREQ },
 	    },
 	},
 

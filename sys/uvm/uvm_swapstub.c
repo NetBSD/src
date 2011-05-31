@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swapstub.c,v 1.6 2008/01/08 06:25:55 matt Exp $	*/
+/*	$NetBSD: uvm_swapstub.c,v 1.6.32.1 2011/05/31 03:05:15 rmind Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,11 +27,11 @@
  */
 
 /*
- * dummy routines used when "options VMSWAP" is not configured.
+ * Dummy routines used when "options VMSWAP" is not configured.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swapstub.c,v 1.6 2008/01/08 06:25:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swapstub.c,v 1.6.32.1 2011/05/31 03:05:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,11 +52,4 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *v, register_t *retval)
 {
 
 	return ENOSYS;
-}
-
-void
-uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
-{
-
-	*retval = 0;
 }

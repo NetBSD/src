@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.16.4.3 2011/03/05 20:55:04 rmind Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.16.4.4 2011/05/31 03:04:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.16.4.3 2011/03/05 20:55:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.16.4.4 2011/05/31 03:04:58 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1037,9 +1037,6 @@ hfs_vop_reclaim(void *v)
 	/* Remove the hfsnode from its hash chain. */
 	hfs_nhashremove(hp);
 
-	/* Purge name lookup cache. */
-	cache_purge(vp);
-	
 	/* Decrement the reference count to the volume's device. */
 	if (hp->h_devvp) {
 		vrele(hp->h_devvp);
@@ -1048,7 +1045,7 @@ hfs_vop_reclaim(void *v)
 	
 	genfs_node_destroy(vp);
 	free(vp->v_data, M_TEMP);
-	vp->v_data = 0;
+	vp->v_data = NULL;
 
 	return 0;
 }

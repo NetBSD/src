@@ -1,3 +1,4 @@
+/*	$NetBSD: in6_src.c,v 1.49.4.1 2011/05/31 03:05:08 rmind Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -65,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.49 2009/05/25 22:49:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.49.4.1 2011/05/31 03:05:08 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -110,6 +111,8 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.49 2009/05/25 22:49:23 pooka Exp $");
 #include <net/if_mip.h>
 #endif /* NMIP > 0 */
 #endif /* MIP6 */
+
+#include <netinet/tcp_vtw.h>
 
 #define ADDR_LABEL_NOTAPP (-1)
 struct in6_addrpolicy defaultaddrpolicy;
@@ -846,18 +849,24 @@ in6_pcbsetport(struct sockaddr_in6 *sin6, struct in6pcb *in6p, struct lwp *l)
 
 	lport = *lastport - 1;
 	for (cnt = maxport - minport + 1; cnt; cnt--, lport--) {
+		vestigial_inpcb_t vestige;
+
 		if (lport < minport || lport > maxport)
 			lport = maxport;
 #ifdef INET
 		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
 			t = in_pcblookup_port(table,
 			    *(struct in_addr *)&sin6->sin6_addr.s6_addr32[3],
-			    htons(lport), wild);
+			    htons(lport), wild, &vestige);
+			if (!t && vestige.valid)
+				continue;
 		} else
 #endif
 		{
 			t = in6_pcblookup_port(table, &sin6->sin6_addr,
-			    htons(lport), wild);
+			    htons(lport), wild, &vestige);
+			if (!t && vestige.valid)
+				continue;
 		}
 		if (t == 0) {
 			/* We have a free port. Check with the secmodel. */

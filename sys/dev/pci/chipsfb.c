@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.20.4.3 2011/04/21 01:41:49 rmind Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.20.4.4 2011/05/31 03:04:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.20.4.3 2011/04/21 01:41:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.20.4.4 2011/05/31 03:04:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ CFATTACH_DECL_NEW(chipsfb_pci, sizeof(struct chipsfb_pci_softc),
 static int
 chipsfb_pci_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	const struct pci_attach_args *pa = (const struct pci_attach_args *)aux;
 
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
 	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
@@ -88,7 +88,7 @@ chipsfb_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct chipsfb_pci_softc *scp = device_private(self);
 	struct chipsfb_softc *sc = &scp->sc_chips;
-	struct pci_attach_args *pa = aux;
+	const struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	pcireg_t screg;
 

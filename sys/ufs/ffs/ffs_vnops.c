@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.113.4.4 2011/04/21 01:42:20 rmind Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.113.4.5 2011/05/31 03:05:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.113.4.4 2011/04/21 01:42:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.113.4.5 2011/05/31 03:05:13 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -175,7 +175,7 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_kqfilter_desc, spec_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
-	{ &vop_fsync_desc, ffs_fsync },			/* fsync */
+	{ &vop_fsync_desc, ffs_spec_fsync },		/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
 	{ &vop_remove_desc, spec_remove },		/* remove */
 	{ &vop_link_desc, spec_link },			/* link */
@@ -264,6 +264,61 @@ const struct vnodeopv_desc ffs_fifoop_opv_desc =
 	{ &ffs_fifoop_p, ffs_fifoop_entries };
 
 #include <ufs/ufs/ufs_readwrite.c>
+
+int
+ffs_spec_fsync(void *v)
+{
+	struct vop_fsync_args /* {
+		struct vnode *a_vp;
+		kauth_cred_t a_cred;
+		int a_flags;
+		off_t a_offlo;
+		off_t a_offhi;
+		struct lwp *a_l;
+	} */ *ap = v;
+	int error, flags, uflags;
+	struct vnode *vp;
+	struct mount *mp;
+
+	flags = ap->a_flags;
+	uflags = UPDATE_CLOSE | ((flags & FSYNC_WAIT) ? UPDATE_WAIT : 0);
+	vp = ap->a_vp;
+	mp = vp->v_mount;
+
+	fstrans_start(mp, FSTRANS_LAZY);
+
+	error = spec_fsync(v);
+	if (error)
+		goto out;
+
+#ifdef WAPBL
+	if (mp && mp->mnt_wapbl) {
+		/*
+		 * Don't bother writing out metadata if the syncer is
+		 * making the request.  We will let the sync vnode
+		 * write it out in a single burst through a call to
+		 * VFS_SYNC().
+		 */
+		if ((flags & (FSYNC_DATAONLY | FSYNC_LAZY)) != 0)
+			goto out;
+		if ((VTOI(vp)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE
+		    | IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) != 0) {
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error != 0)
+				goto out;
+			error = ffs_update(vp, NULL, NULL, uflags);
+			UFS_WAPBL_END(mp);
+		}
+		goto out;
+	}
+#endif /* WAPBL */
+
+	error = ffs_update(vp, NULL, NULL, uflags);
+
+out:
+	fstrans_done(mp);
+	return error;
+}
 
 int
 ffs_fsync(void *v)
@@ -399,32 +454,27 @@ out:
 int
 ffs_full_fsync(struct vnode *vp, int flags)
 {
-	struct buf *bp, *nbp;
-	int error, passes, skipmeta, waitfor, i;
+	int error, i, uflags;
 	struct mount *mp;
 
-	KASSERT(VTOI(vp) != NULL);
 	KASSERT(vp->v_tag == VT_UFS);
+	KASSERT(VTOI(vp) != NULL);
+	KASSERT(vp->v_type != VCHR && vp->v_type != VBLK);
 
 	error = 0;
+	uflags = UPDATE_CLOSE | ((flags & FSYNC_WAIT) ? UPDATE_WAIT : 0);
 
 	mp = vp->v_mount;
-	if (vp->v_type == VBLK && vp->v_specmountpoint != NULL) {
-		mp = vp->v_specmountpoint;
-	} else {
-		mp = vp->v_mount;
-	}
 
 	/*
 	 * Flush all dirty data associated with the vnode.
 	 */
-	if (vp->v_type == VREG || vp->v_type == VBLK) {
+	if (vp->v_type == VREG) {
 		int pflags = PGO_ALLPAGES | PGO_CLEANIT;
 
 		if ((flags & FSYNC_WAIT))
 			pflags |= PGO_SYNCIO;
-		if (vp->v_type == VREG &&
-		    fstrans_getstate(mp) == FSTRANS_SUSPENDING)
+		if (fstrans_getstate(mp) == FSTRANS_SUSPENDING)
 			pflags |= PGO_FREE;
 		mutex_enter(vp->v_interlock);
 		error = VOP_PUTPAGES(vp, 0, 0, pflags);
@@ -433,7 +483,6 @@ ffs_full_fsync(struct vnode *vp, int flags)
 	}
 
 #ifdef WAPBL
-	mp = wapbl_vptomp(vp);
 	if (mp && mp->mnt_wapbl) {
 		/*
 		 * Don't bother writing out metadata if the syncer is
@@ -449,8 +498,7 @@ ffs_full_fsync(struct vnode *vp, int flags)
 			error = UFS_WAPBL_BEGIN(mp);
 			if (error)
 				return error;
-			error = ffs_update(vp, NULL, NULL, UPDATE_CLOSE |
-			    ((flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
+			error = ffs_update(vp, NULL, NULL, uflags);
 			UFS_WAPBL_END(mp);
 		}
 		if (error || (flags & FSYNC_NOLOG) != 0)
@@ -477,87 +525,11 @@ ffs_full_fsync(struct vnode *vp, int flags)
 	}
 #endif /* WAPBL */
 
-	/*
-	 * Write out metadata for non-logging file systems. XXX This block
-	 * should be simplified now that softdep is gone.
-	 */
-	passes = NIADDR + 1;
-	skipmeta = 0;
-	if (flags & FSYNC_WAIT)
-		skipmeta = 1;
-
-loop:
-	mutex_enter(&bufcache_lock);
-	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
-		bp->b_cflags &= ~BC_SCANNED;
-	}
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
-		nbp = LIST_NEXT(bp, b_vnbufs);
-		if (bp->b_cflags & (BC_BUSY | BC_SCANNED))
-			continue;
-		if ((bp->b_oflags & BO_DELWRI) == 0)
-			panic("ffs_fsync: not dirty");
-		if (skipmeta && bp->b_lblkno < 0)
-			continue;
-		bp->b_cflags |= BC_BUSY | BC_VFLUSH | BC_SCANNED;
-		mutex_exit(&bufcache_lock);
-		/*
-		 * On our final pass through, do all I/O synchronously
-		 * so that we can find out if our flush is failing
-		 * because of write errors.
-		 */
-		if (passes > 0 || !(flags & FSYNC_WAIT))
-			(void) bawrite(bp);
-		else if ((error = bwrite(bp)) != 0)
-			return (error);
-		/*
-		 * Since we unlocked during the I/O, we need
-		 * to start from a known point.
-		 */
-		mutex_enter(&bufcache_lock);
-		nbp = LIST_FIRST(&vp->v_dirtyblkhd);
-	}
-	mutex_exit(&bufcache_lock);
-	if (skipmeta) {
-		skipmeta = 0;
-		goto loop;
-	}
-
-	if ((flags & FSYNC_WAIT) != 0) {
-		mutex_enter(vp->v_interlock);
-		while (vp->v_numoutput) {
-			cv_wait(&vp->v_cv, vp->v_interlock);
-		}
-		mutex_exit(vp->v_interlock);
-
-		/*
-		 * Ensure that any filesystem metadata associated
-		 * with the vnode has been written.
-		 */
-		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
-			/*
-			* Block devices associated with filesystems may
-			* have new I/O requests posted for them even if
-			* the vnode is locked, so no amount of trying will
-			* get them clean. Thus we give block devices a
-			* good effort, then just give up. For all other file
-			* types, go around and try again until it is clean.
-			*/
-			if (passes > 0) {
-				passes--;
-				goto loop;
-			}
-#ifdef DIAGNOSTIC
-			if (vp->v_type != VBLK)
-				vprint("ffs_fsync: dirty", vp);
-#endif
-		}
-	}
-
-	waitfor = (flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
-	error = ffs_update(vp, NULL, NULL, UPDATE_CLOSE | waitfor);
-
+	error = vflushbuf(vp, (flags & FSYNC_WAIT) != 0);
+	if (error == 0)
+		error = ffs_update(vp, NULL, NULL, uflags);
 	if (error == 0 && (flags & FSYNC_CACHE) != 0) {
+		i = 1;
 		(void)VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
 		    kauth_cred_get());
 	}

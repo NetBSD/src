@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.39 2010/03/05 22:47:03 dyoung Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.39.2.1 2011/05/31 03:04:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.39 2010/03/05 22:47:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.39.2.1 2011/05/31 03:04:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -719,7 +719,7 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 	pba.pba_memt = ca->ca_memt;
 	pba.pba_dmat = ca->ca_dmat;
 	pba.pba_pc   = psc->sc_pc;
-	pba.pba_flags    = PCI_FLAGS_IO_ENABLED|PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags    = PCI_FLAGS_IO_OKAY|PCI_FLAGS_MEM_OKAY;
 	pba.pba_bus      = PPB_BUSINFO_SECONDARY(busdata);
 	pba.pba_bridgetag = &csc->sc_tag;
 	/*pba.pba_intrswiz = parent_sc->sc_intrswiz; */

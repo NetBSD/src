@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_backend.c,v 1.8 2008/01/05 02:47:03 matt Exp $	*/
+/*	$NetBSD: dmover_backend.c,v 1.8.32.1 2011/05/31 03:04:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,37 +40,36 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.8 2008/01/05 02:47:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.8.32.1 2011/05/31 03:04:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
-#include <sys/simplelock.h>
 #include <sys/systm.h>
+#include <sys/once.h>
 
 #include <dev/dmover/dmovervar.h>
 
 TAILQ_HEAD(, dmover_backend) dmover_backend_list;
 kmutex_t dmover_backend_list_lock;
-static int initialized;
-static struct simplelock initialized_slock = SIMPLELOCK_INITIALIZER;
+static bool initialized;
 
-static void
+static int
 initialize(void)
 {
 
-	simple_lock(&initialized_slock);
-	if (__predict_true(initialized == 0)) {
-		TAILQ_INIT(&dmover_backend_list);
-		mutex_init(&dmover_backend_list_lock, MUTEX_DEFAULT, IPL_VM);
+	KASSERT(initialized == false);
 
-		/* Initialize the other bits of dmover. */
-		dmover_session_initialize();
-		dmover_request_initialize();
-		dmover_process_initialize();
+	TAILQ_INIT(&dmover_backend_list);
+	mutex_init(&dmover_backend_list_lock, MUTEX_DEFAULT, IPL_VM);
 
-		initialized = 1;
-	}
-	simple_unlock(&initialized_slock);
+	/* Initialize the other bits of dmover. */
+	dmover_session_initialize();
+	dmover_request_initialize();
+	dmover_process_initialize();
+
+	initialized = true;
+
+	return 0;
 }
 
 /*
@@ -81,9 +80,11 @@ initialize(void)
 void
 dmover_backend_register(struct dmover_backend *dmb)
 {
+	static ONCE_DECL(control);
 
-	if (__predict_false(initialized == 0))
-		initialize();
+	RUN_ONCE(&control, initialize);
+
+	KASSERT(initialized == true);
 
 	LIST_INIT(&dmb->dmb_sessions);
 	dmb->dmb_nsessions = 0;
@@ -105,18 +106,7 @@ void
 dmover_backend_unregister(struct dmover_backend *dmb)
 {
 
-#ifdef DIAGNOSTIC
-	if (__predict_false(initialized == 0)) {
-		int croak;
-
-		simple_lock(&initialized_slock);
-		croak = (initialized == 0);
-		simple_unlock(&initialized_slock);
-
-		if (croak)
-			panic("dmover_backend_unregister: not initialized");
-	}
-#endif
+	KASSERT(initialized == true);
 
 	/* XXX */
 	if (dmb->dmb_nsessions)
@@ -138,15 +128,8 @@ dmover_backend_alloc(struct dmover_session *dses, const char *type)
 	struct dmover_backend *dmb, *best_dmb = NULL;
 	const struct dmover_algdesc *algdesc, *best_algdesc = NULL;
 
-	if (__predict_false(initialized == 0)) {
-		int fail;
-
-		simple_lock(&initialized_slock);
-		fail = (initialized == 0);
-		simple_unlock(&initialized_slock);
-
-		if (fail)
-			return (ESRCH);
+	if (__predict_false(initialized == false)) {
+		return (ESRCH);
 	}
 
 	mutex_enter(&dmover_backend_list_lock);

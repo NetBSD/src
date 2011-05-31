@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.19.2.2 2011/04/21 01:41:34 rmind Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.19.2.3 2011/05/31 03:04:24 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.19.2.2 2011/04/21 01:41:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.19.2.3 2011/05/31 03:04:24 rmind Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -790,7 +790,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	xen_bt_set_readonly(new_pgd);
 #endif
 	/* Pin the PGD */
-	__PRINTK(("pin PGD\n"));
+	__PRINTK(("pin PGD: %"PRIxVADDR"\n", new_pgd - KERNBASE));
 #ifdef __x86_64__
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #elif PAE

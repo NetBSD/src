@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.30.4.2 2011/03/05 20:54:18 rmind Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.30.4.3 2011/05/31 03:04:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.30.4.2 2011/03/05 20:54:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.30.4.3 2011/05/31 03:04:56 rmind Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -671,20 +671,21 @@ uvideo_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	usbd_devinfo_free(sc->sc_devname);
-
 	/* TODO: close the device if it is currently opened?  Or will
 	 * close be called automatically? */
 
 	while (!SLIST_EMPTY(&sc->sc_stream_list)) {
 		vs = SLIST_FIRST(&sc->sc_stream_list);
 		SLIST_REMOVE_HEAD(&sc->sc_stream_list, entries);
+		uvideo_stream_stop_xfer(vs);
 		uvideo_stream_free(vs);
 	}
 
+#if 0
 	/* Wait for outstanding request to complete.  TODO: what is
 	 * appropriate here? */
 	usbd_delay_ms(sc->sc_udev, 1000);
+#endif
 
 	DPRINTFN(15, ("uvideo: detaching from %s\n",
 		device_xname(sc->sc_dev)));
@@ -694,6 +695,8 @@ uvideo_detach(device_t self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    sc->sc_dev);
+
+	usbd_devinfo_free(sc->sc_devname);
 
 	return rv;
 }
@@ -1508,7 +1511,7 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 			bx->bx_running = true;
 			ret = kthread_create(PRI_UVIDEO, 0, NULL,
 			    uvideo_stream_recv_bulk_transfer, vs,
-			    NULL, device_xname(sc->sc_dev));
+			    NULL, "%s", device_xname(sc->sc_dev));
 			if (ret) {
 				DPRINTF(("uvideo: couldn't create kthread:"
 					 " %d\n", err));

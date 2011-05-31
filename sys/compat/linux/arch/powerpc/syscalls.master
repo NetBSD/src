@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44.4.2 2011/04/21 01:41:41 rmind Exp $  
+	$NetBSD: syscalls.master,v 1.44.4.3 2011/05/31 03:04:30 rmind Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -416,7 +416,8 @@
 230	UNIMPL		io_submit
 231	UNIMPL		io_cancel
 232	STD		{ int|linux_sys||set_tid_address(int *tid); }
-233	UNIMPL		fadvise64
+233	STD		{ int|linux_sys||fadvise64(int fd, \
+			    linux_off_t offset, size_t len, int advice); }
 234	STD		{ int|linux_sys||exit_group(int error_code); }
 235	UNIMPL		lookup_dcookie
 236	UNIMPL		epoll_create
@@ -444,7 +445,8 @@
 			    size_t sz, struct linux_statfs64 *sp); }
 253	STD		{ int|linux_sys||fstatfs64(int fd, \
 			    size_t sz, struct linux_statfs64 *sp); }
-254	UNIMPL		fadvise64_64
+254	STD		{ int|linux_sys||fadvise64_64(int fd, \
+			    linux_off_t offset, linux_off_t len, int advise); }
 255	UNIMPL		rtas
 256	UNIMPL		/* reserved for sys_debug_setcontext */
 257	UNIMPL		/* reserved for vserver */

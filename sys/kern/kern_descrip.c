@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.202.4.3 2011/04/21 01:42:07 rmind Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.202.4.4 2011/05/31 03:05:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.202.4.3 2011/04/21 01:42:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.202.4.4 2011/05/31 03:05:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.202.4.3 2011/04/21 01:42:07 rmind
 #include <sys/sysctl.h>
 #include <sys/ktrace.h>
 
+/*
+ * A list (head) of open files, counter, and lock protecting them.
+ */
+struct filelist		filehead	__cacheline_aligned;
+static u_int		nfiles		__cacheline_aligned;
+kmutex_t		filelist_lock	__cacheline_aligned;
+
+static pool_cache_t	filedesc_cache	__read_mostly;
+static pool_cache_t	file_cache	__read_mostly;
+static pool_cache_t	fdfile_cache	__read_mostly;
+
 static int	file_ctor(void *, void *, int);
 static void	file_dtor(void *, void *);
 static int	fdfile_ctor(void *, void *, int);
@@ -109,14 +120,6 @@ static int sysctl_kern_file(SYSCTLFN_PROTO);
 static int sysctl_kern_file2(SYSCTLFN_PROTO);
 static void fill_file(struct kinfo_file *, const file_t *, const fdfile_t *,
 		      int, pid_t);
-
-kmutex_t	filelist_lock;	/* lock on filehead */
-struct filelist	filehead;	/* head of list of open files */
-u_int		nfiles;		/* actual number of open files */
-
-static pool_cache_t filedesc_cache;
-static pool_cache_t file_cache;
-static pool_cache_t fdfile_cache;
 
 const struct cdevsw filedesc_cdevsw = {
 	filedescopen, noclose, noread, nowrite, noioctl,
@@ -206,9 +209,7 @@ fd_checkmaps(filedesc_t *fdp)
 			KASSERT(fd_isused(fdp, fd));
 		}
 	}
-#else	/* DEBUG */
-	/* nothing */
-#endif	/* DEBUG */
+#endif
 }
 
 static int
@@ -240,7 +241,7 @@ fd_next_zero(filedesc_t *fdp, uint32_t *bitmap, int want, u_int bits)
 		off++;
 	}
 
-	return (-1);
+	return -1;
 
  found:
 	return (off << NDENTRYSHIFT) + ffs(~sub) - 1;
@@ -263,7 +264,7 @@ fd_last_set(filedesc_t *fd, int last)
 		off--;
 
 	if (off < 0)
-		return (-1);
+		return -1;
 
 	i = ((off + 1) << NDENTRYSHIFT) - 1;
 	if (i >= last)
@@ -273,7 +274,7 @@ fd_last_set(filedesc_t *fd, int last)
 	while (i > 0 && (ff[i] == NULL || !ff[i]->ff_allocated))
 		i--;
 
-	return (i);
+	return i;
 }
 
 static inline void
@@ -288,9 +289,9 @@ fd_used(filedesc_t *fdp, unsigned fd)
 	KASSERT((fdp->fd_lomap[off] & (1 << (fd & NDENTRYMASK))) == 0);
 	KASSERT(ff != NULL);
 	KASSERT(ff->ff_file == NULL);
-   	KASSERT(!ff->ff_allocated);
+	KASSERT(!ff->ff_allocated);
 
-   	ff->ff_allocated = 1;
+	ff->ff_allocated = 1;
 	fdp->fd_lomap[off] |= 1 << (fd & NDENTRYMASK);
 	if (__predict_false(fdp->fd_lomap[off] == ~0)) {
 		KASSERT((fdp->fd_himap[off >> NDENTRYSHIFT] &
@@ -322,7 +323,7 @@ fd_unused(filedesc_t *fdp, unsigned fd)
 	 */
 	KASSERT(ff != NULL);
 	KASSERT(ff->ff_file == NULL);
-   	KASSERT(ff->ff_allocated);
+	KASSERT(ff->ff_allocated);
 
 	if (fd < fdp->fd_freefile) {
 		fdp->fd_freefile = fd;
@@ -349,7 +350,7 @@ fd_unused(filedesc_t *fdp, unsigned fd)
  * Look up the file structure corresponding to a file descriptor
  * and return the file, holding a reference on the descriptor.
  */
-inline file_t *
+file_t *
 fd_getfile(unsigned fd)
 {
 	filedesc_t *fdp;
@@ -709,10 +710,8 @@ fd_close(unsigned fd)
 int
 fd_dup(file_t *fp, int minfd, int *newp, bool exclose)
 {
-	proc_t *p;
+	proc_t *p = curproc;
 	int error;
-
-	p = curproc;
 
 	while ((error = fd_alloc(p, minfd, newp)) != 0) {
 		if (error != ENOSPC) {
@@ -732,11 +731,9 @@ fd_dup(file_t *fp, int minfd, int *newp, bool exclose)
 int
 fd_dup2(file_t *fp, unsigned new)
 {
-	filedesc_t *fdp;
+	filedesc_t *fdp = curlwp->l_fd;
 	fdfile_t *ff;
 	fdtab_t *dt;
-
-	fdp = curlwp->l_fd;
 
 	/*
 	 * Ensure there are enough slots in the descriptor table,
@@ -772,7 +769,7 @@ fd_dup2(file_t *fp, unsigned new)
 		KASSERT(new >= NDFDFILE);
 		dt->dt_ff[new] = ff;
 		ff = NULL;
-	}		
+	}
 	fd_used(fdp, new);
 	mutex_exit(&fdp->fd_lock);
 
@@ -807,8 +804,8 @@ closef(file_t *fp)
 	mutex_exit(&fp->f_lock);
 
 	/* We held the last reference - release locks, close and free. */
-        if ((fp->f_flag & FHASLOCK) && fp->f_type == DTYPE_VNODE) {
-        	lf.l_whence = SEEK_SET;
+	if ((fp->f_flag & FHASLOCK) && fp->f_type == DTYPE_VNODE) {
+		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
 		lf.l_len = 0;
 		lf.l_type = F_UNLCK;
@@ -832,14 +829,12 @@ closef(file_t *fp)
 int
 fd_alloc(proc_t *p, int want, int *result)
 {
-	filedesc_t *fdp;
+	filedesc_t *fdp = p->p_fd;
 	int i, lim, last, error;
 	u_int off, new;
 	fdtab_t *dt;
 
 	KASSERT(p == curproc || p == &proc0);
-
-	fdp = p->p_fd;
 
 	/*
 	 * Search for a free descriptor starting at the higher
@@ -1070,12 +1065,10 @@ fd_tryexpand(proc_t *p)
 int
 fd_allocfile(file_t **resultfp, int *resultfd)
 {
+	proc_t *p = curproc;
 	kauth_cred_t cred;
 	file_t *fp;
-	proc_t *p;
 	int error;
-
-	p = curproc;
 
 	while ((error = fd_alloc(p, 0, resultfd)) != 0) {
 		if (error != ENOSPC) {
@@ -1243,9 +1236,8 @@ fgetdummy(void)
 {
 	file_t *fp;
 
-	fp = kmem_alloc(sizeof(*fp), KM_SLEEP);
+	fp = kmem_zalloc(sizeof(*fp), KM_SLEEP);
 	if (fp != NULL) {
-		memset(fp, 0, sizeof(*fp));
 		mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
 	}
 	return fp;
@@ -1458,8 +1450,9 @@ fd_copy(void)
 		}
 		if (__predict_false(fp->f_type == DTYPE_KQUEUE)) {
 			/* kqueue descriptors cannot be copied. */
-                       if (i < newfdp->fd_freefile)
-                               newfdp->fd_freefile = i;
+			if (i < newfdp->fd_freefile) {
+				newfdp->fd_freefile = i;
+			}
 			continue;
 		}
 		/* It's active: add a reference to the file. */
@@ -1494,8 +1487,8 @@ fd_copy(void)
 	newfdp->fd_lastfile = newlast;
 	fd_checkmaps(newfdp);
 	mutex_exit(&fdp->fd_lock);
-	
-	return (newfdp);
+
+	return newfdp;
 }
 
 /*
@@ -1781,6 +1774,7 @@ fd_set_exclose(struct lwp *l, int fd, bool exclose)
 {
 	filedesc_t *fdp = l->l_fd;
 	fdfile_t *ff = fdp->fd_dt->dt_ff[fd];
+
 	ff->ff_exclose = exclose;
 	if (exclose)
 		fdp->fd_exclose = true;
@@ -1803,7 +1797,7 @@ fgetown(pid_t pgid, u_long cmd, void *data)
 		*(int *)data = pgid;
 		break;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -1949,7 +1943,6 @@ sysctl_file_marker_reset(void)
 		u_int i;
 
 		mutex_enter(&fd->fd_lock);
-
 		dt = fd->fd_dt;
 		for (i = 0; i < dt->dt_nfiles; i++) {
 			struct file *fp;
@@ -1958,14 +1951,11 @@ sysctl_file_marker_reset(void)
 			if ((ff = dt->dt_ff[i]) == NULL) {
 				continue;
 			}
-
 			if ((fp = ff->ff_file) == NULL) {
 				continue;
 			}
-
 			fp->f_marker = 0;
 		}
-
 		mutex_exit(&fd->fd_lock);
 	}
 }
@@ -1991,7 +1981,7 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 		 */
 		*oldlenp = sizeof(filehead) + (nfiles + 10) *
 		    sizeof(struct file);
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -1999,12 +1989,12 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	 */
 	if (buflen < sizeof(filehead)) {
 		*oldlenp = 0;
-		return (0);
+		return 0;
 	}
 	sysctl_unlock();
 	error = sysctl_copyout(l, &filehead, where, sizeof(filehead));
 	if (error) {
-	 	sysctl_relock();
+		sysctl_relock();
 		return error;
 	}
 	buflen -= sizeof(filehead);
@@ -2071,7 +2061,7 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 			/* Check that we have enough space. */
 			if (buflen < sizeof(struct file)) {
 				*oldlenp = where - start;
-			    	mutex_exit(&fp->f_lock);
+				mutex_exit(&fp->f_lock);
 				error = ENOMEM;
 				break;
 			}
@@ -2110,8 +2100,8 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	mutex_exit(&sysctl_file_marker_lock);
 
 	*oldlenp = where - start;
- 	sysctl_relock();
-	return (error);
+	sysctl_relock();
+	return error;
 }
 
 /*
@@ -2132,10 +2122,10 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 	fdtab_t *dt;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
-		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+		return sysctl_query(SYSCTLFN_CALL(rnode));
 
 	if (namelen != 4)
-		return (EINVAL);
+		return EINVAL;
 
 	error = 0;
 	dp = oldp;
@@ -2148,7 +2138,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 	needed = 0;
 
 	if (elem_size < 1 || elem_count < 0)
-		return (EINVAL);
+		return EINVAL;
 
 	switch (op) {
 	case KERN_FILE_BYFILE:
@@ -2165,7 +2155,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 
 		if ((op == KERN_FILE_BYPID) && (arg < -1))
 			/* -1 means all processes */
-			return (EINVAL);
+			return EINVAL;
 
 		sysctl_unlock();
 		if (op == KERN_FILE_BYFILE)
@@ -2261,14 +2251,14 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		sysctl_relock();
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	if (oldp == NULL)
 		needed += KERN_FILESLOP * elem_size;
 	*oldlenp = needed;
 
-	return (error);
+	return error;
 }
 
 static void

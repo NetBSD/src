@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.37.2.4 2011/04/21 01:41:45 rmind Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.37.2.5 2011/05/31 03:04:34 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.37.2.4 2011/04/21 01:41:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.37.2.5 2011/05/31 03:04:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -903,21 +903,22 @@ static const char *
 acpicpu_debug_print_method(uint8_t val)
 {
 
-	switch (val) {
-
-	case ACPICPU_C_STATE_HALT:
-		return "HLT";
-
-	case ACPICPU_C_STATE_FFH:
-	case ACPI_ADR_SPACE_FIXED_HARDWARE:
+	if (val == ACPICPU_C_STATE_FFH)
 		return "FFH";
 
-	case ACPICPU_C_STATE_SYSIO:		/* ACPI_ADR_SPACE_SYSTEM_IO */
+	if (val == ACPICPU_C_STATE_HALT)
+		return "HLT";
+
+	if (val == ACPICPU_C_STATE_SYSIO)
 		return "I/O";
 
-	default:
-		return "???";
-	}
+	if (val == ACPI_ADR_SPACE_SYSTEM_IO)
+		return "I/O";
+
+	if (val == ACPI_ADR_SPACE_FIXED_HARDWARE)
+		return "FFH";
+
+	return "???";
 }
 
 static const char *

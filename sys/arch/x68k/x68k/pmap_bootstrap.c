@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.50.4.2 2011/03/05 20:52:26 rmind Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.50.4.3 2011/05/31 03:04:23 rmind Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.50.4.2 2011/03/05 20:52:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.50.4.3 2011/05/31 03:04:23 rmind Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -360,7 +360,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	protopte = INTIOBASE | PG_RW | PG_CI | PG_V;
 	epte = &pte[IIOMAPSIZE];
 	RELOC(intiobase, uint8_t *) = (uint8_t *)PTE2VA(pte);
-	RELOC(IODEVbase, uint8_t *) = RELOC(intiobase, uint8_t *); /* XXX */
 	RELOC(intiolimit, uint8_t *) = (uint8_t *)PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;

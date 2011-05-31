@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.95.4.2 2011/04/21 01:41:10 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.95.4.3 2011/05/31 03:04:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -624,8 +624,7 @@ void	fpu_init(void);
 void	fpu_discard(void);
 void	fpu_load(void);
 void	fpu_save(void);
-void	fpu_save_lwp(struct lwp *);
-bool	fpu_used_p(struct lwp *);
+bool	fpu_used_p(void);
 
 /* mips_machdep.c */
 void	dumpsys(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.128.2.4 2011/04/21 01:42:18 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.128.2.5 2011/05/31 03:05:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -44,7 +44,6 @@
 #include <sys/specificdata.h>
 #include <sys/syncobj.h>
 #include <sys/resource.h>
-#include <sys/pcu.h>
 
 #if defined(_KERNEL)
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
@@ -68,6 +67,9 @@
  * of cache hits) and by size (to reduce dead space in the structure).
  */
 #if defined(_KERNEL) || defined(_KMEMUSER)
+
+#include <sys/pcu.h>
+
 struct lockdebug;
 struct sadata_vp;
 struct sysent;
@@ -245,6 +247,7 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
+#define	LP_JOINABLE	0x00000100 /* Joinable kthread */
 #define	LP_SA_PAGEFAULT	0x00000200 /* SA LWP in pagefault handler */
 #define	LP_SA_NOBLOCK	0x00000400 /* SA don't upcall on block */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */

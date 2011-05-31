@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.16.2.2 2011/04/21 01:41:27 rmind Exp $	*/
+/*	$NetBSD: schizo.c,v 1.16.2.3 2011/05/31 03:04:18 rmind Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -241,8 +241,8 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	pbm->sp_iot = schizo_alloc_io_tag(pbm);
 	pbm->sp_cfgt = schizo_alloc_config_tag(pbm);
 	pbm->sp_dmat = schizo_alloc_dma_tag(pbm);
-	pbm->sp_flags = (pbm->sp_memt ? PCI_FLAGS_MEM_ENABLED : 0) |
-		        (pbm->sp_iot ? PCI_FLAGS_IO_ENABLED : 0);
+	pbm->sp_flags = (pbm->sp_memt ? PCI_FLAGS_MEM_OKAY : 0) |
+		        (pbm->sp_iot ? PCI_FLAGS_IO_OKAY : 0);
 
 	if (bus_space_map(pbm->sp_cfgt, 0, 0x1000000, 0, &pbm->sp_cfgh))
 		panic("schizo: could not map config space");

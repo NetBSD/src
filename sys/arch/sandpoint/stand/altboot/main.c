@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.7.2.3 2011/04/21 01:41:22 rmind Exp $ */
+/* $NetBSD: main.c,v 1.7.2.4 2011/05/31 03:04:16 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -128,6 +128,8 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	    cpuclock / 1000000, busclock / 1000000, bi_mem.memsize >> 20);
 
 	nata = pcilookup(PCI_CLASS_IDE, lata, 2);
+	if (nata == 0)
+		nata = pcilookup(PCI_CLASS_RAID, lata, 2);
 	if (nata == 0)
 		nata = pcilookup(PCI_CLASS_MISCSTORAGE, lata, 2);
 	if (nata == 0)

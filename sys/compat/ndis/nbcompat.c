@@ -1,4 +1,4 @@
-/*	$NetBSD: nbcompat.c,v 1.10 2008/01/08 07:59:23 he Exp $	*/
+/*	$NetBSD: nbcompat.c,v 1.10.32.1 2011/05/31 03:04:32 rmind Exp $	*/
 
 /* nbcompat.c
  * Implementations of some FreeBSD functions on NetBSD to make things
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbcompat.c,v 1.10 2008/01/08 07:59:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbcompat.c,v 1.10.32.1 2011/05/31 03:04:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,20 +52,6 @@ bus_release_resource(device_t dev, int type, int rid,
 	}
 	
 	return 0;
-}
-
-void
-mtx_lock(struct mtx *mutex)
-{
-	/* XXXSMP needs doing
-	*/
-	//mutex_enter(mutex);
-}
-
-void
-mtx_unlock(struct mtx *mutex)
-{
-	//mutex_exit(mutex);
 }
 
 int

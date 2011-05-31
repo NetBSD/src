@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.273.2.2 2011/04/21 01:42:01 rmind Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.273.2.3 2011/05/31 03:04:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.273.2.2 2011/04/21 01:42:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.273.2.3 2011/05/31 03:04:53 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -162,7 +162,9 @@ int     rf_kdebug_level = 0;
 static RF_Raid_t **raidPtrs;	/* global raid device descriptors */
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
-RF_DECLARE_STATIC_MUTEX(rf_sparet_wait_mutex)
+static rf_declare_mutex2(rf_sparet_wait_mutex);
+static rf_declare_cond2(rf_sparet_wait_cv);
+static rf_declare_cond2(rf_sparet_resp_cv);
 
 static RF_SparetWait_t *rf_sparet_wait_queue;	/* requests to install a
 						 * spare table */
@@ -339,7 +341,9 @@ raidattach(int num)
 	}
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
-	rf_mutex_init(&rf_sparet_wait_mutex);
+	rf_init_mutex2(rf_sparet_wait_mutex, IPL_VM);
+	rf_init_cond2(rf_sparet_wait_cv, "sparetw");
+	rf_init_cond2(rf_sparet_resp_cv, "rfgst");
 
 	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
 #endif
@@ -829,8 +833,6 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 void
 raidstrategy(struct buf *bp)
 {
-	int s;
-
 	unsigned int raidID = raidunit(bp->b_dev);
 	RF_Raid_t *raidPtr;
 	struct raid_softc *rs = &raid_softc[raidID];
@@ -880,7 +882,8 @@ raidstrategy(struct buf *bp)
 			goto done;
 		}
 	}
-	s = splbio();
+
+	rf_lock_mutex2(raidPtr->iodone_lock);
 
 	bp->b_resid = 0;
 
@@ -888,9 +891,9 @@ raidstrategy(struct buf *bp)
 	bufq_put(rs->buf_queue, bp);
 
 	/* scheduled the IO to happen at the next convenient time */
-	wakeup(&(raidPtrs[raidID]->iodone));
+	rf_signal_cond2(raidPtr->iodone_cv);
+	rf_unlock_mutex2(raidPtr->iodone_lock);
 
-	splx(s);
 	return;
 
 done:
@@ -958,6 +961,8 @@ raid_detach_unlocked(struct raid_softc *rs)
 	dkwedge_delall(&rs->sc_dkdev);
 	disk_detach(&rs->sc_dkdev);
 	disk_destroy(&rs->sc_dkdev);
+
+	aprint_normal_dev(rs->sc_dev, "detached\n");
 
 	return 0;
 }
@@ -1387,7 +1392,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return(EINVAL);
 		}
 
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		if ((raidPtr->Disks[column].status == rf_ds_optimal) &&
 		    (raidPtr->numFailures > 0)) {
 			/* XXX 0 above shouldn't be constant!!! */
@@ -1398,7 +1403,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			       raidPtr->raidid);
 			printf("raid%d:     Col: %d   Too many failures.\n",
 			       raidPtr->raidid, column);
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[column].status ==
@@ -1407,14 +1412,14 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			       raidPtr->raidid);
 			printf("raid%d:    Col: %d   Reconstruction already occuring!\n", raidPtr->raidid, column);
 
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[column].status == rf_ds_spared) {
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		RF_Malloc(rrcopy, sizeof(*rrcopy), (struct rf_recon_req *));
 		if (rrcopy == NULL)
@@ -1527,26 +1532,26 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return (EINVAL);
 
 
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		if (raidPtr->status == rf_rs_reconstructing) {
 			/* you can't fail a disk while we're reconstructing! */
 			/* XXX wrong for RAID6 */
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if ((raidPtr->Disks[rr->col].status ==
 		     rf_ds_optimal) && (raidPtr->numFailures > 0)) {
 			/* some other component has failed.  Let's not make
 			   things worse. XXX wrong for RAID6 */
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[rr->col].status == rf_ds_spared) {
 			/* Can't fail a spared disk! */
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		/* make a copy of the recon request so that we don't rely on
 		 * the user's buffer */
@@ -1689,12 +1694,12 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * character device) for delivering the table     -- XXX */
 #if 0
 	case RAIDFRAME_SPARET_WAIT:
-		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_lock_mutex2(rf_sparet_wait_mutex);
 		while (!rf_sparet_wait_queue)
-			mpsleep(&rf_sparet_wait_queue, (PZERO + 1) | PCATCH, "sparet wait", 0, (void *) simple_lock_addr(rf_sparet_wait_mutex), MS_LOCK_SIMPLE);
+			rf_wait_cond2(rf_sparet_wait_cv, rf_sparet_wait_mutex);
 		waitreq = rf_sparet_wait_queue;
 		rf_sparet_wait_queue = rf_sparet_wait_queue->next;
-		RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_unlock_mutex2(rf_sparet_wait_mutex);
 
 		/* structure assignment */
 		*((RF_SparetWait_t *) data) = *waitreq;
@@ -1707,11 +1712,11 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case RAIDFRAME_ABORT_SPARET_WAIT:
 		RF_Malloc(waitreq, sizeof(*waitreq), (RF_SparetWait_t *));
 		waitreq->fcol = -1;
-		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_lock_mutex2(rf_sparet_wait_mutex);
 		waitreq->next = rf_sparet_wait_queue;
 		rf_sparet_wait_queue = waitreq;
-		RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
-		wakeup(&rf_sparet_wait_queue);
+		rf_broadcast_conf2(rf_sparet_wait_cv);
+		rf_unlock_mutex2(rf_sparet_wait_mutex);
 		return (0);
 
 		/* used by the spare table daemon to deliver a spare table
@@ -1725,11 +1730,11 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * table installation is passed in the "fcol" field */
 		RF_Malloc(waitreq, sizeof(*waitreq), (RF_SparetWait_t *));
 		waitreq->fcol = retcode;
-		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_lock_mutex2(rf_sparet_wait_mutex);
 		waitreq->next = rf_sparet_resp_queue;
 		rf_sparet_resp_queue = waitreq;
-		wakeup(&rf_sparet_resp_queue);
-		RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_broadcast_cond2(rf_sparet_resp_cv);
+		rf_unlock_mutex2(rf_sparet_wait_mutex);
 
 		return (retcode);
 #endif
@@ -1924,19 +1929,18 @@ rf_GetSpareTableFromDaemon(RF_SparetWait_t *req)
 {
 	int     retcode;
 
-	RF_LOCK_MUTEX(rf_sparet_wait_mutex);
+	rf_lock_mutex2(rf_sparet_wait_mutex);
 	req->next = rf_sparet_wait_queue;
 	rf_sparet_wait_queue = req;
-	wakeup(&rf_sparet_wait_queue);
+	rf_broadcast_cond2(rf_sparet_wait_cv);
 
 	/* mpsleep unlocks the mutex */
 	while (!rf_sparet_resp_queue) {
-		tsleep(&rf_sparet_resp_queue, PRIBIO,
-		    "raidframe getsparetable", 0);
+		rf_wait_cond2(rf_sparet_resp_cv, rf_sparet_wait_mutex);
 	}
 	req = rf_sparet_resp_queue;
 	rf_sparet_resp_queue = req->next;
-	RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
+	rf_unlock_mutex2(rf_sparet_wait_mutex);
 
 	retcode = req->fcol;
 	RF_Free(req, sizeof(*req));	/* this is not the same req as we
@@ -1970,18 +1974,18 @@ raidstart(RF_Raid_t *raidPtr)
 	rs = &raid_softc[unit];
 
 	/* quick check to see if anything has died recently */
-	RF_LOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
 	if (raidPtr->numNewFailures > 0) {
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 		rf_update_component_labels(raidPtr,
 					   RF_NORMAL_COMPONENT_UPDATE);
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		raidPtr->numNewFailures--;
 	}
 
 	/* Check to see if we're at the limit... */
 	while (raidPtr->openings > 0) {
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		/* get the next item, if any, from the queue */
 		if ((bp = bufq_get(rs->buf_queue)) == NULL) {
@@ -2022,7 +2026,7 @@ raidstart(RF_Raid_t *raidPtr)
 			bp->b_error = ENOSPC;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
-			RF_LOCK_MUTEX(raidPtr->mutex);
+			rf_lock_mutex2(raidPtr->mutex);
 			continue;
 		}
 		/*
@@ -2033,16 +2037,16 @@ raidstart(RF_Raid_t *raidPtr)
 			bp->b_error = EINVAL;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
-			RF_LOCK_MUTEX(raidPtr->mutex);
+			rf_lock_mutex2(raidPtr->mutex);
 			continue;
 
 		}
 		db1_printf(("Calling DoAccess..\n"));
 
 
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		raidPtr->openings--;
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		/*
 		 * Everything is async.
@@ -2069,9 +2073,9 @@ raidstart(RF_Raid_t *raidPtr)
 			/* continue loop */
 		}
 
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 	}
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_unlock_mutex2(raidPtr->mutex);
 }
 
 
@@ -2160,23 +2164,24 @@ KernelWakeupFunc(struct buf *bp)
 {
 	RF_DiskQueueData_t *req = NULL;
 	RF_DiskQueue_t *queue;
-	int s;
 
-	s = splbio();
 	db1_printf(("recovering the request queue:\n"));
+
 	req = bp->b_private;
 
 	queue = (RF_DiskQueue_t *) req->queue;
+
+	rf_lock_mutex2(queue->raidPtr->iodone_lock);
 
 #if RF_ACC_TRACE > 0
 	if (req->tracerec) {
 		RF_ETIMER_STOP(req->tracerec->timer);
 		RF_ETIMER_EVAL(req->tracerec->timer);
-		RF_LOCK_MUTEX(rf_tracing_mutex);
+		rf_lock_mutex2(rf_tracing_mutex);
 		req->tracerec->diskwait_us += RF_ETIMER_VAL_US(req->tracerec->timer);
 		req->tracerec->phys_io_us += RF_ETIMER_VAL_US(req->tracerec->timer);
 		req->tracerec->num_phys_ios++;
-		RF_UNLOCK_MUTEX(rf_tracing_mutex);
+		rf_unlock_mutex2(rf_tracing_mutex);
 	}
 #endif
 
@@ -2209,22 +2214,16 @@ KernelWakeupFunc(struct buf *bp)
 	}
 
 	/* Fill in the error value */
-
 	req->error = bp->b_error;
-
-	simple_lock(&queue->raidPtr->iodone_lock);
 
 	/* Drop this one on the "finished" queue... */
 	TAILQ_INSERT_TAIL(&(queue->raidPtr->iodone), req, iodone_entries);
 
 	/* Let the raidio thread know there is work to be done. */
-	wakeup(&(queue->raidPtr->iodone));
+	rf_signal_cond2(queue->raidPtr->iodone_cv);
 
-	simple_unlock(&queue->raidPtr->iodone_lock);
-
-	splx(s);
+	rf_unlock_mutex2(queue->raidPtr->iodone_lock);
 }
-
 
 
 /*

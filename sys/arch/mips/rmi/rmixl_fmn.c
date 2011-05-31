@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_fmn.c,v 1.2.2.2 2011/03/05 20:51:10 rmind Exp $	*/
+/*	$NetBSD: rmixl_fmn.c,v 1.2.2.3 2011/05/31 03:04:11 rmind Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -907,14 +907,14 @@ rmixl_fmn_msg_recv_subr(u_int bucket, rmixl_fmn_rxmsg_t *rxmsg)
 		if ((msg_status & (RMIXL_MSG_STS0_LPF)) == 0)
 			goto recv;
 	}
-	DIAG_PRF(("%s: cpu%d, bucket=%d, sts=%#x: Load Pending Fail\n",
+	DIAG_PRF(("%s: cpu%u, bucket=%d, sts=%#x: Load Pending Fail\n",
 		__func__, cpu_number(), bucket, msg_status));
 	rv = -1;
 	goto out;
  recv:
 	rmixl_msgld(bucket);
 	RMIXL_MFC2(RMIXL_COP_2_MSG_STS, 0, msg_status);
-	DPRINTF(("%s: cpu%d, bucket=%d, sts=%#x\n",
+	DPRINTF(("%s: cpu%u, bucket=%d, sts=%#x\n",
 		__func__, cpu_number(), bucket, msg_status));
 	rv = msg_status & (RMIXL_MSG_STS0_LEF|RMIXL_MSG_STS0_LPF);
 	if (rv == 0) {
@@ -1148,7 +1148,7 @@ rmixl_fmn_cc_dump(void)
 	FMN_CP2_4SEL_READ(RMIXL_COP_2_CREDITS+3, 0, &cc[3][0]);
 	FMN_CP2_4SEL_READ(RMIXL_COP_2_CREDITS+3, 4, &cc[3][4]);
 
-	printf("%s: cpu%d\n", __func__, cpu_number());
+	printf("%s: cpu%u\n", __func__, cpu_number());
 	for (int i=0; i < 4; i++) {
 		for (int j=0; j < 8; j++)
 			printf(" %#x,", cc[i][j]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.327.2.2 2011/03/05 20:52:08 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.327.2.3 2011/05/31 03:04:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3086,8 +3086,8 @@ interrupt_vector:
 	 sethi	%hi(KERNBASE), %g1
 
 	cmp	%g7, %g1
-	bl,pt	%xcc, Lsoftint_regular	! >= KERNBASE is a fast cross-call
-	 cmp	%g7, MAXINTNUM
+	bl,a,pt	%xcc, Lsoftint_regular	! >= KERNBASE is a fast cross-call
+	 and	%g7, (MAXINTNUM-1), %g7	! XXX make sun4us work
 
 	mov	IRDR_1H, %g2
 	ldxa	[%g2] ASI_IRDR, %g2	! Get IPI handler argument 1
@@ -3100,7 +3100,7 @@ interrupt_vector:
 	jmpl	%g7, %g0
 	 nop
 #else
-	 cmp	%g7, MAXINTNUM
+	and	%g7, (MAXINTNUM-1), %g7	! XXX make sun4us work
 #endif
 
 Lsoftint_regular:
@@ -3108,8 +3108,7 @@ Lsoftint_regular:
 	membar	#Sync			! Should not be needed due to retry
 	sllx	%g7, PTRSHFT, %g5	! Calculate entry number
 	sethi	%hi(_C_LABEL(intrlev)), %g3
-	bgeu,pn	%xcc, 3f
-	 or	%g3, %lo(_C_LABEL(intrlev)), %g3
+	or	%g3, %lo(_C_LABEL(intrlev)), %g3
 	LDPTR	[%g3 + %g5], %g5	! We have a pointer to the handler
 	brz,pn	%g5, 3f			! NULL means it isn't registered yet.  Skip it.
 	 nop

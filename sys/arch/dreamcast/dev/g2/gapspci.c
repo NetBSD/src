@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.16.16.1 2011/03/05 20:49:51 rmind Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.16.16.2 2011/05/31 03:03:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.16.16.1 2011/03/05 20:49:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.16.16.2 2011/05/31 03:03:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ gaps_attach(device_t parent, device_t self, void *aux)
 	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
-	pba.pba_flags = PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_MEM_OKAY;
 	pba.pba_pc = &sc->sc_pc;
 
 	(void)config_found_ia(self, "pcibus", &pba, pcibusprint);

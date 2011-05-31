@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.10.2.3 2011/04/21 01:41:42 rmind Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.10.2.4 2011/05/31 03:04:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.10.2.3 2011/04/21 01:41:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.10.2.4 2011/05/31 03:04:32 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -623,9 +623,9 @@ compat_50_netbsd32_kevent(struct lwp *l,
 	int error;
 	size_t maxalloc, nchanges, nevents;
 	struct kevent_ops netbsd32_kevent_ops = {
-		keo_fetch_timeout: netbsd32_kevent_fetch_timeout,
-		keo_fetch_changes: netbsd32_kevent_fetch_changes,
-		keo_put_events: netbsd32_kevent_put_events,
+		.keo_fetch_timeout = netbsd32_kevent_fetch_timeout,
+		.keo_fetch_changes = netbsd32_kevent_fetch_changes,
+		.keo_put_events = netbsd32_kevent_put_events,
 	};
 
 	nchanges = SCARG(uap, nchanges);

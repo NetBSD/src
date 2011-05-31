@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.284.4.3 2011/04/21 01:42:14 rmind Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.284.4.4 2011/05/31 03:05:07 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.284.4.3 2011/04/21 01:42:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.284.4.4 2011/05/31 03:05:07 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -277,6 +277,8 @@ static	struct ip_srcrt {
 	char	srcopt[IPOPT_OFFSET + 1];	/* OPTVAL, OLEN and OFFSET */
 	struct	in_addr route[MAX_IPOPTLEN/sizeof(struct in_addr)];
 } ip_srcrt;
+
+static int ip_drainwanted;
 
 static void save_rte(u_char *, struct in_addr);
 
@@ -1281,6 +1283,21 @@ const int inetctlerrmap[PRC_NCMDS] = {
 	[PRC_UNREACH_SRCFAIL] = EHOSTUNREACH,
 	[PRC_PARAMPROB] = ENOPROTOOPT,
 };
+
+void
+ip_fasttimo(void)
+{
+	if (ip_drainwanted) {
+		ip_drain();
+		ip_drainwanted = 0;
+	}
+}
+
+void
+ip_drainstub(void)
+{
+	ip_drainwanted = 1;
+}
 
 /*
  * Forward a packet.  If some error occurs return the sender

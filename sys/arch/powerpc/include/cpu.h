@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68.2.2 2011/03/05 20:51:37 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68.2.3 2011/05/31 03:04:14 rmind Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -320,6 +320,28 @@ cntlzw(uint32_t val)
 
 	__asm volatile ("cntlzw %0,%1" : "=r"(cnt) : "r"(val));
 	return (cnt);
+}
+
+/*
+ * functions to access the G3's cache throttling register
+ * bits 1 - 9 specify additional waits on cache acess
+ * bit 0 enables cache throttling
+ */
+
+static __inline int
+mfictc(void)
+{
+	int reg;
+
+	__asm ("mfspr %0,1019" : "=r"(reg));
+	return reg;
+}
+
+static __inline void
+mtictc(uint32_t reg)
+{
+
+	__asm ("mtspr 1019,%0" :: "r"(reg));
 }
 
 #define	CLKF_USERMODE(frame)	(((frame)->cf_srr1 & PSL_PR) != 0)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.72.2.2 2011/03/05 20:51:35 rmind Exp $
+#	$NetBSD: files.powerpc,v 1.72.2.3 2011/05/31 03:04:13 rmind Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -34,6 +34,7 @@ file	arch/powerpc/powerpc/db_memrw.c			ddb | kgdb
 file	arch/powerpc/powerpc/db_disasm.c		ddb
 file	arch/powerpc/powerpc/db_interface.c		ddb | kgdb
 file	arch/powerpc/powerpc/db_trace.c			ddb
+file	arch/powerpc/powerpc/fpu.c
 
 # IBM 4xx Family files (40x)
 file	arch/powerpc/ibm4xx/pmap.c			ppc_ibm4xx
@@ -52,7 +53,6 @@ file	arch/powerpc/oea/pmap.c				ppc_oea | ppc_oea601
 file	arch/powerpc/oea/pmap64.c			ppc_oea64
 file	arch/powerpc/oea/pmap64_bridge.c		ppc_oea64_bridge
 file	arch/powerpc/oea/pmap_kernel.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
-file	arch/powerpc/powerpc/fpu.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 file	arch/powerpc/powerpc/trap.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 
 # PPC BookE (MPC85xx) Family files
@@ -73,19 +73,7 @@ file	common/pmap/tlb/pmap_tlb.c			ppc_booke
 file	arch/powerpc/powerpc/compat_13_machdep.c	compat_13
 file	arch/powerpc/powerpc/compat_16_machdep.c	compat_16
 
-# MACH binary compatibility (COMPAT_MACH)
-include "compat/mach/files.mach"
-include "compat/mach/arch/powerpc/files.mach_powerpc"
-file	arch/powerpc/powerpc/mach_machdep.c		compat_mach
-file	arch/powerpc/powerpc/mach_sigcode.S		compat_mach
-file	arch/powerpc/powerpc/mach_syscall.c		compat_mach
-file	arch/powerpc/powerpc/macho_machdep.c		exec_macho
-
-# Darwin binary compatibility (COMPAT_DARWIN)
-include "compat/darwin/files.darwin"
 include "compat/freebsd/files.freebsd" 
-file	arch/powerpc/powerpc/darwin_machdep.c		compat_darwin
-file	arch/powerpc/powerpc/darwin_commpage_machdep.S	compat_darwin
 
 include "compat/netbsd32/files.netbsd32"
 file	arch/powerpc/powerpc/netbsd32_sigcode.S		compat_netbsd32

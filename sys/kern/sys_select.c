@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.21.4.3 2011/04/21 01:42:09 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.21.4.4 2011/05/31 03:05:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.21.4.3 2011/04/21 01:42:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.21.4.4 2011/05/31 03:05:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,10 +219,8 @@ sel_do_scan(const int op, void *fds, const int nf, const size_t ni,
     struct timespec *ts, sigset_t *mask, register_t *retval)
 {
 	lwp_t		* const l = curlwp;
-	proc_t		* const p = l->l_proc;
 	selcluster_t	*sc;
 	kmutex_t	*lock;
-	sigset_t	oldmask;
 	struct timespec	sleepts;
 	int		error, timo;
 
@@ -231,16 +229,8 @@ sel_do_scan(const int op, void *fds, const int nf, const size_t ni,
 		return EINVAL;
 	}
 
-	if (__predict_false(mask)) {
-		sigminusset(&sigcantmask, mask);
-		mutex_enter(p->p_lock);
-		oldmask = l->l_sigmask;
-		l->l_sigmask = *mask;
-		mutex_exit(p->p_lock);
-	} else {
-		/* XXXgcc */
-		oldmask = l->l_sigmask;
-	}
+	if (__predict_false(mask))
+		sigsuspendsetup(l, mask);
 
 	sc = curcpu()->ci_data.cpu_selcluster;
 	lock = sc->sc_lock;
@@ -314,11 +304,8 @@ state_check:
 	}
 	selclear();
 
-	if (__predict_false(mask)) {
-		mutex_enter(p->p_lock);
-		l->l_sigmask = oldmask;
-		mutex_exit(p->p_lock);
-	}
+	if (__predict_false(mask))
+		sigsuspendteardown(l);
 
 	/* select and poll are not restarted after signals... */
 	if (error == ERESTART)

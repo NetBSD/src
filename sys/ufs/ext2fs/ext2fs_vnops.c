@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.91.4.3 2011/03/05 20:56:27 rmind Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.91.4.4 2011/05/31 03:05:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.91.4.3 2011/03/05 20:56:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.91.4.4 2011/05/31 03:05:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -552,7 +552,7 @@ ext2fs_remove(void *v)
 }
 
 /*
- * link vnode call
+ * ext2fs_link: create hard link.
  */
 int
 ext2fs_link(void *v)
@@ -568,17 +568,12 @@ ext2fs_link(void *v)
 	struct inode *ip;
 	int error;
 
-	if (vp->v_type == VDIR) {
-		VOP_ABORTOP(dvp, cnp);
-		error = EISDIR;
-		goto out2;
-	}
-	if (dvp->v_mount != vp->v_mount) {
-		VOP_ABORTOP(dvp, cnp);
-		error = EXDEV;
-		goto out2;
-	}
-	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE))) {
+	KASSERT(dvp != vp);
+	KASSERT(vp->v_type != VDIR);
+	KASSERT(dvp->v_mount == vp->v_mount);
+
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error) {
 		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
@@ -603,8 +598,7 @@ ext2fs_link(void *v)
 		ip->i_flag |= IN_CHANGE;
 	}
 out1:
-	if (dvp != vp)
-		VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp);
 out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
@@ -1339,12 +1333,10 @@ ext2fs_fsync(void *v)
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
 
 	if (vp->v_type == VBLK)
-		spec_fsync(v);
+		error = spec_fsync(v);
 	else
-		vflushbuf(vp, wait);
-	if ((ap->a_flags & FSYNC_DATAONLY) != 0)
-		error = 0;
-	else
+		error = vflushbuf(vp, wait);
+	if (error == 0 && (ap->a_flags & FSYNC_DATAONLY) == 0)
 		error = ext2fs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {

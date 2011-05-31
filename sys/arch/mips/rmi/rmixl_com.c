@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.2.6.1 2011/03/05 20:51:10 rmind Exp $ */
+/* $Id: rmixl_com.c,v 1.2.6.2 2011/05/31 03:04:10 rmind Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.2.6.1 2011/03/05 20:51:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.2.6.2 2011/05/31 03:04:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,14 +300,10 @@ rmixl_com_attach(device_t parent, device_t self, void *aux)
 void
 rmixl_com_initmap(struct com_regs *regsp)
 {
-	int i;
-	int sz;
-
 	/*
 	 * map the 4 byte register stride
 	 */
-	sz = sizeof(regsp->cr_map) / sizeof(regsp->cr_map[0]);
-	for (i = 0; i < sz; i++)
+	for (int i = 0; i < __arraycount(regsp->cr_map); i++)
 		regsp->cr_map[i] = com_std_map[i] * 4;
 }
 

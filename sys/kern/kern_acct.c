@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.88.4.3 2011/04/21 01:42:07 rmind Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.88.4.4 2011/05/31 03:05:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.88.4.3 2011/04/21 01:42:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.88.4.4 2011/05/31 03:05:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,7 +423,7 @@ acct_process(struct lwp *l)
 	 *
 	 * XXX We should think about the CPU limit, too.
 	 */
-	lim_privatise(p, false);
+	lim_privatise(p);
 	orlim = p->p_rlimit[RLIMIT_FSIZE];
 	/* Set current and max to avoid illegal values */
 	p->p_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.63.4.1 2011/03/05 20:56:00 rmind Exp $	*/
+/*	$NetBSD: key.c,v 1.63.4.2 2011/05/31 03:05:09 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.63.4.1 2011/03/05 20:56:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.63.4.2 2011/05/31 03:05:09 rmind Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -152,13 +152,17 @@ static LIST_HEAD(_acqtree, secacq) acqtree;		/* acquiring list */
 static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 
 /* search order for SAs */
-static const u_int saorder_state_valid[] = {
-	SADB_SASTATE_DYING, SADB_SASTATE_MATURE,
 	/*
 	 * This order is important because we must select the oldest SA
 	 * for outbound processing.  For inbound, This is not important.
 	 */
+static const u_int saorder_state_valid_prefer_old[] = {
+	SADB_SASTATE_DYING, SADB_SASTATE_MATURE,
 };
+static const u_int saorder_state_valid_prefer_new[] = {
+	SADB_SASTATE_MATURE, SADB_SASTATE_DYING,
+};
+
 static const u_int saorder_state_alive[] = {
 	/* except DEAD */
 	SADB_SASTATE_MATURE, SADB_SASTATE_DYING, SADB_SASTATE_LARVAL
@@ -627,7 +631,7 @@ found:
 		KEY_CHKSPDIR(sp->spidx.dir, dir, "key_allocsp");
 
 		/* found a SPD entry */
-		sp->lastused = time_second;
+		sp->lastused = time_uptime;
 		SP_ADDREF(sp);
 	}
 	splx(s);
@@ -691,7 +695,7 @@ found:
 		KEY_CHKSPDIR(sp->spidx.dir, dir, "key_allocsp2");
 
 		/* found a SPD entry */
-		sp->lastused = time_second;
+		sp->lastused = time_uptime;
 		SP_ADDREF(sp);
 	}
 	splx(s);
@@ -768,7 +772,7 @@ key_gettunnel(const struct sockaddr *osrc,
 	sp = NULL;
 found:
 	if (sp) {
-		sp->lastused = time_second;
+		sp->lastused = time_uptime;
 		SP_ADDREF(sp);
 	}
 	splx(s);
@@ -885,6 +889,8 @@ key_allocsa_policy(const struct secasindex *saidx)
 	struct secashead *sah;
 	struct secasvar *sav;
 	u_int stateidx, state;
+	const u_int *saorder_state_valid;
+	int arraysize;
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (sah->state == SADB_SASTATE_DEAD)
@@ -897,9 +903,21 @@ key_allocsa_policy(const struct secasindex *saidx)
 
     found:
 
+	/*
+	 * search a valid state list for outbound packet.
+	 * This search order is important.
+	 */
+	if (key_prefered_oldsa) {
+		saorder_state_valid = saorder_state_valid_prefer_old;
+		arraysize = _ARRAYLEN(saorder_state_valid_prefer_old);
+	} else {
+		saorder_state_valid = saorder_state_valid_prefer_new;
+		arraysize = _ARRAYLEN(saorder_state_valid_prefer_new);
+	}
+
 	/* search valid state */
 	for (stateidx = 0;
-	     stateidx < _ARRAYLEN(saorder_state_valid);
+	     stateidx < arraysize;
 	     stateidx++) {
 
 		state = saorder_state_valid[stateidx];
@@ -973,7 +991,7 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 		 * permanent.
 		 */
 		if (d->lft_c->sadb_lifetime_addtime != 0) {
-			struct mbuf *m, *result;
+			struct mbuf *m, *result = 0;
 			uint8_t satype;
 
 			key_sa_chgstate(d, SADB_SASTATE_DEAD);
@@ -1028,10 +1046,12 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 			mtod(result, struct sadb_msg *)->sadb_msg_len =
 				PFKEY_UNIT64(result->m_pkthdr.len);
 
-			if (key_sendup_mbuf(NULL, result,
-					KEY_SENDUP_REGISTERED))
-				goto msgfail;
+			key_sendup_mbuf(NULL, result,
+					KEY_SENDUP_REGISTERED);
+			result = 0;
 		 msgfail:
+			if (result)
+				m_freem(result);
 			KEY_FREESAV(&d);
 		}
 	}
@@ -1075,6 +1095,8 @@ key_allocsa(
 	struct secashead *sah;
 	struct secasvar *sav;
 	u_int stateidx, state;
+	const u_int *saorder_state_valid;
+	int arraysize;
 	int s;
 	int chkport = 0;
 
@@ -1119,11 +1141,16 @@ key_allocsa(
 	 * encrypted so we can't check internal IP header.
 	 */
 	s = splsoftnet();	/*called from softclock()*/
+	if (key_prefered_oldsa) {
+		saorder_state_valid = saorder_state_valid_prefer_old;
+		arraysize = _ARRAYLEN(saorder_state_valid_prefer_old);
+	} else {
+		saorder_state_valid = saorder_state_valid_prefer_new;
+		arraysize = _ARRAYLEN(saorder_state_valid_prefer_new);
+	}
 	LIST_FOREACH(sah, &sahtree, chain) {
 		/* search valid state */
-		for (stateidx = 0;
-		     stateidx < _ARRAYLEN(saorder_state_valid);
-		     stateidx++) {
+		for (stateidx = 0; stateidx < arraysize; stateidx++) {
 			state = saorder_state_valid[stateidx];
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
 				/* sanity check */
@@ -1934,7 +1961,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	}
 #endif
 
-	newsp->created = time_second;
+	newsp->created = time_uptime;
 	newsp->lastused = newsp->created;
 	newsp->lifetime = lft ? lft->sadb_lifetime_addtime : 0;
 	newsp->validtime = lft ? lft->sadb_lifetime_usetime : 0;
@@ -1948,7 +1975,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 		struct secspacq *spacq;
 		if ((spacq = key_getspacq(&spidx)) != NULL) {
 			/* reset counter in order to deletion by timehandler. */
-			spacq->created = time_second;
+			spacq->created = time_uptime;
 			spacq->count = 0;
 		}
     	}
@@ -2766,8 +2793,8 @@ key_spdexpire(struct secpolicy *sp)
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
 	lt->sadb_lifetime_allocations = 0;
 	lt->sadb_lifetime_bytes = 0;
-	lt->sadb_lifetime_addtime = sp->created;
-	lt->sadb_lifetime_usetime = sp->lastused;
+	lt->sadb_lifetime_addtime = sp->created + time_second - time_uptime;
+	lt->sadb_lifetime_usetime = sp->lastused + time_second - time_uptime;
 	lt = (struct sadb_lifetime *)(mtod(m, char *) + len / 2);
 	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
@@ -2994,7 +3021,7 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	}
 
 	/* reset created */
-	newsav->created = time_second;
+	newsav->created = time_uptime;
 	newsav->pid = mhp->msg->sadb_msg_pid;
 
 	/* add to satree */
@@ -3066,10 +3093,6 @@ key_delsav(struct secasvar *sav)
 	if (sav->lft_s != NULL) {
 		KFREE(sav->lft_s);
 		sav->lft_s = NULL;
-	}
-	if (sav->iv != NULL) {
-		KFREE(sav->iv);
-		sav->iv = NULL;
 	}
 
 	KFREE(sav);
@@ -3189,7 +3212,6 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	sav->key_enc = NULL;
 	sav->sched = NULL;
 	sav->schedlen = 0;
-	sav->iv = NULL;
 	sav->lft_c = NULL;
 	sav->lft_h = NULL;
 	sav->lft_s = NULL;
@@ -3339,7 +3361,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	}
 
 	/* reset created */
-	sav->created = time_second;
+	sav->created = time_uptime;
 
 	/* make lifetime for CURRENT */
 	KMALLOC(sav->lft_c, struct sadb_lifetime *,
@@ -3355,7 +3377,7 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	sav->lft_c->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
 	sav->lft_c->sadb_lifetime_allocations = 0;
 	sav->lft_c->sadb_lifetime_bytes = 0;
-	sav->lft_c->sadb_lifetime_addtime = time_second;
+	sav->lft_c->sadb_lifetime_addtime = time_uptime;
 	sav->lft_c->sadb_lifetime_usetime = 0;
 
 	/* lifetimes for HARD and SOFT */
@@ -3414,10 +3436,6 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	if (sav->sched) {
 		KFREE(sav->sched);
 		sav->sched = NULL;
-	}
-	if (sav->iv != NULL) {
-		KFREE(sav->iv);
-		sav->iv = NULL;
 	}
 	if (sav->lft_c != NULL) {
 		KFREE(sav->lft_c);
@@ -3526,6 +3544,7 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 	int l = 0;
 	int i;
 	void *p;
+	struct sadb_lifetime lt;
 	int dumporder[] = {
 		SADB_EXT_SA, SADB_X_EXT_SA2,
 		SADB_EXT_LIFETIME_HARD, SADB_EXT_LIFETIME_SOFT,
@@ -3553,32 +3572,24 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 		switch (dumporder[i]) {
 		case SADB_EXT_SA:
 			m = key_setsadbsa(sav);
-			if (!m)
-				goto fail;
 			break;
 
 		case SADB_X_EXT_SA2:
 			m = key_setsadbxsa2(sav->sah->saidx.mode,
 					sav->replay ? sav->replay->count : 0,
 					sav->sah->saidx.reqid);
-			if (!m)
-				goto fail;
 			break;
 
 		case SADB_EXT_ADDRESS_SRC:
 			m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
 			    &sav->sah->saidx.src.sa,
 			    FULLMASK, IPSEC_ULPROTO_ANY);
-			if (!m)
-				goto fail;
 			break;
 
 		case SADB_EXT_ADDRESS_DST:
 			m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
 			    &sav->sah->saidx.dst.sa,
 			    FULLMASK, IPSEC_ULPROTO_ANY);
-			if (!m)
-				goto fail;
 			break;
 
 		case SADB_EXT_KEY_AUTH:
@@ -3599,7 +3610,10 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 			if (!sav->lft_c)
 				continue;
 			l = PFKEY_UNUNIT64(((struct sadb_ext *)sav->lft_c)->sadb_ext_len);
-			p = sav->lft_c;
+			memcpy(&lt, sav->lft_c, sizeof(struct sadb_lifetime));
+			lt.sadb_lifetime_addtime += time_second - time_uptime;
+			lt.sadb_lifetime_usetime += time_second - time_uptime;
+			p = &lt;
 			break;
 
 		case SADB_EXT_LIFETIME_HARD:
@@ -3618,22 +3632,23 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 
 #ifdef IPSEC_NAT_T
 		case SADB_X_EXT_NAT_T_TYPE:
-			if ((m = key_setsadbxtype(sav->natt_type)) == NULL)
-				goto fail;
+			m = key_setsadbxtype(sav->natt_type);
 			break;
 		
 		case SADB_X_EXT_NAT_T_DPORT:
-			if ((m = key_setsadbxport(
+			if (sav->natt_type == 0)
+				continue;
+			m = key_setsadbxport(
 				key_portfromsaddr(&sav->sah->saidx.dst),
-				SADB_X_EXT_NAT_T_DPORT)) == NULL)
-				goto fail;
+				SADB_X_EXT_NAT_T_DPORT);
 			break;
 
 		case SADB_X_EXT_NAT_T_SPORT:
-			if ((m = key_setsadbxport(
+			if (sav->natt_type == 0)
+				continue;
+			m = key_setsadbxport(
 				key_portfromsaddr(&sav->sah->saidx.src),
-				SADB_X_EXT_NAT_T_SPORT)) == NULL)
-				goto fail;
+				SADB_X_EXT_NAT_T_SPORT);
 			break;
 
 		case SADB_X_EXT_NAT_T_OAI:
@@ -3651,7 +3666,8 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 			continue;
 		}
 
-		if ((!m && !p) || (m && p))
+		KASSERT(!(m && p));
+		if (!m && !p)
 			goto fail;
 		if (p && tres) {
 			M_PREPEND(tres, l, M_DONTWAIT);
@@ -3673,6 +3689,7 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 	}
 
 	m_cat(result, tres);
+	tres = NULL; /* avoid free on error below */
 
 	if (result->m_len < sizeof(struct sadb_msg)) {
 		result = m_pullup(result, sizeof(struct sadb_msg));
@@ -4488,7 +4505,7 @@ key_timehandler(void* arg)
 {
 	u_int dir;
 	int s;
-	time_t now = time_second;
+	time_t now = time_uptime;
 
 	s = splsoftnet();	/*called from softclock()*/
 	mutex_enter(softnet_lock);
@@ -4970,7 +4987,7 @@ key_getspi(struct socket *so, struct mbuf *m,
 		struct secacq *acq;
 		if ((acq = key_getacqbyseq(mhp->msg->sadb_msg_seq)) != NULL) {
 			/* reset counter in order to deletion by timehandler. */
-			acq->created = time_second;
+			acq->created = time_uptime;
 			acq->count = 0;
 		}
     	}
@@ -6112,7 +6129,11 @@ key_getcomb_ah(void)
 	for (i = 1; i <= SADB_AALG_MAX; i++) {
 #if 1
 		/* we prefer HMAC algorithms, not old algorithms */
-		if (i != SADB_AALG_SHA1HMAC && i != SADB_AALG_MD5HMAC)
+		if (i != SADB_AALG_SHA1HMAC &&
+		    i != SADB_AALG_MD5HMAC &&
+		    i != SADB_X_AALG_SHA2_256 &&
+		    i != SADB_X_AALG_SHA2_384 &&
+		    i != SADB_X_AALG_SHA2_512)
 			continue;
 #endif
 		algo = ah_algorithm_lookup(i);
@@ -6454,7 +6475,7 @@ key_newacq(const struct secasindex *saidx)
 	/* copy secindex */
 	memcpy(&newacq->saidx, saidx, sizeof(newacq->saidx));
 	newacq->seq = (acq_seq == ~0 ? 1 : ++acq_seq);
-	newacq->created = time_second;
+	newacq->created = time_uptime;
 	newacq->count = 0;
 
 	return newacq;
@@ -6502,7 +6523,7 @@ key_newspacq(const struct secpolicyindex *spidx)
 
 	/* copy secindex */
 	memcpy(&acq->spidx, spidx, sizeof(acq->spidx));
-	acq->created = time_second;
+	acq->created = time_uptime;
 	acq->count = 0;
 
 	return acq;
@@ -6576,7 +6597,7 @@ key_acquire2(struct socket *so, struct mbuf *m,
 		}
 
 		/* reset acq counter in order to deletion by timehander. */
-		acq->created = time_second;
+		acq->created = time_uptime;
 		acq->count = 0;
 #endif
 		m_freem(m);
@@ -6908,8 +6929,10 @@ key_expire(struct secasvar *sav)
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
 	lt->sadb_lifetime_allocations = sav->lft_c->sadb_lifetime_allocations;
 	lt->sadb_lifetime_bytes = sav->lft_c->sadb_lifetime_bytes;
-	lt->sadb_lifetime_addtime = sav->lft_c->sadb_lifetime_addtime;
-	lt->sadb_lifetime_usetime = sav->lft_c->sadb_lifetime_usetime;
+	lt->sadb_lifetime_addtime = sav->lft_c->sadb_lifetime_addtime
+		+ time_second - time_uptime;
+	lt->sadb_lifetime_usetime = sav->lft_c->sadb_lifetime_usetime
+		+ time_second - time_uptime;
 	lt = (struct sadb_lifetime *)(mtod(m, char *) + len / 2);
 	memcpy(lt, sav->lft_s, sizeof(*lt));
 	m_cat(result, m);
@@ -7931,7 +7954,7 @@ key_sa_recordxfer(struct secasvar *sav, struct mbuf *m)
 	 *	<--------------> HARD
 	 *	<-----> SOFT
 	 */
-	sav->lft_c->sadb_lifetime_usetime = time_second;
+	sav->lft_c->sadb_lifetime_usetime = time_uptime;
 	/* XXX check for expires? */
 
 	return;
@@ -7970,15 +7993,6 @@ key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 
 	sav->state = state;
 	LIST_INSERT_HEAD(&sav->sah->savtree[state], sav, chain);
-}
-
-void
-key_sa_stir_iv(struct secasvar *sav)
-{
-
-	if (!sav->iv)
-		panic("key_sa_stir_iv called with sav == NULL");
-	key_randomfill(sav->iv, sav->ivlen);
 }
 
 /* XXX too much? */

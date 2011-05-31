@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.25.20.3 2011/03/05 20:49:50 rmind Exp $	*/
+/*	$NetBSD: pvr.c,v 1.25.20.4 2011/05/31 03:03:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.25.20.3 2011/03/05 20:49:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.25.20.4 2011/05/31 03:03:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,9 @@ struct fb_devconfig {
 	int	dc_tvsystem;		/* TV broadcast system */
 
 	struct rasops_info dc_rinfo;
+
+	char dc_wsscrname[32];
+	struct wsscreen_descr dc_wsscrdescr;
 };
 
 #define	PVR_RGBMODE	0x01		/* RGB or composite */
@@ -153,6 +156,8 @@ struct pvr_softc {
 	device_t sc_dev;
 	struct fb_devconfig *sc_dc;	/* device configuration */
 	int sc_nscreens;
+	const struct wsscreen_descr *sc_scrdescs[1];
+	struct wsscreen_list sc_scrlist;
 };
 
 static int	pvr_match(device_t, cfdata_t, void *);
@@ -164,23 +169,6 @@ CFATTACH_DECL_NEW(pvr, sizeof(struct pvr_softc),
 static void	pvr_getdevconfig(struct fb_devconfig *);
 
 static struct fb_devconfig pvr_console_dc;
-
-static char pvr_stdscreen_textgeom[32] = { "std" };	/* XXX yuck */
-
-static struct wsscreen_descr pvr_stdscreen = {
-	pvr_stdscreen_textgeom, 0, 0,
-	0, /* textops */
-	0, 0,
-	WSSCREEN_WSCOLORS,
-};
-
-static const struct wsscreen_descr *_pvr_scrlist[] = {
-	&pvr_stdscreen,
-};
-
-static const struct wsscreen_list pvr_screenlist = {
-	sizeof(_pvr_scrlist) / sizeof(struct wsscreen_descr *), _pvr_scrlist
-};
 
 static int	pvrioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	pvrmmap(void *, void *, off_t, int);
@@ -266,15 +254,14 @@ pvr_getdevconfig(struct fb_devconfig *dc)
 
 	rasops_init(&dc->dc_rinfo, 500, 500);
 
-	/* XXX shouldn't be global */
-	pvr_stdscreen.nrows = dc->dc_rinfo.ri_rows;
-	pvr_stdscreen.ncols = dc->dc_rinfo.ri_cols;
-	pvr_stdscreen.textops = &dc->dc_rinfo.ri_ops;
-	pvr_stdscreen.capabilities = dc->dc_rinfo.ri_caps;
+	dc->dc_wsscrdescr.name = dc->dc_wsscrname;
+	dc->dc_wsscrdescr.ncols = dc->dc_rinfo.ri_cols;
+	dc->dc_wsscrdescr.nrows = dc->dc_rinfo.ri_rows;
+	dc->dc_wsscrdescr.textops = &dc->dc_rinfo.ri_ops;
+	dc->dc_wsscrdescr.capabilities = dc->dc_rinfo.ri_caps;
 
-	/* XXX yuck */
-	sprintf(pvr_stdscreen_textgeom, "%dx%d", pvr_stdscreen.ncols,
-	    pvr_stdscreen.nrows);
+	sprintf(dc->dc_wsscrname, "%dx%d",
+	    dc->dc_wsscrdescr.ncols, dc->dc_wsscrdescr.nrows);
 }
 
 void
@@ -305,8 +292,12 @@ pvr_attach(device_t parent, device_t self, void *aux)
 
 	/* XXX Colormap initialization? */
 
+	sc->sc_scrdescs[0] = &sc->sc_dc->dc_wsscrdescr;
+	sc->sc_scrlist.nscreens = 1;
+	sc->sc_scrlist.screens = sc->sc_scrdescs;
+
 	waa.console = console;
-	waa.scrdata = &pvr_screenlist;
+	waa.scrdata = &sc->sc_scrlist;
 	waa.accessops = &pvr_accessops;
 	waa.accesscookie = sc;
 
@@ -588,7 +579,7 @@ pvrcninit(struct consdev *cndev)
 
 	pvr_getdevconfig(dcp);
 	(*dcp->dc_rinfo.ri_ops.allocattr)(&dcp->dc_rinfo, 0, 0, 0, &defattr);
-	wsdisplay_cnattach(&pvr_stdscreen, &dcp->dc_rinfo, 0, 0, defattr);
+	wsdisplay_cnattach(&dcp->dc_wsscrdescr, &dcp->dc_rinfo, 0, 0, defattr);
 
 	pvr_is_console = 1;
 

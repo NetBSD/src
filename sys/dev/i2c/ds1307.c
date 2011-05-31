@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.12 2008/06/08 03:49:26 tsutsui Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.12.20.1 2011/05/31 03:04:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.12 2008/06/08 03:49:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.12.20.1 2011/05/31 03:04:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,10 +87,16 @@ dsrtc_match(device_t parent, cfdata_t cf, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
 
-	if (ia->ia_addr == DS1307_ADDR)
-		return (1);
-
-	return (0);
+	if (ia->ia_name) {
+		/* direct config - check name */
+		if (strcmp(ia->ia_name, "dsrtc") == 0)
+			return 1;
+	} else {
+		/* indirect config - check typical address */
+		if (ia->ia_addr == DS1307_ADDR)
+			return 1;
+	}
+	return 0;
 }
 
 static void

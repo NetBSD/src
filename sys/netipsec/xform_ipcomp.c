@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.19.4.2 2011/04/21 01:42:15 rmind Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.19.4.3 2011/05/31 03:05:10 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.19.4.2 2011/04/21 01:42:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.19.4.3 2011/05/31 03:05:10 rmind Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -126,9 +126,7 @@ ipcomp_init(struct secasvar *sav, const struct xformsw *xsp)
 	memset(&cric, 0, sizeof (cric));
 	cric.cri_alg = sav->tdb_compalgxform->type;
 
-	mutex_spin_enter(&crypto_mtx);
 	ses = crypto_newsession(&sav->tdb_cryptoid, &cric, crypto_support);
-	mutex_spin_exit(&crypto_mtx);
 	return ses;
 }
 
@@ -140,9 +138,7 @@ ipcomp_zeroize(struct secasvar *sav)
 {
 	int err;
 
-	mutex_spin_enter(&crypto_mtx);
 	err = crypto_freesession(sav->tdb_cryptoid);
-	mutex_spin_exit(&crypto_mtx);
 	sav->tdb_cryptoid = 0;
 	return err;
 }
@@ -273,7 +269,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	saidx = &sav->sah->saidx;
 	IPSEC_ASSERT(saidx->dst.sa.sa_family == AF_INET ||
 		saidx->dst.sa.sa_family == AF_INET6,
-		("ah_input_cb: unexpected protocol family %u",
+		("ipcomp_input_cb: unexpected protocol family %u",
 		 saidx->dst.sa.sa_family));
 
 	/* Check for crypto errors */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.38.2.4 2011/04/21 01:42:16 rmind Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.38.2.5 2011/05/31 03:05:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -102,7 +102,7 @@ int rumpuser_putchar(int, int *);
 int rumpuser_kill(int64_t, int, int *);
 
 #define RUMPUSER_PANIC (-1)
-void rumpuser_exit(int);
+void rumpuser_exit(int) __dead;
 void rumpuser_seterrno(int);
 
 int rumpuser_writewatchfile_setup(int, int, intptr_t, int *);
@@ -118,7 +118,7 @@ void rumpuser_biothread(void *);
 
 int  rumpuser_thread_create(void *(*f)(void *), void *, const char *, int,
 			    void **);
-void rumpuser_thread_exit(void);
+void rumpuser_thread_exit(void) __dead;
 int  rumpuser_thread_join(void *);
 
 struct rumpuser_mtx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.3 2009/01/19 19:39:41 christos Exp $	*/
+/*	$NetBSD: ipc.h,v 1.3.6.1 2011/05/31 03:04:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@ __ipc_perm14_to_native(const struct ipc_perm14 *operm, struct ipc_perm *perm)
 #undef CVT
 }
 
-void
+static inline void
 __native_to_ipc_perm14(const struct ipc_perm *perm, struct ipc_perm14 *operm)
 {
 

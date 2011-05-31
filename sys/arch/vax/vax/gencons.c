@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.50.4.1 2011/03/05 20:52:18 rmind Exp $	*/
+/*	$NetBSD: gencons.c,v 1.50.4.2 2011/05/31 03:04:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.50.4.1 2011/03/05 20:52:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.50.4.2 2011/05/31 03:04:21 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -102,7 +102,7 @@ gencnopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return ENXIO;
 
 	if (gc_softc[unit].gencn_tty == NULL)
-		gc_softc[unit].gencn_tty = ttymalloc();
+		gc_softc[unit].gencn_tty = tty_alloc();
 
 	gc_softc[unit].alive = 1;
 	gc_softc[unit].unit = unit;

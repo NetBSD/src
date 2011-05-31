@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.24 2009/11/21 05:35:40 rmind Exp $ */
+/* $NetBSD: a12dc.c,v 1.24.4.1 2011/05/31 03:03:52 rmind Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,12 +64,11 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.24 2009/11/21 05:35:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.24.4.1 2011/05/31 03:03:52 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 
 #include <sys/tty.h>
 #include <sys/proc.h>
@@ -158,9 +157,9 @@ a12dcattach(struct device *parent, struct device *self, void *aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.24 $");
+	printf(": driver %s\n", "$Revision: 1.24.4.1 $");
 
-	tp = a12dc_tty[0] = ttymalloc();
+	tp = a12dc_tty[0] = tty_alloc();
 	tp->t_oproc = a12dcstart;
 	tp->t_param = a12dcparam;
 	tty_attach(tp);
@@ -170,7 +169,7 @@ a12dcattach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-a12dc_init(struct a12dc_config *ccp, int mallocsafe)
+a12dc_init(struct a12dc_config *ccp, int sleepsafe)
 {
 }
 
@@ -269,7 +268,7 @@ a12dcopen(dev_t dev, int flag, int mode, struct lwp *l)
 #endif
 
 	if (!a12dc_tty[unit]) {
-		tp = a12dc_tty[unit] = ttymalloc();
+		tp = a12dc_tty[unit] = tty_alloc();
 		tty_attach(tp);
 	} else
 		tp = a12dc_tty[unit];

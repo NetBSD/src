@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.11.4.1 2010/07/03 01:19:54 rmind Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.11.4.2 2011/05/31 03:05:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.11.4.1 2010/07/03 01:19:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.11.4.2 2011/05/31 03:05:02 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,16 +100,16 @@ typedef struct {
 #define	XC_PRI_BIT	(1ULL << 63)
 
 /* Low priority xcall structures. */
-static xc_state_t	xc_low_pri;
-static uint64_t		xc_tailp;
+static xc_state_t	xc_low_pri	__cacheline_aligned;
+static uint64_t		xc_tailp	__cacheline_aligned;
 
 /* High priority xcall structures. */
-static xc_state_t	xc_high_pri;
-static void *		xc_sih;
+static xc_state_t	xc_high_pri	__cacheline_aligned;
+static void *		xc_sih		__cacheline_aligned;
 
 /* Event counters. */
-static struct evcnt	xc_unicast_ev;
-static struct evcnt	xc_broadcast_ev;
+static struct evcnt	xc_unicast_ev	__cacheline_aligned;
+static struct evcnt	xc_broadcast_ev	__cacheline_aligned;
 
 static void		xc_init(void);
 static void		xc_thread(void *);

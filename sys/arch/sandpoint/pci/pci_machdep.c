@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.17.4.3 2011/04/21 01:41:21 rmind Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.17.4.4 2011/05/31 03:04:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.17.4.3 2011/04/21 01:41:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.17.4.4 2011/05/31 03:04:15 rmind Exp $");
 
 #include "opt_pci.h"
 
@@ -135,12 +135,6 @@ pci_attach_hook(struct device *parent, struct device *self,
 	}
 	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 15, 0);
 	dev15 = pci_conf_read(pba->pba_pc, tag, PCI_ID_REG);
-	if (PCI_VENDOR(dev15) == PCI_VENDOR_INTEL
-	    || PCI_VENDOR(dev15) == PCI_VENDOR_REALTEK) {
-		/* Intel or Realtek GbE at dev 15 */
-		brdtype = BRD_QNAPTS;
-		return;
-	}
 	if (PCI_VENDOR(dev15) == PCI_VENDOR_MARVELL) {
 		/* Marvell GbE at dev 15 */
 		brdtype = BRD_SYNOLOGY;
@@ -163,6 +157,12 @@ pci_attach_hook(struct device *parent, struct device *self,
 	if (PCI_VENDOR(dev16) == PCI_VENDOR_ITE
 	    || PCI_VENDOR(dev16) == PCI_VENDOR_CMDTECH) {
 		brdtype = BRD_NH230NAS;
+		return;
+	}
+	if (PCI_VENDOR(dev15) == PCI_VENDOR_INTEL
+	    || PCI_VENDOR(dev15) == PCI_VENDOR_REALTEK) {
+		/* Intel or Realtek GbE at dev 15 */
+		brdtype = BRD_QNAPTS;
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_fifoops.h,v 1.6.22.1 2010/05/30 05:17:56 rmind Exp $	*/
+/*	$NetBSD: tmpfs_fifoops.h,v 1.6.22.2 2011/05/31 03:04:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,8 +39,6 @@
 
 #include <miscfs/fifofs/fifo.h>
 #include <fs/tmpfs/tmpfs_vnops.h>
-
-/* --------------------------------------------------------------------- */
 
 /*
  * Declarations for tmpfs_fifoops.c.
@@ -89,5 +87,4 @@ int	tmpfs_fifo_write	(void *);
 #define	tmpfs_fifo_getpages	genfs_badop
 #define	tmpfs_fifo_putpages	vn_fifo_bypass
 
-/* --------------------------------------------------------------------- */
 #endif /* _FS_TMPFS_TMPFS_FIFOOPS_H_ */

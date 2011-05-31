@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.173.2.2 2011/03/05 20:52:07 rmind Exp $ */
+/*	$NetBSD: autoconf.c,v 1.173.2.3 2011/05/31 03:04:19 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.173.2.2 2011/03/05 20:52:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.173.2.3 2011/05/31 03:04:19 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -136,6 +136,9 @@ void *bootinfo = 0;
 #ifdef KGDB
 int kgdb_break_at_attach;
 #endif
+
+/* Default to sun4u */
+int cputyp = CPU_SUN4U;
 
 #define	OFPATHLEN	128
 #define	OFNODEKEY	"OFpnode"
@@ -254,6 +257,7 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 {
 	void *bi;
 	long bmagic;
+	char buf[32];
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	struct btinfo_symtab *bi_sym;
@@ -328,6 +332,13 @@ die_old_boot_loader:
 #endif
 #endif
 #endif
+
+	if (OF_getprop(findroot(), "compatible", buf, sizeof(buf)) > 0) {
+		if (strcmp(buf, "sun4us") == 0)
+			cputyp = CPU_SUN4US;
+		else if (strcmp(buf, "sun4v") == 0)
+			cputyp = CPU_SUN4V;
+	}
 
 	LOOKUP_BOOTINFO(bi_count, BTINFO_DTLB_SLOTS);
 	kernel_tlb_slots = bi_count->count;
@@ -927,16 +938,22 @@ device_register(struct device *dev, void *aux)
 	if (ofnode != 0) {
 		uint8_t eaddr[ETHER_ADDR_LEN];
 		char tmpstr[32];
+		char tmpstr2[32];
+		int node;
+		uint32_t id = 0;
 		uint64_t nwwn = 0, pwwn = 0;
 		prop_dictionary_t dict;
 		prop_data_t blob;
 		prop_number_t pwwnd = NULL, nwwnd = NULL;
+		prop_number_t idd = NULL;
 
 		device_setofnode(dev, ofnode);
 		dev_path_exact_match(dev, ofnode);
 
 		if (OF_getprop(ofnode, "name", tmpstr, sizeof(tmpstr)) <= 0)
 			tmpstr[0] = 0;
+		if (OF_getprop(ofnode, "device_type", tmpstr2, sizeof(tmpstr2)) <= 0)
+			tmpstr2[0] = 0;
 
 		/*
 		 * If this is a network interface, note the
@@ -944,7 +961,11 @@ device_register(struct device *dev, void *aux)
 		 */
 		if (strcmp(tmpstr, "network") == 0
 		   || strcmp(tmpstr, "ethernet") == 0
+		   || strcmp(tmpstr2, "network") == 0
+		   || strcmp(tmpstr2, "ethernet") == 0
 		   || OF_getprop(ofnode, "mac-address", &eaddr, sizeof(eaddr))
+		      >= ETHER_ADDR_LEN
+		   || OF_getprop(ofnode, "local-mac-address", &eaddr, sizeof(eaddr))
 		      >= ETHER_ADDR_LEN) {
 
 			dict = device_properties(dev);
@@ -952,7 +973,8 @@ device_register(struct device *dev, void *aux)
 			/*
 			 * Is it a network interface with FCode?
 			 */
-			if (strcmp(tmpstr, "network") == 0) {
+			if (strcmp(tmpstr, "network") == 0 ||
+			    strcmp(tmpstr2, "network") == 0) {
 				prop_dictionary_set_bool(dict,
 				    "without-seeprom", true);
 				prom_getether(ofnode, eaddr);
@@ -969,8 +991,7 @@ device_register(struct device *dev, void *aux)
 noether:
 
 		/* is this a FC node? */
-		if (OF_getprop(ofnode, "device_type", tmpstr,
-		    sizeof(tmpstr)) > 0 && strcmp(tmpstr, "scsi-fcp") == 0) {
+		if (strcmp(tmpstr, "scsi-fcp") == 0) {
 
 			dict = device_properties(dev);
 
@@ -988,6 +1009,25 @@ noether:
 				    prop_number_create_unsigned_integer(nwwn);
 				prop_dictionary_set(dict, "node-wwn", nwwnd);
 				prop_object_release(nwwnd);
+			}
+		}
+
+		/* is this an spi device?  look for scsi-initiator-id */
+		if (strcmp(tmpstr2, "scsi") == 0 ||
+		    strcmp(tmpstr2, "scsi-2") == 0) {
+
+			dict = device_properties(dev);
+
+			for (node = ofnode; node != 0; node = OF_parent(node)) {
+				if (OF_getprop(node, "scsi-initiator-id", &id,
+				    sizeof(id)) <= 0)
+					continue;
+
+				idd = prop_number_create_unsigned_integer(id);
+				prop_dictionary_set(dict,
+						    "scsi-initiator-id", idd);
+				prop_object_release(idd);
+				break;
 			}
 		}
 	}

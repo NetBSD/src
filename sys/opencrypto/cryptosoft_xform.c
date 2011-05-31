@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.12.4.1 2011/03/05 20:56:05 rmind Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.12.4.2 2011/05/31 03:05:10 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,23 +40,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.12.4.1 2011/03/05 20:56:05 rmind Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.12.4.2 2011/05/31 03:05:10 rmind Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
 #include <crypto/des/des.h>
 #include <crypto/rijndael/rijndael.h>
 #include <crypto/skipjack/skipjack.h>
+#include <crypto/camellia/camellia.h>
 
 #include <opencrypto/deflate.h>
 
 #include <sys/md5.h>
 #include <sys/rmd160.h>
 #include <sys/sha1.h>
+#include <sys/sha2.h>
+#include <opencrypto/aesxcbcmac.h>
+#include <opencrypto/gmac.h>
 
 struct swcr_auth_hash {
 	const struct auth_hash *auth_hash;
+	int ctxsize;
 	void (*Init)(void *);
+	void (*Setkey)(void *, const uint8_t *, uint16_t);
+	void (*Reinit)(void *, const uint8_t *, uint16_t);
 	int  (*Update)(void *, const uint8_t *, uint16_t);
 	void (*Final)(uint8_t *, void *);
 };
@@ -65,8 +72,9 @@ struct swcr_enc_xform {
 	const struct enc_xform *enc_xform;
 	void (*encrypt)(void *, uint8_t *);
 	void (*decrypt)(void *, uint8_t *);
-	int  (*setkey)(uint8_t **, const uint8_t *, int len);
+	int  (*setkey)(uint8_t **, const uint8_t *, int);
 	void (*zerokey)(uint8_t **);
+	void (*reinit)(void *, const uint8_t *, uint8_t *);
 };
 
 struct swcr_comp_algo {
@@ -86,24 +94,33 @@ static	int blf_setkey(u_int8_t **, const u_int8_t *, int);
 static	int cast5_setkey(u_int8_t **, const u_int8_t *, int);
 static  int skipjack_setkey(u_int8_t **, const u_int8_t *, int);
 static  int rijndael128_setkey(u_int8_t **, const u_int8_t *, int);
+static  int cml_setkey(u_int8_t **, const u_int8_t *, int);
+static  int aes_ctr_setkey(u_int8_t **, const u_int8_t *, int);
 static	void des1_encrypt(void *, u_int8_t *);
 static	void des3_encrypt(void *, u_int8_t *);
 static	void blf_encrypt(void *, u_int8_t *);
 static	void cast5_encrypt(void *, u_int8_t *);
 static	void skipjack_encrypt(void *, u_int8_t *);
 static	void rijndael128_encrypt(void *, u_int8_t *);
+static  void cml_encrypt(void *, u_int8_t *);
 static	void des1_decrypt(void *, u_int8_t *);
 static	void des3_decrypt(void *, u_int8_t *);
 static	void blf_decrypt(void *, u_int8_t *);
 static	void cast5_decrypt(void *, u_int8_t *);
 static	void skipjack_decrypt(void *, u_int8_t *);
 static	void rijndael128_decrypt(void *, u_int8_t *);
+static  void cml_decrypt(void *, u_int8_t *);
+static  void aes_ctr_crypt(void *, u_int8_t *);
 static	void des1_zerokey(u_int8_t **);
 static	void des3_zerokey(u_int8_t **);
 static	void blf_zerokey(u_int8_t **);
 static	void cast5_zerokey(u_int8_t **);
 static	void skipjack_zerokey(u_int8_t **);
 static	void rijndael128_zerokey(u_int8_t **);
+static  void cml_zerokey(u_int8_t **);
+static  void aes_ctr_zerokey(u_int8_t **);
+static  void aes_ctr_reinit(void *, const u_int8_t *, u_int8_t *);
+static  void aes_gcm_reinit(void *, const u_int8_t *, u_int8_t *);
 
 static	void null_init(void *);
 static	int null_update(void *, const u_int8_t *, u_int16_t);
@@ -135,6 +152,7 @@ static const struct swcr_enc_xform swcr_enc_xform_null = {
 	null_decrypt,
 	null_setkey,
 	null_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_des = {
@@ -143,6 +161,7 @@ static const struct swcr_enc_xform swcr_enc_xform_des = {
 	des1_decrypt,
 	des1_setkey,
 	des1_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_3des = {
@@ -150,7 +169,8 @@ static const struct swcr_enc_xform swcr_enc_xform_3des = {
 	des3_encrypt,
 	des3_decrypt,
 	des3_setkey,
-	des3_zerokey
+	des3_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_blf = {
@@ -158,7 +178,8 @@ static const struct swcr_enc_xform swcr_enc_xform_blf = {
 	blf_encrypt,
 	blf_decrypt,
 	blf_setkey,
-	blf_zerokey
+	blf_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_cast5 = {
@@ -166,7 +187,8 @@ static const struct swcr_enc_xform swcr_enc_xform_cast5 = {
 	cast5_encrypt,
 	cast5_decrypt,
 	cast5_setkey,
-	cast5_zerokey
+	cast5_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_skipjack = {
@@ -174,7 +196,8 @@ static const struct swcr_enc_xform swcr_enc_xform_skipjack = {
 	skipjack_encrypt,
 	skipjack_decrypt,
 	skipjack_setkey,
-	skipjack_zerokey
+	skipjack_zerokey,
+	NULL
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_rijndael128 = {
@@ -183,94 +206,157 @@ static const struct swcr_enc_xform swcr_enc_xform_rijndael128 = {
 	rijndael128_decrypt,
 	rijndael128_setkey,
 	rijndael128_zerokey,
+	NULL
 };
 
-static const struct swcr_enc_xform swcr_enc_xform_arc4 = {
-	&enc_xform_arc4,
+static const struct swcr_enc_xform swcr_enc_xform_aes_ctr = {
+	&enc_xform_aes_ctr,
+	aes_ctr_crypt,
+	aes_ctr_crypt,
+	aes_ctr_setkey,
+	aes_ctr_zerokey,
+	aes_ctr_reinit
+};
+
+static const struct swcr_enc_xform swcr_enc_xform_aes_gcm = {
+	&enc_xform_aes_gcm,
+	aes_ctr_crypt,
+	aes_ctr_crypt,
+	aes_ctr_setkey,
+	aes_ctr_zerokey,
+	aes_gcm_reinit
+};
+
+static const struct swcr_enc_xform swcr_enc_xform_aes_gmac = {
+	&enc_xform_aes_gmac,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
+	NULL
+};
+
+static const struct swcr_enc_xform swcr_enc_xform_camellia = {
+	&enc_xform_camellia,
+	cml_encrypt,
+	cml_decrypt,
+	cml_setkey,
+	cml_zerokey,
+	NULL
 };
 
 /* Authentication instances */
 static const struct swcr_auth_hash swcr_auth_hash_null = {
-	&auth_hash_null,
-	null_init, null_update, null_final
+	&auth_hash_null, sizeof(int), /* NB: context isn't used */
+	null_init, NULL, NULL, null_update, null_final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_md5 = {
-	&auth_hash_hmac_md5,
-	(void (*) (void *)) MD5Init, MD5Update_int,
+	&auth_hash_hmac_md5, sizeof(MD5_CTX),
+	(void (*) (void *)) MD5Init, NULL, NULL, MD5Update_int,
 	(void (*) (u_int8_t *, void *)) MD5Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha1 = {
-	&auth_hash_hmac_sha1,
-	SHA1Init_int, SHA1Update_int, SHA1Final_int
+	&auth_hash_hmac_sha1, sizeof(SHA1_CTX),
+	SHA1Init_int, NULL, NULL, SHA1Update_int, SHA1Final_int
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_ripemd_160 = {
-	&auth_hash_hmac_ripemd_160,
-	(void (*)(void *)) RMD160Init, RMD160Update_int,
+	&auth_hash_hmac_ripemd_160, sizeof(RMD160_CTX),
+	(void (*)(void *)) RMD160Init, NULL, NULL, RMD160Update_int,
 	(void (*)(u_int8_t *, void *)) RMD160Final
 };
 static const struct swcr_auth_hash swcr_auth_hash_hmac_md5_96 = {
-	&auth_hash_hmac_md5_96,
-	(void (*) (void *)) MD5Init, MD5Update_int,
+	&auth_hash_hmac_md5_96, sizeof(MD5_CTX),
+	(void (*) (void *)) MD5Init, NULL, NULL, MD5Update_int,
 	(void (*) (u_int8_t *, void *)) MD5Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha1_96 = {
-	&auth_hash_hmac_sha1_96,
-	SHA1Init_int, SHA1Update_int, SHA1Final_int
+	&auth_hash_hmac_sha1_96, sizeof(SHA1_CTX),
+	SHA1Init_int, NULL, NULL, SHA1Update_int, SHA1Final_int
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_ripemd_160_96 = {
-	&auth_hash_hmac_ripemd_160_96,
-	(void (*)(void *)) RMD160Init, RMD160Update_int,
+	&auth_hash_hmac_ripemd_160_96, sizeof(RMD160_CTX),
+	(void (*)(void *)) RMD160Init, NULL, NULL, RMD160Update_int,
 	(void (*)(u_int8_t *, void *)) RMD160Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_key_md5 = {
-	&auth_hash_key_md5,
-	(void (*)(void *)) MD5Init, MD5Update_int,
+	&auth_hash_key_md5, sizeof(MD5_CTX),
+	(void (*)(void *)) MD5Init, NULL, NULL, MD5Update_int,
 	(void (*)(u_int8_t *, void *)) MD5Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_key_sha1 = {
-	&auth_hash_key_sha1,
-	SHA1Init_int, SHA1Update_int, SHA1Final_int
+	&auth_hash_key_sha1, sizeof(SHA1_CTX),
+	SHA1Init_int, NULL, NULL, SHA1Update_int, SHA1Final_int
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_md5 = {
-	&auth_hash_md5,
-	(void (*) (void *)) MD5Init, MD5Update_int,
+	&auth_hash_md5, sizeof(MD5_CTX),
+	(void (*) (void *)) MD5Init, NULL, NULL, MD5Update_int,
 	(void (*) (u_int8_t *, void *)) MD5Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_sha1 = {
-	&auth_hash_sha1,
-	(void (*)(void *)) SHA1Init, SHA1Update_int,
+	&auth_hash_sha1, sizeof(SHA1_CTX),
+	(void (*)(void *)) SHA1Init, NULL, NULL, SHA1Update_int,
 	(void (*)(u_int8_t *, void *)) SHA1Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_256 = {
-	&auth_hash_hmac_sha2_256,
-	(void (*)(void *)) SHA256_Init, SHA256Update_int,
+	&auth_hash_hmac_sha2_256, sizeof(SHA256_CTX),
+	(void (*)(void *)) SHA256_Init, NULL, NULL, SHA256Update_int,
 	(void (*)(u_int8_t *, void *)) SHA256_Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_384 = {
-	&auth_hash_hmac_sha2_384,
-	(void (*)(void *)) SHA384_Init, SHA384Update_int,
+	&auth_hash_hmac_sha2_384, sizeof(SHA384_CTX),
+	(void (*)(void *)) SHA384_Init, NULL, NULL, SHA384Update_int,
 	(void (*)(u_int8_t *, void *)) SHA384_Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_512 = {
-	&auth_hash_hmac_sha2_384,
-	(void (*)(void *)) SHA512_Init, SHA512Update_int,
+	&auth_hash_hmac_sha2_512, sizeof(SHA512_CTX),
+	(void (*)(void *)) SHA512_Init, NULL, NULL, SHA512Update_int,
 	(void (*)(u_int8_t *, void *)) SHA512_Final
+};
+
+static const struct swcr_auth_hash swcr_auth_hash_aes_xcbc_mac = {
+	&auth_hash_aes_xcbc_mac_96, sizeof(aesxcbc_ctx),
+	null_init,
+	(void (*)(void *, const u_int8_t *, u_int16_t))aes_xcbc_mac_init,
+	NULL, aes_xcbc_mac_loop, aes_xcbc_mac_result
+};
+
+static const struct swcr_auth_hash swcr_auth_hash_gmac_aes_128 = {
+	&auth_hash_gmac_aes_128, sizeof(AES_GMAC_CTX),
+	(void (*)(void *))AES_GMAC_Init,
+	(void (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Setkey,
+	(void (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Reinit,
+	(int (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Update,
+	(void (*)(u_int8_t *, void *))AES_GMAC_Final
+};
+
+static const struct swcr_auth_hash swcr_auth_hash_gmac_aes_192 = {
+	&auth_hash_gmac_aes_192, sizeof(AES_GMAC_CTX),
+	(void (*)(void *))AES_GMAC_Init,
+	(void (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Setkey,
+	(void (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Reinit,
+	(int (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Update,
+	(void (*)(u_int8_t *, void *))AES_GMAC_Final
+};
+
+static const struct swcr_auth_hash swcr_auth_hash_gmac_aes_256 = {
+	&auth_hash_gmac_aes_256, sizeof(AES_GMAC_CTX),
+	(void (*)(void *))AES_GMAC_Init,
+	(void (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Setkey,
+	(void (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Reinit,
+	(int (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Update,
+	(void (*)(u_int8_t *, void *))AES_GMAC_Final
 };
 
 /* Compression instance */
@@ -542,6 +628,8 @@ rijndael128_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	int err;
 
+	if (len != 16 && len != 24 && len != 32)
+		return EINVAL;
 	*sched = malloc(sizeof(rijndael_ctx), M_CRYPTO_DATA,
 	    M_NOWAIT|M_ZERO);
 	if (*sched != NULL) {
@@ -558,6 +646,146 @@ rijndael128_zerokey(u_int8_t **sched)
 	memset(*sched, 0, sizeof(rijndael_ctx));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
+}
+
+static void
+cml_encrypt(void *key, u_int8_t *blk)
+{
+
+	camellia_encrypt(key, blk, blk);
+}
+
+static void
+cml_decrypt(void *key, u_int8_t *blk)
+{
+
+	camellia_decrypt(key, blk, blk);
+}
+
+static int
+cml_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+{
+	int err;
+
+	if (len != 16 && len != 24 && len != 32)
+		return (EINVAL);
+	*sched = malloc(sizeof(camellia_ctx), M_CRYPTO_DATA,
+			M_NOWAIT|M_ZERO);
+	if (*sched != NULL) {
+		camellia_set_key((camellia_ctx *) *sched, key, len * 8);
+		err = 0;
+	} else
+		err = ENOMEM;
+	return err;
+}
+
+static void
+cml_zerokey(u_int8_t **sched)
+{
+
+	memset(*sched, 0, sizeof(camellia_ctx));
+	free(*sched, M_CRYPTO_DATA);
+	*sched = NULL;
+}
+
+#define AESCTR_NONCESIZE	4
+#define AESCTR_IVSIZE		8
+#define AESCTR_BLOCKSIZE	16
+
+struct aes_ctr_ctx {
+	/* need only encryption half */
+	u_int32_t ac_ek[4*(RIJNDAEL_MAXNR + 1)];
+	u_int8_t ac_block[AESCTR_BLOCKSIZE];
+	int ac_nr;
+	struct {
+		u_int64_t lastiv;
+	} ivgenctx;
+};
+
+static void
+aes_ctr_crypt(void *key, u_int8_t *blk)
+{
+	struct aes_ctr_ctx *ctx;
+	u_int8_t keystream[AESCTR_BLOCKSIZE];
+	int i;
+
+	ctx = key;
+	/* increment counter */
+	for (i = AESCTR_BLOCKSIZE - 1;
+	     i >= AESCTR_NONCESIZE + AESCTR_IVSIZE; i--)
+		if (++ctx->ac_block[i]) /* continue on overflow */
+			break;
+	rijndaelEncrypt(ctx->ac_ek, ctx->ac_nr, ctx->ac_block, keystream);
+	for (i = 0; i < AESCTR_BLOCKSIZE; i++)
+		blk[i] ^= keystream[i];
+	memset(keystream, 0, sizeof(keystream));
+}
+
+int
+aes_ctr_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+{
+	struct aes_ctr_ctx *ctx;
+
+	if (len < AESCTR_NONCESIZE)
+		return EINVAL;
+
+	ctx = malloc(sizeof(struct aes_ctr_ctx), M_CRYPTO_DATA,
+		     M_NOWAIT|M_ZERO);
+	if (!ctx)
+		return ENOMEM;
+	ctx->ac_nr = rijndaelKeySetupEnc(ctx->ac_ek, (const u_char *)key,
+			(len - AESCTR_NONCESIZE) * 8);
+	if (!ctx->ac_nr) { /* wrong key len */
+		aes_ctr_zerokey((u_int8_t **)&ctx);
+		return EINVAL;
+	}
+	memcpy(ctx->ac_block, key + len - AESCTR_NONCESIZE, AESCTR_NONCESIZE);
+	/* random start value for simple counter */
+	arc4randbytes(&ctx->ivgenctx.lastiv, sizeof(ctx->ivgenctx.lastiv));
+	*sched = (void *)ctx;
+	return 0;
+}
+
+void
+aes_ctr_zerokey(u_int8_t **sched)
+{
+
+	memset(*sched, 0, sizeof(struct aes_ctr_ctx));
+	free(*sched, M_CRYPTO_DATA);
+	*sched = NULL;
+}
+
+void
+aes_ctr_reinit(void *key, const u_int8_t *iv, u_int8_t *ivout)
+{
+	struct aes_ctr_ctx *ctx = key;
+
+	if (!iv) {
+		ctx->ivgenctx.lastiv++;
+		iv = (const u_int8_t *)&ctx->ivgenctx.lastiv;
+	}
+	if (ivout)
+		memcpy(ivout, iv, AESCTR_IVSIZE);
+	memcpy(ctx->ac_block + AESCTR_NONCESIZE, iv, AESCTR_IVSIZE);
+	/* reset counter */
+	memset(ctx->ac_block + AESCTR_NONCESIZE + AESCTR_IVSIZE, 0, 4);
+}
+
+void
+aes_gcm_reinit(void *key, const u_int8_t *iv, u_int8_t *ivout)
+{
+	struct aes_ctr_ctx *ctx = key;
+
+	if (!iv) {
+		ctx->ivgenctx.lastiv++;
+		iv = (const u_int8_t *)&ctx->ivgenctx.lastiv;
+	}
+	if (ivout)
+		memcpy(ivout, iv, AESCTR_IVSIZE);
+	memcpy(ctx->ac_block + AESCTR_NONCESIZE, iv, AESCTR_IVSIZE);
+	/* reset counter */
+	memset(ctx->ac_block + AESCTR_NONCESIZE + AESCTR_IVSIZE, 0, 4);
+	ctx->ac_block[AESCTR_BLOCKSIZE - 1] = 1; /* GCM starts with 1 */
 }
 
 /*

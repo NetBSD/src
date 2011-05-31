@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.42.4.2 2011/03/05 20:50:43 rmind Exp $
+# $NetBSD: Makefile.boot,v 1.42.4.3 2011/05/31 03:04:05 rmind Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -6,6 +6,8 @@ NOMAN=
 PROG?= boot
 NEWVERSWHAT?= "BIOS Boot"
 VERSIONFILE?= ${.CURDIR}/../version
+
+AFLAGS.biosboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 SOURCES?= biosboot.S boot2.c conf.c devopen.c exec.c
 SRCS= ${SOURCES}

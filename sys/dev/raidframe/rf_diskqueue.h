@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.23 2009/03/23 18:38:54 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.23.4.1 2011/05/31 03:04:53 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -102,9 +102,7 @@ struct RF_DiskQueueSW_s {
 struct RF_DiskQueue_s {
 	const RF_DiskQueueSW_t *qPtr;	/* access point to queue functions */
 	void   *qHdr;		/* queue header, of whatever type */
-        RF_DECLARE_MUTEX(mutex)	/* mutex locking data structures */
-        RF_DECLARE_COND(cond)	/* condition variable for
-				 * synchronization */
+	rf_declare_mutex2(mutex);/* mutex locking data structures */
 	long    numOutstanding;	/* number of I/Os currently outstanding on
 				 * disk */
 	long    maxOutstanding;	/* max # of I/Os that can be outstanding on a
@@ -127,8 +125,8 @@ struct RF_DiskQueue_s {
 #define RF_QUEUE_EMPTY(_q)                  ((_q)->numOutstanding == 0)
 #define RF_QUEUE_FULL(_q)                   ((_q)->numOutstanding == (_q)->maxOutstanding)
 
-#define RF_LOCK_QUEUE_MUTEX(_q_,_wh_)   RF_LOCK_MUTEX((_q_)->mutex)
-#define RF_UNLOCK_QUEUE_MUTEX(_q_,_wh_) RF_UNLOCK_MUTEX((_q_)->mutex)
+#define RF_LOCK_QUEUE_MUTEX(_q_,_wh_)   rf_lock_mutex2((_q_)->mutex)
+#define RF_UNLOCK_QUEUE_MUTEX(_q_,_wh_) rf_unlock_mutex2((_q_)->mutex)
 
 /* whether it is ok to dispatch a regular request */
 #define RF_OK_TO_DISPATCH(_q_,_r_) \

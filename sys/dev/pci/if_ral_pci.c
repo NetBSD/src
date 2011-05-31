@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.15 2010/01/19 22:07:01 pooka Exp $	*/
+/*	$NetBSD: if_ral_pci.c,v 1.15.4.1 2011/05/31 03:04:40 rmind Exp $	*/
 /*	$OpenBSD: if_ral_pci.c,v 1.6 2006/01/09 20:03:43 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * PCI front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.15 2010/01/19 22:07:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.15.4.1 2011/05/31 03:04:40 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -122,7 +122,7 @@ ral_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct ral_pci_softc *psc = device_private(self);
 	struct rt2560_softc *sc = &psc->sc_sc;
-	struct pci_attach_args *pa = aux;
+	const struct pci_attach_args *pa = aux;
 	const char *intrstr;
 	char devinfo[256];
 	bus_addr_t base;
@@ -144,7 +144,6 @@ ral_pci_attach(device_t parent, device_t self, void *aux)
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
-	pa->pa_flags |= PCI_FLAGS_MEM_ENABLED;
 
 	/* map control/status registers */
 	error = pci_mapreg_map(pa, RAL_PCI_BAR0, PCI_MAPREG_TYPE_MEM |

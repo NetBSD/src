@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5.2.2 2011/03/05 20:51:34 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.5.2.3 2011/05/31 03:04:13 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.5.2.2 2011/03/05 20:51:34 rmind Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.5.2.3 2011/05/31 03:04:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ spe_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	ci->ci_ev_vec.ev_count++;
 
 #ifdef PPC_HAVE_SPE
-	vec_enable();
+	vec_load();
 	return 0;
 #else
 	KSI_INIT_TRAP(ksi);

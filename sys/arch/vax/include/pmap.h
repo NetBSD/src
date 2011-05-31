@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.77.4.1 2011/03/05 20:52:16 rmind Exp $	   */
+/*	$NetBSD: pmap.h,v 1.77.4.2 2011/05/31 03:04:21 rmind Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -81,7 +81,7 @@
 #ifndef PMAP_H
 #define PMAP_H
 
-#include <sys/simplelock.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_page.h>
 
@@ -102,13 +102,12 @@
 
 struct pmap {
 	struct pte	*pm_p1ap;	/* Base of alloced p1 pte space */
-	int		 pm_count;	/* reference count */
+	u_int		 pm_count;	/* reference count */
 	struct pcb	*pm_pcbs;	/* PCBs using this pmap */
 	struct pte	*pm_p0br;	/* page 0 base register */
 	long		 pm_p0lr;	/* page 0 length register */
 	struct pte	*pm_p1br;	/* page 1 base register */
 	long		 pm_p1lr;	/* page 1 length register */
-	struct simplelock pm_lock;	/* Lock entry in MP environment */
 	struct pmap_statistics	 pm_stats;	/* Some statistics */
 };
 
@@ -149,7 +148,7 @@ extern	struct  pv_entry *pv_table;
 /*
  * This is the by far most used pmap routine. Make it inline.
  */
-__inline static bool
+static __inline bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	int	*pte, sva;
@@ -190,25 +189,30 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	return (false);
 }
 
-bool pmap_clear_modify_long(struct pv_entry *);
-bool pmap_clear_reference_long(struct pv_entry *);
-bool pmap_is_modified_long(struct pv_entry *);
+bool pmap_clear_modify_long(const struct pv_entry *);
+bool pmap_clear_reference_long(const struct pv_entry *);
+bool pmap_is_modified_long_p(const struct pv_entry *);
 void pmap_page_protect_long(struct pv_entry *, vm_prot_t);
 void pmap_protect_long(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 
-__inline static bool
-pmap_is_referenced(struct vm_page *pg)
+static __inline struct pv_entry *
+pmap_pg_to_pv(const struct vm_page *pg)
 {
-	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
-	bool rv = (pv->pv_attr & PG_V) != 0;
-
-	return rv;
+	return pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
 }
 
-__inline static bool
+static __inline bool
+pmap_is_referenced(struct vm_page *pg)
+{
+	const struct pv_entry * const pv = pmap_pg_to_pv(pg);
+
+	return (pv->pv_attr & PG_V) != 0;
+}
+
+static __inline bool
 pmap_clear_reference(struct vm_page *pg)
 {
-	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+	struct pv_entry * const pv = pmap_pg_to_pv(pg);
 	bool rv = (pv->pv_attr & PG_V) != 0;
 
 	pv->pv_attr &= ~PG_V;
@@ -217,10 +221,10 @@ pmap_clear_reference(struct vm_page *pg)
 	return rv;
 }
 
-__inline static bool
+static __inline bool
 pmap_clear_modify(struct vm_page *pg)
 {
-	struct  pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+	struct pv_entry * const pv = pmap_pg_to_pv(pg);
 	bool rv = (pv->pv_attr & PG_M) != 0;
 
 	pv->pv_attr &= ~PG_M;
@@ -229,26 +233,24 @@ pmap_clear_modify(struct vm_page *pg)
 	return rv;
 }
 
-__inline static bool
+static __inline bool
 pmap_is_modified(struct vm_page *pg)
 {
-	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
-	if (pv->pv_attr & PG_M)
-		return 1;
-	else
-		return pmap_is_modified_long(pv);
+	const struct pv_entry * const pv = pmap_pg_to_pv(pg);
+
+	return (pv->pv_attr & PG_M) != 0 || pmap_is_modified_long_p(pv);
 }
 
-__inline static void
+static __inline void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	struct  pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
+	struct pv_entry * const pv = pmap_pg_to_pv(pg);
 
 	if (pv->pv_pmap != NULL || pv->pv_next != NULL)
 		pmap_page_protect_long(pv, prot);
 }
 
-__inline static void
+static __inline void
 pmap_protect(pmap_t pmap, vaddr_t start, vaddr_t end, vm_prot_t prot)
 {
 	if (pmap->pm_p0lr != 0 || pmap->pm_p1lr != 0x200000 ||
@@ -266,10 +268,10 @@ pmap_remove_all(struct pmap *pmap)
 #define pmap_phys_address(phys)		((u_int)(phys) << PGSHIFT)
 #define pmap_copy(a,b,c,d,e)		/* Dont do anything */
 #define pmap_update(pmap)		/* nothing (yet) */
-#define pmap_remove(pmap, start, slut)	pmap_protect(pmap, start, slut, 0)
+#define pmap_remove(pmap, start, end)	pmap_protect(pmap, start, end, 0)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#define pmap_reference(pmap)		(pmap)->pm_count++
+#define pmap_reference(pmap)		atomic_inc_uint(&(pmap)->pm_count)
 
 /* These can be done as efficient inline macros */
 #define pmap_copy_page(src, dst)			\

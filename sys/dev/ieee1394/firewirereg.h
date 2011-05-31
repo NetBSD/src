@@ -1,4 +1,4 @@
-/*	$NetBSD: firewirereg.h,v 1.10.4.2 2011/03/05 20:53:23 rmind Exp $	*/
+/*	$NetBSD: firewirereg.h,v 1.10.4.3 2011/05/31 03:04:37 rmind Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -319,6 +319,8 @@ extern int firewire_phydma_enable;
 #define bio_resid b_resid
 #define BIO_READ B_READ
 #define BIO_WRITE B_WRITE
+
+#include <sys/mallocvar.h>
 
 MALLOC_DECLARE(M_FW);
 MALLOC_DECLARE(M_FWXFER);

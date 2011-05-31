@@ -1,3 +1,5 @@
+/*	$NetBSD: if_ndisvar.h,v 1.6.2.1 2011/05/31 03:04:38 rmind Exp $	*/
+
 /*-
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -182,7 +184,7 @@ struct ndis_softc {
 #ifdef __FreeBSD__	
 	struct mtx		ndis_mtx;
 #else /* __NetBSD__ */
-	struct simplelock	ndis_mtx;
+	kmutex_t		ndis_mtx;
 #endif	
         device_t		ndis_dev;
 	int			ndis_unit;
@@ -228,18 +230,8 @@ struct ndis_softc {
 	int			ndis_mmapcnt;
 };
 
-#ifdef __FreeBSD__
-
 #define NDIS_LOCK(_sc)		mtx_lock(&(_sc)->ndis_mtx)
 #define NDIS_UNLOCK(_sc)	mtx_unlock(&(_sc)->ndis_mtx)
-
-#else /* __NetBSD__ */
-
-#define NDIS_LOCK(_sc)		do {s = spl_sc(); simple_lock(&(_sc)->ndis_mtx);} while(0)
-#define NDIS_UNLOCK(_sc)	do {simple_unlock(&(_sc)->ndis_mtx); splx(s);} while(0)
-#define spl_sc() splnet()
-
-#endif
 
 /*static*/ __stdcall void ndis_txeof	    (ndis_handle, ndis_packet *, ndis_status);
 /*static*/ __stdcall void ndis_rxeof	    (ndis_handle, ndis_packet **, uint32_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.10.4.1 2011/04/21 01:42:09 rmind Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.10.4.2 2011/05/31 03:05:02 rmind Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.10.4.1 2011/04/21 01:42:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.10.4.2 2011/05/31 03:05:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -58,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.10.4.1 2011/04/21 01:42:09 rmind E
 #define	percpu_decrypt(pc)	(pc)
 #endif /* defined(DIAGNOSTIC) */
 
-static krwlock_t percpu_swap_lock;
-static kmutex_t percpu_allocation_lock;
-static vmem_t *percpu_offset_arena;
-static unsigned int percpu_nextoff = PERCPU_QUANTUM_SIZE;
+static krwlock_t	percpu_swap_lock	__cacheline_aligned;
+static kmutex_t		percpu_allocation_lock	__cacheline_aligned;
+static vmem_t *		percpu_offset_arena	__cacheline_aligned;
+static unsigned int	percpu_nextoff		__cacheline_aligned;
 
 static percpu_cpu_t *
 cpu_percpu(struct cpu_info *ci)
@@ -217,6 +217,7 @@ percpu_init(void)
 	ASSERT_SLEEPABLE();
 	rw_init(&percpu_swap_lock);
 	mutex_init(&percpu_allocation_lock, MUTEX_DEFAULT, IPL_NONE);
+	percpu_nextoff = PERCPU_QUANTUM_SIZE;
 
 	percpu_offset_arena = vmem_create("percpu", 0, 0, PERCPU_QUANTUM_SIZE,
 	    percpu_backend_alloc, NULL, NULL, PERCPU_QCACHE_MAX, VM_SLEEP,

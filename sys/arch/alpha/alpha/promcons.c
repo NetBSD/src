@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.35 2009/11/21 05:35:40 rmind Exp $ */
+/* $NetBSD: promcons.c,v 1.35.4.1 2011/05/31 03:03:52 rmind Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.35 2009/11/21 05:35:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.35.4.1 2011/05/31 03:03:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ promopen(dev_t dev, int flag, int mode, struct lwp *l)
 	s = spltty();
 
 	if (!prom_tty[unit]) {
-		tp = prom_tty[unit] = ttymalloc();
+		tp = prom_tty[unit] = tty_alloc();
 		tty_attach(tp);
 	} else
 		tp = prom_tty[unit];

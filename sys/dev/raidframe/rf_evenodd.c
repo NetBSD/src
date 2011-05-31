@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.19 2007/01/29 01:52:45 hubertf Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.19.68.1 2011/05/31 03:04:53 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.19 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.19.68.1 2011/05/31 03:04:53 rmind Exp $");
 
 #include "rf_archs.h"
 
@@ -411,13 +411,13 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		rf_PrintDAGList(rd_dag_h);
 	}
 #endif
-	RF_LOCK_MUTEX(mcpair->mutex);
+	RF_LOCK_MCPAIR(mcpair);
 	mcpair->flag = 0;
 	rf_DispatchDAG(rd_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
 	    (void *) mcpair);
 	while (!mcpair->flag)
-		RF_WAIT_COND(mcpair->cond, mcpair->mutex);
-	RF_UNLOCK_MUTEX(mcpair->mutex);
+		RF_WAIT_MCPAIR(mcpair);
+	RF_UNLOCK_MCPAIR(mcpair);
 	if (rd_dag_h->status != rf_enable) {
 		RF_ERRORMSG("Unable to verify parity:  can't read the stripe\n");
 		retcode = RF_PARITY_COULD_NOT_VERIFY;
@@ -473,13 +473,13 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 			rf_PrintDAGList(wr_dag_h);
 		}
 #endif
-		RF_LOCK_MUTEX(mcpair->mutex);
+		RF_LOCK_MCPAIR(mcpair);
 		mcpair->flag = 0;
 		rf_DispatchDAG(wr_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
 		    (void *) mcpair);
 		while (!mcpair->flag)
-			RF_WAIT_COND(mcpair->cond, mcpair->mutex);
-		RF_UNLOCK_MUTEX(mcpair->mutex);
+			RF_WAIT_MCPAIR(mcpair);
+		RF_UNLOCK_MCPAIR(mcpair);
 		if (wr_dag_h->status != rf_enable) {
 			RF_ERRORMSG("Unable to correct parity in VerifyParity:  can't write the stripe\n");
 			parity_cant_correct = RF_TRUE;
@@ -504,13 +504,13 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 			rf_PrintDAGList(wr_dag_h);
 		}
 #endif
-		RF_LOCK_MUTEX(mcpair->mutex);
+		RF_LOCK_MCPAIR(mcpair);
 		mcpair->flag = 0;
 		rf_DispatchDAG(wr_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
 		    (void *) mcpair);
 		while (!mcpair->flag)
-			RF_WAIT_COND(mcpair->cond, mcpair->mutex);
-		RF_UNLOCK_MUTEX(mcpair->mutex);
+			RF_WAIT_MCPAIR(mcpair);
+		RF_UNLOCK_MCPAIR(mcpair);
 		if (wr_dag_h->status != rf_enable) {
 			RF_ERRORMSG("Unable to correct second redundant information in VerifyParity:  can't write the stripe\n");
 			red2_cant_correct = RF_TRUE;

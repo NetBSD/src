@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.24.4.1 2011/03/05 20:55:59 rmind Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.24.4.2 2011/05/31 03:05:09 rmind Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -93,10 +93,10 @@ struct secpolicy {
 	 * "lifetime" is passed by sadb_lifetime.sadb_lifetime_addtime.
 	 * "validtime" is passed by sadb_lifetime.sadb_lifetime_usetime.
 	 */
-	long created;		/* time created the policy */
-	long lastused;		/* updated every when kernel sends a packet */
-	long lifetime;		/* duration of the lifetime of this policy */
-	long validtime;		/* duration this policy is valid without use */
+	time_t created;		/* time created the policy */
+	time_t lastused;	/* updated every when kernel sends a packet */
+	time_t lifetime;	/* duration of the lifetime of this policy */
+	time_t validtime;	/* duration this policy is valid without use */
 };
 
 /* Request for IPsec */
@@ -146,7 +146,7 @@ struct secspacq {
 
 	struct secpolicyindex spidx;
 
-	long created;		/* for lifetime */
+	time_t created;		/* for lifetime */
 	int count;		/* for lifetime */
 	/* XXX: here is mbuf place holder to be sent ? */
 };

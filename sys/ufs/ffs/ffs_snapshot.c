@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.97.4.4 2011/04/21 01:42:20 rmind Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.97.4.5 2011/05/31 03:05:13 rmind Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.97.4.4 2011/04/21 01:42:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.97.4.5 2011/05/31 03:05:13 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -197,7 +197,9 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	/*
 	 * If the vnode already is a snapshot, return.
 	 */
-	if ((VTOI(vp)->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) == SF_SNAPSHOT) {
+	if ((VTOI(vp)->i_flags & SF_SNAPSHOT)) {
+		if ((VTOI(vp)->i_flags & SF_SNAPINVAL))
+			return EINVAL;
 		if (ctime) {
 			ctime->tv_sec = DIP(VTOI(vp), mtime);
 			ctime->tv_nsec = DIP(VTOI(vp), mtimensec);
@@ -380,7 +382,9 @@ out:
 	mutex_exit(&si->si_lock);
 
 	if (suspended) {
+		VOP_UNLOCK(vp);
 		vfs_resume(vp->v_mount);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 #ifdef DEBUG
 		getmicrotime(&endtime);
 		timersub(&endtime, &starttime, &endtime);

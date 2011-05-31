@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.11 2009/05/18 11:39:30 nakayama Exp $	*/
+/*	$NetBSD: Locore.c,v 1.11.4.1 2011/05/31 03:04:18 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -764,12 +764,12 @@ OF_claim(void *virt, u_int size, u_int align)
 
 	if (virt == NULL) {
 		if ((virt = (void*)OF_alloc_virt(size, align)) == (void*)-1) {
-			printf("OF_alloc_virt(%d,%d) failed w/%x\n", size, align, virt);
+			printf("OF_alloc_virt(%d,%d) failed w/%p\n", size, align, virt);
 			return (void *)-1;
 		}
 	} else {
 		if ((newvirt = (void*)OF_claim_virt((vaddr_t)virt, size)) == (void*)-1) {
-			printf("OF_claim_virt(%x,%d) failed w/%x\n", virt, size, newvirt);
+			printf("OF_claim_virt(%p,%d) failed w/%p\n", virt, size, newvirt);
 			return (void *)-1;
 		}
 	}
@@ -779,7 +779,8 @@ OF_claim(void *virt, u_int size, u_int align)
 		return (void *)-1;
 	}
 	if (OF_map_phys(paddr, size, (vaddr_t)virt, -1) == -1) {
-		printf("OF_map_phys(%x,%d,%x,%d) failed\n", paddr, size, virt, -1);
+		printf("OF_map_phys(0x%lx,%d,%p,%d) failed\n",
+		    (u_long)paddr, size, virt, -1);
 		OF_free_phys((paddr_t)paddr, size);
 		OF_free_virt((vaddr_t)virt, size);
 		return (void *)-1;

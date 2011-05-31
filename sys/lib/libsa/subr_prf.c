@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.17.4.1 2011/03/05 20:55:29 rmind Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.17.4.2 2011/05/31 03:05:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -234,7 +234,8 @@ reswitch:
 		case 's':
 			p = va_arg(ap, char *);
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
-			for (q = p; *q; ++q);
+			for (q = p; *q != '\0'; ++q)
+				continue;
 			width -= q - p;
 #endif
 			RPAD();

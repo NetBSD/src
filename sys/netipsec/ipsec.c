@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.47.4.1 2011/03/05 20:55:59 rmind Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.47.4.2 2011/05/31 03:05:09 rmind Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.47.4.1 2011/03/05 20:55:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.47.4.2 2011/05/31 03:05:09 rmind Exp $");
 
 /*
  * IPsec controller part.
@@ -429,7 +429,7 @@ ipsec_invalpcbcacheall(void)
  * Return a held reference to the default SP.
  */
 static struct secpolicy *
-key_allocsp_default(int af, const char* where, int tag)
+key_allocsp_default(int af, const char *where, int tag)
 {
 	struct secpolicy *sp;
 
@@ -2127,7 +2127,7 @@ inet_ntoa4(struct in_addr ina)
 
 /* Return a printable string for the address. */
 const char *
-ipsec_address(const union sockaddr_union* sa)
+ipsec_address(const union sockaddr_union *sa)
 {
 	switch (sa->sa.sa_family) {
 #if INET
@@ -2196,8 +2196,8 @@ ipsec_dumpmbuf(struct mbuf *m)
 
 #ifdef INET6
 struct secpolicy * 
-ipsec6_check_policy(struct mbuf * m, const struct socket * so,
-		    int flags, int * needipsecp, int * errorp)
+ipsec6_check_policy(struct mbuf *m, const struct socket *so,
+		    int flags, int *needipsecp, int *errorp)
 {
 	struct in6pcb *in6p = NULL;
 	struct secpolicy *sp = NULL;
@@ -2248,13 +2248,13 @@ skippolicycheck:;
 
 /* XXX this stuff doesn't belong here... */
 
-static	struct xformsw* xforms = NULL;
+static	struct xformsw *xforms = NULL;
 
 /*
  * Register a transform; typically at system startup.
  */
 void
-xform_register(struct xformsw* xsp)
+xform_register(struct xformsw *xsp)
 {
 	xsp->xf_next = xforms;
 	xforms = xsp;

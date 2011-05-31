@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.80.2.4 2011/04/21 01:42:21 rmind Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.80.2.5 2011/05/31 03:05:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.80.2.4 2011/04/21 01:42:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.80.2.5 2011/05/31 03:05:13 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -99,13 +99,13 @@ ufs_inactive(void *v)
 	if (ip->i_mode == 0)
 		goto out;
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+#ifdef UFS_EXTATTR
+		ufs_extattr_vnode_inactive(vp, curlwp);
+#endif
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
 			goto out;
 		logged = 1;
-#ifdef UFS_EXTATTR
-		ufs_extattr_vnode_inactive(vp, curlwp);
-#endif
 		if (ip->i_size != 0) {
 			/*
 			 * When journaling, only truncate one indirect block
@@ -194,10 +194,7 @@ ufs_reclaim(struct vnode *vp)
 	 * Remove the inode from its hash chain.
 	 */
 	ufs_ihashrem(ip);
-	/*
-	 * Purge old data structures associated with the inode.
-	 */
-	cache_purge(vp);
+
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;

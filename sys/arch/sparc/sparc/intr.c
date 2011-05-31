@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.108.4.1 2011/03/05 20:52:02 rmind Exp $ */
+/*	$NetBSD: intr.c,v 1.108.4.2 2011/05/31 03:04:17 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108.4.1 2011/03/05 20:52:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108.4.2 2011/05/31 03:04:17 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108.4.1 2011/03/05 20:52:02 rmind Exp $")
 #include <sys/malloc.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
-#include <sys/simplelock.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -187,9 +187,8 @@ int	(*vmeerr_handler)(void);
 int	(*moduleerr_handler)(void);
 
 #if defined(MULTIPROCESSOR)
-volatile int nmi_hard_wait = 0;
-struct simplelock nmihard_lock = SIMPLELOCK_INITIALIZER;
-int drop_into_rom_on_fatal = 1;
+static volatile u_int	nmi_hard_wait = 0;
+int			drop_into_rom_on_fatal = 1;
 #endif
 
 void
@@ -221,9 +220,7 @@ nmi_hard(void)
 	 * variable is non-zero.  If we are the master, loop while this
 	 * variable is less than the number of cpus.
 	 */
-	simple_lock(&nmihard_lock);
-	nmi_hard_wait++;
-	simple_unlock(&nmihard_lock);
+	atomic_inc_uint(&nmi_hard_wait);
 
 	if (cpuinfo.master == 0) {
 		while (nmi_hard_wait)
@@ -275,9 +272,7 @@ nmi_hard(void)
 	/*
 	 * Tell everyone else we've finished dealing with the hard NMI.
 	 */
-	simple_lock(&nmihard_lock);
 	nmi_hard_wait = 0;
-	simple_unlock(&nmihard_lock);
 	if (fatal && drop_into_rom_on_fatal) {
 		prom_abort();
 		return;

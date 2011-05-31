@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.70.2.2 2011/03/05 20:52:59 rmind Exp $ */
+/* $NetBSD: cgd.c,v 1.70.2.3 2011/05/31 03:04:34 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.70.2.2 2011/03/05 20:52:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.70.2.3 2011/05/31 03:04:34 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -293,6 +293,21 @@ cgdstrategy(struct buf *bp)
 
 	DPRINTF_FOLLOW(("cgdstrategy(%p): b_bcount = %ld\n", bp,
 	    (long)bp->b_bcount));
+
+	/*
+	 * Reject unaligned writes.  We can encrypt and decrypt only
+	 * complete disk sectors, and we let the ciphers require their
+	 * buffers to be aligned to 32-bit boundaries.
+	 */
+	if (bp->b_blkno < 0 ||
+	    (bp->b_bcount % DEV_BSIZE) != 0 ||
+	    ((uintptr_t)bp->b_data & 3) != 0) {
+		bp->b_error = EINVAL;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+		return;
+	}
+
 	/* XXXrcd: Should we test for (cs != NULL)? */
 	dk_strategy(di, &cs->sc_dksc, bp);
 	return;

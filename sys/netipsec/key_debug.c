@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.9.56.1 2011/03/05 20:56:00 rmind Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.9.56.2 2011/05/31 03:05:10 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.c,v 1.26 2001/06/27 10:46:50 sakane Exp $	*/
 
@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.9.56.1 2011/03/05 20:56:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.9.56.2 2011/05/31 03:05:10 rmind Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -562,11 +562,6 @@ kdebug_secasv(const struct secasvar *sav)
 		kdebug_sadb_key((struct sadb_ext *)sav->key_auth);
 	if (sav->key_enc != NULL)
 		kdebug_sadb_key((struct sadb_ext *)sav->key_enc);
-	if (sav->iv != NULL) {
-		printf("  iv=");
-		ipsec_hexdump((char *)sav->iv, sav->ivlen ? sav->ivlen : 8);
-		printf("\n");
-	}
 
 	if (sav->replay != NULL)
 		kdebug_secreplay(sav->replay);

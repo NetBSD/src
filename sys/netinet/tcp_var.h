@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.162.4.1 2011/04/21 01:42:15 rmind Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.162.4.2 2011/05/31 03:05:08 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -358,6 +358,7 @@ struct tcpcb {
 	u_int	t_keepcnt;
 	u_int	t_maxidle;		/* t_keepcnt * t_keepintvl */
 
+	u_int	t_msl;			/* MSL to use for this connexion */
 };
 
 /*
@@ -570,6 +571,9 @@ struct syn_cache_head {
  * average (smoothed = (1/scale)sample + ((scale-1)/scale)smoothed).
  * This results in alpha of 0.125 and beta of 0.25, following RFC2988
  * section 2.3
+ *
+ * XXX Change SHIFT values to LGWEIGHT and REP_SHIFT, and adjust
+ * the code to use the correct ones.
  */
 #define	TCP_RTT_SHIFT		3	/* shift for srtt; 3 bits frac. */
 #define	TCP_RTTVAR_SHIFT	2	/* multiplier for rttvar; 2 bits */
@@ -811,6 +815,17 @@ extern int tcp_sack_globalholes;	/* Number of holes present. */
 extern int tcp_do_abc;			/* RFC3465 ABC enabled/disabled? */
 extern int tcp_abc_aggressive;		/* 1: L=2*SMSS  0: L=1*SMSS */
 
+extern int tcp_msl_enable;		/* enable TIME_WAIT truncation	*/
+extern int tcp_msl_loop;		/* MSL for loopback		*/
+extern int tcp_msl_local;		/* MSL for 'local'		*/
+extern int tcp_msl_remote;		/* MSL otherwise		*/
+extern int tcp_msl_remote_threshold;	/* RTT threshold		*/
+extern int tcp_rttlocal;		/* Use RTT to decide who's 'local' */
+extern int tcp4_vtw_enable;
+extern int tcp6_vtw_enable;
+extern int tcp_vtw_was_enabled;
+extern int tcp_vtw_entries;
+
 extern	int tcp_rst_ppslim;
 extern	int tcp_ackdrop_ppslim;
 
@@ -890,6 +905,7 @@ int	 tcp_signature(struct mbuf *, struct tcphdr *, int, struct secasvar *,
 	    char *);
 #endif
 void	 tcp_drain(void);
+void	 tcp_drainstub(void);
 void	 tcp_established(struct tcpcb *);
 void	 tcp_init(void);
 #ifdef INET6
@@ -929,6 +945,7 @@ int	 tcp_signature_compute(struct mbuf *, struct tcphdr *, int, int,
 	    int, u_char *, u_int);
 #endif
 void	 tcp_slowtimo(void);
+void	 tcp_fasttimo(void);
 struct mbuf *
 	 tcp_template(struct tcpcb *);
 void	 tcp_trace(short, short, struct tcpcb *, struct mbuf *, int);

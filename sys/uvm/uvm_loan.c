@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.77.4.4 2011/05/19 03:43:06 rmind Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.77.4.5 2011/05/31 03:05:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,13 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.77.4.4 2011/05/19 03:43:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.77.4.5 2011/05/31 03:05:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 
 #include <uvm/uvm.h>

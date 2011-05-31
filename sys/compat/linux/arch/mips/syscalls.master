@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.37.4.2 2011/04/21 01:41:40 rmind Exp $  
+	$NetBSD: syscalls.master,v 1.37.4.3 2011/05/31 03:04:29 rmind Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -428,7 +428,8 @@
 251	UNIMPL		remap_file_pages
 252	STD		{ int|linux_sys||set_tid_address(int *tid); }
 253	UNIMPL		restart_syscall
-254	UNIMPL		fadvise64
+254	STD		{ int|linux_sys||fadvise64(int fd, \
+			    linux_off_t offset, size_t len, int advice); }
 255	STD		{ int|linux_sys||statfs64(const char *path, \
 			    size_t sz, struct linux_statfs64 *sp); }
 256	STD		{ int|linux_sys||fstatfs64(int fd, \

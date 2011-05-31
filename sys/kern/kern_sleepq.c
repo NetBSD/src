@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.37 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.37.4.1 2011/05/31 03:05:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.37 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.37.4.1 2011/05/31 03:05:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.37 2009/10/21 21:12:06 rmind Exp $
 
 #include "opt_sa.h"
 
-int	sleepq_sigtoerror(lwp_t *, int);
+static int	sleepq_sigtoerror(lwp_t *, int);
 
 /* General purpose sleep table, used by ltsleep() and condition variables. */
-sleeptab_t	sleeptab;
+sleeptab_t	sleeptab	__cacheline_aligned;
 
 /*
  * sleeptab_init:
@@ -163,7 +163,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
  *
  *	Insert an LWP into the sleep queue, optionally sorting by priority.
  */
-inline void
+void
 sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 {
 	lwp_t *l2;
@@ -378,7 +378,7 @@ sleepq_timeout(void *arg)
  *
  *	Given a signal number, interpret and return an error code.
  */
-int
+static int
 sleepq_sigtoerror(lwp_t *l, int sig)
 {
 	struct proc *p = l->l_proc;

@@ -1,4 +1,4 @@
-#	$NetBSD: std.mpc85xx,v 1.2.4.2 2011/03/05 20:50:15 rmind Exp $
+#	$NetBSD: std.mpc85xx,v 1.2.4.3 2011/05/31 03:04:00 rmind Exp $
 #
 # Standard/required options for NetBSD/mpc85xx.
 
@@ -7,6 +7,7 @@ include		"conf/std"	# MI standard options
 
 # standard ("mandatory") kernel options.
 options 	PPC_BOOKE	# Freescale e500 family
+options 	EVBPPC_HAS_MBR	# Use MBR format (needed for SDCARD booting)
 
 # Executable support:
 options 	EXEC_ELF32	# (native) ELF32 binary support
@@ -15,7 +16,7 @@ options 	EXEC_SCRIPT	# shell script support
 makeoptions	TEXTADDR=0x20000
 makeoptions	BOARDTYPE="mpc85xx"
 makeoptions	PPCDIR="booke"
-makeoptions	NEEDS_MDSETIMAGE="yes"
+makeoptions	NEED_MDSETIMAGE="yes"
 
 options 	PPC_INTR_IMPL="<powerpc/booke/intr.h>"
 options 	PPC_PCI_MACHDEP_IMPL="<powerpc/pci_machdep.h>"

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.398.2.6 2011/05/19 03:43:02 rmind Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.398.2.7 2011/05/31 03:05:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.398.2.6 2011/05/19 03:43:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.398.2.7 2011/05/31 03:05:04 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -272,11 +272,11 @@ restart:
  * Called with the underlying vnode locked, which should prevent new dirty
  * buffers from being queued.
  */
-void
+int
 vflushbuf(struct vnode *vp, int sync)
 {
 	struct buf *bp, *nbp;
-	int flags = PGO_CLEANIT | PGO_ALLPAGES | (sync ? PGO_SYNCIO : 0);
+	int error, flags = PGO_CLEANIT | PGO_ALLPAGES | (sync ? PGO_SYNCIO : 0);
 	bool dirty;
 
 	mutex_enter(vp->v_interlock);
@@ -298,14 +298,17 @@ loop:
 		 */
 		if (bp->b_vp == vp || sync == 0)
 			(void) bawrite(bp);
-		else
-			(void) bwrite(bp);
+		else {
+			error = bwrite(bp);
+			if (error)
+				return error;
+		}
 		goto loop;
 	}
 	mutex_exit(&bufcache_lock);
 
 	if (sync == 0)
-		return;
+		return 0;
 
 	mutex_enter(vp->v_interlock);
 	while (vp->v_numoutput != 0)
@@ -317,6 +320,8 @@ loop:
 		vprint("vflushbuf: dirty", vp);
 		goto loop;
 	}
+
+	return 0;
 }
 
 /*

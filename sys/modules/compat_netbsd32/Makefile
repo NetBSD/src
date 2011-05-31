@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.4.1 2011/03/05 20:55:39 rmind Exp $
+#	$NetBSD: Makefile,v 1.4.4.2 2011/05/31 03:05:05 rmind Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -8,6 +8,8 @@ KMOD=	compat_netbsd32
 CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVMSG -DCOMPAT_NETBSD32
 CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_ELF64 -DEXEC_AOUT
 CPPFLAGS+=	-DP1003_1B_SEMAPHORE -DCOREDUMP -DKERN_SA
+
+COPTS.netbsd32_sigcode.S+=	${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 .PATH:	${S}/compat/netbsd32
 SRCS+=	netbsd32_compat_09.c netbsd32_compat_10.c

@@ -1,6 +1,12 @@
-# $NetBSD: Makefile.bootxx,v 1.38.4.1 2010/05/30 05:16:55 rmind Exp $
+# $NetBSD: Makefile.bootxx,v 1.38.4.2 2011/05/31 03:04:05 rmind Exp $
 
 S=	${.CURDIR}/../../../../..
+
+UNSUPPORTED_COMPILER.clang=	# defined
+
+AFLAGS.bootxx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.label.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.pbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 PIE_CFLAGS=
 PIE_LDFLAGS=

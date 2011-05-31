@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.1.4.1 2010/05/30 05:17:28 rmind Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.1.4.2 2011/05/31 03:04:38 rmind Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.5 2009/03/29 21:53:52 sthen Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -25,7 +25,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

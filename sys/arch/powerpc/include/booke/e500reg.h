@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.4.2.3 2011/04/21 01:41:19 rmind Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.4.2.4 2011/05/31 03:04:14 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,6 +45,9 @@
 #endif
 
 #define	GUR_SIZE		0x100000
+#define	GUR_BPTR		0x0020		/* Boot Page Translation */
+#define	BPTR_EN			__PPCBIT(0)	/* Boot Page Enabled */
+#define	BPTR_BOOT_PAGE		__PPCBITS(8,31)	/* high 24 bits of phys addr */
 
 #define	DDRC1_BASE		0x02000
 #define	DDRC2_BASE		0x06000
@@ -550,17 +553,110 @@
 #define MBMR		0x074 /* UPMB mode register */
 #define MCMR		0x078 /* UPMC mode register */
 #define MRTPR		0x084 /* Memory refresh timer prescaler register */
-#define MDR		0x088 /* UPM data register */
+#define MDR		0x088 /* UPM/FCM data register */
+#define	MDR_AS3		__PPCBITS(0,7)
+#define	MDR_AS2		__PPCBITS(8,15)
+#define	MDR_AS1		__PPCBITS(16,23)
+#define	MDR_AS0		__PPCBITS(24,31)
 #define LSDMR		0x094 /* SDRAM mode register */
 #define LURT		0x0A0 /* UPM refresh timer */
 #define LSRT		0x0A4 /* SDRAM refresh timer */
 #define LTESR		0x0B0 /* Transfer error status register */
+#define	LTESR_BM	__PPCBIT(0)
+#define	LTESR_FCT	__PPCBIT(1)
+#define	LTESR_PAR	__PPCBIT(2)
+#define	LTESR_WP	__PPCBIT(5)
+#define	LTESR_ATMW	__PPCBIT(8)
+#define	LTESR_ATMR	__PPCBIT(9)
+#define	LTESR_CS	__PPCBIT(12)
+#define	LTESR_UCC	__PPCBIT(30)
+#define	LTESR_CC	__PPCBIT(31)
 #define LTEDR		0x0B4 /* Transfer error disable register */
+#define	LTEDR_BMD	__PPCBIT(0)
+#define	LTEDR_FCTD	__PPCBIT(1)
+#define	LTEDR_PARD	__PPCBIT(2)
+#define	LTEDR_WPD	__PPCBIT(5)
+#define	LTEDR_WARA	__PPCBIT(8)
+#define	LTEDR_RAWA	__PPCBIT(9)
+#define	LTEDR_CSD	__PPCBIT(12)
+#define	LTEDR_UCCD	__PPCBIT(30)
+#define	LTEDR_CCD	__PPCBIT(31)
 #define LTEIR		0x0B8 /* Transfer error interrupt register */
+#define	LTEIR_BMI	__PPCBIT(0)
+#define	LTEIR_FCTI	__PPCBIT(1)
+#define	LTEIR_PARI	__PPCBIT(2)
+#define	LTEIR_WPI	__PPCBIT(5)
+#define	LTEIR_WARA	__PPCBIT(8)
+#define	LTEIR_RAWA	__PPCBIT(9)
+#define	LTEIR_CSI	__PPCBIT(12)
+#define	LTEIR_UCCI	__PPCBIT(30)
+#define	LTEIR_CCI	__PPCBIT(31)
 #define LTEATR		0x0BC /* Transfer error attributes register */
+#define	LTEATR_RWB	__PPCBIT(3)
+#define	LTEATR_SRCID	__PPCBITS(11,15)
+#define	LTEATR_PB	__PPCBITS(16,19)
+#define	LTEATR_BNK	__PPCBITS(20,27)
+#define	LTEATR_V	__PPCBIT(31)
 #define LTEAR		0x0C0 /* Transfer error address register */
+#define	LTECCR		0x0C4 /* Transfer error ECC register */
+#define	LTECCR_SBCE	__PPCBITS(12,15)
+#define	LTECCR_MBUE	__PPCBITS(28,31)
 #define LBCR		0x0D0 /* Configuration register */
 #define LCRR		0x0D4 /* Clock ratio register */
+
+#define	FMR		0x0E0 /* Flash Mode Register */
+#define	FMR_CWTO	__PPCBITS(16,19)
+#define	FMR_BOOT	__PPCBIT(20)
+#define	FMR_ECCM	__PPCBIT(23)
+#define	FMR_AL		__PPCBITS(26,27)
+#define	FMR_OP		__PPCBITS(30,31)
+#define	FIR		0x0E4 /* Flash Instruction Register */
+#define	FIR_OP0		__PPCBITS(0,3)
+#define	FIR_OP1		__PPCBITS(4,7)
+#define	FIR_OP2		__PPCBITS(8,11)
+#define	FIR_OP3		__PPCBITS(12,15)
+#define	FIR_OP4		__PPCBITS(16,19)
+#define	FIR_OP5		__PPCBITS(20,23)
+#define	FIR_OP6		__PPCBITS(24,27)
+#define	FIR_OP7		__PPCBITS(28,31)
+#define	FIR_OP_NOP	0
+#define	FIR_OP_CA	1	/* Issue current column address */
+#define	FIR_OP_PA	2	/* Issue current block+page address */
+#define	FIR_OP_UA	3	/* Issue user-defined address byte */
+#define	FIR_OP_CM0	4	/* Issue command from FCR[CMD0] */
+#define	FIR_OP_CM1	5	/* Issue command from FCR[CMD1] */
+#define	FIR_OP_CM2	6	/* Issue command from FCR[CMD2] */
+#define	FIR_OP_CM3	7	/* Issue command from FCR[CMD3] */
+#define	FIR_OP_WB	8	/* Write FBCR bytes of data */
+#define	FIR_OP_WS	9	/* Write one byte of data from MDR */
+#define	FIR_OP_RB	10	/* Read FBCR bytes of data */
+#define	FIR_OP_RS	11	/* Read one byte of data into MDR */
+#define	FIR_OP_CW0	12	/* Wait for LFRB then FCR[CMD0] */
+#define	FIR_OP_CW1	13	/* Wait for LFRB then FCR[CMD1] */
+#define	FIR_OP_RBW	14	/* Wait for LFRB then read FBCR bytes */
+#define	FIR_OP_RSW	15	/* Wait for LFRB then byte into MDR */
+#define	FCR		0xE8 /* Flash Command Register */
+#define	FCR_CMD0	__PPCBITS(0,7)
+#define	FCR_CMD1	__PPCBITS(8,15)
+#define	FCR_CMD2	__PPCBITS(16,23)
+#define	FCR_CMD3	__PPCBITS(24,31)
+#define	FBAR		0xEC /* Flash Block Address Register */
+#define	FBAR_BLK	__PPCBITS(8,31)
+#define	FPAR		0xF0 /* Flash Page Address Register */
+#define	FPAR_S_PI	__PPCBITS(17,21)	/* Page Index */
+#define	FPAR_S_MS	__PPCBIT(22)		/* Main(0)/Spare(1) */
+#define	FPAR_S_CI	__PPCBITS(23,31)	/* Column Index */
+#define	FPAR_L_PI	__PPCBITS(14,19)	/* Page Index */
+#define	FPAR_L_MS	__PPCBIT(20)		/* Main(0)/Spare(1) */
+#define	FPAR_L_CI	__PPCBITS(21,31)	/* Column Index */
+#define	FBCR		0xF4 /* Flash Byte Count Register */
+#define	FBCR_BC		__PPCBITS(20,31)
+#define	FECC0		0x100
+#define	FECC_V		__PPCBIT(0)
+#define	FECC_ECC	__PPCBIT(8,31)
+#define	FECC1		0x104
+#define	FECC2		0x108
+#define	FECC3		0x10C
 
 #define MXMR_RFEN	__PPCBIT(1)	/* Refresh enable */
 #define MXMR_OP		__PPCBITS(2,3)	/* Command opcode */

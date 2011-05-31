@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.34.4.1 2011/03/05 20:56:04 rmind Exp $ */
+/*	$NetBSD: crypto.c,v 1.34.4.2 2011/05/31 03:05:10 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.34.4.1 2011/03/05 20:56:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.34.4.2 2011/05/31 03:05:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.34.4.1 2011/03/05 20:56:04 rmind Exp $"
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>			/* XXX for M_XDATA */
 
+kmutex_t crypto_q_mtx;
+kmutex_t crypto_ret_q_mtx;
 kcondvar_t cryptoret_cv;
 kmutex_t crypto_mtx;
 
@@ -247,7 +249,9 @@ crypto_init0(void)
 {
 	int error;
 
-	mutex_init(&crypto_mtx, MUTEX_DEFAULT, IPL_NET);
+	mutex_init(&crypto_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&crypto_q_mtx, MUTEX_DEFAULT, IPL_NET);
+	mutex_init(&crypto_ret_q_mtx, MUTEX_DEFAULT, IPL_NET);
 	cv_init(&cryptoret_cv, "crypto_w");
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,  
 		  0, "cryptop", NULL, IPL_NET); 
@@ -303,7 +307,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 	u_int32_t hid, lid;
 	int err = EINVAL;
 
-	KASSERT(mutex_owned(&crypto_mtx));
+	mutex_enter(&crypto_mtx);
 
 	if (crypto_drivers == NULL)
 		goto done;
@@ -366,6 +370,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 		}
 	}
 done:
+	mutex_exit(&crypto_mtx);
 	return err;
 }
 
@@ -379,7 +384,7 @@ crypto_freesession(u_int64_t sid)
 	u_int32_t hid;
 	int err = 0;
 
-	KASSERT(mutex_owned(&crypto_mtx));
+	mutex_enter(&crypto_mtx);
 
 	if (crypto_drivers == NULL) {
 		err = EINVAL;
@@ -414,6 +419,7 @@ crypto_freesession(u_int64_t sid)
 		memset(&crypto_drivers[hid], 0, sizeof(struct cryptocap));
 
 done:
+	mutex_exit(&crypto_mtx);
 	return err;
 }
 
@@ -429,7 +435,7 @@ crypto_get_driverid(u_int32_t flags)
 
 	crypto_init();		/* XXX oh, this is foul! */
 
-	mutex_spin_enter(&crypto_mtx);
+	mutex_enter(&crypto_mtx);
 	for (i = 0; i < crypto_drivers_num; i++)
 		if (crypto_drivers[i].cc_process == NULL &&
 		    (crypto_drivers[i].cc_flags & CRYPTOCAP_F_CLEANUP) == 0 &&
@@ -440,7 +446,7 @@ crypto_get_driverid(u_int32_t flags)
 	if (i == crypto_drivers_num) {
 		/* Be careful about wrap-around. */
 		if (2 * crypto_drivers_num <= crypto_drivers_num) {
-			mutex_spin_exit(&crypto_mtx);
+			mutex_exit(&crypto_mtx);
 			printf("crypto: driver count wraparound!\n");
 			return -1;
 		}
@@ -448,7 +454,7 @@ crypto_get_driverid(u_int32_t flags)
 		newdrv = malloc(2 * crypto_drivers_num *
 		    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 		if (newdrv == NULL) {
-			mutex_spin_exit(&crypto_mtx);
+			mutex_exit(&crypto_mtx);
 			printf("crypto: no space to expand driver table!\n");
 			return -1;
 		}
@@ -469,7 +475,7 @@ crypto_get_driverid(u_int32_t flags)
 	if (bootverbose)
 		printf("crypto: assign driver %u, flags %u\n", i, flags);
 
-	mutex_spin_exit(&crypto_mtx);
+	mutex_exit(&crypto_mtx);
 
 	return i;
 }
@@ -494,7 +500,7 @@ crypto_kregister(u_int32_t driverid, int kalg, u_int32_t flags,
 	struct cryptocap *cap;
 	int err;
 
-	mutex_spin_enter(&crypto_mtx);
+	mutex_enter(&crypto_mtx);
 
 	cap = crypto_checkdriver(driverid);
 	if (cap != NULL &&
@@ -523,7 +529,7 @@ crypto_kregister(u_int32_t driverid, int kalg, u_int32_t flags,
 	} else
 		err = EINVAL;
 
-	mutex_spin_exit(&crypto_mtx);
+	mutex_exit(&crypto_mtx);
 	return err;
 }
 
@@ -542,7 +548,7 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 	struct cryptocap *cap;
 	int err;
 
-	mutex_spin_enter(&crypto_mtx);
+	mutex_enter(&crypto_mtx);
 
 	cap = crypto_checkdriver(driverid);
 	/* NB: algorithms are in the range [1..max] */
@@ -577,7 +583,7 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 	} else
 		err = EINVAL;
 
-	mutex_spin_exit(&crypto_mtx);
+	mutex_exit(&crypto_mtx);
 	return err;
 }
 
@@ -594,7 +600,7 @@ crypto_unregister(u_int32_t driverid, int alg)
 	u_int32_t ses;
 	struct cryptocap *cap;
 
-	mutex_spin_enter(&crypto_mtx);
+	mutex_enter(&crypto_mtx);
 
 	cap = crypto_checkdriver(driverid);
 	if (cap != NULL &&
@@ -623,7 +629,7 @@ crypto_unregister(u_int32_t driverid, int alg)
 	} else
 		err = EINVAL;
 
-	mutex_spin_exit(&crypto_mtx);
+	mutex_exit(&crypto_mtx);
 	return err;
 }
 
@@ -645,7 +651,7 @@ crypto_unregister_all(u_int32_t driverid)
 	u_int32_t ses;
 	struct cryptocap *cap;
 
-	mutex_spin_enter(&crypto_mtx);
+	mutex_enter(&crypto_mtx);
 	cap = crypto_checkdriver(driverid);
 	if (cap != NULL) {
 		for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++) {
@@ -665,7 +671,7 @@ crypto_unregister_all(u_int32_t driverid)
 	} else
 		err = EINVAL;
 
-	mutex_spin_exit(&crypto_mtx);
+	mutex_exit(&crypto_mtx);
 	return err;
 }
 
@@ -679,7 +685,7 @@ crypto_unblock(u_int32_t driverid, int what)
 	struct cryptocap *cap;
 	int needwakeup, err;
 
-	mutex_spin_enter(&crypto_mtx);
+	mutex_spin_enter(&crypto_q_mtx);
 	cap = crypto_checkdriver(driverid);
 	if (cap != NULL) {
 		needwakeup = 0;
@@ -692,12 +698,12 @@ crypto_unblock(u_int32_t driverid, int what)
 			cap->cc_kqblocked = 0;
 		}
 		err = 0;
-		mutex_spin_exit(&crypto_mtx);
 		if (needwakeup)
 			setsoftcrypto(softintr_cookie);
+		mutex_spin_exit(&crypto_q_mtx);
 	} else {
 		err = EINVAL;
-		mutex_spin_exit(&crypto_mtx);
+		mutex_spin_exit(&crypto_q_mtx);
 	}
 
 	return err;
@@ -713,7 +719,7 @@ crypto_dispatch(struct cryptop *crp)
 	u_int32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
 	int result;
 
-	mutex_spin_enter(&crypto_mtx);
+	mutex_spin_enter(&crypto_q_mtx);
 	DPRINTF(("crypto_dispatch: crp %p, reqid 0x%x, alg %d\n",
 		crp, crp->crp_reqid, crp->crp_desc->crd_alg));
 
@@ -732,7 +738,7 @@ crypto_dispatch(struct cryptop *crp)
 		 */
 		cap = crypto_checkdriver(hid);
 		if (cap && !cap->cc_qblocked) {
-			mutex_spin_exit(&crypto_mtx);
+			mutex_spin_exit(&crypto_q_mtx);
 			result = crypto_invoke(crp, 0);
 			if (result == ERESTART) {
 				/*
@@ -740,11 +746,11 @@ crypto_dispatch(struct cryptop *crp)
 				 * driver ``blocked'' for cryptop's and put
 				 * the op on the queue.
 				 */
-				mutex_spin_enter(&crypto_mtx);
+				mutex_spin_enter(&crypto_q_mtx);
 				crypto_drivers[hid].cc_qblocked = 1;
 				TAILQ_INSERT_HEAD(&crp_q, crp, crp_next);
 				cryptostats.cs_blocks++;
-				mutex_spin_exit(&crypto_mtx);
+				mutex_spin_exit(&crypto_q_mtx);
 			}
 			goto out_released;
 		} else {
@@ -765,8 +771,8 @@ crypto_dispatch(struct cryptop *crp)
 		 */
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
 		if (wasempty) {
-			mutex_spin_exit(&crypto_mtx);
 			setsoftcrypto(softintr_cookie);
+			mutex_spin_exit(&crypto_q_mtx);
 			result = 0;
 			goto out_released;
 		}
@@ -774,7 +780,7 @@ crypto_dispatch(struct cryptop *crp)
 		result = 0;
 	}
 
-	mutex_spin_exit(&crypto_mtx);
+	mutex_spin_exit(&crypto_q_mtx);
 out_released:
 	return result;
 }
@@ -789,12 +795,12 @@ crypto_kdispatch(struct cryptkop *krp)
 	struct cryptocap *cap;
 	int result;
 
-	mutex_spin_enter(&crypto_mtx);
+	mutex_spin_enter(&crypto_q_mtx);
 	cryptostats.cs_kops++;
 
 	cap = crypto_checkdriver(krp->krp_hid);
 	if (cap && !cap->cc_kqblocked) {
-		mutex_spin_exit(&crypto_mtx);
+		mutex_spin_exit(&crypto_q_mtx);
 		result = crypto_kinvoke(krp, 0);
 		if (result == ERESTART) {
 			/*
@@ -802,11 +808,11 @@ crypto_kdispatch(struct cryptkop *krp)
 			 * driver ``blocked'' for cryptop's and put
 			 * the op on the queue.
 			 */
-			mutex_spin_enter(&crypto_mtx);
+			mutex_spin_enter(&crypto_q_mtx);
 			crypto_drivers[krp->krp_hid].cc_kqblocked = 1;
 			TAILQ_INSERT_HEAD(&crp_kq, krp, krp_next);
 			cryptostats.cs_kblocks++;
-			mutex_spin_exit(&crypto_mtx);
+			mutex_spin_exit(&crypto_q_mtx);
 		}
 	} else {
 		/*
@@ -815,7 +821,7 @@ crypto_kdispatch(struct cryptkop *krp)
 		 */
 		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
 		result = 0;
-		mutex_spin_exit(&crypto_mtx);
+		mutex_spin_exit(&crypto_q_mtx);
 	}
 
 	return result;
@@ -839,7 +845,7 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 		return EINVAL;
 	}
 
-	mutex_spin_enter(&crypto_mtx);
+	mutex_enter(&crypto_mtx);
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
 		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&
 		    crypto_devallowsoft == 0)
@@ -857,11 +863,11 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 
 		process = crypto_drivers[hid].cc_kprocess;
 		arg = crypto_drivers[hid].cc_karg;
-		mutex_spin_exit(&crypto_mtx);
+		mutex_exit(&crypto_mtx);
 		krp->krp_hid = hid;
 		error = (*process)(arg, krp, hint);
 	} else {
-		mutex_spin_exit(&crypto_mtx);
+		mutex_exit(&crypto_mtx);
 		error = ENODEV;
 	}
 
@@ -922,16 +928,19 @@ crypto_invoke(struct cryptop *crp, int hint)
 
 	hid = CRYPTO_SESID2HID(crp->crp_sid);
 
-	mutex_spin_enter(&crypto_mtx);
+	mutex_enter(&crypto_mtx);
 	if (hid < crypto_drivers_num) {
 		int (*process)(void *, struct cryptop *, int);
 		void *arg;
 
-		if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP)
+		if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP) {
+			mutex_exit(&crypto_mtx);
 			crypto_freesession(crp->crp_sid);
+			mutex_enter(&crypto_mtx);
+		}
 		process = crypto_drivers[hid].cc_process;
 		arg = crypto_drivers[hid].cc_arg;
-		mutex_spin_exit(&crypto_mtx);
+		mutex_exit(&crypto_mtx);
 
 		/*
 		 * Invoke the driver to process the request.
@@ -949,11 +958,12 @@ crypto_invoke(struct cryptop *crp, int hint)
 		for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
 			crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
 
+		mutex_exit(&crypto_mtx);
+
 		if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
 			crp->crp_sid = nid;
 
 		crp->crp_etype = EAGAIN;
-		mutex_spin_exit(&crypto_mtx);
 
 		crypto_done(crp);
 		return 0;
@@ -1048,9 +1058,9 @@ crypto_done(struct cryptop *crp)
   	 	* callback routine does very little (e.g. the
 	 	* /dev/crypto callback method just does a wakeup).
 	 	*/
-		mutex_spin_enter(&crypto_mtx);
+		mutex_spin_enter(&crypto_ret_q_mtx);
 		crp->crp_flags |= CRYPTO_F_DONE;
-		mutex_spin_exit(&crypto_mtx);
+		mutex_spin_exit(&crypto_ret_q_mtx);
 
 #ifdef CRYPTO_TIMING
 		if (crypto_timing) {
@@ -1067,7 +1077,7 @@ crypto_done(struct cryptop *crp)
 #endif
 		crp->crp_callback(crp);
 	} else {
-		mutex_spin_enter(&crypto_mtx);
+		mutex_spin_enter(&crypto_ret_q_mtx);
 		crp->crp_flags |= CRYPTO_F_DONE;
 
 		if (crp->crp_flags & CRYPTO_F_USER) {
@@ -1094,7 +1104,7 @@ crypto_done(struct cryptop *crp)
 				cv_signal(&cryptoret_cv);
 			}
 		}
-		mutex_spin_exit(&crypto_mtx);
+		mutex_spin_exit(&crypto_ret_q_mtx);
 	}
 }
 
@@ -1120,13 +1130,13 @@ crypto_kdone(struct cryptkop *krp)
 	if (krp->krp_flags & CRYPTO_F_CBIMM) {
 		krp->krp_callback(krp);
 	} else {
-		mutex_spin_enter(&crypto_mtx);
+		mutex_spin_enter(&crypto_ret_q_mtx);
 		wasempty = TAILQ_EMPTY(&crp_ret_kq);
 		krp->krp_flags |= CRYPTO_F_ONRETQ;
 		TAILQ_INSERT_TAIL(&crp_ret_kq, krp, krp_next);
 		if (wasempty)
 			cv_signal(&cryptoret_cv);
-		mutex_spin_exit(&crypto_mtx);
+		mutex_spin_exit(&crypto_ret_q_mtx);
 	}
 }
 
@@ -1135,7 +1145,7 @@ crypto_getfeat(int *featp)
 {
 	int hid, kalg, feat = 0;
 
-	mutex_spin_enter(&crypto_mtx);
+	mutex_enter(&crypto_mtx);
 
 	if (crypto_userasymcrypto == 0)
 		goto out;
@@ -1153,7 +1163,7 @@ crypto_getfeat(int *featp)
 				feat |=  1 << kalg;
 	}
 out:
-	mutex_spin_exit(&crypto_mtx);
+	mutex_exit(&crypto_mtx);
 	*featp = feat;
 	return (0);
 }
@@ -1170,7 +1180,7 @@ cryptointr(void)
 	int result, hint;
 
 	cryptostats.cs_intrs++;
-	mutex_spin_enter(&crypto_mtx);
+	mutex_spin_enter(&crypto_q_mtx);
 	do {
 		/*
 		 * Find the first element in the queue that can be
@@ -1212,11 +1222,11 @@ cryptointr(void)
 		}
 		if (submit != NULL) {
 			TAILQ_REMOVE(&crp_q, submit, crp_next);
-			mutex_spin_exit(&crypto_mtx);
+			mutex_spin_exit(&crypto_q_mtx);
 			result = crypto_invoke(submit, hint);
 			/* we must take here as the TAILQ op or kinvoke
 			   may need this mutex below.  sigh. */
-			mutex_spin_enter(&crypto_mtx);	
+			mutex_spin_enter(&crypto_q_mtx);	
 			if (result == ERESTART) {
 				/*
 				 * The driver ran out of resources, mark the
@@ -1246,10 +1256,10 @@ cryptointr(void)
 		}
 		if (krp != NULL) {
 			TAILQ_REMOVE(&crp_kq, krp, krp_next);
-			mutex_spin_exit(&crypto_mtx);
+			mutex_spin_exit(&crypto_q_mtx);
 			result = crypto_kinvoke(krp, 0);
 			/* the next iteration will want the mutex. :-/ */
-			mutex_spin_enter(&crypto_mtx);
+			mutex_spin_enter(&crypto_q_mtx);
 			if (result == ERESTART) {
 				/*
 				 * The driver ran out of resources, mark the
@@ -1267,7 +1277,7 @@ cryptointr(void)
 			}
 		}
 	} while (submit != NULL || krp != NULL);
-	mutex_spin_exit(&crypto_mtx);
+	mutex_spin_exit(&crypto_q_mtx);
 }
 
 /*
@@ -1279,7 +1289,7 @@ cryptoret(void)
 	struct cryptop *crp;
 	struct cryptkop *krp;
 
-	mutex_spin_enter(&crypto_mtx);
+	mutex_spin_enter(&crypto_ret_q_mtx);
 	for (;;) {
 		crp = TAILQ_FIRST(&crp_ret_q);
 		if (crp != NULL) {
@@ -1295,11 +1305,11 @@ cryptoret(void)
 		/* drop before calling any callbacks. */
 		if (crp == NULL && krp == NULL) {
 			cryptostats.cs_rets++;
-			cv_wait(&cryptoret_cv, &crypto_mtx);
+			cv_wait(&cryptoret_cv, &crypto_ret_q_mtx);
 			continue;
 		}
 
-		mutex_spin_exit(&crypto_mtx);
+		mutex_spin_exit(&crypto_ret_q_mtx);
 			
 		if (crp != NULL) {
 #ifdef CRYPTO_TIMING
@@ -1322,6 +1332,6 @@ cryptoret(void)
 		if (krp != NULL)
 			krp->krp_callback(krp);
 
-		mutex_spin_enter(&crypto_mtx);
+		mutex_spin_enter(&crypto_ret_q_mtx);
 	}
 }

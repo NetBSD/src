@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.16 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.16.4.1 2011/05/31 03:04:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.16 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.16.4.1 2011/05/31 03:04:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -122,6 +122,9 @@ static struct winids {
 		"ASUSCOM P-IN100-ST-D"
 	},
 	{
+#ifndef PCI_VENDOR_CITICORP
+#define PCI_VENDOR_CITICORP	PCI_VENDOR_FUJITSU4
+#endif
 		PCI_ID_CODE(PCI_VENDOR_CITICORP,0x105E),
 		-1,
 		-1,

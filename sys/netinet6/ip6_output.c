@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.139 2009/05/07 21:51:47 elad Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.139.4.1 2011/05/31 03:05:09 rmind Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.139 2009/05/07 21:51:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.139.4.1 2011/05/31 03:05:09 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -146,11 +146,6 @@ static int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
 #ifdef RFC2292
 static int ip6_pcbopts(struct ip6_pktopts **, struct socket *, struct sockopt *);
 #endif
-
-#define	IN6_NEED_CHECKSUM(ifp, csum_flags) \
-	(__predict_true(((ifp)->if_flags & IFF_LOOPBACK) == 0 || \
-	(((csum_flags) & M_CSUM_UDPv6) != 0 && udp_do_loopback_cksum) || \
-	(((csum_flags) & M_CSUM_TCPv6) != 0 && tcp_do_loopback_cksum)))
 
 /*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6

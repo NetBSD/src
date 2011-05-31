@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.117.4.2 2011/03/05 20:55:24 rmind Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.117.4.3 2011/05/31 03:05:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.117.4.2 2011/03/05 20:55:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.117.4.3 2011/05/31 03:05:03 rmind Exp $");
 
 #define SYSVSHM
 
@@ -76,14 +76,10 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.117.4.2 2011/03/05 20:55:24 rmind Exp
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/syscallargs.h>
 #include <sys/queue.h>
-#include <sys/pool.h>
 #include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
-
-int shm_nused;
-struct	shmid_ds *shmsegs;
 
 struct shmmap_entry {
 	SLIST_ENTRY(shmmap_entry) next;
@@ -91,11 +87,14 @@ struct shmmap_entry {
 	int shmid;
 };
 
-static kmutex_t		shm_lock;
-static kcondvar_t *	shm_cv;
-static struct pool	shmmap_entry_pool;
-static int		shm_last_free, shm_use_phys;
-static size_t		shm_committed;
+int			shm_nused		__cacheline_aligned;
+struct shmid_ds *	shmsegs			__read_mostly;
+
+static kmutex_t		shm_lock		__cacheline_aligned;
+static kcondvar_t *	shm_cv			__cacheline_aligned;
+static int		shm_last_free		__cacheline_aligned;
+static size_t		shm_committed		__cacheline_aligned;
+static int		shm_use_phys		__read_mostly;
 
 static kcondvar_t	shm_realloc_cv;
 static bool		shm_realloc_state;
@@ -230,7 +229,7 @@ shmmap_getprivate(struct proc *p)
 
 	/* 3. A shared shm map, copy to a fresh one and adjust refcounts */
 	SLIST_FOREACH(oshmmap_se, &oshmmap_s->entries, next) {
-		shmmap_se = pool_get(&shmmap_entry_pool, PR_WAITOK);
+		shmmap_se = kmem_alloc(sizeof(struct shmmap_entry), KM_SLEEP);
 		shmmap_se->va = oshmmap_se->va;
 		shmmap_se->shmid = oshmmap_se->shmid;
 		SLIST_INSERT_HEAD(&shmmap_s->entries, shmmap_se, next);
@@ -356,9 +355,10 @@ sys_shmdt(struct lwp *l, const struct sys_shmdt_args *uap, register_t *retval)
 	mutex_exit(&shm_lock);
 
 	uvm_deallocate(&p->p_vmspace->vm_map, shmmap_se->va, size);
-	if (uobj != NULL)
+	if (uobj != NULL) {
 		uao_detach(uobj);
-	pool_put(&shmmap_entry_pool, shmmap_se);
+	}
+	kmem_free(shmmap_se, sizeof(struct shmmap_entry));
 
 	return 0;
 }
@@ -387,7 +387,7 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 	vsize_t size;
 
 	/* Allocate a new map entry and set it */
-	shmmap_se = pool_get(&shmmap_entry_pool, PR_WAITOK);
+	shmmap_se = kmem_alloc(sizeof(struct shmmap_entry), KM_SLEEP);
 	shmmap_se->shmid = SCARG(uap, shmid);
 
 	mutex_enter(&shm_lock);
@@ -477,8 +477,9 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 err:
 	cv_broadcast(&shm_realloc_cv);
 	mutex_exit(&shm_lock);
-	if (error && shmmap_se)
-		pool_put(&shmmap_entry_pool, shmmap_se);
+	if (error && shmmap_se) {
+		kmem_free(shmmap_se, sizeof(struct shmmap_entry));
+	}
 	return error;
 
 err_detach:
@@ -488,9 +489,10 @@ err_detach:
 	shm_realloc_disable--;
 	cv_broadcast(&shm_realloc_cv);
 	mutex_exit(&shm_lock);
-	if (uobj != NULL)
+	if (uobj != NULL) {
 		uao_detach(uobj);
-	pool_put(&shmmap_entry_pool, shmmap_se);
+	}
+	kmem_free(shmmap_se, sizeof(struct shmmap_entry));
 	return error;
 }
 
@@ -849,7 +851,7 @@ shmexit(struct vmspace *vm)
 		if (uobj != NULL) {
 			uao_detach(uobj);
 		}
-		pool_put(&shmmap_entry_pool, shmmap_se);
+		kmem_free(shmmap_se, sizeof(struct shmmap_entry));
 
 		if (SLIST_EMPTY(&shmmap_s->entries)) {
 			break;
@@ -947,8 +949,6 @@ shminit(void)
 	int i;
 
 	mutex_init(&shm_lock, MUTEX_DEFAULT, IPL_NONE);
-	pool_init(&shmmap_entry_pool, sizeof(struct shmmap_entry), 0, 0, 0,
-	    "shmmp", &pool_allocator_nointr, IPL_NONE);
 	cv_init(&shm_realloc_cv, "shmrealc");
 
 	/* Allocate the wired memory for our structures */

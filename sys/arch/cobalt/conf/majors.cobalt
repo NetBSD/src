@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cobalt,v 1.28 2010/03/06 23:45:39 plunky Exp $
+#	$NetBSD: majors.cobalt,v 1.28.2.1 2011/05/31 03:03:58 rmind Exp $
 #
 # Device majors for cobalt
 #
@@ -63,5 +63,5 @@ device-major	altq		char 77			altq
 device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independent driver majors are assigned in 
+# New machine-independent driver majors are assigned in
 # sys/conf/majors.

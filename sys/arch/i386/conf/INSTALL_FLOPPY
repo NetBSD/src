@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.8.4.3 2011/04/21 01:41:05 rmind Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.8.4.4 2011/05/31 03:04:03 rmind Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -13,9 +13,9 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions 	CPUFLAGS="-march=i486 -mtune=i486"	# i486 is densest code
-makeoptions 	COPTS="-Os"
-makeoptions 	USE_SSP="no"
+makeoptions	CPUFLAGS="-march=i486 -mtune=i486"	# i486 is densest code
+makeoptions	COPTS="-Os"
+makeoptions	USE_SSP="no"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -75,7 +75,7 @@ options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions 	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 #options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -154,7 +154,7 @@ options 	INET6		# IPv6
 #
 # wscons options
 #
-# builtin terminal emulations 
+# builtin terminal emulations
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 # customization of console and kernel output - see dev/wscons/wsdisplayvar.h
@@ -229,10 +229,10 @@ pcmcia* at pcic? controller ? socket ?
 pcmcia* at tcic? controller ? socket ?
 
 # ISA PCMCIA controllers
-pcic0 	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
-pcic1 	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
+pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
 pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
-tcic0 	at isa? port 0x240 iomem 0xd0000 iosiz 0x10000
+tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x10000
 
 # PCI PCMCIA controllers
 pcic0	at pci? dev? function ?
@@ -343,7 +343,7 @@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # ISA Plug-and-Play SCSI controllers
-aha*	at isapnp? 			# Adaptec AHA-154[02
+aha*	at isapnp?			# Adaptec AHA-154[02
 aic*	at isapnp?			# Adaptec AHA-1520B
 
 # ISA SCSI controllers
@@ -405,24 +405,24 @@ icpsp*	at icp? unit ?			# SCSI pass-through
 # a machine hang with some controllers.
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
-aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
-#ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
+aceride*	at pci? dev ? function ?	# Acer Lab IDE controllers
+#ahcisata*	at pci? dev ? function ?	# AHCI SATA controllers
 artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
-geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
+geodeide*	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 #ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
-optiide* 	at pci? dev ? function ?	# Opti IDE controllers
-piixide* 	at pci? dev ? function ?	# Intel IDE controllers
+optiide*	at pci? dev ? function ?	# Opti IDE controllers
+piixide*	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*		at pci? dev ? function ?	# Symphony Labs IDE controllers
-#svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
+#svwsata*	at pci? dev ? function ?	# ServerWorks SATA controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 
@@ -495,9 +495,9 @@ fd*	at fdc? drive ?			# the drives themselves
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
-bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
-bge* 	at pci? dev ? function ?	# Broadcom 570x Gigabit Ethernet
-# bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
+bce*	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
+bge*	at pci? dev ? function ?	# Broadcom 570x Gigabit Ethernet
+# bnx*	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
@@ -557,7 +557,7 @@ cs*	at pcmcia? function ?		# CS89xx Ethernet
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
-ray* 	at pcmcia? function ?		# Raytheon Raylink (802.11)
+ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent/Intersil WaveLAN/IEEE (802.11)
 options 	WI_PCMCIA_SPECTRUM24T_FW=0
@@ -673,10 +673,10 @@ umass*	at uhub? port ? configuration ? interface ?
 
 # USB Ethernet adapters
 #atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-aue* 	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
-cue* 	at uhub? port ?		# CATC USB-EL1201A based adapters
-kue* 	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Audio Devices

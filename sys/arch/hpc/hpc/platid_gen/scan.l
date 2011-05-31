@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.4 2006/02/19 13:06:06 peter Exp $	*/
+/*	$NetBSD: scan.l,v 1.4.94.1 2011/05/31 03:04:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,10 +43,9 @@
 int	yyline;
 char	*getstr(char *);
 void	getcomment(void);
-
-#define	yywrap() 1
-
 %}
+
+%option	noyywrap
 
 %%
 #[^\n]*\n		{ yylval.str = strdup(yytext); yyline++; return DIRECTIVE; }

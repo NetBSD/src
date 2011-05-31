@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.75.4.1 2011/04/21 01:42:20 rmind Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.75.4.2 2011/05/31 03:05:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -125,6 +125,7 @@ int	ffs_cgupdate(struct ufsmount *, int);
 int	ffs_read(void *);
 int	ffs_write(void *);
 int	ffs_fsync(void *);
+int	ffs_spec_fsync(void *);
 int	ffs_reclaim(void *);
 int	ffs_getpages(void *);
 void	ffs_gop_size(struct vnode *, off_t, off_t *, int);

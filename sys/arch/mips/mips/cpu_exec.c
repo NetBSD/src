@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.59.4.2 2011/04/21 01:41:11 rmind Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.59.4.3 2011/05/31 03:04:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.59.4.2 2011/04/21 01:41:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.59.4.3 2011/05/31 03:04:09 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -280,8 +280,9 @@ mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 		break;
 	case EF_MIPS_ARCH_32:
 	case EF_MIPS_ARCH_64:
-		if (!CPUISMIPSNN)
+		if (!CPUISMIPSNN && !CPUISMIPS32R2 && !CPUISMIPS64R2)
 			return ENOEXEC;
+		break;
 	case EF_MIPS_ARCH_32R2:
 	case EF_MIPS_ARCH_64R2:
 		if (!CPUISMIPS32R2 && !CPUISMIPS64R2)

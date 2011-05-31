@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.51.32.3 2011/03/05 20:56:35 rmind Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.51.32.4 2011/05/31 03:05:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,14 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.51.32.3 2011/03/05 20:56:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.51.32.4 2011/05/31 03:05:13 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/kernel.h>
 
