@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.67 2011/04/10 20:36:48 christos Exp $
+#	$NetBSD: files.x86,v 1.68 2011/05/31 23:28:52 dyoung Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -85,6 +85,7 @@ file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/syscall.c
 file	arch/x86/x86/vm_machdep.c
 file	arch/x86/x86/x86_autoconf.c
+file	arch/x86/x86/x86_userconf.c		userconf
 file	arch/x86/x86/x86_machdep.c
 
 define	lapic
