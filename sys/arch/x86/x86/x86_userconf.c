@@ -1,8 +1,11 @@
-/*	$NetBSD: userconf.h,v 1.7 2011/05/31 23:28:53 dyoung Exp $	*/
+/*	$NetBSD: x86_userconf.c,v 1.1 2011/05/31 23:28:53 dyoung Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2008, 2009, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Julio M. Merino Vidal.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,14 +29,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_USERCONF_H_
-#define _SYS_USERCONF_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: x86_userconf.c,v 1.1 2011/05/31 23:28:53 dyoung Exp $");
 
-#include <sys/cpu.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
 
-void userconf_bootinfo(void);
-void userconf_init(void);
-void userconf_prompt(void);
-int userconf_parse(char *);
+#include <sys/userconf.h>
 
-#endif /* !_SYS_USERCONF_H_ */
+#include <machine/bootinfo.h>
+
+void
+userconf_bootinfo(void)
+{
+	struct btinfo_userconfcommands *biuc;
+	struct bi_userconfcommand *bi, *bimax;
+
+	biuc = lookup_bootinfo(BTINFO_USERCONFCOMMANDS);
+	if (biuc == NULL) {
+		aprint_debug("No bootinfo commands at boot\n");
+		return;
+	}
+
+	bi = (struct bi_userconfcommand *)((uint8_t *)biuc + sizeof(*biuc));
+	bimax = bi + biuc->num;
+	for (; bi < bimax; bi++) {
+		aprint_debug("Processing userconf command: %s\n", bi->text);
+		userconf_parse(bi->text);
+	}
+}

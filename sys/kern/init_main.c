@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.430 2011/05/26 04:25:26 uebayasi Exp $	*/
+/*	$NetBSD: init_main.c,v 1.431 2011/05/31 23:28:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.430 2011/05/26 04:25:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.431 2011/05/31 23:28:53 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -240,12 +240,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.430 2011/05/26 04:25:26 uebayasi Exp
 struct timeval50 boottime50;
 #endif
 
-#ifdef _KERNEL_OPT
-#include "opt_userconf.h"
-#endif
-#ifdef USERCONF
 #include <sys/userconf.h>
-#endif
 
 extern struct lwp lwp0;
 extern time_t rootfstime;
@@ -728,11 +723,9 @@ configure(void)
 	drvctl_init();
 #endif
 
-#ifdef USERCONF
 	userconf_init();
 	if (boothowto & RB_USERCONF)
 		userconf_prompt();
-#endif
 
 	if ((boothowto & (AB_SILENT|AB_VERBOSE)) == AB_SILENT) {
 		printf_nolog("Detecting hardware...");
