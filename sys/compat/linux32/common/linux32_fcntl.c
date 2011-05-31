@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_fcntl.c,v 1.8 2008/12/29 14:33:40 njoly Exp $ */
+/*	$NetBSD: linux32_fcntl.c,v 1.8.6.1 2011/05/31 03:04:31 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.8 2008/12/29 14:33:40 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.8.6.1 2011/05/31 03:04:31 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -143,4 +143,48 @@ linux32_sys_fcntl(struct lwp *l, const struct linux32_sys_fcntl_args *uap, regis
 	NETBSD32TOP_UAP(arg, void);
 
 	return linux_sys_fcntl(l, &ua, retval);
+}
+
+int
+linux32_sys_fadvise64(struct lwp *l,
+    const struct linux32_sys_fadvise64_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(off_t) offset;
+		syscallarg(size_t) len;
+		syscallarg(int) advice;
+	} */
+	struct sys___posix_fadvise50_args ua;
+
+	/* Linux doesn't have the 'pad' pseudo-parameter */
+	NETBSD32TO64_UAP(fd);
+	SCARG(&ua, PAD) = 0;
+	SCARG(&ua, offset) = ((off_t)SCARG(uap, offhi) << 32) + SCARG(uap, offlo);
+	SCARG(&ua, len) = SCARG(uap, len);
+	SCARG(&ua, advice) = linux_to_bsd_posix_fadv(SCARG(uap, advice));
+
+	return sys___posix_fadvise50(l, &ua, retval);
+}
+
+int
+linux32_sys_fadvise64_64(struct lwp *l,
+    const struct linux32_sys_fadvise64_64_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(off_t) offset;
+		syscallarg(off_t) len;
+		syscallarg(int) advice;
+	} */
+	struct sys___posix_fadvise50_args ua;
+
+	/* Linux doesn't have the 'pad' pseudo-parameter */
+	NETBSD32TO64_UAP(fd);
+	SCARG(&ua, PAD) = 0;
+	SCARG(&ua, offset) = ((off_t)SCARG(uap, offhi) << 32) + SCARG(uap, offlo);
+	SCARG(&ua, len) = ((off_t)SCARG(uap, lenhi) << 32) + SCARG(uap, lenlo);
+	SCARG(&ua, advice) = linux_to_bsd_posix_fadv(SCARG(uap, advice));
+
+	return sys___posix_fadvise50(l, &ua, retval);
 }

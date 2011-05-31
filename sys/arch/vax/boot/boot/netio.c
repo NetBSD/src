@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.15 2009/10/26 19:16:58 cegger Exp $	*/
+/*	$NetBSD: netio.c,v 1.15.4.1 2011/05/31 03:04:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ static struct iodesc desc;
 static int inited = 0;
 
 struct iodesc *
-socktodesc(sock)
+socktodesc(int sock)
 {
 	return &desc;
 }

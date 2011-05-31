@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.45 2009/05/12 14:43:33 cegger Exp $	*/
+/*	$NetBSD: dl.c,v 1.45.4.1 2011/05/31 03:04:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.45 2009/05/12 14:43:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.45.4.1 2011/05/31 03:04:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ dl_attach (device_t parent, device_t self, void *aux)
 
 	/* Initialize our softc structure. Should be done in open? */
 
-	sc->sc_tty = ttymalloc();
+	sc->sc_tty = tty_alloc();
 	tty_attach(sc->sc_tty);
 
 	/* Now register the TX & RX interrupt handlers */

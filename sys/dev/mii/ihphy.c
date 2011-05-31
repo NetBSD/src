@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.1.6.2 2011/03/05 20:53:32 rmind Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.1.6.3 2011/05/31 03:04:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.1.6.2 2011/03/05 20:53:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.1.6.3 2011/05/31 03:04:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,8 @@ static const struct mii_phy_funcs ihphy_funcs = {
 static const struct mii_phydesc ihphys[] = {
 	{ MII_OUI_INTEL,		MII_MODEL_INTEL_I82577,
 	  MII_STR_INTEL_I82577 },
+	{ MII_OUI_INTEL,		MII_MODEL_INTEL_I82579,
+	  MII_STR_INTEL_I82579 },
 
 	{ 0,				0,
 	  NULL },

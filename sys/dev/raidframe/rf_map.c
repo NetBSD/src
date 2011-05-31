@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.44 2009/03/15 17:17:23 cegger Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.44.4.1 2011/05/31 03:04:53 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.44 2009/03/15 17:17:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.44.4.1 2011/05/31 03:04:53 rmind Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -632,9 +632,9 @@ rf_CheckStripeForFailures(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap)
 	RF_SectorNum_t diskOffset, poffset;
 
 	/* quick out in the fault-free case.  */
-	RF_LOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
 	numFailures = raidPtr->numFailures;
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_unlock_mutex2(raidPtr->mutex);
 	if (numFailures == 0)
 		return (0);
 
@@ -683,9 +683,9 @@ rf_NumFailedDataUnitsInStripe(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap)
 	int     numFailures;
 
 	/* quick out in the fault-free case.  */
-	RF_LOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
 	numFailures = raidPtr->numFailures;
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_unlock_mutex2(raidPtr->mutex);
 	if (numFailures == 0)
 		return (0);
 	numFailures = 0;

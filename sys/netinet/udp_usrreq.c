@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.179 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.179.4.1 2011/05/31 03:05:08 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.179 2009/09/16 15:23:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.179.4.1 2011/05/31 03:05:08 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -804,7 +804,8 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		/*
 		 * Locate pcb for datagram.
 		 */
-		inp = in_pcblookup_connect(&udbtable, *src4, *sport, *dst4, *dport);
+		inp = in_pcblookup_connect(&udbtable, *src4, *sport, *dst4,
+		    *dport, 0);
 		if (inp == 0) {
 			UDP_STATINC(UDP_STAT_PCBHASHMISS);
 			inp = in_pcblookup_bind(&udbtable, *dst4, *dport);
@@ -958,7 +959,7 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 		 * Locate pcb for datagram.
 		 */
 		in6p = in6_pcblookup_connect(&udbtable, &src6, sport, dst6,
-		    dport, 0);
+					     dport, 0, 0);
 		if (in6p == 0) {
 			UDP_STATINC(UDP_STAT_PCBHASHMISS);
 			in6p = in6_pcblookup_bind(&udbtable, dst6, dport, 0);

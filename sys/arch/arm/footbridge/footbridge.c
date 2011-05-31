@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.21.4.1 2011/03/05 20:49:32 rmind Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.21.4.2 2011/05/31 03:03:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.21.4.1 2011/03/05 20:49:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.21.4.2 2011/05/31 03:03:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ footbridge_attach(device_t parent, device_t self, void *aux)
 	fba.fba_pba.pba_memt = &footbridge_pci_mem_bs_tag;
 	fba.fba_pba.pba_dmat = &footbridge_pci_bus_dma_tag;
 	fba.fba_pba.pba_dmat64 = NULL;
-	fba.fba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	fba.fba_pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	fba.fba_pba.pba_bus = 0;
 	fba.fba_pba.pba_bridgetag = NULL;
 	config_found_ia(self, "pcibus", &fba.fba_pba, pcibusprint);

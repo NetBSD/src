@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.2.4.4 2011/04/21 01:41:48 rmind Exp $	*/
+/*	$NetBSD: nand.h,v 1.2.4.5 2011/05/31 03:04:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -45,11 +45,9 @@
 #include <dev/flash/flash.h>
 
 #ifdef NAND_DEBUG
-#define DPRINTF(x)	if (nanddebug) printf x
-#define DPRINTFN(n,x)	if (nanddebug>(n)) printf x
+#define DPRINTF(x)	printf x
 #else
 #define DPRINTF(x)
-#define DPRINTFN(n,x)
 #endif
 
 //#define NAND_VERBOSE
@@ -143,6 +141,9 @@ struct nand_write_cache {
 	daddr_t nwc_block;
 	kmutex_t nwc_lock;
 	bool nwc_write_pending;
+	struct lwp *nwc_thread;
+	kcondvar_t nwc_cv;
+	bool nwc_exiting;
 };
 
 /* driver softc for nand */
@@ -156,14 +157,7 @@ struct nand_softc {
 	size_t sc_part_offset;
 	size_t sc_part_size;
 	kmutex_t sc_device_lock; /* serialize access to chip */
-
-	/* for the i/o thread */
-	struct lwp *sc_sync_thread;
 	struct nand_write_cache sc_cache;
-	kmutex_t sc_io_lock;
-	kmutex_t sc_waitq_lock;
-	kcondvar_t sc_io_cv;
-	bool sc_io_running;
 };
 
 /* structure holding the nand api */

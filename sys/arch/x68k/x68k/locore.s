@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.97.2.2 2011/03/05 20:52:26 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.97.2.3 2011/05/31 03:04:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -898,9 +898,6 @@ Lenab1:
 	movl	#_C_LABEL(vectab),%d0	| set Vector Base Register
 	movc	%d0,%vbr
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-/* detect FPU type */
-	jbsr	_C_LABEL(fpu_probe)
-	movl	%d0,_C_LABEL(fputype)
 /* call final pmap setup */
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
@@ -909,6 +906,9 @@ Lenab1:
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 
+/* detect FPU type */
+	jbsr	_C_LABEL(fpu_probe)
+	movl	%d0,_C_LABEL(fputype)
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
 	clrl	%a1@(PCB_FPCTX)		| ensure null FP context
@@ -930,6 +930,7 @@ Lenab3:
 /* final setup for C code */
 	movl	%d7,_C_LABEL(boothowto)	| save reboot flags
 	movl	%d6,_C_LABEL(bootdev)	|   and boot device
+	jbsr	_C_LABEL(x68k_init)	| additional pre-main initialization
 
 /*
  * Create a fake exception frame so that cpu_lwp_fork() can copy it.

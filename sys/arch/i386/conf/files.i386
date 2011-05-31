@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.353.4.4 2011/04/21 01:41:05 rmind Exp $
+#	$NetBSD: files.i386,v 1.353.4.5 2011/05/31 03:04:04 rmind Exp $
 #
 # new style config file for i386 architecture
 #
@@ -359,18 +359,6 @@ file	arch/i386/i386/svr4_machdep.c		compat_svr4
 file	arch/i386/i386/svr4_sigcode.S		compat_svr4
 file	arch/i386/i386/svr4_syscall.c		compat_svr4
 
-# MACH binary compatibility (COMPAT_MACH)
-include	"compat/mach/files.mach"
-file	arch/i386/i386/mach_machdep.c		compat_mach | compat_darwin
-file	arch/i386/i386/mach_sigcode.S		compat_mach | compat_darwin
-file	arch/i386/i386/mach_syscall.c		compat_mach | compat_darwin
-file	arch/i386/i386/darwin_commpage_machdep.S compat_darwin
-file	arch/i386/i386/macho_machdep.c		exec_macho
-
-# DARWIN binary compatibility (COMPAT_DARWIN)
-include	"compat/darwin/files.darwin"
-file	arch/i386/i386/darwin_machdep.c		compat_darwin
-
 # iBCS-2 binary compatibility (COMPAT_IBCS2)
 include	"compat/ibcs2/files.ibcs2"
 file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
@@ -392,9 +380,6 @@ file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
 
 # NDIS compatibilty (COMPAT_NDIS)
 include "compat/ndis/files.ndis"
-
-# Win32 binary compatibility (COMPAT_PECOFF)
-include	"compat/pecoff/files.pecoff"
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"

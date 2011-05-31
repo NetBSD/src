@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.55.4.2 2011/03/05 20:49:15 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.55.4.3 2011/05/31 03:03:53 rmind Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1132,8 +1132,8 @@ IDTVEC(syscall)
 	swapgs
 #endif
 	INTR_RESTORE_GPRS
-	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),%r11
-	movw	%r11,%ds
+	movw	$(LSEL(LUDATA_SEL, SEL_UPL)), %r11w
+	movw	%r11w,%ds
 	addq	$TF_REGSIZE+16,%rsp	/* + T_xxx and error code */
 #ifndef XEN
 	popq	%rcx	/* return rip */

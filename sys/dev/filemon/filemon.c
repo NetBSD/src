@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.1.10.2 2011/03/05 20:53:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.1.10.3 2011/05/31 03:04:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -195,20 +195,16 @@ filemon_open(dev_t dev, int oflags __unused, int mode __unused,
 		return error;
 
 	filemon = kmem_alloc(sizeof(struct filemon), KM_SLEEP);
-	if (!filemon)
-		return ENOMEM;
-
 	rw_init(&filemon->fm_mtx);
 	filemon->fm_fd = -1;
 	filemon->fm_fp = NULL;
 	filemon->fm_pid = curproc->p_pid;
 
 	rw_enter(&filemon_mtx, RW_WRITER);
-	n_open++;
-
 	TAILQ_INSERT_TAIL(&filemons_inuse, filemon, fm_link);
-
+	n_open++;
 	rw_exit(&filemon_mtx);
+
 	return fd_clone(fp, fd, oflags, &filemon_fileops, filemon);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.30.6.1 2010/05/30 05:17:15 rmind Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.30.6.2 2011/05/31 03:04:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.30.6.1 2010/05/30 05:17:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.30.6.2 2011/05/31 03:04:32 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -143,12 +143,12 @@ netbsd32_sysctl_init(void)
 	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine", NULL,
-		       NULL, 0, &machine32, 0,
+		       NULL, 0, __UNCONST(&machine32), 0,
 		       CTL_HW, HW_MACHINE, CTL_EOL);
 	sysctl_createv(&netbsd32_clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine_arch", NULL,
-		       NULL, 0, &machine_arch32, 0,
+		       NULL, 0, __UNCONST(&machine_arch32), 0,
 		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
 }
 

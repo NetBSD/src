@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.1.4.2 2011/04/21 01:41:11 rmind Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.1.4.3 2011/05/31 03:04:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.4.2 2011/04/21 01:41:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.4.3 2011/05/31 03:04:09 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -150,7 +150,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
         ci->ci_cycles_per_hz = cpu_info_store.ci_cycles_per_hz;
         ci->ci_divisor_delay = cpu_info_store.ci_divisor_delay;
         ci->ci_divisor_recip = cpu_info_store.ci_divisor_recip;
-        ci->ci_cpuwatch_count = cpu_info_store.ci_cpuwatch_count;
+	ci->ci_cpuwatch_count = cpu_info_store.ci_cpuwatch_count;
 
 	/*
 	 * Attach its TLB info (which must be direct-mapped)
@@ -395,7 +395,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	*flags |= _UC_CPU | _UC_TLSBASE;
 
 	/* Save floating point register context, if any. */
-	if (fpu_used_p(l)) {
+	KASSERT(l == curlwp);
+	if (fpu_used_p()) {
 		size_t fplen;
 		/*
 		 * If this process is the current FP owner, dump its
@@ -974,7 +975,7 @@ void
 xc_send_ipi(struct cpu_info *ci)
 {
 
-	(*mips_locoresw.lsw_send_ipi)(ci, IPI_NOP);
+	(*mips_locoresw.lsw_send_ipi)(ci, IPI_XCALL);
 }
 #endif /* MULTIPROCESSOR */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_bbt.c,v 1.1.4.3 2011/04/21 01:41:48 rmind Exp $	*/
+/*	$NetBSD: nand_bbt.c,v 1.1.4.4 2011/05/31 03:04:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -31,7 +31,12 @@
  * SUCH DAMAGE.
  */
 
-/* Support for Bad Block Tables (BBTs) */
+/*
+ * Implementation of Bad Block Tables (BBTs).
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nand_bbt.c,v 1.1.4.4 2011/05/31 03:04:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -58,9 +63,7 @@ nand_bbt_detach(device_t self)
 	struct nand_softc *sc = device_private(self);
 	struct nand_bbt *bbt = &sc->sc_bbt;
 
-	printf("freeing bbt bitmap...");
 	kmem_free(bbt->nbbt_bitmap, bbt->nbbt_size);
-	printf("done!\n");
 }
 
 void
@@ -97,9 +100,9 @@ nand_bbt_page_has_bbt(device_t self, flash_off_t addr) {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
 	uint8_t *oob = chip->nc_oob_cache;
-	
+
 	nand_read_oob(self, addr, oob);
-	
+
 	if (oob[NAND_BBT_OFFSET] == 'B' &&
 	    oob[NAND_BBT_OFFSET + 1] == 'b' &&
 	    oob[NAND_BBT_OFFSET + 2] == 't') {
@@ -125,26 +128,26 @@ nand_bbt_get_bbt_from_page(device_t self, flash_off_t addr)
 	if (nand_isbad(self, addr)) {
 		return false;
 	}
-		
+
 	if (nand_bbt_page_has_bbt(self, addr)) {
 		bbtp = bbt->nbbt_bitmap;
 		left = bbt->nbbt_size;
-		
+
 		for (i = 0; i < bbt_pages; i++) {
 			nand_read_page(self, addr, buf);
-				
+
 			if (i == bbt_pages - 1) {
 				KASSERT(left <= chip->nc_page_size);
 				memcpy(bbtp, buf, left);
 			} else {
 				memcpy(bbtp, buf, chip->nc_page_size);
 			}
-				
+
 			bbtp += chip->nc_page_size;
 			left -= chip->nc_page_size;
 			addr += chip->nc_page_size;
 		}
-		
+
 		return true;
 	} else {
 		return false;

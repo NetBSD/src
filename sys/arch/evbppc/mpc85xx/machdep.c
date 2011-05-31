@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5.2.2 2011/03/05 20:50:16 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.3 2011/05/31 03:04:01 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -136,10 +136,15 @@ struct powerpc_bus_space gur_le_bst = {
 
 const bus_space_handle_t gur_bsh = (bus_space_handle_t)(uintptr_t)(GUR_BASE);
 
+#if defined(SYS_CLK)
+static uint64_t e500_sys_clk = SYS_CLK;
+#endif
 #ifdef CADMUS
 static uint8_t cadmus_pci;
 static uint8_t cadmus_csr;
+#ifndef SYS_CLK
 static uint64_t e500_sys_clk = 33333333; /* 33.333333Mhz */
+#endif
 #elif defined(PIXIS)
 static const uint32_t pixis_spd_map[8] = {
     [PX_SPD_33MHZ] = 33333333,
@@ -147,15 +152,15 @@ static const uint32_t pixis_spd_map[8] = {
     [PX_SPD_50MHZ] = 50000000,
     [PX_SPD_66MHZ] = 66666666,
     [PX_SPD_83MHZ] = 83333333,
-    [PX_SPD_133MHZ] = 100000000,
+    [PX_SPD_100MHZ] = 100000000,
     [PX_SPD_133MHZ] = 133333333,
     [PX_SPD_166MHZ] = 166666667,
 };
 static uint8_t pixis_spd;
+#ifndef SYS_CLK
 static uint64_t e500_sys_clk;
-#elif defined(SYS_CLK)
-static uint64_t e500_sys_clk = SYS_CLK;
-#else
+#endif
+#elif !defined(SYS_CLK)
 static uint64_t e500_sys_clk = 66666667; /* 66.666667Mhz */
 #endif
 
@@ -172,7 +177,14 @@ static struct consdev e500_earlycons = {
  * List of port-specific devices to attach to the processor local bus.
  */
 static const struct cpunode_locators mpc8548_cpunode_locs[] = {
-	{ "cpu" },	/* not a real device */
+	{ "cpu", 0, 0, 0, 0, { 0 }, 0,	/* not a real device */
+		{ 0xffff, SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+#if defined(MPC8572) || defined(P2020)
+	{ "cpu", 0, 0, 1, 0, { 0 }, 0,	/* not a real device */
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+	{ "cpu", 0, 0, 2, 0, { 0 }, 0,	/* not a real device */
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+#endif
 	{ "wdog" },	/* not a real device */
 	{ "duart", DUART1_BASE, 2*DUART_SIZE, 0,
 		1, { ISOURCE_DUART },
@@ -234,6 +246,9 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		1 + ilog2(DEVDISR_DDR2_14),
 		{ SVR_MPC8572v1 >> 16 } },
 #endif
+	{ "lbc", LBC_BASE, LBC_SIZE, 0,
+		1, { ISOURCE_LBC },
+		1 + ilog2(DEVDISR_LBC) },
 #if defined(MPC8544) || defined(MPC8536)
 	{ "pcie", PCIE1_BASE, PCI_SIZE, 1,
 		1, { ISOURCE_PCIEX },
@@ -322,9 +337,6 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		1 + ilog2(DEVDISR_ESDHC_10),
 		{ SVR_P2020v2 >> 16 }, },
 #endif
-	{ "lbc", LBC_BASE, LBC_SIZE, 0,
-		1, { ISOURCE_LBC },
-		1 + ilog2(DEVDISR_LBC) },
 	//{ "sec", RNG_BASE, RNG_SIZE, 0, 0, },
 	{ NULL }
 };
@@ -380,6 +392,16 @@ static psize_t
 memprobe(vaddr_t endkernel)
 {
 	phys_ram_seg_t *mr;
+	paddr_t boot_page = cpu_read_4(GUR_BPTR);
+	printf(" bptr=%"PRIxPADDR, boot_page);
+	if (boot_page & BPTR_EN) {
+		/*
+		 * shift it to an address
+		 */
+		boot_page = (boot_page & BPTR_BOOT_PAGE) << PAGE_SHIFT;
+	} else {
+		boot_page = ~(paddr_t)0;
+	}
 
 	/*
 	 * First we need to find out how much physical memory we have.
@@ -392,8 +414,14 @@ memprobe(vaddr_t endkernel)
 		uint32_t v = cpu_read_4(DDRC1_BASE + CS_CONFIG(i));
 		if (v & CS_CONFIG_EN) {
 			v = cpu_read_4(DDRC1_BASE + CS_BNDS(i));
+			if (v == 0)
+				continue;
 			mr->start = BNDS_SA_GET(v);
 			mr->size  = BNDS_SIZE_GET(v);
+#if 0
+			printf(" [%zd]={%#"PRIx64"@%#"PRIx64"}",
+			    mr - physmemr, mr->size, mr->start);
+#endif
 			mr++;
 		}
 	}
@@ -441,6 +469,38 @@ memprobe(vaddr_t endkernel)
 	 */
 	availmemr[0].size -= endkernel - availmemr[0].start;
 	availmemr[0].start = endkernel;
+
+	mr = availmemr;
+	for (u_int i = 0; i < cnt; i++, mr++) {
+		/*
+		 * U-boot reserves a boot-page on multi-core chips.
+		 * We need to make sure that we never disturb it.
+		 */
+		const paddr_t mr_end = mr->start + mr->size;
+		if (mr_end > boot_page && boot_page >= mr->start) {
+			/*
+			 * Normally u-boot will put in at the end
+			 * of memory.  But in case it doesn't, deal
+			 * with all possibilities.
+			 */
+			if (boot_page + PAGE_SIZE == mr_end) {
+				mr->size -= PAGE_SIZE;
+			} else if (boot_page == mr->start) {
+				mr->start += PAGE_SIZE;
+				mr->size -= PAGE_SIZE;
+			} else {
+				mr->size = boot_page - mr->start;
+				mr++;
+				for (u_int j = cnt; j > i + 1; j--) {
+					availmemr[j] = availmemr[j-1];
+				}
+				cnt++;
+				mr->start = boot_page + PAGE_SIZE;
+				mr->size = mr_end - mr->start;
+			}
+			break;
+		}
+	}
 
 	/*
 	 * Steal pages at the end of memory for the kernel message buffer.
@@ -577,20 +637,26 @@ e500_tlb_print(device_t self, const char *name, uint32_t tlbcfg)
 static void
 e500_cpu_attach(device_t self, u_int instance)
 {
-	struct cpu_info * const ci = &cpu_info[instance];
-	
-	KASSERT(instance == 0);
-	self->dv_private = ci;
+	struct cpu_info * const ci = &cpu_info[instance - (instance > 0)];
 
-	ci->ci_cpuid = instance;
-	ci->ci_dev = self;
-        //ci->ci_idlespin = cpu_idlespin;
-	if (instance > 0) {
+	if (instance > 1) {
+#ifdef MULTIPROCESSOR
+#error		still needs to be written
 		ci->ci_idepth = -1;
 		cpu_probe_cache();
+#else
+		aprint_error_dev(self, "disabled (uniprocessor kernel)\n");
+		return;
+#endif
 	}
 
+	self->dv_private = ci;
+
+	ci->ci_cpuid = instance - (instance > 0);
+	ci->ci_dev = self;
+        //ci->ci_idlespin = cpu_idlespin;
 	uint64_t freq = board_info_get_number("processor-frequency");
+
 	char freqbuf[10];
 	if (freq >= 999500000) {
 		const uint32_t freq32 = (freq + 500000) / 10000000;
@@ -681,8 +747,13 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 #endif
 #ifdef PIXIS
 	pixis_spd = ((uint8_t *)PX_BASE)[PX_SPD];
-	printf(" pixis_spd=%#x ", pixis_spd);
+	printf(" pixis_spd=%#x sysclk=%"PRIuMAX,
+	    pixis_spd, PX_SPD_SYSCLK_GET(pixis_spd));
+#ifndef SYS_CLK
 	e500_sys_clk = pixis_spd_map[PX_SPD_SYSCLK_GET(pixis_spd)];
+#else
+	printf(" pixis_sysclk=%u", pixis_spd_map[PX_SPD_SYSCLK_GET(pixis_spd)]);
+#endif
 #endif
 	printf(" porpllsr=0x%08x",
 	    *(uint32_t *)(GUR_BASE + GLOBAL_BASE + PORPLLSR));
@@ -734,7 +805,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	 * Get the cache sizes.
 	 */
 	cpu_probe_cache();
-		printf(" cache(DC=%u/%u,IC=%u/%u)",
+		printf(" cache(DC=%uKB/%u,IC=%uKB/%u)",
 		    ci->ci_ci.dcache_size >> 10,
 		    ci->ci_ci.dcache_line_size,
 		    ci->ci_ci.icache_size >> 10,
@@ -962,6 +1033,32 @@ cpu_startup(void)
 		l2banks >>= 1;
 	}
 #endif
+	paddr_t boot_page = cpu_read_4(GUR_BPTR);
+	if (boot_page & BPTR_EN) {
+		bool found = false;
+		boot_page = (boot_page & BPTR_BOOT_PAGE) << PAGE_SHIFT;
+		for (const uint32_t *dp = (void *)(boot_page + PAGE_SIZE - 4),
+		     * const bp = (void *)boot_page;
+		     bp <= dp; dp--) {
+			if (*dp == boot_page) {
+				uintptr_t spinup_table_addr = (uintptr_t)++dp;
+				spinup_table_addr =
+				    roundup2(spinup_table_addr, 32);
+				board_info_add_number("mp-boot-page",
+				    boot_page);
+				board_info_add_number("mp-spin-up-table", 
+				    spinup_table_addr);
+				printf("Found MP boot page @ %#"PRIxPADDR". "
+				    "Spin-up table @ %#"PRIxPTR"\n",
+				    boot_page, spinup_table_addr);
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			printf("Found MP boot page @ %#"PRIxPADDR
+			    " with missing U-boot signature!\n", boot_page);
+	}
 	board_info_add_number("l2-cache-size", l2siz);
 	board_info_add_number("l2-cache-line-size", 32);
 	board_info_add_number("l2-cache-banks", l2banks);

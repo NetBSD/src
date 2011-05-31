@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.137 2009/05/12 22:22:46 elad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.137.4.1 2011/05/31 03:05:07 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,9 +30,11 @@
  */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Coyote Point Systems, Inc.
  * This code is derived from software contributed to The NetBSD Foundation
  * by Public Access Networks Corporation ("Panix").  It was developed under
  * contract to Panix by Eric Haszlakiewicz and Thor Lancelot Simon.
@@ -91,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.137 2009/05/12 22:22:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.137.4.1 2011/05/31 03:05:07 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -136,6 +138,8 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.137 2009/05/12 22:22:46 elad Exp $");
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
 #endif /* IPSEC */
+
+#include <netinet/tcp_vtw.h>
 
 struct	in_addr zeroin_addr;
 
@@ -269,9 +273,12 @@ in_pcbsetport(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
 
 	lport = *lastport - 1;
 	for (cnt = mymax - mymin + 1; cnt; cnt--, lport--) {
+		vestigial_inpcb_t vestigial;
+
 		if (lport < mymin || lport > mymax)
 			lport = mymax;
-		if (!in_pcblookup_port(table, sin->sin_addr, htons(lport), 1)) {
+		if (!in_pcblookup_port(table, sin->sin_addr, htons(lport), 1,
+		                       &vestigial) && !vestigial.valid) {
 			/* We have a free port, check with the secmodel(s). */
 			sin->sin_port = lport;
 			error = kauth_authorize_network(cred,
@@ -347,6 +354,7 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 			return (error);
 	} else {
 		struct inpcb *t;
+		vestigial_inpcb_t vestige;
 #ifdef INET6
 		struct in6pcb *t6;
 		struct in6_addr mapped;
@@ -373,14 +381,19 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 		mapped.s6_addr16[5] = 0xffff;
 		memcpy(&mapped.s6_addr32[3], &sin->sin_addr,
 		    sizeof(mapped.s6_addr32[3]));
-		t6 = in6_pcblookup_port(table, &mapped, sin->sin_port, wild);
+		t6 = in6_pcblookup_port(table, &mapped, sin->sin_port, wild, &vestige);
 		if (t6 && (reuseport & t6->in6p_socket->so_options) == 0)
 			return (EADDRINUSE);
+		if (!t6 && vestige.valid) {
+		    if (!!reuseport != !!vestige.reuse_port) {
+			return EADDRINUSE;
+		    }
+		}
 #endif
 
 		/* XXX-kauth */
 		if (so->so_uidinfo->ui_uid && !IN_MULTICAST(sin->sin_addr.s_addr)) {
-			t = in_pcblookup_port(table, sin->sin_addr, sin->sin_port, 1);
+			t = in_pcblookup_port(table, sin->sin_addr, sin->sin_port, 1, &vestige);
 			/*
 			 * XXX:	investigate ramifications of loosening this
 			 *	restriction so that as long as both ports have
@@ -393,10 +406,22 @@ in_pcbbind_port(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 			    && (so->so_uidinfo->ui_uid != t->inp_socket->so_uidinfo->ui_uid)) {
 				return (EADDRINUSE);
 			}
+			if (!t && vestige.valid) {
+				if ((!in_nullhost(sin->sin_addr)
+				     || !in_nullhost(vestige.laddr.v4)
+				     || !vestige.reuse_port)
+				    && so->so_uidinfo->ui_uid != vestige.uid) {
+					return EADDRINUSE;
+				}
+			}
 		}
-		t = in_pcblookup_port(table, sin->sin_addr, sin->sin_port, wild);
+		t = in_pcblookup_port(table, sin->sin_addr, sin->sin_port, wild, &vestige);
 		if (t && (reuseport & t->inp_socket->so_options) == 0)
 			return (EADDRINUSE);
+		if (!t
+		    && vestige.valid
+		    && !(reuseport && vestige.reuse_port))
+			return EADDRINUSE;
 
 		inp->inp_lport = sin->sin_port;
 		in_pcbstate(inp, INP_BOUND);
@@ -464,6 +489,7 @@ in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	struct in_ifaddr *ia = NULL;
 	struct sockaddr_in *ifaddr = NULL;
 	struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
+	vestigial_inpcb_t vestige;
 	int error;
 
 	if (inp->inp_af != AF_INET)
@@ -524,7 +550,8 @@ in_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	}
 	if (in_pcblookup_connect(inp->inp_table, sin->sin_addr, sin->sin_port,
 	    !in_nullhost(inp->inp_laddr) ? inp->inp_laddr : ifaddr->sin_addr,
-	    inp->inp_lport) != 0)
+				 inp->inp_lport, &vestige) != 0
+	    || vestige.valid)
 		return (EADDRINUSE);
 	if (in_nullhost(inp->inp_laddr)) {
 		if (inp->inp_lport == 0) {
@@ -794,13 +821,16 @@ in_rtchange(struct inpcb *inp, int errno)
 
 struct inpcb *
 in_pcblookup_port(struct inpcbtable *table, struct in_addr laddr,
-    u_int lport_arg, int lookup_wildcard)
+		  u_int lport_arg, int lookup_wildcard, vestigial_inpcb_t *vp)
 {
 	struct inpcbhead *head;
 	struct inpcb_hdr *inph;
 	struct inpcb *inp, *match = 0;
 	int matchwild = 3, wildcard;
 	u_int16_t lport = lport_arg;
+
+	if (vp)
+		vp->valid = 0;
 
 	head = INPCBHASH_PORT(table, lport);
 	LIST_FOREACH(inph, head, inph_lhash) {
@@ -833,6 +863,54 @@ in_pcblookup_port(struct inpcbtable *table, struct in_addr laddr,
 				break;
 		}
 	}
+	if (match && matchwild == 0)
+		return match;
+
+	if (vp && table->vestige) {
+		void	*state = (*table->vestige->init_ports4)(laddr, lport_arg, lookup_wildcard);
+		vestigial_inpcb_t better;
+
+		while (table->vestige
+		       && (*table->vestige->next_port4)(state, vp)) {
+
+			if (vp->lport != lport)
+				continue;
+			wildcard = 0;
+			if (!in_nullhost(vp->faddr.v4))
+				wildcard++;
+			if (in_nullhost(vp->laddr.v4)) {
+				if (!in_nullhost(laddr))
+					wildcard++;
+			} else {
+				if (in_nullhost(laddr))
+					wildcard++;
+				else {
+					if (!in_hosteq(vp->laddr.v4, laddr))
+						continue;
+				}
+			}
+			if (wildcard && !lookup_wildcard)
+				continue;
+			if (wildcard < matchwild) {
+				better = *vp;
+				match  = (void*)&better;
+
+				matchwild = wildcard;
+				if (matchwild == 0)
+					break;
+			}
+		}
+
+		if (match) {
+			if (match != (void*)&better)
+				return match;
+			else {
+				*vp = better;
+				return 0;
+			}
+		}
+	}
+
 	return (match);
 }
 
@@ -843,12 +921,16 @@ int	in_pcbnotifymiss = 0;
 struct inpcb *
 in_pcblookup_connect(struct inpcbtable *table,
     struct in_addr faddr, u_int fport_arg,
-    struct in_addr laddr, u_int lport_arg)
+    struct in_addr laddr, u_int lport_arg,
+    vestigial_inpcb_t *vp)
 {
 	struct inpcbhead *head;
 	struct inpcb_hdr *inph;
 	struct inpcb *inp;
 	u_int16_t fport = fport_arg, lport = lport_arg;
+
+	if (vp)
+		vp->valid = 0;
 
 	head = INPCBHASH_CONNECT(table, faddr, fport, laddr, lport);
 	LIST_FOREACH(inph, head, inph_hash) {
@@ -862,6 +944,12 @@ in_pcblookup_connect(struct inpcbtable *table,
 		    in_hosteq(inp->inp_laddr, laddr))
 			goto out;
 	}
+	if (vp && table->vestige) {
+		if ((*table->vestige->lookup4)(faddr, fport_arg,
+					       laddr, lport_arg, vp))
+			return 0;
+	}
+
 #ifdef DIAGNOSTIC
 	if (in_pcbnotifymiss) {
 		printf("in_pcblookup_connect: faddr=%08x fport=%d laddr=%08x lport=%d\n",

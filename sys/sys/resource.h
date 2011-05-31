@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.31 2009/03/29 01:02:50 mrg Exp $	*/
+/*	$NetBSD: resource.h,v 1.31.4.1 2011/05/31 03:05:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -124,8 +124,6 @@ struct loadavg {
 extern struct loadavg averunnable;
 struct pcred;
 int	dosetrlimit(struct lwp *, struct proc *, int, struct rlimit *);
-int	donice(struct lwp *, struct proc *, int);
-
 #else
 #include <sys/cdefs.h>
 

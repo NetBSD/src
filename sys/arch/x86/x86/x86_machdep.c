@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.39.2.5 2011/04/21 01:41:33 rmind Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.39.2.6 2011/05/31 03:04:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.39.2.5 2011/04/21 01:41:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.39.2.6 2011/05/31 03:04:24 rmind Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
 #include "opt_splash.h"
+#include "opt_userconf.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.39.2.5 2011/04/21 01:41:33 rmind E
 #include <sys/module.h>
 #include <sys/sysctl.h>
 #include <sys/extent.h>
+
+#if defined(USERCONF)
+#include <sys/userconf.h>
+#endif /* defined(USERCONF) */
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
@@ -174,6 +179,28 @@ module_init_md(void)
 	}
 }
 #endif	/* MODULAR */
+
+#if defined(USERCONF)
+void
+userconf_bootinfo(void)
+{
+	struct btinfo_userconfcommands *biuc;
+	struct bi_userconfcommand *bi, *bimax;
+
+	biuc = lookup_bootinfo(BTINFO_USERCONFCOMMANDS);
+	if (biuc == NULL) {
+		aprint_debug("No bootinfo commands at boot\n");
+		return;
+	}
+
+	bi = (struct bi_userconfcommand *)((uint8_t *)biuc + sizeof(*biuc));
+	bimax = bi + biuc->num;
+	for (; bi < bimax; bi++) {
+		aprint_debug("Processing userconf command: %s\n", bi->text);
+		userconf_parse(bi->text);
+	}
+}
+#endif /* defined (USERCONF) */
 
 void
 cpu_need_resched(struct cpu_info *ci, int flags)

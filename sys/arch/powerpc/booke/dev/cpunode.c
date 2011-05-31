@@ -1,4 +1,4 @@
-/*	$NetBSD: cpunode.c,v 1.4.2.2 2011/03/05 20:51:34 rmind Exp $	*/
+/*	$NetBSD: cpunode.c,v 1.4.2.3 2011/05/31 03:04:13 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpunode.c,v 1.4.2.2 2011/03/05 20:51:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpunode.c,v 1.4.2.3 2011/05/31 03:04:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -110,6 +110,19 @@ cpunode_attach(device_t parent, device_t self, void *aux)
 	for (u_int childmask = 1; cnl->cnl_name != NULL; cnl++) {
 		bool inclusive = true;
 		bool found = (cnl->cnl_ids[0] == 0);
+
+#if DEBUG > 1
+		aprint_normal_dev(self, "dev=%s[%u], addr=%x@%x",
+		    cnl->cnl_name, cnl->cnl_instance, cnl->cnl_size,
+		    cnl->cnl_addr);
+		if (cnl->cnl_nintr > 0) {
+			aprint_normal(", intrs=%u", cnl->cnl_intrs[0]);
+			for (u_int i = 1; i < cnl->cnl_nintr; i++)
+				aprint_normal(",%u", cnl->cnl_intrs[i]);
+		}
+		aprint_normal("\n");
+#endif
+
 		for (u_int i = 0;
 		     !found
 		     && i < __arraycount(cnl->cnl_ids)
@@ -141,17 +154,6 @@ cpunode_attach(device_t parent, device_t self, void *aux)
 		cna.cna_childmask = childmask;
 		cna.cna_locs = *cnl;
 
-#if DEBUG > 1
-		aprint_normal_dev(self, "dev=%s[%u], addr=%x@%x",
-		    cnl->cnl_name, cnl->cnl_instance, cnl->cnl_size,
-		    cnl->cnl_addr);
-		if (cnl->cnl_nintr > 0) {
-			aprint_normal(", intrs=%u", cnl->cnl_intrs[0]);
-			for (u_int i = 1; i < cnl->cnl_nintr; i++)
-				aprint_normal(",%u", cnl->cnl_intrs[i]);
-		}
-		aprint_normal("\n");
-#endif
 		(void)config_found_sm_loc(self, "cpunode", NULL, &cna,
 		    cpunode_print, NULL);
 		childmask <<= 1;

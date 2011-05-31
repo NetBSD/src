@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.100.4.2 2011/04/21 01:41:26 rmind Exp $	*/
+/*	$NetBSD: psycho.c,v 1.100.4.3 2011/05/31 03:04:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.100.4.2 2011/04/21 01:41:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.100.4.3 2011/05/31 03:04:18 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -476,8 +476,8 @@ found:
 	pp->pp_memt = psycho_alloc_mem_tag(pp);
 	pp->pp_iot = psycho_alloc_io_tag(pp);
 	pp->pp_dmat = psycho_alloc_dma_tag(pp);
-	pp->pp_flags = (pp->pp_memt ? PCI_FLAGS_MEM_ENABLED : 0) |
-		       (pp->pp_iot ? PCI_FLAGS_IO_ENABLED : 0);
+	pp->pp_flags = (pp->pp_memt ? PCI_FLAGS_MEM_OKAY : 0) |
+		       (pp->pp_iot ? PCI_FLAGS_IO_OKAY : 0);
 
 	/* allocate a chipset for this */
 	pp->pp_pc = psycho_alloc_chipset(pp, sc->sc_node, &_sparc_pci_chipset);

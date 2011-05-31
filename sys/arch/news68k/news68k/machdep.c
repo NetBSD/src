@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85.2.4 2011/04/21 01:41:16 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85.2.5 2011/05/31 03:04:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85.2.4 2011/04/21 01:41:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85.2.5 2011/05/31 03:04:12 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -187,8 +187,6 @@ news68k_init(void)
 		panic("impossible system type");
 	}
 
-	isrinit();
-
 	/*
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
@@ -253,40 +251,6 @@ cpu_startup(void)
 }
 
 /*
- * Set registers on exec.
- */
-void
-setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
-{
-	struct frame *frame = (struct frame *)l->l_md.md_regs;
-	struct pcb *pcb = lwp_getpcb(l);
-
-	frame->f_sr = PSL_USERSET;
-	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[D0] = 0;
-	frame->f_regs[D1] = 0;
-	frame->f_regs[D2] = 0;
-	frame->f_regs[D3] = 0;
-	frame->f_regs[D4] = 0;
-	frame->f_regs[D5] = 0;
-	frame->f_regs[D6] = 0;
-	frame->f_regs[D7] = 0;
-	frame->f_regs[A0] = 0;
-	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = l->l_proc->p_psstrp;
-	frame->f_regs[A3] = 0;
-	frame->f_regs[A4] = 0;
-	frame->f_regs[A5] = 0;
-	frame->f_regs[A6] = 0;
-	frame->f_regs[SP] = stack;
-
-	/* restore a null state frame */
-	pcb->pcb_fpregs.fpf_null = 0;
-	if (fputype != FPU_NONE)
-		m68881_restore(&pcb->pcb_fpregs);
-}
-
-/*
  * Info for CTL_HW
  */
 char cpu_model[124];
@@ -310,16 +274,16 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "machdep", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "console_device", NULL,
-		       sysctl_consdev, 0, NULL, sizeof(dev_t),
-		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_STRUCT, "console_device", NULL,
+	    sysctl_consdev, 0, NULL, sizeof(dev_t),
+	    CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
 int	waittime = -1;
@@ -1030,8 +994,8 @@ consinit(void)
 	dipsw &= ~SW_CONSOLE;
 
 	switch (dipsw & SW_CONSOLE) {
-	    default: /* XXX no fb support yet */
-	    case 0:
+	default: /* XXX no fb support yet */
+	case 0:
 		tty00_is_console = 1;
 		cn_tab = &consdev_zs;
 		(*cn_tab->cn_init)(cn_tab);
@@ -1039,7 +1003,7 @@ consinit(void)
 	}
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
-		    (void *)&end, esym);
+	    (void *)&end, esym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)

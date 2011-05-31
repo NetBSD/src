@@ -1,5 +1,5 @@
-/*	$Id: at91usart.c,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
-/*	$NetBSD: at91usart.c,v 1.3 2009/10/23 06:53:13 snj Exp $ */
+/*	$Id: at91usart.c,v 1.3.4.1 2011/05/31 03:03:55 rmind Exp $	*/
+/*	$NetBSD: at91usart.c,v 1.3.4.1 2011/05/31 03:03:55 rmind Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.3 2009/10/23 06:53:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.3.4.1 2011/05/31 03:03:55 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.3 2009/10/23 06:53:13 snj Exp $");
 #include <sys/file.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
@@ -278,7 +277,7 @@ at91usart_attach_subr(struct at91usart_softc *sc, struct at91bus_attach_args *sa
 	}
 #endif	// NOTYET
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = at91usart_start;
 	tp->t_param = at91usart_param;
 	tp->t_hwiflow = at91usart_hwiflow;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.65.2.2 2011/03/05 20:53:43 rmind Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.65.2.3 2011/05/31 03:04:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.65.2.2 2011/03/05 20:53:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.65.2.3 2011/05/31 03:04:40 rmind Exp $");
 
 #include "rnd.h"
 
@@ -1554,6 +1554,15 @@ skc_attach(device_t parent, device_t self, void *aux)
 			pci_conf_write(pc, pa->pa_tag, SK_PCI_INTLINE, irq);
 		}
 	}
+
+	/*
+	 * The firmware might have configured the interface to revert the
+	 * byte order in all descriptors. Make that undone.
+	 */
+	command = pci_conf_read(pc, pa->pa_tag, SK_PCI_OURREG2);
+	if (command & SK_REG2_REV_DESC)
+		pci_conf_write(pc, pa->pa_tag, SK_PCI_OURREG2,
+		    command & ~SK_REG2_REV_DESC);
 
 	/*
 	 * Map control/status registers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.1.2.2 2011/04/21 01:40:53 rmind Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.1.2.3 2011/05/31 03:03:56 rmind Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.1.2.2 2011/04/21 01:40:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.1.2.3 2011/05/31 03:03:56 rmind Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -63,7 +63,9 @@ _spllower(int newipl)
 	KASSERT(panicstr || newipl <= ci->ci_cpl);
 	if (newipl < ci->ci_cpl) {
 		register_t psw = disable_interrupts(I32_bit);
+		ci->ci_intr_depth++;
 		pic_do_pending_ints(psw, newipl, NULL);
+		ci->ci_intr_depth--;
 		restore_interrupts(psw);
 	}
 	return oldipl;
@@ -76,7 +78,9 @@ splx(int savedipl)
 	KASSERT(savedipl < NIPL);
 	if (savedipl < ci->ci_cpl) {
 		register_t psw = disable_interrupts(I32_bit);
+		ci->ci_intr_depth++;
 		pic_do_pending_ints(psw, savedipl, NULL);
+		ci->ci_intr_depth--;
 		restore_interrupts(psw);
 	}
 	ci->ci_cpl = savedipl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.45.4.2 2011/03/05 20:56:38 rmind Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.45.4.3 2011/05/31 03:05:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,12 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.45.4.2 2011/03/05 20:56:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.45.4.3 2011/05/31 03:05:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>

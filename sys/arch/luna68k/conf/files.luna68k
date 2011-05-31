@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.20.32.1 2010/03/18 04:36:49 rmind Exp $
+#	$NetBSD: files.luna68k,v 1.20.32.2 2011/05/31 03:04:06 rmind Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -64,5 +64,9 @@ file	dev/md_root.c			memory_disk_hooks
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
 include "compat/aoutm68k/files.aoutm68k"
+
+# SunOS binary compatibility (COMPAT_SUNOS)
+include "compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
 
 include "arch/luna68k/conf/majors.luna68k"

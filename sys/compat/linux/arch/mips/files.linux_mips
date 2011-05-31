@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_mips,v 1.5.32.1 2011/03/05 20:52:45 rmind Exp $
+#	$NetBSD: files.linux_mips,v 1.5.32.2 2011/05/31 03:04:29 rmind Exp $
 #
 # Config file description for mips-dependent Linux compat code.
 
@@ -18,3 +18,4 @@ file	compat/linux/common/linux_olduname.c		compat_linux
 file	compat/linux/common/linux_file64.c		compat_linux
 file	compat/linux/common/linux_fcntl64.c		compat_linux
 file	compat/linux/common/linux_futex.c		compat_linux
+file	compat/linux/common/linux_fadvise64.c		compat_linux

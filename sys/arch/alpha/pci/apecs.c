@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.49.4.2 2011/03/05 20:49:12 rmind Exp $ */
+/* $NetBSD: apecs.c,v 1.49.4.3 2011/05/31 03:03:53 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.49.4.2 2011/03/05 20:49:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.49.4.3 2011/05/31 03:03:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ apecsattach(device_t parent, device_t self, void *aux)
 	pba.pba_pc = &acp->ac_pc;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }

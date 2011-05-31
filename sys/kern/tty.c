@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.234.4.4 2011/04/21 01:42:10 rmind Exp $	*/
+/*	$NetBSD: tty.c,v 1.234.4.5 2011/05/31 03:05:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.234.4.4 2011/04/21 01:42:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.234.4.5 2011/05/31 03:05:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2637,10 +2637,10 @@ ttysleep(struct tty *tp, kcondvar_t *cv, bool catch, int timo)
  * This should be called ONLY once per real tty (including pty's).
  * eg, on the sparc, the keyboard and mouse have struct tty's that are
  * distinctly NOT usable as tty's, and thus should not be attached to
- * the ttylist.  This is why this call is not done from ttymalloc().
+ * the ttylist.  This is why this call is not done from tty_alloc().
  *
  * Device drivers should attach tty's at a similar time that they are
- * ttymalloc()'ed, or, for the case of statically allocated struct tty's
+ * allocated, or, for the case of statically allocated struct tty's
  * either in the attach or (first) open routine.
  */
 void
@@ -2674,10 +2674,10 @@ tty_detach(struct tty *tp)
  * Allocate a tty structure and its associated buffers.
  */
 struct tty *
-ttymalloc(void)
+tty_alloc(void)
 {
-	struct tty	*tp;
-	int i;	
+	struct tty *tp;
+	int i;
 
 	tp = kmem_zalloc(sizeof(*tp), KM_SLEEP);
 	callout_init(&tp->t_rstrt_ch, 0);
@@ -2698,9 +2698,11 @@ ttymalloc(void)
 	tp->t_dev = NODEV;
 	selinit(&tp->t_rsel);
 	selinit(&tp->t_wsel);
-	for (i = 0; i < TTYSIG_COUNT; i++) 
+	for (i = 0; i < TTYSIG_COUNT; i++)  {
 		sigemptyset(&tp->t_sigs[i]);
-	return (tp);
+	}
+
+	return tp;
 }
 
 /*
@@ -2710,7 +2712,7 @@ ttymalloc(void)
  * tty_attach()ed.
  */
 void
-ttyfree(struct tty *tp)
+tty_free(struct tty *tp)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.47.4.1 2011/03/05 20:55:58 rmind Exp $	*/
+/*	$NetBSD: frag6.c,v 1.47.4.2 2011/05/31 03:05:08 rmind Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.47.4.1 2011/03/05 20:55:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.47.4.2 2011/05/31 03:05:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ static void frag6_remque(struct ip6q *);
 static void frag6_freef(struct ip6q *);
 
 static int ip6q_locked;
+static int frag6_drainwanted;
+
 u_int frag6_nfragpackets;
 u_int frag6_nfrags;
 struct	ip6q ip6q;	/* ip6 reassemble queue */
@@ -670,6 +672,15 @@ frag6_remque(struct ip6q *p6)
 	p6->ip6q_next->ip6q_prev = p6->ip6q_prev;
 }
 
+void
+frag6_fasttimo(void)
+{
+	if (frag6_drainwanted) {
+		frag6_drain();
+		frag6_drainwanted = 0;
+	}
+}
+
 /*
  * IPv6 reassembling timer processing;
  * if a timer expires on a reassembly
@@ -720,6 +731,12 @@ frag6_slowtimo(void)
 
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+}
+
+void
+frag6_drainstub(void)
+{
+	frag6_drainwanted = 1;
 }
 
 /*

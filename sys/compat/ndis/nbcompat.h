@@ -12,10 +12,12 @@
 
 #define mtx				kmutex
 #define mtx_init(mtx, desc, type, opts)	mutex_init(mtx, MUTEX_DEFAULT, IPL_NONE)
-/*
-#define mtx_lock(mtx)		ndis_mtx_ipl = splnet() mutex_enter(mtx)
-#define mtx_unlock(mtx)         splx(ndis_mtx_ipl)	mutex_exit(mtx)
-*/
+
+#define mtx_lock(mtx)			mutex_enter(mtx)
+#define mtx_unlock(mtx)			mutex_exit(mtx)
+
+#define	mtx_lock_spin(mtx)		mutex_spin_enter(mtx);
+#define	mtx_unlock_spin(mtx)		mutex_spin_exit(mtx);
 
 void mtx_lock(struct mtx *mutex);
 void mtx_unlock(struct mtx *mutex);

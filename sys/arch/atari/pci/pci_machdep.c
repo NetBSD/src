@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.47.4.2 2011/04/21 01:40:54 rmind Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.47.4.3 2011/05/31 03:03:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.47.4.2 2011/04/21 01:40:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.47.4.3 2011/05/31 03:03:57 rmind Exp $");
 
 #include "opt_mbtype.h"
 
@@ -169,7 +169,7 @@ pcibusattach(struct device *pdp, struct device *dp, void *auxp)
 	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
 	pba.pba_bridgetag = NULL;
-	pba.pba_flags	= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags	= PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pba.pba_dmat	= &pci_bus_dma_tag;
 	pba.pba_iot     = leb_alloc_bus_space_tag(&bs_storage[0]);
 	pba.pba_memt    = leb_alloc_bus_space_tag(&bs_storage[1]);

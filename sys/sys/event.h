@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.21 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.21.6.1 2011/05/31 03:05:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -144,9 +144,6 @@ struct kfilter_mapping {
 #define KFILTER_BYNAME		_IOWR('k', 1, struct kfilter_mapping)
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>		/* for malloc types */
-
-MALLOC_DECLARE(M_KEVENT);
 
 #define	KNOTE(list, hint)	if (!SLIST_EMPTY(list)) knote(list, hint)
 

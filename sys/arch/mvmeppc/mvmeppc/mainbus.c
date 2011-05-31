@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 2009/03/14 15:36:11 dsl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11.4.1 2011/05/31 03:04:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2009/03/14 15:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.4.1 2011/05/31 03:04:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -136,7 +136,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = genppc_pct;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 #endif
 }

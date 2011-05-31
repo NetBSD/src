@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.166.2.3 2011/04/21 01:41:42 rmind Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.166.2.4 2011/05/31 03:04:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.166.2.3 2011/04/21 01:41:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.166.2.4 2011/05/31 03:04:32 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1950,7 +1950,7 @@ netbsd32_adjust_limits(struct proc *p)
 			break;
 	}
 
-	lim_privatise(p, false);
+	lim_privatise(p);
 
 	lim = p->p_limit;
 	for (i = 0; i < __arraycount(lm); i++) {

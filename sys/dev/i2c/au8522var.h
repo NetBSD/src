@@ -1,4 +1,4 @@
-/* $NetBSD: au8522var.h,v 1.1.6.2 2011/03/05 20:53:10 rmind Exp $ */
+/* $NetBSD: au8522var.h,v 1.1.6.3 2011/05/31 03:04:36 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -58,5 +58,6 @@ void		au8522_enable(struct au8522 *, bool);
 void		au8522_set_input(struct au8522 *,
 				 au8522_vinput_t, au8522_ainput_t);
 int		au8522_get_signal(struct au8522 *);
+void		au8522_set_audio(struct au8522 *, bool);
 
 #endif /* !_AU8522VAR_H */

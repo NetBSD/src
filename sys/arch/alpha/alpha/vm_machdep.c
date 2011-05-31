@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.104.4.1 2011/03/05 20:49:10 rmind Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.104.4.2 2011/05/31 03:03:52 rmind Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104.4.1 2011/03/05 20:49:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104.4.2 2011/05/31 03:03:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ cpu_lwp_free(struct lwp *l, int proc)
 
 	if (pcb->pcb_fpcpu != NULL)
 		fpusave_proc(l, 0);
+
+	mutex_destroy(&pcb->pcb_fpcpu_lock);
 }
 
 void
@@ -116,7 +118,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		pcb2->pcb_hw.apcb_usp = (u_long)stack + stacksize;
 	else
 		pcb2->pcb_hw.apcb_usp = alpha_pal_rdusp();
-	simple_lock_init(&pcb2->pcb_fpcpu_slock);
+
+	mutex_init(&pcb2->pcb_fpcpu_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/*
 	 * Arrange for a non-local goto when the new process

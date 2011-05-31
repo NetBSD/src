@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.12 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: becc.c,v 1.12.102.1 2011/05/31 03:03:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.12 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.12.102.1 2011/05/31 03:03:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ becc_attach(struct becc_softc *sc)
 	pba.pba_bridgetag = NULL;
 	pba.pba_intrswiz = 0;
 	pba.pba_intrtag = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
 }

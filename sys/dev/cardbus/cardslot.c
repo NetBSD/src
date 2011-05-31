@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.51.4.1 2010/05/30 05:17:19 rmind Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.51.4.2 2011/05/31 03:04:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.51.4.1 2010/05/30 05:17:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.51.4.2 2011/05/31 03:04:35 rmind Exp $");
 
 #include "opt_cardslot.h"
 
@@ -220,7 +220,7 @@ cardslot_16_submatch(device_t parent, cfdata_t cf,
 		return 0;
 	}
 
-	if ((cf->cf_loc[PCMCIABUSCF_CONTROLLER] == PCMCIABUSCF_CONTROLLER_DEFAULT)) {
+	if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] == PCMCIABUSCF_CONTROLLER_DEFAULT) {
 		return (config_match(parent, cf, aux));
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.33 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.33.22.1 2011/05/31 03:04:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.33 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.33.22.1 2011/05/31 03:04:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,6 @@ int	ec_ring_copy(struct dp8390_softc *, int, void *, u_short);
 void	ec_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
 int	ec_fake_test_mem(struct dp8390_softc *);
 int	ec_test_mem(struct dp8390_softc *);
-
-inline void ec_readmem(struct ec_softc *, int, u_int8_t *, int);
 
 static const int ec_iobase[] = {
 	0x2e0, 0x2a0, 0x280, 0x250, 0x350, 0x330, 0x310, 0x300,
@@ -549,7 +547,7 @@ ec_test_mem(struct dp8390_softc *sc)
  * copy 'len' from NIC to host using shared memory.  The 'len' is rounded
  * up to a word - ok as long as mbufs are word-sized.
  */
-inline void
+static inline void
 ec_readmem(struct ec_softc *esc, int from, uint8_t *to, int len)
 {
 	bus_space_tag_t memt = esc->sc_dp8390.sc_buft;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.221.4.3 2011/04/21 01:41:13 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.221.4.4 2011/05/31 03:04:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.221.4.3 2011/04/21 01:41:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.221.4.4 2011/05/31 03:04:10 rmind Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.221.4.3 2011/04/21 01:41:13 rmind Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
 #include <sys/signalvar.h>
@@ -58,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.221.4.3 2011/04/21 01:41:13 rmind Exp $")
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/kauth.h>
-#include <sys/cpu.h>
 #include <sys/atomic.h>
 
 #include <mips/cache.h>
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.221.4.3 2011/04/21 01:41:13 rmind Exp $")
 
 #include <uvm/uvm.h>
 
-#include <machine/cpu.h>
 #include <mips/trap.h>
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */

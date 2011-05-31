@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.166.2.4 2011/04/21 01:42:02 rmind Exp $ */
+/*	$NetBSD: ehci.c,v 1.166.2.5 2011/05/31 03:04:55 rmind Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.166.2.4 2011/04/21 01:42:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.166.2.5 2011/05/31 03:04:55 rmind Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1567,7 +1567,8 @@ ehci_open(usbd_pipe_handle pipe)
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
-	epipe->nexttoggle = 0;
+	/* toggle state needed for bulk endpoints */
+	epipe->nexttoggle = pipe->endpoint->datatoggle;
 
 	if (addr == sc->sc_addr) {
 		switch (ed->bEndpointAddress) {
@@ -3569,8 +3570,10 @@ Static void
 ehci_device_bulk_close(usbd_pipe_handle pipe)
 {
 	ehci_softc_t *sc = pipe->device->bus->hci_private;
+	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
 
 	DPRINTF(("ehci_device_bulk_close: pipe=%p\n", pipe));
+	pipe->endpoint->datatoggle = epipe->nexttoggle;
 	ehci_close_pipe(pipe, sc->sc_async_head);
 }
 

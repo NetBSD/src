@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.43 2009/11/23 02:13:46 rmind Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.43.4.1 2011/05/31 03:04:36 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.43 2009/11/23 02:13:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.43.4.1 2011/05/31 03:04:36 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -288,7 +288,7 @@ clmpcc_attach(struct clmpcc_softc *sc)
 		ch->ch_sc = sc;
 		ch->ch_car = chan;
 
-		tp = ttymalloc();
+		tp = tty_alloc();
 		tp->t_oproc = clmpcc_start;
 		tp->t_param = clmpcc_param;
 

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.55.4.2 2011/04/21 01:41:41 rmind Exp $
+	$NetBSD: syscalls.master,v 1.55.4.3 2011/05/31 03:04:30 rmind Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -425,7 +425,8 @@
 247	UNIMPL	io_getevents
 248	UNIMPL	io_submit
 249	UNIMPL	io_cancel
-250	UNIMPL	fadvise64
+250	STD	{ int|linux32_sys||fadvise64(int fd, uint32_t offlo, \
+		    uint32_t offhi, linux32_size_t len, int advice); }
 251	UNIMPL	/*	unused	*/
 252	STD	{ int|linux32_sys||exit_group(int error_code); }
 253	UNIMPL	lookup_dcookie
@@ -453,7 +454,8 @@
 		    netbsd32_size_t sz, linux32_statfs64p sp); }
 270	STD	{ int|linux32_sys||tgkill(int tgid, int tid, int sig); }
 271	UNIMPL	utimes
-272	UNIMPL	fadvise64_64
+272	STD	{ int|linux32_sys||fadvise64_64(int fd, uint32_t offlo, \
+		    uint32_t offhi, uint32_t lenlo, uint32_t lenhi, int advice); }
 273	UNIMPL	vserver
 274	UNIMPL	mbind
 275	UNIMPL	get_mempolicy

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadkmap.c,v 1.6 2006/06/27 10:55:16 tsutsui Exp $	*/
+/*	$NetBSD: loadkmap.c,v 1.6.84.1 2011/05/31 03:03:54 rmind Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -7,6 +7,8 @@
 #include "../../dev/kbdmap.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 
 void load_kmap(const char *);

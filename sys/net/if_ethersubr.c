@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.176.4.3 2011/03/05 20:55:51 rmind Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.176.4.4 2011/05/31 03:05:06 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.176.4.3 2011/03/05 20:55:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.176.4.4 2011/05/31 03:05:06 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -115,9 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.176.4.3 2011/03/05 20:55:51 rmind
 #include <net/bpf.h>
 
 #include <net/if_ether.h>
-#if NVLAN > 0
 #include <net/if_vlanvar.h>
-#endif
 
 #if NPPPOE > 0
 #include <net/if_pppoe.h>
@@ -637,6 +635,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	struct ifqueue *inq;
 	uint16_t etype;
 	struct ether_header *eh;
+	size_t ehlen;
 #if defined (ISO) || defined (LLC) || defined(NETATALK)
 	struct llc *l;
 #endif
@@ -651,6 +650,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);
+	ehlen = sizeof(*eh);
 
 	/*
 	 * Determine if the packet is within its size limits.
@@ -748,6 +748,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 		eh = mtod(m, struct ether_header *);
 		etype = ntohs(eh->ether_type);
+		ehlen = sizeof(*eh);
 	}
 #endif
 
@@ -783,8 +784,23 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 * (and possibly FCS) intact.
 	 */
 	switch (etype) {
+	case ETHERTYPE_VLAN: {
+		struct ether_vlan_header *evl = (void *)eh;
+		/*
+		 * If there is a tag of 0, then the VLAN header was probably
+		 * just being used to store the priority.  Extract the ether
+		 * type, and if IP or IPV6, let them deal with it. 
+		 */
+		if (m->m_len <= sizeof(*evl)
+		    && EVL_VLANOFTAG(evl->evl_tag) == 0) {
+			etype = ntohs(evl->evl_proto);
+			ehlen = sizeof(*evl);
+			if ((m->m_flags & M_PROMISC) == 0
+			    && (etype == ETHERTYPE_IP
+				|| etype == ETHERTYPE_IPV6))
+				break;
+		}
 #if NVLAN > 0
-	case ETHERTYPE_VLAN:
 		/*
 		 * vlan_input() will either recursively call ether_input()
 		 * or drop the packet.
@@ -792,9 +808,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		if (((struct ethercom *)ifp)->ec_nvlans != 0)
 			vlan_input(ifp, m);
 		else
+#endif /* NVLAN > 0 */
 			m_freem(m);
 		return;
-#endif /* NVLAN > 0 */
+	}
 #if NPPPOE > 0
 	case ETHERTYPE_PPPOEDISC:
 	case ETHERTYPE_PPPOE:
@@ -872,7 +889,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 	if (etype > ETHERMTU + sizeof (struct ether_header)) {
 		/* Strip off the Ethernet header. */
-		m_adj(m, sizeof(struct ether_header));
+		m_adj(m, ehlen);
 
 		switch (etype) {
 #ifdef INET
@@ -1368,7 +1385,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	/*
 	 * Verify that we have valid Ethernet multicast addresses.
 	 */
-	if ((addrlo[0] & 0x01) != 1 || (addrhi[0] & 0x01) != 1) {
+	if (!ETHER_IS_MULTICAST(addrlo) || !ETHER_IS_MULTICAST(addrhi)) {
 		splx(s);
 		return EINVAL;
 	}

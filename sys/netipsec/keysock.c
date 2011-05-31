@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.19 2010/02/08 19:02:33 joerg Exp $	*/
+/*	$NetBSD: keysock.c,v 1.19.2.1 2011/05/31 03:05:10 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.19 2010/02/08 19:02:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.19.2.1 2011/05/31 03:05:10 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -180,7 +180,6 @@ key_sendup0(
 			m = m_pullup(m, sizeof(struct sadb_msg));
 		if (!m) {
 			PFKEY_STATINC(PFKEY_STAT_IN_NOMEM);
-			m_freem(m);
 			return ENOBUFS;
 		}
 		m->m_pkthdr.len += sizeof(*pmsg);

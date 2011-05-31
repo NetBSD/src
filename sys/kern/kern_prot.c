@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.109.4.2 2011/03/05 20:55:15 rmind Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.109.4.3 2011/05/31 03:05:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.109.4.2 2011/03/05 20:55:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.109.4.3 2011/05/31 03:05:01 rmind Exp $");
 
 #include "opt_compat_43.h"
 
@@ -231,7 +231,7 @@ sys_getgroups(struct lwp *l, const struct sys_getgroups_args *uap, register_t *r
 	*retval = kauth_cred_ngroups(l->l_cred);
 	if (SCARG(uap, gidsetsize) == 0)
 		return 0;
-	if (SCARG(uap, gidsetsize) < *retval)
+	if (SCARG(uap, gidsetsize) < (int)*retval)
 		return EINVAL;
 
 	return kauth_cred_getgroups(l->l_cred, SCARG(uap, gidset), *retval,

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.29.4.1 2011/03/05 20:49:16 rmind Exp $
+#	$NetBSD: Makefile.amd64,v 1.29.4.2 2011/05/31 03:03:53 rmind Exp $
 
 # Makefile for NetBSD
 #
@@ -37,7 +37,6 @@ DEFCOPTS=	-O2
 CPPFLAGS+=	-Damd64 -Dx86_64
 CFLAGS+=	-mcmodel=kernel
 CFLAGS+=	-mno-red-zone
-AFLAGS+=	-x assembler-with-cpp
 
 ##
 ## (3) libkern and compat
@@ -63,6 +62,12 @@ copy.o: ${AMD64}/amd64/copy.S assym.h
 
 spl.o: ${AMD64}/amd64/spl.S assym.h
 	${NORMAL_S}
+
+AFLAGS.locore.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.mptramp.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.linux32_sigcode.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.netbsd32_sigcode.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+CWARNFLAGS.ah_regdomain.c= ${${ACTIVE_CC} == "clang":?-Wno-error:}
 
 ##
 ## (5) link settings

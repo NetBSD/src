@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.132.2.1 2010/05/30 05:17:46 rmind Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.132.2.2 2011/05/31 03:04:57 rmind Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.132.2.1 2010/05/30 05:17:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.132.2.2 2011/05/31 03:04:57 rmind Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -289,7 +289,7 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 
 	scr->scr_dconf = dconf;
 
-	scr->scr_tty = ttymalloc();
+	scr->scr_tty = tty_alloc();
 	tty_attach(scr->scr_tty);
 	scr->scr_hold_screen = 0;
 	if (WSSCREEN_HAS_EMULATOR(scr))
@@ -312,7 +312,7 @@ wsscreen_detach(struct wsscreen *scr)
 
 	if (WSSCREEN_HAS_TTY(scr)) {
 		tty_detach(scr->scr_tty);
-		ttyfree(scr->scr_tty);
+		tty_free(scr->scr_tty);
 	}
 	if (WSSCREEN_HAS_EMULATOR(scr)) {
 		(*scr->scr_dconf->wsemul->detach)(scr->scr_dconf->wsemulcookie,

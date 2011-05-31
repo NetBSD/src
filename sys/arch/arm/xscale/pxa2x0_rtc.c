@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_rtc.c,v 1.3 2009/12/12 14:44:08 tsutsui Exp $	*/
+/*	$NetBSD: pxa2x0_rtc.c,v 1.3.4.1 2011/05/31 03:03:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.3 2009/12/12 14:44:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.3.4.1 2011/05/31 03:03:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.3 2009/12/12 14:44:08 tsutsui Exp $
 #endif
 
 struct pxartc_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
@@ -57,7 +57,7 @@ struct pxartc_softc {
 static int  pxartc_match(struct device *, struct cfdata *, void *);
 static void pxartc_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(pxartc, sizeof(struct pxartc_softc),
+CFATTACH_DECL_NEW(pxartc, sizeof(struct pxartc_softc),
     pxartc_match, pxartc_attach, NULL, NULL);
 
 /* todr(9) interface */
@@ -75,30 +75,34 @@ pxartc_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(pxa->pxa_name, cf->cf_name) != 0)
 		return 0;
 
-	pxa->pxa_size = CPU_IS_PXA270 ? PXA270_RTC_SIZE : PXA250_RTC_SIZE;
+	if (pxa->pxa_size == 0) {
+		pxa->pxa_size =
+		    CPU_IS_PXA270 ? PXA270_RTC_SIZE : PXA250_RTC_SIZE;
+	}
 	return 1;
 }
 
 static void
 pxartc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pxartc_softc *sc = (struct pxartc_softc *)self;
+	struct pxartc_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
 
+	sc->sc_dev = self;
 	sc->sc_iot = pxa->pxa_iot;
 
-	aprint_normal(": PXA2x0 Real-time Clock\n");
+	aprint_normal(": Real-time Clock\n");
 
 	if (bus_space_map(sc->sc_iot, pxa->pxa_addr, pxa->pxa_size, 0,
 	    &sc->sc_ioh)) {
 		aprint_error("%s: couldn't map registers\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		return;
 	}
 
 	if (pxa->pxa_size == PXA270_RTC_SIZE) {
 		aprint_normal("%s: using wristwatch register\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		sc->sc_flags |= FLAG_WRISTWATCH;
 	}
 
@@ -119,11 +123,12 @@ pxartc_todr_gettime(todr_chip_handle_t ch, struct timeval *tv)
 	if ((sc->sc_flags & FLAG_WRISTWATCH) == 0) {
 		tv->tv_sec = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RTC_RCNR);
 		tv->tv_usec = 0;
-		DPRINTF(("%s: RCNR = %08lx\n", sc->sc_dev.dv_xname,tv->tv_sec));
 #ifdef PXARTC_DEBUG
+		DPRINTF(("%s: RCNR = %08llx\n", device_xname(sc->sc_dev),
+		    tv->tv_sec));
 		clock_secs_to_ymdhms(tv->tv_sec, &dt);
 		DPRINTF(("%s: %02d/%02d/%02d %02d:%02d:%02d\n",
-		    sc->sc_dev.dv_xname,
+		    device_xname(sc->sc_dev),
 		    dt.dt_year, dt.dt_mon, dt.dt_day,
 		    dt.dt_hour, dt.dt_min, dt.dt_sec));
 #endif
@@ -148,10 +153,11 @@ pxartc_todr_settime(todr_chip_handle_t ch, struct timeval *tv)
 
 	if ((sc->sc_flags & FLAG_WRISTWATCH) == 0) {
 #ifdef PXARTC_DEBUG
-		DPRINTF(("%s: RCNR = %08lx\n", sc->sc_dev.dv_xname,tv->tv_sec));
+		DPRINTF(("%s: RCNR = %08llx\n", device_xname(sc->sc_dev),
+		    tv->tv_sec));
 		clock_secs_to_ymdhms(tv->tv_sec, &dt);
 		DPRINTF(("%s: %02d/%02d/%02d %02d:%02d:%02d\n",
-		    sc->sc_dev.dv_xname,
+		    device_xname(sc->sc_dev),
 		    dt.dt_year, dt.dt_mon, dt.dt_day,
 		    dt.dt_hour, dt.dt_min, dt.dt_sec));
 #endif
@@ -161,10 +167,11 @@ pxartc_todr_settime(todr_chip_handle_t ch, struct timeval *tv)
 		uint32_t cntr;
 		delay(1);
 		cntr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RTC_RCNR);
-		DPRINTF(("%s: new RCNR = %08x\n", sc->sc_dev.dv_xname, cntr));
+		DPRINTF(("%s: new RCNR = %08x\n", device_xname(sc->sc_dev),
+		    cntr));
 		clock_secs_to_ymdhms(cntr, &dt);
 		DPRINTF(("%s: %02d/%02d/%02d %02d:%02d:%02d\n",
-		    sc->sc_dev.dv_xname,
+		    device_xname(sc->sc_dev),
 		    dt.dt_year, dt.dt_mon, dt.dt_day,
 		    dt.dt_hour, dt.dt_min, dt.dt_sec));
 		}
@@ -185,14 +192,14 @@ pxartc_wristwatch_read(struct pxartc_softc *sc, struct clock_ymdhms *dt)
 	uint32_t dayr, yearr;
 	int s;
 
-	DPRINTF(("%s: pxartc_wristwatch_read()\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: pxartc_wristwatch_read()\n", device_xname(sc->sc_dev)));
 
 	s = splhigh();
 	dayr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RTC_RDCR);
 	yearr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RTC_RYCR);
 	splx(s);
 
-	DPRINTF(("%s: RDCR = %08x, RYCR = %08x\n", sc->sc_dev.dv_xname,
+	DPRINTF(("%s: RDCR = %08x, RYCR = %08x\n", device_xname(sc->sc_dev),
 	    dayr, yearr));
 
 	dt->dt_sec = (dayr >> RDCR_SECOND_SHIFT) & RDCR_SECOND_MASK;
@@ -202,7 +209,8 @@ pxartc_wristwatch_read(struct pxartc_softc *sc, struct clock_ymdhms *dt)
 	dt->dt_mon = (yearr >> RYCR_MONTH_SHIFT) & RYCR_MONTH_MASK;
 	dt->dt_year = (yearr >> RYCR_YEAR_SHIFT) & RYCR_YEAR_MASK;
 
-	DPRINTF(("%s: %02d/%02d/%02d %02d:%02d:%02d\n", sc->sc_dev.dv_xname,
+	DPRINTF(("%s: %02d/%02d/%02d %02d:%02d:%02d\n",
+	    device_xname(sc->sc_dev),
 	    dt->dt_year, dt->dt_mon, dt->dt_day,
 	    dt->dt_hour, dt->dt_min, dt->dt_sec));
 
@@ -216,9 +224,10 @@ pxartc_wristwatch_write(struct pxartc_softc *sc, struct clock_ymdhms *dt)
 	uint32_t wom;	/* week of month: 1=first week of month */
 	int s;
 
-	DPRINTF(("%s: pxartc_wristwatch_write()\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: pxartc_wristwatch_write()\n", device_xname(sc->sc_dev)));
 
-	DPRINTF(("%s: %02d/%02d/%02d %02d:%02d:%02d\n", sc->sc_dev.dv_xname,
+	DPRINTF(("%s: %02d/%02d/%02d %02d:%02d:%02d\n",
+	    device_xname(sc->sc_dev),
 	    dt->dt_year, dt->dt_mon, dt->dt_day,
 	    dt->dt_hour, dt->dt_min, dt->dt_sec));
 
@@ -232,7 +241,7 @@ pxartc_wristwatch_write(struct pxartc_softc *sc, struct clock_ymdhms *dt)
 	yearr |= (dt->dt_mon & RYCR_MONTH_MASK) << RYCR_MONTH_SHIFT;
 	yearr |= (dt->dt_year & RYCR_YEAR_MASK) << RYCR_YEAR_SHIFT;
 
-	DPRINTF(("%s: RDCR = %08x, RYCR = %08x\n", sc->sc_dev.dv_xname,
+	DPRINTF(("%s: RDCR = %08x, RYCR = %08x\n", device_xname(sc->sc_dev),
 	    dayr, yearr));
 
 	/*

@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.115 2009/11/11 09:15:42 rmind Exp $ */
+/*     $NetBSD: buf.h,v 1.115.4.1 2011/05/31 03:05:12 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -162,7 +162,6 @@ struct buf {
  */
 #define	BC_AGE		0x00000001	/* Move to age queue when I/O done. */
 #define	BC_BUSY		0x00000010	/* I/O in progress. */
-#define BC_SCANNED	0x00000020	/* Block already pushed during sync */
 #define	BC_INVAL	0x00002000	/* Does not contain valid info. */
 #define	BC_NOCACHE	0x00008000	/* Do not cache block after use. */
 #define	BC_WANTED	0x00800000	/* Process wants this buffer. */
@@ -188,7 +187,7 @@ struct buf {
 #define	B_DEVPRIVATE	0x02000000	/* Device driver private flag. */
 
 #define BUF_FLAGBITS \
-    "\20\1AGE\3ASYNC\4BAD\5BUSY\6SCANNED\10DELWRI" \
+    "\20\1AGE\3ASYNC\4BAD\5BUSY\10DELWRI" \
     "\12DONE\13COWDONE\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
     "\23PHYS\24RAW\25READ\32DEVPRIVATE\33VFLUSH"
 

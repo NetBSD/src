@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.4.4.3 2011/03/05 20:55:06 rmind Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.4.4.4 2011/05/31 03:04:59 rmind Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.4.4.3 2011/03/05 20:55:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.4.4.4 2011/05/31 03:04:59 rmind Exp $");
 #endif /* not lint */
 
 
@@ -117,9 +117,6 @@ nilfs_reclaim(void *v)
 
 	/* update note for closure */
 	nilfs_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
-
-	/* purge old data from namei */
-	cache_purge(vp);
 
 	/* dispose all node knowledge */
 	nilfs_dispose_node(&nilfs_node);
@@ -1159,15 +1156,9 @@ nilfs_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	int error;
 
 	DPRINTF(VFSCALL, ("nilfs_link called\n"));
-	error = 0;
-
-	/* some quick checks */
-	if (vp->v_type == VDIR)
-		return EPERM;		/* can't link a directory */
-	if (dvp->v_mount != vp->v_mount)
-		return EXDEV;		/* can't link across devices */
-	if (dvp == vp)
-		return EPERM;		/* can't be the same */
+	KASSERT(dvp != vp);
+	KASSERT(vp->v_type != VDIR);
+	KASSERT(dvp->v_mount == vp->v_mount);
 
 	/* lock node */
 	error = vn_lock(vp, LK_EXCLUSIVE);

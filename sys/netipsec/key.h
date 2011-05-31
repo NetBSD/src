@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.8.56.1 2011/03/05 20:56:00 rmind Exp $	*/
+/*	$NetBSD: key.h,v 1.8.56.2 2011/05/31 03:05:10 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -106,7 +106,6 @@ int key_parse (struct mbuf *, struct socket *);
 void key_init (void);
 void key_sa_recordxfer (struct secasvar *, struct mbuf *);
 void key_sa_routechange (struct sockaddr *);
-void key_sa_stir_iv (struct secasvar *);
 
 #ifdef IPSEC_NAT_T
 u_int16_t key_portfromsaddr (const union sockaddr_union *);

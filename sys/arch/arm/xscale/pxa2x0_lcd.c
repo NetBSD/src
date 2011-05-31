@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.28.2.1 2011/03/05 20:49:40 rmind Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.28.2.2 2011/05/31 03:03:56 rmind Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.28.2.1 2011/03/05 20:49:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.28.2.2 2011/05/31 03:03:56 rmind Exp $");
+
+#include "opt_pxa2x0_lcd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

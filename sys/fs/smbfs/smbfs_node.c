@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.42.4.4 2011/05/19 03:43:01 rmind Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.42.4.5 2011/05/31 03:04:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.42.4.4 2011/05/19 03:43:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.42.4.5 2011/05/31 03:04:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,6 @@ smbfs_reclaim(void *v)
 
 	LIST_REMOVE(np, n_hash);
 
-	cache_purge(vp);
 	if (smp->sm_root == np) {
 		SMBVDEBUG0("root vnode\n");
 		smp->sm_root = NULL;

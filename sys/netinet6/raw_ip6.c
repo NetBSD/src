@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.105.4.1 2011/03/05 20:55:59 rmind Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.105.4.2 2011/05/31 03:05:09 rmind Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.105.4.1 2011/03/05 20:55:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.105.4.2 2011/05/31 03:05:09 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -349,7 +349,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		 */
 		in6p = NULL;
 		in6p = in6_pcblookup_connect(&raw6cbtable, &sa6->sin6_addr, 0,
-		    (const struct in6_addr *)&sa6_src->sin6_addr, 0, 0);
+					     (const struct in6_addr *)&sa6_src->sin6_addr, 0, 0, 0);
 #if 0
 		if (!in6p) {
 			/*
@@ -634,7 +634,9 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	case PRU_ATTACH:
 		error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_SOCKET, KAUTH_REQ_NETWORK_SOCKET_RAWSOCK,
-		    NULL, NULL, NULL);
+		    KAUTH_ARG(AF_INET6),
+		    KAUTH_ARG(SOCK_RAW),
+		    KAUTH_ARG(so->so_proto->pr_protocol));
 		sosetlock(so);
 		if (in6p != NULL)
 			panic("rip6_attach");

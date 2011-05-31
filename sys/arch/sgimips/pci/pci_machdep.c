@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.20 2008/05/30 19:26:35 ad Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.20.20.1 2011/05/31 03:04:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20 2008/05/30 19:26:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20.20.1 2011/05/31 03:04:17 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -115,7 +115,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 }
 
 int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	return (*pa->pa_pc->pc_intr_map)(pa, ihp);
 }

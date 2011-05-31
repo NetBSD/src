@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.34.2.3 2011/03/05 20:55:27 rmind Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.34.2.4 2011/05/31 03:05:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.34.2.3 2011/03/05 20:55:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.34.2.4 2011/05/31 03:05:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1245,14 +1245,14 @@ wapbl_biodone(struct buf *bp)
 	}
 
 #ifdef ohbother
-	KDASSERT(bp->b_flags & B_DONE);
-	KDASSERT(!(bp->b_flags & B_DELWRI));
+	KDASSERT(bp->b_oflags & BO_DONE);
+	KDASSERT(!(bp->b_oflags & BO_DELWRI));
 	KDASSERT(bp->b_flags & B_ASYNC);
-	KDASSERT(bp->b_flags & B_BUSY);
+	KDASSERT(bp->b_cflags & BC_BUSY);
 	KDASSERT(!(bp->b_flags & B_LOCKED));
 	KDASSERT(!(bp->b_flags & B_READ));
-	KDASSERT(!(bp->b_flags & B_INVAL));
-	KDASSERT(!(bp->b_flags & B_NOCACHE));
+	KDASSERT(!(bp->b_cflags & BC_INVAL));
+	KDASSERT(!(bp->b_cflags & BC_NOCACHE));
 #endif
 
 	if (bp->b_error) {

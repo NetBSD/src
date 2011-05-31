@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.22.20.2 2011/03/05 20:55:15 rmind Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.22.20.3 2011/05/31 03:05:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.22.20.2 2011/03/05 20:55:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.22.20.3 2011/05/31 03:05:01 rmind Exp $");
 
 #include "opt_pax.h"
 
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.22.20.2 2011/03/05 20:55:15 rmind Exp
 #include <sys/exec_elf.h>
 #include <sys/pax.h>
 #include <sys/sysctl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/fileassoc.h>
 #include <sys/syslog.h>
 #include <sys/vnode.h>
@@ -363,19 +363,17 @@ pax_aslr_stack(struct lwp *l, struct exec_package *epp, u_long *max_stack_size)
 static void
 pax_segvguard_cb(void *v)
 {
-	struct pax_segvguard_entry *p;
+	struct pax_segvguard_entry *p = v;
 	struct pax_segvguard_uid_entry *up;
 
-	if (v == NULL)
+	if (p == NULL) {
 		return;
-
-	p = v;
+	}
 	while ((up = LIST_FIRST(&p->segv_uids)) != NULL) {
 		LIST_REMOVE(up, sue_list);
-		free(up, M_TEMP);
+		kmem_free(up, sizeof(*up));
 	}
-
-	free(v, M_TEMP);
+	kmem_free(p, sizeof(*p));
 }
 
 /*
@@ -417,7 +415,7 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 	 * for it.
 	 */
 	if (p == NULL) {
-		p = malloc(sizeof(*p), M_TEMP, M_WAITOK);
+		p = kmem_alloc(sizeof(*p), KM_SLEEP);
 		fileassoc_add(vp, segvguard_id, p);
 		LIST_INIT(&p->segv_uids);
 
@@ -426,7 +424,7 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 		 * The expiry time is when we purge the entry if it didn't
 		 * reach the limit.
 		 */
-		up = malloc(sizeof(*up), M_TEMP, M_WAITOK);
+		up = kmem_alloc(sizeof(*up), KM_SLEEP);
 		up->sue_uid = kauth_cred_getuid(l->l_cred);
 		up->sue_ncrashes = 1;
 		up->sue_expiry = tv.tv_sec + pax_segvguard_expiry;
@@ -455,7 +453,7 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 	 */
 	if (!have_uid) {
 		if (crashed) {
-			up = malloc(sizeof(*up), M_TEMP, M_WAITOK);
+			up = kmem_alloc(sizeof(*up), KM_SLEEP);
 			up->sue_uid = uid;
 			up->sue_ncrashes = 1;
 			up->sue_expiry = tv.tv_sec + pax_segvguard_expiry;
@@ -463,7 +461,6 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 
 			LIST_INSERT_HEAD(&p->segv_uids, up, sue_list);
 		}
-
 		return (0);
 	}
 

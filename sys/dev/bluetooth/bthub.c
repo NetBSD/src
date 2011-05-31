@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.15 2009/05/12 12:10:46 cegger Exp $	*/
+/*	$NetBSD: bthub.c,v 1.15.4.1 2011/05/31 03:04:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.15 2009/05/12 12:10:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.15.4.1 2011/05/31 03:04:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.15 2009/05/12 12:10:46 cegger Exp $");
 
 #include <dev/bluetooth/btdev.h>
 
-#include "ioconf.h"
-
 /*****************************************************************************
  *
  *	Bluetooth Device Hub
@@ -62,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.15 2009/05/12 12:10:46 cegger Exp $");
 static int	bthub_match(device_t, cfdata_t, void *);
 static void	bthub_attach(device_t, device_t, void *);
 static int	bthub_detach(device_t, int);
+
+extern struct cfdriver bthub_cd;
 
 CFATTACH_DECL_NEW(bthub, 0,
     bthub_match, bthub_attach, bthub_detach, NULL);

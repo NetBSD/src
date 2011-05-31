@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.40.20.1 2011/03/05 20:53:16 rmind Exp $ */
+/*	$NetBSD: iha.c,v 1.40.20.2 2011/05/31 03:04:36 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002 Izumi Tsutsui
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.40.20.1 2011/03/05 20:53:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.40.20.2 2011/05/31 03:04:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2169,7 +2169,7 @@ iha_resel(struct iha_softc *sc)
 	uint8_t tag, target, lun, msg, abortmsg;
 
 	if (sc->sc_actscb != NULL) {
-		if ((sc->sc_actscb->status == STATUS_SELECT))
+		if (sc->sc_actscb->status == STATUS_SELECT)
 			iha_push_pend_scb(sc, sc->sc_actscb);
 		sc->sc_actscb = NULL;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.3.18.1 2011/03/05 20:49:35 rmind Exp $ */
+/* $NetBSD: imxuart.c,v 1.3.18.2 2011/05/31 03:03:55 rmind Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.3.18.1 2011/03/05 20:49:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.3.18.2 2011/05/31 03:03:55 rmind Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -433,7 +433,7 @@ imxuart_attach_common(device_t parent, device_t self,
 	}
 
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = imxustart;
 	tp->t_param = imxuparam;
 	tp->t_hwiflow = imxuhwiflow;
@@ -633,7 +633,7 @@ imxuart_detach(device_t self, int flags)
 		 * Ring buffer allocation failed in the imxuart_attach_subr,
 		 * only the tty is allocated, and nothing else.
 		 */
-		ttyfree(sc->sc_tty);
+		tty_free(sc->sc_tty);
 		return 0;
 	}
 
@@ -642,7 +642,7 @@ imxuart_detach(device_t self, int flags)
 
 	/* Detach and free the tty. */
 	tty_detach(sc->sc_tty);
-	ttyfree(sc->sc_tty);
+	tty_free(sc->sc_tty);
 
 	/* Unhook the soft interrupt handler. */
 	softint_disestablish(sc->sc_si);

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1025.2.5 2011/04/21 01:41:52 rmind Exp $
+$NetBSD: pcidevs,v 1.1025.2.6 2011/05/31 03:04:42 rmind Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -257,8 +257,8 @@ vendor OMRON		0x10cb	Omron
 vendor MENTOR		0x10cc	Mentor ARC
 vendor ADVSYS		0x10cd	Advanced System Products
 vendor RADIUS		0x10ce	Radius
-vendor CITICORP		0x10cf	Citicorp TTI
-vendor FUJITSU2		0x10d0	Fujitsu Limited (2nd PCI Vendor ID)
+vendor FUJITSU4		0x10cf	Fujitsu (4th PCI Vendor ID)
+vendor FUJITSU2		0x10d0	Fujitsu (2nd PCI Vendor ID)
 vendor FUTUREPLUS	0x10d1	Future+ Systems
 vendor MOLEX		0x10d2	Molex
 vendor JABIL		0x10d3	Jabil Circuit
@@ -626,10 +626,12 @@ vendor EVE		0x1adb	EVE
 vendor QUMRANET		0x1af4	Qumranet
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
+vendor SUNIX2		0x1fd4	SUNIX Co
 vendor HINT		0x3388	HiNT
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
 vendor ADDTRON		0x4033	Addtron Technology
+vendor QINHENG		0x4348	Nanjing QinHeng Electronics
 vendor ICOMPRESSION	0x4444	Conexant (iCompression)
 vendor INDCOMPSRC	0x494f	Industrial Computer Source
 vendor NETVIN		0x4a14	NetVin
@@ -805,6 +807,7 @@ product ALI M5239	0x5239	M5239 USB 2.0 Host Controller
 product ALI M5243	0x5243	M5243 PCI-AGP Bridge
 product ALI M5249	0x5249	M5249 Hypertransport to PCI Bridge
 product ALI M5261	0x5261	M5261 Tulip Ethernet Controller
+product ALI M5288	0x5288	M5288 SATA/Raid Controller
 product ALI M5451	0x5451	M5451 AC-Link Controller Audio Device
 product ALI M5453	0x5453	M5453 AC-Link Controller Modem Device
 product ALI M5455	0x5455	M5455 AC-Link Controller Audio Device
@@ -2032,6 +2035,11 @@ product FORTEMEDIA	PCIJOY	0x0802	PCI Gameport Joystick
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
 
+/* Fujitsu products */
+product	FUJITSU4	PW008GE5	0x11a1	PW008GE5
+product	FUJITSU4	PW008GE4	0x11a2	PW008GE4
+product	FUJITSU4	PP250_450_LAN	0x11cc	PRIMEPOWER250/450 LAN
+
 /* FZ Juelich / ZEL products */
 product FZJZEL	GIGALINK	0x0001	Gigabit Link / STR1100
 product FZJZEL	PLXHOTLINK	0x0002	HOTlink Interface
@@ -2333,6 +2341,10 @@ product INTEL WIFI_LINK_1000_2	0x0084	WiFi Link 1000
 product INTEL WIFI_LINK_6005_2X2_2	0x0085	Centrino Advanced-N 6205
 product INTEL WIFI_LINK_6050_2X2_1	0x0087	Centrino Advanced-N 6250
 product INTEL WIFI_LINK_6050_2X2_2	0x0089	Centrino Advanced-N 6250
+product INTEL WIFI_LINK_1030_1	0x008a	Centrino Wireless-N 1030
+product INTEL WIFI_LINK_1030_2	0x008b	Centrino Wireless-N 1030
+product INTEL WIFI_LINK_6230_1	0x0090	Centrino Advanced-N 6230
+product INTEL WIFI_LINK_6230_2	0x0091	Centrino Advanced-N 6230
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82542		0x1000	i82542 Gigabit Ethernet
@@ -2487,6 +2499,8 @@ product INTEL 82870P2_PPB	0x1460	82870P2 P64H2 PCI-PCI Bridge
 product INTEL 82870P2_IOxAPIC	0x1461	82870P2 P64H2 IOxAPIC
 product INTEL 82870P2_HPLUG	0x1462	82870P2 P64H2 Hot Plug Controller
 product INTEL 82801I_82567V_3	0x1501	i82567V-3 LAN Controller
+product INTEL PCH2_LV_LM	0x1502	82579LM Gigabit Network Connection
+product INTEL PCH2_LV_V		0x1503	82579V Gigabit Network Connection
 product INTEL 82583V		0x150c	i82583V 1000baseT Ethernet
 product INTEL 82576_NS 		0x150a	82576 gigabit Ethernet
 product INTEL 82576_SERDES_QUAD	0x150d	82576 quad-gigabit Ethernet (SERDES)
@@ -2498,6 +2512,8 @@ product INTEL 82580_COPPER_DUAL	0x1516	82580 dual-1000BaseT Ethernet
 product INTEL 82576_NS_SERDES 	0x1518	82576 gigabit Ethernet (SERDES)
 product INTEL 82580_ER 		0x151d	82580 1000BaseT Ethernet
 product INTEL 82580_ER_DUAL 	0x151e	82580 dual-1000BaseT Ethernet
+product INTEL 82801J_D_BM_V	0x1525	82567V LAN Controller
+product INTEL 82580_QUAD_FIBER 	0x1527	82580 quad-1000BaseX Ethernet
 product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
 product INTEL 80960RM_2		0x1962	i960 RM PCI-PCI
 product INTEL 82840_HB		0x1a21	82840 Host
@@ -2505,6 +2521,45 @@ product INTEL 82840_AGP		0x1a23	82840 AGP
 product INTEL 82840_PCI		0x1a24	82840 PCI
 product INTEL 82845_HB		0x1a30	82845 Host
 product INTEL 82845_AGP		0x1a31	82845 AGP
+product INTEL 6SERIES_SATA_1	0x1c00	6 Series SATA
+product INTEL 6SERIES_SATA_2	0x1c01	6 Series SATA
+product INTEL 6SERIES_AHCI_1	0x1c02	6 Series AHCI
+product INTEL 6SERIES_AHCI_2	0x1c03	6 Series AHCI
+product INTEL 6SERIES_RAID_1	0x1c04	6 Series RAID
+product INTEL 6SERIES_RAID_2	0x1c05	6 Series RAID
+product INTEL 6SERIES_RAID_3	0x1c06	6 Series RAID
+product INTEL 6SERIES_SATA_3	0x1c08	6 Series SATA
+product INTEL 6SERIES_SATA_4	0x1c09	6 Series SATA
+product INTEL 6SERIES_PCIE_1	0x1c10	6 Series PCIE
+product INTEL 6SERIES_PCIE_2	0x1c12	6 Series PCIE
+product INTEL 6SERIES_PCIE_3	0x1c14	6 Series PCIE
+product INTEL 6SERIES_PCIE_4	0x1c16	6 Series PCIE
+product INTEL 6SERIES_PCIE_5	0x1c18	6 Series PCIE
+product INTEL 6SERIES_PCIE_6	0x1c1a	6 Series PCIE
+product INTEL 6SERIES_PCIE_7	0x1c1c	6 Series PCIE
+product INTEL 6SERIES_PCIE_8	0x1c1e	6 Series PCIE
+product INTEL 6SERIES_HDA	0x1c20	6 Series HD Audio
+product INTEL 6SERIES_SMB	0x1c22	6 Series SMBus
+product INTEL 6SERIES_THERM	0x1c24	6 Series Thermal
+product INTEL 6SERIES_DMI	0x1c25	6 Series DMI-PCI
+product INTEL 6SERIES_EHCI_1	0x1c26	6 Series USB
+product INTEL 6SERIES_EHCI_2	0x1c2d	6 Series USB
+product INTEL 6SERIES_MEI	0x1c3a	6 Series MEI
+product INTEL 6SERIES_KT	0x1c3d	6 Series KT
+product INTEL P67_LPC		0x1c46	P67 LPC
+product INTEL UM67_LPC		0x1c47	UM67 LPC
+product INTEL HM65_LPC		0x1c49	HM65 LPC
+product INTEL H67_LPC		0x1c4a	H67 LPC
+product INTEL HM67_LPC		0x1c4b	HM67 LPC
+product INTEL Q65_LPC		0x1c4c	Q65 LPC
+product INTEL QS67_LPC		0x1c4d	QS67 LPC
+product INTEL Q67_LPC		0x1c4e	Q67 LPC
+product INTEL QM67_LPC		0x1c4f	QM67 LPC
+product INTEL B65_LPC		0x1c50	B65 LPC
+product INTEL H61_LPC		0x1c51	H61 LPC
+product INTEL C202_LPC		0x1c52	C202 LPC
+product INTEL C204_LPC		0x1c54	C204 LPC
+product INTEL C206_LPC		0x1c56	C206 LPC
 product INTEL 82801AA_LPC	0x2410	82801AA LPC Interface Bridge
 product INTEL 82801AA_IDE	0x2411	82801AA IDE Controller
 product INTEL 82801AA_USB	0x2412	82801AA USB Controller
@@ -2943,8 +2998,10 @@ product INTEL PRO_WL_3945ABG_2	0x4227	PRO/Wireless LAN 3945ABG Mini-PCI Adapter
 product INTEL WIFI_LINK_4965_1	0x4229	Wireless WiFi Link 4965
 product INTEL WIFI_LINK_6000_3X3_1	0x422b	Centrino Ultimate-N 6300
 product INTEL WIFI_LINK_6000_IPA_1	0x422c	Centrino Advanced-N 6200
+product INTEL WIFI_LINK_4965_3	0x422d  Wireless WiFi Link 4965
 product INTEL WIFI_LINK_4965_2	0x4230  Wireless WiFi Link 4965
 product INTEL WIFI_LINK_5100_1	0x4232  WiFi Link 5100
+product INTEL WIFI_LINK_4965_4	0x4233  Wireless WiFi Link 4965
 product INTEL WIFI_LINK_5300_1	0x4235  WiFi Link 5300
 product INTEL WIFI_LINK_5300_2	0x4236  WiFi Link 5300
 product INTEL WIFI_LINK_5100_2	0x4237  WiFi Link 5100
@@ -3003,6 +3060,8 @@ product INTEL CP_SYS_MREGS	0xd155	Core Processor System Management Registers
 product INTEL CP_SS_REGS	0xd156	Core Processor Semaphore and Scratchpad Registers
 product INTEL CP_SCS_REGS	0xd157	Core Processor System Control and Status Registers
 product INTEL CP_MISC_REGS	0xd158	Core Processor Miscellaneous Registers
+product INTEL HANKSVILLE	0xF0FE	HANKSVILLE LAN Controller
+
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
@@ -4239,6 +4298,10 @@ product SUNDANCETI ST201	0x0201	ST201 10/100 Ethernet
 product SUNDANCETI ST1023	0x1023	ST1023 Gigabit Ethernet
 product SUNDANCETI ST2021	0x2021	ST2021 Gigabit Ethernet
 
+/* SUNIX products */
+product SUNIX 0001	0x0001	Matrix serial adapter
+product SUNIX 1999	0x1999	1999 multiport adapter
+
 /* Surecom Technology products */
 product SURECOM NE34	0x0e34	NE-34 Ethernet
 
@@ -4254,7 +4317,8 @@ product SYMPHONY2	82C101	0x0001	82C101
 product SYMPHONY	83C553	0x0565	83C553 PCI-ISA Bridge
 
 /* System Base products */
-product SYSTEMBASE	SB16C1054	0x0004 SB16C1054 UARTs
+product SYSTEMBASE	SB16C1054	0x0004	SB16C1054 UARTs
+product SYSTEMBASE	SB16C1058	0x0008	SB16C1058 UARTs
 
 /* Schneider & Koch (really SysKonnect) products */
 product SCHNEIDERKOCH	SKNET_FDDI	0x4000	SK-NET FDDI-xP
@@ -4536,6 +4600,7 @@ product VIATECH VT8623_VGA	0x3122	VT8623 (Apollo CLE266) VGA Controller
 product VIATECH VT8623		0x3123	VT8623 (Apollo CLE266) CPU-PCI Bridge
 product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
 product VIATECH VT8237_SATA	0x3149	VT8237 Integrated SATA Controller
+product VIATECH VT6410_RAID	0x3164	VT6410 ATA133 RAID Controller
 product VIATECH K8HTB		0x3188	K8HTB Host
 product VIATECH VT6421_RAID	0x3249	VT6421 Serial RAID Controller
 product	VIATECH VT3314_IG	0x3344	VT3314 CN900 UniChrome Integrated Graphics

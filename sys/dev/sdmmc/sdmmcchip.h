@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcchip.h,v 1.1.12.2 2011/03/05 20:54:06 rmind Exp $	*/
+/*	$NetBSD: sdmmcchip.h,v 1.1.12.3 2011/05/31 03:04:55 rmind Exp $	*/
 /*	$OpenBSD: sdmmcchip.h,v 1.3 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
 
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct sdmmc_command;
 

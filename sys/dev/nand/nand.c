@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.1.4.3 2011/04/21 01:41:48 rmind Exp $	*/
+/*	$NetBSD: nand.c,v 1.1.4.4 2011/05/31 03:04:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.1.4.3 2011/04/21 01:41:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.1.4.4 2011/05/31 03:04:38 rmind Exp $");
 
 #include "locators.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.1.4.3 2011/04/21 01:41:48 rmind Exp $");
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/sysctl.h>
+#include <sys/atomic.h>
 
 #include <dev/flash/flash.h>
 #include <dev/nand/nand.h>
@@ -211,8 +212,11 @@ nand_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	faa.flash_if = flash_if;
 
 	if (config_match(parent, cf, &faa)) {
-		config_attach(parent, cf, &faa, nand_print);
-		return 0;
+		if (config_attach(parent, cf, &faa, nand_print) != NULL) {
+			return 0;
+		} else {
+			return 1;
+		}
 	} else {
 		kmem_free(flash_if, sizeof(*flash_if));
 	}
@@ -225,13 +229,17 @@ nand_detach(device_t self, int flags)
 {
 	struct nand_softc *sc = device_private(self);
 	struct nand_chip *chip = &sc->sc_chip;
-	int ret = 0;
+	int error = 0;
 
+	error = config_detach_children(self, flags);
+	if (error) {
+		return error;
+	}
+
+	nand_sync_thread_stop(self);
 #ifdef NAND_BBT
 	nand_bbt_detach(self);
 #endif
-	nand_sync_thread_stop(self);
-
 	/* free oob cache */
 	kmem_free(chip->nc_oob_cache, chip->nc_spare_size);
 	kmem_free(chip->nc_page_cache, chip->nc_page_size);
@@ -241,7 +249,7 @@ nand_detach(device_t self, int flags)
 
 	pmf_device_deregister(sc->sc_dev);
 
-	return ret;
+	return error;
 }
 
 int
@@ -335,7 +343,7 @@ nand_fill_chip_structure_legacy(device_t self, struct nand_chip *chip)
 	default:
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -367,9 +375,9 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 	if (onfi_signature[0] != 'O' || onfi_signature[1] != 'N' ||
 	    onfi_signature[2] != 'F' || onfi_signature[3] != 'I') {
 		chip->nc_isonfi = false;
-		
+
 		aprint_normal(": Legacy NAND Flash\n");
-		
+
 		nand_read_id(self, &chip->nc_manf_id, &chip->nc_dev_id);
 
 		if (nand_fill_chip_structure_legacy(self, chip)) {
@@ -383,11 +391,10 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 		aprint_normal(": ONFI NAND Flash\n");
 
 		nand_read_id(self, &chip->nc_manf_id, &chip->nc_dev_id);
-		
+
 		if (nand_fill_chip_structure(self, chip)) {
 			aprint_error_dev(self,
 			    "can't read device parameters\n");
-			
 			return 1;
 		}
 	}
@@ -480,10 +487,10 @@ nand_read_id(device_t self, uint8_t *manf, uint8_t *dev)
 	nand_select(self, true);
 	nand_command(self, ONFI_READ_ID);
 	nand_address(self, 0x00);
-	
+
 	nand_read_byte(self, manf);
 	nand_read_byte(self, dev);
-	
+
 	nand_select(self, false);
 }
 
@@ -1292,9 +1299,7 @@ nand_flash_read_unaligned(device_t self, size_t offset,
 
 		addr += chip->nc_page_size;
 	}
-
 	KASSERT(*retlen == len);
-
 out:
 	mutex_exit(&sc->sc_device_lock);
 
@@ -1333,7 +1338,6 @@ nand_flash_read(device_t self, flash_off_t offset, size_t len, size_t *retlen,
 	if (len < chip->nc_page_size)
 		panic("TODO page size is larger than read size");
 #endif
-	
 
 	if (len % chip->nc_page_size != 0 ||
 	    offset % chip->nc_page_size != 0) {
@@ -1361,7 +1365,6 @@ nand_flash_read(device_t self, flash_off_t offset, size_t len, size_t *retlen,
 		addr += chip->nc_page_size;
 		*retlen += chip->nc_page_size;
 	}
-
 out:
 	mutex_exit(&sc->sc_device_lock);
 
@@ -1394,7 +1397,7 @@ nand_flash_isbad(device_t self, flash_off_t ofs, bool *isbad)
 	mutex_exit(&sc->sc_device_lock);
 
 	*isbad = result;
-	
+
 	return 0;
 }
 
@@ -1465,7 +1468,6 @@ nand_flash_erase(device_t self,
 		if (nand_isbad(self, addr)) {
 			aprint_error_dev(self, "bad block encountered\n");
 			ei->ei_state = FLASH_ERASE_FAILED;
-			
 			error = EIO;
 			goto out;
 		}
@@ -1473,7 +1475,6 @@ nand_flash_erase(device_t self,
 		error = nand_erase_block(self, addr);
 		if (error) {
 			ei->ei_state = FLASH_ERASE_FAILED;
-			
 			goto out;
 		}
 

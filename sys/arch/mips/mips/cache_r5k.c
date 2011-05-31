@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.12.100.1 2011/03/05 20:51:05 rmind Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.12.100.2 2011/05/31 03:04:09 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.12.100.1 2011/03/05 20:51:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.12.100.2 2011/05/31 03:04:09 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -621,8 +621,8 @@ r5k_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 	r5k_sdcache_wbinv_range(va, size);
 }
 
-#define	mips_r5k_round_page(x)		(((x) + (128 * 32 - 1)) & ~(128 * 32 - 1))
-#define	mips_r5k_trunc_page(x)		((x) & ~(128 * 32 - 1))
+#define	mips_r5k_round_page(x)	(((x) + (128 * 32 - 1)) & ~(128 * 32 - 1))
+#define	mips_r5k_trunc_page(x)	((x) & ~(128 * 32 - 1))
 
 void
 r5k_sdcache_wbinv_range(vaddr_t va, vsize_t size)

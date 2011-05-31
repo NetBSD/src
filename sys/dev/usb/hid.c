@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.28.22.2 2011/03/05 20:54:10 rmind Exp $	*/
+/*	$NetBSD: hid.c,v 1.28.22.3 2011/05/31 03:04:55 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.28.22.2 2011/03/05 20:54:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.28.22.3 2011/05/31 03:04:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,6 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 		case 2:
 			dval = *data++;
 			dval |= *data++ << 8;
-			dval = /*(int16_t)*/ dval;
 			break;
 		case 4:
 			dval = *data++;

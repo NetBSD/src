@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.225.4.6 2011/04/21 01:41:12 rmind Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.225.4.7 2011/05/31 03:04:10 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225.4.6 2011/04/21 01:41:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225.4.7 2011/05/31 03:04:10 rmind Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -251,7 +251,6 @@ void std_splsw_test(void);
 mips_locore_jumpvec_t mips_locore_jumpvec;
 
 struct locoresw mips_locoresw;
-mips_locore_atomicvec_t mips_locore_atomicvec;
 
 extern const struct splsw std_splsw;
 struct splsw mips_splsw;
@@ -1142,9 +1141,8 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 	mips_config_cache();
 
 	/*
-	 * Default to RAS atomic ops since they are the lowest overhead.
+	 * We default to RAS atomic ops since they are the lowest overhead.
 	 */
-	mips_locore_atomicvec = mips_ras_locore_atomicvec;
 #ifdef MULTIPROCESSOR
 	if (multicpu_p) {
 		/*
@@ -1845,14 +1843,13 @@ mips_init_msgbuf(void)
 {
 	vsize_t sz = (vsize_t)round_page(MSGBUFSIZE);
 	vsize_t reqsz = sz;
-	struct vm_physseg *vps;
-
-	vps = VM_PHYSMEM_PTR(vm_nphysseg - 1);
+	u_int bank = vm_nphysseg - 1;
+	struct vm_physseg *vps = VM_PHYSMEM_PTR(bank);
 #ifndef _LP64
 	/*
 	 * Fist the physical segment that can be mapped to KSEG0
 	 */
-	for (; vps >= vm_physmem; vps--) {
+	for (; vps >= vm_physmem; vps--, bank--) {
 		if (vps->avail_start + atop(sz) <= atop(MIPS_PHYS_MASK))
 			break;
 	}
@@ -1873,9 +1870,9 @@ mips_init_msgbuf(void)
 
 	/* Remove the [last] segment if it now has no pages. */
 	if (vps->start == vps->end) {
-		for (; vps != &vm_physmem[vm_nphysseg - 1]; vps++)
-			vps[0] = vps[1];
-		vm_nphysseg--;
+		for (vm_nphysseg--; bank < vm_nphysseg - 1; bank++) {
+			VM_PHYSMEM_PTR_SWAP(bank, bank + 1);
+		}
 	}
 
 	/* warn if the message buffer had to be shrunk */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.176.2.3 2011/04/21 01:42:07 rmind Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.176.2.4 2011/05/31 03:05:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.176.2.3 2011/04/21 01:42:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.176.2.4 2011/05/31 03:05:01 rmind Exp $");
 
 #include "opt_ktrace.h"
 
@@ -349,26 +349,24 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	else
 		p2->p_fd = fd_copy();
 
+	/* XXX racy */
+	p2->p_mqueue_cnt = p1->p_mqueue_cnt;
+
 	if (flags & FORK_SHARECWD)
 		cwdshare(p2);
 	else
 		p2->p_cwdi = cwdinit();
 
 	/*
-	 * p_limit (rlimit stuff) is usually copy-on-write, so we just need
-	 * to bump pl_refcnt.
-	 * However in some cases (see compat irix, and plausibly from clone)
-	 * the parent and child share limits - in which case nothing else
-	 * must have a copy of the limits (PL_SHAREMOD is set).
+	 * Note: p_limit (rlimit stuff) is copy-on-write, so normally
+	 * we just need increase pl_refcnt.
 	 */
-	if (__predict_false(flags & FORK_SHARELIMIT))
-		lim_privatise(p1, 1);
 	p1_lim = p1->p_limit;
-	if (p1_lim->pl_flags & PL_WRITEABLE && !(flags & FORK_SHARELIMIT))
-		p2->p_limit = lim_copy(p1_lim);
-	else {
+	if (!p1_lim->pl_writeable) {
 		lim_addref(p1_lim);
 		p2->p_limit = p1_lim;
+	} else {
+		p2->p_limit = lim_copy(p1_lim);
 	}
 
 	p2->p_lflag = ((flags & FORK_PPWAIT) ? PL_PPWAIT : 0);
@@ -508,12 +506,14 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	lwp_lock(l2);
 	KASSERT(p2->p_nrlwps == 1);
 	if (p2->p_sflag & PS_STOPFORK) {
+		struct schedstate_percpu *spc = &l2->l_cpu->ci_schedstate;
 		p2->p_nrlwps = 0;
 		p2->p_stat = SSTOP;
 		p2->p_waited = 0;
 		p1->p_nstopchild++;
 		l2->l_stat = LSSTOP;
-		lwp_unlock(l2);
+		KASSERT(l2->l_wchan == NULL);
+		lwp_unlock_to(l2, spc->spc_lwplock);
 	} else {
 		p2->p_nrlwps = 1;
 		p2->p_stat = SACTIVE;
@@ -521,7 +521,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		sched_enqueue(l2, false);
 		lwp_unlock(l2);
 	}
-
 	mutex_exit(p2->p_lock);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.11.4.1 2010/05/30 05:17:27 rmind Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.11.4.2 2011/05/31 03:04:37 rmind Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.11.4.1 2010/05/30 05:17:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.11.4.2 2011/05/31 03:04:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.11.4.1 2010/05/30 05:17:27 rmind Exp $")
 #include <dev/ieee1394/firewirereg.h>
 #include <dev/ieee1394/fwmem.h>
 
-#include "ioconf.h"
-
 static int fwmem_speed=2, fwmem_debug=0;
 static struct fw_eui64 fwmem_eui64;
 
@@ -62,6 +60,8 @@ static int sysctl_fwmem_verify_speed(SYSCTLFN_PROTO);
 static struct fw_xfer *fwmem_xfer_req(struct fw_device *, void *, int, int,
 				      int, void *);
 static void fwmem_biodone(struct fw_xfer *);
+
+extern struct cfdriver ieee1394if_cd;
 
 /*
  * Setup sysctl(3) MIB, hw.fwmem.*

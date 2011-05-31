@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.418.4.6 2011/04/21 01:42:06 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.418.4.7 2011/05/31 03:05:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.4.6 2011/04/21 01:42:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.4.7 2011/05/31 03:05:00 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -304,6 +304,7 @@ main(void)
 	once_init();
 	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 	kernconfig_lock_init();
+	kthread_sysinit();
 
 	/* Initialize the device switch tables. */
 	devsw_init();
@@ -730,8 +731,9 @@ configure(void)
 #endif
 
 #ifdef USERCONF
+	userconf_init();
 	if (boothowto & RB_USERCONF)
-		user_config();
+		userconf_prompt();
 #endif
 
 	if ((boothowto & (AB_SILENT|AB_VERBOSE)) == AB_SILENT) {

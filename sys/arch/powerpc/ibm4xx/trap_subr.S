@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.11.42.1 2011/03/05 20:51:36 rmind Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.11.42.2 2011/05/31 03:04:13 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -90,14 +90,15 @@
 	mfsrr0	%r30;						\
 	mfsrr1	%r31; /* Test whether we already had PR set */	\
 	stmw	%r30,(savearea+CPUSAVE_SRR0)(%r1); /* save srr0/srr1 */	\
+	mfsprg1	%r1;			/* restore SP */ 	\
 	mtcr	%r31;						\
 	bc	%cr4,MSR_PR,1f;	/* branch if MSR[PR] is clear */	\
-	lwz	%r1,CI_CURPCB(%r1);				\
+	GET_PCB(%r1);						\
 	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
 1:
 
 #define	ACCESS_PROLOG(savearea)					\
-	mtsprg1	%r1;			/* save SP */ 		\
+	mtsprg1	%r1;			/* save SP temporalily */	\
 	GET_CPUINFO(%r1);					\
 	stmw	%r28,(savearea+CPUSAVE_R28)(%r1); /* free r28-r31 */	\
 	mflr	%r28;			/* save LR */		\
@@ -108,24 +109,26 @@
 	mfsrr0	%r30;						\
 	mfsrr1	%r31; /* Test whether we already had PR set */	\
 	stmw	%r30,(savearea+CPUSAVE_SRR0)(%r1); /* save srr0/srr1 */	\
+	mfsprg1	%r1;			/* restore SP */ 	\
 	mtcr	%r31;						\
 	bc	%cr4,MSR_PR,1f;	/* branch if MSR[PR] is clear */	\
-	lwz	%r1,CI_CURPCB(%r1);				\
+	GET_PCB(%r1);						\
 	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
 1:
 
 #define	CRITICAL_PROLOG(savearea)				\
 	mtsprg1	%r1;			/* save SP */ 		\
-	GET_CPUINFO(%r2);					\
+	GET_CPUINFO(%r1);					\
 	stmw	%r28,(savearea+CPUSAVE_R28)(%r1); /* free r28-r31 */	\
 	mflr	%r28;			/* save LR */		\
 	mfcr	%r29;			/* save CR */		\
 	mfsrr2	%r30; /* Fake a standard trap */		\
 	mfsrr3	%r31; /* Test whether we already had PR set */	\
 	stmw	%r30,(savearea+CPUSAVE_SRR0)(%r1); /* save srr0/srr1 */	\
+	mfsprg1	%r1;			/* restore SP */ 	\
 	mtcr	%r31;						\
 	bc	%cr4,MSR_PR,1f;	/* branch if MSR[PR] is clear */	\
-	lwz	%r1,CI_CURPCB(%r1);				\
+	GET_PCB(%r1);						\
 	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
 1:
 

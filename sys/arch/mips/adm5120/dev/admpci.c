@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.2.4.2 2011/04/21 01:41:10 rmind Exp $ */
+/* $NetBSD: admpci.c,v 1.2.4.3 2011/05/31 03:04:08 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.2.4.2 2011/04/21 01:41:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.2.4.3 2011/05/31 03:04:08 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -260,7 +260,7 @@ admpciattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_dmat = ma->ma_dmat;
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &sc->sc_pc;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.73.2.1 2011/03/05 20:54:03 rmind Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.73.2.2 2011/05/31 03:04:53 rmind Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.73.2.1 2011/03/05 20:54:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.73.2.2 2011/05/31 03:04:53 rmind Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -972,13 +972,12 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 		return(EINVAL);
 	}
 
-	RF_LOCK_MUTEX(raidPtr->mutex);
-	while (raidPtr->adding_hot_spare==1) {
-		ltsleep(&(raidPtr->adding_hot_spare), PRIBIO, "raidhs", 0,
-			&(raidPtr->mutex));
+	rf_lock_mutex2(raidPtr->mutex);
+	while (raidPtr->adding_hot_spare == 1) {
+		rf_wait_cond2(raidPtr->adding_hot_spare_cv, raidPtr->mutex);
 	}
-	raidPtr->adding_hot_spare=1;
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	raidPtr->adding_hot_spare = 1;
+	rf_unlock_mutex2(raidPtr->mutex);
 
 	/* the beginning of the spares... */
 	disks = &raidPtr->Disks[raidPtr->numCol];
@@ -1048,15 +1047,15 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 				 &raidPtr->shutdownList,
 				 raidPtr->cleanupList);
 
-	RF_LOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
 	raidPtr->numSpare++;
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_unlock_mutex2(raidPtr->mutex);
 
 fail:
-	RF_LOCK_MUTEX(raidPtr->mutex);
-	raidPtr->adding_hot_spare=0;
-	wakeup(&(raidPtr->adding_hot_spare));
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
+	raidPtr->adding_hot_spare = 0;
+	rf_signal_cond2(raidPtr->adding_hot_spare_cv);
+	rf_unlock_mutex2(raidPtr->mutex);
 
 	return(ret);
 }

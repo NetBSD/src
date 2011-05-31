@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.101.2.1 2011/04/21 01:41:28 rmind Exp $ */
+/*	$NetBSD: clock.c,v 1.101.2.2 2011/05/31 03:04:19 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.101.2.1 2011/04/21 01:41:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.101.2.2 2011/05/31 03:04:19 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -234,7 +234,7 @@ timerattach(struct device *parent, struct device *self, void *aux)
 	     (CPU_UPAID << INTMAP_TID_SHIFT));
 
 	/* Install the appropriate interrupt vector here */
-	level10.ih_number = ma->ma_interrupts[0];
+	level10.ih_number = INTVEC(ma->ma_interrupts[0]);
 	level10.ih_clr = &timerreg_4u.t_clrintr[0];
 	intr_establish(PIL_CLOCK, true, &level10);
 	printf(" irq vectors %lx", (u_long)level10.ih_number);
@@ -242,7 +242,7 @@ timerattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * On SMP kernel, don't establish interrupt to use it as timecounter.
 	 */
-	level14.ih_number = ma->ma_interrupts[1];
+	level14.ih_number = INTVEC(ma->ma_interrupts[1]);
 	level14.ih_clr = &timerreg_4u.t_clrintr[1];
 	intr_establish(PIL_STATCLOCK, true, &level14);
 	printf(" and %lx", (u_long)level14.ih_number);

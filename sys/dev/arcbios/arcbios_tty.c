@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.20.4.1 2011/03/05 20:53:05 rmind Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.20.4.2 2011/05/31 03:04:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.20.4.1 2011/03/05 20:53:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.20.4.2 2011/05/31 03:04:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/uio.h>
@@ -87,7 +87,7 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct lwp *l)
 	s = spltty();
 
 	if (arcbios_tty[unit] == NULL) {
-		tp = arcbios_tty[unit] = ttymalloc();
+		tp = arcbios_tty[unit] = tty_alloc();
 		tty_attach(tp);
 	} else
 		tp = arcbios_tty[unit];

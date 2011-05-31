@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.32.18.2 2011/04/21 01:40:50 rmind Exp $	*/
+/*	$NetBSD: necpb.c,v 1.32.18.3 2011/05/31 03:03:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.32.18.2 2011/04/21 01:40:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.32.18.3 2011/05/31 03:03:55 rmind Exp $");
 
 #include "opt_pci.h"
 
@@ -262,7 +262,7 @@ necpbattach(device_t parent, device_t self, void *aux)
 	pba.pba_dmat = &sc->sc_ncp->nc_dmat;
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = pc;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 

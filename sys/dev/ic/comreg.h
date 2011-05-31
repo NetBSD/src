@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.15.22.1 2011/03/05 20:53:14 rmind Exp $	*/
+/*	$NetBSD: comreg.h,v 1.15.22.2 2011/05/31 03:04:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -33,8 +33,14 @@
 
 #include <dev/ic/ns16550reg.h>
 
+#ifdef _KERNEL_OPT
+#include "opt_com.h"
+#endif
+
 #define	COM_FREQ	1843200	/* 16-bit baud rate divisor */
+#ifndef COM_TOLERANCE
 #define	COM_TOLERANCE	30	/* baud rate tolerance, in 0.1% units */
+#endif
 
 /* interrupt enable register */
 #define	IER_ERXRDY	0x1	/* Enable receiver interrupt */

@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.94.2.2 2011/03/05 20:53:32 rmind Exp $
+$NetBSD: miidevs,v 1.94.2.3 2011/05/31 03:04:38 rmind Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ model CICADA CS8204		0x0004 Cicada CS8204 10/100/1000TX PHY
 model CICADA VSC8211		0x000b Cicada VSC8211 10/100/1000TX PHY
 model CICADA CS8201A		0x0020 Cicada CS8201 10/100/1000TX PHY
 model CICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
-model CICADA CS8244		0x002c Cicada CS8244 10/100/1000TX PHY
+model xxCICADA VSC8244		0x002c Vitesse VSC8244 Quad 10/100/1000BASE-T PHY
 model xxCICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
 
 /* Davicom Semiconductor PHYs */
@@ -210,6 +210,7 @@ model yyINTEL I82562ET		0x0033 i82562ET 10/100 media interface
 model yyINTEL I82553		0x0035 i82553 10/100 media interface
 model yyINTEL I82566		0x0039 i82566 10/100/1000 media interface
 model INTEL I82577		0x0005 i82577 10/100/1000 media interface
+model INTEL I82579		0x0009 i82579 10/100/1000 media interface
 model xxMARVELL I82563		0x000a i82563 10/100/1000 media interface
 
 model yyINTEL IGP01E1000	0x0038 Intel IGP01E1000 Gigabit PHY

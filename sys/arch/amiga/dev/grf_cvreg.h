@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.16 2010/02/09 18:13:10 phx Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.16.2.1 2011/05/31 03:03:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -371,7 +371,7 @@ static inline unsigned char RGfx(volatile void *, short);
 
 
 /* Gfx engine busy wait */
-
+#ifdef _KERNEL
 static inline void
 GfxBusyWait (ba)
 	volatile void *ba;
@@ -441,5 +441,6 @@ RGfx(ba, idx)
 	vgaw(ba, GCT_ADDRESS, idx);
 	return vgar(ba, GCT_ADDRESS_R);
 }
+#endif
 
 #endif /* _GRF_RHREG_H */

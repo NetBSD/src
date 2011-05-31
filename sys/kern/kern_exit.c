@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.227.2.3 2011/03/05 20:55:14 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.227.2.4 2011/05/31 03:05:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.227.2.3 2011/03/05 20:55:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.227.2.4 2011/05/31 03:05:01 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -970,7 +970,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	 * Release substructures.
 	 */
 
-	limfree(p->p_limit);
+	lim_free(p->p_limit);
 	pstatsfree(p->p_stats);
 	kauth_cred_free(cred1);
 	kauth_cred_free(cred2);

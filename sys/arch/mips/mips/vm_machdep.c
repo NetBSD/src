@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.130.4.1 2011/03/05 20:51:09 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.130.4.2 2011/05/31 03:04:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.130.4.1 2011/03/05 20:51:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.130.4.2 2011/05/31 03:04:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -100,7 +100,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 #ifndef NOFPU
 	/* If parent LWP was using FPU, then save the FPU h/w state. */
-	fpu_save_lwp(l1);
+	fpu_save();
 #endif
 
 	/* Copy the PCB from parent. */
@@ -120,17 +120,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	l2->l_md.md_utf = tf;
 #if USPACE > PAGE_SIZE
+	bool direct_mapped_p = MIPS_KSEG0_P(ua2);
 #ifdef _LP64
-	if (!MIPS_XKPHYS_P(ua2))
-#else
-	if (!MIPS_KSEG0_P(ua2))
+	direct_mapped_p = direct_mapped_p || MIPS_XKPHYS_P(ua2);
 #endif
-	{
-		const int x = (MIPS_HAS_R4K_MMU) ?
+	if (!direct_mapped_p) {
+		pt_entry_t * const pte = kvtopte(ua2);
+		const uint32_t x = (MIPS_HAS_R4K_MMU) ?
 		    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) : MIPS1_PG_G;
-		pt_entry_t *pte = kvtopte(ua2);
 
-		for (size_t i = 0; i < UPAGES; i++) {
+		for (u_int i = 0; i < UPAGES; i++) {
 			l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
 		}
 	}

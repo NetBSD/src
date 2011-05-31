@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_blist.c,v 1.9 2006/01/20 14:19:40 yamt Exp $	*/
+/*	$NetBSD: subr_blist.c,v 1.9.96.1 2011/05/31 03:05:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.9 2006/01/20 14:19:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.9.96.1 2011/05/31 03:05:02 rmind Exp $");
 #if 0
 __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp $");
 #endif
@@ -96,7 +96,7 @@ __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/blist.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #else
 
@@ -111,8 +111,10 @@ __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp
 #include <stdarg.h>
 #include <inttypes.h>
 
-#define malloc(a,b,c)	calloc(a, 1)
-#define free(a,b)	free(a)
+#define	KM_SLEEP 1
+#define	kmem_zalloc(a,b,c) calloc(1, (a))
+#define	kmem_alloc(a,b,c) malloc(a)
+#define	kmem_free(a,b) free(a)
 
 #include "../sys/blist.h"
 
@@ -168,10 +170,6 @@ static void blst_radix_print(blmeta_t *scan, blist_blkno_t blk,
     blist_blkno_t radix, blist_blkno_t skip, int tab);
 #endif
 
-#ifdef _KERNEL
-static MALLOC_DEFINE(M_BLIST, "blist", "Bitmap allocator");
-#endif
-
 /*
  * blist_create() - create a blist capable of handling up to the specified
  *		    number of blocks
@@ -201,14 +199,14 @@ blist_create(blist_blkno_t blocks)
 		skip = (skip + 1) * BLIST_META_RADIX;
 	}
 
-	bl = malloc(sizeof(struct blist), M_BLIST, M_WAITOK | M_ZERO);
+	bl = kmem_zalloc(sizeof(struct blist), KM_SLEEP);
 
 	bl->bl_blocks = blocks;
 	bl->bl_radix = radix;
 	bl->bl_skip = skip;
 	bl->bl_rootblks = 1 +
 	    blst_radix_init(NULL, bl->bl_radix, bl->bl_skip, blocks);
-	bl->bl_root = malloc(sizeof(blmeta_t) * bl->bl_rootblks, M_BLIST, M_WAITOK);
+	bl->bl_root = kmem_alloc(sizeof(blmeta_t) * bl->bl_rootblks, KM_SLEEP);
 
 #if defined(BLIST_DEBUG)
 	printf(
@@ -229,8 +227,9 @@ blist_create(blist_blkno_t blocks)
 void 
 blist_destroy(blist_t bl)
 {
-	free(bl->bl_root, M_BLIST);
-	free(bl, M_BLIST);
+
+	kmem_free(bl->bl_root, sizeof(blmeta_t) * bl->bl_rootblks);
+	kmem_free(bl, sizeof(struct blist));
 }
 
 /*

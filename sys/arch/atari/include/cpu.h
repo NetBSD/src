@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.64.4.1 2011/03/05 20:49:42 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.64.4.2 2011/05/31 03:03:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -165,13 +165,9 @@ int	fpu_probe(void);
 /*
  * Prototypes from locore.s
  */
-struct fpframe;
-
 void	clearseg(paddr_t);
 void	doboot(void);
 void	loadustp(int);
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
 void	physcopyseg(paddr_t, paddr_t);
 u_int	probeva(u_int, u_int);
 int	suline(void *, void *);

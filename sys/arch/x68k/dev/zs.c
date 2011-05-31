@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.40 2008/12/31 09:50:21 isaki Exp $	*/
+/*	$NetBSD: zs.c,v 1.40.6.1 2011/05/31 03:04:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.40 2008/12/31 09:50:21 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.40.6.1 2011/05/31 03:04:22 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -580,9 +580,11 @@ zscninit(struct consdev *cn)
 	zscn_cs.cs_brg_clk = PCLK / 16;
 	memcpy(zscn_cs.cs_preg, zs_init_reg, 16);
 	zscn_cs.cs_preg[4] = ZSWR4_CLK_X16 | ZSWR4_ONESB; /* XXX */
-	zscn_cs.cs_preg[9] = 0;
+	zscn_cs.cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
 	zs_set_speed(&zscn_cs, ZSCN_SPEED);
 	s = splzs();
+	zs_write_reg(&zscn_cs, 9, 0);
+	zs_write_reg(&zscn_cs, 9, ZSWR9_HARD_RESET);
 	zs_loadchannelregs(&zscn_cs);
 	splx(s);
 	conschan = cnchan;

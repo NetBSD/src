@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.71.4.1 2011/04/21 01:42:18 rmind Exp $	*/
+/*	$NetBSD: file.h,v 1.71.4.2 2011/05/31 03:05:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@
 #include <sys/unistd.h>
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
@@ -143,7 +142,6 @@ struct file {
 LIST_HEAD(filelist, file);
 extern struct filelist	filehead;	/* head of list of open files */
 extern u_int		maxfiles;	/* kernel limit on # of open files */
-extern u_int		nfiles;		/* actual number of open files */
 
 extern const struct fileops vnops;	/* vnode operations for files */
 

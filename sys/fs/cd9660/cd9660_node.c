@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.24.22.3 2011/03/05 20:55:03 rmind Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.24.22.4 2011/05/31 03:04:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.24.22.3 2011/03/05 20:55:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.24.22.4 2011/05/31 03:04:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,6 @@ cd9660_reclaim(void *v)
 	/*
 	 * Purge old data structures associated with the inode.
 	 */
-	cache_purge(vp);
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.32.2.1 2010/05/30 05:17:33 rmind Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.32.2.2 2011/05/31 03:04:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.32.2.1 2010/05/30 05:17:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.32.2.2 2011/05/31 03:04:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,12 +155,10 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 	 */
 	switch (type) {
 	case PCI_MAPREG_TYPE_MEM:
-		pa->pa_flags |= PCI_FLAGS_MEM_ENABLED;
 		csr |= PCI_COMMAND_MEM_ENABLE;
 		sc->sc_bustag = pa->pa_memt;
 		break;
 	case PCI_MAPREG_TYPE_IO:
-		pa->pa_flags |= PCI_FLAGS_IO_ENABLED;
 		csr |= PCI_COMMAND_IO_ENABLE;
 		sc->sc_bustag = pa->pa_iot;
 		break;

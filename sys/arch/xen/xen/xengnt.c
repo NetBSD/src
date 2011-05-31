@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.17 2010/01/23 22:32:42 cegger Exp $      */
+/*      $NetBSD: xengnt.c,v 1.17.4.1 2011/05/31 03:04:25 rmind Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.17 2010/01/23 22:32:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.17.4.1 2011/05/31 03:04:25 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -210,7 +210,8 @@ xengnt_get_entry(void)
 	gnt_entries[last_gnt_entry] = XENGNT_NO_ENTRY;
 	splx(s);
 	KASSERT(entry != XENGNT_NO_ENTRY);
-	KASSERT(last_gnt_entry >= 0 && last_gnt_entry <= gnt_max_grant_frames * NR_GRANT_ENTRIES_PER_PAGE);
+	KASSERT(last_gnt_entry >= 0);
+	KASSERT(last_gnt_entry <= gnt_max_grant_frames * NR_GRANT_ENTRIES_PER_PAGE);
 	return entry;
 }
 
@@ -222,7 +223,8 @@ xengnt_free_entry(grant_ref_t entry)
 {
 	int s = splvm();
 	KASSERT(gnt_entries[last_gnt_entry] == XENGNT_NO_ENTRY);
-	KASSERT(last_gnt_entry >= 0 && last_gnt_entry <= gnt_max_grant_frames * NR_GRANT_ENTRIES_PER_PAGE);
+	KASSERT(last_gnt_entry >= 0);
+	KASSERT(last_gnt_entry <= gnt_max_grant_frames * NR_GRANT_ENTRIES_PER_PAGE);
 	gnt_entries[last_gnt_entry] = entry;
 	last_gnt_entry++;
 	splx(s);

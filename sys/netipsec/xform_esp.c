@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.22.4.2 2011/04/21 01:42:15 rmind Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.22.4.3 2011/05/31 03:05:10 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.22.4.2 2011/04/21 01:42:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.22.4.3 2011/05/31 03:05:10 rmind Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -128,6 +128,14 @@ esp_algorithm_lookup(int alg)
 		return &enc_xform_cast5;
 	case SADB_X_EALG_SKIPJACK:
 		return &enc_xform_skipjack;
+	case SADB_X_EALG_CAMELLIACBC:
+		return &enc_xform_camellia;
+	case SADB_X_EALG_AESCTR:
+		return &enc_xform_aes_ctr;
+	case SADB_X_EALG_AESGCM16:
+		return &enc_xform_aes_gcm;
+	case SADB_X_EALG_AESGMAC:
+		return &enc_xform_aes_gmac;
 	case SADB_EALG_NULL:
 		return &enc_xform_null;
 	}
@@ -147,7 +155,7 @@ esp_hdrsiz(const struct secasvar *sav)
 			size = sizeof (struct esp);
 		else
 			size = sizeof (struct newesp);
-		size += sav->tdb_encalgxform->blocksize + 9;
+		size += sav->tdb_encalgxform->ivsize + 9;
 		/*XXX need alg check???*/
 		if (sav->tdb_authalgxform != NULL && sav->replay)
 			size += ah_hdrsiz(sav);
@@ -200,19 +208,7 @@ esp_init(struct secasvar *sav, const struct xformsw *xsp)
 		return EINVAL;
 	}
 
-	/*
-	 * NB: The null xform needs a non-zero blocksize to keep the
-	 *      crypto code happy but if we use it to set ivlen then
-	 *      the ESP header will be processed incorrectly.  The
-	 *      compromise is to force it to zero here.
-	 */
-	sav->ivlen = (txform == &enc_xform_null ? 0 : txform->blocksize);
-	sav->iv = malloc(sav->ivlen, M_SECA, M_WAITOK);
-	if (sav->iv == NULL) {
-		DPRINTF(("esp_init: no memory for IV\n"));
-		return EINVAL;
-	}
-	key_randomfill(sav->iv, sav->ivlen);	/*XXX*/
+	sav->ivlen = txform->ivsize;
 
 	/*
 	 * Setup AH-related state.
@@ -227,6 +223,28 @@ esp_init(struct secasvar *sav, const struct xformsw *xsp)
 	sav->tdb_xform = xsp;
 	sav->tdb_encalgxform = txform;
 
+	if (sav->alg_enc == SADB_X_EALG_AESGCM16 ||
+	    sav->alg_enc == SADB_X_EALG_AESGMAC) {
+		switch (keylen) {
+		case 20:
+			sav->alg_auth = SADB_X_AALG_AES128GMAC;
+			sav->tdb_authalgxform = &auth_hash_gmac_aes_128;
+			break;
+		case 28:
+			sav->alg_auth = SADB_X_AALG_AES192GMAC;
+			sav->tdb_authalgxform = &auth_hash_gmac_aes_192;
+			break;
+		case 36:
+			sav->alg_auth = SADB_X_AALG_AES256GMAC;
+			sav->tdb_authalgxform = &auth_hash_gmac_aes_256;
+			break;
+		}
+		memset(&cria, 0, sizeof(cria));
+		cria.cri_alg = sav->tdb_authalgxform->type;
+		cria.cri_klen = _KEYBITS(sav->key_enc);
+		cria.cri_key = _KEYBUF(sav->key_enc);
+	}
+
 	/* Initialize crypto session. */
 	memset(&crie, 0, sizeof (crie));
 	crie.cri_alg = sav->tdb_encalgxform->type;
@@ -234,7 +252,6 @@ esp_init(struct secasvar *sav, const struct xformsw *xsp)
 	crie.cri_key = _KEYBUF(sav->key_enc);
 	/* XXX Rounds ? */
 
-	mutex_spin_enter(&crypto_mtx);
 	if (sav->tdb_authalgxform && sav->tdb_encalgxform) {
 		/* init both auth & enc */
 		crie.cri_next = &cria;
@@ -251,7 +268,6 @@ esp_init(struct secasvar *sav, const struct xformsw *xsp)
 		DPRINTF(("esp_init: no encoding OR authentication xform!\n"));
 		error = EINVAL;
 	}
-	mutex_spin_exit(&crypto_mtx);
 	return error;
 }
 
@@ -266,7 +282,6 @@ esp_zeroize(struct secasvar *sav)
 
 	if (sav->key_enc)
 		memset(_KEYBUF(sav->key_enc), 0, _KEYLEN(sav->key_enc));
-	/* NB: sav->iv is freed elsewhere, even though we malloc it! */
 	sav->tdb_encalgxform = NULL;
 	sav->tdb_xform = NULL;
 	return error;
@@ -392,12 +407,21 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 
 		/* Authentication descriptor */
 		crda->crd_skip = skip;
-		crda->crd_len = m->m_pkthdr.len - (skip + alen);
+		if (espx && espx->type == CRYPTO_AES_GCM_16)
+			crda->crd_len = hlen - sav->ivlen;
+		else
+			crda->crd_len = m->m_pkthdr.len - (skip + alen);
 		crda->crd_inject = m->m_pkthdr.len - alen;
 
 		crda->crd_alg = esph->type;
-		crda->crd_key = _KEYBUF(sav->key_auth);
-		crda->crd_klen = _KEYBITS(sav->key_auth);
+		if (espx && (espx->type == CRYPTO_AES_GCM_16 ||
+			     espx->type == CRYPTO_AES_GMAC)) {
+			crda->crd_key = _KEYBUF(sav->key_enc);
+			crda->crd_klen = _KEYBITS(sav->key_enc);
+		} else {
+			crda->crd_key = _KEYBUF(sav->key_auth);
+			crda->crd_klen = _KEYBITS(sav->key_auth);
+		}
 
 		/* Copy the authenticator */
 		if (mtag == NULL)
@@ -429,7 +453,10 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	if (espx) {
 		IPSEC_ASSERT(crde != NULL, ("esp_input: null esp crypto descriptor"));
 		crde->crd_skip = skip + hlen;
-		crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
+		if (espx->type == CRYPTO_AES_GMAC)
+			crde->crd_len = 0;
+		else
+			crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
 		crde->crd_inject = skip + hlen - sav->ivlen;
 
 		crde->crd_alg = espx->type;
@@ -514,7 +541,7 @@ esp_input_cb(struct cryptop *crp)
 	saidx = &sav->sah->saidx;
 	IPSEC_ASSERT(saidx->dst.sa.sa_family == AF_INET ||
 		saidx->dst.sa.sa_family == AF_INET6,
-		("ah_input_cb: unexpected protocol family %u",
+		("esp_input_cb: unexpected protocol family %u",
 		 saidx->dst.sa.sa_family));
 
 	esph = sav->tdb_authalgxform;
@@ -867,7 +894,10 @@ esp_output(
 
 		/* Encryption descriptor. */
 		crde->crd_skip = skip + hlen;
-		crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
+		if (espx->type == CRYPTO_AES_GMAC)
+			crde->crd_len = 0;
+		else
+			crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
 		crde->crd_flags = CRD_F_ENCRYPT;
 		crde->crd_inject = skip + hlen - sav->ivlen;
 
@@ -907,13 +937,22 @@ esp_output(
 	if (esph) {
 		/* Authentication descriptor. */
 		crda->crd_skip = skip;
-		crda->crd_len = m->m_pkthdr.len - (skip + alen);
+		if (espx && espx->type == CRYPTO_AES_GCM_16)
+			crda->crd_len = hlen - sav->ivlen;
+		else
+			crda->crd_len = m->m_pkthdr.len - (skip + alen);
 		crda->crd_inject = m->m_pkthdr.len - alen;
 
 		/* Authentication operation. */
 		crda->crd_alg = esph->type;
-		crda->crd_key = _KEYBUF(sav->key_auth);
-		crda->crd_klen = _KEYBITS(sav->key_auth);
+		if (espx && (espx->type == CRYPTO_AES_GCM_16 ||
+			     espx->type == CRYPTO_AES_GMAC)) {
+			crda->crd_key = _KEYBUF(sav->key_enc);
+			crda->crd_klen = _KEYBITS(sav->key_enc);
+		} else {
+			crda->crd_key = _KEYBUF(sav->key_auth);
+			crda->crd_klen = _KEYBITS(sav->key_auth);
+		}
 	}
 
 	return crypto_dispatch(crp);
@@ -1039,8 +1078,8 @@ esp_attach(void)
 	espstat_percpu = percpu_alloc(sizeof(uint64_t) * ESP_NSTATS);
 
 #define	MAXIV(xform)					\
-	if (xform.blocksize > esp_max_ivlen)		\
-		esp_max_ivlen = xform.blocksize		\
+	if (xform.ivsize > esp_max_ivlen)		\
+		esp_max_ivlen = xform.ivsize		\
 
 	esp_max_ivlen = 0;
 	MAXIV(enc_xform_des);		/* SADB_EALG_DESCBC */
@@ -1049,6 +1088,8 @@ esp_attach(void)
 	MAXIV(enc_xform_blf);		/* SADB_X_EALG_BLOWFISHCBC */
 	MAXIV(enc_xform_cast5);		/* SADB_X_EALG_CAST128CBC */
 	MAXIV(enc_xform_skipjack);	/* SADB_X_EALG_SKIPJACK */
+	MAXIV(enc_xform_camellia);	/* SADB_X_EALG_CAMELLIACBC */
+	MAXIV(enc_xform_aes_ctr);	/* SADB_X_EALG_AESCTR */
 	MAXIV(enc_xform_null);		/* SADB_EALG_NULL */
 
 	xform_register(&esp_xformsw);

@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.25.4.2 2011/04/21 01:42:01 rmind Exp $	*/
+/*	$NetBSD: siside.c,v 1.25.4.3 2011/05/31 03:04:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.25.4.2 2011/04/21 01:42:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.25.4.3 2011/05/31 03:04:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ sis_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			sc->sc_wdcdev.sc_atac.atac_udma_cap =
 		    	    sis_hostbr_type_match->udma_mode;
 		}
-		aprint_normal(sis_hostbr_type_match->name);
+		aprint_normal("%s", sis_hostbr_type_match->name);
 	} else {
 		aprint_normal("5597/5598");
 		if (rev >= 0xd0) {

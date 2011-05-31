@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.71.4.4 2011/05/19 03:43:00 rmind Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.71.4.5 2011/05/31 03:04:25 rmind Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.71.4.4 2011/05/19 03:43:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.71.4.5 2011/05/31 03:04:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1735,7 +1735,6 @@ coda_reclaim(void *v)
 	}
 #endif
     }
-    cache_purge(vp);
     coda_free(VTOC(vp));
     SET_VTOC(vp) = NULL;
     return (0);

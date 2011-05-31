@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.129 2010/02/04 21:48:35 joerg Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.129.4.1 2011/05/31 03:05:08 rmind Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.129 2010/02/04 21:48:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.129.4.1 2011/05/31 03:05:08 rmind Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -137,6 +137,8 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.129 2010/02/04 21:48:35 joerg Exp $"
 #endif
 
 #include <net/net_osdep.h>
+
+extern  struct inpcbtable tcbtable; /* XXX include of tcp_var.h no good */
 
 extern struct domain inet6domain;
 
@@ -1791,6 +1793,20 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       NULL, 0, &ip6_accept_rtadv, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_ACCEPT_RTADV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "rtadv_maxroutes",
+		       SYSCTL_DESCR("Maximum number of routes accepted via router advertisements"),
+		       NULL, 0, &ip6_rtadv_maxroutes, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_RTADV_MAXROUTES, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "rtadv_numroutes",
+		       SYSCTL_DESCR("Current number of routes accepted via router advertisements"),
+		       NULL, 0, &nd6_numroutes, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_RTADV_NUMROUTES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "keepfaith",

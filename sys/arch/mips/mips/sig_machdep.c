@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.19.4.1 2011/03/05 20:51:09 rmind Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.19.4.2 2011/05/31 03:04:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19.4.1 2011/03/05 20:51:09 rmind Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19.4.2 2011/05/31 03:04:10 rmind Exp $"); 
 
 #include "opt_cputype.h"
 
@@ -75,10 +75,10 @@ struct sigframe_siginfo {
 void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct sigacts *ps = p->p_sigacts;
-	struct trapframe *tf = l->l_md.md_utf;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct sigacts * const sa = p->p_sigacts;
+	struct trapframe * const tf = l->l_md.md_utf;
 	int onstack, error;
 	const int signo = ksi->ksi_signo;
 	struct sigframe_siginfo *sf = getframe(l, signo, &onstack);
@@ -121,7 +121,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_regs[_R_PC] = (intptr_t)catcher;
 	tf->tf_regs[_R_T9] = (intptr_t)catcher;
 	tf->tf_regs[_R_SP] = (intptr_t)sf;
-	tf->tf_regs[_R_RA] = (intptr_t)ps->sa_sigdesc[signo].sd_tramp;
+	tf->tf_regs[_R_RA] = (intptr_t)sa->sa_sigdesc[signo].sd_tramp;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

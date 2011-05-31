@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.188.4.1 2011/03/05 20:56:26 rmind Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.188.4.2 2011/05/31 03:05:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1003,20 +1003,9 @@ struct evcnt_sysctl {
  * Subsequent levels are specified in the emulations themselves.
  */
 #define	EMUL_LINUX	1
-#define	EMUL_IRIX	2
-#define	EMUL_DARWIN	3
-#define	EMUL_MACH	4
 #define	EMUL_LINUX32	5
 
 #define	EMUL_MAXID	6
-#define	CTL_EMUL_NAMES { \
-	{ 0, 0 }, \
-	{ "linux", CTLTYPE_NODE }, \
-	{ "irix", CTLTYPE_NODE }, \
-	{ "darwin", CTLTYPE_NODE }, \
-	{ "mach", CTLTYPE_NODE }, \
-	{ "linux32", CTLTYPE_NODE }, \
-}
 
 #ifdef _KERNEL
 

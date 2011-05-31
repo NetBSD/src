@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.12.22.1 2011/03/05 20:51:37 rmind Exp $	*/
+/*	$NetBSD: altivec.h,v 1.12.22.2 2011/05/31 03:04:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,23 +36,43 @@
 #define	VSCR_NJ		0x00010000	/* Non Java-IEEE-C9X FP mode */
 
 #ifdef _KERNEL
+#include <sys/pcu.h>
 #include <powerpc/mcontext.h>
 
-enum vec_op { VEC_SAVE, VEC_DISCARD, VEC_SAVE_AND_RELEASE };
 struct lwp;
 struct vreg;
 struct trapframe;
 
-void	vec_enable(void);
-void	vec_save_cpu(enum vec_op);
-void	vec_save_lwp(struct lwp *, enum vec_op);
+extern const pcu_ops_t vec_ops;
+
+bool	vec_used_p(struct lwp *);
+void	vec_mark_used(struct lwp *);
+
 void	vec_restore_from_mcontext(struct lwp *, const mcontext_t *);
 bool	vec_save_to_mcontext(struct lwp *, mcontext_t *, unsigned int *);
 
+int	vec_siginfo_code(const struct trapframe *);
+
+static inline void
+vec_load(void)
+{
+	pcu_load(&vec_ops);
+}
+
+static inline void
+vec_save(void)
+{
+	pcu_save(&vec_ops);
+}
+
+static inline void
+vec_discard(void)
+{
+	pcu_discard(&vec_ops);
+}
+
 void	vec_load_from_vreg(const struct vreg *);
 void	vec_unload_to_vreg(struct vreg *);
-
-int	vec_siginfo_code(const struct trapframe *);
 
 /* OEA only */
 void	vzeropage(paddr_t);

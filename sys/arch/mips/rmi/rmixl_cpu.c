@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.6.2 2011/04/21 01:41:13 rmind Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.6.3 2011/05/31 03:04:11 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,12 +38,10 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.6.2 2011/04/21 01:41:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.6.3 2011/05/31 03:04:11 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
-
-#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -100,7 +98,7 @@ static struct rmixl_cpu_trampoline_args rmixl_cpu_trampoline_args;
 #endif
 
 /*
- * cpu_rmixl_db_watch_init - initialize COP0 watchpoint stuff
+ * cpu_rmixl_watchpoint_init - initialize COP0 watchpoint stuff
  *
  * clear IEU_DEFEATURE[DBE] to ensure T_WATCH on watchpoint exception
  * set COP0 watchhi and watchlo
@@ -108,7 +106,7 @@ static struct rmixl_cpu_trampoline_args rmixl_cpu_trampoline_args;
  * disable all watchpoints
  */
 static void
-cpu_rmixl_db_watch_init(void)
+cpu_rmixl_watchpoint_init(void)
 {
 	uint32_t r;
 
@@ -195,7 +193,7 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 		mips_locoresw.lsw_cpu_init = cpu_rmixl_hatch;
 		mips_locoresw.lsw_cpu_run = cpu_rmixl_run;
 	} else {
-		struct cpucore_attach_args *ca = aux;
+		struct cpucore_attach_args * const ca = aux;
 		struct cpucore_softc * const ccsc = device_private(parent);
 		rmixlfw_psb_type_t psb_type = rmixl_configuration.rc_psb_type;
 		cpuid_t cpuid;
@@ -263,7 +261,7 @@ cpu_rmixl_attach_primary(struct rmixl_cpu_softc * const sc)
 	asm volatile("dmfc0 %0, $15, 1;" : "=r"(ebase));
 	ci->ci_cpuid = ebase & __BITS(9,0);
 
-	cpu_rmixl_db_watch_init();
+	cpu_rmixl_watchpoint_init();
 
 	rmixl_fmn_init();
 
@@ -280,7 +278,6 @@ cpu_rmixl_attach_primary(struct rmixl_cpu_softc * const sc)
 			__func__);
 	sc->sc_ih_fmn = ih;
 #endif
-
 }
 
 #ifdef NOTYET
@@ -336,7 +333,7 @@ cpu_rmixl_hatch(struct cpu_info *ci)
 
 	cpucore_rmixl_hatch(device_parent(sc->sc_dev));
 
-	cpu_rmixl_db_watch_init();
+	cpu_rmixl_watchpoint_init();
 }
 
 static int

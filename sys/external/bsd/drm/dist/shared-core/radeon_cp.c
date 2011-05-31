@@ -378,7 +378,7 @@ static void radeon_init_pipes(drm_radeon_private_t * dev_priv)
 static void radeon_cp_load_microcode(drm_radeon_private_t * dev_priv)
 {
 	const char *chip_name;
-	const u32 (*cp)[2];
+	u32 (*cp)[2];
 	int i, error;
 	size_t cp_size;
 	DRM_DEBUG("\n");

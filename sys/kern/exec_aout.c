@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.34 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.34.8.1 2011/05/31 03:05:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.34 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.34.8.1 2011/05/31 03:05:00 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.34 2008/11/19 18:36:06 ad Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.10.4.2 2011/04/21 01:42:16 rmind Exp $ */
+/*	$NetBSD: xform.h,v 1.10.4.3 2011/05/31 03:05:10 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -26,11 +26,6 @@
 #ifndef _CRYPTO_XFORM_H_
 #define _CRYPTO_XFORM_H_
 
-#include <sys/md5.h>
-#include <sys/sha1.h>
-#include <sys/sha2.h>
-#include <sys/rmd160.h>
-
 /* Declarations */
 struct auth_hash {
 	int type;
@@ -39,7 +34,6 @@ struct auth_hash {
 	u_int16_t hashsize;
 	u_int16_t authsize;
 	u_int16_t blocksize;
-	u_int16_t ctxsize;
 };
 
 /* Provide array-limit for clients (e.g., netipsec) */
@@ -48,7 +42,7 @@ struct auth_hash {
 struct enc_xform {
 	int type;
 	const char *name;
-	u_int16_t blocksize;
+	u_int16_t blocksize, ivsize;
 	u_int16_t minkey, maxkey;
 };
 
@@ -69,6 +63,10 @@ extern const struct enc_xform enc_xform_cast5;
 extern const struct enc_xform enc_xform_skipjack;
 extern const struct enc_xform enc_xform_rijndael128;
 extern const struct enc_xform enc_xform_arc4;
+extern const struct enc_xform enc_xform_camellia;
+extern const struct enc_xform enc_xform_aes_ctr;
+extern const struct enc_xform enc_xform_aes_gcm;
+extern const struct enc_xform enc_xform_aes_gmac;
 
 extern const struct auth_hash auth_hash_null;
 extern const struct auth_hash auth_hash_md5;
@@ -84,6 +82,10 @@ extern const struct auth_hash auth_hash_hmac_ripemd_160_96;
 extern const struct auth_hash auth_hash_hmac_sha2_256;
 extern const struct auth_hash auth_hash_hmac_sha2_384;
 extern const struct auth_hash auth_hash_hmac_sha2_512;
+extern const struct auth_hash auth_hash_aes_xcbc_mac_96;
+extern const struct auth_hash auth_hash_gmac_aes_128;
+extern const struct auth_hash auth_hash_gmac_aes_192;
+extern const struct auth_hash auth_hash_gmac_aes_256;
 
 extern const struct comp_algo comp_algo_deflate;
 extern const struct comp_algo comp_algo_deflate_nogrow;

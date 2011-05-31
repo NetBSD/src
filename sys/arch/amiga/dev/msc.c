@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.41.20.1 2010/05/30 05:16:37 rmind Exp $ */
+/*	$NetBSD: msc.c,v 1.41.20.2 2011/05/31 03:03:54 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.41.20.1 2010/05/30 05:16:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.41.20.2 2011/05/31 03:03:54 rmind Exp $");
 
 #include "msc.h"
 
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.41.20.1 2010/05/30 05:16:37 rmind Exp $");
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
@@ -348,7 +347,7 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (!msc_tty[ttyn]) {
 
-		tp = ttymalloc();
+		tp = tty_alloc();
 		tty_attach(tp);
 		msc_tty[ttyn] = tp;
 		msc_tty[ttyn+1] = (struct tty *)NULL;

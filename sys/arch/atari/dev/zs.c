@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.64.4.1 2010/05/30 05:16:40 rmind Exp $	*/
+/*	$NetBSD: zs.c,v 1.64.4.2 2011/05/31 03:03:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.64.4.1 2010/05/30 05:16:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.64.4.2 2011/05/31 03:03:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,7 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	tp = cs->cs_ttyp;
 	if (tp == NULL) {
-		cs->cs_ttyp = tp = ttymalloc();
+		cs->cs_ttyp = tp = tty_alloc();
 		tty_attach(tp);
 		tp->t_dev   = dev;
 		tp->t_oproc = zsstart;

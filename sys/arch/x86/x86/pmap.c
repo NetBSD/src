@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105.2.15 2011/05/19 03:42:59 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.16 2011/05/31 03:04:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.15 2011/05/19 03:42:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.16 2011/05/31 03:04:24 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -709,7 +709,7 @@ pmap_is_active(struct pmap *pmap, struct cpu_info *ci, bool kernel)
  *	Add a reference to the specified pmap.
  */
 
-inline void
+void
 pmap_reference(struct pmap *pmap)
 {
 
@@ -1482,9 +1482,9 @@ pmap_bootstrap(vaddr_t kva_start)
 void
 pmap_prealloc_lowmem_ptps(void)
 {
-#ifdef XEN
 	int level;
 	paddr_t newp;
+#ifdef XEN
 	paddr_t pdes_pa;
 
 	pdes_pa = pmap_pdirpa(pmap_kernel(), 0);
@@ -1494,7 +1494,7 @@ pmap_prealloc_lowmem_ptps(void)
 		avail_start += PAGE_SIZE;
 		HYPERVISOR_update_va_mapping ((vaddr_t)early_zerop,
 		    xpmap_ptom_masked(newp) | PG_u | PG_V | PG_RW, UVMF_INVLPG);
-		memset((void *)early_zerop, 0, PAGE_SIZE);
+		memset(early_zerop, 0, PAGE_SIZE);
 		/* Mark R/O before installing */
 		HYPERVISOR_update_va_mapping ((vaddr_t)early_zerop,
 		    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
@@ -1502,9 +1502,10 @@ pmap_prealloc_lowmem_ptps(void)
 			HYPERVISOR_update_va_mapping (newp + KERNBASE,
 			    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
 		xpq_queue_pte_update (
-			xpmap_ptom_masked(pdes_pa)
-			+ (pl_i(0, level) * sizeof (pd_entry_t)),
-			xpmap_ptom_masked(newp) | PG_RW | PG_u | PG_V);
+		    xpmap_ptom_masked(pdes_pa)
+		    + (pl_i(0, level) * sizeof (pd_entry_t)),
+		    xpmap_ptom_masked(newp) | PG_RW | PG_u | PG_V);
+		pmap_pte_flush();
 		level--;
 		if (level <= 1)
 			break;
@@ -1512,15 +1513,14 @@ pmap_prealloc_lowmem_ptps(void)
 	}
 #else /* XEN */
 	pd_entry_t *pdes;
-	int level;
-	paddr_t newp;
 
 	pdes = pmap_kernel()->pm_pdir;
 	level = PTP_LEVELS;
 	for (;;) {
 		newp = avail_start;
 		avail_start += PAGE_SIZE;
-		*early_zero_pte = (newp & PG_FRAME) | PG_V | PG_RW;
+		pmap_pte_set(early_zero_pte, (newp & PG_FRAME) | PG_V | PG_RW);
+		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
 		pdes[pl_i(0, level)] = (newp & PG_FRAME) | PG_V | PG_RW;

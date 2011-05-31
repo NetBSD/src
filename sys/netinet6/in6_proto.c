@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.88.4.2 2011/04/21 01:42:15 rmind Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.88.4.3 2011/05/31 03:05:08 rmind Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.88.4.2 2011/04/21 01:42:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.88.4.3 2011/05/31 03:05:08 rmind Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -193,8 +193,9 @@ const struct ip6protosw inet6sw[] = {
 {	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_IPV6,
 	.pr_init = ip6_init,
+	.pr_fasttimo = frag6_fasttimo,
 	.pr_slowtimo = frag6_slowtimo,
-	.pr_drain = frag6_drain,
+	.pr_drain = frag6_drainstub,
 },
 {	.pr_type = SOCK_DGRAM,
 	.pr_domain = &inet6domain,
@@ -216,8 +217,9 @@ const struct ip6protosw inet6sw[] = {
 	.pr_usrreq = tcp_usrreq,
 #ifndef INET	/* don't call initialization and timeout routines twice */
 	.pr_init = tcp_init,
+	.pr_fasttimo = tcp_fasttimo,
 	.pr_slowtimo = tcp_slowtimo,
-	.pr_drain = tcp_drain,
+	.pr_drain = tcp_drainstub,
 #endif
 },
 {	.pr_type = SOCK_RAW,
@@ -480,6 +482,13 @@ int	ip6_v6only = 1;
 
 int	ip6_keepfaith = 0;
 time_t	ip6_log_time = (time_t)0L;
+int	ip6_rtadv_maxroutes = 100; /* (arbitrary) initial maximum number of
+                                    * routes via rtadv expected to be
+                                    * significantly larger than common use.
+                                    * if you need to count: 3 extra initial
+                                    * routes, plus 1 per interface after the
+                                    * first one, then one per non-linklocal
+                                    * prefix */
 
 /* icmp6 */
 /*

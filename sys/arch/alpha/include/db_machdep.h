@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.17 2007/02/21 22:59:37 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.17.68.1 2011/05/31 03:03:53 rmind Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -39,6 +39,7 @@
 #include <machine/frame.h>
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
+#define	DDB_EXPR_FMT	"l"		/* expression is long */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;

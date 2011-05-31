@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.37 2009/07/10 12:16:31 roy Exp $	*/
+/*	$NetBSD: bootp.c,v 1.37.4.1 2011/05/31 03:05:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -123,11 +123,11 @@ bootp(int sock)
 	struct iodesc *d;
 	struct bootp *bp;
 	struct {
-		u_char header[HEADER_SIZE];
+		u_char header[UDP_TOTAL_HEADER_SIZE];
 		struct bootp wbootp;
 	} wbuf;
 	struct {
-		u_char header[HEADER_SIZE];
+		u_char header[UDP_TOTAL_HEADER_SIZE];
 		struct bootp rbootp;
 	} rbuf;
 	unsigned int index;

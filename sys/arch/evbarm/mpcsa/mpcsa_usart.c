@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_usart.c,v 1.2 2008/07/03 01:15:39 matt Exp $	*/
-/*	$NetBSD: mpcsa_usart.c,v 1.2 2008/07/03 01:15:39 matt Exp $	*/
+/*	$Id: mpcsa_usart.c,v 1.2.20.1 2011/05/31 03:04:00 rmind Exp $	*/
+/*	$NetBSD: mpcsa_usart.c,v 1.2.20.1 2011/05/31 03:04:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_usart.c,v 1.2 2008/07/03 01:15:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_usart.c,v 1.2.20.1 2011/05/31 03:04:00 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -221,9 +221,9 @@ mpcsa_usart_enable(struct at91usart_softc *dev)
 	case PID_US3:
 		/* turn gsm on */
 		at91pio_clear(sc->sc_pioa, PA_GSMOFF);
-		ltsleep(sc, 0, "gsmond", 4 * hz, NULL);
+		kpause("gsmond", false, 4 * hz, NULL);
 		at91pio_set(sc->sc_pioa, PA_GSMON);
-		ltsleep(sc, 0, "gsmon", 2 * hz, NULL);
+		kpause("gsmon", false, 2 * hz, NULL);
 		at91pio_clear(sc->sc_pioa, PA_GSMON);
 		/* then attach pins to devices etc */
 		at91pio_per(sc->sc_pioa, PA_TXD4, 1);
@@ -253,14 +253,14 @@ mpcsa_usart_disable(struct at91usart_softc *dev)
 		at91pio_intr_disestablish(sc->sc_piob, PB_CTS4, sc->sc_cts_ih);
 
 		at91pio_clear(sc->sc_pioa, PA_GSMON);
-		ltsleep(sc, 0, "gsmoffd", (hz * 350 + 999) / 1000, NULL);
+		kpause("gsmoffd", false, (hz * 350 + 999) / 1000, NULL);
 
 		at91pio_per(sc->sc_pioa, PA_TXD4, -1);
 		at91pio_in(sc->sc_piob, PB_RTS4);
 		at91pio_in(sc->sc_piod, PD_DTR4);
 		
 		at91pio_set(sc->sc_pioa, PA_GSMOFF);
-		ltsleep(sc, 0, "gsmoff", hz * 4, NULL);
+		kpause("gsmoff", false, hz * 4, NULL);
 		at91pio_clear(sc->sc_pioa, PA_GSMOFF);
 
 		break;

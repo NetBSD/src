@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20.4.4 2011/04/21 01:41:31 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20.4.5 2011/05/31 03:04:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -438,6 +438,8 @@ void x86_bus_space_init(void);
 void x86_bus_space_mallocok(void);
 
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
+
+#define __HAVE_USERCONF_BOOTINFO
 
 #endif /* _KERNEL || __KMEMUSER */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.11 2010/03/07 09:05:19 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.11.2.1 2011/05/31 03:04:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -123,6 +123,7 @@ typedef enum {
 	WM_T_ICH9,			/* ICH9 LAN */
 	WM_T_ICH10,			/* ICH10 LAN */
 	WM_T_PCH,			/* PCH LAN */
+	WM_T_PCH2,			/* PCH2 LAN */
 } wm_chip_type;
 
 typedef enum {
@@ -135,8 +136,9 @@ typedef enum {
 	WMPHY_IGP_3,
 	WMPHY_IFE,
 	WMPHY_BM,
+	WMPHY_82577,
 	WMPHY_82578,
-	WMPHY_82577
+	WMPHY_82579
 } wm_phy_type;
 
 

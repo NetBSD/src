@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.36.4.2 2011/03/05 20:56:36 rmind Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.36.4.3 2011/05/31 03:05:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.36.4.2 2011/03/05 20:56:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.36.4.3 2011/05/31 03:05:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.36.4.2 2011/03/05 20:56:36 rmind Exp 
 #include <sys/resourcevar.h>
 #include <sys/kmem.h>
 #include <sys/mman.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 
 #include <uvm/uvm.h>
@@ -157,6 +155,12 @@ uvm_init(void)
 	 */
 
 	kmem_init();
+
+	/*
+	 * Initialize the uvm_loan() facility.
+	 */
+
+	uvm_loan_init();
 
 	/*
 	 * init emap subsystem.

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.10.4.1 2011/03/05 20:54:19 rmind Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.10.4.2 2011/05/31 03:04:57 rmind Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -121,21 +121,11 @@ struct vcons_data {
 	struct vcons_screen *active, *wanted;
 	const struct wsscreen_descr *currenttype;
 	int switch_poll_count;
-#ifdef VCONS_DRAW_ASYNC
-	lwp_t *drawing_thread;
-	kmutex_t drawing_mutex;
-	kcondvar_t go_draw;	/* wakeup the drawing thread */
-	kcondvar_t go_buffer;	/* wakeup anyone waiting for room in the
-				 * buffer */
-	kmutex_t go_draw_il, go_buffer_il; /* interlocks for above */
-	int use_async;		/* use async drawing when non-zero */
-#define VCONS_RING_BUFFER_LENGTH 2048
-	uint32_t rb_read;	/* to be written by the drawing thread only */
-	uint32_t rb_write;	/* written by the async drawing methods with
-				 * drawing_mutex held */
-	uint32_t rb_buffer[VCONS_RING_BUFFER_LENGTH];
-#endif
 #ifdef VCONS_DRAW_INTR
+	int cells;
+	long *attrs;
+	uint16_t *chars;
+	int cursor_offset;
 	callout_t intr;
 	int intr_valid;
 	void *intr_softint;
@@ -143,35 +133,22 @@ struct vcons_data {
 #endif
 };
 
-/*
- * the ring buffer contains commands in the form:
- * uint32_t command
- * uint32_t parameters[]
- * uint32_t command
- * ...
- * parameters are exactly what the corresponding rasops method would take as a
- * series of uint32_ts, except for the cookie which is always assumed to be
- * the active screen
- * There should probably be a command to do vcons_redraw_screen() as a single
- * operation, not a huge series of VCMD_PUTCHAR, Also, when we find a buffer
- * with lots of commands in it we should probably ignore all VCMD_CURSOR except
- * the first that removes the cursor and the last that draws it again
- */
-
-#define VCMD_COPYCOLS	0x80000001
-#define VCMD_COPYROWS	0x80000002
-#define VCMD_ERASECOLS	0x80000003
-#define VCMD_ERASEROWS	0x80000004
-#define VCMD_PUTCHAR	0x80000005
-#define VCMD_CURSOR	0x80000006
-
 int	vcons_init(struct vcons_data *, void *cookie, struct wsscreen_descr *,
     struct wsdisplay_accessops *);
 
 int	vcons_init_screen(struct vcons_data *, struct vcons_screen *, int,
     long *);
 
+/* completely redraw the screen, clear it if RI_FULLCLEAR is set */
 void	vcons_redraw_screen(struct vcons_screen *);
+
+#ifdef VCONS_DRAW_INTR
+/* redraw all dirty character cells */
+void	vcons_update_screen(struct vcons_screen *);
+void	vcons_invalidate_cache(struct vcons_data *);
+#else
+#define vcons_update_screen vcons_redraw_screen
+#endif
 
 void	vcons_replay_msgbuf(struct vcons_screen *);
 

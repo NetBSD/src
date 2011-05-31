@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.33 2010/02/24 22:38:09 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.33.2.1 2011/05/31 03:05:01 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.33 2010/02/24 22:38:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.33.2.1 2011/05/31 03:05:01 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,6 +82,7 @@ int pmf_debug_transition;
 
 /* #define PMF_DEBUG */
 
+#include <sys/mallocvar.h>
 MALLOC_DEFINE(M_PMF, "pmf", "device pmf messaging memory");
 
 static prop_dictionary_t pmf_platform = NULL;

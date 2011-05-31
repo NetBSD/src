@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.296.2.3 2011/04/21 01:42:19 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.296.2.4 2011/05/31 03:05:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -194,15 +194,14 @@ struct emul {
  * which might be addressible only on a processor on which the process
  * is running.
  *
- * Field markings and the corresponding locks (not yet fully implemented,
- * more a statement of intent):
+ * Field markings and the corresponding locks:
  *
  * a:	p_auxlock
  * k:	ktrace_mutex
  * l:	proc_lock
  * t:	p_stmutex
  * p:	p_lock
- * q:	mqlist_mtx
+ * (:	updated atomically
  * ::	unlocked, stable
  */
 struct proc {
@@ -224,7 +223,7 @@ struct proc {
 	struct vmspace	*p_vmspace;	/* :: Address space */
 	struct sigacts	*p_sigacts;	/* :: Process sigactions */
 	struct aioproc	*p_aio;		/* p: Asynchronous I/O data */
-	u_int		p_mqueue_cnt;	/* q: Count of open mqueues */
+	u_int		p_mqueue_cnt;	/* (: Count of open message queues */
 	specificdata_reference
 			p_specdataref;	/*    subsystem proc-specific data */
 
@@ -411,8 +410,6 @@ struct proclist_desc {
 };
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
-MALLOC_DECLARE(M_EMULDATA);
 
 /*
  * We use process IDs <= PID_MAX until there are > 16k processes.
@@ -434,7 +431,6 @@ MALLOC_DECLARE(M_EMULDATA);
 #define	FORK_NOWAIT	0x0020		/* Make init the parent of the child */
 #define	FORK_CLEANFILES	0x0040		/* Start with a clean descriptor set */
 #define	FORK_SYSTEM	0x0080		/* Fork a kernel thread */
-#define	FORK_SHARELIMIT	0x0100		/* Share rlimit values */
 
 extern struct proc	proc0;		/* Process slot for swapper */
 extern u_int		nprocs;		/* Current number of procs */

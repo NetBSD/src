@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.17.4.2 2011/03/05 20:53:23 rmind Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.17.4.3 2011/05/31 03:04:37 rmind Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.17.4.2 2011/03/05 20:53:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.17.4.3 2011/05/31 03:04:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.17.4.2 2011/03/05 20:53:23 rmind Exp $")
 #include <dev/ieee1394/fwdma.h>
 #include <dev/ieee1394/fwmem.h>
 #include <dev/ieee1394/iec68113.h>
-
-#include "ioconf.h"
 
 #define	FWNODE_INVAL 0xffff
 
@@ -96,6 +94,7 @@ static int fw_read_async(struct fw_drv1 *, struct uio *, int);
 static int fw_write_async(struct fw_drv1 *, struct uio *, int);
 static void fw_hand(struct fw_xfer *);
 
+extern struct cfdriver ieee1394if_cd;
 
 int
 fw_open(dev_t dev, int flags, int fmt, struct lwp *td)

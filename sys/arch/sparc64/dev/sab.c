@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.45 2010/03/11 04:19:56 mrg Exp $	*/
+/*	$NetBSD: sab.c,v 1.45.2.1 2011/05/31 03:04:18 rmind Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.45 2010/03/11 04:19:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.45.2.1 2011/05/31 03:04:18 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -227,7 +227,8 @@ sab_match(struct device *parent, struct cfdata *match, void *aux)
 	struct ebus_attach_args *ea = aux;
 	char *compat;
 
-	if (strcmp(ea->ea_name, "se") == 0)
+	if (strcmp(ea->ea_name, "se") == 0 ||
+	    strcmp(ea->ea_name, "FJSV,se") == 0)
 		return (1);
 
 	compat = prom_getpropstring(ea->ea_node, "compatible");
@@ -384,7 +385,7 @@ sabtty_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	if (!is_kgdb) {
-		sc->sc_tty = ttymalloc();
+		sc->sc_tty = tty_alloc();
 		if (sc->sc_tty == NULL) {
 			aprint_normal(": failed to allocate tty\n");
 			return;

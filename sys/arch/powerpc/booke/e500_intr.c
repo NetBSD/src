@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.3.2.3 2011/04/21 01:41:18 rmind Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.3.2.4 2011/05/31 03:04:13 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -134,6 +134,7 @@ static const struct e500_intr_name e500_onchip_intr_names[] = {
 	{ ISOURCE_SRIO_OMU1, "srio-omu1" },
 	{ ISOURCE_SRIO_IMU1, "srio-imu1" },
 	{ ISOURCE_SRIO_OMU2, "srio-omu2" },
+	{ ISOURCE_SRIO_IMU2, "srio-imu2" },
 	{ ISOURCE_SECURITY2, "sec2" },
 	{ ISOURCE_SPI, "spi" },
 	{ ISOURCE_ETSEC1_PTP, "etsec1-ptp" },
@@ -504,7 +505,9 @@ e500_splset(struct cpu_info *ci, int ipl)
 	u_int ctpr = (ipl >= IPL_VM ? 15 : ipl);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == old_ctpr);
 #else
+#ifdef DIAGNOSTIC
 	u_int old_ctpr = IPL2CTPR(ci->ci_cpl);
+#endif
 	u_int ctpr = IPL2CTPR(ipl);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == old_ctpr);
 #endif
@@ -614,8 +617,6 @@ e500_softint_trigger(uintptr_t machdep)
 	struct cpu_info * const ci = curcpu();
 
 	atomic_or_uint(&ci->ci_data.cpu_softints, machdep);
-	if (machdep == (1 << IPL_SOFTBIO))
-		printf("%s(%u): cpl=%u\n", __func__, machdep, ci->ci_cpl);
 }
 #endif /* __HAVE_FAST_SOFTINTS */
 
@@ -908,7 +909,9 @@ e500_extintr(struct trapframe *tf)
 			    __func__, tf, __LINE__, old_ipl, 
 			    15 - IPL_HIGH, openpic_read(cpu, OPENPIC_CTPR));
 		const uint32_t iack = openpic_read(cpu, OPENPIC_IACK);
+#ifdef DIAGNOSTIC
 		const int ipl = iack & 0xf;
+#endif
 		const int irq = (iack >> 4) - 1;
 #if 0
 		printf("%s: iack=%d ipl=%d irq=%d <%s>\n",

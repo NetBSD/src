@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.17 2008/04/15 15:02:29 cegger Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.17.26.1 2011/05/31 03:04:52 rmind Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.17 2008/04/15 15:02:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.17.26.1 2011/05/31 03:04:52 rmind Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -143,15 +143,15 @@ ppbus_poll_bus(device_t dev, int maxp, char mask, char status,
 		switch (how) {
 		case PPBUS_NOINTR:
 			/* wait 10 ms */
-			tsleep((void *)dev, PPBUSPRI, "ppbuspoll", hz/100);
+			kpause("ppbuspoll", false, hz / 100, NULL);
 			break;
 
 		case PPBUS_INTR:
 		default:
 			/* wait 10 ms */
-			if (((error = tsleep((void *)dev, PPBUSPRI | PCATCH,
-			    "ppbuspoll", hz/100)) != EWOULDBLOCK) != 0) {
-				return (error);
+			error = kpause("ppbuspoll", true, hz / 100, NULL);
+			if (error != EWOULDBLOCK) {
+				return error;
 			}
 			break;
 		}
@@ -362,11 +362,8 @@ ppbus_request_bus(device_t dev, device_t busdev, int how,
 {
 	struct ppbus_softc * bus = device_private(dev);
 	unsigned int counter = timeout;
-	int priority = PPBUSPRI;
+	bool intr = (how & PPBUS_INTR) != 0;
 	int error;
-
-	if(how & PPBUS_INTR)
-		priority |= PCATCH;
 
 	/* Loop until lock acquired (if PPBUS_WAIT) or an error occurs */
 	for(;;) {
@@ -374,7 +371,7 @@ ppbus_request_bus(device_t dev, device_t busdev, int how,
 			break;
 
 		if(how & PPBUS_WAIT) {
-			error = ltsleep(bus, priority, __func__, hz/2, NULL);
+			error = kpause("ppbusreq", intr, hz / 2, NULL);
 			counter -= (hz/2);
 			if(!(error))
 				continue;
@@ -414,11 +411,8 @@ ppbus_release_bus(device_t dev, device_t busdev, int how,
 {
 	struct ppbus_softc * bus = device_private(dev);
 	unsigned int counter = timeout;
-	int priority = PPBUSPRI;
+	bool intr = (how & PPBUS_INTR) != 0;
 	int error;
-
-	if(how & PPBUS_INTR)
-		priority |= PCATCH;
 
 	/* Loop until lock acquired (if PPBUS_WAIT) or an error occurs */
 	for(;;) {
@@ -426,7 +420,7 @@ ppbus_release_bus(device_t dev, device_t busdev, int how,
 			break;
 
 		if(how & PPBUS_WAIT) {
-			error = ltsleep(bus, priority, __func__, hz/2, NULL);
+			error = kpause("ppbusrel", intr, hz / 2, NULL);
 			counter -= (hz/2);
 			if(!(error))
 				continue;

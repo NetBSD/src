@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.120.4.2 2011/03/05 20:53:23 rmind Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.120.4.3 2011/05/31 03:04:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.120.4.2 2011/03/05 20:53:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.120.4.3 2011/05/31 03:04:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -61,12 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.120.4.2 2011/03/05 20:53:23 rmind Exp $
 #include <dev/ieee1394/fwohcivar.h>
 #include <dev/ieee1394/firewire_phy.h>
 
-#include "ioconf.h"
-
 #undef OHCI_DEBUG
 
 static int nocyclemaster = 0;
 int firewire_phydma_enable = 1;
+
+extern struct cfdriver fwohci_cd;
+
 /*
  * Setup sysctl(3) MIB, hw.fwohci.*
  *

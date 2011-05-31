@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.32 2009/12/09 12:42:59 he Exp $ */
+/*	$NetBSD: sscom.c,v 1.32.4.1 2011/05/31 03:03:56 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.32 2009/12/09 12:42:59 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.32.4.1 2011/05/31 03:03:56 rmind Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -458,9 +458,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 	}
 #endif
 
-
-
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = sscomstart;
 	tp->t_param = sscomparam;
 	tp->t_hwiflow = sscomhwiflow;

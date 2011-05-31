@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.23.6.1 2010/05/30 05:16:49 rmind Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.23.6.2 2011/05/31 03:04:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -948,3 +948,17 @@ platid_t platid_mask_MACH_AGENDA_VR_VR3 = {{
 	PLATID_MACH_AGENDA_VR_VR3
 }};
 #endif /* hpcmips */
+#ifdef hpcarm
+platid_t platid_mask_MACH_PSIONTEKLOGIX = {{
+	PLATID_WILD,
+	PLATID_MACH_PSIONTEKLOGIX
+}};
+platid_t platid_mask_MACH_PSIONTEKLOGIX_NETBOOK = {{
+	PLATID_WILD,
+	PLATID_MACH_PSIONTEKLOGIX_NETBOOK
+}};
+platid_t platid_mask_MACH_PSIONTEKLOGIX_NETBOOK_PRO = {{
+	PLATID_CPU_ARM_XSCALE_PXA250,
+	PLATID_MACH_PSIONTEKLOGIX_NETBOOK_PRO
+}};
+#endif /* hpcarm */

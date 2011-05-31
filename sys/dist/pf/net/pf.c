@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.61.4.1 2010/05/30 05:17:47 rmind Exp $	*/
+/*	$NetBSD: pf.c,v 1.61.4.2 2011/05/31 03:04:57 rmind Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.61.4.1 2010/05/30 05:17:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.61.4.2 2011/05/31 03:04:57 rmind Exp $");
 
 #include "pflog.h"
 
@@ -2798,9 +2798,9 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 
 #ifdef __NetBSD__
 #define in_pcbhashlookup(tbl, saddr, sport, daddr, dport) \
-    in_pcblookup_connect(tbl, saddr, sport, daddr, dport)
+    in_pcblookup_connect(tbl, saddr, sport, daddr, dport, NULL)
 #define in6_pcbhashlookup(tbl, saddr, sport, daddr, dport) \
-    in6_pcblookup_connect(tbl, saddr, sport, daddr, dport, 0)
+    in6_pcblookup_connect(tbl, saddr, sport, daddr, dport, 0, NULL)
 #define in_pcblookup_listen(tbl, addr, port, zero) \
     in_pcblookup_bind(tbl, addr, port)
 #define in6_pcblookup_listen(tbl, addr, port, zero) \

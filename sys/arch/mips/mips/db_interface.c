@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.66.4.2 2011/04/21 01:41:11 rmind Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.66.4.3 2011/05/31 03:04:09 rmind Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.66.4.2 2011/04/21 01:41:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.66.4.3 2011/05/31 03:04:09 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.66.4.2 2011/04/21 01:41:11 rmind 
 #include <mips/asm.h>
 #include <mips/regnum.h>
 #include <mips/cache.h>
+#include <mips/pcb.h>
 #include <mips/pte.h>
-#include <mips/cpu.h>
 #include <mips/locore.h>
 #include <mips/mips_opcode.h>
 #include <dev/cons.h>
@@ -521,7 +521,7 @@ db_watch_cmd(db_expr_t address, bool have_addr, db_expr_t count,
 	if (!have_addr) {
 		db_printf("%-3s %-5s %-16s %4s %4s\n",
 			"#", "MODE", "ADDR", "MASK", "ASID");
-		for (int i=0; i < ci->ci_cpuwatch_count; i++) {
+		for (u_int i=0; i < ci->ci_cpuwatch_count; i++) {
 			cwp = &ci->ci_cpuwatch_tab[i];
 			mode = cwp->cw_mode;
 			if ((mode & CPUWATCH_RWX) == 0)
@@ -532,9 +532,9 @@ db_watch_cmd(db_expr_t address, bool have_addr, db_expr_t count,
 			str[3] = (mode & CPUWATCH_MASK)  ?  'm' : '-';
 			str[4] = (mode & CPUWATCH_ASID)  ?  'a' : 'g';
 			str[5] = '\0';
-			db_printf("%2d: %s %16" PRIxREGISTER
-				  " %4" PRIxREGISTER " %4x\n",
-				  i, str, cwp->cw_addr, cwp->cw_mask, cwp->cw_asid);
+			db_printf("%2u: %s %16" PRIxREGISTER
+			    " %4" PRIxREGISTER " %4x\n",
+			    i, str, cwp->cw_addr, cwp->cw_mask, cwp->cw_asid);
 		}
 		db_flush_lex();
 		return;
@@ -629,13 +629,12 @@ db_unwatch_cmd(db_expr_t address, bool have_addr, db_expr_t count,
 		 const char *modif)
 {
 	struct cpu_info * const ci = curcpu();
-	cpu_watchpoint_t *cwp;
-	int i, n;
-	bool unwatch_all = !have_addr;
+	const bool unwatch_all = !have_addr;
+	int n;
 
 	n = 0;
-	for (i=0; i < ci->ci_cpuwatch_count; i++) {
-		cwp = &ci->ci_cpuwatch_tab[i];
+	for (u_int i=0; i < ci->ci_cpuwatch_count; i++) {
+		cpu_watchpoint_t * const cwp = &ci->ci_cpuwatch_tab[i];
 		if (unwatch_all || (cwp->cw_addr == (register_t)address)) {
 			cpuwatch_free(cwp);
 			n++;
@@ -643,8 +642,7 @@ db_unwatch_cmd(db_expr_t address, bool have_addr, db_expr_t count,
 	}
 	if (n == 0)
 		db_printf("no watch found on address %#" PRIxREGISTER "\n",
-			(register_t)address);
-
+		    (register_t)address);
 }
 #endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 

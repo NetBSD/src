@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.46 2010/02/01 05:00:59 mrg Exp $ */
+/*	$NetBSD: psl.h,v 1.46.4.1 2011/05/31 03:04:19 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -224,6 +224,17 @@
 #define VER_MAXTL_SHIFT	8
 #define VER_MAXWIN	0x000000000000001fLL
 
+#define MANUF_FUJITSU		0x04 /* Fujitsu SPARC64 */
+#define MANUF_SUN		0x17 /* Sun UltraSPARC */
+
+#define IMPL_SPARC64		0x01 /* SPARC64 */
+#define IMPL_SPARC64_II		0x02 /* SPARC64-II */
+#define IMPL_SPARC64_III	0x03 /* SPARC64-III */
+#define IMPL_SPARC64_IV		0x04 /* SPARC64-IV */
+#define IMPL_ZEUS		0x05 /* SPARC64-V */
+#define IMPL_OLYMPUS_C		0x06 /* SPARC64-VI */
+#define IMPL_JUPITER		0x07 /* SPARC64-VII */
+
 #define IMPL_SPITFIRE		0x10 /* UltraSPARC-I */
 #define IMPL_BLACKBIRD		0x11 /* UltraSPARC-II */
 #define IMPL_SABRE		0x12 /* UltraSPARC-IIi */
@@ -317,8 +328,13 @@ SPARC64_GETPR64_DEF(ver)			/* getver() */
 
 /* Some simple macros to check the cpu type. */
 #define GETVER_CPU_IMPL()	((getver() & VER_IMPL) >> VER_IMPL_SHIFT)
-#define CPU_IS_JALAPENO()	(GETVER_CPU_IMPL() == IMPL_JALAPENO)
+#define GETVER_CPU_MANUF()	((getver() & VER_MANUF) >> VER_MANUF_SHIFT)
+#define CPU_IS_SPITFIRE()	(GETVER_CPU_IMPL() == IMPL_SPITFIRE)
+#define CPU_IS_USIIIi()		((GETVER_CPU_IMPL() == IMPL_JALAPENO) || \
+				 (GETVER_CPU_IMPL() == IMPL_SERRANO))
 #define CPU_IS_USIII_UP()	(GETVER_CPU_IMPL() >= IMPL_CHEETAH)
+#define CPU_IS_SPARC64_V_UP()	(GETVER_CPU_MANUF() == MANUF_FUJITSU && \
+				 GETVER_CPU_IMPL() >= IMPL_ZEUS)
 
 static __inline int
 intr_disable(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.180.4.4 2011/04/21 01:41:50 rmind Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.180.4.5 2011/05/31 03:04:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.4.4 2011/04/21 01:41:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.4.5 2011/05/31 03:04:39 rmind Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -604,6 +604,18 @@ static const struct bge_product {
 	{ PCI_VENDOR_3COM,
 	  PCI_PRODUCT_3COM_3C996,
 	  "3Com 3c996 Gigabit Ethernet",
+	  },
+	{ PCI_VENDOR_FUJITSU4,
+	  PCI_PRODUCT_FUJITSU4_PW008GE4,
+	  "Fujitsu PW008GE4 Gigabit Ethernet",
+	  },
+	{ PCI_VENDOR_FUJITSU4,
+	  PCI_PRODUCT_FUJITSU4_PW008GE5,
+	  "Fujitsu PW008GE5 Gigabit Ethernet",
+	  },
+	{ PCI_VENDOR_FUJITSU4,
+	  PCI_PRODUCT_FUJITSU4_PP250_450_LAN,
+	  "Fujitsu Primepower 250/450 Gigabit Ethernet",
 	  },
 	{ 0,
 	  0,
@@ -2959,9 +2971,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 		    sc->bge_flags |= BGE_PHY_FIBER_TBI;
 	}
 
-	/* set phyflags before mii_attach() */
+	/* set phyflags and chipid before mii_attach() */
 	dict = device_properties(self);
 	prop_dictionary_set_uint32(dict, "phyflags", sc->bge_flags);
+	prop_dictionary_set_uint32(dict, "chipid", sc->bge_chipid);
 
 	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,

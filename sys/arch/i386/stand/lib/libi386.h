@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.32.4.2 2011/03/05 20:50:45 rmind Exp $	*/
+/*	$NetBSD: libi386.h,v 1.32.4.3 2011/05/31 03:04:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -138,6 +138,7 @@ extern int doserrno;	/* in dos_file.S */
 
 void module_add(char *);
 void splash_add(char *);
+void userconf_add(char *);
 
 struct btinfo_framebuffer;
 void framebuffer_configure(struct btinfo_framebuffer *);

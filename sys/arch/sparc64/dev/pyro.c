@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.4.2.2 2011/04/21 01:41:27 rmind Exp $	*/
+/*	$NetBSD: pyro.c,v 1.4.2.3 2011/05/31 03:04:18 rmind Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -208,8 +208,8 @@ pyro_init(struct pyro_softc *sc, int busa)
 	pbm->pp_iot = pyro_alloc_io_tag(pbm);
 	pbm->pp_cfgt = pyro_alloc_config_tag(pbm);
 	pbm->pp_dmat = pyro_alloc_dma_tag(pbm);
-	pbm->pp_flags = (pbm->pp_memt ? PCI_FLAGS_MEM_ENABLED : 0) |
-		        (pbm->pp_iot ? PCI_FLAGS_IO_ENABLED : 0);
+	pbm->pp_flags = (pbm->pp_memt ? PCI_FLAGS_MEM_OKAY : 0) |
+		        (pbm->pp_iot ? PCI_FLAGS_IO_OKAY : 0);
 
 	if (bus_space_map(pbm->pp_cfgt, 0, 0x10000000, 0, &pbm->pp_cfgh))
 		panic("pyro: can't map config space");

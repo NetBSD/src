@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.25.2.2 2011/04/21 01:41:03 rmind Exp $ */
+/*	$NetBSD: dino.c,v 1.25.2.3 2011/05/31 03:04:02 rmind Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.25.2.2 2011/04/21 01:41:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.25.2.3 2011/05/31 03:04:02 rmind Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1729,7 +1729,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 	pba.pba_dmat = &sc->sc_dmatag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.684.2.3 2011/03/05 20:50:40 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.684.2.4 2011/05/31 03:04:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,11 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684.2.3 2011/03/05 20:50:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684.2.4 2011/05/31 03:04:04 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
-#include "opt_compat_mach.h"	/* need to get the right segment def */
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
@@ -1118,9 +1117,6 @@ extern vector *IDTVEC(exceptions)[];
 extern vector IDTVEC(svr4_fasttrap);
 void (*svr4_fasttrap_vec)(void) = (void (*)(void))nullop;
 krwlock_t svr4_fasttrap_lock;
-#ifdef COMPAT_MACH
-extern vector IDTVEC(mach_trap);
-#endif
 #ifdef XEN
 #define MAX_XEN_IDT 128
 trap_info_t xen_idt[MAX_XEN_IDT];
@@ -1155,10 +1151,6 @@ initgdt(union descriptor *tgdt)
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUDATA_SEL].sd, 0, 0xfffff,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
-#ifdef COMPAT_MACH
-	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
-	    SDT_SYS386CGT, SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
-#endif
 #if NBIOSCALL > 0
 	/* bios trampoline GDT entries */
 	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0,

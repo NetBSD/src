@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.78.32.2 2011/03/05 20:50:20 rmind Exp $
+#	$NetBSD: files.hp300,v 1.78.32.3 2011/05/31 03:04:01 rmind Exp $
 #
 # hp300-specific configuration info
 
@@ -181,6 +181,13 @@ include "dev/scsipi/files.scsipi"
 
 attach	spc at dio
 file	arch/hp300/dev/spc.c		spc needs-flag
+
+#
+# Devices on the SGC bus
+#
+
+attach	sti at sgc with sti_sgc
+file	arch/hp300/dev/sti_sgc.c	sti_sgc
 
 # Memory Disk for ramdisk
 file	dev/md_root.c			memory_disk_hooks

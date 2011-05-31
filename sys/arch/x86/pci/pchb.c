@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.21.2.2 2011/03/05 20:52:29 rmind Exp $ */
+/*	$NetBSD: pchb.c,v 1.21.2.3 2011/05/31 03:04:23 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.21.2.2 2011/03/05 20:52:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.21.2.3 2011/05/31 03:04:23 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -152,7 +152,7 @@ void
 pchbattach(device_t parent, device_t self, void *aux)
 {
 	struct pchb_softc *sc = device_private(self);
-	struct pci_attach_args *pa = aux;
+	const struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct pcibus_attach_args pba;
 	struct agpbus_attach_args apa;
@@ -224,12 +224,12 @@ pchbattach(device_t parent, device_t self, void *aux)
 		case PCI_PRODUCT_SERVERWORKS_CIOB_X2:
 		case PCI_PRODUCT_SERVERWORKS_CIOB_E:
 			switch (attachflags &
-			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) {
+			    (PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY)) {
 			case 0:
 				/* Doesn't smell like there's anything there. */
 				break;
-			case PCI_FLAGS_MEM_ENABLED:
-				attachflags |= PCI_FLAGS_IO_ENABLED;
+			case PCI_FLAGS_MEM_OKAY:
+				attachflags |= PCI_FLAGS_IO_OKAY;
 				/* FALLTHROUGH */
 			default:
 				doattach = 1;
@@ -327,9 +327,9 @@ pchbattach(device_t parent, device_t self, void *aux)
 			 * at the MIOC, but less aesthetical imho.)
 			 */
 			if ((attachflags &
-			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) ==
-			    PCI_FLAGS_MEM_ENABLED)
-				attachflags |= PCI_FLAGS_IO_ENABLED;
+			    (PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY)) ==
+			    PCI_FLAGS_MEM_OKAY)
+				attachflags |= PCI_FLAGS_IO_OKAY;
 
 			pbnum = 0;
 			switch (pa->pa_device) {

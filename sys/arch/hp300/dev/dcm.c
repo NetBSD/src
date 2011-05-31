@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.81.18.1 2011/03/05 20:50:20 rmind Exp $	*/
+/*	$NetBSD: dcm.c,v 1.81.18.2 2011/05/31 03:04:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.81.18.1 2011/03/05 20:50:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.81.18.2 2011/05/31 03:04:01 rmind Exp $");
 
 #include "opt_kgdb.h"
 
@@ -498,7 +498,7 @@ dcmopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return ENXIO;
 
 	if (sc->sc_tty[port] == NULL) {
-		tp = sc->sc_tty[port] = ttymalloc();
+		tp = sc->sc_tty[port] = tty_alloc();
 		tty_attach(tp);
 	} else
 		tp = sc->sc_tty[port];
@@ -598,7 +598,7 @@ dcmclose(dev_t dev, int flag, int mode, struct lwp *l)
 	ttyclose(tp);
 #if 0
 	tty_detach(tp);
-	ttyfree(tp);
+	tty_free(tp);
 	sc->sc_tty[port] == NULL;
 #endif
 	return 0;

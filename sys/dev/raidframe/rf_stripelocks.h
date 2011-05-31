@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.h,v 1.7 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_stripelocks.h,v 1.7.98.1 2011/05/31 03:04:54 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -75,7 +75,7 @@ struct RF_StripeLockDesc_s {
 };
 
 struct RF_LockTableEntry_s {
-	RF_DECLARE_MUTEX(mutex)	/* mutex on this hash chain */
+	rf_declare_mutex2(mutex);	/* mutex on this hash chain */
 	RF_StripeLockDesc_t *descList;	/* hash chain of lock descriptors */
 };
 /*

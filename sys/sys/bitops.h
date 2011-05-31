@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.2.22.1 2010/05/30 05:18:08 rmind Exp $	*/
+/*	$NetBSD: bitops.h,v 1.2.22.2 2011/05/31 03:05:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -255,7 +255,7 @@ fls64(uint64_t _n)
 	_ilog2_helper(_n,  2) \
 	_ilog2_helper(_n,  1) \
 	_ilog2_helper(_n,  0) \
-	-1) : ((sizeof(_n) >= 4 ? fls64(_n) : fls32(_n)) - 1) \
+	-1) : ((sizeof(_n) > 4 ? fls64(_n) : fls32(_n)) - 1) \
 )
 
 static __inline void

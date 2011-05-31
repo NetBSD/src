@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.30 2010/01/13 10:56:17 drochner Exp $	 */
+/*	$NetBSD: tftp.c,v 1.30.4.1 2011/05/31 03:05:05 rmind Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -73,7 +73,7 @@ struct tftp_handle {
 	int             off;
 	const char     *path;	/* saved for re-requests */
 	struct {
-		u_char header[HEADER_SIZE];
+		u_char header[UDP_TOTAL_HEADER_SIZE];
 		struct tftphdr t;
 		u_char space[RSPACE];
 	} lastdata;
@@ -153,7 +153,7 @@ static int
 tftp_makereq(struct tftp_handle *h)
 {
 	struct {
-		u_char header[HEADER_SIZE];
+		u_char header[UDP_TOTAL_HEADER_SIZE];
 		struct tftphdr t;
 		u_char space[FNAME_SIZE + 6];
 	} wbuf;
@@ -196,7 +196,7 @@ static int
 tftp_getnextblock(struct tftp_handle *h)
 {
 	struct {
-		u_char header[HEADER_SIZE];
+		u_char header[UDP_TOTAL_HEADER_SIZE];
 		struct tftphdr t;
 	} wbuf;
 	char           *wtail;
@@ -229,7 +229,7 @@ static void
 tftp_terminate(struct tftp_handle *h)
 {
 	struct {
-		u_char header[HEADER_SIZE];
+		u_char header[UDP_TOTAL_HEADER_SIZE];
 		struct tftphdr t;
 	} wbuf;
 	char           *wtail;

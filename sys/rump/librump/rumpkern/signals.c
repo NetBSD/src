@@ -1,4 +1,4 @@
-/*	$NetBSD: signals.c,v 1.2.4.4 2011/03/05 20:56:15 rmind Exp $	*/
+/*	$NetBSD: signals.c,v 1.2.4.5 2011/05/31 03:05:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.2.4.4 2011/03/05 20:56:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.2.4.5 2011/05/31 03:05:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -275,4 +275,32 @@ siginit(struct proc *p)
 
 	sigemptyset(&p->p_sigctx.ps_sigignore);
 	sigemptyset(&p->p_sigpend.sp_set);
+}
+
+void
+sigsuspendsetup(struct lwp *l, const sigset_t *ss)
+{
+	/* XXX: Partial copy of kernel code, remove and use the kernel code. */
+	struct proc *p = l->l_proc;
+
+	mutex_enter(p->p_lock);
+	l->l_sigrestore = 1;
+	l->l_sigoldmask = l->l_sigmask;
+	l->l_sigmask = *ss;
+	sigminusset(&sigcantmask, &l->l_sigmask);
+	mutex_exit(p->p_lock);
+}
+
+void
+sigsuspendteardown(struct lwp *l)
+{
+	/* XXX: Copy of kernel code, remove and use the kernel code. */
+	struct proc *p = l->l_proc;
+
+	mutex_enter(p->p_lock);
+	if (l->l_sigrestore) {
+		l->l_sigrestore = 0;
+		l->l_sigmask = l->l_sigoldmask;
+	}
+	mutex_exit(p->p_lock);
 }

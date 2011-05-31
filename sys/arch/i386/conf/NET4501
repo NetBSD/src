@@ -1,23 +1,23 @@
-# $NetBSD: NET4501,v 1.71.4.2 2011/04/21 01:41:05 rmind Exp $
+# $NetBSD: NET4501,v 1.71.4.3 2011/05/31 03:04:03 rmind Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
 #
 #	http://www.soekris.com/
-# 
+#
 
 include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.71.4.2 $"
+#ident 		"NET4501-$Revision: 1.71.4.3 $"
 
 maxusers	32		# estimated number of users
 
 # AMD Elan SC520's timer runs at a different frequency
 options 	TIMER_FREQ=1189200
 
-makeoptions 	COPTS="-Os"
+makeoptions	COPTS="-Os"
 
 # CPU-related options.
 #options 	VM86		# virtual 8086 emulation
@@ -74,7 +74,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions 	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -97,9 +97,6 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options 	COMPAT_MACH	# binary compatibility with Mach binaries
-#options 	EXEC_MACHO	# exec MACH-O binaries
-#options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
@@ -188,7 +185,7 @@ pci*	at elansc? bus ?
 elansc* at mainbus? bus ?			# Elan SC520 System Controller
 #elanpar*	at elansc?			# Programmable Address Regions
 #elanpex*	at elansc?			# PCI Exception Instrumentation
-gpio* 	at elansc?
+gpio*		at elansc?
 #gpioow* 	at gpio? offset 6 mask 0x1	# 1-wire bus bitbanging via gpio
 #onewire*	at gpioow?
 

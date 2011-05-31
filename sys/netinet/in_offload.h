@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.h,v 1.6.40.1 2011/03/05 20:55:57 rmind Exp $	*/
+/*	$NetBSD: in_offload.h,v 1.6.40.2 2011/05/31 03:05:07 rmind Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -48,10 +48,13 @@ void ip_undefer_csum(struct mbuf *, size_t, int);
 extern int tcp_do_loopback_cksum; /* do TCP checksum on loopback? */
 extern int udp_do_loopback_cksum; /* do UDP checksum on loopback? */
 
+#define	IN_LOOPBACK_NEED_CHECKSUM(csum_flags) \
+	((((csum_flags) & M_CSUM_UDPv4) != 0 && udp_do_loopback_cksum) || \
+	(((csum_flags) & M_CSUM_TCPv4) != 0 && tcp_do_loopback_cksum) || \
+	(((csum_flags) & M_CSUM_IPv4) != 0 && ip_do_loopback_cksum))
+
 #define	IN_NEED_CHECKSUM(ifp, csum_flags) \
 	(__predict_true(((ifp)->if_flags & IFF_LOOPBACK) == 0 || \
-	(((csum_flags) & M_CSUM_UDPv4) != 0 && udp_do_loopback_cksum) || \
-	(((csum_flags) & M_CSUM_TCPv4) != 0 && tcp_do_loopback_cksum) || \
-	(((csum_flags) & M_CSUM_IPv4) != 0 && ip_do_loopback_cksum)))
+	IN_LOOPBACK_NEED_CHECKSUM(csum_flags)))
 
 #endif /* !_NETINET_IN_OFFLOAD_H_ */

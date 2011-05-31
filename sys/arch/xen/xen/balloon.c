@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.6.6.3 2011/04/21 01:41:34 rmind Exp $ */
+/* $NetBSD: balloon.c,v 1.6.6.4 2011/05/31 03:04:24 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define BALLOONDEBUG 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.6.6.3 2011/04/21 01:41:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.6.6.4 2011/05/31 03:04:24 rmind Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -302,29 +302,37 @@ xenmem_get_currentreservation(void)
 
 /*
  * Get value (in KiB) of memory/target in XenStore for current domain
- * A return value of 0 can be considered as bogus.
+ * A return value of 0 can be considered as bogus or absent.
  */
 static unsigned long long
 balloon_xenbus_read_target(void)
 {
 	unsigned long long new_target;
+	int err = xenbus_read_ull(NULL, "memory", "target", &new_target, 0);
 
-	if (0 != xenbus_read_ull(NULL, "memory", "target", &new_target, 0)) {
+	switch(err) {
+	case 0:
+		return new_target;
+	case ENOENT:
+		break;
+	default:
 		device_printf(balloon_sc->sc_dev,
-		    "error, couldn't read xenbus target node\n");
-		return 0;
+		    "error %d, couldn't read xenbus target node\n", err);
+		break;
 	}
 
-	return new_target;
+	return 0;
 }
 
 /* Set memory/target value (in KiB) in XenStore for current domain */
 static void
 balloon_xenbus_write_target(unsigned long long new_target)
 {
-	if (0 != xenbus_printf(NULL, "memory", "target", "%llu", new_target)) {
+	int err = xenbus_printf(NULL, "memory", "target", "%llu", new_target);
+
+	if (err != 0) {
 		device_printf(balloon_sc->sc_dev,
-		    "error, couldn't write xenbus target node\n");
+		    "error %d, couldn't write xenbus target node\n", err);
 	}
 
 	return;

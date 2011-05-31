@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.21.4.2 2011/03/05 20:52:05 rmind Exp $	*/
+/*	$NetBSD: boot.c,v 1.21.4.3 2011/05/31 03:04:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -230,8 +230,8 @@ bootoptions(const char *ap, char *loaddev, char *kernel, char *options)
 static void
 ksyms_copyout(void **ssym, void **esym)
 {
-	void *addr;
-	int kssize = (int)(long)(*esym - *ssym + 1);
+	uint8_t *addr;
+	int kssize = (int)(long)((char *)*esym - (char *)*ssym + 1);
 
 	DPRINTF(("ksyms_copyout(): ssym = %p, esym = %p, kssize = %d\n",
 				*ssym, *esym, kssize));
@@ -253,7 +253,6 @@ ksyms_copyout(void **ssym, void **esym)
 static void
 jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw)
 {
-	extern char end[];
 	int l, machine_tag;
 	long newargs[4];
 	void *ssym, *esym;
@@ -467,7 +466,7 @@ parse_boot_config(char *cfg, size_t len)
 static void
 check_boot_config(void)
 {
-	int fd, err, off, len;
+	int fd, off, len;
 	struct stat st;
 	char *bc;
 
@@ -515,7 +514,7 @@ main(void *ofw)
 
 	for (;; *kernel = '\0') {
 		if (boothowto & RB_ASKNAME) {
-			char *cp, cmdline[PROM_MAX_PATH];
+			char cmdline[PROM_MAX_PATH];
 
 			printf("Boot: ");
 			gets(cmdline);

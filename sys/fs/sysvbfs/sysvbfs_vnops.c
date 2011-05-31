@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.26.4.3 2011/03/05 20:55:09 rmind Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.26.4.4 2011/05/31 03:04:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.26.4.3 2011/03/05 20:55:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.26.4.4 2011/05/31 03:04:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -644,7 +644,6 @@ sysvbfs_reclaim(void *v)
 	mutex_enter(&mntvnode_lock);
 	LIST_REMOVE(bnode, link);
 	mutex_exit(&mntvnode_lock);
-	cache_purge(vp);
 	genfs_node_destroy(vp);
 	pool_put(&sysvbfs_node_pool, bnode);
 	vp->v_data = NULL;
@@ -810,11 +809,8 @@ sysvbfs_fsync(void *v)
 	}
 
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
-	vflushbuf(vp, wait);
-
-	if ((ap->a_flags & FSYNC_DATAONLY) != 0)
-		error = 0;
-	else
+	error = vflushbuf(vp, wait);
+	if (error == 0 && (ap->a_flags & FSYNC_DATAONLY) == 0)
 		error = sysvbfs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 
 	return error;

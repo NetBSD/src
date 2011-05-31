@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.99.4.1 2011/04/21 01:42:14 rmind Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.99.4.2 2011/05/31 03:05:07 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.99.4.1 2011/04/21 01:42:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.99.4.2 2011/05/31 03:05:07 rmind Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -215,8 +215,9 @@ const struct protosw inetsw[] = {
 {	.pr_domain = &inetdomain,
 	.pr_init = ip_init,
 	.pr_output = ip_output,
+	.pr_fasttimo = ip_fasttimo,
 	.pr_slowtimo = ip_slowtimo,
-	.pr_drain = ip_drain,
+	.pr_drain = ip_drainstub,
 },
 {	.pr_type = SOCK_DGRAM,
 	.pr_domain = &inetdomain,
@@ -237,8 +238,9 @@ const struct protosw inetsw[] = {
 	.pr_ctloutput = tcp_ctloutput,
 	.pr_usrreq = tcp_usrreq,
 	.pr_init = tcp_init,
+	.pr_fasttimo = tcp_fasttimo,
 	.pr_slowtimo = tcp_slowtimo,
-	.pr_drain = tcp_drain,
+	.pr_drain = tcp_drainstub,
 },
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,

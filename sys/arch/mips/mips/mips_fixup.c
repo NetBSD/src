@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.1.4.2 2011/04/21 01:41:12 rmind Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.1.4.3 2011/05/31 03:04:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.4.2 2011/04/21 01:41:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.4.3 2011/05/31 03:04:10 rmind Exp $");
 
-#include "opt_multiprocessor.h"
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
 #include <sys/param.h>

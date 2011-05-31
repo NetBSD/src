@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.1.4.3 2011/04/21 01:42:02 rmind Exp $	*/
+/*	$NetBSD: uhso.c,v 1.1.4.4 2011/05/31 03:04:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.1.4.3 2011/04/21 01:42:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.1.4.4 2011/05/31 03:04:56 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -1323,7 +1323,7 @@ uhso_tty_attach(struct uhso_port *hp)
 {
 	struct tty *tp;
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = uhso_tty_start;
 	tp->t_param = uhso_tty_param;
 
@@ -1342,7 +1342,7 @@ uhso_tty_detach(struct uhso_port *hp)
 	uhso_tty_clean(hp);
 
 	tty_detach(hp->hp_tp);
-	ttyfree(hp->hp_tp);
+	tty_free(hp->hp_tp);
 	hp->hp_tp = NULL;
 }
 

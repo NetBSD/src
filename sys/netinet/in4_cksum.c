@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.17 2008/02/12 13:05:55 joerg Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.17.32.1 2011/05/31 03:05:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.17 2008/02/12 13:05:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.17.32.1 2011/05/31 03:05:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -50,13 +50,13 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 	uint32_t sum;
 	uint16_t *w;
 
+	if (nxt == 0)
+		return cpu_in_cksum(m, len, off, 0);
+
 	if (__predict_false(off < sizeof(struct ip)))
 		panic("in4_cksum: offset too short for IP header");
 	if (__predict_false(m->m_len < sizeof(struct ip)))
 		panic("in4_cksum: mbuf too short for IP header");
-
-	if (nxt == 0)
-		return cpu_in_cksum(m, len, off, 0);
 
 	/*
 	 * Compute the equivalent of:

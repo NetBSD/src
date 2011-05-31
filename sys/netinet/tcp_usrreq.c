@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.158 2009/12/30 06:59:32 elad Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.158.4.1 2011/05/31 03:05:08 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.158 2009/12/30 06:59:32 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.158.4.1 2011/05/31 03:05:08 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -149,6 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.158 2009/12/30 06:59:32 elad Exp $"
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
+#include <netinet/tcp_vtw.h>
 
 #include "opt_tcp_space.h"
 
@@ -1012,6 +1013,16 @@ tcp_usrclosed(struct tcpcb *tp)
 		 */
 		if ((tp->t_state == TCPS_FIN_WAIT_2) && (tp->t_maxidle > 0))
 			TCP_TIMER_ARM(tp, TCPT_2MSL, tp->t_maxidle);
+		else if (tp->t_state == TCPS_TIME_WAIT
+			 && ((tp->t_inpcb
+			      && (tcp4_vtw_enable & 1)
+			      && vtw_add(AF_INET, tp))
+			     ||
+			     (tp->t_in6pcb
+			      && (tcp6_vtw_enable & 1)
+			      && vtw_add(AF_INET6, tp)))) {
+			tp = 0;
+		}
 	}
 	return (tp);
 }
@@ -1181,7 +1192,7 @@ inet4_ident_core(struct in_addr raddr, u_int rport,
 	struct inpcb *inp;
 	struct socket *sockp;
 
-	inp = in_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport);
+	inp = in_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport, 0);
 	
 	if (inp == NULL || (sockp = inp->inp_socket) == NULL)
 		return ESRCH;
@@ -1216,7 +1227,7 @@ inet6_ident_core(struct in6_addr *raddr, u_int rport,
 	struct in6pcb *in6p;
 	struct socket *sockp;
 
-	in6p = in6_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport, 0);
+	in6p = in6_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport, 0, 0);
 
 	if (in6p == NULL || (sockp = in6p->in6p_socket) == NULL)
 		return ESRCH;
@@ -1635,6 +1646,8 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 	const struct sysctlnode *abc_node;
 	const struct sysctlnode *ecn_node;
 	const struct sysctlnode *congctl_node;
+	const struct sysctlnode *mslt_node;
+	const struct sysctlnode *vtw_node;
 #ifdef TCP_DEBUG
 	extern struct tcp_debug tcp_debug[TCP_NDEBUG];
 	extern int tcp_debx;
@@ -1978,6 +1991,13 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       sysctl_net_inet_tcp_stats, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_STATS,
 		       CTL_EOL);
+        sysctl_createv(clog, 0, NULL, NULL,
+                       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+                       CTLTYPE_INT, "local_by_rtt",
+                       SYSCTL_DESCR("Use RTT estimator to decide which hosts "
+				    "are local"),
+		       NULL, 0, &tcp_rttlocal, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
 #ifdef TCP_DEBUG
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -2028,6 +2048,59 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLTYPE_INT, "aggressive",
 		       SYSCTL_DESCR("1: L=2*SMSS 0: L=1*SMSS"),
 		       NULL, 0, &tcp_abc_aggressive, 0, CTL_CREATE, CTL_EOL);
+
+	/* MSL tuning subtree */
+
+	sysctl_createv(clog, 0, NULL, &mslt_node,
+		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "mslt",
+		       SYSCTL_DESCR("MSL Tuning for TIME_WAIT truncation"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &mslt_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enable",
+		       SYSCTL_DESCR("Enable TIME_WAIT truncation"),
+		       NULL, 0, &tcp_msl_enable, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &mslt_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "loopback",
+		       SYSCTL_DESCR("MSL value to use for loopback connections"),
+		       NULL, 0, &tcp_msl_loop, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &mslt_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "local",
+		       SYSCTL_DESCR("MSL value to use for local connections"),
+		       NULL, 0, &tcp_msl_local, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &mslt_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "remote",
+		       SYSCTL_DESCR("MSL value to use for remote connections"),
+		       NULL, 0, &tcp_msl_remote, 0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &mslt_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "remote_threshold",
+		       SYSCTL_DESCR("RTT estimate value to promote local to remote"), 
+		       NULL, 0, &tcp_msl_remote_threshold, 0, CTL_CREATE, CTL_EOL);
+
+	/* vestigial TIME_WAIT tuning subtree */
+
+	sysctl_createv(clog, 0, NULL, &vtw_node,
+		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "vtw",
+		       SYSCTL_DESCR("Tuning for Vestigial TIME_WAIT"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &vtw_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enable",
+		       SYSCTL_DESCR("Enable Vestigial TIME_WAIT"),
+		       NULL, 0,
+	               (pf == AF_INET) ? &tcp4_vtw_enable : &tcp6_vtw_enable,
+		       0, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &vtw_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "entries",
+		       SYSCTL_DESCR("Maximum number of vestigial TIME_WAIT entries"),
+		       NULL, 0, &tcp_vtw_entries, 0, CTL_CREATE, CTL_EOL);
 }
 
 void

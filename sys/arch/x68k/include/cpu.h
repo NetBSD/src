@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.49.4.2 2011/03/05 20:52:23 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.49.4.3 2011/05/31 03:04:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -124,8 +124,8 @@ extern int astpending;		/* need to trap before returning to user mode */
 
 #ifdef _KERNEL
 extern int machineid;
-extern char *intiobase;
-extern char *intiolimit;
+extern uint8_t *intiobase;
+extern uint8_t *intiolimit;
 
 /* fpu.c functions */
 int	fpu_probe(void);
@@ -134,11 +134,8 @@ int	fpu_probe(void);
 void	dumpsys(void);
 
 /* locore.s functions */
-struct fpframe;
 int	suline(void *, void *);
 void	loadustp(int);
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
 
 /* machdep.c functions */
 int	badaddr(volatile void*);

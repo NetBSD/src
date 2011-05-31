@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.2.2.3 2011/04/21 01:41:13 rmind Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.2.2.4 2011/05/31 03:04:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.2.2.3 2011/04/21 01:41:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.2.2.4 2011/05/31 03:04:11 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -470,7 +470,7 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_intrswiz = 0;
 	pba.pba_intrtag = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 		PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 
 	(void) config_found_ia(self, "pcibus", &pba, pcibusprint);
@@ -983,15 +983,13 @@ rmixl_pcix_pip_add_1(rmixl_pcix_softc_t *sc, int irq, int ipl)
 	 * allocate and initialize softc intr struct
 	 * with one or more dispatch handles
 	 */
-	pip_new = malloc(size, M_DEVBUF, M_NOWAIT);
+	pip_new = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (pip_new == NULL) {
 #ifdef DIAGNOSTIC
 		printf("%s: cannot malloc\n", __func__);
 #endif
 		return NULL;
 	}
-
-	memset(pip_new, 0, size);
 
 	if (pip_old == NULL) {
 		/* initialize the interrupt struct */

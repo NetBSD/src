@@ -1,4 +1,4 @@
-/*	$NetBSD: bellctrl.c,v 1.11 2006/08/04 02:30:48 mhitch Exp $	*/
+/*	$NetBSD: bellctrl.c,v 1.11.84.1 2011/05/31 03:04:22 rmind Exp $	*/
 
 /*
  * bellctrl - OPM bell controller (for NetBSD/X680x0)
@@ -6,11 +6,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bellctrl.c,v 1.11 2006/08/04 02:30:48 mhitch Exp $");
+__RCSID("$NetBSD: bellctrl.c,v 1.11.84.1 2011/05/31 03:04:22 rmind Exp $");
 
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <ctype.h>
 #include <string.h>
 #include <sys/file.h>
@@ -35,18 +36,18 @@ static struct bell_info values = {
 };
 
 /* function prototype */
-int is_number(char *, int);
+int is_number(const char *, int);
 void set_bell_vol(int);
 void set_bell_pitch(int);
 void set_bell_dur(int);
-void set_voice_param(char *, int);
+void set_voice_param(const char *, int);
 void set_bell_param(void);
-int usage(char *, char *);
+int usage(const char *, const char *);
 
 int
 main(int argc, char **argv)
 {
-	register char *arg;
+	const char *arg;
 	int percent;
 	int i;
 
@@ -153,9 +154,9 @@ main(int argc, char **argv)
 }
 
 int
-is_number(char *arg, int maximum)
+is_number(const char *arg, int maximum)
 {
-	register char *p;
+	const char *p;
 
 	if (arg[0] == '-' && arg[1] == '1' && arg[2] == '\0')
 		return 1;
@@ -189,7 +190,7 @@ set_bell_dur(int duration)
 }
 
 void
-set_voice_param(char *path, int flag)
+set_voice_param(const char *path, int flag)
 {
 	int fd;
 
@@ -238,7 +239,7 @@ set_bell_param(void)
 }
 
 int
-usage(char *fmt, char *arg)
+usage(const char *fmt, const char *arg)
 {
 	if (fmt) {
 		fprintf(stderr, "%s:  ", progName);

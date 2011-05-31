@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.25.4.2 2011/04/21 01:41:47 rmind Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.25.4.3 2011/05/31 03:04:36 rmind Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.25.4.2 2011/04/21 01:41:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.25.4.3 2011/05/31 03:04:36 rmind Exp $");
 
 #include "opt_slhci.h"
 
@@ -561,35 +561,42 @@ struct slhci_softc *ssc;
 int slhci_usbdebug = -1; /* value to set usbdebug on attach, -1 = leave alone */
 #endif
 
-/* Add UVMHIST history for debugging: 
- *
- *   Before uvm_hist in sys/uvm/uvm_stat.c add:
- *      UVMHIST_DECL(slhcihist);
- *
- *   In uvm_hist add:
- *      if ((bitmask & UVMHIST_SLHCI))
- *              hists[i++] = &slhcihist;
- *
- *   In sys/uvm/uvm_stat.h add UVMHIST_SLHCI define.
+/*
+ * XXXMRG the SLHCI UVMHIST code has been converted to KERNHIST, but it has
+ * not been tested.  the extra instructions to enable it can probably be
+ * commited to the kernhist code, and these instructions reduced to simply
+ * enabling SLHCI_DEBUG.
  */
 
-#include <uvm/uvm_stat.h>
-UVMHIST_DECL(slhcihist);
+/* Add KERNHIST history for debugging: 
+ *
+ *   Before kern_hist in sys/kern/subr_kernhist.c add:
+ *      KERNHIST_DECL(slhcihist);
+ *
+ *   In kern_hist add:
+ *      if ((bitmask & KERNHIST_SLHCI))
+ *              hists[i++] = &slhcihist;
+ *
+ *   In sys/sys/kernhist.h add KERNHIST_SLHCI define.
+ */
 
-#if !defined(UVMHIST) || !defined(UVMHIST_SLHCI)
-#error "SLHCI_DEBUG requires UVMHIST (with modifications, see sys/dev/ic/sl81hs.c)"
+#include <sys/kernhist.h>
+KERNHIST_DECL(slhcihist);
+
+#if !defined(KERNHIST) || !defined(KERNHIST_SLHCI)
+#error "SLHCI_DEBUG requires KERNHIST (with modifications, see sys/dev/ic/sl81hs.c)"
 #endif
 
 #ifndef SLHCI_NHIST
 #define SLHCI_NHIST 409600
 #endif
-const unsigned int SLHCI_HISTMASK = UVMHIST_SLHCI;
-struct uvm_history_ent slhci_he[SLHCI_NHIST];
+const unsigned int SLHCI_HISTMASK = KERNHIST_SLHCI;
+struct kern_history_ent slhci_he[SLHCI_NHIST];
 
 #define SLHCI_DEXEC(x, y) do { if ((slhci_debug & SLHCI_ ## x)) { y; } \
 } while (/*CONSTCOND*/ 0)
-#define DDOLOG(f, a, b, c, d) do { const char *_uvmhist_name = __func__; \
-    u_long _uvmhist_call = 0; UVMHIST_LOG(slhcihist, f, a, b, c, d);	     \
+#define DDOLOG(f, a, b, c, d) do { const char *_kernhist_name = __func__; \
+    u_long _kernhist_call = 0; KERNHIST_LOG(slhcihist, f, a, b, c, d);	     \
 } while (/*CONSTCOND*/0)
 #define DLOG(x, f, a, b, c, d) SLHCI_DEXEC(x, DDOLOG(f, a, b, c, d))
 /* DLOGFLAG8 is a macro not a function so that flag name expressions are not 
@@ -597,10 +604,10 @@ struct uvm_history_ent slhci_he[SLHCI_NHIST];
  * x is debug mask, y is flag identifier, z is flag variable, 
  * a-h are flag names (must evaluate to string constants, msb first). */
 #define DDOLOGFLAG8(y, z, a, b, c, d, e, f, g, h) do { uint8_t _DLF8 = (z);   \
-    const char *_uvmhist_name = __func__; u_long _uvmhist_call = 0;	      \
-    if (_DLF8 & 0xf0) UVMHIST_LOG(slhcihist, y " %s %s %s %s", _DLF8 & 0x80 ?  \
+    const char *_kernhist_name = __func__; u_long _kernhist_call = 0;	      \
+    if (_DLF8 & 0xf0) KERNHIST_LOG(slhcihist, y " %s %s %s %s", _DLF8 & 0x80 ?  \
     (a) : "", _DLF8 & 0x40 ? (b) : "", _DLF8 & 0x20 ? (c) : "", _DLF8 & 0x10 ? \
-    (d) : ""); if (_DLF8 & 0x0f) UVMHIST_LOG(slhcihist, y " %s %s %s %s",      \
+    (d) : ""); if (_DLF8 & 0x0f) KERNHIST_LOG(slhcihist, y " %s %s %s %s",      \
     _DLF8 & 0x08 ? (e) : "", _DLF8 & 0x04 ? (f) : "", _DLF8 & 0x02 ? (g) : "", \
     _DLF8 & 0x01 ? (h) : "");		      				       \
 } while (/*CONSTCOND*/ 0)
@@ -1143,7 +1150,7 @@ slhci_preinit(struct slhci_softc *sc, PowerFunc pow, bus_space_tag_t iot,
 	t = &sc->sc_transfers;
 
 #ifdef SLHCI_DEBUG
-	UVMHIST_INIT_STATIC(slhcihist, slhci_he);
+	KERNHIST_INIT_STATIC(slhcihist, slhci_he);
 #endif
 	simple_lock_init(&sc->sc_lock);
 #ifdef SLHCI_WAITLOCK

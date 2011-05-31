@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.35.4.3 2011/04/21 01:41:12 rmind Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.35.4.4 2011/05/31 03:04:09 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -162,11 +162,14 @@
 #if (MIPS3 + MIPS64 + MIPS64R2) > 0
 #define	USE_64BIT_INSTRUCTIONS
 #define	USE_64BIT_CP0_FUNCTIONS
+#elif (MIPS32 + MIPS32R2) > 0
+#ifdef _LP64
+#error	MIPS32 and MIPS32R2 can't run 64-bit kernels.
 #endif
-
-#if (MIPS32 + MIPS32R2) > 0
 #undef	USE_64BIT_INSTRUCTIONS
 #undef	USE_64BIT_CP0_FUNCTIONS
+#else
+#error	One of MIPS{3,32,32R2,64,64R2} must be defined
 #endif
 
 #ifdef _LP64
@@ -355,20 +358,19 @@ MIPSX(tlb_miss_common):
 	_SLL	k1, WIRED_SHIFT			#14: chop top 2 bits (part 2a)
 	_SRL	k1, WIRED_SHIFT			#15: chop top 2 bits (part 2b)
 	_MTC0	k1, MIPS_COP_0_TLB_LO1		#16: lo1 is loaded
-	nop					#17: standard nop
+	sll	$0, $0, 3			#17: standard nop (ehb)
+#ifdef MIPS3
 	nop					#18: extra nop for QED5230
-	tlbwr					#19: write to tlb
-#ifdef MIPS64
-	lui	k1, %hi(CPUVAR(EV_TLBMISSES))	#01: k1=hi of tlbmisses
-	REG_L	k0, %lo(CPUVAR(EV_TLBMISSES))(k1)
-	REG_ADDU k0, 1
-	REG_S	k0, %lo(CPUVAR(EV_TLBMISSES))(k1)
-#else
-	nop					#1a: standard nop
-	nop					#1b: needed by R4000/4400
-	nop					#1c: needed by R4000/4400
 #endif
-	eret					#1d: return from exception
+	tlbwr					#19: write to tlb
+	sll	$0, $0, 3			#1a: standard nop (ehb)
+#if (MIPS3 + MIPS64 + MIPS64R2) > 0
+	lui	k1, %hi(CPUVAR(EV_TLBMISSES))	#1b: k1=hi of tlbmisses
+	REG_L	k0, %lo(CPUVAR(EV_TLBMISSES))(k1) #1c
+	REG_ADDU k0, 1				#1d
+	REG_S	k0, %lo(CPUVAR(EV_TLBMISSES))(k1) #1e
+#endif
+	eret					#1f: return from exception
 	.set	at
 _VECTOR_END(MIPSX(tlb_miss))
 
@@ -706,7 +708,6 @@ MIPSX(kern_return):
 	 nop
 #endif /* PARANOIA */
 
-#ifdef notyet
 	/*
 	 * Check for kernel restartable atomic sequences.
 	 */
@@ -718,7 +719,6 @@ MIPSX(kern_return):
 	jal	_C_LABEL(_restart_lock_ras)	# fix the pc (k1)
 	 nop
 1:
-#endif
 
 	_MTC0	k1, MIPS_COP_0_EXC_PC		# set return address
 	COP0_SYNC
@@ -933,7 +933,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	 * Interrupts handled, restore registers and return from the interrupt.
 	 * First, clear interrupt enable
 	 */
-	mfc0	v0, MIPS_COP_0_STATUS		# read it 
+	mfc0	v0, MIPS_COP_0_STATUS		# read it
 	xor	v0, MIPS_SR_INT_IE		# disable interrupts
 	mtc0	v0, MIPS_COP_0_STATUS		# write it
 	COP0_SYNC
@@ -1223,7 +1223,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 #else
 	lui	v0, %hi(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
 	addiu	v0, %lo(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
-	and	v0, v1 
+	and	v0, v1
 #endif
 	mtc0	v0, MIPS_COP_0_STATUS		# write new status
 	COP0_SYNC
@@ -1305,7 +1305,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	REG_S	s6, CALLFRAME_SIZ+TF_REG_S6(sp)	# $22
 	REG_S	s7, CALLFRAME_SIZ+TF_REG_S7(sp)	# $23
 	REG_S	s8, CALLFRAME_SIZ+TF_REG_S8(sp)	# $30
-	mfc0	t0, MIPS_COP_0_STATUS		# 
+	mfc0	t0, MIPS_COP_0_STATUS		#
 	or	t0, MIPS_SR_INT_IE 		# enable interrupts
 	DYNAMIC_STATUS_MASK(t0, t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts (spl0)
@@ -1586,7 +1586,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	dsll32	k1, k1, 0
 #endif
 	bgez	k0, _C_LABEL(MIPSX(kern_gen_exception))	# full trap processing
-	 nop		
+	 nop					# - delay slot -
 	PTR_SUBU k0, k1
 	INT_L	k1, _C_LABEL(Sysmapsize)	# index within range?
 	PTR_SRL	k0, PGSHIFT
@@ -1604,7 +1604,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	nop
 #endif
 	bltz	k0, _C_LABEL(MIPSX(kern_gen_exception)) # ASSERT(TLB entry exists)
-	 nop		
+	 nop					# - delay slot -
 
 	and	k0, k1, 4			# check even/odd page
 #ifdef MIPS3
@@ -1614,7 +1614,6 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	 nop
 
 	INT_L	k0, 0(k1)			# get PTE entry
-
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of "wired" bit
 	_SRL	k0, k0, WIRED_SHIFT
 	_MTC0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
@@ -1624,7 +1623,8 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	nop					# required for QED5230
 #endif
 	beqz	k0, _C_LABEL(MIPSX(kern_gen_exception))	# PTE invalid
-	 nop		
+	 nop					# - delay slot -
+
 	INT_L	k0, 4(k1)			# get odd PTE entry
 	_SLL	k0, k0, WIRED_SHIFT
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
@@ -1647,7 +1647,6 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 
 MIPSX(kern_tlbi_odd):
 	INT_L	k0, 0(k1)			# get PTE entry
-
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of wired bit
 	_SRL	k0, k0, WIRED_SHIFT
 	_MTC0	k0, MIPS_COP_0_TLB_LO1		# save PTE entry
@@ -1657,7 +1656,8 @@ MIPSX(kern_tlbi_odd):
 	nop					# required for QED5230
 #endif
 	beqz	k0, _C_LABEL(MIPSX(kern_gen_exception))	# PTE invalid
-	 nop
+	 nop					# - delay slot -
+
 	INT_L	k0, -4(k1)			# get even PTE entry
 	_SLL	k0, k0, WIRED_SHIFT
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
@@ -1766,7 +1766,6 @@ LEAF(MIPSX(tlb_update))
 #ifdef MIPS3
 	nop					# required for QED5230
 #endif
-
 	tlbr					# read the entry first
 	COP0_SYNC
 	_MTC0	a1, MIPS_COP_0_TLB_LO1		# init low reg1.
@@ -1841,7 +1840,6 @@ LEAF(MIPSX(tlb_read_indexed))
 	_MFC0	ta0, MIPS_COP_0_TLB_LO0		# See what we got
 	_MFC0	ta1, MIPS_COP_0_TLB_LO1		# See what we got
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID
-	COP0_SYNC
 	mtc0	ta2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
@@ -1874,8 +1872,6 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	tlbp					# probe the entry in question
 	COP0_SYNC
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# see what we got
-	#nop					# -slip-
-	#nop					# -slip-
 	bltz	v0, 1f				# index < 0 then skip
 	 li	t1, MIPS_KSEG0_START		# invalid address
 	PTR_SLL	v0, PGSHIFT + 1			# PAGE_SHIFT + 1
@@ -1883,20 +1879,21 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	_MTC0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	_MTC0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
 	_MTC0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
-	COP0_SYNC
-#if 1
-	nop
-#else
+#if 0
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# zero out pageMask
 #endif
 	COP0_SYNC
+#ifdef MIPS3
 	nop
 	nop
+#endif
 
 	tlbwi
 	COP0_SYNC
+#ifdef MIPS3
 	nop
 	nop
+#endif
 1:
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore current ASID
 	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
@@ -2049,24 +2046,24 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore ASID
 	mtc0	t2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
+	COP0_SYNC
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	JR_HB_RA
 END(MIPSX(tlb_invalidate_all))
 
 /*
- * u_int mipsN_tlb_record_asids(u_long *bitmap, uint32_t asid_mask);
+ * u_int mipsN_tlb_record_asids(u_long *bitmap, uint32_t asid_mask)
  *
  * Record all the ASIDs in use in the TLB and return the number of different
  * ASIDs present.
  */
 LEAF_NOPROFILE(MIPSX(tlb_record_asids))
-
 	_MFC0	a3, MIPS_COP_0_TLB_HI		# Save the current PID.
 	mfc0	ta0, MIPS_COP_0_TLB_WIRED
 	INT_L	ta1, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
 	move	ta2, zero
 	li	ta3, 1
-	move	v0, zero
+	move	v0, zero			# start at zero ASIDs
 
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 #ifdef _LP64
@@ -2088,6 +2085,7 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	and	t0, MIPS3_PG_G			# check to see it has G bit
 	bnez	t0, 4f				# yep, skip this one.
 	 nop
+
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# get VA and ASID
 	and	t0, a1				# focus on ASID
 
@@ -2095,28 +2093,29 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	sll	a2, LONG_SCALESHIFT		# make an index for the bitmap
 	_SLLV	t0, ta3, t0			# t0 is mask (ta3 == 1)
 
-	PTR_ADDU a2, a0				# index into the bitmap 
+	PTR_ADDU a2, a0				# index into the bitmap
 	beq	a2, ta2, 3f			# is the desired cell loaded?
-	 nop					#    yes, don't reload it
+	 nop					#   yes, don't reload it
 	beqz	ta2, 2f				# have we ever loaded it?
-	 nop					#   nope, so don't save it.
+	 nop					#   nope, so don't save it
 
 	LONG_S	t2, 0(ta2)			# save the updated value.
 2:
 	move	ta2, a2				# remember the new cell's addr
 	LONG_L	t2, 0(ta2)			# and load it
 3:
-	and	t1, t2, t0			# t1 = t2 & t0
+	and	t1, t2, t0			# see if this asid was recorded
 	sltu	t1, t1, ta3			# t1 = t1 < 1 (aka t1 == 0)
 	addu	v0, t1				# v0 += t1
 	or	t2, t0				# or in the new ASID bits
+
 4:
 	addu	ta0, 1				# increment TLB entry #
 	bne	ta0, ta1, 1b			# keep lookup if not limit
 	 nop
 
 	beqz	ta2, 5f				# do we have a cell to write?
-	 nop					#   nope.  nothing
+	 nop					#   nope, nothing.
 
 	LONG_S	t2, 0(ta2)			# save the updated value.
 5:
@@ -2143,6 +2142,7 @@ LEAF(MIPSX(tlb_enter))
 	and	t3, a2, MIPS3_PG_G		# make prototype tlb_lo1
 
 	tlbp					# is va in TLB?
+	COP0_SYNC
 
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# was it in the TLB?
 	bltz	v0, 1f				# nope
@@ -2158,7 +2158,7 @@ LEAF(MIPSX(tlb_enter))
 	 * If it's already where we want, no reason to invalidate it.
 	 */
 	beq	v0, a0, 2f			# already where we want it?
-	 nop					
+	 nop
 
 	/*
 	 * Make an
@@ -2170,9 +2170,8 @@ LEAF(MIPSX(tlb_enter))
 	COP0_SYNC
 
 	and	t0, a2, MIPS3_PG_G		# make prototype tlb_lo
-	mtc0	t0, MIPS_COP_0_TLB_LO0		# use an invalid tlb_lo
-	COP0_SYNC
-	mtc0	t0, MIPS_COP_0_TLB_LO1		# use an invalid tlb_lo
+	mtc0	t0, MIPS_COP_0_TLB_LO0		# use an invalid tlb_lo0
+	mtc0	t0, MIPS_COP_0_TLB_LO1		# use an invalid tlb_lo1
 	COP0_SYNC
 
 	tlbwi					# now write the invalid TLB
@@ -2225,7 +2224,7 @@ LEAF(MIPSX(lwp_trampoline))
 	 move	a1, MIPS_CURLWP
 
 	# Call the routine specified by cpu_setfunc()
-	jalr	s0			
+	jalr	s0
 	 move	a0, s1
 
 	#
@@ -2303,7 +2302,7 @@ LEAF(MIPSX(setfunc_trampoline))
 	# Call the routine specified by cpu_setfunc()
 	# and return directly to user_return
 	PTR_LA	ra, MIPSX(user_return)
-	jr	s0			
+	jr	s0
 	 move	a0, s1
 END(MIPSX(setfunc_trampoline))
 

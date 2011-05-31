@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.108.4.4 2011/05/19 03:43:05 rmind Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.108.4.5 2011/05/31 03:05:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.108.4.4 2011/05/19 03:43:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.108.4.5 2011/05/31 03:05:14 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -443,7 +443,7 @@ uao_create(vsize_t size, int flags)
 	int refs;
 
 	/*
-	 * malloc a new aobj unless we are asked for the kernel object
+	 * Allocate a new aobj, unless kernel object is requested.
 	 */
 
 	if (flags & UAO_FLAG_KERNOBJ) {
@@ -487,7 +487,7 @@ uao_create(vsize_t size, int flags)
 			aobj->u_swslots = kmem_zalloc(pages * sizeof(int),
 			    kernswap ? KM_NOSLEEP : KM_SLEEP);
 			if (aobj->u_swslots == NULL)
-				panic("uao_create: malloc swslots failed");
+				panic("uao_create: swslots allocation failed");
 		}
 #endif /* defined(VMSWAP) */
 

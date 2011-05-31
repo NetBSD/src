@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.121.4.3 2011/04/21 01:42:10 rmind Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.121.4.4 2011/05/31 03:05:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.121.4.3 2011/04/21 01:42:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.121.4.4 2011/05/31 03:05:03 rmind Exp $");
 
 #include "opt_ptm.h"
 
@@ -248,7 +248,7 @@ pty_check(int ptn)
 
 		selinit(&pti->pt_selr);
 		selinit(&pti->pt_selw);
-		pti->pt_tty = ttymalloc();
+		pti->pt_tty = tty_alloc();
 
 		mutex_enter(&pt_softc_mutex);
 
@@ -258,7 +258,7 @@ pty_check(int ptn)
 		 */
 		if (pt_softc[ptn]) {
 			mutex_exit(&pt_softc_mutex);
-			ttyfree(pti->pt_tty);
+			tty_free(pti->pt_tty);
 			seldestroy(&pti->pt_selr);
 			seldestroy(&pti->pt_selw);
 			kmem_free(pti, sizeof(*pti));

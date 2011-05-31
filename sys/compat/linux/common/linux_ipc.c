@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.54 2009/11/16 08:44:19 joerg Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.54.4.1 2011/05/31 03:04:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.54 2009/11/16 08:44:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.54.4.1 2011/05/31 03:04:30 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.54 2009/11/16 08:44:19 joerg Exp $")
  *
  * Function in multiarch:
  *	linux_sys_ipc		: linux_ipccall.c
- *	liunx_semop		: linux_ipccall.c
+ *	linux_semop		: linux_ipccall.c
  *	linux_semget		: linux_ipccall.c
  *	linux_msgsnd		: linux_ipccall.c
  *	linux_msgrcv		: linux_ipccall.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.16.4.1 2011/03/05 20:50:53 rmind Exp $	*/
+/*	$NetBSD: m68k.h,v 1.16.4.2 2011/05/31 03:04:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,6 +96,7 @@ extern	int mmutype;		/* MMU on this host */
 
 struct pcb;
 struct trapframe;
+struct fpframe;
 
 /* copypage.s */
 void	copypage040(void *fromaddr, void *toaddr);
@@ -105,6 +106,8 @@ void	zeropage(void *addr);
 /* locore.s (XXX: move to support.s?) */
 int 	getdfc(void);
 int 	getsfc(void);
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *); 
 
 /* switch_subr.s */
 void	lwp_trampoline(void);
