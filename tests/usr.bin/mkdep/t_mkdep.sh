@@ -1,4 +1,4 @@
-# $NetBSD: t_mkdep.sh,v 1.1 2011/05/30 18:14:11 njoly Exp $
+# $NetBSD: t_mkdep.sh,v 1.2 2011/05/31 13:22:56 njoly Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,13 +43,11 @@ suffixes_body() {
 
 	# Suffix list
 	atf_check mkdep -f sample.d -s '.a .b' sample.c
-	atf_check -o ignore grep '^sample.a sample.b:' sample.d
+	atf_check -o ignore grep '^sample.b sample.a:' sample.d
 
 	# Empty list
-	atf_expect_fail "PR bin/45004"
 	atf_check mkdep -f sample.d -s '' sample.c
 	atf_check -o ignore grep '^sample:' sample.d
-	atf_expect_pass
 }
 
 atf_init_test_cases() {
