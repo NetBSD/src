@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_process.c,v 1.4 2008/01/05 02:47:03 matt Exp $	*/
+/*	$NetBSD: dmover_process.c,v 1.4.32.1 2011/05/31 03:04:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,18 +40,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_process.c,v 1.4 2008/01/05 02:47:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_process.c,v 1.4.32.1 2011/05/31 03:04:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/intr.h>
-#include <sys/simplelock.h>
+#include <sys/mutex.h>
 
 #include <dev/dmover/dmovervar.h>
 
 TAILQ_HEAD(, dmover_request) dmover_completed_q;
-struct simplelock dmover_completed_q_slock;	/* must be held at splbio */
+kmutex_t dmover_completed_q_lock;
 
 void	*dmover_completed_si;
 
@@ -67,7 +67,7 @@ dmover_process_initialize(void)
 {
 
 	TAILQ_INIT(&dmover_completed_q);
-	simple_lock_init(&dmover_completed_q_slock);
+	mutex_init(&dmover_completed_q_lock, MUTEX_DEFAULT, IPL_BIO);
 
 	dmover_completed_si = softint_establish(SOFTINT_CLOCK,
 	    dmover_complete, NULL);
@@ -150,9 +150,9 @@ dmover_done(struct dmover_request *dreq)
 	dreq->dreq_assignment = NULL;
 
 	if (dreq->dreq_callback != NULL) {
-		simple_lock(&dmover_completed_q_slock);
+		mutex_enter(&dmover_completed_q_lock);
 		TAILQ_INSERT_TAIL(&dmover_completed_q, dreq, dreq_dmbq);
-		simple_unlock(&dmover_completed_q_slock);
+		mutex_exit(&dmover_completed_q_lock);
 		softint_schedule(dmover_completed_si);
 	} else if (dreq->dreq_flags & DMOVER_REQ_WAIT)
 		wakeup(dreq);
@@ -169,15 +169,12 @@ void
 dmover_complete(void *arg)
 {
 	struct dmover_request *dreq;
-	int s;
 
 	for (;;) {
-		s = splbio();
-		simple_lock(&dmover_completed_q_slock);
+		mutex_enter(&dmover_completed_q_lock);
 		if ((dreq = TAILQ_FIRST(&dmover_completed_q)) != NULL)
 			TAILQ_REMOVE(&dmover_completed_q, dreq, dreq_dmbq);
-		simple_unlock(&dmover_completed_q_slock);
-		splx(s);
+		mutex_exit(&dmover_completed_q_lock);
 
 		if (dreq == NULL)
 			return;

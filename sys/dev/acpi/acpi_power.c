@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.12.2.5 2011/04/21 01:41:45 rmind Exp $ */
+/* $NetBSD: acpi_power.c,v 1.12.2.6 2011/05/31 03:04:34 rmind Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.12.2.5 2011/04/21 01:41:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.12.2.6 2011/05/31 03:04:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -480,20 +480,12 @@ acpi_power_res(ACPI_HANDLE hdl, ACPI_HANDLE ref, bool on)
 	 * necessary since a single power resource
 	 * can be shared by multiple devices.
 	 */
-	switch (on) {
-
-	case true:
+	if (on) {
 		rv = acpi_power_res_ref(res, ref);
 		str = "_ON";
-		break;
-
-	case false:
+	} else {
 		rv = acpi_power_res_deref(res, ref);
 		str = "_OFF";
-		break;
-
-	default:
-		return AE_BAD_PARAMETER;
 	}
 
 	if (ACPI_FAILURE(rv))

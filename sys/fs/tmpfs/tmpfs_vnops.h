@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.h,v 1.11.22.1 2011/03/05 20:55:09 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.h,v 1.11.22.2 2011/05/31 03:05:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,8 +38,6 @@
 #endif
 
 #include <miscfs/genfs/genfs.h>
-
-/* --------------------------------------------------------------------- */
 
 /*
  * Declarations for tmpfs_vnops.c.
@@ -88,7 +86,5 @@ int	tmpfs_advlock		(void *);
 int	tmpfs_getpages		(void *);
 int	tmpfs_putpages		(void *);
 int	tmpfs_whiteout		(void *);
-
-/* --------------------------------------------------------------------- */
 
 #endif /* _FS_TMPFS_TMPFS_VNOPS_H_ */

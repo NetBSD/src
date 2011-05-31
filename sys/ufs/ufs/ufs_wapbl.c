@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.8.2.3 2011/03/05 20:56:34 rmind Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.8.2.4 2011/05/31 03:05:13 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.8.2.3 2011/03/05 20:56:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.8.2.4 2011/05/31 03:05:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,8 +699,9 @@ ufs_wapbl_verify_inodes(struct mount *mp, const char *str)
 {
 	struct vnode *vp, *nvp;
 	struct inode *ip;
+	struct buf *bp, *nbp;
 
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
  loop:
 	TAILQ_FOREACH_REVERSE(vp, &mp->mnt_vnodelist, vnodelst, v_mntvnodes) {
 		/*
@@ -709,11 +710,11 @@ ufs_wapbl_verify_inodes(struct mount *mp, const char *str)
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
 		if (vp->v_type == VNON) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
 		/* verify that update has been called on all inodes */
@@ -721,55 +722,36 @@ ufs_wapbl_verify_inodes(struct mount *mp, const char *str)
 			panic("wapbl_verify: mp %p: dirty vnode %p (inode %p): 0x%x\n",
 				mp, vp, ip, ip->i_flag);
 		}
+		mutex_exit(&mntvnode_lock);
 
-		simple_unlock(&mntvnode_slock);
-		{
-			int s;
-			struct buf *bp;
-			struct buf *nbp;
-			s = splbio();
-			for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
-				nbp = LIST_NEXT(bp, b_vnbufs);
-				simple_lock(&bp->b_interlock);
-				if ((bp->b_flags & B_BUSY)) {
-					simple_unlock(&bp->b_interlock);
-					continue;
-				}
-				if ((bp->b_flags & B_DELWRI) == 0)
-					panic("wapbl_verify: not dirty, bp %p", bp);
-				if ((bp->b_flags & B_LOCKED) == 0)
-					panic("wapbl_verify: not locked, bp %p", bp);
-				simple_unlock(&bp->b_interlock);
-			}
-			splx(s);
-		}
-		simple_unlock(&vp->v_interlock);
-		simple_lock(&mntvnode_slock);
-	}
-	simple_unlock(&mntvnode_slock);
-
-	vp = VFSTOUFS(mp)->um_devvp;
-	simple_lock(&vp->v_interlock);
-	{
-		int s;
-		struct buf *bp;
-		struct buf *nbp;
-		s = splbio();
+		mutex_enter(&bufcache_lock);
 		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 			nbp = LIST_NEXT(bp, b_vnbufs);
-			simple_lock(&bp->b_interlock);
-			if ((bp->b_flags & B_BUSY)) {
-				simple_unlock(&bp->b_interlock);
+			if ((bp->b_cflags & BC_BUSY)) {
 				continue;
 			}
-			if ((bp->b_flags & B_DELWRI) == 0)
-				panic("wapbl_verify: devvp not dirty, bp %p", bp);
-			if ((bp->b_flags & B_LOCKED) == 0)
-				panic("wapbl_verify: devvp not locked, bp %p", bp);
-			simple_unlock(&bp->b_interlock);
+			KASSERT((bp->b_oflags & BO_DELWRI) != 0);
+			KASSERT((bp->b_flags & B_LOCKED) != 0);
 		}
-		splx(s);
+		mutex_exit(&bufcache_lock);
+		mutex_exit(&vp->v_interlock);
+
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&mntvnode_lock);
+
+	vp = VFSTOUFS(mp)->um_devvp;
+	mutex_enter(&vp->v_interlock);
+	mutex_enter(&bufcache_lock);
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if ((bp->b_cflags & BC_BUSY)) {
+			continue;
+		}
+		KASSERT((bp->b_oflags & BO_DELWRI) != 0);
+		KASSERT((bp->b_flags & B_LOCKED) != 0);
+	}
+	mutex_exit(&bufcache_lock);
+	mutex_exit(&vp->v_interlock);
 }
 #endif /* WAPBL_DEBUG_INODES */

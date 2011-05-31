@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.62.4.1 2011/03/05 20:50:24 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.62.4.2 2011/05/31 03:04:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,11 +126,7 @@ extern int astpending;		/* need to trap before returning to user mode */
 extern	uint8_t *intiobase, *intiolimit, *extiobase;
 extern	void (*vectab[])(void);
 
-struct fpframe;
-
 /* locore.s functions */
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
 int	suline(void *, void *);
 void	loadustp(int);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.11 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.11.24.1 2011/05/31 03:05:09 rmind Exp $	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.11 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.11.24.1 2011/05/31 03:05:09 rmind Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.11 2008/04/23 06:09:05 thorpej Exp 
 
 #include <netipsec/ipsec_osdep.h>
 #include <net/net_osdep.h>
-
-extern	struct mbuf *m_getptr(struct mbuf *, int, int *);
 
 /*
  * Create a writable copy of the mbuf chain.  While doing this

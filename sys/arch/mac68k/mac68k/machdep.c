@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.335.2.2 2011/03/05 20:50:57 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.335.2.3 2011/05/31 03:04:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335.2.2 2011/03/05 20:50:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335.2.3 2011/05/31 03:04:07 rmind Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -438,41 +438,6 @@ initcpu(void)
 }
 
 void doboot(void) __attribute__((__noreturn__));
-
-/*
- * Set registers on exec.
- */
-void
-setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
-{
-	struct frame *frame = (struct frame *)l->l_md.md_regs;
-	struct pcb *pcb = lwp_getpcb(l);
-
-	frame->f_sr = PSL_USERSET;
-	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[D0] = 0;
-	frame->f_regs[D1] = 0;
-	frame->f_regs[D2] = 0;
-	frame->f_regs[D3] = 0;
-	frame->f_regs[D4] = 0;
-	frame->f_regs[D5] = 0;
-	frame->f_regs[D6] = 0;
-	frame->f_regs[D7] = 0;
-	frame->f_regs[A0] = 0;
-	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = l->l_proc->p_psstrp;
-	frame->f_regs[A3] = 0;
-	frame->f_regs[A4] = 0;
-	frame->f_regs[A5] = 0;
-	frame->f_regs[A6] = 0;
-	frame->f_regs[SP] = stack;
-
-	/* restore a null state frame */
-	pcb->pcb_fpregs.fpf_null = 0;
-
-	if (fputype)
-		m68881_restore(&pcb->pcb_fpregs);
-}
 
 int	waittime = -1;
 struct pcb dumppcb;

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.101.4.3 2011/04/21 01:41:39 rmind Exp $
+	$NetBSD: syscalls.master,v 1.101.4.4 2011/05/31 03:04:28 rmind Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -419,7 +419,8 @@
 247	UNIMPL		io_getevents
 248	UNIMPL		io_submit
 249	UNIMPL		io_cancel
-250	UNIMPL		fadvise64
+250	STD		{ int|linux_sys||fadvise64(int fd, \
+			    linux_off_t offset, size_t len, int advice); }
 251	UNIMPL		/* unused */
 252	STD		{ int|linux_sys||exit_group(int error_code); }
 253	UNIMPL		lookup_dcookie
@@ -448,7 +449,8 @@
 			    size_t sz, struct linux_statfs64 *sp); }
 270	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
 271	UNIMPL		utimes
-272	UNIMPL		fadvise64_64
+272	STD		{ int|linux_sys||fadvise64_64(int fd, \
+			    linux_off_t offset, linux_off_t len, int advice); }
 273	UNIMPL		vserver
 274	UNIMPL		mbind
 275	UNIMPL		get_mempolicy

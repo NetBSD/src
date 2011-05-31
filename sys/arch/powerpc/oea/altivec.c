@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.16.2.1 2011/03/05 20:51:39 rmind Exp $	*/
+/*	$NetBSD: altivec.c,v 1.16.2.2 2011/05/31 03:04:14 rmind Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.16.2.1 2011/03/05 20:51:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.16.2.2 2011/05/31 03:04:14 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -49,66 +49,70 @@ __KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.16.2.1 2011/03/05 20:51:39 rmind Exp $
 #include <powerpc/oea/spr.h>
 #include <powerpc/psl.h>
 
-#ifdef MULTIPROCESSOR
-#include <arch/powerpc/pic/picvar.h>
-#include <arch/powerpc/pic/ipivar.h>
-static void vec_mp_save_lwp(struct lwp *);
-#endif
+static void vec_state_load(lwp_t *, bool);
+static void vec_state_save(lwp_t *);
+static void vec_state_release(lwp_t *);
+
+const pcu_ops_t vec_ops = {
+	.pcu_id = PCU_VEC,
+	.pcu_state_load = vec_state_load,
+	.pcu_state_save = vec_state_save,
+	.pcu_state_release = vec_state_release,
+};
+
+bool
+vec_used_p(lwp_t *l)
+{
+	return (l->l_md.md_flags & MDLWP_USEDVEC) != 0;
+}
 
 void
-vec_enable(void)
+vec_mark_used(lwp_t *l)
 {
-	struct cpu_info *ci = curcpu();
-	struct lwp *l = curlwp;
-	register_t msr;
-
-	KASSERT(l->l_md.md_veccpu != NULL);
-
 	l->l_md.md_flags |= MDLWP_USEDVEC;
+}
+
+void
+vec_state_load(lwp_t *l, bool used)
+{
+	struct pcb * const pcb = lwp_getpcb(l);
 
 	/*
 	 * Enable AltiVec temporarily (and disable interrupts).
 	 */
-	msr = mfmsr();
+	const register_t msr = mfmsr();
 	mtmsr((msr & ~PSL_EE) | PSL_VEC);
 	__asm volatile ("isync");
 
-	if (ci->ci_veclwp != l) {
-		struct pcb * const pcb = lwp_getpcb(l);
-		struct trapframe * const tf = l->l_md.md_utf;
+	/*
+	 * Load the vector unit from vreg which is best done in
+	 * assembly.
+	 */
+	vec_load_from_vreg(&pcb->pcb_vr);
 
-		vec_save_cpu(VEC_SAVE_AND_RELEASE);
-
-		/*
-		 * Load the vector unit from vreg which is best done in
-		 * assembly.
-		 */
-		vec_load_from_vreg(&pcb->pcb_vr);
-
-		/*
-		 * VRSAVE will be restored when trap frame returns
-		 */
-		tf->tf_vrsave = pcb->pcb_vr.vrsave;
-
-		/*
-		 * Enable AltiVec when we return to user-mode.
-		 * Record the new ownership of the AltiVec unit.
-		 */
-		ci->ci_veclwp = l;
-		l->l_md.md_veccpu = ci;
-		__asm volatile ("sync");
-	}
-	l->l_md.md_flags |= MDLWP_OWNVEC;
+	/*
+	 * VRSAVE will be restored when trap frame returns
+	 */
+	l->l_md.md_utf->tf_vrsave = pcb->pcb_vr.vrsave;
 
 	/*
 	 * Restore MSR (turn off AltiVec)
 	 */
 	mtmsr(msr);
+	__asm volatile ("isync");
+
+	/*
+	 * Mark vector registers as modified.
+	 */
+	l->l_md.md_flags |= MDLWP_USEDVEC|PSL_VEC;
+	l->l_md.md_utf->tf_srr1 |= PSL_VEC;
 }
 
 void
-vec_save_cpu(enum vec_op op)
+vec_state_save(lwp_t *l)
 {
+	struct pcb * const pcb = lwp_getpcb(l);
+
 	/*
 	 * Turn on AltiVEC, turn off interrupts.
 	 */
@@ -116,131 +120,35 @@ vec_save_cpu(enum vec_op op)
 	mtmsr((msr & ~PSL_EE) | PSL_VEC);
 	__asm volatile ("isync");
 
-	struct cpu_info * const ci = curcpu();
-	lwp_t * const l = ci->ci_veclwp;
+	/*
+	 * Grab contents of vector unit.
+	 */
+	vec_unload_to_vreg(&pcb->pcb_vr);
 
-	if (l->l_md.md_flags & MDLWP_OWNVEC) {
-		struct pcb * const pcb = lwp_getpcb(l);
-		struct trapframe * const tf = l->l_md.md_utf;
+	/*
+	 * Save VRSAVE
+	 */
+	pcb->pcb_vr.vrsave = l->l_md.md_utf->tf_vrsave;
 
-		/*
-		 * Grab contents of vector unit.
-		 */
-		vec_unload_to_vreg(&pcb->pcb_vr);
-
-		/*
-		 * Save VRSAVE
-		 */
-		pcb->pcb_vr.vrsave = tf->tf_vrsave;
-
-		/*
-		 * Note that we aren't using any CPU resources and stop any
-		 * data streams.
-		 */
-		__asm volatile ("dssall; sync");
-
-		/*
-		 * Disclaim ownership.
-		 */
-		l->l_md.md_flags &= ~MDLWP_OWNVEC;
-
-		/*
-		 * Give up the VEC unit if are releasing it too.
-		 */
-		if (op == VEC_SAVE_AND_RELEASE)
-			ci->ci_veclwp = ci->ci_data.cpu_idlelwp;
-	}
+	/*
+	 * Note that we aren't using any CPU resources and stop any
+	 * data streams.
+	 */
+	__asm volatile ("dssall; sync");
 
 	/*
 	 * Restore MSR (turn off AltiVec)
 	 */
 	mtmsr(msr);
+	__asm volatile ("isync");
 }
 
-#ifdef MULTIPROCESSOR
-/*
- * Save a process's AltiVEC state to its PCB.  The state may be in any CPU.
- * The process must either be curproc or traced by curproc (and stopped).
- * (The point being that the process must not run on another CPU during
- * this function).
- */
-static void
-vec_mp_save_lwp(struct lwp *l)
-{
-	/*
-	 * Send an IPI to the other CPU with the data and wait for that CPU
-	 * to flush the data.  Note that the other CPU might have switched
-	 * to a different proc's AltiVEC state by the time it receives the IPI,
-	 * but that will only result in an unnecessary reload.
-	 */
-
-	if ((l->l_md.md_flags & MDLWP_OWNVEC) == 0)
-		return;
-
-	ppc_send_ipi(l->l_md.md_veccpu->ci_cpuid, PPC_IPI_FLUSH_VEC);
-
-	/* Wait for flush. */
-	for (u_int i = 0; i < 0x3fffffff; i++) {
-		if ((l->l_md.md_flags & MDLWP_OWNVEC) == 0)
-			return;
-	}
-
-	panic("%s/%d timed out: pid = %d.%d, veccpu->ci_cpuid = %d\n",
-	    __func__, cpu_number(), l->l_proc->p_pid, l->l_lid,
-	    l->l_md.md_veccpu->ci_cpuid);
-}
-#endif /*MULTIPROCESSOR*/
-
-/*
- * Save a process's AltiVEC state to its PCB.  The state may be in any CPU.
- * The process must either be curproc or traced by curproc (and stopped).
- * (The point being that the process must not run on another CPU during
- * this function).
- */
 void
-vec_save_lwp(struct lwp *l, enum vec_op op)
+vec_state_release(lwp_t *l)
 {
-	struct cpu_info * const ci = curcpu();
-
-	KASSERT(l->l_md.md_veccpu != NULL);
-
-	/*
-	 * If it's already in the PCB, there's nothing to do.
-	 */
-	if ((l->l_md.md_flags & MDLWP_OWNVEC) == 0)
-		return;
-
-	/*
-	 * If we simply need to discard the information, then don't
-	 * to save anything.
-	 */
-	if (op == VEC_DISCARD) {
-#ifndef MULTIPROCESSOR
-		KASSERT(ci == l->l_md.md_veccpu);
-#endif
-		KASSERT(l == l->l_md.md_veccpu->ci_veclwp);
-		KASSERT(l == curlwp || ci == l->l_md.md_veccpu);
-		ci->ci_veclwp = ci->ci_data.cpu_idlelwp;
-		atomic_and_uint(&l->l_md.md_flags, ~MDLWP_OWNVEC);
-		return;
-	}
-
-	/*
-	 * If the state is in the current CPU, just flush the current CPU's
-	 * state.
-	 */
-	if (l == ci->ci_veclwp) {
-		vec_save_cpu(op);
-		return;
-	}
-
-
-#ifdef MULTIPROCESSOR
-	/*
-	 * It must be on another CPU, flush it from there.
-	 */
-	vec_mp_save_lwp(l);
-#endif
+	__asm volatile("dssall;sync");
+	l->l_md.md_utf->tf_srr1 &= ~PSL_VEC;
+	l->l_md.md_flags &= ~PSL_VEC;
 }
 
 void
@@ -248,8 +156,10 @@ vec_restore_from_mcontext(struct lwp *l, const mcontext_t *mcp)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
+	KASSERT(l == curlwp);
+
 	/* we don't need to save the state, just drop it */
-	vec_save_lwp(l, VEC_DISCARD);
+	pcu_discard(&vec_ops);
 	memcpy(pcb->pcb_vr.vreg, &mcp->__vrf.__vrs, sizeof (pcb->pcb_vr.vreg));
 	pcb->pcb_vr.vscr = mcp->__vrf.__vscr;
 	pcb->pcb_vr.vrsave = mcp->__vrf.__vrsave;
@@ -259,16 +169,18 @@ vec_restore_from_mcontext(struct lwp *l, const mcontext_t *mcp)
 bool
 vec_save_to_mcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 {
-	/* Save AltiVec context, if any. */
-	if ((l->l_md.md_flags & MDLWP_USEDVEC) == 0)
-		return false;
-
 	struct pcb * const pcb = lwp_getpcb(l);
+
+	KASSERT(l == curlwp);
+
+	/* Save AltiVec context, if any. */
+	if (!vec_used_p(l))
+		return false;
 
 	/*
 	 * If we're the AltiVec owner, dump its context to the PCB first.
 	 */
-	vec_save_lwp(l, VEC_SAVE);
+	pcu_save(&vec_ops);
 
 	mcp->__gregs[_REG_MSR] |= PSL_VEC;
 	mcp->__vrf.__vscr = pcb->pcb_vr.vscr;

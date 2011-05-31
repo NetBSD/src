@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.5.68.1 2011/03/05 20:51:53 rmind Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.5.68.2 2011/05/31 03:04:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.5.68.1 2011/03/05 20:51:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.5.68.2 2011/05/31 03:04:16 rmind Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -80,7 +80,8 @@ static int	giopci_bus_maxdevs(pci_chipset_tag_t, int);
 static pcireg_t	giopci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 static void	giopci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 static int	giopci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
-static int	giopci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int	giopci_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 static const char *
 		giopci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 static void    *giopci_intr_establish(int, int, int (*)(void *), void *);
@@ -222,7 +223,7 @@ giopci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt	= SGIMIPS_BUS_SPACE_MEM;
 	pba.pba_dmat	= ga->ga_dmat;
 	pba.pba_pc	= pc;
-	pba.pba_flags	= PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags	= PCI_FLAGS_MEM_OKAY;
 	/* NB: do not set PCI_FLAGS_{MRL,MRM,MWI}_OKAY  -- true ?! */
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
@@ -290,7 +291,7 @@ giopci_conf_hook(pci_chipset_tag_t pc, int bus, int device, int function,
 }
 
 static int
-giopci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+giopci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct giopci_softc *sc = pa->pa_pc->cookie;
 

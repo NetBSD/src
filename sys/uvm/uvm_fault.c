@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.173.2.8 2011/05/21 21:26:48 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.173.2.9 2011/05/31 03:05:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,15 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.173.2.8 2011/05/21 21:26:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.173.2.9 2011/05/31 03:05:14 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 
 #include <uvm/uvm.h>
@@ -356,7 +354,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 
 			pg = uvm_pagealloc(NULL,
 			    ufi != NULL ? ufi->orig_rvaddr : 0,
-			    anon, UVM_FLAG_COLORMATCH);
+			    anon, ufi != NULL ? UVM_FLAG_COLORMATCH : 0);
 			if (pg == NULL) {		/* out of RAM.  */
 				uvmfault_unlockall(ufi, amap, NULL);
 				uvmexp.fltnoram++;

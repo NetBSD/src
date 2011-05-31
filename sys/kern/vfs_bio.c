@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.223.2.3 2011/04/21 01:42:10 rmind Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.223.2.4 2011/05/31 03:05:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.223.2.3 2011/04/21 01:42:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.223.2.4 2011/05/31 03:05:04 rmind Exp $");
 
 #include "opt_bufcache.h"
 
@@ -177,7 +177,7 @@ static int buf_lotsfree(void);
 static int buf_canrelease(void);
 static u_long buf_mempoolidx(u_long);
 static u_long buf_roundsize(u_long);
-static void *buf_malloc(size_t);
+static void *buf_alloc(size_t);
 static void buf_mrelease(void *, size_t);
 static void binsheadfree(buf_t *, struct bqueue *);
 static void binstailfree(buf_t *, struct bqueue *);
@@ -623,7 +623,7 @@ buf_roundsize(u_long size)
 }
 
 static void *
-buf_malloc(size_t size)
+buf_alloc(size_t size)
 {
 	u_int n = buf_mempoolidx(size);
 	void *addr;
@@ -1254,7 +1254,7 @@ allocbuf(buf_t *bp, int size, int preserve)
 	 * If we want a buffer of a different size, re-allocate the
 	 * buffer's memory; copy old content only if needed.
 	 */
-	addr = buf_malloc(desired_size);
+	addr = buf_alloc(desired_size);
 	if (addr == NULL)
 		return ENOMEM;
 	if (preserve)
@@ -1496,7 +1496,7 @@ biowait(buf_t *bp)
  * In real life, the pagedaemon (or other system processes) wants
  * to do async stuff to, and doesn't want the buffer brelse()'d.
  * (for swap pager, that puts swap buffers on the free lists (!!!),
- * for the vn device, that puts malloc'd buffers on the free lists!)
+ * for the vn device, that puts allocated buffers on the free lists!)
  */
 void
 biodone(buf_t *bp)

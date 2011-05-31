@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.4.4 2011/04/21 01:42:12 rmind Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.4.5 2011/05/31 03:05:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.4.4 2011/04/21 01:42:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.4.5 2011/05/31 03:05:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -903,19 +903,19 @@ retry:
 	by_list = (uobj->uo_npages <=
 	    ((endoff - startoff) >> PAGE_SHIFT) * UVM_PAGE_TREE_PENALTY);
 
-#if !defined(DEBUG)
 	/*
 	 * if this vnode is known not to have dirty pages,
 	 * don't bother to clean it out.
 	 */
 
 	if ((vp->v_iflag & VI_ONWORKLST) == 0) {
+#if !defined(DEBUG)
 		if ((flags & (PGO_FREE|PGO_DEACTIVATE)) == 0) {
 			goto skip_scan;
 		}
+#endif /* !defined(DEBUG) */
 		flags &= ~PGO_CLEANIT;
 	}
-#endif /* !defined(DEBUG) */
 
 	/*
 	 * start the loop.  when scanning by list, hold the last page

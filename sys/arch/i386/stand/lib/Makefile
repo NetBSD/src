@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29.4.1 2011/03/05 20:50:44 rmind Exp $
+#	$NetBSD: Makefile,v 1.29.4.2 2011/05/31 03:04:05 rmind Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -10,6 +10,28 @@ I386_INCLUDE_DISK?= yes
 I386_INCLUDE_DOS?= no
 I386_INCLUDE_BUS?= no
 I386_INCLUDE_PS2?= yes
+
+AFLAGS.biosdelay.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosgetrtc.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosgetsystime.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosmca.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosmemps2.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosmem.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosmemx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosreboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosvbe.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.biosvideomode.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.bios_disk.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.bios_pci.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.comio.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.conio.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.dos_file.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.dump_eax.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.message.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.message32.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.pvcopy.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.putstr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.realprot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 CPPFLAGS= -I$S/lib/libsa ${I386CPPFLAGS} ${I386MISCCPPFLAGS}
 #CPPFLAGS+= -DDISK_DEBUG

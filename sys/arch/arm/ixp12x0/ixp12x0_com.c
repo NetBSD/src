@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.36.4.1 2011/03/05 20:49:36 rmind Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.36.4.2 2011/05/31 03:03:56 rmind Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.36.4.1 2011/03/05 20:49:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.36.4.2 2011/05/31 03:03:56 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -200,7 +200,7 @@ ixpcom_attach_subr(struct ixpcom_softc *sc)
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
 	}
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = ixpcomstart;
 	tp->t_param = ixpcomparam;
 	tp->t_hwiflow = ixpcomhwiflow;

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.982.2.4 2011/04/21 01:41:44 rmind Exp $
+#	$NetBSD: files,v 1.982.2.5 2011/05/31 03:04:33 rmind Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -79,7 +79,7 @@ defparam opt_poollog.h		POOL_LOGSIZE
 defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 
 defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
-				EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT
+				EXEC_ELF64 EXEC_SCRIPT
 				EXEC_ELF_NOTELESS
 
 defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
@@ -138,7 +138,6 @@ defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10, COMPAT_NETBSD
 defflag				COMPAT_OSSAUDIO
 defflag				COMPAT_FREEBSD: COMPAT_30
 defflag				COMPAT_IBCS2
-defflag				COMPAT_IRIX
 defflag				COMPAT_LINUX: COMPAT_16
 defflag				COMPAT_LINUX32 : COMPAT_LINUX
 defflag				COMPAT_OSF1
@@ -148,11 +147,8 @@ defflag				COMPAT_ULTRIX: COMPAT_50
 defflag				COMPAT_NETBSD32
 defflag				COMPAT_AOUT_M68K: COMPAT_40
 defflag				COMPAT_M68K4K
-defflag				COMPAT_MACH
-defflag				COMPAT_DARWIN
 defflag				COMPAT_VAX1K
 defflag				COMPAT_43
-defflag				COMPAT_PECOFF
 defflag	opt_compat_netbsd.h	COMPAT_NOMID
 
 #
@@ -166,9 +162,16 @@ include "crypto/blowfish/files.blowfish"
 include "crypto/cast128/files.cast128"
 include "crypto/rijndael/files.rijndael"
 include "crypto/skipjack/files.skipjack"
+include "crypto/camellia/files.camellia"
 
 # General-purpose crypto processing framework.
 include "opencrypto/files.opencrypto"
+
+#
+# Kernel history/tracing. Old UVMHIST depends upon this.
+#
+defflag opt_kernhist.h			KERNHIST KERNHIST_PRINT
+file	kern/kern_history.c		kernhist
 
 #
 # System monitoring framework
@@ -383,7 +386,7 @@ define	hippi
 define	ieee1394
 define	token
 define	sppp
-define	wlan: arc4, rijndael
+define	wlan: rijndael
 define	crypto
 
 # devices ARPing IPv4 pull this in:
@@ -835,6 +838,7 @@ defflag	opt_com.h		COM_DEBUG
 # XXX In a perfect world, this would be done with attributes
 defflag	opt_com.h		COM_16650 COM_HAYESP COM_PXA2X0 COM_AU1X00
 				COM_REGMAP
+defparam opt_com.h		COM_TOLERANCE
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
 
@@ -1302,8 +1306,6 @@ defpseudodev etherip:	ifnet, ether, arp
 
 defpseudo sequencer
 defpseudo clockctl
-defpseudo irix_kmem
-defpseudo irix_usema
 
 #
 # Accept filters.  XXX should use another registration/initialization method.
@@ -1437,14 +1439,12 @@ file	kern/bufq_priocscan.c		bufq_priocscan
 file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
-file	kern/core_netbsd.c		exec_aout | exec_coff |
-					exec_ecoff | exec_macho
+file	kern/core_netbsd.c		exec_aout | exec_coff | exec_ecoff
 file	kern/cnmagic.c
 file	kern/exec_aout.c		exec_aout
 file	kern/exec_ecoff.c		exec_ecoff
 file	kern/exec_elf32.c		exec_elf32
 file	kern/exec_elf64.c		exec_elf64
-file	kern/exec_macho.c		exec_macho
 file	kern/exec_script.c		exec_script
 file	kern/exec_subr.c
 file	kern/init_main.c

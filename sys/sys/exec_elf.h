@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.102.2.1 2011/03/05 20:56:23 rmind Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.102.2.2 2011/05/31 03:05:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -576,7 +576,7 @@ typedef struct {
 } Elf32_Move;
 
 #define	ELF32_M_SYM(info)	((info) >> 8)
-#define	ELF32_M_SIZE(info)	(info) & 0xff)
+#define	ELF32_M_SIZE(info)	((info) & 0xff)
 #define	ELF32_M_INFO(sym, size)	(((sym) << 8) + (unsigned char)(size))
 
 typedef struct {
@@ -588,7 +588,7 @@ typedef struct {
 } Elf64_Move;
 
 #define	ELF64_M_SYM(info)	((info) >> 8)
-#define	ELF64_M_SIZE(info)	(info) & 0xff)
+#define	ELF64_M_SIZE(info)	((info) & 0xff)
 #define	ELF64_M_INFO(sym, size)	(((sym) << 8) + (unsigned char)(size))
 
 /*
@@ -971,7 +971,7 @@ typedef struct {
 #define	VER_NEED_CURRENT	1
 
 /*
- * GNU Extension hidding symb
+ * GNU Extension hidding symbol
  */
 #define	VERSYM_HIDDEN		0x8000
 #define	VERSYM_VERSION		0x7fff

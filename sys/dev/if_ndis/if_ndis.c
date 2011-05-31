@@ -1,3 +1,5 @@
+/*	$NetBSD: if_ndis.c,v 1.30.4.2 2011/05/31 03:04:37 rmind Exp $	*/
+
 /*-
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -35,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.30.4.1 2010/05/30 05:17:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.30.4.2 2011/05/31 03:04:37 rmind Exp $");
 #endif
 
 
@@ -497,8 +499,8 @@ ndis_attach(dev)
 	/* start out at dispatch level */
 	win_irql = DISPATCH_LEVEL;
 
-	simple_lock_init(&sc->ndis_mtx);
-	
+	mutex_init(&sc->ndis_mtx, MUTEX_DEFAULT, IPL_NET);
+
 	/*
 	 * Hook interrupt early, since calling the driver's
 	 * init routine may trigger an interrupt. Note that
@@ -942,9 +944,11 @@ ndis_detach (dev, flags)
 	if (drv == NULL)
 		panic("couldn't find driver object");
 	windrv_destroy_pdo(drv, dev);
+
 /* 
  * TODO: Unmap dma for NetBSD
  */
+	mutex_destroy(&sc->ndis_mtx);
 
 	return(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.4.7 2011/05/19 03:43:05 rmind Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.4.8 2011/05/31 03:05:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.4.7 2011/05/19 03:43:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.4.8 2011/05/31 03:05:14 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -627,15 +627,12 @@ ubc_release(void *va, int flags)
 	KASSERT(uobj != NULL);
 
 	if (umap->flags & UMAP_PAGES_LOCKED) {
-		int slot_offset = umap->writeoff;
-		int endoff = umap->writeoff + umap->writelen;
-		int zerolen = round_page(endoff) - endoff;
-		int npages = (int)(round_page(umap->writeoff + umap->writelen)
-				   - trunc_page(umap->writeoff)) >> PAGE_SHIFT;
+		const voff_t slot_offset = umap->writeoff;
+		const voff_t endoff = umap->writeoff + umap->writelen;
+		const voff_t zerolen = round_page(endoff) - endoff;
+		const u_int npages = (round_page(endoff) -
+		    trunc_page(slot_offset)) >> PAGE_SHIFT;
 		struct vm_page *pgs[npages];
-		paddr_t pa;
-		int i;
-		bool rv;
 
 		KASSERT((umap->flags & UMAP_MAPPING_CACHED) == 0);
 		if (zerolen) {
@@ -644,7 +641,10 @@ ubc_release(void *va, int flags)
 		umap->flags &= ~UMAP_PAGES_LOCKED;
 		mutex_enter(uobj->vmobjlock);
 		mutex_enter(&uvm_pageqlock);
-		for (i = 0; i < npages; i++) {
+		for (u_int i = 0; i < npages; i++) {
+			paddr_t pa;
+			bool rv;
+
 			rv = pmap_extract(pmap_kernel(),
 			    umapva + slot_offset + (i << PAGE_SHIFT), &pa);
 			KASSERT(rv);
@@ -705,8 +705,8 @@ int
 ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
     int flags)
 {
-	voff_t off;
 	const bool overwrite = (flags & UBC_FAULTBUSY) != 0;
+	voff_t off;
 	int error;
 
 	KASSERT(todo <= uio->uio_resid);

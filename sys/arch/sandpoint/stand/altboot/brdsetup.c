@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.5.2.3 2011/04/21 01:41:22 rmind Exp $ */
+/* $NetBSD: brdsetup.c,v 1.5.2.4 2011/05/31 03:04:16 rmind Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -125,11 +125,23 @@ static struct brdprop brdlist[] = {
 	NULL, NULL, NULL, NULL }, /* must be the last */
 };
 
+/* Iomega StorCenter MC68HC908 microcontroller data packet */
+#define IOMEGA_POWER		0
+#define IOMEGA_LED		1
+#define IOMEGA_FLASH_RATE	2
+#define IOMEGA_FAN		3
+#define IOMEGA_HIGH_TEMP	4
+#define IOMEGA_LOW_TEMP		5
+#define IOMEGA_ID		6
+#define IOMEGA_CHECKSUM		7
+#define IOMEGA_PACKETSIZE	8
+
 static struct brdprop *brdprop;
 static uint32_t ticks_per_sec, ns_per_tick;
 
 static void brdfixup(void);
 static void setup(void);
+static int send_iomega(int, int, int, int, int, int, uint8_t *);
 static inline uint32_t mfmsr(void);
 static inline void mtmsr(uint32_t);
 static inline uint32_t cputype(void);
@@ -225,11 +237,6 @@ brdsetup(void)
 		/* SKnet/Marvell (sk) at dev 15 */
 		brdtype = BRD_SYNOLOGY;
 	}
-	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x8086
-	    || PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x10ec) {
-		/* Intel (wm) or RealTek (re) at dev 15 */
-		brdtype = BRD_QNAPTS;
-	}
 	else if (PCI_VENDOR(pcicfgread(dev13, PCI_ID_REG)) == 0x1106) {
 		/* VIA 6410 (viaide) at dev 13 */
 		brdtype = BRD_STORCENTER;
@@ -242,6 +249,11 @@ brdsetup(void)
 	    || PCI_VENDOR(pcicfgread(dev16, PCI_ID_REG)) == 0x1095) {
 		/* ITE (iteide) or SiI (satalink) at dev 16 */
 		brdtype = BRD_NH230NAS;
+	}
+	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x8086
+	    || PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x10ec) {
+		/* Intel (wm) or RealTek (re) at dev 15 */
+		brdtype = BRD_QNAPTS;
 	}
 
 	brdprop = brd_lookup(brdtype);
@@ -693,6 +705,7 @@ iomegabrdfix(struct brdprop *brd)
 
 	init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
 	/* illuminate LEDs */
+	(void)send_iomega('b', 'd', 2, 'a', 60, 50, NULL);
 }
 
 void
@@ -875,6 +888,46 @@ send_sat(char *msg)
 	while (*msg)
 		putchar(*msg++);
 	uart1base = savedbase;
+}
+
+static int
+send_iomega(int power, int led, int rate, int fan, int high, int low,
+    uint8_t *st)
+{
+	unsigned i, savedbase;
+	static uint8_t cur_state[IOMEGA_PACKETSIZE];
+	uint8_t buf[IOMEGA_PACKETSIZE];
+
+	buf[IOMEGA_POWER] =
+	    power >= 0 ? power : cur_state[IOMEGA_POWER];
+	buf[IOMEGA_LED] =
+	    led >= 0 ? led : cur_state[IOMEGA_LED];
+	buf[IOMEGA_FLASH_RATE] =
+	    rate >= 0 ? rate : cur_state[IOMEGA_FLASH_RATE];
+	buf[IOMEGA_FAN] =
+	    fan >= 0 ? fan : cur_state[IOMEGA_FAN];
+	buf[IOMEGA_HIGH_TEMP] =
+	    high >= 0 ? high : cur_state[IOMEGA_HIGH_TEMP];
+	buf[IOMEGA_LOW_TEMP] =
+	    low >= 0 ? low : cur_state[IOMEGA_LOW_TEMP];
+	buf[IOMEGA_ID] = 7;	/* host id */
+	buf[IOMEGA_CHECKSUM] = (buf[IOMEGA_POWER] + buf[IOMEGA_LED] +
+	    buf[IOMEGA_FLASH_RATE] + buf[IOMEGA_FAN] +
+	    buf[IOMEGA_HIGH_TEMP] + buf[IOMEGA_LOW_TEMP] +
+	    buf[IOMEGA_ID]) & 0x7f;
+
+	savedbase = uart1base;
+	uart1base = uart2base;
+	for (i = 0; i < IOMEGA_PACKETSIZE; i++)
+		putchar(buf[i]);
+	for (i = 0; i < IOMEGA_PACKETSIZE; i++)
+		buf[i] = getchar();
+	uart1base = savedbase;
+	for (i = 0; i < IOMEGA_PACKETSIZE; i++)
+		printf("%02x", buf[i]);
+	printf("\n");
+
+	return 0;
 }
 
 void

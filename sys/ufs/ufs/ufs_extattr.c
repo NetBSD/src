@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.26.4.3 2011/03/05 20:56:33 rmind Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.26.4.4 2011/05/31 03:05:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.26.4.3 2011/03/05 20:56:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.26.4.4 2011/05/31 03:05:13 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -287,13 +287,18 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 	error = ufs_lookup(&vargs);
 	PNBUF_PUT(pnbuf);
 	if (error) {
-		VOP_UNLOCK(start_dvp);
+		if (lockparent == 0) {
+			VOP_UNLOCK(start_dvp);
+		}
 		return (error);
 	}
 #if 0
 	if (target_vp == start_dvp)
 		panic("ufs_extattr_lookup: target_vp == start_dvp");
 #endif
+
+	if ((target_vp != start_dvp) && (lockparent == 0))
+		 VOP_UNLOCK(start_dvp);
 
 	KASSERT(VOP_ISLOCKED(target_vp) == LK_EXCLUSIVE);
 	*vp = target_vp;

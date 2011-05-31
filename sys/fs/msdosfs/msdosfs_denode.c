@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.37.4.6 2011/05/19 03:43:01 rmind Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.37.4.7 2011/05/31 03:04:58 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.37.4.6 2011/05/19 03:43:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.37.4.7 2011/05/31 03:04:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -686,7 +686,6 @@ msdosfs_reclaim(void *v)
 	/*
 	 * Purge old data structures associated with the denode.
 	 */
-	cache_purge(vp);
 	if (dep->de_devvp) {
 		vrele(dep->de_devvp);
 		dep->de_devvp = 0;

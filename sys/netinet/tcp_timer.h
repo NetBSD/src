@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.26.22.1 2011/04/21 01:42:14 rmind Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.26.22.2 2011/05/31 03:05:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@
 
 #define	TCP_MAXRXTSHIFT	12			/* maximum retransmits */
 
+/* Acks are delayed for 1 second; constant is in fast ticks. */
 #define	TCP_DELACK_TICKS (hz / PR_FASTHZ)	/* time to delay ACK */
 
 #ifdef	TCPTIMERS

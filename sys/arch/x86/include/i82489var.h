@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.12.22.1 2010/04/26 02:43:34 rmind Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.12.22.2 2011/05/31 03:04:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,8 +109,6 @@ struct cpu_info;
 extern void lapic_boot_init(paddr_t);
 extern void lapic_set_lvt(void);
 extern void lapic_enable(void);
-extern void lapic_suspend(void);
-extern void lapic_resume(void);
 extern void lapic_calibrate_timer(struct cpu_info *ci);
 extern void lapic_initclocks(void);
 

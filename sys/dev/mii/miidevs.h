@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.96.2.2 2011/03/05 20:53:32 rmind Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.96.2.3 2011/05/31 03:04:38 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.99 2011/01/26 18:39:04 bouyer Exp
+ *	NetBSD: miidevs,v 1.101 2011/05/28 05:55:58 matt Exp
  */
 
 /*-
@@ -246,8 +246,8 @@
 #define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
-#define	MII_MODEL_CICADA_CS8244	0x002c
-#define	MII_STR_CICADA_CS8244	"Cicada CS8244 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_VSC8244	0x002c
+#define	MII_STR_xxCICADA_VSC8244	"Vitesse VSC8244 Quad 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_CS8201B	0x0021
 #define	MII_STR_xxCICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
 
@@ -291,6 +291,8 @@
 #define	MII_STR_yyINTEL_I82566	"i82566 10/100/1000 media interface"
 #define	MII_MODEL_INTEL_I82577	0x0005
 #define	MII_STR_INTEL_I82577	"i82577 10/100/1000 media interface"
+#define	MII_MODEL_INTEL_I82579	0x0009
+#define	MII_STR_INTEL_I82579	"i82579 10/100/1000 media interface"
 #define	MII_MODEL_xxMARVELL_I82563	0x000a
 #define	MII_STR_xxMARVELL_I82563	"i82563 10/100/1000 media interface"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.32 2009/07/21 07:35:55 skrll Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.32.4.1 2011/05/31 03:03:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.32 2009/07/21 07:35:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.32.4.1 2011/05/31 03:03:55 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -227,7 +227,7 @@ fcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (!sc)
 		return ENXIO;
 	if (!(tp = sc->sc_tty))
-		sc->sc_tty = tp = ttymalloc();
+		sc->sc_tty = tp = tty_alloc();
 	if (!sc->sc_rxbuffer[0]) {
 		sc->sc_rxbuffer[0] = malloc(RX_BUFFER_SIZE, M_DEVBUF, M_WAITOK);
 		sc->sc_rxbuffer[1] = malloc(RX_BUFFER_SIZE, M_DEVBUF, M_WAITOK);

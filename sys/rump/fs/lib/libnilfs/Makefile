@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/16 20:42:46 pooka Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2011/05/31 03:05:11 rmind Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../fs/nilfs
@@ -6,6 +6,8 @@
 LIB=	rumpfs_nilfs
 
 SRCS=	nilfs_subr.c nilfs_vfsops.c nilfs_vnops.c
+
+CWARNFLAGS.clang+=	-Wno-self-assign
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

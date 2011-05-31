@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.13 2008/11/18 09:30:43 chris Exp $ */
+/* $NetBSD: if_skreg.h,v 1.13.8.1 2011/05/31 03:04:41 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1512,6 +1512,9 @@
 
 #define SK_Y2_REG1_PHY1_COMA	0x10000000
 #define SK_Y2_REG1_PHY2_COMA	0x20000000
+
+/* SK_PCI_OURREG2 32bits */
+#define SK_REG2_REV_DESC	0x00000004 /* revert byte order in descriptor */
 
 /* SK_PCI_OURREG4 32bits (Yukon-ECU only) */
 #define SK_Y2_REG4_TIMER_VALUE_MSK	(0xff << 16)

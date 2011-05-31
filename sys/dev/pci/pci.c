@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.127.2.4 2011/04/21 01:41:52 rmind Exp $	*/
+/*	$NetBSD: pci.c,v 1.127.2.5 2011/05/31 03:04:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.127.2.4 2011/04/21 01:41:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.127.2.5 2011/05/31 03:04:42 rmind Exp $");
 
 #include "opt_pci.h"
 
@@ -148,8 +148,8 @@ pciattach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	io_enabled = (pba->pba_flags & PCI_FLAGS_IO_ENABLED);
-	mem_enabled = (pba->pba_flags & PCI_FLAGS_MEM_ENABLED);
+	io_enabled = (pba->pba_flags & PCI_FLAGS_IO_OKAY);
+	mem_enabled = (pba->pba_flags & PCI_FLAGS_MEM_OKAY);
 	mrl_enabled = (pba->pba_flags & PCI_FLAGS_MRL_OKAY);
 	mrm_enabled = (pba->pba_flags & PCI_FLAGS_MRM_OKAY);
 	mwi_enabled = (pba->pba_flags & PCI_FLAGS_MWI_OKAY);
@@ -247,8 +247,8 @@ pciprint(void *aux, const char *pnp)
 		    (long)pa->pa_intrswiz, (long)pa->pa_intrpin);
 #endif
 		printf(", i/o %s, mem %s,",
-		    pa->pa_flags & PCI_FLAGS_IO_ENABLED ? "on" : "off",
-		    pa->pa_flags & PCI_FLAGS_MEM_ENABLED ? "on" : "off");
+		    pa->pa_flags & PCI_FLAGS_IO_OKAY ? "on" : "off",
+		    pa->pa_flags & PCI_FLAGS_MEM_OKAY ? "on" : "off");
 		qd = pci_lookup_quirkdata(PCI_VENDOR(pa->pa_id),
 		    PCI_PRODUCT(pa->pa_id));
 		if (qd == NULL) {
@@ -370,10 +370,6 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	 * as appropriate.
 	 */
 	pa.pa_flags = sc->sc_flags;
-	if ((csr & PCI_COMMAND_IO_ENABLE) == 0)
-		pa.pa_flags &= ~PCI_FLAGS_IO_ENABLED;
-	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0)
-		pa.pa_flags &= ~PCI_FLAGS_MEM_ENABLED;
 
 	/*
 	 * If the cache line size is not configured, then

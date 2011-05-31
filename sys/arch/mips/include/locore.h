@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.81.2.2 2011/04/21 01:41:11 rmind Exp $ */
+/* $NetBSD: locore.h,v 1.81.2.3 2011/05/31 03:04:09 rmind Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -376,7 +376,6 @@ struct mips_vmfreelist {
  * The "active" locore-function vector, and
  */
 extern const mips_locore_atomicvec_t mips_llsc_locore_atomicvec;
-extern const mips_locore_atomicvec_t mips_ras_locore_atomicvec;
 
 extern mips_locore_atomicvec_t mips_locore_atomicvec;
 extern mips_locore_jumpvec_t mips_locore_jumpvec;

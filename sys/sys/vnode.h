@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.214.2.7 2011/05/30 14:57:49 rmind Exp $	*/
+/*	$NetBSD: vnode.h,v 1.214.2.8 2011/05/31 03:05:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -338,7 +338,6 @@ extern const int	vttoif_tab[];
 #define	FSYNC_LAZY	0x0008		/* fsync: lazy sync (trickle) */
 #define	FSYNC_NOLOG	0x0010		/* fsync: do not flush the log */
 #define	FSYNC_CACHE	0x0100		/* fsync: flush disk caches too */
-#define	FSYNC_VFS	0x0200		/* fsync: via FSYNC_VFS() */
 
 #define	UPDATE_WAIT	0x0001		/* update: wait for completion */
 #define	UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
@@ -553,7 +552,7 @@ void 	vattr_null(struct vattr *);
 void	vdevgone(int, int, int, enum vtype);
 int	vfinddev(dev_t, enum vtype, struct vnode **);
 int	vflush(struct mount *, struct vnode *, int);
-void	vflushbuf(struct vnode *, int);
+int	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);
 bool	vtryget(struct vnode *);
 void 	vgone(struct vnode *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcalarm.c,v 1.10 2009/11/28 02:56:14 isaki Exp $	*/
+/*	$NetBSD: rtcalarm.c,v 1.10.4.1 2011/05/31 03:04:23 rmind Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -50,9 +51,9 @@ static char *numstr(unsigned int);
 static void showontime(unsigned int);
 static void disablealarm(void);
 static void setinfo(int, char **);
-static int strnum(const char *, int);
+static int strnum(const char *, size_t);
 
-static char *devicefile = "/dev/pow0";	/* default path */
+static const char *devicefile = "/dev/pow0";	/* default path */
 
 int
 main(int argc, char *argv[])
@@ -87,10 +88,10 @@ showinfo(void)
 
 	fd = open(devicefile, O_RDONLY);
 	if (fd < 0)
-		err("Opening %s", devicefile);
+		err(EXIT_FAILURE, "Opening %s", devicefile);
 
 	if (ioctl(fd, POWIOCGALARMINFO, &alarminfo) < 0)
-		err("POWIOCGALARMINFO");
+		err(EXIT_FAILURE, "POWIOCGALARMINFO");
 	close(fd);
 
 	if (alarminfo.al_enable) {
@@ -108,8 +109,8 @@ showinfo(void)
 			printf("Never shut down automatically.\n");
 		else
 			printf("Shut down in %d seconds (%d minutes).\n",
-			       alarminfo.al_offtime,
-			       alarminfo.al_offtime / 60);
+			       (int)alarminfo.al_offtime,
+			       (int)alarminfo.al_offtime / 60);
 	} else {
 		printf("RTC alarm is disabled.\n");
 	}
@@ -180,9 +181,9 @@ disablealarm(void)
 
 	fd = open(devicefile, O_WRONLY);
 	if (fd < 0)
-		err("Opening %s", devicefile);
+		err(EXIT_FAILURE, "Opening %s", devicefile);
 	if (ioctl(fd, POWIOCSALARMINFO, &alarminfo) < 0)
-		err("POWIOCSALARMINFO");
+		err(EXIT_FAILURE, "POWIOCSALARMINFO");
 	close(fd);
 }
 
@@ -193,7 +194,7 @@ setinfo(int argc, char **argv)
 	int             week = 0x0f;
 	int             hour = 0xffff;
 	int             day = 0xff;
-	int             offtime = 0;
+	int             off_time = 0;
 	int             dowhat = 0;
 	int             fd;
 	struct x68k_alarminfo alarminfo;
@@ -209,10 +210,10 @@ setinfo(int argc, char **argv)
 				usage();
 			break;
 		case 'm':	/* for X minits */
-			offtime = atoi(optarg);
+			off_time = atoi(optarg);
 			break;
 		case 's':	/* for X seconds */
-			offtime = atoi(optarg) / 60;
+			off_time = atoi(optarg) / 60;
 			break;
 		case 'c':	/* channel */
 			dowhat = atoi(optarg) + 0x30 - 1;
@@ -226,7 +227,7 @@ setinfo(int argc, char **argv)
 
 #ifdef DEBUG
 	printf("week: %x, day:%x, for:%d, hour:%x\n",
-	       week, day, offtime, strnum(argv[optind], 5));
+	       week, day, off_time, strnum(argv[optind], 5));
 #endif
 
 	hour = strnum(argv[optind], 5);
@@ -236,18 +237,18 @@ setinfo(int argc, char **argv)
 	alarminfo.al_enable = 1;
 	alarminfo.al_ontime = (week << 24) | (day << 16) | hour;
 	alarminfo.al_dowhat = dowhat;
-	alarminfo.al_offtime = offtime * 60;
+	alarminfo.al_offtime = off_time * 60;
 
 	fd = open(devicefile, O_WRONLY);
 	if (fd < 0)
-		err("Opening %s", devicefile);
+		err(EXIT_FAILURE, "Opening %s", devicefile);
 	if (ioctl(fd, POWIOCSALARMINFO, &alarminfo) < 0)
-		err("POWIOCSALARMINFO");
+		err(EXIT_FAILURE, "POWIOCSALARMINFO");
 	close(fd);
 }
 
 static int
-strnum(const char *str, int wid)
+strnum(const char *str, size_t wid)
 {
 	int             r;
 

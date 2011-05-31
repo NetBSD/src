@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5211reg.h,v 1.1.1.1 2008/12/11 04:46:34 alc Exp $
+ * $Id: ar5211reg.h,v 1.1.1.1.14.1 2011/05/31 03:04:58 rmind Exp $
  */
 #ifndef _DEV_ATH_AR5211REG_H
 #define _DEV_ATH_AR5211REG_H
@@ -619,8 +619,8 @@
 #define	AR_SCR_SLE	0x00030000	/* sleep enable mask */
 #define	AR_SCR_SLE_S	16		/* sleep enable bits shift */
 #define	AR_SCR_SLE_WAKE	0x00000000	/* force wake */
-#define	AR_SCR_SLE_SLP	0x00010000	/* force sleep */
-#define	AR_SCR_SLE_NORM	0x00020000	/* sleep logic normal operation */
+#define	AR_SCR_SLE_SLP	0x00010000U	/* force sleep */
+#define	AR_SCR_SLE_NORM	0x00020000U	/* sleep logic normal operation */
 #define	AR_SCR_SLE_UNITS	0x00000008	/* SCR units/TU */
 #define	AR_SCR_BITS	"\20\20SLE_SLP\21SLE"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.188.4.2 2011/04/21 01:41:12 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.188.4.3 2011/05/31 03:04:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.4.2 2011/04/21 01:41:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.4.3 2011/05/31 03:04:10 rmind Exp $");
 
 /*
  *	Manages physical address maps.
@@ -271,7 +271,7 @@ struct pmap_kernel kernel_pmap_store = {
 #endif
 	},
 };
-struct pmap		*const kernel_pmap_ptr = &kernel_pmap_store.kernel_pmap;
+struct pmap * const kernel_pmap_ptr = &kernel_pmap_store.kernel_pmap;
 
 paddr_t mips_avail_start;	/* PA of first available physical page */
 paddr_t mips_avail_end;		/* PA of last available physical page */
@@ -660,8 +660,8 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 		printf("%s: seg %u: %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR" %#"PRIxPADDR"\n",
 		    __func__, bank,
-		    seg->avail_start, seg->start, 
-		    seg->avail_end, seg->end); 
+		    seg->avail_start, seg->start,
+		    seg->avail_end, seg->end);
 
 		if (seg->avail_start != seg->start
 		    || seg->avail_start >= seg->avail_end) {
@@ -773,11 +773,11 @@ pmap_init(void)
 		 * Disable sosend_loan() in src/sys/kern/uipc_socket.c
 		 * on MIPS3 CPUs to avoid possible virtual cache aliases
 		 * and uncached mappings in pmap_enter_pv().
-		 * 
+		 *
 		 * Ideally, read only shared mapping won't cause aliases
 		 * so pmap_enter_pv() should handle any shared read only
 		 * mappings without uncached ops like ARM pmap.
-		 * 
+		 *
 		 * On the other hand, R4000 and R4400 have the virtual
 		 * coherency exceptions which will happen even on read only
 		 * mappings, so we always have to disable sosend_loan()
@@ -1491,11 +1491,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (!MIPS_HAS_R4K_MMU
 	    && pg != NULL
 	    && prot == (VM_PROT_READ | VM_PROT_EXECUTE)) {
+		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 		PMAP_COUNT(enter_exec_mapping);
 		if (!PG_MD_EXECPAGE_P(md)) {
 			mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(pa),
 			    PAGE_SIZE);
-			pmap_set_page_attributes(pg, PG_MD_EXECPAGE);
+			pmap_set_mdpage_attributes(md, PG_MD_EXECPAGE);
 			PMAP_COUNT(exec_syncicache_entry);
 		}
 	}
@@ -1695,7 +1696,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 				(void)PG_MD_PVLIST_LOCK(md, false);
 				pv_entry_t pv = &md->pvh_first;
 				if (pv->pv_pmap == NULL) {
-					pv->pv_va = va; 
+					pv->pv_va = va;
 				} else if (PG_MD_CACHED_P(md)
 				    && mips_cache_badalias(pv->pv_va, va)) {
 					mips_dcache_wbinv_range(va, PAGE_SIZE);
@@ -2014,7 +2015,7 @@ pmap_clear_modify(struct vm_page *pg)
 		if (pte->pt_entry == pt_entry) {
 			continue;
 		}
-		KASSERT(pt_entry & MIPS3_PG_V);
+		KASSERT(mips_pg_v(pt_entry));
 		/*
 		 * Why? Why?
 		 */
@@ -2238,7 +2239,7 @@ again:
 			/*
 			 * To allocate a PV, we have to release the PVLIST lock
 			 * so get the page generation.  We allocate the PV, and
-			 * then reacquire the lock.  
+			 * then reacquire the lock.
 			 */
 			PG_MD_PVLIST_UNLOCK(md);
 #endif
@@ -2345,6 +2346,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 			pmap_page_cache(pg, true);
 	}
 #endif
+#endif	/* MIPS3_PLUS */
 
 	pmap_check_pvlist(md);
 	PG_MD_PVLIST_UNLOCK(md);
@@ -2371,6 +2373,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 			PMAP_COUNT(exec_synced_remove);
 		}
 	}
+#ifdef MIPS3_PLUS	/* XXX mmu XXX */
 	if (MIPS_HAS_R4K_MMU && last)	/* XXX why */
 		mips_dcache_wbinv_range_index(va, PAGE_SIZE);
 #endif	/* MIPS3_PLUS */
@@ -2496,7 +2499,7 @@ pmap_pv_page_free(struct pool *pp, void *v)
 	if (MIPS_CACHE_VIRTUAL_ALIAS)
 		mips_dcache_inv_range(va, PAGE_SIZE);
 #endif
-	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+	struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 	KASSERT(pg != NULL);
 	pmap_clear_mdpage_attributes(VM_PAGE_TO_MD(pg), PG_MD_POOLPAGE);
 	uvm_pagefree(pg);
@@ -2623,7 +2626,7 @@ mips_pmap_map_poolpage(paddr_t pa)
 		KASSERT(pv->pv_pmap == NULL);
 		pv->pv_va = va;
 		if (PG_MD_CACHED_P(md) && mips_cache_badalias(last_va, va))
-			mips_dcache_wbinv_range_index(last_va, PAGE_SIZE); 
+			mips_dcache_wbinv_range_index(last_va, PAGE_SIZE);
 		PG_MD_PVLIST_UNLOCK(md);
 	}
 #endif

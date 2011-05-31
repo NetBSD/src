@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7.4.1 2010/05/30 05:16:55 rmind Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7.4.2 2011/05/31 03:04:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7.4.1 2010/05/30 05:16:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7.4.2 2011/05/31 03:04:06 rmind Exp $");
 
 #include "acpica.h"
 
@@ -120,7 +120,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	aaa.aa_memt = IA64_BUS_SPACE_MEM;
 	aaa.aa_pc = 0;
 	aaa.aa_pciflags =
-	    PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	    PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 	    PCI_FLAGS_MWI_OKAY;
 	aaa.aa_ic = 0;

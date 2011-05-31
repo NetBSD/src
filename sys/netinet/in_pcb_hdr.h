@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb_hdr.h,v 1.5 2007/03/04 06:03:20 christos Exp $	*/
+/*	$NetBSD: in_pcb_hdr.h,v 1.5.64.1 2011/05/31 03:05:07 rmind Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -88,6 +88,27 @@ struct inpcb_hdr {
 
 LIST_HEAD(inpcbhead, inpcb_hdr);
 
+struct vestigial_inpcb;
+
+/* Hooks for vestigial pcb entries.
+ * If vestigial entries exist for a table (TCP only)
+ * the vestigial pointer is set.
+ */
+typedef struct vestigial_hooks {
+	/* IPv4 hooks */
+	void	*(*init_ports4)(struct in_addr, u_int, int);
+	int	(*next_port4)(void *, struct vestigial_inpcb *);
+	int	(*lookup4)(struct in_addr, uint16_t,
+			   struct in_addr, uint16_t,
+			   struct vestigial_inpcb *);
+	/* IPv6 hooks */
+	void	*(*init_ports6)(const struct in6_addr*, u_int, int);
+	int	(*next_port6)(void *, struct vestigial_inpcb *);
+	int	(*lookup6)(const struct in6_addr *, uint16_t,
+			   const struct in6_addr *, uint16_t,
+			   struct vestigial_inpcb *);
+} vestigial_hooks_t;
+
 struct inpcbtable {
 	CIRCLEQ_HEAD(, inpcb_hdr) inpt_queue;
 	struct	  inpcbhead *inpt_porthashtbl;
@@ -98,6 +119,8 @@ struct inpcbtable {
 	u_long	  inpt_connecthash;
 	u_int16_t inpt_lastport;
 	u_int16_t inpt_lastlow;
+
+	vestigial_hooks_t *vestige;
 };
 #define inpt_lasthi inpt_lastport
 

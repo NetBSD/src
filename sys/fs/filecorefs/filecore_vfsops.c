@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.61.4.3 2011/05/19 03:43:00 rmind Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.61.4.4 2011/05/31 03:04:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.61.4.3 2011/05/19 03:43:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.61.4.4 2011/05/31 03:04:58 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.61.4.3 2011/05/19 03:43:00 rmi
 #include <sys/file.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/conf.h>
 #include <sys/sysctl.h>
@@ -97,11 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.61.4.3 2011/05/19 03:43:00 rmi
 #include <fs/filecorefs/filecore_mount.h>
 
 MODULE(MODULE_CLASS_VFS, filecore, NULL);
-
-MALLOC_JUSTDEFINE(M_FILECOREMNT,
-    "filecore mount", "Filecore FS mount structures");
-MALLOC_JUSTDEFINE(M_FILECORETMP,
-    "filecore temp", "Filecore FS temporary structures");
 
 static struct sysctllog *filecore_sysctl_log;
 
@@ -373,8 +367,7 @@ filecore_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct fi
 	if (error != 0)
 		goto out;
        	fcdr = (struct filecore_disc_record *)((char *)(bp->b_data) + 4);
-	fcmp = malloc(sizeof *fcmp, M_FILECOREMNT, M_WAITOK);
-	memset(fcmp, 0, sizeof *fcmp);
+	fcmp = kmem_zalloc(sizeof(*fcmp), KM_SLEEP);
 	if (fcdr->log2bpmb > fcdr->log2secsize)
 		fcmp->log2bsize = fcdr->log2bpmb;
 	else	fcmp->log2bsize = fcdr->log2secsize;
@@ -464,7 +457,7 @@ filecore_unmount(struct mount *mp, int mntflags)
 	vn_lock(fcmp->fc_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(fcmp->fc_devvp, FREAD, NOCRED);
 	vput(fcmp->fc_devvp);
-	free(fcmp, M_FILECOREMNT);
+	kmem_free(fcmp, sizeof(*fcmp));
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);

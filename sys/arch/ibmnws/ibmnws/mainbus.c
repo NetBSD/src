@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2009/03/18 16:00:13 cegger Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8.4.1 2011/05/31 03:04:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -143,7 +143,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.mba_pba.pba_pc = genppc_pct;
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_bridgetag = NULL;
-	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	mba.mba_pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);
 #endif
 

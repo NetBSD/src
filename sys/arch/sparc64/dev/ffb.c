@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.37.4.2 2011/04/21 01:41:26 rmind Exp $	*/
+/*	$NetBSD: ffb.c,v 1.37.4.3 2011/05/31 03:04:18 rmind Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.37.4.2 2011/04/21 01:41:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.37.4.3 2011/05/31 03:04:18 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -991,11 +991,6 @@ ffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct ffb_softc *sc = scr->scr_cookie;
 	
-	/*
-	 * font operations don't use the blitter so we have to wait here
-	 * in case we were scrolling
-	 */
-	
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		void *data;
 		uint32_t fg, bg;
@@ -1362,10 +1357,10 @@ ffb_set_vmode(struct ffb_softc *sc, struct videomode *mode, int btype,
 		}
 	}
 #define EDID_VID_INP	sc->sc_edid_info.edid_video_input
-	if (!(EDID_VID_INP & EDID_VIDEO_INPUT_COMPOSITE_SYNC) &&
-	    (EDID_VID_INP & EDID_VIDEO_INPUT_SYNC_ON_GRN)) {
+	if (!(EDID_VID_INP & EDID_VIDEO_INPUT_COMPOSITE_SYNC)) {
 		dcl |= FFB_DAC_DAC_CTRL_SYNC_G;
-		tgc |= FFB_DAC_TGC_VSYNC_DISABLE;
+		if (EDID_VID_INP & EDID_VIDEO_INPUT_SEPARATE_SYNCS)
+			tgc |= FFB_DAC_TGC_VSYNC_DISABLE;
 	}
 	if (EDID_VID_INP & EDID_VIDEO_INPUT_BLANK_TO_BLACK)
 		dcl |= FFB_DAC_DAC_CTRL_PED_ENABLE;

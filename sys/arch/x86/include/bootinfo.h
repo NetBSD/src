@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.16.4.1 2011/03/05 20:52:27 rmind Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.16.4.2 2011/05/31 03:04:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -37,6 +37,7 @@
 #define	BTINFO_BOOTWEDGE	10
 #define BTINFO_MODULELIST	11
 #define BTINFO_FRAMEBUFFER	12
+#define BTINFO_USERCONFCOMMANDS	13
 
 #ifndef _LOCORE
 
@@ -198,6 +199,16 @@ struct btinfo_framebuffer {
 	uint8_t bpos;
 	uint16_t vbemode;
 	uint8_t reserved[14];
+};
+
+struct bi_userconfcommand {
+	char text[80];
+};
+
+struct btinfo_userconfcommands {
+	struct btinfo_common common;
+	int num;
+	/* bi_userconfcommand list follows */
 };
 
 #endif /* _LOCORE */

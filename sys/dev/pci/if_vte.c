@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.1.4.3 2011/04/21 01:41:51 rmind Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.1.4.4 2011/05/31 03:04:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.1.4.3 2011/04/21 01:41:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.1.4.4 2011/05/31 03:04:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -948,7 +948,6 @@ vte_stats_update(struct vte_softc *sc)
 
 	/* Update ifp counters. */
 	ifp->if_opackets = stat->tx_frames;
-	ifp->if_collisions = stat->tx_late_colls;
 	ifp->if_oerrors = stat->tx_late_colls + stat->tx_underruns;
 	ifp->if_ipackets = stat->rx_frames;
 	ifp->if_ierrors = stat->rx_crcerrs + stat->rx_runts +
@@ -1024,6 +1023,8 @@ vte_txeof(struct vte_softc *sc)
 		status = le16toh(txd->tx_desc->dtst);
 		if ((status & VTE_DTST_TX_OWN) != 0)
 			break;
+		if ((status & VTE_DTST_TX_OK) != 0)
+			ifp->if_collisions += (status & 0xf);
 		sc->vte_cdata.vte_tx_cnt--;
 		/* Reclaim transmitted mbufs. */
 		bus_dmamap_sync(sc->vte_dmatag, txd->tx_dmamap, 0, 
@@ -1352,6 +1353,7 @@ vte_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
+	/* calling mii_mediachg will call back vte_start_mac() */
 	if ((error = mii_mediachg(&sc->vte_mii)) == ENXIO)
 		error = 0;
 	else if (error != 0) {
@@ -1456,6 +1458,7 @@ vte_start_mac(struct vte_softc *sc)
 			aprint_error_dev(sc->vte_dev,
 			    "could not enable RX/TX MAC(0x%04x)!\n", mcr);
 	}
+	vte_rxfilter(sc);
 }
 
 static void
@@ -1577,7 +1580,7 @@ vte_rxfilter(struct vte_softc *sc)
 	ifp = &sc->vte_if;
 
 	DPRINTF(("vte_rxfilter\n"));
-	bzero(mchash, sizeof(mchash));
+	memset(mchash, 0, sizeof(mchash));
 	for (i = 0; i < VTE_RXFILT_PERFECT_CNT; i++) {
 		rxfilt_perf[i][0] = 0xFFFF;
 		rxfilt_perf[i][1] = 0xFFFF;
@@ -1586,9 +1589,9 @@ vte_rxfilter(struct vte_softc *sc)
 
 	mcr = CSR_READ_2(sc, VTE_MCR0);
 	DPRINTF(("vte_rxfilter mcr 0x%x\n", mcr));
-	mcr &= ~(MCR0_PROMISC | MCR0_BROADCAST | MCR0_MULTICAST);
-	if ((ifp->if_flags & IFF_BROADCAST) != 0)
-		mcr |= MCR0_BROADCAST;
+	mcr &= ~(MCR0_PROMISC | MCR0_BROADCAST_DIS | MCR0_MULTICAST);
+	if ((ifp->if_flags & IFF_BROADCAST) == 0)
+		mcr |= MCR0_BROADCAST_DIS;
 	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
 		if ((ifp->if_flags & IFF_PROMISC) != 0)
 			mcr |= MCR0_PROMISC;
@@ -1604,7 +1607,7 @@ vte_rxfilter(struct vte_softc *sc)
 	ETHER_FIRST_MULTI(step, &sc->vte_ec, enm);
 	nperf = 0;
 	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
 			sc->vte_if.if_flags |= IFF_ALLMULTI;
 			mcr |= MCR0_MULTICAST;
 			mchash[0] = 0xFFFF;
@@ -1624,10 +1627,10 @@ vte_rxfilter(struct vte_softc *sc)
 			rxfilt_perf[nperf][1] = eaddr[3] << 8 | eaddr[2];
 			rxfilt_perf[nperf][2] = eaddr[5] << 8 | eaddr[4];
 			nperf++;
-			continue;
+		} else {
+			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+			mchash[crc >> 30] |= 1 << ((crc >> 26) & 0x0F);
 		}
-		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
-		mchash[crc >> 30] |= 1 << ((crc >> 26) & 0x0F);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	if (mchash[0] != 0 || mchash[1] != 0 || mchash[2] != 0 ||

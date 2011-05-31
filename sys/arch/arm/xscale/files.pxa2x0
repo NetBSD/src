@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.16 2009/04/21 03:00:29 nonaka Exp $
+#	$NetBSD: files.pxa2x0,v 1.16.4.1 2011/05/31 03:03:56 rmind Exp $
 #
 # Configuration info for Intel PXA2[751]0 CPU support
 #
@@ -42,6 +42,7 @@ file	arch/arm/sa11x0/sa11x0_ost.c		saost needs-flag
 # LCD controller
 device lcd: wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation
 file arch/arm/xscale/pxa2x0_lcd.c		lcd needs-flag
+defflag	opt_pxa2x0_lcd.h		PXA2X0_LCD_WRITETHROUGH
 
 # XXX this is a hack to use dev/pcmcia without fdc.c
 device	fdc

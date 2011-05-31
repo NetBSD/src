@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.53.2.2 2011/03/05 20:53:31 rmind Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.53.2.3 2011/05/31 03:04:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.53.2.2 2011/03/05 20:53:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.53.2.3 2011/05/31 03:04:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,8 @@ struct brgphy_softc {
 	struct mii_softc sc_mii;
 	bool sc_isbge;
 	bool sc_isbnx;
-	int sc_bge_flags;
-	int sc_bnx_flags;
+	uint32_t sc_chipid;    /* parent's chipid */
+	uint32_t sc_phyflags;  /* parent's phyflags */
 };
 
 CFATTACH_DECL3_NEW(brgphy, sizeof(struct brgphy_softc),
@@ -111,6 +111,7 @@ static void	brgphy_adc_bug(struct mii_softc *);
 static void	brgphy_5704_a0_bug(struct mii_softc *);
 static void	brgphy_ber_bug(struct mii_softc *);
 static void	brgphy_crc_bug(struct mii_softc *);
+static void	brgphy_disable_early_dac(struct mii_softc *);
 static void	brgphy_jumbo_settings(struct mii_softc *);
 static void	brgphy_eth_wirespeed(struct mii_softc *);
 
@@ -251,18 +252,19 @@ brgphyattach(device_t parent, device_t self, void *aux)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
 
-	if (device_is_a(parent, "bge")) {
+	if (device_is_a(parent, "bge"))
 		bsc->sc_isbge = true;
-		dict = device_properties(parent);
-		if (!prop_dictionary_get_uint32(dict, "phyflags",
-		    &bsc->sc_bge_flags))
-			aprint_error_dev(self, "failed to get phyflags");
-	} else if (device_is_a(parent, "bnx")) {
+	else if (device_is_a(parent, "bnx"))
 		bsc->sc_isbnx = true;
+
+	if (bsc->sc_isbge || bsc->sc_isbnx) {
 		dict = device_properties(parent);
 		if (!prop_dictionary_get_uint32(dict, "phyflags",
-		    &bsc->sc_bnx_flags))
-			aprint_error_dev(self, "failed to get phyflags");
+		    &bsc->sc_phyflags))
+			aprint_error_dev(self, "failed to get phyflags\n");
+		if (!prop_dictionary_get_uint32(dict, "chipid",
+		    &bsc->sc_chipid))
+			aprint_error_dev(self, "failed to get chipid\n");
 	}
 
 	aprint_normal_dev(self, "");
@@ -287,7 +289,7 @@ brgphyattach(device_t parent, device_t self, void *aux)
 				 * on the BCM5708S and BCM5709S controllers.
 				 */
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-				if (bsc->sc_bnx_flags
+				if (bsc->sc_phyflags
 				    & BNX_PHY_2_5G_CAPABLE_FLAG) {
 					ADD(IFM_MAKEWORD(IFM_ETHER, IFM_2500_SX,
 					    IFM_FDX, sc->mii_inst), 0);
@@ -627,18 +629,19 @@ brgphy_reset(struct mii_softc *sc)
 	if (bsc->sc_isbge) {
 		if (!(sc->mii_flags & MIIF_HAVEFIBER)) {
 
-			if (bsc->sc_bge_flags & BGE_PHY_ADC_BUG)
+			if (bsc->sc_phyflags & BGE_PHY_ADC_BUG)
 				brgphy_adc_bug(sc);
-			if (bsc->sc_bge_flags & BGE_PHY_5704_A0_BUG)
+			if (bsc->sc_phyflags & BGE_PHY_5704_A0_BUG)
 				brgphy_5704_a0_bug(sc);
-			if (bsc->sc_bge_flags & BGE_PHY_BER_BUG)
+			if (bsc->sc_phyflags & BGE_PHY_BER_BUG)
 				brgphy_ber_bug(sc);
-			else if (bsc->sc_bge_flags & BGE_PHY_JITTER_BUG) {
+			else if (bsc->sc_phyflags & BGE_PHY_JITTER_BUG) {
 				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0c00);
 				PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG,
 				    0x000a);
 
-				if (bsc->sc_bge_flags & BGE_PHY_ADJUST_TRIM) {
+				if (bsc->sc_phyflags 
+				    & BGE_PHY_ADJUST_TRIM) {
 					PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT,
 					    0x110b);
 					PHY_WRITE(sc, BRGPHY_TEST1,
@@ -650,11 +653,11 @@ brgphy_reset(struct mii_softc *sc)
 
 				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0400);
 			}
-			if (bsc->sc_bge_flags & BGE_PHY_CRC_BUG)
+			if (bsc->sc_phyflags & BGE_PHY_CRC_BUG)
 				brgphy_crc_bug(sc);
 
 			/* Set Jumbo frame settings in the PHY. */
-			if (bsc->sc_bge_flags & BGE_JUMBO_CAPABLE)
+			if (bsc->sc_phyflags & BGE_JUMBO_CAPABLE)
 				brgphy_jumbo_settings(sc);
 
 			/* Adjust output voltage */
@@ -662,12 +665,12 @@ brgphy_reset(struct mii_softc *sc)
 				PHY_WRITE(sc, BRGPHY_MII_EPHY_PTEST, 0x12);
 
 			/* Enable Ethernet@Wirespeed */
-			if (!(bsc->sc_bge_flags & BGE_NO_ETH_WIRE_SPEED))
+			if (!(bsc->sc_phyflags & BGE_NO_ETH_WIRE_SPEED))
 				brgphy_eth_wirespeed(sc);
 
 #if 0
 			/* Enable Link LED on Dell boxes */
-			if (bsc->sc_bge_flags & BGE_NO_3LED) {
+			if (bsc->sc_phyflags & BGE_NO_3LED) {
 				PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
 				PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
 					& ~BRGPHY_PHY_EXTCTL_3_LED);
@@ -737,7 +740,7 @@ brgphy_reset(struct mii_softc *sc)
 			    ~BRGPHY_SD_DIG_1000X_CTL1_AUTODET) |
 			    BRGPHY_SD_DIG_1000X_CTL1_FIBER);
 
-			if (bsc->sc_bnx_flags & BNX_PHY_2_5G_CAPABLE_FLAG) {
+			if (bsc->sc_phyflags & BNX_PHY_2_5G_CAPABLE_FLAG) {
 				/* Select the Over 1G block of the AN MMD. */
 				PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
 				    BRGPHY_BLOCK_ADDR_OVER_1G);
@@ -777,6 +780,16 @@ brgphy_reset(struct mii_softc *sc)
                         PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
                             BRGPHY_BLOCK_ADDR_COMBO_IEEE0);
 
+		} else if (_BNX_CHIP_NUM(bsc->sc_chipid) == BNX_CHIP_NUM_5709) {
+			if (_BNX_CHIP_REV(bsc->sc_chipid) == BNX_CHIP_REV_Ax ||
+			    _BNX_CHIP_REV(bsc->sc_chipid) == BNX_CHIP_REV_Bx)
+				brgphy_disable_early_dac(sc);
+
+			/* Set Jumbo frame settings in the PHY. */
+			brgphy_jumbo_settings(sc);
+
+			/* Enable Ethernet@Wirespeed */
+			brgphy_eth_wirespeed(sc);
 		} else {
 			if (!(sc->mii_flags & MIIF_HAVEFIBER)) {
 				brgphy_ber_bug(sc);
@@ -952,6 +965,18 @@ brgphy_crc_bug(struct mii_softc *sc)
 
 	for (i = 0; dspcode[i].reg != 0; i++)
 		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+}
+
+static void
+brgphy_disable_early_dac(struct mii_softc *sc)
+{
+	uint32_t val;
+
+	PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG, 0x0f08);
+	val = PHY_READ(sc, BRGPHY_MII_DSP_RW_PORT);
+	val &= ~(1 << 8);
+	PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT, val);
+
 }
 
 static void

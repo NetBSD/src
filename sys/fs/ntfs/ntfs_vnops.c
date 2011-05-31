@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.46.4.1 2010/07/03 01:19:50 rmind Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.46.4.2 2011/05/31 03:04:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.46.4.1 2010/07/03 01:19:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.46.4.2 2011/05/31 03:04:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,8 +246,6 @@ ntfs_reclaim(void *v)
 	if ((error = ntfs_ntget(ip)) != 0)
 		return (error);
 
-	/* Purge old data structures associated with the inode. */
-	cache_purge(vp);
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);
 		ip->i_devvp = NULL;
@@ -756,9 +754,7 @@ ntfs_fsync(void *v)
 	}
 
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
-	vflushbuf(vp, wait);
-
-	return 0;
+	return vflushbuf(vp, wait);
 }
 
 /*

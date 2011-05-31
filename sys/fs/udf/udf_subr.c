@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.104.2.4 2011/05/19 03:43:02 rmind Exp $ */
+/* $NetBSD: udf_subr.c,v 1.104.2.5 2011/05/31 03:05:00 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.104.2.4 2011/05/19 03:43:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.104.2.5 2011/05/31 03:05:00 rmind Exp $");
 #endif /* not lint */
 
 
@@ -1829,10 +1829,10 @@ udf_write_metadata_partition_spacetable(struct udf_mount *ump, int waitfor)
 			NULL, NULL);
 
 	bitmap_node->i_flags |= IN_MODIFIED;
-	vflushbuf(bitmap_node->vnode, 1 /* sync */);
-
-	error = VOP_FSYNC(bitmap_node->vnode,
-			FSCRED, FSYNC_WAIT, 0, 0);
+	error = vflushbuf(bitmap_node->vnode, 1 /* sync */);
+	if (error == 0)
+		error = VOP_FSYNC(bitmap_node->vnode,
+				FSCRED, FSYNC_WAIT, 0, 0);
 
 	if (error)
 		printf( "Error writing out metadata partition unalloced "
@@ -2833,7 +2833,9 @@ udf_writeout_vat(struct udf_mount *ump)
 
 //	mutex_exit(&ump->allocate_mutex);
 
-	vflushbuf(ump->vat_node->vnode, 1 /* sync */);
+	error = vflushbuf(ump->vat_node->vnode, 1 /* sync */);
+	if (error)
+		goto out;
 	error = VOP_FSYNC(ump->vat_node->vnode,
 			FSCRED, FSYNC_WAIT, 0, 0);
 	if (error)
@@ -3778,7 +3780,7 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 		/* write out the VAT data and all its descriptors */
 		DPRINTF(VOLUMES, ("writeout vat_node\n"));
 		udf_writeout_vat(ump);
-		vflushbuf(ump->vat_node->vnode, 1 /* sync */);
+		(void) vflushbuf(ump->vat_node->vnode, 1 /* sync */);
 
 		(void) VOP_FSYNC(ump->vat_node->vnode,
 				FSCRED, FSYNC_WAIT, 0, 0);

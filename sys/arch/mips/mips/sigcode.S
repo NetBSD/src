@@ -1,9 +1,8 @@
-/*	$NetBSD: sigcode.S,v 1.3 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.3.100.1 2011/05/31 03:04:10 rmind Exp $	*/
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
 #include "opt_compat_linux.h"
-#include "opt_compat_irix.h"
 
 #include <mips/signal.h>
 #include <sys/syscall.h>
@@ -12,9 +11,6 @@
 #endif
 #ifdef COMPAT_LINUX
 #include <compat/linux/linux_syscall.h>
-#endif
-#ifdef COMPAT_IRIX
-#include <compat/irix/irix_syscall.h>
 #endif
 
 #include <mips/asm.h>

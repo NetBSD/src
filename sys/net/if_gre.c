@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.142.4.2 2010/07/03 01:19:59 rmind Exp $ */
+/*	$NetBSD: if_gre.c,v 1.142.4.3 2011/05/31 03:05:06 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.142.4.2 2010/07/03 01:19:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.142.4.3 2011/05/31 03:05:06 rmind Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -350,7 +350,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_fd = -1;
 
 	rc = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, gre_fp_recvloop, sc,
-	    NULL, sc->sc_if.if_xname);
+	    NULL, "%s", sc->sc_if.if_xname);
 
 	if (rc != 0)
 		return -1;

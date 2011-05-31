@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.24.4.2 2011/04/21 01:41:33 rmind Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.24.4.3 2011/05/31 03:04:24 rmind Exp $	*/
 
 /*
  *
@@ -76,14 +76,6 @@ extern unsigned long *xpmap_phys_to_machine_mapping;
 #define pfn_to_mfn(pfn) (xpmap_phys_to_machine_mapping[(pfn)])
 
 static __inline paddr_t
-xpmap_mtop(paddr_t mpa)
-{
-	return (
-	    ((paddr_t)machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT)
-	    + XPMAP_OFFSET) | (mpa & ~PG_FRAME);
-}
-
-static __inline paddr_t
 xpmap_mtop_masked(paddr_t mpa)
 {
 	return (
@@ -92,11 +84,9 @@ xpmap_mtop_masked(paddr_t mpa)
 }
 
 static __inline paddr_t
-xpmap_ptom(paddr_t ppa)
+xpmap_mtop(paddr_t mpa)
 {
-	return (((paddr_t)xpmap_phys_to_machine_mapping[(ppa -
-	    XPMAP_OFFSET) >> PAGE_SHIFT]) << PAGE_SHIFT)
-		| (ppa & ~PG_FRAME);
+	return (xpmap_mtop_masked(mpa) | (mpa & ~PG_FRAME));
 }
 
 static __inline paddr_t
@@ -104,6 +94,12 @@ xpmap_ptom_masked(paddr_t ppa)
 {
 	return (((paddr_t)xpmap_phys_to_machine_mapping[(ppa -
 	    XPMAP_OFFSET) >> PAGE_SHIFT]) << PAGE_SHIFT);
+}
+
+static __inline paddr_t
+xpmap_ptom(paddr_t ppa)
+{
+	return (xpmap_ptom_masked(ppa) | (ppa & ~PG_FRAME));
 }
 
 static inline void

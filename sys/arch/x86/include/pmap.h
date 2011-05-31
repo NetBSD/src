@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29.2.10 2011/05/19 03:42:59 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.2.11 2011/05/31 03:04:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,8 +67,6 @@
 #ifndef _X86_PMAP_H_
 #define	_X86_PMAP_H_
 
-#define ptei(VA)	(((VA_SIGN_POS(VA)) & L1_MASK) >> L1_SHIFT)
-
 /*
  * pl*_pi: index in the ptp page for a pde mapping a VA.
  * (pl*_i below is the index in the virtual array of all pdes per level)
@@ -80,6 +78,8 @@
 
 /*
  * pl*_i: generate index into pde/pte arrays in virtual space
+ *
+ * pl_i(va, X) == plX_i(va) <= pl_i_roundup(va, X)
  */
 #define pl1_i(VA)	(((VA_SIGN_POS(VA)) & L1_FRAME) >> L1_SHIFT)
 #define pl2_i(VA)	(((VA_SIGN_POS(VA)) & L2_FRAME) >> L2_SHIFT)
@@ -394,13 +394,11 @@ bool	sse2_idlezero_page(void *);
 
 #ifdef XEN
 
+#include <sys/bitops.h>
+
 #define XPTE_MASK	L1_FRAME
-/* XPTE_SHIFT = L1_SHIFT - log2(sizeof(pt_entry_t)) */
-#if defined(__x86_64__) || defined(PAE)
-#define XPTE_SHIFT	9
-#else
-#define XPTE_SHIFT	10
-#endif
+/* Selects the index of a PTE in (A)PTE_BASE */
+#define XPTE_SHIFT	(L1_SHIFT - ilog2(sizeof(pt_entry_t)))
 
 /* PTE access inline fuctions */
 

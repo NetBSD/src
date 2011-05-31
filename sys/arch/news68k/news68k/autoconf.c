@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18.32.1 2011/03/05 20:51:23 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.32.2 2011/05/31 03:04:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.32.1 2011/03/05 20:51:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.32.2 2011/05/31 03:04:12 rmind Exp $");
 
 #include "scsibus.h"
 
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.32.1 2011/03/05 20:51:23 rmind Exp
 #include <machine/cpu.h>
 #include <machine/romcall.h>
 #include <machine/autoconf.h>
+
+#include <news68k/news68k/isr.h>
 
 /*
  * The following several variables are related to
@@ -90,6 +92,9 @@ cpu_configure(void)
 	 * Kick off autoconfiguration
 	 */
 	(void) splhigh();
+
+	/* Initialize the interrupt handlers. */
+	isrinit();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");

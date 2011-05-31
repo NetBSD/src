@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.80 2009/11/06 20:41:22 dyoung Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.80.4.1 2011/05/31 03:05:09 rmind Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.80 2009/11/06 20:41:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.80.4.1 2011/05/31 03:05:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,8 @@ u_int32_t ip6_temp_preferred_lifetime = DEF_TEMP_PREFERRED_LIFETIME;
 u_int32_t ip6_temp_valid_lifetime = DEF_TEMP_VALID_LIFETIME;
 int ip6_temp_regen_advance = TEMPADDR_REGEN_ADVANCE;
 
+int nd6_numroutes = 0;
+
 /* RTPREF_MEDIUM has to be 0! */
 #define RTPREF_HIGH	1
 #define RTPREF_MEDIUM	0
@@ -104,7 +106,7 @@ int ip6_temp_regen_advance = TEMPADDR_REGEN_ADVANCE;
 
 /*
  * Receive Router Solicitation Message - just for routers.
- * Router solicitation/advertisement is mostly managed by userland program
+ * Router solicitation/advertisement is mostly managed by a userland program
  * (rtadvd) so here we have no function like nd6_ra_output().
  *
  * Based on RFC 2461
@@ -206,8 +208,8 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	struct nd_defrouter *dr;
 
 	/*
-	 * We only accept RAs only when
-	 * the system-wide variable allows the acceptance, and
+	 * We only accept RAs when
+	 * the system-wide variable allows the acceptance, and the
 	 * per-interface variable allows RAs on the receiving interface.
 	 */
 	if (!nd6_accepts_rtadv(ndi))
@@ -458,6 +460,7 @@ defrouter_addreq(struct nd_defrouter *new)
 	if (newrt) {
 		nd6_rtmsg(RTM_ADD, newrt); /* tell user process */
 		newrt->rt_refcnt--;
+		nd6_numroutes++;
 	}
 	if (error == 0)
 		new->installed = 1;
@@ -561,6 +564,7 @@ defrouter_delreq(struct nd_defrouter *dr)
 			 */
 			oldrt->rt_refcnt++;
 			rtfree(oldrt);
+			nd6_numroutes--;
 		}
 	}
 
@@ -774,6 +778,12 @@ defrtrlist_update(struct nd_defrouter *new)
 
 	/* entry does not exist */
 	if (new->rtlifetime == 0) {
+		splx(s);
+		return (NULL);
+	}
+
+	if (ip6_rtadv_maxroutes <= nd6_numroutes) {
+		ICMP6_STATINC(ICMP6_STAT_DROPPED_RAROUTE);
 		splx(s);
 		return (NULL);
 	}
@@ -1044,6 +1054,11 @@ prelist_update(struct nd_prefixctl *new,
 			goto end;
 		if (new->ndpr_raf_onlink == 0 && new->ndpr_raf_auto == 0)
 			goto end;
+
+		if (ip6_rtadv_maxroutes <= nd6_numroutes) {
+			ICMP6_STATINC(ICMP6_STAT_DROPPED_RAROUTE);
+			goto end;
+		}
 
 		error = nd6_prelist_add(new, dr, &newpr);
 		if (error != 0 || newpr == NULL) {
@@ -1603,8 +1618,10 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	error = rtrequest(RTM_ADD, (struct sockaddr *)&pr->ndpr_prefix,
 	    ifa->ifa_addr, (struct sockaddr *)&mask6, rtflags, &rt);
 	if (error == 0) {
-		if (rt != NULL) /* this should be non NULL, though */
+		if (rt != NULL) { /* this should be non NULL, though */
 			nd6_rtmsg(RTM_ADD, rt);
+			nd6_numroutes++;
+		}
 		pr->ndpr_stateflags |= NDPRF_ONLINK;
 	} else {
 		nd6log((LOG_ERR, "nd6_prefix_onlink: failed to add route for a"
@@ -1647,8 +1664,10 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 		pr->ndpr_stateflags &= ~NDPRF_ONLINK;
 
 		/* report the route deletion to the routing socket. */
-		if (rt != NULL)
+		if (rt != NULL) {
 			nd6_rtmsg(RTM_DELETE, rt);
+			nd6_numroutes--;
+		}
 
 		/*
 		 * There might be the same prefix on another interface,

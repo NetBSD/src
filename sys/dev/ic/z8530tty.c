@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.127 2009/05/22 03:51:30 mrg Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.127.4.1 2011/05/31 03:04:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.127 2009/05/22 03:51:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.127.4.1 2011/05/31 03:04:37 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -390,7 +390,7 @@ zstty_attach(device_t parent, device_t self, void *aux)
 #endif
 	aprint_normal("\n");
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_dev = dev;
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;

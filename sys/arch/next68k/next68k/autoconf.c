@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23.32.1 2011/03/05 20:51:27 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23.32.2 2011/05/31 03:04:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23.32.1 2011/03/05 20:51:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23.32.2 2011/05/31 03:04:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,9 @@ cpu_configure(void)
 	extern u_int rom_intrstat;
 
 	booted_device = NULL;	/* set by device drivers (if found) */
+
+	/* Initialize the interrupt handlers. */
+	isrinit();
 
 #if 0
 	dma_rev = ((volatile u_char *)IIOV(NEXT_P_SCR1))[1];

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.3.2.3 2011/04/21 01:41:48 rmind Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.3.2.4 2011/05/31 03:04:38 rmind Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.3.2.3 2011/04/21 01:41:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.3.2.4 2011/05/31 03:04:38 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -440,7 +440,7 @@ mvpex_pci_config(struct mvpex_softc *sc, bus_space_tag_t iot,
 	pba.pba_dmat = dmat;
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = pc;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pba.pba_bus = MVPEX_STAT_PEXBUSNUM(stat);
 	pba.pba_bridgetag = NULL;
 	config_found_ia(sc->sc_dev, "pcibus", &pba, NULL);

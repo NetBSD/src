@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.68.4.2 2011/04/21 01:42:19 rmind Exp $	*/
+/*	$NetBSD: namei.h,v 1.68.4.3 2011/05/31 03:05:12 rmind Exp $	*/
 
 
 /*
@@ -184,7 +184,7 @@ struct nameidata {
 /*
  * This structure describes the elements in the cache of recent
  * names looked up by namei. NCHNAMLEN is sized to make structure
- * size a power of two to optimize malloc's. Minimum reasonable
+ * size a power of two to optimize allocations.  Minimum reasonable
  * size is 15.
  */
 
@@ -213,7 +213,6 @@ struct	namecache {
 };
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
 #include <sys/pool.h>
 
 struct mount;

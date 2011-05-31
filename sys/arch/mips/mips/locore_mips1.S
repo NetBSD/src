@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.67.4.2 2011/04/21 01:41:12 rmind Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.67.4.3 2011/05/31 03:04:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ VECTOR(MIPSX(utlb_miss), unknown)
 	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#01: k1=hi of seg0tab
 	bltz	k0, 1f				# R3000 chip bug
 	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2)#03: k0=seg offset (almost)
-	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1) #04: k1=seg0tab 
+	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1) #04: k1=seg0tab
 	andi	k0, (NBPG-(1<<PTR_SCALESHIFT))	#07: k0=seg offset (mask 0x3)
 	PTR_ADDU k1, k0				#08: k1=seg entry address
 	PTR_L	k1, 0(k1)			#09: k1=seg entry
@@ -944,10 +944,10 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	move	ra, a3
 	REG_S	ra, CALLFRAME_RA(sp)
 #endif
+	PTR_L	t9, P_MD_SYSCALL(t0)		# t9 = syscall
 	/*
 	 * Turn off FPU
 	 */
-	PTR_L	t9, P_MD_SYSCALL(t0)		# t1 = syscall
 #ifdef NOFPU
 	li	t0, MIPS_SR_INT_IE
 #else
@@ -979,9 +979,9 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 END(MIPSX(systemcall))
 
 /*----------------------------------------------------------------------------
- *      
+ *
  *	R3000 TLB exception handlers
- *      
+ *
  *----------------------------------------------------------------------------
  */
 
@@ -1198,9 +1198,9 @@ LEAF(MIPSX(tlb_write_indexed))
 	sll	a0, MIPS1_TLB_INDEX_SHIFT
 	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index register
 	nop
-	mtc0	t2, MIPS_COP_0_TLB_HI		
-	mtc0	t3, MIPS_COP_0_TLB_LOW		
-	
+	mtc0	t2, MIPS_COP_0_TLB_HI
+	mtc0	t3, MIPS_COP_0_TLB_LOW
+
 	tlbwi					# Write to the TLB entry
 
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
@@ -1325,7 +1325,7 @@ END(MIPSX(tlb_invalidate_all))
  * number of new unique ASIDs encountered.
  */
 LEAF(MIPSX(tlb_record_asids))
-	mfc0	ta3, MIPS_COP_0_TLB_HI		# save EntryHi
+	mfc0	a3, MIPS_COP_0_TLB_HI		# save EntryHi
 	li	ta0, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
 	INT_L	ta1, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
 	move	ta2, zero
@@ -1355,33 +1355,33 @@ LEAF(MIPSX(tlb_record_asids))
 
 	srl	a2, t0, 3 + LONG_SCALESHIFT	# drop low 5 bits
 	sll	a2, LONG_SCALESHIFT		# make an index for the bitmap
-	sllv	t0, ta3, t0			# t0 is mask (ta3 = 1)
+	sllv	t0, ta3, t0			# t0 is mask (ta3 == 1)
 
 	PTR_ADDU a2, a0				# index into the bitmap
 	beq	a2, ta2, 3f			# is the desired cell loaded?
 	 nop					#   yes, don't reload it
-	beqz	ta2, 2f				# has is ever been loaded?
-	 nop					#   nope, so don't have it
+	beqz	ta2, 2f				# have we ever loaded it?
+	 nop					#   nope, so don't save it
 
-	LONG_S	t2, 0(ta2)			# save the updated value
+	LONG_S	t2, 0(ta2)			# save the updated value.
 2:
 	LONG_L	t2, 0(a2)			# and load it
 	 move	ta2, a2				# remember the new cell's addr
 3:
 	and	t1, t2, t0			# see if this asid was recorded
 	sltu	t1, t1, ta3			# t1 = t1 < 1 (aka t1 == 0)
-	addu	v0, t1				# v0 += t1 
-	or	t2, t0				# or in the new ASID bit
+	addu	v0, t1				# v0 += t1
+	or	t2, t0				# or in the new ASID bits
 
 4:
 	addu	ta0, 1 << MIPS1_TLB_INDEX_SHIFT	# increment TLB entry #
-	bne	ta0, ta1, 1b			# keep looking if not at limit
+	bne	ta0, ta1, 1b			# keep lookup if not limit
 	 nop
 
 	beqz	ta2, 5f				# do we have a cell to write?
 	 nop					#   nope, nothing.
 
-	LONG_S	t2, 0(ta2)			# save the updated valu.
+	LONG_S	t2, 0(ta2)			# save the updated value.
 5:
 	mtc0	a3, MIPS_COP_0_TLB_HI		# restore entryHi
 
@@ -1393,7 +1393,7 @@ END(MIPSX(tlb_record_asids))
  *
  * mipsN_tlb_enter --
  *
- *	Entr the 
+ *	Entr the
  *
  *	mipsN_tlb_enter(size_t tlb_index, vaddr_t va_asid, uint32_t tlb_lo)
  *
@@ -1467,21 +1467,21 @@ LEAF(MIPSX(lwp_trampoline))
 	 move	a1, MIPS_CURLWP
 
 	# Call the routine specified by cpu_setfunc()
-	jalr	s0			
+	jalr	s0
 	 move	a0, s1
 
 	# Return to user (won't happen if a kernel thread)
 	.set	noat
 MIPSX(user_return):
-	REG_L	s0, CALLFRAME_SIZ+TF_REG_S0(sp)	# $16
-	REG_L	s1, CALLFRAME_SIZ+TF_REG_S1(sp)	# $16
-	REG_L	s2, CALLFRAME_SIZ+TF_REG_S2(sp)	# $16
-	REG_L	s3, CALLFRAME_SIZ+TF_REG_S3(sp)	# $16
-	REG_L	s4, CALLFRAME_SIZ+TF_REG_S4(sp)	# $16
-	REG_L	s5, CALLFRAME_SIZ+TF_REG_S5(sp)	# $16
-	REG_L	s6, CALLFRAME_SIZ+TF_REG_S6(sp)	# $16
-	REG_L	s7, CALLFRAME_SIZ+TF_REG_S7(sp)	# $16
-	REG_L	s8, CALLFRAME_SIZ+TF_REG_S8(sp)	# $30
+	REG_L	s0, CALLFRAME_SIZ+TF_REG_S0(sp)		# $16
+	REG_L	s1, CALLFRAME_SIZ+TF_REG_S1(sp)		# $17
+	REG_L	s2, CALLFRAME_SIZ+TF_REG_S2(sp)		# $18
+	REG_L	s3, CALLFRAME_SIZ+TF_REG_S3(sp)		# $19
+	REG_L	s4, CALLFRAME_SIZ+TF_REG_S4(sp)		# $20
+	REG_L	s5, CALLFRAME_SIZ+TF_REG_S5(sp)		# $21
+	REG_L	s6, CALLFRAME_SIZ+TF_REG_S6(sp)		# $22
+	REG_L	s7, CALLFRAME_SIZ+TF_REG_S7(sp)		# $23
+	REG_L	s8, CALLFRAME_SIZ+TF_REG_S8(sp)		# $30
 MIPSX(user_intr_return):
 	REG_L	a0, CALLFRAME_SIZ+TF_REG_SR(sp)
 	REG_L	t0, CALLFRAME_SIZ+TF_REG_MULLO(sp)
@@ -1526,7 +1526,7 @@ LEAF(MIPSX(setfunc_trampoline))
 
 	# Call the routine specified by cpu_setfunc()
 	PTR_LA	ra, MIPSX(user_return)
-	jr	s0			
+	jr	s0
 	 move	a0, s1
 END(MIPSX(setfunc_trampoline))
 
@@ -1627,20 +1627,20 @@ END(MIPSX(wbflush))
 #else /* !ENABLE_MIPS_TX3900 */
 /*
  *	The differences between R3900 and R3000.
- *	1. Cache system 
- *		Physical-index physical-tag	
+ *	1. Cache system
+ *		Physical-index physical-tag
  *		fixed line-size
  *		refil-size 4/8/16/32 words (set in config register)
- *		TX3912 
+ *		TX3912
  *		       Write-through
  *		       I-cache 4KB/16B direct mapped (256line)
  *		       D-cache 1KB/4B 2-way sa (128line)
- *		       Cache snoop	
+ *		       Cache snoop
  *		TX3922
  *		       Write-through/write-back (set in config register)
- *		       I-cache 16KB/16B 2-way sa 
+ *		       I-cache 16KB/16B 2-way sa
  *		       D-cache 8KB/16B 2-way sa
- *		       Cache snoop	
+ *		       Cache snoop
  *
  *	2. Coprocessor1
  *	2.1	cache operation.
@@ -1669,7 +1669,7 @@ END(tx3900_cp0_config_read)
 LEAF(MIPSX(wbflush))
 	.set push
 	.set mips2
-	sync	
+	sync
 	.set pop
 	j	ra
 	nop

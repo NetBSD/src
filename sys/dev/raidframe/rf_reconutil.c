@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.28 2007/03/04 06:02:39 christos Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.28.64.1 2011/05/31 03:04:54 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.28 2007/03/04 06:02:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.28.64.1 2011/05/31 03:04:54 rmind Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -125,13 +125,15 @@ rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc,
 	}
 
 	/* initialize the event queue */
-	simple_lock_init(&reconCtrlPtr->eq_mutex);
+	rf_init_mutex2(reconCtrlPtr->eq_mutex, IPL_VM);
+	rf_init_cond2(reconCtrlPtr->eq_cv, "rfevq");
 
 	reconCtrlPtr->eventQueue = NULL;
 	reconCtrlPtr->eq_count = 0;
 
 	/* make the floating recon buffers and append them to the free list */
-	simple_lock_init(&reconCtrlPtr->rb_mutex);
+	rf_init_mutex2(reconCtrlPtr->rb_mutex, IPL_VM);
+	rf_init_cond2(reconCtrlPtr->rb_cv, "rfrcw");
 
 	reconCtrlPtr->fullBufferList = NULL;
 	reconCtrlPtr->floatingRbufs = NULL;
@@ -170,6 +172,12 @@ rf_FreeReconControl(RF_Raid_t *raidPtr)
 		rf_FreeReconBuffer(t);
 		t = reconCtrlPtr->floatingRbufs;
 	}
+
+	rf_destroy_mutex2(reconCtrlPtr->eq_mutex);
+	rf_destroy_cond2(reconCtrlPtr->eq_cv);
+
+	rf_destroy_mutex2(reconCtrlPtr->rb_mutex);
+	rf_destroy_cond2(reconCtrlPtr->rb_cv);
 
 	rf_FreeReconMap(reconCtrlPtr->reconMap);
 	rf_FreeParityStripeStatusTable(raidPtr, reconCtrlPtr->pssTable);
@@ -262,11 +270,11 @@ rf_CheckFloatingRbufCount(RF_Raid_t *raidPtr, int dolock)
 	int     i, j, sum = 0;
 
 	if (dolock)
-		RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+		rf_lock_mutex2(raidPtr->reconControl->rb_mutex);
 	pssTable = raidPtr->reconControl->pssTable;
 
 	for (i = 0; i < raidPtr->pssTableSize; i++) {
-		RF_LOCK_MUTEX(pssTable[i].mutex);
+		rf_lock_mutex2(pssTable[i].mutex);
 		for (p = pssTable[i].chain; p; p = p->next) {
 			rbuf = (RF_ReconBuffer_t *) p->rbuf;
 			if (rbuf && rbuf->type == RF_RBUF_TYPE_FLOATING)
@@ -283,7 +291,7 @@ rf_CheckFloatingRbufCount(RF_Raid_t *raidPtr, int dolock)
 					sum++;
 			}
 		}
-		RF_UNLOCK_MUTEX(pssTable[i].mutex);
+		rf_unlock_mutex2(pssTable[i].mutex);
 	}
 
 	for (rbuf = raidPtr->reconControl->floatingRbufs; rbuf;
@@ -304,7 +312,7 @@ rf_CheckFloatingRbufCount(RF_Raid_t *raidPtr, int dolock)
 	RF_ASSERT(sum == raidPtr->numFloatingReconBufs);
 
 	if (dolock)
-		RF_UNLOCK_MUTEX(raidPtr->reconControl->rb_mutex);
+		rf_unlock_mutex2(raidPtr->reconControl->rb_mutex);
 }
 #endif
 

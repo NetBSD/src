@@ -1,7 +1,7 @@
-/*	$NetBSD: wsdisplay_vcons_util.c,v 1.1 2009/08/20 02:01:08 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons_util.c,v 1.1.6.1 2011/05/31 03:04:57 rmind Exp $ */
 
 /*-
- * Copyright (c) 2005, 2006 Michael Lorenz
+ * Copyright (c) 2009 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,5 +56,5 @@ vcons_replay_msgbuf(struct vcons_screen *scr)
 			rptr = 0;
 	}
 	scr->scr_status = status;
-	vcons_redraw_screen(scr);
+	vcons_update_screen(scr);
 }

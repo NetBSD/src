@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.8.66.1 2011/03/05 20:51:01 rmind Exp $ */
+/* $NetBSD: aupci.c,v 1.8.66.2 2011/05/31 03:04:08 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.8.66.1 2011/03/05 20:51:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.8.66.2 2011/05/31 03:04:08 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -281,7 +281,7 @@ aupciattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_dmat = aa->aa_dt;
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &sc->sc_pc;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 

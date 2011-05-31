@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.57.4.3 2011/03/05 20:55:10 rmind Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.57.4.4 2011/05/31 03:05:00 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.57.4.3 2011/03/05 20:55:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.57.4.4 2011/05/31 03:05:00 rmind Exp $");
 #endif /* not lint */
 
 
@@ -158,9 +158,6 @@ udf_reclaim(void *v)
 		vprint("udf_reclaim(): waiting for writeout\n", vp);
 		tsleep(&udf_node->outstanding_nodedscr, PRIBIO, "recl wait", hz/8);
 	}
-
-	/* purge old data from namei */
-	cache_purge(vp);
 
 	/* dispose all node knowledge */
 	udf_dispose_node(udf_node);
@@ -1481,15 +1478,9 @@ udf_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	int error;
 
 	DPRINTF(CALL, ("udf_link called\n"));
-	error = 0;
-
-	/* some quick checks */
-	if (vp->v_type == VDIR)
-		return EPERM;		/* can't link a directory */
-	if (dvp->v_mount != vp->v_mount)
-		return EXDEV;		/* can't link across devices */
-	if (dvp == vp)
-		return EPERM;		/* can't be the same */
+	KASSERT(dvp != vp);
+	KASSERT(vp->v_type != VDIR);
+	KASSERT(dvp->v_mount == vp->v_mount);
 
 	/* lock node */
 	error = vn_lock(vp, LK_EXCLUSIVE);
@@ -2220,7 +2211,9 @@ udf_fsync(void *v)
 
 	/* flush data and wait for it when requested */
 	wait = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
-	vflushbuf(vp, wait);
+	error = vflushbuf(vp, wait);
+	if (error)
+		return error;
 
 	if (udf_node == NULL) {
 		printf("udf_fsync() called on NULL udf_node!\n");

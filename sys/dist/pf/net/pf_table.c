@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_table.c,v 1.15.4.1 2010/05/30 05:17:47 rmind Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.15.4.2 2011/05/31 03:04:57 rmind Exp $	*/
 /*	$OpenBSD: pf_table.c,v 1.70 2007/05/23 11:53:45 markus Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_table.c,v 1.15.4.1 2010/05/30 05:17:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_table.c,v 1.15.4.2 2011/05/31 03:04:57 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -200,9 +200,9 @@ pfr_initialize(void)
 {
 #ifdef __NetBSD__
 	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
-	    "pfrktable", &pool_allocator_nointr, IPL_NONE);
+	    "pfrktable", &pool_allocator_nointr, IPL_NET);
 	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
-	    "pfrkentry", &pool_allocator_nointr, IPL_NONE);
+	    "pfrkentry", &pool_allocator_nointr, IPL_NET);
 	pool_init(&pfr_kentry_pl2, sizeof(struct pfr_kentry), 0, 0, 0,
 	    "pfrkentry2", NULL, IPL_SOFTNET);
 #else

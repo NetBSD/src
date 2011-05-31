@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.46 2009/11/21 05:35:40 rmind Exp $ */
+/* $NetBSD: prom.c,v 1.46.4.1 2011/05/31 03:03:52 rmind Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,13 +27,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.46 2009/11/21 05:35:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.46.4.1 2011/05/31 03:03:52 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/simplelock.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
 
@@ -55,7 +54,7 @@ int		alpha_console;
 
 extern struct prom_vec prom_dispatch_v;
 
-struct simplelock prom_slock;
+static kmutex_t	prom_lock;
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 int		prom_mapped = 1;	/* Is PROM still mapped? */
@@ -86,7 +85,7 @@ init_prom_interface(struct rpb *rpb)
         prom_dispatch_v.routine_arg = c->crb_v_dispatch;
         prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
 
-	simple_lock_init(&prom_slock);
+	mutex_init(&prom_lock, MUTEX_DEFAULT, IPL_HIGH);
 }
 
 void
@@ -107,13 +106,11 @@ init_bootstrap_console(void)
 static void prom_cache_sync(void);
 #endif
 
-int
+void
 prom_enter(void)
 {
-	int s;
 
-	s = splhigh();
-	simple_lock(&prom_slock);
+	mutex_enter(&prom_lock);
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 	/*
@@ -134,11 +131,10 @@ prom_enter(void)
 		prom_cache_sync();			/* XXX */
 	}
 #endif
-	return s;
 }
 
 void
-prom_leave(int s)
+prom_leave(void)
 {
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
@@ -157,8 +153,7 @@ prom_leave(int s)
 		prom_cache_sync();			/* XXX */
 	}
 #endif
-	simple_unlock(&prom_slock);
-	splx(s);
+	mutex_exit(&prom_lock);
 }
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
@@ -185,16 +180,15 @@ promcnputc(dev_t dev, int c)
 {
         prom_return_t ret;
 	unsigned char *to = (unsigned char *)0x20000000;
-	int s;
 
-	s = prom_enter();	/* splhigh() and map prom */
+	prom_enter();
 	*to = c;
 
 	do {
 		ret.bits = prom_putstr(alpha_console, to, 1);
 	} while ((ret.u.retval & 1) == 0);
 
-	prom_leave(s);		/* unmap prom and splx(s) */
+	prom_leave();
 }
 
 /*
@@ -206,12 +200,11 @@ int
 promcngetc(dev_t dev)
 {
         prom_return_t ret;
-	int s;
 
         for (;;) {
-		s = prom_enter();
+		prom_enter();
                 ret.bits = prom_getc(alpha_console);
-		prom_leave(s);
+		prom_leave();
                 if (ret.u.status == 0 || ret.u.status == 1)
                         return (ret.u.retval);
         }
@@ -226,11 +219,10 @@ int
 promcnlookc(dev_t dev, char *cp)
 {
         prom_return_t ret;
-	int s;
 
-	s = prom_enter();
+	prom_enter();
 	ret.bits = prom_getc(alpha_console);
-	prom_leave(s);
+	prom_leave();
 	if (ret.u.status == 0 || ret.u.status == 1) {
 		*cp = ret.u.retval;
 		return 1;
@@ -243,12 +235,11 @@ prom_getenv(int id, char *buf, int len)
 {
 	unsigned char *to = (unsigned char *)0x20000000;
 	prom_return_t ret;
-	int s;
 
-	s = prom_enter();
+	prom_enter();
 	ret.bits = prom_getenv_disp(id, to, len);
 	memcpy(buf, to, len);
-	prom_leave(s);
+	prom_leave();
 
 	if (ret.u.status & 0x4)
 		ret.u.retval = 0;

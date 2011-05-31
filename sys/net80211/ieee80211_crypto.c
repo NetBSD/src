@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.14 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.14.76.1 2011/05/31 03:05:07 rmind Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.14 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.14.76.1 2011/05/31 03:05:07 rmind Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -73,7 +73,6 @@ static	const struct ieee80211_cipher *ciphers[IEEE80211_CIPHER_MAX];
 #include <net/if_ether.h>
 #endif
 
-#include <crypto/arc4/arc4.h>	/* XXX unneeded? */
 static	int _ieee80211_crypto_delkey(struct ieee80211com *,
 		struct ieee80211_key *);
 

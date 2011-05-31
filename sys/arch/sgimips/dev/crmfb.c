@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.26.16.2 2011/04/21 01:41:23 rmind Exp $ */
+/* $NetBSD: crmfb.c,v 1.26.16.3 2011/05/31 03:04:16 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.26.16.2 2011/04/21 01:41:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.26.16.3 2011/05/31 03:04:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,9 +147,12 @@ struct crmfb_softc {
 	int			sc_width;
 	int			sc_height;
 	int			sc_depth;
+	int			sc_console_depth;
 	int			sc_tiles_x, sc_tiles_y;
 	uint32_t		sc_fbsize;
 	int			sc_mte_direction;
+	int			sc_mte_x_shift;
+	uint32_t		sc_mte_mode;
 	uint8_t			*sc_scratch;
 	paddr_t			sc_linear;
 	int			sc_wsmode;
@@ -289,6 +292,8 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 	aprint_normal_dev(sc->sc_dev, "initial resolution %dx%d\n",
 	    sc->sc_width, sc->sc_height);
 
+	sc->sc_console_depth = 8;
+
 	crmfb_setup_ddc(sc);
 	if ((sc->sc_edid_info.edid_preferred_mode != NULL)) {
 		if (crmfb_set_mode(sc, sc->sc_edid_info.edid_preferred_mode))
@@ -359,7 +364,7 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 	aprint_normal_dev(sc->sc_dev, "allocated %d byte fb @ %p (%p)\n", 
 	    sc->sc_fbsize, KERNADDR(sc->sc_dmai), KERNADDR(sc->sc_dma));
 
-	crmfb_setup_video(sc, 8);
+	crmfb_setup_video(sc, sc->sc_console_depth);
 	ri = &crmfb_console_screen.scr_ri;
 	memset(ri, 0, sizeof(struct rasops_info));
 
@@ -456,7 +461,7 @@ crmfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		if (nmode != sc->sc_wsmode) {
 			sc->sc_wsmode = nmode;
 			if (nmode == WSDISPLAYIO_MODE_EMUL) {
-				crmfb_setup_video(sc, 8);
+				crmfb_setup_video(sc, sc->sc_console_depth);
 				crmfb_setup_palette(sc);
 				vcons_redraw_screen(vd->active);
 			} else {
@@ -560,17 +565,17 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	ri = &scr->scr_ri;
 
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
-	ri->ri_depth = sc->sc_depth;
+	ri->ri_depth = sc->sc_console_depth;
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = ri->ri_width * (ri->ri_depth / 8);
-
+#if 1
 	switch (ri->ri_depth) {
 	case 16:
 		ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 5;
-		ri->ri_rpos = 10;
-		ri->ri_gpos = 5;
-		ri->ri_bpos = 0;
+		ri->ri_rpos = 11;
+		ri->ri_gpos = 6;
+		ri->ri_bpos = 1;
 		break;
 	case 32:
 		ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 8;
@@ -579,7 +584,7 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 		ri->ri_bpos = 24;
 		break;
 	}
-
+#endif
 	ri->ri_bits = KERNADDR(sc->sc_dma);
 
 	if (existing)
@@ -1012,15 +1017,30 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 		case 8:
 			mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_8 |
 			    DE_MODE_TYPE_CI | DE_MODE_PIXDEPTH_8;
+			sc->sc_mte_mode = MTE_MODE_DST_ECC |
+			    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
+			    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
+			    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT);
+			sc->sc_mte_x_shift = 0;
 			break;
 		case 16:
 			mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_16 |
-			    DE_MODE_TYPE_RGB | DE_MODE_PIXDEPTH_16;
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_16;
+			sc->sc_mte_mode = MTE_MODE_DST_ECC |
+			    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
+			    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
+			    (MTE_DEPTH_16 << MTE_DEPTH_SHIFT);
+			sc->sc_mte_x_shift = 1;
 			break;
 		case 32:
 			mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
 			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32;
 			break;
+			sc->sc_mte_mode = MTE_MODE_DST_ECC |
+			    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
+			    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
+			    (MTE_DEPTH_32 << MTE_DEPTH_SHIFT);
+			sc->sc_mte_x_shift = 2;
 		default:
 			panic("%s: unsuported colour depth %d\n", __func__,
 			    depth);
@@ -1032,11 +1052,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 
 	/* initialize memory transfer engine */
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_MODE,
-	    MTE_MODE_DST_ECC |
-	    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
-	    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
-	    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT) |
-	    MTE_MODE_COPY);
+	    sc->sc_mte_mode | MTE_MODE_COPY);
 	sc->sc_mte_direction = 1;
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST_Y_STEP, 1);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC_Y_STEP, 1);
@@ -1086,20 +1102,20 @@ static void
 crmfb_fill_rect(struct crmfb_softc *sc, int x, int y, int width, int height,
     uint32_t colour)
 {
+	int rxa, rxe;
+
+	rxa = x << sc->sc_mte_x_shift;
+	rxe = ((x + width) << sc->sc_mte_x_shift) - 1;
 	crmfb_wait_idle(sc);
 	crmfb_set_mte_direction(sc, 1);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_MODE,
-	    MTE_MODE_DST_ECC |
-	    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
-	    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
-	    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT) |
-	    0);
+	    sc->sc_mte_mode | 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_BG, colour);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST0,
-	    (x << 16) | (y & 0xffff));
+	    (rxa << 16) | (y & 0xffff));
 	bus_space_write_4(sc->sc_iot, sc->sc_reh,
 	    CRIME_MTE_DST1 | CRIME_DE_START,
-	    ((x + width - 1) << 16) | ((y + height - 1) & 0xffff));
+	    (rxe << 16) | ((y + height - 1) & 0xffff));
 }
 
 static void
@@ -1151,19 +1167,15 @@ crmfb_scroll(struct crmfb_softc *sc, int xs, int ys, int xd, int yd,
 {
 	int rxa, rya, rxe, rye, rxd, ryd, rxde, ryde;
 
-	rxa = xs;
-	rxe = xs + wi - 1;
-	rxd = xd;
-	rxde = xd + wi - 1;
+	rxa = xs << sc->sc_mte_x_shift;
+	rxd = xd << sc->sc_mte_x_shift;
+	rxe = ((xs + wi) << sc->sc_mte_x_shift) - 1;
+	rxde = ((xd + wi) << sc->sc_mte_x_shift) - 1;
 
 	crmfb_wait_idle(sc);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_MODE,
-	    MTE_MODE_DST_ECC |
-	    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
-	    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
-	    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT) |
-	    MTE_MODE_COPY);
+	    sc->sc_mte_mode | MTE_MODE_COPY);
 
 	if (ys < yd) {
 		/* bottom to top */
@@ -1317,13 +1329,14 @@ crmfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	} else {
 		crmfb_wait_idle(sc);
 		/* setup */
-		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_ROP, 3);
-		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_FG, fg);
-		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_BG, bg);
 		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_DRAWMODE,
 		    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK |
 		    DE_DRAWMODE_ROP | 
 		    DE_DRAWMODE_OPAQUE_STIP | DE_DRAWMODE_POLY_STIP);
+		wbflush();
+		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_ROP, 3);
+		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_FG, fg);
+		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_BG, bg);
 		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_PRIMITIVE,
 		    DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
 		bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_STIPPLE_MODE,
@@ -1524,12 +1537,27 @@ crmfb_set_mode(struct crmfb_softc *sc, const struct videomode *mode)
 	uint32_t d, dc;
 	int tmp, diff;
 
-	if ((mode->hdisplay % 32) != 0) {
-		aprint_error_dev(sc->sc_dev, "hdisplay (%d) is not a multiple of 32\n", mode->hdisplay);
-		return FALSE;
+	switch (mode->hdisplay % 32) {
+		case 0:
+			sc->sc_console_depth = 8;
+			break;
+		case 16:
+			sc->sc_console_depth = 16;
+			break;
+		case 8:
+		case 24:
+			sc->sc_console_depth = 32;
+			break;
+		default:
+			aprint_error_dev(sc->sc_dev,
+			    "hdisplay (%d) is not a multiple of 32\n",
+			    mode->hdisplay);
+			return FALSE;
 	}
-	if (mode->dot_clock > 140000) {
-		aprint_error_dev(sc->sc_dev, "requested dot clock is too high ( %d MHz )\n", mode->dot_clock / 1000);
+	if (mode->dot_clock > 150000) {
+		aprint_error_dev(sc->sc_dev,
+		    "requested dot clock is too high ( %d MHz )\n",
+		    mode->dot_clock / 1000);
 		return FALSE;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.23 2009/07/21 16:04:16 dyoung Exp $ */
+/*	$NetBSD: ifpga.c,v 1.23.4.1 2011/05/31 03:04:00 rmind Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.23 2009/07/21 16:04:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.23.4.1 2011/05/31 03:04:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -325,7 +325,7 @@ ifpga_attach(device_t parent, device_t self, void *aux)
 	pci_pba.pba_memt = &ifpga_pci_mem_tag;
 	pci_pba.pba_dmat = &ifpga_pci_bus_dma_tag;
 	pci_pba.pba_dmat64 = NULL;
-	pci_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pci_pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pci_pba.pba_bus = 0;
 	pci_pba.pba_bridgetag = NULL;
 	

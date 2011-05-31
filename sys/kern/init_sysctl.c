@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.173.2.3 2011/04/21 01:42:07 rmind Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.173.2.4 2011/05/31 03:05:00 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.173.2.3 2011/04/21 01:42:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.173.2.4 2011/05/31 03:05:00 rmind Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -213,13 +213,13 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "ostype",
 		       SYSCTL_DESCR("Operating system type"),
-		       NULL, 0, &ostype, 0,
+		       NULL, 0, __UNCONST(&ostype), 0,
 		       CTL_KERN, KERN_OSTYPE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "osrelease",
 		       SYSCTL_DESCR("Operating system release"),
-		       NULL, 0, &osrelease, 0,
+		       NULL, 0, __UNCONST(&osrelease), 0,
 		       CTL_KERN, KERN_OSRELEASE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
@@ -231,7 +231,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "version",
 		       SYSCTL_DESCR("Kernel version"),
-		       NULL, 0, &version, 0,
+		       NULL, 0, __UNCONST(&version), 0,
 		       CTL_KERN, KERN_VERSION, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

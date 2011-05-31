@@ -1,6 +1,10 @@
-#	$NetBSD: Makefile.netboot,v 1.8 2009/03/30 09:22:52 tsutsui Exp $
+#	$NetBSD: Makefile.netboot,v 1.8.4.1 2011/05/31 03:04:05 rmind Exp $
 
 NOMAN=	# defined
+
+UNSUPPORTED_COMPILER.clang=	# defined
+
+AFLAGS.start_rom.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 PIE_CFLAGS=
 PIE_LDFLAGS=

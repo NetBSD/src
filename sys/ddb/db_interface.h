@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.25.4.1 2011/04/21 01:41:44 rmind Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.25.4.2 2011/05/31 03:04:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -71,11 +71,5 @@ void		db_show_module_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/subr_vmem.c */
 void		db_show_all_vmems(db_expr_t, bool, db_expr_t, const char *);
-
-/*
- * This is used in several places to determine which printf format
- * string is appropriate for displaying a variable of type db_expr_t.
- */
-#define	DB_EXPR_T_IS_QUAD (/* CONSTCOND */ sizeof(db_expr_t) > sizeof(long))
 
 #endif /* _DDB_DB_INTERFACE_H_ */

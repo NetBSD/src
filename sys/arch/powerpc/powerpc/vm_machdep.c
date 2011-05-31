@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.80.4.1 2011/03/05 20:51:42 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.80.4.2 2011/05/31 03:04:15 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.4.1 2011/03/05 20:51:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.4.2 2011/05/31 03:04:15 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -93,10 +93,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct pcb * const pcb2 = lwp_getpcb(l2);
 
 #ifdef PPC_HAVE_FPU
-	fpu_save_lwp(l1, FPU_SAVE);
+	fpu_save();
 #endif
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
-	vec_save_lwp(l1, VEC_SAVE);
+	vec_save();
 #endif
 
 	/* Copy MD part of lwp and set up user trapframe pointer.  */
@@ -167,13 +167,14 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
+	KASSERT(l == curlwp);
 #ifdef PPC_HAVE_FPU
 	/* release the FPU */
-	fpu_save_lwp(l, FPU_DISCARD);
+	fpu_discard();
 #endif
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 	/* release the vector unit */
-	vec_save_lwp(l, VEC_DISCARD);
+	vec_discard();
 #endif
 
 }

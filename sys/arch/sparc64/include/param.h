@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.44 2010/02/08 19:02:32 joerg Exp $ */
+/*	$NetBSD: param.h,v 1.44.2.1 2011/05/31 03:04:19 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -230,6 +230,10 @@ extern void	delay(unsigned int);
 
 extern int cputyp;
 
+#define CPU_ISSUN4U     (cputyp == CPU_SUN4U)
+#define CPU_ISSUN4US    (cputyp == CPU_SUN4US)
+#define CPU_ISSUN4V     (cputyp == CPU_SUN4V)
+
 #endif /* _LOCORE */
 #endif /* _KERNEL */
 
@@ -240,6 +244,8 @@ extern int cputyp;
 #define CPU_SUN4C	1
 #define CPU_SUN4M	2
 #define CPU_SUN4U	3
+#define CPU_SUN4US	4
+#define CPU_SUN4V	5
 
 /*
  * Shorthand CPU-type macros. Enumerate all eight cases.
@@ -255,7 +261,6 @@ extern int cputyp;
  * extra memory references they'll generate.
  */
 
-#define CPU_ISSUN4U	(1)
 #define CPU_ISSUN4M	(0)
 #define CPU_ISSUN4C	(0)
 #define CPU_ISSUN4	(0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.23.6.1 2010/05/30 05:16:49 rmind Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.23.6.2 2011/05/31 03:04:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -519,5 +519,13 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_AGENDA_VR_VR3,
 	 TEXT("AGENDA VR3+") },
 #endif /* hpcmips */
+#ifdef hpcarm
+	{ &platid_mask_MACH_PSIONTEKLOGIX,
+	 TEXT("PSIONTEKLOGIX") },
+	{ &platid_mask_MACH_PSIONTEKLOGIX_NETBOOK,
+	 TEXT("PSIONTEKLOGIX NETBOOK") },
+	{ &platid_mask_MACH_PSIONTEKLOGIX_NETBOOK_PRO,
+	 TEXT("PSIONTEKLOGIX NETBOOK PRO") },
+#endif /* hpcarm */
 };
 int platid_name_table_size = sizeof(platid_name_table)/sizeof(*platid_name_table);

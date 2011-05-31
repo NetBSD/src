@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.41.2.1 2010/05/30 05:17:12 rmind Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.41.2.2 2011/05/31 03:04:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41.2.1 2010/05/30 05:17:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41.2.2 2011/05/31 03:04:23 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -644,7 +644,7 @@ not2:
 int
 pci_bus_flags(void)
 {
-	int rval = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	int rval = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	int device, maxndevs;
 	pcitag_t tag;
@@ -678,7 +678,7 @@ pci_bus_flags(void)
  disable_mem:
 	printf("Warning: broken PCI-Host bridge detected; "
 	    "disabling memory-mapped access\n");
-	rval &= ~(PCI_FLAGS_MEM_ENABLED|PCI_FLAGS_MRL_OKAY|PCI_FLAGS_MRM_OKAY|
+	rval &= ~(PCI_FLAGS_MEM_OKAY|PCI_FLAGS_MRL_OKAY|PCI_FLAGS_MRM_OKAY|
 	    PCI_FLAGS_MWI_OKAY);
 	return (rval);
 }

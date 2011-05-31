@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.133.4.2 2011/04/21 01:41:44 rmind Exp $	*/
+/*	$NetBSD: db_command.c,v 1.133.4.3 2011/05/31 03:04:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.133.4.2 2011/04/21 01:41:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.133.4.3 2011/05/31 03:04:34 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.133.4.2 2011/04/21 01:41:44 rmind E
 #include "opt_kgdb.h"
 #include "opt_mqueue.h"
 #include "opt_inet.h"
-#include "opt_uvmhist.h"
+#include "opt_kernhist.h"
 #include "opt_ddbparam.h"
 #include "opt_multiprocessor.h"
 #include "arp.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.133.4.2 2011/04/21 01:41:44 rmind E
 #include <sys/cpu.h>
 #include <sys/buf.h>
 #include <sys/module.h>
+#include <sys/kernhist.h>
 
 /*include queue macros*/
 #include <sys/queue.h>
@@ -205,8 +206,8 @@ static void	db_stack_trace_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_sync_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_whatis_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_uvmexp_print_cmd(db_expr_t, bool, db_expr_t, const char *);
-#ifdef UVMHIST
-static void	db_uvmhist_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+#ifdef KERNHIST
+static void	db_kernhist_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 static void	db_vnode_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_vmem_print_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -276,8 +277,8 @@ static const struct db_command db_show_cmds[] = {
 	{ DDB_ADD_CMD("uvmexp",	db_uvmexp_print_cmd, 0,
 	    "Print a selection of UVM counters and statistics.",
 	    NULL,NULL) },
-#ifdef UVMHIST
-	{ DDB_ADD_CMD("uvmhist", db_uvmhist_print_cmd, 0,
+#ifdef KERNHIST
+	{ DDB_ADD_CMD("kernhist", db_kernhist_print_cmd, 0,
 	    "Print the UVM history logs.",
 	    NULL,NULL) },
 #endif
@@ -1197,14 +1198,14 @@ db_uvmexp_print_cmd(db_expr_t addr, bool have_addr,
 #endif
 }
 
-#ifdef UVMHIST
+#ifdef KERNHIST
 /*ARGSUSED*/
 static void
-db_uvmhist_print_cmd(db_expr_t addr, bool have_addr,
+db_kernhist_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-	uvmhist_print(db_printf);
+	kernhist_print(db_printf);
 }
 #endif
 

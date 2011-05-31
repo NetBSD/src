@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.2.2.3 2011/04/21 01:41:22 rmind Exp $ */
+/* $NetBSD: siisata.c,v 1.2.2.4 2011/05/31 03:04:16 rmind Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ void *
 siisata_init(unsigned tag, void *data)
 {
 	unsigned idreg;
-	int nchan, n;
+	int n, nchan, retries;
 	struct dkdev_ata *l;
 
 	l = alloc(sizeof(struct dkdev_ata));
@@ -99,15 +99,22 @@ siisata_init(unsigned tag, void *data)
 	pcicfgwrite(tag, 0x80, 0x00);
 	pcicfgwrite(tag, 0x84, 0x00);
 
-	for (n = 0; n < nchan; n++) {
+	for (n = 0, retries = 0; n < nchan; n++) {
+		l->presense[n] = 0;
+
 		if (satapresense(l, n)) {
 			/* drive present, now check whether soft reset works */
-			if (perform_atareset(l, n)) {
-				DPRINTF(("port %d device present\n", n));
-				l->presense[n] = 1;
+			while (retries++ < 10) {
+				if (perform_atareset(l, n)) {
+					DPRINTF(("port %d device present\n", n));
+					l->presense[n] = 1;
+					break;
+				}
+				/* give the drive another second to spin up */
+				if (retries < 10)
+					delay(1000 * 1000);
 			}
-		} else
-			l->presense[n] = 0;
+		}
 	}
 	return l;
 }

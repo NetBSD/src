@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.34.4.3 2011/04/21 01:42:00 rmind Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.34.4.4 2011/05/31 03:04:51 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.34.4.3 2011/04/21 01:42:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.34.4.4 2011/05/31 03:04:51 rmind Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 8
 
@@ -107,7 +107,7 @@ static int radeonfb_ioctl(void *, void *, unsigned long, void *, int,
 static paddr_t radeonfb_mmap(void *, void *, off_t, int);
 static int radeonfb_scratch_test(struct radeonfb_softc *, int, uint32_t);
 static void radeonfb_loadbios(struct radeonfb_softc *,
-    struct pci_attach_args *);
+    const struct pci_attach_args *);
 
 static uintmax_t radeonfb_getprop_num(struct radeonfb_softc *, const char *,
     uintmax_t);
@@ -416,7 +416,7 @@ CFATTACH_DECL(radeonfb, sizeof (struct radeonfb_softc),
 static int
 radeonfb_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct pci_attach_args	*pa = aux;
+	const struct pci_attach_args	*pa = aux;
 	int			i;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_ATI)
@@ -434,7 +434,7 @@ static void
 radeonfb_attach(device_t parent, device_t dev, void *aux)
 {
 	struct radeonfb_softc	*sc = device_private(dev);
-	struct pci_attach_args	*pa = aux;
+	const struct pci_attach_args	*pa = aux;
 	const char		*mptr;
 	bus_size_t		bsz;
 	pcireg_t		screg;
@@ -1151,7 +1151,7 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 }
 
 static void
-radeonfb_loadbios(struct radeonfb_softc *sc, struct pci_attach_args *pa)
+radeonfb_loadbios(struct radeonfb_softc *sc, const struct pci_attach_args *pa)
 {
 	bus_space_tag_t		romt;
 	bus_space_handle_t	romh, biosh;

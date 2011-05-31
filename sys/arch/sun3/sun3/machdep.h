@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.36 2006/10/03 13:02:32 tsutsui Exp $	*/
+/*	$NetBSD: machdep.h,v 1.36.78.1 2011/05/31 03:04:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -126,9 +126,6 @@ void	intreg_init(void);
 
 void	isr_init(void);
 void	isr_config(void);
-
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
 
 void	netintr(void);
 

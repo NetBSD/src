@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.1.4.3 2011/03/05 20:51:37 rmind Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.1.4.4 2011/05/31 03:04:14 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -277,7 +277,7 @@
 
 #define	P20x0_EXTERNALSOURCES	12
 #define	P20x0_ONCHIPSOURCES	64
-#define	P20x0_ONCHIPBITMAP	{ 0xdd1ff7ff, 0xf9700de7 }
+#define	P20x0_ONCHIPBITMAP	{ 0xbd1ff7ff, 0xf17005e7 }
 #define	P20x0_IPISOURCES	4
 #define	P20x0_TIMERSOURCES	4
 #define	P20x0_MISOURCES		4
