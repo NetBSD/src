@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.56.4.7 2011/05/30 14:57:48 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.56.4.8 2011/05/31 01:51:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56.4.7 2011/05/30 14:57:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56.4.8 2011/05/31 01:51:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -344,7 +344,7 @@ tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
 int
 tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 {
-	struct uvm_object *uobj;
+	kmutex_t *slock;
 	int error;
 	struct vnode *vp;
 
@@ -367,16 +367,19 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 
 	/*
 	 * Get a new vnode and associate it with our inode.  Share the
-	 * lock with underlying UVM object.
+	 * lock with underlying UVM object, if there is one (VREG case).
 	 */
-	uobj = node->tn_spec.tn_reg.tn_aobj;
-	error = getnewvnode(VT_TMPFS, mp, tmpfs_vnodeop_p,
-	    uobj->vmobjlock, &vp);
+	if (node->tn_type == VREG) {
+		struct uvm_object *uobj = node->tn_spec.tn_reg.tn_aobj;
+		slock = uobj->vmobjlock;
+	} else {
+		slock = NULL;
+	}
+	error = getnewvnode(VT_TMPFS, mp, tmpfs_vnodeop_p, slock, &vp);
 	if (error != 0) {
 		mutex_exit(&node->tn_vlock);
 		return error;
 	}
-	KASSERT(uobj->vmobjlock == vp->v_interlock);
 
 	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0) {
