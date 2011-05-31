@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.1,v 1.20 2011/05/31 10:24:43 christos Exp $
+.\"	$NetBSD: rcmd.1,v 1.21 2011/05/31 11:31:10 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green.
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 .\"	from: @(#)rsh.1	6.10 (Berkeley) 7/24/91
 .\"	from: NetBSD: rsh.1,v 1.3 1997/01/09 20:21:14 tls Exp
 .\"
-.Dd September 5, 2004
+.Dd May 31, 2011
 .Dt RCMD 1
 .Os
 .Sh NAME
@@ -64,8 +64,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl 46dn
-.Op Fl p Ar port
 .Op Fl l Ar username
+.Op Fl p Ar port
 .Op Fl u Ar localusername
 .Ar host
 .Ar command
@@ -74,7 +74,7 @@
 executes
 .Ar command
 on
-.Ar host  .
+.Ar host .
 .Pp
 .Nm
 copies its standard input to the remote command, the standard
@@ -94,7 +94,7 @@ Use IPv6 addresses only.
 The
 .Fl d
 option turns on socket debugging (using
-.Xr setsockopt  2  )
+.Xr setsockopt 2 )
 on the
 .Tn TCP
 sockets used for communication with the remote host.
@@ -106,11 +106,6 @@ option allows the remote name to be specified.
 Another possible way to specify the remote username
 is the notation
 .Ar user@host .
-.It Fl u
-The
-.Fl u
-option allows the local username to be specified.
-Only the superuser is allowed to use this option.
 .It Fl n
 The
 .Fl n
@@ -125,6 +120,11 @@ Uses the given
 instead of the one assigned to the service
 .Dq shell .
 May be given either as symbolic name or as number.
+.It Fl u
+The
+.Fl u
+option allows the local username to be specified.
+Only the superuser is allowed to use this option.
 .El
 .Pp
 Shell metacharacters which are not quoted are interpreted on local machine,
@@ -167,7 +167,7 @@ that would allow the users of
 to no longer require super-user privileges.
 .Sh BUGS
 If you are using
-.Xr csh  1
+.Xr csh 1
 and put a
 .Nm
 in the background without redirecting its input away from the terminal,
@@ -183,11 +183,11 @@ option.
 You cannot use
 .Nm rcmd
 to run an interactive command (like
-.Xr rogue  6
+.Xr rogue 6
 or
-.Xr vi  1 ) .
+.Xr vi 1 ) .
 Use
-.Xr rlogin  1
+.Xr rlogin 1
 instead.
 .Pp
 The stop signal,
