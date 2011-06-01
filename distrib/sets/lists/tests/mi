@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.341 2011/05/30 18:14:11 njoly Exp $
+# $NetBSD: mi,v 1.342 2011/06/01 19:45:08 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -621,6 +621,7 @@
 ./usr/libdata/debug/usr/tests/syscall/t_mprotect.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_msync.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_nanosleep.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_poll.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_pollts.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_pselect.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_setrlimit.debug			tests-syscall-debug	debug,atf
@@ -2326,6 +2327,7 @@
 ./usr/tests/syscall/t_mprotect			tests-syscall-tests	atf
 ./usr/tests/syscall/t_msync			tests-syscall-tests	atf
 ./usr/tests/syscall/t_nanosleep			tests-syscall-tests	atf
+./usr/tests/syscall/t_poll			tests-syscall-tests	atf
 ./usr/tests/syscall/t_pollts			tests-syscall-tests	atf
 ./usr/tests/syscall/t_pselect			tests-syscall-tests	atf
 ./usr/tests/syscall/t_setrlimit			tests-syscall-tests	atf
