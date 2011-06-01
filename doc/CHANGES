@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1551 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1552 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -784,8 +784,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[christos 20101103]
 	rumpclient(3): Add a clientside library for remote rump kernel
 		access.  [pooka 20101104]
-	fujitsu(4): Add brightness and hotkey drivers for Fujitsu laptops.
-		[gsutre 20101105]
+	fujbp(4), fujhk(4): Add brightness and hotkey drivers
+		for Fujitsu laptops. [gsutre 20101105]
 	rump_sp(7): Support local domain sockets.  [pooka 20101105]
 	schide(4): Add Intel SCH IDE driver from OpenBSD.
 		[jakllsch 20101106]
