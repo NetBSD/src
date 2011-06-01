@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.314 2011/04/26 16:36:42 joerg Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.315 2011/06/01 21:24:59 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.314 2011/04/26 16:36:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.315 2011/06/01 21:24:59 alnsn Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -979,6 +979,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	cwdexec(p);
 	fd_closeexec();		/* handle close on exec */
+
+	if (__predict_false(ktrace_on))
+		fd_ktrexecfd();
+
 	execsigs(p);		/* reset catched signals */
 
 	l->l_ctxlink = NULL;	/* reset ucontext link */
