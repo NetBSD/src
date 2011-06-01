@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/05/12 14:56:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/01 14:13:42 joerg Exp $
 
 LIB=	clangTooling
 
@@ -6,7 +6,8 @@ LIB=	clangTooling
 
 .PATH: ${CLANG_SRCDIR}/lib/Tooling
 
-SRCS+=	JsonCompileCommandLineDatabase.cpp \
+SRCS+=	ASTMatcher.cpp \
+	JsonCompileCommandLineDatabase.cpp \
 	Tooling.cpp
 
 .if defined(HOSTLIB)
