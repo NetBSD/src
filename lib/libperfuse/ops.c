@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.28 2011/05/30 14:50:08 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.29 2011/06/01 07:57:24 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1370,12 +1370,6 @@ perfuse_node_close(pu, opc, flags, pcr)
 	return 0;
 }
 
-/*
- * XXX
- * This fails as unprivilegied, it should not: touch testa/testx/a
- * d-wx-wx-wx  2 root  wheel  512 Oct  5 04:32 testa/testx
- * -rwxrwxrwx  1 root  wheel  0   Oct  5 04:39 testa/testx/a
- */
 int
 perfuse_node_access(pu, opc, mode, pcr)
 	struct puffs_usermount *pu;
