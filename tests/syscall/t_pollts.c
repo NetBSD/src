@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pollts.c,v 1.2 2011/05/29 12:57:14 tron Exp $	*/
+/*	$NetBSD: t_pollts.c,v 1.3 2011/06/01 03:39:45 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <sys/time.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <poll.h>
@@ -39,23 +40,15 @@
 
 #include <atf-c.h>
 
-ATF_TC(pollts);
-ATF_TC_HEAD(pollts, tc)
+ATF_TC(pollts_basic);
+ATF_TC_HEAD(pollts_basic, tc)
 {
 	atf_tc_set_md_var(tc, "timeout", "10");
 	atf_tc_set_md_var(tc, "descr",
 	    "Basis functionality test for pollts(2)");
 }
 
-ATF_TC(pollts_sigmask);
-ATF_TC_HEAD(pollts_sigmask, tc)
-{
-	atf_tc_set_md_var(tc, "timeout", "10");
-	atf_tc_set_md_var(tc, "descr",
-	    "Check that pollts_sigmask(2) restores the signal mask");
-}
-
-ATF_TC_BODY(pollts, tc)
+ATF_TC_BODY(pollts_basic, tc)
 {
 	int fds[2];
 	struct pollfd pfds[2];
@@ -119,6 +112,42 @@ ATF_TC_BODY(pollts, tc)
 	ATF_REQUIRE_EQ(close(fds[1]), 0);
 }
 
+ATF_TC(pollts_err);
+ATF_TC_HEAD(pollts_err, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Check errors from pollts(2)");
+}
+
+ATF_TC_BODY(pollts_err, tc)
+{
+	struct timespec timeout;
+	struct pollfd pfd;
+	int fd = 0;
+
+	pfd.fd = fd;
+	pfd.events = POLLIN;
+
+	timeout.tv_sec = 1;
+	timeout.tv_nsec = 0;
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EFAULT, pollts((void *)-1, 1, &timeout, NULL) != 0);
+
+	timeout.tv_sec = -1;
+	timeout.tv_nsec = -1;
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(EINVAL, pollts(&pfd, 1, &timeout, NULL) != 0);
+}
+
+ATF_TC(pollts_sigmask);
+ATF_TC_HEAD(pollts_sigmask, tc)
+{
+	atf_tc_set_md_var(tc, "timeout", "10");
+	atf_tc_set_md_var(tc, "descr",
+	    "Check that pollts(2) restores the signal mask");
+}
+
 ATF_TC_BODY(pollts_sigmask, tc)
 {
 	int fd;
@@ -143,7 +172,7 @@ ATF_TC_BODY(pollts_sigmask, tc)
 	ATF_REQUIRE_EQ(sigfillset(&mask), 0);
 	ATF_REQUIRE_EQ(sigprocmask(SIG_UNBLOCK, &mask, NULL), 0);
 
-	/* 
+	/*
 	 * Check that pollts(2) immediately returns. We block *all*
 	 * signals during pollts(2).
 	 */
@@ -160,7 +189,9 @@ ATF_TC_BODY(pollts_sigmask, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, pollts);
+
+	ATF_TP_ADD_TC(tp, pollts_basic);
+	ATF_TP_ADD_TC(tp, pollts_err);
 	ATF_TP_ADD_TC(tp, pollts_sigmask);
 
 	return atf_no_error();
