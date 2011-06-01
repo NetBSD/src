@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.178 2011/05/24 10:08:03 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.179 2011/06/01 16:00:10 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.178 2011/05/24 10:08:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.179 2011/06/01 16:00:10 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -190,7 +190,7 @@ int autoconf_debug = 0x0;
 int console_node, console_instance;
 struct genfb_colormap_callback gfb_cb;
 static void of_set_palette(void *, int, int, int, int);
-static void copyprops(struct device *busdev, int, prop_dictionary_t);
+static void copyprops(struct device *busdev, int, prop_dictionary_t, int);
 
 static void
 get_ncpus(void)
@@ -1079,12 +1079,13 @@ noether:
 				console = true;
 			}
 		}
-		
+
+		copyprops(busdev, ofnode, dict, console);
+
 		if (console) {
 			uint64_t cmap_cb;
 			prop_dictionary_set_uint32(dict,
 			    "instance_handle", console_instance);
-			copyprops(busdev, console_node, dict);
 
 			gfb_cb.gcc_cookie = 
 			    (void *)(intptr_t)console_instance;
@@ -1093,6 +1094,20 @@ noether:
 			prop_dictionary_set_uint64(dict,
 			    "cmap_callback", cmap_cb);
 		}
+#ifdef notyet 
+		else {
+			int width;
+
+			/*
+			 * the idea is to 'open' display devices with no useful
+			 * properties, in the hope that the firmware will
+			 * properly initialize them and we can run things like
+			 * genfb on them
+			 */
+			if (OF_getprop(node, "width", &width, sizeof(width))
+			    != 4) {
+				instance = OF_open(name);
+#endif
 	}
 }
 
@@ -1136,7 +1151,7 @@ device_register_post_config(struct device *dev, void *aux)
 }
 
 static void
-copyprops(struct device *busdev, int node, prop_dictionary_t dict)
+copyprops(struct device *busdev, int node, prop_dictionary_t dict, int is_console)
 {
 	struct device *cntrlr;
 	prop_dictionary_t psycho;
@@ -1153,21 +1168,15 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		prop_dictionary_get_uint64(psycho, "mem_base", &mem_base);
 	}
 
-	prop_dictionary_set_bool(dict, "is_console", 1);
-	if (!of_to_uint32_prop(dict, node, "width", "width")) {
+	if (is_console)
+		prop_dictionary_set_bool(dict, "is_console", 1);
 
-		OF_interpret("screen-width", 0, 1, &temp);
-		prop_dictionary_set_uint32(dict, "width", temp);
-	}
-	if (!of_to_uint32_prop(dict, console_node, "height", "height")) {
-
-		OF_interpret("screen-height", 0, 1, &temp);
-		prop_dictionary_set_uint32(dict, "height", temp);
-	}
-	of_to_uint32_prop(dict, console_node, "linebytes", "linebytes");
-	if (!of_to_uint32_prop(dict, console_node, "depth", "depth") &&
+	of_to_uint32_prop(dict, node, "width", "width");
+	of_to_uint32_prop(dict, node, "height", "height");
+	of_to_uint32_prop(dict, node, "linebytes", "linebytes");
+	if (!of_to_uint32_prop(dict, node, "depth", "depth") &&
 	    /* Some cards have an extra space in the property name */
-	    !of_to_uint32_prop(dict, console_node, "depth ", "depth")) {
+	    !of_to_uint32_prop(dict, node, "depth ", "depth")) {
 		/*
 		 * XXX we should check linebytes vs. width but those
 		 * FBs that don't have a depth property ( /chaos/control... )
@@ -1175,7 +1184,8 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		 */
 		prop_dictionary_set_uint32(dict, "depth", 8);
 	}
-	OF_getprop(console_node, "address", &fbaddr, sizeof(fbaddr));
+
+	OF_getprop(node, "address", &fbaddr, sizeof(fbaddr));
 	if (fbaddr != 0) {
 	
 		pmap_extract(pmap_kernel(), fbaddr, &fbpa);
@@ -1190,22 +1200,28 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 			fboffset = (uint32_t)(fbpa - mem_base);
 		prop_dictionary_set_uint32(dict, "address", fboffset);
 	}
-	if (!of_to_dataprop(dict, console_node, "EDID", "EDID"))
-		of_to_dataprop(dict, console_node, "edid", "EDID");
+
+	if (!of_to_dataprop(dict, node, "EDID", "EDID"))
+		of_to_dataprop(dict, node, "edid", "EDID");
 
 	temp = 0;
-	if (OF_getprop(console_node, "ATY,RefCLK", &temp, sizeof(temp)) != 4) {
+	if (OF_getprop(node, "ATY,RefCLK", &temp, sizeof(temp)) != 4) {
 
-		OF_getprop(OF_parent(console_node), "ATY,RefCLK", &temp,
+		OF_getprop(OF_parent(node), "ATY,RefCLK", &temp,
 		    sizeof(temp));
 	}
 	if (temp != 0)
 		prop_dictionary_set_uint32(dict, "refclk", temp / 10);
+
 	/*
 	 * finally, let's see if there's a video mode specified in
 	 * output-device and pass it on so drivers like radeonfb
 	 * can do their thing
 	 */
+
+	if (!is_console)
+		return;
+
 	options = OF_finddevice("/options");
 	if ((options == 0) || (options == -1))
 		return;
