@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.1.2.3 2010/01/28 17:10:20 matt Exp $
+# $NetBSD: ad.mips64el,v 1.1.2.4 2011/06/01 08:35:34 cliff Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -805,7 +805,7 @@
 ./usr/lib/o32/libz.so				base-sys-shlib		compat,pic
 ./usr/lib/o32/libz_p.a				comp-c-proflib		compat,profile
 ./usr/lib/o32/libz_pic.a			comp-c-piclib		compat,pic
-./usr/libdata/debug/usr/bin/elf2aout.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/bin/elf2aout.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/elf2ecoff.debug	comp-sysutil-debug	debug
 ./usr/libdata/ldscripts/elf32btsmip.x		comp-util-bin
 ./usr/libdata/ldscripts/elf32btsmip.xbn		comp-util-bin
