@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1626 2011/05/30 02:10:25 christos Exp $
+#	$NetBSD: mi,v 1.1627 2011/06/01 02:22:19 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10169,6 +10169,7 @@
 ./usr/share/man/cat9/uvm_init_limits.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_io.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_kernacc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/uvm_km.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_km_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_km_alloc1.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/uvm_km_free.0		comp-sys-catman		.cat
@@ -16106,6 +16107,7 @@
 ./usr/share/man/html9/uvm_init_limits.html	comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_io.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_kernacc.html		comp-sys-htmlman	html
+./usr/share/man/html9/uvm_km.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_km_alloc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_km_free.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_km_suballoc.html	comp-sys-htmlman	html
@@ -22259,6 +22261,7 @@
 ./usr/share/man/man9/uvm_init_limits.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_io.9			comp-sys-man		.man
 ./usr/share/man/man9/uvm_kernacc.9		comp-sys-man		.man
+./usr/share/man/man9/uvm_km.9			comp-sys-man		.man
 ./usr/share/man/man9/uvm_km_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_km_alloc1.9		comp-obsolete		obsolete
 ./usr/share/man/man9/uvm_km_free.9		comp-sys-man		.man
