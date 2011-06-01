@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.346 2011/04/06 05:40:19 jruoho Exp $
+#       $NetBSD: Makefile,v 1.347 2011/06/01 02:22:18 rmind Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -54,7 +54,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
 	video.9 vme.9 \
 	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
-	ubc.9 usbdi.9 uvm.9 vmem.9 \
+	ubc.9 usbdi.9 uvm.9 uvm_km.9 uvm_map.9 vmem.9 \
 	wdc.9 workqueue.9 \
 	wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
 	xcall.9
@@ -734,18 +734,12 @@ MLINKS+=tc.9 tc_intr_establish.9 \
 	tc.9 TC_PHYS_TO_UNCACHED.9
 MLINKS+=todr.9 todr_gettime.9 todr.9 todr_settime.9 \
 	todr.9 clock_ymdhms_to_secs.9 todr.9 clock_secs_to_ymdhms.9
+
 MLINKS+=ubc.9 ubc_alloc.9 ubc.9 ubc_release.9 ubc.9 ubc_uiomove.9
 MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
-	uvm.9 uvm_swap_init.9 uvm.9 uvm_map.9 uvm.9 uvm_unmap.9 \
-	uvm.9 uvm_map_pageable.9 \
-	uvm.9 uvm_map_checkprot.9 uvm.9 uvm_map_protect.9 \
-	uvm.9 uvm_deallocate.9 uvm.9 uvmspace_alloc.9 uvm.9 uvmspace_exec.9 \
-	uvm.9 uvmspace_fork.9 uvm.9 uvmspace_free.9 uvm.9 uvmspace_share.9 \
-	uvm.9 uvmspace_unshare.9 uvm.9 uvm_fault.9 \
+	uvm.9 uvm_swap_init.9 uvm.9 uvm_fault.9 \
 	uvm.9 uvm_vnp_setsize.9 \
-	uvm.9 uvm_io.9 uvm.9 uvm_km_alloc.9 \
-	uvm.9 uvm_km_suballoc.9 uvm.9 uvm_km_free.9 \
-	uvm.9 uvm_pagealloc.9 \
+	uvm.9 uvm_io.9 uvm.9 uvm_pagealloc.9 \
 	uvm.9 uvm_pagerealloc.9 uvm.9 uvm_pagefree.9 uvm.9 uvm_pglistalloc.9 \
 	uvm.9 uvm_pglistfree.9 uvm.9 uvm_page_physload.9 uvm.9 uvm_pageout.9 \
 	uvm.9 uvm_scheduler.9 uvm.9 uvm_swapin.9 uvm.9 uao_create.9 \
@@ -755,6 +749,15 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 \
 	uvm.9 uvn_findpages.9 \
 	uvm.9 uvm_loan.9 uvm.9 uvm_unloan.9
+MLINKS+=uvm_km.9 uvm_km_alloc.9 uvm_km.9 uvm_km_free.9 \
+	uvm_km.9 uvm_km_suballoc.9
+MLINKS+=uvm_map.9 uvm_unmap.9 uvm_map.9 uvm_map_pageable.9 \
+	uvm_map.9 uvm_map_checkprot.9 uvm_map.9 uvm_map_protect.9 \
+	uvm_map.9 uvm_deallocate.9 uvm_map.9 uvmspace_alloc.9 \
+	uvm_map.9 uvmspace_exec.9 uvm_map.9 uvmspace_fork.9 \
+	uvm_map.9 uvmspace_free.9 uvm_map.9 uvmspace_share.9 \
+	uvm_map.9 uvmspace_unshare.9
+
 MLINKS+=vme.9 vme_probe.9 \
 	vme.9 vme_space_map.9 \
 	vme.9 vme_space_unmap.9 \
