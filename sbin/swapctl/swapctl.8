@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.41 2009/09/24 16:15:20 apb Exp $
+.\"	$NetBSD: swapctl.8,v 1.42 2011/06/01 09:46:48 jruoho Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 24, 2009
+.Dd June 1, 2011
 .Dt SWAPCTL 8
 .Os
 .Sh NAME
@@ -71,18 +71,18 @@
 The
 .Nm
 program adds, removes,
-lists and prioritizes swap devices and files for the system.
+lists, and prioritizes swap devices and files for the system.
 The
 .Nm swapon
 program acts the same as the
 .Nm
-program, as if called with the
+program as if called with the
 .Fl a
 option, except if
 .Nm swapon
 itself is called with
 .Fl a
-in which case,
+in which case
 .Nm swapon
 acts as
 .Nm
