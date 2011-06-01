@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.579 2011/03/10 00:11:59 scw Exp $
+$NetBSD: usbdevs,v 1.580 2011/06/01 13:57:55 njoly Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ $NetBSD: usbdevs,v 1.579 2011/03/10 00:11:59 scw Exp $
  */
 
 vendor EGALAX2		0x0123	eGalax, Inc.
+vendor CHIPSBANK	0x0204	Chipsbank
 vendor AOX		0x03e8	AOX
 vendor ATMEL		0x03eb	Atmel
 vendor MITSUMI		0x03ee	Mitsumi
