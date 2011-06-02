@@ -1,4 +1,4 @@
-/* $NetBSD: ym_acpi.c,v 1.12 2010/10/02 18:06:47 gsutre Exp $ */
+/* $NetBSD: ym_acpi.c,v 1.13 2011/06/02 13:02:40 nonaka Exp $ */
 
 /*
  * Copyright (c) 2006 Jasper Wallace <jasper@pointless.net>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.12 2010/10/02 18:06:47 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.13 2011/06/02 13:02:40 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ ym_acpi_attach(device_t parent, device_t self, void *aux)
 	ACPI_STATUS rv;
 
 	/* Parse our resources */
-	rv = acpi_resource_parse(&sc->sc_ad1848.sc_ad1848.sc_dev,
+	rv = acpi_resource_parse(sc->sc_ad1848.sc_ad1848.sc_dev,
 	    aa->aa_node->ad_handle, "_CRS", &res,
 	    &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
