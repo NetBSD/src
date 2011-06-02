@@ -1,4 +1,4 @@
-/* $NetBSD: t_sethostname.c,v 1.1 2011/06/02 12:15:33 jruoho Exp $ */
+/* $NetBSD: t_sethostname.c,v 1.2 2011/06/02 12:42:27 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sethostname.c,v 1.1 2011/06/02 12:15:33 jruoho Exp $");
+__RCSID("$NetBSD: t_sethostname.c,v 1.2 2011/06/02 12:42:27 jruoho Exp $");
 
 #include <sys/param.h>
 
@@ -67,6 +67,8 @@ ATF_TC_BODY(sethostname_basic, tc)
 		ATF_REQUIRE(gethostname(name, sizeof(name)) == 0);
 		ATF_REQUIRE(strcmp(hosts[i], name) == 0);
 	}
+
+	(void)sethostname(host, sizeof(host));
 }
 
 ATF_TC_CLEANUP(sethostname_basic, tc)
