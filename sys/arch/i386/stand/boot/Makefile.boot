@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.51 2011/05/20 22:29:55 joerg Exp $
+# $NetBSD: Makefile.boot,v 1.52 2011/06/02 18:48:55 dsl Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -36,8 +36,6 @@ BINMODE=444
 LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,boot_start
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
-#CPPFLAGS+= -DDEBUG_MEMSIZE
-#CPPFLAGS+= -DBOOT_MSG_COM0
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 
@@ -78,6 +76,8 @@ CPPFLAGS+= -DPASS_BIOSGEOM
 CPPFLAGS+= -DPASS_MEMMAP
 #CPPFLAGS+= -DBOOTPASSWD
 CPPFLAGS+= -DEPIA_HACK
+#CPPFLAGS+= -DDEBUG_MEMSIZE
+#CPPFLAGS+= -DBOOT_MSG_COM0
 
 # The biosboot code is linked to 'virtual' address of zero and is
 # loaded at physical address 0x10000.
