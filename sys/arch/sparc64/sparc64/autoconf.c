@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.179 2011/06/01 16:00:10 macallan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.180 2011/06/02 00:35:23 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.179 2011/06/01 16:00:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.180 2011/06/02 00:35:23 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -149,8 +149,8 @@ char	ofbootpath[OFPATHLEN], *ofboottarget, *ofbootpartition;
 int	ofbootpackage;
 
 static	int mbprint(void *, const char *);
-int	mainbus_match(struct device *, struct cfdata *, void *);
-static	void mainbus_attach(struct device *, struct device *, void *);
+int	mainbus_match(device_t, cfdata_t, void *);
+static	void mainbus_attach(device_t, device_t, void *);
 static  void get_ncpus(void);
 static	void get_bootpath_from_prom(void);
 
@@ -190,7 +190,7 @@ int autoconf_debug = 0x0;
 int console_node, console_instance;
 struct genfb_colormap_callback gfb_cb;
 static void of_set_palette(void *, int, int, int, int);
-static void copyprops(struct device *busdev, int, prop_dictionary_t, int);
+static void copyprops(device_t, int, prop_dictionary_t, int);
 
 static void
 get_ncpus(void)
@@ -525,8 +525,7 @@ mbprint(void *aux, const char *name)
 }
 
 int
-mainbus_match(struct device * parent, struct cfdata * cf,
-	void *aux)
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
@@ -540,8 +539,7 @@ mainbus_match(struct device * parent, struct cfdata * cf,
  * We also record the `node id' of the default frame buffer, if any.
  */
 static void
-mainbus_attach(struct device * parent, struct device *dev,
-	void *aux)
+mainbus_attach(device_t parent, device_t dev, void *aux)
 {
 extern struct sparc_bus_dma_tag mainbus_dma_tag;
 extern struct sparc_bus_space_tag mainbus_space_tag;
@@ -602,7 +600,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	/*
 	 * Init static interrupt eventcounters
 	 */
-	for (i = 0; i < sizeof(intr_evcnts)/sizeof(intr_evcnts[0]); i++)
+	for (i = 0; i < __arraycount(intr_evcnts); i++)
 		evcnt_attach_static(&intr_evcnts[i]);
 
 	node = findroot();
@@ -714,7 +712,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	(void) config_found(dev, (void *)&ma, mbprint);
 }
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
 
@@ -745,7 +743,7 @@ romgetcursoraddr(int **rowp, int **colp)
  * exactly, we found the boot device.
  */
 static void
-dev_path_exact_match(struct device *dev, int ofnode)
+dev_path_exact_match(device_t dev, int ofnode)
 {
 
 	if (ofnode != ofbootpackage)
@@ -762,7 +760,7 @@ dev_path_exact_match(struct device *dev, int ofnode)
  * the bootpath remainder.
  */
 static void
-dev_path_drive_match(struct device *dev, int ctrlnode, int target,
+dev_path_drive_match(device_t dev, int ctrlnode, int target,
     uint64_t wwn, int lun)
 {
 	int child = 0;
@@ -814,7 +812,7 @@ dev_path_drive_match(struct device *dev, int ctrlnode, int target,
  * dictionary.
  */
 static int
-device_ofnode(struct device *dev)
+device_ofnode(device_t dev)
 {
 	prop_dictionary_t props;
 	prop_object_t obj;
@@ -836,7 +834,7 @@ device_ofnode(struct device *dev)
  * of a struct device.
  */
 static void
-device_setofnode(struct device *dev, int node)
+device_setofnode(device_t dev, int node)
 {
 	prop_dictionary_t props;
 	prop_object_t obj;
@@ -859,9 +857,9 @@ device_setofnode(struct device *dev, int node)
  * Called back during autoconfiguration for each device found
  */
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
-	struct device *busdev = device_parent(dev);
+	device_t busdev = device_parent(dev);
 	int ofnode = 0;
 
 	/*
@@ -1115,7 +1113,7 @@ noether:
  * Called back after autoconfiguration of a device is done
  */
 void
-device_register_post_config(struct device *dev, void *aux)
+device_register_post_config(device_t dev, void *aux)
 {
 	if (booted_device == NULL && device_is_a(dev, "sd")) {
 		struct scsipibus_attach_args *sa = aux;
@@ -1151,9 +1149,9 @@ device_register_post_config(struct device *dev, void *aux)
 }
 
 static void
-copyprops(struct device *busdev, int node, prop_dictionary_t dict, int is_console)
+copyprops(device_t busdev, int node, prop_dictionary_t dict, int is_console)
 {
-	struct device *cntrlr;
+	device_t cntrlr;
 	prop_dictionary_t psycho;
 	paddr_t fbpa, mem_base = 0;
 	uint32_t temp, fboffset;
