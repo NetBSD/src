@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.307 2011/05/20 08:12:46 matt Exp $
+#	$NetBSD: BRANCHES,v 1.308 2011/06/02 22:15:22 cherry Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -284,6 +284,16 @@ Scope:		sys/arch/arm sys/arch/acorn32
 Notes:		This code was on a branch because it involves changes to
 		cpuswitch.S which would otherwise make merging the
 		nathanw_sa branch difficult.
+
+Branch:		cherry-xenmp
+Description:	Port i386 and amd64 Xen kernels to run MP
+Status:		Active
+Start Date:	1st June 2011
+End Date:
+Base Tag:	cherry-xenmp-base
+Maintainer:	Cherry G. Mathew <cherry@NetBSD.org>
+Scope:		kernel
+Notes:
 
 Branch:		chris-arm-intr-rework
 Description:	Rework arm interrupt handling code
