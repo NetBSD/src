@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.27 2009/05/12 09:10:16 cegger Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.28 2011/06/02 13:02:40 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.27 2009/05/12 09:10:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.28 2011/06/02 13:02:40 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ wss_isa_probe(device_t parent, cfdata_t match, void *aux)
 		return 0;
 
 	memset(sc, 0, sizeof *sc);
-	ac->sc_dev.dv_cfdata = match;
+	ac->sc_dev->dv_cfdata = match;
 	if (wssfind(parent, sc, 1, aux)) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);
 		ad1848_isa_unmap(&sc->sc_ad1848);
@@ -132,7 +132,7 @@ wssfind(device_t parent, struct wss_softc *sc, int probing,
 
 	ac = &sc->sc_ad1848.sc_ad1848;
 	sc->sc_iot = ia->ia_iot;
-	if (device_cfdata(&ac->sc_dev)->cf_flags & 1)
+	if (device_cfdata(ac->sc_dev)->cf_flags & 1)
 		madprobe(sc, ia->ia_io[0].ir_addr);
 	else
 		sc->mad_chip_type = MAD_NONE;
@@ -242,7 +242,7 @@ wss_isa_attach(device_t parent, device_t self, void *aux)
 	ac = (struct ad1848_softc *)&sc->sc_ad1848;
 	ia = (struct isa_attach_args *)aux;
 	if (!wssfind(parent, sc, 0, ia)) {
-		aprint_error_dev(&ac->sc_dev, "wssfind failed\n");
+		aprint_error_dev(ac->sc_dev, "wssfind failed\n");
 		return;
 	}
 
