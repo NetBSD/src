@@ -77,7 +77,7 @@
 #include <machine/stdarg.h>
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.5 2011/06/03 17:11:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.6 2011/06/03 20:01:00 dyoung Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -166,22 +166,15 @@ fatp_free(fatp_ctl_t *fat, fatp_t *fp)
  * We allocate 2x as much, as we have two hashes: full and lport only.
  */
 static void
-fatp_init(fatp_ctl_t *fat, uint32_t n, uint32_t m)
+fatp_init(fatp_ctl_t *fat, uint32_t n, uint32_t m,
+    fatp_t *fat_base, fatp_t **fat_hash)
 {
 	fatp_t	*fp;
 
 	KASSERT(n <= FATP_MAX / 2);
 
-	fat->hash   = kmem_alloc(2*m * sizeof (fatp_t *), KM_SLEEP);
-	fat->base   = kmem_alloc(2*n * sizeof (fatp_t), KM_SLEEP);
-
-	if (!fat->base) {
-		if (fat->hash)
-			kmem_free(fat->hash, 2*m * sizeof (fatp_t *));
-
-		bzero(fat, sizeof (*fat));
-		return;
-	}
+	fat->hash = fat_hash;
+	fat->base = fat_base;
 
 	fat->port = &fat->hash[m];
 
@@ -189,9 +182,6 @@ fatp_init(fatp_ctl_t *fat, uint32_t n, uint32_t m)
 	fat->lim    = fat->base + 2*n - 1;
 	fat->nfree  = 0;
 	fat->nalloc = 2*n;
-
-	bzero(fat->hash, 2*m * sizeof (fatp_t *));
-	bzero(fat->base, 2*n * sizeof (fatp_t));
 
 	/* Initialise the free list.
 	 */
@@ -1240,69 +1230,63 @@ out:
  * by the operator.
  */
 static void
-vtw_init(fatp_ctl_t *fat, vtw_ctl_t *ctl, uint32_t n)
+vtw_init(fatp_ctl_t *fat, vtw_ctl_t *ctl, const uint32_t n, vtw_t *ctl_base_v)
 {
-	int i;
-	int sz = (ctl->is_v4 ? sizeof (vtw_v4_t) : sizeof (vtw_v6_t));
+	int class_n, i;
+	vtw_t	*base;
 
-	ctl->base.v4 = kmem_alloc(n * sz, KM_SLEEP);
-	if (ctl->base.v4) {
-		vtw_t	*base;
-		int	class_n;
+	ctl->base.v = ctl_base_v;
 
-		bzero(ctl->base.v4, n * sz);
+	if (ctl->is_v4) {
+		ctl->lim.v4    = ctl->base.v4 + n - 1;
+		ctl->alloc.v4  = ctl->base.v4;
+	} else {
+		ctl->lim.v6    = ctl->base.v6 + n - 1;
+		ctl->alloc.v6  = ctl->base.v6;
+	}
 
-		if (ctl->is_v4) {
-			ctl->lim.v4    = ctl->base.v4 + n - 1;
-			ctl->alloc.v4  = ctl->base.v4;
-		} else {
-			ctl->lim.v6    = ctl->base.v6 + n - 1;
-			ctl->alloc.v6  = ctl->base.v6;
-		}
+	ctl->nfree  = n;
+	ctl->ctl    = ctl;
 
-		ctl->nfree  = n;
-		ctl->ctl    = ctl;
+	ctl->idx_bits = 32;
+	for (ctl->idx_mask = ~0; (ctl->idx_mask & (n-1)) == n-1; ) {
+		ctl->idx_mask >>= 1;
+		ctl->idx_bits  -= 1;
+	}
 
-		ctl->idx_bits = 32;
-		for (ctl->idx_mask = ~0; (ctl->idx_mask & (n-1)) == n-1; ) {
-			ctl->idx_mask >>= 1;
-			ctl->idx_bits  -= 1;
-		}
+	ctl->idx_mask <<= 1;
+	ctl->idx_mask  |= 1;
+	ctl->idx_bits  += 1;
 
-		ctl->idx_mask <<= 1;
-		ctl->idx_mask  |= 1;
-		ctl->idx_bits  += 1;
+	ctl->fat = fat;
+	fat->vtw = ctl;
 
-		ctl->fat = fat;
-		fat->vtw = ctl;
+	/* Divide the resources equally amongst the classes.
+	 * This is not optimal, as the different classes
+	 * arrive and leave at different rates, but it is
+	 * the best I can do for now.
+	 */
+	class_n = n / (VTW_NCLASS-1);
+	base    = ctl->base.v;
 
-		/* Divide the resources equally amongst the classes.
-		 * This is not optimal, as the different classes
-		 * arrive and leave at different rates, but it is
-		 * the best I can do for now.
-		 */
-		class_n = n / (VTW_NCLASS-1);
-		base    = ctl->base.v;
+	for (i = 1; i < VTW_NCLASS; ++i) {
+		int j;
 
-		for (i = 1; i < VTW_NCLASS; ++i) {
-			int j;
+		ctl[i] = ctl[0];
+		ctl[i].clidx = i;
 
-			ctl[i] = ctl[0];
-			ctl[i].clidx = i;
+		ctl[i].base.v = base;
+		ctl[i].alloc  = ctl[i].base;
 
-			ctl[i].base.v = base;
-			ctl[i].alloc  = ctl[i].base;
-
-			for (j = 0; j < class_n - 1; ++j) {
-				if (tcp_msl_enable)
-					base->msl_class = i;
-				base = vtw_next(ctl, base);
-			}
-
-			ctl[i].lim.v = base;
+		for (j = 0; j < class_n - 1; ++j) {
+			if (tcp_msl_enable)
+				base->msl_class = i;
 			base = vtw_next(ctl, base);
-			ctl[i].nfree = class_n;
 		}
+
+		ctl[i].lim.v = base;
+		base = vtw_next(ctl, base);
+		ctl[i].nfree = class_n;
 	}
 
 	vtw_debug_init();
@@ -1778,35 +1762,61 @@ vtw_control_init(int af)
 {
 	fatp_ctl_t	*fat;
 	vtw_ctl_t	*ctl;
+	fatp_t		*fat_base;
+	fatp_t		**fat_hash;
+	vtw_t		*ctl_base_v;
+	uint32_t	n, m;
+	size_t sz;
+
+	KASSERT(powerof2(tcp_vtw_entries));
 
 	if (!vtw_select(af, &fat, &ctl))
 		return EAFNOSUPPORT;
 
-	if (!fat->base) {
-		uint32_t	n, m;
-
-		KASSERT(powerof2(tcp_vtw_entries));
-
-		/* Allocate 10% more capacity in the fat pointers.
-		 * We should only need ~#hash additional based on
-		 * how they age, but TIME_WAIT assassination could cause
-		 * sparse fat pointer utilisation.
-		 */
-		m = 512;
-		n = 2*m + (11 * (tcp_vtw_entries / fatp_ntags())) / 10;
-
-		fatp_init(fat, n, m);
-
-		if (!fat->base)
-			return ENOMEM;
+	if (fat->hash != NULL) {
+		KASSERT(fat->base != NULL && ctl->base.v != NULL);
+		return 0;
 	}
 
-	if (!ctl->base.v) {
+	/* Allocate 10% more capacity in the fat pointers.
+	 * We should only need ~#hash additional based on
+	 * how they age, but TIME_WAIT assassination could cause
+	 * sparse fat pointer utilisation.
+	 */
+	m = 512;
+	n = 2*m + (11 * (tcp_vtw_entries / fatp_ntags())) / 10;
+	sz = (ctl->is_v4 ? sizeof(vtw_v4_t) : sizeof(vtw_v6_t));
 
-		vtw_init(fat, ctl, tcp_vtw_entries);
-		if (!ctl->base.v)
-			return ENOMEM;
+	fat_hash = kmem_zalloc(2*m * sizeof(fatp_t *), KM_NOSLEEP);
+
+	if (fat_hash == NULL) {
+		printf("%s: could not allocate %zu bytes for "
+		    "hash anchors", __func__, 2*m * sizeof(fatp_t *));
+		return ENOMEM;
 	}
+
+	fat_base = kmem_zalloc(2*n * sizeof(fatp_t), KM_NOSLEEP);
+
+	if (fat_base == NULL) {
+		kmem_free(fat_hash, 2*m * sizeof (fatp_t *));
+		printf("%s: could not allocate %zu bytes for "
+		    "fatp_t array", __func__, 2*n * sizeof(fatp_t));
+		return ENOMEM;
+	}
+
+	ctl_base_v = kmem_zalloc(tcp_vtw_entries * sz, KM_NOSLEEP);
+
+	if (ctl_base_v == NULL) {
+		kmem_free(fat_hash, 2*m * sizeof (fatp_t *));
+		kmem_free(fat_base, 2*n * sizeof(fatp_t));
+		printf("%s: could not allocate %zu bytes for "
+		    "vtw_t array", __func__, tcp_vtw_entries * sz);
+		return ENOMEM;
+	}
+
+	fatp_init(fat, n, m, fat_base, fat_hash);
+
+	vtw_init(fat, ctl, tcp_vtw_entries, ctl_base_v);
 
 	return 0;
 }
