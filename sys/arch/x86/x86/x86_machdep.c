@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.50 2011/05/31 23:28:53 dyoung Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.50.2.1 2011/06/03 13:27:39 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.50 2011/05/31 23:28:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.50.2.1 2011/06/03 13:27:39 cherry Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -201,10 +201,13 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	if (l == ci->ci_data.cpu_idlelwp) {
 		if (ci == cur)
 			return;
-#ifndef XEN /* XXX review when Xen gets MP support */
-		if (x86_cpu_idle_ipi != false)
+		if (x86_cpu_idle_ipi != false) {
+#ifdef XEN
+			xen_send_ipi(ci, XEN_IPI_KICK);
+#else /* XEN */
 			x86_send_ipi(ci, 0);
-#endif
+#endif /* XEN */
+		}
 		return;
 	}
 
@@ -225,7 +228,11 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		return;
 	}
 	if ((flags & RESCHED_IMMED) != 0) {
+#ifdef XEN
+		xen_send_ipi(ci, XEN_IPI_KICK);
+#else /* XEN */
 		x86_send_ipi(ci, 0);
+#endif /* XEN */
 	}
 }
 
@@ -236,7 +243,11 @@ cpu_signotify(struct lwp *l)
 	KASSERT(kpreempt_disabled());
 	aston(l, X86_AST_GENERIC);
 	if (l->l_cpu != curcpu())
+#ifdef XEN
+		xen_send_ipi(l->l_cpu, XEN_IPI_KICK);
+#else /* XEN */
 		x86_send_ipi(l->l_cpu, 0);
+#endif /* XEN */
 }
 
 void
@@ -360,7 +371,7 @@ x86_cpu_idle_init(void)
 	else
 		x86_cpu_idle_set(x86_cpu_idle_mwait, "mwait", false);
 #else
-	x86_cpu_idle_set(x86_cpu_idle_xen, "xen", false);
+	x86_cpu_idle_set(x86_cpu_idle_xen, "xen", true);
 #endif
 }
 

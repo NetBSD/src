@@ -1,10 +1,10 @@
-# $NetBSD: XEN3_DOMU,v 1.30 2011/05/28 16:58:51 ryo Exp $
+# $NetBSD: XEN3_DOMU,v 1.30.2.1 2011/06/03 13:27:38 cherry Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#options 	UVMHIST
+options 	UVMHIST
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 

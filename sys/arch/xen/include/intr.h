@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.31 2009/07/29 12:02:06 cegger Exp $	*/
+/*	$NetBSD: intr.h,v 1.31.10.1 2011/06/03 13:27:40 cherry Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -33,15 +33,18 @@
 #ifndef _XEN_INTR_H_
 #define	_XEN_INTR_H_
 
+#ifndef _LOCORE
+#include <machine/cpu.h>
+#include <machine/pic.h>
 #include <machine/intrdefs.h>
 
-#ifndef _LOCORE
+#include <sys/evcnt.h>
+#include <sys/types.h>
+#include <sys/simplelock.h>
+
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
-#include <machine/cpu.h>
-#include <machine/pic.h>
-#include <sys/evcnt.h>
 
 #include "opt_xen.h"
 
@@ -55,6 +58,13 @@ struct evtsource {
 	struct intrhand *ev_handlers;	/* handler chain */
 	struct evcnt ev_evcnt;		/* interrupt counter */
 	char ev_evname[32];		/* event counter name */
+	struct simplelock ev_lock;	/* protects this structure */
+
+	/* 
+	 * XXX: The lock is quite coursegrained ( for the entire
+	 * handler list ), but contention is expected to be low. See
+	 * how this performs and revisit.
+	 */
 };
 
 /*
@@ -175,9 +185,9 @@ int intr_find_mpmapping(int, int, struct xen_intr_handle *);
 struct pic *intr_findpic(int);
 void intr_add_pcibus(struct pcibus_attach_args *);
 
-int x86_send_ipi(struct cpu_info *, int);
-void x86_broadcast_ipi(int);
-void x86_multicast_ipi(int, int);
+void xen_ipi_init(void);
+int xen_send_ipi(struct cpu_info *, uint32_t);
+void xen_broadcast_ipi(uint32_t);
 
 #endif /* !_LOCORE */
 

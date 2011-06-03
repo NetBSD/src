@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.18 2009/10/23 02:32:33 snj Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.18.10.1 2011/06/03 13:27:40 cherry Exp $	*/
 
 /*
  *
@@ -51,6 +51,8 @@ int bind_virq_to_evtch(int);
 int bind_pirq_to_evtch(int);
 int unbind_pirq_from_evtch(int);
 int unbind_virq_from_evtch(int);
+
+evtchn_port_t bind_vcpu_to_evtch(cpuid_t);
 
 struct pintrhand {
 	int pirq;
