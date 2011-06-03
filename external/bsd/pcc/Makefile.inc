@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2010/06/03 19:17:22 plunky Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2011/06/03 13:31:25 plunky Exp $
 
 PCC_DIR:=${.PARSEDIR}
 PCC_DIST=${PCC_DIR}/dist/pcc
@@ -20,13 +20,8 @@ ERROR!= echo "ERROR: ${TARGMACH} not yet supported - write code!" >&2;echo
 
 VERSSTR = PACKAGE_STRING " for ${TARGOS}-${TARGMACH}"
 
-libexecdir = /usr/libexec
-includedir = /usr/include
-
 CPPFLAGS+=	-DGCC_COMPAT
 CPPFLAGS+=	-DVERSSTR=${VERSSTR:Q}
-CPPFLAGS+=	-DLIBEXECDIR=\"${libexecdir}/\"
-CPPFLAGS+=	-DINCLUDEDIR=\"${includedir}/\"
 CPPFLAGS+=	-Dos_${TARGOS}
 CPPFLAGS+=	-Dmach_${TARGMACH}
 CPPFLAGS+=	-I${PCC_DIR}/include
