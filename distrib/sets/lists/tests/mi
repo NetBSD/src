@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.345 2011/06/03 05:42:09 jruoho Exp $
+# $NetBSD: mi,v 1.346 2011/06/03 06:39:52 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -446,6 +446,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_memcpy.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_memmem.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/string/t_memset.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_strerror.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_stresep.debug		tests-lib-debug		debug,atf
@@ -1960,6 +1961,7 @@
 ./usr/tests/lib/libc/string/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_memcpy		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_memmem		tests-lib-tests		atf
+./usr/tests/lib/libc/string/t_memset		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_popcount		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_strerror		tests-lib-tests		atf
 ./usr/tests/lib/libc/string/t_stresep		tests-lib-tests		atf
