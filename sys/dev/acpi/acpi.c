@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.241 2011/05/31 14:27:44 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.242 2011/06/03 09:15:02 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.241 2011/05/31 14:27:44 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.242 2011/06/03 09:15:02 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1301,12 +1301,17 @@ acpi_enter_sleep_state(int state)
 		if (state == ACPI_STATE_S1) {
 
 			/*
-			 * Enter the state. Note that interrupts must
-			 * be off before calling AcpiEnterSleepState().
-			 * Conversely, AcpiLeaveSleepState() should
-			 * always be called with interrupts enabled.
+			 * Before the transition to S1, CPU caches
+			 * must be flushed (see ACPI 4.0, 7.3.4.2).
+			 *
+			 * Note that interrupts must be off before
+			 * calling AcpiEnterSleepState(). Conversely,
+			 * AcpiLeaveSleepState() should always be
+			 * called with interrupts enabled.
 			 */
 			acpi_md_OsDisableInterrupt();
+
+			ACPI_FLUSH_CPU_CACHE();
 			rv = AcpiEnterSleepState(state);
 
 			if (ACPI_FAILURE(rv))
