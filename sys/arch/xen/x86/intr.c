@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27 2010/03/19 23:27:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.6.1 2011/06/03 13:27:41 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27 2010/03/19 23:27:12 dyoung Exp $");
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/cpu.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -160,6 +161,10 @@ intr_calculatemasks(struct evtsource *evts)
 {
 	struct intrhand *ih;
 
+#ifdef MULTIPROCESSOR /* on UP, #define	simple_lock_held(alp)	1 */
+	KASSERT(!simple_lock_held(&evts->ev_lock));
+#endif
+	simple_lock(&evts->ev_lock);
 	evts->ev_maxlevel = IPL_NONE;
 	evts->ev_imask = 0;
 	for (ih = evts->ev_handlers; ih != NULL; ih = ih->ih_evt_next) {
@@ -167,7 +172,7 @@ intr_calculatemasks(struct evtsource *evts)
 			evts->ev_maxlevel = ih->ih_level;
 		evts->ev_imask |= (1 << ih->ih_level);
 	}
-
+	simple_unlock(&evts->ev_lock);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.14 2011/03/30 21:53:58 jym Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.14.2.1 2011/06/03 13:27:41 cherry Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.14 2011/03/30 21:53:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.14.2.1 2011/06/03 13:27:41 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,6 +352,8 @@ hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 	ipl = ffs(iplmask);
 	KASSERT(ipl > 0);
 	ipl--;
+	KASSERT(ipl < NIPL);
+	KASSERT(ci->ci_isources[ipl] != NULL);
 	ci->ci_isources[ipl]->ipl_evt_mask1 |= 1UL << l1;
 	ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1UL << l2;
 }

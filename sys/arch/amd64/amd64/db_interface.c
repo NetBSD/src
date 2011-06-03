@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.23 2011/04/03 22:29:25 dyoung Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.23.2.1 2011/06/03 13:27:37 cherry Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.23 2011/04/03 22:29:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.23.2.1 2011/06/03 13:27:37 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -98,9 +98,13 @@ db_machine_init(void)
 {
 
 #ifdef MULTIPROCESSOR
+#ifndef XEN
 	ddb_vec = idt_vec_alloc(0xf0, 0xff);
 	setgate((struct gate_descriptor *)&idt[ddb_vec], &Xintrddb, 1,
 	    SDT_SYS386IGT, SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+#else
+	/* Initialised as part of xen_ipi_init() */
+#endif /* XEN */
 #endif
 }
 
@@ -114,8 +118,10 @@ db_suspend_others(void)
 	int cpu_me = cpu_number();
 	int win;
 
+#ifndef XEN
 	if (ddb_vec == 0)
 		return 1;
+#endif /* XEN */
 
 	__cpu_simple_lock(&db_lock);
 	if (ddb_cpu == NOCPU)
@@ -123,7 +129,12 @@ db_suspend_others(void)
 	win = (ddb_cpu == cpu_me);
 	__cpu_simple_unlock(&db_lock);
 	if (win) {
+#ifdef XEN
+		xen_broadcast_ipi(XEN_IPI_DDB);
+#else
 		x86_ipi(ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
+#endif /* XEN */
+
 	}
 	ddb_mp_online = x86_mp_online;
 	x86_mp_online = false;

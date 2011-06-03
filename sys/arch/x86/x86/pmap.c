@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121 2011/05/01 18:52:29 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121.2.1 2011/06/03 13:27:39 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2011/05/01 18:52:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.1 2011/06/03 13:27:39 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -855,6 +855,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	    pmap_pte2pa(opde) != pmap_pdirpa(pmap, 0)) {
 #ifdef XEN
 		s = splvm();
+		xpq_queue_lock();
 		/* Make recursive entry usable in user PGD */
 		for (i = 0; i < PDP_SIZE; i++) {
 			npde = pmap_pa2pte(
@@ -871,9 +872,11 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 #endif /* PAE */
 			xpq_queue_invlpg(
 			    (vaddr_t)&pmap->pm_pdir[PDIR_SLOT_PTE + i]);
+			/* XXX: tlbshootdown... */
 		}
 		if (pmap_valid_entry(opde))
 			pmap_apte_flush(ourpmap);
+		xpq_queue_unlock();
 		splx(s);
 #else /* XEN */
 		int i;
@@ -1497,7 +1500,9 @@ pmap_bootstrap(vaddr_t kva_start)
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
 	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
 	/* Pin as L4 */
+	xpq_queue_lock();
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
+	xpq_queue_unlock();
 #endif /* __x86_64__ */
 	idt_vaddr = virtual_avail;                      /* don't need pte */
 	idt_paddr = avail_start;                        /* steal a page */
@@ -1613,11 +1618,14 @@ pmap_prealloc_lowmem_ptps(void)
 		if (newp < (NKL2_KIMG_ENTRIES * NBPD_L2))
 			HYPERVISOR_update_va_mapping (newp + KERNBASE,
 			    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
+		xpq_queue_lock();
 		xpq_queue_pte_update (
 		    xpmap_ptom_masked(pdes_pa)
 		    + (pl_i(0, level) * sizeof (pd_entry_t)),
 		    xpmap_ptom_masked(newp) | PG_RW | PG_u | PG_V);
+		xpq_queue_unlock();
 		pmap_pte_flush();
+
 		level--;
 		if (level <= 1)
 			break;
@@ -1677,7 +1685,7 @@ void
 pmap_cpu_init_early(struct cpu_info *ci)
 {
 	struct pmap_cpu *pc;
-	static uint8_t pmap_cpu_alloc;
+	static uint8_t pmap_cpu_alloc = 0;
 
 	pc = &pmap_cpu[pmap_cpu_alloc++].pc;
 	ci->ci_pmap_cpu = pc;
@@ -2183,16 +2191,21 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 			continue;
 #endif
 
+		xpq_queue_lock();
 #ifdef __x86_64__
 		xpq_queue_pin_l4_table(xpmap_ptom_masked(pdirpa));
 #else
 		xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
 #endif
+		xpq_queue_unlock();
+
 	}
 #ifdef PAE
 	object = ((vaddr_t)pdir) + PAGE_SIZE  * l2tol3(PDIR_SLOT_PTE);
 	(void)pmap_extract(pmap_kernel(), object, &pdirpa);
+	xpq_queue_lock();
 	xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
+	xpq_queue_unlock();
 #endif
 	splx(s);
 #endif /* XEN */
@@ -2218,14 +2231,18 @@ pmap_pdp_dtor(void *arg, void *v)
 		/* fetch the physical address of the page directory. */
 		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
 		/* unpin page table */
+		xpq_queue_lock();
 		xpq_queue_unpin_table(xpmap_ptom_masked(pdirpa));
+		xpq_queue_unlock();
 	}
 	object = (vaddr_t)v;
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
 		/* Set page RW again */
 		pte = kvtopte(object);
+		xpq_queue_lock();
 		xpq_queue_pte_update(xpmap_ptetomach(pte), *pte | PG_RW);
 		xpq_queue_invlpg((vaddr_t)object);
+		xpq_queue_unlock();
 	}
 	splx(s);
 #endif  /* XEN */
@@ -2690,7 +2707,8 @@ pmap_load(void)
 	/* should be able to take ipis. */
 	KASSERT(ci->ci_ilevel < IPL_HIGH); 
 #ifdef XEN
-	/* XXX not yet KASSERT(x86_read_psl() != 0); */
+	/* Check to see if interrupts are enabled (ie; no events are masked) */
+	KASSERT(x86_read_psl() == 0);
 #else
 	KASSERT((x86_read_psl() & PSL_I) != 0);
 #endif
@@ -2713,7 +2731,6 @@ pmap_load(void)
 			tlbflush();
 			uvm_emap_update(gen);
 		}
-
 		ci->ci_want_pmapload = 0;
 		kpreempt_enable();
 		return;
@@ -4259,6 +4276,7 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			KASSERT(!pmap_valid_entry(pdep[i]));
 			pmap_get_physpage(va, level - 1, &pa);
 #ifdef XEN
+			xpq_queue_lock();
 			xpq_queue_pte_update((level == PTP_LEVELS) ?
 			    xpmap_ptom(pmap_pdirpa(pmap_kernel(), i)) :
 			    xpmap_ptetomach(&pdep[i]),
@@ -4271,6 +4289,7 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 				    pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
 			}
 #endif
+			xpq_queue_unlock();
 #else /* XEN */
 			pdep[i] = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
 #endif /* XEN */
@@ -4343,6 +4362,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		/* nothing, kernel entries are never entered in user pmap */
 #else /* __x86_64__ */
 		mutex_enter(&pmaps_lock);
+		xpq_queue_lock();
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			int pdkidx;
 			for (pdkidx =  PDIR_SLOT_KERN + old;
@@ -4351,9 +4371,11 @@ pmap_growkernel(vaddr_t maxkvaddr)
 				xpq_queue_pte_update(
 				    xpmap_ptom(pmap_pdirpa(pm, pdkidx)),
 				    kpm->pm_pdir[pdkidx]);
+
 			}
 			xpq_flush_queue();
 		}
+		xpq_queue_unlock();
 		mutex_exit(&pmaps_lock);
 #endif /* __x86_64__ */
 #else /* XEN */
@@ -4455,11 +4477,14 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 {
 #ifdef MULTIPROCESSOR
 	extern bool x86_mp_online;
-	struct cpu_info *ci;
-	struct pmap_mbox *mb, *selfmb;
-	CPU_INFO_ITERATOR cii;
+	struct pmap_mbox *selfmb;
+#ifndef XEN
+	struct pmap_mbox *mb;
 	uintptr_t head;
 	u_int count;
+#endif /* !XEN */
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 	int s;
 #endif	/* MULTIPROCESSOR */
 	struct cpu_info *self;
@@ -4516,6 +4541,19 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 			 * Once we have the lock, increment the counter.
 			 */
 			s = splvm();
+#ifdef XEN
+			xpq_queue_lock();
+			if (sva == -1LL) { /* XXX: handle pte ? */
+				xen_bcast_tlbflush();
+				self->ci_need_tlbwait = 0;
+			} 
+			else {
+				xen_vcpu_bcast_invlpg(sva, eva);
+				self->ci_need_tlbwait = 0;
+			}
+			pmap_tlb_evcnt.ev_count++;
+			xpq_queue_unlock();
+#else /* XEN */
 			mb = &pmap_mbox;
 			count = SPINLOCK_BACKOFF_MIN;
 			do {
@@ -4540,12 +4578,13 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 			mb->mb_addr1 = sva;
 			mb->mb_addr2 = eva;
 			mb->mb_global = pte;
-			x86_ipi(LAPIC_TLB_BCAST_VECTOR, LAPIC_DEST_ALLEXCL,
-			    LAPIC_DLMODE_FIXED);
+			x86_broadcast_ipi(X86_IPI_TLB);
 			self->ci_need_tlbwait = 1;
+#endif /* XEN */
 			splx(s);
 		} else if ((pm->pm_cpus & ~self->ci_cpumask) != 0 ||
 		    (kernel && (pm->pm_kernel_cpus & ~self->ci_cpumask) != 0)) {
+
 			/*
 			 * We don't bother traversing the CPU list if only
 			 * used by this CPU.
@@ -4560,11 +4599,13 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 			 * CPU, fill the details and fire it off.
 			 */
 			s = splvm();
+#ifndef XEN
 			for (CPU_INFO_FOREACH(cii, ci)) {
 				if (ci == self ||
 				    !pmap_is_active(pm, ci, kernel) ||
 				    !(ci->ci_flags & CPUF_RUNNING))
 					continue;
+
 				selfmb->mb_head++;
 				mb = &ci->ci_pmap_cpu->pc_mbox;
 				count = SPINLOCK_BACKOFF_MIN;
@@ -4579,12 +4620,45 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 				mb->mb_addr1 = sva;
 				mb->mb_addr2 = eva;
 				mb->mb_global = pte;
-				if (x86_ipi(LAPIC_TLB_MCAST_VECTOR,
-				    ci->ci_cpuid, LAPIC_DLMODE_FIXED))
+				if (x86_send_ipi(ci, X86_IPI_TLB)) {
 					panic("pmap_tlb_shootdown: ipi failed");
+				}
 			}
 			self->ci_need_tlbwait = 1;
+#else /* !XEN */
+			
+			uint32_t mcast_cpu_mask;
+			mcast_cpu_mask = pm->pm_cpus;
+			mcast_cpu_mask |= (kernel ? pm->pm_kernel_cpus : 0);
+			/* XXX: prune out CPUs that are !CPUF_RUNNING */
+
+			xpq_queue_lock();
+			
+			if (sva == -1) {
+				xen_mcast_tlbflush(mcast_cpu_mask);
+			}
+			else {
+				xen_vcpu_mcast_invlpg(sva, eva, mcast_cpu_mask);
+			}
+
+			/* take TLBSTATE_LAZY cpus off pm->pm_cpus */
+			for (CPU_INFO_FOREACH(cii, ci)) {
+				if (ci == self ||
+				    !pmap_is_active(pm, ci, kernel) ||
+				    !(ci->ci_flags & CPUF_RUNNING))
+					continue;
+
+				if (ci->ci_tlbstate == TLBSTATE_LAZY) {
+					pm->pm_cpus &= ~ci->ci_cpumask;
+					ci->ci_tlbstate = TLBSTATE_STALE;
+				}
+			}
+
+			self->ci_need_tlbwait = 0;
+			xpq_queue_unlock();
+#endif /* !XEN */
 			splx(s);
+
 		}
 	}
 #endif	/* MULTIPROCESSOR */

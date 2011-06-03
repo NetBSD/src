@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.47 2010/12/20 00:25:46 matt Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.47.6.1 2011/06/03 13:27:42 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,13 +54,14 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47 2010/12/20 00:25:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47.6.1 2011/06/03 13:27:42 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
 #include "pci.h"
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -82,13 +83,19 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.47 2010/12/20 00:25:46 matt Exp $");
  * This lock protects updates to the following mapping and reference-count
  * arrays. The lock does not need to be acquired to read the mapping tables.
  */
-static struct simplelock irq_mapping_update_lock = SIMPLELOCK_INITIALIZER;
+static struct simplelock evtchn_lock = SIMPLELOCK_INITIALIZER;
 
 /* event handlers */
 struct evtsource *evtsource[NR_EVENT_CHANNELS];
 
-/* Reference counts for bindings to event channels */
+/* Reference counts for bindings to event channels XXX: redo for SMP */
 static uint8_t evtch_bindcount[NR_EVENT_CHANNELS];
+
+/* event-channel <-> VCPU mapping for IPIs. XXX: redo for SMP. */
+static evtchn_port_t vcpu_ipi_to_evtch[MAX_VIRT_CPUS];
+
+/* event-channel <-> VCPU mapping for VIRQ_TIMER.  XXX: redo for SMP. */
+static int virq_timer_to_evtch[MAX_VIRT_CPUS];
 
 /* event-channel <-> VIRQ mapping. */
 static int virq_to_evtch[NR_VIRQS];
@@ -137,6 +144,14 @@ events_default_setup(void)
 {
 	int i;
 
+	/* No VCPU -> event mappings. */
+	for (i = 0; i < MAX_VIRT_CPUS; i++)
+		vcpu_ipi_to_evtch[i] = -1;
+
+	/* No VIRQ_TIMER -> event mappings. */
+	for (i = 0; i < MAX_VIRT_CPUS; i++)
+		virq_timer_to_evtch[i] = -1;
+
 	/* No VIRQ -> event mappings. */
 	for (i = 0; i < NR_VIRQS; i++)
 		virq_to_evtch[i] = -1;
@@ -162,6 +177,8 @@ void
 events_init(void)
 {
 	debug_port = bind_virq_to_evtch(VIRQ_DEBUG);
+	KASSERT(debug_port != -1);
+
 	aprint_verbose("debug virtual interrupt using event channel %d\n",
 	    debug_port);
 	/*
@@ -197,7 +214,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	if (evtch == IRQ_DEBUG)
 		printf("evtchn_do_event: evtch %d\n", evtch);
 #endif
-	ci = &cpu_info_primary;
+	ci = curcpu();
 
 	/*
 	 * Shortcut for the debug handler, we want it to always run,
@@ -231,6 +248,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
 	iplmask = evtsource[evtch]->ev_imask;
 	sti();
+	simple_lock(&evtsource[evtch]->ev_lock);
 	ih = evtsource[evtch]->ev_handlers;
 	while (ih != NULL) {
 		if (ih->ih_level <= ilevel) {
@@ -242,6 +260,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 			hypervisor_set_ipending(iplmask,
 			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 			/* leave masked */
+			simple_unlock(&evtsource[evtch]->ev_lock);
 			goto splx;
 		}
 		iplmask &= ~IUNMASK(ci, ih->ih_level);
@@ -250,6 +269,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		ih_fun(ih->ih_arg, regs);
 		ih = ih->ih_evt_next;
 	}
+	simple_unlock(&evtsource[evtch]->ev_lock);
 	cli();
 	hypervisor_enable_event(evtch);
 splx:
@@ -292,6 +312,37 @@ splx:
 	return 0;
 }
 
+#define PRIuCPUID	"lu" /* XXX: move this somewhere more appropriate */
+
+evtchn_port_t
+bind_vcpu_to_evtch(cpuid_t vcpu)
+{
+	evtchn_op_t op;
+	evtchn_port_t evtchn;
+	int s;
+
+	s = splhigh();
+	simple_lock(&evtchn_lock);
+
+	evtchn = vcpu_ipi_to_evtch[vcpu];
+	if (evtchn == -1) {
+		op.cmd = EVTCHNOP_bind_ipi;
+		op.u.bind_ipi.vcpu = (uint32_t) vcpu;
+		if (HYPERVISOR_event_channel_op(&op) != 0)
+			panic("Failed to bind ipi to VCPU %"PRIuCPUID"\n", vcpu);
+		evtchn = op.u.bind_ipi.port;
+
+		vcpu_ipi_to_evtch[vcpu] = evtchn;
+	}
+
+	evtch_bindcount[evtchn]++;
+
+	simple_unlock(&evtchn_lock);
+	splx(s);
+    
+	return evtchn;
+}
+
 int
 bind_virq_to_evtch(int virq)
 {
@@ -299,13 +350,31 @@ bind_virq_to_evtch(int virq)
 	int evtchn, s;
 
 	s = splhigh();
-	simple_lock(&irq_mapping_update_lock);
+	simple_lock(&evtchn_lock);
 
-	evtchn = virq_to_evtch[virq];
+	/* 
+	 * XXX: The only per-cpu VIRQ we currently use is VIRQ_TIMER. 
+	 * Please re-visit this implementation when others are used. 
+	 * Note: VIRQ_DEBUG is special-cased, and not used or bound on APs.
+	 * XXX: event->virq/ipi can be unified in a linked-list
+	 * implementation.
+	 */
+	struct cpu_info *ci = curcpu();
+
+	if (virq == VIRQ_DEBUG && ci != &cpu_info_primary) {
+		return -1;
+	}
+
+	if (virq == VIRQ_TIMER) {
+		evtchn = virq_timer_to_evtch[ci->ci_cpuid];
+	}
+	else {
+		evtchn = virq_to_evtch[virq];
+	}
 	if (evtchn == -1) {
 		op.cmd = EVTCHNOP_bind_virq;
 		op.u.bind_virq.virq = virq;
-		op.u.bind_virq.vcpu = 0;
+		op.u.bind_virq.vcpu = ci->ci_cpuid;
 		if (HYPERVISOR_event_channel_op(&op) != 0)
 			panic("Failed to bind virtual IRQ %d\n", virq);
 		evtchn = op.u.bind_virq.port;
@@ -315,7 +384,7 @@ bind_virq_to_evtch(int virq)
 
 	evtch_bindcount[evtchn]++;
 
-	simple_unlock(&irq_mapping_update_lock);
+	simple_unlock(&evtchn_lock);
 	splx(s);
     
 	return evtchn;
@@ -325,10 +394,24 @@ int
 unbind_virq_from_evtch(int virq)
 {
 	evtchn_op_t op;
-	int evtchn = virq_to_evtch[virq];
-	int s = splhigh();
+	int evtchn;
+	int s;
 
-	simple_lock(&irq_mapping_update_lock);
+	struct cpu_info *ci = curcpu();
+
+	if (virq == VIRQ_TIMER) {
+		evtchn = virq_timer_to_evtch[ci->ci_cpuid];
+	}
+	else {
+		evtchn = virq_to_evtch[virq];
+	}
+
+	if (evtchn == -1) {
+		return -1;
+	}
+
+	s = splhigh();
+	simple_lock(&evtchn_lock);
 
 	evtch_bindcount[evtchn]--;
 	if (evtch_bindcount[evtchn] == 0) {
@@ -340,7 +423,7 @@ unbind_virq_from_evtch(int virq)
 		virq_to_evtch[virq] = -1;
 	}
 
-	simple_unlock(&irq_mapping_update_lock);
+	simple_unlock(&evtchn_lock);
 	splx(s);
 
 	return evtchn;
@@ -358,7 +441,7 @@ bind_pirq_to_evtch(int pirq)
 	}
 
 	s = splhigh();
-	simple_lock(&irq_mapping_update_lock);
+	simple_lock(&evtchn_lock);
 
 	evtchn = pirq_to_evtch[pirq];
 	if (evtchn == -1) {
@@ -377,7 +460,7 @@ bind_pirq_to_evtch(int pirq)
 
 	evtch_bindcount[evtchn]++;
 
-	simple_unlock(&irq_mapping_update_lock);
+	simple_unlock(&evtchn_lock);
 	splx(s);
     
 	return evtchn;
@@ -390,7 +473,7 @@ unbind_pirq_from_evtch(int pirq)
 	int evtchn = pirq_to_evtch[pirq];
 	int s = splhigh();
 
-	simple_lock(&irq_mapping_update_lock);
+	simple_lock(&evtchn_lock);
 
 	evtch_bindcount[evtchn]--;
 	if (evtch_bindcount[evtchn] == 0) {
@@ -402,7 +485,7 @@ unbind_pirq_from_evtch(int pirq)
 		pirq_to_evtch[pirq] = -1;
 	}
 
-	simple_unlock(&irq_mapping_update_lock);
+	simple_unlock(&evtchn_lock);
 	splx(s);
 
 	return evtchn;
@@ -465,7 +548,7 @@ int
 event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
     const char *evname)
 {
-	struct cpu_info *ci = &cpu_info_primary;
+	struct cpu_info *ci = curcpu(); /* XXX: pass in ci ? */
 	struct evtsource *evts;
 	struct intrhand *ih, **ihp;
 	int s;
@@ -517,7 +600,9 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 		    M_DEVBUF, M_WAITOK|M_ZERO);
 		if (evts == NULL)
 			panic("can't allocate fixed interrupt source");
+
 		evts->ev_handlers = ih;
+		simple_lock_init(&evts->ev_lock);
 		evtsource[evtch] = evts;
 		if (evname)
 			strncpy(evts->ev_evname, evname,
@@ -530,6 +615,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	} else {
 		evts = evtsource[evtch];
 		/* sort by IPL order, higher first */
+		simple_lock(&evts->ev_lock);
 		for (ihp = &evts->ev_handlers; ; ihp = &((*ihp)->ih_evt_next)) {
 			if ((*ihp)->ih_level < ih->ih_level) {
 				/* insert before *ihp */
@@ -542,6 +628,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 				break;
 			}
 		}
+		simple_unlock(&evts->ev_lock);
 	}
 
 	intr_calculatemasks(evts);
@@ -553,7 +640,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 void
 event_set_iplhandler(struct intrhand *ih, int level)
 {
-	struct cpu_info *ci = &cpu_info_primary;
+	struct cpu_info *ci = curcpu();
 	struct iplsource *ipls;
 
 	if (ci->ci_isources[level] == NULL) {
@@ -579,21 +666,25 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	struct evtsource *evts;
 	struct intrhand *ih;
 	struct intrhand **ihp;
-	struct cpu_info *ci = &cpu_info_primary;
+	struct cpu_info *ci = curcpu();
 
 	evts = evtsource[evtch];
 	if (evts == NULL)
 		return ENOENT;
 
+	simple_lock(&evts->ev_lock);
 	for (ihp = &evts->ev_handlers, ih = evts->ev_handlers;
 	    ih != NULL;
 	    ihp = &ih->ih_evt_next, ih = ih->ih_evt_next) {
 		if (ih->ih_fun == func && ih->ih_arg == arg)
 			break;
 	}
-	if (ih == NULL)
+	if (ih == NULL) {
+		simple_unlock(&evts->ev_lock);
 		return ENOENT;
+	}
 	*ihp = ih->ih_evt_next;
+	simple_unlock(&evts->ev_lock);
 
 	ipls = ci->ci_isources[ih->ih_level];
 	for (ihp = &ipls->ipl_handlers, ih = ipls->ipl_handlers;

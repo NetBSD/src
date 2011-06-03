@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.38 2011/05/07 23:59:13 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.38.2.1 2011/06/03 13:27:39 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -408,8 +408,10 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 {
         int s = splvm();
 
+	xpq_queue_lock();
         xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
         xpq_flush_queue();
+	xpq_queue_unlock();
         splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.22 2010/11/12 10:51:14 njoly Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.22.6.1 2011/06/03 13:27:41 cherry Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.22 2010/11/12 10:51:14 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.22.6.1 2011/06/03 13:27:41 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment,
 		goto failed;
 	}
 	s = splvm();
+	xpq_queue_lock();
 	/* Map the new extent in place of the old pages */
 	for (pg = mlistp->tqh_first, i = 0; pg != NULL; pg = pgnext, i++) {
 		pgnext = pg->pageq.queue.tqe_next;
@@ -144,6 +145,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment,
 	}
 	/* Flush updates through and flush the TLB */
 	xpq_queue_tlb_flush();
+	xpq_queue_unlock();
 	splx(s);
 	return 0;
 

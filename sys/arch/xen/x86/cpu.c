@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56 2011/02/26 14:43:18 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56.2.1 2011/06/03 13:27:41 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2011/02/26 14:43:18 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.1 2011/06/03 13:27:41 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2011/02/26 14:43:18 jruoho Exp $");
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 #include <sys/reboot.h>
+#include <sys/idle.h>
 
 #include <uvm/uvm.h>
 
@@ -99,7 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2011/02/26 14:43:18 jruoho Exp $");
 #include <machine/gdt.h>
 #include <machine/mtrr.h>
 #include <machine/pio.h>
+#include <machine/fpu.h>
 
+#include <xen/xen.h>
+#include <xen/xen3-public/vcpu.h>
 #include <xen/vcpuvar.h>
 
 #if NLAPIC > 0
@@ -193,21 +197,6 @@ paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
 static void    	cpu_start_secondary(struct cpu_info *ci);
-static void	cpu_copy_trampoline(void);
-
-/*
- * Runs once per boot once multiprocessor goo has been detected and
- * the local APIC on the boot processor has been mapped.
- *
- * Called from lapic_boot_init() (from mpbios_scan()).
- */
-void
-cpu_init_first(void)
-{
-
-	cpu_info_primary.ci_cpuid = lapic_cpu_number();
-	cpu_copy_trampoline();
-}
 #endif	/* MULTIPROCESSOR */
 
 static int
@@ -316,9 +305,23 @@ static int
 vcpu_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct vcpu_attach_args *vcaa = aux;
+	struct vcpu_runstate_info vcr;
+	int error;
 
-	if (strcmp(vcaa->vcaa_name, match->cf_name) == 0)
-		return 1;
+	if (strcmp(vcaa->vcaa_name, match->cf_name) == 0) {
+		error = HYPERVISOR_vcpu_op(VCPUOP_get_runstate_info,
+					   vcaa->vcaa_caa.cpu_number,
+					   &vcr);
+		switch (error) {
+		case 0:
+			return 1;
+		case -ENOENT:
+			return 0;
+		default:
+			panic("Unknown hypervisor error %d returned on vcpu runstate probe\n", error);
+		}
+	}
+
 	return 0;
 }
 
@@ -327,7 +330,16 @@ vcpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct vcpu_attach_args *vcaa = aux;
 
+	KASSERT(vcaa->vcaa_caa.cpu_func == NULL);
+	vcaa->vcaa_caa.cpu_func = &mp_cpu_funcs;
 	cpu_attach_common(parent, self, &vcaa->vcaa_caa);
+}
+
+static int
+vcpu_is_up(struct cpu_info *ci)
+{
+	KASSERT(ci != NULL);
+	return HYPERVISOR_vcpu_op(VCPUOP_is_up, ci->ci_cpuid, NULL);
 }
 
 static void
@@ -394,22 +406,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		aprint_naive(": %s Processor\n",
 		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
 		ci = &cpu_info_primary;
-#if NLAPIC > 0
-		if (cpunum != lapic_cpu_number()) {
-			/* XXX should be done earlier */
-			uint32_t reg;
-			aprint_verbose("\n");
-			aprint_verbose_dev(self, "running CPU at apic %d"
-			    " instead of at expected %d", lapic_cpu_number(),
-			    cpunum);
-			reg = i82489_readreg(LAPIC_ID);
-			i82489_writereg(LAPIC_ID, (reg & ~LAPIC_ID_MASK) |
-			    (cpunum << LAPIC_ID_SHIFT));
-		}
-		if (cpunum != lapic_cpu_number()) {
-			aprint_error_dev(self, "unable to reset apic id\n");
-		}
-#endif
 	}
 
 	ci->ci_self = ci;
@@ -420,6 +416,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	ci->ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[cpunum];
 
+	KASSERT(ci->ci_func == 0);
 	ci->ci_func = caa->cpu_func;
 
 	/* Must be called before mi_cpu_attach(). */
@@ -429,12 +426,15 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		int error;
 
 		error = mi_cpu_attach(ci);
+
+		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 		if (error != 0) {
 			aprint_normal("\n");
 			aprint_error_dev(self,
 			    "mi_cpu_attach failed with %d\n", error);
 			return;
 		}
+
 	} else {
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
@@ -456,14 +456,11 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
-#if NLAPIC > 0
-		if (caa->cpu_role != CPU_ROLE_SP) {
-			/* Enable lapic. */
-			lapic_enable();
-			lapic_set_lvt();
-			lapic_calibrate_timer();
-		}
-#endif
+
+		/* Every processor needs to init it's own ipi h/w (similar to lapic) */
+		xen_ipi_init();
+		/* XXX: clock_init() */
+
 		/* Make sure DELAY() is initialized. */
 		DELAY(1);
 		again = true;
@@ -479,6 +476,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		x86_errata();
 #endif
 		x86_cpu_idle_init();
+
 		break;
 
 	case CPU_ROLE_BP:
@@ -489,24 +487,33 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		x86_errata();
 #endif
 		x86_cpu_idle_init();
+
 		break;
 
 	case CPU_ROLE_AP:
+		atomic_or_32(&ci->ci_flags, CPUF_AP);
+
 		/*
 		 * report on an AP
 		 */
 
 #if defined(MULTIPROCESSOR)
+		/* interrupt handler stack */
 		cpu_intr_init(ci);
+
+		/* Setup gdt */
 		gdt_alloc_cpu(ci);
+		//gdt_init_cpu(ci);
+
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_early(ci);
 		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
+
 		if (ci->ci_flags & CPUF_PRESENT) {
 			struct cpu_info *tmp;
 
-			identifycpu(ci);
+			cpu_identify(ci);
 			tmp = cpu_info_list;
 			while (tmp->ci_next)
 				tmp = tmp->ci_next;
@@ -514,7 +521,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 			tmp->ci_next = ci;
 		}
 #else
-		aprint_error_dev(self, "not started\n");
+		aprint_error(": not started\n");
 #endif
 		break;
 
@@ -531,7 +538,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 #endif
 
-#if defined(MULTIPROCESSOR)
+#ifdef MPVERBOSE
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
 		struct pcb *pcb = lwp_getpcb(l);
@@ -541,13 +548,13 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		    l,
 #ifdef i386
 		    (void *)pcb->pcb_esp
-#else
+#else /* i386 */
 		    (void *)pcb->pcb_rsp
-#endif
+#endif /* i386 */
 		);
 		
 	}
-#endif
+#endif /* MPVERBOSE */
 }
 
 /*
@@ -595,16 +602,18 @@ cpu_init(struct cpu_info *ci)
 
 	atomic_or_32(&cpus_running, ci->ci_cpumask);
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
+
+	/* XXX: register vcpu_register_runstate_memory_area, and figure out how to make sure this VCPU is running ? */
 }
 
 
 #ifdef MULTIPROCESSOR
+
 void
 cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
 	u_long i;
-
 	for (i = 0; i < maxcpus; i++) {
 		ci = cpu_lookup(i);
 		if (ci == NULL)
@@ -648,22 +657,18 @@ cpu_init_idle_lwps(void)
 	}
 }
 
-void
+static void
 cpu_start_secondary(struct cpu_info *ci)
 {
 	int i;
-	struct pmap *kpm = pmap_kernel();
-	extern uint32_t mp_pdirpa;
-
-	mp_pdirpa = kpm->pm_pdirpa; /* XXX move elsewhere, not per CPU. */
-
-	atomic_or_32(&ci->ci_flags, CPUF_AP);
 
 	aprint_debug_dev(ci->ci_dev, "starting\n");
 
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
-	if (CPU_STARTUP(ci, mp_trampoline_paddr) != 0)
+
+	if (CPU_STARTUP(ci, (vaddr_t) cpu_hatch) != 0) {
 		return;
+	}
 
 	/*
 	 * wait for it to become ready
@@ -695,7 +700,6 @@ void
 cpu_boot_secondary(struct cpu_info *ci)
 {
 	int i;
-
 	atomic_or_32(&ci->ci_flags, CPUF_GO);
 	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i > 0; i--) {
 		delay(10);
@@ -710,13 +714,13 @@ cpu_boot_secondary(struct cpu_info *ci)
 }
 
 /*
- * The CPU ends up here when its ready to run
- * This is called from code in mptramp.s; at this point, we are running
- * in the idle pcb/idle stack of the new CPU.  When this function returns,
- * this processor will enter the idle loop and start looking for work.
- *
- * XXX should share some of this with init386 in machdep.c
+ * APs end up here immediately after initialisation and VCPUOP_up in
+ * mp_cpu_start(). 
+ * At this point, we are running in the idle pcb/idle stack of the new
+ * CPU.  This function jumps to the idle loop and starts looking for
+ * work. 
  */
+extern void x86_64_tls_switch(struct lwp *);
 void
 cpu_hatch(void *v)
 {
@@ -724,15 +728,12 @@ cpu_hatch(void *v)
 	struct pcb *pcb;
 	int s, i;
 
+	/* Setup TLS and kernel GS */
+	cpu_init_msrs(ci, true);
 	cpu_probe(ci);
 
-	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
-	cpu_feature[2] &= ~CPUID_FEAT_EXT_BLACKLIST;
-
-        cpu_init_msrs(ci, true);
-
-	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
 	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
+
 	while ((ci->ci_flags & CPUF_GO) == 0) {
 		/* Don't use delay, boot CPU may be patching the text. */
 		for (i = 10000; i != 0; i--)
@@ -740,27 +741,30 @@ cpu_hatch(void *v)
 	}
 
 	/* Because the text may have been patched in x86_patch(). */
-	wbinvd();
 	x86_flush();
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
 	pcb = lwp_getpcb(curlwp);
-	lcr3(pmap_kernel()->pm_pdirpa);
-	pcb->pcb_cr3 = pmap_kernel()->pm_pdirpa;
+	pcb->pcb_cr3 = pmap_pdirpa(pmap_kernel(), 0); /* XXX: consider using pmap_load() ? */
 	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
 	lcr0(pcb->pcb_cr0);
 
 	cpu_init_idt();
 	gdt_init_cpu(ci);
-	lapic_enable();
-	lapic_set_lvt();
-	lapic_initclocks();
+	xen_ipi_init();
+
+	xen_initclocks();
+	
+	/* XXX: lapic_initclocks(); */
 
 #ifdef i386
+#if NNPX > 0
 	npxinit(ci);
+#endif
 #else
 	fpuinit(ci);
+	/* XXX: fixme compile fpuinit(ci); */
 #endif
 
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
@@ -770,19 +774,20 @@ cpu_hatch(void *v)
 	cpu_get_tsc_freq(ci);
 
 	s = splhigh();
-#ifdef i386
-	lapic_tpr = 0;
-#else
-	lcr8(0);
-#endif
 	x86_enable_intr();
 	splx(s);
 #if 0
 	x86_errata();
 #endif
 
-	aprint_debug_dev(ci->ci_dev, "CPU %ld running\n",
-		(long)ci->ci_cpuid);
+	aprint_debug_dev(ci->ci_dev, "running\n");
+
+	printf("\n\nAbout to switch to idle_loop()\n\n");
+
+	cpu_switchto(NULL, ci->ci_data.cpu_idlelwp, true);
+
+	panic("switch to idle_loop context returned!\n");
+	/* NOTREACHED */
 }
 
 #if defined(DDB)
@@ -811,32 +816,6 @@ cpu_debug_dump(void)
 	}
 }
 #endif /* DDB */
-
-static void
-cpu_copy_trampoline(void)
-{
-	/*
-	 * Copy boot code.
-	 */
-	extern u_char cpu_spinup_trampoline[];
-	extern u_char cpu_spinup_trampoline_end[];
-
-	vaddr_t mp_trampoline_vaddr;
-
-	mp_trampoline_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		UVM_KMF_VAONLY);
-
-	pmap_kenter_pa(mp_trampoline_vaddr, mp_trampoline_paddr,
-		VM_PROT_READ | VM_PROT_WRITE, 0);
-	pmap_update(pmap_kernel());
-	memcpy((void *)mp_trampoline_vaddr,
-		cpu_spinup_trampoline,
-		cpu_spinup_trampoline_end - cpu_spinup_trampoline);
-
-	pmap_kremove(mp_trampoline_vaddr, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, mp_trampoline_vaddr, PAGE_SIZE, UVM_KMF_VAONLY);
-}
 
 #endif /* MULTIPROCESSOR */
 
@@ -915,86 +894,160 @@ cpu_set_tss_gates(struct cpu_info *ci)
 }
 #endif	/* i386 */
 
-int
-mp_cpu_start(struct cpu_info *ci, paddr_t target)
+extern void hypervisor_callback(void);
+extern void failsafe_callback(void);
+#ifdef __x86_64__
+typedef void (vector)(void);
+extern vector Xsyscall, Xsyscall32;
+#endif
+
+/*
+ * Setup the "trampoline". On Xen, we setup nearly all cpu context
+ * outside a trampoline, so we prototype and call targetrip like so:
+ * void targetrip(struct cpu_info *);
+ */
+
+static void
+gdt_prepframes(paddr_t *frames, vaddr_t base, uint32_t entries)
 {
-#if 0
-#if NLAPIC > 0
-	int error;
-#endif
-	unsigned short dwordptr[2];
+	int i;	
+	for (i = 0; i < roundup(entries, PAGE_SIZE) >> PAGE_SHIFT; i++) {
 
-	/*
-	 * Bootstrap code must be addressable in real mode
-	 * and it must be page aligned.
-	 */
-	KASSERT(target < 0x10000 && target % PAGE_SIZE == 0);
+		frames[i] = ((paddr_t) xpmap_ptetomach(
+				(pt_entry_t *) (base + (i << PAGE_SHIFT))))
+			>> PAGE_SHIFT;
 
-	/*
-	 * "The BSP must initialize CMOS shutdown code to 0Ah ..."
-	 */
-
-	outb(IO_RTC, NVRAM_RESET);
-	outb(IO_RTC+1, NVRAM_RESET_JUMP);
-
-	/*
-	 * "and the warm reset vector (DWORD based at 40:67) to point
-	 * to the AP startup code ..."
-	 */
-
-	dwordptr[0] = 0;
-	dwordptr[1] = target >> 4;
-
-	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE, 0);
-	pmap_update(pmap_kernel());
-
-	memcpy ((uint8_t *) 0x467, dwordptr, 4);
-
-	pmap_kremove (0, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-
-#if NLAPIC > 0
-	/*
-	 * ... prior to executing the following sequence:"
-	 */
-
-	if (ci->ci_flags & CPUF_AP) {
-		if ((error = x86_ipi_init(ci->ci_cpuid)) != 0)
-			return error;
-
-		delay(10000);
-
-		if (cpu_feature & CPUID_APIC) {
-			error = x86_ipi_init(ci->ci_cpuid);
-			if (error != 0) {
-				aprint_error_dev(ci->ci_dev, "%s: IPI not taken (1)\n",
-						__func__);
-				return error;
-			}
-
-			delay(10000);
-
-			error = x86_ipi(target / PAGE_SIZE, ci->ci_cpuid,
-					LAPIC_DLMODE_STARTUP);
-			if (error != 0) {
-				aprint_error_dev(ci->ci_dev, "%s: IPI not taken (2)\n",
-						__func__);
-				return error;
-			}
-			delay(200);
-
-			error = x86_ipi(target / PAGE_SIZE, ci->ci_cpuid,
-					LAPIC_DLMODE_STARTUP);
-			if (error != 0) {
-				aprint_error_dev(ci->ci_dev, "%s: IPI not taken ((3)\n",
-						__func__);
-				return error;
-			}
-			delay(200);
-		}
+		/* Mark Read-only */
+		pmap_pte_clearbits(kvtopte(base + (i << PAGE_SHIFT)),
+		    PG_RW);
 	}
-#endif
-#endif /* 0 */
+}
+
+extern char *ldtstore; /* XXX: Xen MP todo */
+
+static void
+xen_init_amd64_vcpuctxt(struct cpu_info *ci,
+			struct vcpu_guest_context *initctx, 
+			void targetrip(struct cpu_info *))
+{
+	/* page frames to point at GDT */
+	extern int gdt_size;
+	paddr_t frames[16];
+	psize_t gdt_ents;
+
+	struct lwp *l;
+	struct pcb *pcb;
+
+	volatile struct vcpu_info *vci;
+
+	KASSERT(ci != NULL);
+	KASSERT(ci != &cpu_info_primary);
+	KASSERT(initctx != NULL);
+	KASSERT(targetrip != NULL);
+
+	memset(initctx, 0, sizeof *initctx);
+
+	gdt_ents = roundup(gdt_size, PAGE_SIZE) >> PAGE_SHIFT; /* XXX: re-investigate roundup(gdt_size... ) for gdt_ents. */
+	KASSERT(gdt_ents <= 16);
+
+	gdt_prepframes(frames, (vaddr_t) ci->ci_gdt, gdt_ents);
+
+	/* XXX: The stuff in here is amd64 specific. move to mptramp.[Sc] ? */
+
+	/* Initialise the vcpu context: We use idle_loop()'s pcb context. */
+
+	l = ci->ci_data.cpu_idlelwp;
+
+	KASSERT(l != NULL);
+	pcb = lwp_getpcb(l);
+	KASSERT(pcb != NULL);
+
+	/* resume with interrupts off */
+	vci = ci->ci_vcpu;
+	vci->evtchn_upcall_mask = 1;
+	xen_mb();
+
+	/* resume in kernel-mode */
+	initctx->flags = VGCF_in_kernel | VGCF_online;
+
+	/* Stack and entry points */
+	initctx->user_regs.rbp = pcb->pcb_rbp;
+	initctx->user_regs.rdi = (uint64_t) ci; /* targetrip(ci); */
+	initctx->user_regs.rip = (vaddr_t) targetrip;
+
+	initctx->user_regs.cs = GSEL(GCODE_SEL, SEL_KPL);
+
+	initctx->user_regs.rflags = pcb->pcb_flags;
+	initctx->user_regs.rsp = pcb->pcb_rsp;
+
+	/* Data segments */
+	initctx->user_regs.ss = GSEL(GDATA_SEL, SEL_KPL);
+	initctx->user_regs.es = GSEL(GDATA_SEL, SEL_KPL);
+	initctx->user_regs.ds = GSEL(GDATA_SEL, SEL_KPL);
+
+	/* GDT */
+	memcpy(initctx->gdt_frames, frames, sizeof frames);
+	initctx->gdt_ents = gdt_ents;
+
+	/* LDT */
+	initctx->ldt_base = (unsigned long) ldtstore;
+	initctx->ldt_ents = LDT_SIZE >> 3;
+
+	/* Kernel context state */
+	initctx->kernel_ss = GSEL(GDATA_SEL, SEL_KPL);
+	initctx->kernel_sp = pcb->pcb_rsp0;
+	initctx->ctrlreg[0] = pcb->pcb_cr0;
+	initctx->ctrlreg[1] = 0; /* "resuming" from kernel - no User cr3. */
+	initctx->ctrlreg[2] = pcb->pcb_cr2; /* XXX: */
+	initctx->ctrlreg[3] = xpmap_ptom(pcb->pcb_cr3);
+	initctx->ctrlreg[4] = CR4_PAE | CR4_OSFXSR | CR4_OSXMMEXCPT;
+
+
+	/* Xen callbacks */
+	initctx->event_callback_eip = (unsigned long) hypervisor_callback;
+	initctx->failsafe_callback_eip = (unsigned long) failsafe_callback;
+	initctx->syscall_callback_eip = (unsigned long) Xsyscall;
+
+	return;
+}
+
+int
+mp_cpu_start(struct cpu_info *ci, vaddr_t target)
+{
+
+	int hyperror;
+	struct vcpu_guest_context vcpuctx;
+
+	KASSERT(ci != NULL);
+	KASSERT(ci != &cpu_info_primary);
+	KASSERT(ci->ci_flags & CPUF_AP);
+
+	xen_init_amd64_vcpuctxt(ci, &vcpuctx, (void (*)(struct cpu_info *))target);
+
+	/* Initialise the given vcpu to execute cpu_hatch(ci); */
+	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_initialise, ci->ci_cpuid, &vcpuctx))) {
+		aprint_error(": context initialisation failed. errno = %d\n", hyperror);
+		return hyperror;
+	}
+
+	/* Start it up */
+
+	/* First bring it down - yay, thanks Xen documentation for omitting this slight detail - lost only about 1 week reading through crap */
+	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_down, ci->ci_cpuid, NULL))) {
+		aprint_error(": VCPUOP_down hypervisor command failed. errno = %d\n", hyperror);
+		return hyperror;
+	}
+
+	if ((hyperror = HYPERVISOR_vcpu_op(VCPUOP_up, ci->ci_cpuid, NULL))) {
+		aprint_error(": VCPUOP_up hypervisor command failed. errno = %d\n", hyperror);
+		return hyperror;
+	}
+
+	if (!vcpu_is_up(ci)) {
+		aprint_error(": did not come up\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -1009,6 +1062,13 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 	outb(IO_RTC, NVRAM_RESET);
 	outb(IO_RTC+1, NVRAM_RESET_RST);
 #endif
+	if (vcpu_is_up(ci)) {
+		aprint_debug_dev(ci->ci_dev, "is started.\n");
+	}
+	else {
+		aprint_error_dev(ci->ci_dev, "did not start up.\n");
+	}
+
 }
 
 void
@@ -1024,6 +1084,7 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 
 	if (cpu_feature[2] & CPUID_NOX)
 		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
+
 }
 
 void
@@ -1097,8 +1158,12 @@ cpu_resume(device_t dv, const pmf_qual_t *qual)
 void    
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
+	uint32_t vcpu_tversion;
 	const volatile vcpu_time_info_t *tinfo = &ci->ci_vcpu->time;
-	delay(1000000);
+
+	vcpu_tversion = tinfo->version;
+	while (tinfo->version == vcpu_tversion); /* Wait for a time update. XXX: timeout ? */
+
 	uint64_t freq = 1000000000ULL << 32;
 	freq = freq / (uint64_t)tinfo->tsc_to_system_mul;
 	if ( tinfo->tsc_shift < 0 )
@@ -1112,12 +1177,13 @@ void
 x86_cpu_idle_xen(void)
 {
 	struct cpu_info *ci = curcpu();
-
+	
 	KASSERT(ci->ci_ilevel == IPL_NONE);
 
 	x86_disable_intr();
 	if (!__predict_false(ci->ci_want_resched)) {
 		idle_block();
+
 	} else {
 		x86_enable_intr();
 	}
@@ -1135,6 +1201,7 @@ cpu_load_pmap(struct pmap *pmap)
 	struct cpu_info *ci;
 
 	s = splvm(); /* just to be safe */
+	xpq_queue_lock();
 	ci = curcpu();
 	paddr_t l3_pd = xpmap_ptom_masked(ci->ci_pae_l3_pdirpa);
 	/* don't update the kernel L3 slot */
@@ -1142,6 +1209,7 @@ cpu_load_pmap(struct pmap *pmap)
 		xpq_queue_pte_update(l3_pd + i * sizeof(pd_entry_t),
 		    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
 	}
+	xpq_queue_unlock();
 	splx(s);
 	tlbflush();
 #else /* PAE */
@@ -1166,14 +1234,18 @@ cpu_load_pmap(struct pmap *pmap)
 		new_pgd = pmap->pm_pdir;
 		old_pgd = pmap_kernel()->pm_pdir;
 		addr = xpmap_ptom(pmap_pdirpa(pmap_kernel(), 0));
+		xpq_queue_lock();
 		for (i = 0; i < PDIR_SLOT_PTE;
 		    i++, addr += sizeof(pd_entry_t)) {
 			if ((new_pgd[i] & PG_V) || (old_pgd[i] & PG_V))
 				xpq_queue_pte_update(addr, new_pgd[i]);
 		}
+		xpq_queue_unlock();
 		tlbflush();
+		xpq_queue_lock();
 		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
 		ci->ci_xen_current_user_pgd = pmap_pdirpa(pmap, 0);
+		xpq_queue_unlock();
 		splx(s);
 	}
 #endif /* __x86_64__ */
