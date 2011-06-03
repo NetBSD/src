@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.h,v 1.7 2008/06/04 12:45:28 ad Exp $	*/
+/*	uvm_pglist.h,v 1.7 2008/06/04 12:45:28 ad Exp	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -41,18 +41,16 @@ LIST_HEAD(pgflist, vm_page);
 
 /*
  * A page free list consists of free pages of unknown contents and free
- * pages of all zeros.
+ * pages of all zeros.  For each color, there is a global page free list
+ * as well as one for each cpu.
  */
 #define	PGFL_UNKNOWN	0
 #define	PGFL_ZEROS	1
 #define	PGFL_NQUEUES	2
 
-struct pgflbucket {
-	struct pgflist pgfl_queues[PGFL_NQUEUES];
-};
-
 struct pgfreelist {
-	struct pgflbucket *pgfl_buckets;
+	u_long pgfl_pages[PGFL_NQUEUES];
+	struct pgflist pgfl_queues[VM_NFREELIST][PGFL_NQUEUES];
 };
 
 #endif /* _UVM_UVM_PGLIST_H_ */

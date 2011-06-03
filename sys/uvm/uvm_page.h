@@ -307,7 +307,6 @@ static int vm_physseg_find(paddr_t, int *);
 	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)
 
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
-#define VM_PAGE_TO_COLOR(entry)	(atop((entry)->phys_addr) & uvmexp.colormask)
 
 #ifdef __HAVE_VM_PAGE_MD
 #define VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)

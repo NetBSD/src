@@ -152,7 +152,7 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	struct vm_page *pp;
 	vm_prot_t prot;
 	const bool pdaemon = (curlwp == uvm.pagedaemon_lwp);
-	const u_int first_color = VM_PAGE_TO_COLOR(*pps);
+	const u_int first_color = VM_PGCOLOR_BUCKET(*pps);
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d, first_color=%u)",
