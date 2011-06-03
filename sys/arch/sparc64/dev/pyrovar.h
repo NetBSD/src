@@ -55,7 +55,7 @@ struct pyro_pbm {
 };
 
 struct pyro_softc {
-	struct device sc_dv;
+	device_t sc_dev;
 	int sc_node;
 	int sc_ign;
 	bus_dma_tag_t sc_dmat;
