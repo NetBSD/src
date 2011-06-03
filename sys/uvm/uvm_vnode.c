@@ -269,7 +269,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 				mutex_enter(&uobj->vmobjlock);
 				continue;
 			}
-			UVMHIST_LOG(ubchist, "alloced %p", pg,0,0,0);
+			UVMHIST_LOG(ubchist, "alloced %p (%u)", pg,
+			    VM_PGCOLOR_BUCKET(pg), 0,0);
 			break;
 		} else if (flags & UFP_NOCACHE) {
 			UVMHIST_LOG(ubchist, "nocache",0,0,0,0);
@@ -283,7 +284,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 				return 0;
 			}
 			pg->flags |= PG_WANTED;
-			UVMHIST_LOG(ubchist, "wait %p", pg,0,0,0);
+			UVMHIST_LOG(ubchist, "wait %p (color %u)", pg,
+			    VM_PGCOLOR_BUCKET(pg), 0,0);
 			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
 					    "uvn_fp2", 0);
 			mutex_enter(&uobj->vmobjlock);
@@ -310,7 +312,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 		/* mark the page BUSY and we're done. */
 		pg->flags |= PG_BUSY;
 		UVM_PAGE_OWN(pg, "uvn_findpage");
-		UVMHIST_LOG(ubchist, "found %p", pg,0,0,0);
+		UVMHIST_LOG(ubchist, "found %p (color %u)",
+		    pg, VM_PGCOLOR_BUCKET(pg), 0,0);
 		break;
 	}
 	*pgp = pg;

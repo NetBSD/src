@@ -81,7 +81,8 @@ u_long	uvm_pglistalloc_npages;
 static void
 uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 {
-	int free_list, color, pgflidx;
+	struct uvm_cpu *ucpu;
+	int free_list, color, queue;
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
 
@@ -89,13 +90,14 @@ uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 #error uvm_pglistalloc needs to be updated
 #endif
 
+	ucpu = VM_FREE_PAGE_TO_CPU(pg);
 	free_list = uvm_page_lookup_freelist(pg);
 	color = VM_PGCOLOR_BUCKET(pg);
-	pgflidx = (pg->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN;
+	queue = (pg->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN;
 #if defined(DEBUG) && DEBUG > 1
 	struct vm_page *tp;
 	LIST_FOREACH(tp,
-	    &uvm.page_free[free_list].pgfl_buckets[color].pgfl_queues[pgflidx],
+	    &uvm.page_free[color].pgfl_queues[free_list][queue],
 	    pageq.list) {
 		if (tp == pg)
 			break;
@@ -105,10 +107,12 @@ uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 #endif
 	LIST_REMOVE(pg, pageq.list);	/* global */
 	LIST_REMOVE(pg, listq.list);	/* cpu */
+	uvm.page_free[color].pgfl_pages[queue]--;
+	ucpu->page_free[color].pgfl_pages[queue]--;
+	ucpu->pages[queue]--;
 	uvmexp.free--;
 	if (pg->flags & PG_ZERO)
 		uvmexp.zeropages--;
-	VM_FREE_PAGE_TO_CPU(pg)->pages[pgflidx]--;
 	pg->flags = PG_CLEAN;
 	pg->pqflags = 0;
 	pg->uobject = NULL;
@@ -387,7 +391,7 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 #ifdef DIAGNOSTIC
 	if (!colorless) {
 		pg = TAILQ_LAST(rlist, pglist);
-		KASSERT(color == ((VM_PAGE_TO_COLOR(pg) + 1) & colormask));
+		KASSERT(color == ((VM_PGCOLOR_BUCKET(pg) + 1) & colormask));
 	}
 #endif
 
@@ -586,21 +590,18 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 void
 uvm_pglistfree(struct pglist *list)
 {
-	struct uvm_cpu *ucpu;
 	struct vm_page *pg;
-	int index, color, queue;
-	bool iszero;
 
 	/*
 	 * Lock the free list and free each page.
 	 */
 
 	mutex_spin_enter(&uvm_fpageqlock);
-	ucpu = curcpu()->ci_data.cpu_uvm;
+	struct uvm_cpu * const ucpu = curcpu()->ci_data.cpu_uvm;
 	while ((pg = TAILQ_FIRST(list)) != NULL) {
 		KASSERT(!uvmpdpol_pageisqueued_p(pg));
 		TAILQ_REMOVE(list, pg, pageq.queue);
-		iszero = (pg->flags & PG_ZERO);
+		const bool iszero = (pg->flags & PG_ZERO);
 		pg->pqflags = PQ_FREE;
 #ifdef DEBUG
 		pg->uobject = (void *)0xdeadbeef;
@@ -610,21 +611,29 @@ uvm_pglistfree(struct pglist *list)
 		if (iszero)
 			uvm_pagezerocheck(pg);
 #endif /* DEBUG */
-		index = uvm_page_lookup_freelist(pg);
-		color = VM_PGCOLOR_BUCKET(pg);
-		queue = iszero ? PGFL_ZEROS : PGFL_UNKNOWN;
+		const size_t free_list = uvm_page_lookup_freelist(pg);
+		const size_t color = VM_PGCOLOR_BUCKET(pg);
+		const size_t queue = iszero ? PGFL_ZEROS : PGFL_UNKNOWN;
 		pg->offset = (uintptr_t)ucpu;
-		LIST_INSERT_HEAD(&uvm.page_free[index].pgfl_buckets[color].
-		    pgfl_queues[queue], pg, pageq.list);
-		LIST_INSERT_HEAD(&ucpu->page_free[index].pgfl_buckets[color].
-		    pgfl_queues[queue], pg, listq.list);
+		LIST_INSERT_HEAD(&uvm.page_free[color].
+		    pgfl_queues[free_list][queue], pg, pageq.list);
+		LIST_INSERT_HEAD(&ucpu->page_free[color].
+		    pgfl_queues[free_list][queue], pg, listq.list);
+		uvm.page_free[color].pgfl_pages[queue]++;
+		ucpu->page_free[color].pgfl_pages[queue]++;
+		ucpu->pages[queue]++;
 		uvmexp.free++;
 		if (iszero)
 			uvmexp.zeropages++;
-		ucpu->pages[queue]++;
 		STAT_DECR(uvm_pglistalloc_npages);
 	}
-	if (ucpu->pages[PGFL_ZEROS] < ucpu->pages[PGFL_UNKNOWN])
-		ucpu->page_idle_zero = vm_page_zero_enable;
+	for (size_t color = 0; color < uvmexp.ncolors; color++) {
+		const u_long * const pages =
+		    ucpu->page_free[color].pgfl_pages;
+		if (pages[PGFL_ZEROS] < pages[PGFL_UNKNOWN]) {
+			ucpu->page_idle_zero = vm_page_zero_enable;
+			break;
+		}
+	}
 	mutex_spin_exit(&uvm_fpageqlock);
 }

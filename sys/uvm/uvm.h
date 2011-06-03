@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.55 2008/06/04 15:06:04 ad Exp $	*/
+/*	uvm.h,v 1.55 2008/06/04 15:06:04 ad Exp	*/
 
 /*
  *
@@ -78,7 +78,7 @@ struct workqueue;
  */
 
 struct uvm_cpu {
-	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
+	struct pgfreelist *page_free;	/* unallocated pages */
 	int page_free_nextcolor;	/* next color to allocate from */
 	int page_idlezero_next;		/* which color to zero next */
 	bool page_idle_zero;		/* TRUE if we should try to zero
@@ -95,7 +95,7 @@ struct uvm {
 	/* vm_page related parameters */
 
 		/* vm_page queues */
-	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
+	struct pgfreelist *page_free;	/* unallocated pages */
 	bool page_init_done;		/* TRUE if uvm_page_init() finished */
 
 		/* page daemon trigger */

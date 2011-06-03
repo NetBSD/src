@@ -4660,7 +4660,7 @@ again:
 	}
 
 	error = uvm_map_prepare(map, 0, PAGE_SIZE, NULL, UVM_UNKNOWN_OFFSET,
-	    VM_PAGE_TO_COLOR(pg), mapflags | UVM_FLAG_COLORMATCH, &args);
+	    VM_PGCOLOR_BUCKET(pg), mapflags | UVM_FLAG_COLORMATCH, &args);
 	if (error) {
 		uvm_pagefree(pg);
 		return NULL;
@@ -5105,9 +5105,9 @@ uvm_page_printit(struct vm_page *pg, bool full,
 
 	/* cross-verify page queue */
 	if (pg->pqflags & PQ_FREE) {
-		int fl = uvm_page_lookup_freelist(pg);
+		int free_list = uvm_page_lookup_freelist(pg);
 		int color = VM_PGCOLOR_BUCKET(pg);
-		pgl = &uvm.page_free[fl].pgfl_buckets[color].pgfl_queues[
+		pgl = &uvm.page_free[color].pgfl_queues[free_list][
 		    ((pg)->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN];
 	} else {
 		pgl = NULL;

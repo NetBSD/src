@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93.4.2 2009/02/02 19:24:04 snj Exp $	*/
+/*	uvm_pdaemon.c,v 1.93.4.2 2009/02/02 19:24:04 snj Exp	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93.4.2 2009/02/02 19:24:04 snj Exp $");
+__KERNEL_RCSID(0, "uvm_pdaemon.c,v 1.93.4.2 2009/02/02 19:24:04 snj Exp");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -112,6 +112,20 @@ unsigned int uvm_pagedaemon_waiters;
  * XXX hack to avoid hangs when large processes fork.
  */
 u_int uvm_extrapages;
+
+static bool
+uvm_color_needsscan_p(void)
+{
+	struct pgfreelist *pgfl = uvm.page_free;
+	for (int color = 0; color < uvmexp.ncolors; color++, pgfl++) {
+		u_long freepages =
+		    pgfl->pgfl_pages[PGFL_UNKNOWN]
+		    + pgfl->pgfl_pages[PGFL_ZEROS];
+		if (freepages * uvmexp.ncolors < uvmexp.freetarg)
+			return true;
+	}
+	return false;
+}
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -175,9 +189,10 @@ uvm_kick_pdaemon(void)
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
 
-	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
-	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
-	     uvmpdpol_needsscan_p())) {
+	if (uvmexp.free + uvmexp.paging < uvmexp.freemin
+	    || (uvmexp.free + uvmexp.paging < uvmexp.freetarg
+		&& uvmpdpol_needsscan_p())
+	    || uvm_color_needsscan_p()) {
 		wakeup(&uvm.pagedaemon);
 	}
 }
@@ -293,6 +308,7 @@ uvm_pageout(void *arg)
 
 		needsfree = uvmexp.free + uvmexp.paging < uvmexp.freetarg;
 		needsscan = needsfree || uvmpdpol_needsscan_p();
+		needsscan = needsscan || uvm_color_needsscan_p();
 
 		/*
 		 * scan if needed

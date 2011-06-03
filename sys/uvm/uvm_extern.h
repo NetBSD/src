@@ -331,8 +331,10 @@ struct uvmexp {
 				   not available */
 	int zeroaborts;		/* number of times page zeroing was
 				   aborted */
+	int colorfail;		/* pagealloc where we got no page */
 	int colorhit;		/* pagealloc where we got optimal color */
 	int colormiss;		/* pagealloc where we didn't */
+	int colorany;		/* pagealloc where we wanted any color */
 	int cpuhit;		/* pagealloc where we allocated locally */
 	int cpumiss;		/* pagealloc where we didn't */
 
@@ -457,6 +459,8 @@ struct uvmexp_sysctl {
 	int64_t colorhit;
 	int64_t colormiss;
 	int64_t ncolors;
+	int64_t colorany;
+	int64_t colorfail;
 };
 
 #ifdef _KERNEL
