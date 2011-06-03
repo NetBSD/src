@@ -1,4 +1,4 @@
-/*	uvm_vnode.c,v 1.90 2008/01/02 11:49:21 ad Exp	*/
+/*	$NetBSD: uvm_vnode.c,v 1.90.28.3 2011/06/03 07:52:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "uvm_vnode.c,v 1.90 2008/01/02 11:49:21 ad Exp");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.90.28.3 2011/06/03 07:52:48 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"

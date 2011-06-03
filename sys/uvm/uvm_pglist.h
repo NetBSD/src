@@ -1,4 +1,4 @@
-/*	uvm_pglist.h,v 1.7 2008/06/04 12:45:28 ad Exp	*/
+/*	$NetBSD: uvm_pglist.h,v 1.7.16.2 2011/06/03 07:56:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
