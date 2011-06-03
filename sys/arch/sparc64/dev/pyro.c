@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.6 2011/06/03 03:01:23 christos Exp $	*/
+/*	$NetBSD: pyro.c,v 1.7 2011/06/03 03:02:36 christos Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ int pyro_match(device_t, cfdata_t, void *);
 void pyro_attach(device_t, device_t, void *);
 int pyro_print(void *, const char *);
 
-CFATTACH_DECL(pyro, sizeof(struct pyro_softc),
+CFATTACH_DECL_NEW(pyro, sizeof(struct pyro_softc),
     pyro_match, pyro_attach, NULL, NULL);
 
 void pyro_init(struct pyro_softc *, int);
