@@ -46,7 +46,7 @@ done
 echo "====> Creating pcc \"config.h\" file..."
 mkdir work/tmp
 cd work/tmp
-sh ../pcc/configure
+env -i PATH=/bin:/usr/bin /bin/sh ../pcc/configure
 cd ../..
 #
 # comment out items we provide at build time from Makefile.inc
