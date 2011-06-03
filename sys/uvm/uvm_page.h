@@ -1,4 +1,4 @@
-/*	uvm_page.h,v 1.55.14.2 2011/04/29 08:16:42 matt Exp	*/
+/*	$NetBSD: uvm_page.h,v 1.55.14.5 2011/06/03 07:56:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.

@@ -1,4 +1,4 @@
-/*	uvm_extern.h,v 1.148.4.2.4.1 2010/01/26 21:26:28 matt Exp	*/
+/*	$NetBSD: uvm_extern.h,v 1.148.4.2.4.4 2011/06/03 07:56:08 matt Exp $	*/
 
 /*
  *

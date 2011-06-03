@@ -1,4 +1,4 @@
-/*	uvm_aobj.c,v 1.104 2008/10/18 03:46:22 rmind Exp	*/
+/*	$NetBSD: uvm_aobj.c,v 1.104.10.2 2011/06/03 07:59:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "uvm_aobj.c,v 1.104 2008/10/18 03:46:22 rmind Exp");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.104.10.2 2011/06/03 07:59:57 matt Exp $");
 
 #include "opt_uvmhist.h"
 
