@@ -77,7 +77,7 @@
 #include <machine/stdarg.h>
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.4 2011/05/17 05:42:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.5 2011/06/03 17:11:34 dyoung Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -1826,6 +1826,16 @@ vtw_control(int af, uint32_t msl)
 	if (!fat->base || !ctl->base.v)
 		return NULL;
 
+	if (!tcp_vtw_was_enabled) {
+		/* This guarantees is timer ticks until we no longer need them.
+		 */
+		tcp_vtw_was_enabled = 1;
+
+		callout_schedule(&vtw_cs, hz / 5);
+
+		tcbtable.vestige = &tcp_hooks;
+	}
+
 	return ctl + class;
 }
 
@@ -2120,25 +2130,14 @@ vtw_restart(vestigial_inpcb_t *vp)
 int
 vtw_earlyinit(void)
 {
-	int rc;
- 
-	if (!tcp_vtw_was_enabled) {
-		int i;
+	int i, rc;
 
-		/* This guarantees is timer ticks until we no longer need them.
-		 */
-		tcp_vtw_was_enabled = 1;
+	callout_init(&vtw_cs, 0);
+	callout_setfunc(&vtw_cs, vtw_tick, 0);
 
-		callout_init(&vtw_cs, 0);
-		callout_setfunc(&vtw_cs, vtw_tick, 0);
-		callout_schedule(&vtw_cs, hz / 5);
-
-		for (i = 0; i < VTW_NCLASS; ++i) {
-			vtw_tcpv4[i].is_v4 = 1;
-			vtw_tcpv6[i].is_v6 = 1;
-		}
-
-		tcbtable.vestige = &tcp_hooks;
+	for (i = 0; i < VTW_NCLASS; ++i) {
+		vtw_tcpv4[i].is_v4 = 1;
+		vtw_tcpv6[i].is_v6 = 1;
 	}
 
 	if ((rc = vtw_control_init(AF_INET)) != 0 || 
