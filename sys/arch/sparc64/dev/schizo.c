@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.21 2011/06/03 02:58:07 christos Exp $	*/
+/*	$NetBSD: schizo.c,v 1.22 2011/06/03 03:02:12 christos Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static	int	schizo_match(device_t, cfdata_t, void *);
 static	void	schizo_attach(device_t, device_t, void *);
 static	int	schizo_print(void *aux, const char *p);
 
-CFATTACH_DECL(schizo, sizeof(struct schizo_softc),
+CFATTACH_DECL_NEW(schizo, sizeof(struct schizo_softc),
     schizo_match, schizo_attach, NULL, NULL);
 
 void schizo_init_iommu(struct schizo_softc *, struct schizo_pbm *);
