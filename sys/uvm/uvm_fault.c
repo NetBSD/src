@@ -1,4 +1,4 @@
-/*	uvm_fault.c,v 1.125.6.1.4.1 2010/01/26 21:26:28 matt Exp	*/
+/*	$NetBSD: uvm_fault.c,v 1.125.6.1.4.3 2011/06/03 07:59:57 matt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "uvm_fault.c,v 1.125.6.1.4.1 2010/01/26 21:26:28 matt Exp");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.125.6.1.4.3 2011/06/03 07:59:57 matt Exp $");
 
 #include "opt_uvmhist.h"
 

@@ -1,4 +1,4 @@
-/*	uvm_pager.c,v 1.92 2008/04/17 05:39:41 simonb Exp	*/
+/*	$NetBSD: uvm_pager.c,v 1.92.18.3 2011/06/03 07:59:58 matt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "uvm_pager.c,v 1.92 2008/04/17 05:39:41 simonb Exp");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.92.18.3 2011/06/03 07:59:58 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
