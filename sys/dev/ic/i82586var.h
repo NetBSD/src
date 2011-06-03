@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.22 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.23 2011/06/03 16:28:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,7 +166,7 @@
  */
 
 struct ie_softc {
-	struct device sc_dev;   /* device structure */
+	device_t sc_dev;	/* device structure */
 
 	bus_space_tag_t	bt;	/* bus-space tag of card memory */
 	bus_space_handle_t bh;	/* bus-space handle of card memory */
