@@ -20,6 +20,8 @@ gpos01.example.		3600	IN	GPOS	"-22.6882" "116.8652" "250.0"
 gpos02.example.		3600	IN	GPOS	"" "" ""
 hinfo01.example.	3600	IN	HINFO	"Generic PC clone" "NetBSD-1.4"
 hinfo02.example.	3600	IN	HINFO	"PC" "NetBSD"
+hip1.example.		3600	IN	HIP     2 200100107B1A74DF365639CC39F1D578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D 
+hip2.example.		3600	IN	HIP	2 200100107B1A74DF365639CC39F1D578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D rvs.example.com.
 isdn01.example.		3600	IN	ISDN	"isdn-address"
 isdn02.example.		3600	IN	ISDN	"isdn-address" "subaddress"
 isdn03.example.		3600	IN	ISDN	"isdn-address"
@@ -40,7 +42,7 @@ mr02.example.		3600	IN	MR	.
 mx01.example.		3600	IN	MX	10 mail.example.
 mx02.example.		3600	IN	MX	10 .
 naptr01.example.	3600	IN	NAPTR	0 0 "" "" "" .
-naptr02.example.	3600	IN	NAPTR	65535 65535 "blurgh" "blorf" "blegh" foo.
+naptr02.example.	3600	IN	NAPTR	65535 65535 "blurgh" "blorf" "blllbb" foo.
 ns2.example.		3600	IN	A	10.53.0.2
 ns3.example.		3600	IN	A	10.53.0.3
 nsap-ptr01.example.	3600	IN	NSAP-PTR .

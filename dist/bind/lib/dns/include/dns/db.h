@@ -1,7 +1,7 @@
-/*	$NetBSD: db.h,v 1.1.1.6 2008/06/21 18:32:31 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.1.1.7 2011/06/03 19:52:29 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db.h,v 1.89.128.2 2008/04/03 06:20:34 tbox Exp */
+/* Id: db.h,v 1.102 2009-11-25 23:49:22 tbox Exp */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1
@@ -61,7 +61,10 @@
 #include <isc/ondestroy.h>
 #include <isc/stdtime.h>
 
+#include <dns/fixedname.h>
 #include <dns/name.h>
+#include <dns/rdata.h>
+#include <dns/rdataset.h>
 #include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
@@ -113,8 +116,7 @@ typedef struct dns_dbmethods {
 				      isc_stdtime_t now);
 	void		(*printnode)(dns_db_t *db, dns_dbnode_t *node,
 				     FILE *out);
-	isc_result_t 	(*createiterator)(dns_db_t *db,
-					  isc_boolean_t relative_names,
+	isc_result_t 	(*createiterator)(dns_db_t *db, unsigned int options,
 					  dns_dbiterator_t **iteratorp);
 	isc_result_t	(*findrdataset)(dns_db_t *db, dns_dbnode_t *node,
 					dns_dbversion_t *version,
@@ -150,6 +152,25 @@ typedef struct dns_dbmethods {
 	isc_result_t	(*getoriginnode)(dns_db_t *db, dns_dbnode_t **nodep);
 	void		(*transfernode)(dns_db_t *db, dns_dbnode_t **sourcep,
 					dns_dbnode_t **targetp);
+	isc_result_t    (*getnsec3parameters)(dns_db_t *db,
+					      dns_dbversion_t *version,
+					      dns_hash_t *hash,
+					      isc_uint8_t *flags,
+					      isc_uint16_t *iterations,
+					      unsigned char *salt,
+					      size_t *salt_len);
+	isc_result_t    (*findnsec3node)(dns_db_t *db, dns_name_t *name,
+					 isc_boolean_t create,
+					 dns_dbnode_t **nodep);
+	isc_result_t	(*setsigningtime)(dns_db_t *db,
+					  dns_rdataset_t *rdataset,
+					  isc_stdtime_t resign);
+	isc_result_t	(*getsigningtime)(dns_db_t *db,
+					  dns_rdataset_t *rdataset,
+					  dns_name_t *name);
+	void		(*resigned)(dns_db_t *db, dns_rdataset_t *rdataset,
+					   dns_dbversion_t *version);
+	isc_boolean_t	(*isdnssec)(dns_db_t *db);
 	dns_stats_t	*(*getrrsetstats)(dns_db_t *db);
 } dns_dbmethods_t;
 
@@ -189,13 +210,15 @@ struct dns_db {
 /*%
  * Options that can be specified for dns_db_find().
  */
-#define DNS_DBFIND_GLUEOK		0x01
-#define DNS_DBFIND_VALIDATEGLUE		0x02
-#define DNS_DBFIND_NOWILD		0x04
-#define DNS_DBFIND_PENDINGOK		0x08
-#define DNS_DBFIND_NOEXACT		0x10
-#define DNS_DBFIND_FORCENSEC		0x20
-#define DNS_DBFIND_COVERINGNSEC		0x40
+#define DNS_DBFIND_GLUEOK		0x0001
+#define DNS_DBFIND_VALIDATEGLUE		0x0002
+#define DNS_DBFIND_NOWILD		0x0004
+#define DNS_DBFIND_PENDINGOK		0x0008
+#define DNS_DBFIND_NOEXACT		0x0010
+#define DNS_DBFIND_FORCENSEC		0x0020
+#define DNS_DBFIND_COVERINGNSEC		0x0040
+#define DNS_DBFIND_FORCENSEC3		0x0080
+#define DNS_DBFIND_ADDITIONALOK		0x0100
 /*@}*/
 
 /*@{*/
@@ -212,6 +235,15 @@ struct dns_db {
  * Options that can be specified for dns_db_subtractrdataset().
  */
 #define DNS_DBSUB_EXACT			0x01
+
+/*@{*/
+/*%
+ * Iterator options
+ */
+#define DNS_DB_RELATIVENAMES	0x1
+#define DNS_DB_NSEC3ONLY	0x2
+#define DNS_DB_NONSEC3		0x4
+/*@}*/
 
 /*****
  ***** Methods
@@ -360,6 +392,20 @@ dns_db_issecure(dns_db_t *db);
  * \li	#ISC_FALSE	'db' is not secure.
  */
 
+isc_boolean_t
+dns_db_isdnssec(dns_db_t *db);
+/*%<
+ * Is 'db' secure or partially secure?
+ *
+ * Requires:
+ *
+ * \li	'db' is a valid database with zone semantics.
+ *
+ * Returns:
+ * \li	#ISC_TRUE	'db' is secure or is partially.
+ * \li	#ISC_FALSE	'db' is not secure.
+ */
+
 dns_name_t *
 dns_db_origin(dns_db_t *db);
 /*%<
@@ -450,6 +496,10 @@ dns_db_load(dns_db_t *db, const char *filename);
 
 isc_result_t
 dns_db_load2(dns_db_t *db, const char *filename, dns_masterformat_t format);
+
+isc_result_t
+dns_db_load3(dns_db_t *db, const char *filename, dns_masterformat_t format,
+	     unsigned int options);
 /*%<
  * Load master file 'filename' into 'db'.
  *
@@ -573,7 +623,7 @@ dns_db_closeversion(dns_db_t *db, dns_dbversion_t **versionp,
  *
  * Note: if '*versionp' is a read-write version and 'commit' is ISC_TRUE,
  * then all changes made in the version will take effect, otherwise they
- * will be rolled back.  The value if 'commit' is ignored for read-only
+ * will be rolled back.  The value of 'commit' is ignored for read-only
  * versions.
  *
  * Requires:
@@ -631,7 +681,7 @@ dns_db_findnode(dns_db_t *db, dns_name_t *name, isc_boolean_t create,
  *
  * \li	#ISC_R_SUCCESS
  * \li	#ISC_R_NOTFOUND			If !create and name not found.
- * \li	#ISC_R_NOMEMORY		        Can only happen if create is ISC_TRUE.
+ * \li	#ISC_R_NOMEMORY			Can only happen if create is ISC_TRUE.
  *
  * \li	Other results are possible, depending upon the database
  *	implementation used.
@@ -653,6 +703,10 @@ dns_db_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
  *	be returned.  For zone databases, glue is as defined in RFC2181.
  *	For cache databases, glue is any rdataset with a trust of
  *	dns_trust_glue.
+ *
+ * \li	If 'options' does not have #DNS_DBFIND_ADDITIONALOK set, then no
+ *	additional records will be returned.  Only caches can have
+ *	rdataset with trust dns_trust_additional.
  *
  * \li	If 'options' does not have #DNS_DBFIND_PENDINGOK set, then no
  *	pending data will be returned.  This option is only meaningful for
@@ -790,11 +844,14 @@ dns_db_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
  *						name, and 'rdataset' contains
  *						the negative caching proof.
  *
- *	\li	#DNS_R_EMPTYNAME			The name exists but there is
+ *	\li	#DNS_R_EMPTYNAME		The name exists but there is
  *						no data at the name.
  *
  *	\li	#DNS_R_COVERINGNSEC		The returned data is a NSEC
  *						that potentially covers 'name'.
+ *
+ *	\li	#DNS_R_EMPTYWILD		The name is a wildcard without
+ *						resource records.
  *
  *	Error results:
  *
@@ -943,16 +1000,17 @@ dns_db_printnode(dns_db_t *db, dns_dbnode_t *node, FILE *out);
  ***/
 
 isc_result_t
-dns_db_createiterator(dns_db_t *db, isc_boolean_t relative_names,
+dns_db_createiterator(dns_db_t *db, unsigned int options,
 		      dns_dbiterator_t **iteratorp);
 /*%<
  * Create an iterator for version 'version' of 'db'.
  *
  * Notes:
  *
- * \li	If 'relative_names' is ISC_TRUE, then node names returned by the
- *	iterator will be relative to the iterator's current origin.  If
- *	#ISC_FALSE, then the node names will be absolute.
+ * \li	One or more of the following options can be set.
+ *	#DNS_DB_RELATIVENAMES
+ *	#DNS_DB_NSEC3ONLY
+ *	#DNS_DB_NONSEC3
  *
  * Requires:
  *
@@ -1031,7 +1089,7 @@ isc_result_t
 dns_db_allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		    isc_stdtime_t now, dns_rdatasetiter_t **iteratorp);
 /*%<
- * Make '*iteratorp' an rdataset iteratator for all rdatasets at 'node' in
+ * Make '*iteratorp' an rdataset iterator for all rdatasets at 'node' in
  * version 'version' of 'db'.
  *
  * Notes:
@@ -1218,7 +1276,7 @@ dns_db_getsoaserial(dns_db_t *db, dns_dbversion_t *ver, isc_uint32_t *serialp);
 void
 dns_db_overmem(dns_db_t *db, isc_boolean_t overmem);
 /*%<
- * Enable / disable agressive cache cleaning.
+ * Enable / disable aggressive cache cleaning.
  */
 
 unsigned int
@@ -1288,7 +1346,7 @@ dns_db_register(const char *name, dns_dbcreatefunc_t create, void *driverarg,
 void
 dns_db_unregister(dns_dbimplementation_t **dbimp);
 /*%<
- * Remove a database implementation from the the list of supported
+ * Remove a database implementation from the list of supported
  * implementations.  No databases of this type can be active when this
  * is called.
  *
@@ -1318,6 +1376,102 @@ dns_db_getoriginnode(dns_db_t *db, dns_dbnode_t **nodep);
  * Returns:
  * \li	#ISC_R_SUCCESS
  * \li	#ISC_R_NOTFOUND - the DB implementation does not support this feature.
+ */
+
+isc_result_t
+dns_db_getnsec3parameters(dns_db_t *db, dns_dbversion_t *version,
+			  dns_hash_t *hash, isc_uint8_t *flags,
+			  isc_uint16_t *interations,
+			  unsigned char *salt, size_t *salt_length);
+/*%<
+ * Get the NSEC3 parameters that are associated with this zone.
+ *
+ * Requires:
+ * \li	'db' is a valid zone database.
+ *
+ * Returns:
+ * \li	#ISC_R_SUCCESS
+ * \li	#ISC_R_NOTFOUND - the DB implementation does not support this feature
+ *			  or this zone does not have NSEC3 records.
+ */
+
+isc_result_t
+dns_db_findnsec3node(dns_db_t *db, dns_name_t *name,
+		     isc_boolean_t create, dns_dbnode_t **nodep);
+/*%<
+ * Find the NSEC3 node with name 'name'.
+ *
+ * Notes:
+ * \li	If 'create' is ISC_TRUE and no node with name 'name' exists, then
+ *	such a node will be created.
+ *
+ * Requires:
+ *
+ * \li	'db' is a valid database.
+ *
+ * \li	'name' is a valid, non-empty, absolute name.
+ *
+ * \li	nodep != NULL && *nodep == NULL
+ *
+ * Ensures:
+ *
+ * \li	On success, *nodep is attached to the node with name 'name'.
+ *
+ * Returns:
+ *
+ * \li	#ISC_R_SUCCESS
+ * \li	#ISC_R_NOTFOUND			If !create and name not found.
+ * \li	#ISC_R_NOMEMORY			Can only happen if create is ISC_TRUE.
+ *
+ * \li	Other results are possible, depending upon the database
+ *	implementation used.
+ */
+
+isc_result_t
+dns_db_setsigningtime(dns_db_t *db, dns_rdataset_t *rdataset,
+		      isc_stdtime_t resign);
+/*%<
+ * Sets the re-signing time associated with 'rdataset' to 'resign'.
+ *
+ * Requires:
+ * \li	'db' is a valid zone database.
+ * \li	'rdataset' to be associated with 'db'.
+ *
+ * Returns:
+ * \li	#ISC_R_SUCCESS
+ * \li	#ISC_R_NOMEMORY
+ * \li	#ISC_R_NOTIMPLEMENTED - Not supported by this DB implementation.
+ */
+
+isc_result_t
+dns_db_getsigningtime(dns_db_t *db, dns_rdataset_t *rdataset, dns_name_t *name);
+/*%<
+ * Return the rdataset with the earliest signing time in the zone.
+ * Note: the rdataset is version agnostic.
+ *
+ * Requires:
+ * \li	'db' is a valid zone database.
+ * \li	'rdataset' to be initialized but not associated.
+ * \li	'name' to be NULL or have a buffer associated with it.
+ *
+ * Returns:
+ * \li	#ISC_R_SUCCESS
+ * \li	#ISC_R_NOTFOUND - No dataset exists.
+ */
+
+void
+dns_db_resigned(dns_db_t *db, dns_rdataset_t *rdataset,
+		dns_dbversion_t *version);
+/*%<
+ * Mark 'rdataset' as not being available to be returned by
+ * dns_db_getsigningtime().  If the changes associated with 'version'
+ * are committed this will be permanent.  If the version is not committed
+ * this change will be rolled back when the version is closed.
+ *
+ * Requires:
+ * \li	'db' is a valid zone database.
+ * \li	'rdataset' to be associated with 'db'.
+ * \li	'version' to be open for writing.
  */
 
 dns_stats_t *

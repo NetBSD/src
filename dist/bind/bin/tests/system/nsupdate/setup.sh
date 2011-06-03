@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,15 +15,21 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.10 2007/06/19 23:47:04 tbox Exp
+# Id: setup.sh,v 1.14.4.2 2010-12-07 23:46:26 tbox Exp
+
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
 
 #
 # jnl and database files MUST be removed before we start
 #
 
 rm -f ns1/*.jnl ns1/example.db ns2/*.jnl ns2/example.bk
+rm -f ns3/example.db.jnl
 
 cp -f ns1/example1.db ns1/example.db
+sed 's/example.nil/other.nil/g' ns1/example1.db > ns1/other.db
+cp -f ns3/example.db.in ns3/example.db
 
 # update_test.pl has its own zone file because it
 # requires a specific NS record set.
@@ -39,4 +45,10 @@ update.nil              IN SOA  ns1.example.nil. hostmaster.example.nil. (
                                 )
 update.nil.             NS      ns1.update.nil.
 ns1.update.nil.         A       10.53.0.2
+ns2.update.nil.		AAAA	::1
 EOF
+
+../../../tools/genrandom 400 random.data
+$DDNSCONFGEN -q -r random.data -z example.nil > ns1/ddns.key
+
+(cd ns3; sh -e sign.sh)

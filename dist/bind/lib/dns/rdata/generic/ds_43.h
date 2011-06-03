@@ -1,4 +1,4 @@
-/*	$NetBSD: ds_43.h,v 1.1.1.3 2008/06/21 18:32:39 christos Exp $	*/
+/*	$NetBSD: ds_43.h,v 1.1.1.4 2011/06/03 19:52:40 spz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ds_43.h,v 1.7 2007/06/19 23:47:17 tbox Exp */
+/* Id: ds_43.h,v 1.7 2007-06-19 23:47:17 tbox Exp */
 
 #ifndef GENERIC_DS_43_H
 #define GENERIC_DS_43_H 1

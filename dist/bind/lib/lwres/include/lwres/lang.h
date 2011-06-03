@@ -1,4 +1,4 @@
-/*	$NetBSD: lang.h,v 1.1.1.5 2008/06/21 18:30:59 christos Exp $	*/
+/*	$NetBSD: lang.h,v 1.1.1.6 2011/06/03 19:53:33 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lang.h,v 1.13 2007/06/19 23:47:23 tbox Exp */
+/* Id: lang.h,v 1.13 2007-06-19 23:47:23 tbox Exp */
 
 #ifndef LWRES_LANG_H
 #define LWRES_LANG_H 1

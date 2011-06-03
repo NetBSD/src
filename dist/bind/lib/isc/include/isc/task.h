@@ -1,7 +1,7 @@
-/*	$NetBSD: task.h,v 1.1.1.5 2008/06/21 18:31:16 christos Exp $	*/
+/*	$NetBSD: task.h,v 1.1.1.6 2011/06/03 19:53:10 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: task.h,v 1.61 2007/06/18 23:47:44 tbox Exp */
+/* Id: task.h,v 1.65.104.3 2010-12-05 20:29:24 marka Exp */
 
 #ifndef ISC_TASK_H
 #define ISC_TASK_H 1
@@ -28,7 +28,7 @@
 
 /*! \file isc/task.h
  * \brief The task system provides a lightweight execution context, which is
- * basically an event queue.  
+ * basically an event queue.
 
  * When a task's event queue is non-empty, the
  * task is runnable.  A small work crew of threads, typically one per CPU,
@@ -69,7 +69,7 @@
  * Consumers of events should purge, not unsend.
  *
  * Producers of events often want to remove events when the caller indicates
- * it is no longer interested in the object, e.g. by cancelling a timer.
+ * it is no longer interested in the object, e.g. by canceling a timer.
  * Sometimes this can be done by purging, but for some event types, the
  * calls to isc_event_free() cause deadlock because the event free routine
  * wants to acquire a lock the caller is already holding.  Unsending instead
@@ -97,6 +97,70 @@
  *****/
 
 ISC_LANG_BEGINDECLS
+
+/***
+ *** Types
+ ***/
+
+/*% Task and task manager methods */
+typedef struct isc_taskmgrmethods {
+	void		(*destroy)(isc_taskmgr_t **managerp);
+	isc_result_t	(*taskcreate)(isc_taskmgr_t *manager,
+				      unsigned int quantum,
+				      isc_task_t **taskp);
+} isc_taskmgrmethods_t;
+
+typedef struct isc_taskmethods {
+	void (*attach)(isc_task_t *source, isc_task_t **targetp);
+	void (*detach)(isc_task_t **taskp);
+	void (*destroy)(isc_task_t **taskp);
+	void (*send)(isc_task_t *task, isc_event_t **eventp);
+	void (*sendanddetach)(isc_task_t **taskp, isc_event_t **eventp);
+	unsigned int (*unsend)(isc_task_t *task, void *sender, isc_eventtype_t type,
+			       void *tag, isc_eventlist_t *events);
+	isc_result_t (*onshutdown)(isc_task_t *task, isc_taskaction_t action,
+				   const void *arg);
+	void (*shutdown)(isc_task_t *task);
+	void (*setname)(isc_task_t *task, const char *name, void *tag);
+	unsigned int (*purgeevents)(isc_task_t *task, void *sender,
+				    isc_eventtype_t type, void *tag);
+	unsigned int (*purgerange)(isc_task_t *task, void *sender,
+				   isc_eventtype_t first, isc_eventtype_t last,
+				   void *tag);
+} isc_taskmethods_t;
+
+/*%
+ * This structure is actually just the common prefix of a task manager
+ * object implementation's version of an isc_taskmgr_t.
+ * \brief
+ * Direct use of this structure by clients is forbidden.  task implementations
+ * may change the structure.  'magic' must be ISCAPI_TASKMGR_MAGIC for any
+ * of the isc_task_ routines to work.  task implementations must maintain
+ * all task invariants.
+ */
+struct isc_taskmgr {
+	unsigned int		impmagic;
+	unsigned int		magic;
+	isc_taskmgrmethods_t	*methods;
+};
+
+#define ISCAPI_TASKMGR_MAGIC	ISC_MAGIC('A','t','m','g')
+#define ISCAPI_TASKMGR_VALID(m)	((m) != NULL && \
+				 (m)->magic == ISCAPI_TASKMGR_MAGIC)
+
+/*%
+ * This is the common prefix of a task object.  The same note as
+ * that for the taskmgr structure applies.
+ */
+struct isc_task {
+	unsigned int		impmagic;
+	unsigned int		magic;
+	isc_taskmethods_t	*methods;
+};
+
+#define ISCAPI_TASK_MAGIC	ISC_MAGIC('A','t','s','t')
+#define ISCAPI_TASK_VALID(s)	((s) != NULL && \
+				 (s)->magic == ISCAPI_TASK_MAGIC)
 
 isc_result_t
 isc_task_create(isc_taskmgr_t *manager, unsigned int quantum,
@@ -500,7 +564,7 @@ isc_task_beginexclusive(isc_task_t *task);
  * current event, and prevents any new events from executing in any of the
  * tasks sharing a task manager with 'task'.
  *
- * The exclusive access must be relinquished by calling 
+ * The exclusive access must be relinquished by calling
  * isc_task_endexclusive() before returning from the current event handler.
  *
  * Requires:
@@ -515,7 +579,7 @@ isc_task_beginexclusive(isc_task_t *task);
 void
 isc_task_endexclusive(isc_task_t *task);
 /*%<
- * Relinquish the exclusive access obtained by isc_task_beginexclusive(), 
+ * Relinquish the exclusive access obtained by isc_task_beginexclusive(),
  * allowing other tasks to execute.
  *
  * Requires:
@@ -537,15 +601,30 @@ isc_task_getcurrenttime(isc_task_t *task, isc_stdtime_t *t);
  *\li	'*t' has the "current time".
  */
 
+isc_boolean_t
+isc_task_exiting(isc_task_t *t);
+/*%<
+ * Returns ISC_TRUE if the task is in the process of shutting down,
+ * ISC_FALSE otherwise.
+ *
+ * Requires:
+ *\li	'task' is a valid task.
+ */
+
 /*****
  ***** Task Manager.
  *****/
 
 isc_result_t
+isc_taskmgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
+			unsigned int workers, unsigned int default_quantum,
+			isc_taskmgr_t **managerp);
+isc_result_t
 isc_taskmgr_create(isc_mem_t *mctx, unsigned int workers,
 		   unsigned int default_quantum, isc_taskmgr_t **managerp);
 /*%<
- * Create a new task manager.
+ * Create a new task manager.  isc_taskmgr_createinctx() also associates
+ * the new manager with the specified application context.
  *
  * Notes:
  *
@@ -566,6 +645,8 @@ isc_taskmgr_create(isc_mem_t *mctx, unsigned int workers,
  *\li	workers > 0
  *
  *\li	managerp != NULL && *managerp == NULL
+ *
+ *\li	'actx' is a valid application context (for createinctx()).
  *
  * Ensures:
  *
@@ -595,7 +676,7 @@ isc_taskmgr_destroy(isc_taskmgr_t **managerp);
  *	because it would block forever waiting for the event action to
  *	complete.  An event action that wants to cause task manager shutdown
  *	should request some non-event action thread of execution to do the
- *	shutdown, e.g. by signalling a condition variable or using
+ *	shutdown, e.g. by signaling a condition variable or using
  *	isc_app_shutdown().
  *
  *\li	Task manager references are not reference counted, so the caller
@@ -620,6 +701,31 @@ void
 isc_taskmgr_renderxml(isc_taskmgr_t *mgr, xmlTextWriterPtr writer);
 
 #endif
+
+/*%<
+ * See isc_taskmgr_create() above.
+ */
+typedef isc_result_t
+(*isc_taskmgrcreatefunc_t)(isc_mem_t *mctx, unsigned int workers,
+			   unsigned int default_quantum,
+			   isc_taskmgr_t **managerp);
+
+isc_result_t
+isc_task_register(isc_taskmgrcreatefunc_t createfunc);
+/*%<
+ * Register a new task management implementation and add it to the list of
+ * supported implementations.  This function must be called when a different
+ * event library is used than the one contained in the ISC library.
+ */
+
+isc_result_t
+isc__task_register(void);
+/*%<
+ * A short cut function that specifies the task management module in the ISC
+ * library for isc_task_register().  An application that uses the ISC library
+ * usually do not have to care about this function: it would call
+ * isc_lib_register(), which internally calls this function.
+ */
 
 ISC_LANG_ENDDECLS
 

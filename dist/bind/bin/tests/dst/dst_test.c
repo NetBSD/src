@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_test.c,v 1.1.1.6 2008/06/21 18:34:07 christos Exp $	*/
+/*	$NetBSD: dst_test.c,v 1.1.1.7 2011/06/03 19:46:51 spz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_test.c,v 1.43 2007/06/19 23:47:00 tbox Exp */
+/* Id: dst_test.c,v 1.46 2009-09-01 00:22:25 jinmei Exp */
 
 #include <config.h>
 
@@ -247,7 +247,10 @@ main(void) {
 	current = isc_mem_get(mctx, 256);
 	if (current == NULL)
 		return (1);
-	getcwd(current, 256);
+	if (getcwd(current, 256) == NULL) {
+		perror("getcwd");
+		return (1);
+	}
 
 	dns_result_register();
 
@@ -263,7 +266,7 @@ main(void) {
 	name = dns_fixedname_name(&fname);
 	isc_buffer_init(&b, "test.", 5);
 	isc_buffer_add(&b, 5);
-	result = dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	result = dns_name_fromtext(name, &b, NULL, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (1);
 	io(name, 23616, DST_ALG_DSA, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC, mctx);
@@ -275,7 +278,7 @@ main(void) {
 
 	isc_buffer_init(&b, "dh.", 3);
 	isc_buffer_add(&b, 3);
-	result = dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	result = dns_name_fromtext(name, &b, NULL, 0, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (1);
 	dh(name, 18602, name, 48957, mctx);

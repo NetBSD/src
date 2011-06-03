@@ -1,88 +1,95 @@
-/*	$NetBSD: gai_strerror.c,v 1.1.1.2 2002/06/20 10:30:22 itojun Exp $	*/
+/*	$NetBSD: gai_strerror.c,v 1.1.1.3 2011/06/03 19:52:51 spz Exp $	*/
 
 /*
- * Copyright (c) 2001 by Internet Software Consortium.
+ * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <port_before.h>
-#include <netdb.h>
-#include <port_after.h>
+/* Id: gai_strerror.c,v 1.5 2009-09-02 23:48:02 tbox Exp */
 
-#ifdef DO_PTHREADS
-#include <pthread.h>
-#include <stdlib.h>
-#endif
+/*! \file gai_strerror.c
+ * gai_strerror() returns an error message corresponding to an
+ * error code returned by getaddrinfo() and getnameinfo(). The following error
+ * codes and their meaning are defined in
+ * \link netdb.h include/irs/netdb.h.\endlink
+ * This implementation is almost an exact copy of lwres/gai_sterror.c except
+ * that it catches up the latest API standard, RFC3493.
+ *
+ * \li #EAI_ADDRFAMILY address family for hostname not supported
+ * \li #EAI_AGAIN temporary failure in name resolution
+ * \li #EAI_BADFLAGS invalid value for ai_flags
+ * \li #EAI_FAIL non-recoverable failure in name resolution
+ * \li #EAI_FAMILY ai_family not supported
+ * \li #EAI_MEMORY memory allocation failure
+ * \li #EAI_NODATA no address associated with hostname (obsoleted in RFC3493)
+ * \li #EAI_NONAME hostname nor servname provided, or not known
+ * \li #EAI_SERVICE servname not supported for ai_socktype
+ * \li #EAI_SOCKTYPE ai_socktype not supported
+ * \li #EAI_SYSTEM system error returned in errno
+ * \li #EAI_BADHINTS Invalid value for hints (non-standard)
+ * \li #EAI_PROTOCOL Resolved protocol is unknown (non-standard)
+ * \li #EAI_OVERFLOW Argument buffer overflow
+ * \li #EAI_INSECUREDATA Insecure Data (experimental)
+ *
+ * The message invalid error code is returned if ecode is out of range.
+ *
+ * ai_flags, ai_family and ai_socktype are elements of the struct
+ * addrinfo used by lwres_getaddrinfo().
+ *
+ * \section gai_strerror_see See Also
+ *
+ * strerror(), getaddrinfo(), getnameinfo(), RFC3493.
+ */
+#include <config.h>
 
-static const char *gai_errlist[] = {
+#include <irs/netdb.h>
+
+/*% Text of error messages. */
+static const char *gai_messages[] = {
 	"no error",
-	"address family not supported for name",/* EAI_ADDRFAMILY */
-	"temporary failure",			/* EAI_AGAIN */
-	"invalid flags",			/* EAI_BADFLAGS */
-	"permanent failure",			/* EAI_FAIL */
-	"address family not supported",		/* EAI_FAMILY */
-	"memory failure",			/* EAI_MEMORY */
-	"no address",				/* EAI_NODATA */
-	"unknown name or service",		/* EAI_NONAME */
-	"service not supported for socktype",	/* EAI_SERVICE */
-	"socktype not supported",		/* EAI_SOCKTYPE */
-	"system failure",			/* EAI_SYSTEM */
-	"bad hints",				/* EAI_BADHINTS */
-	"bad protocol",				/* EAI_PROTOCOL */
-
-	"unknown error"				/* Must be last. */
+	"address family for hostname not supported",
+	"temporary failure in name resolution",
+	"invalid value for ai_flags",
+	"non-recoverable failure in name resolution",
+	"ai_family not supported",
+	"memory allocation failure",
+	"no address associated with hostname",
+	"hostname nor servname provided, or not known",
+	"servname not supported for ai_socktype",
+	"ai_socktype not supported",
+	"system error returned in errno",
+	"bad hints",
+	"bad protocol",
+	"argument buffer overflow",
+	"insecure data provided"
 };
 
-static const int gai_nerr = (sizeof(gai_errlist)/sizeof(*gai_errlist));
-
-#define EAI_BUFSIZE 128
-
-const char *
+/*%
+ * Returns an error message corresponding to an error code returned by
+ * getaddrinfo() and getnameinfo()
+ */
+IRS_GAISTRERROR_RETURN_T
 gai_strerror(int ecode) {
-#ifndef DO_PTHREADS
-	static char buf[EAI_BUFSIZE];
-#else	/* DO_PTHREADS */
-	static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-	static pthread_key_t key;
-	static int once = 0;
-	char *buf;
-#endif
+	union {
+		const char *const_ptr;
+		char *deconst_ptr;
+	} ptr;
 
-	if (ecode >= 0 && ecode < (gai_nerr - 1))
-		return (gai_errlist[ecode]);
-
-#ifdef DO_PTHREADS
-        if (!once) {
-                pthread_mutex_lock(&lock);
-                if (!once++)
-                        pthread_key_create(&key, free);
-                pthread_mutex_unlock(&lock);
-        }
-
-	buf = pthread_getspecific(key);
-        if (buf == NULL) {
-		buf = malloc(EAI_BUFSIZE);
-                if (buf == NULL)
-                        return ("unknown error");
-                pthread_setspecific(key, buf);
-        }
-#endif
-	/* 
-	 * XXX This really should be snprintf(buf, EAI_BUFSIZE, ...).
-	 * It is safe until message catalogs are used.
-	 */
-	sprintf(buf, "%s: %d", gai_errlist[gai_nerr - 1], ecode);
-	return (buf);
+	if ((ecode < 0) ||
+	    (ecode >= (int)(sizeof(gai_messages)/sizeof(*gai_messages))))
+		ptr.const_ptr = "invalid error code";
+	else
+		ptr.const_ptr = gai_messages[ecode];
+	return (ptr.deconst_ptr);
 }

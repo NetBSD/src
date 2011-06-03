@@ -1,7 +1,7 @@
-/*	$NetBSD: sig0_test.c,v 1.1.1.6 2008/08/15 14:39:56 he Exp $	*/
+/*	$NetBSD: sig0_test.c,v 1.1.1.7 2011/06/03 19:46:49 spz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sig0_test.c,v 1.15.232.2 2008/07/23 07:32:56 tbox Exp */
+/* Id: sig0_test.c,v 1.19 2009-09-02 23:48:01 tbox Exp */
 
 #include <config.h>
 
@@ -159,8 +159,7 @@ buildquery(void) {
 	isc_buffer_add(&namesrc, strlen(nametext));
 	isc_buffer_init(&namedst, namedata, sizeof(namedata));
 	dns_name_init(qname, NULL);
-	result = dns_name_fromtext(qname, &namesrc, dns_rootname, ISC_FALSE,
-				   &namedst);
+	result = dns_name_fromtext(qname, &namesrc, dns_rootname, 0, &namedst);
 	CHECK("dns_name_fromtext", result);
 	ISC_LIST_APPEND(qname->list, question, link);
 	dns_message_addname(query, qname, DNS_SECTION_QUESTION);
@@ -266,7 +265,7 @@ main(int argc, char *argv[]) {
 	name = dns_fixedname_name(&fname);
 	isc_buffer_init(&b, "child.example.", strlen("child.example."));
 	isc_buffer_add(&b, strlen("child.example."));
-	result = dns_name_fromtext(name, &b, dns_rootname, ISC_FALSE, NULL);
+	result = dns_name_fromtext(name, &b, dns_rootname, 0, NULL);
 	CHECK("dns_name_fromtext", result);
 
 	key = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_mysql_driver.c,v 1.1.1.2 2007/03/30 19:17:13 ghen Exp $	*/
+/*	$NetBSD: dlz_mysql_driver.c,v 1.1.1.3 2011/06/03 19:47:45 spz Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -794,6 +794,9 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 	char *endp;
 	int j;
 	unsigned int flags = 0;
+#if MYSQL_VERSION_ID >= 50000
+        my_bool auto_reconnect = 1;
+#endif
 
 	UNUSED(driverarg);
 	UNUSED(dlzname);
@@ -882,7 +885,7 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 			      "mysql driver could not create "
 			      "database instance object.");
 		result = ISC_R_FAILURE;
-		goto full_cleanup;
+		goto cleanup;
 	}
 
 	/* create and set db connection */
@@ -924,6 +927,17 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 	user = getParameterValue(argv[1], "user=");
 	pass = getParameterValue(argv[1], "pass=");
 	socket = getParameterValue(argv[1], "socket=");
+
+#if MYSQL_VERSION_ID >= 50000
+	/* enable automatic reconnection. */
+        if (mysql_options((MYSQL *) dbi->dbconn, MYSQL_OPT_RECONNECT,
+			  &auto_reconnect) != 0) {
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
+			      DNS_LOGMODULE_DLZ, ISC_LOG_WARNING,
+			      "mysql driver failed to set "
+			      "MYSQL_OPT_RECONNECT option, continuing");
+	}
+#endif
 
 	for (j=0; dbc == NULL && j < 4; j++)
 		dbc = mysql_real_connect((MYSQL *) dbi->dbconn, host,

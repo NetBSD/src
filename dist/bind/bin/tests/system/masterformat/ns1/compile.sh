@@ -12,6 +12,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: compile.sh,v 1.6 2007/06/19 23:47:04 tbox Exp
+# Id: compile.sh,v 1.6 2007-06-19 23:47:04 tbox Exp
 
 ../named-compilezone -D -F raw -o example.db.raw example example.db

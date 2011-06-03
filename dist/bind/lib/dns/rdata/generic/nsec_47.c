@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec_47.c,v 1.1.1.3 2008/06/21 18:32:44 christos Exp $	*/
+/*	$NetBSD: nsec_47.c,v 1.1.1.4 2011/06/03 19:52:43 spz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,11 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec_47.c,v 1.9 2007/06/19 23:47:17 tbox Exp */
+/* Id: nsec_47.c,v 1.13.4.2 2011-01-13 04:48:58 tbox Exp */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
-/* draft-ietf-dnsext-nsec-rdata-01.txt */
+/* RFC 3845 */
 
 #ifndef RDATA_GENERIC_NSEC_47_C
 #define RDATA_GENERIC_NSEC_47_C
@@ -90,20 +90,18 @@ totext_nsec(ARGS_TOTEXT) {
 	isc_region_t sr;
 	unsigned int i, j, k;
 	dns_name_t name;
-	dns_name_t prefix;
-	isc_boolean_t sub;
 	unsigned int window, len;
 
 	REQUIRE(rdata->type == 47);
 	REQUIRE(rdata->length != 0);
 
+	UNUSED(tctx);
+
 	dns_name_init(&name, NULL);
-	dns_name_init(&prefix, NULL);
 	dns_rdata_toregion(rdata, &sr);
 	dns_name_fromregion(&name, &sr);
 	isc_region_consume(&sr, name_length(&name));
-	sub = name_prefix(&name, tctx->origin, &prefix);
-	RETERR(dns_name_totext(&prefix, sub, target));
+	RETERR(dns_name_totext(&name, ISC_FALSE, target));
 
 
 	for (i = 0; i < sr.length; i += len) {
@@ -257,7 +255,7 @@ fromstruct_nsec(ARGS_FROMSTRUCT) {
 		window = nsec->typebits[i];
 		len = nsec->typebits[i+1];
 		i += 2;
-		INSIST(first || window > lastwindow); 
+		INSIST(first || window > lastwindow);
 		INSIST(len > 0 && len <= 32);
 		INSIST(i + len <= nsec->len);
 		INSIST(nsec->typebits[i + len - 1] != 0);
@@ -365,4 +363,36 @@ checknames_nsec(ARGS_CHECKNAMES) {
 	return (ISC_TRUE);
 }
 
+static inline int
+casecompare_nsec(ARGS_COMPARE) {
+	isc_region_t region1;
+	isc_region_t region2;
+	dns_name_t name1;
+	dns_name_t name2;
+	int order;
+
+	REQUIRE(rdata1->type == rdata2->type);
+	REQUIRE(rdata1->rdclass == rdata2->rdclass);
+	REQUIRE(rdata1->type == 47);
+	REQUIRE(rdata1->length != 0);
+	REQUIRE(rdata2->length != 0);
+
+	dns_name_init(&name1, NULL);
+	dns_name_init(&name2, NULL);
+
+	dns_rdata_toregion(rdata1, &region1);
+	dns_rdata_toregion(rdata2, &region2);
+
+	dns_name_fromregion(&name1, &region1);
+	dns_name_fromregion(&name2, &region2);
+
+	order = dns_name_rdatacompare(&name1, &name2);
+	if (order != 0)
+		return (order);
+
+	isc_region_consume(&region1, name_length(&name1));
+	isc_region_consume(&region2, name_length(&name2));
+
+	return (isc_region_compare(&region1, &region2));
+}
 #endif	/* RDATA_GENERIC_NSEC_47_C */

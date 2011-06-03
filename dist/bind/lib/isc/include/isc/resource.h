@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.1.1.6 2008/08/15 14:42:11 he Exp $	*/
+/*	$NetBSD: resource.h,v 1.1.1.7 2011/06/03 19:53:08 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resource.h,v 1.11.232.2 2008/07/23 23:48:45 tbox Exp */
+/* Id: resource.h,v 1.13 2008-07-11 23:47:09 tbox Exp */
 
 #ifndef ISC_RESOURCE_H
 #define ISC_RESOURCE_H 1
@@ -84,16 +84,13 @@ isc_resource_getlimit(isc_resource_t resource, isc_resourcevalue_t *value);
  */
 
 isc_result_t
-isc_resource_curlimit(isc_resource_t resource, isc_resourcevalue_t *value);
-/*
- * Get the current limit on a resource.
- *
- * Requires:
- *	'resource' is a valid member of the isc_resource_t enumeration.
+isc_resource_getcurlimit(isc_resource_t resource, isc_resourcevalue_t *value);
+/*%<
+ * Same as isc_resource_getlimit(), but returns the current (soft) limit.
  *
  * Returns:
- *	ISC_R_SUCCESS		Success.
- *	ISC_R_NOTIMPLEMENTED	'resource' is not a type known by the OS.
+ *\li	#ISC_R_SUCCESS		Success.
+ *\li	#ISC_R_NOTIMPLEMENTED	'resource' is not a type known by the OS.
  */
 
 ISC_LANG_ENDDECLS

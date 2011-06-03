@@ -1,7 +1,7 @@
-/*	$NetBSD: zoneconf.c,v 1.1.1.5 2008/06/21 18:35:15 christos Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.1.1.6 2011/06/03 19:46:26 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zoneconf.c,v 1.139.56.3 2008/05/21 23:26:11 each Exp */
+/* Id: zoneconf.c,v 1.161.4.4 2010-09-15 03:36:41 marka Exp */
 
 /*% */
 
@@ -27,6 +27,7 @@
 #include <isc/file.h>
 #include <isc/mem.h>
 #include <isc/print.h>
+#include <isc/stats.h>
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 #include <isc/util.h>
 
@@ -47,14 +48,25 @@
 #include <named/server.h>
 #include <named/zoneconf.h>
 
-/*%
- * These are BIND9 server defaults, not necessarily identical to the
- * library defaults defined in zone.c.
- */
+/* ACLs associated with zone */
+typedef enum {
+	allow_notify,
+	allow_query,
+	allow_transfer,
+	allow_update,
+	allow_update_forwarding
+} acl_type_t;
+
 #define RETERR(x) do { \
 	isc_result_t _r = (x); \
 	if (_r != ISC_R_SUCCESS) \
 		return (_r); \
+	} while (0)
+
+#define CHECK(x) do { \
+	result = (x); \
+	if (result != ISC_R_SUCCESS) \
+		goto cleanup; \
 	} while (0)
 
 /*%
@@ -62,21 +74,74 @@
  */
 static isc_result_t
 configure_zone_acl(const cfg_obj_t *zconfig, const cfg_obj_t *vconfig,
-		   const cfg_obj_t *config, const char *aclname,
+		   const cfg_obj_t *config, acl_type_t acltype,
 		   cfg_aclconfctx_t *actx, dns_zone_t *zone,
 		   void (*setzacl)(dns_zone_t *, dns_acl_t *),
 		   void (*clearzacl)(dns_zone_t *))
 {
 	isc_result_t result;
-	const cfg_obj_t *maps[5];
+	const cfg_obj_t *maps[5] = {NULL, NULL, NULL, NULL, NULL};
 	const cfg_obj_t *aclobj = NULL;
 	int i = 0;
-	dns_acl_t *dacl = NULL;
+	dns_acl_t **aclp = NULL, *acl = NULL;
+	const char *aclname;
+	dns_view_t *view;
 
-	if (zconfig != NULL)
-		maps[i++] = cfg_tuple_get(zconfig, "options");
-	if (vconfig != NULL)
-		maps[i++] = cfg_tuple_get(vconfig, "options");
+	view = dns_zone_getview(zone);
+
+	switch (acltype) {
+	    case allow_notify:
+		if (view != NULL)
+			aclp = &view->notifyacl;
+		aclname = "allow-notify";
+		break;
+	    case allow_query:
+		if (view != NULL)
+			aclp = &view->queryacl;
+		aclname = "allow-query";
+		break;
+	    case allow_transfer:
+		if (view != NULL)
+			aclp = &view->transferacl;
+		aclname = "allow-transfer";
+		break;
+	    case allow_update:
+		if (view != NULL)
+			aclp = &view->updateacl;
+		aclname = "allow-update";
+		break;
+	    case allow_update_forwarding:
+		if (view != NULL)
+			aclp = &view->upfwdacl;
+		aclname = "allow-update-forwarding";
+		break;
+	    default:
+		INSIST(0);
+		return (ISC_R_FAILURE);
+	}
+
+	/* First check to see if ACL is defined within the zone */
+	if (zconfig != NULL) {
+		maps[0] = cfg_tuple_get(zconfig, "options");
+		ns_config_get(maps, aclname, &aclobj);
+		if (aclobj != NULL) {
+			aclp = NULL;
+			goto parse_acl;
+		}
+	}
+
+	/* Failing that, see if there's a default ACL already in the view */
+	if (aclp != NULL && *aclp != NULL) {
+		(*setzacl)(zone, *aclp);
+		return (ISC_R_SUCCESS);
+	}
+
+	/* Check for default ACLs that haven't been parsed yet */
+	if (vconfig != NULL) {
+		const cfg_obj_t *options = cfg_tuple_get(vconfig, "options");
+		if (options != NULL)
+			maps[i++] = options;
+	}
 	if (config != NULL) {
 		const cfg_obj_t *options = NULL;
 		(void)cfg_map_get(config, "options", &options);
@@ -92,12 +157,18 @@ configure_zone_acl(const cfg_obj_t *zconfig, const cfg_obj_t *vconfig,
 		return (ISC_R_SUCCESS);
 	}
 
+parse_acl:
 	result = cfg_acl_fromconfig(aclobj, config, ns_g_lctx, actx,
-				    dns_zone_getmctx(zone), 0, &dacl);
+				    dns_zone_getmctx(zone), 0, &acl);
 	if (result != ISC_R_SUCCESS)
 		return (result);
-	(*setzacl)(zone, dacl);
-	dns_acl_detach(&dacl);
+	(*setzacl)(zone, acl);
+
+	/* Set the view default now */
+	if (aclp != NULL)
+		dns_acl_attach(acl, aclp);
+
+	dns_acl_detach(&acl);
 	return (ISC_R_SUCCESS);
 }
 
@@ -105,17 +176,27 @@ configure_zone_acl(const cfg_obj_t *zconfig, const cfg_obj_t *vconfig,
  * Parse the zone update-policy statement.
  */
 static isc_result_t
-configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone) {
+configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone,
+			const char *zname)
+{
 	const cfg_obj_t *updatepolicy = NULL;
 	const cfg_listelt_t *element, *element2;
 	dns_ssutable_t *table = NULL;
 	isc_mem_t *mctx = dns_zone_getmctx(zone);
+	isc_boolean_t autoddns = ISC_FALSE;
 	isc_result_t result;
 
 	(void)cfg_map_get(zconfig, "update-policy", &updatepolicy);
+
 	if (updatepolicy == NULL) {
 		dns_zone_setssutable(zone, NULL);
 		return (ISC_R_SUCCESS);
+	}
+
+	if (cfg_obj_isstring(updatepolicy) &&
+	    strcmp("local", cfg_obj_asstring(updatepolicy)) == 0) {
+		autoddns = ISC_TRUE;
+		updatepolicy = NULL;
 	}
 
 	result = dns_ssutable_create(mctx, &table);
@@ -134,6 +215,7 @@ configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone) {
 		const cfg_obj_t *typelist = cfg_tuple_get(stmt, "types");
 		const char *str;
 		isc_boolean_t grant = ISC_FALSE;
+		isc_boolean_t usezone = ISC_FALSE;
 		unsigned int mtype = DNS_SSUMATCHTYPE_NAME;
 		dns_fixedname_t fname, fident;
 		isc_buffer_t b;
@@ -169,7 +251,14 @@ configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone) {
 			mtype = DNS_SSUMATCHTYPE_SUBDOMAINMS;
 		else if (strcasecmp(str, "krb5-subdomain") == 0)
 			mtype = DNS_SSUMATCHTYPE_SUBDOMAINKRB5;
-		else
+		else if (strcasecmp(str, "tcp-self") == 0)
+			mtype = DNS_SSUMATCHTYPE_TCPSELF;
+		else if (strcasecmp(str, "6to4-self") == 0)
+			mtype = DNS_SSUMATCHTYPE_6TO4SELF;
+		else if (strcasecmp(str, "zonesub") == 0) {
+			mtype = DNS_SSUMATCHTYPE_SUBDOMAIN;
+			usezone = ISC_TRUE;
+		} else
 			INSIST(0);
 
 		dns_fixedname_init(&fident);
@@ -177,7 +266,7 @@ configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone) {
 		isc_buffer_init(&b, str, strlen(str));
 		isc_buffer_add(&b, strlen(str));
 		result = dns_name_fromtext(dns_fixedname_name(&fident), &b,
-					   dns_rootname, ISC_FALSE, NULL);
+					   dns_rootname, 0, NULL);
 		if (result != ISC_R_SUCCESS) {
 			cfg_obj_log(identity, ns_g_lctx, ISC_LOG_ERROR,
 				    "'%s' is not a valid name", str);
@@ -185,15 +274,27 @@ configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone) {
 		}
 
 		dns_fixedname_init(&fname);
-		str = cfg_obj_asstring(dname);
-		isc_buffer_init(&b, str, strlen(str));
-		isc_buffer_add(&b, strlen(str));
-		result = dns_name_fromtext(dns_fixedname_name(&fname), &b,
-					   dns_rootname, ISC_FALSE, NULL);
-		if (result != ISC_R_SUCCESS) {
-			cfg_obj_log(identity, ns_g_lctx, ISC_LOG_ERROR,
-				    "'%s' is not a valid name", str);
-			goto cleanup;
+		if (usezone) {
+			result = dns_name_copy(dns_zone_getorigin(zone),
+					       dns_fixedname_name(&fname),
+					       NULL);
+			if (result != ISC_R_SUCCESS) {
+				cfg_obj_log(identity, ns_g_lctx, ISC_LOG_ERROR,
+					    "error copying origin: %s",
+					    isc_result_totext(result));
+				goto cleanup;
+			}
+		} else {
+			str = cfg_obj_asstring(dname);
+			isc_buffer_init(&b, str, strlen(str));
+			isc_buffer_add(&b, strlen(str));
+			result = dns_name_fromtext(dns_fixedname_name(&fname),
+						   &b, dns_rootname, 0, NULL);
+			if (result != ISC_R_SUCCESS) {
+				cfg_obj_log(identity, ns_g_lctx, ISC_LOG_ERROR,
+					    "'%s' is not a valid name", str);
+				goto cleanup;
+			}
 		}
 
 		n = ns_config_listcount(typelist);
@@ -243,7 +344,34 @@ configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone) {
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
+	}
 
+	/*
+	 * If "update-policy local;" and a session key exists,
+	 * then use the default policy, which is equivalent to:
+	 * update-policy { grant <session-keyname> zonesub any; };
+	 */
+	if (autoddns) {
+		dns_rdatatype_t any = dns_rdatatype_any;
+
+		if (ns_g_server->session_keyname == NULL) {
+			isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+				      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
+				      "failed to enable auto DDNS policy "
+				      "for zone %s: session key not found",
+				      zname);
+			result = ISC_R_NOTFOUND;
+			goto cleanup;
+		}
+
+		result = dns_ssutable_addrule(table, ISC_TRUE,
+					      ns_g_server->session_keyname,
+					      DNS_SSUMATCHTYPE_SUBDOMAIN,
+					      dns_zone_getorigin(zone),
+					      1, &any);
+
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
 	}
 
 	result = ISC_R_SUCCESS;
@@ -364,8 +492,9 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	isc_boolean_t warn = ISC_FALSE, ignore = ISC_FALSE;
 	isc_boolean_t ixfrdiff;
 	dns_masterformat_t masterformat;
-	dns_stats_t *zoneqrystats;
+	isc_stats_t *zoneqrystats;
 	isc_boolean_t zonestats_on;
+	int seconds;
 
 	i = 0;
 	if (zconfig != NULL) {
@@ -434,6 +563,19 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	if (result == ISC_R_SUCCESS)
 		filename = cfg_obj_asstring(obj);
 
+	/*
+	 * Unless we're using some alternative database, a master zone
+	 * will be needing a master file.
+	 */
+	if (ztype == dns_zone_master && cpval == default_dbtype &&
+	    filename == NULL) {
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
+			      "zone '%s': 'file' not specified",
+			      zname);
+		return (ISC_R_FAILURE);
+	}
+
 	masterformat = dns_masterformat_text;
 	obj = NULL;
 	result= ns_config_get(maps, "masterfile-format", &obj);
@@ -456,14 +598,14 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 	if (ztype == dns_zone_slave)
 		RETERR(configure_zone_acl(zconfig, vconfig, config,
-					  "allow-notify", ac, zone,
+					  allow_notify, ac, zone,
 					  dns_zone_setnotifyacl,
 					  dns_zone_clearnotifyacl));
 	/*
 	 * XXXAG This probably does not make sense for stubs.
 	 */
 	RETERR(configure_zone_acl(zconfig, vconfig, config,
-				  "allow-query", ac, zone,
+				  allow_query, ac, zone,
 				  dns_zone_setqueryacl,
 				  dns_zone_clearqueryacl));
 
@@ -496,12 +638,12 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	zonestats_on = cfg_obj_asboolean(obj);
 	zoneqrystats = NULL;
 	if (zonestats_on) {
-		RETERR(dns_generalstats_create(mctx, &zoneqrystats,
-					       dns_nsstatscounter_max));
+		RETERR(isc_stats_create(mctx, &zoneqrystats,
+					dns_nsstatscounter_max));
 	}
 	dns_zone_setrequeststats(zone, zoneqrystats);
 	if (zoneqrystats != NULL)
-		dns_stats_detach(&zoneqrystats);
+		isc_stats_detach(&zoneqrystats);
 
 	/*
 	 * Configure master functionality.  This applies
@@ -566,7 +708,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		dns_zone_setisself(zone, ns_client_isself, NULL);
 
 		RETERR(configure_zone_acl(zconfig, vconfig, config,
-					  "allow-transfer", ac, zone,
+					  allow_transfer, ac, zone,
 					  dns_zone_setxfracl,
 					  dns_zone_clearxfracl));
 
@@ -648,6 +790,12 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		result = ns_config_get(maps, "zero-no-soa-ttl", &obj);
 		INSIST(result == ISC_R_SUCCESS);
 		dns_zone_setzeronosoattl(zone, cfg_obj_asboolean(obj));
+
+		obj = NULL;
+		result = ns_config_get(maps, "nsec3-test-zone", &obj);
+		INSIST(result == ISC_R_SUCCESS);
+		dns_zone_setoption(zone, DNS_ZONEOPT_NSEC3TESTZONE,
+				   cfg_obj_asboolean(obj));
 	}
 
 	/*
@@ -656,8 +804,9 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	 */
 	if (ztype == dns_zone_master) {
 		dns_acl_t *updateacl;
+
 		RETERR(configure_zone_acl(zconfig, vconfig, config,
-					  "allow-update", ac, zone,
+					  allow_update, ac, zone,
 					  dns_zone_setupdateacl,
 					  dns_zone_clearupdateacl));
 
@@ -669,26 +818,78 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 				      "address, which is insecure",
 				      zname);
 
-		RETERR(configure_zone_ssutable(zoptions, zone));
+		RETERR(configure_zone_ssutable(zoptions, zone, zname));
 
 		obj = NULL;
 		result = ns_config_get(maps, "sig-validity-interval", &obj);
 		INSIST(result == ISC_R_SUCCESS);
-		dns_zone_setsigvalidityinterval(zone,
-						cfg_obj_asuint32(obj) * 86400);
+		{
+			const cfg_obj_t *validity, *resign;
+
+			validity = cfg_tuple_get(obj, "validity");
+			seconds = cfg_obj_asuint32(validity) * 86400;
+			dns_zone_setsigvalidityinterval(zone, seconds);
+
+			resign = cfg_tuple_get(obj, "re-sign");
+			if (cfg_obj_isvoid(resign)) {
+				seconds /= 4;
+			} else {
+				if (seconds > 7 * 86400)
+					seconds = cfg_obj_asuint32(resign) *
+							86400;
+				else
+					seconds = cfg_obj_asuint32(resign) *
+							3600;
+			}
+			dns_zone_setsigresigninginterval(zone, seconds);
+		}
 
 		obj = NULL;
 		result = ns_config_get(maps, "key-directory", &obj);
 		if (result == ISC_R_SUCCESS) {
 			filename = cfg_obj_asstring(obj);
-			if (!isc_file_isabsolute(filename)) {
-				cfg_obj_log(obj, ns_g_lctx, ISC_LOG_ERROR,
-					    "key-directory '%s' "
-					    "is not absolute", filename);
-				return (ISC_R_FAILURE);
-			}
 			RETERR(dns_zone_setkeydirectory(zone, filename));
 		}
+
+		obj = NULL;
+		result = ns_config_get(maps, "sig-signing-signatures", &obj);
+		INSIST(result == ISC_R_SUCCESS);
+		dns_zone_setsignatures(zone, cfg_obj_asuint32(obj));
+
+		obj = NULL;
+		result = ns_config_get(maps, "sig-signing-nodes", &obj);
+		INSIST(result == ISC_R_SUCCESS);
+		dns_zone_setnodes(zone, cfg_obj_asuint32(obj));
+
+		obj = NULL;
+		result = ns_config_get(maps, "sig-signing-type", &obj);
+		INSIST(result == ISC_R_SUCCESS);
+		dns_zone_setprivatetype(zone, cfg_obj_asuint32(obj));
+
+		obj = NULL;
+		result = ns_config_get(maps, "update-check-ksk", &obj);
+		INSIST(result == ISC_R_SUCCESS);
+		dns_zone_setoption(zone, DNS_ZONEOPT_UPDATECHECKKSK,
+				   cfg_obj_asboolean(obj));
+
+		obj = NULL;
+		result = ns_config_get(maps, "dnssec-dnskey-kskonly", &obj);
+		INSIST(result == ISC_R_SUCCESS);
+		dns_zone_setoption(zone, DNS_ZONEOPT_DNSKEYKSKONLY,
+				   cfg_obj_asboolean(obj));
+	} else if (ztype == dns_zone_slave) {
+		RETERR(configure_zone_acl(zconfig, vconfig, config,
+					  allow_update_forwarding, ac, zone,
+					  dns_zone_setforwardacl,
+					  dns_zone_clearforwardacl));
+	}
+
+	/*%
+	 * Primary master functionality.
+	 */
+	if (ztype == dns_zone_master) {
+		isc_boolean_t allow = ISC_FALSE, maint = ISC_FALSE;
+		isc_boolean_t create = ISC_FALSE;
 
 		obj = NULL;
 		result = ns_config_get(maps, "check-wildcard", &obj);
@@ -697,6 +898,21 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		else
 			check = ISC_FALSE;
 		dns_zone_setoption(zone, DNS_ZONEOPT_CHECKWILDCARD, check);
+
+		obj = NULL;
+		result = ns_config_get(maps, "check-dup-records", &obj);
+		INSIST(obj != NULL);
+		if (strcasecmp(cfg_obj_asstring(obj), "warn") == 0) {
+			fail = ISC_FALSE;
+			check = ISC_TRUE;
+		} else if (strcasecmp(cfg_obj_asstring(obj), "fail") == 0) {
+			fail = check = ISC_TRUE;
+		} else if (strcasecmp(cfg_obj_asstring(obj), "ignore") == 0) {
+			fail = check = ISC_FALSE;
+		} else
+			INSIST(0);
+		dns_zone_setoption(zone, DNS_ZONEOPT_CHECKDUPRR, check);
+		dns_zone_setoption(zone, DNS_ZONEOPT_CHECKDUPRRFAIL, fail);
 
 		obj = NULL;
 		result = ns_config_get(maps, "check-mx", &obj);
@@ -750,15 +966,29 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		dns_zone_setoption(zone, DNS_ZONEOPT_IGNORESRVCNAME, ignore);
 
 		obj = NULL;
-		result = ns_config_get(maps, "update-check-ksk", &obj);
-		INSIST(result == ISC_R_SUCCESS);
-		dns_zone_setoption(zone, DNS_ZONEOPT_UPDATECHECKKSK,
+		result = ns_config_get(maps, "dnssec-secure-to-insecure", &obj);
+		INSIST(obj != NULL);
+		dns_zone_setoption(zone, DNS_ZONEOPT_SECURETOINSECURE,
 				   cfg_obj_asboolean(obj));
-	} else if (ztype == dns_zone_slave) {
-		RETERR(configure_zone_acl(zconfig, vconfig, config,
-					  "allow-update-forwarding", ac, zone,
-					  dns_zone_setforwardacl,
-					  dns_zone_clearforwardacl));
+
+		obj = NULL;
+		result = cfg_map_get(zoptions, "auto-dnssec", &obj);
+		if (result == ISC_R_SUCCESS) {
+			const char *arg = cfg_obj_asstring(obj);
+			if (strcasecmp(arg, "allow") == 0)
+				allow = ISC_TRUE;
+			else if (strcasecmp(arg, "maintain") == 0)
+				allow = maint = ISC_TRUE;
+			else if (strcasecmp(arg, "create") == 0)
+				allow = maint = create = ISC_TRUE;
+			else if (strcasecmp(arg, "off") == 0)
+				;
+			else
+				INSIST(0);
+			dns_zone_setkeyopt(zone, DNS_ZONEKEY_ALLOW, allow);
+			dns_zone_setkeyopt(zone, DNS_ZONEKEY_MAINTAIN, maint);
+			dns_zone_setkeyopt(zone, DNS_ZONEKEY_CREATE, create);
+		}
 	}
 
 	/*

@@ -1,7 +1,7 @@
-/*	$NetBSD: keydelete.c,v 1.1.1.6 2008/06/21 18:34:43 christos Exp $	*/
+/*	$NetBSD: keydelete.c,v 1.1.1.7 2011/06/03 19:47:30 spz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keydelete.c,v 1.11 2007/06/19 23:47:06 tbox Exp */
+/* Id: keydelete.c,v 1.13.126.3 2010-12-09 01:05:28 marka Exp */
 
 #include <config.h>
 
@@ -228,12 +228,13 @@ main(int argc, char **argv) {
 
 	dstkey = NULL;
 	type = DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_KEY;
-	result = dst_key_fromnamedfile(keyname, type, mctx, &dstkey);
+	result = dst_key_fromnamedfile(keyname, NULL, type, mctx, &dstkey);
 	CHECK("dst_key_fromnamedfile", result);
 	result = dns_tsigkey_createfromkey(dst_key_name(dstkey),
 					   DNS_TSIG_HMACMD5_NAME,
 					   dstkey, ISC_TRUE, NULL, 0, 0,
 					   mctx, ring, &tsigkey);
+	dst_key_free(&dstkey);
 	CHECK("dns_tsigkey_createfromkey", result);
 
 	(void)isc_app_run();

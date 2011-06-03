@@ -1,7 +1,7 @@
-/*	$NetBSD: journal.h,v 1.1.1.5 2008/06/21 18:32:32 christos Exp $	*/
+/*	$NetBSD: journal.h,v 1.1.1.6 2011/06/03 19:52:31 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: journal.h,v 1.31 2007/06/19 23:47:16 tbox Exp */
+/* Id: journal.h,v 1.37 2009-11-04 23:48:18 tbox Exp */
 
 #ifndef DNS_JOURNAL_H
 #define DNS_JOURNAL_H 1
@@ -28,7 +28,7 @@
 
 /*! \file dns/journal.h
  * \brief
- * Database journalling.
+ * Database journaling.
  */
 
 /***
@@ -42,6 +42,11 @@
 #include <dns/diff.h>
 #include <dns/rdata.h>
 #include <dns/types.h>
+
+/***
+ *** Defines.
+ ***/
+#define DNS_JOURNALOPT_RESIGN	0x00000001
 
 /***
  *** Types
@@ -190,7 +195,7 @@ dns_journal_iter_init(dns_journal_t *j,
  * Returns:
  *\li	ISC_R_SUCCESS
  *\li	ISC_R_RANGE	begin_serial is outside the addressable range.
- *\li	ISC_R_NOTFOUND	begin_serial is within the range of adressable
+ *\li	ISC_R_NOTFOUND	begin_serial is within the range of addressable
  *			serial numbers covered by the journal, but
  *			this particular serial number does not exist.
  */
@@ -227,17 +232,25 @@ dns_journal_current_rr(dns_journal_t *j, dns_name_t **name, isc_uint32_t *ttl,
  */
 
 isc_result_t
-dns_journal_rollforward(isc_mem_t *mctx, dns_db_t *db, const char *filename);
+dns_journal_rollforward(isc_mem_t *mctx, dns_db_t *db, unsigned int options,
+			const char *filename);
+
+isc_result_t
+dns_journal_rollforward2(isc_mem_t *mctx, dns_db_t *db, unsigned int options,
+			 isc_uint32_t resign, const char *filename);
 /*%<
  * Roll forward (play back) the journal file "filename" into the
  * database "db".  This should be called when the server starts
- * after a shutdown or crash.
+ * after a shutdown or crash.  'resign' is how many seconds before
+ * a RRSIG is due to expire it should be scheduled to be regenerated.
  *
  * Requires:
- *\li      'mctx' is a valid memory context.
+ *\li	dns_journal_rollforward() requires that DNS_JOURNALOPT_RESIGN
+ *	is not set.
+ *\li   'mctx' is a valid memory context.
  *\li	'db' is a valid database which does not have a version
  *           open for writing.
- *  \li    'filename' is the name of the journal file belonging to 'db'.
+ *\li   'filename' is the name of the journal file belonging to 'db'.
  *
  * Returns:
  *\li	DNS_R_NOJOURNAL when journal does not exist.
@@ -266,7 +279,7 @@ dns_db_diff(isc_mem_t *mctx,
 
 isc_result_t
 dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
-                    isc_uint32_t target_size);
+		    isc_uint32_t target_size);
 /*%<
  * Attempt to compact the journal if it is greater that 'target_size'.
  * Changes from 'serial' onwards will be preserved.  If the journal

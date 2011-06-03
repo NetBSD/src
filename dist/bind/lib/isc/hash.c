@@ -1,7 +1,7 @@
-/*	$NetBSD: hash.c,v 1.1.1.5 2008/06/21 18:31:12 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.1.1.6 2011/06/03 19:52:54 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,11 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hash.c,v 1.13 2007/06/19 23:47:17 tbox Exp */
+/* Id: hash.c,v 1.16 2009-09-01 00:22:28 jinmei Exp */
 
 /*! \file
  * Some portion of this code was derived from universal hash function
- * libraries of Rice University. 
+ * libraries of Rice University.
 \section license UH Universal Hashing Library
 
 Copyright ((c)) 2002, Rice University
@@ -196,8 +196,12 @@ isc_hash_ctxcreate(isc_mem_t *mctx, isc_entropy_t *entropy,
 	hctx->vectorlen = vlen;
 	hctx->rndvector = rv;
 
+#ifdef BIND9
 	if (entropy != NULL)
 		isc_entropy_attach(entropy, &hctx->entropy);
+#else
+	UNUSED(entropy);
+#endif
 
 	*hctxp = hctx;
 	return (ISC_R_SUCCESS);
@@ -238,18 +242,22 @@ isc_hash_create(isc_mem_t *mctx, isc_entropy_t *entropy, size_t limit) {
 
 void
 isc_hash_ctxinit(isc_hash_t *hctx) {
-	isc_result_t result;
-
 	LOCK(&hctx->lock);
 
 	if (hctx->initialized == ISC_TRUE)
 		goto out;
 
 	if (hctx->entropy) {
-		result = isc_entropy_getdata(hctx->entropy, 
+#ifdef BIND9
+		isc_result_t result;
+
+		result = isc_entropy_getdata(hctx->entropy,
 					     hctx->rndvector, hctx->vectorlen,
 					     NULL, 0);
 		INSIST(result == ISC_R_SUCCESS);
+#else
+		INSIST(0);
+#endif
 	} else {
 		isc_uint32_t pr;
 		unsigned int i, copylen;
@@ -278,7 +286,7 @@ isc_hash_ctxinit(isc_hash_t *hctx) {
 void
 isc_hash_init() {
 	INSIST(hash != NULL && VALID_HASH(hash));
-	
+
 	isc_hash_ctxinit(hash);
 }
 
@@ -295,6 +303,7 @@ static void
 destroy(isc_hash_t **hctxp) {
 	isc_hash_t *hctx;
 	isc_mem_t *mctx;
+	unsigned char canary0[4], canary1[4];
 
 	REQUIRE(hctxp != NULL && *hctxp != NULL);
 	hctx = *hctxp;
@@ -305,8 +314,10 @@ destroy(isc_hash_t **hctxp) {
 	isc_refcount_destroy(&hctx->refcnt);
 
 	mctx = hctx->mctx;
+#ifdef BIND9
 	if (hctx->entropy != NULL)
 		isc_entropy_detach(&hctx->entropy);
+#endif
 	if (hctx->rndvector != NULL)
 		isc_mem_put(mctx, hctx->rndvector, hctx->vectorlen);
 
@@ -314,7 +325,10 @@ destroy(isc_hash_t **hctxp) {
 
 	DESTROYLOCK(&hctx->lock);
 
+	memcpy(canary0, hctx + 1, sizeof(canary0));
 	memset(hctx, 0, sizeof(isc_hash_t));
+	memcpy(canary1, hctx + 1, sizeof(canary1));
+	INSIST(memcmp(canary0, canary1, sizeof(canary0)) == 0);
 	isc_mem_put(mctx, hctx, sizeof(isc_hash_t));
 	isc_mem_detach(&mctx);
 }

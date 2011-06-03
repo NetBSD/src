@@ -1,7 +1,7 @@
-/*	$NetBSD: resolver.h,v 1.1.1.5 2008/06/21 18:32:29 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.1.1.6 2011/06/03 19:52:35 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.h,v 1.56.128.2 2008/04/03 06:08:27 tbox Exp */
+/* Id: resolver.h,v 1.64.104.3 2010-07-11 00:12:19 each Exp */
 
 #ifndef DNS_RESOLVER_H
 #define DNS_RESOLVER_H 1
@@ -83,6 +83,7 @@ typedef struct dns_fetchevent {
 	dns_fixedname_t			foundname;
 	isc_sockaddr_t *		client;
 	dns_messageid_t			id;
+	isc_result_t			vresult;
 } dns_fetchevent_t;
 
 /*
@@ -103,14 +104,27 @@ typedef struct dns_fetchevent {
 #define	DNS_FETCHOPT_EDNSVERSIONSHIFT	24
 
 /*
+ * Upper bounds of class of query RTT (ms).  Corresponds to
+ * dns_resstatscounter_queryrttX statistics counters.
+ */
+#define DNS_RESOLVER_QRYRTTCLASS0	10
+#define DNS_RESOLVER_QRYRTTCLASS0STR	"10"
+#define DNS_RESOLVER_QRYRTTCLASS1	100
+#define DNS_RESOLVER_QRYRTTCLASS1STR	"100"
+#define DNS_RESOLVER_QRYRTTCLASS2	500
+#define DNS_RESOLVER_QRYRTTCLASS2STR	"500"
+#define DNS_RESOLVER_QRYRTTCLASS3	800
+#define DNS_RESOLVER_QRYRTTCLASS3STR	"800"
+#define DNS_RESOLVER_QRYRTTCLASS4	1600
+#define DNS_RESOLVER_QRYRTTCLASS4STR	"1600"
+
+/*
  * XXXRTH  Should this API be made semi-private?  (I.e.
  * _dns_resolver_create()).
  */
 
 #define DNS_RESOLVER_CHECKNAMES		0x01
 #define DNS_RESOLVER_CHECKNAMESFAIL	0x02
-#define DNS_RESOLVER_USEDISPATCHPOOL4	0x04
-#define DNS_RESOLVER_USEDISPATCHPOOL6	0x08
 
 isc_result_t
 dns_resolver_create(dns_view_t *view,
@@ -168,7 +182,7 @@ dns_resolver_freeze(dns_resolver_t *res);
  *
  * Requires:
  *
- *\li	'res' is a valid, unfrozen resolver.
+ *\li	'res' is a valid resolver.
  *
  * Ensures:
  *
@@ -351,6 +365,23 @@ dns_resolver_destroyfetch(dns_fetch_t **fetchp);
  *\li	*fetchp == NULL.
  */
 
+void
+dns_resolver_logfetch(dns_fetch_t *fetch, isc_log_t *lctx,
+		      isc_logcategory_t *category, isc_logmodule_t *module,
+		      int level, isc_boolean_t duplicateok);
+/*%<
+ * Dump a log message on internal state at the completion of given 'fetch'.
+ * 'lctx', 'category', 'module', and 'level' are used to write the log message.
+ * By default, only one log message is written even if the corresponding fetch
+ * context serves multiple clients; if 'duplicateok' is true the suppression
+ * is disabled and the message can be written every time this function is
+ * called.
+ *
+ * Requires:
+ *
+ *\li	'fetch' is a valid fetch, and has completed.
+ */
+
 dns_dispatchmgr_t *
 dns_resolver_dispatchmgr(dns_resolver_t *resolver);
 
@@ -480,31 +511,46 @@ dns_resolver_setzeronosoattl(dns_resolver_t *resolver, isc_boolean_t state);
 unsigned int
 dns_resolver_getoptions(dns_resolver_t *resolver);
 
-isc_result_t
-dns_resolver_createdispatchpool(dns_resolver_t *res, unsigned int ndisps,
-				unsigned int interval);
+void
+dns_resolver_addbadcache(dns_resolver_t *resolver, dns_name_t *name,
+			 dns_rdatatype_t type, isc_time_t *expire);
 /*%<
- * Create a pool of dispatches
- *
- * Notes:
- *
- *\li	Generally, applications should not create a resolver directly, but
- *	should instead call dns_view_createresolver().
+ * Add a entry to the bad cache for <name,type> that will expire at 'expire'.
  *
  * Requires:
+ * \li	resolver to be valid.
+ * \li	name to be valid.
+ */
+
+isc_boolean_t
+dns_resolver_getbadcache(dns_resolver_t *resolver, dns_name_t *name,
+			 dns_rdatatype_t type, isc_time_t *now);
+/*%<
+ * Check to see if there is a unexpired entry in the bad cache for
+ * <name,type>.
  *
- *\li	'res' is a valid resolver that has not been frozen.  Also it must have
- *	either the _USEDISPATCHPOOL4 or _USEDISPATCHPOOL6 option.
+ * Requires:
+ * \li	resolver to be valid.
+ * \li	name to be valid.
+ */
+
+void
+dns_resolver_flushbadcache(dns_resolver_t *resolver, dns_name_t *name);
+/*%<
+ * Flush the bad cache of all entries at 'name' if 'name' is non NULL.
+ * Flush the entire bad cache if 'name' is NULL.
  *
- *\li	'taskmgr' is a valid task manager.
+ * Requires:
+ * \li	resolver to be valid.
+ */
+
+void
+dns_resolver_printbadcache(dns_resolver_t *resolver, FILE *fp);
+/*%
+ * Print out the contents of the bad cache to 'fp'.
  *
- *\li	'ndisps' > 0.
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS				On success.
- *
- *\li	Anything else				Failure.
+ * Requires:
+ * \li	resolver to be valid.
  */
 
 ISC_LANG_ENDDECLS

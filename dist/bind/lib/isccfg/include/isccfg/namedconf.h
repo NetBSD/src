@@ -1,7 +1,7 @@
-/*	$NetBSD: namedconf.h,v 1.1.1.3 2008/06/21 18:30:41 christos Exp $	*/
+/*	$NetBSD: namedconf.h,v 1.1.1.4 2011/06/03 19:53:29 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.h,v 1.9 2007/06/19 23:47:22 tbox Exp */
+/* Id: namedconf.h,v 1.15.120.3 2010-08-11 18:19:59 each Exp */
 
 #ifndef ISCCFG_NAMEDCONF_H
 #define ISCCFG_NAMEDCONF_H 1
@@ -35,13 +35,25 @@
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_namedconf;
 /*%< A complete named.conf file. */
 
+LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_bindkeys;
+/*%< A bind.keys file. */
+
+LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_newzones;
+/*%< A new-zones file (for zones added by 'rndc addzone'). */
+
+LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_addzoneconf;
+/*%< A single zone passed via the addzone rndc command. */
+
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_rndcconf;
 /*%< A complete rndc.conf file. */
 
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_rndckey;
 /*%< A complete rndc.key file. */
 
+LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sessionkey;
+/*%< A complete session.key file. */
+
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_keyref;
 /*%< A key reference, used as an ACL element */
 
-#endif /* ISCCFG_CFG_H */
+#endif /* ISCCFG_NAMEDCONF_H */

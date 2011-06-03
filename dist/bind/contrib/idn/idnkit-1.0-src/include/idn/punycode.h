@@ -1,6 +1,6 @@
-/*	$NetBSD: punycode.h,v 1.1.1.1 2004/05/17 23:43:42 christos Exp $	*/
+/*	$NetBSD: punycode.h,v 1.1.1.2 2011/06/03 19:47:57 spz Exp $	*/
 
-/* Id: punycode.h,v 1.1.1.1 2003/06/04 00:25:40 marka Exp */
+/* Id: punycode.h,v 1.1.1.1 2003-06-04 00:25:40 marka Exp */
 /*
  * Copyright (c) 2001 Japan Network Information Center.  All rights reserved.
  *  

@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2002  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named-checkzone.docbook,v 1.34 2007/06/19 06:58:03 marka Exp -->
+<!-- Id: named-checkzone.docbook,v 1.38 2009-12-04 21:09:32 marka Exp -->
 <refentry id="man.named-checkzone">
   <refentryinfo>
     <date>June 13, 2000</date>
@@ -36,6 +36,7 @@
       <year>2005</year>
       <year>2006</year>
       <year>2007</year>
+      <year>2009</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -68,7 +69,7 @@
       <arg><option>-m <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-M <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-n <replaceable class="parameter">mode</replaceable></option></arg>
-      <arg><option>-o <replaceable class="parameter">filename</replaceable></option></arg>
+      <arg><option>-r <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-s <replaceable class="parameter">style</replaceable></option></arg>
       <arg><option>-S <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">directory</replaceable></option></arg>
@@ -93,11 +94,13 @@
       <arg><option>-m <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-n <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-o <replaceable class="parameter">filename</replaceable></option></arg>
+      <arg><option>-r <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-s <replaceable class="parameter">style</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">directory</replaceable></option></arg>
       <arg><option>-w <replaceable class="parameter">directory</replaceable></option></arg>
       <arg><option>-D</option></arg>
       <arg><option>-W <replaceable class="parameter">mode</replaceable></option></arg>
+      <arg choice="req"><option>-o <replaceable class="parameter">filename</replaceable></option></arg>
       <arg choice="req">zonename</arg>
       <arg choice="req">filename</arg>
     </cmdsynopsis>
@@ -178,7 +181,7 @@
         <term>-c <replaceable class="parameter">class</replaceable></term>
         <listitem>
           <para>
-            Specify the class of the zone.  If not specified "IN" is assumed.
+            Specify the class of the zone.  If not specified, "IN" is assumed.
           </para>
         </listitem>
       </varlistentry>
@@ -315,6 +318,19 @@
 	    write to standard out.
 	    This is mandatory for <command>named-compilezone</command>.
           </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-r <replaceable class="parameter">mode</replaceable></term>
+        <listitem>
+	  <para>
+            Check for records that are treated as different by DNSSEC but
+	    are semantically equal in plain DNS.  
+            Possible modes are <command>"fail"</command>,
+            <command>"warn"</command> (default) and
+            <command>"ignore"</command>.
+	  </para>
         </listitem>
       </varlistentry>
 

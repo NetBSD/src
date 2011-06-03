@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic.h,v 1.1.1.2 2008/06/21 18:31:37 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.1.3 2011/06/03 19:53:03 spz Exp $	*/
 
 /*
- * Copyright (C) 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: atomic.h,v 1.4 2007/06/19 23:47:17 tbox Exp */
+/* Id: atomic.h,v 1.7 2009-06-24 02:22:50 marka Exp */
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1
@@ -33,7 +33,11 @@
  * (e.g., 1 and -1)?
  */
 static inline isc_int32_t
-isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
+#ifdef __GNUC__
+__attribute__ ((unused))
+#endif
+isc_atomic_xadd(isc_int32_t *p, isc_int32_t val)
+{
 	isc_int32_t prev, swapped;
 
 	for (prev = *(volatile isc_int32_t *)p; ; prev = swapped) {
@@ -55,7 +59,11 @@ isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
  * This routine atomically stores the value 'val' in 'p'.
  */
 static inline void
-isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
+#ifdef __GNUC__
+__attribute__ ((unused))
+#endif
+isc_atomic_store(isc_int32_t *p, isc_int32_t val)
+{
 	__asm__ volatile(
 		"st4.rel %0=%1"
 		: "=m" (*p)
@@ -70,7 +78,11 @@ isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
  * case.
  */
 static inline isc_int32_t
-isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
+#ifdef __GNUC__
+__attribute__ ((unused))
+#endif
+isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val)
+{
 	isc_int32_t ret;
 
 	__asm__ volatile(

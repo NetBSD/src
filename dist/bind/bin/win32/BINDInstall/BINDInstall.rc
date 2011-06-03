@@ -1,4 +1,4 @@
-//Microsoft Developer Studio generated resource script.
+// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -27,18 +27,18 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE 
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE 
 BEGIN
     "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
     "#define _AFX_NO_OLE_RESOURCES\r\n"
@@ -66,73 +66,65 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON    DISCARDABLE     "res\\BINDInstall.ico"
+IDR_MAINFRAME           ICON                    "res\\BINDInstall.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Dialog
 //
 
-IDD_BINDINSTALL_DIALOG DIALOGEX 0, 0, 210, 301
-STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
-    WS_SYSMENU
+IDD_BINDINSTALL_DIALOG DIALOGEX 0, 0, 210, 311
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "BIND 9 Installer"
-FONT 8, "MS Sans Serif",0,0,0x1
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     EDITTEXT        IDC_TARGETDIR,7,62,196,14,ES_AUTOHSCROLL
     EDITTEXT        IDC_ACCOUNT_NAME,7,94,196,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_ACCOUNT_PASSWORD,7,122,196,14,ES_PASSWORD | 
-                    ES_AUTOHSCROLL
-    EDITTEXT        IDC_ACCOUNT_PASSWORD_CONFIRM,7,151,196,14,ES_PASSWORD | 
-                    ES_AUTOHSCROLL
+    EDITTEXT        IDC_ACCOUNT_PASSWORD,7,122,196,14,ES_PASSWORD | ES_AUTOHSCROLL
+    EDITTEXT        IDC_ACCOUNT_PASSWORD_CONFIRM,7,151,196,14,ES_PASSWORD | ES_AUTOHSCROLL
     DEFPUSHBUTTON   "&Install",IDC_INSTALL,153,7,50,14
     PUSHBUTTON      "E&xit",IDC_EXIT,153,39,50,14
-    CONTROL         "&Automatic Startup",IDC_AUTO_START,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,190,72,10
+    CONTROL         "&Tools Only",IDC_TOOLS_ONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,185,72,10
+    CONTROL         "&Automatic Startup",IDC_AUTO_START,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,195,72,10
     CONTROL         "&Keep Config Files After Uninstall",IDC_KEEP_FILES,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,200,116,10
-    CONTROL         "&Start BIND Service After Install",IDC_START,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,210,113,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,205,116,10
+    CONTROL         "&Start BIND Service After Install",IDC_START,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,215,113,10
     PUSHBUTTON      "&Uninstall",IDC_UNINSTALL,153,23,50,14
     PUSHBUTTON      "Browse",IDC_BROWSE,7,22,50,14
     LTEXT           "Target Directory:",IDC_STATIC,7,53,54,8
-    GROUPBOX        "Progress",IDC_STATIC,7,224,196,70
-    RTEXT           "",IDC_COPY_TAG,14,261,78,8
-    LTEXT           "",IDC_COPY_FILE,105,261,90,8
-    RTEXT           "",IDC_SERVICE_TAG,15,271,77,8
-    LTEXT           "",IDC_REG_SERVICE,105,271,89,8
-    RTEXT           "",IDC_MESSAGE_TAG,15,281,77,8
-    LTEXT           "",IDC_REG_MESSAGE,105,281,88,8
-    RTEXT           "",IDC_DIR_TAG,15,251,77,8
-    GROUPBOX        "Options",IDC_STATIC,7,172,196,49
-    CTEXT           "Version Unknown",IDC_VERSION,7,7,61,10,SS_CENTERIMAGE | 
-                    SS_SUNKEN
-    RTEXT           "Current Operation:",IDC_CURRENT_TAG,34,235,58,8
-    LTEXT           "",IDC_CURRENT,105,235,90,8
-    LTEXT           "",IDC_CREATE_DIR,105,251,88,8
+    GROUPBOX        "Progress",IDC_STATIC,7,234,196,70
+    RTEXT           "",IDC_COPY_TAG,14,271,78,8
+    LTEXT           "",IDC_COPY_FILE,105,271,90,8
+    RTEXT           "",IDC_SERVICE_TAG,15,281,77,8
+    LTEXT           "",IDC_REG_SERVICE,105,281,89,8
+    RTEXT           "",IDC_MESSAGE_TAG,15,291,77,8
+    LTEXT           "",IDC_REG_MESSAGE,105,291,88,8
+    RTEXT           "",IDC_DIR_TAG,15,261,77,8
+    GROUPBOX        "Options",IDC_STATIC,7,172,196,60
+    CTEXT           "Version Unknown",IDC_VERSION,7,7,61,10,SS_CENTERIMAGE | SS_SUNKEN
+    RTEXT           "Current Operation:",IDC_CURRENT_TAG,34,245,58,8
+    LTEXT           "",IDC_CURRENT,105,245,90,8
+    LTEXT           "",IDC_CREATE_DIR,105,261,88,8
     LTEXT           "Service Account Name",IDC_STATIC,7,84,74,8
     LTEXT           "Service Account Password",IDC_STATIC,7,112,86,8
-    LTEXT           "Confirm Service Account Password",IDC_STATIC,7,140,112,
-                    8
+    LTEXT           "Confirm Service Account Password",IDC_STATIC,7,140,112,8
 END
 
-IDD_BROWSE DIALOG DISCARDABLE  0, 0, 227, 117
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_BROWSE DIALOG  0, 0, 227, 117
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Select Directory"
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,170,7,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,170,24,50,14
-    LISTBOX         IDC_DIRLIST,7,28,155,82,LBS_SORT | LBS_NOINTEGRALHEIGHT | 
-                    WS_VSCROLL | WS_TABSTOP
+    LISTBOX         IDC_DIRLIST,7,28,155,82,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     EDITTEXT        IDC_CURDIR,7,7,155,14,ES_AUTOHSCROLL
-    COMBOBOX        IDC_DRIVES,170,98,50,74,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_DRIVES,170,98,50,74,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_DIALOG1 DIALOG DISCARDABLE  0, 0, 186, 95
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_DIALOG1 DIALOG  0, 0, 186, 95
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Dialog"
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -141,7 +133,6 @@ BEGIN
 END
 
 
-#ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
@@ -164,18 +155,14 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "\0"
-            VALUE "CompanyName", "Internet Software Consortium\0"
-            VALUE "FileDescription", "ISC BIND Install Utility\0"
-            VALUE "FileVersion", "2.0.0\0"
-            VALUE "InternalName", "BINDInstall\0"
-            VALUE "LegalCopyright", "Copyright © 2000\0"
-            VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "BINDInstall.EXE\0"
-            VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "ISC BIND\0"
-            VALUE "ProductVersion", "9.3.0\0"
-            VALUE "SpecialBuild", "\0"
+            VALUE "CompanyName", "Internet Software Consortium"
+            VALUE "FileDescription", "ISC BIND Install Utility"
+            VALUE "FileVersion", "2.0.0"
+            VALUE "InternalName", "BINDInstall"
+            VALUE "LegalCopyright", "Copyright © 2000"
+            VALUE "OriginalFilename", "BINDInstall.EXE"
+            VALUE "ProductName", "ISC BIND"
+            VALUE "ProductVersion", "9.7.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -184,8 +171,6 @@ BEGIN
     END
 END
 
-#endif    // !_MAC
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -193,7 +178,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
+GUIDELINES DESIGNINFO 
 BEGIN
     IDD_BINDINSTALL_DIALOG, DIALOG
     BEGIN
@@ -212,6 +197,7 @@ BEGIN
         HORZGUIDE, 265
         HORZGUIDE, 275
         HORZGUIDE, 285
+        HORZGUIDE, 295
     END
 
     IDD_BROWSE, DIALOG
@@ -238,7 +224,7 @@ END
 // String Table
 //
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     IDS_MAINFRAME           "BIND 9 Installer"
     IDS_CREATEDIR           "Directory %s does not exist.\nDo you wish to create it?"
@@ -253,7 +239,7 @@ BEGIN
     IDS_UNINSTALL_DONE      "BIND Uninstall Completed"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     IDS_CREATE_KEY          "Creating BIND registry key"
     IDS_ADD_REMOVE          "Setting up Add/Remove Programs entry"
@@ -273,7 +259,7 @@ BEGIN
     IDS_START_SERVICE       "Starting BIND service"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     IDS_UNINSTALL_DIR       "Remove Directories..."
     IDS_UNINSTALL_FILES     "Delete Files..."
@@ -293,7 +279,7 @@ BEGIN
     IDS_ERR_CREATE_KEY      "An error occured while creating registry keys\n(%s)"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     IDS_ERR_SET_VALUE       "An error occured while setting registry key values\n(%s)"
     IDS_NO_VERSION          "Version Unknown"

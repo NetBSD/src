@@ -1,7 +1,7 @@
-/*	$NetBSD: named-checkconf.c,v 1.1.1.5 2008/06/21 18:33:48 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.1.1.6 2011/06/03 19:45:47 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-checkconf.c,v 1.46 2007/11/26 02:12:45 marka Exp */
+/* Id: named-checkconf.c,v 1.51.4.3 2010-09-07 01:52:22 marka Exp */
 
 /*! \file */
 
@@ -61,11 +61,14 @@ isc_log_t *logc = NULL;
 	} while (0)
 
 /*% usage */
+ISC_PLATFORM_NORETURN_PRE static void
+usage(void) ISC_PLATFORM_NORETURN_POST;
+
 static void
 usage(void) {
-        fprintf(stderr, "usage: %s [-h] [-j] [-v] [-z] [-t directory] "
+	fprintf(stderr, "usage: %s [-h] [-j] [-p] [-v] [-z] [-t directory] "
 		"[named.conf]\n", program);
-        exit(1);
+	exit(1);
 }
 
 /*% directory callback */
@@ -175,9 +178,9 @@ configure_zone(const char *vclass, const char *view,
 
 	zname = cfg_obj_asstring(cfg_tuple_get(zconfig, "name"));
 	classobj = cfg_tuple_get(zconfig, "class");
-        if (!cfg_obj_isstring(classobj))
-                zclass = vclass;
-        else
+	if (!cfg_obj_isstring(classobj))
+		zclass = vclass;
+	else
 		zclass = cfg_obj_asstring(classobj);
 
 	zoptions = cfg_tuple_get(zconfig, "options");
@@ -196,13 +199,31 @@ configure_zone(const char *vclass, const char *view,
 		return (ISC_R_FAILURE);
 	if (strcasecmp(cfg_obj_asstring(typeobj), "master") != 0)
 		return (ISC_R_SUCCESS);
-        cfg_map_get(zoptions, "database", &dbobj);
-        if (dbobj != NULL)
-                return (ISC_R_SUCCESS);
+	cfg_map_get(zoptions, "database", &dbobj);
+	if (dbobj != NULL)
+		return (ISC_R_SUCCESS);
 	cfg_map_get(zoptions, "file", &fileobj);
 	if (fileobj == NULL)
 		return (ISC_R_FAILURE);
 	zfile = cfg_obj_asstring(fileobj);
+
+	obj = NULL;
+	if (get_maps(maps, "check-dup-records", &obj)) {
+		if (strcasecmp(cfg_obj_asstring(obj), "warn") == 0) {
+			zone_options |= DNS_ZONEOPT_CHECKDUPRR;
+			zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
+		} else if (strcasecmp(cfg_obj_asstring(obj), "fail") == 0) {
+			zone_options |= DNS_ZONEOPT_CHECKDUPRR;
+			zone_options |= DNS_ZONEOPT_CHECKDUPRRFAIL;
+		} else if (strcasecmp(cfg_obj_asstring(obj), "ignore") == 0) {
+			zone_options &= ~DNS_ZONEOPT_CHECKDUPRR;
+			zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
+		} else
+			INSIST(0);
+	} else {
+		zone_options |= DNS_ZONEOPT_CHECKDUPRR;
+		zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
+	}
 
 	obj = NULL;
 	if (get_maps(maps, "check-mx", &obj)) {
@@ -289,8 +310,8 @@ configure_zone(const char *vclass, const char *view,
 		} else
 			INSIST(0);
 	} else {
-               zone_options |= DNS_ZONEOPT_CHECKNAMES;
-               zone_options |= DNS_ZONEOPT_CHECKNAMESFAIL;
+	       zone_options |= DNS_ZONEOPT_CHECKNAMES;
+	       zone_options |= DNS_ZONEOPT_CHECKNAMESFAIL;
 	}
 
 	masterformat = dns_masterformat_text;
@@ -389,6 +410,15 @@ load_zones_fromconfig(const cfg_obj_t *config, isc_mem_t *mctx) {
 	return (result);
 }
 
+static void
+output(void *closure, const char *text, int textlen) {
+	UNUSED(closure);
+	if (fwrite(text, 1, textlen, stdout) != (size_t)textlen) {
+		perror("fwrite");
+		exit(1);
+	}
+}
+
 /*% The main processing routine */
 int
 main(int argc, char **argv) {
@@ -401,10 +431,11 @@ main(int argc, char **argv) {
 	int exit_status = 0;
 	isc_entropy_t *ectx = NULL;
 	isc_boolean_t load_zones = ISC_FALSE;
-	
+	isc_boolean_t print = ISC_FALSE;
+
 	isc_commandline_errprint = ISC_FALSE;
 
-	while ((c = isc_commandline_parse(argc, argv, "dhjt:vz")) != EOF) {
+	while ((c = isc_commandline_parse(argc, argv, "dhjt:pvz")) != EOF) {
 		switch (c) {
 		case 'd':
 			debug++;
@@ -421,12 +452,10 @@ main(int argc, char **argv) {
 					isc_result_totext(result));
 				exit(1);
 			}
-			result = isc_dir_chdir("/");
-			if (result != ISC_R_SUCCESS) {
-				fprintf(stderr, "isc_dir_chdir: %s\n",
-					isc_result_totext(result));
-				exit(1);
-			}
+			break;
+
+		case 'p':
+			print = ISC_TRUE;
 			break;
 
 		case 'v':
@@ -461,6 +490,10 @@ main(int argc, char **argv) {
 	if (conffile == NULL || conffile[0] == '\0')
 		conffile = NAMED_CONFFILE;
 
+#ifdef _WIN32
+	InitSockets();
+#endif
+
 	RUNTIME_CHECK(isc_mem_create(0, 0, &mctx) == ISC_R_SUCCESS);
 
 	RUNTIME_CHECK(setup_logging(mctx, stdout, &logc) == ISC_R_SUCCESS);
@@ -489,6 +522,8 @@ main(int argc, char **argv) {
 			exit_status = 1;
 	}
 
+	if (print && exit_status == 0)
+		cfg_print(config, output, NULL);
 	cfg_obj_destroy(parser, &config);
 
 	cfg_parser_destroy(&parser);
@@ -501,6 +536,10 @@ main(int argc, char **argv) {
 	isc_entropy_detach(&ectx);
 
 	isc_mem_destroy(&mctx);
+
+#ifdef _WIN32
+	DestroySockets();
+#endif
 
 	return (exit_status);
 }

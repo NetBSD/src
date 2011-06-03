@@ -1,7 +1,7 @@
-/*	$NetBSD: log.h,v 1.1.1.5 2008/06/21 18:32:32 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.1.1.6 2011/06/03 19:52:31 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.h,v 1.42 2007/06/18 23:47:42 tbox Exp */
+/* Id: log.h,v 1.44.186.1 2009-12-18 22:13:54 each Exp */
 
 /*! \file dns/log.h
  * \author  Principal Authors: DCL */
@@ -75,6 +75,7 @@ LIBDNS_EXTERNAL_DATA extern isc_logmodule_t dns_modules[];
 #define DNS_LOGMODULE_HINTS		(&dns_modules[24])
 #define DNS_LOGMODULE_ACACHE		(&dns_modules[25])
 #define DNS_LOGMODULE_DLZ		(&dns_modules[26])
+#define DNS_LOGMODULE_DNSSEC		(&dns_modules[27])
 
 ISC_LANG_BEGINDECLS
 
@@ -90,7 +91,7 @@ dns_log_init(isc_log_t *lctx);
  *\li	dns_log_init() is called only once.
  *
  * Ensures:
- * \li	The catgories and modules defined above are available for
+ * \li	The categories and modules defined above are available for
  * 	use by isc_log_usechannnel() and isc_log_write().
  */
 

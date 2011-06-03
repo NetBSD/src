@@ -1,6 +1,6 @@
-/*	$NetBSD: nameprep_template.c,v 1.1.1.1 2004/05/17 23:43:43 christos Exp $	*/
+/*	$NetBSD: nameprep_template.c,v 1.1.1.2 2011/06/03 19:48:00 spz Exp $	*/
 
-/* Id: nameprep_template.c,v 1.1.1.1 2003/06/04 00:25:57 marka Exp */
+/* Id: nameprep_template.c,v 1.1.1.1 2003-06-04 00:25:57 marka Exp */
 
 /*
  * Copyright (c) 2001 Japan Network Information Center.  All rights reserved.

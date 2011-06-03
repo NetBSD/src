@@ -1,4 +1,4 @@
-/*	$NetBSD: sshfp_44.h,v 1.1.1.3 2008/06/21 18:32:44 christos Exp $	*/
+/*	$NetBSD: sshfp_44.h,v 1.1.1.4 2011/06/03 19:52:45 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sshfp_44.h,v 1.8 2007/06/19 23:47:17 tbox Exp */
+/* Id: sshfp_44.h,v 1.8 2007-06-19 23:47:17 tbox Exp */
 
 /*!
  *  \brief Per RFC 4255 */

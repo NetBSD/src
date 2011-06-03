@@ -1,4 +1,4 @@
-/*	$NetBSD: string.c,v 1.1.1.5 2008/06/21 18:31:04 christos Exp $	*/
+/*	$NetBSD: string.c,v 1.1.1.6 2011/06/03 19:53:02 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: string.c,v 1.20 2007/06/19 23:47:17 tbox Exp */
+/* Id: string.c,v 1.20 2007-06-19 23:47:17 tbox Exp */
 
 /*! \file */
 

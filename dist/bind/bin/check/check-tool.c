@@ -1,7 +1,7 @@
-/*	$NetBSD: check-tool.c,v 1.1.1.5 2008/06/21 18:33:49 christos Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.1.1.6 2011/06/03 19:45:47 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,13 +17,17 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check-tool.c,v 1.31 2007/09/13 04:45:18 each Exp */
+/* Id: check-tool.c,v 1.39.104.2 2010-09-07 23:46:37 tbox Exp */
 
 /*! \file */
 
 #include <config.h>
 
 #include <stdio.h>
+
+#ifdef _WIN32
+#include <Winsock2.h>
+#endif
 
 #include "check-tool.h"
 #include <isc/buffer.h>
@@ -49,6 +53,14 @@
 
 #include <isccfg/log.h>
 
+#ifndef CHECK_SIBLING
+#define CHECK_SIBLING 1
+#endif
+
+#ifndef CHECK_LOCAL
+#define CHECK_LOCAL 1
+#endif
+
 #ifdef HAVE_ADDRINFO
 #ifdef HAVE_GETADDRINFO
 #ifdef HAVE_GAISTRERROR
@@ -62,7 +74,7 @@
 		result = (r); \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup; \
-	} while (0)   
+	} while (0)
 
 #define ERR_IS_CNAME 1
 #define ERR_NO_ADDRESSES 2
@@ -77,14 +89,23 @@ static const char *dbtype[] = { "rbt" };
 
 int debug = 0;
 isc_boolean_t nomerge = ISC_TRUE;
+#if CHECK_LOCAL
 isc_boolean_t docheckmx = ISC_TRUE;
 isc_boolean_t dochecksrv = ISC_TRUE;
 isc_boolean_t docheckns = ISC_TRUE;
-unsigned int zone_options = DNS_ZONEOPT_CHECKNS | 
+#else
+isc_boolean_t docheckmx = ISC_FALSE;
+isc_boolean_t dochecksrv = ISC_FALSE;
+isc_boolean_t docheckns = ISC_FALSE;
+#endif
+unsigned int zone_options = DNS_ZONEOPT_CHECKNS |
 			    DNS_ZONEOPT_CHECKMX |
 			    DNS_ZONEOPT_MANYERRORS |
 			    DNS_ZONEOPT_CHECKNAMES |
 			    DNS_ZONEOPT_CHECKINTEGRITY |
+#if CHECK_SIBLING
+			    DNS_ZONEOPT_CHECKSIBLING |
+#endif
 			    DNS_ZONEOPT_CHECKWILDCARD |
 			    DNS_ZONEOPT_WARNMXCNAME |
 			    DNS_ZONEOPT_WARNSRVCNAME;
@@ -100,6 +121,7 @@ static isc_logcategory_t categories[] = {
 	{ "queries",	     0 },
 	{ "unmatched", 	     0 },
 	{ "update-security", 0 },
+	{ "query-errors",    0 },
 	{ NULL,		     0 }
 };
 
@@ -111,7 +133,7 @@ freekey(char *key, unsigned int type, isc_symvalue_t value, void *userarg) {
 	UNUSED(type);
 	UNUSED(value);
 	isc_mem_free(userarg, key);
-} 
+}
 
 static void
 add(char *key, int value) {
@@ -202,13 +224,14 @@ checkns(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner,
 		while (cur != NULL && cur->ai_canonname == NULL &&
 		       cur->ai_next != NULL)
 			cur = cur->ai_next;
-		if (ai != NULL && cur->ai_canonname != NULL &&
-		    strcasecmp(ai->ai_canonname, namebuf) != 0 &&
+		if (cur != NULL && cur->ai_canonname != NULL &&
+		    strcasecmp(cur->ai_canonname, namebuf) != 0 &&
 		    !logged(namebuf, ERR_IS_CNAME)) {
 			dns_zone_log(zone, ISC_LOG_ERROR,
 				     "%s/NS '%s' (out of zone) "
-				     "is a CNAME (illegal)",
-				     ownerbuf, namebuf);
+				     "is a CNAME '%s' (illegal)",
+				     ownerbuf, namebuf,
+				     cur->ai_canonname);
 			/* XXX950 make fatal for 9.5.0 */
 			/* answer = ISC_FALSE; */
 			add(namebuf, ERR_IS_CNAME);
@@ -378,7 +401,7 @@ checkmx(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner) {
 	if (dns_name_countlabels(name) > 1U)
 		strcat(namebuf, ".");
 	dns_name_format(owner, ownerbuf, sizeof(ownerbuf));
-	
+
 	result = getaddrinfo(namebuf, NULL, &hints, &ai);
 	dns_name_format(name, namebuf, sizeof(namebuf) - 1);
 	switch (result) {
@@ -399,8 +422,10 @@ checkmx(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner) {
 				if (!logged(namebuf, ERR_IS_MXCNAME)) {
 					dns_zone_log(zone, level,
 						     "%s/MX '%s' (out of zone)"
-						     " is a CNAME (illegal)",
-						     ownerbuf, namebuf);
+						     " is a CNAME '%s' "
+						     "(illegal)",
+						     ownerbuf, namebuf,
+						     cur->ai_canonname);
 					add(namebuf, ERR_IS_MXCNAME);
 				}
 				if (level == ISC_LOG_ERROR)
@@ -461,7 +486,7 @@ checksrv(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner) {
 	if (dns_name_countlabels(name) > 1U)
 		strcat(namebuf, ".");
 	dns_name_format(owner, ownerbuf, sizeof(ownerbuf));
-	
+
 	result = getaddrinfo(namebuf, NULL, &hints, &ai);
 	dns_name_format(name, namebuf, sizeof(namebuf) - 1);
 	switch (result) {
@@ -482,8 +507,9 @@ checksrv(dns_zone_t *zone, dns_name_t *name, dns_name_t *owner) {
 				if (!logged(namebuf, ERR_IS_SRVCNAME)) {
 					dns_zone_log(zone, level, "%s/SRV '%s'"
 						     " (out of zone) is a "
-						     "CNAME (illegal)",
-						     ownerbuf, namebuf);
+						     "CNAME '%s' (illegal)",
+						     ownerbuf, namebuf,
+						     cur->ai_canonname);
 					add(namebuf, ERR_IS_SRVCNAME);
 				}
 				if (level == ISC_LOG_ERROR)
@@ -577,8 +603,7 @@ load_zone(isc_mem_t *mctx, const char *zonename, const char *filename,
 	isc_buffer_add(&buffer, strlen(zonename));
 	dns_fixedname_init(&fixorigin);
 	origin = dns_fixedname_name(&fixorigin);
-	CHECK(dns_name_fromtext(origin, &buffer, dns_rootname,
-				ISC_FALSE, NULL));
+	CHECK(dns_name_fromtext(origin, &buffer, dns_rootname, 0, NULL));
 	CHECK(dns_zone_setorigin(zone, origin));
 	CHECK(dns_zone_setdbtype(zone, 1, (const char * const *) dbtype));
 	CHECK(dns_zone_setfile2(zone, filename, fileformat));
@@ -642,3 +667,26 @@ dump_zone(const char *zonename, dns_zone_t *zone, const char *filename,
 
 	return (result);
 }
+
+#ifdef _WIN32
+void
+InitSockets(void) {
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	int err;
+
+	wVersionRequested = MAKEWORD(2, 0);
+
+	err = WSAStartup( wVersionRequested, &wsaData );
+	if (err != 0) {
+		fprintf(stderr, "WSAStartup() failed: %d\n", err);
+		exit(1);
+	}
+}
+
+void
+DestroySockets(void) {
+	WSACleanup();
+}
+#endif
+

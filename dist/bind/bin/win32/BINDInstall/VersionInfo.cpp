@@ -55,7 +55,7 @@ CVersionInfo::CVersionInfo(CString filename)
 		{
 			if(m_versionInfo)
 			{
-				delete m_versionInfo;
+				delete [] m_versionInfo;
 				m_versionInfo = NULL;
 			}
 			return;
@@ -68,7 +68,7 @@ CVersionInfo::CVersionInfo(CString filename)
 		{
 			if(m_versionInfo)
 			{
-				delete m_versionInfo;
+				delete [] m_versionInfo;
 				m_versionInfo = NULL;
 			}
 			return;
@@ -89,7 +89,7 @@ CVersionInfo::~CVersionInfo()
 	m_fixedInfo = NULL;
 	if(m_versionInfo)
 	{
-		delete m_versionInfo;
+		delete [] m_versionInfo;
 		m_versionInfo = NULL;
 	}
 }

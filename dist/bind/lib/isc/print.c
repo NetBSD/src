@@ -1,7 +1,7 @@
-/*	$NetBSD: print.c,v 1.1.1.5 2008/06/21 18:31:11 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.1.1.6 2011/06/03 19:52:59 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: print.c,v 1.33.128.2 2008/02/18 23:46:30 tbox Exp */
+/* Id: print.c,v 1.35.350.2 2010-10-18 23:46:48 tbox Exp */
 
 /*! \file */
 
@@ -470,7 +470,7 @@ isc_print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 			if (width > 0) {
 				count += width;
 				width--;
-				if (left) {
+				if (left && size > 1) {
 					*str++ = c;
 					size--;
 				}

@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: makeversion.pl,v 1.8 2007/06/19 23:47:24 tbox Exp 
+# Id: makeversion.pl,v 1.8 2007-06-19 23:47:24 tbox Exp 
 
 # This script takes the version information from the version file located
 # at the root of the source tree and the api files in each library directory

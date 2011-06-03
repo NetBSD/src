@@ -1,7 +1,7 @@
-/*	$NetBSD: os.h,v 1.1.1.5 2008/06/21 18:33:47 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.1.1.6 2011/06/03 19:46:44 spz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.h,v 1.9 2007/06/19 23:46:59 tbox Exp */
+/* Id: os.h,v 1.12 2009-06-10 00:27:21 each Exp */
 
 /*! \file */
 
@@ -29,15 +29,9 @@
 
 ISC_LANG_BEGINDECLS
 
-FILE *safe_create(const char *filename);
-/*%<
- * Open 'filename' for writing, truncate if necessary.  If the file was
- * created ensure that only the owner can read/write it.
- */
-
 int set_user(FILE *fd, const char *user);
 /*%<
- * Set the owner of the file refernced by 'fd' to 'user'.
+ * Set the owner of the file referenced by 'fd' to 'user'.
  * Returns:
  *   0 		success
  *   -1 	insufficient permissions, or 'user' does not exist.

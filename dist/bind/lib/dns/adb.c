@@ -1,7 +1,7 @@
-/*	$NetBSD: adb.c,v 1.1.1.7 2008/07/10 14:19:16 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.1.1.8 2011/06/03 19:51:42 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: adb.c,v 1.233.36.8 2008/05/03 05:06:03 marka Exp */
+/* Id: adb.c,v 1.247.172.2 2010-08-13 23:46:28 tbox Exp */
 
 /*! \file
  *
@@ -35,6 +35,7 @@
 #include <isc/mutexblock.h>
 #include <isc/netaddr.h>
 #include <isc/random.h>
+#include <isc/stats.h>
 #include <isc/string.h>         /* Required for HP/UX (and others?) */
 #include <isc/task.h>
 #include <isc/util.h>
@@ -119,7 +120,6 @@ struct dns_adb {
 
 	isc_taskmgr_t                  *taskmgr;
 	isc_task_t                     *task;
-	isc_boolean_t                   overmem;
 
 	isc_interval_t                  tick_interval;
 	int                             next_cleanbucket;
@@ -142,6 +142,7 @@ struct dns_adb {
 	 * XXXRTH  Have a per-bucket structure that contains all of these?
 	 */
 	dns_adbnamelist_t               names[NBUCKETS];
+	dns_adbnamelist_t               deadnames[NBUCKETS];
 	/*% See dns_adbnamelist_t */
 	isc_mutex_t                     namelocks[NBUCKETS];
 	/*% See dns_adbnamelist_t */
@@ -155,6 +156,7 @@ struct dns_adb {
 	 * XXXRTH  Have a per-bucket structure that contains all of these?
 	 */
 	dns_adbentrylist_t              entries[NBUCKETS];
+	dns_adbentrylist_t              deadentries[NBUCKETS];
 	isc_mutex_t                     entrylocks[NBUCKETS];
 	isc_boolean_t                   entry_sd[NBUCKETS]; /*%< shutting down */
 	unsigned int                    entry_refcnt[NBUCKETS];
@@ -198,8 +200,6 @@ struct dns_adbname {
 /*% The adbfetch structure */
 struct dns_adbfetch {
 	unsigned int                    magic;
-	dns_adbnamehook_t              *namehook;
-	dns_adbentry_t                 *entry;
 	dns_fetch_t                    *fetch;
 	dns_rdataset_t                  rdataset;
 };
@@ -280,7 +280,8 @@ static inline void free_adbfetch(dns_adb_t *, dns_adbfetch_t **);
 static inline dns_adbname_t *find_name_and_lock(dns_adb_t *, dns_name_t *,
 						unsigned int, int *);
 static inline dns_adbentry_t *find_entry_and_lock(dns_adb_t *,
-						  isc_sockaddr_t *, int *);
+						  isc_sockaddr_t *, int *,
+						  isc_stdtime_t);
 static void dump_adb(dns_adb_t *, FILE *, isc_boolean_t debug, isc_stdtime_t);
 static void print_dns_name(FILE *, dns_name_t *);
 static void print_namehook_list(FILE *, const char *legend,
@@ -294,15 +295,16 @@ static inline void inc_adb_irefcnt(dns_adb_t *);
 static inline void inc_adb_erefcnt(dns_adb_t *);
 static inline void inc_entry_refcnt(dns_adb_t *, dns_adbentry_t *,
 				    isc_boolean_t);
-static inline isc_boolean_t dec_entry_refcnt(dns_adb_t *, dns_adbentry_t *,
-					     isc_boolean_t);
+static inline isc_boolean_t dec_entry_refcnt(dns_adb_t *, isc_boolean_t,
+					     dns_adbentry_t *, isc_boolean_t);
 static inline void violate_locking_hierarchy(isc_mutex_t *, isc_mutex_t *);
-static isc_boolean_t clean_namehooks(dns_adb_t *, dns_adbnamehooklist_t *,
-				     isc_boolean_t);
+static isc_boolean_t clean_namehooks(dns_adb_t *, dns_adbnamehooklist_t *);
 static void clean_target(dns_adb_t *, dns_name_t *);
 static void clean_finds_at_name(dns_adbname_t *, isc_eventtype_t,
 				unsigned int);
 static isc_boolean_t check_expire_namehooks(dns_adbname_t *, isc_stdtime_t);
+static isc_boolean_t check_expire_entry(dns_adb_t *, dns_adbentry_t **,
+					isc_stdtime_t);
 static void cancel_fetches_at_name(dns_adbname_t *);
 static isc_result_t dbfind_name(dns_adbname_t *, isc_stdtime_t,
 				dns_rdatatype_t);
@@ -316,8 +318,7 @@ static inline void link_name(dns_adb_t *, int, dns_adbname_t *);
 static inline isc_boolean_t unlink_name(dns_adb_t *, dns_adbname_t *);
 static inline void link_entry(dns_adb_t *, int, dns_adbentry_t *);
 static inline isc_boolean_t unlink_entry(dns_adb_t *, dns_adbentry_t *);
-static isc_boolean_t kill_name(dns_adbname_t **, isc_eventtype_t,
-			       isc_boolean_t);
+static isc_boolean_t kill_name(dns_adbname_t **, isc_eventtype_t);
 static void water(void *, int);
 static void dump_entry(FILE *, dns_adbentry_t *, isc_boolean_t, isc_stdtime_t);
 
@@ -338,6 +339,12 @@ static void dump_entry(FILE *, dns_adbentry_t *, isc_boolean_t, isc_stdtime_t);
 #define NAME_NEEDSPOKE(n)       (((n)->flags & NAME_NEEDS_POKE) != 0)
 #define NAME_GLUEOK(n)          (((n)->flags & NAME_GLUE_OK) != 0)
 #define NAME_HINTOK(n)          (((n)->flags & NAME_HINT_OK) != 0)
+
+/*
+ * Private flag(s) for entries.
+ * MUST NOT overlap FCTX_ADDRINFO_xxx and DNS_FETCHOPT_NOEDNS0.
+ */
+#define ENTRY_IS_DEAD		0x80000000
 
 /*
  * To the name, address classes are all that really exist.  If it has a
@@ -463,9 +470,9 @@ DP(int level, const char *format, ...) {
  * Increment resolver-related statistics counters.
  */
 static inline void
-inc_stats(dns_adb_t *adb, dns_statscounter_t counter) {
+inc_stats(dns_adb_t *adb, isc_statscounter_t counter) {
 	if (adb->view->resstats != NULL)
-		dns_generalstats_increment(adb->view->resstats, counter);
+		isc_stats_increment(adb->view->resstats, counter);
 }
 
 static inline dns_ttl_t
@@ -541,7 +548,8 @@ import_rdataset(dns_adbname_t *adbname, dns_rdataset_t *rdataset,
 			goto fail;
 		}
 
-		foundentry = find_entry_and_lock(adb, &sockaddr, &addr_bucket);
+		foundentry = find_entry_and_lock(adb, &sockaddr, &addr_bucket,
+						 now);
 		if (foundentry == NULL) {
 			dns_adbentry_t *entry;
 
@@ -618,10 +626,11 @@ import_rdataset(dns_adbname_t *adbname, dns_rdataset_t *rdataset,
  * Requires the name's bucket be locked.
  */
 static isc_boolean_t
-kill_name(dns_adbname_t **n, isc_eventtype_t ev, isc_boolean_t is_purge) {
+kill_name(dns_adbname_t **n, isc_eventtype_t ev) {
 	dns_adbname_t *name;
 	isc_boolean_t result = ISC_FALSE;
 	isc_boolean_t result4, result6;
+	int bucket;
 	dns_adb_t *adb;
 
 	INSIST(n != NULL);
@@ -650,8 +659,8 @@ kill_name(dns_adbname_t **n, isc_eventtype_t ev, isc_boolean_t is_purge) {
 	 * in that they will always empty the list.
 	 */
 	clean_finds_at_name(name, ev, DNS_ADBFIND_ADDRESSMASK);
-	result4 = clean_namehooks(adb, &name->v4, is_purge);
-	result6 = clean_namehooks(adb, &name->v6, is_purge);
+	result4 = clean_namehooks(adb, &name->v4);
+	result6 = clean_namehooks(adb, &name->v6);
 	clean_target(adb, &name->target);
 	result = ISC_TF(result4 || result6);
 
@@ -666,8 +675,13 @@ kill_name(dns_adbname_t **n, isc_eventtype_t ev, isc_boolean_t is_purge) {
 		if (result)
 			result = dec_adb_irefcnt(adb);
 	} else {
-		name->flags |= NAME_IS_DEAD;
 		cancel_fetches_at_name(name);
+		if (!NAME_DEAD(name)) {
+			bucket = name->lock_bucket;
+			ISC_LIST_UNLINK(adb->names[bucket], name, plink);
+			ISC_LIST_APPEND(adb->deadnames[bucket], name, plink);
+			name->flags |= NAME_IS_DEAD;
+		}
 	}
 	return (result);
 }
@@ -691,7 +705,7 @@ check_expire_namehooks(dns_adbname_t *name, isc_stdtime_t now) {
 	if (!NAME_FETCH_V4(name) && EXPIRE_OK(name->expire_v4, now)) {
 		if (NAME_HAS_V4(name)) {
 			DP(DEF_LEVEL, "expiring v4 for name %p", name);
-			result4 = clean_namehooks(adb, &name->v4, ISC_FALSE);
+			result4 = clean_namehooks(adb, &name->v4);
 			name->partial_result &= ~DNS_ADBFIND_INET;
 		}
 		name->expire_v4 = INT_MAX;
@@ -704,7 +718,7 @@ check_expire_namehooks(dns_adbname_t *name, isc_stdtime_t now) {
 	if (!NAME_FETCH_V6(name) && EXPIRE_OK(name->expire_v6, now)) {
 		if (NAME_HAS_V6(name)) {
 			DP(DEF_LEVEL, "expiring v6 for name %p", name);
-			result6 = clean_namehooks(adb, &name->v6, ISC_FALSE);
+			result6 = clean_namehooks(adb, &name->v6);
 			name->partial_result &= ~DNS_ADBFIND_INET6;
 		}
 		name->expire_v6 = INT_MAX;
@@ -744,7 +758,10 @@ unlink_name(dns_adb_t *adb, dns_adbname_t *name) {
 	bucket = name->lock_bucket;
 	INSIST(bucket != DNS_ADB_INVALIDBUCKET);
 
-	ISC_LIST_UNLINK(adb->names[bucket], name, plink);
+	if (NAME_DEAD(name))
+		ISC_LIST_UNLINK(adb->deadnames[bucket], name, plink);
+	else
+		ISC_LIST_UNLINK(adb->names[bucket], name, plink);
 	name->lock_bucket = DNS_ADB_INVALIDBUCKET;
 	INSIST(adb->name_refcnt[bucket] > 0);
 	adb->name_refcnt[bucket]--;
@@ -758,6 +775,26 @@ unlink_name(dns_adb_t *adb, dns_adbname_t *name) {
  */
 static inline void
 link_entry(dns_adb_t *adb, int bucket, dns_adbentry_t *entry) {
+	int i;
+	dns_adbentry_t *e;
+
+	if (isc_mem_isovermem(adb->mctx)) {
+		for (i = 0; i < 2; i++) {
+			e = ISC_LIST_TAIL(adb->entries[bucket]);
+			if (e == NULL)
+				break;
+			if (e->refcnt == 0) {
+				unlink_entry(adb, e);
+				free_adbentry(adb, &e);
+				continue;
+			}
+			INSIST((e->flags & ENTRY_IS_DEAD) == 0);
+			e->flags |= ENTRY_IS_DEAD;
+			ISC_LIST_UNLINK(adb->entries[bucket], e, plink);
+			ISC_LIST_PREPEND(adb->deadentries[bucket], e, plink);
+		}
+	}
+
 	ISC_LIST_PREPEND(adb->entries[bucket], entry, plink);
 	entry->lock_bucket = bucket;
 	adb->entry_refcnt[bucket]++;
@@ -774,7 +811,10 @@ unlink_entry(dns_adb_t *adb, dns_adbentry_t *entry) {
 	bucket = entry->lock_bucket;
 	INSIST(bucket != DNS_ADB_INVALIDBUCKET);
 
-	ISC_LIST_UNLINK(adb->entries[bucket], entry, plink);
+	if ((entry->flags & ENTRY_IS_DEAD) != 0)
+		ISC_LIST_UNLINK(adb->deadentries[bucket], entry, plink);
+	else
+		ISC_LIST_UNLINK(adb->entries[bucket], entry, plink);
 	entry->lock_bucket = DNS_ADB_INVALIDBUCKET;
 	INSIST(adb->entry_refcnt[bucket] > 0);
 	adb->entry_refcnt[bucket]--;
@@ -827,8 +867,7 @@ shutdown_names(dns_adb_t *adb) {
 				next_name = ISC_LIST_NEXT(name, plink);
 				INSIST(result == ISC_FALSE);
 				result = kill_name(&name,
-						   DNS_EVENT_ADBSHUTDOWN,
-						   ISC_FALSE);
+						   DNS_EVENT_ADBSHUTDOWN);
 				name = next_name;
 			}
 		}
@@ -854,7 +893,7 @@ shutdown_entries(dns_adb_t *adb) {
 		adb->entry_sd[bucket] = ISC_TRUE;
 
 		entry = ISC_LIST_HEAD(adb->entries[bucket]);
-		if (entry == NULL) {
+		if (adb->entry_refcnt[bucket] == 0) {
 			/*
 			 * This bucket has no entries.  We must decrement the
 			 * irefcnt ourselves, since it will not be
@@ -900,13 +939,12 @@ cancel_fetches_at_name(dns_adbname_t *name) {
  * Assumes the name bucket is locked.
  */
 static isc_boolean_t
-clean_namehooks(dns_adb_t *adb, dns_adbnamehooklist_t *namehooks,
-		isc_boolean_t is_purge)
-{
+clean_namehooks(dns_adb_t *adb, dns_adbnamehooklist_t *namehooks) {
 	dns_adbentry_t *entry;
 	dns_adbnamehook_t *namehook;
 	int addr_bucket;
 	isc_boolean_t result = ISC_FALSE;
+	isc_boolean_t overmem = isc_mem_isovermem(adb->mctx);
 
 	addr_bucket = DNS_ADB_INVALIDBUCKET;
 	namehook = ISC_LIST_HEAD(*namehooks);
@@ -927,14 +965,8 @@ clean_namehooks(dns_adb_t *adb, dns_adbnamehooklist_t *namehooks,
 				LOCK(&adb->entrylocks[addr_bucket]);
 			}
 
-			/*
-			 * If we are in an overmem situation, force expiration
-			 * so that # of names and # of entries are well
-			 * balanced.
-			 */
-			if (is_purge)
-				entry->expires = 0;
-			result = dec_entry_refcnt(adb, entry, ISC_FALSE);
+			result = dec_entry_refcnt(adb, overmem, entry,
+						  ISC_FALSE);
 		}
 
 		/*
@@ -1206,7 +1238,9 @@ inc_entry_refcnt(dns_adb_t *adb, dns_adbentry_t *entry, isc_boolean_t lock) {
 }
 
 static inline isc_boolean_t
-dec_entry_refcnt(dns_adb_t *adb, dns_adbentry_t *entry, isc_boolean_t lock) {
+dec_entry_refcnt(dns_adb_t *adb, isc_boolean_t overmem, dns_adbentry_t *entry,
+		 isc_boolean_t lock)
+{
 	int bucket;
 	isc_boolean_t destroy_entry;
 	isc_boolean_t result = ISC_FALSE;
@@ -1221,7 +1255,8 @@ dec_entry_refcnt(dns_adb_t *adb, dns_adbentry_t *entry, isc_boolean_t lock) {
 
 	destroy_entry = ISC_FALSE;
 	if (entry->refcnt == 0 &&
-	    (adb->entry_sd[bucket] || entry->expires == 0)) {
+	    (adb->entry_sd[bucket] || entry->expires == 0 || overmem ||
+	     (entry->flags & ENTRY_IS_DEAD) != 0)) {
 		destroy_entry = ISC_TRUE;
 		result = unlink_entry(adb, entry);
 	}
@@ -1464,31 +1499,13 @@ new_adbfetch(dns_adb_t *adb) {
 		return (NULL);
 
 	f->magic = 0;
-	f->namehook = NULL;
-	f->entry = NULL;
 	f->fetch = NULL;
-
-	f->namehook = new_adbnamehook(adb, NULL);
-	if (f->namehook == NULL)
-		goto err;
-
-	f->entry = new_adbentry(adb);
-	if (f->entry == NULL)
-		goto err;
 
 	dns_rdataset_init(&f->rdataset);
 
 	f->magic = DNS_ADBFETCH_MAGIC;
 
 	return (f);
-
- err:
-	if (f->namehook != NULL)
-		free_adbnamehook(adb, &f->namehook);
-	if (f->entry != NULL)
-		free_adbentry(adb, &f->entry);
-	isc_mempool_put(adb->afmp, f);
-	return (NULL);
 }
 
 static inline void
@@ -1500,11 +1517,6 @@ free_adbfetch(dns_adb_t *adb, dns_adbfetch_t **fetch) {
 	*fetch = NULL;
 
 	f->magic = 0;
-
-	if (f->namehook != NULL)
-		free_adbnamehook(adb, &f->namehook);
-	if (f->entry != NULL)
-		free_adbentry(adb, &f->entry);
 
 	if (dns_rdataset_isassociated(&f->rdataset))
 		dns_rdataset_disassociate(&f->rdataset);
@@ -1623,8 +1635,10 @@ find_name_and_lock(dns_adb_t *adb, dns_name_t *name,
  * the bucket changes.
  */
 static inline dns_adbentry_t *
-find_entry_and_lock(dns_adb_t *adb, isc_sockaddr_t *addr, int *bucketp) {
-	dns_adbentry_t *entry;
+find_entry_and_lock(dns_adb_t *adb, isc_sockaddr_t *addr, int *bucketp,
+	isc_stdtime_t now)
+{
+	dns_adbentry_t *entry, *entry_next;
 	int bucket;
 
 	bucket = isc_sockaddr_hash(addr, ISC_TRUE) % NBUCKETS;
@@ -1638,11 +1652,18 @@ find_entry_and_lock(dns_adb_t *adb, isc_sockaddr_t *addr, int *bucketp) {
 		*bucketp = bucket;
 	}
 
-	entry = ISC_LIST_HEAD(adb->entries[bucket]);
-	while (entry != NULL) {
-		if (isc_sockaddr_equal(addr, &entry->sockaddr))
+	/* Search the list, while cleaning up expired entries. */
+	for (entry = ISC_LIST_HEAD(adb->entries[bucket]);
+	     entry != NULL;
+	     entry = entry_next) {
+		entry_next = ISC_LIST_NEXT(entry, plink);
+		(void)check_expire_entry(adb, &entry, now);
+		if (entry != NULL &&
+		    isc_sockaddr_equal(addr, &entry->sockaddr)) {
+			ISC_LIST_UNLINK(adb->entries[bucket], entry, plink);
+			ISC_LIST_PREPEND(adb->entries[bucket], entry, plink);
 			return (entry);
-		entry = ISC_LIST_NEXT(entry, plink);
+		}
 	}
 
 	return (NULL);
@@ -1739,8 +1760,11 @@ copy_namehook_lists(dns_adb_t *adb, dns_adbfind_t *find, dns_name_t *qname,
 			bucket = entry->lock_bucket;
 			LOCK(&adb->entrylocks[bucket]);
 
-			if (entry_is_lame(adb, entry, qname, qtype, now))
+			if (!FIND_RETURNLAME(find)
+			    && entry_is_lame(adb, entry, qname, qtype, now)) {
+				find->options |= DNS_ADBFIND_LAMEPRUNED;
 				goto nextv6;
+			}
 			addrinfo = new_adbaddrinfo(adb, entry, find->port);
 			if (addrinfo == NULL) {
 				find->partial_result |= DNS_ADBFIND_INET6;
@@ -1807,7 +1831,7 @@ check_expire_name(dns_adbname_t **namep, isc_stdtime_t now) {
 	/*
 	 * The name is empty.  Delete it.
 	 */
-	result = kill_name(&name, DNS_EVENT_ADBEXPIRED, ISC_FALSE);
+	result = kill_name(&name, DNS_EVENT_ADBEXPIRED);
 	*namep = NULL;
 
 	/*
@@ -1833,7 +1857,7 @@ check_stale_name(dns_adb_t *adb, int bucket, isc_stdtime_t now) {
 	int victims, max_victims;
 	isc_boolean_t result;
 	dns_adbname_t *victim, *next_victim;
-	isc_boolean_t overmem = adb->overmem;
+	isc_boolean_t overmem = isc_mem_isovermem(adb->mctx);
 	int scans = 0;
 
 	INSIST(bucket != DNS_ADB_INVALIDBUCKET);
@@ -1850,16 +1874,9 @@ check_stale_name(dns_adb_t *adb, int bucket, isc_stdtime_t now) {
 	for (victims = 0;
 	     victim != NULL && victims < max_victims && scans < 10;
 	     victim = next_victim) {
+		INSIST(!NAME_DEAD(victim));
 		scans++;
 		next_victim = ISC_LIST_PREV(victim, plink);
-
-		/*
-		 * If the victim is already dead, it simply waits for some
-		 * final events.  Ignore it.
-		 */
-		if (NAME_DEAD(victim))
-			goto next;
-
 		result = check_expire_name(&victim, now);
 		if (victim == NULL) {
 			victims++;
@@ -1869,8 +1886,7 @@ check_stale_name(dns_adb_t *adb, int bucket, isc_stdtime_t now) {
 		if (!NAME_FETCH(victim) &&
 		    (overmem || victim->last_used + ADB_STALE_MARGIN <= now)) {
 			RUNTIME_CHECK(kill_name(&victim,
-						DNS_EVENT_ADBCANCELED,
-						ISC_TRUE) ==
+						DNS_EVENT_ADBCANCELED) ==
 				      ISC_FALSE);
 			victims++;
 		}
@@ -2038,7 +2054,6 @@ dns_adb_create(isc_mem_t *mem, dns_view_t *view, isc_timermgr_t *timermgr,
 		       adb, NULL, NULL);
 	adb->cevent_sent = ISC_FALSE;
 	adb->shutting_down = ISC_FALSE;
-	adb->overmem = ISC_FALSE;
 	ISC_LIST_INIT(adb->whenshutdown);
 
 	isc_mem_attach(mem, &adb->mctx);
@@ -2068,12 +2083,14 @@ dns_adb_create(isc_mem_t *mem, dns_view_t *view, isc_timermgr_t *timermgr,
 		goto fail1;
 	for (i = 0; i < NBUCKETS; i++) {
 		ISC_LIST_INIT(adb->names[i]);
+		ISC_LIST_INIT(adb->deadnames[i]);
 		adb->name_sd[i] = ISC_FALSE;
 		adb->name_refcnt[i] = 0;
 		adb->irefcnt++;
 	}
 	for (i = 0; i < NBUCKETS; i++) {
 		ISC_LIST_INIT(adb->entries[i]);
+		ISC_LIST_INIT(adb->deadentries[i]);
 		adb->entry_sd[i] = ISC_FALSE;
 		adb->entry_refcnt[i] = 0;
 		adb->irefcnt++;
@@ -2603,6 +2620,7 @@ dns_adb_destroyfind(dns_adbfind_t **findp) {
 	dns_adbaddrinfo_t *ai;
 	int bucket;
 	dns_adb_t *adb;
+	isc_boolean_t overmem;
 
 	REQUIRE(findp != NULL && DNS_ADBFIND_VALID(*findp));
 	find = *findp;
@@ -2627,13 +2645,14 @@ dns_adb_destroyfind(dns_adbfind_t **findp) {
 	 * Return the find to the memory pool, and decrement the adb's
 	 * reference count.
 	 */
+	overmem = isc_mem_isovermem(adb->mctx);
 	ai = ISC_LIST_HEAD(find->list);
 	while (ai != NULL) {
 		ISC_LIST_UNLINK(find->list, ai, publink);
 		entry = ai->entry;
 		ai->entry = NULL;
 		INSIST(DNS_ADBENTRY_VALID(entry));
-		RUNTIME_CHECK(dec_entry_refcnt(adb, entry, ISC_TRUE) ==
+		RUNTIME_CHECK(dec_entry_refcnt(adb, overmem, entry, ISC_TRUE) ==
 			      ISC_FALSE);
 		free_adbaddrinfo(adb, &ai);
 		ai = ISC_LIST_HEAD(find->list);
@@ -2936,8 +2955,8 @@ print_namehook_list(FILE *f, const char *legend, dns_adbnamehooklist_t *list,
 
 static inline void
 print_fetch(FILE *f, dns_adbfetch_t *ft, const char *type) {
-	fprintf(f, "\t\tFetch(%s): %p -> { nh %p, entry %p, fetch %p }\n",
-		type, ft, ft->namehook, ft->entry, ft->fetch);
+	fprintf(f, "\t\tFetch(%s): %p -> { fetch %p }\n",
+		type, ft, ft->fetch);
 }
 
 static void
@@ -3129,8 +3148,10 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 		address_type = DNS_ADBFIND_INET6;
 		fetch = name->fetch_aaaa;
 		name->fetch_aaaa = NULL;
-	}
-	INSIST(address_type != 0);
+	} else
+		fetch = NULL;
+
+	INSIST(address_type != 0 && fetch != NULL);
 
 	dns_resolver_destroyfetch(&fetch->fetch);
 	dev->fetch = NULL;
@@ -3153,8 +3174,7 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 		free_adbfetch(adb, &fetch);
 		isc_event_free(&ev);
 
-		want_check_exit = kill_name(&name, DNS_EVENT_ADBCANCELED,
-					    ISC_FALSE);
+		want_check_exit = kill_name(&name, DNS_EVENT_ADBCANCELED);
 
 		UNLOCK(&adb->namelocks[bucket]);
 
@@ -3453,7 +3473,7 @@ dns_adb_findaddrinfo(dns_adb_t *adb, isc_sockaddr_t *sa,
 
 	result = ISC_R_SUCCESS;
 	bucket = DNS_ADB_INVALIDBUCKET;
-	entry = find_entry_and_lock(adb, sa, &bucket);
+	entry = find_entry_and_lock(adb, sa, &bucket, now);
 	if (adb->entry_sd[bucket]) {
 		result = ISC_R_SHUTTINGDOWN;
 		goto unlock;
@@ -3495,6 +3515,7 @@ dns_adb_freeaddrinfo(dns_adb_t *adb, dns_adbaddrinfo_t **addrp) {
 	int bucket;
 	isc_stdtime_t now;
 	isc_boolean_t want_check_exit = ISC_FALSE;
+	isc_boolean_t overmem;
 
 	REQUIRE(DNS_ADB_VALID(adb));
 	REQUIRE(addrp != NULL);
@@ -3506,13 +3527,14 @@ dns_adb_freeaddrinfo(dns_adb_t *adb, dns_adbaddrinfo_t **addrp) {
 	isc_stdtime_get(&now);
 
 	*addrp = NULL;
+	overmem = isc_mem_isovermem(adb->mctx);
 
 	bucket = addr->entry->lock_bucket;
 	LOCK(&adb->entrylocks[bucket]);
 
 	entry->expires = now + ADB_ENTRY_WINDOW;
 
-	want_check_exit = dec_entry_refcnt(adb, entry, ISC_FALSE);
+	want_check_exit = dec_entry_refcnt(adb, overmem, entry, ISC_FALSE);
 
 	UNLOCK(&adb->entrylocks[bucket]);
 
@@ -3566,8 +3588,7 @@ dns_adb_flushname(dns_adb_t *adb, dns_name_t *name) {
 		if (!NAME_DEAD(adbname) &&
 		    dns_name_equal(name, &adbname->name)) {
 			RUNTIME_CHECK(kill_name(&adbname,
-						DNS_EVENT_ADBCANCELED,
-						ISC_TRUE) ==
+						DNS_EVENT_ADBCANCELED) ==
 				      ISC_FALSE);
 		}
 		adbname = nextname;
@@ -3578,6 +3599,14 @@ dns_adb_flushname(dns_adb_t *adb, dns_name_t *name) {
 
 static void
 water(void *arg, int mark) {
+	/*
+	 * We're going to change the way to handle overmem condition: use
+	 * isc_mem_isovermem() instead of storing the state via this callback,
+	 * since the latter way tends to cause race conditions.
+	 * To minimize the change, and in case we re-enable the callback
+	 * approach, however, keep this function at the moment.
+	 */
+
 	dns_adb_t *adb = arg;
 	isc_boolean_t overmem = ISC_TF(mark == ISC_MEM_HIWATER);
 
@@ -3585,17 +3614,6 @@ water(void *arg, int mark) {
 
 	DP(ISC_LOG_DEBUG(1),
 	   "adb reached %s water mark", overmem ? "high" : "low");
-
-	/*
-	 * We can't use adb->lock as there is potential for water
-	 * to be called when adb->lock is held.
-	 */
-	LOCK(&adb->overmemlock);
-	if (adb->overmem != overmem) {
-		adb->overmem = overmem;
-		isc_mem_waterack(adb->mctx, mark);
-	}
-	UNLOCK(&adb->overmemlock);
 }
 
 void

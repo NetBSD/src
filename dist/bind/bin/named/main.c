@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.1.1.6 2008/06/21 18:35:10 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.7 2011/06/03 19:46:14 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: main.c,v 1.158.48.2 2008/04/03 23:46:30 tbox Exp */
+/* Id: main.c,v 1.175.60.4 2010-09-15 12:10:53 marka Exp */
 
 /*! \file */
 
@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include <isc/app.h>
+#include <isc/backtrace.h>
 #include <isc/commandline.h>
 #include <isc/dir.h>
 #include <isc/entropy.h>
@@ -35,6 +36,7 @@
 #include <isc/hash.h>
 #include <isc/os.h>
 #include <isc/platform.h>
+#include <isc/print.h>
 #include <isc/resource.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
@@ -82,11 +84,20 @@
 #include <dlz/dlz_drivers.h>
 #endif
 
+/*
+ * The maximum number of stack frames to dump on assertion failure.
+ */
+#ifndef BACKTRACE_MAXFRAME
+#define BACKTRACE_MAXFRAME 128
+#endif
+
 static isc_boolean_t	want_stats = ISC_FALSE;
 static char		program_name[ISC_DIR_NAMEMAX] = "named";
 static char		absolute_conffile[ISC_DIR_PATHMAX];
 static char		saved_command_line[512];
 static char		version[512];
+static unsigned int	maxsocks = 0;
+static int		maxudp = 0;
 
 void
 ns_main_earlywarning(const char *format, ...) {
@@ -129,25 +140,65 @@ ns_main_earlyfatal(const char *format, ...) {
 	exit(1);
 }
 
+ISC_PLATFORM_NORETURN_PRE static void
+assertion_failed(const char *file, int line, isc_assertiontype_t type,
+		 const char *cond) ISC_PLATFORM_NORETURN_POST;
+
 static void
 assertion_failed(const char *file, int line, isc_assertiontype_t type,
 		 const char *cond)
 {
+	void *tracebuf[BACKTRACE_MAXFRAME];
+	int i, nframes;
+	isc_result_t result;
+	const char *logsuffix = "";
+	const char *fname;
+
 	/*
 	 * Handle assertion failures.
 	 */
 
 	if (ns_g_lctx != NULL) {
 		/*
-		 * Reset the assetion callback in case it is the log
+		 * Reset the assertion callback in case it is the log
 		 * routines causing the assertion.
 		 */
 		isc_assertion_setcallback(NULL);
 
+		result = isc_backtrace_gettrace(tracebuf, BACKTRACE_MAXFRAME,
+						&nframes);
+		if (result == ISC_R_SUCCESS && nframes > 0)
+			logsuffix = ", back trace";
 		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 			      NS_LOGMODULE_MAIN, ISC_LOG_CRITICAL,
-			      "%s:%d: %s(%s) failed", file, line,
-			      isc_assertion_typetotext(type), cond);
+			      "%s:%d: %s(%s) failed%s", file, line,
+			      isc_assertion_typetotext(type), cond, logsuffix);
+		if (result == ISC_R_SUCCESS) {
+			for (i = 0; i < nframes; i++) {
+				unsigned long offset;
+
+				fname = NULL;
+				result = isc_backtrace_getsymbol(tracebuf[i],
+								 &fname,
+								 &offset);
+				if (result == ISC_R_SUCCESS) {
+					isc_log_write(ns_g_lctx,
+						      NS_LOGCATEGORY_GENERAL,
+						      NS_LOGMODULE_MAIN,
+						      ISC_LOG_CRITICAL,
+						      "#%d %p in %s()+0x%lx", i,
+						      tracebuf[i], fname,
+						      offset);
+				} else {
+					isc_log_write(ns_g_lctx,
+						      NS_LOGCATEGORY_GENERAL,
+						      NS_LOGMODULE_MAIN,
+						      ISC_LOG_CRITICAL,
+						      "#%d %p in ??", i,
+						      tracebuf[i]);
+				}
+			}
+		}
 		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 			      NS_LOGMODULE_MAIN, ISC_LOG_CRITICAL,
 			      "exiting (due to assertion failure)");
@@ -162,9 +213,10 @@ assertion_failed(const char *file, int line, isc_assertiontype_t type,
 	exit(1);
 }
 
-static void
+ISC_PLATFORM_NORETURN_PRE static void
 library_fatal_error(const char *file, int line, const char *format,
-		    va_list args) ISC_FORMAT_PRINTF(3, 0);
+		    va_list args)
+ISC_FORMAT_PRINTF(3, 0) ISC_PLATFORM_NORETURN_POST;
 
 static void
 library_fatal_error(const char *file, int line, const char *format,
@@ -248,8 +300,9 @@ usage(void) {
 	}
 	fprintf(stderr,
 		"usage: named [-4|-6] [-c conffile] [-d debuglevel] "
-		"[-f|-g] [-n number_of_cpus]\n"
-		"             [-p port] [-s] [-t chrootdir] [-u username]\n"
+		"[-E engine] [-f|-g]\n"
+		"             [-n number_of_cpus] [-p port] [-s] "
+		"[-t chrootdir] [-u username]\n"
 		"             [-m {usage|trace|record|size|mctx}]\n");
 }
 
@@ -358,7 +411,8 @@ parse_command_line(int argc, char *argv[]) {
 
 	isc_commandline_errprint = ISC_FALSE;
 	while ((ch = isc_commandline_parse(argc, argv,
-				   "46c:C:d:fgi:lm:n:N:p:P:st:u:vx:")) != -1) {
+					   "46c:C:d:E:fFgi:lm:n:N:p:P:"
+					   "sS:t:T:u:vVx:")) != -1) {
 		switch (ch) {
 		case '4':
 			if (disable4)
@@ -392,6 +446,9 @@ parse_command_line(int argc, char *argv[]) {
 		case 'd':
 			ns_g_debuglevel = parse_int(isc_commandline_argument,
 						    "debug level");
+			break;
+		case 'E':
+			ns_g_engine = isc_commandline_argument;
 			break;
 		case 'f':
 			ns_g_foreground = ISC_TRUE;
@@ -437,9 +494,32 @@ parse_command_line(int argc, char *argv[]) {
 			/* XXXRTH temporary syntax */
 			want_stats = ISC_TRUE;
 			break;
+		case 'S':
+			maxsocks = parse_int(isc_commandline_argument,
+					     "max number of sockets");
+			break;
 		case 't':
 			/* XXXJAB should we make a copy? */
 			ns_g_chrootdir = isc_commandline_argument;
+			break;
+		case 'T':	/* NOT DOCUMENTED */
+			/*
+			 * clienttest: make clients single shot with their
+			 * 	       own memory context.
+			 */
+			if (!strcmp(isc_commandline_argument, "clienttest"))
+				ns_g_clienttest = ISC_TRUE;
+			else if (!strcmp(isc_commandline_argument, "nosoa"))
+				ns_g_nosoa = ISC_TRUE;
+			else if (!strcmp(isc_commandline_argument, "noaa"))
+				ns_g_noaa = ISC_TRUE;
+			else if (!strcmp(isc_commandline_argument, "maxudp512"))
+				maxudp = 512;
+			else if (!strcmp(isc_commandline_argument, "maxudp1460"))
+				maxudp = 1460;
+			else
+				fprintf(stderr, "unknown -T flag '%s\n",
+					isc_commandline_argument);
 			break;
 		case 'u':
 			ns_g_username = isc_commandline_argument;
@@ -447,12 +527,20 @@ parse_command_line(int argc, char *argv[]) {
 		case 'v':
 			printf("BIND %s\n", ns_g_version);
 			exit(0);
+		case 'V':
+			printf("BIND %s built with %s\n", ns_g_version,
+				ns_g_configargs);
+			exit(0);
+		case 'F':
+			/* Reserved for FIPS mode */
+			/* FALLTHROUGH */
 		case '?':
 			usage();
 			if (isc_commandline_option == '?')
 				exit(0);
 			ns_main_earlyfatal("unknown option '-%c'",
 					   isc_commandline_option);
+			/* FALLTHROUGH */
 		default:
 			ns_main_earlyfatal("parsing options returned %d", ch);
 		}
@@ -470,17 +558,14 @@ parse_command_line(int argc, char *argv[]) {
 static isc_result_t
 create_managers(void) {
 	isc_result_t result;
-#ifdef ISC_PLATFORM_USETHREADS
-	unsigned int cpus_detected;
-#endif
+	unsigned int socks;
 
 #ifdef ISC_PLATFORM_USETHREADS
-	cpus_detected = isc_os_ncpus();
 	if (ns_g_cpus == 0)
-		ns_g_cpus = cpus_detected;
+		ns_g_cpus = ns_g_cpus_detected;
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER,
 		      ISC_LOG_INFO, "found %u CPU%s, using %u worker thread%s",
-		      cpus_detected, cpus_detected == 1 ? "" : "s",
+		      ns_g_cpus_detected, ns_g_cpus_detected == 1 ? "" : "s",
 		      ns_g_cpus, ns_g_cpus == 1 ? "" : "s");
 #else
 	ns_g_cpus = 1;
@@ -501,12 +586,19 @@ create_managers(void) {
 		return (ISC_R_UNEXPECTED);
 	}
 
-	result = isc_socketmgr_create(ns_g_mctx, &ns_g_socketmgr);
+	result = isc_socketmgr_create2(ns_g_mctx, &ns_g_socketmgr, maxsocks);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_socketmgr_create() failed: %s",
 				 isc_result_totext(result));
 		return (ISC_R_UNEXPECTED);
+	}
+	isc__socketmgr_maxudp(ns_g_socketmgr, maxudp);
+	result = isc_socketmgr_getmaxsockets(ns_g_socketmgr, &socks);
+	if (result == ISC_R_SUCCESS) {
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_SERVER,
+			      ISC_LOG_INFO, "using up to %u sockets", socks);
 	}
 
 	result = isc_entropy_create(ns_g_mctx, &ns_g_entropy);
@@ -552,8 +644,37 @@ destroy_managers(void) {
 }
 
 static void
+dump_symboltable() {
+	int i;
+	isc_result_t result;
+	const char *fname;
+	const void *addr;
+
+	if (isc__backtrace_nsymbols == 0)
+		return;
+
+	if (!isc_log_wouldlog(ns_g_lctx, ISC_LOG_DEBUG(99)))
+		return;
+
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_DEBUG(99), "Symbol table:");
+
+	for (i = 0, result = ISC_R_SUCCESS; result == ISC_R_SUCCESS; i++) {
+		addr = NULL;
+		fname = NULL;
+		result = isc_backtrace_getsymbolfromindex(i, &addr, &fname);
+		if (result == ISC_R_SUCCESS) {
+			isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+				      NS_LOGMODULE_MAIN, ISC_LOG_DEBUG(99),
+				      "[%d] %p %s", i, addr, fname);
+		}
+	}
+}
+
+static void
 setup(void) {
 	isc_result_t result;
+	isc_resourcevalue_t old_openfiles;
 #ifdef HAVE_LIBSCF
 	char *instance = NULL;
 #endif
@@ -607,6 +728,13 @@ setup(void) {
 	}
 #endif
 
+#ifdef ISC_PLATFORM_USETHREADS
+	/*
+	 * Check for the number of cpu's before ns_os_chroot().
+	 */
+	ns_g_cpus_detected = isc_os_ncpus();
+#endif
+
 	ns_os_chroot(ns_g_chrootdir);
 
 	/*
@@ -647,6 +775,11 @@ setup(void) {
 		      ISC_LOG_NOTICE, "starting BIND %s%s", ns_g_version,
 		      saved_command_line);
 
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE, "built with %s", ns_g_configargs);
+
+	dump_symboltable();
+
 	/*
 	 * Get the initial resource limits.
 	 */
@@ -660,6 +793,23 @@ setup(void) {
 				    &ns_g_initopenfiles);
 
 	/*
+	 * System resources cannot effectively be tuned on some systems.
+	 * Raise the limit in such cases for safety.
+	 */
+	old_openfiles = ns_g_initopenfiles;
+	ns_os_adjustnofile();
+	(void)isc_resource_getlimit(isc_resource_openfiles,
+				    &ns_g_initopenfiles);
+	if (old_openfiles != ns_g_initopenfiles) {
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_MAIN, ISC_LOG_NOTICE,
+			      "adjusted limit on open files from "
+			      "%" ISC_PRINT_QUADFORMAT "u to "
+			      "%" ISC_PRINT_QUADFORMAT "u",
+			      old_openfiles, ns_g_initopenfiles);
+	}
+
+	/*
 	 * If the named configuration filename is relative, prepend the current
 	 * directory's name before possibly changing to another directory.
 	 */
@@ -668,8 +818,8 @@ setup(void) {
 					       absolute_conffile,
 					       sizeof(absolute_conffile));
 		if (result != ISC_R_SUCCESS)
-			ns_main_earlyfatal("could not construct absolute path of "
-					   "configuration file: %s",
+			ns_main_earlyfatal("could not construct absolute path "
+					   "of configuration file: %s",
 					   isc_result_totext(result));
 		ns_g_conffile = absolute_conffile;
 	}
@@ -696,7 +846,7 @@ setup(void) {
 
 #ifdef DLZ
 	/*
-	 * Registyer any DLZ drivers.
+	 * Register any DLZ drivers.
 	 */
 	result = dlz_drivers_init();
 	if (result != ISC_R_SUCCESS)
@@ -828,10 +978,10 @@ main(int argc, char *argv[]) {
 	 * strings named.core | grep "named version:"
 	 */
 	strlcat(version,
-#ifdef __DATE__
-		"named version: BIND " VERSION " (" __DATE__ ")",
-#else
+#if defined(NO_VERSION_DATE) || !defined(__DATE__)
 		"named version: BIND " VERSION,
+#else
+		"named version: BIND " VERSION " (" __DATE__ ")",
 #endif
 		sizeof(version));
 	result = isc_file_progname(*argv, program_name, sizeof(program_name));
@@ -840,6 +990,9 @@ main(int argc, char *argv[]) {
 
 	if (strcmp(program_name, "lwresd") == 0)
 		ns_g_lwresdonly = ISC_TRUE;
+
+	if (result != ISC_R_SUCCESS)
+		ns_main_earlyfatal("failed to build internal symbol table");
 
 	isc_assertion_setcallback(assertion_failed);
 	isc_error_setfatal(library_fatal_error);

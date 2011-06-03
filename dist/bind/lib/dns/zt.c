@@ -1,4 +1,4 @@
-/*	$NetBSD: zt.c,v 1.1.1.5 2008/06/21 18:32:22 christos Exp $	*/
+/*	$NetBSD: zt.c,v 1.1.1.6 2011/06/03 19:51:59 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zt.c,v 1.47 2007/06/19 23:47:16 tbox Exp */
+/* Id: zt.c,v 1.47 2007-06-19 23:47:16 tbox Exp */
 
 /*! \file */
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: aclconf.c,v 1.1.1.3 2008/08/15 14:42:17 he Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.1.1.4 2011/06/03 19:53:26 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: aclconf.c,v 1.17.100.2 2008/07/24 23:48:39 tbox Exp */
+/* Id: aclconf.c,v 1.27.62.2 2010-08-13 23:46:28 tbox Exp */
 
 #include <config.h>
 
@@ -41,7 +41,7 @@ cfg_aclconfctx_init(cfg_aclconfctx_t *ctx) {
 }
 
 void
-cfg_aclconfctx_destroy(cfg_aclconfctx_t *ctx) {
+cfg_aclconfctx_clear(cfg_aclconfctx_t *ctx) {
 	dns_acl_t *dacl, *next;
 
 	for (dacl = ISC_LIST_HEAD(ctx->named_acl_cache);
@@ -50,6 +50,23 @@ cfg_aclconfctx_destroy(cfg_aclconfctx_t *ctx) {
 	{
 		next = ISC_LIST_NEXT(dacl, nextincache);
 		dns_acl_detach(&dacl);
+	}
+}
+
+void
+cfg_aclconfctx_clone(cfg_aclconfctx_t *src, cfg_aclconfctx_t *dest) {
+	dns_acl_t *dacl, *next;
+	REQUIRE(src != NULL && dest != NULL);
+
+	cfg_aclconfctx_init(dest);
+	for (dacl = ISC_LIST_HEAD(src->named_acl_cache);
+	     dacl != NULL;
+	     dacl = next)
+	{
+		dns_acl_t *copy;
+		next = ISC_LIST_NEXT(dacl, nextincache);
+		dns_acl_attach(dacl, &copy);
+		ISC_LIST_APPEND(dest->named_acl_cache, copy, nextincache);
 	}
 }
 
@@ -152,7 +169,7 @@ convert_keyname(const cfg_obj_t *keyobj, isc_log_t *lctx, isc_mem_t *mctx,
 	isc_buffer_add(&buf, keylen);
 	dns_fixedname_init(&fixname);
 	result = dns_name_fromtext(dns_fixedname_name(&fixname), &buf,
-				   dns_rootname, ISC_FALSE, NULL);
+				   dns_rootname, 0, NULL);
 	if (result != ISC_R_SUCCESS) {
 		cfg_obj_log(keyobj, lctx, ISC_LOG_WARNING,
 			    "key name '%s' is not a valid domain name",
@@ -160,6 +177,62 @@ convert_keyname(const cfg_obj_t *keyobj, isc_log_t *lctx, isc_mem_t *mctx,
 		return (result);
 	}
 	return (dns_name_dup(dns_fixedname_name(&fixname), mctx, dnsname));
+}
+
+/*
+ * Recursively pre-parse an ACL definition to find the total number
+ * of non-IP-prefix elements (localhost, localnets, key) in all nested
+ * ACLs, so that the parent will have enough space allocated for the
+ * elements table after all the nested ACLs have been merged in to the
+ * parent.
+ */
+static int
+count_acl_elements(const cfg_obj_t *caml, const cfg_obj_t *cctx,
+		   isc_boolean_t *has_negative)
+{
+	const cfg_listelt_t *elt;
+	const cfg_obj_t *cacl = NULL;
+	isc_result_t result;
+	int n = 0;
+
+	if (has_negative != NULL)
+		*has_negative = ISC_FALSE;
+
+	for (elt = cfg_list_first(caml);
+	     elt != NULL;
+	     elt = cfg_list_next(elt)) {
+		const cfg_obj_t *ce = cfg_listelt_value(elt);
+
+		/* negated element; just get the value. */
+		if (cfg_obj_istuple(ce)) {
+			ce = cfg_tuple_get(ce, "value");
+			if (has_negative != NULL)
+				*has_negative = ISC_TRUE;
+		}
+
+		if (cfg_obj_istype(ce, &cfg_type_keyref)) {
+			n++;
+		} else if (cfg_obj_islist(ce)) {
+			isc_boolean_t negative;
+			n += count_acl_elements(ce, cctx, &negative);
+			if (negative)
+				n++;
+		} else if (cfg_obj_isstring(ce)) {
+			const char *name = cfg_obj_asstring(ce);
+			if (strcasecmp(name, "localhost") == 0 ||
+			    strcasecmp(name, "localnets") == 0) {
+				n++;
+			} else if (strcasecmp(name, "any") != 0 &&
+				   strcasecmp(name, "none") != 0) {
+				result = get_acl_def(cctx, name, &cacl);
+				if (result == ISC_R_SUCCESS)
+					n += count_acl_elements(cacl, cctx,
+								NULL) + 1;
+			}
+		}
+	}
+
+	return n;
 }
 
 isc_result_t
@@ -196,14 +269,18 @@ cfg_acl_fromconfig(const cfg_obj_t *caml,
 	} else {
 		/*
 		 * Need to allocate a new ACL structure.  Count the items
-		 * in the ACL definition and allocate space for that many
-		 * elements (even though some or all of them may end up in
-		 * the iptable instead of the element array).
+		 * in the ACL definition that will require space in the
+		 * elements table.  (Note that if nest_level is nonzero,
+		 * *everything* goes in the elements table.)
 		 */
-		isc_boolean_t recurse = ISC_TF(nest_level == 0);
-		result = dns_acl_create(mctx,
-					cfg_list_length(caml, recurse),
-					&dacl);
+		int nelem;
+
+		if (nest_level == 0)
+			nelem = count_acl_elements(caml, cctx, NULL);
+		else
+			nelem = cfg_list_length(caml, ISC_FALSE);
+
+		result = dns_acl_create(mctx, nelem, &dacl);
 		if (result != ISC_R_SUCCESS)
 			return (result);
 	}
@@ -211,8 +288,7 @@ cfg_acl_fromconfig(const cfg_obj_t *caml,
 	de = dacl->elements;
 	for (elt = cfg_list_first(caml);
 	     elt != NULL;
-	     elt = cfg_list_next(elt))
-	{
+	     elt = cfg_list_next(elt)) {
 		const cfg_obj_t *ce = cfg_listelt_value(elt);
 		isc_boolean_t	neg;
 
