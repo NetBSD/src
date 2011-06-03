@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.118 2011/04/26 16:57:41 joerg Exp $
+#	$NetBSD: files.xen,v 1.118.2.1 2011/06/03 13:27:39 cherry Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -57,7 +57,6 @@ file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/lock_stubs.S
 
-file	arch/i386/i386/mptramp.S		multiprocessor
 
 file	arch/i386/i386/pmc.c			perfctrs
 
@@ -84,7 +83,6 @@ file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/fpu.c
 file	arch/amd64/amd64/lock_stubs.S
-file	arch/amd64/amd64/mptramp.S		multiprocessor
 endif
 
 file	kern/subr_disk_mbr.c		disk
@@ -131,7 +129,7 @@ file	arch/x86/x86/bus_space.c	pci
 file	arch/xen/x86/consinit.c
 file	arch/x86/x86/identcpu.c
 file	arch/xen/x86/intr.c
-file	arch/x86/x86/ipi.c
+file	arch/xen/x86/xen_ipi.c
 file	arch/x86/x86/pmap.c
 file	arch/x86/x86/procfs_machdep.c	procfs
 file	arch/x86/x86/sys_machdep.c
@@ -139,6 +137,7 @@ file	arch/x86/x86/tsc.c
 file	arch/x86/x86/vm_machdep.c
 file	arch/x86/x86/x86_machdep.c
 file	arch/x86/x86/cpu_topology.c
+file	arch/xen/xen/xentests.c
 
 include	"arch/xen/conf/files.compat"
 

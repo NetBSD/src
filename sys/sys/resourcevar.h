@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.52 2011/05/14 17:57:05 rmind Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.52.2.1 2011/06/03 13:27:42 cherry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,6 +39,7 @@
 #endif
 
 #include <sys/mutex.h>
+#include <machine/mutex.h> /* XXX: Fix intr.h <-> mutex.h feaud */
 
 /*
  * Kernel per-process accounting / statistics

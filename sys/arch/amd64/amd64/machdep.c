@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.160 2011/03/04 22:25:24 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.160.2.1 2011/06/03 13:27:37 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2011/03/04 22:25:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160.2.1 2011/06/03 13:27:37 cherry Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -712,7 +712,11 @@ haltsys:
 #endif /* XEN */
 	}
 
+#ifdef XEN
+	xen_broadcast_ipi(XEN_IPI_HALT);
+#else /* XEN */
 	x86_broadcast_ipi(X86_IPI_HALT);
+#endif
 
 	if (howto & RB_HALT) {
 #if NACPICA > 0

@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.6 2011/03/30 22:57:24 jym Exp $ */
+/* $NetBSD: hypercalls.h,v 1.6.2.1 2011/06/03 13:27:40 cherry Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -339,6 +339,14 @@ HYPERVISOR_shutdown(
 {
 	return _hypercall2(int, sched_op, SCHEDOP_shutdown, SHUTDOWN_poweroff);
 }
+
+static inline long
+HYPERVISOR_poll(
+	sched_poll_t *pollarg)
+{
+	return _hypercall2(int, sched_op, SCHEDOP_poll, pollarg);
+}
+
 
 static inline long
 HYPERVISOR_crash(

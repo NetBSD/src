@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 2011/05/31 23:28:52 dyoung Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34.2.1 2011/06/03 13:27:38 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,6 +66,13 @@
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
 #include <sys/device_if.h> /* for device_t */
+
+#include <sys/device_if.h> /* for device_t */
+
+#ifdef XEN
+#include <xen/xen3-public/xen.h>
+#include <xen/xen3-public/event_channel.h>
+#endif /* XEN */
 
 struct intrsource;
 struct pmap;
@@ -183,7 +190,12 @@ struct cpu_info {
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
 
+#ifndef XEN
 	struct evcnt ci_ipi_events[X86_NIPI];
+#else   /* XEN */
+	struct evcnt ci_ipi_events[XEN_NIPIS];
+	evtchn_port_t ci_ipi_evtchn;
+#endif  /* XEN */
 
 	device_t	ci_frequency;	/* Frequency scaling technology */
 	device_t	ci_padlock;	/* VIA PadLock private storage */
@@ -299,14 +311,9 @@ void cpu_init_msrs(struct cpu_info *, bool);
 void cpu_load_pmap(struct pmap *);
 
 extern uint32_t cpus_attached;
-#ifndef XEN
+
 #define	curcpu()		x86_curcpu()
 #define	curlwp			x86_curlwp()
-#else
-/* XXX initgdt() calls pmap_kenter_pa() which calls splvm() before %fs is set */
-#define curcpu()		(&cpu_info_primary)
-#define curlwp			curcpu()->ci_curlwp
-#endif
 #define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 
 /*
