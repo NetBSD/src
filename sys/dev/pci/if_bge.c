@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.196 2011/05/22 08:15:20 mrg Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.197 2011/06/03 09:51:40 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.196 2011/05/22 08:15:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.197 2011/06/03 09:51:40 cegger Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -3406,6 +3406,11 @@ bge_rxeof(struct bge_softc *sc)
 			stdcnt++;
 			dmamap = sc->bge_cdata.bge_rx_std_map[rxidx];
 			sc->bge_cdata.bge_rx_std_map[rxidx] = 0;
+			if (dmamap == NULL) {
+				ifp->if_ierrors++;
+				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
+				continue;
+			}
 			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0,
 			    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->bge_dmatag, dmamap);
