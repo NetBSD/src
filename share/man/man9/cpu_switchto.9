@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpu_switchto.9,v 1.12 2011/06/02 00:58:26 yamt Exp $
+.\"	$NetBSD: cpu_switchto.9,v 1.13 2011/06/03 04:33:31 yamt Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -67,7 +67,7 @@ to
 If the architecture does non-interlocked adaptive mutex release,
 .Fn cpu_switchto
 does an equivalent of
-.Xr membar_producer 9 ,
+.Xr membar_producer 3 ,
 before and after the modification of
 .Xr curlwp 9 .
 .It
@@ -144,6 +144,6 @@ was exiting.
 .Sh SEE ALSO
 .Xr swapcontext 3 ,
 .Xr intro 9 ,
-.Xr membar_producer 9 ,
+.Xr membar_producer 3 ,
 .Xr mutex 9 ,
 .Xr spl 9
