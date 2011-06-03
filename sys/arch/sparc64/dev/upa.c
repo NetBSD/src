@@ -50,7 +50,7 @@ struct upa_range {
 };
 
 struct upa_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_bt;
 	bus_space_handle_t	sc_reg[3];
 	struct upa_range	*sc_range;
@@ -59,10 +59,10 @@ struct upa_softc {
 	bus_space_tag_t		sc_cbt;
 };
 
-int	upa_match(struct device*, struct cfdata*, void *);
-void	upa_attach(struct device*, struct device*, void *);
+int	upa_match(device_t, cfdata_t, void *);
+void	upa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(upa, sizeof(struct upa_softc),
+CFATTACH_DECL_NEW(upa, sizeof(struct upa_softc),
     upa_match, upa_attach, NULL, NULL);
 
 int upa_print(void *, const char *);
@@ -72,7 +72,7 @@ int upa_bus_map(bus_space_tag_t, bus_addr_t,
 paddr_t upa_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 
 int
-upa_match(struct device *parent, struct cfdata *match, void *aux)
+upa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -83,12 +83,13 @@ upa_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-upa_attach(struct device *parent, struct device *self, void *aux)
+upa_attach(device_t parent, device_t self, void *aux)
 {
 	struct upa_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	int i, node;
 
+	sc->sc_dev = self;
 	sc->sc_bt = ma->ma_bustag;
 	sc->sc_node = ma->ma_node;
 
@@ -128,7 +129,7 @@ upa_attach(struct device *parent, struct device *self, void *aux)
 		map.ma_name = buf;
 		map.ma_bustag = sc->sc_cbt;
 		map.ma_dmatag = ma->ma_dmatag;
-		config_found(&sc->sc_dev, &map, upa_print);
+		config_found(sc->sc_dev, &map, upa_print);
 	}
 }
 
