@@ -1,4 +1,4 @@
-/*	$NetBSD: pld_wdog.c,v 1.8 2011/06/03 03:20:39 christos Exp $	*/
+/*	$NetBSD: pld_wdog.c,v 1.9 2011/06/03 03:21:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct pldwdog_softc {
 int	pldwdog_match(device_t, cfdata_t, void *);
 void	pldwdog_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pldwdog, sizeof(struct pldwdog_softc),
+CFATTACH_DECL_NEW(pldwdog, sizeof(struct pldwdog_softc),
     pldwdog_match, pldwdog_attach, NULL, NULL);
 
 #ifdef PLD_WDOG_DEBUG
