@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.180 2011/06/02 00:35:23 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.181 2011/06/03 02:33:27 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.180 2011/06/02 00:35:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.181 2011/06/03 02:33:27 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -712,7 +712,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	(void) config_found(dev, (void *)&ma, mbprint);
 }
 
-CFATTACH_DECL_NEW(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 
