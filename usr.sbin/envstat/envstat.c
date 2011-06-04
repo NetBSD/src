@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.85 2010/12/16 14:37:23 pgoyette Exp $ */
+/* $NetBSD: envstat.c,v 1.86 2011/06/04 13:29:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.85 2010/12/16 14:37:23 pgoyette Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.86 2011/06/04 13:29:02 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -65,7 +65,6 @@ typedef struct envsys_sensor {
 	int32_t	cur_value;
 	int32_t	max_value;
 	int32_t	min_value;
-	int32_t	avg_value;
 	int32_t	critmin_value;
 	int32_t	critmax_value;
 	int32_t	warnmin_value;
@@ -558,11 +557,6 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 		obj1 = prop_dictionary_get(obj, "min-value");
 		if (obj1)
 			sensor->min_value = prop_number_integer_value(obj1);
-
-		/* get avg value */
-		obj1 = prop_dictionary_get(obj, "avg-value");
-		if (obj1)
-			sensor->avg_value = prop_number_integer_value(obj1);
 
 		/* get percentage flag */
 		obj1 = prop_dictionary_get(obj, "want-percentage");
