@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/11/22 22:19:53 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2011/06/04 02:08:50 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -25,8 +25,11 @@ SRCS +=	gss-genr.c
 LDADD+=	-lgssapi -lheimntlm
 DPADD+=	${LIBGSSAPI} ${LIBHEIMNTLM}
 
-LDADD+=	-lkrb5 -lhx509 -lkafs -lasn1 -lcrypt
-DPADD+=	${LIBKRB5} ${LIBHX509} ${LIBKAFS} ${LIBASN1} ${LIBCRYPT}
+LDADD+=	-lkrb5 -lhx509 -lheimbase -lwind
+DPADD+=	${LIBKRB5} ${LIBHX509} ${LIBHEIMBASE} ${LIBWIND}
+
+LDADD+=	-lkafs -lasn1 -lcrypt
+DPADD+=	${LIBKAFS} ${LIBASN1} ${LIBCRYPT}
 
 LDADD+=	-lcom_err -lroken -lutil
 DPADD+=	${LIBCOM_ERR} ${LIBROKEN} ${LIBUTIL}
