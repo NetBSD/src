@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2011/06/04 11:12:28 jruoho Exp $
+# $NetBSD: Makefile,v 1.14 2011/06/04 14:56:58 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ TESTS_C+=	t_hsearch
 TESTS_C+=	t_mi_vector_hash
 TESTS_C+=	t_posix_memalign
 TESTS_C+=	t_strtod
+TESTS_C+=	t_strtol
 
 TESTS_SH+=	t_atexit
 TESTS_SH+=	t_getopt
