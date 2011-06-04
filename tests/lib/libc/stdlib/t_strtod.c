@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.13 2011/06/04 09:57:33 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.14 2011/06/04 10:16:59 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.13 2011/06/04 09:57:33 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.14 2011/06/04 10:16:59 jruoho Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -108,11 +108,17 @@ ATF_TC_HEAD(strtod_inf, tc)
 
 ATF_TC_BODY(strtod_inf, tc)
 {
+
 #ifndef __vax__
+
+	static const char *str[] =
+	    { "Inf", "INF", "-Inf", "-INF", "Infinity", "+Infinity",
+	      "INFINITY", "-INFINITY", "InFiNiTy", "+InFiNiTy" };
 
 	long double ld;
 	double d;
 	float f;
+	size_t i;
 
 	/*
 	 * See the closed PR lib/33262.
@@ -122,14 +128,17 @@ ATF_TC_BODY(strtod_inf, tc)
 	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
 		atf_tc_expect_fail("PR misc/44767");
 
-	d = strtod("INF", NULL);
-	ATF_REQUIRE(isinf(d) != 0);
+	for (i = 0; i < __arraycount(str); i++) {
 
-	f = strtof("INF", NULL);
-	ATF_REQUIRE(isinff(f) != 0);
+		d = strtod(str[i], NULL);
+		ATF_REQUIRE(isinf(d) != 0);
 
-	ld = strtold("INF", NULL);
-	ATF_REQUIRE(isinf(ld) != 0);
+		f = strtof(str[i], NULL);
+		ATF_REQUIRE(isinf(f) != 0);
+
+		ld = strtold(str[i], NULL);
+		ATF_REQUIRE(isinf(ld) != 0);
+	}
 #endif
 }
 
