@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.11 2011/03/21 22:33:29 christos Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.12 2011/06/04 14:18:10 christos Exp $ */
 
 /****************************************************************
 
@@ -624,8 +624,6 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern double strtod ANSI((const char *s00, char **se));
  extern Bigint *sum ANSI((Bigint*, Bigint*));
  extern int trailz ANSI((CONST Bigint*));
-/*###626 [lint] syntax error '*' [249]%%%*/
-/*###626 [lint] incomplete or misplaced function definition [22]%%%*/
  extern double ulp ANSI((U*));
 
 #ifdef __cplusplus
