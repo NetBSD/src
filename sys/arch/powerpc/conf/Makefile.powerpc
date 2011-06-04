@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.44 2011/01/18 01:02:53 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.45 2011/06/04 17:51:09 matt Exp $
 #
 # Makefile for NetBSD
 #
@@ -43,6 +43,7 @@ CWARNFLAGS+=	-Wreturn-type
 CFLAGS+=	-mno-strict-align
 CFLAGS+=	-Wa,-maltivec
 .endif
+CFLAGS+=	-msdata=none
 CFLAGS+=	-msoft-float ${CCPUOPTS}
 AFLAGS+=	${AOPTS} -D_NOREGNAMES
 
