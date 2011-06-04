@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.15 2011/06/04 11:12:28 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.16 2011/06/04 22:55:57 matt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.15 2011/06/04 11:12:28 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.16 2011/06/04 22:55:57 matt Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -111,11 +111,13 @@ ATF_TC_BODY(strtod_inf, tc)
 
 #ifndef __vax__
 
-	static const char *str[] =
+	static const char * const str[] =
 	    { "Inf", "INF", "-Inf", "-INF", "Infinity", "+Infinity",
 	      "INFINITY", "-INFINITY", "InFiNiTy", "+InFiNiTy" };
 
+#ifdef __HAVE_LONG_DOUBLE
 	long double ld;
+#endif
 	double d;
 	float f;
 	size_t i;
@@ -136,8 +138,10 @@ ATF_TC_BODY(strtod_inf, tc)
 		f = strtof(str[i], NULL);
 		ATF_REQUIRE(isinf(f) != 0);
 
+#ifdef __HAVE_LONG_DOUBLE
 		ld = strtold(str[i], NULL);
 		ATF_REQUIRE(isinf(ld) != 0);
+#endif
 	}
 #endif
 }
@@ -153,7 +157,9 @@ ATF_TC_BODY(strtod_nan, tc)
 #ifndef __vax__
 
 	const char *str = "NaN(x)y";
+#if __HAVE_LONG_DOUBLE
 	long double ld;
+#endif
 	char *end;
 	double d;
 	float f;
@@ -168,10 +174,12 @@ ATF_TC_BODY(strtod_nan, tc)
 	ATF_REQUIRE(isnanf(f) != 0);
 	ATF_REQUIRE(strcmp(end, "y") == 0);
 
+#ifdef __HAVE_LONG_DOUBLE
 	ld = strtold(str, &end);
 	ATF_REQUIRE(isnan(ld) != 0);
 	ATF_REQUIRE(__isnanl(ld) != 0);
 	ATF_REQUIRE(strcmp(end, "y") == 0);
+#endif
 
 #endif
 }
