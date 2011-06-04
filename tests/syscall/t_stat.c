@@ -1,4 +1,4 @@
-/* $NetBSD: t_stat.c,v 1.1 2011/06/04 09:29:44 jruoho Exp $ */
+/* $NetBSD: t_stat.c,v 1.2 2011/06/04 15:45:55 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stat.c,v 1.1 2011/06/04 09:29:44 jruoho Exp $");
+__RCSID("$NetBSD: t_stat.c,v 1.2 2011/06/04 15:45:55 jruoho Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -147,7 +147,9 @@ ATF_TC_BODY(stat_dir, tc)
 			ATF_REQUIRE(dir != NULL);
 
 			dr = readdir(dir);
-			ATF_REQUIRE(dr != NULL);
+
+			if (dr == NULL)
+				break;
 
 			if (sb.st_ino != dr->d_fileno)
 				atf_tc_fail("stat(2) and readdir(3) differ");
