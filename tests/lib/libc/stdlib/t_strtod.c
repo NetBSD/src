@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.12 2011/05/31 20:17:36 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.13 2011/06/04 09:57:33 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.12 2011/05/31 20:17:36 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.13 2011/06/04 09:57:33 jruoho Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -126,10 +126,43 @@ ATF_TC_BODY(strtod_inf, tc)
 	ATF_REQUIRE(isinf(d) != 0);
 
 	f = strtof("INF", NULL);
-	ATF_REQUIRE(isinf(f) != 0);
+	ATF_REQUIRE(isinff(f) != 0);
 
 	ld = strtold("INF", NULL);
 	ATF_REQUIRE(isinf(ld) != 0);
+#endif
+}
+
+ATF_TC(strtod_nan);
+ATF_TC_HEAD(strtod_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A strtod(3) with NaN");
+}
+
+ATF_TC_BODY(strtod_nan, tc)
+{
+#ifndef __vax__
+
+	const char *str = "NaN(x)y";
+	long double ld;
+	char *end;
+	double d;
+	float f;
+
+	atf_tc_expect_fail("PR lib/45020");
+
+	d = strtod(str, &end);
+	ATF_REQUIRE(isnan(d) != 0);
+	ATF_REQUIRE(strcmp(end, "y") == 0);
+
+	f = strtof(str, &end);
+	ATF_REQUIRE(isnanf(f) != 0);
+	ATF_REQUIRE(strcmp(end, "y") == 0);
+
+	ld = strtold(str, &end);
+	ATF_REQUIRE(isnan(ld) != 0);
+	ATF_REQUIRE(strcmp(end, "y") == 0);
+
 #endif
 }
 
@@ -203,6 +236,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, strtod_basic);
 	ATF_TP_ADD_TC(tp, strtod_hex);
 	ATF_TP_ADD_TC(tp, strtod_inf);
+	ATF_TP_ADD_TC(tp, strtod_nan);
 	ATF_TP_ADD_TC(tp, strtod_round);
 	ATF_TP_ADD_TC(tp, strtod_underflow);
 
