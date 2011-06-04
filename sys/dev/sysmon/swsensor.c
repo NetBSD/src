@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.8 2011/06/04 02:02:55 pgoyette Exp $ */
+/*	$NetBSD: swsensor.c,v 1.9 2011/06/04 13:26:51 pgoyette Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.8 2011/06/04 02:02:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.9 2011/06/04 13:26:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -234,7 +234,7 @@ swsensor_init(void *arg)
 	if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER)
 		sw_sensor_value = prop_number_integer_value(po);
 
-	/* Retrieve any value_{max,min,avg} that might be present */
+	/* Retrieve any value_{max,min} that might be present */
 	if (pd != NULL) {
 		po = prop_dictionary_get(pd, "value_max");
 		if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER) {
@@ -248,13 +248,6 @@ swsensor_init(void *arg)
 			swsensor_edata.value_min =
 			    prop_number_integer_value(po);
 			swsensor_edata.flags |= ENVSYS_FVALID_MIN;
-		}
-
-		po = prop_dictionary_get(pd, "value_avg");
-		if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER) {
-			swsensor_edata.value_avg =
-			    prop_number_integer_value(po);
-			swsensor_edata.flags |= ENVSYS_FVALID_AVG;
 		}
 	}
 
