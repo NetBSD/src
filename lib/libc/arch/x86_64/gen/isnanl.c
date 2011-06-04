@@ -1,4 +1,4 @@
-/*	$NetBSD: isnanl.c,v 1.6 2007/02/02 23:19:25 christos Exp $	*/
+/*	$NetBSD: isnanl.c,v 1.7 2011/06/04 15:45:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isnanl.c,v 1.6 2007/02/02 23:19:25 christos Exp $");
+__RCSID("$NetBSD: isnanl.c,v 1.7 2011/06/04 15:45:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,6 @@ __isnanl(long double x)
 
 	u.extu_ld = x;
 
-	return (u.extu_ext.ext_exp == EXT_EXP_INFNAN &&
-	    (u.extu_ext.ext_frach & 0x80000000) != 0 &&
-	    (u.extu_ext.ext_frach != 0x80000000 || u.extu_ext.ext_fracl != 0));
+	return u.extu_ext.ext_exp == EXT_EXP_INFNAN &&
+	    (u.extu_ext.ext_frach != 0 || u.extu_ext.ext_fracl != 0);
 }
