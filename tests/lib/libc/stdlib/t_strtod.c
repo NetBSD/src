@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.14 2011/06/04 10:16:59 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.15 2011/06/04 11:12:28 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.14 2011/06/04 10:16:59 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.15 2011/06/04 11:12:28 jruoho Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -170,6 +170,7 @@ ATF_TC_BODY(strtod_nan, tc)
 
 	ld = strtold(str, &end);
 	ATF_REQUIRE(isnan(ld) != 0);
+	ATF_REQUIRE(__isnanl(ld) != 0);
 	ATF_REQUIRE(strcmp(end, "y") == 0);
 
 #endif
