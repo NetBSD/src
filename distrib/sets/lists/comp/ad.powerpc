@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.49 2011/04/15 19:31:06 joerg Exp $
+# $NetBSD: ad.powerpc,v 1.50 2011/06/05 16:52:22 matt Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb,gdb=6
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -8,7 +8,7 @@
 ./usr/include/powerpc/ansi.h			comp-c-include
 ./usr/include/powerpc/aout_machdep.h		comp-c-include
 ./usr/include/powerpc/asm.h			comp-c-include
-./usr/include/powerpc/atomic.h			comp-c-include
+./usr/include/powerpc/atomic.h			comp-obsolete		obsolete
 ./usr/include/powerpc/bat.h			comp-obsolete		obsolete
 ./usr/include/powerpc/bswap.h			comp-c-include
 ./usr/include/powerpc/bus.h			comp-obsolete		obsolete
