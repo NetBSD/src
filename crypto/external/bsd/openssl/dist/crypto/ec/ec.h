@@ -151,6 +151,13 @@ const EC_METHOD *EC_GFp_mont_method(void);
  */
 const EC_METHOD *EC_GFp_nist_method(void);
 
+#ifndef OPENSSL_NO_EC_NISTP224_64_GCC_128
+/** Returns 64-bit optimized methods for nistp224
+ *  \return  EC_METHOD object
+ */
+const EC_METHOD *EC_GFp_nistp224_method(void);
+#endif
+
 
 /********************************************************************/ 
 /*           EC_METHOD for curves over GF(2^m)                      */
@@ -799,6 +806,15 @@ int EC_KEY_generate_key(EC_KEY *key);
  */
 int EC_KEY_check_key(const EC_KEY *key);
 
+/** Sets a public key from affine coordindates performing
+ *  neccessary NIST PKV tests.
+ *  \param  key  the EC_KEY object
+ *  \param  x    public key x coordinate
+ *  \param  y    public key y coordinate
+ *  \return 1 on success and 0 otherwise.
+ */
+int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y);
+
 
 /********************************************************************/
 /*        de- and encoding functions for SEC1 ECPrivateKey          */
@@ -926,6 +942,7 @@ void ERR_load_EC_strings(void);
 /* Error codes for the EC functions. */
 
 /* Function codes. */
+#define EC_F_BN_TO_FELEM				 224
 #define EC_F_COMPUTE_WNAF				 143
 #define EC_F_D2I_ECPARAMETERS				 144
 #define EC_F_D2I_ECPKPARAMETERS				 145
@@ -968,6 +985,9 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GFP_MONT_FIELD_SQR			 132
 #define EC_F_EC_GFP_MONT_GROUP_SET_CURVE		 189
 #define EC_F_EC_GFP_MONT_GROUP_SET_CURVE_GFP		 135
+#define EC_F_EC_GFP_NISTP224_GROUP_SET_CURVE		 225
+#define EC_F_EC_GFP_NISTP224_POINTS_MUL			 228
+#define EC_F_EC_GFP_NISTP224_POINT_GET_AFFINE_COORDINATES 226
 #define EC_F_EC_GFP_NIST_FIELD_MUL			 200
 #define EC_F_EC_GFP_NIST_FIELD_SQR			 201
 #define EC_F_EC_GFP_NIST_GROUP_SET_CURVE		 202
@@ -1010,6 +1030,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_KEY_NEW					 182
 #define EC_F_EC_KEY_PRINT				 180
 #define EC_F_EC_KEY_PRINT_FP				 181
+#define EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES	 229
 #define EC_F_EC_POINTS_MAKE_AFFINE			 136
 #define EC_F_EC_POINT_ADD				 112
 #define EC_F_EC_POINT_CMP				 113
@@ -1040,6 +1061,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_I2D_ECPKPARAMETERS				 191
 #define EC_F_I2D_ECPRIVATEKEY				 192
 #define EC_F_I2O_ECPUBLICKEY				 151
+#define EC_F_NISTP224_PRE_COMP_NEW			 227
 #define EC_F_O2I_ECPUBLICKEY				 152
 #define EC_F_OLD_EC_PRIV_DECODE				 222
 #define EC_F_PKEY_EC_CTRL				 197
@@ -1052,7 +1074,9 @@ void ERR_load_EC_strings(void);
 /* Reason codes. */
 #define EC_R_ASN1_ERROR					 115
 #define EC_R_ASN1_UNKNOWN_FIELD				 116
+#define EC_R_BIGNUM_OUT_OF_RANGE			 144
 #define EC_R_BUFFER_TOO_SMALL				 100
+#define EC_R_COORDINATES_OUT_OF_RANGE			 146
 #define EC_R_D2I_ECPKPARAMETERS_FAILURE			 117
 #define EC_R_DECODE_ERROR				 142
 #define EC_R_DISCRIMINANT_IS_ZERO			 118
@@ -1092,6 +1116,7 @@ void ERR_load_EC_strings(void);
 #define EC_R_UNKNOWN_GROUP				 129
 #define EC_R_UNKNOWN_ORDER				 114
 #define EC_R_UNSUPPORTED_FIELD				 131
+#define EC_R_WRONG_CURVE_PARAMETERS			 145
 #define EC_R_WRONG_ORDER				 130
 
 #ifdef  __cplusplus

@@ -182,7 +182,6 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
         {
 	int i, ret = 0;
 	long l;
-	unsigned char *p;
 	OCSP_CERTID *cid = NULL;
 	OCSP_BASICRESP *br = NULL;
 	OCSP_RESPID *rid = NULL;
@@ -207,7 +206,6 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 		return 1;
 		}
 
-	p = ASN1_STRING_data(rb->response);
 	i = ASN1_STRING_length(rb->response);
 	if (!(br = OCSP_response_get1_basic(o))) goto err;
 	rd = br->tbsResponseData;
@@ -275,6 +273,7 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 		}
 	if (!X509V3_extensions_print(bp, "Response Extensions",
 					rd->responseExtensions, flags, 4))
+							goto err;
 	if(X509_signature_print(bp, br->signatureAlgorithm, br->signature) <= 0)
 							goto err;
 

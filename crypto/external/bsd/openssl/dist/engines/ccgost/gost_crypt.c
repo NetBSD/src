@@ -34,7 +34,7 @@ EVP_CIPHER cipher_gost =
 	NID_id_Gost28147_89,
 	1,/*block_size*/
 	32,/*key_size*/
-	8,/*iv_len - синхропосылка*/
+	8,/*iv_len */
 	EVP_CIPH_CFB_MODE| EVP_CIPH_NO_PADDING |
 	EVP_CIPH_CUSTOM_IV| EVP_CIPH_RAND_KEY | EVP_CIPH_ALWAYS_CALL_INIT,
 	gost_cipher_init,
@@ -52,7 +52,7 @@ EVP_CIPHER cipher_gost_cpacnt =
 	NID_gost89_cnt,
 	1,/*block_size*/
 	32,/*key_size*/
-	8,/*iv_len - синхропосылка*/
+	8,/*iv_len */
 	EVP_CIPH_OFB_MODE| EVP_CIPH_NO_PADDING |
 	EVP_CIPH_CUSTOM_IV| EVP_CIPH_RAND_KEY | EVP_CIPH_ALWAYS_CALL_INIT,
 	gost_cipher_init_cpa,
@@ -299,7 +299,7 @@ int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	if (i<inl)
 		{
 		gost_crypt_mesh(ctx->cipher_data,ctx->iv,ctx->buf);
-		if (!ctx->encrypt) memcpy(ctx->buf+8,in_ptr,j);
+		if (!ctx->encrypt) memcpy(ctx->buf+8,in_ptr,inl-i);
 		for (j=0;i<inl;j++,i++)
 			{
 			out_ptr[j]=ctx->buf[j]^in_ptr[j];
@@ -459,12 +459,14 @@ int  gost89_get_asn1_parameters(EVP_CIPHER_CTX *ctx,ASN1_TYPE *params)
 	int ret = -1;
 	int len; 
 	GOST_CIPHER_PARAMS *gcp = NULL;
-	unsigned char *p = params->value.sequence->data;
+	unsigned char *p;
 	struct ossl_gost_cipher_ctx *c=ctx->cipher_data;
 	if (ASN1_TYPE_get(params) != V_ASN1_SEQUENCE)
 		{
 		return ret;
 		}
+
+	p = params->value.sequence->data;
 
 	gcp = d2i_GOST_CIPHER_PARAMS(NULL, (const unsigned char **)&p,
 		params->value.sequence->length);

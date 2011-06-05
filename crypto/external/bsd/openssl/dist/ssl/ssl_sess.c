@@ -218,6 +218,9 @@ SSL_SESSION *SSL_SESSION_new(void)
 	ss->psk_identity_hint=NULL;
 	ss->psk_identity=NULL;
 #endif
+#ifndef OPENSSL_NO_SRP
+	ss->srp_username=NULL;
+#endif
 	return(ss);
 	}
 
@@ -303,6 +306,11 @@ int ssl_get_new_session(SSL *s, int session)
 		else if (s->version == TLS1_1_VERSION)
 			{
 			ss->ssl_version=TLS1_1_VERSION;
+			ss->session_id_length=SSL3_SSL_SESSION_ID_LENGTH;
+			}
+		else if (s->version == TLS1_2_VERSION)
+			{
+			ss->ssl_version=TLS1_2_VERSION;
 			ss->session_id_length=SSL3_SSL_SESSION_ID_LENGTH;
 			}
 		else if (s->version == DTLS1_BAD_VER)
@@ -543,7 +551,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 		p=buf;
 		l=ret->cipher_id;
 		l2n(l,p);
-		if ((ret->ssl_version>>8) == SSL3_VERSION_MAJOR)
+		if ((ret->ssl_version>>8) >= SSL3_VERSION_MAJOR)
 			ret->cipher=ssl_get_cipher_by_char(s,&(buf[2]));
 		else 
 			ret->cipher=ssl_get_cipher_by_char(s,&(buf[1]));
@@ -734,6 +742,10 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 	if (ss->psk_identity != NULL)
 		OPENSSL_free(ss->psk_identity);
 #endif
+#ifndef OPENSSL_NO_SRP
+	if (ss->srp_username != NULL)
+		OPENSSL_free(ss->srp_username);
+#endif
 	OPENSSL_cleanse(ss,sizeof(*ss));
 	OPENSSL_free(ss);
 	}
@@ -828,6 +840,35 @@ long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 	s->time=t;
 	return(t);
 	}
+
+unsigned int SSL_SESSION_get_id_len(SSL_SESSION *s)
+	{
+	return s->session_id_length;
+	}
+
+const unsigned char *SSL_SESSION_get0_id(SSL_SESSION *s)
+	{
+	return s->session_id;
+	}
+
+X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
+	{
+	return s->peer;
+	}
+
+int SSL_SESSION_set1_id_context(SSL_SESSION *s,const unsigned char *sid_ctx,
+			       unsigned int sid_ctx_len)
+    {
+    if(sid_ctx_len > SSL_MAX_SID_CTX_LENGTH)
+	{
+	SSLerr(SSL_F_SSL_SESSION_SET1_ID_CONTEXT,SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
+	return 0;
+	}
+    s->sid_ctx_length=sid_ctx_len;
+    memcpy(s->sid_ctx,sid_ctx,sid_ctx_len);
+
+    return 1;
+    }
 
 long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 	{

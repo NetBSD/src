@@ -131,8 +131,8 @@ ASN1_NDEF_SEQUENCE(CMS_SignedData) = {
 } ASN1_NDEF_SEQUENCE_END(CMS_SignedData)
 
 ASN1_SEQUENCE(CMS_OriginatorInfo) = {
-	ASN1_IMP_SET_OF_OPT(CMS_SignedData, certificates, CMS_CertificateChoices, 0),
-	ASN1_IMP_SET_OF_OPT(CMS_SignedData, crls, CMS_RevocationInfoChoice, 1)
+	ASN1_IMP_SET_OF_OPT(CMS_OriginatorInfo, certificates, CMS_CertificateChoices, 0),
+	ASN1_IMP_SET_OF_OPT(CMS_OriginatorInfo, crls, CMS_RevocationInfoChoice, 1)
 } ASN1_SEQUENCE_END(CMS_OriginatorInfo)
 
 ASN1_NDEF_SEQUENCE(CMS_EncryptedContentInfo) = {
@@ -235,15 +235,6 @@ static int cms_ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 				{
 				OPENSSL_cleanse(kekri->key, kekri->keylen);
 				OPENSSL_free(kekri->key);
-				}
-			}
-		else if (ri->type == CMS_RECIPINFO_PASS)
-			{
-			CMS_PasswordRecipientInfo *pwri = ri->d.pwri;
-			if (pwri->pass)
-				{
-				OPENSSL_cleanse(pwri->pass, pwri->passlen);
-				OPENSSL_free(pwri->pass);
 				}
 			}
 		}
