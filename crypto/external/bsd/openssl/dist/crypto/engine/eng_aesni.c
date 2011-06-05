@@ -154,7 +154,13 @@ static const char   aesni_id[] = "aesni",
 static int
 aesni_bind_helper(ENGINE *e)
 {
-	int engage = (OPENSSL_ia32cap_P[1] & (1 << (57-32))) != 0;
+	int engage;
+	if (sizeof(OPENSSL_ia32cap_P) > 4) {
+		engage = (int)((OPENSSL_ia32cap_P >> 30) >> 27) & 1;
+	} else {
+		IA32CAP OPENSSL_ia32_cpuid(void);
+		engage = (int)(OPENSSL_ia32_cpuid() >> 57) & 1;
+	}
 
 	/* Register everything or return with an error */
 	if (!ENGINE_set_id(e, aesni_id) ||

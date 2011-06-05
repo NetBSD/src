@@ -1,4 +1,4 @@
-.text
+.text	
 
 .globl	whirlpool_block
 .type	whirlpool_block,@function
@@ -11,18 +11,19 @@ whirlpool_block:
 	pushq	%r14
 	pushq	%r15
 
-	movq	%rsp,%rax
+	movq	%rsp,%r11
 	subq	$128+40,%rsp
 	andq	$-64,%rsp
 
-	leaq	128(%rsp),%rbx
-	movq	%rdi,0(%rbx)
-	movq	%rsi,8(%rbx)
-	movq	%rdx,16(%rbx)
-	movq	%rax,32(%rbx)
+	leaq	128(%rsp),%r10
+	movq	%rdi,0(%r10)
+	movq	%rsi,8(%r10)
+	movq	%rdx,16(%r10)
+	movq	%r11,32(%r10)
+.Lprologue:
 
-	.long	0x12d8d48,0x90000000
-	leaq	.Ltable-.(%rbp),%rbp
+	movq	%r10,%rbx
+	leaq	.Ltable@GOTPCREL(%rip),%rbp
 
 	xorq	%rcx,%rcx
 	xorq	%rdx,%rdx
@@ -574,13 +575,15 @@ whirlpool_block:
 	movq	%rax,16(%rbx)
 	jmp	.Louterloop
 .Lalldone:
-	movq	32(%rbx),%rsp
-	popq	%r15
-	popq	%r14
-	popq	%r13
-	popq	%r12
-	popq	%rbp
-	popq	%rbx
+	movq	32(%rbx),%rsi
+	movq	(%rsi),%r15
+	movq	8(%rsi),%r14
+	movq	16(%rsi),%r13
+	movq	24(%rsi),%r12
+	movq	32(%rsi),%rbp
+	movq	40(%rsi),%rbx
+	leaq	48(%rsi),%rsp
+.Lepilogue:
 	.byte	0xf3,0xc3
 .size	whirlpool_block,.-whirlpool_block
 
