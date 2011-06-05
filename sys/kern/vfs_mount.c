@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.4 2011/04/03 01:20:23 rmind Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.5 2011/06/05 09:04:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.4 2011/04/03 01:20:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.5 2011/06/05 09:04:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.4 2011/04/03 01:20:23 rmind Exp $");
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/vfs_syscalls.h>
 #include <sys/vnode.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -984,7 +985,7 @@ vfs_sync_all(struct lwp *l)
 	/* avoid coming back this way again if we panic. */
 	doing_shutdown = 1;
 
-	sys_sync(l, NULL, NULL);
+	do_sys_sync(l);
 
 	/* Wait for sync to finish. */
 	if (buf_syncwait() != 0) {

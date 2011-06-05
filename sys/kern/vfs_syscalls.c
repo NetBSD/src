@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.424 2011/06/02 18:54:43 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.425 2011/06/05 09:04:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.424 2011/06/02 18:54:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.425 2011/06/05 09:04:22 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -538,15 +538,11 @@ int syncprt = 0;
 struct ctldebug debug0 = { "syncprt", &syncprt };
 #endif
 
-/* ARGSUSED */
-int
-sys_sync(struct lwp *l, const void *v, register_t *retval)
+void
+do_sys_sync(struct lwp *l)
 {
 	struct mount *mp, *nmp;
 	int asyncflag;
-
-	if (l == NULL)
-		l = &lwp0;
 
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
@@ -570,8 +566,16 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 	if (syncprt)
 		vfs_bufstats();
 #endif /* DEBUG */
+}
+
+/* ARGSUSED */
+int
+sys_sync(struct lwp *l, const void *v, register_t *retval)
+{
+	do_sys_sync(l);
 	return (0);
 }
+
 
 /*
  * Change filesystem quotas.
