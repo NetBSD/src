@@ -129,6 +129,10 @@ static const SSL_METHOD *ssl23_get_client_method(int ver)
 		return(SSLv3_client_method());
 	else if (ver == TLS1_VERSION)
 		return(TLSv1_client_method());
+	else if (ver == TLS1_1_VERSION)
+		return(TLSv1_1_client_method());
+	else if (ver == TLS1_2_VERSION)
+		return(TLSv1_2_client_method());
 	else
 		return(NULL);
 	}
@@ -284,7 +288,11 @@ static int ssl23_client_hello(SSL *s)
 	if (ssl2_compat && ssl23_no_ssl2_ciphers(s))
 		ssl2_compat = 0;
 
-	if (!(s->options & SSL_OP_NO_TLSv1_1))
+	if (!(s->options & SSL_OP_NO_TLSv1_2))
+		{
+		version = TLS1_2_VERSION;
+		}
+	else if (!(s->options & SSL_OP_NO_TLSv1_1))
 		{
 		version = TLS1_1_VERSION;
 		}
@@ -309,9 +317,6 @@ static int ssl23_client_hello(SSL *s)
 			ssl2_compat = 0;
 		if (s->tlsext_status_type != -1)
 			ssl2_compat = 0;
-		if (!(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
-			ssl2_compat = 0;
-		
 #ifdef TLSEXT_TYPE_opaque_prf_input
 		if (s->ctx->tlsext_opaque_prf_input_callback != 0 || s->tlsext_opaque_prf_input != NULL)
 			ssl2_compat = 0;
@@ -336,7 +341,12 @@ static int ssl23_client_hello(SSL *s)
 		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
 			return -1;
 
-		if (version == TLS1_1_VERSION)
+		if (version == TLS1_2_VERSION)
+			{
+			version_major = TLS1_2_VERSION_MAJOR;
+			version_minor = TLS1_2_VERSION_MINOR;
+			}
+		else if (version == TLS1_1_VERSION)
 			{
 			version_major = TLS1_1_VERSION_MAJOR;
 			version_minor = TLS1_1_VERSION_MINOR;
@@ -346,6 +356,14 @@ static int ssl23_client_hello(SSL *s)
 			version_major = TLS1_VERSION_MAJOR;
 			version_minor = TLS1_VERSION_MINOR;
 			}
+#ifdef OPENSSL_FIPS
+		else if(FIPS_mode())
+			{
+			SSLerr(SSL_F_SSL23_CLIENT_HELLO,
+					SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+			return -1;
+			}
+#endif
 		else if (version == SSL3_VERSION)
 			{
 			version_major = SSL3_VERSION_MAJOR;
@@ -620,11 +638,7 @@ static int ssl23_get_server_hello(SSL *s)
 #endif
 		}
 	else if (p[1] == SSL3_VERSION_MAJOR &&
-	         (
-#if SSL3_VERSION_MINOR > 0
-		 p[2] >= SSL3_VERSION_MINOR &&
-#endif
-		 p[2] <= TLS1_1_VERSION_MINOR) &&
+	         p[2] <= TLS1_2_VERSION_MINOR &&
 	         ((p[0] == SSL3_RT_HANDSHAKE && p[5] == SSL3_MT_SERVER_HELLO) ||
 	          (p[0] == SSL3_RT_ALERT && p[3] == 0 && p[4] == 2)))
 		{
@@ -633,6 +647,14 @@ static int ssl23_get_server_hello(SSL *s)
 		if ((p[2] == SSL3_VERSION_MINOR) &&
 			!(s->options & SSL_OP_NO_SSLv3))
 			{
+#ifdef OPENSSL_FIPS
+			if(FIPS_mode())
+				{
+				SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,
+					SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+				goto err;
+				}
+#endif
 			s->version=SSL3_VERSION;
 			s->method=SSLv3_client_method();
 			}
@@ -647,6 +669,12 @@ static int ssl23_get_server_hello(SSL *s)
 			{
 			s->version=TLS1_1_VERSION;
 			s->method=TLSv1_1_client_method();
+			}
+		else if ((p[2] == TLS1_2_VERSION_MINOR) &&
+			!(s->options & SSL_OP_NO_TLSv1_2))
+			{
+			s->version=TLS1_2_VERSION;
+			s->method=TLSv1_2_client_method();
 			}
 		else
 			{

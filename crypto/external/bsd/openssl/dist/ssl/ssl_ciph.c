@@ -179,28 +179,29 @@ static STACK_OF(SSL_COMP) *ssl_comp_methods=NULL;
 #define SSL_MD_SHA1_IDX	1
 #define SSL_MD_GOST94_IDX 2
 #define SSL_MD_GOST89MAC_IDX 3
+#define SSL_MD_SHA256_IDX 4
 /*Constant SSL_MAX_DIGEST equal to size of digests array should be 
  * defined in the
  * ssl_locl.h */
 #define SSL_MD_NUM_IDX	SSL_MAX_DIGEST 
 static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX]={
-	NULL,NULL,NULL,NULL
+	NULL,NULL,NULL,NULL,NULL
 	};
 /* PKEY_TYPE for GOST89MAC is known in advance, but, because
  * implementation is engine-provided, we'll fill it only if
  * corresponding EVP_PKEY_METHOD is found 
  */
 static int  ssl_mac_pkey_id[SSL_MD_NUM_IDX]={
-	EVP_PKEY_HMAC,EVP_PKEY_HMAC,EVP_PKEY_HMAC,NID_undef
+	EVP_PKEY_HMAC,EVP_PKEY_HMAC,EVP_PKEY_HMAC,NID_undef,EVP_PKEY_HMAC
 	};
 
 static int ssl_mac_secret_size[SSL_MD_NUM_IDX]={
-	0,0,0,0
+	0,0,0,0,0
 	};
 
 static int ssl_handshake_digest_flag[SSL_MD_NUM_IDX]={
 	SSL_HANDSHAKE_MAC_MD5,SSL_HANDSHAKE_MAC_SHA,
-	SSL_HANDSHAKE_MAC_GOST94,0
+	SSL_HANDSHAKE_MAC_GOST94, 0, SSL_HANDSHAKE_MAC_SHA256
 	};
 
 #define CIPHER_ADD	1
@@ -247,6 +248,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_ECDH,0,    SSL_kECDHr|SSL_kECDHe|SSL_kEECDH,0,0,0,0,0,0,0,0},
 
         {0,SSL_TXT_kPSK,0,    SSL_kPSK,  0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kSRP,0,    SSL_kSRP,  0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kGOST,0, SSL_kGOST,0,0,0,0,0,0,0,0},
 
 	/* server authentication aliases */
@@ -273,6 +275,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_ADH,0,     SSL_kEDH,SSL_aNULL,0,0,0,0,0,0,0},
 	{0,SSL_TXT_AECDH,0,   SSL_kEECDH,SSL_aNULL,0,0,0,0,0,0,0},
         {0,SSL_TXT_PSK,0,     SSL_kPSK,SSL_aPSK,0,0,0,0,0,0,0},
+	{0,SSL_TXT_SRP,0,     SSL_kSRP,0,0,0,0,0,0,0,0},
 
 
 	/* symmetric encryption aliases */
@@ -296,6 +299,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_SHA,0,     0,0,0,SSL_SHA1,  0,0,0,0,0},
 	{0,SSL_TXT_GOST94,0,     0,0,0,SSL_GOST94,  0,0,0,0,0},
 	{0,SSL_TXT_GOST89MAC,0,     0,0,0,SSL_GOST89MAC,  0,0,0,0,0},
+	{0,SSL_TXT_SHA256,0,    0,0,0,SSL_SHA256,  0,0,0,0,0},
 
 	/* protocol version aliases */
 	{0,SSL_TXT_SSLV2,0,   0,0,0,0,SSL_SSLV2, 0,0,0,0},
@@ -404,6 +408,10 @@ void ssl_load_ciphers(void)
 			ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX]=32;
 		}		
 
+	ssl_digest_methods[SSL_MD_SHA256_IDX]=
+		EVP_get_digestbyname(SN_sha256);
+	ssl_mac_secret_size[SSL_MD_SHA256_IDX]=
+		EVP_MD_size(ssl_digest_methods[SSL_MD_SHA256_IDX]);
 	}
 #ifndef OPENSSL_NO_COMP
 
@@ -548,6 +556,9 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	case SSL_SHA1:
 		i=SSL_MD_SHA1_IDX;
 		break;
+	case SSL_SHA256:
+		i=SSL_MD_SHA256_IDX;
+		break;
 	case SSL_GOST94:
 		i = SSL_MD_GOST94_IDX;
 		break;
@@ -584,9 +595,11 @@ int ssl_get_handshake_digest(int idx, long *mask, const EVP_MD **md)
 		{
 		return 0;
 		}
-	if (ssl_handshake_digest_flag[idx]==0) return 0;
 	*mask = ssl_handshake_digest_flag[idx];
-	*md = ssl_digest_methods[idx];
+	if (*mask)
+		*md = ssl_digest_methods[idx];
+	else
+		*md = NULL;
 	return 1;
 }
 
@@ -661,6 +674,9 @@ static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, un
 	*mkey |= SSL_kPSK;
 	*auth |= SSL_aPSK;
 #endif
+#ifdef OPENSSL_NO_SRP
+	*mkey |= SSL_kSRP;
+#endif
 	/* Check for presence of GOST 34.10 algorithms, and if they
 	 * do not present, disable  appropriate auth and key exchange */
 	if (!get_optional_pkey_id("gost94")) {
@@ -693,6 +709,7 @@ static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, un
 
 	*mac |= (ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL) ? SSL_MD5 :0;
 	*mac |= (ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL) ? SSL_SHA1:0;
+	*mac |= (ssl_digest_methods[SSL_MD_SHA256_IDX] == NULL) ? SSL_SHA256:0;
 	*mac |= (ssl_digest_methods[SSL_MD_GOST94_IDX] == NULL) ? SSL_GOST94:0;
 	*mac |= (ssl_digest_methods[SSL_MD_GOST89MAC_IDX] == NULL || ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX]==NID_undef)? SSL_GOST89MAC:0;
 
@@ -723,6 +740,9 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 		c = ssl_method->get_cipher(i);
 		/* drop those that use any of that is not available */
 		if ((c != NULL) && c->valid &&
+#ifdef OPENSSL_FIPS
+		    (!FIPS_mode() || (c->algo_strength & SSL_FIPS)) &&
+#endif
 		    !(c->algorithm_mkey & disabled_mkey) &&
 		    !(c->algorithm_auth & disabled_auth) &&
 		    !(c->algorithm_enc & disabled_enc) &&
@@ -1027,7 +1047,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                 const SSL_CIPHER **ca_list)
 	{
 	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, algo_strength;
-	const char *l, *start, *buf;
+	const char *l, *buf;
 	int j, multi, found, rule, retval, ok, buflen;
 	unsigned long cipher_id = 0;
 	char ch;
@@ -1064,7 +1084,6 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 		alg_ssl = 0;
 		algo_strength = 0;
 
-		start=l;
 		for (;;)
 			{
 			ch = *l;
@@ -1423,7 +1442,11 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 */
 	for (curr = head; curr != NULL; curr = curr->next)
 		{
+#ifdef OPENSSL_FIPS
+		if (curr->active && (!FIPS_mode() || curr->cipher->algo_strength & SSL_FIPS))
+#else
 		if (curr->active)
+#endif
 			{
 			sk_SSL_CIPHER_push(cipherstack, curr->cipher);
 #ifdef CIPHER_DEBUG
@@ -1456,7 +1479,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	int is_export,pkl,kl;
 	const char *ver,*exp_str;
 	const char *kx,*au,*enc,*mac;
-	unsigned long alg_mkey,alg_auth,alg_enc,alg_mac,alg_ssl,alg2,alg_s;
+	unsigned long alg_mkey,alg_auth,alg_enc,alg_mac,alg_ssl,alg2;
 #ifdef KSSL_DEBUG
 	static const char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s AL=%lx/%lx/%lx/%lx/%lx\n";
 #else
@@ -1469,7 +1492,6 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	alg_mac = cipher->algorithm_mac;
 	alg_ssl = cipher->algorithm_ssl;
 
-	alg_s=cipher->algo_strength;
 	alg2=cipher->algorithm2;
 
 	is_export=SSL_C_IS_EXPORT(cipher);
@@ -1512,6 +1534,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_kPSK:
 		kx="PSK";
+		break;
+	case SSL_kSRP:
+		kx="SRP";
 		break;
 	default:
 		kx="unknown";
@@ -1597,6 +1622,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_SHA1:
 		mac="SHA1";
 		break;
+	case SSL_SHA256:
+		mac="SHA256";
+		break;
 	default:
 		mac="unknown";
 		break;
@@ -1652,6 +1680,11 @@ int SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits)
 		ret = c->strength_bits;
 		}
 	return(ret);
+	}
+
+unsigned long SSL_CIPHER_get_id(const SSL_CIPHER *c)
+	{
+	return c->id;
 	}
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
