@@ -1,4 +1,4 @@
-#	$NetBSD: engine.inc,v 1.1 2009/07/19 23:30:43 christos Exp $
+#	$NetBSD: engine.inc,v 1.2 2011/06/05 23:09:50 spz Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -24,11 +24,11 @@ ENGINE_SRCS = eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 	e_sureware.c e_sureware_err.c \
 	e_ubsec.c e_ubsec_err.c   \
 
-.if defined(AESNI)
-ENGINE_SRCS+=	eng_aesni.c
-.else
-AESCPPFLAGS=-DOPENSSL_NO_HW_AESNI
-.endif
+#.if defined(AESNI)
+#ENGINE_SRCS+=  eng_aesni.c
+#.else
+AESCPPFLAGS=-DOPENSSL_NO_HW_AESNI # re-enable later
+#.endif
 
 #ENGINE_SRCS += gost2001.c gost2001_keyx.c gost89.c gost94_keyx.c gost_ameth.c \
 #	gost_asn1.c gost_crypt.c gost_ctl.c gost_eng.c gosthash.c \
@@ -37,5 +37,5 @@ AESCPPFLAGS=-DOPENSSL_NO_HW_AESNI
 SRCS += ${ENGINE_SRCS}
 
 .for cryptosrc in ${ENGINE_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/engine ${AESCPPFLAGS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/engine ${AESCPPFLAGS} -DHAVE_CRYPTODEV
 .endfor

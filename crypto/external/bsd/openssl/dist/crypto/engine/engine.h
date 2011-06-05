@@ -141,6 +141,13 @@ extern "C" {
  * the existing ENGINE's structural reference count. */
 #define ENGINE_FLAGS_BY_ID_COPY		(int)0x0004
 
+/* This flag if for an ENGINE that does not want its methods registered as 
+ * part of ENGINE_register_all_complete() for example if the methods are
+ * not usable as default methods.
+ */
+
+#define ENGINE_FLAGS_NO_REGISTER_ALL	(int)0x0008
+
 /* ENGINEs can support their own command types, and these flags are used in
  * ENGINE_CTRL_GET_CMD_FLAGS to indicate to the caller what kind of input each
  * command expects. Currently only numeric and string input is supported. If a
@@ -335,11 +342,7 @@ void ENGINE_load_nuron(void);
 void ENGINE_load_sureware(void);
 void ENGINE_load_ubsec(void);
 void ENGINE_load_padlock(void);
-#ifdef OPENSSL_SYS_WIN32
-#ifndef OPENSSL_NO_CAPIENG
 void ENGINE_load_capi(void);
-#endif
-#endif
 #ifndef OPENSSL_NO_GMP
 void ENGINE_load_gmp(void);
 #endif
@@ -682,6 +685,7 @@ typedef struct st_dynamic_fns {
  * can be fully instantiated with IMPLEMENT_DYNAMIC_CHECK_FN(). */
 typedef unsigned long (*dynamic_v_check_fn)(unsigned long ossl_version);
 #define IMPLEMENT_DYNAMIC_CHECK_FN() \
+	OPENSSL_EXPORT unsigned long v_check(unsigned long v); \
 	OPENSSL_EXPORT unsigned long v_check(unsigned long v) { \
 		if(v >= OSSL_DYNAMIC_OLDEST) return OSSL_DYNAMIC_VERSION; \
 		return 0; }
@@ -704,6 +708,8 @@ typedef unsigned long (*dynamic_v_check_fn)(unsigned long ossl_version);
 typedef int (*dynamic_bind_engine)(ENGINE *e, const char *id,
 				const dynamic_fns *fns);
 #define IMPLEMENT_DYNAMIC_BIND_FN(fn) \
+	OPENSSL_EXPORT \
+	int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns); \
 	OPENSSL_EXPORT \
 	int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { \
 		if(ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
@@ -733,7 +739,7 @@ typedef int (*dynamic_bind_engine)(ENGINE *e, const char *id,
  * values. */
 void *ENGINE_get_static_state(void);
 
-#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
 void ENGINE_setup_bsd_cryptodev(void);
 #endif
 
@@ -799,6 +805,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_R_DSO_FAILURE				 104
 #define ENGINE_R_DSO_NOT_FOUND				 132
 #define ENGINE_R_ENGINES_SECTION_ERROR			 148
+#define ENGINE_R_ENGINE_CONFIGURATION_ERROR		 102
 #define ENGINE_R_ENGINE_IS_NOT_IN_LIST			 105
 #define ENGINE_R_ENGINE_SECTION_ERROR			 149
 #define ENGINE_R_FAILED_LOADING_PRIVATE_KEY		 128
