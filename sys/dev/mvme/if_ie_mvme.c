@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.17 2010/11/13 13:52:04 uebayasi Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.18 2011/06/05 16:08:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.17 2010/11/13 13:52:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.18 2011/06/05 16:08:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ ie_pcctwo_attach(device_t parent, device_t self, void *args)
 
 	/* Register the event counter */
 	evcnt_attach_dynamic(&ps->ps_evcnt, EVCNT_TYPE_INTR,
-	    pcctwointr_evcnt(pa->pa_ipl), "ether", device_xname(&sc->sc_dev));
+	    pcctwointr_evcnt(pa->pa_ipl), "ether", device_xname(sc->sc_dev));
 
 	/* Finally, hook the hardware interrupt */
 	pcctwointr_establish(PCCTWOV_LANC_IRQ, i82586_intr, pa->pa_ipl, sc,
