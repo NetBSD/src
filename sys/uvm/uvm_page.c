@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.172 2011/04/01 00:47:11 rmind Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.173 2011/06/05 16:58:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.172 2011/04/01 00:47:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.173 2011/06/05 16:58:00 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -446,7 +446,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 			VM_MDPAGE_INIT(&seg->pgs[i]);
 #endif
 			if (atop(paddr) >= seg->avail_start &&
-			    atop(paddr) <= seg->avail_end) {
+			    atop(paddr) < seg->avail_end) {
 				uvmexp.npages++;
 				/* add page to free pool */
 				uvm_pagefree(&seg->pgs[i]);
