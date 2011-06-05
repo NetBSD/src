@@ -116,35 +116,32 @@ static const struct intrsw null_intrsw = {
 
 const struct intrsw *powerpc_intrsw = &null_intrsw;
 struct cpu_md_ops cpu_md_ops;
-extern struct cpu_info cpu_info[1];
 
-#if 0
-pt_entry_t ptp0[NPTEPG] = {
-	[(0x20000 & SEGOFSET) >> PGSHIFT] = 0x00020000|PTE_xR|PTE_xX|PTE_M,
-};
-
-struct pmap_segtab pmap_kern_segtab = {
-	.seg_tab[0x20000 >> SEGSHIFT] = ptp0,
-};
-#endif
-
-struct cpu_softc cpu_softc[1] = {
+struct cpu_softc cpu_softc[] = {
 	[0] = {
-		.cpu_ci = cpu_info,
+		.cpu_ci = &cpu_info[0],
 	},
+#ifdef MULTIPROCESSOR
+	[CPU_MAXNUM-1] = {
+		.cpu_ci = &cpu_info[CPU_MAXNUM-1],
+	},
+#endif
 };
-struct cpu_info cpu_info[1] = {
+struct cpu_info cpu_info[] = {
 	[0] = {
 		.ci_curlwp = &lwp0,
 		.ci_tlb_info = &pmap_tlb0_info,
-		.ci_softc = cpu_softc,
+		.ci_softc = &cpu_softc[0],
 		.ci_cpl = IPL_HIGH,
-		.ci_fpulwp = &lwp0,
-		.ci_veclwp = &lwp0,
-#if 0
-		.ci_pmap_kern_segtab = &pmap_kern_segtab,
-#endif
 	},
+#ifdef MULTIPROCESSOR
+	[CPU_MAXNUM-1] = {
+		.ci_curlwp = NULL,
+		.ci_tlb_info = &pmap_tlb0_info,
+		.ci_softc = &cpu_softc[CPU_MAXNUM-1],
+		.ci_cpl = IPL_HIGH,
+	},
+#endif
 };
 
 /*
