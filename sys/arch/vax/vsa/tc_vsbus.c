@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_vsbus.c,v 1.6 2011/06/04 01:57:35 tsutsui Exp $	*/
+/*	$NetBSD: tc_vsbus.c,v 1.7 2011/06/05 16:12:50 christos Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -110,7 +110,6 @@ tcbus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_dev = self;
 	sc->sc_slots[0].tcs_addr = sc->sc_memh;
 	sc->sc_slots[0].tcs_cookie = sc;
 
