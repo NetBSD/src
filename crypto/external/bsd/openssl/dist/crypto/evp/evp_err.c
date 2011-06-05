@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,6 +72,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 	{
 {ERR_FUNC(EVP_F_AESNI_INIT_KEY),	"AESNI_INIT_KEY"},
 {ERR_FUNC(EVP_F_AES_INIT_KEY),	"AES_INIT_KEY"},
+{ERR_FUNC(EVP_F_AES_XTS),	"AES_XTS"},
 {ERR_FUNC(EVP_F_CAMELLIA_INIT_KEY),	"CAMELLIA_INIT_KEY"},
 {ERR_FUNC(EVP_F_D2I_PKEY),	"D2I_PKEY"},
 {ERR_FUNC(EVP_F_DO_SIGVER_INIT),	"DO_SIGVER_INIT"},
@@ -80,6 +81,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_FUNC(EVP_F_ECDSA_PKEY2PKCS8),	"ECDSA_PKEY2PKCS8"},
 {ERR_FUNC(EVP_F_ECKEY_PKEY2PKCS8),	"ECKEY_PKEY2PKCS8"},
 {ERR_FUNC(EVP_F_EVP_CIPHERINIT_EX),	"EVP_CipherInit_ex"},
+{ERR_FUNC(EVP_F_EVP_CIPHER_CTX_COPY),	"EVP_CIPHER_CTX_copy"},
 {ERR_FUNC(EVP_F_EVP_CIPHER_CTX_CTRL),	"EVP_CIPHER_CTX_ctrl"},
 {ERR_FUNC(EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH),	"EVP_CIPHER_CTX_set_key_length"},
 {ERR_FUNC(EVP_F_EVP_DECRYPTFINAL_EX),	"EVP_DecryptFinal_ex"},
@@ -126,6 +128,12 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_FUNC(EVP_F_EVP_RIJNDAEL),	"EVP_RIJNDAEL"},
 {ERR_FUNC(EVP_F_EVP_SIGNFINAL),	"EVP_SignFinal"},
 {ERR_FUNC(EVP_F_EVP_VERIFYFINAL),	"EVP_VerifyFinal"},
+{ERR_FUNC(EVP_F_FIPS_CIPHERINIT),	"FIPS_CIPHERINIT"},
+{ERR_FUNC(EVP_F_FIPS_CIPHER_CTX_COPY),	"FIPS_CIPHER_CTX_COPY"},
+{ERR_FUNC(EVP_F_FIPS_CIPHER_CTX_CTRL),	"FIPS_CIPHER_CTX_CTRL"},
+{ERR_FUNC(EVP_F_FIPS_CIPHER_CTX_SET_KEY_LENGTH),	"FIPS_CIPHER_CTX_SET_KEY_LENGTH"},
+{ERR_FUNC(EVP_F_FIPS_DIGESTINIT),	"FIPS_DIGESTINIT"},
+{ERR_FUNC(EVP_F_FIPS_MD_CTX_COPY),	"FIPS_MD_CTX_COPY"},
 {ERR_FUNC(EVP_F_INT_CTX_NEW),	"INT_CTX_NEW"},
 {ERR_FUNC(EVP_F_PKCS5_PBE_KEYIVGEN),	"PKCS5_PBE_keyivgen"},
 {ERR_FUNC(EVP_F_PKCS5_V2_PBE_KEYIVGEN),	"PKCS5_v2_PBE_keyivgen"},
@@ -139,6 +147,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 
 static ERR_STRING_DATA EVP_str_reasons[]=
 	{
+{ERR_REASON(EVP_R_AES_IV_SETUP_FAILED)   ,"aes iv setup failed"},
 {ERR_REASON(EVP_R_AES_KEY_SETUP_FAILED)  ,"aes key setup failed"},
 {ERR_REASON(EVP_R_ASN1_LIB)              ,"asn1 lib"},
 {ERR_REASON(EVP_R_BAD_BLOCK_LENGTH)      ,"bad block length"},
@@ -156,6 +165,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {ERR_REASON(EVP_R_DECODE_ERROR)          ,"decode error"},
 {ERR_REASON(EVP_R_DIFFERENT_KEY_TYPES)   ,"different key types"},
 {ERR_REASON(EVP_R_DIFFERENT_PARAMETERS)  ,"different parameters"},
+{ERR_REASON(EVP_R_DISABLED_FOR_FIPS)     ,"disabled for fips"},
 {ERR_REASON(EVP_R_ENCODE_ERROR)          ,"encode error"},
 {ERR_REASON(EVP_R_EVP_PBE_CIPHERINIT_ERROR),"evp pbe cipherinit error"},
 {ERR_REASON(EVP_R_EXPECTING_AN_RSA_KEY)  ,"expecting an rsa key"},
@@ -187,6 +197,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {ERR_REASON(EVP_R_PRIVATE_KEY_DECODE_ERROR),"private key decode error"},
 {ERR_REASON(EVP_R_PRIVATE_KEY_ENCODE_ERROR),"private key encode error"},
 {ERR_REASON(EVP_R_PUBLIC_KEY_NOT_RSA)    ,"public key not rsa"},
+{ERR_REASON(EVP_R_TOO_LARGE)             ,"too large"},
 {ERR_REASON(EVP_R_UNKNOWN_CIPHER)        ,"unknown cipher"},
 {ERR_REASON(EVP_R_UNKNOWN_DIGEST)        ,"unknown digest"},
 {ERR_REASON(EVP_R_UNKNOWN_PBE_ALGORITHM) ,"unknown pbe algorithm"},
