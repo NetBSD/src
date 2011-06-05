@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.18 2011/06/05 07:58:03 jmmv Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.19 2011/06/05 16:33:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.18 2011/06/05 07:58:03 jmmv Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.19 2011/06/05 16:33:51 jruoho Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -114,12 +114,7 @@ ATF_TC_BODY(strtod_inf, tc)
 #ifndef __vax__
 	/*
 	 * See the closed PR lib/33262.
-	 *
-	 * This may also fail under QEMU; cf. PR misc/44767.
 	 */
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
-		atf_tc_expect_fail("PR misc/44767");
-
 	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
 		double d = strtod(inf_strings[i], NULL);
 		ATF_REQUIRE(isinf(d) != 0);
@@ -140,12 +135,7 @@ ATF_TC_BODY(strtof_inf, tc)
 #ifndef __vax__
 	/*
 	 * See the closed PR lib/33262.
-	 *
-	 * This may also fail under QEMU; cf. PR misc/44767.
 	 */
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
-		atf_tc_expect_fail("PR misc/44767");
-
 	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
 		float f = strtof(inf_strings[i], NULL);
 		ATF_REQUIRE(isinf(f) != 0);
