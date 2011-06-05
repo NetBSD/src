@@ -1,7 +1,7 @@
-/*	$NetBSD: openpic_common.c,v 1.4 2011/06/05 16:52:26 matt Exp $ */
+/*	$NetBSD: cpuset.h,v 1.1 2011/06/05 16:52:25 matt Exp $	*/
 
 /*-
- * Copyright (c) 2007 Michael Lorenz
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,64 +26,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openpic_common.c,v 1.4 2011/06/05 16:52:26 matt Exp $");
+#ifndef _POWERPC_CPUSET_H_
+#define	_POWERPC_CPUSET_H_
 
-#include "opt_openpic.h"
-#include "opt_interrupt.h"
+#include <sys/atomic.h>
 
-#include <sys/param.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
+#define	CPUSET_SINGLE(cpu)		((__cpuset_t)1U << (cpu))
 
-#include <uvm/uvm_extern.h>
+#define	CPUSET_ADD(set, cpu)		atomic_or_32(&(set), CPUSET_SINGLE(cpu))
+#define	CPUSET_DEL(set, cpu)		atomic_and_32(&(set), ~CPUSET_SINGLE(cpu))
+#define	CPUSET_ADDSET(set1, set2)	atomic_or_32(&(set1), (set2))
+#define	CPUSET_DELSET(set1, set2)	atomic_and_32(&(set1), ~(set2))
 
-#include <machine/pio.h>
-#include <powerpc/openpic.h>
+#define	CPUSET_EXCEPT(set, cpu)		((set) & ~CPUSET_SINGLE(cpu))
 
-#include <arch/powerpc/pic/picvar.h>
+#define	CPUSET_HAS_P(set, cpu)		((set) & CPUSET_SINGLE(cpu))
+#define	CPUSET_INTERSECTS_P(set1, set2)	((set1) & (set2))
+#define	CPUSET_NEXT(set)		(ffs(set) - 1)
 
-volatile unsigned char *openpic_base;
+#define CPUSET_NULLSET			((__cpuset_t)0)
+#define	CPUSET_EMPTY_P(set)		((set) == (__cpuset_t)0)
+#define	CPUSET_EQUAL_P(set1, set2)	((set1) == (set2))
+#define	CPUSET_CLEAR(set)		((set) = (__cpuset_t)0)
+#define	CPUSET_ASSIGN(set1, set2)	((set1) = (set2))
+#define	CPUSET_MERGE(set1, set2)	((set1) |= (set2))
+#define	CPUSET_REMOVE(set1, set2)	((set1) & ~(set2))
+#define	CPUSET_SUBSET(set1, set2)	((set1) & (set2))
+#define	CPUSET_INVERT(set)		(~(set))
 
-void
-opic_finish_setup(struct pic_ops *pic)
-{
-	uint32_t cpumask = 0;
-	int i;
-
-#ifdef OPENPIC_DISTRIBUTE
-	for (i = 0; i < ncpu; i++)
-		cpumask |= (1 << cpu_info[i].ci_cpuid);
-#else
-	cpumask = 1;
-#endif
-	for (i = 0; i < pic->pic_numintrs; i++) {
-		/* send all interrupts to all active CPUs */
-		openpic_write(OPENPIC_IDEST(i), cpumask);
-	}
-}
-
-void
-openpic_set_priority(int cpu, int pri)
-{
-	u_int x;
-
-	x = openpic_read(OPENPIC_CPU_PRIORITY(cpu));
-	x &= ~OPENPIC_CPU_PRIORITY_MASK;
-	x |= pri;
-	openpic_write(OPENPIC_CPU_PRIORITY(cpu), x);
-}
-
-int
-opic_get_irq(struct pic_ops *pic, int mode)
-{
-
-	return openpic_read_irq(curcpu()->ci_index);
-}
-
-void
-opic_ack_irq(struct pic_ops *pic, int irq)
-{
-
-	openpic_eoi(curcpu()->ci_index);
-}
+#endif /* _POWERPC_CPUSET_H_ */
