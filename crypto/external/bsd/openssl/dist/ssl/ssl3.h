@@ -128,10 +128,8 @@
 extern "C" {
 #endif
 
-/* Magic Cipher Suite Value. NB: bogus value used for testing */
-#ifndef SSL3_CK_MCSV
-#define SSL3_CK_MCSV				0x03000FEC
-#endif
+/* Signalling cipher suite value: from draft-ietf-tls-renegotiation-03.txt */
+#define SSL3_CK_SCSV				0x030000FF
 
 #define SSL3_CK_RSA_NULL_MD5			0x03000001
 #define SSL3_CK_RSA_NULL_SHA			0x03000002
@@ -341,6 +339,8 @@ extern "C" {
 #define SSL3_AD_CERTIFICATE_UNKNOWN	46
 #define SSL3_AD_ILLEGAL_PARAMETER	47	/* fatal */
 
+#ifndef OPENSSL_NO_SSL_INTERN
+
 typedef struct ssl3_record_st
 	{
 /*r */	int type;               /* type of record */
@@ -362,6 +362,8 @@ typedef struct ssl3_buffer_st
 	int left;               /* how many bytes left */
 	} SSL3_BUFFER;
 
+#endif
+
 #define SSL3_CT_RSA_SIGN			1
 #define SSL3_CT_DSS_SIGN			2
 #define SSL3_CT_RSA_FIXED_DH			3
@@ -381,6 +383,9 @@ typedef struct ssl3_buffer_st
 #define SSL3_FLAGS_POP_BUFFER			0x0004
 #define TLS1_FLAGS_TLS_PADDING_BUG		0x0008
 #define TLS1_FLAGS_SKIP_CERT_VERIFY		0x0010
+#define TLS1_FLAGS_KEEP_HANDSHAKE		0x0020
+
+#ifndef OPENSSL_NO_SSL_INTERN
 
 typedef struct ssl3_state_st
 	{
@@ -466,7 +471,7 @@ typedef struct ssl3_state_st
 		int finish_md_len;
 		unsigned char peer_finish_md[EVP_MAX_MD_SIZE*2];
 		int peer_finish_md_len;
-		
+
 		unsigned long message_size;
 		int message_type;
 
@@ -516,6 +521,7 @@ typedef struct ssl3_state_st
         int send_connection_binding; /* TODOEKR */
 	} SSL3_STATE;
 
+#endif
 
 /* SSLv3 */
 /*client */
@@ -568,6 +574,8 @@ typedef struct ssl3_state_st
 #define SSL3_ST_SR_CLNT_HELLO_A		(0x110|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CLNT_HELLO_B		(0x111|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CLNT_HELLO_C		(0x112|SSL_ST_ACCEPT)
+/* a new state to remember that we have already receive a ClientHello without srp username extension */
+#define SSL3_ST_SR_CLNT_HELLO_SRP_USERNAME (0x1E2|SSL_ST_ACCEPT)
 /* write to client */
 #define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A (0x113|SSL_ST_ACCEPT)
 #define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B (0x114|SSL_ST_ACCEPT)
