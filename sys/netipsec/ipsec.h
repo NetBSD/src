@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.26 2011/05/16 10:02:30 drochner Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.27 2011/06/05 01:40:40 christos Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -283,8 +283,8 @@ struct inpcb;
 int ipsec_init_policy (struct socket *so, struct inpcbpolicy **);
 int ipsec_copy_policy
 	(struct inpcbpolicy *, struct inpcbpolicy *);
-u_int ipsec_get_reqlevel (struct ipsecrequest *);
-int ipsec_in_reject (struct secpolicy *, struct mbuf *);
+u_int ipsec_get_reqlevel (const struct ipsecrequest *);
+int ipsec_in_reject (const struct secpolicy *, const struct mbuf *);
 
 int ipsec4_set_policy (struct inpcb *, int, void *, size_t, kauth_cred_t);
 int ipsec4_get_policy (struct inpcb *, void *, size_t, struct mbuf **);
