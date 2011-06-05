@@ -1,4 +1,4 @@
-/* $NetBSD: t_stat.c,v 1.2 2011/06/04 15:45:55 jruoho Exp $ */
+/* $NetBSD: t_stat.c,v 1.3 2011/06/05 13:49:46 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,13 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stat.c,v 1.2 2011/06/04 15:45:55 jruoho Exp $");
+__RCSID("$NetBSD: t_stat.c,v 1.3 2011/06/05 13:49:46 jruoho Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
 
 #include <atf-c.h>
-#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
@@ -88,11 +87,9 @@ ATF_TC_BODY(stat_dir, tc)
 {
 	const short depth = 3;
 	struct stat sa, sb;
-	struct dirent *dr;
 	char *argv[2];
 	FTSENT *ftse;
 	FTS *fts;
-	DIR *dir;
 	int ops;
 
 	argv[1] = NULL;
@@ -139,22 +136,6 @@ ATF_TC_BODY(stat_dir, tc)
 			if (sb.st_ino != ftse->fts_statp->st_ino)
 				atf_tc_fail("stat(2) and fts(3) differ");
 
-			/*
-			 * Verify that the last stat(2) call
-			 * matches the corresponding dirent(3).
-			 */
-			dir = opendir(ftse->fts_path);
-			ATF_REQUIRE(dir != NULL);
-
-			dr = readdir(dir);
-
-			if (dr == NULL)
-				break;
-
-			if (sb.st_ino != dr->d_fileno)
-				atf_tc_fail("stat(2) and readdir(3) differ");
-
-			ATF_REQUIRE(closedir(dir) == 0);
 			break;
 
 		default:
