@@ -148,7 +148,6 @@ int dtls1_connect(SSL *s)
 	{
 	BUF_MEM *buf=NULL;
 	unsigned long Time=(unsigned long)time(NULL);
-	long num1;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
 	int new_state,state,skip=0;;
@@ -172,7 +171,7 @@ int dtls1_connect(SSL *s)
 		switch(s->state)
 			{
 		case SSL_ST_RENEGOTIATE:
-			s->new_session=1;
+			s->renegotiate=1;
 			s->state=SSL_ST_CONNECT;
 			s->ctx->stats.sess_connect_renegotiate++;
 			/* break */
@@ -408,7 +407,8 @@ int dtls1_connect(SSL *s)
 
 		case SSL3_ST_CW_CHANGE_A:
 		case SSL3_ST_CW_CHANGE_B:
-			dtls1_start_timer(s);
+			if (!s->hit)
+				dtls1_start_timer(s);
 			ret=dtls1_send_change_cipher_spec(s,
 				SSL3_ST_CW_CHANGE_A,SSL3_ST_CW_CHANGE_B);
 			if (ret <= 0) goto end;
@@ -443,7 +443,8 @@ int dtls1_connect(SSL *s)
 
 		case SSL3_ST_CW_FINISHED_A:
 		case SSL3_ST_CW_FINISHED_B:
-			dtls1_start_timer(s);
+			if (!s->hit)
+				dtls1_start_timer(s);
 			ret=dtls1_send_finished(s,
 				SSL3_ST_CW_FINISHED_A,SSL3_ST_CW_FINISHED_B,
 				s->method->ssl3_enc->client_finished_label,
@@ -511,16 +512,13 @@ int dtls1_connect(SSL *s)
 			break;
 
 		case SSL3_ST_CW_FLUSH:
-			/* number of bytes to be flushed */
-			num1=BIO_ctrl(s->wbio,BIO_CTRL_INFO,0,NULL);
-			if (num1 > 0)
+			s->rwstate=SSL_WRITING;
+			if (BIO_flush(s->wbio) <= 0)
 				{
-				s->rwstate=SSL_WRITING;
-				num1=BIO_flush(s->wbio);
-				if (num1 <= 0) { ret= -1; goto end; }
-				s->rwstate=SSL_NOTHING;
+				ret= -1;
+				goto end;
 				}
-
+			s->rwstate=SSL_NOTHING;
 			s->state=s->s3->tmp.next_state;
 			break;
 
@@ -543,6 +541,7 @@ int dtls1_connect(SSL *s)
 			/* else do it later in ssl3_write */
 
 			s->init_num=0;
+			s->renegotiate=0;
 			s->new_session=0;
 
 			ssl_update_cache(s,SSL_SESS_CACHE_CLIENT);
