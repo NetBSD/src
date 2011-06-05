@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.60 2011/06/05 06:31:41 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.61 2011/06/05 17:09:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.60 2011/06/05 06:31:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.61 2011/06/05 17:09:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ atari_config_found(cfdata_t pcfp, device_t pdp, void *auxp, cfprint_t pfn)
 void
 config_console(void)
 {	
-	struct cfdata *cf;
+	cfdata_t cf;
 
 	config_init();
 
@@ -187,7 +187,7 @@ findroot(void)
 {
 	struct disk *dkp;
 	struct partition *pp;
-	struct device **devs;
+	device_t *devs;
 	const struct bdevsw *bdev;
 	int i, maj, unit;
 
@@ -203,7 +203,7 @@ findroot(void)
 			 * Find the disk structure corresponding to the
 			 * current device.
 			 */
-			devs = (struct device **)genericconf[i]->cd_devs;
+			devs = (device_t *)genericconf[i]->cd_devs;
 			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
 				continue;
 

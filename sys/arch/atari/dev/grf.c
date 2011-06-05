@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.45 2011/06/05 06:31:41 tsutsui Exp $	*/
+/*	$NetBSD: grf.c,v 1.46 2011/06/05 17:09:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.45 2011/06/05 06:31:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.46 2011/06/05 17:09:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -115,7 +115,7 @@ const struct cdevsw grf_cdevsw = {
 /*
  * only used in console init.
  */
-static struct cfdata *cfdata_gbus  = NULL;
+static cfdata_t cfdata_gbus  = NULL;
 
 int
 grfbusmatch(device_t parent, cfdata_t cf, void *aux)
