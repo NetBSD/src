@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 2011/06/05 16:52:24 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15 2011/06/05 17:03:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2011/06/05 16:52:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2011/06/05 17:03:16 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -73,18 +73,18 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2011/06/05 16:52:24 matt Exp $");
 #endif /* NOPENPIC > 0 */
 #endif /* OPENPIC */
 
-static int cpu_match(struct device *, struct cfdata *, void *);
-static void cpu_attach(struct device *, struct device *, void *);
-void cpu_OFgetspeed(struct device *, struct cpu_info *);
+static int cpu_match(device_t, cfdata_t, void *);
+static void cpu_attach(device_t, device_t, void *);
+void cpu_OFgetspeed(device_t, struct cpu_info *);
 
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
 extern int machine_has_rtas;
 
 int
-cpu_match(struct device *parent, struct cfdata *cfdata, void *aux)
+cpu_match(device_t parent, cfdata_t cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 	int *reg = ca->ca_reg;
@@ -110,7 +110,7 @@ cpu_match(struct device *parent, struct cfdata *cfdata, void *aux)
 }
 
 void
-cpu_OFgetspeed(struct device *self, struct cpu_info *ci)
+cpu_OFgetspeed(device_t self, struct cpu_info *ci)
 {
 	int node;
 	node = OF_finddevice("/cpus");
@@ -168,7 +168,7 @@ cpu_OFprintcacheinfo(int node)
 }
 
 static void
-cpu_OFgetcache(struct device *self, struct cpu_info *ci)
+cpu_OFgetcache(device_t self, struct cpu_info *ci)
 {
 	int node, cpu=-1;
 	char name[32];
@@ -207,7 +207,7 @@ cpu_OFgetcache(struct device *self, struct cpu_info *ci)
 
 
 void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_info *ci;
 	struct confargs *ca = aux;
