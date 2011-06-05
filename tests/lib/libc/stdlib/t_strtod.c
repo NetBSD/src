@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.16 2011/06/04 22:55:57 matt Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.17 2011/06/05 00:02:05 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.16 2011/06/04 22:55:57 matt Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.17 2011/06/05 00:02:05 christos Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -55,18 +55,14 @@ ATF_TC_HEAD(strtod_basic, tc)
 
 ATF_TC_BODY(strtod_basic, tc)
 {
-	char buf[512];
-	size_t i, n;
-	double d;
+	static const size_t n = 1024 * 1000;
 
-	n = 1024 * 1000;
-
-	for (i = 1; i < n; i = i + 1024) {
-
+	for (size_t i = 1; i < n; i = i + 1024) {
+		char buf[512];
 		(void)snprintf(buf, sizeof(buf), "%zu.%zu", i, i + 1);
 
 		errno = 0;
-		d = strtod(buf, NULL);
+		double d = strtod(buf, NULL);
 
 		ATF_REQUIRE(d > 0.0);
 		ATF_REQUIRE(errno == 0);
@@ -108,19 +104,10 @@ ATF_TC_HEAD(strtod_inf, tc)
 
 ATF_TC_BODY(strtod_inf, tc)
 {
-
 #ifndef __vax__
-
 	static const char * const str[] =
 	    { "Inf", "INF", "-Inf", "-INF", "Infinity", "+Infinity",
 	      "INFINITY", "-INFINITY", "InFiNiTy", "+InFiNiTy" };
-
-#ifdef __HAVE_LONG_DOUBLE
-	long double ld;
-#endif
-	double d;
-	float f;
-	size_t i;
 
 	/*
 	 * See the closed PR lib/33262.
@@ -130,16 +117,16 @@ ATF_TC_BODY(strtod_inf, tc)
 	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
 		atf_tc_expect_fail("PR misc/44767");
 
-	for (i = 0; i < __arraycount(str); i++) {
+	for (size_t i = 0; i < __arraycount(str); i++) {
 
-		d = strtod(str[i], NULL);
+		double d = strtod(str[i], NULL);
 		ATF_REQUIRE(isinf(d) != 0);
 
-		f = strtof(str[i], NULL);
+		float f = strtof(str[i], NULL);
 		ATF_REQUIRE(isinf(f) != 0);
 
 #ifdef __HAVE_LONG_DOUBLE
-		ld = strtold(str[i], NULL);
+		long double ld = strtold(str[i], NULL);
 		ATF_REQUIRE(isinf(ld) != 0);
 #endif
 	}
@@ -155,32 +142,25 @@ ATF_TC_HEAD(strtod_nan, tc)
 ATF_TC_BODY(strtod_nan, tc)
 {
 #ifndef __vax__
-
 	const char *str = "NaN(x)y";
-#if __HAVE_LONG_DOUBLE
-	long double ld;
-#endif
 	char *end;
-	double d;
-	float f;
 
 	atf_tc_expect_fail("PR lib/45020");
 
-	d = strtod(str, &end);
+	double d = strtod(str, &end);
 	ATF_REQUIRE(isnan(d) != 0);
 	ATF_REQUIRE(strcmp(end, "y") == 0);
 
-	f = strtof(str, &end);
+	float f = strtof(str, &end);
 	ATF_REQUIRE(isnanf(f) != 0);
 	ATF_REQUIRE(strcmp(end, "y") == 0);
 
 #ifdef __HAVE_LONG_DOUBLE
-	ld = strtold(str, &end);
+	long double ld = strtold(str, &end);
 	ATF_REQUIRE(isnan(ld) != 0);
 	ATF_REQUIRE(__isnanl(ld) != 0);
 	ATF_REQUIRE(strcmp(end, "y") == 0);
 #endif
-
 #endif
 }
 
@@ -193,10 +173,6 @@ ATF_TC_HEAD(strtod_round, tc)
 ATF_TC_BODY(strtod_round, tc)
 {
 #if defined(__i386__) || defined(__amd64__) || defined(__sparc__)
-
-	const char *val;
-	double d1, d2;
-
 	/*
 	 * Test that strtod(3) honors the current rounding mode.
 	 * The used value is somewhere near 1 + DBL_EPSILON + FLT_EPSILON.
@@ -206,15 +182,16 @@ ATF_TC_BODY(strtod_round, tc)
 	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
 		atf_tc_expect_fail("PR misc/44767");
 
-	val = "1.00000011920928977282585492503130808472633361816406";
+	const char *val =
+	    "1.00000011920928977282585492503130808472633361816406";
 
 	(void)fesetround(FE_UPWARD);
 
-	d1 = strtod(val, NULL);
+	double d1 = strtod(val, NULL);
 
 	(void)fesetround(FE_DOWNWARD);
 
-	d2 = strtod(val, NULL);
+	double d2 = strtod(val, NULL);
 
 	ATF_REQUIRE(fabs(d1 - d2) > 0.0);
 #endif
@@ -239,12 +216,10 @@ ATF_TC_BODY(strtod_underflow, tc)
 	    "000000000000000000000000000000000000000000000000000000"
 	    "000000000000000002";
 
-	double d;
-
 	errno = 0;
-	d = strtod(tmp, NULL);
+	double d = strtod(tmp, NULL);
 
-	if (errno != ERANGE)
+	if (d != 0 || errno != ERANGE)
 		atf_tc_fail("strtod(3) did not detect underflow");
 }
 
