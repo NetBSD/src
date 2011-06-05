@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.51 2011/05/16 10:00:32 drochner Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.52 2011/06/05 01:40:40 christos Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.51 2011/05/16 10:00:32 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.52 2011/06/05 01:40:40 christos Exp $");
 
 /*
  * IPsec controller part.
@@ -241,7 +241,7 @@ static void ipsec6_get_ulp (struct mbuf *m, struct secpolicyindex *, int);
 static int ipsec6_setspidx_ipaddr (struct mbuf *, struct secpolicyindex *);
 #endif
 static void ipsec_delpcbpolicy (struct inpcbpolicy *);
-static struct secpolicy *ipsec_deepcopy_policy (struct secpolicy *);
+static struct secpolicy *ipsec_deepcopy_policy (const struct secpolicy *);
 static int ipsec_set_policy (struct secpolicy **,int , void *, size_t ,
     kauth_cred_t );
 static int ipsec_get_policy (struct secpolicy *, struct mbuf **);
@@ -1197,7 +1197,7 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **pcb_sp)
 
 /* copy old ipsec policy into new */
 int
-ipsec_copy_policy(struct inpcbpolicy *old, struct inpcbpolicy *new)
+ipsec_copy_policy(const struct inpcbpolicy *old, struct inpcbpolicy *new)
 {
 	struct secpolicy *sp;
 
@@ -1222,10 +1222,10 @@ ipsec_copy_policy(struct inpcbpolicy *old, struct inpcbpolicy *new)
 
 /* deep-copy a policy in PCB */
 static struct secpolicy *
-ipsec_deepcopy_policy(struct secpolicy *src)
+ipsec_deepcopy_policy(const struct secpolicy *src)
 {
 	struct ipsecrequest *newchain = NULL;
-	struct ipsecrequest *p;
+	const struct ipsecrequest *p;
 	struct ipsecrequest **q;
 	struct ipsecrequest *r;
 	struct secpolicy *dst;
@@ -1242,8 +1242,7 @@ ipsec_deepcopy_policy(struct secpolicy *src)
 	 */
 	q = &newchain;
 	for (p = src->req; p; p = p->next) {
-		*q = (struct ipsecrequest *)malloc(sizeof(struct ipsecrequest),
-			M_SECA, M_NOWAIT);
+		*q = malloc(sizeof(**q), M_SECA, M_NOWAIT);
 		if (*q == NULL)
 			goto fail;
 		memset(*q, 0, sizeof(**q));
@@ -1541,7 +1540,7 @@ ipsec6_delete_pcbpolicy(struct in6pcb *in6p)
  * Either IPSEC_LEVEL_USE or IPSEC_LEVEL_REQUIRE are always returned.
  */
 u_int
-ipsec_get_reqlevel(struct ipsecrequest *isr)
+ipsec_get_reqlevel(const struct ipsecrequest *isr)
 {
 	u_int level = 0;
 	u_int esp_trans_deflev, esp_net_deflev;
@@ -1647,7 +1646,7 @@ ipsec_get_reqlevel(struct ipsecrequest *isr)
  *	1: invalid
  */
 int
-ipsec_in_reject(struct secpolicy *sp, struct mbuf *m)
+ipsec_in_reject(const struct secpolicy *sp, const struct mbuf *m)
 {
 	struct ipsecrequest *isr;
 	int need_auth;
