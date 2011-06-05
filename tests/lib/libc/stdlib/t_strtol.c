@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtol.c,v 1.2 2011/06/04 22:49:49 haad Exp $ */
+/*	$NetBSD: t_strtol.c,v 1.3 2011/06/05 13:51:46 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtol.c,v 1.2 2011/06/04 22:49:49 haad Exp $");
+__RCSID("$NetBSD: t_strtol.c,v 1.3 2011/06/05 13:51:46 jruoho Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: t_strtol.c,v 1.2 2011/06/04 22:49:49 haad Exp $");
 
 struct test {
 	const char	*str;
-	long int	 res;
+	long long int	 res;
 	int		 base;
 	const char	*end;
 };
@@ -55,7 +55,7 @@ check(struct test *t, long int li, long long int lli, char *end)
 		atf_tc_fail_nonfatal("strtol(%s, &end, %d) failed "
 		    "(rv = %ld)", t->str, t->base, li);
 
-	if (lli != -1 && lli != (long long int)t->res)
+	if (lli != -1 && lli != t->res)
 		atf_tc_fail_nonfatal("strtoll(%s, NULL, %d) failed "
 		    "(rv = %lld)", t->str, t->base, lli);
 
@@ -92,8 +92,8 @@ ATF_TC_BODY(strtol_base, tc)
 		{ "123456789",			    342391,  8, NULL	},
 		{ "0123456789",			    342391,  0, NULL	},
 		{ "0123456789",			 123456789, 10, NULL	},
-		{ "0123456789",		       (uint32_t)0x123456789, 16, NULL	},
-		{ "0x123456789",	       (uint32_t)0x123456789,  0, NULL	},
+		{ "0123456789",		       0x123456789, 16, NULL	},
+		{ "0x123456789",	       0x123456789,  0, NULL	},
 		{ "0x75bcd15",		         123456789,  0, NULL	},
 	};
 
