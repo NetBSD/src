@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.55 2011/06/05 16:52:24 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56 2011/06/05 17:03:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2011/06/05 16:52:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2011/06/05 17:03:16 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -75,13 +75,13 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2011/06/05 16:52:24 matt Exp $");
 #endif /* NOPENPIC > 0 */
 #endif /* OPENPIC */
 
-int cpumatch(struct device *, struct cfdata *, void *);
-void cpuattach(struct device *, struct device *, void *);
+int cpumatch(device_t, cfdata_t, void *);
+void cpuattach(device_t, device_t, void *);
 
 void identifycpu(char *);
 static void ohare_init(void);
 
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpumatch, cpuattach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
@@ -96,7 +96,7 @@ extern void openpic_set_priority(int, int);
 #endif
 
 int
-cpumatch(struct device *parent, struct cfdata *cf, void *aux)
+cpumatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	int *reg = ca->ca_reg;
@@ -128,10 +128,10 @@ cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 	return 0;
 }
 
-void cpu_OFgetspeed(struct device *, struct cpu_info *);
+void cpu_OFgetspeed(device_t, struct cpu_info *);
 
 void
-cpu_OFgetspeed(struct device *self, struct cpu_info *ci)
+cpu_OFgetspeed(device_t self, struct cpu_info *ci)
 {
 	int	node;
 
@@ -154,7 +154,7 @@ cpu_OFgetspeed(struct device *self, struct cpu_info *ci)
 }
 
 void
-cpuattach(struct device *parent, struct device *self, void *aux)
+cpuattach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_info *ci;
 	struct confargs *ca = aux;
