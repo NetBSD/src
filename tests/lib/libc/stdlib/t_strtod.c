@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.17 2011/06/05 00:02:05 christos Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.18 2011/06/05 07:58:03 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.17 2011/06/05 00:02:05 christos Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.18 2011/06/05 07:58:03 jmmv Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -45,6 +45,13 @@ __RCSID("$NetBSD: t_strtod.c,v 1.17 2011/06/05 00:02:05 christos Exp $");
 
 #if defined(__i386__) || defined(__amd64__) || defined(__sparc__)
 #include <fenv.h>
+#endif
+
+#if !defined(__vax__)
+static const char * const inf_strings[] =
+    { "Inf", "INF", "-Inf", "-INF", "Infinity", "+Infinity",
+      "INFINITY", "-INFINITY", "InFiNiTy", "+InFiNiTy" };
+const char *nan_string = "NaN(x)y";
 #endif
 
 ATF_TC(strtod_basic);
@@ -105,10 +112,6 @@ ATF_TC_HEAD(strtod_inf, tc)
 ATF_TC_BODY(strtod_inf, tc)
 {
 #ifndef __vax__
-	static const char * const str[] =
-	    { "Inf", "INF", "-Inf", "-INF", "Infinity", "+Infinity",
-	      "INFINITY", "-INFINITY", "InFiNiTy", "+InFiNiTy" };
-
 	/*
 	 * See the closed PR lib/33262.
 	 *
@@ -117,19 +120,68 @@ ATF_TC_BODY(strtod_inf, tc)
 	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
 		atf_tc_expect_fail("PR misc/44767");
 
-	for (size_t i = 0; i < __arraycount(str); i++) {
-
-		double d = strtod(str[i], NULL);
+	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
+		double d = strtod(inf_strings[i], NULL);
 		ATF_REQUIRE(isinf(d) != 0);
-
-		float f = strtof(str[i], NULL);
-		ATF_REQUIRE(isinf(f) != 0);
-
-#ifdef __HAVE_LONG_DOUBLE
-		long double ld = strtold(str[i], NULL);
-		ATF_REQUIRE(isinf(ld) != 0);
-#endif
 	}
+#else
+	atf_tc_skip("vax not supported");
+#endif
+}
+
+ATF_TC(strtof_inf);
+ATF_TC_HEAD(strtof_inf, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A strtof(3) with INF");
+}
+
+ATF_TC_BODY(strtof_inf, tc)
+{
+#ifndef __vax__
+	/*
+	 * See the closed PR lib/33262.
+	 *
+	 * This may also fail under QEMU; cf. PR misc/44767.
+	 */
+	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+		atf_tc_expect_fail("PR misc/44767");
+
+	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
+		float f = strtof(inf_strings[i], NULL);
+		ATF_REQUIRE(isinf(f) != 0);
+	}
+#else
+	atf_tc_skip("vax not supported");
+#endif
+}
+
+ATF_TC(strtold_inf);
+ATF_TC_HEAD(strtold_inf, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A strtold(3) with INF");
+}
+
+ATF_TC_BODY(strtold_inf, tc)
+{
+#ifndef __vax__
+#   ifdef __HAVE_LONG_DOUBLE
+	/*
+	 * See the closed PR lib/33262.
+	 *
+	 * This may also fail under QEMU; cf. PR misc/44767.
+	 */
+	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
+		atf_tc_expect_fail("PR misc/44767");
+
+	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
+		long double ld = strtold(inf_strings[i], NULL);
+		ATF_REQUIRE(isinf(ld) != 0);
+	}
+#   else
+	atf_tc_skip("Requires long double support");
+#   endif
+#else
+	atf_tc_skip("vax not supported");
 #endif
 }
 
@@ -142,25 +194,58 @@ ATF_TC_HEAD(strtod_nan, tc)
 ATF_TC_BODY(strtod_nan, tc)
 {
 #ifndef __vax__
-	const char *str = "NaN(x)y";
+	char *end;
+
+	double d = strtod(nan_string, &end);
+	ATF_REQUIRE(isnan(d) != 0);
+	ATF_REQUIRE(strcmp(end, "y") == 0);
+#else
+	atf_tc_skip("vax not supported");
+#endif
+}
+
+ATF_TC(strtof_nan);
+ATF_TC_HEAD(strtof_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A strtof(3) with NaN");
+}
+
+ATF_TC_BODY(strtof_nan, tc)
+{
+#ifndef __vax__
+	char *end;
+
+	float f = strtof(nan_string, &end);
+	ATF_REQUIRE(isnanf(f) != 0);
+	ATF_REQUIRE(strcmp(end, "y") == 0);
+#else
+	atf_tc_skip("vax not supported");
+#endif
+}
+
+ATF_TC(strtold_nan);
+ATF_TC_HEAD(strtold_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A strtold(3) with NaN");
+}
+
+ATF_TC_BODY(strtold_nan, tc)
+{
+#ifndef __vax__
+#   ifdef __HAVE_LONG_DOUBLE
 	char *end;
 
 	atf_tc_expect_fail("PR lib/45020");
 
-	double d = strtod(str, &end);
-	ATF_REQUIRE(isnan(d) != 0);
-	ATF_REQUIRE(strcmp(end, "y") == 0);
-
-	float f = strtof(str, &end);
-	ATF_REQUIRE(isnanf(f) != 0);
-	ATF_REQUIRE(strcmp(end, "y") == 0);
-
-#ifdef __HAVE_LONG_DOUBLE
-	long double ld = strtold(str, &end);
+	long double ld = strtold(nan_string, &end);
 	ATF_REQUIRE(isnan(ld) != 0);
 	ATF_REQUIRE(__isnanl(ld) != 0);
 	ATF_REQUIRE(strcmp(end, "y") == 0);
-#endif
+#   else
+	atf_tc_skip("Requires long double support");
+#   endif
+#else
+	atf_tc_skip("vax not supported");
 #endif
 }
 
@@ -194,6 +279,8 @@ ATF_TC_BODY(strtod_round, tc)
 	double d2 = strtod(val, NULL);
 
 	ATF_REQUIRE(fabs(d1 - d2) > 0.0);
+#else
+	atf_tc_skip("Requires one of i386, amd64 or sparc");
 #endif
 }
 
@@ -229,7 +316,11 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, strtod_basic);
 	ATF_TP_ADD_TC(tp, strtod_hex);
 	ATF_TP_ADD_TC(tp, strtod_inf);
+	ATF_TP_ADD_TC(tp, strtof_inf);
+	ATF_TP_ADD_TC(tp, strtold_inf);
 	ATF_TP_ADD_TC(tp, strtod_nan);
+	ATF_TP_ADD_TC(tp, strtof_nan);
+	ATF_TP_ADD_TC(tp, strtold_nan);
 	ATF_TP_ADD_TC(tp, strtod_round);
 	ATF_TP_ADD_TC(tp, strtod_underflow);
 
