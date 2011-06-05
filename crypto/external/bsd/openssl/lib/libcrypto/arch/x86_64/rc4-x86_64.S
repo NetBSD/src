@@ -1,4 +1,4 @@
-.text
+.text	
 
 .globl	RC4
 .type	RC4,@function
@@ -7,8 +7,10 @@ RC4:	orq	%rsi,%rsi
 	jne	.Lentry
 	.byte	0xf3,0xc3
 .Lentry:
+	pushq	%rbx
 	pushq	%r12
 	pushq	%r13
+.Lprologue:
 
 	addq	$8,%rdi
 	movl	-8(%rdi),%r8d
@@ -130,14 +132,8 @@ RC4:	orq	%rsi,%rsi
 	jnz	.Lloop8
 	cmpq	$0,%rsi
 	jne	.Lloop1
-.Lexit:
-	subb	$1,%r8b
-	movl	%r8d,-8(%rdi)
-	movl	%r12d,-4(%rdi)
+	jmp	.Lexit
 
-	popq	%r13
-	popq	%r12
-	.byte	0xf3,0xc3
 .align	16
 .Lloop1:
 	addb	%r9b,%r12b
@@ -164,7 +160,6 @@ RC4:	orq	%rsi,%rsi
 	jz	.Lcloop1
 	cmpl	$0,260(%rdi)
 	jnz	.Lcloop1
-	pushq	%rbx
 	jmp	.Lcloop8
 .align	16
 .Lcloop8:
@@ -290,7 +285,6 @@ RC4:	orq	%rsi,%rsi
 
 	testq	$-8,%rsi
 	jnz	.Lcloop8
-	popq	%rbx
 	cmpq	$0,%rsi
 	jne	.Lcloop1
 	jmp	.Lexit
@@ -313,6 +307,19 @@ RC4:	orq	%rsi,%rsi
 	subq	$1,%rsi
 	jnz	.Lcloop1
 	jmp	.Lexit
+
+.align	16
+.Lexit:
+	subb	$1,%r8b
+	movl	%r8d,-8(%rdi)
+	movl	%r12d,-4(%rdi)
+
+	movq	(%rsp),%r13
+	movq	8(%rsp),%r12
+	movq	16(%rsp),%rbx
+	addq	$24,%rsp
+.Lepilogue:
+	.byte	0xf3,0xc3
 .size	RC4,.-RC4
 
 .globl	RC4_set_key
@@ -394,8 +401,7 @@ RC4_set_key:
 .type	RC4_options,@function
 .align	16
 RC4_options:
-	.long	0x1058d48,0x90000000
-	leaq	.Lopts-.(%rax),%rax
+	leaq	.Lopts@GOTPCREL(%rip),%rax
 	movl	OPENSSL_ia32cap_P@GOTPCREL(%rip),%edx
 	btl	$20,%edx
 	jnc	.Ldone

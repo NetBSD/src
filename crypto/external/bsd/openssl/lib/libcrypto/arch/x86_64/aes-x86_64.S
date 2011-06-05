@@ -1,4 +1,4 @@
-.text
+.text	
 .type	_x86_64_AES_encrypt,@function
 .align	16
 _x86_64_AES_encrypt:
@@ -339,18 +339,20 @@ AES_encrypt:
 	pushq	%r15
 
 
-	movq	%rsp,%rax
-	movq	%rdx,%r15
+	movq	%rsp,%r10
 	leaq	-63(%rdx),%rcx
 	andq	$-64,%rsp
 	subq	%rsp,%rcx
 	negq	%rcx
 	andq	$960,%rcx
 	subq	%rcx,%rsp
+	subq	$32,%rsp
 
-	pushq	%rax
-	pushq	%rsi
+	movq	%rsi,16(%rsp)
+	movq	%r10,24(%rsp)
+.Lenc_prologue:
 
+	movq	%rdx,%r15
 	movl	240(%r15),%r13d
 
 	movl	0(%rdi),%eax
@@ -360,12 +362,11 @@ AES_encrypt:
 
 	shll	$4,%r13d
 	leaq	(%r15,%r13,1),%rbp
-	pushq	%rbp
-	pushq	%r15
+	movq	%r15,(%rsp)
+	movq	%rbp,8(%rsp)
 
 
-	.long	0x1358d4c,0x90000000
-	leaq	AES_Te+2048-.(%r14),%r14
+	leaq	.LAES_Te+2048@GOTPCREL(%rip),%r14
 	leaq	768(%rsp),%rbp
 	subq	%r14,%rbp
 	andq	$768,%rbp
@@ -374,18 +375,20 @@ AES_encrypt:
 	call	_x86_64_AES_encrypt_compact
 
 	movq	16(%rsp),%r9
-	movq	24(%rsp),%rsp
+	movq	24(%rsp),%rsi
 	movl	%eax,0(%r9)
 	movl	%ebx,4(%r9)
 	movl	%ecx,8(%r9)
 	movl	%edx,12(%r9)
 
-	popq	%r15
-	popq	%r14
-	popq	%r13
-	popq	%r12
-	popq	%rbp
-	popq	%rbx
+	movq	(%rsi),%r15
+	movq	8(%rsi),%r14
+	movq	16(%rsi),%r13
+	movq	24(%rsi),%r12
+	movq	32(%rsi),%rbp
+	movq	40(%rsi),%rbx
+	leaq	48(%rsi),%rsp
+.Lenc_epilogue:
 	.byte	0xf3,0xc3
 .size	AES_encrypt,.-AES_encrypt
 .type	_x86_64_AES_decrypt,@function
@@ -781,18 +784,20 @@ AES_decrypt:
 	pushq	%r15
 
 
-	movq	%rsp,%rax
-	movq	%rdx,%r15
+	movq	%rsp,%r10
 	leaq	-63(%rdx),%rcx
 	andq	$-64,%rsp
 	subq	%rsp,%rcx
 	negq	%rcx
 	andq	$960,%rcx
 	subq	%rcx,%rsp
+	subq	$32,%rsp
 
-	pushq	%rax
-	pushq	%rsi
+	movq	%rsi,16(%rsp)
+	movq	%r10,24(%rsp)
+.Ldec_prologue:
 
+	movq	%rdx,%r15
 	movl	240(%r15),%r13d
 
 	movl	0(%rdi),%eax
@@ -802,12 +807,11 @@ AES_decrypt:
 
 	shll	$4,%r13d
 	leaq	(%r15,%r13,1),%rbp
-	pushq	%rbp
-	pushq	%r15
+	movq	%r15,(%rsp)
+	movq	%rbp,8(%rsp)
 
 
-	.long	0x1358d4c,0x90000000
-	leaq	AES_Td+2048-.(%r14),%r14
+	leaq	.LAES_Td+2048@GOTPCREL(%rip),%r14
 	leaq	768(%rsp),%rbp
 	subq	%r14,%rbp
 	andq	$768,%rbp
@@ -818,34 +822,51 @@ AES_decrypt:
 	call	_x86_64_AES_decrypt_compact
 
 	movq	16(%rsp),%r9
-	movq	24(%rsp),%rsp
+	movq	24(%rsp),%rsi
 	movl	%eax,0(%r9)
 	movl	%ebx,4(%r9)
 	movl	%ecx,8(%r9)
 	movl	%edx,12(%r9)
 
-	popq	%r15
-	popq	%r14
-	popq	%r13
-	popq	%r12
-	popq	%rbp
-	popq	%rbx
+	movq	(%rsi),%r15
+	movq	8(%rsi),%r14
+	movq	16(%rsi),%r13
+	movq	24(%rsi),%r12
+	movq	32(%rsi),%rbp
+	movq	40(%rsi),%rbx
+	leaq	48(%rsi),%rsp
+.Ldec_epilogue:
 	.byte	0xf3,0xc3
 .size	AES_decrypt,.-AES_decrypt
 .globl	AES_set_encrypt_key
 .type	AES_set_encrypt_key,@function
 .align	16
 AES_set_encrypt_key:
+	pushq	%rbx
+	pushq	%rbp
+	pushq	%r12
+	pushq	%r13
+	pushq	%r14
+	pushq	%r15
+	subq	$8,%rsp
+.Lenc_key_prologue:
+
 	call	_x86_64_AES_set_encrypt_key
+
+	movq	8(%rsp),%r15
+	movq	16(%rsp),%r14
+	movq	24(%rsp),%r13
+	movq	32(%rsp),%r12
+	movq	40(%rsp),%rbp
+	movq	48(%rsp),%rbx
+	addq	$56,%rsp
+.Lenc_key_epilogue:
 	.byte	0xf3,0xc3
 .size	AES_set_encrypt_key,.-AES_set_encrypt_key
 
 .type	_x86_64_AES_set_encrypt_key,@function
 .align	16
 _x86_64_AES_set_encrypt_key:
-	pushq	%rbx
-	pushq	%rbp
-
 	movl	%esi,%ecx
 	movq	%rdi,%rsi
 	movq	%rdx,%rdi
@@ -855,8 +876,7 @@ _x86_64_AES_set_encrypt_key:
 	testq	$-1,%rdi
 	jz	.Lbadpointer
 
-	.long	0x12d8d48,0x90000000
-	leaq	AES_Te-.(%rbp),%rbp
+	leaq	.LAES_Te@GOTPCREL(%rip),%rbp
 	leaq	2048+128(%rbp),%rbp
 
 
@@ -1081,26 +1101,25 @@ _x86_64_AES_set_encrypt_key:
 .Lbadpointer:
 	movq	$-1,%rax
 .Lexit:
-	popq	%rbp
-	popq	%rbx
 .byte	0xf3,0xc3			
 .size	_x86_64_AES_set_encrypt_key,.-_x86_64_AES_set_encrypt_key
 .globl	AES_set_decrypt_key
 .type	AES_set_decrypt_key,@function
 .align	16
 AES_set_decrypt_key:
-	pushq	%rdx
-	call	_x86_64_AES_set_encrypt_key
-	cmpl	$0,%eax
-	popq	%r8
-	jne	.Labort
-
 	pushq	%rbx
 	pushq	%rbp
 	pushq	%r12
 	pushq	%r13
 	pushq	%r14
 	pushq	%r15
+	pushq	%rdx
+.Ldec_key_prologue:
+
+	call	_x86_64_AES_set_encrypt_key
+	movq	(%rsp),%r8
+	cmpl	$0,%eax
+	jne	.Labort
 
 	movl	240(%r8),%r14d
 	xorq	%rdi,%rdi
@@ -1122,8 +1141,7 @@ AES_set_decrypt_key:
 	cmpq	%rsi,%rdi
 	jne	.Linvert
 
-	.long	0x1058d48,0x90000000
-	leaq	AES_Te+2048+1024-.(%rax),%rax
+	leaq	.LAES_Te+2048+1024@GOTPCREL(%rip),%rax
 
 	movq	40(%rax),%rsi
 	movq	48(%rax),%rdi
@@ -1261,13 +1279,15 @@ AES_set_decrypt_key:
 	jnz	.Lpermute
 
 	xorq	%rax,%rax
-	popq	%r15
-	popq	%r14
-	popq	%r13
-	popq	%r12
-	popq	%rbp
-	popq	%rbx
 .Labort:
+	movq	8(%rsp),%r15
+	movq	16(%rsp),%r14
+	movq	24(%rsp),%r13
+	movq	32(%rsp),%r12
+	movq	40(%rsp),%rbp
+	movq	48(%rsp),%rbx
+	addq	$56,%rsp
+.Ldec_key_epilogue:
 	.byte	0xf3,0xc3
 .size	AES_set_decrypt_key,.-AES_set_decrypt_key
 .globl	AES_cbc_encrypt
@@ -1276,31 +1296,32 @@ AES_set_decrypt_key:
 
 AES_cbc_encrypt:
 	cmpq	$0,%rdx
-	je	.Lcbc_just_ret
+	je	.Lcbc_epilogue
+	pushfq
 	pushq	%rbx
 	pushq	%rbp
 	pushq	%r12
 	pushq	%r13
 	pushq	%r14
 	pushq	%r15
-	pushfq
+.Lcbc_prologue:
+
 	cld
 	movl	%r9d,%r9d
 
-	.long	0x1358d4c,0x90000000
-	leaq	AES_Te-.(%r14),%r14
+	leaq	.LAES_Te@GOTPCREL(%rip),%r14
 	cmpq	$0,%r9
 	jne	.Lcbc_picked_te
-	leaq	AES_Td-AES_Te(%r14),%r14
+	leaq	.LAES_Td@GOTPCREL(%rip),%r14
 .Lcbc_picked_te:
 
-	movl	OPENSSL_ia32cap_P@GOTPCREL(%rip),%eax
+	movl	OPENSSL_ia32cap_P@GOTPCREL(%rip),%r10d
 	cmpq	$512,%rdx
-	jb	.Lcbc_slow_way
+	jb	.Lcbc_slow_prologue
 	testq	$15,%rdx
-	jnz	.Lcbc_slow_way
-	btl	$28,%eax
-	jc	.Lcbc_slow_way
+	jnz	.Lcbc_slow_prologue
+	btl	$28,%r10d
+	jc	.Lcbc_slow_prologue
 
 
 	leaq	-88-248(%rsp),%r15
@@ -1328,8 +1349,9 @@ AES_cbc_encrypt:
 .Lcbc_te_ok:
 
 	xchgq	%rsp,%r15
-	addq	$8,%rsp
+
 	movq	%r15,16(%rsp)
+.Lcbc_fast_body:
 	movq	%rdi,24(%rsp)
 	movq	%rsi,32(%rsp)
 	movq	%rdx,40(%rsp)
@@ -1413,25 +1435,7 @@ AES_cbc_encrypt:
 	movl	%ecx,8(%rbp)
 	movl	%edx,12(%rbp)
 
-.align	4
-.Lcbc_cleanup:
-	cmpl	$0,80+240(%rsp)
-	leaq	80(%rsp),%rdi
-	je	.Lcbc_exit
-	movl	$30,%ecx
-	xorq	%rax,%rax
-.long	0x90AB48F3	
-.Lcbc_exit:
-	movq	16(%rsp),%rsp
-	popfq
-	popq	%r15
-	popq	%r14
-	popq	%r13
-	popq	%r12
-	popq	%rbp
-	popq	%rbx
-.Lcbc_just_ret:
-	.byte	0xf3,0xc3
+	jmp	.Lcbc_fast_cleanup
 
 
 .align	16
@@ -1477,7 +1481,7 @@ AES_cbc_encrypt:
 	movq	8(%rbp),%r11
 	movq	%r10,0(%r12)
 	movq	%r11,8(%r12)
-	jmp	.Lcbc_cleanup
+	jmp	.Lcbc_fast_cleanup
 
 .align	16
 .Lcbc_fast_dec_in_place:
@@ -1530,24 +1534,34 @@ AES_cbc_encrypt:
 	movl	%ecx,8(%r9)
 	movl	%edx,12(%r9)
 
-	jmp	.Lcbc_cleanup
+.align	4
+.Lcbc_fast_cleanup:
+	cmpl	$0,80+240(%rsp)
+	leaq	80(%rsp),%rdi
+	je	.Lcbc_exit
+	movl	$30,%ecx
+	xorq	%rax,%rax
+.long	0x90AB48F3	
+
+	jmp	.Lcbc_exit
 
 
 .align	16
-.Lcbc_slow_way:
+.Lcbc_slow_prologue:
 
 	leaq	-88(%rsp),%rbp
 	andq	$-64,%rbp
 
-	leaq	-88-63(%rcx),%rax
-	subq	%rbp,%rax
-	negq	%rax
-	andq	$960,%rax
-	subq	%rax,%rbp
+	leaq	-88-63(%rcx),%r10
+	subq	%rbp,%r10
+	negq	%r10
+	andq	$960,%r10
+	subq	%r10,%rbp
 
 	xchgq	%rsp,%rbp
-	addq	$8,%rsp
+
 	movq	%rbp,16(%rsp)
+.Lcbc_slow_body:
 
 
 
@@ -1619,21 +1633,23 @@ AES_cbc_encrypt:
 	movl	%edx,12(%rbp)
 
 	jmp	.Lcbc_exit
+
 .align	4
 .Lcbc_slow_enc_tail:
-	cmpq	%r8,%r9
-	je	.Lcbc_slow_enc_in_place
+	movq	%rax,%r11
+	movq	%rcx,%r12
 	movq	%r10,%rcx
 	movq	%r8,%rsi
 	movq	%r9,%rdi
 .long	0x9066A4F3		
-.Lcbc_slow_enc_in_place:
 	movq	$16,%rcx
 	subq	%r10,%rcx
 	xorq	%rax,%rax
 .long	0x9066AAF3		
 	movq	%r9,%r8
-	movq	$16,40(%rsp)
+	movq	$16,%r10
+	movq	%r11,%rax
+	movq	%r12,%rcx
 	jmp	.Lcbc_slow_enc_loop	
 
 .align	16
@@ -1712,10 +1728,24 @@ AES_cbc_encrypt:
 	leaq	16(%r10),%rcx
 .long	0x9066A4F3	
 	jmp	.Lcbc_exit
+
+.align	16
+.Lcbc_exit:
+	movq	16(%rsp),%rsi
+	movq	(%rsi),%r15
+	movq	8(%rsi),%r14
+	movq	16(%rsi),%r13
+	movq	24(%rsi),%r12
+	movq	32(%rsi),%rbp
+	movq	40(%rsi),%rbx
+	leaq	48(%rsi),%rsp
+.Lcbc_popfq:
+	popfq
+.Lcbc_epilogue:
+	.byte	0xf3,0xc3
 .size	AES_cbc_encrypt,.-AES_cbc_encrypt
-.globl	AES_Te
 .align	64
-AES_Te:
+.LAES_Te:
 .long	0xa56363c6,0xa56363c6
 .long	0x847c7cf8,0x847c7cf8
 .long	0x997777ee,0x997777ee
@@ -2104,9 +2134,8 @@ AES_Te:
 .long	0x00000010, 0x00000020, 0x00000040, 0x00000080
 .long	0x0000001b, 0x00000036, 0x80808080, 0x80808080
 .long	0xfefefefe, 0xfefefefe, 0x1b1b1b1b, 0x1b1b1b1b
-.globl	AES_Td
 .align	64
-AES_Td:
+.LAES_Td:
 .long	0x50a7f451,0x50a7f451
 .long	0x5365417e,0x5365417e
 .long	0xc3a4171a,0xc3a4171a

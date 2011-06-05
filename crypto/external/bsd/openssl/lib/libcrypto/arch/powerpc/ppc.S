@@ -103,7 +103,7 @@
 
 
 
-.machine	"ppc"
+.machine	"any"
 
 
 

@@ -1,5 +1,6 @@
 .file	"des-586.s"
 .text
+.globl	DES_SPtrans
 .type	_x86_DES_encrypt,@function
 .align	16
 _x86_DES_encrypt:
@@ -996,11 +997,10 @@ DES_encrypt1:
 	xorl	%eax,%edi
 
 	roll	$1,%edi
-	call	.L000PIC_me_up
-.L000PIC_me_up:
+	call	.L000pic_point
+.L000pic_point:
 	popl	%ebp
-	leal	_GLOBAL_OFFSET_TABLE_+[.-.L000PIC_me_up](%ebp),%ebp
-	movl	DES_SPtrans@GOT(%ebp),%ebp
+	leal	DES_SPtrans-.L000pic_point(%ebp),%ebp
 	movl	24(%esp),%ecx
 	cmpl	$0,%ebx
 	je	.L001decrypt
@@ -1074,11 +1074,10 @@ DES_encrypt2:
 	roll	$3,%esi
 	movl	4(%eax),%edi
 	roll	$3,%edi
-	call	.L003PIC_me_up
-.L003PIC_me_up:
+	call	.L003pic_point
+.L003pic_point:
 	popl	%ebp
-	leal	_GLOBAL_OFFSET_TABLE_+[.-.L003PIC_me_up](%ebp),%ebp
-	movl	DES_SPtrans@GOT(%ebp),%ebp
+	leal	DES_SPtrans-.L003pic_point(%ebp),%ebp
 	movl	24(%esp),%ecx
 	cmpl	$0,%ebx
 	je	.L004decrypt
@@ -1706,7 +1705,6 @@ DES_ede3_cbc_encrypt:
 .long	.L036ej7-.L034PIC_point
 .align	64
 .size	DES_ede3_cbc_encrypt,.-.L_DES_ede3_cbc_encrypt_begin
-.globl	DES_SPtrans
 .align	64
 DES_SPtrans:
 .long	34080768,524288,33554434,34080770

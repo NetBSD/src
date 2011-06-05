@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2009/07/19 23:30:46 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/05 23:09:50 spz Exp $
 
 .include "bsd.own.mk"
 
-CRYPTODIST=${NETBSDSRCDIR}/crypto/dist
+CRYPTODIST=${NETBSDSRCDIR}/crypto
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 XLATE=${OPENSSLSRC}/crypto/perlasm/ppc-xlate.pl
 

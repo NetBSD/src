@@ -61,6 +61,8 @@
 
 void ENGINE_load_builtin_engines(void)
 	{
+	/* Some ENGINEs need this */
+	OPENSSL_cpuid_setup();
 #if 0
 	/* There's no longer any need for an "openssl" ENGINE unless, one day,
 	 * it is the *only* way for standard builtin implementations to be be
@@ -68,11 +70,11 @@ void ENGINE_load_builtin_engines(void)
 	 * *no* builtin implementations). */
 	ENGINE_load_openssl();
 #endif
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
+#if !defined(OPENSSL_NO_HW) && (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV))
 	ENGINE_load_cryptodev();
 #endif
 #if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_AESNI)
-	ENGINE_load_aesni();
+        ENGINE_load_aesni();
 #endif
 	ENGINE_load_dynamic();
 #ifndef OPENSSL_NO_STATIC_ENGINE
@@ -111,18 +113,14 @@ void ENGINE_load_builtin_engines(void)
 #ifndef OPENSSL_NO_GMP
 	ENGINE_load_gmp();
 #endif
-#ifndef OPENSSL_NO_HW
-#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
-	ENGINE_load_cryptodev();
-#endif
-#endif
 #if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
 	ENGINE_load_capi();
 #endif
 #endif
+	ENGINE_register_all_complete();
 	}
 
-#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
 void ENGINE_setup_bsd_cryptodev(void) {
 	static int bsd_cryptodev_default_loaded = 0;
 	if (!bsd_cryptodev_default_loaded) {
