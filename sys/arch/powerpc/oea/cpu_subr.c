@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.62 2011/02/12 01:02:12 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.63 2011/06/05 16:52:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.62 2011/02/12 01:02:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.63 2011/06/05 16:52:25 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -232,8 +232,6 @@ static const struct cputab models[] = {
 struct cpu_info cpu_info[CPU_MAXNUM] = {
     [0] = {
 	.ci_curlwp = &lwp0,
-	.ci_fpulwp = &lwp0,
-	.ci_veclwp = &lwp0,
     },
 };
 volatile struct cpu_hatch_data *cpu_hatch_data;
@@ -247,8 +245,6 @@ extern struct bat battable[];
 struct cpu_info cpu_info[1] = {
     [0] = {
 	.ci_curlwp = &lwp0,
-	.ci_fpulwp = &lwp0,
-	.ci_veclwp = &lwp0,
     },
 };
 #endif /*MULTIPROCESSOR*/

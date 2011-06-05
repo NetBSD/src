@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc85xx_start.S,v 1.2 2011/01/18 01:10:25 matt Exp $	*/
+/*	$NetBSD: mpc85xx_start.S,v 1.3 2011/06/05 16:52:23 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: mpc85xx_start.S,v 1.2 2011/01/18 01:10:25 matt Exp $")
+RCSID("$NetBSD: mpc85xx_start.S,v 1.3 2011/06/05 16:52:23 matt Exp $")
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -275,6 +275,9 @@ loop:	b	loop			/* XXX not reached */
 #include <powerpc/powerpc/pio_subr.S>
 #ifdef PPC_HAVE_SPE
 #include <powerpc/booke/spe_subr.S>
+#endif
+#if defined(MULTIPROCESSOR)
+#include <powerpc/booke/e500_mpsubr.S>
 #endif
 
 #if 0

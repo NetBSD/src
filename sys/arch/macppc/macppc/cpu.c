@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.54 2010/12/20 00:25:37 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.55 2011/06/05 16:52:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2010/12/20 00:25:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.55 2011/06/05 16:52:24 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2010/12/20 00:25:37 matt Exp $");
 #include <powerpc/oea/hid.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/openpic.h>
-#include <powerpc/atomic.h>
 #include <powerpc/spr.h>
 #include <powerpc/oea/spr.h>
 #ifdef ALTIVEC
@@ -243,7 +242,7 @@ md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
 #endif /* OPENPIC */
 		/* Start secondary CPU and stop timebase. */
 		out32(0xf2800000, (int)cpu_spinup_trampoline);
-		ppc_send_ipi(1, PPC_IPI_NOMESG);
+		cpu_send_ipi(1, IPI_NOMESG);
 #ifdef OPENPIC
 	}
 #endif
@@ -297,7 +296,7 @@ md_start_timebase(volatile struct cpu_hatch_data *h)
 
 		/* Start timebase. */
 		out32(0xf2800000, 0x100);
-		ppc_send_ipi(1, PPC_IPI_NOMESG);
+		cpu_send_ipi(1, IPI_NOMESG);
 #ifdef OPENPIC
 	}
 #endif

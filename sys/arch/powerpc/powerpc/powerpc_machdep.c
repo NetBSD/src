@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.48 2011/05/02 02:01:33 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.49 2011/06/05 16:52:26 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.48 2011/05/02 02:01:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.49 2011/06/05 16:52:26 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.48 2011/05/02 02:01:33 matt Ex
 #include <sys/module.h>
 #include <sys/device.h>
 #include <sys/pcu.h>
+#include <sys/atomic.h>
+#include <sys/xcall.h>
 
 #include <powerpc/pcb.h>
 #include <powerpc/fpu.h>
@@ -332,6 +334,95 @@ cpu_idle(void)
 	KASSERT(curcpu()->ci_cpl == IPL_NONE);
 	(*curcpu()->ci_idlespin)();
 }
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	struct lwp * const l = ci->ci_data.cpu_onproc;
+#if defined(MULTIPROCESSOR)
+	struct cpu_info * const cur_ci = curcpu();
+#endif
+
+	KASSERT(kpreempt_disabled());
+
+#ifdef MULTIPROCESSOR
+	atomic_or_uint(&ci->ci_want_resched, flags);
+#else
+	ci->ci_want_resched |= flags;
+#endif
+
+	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
+		/*
+		 * No point doing anything, it will switch soon.
+		 * Also here to prevent an assertion failure in
+		 * kpreempt() due to preemption being set on a
+		 * soft interrupt LWP.
+		 */
+		return;
+	}
+
+	if (__predict_false(l == ci->ci_data.cpu_idlelwp)) {
+#if defined(MULTIPROCESSOR)
+		/*
+		 * If the other CPU is idling, it must be waiting for an
+		 * interrupt.  So give it one.
+		 */
+		if (__predict_false(ci != cur_ci))
+			cpu_send_ipi(cpu_index(ci), IPI_NOMESG);
+#endif
+		return;
+	}
+
+#ifdef __HAVE_PREEMPTION
+	if (flags & RESCHED_KPREEMPT) {
+		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
+		if (ci == cur_ci) {
+			softint_trigger(SOFTINT_KPREEMPT);
+                } else {
+                        cpu_send_ipi(cpu_index(ci), IPI_KPREEMPT);
+                }
+		return;
+	}
+#endif
+	l->l_md.md_astpending = 1;		/* force call to ast() */
+#if defined(MULTIPROCESSOR)
+	if (ci != cur_ci && (flags & RESCHED_IMMED)) {
+		cpu_send_ipi(cpu_index(ci), IPI_NOMESG);
+	} 
+#endif
+}
+
+void
+cpu_need_proftick(lwp_t *l)
+{
+	l->l_pflag |= LP_OWEUPC;
+	l->l_md.md_astpending = 1;
+}
+
+void
+cpu_signotify(lwp_t *l)
+{
+	l->l_md.md_astpending = 1;
+}
+
+#ifdef MULTIPROCESSOR
+/*
+ * MD support for xcall(9) interface.
+ */
+
+void
+xc_send_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	cpuid_t target = (ci != NULL ? cpu_index(ci) : IPI_DST_NOTME);
+
+	/* Unicast: remote CPU. */
+	/* Broadcast: all, but local CPU (caller will handle it). */
+	cpu_send_ipi(target, IPI_XCALL);
+}
+#endif /* MULTIPROCESSOR */
 
 #ifdef MODULAR
 /*
