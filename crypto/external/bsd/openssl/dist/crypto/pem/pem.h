@@ -439,13 +439,13 @@ STACK_OF(X509_INFO) *	PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
 int	PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type,
 		EVP_MD *md_type, unsigned char **ek, int *ekl,
 		unsigned char *iv, EVP_PKEY **pubk, int npubk);
-int	PEM_SealUpdate(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *out, int *outl,
+void	PEM_SealUpdate(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *out, int *outl,
 		unsigned char *in, int inl);
 int	PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig,int *sigl,
 		unsigned char *out, int *outl, EVP_PKEY *priv);
 
-int	PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type);
-int	PEM_SignUpdate(EVP_MD_CTX *ctx,unsigned char *d,unsigned int cnt);
+void    PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type);
+void    PEM_SignUpdate(EVP_MD_CTX *ctx,unsigned char *d,unsigned int cnt);
 int	PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
 		unsigned int *siglen, EVP_PKEY *pkey);
 
@@ -548,10 +548,11 @@ EVP_PKEY *b2i_PrivateKey_bio(BIO *in);
 EVP_PKEY *b2i_PublicKey_bio(BIO *in);
 int i2b_PrivateKey_bio(BIO *out, EVP_PKEY *pk);
 int i2b_PublicKey_bio(BIO *out, EVP_PKEY *pk);
-
+#ifndef OPENSSL_NO_RC4
 EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u);
 int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
 		pem_password_cb *cb, void *u);
+#endif
 
 
 /* BEGIN ERROR CODES */

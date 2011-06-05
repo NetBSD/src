@@ -107,14 +107,14 @@ install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
-		$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines; \
+		$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines; \
 		for l in $(LIBNAMES); do \
 			( echo installing $$l; \
 			  pfx=lib; \
 			  if [ "$(PLATFORM)" != "Cygwin" ]; then \
 				case "$(CFLAGS)" in \
 				*DSO_BEOS*)	sfx=".so";;	\
-				*DSO_DLFCN*)	sfx=".so";;	\
+				*DSO_DLFCN*)	sfx=`expr "$(SHLIB_EXT)" : '.*\(\.[a-z][a-z]*\)' \| ".so"`;;	\
 				*DSO_DL*)	sfx=".sl";;	\
 				*DSO_WIN32*)	sfx="eay32.dll"; pfx=;;	\
 				*)		sfx=".bad";;	\
