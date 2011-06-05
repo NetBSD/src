@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 2011/06/05 16:52:25 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,6 +36,8 @@
 
 #ifndef _POWERPC_BOOKE_VMPARAM_H_
 #define _POWERPC_BOOKE_VMPARAM_H_
+
+#include <sys/mutex.h>
 
 /*
  * Most of the definitions in this can be overriden by a machine-specific
