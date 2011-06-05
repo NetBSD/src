@@ -184,12 +184,27 @@
 #include <openssl/ecdh.h>
 #endif
 
-#if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
-# define NO_FORK 1
-#elif HAVE_FORK
-# undef NO_FORK
+#ifdef OPENSSL_FIPS
+#define BF_set_key	private_BF_set_key
+#define CAST_set_key	private_CAST_set_key
+#define idea_set_encrypt_key	private_idea_set_encrypt_key
+#define SEED_set_key	private_SEED_set_key
+#define RC2_set_key	private_RC2_set_key
+#define DES_set_key_unchecked	private_DES_set_key_unchecked
+#endif
+
+#ifndef HAVE_FORK
+# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
+#  define HAVE_FORK 0
+# else
+#  define HAVE_FORK 1
+# endif
+#endif
+
+#if HAVE_FORK
+#undef NO_FORK
 #else
-# define NO_FORK 1
+#define NO_FORK
 #endif
 
 #undef BUFSIZE
@@ -226,8 +241,12 @@ static const char *names[ALGOR_NUM]={
   "aes-128 ige","aes-192 ige","aes-256 ige"};
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
+#ifndef OPENSSL_NO_RSA
 static double rsa_results[RSA_NUM][2];
+#endif
+#ifndef OPENSSL_NO_DSA
 static double dsa_results[DSA_NUM][2];
+#endif
 #ifndef OPENSSL_NO_ECDSA
 static double ecdsa_results[EC_NUM][2];
 #endif
@@ -324,9 +343,6 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE *e = NULL;
-#endif
 	unsigned char *buf=NULL,*buf2=NULL;
 	int mret=1;
 	long count=0,save_count=0;
@@ -420,7 +436,6 @@ int MAIN(int argc, char **argv)
 	unsigned char DES_iv[8];
 	unsigned char iv[2*MAX_BLOCK_SIZE/8];
 #ifndef OPENSSL_NO_DES
-	DES_cblock *buf_as_des_cblock = NULL;
 	static DES_cblock key ={0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0};
 	static DES_cblock key2={0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
 	static DES_cblock key3={0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34};
@@ -634,9 +649,6 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
 		}
-#ifndef OPENSSL_NO_DES
-	buf_as_des_cblock = (DES_cblock *)buf;
-#endif
 	if ((buf2=(unsigned char *)OPENSSL_malloc((int)BUFSIZE)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
@@ -711,7 +723,7 @@ int MAIN(int argc, char **argv)
 				BIO_printf(bio_err,"no engine given\n");
 				goto end;
 				}
-                        e = setup_engine(bio_err, *argv, 0);
+                        setup_engine(bio_err, *argv, 0);
 			/* j will be increased again further down.  We just
 			   don't want speed to confuse an engine with an
 			   algorithm, especially when none is given (which
@@ -1227,7 +1239,8 @@ int MAIN(int argc, char **argv)
 		count*=2;
 		Time_F(START);
 		for (it=count; it; it--)
-			DES_ecb_encrypt(buf_as_des_cblock,buf_as_des_cblock,
+			DES_ecb_encrypt((DES_cblock *)buf,
+				(DES_cblock *)buf,
 				&sch,DES_ENCRYPT);
 		d=Time_F(STOP);
 		} while (d <3);
@@ -2604,7 +2617,11 @@ static int do_multi(int multi)
 	fds=malloc(multi*sizeof *fds);
 	for(n=0 ; n < multi ; ++n)
 		{
-		pipe(fd);
+		if (pipe(fd) == -1)
+			{
+			fprintf(stderr, "pipe failure\n");
+			exit(1);
+			}
 		fflush(stdout);
 		fflush(stderr);
 		if(fork())
@@ -2616,7 +2633,11 @@ static int do_multi(int multi)
 			{
 			close(fd[0]);
 			close(1);
-			dup(fd[1]);
+			if (dup(fd[1]) == -1)
+				{
+				fprintf(stderr, "dup failed\n");
+				exit(1);
+				}
 			close(fd[1]);
 			mr=1;
 			usertime=0;
@@ -2699,6 +2720,7 @@ static int do_multi(int multi)
 				else
 					rsa_results[k][1]=d;
 				}
+#ifndef OPENSSL_NO_DSA
 			else if(!strncmp(buf,"+F3:",4))
 				{
 				int k;
@@ -2720,6 +2742,7 @@ static int do_multi(int multi)
 				else
 					dsa_results[k][1]=d;
 				}
+#endif
 #ifndef OPENSSL_NO_ECDSA
 			else if(!strncmp(buf,"+F4:",4))
 				{
