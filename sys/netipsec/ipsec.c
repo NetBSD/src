@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.52 2011/06/05 01:40:40 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.53 2011/06/05 01:45:37 christos Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.52 2011/06/05 01:40:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.53 2011/06/05 01:45:37 christos Exp $");
 
 /*
  * IPsec controller part.
@@ -1163,8 +1163,7 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **pcb_sp)
 	if (so == NULL || pcb_sp == NULL)
 		panic("ipsec_init_policy: NULL pointer was passed");
 
-	new = (struct inpcbpolicy *) malloc(sizeof(struct inpcbpolicy),
-						M_SECA, M_NOWAIT|M_ZERO);
+	new = malloc(sizeof(*new), M_SECA, M_NOWAIT|M_ZERO);
 	if (new == NULL) {
 		ipseclog((LOG_DEBUG, "ipsec_init_policy: No more memory.\n"));
 		return ENOBUFS;
@@ -1242,10 +1241,9 @@ ipsec_deepcopy_policy(const struct secpolicy *src)
 	 */
 	q = &newchain;
 	for (p = src->req; p; p = p->next) {
-		*q = malloc(sizeof(**q), M_SECA, M_NOWAIT);
+		*q = malloc(sizeof(**q), M_SECA, M_NOWAIT|M_ZERO);
 		if (*q == NULL)
 			goto fail;
-		memset(*q, 0, sizeof(**q));
 		(*q)->next = NULL;
 
 		(*q)->saidx.proto = p->saidx.proto;
