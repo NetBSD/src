@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.49 2011/06/05 23:09:51 spz Exp $
+# $NetBSD: ad.mips64el,v 1.50 2011/06/06 16:16:00 njoly Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -349,7 +349,7 @@
 ./usr/lib/o32/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcrypto.so.6			base-compat-shlib	compat,pic,crypto
-./usr/lib/o32/libcrypto.so.6.1			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libcrypto.so.6.2			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdes.so.8			base-compat-shlib	compat,pic,crypto
@@ -509,7 +509,7 @@
 ./usr/lib/o32/libssh.so.16			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libssh.so.16.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libssl.so.8			base-compat-shlib	compat,pic,crypto
-./usr/lib/o32/libssl.so.8.1			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libssl.so.8.2			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libstdc++.so.7			base-compat-shlib	compat,pic,cxx
 ./usr/lib/o32/libstdc++.so.7.0			base-compat-shlib	compat,pic,cxx
 ./usr/lib/o32/libsupc++.so.0			base-compat-shlib	obsolete
