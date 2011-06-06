@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.79 2011/02/16 09:05:12 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.80 2011/06/06 17:49:41 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.79 2011/02/16 09:05:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.80 2011/06/06 17:49:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -850,12 +850,10 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 		if (sc->sc_zone.fanmin != ATZ_TMP_INVALID) {
 			*props |= PROP_WARNMIN;
 			limits->sel_warnmin = sc->sc_zone.fanmin;
-			sc->sc_fan_sensor.flags |= ENVSYS_FVALID_MIN;
 		}
 		if (sc->sc_zone.fanmax != ATZ_TMP_INVALID) {
 			*props |= PROP_WARNMAX;
 			limits->sel_warnmax = sc->sc_zone.fanmax;
-			sc->sc_fan_sensor.flags |= ENVSYS_FVALID_MAX;
 		}
 		break;
 	}
