@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.44 2011/05/28 02:20:13 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.45 2011/06/06 21:53:42 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1772,6 +1772,10 @@ MIPSX(kern_tlbi_odd):
 #ifdef MIPS3
 	nop
 	nop
+#endif
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+	_MFC0	k1, MIPS_COP_0_OSSCRATCH, 2	# get tlblock addr
+	INT_S	zero, 0(k1)			# clear lock
 #endif
 	eret
 
