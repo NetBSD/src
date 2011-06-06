@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.31 2010/12/20 21:11:24 joerg Exp $ */
+/* $NetBSD: asm.h,v 1.31.2.1 2011/06/06 09:04:44 jruoho Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -646,7 +646,7 @@ label:	ASCIZ msg;						\
 #ifdef _KERNEL
 
 #define	__KERNEL_SECTIONSTRING(_sec, _str)				\
-	.section _sec ; .asciz _str ; .text
+	.pushsection _sec ; .asciz _str ; .popsection
 
 #define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident, _s)
 #define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.copyright, _s)

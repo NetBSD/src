@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.93 2011/01/14 02:06:32 rmind Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.93.2.1 2011/06/06 09:06:53 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.93 2011/01/14 02:06:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.93.2.1 2011/06/06 09:06:53 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -129,7 +129,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	 * Set the registers to 0 except for:
 	 *	%o6: stack pointer, built in exec())
 	 *	%tstate: (retain icc and xcc and cwp bits)
-	 *	%g1: address of p->p_psstr (used by crt0)
+	 *	%g1: p->p_psstrp (used by crt0)
 	 *	%tpc,%tnpc: entry point of program
 	 */
 	tstate = ((PSTATE_USER32)<<TSTATE_PSTATE_SHIFT) 
@@ -146,7 +146,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	}
 	memset(tf, 0, sizeof *tf);
 	tf->tf_tstate = tstate;
-	tf->tf_global[1] = (u_int)(u_long)p->p_psstr;
+	tf->tf_global[1] = p->p_psstrp;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 
@@ -285,7 +285,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-	addr = (long)p->p_psstr - szsigcode;
+	addr = p->p_psstrp - szsigcode;
 	tf->tf_global[1] = (long)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
@@ -1227,6 +1227,8 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		tf->tf_out[6]    = (uint64_t)gr[_REG32_O6];
 		tf->tf_out[7]    = (uint64_t)gr[_REG32_O7];
 		/* %asi restored above; %fprs not yet supported. */
+
+		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_G7]);
 
 		/* XXX mcp->__gwins */
 	}

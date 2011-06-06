@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.15 2011/01/14 02:06:30 rmind Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.15.2.1 2011/06/06 09:06:30 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15 2011/01/14 02:06:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15.2.1 2011/06/06 09:06:30 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -54,6 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15 2011/01/14 02:06:30 rmind
 
 #include <powerpc/pcb.h>
 #include <powerpc/fpu.h>
+#if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
+#include <powerpc/altivec.h>
+#endif
 
 /*
  * Send a signal to process.
@@ -61,19 +64,17 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15 2011/01/14 02:06:30 rmind
 void
 sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct sigacts *ps = p->p_sigacts;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct sigacts * const ps = p->p_sigacts;
 	struct sigcontext *fp, frame;
-	struct trapframe *tf;
-	struct utrapframe *utf = &frame.sc_frame;
-	struct pcb *pcb;
+	struct trapframe * const tf = l->l_md.md_utf;
+	struct utrapframe * const utf = &frame.sc_frame;
 	int onstack, error;
 	int sig = ksi->ksi_signo;
 	u_long code = KSI_TRAPCODE(ksi);
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = trapframe(l);
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -85,28 +86,28 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 		fp = (struct sigcontext *)((char *)l->l_sigstk.ss_sp +
 						l->l_sigstk.ss_size);
 	else
-		fp = (struct sigcontext *)tf->fixreg[1];
-	fp = (struct sigcontext *)((uintptr_t)(fp - 1) & ~0xf);
+		fp = (struct sigcontext *)tf->tf_fixreg[1];
+	fp = (struct sigcontext *)((uintptr_t)(fp - 1) & -CALLFRAMELEN);
 
 	/* Save register context. */
-	memcpy(utf->fixreg, tf->fixreg, sizeof(utf->fixreg));
-	utf->lr   = tf->lr;
-	utf->cr   = tf->cr;
-	utf->xer  = tf->xer;
-	utf->ctr  = tf->ctr;
-	utf->srr0 = tf->srr0;
-	utf->srr1 = tf->srr1 & PSL_USERSRR1;
+	memcpy(utf->fixreg, tf->tf_fixreg, sizeof(utf->fixreg));
+	utf->lr   = tf->tf_lr;
+	utf->cr   = tf->tf_cr;
+	utf->xer  = tf->tf_xer;
+	utf->ctr  = tf->tf_ctr;
+	utf->srr0 = tf->tf_srr0;
+	utf->srr1 = tf->tf_srr1 & PSL_USERSRR1;
 
-	pcb = lwp_getpcb(l);
 #ifdef PPC_HAVE_FPU
+	const struct pcb * const pcb = lwp_getpcb(l);
 	utf->srr1 |= pcb->pcb_flags & (PCB_FE0|PCB_FE1);
 #endif
-#ifdef ALTIVEC
-	utf->srr1 |= pcb->pcb_flags & PCB_ALTIVEC ? PSL_VEC : 0;
+#if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
+	utf->srr1 |= vec_used_p(l) ? PSL_VEC : 0;
 #endif
 #ifdef PPC_OEA
-	utf->vrsave = tf->tf_xtra[TF_VRSAVE];
-	utf->mq = tf->tf_xtra[TF_MQ];
+	utf->vrsave = tf->tf_vrsave;
+	utf->mq = tf->tf_mq;
 #endif
 
 	/* Save signal stack. */
@@ -145,22 +146,22 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 #if 1 /* COMPAT_16 */
 	case 0:		/* legacy on-stack sigtramp */
-		tf->fixreg[1] = (register_t)fp;
-		tf->lr = (register_t)catcher;
-		tf->fixreg[3] = (register_t)sig;
-		tf->fixreg[4] = (register_t)code;
-		tf->fixreg[5] = (register_t)fp;
-		tf->srr0 = (register_t)p->p_sigctx.ps_sigcode;
+		tf->tf_fixreg[1] = (register_t)fp;
+		tf->tf_lr = (register_t)catcher;
+		tf->tf_fixreg[3] = (register_t)sig;
+		tf->tf_fixreg[4] = (register_t)code;
+		tf->tf_fixreg[5] = (register_t)fp;
+		tf->tf_srr0 = (register_t)p->p_sigctx.ps_sigcode;
 		break;
 #endif /* COMPAT_16 */
 
 	case 1:
-		tf->fixreg[1] = (register_t)fp;
-		tf->lr = (register_t)catcher;
-		tf->fixreg[3] = (register_t)sig;
-		tf->fixreg[4] = (register_t)code;
-		tf->fixreg[5] = (register_t)fp;
-		tf->srr0 = (register_t)ps->sa_sigdesc[sig].sd_tramp;
+		tf->tf_fixreg[1] = (register_t)fp;
+		tf->tf_lr = (register_t)catcher;
+		tf->tf_fixreg[3] = (register_t)sig;
+		tf->tf_fixreg[4] = (register_t)code;
+		tf->tf_fixreg[5] = (register_t)fp;
+		tf->tf_srr0 = (register_t)ps->sa_sigdesc[sig].sd_tramp;
 		break;
 
 	default:
@@ -183,10 +184,8 @@ compat_16_sys___sigreturn14(struct lwp *l,
 	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */
-	struct proc *p = l->l_proc;
+	struct proc * const p = l->l_proc;
 	struct sigcontext sc;
-	struct trapframe *tf;
-	struct pcb *pcb;
 	struct utrapframe * const utf = &sc.sc_frame;
 	int error;
 
@@ -199,7 +198,7 @@ compat_16_sys___sigreturn14(struct lwp *l,
 		return (error);
 
 	/* Restore the register context. */
-	tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 
 	/*
 	 * Make sure SRR1 hasn't been maliciously tampered with.
@@ -208,22 +207,22 @@ compat_16_sys___sigreturn14(struct lwp *l,
 		return (EINVAL);
 
 	/* Restore register context. */
-	memcpy(tf->fixreg, utf->fixreg, sizeof(tf->fixreg));
-	tf->lr   = utf->lr;
-	tf->cr   = utf->cr;
-	tf->xer  = utf->xer;
-	tf->ctr  = utf->ctr;
-	tf->srr0 = utf->srr0;
-	tf->srr1 = utf->srr1;
+	memcpy(tf->tf_fixreg, utf->fixreg, sizeof(tf->tf_fixreg));
+	tf->tf_lr   = utf->lr;
+	tf->tf_cr   = utf->cr;
+	tf->tf_xer  = utf->xer;
+	tf->tf_ctr  = utf->ctr;
+	tf->tf_srr0 = utf->srr0;
+	tf->tf_srr1 = utf->srr1;
 
-	pcb = lwp_getpcb(l);
 #ifdef PPC_HAVE_FPU
+	struct pcb * const pcb = lwp_getpcb(l);
 	pcb->pcb_flags &= ~(PCB_FE0|PCB_FE1);
 	pcb->pcb_flags |= utf->srr1 & (PCB_FE0|PCB_FE1);
 #endif
 #ifdef PPC_OEA
-	tf->tf_xtra[TF_VRSAVE] = utf->vrsave;
-	tf->tf_xtra[TF_MQ] = utf->mq;
+	tf->tf_vrsave = utf->vrsave;
+	tf->tf_mq = utf->mq;
 #endif
 
 	mutex_enter(p->p_lock);

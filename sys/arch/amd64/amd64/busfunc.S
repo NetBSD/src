@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.9 2010/05/05 16:53:57 dyoung Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.9.2.1 2011/06/06 09:04:46 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ ENTRY(bus_space_read_multi_1)
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
 	rep
-	insb	(%dx), %es:(%rdi)
+	insb	%dx, %es:(%rdi)
 	ret
 	.align	16
 1:
@@ -192,7 +192,7 @@ ENTRY(bus_space_read_multi_2)
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
 	rep
-	insw	(%dx), %es:(%rdi)
+	insw	%dx, %es:(%rdi)
 	ret
 	.align	16
 1:
@@ -214,7 +214,7 @@ ENTRY(bus_space_read_multi_4)
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
 	rep
-	insl	(%dx), %es:(%rdi)
+	insl	%dx, %es:(%rdi)
 	ret
 	.align	16
 1:
@@ -258,7 +258,7 @@ ENTRY(bus_space_write_multi_1)
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
 	rep
-	outsb	%ds:(%rsi), (%dx)
+	outsb	%ds:(%rsi), %dx
 	ret
 	.align	16
 1:
@@ -280,7 +280,7 @@ ENTRY(bus_space_write_multi_2)
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
 	rep
-	outsw	%ds:(%rsi), (%dx)
+	outsw	%ds:(%rsi), %dx
 	ret
 	.align	16
 1:
@@ -302,7 +302,7 @@ ENTRY(bus_space_write_multi_4)
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
 	rep
-	outsl	%ds:(%rsi), (%dx)
+	outsl	%ds:(%rsi), %dx
 	ret
 	.align	16
 1:

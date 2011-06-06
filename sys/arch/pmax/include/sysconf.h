@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.13 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.13.6.1 2011/06/06 09:06:23 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -67,9 +67,9 @@ struct platform {
 	 */
 	void	(*bus_reset)(void);
 	void	(*cons_init)(void);
-	void	(*iointr)(unsigned, unsigned, unsigned, unsigned);
-	void	(*intr_establish)(struct device *, void *, int,
-		    int (*)(void *), void *);
+	void	(*iointr)(uint32_t, vaddr_t, uint32_t);
+	void	(*intr_establish)(device_t, void *, int, int (*)(void *),
+		    void *);
 	int	(*memsize)(void *);
 	void	(*tc_init)(void);
 };
@@ -86,8 +86,8 @@ struct sysinit {
 #define	sys_init(fn, opt)	{ fn, opt }
 
 extern struct platform platform;
-extern struct sysinit sysinit[];
-extern int nsysinit;
+extern const struct sysinit sysinit[];
+extern const int nsysinit;
 
 int	memsize_scan(void *);
 int	memsize_bitmap(void *);

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.77 2010/11/23 11:13:55 hannken Exp $
+#	$NetBSD: INSTALL,v 1.77.2.1 2011/06/06 09:05:11 jruoho Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -49,7 +49,8 @@ file-system	KERNFS		# /kern
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental

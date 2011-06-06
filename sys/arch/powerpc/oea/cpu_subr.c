@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.59 2010/11/06 11:46:01 uebayasi Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.59.2.1 2011/06/06 09:06:29 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.59 2010/11/06 11:46:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.59.2.1 2011/06/06 09:06:29 jruoho Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.59 2010/11/06 11:46:01 uebayasi Exp $
 
 #include <uvm/uvm.h>
 
+#include <powerpc/pcb.h>
 #include <powerpc/spr.h>
 #include <powerpc/oea/hid.h>
 #include <powerpc/oea/hid_601.h>
@@ -210,6 +211,7 @@ static const struct cputab models[] = {
 	{ "620",	MPC620,  	REVFMT_HEX },
 	{ "750",	MPC750,		REVFMT_MAJMIN },
 	{ "750FX",	IBM750FX,	REVFMT_MAJMIN },
+	{ "750GX",	IBM750GX,	REVFMT_MAJMIN },
 	{ "7400",	MPC7400,	REVFMT_MAJMIN },
 	{ "7410",	MPC7410,	REVFMT_MAJMIN },
 	{ "7450",	MPC7450,	REVFMT_MAJMIN },
@@ -227,7 +229,11 @@ static const struct cputab models[] = {
 };
 
 #ifdef MULTIPROCESSOR
-struct cpu_info cpu_info[CPU_MAXNUM] = { { .ci_curlwp = &lwp0, }, }; 
+struct cpu_info cpu_info[CPU_MAXNUM] = {
+    [0] = {
+	.ci_curlwp = &lwp0,
+    },
+};
 volatile struct cpu_hatch_data *cpu_hatch_data;
 volatile int cpu_hatch_stack;
 extern int ticks_per_intr;
@@ -236,7 +242,11 @@ extern int ticks_per_intr;
 #include <arch/powerpc/pic/ipivar.h>
 extern struct bat battable[];
 #else
-struct cpu_info cpu_info[1] = { { .ci_curlwp = &lwp0, }, }; 
+struct cpu_info cpu_info[1] = {
+    [0] = {
+	.ci_curlwp = &lwp0,
+    },
+};
 #endif /*MULTIPROCESSOR*/
 
 int cpu_altivec;
@@ -264,6 +274,9 @@ cpu_model_init(void)
 
 	else if (MPC745X_P(vers) && vers != MPC7450)
 		oeacpufeat |= OEACPU_XBSEN | OEACPU_HIGHBAT | OEACPU_HIGHSPRG;
+
+	else if (vers == IBM750FX || vers == IBM750GX)
+		oeacpufeat |= OEACPU_HIGHBAT;
 }
 
 void
@@ -311,6 +324,7 @@ cpu_probe_cache(void)
 	switch (vers) {
 #define	K	*1024
 	case IBM750FX:
+	case IBM750GX:
 	case MPC601:
 	case MPC750:
 	case MPC7400:
@@ -375,7 +389,7 @@ cpu_probe_cache(void)
 }
 
 struct cpu_info *
-cpu_attach_common(struct device *self, int id)
+cpu_attach_common(device_t self, int id)
 {
 	struct cpu_info *ci;
 	u_int pvr, vers;
@@ -395,7 +409,7 @@ cpu_attach_common(struct device *self, int id)
 #endif
 
 	ci->ci_cpuid = id;
-	ci->ci_intrdepth = -1;
+	ci->ci_idepth = -1;
 	ci->ci_dev = self;
 	ci->ci_idlespin = cpu_idlespin;
 
@@ -438,7 +452,7 @@ cpu_attach_common(struct device *self, int id)
 }
 
 void
-cpu_setup(struct device *self, struct cpu_info *ci)
+cpu_setup(device_t self, struct cpu_info *ci)
 {
 	u_int hid0, hid0_save, pvr, vers;
 	const char *bitmask;
@@ -488,6 +502,7 @@ cpu_setup(struct device *self, struct cpu_info *ci)
 
 	case MPC750:
 	case IBM750FX:
+	case IBM750GX:
 		/* Select NAP mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_NAP | HID0_DPM;
@@ -527,6 +542,7 @@ cpu_setup(struct device *self, struct cpu_info *ci)
 #ifdef NAPMODE
 	switch (vers) {
 	case IBM750FX:
+	case IBM750GX:
 	case MPC750:
 	case MPC7400:
 		/* Select NAP mode. */
@@ -538,6 +554,7 @@ cpu_setup(struct device *self, struct cpu_info *ci)
 
 	switch (vers) {
 	case IBM750FX:
+	case IBM750GX:
 	case MPC750:
 		hid0 &= ~HID0_DBP;		/* XXX correct? */
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
@@ -590,6 +607,7 @@ cpu_setup(struct device *self, struct cpu_info *ci)
 	case MPC604ev:
 	case MPC750:
 	case IBM750FX:
+	case IBM750GX:
 	case MPC7400:
 	case MPC7410:
 	case MPC7447A:
@@ -608,6 +626,7 @@ cpu_setup(struct device *self, struct cpu_info *ci)
 			cpu_config_l3cr(vers);
 			break;
 		case IBM750FX:
+		case IBM750GX:
 		case MPC750:
 		case MPC7400:
 		case MPC7410:
@@ -629,7 +648,7 @@ cpu_setup(struct device *self, struct cpu_info *ci)
 	 * XXX supported by Motorola and may return values that are off by 
 	 * XXX 35-55 degrees C.
 	 */
-	if (vers == MPC750 || vers == IBM750FX)
+	if (vers == MPC750 || vers == IBM750FX || vers == IBM750GX)
 		cpu_tau_setup(ci);
 #endif
 
@@ -889,6 +908,7 @@ cpu_config_l2cr(int pvr)
 
 	switch (vers) {
 	case IBM750FX:
+	case IBM750GX:
 		cpu_fmttab_print(cpu_ibm750_l2cr_formats, l2cr);
 		break;
 	case MPC750:
@@ -1166,35 +1186,16 @@ cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 extern volatile u_int cpu_spinstart_ack;
 
 int
-cpu_spinup(struct device *self, struct cpu_info *ci)
+cpu_spinup(device_t self, struct cpu_info *ci)
 {
 	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
 	struct pglist mlist;
 	int i, error, pvr, vers;
-	char *cp, *hp;
+	char *hp;
 
 	pvr = mfpvr();
 	vers = pvr >> 16;
 	KASSERT(ci != curcpu());
-
-	/*
-	 * Allocate some contiguous pages for the intteup PCB and stack
-	 * from the lowest 256MB (because bat0 always maps it va == pa).
-	 * Must be 16 byte aligned.
-	 */
-	error = uvm_pglistalloc(INTSTK, 0x10000, 0x10000000, 16, 0,
-	    &mlist, 1, 1);
-	if (error) {
-		aprint_error(": unable to allocate idle stack\n");
-		return -1;
-	}
-
-	KASSERT(ci != &cpu_info[0]);
-
-	cp = (void *)VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
-	memset(cp, 0, INTSTK);
-
-	ci->ci_intstk = cp;
 
 	/* Now allocate a hatch stack */
 	error = uvm_pglistalloc(0x1000, 0x10000, 0x10000000, 16, 0,

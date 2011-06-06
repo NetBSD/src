@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_oioc.c,v 1.3 2011/01/10 13:29:29 tsutsui Exp $	*/
+/*	$NetBSD: if_le_oioc.c,v 1.3.2.1 2011/06/06 09:06:40 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_oioc.c,v 1.3 2011/01/10 13:29:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_oioc.c,v 1.3.2.1 2011/06/06 09:06:40 jruoho Exp $");
 
 #include "opt_inet.h"
 
@@ -150,8 +150,6 @@ le_match(device_t parent, cfdata_t cf, void *aux)
 void
 le_attach(device_t parent, device_t self, void *aux)
 {
-	extern paddr_t avail_start, avail_end;
-
 	struct le_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct oioc_attach_args *oa = aux;
@@ -164,7 +162,7 @@ le_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	lesc->sc_st = oa->oa_st;
 
-	enaddrstr = ARCBIOS->GetEnvironmentVariable("eaddr");
+	enaddrstr = arcbios_GetEnvironmentVariable("eaddr");
 	if (enaddrstr == NULL) {
 		aprint_error(": failed to obtain MAC address\n");
 		return;
@@ -190,7 +188,7 @@ le_attach(device_t parent, device_t self, void *aux)
 
 	/* Allocate a contiguous chunk of physical memory for the le buffer. */
 	error = uvm_pglistalloc(OIOC_LANCE_NPAGES * PAGE_SIZE,
-	    avail_start, avail_end, PAGE_SIZE, 0, &mlist, 1, 0);
+	    mips_avail_start, mips_avail_end, PAGE_SIZE, 0, &mlist, 1, 0);
 	if (error) {
 		aprint_error(": failed to allocate ioc<->lance buffer space, "
 		    "error = %d\n", error);

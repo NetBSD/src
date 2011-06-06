@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.4 2009/05/18 11:39:30 nakayama Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.4.6.1 2011/06/06 09:06:48 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,7 +58,8 @@ int OF_seek(u_int handle, uint64_t pos);
 void*	OF_claim(void *, u_int, u_int);
 void	OF_release(void *, u_int);
 int	OF_milliseconds(void);
-void	OF_chain(void *, u_int, void (*)(), void *, u_int);
+void	OF_chain(void *, u_int,
+	    void (*)(int, int, int (*)(void *), void *, u_int), void *, u_int);
 int	OF_peer(int);
 int	OF_child(int);
 vaddr_t	OF_claim_virt(vaddr_t, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.35 2010/11/30 10:43:04 dholland Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.35.2.1 2011/06/06 09:09:23 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.35 2010/11/30 10:43:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.35.2.1 2011/06/06 09:09:23 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,9 +85,15 @@ sysvbfs_lookup(void *arg)
 	*a->a_vpp = NULL;
 
 	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
+
 	if ((error = VOP_ACCESS(a->a_dvp, VEXEC, cnp->cn_cred)) != 0) {
 		return error;	/* directory permission. */
 	}
+
+	/* Deny last component write operation on a read-only mount */
+	if ((cnp->cn_flags & ISLASTCN) && (v->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return EROFS;
 
 	if (namelen == 1 && name[0] == '.') {	/* "." */
 		vref(v);
@@ -638,7 +644,6 @@ sysvbfs_reclaim(void *v)
 	mutex_enter(&mntvnode_lock);
 	LIST_REMOVE(bnode, link);
 	mutex_exit(&mntvnode_lock);
-	cache_purge(vp);
 	genfs_node_destroy(vp);
 	pool_put(&sysvbfs_node_pool, bnode);
 	vp->v_data = NULL;
@@ -804,11 +809,8 @@ sysvbfs_fsync(void *v)
 	}
 
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
-	vflushbuf(vp, wait);
-
-	if ((ap->a_flags & FSYNC_DATAONLY) != 0)
-		error = 0;
-	else
+	error = vflushbuf(vp, wait);
+	if (error == 0 && (ap->a_flags & FSYNC_DATAONLY) == 0)
 		error = sysvbfs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 
 	return error;

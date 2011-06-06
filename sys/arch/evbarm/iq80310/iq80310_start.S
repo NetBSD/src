@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_start.S,v 1.4 2002/10/14 22:32:53 bjh21 Exp $	*/
+/*	$NetBSD: iq80310_start.S,v 1.4.140.1 2011/06/06 09:05:26 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -37,7 +37,9 @@
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pte.h>
+#include "assym.h"
+
+RCSID("$NetBSD: iq80310_start.S,v 1.4.140.1 2011/06/06 09:05:26 jruoho Exp $")
 
 	.section .start,"ax",%progbits
 
@@ -78,7 +80,7 @@ _C_LABEL(iq80310_start):
 	adr	r0, Ltable
 	ldr	r0, [r0]			/* r0 = &l1table */
 
-	mov	r3, #(L1_S_AP(AP_KRW))
+	mov	r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
 	mov	r2, #0x100000			/* advance by 1MB */
 	mov	r1, #0x1000			/* 4096MB */
@@ -94,7 +96,7 @@ _C_LABEL(iq80310_start):
 	adr	r0, Ltable			/* r0 = &l1table */
 	ldr	r0, [r0]
 
-	mov	r3, #(L1_S_AP(AP_KRW))
+	mov	r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
 	orr	r3, r3, #0xa0000000
 	add	r0, r0, #(0xc00 * 4)		/* offset to 0xc00xxxxx */

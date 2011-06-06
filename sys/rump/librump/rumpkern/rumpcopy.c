@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.16 2011/01/13 15:38:29 pooka Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.16.2.1 2011/06/06 09:10:08 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.16 2011/01/13 15:38:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.16.2.1 2011/06/06 09:10:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -205,4 +205,20 @@ uvm_io(struct vm_map *vm, struct uio *uio)
 	}
 
 	return error;
+}
+
+/*
+ * Copy one byte from userspace to kernel.
+ */
+int
+fubyte(const void *base)
+{
+	unsigned char val;
+	int error;
+
+	error = copyin(base, &val, sizeof(char));
+	if (error != 0)
+		return -1;
+
+	return (int)val;
 }

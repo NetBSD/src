@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.22 2010/03/22 02:14:28 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.22.2.1 2011/06/06 09:06:28 jruoho Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,7 +45,11 @@
 
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)
+ * For userland regardless of port, force MACHINE to be "powerpc"
  */
+#ifndef _KERNEL
+#undef MACHINE
+#endif
 #ifndef MACHINE
 #define	MACHINE		"powerpc"
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.108 2010/12/24 12:41:43 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.108.2.1 2011/06/06 09:10:10 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -344,7 +344,12 @@ typedef struct {
 #define	PT_NUM		8
 
 #define	PT_LOOS         0x60000000	/* OS-specific range */
-#define	PT_GNU_EH_FRAME	0x6474e550	/* GNU-specific EH frame segment */
+
+/* GNU-specific */
+#define	PT_GNU_EH_FRAME	0x6474e550	/* EH frame segment */
+#define	PT_GNU_STACK	0x6474e551	/* Indicate executable stack */
+#define	PT_GNU_RELRO	0x6474e552      /* Make read-only after relocation */
+
 #define	PT_HIOS         0x6fffffff
 #define	PT_LOPROC	0x70000000	/* Processor-specific range */
 #define	PT_HIPROC	0x7fffffff
@@ -571,7 +576,7 @@ typedef struct {
 } Elf32_Move;
 
 #define	ELF32_M_SYM(info)	((info) >> 8)
-#define	ELF32_M_SIZE(info)	(info) & 0xff)
+#define	ELF32_M_SIZE(info)	((info) & 0xff)
 #define	ELF32_M_INFO(sym, size)	(((sym) << 8) + (unsigned char)(size))
 
 typedef struct {
@@ -583,7 +588,7 @@ typedef struct {
 } Elf64_Move;
 
 #define	ELF64_M_SYM(info)	((info) >> 8)
-#define	ELF64_M_SIZE(info)	(info) & 0xff)
+#define	ELF64_M_SIZE(info)	((info) & 0xff)
 #define	ELF64_M_INFO(sym, size)	(((sym) << 8) + (unsigned char)(size))
 
 /*
@@ -966,7 +971,7 @@ typedef struct {
 #define	VER_NEED_CURRENT	1
 
 /*
- * GNU Extension hidding symb
+ * GNU Extension hidding symbol
  */
 #define	VERSYM_HIDDEN		0x8000
 #define	VERSYM_VERSION		0x7fff
@@ -1060,6 +1065,8 @@ struct elf_args {
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
 #endif
+
+struct ps_strings;
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds(struct lwp *, struct exec_package *);

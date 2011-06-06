@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.37 2009/08/02 11:20:37 gavan Exp $	*/
+/*	$NetBSD: boot32.c,v 1.37.6.1 2011/06/06 09:04:41 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -130,9 +130,6 @@ u_long	 scratch_virtualbase, scratch_physicalbase;
 /* bootprogram identifiers */
 extern const char bootprog_rev[];
 extern const char bootprog_name[];
-extern const char bootprog_date[];
-extern const char bootprog_maker[];
-
 
 /* predefines / prototypes */
 void	 init_datastructures(void);
@@ -774,7 +771,6 @@ main(int argc, char **argv)
 
 	printf("\n\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 	printf(">> Booting NetBSD/acorn32 on a RiscPC/A7000/NC\n");
 	printf("\n");
 

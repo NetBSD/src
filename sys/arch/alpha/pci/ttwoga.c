@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.11 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: ttwoga.c,v 1.11.28.1 2011/06/06 09:04:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.11 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.11.28.1 2011/06/06 09:04:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ ttwopciattach(struct device *parent, struct device *self, void *aux)
 	npba.pba_pc = &tcp->tc_pc;
 	npba.pba_bus = 0;
 	npba.pba_bridgetag = NULL;
-	npba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	npba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 
 	/*
 	 * Hose 0 has the STDIO module.

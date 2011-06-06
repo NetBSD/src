@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.25 2009/09/19 11:58:06 tsutsui Exp $	*/
+/*	$NetBSD: spif.c,v 1.25.6.1 2011/06/06 09:08:36 jruoho Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.25 2009/09/19 11:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.25.6.1 2011/06/06 09:08:36 jruoho Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -288,7 +288,7 @@ stty_attach(device_t parent, device_t dev, void *aux)
 
 		DTR_WRITE(sc, port, 0);
 
-		tp = ttymalloc();
+		tp = tty_alloc();
 
 		tp->t_oproc = stty_start;
 		tp->t_param = stty_param;

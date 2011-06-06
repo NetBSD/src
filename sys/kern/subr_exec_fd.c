@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.4 2010/11/19 06:44:43 dholland Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.4.2.1 2011/06/06 09:09:34 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -26,12 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * File descriptor related subroutines for exec.
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.4 2010/11/19 06:44:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.4.2.1 2011/06/06 09:09:34 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -40,12 +36,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.4 2010/11/19 06:44:43 dholland Ex
 #include <sys/namei.h>
 #include <sys/syslog.h>
 #include <sys/vnode.h>
+#include <sys/ktrace.h>
 
-/*
- * Close open files on exec.
- */
 void
-fd_closeexec(void)
+fd_ktrexecfd(void)
 {
 	proc_t *p;
 	filedesc_t *fdp;
@@ -57,23 +51,6 @@ fd_closeexec(void)
 	l = curlwp;
 	p = l->l_proc;
 	fdp = p->p_fd;
-
-	cwdunshare(p);
-
-	if (p->p_cwdi->cwdi_edir) {
-		vrele(p->p_cwdi->cwdi_edir);
-	}
-
-	if (fdp->fd_refcnt > 1) {
-		fdp = fd_copy();
-		fd_free();
-		p->p_fd = fdp;
-		l->l_fd = fdp;
-	}
-	if (!fdp->fd_exclose) {
-		return;
-	}
-	fdp->fd_exclose = false;
 	dt = fdp->fd_dt;
 
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
@@ -85,16 +62,7 @@ fd_closeexec(void)
 		    ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
 		if (ff->ff_file == NULL)
 			continue;
-		if (ff->ff_exclose) {
-			/*
-			 * We need a reference to close the file.
-			 * No other threads can see the fdfile_t at
-			 * this point, so don't bother locking.
-			 */
-			KASSERT((ff->ff_refcnt & FR_CLOSING) == 0);
-			ff->ff_refcnt++;
-			fd_close(fd);
-		}
+		ktr_execfd(fd, ff->ff_file->f_type);
 	}
 }
 

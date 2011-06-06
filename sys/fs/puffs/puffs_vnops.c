@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.150 2011/01/11 14:04:54 kefren Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.150.2.1 2011/06/06 09:09:23 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.150 2011/01/11 14:04:54 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.150.2.1 2011/06/06 09:09:23 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -125,7 +125,7 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_getpages_desc, puffs_vnop_checkop },	/* getpages */
         { &vop_putpages_desc, genfs_putpages },		/* REAL putpages */
         { &vop_pathconf_desc, puffs_vnop_checkop },	/* pathconf */
-        { &vop_advlock_desc, puffs_vnop_advlock },	/* REAL advlock */
+        { &vop_advlock_desc, puffs_vnop_advlock },	/* advlock */
         { &vop_strategy_desc, puffs_vnop_strategy },	/* REAL strategy */
         { &vop_revoke_desc, genfs_revoke },		/* REAL revoke */
         { &vop_abortop_desc, puffs_vnop_abortop },	/* REAL abortop */
@@ -1104,13 +1104,12 @@ puffs_vnop_reclaim(void *v)
 	mutex_enter(&pmp->pmp_lock);
 	LIST_REMOVE(pnode, pn_hashent);
 	mutex_exit(&pmp->pmp_lock);
-	if (PUFFS_USE_NAMECACHE(pmp))
-		cache_purge(vp);
 
 	if (notifyserver)
 		callreclaim(MPTOPUFFSMP(vp->v_mount), VPTOPNC(vp));
 
 	puffs_putvnode(vp);
+	vp->v_data = NULL;
 
 	return 0;
 }
@@ -2108,10 +2107,28 @@ puffs_vnop_advlock(void *v)
 		struct flock *a_fl;
 		int a_flags;
 	} */ *ap = v;
+	PUFFS_MSG_VARS(vn, advlock);
 	struct vnode *vp = ap->a_vp;
 	struct puffs_node *pn = VPTOPP(vp);
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	int error;
 
-	return lf_advlock(ap, &pn->pn_lockf, vp->v_size);
+	if (!EXISTSOP(pmp, ADVLOCK))
+		return lf_advlock(ap, &pn->pn_lockf, vp->v_size); 
+	
+	PUFFS_MSG_ALLOC(vn, advlock);
+	(void)memcpy(&advlock_msg->pvnr_fl, ap->a_fl, 
+		     sizeof(advlock_msg->pvnr_fl));
+	advlock_msg->pvnr_id = ap->a_id;
+	advlock_msg->pvnr_op = ap->a_op;
+	advlock_msg->pvnr_flags = ap->a_flags;
+	puffs_msg_setinfo(park_advlock, PUFFSOP_VN,
+	    PUFFS_VN_ADVLOCK, VPTOPNC(vp));
+	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_advlock, vp->v_data, NULL, error);
+	error = checkerr(pmp, error, __func__);
+	PUFFS_MSG_RELEASE(advlock);
+
+	return error;
 }
 
 int

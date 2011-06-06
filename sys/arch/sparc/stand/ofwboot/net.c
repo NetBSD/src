@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.5 2009/05/07 00:01:31 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.5.6.1 2011/06/06 09:06:48 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -60,10 +60,14 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
+#include <lib/libsa/bootp.h>
+#include <lib/libsa/bootparam.h>
+#include <lib/libsa/nfs.h>
 
 #include <lib/libkern/libkern.h>
 
 #include "ofdev.h"
+#include "net.h"
 
 
 static int net_mountroot_bootparams(void);
@@ -114,6 +118,7 @@ net_close(struct of_dev *op)
 			netif_close(netdev_sock);
 			netdev_sock = -1;
 		}
+	return 0;
 }
 
 static void
@@ -176,14 +181,13 @@ net_mountroot_bootp(void)
 }
 
 int
-net_tftp_bootp(int **sock)
+net_tftp_bootp(struct of_dev *op)
 {
 
 	net_mountroot_bootp();
 	if (myip.s_addr == 0)
 		return(ENOENT);
 
-	*sock = &netdev_sock;
 	return (0);
 }
 

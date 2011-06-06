@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.48 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: kd.c,v 1.48.28.1 2011/06/06 09:06:45 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.48 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.48.28.1 2011/06/06 09:06:45 jruoho Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -123,7 +123,7 @@ kd_init(struct kd_softc *kd)
 {
 	struct tty *tp;
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	callout_setfunc(&tp->t_rstrt_ch, kd_later, tp);
 	tp->t_oproc = kdstart;
 	tp->t_param = kdparam;

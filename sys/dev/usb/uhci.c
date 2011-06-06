@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.235 2010/11/13 13:52:12 uebayasi Exp $	*/
+/*	$NetBSD: uhci.c,v 1.235.2.1 2011/06/06 09:08:42 jruoho Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.235 2010/11/13 13:52:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.235.2.1 2011/06/06 09:08:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2175,6 +2175,8 @@ uhci_device_bulk_close(usbd_pipe_handle pipe)
 	uhci_softc_t *sc = dev->bus->hci_private;
 
 	uhci_free_sqh(sc, upipe->u.bulk.sqh);
+
+	pipe->endpoint->datatoggle = upipe->nexttoggle;
 }
 
 usbd_status
@@ -3183,7 +3185,8 @@ uhci_open(usbd_pipe_handle pipe)
 		     ed->bEndpointAddress, sc->sc_addr));
 
 	upipe->aborting = 0;
-	upipe->nexttoggle = 0;
+	/* toggle state needed for bulk endpoints */
+	upipe->nexttoggle = pipe->endpoint->datatoggle;
 
 	if (pipe->device->address == sc->sc_addr) {
 		switch (ed->bEndpointAddress) {

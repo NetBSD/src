@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.24 2010/12/06 09:03:40 haad Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.24.2.1 2011/06/06 09:07:47 jruoho Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -915,7 +915,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		prop_dictionary_set_int32(target_dict, DM_TABLE_STAT,
 		    dmv->table_head.cur_active_table);
 
-		if (flags |= DM_STATUS_TABLE_FLAG) {
+		if (flags & DM_STATUS_TABLE_FLAG) {
 			params = table_en->target->status
 			    (table_en->target_config);
 

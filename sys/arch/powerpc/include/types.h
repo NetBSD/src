@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.36 2010/12/22 01:03:03 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.36.2.1 2011/06/06 09:06:28 jruoho Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -67,16 +67,26 @@ typedef struct label_t {
 #endif
 
 typedef volatile int __cpu_simple_lock_t;
+typedef volatile __uint32_t __cpuset_t;
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0
 
 #define __HAVE_CPU_COUNTER
 #define __HAVE_SYSCALL_INTERN
-#define __HAVE_CPU_LWP_SETPRIVATE
 #define	__HAVE_CPU_DATA_FIRST
 #ifdef _LP64
 #define	__HAVE_ATOMIC64_OPS
+#endif
+#define	__HAVE_COMMON___TLS_GET_ADDR
+#define	__HAVE___LWP_GETTCB_FAST
+#define	__HAVE___LWP_SETTCB
+#define	__HAVE_TLS_VARIANT_I
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
+#define	PCU_FPU		0	/* FPU */
+#define	PCU_VEC		1	/* AltiVec/SPE */
+#define	PCU_UNIT_COUNT	2
 #endif
 
 #endif	/* _MACHTYPES_H_ */

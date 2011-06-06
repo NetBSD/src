@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.92 2010/12/20 18:49:12 phx Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.92.2.1 2011/06/06 09:08:45 jruoho Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -46,6 +46,7 @@ struct usbd_pipe;
 struct usbd_endpoint {
 	usb_endpoint_descriptor_t *edesc;
 	int			refcnt;
+	int datatoggle;
 };
 
 struct usbd_bus_methods {

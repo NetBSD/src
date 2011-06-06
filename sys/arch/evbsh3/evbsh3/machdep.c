@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 2010/12/20 00:25:32 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72.2.1 2011/06/06 09:05:33 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2010/12/20 00:25:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72.2.1 2011/06/06 09:05:33 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2010/12/20 00:25:32 matt Exp $");
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/pcb.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>

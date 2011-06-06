@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.7 2010/10/07 12:06:09 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.7.2.1 2011/06/06 09:05:06 jruoho Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.7 2010/10/07 12:06:09 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.7.2.1 2011/06/06 09:05:06 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -812,9 +812,6 @@ pxamci_intr(void *arg)
 		DPRINTF(9, ("%s: handling MMC_I_DAT_ERR\n",
 		    device_xname(sc->sc_dev)));
 		sc->sc_cmd->c_error = EIO;
-		pxamci_intr_done(sc);
-		pxamci_disable_intr(sc, MMC_I_DAT_ERR);
-		CLR(status, MMC_I_DAT_ERR);
 		if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)
 		 && DMA_ALIGNED(sc->sc_cmd->c_data)) {
 			if (ISSET(sc->sc_cmd->c_flags, SCF_CMD_READ)) {
@@ -823,6 +820,9 @@ pxamci_intr(void *arg)
 				pxa2x0_dmac_abort_xfer(sc->sc_txdx);
 			}
 		}
+		pxamci_intr_done(sc);
+		pxamci_disable_intr(sc, MMC_I_DAT_ERR);
+		CLR(status, MMC_I_DAT_ERR);
 		/* ignore transmission done condition */
 		if (ISSET(status, MMC_I_DATA_TRAN_DONE)) {
 			pxamci_disable_intr(sc, MMC_I_DATA_TRAN_DONE);

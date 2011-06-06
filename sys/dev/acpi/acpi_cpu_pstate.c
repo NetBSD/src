@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.36 2010/12/30 12:05:02 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.36.2.1 2011/06/06 09:07:41 jruoho Exp $ */
 
 /*-
- * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
+ * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,12 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.36 2010/12/30 12:05:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.36.2.1 2011/06/06 09:07:41 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/evcnt.h>
 #include <sys/kmem.h>
 #include <sys/once.h>
+#include <sys/xcall.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -41,9 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.36 2010/12/30 12:05:02 jruoho 
 #define _COMPONENT	 ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	 ("acpi_cpu_pstate")
 
-static void		 acpicpu_pstate_attach_print(struct acpicpu_softc *);
-static void		 acpicpu_pstate_attach_evcnt(struct acpicpu_softc *);
-static void		 acpicpu_pstate_detach_evcnt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_pstate_pss(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_pstate_pss_add(struct acpicpu_pstate *,
 						ACPI_OBJECT *);
@@ -51,13 +48,15 @@ static ACPI_STATUS	 acpicpu_pstate_xpss(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_pstate_xpss_add(struct acpicpu_pstate *,
 						 ACPI_OBJECT *);
 static ACPI_STATUS	 acpicpu_pstate_pct(struct acpicpu_softc *);
+static ACPI_STATUS	 acpicpu_pstate_dep(struct acpicpu_softc *);
 static int		 acpicpu_pstate_max(struct acpicpu_softc *);
 static int		 acpicpu_pstate_min(struct acpicpu_softc *);
 static void		 acpicpu_pstate_change(struct acpicpu_softc *);
 static void		 acpicpu_pstate_reset(struct acpicpu_softc *);
 static void		 acpicpu_pstate_bios(void);
+static void		 acpicpu_pstate_set_xcall(void *, void *);
 
-static uint32_t		 acpicpu_pstate_saved = 0;
+extern struct acpicpu_softc **acpicpu_sc;
 
 void
 acpicpu_pstate_attach(device_t self)
@@ -75,10 +74,16 @@ acpicpu_pstate_attach(device_t self)
 	}
 
 	/*
-	 * Append additional information from the
-	 * extended _PSS, if available. Note that
-	 * XPSS can not be used on Intel systems
-	 * that use either _PDC or _OSC.
+	 * Append additional information from the extended _PSS,
+	 * if available. Note that XPSS can not be used on Intel
+	 * systems that use either _PDC or _OSC. From the XPSS
+	 * method specification:
+	 *
+	 *   "The platform must not require the use of the
+	 *    optional _PDC or _OSC methods to coordinate
+	 *    between the operating system and firmware for
+	 *    the purposes of enabling specific processor
+	 *    power management features or implementations."
 	 */
 	if (sc->sc_cap == 0) {
 
@@ -108,22 +113,27 @@ acpicpu_pstate_attach(device_t self)
 		aprint_debug_dev(self, "_PPC missing\n");
 
 	/*
-	 * Employ the XPSS structure by filling
-	 * it with MD information required for FFH.
+	 * Carry out MD initialization.
 	 */
-	rv = acpicpu_md_pstate_pss(sc);
+	rv = acpicpu_md_pstate_init(sc);
 
 	if (rv != 0) {
 		rv = AE_SUPPORT;
 		goto fail;
 	}
 
+	/*
+	 * Query the optional _PSD.
+	 */
+	rv = acpicpu_pstate_dep(sc);
+
+	if (ACPI_SUCCESS(rv))
+		sc->sc_flags |= ACPICPU_FLAG_P_DEP;
+
 	sc->sc_flags |= ACPICPU_FLAG_P;
 
 	acpicpu_pstate_bios();
 	acpicpu_pstate_reset(sc);
-	acpicpu_pstate_attach_evcnt(sc);
-	acpicpu_pstate_attach_print(sc);
 
 	return;
 
@@ -134,62 +144,12 @@ fail:
 		return;
 
 	case AE_SUPPORT:
-		aprint_verbose_dev(sc->sc_dev, "P-states not supported\n");
+		aprint_verbose_dev(self, "P-states not supported\n");
 		return;
 
 	default:
-		aprint_error_dev(sc->sc_dev, "failed to evaluate "
+		aprint_error_dev(self, "failed to evaluate "
 		    "%s: %s\n", str, AcpiFormatException(rv));
-	}
-}
-
-static void
-acpicpu_pstate_attach_print(struct acpicpu_softc *sc)
-{
-	const uint8_t method = sc->sc_pstate_control.reg_spaceid;
-	struct acpicpu_pstate *ps;
-	static bool once = false;
-	const char *str;
-	uint32_t i;
-
-	if (once != false)
-		return;
-
-	str = (method != ACPI_ADR_SPACE_SYSTEM_IO) ? "FFH" : "I/O";
-
-	for (i = 0; i < sc->sc_pstate_count; i++) {
-
-		ps = &sc->sc_pstate[i];
-
-		if (ps->ps_freq == 0)
-			continue;
-
-		aprint_debug_dev(sc->sc_dev, "P%d: %3s, "
-		    "lat %3u us, pow %5u mW, %4u MHz\n", i, str,
-		    ps->ps_latency, ps->ps_power, ps->ps_freq);
-	}
-
-	once = true;
-}
-
-static void
-acpicpu_pstate_attach_evcnt(struct acpicpu_softc *sc)
-{
-	struct acpicpu_pstate *ps;
-	uint32_t i;
-
-	for (i = 0; i < sc->sc_pstate_count; i++) {
-
-		ps = &sc->sc_pstate[i];
-
-		if (ps->ps_freq == 0)
-			continue;
-
-		(void)snprintf(ps->ps_name, sizeof(ps->ps_name),
-		    "P%u (%u MHz)", i, ps->ps_freq);
-
-		evcnt_attach_dynamic(&ps->ps_evcnt, EVCNT_TYPE_MISC,
-		    NULL, device_xname(sc->sc_dev), ps->ps_name);
 	}
 }
 
@@ -215,24 +175,8 @@ acpicpu_pstate_detach(device_t self)
 		kmem_free(sc->sc_pstate, size);
 
 	sc->sc_flags &= ~ACPICPU_FLAG_P;
-	acpicpu_pstate_detach_evcnt(sc);
 
 	return 0;
-}
-
-static void
-acpicpu_pstate_detach_evcnt(struct acpicpu_softc *sc)
-{
-	struct acpicpu_pstate *ps;
-	uint32_t i;
-
-	for (i = 0; i < sc->sc_pstate_count; i++) {
-
-		ps = &sc->sc_pstate[i];
-
-		if (ps->ps_freq != 0)
-			evcnt_detach(&ps->ps_evcnt);
-	}
 }
 
 void
@@ -243,54 +187,47 @@ acpicpu_pstate_start(device_t self)
 	uint32_t i;
 	int rv;
 
-	rv = acpicpu_md_pstate_start();
+	rv = acpicpu_md_pstate_start(sc);
 
 	if (rv != 0)
 		goto fail;
 
 	/*
-	 * Initialize the state to P0.
+	 * Initialize the states to P0.
 	 */
 	for (i = 0, rv = ENXIO; i < sc->sc_pstate_count; i++) {
 
 		ps = &sc->sc_pstate[i];
 
 		if (ps->ps_freq != 0) {
-			sc->sc_cold = false;
-			rv = acpicpu_pstate_set(sc, ps->ps_freq);
-			break;
+			acpicpu_pstate_set(sc->sc_ci, ps->ps_freq);
+			return;
 		}
 	}
 
-	if (rv != 0)
-		goto fail;
-
-	return;
-
 fail:
 	sc->sc_flags &= ~ACPICPU_FLAG_P;
-
-	if (rv == EEXIST) {
-		aprint_error_dev(self, "driver conflicts with existing one\n");
-		return;
-	}
-
 	aprint_error_dev(self, "failed to start P-states (err %d)\n", rv);
 }
 
-bool
-acpicpu_pstate_suspend(device_t self)
+void
+acpicpu_pstate_suspend(void *aux)
 {
-	struct acpicpu_softc *sc = device_private(self);
 	struct acpicpu_pstate *ps = NULL;
+	struct acpicpu_softc *sc;
+	struct cpu_info *ci;
+	device_t self = aux;
+	uint64_t xc;
 	int32_t i;
 
+	sc = device_private(self);
+	ci = sc->sc_ci;
+
+	/*
+	 * Reset any dynamic limits.
+	 */
 	mutex_enter(&sc->sc_mtx);
 	acpicpu_pstate_reset(sc);
-	mutex_exit(&sc->sc_mtx);
-
-	if (acpicpu_pstate_saved != 0)
-		return true;
 
 	/*
 	 * Following design notes for Windows, we set the highest
@@ -300,6 +237,8 @@ acpicpu_pstate_suspend(device_t self)
 	 *	Microsoft Corporation: Windows Native Processor
 	 *	Performance Control. Version 1.1a, November, 2002.
 	 */
+	sc->sc_pstate_saved = sc->sc_pstate_current;
+
 	for (i = sc->sc_pstate_count - 1; i >= 0; i--) {
 
 		if (sc->sc_pstate[i].ps_freq != 0) {
@@ -308,32 +247,35 @@ acpicpu_pstate_suspend(device_t self)
 		}
 	}
 
-	if (__predict_false(ps == NULL))
-		return true;
-
-	mutex_enter(&sc->sc_mtx);
-	acpicpu_pstate_saved = sc->sc_pstate_current;
-	mutex_exit(&sc->sc_mtx);
-
-	if (acpicpu_pstate_saved == ps->ps_freq)
-		return true;
-
-	(void)acpicpu_pstate_set(sc, ps->ps_freq);
-
-	return true;
-}
-
-bool
-acpicpu_pstate_resume(device_t self)
-{
-	struct acpicpu_softc *sc = device_private(self);
-
-	if (acpicpu_pstate_saved != 0) {
-		(void)acpicpu_pstate_set(sc, acpicpu_pstate_saved);
-		acpicpu_pstate_saved = 0;
+	if (__predict_false(ps == NULL)) {
+		mutex_exit(&sc->sc_mtx);
+		return;
 	}
 
-	return true;
+	if (sc->sc_pstate_saved == ps->ps_freq) {
+		mutex_exit(&sc->sc_mtx);
+		return;
+	}
+
+	mutex_exit(&sc->sc_mtx);
+
+	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &ps->ps_freq, NULL, ci);
+	xc_wait(xc);
+}
+
+void
+acpicpu_pstate_resume(void *aux)
+{
+	struct acpicpu_softc *sc;
+	device_t self = aux;
+	uint32_t freq;
+	uint64_t xc;
+
+	sc = device_private(self);
+	freq = sc->sc_pstate_saved;
+
+	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &freq, NULL, sc->sc_ci);
+	xc_wait(xc);
 }
 
 void
@@ -341,29 +283,28 @@ acpicpu_pstate_callback(void *aux)
 {
 	struct acpicpu_softc *sc;
 	device_t self = aux;
-	uint32_t old, new;
+	uint32_t freq;
+	uint64_t xc;
 
 	sc = device_private(self);
 
 	mutex_enter(&sc->sc_mtx);
-
-	old = sc->sc_pstate_max;
 	acpicpu_pstate_change(sc);
-	new = sc->sc_pstate_max;
 
-	if (old == new) {
-		mutex_exit(&sc->sc_mtx);
-		return;
+	freq = sc->sc_pstate[sc->sc_pstate_max].ps_freq;
+
+	if (sc->sc_pstate_saved == 0)
+		sc->sc_pstate_saved = sc->sc_pstate_current;
+
+	if (sc->sc_pstate_saved <= freq) {
+		freq = sc->sc_pstate_saved;
+		sc->sc_pstate_saved = 0;
 	}
 
 	mutex_exit(&sc->sc_mtx);
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "maximum frequency "
-		"changed from P%u (%u MHz) to P%u (%u MHz)\n",
-		old, sc->sc_pstate[old].ps_freq, new,
-		sc->sc_pstate[sc->sc_pstate_max].ps_freq));
-
-	(void)acpicpu_pstate_set(sc, sc->sc_pstate[new].ps_freq);
+	xc = xc_unicast(0, acpicpu_pstate_set_xcall, &freq, NULL, sc->sc_ci);
+	xc_wait(xc);
 }
 
 ACPI_STATUS
@@ -414,6 +355,8 @@ acpicpu_pstate_pss(struct acpicpu_softc *sc)
 		rv = acpicpu_pstate_pss_add(ps, &obj->Package.Elements[i]);
 
 		if (ACPI_FAILURE(rv)) {
+			aprint_error_dev(sc->sc_dev, "failed to add "
+			    "P-state: %s\n", AcpiFormatException(rv));
 			ps->ps_freq = 0;
 			continue;
 		}
@@ -472,12 +415,8 @@ acpicpu_pstate_pss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 	if (ps->ps_freq == 0 || ps->ps_freq > 9999)
 		return AE_BAD_DECIMAL_CONSTANT;
 
-	/*
-	 * The latency is typically around 10 usec
-	 * on Intel CPUs. Use that as the minimum.
-	 */
-	if (ps->ps_latency < 10)
-		ps->ps_latency = 10;
+	if (ps->ps_latency == 0 || ps->ps_latency > 1000)
+		ps->ps_latency = 1;
 
 	return AE_OK;
 }
@@ -494,7 +433,7 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "XPSS", &buf);
 
 	if (ACPI_FAILURE(rv))
-		return rv;
+		goto out;
 
 	obj = buf.Pointer;
 
@@ -517,6 +456,10 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 	}
 
 out:
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
+		aprint_error_dev(sc->sc_dev, "failed to evaluate "
+		    "XPSS: %s\n", AcpiFormatException(rv));
+
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
 
@@ -583,17 +526,13 @@ acpicpu_pstate_xpss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 	if (ps->ps_status_mask == 0)
 		ps->ps_status_mask = ACPI_GET64(elm[7].Buffer.Pointer);
 
-	/*
-	 * The latency is often defined to be
-	 * zero on AMD systems. Raise that to 1.
-	 */
-	if (ps->ps_latency == 0)
-		ps->ps_latency = 1;
-
 	ps->ps_flags |= ACPICPU_FLAG_P_XPSS;
 
-	if (ps->ps_freq > 9999)
+	if (ps->ps_freq == 0 || ps->ps_freq > 9999)
 		return AE_BAD_DECIMAL_CONSTANT;
+
+	if (ps->ps_latency == 0 || ps->ps_latency > 1000)
+		ps->ps_latency = 1;
 
 	return AE_OK;
 }
@@ -708,10 +647,8 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 		goto out;
 
 	/*
-	 * In XPSS the control address can not be zero,
-	 * but the status address may be. In this case,
-	 * comparable to T-states, we can ignore the status
-	 * check during the P-state (FFH) transition.
+	 * At the very least, mandate that
+	 * XPSS supplies the control address.
 	 */
 	if (sc->sc_pstate_control.reg_addr == 0) {
 		rv = AE_AML_BAD_RESOURCE_LENGTH;
@@ -734,6 +671,95 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 	}
 
 out:
+	if (buf.Pointer != NULL)
+		ACPI_FREE(buf.Pointer);
+
+	return rv;
+}
+
+static ACPI_STATUS
+acpicpu_pstate_dep(struct acpicpu_softc *sc)
+{
+	ACPI_OBJECT *elm, *obj;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+	uint32_t val;
+	uint8_t i, n;
+
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_PSD", &buf);
+
+	if (ACPI_FAILURE(rv))
+		goto out;
+
+	obj = buf.Pointer;
+
+	if (obj->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	if (obj->Package.Count != 1) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	elm = &obj->Package.Elements[0];
+
+	if (obj->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	n = elm->Package.Count;
+
+	if (n != 5) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	elm = elm->Package.Elements;
+
+	for (i = 0; i < n; i++) {
+
+		if (elm[i].Type != ACPI_TYPE_INTEGER) {
+			rv = AE_TYPE;
+			goto out;
+		}
+
+		if (elm[i].Integer.Value > UINT32_MAX) {
+			rv = AE_AML_NUMERIC_OVERFLOW;
+			goto out;
+		}
+	}
+
+	val = elm[1].Integer.Value;
+
+	if (val != 0)
+		aprint_debug_dev(sc->sc_dev, "invalid revision in _PSD\n");
+
+	val = elm[3].Integer.Value;
+
+	if (val < ACPICPU_DEP_SW_ALL || val > ACPICPU_DEP_HW_ALL) {
+		rv = AE_AML_BAD_RESOURCE_VALUE;
+		goto out;
+	}
+
+	val = elm[4].Integer.Value;
+
+	if (val > sc->sc_ncpus) {
+		rv = AE_BAD_VALUE;
+		goto out;
+	}
+
+	sc->sc_pstate_dep.dep_domain = elm[2].Integer.Value;
+	sc->sc_pstate_dep.dep_type   = elm[3].Integer.Value;
+	sc->sc_pstate_dep.dep_ncpus  = elm[4].Integer.Value;
+
+out:
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
+		aprint_debug_dev(sc->sc_dev, "failed to evaluate "
+		    "_PSD: %s\n", AcpiFormatException(rv));
+
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
 
@@ -846,14 +872,21 @@ acpicpu_pstate_bios(void)
 }
 
 int
-acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
+acpicpu_pstate_get(struct cpu_info *ci, uint32_t *freq)
 {
-	const uint8_t method = sc->sc_pstate_control.reg_spaceid;
 	struct acpicpu_pstate *ps = NULL;
+	struct acpicpu_softc *sc;
 	uint32_t i, val = 0;
 	uint64_t addr;
 	uint8_t width;
 	int rv;
+
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (__predict_false(sc == NULL)) {
+		rv = ENXIO;
+		goto fail;
+	}
 
 	if (__predict_false(sc->sc_cold != false)) {
 		rv = EBUSY;
@@ -878,7 +911,7 @@ acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 
 	mutex_exit(&sc->sc_mtx);
 
-	switch (method) {
+	switch (sc->sc_pstate_status.reg_spaceid) {
 
 	case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
@@ -932,7 +965,7 @@ acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 	return 0;
 
 fail:
-	aprint_error_dev(sc->sc_dev, "failed "
+	aprint_debug_dev(sc->sc_dev, "failed "
 	    "to get frequency (err %d)\n", rv);
 
 	mutex_enter(&sc->sc_mtx);
@@ -942,15 +975,33 @@ fail:
 	return rv;
 }
 
-int
-acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
+void
+acpicpu_pstate_set(struct cpu_info *ci, uint32_t freq)
 {
-	const uint8_t method = sc->sc_pstate_control.reg_spaceid;
+	uint64_t xc;
+
+	xc = xc_broadcast(0, acpicpu_pstate_set_xcall, &freq, NULL);
+	xc_wait(xc);
+}
+
+static void
+acpicpu_pstate_set_xcall(void *arg1, void *arg2)
+{
 	struct acpicpu_pstate *ps = NULL;
-	uint32_t i, val;
+	struct cpu_info *ci = curcpu();
+	struct acpicpu_softc *sc;
+	uint32_t freq, i, val;
 	uint64_t addr;
 	uint8_t width;
 	int rv;
+
+	freq = *(uint32_t *)arg1;
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (__predict_false(sc == NULL)) {
+		rv = ENXIO;
+		goto fail;
+	}
 
 	if (__predict_false(sc->sc_cold != false)) {
 		rv = EBUSY;
@@ -966,7 +1017,7 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 
 	if (sc->sc_pstate_current == freq) {
 		mutex_exit(&sc->sc_mtx);
-		return 0;
+		return;
 	}
 
 	/*
@@ -993,7 +1044,7 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 		goto fail;
 	}
 
-	switch (method) {
+	switch (sc->sc_pstate_control.reg_spaceid) {
 
 	case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
@@ -1045,15 +1096,13 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 	sc->sc_pstate_current = freq;
 	mutex_exit(&sc->sc_mtx);
 
-	return 0;
+	return;
 
 fail:
-	aprint_error_dev(sc->sc_dev, "failed to set "
+	aprint_debug_dev(sc->sc_dev, "failed to set "
 	    "frequency to %u (err %d)\n", freq, rv);
 
 	mutex_enter(&sc->sc_mtx);
 	sc->sc_pstate_current = ACPICPU_P_STATE_UNKNOWN;
 	mutex_exit(&sc->sc_mtx);
-
-	return rv;
 }

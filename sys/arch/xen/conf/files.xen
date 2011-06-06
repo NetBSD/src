@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.110 2010/12/02 23:12:30 bouyer Exp $
+#	$NetBSD: files.xen,v 1.110.2.1 2011/06/06 09:07:10 jruoho Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -33,18 +33,6 @@ defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 
 defparam		PCI_CONF_MODE
 
-# Intel Enhanced Speedstep
-defflag					ENHANCED_SPEEDSTEP
-defflag	opt_est.h			EST_FREQ_USERWRITE
-file	arch/x86/x86/est.c		enhanced_speedstep
-file	arch/x86/x86/intel_busclock.c	enhanced_speedstep
-
-# AMD Powernow/Cool`n'Quiet Technology
-defflag opt_powernow_k8.h	POWERNOW_K8
-# Powernow common functions
-file	arch/x86/x86/powernow_k8.c	powernow_k8
-file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
-
 file	arch/xen/x86/autoconf.c
 ifdef i386
 file	arch/i386/i386/aout_machdep.c	exec_aout
@@ -54,8 +42,8 @@ file	arch/i386/i386/cpu_in_cksum.S   (inet | inet6) & cpu_in_cksum
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
+file	arch/i386/i386/db_machdep.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
-file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/dumpsys.c
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
@@ -79,18 +67,14 @@ file	crypto/des/arch/i386/des_cbc.S		des
 file	crypto/blowfish/arch/i386/bf_enc.S	blowfish
 file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish
 
-# AMD PowerNow K7
-defflag					POWERNOW_K7
-file	arch/i386/i386/powernow_k7.c		powernow_k7
-
 elifdef amd64
 file	arch/amd64/amd64/busfunc.S
 file	arch/amd64/amd64/cpufunc.S
 file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/amd64/amd64/db_disasm.c		ddb
-file	arch/amd64/amd64/db_interface.c	 ddb
+file	arch/amd64/amd64/db_interface.c		ddb
+file	arch/amd64/amd64/db_machdep.c		ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
-file	arch/amd64/amd64/db_trace.c		ddb
 file	arch/amd64/amd64/kgdb_machdep.c	 kgdb
 file	arch/amd64/amd64/kobj_machdep.c	 	modular
 file	arch/amd64/amd64/gdt.c
@@ -104,6 +88,7 @@ file	arch/amd64/amd64/mptramp.S		multiprocessor
 endif
 
 file	kern/subr_disk_mbr.c		disk
+file	arch/x86/x86/db_trace.c		ddb
 file	arch/xen/x86/hypervisor_machdep.c
 # file 	arch/x86/x86/mtrr_i686.c	mtrr
 file	arch/x86/x86/syscall.c
@@ -167,6 +152,7 @@ endif
 
 # xen specific mainbus attributes
 define cpubus { [apid = -1] }
+define cpufeaturebus {}
 define ioapicbus { [apid = -1] }
 define apmbus {}
 define pnpbiosbus {}
@@ -231,6 +217,11 @@ device xpci: pcibus
 attach xpci at xenbus with xpci_xenbus
 file	arch/xen/xen/xpci_xenbus.c	xpci_xenbus
 
+# Xen Balloon driver
+device	balloon
+attach	balloon at xenbus
+file	arch/xen/xen/balloon.c		balloon
+
 # Non-Xen specific devices and options
 
 include	"dev/pckbport/files.pckbport"
@@ -270,6 +261,9 @@ file	arch/x86/x86/mpacpi.c		acpi
 file	arch/x86/x86/acpi_machdep.c	acpi
 file	arch/x86/x86/i8259.c
 
+# Stubs for x86 routines not included in the system
+file	arch/x86/x86/x86_stub.c
+
 # MP configuration using Intel SMP specification 1.4
 file	arch/x86/x86/mpbios.c		mpbios
 
@@ -280,6 +274,7 @@ file	arch/x86/pci/pci_bus_fixup.c	pci_bus_fixup
 file	arch/x86/pci/pci_addr_fixup.c	pci_addr_fixup
 
 file	arch/x86/x86/apic.c		ioapic
+file	arch/x86/x86/nmi.c
 
 device ioapic
 attach ioapic at ioapicbus
@@ -290,15 +285,26 @@ device ipmi : sysmon_envsys, sysmon_wdog
 attach ipmi at ipmibus
 file	arch/x86/x86/ipmi.c		ipmi needs-flag
 
-# CPUS
-
-device cpu
+# CPUs
+#
+device cpu: cpufeaturebus
 attach cpu at cpubus
 
 device vcpu
 attach vcpu at xendevbus
 
 file	arch/xen/x86/cpu.c		cpu | vcpu
+
+# CPU features
+#
+device	est
+attach	est at cpufeaturebus
+file	arch/x86/x86/est.c		est
+file	arch/x86/x86/intel_busclock.c	est
+
+device	powernow
+attach	powernow at cpufeaturebus
+file	arch/x86/x86/powernow.c		powernow
 
 #
 # Compatibility modules
@@ -322,18 +328,6 @@ file	arch/i386/i386/svr4_machdep.c		compat_svr4
 file	arch/i386/i386/svr4_sigcode.S		compat_svr4
 file	arch/i386/i386/svr4_syscall.c		compat_svr4
 
-# MACH binary compatibility (COMPAT_MACH)
-include	"compat/mach/files.mach"
-file	arch/i386/i386/mach_machdep.c		compat_mach | compat_darwin
-file	arch/i386/i386/mach_sigcode.S		compat_mach | compat_darwin
-file	arch/i386/i386/mach_syscall.c		compat_mach | compat_darwin
-file    arch/i386/i386/darwin_commpage_machdep.S compat_darwin
-file	arch/i386/i386/macho_machdep.c		exec_macho
-
-# DARWIN binary compatibility (COMPAT_DARWIN)
-include	"compat/darwin/files.darwin"
-file	arch/i386/i386/darwin_machdep.c		compat_darwin
-
 # iBCS-2 binary compatibility (COMPAT_IBCS2)
 include	"compat/ibcs2/files.ibcs2"
 file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
@@ -352,9 +346,6 @@ include	"compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
 file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
-
-# Win32 binary compatibility (COMPAT_PECOFF)
-include	"compat/pecoff/files.pecoff"
 
 elifdef amd64
 # NetBSD/i386 32-bit binary compatibility (COMPAT_NETBSD32)
@@ -399,7 +390,7 @@ endif
 include	"dev/pcmcia/files.pcmcia"
 
 # Domain-0 operations
-defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001 XEN_BALLOON
+defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
 file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops
@@ -409,7 +400,6 @@ file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 file	arch/xen/xen/xennetback_xenbus.c xvif
 file	arch/xen/xen/xennet_checksum.c	xvif | xennet
 file	arch/xen/xen/xbdback_xenbus.c xbdback
-file    arch/xen/xen/balloon.c          hypervisor
 
 ifdef i386
 include "arch/i386/conf/majors.i386"

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.27 2010/12/20 00:25:31 matt Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.27.2.1 2011/06/06 09:05:26 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.27 2010/12/20 00:25:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.27.2.1 2011/06/06 09:05:26 jruoho Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -74,7 +74,7 @@ volatile int iq80310_ipending;
 /* Software copy of the IRQs we have enabled. */
 uint32_t intr_enabled;
 
-#ifdef __HAVE_FAST_SOFTINTRS
+#ifdef __HAVE_FAST_SOFTINTS
 /*
  * Map a software interrupt queue index (at the top of the word, and
  * highest priority softintr is encountered first in an ffs()).
@@ -247,7 +247,7 @@ iq80310_intr_calculate_masks(void)
 	}
 }
 
-#ifdef __HAVE_FAST_SOFTINTRS
+#ifdef __HAVE_FAST_SOFTINTS
 void
 iq80310_do_soft(void)
 {
@@ -281,7 +281,7 @@ iq80310_do_soft(void)
 
 	restore_interrupts(oldirqstate);
 }
-#endif	/* __HAVE_SOFT_FASTINTRS */
+#endif	/* __HAVE_SOFT_FASTINTS */
 
 int
 _splraise(int ipl)
@@ -304,7 +304,7 @@ _spllower(int ipl)
 	return (iq80310_spllower(ipl));
 }
 
-#ifdef __HAVE_FAST_SOFTINTRS
+#ifdef __HAVE_FAST_SOFTINTS
 void
 _setsoftintr(int si)
 {

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44 2011/01/14 02:06:23 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.44.2.1 2011/06/06 09:05:01 jruoho Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -47,6 +47,7 @@ include <uvm/uvm_extern.h>
 
 include <arm/fiq.h>
 
+include <arm/arm32/pte.h>
 include <machine/pmap.h>
 include <machine/frame.h>
 include <machine/vmparam.h>
@@ -73,6 +74,23 @@ define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 
 define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
+define	DOMAIN_CLIENT		DOMAIN_CLIENT
+define	L1_S_PROTO_generic	L1_S_PROTO_generic
+define	L1_S_PROTO_armv7	L1_S_PROTO_armv7
+define	L1_S_PROTO_xscale	L1_S_PROTO_xscale
+if ARM_NMMUS == 1
+define	L1_S_PROTO		L1_S_PROTO
+endif
+define	L1_S_FRAME		L1_S_FRAME
+define	L1_S_SHIFT		L1_S_SHIFT
+define	L1_S_SIZE		L1_S_SIZE
+define	L1_S_B			L1_S_B
+define	L1_S_C			L1_S_C
+define	L1_S_AP_KRW		L1_S_AP(AP_KRW)
+define	L1_S_APv7_KRW		L1_S_AP(AP7_KRW)
+define	L1_TABLE_SIZE		L1_TABLE_SIZE
+define	L1_TYPE_S		L1_TYPE_S
+define	L1_S_DOM_KERNEL		L1_S_DOM(PMAP_DOMAIN_KERNEL)
 
 ifdef PMAP_INCLUDE_PTE_SYNC
 define	PMAP_INCLUDE_PTE_SYNC	1
@@ -90,6 +108,7 @@ define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
+define	L_PRIVATE		offsetof(struct lwp, l_private)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 
 define	PCB_TF			offsetof(struct pcb, pcb_tf)
@@ -103,7 +122,6 @@ define	PCB_SP			offsetof(struct pcb, pcb_un.un_32.pcb32_sp)
 define	PCB_LR			offsetof(struct pcb, pcb_un.un_32.pcb32_lr)
 define	PCB_PC			offsetof(struct pcb, pcb_un.un_32.pcb32_pc)
 define	PCB_USER_PID_RW		offsetof(struct pcb, pcb_un.un_32.pcb32_user_pid_rw)
-define	PCB_USER_PID_RO		offsetof(struct pcb, pcb_un.un_32.pcb32_user_pid_ro)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_NOALIGNFLT		PCB_NOALIGNFLT
 

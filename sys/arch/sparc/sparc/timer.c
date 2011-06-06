@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.26 2010/01/04 04:21:35 mrg Exp $ */
+/*	$NetBSD: timer.c,v 1.26.6.1 2011/06/06 09:06:47 jruoho Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.26 2010/01/04 04:21:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.26.6.1 2011/06/06 09:06:47 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -208,7 +208,12 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
 		timer_init = timer_init_4m;
-		sched_intr_fn = schedintr_4m;
+#if defined(MULTIPROCESSOR)
+		if (sparc_ncpus > 1)
+			sched_intr_fn = schedintr_4m;
+		else
+#endif
+			sched_intr_fn = schedintr;
 		level10.ih_fun = clockintr_4m;
 		level14.ih_fun = statintr_4m;
 		cntr.limit = tmr_ustolim4m(tick);

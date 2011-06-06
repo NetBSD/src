@@ -1,7 +1,7 @@
-/*	$NetBSD: tprof_ioctl.h,v 1.1 2008/01/01 21:28:38 yamt Exp $	*/
+/*	$NetBSD: tprof_ioctl.h,v 1.1.46.1 2011/06/06 09:08:40 jruoho Exp $	*/
 
 /*-
- * Copyright (c)2008 YAMAMOTO Takashi,
+ * Copyright (c)2008,2010 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,15 @@
 #ifndef _DEV_TPROF_TPROF_IOCTL_H_
 #define _DEV_TPROF_TPROF_IOCTL_H_
 
+/*
+ * definitions for userland consumer
+ */
+
 #include <sys/ioccom.h>
 
-#define	TPROF_VERSION	1
+#include <dev/tprof/tprof_types.h>
+
+#define	TPROF_VERSION	3	/* kernel-userland ABI version */
 
 #define	TPROF_IOC_GETVERSION	_IOR('T', 1, int)
 

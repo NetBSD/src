@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.13 2008/08/23 17:25:54 tsutsui Exp $	 */
+/*	$NetBSD: pic.c,v 1.13.22.1 2011/06/06 09:06:39 jruoho Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.13 2008/08/23 17:25:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.13.22.1 2011/06/06 09:06:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,7 +59,7 @@ static int      pic_match(struct device *, struct cfdata *, void *);
 static void     pic_attach(struct device *, struct device *, void *);
 static int      pic_print(void *, const char *);
 static void	pic_bus_reset(void);
-static void	pic_bus_error(uint32_t, uint32_t, uint32_t, uint32_t);
+static void	pic_bus_error(vaddr_t, uint32_t, uint32_t);
 static void	pic_watchdog_enable(void);
 static void	pic_watchdog_disable(void);
 static void	pic_watchdog_tickle(void);
@@ -212,7 +212,7 @@ pic_bus_reset(void)
 }
 
 static void
-pic_bus_error(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+pic_bus_error(vaddr_t pc, uint32_t status, uint32_t ipending)
 {
 
 	printf("pic0: bus error\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.38 2009/11/17 18:54:26 jld Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.38.6.1 2011/06/06 09:08:33 jruoho Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -84,7 +84,7 @@ struct RF_CumulativeStats_s {
 };
 
 struct RF_ThroughputStats_s {
-	RF_DECLARE_MUTEX(mutex)	/* a mutex used to lock the configuration
+	rf_declare_mutex2(mutex);/* a mutex used to lock the configuration
 				 * stuff */
 	struct timeval start;	/* timer started when numOutstandingRequests
 				 * moves from 0 to 1 */
@@ -124,7 +124,7 @@ struct RF_Raid_s {
 	 * local copy of this pointer for the actual accesses. */
 	/* The remainder of the structure can change, and therefore requires
 	 * locking on reads and updates */
-	RF_DECLARE_MUTEX(mutex)	/* mutex used to serialize access to
+	rf_declare_mutex2(mutex);/* mutex used to serialize access to
 				 * the fields below */
 	RF_RowStatus_t status;	/* the status of each row in the array */
 	int     valid;		/* indicates successful configuration */
@@ -161,8 +161,9 @@ struct RF_Raid_s {
 	   a kernel thread deal with calling rf_DiskIOComplete and any
 	   callback functions. */
 	TAILQ_HEAD(iodone_q,RF_DiskQueueData_s) iodone;
-	/* and a lock to protect it */
-	struct simplelock iodone_lock;
+	/* and a lock/cv to protect it */
+	rf_declare_mutex2(iodone_lock);
+	rf_declare_cond2(iodone_cv);
 
 
 	RF_VoidPointerListElem_t *iobuf;       /* I/O buffer free list */
@@ -186,7 +187,7 @@ struct RF_Raid_s {
 	RF_HeadSepLimit_t headSepLimit;
 	int     numFloatingReconBufs;
 	int     reconInProgress;
-	RF_DECLARE_COND(waitForReconCond)
+	rf_declare_cond2(waitForReconCond);	/* goes with raidPtr->mutex */
 	RF_RaidReconDesc_t *reconDesc;	/* reconstruction descriptor */
 	RF_ReconCtrl_t *reconControl;	/* reconstruction control structure
 					 * pointers for each row in the array */
@@ -194,7 +195,8 @@ struct RF_Raid_s {
 	/*
          * Array-quiescence stuff
          */
-	RF_DECLARE_MUTEX(access_suspend_mutex)
+	rf_declare_mutex2(access_suspend_mutex);
+	rf_declare_cond2(access_suspend_cv);
 	RF_IoCount_t accesses_suspended;
 	RF_IoCount_t accs_in_flight;
 	int     access_suspend_release;
@@ -212,10 +214,13 @@ struct RF_Raid_s {
 	int     copyback_in_progress;
 	int     adding_hot_spare;
 
+	rf_declare_cond2(adding_hot_spare_cv);
+
 	/*
          * Engine thread control
          */
-	RF_DECLARE_MUTEX(node_queue_mutex)
+	rf_declare_mutex2(node_queue_mutex);
+	rf_declare_cond2(node_queue_cv);
 	RF_DagNode_t *node_queue;
 	RF_Thread_t parity_rewrite_thread;
 	RF_Thread_t copyback_thread;
@@ -247,7 +252,8 @@ struct RF_Raid_s {
          * for a per-array piece of data, but otherwise, it'd be an extra
          * per-array lock, and that'd only be less efficient...)
          */
-	RF_DECLARE_COND(outstandingCond)
+	rf_declare_mutex2(rad_lock);
+	rf_declare_cond2(outstandingCond);
 	int     waitShutdown;
 	int     nAccOutstanding;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.71 2010/06/06 04:52:01 mrg Exp $
+#	$NetBSD: files.x68k,v 1.71.2.1 2011/06/06 09:07:00 jruoho Exp $
 #
 # new style config file for x68k architecture
 #
@@ -24,7 +24,6 @@ file	arch/x68k/x68k/mainbus.c
 define	event {}
 file	arch/x68k/dev/event.c		event
 
-file	arch/x68k/x68k/x68k_init.c
 file	arch/x68k/x68k/autoconf.c
 file	arch/x68k/x68k/conf.c
 file	arch/x68k/x68k/disksubr.c	disk
@@ -210,5 +209,8 @@ include "compat/ossaudio/files.ossaudio"
 
 # USB support
 include "dev/usb/files.usb"
+
+# ATA and ATAPI support
+include "dev/ata/files.ata"
 
 include "arch/x68k/conf/majors.x68k"

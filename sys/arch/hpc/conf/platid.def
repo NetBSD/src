@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.25 2010/04/06 16:15:34 nonaka Exp $	*/
+/*	$NetBSD: platid.def,v 1.25.2.1 2011/06/06 09:05:42 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -410,3 +410,12 @@ AGENDA {
 	}
 }
 #endif /* hpcmips */
+
+#ifdef hpcarm
+PSIONTEKLOGIX {
+  NETBOOK {
+    CPU=ARM_XSCALE_PXA250
+    PRO -" NETBOOK PRO"
+  }
+}
+#endif /* hpcarm */

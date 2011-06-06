@@ -1,4 +1,4 @@
-/*	$NetBSD: dtvar.h,v 1.5 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: dtvar.h,v 1.5.28.1 2011/06/06 09:06:25 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ struct dt_msg {
 #define	DT_CTL_LEN(c)		(c & 0x1f)
 
 struct dt_device {
-	struct	device *dtdv_dv;
+	void	*dtdv_arg;
 	void	(*dtdv_handler)(void *, struct dt_msg *);
 };
 
@@ -71,7 +71,7 @@ struct dt_state {
 };
 
 struct dt_softc {
-	struct device	sc_dv;
+	device_t	sc_dev;
 	struct dt_msg	sc_msg;
 	void		*sc_sih;
 	SLIST_HEAD(, dt_msg) sc_free;
@@ -91,7 +91,7 @@ int	dt_identify(int, struct dt_ident *);
 int	dt_msg_get(struct dt_msg *, int);
 void	dt_msg_dump(struct dt_msg *);
 int	dt_establish_handler(struct dt_softc *, struct dt_device *,
-    struct device *, void (*)(void *, struct dt_msg *));
+    void *, void (*)(void *, struct dt_msg *));
 
 extern int	dt_kbd_addr;
 extern struct	dt_device dt_kbd_dv;

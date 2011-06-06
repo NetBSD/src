@@ -1,4 +1,4 @@
-/*	$NetBSD: nvramvar.h,v 1.3 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: nvramvar.h,v 1.3.6.1 2011/06/06 09:05:09 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -30,8 +30,8 @@
  */
 
 struct	nvr_softc {
-	struct	device		nvr_dev;
-	u_int16_t		nvr_flags;
+	device_t		sc_dev;
+	u_int16_t		sc_flags;
 };
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ews4800mips,v 1.4 2009/08/21 03:53:18 thorpej Exp $
+#	$NetBSD: files.ews4800mips,v 1.4.6.1 2011/06/06 09:05:33 jruoho Exp $
 
 maxpartitions 16
 
@@ -6,7 +6,6 @@ maxusers 2 8 64
 
 include "arch/ews4800mips/conf/majors.ews4800mips"
 
-file arch/mips/mips/softintr.c
 file arch/mips/mips/mips3_clock.c
 
 file arch/ews4800mips/ews4800mips/autoconf.c

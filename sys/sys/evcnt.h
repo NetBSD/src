@@ -1,4 +1,4 @@
-/*	$NetBSD: evcnt.h,v 1.7 2010/12/11 22:30:55 matt Exp $	*/
+/*	$NetBSD: evcnt.h,v 1.7.2.1 2011/06/06 09:10:10 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -96,9 +96,10 @@ struct evcnt {
 TAILQ_HEAD(evcntlist, evcnt);
 
 /* maximum group/name lengths, including trailing NUL */
-#define	EVCNT_STRING_MAX	256
+#define	EVCNT_STRING_MAX	255
 
 /* ev_type values */
+#define	EVCNT_TYPE_ANY		-1	/* for sysctl */
 #define	EVCNT_TYPE_MISC		0	/* miscellaneous; catch all */
 #define	EVCNT_TYPE_INTR		1	/* interrupt; count with vmstat -i */
 #define	EVCNT_TYPE_TRAP		2	/* processor trap/execption */

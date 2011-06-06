@@ -1,0 +1,10 @@
+# $NetBSD: powernow.ioconf,v 1.1.8.2 2011/06/06 09:09:50 jruoho Exp $
+
+ioconf powernow
+
+include "conf/files"
+include "arch/x86/conf/files.x86"
+
+pseudo-root cpufeaturebus*
+
+powernow0 at cpufeaturebus?

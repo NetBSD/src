@@ -1,4 +1,4 @@
-$NetBSD: diodevs,v 1.11 2010/12/31 22:48:59 tsutsui Exp $
+$NetBSD: diodevs,v 1.11.2.1 2011/06/06 09:05:34 jruoho Exp $
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,21 +60,21 @@ device FRAMEBUFFER	0x39	1	bitmapped display
 
 framebuffer GATORBOX	0x01	1	98700/98710 (\"gatorbox\") display
 framebuffer TOPCAT	0x02	1	98544/98545/98547 (\"topcat\") display
-framebuffer RENASSIANCE	0x04	2	98720/98721 (\"renassiance\") display
+framebuffer RENAISSANCE	0x04	2	98720/98721 (\"renaissance\") display
 framebuffer LRCATSEYE	0x05	1	low-res catseye display
 framebuffer HRCCATSEYE	0x06	1	high-res color catseye display
 framebuffer HRMCATSEYE	0x07	1	high-res mono catseye display
 framebuffer DAVINCI	0x08	2	98730/98731 (\"davinci\") display
 framebuffer XXXCATSEYE	0x09	1	catseye display
+framebuffer TIGERSHARK	0x0c	3	TurboVRX (\"tigershark\") display
 framebuffer HYPERION	0x0e	1	A1096A (\"hyperion\") display
+framebuffer A1474MID	0x10	4	A1474-69511 on-board mid-res graphics
+framebuffer A147xVGA	0x11	4	A147x-69510 on-board VGA graphics
 
 /* Unsupported framebuffers. */
 
 framebuffer XGENESIS	0x0b	1	x-genesis display
-framebuffer TIGER	0x0c	1	tiger display
 framebuffer YGENESIS	0x0d	1	y-genesis display
-framebuffer A1474MID	0x10	4	A1474-69511 on-board mid-res graphics
-framebuffer A147xVGA	0x11	4	A147x-69510 on-board VGA graphics
 /* No ID info about A1474-69515 on-board high-res graphics */
 
 /* Devices not yet supported.  Descriptions are lacking. */

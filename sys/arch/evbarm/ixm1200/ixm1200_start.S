@@ -1,4 +1,4 @@
-/* $NetBSD: ixm1200_start.S,v 1.3 2008/04/28 20:23:17 martin Exp $ */
+/* $NetBSD: ixm1200_start.S,v 1.3.28.1 2011/06/06 09:05:26 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,13 +32,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "assym.h"
 
 #include <arm/asm.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pte.h>
+#include "assym.h"
 
 	.section .start,"ax",%progbits
+
+RCSID("$NetBSD: ixm1200_start.S,v 1.3.28.1 2011/06/06 09:05:26 jruoho Exp $")
 
 	.global _C_LABEL(ixm1200_start)
 _C_LABEL(ixm1200_start):
@@ -128,7 +129,7 @@ _C_LABEL(ixm1200_start):
 	ldr	r0, Ltable
 	mov	r1, #(L1_TABLE_SIZE / 4)	/* 4096 entry */
 	mov	r2, #(L1_S_SIZE)		/* 1MB / section */
-	mov	r3, #(L1_S_AP(AP_KRW))		/* kernel read/write */
+	mov	r3, #(L1_S_AP_KRW)		/* kernel read/write */
 	orr	r3, r3, #(L1_TYPE_S)		/* L1 entry is section */
 1:
 	str	r3, [r0], #4
@@ -143,7 +144,7 @@ _C_LABEL(ixm1200_start):
 	add	r0, r0, #(0xf00 * 4)		/* offset to 0xf0000000 */
 	mov	r3, #0x90000000
 	add	r3, r3, #0x00100000		/* set 0x90100000 to r3 */
-	orr	r3, r3, #(L1_S_AP(AP_KRW))	/* kernel read/write */
+	orr	r3, r3, #(L1_S_AP_KRW)	/* kernel read/write */
 	orr	r3, r3, #(L1_TYPE_S)		/* L1 entry is section */
 	str	r3, [r0]
 	

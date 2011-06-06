@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpica,v 1.14 2009/08/18 16:41:02 jmcneill Exp $
+#	$NetBSD: files.acpica,v 1.14.6.1 2011/06/06 09:07:44 jruoho Exp $
 
 file	dev/acpi/acpica/OsdEnvironment.c	acpica	needs-flag
 file	dev/acpi/acpica/OsdHardware.c		acpica
@@ -9,4 +9,4 @@ file	dev/acpi/acpica/OsdSchedule.c		acpica
 file	dev/acpi/acpica/OsdStream.c		acpica
 file	dev/acpi/acpica/OsdSynch.c		acpica
 
-include	"external/intel-public/acpica/conf/files.acpica"
+include	"external/bsd/acpica/conf/files.acpica"

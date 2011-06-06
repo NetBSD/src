@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.68 2009/09/11 22:06:29 dyoung Exp $	*/
+/*	$NetBSD: in6.h,v 1.68.6.1 2011/06/06 09:09:58 jruoho Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -575,9 +575,13 @@ struct ip6_mtuinfo {
 /* 40: reserved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
 #define IPV6CTL_IFQ		42	/* ip6intrq node */
+#define IPV6CTL_RTADV_MAXROUTES 43	/* maximum number of routes */
+					/* via router advertisement */
+#define IPV6CTL_RTADV_NUMROUTES 44	/* current number of routes */
+					/* via router advertisement */
 /* New entries should be added here from current IPV6CTL_MAXID value. */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
-#define IPV6CTL_MAXID		43
+#define IPV6CTL_MAXID		45
 
 #define IPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -623,6 +627,8 @@ struct ip6_mtuinfo {
 	{ 0, 0 }, \
 	{ "maxfrags", CTLTYPE_INT }, \
 	{ "ifq", CTLTYPE_NODE }, \
+	{ "rtadv_maxroutes", CTLTYPE_INT }, \
+	{ "rtadv_numroutes", CTLTYPE_INT }, \
 }
 
 #endif /* _NETBSD_SOURCE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.25 2010/11/15 05:58:18 uebayasi Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.25.2.1 2011/06/06 09:08:30 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.25 2010/11/15 05:58:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.25.2.1 2011/06/06 09:08:30 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,10 +147,8 @@ pms_synaptics_probe_init(void *vsc)
 	res |= pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, 1, 3,
 	    resp, 0);
 	if (res) {
-#ifdef SYNAPTICSDEBUG
-		aprint_normal_dev(psc->sc_dev,
+		aprint_debug_dev(psc->sc_dev,
 		    "synaptics_probe: Identify Touchpad error.\n");
-#endif
 		/*
 		 * Reset device in case the probe confused it.
 		 */
@@ -162,10 +160,8 @@ pms_synaptics_probe_init(void *vsc)
 	}
 
 	if (resp[1] != SYNAPTICS_MAGIC_BYTE) {
-#ifdef SYNAPTICSDEBUG
-		aprint_normal_dev(psc->sc_dev,
+		aprint_debug_dev(psc->sc_dev,
 		    "synaptics_probe: Not synaptics.\n");
-#endif
 		res = 1;
 		goto doreset;
 	}
@@ -205,10 +201,8 @@ pms_synaptics_probe_init(void *vsc)
 		sc->flags |= SYN_FLAG_HAS_BUTTONS_4_5;
 
 	if (sc->caps & SYNAPTICS_CAP_EXTENDED) {
-#ifdef SYNAPTICSDEBUG
-		aprint_normal_dev(psc->sc_dev,
+		aprint_debug_dev(psc->sc_dev,
 		    "synaptics_probe: Capabilities 0x%04x.\n", sc->caps);
-#endif
 		if (sc->caps & SYNAPTICS_CAP_PASSTHROUGH)
 			sc->flags |= SYN_FLAG_HAS_PASSTHROUGH;
 
@@ -225,12 +219,10 @@ pms_synaptics_probe_init(void *vsc)
 			cmd[0] = PMS_SEND_DEV_STATUS;
 			res |= pckbport_poll_cmd(psc->sc_kbctag,
 			    psc->sc_kbcslot, cmd, 1, 3, resp, 0);
-#ifdef SYNAPTICSDEBUG
 			if (res == 0)
-				aprint_normal_dev(psc->sc_dev,
+				aprint_debug_dev(psc->sc_dev,
 				    "synaptics_probe: Extended "
 				    "Capabilities 0x%02x.\n", resp[1]);
-#endif
 			if (!res && (resp[1] >> 4) >= 2) {
 				/* Yes. */
 				sc->flags |= SYN_FLAG_HAS_UP_DOWN_BUTTONS;
@@ -790,20 +782,16 @@ pms_synaptics_input(void *vsc, int data)
 	switch (psc->inputstate) {
 	case 0:
 		if ((data & 0xc8) != 0x80) {
-#ifdef SYNAPTICSDEBUG
-			aprint_normal_dev(psc->sc_dev,
+			aprint_debug_dev(psc->sc_dev,
 			    "pms_input: 0x%02x out of sync\n", data);
-#endif
 			return;	/* not in sync yet, discard input */
 		}
 		/*FALLTHROUGH*/
 
 	case 3:
 		if ((data & 8) == 8) {
-#ifdef SYNAPTICSDEBUG
-			aprint_normal_dev(psc->sc_dev,
+			aprint_debug_dev(psc->sc_dev,
 			    "pms_input: dropped in relative mode, reset\n");
-#endif
 			psc->inputstate = 0;
 			psc->sc_enabled = 0;
 			wakeup(&psc->sc_enabled);

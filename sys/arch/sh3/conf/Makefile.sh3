@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.26 2008/05/06 02:25:19 uwe Exp $
+#	$NetBSD: Makefile.sh3,v 1.26.28.1 2011/06/06 09:06:42 jruoho Exp $
 
 # Makefile for NetBSD
 #
@@ -33,7 +33,7 @@ GENASSYM_CONF=	${SH3}/sh3/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-D${MACHINE}
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+AFLAGS+=	-x assembler-with-cpp
 # -O2 is too -falign-* zealous for low-memory sh3 machines
 COPTS?=		-Os -freorder-blocks
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_start.S,v 1.1 2010/11/13 07:31:32 bsh Exp $	*/
+/*	$NetBSD: netwalker_start.S,v 1.1.4.1 2011/06/06 09:05:27 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009 SHIMIZU Ryo <ryo@nerv.org>
@@ -54,17 +54,16 @@
 
 #include "opt_imx.h"
 #include "opt_com.h"
-#include "assym.h"
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pmap.h>
-#include <arm/arm32/pte.h>
+#include "assym.h"
+
 #include <arm/imx/imx51reg.h>
 #include <arm/imx/imxuartreg.h>
 #include <evbarm/netwalker/netwalker_reg.h>
 
-RCSID("$NetBSD: netwalker_start.S,v 1.1 2010/11/13 07:31:32 bsh Exp $")
+RCSID("$NetBSD: netwalker_start.S,v 1.1.4.1 2011/06/06 09:05:27 jruoho Exp $")
 
 #if 0
 #define CPWAIT_BRANCH							 \
@@ -282,21 +281,21 @@ mmu_init_table:
 	/* fill all table VA==PA */
 	MMU_INIT(0x00000000, 0x00000000,
 		1 << (32 - L1_S_SHIFT),
-		L1_S_PROTO_armv7 | L1_S_AP(AP7_KRW))
+		L1_S_PROTO | L1_S_APv7_KRW)
 
 	/* Map KERNEL_BASE VA to SDRAM PA, write-back cacheable */
 	MMU_INIT(SDRAM_START, SDRAM_START,
 		512,
-		L1_S_PROTO_armv7 | L1_S_AP(AP7_KRW) | L1_S_B | L1_S_C)
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C)
 
 	/* map VA 0xc0000000..0xdfffffff to PA 0x90000000..0xafffffff */
 	MMU_INIT(0xc0000000, SDRAM_START,
-		512, L1_S_PROTO_armv7 | L1_S_AP(AP7_KRW) | L1_S_B | L1_S_C)
+		512, L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C)
 	
 	/* Map all 256KB of L4 WAKEUP (so console will work) */
 	MMU_INIT(NETWALKER_IO_VBASE0, NETWALKER_IO_PBASE0,
 		4,
-		L1_S_PROTO_armv7 | L1_S_AP(AP7_KRW))
+		L1_S_PROTO | L1_S_APv7_KRW)
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)

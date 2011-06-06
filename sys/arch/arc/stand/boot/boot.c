@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.6.28.1 2011/06/06 09:05:00 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -113,8 +113,6 @@ struct btinfo_bootpath bi_bpath;
 
 static char bootinfo[BOOTINFO_SIZE];
 
-extern const struct arcbios_fv *ARCBIOS;
-
 int main(int, char **);
 static char *firmware_getenv(char *);
 
@@ -143,7 +141,6 @@ main(int argc, char **argv)
 	/* print a banner */
 	printf("\n");
 	printf("%s Bootstrap, Revision %s\n", bootprog_name, bootprog_rev);
-	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 
 	memset(marks, 0, sizeof marks);
 
@@ -169,7 +166,7 @@ main(int argc, char **argv)
 	bootpath = firmware_getenv("OSLoadPartition");
 	if (bootpath == NULL)
 		bootpath =
-		    (*ARCBIOS->GetEnvironmentVariable)("OSLoadPartition");
+		    arcbios_GetEnvironmentVariable("OSLoadPartition");
 
 	if (bootpath == NULL) {
 		/* XXX need to actually do the fixup */
@@ -184,7 +181,7 @@ main(int argc, char **argv)
 
 	kernel = firmware_getenv("OSLoadFilename");
 	if (kernel == NULL)
-		kernel = (*ARCBIOS->GetEnvironmentVariable)("OSLoadFilename");
+		kernel = arcbios_GetEnvironmentVariable("OSLoadFilename");
 
 	DPRINTF("kernel = %s\n", kernel ? kernel : "<null>");
 
@@ -277,5 +274,5 @@ void
 _rtt(void)
 {
 
-	(*ARCBIOS->Halt)();
+	arcbios_Halt();
 }

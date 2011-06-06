@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.31 2010/04/28 19:17:03 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.31.2.1 2011/06/06 09:04:47 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31 2010/04/28 19:17:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31.2.1 2011/06/06 09:04:47 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,9 +149,11 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
 void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
+#if NPCI > 0 || NACPICA > 0 || NIPMI > 0
+	union mainbus_attach_args mba;
+#endif
 #if NPCI > 0
 	int mode;
-	union mainbus_attach_args mba;
 #endif
 #if NACPICA > 0
 	int acpi_present = 0;
@@ -235,7 +237,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		mba.mba_acpi.aa_memt = x86_bus_space_mem;
 		mba.mba_acpi.aa_pc = NULL;
 		mba.mba_acpi.aa_pciflags =
-		    PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+		    PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
 		mba.mba_acpi.aa_ic = &x86_isa_chipset;

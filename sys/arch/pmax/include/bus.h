@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.29 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: bus.h,v 1.29.6.1 2011/06/06 09:06:23 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
      ((void) t, (*(volatile u_int16_t *)((h) + (o))))
 
 #define	bus_space_read_4(t, h, o)					\
-     ((void) t, (*(volatile u_int32_t *)((h) + (o))))
+     ((void) t, (*(volatile uint32_t *)((h) + (o))))
 
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
@@ -153,16 +153,16 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define __PMAX_bus_space_read_multi(BYTES,BITS)				\
 static __inline void __CONCAT(bus_space_read_multi_,BYTES)		\
-(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t);				\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_read_multi_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_read_multi_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -191,16 +191,16 @@ __PMAX_bus_space_read_multi(4,32)
 
 #define __PMAX_bus_space_read_region(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_read_region_,BYTES)		\
-(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t);				\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_read_region_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_read_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -231,21 +231,21 @@ __PMAX_bus_space_read_region(4,32)
 #define	bus_space_write_1(t, h, o, v)					\
 do {									\
 	(void) t;							\
-	*(volatile u_int8_t *)((h) + (o)) = (v);			\
+	*(volatile uint8_t *)((h) + (o)) = (v);				\
 	wbflush();					/* XXX */	\
 } while (0)
 
 #define	bus_space_write_2(t, h, o, v)					\
 do {									\
 	(void) t;							\
-	*(volatile u_int16_t *)((h) + (o)) = (v);			\
+	*(volatile uint16_t *)((h) + (o)) = (v);			\
 	wbflush();					/* XXX */	\
 } while (0)
 
 #define	bus_space_write_4(t, h, o, v)					\
 do {									\
 	(void) t;							\
-	*(volatile u_int32_t *)((h) + (o)) = (v);			\
+	*(volatile uint32_t *)((h) + (o)) = (v);			\
 	wbflush();					/* XXX */	\
 } while (0)
 
@@ -264,16 +264,16 @@ do {									\
 
 #define __PMAX_bus_space_write_multi(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_write_multi_,BYTES)		\
-(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t);				\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_write_multi_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_write_multi_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -302,16 +302,16 @@ __PMAX_bus_space_write_multi(4,32)
 
 #define __PMAX_bus_space_write_region(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_write_region_,BYTES)		\
-(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t);				\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_write_region_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_write_region_,BYTES)(				\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) *a,						\
+	size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -342,16 +342,16 @@ __PMAX_bus_space_write_region(4,32)
 
 #define __PMAX_bus_space_set_multi(BYTES,BITS)				\
 static __inline void __CONCAT(bus_space_set_multi_,BYTES)		\
-(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_set_multi_,BYTES)(t, h, o, v, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) v;						\
-	size_t c;							\
+__CONCAT(bus_space_set_multi_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) v,						\
+	size_t c)							\
 {									\
 									\
 	while (c--)							\
@@ -380,16 +380,16 @@ __PMAX_bus_space_set_multi(4,32)
 
 #define __PMAX_bus_space_set_region(BYTES,BITS)				\
 static __inline void __CONCAT(bus_space_set_region_,BYTES)		\
-(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_set_region_,BYTES)(t, h, o, v, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) v;						\
-	size_t c;							\
+__CONCAT(bus_space_set_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h,						\
+	bus_size_t o,							\
+	__PB_TYPENAME(BITS) v,						\
+	size_t c)							\
 {									\
 									\
 	while (c--) {							\
@@ -421,16 +421,17 @@ __PMAX_bus_space_set_region(4,32)
 
 #define	__PMAX_copy_region(BYTES)					\
 static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
-(bus_space_tag_t,						\
+	   (bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
 	    bus_size_t count);						\
 									\
 static __inline void							\
-__CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h1, h2;					\
-	bus_size_t o1, o2, c;						\
+__CONCAT(bus_space_copy_region_,BYTES)(					\
+	bus_space_tag_t t,						\
+	bus_space_handle_t h1, bus_size_t o1,				\
+	bus_space_handle_t h2, bus_size_t o2,				\
+	bus_size_t c)							\
 {									\
 	bus_size_t o;							\
 									\

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.47 2010/08/19 15:17:53 tsutsui Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.47.2.1 2011/06/06 09:05:06 jruoho Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.47 2010/08/19 15:17:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.47.2.1 2011/06/06 09:05:06 jruoho Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -296,7 +296,7 @@ sacom_attach_subr(struct sacom_softc *sc)
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
 	}
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = sacomstart;
 	tp->t_param = sacomparam;
 	tp->t_hwiflow = sacomhwiflow;
@@ -375,7 +375,7 @@ sacom_detach(device_t dev, int flags)
 
 	/* Detach and free the tty. */
 	tty_detach(sc->sc_tty);
-	ttyfree(sc->sc_tty);
+	tty_free(sc->sc_tty);
 
 	/* Unhook the soft interrupt handler. */
 	softint_disestablish(sc->sc_si);

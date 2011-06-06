@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.9 2011/01/04 10:42:33 skrll Exp $	*/
+/*	$NetBSD: apic.c,v 1.9.2.1 2011/06/06 09:05:39 jruoho Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -124,7 +124,7 @@ apic_attach(struct elroy_softc *sc)
 }
 
 int
-apic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+apic_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct elroy_softc *sc = pa->pa_pc->_cookie;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -139,7 +139,7 @@ apic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 #endif
 	line = PCI_INTERRUPT_LINE(reg);
 	if (sc->sc_irq[line] == 0)
-		sc->sc_irq[line] = hp700_intr_allocate_bit(&int_reg_cpu);
+		sc->sc_irq[line] = hp700_intr_allocate_bit(&ir_cpu);
 	*ihp = (line << APIC_INT_LINE_SHIFT) | sc->sc_irq[line];
 	return (APIC_INT_IRQ(*ihp) == 0);
 }
@@ -203,7 +203,7 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 		return arg;
 	}
 
-	iv = hp700_intr_establish(pri, apic_intr, aiv, &int_reg_cpu, irq);
+	iv = hp700_intr_establish(pri, apic_intr, aiv, &ir_cpu, irq);
 	if (iv) {
 		ent0 = (31 - irq) & APIC_ENT0_VEC;
 		ent0 |= apic_get_int_ent0(sc, line);
@@ -266,7 +266,7 @@ apic_get_int_tbl(struct elroy_softc *sc)
 	err = pdcproc_pci_inttblsz(&nentries);
 	if (err)
 		return;
-	
+
 	size = nentries * sizeof(struct pdc_pat_pci_rt);
 	sc->sc_int_tbl_sz = nentries;
 	sc->sc_int_tbl = malloc(size, M_DEVBUF, M_NOWAIT);
@@ -337,9 +337,9 @@ apic_dump(struct elroy_softc *sc)
 	for (i = 0; i < sc->sc_int_tbl_sz; i++) {
 		printf("type=%x ", sc->sc_int_tbl[i].type);
 		printf("len=%d ", sc->sc_int_tbl[i].len);
-		printf("itype=%d ", sc->sc_int_tbl[i].itype);			
-		printf("trigger=%x ", sc->sc_int_tbl[i].trigger);		
-		printf("pin=%x ", sc->sc_int_tbl[i].pin);		
+		printf("itype=%d ", sc->sc_int_tbl[i].itype);
+		printf("trigger=%x ", sc->sc_int_tbl[i].trigger);
+		printf("pin=%x ", sc->sc_int_tbl[i].pin);
 		printf("bus=%d ", sc->sc_int_tbl[i].bus);
 		printf("line=%d ", sc->sc_int_tbl[i].line);
 		printf("addr=%llx\n", sc->sc_int_tbl[i].addr);

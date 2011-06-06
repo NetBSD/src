@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.7 2010/05/05 17:42:19 dyoung Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.7.2.1 2011/06/06 09:05:48 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: busfunc.S,v 1.7 2010/05/05 17:42:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: busfunc.S,v 1.7.2.1 2011/06/06 09:05:48 jruoho Exp $");
 
 #include "assym.h"
 
@@ -157,7 +157,7 @@ ENTRY(bus_space_read_multi_1)
 	movl	24(%esp), %ecx
 	jne	1f
 	rep
-	insb	(%dx), %es:(%edi)
+	insb	%dx, %es:(%edi)
 	popl	%edi
 	ret
 	.align	16
@@ -184,7 +184,7 @@ ENTRY(bus_space_read_multi_2)
 	movl	24(%esp), %ecx
 	jne	1f
 	rep
-	insw	(%dx), %es:(%edi)
+	insw	%dx, %es:(%edi)
 	popl	%edi
 	ret
 	.align	16
@@ -211,7 +211,7 @@ ENTRY(bus_space_read_multi_4)
 	movl	24(%esp), %ecx
 	jne	1f
 	rep
-	insl	(%dx), %es:(%edi)
+	insl	%dx, %es:(%edi)
 	popl	%edi
 	ret
 	.align	16
@@ -242,7 +242,7 @@ ENTRY(bus_space_write_multi_1)
 	movl	24(%esp), %ecx
 	jne	1f
 	rep
-	outsb	%ds:(%esi), (%dx)
+	outsb	%ds:(%esi), %dx
 	popl	%esi
 	ret
 	.align	16
@@ -269,7 +269,7 @@ ENTRY(bus_space_write_multi_2)
 	movl	24(%esp), %ecx
 	jne	1f
 	rep
-	outsw	%ds:(%esi),(%dx)
+	outsw	%ds:(%esi), %dx
 	popl	%esi
 	ret
 	.align	16
@@ -296,7 +296,7 @@ ENTRY(bus_space_write_multi_4)
 	movl	24(%esp), %ecx
 	jne	1f
 	rep
-	outsl	%ds:(%esi),(%dx)
+	outsl	%ds:(%esi), %dx
 	popl	%esi
 	ret
 	.align	16

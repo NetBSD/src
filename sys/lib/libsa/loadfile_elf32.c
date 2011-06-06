@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.27 2010/09/16 00:26:49 jym Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.27.2.1 2011/06/06 09:09:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -273,10 +273,10 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		uint8_t		desc[ELF_NOTE_NETBSD_DESCSZ];
 	} note;
 	char *shstr = NULL;
-	int boot_load_ctf=1;
+	int boot_load_ctf = 1;
 
 	/* some ports dont use the offset */
-	offset = offset;
+	(void)&offset;
 
 	internalize_ehdr(elf->e_ident[EI_DATA], elf);
 

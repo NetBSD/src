@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.59 2010/04/23 15:19:20 rmind Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.59.2.1 2011/06/06 09:07:33 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.59 2010/04/23 15:19:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.59.2.1 2011/06/06 09:07:33 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.59 2010/04/23 15:19:20 rmind Exp $
 
 #include <fs/cd9660/cd9660_mount.h>
 #include <ufs/ufs/ufsmount.h>
+
+#define NFS_ARGS_ONLY
+#include <nfs/nfsmount.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -756,7 +759,7 @@ out:
 
 int
 netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
-	register_t *retval) 
+	register_t *retval)
 {
 	/* {
 		syscallarg(netbsd32_charp) type;
@@ -770,11 +773,13 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		struct netbsd32_ufs_args ufs_args;
 		struct netbsd32_mfs_args mfs_args;
 		struct netbsd32_iso_args iso_args;
+		struct netbsd32_nfs_args nfs_args;
 	} fs_args32;
 	union {
 		struct ufs_args ufs_args;
 		struct mfs_args mfs_args;
 		struct iso_args iso_args;
+		struct nfs_args nfs_args;
 	} fs_args;
 	const char *type = SCARG_P32(uap, type);
 	const char *path = SCARG_P32(uap, path);
@@ -838,6 +843,33 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		data_seg = UIO_SYSSPACE;
 		data = &fs_args.iso_args;
 		data_len = sizeof(fs_args.iso_args);
+	} else if (strcmp(mtype, MOUNT_NFS) == 0) {
+		if (data_len != sizeof(fs_args32.nfs_args))
+			return EINVAL;
+		if ((flags & MNT_GETARGS) == 0) {
+			error = copyin(data, &fs_args32.nfs_args, 
+			    sizeof(fs_args32.nfs_args));
+			if (error)
+				return error;
+			fs_args.nfs_args.version = fs_args32.nfs_args.version;
+			fs_args.nfs_args.addr =
+			    NETBSD32PTR64(fs_args32.nfs_args.addr);
+			memcpy(&fs_args.nfs_args.addrlen,
+			    &fs_args32.nfs_args.addrlen,
+			    offsetof(struct nfs_args, fh)
+				- offsetof(struct nfs_args, addrlen));
+			fs_args.nfs_args.fh =
+			    NETBSD32PTR64(fs_args32.nfs_args.fh);
+			memcpy(&fs_args.nfs_args.fhsize,
+			    &fs_args32.nfs_args.fhsize,
+			    offsetof(struct nfs_args, hostname)
+				- offsetof(struct nfs_args, fhsize));
+			fs_args.nfs_args.hostname =
+			    NETBSD32PTR64(fs_args32.nfs_args.hostname);
+		}
+		data_seg = UIO_SYSSPACE;
+		data = &fs_args.nfs_args;
+		data_len = sizeof(fs_args.nfs_args);
 	} else {
 		data_seg = UIO_USERSPACE;
 	}
@@ -876,6 +908,30 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 			fs_args32.iso_args.flags = fs_args.iso_args.flags;
 			error = copyout(&fs_args32.iso_args, data,
 				    sizeof(fs_args32.iso_args));
+		} else if (strcmp(mtype, MOUNT_NFS) == 0) {
+			if (data_len != sizeof(fs_args.nfs_args))
+				return EINVAL;
+			error = copyin(data, &fs_args32.nfs_args, 
+			    sizeof(fs_args32.nfs_args));
+			if (error)
+				return error;
+			fs_args.nfs_args.version = fs_args32.nfs_args.version;
+			NETBSD32PTR32(fs_args32.nfs_args.addr,
+			    fs_args.nfs_args.addr);
+			memcpy(&fs_args32.nfs_args.addrlen,
+			    &fs_args.nfs_args.addrlen,
+			    offsetof(struct nfs_args, fh)
+				- offsetof(struct nfs_args, addrlen));
+			NETBSD32PTR32(fs_args32.nfs_args.fh,
+			    fs_args.nfs_args.fh);
+			memcpy(&fs_args32.nfs_args.fhsize,
+			    &fs_args.nfs_args.fhsize,
+			    offsetof(struct nfs_args, hostname)
+				- offsetof(struct nfs_args, fhsize));
+			NETBSD32PTR32(fs_args32.nfs_args.hostname,
+			    fs_args.nfs_args.hostname);
+			error = copyout(&fs_args32.nfs_args, data,
+			    sizeof(fs_args32.nfs_args));
 		}
 	}
 	return error;

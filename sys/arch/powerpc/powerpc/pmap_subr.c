@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.25 2010/11/12 07:59:27 uebayasi Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.25.2.1 2011/06/06 09:06:31 jruoho Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.25 2010/11/12 07:59:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.25.2.1 2011/06/06 09:06:31 jruoho Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -53,10 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.25 2010/11/12 07:59:27 uebayasi Exp 
 
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	__asm volatile("sync; mtmsr %0; isync" :: "r"(psl))
-
-#ifdef PMAP_EXCLUDE_DECLS
-const struct pmap_ops *pmapops;
-#endif
 
 #ifdef PMAPCOUNTERS
 #define	PMAPCOUNT(ev)	((pmap_evcnt_ ## ev).ev_count++)

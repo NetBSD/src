@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.15 2011/01/14 02:06:30 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.15.2.1 2011/06/06 09:06:42 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -58,6 +58,7 @@ struct mdlwp {
 
 /* md_flags */
 #define	MDP_USEDFPU	0x0001	/* has used the FPU */
+#define	MDP_SSTEP	0x0002	/* single-stepped with PT_STEP */
 
 struct lwp;
 

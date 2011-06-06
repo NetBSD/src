@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.13 2010/06/19 19:44:58 matt Exp $
+#	$NetBSD: TISDP2420,v 1.13.2.1 2011/06/06 09:05:24 jruoho Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -43,7 +43,8 @@ file-system	TMPFS		# memory file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental
@@ -141,12 +142,12 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=300000
+options 	SYMTAB_SPACE=500000
 
 ## USB Debugging options
 options USB_DEBUG
-options OHCI_DEBUG 
-options UHUB_DEBUG 
+options OHCI_DEBUG
+options UHUB_DEBUG
 
 
 # Valid options for BOOT_ARGS:
@@ -178,8 +179,8 @@ options		MEMSIZE=64
 L3i0		at mainbus?
 
 # OBIO
-obio0		at mainbus? base 0x48000000 size 0x1000000	# L4 CORE 
-obio1		at mainbus? base 0x49000000 size 0x0800000	# L4 WAKEUP 
+obio0		at mainbus? base 0x48000000 size 0x1000000	# L4 CORE
+obio1		at mainbus? base 0x49000000 size 0x0800000	# L4 WAKEUP
 
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x6800a000

@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.28 2011/01/13 21:15:13 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.28.2.1 2011/06/06 09:05:39 jruoho Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.28 2011/01/13 21:15:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.28.2.1 2011/06/06 09:05:39 jruoho Exp $");
 
 /* #include "cardbus.h" */
 
@@ -118,7 +118,7 @@ struct dino_softc {
 
 	int sc_ver;
 	void *sc_ih;
-	struct hp700_int_reg sc_int_reg;
+	struct hp700_interrupt_register sc_ir;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
 	bus_dma_tag_t sc_dmat;
@@ -149,7 +149,7 @@ void dino_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t dino_conf_read(void *, pcitag_t, int);
 void dino_conf_write(void *, pcitag_t, int, pcireg_t);
 
-int dino_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int dino_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 const char *dino_intr_string(void *, pci_intr_handle_t);
 void *dino_intr_establish(void *, pci_intr_handle_t, int,
     int (*)(void *), void *);
@@ -376,7 +376,7 @@ dino_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 }
 
 int
-dino_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+dino_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int line = pa->pa_intrline;
 
@@ -406,7 +406,7 @@ dino_intr_establish(void *v, pci_intr_handle_t ih,
 {
 	struct dino_softc *sc = v;
 
-	return hp700_intr_establish(pri, handler, arg, &sc->sc_int_reg, ih);
+	return hp700_intr_establish(pri, handler, arg, &sc->sc_ir, ih);
 }
 
 void
@@ -1596,7 +1596,7 @@ dinomatch(device_t parent, cfdata_t cfdata, void *aux)
 
 	/* Make sure we have an IRQ. */
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
-		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
+		ca->ca_irq = hp700_intr_allocate_bit(&ir_cpu);
 
 	return 1;
 }
@@ -1658,15 +1658,15 @@ dinoattach(device_t parent, device_t self, void *aux)
 	r->iar0 = cpu_gethpa(0) | (31 - ca->ca_irq);
 	splx(s);
 	/* Establish the interrupt register. */
-	hp700_intr_reg_establish(&sc->sc_int_reg);
-	sc->sc_int_reg.int_reg_name = device_xname(self);
-	sc->sc_int_reg.int_reg_mask = &r->imr;
-	sc->sc_int_reg.int_reg_req = &r->irr0;
-	sc->sc_int_reg.int_reg_level = &r->ilr;
+	hp700_interrupt_register_establish(&sc->sc_ir);
+	sc->sc_ir.ir_name = device_xname(self);
+	sc->sc_ir.ir_mask = &r->imr;
+	sc->sc_ir.ir_req = &r->irr0;
+	sc->sc_ir.ir_level = &r->ilr;
 	/* Add the I/O interrupt register. */
 
-	sc->sc_ih = hp700_intr_establish(IPL_NONE, NULL, &sc->sc_int_reg,
-	    &int_reg_cpu, ca->ca_irq);
+	sc->sc_ih = hp700_intr_establish(IPL_NONE, NULL, &sc->sc_ir,
+	    &ir_cpu, ca->ca_irq);
 
 	/* TODO establish the bus error interrupt */
 
@@ -1729,7 +1729,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 	pba.pba_dmat = &sc->sc_dmatag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 

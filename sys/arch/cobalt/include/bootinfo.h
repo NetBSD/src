@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.9 2009/12/30 18:39:03 he Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.9.6.1 2011/06/06 09:05:14 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000-2004
@@ -34,7 +34,7 @@
 
 struct btinfo_common {
 	int32_t next;		/* offset of next item, or zero */
-	int32_t type;
+	uint32_t type;
 };
 
 #define BTINFO_MAGIC	1
@@ -45,7 +45,7 @@ struct btinfo_common {
 
 struct btinfo_magic {
 	struct btinfo_common common;
-	int32_t magic;
+	uint32_t magic;
 };
 
 #define BTINFO_BOOTPATH_LEN	80

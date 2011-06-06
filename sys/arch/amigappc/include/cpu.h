@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 2010/02/09 18:13:10 phx Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18.4.1 2011/06/06 09:04:56 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -47,14 +47,15 @@ extern int machineid;
 /*
  * Prototypes from amiga_init.c
  */
-void	*alloc_z2mem (long);
+void	*alloc_z2mem(long);
 
 /*
  * Prototypes from autoconf.c
  */
-int     is_a1200 (void);
-int     is_a3000 (void);
-int     is_a4000 (void);
+#define	is_a600()	0
+int     is_a1200(void);
+int     is_a3000(void);
+int     is_a4000(void);
 
 /*
  * Prototypes from machdep.c

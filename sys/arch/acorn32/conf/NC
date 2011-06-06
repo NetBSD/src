@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.53 2010/11/23 11:13:52 hannken Exp $
+#	$NetBSD: NC,v 1.53.2.1 2011/06/06 09:04:39 jruoho Exp $
 #
 #	NC - with wscons
 #
@@ -48,7 +48,8 @@ file-system	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	NFSSERVER
 
 # Networking options

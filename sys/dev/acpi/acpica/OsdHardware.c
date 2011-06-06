@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.6 2010/07/10 21:31:00 gsutre Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.6.2.1 2011/06/06 09:07:43 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.6 2010/07/10 21:31:00 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.6.2.1 2011/06/06 09:07:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -199,7 +199,7 @@ AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 Value, UINT32 Width)
  *	Read a value from a PCI configuration register.
  */
 ACPI_STATUS
-AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, void *Value,
+AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, UINT64 *Value,
     UINT32 Width)
 {
 	pcitag_t tag;
@@ -275,118 +275,4 @@ AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
 	pci_conf_write(acpi_softc->sc_pc, tag, Register & ~3, tmp);
 
 	return AE_OK;
-}
-
-/*
- * acpi_os_derive_pciid_rec:
- *
- *	Helper function for AcpiOsDerivePciId.  The parameters are:
- *	- chandle:	a handle to the node whose PCI id shall be derived.
- *	- rhandle:	a handle the PCI root bridge upstream of chandle.
- *	- pciid:	where the derived PCI id is returned.
- *
- *	This function assumes that rhandle is a proper ancestor of chandle,
- *	and that pciid has already been filled by ACPICA:
- *	- segment# and bus# obtained from _SEG and _BBN on rhandle,
- *	- device# and function# obtained from _ADR on the ACPI device node
- *	  whose scope chandle is in).
- */
-static ACPI_STATUS
-acpi_os_derive_pciid_rec(ACPI_HANDLE chandle, ACPI_HANDLE rhandle, ACPI_PCI_ID *pciid)
-{
-	ACPI_HANDLE phandle;
-	ACPI_INTEGER address;
-	ACPI_OBJECT_TYPE objtype;
-	ACPI_STATUS rv;
-	uint16_t valb;
-
-	KASSERT(chandle != rhandle);
-
-	/*
-	 * Get parent device node.  This is should not fail since chandle has
-	 * at least one ancestor that is a device node: rhandle.
-	 */
-	phandle = chandle;
-	do {
-		rv = AcpiGetParent(phandle, &phandle);
-		if (ACPI_FAILURE(rv))
-			return rv;
-		rv = AcpiGetType(phandle, &objtype);
-		if (ACPI_FAILURE(rv))
-			return rv;
-	}
-	while (objtype != ACPI_TYPE_DEVICE);
-
-	/*
-	 * If the parent is rhandle then we have nothing to do since ACPICA
-	 * has pre-filled the PCI id to the best it could.
-	 */
-	if (phandle == rhandle)
-		return AE_OK;
-
-	/* Recursive call to get PCI id of the parent */
-	rv = acpi_os_derive_pciid_rec(phandle, rhandle, pciid);
-	if (ACPI_FAILURE(rv))
-		return rv;
-
-	/*
-	 * If this is not an ACPI device, return the PCI id of its parent.
-	 */
-	rv = AcpiGetType(chandle, &objtype);
-	if (ACPI_FAILURE(rv))
-		return rv;
-	if (objtype != ACPI_TYPE_DEVICE)
-		return AE_OK;
-
-	/*
-	 * This is an ACPI device node.  Its parent device node is not a PCI
-	 * root bridge.  Check that it is a PCI-to-PCI bridge and get its
-	 * secondary bus#.
-	 */
-	rv = acpi_pcidev_ppb_downbus(pciid->Segment, pciid->Bus, pciid->Device,
-	    pciid->Function, &valb);
-	if (ACPI_FAILURE(rv))
-		return rv;
-
-	/* Get address (contains dev# and fun# for PCI devices). */
-	rv = acpi_eval_integer(chandle, METHOD_NAME__ADR, &address);
-	if (ACPI_FAILURE(rv))
-		return rv;
-
-	pciid->Bus = valb;
-	pciid->Device = ACPI_HIWORD(ACPI_LODWORD(address));
-	pciid->Function = ACPI_LOWORD(ACPI_LODWORD(address));
-	return AE_OK;
-}
-
-/*
- * AcpiOsDerivePciId:
- *
- *	Derive correct PCI bus# by traversing bridges.
- *
- *	In ACPICA release 20100331 (as well as older versions), the interface
- *	of this function is not correctly documented in the ACPICA programmer
- *	reference.  The correct interface parameters to this function are:
- *	- rhandle:	a handle the PCI root bridge upstream of handle.
- *	- chandle:	a handle to the PCI_Config operation region.
- *	- PciId:	where the derived PCI id is returned.
- */
-void
-AcpiOsDerivePciId(
-    ACPI_HANDLE        rhandle,
-    ACPI_HANDLE        chandle,
-    ACPI_PCI_ID        **PciId)
-{
-	ACPI_PCI_ID pciid;
-	ACPI_STATUS rv;
-
-	if (chandle == rhandle)
-		return;
-
-	pciid = **PciId;
-	rv = acpi_os_derive_pciid_rec(chandle, rhandle, &pciid);
-	if (ACPI_FAILURE(rv))
-		return;
-
-	(*PciId)->Bus = pciid.Bus;
 }

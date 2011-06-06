@@ -1,4 +1,4 @@
-/* $NetBSD: ipivar.h,v 1.4 2010/06/22 18:29:02 rmind Exp $ */
+/* $NetBSD: ipivar.h,v 1.4.2.1 2011/06/06 09:06:30 jruoho Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,44 +29,40 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.4 2010/06/22 18:29:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.4.2.1 2011/06/06 09:06:30 jruoho Exp $");
 
 #ifndef _IPI_VAR_H_
 #define _IPI_VAR_H_
 
-#include <machine/intr.h>
-
 struct ipi_ops {
-	void (*ppc_send_ipi)(int, u_long);
+	void (*ppc_send_ipi)(cpuid_t, uint32_t);
 	/* type, level, arg */
 	void (*ppc_establish_ipi)(int, int, void *);
 	int ppc_ipi_vector;
 };
 
 /* target macros, 0+ are real cpu numbers */
-#define IPI_T_ALL	-2
-#define IPI_T_NOTME	-1
+#define IPI_DST_ALL	((cpuid_t) -2)
+#define IPI_DST_NOTME	((cpuid_t) -1)
 
-#define PPC_IPI_NOMESG		0x0000
-#define PPC_IPI_HALT		0x0001
-#define PPC_IPI_FLUSH_FPU	0x0002
-#define PPC_IPI_FLUSH_VEC	0x0004
-#define PPC_IPI_XCALL		0x0008
+#define IPI_NOMESG		0x0000
+#define IPI_HALT		0x0001
+#define IPI_XCALL		0x0002
+#define IPI_KPREEMPT		0x0004
 
 /* OpenPIC */
 void setup_openpic_ipi(void);
 
 /* IPI Handler */
-int ppcipi_intr(void *);
+int ipi_intr(void *);
 
 /* convenience */
 extern struct ipi_ops ipiops;
 
 static inline void
-ppc_send_ipi(int cpuid, u_long msg)
+cpu_send_ipi(cpuid_t cpuid, uint32_t msg)
 {
-	ipiops.ppc_send_ipi(cpuid, msg);
+	(*ipiops.ppc_send_ipi)(cpuid, msg);
 }
-
 
 #endif /*_IPI_VAR_H_*/

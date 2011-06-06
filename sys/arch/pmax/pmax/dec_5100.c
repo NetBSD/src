@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.44 2009/07/20 17:05:13 tsutsui Exp $ */
+/* $NetBSD: dec_5100.c,v 1.44.6.1 2011/06/06 09:06:23 jruoho Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,15 +31,17 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.44 2009/07/20 17:05:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.44.6.1 2011/06/06 09:06:23 jruoho Exp $");
 
+#define __INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/lwp.h>
 #include <sys/kernel.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/locore.h>
 #include <machine/sysconf.h>
 
@@ -58,18 +60,21 @@ __KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.44 2009/07/20 17:05:13 tsutsui Exp $"
 void		dec_5100_init(void);		/* XXX */
 static void	dec_5100_bus_reset(void);
 static void	dec_5100_cons_init(void);
-static void	dec_5100_intr(unsigned, unsigned, unsigned, unsigned);
+static void	dec_5100_intr(uint32_t, vaddr_t, uint32_t);
 static void	dec_5100_intr_establish(struct device *, void *,
 		    int, int (*)(void *), void *);
 static void	dec_5100_memintr(void);
 
-static const int dec_5100_ipl2spl_table[] = {
+static const struct ipl_sr_map dec_5100_ipl_sr_map = {
+    .sr_bits = {
 	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
-	[IPL_SOFTNET] = _SPL_SOFTNET,
+	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK,
 	[IPL_VM] = MIPS_SPL_0_1,
-	[IPL_SCHED] = MIPS_SPL_0_1_2,
-	[IPL_HIGH] = MIPS_SPL_0_1_2,
+	[IPL_SCHED] = MIPS_SPLHIGH,
+	[IPL_DDB] = MIPS_SPLHIGH,
+	[IPL_HIGH] = MIPS_SPLHIGH,
+    },
 };
 
 void
@@ -87,7 +92,7 @@ dec_5100_init(void)
 	/* set correct wbflush routine for this motherboard */
 	mips_set_wbflush(kn230_wbflush);
 
-	ipl2spl_table = dec_5100_ipl2spl_table;
+	ipl_sr_map = dec_5100_ipl_sr_map;
 
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_2);
@@ -132,8 +137,8 @@ dec_5100_intr_establish(struct device *dev, void *cookie, int level,
     int (*handler)(void *), void *arg)
 {
 
-	intrtab[(int)cookie].ih_func = handler;
-	intrtab[(int)cookie].ih_arg = arg;
+	intrtab[(intptr_t)cookie].ih_func = handler;
+	intrtab[(intptr_t)cookie].ih_arg = arg;
 }
 
 
@@ -146,7 +151,7 @@ dec_5100_intr_establish(struct device *dev, void *cookie, int level,
     } while (/*CONSTCOND*/0)
 
 static void
-dec_5100_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+dec_5100_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 {
 	uint32_t icsr;
 
@@ -168,15 +173,10 @@ dec_5100_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			"r"(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK)));
 		cf.pc = pc;
 		cf.sr = status;
+		cf.intr = (curcpu()->ci_idepth > 1);
 		hardclock(&cf);
 		pmax_clock_evcnt.ev_count++;
-
-		/* keep clock interrupts enabled when we return */
-		cause &= ~MIPS_INT_MASK_2;
 	}
-
-	/* If clock interrupts were enabled, re-enable them ASAP. */
-	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
 	if (ipending & MIPS_INT_MASK_0) {
 		CALLINTR(SYS_DEV_SCC0, KN230_CSR_INTR_DZ0);
@@ -193,8 +193,6 @@ dec_5100_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		dec_5100_memintr();
 		pmax_memerr_evcnt.ev_count++;
 	}
-
-	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 

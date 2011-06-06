@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2010/07/06 06:09:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2011/06/06 09:04:55 jruoho Exp $
 
 ### what we need:
 
@@ -101,7 +101,8 @@ libboot.a: ${OBJS}
 
 .PHONY:	vers.c
 vers.c:	${.CURDIR}/../boot/version
-	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh -NDM ${.CURDIR}/../boot/version "amiga"
+	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh -N \
+	    ${.CURDIR}/../boot/version "amiga"
 
 .if !make(obj) && !make(clean) && !make(cleandir)
 .NOPATH: machine m68k

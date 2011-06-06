@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.18 2010/10/07 19:55:02 hans Exp $ */
+/* $NetBSD: tsc.c,v 1.18.2.1 2011/06/06 09:04:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.18 2010/10/07 19:55:02 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.18.2.1 2011/06/06 09:04:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ tspattach(device_t parent, device_t self, void *aux)
 	pba.pba_pc = &pcp->pc_pc;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }

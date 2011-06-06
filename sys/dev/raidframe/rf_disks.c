@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.76 2010/12/04 10:01:16 mrg Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.76.2.1 2011/06/06 09:08:32 jruoho Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.76 2010/12/04 10:01:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.76.2.1 2011/06/06 09:08:32 jruoho Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -455,9 +455,8 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 		if (ac!=NULL) {
 			/* Found it.  Configure it.. */
 			diskPtr->blockSize = ac->clabel->blockSize;
-			diskPtr->numBlocks = ac->clabel->numBlocks;
-			diskPtr->numBlocks |= 
-			    (uint64_t)ac->clabel->numBlocksHi << 32;
+			diskPtr->numBlocks =
+			    rf_component_label_numblocks(ac->clabel);
 			/* Note: rf_protectedSectors is already
 			   factored into numBlocks here */
 			raidPtr->raid_cinfo[c].ci_vp = ac->vp;
@@ -973,13 +972,12 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 		return(EINVAL);
 	}
 
-	RF_LOCK_MUTEX(raidPtr->mutex);
-	while (raidPtr->adding_hot_spare==1) {
-		ltsleep(&(raidPtr->adding_hot_spare), PRIBIO, "raidhs", 0,
-			&(raidPtr->mutex));
+	rf_lock_mutex2(raidPtr->mutex);
+	while (raidPtr->adding_hot_spare == 1) {
+		rf_wait_cond2(raidPtr->adding_hot_spare_cv, raidPtr->mutex);
 	}
-	raidPtr->adding_hot_spare=1;
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	raidPtr->adding_hot_spare = 1;
+	rf_unlock_mutex2(raidPtr->mutex);
 
 	/* the beginning of the spares... */
 	disks = &raidPtr->Disks[raidPtr->numCol];
@@ -1049,15 +1047,15 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 				 &raidPtr->shutdownList,
 				 raidPtr->cleanupList);
 
-	RF_LOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
 	raidPtr->numSpare++;
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_unlock_mutex2(raidPtr->mutex);
 
 fail:
-	RF_LOCK_MUTEX(raidPtr->mutex);
-	raidPtr->adding_hot_spare=0;
-	wakeup(&(raidPtr->adding_hot_spare));
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
+	raidPtr->adding_hot_spare = 0;
+	rf_signal_cond2(raidPtr->adding_hot_spare_cv);
+	rf_unlock_mutex2(raidPtr->mutex);
 
 	return(ret);
 }

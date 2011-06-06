@@ -1,7 +1,7 @@
-/*	$NetBSD: vm.c,v 1.106 2011/01/13 15:38:29 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.106.2.1 2011/06/06 09:10:08 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by
  * The Finnish Cultural Foundation and the Research Foundation of
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.106 2011/01/13 15:38:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.106.2.1 2011/06/06 09:10:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -69,10 +69,13 @@ kmutex_t uvm_pageqlock;
 kmutex_t uvm_swap_data_lock;
 
 struct uvmexp uvmexp;
-int *uvmexp_pagesize;
-int *uvmexp_pagemask;
-int *uvmexp_pageshift;
 struct uvm uvm;
+
+#ifdef __uvmexp_pagesize
+int *uvmexp_pagesize = &uvmexp.pagesize;
+int *uvmexp_pagemask = &uvmexp.pagemask;
+int *uvmexp_pageshift = &uvmexp.pageshift;
+#endif
 
 struct vm_map rump_vmmap;
 static struct vm_map_kernel kmem_map_store;
@@ -260,7 +263,7 @@ uvm_init(void)
 		char *ep;
 		int mult;
 
-		tmp = strtoll(buf, &ep, 10);
+		tmp = strtoul(buf, &ep, 10);
 		if (strlen(ep) > 1)
 			panic("uvm_init: invalid RUMP_MEMLIMIT: %s", buf);
 
@@ -303,6 +306,18 @@ uvm_init(void)
 
 	uvmexp.free = 1024*1024; /* XXX: arbitrary & not updated */
 
+#ifndef __uvmexp_pagesize
+	uvmexp.pagesize = PAGE_SIZE;
+	uvmexp.pagemask = PAGE_MASK;
+	uvmexp.pageshift = PAGE_SHIFT;
+#else
+#define FAKE_PAGE_SHIFT 12
+	uvmexp.pageshift = FAKE_PAGE_SHIFT;
+	uvmexp.pagesize = 1<<FAKE_PAGE_SHIFT;
+	uvmexp.pagemask = (1<<FAKE_PAGE_SHIFT)-1;
+#undef FAKE_PAGE_SHIFT
+#endif
+
 	mutex_init(&pagermtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, 0);
@@ -341,6 +356,21 @@ uvm_pageunwire(struct vm_page *pg)
 
 	/* nada */
 }
+
+/*
+ * The uvm reclaim hook is not currently necessary because it is
+ * used only by ZFS and implements exactly the same functionality
+ * as the kva reclaim hook which we already run in the pagedaemon
+ * (rump vm does not have a concept of uvm_map(), so we cannot
+ * reclaim kva it when a mapping operation fails due to insufficient
+ * available kva).
+ */
+void
+uvm_reclaim_hook_add(struct uvm_reclaim_hook *hook_entry)
+{
+
+}
+__strong_alias(uvm_reclaim_hook_del,uvm_reclaim_hook_add);
 
 /* where's your schmonz now? */
 #define PUNLIMIT(a)	\
@@ -756,9 +786,10 @@ uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
  * For the remote case we need to reserve space and copy data in or
  * out, depending on B_READ/B_WRITE.
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
+	int error = 0;
 
 	bp->b_saveaddr = bp->b_data;
 
@@ -766,9 +797,16 @@ vmapbuf(struct buf *bp, vsize_t len)
 	if (!RUMP_LOCALPROC_P(curproc)) {
 		bp->b_data = rump_hypermalloc(len, 0, true, "vmapbuf");
 		if (BUF_ISWRITE(bp)) {
-			copyin(bp->b_saveaddr, bp->b_data, len);
+			error = copyin(bp->b_saveaddr, bp->b_data, len);
+			if (error) {
+				rump_hyperfree(bp->b_data, len);
+				bp->b_data = bp->b_saveaddr;
+				bp->b_saveaddr = 0;
+			}
 		}
 	}
+
+	return error;
 }
 
 void
@@ -778,7 +816,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	/* remote case */
 	if (!RUMP_LOCALPROC_P(bp->b_proc)) {
 		if (BUF_ISREAD(bp)) {
-			copyout_proc(bp->b_proc,
+			bp->b_error = copyout_proc(bp->b_proc,
 			    bp->b_data, bp->b_saveaddr, len);
 		}
 		rump_hyperfree(bp->b_data, len);
@@ -885,14 +923,27 @@ void
 uvm_pageout_start(int npages)
 {
 
-	/* we don't have the heuristics */
+	mutex_enter(&pdaemonmtx);
+	uvmexp.paging += npages;
+	mutex_exit(&pdaemonmtx);
 }
 
 void
 uvm_pageout_done(int npages)
 {
 
-	/* could wakeup waiters, but just let the pagedaemon do it */
+	if (!npages)
+		return;
+
+	mutex_enter(&pdaemonmtx);
+	KASSERT(uvmexp.paging >= npages);
+	uvmexp.paging -= npages;
+
+	if (pdaemon_waiters) {
+		pdaemon_waiters = 0;
+		cv_broadcast(&oomwait);
+	}
+	mutex_exit(&pdaemonmtx);
 }
 
 static bool
@@ -931,6 +982,8 @@ processpage(struct vm_page *pg, bool *lockrunning)
 
 /*
  * The Diabolical pageDaemon Director (DDD).
+ *
+ * This routine can always use better heuristics.
  */
 void
 uvm_pageout(void *arg)
@@ -938,35 +991,30 @@ uvm_pageout(void *arg)
 	struct vm_page *pg;
 	struct pool *pp, *pp_first;
 	uint64_t where;
-	int timo = 0;
 	int cleaned, skip, skipped;
-	bool succ = false;
+	int waspaging;
+	bool succ;
 	bool lockrunning;
 
 	mutex_enter(&pdaemonmtx);
 	for (;;) {
-		if (succ) {
+		if (!NEED_PAGEDAEMON()) {
 			kernel_map->flags &= ~VM_MAP_WANTVA;
 			kmem_map->flags &= ~VM_MAP_WANTVA;
-			timo = 0;
-			if (pdaemon_waiters) {
-				pdaemon_waiters = 0;
-				cv_broadcast(&oomwait);
-			}
 		}
-		succ = false;
 
-		if (pdaemon_waiters == 0) {
-			cv_timedwait(&pdaemoncv, &pdaemonmtx, timo);
-			uvmexp.pdwoke++;
+		if (pdaemon_waiters) {
+			pdaemon_waiters = 0;
+			cv_broadcast(&oomwait);
 		}
+
+		cv_wait(&pdaemoncv, &pdaemonmtx);
+		uvmexp.pdwoke++;
+		waspaging = uvmexp.paging;
 
 		/* tell the world that we are hungry */
 		kernel_map->flags |= VM_MAP_WANTVA;
 		kmem_map->flags |= VM_MAP_WANTVA;
-
-		if (pdaemon_waiters == 0 && !NEED_PAGEDAEMON())
-			continue;
 		mutex_exit(&pdaemonmtx);
 
 		/*
@@ -976,7 +1024,6 @@ uvm_pageout(void *arg)
 		 */
 		pool_cache_reclaim(&pagecache);
 		if (!NEED_PAGEDAEMON()) {
-			succ = true;
 			mutex_enter(&pdaemonmtx);
 			continue;
 		}
@@ -1043,7 +1090,6 @@ uvm_pageout(void *arg)
 		 */
 		pool_cache_reclaim(&pagecache);
 		if (!NEED_PAGEDAEMON()) {
-			succ = true;
 			mutex_enter(&pdaemonmtx);
 			continue;
 		}
@@ -1080,13 +1126,14 @@ uvm_pageout(void *arg)
 		 * Unfortunately, the wife just borrowed it.
 		 */
 
-		if (!succ && cleaned == 0) {
+		mutex_enter(&pdaemonmtx);
+		if (!succ && cleaned == 0 && pdaemon_waiters &&
+		    uvmexp.paging == 0) {
 			rumpuser_dprintf("pagedaemoness: failed to reclaim "
 			    "memory ... sleeping (deadlock?)\n");
-			timo = hz;
+			cv_timedwait(&pdaemoncv, &pdaemonmtx, hz);
+			mutex_enter(&pdaemonmtx);
 		}
-
-		mutex_enter(&pdaemonmtx);
 	}
 
 	panic("you can swap out any time you like, but you can never leave");

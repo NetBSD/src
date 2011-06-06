@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.9 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.9.106.1 2011/06/06 09:06:40 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -105,24 +105,24 @@ struct sq_action_trace {
 	(sc)->sq_trace[(sc)->sq_trace_idx].freebuf = (sc)->sc_nfreetx;	\
 	if (++(sc)->sq_trace_idx == SQ_TRACEBUF_SIZE)			\
 		(sc)->sq_trace_idx = 0;					\
-} while (0)
+} while (/* CONSTCOND */0)
 
 struct sq_softc {
-	struct device 		sc_dev;
+	device_t		sc_dev;
 
 	/* HPC registers */
-	bus_space_tag_t 	sc_hpct;
-	bus_space_handle_t 	sc_hpch;
+	bus_space_tag_t		sc_hpct;
+	bus_space_handle_t	sc_hpch;
 
 
 	/* HPC external ethernet registers: aka Seeq 8003 registers */
-	bus_space_tag_t 	sc_regt;
-	bus_space_handle_t 	sc_regh;
+	bus_space_tag_t		sc_regt;
+	bus_space_handle_t	sc_regh;
 
-	bus_dma_tag_t 		sc_dmat;
+	bus_dma_tag_t		sc_dmat;
 
-	struct ethercom 	sc_ethercom;
-	unsigned char 		sc_enaddr[ETHER_ADDR_LEN];
+	struct ethercom		sc_ethercom;
+	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
 
 	int			sc_type;
 
@@ -152,12 +152,12 @@ struct sq_softc {
 	bus_dmamap_t		sc_txmap[SQ_NTXDESC];
 	struct mbuf*		sc_txmbuf[SQ_NTXDESC];
 
-	u_int8_t		sc_rxcmd;	/* prototype rxcmd */
+	uint8_t			sc_rxcmd;	/* prototype rxcmd */
 
 	struct evcnt		sq_intrcnt;	/* count interrupts */
 
 #if NRND > 0
-	rndsource_element_t 	rnd_source;	/* random source */
+	rndsource_element_t	rnd_source;	/* random source */
 #endif
 	struct hpc_values       *hpc_regs;      /* HPC register definitions */
 
@@ -198,18 +198,19 @@ SQ_INIT_RXDESC(struct sq_softc *sc, unsigned int x)
 	__m->m_data = __m->m_ext.ext_buf;
 	if (sc->hpc_regs->revision == 3) {
 		__rxd->hpc3_hdd_bufptr =
-			(sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr;
+		    (sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr;
 		__rxd->hpc3_hdd_ctl = __m->m_ext.ext_size | HPC3_HDD_CTL_OWN |
-			HPC3_HDD_CTL_INTR | HPC3_HDD_CTL_EOPACKET |
-			((x) == (SQ_NRXDESC  - 1) ? HPC3_HDD_CTL_EOCHAIN : 0);
+		    HPC3_HDD_CTL_INTR | HPC3_HDD_CTL_EOPACKET |
+		    ((x) == (SQ_NRXDESC  - 1) ? HPC3_HDD_CTL_EOCHAIN : 0);
 	} else {
-		__rxd->hpc1_hdd_bufptr = (sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr
-			| ((x) == (SQ_NRXDESC - 1) ? HPC1_HDD_CTL_EOCHAIN : 0);
-        	__rxd->hpc1_hdd_ctl = __m->m_ext.ext_size | HPC1_HDD_CTL_OWN |
-			HPC1_HDD_CTL_INTR | HPC1_HDD_CTL_EOPACKET;
+		__rxd->hpc1_hdd_bufptr =
+		    (sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr |
+		    ((x) == (SQ_NRXDESC - 1) ? HPC1_HDD_CTL_EOCHAIN : 0);
+		__rxd->hpc1_hdd_ctl = __m->m_ext.ext_size | HPC1_HDD_CTL_OWN |
+		    HPC1_HDD_CTL_INTR | HPC1_HDD_CTL_EOPACKET;
 	}
-	__rxd->hdd_descptr = SQ_CDRXADDR((sc), SQ_NEXTRX((x)));	
-	SQ_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	__rxd->hdd_descptr = SQ_CDRXADDR((sc), SQ_NEXTRX((x)));
+	SQ_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 #endif	/* _ARCH_SGIMIPS_HPC_SQVAR_H_ */

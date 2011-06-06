@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.39 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: ubt.c,v 1.39.2.1 2011/06/06 09:08:42 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.39 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.39.2.1 2011/06/06 09:08:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,14 +97,18 @@ __KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.39 2010/11/03 22:34:23 dyoung Exp $");
 #ifdef UBT_DEBUG
 int	ubt_debug = 0;
 
-#define DPRINTF(fmt, args...)		do {		\
-	if (ubt_debug)					\
-		printf("%s: "fmt, __func__ , ##args);	\
+#define DPRINTF(...)		do {		\
+	if (ubt_debug) {			\
+		printf("%s: ", __func__);	\
+		printf(__VA_ARGS__);		\
+	}					\
 } while (/* CONSTCOND */0)
 
-#define DPRINTFN(n, fmt, args...)	do {		\
-	if (ubt_debug > (n))				\
-		printf("%s: "fmt, __func__ , ##args);	\
+#define DPRINTFN(n, ...)	do {		\
+	if (ubt_debug > (n)) {			\
+		printf("%s: ", __func__);	\
+		printf(__VA_ARGS__);		\
+	}					\
 } while (/* CONSTCOND */0)
 
 SYSCTL_SETUP(sysctl_hw_ubt_debug_setup, "sysctl hw.ubt_debug setup")

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.evbarm,v 1.5 2008/11/07 16:23:58 rafal Exp $	*/
+/*	$NetBSD: ldscript.evbarm,v 1.5.10.1 2011/06/06 09:05:24 jruoho Exp $	*/
 
 OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
@@ -36,10 +36,10 @@ SECTIONS
     *(.data)
     *(.data.*)
   }
-  .sdata     : 
+  .sdata     :
   AT (LOADADDR(.data) + (ADDR(.sdata) - ADDR(.data)))
   {
-    *(.sdata) 
+    *(.sdata)
     *(.sdata.*)
   }
   _edata = .;

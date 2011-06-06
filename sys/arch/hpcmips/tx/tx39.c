@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.41 2010/01/21 01:23:15 pooka Exp $ */
+/*	$NetBSD: tx39.c,v 1.41.6.1 2011/06/06 09:05:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.41 2010/01/21 01:23:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.41.6.1 2011/06/06 09:05:45 jruoho Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -39,12 +39,13 @@ __KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.41 2010/01/21 01:23:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <mips/cache.h>
+#include <mips/locore.h>
 
-#include <machine/locore.h>   /* cpu_id */
 #include <machine/bootinfo.h> /* bootinfo */
 #include <machine/sysconf.h>  /* platform */
 
@@ -84,7 +85,7 @@ void	tx_init(void);
 #define	TX_INTR	cpu_intr	/* locore_mips3 directly call this */
 #endif
 
-extern void TX_INTR(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+extern void TX_INTR(int, vaddr_t, uint32_t);
 
 void	tx39clock_cpuspeed(int *, int *);
 
@@ -114,7 +115,7 @@ tx_init(void)
 	platform.reboot		= tx_reboot;
 
 
-	model = MIPS_PRID_REV(cpu_id);
+	model = MIPS_PRID_REV(mips_options.mips_cpu_id);
 
 	switch (model) {
 	default:
@@ -181,9 +182,9 @@ void
 tx_find_dram(paddr_t start, paddr_t end)
 {
 	char *page, *startaddr, *endaddr;
-	u_int32_t magic0, magic1;
-#define MAGIC0		(*(volatile u_int32_t *)(page + 0))
-#define MAGIC1		(*(volatile u_int32_t *)(page + 4))
+	uint32_t magic0, magic1;
+#define MAGIC0		(*(volatile uint32_t *)(page + 0))
+#define MAGIC1		(*(volatile uint32_t *)(page + 4))
 
 	startaddr = (char *)MIPS_PHYS_TO_KSEG1(start);
 	endaddr = (char *)MIPS_PHYS_TO_KSEG1(end);
@@ -238,7 +239,7 @@ void
 tx_reboot(int howto, char *bootstr)
 {
 
-	goto *(u_int32_t *)MIPS_RESET_EXC_VEC;
+	goto *(uint32_t *)MIPS_RESET_EXC_VEC;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.27 2010/12/20 21:11:25 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.27.2.1 2011/06/06 09:05:57 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -135,9 +135,9 @@
 #define ALTENTRY(name, rname)	_ENTRY(_C_LABEL(name))
 #endif
 
-#define RCSID(x)	.text			;	\
+#define RCSID(x)	.pushsection ".ident"	;	\
 			.asciz x		;	\
-			.even
+			.popsection
 
 /*
  * Global variables of whatever sort.

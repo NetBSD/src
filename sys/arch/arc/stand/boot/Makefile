@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2010/05/27 06:58:12 dholland Exp $
+# $NetBSD: Makefile,v 1.9.2.1 2011/06/06 09:05:00 jruoho Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>	# for ${HOST_SH}
@@ -12,8 +12,12 @@ BINMODE= 444
 
 NETBSD_VERS!=	${HOST_SH} ${S}/conf/osrelease.sh
 
-SRCS=	start.S
+.PATH:		${S}/dev/arcbios
+
+SRCS=	start.S arcbios_calls.S
 SRCS+=	boot.c bootinfo.c conf.c devopen.c disk.c getchar.c getopt.c putchar.c
+
+.include "${S}/dev/arcbios/Makefile.inc"
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
@@ -21,10 +25,10 @@ LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-AFLAGS=    -x assembler-with-cpp -traditional-cpp -mno-abicalls -mips2
+AFLAGS=    -x assembler-with-cpp -mno-abicalls -mips2
 AFLAGS+=   -D_LOCORE -D_KERNEL
 CFLAGS=    -Os -mmemcpy -G 1024
-CFLAGS+=   -ffreestanding -mno-abicalls -msoft-float -mips2
+CFLAGS+=   -ffreestanding -mno-abicalls -msoft-float -mips2 -mabi=32
 CFLAGS+=   -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 CPPFLAGS+= -nostdinc -I. -I${S}
 CPPFLAGS+= -D_STANDALONE -DNO_ABICALLS -D${MACHINE}
@@ -38,7 +42,8 @@ TEXTADDR=  0x80f00000
 .if exists(version)
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version ${MACHINE}
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c

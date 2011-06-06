@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.110 2010/07/29 10:54:51 hannken Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.110.2.1 2011/06/06 09:10:20 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -13,12 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,6 +27,7 @@
  *
  * from: Id: uvm_aobj.c,v 1.1.2.5 1998/02/06 05:14:38 chs Exp
  */
+
 /*
  * uvm_aobj.c: anonymous memory uvm_object pager
  *
@@ -43,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.110 2010/07/29 10:54:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.110.2.1 2011/06/06 09:10:20 jruoho Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -137,12 +132,10 @@ struct uao_swhash_elt {
 LIST_HEAD(uao_swhash, uao_swhash_elt);
 
 /*
- * uao_swhash_elt_pool: pool of uao_swhash_elt structures
- * NOTE: Pages for this pool must not come from a pageable kernel map!
+ * uao_swhash_elt_pool: pool of uao_swhash_elt structures.
+ * Note: pages for this pool must not come from a pageable kernel map.
  */
 static struct pool uao_swhash_elt_pool;
-
-static struct pool_cache uvm_aobj_cache;
 
 /*
  * uvm_aobj: the actual anon-backed uvm_object
@@ -393,8 +386,6 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 static void
 uao_free(struct uvm_aobj *aobj)
 {
-	int swpgonlydelta = 0;
-
 
 #if defined(VMSWAP)
 	uao_dropswap_range1(aobj, 0, 0);
@@ -425,19 +416,7 @@ uao_free(struct uvm_aobj *aobj)
 	 */
 
 	UVM_OBJ_DESTROY(&aobj->u_obj);
-	pool_cache_put(&uvm_aobj_cache, aobj);
-
-	/*
-	 * adjust the counter of pages only in swap for all
-	 * the swap slots we've freed.
-	 */
-
-	if (swpgonlydelta > 0) {
-		mutex_enter(&uvm_swap_data_lock);
-		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
-		uvmexp.swpgonly -= swpgonlydelta;
-		mutex_exit(&uvm_swap_data_lock);
-	}
+	kmem_free(aobj, sizeof(struct uvm_aobj));
 }
 
 /*
@@ -463,7 +442,7 @@ uao_create(vsize_t size, int flags)
 	int refs;
 
 	/*
-	 * malloc a new aobj unless we are asked for the kernel object
+	 * Allocate a new aobj, unless kernel object is requested.
 	 */
 
 	if (flags & UAO_FLAG_KERNOBJ) {
@@ -479,7 +458,7 @@ uao_create(vsize_t size, int flags)
 		kobj_alloced = UAO_FLAG_KERNSWAP;
 		refs = 0xdeadbeaf; /* XXX: gcc */
 	} else {
-		aobj = pool_cache_get(&uvm_aobj_cache, PR_WAITOK);
+		aobj = kmem_alloc(sizeof(struct uvm_aobj), KM_SLEEP);
 		aobj->u_pages = pages;
 		aobj->u_flags = 0;
 		refs = 1;
@@ -507,7 +486,7 @@ uao_create(vsize_t size, int flags)
 			aobj->u_swslots = kmem_zalloc(pages * sizeof(int),
 			    kernswap ? KM_NOSLEEP : KM_SLEEP);
 			if (aobj->u_swslots == NULL)
-				panic("uao_create: malloc swslots failed");
+				panic("uao_create: swslots allocation failed");
 		}
 #endif /* defined(VMSWAP) */
 
@@ -551,8 +530,6 @@ uao_init(void)
 	uao_initialized = true;
 	LIST_INIT(&uao_list);
 	mutex_init(&uao_list_lock, MUTEX_DEFAULT, IPL_NONE);
-	pool_cache_bootstrap(&uvm_aobj_cache, sizeof(struct uvm_aobj), 0, 0,
-	    0, "aobj", NULL, IPL_NONE, NULL, NULL, NULL);
 	pool_init(&uao_swhash_elt_pool, sizeof(struct uao_swhash_elt),
 	    0, 0, 0, "uaoeltpl", NULL, IPL_VM);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.138 2011/01/05 17:00:25 jmcneill Exp $	*/
+/*	$NetBSD: conf.h,v 1.138.2.1 2011/06/06 09:10:10 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -231,9 +231,13 @@ int	seltrue_kqfilter(dev_t, struct knote *);
 enum devnode_class {
 	DEVNODE_DONTBOTHER,
 	DEVNODE_SINGLE,
-	DEVNODE_VECTOR
+	DEVNODE_VECTOR,
 };
 #define DEVNODE_FLAG_LINKZERO	0x01	/* create name -> name0 link */
+#define DEVNODE_FLAG_ISMINOR0	0x02	/* vector[0] specifies minor */
+#ifdef notyet
+#define DEVNODE_FLAG_ISMINOR1	0x04	/* vector[1] specifies starting minor */
+#endif
 
 struct devsw_conv {
 	const char *d_name;

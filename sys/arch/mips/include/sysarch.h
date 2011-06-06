@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.8 2005/12/11 12:18:09 christos Exp $ */
+/*	$NetBSD: sysarch.h,v 1.8.106.1 2011/06/06 09:06:04 jruoho Exp $ */
 
 #ifndef _MIPS_SYSARCH_H_
 #define _MIPS_SYSARCH_H_

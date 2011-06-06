@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.24 2010/12/20 00:25:42 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.24.2.1 2011/06/06 09:06:41 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2010/12/20 00:25:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24.2.1 2011/06/06 09:06:41 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,13 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2010/12/20 00:25:42 matt Exp $");
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
 
-static int	cpu_match(struct device *, struct cfdata *, void *);
-static void	cpu_attach(struct device *, struct device *, void *);
-void		cpu_intr(uint32_t, uint32_t, vaddr_t, uint32_t);
-void *cpu_intr_establish(int, int, int (*func)(void *), void *);
-void		mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-
-extern void	MachFPInterrupt(u_int32_t, u_int32_t, u_int32_t, struct frame *);
+static int	cpu_match(device_t, cfdata_t, void *);
+static void	cpu_attach(device_t, device_t, void *);
+void		cpu_intr(int, vaddr_t, uint32_t);
+void		*cpu_intr_establish(int, int, int (*func)(void *), void *);
 
 static struct evcnt mips_int0_evcnt =
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 0");
@@ -79,23 +76,25 @@ static struct evcnt mips_int4_evcnt =
 static struct evcnt mips_int5_evcnt =
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5");
 
-static struct evcnt mips_spurint_evcnt =
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
-
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
 static int
-cpu_match(struct device *parent, struct cfdata *match, void *aux)
+cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }
 
 static void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
-	printf(": ");
-	cpu_identify();
+	struct cpu_info * const ci = curcpu();
+
+	ci->ci_dev = self;
+	self->dv_private = ci;
+
+	aprint_normal(": ");
+	cpu_identify(self);
 }
 
 /*
@@ -103,66 +102,49 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
  * sorts of Bad Things(tm) to happen, including kernel stack overflows.
  */
 void
-cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
-	struct cpu_info *ci;
+	uint32_t pending;
+	int ipl;
 
-	ci = curcpu();
-	ci->ci_idepth++;
-	ci->ci_data.cpu_nintr++;
+	curcpu()->ci_data.cpu_nintr++;
 
 	(void)(*platform.watchdog_reset)();
 
-	if (ipending & MIPS_HARD_INT_MASK) {
-        	if (ipending & MIPS_INT_MASK_5) {
-               		(void)(*platform.intr5)(status, cause, pc, ipending);
+	while (ppl < (ipl = splintr(&pending))) {
+		splx(ipl);		/* enable interrupts */
+
+        	if (pending & MIPS_INT_MASK_5) {
+               		(void)(*platform.intr5)(pc, status, pending);
 			mips_int5_evcnt.ev_count++;
-			cause &= ~MIPS_INT_MASK_5;
         	}
 
-		if (ipending & MIPS_INT_MASK_4) {
-			(void)(*platform.intr4)(status, cause, pc, ipending);
+		if (pending & MIPS_INT_MASK_4) {
+               		(void)(*platform.intr4)(pc, status, pending);
 			mips_int4_evcnt.ev_count++;
-			cause &= ~MIPS_INT_MASK_4;
 		}
 
-		if (ipending & MIPS_INT_MASK_3) {
-			(void)(*platform.intr3)(status, cause, pc, ipending);
+		if (pending & MIPS_INT_MASK_3) {
+               		(void)(*platform.intr3)(pc, status, pending);
 			mips_int3_evcnt.ev_count++;
-			cause &= ~MIPS_INT_MASK_3;
 		}
 
-	        if (ipending & MIPS_INT_MASK_2) {
-			(void)(*platform.intr2)(status, cause, pc, ipending);
+	        if (pending & MIPS_INT_MASK_2) {
+               		(void)(*platform.intr2)(pc, status, pending);
 			mips_int2_evcnt.ev_count++;
-			cause &= ~MIPS_INT_MASK_2;
 		}
 
-		if (ipending & MIPS_INT_MASK_1) {
-			(void)(*platform.intr1)(status, cause, pc, ipending);
+		if (pending & MIPS_INT_MASK_1) {
+               		(void)(*platform.intr1)(pc, status, pending);
 			mips_int1_evcnt.ev_count++;
-			cause &= ~MIPS_INT_MASK_1;
 		}
 
-		if (ipending & MIPS_INT_MASK_0) {  
-			(void)(*platform.intr0)(status, cause, pc, ipending);
+		if (pending & MIPS_INT_MASK_0) {  
+               		(void)(*platform.intr0)(pc, status, pending);
 			mips_int0_evcnt.ev_count++;
-			cause &= ~MIPS_INT_MASK_0;
 		}
-
-		if (cause & status & MIPS_HARD_INT_MASK)
-			mips_spurint_evcnt.ev_count++;
+		(void)splhigh();
 	}
-	ci->ci_idepth--;
-
-#ifdef __HAVE_FAST_SOFTINTS
-	/* software interrupt */
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
-	if (ipending == 0)
-		return;
-	_clrsoftintr(ipending);
-	softintr_dispatch(ipending);
-#endif
 }
 
 void *
@@ -172,16 +154,16 @@ cpu_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
 	return (void *) -1;
 }
 
+#ifdef MIPS1
 void
-mips1_fpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
-    u_int32_t ipending)
+mips1_fpu_intr(vaddr_t pc, uint32_t status, uint32_t pending)
 {
-
 	if (!USERMODE(status))
-		panic("kernel used FPU: PC 0x%08x, CR 0x%08x, SR 0x%08x",
-		    pc, cause, status);
+		panic("kernel used FPU: PC 0x%08x, SR 0x%08x",
+		    pc, status);
 
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
-	MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
+#if !defined(NOFPU) && !defined(FPEMUL)
+	mips_fpu_intr(pc, curlwp->l_md.md_utf);
 #endif
 }
+#endif

@@ -1,10 +1,10 @@
-/*	$NetBSD: readufs_ffs.c,v 1.5 2009/03/18 10:22:28 cegger Exp $	*/
+/*	$NetBSD: readufs_ffs.c,v 1.5.6.1 2011/06/06 09:05:42 jruoho Exp $	*/
 /*	from Id: readufs_ffs.c,v 1.8 2004/06/12 04:26:39 itohy Exp	*/
 
 /*
  * FS specific support for 4.2BSD Fast Filesystem
  *
- * Written in 1999, 2002, 2003 by ITOH Yasufumi (itohy@NetBSD.org).
+ * Written in 1999, 2002, 2003 by ITOH Yasufumi.
  * Public domain.
  *
  * Intended to be used for boot programs (first stage).

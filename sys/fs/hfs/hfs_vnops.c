@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.18 2010/06/24 13:03:09 hannken Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.18.2.1 2011/06/06 09:09:22 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.18 2010/06/24 13:03:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.18.2.1 2011/06/06 09:09:22 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -131,18 +131,24 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.18 2010/06/24 13:03:09 hannken Exp $
 
 #include <miscfs/genfs/genfs.h>
 
-int	hfs_vop_lookup		(void *);
-int	hfs_vop_open		(void *);
-int	hfs_vop_close		(void *);
-int	hfs_vop_access		(void *);
-int	hfs_vop_getattr	(void *);
-int	hfs_vop_setattr	(void *);
-int	hfs_vop_bmap		(void *);
-int	hfs_vop_read		(void *);
-int	hfs_vop_readdir	(void *);
-int	hfs_vop_readlink	(void *);
-int	hfs_vop_reclaim	(void *);
-int	hfs_vop_print		(void *);
+int	hfs_vop_lookup(void *);
+int	hfs_vop_open(void *);
+int	hfs_vop_close(void *);
+int	hfs_vop_access(void *);
+int	hfs_vop_getattr(void *);
+int	hfs_vop_setattr(void *);
+int	hfs_vop_bmap(void *);
+int	hfs_vop_read(void *);
+int	hfs_vop_readdir(void *);
+int	hfs_vop_readlink(void *);
+int	hfs_vop_reclaim(void *);
+int	hfs_vop_print(void *);
+
+#ifdef HFS_DEBUG
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
+#endif
 
 
 int (**hfs_vnodeop_p) (void *);
@@ -155,8 +161,8 @@ const struct vnodeopv_entry_desc hfs_vnodeop_entries[] = {
 	{ &vop_open_desc, hfs_vop_open },		/* open */
 	{ &vop_close_desc, hfs_vop_close },		/* close */
 	{ &vop_access_desc, hfs_vop_access },		/* access */
-	{ &vop_getattr_desc, hfs_vop_getattr },	/* getattr */
-	{ &vop_setattr_desc, hfs_vop_setattr },	/* setattr */
+	{ &vop_getattr_desc, hfs_vop_getattr },		/* getattr */
+	{ &vop_setattr_desc, hfs_vop_setattr },		/* setattr */
 	{ &vop_read_desc, hfs_vop_read },		/* read */
 	{ &vop_write_desc, genfs_eopnotsupp },		/* write */
 	{ &vop_ioctl_desc, genfs_eopnotsupp },		/* ioctl */
@@ -173,11 +179,11 @@ const struct vnodeopv_entry_desc hfs_vnodeop_entries[] = {
 	{ &vop_mkdir_desc, genfs_eopnotsupp },		/* mkdir */
 	{ &vop_rmdir_desc, genfs_eopnotsupp },		/* rmdir */
 	{ &vop_symlink_desc, genfs_eopnotsupp },	/* symlink */
-	{ &vop_readdir_desc, hfs_vop_readdir },	/* readdir */
+	{ &vop_readdir_desc, hfs_vop_readdir },		/* readdir */
 	{ &vop_readlink_desc, hfs_vop_readlink },	/* readlink */
 	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, genfs_eopnotsupp },	/* inactive */
-	{ &vop_reclaim_desc, hfs_vop_reclaim },	/* reclaim */
+	{ &vop_reclaim_desc, hfs_vop_reclaim },		/* reclaim */
 	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, hfs_vop_bmap },		/* bmap */
@@ -209,8 +215,8 @@ const struct vnodeopv_entry_desc hfs_specop_entries[] = {
 	{ &vop_open_desc, spec_open },			/* open */
 	{ &vop_close_desc, spec_close },		/* close */
 	{ &vop_access_desc, hfs_vop_access },		/* access */
-	{ &vop_getattr_desc, hfs_vop_getattr },	/* getattr */
-	{ &vop_setattr_desc, hfs_vop_setattr },	/* setattr */
+	{ &vop_getattr_desc, hfs_vop_getattr },		/* getattr */
+	{ &vop_setattr_desc, hfs_vop_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
@@ -231,7 +237,7 @@ const struct vnodeopv_entry_desc hfs_specop_entries[] = {
 	{ &vop_readlink_desc, spec_readlink },		/* readlink */
 	{ &vop_abortop_desc, spec_abortop },		/* abortop */
 	{ &vop_inactive_desc, genfs_eopnotsupp },	/* inactive */
-	{ &vop_reclaim_desc, hfs_vop_reclaim },	/* reclaim */
+	{ &vop_reclaim_desc, hfs_vop_reclaim },		/* reclaim */
 	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, spec_bmap },			/* bmap */
@@ -333,11 +339,9 @@ hfs_vop_lookup(void *v)
 	const char *pname;
 	int error;
 	int flags;
-	int result;				/* result of libhfs operations */
+	int result;			/* result of libhfs operations */
 
-#ifdef HFS_DEBUG
-	printf("VOP = hfs_vop_lookup()\n");
-#endif /* HFS_DEBUG */
+	DPRINTF(("VOP = hfs_vop_lookup()\n"));
 
 	bp = NULL;
 	cnp = ap->a_cnp;
@@ -372,51 +376,61 @@ hfs_vop_lookup(void *v)
 	 * we are looking for is known already.
 	 */
 /* XXX Cache disabled until we can make sure it works. */
-/*	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
-		return error; */
+#if 0
+	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
+		return error;
+#endif
 
 
-/*	if (cnp->cn_namelen == 1 && *pname == '.') {
+#if 0
+	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = vdp;
 		vref(vdp);
-		return (0);
-	}*/
+		return 0;
+	}
+#endif
 	
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
-/*printf("DOTDOT ");*/
+		DPRINTF(("DOTDOT "));
 		VOP_UNLOCK(pdp);	/* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, dp->h_parent, &tdp);
 		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error != 0)
 			goto error;
 		*vpp = tdp;
-/*	} else if (dp->h_rec.u.cnid == rec.file.u.cnid) {*/
+#if 0
+	} else if (dp->h_rec.u.cnid == rec.file.u.cnid) {
+#endif
 	} else if (cnp->cn_namelen == 1 && pname[0] == '.') {
-/*printf("DOT ");*/
+		DPRINTF(("DOT "));
 		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 		hfs_callback_args cbargs;
-		uint8_t len;
+		uint8_t len, ni;
 
 		hfslib_init_cbargs(&cbargs);
 
 		/* XXX: when decomposing, string could grow
 		   and we have to handle overflow */
-		unicn = malloc(cnp->cn_namelen*sizeof(unicn[0]), M_TEMP, M_WAITOK);
+		unicn = malloc(cnp->cn_namelen * sizeof(unicn[0]),
+		    M_TEMP, M_WAITOK);
 		len = utf8_to_utf16(unicn, cnp->cn_namelen,
-				    cnp->cn_nameptr, cnp->cn_namelen, 0, NULL);
+		    cnp->cn_nameptr, cnp->cn_namelen, 0, NULL);
+		for (ni = 0; ni < len; ni++)
+			if (unicn[ni] == (unichar_t)':')
+				unicn[ni] = (unichar_t)'/';
 		/* XXX: check conversion errors? */
 		if (hfslib_make_catalog_key(VTOH(vdp)->h_rec.u.cnid, len, unicn,
-			&key) == 0) {
-/*printf("ERROR in hfslib_make_catalog_key\n");*/
+		    &key) == 0) {
+			DPRINTF(("ERROR in hfslib_make_catalog_key\n"));
 			error = EINVAL;
 			goto error;
 		}
 			
-		result = hfslib_find_catalog_record_with_key(&dp->h_hmp->hm_vol, &key,
-			&rec, &cbargs);
+		result = hfslib_find_catalog_record_with_key(&dp->h_hmp->hm_vol,
+		    &key, &rec, &cbargs);
 		if (result > 0) {
 			error = EINVAL;
 			goto error;
@@ -430,11 +444,10 @@ hfs_vop_lookup(void *v)
 		}
 
 		if (rec.file.user_info.file_type == HFS_HARD_LINK_FILE_TYPE
-		    && rec.file.user_info.file_creator
-		    == HFS_HFSLUS_CREATOR) {
+		    && rec.file.user_info.file_creator == HFS_HFSLUS_CREATOR) {
 			if (hfslib_get_hardlink(&dp->h_hmp->hm_vol,
-					 rec.file.bsd.special.inode_num,
-					 &rec, &cbargs) != 0) {
+			    rec.file.bsd.special.inode_num,
+			    &rec, &cbargs) != 0) {
 				error = EINVAL;
 				goto error;
 			}
@@ -455,13 +468,15 @@ hfs_vop_lookup(void *v)
 			goto error;
 		*vpp = tdp;
 	}
-/*printf("\n");*/
+	DPRINTF(("\n"));
 	/*
 	 * Insert name into cache if appropriate.
 	 */
 /* XXX Cache disabled until we can make sure it works. */
-/*	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(vdp, *vpp, cnp);*/
+#if 0
+	if (cnp->cn_flags & MAKEENTRY)
+		cache_enter(vdp, *vpp, cnp);
+#endif
 	
 	error = 0;
 
@@ -484,14 +499,13 @@ hfs_vop_open(void *v)
 	} */ *ap = v;
 	struct hfsnode *hn = VTOH(ap->a_vp);
 #endif
-#ifdef HFS_DEBUG
-	printf("VOP = hfs_vop_open()\n");
-#endif /* HFS_DEBUG */
+	DPRINTF(("VOP = hfs_vop_open()\n"));
 
 	/*
-	 * XXX This is a good place to read and cache the file's extents to avoid
-	 * XXX doing it upon every read/write. Must however keep the cache in sync
-	 * XXX when the file grows/shrinks. (So would that go in vop_truncate?)
+	 * XXX This is a good place to read and cache the file's extents to
+	 * XXX avoid doing it upon every read/write. Must however keep the
+	 * XXX cache in sync when the file grows/shrinks. (So would that go
+	 * XXX in vop_truncate?)
 	 */
 	
 	return 0;
@@ -508,9 +522,7 @@ hfs_vop_close(void *v)
 	} */ *ap = v;
 	struct hfsnode *hn = VTOH(ap->a_vp);
 #endif
-#ifdef HFS_DEBUG
-	printf("VOP = hfs_vop_close()\n");
-#endif /* HFS_DEBUG */
+	DPRINTF(("VOP = hfs_vop_close()\n"));
 
 	/* Release extents cache here. */
 	
@@ -559,9 +571,7 @@ hfs_vop_access(void *v)
 	struct vattr va;
 	int error;
 
-#ifdef HFS_DEBUG
-	printf("VOP = hfs_vop_access()\n");
-#endif /* HFS_DEBUG */
+	DPRINTF(("VOP = hfs_vop_access()\n"));
 
 	error = hfs_check_possible(ap->a_vp, ap->a_mode);
 	if (error)
@@ -589,9 +599,7 @@ hfs_vop_getattr(void *v)
 	hfs_bsd_data_t *bsd;
 	hfs_fork_t     *fork;
 
-#ifdef HFS_DEBUG
-	printf("VOP = hfs_vop_getattr()\n");
-#endif /* HFS_DEBUG */
+	DPRINTF(("VOP = hfs_vop_getattr()\n"));
 
 	vp = ap->a_vp;
 	hp = VTOH(vp);
@@ -600,37 +608,39 @@ hfs_vop_getattr(void *v)
 	vattr_null(vap);
 
 	/*
-	 * XXX Cannot trust permissions/modes/flags stored in an HFS+ catalog record
+	 * XXX Cannot trust permissions/modes/flags stored in an HFS+ catalog
 	 * XXX record those values are not set on files created under Mac OS 9.
 	 */
 	vap->va_type = ap->a_vp->v_type;
 	if (hp->h_rec.u.rec_type == HFS_REC_FILE) {
+		hfs_file_record_t *f = &hp->h_rec.file;
 		if (hp->h_fork == HFS_RSRCFORK)
-			fork = &hp->h_rec.file.rsrc_fork;
+			fork = &f->rsrc_fork;
 		else
-			fork = &hp->h_rec.file.data_fork;
-		vap->va_fileid = hp->h_rec.file.cnid;
-		bsd = &hp->h_rec.file.bsd;
+			fork = &f->data_fork;
+		vap->va_fileid = f->cnid;
+		bsd = &f->bsd;
 		vap->va_bytes = fork->total_blocks * HFS_BLOCKSIZE(vp);
 		vap->va_size = fork->logical_size;
-		hfs_time_to_timespec(hp->h_rec.file.date_created, &vap->va_ctime);
-		hfs_time_to_timespec(hp->h_rec.file.date_content_mod, &vap->va_mtime);
-		hfs_time_to_timespec(hp->h_rec.file.date_accessed, &vap->va_atime);
+		hfs_time_to_timespec(f->date_created, &vap->va_ctime);
+		hfs_time_to_timespec(f->date_content_mod, &vap->va_mtime);
+		hfs_time_to_timespec(f->date_accessed, &vap->va_atime);
 		vap->va_nlink = 1;
 	}
 	else if (hp->h_rec.u.rec_type == HFS_REC_FLDR) {
+		hfs_folder_record_t *f = &hp->h_rec.folder;
 		vap->va_fileid = hp->h_rec.folder.cnid;
-		bsd = &hp->h_rec.folder.bsd;
+		bsd = &f->bsd;
 		vap->va_size = 512; /* XXX Temporary */
 		vap->va_bytes = 512; /* XXX Temporary */
-		hfs_time_to_timespec(hp->h_rec.folder.date_created, &vap->va_ctime);
-		hfs_time_to_timespec(hp->h_rec.folder.date_content_mod,&vap->va_mtime);
-		hfs_time_to_timespec(hp->h_rec.folder.date_accessed, &vap->va_atime);
+		hfs_time_to_timespec(f->date_created, &vap->va_ctime);
+		hfs_time_to_timespec(f->date_content_mod,&vap->va_mtime);
+		hfs_time_to_timespec(f->date_accessed, &vap->va_atime);
 		vap->va_nlink = 2; /* XXX */
 	}
 	else {
-		printf("hfslus: hfs_vop_getattr(): invalid record type %i",
-			hp->h_rec.u.rec_type);
+		DPRINTF(("hfs+: hfs_vop_getattr(): invalid record type %i",
+		    hp->h_rec.u.rec_type));
 		return EINVAL;
 	}
 
@@ -712,7 +722,7 @@ hfs_vop_setattr(void *v)
 		case VFIFO:
 			break;
 		case VREG:
-			 return EROFS;
+			return EROFS;
 		default:
 			return EOPNOTSUPP;
 		}
@@ -752,7 +762,7 @@ hfs_vop_bmap(void *v)
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = hp->h_devvp;
 	if (ap->a_bnp == NULL)
-		return (0);
+		return 0;
 
 	hfslib_init_cbargs(&cbargs);
 	argsread.cred = NULL;
@@ -766,7 +776,7 @@ hfs_vop_bmap(void *v)
 	if (numextents == 0)
 		return EBADF;
 
-	for (i=0; i<numextents; i++) {
+	for (i = 0; i < numextents; i++) {
 		if (lblkno < extents[i].block_count)
 			break;
 		lblkno -= extents[i].block_count;
@@ -778,8 +788,7 @@ hfs_vop_bmap(void *v)
 		lblkno += extents[i].block_count;
 	}
 
-	*ap->a_bnp = ((extents[i].start_block + lblkno)
-		      << (bshift-DEV_BSHIFT))
+	*ap->a_bnp = ((extents[i].start_block + lblkno) << (bshift-DEV_BSHIFT))
 	    + (hp->h_hmp->hm_vol.offset >> DEV_BSHIFT);
 
 	if (ap->a_runp) {
@@ -795,7 +804,7 @@ hfs_vop_bmap(void *v)
 
 	}
 
-	free(extents, /*M_HFSMNT*/ M_TEMP);
+	free(extents, M_TEMP);
 
 	return 0;
 }
@@ -862,21 +871,19 @@ struct vop_readdir_args /* {
 		int a_*ncookies;
 	} */ *ap = v;
 
-#ifdef HFS_DEBUG
-	printf("VOP = hfs_vop_readdir()\n");
-#endif /* HFS_DEBUG */
+	DPRINTF(("VOP = hfs_vop_readdir()\n"));
 
-	struct dirent curent; /* the dirent entry we're currently constructing */
+	struct dirent curent; /* the dirent entry we are constructing */
 	struct hfsnode *hp;
 	hfs_catalog_keyed_record_t *children;
 	hfs_unistr255_t *childnames;
 	hfs_callback_args cbargs;
 	hfs_libcb_argsread argsread;
 	struct uio *uio;
-	off_t bufoff; /* current position in buffer relative to start of dirents */
+	off_t bufoff; /* offset in buffer relative to start of dirents */
 	uint32_t numchildren;
-	uint32_t curchild; /* index of child we're currently stuffing into dirent */
-	size_t namlen;
+	uint32_t curchild; /* index of child we are stuffing into dirent */
+	size_t namlen, ni;
 	int error;
 	int i; /* dummy variable */
 	
@@ -893,10 +900,13 @@ struct vop_readdir_args /* {
 		*ap->a_eofflag = 0;
 
 /* XXX Inform that we don't support NFS, for now. */
-/*	if(ap->a_eofflag != NULL || ap->a_cookies != NULL || ap->a_ncookies != NULL)
-		return EOPNOTSUPP;*/
-/*printf("READDIR uio: offset=%i, resid=%i\n",
-(int)uio->uio_offset, (int)uio->uio_resid);*/
+#if 0
+	if(ap->a_eofflag != NULL || ap->a_cookies != NULL ||
+	    ap->a_ncookies != NULL)
+		return EOPNOTSUPP;
+#endif
+	DPRINTF(("READDIR uio: offset=%td, resid=%zu\n",
+	    uio->uio_offset, uio->uio_resid));
 	hfslib_init_cbargs(&cbargs);
 	argsread.cred = ap->a_cred;
 	argsread.l = NULL;
@@ -904,33 +914,37 @@ struct vop_readdir_args /* {
 	
 	/* XXX Should we cache this? */
 	if (hfslib_get_directory_contents(&hp->h_hmp->hm_vol, hp->h_rec.u.cnid,
-		&children, &childnames, &numchildren, &cbargs) != 0) {
-/*printf("NOENT\n");*/
+	    &children, &childnames, &numchildren, &cbargs) != 0) {
+		DPRINTF(("ENOENT\n"));
 		error = ENOENT;
 		goto error;
 	}
 
-/*printf("numchildren = %i\n", numchildren);*/
-	for (curchild = 0; curchild < numchildren && uio->uio_resid>0; curchild++) {
+	DPRINTF(("numchildren = %u\n", numchildren));
+	for (curchild = 0; curchild < numchildren && uio->uio_resid > 0;
+	    curchild++) {
 		namlen = utf16_to_utf8(curent.d_name, MAXNAMLEN, 
-				       childnames[curchild].unicode,
-				       childnames[curchild].length,
-				       0, NULL);
+		    childnames[curchild].unicode, childnames[curchild].length,
+		    0, NULL);
 		/* XXX: check conversion errors? */
 		if (namlen > MAXNAMLEN) {
 			/* XXX: how to handle name too long? */
 			continue;
 		}
+		for (ni = 0; ni < namlen; ni++)
+			if (curent.d_name[ni] == '/')
+				curent.d_name[ni] = ':';
 		curent.d_namlen = namlen;
 		curent.d_reclen = _DIRENT_SIZE(&curent);
 		
 		/* Skip to desired dirent. */
-		if ((bufoff += curent.d_reclen) - curent.d_reclen < uio->uio_offset)
+		bufoff += curent.d_reclen;
+		if (bufoff - curent.d_reclen < uio->uio_offset)
 			continue;
 
 		/* Make sure we don't return partial entries. */
 		if (uio->uio_resid < curent.d_reclen) {
-/*printf("PARTIAL ENTRY\n");*/
+			DPRINTF(("PARTIAL ENTRY\n"));
 			if (ap->a_eofflag != NULL)
 				*ap->a_eofflag = 1;
 			break;
@@ -963,13 +977,13 @@ struct vop_readdir_args /* {
 			curent.d_type = DT_UNKNOWN;
 			break;
 		}
-/*printf("curchildname = %s\t\t", curchildname);*/
+		DPRINTF(("curchildname = %s\t\t", curchildname));
 		/* pad curent.d_name to aligned byte boundary */
-                for (i=curent.d_namlen;
-                     i<curent.d_reclen-_DIRENT_NAMEOFF(&curent); i++)
+                for (i = curent.d_namlen;
+                     i < curent.d_reclen - _DIRENT_NAMEOFF(&curent); i++)
                         curent.d_name[i] = 0;
 			
-/*printf("curent.d_name = %s\n", curent.d_name);*/
+		DPRINTF(("curent.d_name = %s\n", curent.d_name));
 
 		if ((error = uiomove(&curent, curent.d_reclen, uio)) != 0)
 			goto error;
@@ -986,8 +1000,10 @@ error:
 			free(childnames, M_TEMP);
 	}
 
-/*if (error)
-printf("ERROR = %i\n", error);*/
+	if (error) {
+		DPRINTF(("ERROR = %i\n", error));
+	}
+
 	return error;
 }
 
@@ -1012,9 +1028,7 @@ hfs_vop_reclaim(void *v)
 	struct hfsnode *hp;
 	struct hfsmount *hmp;
 	
-#ifdef HFS_DEBUG
-	printf("VOP = hfs_vop_reclaim()\n");
-#endif /* HFS_DEBUG */
+	DPRINTF(("VOP = hfs_vop_reclaim()\n"));
 
 	vp = ap->a_vp;
 	hp = VTOH(vp);
@@ -1023,9 +1037,6 @@ hfs_vop_reclaim(void *v)
 	/* Remove the hfsnode from its hash chain. */
 	hfs_nhashremove(hp);
 
-	/* Purge name lookup cache. */
-	cache_purge(vp);
-	
 	/* Decrement the reference count to the volume's device. */
 	if (hp->h_devvp) {
 		vrele(hp->h_devvp);
@@ -1034,7 +1045,7 @@ hfs_vop_reclaim(void *v)
 	
 	genfs_node_destroy(vp);
 	free(vp->v_data, M_TEMP);
-	vp->v_data = 0;
+	vp->v_data = NULL;
 
 	return 0;
 }
@@ -1048,9 +1059,7 @@ hfs_vop_print(void *v)
 	struct vnode	*vp;
 	struct hfsnode	*hp;
 
-#ifdef HFS_DEBUG
-	printf("VOP = hfs_vop_print()\n");
-#endif /* HFS_DEBUG */
+	DPRINTF(("VOP = hfs_vop_print()\n"));
 
 	vp = ap->a_vp;
 	hp = VTOH(vp);

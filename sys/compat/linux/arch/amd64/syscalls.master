@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35 2010/07/07 01:30:33 chs Exp $
+	$NetBSD: syscalls.master,v 1.35.2.1 2011/06/06 09:07:22 jruoho Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -417,7 +417,8 @@
 218	STD		{ int|linux_sys||set_tid_address(int *tid); }
 219	UNIMPL		restart_syscall
 220	UNIMPL		semtimedop
-221	UNIMPL		fadvise64
+221	STD		{ int|linux_sys||fadvise64(int fd, \
+			    linux_off_t offset, size_t len, int advice); }
 222	UNIMPL		timer_create
 223	UNIMPL		timer_settime
 224	UNIMPL		timer_gettime
@@ -496,8 +497,8 @@
 289	UNIMPL		signalfd4
 290	UNIMPL		eventfd2
 291	UNIMPL		epoll_create1
-292	UNIMPL		dup3
-293	UNIMPL		pipe2
+292	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
+293	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
 294	UNIMPL		inotify_init1
 295	UNIMPL		preadv
 296	UNIMPL		pwritev

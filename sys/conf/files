@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.996 2010/11/23 11:14:08 hannken Exp $
+#	$NetBSD: files,v 1.996.2.1 2011/06/06 09:07:36 jruoho Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -79,7 +79,7 @@ defparam opt_poollog.h		POOL_LOGSIZE
 defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 
 defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
-				EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT
+				EXEC_ELF64 EXEC_SCRIPT
 				EXEC_ELF_NOTELESS
 
 defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
@@ -138,7 +138,6 @@ defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10, COMPAT_NETBSD
 defflag				COMPAT_OSSAUDIO
 defflag				COMPAT_FREEBSD: COMPAT_30
 defflag				COMPAT_IBCS2
-defflag				COMPAT_IRIX
 defflag				COMPAT_LINUX: COMPAT_16
 defflag				COMPAT_LINUX32 : COMPAT_LINUX
 defflag				COMPAT_OSF1
@@ -148,11 +147,8 @@ defflag				COMPAT_ULTRIX: COMPAT_50
 defflag				COMPAT_NETBSD32
 defflag				COMPAT_AOUT_M68K: COMPAT_40
 defflag				COMPAT_M68K4K
-defflag				COMPAT_MACH
-defflag				COMPAT_DARWIN
 defflag				COMPAT_VAX1K
 defflag				COMPAT_43
-defflag				COMPAT_PECOFF
 defflag	opt_compat_netbsd.h	COMPAT_NOMID
 
 #
@@ -166,9 +162,16 @@ include "crypto/blowfish/files.blowfish"
 include "crypto/cast128/files.cast128"
 include "crypto/rijndael/files.rijndael"
 include "crypto/skipjack/files.skipjack"
+include "crypto/camellia/files.camellia"
 
 # General-purpose crypto processing framework.
 include "opencrypto/files.opencrypto"
+
+#
+# Kernel history/tracing. Old UVMHIST depends upon this.
+#
+defflag opt_kernhist.h			KERNHIST KERNHIST_PRINT
+file	kern/kern_history.c		kernhist
 
 #
 # System monitoring framework
@@ -225,7 +228,7 @@ defparam			SB_MAX
 
 # file system options
 #
-defflag				QUOTA			# XXX files.ufs?
+defflag	opt_quota.h		QUOTA QUOTA2		# XXX files.ufs?
 defflag				VNODE_LOCKDEBUG
 defflag				MAGICLINKS
 
@@ -362,6 +365,9 @@ define	rasops24
 define	rasops32
 define	rasops_rotation
 
+# image decoding support
+include "dev/stbi/files.stbi"
+
 # splash screen support
 include "dev/splash/files.splash"
 
@@ -380,7 +386,7 @@ define	hippi
 define	ieee1394
 define	token
 define	sppp
-define	wlan: arc4, rijndael
+define	wlan: rijndael
 define	crypto
 
 # devices ARPing IPv4 pull this in:
@@ -832,6 +838,7 @@ defflag	opt_com.h		COM_DEBUG
 # XXX In a perfect world, this would be done with attributes
 defflag	opt_com.h		COM_16650 COM_HAYESP COM_PXA2X0 COM_AU1X00
 				COM_REGMAP
+defparam opt_com.h		COM_TOLERANCE
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
 
@@ -1066,6 +1073,7 @@ file	dev/ic/lan9118.c		smsh
 # DRM - Direct Rendering Infrastructure: dev/drm
 define drm {}
 include "external/bsd/drm/conf/files.drm"
+include "dev/drm/files.drm"
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
@@ -1099,15 +1107,21 @@ file	dev/ic/vga.c		vga & !vga_rasterconsole	needs-flag
 file	dev/ic/vga_raster.c	vga_rasterconsole		needs-flag
 file	dev/ic/vga_subr.c	vga | vga_rasterconsole
 file	dev/ic/vga_common.c	vga | vga_rasterconsole
+
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
 device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8, vcons, videomode
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
 
+device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
+file	dev/ic/ct65550.c		chipsfb
+defflag	opt_chipsfb.h	CHIPSFB_DEBUG
+defflag	opt_chipsfb.h	CHIPSFB_WAIT
+
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
-file	dev/ic/sti.c		sti & (sti_pci | sti_gedoens)
+file	dev/ic/sti.c		sti
 
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
@@ -1143,17 +1157,19 @@ defparam USB_MEM_RESERVE
 define	usbroothub
 file	dev/usb/usbroothub_subr.c	usbroothub
 
-device	uhci: usbus, usbroothub
+define	usb_dma
+
+device	uhci: usbus, usbroothub, usb_dma
 file	dev/usb/uhci.c			uhci			needs-flag
 
 # OHCI USB controller
 #
-device	ohci: usbus, usbroothub
+device	ohci: usbus, usbroothub, usb_dma
 file	dev/usb/ohci.c			ohci			needs-flag
 
 # EHCI USB controller
 #
-device	ehci: usbus, usbroothub
+device	ehci: usbus, usbroothub, usb_dma
 file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
@@ -1290,8 +1306,6 @@ defpseudodev etherip:	ifnet, ether, arp
 
 defpseudo sequencer
 defpseudo clockctl
-defpseudo irix_kmem
-defpseudo irix_usema
 
 #
 # Accept filters.  XXX should use another registration/initialization method.
@@ -1425,14 +1439,12 @@ file	kern/bufq_priocscan.c		bufq_priocscan
 file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
-file	kern/core_netbsd.c		exec_aout | exec_coff |
-					exec_ecoff | exec_macho
+file	kern/core_netbsd.c		exec_aout | exec_coff | exec_ecoff
 file	kern/cnmagic.c
 file	kern/exec_aout.c		exec_aout
 file	kern/exec_ecoff.c		exec_ecoff
 file	kern/exec_elf32.c		exec_elf32
 file	kern/exec_elf64.c		exec_elf64
-file	kern/exec_macho.c		exec_macho
 file	kern/exec_script.c		exec_script
 file	kern/exec_subr.c
 file	kern/init_main.c
@@ -1524,6 +1536,7 @@ file	kern/subr_log.c
 file	kern/subr_lwp_specificdata.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
+file	kern/subr_pcu.c
 file	kern/subr_percpu.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
@@ -1581,9 +1594,11 @@ file	kern/vfs_hooks.c
 file	kern/vfs_init.c
 file	kern/vfs_lockf.c
 file	kern/vfs_lookup.c
+file	kern/vfs_mount.c
 file	kern/vfs_subr.c
 file	kern/vfs_syscalls.c
 file	kern/vfs_trans.c
+file	kern/vfs_vnode.c
 file	kern/vfs_vnops.c
 file	kern/vfs_wapbl.c		wapbl
 file	kern/vfs_xattr.c
@@ -1641,6 +1656,7 @@ file	net/radix.c
 file	net/raw_cb.c
 file	net/raw_usrreq.c
 file	net/route.c
+file	net/rtbl.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
@@ -1694,3 +1710,14 @@ include	"dev/tprof/files.tprof"
 # alternate memory device
 #
 include "dev/altmem/files.altmem"
+
+#
+# Flash subsystem
+#
+include "dev/flash/files.flash"
+
+#
+# NAND subsytem
+#
+include "dev/nand/files.nand"
+

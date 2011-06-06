@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.23 2010/11/13 13:52:05 uebayasi Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.23.2.1 2011/06/06 09:08:09 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.23 2010/11/13 13:52:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.23.2.1 2011/06/06 09:08:09 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -87,6 +87,8 @@ static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_11,
 	    AHCI_PCI_QUIRK_FORCE },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_12,
+	    AHCI_PCI_QUIRK_FORCE },
+	{ PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5288,
 	    AHCI_PCI_QUIRK_FORCE },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE6121,
 	    AHCI_PCI_QUIRK_FORCE },
@@ -240,6 +242,8 @@ ahci_pci_detach(device_t dv, int flags)
 
 	if ((rv = ahci_detach(sc, flags)))
 		return rv;
+
+	pmf_device_deregister(dv);
 
 	if (psc->sc_ih != NULL)
 		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);

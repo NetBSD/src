@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_coredump.c,v 1.1 2008/11/19 18:36:10 ad Exp $	*/
+/*	$NetBSD: uvm_coredump.c,v 1.1.18.1 2011/06/06 09:10:21 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -17,12 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and
- *      its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -67,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.1 2008/11/19 18:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.1.18.1 2011/06/06 09:10:21 jruoho Exp $");
 
 /*
  * uvm_coredump.c: glue functions for coredump

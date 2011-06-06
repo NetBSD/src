@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.112 2010/12/30 03:59:59 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.112.2.1 2011/06/06 09:08:39 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.112 2010/12/30 03:59:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.112.2.1 2011/06/06 09:08:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -372,8 +372,8 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			tred->max.data_s = edata->value_max;
 			tred->min.data_us = edata->value_min;
 			tred->min.data_s = edata->value_min;
-			tred->avg.data_us = edata->value_avg;
-			tred->avg.data_s = edata->value_avg;
+			tred->avg.data_us = 0;
+			tred->avg.data_s = 0;
 			if (edata->units == ENVSYS_BATTERY_CHARGE)
 				tred->units = ENVSYS_INDICATOR;
 			else
@@ -1421,8 +1421,6 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 	 * 	<integer>800</integer>
 	 	 * 	<key>max-value</integer>
 	 	 * 	<integer>3000</integer>
-	 	 * 	<key>avg-value</integer>
-	 	 * 	<integer>1400</integer>
 	 	 * 	...
 	 	 */
 		if (edata->units == ENVSYS_SFANRPM)
@@ -1448,13 +1446,6 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 			if (sme_sensor_upint32(dict,
 					       "max-value",
 					       edata->value_max))
-			goto out;
-		}
-
-		if (edata->flags & ENVSYS_FVALID_AVG) {
-			if (sme_sensor_upint32(dict,
-					       "avg-value",
-					       edata->value_avg))
 			goto out;
 		}
 	}
@@ -1689,7 +1680,7 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		}
 
 		/*
-		 * update sensor's {avg,max,min}-value.
+		 * update sensor's {max,min}-value.
 		 */
 		if (edata->flags & ENVSYS_FVALID_MAX) {
 			error = sme_sensor_upint32(dict,
@@ -1703,14 +1694,6 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 			error = sme_sensor_upint32(dict,
 						   "min-value",
 						   edata->value_min);
-			if (error)
-				break;
-		}
-
-		if (edata->flags & ENVSYS_FVALID_AVG) {
-			error = sme_sensor_upint32(dict,
-						   "avg-value",
-						   edata->value_avg);
 			if (error)
 				break;
 		}

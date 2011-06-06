@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 2007/11/11 05:20:27 isaki Exp $	*/
+/*	$NetBSD: devopen.c,v 1.4.46.1 2011/06/06 09:07:03 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -91,17 +91,17 @@ devopen(struct open_file *f, const char *fname, char **file)
 
 	error = devparse(fname, &dev, &unit, &part, file);
 	if (error)
-	    return error;
+		return error;
 
 	dp = &devsw[dev];
 
-	if (!dp->dv_open)
+	if (dp->dv_open == NULL)
 		return ENODEV;
 
 	f->f_dev = dp;
 
 	if ((error = (*dp->dv_open)(f, unit, part)) == 0)
-	    return 0;
+		return 0;
 
 	return error;
 }

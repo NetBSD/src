@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_proto.c,v 1.21 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.21.30.1 2011/06/06 09:09:39 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.21 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.21.30.1 2011/06/06 09:09:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -62,6 +62,13 @@ const struct protosw unixsw[] = {
 		.pr_type = SOCK_DGRAM,
 		.pr_domain = &unixdomain,
 		.pr_flags = PR_ATOMIC|PR_ADDR|PR_RIGHTS,
+		.pr_ctloutput = uipc_ctloutput,
+		.pr_usrreq = uipc_usrreq,
+	}, {
+		.pr_type = SOCK_SEQPACKET,
+		.pr_domain = &unixdomain,
+		.pr_flags = PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS|PR_LISTEN|
+			    PR_ATOMIC,
 		.pr_ctloutput = uipc_ctloutput,
 		.pr_usrreq = uipc_usrreq,
 	}, {

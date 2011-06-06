@@ -1,6 +1,7 @@
-/*	$NetBSD: promcall.c,v 1.18 2009/12/14 00:46:11 matt Exp $	*/
+/*	$NetBSD: promcall.c,v 1.18.6.1 2011/06/06 09:06:24 jruoho Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,48 +37,9 @@
  *
  *	@(#)cons.c	8.2 (Berkeley) 1/11/94
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah Hdr: cons.c 1.1 90/07/09
- *
- *	@(#)cons.c	8.2 (Berkeley) 1/11/94
- */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.18 2009/12/14 00:46:11 matt Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.18.6.1 2011/06/06 09:06:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -119,7 +81,7 @@ romgetc(dev_t dev)
 	int chr, s;
 
 	s  = splhigh();
-	chr = (*callv->_getchar)();
+	chr = promcall(callv->_getchar);
 	splx(s);
 	return chr;
 }
@@ -133,7 +95,7 @@ romputc(dev_t dev, int c)
 	int s;
 
 	s = splhigh();
-	(*callv->_printf)("%c", c);
+	promcall(callv->_printf, "%c", c);
 	splx(s);
 }
 
@@ -195,7 +157,7 @@ char *
 prom_getenv(const char *name)
 {
 
-	return (*callv->_getenv)(name);
+	return (void *)promcall(callv->_getenv, name);
 }
 
 /*
@@ -208,12 +170,16 @@ prom_getenv(const char *name)
 int
 prom_systype(void)
 {
+#ifndef _LP64
 	char *cp;
 
 	if (callv != &callvec)
-		return (*callv->_getsysid)();
+#endif
+		return promcall(callv->_getsysid);
+#ifndef _LP64
 	cp = prom_getenv("systype");
 	return (cp != NULL) ? strtoul(cp, NULL, 0) : 0;
+#endif
 }
 
 /*
@@ -223,7 +189,7 @@ void
 prom_haltbutton(void)
 {
 
-	(*callv->_halt)((int *)0, 0);
+	promcall(callv->_halt, (int *)0, 0);
 }
 
 /*
@@ -234,7 +200,7 @@ prom_halt(int howto, char *bootstr)
 {
 
 	if (callv != &callvec)
-		(*callv->_rex)((howto & RB_HALT) ? 'h' : 'b');
+		promcall(callv->_rex, (howto & RB_HALT) ? 'h' : 'b');
 	else {
 		void __dead (*f)(void);
 
@@ -272,7 +238,8 @@ prom_getbitmap(struct memmap *map)
 	int len;
 
 	if (callv->_getbitmap != NULL)
-		return callv->_getbitmap(map);
+		return promcall(callv->_getbitmap, map);
+
 	/*
 	 * See if we can get the bitmap from the environment variables
 	 */

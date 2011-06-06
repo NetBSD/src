@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.8 2010/10/07 12:24:23 kiyohara Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.8.2.1 2011/06/06 09:08:37 jruoho Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
 #include <sys/mutex.h>
 #include <sys/callout.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>
@@ -219,6 +219,8 @@ struct sdmmc_softc {
 #define SMC_CAPS_SINGLE_ONLY	0x0020	/* only single read/write */
 #define SMC_CAPS_8BIT_MODE	0x0040	/* 8-bits data bus width */
 #define SMC_CAPS_MULTI_SEG_DMA	0x0080	/* multiple segment DMA transfer */
+#define SMC_CAPS_SD_HIGHSPEED	0x0100	/* SD high-speed timing */
+#define SMC_CAPS_MMC_HIGHSPEED	0x0200	/* MMC high-speed timing */
 
 	/* function */
 	int sc_function_count;		/* number of I/O functions (SDIO) */

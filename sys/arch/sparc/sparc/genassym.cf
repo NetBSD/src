@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.63 2011/01/14 02:06:31 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.63.2.1 2011/06/06 09:06:46 jruoho Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -128,6 +128,9 @@ define	PMAP_CPUSET	offsetof(struct pmap, pm_cpuset)
 define	CPUINFO_NINTR	offsetof(struct cpu_info, ci_data.cpu_nintr)
 define	CPUINFO_NSOFT	offsetof(struct cpu_info, ci_data.cpu_nsoft)
 define	CPUINFO_NFAULT	offsetof(struct cpu_info, ci_data.cpu_nfault)
+define	CPUINFO_LEV14	offsetof(struct cpu_info, ci_sintrcnt[14])
+define	CPUINFO_INTRCNT	offsetof(struct cpu_info, ci_intrcnt)
+define	CPUINFO_SINTRCNT	offsetof(struct cpu_info, ci_sintrcnt)
 define	EV_COUNT	offsetof(struct evcnt, ev_count)
 define	EV_STRUCTSIZE	sizeof(struct evcnt)
 
@@ -168,7 +171,6 @@ define	CPUINFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPUINFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CPUINFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPUINFO_SAVEFPSTATE	offsetof(struct cpu_info, ci_savefpstate)
-define	CPUINFO_SAVEFPSTATE_NULL offsetof(struct cpu_info, ci_savefpstate_null)
 
 # PTE bits and related information
 define	PG_W		PG_W

@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs.h,v 1.14 2010/12/31 22:49:55 tsutsui Exp $	*/
+/*	$NetBSD: diodevs.h,v 1.14.2.1 2011/06/06 09:05:34 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.11 2010/12/31 22:48:59 tsutsui Exp 
+ *	NetBSD: diodevs,v 1.14 2011/02/19 05:40:58 tsutsui Exp 
  */
 
 /*-
@@ -96,8 +96,8 @@
 #define	DIO_DEVICE_SECID_TOPCAT	0x02
 #define	DIO_DEVICE_DESC_TOPCAT	"98544/98545/98547 (\"topcat\") display"
 
-#define	DIO_DEVICE_SECID_RENASSIANCE	0x04
-#define	DIO_DEVICE_DESC_RENASSIANCE	"98720/98721 (\"renassiance\") display"
+#define	DIO_DEVICE_SECID_RENAISSANCE	0x04
+#define	DIO_DEVICE_DESC_RENAISSANCE	"98720/98721 (\"renaissance\") display"
 
 #define	DIO_DEVICE_SECID_LRCATSEYE	0x05
 #define	DIO_DEVICE_DESC_LRCATSEYE	"low-res catseye display"
@@ -114,8 +114,17 @@
 #define	DIO_DEVICE_SECID_XXXCATSEYE	0x09
 #define	DIO_DEVICE_DESC_XXXCATSEYE	"catseye display"
 
+#define	DIO_DEVICE_SECID_TIGERSHARK	0x0c
+#define	DIO_DEVICE_DESC_TIGERSHARK	"TurboVRX (\"tigershark\") display"
+
 #define	DIO_DEVICE_SECID_HYPERION	0x0e
 #define	DIO_DEVICE_DESC_HYPERION	"A1096A (\"hyperion\") display"
+
+#define	DIO_DEVICE_SECID_A1474MID	0x10
+#define	DIO_DEVICE_DESC_A1474MID	"A1474-69511 on-board mid-res graphics"
+
+#define	DIO_DEVICE_SECID_A147xVGA	0x11
+#define	DIO_DEVICE_DESC_A147xVGA	"A147x-69510 on-board VGA graphics"
 
 /* Unsupported framebuffers. */
 
@@ -123,17 +132,8 @@
 #define	DIO_DEVICE_SECID_XGENESIS	0x0b
 #define	DIO_DEVICE_DESC_XGENESIS	"x-genesis display"
 
-#define	DIO_DEVICE_SECID_TIGER	0x0c
-#define	DIO_DEVICE_DESC_TIGER	"tiger display"
-
 #define	DIO_DEVICE_SECID_YGENESIS	0x0d
 #define	DIO_DEVICE_DESC_YGENESIS	"y-genesis display"
-
-#define	DIO_DEVICE_SECID_A1474MID	0x10
-#define	DIO_DEVICE_DESC_A1474MID	"A1474-69511 on-board mid-res graphics"
-
-#define	DIO_DEVICE_SECID_A147xVGA	0x11
-#define	DIO_DEVICE_DESC_A147xVGA	"A147x-69510 on-board VGA graphics"
 /* No ID info about A1474-69515 on-board high-res graphics */
 
 /* Devices not yet supported.  Descriptions are lacking. */

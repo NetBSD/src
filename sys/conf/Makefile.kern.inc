@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.129 2011/01/04 01:52:30 matt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.129.2.1 2011/06/06 09:07:35 jruoho Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -63,17 +63,11 @@ COPTS?=		${DEFCOPTS}
 DBG=		# might contain unwanted -Ofoo
 DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
-. if !defined(NOGCCERROR)
-CWARNFLAGS+=	-Werror
-. endif
 CWARNFLAGS+=	-Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wswitch -Wshadow
 CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-unreachable-code
-# Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
-# but our sources aren't up for it yet.
-CWARNFLAGS+=	-Wno-sign-compare
 . if (defined(HAVE_GCC) && ${HAVE_GCC} > 3) || defined(HAVE_PCC)
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 .  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
@@ -81,11 +75,17 @@ CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 CWARNFLAGS+=	-Wextra -Wno-unused-parameter
 .  endif
 . endif
+# Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
+# but our sources aren't up for it yet.
+CWARNFLAGS+=	-Wno-sign-compare
 .endif
+
+CWARNFLAGS.clang+=	-Wno-unknown-pragmas -Wno-conversion \
+			-Wno-self-assign -Wno-array-bounds
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${DEBUG} ${COPTS}
-AFLAGS+=	-D_LOCORE -Wa,-fatal-warnings
+AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
 
 # XXX
 .if defined(HAVE_GCC) && ${HAVE_GCC} > 3
@@ -93,8 +93,6 @@ CFLAGS+=	-fno-strict-aliasing
 .endif
 
 .if ${USE_SSP:Uno} == "yes"
-CFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
-LDFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 COPTS.kern_ssp.c+=	-fno-stack-protector -D__SSP__
 .endif
 
@@ -115,7 +113,7 @@ COPTS.${j}+=-g
 . endfor
 .endfor
 
-# Always compile subr_debug_info.c with debug informations.
+# Always compile debugsyms.c with debug information.
 # This allows gdb to use type informations.
 #
 COPTS.debugsyms.c+=	-g
@@ -133,18 +131,18 @@ COMPILE_CTFCONVERT=	${_MKSHECHO}
 # NOPROF and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 NORMAL_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< && \
-		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< && \
+		${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< && \
+		${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< && \
 		${COMPILE_CTFCONVERT}
 NOPROF_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${CC} ${CFLAGS} ${CPPFLAGS} -c $< && \
-		${CC} ${CFLAGS} ${CPPFLAGS} -c $< && \
+		${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} -c $< && \
+		${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} -c $< && \
 		${COMPILE_CTFCONVERT}
 NORMAL_S?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${CC} ${AFLAGS} ${CPPFLAGS} -c $< && \
-		${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+		${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} -c $< && \
+		${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} -c $<
 
 ##
 ## (3) libkern and compat
@@ -249,6 +247,12 @@ SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_DEBUG}
 LINKFLAGS+=	${LINKFLAGS_DEBUG}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gdb@}
 CTFFLAGS+=	-g
+SYSTEM_LD_TAIL+=; \
+	if grep '^\#define.*SYMTAB_SPACE' opt_ddbparam.h > /dev/null; then \
+		echo "${DBSYM} $@.gdb"; \
+		${DBSYM} $@.gdb || exit 1; \
+	fi
+
 .elifndef PROF
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
@@ -256,7 +260,7 @@ LINKFLAGS+=	${LINKFLAGS_NORMAL}
 SYSTEM_LD_TAIL+=; \
 	if grep '^\#define.*SYMTAB_SPACE' opt_ddbparam.h > /dev/null; then \
 		echo "${DBSYM} $@"; \
-		${DBSYM} $@; \
+		${DBSYM} $@ || exit 1; \
 	fi
 
 SYSTEM_LD_HEAD+=${SYSTEM_LD_HEAD_EXTRA}

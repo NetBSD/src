@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.80 2010/11/23 11:14:05 hannken Exp $
+# $NetBSD: GENERIC,v 1.80.2.1 2011/06/06 09:06:37 jruoho Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.80 $"
+#ident 		"GENERIC-$Revision: 1.80.2.1 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -12,7 +12,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 # The following three options are required for BCM1250 pass 1 silicon
 #options 	SB1250_PASS1
 #options 	NOFPU
-#options 	SOFTFLOAT
+#options 	FPEMUL
 
 maxusers	32
 
@@ -33,7 +33,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 #makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=330000	# size for embedded symbol table
+options 	SYMTAB_SPACE=380000	# size for embedded symbol table
 
 # Compatibility options
 options 	COMPAT_43	# compatibility with 4.3BSD binaries
@@ -74,7 +74,8 @@ file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
-options 	QUOTA		# FFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
@@ -136,24 +137,44 @@ zbbus*		at root
 
 cpu*		at zbbus? busid ?
 sbscd*		at zbbus? busid ?
+sbbrz*		at zbbus? busid ?
 sbobio*		at zbbus? busid ?
 
-#sbicu*		at sbscd? addr ?
-sbwdog*		at sbscd? addr ? intr ?
-sbtimer0	at sbscd? addr ? intr ? flags 0x01		# clock
-#sbtimer1	at sbscd? addr ? intr ? flags 0x02		# statclock
-sbtimer*	at sbscd? addr ? intr ?
+pci*		at sbbrz? bus ?
+ppb*		at pci? dev ?
+pci*		at ppb?
 
-sbmac*		at sbobio? addr ?
-sbscn*		at sbobio? addr ?
-#sbgbus*	at sbobio? addr ?
-smbus*		at sbobio? addr ?
+ohci*		at pci? dev ? function ?        # Open Host Controller
+
+bge*		at pci? dev ?
+
+#sbicu*		at sbscd? offset ?
+sbwdog*		at sbscd? offset ? intr ?
+sbtimer0	at sbscd? offset ? intr ? flags 0x01		# clock
+#sbtimer1	at sbscd? offset ? intr ? flags 0x02		# statclock
+sbtimer*	at sbscd? offset ? intr ?
+
+sbmac*		at sbobio? offset ?
+sbscn*		at sbobio? offset ?
+#sbgbus*	at sbobio? offset ?
+smbus*		at sbobio? offset ?
 
 xirtc*		at smbus? chan ? dev ?		# Xicor X1241 RTC
 m41t81rtc*	at smbus? chan ? dev ?		# ST M41T81 RTC
 
 # MII/PHY support
 brgphy*		at mii? phy ?
+
+# USB
+usb*		at ohci?
+uhub*		at usb?
+uhub*		at uhub? port ?
+umass*		at uhub? port ? configuration ? interface ?
+wd*		at umass?
+scsibus*	at umass? channel ?
+sd*		at scsibus? target ? lun ?
+uplcom* 	at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+ucom*   	at uplcom? portno ?
 
 # Pseudo-devices
 

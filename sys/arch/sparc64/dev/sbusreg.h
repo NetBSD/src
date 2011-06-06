@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusreg.h,v 1.8 2006/02/13 21:47:12 cdi Exp $ */
+/*	$NetBSD: sbusreg.h,v 1.8.100.1 2011/06/06 09:06:51 jruoho Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath

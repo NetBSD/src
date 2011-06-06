@@ -1,4 +1,4 @@
-/*	$NetBSD: psychoreg.h,v 1.14 2008/05/30 02:29:37 mrg Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.14.26.1 2011/06/06 09:06:50 jruoho Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -307,7 +307,7 @@ struct psychoreg {
  */
 
 /*
- * For the physical addresses split into 3 32 bit values, we deocde
+ * For the physical addresses split into 3 32 bit values, we decode
  * them like the following (IEEE1275 PCI Bus binding 2.0, 2.2.1.1
  * Numerical Representation):
  *

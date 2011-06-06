@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_pmi.c,v 1.11 2010/05/09 20:32:41 rmind Exp $	*/
+/*	$NetBSD: tprof_pmi.c,v 1.11.2.1 2011/06/06 09:07:09 jruoho Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.11 2010/05/09 20:32:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.11.2.1 2011/06/06 09:07:09 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.11 2010/05/09 20:32:41 rmind Exp $")
 #include <sys/xcall.h>
 
 #include <dev/tprof/tprof.h>
+
+#include <uvm/uvm.h>		/* VM_MIN_KERNEL_ADDRESS */
 
 #include <x86/tprof.h>
 #include <x86/nmi.h>
@@ -126,10 +128,10 @@ tprof_pmi_start_cpu(void *arg1, void *arg2)
 	cccr = CCCR_ENABLE | __SHIFTIN(cccr_escr_select, CCCR_ESCR_SELECT) |
 	    CCCR_MUST_BE_SET;
 	if (ci->ci_smt_id == 0) {
-		escr |= ESCR_T0_OS;
+		escr |= ESCR_T0_OS | ESCR_T0_USR;
 		cccr |= CCCR_OVF_PMI_T0;
 	} else {
-		escr |= ESCR_T1_OS;
+		escr |= ESCR_T1_OS | ESCR_T0_USR;
 		cccr |= CCCR_OVF_PMI_T1;
 	}
 
@@ -189,6 +191,7 @@ tprof_pmi_nmi(const struct trapframe *tf, void *dummy)
 #else /* defined(__x86_64__) */
 	tfi.tfi_pc = tf->tf_eip;
 #endif /* defined(__x86_64__) */
+	tfi.tfi_inkernel = tfi.tfi_pc >= VM_MIN_KERNEL_ADDRESS;
 	tprof_sample(tprof_cookie, &tfi);
 
 	/* reset counter */

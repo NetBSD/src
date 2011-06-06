@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.7 2008/12/16 22:35:25 christos Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.7.8.1 2011/06/06 09:06:40 jruoho Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.7 2008/12/16 22:35:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.7.8.1 2011/06/06 09:06:40 jruoho Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -78,8 +78,8 @@ int pi1ppc_verbose = 1;
 /* Prototypes for functions. */
 
 /* PC-style register emulation */
-static u_int8_t r_reg(int reg, struct pi1ppc_softc *pi1ppc);
-static void w_reg(int reg, struct pi1ppc_softc *pi1ppc, u_int8_t byte);
+static uint8_t r_reg(int reg, struct pi1ppc_softc *pi1ppc);
+static void w_reg(int reg, struct pi1ppc_softc *pi1ppc, uint8_t byte);
 
 #define	AT_DATA_REG	0
 #define	AT_STAT_REG	1
@@ -110,7 +110,7 @@ static int pi1ppc_write(device_t, char *, int, int, size_t *);
 static int pi1ppc_setmode(device_t, int);
 static int pi1ppc_getmode(device_t);
 static int pi1ppc_exec_microseq(device_t, struct ppbus_microseq * *);
-static u_int8_t pi1ppc_io(device_t, int, u_char *, int, u_char);
+static uint8_t pi1ppc_io(device_t, int, u_char *, int, u_char);
 static int pi1ppc_read_ivar(device_t, int, unsigned int *);
 static int pi1ppc_write_ivar(device_t, int, unsigned int *);
 static int pi1ppc_add_handler(device_t, void (*)(void *), void *);
@@ -130,20 +130,20 @@ static void pi1ppc_byte_read(struct pi1ppc_softc * const);
 static void pi1ppc_std_write(struct pi1ppc_softc * const);
 
 /* Miscellaneous */
-static void pi1ppc_set_intr_mask(struct pi1ppc_softc * const, u_int8_t);
-static u_int8_t pi1ppc_get_intr_stat(struct pi1ppc_softc * const);
+static void pi1ppc_set_intr_mask(struct pi1ppc_softc * const, uint8_t);
+static uint8_t pi1ppc_get_intr_stat(struct pi1ppc_softc * const);
 
 #ifdef USE_INDY_ACK_HACK
-static u_int8_t pi1ppc_get_intr_mask(struct pi1ppc_softc * const);
+static uint8_t pi1ppc_get_intr_mask(struct pi1ppc_softc * const);
 #endif
 
-static int pi1ppc_poll_str(struct pi1ppc_softc * const, const u_int8_t,
-	const u_int8_t);
+static int pi1ppc_poll_str(struct pi1ppc_softc * const, const uint8_t,
+	const uint8_t);
 static int pi1ppc_wait_interrupt(struct pi1ppc_softc * const, const void *,
-	const u_int8_t);
+	const uint8_t);
 
 static int pi1ppc_poll_interrupt_stat(struct pi1ppc_softc * const, 
-	const u_int8_t);
+	const uint8_t);
 
 static int pi1ppc_match(device_t parent, cfdata_t match, void *aux);
 static void pi1ppc_attach(device_t parent, device_t self, void *aux);
@@ -162,6 +162,11 @@ CFATTACH_DECL_NEW(pi1ppc, sizeof(struct pi1ppc_softc),
 static int
 pi1ppc_match(device_t parent, cfdata_t match, void *aux)
 {
+	struct hpc_attach_args *ha = aux;
+
+	if (strcmp(ha->ha_name, match->cf_name) != 0)
+		return 0;
+
 	if (mach_type == MACH_SGI_IP22)
 		return 1;
 
@@ -589,8 +594,8 @@ static int
 pi1ppc_setmode(device_t dev, int mode)
 {
 	struct pi1ppc_softc *pi1ppc = device_private(dev);
-	u_int8_t ecr;
-	u_int8_t chipset_mode;
+	uint8_t ecr;
+	uint8_t chipset_mode;
 	int s;
 	int rval = 0;
 
@@ -694,9 +699,9 @@ pi1ppc_ecp_sync(device_t dev)
 /* Bit 4 of ctl_reg_int_en is used to emulate the PC's int enable
    bit.  Without it, lpt doesn't like the port.
  */
-static u_int8_t ctl_reg_int_en = 0;
+static uint8_t ctl_reg_int_en = 0;
 
-static u_int8_t
+static uint8_t
 r_reg(int reg, struct pi1ppc_softc *pi1ppc)
 {
 	int val = 0;
@@ -746,7 +751,7 @@ r_reg(int reg, struct pi1ppc_softc *pi1ppc)
 }
 
 static void
-w_reg(int reg, struct pi1ppc_softc *pi1ppc, u_int8_t byte)
+w_reg(int reg, struct pi1ppc_softc *pi1ppc, uint8_t byte)
 {
 	/* don't try to write to the status reg */
 
@@ -1015,11 +1020,11 @@ pi1ppc_exec_microseq(device_t dev, struct ppbus_microseq **p_msq)
 }
 
 /* General I/O routine */
-static u_int8_t
+static uint8_t
 pi1ppc_io(device_t dev, int iop, u_char *addr, int cnt, u_char byte)
 {
 	struct pi1ppc_softc *pi1ppc = device_private(dev);
-	u_int8_t val = 0;
+	uint8_t val = 0;
 	int s;
 
 	s = splpi1ppc();
@@ -1216,9 +1221,9 @@ static void
 pi1ppc_nibble_read(struct pi1ppc_softc *pi1ppc)
 {
 	int i;
-	u_int8_t nibble[2];
-	u_int8_t ctr;
-	u_int8_t str;
+	uint8_t nibble[2];
+	uint8_t ctr;
+	uint8_t str;
 
 	/* Enable interrupts if needed */
 	if (pi1ppc->sc_use & PI1PPC_USE_INTR) {
@@ -1290,8 +1295,8 @@ pi1ppc_nibble_read(struct pi1ppc_softc *pi1ppc)
 static void
 pi1ppc_byte_read(struct pi1ppc_softc * const pi1ppc)
 {
-	u_int8_t ctr;
-	u_int8_t str;
+	uint8_t ctr;
+	uint8_t str;
 
 	/* Check direction bit */
 	ctr = pi1ppc_r_ctr(pi1ppc);
@@ -1372,7 +1377,7 @@ pi1ppc_byte_read(struct pi1ppc_softc * const pi1ppc)
  */
 
 static void
-pi1ppc_set_intr_mask(struct pi1ppc_softc * const pi1ppc, u_int8_t mask)
+pi1ppc_set_intr_mask(struct pi1ppc_softc * const pi1ppc, uint8_t mask)
 {
 	/* invert valid bits (0 = enabled) */
 	mask = ~mask;
@@ -1384,7 +1389,7 @@ pi1ppc_set_intr_mask(struct pi1ppc_softc * const pi1ppc, u_int8_t mask)
 
 
 #ifdef USE_INDY_ACK_HACK
-static u_int8_t
+static uint8_t
 pi1ppc_get_intr_mask(struct pi1ppc_softc * const pi1ppc)
 {
 	int val;
@@ -1398,7 +1403,7 @@ pi1ppc_get_intr_mask(struct pi1ppc_softc * const pi1ppc)
 }
 #endif
 
-static u_int8_t
+static uint8_t
 pi1ppc_get_intr_stat(struct pi1ppc_softc * const pi1ppc)
 {
 	int val;
@@ -1491,11 +1496,11 @@ pi1ppc_std_write(struct pi1ppc_softc * const pi1ppc)
  * Returns 0 if device ready, error value otherwise.
  */
 static int
-pi1ppc_poll_str(struct pi1ppc_softc * const pi1ppc, const u_int8_t status,
-	const u_int8_t mask)
+pi1ppc_poll_str(struct pi1ppc_softc * const pi1ppc, const uint8_t status,
+	const uint8_t mask)
 {
 	unsigned int timecount;
-	u_int8_t str;
+	uint8_t str;
 	int error = EIO;
 
 	/* Wait for str to have status for MAXBUSYWAIT */
@@ -1517,7 +1522,7 @@ pi1ppc_poll_str(struct pi1ppc_softc * const pi1ppc, const u_int8_t status,
 /* Wait for interrupt for MAXBUSYWAIT: returns 0 if acknowledge received. */
 static int
 pi1ppc_wait_interrupt(struct pi1ppc_softc * const pi1ppc, const void *where,
-	const u_int8_t irqstat)
+	const uint8_t irqstat)
 {
 	int error = EIO;
 
@@ -1575,10 +1580,10 @@ pi1ppc_wait_interrupt(struct pi1ppc_softc * const pi1ppc, const void *where,
 
 static int
 pi1ppc_poll_interrupt_stat(struct pi1ppc_softc * const pi1ppc, 
-	const u_int8_t match)
+	const uint8_t match)
 {
 	unsigned int timecount;
-	u_int8_t cur;
+	uint8_t cur;
 	int error = EIO;
 
 #ifdef USE_INDY_ACK_HACK

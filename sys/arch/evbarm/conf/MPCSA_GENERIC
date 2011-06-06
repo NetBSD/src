@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.17 2010/11/23 11:13:56 hannken Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.17.2.1 2011/06/06 09:05:24 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.17.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -119,11 +119,7 @@ options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options 	COMPAT_MACH	# binary compatibility with Mach binaries
-#options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
-#options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_NDIS	# NDIS network driver
-#options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
@@ -149,7 +145,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
@@ -250,7 +247,6 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	VGA_RASTERCONSOLE
 # enable splash screen support; requires hw driver support
 #options 	SPLASHSCREEN
-#options 	SPLASHSCREEN_PROGRESS
 
 # Kernel root file system and dump configuration.
 #config		netbsd root on sd0c type ffs

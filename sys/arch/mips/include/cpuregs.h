@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.78 2010/02/27 22:12:31 snj Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.78.4.1 2011/06/06 09:06:03 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,7 +120,7 @@
 #define	MIPS_PHYS_TO_XKPHYS_UNCACHED(x) \
 	(MIPS_XKPHYS_START | ((uint64_t)(CCA_UNCACHED) << 59) | (x))
 #define	MIPS_PHYS_TO_XKPHYS_CACHED(x) \
-	(mips3_xkphys_cached | (x))
+	(mips_options.mips3_xkphys_cached | (x))
 #define	MIPS_PHYS_TO_XKPHYS(cca,x) \
 	(MIPS_XKPHYS_START | ((uint64_t)(cca) << 59) | (x))
 #define	MIPS_XKPHYS_TO_PHYS(x)	((uint64_t)(x) & 0x07ffffffffffffffLL)
@@ -132,7 +132,24 @@
 #define	CCA_CACHEABLE		3	/* cacheable non-coherent */
 
 /* CPU dependent mtc0 hazard hook */
-#define	COP0_SYNC		/* nothing */
+#if (MIPS32R2 + MIPS64R2) > 0
+# if (MIPS1 + MIPS3 + MIPS32 + MIPS64) == 0
+#  define COP0_SYNC		sll $0,$0,3	/* EHB */
+#  define JR_HB_RA		.set push; .set mips32r2; jr.hb ra; nop; .set pop
+# else
+#  define COP0_SYNC		sll $0,$0,1; sll $0,$0,1; sll $0,$0,3
+#  define JR_HB_RA		sll $0,$0,1; sll $0,$0,1; jr ra; sll $0,$0,3
+# endif
+#elif (MIPS32 + MIPS64) > 0
+# define COP0_SYNC		sll $0,$0,1; sll $0,$0,1; sll $0,$0,1
+# define JR_HB_RA		sll $0,$0,1; sll $0,$0,1; jr ra; sll $0,$0,1
+#elif MIPS3 > 0
+# define COP0_SYNC		nop; nop; nop
+# define JR_HB_RA		nop; nop; jr ra; nop
+#else
+# define COP0_SYNC		nop
+# define JR_HB_RA		jr ra; nop
+#endif
 #define	COP0_HAZARD_FPUENABLE	nop; nop; nop; nop;
 
 /*
@@ -174,6 +191,7 @@
 #define	MIPS_SR_COP_USABILITY	0xf0000000
 #define	MIPS_SR_COP_0_BIT	0x10000000
 #define	MIPS_SR_COP_1_BIT	0x20000000
+#define	MIPS_SR_COP_2_BIT	0x40000000
 
 	/* r4k and r3k differences, see below */
 
@@ -248,7 +266,6 @@
 #define	MIPS3_SR_DIAG_CH	0x00040000
 #define	MIPS3_SR_DIAG_CE	0x00020000
 #define	MIPS3_SR_DIAG_PE	0x00010000
-#define	MIPS3_SR_EIE		0x00010000		/* TX79/R5900 */
 #define	MIPS3_SR_KX		0x00000080
 #define	MIPS3_SR_SX		0x00000040
 #define	MIPS3_SR_UX		0x00000020
@@ -258,11 +275,6 @@
 #define	MIPS3_SR_KSU_KERNEL	0x00000000
 #define	MIPS3_SR_ERL		0x00000004
 #define	MIPS3_SR_EXL		0x00000002
-
-#ifdef MIPS3_5900
-#undef MIPS_SR_INT_IE
-#define	MIPS_SR_INT_IE		0x00010001		/* XXX */
-#endif
 
 #define	MIPS_SR_SOFT_RESET	MIPS3_SR_SOFT_RESET
 #define	MIPS_SR_DIAG_CH		MIPS3_SR_DIAG_CH
@@ -294,6 +306,8 @@
 #define	MIPS_HARD_INT_MASK	0xfc00
 #define	MIPS_SOFT_INT_MASK_1	0x0200
 #define	MIPS_SOFT_INT_MASK_0	0x0100
+#define	MIPS_SOFT_INT_MASK	0x0300
+#define	MIPS_INT_MASK_SHIFT	8
 
 /*
  * mips3 CPUs have on-chip timer at INT_MASK_5.  Each platform can
@@ -444,12 +458,6 @@
 #define	MIPS3_GEN_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0180)
 
 /*
- * TX79 (R5900) exception vectors
- */
-#define MIPS_R5900_COUNTER_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0080)
-#define MIPS_R5900_DEBUG_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0100)
-
-/*
  * MIPS32/MIPS64 (and some MIPS3) dedicated interrupt vector.
  */
 #define	MIPS3_INTR_EXC_VEC	MIPS_PHYS_TO_KSEG0(0x0200)
@@ -465,25 +473,33 @@
  *  2	MIPS_COP_0_TLB_LO0	.636 r4k TLB entry low.
  *  3	MIPS_COP_0_TLB_LO1	.636 r4k TLB entry low, extended.
  *  4	MIPS_COP_0_TLB_CONTEXT	3636 TLB Context.
+ *  4/2	MIPS_COP_0_USERLOCAL	..36 UserLocal.
  *  5	MIPS_COP_0_TLB_PG_MASK	.333 TLB Page Mask register.
  *  6	MIPS_COP_0_TLB_WIRED	.333 Wired TLB number.
+ *  7	MIPS_COP_0_HWRENA	..33 rdHWR Enable.
  *  8	MIPS_COP_0_BAD_VADDR	3636 Bad virtual address.
  *  9	MIPS_COP_0_COUNT	.333 Count register.
  * 10	MIPS_COP_0_TLB_HI	3636 TLB entry high.
  * 11	MIPS_COP_0_COMPARE	.333 Compare (against Count).
  * 12	MIPS_COP_0_STATUS	3333 Status register.
+ * 12/1	MIPS_COP_0_INTCTL	..33 Interrupt Control.
+ * 12/2	MIPS_COP_0_SRSCTL	..33 Shadow Register Set Selectors.
+ * 12/3	MIPS_COP_0_SRSMAP	..33 Shadow Set Map.
  * 13	MIPS_COP_0_CAUSE	3333 Exception cause register.
  * 14	MIPS_COP_0_EXC_PC	3636 Exception PC.
  * 15	MIPS_COP_0_PRID		3333 Processor revision identifier.
- * 15/1	MIPS_COP_0_EBASE	..33 Exception Base
+ * 15/1	MIPS_COP_0_EBASE	..33 Exception Base.
  * 16	MIPS_COP_0_CONFIG	3333 Configuration register.
  * 16/1	MIPS_COP_0_CONFIG1	..33 Configuration register 1.
  * 16/2	MIPS_COP_0_CONFIG2	..33 Configuration register 2.
  * 16/3	MIPS_COP_0_CONFIG3	..33 Configuration register 3.
+ * 16/6	MIPS_COP_0_CONFIG6	..33 Configuration register 6.
+ * 16/7	MIPS_COP_0_CONFIG7	..33 Configuration register 7.
  * 17	MIPS_COP_0_LLADDR	.336 Load Linked Address.
  * 18	MIPS_COP_0_WATCH_LO	.336 WatchLo register.
  * 19	MIPS_COP_0_WATCH_HI	.333 WatchHi register.
  * 20	MIPS_COP_0_TLB_XCONTEXT .6.6 TLB XContext register.
+ * 22	MIPS_COP_0_OSSCRATCH	...6 [RMI] OS Scratch register. (select 0..7)
  * 23	MIPS_COP_0_DEBUG	.... Debug JTAG register.
  * 24	MIPS_COP_0_DEPC		.... DEPC JTAG register.
  * 25	MIPS_COP_0_PERFCNT	..36 Performance Counter register.
@@ -544,6 +560,8 @@
 #define	MIPS_COP_0_ERROR_PC	_(30)
 
 /* MIPS32/64 */
+#define	MIPS_COP_0_HWRENA	_(7)
+#define	MIPS_COP_0_OSSCRATCH	_(22)
 #define	MIPS_COP_0_DEBUG	_(23)
 #define	MIPS_COP_0_DEPC		_(24)
 #define	MIPS_COP_0_PERFCNT	_(25)
@@ -647,7 +665,7 @@
 #define	MIPS3_TLB_MOD_BIT		MIPS3_TLB_DIRTY_BIT
 
 /*
- * MIPS3_TLB_ATTR values - coherency algorithm:
+ * MIPS3_TLB_ATTR (CCA) values - coherency algorithm:
  * 0: cacheable, noncoherent, write-through, no write allocate
  * 1: cacheable, noncoherent, write-through, write allocate
  * 2: uncached
@@ -705,15 +723,15 @@
 
 /* XXX simonb: this is before MIPS3_PLUS is defined (and is ugly!) */
 
-#if !(defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)) \
-    && defined(MIPS1)				/* XXX simonb must be neater! */
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 0 && MIPS1 != 0
 #define	MIPS_TLB_PID_SHIFT		MIPS1_TLB_PID_SHIFT
+#define	MIPS_TLB_PID			MIPS1_TLB_PID
 #define	MIPS_TLB_NUM_PIDS		MIPS1_TLB_NUM_PIDS
 #endif
 
-#if (defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)) \
-    && !defined(MIPS1)				/* XXX simonb must be neater! */
+#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) != 0 && MIPS1 == 0
 #define	MIPS_TLB_PID_SHIFT		0
+#define	MIPS_TLB_PID			MIPS3_TLB_PID
 #define	MIPS_TLB_NUM_PIDS		MIPS3_TLB_NUM_ASIDS
 #endif
 
@@ -722,9 +740,58 @@
 #define	MIPS_TLB_PID_SHIFT \
     ((MIPS_HAS_R4K_MMU) ? 0 : MIPS1_TLB_PID_SHIFT)
 
+#define	MIPS_TLB_PID \
+    ((MIPS_HAS_R4K_MMU) ? MIPS3_TLB_PID : MIPS1_TLB_PID)
+
 #define	MIPS_TLB_NUM_PIDS \
     ((MIPS_HAS_R4K_MMU) ? MIPS3_TLB_NUM_ASIDS : MIPS1_TLB_NUM_PIDS)
 #endif
+
+/*
+ * Bits defined for for the HWREna (CP0 register 7, select 0).
+ */
+#define	MIPS_HWRENA_IMPL31		__BIT(31)
+#define	MIPS_HWRENA_IMPL30		__BIT(30)
+#define	MIPS_HWRENA_UL			__BIT(29)	/* Userlocal */
+#define	MIPS_HWRENA_CCRES		__BIT(3)
+#define	MIPS_HWRENA_CC			__BIT(2)
+#define	MIPS_HWRENA_SYNCI_STEP		__BIT(1)
+#define	MIPS_HWRENA_CPUNUM		__BIT(0)
+
+/*
+ * Hints for the prefetch instruction
+ */
+
+/*
+ * Prefetched data is expected to be read (not modified)
+ */
+#define	PREF_LOAD		0	
+#define	PREF_LOAD_STREAMED	4	/* but not reused extensively; it */
+					/* "streams" through cache.  */
+#define	PREF_LOAD_RETAINED	6	/* and reused extensively; it should */
+					/* be "retained" in the cache.  */
+
+/*
+ * Prefetched data is expected to be stored or modified
+ */
+#define	PREF_STORE		1	
+#define	PREF_STORE_STREAMED	5	/* but not reused extensively; it */
+					/* "streams" through cache.  */
+#define	PREF_STORE_RETAINED	7	/* and reused extensively; it should */
+					/* be "retained" in the cache.  */
+
+/*
+ * data is no longer expected to be used.  For a WB cache, schedule a
+ * writeback of any dirty data and afterwards free the cache lines.
+ */
+#define	PREF_WB_INV		25	
+#define	PREF_NUDGE		PREF_WB_INV
+
+/*
+ * Prepare for writing an entire cache line without the overhead
+ * involved in filling the line from memory.
+ */
+#define	PREF_PREPAREFORSTORE	30	
 
 /*
  * CPU processor revision IDs for company ID == 0 (non mips32/64 chips)
@@ -811,6 +878,7 @@
 #define	MIPS_34K	0x95	/* MIPS 34K			ISA 32  R2 MT */
 #define	MIPS_24KE	0x96	/* MIPS 24KEc			ISA 32  Rel 2 */
 #define	MIPS_74K	0x97	/* MIPS 74Kc/74Kf		ISA 32  Rel 2 */
+#define	MIPS_1004K	0x99	/* MIPS 1004Kc/1004Kf		ISA 32  Rel 2 */
 
 /*
  * Alchemy (company ID 3) use the processor ID field to donote the CPU core
@@ -836,14 +904,27 @@
 #define	MIPS_SR7100	0x04	/* SandCraft SR7100 		ISA 64  */
 
 /*
- * CPU processor revision IDs for company ID == 12 (RMI)
+ * CPU revision IDs for company ID == 12 (RMI)
+ * note: unlisted Rev values may indicate pre-production silicon
  */
-#define	MIPS_XLR732	0x00	/* RMI XLR732-C	 		ISA 64  */
-#define	MIPS_XLR716	0x02	/* RMI XLR716-C	 		ISA 64  */
-#define	MIPS_XLR532	0x08	/* RMI XLR532-C	 		ISA 64  */
-#define	MIPS_XLR516	0x0a	/* RMI XLR516-C	 		ISA 64  */
-#define	MIPS_XLR508	0x0b	/* RMI XLR508-C	 		ISA 64  */
-#define	MIPS_XLR308	0x0f	/* RMI XLR308-C	 		ISA 64  */
+#define	MIPS_XLR_B2	0x04	/* RMI XLR Production Rev B2		*/
+#define	MIPS_XLR_C4	0x91	/* RMI XLR Production Rev C4		*/
+
+/*
+ * CPU processor IDs for company ID == 12 (RMI)
+ */
+#define	MIPS_XLR308B	0x06	/* RMI XLR308-B	 		ISA 64  */
+#define	MIPS_XLR508B	0x07	/* RMI XLR508-B	 		ISA 64  */
+#define	MIPS_XLR516B	0x08	/* RMI XLR516-B	 		ISA 64  */
+#define	MIPS_XLR532B	0x09	/* RMI XLR532-B	 		ISA 64  */
+#define	MIPS_XLR716B	0x0a	/* RMI XLR716-B	 		ISA 64  */
+#define	MIPS_XLR732B	0x0b	/* RMI XLR732-B	 		ISA 64  */
+#define	MIPS_XLR732C	0x00	/* RMI XLR732-C	 		ISA 64  */
+#define	MIPS_XLR716C	0x02	/* RMI XLR716-C	 		ISA 64  */
+#define	MIPS_XLR532C	0x08	/* RMI XLR532-C	 		ISA 64  */
+#define	MIPS_XLR516C	0x0a	/* RMI XLR516-C	 		ISA 64  */
+#define	MIPS_XLR508C	0x0b	/* RMI XLR508-C	 		ISA 64  */
+#define	MIPS_XLR308C	0x0f	/* RMI XLR308-C	 		ISA 64  */
 #define	MIPS_XLS616	0x40	/* RMI XLS616	 		ISA 64  */
 #define	MIPS_XLS416	0x44	/* RMI XLS416	 		ISA 64  */
 #define	MIPS_XLS608	0x4A	/* RMI XLS608	 		ISA 64  */
@@ -855,6 +936,11 @@
 #define	MIPS_XLS204	0x8F	/* RMI XLS204	 		ISA 64  */
 #define	MIPS_XLS108	0xCE	/* RMI XLS108	 		ISA 64  */
 #define	MIPS_XLS104	0xCF	/* RMI XLS104	 		ISA 64  */
+
+/*
+ * CPU processor revision IDs for company ID == 7 (Microsoft)
+ */
+#define	MIPS_eMIPS	0x04	/* MSR's eMIPS */
 
 /*
  * FPU processor revision ID
@@ -870,9 +956,6 @@
 
 #ifdef ENABLE_MIPS_TX3900
 #include <mips/r3900regs.h>
-#endif
-#ifdef MIPS3_5900
-#include <mips/r5900regs.h>
 #endif
 #ifdef MIPS64_SB1
 #include <mips/sb1regs.h>

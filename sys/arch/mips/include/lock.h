@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.17 2009/01/12 03:05:10 pooka Exp $	*/
+/*	$NetBSD: lock.h,v 1.17.8.1 2011/06/06 09:06:03 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 static __inline int
 __SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
 {
-	return *__ptr == __SIMPLELOCK_LOCKED;
+	return *__ptr != __SIMPLELOCK_UNLOCKED;
 }
 
 static __inline int
@@ -144,7 +144,9 @@ mb_memory(void)
 
 #else	/* !_HARDKERNEL */
 
-unsigned _atomic_cas_uint(volatile unsigned *, unsigned, unsigned);
+u_int	_atomic_cas_uint(volatile u_int *, u_int, u_int);
+u_long	_atomic_cas_ulong(volatile u_long *, u_long, u_long);
+void *	_atomic_cas_ptr(volatile void *, void *, void *);
 void	mb_read(void);
 void	mb_write(void);
 void	mb_memory(void);
@@ -153,7 +155,7 @@ static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
 {
 
-	return _atomic_cas_uint((volatile unsigned *)lp,
+	return _atomic_cas_uint(lp,
 	    __SIMPLELOCK_UNLOCKED, __SIMPLELOCK_LOCKED) ==
 	    __SIMPLELOCK_UNLOCKED;
 }
@@ -172,9 +174,10 @@ static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *lp)
 {
 
-	while (!__cpu_simple_lock_try(lp))
+	while (!__cpu_simple_lock_try(lp)) {
 		while (*lp == __SIMPLELOCK_LOCKED)
 			/* spin */;
+	}
 }
 
 static __inline void

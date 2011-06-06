@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.36 2011/01/05 22:06:59 jakllsch Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.36.2.1 2011/06/06 09:05:52 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -310,6 +310,10 @@ read_gpt(struct biosdisk *d)
 	daddr_t gptsector[2];
 	int i, error;
 
+	if (d->ll.type != BIOSDISK_TYPE_HD)
+		/* No GPT on floppy and CD */
+		return -1;
+
 	gptsector[0] = GPT_HDR_BLKNO;
 	if (set_geometry(&d->ll, &ed) == 0 && d->ll.flags & BIOSDISK_INT13EXT) {
 		gptsector[1] = ed.totsec - 1;
@@ -345,11 +349,28 @@ read_gpt(struct biosdisk *d)
 #endif	/* !NO_GPT */
 
 #ifndef NO_DISKLABEL
+static void
+ingest_label(struct biosdisk *d, struct disklabel *lp)
+{
+	int part;
+
+	memset(d->part, 0, sizeof(d->part));
+
+	for (part = 0; part < lp->d_npartitions; part++) {
+		if (lp->d_partitions[part].p_size == 0)
+			continue;
+		if (lp->d_partitions[part].p_fstype == FS_UNUSED)
+			continue;
+		d->part[part].fstype = lp->d_partitions[part].p_fstype;
+		d->part[part].offset = lp->d_partitions[part].p_offset;
+		d->part[part].size = lp->d_partitions[part].p_size;
+	}
+}
+	
 static int
 check_label(struct biosdisk *d, daddr_t sector)
 {
 	struct disklabel *lp;
-	int part;
 
 	/* find partition in NetBSD disklabel */
 	if (readsects(&d->ll, sector + LABELSECTOR, 1, d->buf, 0)) {
@@ -366,18 +387,7 @@ check_label(struct biosdisk *d, daddr_t sector)
 		return -1;
 	}
 
-	memset(d->part, 0, sizeof(d->part));
-	for (part = 0; part < lp->d_npartitions; part++) {
-		if (lp->d_partitions[part].p_size == 0)
-			continue;
-		if (lp->d_partitions[part].p_fstype == FS_UNUSED)
-			continue;
-		d->part[part].fstype = lp->d_partitions[part].p_fstype;
-		d->part[part].offset = lp->d_partitions[part].p_offset;
-		d->part[part].size = lp->d_partitions[part].p_size;
-	}
-	
-	d->boff = sector;
+	ingest_label(d, lp);
 
 #ifdef _STANDALONE
 	bi_disk.labelsector = d->boff + LABELSECTOR;
@@ -499,7 +509,7 @@ read_label(struct biosdisk *d)
 	 */
 	/* XXX fill it to make checksum match kernel one */
 	dflt_lbl.d_checksum = dkcksum(&dflt_lbl);
-	memcpy(d->buf, &dflt_lbl, sizeof(dflt_lbl));
+	ingest_label(d, &dflt_lbl);
 	return 0;
 }
 #endif /* NO_DISKLABEL */

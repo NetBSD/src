@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.17 2008/05/29 14:51:27 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.17.26.1 2011/06/06 09:10:24 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -50,7 +50,6 @@ bool	uvm_swapisfull(void);
 #else /* defined(VMSWAP) */
 #define	uvm_swapisfull()	true
 #endif /* defined(VMSWAP) */
-void	uvm_swap_stats(int, struct swapent *, int, register_t *);
 
 #endif /* _KERNEL */
 

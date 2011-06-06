@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.53 2010/08/07 21:58:34 cegger Exp $ */
+/* $NetBSD: hypervisor.c,v 1.53.2.1 2011/06/06 09:07:11 jruoho Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.53 2010/08/07 21:58:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.53.2.1 2011/06/06 09:07:11 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,16 +225,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_xencons.xa_device = "xencons";
 	config_found_ia(self, "xendevbus", &hac.hac_xencons, hypervisor_print);
 #endif
-#if NXENNET_HYPERVISOR > 0
-	memset(&hac, 0, sizeof(hac));
-	hac.hac_xennet.xa_device = "xennet";
-	xennet_scan(self, &hac.hac_xennet, hypervisor_print);
-#endif
-#if NXBD_HYPERVISOR > 0
-	memset(&hac, 0, sizeof(hac));
-	hac.hac_xbd.xa_device = "xbd";
-	xbd_scan(self, &hac.hac_xbd, hypervisor_print);
-#endif
 #if NNPX > 0
 	memset(&hac, 0, sizeof(hac));
 	hac.hac_xennpx.xa_device = "npx";
@@ -249,7 +239,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		hac.hac_acpi.aa_memt = x86_bus_space_mem;
 		hac.hac_acpi.aa_pc = NULL;
 		hac.hac_acpi.aa_pciflags =
-			PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+			PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 			PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY;
 		hac.hac_acpi.aa_ic = &x86_isa_chipset;
@@ -265,7 +255,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #else
 	hac.hac_pba.pba_dmat64 = NULL;
 #endif /* _LP64 */
-	hac.hac_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
+	hac.hac_pba.pba_flags = PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY;
 	hac.hac_pba.pba_bridgetag = NULL;
 	hac.hac_pba.pba_bus = 0;
 #if NACPICA > 0 && defined(ACPI_SCANPCI)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.138 2010/11/24 14:49:18 cegger Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.138.2.1 2011/06/06 09:09:39 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.138 2010/11/24 14:49:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.138.2.1 2011/06/06 09:09:39 jruoho Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.138 2010/11/24 14:49:18 cegger Exp $
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #define MBTYPES
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
@@ -87,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.138 2010/11/24 14:49:18 cegger Exp $
 
 #include <net/if.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 pool_cache_t mb_cache;	/* mbuf cache */
 pool_cache_t mcl_cache;	/* mbuf cluster cache */

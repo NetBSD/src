@@ -1,4 +1,4 @@
-/* $NetBSD: hpqlb_acpi.c,v 1.8 2010/10/26 05:28:29 jruoho Exp $ */
+/* $NetBSD: hpqlb_acpi.c,v 1.8.2.1 2011/06/06 09:07:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008  Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.8 2010/10/26 05:28:29 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.8.2.1 2011/06/06 09:07:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -303,29 +303,38 @@ hpqlb_resume(device_t self, const pmf_qual_t *qual)
 	return true;
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, hpqlb, NULL);
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
-hpqlb_modcmd(modcmd_t cmd, void *context)
+hpqlb_modcmd(modcmd_t cmd, void *aux)
 {
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-		return config_init_component(cfdriver_ioconf_hpqlb,
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_hpqlb,
 		    cfattach_ioconf_hpqlb, cfdata_ioconf_hpqlb);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
-		return config_fini_component(cfdriver_ioconf_hpqlb,
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_hpqlb,
 		    cfattach_ioconf_hpqlb, cfdata_ioconf_hpqlb);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

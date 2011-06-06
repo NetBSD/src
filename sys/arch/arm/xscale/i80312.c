@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.19 2006/02/25 02:28:56 wiz Exp $	*/
+/*	$NetBSD: i80312.c,v 1.19.102.1 2011/06/06 09:05:06 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.19 2006/02/25 02:28:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.19.102.1 2011/06/06 09:05:06 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ i80312_attach(struct i80312_softc *sc)
 	pba.pba_intrswiz = 3;
 	pba.pba_intrtag = 0;
 	/* XXX MRL/MRM/MWI seem to have problems, at the moment. */
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED /* |
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY /* |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY */;
 	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
 }

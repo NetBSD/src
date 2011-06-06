@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus_machdep.h,v 1.2 2009/03/14 14:45:51 dsl Exp $ */
+/* $NetBSD: podulebus_machdep.h,v 1.2.6.1 2011/06/06 09:04:40 jruoho Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -161,8 +161,8 @@ extern void podulebus_shift_tag(bus_space_tag_t, u_int,
     bus_space_tag_t *);
 
 /* Used internally by the podulebus code */
-extern void netslotscan(struct device *);
-extern void poduleexamine(podule_t *, struct device *, int);
+extern void netslotscan(device_t);
+extern void poduleexamine(podule_t *, device_t, int);
 
 #endif
 

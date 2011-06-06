@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.22 2010/12/20 21:11:26 joerg Exp $ */
+/*	$NetBSD: asm.h,v 1.22.2.1 2011/06/06 09:06:58 jruoho Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -60,7 +60,7 @@
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT
-# define _ALIGN_TEXT .align 4
+# define _ALIGN_TEXT .p2align 2
 #endif
 
 #define	_ENTRY(x, regs) \
@@ -76,6 +76,7 @@
 #define ENTRY(x, regs)		_ENTRY(_C_LABEL(x), regs); _PROF_PROLOGUE
 #define NENTRY(x, regs)		_ENTRY(_C_LABEL(x), regs)
 #define ASENTRY(x, regs)	_ENTRY(_ASM_LABEL(x), regs); _PROF_PROLOGUE
+#define END(x)			.size _C_LABEL(x),.-_C_LABEL(x)
 
 #define ALTENTRY(x)		.globl _C_LABEL(x); _C_LABEL(x):
 #define RCSID(name)		.pushsection ".ident"; .asciz name; .popsection

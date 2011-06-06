@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 2009/11/05 18:17:34 dyoung Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9.6.1 2011/06/06 09:07:13 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2009/11/05 18:17:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.6.1 2011/06/06 09:07:13 jruoho Exp $");
 
 #include "opt_md.h"
 
@@ -192,15 +192,8 @@ findroot(void)
 				continue;
 
 			if (is_valid_disk(dv)) {
-				/*
-				 * Don't trust BIOS device numbers, try
-				 * to match the information passed by the
-				 * boot loader instead.
-				 */
-				if ((bid->biosdev & 0x80) == 0 ||
-				    match_bootdisk(dv, bid) == 0)
-				    	continue;
-				goto bootdisk_found;
+				if (match_bootdisk(dv, bid))
+					goto bootdisk_found;
 			}
 			continue;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.6 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.6.28.1 2011/06/06 09:05:57 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ typedef struct {
 	__gregset_t	__gregs;	/* General Register set */
 	__fpregset_t	__fpregs;	/* Floating Point Register set */
 	union {
-		long	__mc_state[202];	/* Only need 308 bytes... */
+		long	__mc_state[201];	/* Only need 308 bytes... */
 #if defined(_KERNEL) || defined(__M68K_MCONTEXT_PRIVATE)
 		struct {
 			/* Rest of the frame. */
@@ -92,17 +92,21 @@ typedef struct {
 		} __mc_frame;
 #endif /* _KERNEL || __M68K_MCONTEXT_PRIVATE */
 	}		__mc_pad;
+	__greg_t	_mc_tlsbase;
 } mcontext_t;
 
 /* Note: no additional padding is to be performed in ucontext_t. */
 
 /* Machine-specific uc_flags value */
 #define _UC_M68K_UC_USER 0x40000000
+#define	_UC_TLSBASE	0x00080000
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_A7])
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_D0])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+
+#define	__UCONTEXT_SIZE	1024
 
 #endif	/* !_M68K_MCONTEXT_H_ */

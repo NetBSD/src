@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.17 2010/07/07 01:14:52 chs Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.17.2.1 2011/06/06 09:04:46 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -427,7 +427,7 @@ ENTRY(fxrstor)
 
 ENTRY(fldummy)
 	ffree	%st(7)
-	fld	(%rdi)
+	flds	(%rdi)
 	ret
 
 ENTRY(x86_ldmxcsr)

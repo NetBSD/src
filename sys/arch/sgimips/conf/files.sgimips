@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.49 2009/08/21 04:10:33 thorpej Exp $
+#	$NetBSD: files.sgimips,v 1.49.6.1 2011/06/06 09:06:39 jruoho Exp $
 
 maxpartitions 16
 
@@ -14,6 +14,7 @@ file arch/sgimips/sgimips/cpu.c		cpu
 
 file dev/arcbios/arcbios.c
 file dev/arcbios/arcbios_tty.c
+file dev/arcbios/arcbios_calls.S
 
 file arch/sgimips/sgimips/arcemu.c
 

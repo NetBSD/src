@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2010/07/06 06:00:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 2011/06/06 09:07:02 jruoho Exp $
 
 NOMAN=		# defined
 
@@ -34,7 +34,8 @@ SRCS+=		vers.c
 CLEANFILES+=	vers.c
 vers.c:	${VERSIONFILE}
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh \
+	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CFLAGS=	-Os -fomit-frame-pointer
 CFLAGS+= -W -Wall -Wstrict-prototypes -Wmissing-prototypes

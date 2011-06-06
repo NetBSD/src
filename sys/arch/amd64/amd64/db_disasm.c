@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.13 2009/03/14 21:04:03 dsl Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.13.6.1 2011/06/06 09:04:46 jruoho Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,10 +33,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2009/03/14 21:04:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13.6.1 2011/06/06 09:04:46 jruoho Exp $");
 
 #ifndef _KERNEL
-#include "stubs.h"
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/ksyms.h>
@@ -1393,11 +1392,9 @@ db_disasm(db_addr_t loc, bool altfmt)
 		    case Si:
 			db_printf("%s", db_seg_reg[f_reg(inst)]);
 			break;
-		    case A: {
-			int ext = ((rex & REX_w) != 0);
-			db_printf("%s", db_reg[ext][size][0]);	/* acc */
+		    case A:
+			db_printf("%s", db_reg[0][size][0]);	/* acc */
 			break;
-		    }
 		    case BX:
 			if (seg)
 				db_printf("%s:", seg);

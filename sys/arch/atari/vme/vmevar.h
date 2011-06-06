@@ -1,4 +1,4 @@
-/*	$NetBSD: vmevar.h,v 1.6 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: vmevar.h,v 1.6.28.1 2011/06/06 09:05:10 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ struct vme_attach_args {
  * VME master bus
  */
 struct vme_softc {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	bus_space_tag_t sc_iot;		/* vme io space tag */
 	bus_space_tag_t sc_memt;	/* vme mem space tag */
 

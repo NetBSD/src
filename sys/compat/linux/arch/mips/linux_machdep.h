@@ -1,4 +1,4 @@
-/* $NetBSD: linux_machdep.h,v 1.10 2008/11/12 12:36:10 ad Exp $ */
+/* $NetBSD: linux_machdep.h,v 1.10.10.1 2011/06/06 09:07:25 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,44 +36,55 @@
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 
-#if defined(ELFSIZE) && (ELFSIZE == 64)
 /*
  * From Linux's include/asm-mips64/sigcontext.h
  */
-struct linux_sigcontext {
-	unsigned long long sc_regs[32];
-	unsigned long long sc_fpregs[32];
-	unsigned long long sc_mdhi;
-	unsigned long long sc_mdlo;
-	unsigned long long sc_pc;
-	unsigned int sc_status;
-	unsigned int sc_ownedfp;
-	unsigned int sc_fpc_csr;
-	unsigned int sc_fpc_eir;
-	unsigned int sc_cause;
-	unsigned int sc_badvaddr;
-}
-#else
+#ifndef __mips_o32
+struct linux_sigcontext {		/* N32 too */
+	uint64_t lsc_regs[32];
+	uint64_t lsc_fpregs[32];
+	uint64_t lsc_mdhi;
+	uint64_t lsc_hi1;
+	uint64_t lsc_hi2;
+	uint64_t lsc_hi3;
+	uint64_t lsc_mdlo;
+	uint64_t lsc_lo1;
+	uint64_t lsc_lo2;
+	uint64_t lsc_lo3;
+	uint64_t lsc_pc;
+	uint32_t lsc_fpc_csr;
+	uint32_t lsc_ownedfp;
+	uint32_t lsc_dsp;
+	uint32_t lsc_reserved;
+};
+#endif
+
 /*
  * From Linux's include/asm-mips/sigcontext.h
  */
-struct linux_sigcontext {
-	unsigned int lsc_regmask;		/* Unused */
-	unsigned int lsc_status;
-	unsigned long long lsc_pc;
-	unsigned long long lsc_regs[32];
-	unsigned long long lsc_fpregs[32];	/* Unused */
-	unsigned int lsc_ownedfp;
-	unsigned int lsc_fpc_csr;		/* Unused */
-	unsigned int lsc_fpc_eir;		/* Unused */
-	unsigned int lsc_ssflags;		/* Unused */
-	unsigned long long lsc_mdhi;
-	unsigned long long lsc_mdlo;
-	unsigned int lsc_cause;	  		/* Unused */
-	unsigned int lsc_badvaddr;	  	/* Unused */
-	unsigned long lsc_sigset[4]; 		/* kernel's sigset_t */
-};
+struct
+#ifdef __mips_o32
+	linux_sigcontext
+#else
+	linux_sigcontext32
 #endif
+{
+	uint32_t lsc_regmask;		/* Unused */
+	uint32_t lsc_status;
+	uint64_t lsc_pc;
+	uint64_t lsc_regs[32];
+	uint64_t lsc_fpregs[32];	/* Unused */
+	uint32_t lsc_acx;		/* Was owned_fp */
+	uint32_t lsc_fpc_csr;		/* Unused */
+	uint32_t lsc_fpc_eir;		/* Unused */
+	uint32_t lsc_used_math;		/* Unused */
+	uint32_t lsc_dsp;		/* dsp status; was ssflags */
+	uint64_t lsc_mdhi;
+	uint64_t lsc_mdlo;
+	uint32_t lsc_hi1;  		/* Unused; was cause */
+	uint32_t lsc_lo1;	  	/* Unused; was badvddr */
+	uint32_t lsc_sigset[4]; 	/* kernel's sigset_t */
+};
 
 /*
  * From Linux's include/asm-mips/elf.h
@@ -83,15 +94,32 @@ struct linux_sigcontext {
 typedef unsigned long linux_elf_greg_t;
 typedef linux_elf_greg_t linux_elf_gregset_t[LINUX_ELF_NGREG];
 
+#ifndef __mips_o32
+typedef struct linux_sigaltstack32 {
+	int32_t ss_sp;
+	uint32_t ss_size;
+	int ss_flags;
+} linux_stack32_t;
+#endif /* !mips_o32 */
+
 /*
  * From Linux's arch/mips/kernel/signal.c
  */
 struct linux_sigframe {
-	unsigned int lsf_ass[4];
-	unsigned int lsf_code[2];
+	uint32_t lsf_ass[4];
+	uint32_t lsf_code[2];
 	struct linux_sigcontext lsf_sc;
 	linux_sigset_t lsf_mask;
 };
+
+#ifndef __mips_o32
+struct linux_sigframe32 {
+	uint32_t lsf_ass[4];
+	uint32_t lsf_code[2];
+	struct linux_sigcontext32 lsf_sc;
+	linux_sigset_t lsf_mask;
+};
+#endif /* !mips_o32 */
 
 /*
  * From Linux's include/asm-mips/ucontext.h
@@ -104,16 +132,46 @@ struct linux_ucontext {
 	linux_sigset_t luc_sigmask;
 };
 
+#ifndef __mips_o32
+struct linux_ucontext32 {
+	uint32_t luc_flags;
+	int32_t luc_link;
+	linux_stack32_t luc_stack;
+	struct linux_sigcontext32 luc_mcontext;
+	linux_sigset_t luc_sigmask;
+};
+
+struct linux_ucontextn32 {
+	uint32_t luc_flags;
+	int32_t luc_link;
+	linux_stack32_t luc_stack;
+	struct linux_sigcontext luc_mcontext;
+	linux_sigset_t luc_sigmask;
+};
+
+#endif /* !__mips_o32 */
+
 /*
  * From Linux's arch/mips/kernel/signal.c
  */
-struct linux_rt_sigframe
-{
-	unsigned int lrs_ass[4];
-	unsigned int lrs_code[2];
+struct linux_rt_sigframe {
+	uint32_t lrs_ass[4];
+	uint32_t lrs_code[2];
 	struct linux_siginfo lrs_info;
 	struct linux_ucontext lrs_uc;
 };
+
+#ifndef __mips_o32
+/*
+ * From Linux's arch/mips/kernel/signal.c
+ */
+struct linux_rt_sigframe32 {
+	uint32_t lrs_ass[4];
+	uint32_t lrs_code[2];
+	struct linux_siginfo lrs_info;
+	struct linux_ucontext32 lrs_uc;
+};
+#endif /* !__mips_o32 */
 
 /*
  * From Linux's include/asm-mips/sysmips.h

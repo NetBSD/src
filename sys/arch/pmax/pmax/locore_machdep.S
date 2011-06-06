@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.23 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.23.106.1 2011/06/06 09:06:24 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>	/* XXX - misnomer? */
 
+#include "assym.h"
 #include "sii.h"
 #include "opt_dec_5100.h"
 #include "opt_dec_5400.h"
@@ -80,9 +81,9 @@ LEAF(CopyToBuffer)
 	nop
 1:
 	lhu	t0, 0(a0)		# read 2 bytes of data
-	subu	a2, a2, 2
-	addu	a0, a0, 2
-	addu	a1, a1, 4
+	PTR_SUBU a2, 2
+	PTR_ADDU a0, 2
+	PTR_ADDU a1, 4
 	bgtz	a2, 1b
 	sh	t0, -4(a1)		# write 2 bytes of data to buffer
 2:
@@ -108,11 +109,11 @@ LEAF(CopyFromBuffer)
 	nop
 1:
 	lhu	t0, 0(a0)		# read 2 bytes of data from buffer
-	addu	a0, a0, 4		# keep buffer pointer word aligned
-	addu	a1, a1, 2
-	subu	a2, a2, 2
+	PTR_ADDU a0, 4			# keep buffer pointer word aligned
+	PTR_ADDU a1, 2
+	PTR_SUBU a2, 2
 	sb	t0, -2(a1)
-	srl	t0, t0, 8
+	srl	t0, 8
 	bge	a2, 2, 1b
 	sb	t0, -1(a1)
 3:
@@ -120,13 +121,13 @@ LEAF(CopyFromBuffer)
 	nop
 6:
 	lhu	t0, 0(a0)		# read 2 bytes of data from buffer
-	addu	a0, a0, 4		# keep buffer pointer word aligned
-	addu	a1, a1, 2
-	subu	a2, a2, 2
+	PTR_ADDU a0, 4			# keep buffer pointer word aligned
+	PTR_ADDU a1, 2
+	PTR_SUBU a2, 2
 	bge	a2, 2, 6b
 	sh	t0, -2(a1)
 7:
-	ble	a2, zero, 9f		# done?
+	blez	a2, 9f			# done?
 	nop
 	lhu	t0, 0(a0)		# copy one more byte
 	nop
@@ -162,3 +163,72 @@ ALEAF(kn210_wbflush)
         nop
 END(dec_mips1_wbflush)
 #endif	/* defined(DEC_5100) || defined(DEC_5400) */
+
+#ifdef __mips_o32
+NESTED(promcall, CALLFRAME_SIZ, ra)
+	PTR_SUBU sp, CALLFRAME_SIZ
+	REG_S	ra, CALLFRAME_RA(sp)
+	REG_S	s0, CALLFRAME_SP(sp)
+
+	move	s0, t8			/* save MIPS_CURLWP */
+
+	sll	t9, a0, 0
+	sll	a0, a1, 0
+	sll	a1, a2, 0
+	sll	a2, a3, 0
+
+	jalr	t9
+	 nop
+
+	move	t8, s0			/* restore MIPS_CURLWP */
+
+	REG_L	ra, CALLFRAME_RA(sp)
+	REG_L	s0, CALLFRAME_SP(sp)
+
+	jr	ra
+	 PTR_ADDU sp, CALLFRAME_SIZ
+END(promcall)
+#else
+NESTED(promcall, TF_SIZ, ra)
+	PTR_SUBU sp, TF_SIZ
+	REG_S	ra, TF_REG_RA(sp)
+	REG_S	s0, TF_REG_S0(sp)
+	REG_S	s1, TF_REG_S1(sp)
+	REG_S	s2, TF_REG_S2(sp)
+	REG_S	s3, TF_REG_S3(sp)
+	REG_S	s4, TF_REG_S4(sp)
+	REG_S	s5, TF_REG_S5(sp)
+	REG_S	s6, TF_REG_S6(sp)
+	REG_S	s7, TF_REG_S7(sp)
+	REG_S	s8, TF_REG_S8(sp)
+	REG_S	t8, TF_REG_T8(sp)
+	REG_S	gp, TF_REG_GP(sp)
+
+	sll	t9, a0, 0
+	sll	a0, a1, 0
+	sll	a1, a2, 0
+	sll	a2, a3, 0
+
+	jalr	t9
+	 nop
+
+	sll	v0, v0, 0
+
+	REG_L	ra, TF_REG_RA(sp)
+	REG_L	s0, TF_REG_S0(sp)
+	REG_L	s1, TF_REG_S1(sp)
+	REG_L	s2, TF_REG_S2(sp)
+	REG_L	s3, TF_REG_S3(sp)
+	REG_L	s4, TF_REG_S4(sp)
+	REG_L	s5, TF_REG_S5(sp)
+	REG_L	s6, TF_REG_S6(sp)
+	REG_L	s7, TF_REG_S7(sp)
+	REG_L	s8, TF_REG_S8(sp)
+	REG_L	t8, TF_REG_T8(sp)
+	REG_L	gp, TF_REG_GP(sp)
+
+	PTR_ADDU sp, TF_SIZ
+	j	ra
+	nop
+END(promcall)
+#endif

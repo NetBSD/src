@@ -79,7 +79,7 @@ drm_irq_handler_wrap(DRM_IRQ_ARGS)
 static void vblank_disable_fn(void *arg)
 {
 	struct drm_device *dev = (struct drm_device *)arg;
-	int i;
+	unsigned int i;
 
 #if defined(__NetBSD__)
 	mutex_enter(&dev->vbl_lock);
@@ -228,6 +228,8 @@ int drm_irq_install(struct drm_device *dev)
 	dev->irqh = pci_intr_establish(dev->pa.pa_pc, ih, IPL_TTY,
 	    drm_irq_handler_wrap, dev);
 	if (!dev->irqh) {
+		aprint_error_dev(dev->device,
+		    "couldn't establish interrupt at %s\n", istr);
 		retcode = ENOENT;
 		goto err;
 	}
@@ -298,12 +300,12 @@ int drm_control(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	}
 }
 
-u32 drm_vblank_count(struct drm_device *dev, int crtc)
+u32 drm_vblank_count(struct drm_device *dev, unsigned int crtc)
 {
 	return atomic_read(&dev->vblank[crtc].count);
 }
 
-static void drm_update_vblank_count(struct drm_device *dev, int crtc)
+static void drm_update_vblank_count(struct drm_device *dev, unsigned int crtc)
 {
 	u32 cur_vblank, diff;
 
@@ -329,7 +331,7 @@ static void drm_update_vblank_count(struct drm_device *dev, int crtc)
 	atomic_add(diff, &dev->vblank[crtc].count);
 }
 
-int drm_vblank_get(struct drm_device *dev, int crtc)
+int drm_vblank_get(struct drm_device *dev, unsigned int crtc)
 {
 	unsigned long irqflags;
 	int ret = 0;
@@ -353,7 +355,7 @@ int drm_vblank_get(struct drm_device *dev, int crtc)
 	return ret;
 }
 
-void drm_vblank_put(struct drm_device *dev, int crtc)
+void drm_vblank_put(struct drm_device *dev, unsigned int crtc)
 {
 	unsigned long irqflags;
 
@@ -375,7 +377,8 @@ int drm_modeset_ctl(struct drm_device *dev, void *data,
 {
 	struct drm_modeset_ctl *modeset = data;
 	unsigned long irqflags;
-	int crtc, ret = 0;
+	int ret = 0;
+	unsigned int crtc;
 
 	DRM_DEBUG("num_crtcs=%d\n", dev->num_crtcs);
 	/* If drm_vblank_init() hasn't been called yet, just no-op */
@@ -527,12 +530,12 @@ done:
 	return ret;
 }
 
-void drm_vbl_send_signals(struct drm_device *dev, int crtc)
+void drm_vbl_send_signals(struct drm_device *dev, unsigned int crtc)
 {
 }
 
 #if 0 /* disabled */
-void drm_vbl_send_signals(struct drm_device *dev, int crtc )
+void drm_vbl_send_signals(struct drm_device *dev, unsigned int crtc )
 {
 	drm_vbl_sig_t *vbl_sig;
 	unsigned int vbl_seq = atomic_read( &dev->vbl_received );
@@ -558,7 +561,7 @@ void drm_vbl_send_signals(struct drm_device *dev, int crtc )
 }
 #endif
 
-void drm_handle_vblank(struct drm_device *dev, int crtc)
+void drm_handle_vblank(struct drm_device *dev, unsigned int crtc)
 {
 	atomic_inc(&dev->vblank[crtc].count);
 	DRM_WAKEUP(&dev->vblank[crtc].queue);

@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.21 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: apbus.c,v 1.21.32.1 2011/06/06 09:06:19 jruoho Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,13 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.21 2008/04/09 15:40:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.21.32.1 2011/06/06 09:06:19 jruoho Exp $");
+
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -41,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.21 2008/04/09 15:40:30 tsutsui Exp $");
 #include <machine/autoconf.h>
 #define _NEWSMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-#include <machine/intr.h>
 #include <newsmips/apbus/apbusvar.h>
 
 static int  apbusmatch(device_t, cfdata_t, void *);
@@ -96,6 +98,8 @@ apbusattach(device_t parent, device_t self, void *aux)
 	struct apbus_ctl *apctl;
 	struct newsmips_intr *ip;
 	int i;
+
+	mips_set_wbflush(apbus_wbflush);
 
 	*(volatile uint32_t *)(NEWS5000_APBUS_INTST) = 0xffffffff;
 	*(volatile uint32_t *)(NEWS5000_APBUS_INTMSK) = 0xffffffff;
@@ -176,9 +180,10 @@ aptokseg0(void *va)
 void
 apbus_wbflush(void)
 {
-	volatile int32_t *wbflush = (uint32_t *)NEWS5000_WBFLUSH;
+	volatile int32_t * const our_wbflush = (int32_t *)NEWS5000_WBFLUSH;
 
-	(void)*wbflush;
+	(*mips_locore_jumpvec.ljv_wbflush)();
+	(void)*our_wbflush;
 }
 
 /*

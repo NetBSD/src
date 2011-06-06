@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.22 2010/04/13 13:30:37 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.22.2.1 2011/06/06 09:05:09 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -152,7 +152,7 @@
 #define	INTR_DMA	3
 
 struct	ncr_softc {
-	struct	device		sc_dev;
+	device_t		sc_dev;
 	struct	scsipi_channel	sc_channel;
 	struct	scsipi_adapter	sc_adapter;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.54 2010/11/23 11:13:56 hannken Exp $
+#	$NetBSD: GUMSTIX,v 1.54.2.1 2011/06/06 09:05:24 jruoho Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -60,7 +60,8 @@ file-system 	TMPFS		# Efficient memory file-system
 #file-system 	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
@@ -164,7 +165,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=500000
+options 	SYMTAB_SPACE=740000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?

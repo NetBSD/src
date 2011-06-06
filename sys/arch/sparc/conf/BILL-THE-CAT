@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.49 2010/11/23 11:14:06 hannken Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.49.2.1 2011/06/06 09:06:44 jruoho Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -155,7 +155,8 @@ file-system	PTYFS		# /dev/pts/N support
 
 ## File system options.
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

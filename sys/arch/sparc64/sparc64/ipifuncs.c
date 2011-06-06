@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.39 2010/06/22 18:29:02 rmind Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.39.2.1 2011/06/06 09:06:53 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.39 2010/06/22 18:29:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.39.2.1 2011/06/06 09:06:53 jruoho Exp $");
 
 #include "opt_ddb.h"
 
@@ -213,7 +213,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 	 * UltraSPARC-IIIi CPUs select the BUSY/NACK pair based on the
 	 * lower two bits of the ITID.
 	 */
-	if (CPU_IS_JALAPENO())
+	if (CPU_IS_USIIIi())
 		shift = (upaid & 0x3) * 2;
 
 	if (ldxa(0, ASR_IDSR) & (IDSR_BUSY << shift))
@@ -231,8 +231,10 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 		stxa(IDCR(upaid), ASI_INTERRUPT_DISPATCH, 0);
 		membar_sync();
 		/* Workaround for SpitFire erratum #54, from FreeBSD */
-		(void)ldxa(P_DCR_0, ASI_INTERRUPT_RECEIVE_DATA);
-		membar_sync();
+		if (CPU_IS_SPITFIRE()) {
+			(void)ldxa(P_DCR_0, ASI_INTERRUPT_RECEIVE_DATA);
+			membar_sync();
+		}
 
 		for (ik = 0; ik < 1000000; ik++) {
 			if (ldxa(0, ASR_IDSR) & (IDSR_BUSY << shift))
@@ -426,17 +428,24 @@ smp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t activecpus)
 		func = sparc64_ipi_dcache_flush_page_us;
 
 	sparc64_multicast_ipi(activecpus, func, pa, dcache_line_size);
-	dcache_flush_page(pa);
+	sp_dcache_flush_page(pa);
+}
+
+void
+smp_dcache_flush_page_allcpu(paddr_t pa)
+{
+
+	smp_dcache_flush_page_cpuset(pa, cpus_active);
 }
 
 /*
- * Flush the D$ on this set of CPUs.
+ * Flush the D$ on all CPUs.
  */
 void
-smp_blast_dcache(sparc64_cpuset_t activecpus)
+smp_blast_dcache(void)
 {
 
-	sparc64_multicast_ipi(activecpus, sparc64_ipi_blast_dcache,
+	sparc64_multicast_ipi(cpus_active, sparc64_ipi_blast_dcache,
 			      dcache_size, dcache_line_size);
 	sp_blast_dcache(dcache_size, dcache_line_size);
 }

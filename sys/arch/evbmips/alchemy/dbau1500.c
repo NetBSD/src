@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1500.c,v 1.3 2006/02/16 01:52:37 gdamore Exp $ */
+/* $NetBSD: dbau1500.c,v 1.3.108.1 2011/06/06 09:05:28 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.3 2006/02/16 01:52:37 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.3.108.1 2011/06/06 09:05:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: dbau1500.c,v 1.3 2006/02/16 01:52:37 gdamore Exp $")
 	(*((volatile uint16_t *)MIPS_PHYS_TO_KSEG1(x)) = (v))
 
 static void dbau1500_init(void);
-static int dbau1500_pci_intr_map(struct pci_attach_args *,
+static int dbau1500_pci_intr_map(const struct pci_attach_args *,
 				 pci_intr_handle_t *);
 static void dbau1500_reboot(void);
 
@@ -80,7 +80,7 @@ dbau1500_init(void)
 {
 	uint32_t	whoami;
 
-	if (MIPS_PRID_COPTS(cpu_id) != MIPS_AU1500)
+	if (MIPS_PRID_COPTS(mips_options.mips_cpu_id) != MIPS_AU1500)
 		panic("dbau1500: CPU not an AU1500!");
 
 	/* check the whoami register for a match */
@@ -102,7 +102,7 @@ dbau1500_init(void)
 }
 
 int
-dbau1500_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+dbau1500_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	/*
 	 * This platform has PCI slot and IDE interrupts mapped

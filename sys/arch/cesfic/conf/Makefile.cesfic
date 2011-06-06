@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.15 2006/09/01 13:07:51 matt Exp $
+#	$NetBSD: Makefile.cesfic,v 1.15.88.1 2011/06/06 09:05:12 jruoho Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,7 @@ GENASSYM_CONF=	${CESFIC}/cesfic/genassym.cf
 CPPFLAGS+=	-Dcesfic
 CWARNFLAGS+=	-Wno-format
 CFLAGS+=	-msoft-float
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+AFLAGS+=	-x assembler-with-cpp
 AFLAGS+=	-Wa,-m68040 -Wa,-m68030 -Wa,-m68851
 
 ##

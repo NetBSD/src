@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.7 2006/02/16 18:20:31 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7.100.1 2011/06/06 09:04:42 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -60,7 +60,7 @@ struct algor_pci_chipset {
 	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
 	void		*pc_intr_v;
-	int		(*pc_intr_map)(struct pci_attach_args *, 
+	int		(*pc_intr_map)(const struct pci_attach_args *, 
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
 	const struct evcnt *(*pc_intr_evcnt)(void *, pci_intr_handle_t);
@@ -73,7 +73,7 @@ struct algor_pci_chipset {
 
 	/* algor-specific */
 	void		*(*pc_pciide_compat_intr_establish)(void *,
-			    struct device *, struct pci_attach_args *, int,
+			    device_t, const struct pci_attach_args *, int,
 			    int (*)(void *), void *);
 };
 

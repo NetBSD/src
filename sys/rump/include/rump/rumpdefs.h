@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.9 2010/07/28 09:32:13 hannken Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.9.2.1 2011/06/06 09:10:06 jruoho Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -9,7 +9,7 @@
 
 #include <rump/rump_namei.h>
 
-/*	NetBSD: fcntl.h,v 1.35 2009/03/11 06:05:29 mrg Exp 	*/
+/*	NetBSD: fcntl.h,v 1.36 2010/09/21 19:26:18 chs Exp 	*/
 #define	RUMP_O_RDONLY	0x00000000	/* open for reading only */
 #define	RUMP_O_WRONLY	0x00000001	/* open for writing only */
 #define	RUMP_O_RDWR		0x00000002	/* open for reading and writing */
@@ -24,12 +24,13 @@
 #define	RUMP_O_CREAT		0x00000200	/* create if nonexistent */
 #define	RUMP_O_TRUNC		0x00000400	/* truncate to zero length */
 #define	RUMP_O_EXCL		0x00000800	/* error if already exists */
+#define	RUMP_O_NOCTTY	0x00008000	/* don't assign controlling terminal */
 #define	RUMP_O_DSYNC		0x00010000	/* write: I/O data completion */
 #define	RUMP_O_RSYNC		0x00020000	/* read: I/O completion as for write */
 #define	RUMP_O_DIRECT	0x00080000	/* direct I/O hint */
-#define	RUMP_O_NOCTTY	0x00008000	/* don't assign controlling terminal */
+#define	RUMP_O_DIRECTORY	0x00200000	/* fail if not a directory */
 
-/*	NetBSD: vnode.h,v 1.222 2010/07/28 09:31:00 hannken Exp 	*/
+/*	NetBSD: vnode.h,v 1.223 2010/07/28 11:03:47 hannken Exp 	*/
 #ifndef __VTYPE_DEFINED
 #define __VTYPE_DEFINED
 enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.28 2009/12/05 22:38:19 pooka Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.28.6.1 2011/06/06 09:09:27 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.28 2009/12/05 22:38:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.28.6.1 2011/06/06 09:09:27 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -224,7 +224,7 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
  *
  *	Wait on a condition variable until a awoken or a signal is received. 
  *	Will also return early if the process is exiting.  Returns zero if
- *	awoken normallly, ERESTART if a signal was received and the system
+ *	awoken normally, ERESTART if a signal was received and the system
  *	call is restartable, or EINTR otherwise.
  */
 int
@@ -265,7 +265,7 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
  *
  *	Wait on a condition variable until a timeout expires, awoken or a
  *	signal is received.  Will also return early if the process is
- *	exiting.  Returns zero if awoken normallly, EWOULDBLOCK if the
+ *	exiting.  Returns zero if awoken normally, EWOULDBLOCK if the
  *	timeout expires, ERESTART if a signal was received and the system
  *	call is restartable, or EINTR otherwise.
  */

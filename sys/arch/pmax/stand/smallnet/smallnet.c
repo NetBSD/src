@@ -1,4 +1,4 @@
-/*	$NetBSD: smallnet.c,v 1.7 2009/03/14 15:36:12 dsl Exp $	*/
+/*	$NetBSD: smallnet.c,v 1.7.6.1 2011/06/06 09:06:25 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@ main(int argc, char **argv)
 
 	printf("NetBSD/pmax " NETBSD_VERS " " BOOT_TYPE_NAME
 	    " Bootstrap, Revision %s\n", bootprog_rev);
-	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 
 	/* initialise bootinfo structure early */
 	bi_init(BOOTINFO_ADDR);

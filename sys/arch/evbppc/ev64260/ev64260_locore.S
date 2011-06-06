@@ -1,4 +1,4 @@
-/*	$NetBSD: ev64260_locore.S,v 1.15 2010/03/03 00:30:15 pooka Exp $	*/
+/*	$NetBSD: ev64260_locore.S,v 1.15.4.1 2011/06/06 09:05:31 jruoho Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
-#define _NOREGNAMES
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
@@ -230,6 +229,7 @@ __start:
 	li	5,0
 	li	6,0
 
+	bl	_C_LABEL(cpu_model_init)
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)
 

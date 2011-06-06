@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mv.c,v 1.4 2010/09/04 05:01:20 kiyohara Exp $	*/
+/*	$NetBSD: com_mv.c,v 1.4.2.1 2011/06/06 09:07:58 jruoho Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.4 2010/09/04 05:01:20 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.4.2.1 2011/06/06 09:07:58 jruoho Exp $");
 
 #include "opt_com.h"
 
@@ -88,7 +88,7 @@ mvuart_match(device_t parent, struct cfdata *match, void *aux)
 		return 0;
 
 	if (com_is_console(mva->mva_iot, mva->mva_addr + mva->mva_offset, NULL))
-		return 1;
+		goto console;
 
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh, mva->mva_offset,
 	    MVUART_SIZE, &ioh))
@@ -97,6 +97,7 @@ mvuart_match(device_t parent, struct cfdata *match, void *aux)
 	if (!com_probe_subr(&regs))
 		return 0;
 
+console:
 	mva->mva_size = MVUART_SIZE;
 	return 1;
 }

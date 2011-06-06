@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.2 2009/11/21 17:40:28 rmind Exp $ */
+/*	$NetBSD: scn.c,v 1.2.6.1 2011/06/06 09:06:39 jruoho Exp $ */
 
 /*
  * Resurrected from the old pc532 port 1/18/2009.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.2 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.2.6.1 2011/06/06 09:06:39 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1081,7 +1081,7 @@ scnopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 	if (!tp) {
-		tp = ttymalloc();
+		tp = tty_alloc();
 		sc->sc_tty = sc->sc_duart->chan[sc->sc_channel].tty = tp;
 		tty_attach(tp);
 	}
@@ -1191,7 +1191,7 @@ scnclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 #if 0
 	if ((tp->t_state & TS_ISOPEN) == 0) {
-		ttyfree(tp);
+		tty_free(tp);
 		sc->sc_tty = (struct tty *) NULL;
 	}
 #endif

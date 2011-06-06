@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.152 2010/11/13 08:54:23 uebayasi Exp $  */
+/*	$NetBSD: atw.c,v 1.152.2.1 2011/06/06 09:07:51 jruoho Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.152 2010/11/13 08:54:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.152.2.1 2011/06/06 09:07:51 jruoho Exp $");
 
 
 #include <sys/param.h>
@@ -3890,7 +3890,7 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			if ((error = kauth_authorize_network(curlwp->l_cred,
 			    KAUTH_NETWORK_INTERFACE,
 			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
-			    (void *)cmd, NULL) != 0))
+			    (void *)cmd, NULL)) != 0)
 				break;
 			if (!(IEEE80211_FRAG_MIN <= ireq->i_val &&
 			      ireq->i_val <= IEEE80211_FRAG_MAX))

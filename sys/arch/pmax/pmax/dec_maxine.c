@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.59 2009/12/14 00:46:10 matt Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.59.6.1 2011/06/06 09:06:24 jruoho Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,6 +31,7 @@
  */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -65,55 +66,19 @@
  *
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department, The Mach Operating System project at
- * Carnegie-Mellon University and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
- */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+#define __INTR_PRIVATE
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.59 2009/12/14 00:46:10 matt Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.59.6.1 2011/06/06 09:06:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/timetc.h>
+#include <sys/lwp.h>
+#include <sys/cpu.h>
 
-#include <machine/cpu.h>
 #include <machine/sysconf.h>
 #include <mips/mips/mips_mcclock.h>
 
@@ -134,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.59 2009/12/14 00:46:10 matt Exp $")
 void		dec_maxine_init(void);		/* XXX */
 static void	dec_maxine_bus_reset(void);
 static void	dec_maxine_cons_init(void);
-static void	dec_maxine_intr(unsigned, unsigned, unsigned, unsigned);
+static void	dec_maxine_intr(uint32_t, vaddr_t, uint32_t);
 static void	dec_maxine_intr_establish(struct device *, void *,
 		    int, int (*)(void *), void *);
 
@@ -147,18 +112,21 @@ static void	kn02ca_wbflush(void);
  */
 static uint32_t xine_tc3_imask;
 
-static const int dec_maxine_ipl2spl_table[] = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] = _SPL_SOFTCLOCK,
-	[IPL_SOFTNET] = _SPL_SOFTNET,
+static const struct ipl_sr_map dec_maxine_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
 	/*
 	 * MAXINE IOASIC interrupts come through INT 3, while
 	 * clock interrupt does via INT 1.  splclock and splstatclock
 	 * should block IOASIC activities.
 	 */
-	[IPL_VM] = MIPS_SPL3,
-	[IPL_SCHED] = MIPS_SPL_0_1_3,
-	[IPL_HIGH] = MIPS_SPL_0_1_3,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_3,
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
 };
 
 void
@@ -180,7 +148,7 @@ dec_maxine_init(void)
  
 	ioasic_base = MIPS_PHYS_TO_KSEG1(XINE_SYS_ASIC);
 
-	ipl2spl_table = dec_maxine_ipl2spl_table;
+	ipl_sr_map = dec_maxine_ipl_sr_map;
  
 	/* calibrate cpu_mhz value */  
 	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_1);
@@ -200,7 +168,7 @@ dec_maxine_init(void)
 	*(volatile uint32_t *)(ioasic_base + IOASIC_IMSK) = xine_tc3_imask;
 	kn02ca_wbflush();
 
-	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
+	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", mips_options.mips_cpu_mhz);
 }
 
 /*
@@ -308,59 +276,34 @@ dec_maxine_intr_establish(struct device *dev, void *cookie, int level,
 #define CHECKINTR(vvv, bits)					\
     do {							\
 	if (can_serve & (bits)) {				\
-		ifound = 1;					\
+		ifound = true;					\
 		intrtab[vvv].ih_count.ev_count++;		\
 		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
 	}							\
     } while (/*CONSTCOND*/0)
 
 static void
-dec_maxine_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+dec_maxine_ioasic_intr(void)
 {
+	bool ifound;
+	uint32_t imsk, intr, can_serve, xxxintr;
 
-	if (ipending & MIPS_INT_MASK_4)
-		prom_haltbutton();
+	do {
+		ifound = false;
+		intr = *(uint32_t *)(ioasic_base + IOASIC_INTR);
+		imsk = *(uint32_t *)(ioasic_base + IOASIC_IMSK);
+		can_serve = intr & imsk;
 
-	/* handle clock interrupts ASAP */
-	if (ipending & MIPS_INT_MASK_1) {
-		struct clockframe cf;
-
-		__asm volatile("lbu $0,48(%0)" ::
-			"r"(ioasic_base + IOASIC_SLOT_8_START));
-		cf.pc = pc;
-		cf.sr = status;
-		hardclock(&cf);
-		pmax_clock_evcnt.ev_count++;
-		/* keep clock interrupts enabled when we return */
-		cause &= ~MIPS_INT_MASK_1;
-	}
-
-	/* If clock interrupts were enabled, re-enable them ASAP. */
-	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
-
-	if (ipending & MIPS_INT_MASK_3) {
-		int ifound;
-		uint32_t imsk, intr, can_serve, xxxintr;
-
-		do {
-			ifound = 0;
-			intr =
-			    *(volatile uint32_t *)(ioasic_base + IOASIC_INTR);
-			imsk =
-			    *(volatile uint32_t *)(ioasic_base + IOASIC_IMSK);
-			can_serve = intr & imsk;
-
-			CHECKINTR(SYS_DEV_DTOP, XINE_INTR_DTOP);
-			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
-			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
-			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
-			/* CHECKINTR(SYS_DEV_OPT2, XINE_INTR_VINT);	*/
-			CHECKINTR(SYS_DEV_ISDN,
-			    IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD);
-			/* CHECKINTR(SYS_DEV_FDC, IOASIC_INTR_FDC);	*/
-			CHECKINTR(SYS_DEV_OPT1, XINE_INTR_TC_1);
-			CHECKINTR(SYS_DEV_OPT0, XINE_INTR_TC_0);
- 
+		CHECKINTR(SYS_DEV_DTOP, XINE_INTR_DTOP);
+		CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
+		CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
+		CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
+		/* CHECKINTR(SYS_DEV_OPT2, XINE_INTR_VINT);	*/
+		CHECKINTR(SYS_DEV_ISDN, (IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD));
+		/* CHECKINTR(SYS_DEV_FDC, IOASIC_INTR_FDC);	*/
+		CHECKINTR(SYS_DEV_OPT1, XINE_INTR_TC_1);
+		CHECKINTR(SYS_DEV_OPT0, XINE_INTR_TC_0);
+	 
 #define ERRORS	(IOASIC_INTR_ISDN_OVRUN|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
 #define PTRLOAD (IOASIC_INTR_ISDN_TXLOAD|IOASIC_INTR_ISDN_RXLOAD|IOASIC_INTR_SCSI_PTR_LOAD)
  
@@ -381,21 +324,41 @@ dec_maxine_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	 * DMA interrupts can then be serviced whilst still servicing
 	 * non-DMA interrupts from ioctl devices or TC options.
 	 */
-			xxxintr = can_serve & (ERRORS | PTRLOAD);
-			if (xxxintr) {
-				ifound = 1;
-				*(volatile uint32_t *)
-				    (ioasic_base + IOASIC_INTR)
-					= intr &~ xxxintr;
-			}
-		} while (ifound);
+		xxxintr = can_serve & (ERRORS | PTRLOAD);
+		if (xxxintr) {
+			ifound = true;
+			*(uint32_t *)(ioasic_base + IOASIC_INTR)
+				= intr &~ xxxintr;
+		}
+	} while (ifound);
+}
+
+static void
+dec_maxine_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
+{
+	if (ipending & MIPS_INT_MASK_4)
+		prom_haltbutton();
+
+	/* handle clock interrupts ASAP */
+	if (ipending & MIPS_INT_MASK_1) {
+		struct clockframe cf;
+
+		__asm volatile("lbu $0,48(%0)" ::
+			"r"(ioasic_base + IOASIC_SLOT_8_START));
+		cf.pc = pc;
+		cf.sr = status;
+		cf.intr = (curcpu()->ci_idepth > 1);
+		hardclock(&cf);
+		pmax_clock_evcnt.ev_count++;
+	}
+
+	if (ipending & MIPS_INT_MASK_3) {
+		dec_maxine_ioasic_intr();
 	}
 	if (ipending & MIPS_INT_MASK_2) {
 		kn02ba_errintr();
 		pmax_memerr_evcnt.ev_count++;
 	}
-
-	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 static void
@@ -417,6 +380,14 @@ dec_maxine_get_timecount(struct timecounter *tc)
 static void
 dec_maxine_tc_init(void)
 {
+#if defined(MIPS3)
+	static struct timecounter tc3 =  {
+		.tc_get_timecount = (timecounter_get_t *)mips3_cp0_count_read,
+		.tc_counter_mask = ~0u,
+		.tc_name = "mips3_cp0_counter",
+		.tc_quality = 200,
+	};
+#endif
 	static struct timecounter tc = {
 		.tc_get_timecount = dec_maxine_get_timecount,
 		.tc_quality = 100,
@@ -426,4 +397,12 @@ dec_maxine_tc_init(void)
 	};
 
 	tc_init(&tc);
+
+#if defined(MIPS3)
+	if (MIPS_HAS_CLOCK) {
+		tc3.tc_frequency = mips_options.mips_cpu_mhz * 1000000;
+
+		tc_init(&tc3);
+	}
+#endif
 }

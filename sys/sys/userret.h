@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.20 2009/02/25 19:58:03 mhitch Exp $	*/
+/*	$NetBSD: userret.h,v 1.20.6.1 2011/06/06 09:10:14 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -80,6 +80,11 @@ mi_userret(struct lwp *l)
 	struct cpu_info *ci;
 #endif
 
+	KASSERT(l->l_blcnt == 0);
+#ifndef __HAVE_PREEMPTION
+	KASSERT(curcpu()->ci_biglock_count == 0);
+#endif
+
 	/*
 	 * Handle "exceptional" events: pending signals, stop/exit actions,
 	 * etc.  Note that the event must be flagged BEFORE any AST is
@@ -89,6 +94,13 @@ mi_userret(struct lwp *l)
 	if (__predict_false(((l->l_flag & LW_USERRET) | p->p_timerpend) != 0))
 		lwp_userret(l);
 	l->l_kpriority = false;
+	/*
+	 * cpu_set_curpri(prio) is a MD optimized version of:
+	 *
+	 *	kpreempt_disable();
+	 *	curcpu()->ci_schedstate.spc_curpriority = prio;
+	 *	kpreempt_enable();
+	 */
 	cpu_set_curpri(l->l_priority);	/* XXX this needs to die */
 #else
 	ci = l->l_cpu;

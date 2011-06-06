@@ -1,7 +1,7 @@
-/*	$NetBSD: rumpfs.c,v 1.89 2011/01/14 11:07:42 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.89.2.1 2011/06/06 09:10:08 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.89 2011/01/14 11:07:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.89.2.1 2011/06/06 09:10:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -679,7 +679,8 @@ rump_vop_lookup(void *v)
 		return EOPNOTSUPP;
 
 	/* check for etfs */
-	if (dvp == rootvnode && cnp->cn_nameiop == LOOKUP) {
+	if (dvp == rootvnode &&
+	    (cnp->cn_nameiop == LOOKUP || cnp->cn_nameiop == CREATE)) {
 		bool found;
 		mutex_enter(&etfs_lock);
 		found = etfs_find(cnp->cn_nameptr, &et, false);
@@ -732,8 +733,8 @@ rump_vop_lookup(void *v)
 		goto getvnode;
 	} else {
 		if (dotdot) {
-			rn = rnd->rn_parent;
-			goto getvnode;
+			if ((rn = rnd->rn_parent) != NULL)
+				goto getvnode;
 		} else {
 			LIST_FOREACH(rd, &rnd->rn_dir, rd_entries) {
 				if (rd->rd_namelen == cnp->cn_namelen &&
@@ -855,8 +856,24 @@ rump_vop_setattr(void *v)
 	SETIFVAL(va_flags, u_long);
 #undef  SETIFVAL
 
-	if (vp->v_type == VREG && vap->va_size != VSIZENOTSET)
-		uvm_vnp_setsize(vp, vap->va_size);
+	if (vp->v_type == VREG &&
+	    vap->va_size != VSIZENOTSET &&
+	    vap->va_size != rn->rn_dlen) {
+		void *newdata;
+		size_t copylen, newlen;
+
+		newlen = vap->va_size;
+		newdata = rump_hypermalloc(newlen, 0, true, "rumpfs");
+
+		copylen = MIN(rn->rn_dlen, newlen);
+		memset(newdata, 0, newlen);
+		memcpy(newdata, rn->rn_data, copylen);
+		rump_hyperfree(rn->rn_data, rn->rn_dlen); 
+
+		rn->rn_data = newdata;
+		rn->rn_dlen = newlen;
+		uvm_vnp_setsize(vp, newlen);
+	}
 	return 0;
 }
 
@@ -910,6 +927,7 @@ rump_vop_rmdir(void *v)
 
 	freedir(rnd, cnp);
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
+	rn->rn_parent = NULL;
 
 out:
 	vput(dvp);
@@ -1201,6 +1219,8 @@ etread(struct rumpfs_node *rn, struct uio *uio)
 	int error = 0;
 
 	bufsize = uio->uio_resid;
+	if (bufsize == 0)
+		return 0;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
 	if ((n = rumpuser_pread(rn->rn_readfd, buf, bufsize,
 	    uio->uio_offset + rn->rn_offset, &error)) == -1)
@@ -1257,6 +1277,8 @@ etwrite(struct rumpfs_node *rn, struct uio *uio)
 	int error = 0;
 
 	bufsize = uio->uio_resid;
+	if (bufsize == 0)
+		return 0;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
 	error = uiomove(buf, bufsize, uio);
 	if (error)

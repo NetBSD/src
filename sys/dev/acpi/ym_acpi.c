@@ -1,4 +1,4 @@
-/* $NetBSD: ym_acpi.c,v 1.12 2010/10/02 18:06:47 gsutre Exp $ */
+/* $NetBSD: ym_acpi.c,v 1.12.2.1 2011/06/06 09:07:43 jruoho Exp $ */
 
 /*
  * Copyright (c) 2006 Jasper Wallace <jasper@pointless.net>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.12 2010/10/02 18:06:47 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.12.2.1 2011/06/06 09:07:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.12 2010/10/02 18:06:47 gsutre Exp $");
 static int	ym_acpi_match(device_t, cfdata_t, void *);
 static void	ym_acpi_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ym_acpi, sizeof(struct ym_softc), ym_acpi_match,
+CFATTACH_DECL_NEW(ym_acpi, sizeof(struct ym_softc), ym_acpi_match,
     ym_acpi_attach, NULL, NULL);
 
 /*
@@ -79,7 +79,7 @@ ym_acpi_match(device_t parent, cfdata_t match, void *aux)
 static void
 ym_acpi_attach(device_t parent, device_t self, void *aux)
 {
-	struct ym_softc *sc = (struct ym_softc *)self;
+	struct ym_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
 	struct acpi_io *sb_io, *codec_io, *opl_io, *control_io;
@@ -91,8 +91,9 @@ ym_acpi_attach(device_t parent, device_t self, void *aux)
 	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
 	ACPI_STATUS rv;
 
+	ac->sc_dev = self;
 	/* Parse our resources */
-	rv = acpi_resource_parse(&sc->sc_ad1848.sc_ad1848.sc_dev,
+	rv = acpi_resource_parse(self,
 	    aa->aa_node->ad_handle, "_CRS", &res,
 	    &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))

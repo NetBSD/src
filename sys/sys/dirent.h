@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.24 2008/03/15 19:02:49 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.24.32.1 2011/06/06 09:10:10 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -83,8 +83,12 @@ struct dirent {
  * The _DIRENT_NAMEOFF macro returns the offset of the d_name field in 
  * struct dirent
  */
+#if __GNUC_PREREQ__(4, 0)
+#define	_DIRENT_NAMEOFF(dp)	__builtin_offsetof(struct dirent, d_name)
+#else
 #define _DIRENT_NAMEOFF(dp) \
     ((char *)(void *)&(dp)->d_name - (char *)(void *)dp)
+#endif
 /*
  * The _DIRENT_RECLEN macro gives the minimum record length which will hold
  * a name of size "namlen".  This requires the amount of space in struct dirent

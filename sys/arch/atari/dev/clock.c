@@ -1,6 +1,7 @@
-/*	$NetBSD: clock.c,v 1.51 2010/04/13 09:51:07 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.51.2.1 2011/06/06 09:05:08 jruoho Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -36,48 +37,9 @@
  *
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: clock.c 1.18 91/01/21$
- *
- *	@(#)clock.c	7.6 (Berkeley) 5/7/91
- */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.51 2010/04/13 09:51:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.51.2.1 2011/06/06 09:05:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -138,8 +100,9 @@ static struct timecounter clk_timecounter = {
  */
 
 struct clock_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	int		sc_flags;
+	struct todr_chip_handle	sc_handle;
 };
 
 /*
@@ -152,10 +115,10 @@ dev_type_close(rtcclose);
 dev_type_read(rtcread);
 dev_type_write(rtcwrite);
 
-static void	clockattach(struct device *, struct device *, void *);
-static int	clockmatch(struct device *, struct cfdata *, void *);
+static void	clockattach(device_t, device_t, void *);
+static int	clockmatch(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(clock, sizeof(struct clock_softc),
+CFATTACH_DECL_NEW(clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);
 
 const struct cdevsw rtc_cdevsw = {
@@ -185,10 +148,10 @@ static int	clk2min;	/* current, from above choices		*/
 #endif
 
 int
-clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+clockmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (!strcmp("clock", auxp))
+	if (!strcmp("clock", aux))
 		return 1;
 	return 0;
 }
@@ -196,17 +159,18 @@ clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 /*
  * Start the real-time clock.
  */
-void clockattach(struct device *pdp, struct device *dp, void *auxp)
+void clockattach(device_t parent, device_t self, void *aux)
 {
+	struct clock_softc *sc = device_private(self);
+	struct todr_chip_handle	*tch;
 
-	struct clock_softc *sc = (void *)dp;
-	static struct todr_chip_handle	tch;
+	sc->sc_dev = self;
+	tch = &sc->sc_handle;
+	tch->todr_gettime_ymdhms = atari_rtc_get;
+	tch->todr_settime_ymdhms = atari_rtc_set;
+	tch->todr_setwen = NULL;
 
-	tch.todr_gettime_ymdhms = atari_rtc_get;
-	tch.todr_settime_ymdhms = atari_rtc_set;
-	tch.todr_setwen = NULL;
-
-	todr_attach(&tch);
+	todr_attach(tch);
 
 	sc->sc_flags = 0;
 

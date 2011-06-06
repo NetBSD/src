@@ -1,4 +1,4 @@
-/*	$NetBSD: yamon.c,v 1.12 2009/03/14 15:36:05 dsl Exp $	*/
+/*	$NetBSD: yamon.c,v 1.12.6.1 2011/06/06 09:05:29 jruoho Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 /* XXX move to arch/mips/yamon/yamon.c or similar? */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yamon.c,v 1.12 2009/03/14 15:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yamon.c,v 1.12.6.1 2011/06/06 09:05:29 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,6 +131,7 @@ yamon_exit(uint32_t rc)
 int
 yamon_setcpufreq(int force)
 {
+	struct cpu_info * const ci = curcpu();
 	uint32_t freq;
 	int ret;
 
@@ -145,12 +146,14 @@ yamon_setcpufreq(int force)
 	} else
 		ret = 1;
 
-	curcpu()->ci_cpu_freq = freq;
-	curcpu()->ci_cycles_per_hz = (freq + hz / 2) / hz;
-	curcpu()->ci_divisor_delay = ((freq + 500000) / 1000000);
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
-		curcpu()->ci_cycles_per_hz /= 2;
-		curcpu()->ci_divisor_delay /= 2;
+	ci->ci_cpu_freq = freq;
+	ci->ci_cycles_per_hz = (freq + hz / 2) / hz;
+	ci->ci_divisor_delay = ((freq + 500000) / 1000000);
+	ci->ci_cctr_freq /= ci->ci_cpu_freq;
+	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
+		ci->ci_cycles_per_hz /= 2;
+		ci->ci_divisor_delay /= 2;
+		ci->ci_cctr_freq /= 2;
 	}
 
 	return ret;

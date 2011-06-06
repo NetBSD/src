@@ -1,6 +1,6 @@
-/*
- * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
- * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
+/*-
+ * Copyright 2006 Tungsten Graphics Inc., Bismarck, ND., USA.
+ * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -16,332 +16,165 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
- * VIA, S3 GRAPHICS, AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * THE AUTHORS OR COPYRIGHT HOLDERS AND/OR THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
+/*
+ * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_mm.c,v 1.2.6.1 2011/06/06 09:09:13 jruoho Exp $");
+
 #include "drmP.h"
 #include "via_drm.h"
 #include "via_drv.h"
-#include "via_ds.h"
-#include "via_mm.h"
+#include "drm_sman.h"
 
-#define MAX_CONTEXT 100
-
-typedef struct {
-	int used;
-	int context;
-	set_t *sets[2];		/* 0 for frame buffer, 1 for AGP , 2 for System */
-} via_context_t;
-
-static via_context_t global_ppriv[MAX_CONTEXT];
-
-static int via_agp_alloc(drm_via_mem_t * mem);
-static int via_agp_free(drm_via_mem_t * mem);
-static int via_fb_alloc(drm_via_mem_t * mem);
-static int via_fb_free(drm_via_mem_t * mem);
-
-static int add_alloc_set(int context, int type, unsigned long val)
-{
-	int i, retval = 0;
-
-	for (i = 0; i < MAX_CONTEXT; i++) {
-		if (global_ppriv[i].used && global_ppriv[i].context == context) {
-			retval = via_setAdd(global_ppriv[i].sets[type], val);
-			break;
-		}
-	}
-
-	return retval;
-}
-
-static int del_alloc_set(int context, int type, unsigned long val)
-{
-	int i, retval = 0;
-
-	for (i = 0; i < MAX_CONTEXT; i++)
-		if (global_ppriv[i].used && global_ppriv[i].context == context) {
-			retval = via_setDel(global_ppriv[i].sets[type], val);
-			break;
-		}
-
-	return retval;
-}
-
-/* agp memory management */
-static memHeap_t *AgpHeap = NULL;
+#define VIA_MM_ALIGN_SHIFT 4
+#define VIA_MM_ALIGN_MASK ( (1 << VIA_MM_ALIGN_SHIFT) - 1)
 
 int via_agp_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_via_agp_t *agp = data;
+	drm_via_private_t *dev_priv = (drm_via_private_t *) dev->dev_private;
+	int ret;
 
-	AgpHeap = via_mmInit(agp->offset, agp->size);
+	ret = drm_sman_set_range(&dev_priv->sman, VIA_MEM_AGP, 0,
+				 agp->size >> VIA_MM_ALIGN_SHIFT);
+	if (ret) {
+		DRM_ERROR("AGP memory manager initialisation error\n");
+		return ret;
+	}
 
-	DRM_DEBUG("offset = %lu, size = %lu", (unsigned long)agp->offset,
-		  (unsigned long)agp->size);
+	dev_priv->agp_initialized = 1;
+	dev_priv->agp_offset = agp->offset;
 
+	DRM_DEBUG("offset = %u, size = %u\n", agp->offset, agp->size);
 	return 0;
 }
-
-/* fb memory management */
-static memHeap_t *FBHeap = NULL;
 
 int via_fb_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_via_fb_t *fb = data;
+	drm_via_private_t *dev_priv = (drm_via_private_t *) dev->dev_private;
+	int ret;
 
-	FBHeap = via_mmInit(fb->offset, fb->size);
-
-	DRM_DEBUG("offset = %lu, size = %lu", (unsigned long)fb->offset,
-		  (unsigned long)fb->size);
-
-	return 0;
-}
-
-int via_init_context(struct drm_device *dev, int context)
-{
-	int i;
-
-	for (i = 0; i < MAX_CONTEXT; i++)
-		if (global_ppriv[i].used &&
-		    (global_ppriv[i].context == context))
-			break;
-
-	if (i >= MAX_CONTEXT) {
-		for (i = 0; i < MAX_CONTEXT; i++) {
-			if (!global_ppriv[i].used) {
-				global_ppriv[i].context = context;
-				global_ppriv[i].used = 1;
-				global_ppriv[i].sets[0] = via_setInit();
-				global_ppriv[i].sets[1] = via_setInit();
-				DRM_DEBUG("init allocation set, socket=%d,"
-					  " context = %d\n", i, context);
-				break;
-			}
-		}
-
-		if ((i >= MAX_CONTEXT) || (global_ppriv[i].sets[0] == NULL) ||
-		    (global_ppriv[i].sets[1] == NULL)) {
-			return 0;
-		}
+	ret = drm_sman_set_range(&dev_priv->sman, VIA_MEM_VIDEO, 0,
+				 fb->size >> VIA_MM_ALIGN_SHIFT);
+	if (ret) {
+		DRM_ERROR("VRAM memory manager initialisation error\n");
+		return ret;
 	}
 
-	return 1;
+	dev_priv->vram_initialized = 1;
+	dev_priv->vram_offset = fb->offset;
+
+	DRM_DEBUG("offset = %u, size = %u\n", fb->offset, fb->size);
+
+	return 0;
+
 }
 
 int via_final_context(struct drm_device *dev, int context)
-{	
-        int i;
+{
 	drm_via_private_t *dev_priv = (drm_via_private_t *) dev->dev_private;
 
-	for (i = 0; i < MAX_CONTEXT; i++)
-		if (global_ppriv[i].used &&
-		    (global_ppriv[i].context == context))
-			break;
+	via_release_futex(dev_priv, context);
 
-	if (i < MAX_CONTEXT) {
-		set_t *set;
-		ITEM_TYPE item;
-		int retval;
-
-		DRM_DEBUG("find socket %d, context = %d\n", i, context);
-
-		/* Video Memory */
-		set = global_ppriv[i].sets[0];
-		retval = via_setFirst(set, &item);
-		while (retval) {
-			DRM_DEBUG("free video memory 0x%lx\n", item);
-			via_mmFreeMem((PMemBlock) item);
-			retval = via_setNext(set, &item);
-		}
-		via_setDestroy(set);
-
-		/* AGP Memory */
-		set = global_ppriv[i].sets[1];
-		retval = via_setFirst(set, &item);
-		while (retval) {
-			DRM_DEBUG("free agp memory 0x%lx\n", item);
-			via_mmFreeMem((PMemBlock) item);
-			retval = via_setNext(set, &item);
-		}
-		via_setDestroy(set);
-		global_ppriv[i].used = 0;
-	}
-	via_release_futex(dev_priv, context); 
-	
-#if defined(__linux__)
+#ifdef __linux__
 	/* Linux specific until context tracking code gets ported to BSD */
 	/* Last context, perform cleanup */
 	if (dev->ctx_count == 1 && dev->dev_private) {
-	        DRM_DEBUG("Last Context\n");
-		if (dev->irq)
-			drm_irq_uninstall(dev);
-
+		DRM_DEBUG("Last Context\n");
+		drm_irq_uninstall(dev);
 		via_cleanup_futex(dev_priv);
 		via_do_cleanup_map(dev);
 	}
 #endif
-
 	return 1;
 }
 
-int via_mem_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
+void via_lastclose(struct drm_device *dev)
+{
+	drm_via_private_t *dev_priv = (drm_via_private_t *) dev->dev_private;
+
+	if (!dev_priv)
+		return;
+
+	drm_sman_cleanup(&dev_priv->sman);
+	dev_priv->vram_initialized = 0;
+	dev_priv->agp_initialized = 0;
+}
+
+int via_mem_alloc(struct drm_device *dev, void *data,
+		  struct drm_file *file_priv)
 {
 	drm_via_mem_t *mem = data;
-
-	switch (mem->type) {
-	case VIA_MEM_VIDEO:
-		if (via_fb_alloc(mem) < 0)
-			return -EFAULT;
-		return 0;
-	case VIA_MEM_AGP:
-		if (via_agp_alloc(mem) < 0)
-			return -EFAULT;
-		return 0;
-	}
-
-	return -EFAULT;
-}
-
-static int via_fb_alloc(drm_via_mem_t * mem)
-{
-	drm_via_mm_t fb;
-	PMemBlock block;
 	int retval = 0;
+	struct drm_memblock_item *item;
+	drm_via_private_t *dev_priv = (drm_via_private_t *) dev->dev_private;
+	unsigned long tmpSize;
 
-	if (!FBHeap)
-		return -1;
-
-	fb.size = mem->size;
-	fb.context = mem->context;
-
-	block = via_mmAllocMem(FBHeap, fb.size, 5, 0);
-	if (block) {
-		fb.offset = block->ofs;
-		fb.free = (unsigned long)block;
-		if (!add_alloc_set(fb.context, VIA_MEM_VIDEO, fb.free)) {
-			DRM_DEBUG("adding to allocation set fails\n");
-			via_mmFreeMem((PMemBlock) fb.free);
-			retval = -1;
-		}
-	} else {
-		fb.offset = 0;
-		fb.size = 0;
-		fb.free = 0;
-		retval = -1;
+	if (mem->type > VIA_MEM_AGP) {
+		DRM_ERROR("Unknown memory type allocation\n");
+		return -EINVAL;
+	}
+	if (0 == ((mem->type == VIA_MEM_VIDEO) ? dev_priv->vram_initialized :
+		      dev_priv->agp_initialized)) {
+		DRM_ERROR
+		    ("Attempt to allocate from uninitialized memory manager.\n");
+		return -EINVAL;
 	}
 
-	mem->offset = fb.offset;
-	mem->index = fb.free;
-
-	DRM_DEBUG("alloc fb, size = %d, offset = %d\n", fb.size,
-		  (int)fb.offset);
-
-	return retval;
-}
-
-static int via_agp_alloc(drm_via_mem_t * mem)
-{
-	drm_via_mm_t agp;
-	PMemBlock block;
-	int retval = 0;
-
-	if (!AgpHeap)
-		return -1;
-
-	agp.size = mem->size;
-	agp.context = mem->context;
-
-	block = via_mmAllocMem(AgpHeap, agp.size, 5, 0);
-	if (block) {
-		agp.offset = block->ofs;
-		agp.free = (unsigned long)block;
-		if (!add_alloc_set(agp.context, VIA_MEM_AGP, agp.free)) {
-			DRM_DEBUG("adding to allocation set fails\n");
-			via_mmFreeMem((PMemBlock) agp.free);
-			retval = -1;
-		}
+	tmpSize = (mem->size + VIA_MM_ALIGN_MASK) >> VIA_MM_ALIGN_SHIFT;
+	item = drm_sman_alloc(&dev_priv->sman, mem->type, tmpSize, 0,
+			      (unsigned long)file_priv);
+	if (item) {
+		mem->offset = ((mem->type == VIA_MEM_VIDEO) ?
+			      dev_priv->vram_offset : dev_priv->agp_offset) +
+		    (item->mm->
+		     offset(item->mm, item->mm_info) << VIA_MM_ALIGN_SHIFT);
+		mem->index = item->user_hash.key;
 	} else {
-		agp.offset = 0;
-		agp.size = 0;
-		agp.free = 0;
+		mem->offset = 0;
+		mem->size = 0;
+		mem->index = 0;
+		DRM_DEBUG("Video memory allocation failed\n");
+		retval = -ENOMEM;
 	}
 
-	mem->offset = agp.offset;
-	mem->index = agp.free;
-
-	DRM_DEBUG("alloc agp, size = %d, offset = %d\n", agp.size,
-		  (unsigned int)agp.offset);
 	return retval;
 }
 
 int via_mem_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
+	drm_via_private_t *dev_priv = dev->dev_private;
 	drm_via_mem_t *mem = data;
+	int ret;
 
-	switch (mem->type) {
+	ret = drm_sman_free_key(&dev_priv->sman, mem->index);
+	DRM_DEBUG("free = 0x%lx\n", mem->index);
 
-	case VIA_MEM_VIDEO:
-		if (via_fb_free(mem) == 0)
-			return 0;
-		break;
-	case VIA_MEM_AGP:
-		if (via_agp_free(mem) == 0)
-			return 0;
-		break;
-	}
-
-	return -EFAULT;
+	return ret;
 }
 
-static int via_fb_free(drm_via_mem_t * mem)
+
+void via_reclaim_buffers_locked(struct drm_device * dev,
+				struct drm_file *file_priv)
 {
-	drm_via_mm_t fb;
-	int retval = 0;
+	drm_via_private_t *dev_priv = dev->dev_private;
 
-	if (!FBHeap) {
-		return -1;
-	}
+	if (drm_sman_owner_clean(&dev_priv->sman, (unsigned long)file_priv))
+		return;
 
-	fb.free = mem->index;
-	fb.context = mem->context;
+	if (dev->driver->dma_quiescent)
+		dev->driver->dma_quiescent(dev);
 
-	if (!fb.free) {
-		return -1;
+	drm_sman_owner_cleanup(&dev_priv->sman, (unsigned long)file_priv);
 
-	}
-
-	via_mmFreeMem((PMemBlock) fb.free);
-
-	if (!del_alloc_set(fb.context, VIA_MEM_VIDEO, fb.free)) {
-		retval = -1;
-	}
-
-	DRM_DEBUG("free fb, free = %ld\n", fb.free);
-
-	return retval;
-}
-
-static int via_agp_free(drm_via_mem_t * mem)
-{
-	drm_via_mm_t agp;
-
-	int retval = 0;
-
-	agp.free = mem->index;
-	agp.context = mem->context;
-
-	if (!agp.free)
-		return -1;
-
-	via_mmFreeMem((PMemBlock) agp.free);
-
-	if (!del_alloc_set(agp.context, VIA_MEM_AGP, agp.free)) {
-		retval = -1;
-	}
-
-	DRM_DEBUG("free agp, free = %ld\n", agp.free);
-
-	return retval;
+	return;
 }

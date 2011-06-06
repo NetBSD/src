@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.133 2010/06/24 13:03:20 hannken Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.133.2.1 2011/06/06 09:10:23 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -19,12 +19,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Charles D. Cranor,
- *	Washington University, University of California, Berkeley and
- *	its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -51,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.133 2010/06/24 13:03:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.133.2.1 2011/06/06 09:10:23 jruoho Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -64,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.133 2010/06/24 13:03:20 hannken Exp $
 #include <sys/resourcevar.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/conf.h>
 #include <sys/stat.h>

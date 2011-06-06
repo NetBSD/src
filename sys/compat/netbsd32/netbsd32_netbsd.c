@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.168 2010/11/19 06:44:37 dholland Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.168.2.1 2011/06/06 09:07:33 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.168 2010/11/19 06:44:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.168.2.1 2011/06/06 09:07:33 jruoho Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1185,21 +1185,39 @@ netbsd32_rmdir(struct lwp *l, const struct netbsd32_rmdir_args *uap, register_t 
 }
 
 int
-netbsd32_quotactl(struct lwp *l, const struct netbsd32_quotactl_args *uap, register_t *retval)
+netbsd32___quotactl50(struct lwp *l, const struct netbsd32___quotactl50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(const netbsd32_charp) path;
-		syscallarg(int) cmd;
-		syscallarg(int) uid;
-		syscallarg(netbsd32_voidp) arg;
+		syscallarg(netbsd32_voidp) v;
 	} */
-	struct sys_quotactl_args ua;
+	struct plistref pref;
+	int error;
+	struct vnode *vp;
+	struct mount *mp;
+	prop_dictionary_t dict;
 
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TO64_UAP(cmd);
-	NETBSD32TO64_UAP(uid);
-	NETBSD32TOP_UAP(arg, void *);
-	return (sys_quotactl(l, &ua, retval));
+	error = namei_simple_user(SCARG_P32(uap, path),
+	    NSM_FOLLOW_TRYEMULROOT, &vp);
+
+	if (error != 0)
+		return (error);
+	mp = vp->v_mount;
+
+	error = netbsd32_copyin_plistref(SCARG(uap, pref), &pref);
+	if (error)
+		return error;
+	error = prop_dictionary_copyin(&pref, &dict);
+	if (error)
+		return error;
+	error = VFS_QUOTACTL(mp, dict);
+	vrele(vp);
+	if (!error)
+		error = prop_dictionary_copyout(&pref, dict);
+	if (!error)
+		error = netbsd32_copyout_plistref(SCARG(uap, pref), &pref);
+	prop_object_release(dict);
+	return (error);
 }
 
 int
@@ -1845,7 +1863,7 @@ netbsd32___sigsuspend14(struct lwp *l, const struct netbsd32___sigsuspend14_args
 
 	NETBSD32TOP_UAP(set, sigset_t);
 	return (sys___sigsuspend14(l, &ua, retval));
-};
+}
 
 int
 netbsd32_fchroot(struct lwp *l, const struct netbsd32_fchroot_args *uap, register_t *retval)
@@ -1932,7 +1950,7 @@ netbsd32_adjust_limits(struct proc *p)
 			break;
 	}
 
-	lim_privatise(p, false);
+	lim_privatise(p);
 
 	lim = p->p_limit;
 	for (i = 0; i < __arraycount(lm); i++) {

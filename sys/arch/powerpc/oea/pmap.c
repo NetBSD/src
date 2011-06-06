@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 2010/11/12 07:59:26 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74.2.1 2011/06/06 09:06:29 jruoho Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2010/11/12 07:59:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.1 2011/06/06 09:06:29 jruoho Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -121,21 +121,6 @@ static u_int mem_cnt, avail_cnt;
 
 #if !defined(PMAP_OEA64) && !defined(PMAP_OEA64_BRIDGE)
 # define	PMAP_OEA 1
-# if defined(PMAP_EXCLUDE_DECLS) && !defined(PPC_OEA64) && !defined(PPC_OEA64_BRIDGE)
-#  define	PMAPNAME(name)	pmap_##name
-# endif
-#endif
-
-#if defined(PMAP_OEA64)
-# if defined(PMAP_EXCLUDE_DECLS) && !defined(PPC_OEA) && !defined(PPC_OEA64_BRIDGE)
-#  define	PMAPNAME(name)	pmap_##name
-# endif
-#endif
-
-#if defined(PMAP_OEA64_BRIDGE)
-# if defined(PMAP_EXCLUDE_DECLS) && !defined(PPC_OEA) && !defined(PPC_OEA64)
-#  define	PMAPNAME(name)	pmap_##name
-# endif
 #endif
 
 #if defined(PMAP_OEA)
@@ -147,7 +132,7 @@ static u_int mem_cnt, avail_cnt;
 #define	_PRIxva		"lx"
 #define	_PRIsr  	"lx"
 
-#if defined(PMAP_EXCLUDE_DECLS) && !defined(PMAPNAME)
+#ifdef PMAP_NEEDS_FIXUP
 #if defined(PMAP_OEA)
 #define	PMAPNAME(name)	pmap32_##name
 #elif defined(PMAP_OEA64)
@@ -157,9 +142,9 @@ static u_int mem_cnt, avail_cnt;
 #else
 #error unknown variant for pmap
 #endif
-#endif /* PMAP_EXLCUDE_DECLS && !PMAPNAME */
+#endif /* PMAP_NEEDS_FIXUP */
 
-#if defined(PMAPNAME)
+#ifdef PMAPNAME
 #define	STATIC			static
 #define pmap_pte_spill		PMAPNAME(pte_spill)
 #define pmap_real_memory	PMAPNAME(real_memory)
@@ -760,12 +745,10 @@ pmap_pte_create(struct pte *pt, const struct pmap *pm, vaddr_t va, register_t pt
 	pt->pte_hi = (va_to_vsid(pm, va) << PTE_VSID_SHFT)
 	    | (((va & ADDR_PIDX) >> (ADDR_API_SHFT - PTE_API_SHFT)) & PTE_API);
 	pt->pte_lo = pte_lo;
-#elif defined (PMAP_OEA64_BRIDGE)
+#elif defined (PMAP_OEA64_BRIDGE) || defined (PMAP_OEA64)
 	pt->pte_hi = ((u_int64_t)va_to_vsid(pm, va) << PTE_VSID_SHFT)
 	    | (((va & ADDR_PIDX) >> (ADDR_API_SHFT - PTE_API_SHFT)) & PTE_API);
 	pt->pte_lo = (u_int64_t) pte_lo;
-#elif defined (PMAP_OEA64)
-#error PMAP_OEA64 not supported
 #endif /* PMAP_OEA */
 }
 
@@ -1942,14 +1925,20 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * it's in our available memory array.  If it is in the memory array,
 	 * asssume it's in memory coherent memory.
 	 */
-	pte_lo = PTE_IG;
-	if ((flags & PMAP_NC) == 0) {
+	if (flags & PMAP_MD_PREFETCHABLE) {
+		pte_lo = 0;
+	} else
+		pte_lo = PTE_G;
+
+	if ((flags & PMAP_MD_NOCACHE) == 0) {
 		for (mp = mem; mp->size; mp++) {
 			if (pa >= mp->start && pa < mp->start + mp->size) {
 				pte_lo = PTE_M;
 				break;
 			}
 		}
+	} else {
+		pte_lo |= PTE_I;
 	}
 
 	if (prot & VM_PROT_WRITE)
@@ -2034,7 +2023,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * asssume it's in memory coherent memory.
 	 */
 	pte_lo = PTE_IG;
-	if ((prot & PMAP_NC) == 0) {
+	if ((flags & PMAP_MD_NOCACHE) == 0) {
 		for (mp = mem; mp->size; mp++) {
 			if (pa >= mp->start && pa < mp->start + mp->size) {
 				pte_lo = PTE_M;

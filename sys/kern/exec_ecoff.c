@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.28 2008/11/19 21:29:32 cegger Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.28.10.1 2011/06/06 09:09:25 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.28 2008/11/19 21:29:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.28.10.1 2011/06/06 09:09:25 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.28 2008/11/19 21:29:32 cegger Exp $
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>

@@ -1,5 +1,5 @@
 /*
- * $NetBSD: start.s,v 1.7 2000/12/04 20:31:16 scw Exp $
+ * $NetBSD: start.s,v 1.7.158.1 2011/06/06 09:06:16 jruoho Exp $
  *
  * Copyright (c) 1995 Charles D. Cranor
  * All rights reserved.
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.112 2010/08/20 16:38:16 joerg Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.112.2.1 2011/06/06 09:09:58 jruoho Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.112 2010/08/20 16:38:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.112.2.1 2011/06/06 09:09:58 jruoho Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -108,6 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.112 2010/08/20 16:38:16 joerg Exp $");
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
 #endif /* FAST_IPSEC */
+
+#include <netinet/tcp_vtw.h>
 
 const struct in6_addr zeroin6_addr;
 
@@ -314,12 +316,17 @@ in6_pcbbind_port(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
 #ifdef INET
 			struct inpcb *t;
+			struct vestigial_inpcb vestige;
 
 			t = in_pcblookup_port(table,
 			    *(struct in_addr *)&sin6->sin6_addr.s6_addr32[3],
-			    sin6->sin6_port, wild);
+			    sin6->sin6_port, wild, &vestige);
 			if (t && (reuseport & t->inp_socket->so_options) == 0)
 				return (EADDRINUSE);
+			if (!t
+			    && vestige.valid
+			    && !(reuseport && vestige.reuse_port))
+			    return EADDRINUSE;
 #else
 			return (EADDRNOTAVAIL);
 #endif
@@ -327,11 +334,16 @@ in6_pcbbind_port(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 
 		{
 			struct in6pcb *t;
+			struct vestigial_inpcb vestige;
 
 			t = in6_pcblookup_port(table, &sin6->sin6_addr,
-			    sin6->sin6_port, wild);
+			    sin6->sin6_port, wild, &vestige);
 			if (t && (reuseport & t->in6p_socket->so_options) == 0)
 				return (EADDRINUSE);
+			if (!t
+			    && vestige.valid
+			    && !(reuseport && vestige.reuse_port))
+			    return EADDRINUSE;
 		}
 	}
 
@@ -428,6 +440,7 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	struct in6_addr mapped;
 #endif
 	struct sockaddr_in6 tmp;
+	struct vestigial_inpcb vestige;
 
 	(void)&in6a;				/* XXX fool gcc */
 
@@ -518,7 +531,8 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	if (in6_pcblookup_connect(in6p->in6p_table, &sin6->sin6_addr,
 	    sin6->sin6_port,
 	    IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) ? in6a : &in6p->in6p_laddr,
-	    in6p->in6p_lport, 0))
+				  in6p->in6p_lport, 0, &vestige)
+		|| vestige.valid)
 		return (EADDRINUSE);
 	if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) ||
 	    (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr) &&
@@ -891,13 +905,16 @@ in6_rtchange(struct in6pcb *in6p, int errno)
 
 struct in6pcb *
 in6_pcblookup_port(struct inpcbtable *table, struct in6_addr *laddr6, 
-	u_int lport_arg, int lookup_wildcard)
+		   u_int lport_arg, int lookup_wildcard, struct vestigial_inpcb *vp)
 {
 	struct inpcbhead *head;
 	struct inpcb_hdr *inph;
 	struct in6pcb *in6p, *match = 0;
 	int matchwild = 3, wildcard;
 	u_int16_t lport = lport_arg;
+
+	if (vp)
+		vp->valid = 0;
 
 	head = IN6PCBHASH_PORT(table, lport);
 	LIST_FOREACH(inph, head, inph_lhash) {
@@ -964,6 +981,60 @@ in6_pcblookup_port(struct inpcbtable *table, struct in6_addr *laddr6,
 			matchwild = wildcard;
 			if (matchwild == 0)
 				break;
+		}
+	}
+	if (match && matchwild == 0)
+		return match;
+
+	if (vp && table->vestige && table->vestige->init_ports6) {
+		struct vestigial_inpcb better;
+		void *state;
+
+		state = (*table->vestige->init_ports6)(laddr6,
+						       lport_arg,
+						       lookup_wildcard);
+		while (table->vestige
+		       && (*table->vestige->next_port6)(state, vp)) {
+
+			if (vp->lport != lport)
+				continue;
+			wildcard = 0;
+			if (!IN6_IS_ADDR_UNSPECIFIED(&vp->faddr.v6))
+				wildcard++;
+			if (IN6_IS_ADDR_UNSPECIFIED(&vp->laddr.v6)) {
+				if (!IN6_IS_ADDR_UNSPECIFIED(laddr6))
+					wildcard++;
+			} else {
+				if (IN6_IS_ADDR_V4MAPPED(laddr6)) {
+					if (vp->v6only)
+						continue;
+				}
+				if (IN6_IS_ADDR_UNSPECIFIED(laddr6))
+					wildcard++;
+				else {
+					if (!IN6_ARE_ADDR_EQUAL(&vp->laddr.v6, laddr6))
+						continue;
+				}
+			}
+			if (wildcard && !lookup_wildcard)
+				continue;
+			if (wildcard < matchwild) {
+				better = *vp;
+				match  = (void*)&better;
+
+				matchwild = wildcard;
+				if (matchwild == 0)
+					break;
+			}
+		}
+
+		if (match) {
+			if (match != (void*)&better)
+				return match;
+			else {
+				*vp = better;
+				return 0;
+			}
 		}
 	}
 	return (match);
@@ -1041,13 +1112,17 @@ in6_pcbrtentry(struct in6pcb *in6p)
 
 struct in6pcb *
 in6_pcblookup_connect(struct inpcbtable *table, const struct in6_addr *faddr6,
-    u_int fport_arg, const struct in6_addr *laddr6, u_int lport_arg,
-    int faith)
+		      u_int fport_arg, const struct in6_addr *laddr6, u_int lport_arg,
+		      int faith,
+		      struct vestigial_inpcb *vp)
 {
 	struct inpcbhead *head;
 	struct inpcb_hdr *inph;
 	struct in6pcb *in6p;
 	u_int16_t fport = fport_arg, lport = lport_arg;
+
+	if (vp)
+		vp->valid = 0;
 
 	head = IN6PCBHASH_CONNECT(table, faddr6, fport, laddr6, lport);
 	LIST_FOREACH(inph, head, inph_hash) {
@@ -1074,6 +1149,12 @@ in6_pcblookup_connect(struct inpcbtable *table, const struct in6_addr *faddr6,
 			continue;
 		return in6p;
 	}
+	if (vp && table->vestige) {
+		if ((*table->vestige->lookup6)(faddr6, fport_arg,
+					       laddr6, lport_arg, vp))
+			return 0;
+	}
+
 	return NULL;
 }
 

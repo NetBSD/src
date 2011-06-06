@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.7 2006/12/29 05:26:30 rumble Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.7.76.1 2011/06/06 09:06:40 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -75,12 +75,12 @@ struct platform {
 	void	(*watchdog_reset)(void);
 	void	(*watchdog_disable)(void);
 	void	(*watchdog_enable)(void);
-	void	(*intr0)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-	void	(*intr1)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-	void	(*intr2)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-	void	(*intr3)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-	void	(*intr4)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-	void	(*intr5)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+	void	(*intr0)(vaddr_t, uint32_t, uint32_t);
+	void	(*intr1)(vaddr_t, uint32_t, uint32_t);
+	void	(*intr2)(vaddr_t, uint32_t, uint32_t);
+	void	(*intr3)(vaddr_t, uint32_t, uint32_t);
+	void	(*intr4)(vaddr_t, uint32_t, uint32_t);
+	void	(*intr5)(vaddr_t, uint32_t, uint32_t);
 };
 
 extern struct platform platform;

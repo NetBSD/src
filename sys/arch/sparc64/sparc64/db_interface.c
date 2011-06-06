@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.126 2011/01/14 02:06:32 rmind Exp $ */
+/*	$NetBSD: db_interface.c,v 1.126.2.1 2011/06/06 09:06:52 jruoho Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,10 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.126 2011/01/14 02:06:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.126.2.1 2011/06/06 09:06:52 jruoho Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.126 2011/01/14 02:06:32 rmind Exp
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
+#include <ddb/db_user.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
@@ -61,12 +64,20 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.126 2011/01/14 02:06:32 rmind Exp
 
 #include <machine/instr.h>
 #include <machine/cpu.h>
+#ifdef _KERNEL
 #include <machine/promlib.h>
+#endif
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
 #include <machine/intr.h>
+#include <machine/vmparam.h>
 
+#ifdef _KERNEL
 #include "fb.h"
+#else
+#include <stddef.h>
+#include <stdbool.h>
+#endif
 
 extern struct traptrace {
 	unsigned short tl:3,	/* Trap level */
@@ -491,12 +502,12 @@ kdb_trap(int type, struct trapframe64 *tf)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(true);
 	/* Need to do spl stuff till cnpollc works */
 	db_dump_ts(0, 0, 0, 0);
 	db_trap(type, 0/*code*/);
 	ddb_restore_state();
-	cnpollc(FALSE);
+	cnpollc(false);
 	db_active--;
 
 	splx(s);
@@ -515,6 +526,7 @@ kdb_trap(int type, struct trapframe64 *tf)
 }
 #endif	/* DDB */
 
+#ifdef _KERNEL
 /*
  * Read bytes from kernel address space for debugger.
  */
@@ -556,6 +568,7 @@ db_write_bytes(db_addr_t addr, size_t size, const char *data)
 	}
 
 }
+#endif
 
 #ifdef DDB
 void
@@ -1306,6 +1319,13 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD(NULL,     NULL,           0,	NULL,NULL,NULL) }
 };
 
+#else	/* DDB */
+
+/* XXX */
+const struct db_command db_machine_command_table[] = {
+	{ DDB_ADD_CMD(NULL,     NULL,           0,	NULL,NULL,NULL) }
+};
+
 #endif	/* DDB */
 
 /*
@@ -1358,7 +1378,8 @@ db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 
       default:
 	/* not a branch */
-	panic("branch_taken() on non-branch");
+	printf("branch_taken() on non-branch");
+	return pc;
     }
 }
 
@@ -1370,7 +1391,7 @@ db_inst_branch(int inst)
     insn.i_int = inst;
 
     if (insn.i_any.i_op != IOP_OP2)
-	return FALSE;
+	return false;
 
     switch (insn.i_op2.i_op2) {
       case IOP2_BPcc:
@@ -1379,10 +1400,10 @@ db_inst_branch(int inst)
       case IOP2_FBPfcc:
       case IOP2_FBfcc:
       case IOP2_CBccc:
-	return TRUE;
+	return true;
 
       default:
-	return FALSE;
+	return false;
     }
 }
 
@@ -1396,13 +1417,13 @@ db_inst_call(int inst)
 
     switch (insn.i_any.i_op) {
       case IOP_CALL:
-	return TRUE;
+	return true;
 
       case IOP_reg:
 	return (insn.i_op3.i_op3 == IOP3_JMPL) && !db_inst_return(inst);
 
       default:
-	return FALSE;
+	return false;
     }
 }
 
@@ -1415,10 +1436,10 @@ db_inst_unconditional_flow_transfer(int inst)
     insn.i_int = inst;
 
     if (db_inst_call(inst))
-	return TRUE;
+	return true;
 
     if (insn.i_any.i_op != IOP_OP2)
-	return FALSE;
+	return false;
 
     switch (insn.i_op2.i_op2)
     {
@@ -1430,7 +1451,7 @@ db_inst_unconditional_flow_transfer(int inst)
 	return insn.i_branch.i_cond == Icc_A;
 
       default:
-	return FALSE;
+	return false;
     }
 }
 

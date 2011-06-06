@@ -1,19 +1,26 @@
-# $NetBSD: Makefile,v 1.13 2008/10/25 22:27:36 apb Exp $
+# $NetBSD: Makefile,v 1.13.22.1 2011/06/06 09:04:42 jruoho Exp $
 
 # Makefile for alpha tags file and boot blocks
 
-TALPHA=	../alpha/tags
-SALPHA=	../alpha/alpha/*.[ch] ../alpha/include/*.h \
-	../alpha/pci/*.[ch] ../alpha/tlsb/*.[ch] ../alpha/tc/*.[ch]
-AALPHA=	../alpha/alpha/*.S
+TALPHA=	${SYSDIR}/arch/alpha/tags
+SALPHA=	${SYSDIR}/arch/alpha/alpha/*.[ch] ${SYSDIR}/arch/alpha/common/*.[ch] \
+	${SYSDIR}/arch/alpha/eisa/*.[ch] ${SYSDIR}/arch/alpha/include/*.h \
+	${SYSDIR}/arch/alpha/isa/*.[ch] \
+	${SYSDIR}/arch/alpha/jensenio/*.[ch] ${SYSDIR}/arch/alpha/mcbus/*.[ch] \
+	${SYSDIR}/arch/alpha/pci/*.[ch] ${SYSDIR}/arch/alpha/sableio/*.[ch] \
+	${SYSDIR}/arch/alpha/tc/*.[ch] \
+	${SYSDIR}/arch/alpha/tlsb/*.[ch]
+AALPHA=	${SYSDIR}/arch/alpha/alpha/*.s ${SYSDIR}/arch/alpha/pci/*.s
 
 # Directories in which to place tags links
-DALPHA=	tc include
+DALPHA=	a12 common eisa include isa jensenio mcbus pci sableio tc tlsb
 
 .include "../../kern/Make.tags.inc"
 
 tags:
-	-ctags -wdtf ${TALPHA} ${SALPHA} ${COMM} 
+	-rm -f ${TALPHA}
+	-echo ${SALPHA} | xargs ctags -wadtf ${TALPHA}
+	-${FINDCOMM} | xargs ctags -wadtf ${TALPHA}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AALPHA} | \
 	    ${TOOL_SED} "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TALPHA}
@@ -21,7 +28,7 @@ tags:
 
 links:
 	-for i in ${DALPHA}; do \
-	    cd $$i && rm -f tags; ln -s ../tags tags; done
+	    (cd $$i && rm -f tags; ln -s ../tags tags); done
 
 
 SUBDIR=	compile include stand

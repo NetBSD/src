@@ -71,6 +71,7 @@ struct pcb_arm32 {
 #define	pcb_l1vec	pcb_un.un_32.pcb32_l1vec
 #define	pcb_dacr	pcb_un.un_32.pcb32_dacr
 #define	pcb_cstate	pcb_un.un_32.pcb32_cstate
+#define	pcb_user_pid_rw	pcb_un.un_32.pcb32_user_pid_rw
 
 struct pcb_arm26 {
 	struct	switchframe *pcb26_sf;

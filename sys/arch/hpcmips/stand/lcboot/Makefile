@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2006/06/02 19:46:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.9.92.1 2011/06/06 09:05:44 jruoho Exp $
 .include <bsd.own.mk>
 
 ROMICE?=	no
@@ -27,7 +27,7 @@ COPTS=
 DBG=
 
 AFLAGS+=	-D_LOCORE -D_KERNEL
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp -mips2 -mno-abicalls
+AFLAGS+=	-x assembler-with-cpp -mips2 -mno-abicalls
 INCLUDES=	-I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	${INCLUDES} -nostdinc -D_STANDALONE -DHEAP_LIMIT=0x8002ffff
 CFLAGS+=	-mips2 -EL -mno-abicalls -ffreestanding -mmemcpy
@@ -70,7 +70,8 @@ SRCS+=	vers.c
 CLEANFILES+=	vers.c
 .PHONY: vers.c
 vers.c: ${VERSIONFILE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} 'hpcmips' ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.ALLSRC} 'hpcmips' ${NEWVERSWHAT}
 .endif
 
 CLEANFILES+=	${PROG}

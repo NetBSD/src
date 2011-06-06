@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.111 2010/03/28 20:46:18 snj Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.111.2.1 2011/06/06 09:08:36 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.111 2010/03/28 20:46:18 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.111.2.1 2011/06/06 09:08:36 jruoho Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -567,7 +567,7 @@ ready:
 		wdc->select(chp, xfer->c_drive);
 	bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (xfer->c_drive << 4));
-	switch (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags)  < 0) {
+	switch (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags)) {
 	case WDCWAIT_OK:
 		break;
 	case WDCWAIT_TOUT:

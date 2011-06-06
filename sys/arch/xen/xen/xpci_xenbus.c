@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.4 2010/04/28 19:17:04 dyoung Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.4.2.1 2011/06/06 09:07:12 jruoho Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.4 2010/04/28 19:17:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.4.2.1 2011/06/06 09:07:12 jruoho Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -390,7 +390,7 @@ xpci_attach_pcibus(int domain, int busn)
 #else
 	pba.pba_dmat64 = NULL;
 #endif /* _LP64 */
-	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED |
+	pba.pba_flags = PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	pba.pba_bridgetag = NULL;
 	pba.pba_bus = busn;
@@ -561,7 +561,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 
 int
 xpci_enumerate_bus(struct pci_softc *sc, const int *locators,
-    int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
+    int (*match)(const struct pci_attach_args *), struct pci_attach_args *pap)
 {
 #if 0
 	char *string;

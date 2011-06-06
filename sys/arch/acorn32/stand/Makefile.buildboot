@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.13 2009/04/03 10:38:12 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.13.6.1 2011/06/06 09:04:40 jruoho Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -28,11 +28,14 @@ RELOC=8000
 LINKFLAGS+=-N -Ttext ${RELOC}
 .endif
 
+.include <bsd.own.mk>
+
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+=	-D_STANDALONE 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..

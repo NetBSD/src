@@ -1,4 +1,4 @@
-/*	$NetBSD: db_cpu.c,v 1.3 2009/03/09 06:07:05 mrg Exp $	*/
+/*	$NetBSD: db_cpu.c,v 1.3.12.1 2011/06/06 09:07:37 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.3 2009/03/09 06:07:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.3.12.1 2011/06/06 09:07:37 jruoho Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -43,12 +43,14 @@ __KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.3 2009/03/09 06:07:05 mrg Exp $");
 #include <ddb/ddb.h>
 
 static struct cpu_info	*head;
+static void *head_addr;
 
 struct cpu_info *
 db_cpu_first(void)
 {
 
 	head = db_read_ptr("cpu_queue");
+	(void) db_value_of_name("cpu_queue", (db_expr_t *)&head_addr);
 	return head;
 }
 
@@ -58,7 +60,7 @@ db_cpu_next(struct cpu_info *ci)
 
 	db_read_bytes((db_addr_t)&ci->ci_data.cpu_qchain.cqe_next,
 	    sizeof(ci), (char *)&ci);
-	if (ci == head) {
+	if (ci == head_addr) {
 		ci = NULL;
 	}
 	return ci;

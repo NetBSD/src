@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.8 2008/10/27 23:50:12 uwe Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.8.20.1 2011/06/06 09:06:43 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -37,6 +37,8 @@
  * sh3-dependent ptrace definitions
  */
 
+#define PT_STEP		(PT_FIRSTMACH + 0)
+
 /* old struct reg (now struct __reg40) that was missing r_gbr */
 #define	PT___GETREGS40	(PT_FIRSTMACH + 1)
 #define	PT___SETREGS40	(PT_FIRSTMACH + 2)
@@ -45,7 +47,7 @@
 #define	PT_SETREGS	(PT_FIRSTMACH + 4)
 
 #define PT_MACHDEP_STRINGS \
-	"(unused)", \
+	"PT_STEP", \
 	"PT___GETREGS40", \
 	"PT___SETREGS40", \
 	"PT_GETREGS", \

@@ -1,4 +1,4 @@
-/*
+/*-
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
  *
@@ -21,6 +21,10 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_map.c,v 1.2.6.1 2011/06/06 09:09:13 jruoho Exp $");
+
 #include "drmP.h"
 #include "via_drm.h"
 #include "via_drv.h"
@@ -28,7 +32,6 @@
 static int via_do_init_map(struct drm_device * dev, drm_via_init_t * init)
 {
 	drm_via_private_t *dev_priv = dev->dev_private;
-	int ret = 0;
 
 	DRM_DEBUG("\n");
 
@@ -61,23 +64,12 @@ static int via_do_init_map(struct drm_device * dev, drm_via_init_t * init)
 
 	dev_priv->agpAddr = init->agpAddr;
 
-	via_init_futex( dev_priv );
-#ifdef VIA_HAVE_DMABLIT
-	via_init_dmablit( dev );
-#endif
-#ifdef VIA_HAVE_FENCE
-	dev_priv->emit_0_sequence = 0;
-	dev_priv->have_idlelock = 0;
-	spin_lock_init(&dev_priv->fence_lock);
-#endif /* VIA_HAVE_FENCE */
-	dev->dev_private = (void *)dev_priv;
-#ifdef VIA_HAVE_BUFFER
-	ret = drm_bo_driver_init(dev);
-	if (ret)
-		DRM_ERROR("Could not initialize buffer object driver.\n");
-#endif
-	return ret;
+	via_init_futex(dev_priv);
 
+	via_init_dmablit(dev);
+
+	dev->dev_private = (void *)dev_priv;
+	return 0;
 }
 
 int via_do_cleanup_map(struct drm_device * dev)
@@ -86,7 +78,6 @@ int via_do_cleanup_map(struct drm_device * dev)
 
 	return 0;
 }
-
 
 int via_map_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
@@ -109,7 +100,7 @@ int via_driver_load(struct drm_device *dev, unsigned long chipset)
 	drm_via_private_t *dev_priv;
 	int ret = 0;
 
-	dev_priv = drm_calloc(1, sizeof(drm_via_private_t), DRM_MEM_DRIVER);
+	dev_priv = drm_alloc(sizeof(drm_via_private_t), DRM_MEM_DRIVER);
 	if (dev_priv == NULL)
 		return -ENOMEM;
 
@@ -117,35 +108,30 @@ int via_driver_load(struct drm_device *dev, unsigned long chipset)
 
 	dev_priv->chipset = chipset;
 
-#ifdef VIA_HAVE_CORE_MM
 	ret = drm_sman_init(&dev_priv->sman, 2, 12, 8);
 	if (ret) {
-		drm_free(dev_priv, sizeof(*dev_priv), DRM_MEM_DRIVER);
+		drm_free(dev_priv, sizeof(drm_via_private_t), DRM_MEM_DRIVER);
 		return ret;
 	}
-#endif
 
 	ret = drm_vblank_init(dev, 1);
 	if (ret) {
-#ifdef VIA_HAVE_CORE_MM
 		drm_sman_takedown(&dev_priv->sman);
-#endif
 		drm_free(dev_priv, sizeof(drm_via_private_t), DRM_MEM_DRIVER);
 		return ret;
 	}
 
 	return 0;
-
 }
 
 int via_driver_unload(struct drm_device *dev)
 {
 	drm_via_private_t *dev_priv = dev->dev_private;
 
-#ifdef VIA_HAVE_CORE_MM
 	drm_sman_takedown(&dev_priv->sman);
-#endif
+
 	drm_free(dev_priv, sizeof(drm_via_private_t), DRM_MEM_DRIVER);
+	dev->dev_private = NULL;
 
 	return 0;
 }

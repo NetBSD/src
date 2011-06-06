@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.14 2010/11/24 19:12:08 skrll Exp $	*/
+/*	$NetBSD: sti.c,v 1.14.2.1 2011/06/06 09:07:55 jruoho Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.14 2010/11/24 19:12:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.14.2.1 2011/06/06 09:07:55 jruoho Exp $");
 
 #include "wsdisplay.h"
 
@@ -54,7 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.14 2010/11/24 19:12:08 skrll Exp $");
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>
 
+#ifndef hp300	/* XXX */
 #include "sti_pci.h"
+#endif
 
 #ifdef STIDEBUG
 

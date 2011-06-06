@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.10 2010/05/11 21:50:35 pooka Exp $
+#	$NetBSD: Makefile.libkern,v 1.10.2.1 2011/06/06 09:09:42 jruoho Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -32,6 +32,7 @@ CPPFLAGS+=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
 .include "${.PARSEDIR}/../../../common/lib/libc/Makefile.inc"
 .include "${.PARSEDIR}/../../../common/lib/libutil/Makefile.inc"
 .include "${.PARSEDIR}/../../../common/lib/libprop/Makefile.inc"
+.include "${.PARSEDIR}/../../../common/lib/libquota/Makefile.inc"
 
 CPPFLAGS+=	-I${KERNDIR}/../../../common/include
 
@@ -43,11 +44,11 @@ CPPFLAGS+=	-I${KERNDIR}/../../../common/include
 .endif
 
 .if (${MACHINE_ARCH} != "alpha") && \
-    (${MACHINE_ARCH} != "mips64eb") && \
-    (${MACHINE_ARCH} != "mips64el") && \
+    (${MACHINE_ARCH} != "mips64eb" || !empty(CFLAGS:M-mabi=32)) && \
+    (${MACHINE_ARCH} != "mips64el" || !empty(CFLAGS:M-mabi=32)) && \
     (${MACHINE_ARCH} != "powerpc64") && \
     (${MACHINE_ARCH} != "sparc64") && \
-    (${MACHINE_ARCH} != "x86_64")
+    (${MACHINE_ARCH} != "x86_64" || !empty(CFLAGS:M-m32))
 # Quad support
 SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.19 2007/12/03 15:34:05 ad Exp $	*/
+/*	$NetBSD: news3400.c,v 1.19.46.1 2011/06/06 09:06:20 jruoho Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,24 +27,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.19 2007/12/03 15:34:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.19.46.1 2011/06/06 09:06:20 jruoho Exp $");
 
+#define __INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+
+#include <mips/locore.h>
 
 #include <machine/adrsmap.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/psl.h>
 #include <newsmips/newsmips/machid.h>
 
 #include <newsmips/dev/hbvar.h>
-
-#if !defined(SOFTFLOAT)
-extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
-#endif
 
 int news3400_badaddr(void *, u_int);
 
@@ -60,79 +59,91 @@ static volatile int badaddr_flag;
 #define INT_MASK_FPU MIPS_INT_MASK_3
 
 /*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given interrupt priority level.
+ */
+static const struct ipl_sr_map news3400_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1,
+	[IPL_SCHED] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1
+				| MIPS_INT_MASK_2,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
+};
+
+/*
  * Handle news3400 interrupts.
  */
 void
-news3400_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+news3400_intr(int ppl, uint32_t pc, uint32_t status)
 {
-	struct clockframe cf;
-	struct cpu_info *ci;
+	uint32_t ipending;
+	int ipl;
 
-	ci = curcpu();
-	ci->ci_idepth++;
+	while (ppl < (ipl = splintr(&ipending))) {
 
 	/* handle clock interrupts ASAP */
-	if (ipending & MIPS_INT_MASK_2) {
-		int stat;
+		if (ipending & MIPS_INT_MASK_2) {
+			int stat;
 
-		stat = *(volatile uint8_t *)INTST0;
-		stat &= INTST0_TIMINT|INTST0_KBDINT|INTST0_MSINT;
+			stat = *(volatile uint8_t *)INTST0;
+			stat &= INTST0_TIMINT|INTST0_KBDINT|INTST0_MSINT;
 
-		*(volatile uint8_t *)INTCLR0 = stat;
-		if (stat & INTST0_TIMINT) {
-			cf.pc = pc;
-			cf.sr = status;
-			hardclock(&cf);
-			intrcnt[HARDCLOCK_INTR]++;
-			stat &= ~INTST0_TIMINT;
+			*(volatile uint8_t *)INTCLR0 = stat;
+			if (stat & INTST0_TIMINT) {
+				struct clockframe cf = {
+					.pc = pc,
+					.sr = status,
+					.intr = (curcpu()->ci_idepth > 1),
+				};
+				hardclock(&cf);
+				intrcnt[HARDCLOCK_INTR]++;
+			}
+
+			if (stat)
+				hb_intr_dispatch(2, stat);
+
 		}
 
-		if (stat)
-			hb_intr_dispatch(2, stat);
+		if (ipending & MIPS_INT_MASK_5) {
+			*(volatile uint8_t *)INTCLR0 = INTCLR0_PERR;
+			printf("Memory error interrupt(?) at 0x%x\n", pc);
+		}
 
-		cause &= ~MIPS_INT_MASK_2;
-	}
-	/* If clock interrupts were enabled, re-enable them ASAP. */
-	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
+		/* asynchronous bus error */
+		if (ipending & MIPS_INT_MASK_4) {
+			*(volatile uint8_t *)INTCLR0 = INTCLR0_BERR;
+			badaddr_flag = 1;
+		}
 
-	if (ipending & MIPS_INT_MASK_5) {
-		*(volatile uint8_t *)INTCLR0 = INTCLR0_PERR;
-		printf("Memory error interrupt(?) at 0x%x\n", pc);
-		cause &= ~MIPS_INT_MASK_5;
-	}
+		if (ipending & MIPS_INT_MASK_1) {
+			news3400_level1_intr();
+		}
 
-	/* asynchronous bus error */
-	if (ipending & MIPS_INT_MASK_4) {
-		*(volatile uint8_t *)INTCLR0 = INTCLR0_BERR;
-		cause &= ~MIPS_INT_MASK_4;
-		badaddr_flag = 1;
-	}
+		if (ipending & MIPS_INT_MASK_0) {
+			news3400_level0_intr();
+		}
 
-	if (ipending & MIPS_INT_MASK_1) {
-		news3400_level1_intr();
-		cause &= ~MIPS_INT_MASK_1;
-	}
+		/* FPU nofiticaition */
+		if (ipending & INT_MASK_FPU) {
+			if (!USERMODE(status))
+				panic("kernel used FPU: PC %x, SR %x",
+				      pc, status);
 
-	if (ipending & MIPS_INT_MASK_0) {
-		news3400_level0_intr();
-		cause &= ~MIPS_INT_MASK_0;
-	}
-
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
-
-	/* FPU nofiticaition */
-	if (ipending & INT_MASK_FPU) {
-		if (!USERMODE(status))
-			panic("kernel used FPU: PC %x, CR %x, SR %x",
-			      pc, cause, status);
-
-		intrcnt[FPU_INTR]++;
-#if !defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
+			intrcnt[FPU_INTR]++;
+#if !defined(FPEMUL)
+			mips_fpu_intr(pc, curlwp->l_md.md_utf);
 #endif
+		}
 	}
-
-	ci->ci_idepth--;
 }
 
 #define LEVEL0_MASK \
@@ -189,10 +200,16 @@ news3400_level1_intr(void)
 int
 news3400_badaddr(void *addr, u_int size)
 {
+	uint32_t cause;
 	volatile u_int x;
+	volatile uint8_t *intclr0 = (void *)INTCLR0;
 
 	badaddr_flag = 0;
 
+	/* clear bus error interrupt */
+	*intclr0 = INTCLR0_BERR;
+
+	/* bus error will cause INT4 */
 	switch (size) {
 	case 1:
 		x = *(volatile uint8_t *)addr;
@@ -203,6 +220,15 @@ news3400_badaddr(void *addr, u_int size)
 	case 4:
 		x = *(volatile uint32_t *)addr;
 		break;
+	}
+
+	/* also check CPU INT4 here for bus errors during splhigh() */
+	if (badaddr_flag == 0) {
+		cause = mips_cp0_cause_read();
+		if ((cause & MIPS_INT_MASK_4) != 0) {
+			badaddr_flag = 1;
+			*intclr0 = INTCLR0_BERR;
+		}
 	}
 
 	return badaddr_flag;
@@ -243,7 +269,8 @@ news3400_disable_intr(void)
 	volatile uint8_t *inten0 = (void *)INTEN0;
 	volatile uint8_t *inten1 = (void *)INTEN1;
 
-	*inten0 = 0;
+	/* always enable bus error check so that news3400_badaddr() works */
+	*inten0 = INTEN0_BERR;
 	*inten1 = 0;
 }
 
@@ -273,6 +300,8 @@ extern struct idrom idrom;
 void
 news3400_init(void)
 {
+
+	ipl_sr_map = news3400_ipl_sr_map;
 
 	enable_intr = news3400_enable_intr;
 	disable_intr = news3400_disable_intr;

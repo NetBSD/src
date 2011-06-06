@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.30 2010/12/22 02:41:12 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.30.2.1 2011/06/06 09:06:43 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,5 +76,10 @@ typedef	volatile unsigned char __cpu_simple_lock_t;
 #if defined(_KERNEL)
 #define	__HAVE_RAS
 #endif
+
+#define	__HAVE_CPU_LWP_SETPRIVATE
+#define	__HAVE___LWP_GETPRIVATE_FAST
+#define	__HAVE_COMMON___TLS_GET_ADDR
+#define	__HAVE_TLS_VARIANT_I
 
 #endif	/* !_SH3_TYPES_H_ */

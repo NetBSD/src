@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.7 2008/06/01 23:07:20 uwe Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.7.26.1 2011/06/06 09:06:42 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -93,5 +93,14 @@ typedef struct {
 #define	_UC_SETSTACK		0x10000
 #define	_UC_CLRSTACK		0x20000
 
+static __inline void *
+__lwp_getprivate_fast(void)
+{
+	register void *__gbr;
+
+	__asm volatile("stc gbr, %0" : "=r" (__gbr));
+
+	return __gbr;
+}
 
 #endif /* !_SH3_MCONTEXT_H_ */

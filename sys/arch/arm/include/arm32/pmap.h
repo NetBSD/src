@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.97 2010/11/14 13:33:21 uebayasi Exp $	*/
+/*	$NetBSD: pmap.h,v 1.97.2.1 2011/06/06 09:05:03 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -278,6 +278,10 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 
 #define pmap_phys_address(ppn)		(arm_ptob((ppn)))
+u_int arm32_mmap_flags(paddr_t);
+#define ARM32_MMAP_WRITECOMBINE	0x40000000
+#define ARM32_MMAP_CACHEABLE		0x20000000
+#define pmap_mmap_flags(ppn)			arm32_mmap_flags(ppn)
 
 /*
  * Functions that we need to export
@@ -465,6 +469,9 @@ void	pmap_pte_init_arm10(void);
 #if defined(CPU_ARM11)
 void	pmap_pte_init_arm11(void);
 #endif /* CPU_ARM11 */
+#if defined(CPU_ARM11MPCORE)
+void	pmap_pte_init_arm11mpcore(void);
+#endif
 #endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
 
 #if ARM_MMU_SA1 == 1
@@ -499,6 +506,10 @@ extern pt_entry_t		pte_l2_s_cache_mask;
 extern pt_entry_t		pte_l1_s_cache_mode_pt;
 extern pt_entry_t		pte_l2_l_cache_mode_pt;
 extern pt_entry_t		pte_l2_s_cache_mode_pt;
+
+extern pt_entry_t		pte_l1_s_wc_mode;
+extern pt_entry_t		pte_l2_l_wc_mode;
+extern pt_entry_t		pte_l2_s_wc_mode;
 
 extern pt_entry_t		pte_l1_s_prot_u;
 extern pt_entry_t		pte_l1_s_prot_w;
@@ -548,6 +559,11 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L1_S_PROT_RO_xscale	(0)
 #define	L1_S_PROT_MASK_xscale	(L1_S_PROT_U|L1_S_PROT_W|L1_S_PROT_RO)
 
+#define	L1_S_PROT_U_armv6	(L1_S_AP(AP_R) | L1_S_AP(AP_U))
+#define	L1_S_PROT_W_armv6	(L1_S_AP(AP_W))
+#define	L1_S_PROT_RO_armv6	(L1_S_AP(AP_R) | L1_S_AP(AP_RO))
+#define	L1_S_PROT_MASK_armv6	(L1_S_PROT_U|L1_S_PROT_W|L1_S_PROT_RO)
+
 #define	L1_S_PROT_U_armv7	(L1_S_AP(AP_R) | L1_S_AP(AP_U))
 #define	L1_S_PROT_W_armv7	(L1_S_AP(AP_W))
 #define	L1_S_PROT_RO_armv7	(L1_S_AP(AP_R) | L1_S_AP(AP_RO))
@@ -555,6 +571,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 #define	L1_S_CACHE_MASK_generic	(L1_S_B|L1_S_C)
 #define	L1_S_CACHE_MASK_xscale	(L1_S_B|L1_S_C|L1_S_XS_TEX(TEX_XSCALE_X))
+#define	L1_S_CACHE_MASK_armv6	(L1_S_B|L1_S_C|L1_S_XS_TEX(TEX_ARMV6_TEX))
 #define	L1_S_CACHE_MASK_armv7	(L1_S_B|L1_S_C)
 
 #define	L2_L_PROT_U_generic	(L2_AP(AP_U))
@@ -567,6 +584,11 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_PROT_RO_xscale	(0)
 #define	L2_L_PROT_MASK_xscale	(L2_L_PROT_U|L2_L_PROT_W|L2_L_PROT_RO)
 
+#define	L2_L_PROT_U_armv6n	(L2_AP0(AP_R) | L2_AP0(AP_U))
+#define	L2_L_PROT_W_armv6n	(L2_AP0(AP_W))
+#define	L2_L_PROT_RO_armv6n	(L2_AP0(AP_R) | L2_AP0(AP_RO))
+#define	L2_L_PROT_MASK_armv6n	(L2_L_PROT_U|L2_L_PROT_W|L2_L_PROT_RO)
+
 #define	L2_L_PROT_U_armv7	(L2_AP0(AP_R) | L2_AP0(AP_U))
 #define	L2_L_PROT_W_armv7	(L2_AP0(AP_W))
 #define	L2_L_PROT_RO_armv7	(L2_AP0(AP_R) | L2_AP0(AP_RO))
@@ -574,6 +596,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 #define	L2_L_CACHE_MASK_generic	(L2_B|L2_C)
 #define	L2_L_CACHE_MASK_xscale	(L2_B|L2_C|L2_XS_L_TEX(TEX_XSCALE_X))
+#define	L2_L_CACHE_MASK_armv6	(L2_B|L2_C|L2_V6_L_TEX(TEX_ARMV6_TEX))
 #define	L2_L_CACHE_MASK_armv7	(L2_B|L2_C)
 
 #define	L2_S_PROT_U_generic	(L2_AP(AP_U))
@@ -586,6 +609,11 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_S_PROT_RO_xscale	(0)
 #define	L2_S_PROT_MASK_xscale	(L2_S_PROT_U|L2_S_PROT_W|L2_S_PROT_RO)
 
+#define	L2_S_PROT_U_armv6n	(L2_AP0(AP_R) | L2_AP0(AP_U))
+#define	L2_S_PROT_W_armv6n	(L2_AP0(AP_W))
+#define	L2_S_PROT_RO_armv6n	(L2_AP0(AP_R) | L2_AP0(AP_RO))
+#define	L2_S_PROT_MASK_armv6n	(L2_S_PROT_U|L2_S_PROT_W|L2_S_PROT_RO)
+
 #define	L2_S_PROT_U_armv7	(L2_AP0(AP_R) | L2_AP0(AP_U))
 #define	L2_S_PROT_W_armv7	(L2_AP0(AP_W))
 #define	L2_S_PROT_RO_armv7	(L2_AP0(AP_R) | L2_AP0(AP_RO))
@@ -593,20 +621,36 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 #define	L2_S_CACHE_MASK_generic	(L2_B|L2_C)
 #define	L2_S_CACHE_MASK_xscale	(L2_B|L2_C|L2_XS_T_TEX(TEX_XSCALE_X))
+#define	L2_XS_CACHE_MASK_armv6	(L2_B|L2_C|L2_V6_XS_TEX(TEX_ARMV6_TEX))
+#define	L2_S_CACHE_MASK_armv6n	L2_XS_CACHE_MASK_armv6
+#ifdef	ARMV6_EXTENDED_SMALL_PAGE
+#define	L2_S_CACHE_MASK_armv6c	L2_XS_CACHE_MASK_armv6
+#else
+#define	L2_S_CACHE_MASK_armv6c	L2_S_CACHE_MASK_generic
+#endif
 #define	L2_S_CACHE_MASK_armv7	(L2_B|L2_C)
+
 
 #define	L1_S_PROTO_generic	(L1_TYPE_S | L1_S_IMP)
 #define	L1_S_PROTO_xscale	(L1_TYPE_S)
+#define	L1_S_PROTO_armv6	(L1_TYPE_S)
 #define	L1_S_PROTO_armv7	(L1_TYPE_S)
 
 #define	L1_C_PROTO_generic	(L1_TYPE_C | L1_C_IMP2)
 #define	L1_C_PROTO_xscale	(L1_TYPE_C)
+#define	L1_C_PROTO_armv6	(L1_TYPE_C)
 #define	L1_C_PROTO_armv7	(L1_TYPE_C)
 
 #define	L2_L_PROTO		(L2_TYPE_L)
 
 #define	L2_S_PROTO_generic	(L2_TYPE_S)
 #define	L2_S_PROTO_xscale	(L2_TYPE_XS)
+#ifdef	ARMV6_EXTENDED_SMALL_PAGE
+#define	L2_S_PROTO_armv6c	(L2_TYPE_XS)    /* XP=0, extended small page */
+#else
+#define	L2_S_PROTO_armv6c	(L2_TYPE_S)	/* XP=0, subpage APs */
+#endif
+#define	L2_S_PROTO_armv6n	(L2_TYPE_S)	/* with XP=1 */
 #define	L2_S_PROTO_armv7	(L2_TYPE_S)
 
 /*
@@ -640,7 +684,61 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 #define	pmap_copy_page(s, d)	(*pmap_copy_page_func)((s), (d))
 #define	pmap_zero_page(d)	(*pmap_zero_page_func)((d))
-#elif (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V6) != 0
+#elif (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
+#define	L1_S_PROT_U		L1_S_PROT_U_generic
+#define	L1_S_PROT_W		L1_S_PROT_W_generic
+#define	L1_S_PROT_RO		L1_S_PROT_RO_generic
+#define	L1_S_PROT_MASK		L1_S_PROT_MASK_generic
+
+#define	L2_S_PROT_U		L2_S_PROT_U_generic
+#define	L2_S_PROT_W		L2_S_PROT_W_generic
+#define	L2_S_PROT_RO		L2_S_PROT_RO_generic
+#define	L2_S_PROT_MASK		L2_S_PROT_MASK_generic
+
+#define	L2_L_PROT_U		L2_L_PROT_U_generic
+#define	L2_L_PROT_W		L2_L_PROT_W_generic
+#define	L2_L_PROT_RO		L2_L_PROT_RO_generic
+#define	L2_L_PROT_MASK		L2_L_PROT_MASK_generic
+
+#define	L1_S_CACHE_MASK		L1_S_CACHE_MASK_generic
+#define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_generic
+#define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_generic
+
+#define	L1_S_PROTO		L1_S_PROTO_generic
+#define	L1_C_PROTO		L1_C_PROTO_generic
+#define	L2_S_PROTO		L2_S_PROTO_generic
+
+#define	pmap_copy_page(s, d)	pmap_copy_page_generic((s), (d))
+#define	pmap_zero_page(d)	pmap_zero_page_generic((d))
+#elif ARM_MMU_V6N != 0
+#define	L1_S_PROT_U		L1_S_PROT_U_armv6
+#define	L1_S_PROT_W		L1_S_PROT_W_armv6
+#define	L1_S_PROT_RO		L1_S_PROT_RO_armv6
+#define	L1_S_PROT_MASK		L1_S_PROT_MASK_armv6
+
+#define	L2_S_PROT_U		L2_S_PROT_U_armv6n
+#define	L2_S_PROT_W		L2_S_PROT_W_armv6n
+#define	L2_S_PROT_RO		L2_S_PROT_RO_armv6n
+#define	L2_S_PROT_MASK		L2_S_PROT_MASK_armv6n
+
+#define	L2_L_PROT_U		L2_L_PROT_U_armv6n
+#define	L2_L_PROT_W		L2_L_PROT_W_armv6n
+#define	L2_L_PROT_RO		L2_L_PROT_RO_armv6n
+#define	L2_L_PROT_MASK		L2_L_PROT_MASK_armv6n
+
+#define	L1_S_CACHE_MASK		L1_S_CACHE_MASK_armv6
+#define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_armv6
+#define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_armv6n
+
+/* These prototypes make writeable mappings, while the other MMU types
+ * make read-only mappings. */
+#define	L1_S_PROTO		L1_S_PROTO_armv6
+#define	L1_C_PROTO		L1_C_PROTO_armv6
+#define	L2_S_PROTO		L2_S_PROTO_armv6n
+
+#define	pmap_copy_page(s, d)	pmap_copy_page_generic((s), (d))
+#define	pmap_zero_page(d)	pmap_zero_page_generic((d))
+#elif ARM_MMU_V6C != 0
 #define	L1_S_PROT_U		L1_S_PROT_U_generic
 #define	L1_S_PROT_W		L1_S_PROT_W_generic
 #define	L1_S_PROT_RO		L1_S_PROT_RO_generic

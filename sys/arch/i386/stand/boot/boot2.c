@@ -1,7 +1,7 @@
-/*	$NetBSD: boot2.c,v 1.51 2011/01/05 23:13:01 jakllsch Exp $	*/
+/*	$NetBSD: boot2.c,v 1.51.2.1 2011/06/06 09:05:52 jruoho Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -135,6 +135,8 @@ const struct bootblk_command commands[] = {
 	{ "load",	module_add },
 	{ "multiboot",	command_multiboot },
 	{ "vesa",	command_vesa },
+	{ "splash",	splash_add },
+	{ "userconf",	userconf_add },
 	{ NULL,		NULL },
 };
 
@@ -310,8 +312,12 @@ boot2(int biosdev, uint64_t biossector)
 	default_filename = DEFFILENAME;
 
 #ifndef SMALL
-	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF))
+	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
 		parsebootconf(BOOTCONF);
+	} else {
+		bootconf.timeout = boot_params.bp_timeout;
+	}
+	
 
 	/*
 	 * If console set in boot.cfg, switch to it.
@@ -390,6 +396,7 @@ command_help(char *arg)
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
+	       "userconf {command}\n"
 	       "help|?\n"
 	       "quit\n");
 }

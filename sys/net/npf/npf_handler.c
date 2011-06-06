@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.5 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.5.2.1 2011/06/06 09:09:53 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.5 2010/12/18 01:07:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.5.2.1 2011/06/06 09:09:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,13 +60,13 @@ static struct pfil_head *	npf_ph_inet = NULL;
 
 static bool			default_pass = true;
 
-int	npf_packet_handler(void *, struct mbuf **, struct ifnet *, int);
+int	npf_packet_handler(void *, struct mbuf **, ifnet_t *, int);
 
 /*
  * npf_ifhook: hook handling interface changes.
  */
 static int
-npf_ifhook(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
+npf_ifhook(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 {
 
 	return 0;
@@ -78,11 +78,12 @@ npf_ifhook(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
  * Note: packet flow and inspection logic is in strict order.
  */
 int
-npf_packet_handler(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
+npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 {
 	nbuf_t *nbuf = *mp;
 	npf_cache_t npc;
 	npf_session_t *se;
+	npf_ruleset_t *rlset;
 	npf_rule_t *rl;
 	npf_rproc_t *rp;
 	int retfl, error;
@@ -125,8 +126,10 @@ npf_packet_handler(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
 		goto pass;
 	}
 
-	/* Inspect the ruleset using this packet. */
-	rl = npf_ruleset_inspect(&npc, nbuf, ifp, di, NPF_LAYER_3);
+	/* Acquire the lock, inspect the ruleset using this packet. */
+	npf_core_enter();
+	rlset = npf_core_ruleset();
+	rl = npf_ruleset_inspect(&npc, nbuf, rlset, ifp, di, NPF_LAYER_3);
 	if (rl == NULL) {
 		if (default_pass) {
 			npf_stats_inc(NPF_STAT_PASS_DEFAULT);
@@ -134,14 +137,18 @@ npf_packet_handler(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
 		}
 		npf_stats_inc(NPF_STAT_BLOCK_DEFAULT);
 		error = ENETUNREACH;
-		goto out;
+		goto block;
 	}
 
-	/* Apply the rule. */
+	/* Get rule procedure for assocation and/or execution. */
+	KASSERT(rp == NULL);
+	rp = npf_rproc_return(rl);
+
+	/* Apply the rule, release the lock. */
 	error = npf_rule_apply(&npc, nbuf, rl, &retfl);
 	if (error) {
 		npf_stats_inc(NPF_STAT_BLOCK_RULESET);
-		goto out;
+		goto block;
 	}
 	npf_stats_inc(NPF_STAT_PASS_RULESET);
 
@@ -152,29 +159,27 @@ npf_packet_handler(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
 			error = ENOMEM;
 			goto out;
 		}
-		/* Associate rule processing data (XXX locking). */
-		rp = npf_rproc_return(rl);
 		npf_session_setpass(se, rp);
-	} else {
-		/* XXX: Return rule processing, needs locking. */
 	}
 pass:
 	KASSERT(error == 0);
-
-	/*
-	 * Perform rule processing, if required.
-	 */
-	if (rp) {
-		npf_rproc_run(&npc, nbuf, rp);
-	}
 	/*
 	 * Perform NAT.
 	 */
 	error = npf_do_nat(&npc, se, nbuf, ifp, di);
+block:
+	/*
+	 * Perform rule procedure, if any.
+	 */
+	if (rp) {
+		npf_rproc_run(&npc, nbuf, rp, error);
+	}
 out:
-	/* Release reference on session. */
-	if (se != NULL) {
+	/* Release the reference on session, or rule procedure. */
+	if (se) {
 		npf_session_release(se);
+	} else if (rp) {
+		npf_rproc_release(rp); /* XXXkmem */
 	}
 
 	/*
@@ -188,6 +193,10 @@ out:
 		 */
 		if (retfl) {
 			npf_return_block(&npc, nbuf, retfl);
+		}
+		if (error != ENETUNREACH) {
+			NPF_PRINTF(("NPF: error in handler '%d'\n", error));
+			npf_stats_inc(NPF_STAT_ERROR);
 		}
 		m_freem(*mp);
 		*mp = NULL;

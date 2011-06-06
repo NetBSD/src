@@ -1,0 +1,38 @@
+/*	$NetBSD: ath_hal.ldscript,v 1.1.8.2 2011/06/06 09:09:47 jruoho Exp $	*/
+
+SECTIONS
+{
+   /* Pre-loaded modules must have merged BSS and data. */
+   .data 0 :
+   {
+     *(.data)
+     *(.bss)
+     *(.bss.*)
+     *(COMMON)
+   }
+
+   link_set_ah_rfs :
+   {
+     __start_link_set_ah_rfs = .;
+     *(link_set_ah_rfs);
+     __stop_link_set_ah_rfs = .;
+   }
+
+   link_set_ah_chips :
+   {
+     __start_link_set_ah_chips = .;
+     *(link_set_ah_chips);
+     __stop_link_set_ah_chips = .;
+   }
+
+   . = ALIGN(64);	/* COHERENCY_UNIT */
+   .data.cacheline_aligned	: { *(.data.cacheline_aligned) }
+   . = ALIGN(64);	/* COHERENCY_UNIT */
+   .data.read_mostly		: { *(.data.read_mostly) }
+   . = ALIGN(64);	/* COHERENCY_UNIT */
+   /* Pre-loaded modules do not need the following. */
+   /DISCARD/ :
+   {
+     *(.comment)
+   }
+}

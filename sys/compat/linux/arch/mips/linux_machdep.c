@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.41 2010/07/07 01:30:34 chs Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.41.2.1 2011/06/06 09:07:25 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.41 2010/07/07 01:30:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.41.2.1 2011/06/06 09:07:25 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.41 2010/07/07 01:30:34 chs Exp $
 
 #include <mips/cache.h>
 
+union linux_ksigframe {
+	struct linux_sigframe sf;
+#if !defined(__mips_o32)
+	struct linux_sigframe32 sf32;
+#endif
+};
+
 /*
  * To see whether wscons is configured (for virtual console ioctl calls).
  */
@@ -98,6 +105,32 @@ linux_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	return;
 }
 
+#if !defined(__mips_o32)
+static void
+linux_setup_sigcontext32(struct linux_sigcontext32 *sc,
+     const struct trapframe *tf)
+{
+	for (u_int i = 0; i < 32; i++) {
+		sc->lsc_regs[i] = tf->tf_regs[i];
+	}
+	sc->lsc_mdhi = tf->tf_regs[_R_MULHI];
+	sc->lsc_mdlo = tf->tf_regs[_R_MULLO];
+	sc->lsc_pc = tf->tf_regs[_R_PC];
+}
+#endif
+
+static void
+linux_setup_sigcontext(struct linux_sigcontext *sc,
+     const struct trapframe *tf)
+{
+	for (u_int i = 0; i < 32; i++) {
+		sc->lsc_regs[i] = tf->tf_regs[i];
+	}
+	sc->lsc_mdhi = tf->tf_regs[_R_MULHI];
+	sc->lsc_mdlo = tf->tf_regs[_R_MULLO];
+	sc->lsc_pc = tf->tf_regs[_R_PC];
+}
+
 /*
  * Send an interrupt to process.
  *
@@ -111,65 +144,66 @@ void
 linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	const int sig = ksi->ksi_signo;
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct linux_sigframe *fp;
-	struct frame *f;
-	int i, onstack, error;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct trapframe * const tf = l->l_md.md_utf;
+#ifdef __mips_o32
+	const int abi = _MIPS_BSD_API_O32;
+#else
+	const int abi = p->p_md.md_abi;
+#endif
+	union linux_ksigframe ksf, *sf;
+	bool onstack;
+	int error;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct linux_sigframe sf;
 
 #ifdef DEBUG_LINUX
 	printf("linux_sendsig()\n");
 #endif /* DEBUG_LINUX */
-	f = (struct frame *)l->l_md.md_regs;
 
 	/*
 	 * Do we need to jump onto the signal stack?
 	 */
-	onstack =
-	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+	onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
 	 * Signal stack is broken (see at the end of linux_sigreturn), so we do
 	 * not use it yet. XXX fix this.
 	 */
-	onstack=0;
+	onstack = false;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
-	if (onstack)
-		fp = (struct linux_sigframe *)
-		    ((uintptr_t)l->l_sigstk.ss_sp
-		    + l->l_sigstk.ss_size);
-	else
-		/* cast for O64 ABI case */
-		fp = (struct linux_sigframe *)(uintptr_t)f->f_regs[_R_SP];
+	sf = (void *)(onstack
+	    ? (uintptr_t) l->l_sigstk.ss_sp + l->l_sigstk.ss_size
+	    : (uintptr_t) tf->tf_regs[_R_SP]);
 
 	/*
 	 * Build stack frame for signal trampoline.
 	 */
-	memset(&sf, 0, sizeof sf);
+	memset(&ksf, 0, sizeof ksf);
 
 	/*
 	 * This is the signal trampoline used by Linux, we don't use it,
 	 * but we set it up in case an application expects it to be there
 	 */
-	sf.lsf_code[0] = 0x24020000;	/* li	v0, __NR_sigreturn	*/
-	sf.lsf_code[1] = 0x0000000c;	/* syscall			*/
+	ksf.sf.lsf_code[0] = 0x24020000; /* li	v0, __NR_sigreturn	*/
+	ksf.sf.lsf_code[1] = 0x0000000c; /* syscall			*/
 
-	native_to_linux_sigset(&sf.lsf_mask, mask);
-	for (i=0; i<32; i++) {
-		sf.lsf_sc.lsc_regs[i] = f->f_regs[i];
+	switch (abi) {
+	default:
+		native_to_linux_sigset(&ksf.sf.lsf_mask, mask);
+		linux_setup_sigcontext(&ksf.sf.lsf_sc, tf);
+		break;
+#if !defined(__mips_o32)
+	case _MIPS_BSD_API_O32:
+		native_to_linux_sigset(&ksf.sf32.lsf_mask, mask);
+		linux_setup_sigcontext32(&ksf.sf32.lsf_sc, tf);
+		break;
+#endif
 	}
-	sf.lsf_sc.lsc_mdhi = f->f_regs[_R_MULHI];
-	sf.lsf_sc.lsc_mdlo = f->f_regs[_R_MULLO];
-	sf.lsf_sc.lsc_pc = f->f_regs[_R_PC];
-	sf.lsf_sc.lsc_status = f->f_regs[_R_SR];
-	sf.lsf_sc.lsc_cause = f->f_regs[_R_CAUSE];
-	sf.lsf_sc.lsc_badvaddr = f->f_regs[_R_BADVADDR];
 	sendsig_reset(l, sig);
 
 	/*
@@ -180,9 +214,9 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Install the sigframe onto the stack
 	 */
-	fp -= sizeof(struct linux_sigframe);
+	sf -= sizeof(*sf);
 	mutex_exit(p->p_lock);
-	error = copyout(&sf, fp, sizeof(sf));
+	error = copyout(&ksf, sf, sizeof(ksf));
 	mutex_enter(p->p_lock);
 
 	if (error != 0) {
@@ -198,19 +232,19 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	/* Set up the registers to return to sigcode. */
-	f->f_regs[_R_A0] = native_to_linux_signo[sig];
-	f->f_regs[_R_A1] = 0;
-	f->f_regs[_R_A2] = (unsigned long)&fp->lsf_sc;
+	tf->tf_regs[_R_A0] = native_to_linux_signo[sig];
+	tf->tf_regs[_R_A1] = 0;
+	tf->tf_regs[_R_A2] = (intptr_t)&sf->sf.lsf_sc;
 
 #ifdef DEBUG_LINUX
-	printf("sigcontext is at %p\n", &fp->lsf_sc);
+	printf("sigcontext is at %p\n", &sf->sf.lsf_sc);
 #endif /* DEBUG_LINUX */
 
-	f->f_regs[_R_SP] = (unsigned long)fp;
+	tf->tf_regs[_R_SP] = (intptr_t)sf;
 	/* Signal trampoline code is at base of user stack. */
-	f->f_regs[_R_RA] = (unsigned long)p->p_sigctx.ps_sigcode;
-	f->f_regs[_R_T9] = (unsigned long)catcher;
-	f->f_regs[_R_PC] = (unsigned long)catcher;
+	tf->tf_regs[_R_RA] = (intptr_t)p->p_sigctx.ps_sigcode;
+	tf->tf_regs[_R_T9] = (intptr_t)catcher;
+	tf->tf_regs[_R_PC] = (intptr_t)catcher;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -218,6 +252,32 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	return;
 }
+
+static void
+linux_putaway_sigcontext(struct trapframe *tf,
+    const struct linux_sigcontext *sc)
+{
+	for (u_int i = 0; i < 32; i++) {
+		tf->tf_regs[i] = sc->lsc_regs[i];
+	}
+	tf->tf_regs[_R_MULLO] = sc->lsc_mdlo;
+	tf->tf_regs[_R_MULHI] = sc->lsc_mdhi;
+	tf->tf_regs[_R_PC] = sc->lsc_pc;
+}
+
+#ifndef __mips_o32
+static void
+linux_putaway_sigcontext32(struct trapframe *tf,
+    const struct linux_sigcontext32 *sc)
+{
+	for (u_int i = 0; i < 32; i++) {
+		tf->tf_regs[i] = sc->lsc_regs[i];
+	}
+	tf->tf_regs[_R_MULLO] = sc->lsc_mdlo;
+	tf->tf_regs[_R_MULHI] = sc->lsc_mdhi;
+	tf->tf_regs[_R_PC] = sc->lsc_pc;
+}
+#endif
 
 /*
  * System call to cleanup state after a signal
@@ -231,10 +291,15 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 		syscallarg(struct linux_sigframe *) sf;
 	} */
 	struct proc *p = l->l_proc;
-	struct linux_sigframe *sf, ksf;
-	struct frame *f;
+	union linux_ksigframe ksf, *sf;
+#ifdef __mips_o32
+	const int abi = _MIPS_BSD_API_O32;
+#else
+	const int abi = p->p_md.md_abi;
+#endif
+	linux_sigset_t *lmask;
 	sigset_t mask;
-	int i, error;
+	int error;
 
 #ifdef DEBUG_LINUX
 	printf("linux_sys_sigreturn()\n");
@@ -245,20 +310,24 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-	sf = SCARG(uap, sf);
+	sf = (void *)SCARG(uap, sf);
 
 	if ((error = copyin(sf, &ksf, sizeof(ksf))) != 0)
 		return (error);
 
 	/* Restore the register context. */
-	f = (struct frame *)l->l_md.md_regs;
-	for (i=0; i<32; i++)
-		f->f_regs[i] = ksf.lsf_sc.lsc_regs[i];
-	f->f_regs[_R_MULLO] = ksf.lsf_sc.lsc_mdlo;
-	f->f_regs[_R_MULHI] = ksf.lsf_sc.lsc_mdhi;
-	f->f_regs[_R_PC] = ksf.lsf_sc.lsc_pc;
-	f->f_regs[_R_BADVADDR] = ksf.lsf_sc.lsc_badvaddr;
-	f->f_regs[_R_CAUSE] = ksf.lsf_sc.lsc_cause;
+	switch (abi) {
+	default:
+		lmask = &ksf.sf.lsf_mask;
+		linux_putaway_sigcontext(l->l_md.md_utf, &ksf.sf.lsf_sc);
+		break;
+#if !defined(__mips_o32)
+	case _MIPS_BSD_API_O32:
+		lmask = &ksf.sf32.lsf_mask;
+		linux_putaway_sigcontext32(l->l_md.md_utf, &ksf.sf32.lsf_sc);
+		break;
+#endif
+	}
 
 	mutex_enter(p->p_lock);
 
@@ -266,7 +335,7 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	linux_to_native_sigset(&mask, (linux_sigset_t *)&ksf.lsf_mask);
+	linux_to_native_sigset(&mask, lmask);
 	(void)sigprocmask1(l, SIG_SETMASK, &mask, 0);
 
 	mutex_exit(p->p_lock);
@@ -281,21 +350,6 @@ linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *
 	return (ENOSYS);
 }
 
-
-#if 0
-int
-linux_sys_modify_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap, register_t *retval)
-{
-	/*
-	 * This syscall is not implemented in Linux/Mips: we should not
-	 * be here
-	 */
-#ifdef DEBUG_LINUX
-	printf("linux_sys_modify_ldt: should not be here.\n");
-#endif /* DEBUG_LINUX */
-  return 0;
-}
-#endif
 
 /*
  * major device numbers remapping
@@ -382,10 +436,10 @@ int
 linux_sys_sysmips(struct lwp *l, const struct linux_sys_sysmips_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(int) cmd;
-		syscallarg(int) arg1;
-		syscallarg(int) arg2;
-		syscallarg(int) arg3;
+		syscallarg(long) cmd;
+		syscallarg(long) arg1;
+		syscallarg(long) arg2;
+		syscallarg(long) arg3;
 	} */
 	int error;
 

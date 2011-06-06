@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.h,v 1.10 2010/03/19 01:31:11 dyoung Exp $ */
+/*	$NetBSD: ath_netbsd.h,v 1.10.2.1 2011/06/06 09:07:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -119,8 +119,6 @@ typedef struct ath_lock ath_txbuf_lock_t;
 	    SYSCTL_DESCR(__descr), NULL, 0, &ath_##__var, 0, CTL_CREATE,\
 	    CTL_EOL)
 
-extern void device_printf(device_t, const char *fmt, ...)
-    __attribute__((__format__(__printf__,2,3)));
 const struct sysctlnode *ath_sysctl_treetop(struct sysctllog **);
 const struct sysctlnode *ath_sysctl_instance(const char *, struct sysctllog **);
 

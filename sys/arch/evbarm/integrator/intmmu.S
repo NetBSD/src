@@ -1,4 +1,4 @@
-/*	$NetBSD: intmmu.S,v 1.10 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: intmmu.S,v 1.10.106.1 2011/06/06 09:05:26 jruoho Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -29,10 +29,9 @@
  * SUCH DAMAGE.
  */
 
-#include "assym.h"
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pte.h>
+#include "assym.h"
 
 	.section .start,"ax",%progbits
 
@@ -73,7 +72,7 @@ ASENTRY_NP(integrator_start)
 /*
  * Set Virtual == Physical
  */
-	mov	r3, #(L1_S_AP(AP_KRW))
+	mov	r3, #(L1_S_AP_KRW)
 	add	r3, r3, #(L1_TYPE_S)
 	mov	r2, #0x100000		/* advance by 1MB */
 	mov	r1, #0x8000		/* page table start */
@@ -88,7 +87,7 @@ Lflat:
 /*
  * Map VA 0xc0000000->0xc03fffff to PA 0x00000000->0x003fffff
  */
-	mov	r3, #(L1_S_AP(AP_KRW))
+	mov	r3, #(L1_S_AP_KRW)
 	add	r3, r3, #(L1_TYPE_S)
 	mov	r1, #0x8000		/* page table start */
 	add	r1, r1, #(0xc00 * 4)	/* offset to 0xc00xxxxx */
@@ -106,7 +105,7 @@ Lkern:
  * region VA 0xfd000000->0xfdffffff; this should map enough of the peripheral
  * space to at least get us up and running.
  */
-	mov	r3, #(L1_S_AP(AP_KRW))
+	mov	r3, #(L1_S_AP_KRW)
 	add	r3, r3, #L1_TYPE_S
 	add	r3, r3, #0x10000000	/* Peripherals base */
 	mov	r1, #0x8000		/* page table start */

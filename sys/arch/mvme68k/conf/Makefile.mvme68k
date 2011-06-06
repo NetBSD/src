@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.61 2008/02/18 14:11:48 joerg Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.61.38.1 2011/06/06 09:06:15 jruoho Exp $
 
 # Makefile for NetBSD
 #
@@ -46,7 +46,7 @@ CMACHFLAGS=	-m68020-60 -Wa,-m68030 -Wa,-m68851
 .endif
 .endif
 CFLAGS+=	${CMACHFLAGS} -msoft-float
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+AFLAGS+=	-x assembler-with-cpp
 
 ##
 ## (3) libkern and compat

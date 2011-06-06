@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.289 2010/12/14 16:58:58 cegger Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.289.2.1 2011/06/06 09:10:03 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.289 2010/12/14 16:58:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.289.2.1 2011/06/06 09:10:03 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -2050,18 +2050,11 @@ nfs_link(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	int error = 0;
 
-	if (dvp->v_mount != vp->v_mount) {
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error != 0) {
 		VOP_ABORTOP(dvp, cnp);
 		vput(dvp);
-		return (EXDEV);
-	}
-	if (dvp != vp) {
-		error = vn_lock(vp, LK_EXCLUSIVE);
-		if (error != 0) {
-			VOP_ABORTOP(dvp, cnp);
-			vput(dvp);
-			return error;
-		}
+		return error;
 	}
 
 	/*
@@ -2074,10 +2067,10 @@ nfs_link(void *v)
 	error = nfs_linkrpc(dvp, vp, cnp->cn_nameptr, cnp->cn_namelen,
 	    cnp->cn_cred, curlwp);
 
-	if (error == 0)
+	if (error == 0) {
 		cache_purge1(dvp, cnp, 0);
-	if (dvp != vp)
-		VOP_UNLOCK(vp);
+	}
+	VOP_UNLOCK(vp);
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);

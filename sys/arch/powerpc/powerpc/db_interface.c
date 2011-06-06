@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.44 2010/02/25 23:31:48 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.44.4.1 2011/06/06 09:06:30 jruoho Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.44 2010/02/25 23:31:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.44.4.1 2011/06/06 09:06:30 jruoho Exp $");
 
 #define USERACC
 
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.44 2010/02/25 23:31:48 matt Exp $
 #endif
 
 #ifdef PPC_BOOKE
+#include <powerpc/booke/cpuvar.h>
 #include <powerpc/booke/spr.h>
 #endif
 
@@ -78,6 +79,12 @@ static void db_ppc4xx_useracc(db_expr_t, bool, db_expr_t, const char *);
 #endif
 #endif /* PPC_IBM4XX */
 
+#ifdef PPC_BOOKE
+static void db_ppcbooke_reset(db_expr_t, bool, db_expr_t, const char *);
+static void db_ppcbooke_tf(db_expr_t, bool, db_expr_t, const char *);
+static void db_ppcbooke_dumptlb(db_expr_t, bool, db_expr_t, const char *);
+#endif
+
 #ifdef DDB
 const struct db_command db_machine_command_table[] = {
 #if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
@@ -113,6 +120,17 @@ const struct db_command db_machine_command_table[] = {
 	   "   count:\tnumber of bytes to display") },
 #endif
 #endif /* PPC_IBM4XX */
+#ifdef PPC_BOOKE
+	{ DDB_ADD_CMD("reset",	db_ppcbooke_reset,	0,
+	  "Reset the system ", NULL,NULL) },
+	{ DDB_ADD_CMD("tf",	db_ppcbooke_tf,		0,
+	  "Display the contents of the trapframe",
+	  "address",
+	  "   address:\tthe struct trapframe to print") },
+	{ DDB_ADD_CMD("tlb",	db_ppcbooke_dumptlb,	0,
+	  "Display instruction translation storage buffer information.",
+	  NULL,NULL) },
+#endif /* PPC_BOOKE */
 	{ DDB_ADD_CMD(NULL,	NULL,			0, 
 	  NULL,NULL,NULL) }
 };
@@ -120,28 +138,35 @@ const struct db_command db_machine_command_table[] = {
 void
 cpu_Debugger(void)
 {
+#ifdef PPC_BOOKE
+	const register_t msr = mfmsr();
+	__asm volatile("wrteei 0\n\ttweq\t1,1");
+	mtmsr(msr);
+	__asm volatile("isync");
+#else
 	ddb_trap();
-}
 #endif
+}
+#endif /* DDB */
 
 int
-ddb_trap_glue(struct trapframe *frame)
+ddb_trap_glue(struct trapframe *tf)
 {
-#ifdef PPC_IBM4XX
-	if ((frame->srr1 & PSL_PR) == 0)
-		return kdb_trap(frame->exc, frame);
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
+	if ((tf->tf_srr1 & PSL_PR) == 0)
+		return kdb_trap(tf->tf_exc, tf);
 #else /* PPC_OEA */
-	if ((frame->srr1 & PSL_PR) == 0 &&
-	    (frame->exc == EXC_TRC ||
-	     frame->exc == EXC_RUNMODETRC ||
-	     (frame->exc == EXC_PGM && (frame->srr1 & 0x20000)) ||
-	     frame->exc == EXC_BPT ||
-	     frame->exc == EXC_DSI)) {
-		int type = frame->exc;
-		if (type == EXC_PGM && (frame->srr1 & 0x20000)) {
+	if ((tf->tf_srr1 & PSL_PR) == 0 &&
+	    (tf->tf_exc == EXC_TRC ||
+	     tf->tf_exc == EXC_RUNMODETRC ||
+	     (tf->tf_exc == EXC_PGM && (tf->tf_srr1 & 0x20000)) ||
+	     tf->tf_exc == EXC_BPT ||
+	     tf->tf_exc == EXC_DSI)) {
+		int type = tf->tf_exc;
+		if (type == EXC_PGM && (tf->tf_srr1 & 0x20000)) {
 			type = T_BREAKPOINT;
 		}
-		return kdb_trap(type, frame);
+		return kdb_trap(type, tf);
 	}
 #endif
 	return 0;
@@ -150,7 +175,7 @@ ddb_trap_glue(struct trapframe *frame)
 int
 kdb_trap(int type, void *v)
 {
-	struct trapframe *frame = v;
+	struct trapframe *tf = v;
 
 #ifdef DDB
 	if (db_recover != 0 && (type != -1 && type != T_BREAKPOINT)) {
@@ -161,20 +186,19 @@ kdb_trap(int type, void *v)
 
 	/* XXX Should switch to kdb's own stack here. */
 
-	memcpy(DDB_REGS->r, frame->fixreg, 32 * sizeof(u_int32_t));
-	DDB_REGS->iar = frame->srr0;
-	DDB_REGS->msr = frame->srr1;
-	DDB_REGS->lr = frame->lr;
-	DDB_REGS->ctr = frame->ctr;
-	DDB_REGS->cr = frame->cr;
-	DDB_REGS->xer = frame->xer;
+	memcpy(DDB_REGS->r, tf->tf_fixreg, 32 * sizeof(u_int32_t));
+	DDB_REGS->iar = tf->tf_srr0;
+	DDB_REGS->msr = tf->tf_srr1;
+	DDB_REGS->lr = tf->tf_lr;
+	DDB_REGS->ctr = tf->tf_ctr;
+	DDB_REGS->cr = tf->tf_cr;
+	DDB_REGS->xer = tf->tf_xer;
 #ifdef PPC_OEA
-	DDB_REGS->mq = frame->tf_xtra[TF_MQ];
-#endif
-#ifdef PPC_IBM4XX
-	DDB_REGS->dear = frame->dar;
-	DDB_REGS->esr = frame->tf_xtra[TF_ESR];
-	DDB_REGS->pid = frame->tf_xtra[TF_PID];
+	DDB_REGS->mq = tf->tf_mq;
+#elif defined(PPC_IBM4XX) || defined(PPC_BOOKE)
+	DDB_REGS->dear = tf->tf_dear;
+	DDB_REGS->esr = tf->tf_esr;
+	DDB_REGS->pid = tf->tf_pid;
 #endif
 
 #ifdef DDB
@@ -200,20 +224,20 @@ kdb_trap(int type, void *v)
 		}
 	}
 
-	memcpy(frame->fixreg, DDB_REGS->r, 32 * sizeof(u_int32_t));
-	frame->srr0 = DDB_REGS->iar;
-	frame->srr1 = DDB_REGS->msr;
-	frame->lr = DDB_REGS->lr;
-	frame->ctr = DDB_REGS->ctr;
-	frame->cr = DDB_REGS->cr;
-	frame->xer = DDB_REGS->xer;
+	memcpy(tf->tf_fixreg, DDB_REGS->r, 32 * sizeof(u_int32_t));
+	tf->tf_srr0 = DDB_REGS->iar;
+	tf->tf_srr1 = DDB_REGS->msr;
+	tf->tf_lr = DDB_REGS->lr;
+	tf->tf_ctr = DDB_REGS->ctr;
+	tf->tf_cr = DDB_REGS->cr;
+	tf->tf_xer = DDB_REGS->xer;
 #ifdef PPC_OEA
-	frame->tf_xtra[TF_MQ] = DDB_REGS->mq;
+	tf->tf_mq = DDB_REGS->mq;
 #endif
-#ifdef PPC_IBM4XX
-	frame->dar = DDB_REGS->dear;
-	frame->tf_xtra[TF_ESR] = DDB_REGS->esr;
-	frame->tf_xtra[TF_PID] = DDB_REGS->pid;
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
+	tf->tf_dear = DDB_REGS->dear;
+	tf->tf_esr = DDB_REGS->esr;
+	tf->tf_pid = DDB_REGS->pid;
 #endif
 
 	return 1;
@@ -382,7 +406,7 @@ db_show_mmu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 }
 #endif /* PPC_OEA || PPC_OEA64 || PPC_OEA64_BRIDGE */
 
-#ifdef PPC_IBM4XX
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
 db_addr_t
 branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 {
@@ -409,8 +433,10 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 	    inst);
 	return (0);
 }
+#endif /* PPC_IBM4XX || PPC_BOOKE */
 
 
+#ifdef PPC_IBM4XX
 #ifdef DDB
 static void
 db_ppc4xx_ctx(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
@@ -465,44 +491,44 @@ db_ppc4xx_reset(db_expr_t addr, bool have_addr, db_expr_t count,
 static void
 db_ppc4xx_tf(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	struct trapframe *f;
+	struct trapframe *tf;
 
 
 	if (have_addr) {
-		f = (struct trapframe *)addr;
+		tf = (struct trapframe *)addr;
 
 		db_printf("r0-r3:  \t%8.8lx %8.8lx %8.8lx %8.8lx\n", 
-			f->fixreg[0], f->fixreg[1],
-			f->fixreg[2], f->fixreg[3]);
+			tf->tf_fixreg[0], tf->tf_fixreg[1],
+			tf->tf_fixreg[2], tf->tf_fixreg[3]);
 		db_printf("r4-r7:  \t%8.8lx %8.8lx %8.8lx %8.8lx\n",
-			f->fixreg[4], f->fixreg[5],
-			f->fixreg[6], f->fixreg[7]);
+			tf->tf_fixreg[4], tf->tf_fixreg[5],
+			tf->tf_fixreg[6], tf->tf_fixreg[7]);
 		db_printf("r8-r11: \t%8.8lx %8.8lx %8.8lx %8.8lx\n",
-			f->fixreg[8], f->fixreg[9],
-			f->fixreg[10], f->fixreg[11]);
+			tf->tf_fixreg[8], tf->tf_fixreg[9],
+			tf->tf_fixreg[10], tf->tf_fixreg[11]);
 		db_printf("r12-r15:\t%8.8lx %8.8lx %8.8lx %8.8lx\n",
-			f->fixreg[12], f->fixreg[13],
-			f->fixreg[14], f->fixreg[15]);
+			tf->tf_fixreg[12], tf->tf_fixreg[13],
+			tf->tf_fixreg[14], tf->tf_fixreg[15]);
 		db_printf("r16-r19:\t%8.8lx %8.8lx %8.8lx %8.8lx\n",
-			f->fixreg[16], f->fixreg[17],
-			f->fixreg[18], f->fixreg[19]);
+			tf->tf_fixreg[16], tf->tf_fixreg[17],
+			tf->tf_fixreg[18], tf->tf_fixreg[19]);
 		db_printf("r20-r23:\t%8.8lx %8.8lx %8.8lx %8.8lx\n",
-			f->fixreg[20], f->fixreg[21],
-			f->fixreg[22], f->fixreg[23]);
+			tf->tf_fixreg[20], tf->tf_fixreg[21],
+			tf->tf_fixreg[22], tf->tf_fixreg[23]);
 		db_printf("r24-r27:\t%8.8lx %8.8lx %8.8lx %8.8lx\n",
-			f->fixreg[24], f->fixreg[25],
-			f->fixreg[26], f->fixreg[27]);
+			tf->tf_fixreg[24], tf->tf_fixreg[25],
+			tf->tf_fixreg[26], tf->tf_fixreg[27]);
 		db_printf("r28-r31:\t%8.8lx %8.8lx %8.8lx %8.8lx\n",
-			f->fixreg[28], f->fixreg[29],
-			f->fixreg[30], f->fixreg[31]);
+			tf->tf_fixreg[28], tf->tf_fixreg[29],
+			tf->tf_fixreg[30], tf->tf_fixreg[31]);
 
 		db_printf("lr: %8.8lx cr: %8.8x xer: %8.8x ctr: %8.8lx\n",
-			f->lr, f->cr, f->xer, f->ctr);
+			tf->tf_lr, tf->tf_cr, tf->tf_xer, tf->tf_ctr);
 		db_printf("srr0(pc): %8.8lx srr1(msr): %8.8lx "
 			"dear: %8.8lx esr: %8.8x\n",
-			f->srr0, f->srr1, f->dar, f->tf_xtra[TF_ESR]);
+			tf->tf_srr0, tf->tf_srr1, tf->tf_dear, tf->tf_esr);
 		db_printf("exc: %8.8x pid: %8.8x\n",
-			f->exc, f->tf_xtra[TF_PID]);
+			tf->tf_exc, tf->tf_pid);
 	}
 	return;
 }
@@ -696,3 +722,39 @@ db_ppc4xx_useracc(db_expr_t addr, bool have_addr, db_expr_t count,
 #endif /* DDB */
 
 #endif /* PPC_IBM4XX */
+
+#ifdef PPC_BOOKE
+static void
+db_ppcbooke_reset(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+	printf("Reseting...\n");
+	(*cpu_md_ops.md_cpu_reset)();
+}
+
+static void
+db_ppcbooke_tf(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+{
+	if (!have_addr)
+		return;
+
+	const struct trapframe * const tf = (const struct trapframe *)addr;
+
+	db_printf("trapframe %p (exc=%x srr0/1=%#lx/%#lx esr/dear=%#x/%#lx)\n",
+	    tf, tf->tf_exc, tf->tf_srr0, tf->tf_srr1, tf->tf_esr, tf->tf_dear);
+	db_printf("lr =%08lx ctr=%08lx cr =%08x xer=%08x\n",
+	    tf->tf_lr, tf->tf_ctr, tf->tf_cr, tf->tf_xer);
+	for (u_int r = 0; r < 32; r += 4) {
+		db_printf("r%02u=%08lx r%02u=%08lx r%02u=%08lx r%02u=%08lx\n",
+		    r+0, tf->tf_fixreg[r+0], r+1, tf->tf_fixreg[r+1],
+		    r+2, tf->tf_fixreg[r+2], r+3, tf->tf_fixreg[r+3]);
+	}
+}
+
+static void
+db_ppcbooke_dumptlb(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+	tlb_dump(db_printf);
+}
+#endif /* PPC_BOOKE */

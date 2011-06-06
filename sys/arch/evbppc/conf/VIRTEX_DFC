@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_DFC,v 1.11 2010/11/23 11:13:57 hannken Exp $
+#	$NetBSD: VIRTEX_DFC,v 1.11.2.1 2011/06/06 09:05:31 jruoho Exp $
 #
 # VIRTEX_DFC
 #
@@ -93,7 +93,8 @@ file-system	PTYFS		# /dev/pts/N support
 file-system 	TMPFS 		# virtual memory file system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network File System server
@@ -145,8 +146,6 @@ options 	WSDISPLAY_COMPAT_USL 	# VT handling
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_VT220L8x16
 #options 	SPLASHSCREEN
-#options 	SPLASHSCREEN_PROGRESS
-#options 	SPLASHSCREEN_IMAGE="\"dev/splash/images/netbsd-small.h\""
 
 # Kernel root file system and dump configuration.
 #config		netbsd	root on ? type ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.2 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: common.h,v 1.2.28.1 2011/06/06 09:05:14 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,5 +34,3 @@
  */
 extern const char bootprog_rev[];
 extern const char bootprog_name[];
-extern const char bootprog_date[];
-extern const char bootprog_maker[];

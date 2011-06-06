@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416_ani.c,v 1.1.1.1 2008/12/11 04:46:47 alc Exp $
+ * $Id: ar5416_ani.c,v 1.1.1.1.18.1 2011/06/06 09:09:19 jruoho Exp $
  */
 #include "opt_ah.h"
 
@@ -220,7 +220,7 @@ ar5416AniControl(struct ath_hal *ah, HAL_ANI_CMD cmd, int param)
 
 		if (level >= params->maxNoiseImmunityLevel) {
 			HALDEBUG(ah, HAL_DEBUG_ANY,
-			    "%s: level out of range (%u > %u)\n",
+			    "%s: immunity level out of range (%u > %u)\n",
 			    __func__, level, params->maxNoiseImmunityLevel);
 			return AH_FALSE;
 		}
@@ -304,7 +304,7 @@ ar5416AniControl(struct ath_hal *ah, HAL_ANI_CMD cmd, int param)
 
 		if (level >= params->maxFirstepLevel) {
 			HALDEBUG(ah, HAL_DEBUG_ANY,
-			    "%s: level out of range (%u > %u)\n",
+			    "%s: firstep level out of range (%u > %u)\n",
 			    __func__, level, params->maxFirstepLevel);
 			return AH_FALSE;
 		}
@@ -322,7 +322,7 @@ ar5416AniControl(struct ath_hal *ah, HAL_ANI_CMD cmd, int param)
 
 		if (level >= params->maxSpurImmunityLevel) {
 			HALDEBUG(ah, HAL_DEBUG_ANY,
-			    "%s: level out of range (%u > %u)\n",
+			    "%s: spur level out of range (%u > %u)\n",
 			    __func__, level, params->maxSpurImmunityLevel);
 			return AH_FALSE;
 		}

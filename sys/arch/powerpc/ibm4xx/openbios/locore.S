@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2010/03/18 13:58:38 kiyohara Exp $	*/
+/*	$NetBSD: locore.S,v 1.8.2.1 2011/06/06 09:06:27 jruoho Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
  */
 
 #undef PPC_4XX_NOCACHE
-#define _NOREGNAMES
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"

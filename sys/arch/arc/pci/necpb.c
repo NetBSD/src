@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.33 2010/11/02 16:03:47 tsutsui Exp $	*/
+/*	$NetBSD: necpb.c,v 1.33.2.1 2011/06/06 09:05:00 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.33 2010/11/02 16:03:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.33.2.1 2011/06/06 09:05:00 jruoho Exp $");
 
 #include "opt_pci.h"
 
@@ -110,7 +110,8 @@ static void	necpb_decompose_tag(pci_chipset_tag_t, pcitag_t, int *,
 		    int *, int *);
 static pcireg_t	necpb_conf_read(pci_chipset_tag_t, pcitag_t, int);
 static void	necpb_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-static int	necpb_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int	necpb_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 static const char *necpb_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 static void	*necpb_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*func)(void *), void *);
@@ -246,7 +247,7 @@ necpbattach(device_t parent, device_t self, void *aux)
 	pc->pc_memext = extent_create("necpbmem", 0x08000000, 0x3fffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
-	    mips_dcache_align);
+	    mips_cache_info.mci_dcache_align);
 #endif
 
 	out32(RD94_SYS_PCI_INTMASK, 0xf);
@@ -261,7 +262,7 @@ necpbattach(device_t parent, device_t self, void *aux)
 	pba.pba_dmat = &sc->sc_ncp->nc_dmat;
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = pc;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
@@ -334,7 +335,7 @@ necpb_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 }
 
 static int
-necpb_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+necpb_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t intrtag = pa->pa_intrtag;

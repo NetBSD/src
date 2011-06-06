@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 2011/01/14 16:48:15 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38.2.1 2011/06/06 09:05:40 jruoho Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 2011/01/14 16:48:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38.2.1 2011/06/06 09:05:40 jruoho Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -121,12 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 2011/01/14 16:48:15 skrll Exp $");
 #include <hp700/hp700/machdep.h>
 #include <hp700/dev/cpudevs.h>
 #include <hp700/gsc/gscbusvar.h>
-
-register_t	kpsw = 
-	PSW_Q |		/* Interrupt State Collection Enable */
-	PSW_P |		/* Protection Identifier Validation Enable */
-	PSW_C |		/* Instruction Address Translation Enable */
-	PSW_D;		/* Data Address Translation Enable */
 
 static TAILQ_HEAD(hppa_pdcmodule_head, hppa_pdcmodule) hppa_pdcmodule_list =
     TAILQ_HEAD_INITIALIZER(hppa_pdcmodule_list);
@@ -192,7 +186,7 @@ cpu_configure(void)
 	/* in spl*() we trust */
 	hp700_intr_init();
 	__asm volatile("ssm %0, %%r0" :: "i" (PSW_I));
-	kpsw |= PSW_I;
+	curcpu()->ci_psw |= PSW_I;
 	spl0();
 
 	if (cold_hook)

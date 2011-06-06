@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.13 2002/04/09 19:37:22 scw Exp $
+#	$NetBSD: Makefile,v 1.13.144.1 2011/06/06 09:06:16 jruoho Exp $
 
 #
 # sboot would like a newer GNU ld because it can generate S-Records.
 # Until then, we convert.
 #
 
-COMPILE.s= $(CC) -x assembler-with-cpp -traditional-cpp \
+COMPILE.s= $(CC) -x assembler-with-cpp \
 	$(ASFLAGS) $(CPPFLAGS) $(INCPATH) -c -o $*.o
 
 RELOC=		0x4000

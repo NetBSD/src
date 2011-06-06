@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_14.c,v 1.2 2009/01/11 02:45:47 christos Exp $	*/
+/*	$NetBSD: rtsock_14.c,v 1.2.12.1 2011/06/06 09:07:15 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.2 2009/01/11 02:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.2.12.1 2011/06/06 09:07:15 jruoho Exp $");
 
 #include "opt_inet.h"
 
@@ -86,16 +86,17 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_14.c,v 1.2 2009/01/11 02:45:47 christos Exp $
 #include <machine/stdarg.h>
 
 #include <compat/net/if.h>
+#include <compat/net/route.h>
 
 void
-compat_14_rt_ifmsg(struct ifnet *ifp, struct if_msghdr *ifm)
+compat_14_rt_oifmsg(struct ifnet *ifp)
 {
 	struct if_msghdr14 oifm;
 	struct mbuf *m;
 	struct rt_addrinfo info;
 	struct timeval tv;
 
-	if (route_cb.any_count == 0)
+	if (compat_50_route_info.ri_cb.any_count == 0)
 		return;
 	(void)memset(&info, 0, sizeof(info));
 	(void)memset(&oifm, 0, sizeof(oifm));
@@ -121,10 +122,10 @@ compat_14_rt_ifmsg(struct ifnet *ifp, struct if_msghdr *ifm)
 	TIMESPEC_TO_TIMEVAL(&tv, &ifp->if_data.ifi_lastchange);
 	timeval_to_timeval50(&tv, &oifm.ifm_data.ifi_lastchange);
 	oifm.ifm_addrs = 0;
-	m = rt_msg1(RTM_OOIFINFO, &info, (void *)&oifm, sizeof(oifm));
+	m = compat_50_rt_msg1(RTM_OOIFINFO, &info, (void *)&oifm, sizeof(oifm));
 	if (m == NULL)
 		return;
-	route_enqueue(m, 0);
+	compat_50_route_enqueue(m, 0);
 }
 
 int

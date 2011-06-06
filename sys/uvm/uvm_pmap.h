@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.35 2010/11/29 09:49:33 mrg Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.35.2.1 2011/06/06 09:10:24 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -177,6 +177,9 @@ void		pmap_page_protect(struct vm_page *, vm_prot_t);
 
 #if !defined(pmap_phys_address)
 paddr_t		pmap_phys_address(paddr_t);
+#endif
+#if !defined(pmap_mmap_flags)
+#define pmap_mmap_flags(x)	0
 #endif
 void		pmap_protect(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 #if !defined(pmap_reference)

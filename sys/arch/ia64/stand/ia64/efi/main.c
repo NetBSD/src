@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2009/07/20 04:59:04 kiyohara Exp $	*/
+/*	$NetBSD: main.c,v 1.6.6.1 2011/06/06 09:05:54 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -46,8 +46,6 @@
 
 extern char bootprog_name[];
 extern char bootprog_rev[];
-extern char bootprog_date[];
-extern char bootprog_maker[];
 
 struct efi_devdesc	currdev;	/* our current device */
 struct arch_switch	archsw;		/* MI/MD interface boundary */
@@ -135,7 +133,6 @@ main(int argc, CHAR16 *argv[])
 
 	printf("\n");
 	printf("%s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 
 	i = efifs_get_unit(img->DeviceHandle);
 	if (i >= 0) {

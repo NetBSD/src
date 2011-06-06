@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.25 2009/08/21 04:00:57 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.25.6.1 2011/06/06 09:06:12 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25 2009/08/21 04:00:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25.6.1 2011/06/06 09:06:12 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,6 @@ paddr_t	kvtophys(vaddr_t);	/* XXX */
 static int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t,
 		    void *, bus_size_t, struct vmspace *, int, paddr_t *,
 		    int *, int);
-
-extern paddr_t avail_start, avail_end;	/* from pmap.c */
 
 void
 _bus_dma_tag_init(bus_dma_tag_t t)
@@ -447,7 +445,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset, bus_size_
 	 * NOTE: Even though this is `wbinv_all', since the cache is
 	 * write-through, it just invalidates it.
 	 */
-	if (len >= mips_pdcache_size) {
+	if (len >= mips_cache_info.mci_pdcache_size) {
 		mips_dcache_wbinv_all();
 		return;
 	}
@@ -493,7 +491,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment, bus_si
 {
 
 	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, avail_start, trunc_page(avail_end)));
+	    segs, nsegs, rsegs, flags, mips_avail_start, trunc_page(mips_avail_end)));
 }
 
 /*

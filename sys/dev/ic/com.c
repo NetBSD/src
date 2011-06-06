@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.298 2010/07/20 06:17:20 jklos Exp $ */
+/* $NetBSD: com.c,v 1.298.2.1 2011/06/06 09:07:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.298 2010/07/20 06:17:20 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.298.2.1 2011/06/06 09:07:52 jruoho Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -465,8 +465,6 @@ com_attach_subr(struct com_softc *sc)
 					sc->sc_fifolen = 0;
 				} else {
 					SET(sc->sc_hwflags, COM_HW_FLOW);
-					SET(sc->sc_mcr, MCR_PRESCALE);
-					sc->sc_frequency /= 4;
 					sc->sc_fifolen = 32;
 				}
 			} else
@@ -503,7 +501,7 @@ fifodelay:
 
 fifodone:
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = comstart;
 	tp->t_param = comparam;
 	tp->t_hwiflow = comhwiflow;
@@ -672,7 +670,7 @@ com_detach(device_t self, int flags)
 		 * Ring buffer allocation failed in the com_attach_subr,
 		 * only the tty is allocated, and nothing else.
 		 */
-		ttyfree(sc->sc_tty);
+		tty_free(sc->sc_tty);
 		return 0;
 	}
 
@@ -681,7 +679,7 @@ com_detach(device_t self, int flags)
 
 	/* Detach and free the tty. */
 	tty_detach(sc->sc_tty);
-	ttyfree(sc->sc_tty);
+	tty_free(sc->sc_tty);
 
 	/* Unhook the soft interrupt handler. */
 	softint_disestablish(sc->sc_si);
@@ -805,7 +803,10 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 
 		/* Turn on interrupts. */
-		sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
+		sc->sc_ier = IER_ERXRDY | IER_ERLS;
+		if (!ISSET(tp->t_cflag, CLOCAL))
+			sc->sc_ier |= IER_EMSC;
+
 		if (sc->sc_type == COM_TYPE_PXA2x0)
 			sc->sc_ier |= IER_EUART | IER_ERXTOUT;
 		CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
@@ -2170,17 +2171,19 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 	}
 
 	rate = comspeed(rate, frequency, type);
-	if (type != COM_TYPE_AU1x00) {
-		/* no EFR on alchemy */ 
-		if (type != COM_TYPE_16550_NOERS) {
-			CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
-			CSR_WRITE_1(regsp, COM_REG_EFR, 0);
+	if (__predict_true(rate != -1)) {
+		if (type == COM_TYPE_AU1x00) {
+			CSR_WRITE_2(regsp, COM_REG_DLBL, rate);
+		} else {
+			/* no EFR on alchemy */ 
+			if (type != COM_TYPE_16550_NOERS) {
+				CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
+				CSR_WRITE_1(regsp, COM_REG_EFR, 0);
+			}
+			CSR_WRITE_1(regsp, COM_REG_LCR, LCR_DLAB);
+			CSR_WRITE_1(regsp, COM_REG_DLBL, rate & 0xff);
+			CSR_WRITE_1(regsp, COM_REG_DLBH, rate >> 8);
 		}
-		CSR_WRITE_1(regsp, COM_REG_LCR, LCR_DLAB);
-		CSR_WRITE_1(regsp, COM_REG_DLBL, rate & 0xff);
-		CSR_WRITE_1(regsp, COM_REG_DLBH, rate >> 8);
-	} else {
-		CSR_WRITE_1(regsp, COM_REG_DLBL, rate);
 	}
 	CSR_WRITE_1(regsp, COM_REG_LCR, cflag2lcr(cflag));
 	CSR_WRITE_1(regsp, COM_REG_MCR, MCR_DTR | MCR_RTS);

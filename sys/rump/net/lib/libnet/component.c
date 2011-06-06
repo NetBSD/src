@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.9 2011/01/11 09:24:05 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.9.2.1 2011/06/06 09:10:09 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.9 2011/01/11 09:24:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.9.2.1 2011/06/06 09:10:09 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -49,10 +49,11 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET)
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_ROUTE)
 {
-	extern struct domain routedomain, linkdomain;
+	extern struct domain routedomain, compat_50_routedomain, linkdomain;
 
 	DOMAINADD(linkdomain);
 	DOMAINADD(routedomain);
+	DOMAINADD(compat_50_routedomain);
 }
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)

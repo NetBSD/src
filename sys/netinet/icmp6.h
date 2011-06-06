@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.40 2009/10/31 22:32:17 christos Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.40.6.1 2011/06/06 09:09:55 jruoho Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -229,7 +229,7 @@ struct nd_router_advert {	/* router advertisement */
 #define ND_RA_FLAG_HOME_AGENT	0x20
 
 /*
- * Router preference values based on RFC4199.
+ * Router preference values based on RFC4191.
  */
 #define ND_RA_FLAG_RTPREF_MASK	0x18 /* 00011000 */
 
@@ -300,11 +300,11 @@ struct nd_opt_hdr {		/* Neighbor discovery option header */
 #define ND_OPT_HOMEAGENT_INFO		8
 #define ND_OPT_SOURCE_ADDRLIST		9
 #define ND_OPT_TARGET_ADDRLIST		10
+/* RFC5380 */
+#define ND_OPT_MAP			23
+/* RFC4191 */
+#define ND_OPT_ROUTE_INFO		24
 #define ND_OPT_RDNSS			25
-/* draft-ietf-ipngwg-router-preference, not officially assigned yet */
-#define ND_OPT_ROUTE_INFO		200
-/* draft-ietf-mobileip-hmipv6, not officially assigned yet */
-#define ND_OPT_MAP			201
 
 struct nd_opt_route_info {	/* route info */
 	u_int8_t	nd_opt_rti_type;
@@ -569,8 +569,9 @@ struct icmp6_filter {
 #define	ICMP6_STAT_BADRS	538	/* bad router solicitiation */
 #define	ICMP6_STAT_BADRA	539	/* bad router advertisement */
 #define	ICMP6_STAT_BADREDIRECT	540	/* bad redirect message */
+#define ICMP6_STAT_DROPPED_RAROUTE 541	/* discarded routes from router advertisement */
 
-#define	ICMP6_NSTATS		541
+#define	ICMP6_NSTATS		542
 
 #define	ICMP6_ERRSTAT_DST_UNREACH_NOROUTE	0
 #define	ICMP6_ERRSTAT_DST_UNREACH_ADMIN		1

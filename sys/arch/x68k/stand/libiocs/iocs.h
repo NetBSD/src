@@ -2,11 +2,11 @@
  *	iocs.h
  *	X680x0 IOCS call interface
  *
- *	written by Yasha (ITOH Yasufumi)
+ *	written by ITOH Yasufumi
  *	(based on PD libc 1.1.32 by PROJECT C Library)
  *	public domain
  *
- *	$NetBSD: iocs.h,v 1.7 2009/03/17 18:58:27 he Exp $
+ *	$NetBSD: iocs.h,v 1.7.6.1 2011/06/06 09:07:03 jruoho Exp $
  */
 /*
  * PROJECT C Library, X68000 PROGRAMMING INTERFACE DEFINITION

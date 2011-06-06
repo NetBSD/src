@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.45 2010/07/07 01:30:34 chs Exp $  
+	$NetBSD: syscalls.master,v 1.45.2.1 2011/06/06 09:07:27 jruoho Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -416,7 +416,8 @@
 230	UNIMPL		io_submit
 231	UNIMPL		io_cancel
 232	STD		{ int|linux_sys||set_tid_address(int *tid); }
-233	UNIMPL		fadvise64
+233	STD		{ int|linux_sys||fadvise64(int fd, \
+			    linux_off_t offset, size_t len, int advice); }
 234	STD		{ int|linux_sys||exit_group(int error_code); }
 235	UNIMPL		lookup_dcookie
 236	UNIMPL		epoll_create
@@ -444,7 +445,8 @@
 			    size_t sz, struct linux_statfs64 *sp); }
 253	STD		{ int|linux_sys||fstatfs64(int fd, \
 			    size_t sz, struct linux_statfs64 *sp); }
-254	UNIMPL		fadvise64_64
+254	STD		{ int|linux_sys||fadvise64_64(int fd, \
+			    linux_off_t offset, linux_off_t len, int advice); }
 255	UNIMPL		rtas
 256	UNIMPL		/* reserved for sys_debug_setcontext */
 257	UNIMPL		/* reserved for vserver */
@@ -509,8 +511,8 @@
 313	UNIMPL		signalfd4
 314	UNIMPL		eventfd2
 315	UNIMPL		epoll_create1
-316	UNIMPL		dup3
-317	UNIMPL		pipe2
+316	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
+317	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
 318	UNIMPL		inotify_init1
 319	UNIMPL		perf_event_open
 320	UNIMPL		preadv

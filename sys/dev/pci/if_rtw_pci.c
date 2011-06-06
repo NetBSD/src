@@ -1,5 +1,32 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.18 2010/03/04 22:57:37 dyoung Exp $	*/
+/* $NetBSD: if_rtw_pci.c,v 1.18.4.1 2011/06/06 09:08:15 jruoho Exp $ */
 
+/*-
+ * Copyright (c) 2004, 2005, 2010 David Young.  All rights reserved.
+ *
+ * Adapted for the RTL8180 by David Young.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY David Young ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL David
+ * Young BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+ * OF SUCH DAMAGE.
+ */
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.18 2010/03/04 22:57:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.18.4.1 2011/06/06 09:08:15 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,51 +106,57 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.18 2010/03/04 22:57:37 dyoung Exp $
 #define	RTW_PCI_MMBA		0x14	/* memory mapped base */
 
 struct rtw_pci_softc {
-	struct rtw_softc	psc_rtw;	/* real RTL8180 softc */
+	struct rtw_softc	psc_rtw;
 
-	pci_intr_handle_t	psc_ih;		/* interrupt handle */
-	void			*psc_intrcookie;
-
-	pci_chipset_tag_t	psc_pc;		/* our PCI chipset */
-	pcitag_t		psc_pcitag;	/* our PCI tag */
+	pcireg_t		psc_csr;
+	void			*psc_ih;
+	pci_chipset_tag_t	psc_pc;
+	pci_intr_handle_t	psc_pih;
+	pcitag_t		psc_tag;
 };
 
-static int	rtw_pci_match(device_t, cfdata_t, void *);
 static void	rtw_pci_attach(device_t, device_t, void *);
 static int	rtw_pci_detach(device_t, int);
+#if 0
+static void	rtw_pci_funcregen(struct rtw_regs *, int);
+#endif
+static const struct rtw_pci_product *
+		rtw_pci_lookup(const struct pci_attach_args *);
+static int	rtw_pci_match(device_t, cfdata_t, void *);
+static bool	rtw_pci_resume(device_t, const pmf_qual_t *);
+static int	rtw_pci_setup(struct rtw_pci_softc *);
+static bool	rtw_pci_suspend(device_t, const pmf_qual_t *);
 
-CFATTACH_DECL_NEW(rtw_pci, sizeof(struct rtw_pci_softc),
-    rtw_pci_match, rtw_pci_attach, rtw_pci_detach, NULL);
-
-static bool rtw_pci_resume(device_t, const pmf_qual_t *);
-static bool rtw_pci_suspend(device_t, const pmf_qual_t *);
+CFATTACH_DECL3_NEW(rtw_pci, sizeof(struct rtw_pci_softc),
+    rtw_pci_match, rtw_pci_attach, rtw_pci_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 static const struct rtw_pci_product {
-	u_int32_t	app_vendor;	/* PCI vendor ID */
-	u_int32_t	app_product;	/* PCI product ID */
-	const char	*app_product_name;
+	u_int32_t	rpp_vendor;	/* PCI vendor ID */
+	u_int32_t	rpp_product;	/* PCI product ID */
+	const char	*rpp_product_name;
 } rtw_pci_products[] = {
-	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8180,
-	  "Realtek RTL8180 802.11 MAC/BBP" },
-	{ PCI_VENDOR_BELKIN,		PCI_PRODUCT_BELKIN_F5D6001,
-	  "Belkin F5D6001" },
-
-	{ 0,				0,				NULL },
+	  {PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8180,
+	   "Realtek RTL8180 802.11 MAC/BBP"}
+	, {PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6001, "Belkin F5D6001"}
+	, {PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6020V3,
+	   "Belkin F5D6020v3 802.11b (RTL8180 MAC/BBP)"}
+	, {PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DWL610,
+	   "DWL-610 D-Link Air 802.11b (RTL8180 MAC/BBP)"}
+	, {0, 0, NULL}
 };
 
 static const struct rtw_pci_product *
 rtw_pci_lookup(const struct pci_attach_args *pa)
 {
-	const struct rtw_pci_product *app;
+	const struct rtw_pci_product *rpp;
 
-	for (app = rtw_pci_products;
-	     app->app_product_name != NULL;
-	     app++) {
-		if (PCI_VENDOR(pa->pa_id) == app->app_vendor &&
-		    PCI_PRODUCT(pa->pa_id) == app->app_product)
-			return (app);
+	for (rpp = rtw_pci_products; rpp->rpp_product_name != NULL; rpp++) {
+		if (PCI_VENDOR(pa->pa_id) == rpp->rpp_vendor &&
+		    PCI_PRODUCT(pa->pa_id) == rpp->rpp_product)
+			return rpp;
 	}
-	return (NULL);
+	return NULL;
 }
 
 static int
@@ -132,9 +165,9 @@ rtw_pci_match(device_t parent, cfdata_t match, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	if (rtw_pci_lookup(pa) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -144,17 +177,16 @@ rtw_pci_attach(device_t parent, device_t self, void *aux)
 	struct rtw_softc *sc = &psc->psc_rtw;
 	struct rtw_regs *regs = &sc->sc_regs;
 	struct pci_attach_args *pa = aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
 	const char *intrstr = NULL;
-	const struct rtw_pci_product *app;
-	int error;
+	const struct rtw_pci_product *rpp;
 
 	sc->sc_dev = self;
+	sc->sc_dmat = pa->pa_dmat;
 	psc->psc_pc = pa->pa_pc;
-	psc->psc_pcitag = pa->pa_tag;
+	psc->psc_tag = pa->pa_tag;
 
-	app = rtw_pci_lookup(pa);
-	if (app == NULL) {
+	rpp = rtw_pci_lookup(pa);
+	if (rpp == NULL) {
 		printf("\n");
 		panic("rtw_pci_attach: impossible");
 	}
@@ -163,51 +195,52 @@ rtw_pci_attach(device_t parent, device_t self, void *aux)
 	 * Get revision info, and set some chip-specific variables.
 	 */
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s, revision %d.%d\n", app->app_product_name,
-	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
-
-	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self, NULL)) != 0 &&
-	    error != EOPNOTSUPP) {
-		aprint_error_dev(self, "cannot activate %d\n", error);
-		return;
-	}
+	aprint_normal(": %s, revision %d.%d signature %08x\n",
+	    rpp->rpp_product_name,
+	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf,
+	    pci_conf_read(psc->psc_pc, psc->psc_tag, 0x80));
 
 	/*
 	 * Map the device.
 	 */
-	if (pci_mapreg_map(pa, RTW_PCI_MMBA,
-	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &regs->r_bt, &regs->r_bh, NULL, &regs->r_sz) == 0)
-		;
-	else if (pci_mapreg_map(pa, RTW_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
-	    &regs->r_bt, &regs->r_bh, NULL, &regs->r_sz) == 0)
-		;
-	else {
+	psc->psc_csr = PCI_COMMAND_MASTER_ENABLE |
+	              PCI_COMMAND_PARITY_ENABLE |
+		      PCI_COMMAND_SERR_ENABLE;
+	if (pci_mapreg_map(pa, RTW_PCI_MMBA, PCI_MAPREG_TYPE_MEM, 0,
+	    &regs->r_bt, &regs->r_bh, NULL, &regs->r_sz) == 0) {
+		RTW_DPRINTF(RTW_DEBUG_ATTACH,
+		    ("%s: %s mapped %" PRIuMAX " bytes mem space\n",
+		     device_xname(self), __func__, (uintmax_t)regs->r_sz));
+		psc->psc_csr |= PCI_COMMAND_MEM_ENABLE;
+	} else if (pci_mapreg_map(pa, RTW_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
+	    &regs->r_bt, &regs->r_bh, NULL, &regs->r_sz) == 0) {
+		RTW_DPRINTF(RTW_DEBUG_ATTACH,
+		    ("%s: %s mapped %" PRIuMAX " bytes I/O space\n",
+		     device_xname(self), __func__, (uintmax_t)regs->r_sz));
+		psc->psc_csr |= PCI_COMMAND_IO_ENABLE;
+	} else {
 		aprint_error_dev(self, "unable to map device registers\n");
 		return;
 	}
 
-	sc->sc_dmat = pa->pa_dmat;
-
 	/*
-	 * Make sure bus mastering is enabled.
+	 * Bring the chip out of powersave mode and initialize the
+	 * configuration registers.
 	 */
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-	    PCI_COMMAND_MASTER_ENABLE);
+	if (rtw_pci_setup(psc) != 0)
+		return;
 
 	/*
 	 * Map and establish our interrupt.
 	 */
-	if (pci_intr_map(pa, &psc->psc_ih)) {
+	if (pci_intr_map(pa, &psc->psc_pih)) {
 		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, psc->psc_ih);
-	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET,
+	intrstr = pci_intr_string(psc->psc_pc, psc->psc_pih);
+	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pih, IPL_NET,
 	    rtw_intr, sc);
-	if (psc->psc_intrcookie == NULL) {
+	if (psc->psc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
@@ -222,15 +255,14 @@ rtw_pci_attach(device_t parent, device_t self, void *aux)
 	 */
 	rtw_attach(sc);
 
-	if (pmf_device_register(sc->sc_dev, rtw_pci_suspend, rtw_pci_resume)) {
+	if (pmf_device_register(self, rtw_pci_suspend, rtw_pci_resume)) {
 		pmf_class_network_register(self, &sc->sc_if);
 		/*
 		 * Power down the socket.
 		 */
-		pmf_device_suspend(sc->sc_dev, &sc->sc_qual);
+		pmf_device_suspend(self, &sc->sc_qual);
 	} else
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't establish power handler\n");
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -243,8 +275,8 @@ rtw_pci_detach(device_t self, int flags)
 
 	if ((rc = rtw_detach(sc)) != 0)
 		return rc;
-	if (psc->psc_intrcookie != NULL)
-		pci_intr_disestablish(psc->psc_pc, psc->psc_intrcookie);
+	if (psc->psc_ih != NULL)
+		pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
 	bus_space_unmap(regs->r_bt, regs->r_bh, regs->r_sz);
 
 	return 0;
@@ -257,9 +289,9 @@ rtw_pci_resume(device_t self, const pmf_qual_t *qual)
 	struct rtw_softc *sc = &psc->psc_rtw;
 
 	/* Establish the interrupt. */
-	psc->psc_intrcookie = pci_intr_establish(psc->psc_pc, psc->psc_ih,
-	    IPL_NET, rtw_intr, sc);
-	if (psc->psc_intrcookie == NULL) {
+	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pih, IPL_NET,
+	    rtw_intr, sc);
+	if (psc->psc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
 		return false;
 	}
@@ -276,7 +308,43 @@ rtw_pci_suspend(device_t self, const pmf_qual_t *qual)
 		return false;
 
 	/* Unhook the interrupt handler. */
-	pci_intr_disestablish(psc->psc_pc, psc->psc_intrcookie);
-	psc->psc_intrcookie = NULL;
+	pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
+	psc->psc_ih = NULL;
 	return true;
+}
+
+static int
+rtw_pci_setup(struct rtw_pci_softc *psc)
+{
+	pcitag_t tag = psc->psc_tag;
+	pcireg_t bhlc, csr, lattimer;
+	device_t self = psc->psc_rtw.sc_dev;
+	int rc;
+
+	/* power up chip */
+	rc = pci_activate(psc->psc_pc, psc->psc_tag, self, NULL);
+
+	if (rc != 0 && rc != EOPNOTSUPP) {
+		aprint_error_dev(self, "cannot activate (%d)\n", rc);
+		return rc;
+	}
+
+	/* I believe the datasheet tries to warn us that the RTL8180
+	 * wants for 16 (0x10) to divide the latency timer.
+	 */
+	bhlc = pci_conf_read(psc->psc_pc, tag, PCI_BHLC_REG);
+	lattimer = rounddown(PCI_LATTIMER(bhlc), 0x10);
+	if (PCI_LATTIMER(bhlc) != lattimer) {
+		bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+		bhlc |= (lattimer << PCI_LATTIMER_SHIFT);
+		pci_conf_write(psc->psc_pc, tag, PCI_BHLC_REG, bhlc);
+	}
+
+	/* Enable the appropriate bits in the PCI CSR. */
+	csr = pci_conf_read(psc->psc_pc, tag, PCI_COMMAND_STATUS_REG);
+	csr &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
+	csr |= psc->psc_csr;
+	pci_conf_write(psc->psc_pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	return 0;
 }

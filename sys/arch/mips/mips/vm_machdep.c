@@ -1,6 +1,7 @@
-/*	$NetBSD: vm_machdep.c,v 1.132 2011/01/14 02:06:28 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.132.2.1 2011/06/06 09:06:08 jruoho Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,50 +37,12 @@
  *
  *	@(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah Hdr: vm_machdep.c 1.21 91/04/06
- *
- *	@(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
- */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.132 2011/01/14 02:06:28 rmind Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.132.2.1 2011/06/06 09:06:08 jruoho Exp $");
 
 #include "opt_ddb.h"
+#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.132 2011/01/14 02:06:28 rmind Exp $
 #include <sys/sa.h>
 #include <sys/savar.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <mips/cache.h>
 #include <mips/pcb.h>
@@ -106,7 +69,7 @@ paddr_t kvtophys(vaddr_t);	/* XXX */
 
 /*
  * cpu_lwp_fork: Finish a fork operation, with lwp l2 nearly set up.
- * Copy and update the pcb and trap frame, making the child ready to run.
+ * Copy and update the pcb and trapframe, making the child ready to run.
  *
  * First LWP (l1) is the lwp being forked.  If it is &lwp0, then we are
  * creating a kthread, where return path and argument are specified
@@ -125,22 +88,20 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb1, *pcb2;
-	struct frame *f;
-	vaddr_t uv;
+	struct pcb * const pcb1 = lwp_getpcb(l1);
+	struct pcb * const pcb2 = lwp_getpcb(l2);
+	struct trapframe *tf;
 
 	KASSERT(l1 == curlwp || l1 == &lwp0);
-
-	pcb1 = lwp_getpcb(l1);
-	pcb2 = lwp_getpcb(l2);
 
 	l2->l_md.md_ss_addr = 0;
 	l2->l_md.md_ss_instr = 0;
 	l2->l_md.md_astpending = 0;
 
+#ifndef NOFPU
 	/* If parent LWP was using FPU, then save the FPU h/w state. */
-	if ((l1->l_md.md_flags & MDP_FPUSED) && l1 == fpcurlwp)
-		savefpregs(l1);
+	fpu_save();
+#endif
 
 	/* Copy the PCB from parent. */
 	*pcb2 = *pcb1;
@@ -149,74 +110,165 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Copy the trapframe from parent, so that return to userspace
 	 * will be to right address, with correct registers.
 	 */
-	uv = uvm_lwp_getuarea(l2);
-	f = (struct frame *)(uv + USPACE) - 1;
-	*f = *l1->l_md.md_regs;
+	vaddr_t ua2 = uvm_lwp_getuarea(l2);
+	tf = (struct trapframe *)(ua2 + USPACE) - 1;
+	*tf = *l1->l_md.md_utf;
 
 	/* If specified, set a different user stack for a child. */
 	if (stack != NULL)
-		f->f_regs[_R_SP] = (intptr_t)stack + stacksize;
+		tf->tf_regs[_R_SP] = (intptr_t)stack + stacksize;
 
-	l2->l_md.md_regs = f;
-	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
+	l2->l_md.md_utf = tf;
 #if USPACE > PAGE_SIZE
-	{
-		const int x = (MIPS_HAS_R4K_MMU) ?
+	bool direct_mapped_p = MIPS_KSEG0_P(ua2);
+#ifdef _LP64
+	direct_mapped_p = direct_mapped_p || MIPS_XKPHYS_P(ua2);
+#endif
+	if (!direct_mapped_p) {
+		pt_entry_t * const pte = kvtopte(ua2);
+		const uint32_t x = (MIPS_HAS_R4K_MMU) ?
 		    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) : MIPS1_PG_G;
-		pt_entry_t *pte = kvtopte(uv);
 
-		for (size_t i = 0; i < UPAGES; i++)
+		for (u_int i = 0; i < UPAGES; i++) {
 			l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
+		}
 	}
 #endif
-	/*
-	 * Rig kernel stack so that it would start out in lwp_trampoline()
-	 * and call child_return() with l2 as an argument.  This causes the
-	 * newly-created child process to go directly to user level with a
-	 * parent return value of 0 from fork(), while the parent process
-	 * returns normally.
-	 */
-	pcb2->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
-	pcb2->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
-	pcb2->pcb_context.val[_L_SP] = (intptr_t)f;			/* SP */
-	pcb2->pcb_context.val[_L_RA] = (intptr_t)lwp_trampoline;	/* RA */
-#ifdef _LP64
-	KASSERT(pcb2->pcb_context.val[_L_SR] & MIPS_SR_KX);
-#endif
-#ifdef IPL_ICU_MASK
-	/* Machine depenedend interrupt mask. */
-	pcb2->pcb_ppl = 0;
-#endif
+
+	cpu_setfunc(l2, func, arg);
 }
 
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-	struct frame *f = l->l_md.md_regs;
+	struct pcb * const pcb = lwp_getpcb(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 
-	KASSERT(f == (struct frame *)((uintptr_t)uvm_lwp_getuarea(l) + USPACE) - 1);
+	KASSERT(tf == (struct trapframe *)(uvm_lwp_getuarea(l) + USPACE) - 1);
+
+	/*
+	 * Rig kernel stack so that it would start out in lwp_trampoline()
+	 * and call child_return() with l as an argument.  This causes the
+	 * newly-created child process to go directly to user level with a
+	 * parent return value of 0 from fork(), while the parent process
+	 * returns normally.
+	 */
 
 	pcb->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
 	pcb->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
-	pcb->pcb_context.val[_L_SP] = (intptr_t)f;			/* SP */
-	pcb->pcb_context.val[_L_RA] = (intptr_t)setfunc_trampoline;	/* RA */
+	pcb->pcb_context.val[MIPS_CURLWP_LABEL] = (intptr_t)l;		/* T8 */
+	pcb->pcb_context.val[_L_SP] = (intptr_t)tf;			/* SP */
+	pcb->pcb_context.val[_L_RA] =
+	   mips_locore_jumpvec.ljv_lwp_trampoline;			/* RA */
 #ifdef _LP64
 	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_KX);
 #endif
-#ifdef IPL_ICU_MASK
-	/* Machine depenedend interrupt mask. */
-	pcb->pcb_ppl = 0;
+	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_INT_IE);
+}
+
+/*
+ * Routine to copy MD stuff from proc to proc on a fork.
+ * For mips, this is the ABI and "32 bit process on a 64 bit kernel" flag.
+ */
+void
+cpu_proc_fork(struct proc *p1, struct proc *p2)
+{
+	p2->p_md.md_abi = p1->p_md.md_abi;
+}
+
+void *
+cpu_uarea_alloc(bool system)
+{
+	struct pglist pglist;
+#ifdef _LP64
+	const paddr_t high = mips_avail_end;
+#else
+	const paddr_t high = MIPS_KSEG1_START - MIPS_KSEG0_START;
+	/*
+	 * Don't allocate a direct mapped uarea if aren't allocating for a
+	 * system lwp and we have memory that can't be mapped via KSEG0.
+	 * If 
+	 */
+	if (!system && high > mips_avail_end)
+		return NULL;
 #endif
+	int error;
+
+	/*
+	 * Allocate a new physically contiguous uarea which can be
+	 * direct-mapped.
+	 */
+	error = uvm_pglistalloc(USPACE, mips_avail_start, high,
+	    USPACE_ALIGN, 0, &pglist, 1, 1);
+	if (error) {
+#ifdef _LP64
+		if (!system)
+			return NULL;
+#endif
+		panic("%s: uvm_pglistalloc failed: %d", __func__, error);
+	}
+
+	/*
+	 * Get the physical address from the first page.
+	 */
+	const struct vm_page * const pg = TAILQ_FIRST(&pglist);
+	KASSERT(pg != NULL);
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	KASSERTMSG(pa >= mips_avail_start,
+	    ("pa (%#"PRIxPADDR") < mips_avail_start (%#"PRIxPADDR")",
+	     pa, mips_avail_start));
+	KASSERTMSG(pa < mips_avail_end,
+	    ("pa (%#"PRIxPADDR") >= mips_avail_end (%#"PRIxPADDR")",
+	     pa, mips_avail_end));
+
+	/*
+	 * we need to return a direct-mapped VA for the pa.
+	 */
+#ifdef _LP64
+	const vaddr_t va = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
+#else
+	const vaddr_t va = MIPS_PHYS_TO_KSEG0(pa);
+#endif
+
+	return (void *)va;
+}
+
+/*
+ * Return true if we freed it, false if we didn't.
+ */
+bool
+cpu_uarea_free(void *va)
+{
+#ifdef _LP64
+	if (!MIPS_XKPHYS_P(va))
+		return false;
+	paddr_t pa = MIPS_XKPHYS_TO_PHYS(va);
+#else
+	if (!MIPS_KSEG0_P(va))
+		return false;
+	paddr_t pa = MIPS_KSEG0_TO_PHYS(va);
+#endif
+
+	for (const paddr_t epa = pa + USPACE; pa < epa; pa += PAGE_SIZE) {
+		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
+		KASSERT(pg != NULL);
+		uvm_pagefree(pg);
+	}
+	return true;
 }
 
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
+	KASSERT(l == curlwp);
 
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		fpcurlwp = &lwp0;	/* save some NULL checks */
-	KASSERT(fpcurlwp != l);
+	fpu_discard();
+}
+
+vaddr_t
+cpu_lwp_pc(struct lwp *l)
+{
+	return l->l_md.md_utf->tf_regs[_R_PC];
 }
 
 void
@@ -226,10 +278,16 @@ cpu_lwp_free2(struct lwp *l)
 	(void)l;
 }
 
+static struct evcnt evcnt_vmapbuf =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "vmapbuf", "calls");
+static struct evcnt evcnt_vmapbuf_adjustments =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &evcnt_vmapbuf,
+	"vmapbuf", "adjustments");
+
 /*
  * Map a user I/O request into kernel virtual address space.
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *upmap;
@@ -237,14 +295,21 @@ vmapbuf(struct buf *bp, vsize_t len)
 	vaddr_t kva;	/* Kernel VA (new to) */
 	paddr_t pa;	/* physical address */
 	vsize_t off;
+	vsize_t coloroff;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
+	evcnt_vmapbuf.ev_count++;
 	uva = mips_trunc_page(bp->b_saveaddr = bp->b_data);
+	coloroff = uva & ptoa(uvmexp.colormask);
+	if (coloroff)
+		evcnt_vmapbuf_adjustments.ev_count++;
 	off = (vaddr_t)bp->b_data - uva;
 	len = mips_round_page(off + len);
-	kva = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	kva = uvm_km_alloc(phys_map, len + coloroff, ptoa(uvmexp.ncolors),
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	kva += coloroff;
 	bp->b_data = (void *)(kva + off);
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	do {
@@ -257,6 +322,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		len -= PAGE_SIZE;
 	} while (len);
 	pmap_update(vm_map_pmap(phys_map));
+
+	return 0;
 }
 
 /*
@@ -267,16 +334,18 @@ vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t kva;
 	vsize_t off;
+	vsize_t coloroff;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
 	kva = mips_trunc_page(bp->b_data);
+	coloroff = kva & ptoa(uvmexp.colormask);
 	off = (vaddr_t)bp->b_data - kva;
 	len = mips_round_page(off + len);
 	pmap_remove(vm_map_pmap(phys_map), kva, kva + len);
 	pmap_update(pmap_kernel());
-	uvm_km_free(phys_map, kva, len, UVM_KMF_VAONLY);
+	uvm_km_free(phys_map, kva - coloroff, len + coloroff, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
@@ -328,4 +397,39 @@ overrun:
 	return 0;	/* XXX */
 #endif
 	panic("kvtophys");
+}
+
+/*
+ * Make a kernel mapping valid for I/O, e.g. non-cachable.
+ * Alignment and length constraints are as-if NBPG==PAGE_SIZE.
+ */
+int
+ioaccess(vaddr_t vaddr, paddr_t paddr, vsize_t len)
+{
+
+	while (len > PAGE_SIZE) {
+		pmap_kenter_pa(vaddr, paddr, VM_PROT_WRITE, 0);
+		len -= PAGE_SIZE;
+		vaddr += PAGE_SIZE;
+		paddr += PAGE_SIZE;
+	}
+
+	if (len) {
+		/* We could warn.. */
+		pmap_kenter_pa(vaddr, paddr, VM_PROT_WRITE, 0);
+	}
+
+	/* BUGBUG should use pmap_enter() instead and check results! */
+	return 0;
+}
+
+/*
+ * Opposite to the above: just forget the mapping.
+ */
+int
+iounaccess(vaddr_t vaddr, vsize_t len)
+{
+
+	pmap_kremove(vaddr, len);
+	return 0;
 }

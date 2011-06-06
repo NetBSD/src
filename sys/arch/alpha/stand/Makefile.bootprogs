@@ -1,5 +1,8 @@
-# $NetBSD: Makefile.bootprogs,v 1.30 2009/04/20 13:15:12 tsutsui Exp $
+# $NetBSD: Makefile.bootprogs,v 1.30.6.1 2011/06/06 09:04:45 jruoho Exp $
 
+NOMAN=			# defined
+
+.include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
 
 S=	${.CURDIR}/../../../..
@@ -36,7 +39,8 @@ CFLAGS+=	-Werror ${CWARNFLAGS}
 .if exists(version)
 .PHONY: vers.c
 vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "alpha"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    -N ${.CURDIR}/version "alpha"
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c

@@ -1,7 +1,7 @@
-/*	$NetBSD: shmifvar.h,v 1.5 2010/08/15 18:55:03 pooka Exp $	*/
+/*	$NetBSD: shmifvar.h,v 1.5.6.1 2011/06/06 09:10:09 jruoho Exp $	*/
 
 /*-
- * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by The Nokia Foundation.
  *

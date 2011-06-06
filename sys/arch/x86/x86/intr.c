@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.69 2010/11/24 14:56:18 cegger Exp $	*/
+/*	$NetBSD: intr.c,v 1.69.2.1 2011/06/06 09:07:08 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.69 2010/11/24 14:56:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.69.2.1 2011/06/06 09:07:08 jruoho Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -222,12 +222,11 @@ intr_default_setup(void)
  * Handle a NMI, possibly a machine check.
  * return true to panic system, false to ignore.
  */
-int
+void
 x86_nmi(void)
 {
 
 	log(LOG_CRIT, "NMI port 61 %x, port 70 %x\n", inb(0x61), inb(0x70));
-	return(0);
 }
 
 /*
@@ -694,7 +693,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 
 #ifdef DIAGNOSTIC
 	if (legacy_irq != -1 && (legacy_irq < 0 || legacy_irq > 15))
-		panic("intr_establish: bad legacy IRQ value");
+		panic("%s: bad legacy IRQ value", __func__);
 
 	if (legacy_irq == -1 && pic == &i8259_pic)
 		panic("intr_establish: non-legacy IRQ on i8259");
@@ -702,7 +701,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 
 	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	if (ih == NULL) {
-		printf("intr_establish: can't allocate handler info\n");
+		printf("%s: can't allocate handler info\n", __func__);
 		return NULL;
 	}
 
@@ -722,9 +721,9 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	    source->is_pic->pic_type != pic->pic_type) {
 		mutex_exit(&cpu_lock);
 		kmem_free(ih, sizeof(*ih));
-		printf("intr_establish: can't share intr source between "
+		printf("%s: can't share intr source between "
 		       "different PIC types (legacy_irq %d pin %d slot %d)\n",
-		    legacy_irq, pin, slot);
+		    __func__, legacy_irq, pin, slot);
 		return NULL;
 	}
 
@@ -745,15 +744,16 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 			mutex_exit(&cpu_lock);
 			kmem_free(ih, sizeof(*ih));
 			intr_source_free(ci, slot, pic, idt_vec);
-			printf("intr_establish: pic %s pin %d: can't share "
-			       "type %d with %d\n", pic->pic_name, pin,
+			printf("%s: pic %s pin %d: can't share "
+			       "type %d with %d\n",
+				__func__, pic->pic_name, pin,
 				source->is_type, type);
 			return NULL;
 		}
 		break;
 	default:
-		panic("intr_establish: bad intr type %d for pic %s pin %d\n",
-		    source->is_type, pic->pic_name, pin);
+		panic("%s: bad intr type %d for pic %s pin %d\n",
+		    __func__, source->is_type, pic->pic_name, pin);
 		/* NOTREACHED */
 	}
 
@@ -859,7 +859,7 @@ intr_disestablish_xcall(void *arg1, void *arg2)
 		;
 	if (q == NULL) {
 		x86_write_psl(psl);
-		panic("intr_disestablish: handler not registered");
+		panic("%s: handler not registered", __func__);
 		/* NOTREACHED */
 	}
 
@@ -919,7 +919,7 @@ intr_string(int ih)
 #endif
 
 	if (ih == 0)
-		panic("pci_intr_string: bogus handle 0x%x", ih);
+		panic("%s: bogus handle 0x%x", __func__, ih);
 
 
 #if NIOAPIC > 0

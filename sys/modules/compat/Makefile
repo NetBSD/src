@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/01/19 19:39:41 christos Exp $
+#	$NetBSD: Makefile,v 1.5.10.1 2011/06/06 09:09:47 jruoho Exp $
 
 .include "../Makefile.inc"
 
@@ -42,8 +42,8 @@ CPPFLAGS+=	-DCOMPAT_60 -DCOMPAT_70 -DCOMPAT_80
 CPPFLAGS+=	-DSYSVSEM -DSYSVSHM -DSYSVMSG -DCOMPAT_43
 
 SRCS=	kern_exit_43.c kern_info_09.c
-SRCS+=	kern_info_43.c kern_ipc_10.c kern_resource_43.c kern_sig_13.c
-SRCS+=	kern_sig_43.c kern_xxx_12.c sysv_msg_14.c
+SRCS+=	kern_info_43.c kern_ipc_10.c kern_resource_43.c kern_select_50.c
+SRCS+=	kern_sig_13.c kern_sig_43.c kern_xxx_12.c sysv_msg_14.c
 SRCS+=	sysv_sem_14.c sysv_shm_14.c tty_43.c uipc_syscalls_30.c
 SRCS+=	uipc_syscalls_43.c vfs_syscalls_12.c kern_sig_16.c
 SRCS+=	vfs_syscalls_20.c vfs_syscalls_30.c vfs_syscalls_40.c

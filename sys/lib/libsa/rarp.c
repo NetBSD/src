@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.30 2009/01/17 14:00:36 tsutsui Exp $	*/
+/*	$NetBSD: rarp.c,v 1.30.8.1 2011/06/06 09:09:43 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -88,14 +88,14 @@ rarp_getipaddress(int sock)
 	struct iodesc *d;
 	struct ether_arp *ap;
 	struct {
-		u_char header[ETHER_SIZE];
+		u_char header[ETHERNET_HEADER_SIZE];
 		struct {
 			struct ether_arp arp;
 			u_char pad[18]; 	/* 60 - sizeof(arp) */
 		} data;
 	} wbuf;
 	struct {
-		u_char header[ETHER_SIZE];
+		u_char header[ETHERNET_HEADER_SIZE];
 		struct {
 			struct ether_arp arp;
 			u_char pad[24]; 	/* extra space */

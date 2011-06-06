@@ -1,8 +1,8 @@
-/*	$NetBSD: readufs.h,v 1.9 2009/03/14 14:46:07 dsl Exp $	*/
+/*	$NetBSD: readufs.h,v 1.9.6.1 2011/06/06 09:07:02 jruoho Exp $	*/
 /*	from Id: readufs.h,v 1.9 2003/10/15 14:16:58 itohy Exp 	*/
 
 /*
- * Written in 1999, 2002, 2003 by ITOH Yasufumi (itohy@NetBSD.org).
+ * Written in 1999, 2002, 2003 by ITOH Yasufumi.
  * Public domain.
  */
 

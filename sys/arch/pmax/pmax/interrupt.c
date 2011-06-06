@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.17 2010/12/20 00:25:41 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.17.2.1 2011/06/06 09:06:24 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.17 2010/12/20 00:25:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.17.2.1 2011/06/06 09:06:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.17 2010/12/20 00:25:41 matt Exp $");
 #include <sys/cpu.h>
 
 #include <mips/psl.h>
+#include <mips/locore.h>
+#include <mips/regnum.h>
 
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
@@ -45,12 +47,15 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.17 2010/12/20 00:25:41 matt Exp $");
 
 struct evcnt pmax_clock_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "clock", "intr");
+EVCNT_ATTACH_STATIC(pmax_clock_evcnt);
+#ifndef NOFPU
 struct evcnt pmax_fpu_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "fpu", "intr");
+EVCNT_ATTACH_STATIC(pmax_fpu_evcnt);
+#endif
 struct evcnt pmax_memerr_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "memerr", "intr");
-
-extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
+EVCNT_ATTACH_STATIC(pmax_memerr_evcnt);
 
 static const char * const intrnames[] = {
 	"serial0",
@@ -79,51 +84,29 @@ intr_init(void)
  * pmax uses standard mips1 convention, wiring FPU to hard interrupt 5.
  */
 void
-cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
-	struct cpu_info *ci;
+	int ipl;
+	uint32_t pending;
 
-	ci = curcpu();
-	ci->ci_idepth++;
-	ci->ci_data.cpu_nintr++;
+	curcpu()->ci_data.cpu_nintr++;
 
-	/* device interrupts */
-	if (ipending & (MIPS_INT_MASK_0|MIPS_INT_MASK_1|MIPS_INT_MASK_2|
-			MIPS_INT_MASK_3|MIPS_INT_MASK_4)) {
-		(*platform.iointr)(status, cause, pc, ipending);
-	}
-	/* FPU notification */
-	if (ipending & MIPS_INT_MASK_5) {
-		if (!USERMODE(status))
-			goto kerneltouchedFPU;
-		pmax_fpu_evcnt.ev_count++;
-#if !defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
+	while (ppl < (ipl = splintr(&pending))) {
+		/* device interrupts */
+		if (pending & (MIPS_INT_MASK_0|MIPS_INT_MASK_1|MIPS_INT_MASK_2|
+				MIPS_INT_MASK_3|MIPS_INT_MASK_4)) {
+			(*platform.iointr)(status, pc, pending);
+		}
+#if !defined(NOFPU)
+		/* FPU notification */
+		if (pending & MIPS_INT_MASK_5) {
+			if (!USERMODE(status))
+				panic("kernel used FPU: "
+				    "PC %#"PRIxVADDR", SR %#x", pc, status);
+
+			pmax_fpu_evcnt.ev_count++;
+			mips_fpu_intr(pc, curlwp->l_md.md_utf);
+		}
 #endif
 	}
-
-	ci->ci_idepth--;
-
-#ifdef notyet
-	/* For __HAVE_FAST_SOFTINTS */
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
-	if (ipending == 0)
-		return;
-	_clrsoftintr(ipending);
-	mips_softint_dispatch(ipending);
-#endif
-
-	return;
-kerneltouchedFPU:
-	panic("kernel used FPU: PC %"PRIxVADDR", CR %x, SR %x",
-	    pc, cause, status);
-}
-
-const int *ipl2spl_table;
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
 }

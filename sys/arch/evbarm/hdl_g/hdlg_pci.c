@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlg_pci.c,v 1.1 2006/04/16 02:22:33 nonaka Exp $	*/
+/*	$NetBSD: hdlg_pci.c,v 1.1.106.1 2011/06/06 09:05:25 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdlg_pci.c,v 1.1 2006/04/16 02:22:33 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdlg_pci.c,v 1.1.106.1 2011/06/06 09:05:25 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdlg_pci.c,v 1.1 2006/04/16 02:22:33 nonaka Exp $");
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
-int	hdlg_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int	hdlg_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 const char *hdlg_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *hdlg_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*hdlg_pci_intr_establish(void *, pci_intr_handle_t,
@@ -74,7 +74,7 @@ hdlg_pci_init(pci_chipset_tag_t pc, void *cookie)
 }
 
 int
-hdlg_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+hdlg_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct i80321_softc *sc = pa->pa_pc->pc_intr_v;
 	uint32_t busno;

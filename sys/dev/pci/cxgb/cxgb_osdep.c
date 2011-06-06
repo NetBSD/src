@@ -33,7 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/ioccom.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>

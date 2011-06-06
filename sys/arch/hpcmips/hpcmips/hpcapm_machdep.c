@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm_machdep.c,v 1.3 2009/03/18 10:22:29 cegger Exp $	*/
+/*	$NetBSD: hpcapm_machdep.c,v 1.3.6.1 2011/06/06 09:05:44 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm_machdep.c,v 1.3 2009/03/18 10:22:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm_machdep.c,v 1.3.6.1 2011/06/06 09:05:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,7 +64,7 @@ machine_standby(void)
 		 * disable all interrupts except PIU interrupt
 		 */
 		vrip_intr_suspend();
-		_spllower(~MIPS_INT_MASK_0);
+		vrip_splpiu();
 
 		/*
 		 * STANDBY instruction puts the CPU into power saveing
@@ -91,35 +91,35 @@ void
 machine_sleep(void)
 {
 #if NVRIP_COMMON > 0
-	 if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {
-		 /*
-		  * disable all interrupts except PIU interrupt
-		  */
-		 vrip_intr_suspend();
-		 _spllower(~MIPS_INT_MASK_0);
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {
+		/*
+		 * disable all interrupts except PIU interrupt
+		 */
+		vrip_intr_suspend();
+		vrip_splpiu();
 
-		 /*
-		  * SUSPEND instruction puts the CPU into power saveing
-		  * state until some interrupt occuer.
-		  * It sleeps until you push the power button.
-		  */
-		 __asm(".set noreorder");
-		 __asm(".word	" ___STRING(VR_OPCODE_SUSPEND));
-		 __asm("nop");
-		 __asm("nop");
-		 __asm("nop");
-		 __asm("nop");
-		 __asm("nop");
-		 __asm(".set reorder");
+		/*
+		 * SUSPEND instruction puts the CPU into power saveing
+		 * state until some interrupt occuer.
+		 * It sleeps until you push the power button.
+		 */
+		__asm(".set noreorder");
+		__asm(".word	" ___STRING(VR_OPCODE_SUSPEND));
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm("nop");
+		__asm(".set reorder");
 
-		 splhigh();
-		 vrip_intr_resume();
-		 delay(1000); /* 1msec */
-	 }
+		splhigh();
+		vrip_intr_resume();
+		delay(1000); /* 1msec */
+	}
 #endif /* NVRIP_COMMON > 0 */
 #ifdef TX39XX
-	 if (platid_match(&platid, &platid_mask_CPU_MIPS_TX)) {
-		 tx39power_suspend_cpu();
-	 }
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_TX)) {
+		tx39power_suspend_cpu();
+	}
 #endif
 }

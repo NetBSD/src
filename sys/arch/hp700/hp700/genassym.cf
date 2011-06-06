@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25 2011/01/14 02:06:26 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.25.2.1 2011/06/06 09:05:40 jruoho Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -32,6 +32,10 @@
 #
 #	@(#)genassym.c	8.3 (Berkeley) 1/4/94
 #
+
+if defined(_KERNEL_OPT)
+include "opt_multiprocessor.h"
+endif
 
 quote #define __MUTEX_PRIVATE
 quote #define __RWLOCK_PRIVATE
@@ -73,6 +77,7 @@ export	HPPA_PID_KERNEL
 export	HPPA_SID_KERNEL
 export	VM_MAXUSER_ADDRESS
 export	HPPA_LDCW_ALIGN
+export	__SIMPLELOCK_RAW_UNLOCKED
 
 # `break' entry points
 export	HPPA_BREAK_KERNEL
@@ -80,10 +85,10 @@ export	HPPA_BREAK_GET_PSW
 export	HPPA_BREAK_SET_PSW
 
 # hp700_int_reg fields
-struct	hp700_int_reg
-member	INT_REG_REQ		int_reg_req
-member	INT_REG_BITS_MAP	int_reg_bits_map
-export	INT_REG_BIT_REG
+struct	hp700_interrupt_register
+member	IR_REQ			ir_req
+member	IR_BITS_MAP		ir_bits_map
+export	IR_BIT_REG
 
 # struct cpu_info fields
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
@@ -91,8 +96,13 @@ define	CI_IPENDING		offsetof(struct cpu_info, ci_ipending)
 #define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
 #define	CI_SOFTLWPS		offsetof(struct cpu_info, ci_softlwps)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
-#define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_TRAPSAVE		offsetof(struct cpu_info, ci_trapsave)
+define	CI_PSW			offsetof(struct cpu_info, ci_psw)
+define	CI_FPU_STATE		offsetof(struct cpu_info, ci_fpu_state)
+ifdef MULTIPROCESSOR
+define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	CI_STACK		offsetof(struct cpu_info, ci_stack)
+endif
 
 define	MTX_IPL			offsetof(struct kmutex, mtx_ipl)
 define	MTX_LOCK		offsetof(struct kmutex, mtx_lock)
@@ -167,7 +177,9 @@ member	TF_CR20		tf_isr
 member	TF_CR21		tf_ior
 member	TF_CR22		tf_ipsw
 member	TF_CR23		tf_eirr
+member	TF_CR24		tf_cr24
 member	TF_CR25		tf_vtop
+member	TF_CR27		tf_cr27
 member	TF_CR28		tf_cr28
 member	TF_CR30		tf_cr30
 

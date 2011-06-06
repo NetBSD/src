@@ -1,4 +1,4 @@
-#	$NetBSD: lwps,v 1.3 2009/11/18 18:12:00 eeh Exp $
+#	$NetBSD: lwps,v 1.3.6.1 2011/06/06 09:09:25 jruoho Exp $
 
 define lwps
 	set $i = 0
@@ -14,7 +14,7 @@ define lwps
 			set $l = $p->p_lwps.lh_first
 			set $j = 0
 			while ($j < $p->p_nlwps)
-				printf "0x%16lx %5d %5d %8x 0x%16lx", \
+				printf "0x%016lx %5d %5d %8x 0x%016lx", \
 					$l, $p->p_pid, $l->l_lid, $l->l_flag, $l->l_wchan
 				if ($l->l_wmesg)
 					printf " (%s)", (char *)$l->l_wmesg

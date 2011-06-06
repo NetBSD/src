@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.36 2011/01/13 03:40:51 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.36.2.1 2011/06/06 09:07:41 jruoho Exp $ */
 
 /*-
- * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
+ * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.36 2011/01/13 03:40:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.36.2.1 2011/06/06 09:07:41 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/evcnt.h>
 #include <sys/kernel.h>
 #include <sys/once.h>
 #include <sys/mutex.h>
@@ -48,14 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.36 2011/01/13 03:40:51 jruoho 
 #define _COMPONENT	 ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	 ("acpi_cpu_cstate")
 
-static void		 acpicpu_cstate_attach_print(struct acpicpu_softc *);
-static void		 acpicpu_cstate_attach_evcnt(struct acpicpu_softc *);
-static void		 acpicpu_cstate_detach_evcnt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst_add(struct acpicpu_softc *,
-						ACPI_OBJECT *);
+						ACPI_OBJECT *, int );
 static void		 acpicpu_cstate_cst_bios(void);
 static void		 acpicpu_cstate_memset(struct acpicpu_softc *);
+static ACPI_STATUS	 acpicpu_cstate_dep(struct acpicpu_softc *);
 static void		 acpicpu_cstate_fadt(struct acpicpu_softc *);
 static void		 acpicpu_cstate_quirks(struct acpicpu_softc *);
 static int		 acpicpu_cstate_latency(struct acpicpu_softc *);
@@ -99,85 +96,17 @@ acpicpu_cstate_attach(device_t self)
 		break;
 	}
 
+	/*
+	 * Query the optional _CSD.
+	 */
+	rv = acpicpu_cstate_dep(sc);
+
+	if (ACPI_SUCCESS(rv))
+		sc->sc_flags |= ACPICPU_FLAG_C_DEP;
+
 	sc->sc_flags |= ACPICPU_FLAG_C;
 
 	acpicpu_cstate_quirks(sc);
-	acpicpu_cstate_attach_evcnt(sc);
-	acpicpu_cstate_attach_print(sc);
-}
-
-void
-acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
-{
-	struct acpicpu_cstate *cs;
-	static bool once = false;
-	const char *str;
-	int i;
-
-	if (once != false)
-		return;
-
-	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
-
-		cs = &sc->sc_cstate[i];
-
-		if (cs->cs_method == 0)
-			continue;
-
-		switch (cs->cs_method) {
-
-		case ACPICPU_C_STATE_HALT:
-			str = "HLT";
-			break;
-
-		case ACPICPU_C_STATE_FFH:
-			str = "FFH";
-			break;
-
-		case ACPICPU_C_STATE_SYSIO:
-			str = "I/O";
-			break;
-
-		default:
-			panic("NOTREACHED");
-		}
-
-		aprint_debug_dev(sc->sc_dev, "C%d: %3s, "
-		    "lat %3u us, pow %5u mW, flags 0x%02x\n", i, str,
-		    cs->cs_latency, cs->cs_power, cs->cs_flags);
-	}
-
-	once = true;
-}
-
-static void
-acpicpu_cstate_attach_evcnt(struct acpicpu_softc *sc)
-{
-	struct acpicpu_cstate *cs;
-	const char *str;
-	int i;
-
-	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
-
-		cs = &sc->sc_cstate[i];
-
-		if (cs->cs_method == 0)
-			continue;
-
-		str = "HALT";
-
-		if (cs->cs_method == ACPICPU_C_STATE_FFH)
-			str = "MWAIT";
-
-		if (cs->cs_method == ACPICPU_C_STATE_SYSIO)
-			str = "I/O";
-
-		(void)snprintf(cs->cs_name, sizeof(cs->cs_name),
-		    "C%d (%s)", i, str);
-
-		evcnt_attach_dynamic(&cs->cs_evcnt, EVCNT_TYPE_MISC,
-		    NULL, device_xname(sc->sc_dev), cs->cs_name);
-	}
 }
 
 int
@@ -187,30 +116,14 @@ acpicpu_cstate_detach(device_t self)
 	static ONCE_DECL(once_detach);
 	int rv;
 
-	rv = RUN_ONCE(&once_detach, acpicpu_md_idle_stop);
+	rv = RUN_ONCE(&once_detach, acpicpu_md_cstate_stop);
 
 	if (rv != 0)
 		return rv;
 
 	sc->sc_flags &= ~ACPICPU_FLAG_C;
-	acpicpu_cstate_detach_evcnt(sc);
 
 	return 0;
-}
-
-static void
-acpicpu_cstate_detach_evcnt(struct acpicpu_softc *sc)
-{
-	struct acpicpu_cstate *cs;
-	int i;
-
-	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
-
-		cs = &sc->sc_cstate[i];
-
-		if (cs->cs_method != 0)
-			evcnt_detach(&cs->cs_evcnt);
-	}
 }
 
 void
@@ -218,25 +131,19 @@ acpicpu_cstate_start(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 
-	(void)acpicpu_md_idle_start(sc);
+	(void)acpicpu_md_cstate_start(sc);
 }
 
-bool
-acpicpu_cstate_suspend(device_t self)
+void
+acpicpu_cstate_suspend(void *aux)
 {
-	return true;
+	/* Nothing. */
 }
 
-bool
-acpicpu_cstate_resume(device_t self)
+void
+acpicpu_cstate_resume(void *aux)
 {
-	static const ACPI_OSD_EXEC_CALLBACK func = acpicpu_cstate_callback;
-	struct acpicpu_softc *sc = device_private(self);
-
-	if ((sc->sc_flags & ACPICPU_FLAG_C_FADT) == 0)
-		(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, func, sc->sc_dev);
-
-	return true;
+	acpicpu_cstate_callback(aux);
 }
 
 void
@@ -308,7 +215,7 @@ acpicpu_cstate_cst(struct acpicpu_softc *sc)
 	for (count = 0, i = 1; i <= n; i++) {
 
 		elm = &obj->Package.Elements[i];
-		rv = acpicpu_cstate_cst_add(sc, elm);
+		rv = acpicpu_cstate_cst_add(sc, elm, i);
 
 		if (ACPI_SUCCESS(rv))
 			count++;
@@ -324,9 +231,8 @@ out:
 }
 
 static ACPI_STATUS
-acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
+acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm, int i)
 {
-	const struct acpicpu_object *ao = &sc->sc_object;
 	struct acpicpu_cstate *cs = sc->sc_cstate;
 	struct acpicpu_cstate state;
 	struct acpicpu_reg *reg;
@@ -423,18 +329,6 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 			goto out;
 		}
 
-		/*
-		 * Check only that the address is in the mapped space.
-		 * Systems are allowed to change it when operating
-		 * with _CST (see ACPI 4.0, pp. 94-95). For instance,
-		 * the offset of P_LVL3 may change depending on whether
-		 * acpiacad(4) is connected or disconnected.
-		 */
-		if (reg->reg_addr > ao->ao_pblkaddr + ao->ao_pblklen) {
-			rv = AE_BAD_ADDRESS;
-			goto out;
-		}
-
 		state.cs_addr = reg->reg_addr;
 		break;
 
@@ -445,6 +339,11 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 
 		case ACPI_STATE_C1:
 
+			/*
+			 * If ACPI wants native access (FFH), but the
+			 * MD code does not support MONITOR/MWAIT, use
+			 * HLT for C1 and error out for higher C-states.
+			 */
 			if ((sc->sc_flags & ACPICPU_FLAG_C_FFH) == 0)
 				state.cs_method = ACPICPU_C_STATE_HALT;
 
@@ -477,21 +376,35 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		goto out;
 	}
 
-	if (cs[type].cs_method != 0) {
-		rv = AE_ALREADY_EXISTS;
-		goto out;
+	/*
+	 * As some systems define the type arbitrarily,
+	 * we use a sequential counter instead of the
+	 * BIOS data. For instance, AMD family 14h is
+	 * instructed to only use the value 2; see
+	 *
+	 *	Advanced Micro Devices: BIOS and Kernel
+	 *	Developer's Guide (BKDG) for AMD Family
+	 *	14h Models 00h-0Fh Processors. Revision
+	 *	3.00, January 4, 2011.
+	 */
+	if (i != (int)type) {
+
+		ACPI_DEBUG_PRINT((ACPI_DB_INFO,
+			"C%d != C%u from BIOS", i, type));
 	}
 
-	cs[type].cs_addr = state.cs_addr;
-	cs[type].cs_power = state.cs_power;
-	cs[type].cs_flags = state.cs_flags;
-	cs[type].cs_method = state.cs_method;
-	cs[type].cs_latency = state.cs_latency;
+	KASSERT(cs[i].cs_method == 0);
+
+	cs[i].cs_addr = state.cs_addr;
+	cs[i].cs_power = state.cs_power;
+	cs[i].cs_flags = state.cs_flags;
+	cs[i].cs_method = state.cs_method;
+	cs[i].cs_latency = state.cs_latency;
 
 out:
 	if (ACPI_FAILURE(rv))
-		aprint_debug_dev(sc->sc_dev, "invalid "
-		    "_CST: %s\n", AcpiFormatException(rv));
+		aprint_error_dev(sc->sc_dev, "failed to add "
+		    "C-state: %s\n", AcpiFormatException(rv));
 
 	return rv;
 }
@@ -511,9 +424,9 @@ acpicpu_cstate_cst_bios(void)
 static void
 acpicpu_cstate_memset(struct acpicpu_softc *sc)
 {
-	int i = 0;
+	uint8_t i = 0;
 
-	while (i < ACPI_C_STATE_COUNT) {
+	while (i < __arraycount(sc->sc_cstate)) {
 
 		sc->sc_cstate[i].cs_addr = 0;
 		sc->sc_cstate[i].cs_power = 0;
@@ -523,6 +436,96 @@ acpicpu_cstate_memset(struct acpicpu_softc *sc)
 
 		i++;
 	}
+}
+
+static ACPI_STATUS
+acpicpu_cstate_dep(struct acpicpu_softc *sc)
+{
+	ACPI_OBJECT *elm, *obj;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+	uint32_t val;
+	uint8_t i, n;
+
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_CSD", &buf);
+
+	if (ACPI_FAILURE(rv))
+		goto out;
+
+	obj = buf.Pointer;
+
+	if (obj->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	if (obj->Package.Count != 1) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	elm = &obj->Package.Elements[0];
+
+	if (obj->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	n = elm->Package.Count;
+
+	if (n != 6) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	elm = elm->Package.Elements;
+
+	for (i = 0; i < n; i++) {
+
+		if (elm[i].Type != ACPI_TYPE_INTEGER) {
+			rv = AE_TYPE;
+			goto out;
+		}
+
+		if (elm[i].Integer.Value > UINT32_MAX) {
+			rv = AE_AML_NUMERIC_OVERFLOW;
+			goto out;
+		}
+	}
+
+	val = elm[1].Integer.Value;
+
+	if (val != 0)
+		aprint_debug_dev(sc->sc_dev, "invalid revision in _CSD\n");
+
+	val = elm[3].Integer.Value;
+
+	if (val < ACPICPU_DEP_SW_ALL || val > ACPICPU_DEP_HW_ALL) {
+		rv = AE_AML_BAD_RESOURCE_VALUE;
+		goto out;
+	}
+
+	val = elm[4].Integer.Value;
+
+	if (val > sc->sc_ncpus) {
+		rv = AE_BAD_VALUE;
+		goto out;
+	}
+
+	sc->sc_cstate_dep.dep_domain = elm[2].Integer.Value;
+	sc->sc_cstate_dep.dep_type   = elm[3].Integer.Value;
+	sc->sc_cstate_dep.dep_ncpus  = elm[4].Integer.Value;
+	sc->sc_cstate_dep.dep_index  = elm[5].Integer.Value;
+
+out:
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
+		aprint_debug_dev(sc->sc_dev, "failed to evaluate "
+		    "_CSD: %s\n", AcpiFormatException(rv));
+
+	if (buf.Pointer != NULL)
+		ACPI_FREE(buf.Pointer);
+
+	return rv;
 }
 
 static void
@@ -535,13 +538,15 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 	/*
 	 * All x86 processors should support C1 (a.k.a. HALT).
 	 */
-	if ((AcpiGbl_FADT.Flags & ACPI_FADT_C1_SUPPORTED) != 0)
-		cs[ACPI_STATE_C1].cs_method = ACPICPU_C_STATE_HALT;
+	cs[ACPI_STATE_C1].cs_method = ACPICPU_C_STATE_HALT;
+
+	if ((AcpiGbl_FADT.Flags & ACPI_FADT_C1_SUPPORTED) == 0)
+		aprint_debug_dev(sc->sc_dev, "HALT not supported?\n");
 
 	if (sc->sc_object.ao_pblkaddr == 0)
 		return;
 
-	if (acpi_md_ncpus() > 1) {
+	if (sc->sc_ncpus > 1) {
 
 		if ((AcpiGbl_FADT.Flags & ACPI_FADT_C2_MP_SUPPORTED) == 0)
 			return;
@@ -687,7 +692,7 @@ acpicpu_cstate_idle(void)
 	 * Apply AMD C1E quirk.
 	 */
 	if ((sc->sc_flags & ACPICPU_FLAG_C_C1E) != 0)
-		acpicpu_md_quirks_c1e();
+		acpicpu_md_quirk_c1e();
 
 	/*
 	 * Check for bus master activity. Note that particularly usb(4)
@@ -762,7 +767,7 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 
 	case ACPICPU_C_STATE_FFH:
 	case ACPICPU_C_STATE_HALT:
-		acpicpu_md_idle_enter(cs->cs_method, state);
+		acpicpu_md_cstate_enter(cs->cs_method, state);
 		break;
 
 	case ACPICPU_C_STATE_SYSIO:

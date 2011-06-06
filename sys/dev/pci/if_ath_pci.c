@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.38 2010/04/28 22:00:39 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.38.2.1 2011/06/06 09:08:11 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.38 2010/04/28 22:00:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.38.2.1 2011/06/06 09:08:11 jruoho Exp $");
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.38 2010/04/28 22:00:39 dyoung Exp $
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <external/isc/atheros_hal/dist/ah.h>
 
@@ -127,6 +128,7 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	const char *intrstr = NULL;
+	const char *devname;
 	pcireg_t mem_type;
 
 	sc->sc_dev = self;
@@ -134,7 +136,8 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_pc = pc;
 	psc->sc_tag = pa->pa_tag;
 
-	aprint_normal("\n");
+	devname = ath_hal_probe(PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id));
+	aprint_normal(": %s\n", devname);
 
 	if (!ath_pci_setup(psc))
 		goto bad;
@@ -145,12 +148,13 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 	mem_type = pci_mapreg_type(pc, pa->pa_tag, ATH_PCI_MMBA);
 	if (mem_type != PCI_MAPREG_TYPE_MEM &&
 	    mem_type != PCI_MAPREG_MEM_TYPE_64BIT) {
-		aprint_error("bad pci register type %d\n", (int)mem_type);
+		aprint_error_dev(self, "bad pci register type %d\n",
+		    (int)mem_type);
 		goto bad;
 	}
 	if (pci_mapreg_map(pa, ATH_PCI_MMBA, mem_type, 0, &psc->sc_iot,
 		&psc->sc_ioh, NULL, &psc->sc_mapsz) != 0) {
-		aprint_error("cannot map register space\n");
+		aprint_error_dev(self, "cannot map register space\n");
 		goto bad;
 	}
 
@@ -272,4 +276,33 @@ ath_pci_setup(struct ath_pci_softc *sc)
 		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BHLC_REG, bhlc);
 	}
 	return true;
+}
+
+MODULE(MODULE_CLASS_DRIVER, if_ath_pci, "ath");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+if_ath_pci_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_if_ath_pci,
+		    cfattach_ioconf_if_ath_pci, cfdata_ioconf_if_ath_pci);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_if_ath_pci,
+		    cfattach_ioconf_if_ath_pci, cfdata_ioconf_if_ath_pci);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }

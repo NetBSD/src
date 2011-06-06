@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_pmax.c,v 1.21 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: ibus_pmax.c,v 1.21.6.1 2011/06/06 09:06:22 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.21 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.21.6.1 2011/06/06 09:06:22 jruoho Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -49,10 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.21 2009/03/14 21:04:14 dsl Exp $");
 #include <pmax/pmax/kn230.h>
 #include <pmax/pmax/pmaxtype.h>
 
-static int	ibus_pmax_match(struct device *, struct cfdata *, void *);
-static void	ibus_pmax_attach(struct device *, struct device *, void *);
+static int	ibus_pmax_match(device_t, cfdata_t, void *);
+static void	ibus_pmax_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ibus_pmax, sizeof(struct ibus_softc),
+CFATTACH_DECL_NEW(ibus_pmax, 0,
     ibus_pmax_match, ibus_pmax_attach, NULL, NULL);
 
 #define KV(x)	MIPS_PHYS_TO_KSEG1(x)
@@ -65,8 +65,6 @@ static struct ibus_attach_args ibus_pmax_devs[] = {
         { "sii",        SYS_DEV_SCSI,	KV(KN01_SYS_SII),       0	},
         { "mc146818",   SYS_DEV_BOGUS,	KV(KN01_SYS_CLOCK),     0	},
 };
-static const int ibus_pmax_ndevs =
-	sizeof(ibus_pmax_devs)/sizeof(ibus_pmax_devs[0]);
 #endif /* DEC_3100 */
 
 #ifdef DEC_5100
@@ -88,14 +86,12 @@ static struct ibus_attach_args ibus_mipsmate_devs[] = {
 	{ "nvram",	SYS_DEV_BOGUS,	KV(0x86400000),		0 },
 #endif
 };
-static const int ibus_mipsmate_ndevs =
-	sizeof(ibus_mipsmate_devs)/sizeof(ibus_mipsmate_devs[0]);
 #endif /* DEC_5100 */
 
 static int ibus_attached;
 
 static int
-ibus_pmax_match(struct device *parent, struct cfdata *cfdata, void *aux)
+ibus_pmax_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -110,7 +106,7 @@ ibus_pmax_match(struct device *parent, struct cfdata *cfdata, void *aux)
 }
 
 static void
-ibus_pmax_attach(struct device *parent, struct device *self, void *aux)
+ibus_pmax_attach(device_t parent, device_t self, void *aux)
 {
 	struct ibus_dev_attach_args ida;
 
@@ -121,13 +117,13 @@ ibus_pmax_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DEC_3100
 	case DS_PMAX:
 		ida.ida_devs = ibus_pmax_devs;
-		ida.ida_ndevs = ibus_pmax_ndevs;
+		ida.ida_ndevs = __arraycount(ibus_pmax_devs);
 		break;
 #endif
 #ifdef DEC_5100
 	case DS_MIPSMATE:
 		ida.ida_devs = ibus_mipsmate_devs;
-		ida.ida_ndevs = ibus_mipsmate_ndevs;
+		ida.ida_ndevs = __arraycount(ibus_mipsmate_devs);
 		break;
 #endif
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.17 2008/07/28 17:54:02 christos Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.17.22.1 2011/06/06 09:09:54 jruoho Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -78,6 +78,10 @@ int	ieee80211_classify(struct ieee80211com *, struct mbuf *,
 		struct ieee80211_node *);
 struct mbuf *ieee80211_encap(struct ieee80211com *, struct mbuf *,
 		struct ieee80211_node *);
+struct mbuf *ieee80211_get_rts(struct ieee80211com *,
+		const struct ieee80211_frame *, uint16_t);
+struct mbuf *ieee80211_get_cts_to_self(struct ieee80211com *,
+		uint16_t);
 void	ieee80211_pwrsave(struct ieee80211com *, struct ieee80211_node *, 
 		struct mbuf *);
 

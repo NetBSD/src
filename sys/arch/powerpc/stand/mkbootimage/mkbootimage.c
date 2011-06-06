@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.13 2010/10/16 05:14:14 kiyohara Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.13.2.1 2011/06/06 09:06:31 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -527,19 +527,19 @@ rs6000_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	write(rs6000_fd, (void *)rs6000_magic, RS6000_MAGICSIZE);
 	lenpos = lseek(rs6000_fd, 0, SEEK_CUR);
 	if (verboseflag)
-		printf("wrote magic at pos 0x%x\n", lenpos);
+		printf("wrote magic at pos 0x%lx\n", (unsigned long)lenpos);
 	tmp = sa_htobe32(0);
 	write(rs6000_fd, (void *)&tmp, KERNLENSIZE);
 
 	/* write in the compressed kernel */
 	kstart = lseek(rs6000_fd, 0, SEEK_CUR);
 	if (verboseflag)
-		printf("kernel start at pos 0x%x\n", kstart);
+		printf("kernel start at pos 0x%lx\n", (unsigned long)kstart);
 	kgzlen = gzwrite(gzf, kern_img, kern_stat.st_size);
 	gzclose(gzf);
 	kend = lseek(rs6000_fd, 0, SEEK_CUR);
 	if (verboseflag)
-		printf("kernel end at pos 0x%x\n", kend);
+		printf("kernel end at pos 0x%lx\n", (unsigned long)kend);
 
 	/* jump back to the length position now that we know the length */
 	lseek(rs6000_fd, lenpos, SEEK_SET);

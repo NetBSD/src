@@ -1,4 +1,4 @@
-/*	$NetBSD: boot26.c,v 1.5 2007/03/04 05:59:04 christos Exp $	*/
+/*	$NetBSD: boot26.c,v 1.5.72.1 2011/06/06 09:04:39 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 Ben Harris
@@ -37,8 +37,6 @@
 
 extern const char bootprog_rev[];
 extern const char bootprog_name[];
-extern const char bootprog_date[];
-extern const char bootprog_maker[];
 
 int debug = 1;
 
@@ -68,7 +66,6 @@ main(int argc, char **argv)
 	int ret;
 
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	os_read_mem_map_info(&nbpp, &npages);
 	if (debug)

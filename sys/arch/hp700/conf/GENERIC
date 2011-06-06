@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.105 2010/11/23 11:13:59 hannken Exp $
+# $NetBSD: GENERIC,v 1.105.2.1 2011/06/06 09:05:39 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.105 $"
+#ident 		"GENERIC-$Revision: 1.105.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -110,7 +110,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -296,9 +297,10 @@ eisa*	at mongoose?
 # Console Devices
 
 # Human Interface Loop
-#hil*		at gsc?
-#hkbd*		at hil? code 0	# keyboard
-#hms*		at hil? code 1	# mice & trackballs
+hil*		at gsc? irq 1	# Human Interface Loop, kbd and mouse
+hilkbd*		at hil?		# keyboard, knob and buttons
+hilms*		at hil?		# mouse and tablets
+hilid*		at hil?		# ID module
 
 # wscons
 gsckbc*		at gsc?			# pc keyboard controller
@@ -306,8 +308,8 @@ pckbd*		at gsckbc?		# PC keyboard
 pms*		at gsckbc?		# PS/2 mouse for wsmouse
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
-#wskbd*		at hkbd? console ?
-#wsmouse*	at hms? mux 0
+wskbd*		at hilkbd? console ?
+wsmouse*	at hilms? mux 0
 wsdisplay*	at sti?
 
 # Serial Devices

@@ -1,7 +1,6 @@
-/*	$NetBSD: uvm_stat.c,v 1.35 2011/01/05 21:20:44 enami Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.35.2.1 2011/06/06 09:10:24 jruoho Exp $	 */
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -39,9 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.35 2011/01/05 21:20:44 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.35.2.1 2011/06/06 09:10:24 jruoho Exp $");
 
-#include "opt_uvmhist.h"
 #include "opt_readahead.h"
 #include "opt_ddb.h"
 
@@ -52,155 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.35 2011/01/05 21:20:44 enami Exp $");
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
 
-/*
- * globals
- */
-
-#ifdef UVMHIST
-struct uvm_history_head uvm_histories;
-#endif
-
-#ifdef UVMHIST_PRINT
-int uvmhist_print_enabled = 1;
-#endif
-
 #ifdef DDB
-
-/*
- * prototypes
- */
-
-#ifdef UVMHIST
-void uvmhist_dump(struct uvm_history *);
-void uvm_hist(u_int32_t);
-static void uvmhist_dump_histories(struct uvm_history *[]);
-#endif
-void uvmcnt_dump(void);
-
-
-#ifdef UVMHIST
-/* call this from ddb */
-void
-uvmhist_dump(struct uvm_history *l)
-{
-	int lcv, s;
-
-	s = splhigh();
-	lcv = l->f;
-	do {
-		if (l->e[lcv].fmt)
-			uvmhist_entry_print(&l->e[lcv]);
-		lcv = (lcv + 1) % l->n;
-	} while (lcv != l->f);
-	splx(s);
-}
-
-/*
- * print a merged list of uvm_history structures
- */
-static void
-uvmhist_dump_histories(struct uvm_history *hists[])
-{
-	struct timeval  tv;
-	int	cur[MAXHISTS];
-	int	s, lcv, hi;
-
-	/* so we don't get corrupted lists! */
-	s = splhigh();
-
-	/* find the first of each list */
-	for (lcv = 0; hists[lcv]; lcv++)
-		 cur[lcv] = hists[lcv]->f;
-
-	/*
-	 * here we loop "forever", finding the next earliest
-	 * history entry and printing it.  cur[X] is the current
-	 * entry to test for the history in hists[X].  if it is
-	 * -1, then this history is finished.
-	 */
-	for (;;) {
-		hi = -1;
-		tv.tv_sec = tv.tv_usec = 0;
-
-		/* loop over each history */
-		for (lcv = 0; hists[lcv]; lcv++) {
-restart:
-			if (cur[lcv] == -1)
-				continue;
-
-			/*
-			 * if the format is empty, go to the next entry
-			 * and retry.
-			 */
-			if (hists[lcv]->e[cur[lcv]].fmt == NULL) {
-				cur[lcv] = (cur[lcv] + 1) % (hists[lcv]->n);
-				if (cur[lcv] == hists[lcv]->f)
-					cur[lcv] = -1;
-				goto restart;
-			}
-
-			/*
-			 * if the time hasn't been set yet, or this entry is
-			 * earlier than the current tv, set the time and history
-			 * index.
-			 */
-			if (tv.tv_sec == 0 ||
-			    timercmp(&hists[lcv]->e[cur[lcv]].tv, &tv, <)) {
-				tv = hists[lcv]->e[cur[lcv]].tv;
-				hi = lcv;
-			}
-		}
-
-		/* if we didn't find any entries, we must be done */
-		if (hi == -1)
-			break;
-
-		/* print and move to the next entry */
-		uvmhist_entry_print(&hists[hi]->e[cur[hi]]);
-		cur[hi] = (cur[hi] + 1) % (hists[hi]->n);
-		if (cur[hi] == hists[hi]->f)
-			cur[hi] = -1;
-	}
-	splx(s);
-}
-
-/*
- * call this from ddb.  `bitmask' is from <uvm/uvm_stat.h>.  it
- * merges the named histories.
- */
-void
-uvm_hist(u_int32_t bitmask)	/* XXX only support 32 hists */
-{
-	struct uvm_history *hists[MAXHISTS + 1];
-	int i = 0;
-
-	if ((bitmask & UVMHIST_MAPHIST) || bitmask == 0)
-		hists[i++] = &maphist;
-
-	if ((bitmask & UVMHIST_PDHIST) || bitmask == 0)
-		hists[i++] = &pdhist;
-
-	if ((bitmask & UVMHIST_UBCHIST) || bitmask == 0)
-		hists[i++] = &ubchist;
-
-	if ((bitmask & UVMHIST_LOANHIST) || bitmask == 0)
-		hists[i++] = &loanhist;
-
-	hists[i] = NULL;
-
-	uvmhist_dump_histories(hists);
-}
-
-/*
- * uvmhist_print: ddb hook to print uvm history
- */
-void
-uvmhist_print(void (*pr)(const char *, ...))
-{
-	uvmhist_dump(LIST_FIRST(&uvm_histories));
-}
-
-#endif /* UVMHIST */
 
 /*
  * uvmexp_print: ddb hook to print interesting uvm counters

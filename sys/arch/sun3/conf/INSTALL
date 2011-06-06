@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.47 2010/11/23 11:14:06 hannken Exp $
+# $NetBSD: INSTALL,v 1.47.2.1 2011/06/06 09:06:55 jruoho Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -78,7 +78,8 @@ file-system	KERNFS		# /kern
 
 # Filesystem options
 #options 	NFSSERVER	# nfs server support
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

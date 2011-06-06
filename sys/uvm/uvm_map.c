@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.294 2011/01/04 08:21:18 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.294.2.1 2011/06/06 09:10:22 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -17,12 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and
- *      its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -71,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.294 2011/01/04 08:21:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.294.2.1 2011/06/06 09:10:22 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1018,8 +1013,8 @@ void
 uvm_map_init(void)
 {
 #if defined(UVMHIST)
-	static struct uvm_history_ent maphistbuf[100];
-	static struct uvm_history_ent pdhistbuf[100];
+	static struct kern_history_ent maphistbuf[100];
+	static struct kern_history_ent pdhistbuf[100];
 #endif
 
 	/*
@@ -3403,11 +3398,12 @@ uvm_map_willneed(struct vm_map *map, vaddr_t start, vaddr_t end)
 		KASSERT(entry != &map->header);
 		KASSERT(start < entry->end);
 		/*
-		 * XXX IMPLEMENT ME.
-		 * Should invent a "weak" mode for uvm_fault()
-		 * which would only do the PGO_LOCKED pgo_get().
+		 * For now, we handle only the easy but commonly-requested case.
+		 * ie. start prefetching of backing uobj pages.
 		 *
-		 * for now, we handle only the easy but common case.
+		 * XXX It might be useful to pmap_enter() the already-in-core
+		 * pages by inventing a "weak" mode for uvm_fault() which would
+		 * only do the PGO_LOCKED pgo_get().
 		 */
 		if (UVM_ET_ISOBJ(entry) && amap == NULL && uobj != NULL) {
 			off_t offset;

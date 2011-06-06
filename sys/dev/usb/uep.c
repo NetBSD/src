@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.15 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: uep.c,v 1.15.2.1 2011/06/06 09:08:42 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,14 +31,9 @@
 
 /*
  *  eGalax USB touchpanel controller driver.
- *
- *  For Programming Documentation, see:
- *
- *  http://www.egalax.com/SoftwareProgrammingGuide_1.1.pdf
  */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.15 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.15.2.1 2011/06/06 09:08:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,15 +102,14 @@ extern struct cfdriver uep_cd;
 CFATTACH_DECL2_NEW(uep, sizeof(struct uep_softc), uep_match, uep_attach,
     uep_detach, uep_activate, NULL, uep_childdet);
 
-int 
+int
 uep_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
 	if ((uaa->vendor == USB_VENDOR_EGALAX) && (
 		(uaa->product == USB_PRODUCT_EGALAX_TPANEL)
-		|| (uaa->product == USB_PRODUCT_EGALAX_TPANEL2)
-	))
+		|| (uaa->product == USB_PRODUCT_EGALAX_TPANEL2)))
 		return UMATCH_VENDOR_PRODUCT;
 
 	if ((uaa->vendor == USB_VENDOR_EGALAX2)
@@ -126,7 +120,7 @@ uep_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void 
+void
 uep_attach(device_t parent, device_t self, void *aux)
 {
 	struct uep_softc *sc = device_private(self);
@@ -135,6 +129,8 @@ uep_attach(device_t parent, device_t self, void *aux)
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
+	usb_device_request_t req;
+	uByte act;
 	struct wsmousedev_attach_args a;
 	char *devinfop;
 	usbd_status err;
@@ -148,7 +144,6 @@ uep_attach(device_t parent, device_t self, void *aux)
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
-
 	sc->sc_udev = dev;
 	sc->sc_intr_number = -1;
 	sc->sc_intr_pipe = NULL;
@@ -208,8 +203,15 @@ uep_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	/* Newer controllers need an activation command */
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = 0x0a;
+	USETW(req.wValue, 'A');
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 1);
+	usbd_do_request(dev, &req, &act);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	a.accessops = &uep_accessops;
 	a.accesscookie = sc;
@@ -223,7 +225,7 @@ uep_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 uep_detach(device_t self, int flags)
 {
 	struct uep_softc *sc = device_private(self);
@@ -234,7 +236,6 @@ uep_detach(device_t self, int flags)
 		usbd_close_pipe(sc->sc_intr_pipe);
 		sc->sc_intr_pipe = NULL;
 	}
-
 	sc->sc_dying = 1;
 
 	/* save current calib as defaults */
@@ -243,9 +244,7 @@ uep_detach(device_t self, int flags)
 	if (sc->sc_wsmousedev != NULL)
 		rv = config_detach(sc->sc_wsmousedev, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
-
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 	return rv;
 }
 
@@ -286,6 +285,7 @@ uep_enable(void *v)
 
 	if (sc->sc_isize == 0)
 		return 0;
+
 	sc->sc_ibuf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_intr_number,
 		USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc, sc->sc_ibuf,
@@ -364,6 +364,7 @@ uep_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 {
 	struct uep_softc *sc = addr;
 	u_char *p = sc->sc_ibuf;
+	u_char msk;
 	u_int32_t len;
 	int x = 0, y = 0, s;
 
@@ -378,45 +379,59 @@ uep_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		return;
 	}
 
-	if (len != 5) {
-#if 0
-		printf("%s: bad input length %d != %d\n",
-			device_xname(sc->sc_dev), len, sc->sc_isize);
-#endif
-		return;
-	}
-
-	if ((p[0] & 0xFE) != 0x80) {
-		aprint_error_dev(sc->sc_dev,
-		    "bad input packet format\n");
+	/* First bit is always set to 1 */
+	if ((p[0] & 0x80) != 0x80) {
+		aprint_error_dev(sc->sc_dev, "bad input packet format\n");
 		return;
 	}
 
 	if (sc->sc_wsmousedev != NULL) {
-                /*
-                 * Packet format is 5 bytes:
-                 *
-                 * 1000000T
-                 * 0000AAAA
-                 * 0AAAAAAA
-                 * 0000BBBB
-                 * 0BBBBBBB
-                 *
-                 * T: 1=touched 0=not touched
-                 * A: bits of axis A position, MSB to LSB
-                 * B: bits of axis B position, MSB to LSB
-                 *
-                 * For the unit I have, A = Y and B = X.
-                 * I don't know if units exist with A=X and B=Y,
-                 * if so we'll cross that bridge when we come to it.
-                 *
-                 * The controller sends a stream of T=1 events while the
-                 * panel is touched, followed by a single T=0 event.
-                 *
-                 */
-
-		x = (p[3] << 7) | p[4];
-		y = (p[1] << 7) | p[2];
+		/*
+		 * Each report package may contain 5 or 6 bytes as below:
+		 *
+		 * Byte 0	1ZM00HLT
+		 * Byte 1	0AAAAAAA
+		 * Byte 2	0AAAAAAA
+		 * Byte 3	0BBBBBBB
+		 * Byte 4	0BBBBBBB
+		 * Byte 5	0PPPPPPP
+		 *
+		 * Z: 1=byte 5 is pressure information, 0=no pressure
+		 * M: 1=byte 5 is play id, 0=no player id
+		 * T: 1=touched, 0=not touched
+		 * H,L: Resolution
+		 *	0,0: 11 bits
+		 *	0,1: 12 bits
+		 *	1,0: 13 bits
+		 *	1,1: 14 bits
+		 * A: bits of axis A position, MSB to LSB
+		 * B: bits of axis B position, MSB to LSB
+		 *
+		 * The packet has six bytes only if Z or M is set.
+		 * Byte 5, if sent, is ignored.
+		 *
+		 * For the unit I have, A = Y and B = X.
+		 * I don't know if units exist with A=X and B=Y,
+		 * if so we'll cross that bridge when we come to it.
+		 *
+		 * The controller sends a stream of T=1 events while the
+		 * panel is touched, followed by a single T=0 event.
+		 */
+		switch (p[0] & 0x06) {
+		case 0x02:
+			msk = 0x1f;
+			break;
+		case 0x04:
+			msk = 0x3f;
+			break;
+		case 0x06:
+			msk = 0x7f;
+			break;
+		default:
+			msk = 0x0f;	/* H=0, L=0 */
+		}
+		x = ((p[3] & msk) << 7) | p[4];
+		y = ((p[1] & msk) << 7) | p[2];
 
 		tpcalib_trans(&sc->sc_tpcalib, x, y, &x, &y);
 

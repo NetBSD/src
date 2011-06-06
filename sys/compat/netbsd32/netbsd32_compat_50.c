@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.17 2010/05/30 19:31:39 drochner Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.17.2.1 2011/06/06 09:07:32 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.17 2010/05/30 19:31:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.17.2.1 2011/06/06 09:07:32 jruoho Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -623,9 +623,9 @@ compat_50_netbsd32_kevent(struct lwp *l,
 	int error;
 	size_t maxalloc, nchanges, nevents;
 	struct kevent_ops netbsd32_kevent_ops = {
-		keo_fetch_timeout: netbsd32_kevent_fetch_timeout,
-		keo_fetch_changes: netbsd32_kevent_fetch_changes,
-		keo_put_events: netbsd32_kevent_put_events,
+		.keo_fetch_timeout = netbsd32_kevent_fetch_timeout,
+		.keo_fetch_changes = netbsd32_kevent_fetch_changes,
+		.keo_put_events = netbsd32_kevent_put_events,
 	};
 
 	nchanges = SCARG(uap, nchanges);
@@ -1069,3 +1069,21 @@ compat_50_netbsd32___shmctl13(struct lwp *l, const struct compat_50_netbsd32___s
 	return error;
 }
 #endif
+
+int
+compat_50_netbsd32_quotactl(struct lwp *l, const struct compat_50_netbsd32_quotactl_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const netbsd32_charp) path;
+		syscallarg(int) cmd;
+		syscallarg(int) uid;
+		syscallarg(netbsd32_voidp) arg;
+	} */
+	struct compat_50_sys_quotactl_args ua;
+
+	NETBSD32TOP_UAP(path, const char);
+	NETBSD32TO64_UAP(cmd);
+	NETBSD32TO64_UAP(uid);
+	NETBSD32TOP_UAP(arg, void *);
+	return (compat_50_sys_quotactl(l, &ua, retval));
+}

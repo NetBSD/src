@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.23 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.23.6.1 2011/06/06 09:10:01 jruoho Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.23 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.23.6.1 2011/06/06 09:10:01 jruoho Exp $");
 
 /*
  * IPsec input processing.
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.23 2009/04/18 14:58:06 tsutsui Exp
 #ifdef INET6
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>
+#include <netinet6/scope6_var.h>
 #endif
 #include <netinet/in_pcb.h>
 #ifdef INET6
@@ -204,6 +205,10 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
 		    sizeof(struct in6_addr),
 		    &dst_address.sin6.sin6_addr);
+		if (sa6_recoverscope(&dst_address.sin6)) {
+			m_freem(m);
+			return EINVAL;
+		}
 		break;
 #endif /* INET6 */
 	default:
@@ -472,27 +477,34 @@ int
 ipsec6_common_input(struct mbuf **mp, int *offp, int proto)
 {
 	int l = 0;
-	int protoff;
+	int protoff, nxt;
 	struct ip6_ext ip6e;
 
 	if (*offp < sizeof(struct ip6_hdr)) {
 		DPRINTF(("ipsec6_common_input: bad offset %u\n", *offp));
+		IPSEC_ISTAT(proto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
+			    IPCOMP_STAT_HDROPS);
+		m_freem(*mp);
 		return IPPROTO_DONE;
 	} else if (*offp == sizeof(struct ip6_hdr)) {
 		protoff = offsetof(struct ip6_hdr, ip6_nxt);
 	} else {
 		/* Chase down the header chain... */
 		protoff = sizeof(struct ip6_hdr);
+		nxt = (mtod(*mp, struct ip6_hdr *))->ip6_nxt;
 
 		do {
 			protoff += l;
 			m_copydata(*mp, protoff, sizeof(ip6e), &ip6e);
 
-			if (ip6e.ip6e_nxt == IPPROTO_AH)
+			if (nxt == IPPROTO_AH)
 				l = (ip6e.ip6e_len + 2) << 2;
 			else
 				l = (ip6e.ip6e_len + 1) << 3;
-			IPSEC_ASSERT(l > 0, ("ah6_input: l went zero or negative"));
+			IPSEC_ASSERT(l > 0,
+			  ("ipsec6_common_input: l went zero or negative"));
+
+			nxt = ip6e.ip6e_nxt;
 		} while (protoff + l < *offp);
 
 		/* Malformed packet check */
@@ -606,13 +618,13 @@ int
 ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int protoff,
     struct m_tag *mt)
 {
-	int prot, af, sproto;
+	int af, sproto;
 	struct ip6_hdr *ip6;
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct secasindex *saidx;
 	int nxt;
-	u_int8_t nxt8;
+	u_int8_t prot, nxt8;
 	int error, nest;
 
 	IPSEC_ASSERT(m != NULL, ("ipsec6_common_input_cb: null mbuf"));
@@ -655,7 +667,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 	ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
 
 	/* Save protocol */
-	m_copydata(m, protoff, 1, (unsigned char *) &prot);
+	m_copydata(m, protoff, 1, &prot);
 
 #ifdef INET
 	/* IP-in-IP encapsulation */

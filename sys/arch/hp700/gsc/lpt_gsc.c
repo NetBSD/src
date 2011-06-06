@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_gsc.c,v 1.12 2010/12/05 12:19:09 skrll Exp $	*/
+/*	$NetBSD: lpt_gsc.c,v 1.12.2.1 2011/06/06 09:05:40 jruoho Exp $	*/
 
 /*	$OpenBSD: lpt_gsc.c,v 1.6 2000/07/21 17:41:06 mickey Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_gsc.c,v 1.12 2010/12/05 12:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_gsc.c,v 1.12.2.1 2011/06/06 09:05:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ lpt_gsc_attach(device_t parent, device_t self, void *aux)
 
 	lpt_attach_subr(sc);
 
-	sc->sc_ih = hp700_intr_establish(IPL_TTY, lptintr, sc, ga->ga_int_reg,
+	sc->sc_ih = hp700_intr_establish(IPL_TTY, lptintr, sc, ga->ga_ir,
 	     ga->ga_irq);
 	aprint_normal("\n");
 }

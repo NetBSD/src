@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.10 2010/01/19 22:08:18 pooka Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.10.6.1 2011/06/06 09:10:08 jruoho Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -20,9 +20,10 @@ SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
 
 # radix trie support
 SRCS+=	radix.c
+SRCS+=	rtbl.c
 
-# compat
-SRCS+=	rtsock_50.c
+# compat (nothing for now)
+SRCS+=	
 
 # bpf stubs, required for all kernels
 SRCS+=	bpf_stub.c

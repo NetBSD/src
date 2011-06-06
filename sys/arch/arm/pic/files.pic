@@ -1,7 +1,9 @@
-#	$NetBSD: files.pic,v 1.2 2008/04/27 18:58:45 matt Exp $
+#	$NetBSD: files.pic,v 1.2.28.1 2011/06/06 09:05:06 jruoho Exp $
 #
 # Configuration info for the common PIC code.
 #
 define	pic
+define	pic_splfuncs
 
 file	arch/arm/pic/pic.c		pic
+file	arch/arm/pic/pic_splfuncs.c	pic & pic_splfuncs

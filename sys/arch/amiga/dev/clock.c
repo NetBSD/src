@@ -1,6 +1,7 @@
-/*	$NetBSD: clock.c,v 1.51 2009/12/12 13:10:36 phx Exp $ */
+/*	$NetBSD: clock.c,v 1.51.6.1 2011/06/06 09:04:53 jruoho Exp $ */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -36,48 +37,9 @@
  *
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: clock.c 1.18 91/01/21$
- *
- *	@(#)clock.c	7.6 (Berkeley) 5/7/91
- */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.51 2009/12/12 13:10:36 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.51.6.1 2011/06/06 09:04:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -117,10 +79,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.51 2009/12/12 13:10:36 phx Exp $");
  * periods where N is the value loaded into the counter.
  */
 
-int clockmatch(struct device *, struct cfdata *, void *);
-void clockattach(struct device *, struct device *, void *);
+int clockmatch(device_t, cfdata_t, void *);
+void clockattach(device_t, device_t, void *);
 void cpu_initclocks(void);
-static void calibrate_delay(struct device *);
+static void calibrate_delay(device_t);
 
 /* the clocks run at NTSC: 715.909kHz or PAL: 709.379kHz.
    We're using a 100 Hz clock. */
@@ -141,11 +103,11 @@ static struct timecounter clk_timecounter = {
 	NULL,		/* next */
 };
 
-CFATTACH_DECL(clock, sizeof(struct device),
+CFATTACH_DECL_NEW(clock, 0,
     clockmatch, clockattach, NULL, NULL);
 
 int
-clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+clockmatch(device_t pdp, cfdata_t cfp, void *auxp)
 {
 	if (matchname("clock", auxp))
 		return(1);
@@ -156,7 +118,7 @@ clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * Start the real-time clock.
  */
 void
-clockattach(struct device *pdp, struct device *dp, void *auxp)
+clockattach(device_t pdp, device_t dp, void *auxp)
 {
 	const char *clockchip;
 	unsigned short interval;
@@ -364,7 +326,7 @@ clk_getcounter(struct timecounter *tc)
  * off by 2.4%
  */
 static void
-calibrate_delay(struct device *dp)
+calibrate_delay(device_t dp)
 {
 	unsigned long t1, t2;
 	extern u_int32_t delaydivisor;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.4 2007/03/04 06:03:30 christos Exp $	*/
+/*	$NetBSD: xform.h,v 1.4.70.1 2011/06/06 09:10:01 jruoho Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -46,7 +46,6 @@
 #include <netinet/in.h>
 #include <opencrypto/xform.h>
 
-#define	AH_HMAC_HASHLEN		12	/* 96 bits of authenticator */
 #define	AH_HMAC_INITIAL_RPL	1	/* replay counter initial value */
 
 /*
@@ -89,9 +88,9 @@ struct xformsw {
 #define	XFT_CONF	0x0100
 #define	XFT_COMP	0x1000
 	const char	*xf_name;		/* human-readable name */
-	int	(*xf_init)(struct secasvar*, struct xformsw*);	/* setup */
+	int	(*xf_init)(struct secasvar*, const struct xformsw*);/* setup */
 	int	(*xf_zeroize)(struct secasvar*);		/* cleanup */
-	int	(*xf_input)(struct mbuf*, struct secasvar*,	/* input */
+	int	(*xf_input)(struct mbuf*, const struct secasvar*, /* input */
 			int, int);
 	int	(*xf_output)(struct mbuf*,	       		/* output */
 			struct ipsecrequest *, struct mbuf **, int, int);
@@ -111,17 +110,18 @@ extern	int ipip_output(struct mbuf *, struct ipsecrequest *,
 			struct mbuf **, int, int);
 
 /* XF_AH */
-extern int ah_init0(struct secasvar *, struct xformsw *, struct cryptoini *);
+extern int ah_init0(struct secasvar *, const struct xformsw *,
+		    struct cryptoini *);
 extern int ah_zeroize(struct secasvar *sav);
-extern struct auth_hash *ah_algorithm_lookup(int alg);
-extern size_t ah_hdrsiz(struct secasvar *);
+extern const struct auth_hash *ah_algorithm_lookup(int alg);
+extern size_t ah_hdrsiz(const struct secasvar *);
 
 /* XF_ESP */
-extern struct enc_xform *esp_algorithm_lookup(int alg);
-extern size_t esp_hdrsiz(struct secasvar *sav);
+extern const struct enc_xform *esp_algorithm_lookup(int alg);
+extern size_t esp_hdrsiz(const struct secasvar *sav);
 
 /* XF_COMP */
-extern struct comp_algo *ipcomp_algorithm_lookup(int alg);
+extern const struct comp_algo *ipcomp_algorithm_lookup(int alg);
 
 #endif /* _KERNEL */
 #endif /* !_NETIPSEC_XFORM_H_ */

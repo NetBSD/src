@@ -1,7 +1,6 @@
-/*	$NetBSD: uvm_extern.h,v 1.168 2011/01/04 08:26:33 matt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.168.2.1 2011/06/06 09:10:21 jruoho Exp $	*/
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -142,7 +135,7 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #define UVM_FLAG_OVERLAY 0x020000 /* establish overlay */
 #define UVM_FLAG_NOMERGE 0x040000 /* don't merge map entries */
 #define UVM_FLAG_COPYONW 0x080000 /* set copy_on_write flag */
-#define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce malloc() */
+#define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce allocations */
 #define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
 #define UVM_FLAG_NOWAIT  0x400000 /* not allowed to sleep */
 #define UVM_FLAG_QUANTUM 0x800000 /* entry can never be split later */
@@ -566,7 +559,7 @@ MALLOC_DECLARE(M_VMMAP);
 MALLOC_DECLARE(M_VMPMAP);
 
 /* vm_machdep.c */
-void		vmapbuf(struct buf *, vsize_t);
+int		vmapbuf(struct buf *, vsize_t);
 void		vunmapbuf(struct buf *, vsize_t);
 
 /* uvm_aobj.c */
@@ -630,6 +623,8 @@ bool			uvm_kernacc(void *, size_t, int);
 __dead void		uvm_scheduler(void);
 vaddr_t			uvm_uarea_alloc(void);
 void			uvm_uarea_free(vaddr_t);
+vaddr_t			uvm_uarea_system_alloc(void);
+void			uvm_uarea_system_free(vaddr_t);
 vaddr_t			uvm_lwp_getuarea(lwp_t *);
 void			uvm_lwp_setuarea(lwp_t *, vaddr_t);
 int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);

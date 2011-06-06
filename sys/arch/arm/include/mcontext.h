@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.6 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.6.28.1 2011/06/06 09:05:03 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ typedef struct {
 		__fpregset_t __fpregs;
 		__vfpregset_t __vfpregs;
 	} __fpu;
+	__greg_t	_mc_tlsbase;
 } mcontext_t;
 
 /* Machine-dependent uc_flags */
@@ -96,12 +97,24 @@ typedef struct {
 #define _UC_SETSTACK	0x00020000
 #define _UC_CLRSTACK	0x00040000
 
-#define _UC_MACHINE_PAD	3		/* Padding appended to ucontext_t */
+#define	_UC_TLSBASE	0x00080000
+
+#define _UC_MACHINE_PAD	2		/* Padding appended to ucontext_t */
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R0])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+
+#define	__UCONTEXT_SIZE	256
+
+static __inline void *
+__lwp_getprivate_fast(void)
+{
+	void *rv;
+	__asm("mrc p15, 0, %0, c13, c0, 3" : "=r"(rv));
+	return rv;
+}
 
 #endif	/* !_ARM_MCONTEXT_H_ */

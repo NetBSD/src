@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.13 2010/11/13 09:00:00 uebayasi Exp $ */
+/* $NetBSD: siisata.c,v 1.13.2.1 2011/06/06 09:07:54 jruoho Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.13 2010/11/13 09:00:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.13.2.1 2011/06/06 09:07:54 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -454,6 +454,7 @@ siisata_intr_port(struct siisata_channel *schp)
 		/* is this expected? */
 		/* XXX improve */
 		if ((schp->sch_active_slots & __BIT(slot)) == 0) {
+			PRWRITE(sc, PRX(chp->ch_channel, PRO_PIS), 0xffffffff);
 			log(LOG_WARNING, "%s: unexpected command "
 			    "completion on port %d\n",
 			    SIISATANAME(sc), chp->ch_channel);

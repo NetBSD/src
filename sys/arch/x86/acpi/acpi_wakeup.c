@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.27 2011/01/13 03:45:38 jruoho Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.27.2.1 2011/06/06 09:07:05 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.27 2011/01/13 03:45:38 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.27.2.1 2011/06/06 09:07:05 jruoho Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -340,6 +340,13 @@ acpi_md_sleep(int state)
 
 	initrtclock(TIMER_FREQ);
 	inittodr(time_second);
+
+	/*
+	 * The BIOS should always re-enable the SCI upon
+	 * resume from the S3 state. The following is a
+	 * workaround for systems that fail to do this.
+	 */
+	(void)AcpiWriteBitRegister(ACPI_BITREG_SCI_ENABLE, 1);
 
 	/*
 	 * Clear fixed events (see e.g. ACPI 3.0, p. 62).

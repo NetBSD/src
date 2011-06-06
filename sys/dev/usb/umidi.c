@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.42 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: umidi.c,v 1.42.2.1 2011/06/06 09:08:43 jruoho Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.42 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.42.2.1 2011/06/06 09:08:43 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1291,21 +1291,23 @@ describe_mididev(struct umidi_mididev *md)
 	show_ep_in  = sc-> sc_in_num_endpoints > 1 && !sc->cblnums_global;
 	show_ep_out = sc->sc_out_num_endpoints > 1 && !sc->cblnums_global;
 	
-	if ( NULL != md->in_jack )
-		snprintf(in_label, sizeof in_label,
-		    show_ep_in ? "<%d(%x) " : "<%d ",
-		    md->in_jack->cable_number,
-		    md->in_jack->endpoint->addr);
-	else
+	if ( NULL == md->in_jack )
 		in_label[0] = '\0';
-	
-	if ( NULL != md->out_jack )
-		snprintf(out_label, sizeof out_label,
-		    show_ep_out ? ">%d(%x) " : ">%d ",
-		    md->out_jack->cable_number,
-		    md->out_jack->endpoint->addr);
+	else if ( show_ep_in )
+		snprintf(in_label, sizeof in_label, "<%d(%x) ",
+		    md->in_jack->cable_number, md->in_jack->endpoint->addr);
 	else
+		snprintf(in_label, sizeof in_label, "<%d ",
+		    md->in_jack->cable_number);
+	
+	if ( NULL == md->out_jack )
 		out_label[0] = '\0';
+	else if ( show_ep_out )
+		snprintf(out_label, sizeof out_label, ">%d(%x) ",
+		    md->out_jack->cable_number, md->out_jack->endpoint->addr);
+	else
+		snprintf(out_label, sizeof out_label, ">%d ",
+		    md->out_jack->cable_number);
 
 	unit_label = device_xname(sc->sc_dev);
 	

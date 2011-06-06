@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.33 2008/01/02 11:48:32 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.33.38.1 2011/06/06 09:07:05 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33 2008/01/02 11:48:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33.38.1 2011/06/06 09:07:05 jruoho Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -69,7 +69,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	struct buf *bp;
 	struct disklabel *dlp;
 	const char *msg = NULL;
-	int i, labelsz;
+	int i, bsdlabelsz, humanlabelsz;
 
 	if (osdep)
 		dp = osdep->dosparts;
@@ -90,15 +90,19 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	lp->d_partitions[0].p_offset = 0;
 
 	/* get a buffer and initialize it */
-	bp = geteblk((int)lp->d_secsize);
+	bsdlabelsz =
+	    howmany(LABELOFFSET + sizeof(struct disklabel), lp->d_secsize)
+	    * lp->d_secsize;
+	humanlabelsz =
+	    howmany(sizeof(struct cpu_disklabel), lp->d_secsize)
+	    * lp->d_secsize;
+	bp = geteblk(MAX(bsdlabelsz, humanlabelsz));
 	bp->b_dev = dev;
 
 	/* read BSD disklabel first */
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = LABELSECTOR/lp->d_secpercyl;
-	labelsz = howmany(LABELOFFSET+sizeof(struct disklabel), lp->d_secsize)
-		* lp->d_secsize;
-	bp->b_bcount = labelsz;	/* to support < 512B/sector disks */
+	bp->b_bcount = bsdlabelsz;	/* to support < 512B/sector disks */
 	bp->b_flags |= B_READ;
 	(*strat)(bp);
 
@@ -109,7 +113,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	}
 	for (dlp = (struct disklabel *)bp->b_data;
 	     dlp <= (struct disklabel *)
-		((char *)bp->b_data + labelsz - sizeof(*dlp));
+		((char *)bp->b_data + bsdlabelsz - sizeof(*dlp));
 	     dlp = (struct disklabel *)((uint8_t *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -135,9 +139,7 @@ dodospart:
 	bp->b_blkno = DOSPARTOFF * DEF_BSIZE / lp->d_secsize;
 				/* DOSPARTOFF in DEV_BSIZE unit */
 	bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
-	labelsz = howmany(sizeof(struct cpu_disklabel),
-			  lp->d_secsize) * lp->d_secsize;
-	bp->b_bcount = labelsz;	/* to support < 512B/sector disks */
+	bp->b_bcount = humanlabelsz;	/* to support < 512B/sector disks */
 	bp->b_oflags &= ~(BO_DONE);
 	(*strat)(bp);
 
@@ -313,7 +315,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	struct dos_partition *dp = 0;
 	struct buf *bp;
 	struct disklabel *dlp;
-	int error, labelsz, i;
+	int error, bsdlabelsz, humanlabelsz, i;
 	const char *np;
 
 	if (osdep)
@@ -326,15 +328,19 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 		parttbl_consistency_check(lp, dp);
 
 	/* get a buffer and initialize it */
-	bp = geteblk((int)lp->d_secsize);
+	bsdlabelsz =
+	    howmany(LABELOFFSET + sizeof(struct disklabel), lp->d_secsize)
+	    * lp->d_secsize;
+	humanlabelsz =
+	    howmany(sizeof(struct cpu_disklabel), lp->d_secsize)
+	    * lp->d_secsize;
+	bp = geteblk(MAX(bsdlabelsz, humanlabelsz));
 	bp->b_dev = dev;
 
 	/* attempt to write BSD disklabel first */
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
-	labelsz = howmany(LABELOFFSET+sizeof(struct disklabel), lp->d_secsize)
-		* lp->d_secsize;
-	bp->b_bcount = labelsz;	/* to support < 512B/sector disks */
+	bp->b_bcount = bsdlabelsz;	/* to support < 512B/sector disks */
 	bp->b_flags |= B_READ;
 	(*strat)(bp);
 
@@ -344,7 +350,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	error = ESRCH;
 	for (dlp = (struct disklabel *)bp->b_data;
 	     dlp <= (struct disklabel *)
-		((char *)bp->b_data + labelsz - sizeof(*dlp));
+		((char *)bp->b_data + bsdlabelsz - sizeof(*dlp));
 	     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
@@ -370,6 +376,7 @@ dodospart:
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_oflags &= ~(BO_DONE);
+		bp->b_flags &= ~(B_WRITE);
 		bp->b_flags |= B_READ;
 		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
@@ -379,10 +386,9 @@ dodospart:
 
 		/* read the partition table */
 		bp->b_blkno = DOSPARTOFF;
-		labelsz = howmany(sizeof(struct cpu_disklabel),
-				  lp->d_secsize) * lp->d_secsize;
-		bp->b_bcount = labelsz;
+		bp->b_bcount = humanlabelsz;
 		bp->b_oflags &= ~(BO_DONE);
+		bp->b_flags &= ~(B_WRITE);
 		bp->b_flags |= B_READ;
 		bp->b_cylinder = DOSPARTOFF / lp->d_secpercyl;
 		(*strat)(bp);

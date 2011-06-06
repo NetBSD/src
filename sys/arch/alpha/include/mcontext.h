@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.5 2008/04/28 20:23:11 martin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.5.28.1 2011/06/06 09:04:44 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -100,5 +100,17 @@ typedef struct {
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_V0])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+
+static __inline void *
+__lwp_getprivate_fast(void)
+{
+	register void *__tmp __asm("$0");
+
+	__asm volatile("call_pal %1 # PAL_rdunique"
+		: "=r" (__tmp)
+		: "i" (0x009e /* PAL_rdunique */));
+
+	return __tmp;
+}
 
 #endif	/* !_ALPHA_MCONTEXT_H_ */

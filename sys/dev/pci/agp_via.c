@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_via.c,v 1.19 2010/11/13 13:52:05 uebayasi Exp $	*/
+/*	$NetBSD: agp_via.c,v 1.19.2.1 2011/06/06 09:08:09 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.19 2010/11/13 13:52:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.19.2.1 2011/06/06 09:08:09 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,14 +105,14 @@ agp_via_attach(device_t parent, device_t self, void *aux)
 		agpsel = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_VIA_AGPSEL);
 		if ((agpsel & (1 << 9)) == 0) {
 			asc->regs = via_v3_regs;
-			aprint_normal(" (v3)");
+			aprint_debug(" (v3)");
 		} else {
 			asc->regs = via_v2_regs;
-			aprint_normal(" (v2 compat mode)");
+			aprint_debug(" (v2 compat mode)");
 		}
 	} else {
 		asc->regs = via_v2_regs;
-		aprint_normal(" (v2)");
+		aprint_debug(" (v2)");
 	}
 
 	if (agp_map_aperture(pa, sc, AGP_APBASE) != 0) {
@@ -154,7 +154,7 @@ agp_via_attach(device_t parent, device_t self, void *aux)
 				 gatt->ag_physical);
 		/* Enable the aperture. */
 		gartctrl = pci_conf_read(pa->pa_pc, pa->pa_tag,
-				 asc->regs[REG_ATTBASE]);
+				 asc->regs[REG_GARTCTRL]);
 		pci_conf_write(pa->pa_pc, pa->pa_tag, asc->regs[REG_GARTCTRL],
 				 gartctrl | (3 << 7));
 	}
@@ -188,41 +188,118 @@ agp_via_get_aperture(struct agp_softc *sc)
 	struct agp_via_softc *asc = sc->as_chipc;
 	u_int32_t apsize;
 
-	apsize = pci_conf_read(sc->as_pc, sc->as_tag, asc->regs[REG_APSIZE])
-				& 0x1f;
+	if (asc->regs == via_v2_regs) {
+		apsize = pci_conf_read(sc->as_pc, sc->as_tag,
+				asc->regs[REG_APSIZE]) & 0xff;
 
-	/*
-	 * The size is determined by the number of low bits of
-	 * register APBASE which are forced to zero. The low 20 bits
-	 * are always forced to zero and each zero bit in the apsize
-	 * field just read forces the corresponding bit in the 27:20
-	 * to be zero. We calculate the aperture size accordingly.
-	 */
-	return (((apsize ^ 0xff) << 20) | ((1 << 20) - 1)) + 1;
+		/*
+		 * The size is determined by the number of low bits of
+		 * register APBASE which are forced to zero. The low 20 bits
+		 * are always forced to zero and each zero bit in the apsize
+		 * field just read forces the corresponding bit in the 27:20
+		 * to be zero. We calculate the aperture size accordingly.
+		 */
+		return (((apsize ^ 0xff) << 20) | ((1 << 20) - 1)) + 1;
+	} else {
+		apsize = pci_conf_read(sc->as_pc, sc->as_tag,
+				asc->regs[REG_APSIZE]) & 0xfff;
+		switch (apsize) {
+		case 0x800:
+			return 0x80000000;
+		case 0xc00:
+			return 0x40000000;
+		case 0xe00:
+			return 0x20000000;
+		case 0xf00:
+			return 0x10000000;
+		case 0xf20:
+			return 0x08000000;
+		case 0xf30:
+			return 0x04000000;
+		case 0xf38:
+			return 0x02000000;
+		case 0xf3c:
+			return 0x01000000;
+		case 0xf3e:
+			return 0x00800000;
+		case 0xf3f:
+			return 0x00400000;
+		default:
+			aprint_error_dev(sc->as_dev,
+			    "invalid aperture setting 0x%x\n", apsize);
+			return 0;
+		}
+	}
 }
 
 static int
 agp_via_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 {
 	struct agp_via_softc *asc = sc->as_chipc;
-	u_int32_t apsize;
+	u_int32_t apsize, key;
 	pcireg_t reg;
 
-	/*
-	 * Reverse the magic from get_aperture.
-	 */
-	apsize = ((aperture - 1) >> 20) ^ 0xff;
+	if (asc->regs == via_v2_regs) {
+		/*
+		 * Reverse the magic from get_aperture.
+		 */
+		apsize = ((aperture - 1) >> 20) ^ 0xff;
 
-	/*
-	 * Double check for sanity.
-	 */
-	if ((((apsize ^ 0xff) << 20) | ((1 << 20) - 1)) + 1 != aperture)
-		return EINVAL;
+		/*
+		 * Double check for sanity.
+		 */
+		if ((((apsize ^ 0xff) << 20) | ((1 << 20) - 1)) + 1 != aperture)
+			return EINVAL;
 
-	reg = pci_conf_read(sc->as_pc, sc->as_tag, asc->regs[REG_APSIZE]);
-	reg &= ~0xff;
-	reg |= apsize;
-	pci_conf_write(sc->as_pc, sc->as_tag, asc->regs[REG_APSIZE], reg);
+		reg = pci_conf_read(sc->as_pc, sc->as_tag,
+		    asc->regs[REG_APSIZE]);
+		reg &= ~0xff;
+		reg |= apsize;
+		pci_conf_write(sc->as_pc, sc->as_tag,
+		    asc->regs[REG_APSIZE], reg);
+	} else {
+		switch (aperture) {
+		case 0x80000000:
+			key = 0x800;
+			break;
+		case 0x40000000:
+			key = 0xc00;
+			break;
+		case 0x20000000:
+			key = 0xe00;
+			break;
+		case 0x10000000:
+			key = 0xf00;
+			break;
+		case 0x08000000:
+			key = 0xf20;
+			break;
+		case 0x04000000:
+			key = 0xf30;
+			break;
+		case 0x02000000:
+			key = 0xf38;
+			break;
+		case 0x01000000:
+			key = 0xf3c;
+			break;
+		case 0x00800000:
+			key = 0xf3e;
+			break;
+		case 0x00400000:
+			key = 0xf3f;
+			break;
+		default:
+			aprint_error_dev(sc->as_dev,
+			    "invalid aperture size (%dMB)\n",
+			    aperture / 1024 / 1024);
+			return EINVAL;
+		}
+		reg = pci_conf_read(sc->as_pc, sc->as_tag, asc->regs[REG_APSIZE]);
+		reg &= ~0xfff;
+		reg |= key;
+		pci_conf_write(sc->as_pc, sc->as_tag, asc->regs[REG_APSIZE], reg);
+	}
 
 	return 0;
 }

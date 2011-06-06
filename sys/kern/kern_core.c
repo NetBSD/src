@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.17 2010/11/19 06:44:42 dholland Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.17.2.1 2011/06/06 09:09:27 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.17 2010/11/19 06:44:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.17.2.1 2011/06/06 09:09:27 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -164,17 +164,20 @@ coredump(struct lwp *l, const char *pattern)
 		pattern = security_setidcore_path;
 	}
 
-	/* It is (just) possible for p_limit and pl_corename to change */
+	/* Lock, as p_limit and pl_corename might change. */
 	lim = p->p_limit;
 	mutex_enter(&lim->pl_lock);
-	if (pattern == NULL)
+	if (pattern == NULL) {
 		pattern = lim->pl_corename;
+	}
 	error = coredump_buildname(p, name, pattern, MAXPATHLEN);
 	mutex_exit(&lim->pl_lock);
+
 	mutex_exit(p->p_lock);
 	mutex_exit(proc_lock);
-	if (error)
+	if (error) {
 		goto done;
+	}
 
 	pb = pathbuf_create(name);
 	if (pb == NULL) {

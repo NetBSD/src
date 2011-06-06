@@ -1,4 +1,4 @@
-/*
+/*-
  * Copyright 2004 The Unichrome Project. All Rights Reserved.
  * Copyright 2005 Thomas Hellstrom. All Rights Reserved.
  *
@@ -27,6 +27,9 @@
  * Don't run this code directly on an AGP buffer. Due to cache problems it will
  * be very slow.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_verifier.c,v 1.2.6.1 2011/06/06 09:09:13 jruoho Exp $");
 
 #include "via_3d_reg.h"
 #include "drmP.h"
@@ -250,27 +253,18 @@ eat_words(const uint32_t ** buf, const uint32_t * buf_end, unsigned num_words)
  */
 
 static __inline__ drm_local_map_t *via_drm_lookup_agp_map(drm_via_state_t *seq,
-							  unsigned long offset,
-							  unsigned long size,
-							  struct drm_device *dev)
+						    unsigned long offset,
+						    unsigned long size,
+						    struct drm_device * dev)
 {
-#ifdef __linux__
-	struct drm_map_list *r_list;
-#endif
 	drm_local_map_t *map = seq->map_cache;
 
 	if (map && map->offset <= offset
 	    && (offset + size) <= (map->offset + map->size)) {
 		return map;
 	}
-#ifdef __linux__
-	list_for_each_entry(r_list, &dev->maplist, head) {
-		map = r_list->map;
-		if (!map)
-			continue;
-#else
+
 	TAILQ_FOREACH(map, &dev->maplist, link) {
-#endif
 		if (map->offset <= offset
 		    && (offset + size) <= (map->offset + map->size)
 		    && !(map->flags & _DRM_RESTRICTED)
@@ -359,7 +353,7 @@ investigate_hazard(uint32_t cmd, hazard_t haz, drm_via_state_t * cur_seq)
 			return ret;
 	}
 
-	switch (haz) {
+	switch (hz) {
 	case check_for_header2:
 		if (cmd == HALCYON_HEADER2)
 			return 1;

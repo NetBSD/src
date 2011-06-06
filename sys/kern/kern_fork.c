@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.178 2010/07/07 01:30:37 chs Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.178.2.1 2011/06/06 09:09:28 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.178 2010/07/07 01:30:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.178.2.1 2011/06/06 09:09:28 jruoho Exp $");
 
 #include "opt_ktrace.h"
 
@@ -297,9 +297,11 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Increase reference counts on shared objects.
 	 * Inherit flags we want to keep.  The flags related to SIGCHLD
 	 * handling are important in order to keep a consistent behaviour
-	 * for the child after the fork.
+	 * for the child after the fork.  If we are a 32-bit process, the
+	 * child will be too.
 	 */
-	p2->p_flag = p1->p_flag & (PK_SUGID | PK_NOCLDWAIT | PK_CLDSIGIGN);
+	p2->p_flag =
+	    p1->p_flag & (PK_SUGID | PK_NOCLDWAIT | PK_CLDSIGIGN | PK_32);
 	p2->p_emul = p1->p_emul;
 	p2->p_execsw = p1->p_execsw;
 
@@ -347,26 +349,24 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	else
 		p2->p_fd = fd_copy();
 
+	/* XXX racy */
+	p2->p_mqueue_cnt = p1->p_mqueue_cnt;
+
 	if (flags & FORK_SHARECWD)
 		cwdshare(p2);
 	else
 		p2->p_cwdi = cwdinit();
 
 	/*
-	 * p_limit (rlimit stuff) is usually copy-on-write, so we just need
-	 * to bump pl_refcnt.
-	 * However in some cases (see compat irix, and plausibly from clone)
-	 * the parent and child share limits - in which case nothing else
-	 * must have a copy of the limits (PL_SHAREMOD is set).
+	 * Note: p_limit (rlimit stuff) is copy-on-write, so normally
+	 * we just need increase pl_refcnt.
 	 */
-	if (__predict_false(flags & FORK_SHARELIMIT))
-		lim_privatise(p1, 1);
 	p1_lim = p1->p_limit;
-	if (p1_lim->pl_flags & PL_WRITEABLE && !(flags & FORK_SHARELIMIT))
-		p2->p_limit = lim_copy(p1_lim);
-	else {
+	if (!p1_lim->pl_writeable) {
 		lim_addref(p1_lim);
 		p2->p_limit = p1_lim;
+	} else {
+		p2->p_limit = lim_copy(p1_lim);
 	}
 
 	p2->p_lflag = ((flags & FORK_PPWAIT) ? PL_PPWAIT : 0);
@@ -423,6 +423,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	lwp_create(l1, p2, uaddr, (flags & FORK_PPWAIT) ? LWP_VFORK : 0,
 	    stack, stacksize, (func != NULL) ? func : child_return, arg, &l2,
 	    l1->l_class);
+	lwp_setprivate(l2, l1->l_private);
 
 	/*
 	 * If emulation has a process fork hook, call it now.
@@ -505,12 +506,14 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	lwp_lock(l2);
 	KASSERT(p2->p_nrlwps == 1);
 	if (p2->p_sflag & PS_STOPFORK) {
+		struct schedstate_percpu *spc = &l2->l_cpu->ci_schedstate;
 		p2->p_nrlwps = 0;
 		p2->p_stat = SSTOP;
 		p2->p_waited = 0;
 		p1->p_nstopchild++;
 		l2->l_stat = LSSTOP;
-		lwp_unlock(l2);
+		KASSERT(l2->l_wchan == NULL);
+		lwp_unlock_to(l2, spc->spc_lwplock);
 	} else {
 		p2->p_nrlwps = 1;
 		p2->p_stat = SACTIVE;
@@ -518,7 +521,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		sched_enqueue(l2, false);
 		lwp_unlock(l2);
 	}
-
 	mutex_exit(p2->p_lock);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.5 2010/12/20 00:25:31 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.5.2.1 2011/06/06 09:05:13 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -79,7 +79,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.5 2010/12/20 00:25:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.5.2.1 2011/06/06 09:05:13 jruoho Exp $");
+
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -137,11 +139,26 @@ static struct cpu_intrhead cpu_intrtab[NCPU_INT];
 static int	icu_intr(void *);
 static void	icu_set(void);
 
+static const struct ipl_sr_map cobalt_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		MIPS_INT_MASK_0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0 | MIPS_INT_MASK_0,
+	[IPL_SOFTBIO] =		MIPS_SOFT_INT_MASK_0 | MIPS_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
+	[IPL_SOFTSERIAL] =	MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
+	[IPL_VM] =		MIPS_INT_MASK ^ MIPS_INT_MASK_5,
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
+};
+
 void
 intr_init(void)
 {
 	int i;
 
+	ipl_sr_map = cobalt_ipl_sr_map;
 	/*
 	 * Initialize CPU interrupts.
 	 */
@@ -386,110 +403,65 @@ cpu_intr_disestablish(void *cookie)
 	}
 }
 
-void
-cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
+static void inline
+intr_handle(struct cpu_intrhead *intr)
 {
-	struct clockframe cf;
-	struct cobalt_intrhand *ih;
-	struct cpu_info *ci;
-	uint32_t handled;
-
-	handled = 0;
-	ci = curcpu();
-	ci->ci_idepth++;
-	ci->ci_data.cpu_nintr++;
-
-	if (ipending & MIPS_INT_MASK_5) {
-		/* call the common MIPS3 clock interrupt handler */
-		cf.pc = pc;
-		cf.sr = status;
-		mips3_clockintr(&cf);
-
-		handled |= MIPS_INT_MASK_5;
+	struct cobalt_intrhand * const ih = &intr->intr_ih;
+	if (__predict_true(ih->ih_func != NULL)
+	    && __predict_true((*ih->ih_func)(ih->ih_arg))) {
+		intr->intr_evcnt.ev_count++;
 	}
-	_splset((status & handled) | MIPS_SR_INT_IE);
-
-	if (__predict_false(ipending & MIPS_INT_MASK_0)) {
-		/* GT64x11 timer0 */
-		volatile uint32_t *irq_src =
-		    (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_INTR_CAUSE);
-
-		if (__predict_true((*irq_src & T0EXP) != 0)) {
-			/* GT64x11 timer is no longer used for hardclock(9) */
-			*irq_src = 0;
-		}
-		handled |= MIPS_INT_MASK_0;
-	}
-
-	if (ipending & MIPS_INT_MASK_3) {
-		/* 16650 serial */
-		ih = &cpu_intrtab[3].intr_ih;
-		if (__predict_true(ih->ih_func != NULL)) {
-			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
-				cpu_intrtab[3].intr_evcnt.ev_count++;
-			}
-		}
-		handled |= MIPS_INT_MASK_3;
-	}
-	_splset((status & handled) | MIPS_SR_INT_IE);
-
-	if (ipending & MIPS_INT_MASK_1) {
-		/* tulip primary */
-		ih = &cpu_intrtab[1].intr_ih;
-		if (__predict_true(ih->ih_func != NULL)) {
-			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
-				cpu_intrtab[1].intr_evcnt.ev_count++;
-			}
-		}
-		handled |= MIPS_INT_MASK_1;
-	}
-	if (ipending & MIPS_INT_MASK_2) {
-		/* tulip secondary */
-		ih = &cpu_intrtab[2].intr_ih;
-		if (__predict_true(ih->ih_func != NULL)) {
-			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
-				cpu_intrtab[2].intr_evcnt.ev_count++;
-			}
-		}
-		handled |= MIPS_INT_MASK_2;
-	}
-
-	if (ipending & MIPS_INT_MASK_4) {
-		/* ICU interrupts */
-		ih = &cpu_intrtab[4].intr_ih;
-		if (__predict_true(ih->ih_func != NULL)) {
-			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
-				cpu_intrtab[4].intr_evcnt.ev_count++;
-			}
-		}
-		handled |= MIPS_INT_MASK_4;
-	}
-	cause &= ~handled;
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
-	ci->ci_idepth--;
-
-#ifdef __HAVE_FAST_SOFTINTS
-	/* software interrupt */
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
-	if (ipending == 0)
-		return;
-	_clrsoftintr(ipending);
-	softintr_dispatch(ipending);
-#endif
 }
 
-
-static const int ipl2spl_table[] = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] = SPLVM,
-	[IPL_SCHED] = SPLSCHED,
-};
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
+void
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
+	uint32_t pending;
+	int ipl;
 
-	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
+	curcpu()->ci_data.cpu_nintr++;
+
+	while (ppl < (ipl = splintr(&pending))) {
+		splx(ipl);
+		if (pending & MIPS_INT_MASK_5) {
+			struct clockframe cf;
+			/* call the common MIPS3 clock interrupt handler */
+			cf.pc = pc;
+			cf.sr = status;
+			cf.intr = (curcpu()->ci_idepth > 1);
+			mips3_clockintr(&cf);
+		}
+
+		if (__predict_false(pending & MIPS_INT_MASK_0)) {
+			/* GT64x11 timer0 */
+			volatile uint32_t *irq_src =
+			    (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_INTR_CAUSE);
+
+			if (__predict_true((*irq_src & T0EXP) != 0)) {
+				/* GT64x11 timer is no longer used for hardclock(9) */
+				*irq_src = 0;
+			}
+		}
+
+		if (pending & MIPS_INT_MASK_3) {
+			/* 16650 serial */
+			intr_handle(&cpu_intrtab[3]);
+		}
+
+		if (pending & MIPS_INT_MASK_1) {
+			/* tulip primary */
+			intr_handle(&cpu_intrtab[1]);
+		}
+
+		if (pending & MIPS_INT_MASK_2) {
+			/* tulip secondary */
+			intr_handle(&cpu_intrtab[2]);
+		}
+
+		if (pending & MIPS_INT_MASK_4) {
+			/* ICU interrupts */
+			intr_handle(&cpu_intrtab[4]);
+		}
+		(void)splhigh();
+	}
 }

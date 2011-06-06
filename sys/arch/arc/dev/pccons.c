@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.57 2009/03/14 21:04:04 dsl Exp $	*/
+/*	$NetBSD: pccons.c,v 1.57.6.1 2011/06/06 09:04:58 jruoho Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.57 2009/03/14 21:04:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.57.6.1 2011/06/06 09:04:58 jruoho Exp $");
 
 #include "opt_ddb.h"
 
@@ -600,7 +600,7 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return ENXIO;
 
 	if (!sc->sc_tty) {
-		tp = sc->sc_tty = ttymalloc();
+		tp = sc->sc_tty = tty_alloc();
 	}
 	else {
 		tp = sc->sc_tty;
@@ -638,7 +638,7 @@ pcclose(dev_t dev, int flag, int mode, struct lwp *l)
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 #ifdef notyet /* XXX */
-	ttyfree(tp);
+	tty_free(tp);
 #endif
 	return 0;
 }

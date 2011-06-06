@@ -1,4 +1,4 @@
-/* $NetBSD: tcvar.h,v 1.24 2009/05/12 14:47:04 cegger Exp $ */
+/* $NetBSD: tcvar.h,v 1.24.6.1 2011/06/06 09:08:40 jruoho Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -35,6 +35,7 @@
  */
 
 #include <sys/bus.h>
+#include <sys/device.h>
 #include <dev/tc/tcreg.h>
 
 /*
@@ -63,7 +64,7 @@
 #endif /* 1 */
 
 struct tc_softc {
-	struct	device sc_dv;
+	device_t sc_dev;
 
 	int	sc_speed;
 	int	sc_nslots;

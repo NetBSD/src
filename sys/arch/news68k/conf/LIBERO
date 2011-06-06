@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.53 2010/11/23 11:14:03 hannken Exp $
+# 	$NetBSD: LIBERO,v 1.53.2.1 2011/06/06 09:06:18 jruoho Exp $
 
 #	NEWS1750 config file;
 #
@@ -70,7 +70,8 @@ file-system	NULLFS		# loopback file system
 file-system	PTYFS		# /dev/pts/N support
 
 options 	NFSSERVER	# nfs server support
-#options 	QUOTA		# ffs quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# ffs endian independent support
 options 	FFS_NO_SNAPSHOT	# FFS snapshot support
 

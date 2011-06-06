@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.41 2010/11/23 11:13:52 hannken Exp $
+#	$NetBSD: EB7500ATX,v 1.41.2.1 2011/06/06 09:04:39 jruoho Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.41 $"
+#ident		"EB7500ATX-$Revision: 1.41.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -62,7 +62,8 @@ file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER
@@ -143,7 +144,7 @@ options 	KMEMSTATS	# kernel memory statistics
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-options		SYMTAB_SPACE=262144
+options		SYMTAB_SPACE=275000
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.

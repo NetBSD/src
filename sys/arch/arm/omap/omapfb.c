@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.1 2010/08/31 19:03:55 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.1.6.1 2011/06/06 09:05:05 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.1 2010/08/31 19:03:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.1.6.1 2011/06/06 09:05:05 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,6 +178,11 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_height = ((sz & 0x0fff0000 ) >> 16) + 1;
 	sc->sc_depth = 16;
 	sc->sc_stride = sc->sc_width << 1;
+
+	if (sc->sc_width == 1 || sc->sc_height == 1) {
+		aprint_error_dev(self, "bogus display size, not attaching\n");
+		return;
+	}
 
 	printf("%s: firmware set up %d x %d\n", device_xname(self),
 	    sc->sc_width, sc->sc_height);

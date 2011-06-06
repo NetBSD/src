@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.27 2008/04/28 20:24:08 martin Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.27.28.1 2011/06/06 09:09:44 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.27 2008/04/28 20:24:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.27.28.1 2011/06/06 09:09:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,9 +40,22 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.27 2008/04/28 20:24:08 martin E
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
+#include <sys/sysctl.h>
 #include <miscfs/procfs/procfs.h>
 
 #include <uvm/uvm_extern.h>
+
+static int
+procfs_docmdline_helper(void *cookie, const void *src, size_t off, size_t len)
+{
+	struct uio *uio = cookie;
+	char *buf = __UNCONST(src);
+
+	buf += uio->uio_offset - off;
+	if (off + len <= uio->uio_offset)
+		return 0;
+	return uiomove(buf, off + len - uio->uio_offset, cookie);
+}
 
 /*
  * code for returning process's command line arguments
@@ -55,23 +68,12 @@ procfs_docmdline(
     struct uio *uio
 )
 {
-	struct ps_strings pss;
-	int count, error;
-	size_t i, len, xlen, upper_bound;
-	struct uio auio;
-	struct iovec aiov;
-	struct vmspace *vm;
-	vaddr_t argv;
-	char *arg;
+	size_t len, start;
+	int error;
 
 	/* Don't allow writing. */
 	if (uio->uio_rw != UIO_READ)
 		return (EOPNOTSUPP);
-
-	/*
-	 * Allocate a temporary buffer to hold the arguments.
-	 */
-	arg = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
 	/*
 	 * Zombies don't have a stack, so we can't read their psstrings.
@@ -79,98 +81,30 @@ procfs_docmdline(
 	 * ps(1) would display.
 	 */
 	if (P_ZOMBIE(p) || (p->p_flag & PK_SYSTEM) != 0) {
-		len = snprintf(arg, PAGE_SIZE, "(%s)", p->p_comm) + 1;
-		error = uiomove_frombuf(arg, len, uio);
-		free(arg, M_TEMP);
+		static char msg[] = "()";
+		error = 0;
+		if (0 == uio->uio_offset) {
+			error = uiomove(msg, 1, uio);
+			if (error)
+				return (error);
+		}
+		len = strlen(p->p_comm);
+		if (len >= uio->uio_offset) {
+			start = uio->uio_offset - 1;
+			error = uiomove(p->p_comm + start, len - start, uio);
+			if (error)
+				return (error);
+		}
+		if (len + 2 >= uio->uio_offset) {
+			start = uio->uio_offset - 1 - len;
+			error = uiomove(msg + 1 + start, 2 - start, uio);
+		}
 		return (error);
 	}
 
-	/*
-	 * NOTE: Don't bother doing a process_checkioperm() here
-	 * because the psstrings info is available by using ps(1),
-	 * so it's not like there's anything to protect here.
-	 */
+	len = uio->uio_offset + uio->uio_resid;
 
-	/*
-	 * Lock the process down in memory.
-	 */
-	if ((error = proc_vmspace_getref(p, &vm)) != 0) {
-		free(arg, M_TEMP);
-		return (error);
-	}
-
-	/*
-	 * Read in the ps_strings structure.
-	 */
-	aiov.iov_base = &pss;
-	aiov.iov_len = sizeof(pss);
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_offset = (vaddr_t)p->p_psstr;
-	auio.uio_resid = sizeof(pss);
-	auio.uio_rw = UIO_READ;
-	UIO_SETUP_SYSSPACE(&auio);
-	error = uvm_io(&vm->vm_map, &auio);
-	if (error)
-		goto bad;
-
-	/*
-	 * Now read the address of the argument vector.
-	 */
-	aiov.iov_base = &argv;
-	aiov.iov_len = sizeof(argv);
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_offset = (vaddr_t)pss.ps_argvstr;
-	auio.uio_resid = sizeof(argv);
-	auio.uio_rw = UIO_READ;
-	UIO_SETUP_SYSSPACE(&auio);
-	error = uvm_io(&vm->vm_map, &auio);
-	if (error)
-		goto bad;
-
-	/*
-	 * Now copy in the actual argument vector, one page at a time,
-	 * since we don't know how long the vector is (though, we do
-	 * know how many NUL-terminated strings are in the vector).
-	 */
-	len = 0;
-	count = pss.ps_nargvstr;
-	upper_bound = round_page(uio->uio_offset + uio->uio_resid);
-	for (; count && len < upper_bound; len += xlen) {
-		aiov.iov_base = arg;
-		aiov.iov_len = PAGE_SIZE;
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_offset = argv + len;
-		xlen = PAGE_SIZE - ((argv + len) & PAGE_MASK);
-		auio.uio_resid = xlen;
-		auio.uio_rw = UIO_READ;
-		UIO_SETUP_SYSSPACE(&auio);
-		error = uvm_io(&vm->vm_map, &auio);
-		if (error)
-			goto bad;
-
-		for (i = 0; i < xlen && count != 0; i++) {
-			if (arg[i] == '\0')
-				count--;	/* one full string */
-		}
-
-		if (len + i > uio->uio_offset) {
-			/* Have data in this page, copy it out */
-			error = uiomove(arg + uio->uio_offset - len,
-			    i + len - uio->uio_offset, uio);
-			if (error || uio->uio_resid <= 0)
-				break;
-		}
-	}
-
- bad:
-	/*
-	 * Release the process.
-	 */
-	uvmspace_free(vm);
-
-	free(arg, M_TEMP);
-	return (error);
+	error = copy_procargs(p, KERN_PROC_ARGV, &len,
+	    procfs_docmdline_helper, uio);
+	return error;
 }

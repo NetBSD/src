@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.33 2010/12/20 00:25:46 matt Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.33.2.1 2011/06/06 09:09:31 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,10 +176,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.33 2010/12/20 00:25:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.33.2.1 2011/06/06 09:09:31 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/intr.h>
 #include <sys/mutex.h>
@@ -539,6 +538,11 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 			havelock = true;
 		}
 		(*sh->sh_func)(sh->sh_arg);
+
+		/* Diagnostic: check that spin-locks have not leaked. */
+		KASSERTMSG(curcpu()->ci_mtx_count == 0,
+		    ("%s: ci_mtx_count (%d) != 0, sh_func %p\n",
+		    __func__, curcpu()->ci_mtx_count, sh->sh_func));
 	
 		(void)splhigh();
 		KASSERT((sh->sh_flags & SOFTINT_ACTIVE) != 0);

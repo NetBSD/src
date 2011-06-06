@@ -1,16 +1,16 @@
-# $NetBSD: INSTALL,v 1.42 2010/11/23 11:13:55 hannken Exp $
+# $NetBSD: INSTALL,v 1.42.2.1 2011/06/06 09:05:13 jruoho Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
 # This kernel should be derived from GENERIC with most features
 # commented out to shoehorn into Cobalt kernel size limitations.
-# 
+#
 
 include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.42 $"
+#ident 		"INSTALL-$Revision: 1.42.2.1 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -32,7 +32,7 @@ maxusers	32
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
@@ -83,7 +83,8 @@ file-system	MFS		# memory-based filesystem
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

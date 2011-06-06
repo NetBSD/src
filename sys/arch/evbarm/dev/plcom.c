@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.31 2009/12/06 21:38:42 dyoung Exp $	*/
+/*	$NetBSD: plcom.c,v 1.31.6.1 2011/06/06 09:05:25 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.31 2009/12/06 21:38:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.31.6.1 2011/06/06 09:05:25 jruoho Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -392,7 +392,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 	if (sc->sc_fifolen > 1)
 		SET(sc->sc_hwflags, PLCOM_HW_FIFO);
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = plcomstart;
 	tp->t_param = plcomparam;
 	tp->t_hwiflow = plcomhwiflow;
@@ -494,7 +494,7 @@ plcom_detach(struct device *self, int flags)
 
 	/* Detach and free the tty. */
 	tty_detach(sc->sc_tty);
-	ttyfree(sc->sc_tty);
+	tty_free(sc->sc_tty);
 
 	/* Unhook the soft interrupt handler. */
 	softint_disestablish(sc->sc_si);

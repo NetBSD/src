@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7.28.1 2011/06/06 09:06:14 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,51 +27,86 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2008/04/28 20:23:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7.28.1 2011/06/06 09:06:14 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <machine/autoconf.h>
 
-int mainbus_match(struct device *, struct cfdata *, void *);
-void mainbus_attach(struct device *, struct device *, void *);
-int mainbus_print(void *, const char *);
+#include "locators.h"
 
-struct mainbus_attach_args mainbusdevs[] = {
-	{ "cpu"		,         -1,         -1, -1, -1 },
-	{ "shb"		,         -1,         -1, -1, -1 },
-	{ "com"		, 0xa4000000,         -1, 11, -1 },
-	{ "com"		, 0xa4000008,         -1, 12, -1 },
-	{ "mmeyepcmcia"	, 0xb000000a, 0xb8000000,  3, 10 },
-	{ "mmeyepcmaia"	, 0xb000000c, 0xb9000000,  4,  9 },
-	{ NULL }	/* terminator */
-};
+static int mainbus_match(device_t, cfdata_t, void *);
+static void mainbus_attach(device_t, device_t, void *);
+static int mainbus_search(device_t, cfdata_t, const int *, void *);
+static int mainbus_print(void *, const char *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
-int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+static int
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
-void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+static void
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct mainbus_attach_args *ma;
+	struct mainbus_attach_args maa;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
-	for (ma = mainbusdevs; ma->ma_name != NULL; ma++)
-		config_found(self, ma, mainbus_print);
+	maa.ma_addr1 = MAINBUSCF_ADDR1_DEFAULT;
+	maa.ma_irq1 = MAINBUSCF_IRQ1_DEFAULT;
+
+	/* CPU and SHBus */
+	maa.ma_name = "cpu";
+	config_found_ia(self, "mainbus", &maa, mainbus_print);
+	maa.ma_name = "shb";
+	config_found_ia(self, "mainbus", &maa, mainbus_print);
+
+	/* Devices */
+	config_search_ia(mainbus_search, self, "mainbus", 0);
 }
 
-int
+static int
+mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
+{
+	struct mainbus_attach_args maa;
+
+	if (strcmp(cf->cf_name, "cpu") == 0 ||
+	    strcmp(cf->cf_name, "shb") == 0)
+		return 0;
+
+	maa.ma_name = cf->cf_name;
+	maa.ma_addr1 = cf->cf_loc[MAINBUSCF_ADDR1];
+	maa.ma_addr2 = cf->cf_loc[MAINBUSCF_ADDR2];
+	maa.ma_irq1 = cf->cf_loc[MAINBUSCF_IRQ1];
+	maa.ma_irq2 = cf->cf_loc[MAINBUSCF_IRQ2];
+
+	if (config_match(parent, cf, &maa))
+		config_attach(parent, cf, &maa, mainbus_print);
+
+	return 0;
+}
+
+static int
 mainbus_print(void *aux, const char *pnp)
 {
+	struct mainbus_attach_args *maa = aux;
 
-	return (pnp ? QUIET : UNCONF);
+	if (maa->ma_addr1 != MAINBUSCF_ADDR1_DEFAULT) {
+		aprint_normal(" addr 0x%lx", maa->ma_addr1);
+		if (maa->ma_addr2 != MAINBUSCF_ADDR2_DEFAULT)
+			aprint_normal(",0x%lx", maa->ma_addr2);
+	}
+	if (maa->ma_irq1 != MAINBUSCF_IRQ1_DEFAULT) {
+		aprint_normal(" irq %d", maa->ma_irq1);
+		if (maa->ma_irq2 != MAINBUSCF_IRQ2_DEFAULT)
+			aprint_normal(",%d", maa->ma_irq2);
+	}
+	return pnp ? QUIET : UNCONF;
 }

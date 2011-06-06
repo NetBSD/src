@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.146 2011/01/14 02:06:34 rmind Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.146.2.1 2011/06/06 09:10:21 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -17,12 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and
- *      its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -67,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.146 2011/01/14 02:06:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.146.2.1 2011/06/06 09:10:21 jruoho Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -243,6 +238,11 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 #endif
 
 static pool_cache_t uvm_uarea_cache;
+#if defined(__HAVE_CPU_UAREA_ROUTINES)
+static pool_cache_t uvm_uarea_system_cache;
+#else
+#define uvm_uarea_system_cache uvm_uarea_cache
+#endif
 
 static void *
 uarea_poolpage_alloc(struct pool *pp, int flags)
@@ -261,6 +261,11 @@ uarea_poolpage_alloc(struct pool *pp, int flags)
 			uvm_pagefree(pg);
 		return (void *)va;
 	}
+#endif
+#if defined(__HAVE_CPU_UAREA_ROUTINES)
+	void *va = cpu_uarea_alloc(false);
+	if (va)
+		return (void *)va;
 #endif
 	return (void *)uvm_km_alloc(kernel_map, pp->pr_alloc->pa_pagesz,
 	    USPACE_ALIGN, UVM_KMF_WIRED |
@@ -281,6 +286,10 @@ uarea_poolpage_free(struct pool *pp, void *addr)
 		return;
 	}
 #endif
+#if defined(__HAVE_CPU_UAREA_ROUTINES)
+	if (cpu_uarea_free(addr))
+		return;
+#endif
 	uvm_km_free(kernel_map, (vaddr_t)addr, pp->pr_alloc->pa_pagesz,
 	    UVM_KMF_WIRED);
 }
@@ -290,6 +299,29 @@ static struct pool_allocator uvm_uarea_allocator = {
 	.pa_free = uarea_poolpage_free,
 	.pa_pagesz = USPACE,
 };
+
+#if defined(__HAVE_CPU_UAREA_ROUTINES)
+static void *
+uarea_system_poolpage_alloc(struct pool *pp, int flags)
+{
+	void * const va = cpu_uarea_alloc(true);
+	KASSERT(va != NULL);
+	return va;
+}
+
+static void
+uarea_system_poolpage_free(struct pool *pp, void *addr)
+{
+	if (!cpu_uarea_free(addr))
+		panic("%s: failed to free uarea %p", __func__, addr);
+}
+
+static struct pool_allocator uvm_uarea_system_allocator = {
+	.pa_alloc = uarea_system_poolpage_alloc,
+	.pa_free = uarea_system_poolpage_free,
+	.pa_pagesz = USPACE,
+};
+#endif /* __HAVE_CPU_UAREA_ROUTINES */
 
 void
 uvm_uarea_init(void)
@@ -309,6 +341,11 @@ uvm_uarea_init(void)
 
 	uvm_uarea_cache = pool_cache_init(USPACE, USPACE_ALIGN, 0, flags,
 	    "uarea", &uvm_uarea_allocator, IPL_NONE, NULL, NULL, NULL);
+#if defined(__HAVE_CPU_UAREA_ROUTINES)
+	uvm_uarea_system_cache = pool_cache_init(USPACE, USPACE_ALIGN,
+	    0, flags, "uareasys", &uvm_uarea_system_allocator,
+	    IPL_NONE, NULL, NULL, NULL);
+#endif
 }
 
 /*
@@ -322,6 +359,13 @@ uvm_uarea_alloc(void)
 	return (vaddr_t)pool_cache_get(uvm_uarea_cache, PR_WAITOK);
 }
 
+vaddr_t
+uvm_uarea_system_alloc(void)
+{
+
+	return (vaddr_t)pool_cache_get(uvm_uarea_system_cache, PR_WAITOK);
+}
+
 /*
  * uvm_uarea_free: free a u-area
  */
@@ -331,6 +375,13 @@ uvm_uarea_free(vaddr_t uaddr)
 {
 
 	pool_cache_put(uvm_uarea_cache, (void *)uaddr);
+}
+
+void
+uvm_uarea_system_free(vaddr_t uaddr)
+{
+
+	pool_cache_put(uvm_uarea_system_cache, (void *)uaddr);
 }
 
 vaddr_t
@@ -379,8 +430,12 @@ void
 uvm_lwp_exit(struct lwp *l)
 {
 	vaddr_t va = uvm_lwp_getuarea(l);
+	bool system = (l->l_flag & LW_SYSTEM) != 0;
 
-	uvm_uarea_free(va);
+	if (system)
+		uvm_uarea_system_free(va);
+	else
+		uvm_uarea_free(va);
 #ifdef DIAGNOSTIC
 	uvm_lwp_setuarea(l, (vaddr_t)NULL);
 #endif

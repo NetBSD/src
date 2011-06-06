@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.29 2008/08/23 17:25:54 tsutsui Exp $	*/
+/*	$NetBSD: imc.c,v 1.29.22.1 2011/06/06 09:06:39 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.29 2008/08/23 17:25:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.29.22.1 2011/06/06 09:06:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,7 +61,7 @@ static int	imc_match(struct device *, struct cfdata *, void *);
 static void	imc_attach(struct device *, struct device *, void *);
 static int	imc_print(void *, const char *);
 static void	imc_bus_reset(void);
-static void	imc_bus_error(uint32_t, uint32_t, uint32_t, uint32_t);
+static void	imc_bus_error(vaddr_t, uint32_t, uint32_t);
 static void	imc_watchdog_reset(void);
 static void	imc_watchdog_disable(void);
 static void	imc_watchdog_enable(void);
@@ -263,7 +263,7 @@ imc_bus_reset(void)
 }
 
 static void
-imc_bus_error(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+imc_bus_error(vaddr_t pc, uint32_t status, uint32_t ipending)
 {
 
 	printf("bus error: cpu_stat %08x addr %08x, gio_stat %08x addr %08x\n",

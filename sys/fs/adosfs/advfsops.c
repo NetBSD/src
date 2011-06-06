@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.60 2010/06/24 13:03:08 hannken Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.60.2.1 2011/06/06 09:09:21 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.60 2010/06/24 13:03:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.60.2.1 2011/06/06 09:09:21 jruoho Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.60 2010/06/24 13:03:08 hannken Exp $"
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
-#include <sys/simplelock.h>
 #include <sys/module.h>
 #include <fs/adosfs/adosfs.h>
 
@@ -70,13 +69,11 @@ static struct sysctllog *adosfs_sysctl_log;
 int adosfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 int adosfs_loadbitmap(struct adosfsmount *);
 
-struct simplelock adosfs_hashlock;
+kmutex_t adosfs_hashlock;
 
 struct pool adosfs_node_pool;
 
-MALLOC_JUSTDEFINE(M_ADOSFSMNT, "adosfs mount", "adosfs mount structures");
 MALLOC_JUSTDEFINE(M_ANODE, "adosfs anode","adosfs anode structures and tables");
-MALLOC_JUSTDEFINE(M_ADOSFSBITMAP, "adosfs bitmap", "adosfs bitmap");
 
 static const struct genfs_ops adosfs_genfsops = {
 	.gop_size = genfs_size,
@@ -167,6 +164,7 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct adosfsmount *amp;
 	struct buf *bp;
 	struct vnode *rvp;
+	size_t bitmap_sz = 0;
 	int error, part, i;
 
 	part = DISKPART(devvp->v_rdev);
@@ -185,8 +183,7 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		goto fail;
 
 	parp = &dl.d_partitions[part];
-	amp = malloc(sizeof(struct adosfsmount), M_ADOSFSMNT, M_WAITOK);
-	memset((char *)amp, 0, (u_long)sizeof(struct adosfsmount));
+	amp = kmem_zalloc(sizeof(struct adosfsmount), KM_SLEEP);
 	amp->mp = mp;
 	if (dl.d_type == DTYPE_FLOPPY) {
 		amp->bsize = dl.d_secsize;
@@ -246,15 +243,15 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if ((error = VFS_ROOT(mp, &rvp)) != 0)
 		goto fail;
 	/* allocate and load bitmap, set free space */
-	amp->bitmap = malloc(((amp->numblks + 31) / 32) * sizeof(*amp->bitmap),
-	    M_ADOSFSBITMAP, M_WAITOK);
+	bitmap_sz = ((amp->numblks + 31) / 32) * sizeof(*amp->bitmap);
+	amp->bitmap = kmem_alloc(bitmap_sz, KM_SLEEP);
 	if (amp->bitmap)
 		adosfs_loadbitmap(amp);
 	if (mp->mnt_flag & MNT_RDONLY && amp->bitmap) {
 		/*
 		 * Don't need the bitmap any more if it's read-only.
 		 */
-		free(amp->bitmap, M_ADOSFSBITMAP);
+		kmem_free(amp->bitmap, bitmap_sz);
 		amp->bitmap = NULL;
 	}
 	vput(rvp);
@@ -266,9 +263,9 @@ fail:
 	(void) VOP_CLOSE(devvp, FREAD, NOCRED);
 	VOP_UNLOCK(devvp);
 	if (amp && amp->bitmap)
-		free(amp->bitmap, M_ADOSFSBITMAP);
+		kmem_free(amp->bitmap, bitmap_sz);
 	if (amp)
-		free(amp, M_ADOSFSMNT);
+		kmem_free(amp, sizeof(*amp));
 	return (error);
 }
 
@@ -296,9 +293,12 @@ adosfs_unmount(struct mount *mp, int mntflags)
 	vn_lock(amp->devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(amp->devvp, FREAD, NOCRED);
 	vput(amp->devvp);
-	if (amp->bitmap)
-		free(amp->bitmap, M_ADOSFSBITMAP);
-	free(amp, M_ADOSFSMNT);
+	if (amp->bitmap) {
+		size_t bitmap_sz = ((amp->numblks + 31) / 32) *
+		    sizeof(*amp->bitmap);
+		kmem_free(amp->bitmap, bitmap_sz);
+	}
+	kmem_free(amp, sizeof(*amp));
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
@@ -731,12 +731,10 @@ void
 adosfs_init(void)
 {
 
-	malloc_type_attach(M_ADOSFSMNT);
 	malloc_type_attach(M_ANODE);
-	malloc_type_attach(M_ADOSFSBITMAP);
+	mutex_init(&adosfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	pool_init(&adosfs_node_pool, sizeof(struct anode), 0, 0, 0, "adosndpl",
 	    &pool_allocator_nointr, IPL_NONE);
-	simple_lock_init(&adosfs_hashlock);
 }
 
 void
@@ -744,9 +742,8 @@ adosfs_done(void)
 {
 
 	pool_destroy(&adosfs_node_pool);
-	malloc_type_detach(M_ADOSFSBITMAP);
+	mutex_destroy(&adosfs_hashlock);
 	malloc_type_detach(M_ANODE);
-	malloc_type_detach(M_ADOSFSMNT);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.71 2011/01/02 05:09:30 dholland Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.71.2.1 2011/06/06 09:09:22 jruoho Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.71 2011/01/02 05:09:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.71.2.1 2011/06/06 09:09:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,6 +554,7 @@ msdosfs_write(void *v)
 	u_long count;
 	vsize_t bytelen;
 	off_t oldoff;
+	size_t rem;
 	struct uio *uio = ap->a_uio;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
@@ -623,6 +624,10 @@ msdosfs_write(void *v)
 		dep->de_FileSize = uio->uio_offset + resid;
 		/* hint uvm to not read in extended part */
 		uvm_vnp_setwritesize(vp, dep->de_FileSize);
+		/* zero out the remainder of the last page */
+		rem = round_page(dep->de_FileSize) - dep->de_FileSize;
+		if (rem > 0)
+			uvm_vnp_zerorange(vp, (off_t)dep->de_FileSize, rem);
 		extended = 1;
 	}
 
@@ -819,7 +824,7 @@ msdosfs_rename(void *v)
 	struct componentname *tcnp = ap->a_tcnp;
 	struct componentname *fcnp = ap->a_fcnp;
 	struct denode *ip, *xp, *dp, *zp;
-	u_char toname[11], oldname[11];
+	u_char toname[12], oldname[12];
 	u_long from_diroffset, to_diroffset;
 	u_char to_count;
 	int doingdirectory = 0, newparent = 0;
@@ -935,11 +940,11 @@ abortit:
 		 */
 		vref(tdvp);
 		if ((error = doscheckpath(ip, dp)) != 0)
-			goto out;
+			goto bad;
 		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = relookup(tdvp, &tvp, tcnp, 0)) != 0) {
 			VOP_UNLOCK(tdvp);
-			goto out;
+			goto bad;
 		}
 		dp = VTODE(tdvp);
 		xp = tvp ? VTODE(tvp) : NULL;
@@ -1114,7 +1119,6 @@ bad:
 	if (tvp)
 		vput(tvp);
 	vrele(tdvp);
-out:
 	ip->de_flag &= ~DE_RENAME;
 	vrele(fdvp);
 	vrele(fvp);
@@ -1796,10 +1800,8 @@ msdosfs_fsync(void *v)
 
 	fstrans_start(vp->v_mount, FSTRANS_LAZY);
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
-	vflushbuf(vp, wait);
-	if ((ap->a_flags & FSYNC_DATAONLY) != 0)
-		error = 0;
-	else
+	error = vflushbuf(vp, wait);
+	if (error == 0 && (ap->a_flags & FSYNC_DATAONLY) == 0)
 		error = msdosfs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {

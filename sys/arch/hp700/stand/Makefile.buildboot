@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.13 2009/05/03 17:33:29 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.13.6.1 2011/06/06 09:05:41 jruoho Exp $
 
 RELOC=	120000
 HEAP_LIMIT=0x1c0000
@@ -24,6 +24,8 @@ NOMAN=
 STRIPFLAG=
 BINMODE=	444
 
+.include <bsd.own.mk>
+
 CPPFLAGS+=	-nostdinc -I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. \
 		-I${.OBJDIR}
 CFLAGS+=	-Os -msoft-float -Wno-main
@@ -34,8 +36,8 @@ SRCS+=		vers.c
 CLEANFILES+=	vers.c
 
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version \
-		hp700 ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version hp700 ${NEWVERSWHAT}
 
 CPPFLAGS+=		-D_STANDALONE -Dhp700 ${DEBUGFLAGS}
 CPPFLAGS+=		-DRELOC=0x${RELOC} -DHEAP_LIMIT=${HEAP_LIMIT}

@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.8 2010/08/28 04:12:40 kiyohara Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.8.2.1 2011/06/06 09:05:25 jruoho Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -63,10 +63,10 @@
 #include "opt_gumstix.h"
 
 #include <machine/asm.h>
-#include <machine/vmparam.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pte.h>
-#include <arm/arm32/pmap.h>		/* for PMAP_DOMAIN_KERNEL */
+#include "assym.h"
+
+RCSID("$NetBSD: gumstix_start.S,v 1.8.2.1 2011/06/06 09:05:25 jruoho Exp $")
 
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
@@ -238,31 +238,31 @@ ram_size:
 
 #define MMU_INIT(va, pa, n_sec, attr)	  \
 	.word	n_sec			; \
-	.word	4 * ((va) >> L1_S_SHIFT); \
+	.word	(va) >> (L1_S_SHIFT-2)	; \
 	.word	(pa) | (attr)		;
 
 mmu_init_table:
 	/* fill all table VA==PA */
 	MMU_INIT(0x00000000, 0x00000000,
-	    1 << (32 - L1_S_SHIFT), L1_S_PROTO | L1_S_AP(AP_KRW))
+	    1 << (32 - L1_S_SHIFT), L1_S_PROTO | L1_S_AP_KRW)
 
 #if defined(GUMSTIX)
 #define SDRAM_START	0xa0000000
 
 	/* map SDRAM VA==PA, write-back cacheable (first 64M only)*/
 	MMU_INIT(SDRAM_START, SDRAM_START,
-	    64, L1_S_PROTO | L1_S_C | L1_S_AP(AP_KRW))
+	    64, L1_S_PROTO | L1_S_C | L1_S_AP_KRW)
 
 	/* map VA 0xc0000000..0xc3ffffff to PA 0xa0000000..0xa3ffffff */
 	MMU_INIT(0xc0000000, SDRAM_START,
-	    64, L1_S_PROTO | L1_S_C | L1_S_AP(AP_KRW))
+	    64, L1_S_PROTO | L1_S_C | L1_S_AP_KRW)
 
 #elif defined(OVERO)
 #define SDRAM_START	0x80000000
 
 	/* Map VA to PA, write-back cacheable (first 64M only) */
 	MMU_INIT(KERNEL_BASE, SDRAM_START,
-	    64, L1_S_PROTO | L1_S_B | L1_S_C | L1_S_AP(AP_KRW))
+	    64, L1_S_PROTO | L1_S_B | L1_S_C | L1_S_APv7_KRW)
 #endif
 
 	MMU_INIT(0, 0, 0, 0)		/* end of table */

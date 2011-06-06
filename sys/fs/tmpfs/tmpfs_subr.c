@@ -1,12 +1,12 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.62 2011/01/13 13:35:12 pooka Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.62.2.1 2011/06/06 09:09:24 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Julio M. Merino Vidal, developed as part of Google's Summer of Code
- * 2005 program.
+ * 2005 program, and by Mindaugas Rasiukevicius.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,11 +31,50 @@
  */
 
 /*
- * Efficient memory file system supporting functions.
+ * Efficient memory file system: interfaces for inode and directory entry
+ * construction, destruction and manipulation.
+ *
+ * Reference counting
+ *
+ *	The link count of inode (tmpfs_node_t::tn_links) is used as a
+ *	reference counter.  However, it has slightly different semantics.
+ *
+ *	For directories - link count represents directory entries, which
+ *	refer to the directories.  In other words, it represents the count
+ *	of sub-directories.  It also takes into account the virtual '.'
+ *	entry (which has no real entry in the list).  For files - link count
+ *	represents the hard links.  Since only empty directories can be
+ *	removed - link count aligns the reference counting requirements
+ *	enough.  Note: to check whether directory is not empty, the inode
+ *	size (tmpfs_node_t::tn_size) can be used.
+ *
+ *	The inode itself, as an object, gathers its first reference when
+ *	directory entry is attached via tmpfs_dir_attach(9).  For instance,
+ *	after regular tmpfs_create(), a file would have a link count of 1,
+ *	while directory after tmpfs_mkdir() would have 2 (due to '.').
+ *
+ * Reclamation
+ *
+ *	It should be noted that tmpfs inodes rely on a combination of vnode
+ *	reference counting and link counting.  That is, an inode can only be
+ *	destroyed if its associated vnode is inactive.  The destruction is
+ *	done on vnode reclamation i.e. tmpfs_reclaim().  It should be noted
+ *	that tmpfs_node_t::tn_links being 0 is a destruction criterion. 
+ *
+ *	If an inode has references within the file system (tn_links > 0) and
+ *	its inactive vnode gets reclaimed/recycled - then the association is
+ *	broken in tmpfs_reclaim().  In such case, an inode will always pass
+ *	tmpfs_lookup() and thus tmpfs_vnode_get() to associate a new vnode.
+ *
+ * Lock order
+ *
+ *	tmpfs_node_t::tn_vlock ->
+ *		vnode_t::v_vlock ->
+ *			vnode_t::v_interlock
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.62 2011/01/13 13:35:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.62.2.1 2011/06/06 09:09:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -46,10 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.62 2011/01/13 13:35:12 pooka Exp $"
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
-#include <sys/swap.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
-#include <sys/proc.h>
 #include <sys/atomic.h>
 
 #include <uvm/uvm.h>
@@ -61,57 +98,25 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.62 2011/01/13 13:35:12 pooka Exp $"
 #include <fs/tmpfs/tmpfs_specops.h>
 #include <fs/tmpfs/tmpfs_vnops.h>
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Allocates a new node of type 'type' inside the 'tmp' mount point, with
- * its owner set to 'uid', its group to 'gid' and its mode set to 'mode',
- * using the credentials of the process 'p'.
- *
- * If the node type is set to 'VDIR', then the parent parameter must point
- * to the parent directory of the node being created.  It may only be NULL
- * while allocating the root node.
- *
- * If the node type is set to 'VBLK' or 'VCHR', then the rdev parameter
- * specifies the device the node represents.
- *
- * If the node type is set to 'VLNK', then the parameter target specifies
- * the file name of the target file for the symbolic link that is being
- * created.
- *
- * Note that new nodes are retrieved from the available list if it has
- * items or, if it is empty, from the node pool as long as there is enough
- * space to create them.
- *
- * Returns zero on success or an appropriate error code on failure.
+ * tmpfs_alloc_node: allocate a new inode of a specified type and
+ * insert it into the list of specified mount point.
  */
 int
-tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
-    uid_t uid, gid_t gid, mode_t mode, struct tmpfs_node *parent,
-    char *target, dev_t rdev, struct tmpfs_node **node)
+tmpfs_alloc_node(tmpfs_mount_t *tmp, enum vtype type, uid_t uid, gid_t gid,
+    mode_t mode, char *target, dev_t rdev, tmpfs_node_t **node)
 {
-	struct tmpfs_node *nnode;
-
-	/* If the root directory of the 'tmp' file system is not yet
-	 * allocated, this must be the request to do it. */
-	KASSERT(IMPLIES(tmp->tm_root == NULL, parent == NULL && type == VDIR));
-
-	KASSERT(IFF(type == VLNK, target != NULL));
-	KASSERT(IFF(type == VBLK || type == VCHR, rdev != VNOVAL));
-
-	KASSERT(uid != VNOVAL && gid != VNOVAL && mode != VNOVAL);
-
-	nnode = NULL;
-	if (atomic_inc_uint_nv(&tmp->tm_nodes_cnt) >= tmp->tm_nodes_max) {
-		atomic_dec_uint(&tmp->tm_nodes_cnt);
-		return ENOSPC;
-	}
+	tmpfs_node_t *nnode;
 
 	nnode = tmpfs_node_get(tmp);
 	if (nnode == NULL) {
-		atomic_dec_uint(&tmp->tm_nodes_cnt);
 		return ENOSPC;
 	}
+
+	/* Initially, no references and no associations. */
+	nnode->tn_links = 0;
+	nnode->tn_vnode = NULL;
+	nnode->tn_dirent_hint = NULL;
 
 	/*
 	 * XXX Where the pool is backed by a map larger than (4GB *
@@ -119,68 +124,71 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	 * for applications that do not understand 64-bit ino_t.
 	 */
 	nnode->tn_id = (ino_t)((uintptr_t)nnode / sizeof(*nnode));
-	nnode->tn_gen = arc4random();
+	nnode->tn_gen = TMPFS_NODE_GEN_MASK & arc4random();
 
 	/* Generic initialization. */
 	nnode->tn_type = type;
 	nnode->tn_size = 0;
 	nnode->tn_status = 0;
 	nnode->tn_flags = 0;
-	nnode->tn_links = 0;
+	nnode->tn_lockf = NULL;
 
 	vfs_timestamp(&nnode->tn_atime);
 	nnode->tn_birthtime = nnode->tn_atime;
 	nnode->tn_ctime = nnode->tn_atime;
 	nnode->tn_mtime = nnode->tn_atime;
 
+	KASSERT(uid != VNOVAL && gid != VNOVAL && mode != VNOVAL);
 	nnode->tn_uid = uid;
 	nnode->tn_gid = gid;
 	nnode->tn_mode = mode;
-	nnode->tn_lockf = NULL;
-	nnode->tn_vnode = NULL;
 
 	/* Type-specific initialization. */
 	switch (nnode->tn_type) {
 	case VBLK:
 	case VCHR:
+		/* Character/block special device. */
+		KASSERT(rdev != VNOVAL);
 		nnode->tn_spec.tn_dev.tn_rdev = rdev;
 		break;
-
 	case VDIR:
+		/* Directory. */
 		TAILQ_INIT(&nnode->tn_spec.tn_dir.tn_dir);
-		nnode->tn_spec.tn_dir.tn_parent =
-		    (parent == NULL) ? nnode : parent;
+		nnode->tn_spec.tn_dir.tn_parent = NULL;
 		nnode->tn_spec.tn_dir.tn_readdir_lastn = 0;
 		nnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
+
+		/* Extra link count for the virtual '.' entry. */
 		nnode->tn_links++;
 		break;
-
 	case VFIFO:
-		/* FALLTHROUGH */
 	case VSOCK:
 		break;
-
 	case VLNK:
-		KASSERT(strlen(target) < MAXPATHLEN);
+		/* Symbolic link.  Target specifies the file name. */
+		KASSERT(target && strlen(target) < MAXPATHLEN);
+
 		nnode->tn_size = strlen(target);
+		if (nnode->tn_size == 0) {
+			nnode->tn_spec.tn_lnk.tn_link = NULL;
+			break;
+		}
 		nnode->tn_spec.tn_lnk.tn_link =
 		    tmpfs_strname_alloc(tmp, nnode->tn_size);
 		if (nnode->tn_spec.tn_lnk.tn_link == NULL) {
-			atomic_dec_uint(&tmp->tm_nodes_cnt);
 			tmpfs_node_put(tmp, nnode);
 			return ENOSPC;
 		}
 		memcpy(nnode->tn_spec.tn_lnk.tn_link, target, nnode->tn_size);
 		break;
-
 	case VREG:
+		/* Regular file.  Create an underlying UVM object. */
 		nnode->tn_spec.tn_reg.tn_aobj =
 		    uao_create(INT32_MAX - PAGE_SIZE, 0);
 		nnode->tn_spec.tn_reg.tn_aobj_pages = 0;
 		break;
-
 	default:
-		KASSERT(0);
+		KASSERT(false);
 	}
 
 	mutex_init(&nnode->tn_vlock, MUTEX_DEFAULT, IPL_NONE);
@@ -193,44 +201,30 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Destroys the node pointed to by node from the file system 'tmp'.
- * If the node does not belong to the given mount point, the results are
- * unpredicted.
- *
- * If the node references a directory; no entries are allowed because
- * their removal could need a recursive algorithm, something forbidden in
- * kernel space.  Furthermore, there is not need to provide such
- * functionality (recursive removal) because the only primitives offered
- * to the user are the removal of empty directories and the deletion of
- * individual files.
- *
- * Note that nodes are not really deleted; in fact, when a node has been
- * allocated, it cannot be deleted during the whole life of the file
- * system.  Instead, they are moved to the available list and remain there
- * until reused.
+ * tmpfs_free_node: remove the inode from a list in the mount point and
+ * destroy the inode structures.
  */
 void
-tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
+tmpfs_free_node(tmpfs_mount_t *tmp, tmpfs_node_t *node)
 {
 	size_t objsz;
 
 	mutex_enter(&tmp->tm_lock);
 	LIST_REMOVE(node, tn_entries);
 	mutex_exit(&tmp->tm_lock);
-	atomic_dec_uint(&tmp->tm_nodes_cnt);
 
 	switch (node->tn_type) {
 	case VLNK:
-		tmpfs_strname_free(tmp, node->tn_spec.tn_lnk.tn_link,
-		    node->tn_size);
+		if (node->tn_size > 0) {
+			tmpfs_strname_free(tmp, node->tn_spec.tn_lnk.tn_link,
+			    node->tn_size);
+		}
 		break;
 	case VREG:
 		/*
-		 * Calculate the size of node data, decrease the used-memory
-		 * counter, and destroy the memory object (if any).
+		 * Calculate the size of inode data, decrease the used-memory
+		 * counter, and destroy the unerlying UVM object (if any).
 		 */
 		objsz = PAGE_SIZE * node->tn_spec.tn_reg.tn_aobj_pages;
 		if (objsz != 0) {
@@ -240,6 +234,13 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 			uao_detach(node->tn_spec.tn_reg.tn_aobj);
 		}
 		break;
+	case VDIR:
+		/*
+		 * KASSERT(TAILQ_EMPTY(&node->tn_spec.tn_dir.tn_dir));
+		 * KASSERT(node->tn_spec.tn_dir.tn_parent == NULL ||
+		 *     node == tmp->tm_root);
+		 */
+		break;
 	default:
 		break;
 	}
@@ -248,23 +249,144 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 	tmpfs_node_put(tmp, node);
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Allocates a new directory entry for the node node with a name of name.
- * The new directory entry is returned in *de.
+ * tmpfs_vnode_get: allocate or reclaim a vnode for a specified inode.
  *
- * The link count of node is increased by one to reflect the new object
- * referencing it.  This takes care of notifying kqueue listeners about
- * this change.
- *
- * Returns zero on success or an appropriate error code on failure.
+ * => Must be called with tmpfs_node_t::tn_vlock held.
+ * => Returns vnode (*vpp) locked.
  */
 int
-tmpfs_alloc_dirent(struct tmpfs_mount *tmp, struct tmpfs_node *node,
-    const char *name, uint16_t len, struct tmpfs_dirent **de)
+tmpfs_vnode_get(struct mount *mp, tmpfs_node_t *node, vnode_t **vpp)
 {
-	struct tmpfs_dirent *nde;
+	vnode_t *vp;
+	int error;
+again:
+	/* If there is already a vnode, try to reclaim it. */
+	if ((vp = node->tn_vnode) != NULL) {
+		atomic_or_ulong(&node->tn_gen, TMPFS_RECLAIMING_BIT);
+		mutex_enter(&vp->v_interlock);
+		mutex_exit(&node->tn_vlock);
+		error = vget(vp, LK_EXCLUSIVE);
+		if (error == ENOENT) {
+			mutex_enter(&node->tn_vlock);
+			goto again;
+		}
+		atomic_and_ulong(&node->tn_gen, ~TMPFS_RECLAIMING_BIT);
+		*vpp = vp;
+		return error;
+	}
+	if (TMPFS_NODE_RECLAIMING(node)) {
+		atomic_and_ulong(&node->tn_gen, ~TMPFS_RECLAIMING_BIT);
+	}
+
+	/* Get a new vnode and associate it with our node. */
+	error = getnewvnode(VT_TMPFS, mp, tmpfs_vnodeop_p, &vp);
+	if (error) {
+		mutex_exit(&node->tn_vlock);
+		return error;
+	}
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vp->v_type = node->tn_type;
+
+	/* Type-specific initialization. */
+	switch (node->tn_type) {
+	case VBLK:
+	case VCHR:
+		vp->v_op = tmpfs_specop_p;
+		spec_node_init(vp, node->tn_spec.tn_dev.tn_rdev);
+		break;
+	case VDIR:
+		vp->v_vflag |= node->tn_spec.tn_dir.tn_parent == node ?
+		    VV_ROOT : 0;
+		break;
+	case VFIFO:
+		vp->v_op = tmpfs_fifoop_p;
+		break;
+	case VLNK:
+	case VREG:
+	case VSOCK:
+		break;
+	default:
+		KASSERT(false);
+	}
+
+	uvm_vnp_setsize(vp, node->tn_size);
+	vp->v_data = node;
+	node->tn_vnode = vp;
+	mutex_exit(&node->tn_vlock);
+
+	KASSERT(VOP_ISLOCKED(vp));
+	*vpp = vp;
+	return 0;
+}
+
+/*
+ * tmpfs_alloc_file: allocate a new file of specified type and adds it
+ * into the parent directory.
+ *
+ * => Credentials of the caller are used.
+ */
+int
+tmpfs_alloc_file(vnode_t *dvp, vnode_t **vpp, struct vattr *vap,
+    struct componentname *cnp, char *target)
+{
+	tmpfs_mount_t *tmp = VFS_TO_TMPFS(dvp->v_mount);
+	tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp), *node;
+	tmpfs_dirent_t *de;
+	int error;
+
+	KASSERT(VOP_ISLOCKED(dvp));
+	*vpp = NULL;
+
+	/* Check for the maximum number of links limit. */
+	if (vap->va_type == VDIR) {
+		/* Check for maximum links limit. */
+		if (dnode->tn_links == LINK_MAX) {
+			error = EMLINK;
+			goto out;
+		}
+		KASSERT(dnode->tn_links < LINK_MAX);
+	}
+
+	/* Allocate a node that represents the new file. */
+	error = tmpfs_alloc_node(tmp, vap->va_type, kauth_cred_geteuid(cnp->cn_cred),
+	    dnode->tn_gid, vap->va_mode, target, vap->va_rdev, &node);
+	if (error)
+		goto out;
+
+	/* Allocate a directory entry that points to the new file. */
+	error = tmpfs_alloc_dirent(tmp, cnp->cn_nameptr, cnp->cn_namelen, &de);
+	if (error) {
+		tmpfs_free_node(tmp, node);
+		goto out;
+	}
+
+	/* Get a vnode for the new file. */
+	mutex_enter(&node->tn_vlock);
+	error = tmpfs_vnode_get(dvp->v_mount, node, vpp);
+	if (error) {
+		tmpfs_free_dirent(tmp, de);
+		tmpfs_free_node(tmp, node);
+		goto out;
+	}
+
+	/* Associate inode and attach the entry into the directory. */
+	tmpfs_dir_attach(dvp, de, node);
+out:
+	vput(dvp);
+	return error;
+}
+
+/*
+ * tmpfs_alloc_dirent: allocates a new directory entry for the inode.
+ * The directory entry contains a path name component.
+ */
+int
+tmpfs_alloc_dirent(tmpfs_mount_t *tmp, const char *name, uint16_t len,
+    tmpfs_dirent_t **de)
+{
+	tmpfs_dirent_t *nde;
 
 	nde = tmpfs_dirent_get(tmp);
 	if (nde == NULL)
@@ -277,362 +399,196 @@ tmpfs_alloc_dirent(struct tmpfs_mount *tmp, struct tmpfs_node *node,
 	}
 	nde->td_namelen = len;
 	memcpy(nde->td_name, name, len);
-	nde->td_node = node;
 
-	if (node != TMPFS_NODE_WHITEOUT) {
-		node->tn_links++;
-		if (node->tn_links > 1 && node->tn_vnode != NULL)
-			VN_KNOTE(node->tn_vnode, NOTE_LINK);
-	}
 	*de = nde;
-
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Frees a directory entry.  It is the caller's responsibility to destroy
- * the node referenced by it if needed.
- *
- * The link count of node is decreased by one to reflect the removal of an
- * object that referenced it.  This only happens if 'node_exists' is true;
- * otherwise the function will not access the node referred to by the
- * directory entry, as it may already have been released from the outside.
- *
- * Interested parties (kqueue) are notified of the link count change; note
- * that this can include both the node pointed to by the directory entry
- * as well as its parent.
+ * tmpfs_free_dirent: free a directory entry.
  */
 void
-tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
-    bool node_exists)
+tmpfs_free_dirent(tmpfs_mount_t *tmp, tmpfs_dirent_t *de)
 {
-	if (node_exists && de->td_node != TMPFS_NODE_WHITEOUT) {
-		struct tmpfs_node *node;
 
-		node = de->td_node;
-
-		KASSERT(node->tn_links > 0);
-		node->tn_links--;
-		if (node->tn_vnode != NULL)
-			VN_KNOTE(node->tn_vnode, node->tn_links == 0 ?
-			    NOTE_DELETE : NOTE_LINK);
-		if (node->tn_type == VDIR)
-			VN_KNOTE(node->tn_spec.tn_dir.tn_parent->tn_vnode,
-			    NOTE_LINK);
-	}
-
+	/* KASSERT(de->td_node == NULL); */
 	tmpfs_strname_free(tmp, de->td_name, de->td_namelen);
 	tmpfs_dirent_put(tmp, de);
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Allocates a new vnode for the node node or returns a new reference to
- * an existing one if the node had already a vnode referencing it.  The
- * resulting locked vnode is returned in *vpp.
+ * tmpfs_dir_attach: associate directory entry with a specified inode,
+ * and attach the entry into the directory, specified by vnode.
  *
- * Returns zero on success or an appropriate error code on failure.
- */
-int
-tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
-{
-	int error;
-	struct vnode *vp;
-
-	/* If there is already a vnode, then lock it. */
-	for (;;) {
-		mutex_enter(&node->tn_vlock);
-		if ((vp = node->tn_vnode) != NULL) {
-			mutex_enter(&vp->v_interlock);
-			mutex_exit(&node->tn_vlock);
-			error = vget(vp, LK_EXCLUSIVE);
-			if (error == ENOENT) {
-				/* vnode was reclaimed. */
-				continue;
-			}
-			*vpp = vp;
-			return error;
-		}
-		break;
-	}
-
-	/* Get a new vnode and associate it with our node. */
-	error = getnewvnode(VT_TMPFS, mp, tmpfs_vnodeop_p, &vp);
-	if (error != 0) {
-		mutex_exit(&node->tn_vlock);
-		return error;
-	}
-
-	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (error != 0) {
-		mutex_exit(&node->tn_vlock);
-		ungetnewvnode(vp);
-		return error;
-	}
-
-	vp->v_type = node->tn_type;
-
-	/* Type-specific initialization. */
-	switch (node->tn_type) {
-	case VBLK:
-		/* FALLTHROUGH */
-	case VCHR:
-		vp->v_op = tmpfs_specop_p;
-		spec_node_init(vp, node->tn_spec.tn_dev.tn_rdev);
-		break;
-
-	case VDIR:
-		vp->v_vflag |= node->tn_spec.tn_dir.tn_parent == node ?
-		    VV_ROOT : 0;
-		break;
-
-	case VFIFO:
-		vp->v_op = tmpfs_fifoop_p;
-		break;
-
-	case VLNK:
-		/* FALLTHROUGH */
-	case VREG:
-		/* FALLTHROUGH */
-	case VSOCK:
-		break;
-
-	default:
-		KASSERT(0);
-	}
-
-	uvm_vnp_setsize(vp, node->tn_size);
-	vp->v_data = node;
-	node->tn_vnode = vp;
-	mutex_exit(&node->tn_vlock);
-	*vpp = vp;
-
-	KASSERT(IFF(error == 0, *vpp != NULL && VOP_ISLOCKED(*vpp)));
-	KASSERT(*vpp == node->tn_vnode);
-
-	return error;
-}
-
-/* --------------------------------------------------------------------- */
-
-/*
- * Destroys the association between the vnode vp and the node it
- * references.
+ * => Increases link count on the associated node.
+ * => Increases link count on directory node, if our node is VDIR.
+ *    It is caller's responsibility to check for the LINK_MAX limit.
+ * => Triggers kqueue events here.
  */
 void
-tmpfs_free_vp(struct vnode *vp)
+tmpfs_dir_attach(vnode_t *dvp, tmpfs_dirent_t *de, tmpfs_node_t *node)
 {
-	struct tmpfs_node *node;
-
-	node = VP_TO_TMPFS_NODE(vp);
-
-	mutex_enter(&node->tn_vlock);
-	node->tn_vnode = NULL;
-	mutex_exit(&node->tn_vlock);
-	vp->v_data = NULL;
-}
-
-/* --------------------------------------------------------------------- */
-
-/*
- * Allocates a new file of type 'type' and adds it to the parent directory
- * 'dvp'; this addition is done using the component name given in 'cnp'.
- * The ownership of the new file is automatically assigned based on the
- * credentials of the caller (through 'cnp'), the group is set based on
- * the parent directory and the mode is determined from the 'vap' argument.
- * If successful, *vpp holds a vnode to the newly created file and zero
- * is returned.  Otherwise *vpp is NULL and the function returns an
- * appropriate error code.
- */
-int
-tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
-    struct componentname *cnp, char *target)
-{
-	int error;
-	struct tmpfs_dirent *de;
-	struct tmpfs_mount *tmp;
-	struct tmpfs_node *dnode;
-	struct tmpfs_node *node;
-	struct tmpfs_node *parent;
+	tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp);
+	int events = NOTE_WRITE;
 
 	KASSERT(VOP_ISLOCKED(dvp));
 
-	tmp = VFS_TO_TMPFS(dvp->v_mount);
-	dnode = VP_TO_TMPFS_DIR(dvp);
-	*vpp = NULL;
+	/* Associate directory entry and the inode. */
+	if (node != TMPFS_NODE_WHITEOUT) {
+		de->td_node = node;
+		KASSERT(node->tn_links < LINK_MAX);
+		node->tn_links++;
 
-	/* If the entry we are creating is a directory, we cannot overflow
-	 * the number of links of its parent, because it will get a new
-	 * link. */
-	if (vap->va_type == VDIR) {
-		/* Ensure that we do not overflow the maximum number of links
-		 * imposed by the system. */
-		KASSERT(dnode->tn_links <= LINK_MAX);
-		if (dnode->tn_links == LINK_MAX) {
-			error = EMLINK;
-			goto out;
+		/* Save the hint (might overwrite). */
+		node->tn_dirent_hint = de;
+	}
+
+	/* Insert the entry to the directory (parent of inode). */
+	TAILQ_INSERT_TAIL(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
+	dnode->tn_size += sizeof(tmpfs_dirent_t);
+	dnode->tn_status |= TMPFS_NODE_STATUSALL;
+	uvm_vnp_setsize(dvp, dnode->tn_size);
+
+	if (node != TMPFS_NODE_WHITEOUT && node->tn_type == VDIR) {
+		/* Set parent. */
+		KASSERT(node->tn_spec.tn_dir.tn_parent == NULL);
+		node->tn_spec.tn_dir.tn_parent = dnode;
+
+		/* Increase the link count of parent. */
+		KASSERT(dnode->tn_links < LINK_MAX);
+		dnode->tn_links++;
+		events |= NOTE_LINK;
+
+		TMPFS_VALIDATE_DIR(node);
+	}
+	VN_KNOTE(dvp, events);
+}
+
+/*
+ * tmpfs_dir_detach: disassociate directory entry and its inode,
+ * and detach the entry from the directory, specified by vnode.
+ *
+ * => Decreases link count on the associated node.
+ * => Decreases the link count on directory node, if our node is VDIR.
+ * => Triggers kqueue events here.
+ */
+void
+tmpfs_dir_detach(vnode_t *dvp, tmpfs_dirent_t *de)
+{
+	tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp);
+	tmpfs_node_t *node = de->td_node;
+	int events = NOTE_WRITE;
+
+	KASSERT(VOP_ISLOCKED(dvp));
+
+	if (node != TMPFS_NODE_WHITEOUT) {
+		vnode_t *vp = node->tn_vnode;
+
+		KASSERT(VOP_ISLOCKED(vp));
+
+		/* Deassociate the inode and entry. */
+		de->td_node = NULL;
+		node->tn_dirent_hint = NULL;
+
+		KASSERT(node->tn_links > 0);
+		node->tn_links--;
+		if (vp) {
+			VN_KNOTE(vp, node->tn_links ?
+			    NOTE_LINK : NOTE_DELETE);
 		}
 
-		parent = dnode;
-	} else
-		parent = NULL;
+		/* If directory - decrease the link count of parent. */
+		if (node->tn_type == VDIR) {
+			KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
+			node->tn_spec.tn_dir.tn_parent = NULL;
 
-	/* Allocate a node that represents the new file. */
-	error = tmpfs_alloc_node(tmp, vap->va_type, kauth_cred_geteuid(cnp->cn_cred),
-	    dnode->tn_gid, vap->va_mode, parent, target, vap->va_rdev, &node);
-	if (error != 0)
-		goto out;
-
-	/* Allocate a directory entry that points to the new file. */
-	error = tmpfs_alloc_dirent(tmp, node, cnp->cn_nameptr, cnp->cn_namelen,
-	    &de);
-	if (error != 0) {
-		tmpfs_free_node(tmp, node);
-		goto out;
+			KASSERT(dnode->tn_links > 0);
+			dnode->tn_links--;
+			events |= NOTE_LINK;
+		}
 	}
 
-	/* Allocate a vnode for the new file. */
-	error = tmpfs_alloc_vp(dvp->v_mount, node, vpp);
-	if (error != 0) {
-		tmpfs_free_dirent(tmp, de, true);
-		tmpfs_free_node(tmp, node);
-		goto out;
-	}
-
-	/* Now that all required items are allocated, we can proceed to
-	 * insert the new node into the directory, an operation that
-	 * cannot fail. */
-	tmpfs_dir_attach(dvp, de);
-	if (vap->va_type == VDIR) {
-		VN_KNOTE(dvp, NOTE_LINK);
-		dnode->tn_links++;
-		KASSERT(dnode->tn_links <= LINK_MAX);
-	}
-
-out:
-	vput(dvp);
-
-	KASSERT(IFF(error == 0, *vpp != NULL));
-
-	return error;
-}
-
-/* --------------------------------------------------------------------- */
-
-/*
- * Attaches the directory entry de to the directory represented by vp.
- * Note that this does not change the link count of the node pointed by
- * the directory entry, as this is done by tmpfs_alloc_dirent.
- *
- * As the "parent" directory changes, interested parties are notified of
- * a write to it.
- */
-void
-tmpfs_dir_attach(struct vnode *vp, struct tmpfs_dirent *de)
-{
-	struct tmpfs_node *dnode;
-
-	KASSERT(VOP_ISLOCKED(vp));
-	dnode = VP_TO_TMPFS_DIR(vp);
-
-	TAILQ_INSERT_TAIL(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
-	dnode->tn_size += sizeof(struct tmpfs_dirent);
-	dnode->tn_status |= TMPFS_NODE_ACCESSED | TMPFS_NODE_CHANGED | \
-	    TMPFS_NODE_MODIFIED;
-	uvm_vnp_setsize(vp, dnode->tn_size);
-
-	VN_KNOTE(vp, NOTE_WRITE);
-}
-
-/* --------------------------------------------------------------------- */
-
-/*
- * Detaches the directory entry de from the directory represented by vp.
- * Note that this does not change the link count of the node pointed by
- * the directory entry, as this is done by tmpfs_free_dirent.
- *
- * As the "parent" directory changes, interested parties are notified of
- * a write to it.
- */
-void
-tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
-{
-	struct tmpfs_node *dnode;
-
-	KASSERT(VOP_ISLOCKED(vp));
-	dnode = VP_TO_TMPFS_DIR(vp);
-
+	/* Remove the entry from the directory. */
 	if (dnode->tn_spec.tn_dir.tn_readdir_lastp == de) {
 		dnode->tn_spec.tn_dir.tn_readdir_lastn = 0;
 		dnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 	}
-
 	TAILQ_REMOVE(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
-	dnode->tn_size -= sizeof(struct tmpfs_dirent);
-	dnode->tn_status |= TMPFS_NODE_ACCESSED | TMPFS_NODE_CHANGED | \
-	    TMPFS_NODE_MODIFIED;
-	uvm_vnp_setsize(vp, dnode->tn_size);
 
-	VN_KNOTE(vp, NOTE_WRITE);
+	dnode->tn_size -= sizeof(tmpfs_dirent_t);
+	dnode->tn_status |= TMPFS_NODE_STATUSALL;
+	uvm_vnp_setsize(dvp, dnode->tn_size);
+	VN_KNOTE(dvp, events);
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Looks for a directory entry in the directory represented by node.
- * 'cnp' describes the name of the entry to look for.  Note that the .
- * and .. components are not allowed as they do not physically exist
- * within directories.
+ * tmpfs_dir_lookup: find a directory entry in the specified inode.
  *
- * Returns a pointer to the entry when found, otherwise NULL.
+ * Note that the . and .. components are not allowed as they do not
+ * physically exist within directories.
  */
-struct tmpfs_dirent *
-tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
+tmpfs_dirent_t *
+tmpfs_dir_lookup(tmpfs_node_t *node, struct componentname *cnp)
 {
-	struct tmpfs_dirent *de;
+	const char *name = cnp->cn_nameptr;
+	const uint16_t nlen = cnp->cn_namelen;
+	tmpfs_dirent_t *de;
 
 	KASSERT(VOP_ISLOCKED(node->tn_vnode));
-	KASSERT(IMPLIES(cnp->cn_namelen == 1, cnp->cn_nameptr[0] != '.'));
-	KASSERT(IMPLIES(cnp->cn_namelen == 2, !(cnp->cn_nameptr[0] == '.' &&
-	    cnp->cn_nameptr[1] == '.')));
+	KASSERT(nlen != 1 || !(name[0] == '.'));
+	KASSERT(nlen != 2 || !(name[0] == '.' && name[1] == '.'));
 	TMPFS_VALIDATE_DIR(node);
 
-	node->tn_status |= TMPFS_NODE_ACCESSED;
-
 	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
-		KASSERT(cnp->cn_namelen < 0xffff);
-		if (de->td_namelen == (uint16_t)cnp->cn_namelen &&
-		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0) {
-			break;
-		}
+		if (de->td_namelen != nlen)
+			continue;
+		if (memcmp(de->td_name, name, nlen) != 0)
+			continue;
+		break;
 	}
-
+	node->tn_status |= TMPFS_NODE_ACCESSED;
 	return de;
 }
 
-/* --------------------------------------------------------------------- */
+/*
+ * tmpfs_dir_cached: get a cached directory entry if it is valid.  Used to
+ * avoid unnecessary tmpds_dir_lookup().
+ *
+ * => The vnode must be locked.
+ */
+tmpfs_dirent_t *
+tmpfs_dir_cached(tmpfs_node_t *node)
+{
+	tmpfs_dirent_t *de = node->tn_dirent_hint;
+
+	KASSERT(VOP_ISLOCKED(node->tn_vnode));
+
+	if (de == NULL) {
+		return NULL;
+	}
+	KASSERT(de->td_node == node);
+
+	/*
+	 * Directories always have a valid hint.  For files, check if there
+	 * are any hard links.  If there are - hint might be invalid.
+	 */
+	return (node->tn_type != VDIR && node->tn_links > 1) ? NULL : de;
+}
 
 /*
- * Helper function for tmpfs_readdir.  Creates a '.' entry for the given
- * directory and returns it in the uio space.  The function returns 0
- * on success, -1 if there was not enough space in the uio structure to
- * hold the directory entry or an appropriate error code if another
- * error happens.
+ * tmpfs_dir_getdotdent: helper function for tmpfs_readdir.  Creates a
+ * '.' entry for the given directory and returns it in the uio space.
  */
 int
-tmpfs_dir_getdotdent(struct tmpfs_node *node, struct uio *uio)
+tmpfs_dir_getdotdent(tmpfs_node_t *node, struct uio *uio)
 {
-	int error;
 	struct dirent *dentp;
+	int error;
 
 	TMPFS_VALIDATE_DIR(node);
 	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOT);
 
 	dentp = kmem_alloc(sizeof(struct dirent), KM_SLEEP);
-
 	dentp->d_fileno = node->tn_id;
 	dentp->d_type = DT_DIR;
 	dentp->d_namlen = 1;
@@ -647,33 +603,25 @@ tmpfs_dir_getdotdent(struct tmpfs_node *node, struct uio *uio)
 		if (error == 0)
 			uio->uio_offset = TMPFS_DIRCOOKIE_DOTDOT;
 	}
-
 	node->tn_status |= TMPFS_NODE_ACCESSED;
-
 	kmem_free(dentp, sizeof(struct dirent));
 	return error;
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Helper function for tmpfs_readdir.  Creates a '..' entry for the given
- * directory and returns it in the uio space.  The function returns 0
- * on success, -1 if there was not enough space in the uio structure to
- * hold the directory entry or an appropriate error code if another
- * error happens.
+ * tmpfs_dir_getdotdotdent: helper function for tmpfs_readdir.  Creates a
+ * '..' entry for the given directory and returns it in the uio space.
  */
 int
-tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
+tmpfs_dir_getdotdotdent(tmpfs_node_t *node, struct uio *uio)
 {
-	int error;
 	struct dirent *dentp;
+	int error;
 
 	TMPFS_VALIDATE_DIR(node);
 	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT);
 
 	dentp = kmem_alloc(sizeof(struct dirent), KM_SLEEP);
-
 	dentp->d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
 	dentp->d_type = DT_DIR;
 	dentp->d_namlen = 2;
@@ -687,7 +635,7 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 	else {
 		error = uiomove(dentp, dentp->d_reclen, uio);
 		if (error == 0) {
-			struct tmpfs_dirent *de;
+			tmpfs_dirent_t *de;
 
 			de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
 			if (de == NULL)
@@ -696,22 +644,18 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 				uio->uio_offset = tmpfs_dircookie(de);
 		}
 	}
-
 	node->tn_status |= TMPFS_NODE_ACCESSED;
-
 	kmem_free(dentp, sizeof(struct dirent));
 	return error;
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Lookup a directory entry by its associated cookie.
+ * tmpfs_dir_lookupbycookie: lookup a directory entry by associated cookie.
  */
-struct tmpfs_dirent *
-tmpfs_dir_lookupbycookie(struct tmpfs_node *node, off_t cookie)
+tmpfs_dirent_t *
+tmpfs_dir_lookupbycookie(tmpfs_node_t *node, off_t cookie)
 {
-	struct tmpfs_dirent *de;
+	tmpfs_dirent_t *de;
 
 	KASSERT(VOP_ISLOCKED(node->tn_vnode));
 
@@ -719,39 +663,36 @@ tmpfs_dir_lookupbycookie(struct tmpfs_node *node, off_t cookie)
 	    node->tn_spec.tn_dir.tn_readdir_lastp != NULL) {
 		return node->tn_spec.tn_dir.tn_readdir_lastp;
 	}
-
 	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		if (tmpfs_dircookie(de) == cookie) {
 			break;
 		}
 	}
-
 	return de;
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Helper function for tmpfs_readdir.  Returns as much directory entries
- * as can fit in the uio space.  The read starts at uio->uio_offset.
- * The function returns 0 on success, -1 if there was not enough space
- * in the uio structure to hold the directory entry or an appropriate
- * error code if another error happens.
+ * tmpfs_dir_getdents: relper function for tmpfs_readdir.
+ *
+ * => Returns as much directory entries as can fit in the uio space.
+ * => The read starts at uio->uio_offset.
  */
 int
-tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
+tmpfs_dir_getdents(tmpfs_node_t *node, struct uio *uio, off_t *cntp)
 {
-	int error;
-	off_t startcookie;
+	tmpfs_dirent_t *de;
 	struct dirent *dentp;
-	struct tmpfs_dirent *de;
+	off_t startcookie;
+	int error;
 
 	KASSERT(VOP_ISLOCKED(node->tn_vnode));
 	TMPFS_VALIDATE_DIR(node);
 
-	/* Locate the first directory entry we have to return.  We have cached
+	/*
+	 * Locate the first directory entry we have to return.  We have cached
 	 * the last readdir in the node, so use those values if appropriate.
-	 * Otherwise do a linear scan to find the requested entry. */
+	 * Otherwise do a linear scan to find the requested entry.
+	 */
 	startcookie = uio->uio_offset;
 	KASSERT(startcookie != TMPFS_DIRCOOKIE_DOT);
 	KASSERT(startcookie != TMPFS_DIRCOOKIE_DOTDOT);
@@ -764,13 +705,16 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 		return EINVAL;
 	}
 
+	/*
+	 * Read as much entries as possible; i.e., until we reach the end
+	 * of the directory or we exhaust uio space.
+	 */
 	dentp = kmem_alloc(sizeof(struct dirent), KM_SLEEP);
-
-	/* Read as much entries as possible; i.e., until we reach the end of
-	 * the directory or we exhaust uio space. */
 	do {
-		/* Create a dirent structure representing the current
-		 * tmpfs_node and fill it. */
+		/*
+		 * Create a dirent structure representing the current
+		 * inode and fill it.
+		 */
 		if (de->td_node == TMPFS_NODE_WHITEOUT) {
 			dentp->d_fileno = 1;
 			dentp->d_type = DT_WHT;
@@ -779,39 +723,32 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 			switch (de->td_node->tn_type) {
 			case VBLK:
 				dentp->d_type = DT_BLK;
-			break;
-
+				break;
 			case VCHR:
 				dentp->d_type = DT_CHR;
 				break;
-
 			case VDIR:
 				dentp->d_type = DT_DIR;
 				break;
-
 			case VFIFO:
 				dentp->d_type = DT_FIFO;
 				break;
-
 			case VLNK:
 				dentp->d_type = DT_LNK;
 				break;
-
 			case VREG:
 				dentp->d_type = DT_REG;
 				break;
-
 			case VSOCK:
 				dentp->d_type = DT_SOCK;
-			break;
-
+				break;
 			default:
-				KASSERT(0);
+				KASSERT(false);
 			}
 		}
 		dentp->d_namlen = de->td_namelen;
 		KASSERT(de->td_namelen < sizeof(dentp->d_name));
-		(void)memcpy(dentp->d_name, de->td_name, de->td_namelen);
+		memcpy(dentp->d_name, de->td_name, de->td_namelen);
 		dentp->d_name[de->td_namelen] = '\0';
 		dentp->d_reclen = _DIRENT_SIZE(dentp);
 
@@ -822,8 +759,10 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 			break;
 		}
 
-		/* Copy the new dirent structure into the output buffer and
-		 * advance pointers. */
+		/*
+		 * Copy the new dirent structure into the output buffer and
+		 * advance pointers.
+		 */
 		error = uiomove(dentp, dentp->d_reclen, uio);
 
 		(*cntp)++;
@@ -840,39 +779,25 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 		    tmpfs_dircookie(de);
 		node->tn_spec.tn_dir.tn_readdir_lastp = de;
 	}
-
 	node->tn_status |= TMPFS_NODE_ACCESSED;
-
 	kmem_free(dentp, sizeof(struct dirent));
 	return error;
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Resizes the aobj associated to the regular file pointed to by vp to
- * the size newsize.  'vp' must point to a vnode that represents a regular
- * file.  'newsize' must be positive.
- *
- * If the file is extended, the appropriate kevent is raised.  This does
- * not rise a write event though because resizing is not the same as
- * writing.
- *
- * Returns zero on success or an appropriate error code on failure.
+ * tmpfs_reg_resize: resize the underlying UVM object associated with the 
+ * specified regular file.
  */
 int
 tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 {
+	tmpfs_mount_t *tmp = VFS_TO_TMPFS(vp->v_mount);
+	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 	size_t newpages, oldpages;
-	struct tmpfs_mount *tmp;
-	struct tmpfs_node *node;
 	off_t oldsize;
 
 	KASSERT(vp->v_type == VREG);
 	KASSERT(newsize >= 0);
-
-	node = VP_TO_TMPFS_NODE(vp);
-	tmp = VFS_TO_TMPFS(vp->v_mount);
 
 	oldsize = node->tn_size;
 	oldpages = round_page(oldsize) >> PAGE_SHIFT;
@@ -910,36 +835,33 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 		/* Decrease the used-memory counter. */
 		tmpfs_mem_decr(tmp, (oldpages - newpages) << PAGE_SHIFT);
 	}
-
-	if (newsize > oldsize)
+	if (newsize > oldsize) {
 		VN_KNOTE(vp, NOTE_EXTEND);
-
+	}
 	return 0;
 }
 
 /*
- * Change flags of the given vnode.
- * Caller should execute tmpfs_update on vp after a successful execution.
- * The vnode must be locked on entry and remain locked on exit.
+ * tmpfs_chflags: change flags of the given vnode.
+ *
+ * => Caller should perform tmpfs_update().
  */
 int
-tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
+tmpfs_chflags(vnode_t *vp, int flags, kauth_cred_t cred, lwp_t *l)
 {
-	int error;
-	struct tmpfs_node *node;
+	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 	kauth_action_t action = KAUTH_VNODE_WRITE_FLAGS;
-	int fs_decision = 0;
+	int error, fs_decision = 0;
 
 	KASSERT(VOP_ISLOCKED(vp));
-
-	node = VP_TO_TMPFS_NODE(vp);
 
 	/* Disallow this operation if the file system is mounted read-only. */
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return EROFS;
 
-	if (kauth_cred_geteuid(cred) != node->tn_uid)
+	if (kauth_cred_geteuid(cred) != node->tn_uid) {
 		fs_decision = EACCES;
+	}
 
 	/*
 	 * If the new flags have non-user flags that are different than
@@ -947,8 +869,9 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 	 */
 	if ((flags & SF_SETTABLE) != (node->tn_flags & SF_SETTABLE)) {
 		action |= KAUTH_VNODE_WRITE_SYSFLAGS;
-		if (!fs_decision)
+		if (!fs_decision) {
 			fs_decision = EPERM;
+		}
 	}
 
 	/*
@@ -972,38 +895,30 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 	 *      proper permissions, and if we're here it means it's okay to
 	 *      change them...
 	 */
-	if (action & KAUTH_VNODE_WRITE_SYSFLAGS) {
-		node->tn_flags = flags;
-	} else {
+	if ((action & KAUTH_VNODE_WRITE_SYSFLAGS) == 0) {
 		/* Clear all user-settable flags and re-set them. */
 		node->tn_flags &= SF_SETTABLE;
 		node->tn_flags |= (flags & UF_SETTABLE);
+	} else {
+		node->tn_flags = flags;
 	}
-
 	node->tn_status |= TMPFS_NODE_CHANGED;
 	VN_KNOTE(vp, NOTE_ATTRIB);
-
-	KASSERT(VOP_ISLOCKED(vp));
-
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Change access mode on the given vnode.
- * Caller should execute tmpfs_update on vp after a successful execution.
- * The vnode must be locked on entry and remain locked on exit.
+ * tmpfs_chmod: change access mode on the given vnode.
+ *
+ * => Caller should perform tmpfs_update().
  */
 int
-tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
+tmpfs_chmod(vnode_t *vp, mode_t mode, kauth_cred_t cred, lwp_t *l)
 {
+	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 	int error;
-	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
-
-	node = VP_TO_TMPFS_NODE(vp);
 
 	/* Disallow this operation if the file system is mounted read-only. */
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -1013,51 +928,40 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	error = genfs_can_chmod(vp, cred, node->tn_uid, node->tn_gid,
-	    mode);
-
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
-	    NULL, error);
-	if (error)
-		return (error);
-
+	    NULL, genfs_can_chmod(vp, cred, node->tn_uid, node->tn_gid, mode));
+	if (error) {
+		return error;
+	}
 	node->tn_mode = (mode & ALLPERMS);
-
 	node->tn_status |= TMPFS_NODE_CHANGED;
 	VN_KNOTE(vp, NOTE_ATTRIB);
-
-	KASSERT(VOP_ISLOCKED(vp));
-
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Change ownership of the given vnode.  At least one of uid or gid must
- * be different than VNOVAL.  If one is set to that value, the attribute
- * is unchanged.
- * Caller should execute tmpfs_update on vp after a successful execution.
- * The vnode must be locked on entry and remain locked on exit.
+ * tmpfs_chown: change ownership of the given vnode.
+ *
+ * => At least one of uid or gid must be different than VNOVAL.
+ * => Attribute is unchanged for VNOVAL case.
+ * => Caller should perform tmpfs_update().
  */
 int
-tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
-    struct lwp *l)
+tmpfs_chown(vnode_t *vp, uid_t uid, gid_t gid, kauth_cred_t cred, lwp_t *l)
 {
+	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 	int error;
-	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
-
-	node = VP_TO_TMPFS_NODE(vp);
 
 	/* Assign default values if they are unknown. */
 	KASSERT(uid != VNOVAL || gid != VNOVAL);
-	if (uid == VNOVAL)
+	if (uid == VNOVAL) {
 		uid = node->tn_uid;
-	if (gid == VNOVAL)
+	}
+	if (gid == VNOVAL) {
 		gid = node->tn_gid;
-	KASSERT(uid != VNOVAL && gid != VNOVAL);
+	}
 
 	/* Disallow this operation if the file system is mounted read-only. */
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -1067,100 +971,72 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	error = genfs_can_chown(vp, cred, node->tn_uid, node->tn_gid, uid,
-	    gid);
-
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
-	    NULL, error);
-	if (error)
-		return (error);
-
+	    NULL, genfs_can_chown(vp, cred, node->tn_uid, node->tn_gid, uid,
+	    gid));
+	if (error) {
+		return error;
+	}
 	node->tn_uid = uid;
 	node->tn_gid = gid;
-
 	node->tn_status |= TMPFS_NODE_CHANGED;
 	VN_KNOTE(vp, NOTE_ATTRIB);
-
-	KASSERT(VOP_ISLOCKED(vp));
-
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Change size of the given vnode.
- * Caller should execute tmpfs_update on vp after a successful execution.
- * The vnode must be locked on entry and remain locked on exit.
+ * tmpfs_chsize: change size of the given vnode.
  */
 int
-tmpfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred,
-    struct lwp *l)
+tmpfs_chsize(vnode_t *vp, u_quad_t size, kauth_cred_t cred, lwp_t *l)
 {
-	int error;
-	struct tmpfs_node *node;
+	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 
 	KASSERT(VOP_ISLOCKED(vp));
 
-	node = VP_TO_TMPFS_NODE(vp);
-
 	/* Decide whether this is a valid operation based on the file type. */
-	error = 0;
 	switch (vp->v_type) {
 	case VDIR:
 		return EISDIR;
-
 	case VREG:
-		if (vp->v_mount->mnt_flag & MNT_RDONLY)
+		if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 			return EROFS;
+		}
 		break;
-
 	case VBLK:
-		/* FALLTHROUGH */
 	case VCHR:
-		/* FALLTHROUGH */
 	case VFIFO:
-		/* Allow modifications of special files even if in the file
+		/*
+		 * Allow modifications of special files even if in the file
 		 * system is mounted read-only (we are not modifying the
-		 * files themselves, but the objects they represent). */
+		 * files themselves, but the objects they represent).
+		 */
 		return 0;
-
 	default:
-		/* Anything else is unsupported. */
 		return EOPNOTSUPP;
 	}
 
 	/* Immutable or append-only files cannot be modified, either. */
-	if (node->tn_flags & (IMMUTABLE | APPEND))
+	if (node->tn_flags & (IMMUTABLE | APPEND)) {
 		return EPERM;
+	}
 
-	error = tmpfs_truncate(vp, size);
-	/* tmpfs_truncate will raise the NOTE_EXTEND and NOTE_ATTRIB kevents
-	 * for us, as will update tn_status; no need to do that here. */
-
-	KASSERT(VOP_ISLOCKED(vp));
-
-	return error;
+	/* Note: tmpfs_truncate() will raise NOTE_EXTEND and NOTE_ATTRIB. */
+	return tmpfs_truncate(vp, size);
 }
 
-/* --------------------------------------------------------------------- */
-
 /*
- * Change access and modification times of the given vnode.
- * Caller should execute tmpfs_update on vp after a successful execution.
- * The vnode must be locked on entry and remain locked on exit.
+ * tmpfs_chtimes: change access and modification times for vnode.
  */
 int
-tmpfs_chtimes(struct vnode *vp, const struct timespec *atime,
+tmpfs_chtimes(vnode_t *vp, const struct timespec *atime,
     const struct timespec *mtime, const struct timespec *btime,
-    int vaflags, kauth_cred_t cred, struct lwp *l)
+    int vaflags, kauth_cred_t cred, lwp_t *l)
 {
+	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 	int error;
-	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
-
-	node = VP_TO_TMPFS_NODE(vp);
 
 	/* Disallow this operation if the file system is mounted read-only. */
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -1170,12 +1046,10 @@ tmpfs_chtimes(struct vnode *vp, const struct timespec *atime,
 	if (node->tn_flags & (IMMUTABLE | APPEND))
 		return EPERM;
 
-	error = genfs_can_chtimes(vp, vaflags, node->tn_uid, cred);
-
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp, NULL,
-	    error);
+	    genfs_can_chtimes(vp, vaflags, node->tn_uid, cred));
 	if (error)
-		return (error);
+		return error;
 
 	if (atime->tv_sec != VNOVAL && atime->tv_nsec != VNOVAL)
 		node->tn_status |= TMPFS_NODE_ACCESSED;
@@ -1188,28 +1062,27 @@ tmpfs_chtimes(struct vnode *vp, const struct timespec *atime,
 
 	tmpfs_update(vp, atime, mtime, btime, 0);
 	VN_KNOTE(vp, NOTE_ATTRIB);
-
-	KASSERT(VOP_ISLOCKED(vp));
-
 	return 0;
 }
 
-/* --------------------------------------------------------------------- */
-
-/* Sync timestamps */
+/*
+ * tmpfs_update: update timestamps, et al.
+ */
 void
-tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
-    const struct timespec *mod, const struct timespec *birth)
+tmpfs_update(vnode_t *vp, const struct timespec *acc,
+    const struct timespec *mod, const struct timespec *birth, int flags)
 {
-	struct tmpfs_node *node;
+	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 	struct timespec nowtm;
 
-	node = VP_TO_TMPFS_NODE(vp);
+	/* KASSERT(VOP_ISLOCKED(vp)); */
 
-	if ((node->tn_status & (TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED |
-	    TMPFS_NODE_CHANGED)) == 0)
+	if (flags & UPDATE_CLOSE) {
+		/* XXX Need to do anything special? */
+	}
+	if ((node->tn_status & TMPFS_NODE_STATUSALL) == 0) {
 		return;
-
+	}
 	if (birth != NULL) {
 		node->tn_birthtime = *birth;
 	}
@@ -1225,61 +1098,28 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 		node->tn_ctime = nowtm;
 	}
 
-	node->tn_status &=
-	    ~(TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED);
+	node->tn_status &= ~TMPFS_NODE_STATUSALL;
 }
-
-/* --------------------------------------------------------------------- */
-
-void
-tmpfs_update(struct vnode *vp, const struct timespec *acc,
-    const struct timespec *mod, const struct timespec *birth, int flags)
-{
-
-	struct tmpfs_node *node;
-
-	KASSERT(VOP_ISLOCKED(vp));
-
-	node = VP_TO_TMPFS_NODE(vp);
-
-#if 0
-	if (flags & UPDATE_CLOSE)
-		; /* XXX Need to do anything special? */
-#endif
-
-	tmpfs_itimes(vp, acc, mod, birth);
-
-	KASSERT(VOP_ISLOCKED(vp));
-}
-
-/* --------------------------------------------------------------------- */
 
 int
-tmpfs_truncate(struct vnode *vp, off_t length)
+tmpfs_truncate(vnode_t *vp, off_t length)
 {
-	bool extended;
+	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
 	int error;
-	struct tmpfs_node *node;
-
-	node = VP_TO_TMPFS_NODE(vp);
-	extended = length > node->tn_size;
 
 	if (length < 0) {
 		error = EINVAL;
 		goto out;
 	}
-
 	if (node->tn_size == length) {
 		error = 0;
 		goto out;
 	}
-
 	error = tmpfs_reg_resize(vp, length);
-	if (error == 0)
+	if (error == 0) {
 		node->tn_status |= TMPFS_NODE_CHANGED | TMPFS_NODE_MODIFIED;
-
+	}
 out:
 	tmpfs_update(vp, NULL, NULL, NULL, 0);
-
 	return error;
 }

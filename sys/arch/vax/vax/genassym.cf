@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48 2010/12/20 00:25:45 matt Exp $
+#	$NetBSD: genassym.cf,v 1.48.2.1 2011/06/06 09:06:59 jruoho Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -57,6 +57,7 @@ define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_STAT		offsetof(struct lwp, l_stat)
 define	L_PROC		offsetof(struct lwp, l_proc)
 define	L_CTXSWTCH	offsetof(struct lwp, l_ctxswtch)
+define	L_PRIVATE	offsetof(struct lwp, l_private)
 
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
@@ -170,9 +171,6 @@ define	PSL_HIGHIPL	PSL_HIGHIPL
 define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
 define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)
 define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
-ifdef	MUTEX_COUNT_BIAS
-define	MTX_COUNT_BIAS	MUTEX_COUNT_BIAS
-endif
 
 define	RW_OWNER	offsetof(struct krwlock, rw_owner)
 define	RW_HAS_WAITERS	RW_HAS_WAITERS

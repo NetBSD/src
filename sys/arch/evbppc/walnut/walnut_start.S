@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.20 2011/01/17 06:54:57 matt Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.20.2.1 2011/06/06 09:05:33 jruoho Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
  */
 
 #undef PPC_4XX_NOCACHE
-#define _NOREGNAMES
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: lcdkp_subr.h,v 1.2 2003/06/23 11:01:58 martin Exp $ */
+/* $NetBSD: lcdkp_subr.h,v 1.2.134.1 2011/06/06 09:07:53 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -31,8 +31,6 @@
 #define _DEV_IC_LCDKP_SUBR_H_
 
 #ifdef _KERNEL
-#include "opt_multiprocessor.h"
-#include <sys/lock.h>
 
 /* Key code translation */
 struct lcdkp_xlate {
@@ -54,25 +52,11 @@ struct lcdkp_chip {
 
 	u_int8_t (* sc_rread)(bus_space_tag_t, bus_space_handle_t);
 
-#if defined(MULTIPROCESSOR)
-	struct simplelock sc_lock;
-#endif
+	kmutex_t sc_lock;
 };
 
 #define lcdkp_dr_read(sc) \
 	(sc)->sc_rread((sc)->sc_iot, (sc)->sc_ioh);
-
-#if defined(MULTIPROCESSOR)
-#define lcdkp_lock(sc)		simple_lock(&(sc)->sc_lock)
-#define lcdkp_unlock(sc)	simple_unlock(&(sc)->sc_lock)
-#define lcdkp_lockaddr(sc)	(&(sc)->sc_lock)
-#define lcdkp_lock_init(sc)	simple_lock_init(&(sc)->sc_lock)
-#else
-#define lcdkp_lock(sc)		((void)0)
-#define lcdkp_unlock(sc)	((void)0)
-#define lcdkp_lockaddr(sc)	(NULL)
-#define lcdkp_lock_init(sc)	((void)0)
-#endif
 
 void lcdkp_attach_subr(struct lcdkp_chip *);
 int  lcdkp_scankey(struct lcdkp_chip *);

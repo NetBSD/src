@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.36 2010/11/22 23:02:16 dholland Exp $ */
+/*	$NetBSD: twa.c,v 1.36.2.1 2011/06/06 09:08:27 jruoho Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.36 2010/11/22 23:02:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.36.2.1 2011/06/06 09:08:27 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1615,7 +1615,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
 				0, CTLTYPE_STRING, "driver_version",
 				SYSCTL_DESCR("twa driver version"),
-				NULL, 0, &twaver, 0,
+				NULL, 0, __UNCONST(&twaver), 0,
 				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
 				!= 0) {
 		aprint_error_dev(&sc->twa_dv, "could not create %s.%s.driver_version sysctl\n",

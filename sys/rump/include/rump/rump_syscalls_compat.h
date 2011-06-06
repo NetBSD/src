@@ -1,7 +1,7 @@
-/*	$NetBSD: rump_syscalls_compat.h,v 1.5 2011/01/04 17:00:19 pooka Exp $	*/
+/*	$NetBSD: rump_syscalls_compat.h,v 1.5.2.1 2011/06/06 09:10:06 jruoho Exp $	*/
 
 /*-
- * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,48 +29,29 @@
 #define _RUMP_RUMP_SYSCALLS_COMPAT_H_
 
 #ifndef _KERNEL
-/*
- * Compat calls.  They're manual now.  Note the slightly non-standard
- * naming.  This is because we cannot exploit __RENAME() the same way
- * normal builds exploit it -- we want to build *new* files linked
- * against these symbols.  Note that the defines don't allow calling
- * the current ones from a old userland, should that be desired for
- * whatever reason.  
- */
 #ifdef __NetBSD__
 #include <sys/param.h>
+
+/* time_t change */
 #if !__NetBSD_Prereq__(5,99,7)
-#define rump_sys_stat(a,b) rump_sys_nb5_stat(a,b)
-#define rump_sys_lstat(a,b) rump_sys_nb5_lstat(a,b)
-#define rump_sys_fstat(a,b) rump_sys_nb5_fstat(a,b)
-#define rump_sys_pollts(a,b,c,d) rump_sys_nb5_pollts(a,b,c,d)
-#define rump_sys_select(a,b,c,d,e) rump_sys_nb5_select(a,b,c,d,e)
-#define rump_sys_utimes(a,b) rump_sys_nb5_utimes(a,b)
-#define rump_sys_lutimes(a,b) rump_sys_nb5_lutimes(a,b)
-#define rump_sys_futimes(a,b) rump_sys_nb5_futimes(a,b)
-#endif /* __NetBSD_Prereq */
+#define RUMP_SYS_RENAME_STAT rump___sysimpl_stat30
+#define RUMP_SYS_RENAME_FSTAT rump___sysimpl_fstat30
+#define RUMP_SYS_RENAME_LSTAT rump___sysimpl_lstat30
+
+#define RUMP_SYS_RENAME_POLLTS rump___sysimpl_pollts
+#define RUMP_SYS_RENAME_SELECT rump___sysimpl_select
+#define RUMP_SYS_RENAME_PSELECT rump___sysimpl_pselect
+#define RUMP_SYS_RENAME_KEVENT rump___sysimpl_kevent
+
+#define RUMP_SYS_RENAME_UTIMES rump___sysimpl_utimes
+#define RUMP_SYS_RENAME_FUTIMES rump___sysimpl_futimes
+#define RUMP_SYS_RENAME_LUTIMES rump___sysimpl_lutimes
+
+#define RUMP_SYS_RENAME_MKNOD rump___sysimpl_mknod
+#define RUMP_SYS_RENAME_FHSTAT rump___sysimpl_fhstat40
+#endif /* __NetBSD_Prereq(5,99,7) */
+
 #endif /* __NetBSD__ */
 #endif /* _KERNEL */
-
-#ifdef _BEGIN_DECLS
-_BEGIN_DECLS  
-#endif
-
-struct stat;
-struct pollfd;
-struct timespec;
-int rump_sys_nb5_stat(const char *, struct stat *);
-int rump_sys_nb5_lstat(const char *, struct stat *);
-int rump_sys_nb5_fstat(int, struct stat *);
-int rump_sys_nb5_pollts(struct pollfd *, size_t,
-			const struct timespec *, const void *);
-int rump_sys_nb5_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
-int rump_sys_nb5_utimes(const char *, const struct timeval *);
-int rump_sys_nb5_lutimes(const char *, const struct timeval *);
-int rump_sys_nb5_futimes(int, const struct timeval *);
-
-#ifdef _END_DECLS
-_END_DECLS
-#endif
 
 #endif /* _RUMP_RUMP_SYSCALLS_COMPAT_H_ */

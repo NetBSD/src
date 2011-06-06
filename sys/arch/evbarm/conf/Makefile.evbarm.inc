@@ -1,17 +1,18 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.19 2008/10/25 22:27:37 apb Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.19.22.1 2011/06/06 09:05:24 jruoho Exp $
 
 .if defined(BOARDMKFRAG)	# Must be a full pathname.
 .include "${BOARDMKFRAG}"
 .endif
+
+EXTRA_CLEAN+= ldscript tmp ${KERNELS:=.map}
 
 .if defined(KERNEL_BASE_PHYS)
 
 LINKFLAGS=	-T ldscript
 
 netbsd: ldscript             # XXX
-EXTRA_CLEAN+= ldscript tmp
 
-# generate ldscript from common template 
+# generate ldscript from common template
 ldscript: ${THISARM}/conf/ldscript.evbarm ${THISARM}/conf/Makefile.evbarm.inc Makefile ${BOARDMKFRAG}
 	echo ${KERNELS}
 	${TOOL_SED} -e 's/@KERNEL_BASE_PHYS@/${KERNEL_BASE_PHYS}/' \

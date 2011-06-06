@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.18 2009/03/16 23:11:13 dsl Exp $	*/
+/*	$NetBSD: ibus.c,v 1.18.6.1 2011/06/06 09:06:22 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.18 2009/03/16 23:11:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.18.6.1 2011/06/06 09:06:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,14 +43,14 @@ __KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.18 2009/03/16 23:11:13 dsl Exp $");
 #include "locators.h"
 
 void
-ibusattach(struct device *parent, struct device *self, void *aux)
+ibusattach(device_t parent, device_t self, void *aux)
 {
 	struct ibus_dev_attach_args *ida = aux;
 	struct ibus_attach_args *ia;
 	int i;
 	int locs[IBUSCF_NLOCS];
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/*
 	 * Loop through the devices and attach them.  If a probe-size
@@ -63,7 +63,7 @@ ibusattach(struct device *parent, struct device *self, void *aux)
 		    badaddr((void *)ia->ia_addr, ia->ia_basz) != 0)
 			continue;
 
-		locs[IBUSCF_ADDR] = MIPS_KSEG1_TO_PHYS(ia->ia_addr);
+		locs[IBUSCF_ADDR] = (int32_t)MIPS_KSEG1_TO_PHYS(ia->ia_addr);
 
 		config_found_sm_loc(self, "ibus", locs, ia,
 				    ibusprint, config_stdsubmatch);
@@ -78,13 +78,14 @@ ibusprint(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("%s at %s", ia->ia_name, pnp);
 
-	aprint_normal(" addr 0x%x", MIPS_KSEG1_TO_PHYS(ia->ia_addr));
+	aprint_normal(" addr %#"PRIxPADDR, MIPS_KSEG1_TO_PHYS(ia->ia_addr));
 
 	return (UNCONF);
 }
 
 void
-ibus_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *arg)
+ibus_intr_establish(device_t dev, void *cookie, int level,
+	int (*handler)(void *), void *arg)
 {
 	(*platform.intr_establish)(dev, cookie, level, handler, arg);
 }

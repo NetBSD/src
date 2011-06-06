@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp300,v 1.22 2008/11/12 12:36:00 ad Exp $
+#	$NetBSD: majors.hp300,v 1.22.10.1 2011/06/06 09:05:34 jruoho Exp $
 #
 # Device majors for hp300
 #
@@ -17,7 +17,7 @@ device-major	grf		char 10			grf
 device-major	ppi		char 11			ppi
 device-major	com		char 12			com
 device-major	ite		char 13			ite
-device-major	hil		char 14
+#device-major	hil		char 14
 device-major	dcm		char 15			dcm
 device-major	mt		char 16  block 1	mt
 device-major	ccd		char 17  block 5	ccd
@@ -34,11 +34,11 @@ device-major	rnd		char 33			rnd
 device-major	scsibus		char 34			scsibus
 device-major	raid		char 35  block 15	raid
 device-major	svr4_net	char 36			compat_svr4
-#device-major	wsdisplay	char 37			wsdisplay
-#device-major	wskbd		char 38			wskbd
-#device-major	wsmouse		char 39			wsmouse
-#device-major	wsmux		char 40			wsmux
-#device-major	wsfont		char 41			wsfont
+device-major	wsdisplay	char 37			wsdisplay
+device-major	wskbd		char 38			wskbd
+device-major	wsmouse		char 39			wsmouse
+device-major	wsmux		char 40			wsmux
+device-major	wsfont		char 41			wsfont
 device-major	clockctl	char 42			clockctl
 device-major	cgd		char 44  block 16	cgd
 device-major	ksyms		char 45			ksyms
@@ -52,5 +52,5 @@ device-major	ses		char 51			ses
 device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
-# New machine-independent driver majors are assigned in 
+# New machine-independent driver majors are assigned in
 # sys/conf/majors.

@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_start.S,v 1.7 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: smdk2800_start.S,v 1.7.106.1 2011/06/06 09:05:27 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002, 2005 Fujitsu Component Limited
@@ -34,12 +34,13 @@
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pte.h>
-#include <arm/arm32/pmap.h>		/* for PMAP_DOMAIN_KERNEL */
+#include "assym.h"
 
 #include <arm/s3c2xx0/s3c2800reg.h>	/* for S3C2800_DBANK0_START */
 
 #include <evbarm/smdk2xx0/smdk2800var.h>
+
+RCSID("$NetBSD: smdk2800_start.S,v 1.7.106.1 2011/06/06 09:05:27 jruoho Exp $")
 
 /*
  * Kernel start routine for Samsung SMDK2800.
@@ -153,13 +154,13 @@ Lstart:
 	
 mmu_init_table:	
 	/* fill all table VA==PA */
-	MMU_INIT(0x00000000, 0x00000000, 1<<(32-L1_S_SHIFT), L1_TYPE_S|L1_S_AP(AP_KRW))
+	MMU_INIT(0x00000000, 0x00000000, 1<<(32-L1_S_SHIFT), L1_TYPE_S|L1_S_AP_KRW)
 	/* map SDRAM VA==PA, WT cacheable */
-	MMU_INIT(SDRAM_START, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+	MMU_INIT(SDRAM_START, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
 	/* map VA 0xc0000000..0xc3ffffff to PA 0x08000000..0x0bffffff */
-	MMU_INIT(0xc0000000, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+	MMU_INIT(0xc0000000, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
 
 	/* Map all built-in peripheral registers at 0xfd000000 */
-	MMU_INIT(SMDK2800_IO_AREA_VBASE, S3C2800_PERIPHERALS, 2, L1_TYPE_S|L1_S_AP(AP_KRW))
+	MMU_INIT(SMDK2800_IO_AREA_VBASE, S3C2800_PERIPHERALS, 2, L1_TYPE_S|L1_S_AP_KRW)
 	.word 0	/* end of table */
 

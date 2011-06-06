@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.19 2008/01/22 15:24:50 joerg Exp $
+# $NetBSD: Makefile.sun2,v 1.19.38.1 2011/06/06 09:06:54 jruoho Exp $
 
 # Makefile for NetBSD
 #
@@ -33,7 +33,7 @@ GENASSYM_CONF=	${SUN2}/sun2/genassym.cf
 ##
 CPPFLAGS+=	-Dsun2
 CFLAGS+=	-msoft-float -fno-defer-pop
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+AFLAGS+=	-x assembler-with-cpp
 
 ##
 ## (3) libkern and compat

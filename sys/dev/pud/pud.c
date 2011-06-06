@@ -1,4 +1,4 @@
-/*	$NetBSD: pud.c,v 1.8 2009/03/18 10:22:41 cegger Exp $	*/
+/*	$NetBSD: pud.c,v 1.8.6.1 2011/06/06 09:08:31 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,11 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.8 2009/03/18 10:22:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud.c,v 1.8.6.1 2011/06/06 09:08:31 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
 
@@ -380,4 +381,29 @@ pudattach(void)
 		return;
 	}
 	mutex_init(&pud_mtx, MUTEX_DEFAULT, IPL_NONE);
+}
+
+MODULE(MODULE_CLASS_DRIVER, pud, "putter");
+
+static int
+pud_modcmd(modcmd_t cmd, void *arg)
+{
+	#ifdef _MODULE
+	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		pudattach();
+		return devsw_attach("pud", NULL, &bmajor,
+		    &pud_cdevsw, &cmajor);
+	case MODULE_CMD_FINI:
+		return ENOTTY; /* XXX: puddetach */
+	default:
+		return ENOTTY;
+	}
+	#else
+	if (cmd == MODULE_CMD_INIT)
+		return 0;
+	return ENOTTY;
+	#endif
 }

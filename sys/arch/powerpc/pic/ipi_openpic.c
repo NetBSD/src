@@ -1,4 +1,4 @@
-/* $NetBSD: ipi_openpic.c,v 1.4 2008/04/28 20:23:32 martin Exp $ */
+/* $NetBSD: ipi_openpic.c,v 1.4.28.1 2011/06/06 09:06:30 jruoho Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,18 +29,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.4 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.4.28.1 2011/06/06 09:06:30 jruoho Exp $");
 
 #include "opt_multiprocessor.h"
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/pio.h>
 #include <powerpc/openpic.h>
-#include <powerpc/atomic.h>
 
 #include <arch/powerpc/pic/picvar.h>
 #include <arch/powerpc/pic/ipivar.h>
@@ -48,8 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.4 2008/04/28 20:23:32 martin Exp $
 #ifdef MULTIPROCESSOR
 
 extern struct ipi_ops ipiops;
-extern volatile u_long IPI[CPU_MAXNUM];
-static void openpic_send_ipi(int, u_long);
+static void openpic_send_ipi(cpuid_t, uint32_t);
 static void openpic_establish_ipi(int, int, void *);
 
 void
@@ -74,29 +74,31 @@ setup_openpic_ipi(void)
 }
 
 static void
-openpic_send_ipi(int target, u_long mesg)
+openpic_send_ipi(cpuid_t target, uint32_t mesg)
 {
-	int cpumask = 0, i;
+	struct cpu_info * const ci = curcpu();
+	uint32_t cpumask = 0;
 
-	switch(target) {
-		case IPI_T_ALL:
-			for (i = 0; i < ncpu; i++) {
-				cpumask |= 1 << i;
-				atomic_setbits_ulong(&IPI[i], mesg);
+	switch (target) {
+		case IPI_DST_ALL:
+		case IPI_DST_NOTME:
+			for (u_int i = 0; i < ncpu; i++) {
+				struct cpu_info * const dst_ci = cpu_lookup(i);
+				if (target == IPI_DST_ALL || dst_ci != ci) {
+					cpumask |= 1 << cpu_index(dst_ci);
+					atomic_or_32(&dst_ci->ci_pending_ipis,
+					    mesg);
+				}
 			}
 			break;
-		case IPI_T_NOTME:
-			for (i = 0; i < ncpu; i++) {
-				if (i != curcpu()->ci_index)
-					cpumask |= 1 << i;
-				atomic_setbits_ulong(&IPI[i], mesg);
-			}
+		default: {
+			struct cpu_info * const dst_ci = cpu_lookup(target);
+			cpumask = 1 << cpu_index(dst_ci);
+			atomic_or_32(&dst_ci->ci_pending_ipis, mesg);
 			break;
-		default:
-			cpumask = 1 << target;
-			atomic_setbits_ulong(&IPI[target], mesg);
+		}
 	}
-	openpic_write(OPENPIC_IPI(curcpu()->ci_index, 1), cpumask);
+	openpic_write(OPENPIC_IPI(cpu_index(ci), 1), cpumask);
 }
 
 static void

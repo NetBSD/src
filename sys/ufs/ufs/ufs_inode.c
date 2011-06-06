@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.83 2010/09/01 16:56:19 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.83.2.1 2011/06/06 09:10:18 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.83 2010/09/01 16:56:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.83.2.1 2011/06/06 09:10:18 jruoho Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -99,16 +99,13 @@ ufs_inactive(void *v)
 	if (ip->i_mode == 0)
 		goto out;
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+#ifdef UFS_EXTATTR
+		ufs_extattr_vnode_inactive(vp, curlwp);
+#endif
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
 		if (error)
 			goto out;
 		logged = 1;
-#ifdef QUOTA
-		(void)chkiq(ip, -1, NOCRED, 0);
-#endif
-#ifdef UFS_EXTATTR
-		ufs_extattr_vnode_inactive(vp, curlwp);
-#endif
 		if (ip->i_size != 0) {
 			/*
 			 * When journaling, only truncate one indirect block
@@ -140,6 +137,9 @@ ufs_inactive(void *v)
 			if (!error)
 				error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}
+#if defined(QUOTA) || defined(QUOTA2)
+		(void)chkiq(ip, -1, NOCRED, 0);
+#endif
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
 		ip->i_mode = 0;
@@ -194,15 +194,12 @@ ufs_reclaim(struct vnode *vp)
 	 * Remove the inode from its hash chain.
 	 */
 	ufs_ihashrem(ip);
-	/*
-	 * Purge old data structures associated with the inode.
-	 */
-	cache_purge(vp);
+
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;
 	}
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	ufsquota_free(ip);
 #endif
 #ifdef UFS_DIRHASH
