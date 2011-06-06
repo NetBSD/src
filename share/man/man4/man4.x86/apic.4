@@ -1,4 +1,4 @@
-.\"	$NetBSD: ioapic.4,v 1.4 2011/01/17 07:32:05 jruoho Exp $
+.\" $NetBSD: apic.4,v 1.1 2011/06/06 16:52:15 jruoho Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,18 +24,21 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 17, 2011
-.Dt IOAPIC 4 x86
+.Dd June 6, 2011
+.Dt APIC 4 x86
 .Os
 .Sh NAME
-.Nm ioapic
+.Nm apic ,
+.Nm ioapic ,
+.Nm lapic
 .Nd Intel APIC Architecture
 .Sh SYNOPSIS
 .Cd "ioapic* at mainbus*"
 .Sh DESCRIPTION
 The
 .Nm
-provides basis for a system of advanced programmable interrupt controllers
+subsystem provides basis for a system of advanced programmable
+interrupt controllers
 .Pq Tn APICs
 originally designed by Intel but now widely used on all x86 systems.
 .Pp
