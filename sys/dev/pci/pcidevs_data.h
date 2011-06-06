@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1078 2011/05/28 22:54:08 phx Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1079 2011/06/06 14:31:51 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1083 2011/05/28 22:53:23 phx Exp
+ *	NetBSD: pcidevs,v 1.1084 2011/06/06 14:31:23 msaitoh Exp
  */
 
 /*
@@ -4019,8 +4019,8 @@ static const uint16_t pci_products[] = {
 	    17435, 6316, 6150, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_IDE, 
 	    17422, 6316, 6150, 17444, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_ISA, 
-	    17422, 15192, 6253, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DBM_LPC, 
+	    17422, 8017, 3027, 6253, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USBC, 
 	    17422, 6635, 7819, 6150, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LPC, 
@@ -8230,7 +8230,7 @@ static const char pci_words[] = { "."
 	    "Milacron\0" /* 1 refs @ 3004 */
 	    "Workbit\0" /* 1 refs @ 3013 */
 	    "Force\0" /* 1 refs @ 3021 */
-	    "Interface\0" /* 63 refs @ 3027 */
+	    "Interface\0" /* 64 refs @ 3027 */
 	    "Schneider\0" /* 1 refs @ 3037 */
 	    "Koch\0" /* 1 refs @ 3047 */
 	    "Win\0" /* 2 refs @ 3052 */
@@ -8897,7 +8897,7 @@ static const char pci_words[] = { "."
 	    "I/O\0" /* 34 refs @ 8004 */
 	    "Hub\0" /* 12 refs @ 8008 */
 	    "7461\0" /* 1 refs @ 8012 */
-	    "LPC\0" /* 50 refs @ 8017 */
+	    "LPC\0" /* 51 refs @ 8017 */
 	    "SMBus\0" /* 38 refs @ 8021 */
 	    "MC97\0" /* 1 refs @ 8027 */
 	    "756b\0" /* 1 refs @ 8032 */
@@ -9931,7 +9931,7 @@ static const char pci_words[] = { "."
 	    "MP\0" /* 1 refs @ 15178 */
 	    "Fire\0" /* 1 refs @ 15181 */
 	    "Coral\0" /* 1 refs @ 15186 */
-	    "ISA\0" /* 5 refs @ 15192 */
+	    "ISA\0" /* 4 refs @ 15192 */
 	    "PnP\0" /* 1 refs @ 15196 */
 	    "PowerWave\0" /* 1 refs @ 15200 */
 	    "Idaho\0" /* 1 refs @ 15210 */
