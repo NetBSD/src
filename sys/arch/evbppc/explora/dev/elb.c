@@ -1,4 +1,4 @@
-/*	$NetBSD: elb.c,v 1.7 2011/06/06 16:42:17 matt Exp $	*/
+/*	$NetBSD: elb.c,v 1.8 2011/06/06 17:13:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.7 2011/06/06 16:42:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.8 2011/06/06 17:13:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -64,19 +64,20 @@ static struct powerpc_bus_space elb_tag = {
 	BASE_PCKBC,
 	BASE_PCKBC + 0x6ff
 };
-static char elb_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)]
-    __attribute__((aligned(8)));
-static int elb_tag_init_done;
-
 static struct powerpc_bus_space elb_fb_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
 	0x00000000,
 	BASE_FB,
 	BASE_FB2 + SIZE_FB - 1
 };
+
+static char elb_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)]
+    __attribute__((aligned(8)));
 static char elbfb_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)]
     __attribute__((aligned(8)));
-static int elbfb_tag_init_done;
+
+static bool elb_tag_init_done;
+static bool elbfb_tag_init_done;
 
 /*
  * DMA struct, nothing special.
@@ -100,7 +101,7 @@ static struct powerpc_bus_dma_tag elb_bus_dma_tag = {
 	_bus_dma_bus_mem_to_phys_generic,
 };
 
-static struct elb_dev elb_devs[] = {
+static const struct elb_dev elb_devs[] = {
 	{ "cpu",	0,		0,		-1, NULL },
 	{ "pckbc",	BASE_PCKBC,	BASE_PCKBC2,	31, &elb_tag },
 	{ "com",	BASE_COM,	0,		30, &elb_tag },
@@ -128,16 +129,17 @@ static void
 elb_attach(device_t parent, device_t self, void *aux)
 {
 	struct elb_attach_args eaa;
-	int i;
+	const struct elb_dev *elb;
+	size_t i;
 
 	printf("\n");
-	for (i = 0; i < sizeof(elb_devs)/sizeof(elb_devs[0]); i++) {
-		eaa.elb_name = elb_devs[i].elb_name;
-		eaa.elb_bt = elb_get_bus_space_tag(elb_devs[i].elb_addr);
+	for (i = 0, elb = elb_devs; i < __arraycount(elb_devs); i++, elb++) {
+		eaa.elb_name = elb->elb_name;
+		eaa.elb_bt = elb_get_bus_space_tag(elb->elb_addr);
 		eaa.elb_dmat = &elb_bus_dma_tag;
-		eaa.elb_base = elb_devs[i].elb_addr;
-		eaa.elb_base2 = elb_devs[i].elb_addr2;
-		eaa.elb_irq = elb_devs[i].elb_irq;
+		eaa.elb_base = elb->elb_addr;
+		eaa.elb_base2 = elb->elb_addr2;
+		eaa.elb_irq = elb->elb_irq;
 
 		(void) config_found(self, &eaa, elb_print);
 	}
@@ -166,7 +168,7 @@ elb_get_bus_space_tag(bus_addr_t addr)
 			    elb_ex_storage, sizeof(elb_ex_storage)))
 				panic("elb_get_bus_space_tag: elb_tag");
 
-			elb_tag_init_done = 1;
+			elb_tag_init_done = true;
 		}
 		return (&elb_tag);
 	} else {
@@ -175,7 +177,7 @@ elb_get_bus_space_tag(bus_addr_t addr)
 			    elbfb_ex_storage, sizeof(elbfb_ex_storage)))
 				panic("elb_get_bus_space_tag: elb_fb_tag");
 
-			elbfb_tag_init_done = 1;
+			elbfb_tag_init_done = true;
 		}
 		return (&elb_fb_tag);
 	}

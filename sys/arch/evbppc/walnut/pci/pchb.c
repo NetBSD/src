@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.10 2011/06/06 16:42:18 matt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.11 2011/06/06 17:13:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10 2011/06/06 16:42:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.11 2011/06/06 17:13:06 matt Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -59,7 +59,7 @@ static int	pchbprint(void *, const char *);
 CFATTACH_DECL_NEW(pchb, 0,
     pchbmatch, pchbattach, NULL, NULL);
 
-static int pcifound = 0;
+static bool pcifound;
 
 /* IO window located @ e8000000 and maps to 0-0xffff */
 static struct powerpc_bus_space pchb_io_tag = {
@@ -139,7 +139,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 
 	printf("\n");
-	pcifound++;
+	pcifound = true;
 	/*
 	 * All we do is print out a description.  Eventually, we
 	 * might want to add code that does something that's
