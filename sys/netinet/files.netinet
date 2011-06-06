@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet,v 1.21 2010/07/13 22:16:10 rmind Exp $
+#	$NetBSD: files.netinet,v 1.21.2.1 2011/06/06 09:09:55 jruoho Exp $
 
 defflag opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
@@ -40,5 +40,6 @@ file	netinet/tcp_subr.c	inet | inet6
 file	netinet/tcp_timer.c	inet | inet6
 file	netinet/tcp_usrreq.c	inet | inet6
 file	netinet/tcp_congctl.c	inet | inet6
+file	netinet/tcp_vtw.c	inet | inet6
 
 file	netinet/udp_usrreq.c	inet | inet6

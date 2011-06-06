@@ -44,12 +44,17 @@
 # else
 #  if defined(_KERNEL_OPT)
 #    include "agp_i810.h"
+#    include "genfb.h"
 #  else
 #   define NAGP_I810 1
+#   define NGENFB 0
 #  endif
 # endif
 # if NAGP_I810 > 0
 #  include <dev/pci/agpvar.h>
+# endif
+# if NGENFB > 0
+#  include <dev/wsfb/genfbvar.h>
 # endif
 #endif
 
@@ -72,6 +77,7 @@ MALLOC_DEFINE(DRM_MEM_CTXBITMAP, "drm_ctxbitmap",
     "DRM CTXBITMAP Data Structures");
 MALLOC_DEFINE(DRM_MEM_SGLISTS, "drm_sglists", "DRM SGLISTS Data Structures");
 MALLOC_DEFINE(DRM_MEM_DRAWABLE, "drm_drawable", "DRM DRAWABLE Data Structures");
+MALLOC_DEFINE(DRM_MEM_MM, "drm_mm", "DRM MM Data Structures");
 
 void drm_mem_init(void)
 {
@@ -140,6 +146,10 @@ drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 				if (agp_i810_borrow(map->offset, &map->bsh))
 					return bus_space_vaddr(map->bst, map->bsh);
 #endif
+#if NGENFB > 0
+				if (genfb_borrow(map->offset, &map->bsh))
+					return bus_space_vaddr(map->bst, map->bsh);
+#endif
 				DRM_DEBUG("ioremap: failed to map (%d)\n",
 					  reason);
 				return NULL;
@@ -188,7 +198,8 @@ drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 			dev->agp_map_data[i].mapped++;
 			dev->agp_map_data[i].base = map->offset;
 			dev->agp_map_data[i].size = map->size;
-			dev->agp_map_data[i].flags = BUS_SPACE_MAP_LINEAR;
+			dev->agp_map_data[i].flags = BUS_SPACE_MAP_LINEAR |
+			    BUS_SPACE_MAP_PREFETCHABLE;
 			dev->agp_map_data[i].maptype = PCI_MAPREG_TYPE_MEM;
 			map->fullmap = &(dev->agp_map_data[i]);
 			map->mapsize = dev->agp_map_data[i].size;

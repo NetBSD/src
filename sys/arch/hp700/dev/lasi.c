@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.19 2011/01/13 21:15:13 skrll Exp $	*/
+/*	$NetBSD: lasi.c,v 1.19.2.1 2011/06/06 09:05:40 jruoho Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.19 2011/01/13 21:15:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.19.2.1 2011/06/06 09:05:40 jruoho Exp $");
 
 #undef LASIDEBUG
 
@@ -71,7 +71,7 @@ struct lasi_trs {
 struct lasi_softc {
 	device_t sc_dev;
 	
-	struct hp700_int_reg sc_int_reg;
+	struct hp700_interrupt_register sc_ir;
 
 	struct lasi_hwr volatile *sc_hw;
 	struct lasi_trs volatile *sc_trs;
@@ -134,7 +134,7 @@ lasimatch(device_t parent, cfdata_t cf, void *aux)
 
 	/* Make sure we have an IRQ. */
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
-		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
+		ca->ca_irq = hp700_intr_allocate_bit(&ir_cpu);
 
 	/*
 	 * Forcibly mask the HPA down to the start of the LASI
@@ -190,16 +190,16 @@ lasiattach(device_t parent, device_t self, void *aux)
 	splx(s);
 
 	/* Establish the interrupt register. */
-	hp700_intr_reg_establish(&sc->sc_int_reg);
-	sc->sc_int_reg.int_reg_name = device_xname(self);
-	sc->sc_int_reg.int_reg_mask = &sc->sc_trs->lasi_imr;
-	sc->sc_int_reg.int_reg_req = &sc->sc_trs->lasi_irr;
+	hp700_interrupt_register_establish(&sc->sc_ir);
+	sc->sc_ir.ir_name = device_xname(self);
+	sc->sc_ir.ir_mask = &sc->sc_trs->lasi_imr;
+	sc->sc_ir.ir_req = &sc->sc_trs->lasi_irr;
 
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
 
 	ga.ga_name = "gsc";
-	ga.ga_int_reg = &sc->sc_int_reg;
+	ga.ga_ir = &sc->sc_ir;
 	ga.ga_fix_args = lasi_fix_args;
 	ga.ga_fix_args_cookie = sc;
 	ga.ga_scsi_target = 7; /* XXX */

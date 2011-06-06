@@ -26,13 +26,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.3 2009/08/07 21:01:48 sborrill Exp $
+ * $Id: ah_osdep.c,v 1.3.8.1 2011/06/06 09:09:21 jruoho Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.3 2009/08/07 21:01:48 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.3.8.1 2011/06/06 09:09:21 jruoho Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_athhal.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.3 2009/08/07 21:01:48 sborrill Exp $"
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <machine/stdarg.h>
 
@@ -436,4 +439,18 @@ void *
 ath_hal_memcpy(void *dst, const void *src, size_t n)
 {
 	return memcpy(dst, src, n);
+}
+
+MODULE(MODULE_CLASS_MISC, ath_hal, NULL);
+
+static int
+ath_hal_modcmd(modcmd_t cmd, void *opaque)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

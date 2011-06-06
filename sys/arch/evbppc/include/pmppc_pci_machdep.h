@@ -1,4 +1,4 @@
-/*	$NetBSD: pmppc_pci_machdep.h,v 1.2 2007/10/17 19:54:17 garbled Exp $	*/
+/*	$NetBSD: pmppc_pci_machdep.h,v 1.2.54.1 2011/06/06 09:05:32 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,7 +44,7 @@
  * the read and write routines, but this would cause extra overhead.
  */
 
-int pmppc_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int pmppc_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 void pmppc_pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
 
 void pmppc_pci_get_chipset_tag(pci_chipset_tag_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.37 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: dio.c,v 1.37.28.1 2011/06/06 09:05:34 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.37 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.37.28.1 2011/06/06 09:05:34 jruoho Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -365,7 +365,7 @@ dio_bus_space_read_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
 	return *(volatile uint8_t *)(bsh + (offset << 1) + 1);
 }
 
-static void 
+static void
 dio_bus_space_write_oddbyte_1(bus_space_tag_t bst, bus_space_handle_t bsh,
     bus_size_t offset, uint8_t val)
 {

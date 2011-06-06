@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:56 tv Exp $
+#	$NetBSD: Makefile,v 1.2.150.1 2011/06/06 09:07:04 jruoho Exp $
 
+WARNS?=		4
 PROG=		newdisk
 CPPFLAGS+=	-DMBOOT=\"/usr/mdec/mboot\"
 DPADD+=		${LIBUTIL}

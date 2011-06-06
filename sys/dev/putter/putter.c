@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.29 2010/08/27 07:40:01 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.29.2.1 2011/06/06 09:08:31 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.29 2010/08/27 07:40:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.29.2.1 2011/06/06 09:08:31 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

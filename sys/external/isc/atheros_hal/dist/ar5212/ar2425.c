@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar2425.c,v 1.2 2009/01/06 06:03:57 mrg Exp $
+ * $Id: ar2425.c,v 1.2.18.1 2011/06/06 09:09:18 jruoho Exp $
  */
 #include "opt_ah.h"
 
@@ -61,7 +61,7 @@ ar2425WriteRegs(struct ath_hal *ah, u_int modesIndex, u_int freqIndex,
 	 * Bit 0 enables link to go to L1 when MAC goes to sleep.
 	 * Bit 3 enables the loop back the link down to reset.
 	 */
-	if (IS_PCIE(ah) && ath_hal_pcieL1SKPEnable) {
+	if (AH_PRIVATE(ah)->ah_ispcie && && ath_hal_pcieL1SKPEnable) {
 		OS_REG_WRITE(ah, AR_PCIE_PMC,
 		    AR_PCIE_PMC_ENA_L1 | AR_PCIE_PMC_ENA_RESET);
 	}

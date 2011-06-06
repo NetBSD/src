@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.6 2009/12/14 00:46:06 matt Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.6.6.1 2011/06/06 09:06:07 jruoho Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -31,18 +31,25 @@
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/siginfo.h>
+
 #include <mips/cpuregs.h>
 #include <mips/regnum.h>
+#include <mips/locore.h>
 
-#ifndef SOFTFLOAT
-void mips_fpuexcept(struct lwp *, unsigned int);
-void mips_fpuillinst(struct lwp *, unsigned int, unsigned long);
-static int fpustat2sicode(unsigned int);
+#if defined(FPEMUL) || !defined(NOFPU)
+void mips_fpuexcept(struct lwp *, uint32_t);
+void mips_fpuillinst(struct lwp *, uint32_t);
+static int fpustat2sicode(uint32_t);
 
 void
-mips_fpuexcept(struct lwp *l, unsigned int fpustat)
+mips_fpuexcept(struct lwp *l, uint32_t fpustat)
 {
 	ksiginfo_t ksi;
+
+#ifdef FPEMUL_DEBUG
+	printf("%s(%x,%#"PRIxREGISTER")\n",
+	   __func__, fpustat, l->l_md.md_utf->tf_regs[_R_PC]);
+#endif
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGFPE;
@@ -52,19 +59,24 @@ mips_fpuexcept(struct lwp *l, unsigned int fpustat)
 }
 
 void
-mips_fpuillinst(struct lwp *l, unsigned int opcode, unsigned long vaddr)
+mips_fpuillinst(struct lwp *l, uint32_t opcode)
 {
 	ksiginfo_t ksi;
+
+#ifdef FPEMUL_DEBUG
+	printf("%s(%x,%#"PRIxREGISTER")\n",
+	   __func__, opcode, l->l_md.md_utf->tf_regs[_R_PC]);
+#endif
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGILL;
 	ksi.ksi_code = ILL_ILLOPC;
 	ksi.ksi_trap = opcode;
-	ksi.ksi_addr = (void *)vaddr;
+	ksi.ksi_addr = (void *)(uintptr_t)l->l_md.md_utf->tf_regs[_R_PC];
 	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
 }
 
-static struct {
+static const struct {
 	unsigned int bit;
 	int code;
 } fpecodes[] = {
@@ -77,32 +89,13 @@ static struct {
 };
 
 static int
-fpustat2sicode(unsigned int fpustat)
+fpustat2sicode(uint32_t fpustat)
 {
-	int i;
-
-	for (i = 0; i < 6; i++)
+	for (size_t i = 0; i < __arraycount(fpecodes); i++) {
 		if (fpustat & fpecodes[i].bit)
-			return (fpecodes[i].code);
-	return (FPE_FLTINV);
+			return fpecodes[i].code;
+	}
+
+	return FPE_FLTINV;
 }
-#endif /* !SOFTFLOAT */
-
-void fpemul_trapsignal(struct lwp *, unsigned int, unsigned int);
-
-void
-fpemul_trapsignal(struct lwp *l, unsigned int sig, unsigned int code)
-{
-	ksiginfo_t ksi;
-
-#if DEBUG
-	printf("fpemul_trapsignal(%x,%x,%#"PRIxREGISTER")\n",
-	   sig, code, l->l_md.md_regs->f_regs[_R_PC]);
-#endif
-
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = sig;
-	ksi.ksi_code = 1; /* XXX */
-	ksi.ksi_trap = code;
-	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
-}
+#endif /* FPEMUL || !NOFPU */

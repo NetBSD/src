@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.14 2009/10/26 19:16:55 cegger Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.14.6.1 2011/06/06 09:05:27 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -114,15 +114,13 @@ void	gzcopy(void *, const void *, size_t);
 void
 main(void)
 {
-	extern char bootprog_name[], bootprog_rev[],
-	    bootprog_maker[], bootprog_date[];
+	extern char bootprog_name[], bootprog_rev[];
 	void (*loadaddr)(void) = (void *) md_root_loadaddr;
 
 	cons_init();
 
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	board_init();
 

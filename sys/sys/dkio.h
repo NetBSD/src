@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.16 2010/03/22 16:49:41 martin Exp $	*/
+/*	$NetBSD: dkio.h,v 1.16.2.1 2011/06/06 09:10:10 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -44,6 +44,7 @@
 #define DIOCWDINFO	_IOW('d', 103, struct disklabel)/* set, update disk */
 
 #ifdef _KERNEL
+#define DIOCGDINFO32	(DIOCGDINFO - (sizeof(uint32_t) << IOCPARM_SHIFT))
 #define DIOCGPART	_IOW('d', 104, struct partinfo)	/* get partition */
 #endif
 

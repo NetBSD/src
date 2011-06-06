@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.33 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.33.6.1 2011/06/06 09:07:57 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.33 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.33.6.1 2011/06/06 09:07:57 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -674,7 +674,7 @@ out:
 void
 ix_attach(device_t parent, device_t self, void *aux)
 {
-	struct ix_softc *isc = (void *)self;
+	struct ix_softc *isc = device_private(self);
 	struct ie_softc *sc = &isc->sc_ie;
 	struct isa_attach_args *ia = aux;
 
@@ -688,6 +688,7 @@ ix_attach(device_t parent, device_t self, void *aux)
 	u_short irq_encoded;
 	u_int8_t ethaddr[ETHER_ADDR_LEN];
 
+	sc->sc_dev = self;
 	iot = ia->ia_iot;
 
 	/*
@@ -701,7 +702,7 @@ ix_attach(device_t parent, device_t self, void *aux)
 			  ia->ia_io[0].ir_size, 0, &ioh) != 0) {
 
 		DPRINTF(("\n%s: can't map i/o space 0x%x-0x%x\n",
-			  device_xname(&sc->sc_dev), ia->ia_[0].ir_addr,
+			  device_xname(self), ia->ia_[0].ir_addr,
 			  ia->ia_io[0].ir_addr + ia->ia_io[0].ir_size - 1));
 		return;
 	}
@@ -711,7 +712,7 @@ ix_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr,
 			  ia->ia_iomem[0].ir_size, 0, &memh) != 0) {
 		DPRINTF(("\n%s: can't map iomem space 0x%x-0x%x\n",
-			device_xname(&sc->sc_dev), ia->ia_iomem[0].ir_addr,
+			device_xname(self), ia->ia_iomem[0].ir_addr,
 			ia->ia_iomem[0].ir_addr + ia->ia_iomem[0].ir_size - 1));
 		bus_space_unmap(iot, ioh, ia->ia_io[0].ir_size);
 		return;
@@ -849,7 +850,7 @@ ix_attach(device_t parent, device_t self, void *aux)
 		/* Memory tests failed, punt... */
 		if (memsize == 0)  {
 			DPRINTF(("\n%s: can't determine size of on-card RAM\n",
-				device_xname(&sc->sc_dev)));
+				device_xname(self)));
 			bus_space_unmap(iot, ioh, ia->ia_io[0].ir_size);
 			return;
 		}
@@ -913,7 +914,7 @@ ix_attach(device_t parent, device_t self, void *aux)
 
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: Can't talk to i82586!\n",
-			device_xname(&sc->sc_dev)));
+			device_xname(self)));
 		bus_space_unmap(iot, ioh, ia->ia_io[0].ir_size);
 
 		if (ia->ia_iomem[0].ir_size)
@@ -957,15 +958,15 @@ ix_attach(device_t parent, device_t self, void *aux)
 		      ix_media, NIX_MEDIA, media);
 
 	if (isc->use_pio)
-		aprint_error_dev(&sc->sc_dev, "unsupported memory config, using PIO to access %d bytes of memory\n", sc->sc_msize);
+		aprint_error_dev(self, "unsupported memory config, using PIO to access %d bytes of memory\n", sc->sc_msize);
 
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, i82586_intr, sc);
 	if (isc->sc_ih == NULL) {
 		DPRINTF(("\n%s: can't establish interrupt\n",
-			device_xname(&sc->sc_dev)));
+			device_xname(self)));
 	}
 }
 
-CFATTACH_DECL(ix, sizeof(struct ix_softc),
+CFATTACH_DECL_NEW(ix, sizeof(struct ix_softc),
     ix_match, ix_attach, NULL, NULL);

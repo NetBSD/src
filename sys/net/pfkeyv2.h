@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.27 2010/09/05 06:52:53 spz Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.27.2.1 2011/06/06 09:09:53 jruoho Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -351,7 +351,10 @@ struct sadb_x_nat_t_frag {
 #define SADB_X_AALG_SHA2_384	6
 #define SADB_X_AALG_SHA2_512	7
 #define SADB_X_AALG_RIPEMD160HMAC 8
-#define SADB_X_AALG_AES_XCBC_MAC 9 /* draft-ietf-ipsec-ciph-aes-xcbc-mac-04 */
+#define SADB_X_AALG_AES_XCBC_MAC 9 /* RFC3566 */
+#define SADB_X_AALG_AES128GMAC	11 /* RFC4543 + Errata1821 */
+#define SADB_X_AALG_AES192GMAC	12
+#define SADB_X_AALG_AES256GMAC	13
 /* private allocations should use 249-255 (RFC2407) */
 #define SADB_X_AALG_MD5		249	/* Keyed MD5 */
 #define SADB_X_AALG_SHA		250	/* Keyed SHA */
@@ -369,7 +372,12 @@ struct sadb_x_nat_t_frag {
 #define SADB_X_EALG_BLOWFISHCBC	7
 #define SADB_X_EALG_RIJNDAELCBC	12
 #define SADB_X_EALG_AES		12
-#define SADB_X_EALG_AESCTR	13
+#define SADB_X_EALG_AESCTR	13 /* RFC3686 */
+#define SADB_X_EALG_AESGCM8	18 /* RFC4106 */
+#define SADB_X_EALG_AESGCM12	19
+#define SADB_X_EALG_AESGCM16	20
+#define SADB_X_EALG_CAMELLIACBC	22 /* RFC4312 */
+#define SADB_X_EALG_AESGMAC	23 /* RFC4543 + Errata1821 */
 /* private allocations should use 249-255 (RFC2407) */
 #define SADB_X_EALG_SKIPJACK    250
 

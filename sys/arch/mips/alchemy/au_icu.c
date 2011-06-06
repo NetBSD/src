@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.25 2009/05/31 11:34:01 martin Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.25.6.1 2011/06/06 09:06:02 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,9 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.25 2009/05/31 11:34:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.25.6.1 2011/06/06 09:06:02 jruoho Exp $");
 
 #include "opt_ddb.h"
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -93,24 +94,17 @@ __KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.25 2009/05/31 11:34:01 martin Exp $");
  * given hardware interrupt priority level.
  */
 
-const uint32_t ipl_sr_bits[_IPL_N] = {
-	0,					/*  0: IPL_NONE */
-	MIPS_SOFT_INT_MASK_0,			/*  1: IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_0,			/*  2: IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3,		/*  3: IPL_VM */
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/*  4: IPL_{SCHED,HIGH} */
+static const struct ipl_sr_map alchemy_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTBIO] =		MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_SOFTSERIAL] =	MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK|MIPS_INT_MASK_0,
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
 };
 
 #define	NIRQS		64
@@ -137,7 +131,7 @@ struct au_cpuintr {
 };
 
 struct au_cpuintr au_cpuintrs[NINTRS];
-const char *au_cpuintrnames[NINTRS] = {
+const char * const au_cpuintrnames[NINTRS] = {
 	"icu 0, req 0",
 	"icu 0, req 1",
 	"icu 1, req 0",
@@ -149,22 +143,21 @@ static bus_addr_t ic0_base, ic1_base;
 void
 au_intr_init(void)
 {
-	int			i;
-	struct au_chipdep	*chip;
+	ipl_sr_map = alchemy_ipl_sr_map;
 
-	for (i = 0; i < NINTRS; i++) {
+	for (size_t i = 0; i < NINTRS; i++) {
 		LIST_INIT(&au_cpuintrs[i].cintr_list);
 		evcnt_attach_dynamic(&au_cpuintrs[i].cintr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", au_cpuintrnames[i]);
 	}
 
-	chip = au_chipdep();
+	struct au_chipdep * const chip = au_chipdep();
 	KASSERT(chip != NULL);
 
 	ic0_base = chip->icus[0];
 	ic1_base = chip->icus[1];
 
-	for (i = 0; i < NIRQS; i++) {
+	for (size_t i = 0; i < NIRQS; i++) {
 		au_icu_intrtab[i].intr_refcnt = 0;
 		evcnt_attach_dynamic(&au_icu_intrtab[i].intr_count,
 		    EVCNT_TYPE_INTR, NULL, chip->name, chip->irqnames[i]);
@@ -316,7 +309,7 @@ au_intr_disestablish(void *cookie)
 }
 
 void
-au_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+au_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
 	struct au_intrhand *ih;
 	int level;
@@ -375,11 +368,7 @@ au_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 				}
 			}
 		}
-		cause &= ~(MIPS_INT_MASK_0 << level);
 	}
-
-	/* Re-enable anything that we have processed. */
-	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 }
 
 /*

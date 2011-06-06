@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.84 2011/01/09 15:12:34 jruoho Exp $
+#	$NetBSD: files.acpi,v 1.84.2.1 2011/06/06 09:07:42 jruoho Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -10,8 +10,9 @@ defparam opt_acpi.h	ACPI_BLACKLIST_YEAR = 2000
 define	acpiapmbus { }
 define	acpinodebus { }
 define	acpiecdtbus { }
+define	acpiwdrtbus { }
 
-device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, sysmon_power, sysmon_taskq
+device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, acpiwdrtbus, sysmon_power, sysmon_taskq
 attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi
 file	dev/acpi/acpi_debug.c		acpi
@@ -58,14 +59,6 @@ device	acpibat: sysmon_envsys
 attach	acpibat at acpinodebus
 file	dev/acpi/acpi_bat.c		acpibat
 
-# ACPI CPU
-device	acpicpu
-attach	acpicpu at acpinodebus
-file	dev/acpi/acpi_cpu.c		acpicpu
-file	dev/acpi/acpi_cpu_cstate.c	acpicpu
-file	dev/acpi/acpi_cpu_pstate.c	acpicpu
-file	dev/acpi/acpi_cpu_tstate.c	acpicpu
-
 # ACPI Display
 device	acpivga {}
 attach	acpivga at acpinodebus
@@ -87,6 +80,11 @@ file	dev/acpi/acpi_pmtr.c		acpipmtr
 device	acpitz: sysmon_envsys
 attach	acpitz at acpinodebus
 file	dev/acpi/acpi_tz.c		acpitz
+
+# ACPI Watchdog Timer
+device	acpiwdrt: sysmon_wdog
+attach	acpiwdrt at acpiwdrtbus
+file	dev/acpi/acpi_wdrt.c		acpiwdrt
 
 # Serial interface
 attach	com at acpinodebus with com_acpi
@@ -192,11 +190,14 @@ device	acpismbus: i2cbus
 attach	acpismbus at acpinodebus
 file	dev/acpi/smbus_acpi.c		acpismbus
 
-# Fujitsu Brightness, Pointer and Hotkeys
+# Fujitsu Brightness & Pointer
 device	fujbp
 attach	fujbp at acpinodebus
+file	dev/acpi/fujbp_acpi.c		fujbp
+
+# Fujitsu Hotkeys
 device	fujhk: sysmon_power
 attach	fujhk at acpinodebus
-file	dev/acpi/fujitsu_acpi.c		fujbp|fujhk
+file	dev/acpi/fujhk_acpi.c		fujhk
 
 include	"dev/acpi/wmi/files.wmi"

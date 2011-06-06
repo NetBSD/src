@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2010/03/03 00:30:15 pooka Exp $	*/
+/*	$NetBSD: locore.S,v 1.8.4.1 2011/06/06 09:05:54 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,8 +30,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#define _NOREGNAMES
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"

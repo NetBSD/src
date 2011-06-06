@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.92 2011/01/03 06:07:44 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.92.2.1 2011/06/06 09:06:43 jruoho Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.92 $"
+#ident		"GENERIC-$Revision: 1.92.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -61,7 +61,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -250,7 +251,8 @@ pckbc*		at ofisa?
 pckbd*		at pckbc?
 pms*		at pckbc?
 vga*		at ofbus?
-igsfb*		at ofbus?
+igsfb*		at ofbus?	# IGS CyberPro in rev. 5 sharks
+chipsfb*	at ofbus?	# C&T 65550 in rev. 4 and earlier
 wsdisplay*	at wsemuldisplaydev?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0

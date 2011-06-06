@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.86 2009/10/05 23:46:02 rmind Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.86.6.1 2011/06/06 09:09:38 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.86 2009/10/05 23:46:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.86.6.1 2011/06/06 09:09:38 jruoho Exp $");
 
 #define SYSVSEM
 
@@ -59,18 +59,22 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.86 2009/10/05 23:46:02 rmind Exp $");
  *  3rd: Conditional variables
  *  4th: Undo structures
  */
-struct semid_ds		*sema;
-static struct __sem	*sem;
-static kcondvar_t	*semcv;
-static int		*semu;
+struct semid_ds *	sema			__read_mostly;
+static struct __sem *	sem			__read_mostly;
+static kcondvar_t *	semcv			__read_mostly;
+static int *		semu			__read_mostly;
 
-static kmutex_t	semlock;
-static struct	sem_undo *semu_list;	/* list of active undo structures */
-static u_int	semtot = 0;		/* total number of semaphores */
+static kmutex_t		semlock			__cacheline_aligned;
+static bool		sem_realloc_state	__read_mostly;
+static kcondvar_t	sem_realloc_cv;
 
-static u_int	sem_waiters = 0;	/* total number of semop waiters */
-static bool	sem_realloc_state;
-static kcondvar_t sem_realloc_cv;
+/*
+ * List of active undo structures, total number of semaphores,
+ * and total number of semop waiters.
+ */
+static struct sem_undo *semu_list		__read_mostly;
+static u_int		semtot			__cacheline_aligned;
+static u_int		sem_waiters		__cacheline_aligned;
 
 /* Macro to find a particular sem_undo vector */
 #define SEMU(s, ix)	((struct sem_undo *)(((long)s) + ix * seminfo.semusz))
@@ -94,6 +98,8 @@ seminit(void)
 	mutex_init(&semlock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sem_realloc_cv, "semrealc");
 	sem_realloc_state = false;
+	semtot = 0;
+	sem_waiters = 0;
 
 	/* Allocate the wired memory for our structures */
 	sz = ALIGN(seminfo.semmni * sizeof(struct semid_ds)) +

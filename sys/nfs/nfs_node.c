@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.114 2010/09/24 22:51:50 rmind Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.114.2.1 2011/06/06 09:10:02 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.114 2010/09/24 22:51:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.114.2.1 2011/06/06 09:10:02 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -316,7 +316,6 @@ nfs_reclaim(void *v)
 	if (np->n_wcred)
 		kauth_cred_free(np->n_wcred);
 
-	cache_purge(vp);
 	if (vp->v_type == VREG) {
 		mutex_destroy(&np->n_commitlock);
 	}

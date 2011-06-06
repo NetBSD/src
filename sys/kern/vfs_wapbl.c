@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.39 2011/01/08 20:37:05 christos Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.39.2.1 2011/06/06 09:09:41 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.39 2011/01/08 20:37:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.39.2.1 2011/06/06 09:09:41 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -479,7 +479,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	wl->wl_bufcount_max = (nbuf / 2) * 1024;
 
 	/* XXX tie this into resource estimation */
-	wl->wl_dealloclim = 2 * btodb(wl->wl_bufbytes_max);
+	wl->wl_dealloclim = wl->wl_bufbytes_max / mp->mnt_stat.f_bsize / 2;
 	
 	wl->wl_deallocblks = wapbl_malloc(sizeof(*wl->wl_deallocblks) *
 	    wl->wl_dealloclim);
@@ -852,8 +852,7 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 		  ((wl->wl_bufcount + (lockcount * 10)) >
 		   wl->wl_bufcount_max / 2) ||
 		  (wapbl_transaction_len(wl) > wl->wl_circ_size / 2) ||
-		  (wl->wl_dealloccnt >=
-		   (wl->wl_dealloclim - (wl->wl_dealloclim >> 8)));
+		  (wl->wl_dealloccnt >= (wl->wl_dealloclim / 2));
 	mutex_exit(&wl->wl_mtx);
 
 	if (doflush) {
@@ -899,6 +898,18 @@ wapbl_end(struct wapbl *wl)
 	      "bufbytes=%zu bcount=%zu\n",
 	      curproc->p_pid, curlwp->l_lid, wl->wl_bufcount,
 	      wl->wl_bufbytes, wl->wl_bcount));
+#endif
+
+#ifdef DIAGNOSTIC
+	size_t flushsize = wapbl_transaction_len(wl);
+	if (flushsize > (wl->wl_circ_size - wl->wl_reserved_bytes)) {
+		/*
+		 * XXX this could be handled more gracefully, perhaps place
+		 * only a partial transaction in the log and allow the
+		 * remaining to flush without the protection of the journal.
+		 */
+		panic("wapbl_end: current transaction too big to flush\n");
+	}
 #endif
 
 	mutex_enter(&wl->wl_mtx);
@@ -1234,14 +1245,14 @@ wapbl_biodone(struct buf *bp)
 	}
 
 #ifdef ohbother
-	KDASSERT(bp->b_flags & B_DONE);
-	KDASSERT(!(bp->b_flags & B_DELWRI));
+	KDASSERT(bp->b_oflags & BO_DONE);
+	KDASSERT(!(bp->b_oflags & BO_DELWRI));
 	KDASSERT(bp->b_flags & B_ASYNC);
-	KDASSERT(bp->b_flags & B_BUSY);
+	KDASSERT(bp->b_cflags & BC_BUSY);
 	KDASSERT(!(bp->b_flags & B_LOCKED));
 	KDASSERT(!(bp->b_flags & B_READ));
-	KDASSERT(!(bp->b_flags & B_INVAL));
-	KDASSERT(!(bp->b_flags & B_NOCACHE));
+	KDASSERT(!(bp->b_cflags & BC_INVAL));
+	KDASSERT(!(bp->b_cflags & BC_NOCACHE));
 #endif
 
 	if (bp->b_error) {
@@ -1395,7 +1406,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	if (wapbl_verbose_commit) {
 		struct timespec ts;
 		getnanotime(&ts);
-		printf("%s: %lld.%06ld this transaction = %zu bytes\n",
+		printf("%s: %lld.%09ld this transaction = %zu bytes\n",
 		    __func__, (long long)ts.tv_sec,
 		    (long)ts.tv_nsec, flushsize);
 	}

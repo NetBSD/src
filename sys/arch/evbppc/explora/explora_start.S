@@ -1,4 +1,4 @@
-/*	$NetBSD: explora_start.S,v 1.7 2010/02/25 23:33:44 matt Exp $	*/
+/*	$NetBSD: explora_start.S,v 1.7.4.1 2011/06/06 09:05:31 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
  */
 
 #include "assym.h"
-
-#define _NOREGNAMES
 
 #include <machine/param.h>
 #include <machine/psl.h>

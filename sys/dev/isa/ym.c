@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.39 2010/02/24 22:37:59 dyoung Exp $	*/
+/*	$NetBSD: ym.c,v 1.39.4.1 2011/06/06 09:07:58 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.39 2010/02/24 22:37:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.39.4.1 2011/06/06 09:07:58 jruoho Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -138,7 +138,7 @@ int	ymdebug = 0;
 #else
 #define DPRINTF(x)
 #endif
-#define DVNAME(softc)	(device_xname(&(softc)->sc_ad1848.sc_ad1848.sc_dev))
+#define DVNAME(softc)	(device_xname((softc)->sc_ad1848.sc_ad1848.sc_dev))
 
 int	ym_getdev(void *, struct audio_device *);
 int	ym_mixer_set_port(void *, mixer_ctrl_t *);
@@ -258,14 +258,14 @@ ym_attach(struct ym_softc *sc)
 	ym_write(sc, SA3_HVOL_INTR_CNF, SA3_HVOL_INTR_CNF_A);
 
 	/* audio at ym attachment */
-	sc->sc_audiodev = audio_attach_mi(&ym_hw_if, ac, &ac->sc_dev);
+	sc->sc_audiodev = audio_attach_mi(&ym_hw_if, ac, ac->sc_dev);
 
 	/* opl at ym attachment */
 	if (sc->sc_opl_ioh) {
 		arg.type = AUDIODEV_TYPE_OPL;
 		arg.hwif = 0;
 		arg.hdl = 0;
-		(void)config_found(&ac->sc_dev, &arg, audioprint);
+		(void)config_found(ac->sc_dev, &arg, audioprint);
 	}
 
 #if NMPU_YM > 0
@@ -274,7 +274,7 @@ ym_attach(struct ym_softc *sc)
 		arg.type = AUDIODEV_TYPE_MPU;
 		arg.hwif = 0;
 		arg.hdl = 0;
-		sc->sc_mpudev = config_found(&ac->sc_dev, &arg, audioprint);
+		sc->sc_mpudev = config_found(ac->sc_dev, &arg, audioprint);
 	}
 #endif
 
@@ -297,8 +297,8 @@ ym_attach(struct ym_softc *sc)
 #endif
 	ym_powerdown_blocks(sc);
 
-	if (!pmf_device_register(&ac->sc_dev, ym_suspend, ym_resume)) {
-		aprint_error_dev(&ac->sc_dev,
+	if (!pmf_device_register(ac->sc_dev, ym_suspend, ym_resume)) {
+		aprint_error_dev(ac->sc_dev,
 		    "cannot set power mgmt handler\n");
 	}
 #endif

@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.75 2011/01/07 11:25:43 pooka Exp $	*/
+/*	$NetBSD: namei.h,v 1.75.2.1 2011/06/06 09:10:12 jruoho Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.22 2011/01/07 11:25:10 pooka Exp 
+ *   from: NetBSD: namei.src,v 1.23 2011/04/18 00:40:54 dholland Exp 
  */
 
 /*
@@ -162,14 +162,13 @@ struct nameidata {
 #define	ISDOTDOT	0x0002000	/* current component name is .. */
 #define	MAKEENTRY	0x0004000	/* entry is to be added to name cache */
 #define	ISLASTCN	0x0008000	/* this is last component of pathname */
-#define	ISSYMLINK	0x0010000	/* symlink needs interpretation */
 #define	ISWHITEOUT	0x0020000	/* found whiteout */
 #define	DOWHITEOUT	0x0040000	/* do whiteouts */
 #define	REQUIREDIR	0x0080000	/* must be a directory */
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
 #define	INRENAME	0x0400000	/* operation is a part of ``rename'' */
 #define	INRELOOKUP	0x0800000	/* set while inside relookup() */
-#define	PARAMASK	0x0efe300	/* mask of parameter descriptors */
+#define	PARAMASK	0x0eee300	/* mask of parameter descriptors */
 
 /*
  * Initialization of an nameidata structure.
@@ -185,7 +184,7 @@ struct nameidata {
 /*
  * This structure describes the elements in the cache of recent
  * names looked up by namei. NCHNAMLEN is sized to make structure
- * size a power of two to optimize malloc's. Minimum reasonable
+ * size a power of two to optimize allocations.  Minimum reasonable
  * size is 15.
  */
 
@@ -214,7 +213,6 @@ struct	namecache {
 };
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
 #include <sys/pool.h>
 
 struct mount;
@@ -319,13 +317,12 @@ extern struct nchstats nchstats;
 #define NAMEI_ISDOTDOT	0x0002000
 #define NAMEI_MAKEENTRY	0x0004000
 #define NAMEI_ISLASTCN	0x0008000
-#define NAMEI_ISSYMLINK	0x0010000
 #define NAMEI_ISWHITEOUT	0x0020000
 #define NAMEI_DOWHITEOUT	0x0040000
 #define NAMEI_REQUIREDIR	0x0080000
 #define NAMEI_CREATEDIR	0x0200000
 #define NAMEI_INRENAME	0x0400000
 #define NAMEI_INRELOOKUP	0x0800000
-#define NAMEI_PARAMASK	0x0efe300
+#define NAMEI_PARAMASK	0x0eee300
 
 #endif /* !_SYS_NAMEI_H_ */

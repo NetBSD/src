@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.59 2009/04/05 00:22:53 uwe Exp $ */
+/*	$NetBSD: scif.c,v 1.59.6.1 2011/06/06 09:06:42 jruoho Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.59 2009/04/05 00:22:53 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.59.6.1 2011/06/06 09:06:42 jruoho Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -480,7 +480,7 @@ scif_attach(device_t parent, device_t self, void *aux)
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, scifsoft, sc);
 	SET(sc->sc_hwflags, SCIF_HW_DEV_OK);
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = scifstart;
 	tp->t_param = scifparam;
 	tp->t_hwiflow = NULL;

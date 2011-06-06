@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.24 2010/11/13 13:52:00 uebayasi Exp $	*/
+/*	$NetBSD: ciss.c,v 1.24.2.1 2011/06/06 09:07:51 jruoho Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.24 2010/11/13 13:52:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.24.2.1 2011/06/06 09:07:51 jruoho Exp $");
 
 #include "bio.h"
 
@@ -373,7 +373,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	sc->sc_adapter.adapt_dev = (device_t) sc;
 	sc->sc_adapter.adapt_openings = sc->sc_channel.chan_openings;
-	sc->sc_adapter.adapt_max_periph = sc->sc_channel.chan_openings;
+	sc->sc_adapter.adapt_max_periph = min(sc->sc_adapter.adapt_openings, 256);
 	sc->sc_adapter.adapt_request = ciss_scsi_cmd;
 	sc->sc_adapter.adapt_minphys = cissminphys;
 	sc->sc_adapter.adapt_ioctl = ciss_scsi_ioctl;

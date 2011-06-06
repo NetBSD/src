@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.34 2009/09/12 20:43:18 tsutsui Exp $	*/
+/*	$NetBSD: aarp.c,v 1.34.6.1 2011/06/06 09:09:54 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.34 2009/09/12 20:43:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.34.6.1 2011/06/06 09:09:54 jruoho Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -508,7 +508,6 @@ aarptnew(const struct at_addr *addr)
 		first = 0;
 		callout_init(&aarptimer_callout, 0);
 		callout_reset(&aarptimer_callout, hz, aarptimer, NULL);
-		MOWNER_ATTACH(&aarp_mowner);
 	}
 	aat = &aarptab[AARPTAB_HASH(*addr) * AARPTAB_BSIZ];
 	for (n = 0; n < AARPTAB_BSIZ; n++, aat++) {

@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_log.c,v 1.1 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf_log.c,v 1.1.2.1 2011/06/06 09:09:53 jruoho Exp $	*/
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_log.c,v 1.1 2010/12/18 01:07:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_log.c,v 1.1.2.1 2011/06/06 09:09:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,12 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: npf_log.c,v 1.1 2010/12/18 01:07:25 rmind Exp $");
 typedef struct npflog_softc {
 	LIST_ENTRY(npflog_softc)	sc_entry;
 	kmutex_t			sc_lock;
-	struct ifnet			sc_if;
+	ifnet_t				sc_if;
 	int				sc_unit;
 } npflog_softc_t;
 
 static int	npflog_clone_create(struct if_clone *, int );
-static int	npflog_clone_destroy(struct ifnet *);
+static int	npflog_clone_destroy(ifnet_t *);
 
 static LIST_HEAD(, npflog_softc)	npflog_if_list	__cacheline_aligned;
 static struct if_clone			npflog_cloner =
@@ -85,7 +85,7 @@ npflogdetach(void)
 }
 
 static int
-npflog_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+npflog_ioctl(ifnet_t *ifp, u_long cmd, void *data)
 {
 	npflog_softc_t *sc = ifp->if_softc;
 	int error = 0;
@@ -107,7 +107,7 @@ static int
 npflog_clone_create(struct if_clone *ifc, int unit)
 {
 	npflog_softc_t *sc;
-	struct ifnet *ifp;
+	ifnet_t *ifp;
 
 	sc = kmem_zalloc(sizeof(npflog_softc_t), KM_SLEEP);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTNET);
@@ -129,7 +129,7 @@ npflog_clone_create(struct if_clone *ifc, int unit)
 }
 
 static int
-npflog_clone_destroy(struct ifnet *ifp)
+npflog_clone_destroy(ifnet_t *ifp)
 {
 	npflog_softc_t *sc = ifp->if_softc;
 
@@ -142,34 +142,32 @@ npflog_clone_destroy(struct ifnet *ifp)
 }
 
 void
-npf_log_packet(npf_cache_t *npc, nbuf_t *nbuf, int ifidx)
+npf_log_packet(npf_cache_t *npc, nbuf_t *nbuf, int if_idx)
 {
 	struct mbuf *m = nbuf;
-	npflog_softc_t *sc;
-	struct ifnet *ifp;
+	ifnet_t *ifp;
 	int family;
 
-	KASSERT(m != NULL);
-
-	/* Lookup for a pseudo-interface to log. */
-	LIST_FOREACH(sc, &npflog_if_list, sc_entry) {
-		ifp = &sc->sc_if;
-		if (ifp->if_index != ifidx) {
-			continue;
-		}
-		/* Set the address family. */
-		if (npf_iscached(npc, NPC_IP4)) {
-			family = AF_INET;
-		} else if (npf_iscached(npc, NPC_IP6)) {
-			family = AF_INET6;
-		} else {
-			family = AF_UNSPEC;
-		}
-		/* Pass through BPF. */
-		KERNEL_LOCK(1, NULL);
-		ifp->if_opackets++;
-		ifp->if_obytes += m->m_pkthdr.len;
-		bpf_mtap_af(ifp, family, m);
-		KERNEL_UNLOCK_ONE(NULL);
+	/* Find a pseudo-interface to log. */
+	ifp = if_byindex(if_idx);
+	if (ifp == NULL) {
+		/* No interface. */
+		return;
 	}
+
+	/* Set the address family. */
+	if (npf_iscached(npc, NPC_IP4)) {
+		family = AF_INET;
+	} else if (npf_iscached(npc, NPC_IP6)) {
+		family = AF_INET6;
+	} else {
+		family = AF_UNSPEC;
+	}
+
+	/* Pass through BPF. */
+	KERNEL_LOCK(1, NULL);
+	ifp->if_opackets++;
+	ifp->if_obytes += m->m_pkthdr.len;
+	bpf_mtap_af(ifp, family, m);
+	KERNEL_UNLOCK_ONE(NULL);
 }

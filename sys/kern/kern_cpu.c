@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.45 2010/12/22 02:43:23 matt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.45.2.1 2011/06/06 09:09:27 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.45 2010/12/22 02:43:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.45.2.1 2011/06/06 09:09:27 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,13 +103,14 @@ const struct cdevsw cpuctl_cdevsw = {
 	D_OTHER | D_MPSAFE
 };
 
-kmutex_t cpu_lock;
-int	ncpu;
-int	ncpuonline;
-bool	mp_online;
-struct	cpuqueue cpu_queue = CIRCLEQ_HEAD_INITIALIZER(cpu_queue);
+kmutex_t	cpu_lock		__cacheline_aligned;
+int		ncpu			__read_mostly;
+int		ncpuonline		__read_mostly;
+bool		mp_online		__read_mostly;
+struct cpuqueue	cpu_queue		__cacheline_aligned
+    = CIRCLEQ_HEAD_INITIALIZER(cpu_queue);
 
-static struct cpu_info **cpu_infos;
+static struct cpu_info **cpu_infos	__read_mostly;
 
 int
 mi_cpu_attach(struct cpu_info *ci)

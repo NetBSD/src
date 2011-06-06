@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioreg.h,v 1.4 2010/08/03 04:02:21 jakllsch Exp $ */
+/* $NetBSD: hdaudioreg.h,v 1.4.2.1 2011/06/06 09:08:30 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -153,7 +153,8 @@
 #define	 COP_FUNCTION_GROUP_TYPE		 0x05
 #define	 COP_AUDIO_FUNCTION_GROUP_CAPABILITIES	 0x08
 #define	 COP_AUDIO_WIDGET_CAPABILITIES		 0x09
-#define	  COP_AWCAP_STEREO			  (1 << 0)
+#define	  COP_AWCAP_CHANNEL_COUNT(x)		  \
+	    (((((x) & (0x7 << 13)) >> 12) | ((x) & 0x1)) + 1)
 #define	  COP_AWCAP_INAMP_PRESENT		  (1 << 1)
 #define	  COP_AWCAP_OUTAMP_PRESENT		  (1 << 2)
 #define	  COP_AWCAP_AMP_PARAM_OVERRIDE		  (1 << 3)
@@ -165,6 +166,8 @@
 #define	  COP_AWCAP_DIGITAL			  (1 << 9)
 #define	  COP_AWCAP_POWER_CNTRL			  (1 << 10)
 #define	  COP_AWCAP_LR_SWAP			  (1 << 11)
+#define	  COP_AWCAP_CP_CAPS			  (1 << 12)
+#define	  COP_AWCAP_CHAN_COUNT_EXT(x)		  (((x) >> 13) & 0x7)
 #define	  COP_AWCAP_DELAY(x)			  (((x) >> 16) & 0xf)
 #define	  COP_AWCAP_TYPE(x)			  (((x) >> 20) & 0xf)
 #define	   COP_AWCAP_TYPE_MASK			   0x00f00000
@@ -188,6 +191,7 @@
 #define	  COP_PINCAP_OUTPUT_CAPABLE		  (1 << 4)
 #define	  COP_PINCAP_INPUT_CAPABLE		  (1 << 5)
 #define	  COP_PINCAP_BALANCED_IO_PINS		  (1 << 6)
+#define	  COP_PINCAP_HDMI			  (1 << 7)
 #define	  COP_PINCAP_VREF_CONTROL(x)		  (((x) >> 8) & 0xff)
 #define	   COP_VREF_HIZ				   (1 << 0)
 #define	   COP_VREF_50				   (1 << 1)
@@ -195,6 +199,8 @@
 #define	   COP_VREF_80				   (1 << 4)
 #define	   COP_VREF_100				   (1 << 5)
 #define	  COP_PINCAP_EAPD_CAPABLE		  (1 << 16)
+#define	  COP_PINCAP_DP				  (1 << 24)
+#define	  COP_PINCAP_HBR			  (1 << 27)
 #define	 COP_AMPLIFIER_CAPABILITIES_INAMP	 0x0d
 #define	 COP_AMPLIFIER_CAPABILITIES_OUTAMP	 0x12
 #define	  COP_AMPCAP_OFFSET(x)			  (((x) >> 0) & 0x7f)
@@ -209,6 +215,21 @@
 #define	 COP_GPIO_COUNT				 0x11
 #define	  COP_GPIO_COUNT_NUM_GPIO(x)		  ((x) & 0xff)
 #define	 COP_VOLUME_KNOB_CAPABILITIES		 0x13
+#define	 COP_HDMI_LPCM_CAD			 0x20
+#define	  COP_LPCM_CAD_44_1_MS			  (1 << 31)
+#define	  COP_LPCM_CAD_44_1			  (1 << 30)
+#define	  COP_LPCM_CAD_192K_24BIT		  (1 << 29)
+#define	  COP_LPCM_CAD_192K_20BIT		  (1 << 28)
+#define	  COP_LPCM_CAD_192K_MAXCHAN(x)		  (((x) >> 24) & 0xf)
+#define	  COP_LPCM_CAD_192K_MAXCHAN_CP(x)	  (((x) >> 20) & 0xf)
+#define	  COP_LPCM_CAD_96K_24BIT		  (1 << 19)
+#define	  COP_LPCM_CAD_96K_20BIT		  (1 << 18)
+#define	  COP_LPCM_CAD_96K_MAXCHAN(x)		  (((x) >> 14) & 0xf)
+#define	  COP_LPCM_CAD_96K_MAXCHAN_CP(x)	  (((x) >> 10) & 0xf)
+#define	  COP_LPCM_CAD_48K_24BIT		  (1 << 9)
+#define	  COP_LPCM_CAD_48K_20BIT		  (1 << 8)
+#define	  COP_LPCM_CAD_48K_MAXCHAN(x)		  (((x) >> 4) & 0xf)
+#define	  COP_LPCM_CAD_48K_MAXCHAN_CP(x)	  (((x) >> 0) & 0xf)
 #define	CORB_GET_CONNECTION_SELECT_CONTROL	0xf01
 #define	CORB_SET_CONNECTION_SELECT_CONTROL	0x701
 #define	CORB_GET_CONNECTION_LIST_ENTRY		0xf02
@@ -246,7 +267,7 @@
 #define	CORB_SET_INPUT_CONVERTER_SDI_SELECT	0x704
 #define	CORB_GET_PIN_WIDGET_CONTROL		0xf07
 #define	CORB_SET_PIN_WIDGET_CONTROL		0x707
-#define	 COP_PWC_VREF_ENABLE_MASK		 (7 << 0)
+#define	 COP_PWC_VREF_ENABLE_MASK		 0x7
 #define	 COP_PWC_VREF_HIZ			 0x00
 #define	 COP_PWC_VREF_50			 0x01
 #define	 COP_PWC_VREF_GND			 0x02
@@ -255,12 +276,16 @@
 #define	 COP_PWC_IN_ENABLE			 (1 << 5)
 #define	 COP_PWC_OUT_ENABLE			 (1 << 6)
 #define	 COP_PWC_HPHN_ENABLE			 (1 << 7)
+#define	 COP_PWC_EPT_MASK			 0x3
+#define	 COP_PWC_EPT_NATIVE			 0x0
+#define	 COP_PWC_EPT_HIGH_BIT_RATE		 0x3
 #define	CORB_GET_UNSOLICITED_RESPONSE		0xf08
 #define	CORB_SET_UNSOLICITED_RESPONSE		0x708
 #define	 COP_SET_UNSOLICITED_RESPONSE_ENABLE	 (1 << 7)
 #define	CORB_GET_PIN_SENSE			0xf09
 #define	 COP_GET_PIN_SENSE_PRESENSE_DETECT	 (1 << 31)
-#define	 COP_GET_PIN_SENSE_IMPEDENCE_SENSE(x)	 ((x) & 0x7fffffff)
+#define	 COP_GET_PIN_SENSE_ELD_VALID		 (1 << 30) /* digital */
+#define	 COP_GET_PIN_SENSE_IMPEDENCE_SENSE(x)	 ((x) & 0x7fffffff) /* analog */
 #define	CORB_SET_PIN_SENSE			0x709
 #define	CORB_GET_EAPD_BTL_ENABLE		0xf0c
 #define	CORB_SET_EAPD_BTL_ENABLE		0x70c
@@ -348,6 +373,42 @@
 #define	CORB_GET_STRIPE_CONTROL			0xf24
 #define	CORB_SET_STRIPE_CONTROL			0x720
 #define	CORB_EXECUTE_RESET			0x7ff
+#define	CORB_GET_CONVERTER_CHANNEL_COUNT	0xf2d
+#define	CORB_SET_CONVERTER_CHANNEL_COUNT	0x72d
+#define	CORB_GET_HDMI_DIP_SIZE			0xf2e
+#define	 COP_DIP_ELD_SIZE			 (1 << 3)
+#define	 COP_DIP_PI_GP(x)			 ((x) & 0x7)
+#define	 COP_DIP_PI_AUDIO_INFO			 COP_DIP_PI_GP(0)
+#define	 COP_DIP_BUFFER_SIZE(x)			 ((x) & 0xff)
+#define	CORB_GET_HDMI_ELD_DATA			0xf2f
+#define	 COP_ELD_VALID				 (1 << 31)
+#define	 COP_ELD_DATA(x)			 (((x) >> 0) & 0xff)
+#define	CORB_GET_HDMI_DIP_INDEX			0xf30
+#define	CORB_SET_HDMI_DIP_INDEX			0x730
+#define	 COP_DIP_INDEX_BYTE_SHIFT		 0
+#define	 COP_DIP_INDEX_BYTE_MASK		 0xf
+#define	 COP_DIP_INDEX_PACKET_INDEX_SHIFT	 4
+#define	 COP_DIP_INDEX_PACKET_INDEX_MASK	 0xf
+#define	CORB_GET_HDMI_DIP_DATA			0xf31
+#define	CORB_SET_HDMI_DIP_DATA			0x731
+#define	CORB_GET_HDMI_DIP_XMIT_CTRL		0xf32
+#define	CORB_SET_HDMI_DIP_XMIT_CTRL		0x732
+#define	 COP_DIP_XMIT_CTRL_DISABLE		 (0x0 << 6)
+#define	 COP_DIP_XMIT_CTRL_ONCE			 (0x2 << 6)
+#define	 COP_DIP_XMIT_CTRL_BEST_EFFORT		 (0x3 << 6)
+#define	CORB_GET_PROTECTION_CONTROL		0xf33
+#define	CORB_SET_PROTECTION_CONTROL		0x733
+#define	 COP_PROTECTION_CONTROL_CES_ON		 (1 << 9)
+#define	 COP_PROTECTION_CONTROL_READY		 (1 << 8)
+#define	 COP_PROTECTION_CONTROL_URSUBTAG_SHIFT	 3
+#define	 COP_PROTECTION_CONTROL_URSUBTAG_MASK	 0x1f
+#define	 COP_PROTECTION_CONTROL_CPSTATE_MASK	 0x3
+#define	 COP_PROTECTION_CONTROL_CPSTATE_DONTCARE (0 << 0)
+#define	 COP_PROTECTION_CONTROL_CPSTATE_OFF	 (2 << 0)
+#define	 COP_PROTECTION_CONTROL_CPSTATE_ON	 (3 << 0)
+#define	CORB_ASP_GET_CHANNEL_MAPPING		0xf34
+#define	CORB_ASP_SET_CHANNEL_MAPPING		0x734
+
 
 /*
  * RIRB Entry Format

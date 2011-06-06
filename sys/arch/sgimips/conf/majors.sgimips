@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.25 2010/03/06 23:45:40 plunky Exp $
+#	$NetBSD: majors.sgimips,v 1.25.4.1 2011/06/06 09:06:39 jruoho Exp $
 #
 # Device majors for sgimips
 #
@@ -51,8 +51,6 @@ device-major	wsmux		char 53			wsmux
 device-major	wsfont		char 54			wsfont
 
 device-major	clockctl	char 60			clockctl
-device-major	irix_kmem	char 61			compat_irix
-device-major	irix_usema	char 62			compat_irix
 device-major	audio		char 64			audio
 device-major	pci		char 65			pci
 device-major	irframe		char 66			irframedrv

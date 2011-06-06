@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.52 2010/12/16 06:45:50 cegger Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.52.2.1 2011/06/06 09:08:28 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.52 2010/12/16 06:45:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.52.2.1 2011/06/06 09:08:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.52 2010/12/16 06:45:50 cegger Exp $");
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include "opt_vga.h"
 
@@ -312,6 +313,10 @@ vga_pci_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	case PCI_IOC_CFGWRITE:
 		return pci_devioctl(psc->sc_pc, psc->sc_pcitag,
 		    cmd, data, flag, l);
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(vc->softc->sc_dev,
+		    psc->sc_pc, psc->sc_pcitag, data);
 
 	default:
 		return EPASSTHROUGH;

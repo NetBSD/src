@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.56 2010/10/06 18:13:33 jakllsch Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.56.2.1 2011/06/06 09:07:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.56 2010/10/06 18:13:33 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.56.2.1 2011/06/06 09:07:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1940,6 +1940,8 @@ lm_setup_sensors(struct lm_softc *sc, struct lm_sensor *sensors)
 
 	for (i = 0; sensors[i].desc; i++) {
 		sc->sensors[i].units = sensors[i].type;
+		if (sc->sensors[i].units == ENVSYS_SVOLTS_DC)
+			sc->sensors[i].flags = ENVSYS_FCHANGERFACT;
 		strlcpy(sc->sensors[i].desc, sensors[i].desc,
 		    sizeof(sc->sensors[i].desc));
 		sc->numsensors++;
@@ -1965,7 +1967,6 @@ lm_refresh_volt(struct lm_softc *sc, int n)
 	if (data == 0xff) {
 		sc->sensors[n].state = ENVSYS_SINVALID;
 	} else {
-		sc->sensors[n].flags = ENVSYS_FCHANGERFACT;
 		sc->sensors[n].value_cur = (data << 4);
 		if (sc->sensors[n].rfact) {
 			sc->sensors[n].value_cur *= sc->sensors[n].rfact;
@@ -2082,7 +2083,6 @@ wb_refresh_nvolt(struct lm_softc *sc, int n)
 	int data;
 
 	data = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg);
-	sc->sensors[n].flags = ENVSYS_FCHANGERFACT;
 	sc->sensors[n].value_cur = ((data << 4) - WB_VREF);
 	if (sc->sensors[n].rfact)
 		sc->sensors[n].value_cur *= sc->sensors[n].rfact;
@@ -2103,7 +2103,6 @@ wb_w83627ehf_refresh_nvolt(struct lm_softc *sc, int n)
 
 	data = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg);
 	sc->sensors[n].value_cur = ((data << 3) - WB_W83627EHF_VREF);
-	sc->sensors[n].flags = ENVSYS_FCHANGERFACT;
 	if (sc->sensors[n].rfact)
 		sc->sensors[n].value_cur *= sc->sensors[n].rfact;
 	else	

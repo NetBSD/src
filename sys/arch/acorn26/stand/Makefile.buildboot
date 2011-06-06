@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.11 2009/04/03 10:38:12 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.11.6.1 2011/06/06 09:04:39 jruoho Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -18,11 +18,14 @@ LIBCRTEND=
 
 RISCOSTYPE ?= ff8
 
+.include <bsd.own.mk>
+
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x28000
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..

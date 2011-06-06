@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19 2010/03/03 00:30:16 pooka Exp $	*/
+/*	$NetBSD: locore.S,v 1.19.4.1 2011/06/06 09:06:34 jruoho Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
-#define _NOREGNAMES
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
@@ -151,7 +150,8 @@ _C_LABEL(jump_to_ppc_reset_entry):
 	mfmsr	3
 	ori	3,3,PSL_IP@l
 	mtmsr	3
-	b	0xFFF00100
+	isync
+	ba	0xFFF00100
 
 /*
  * Include common switch / setfault code

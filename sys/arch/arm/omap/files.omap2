@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.6 2010/09/01 06:23:59 kiyohara Exp $
+#	$NetBSD: files.omap2,v 1.6.2.1 2011/06/06 09:05:05 jruoho Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -32,7 +32,7 @@ file	arch/arm/omap/omap_a4x_space.c		obio
 file	arch/arm/xscale/pxa2x0_a4x_io.S		obio
 
 # OMAP2 interrupt controller
-device	omapicu: pic
+device	omapicu: pic, pic_splfuncs
 attach	omapicu at obio with omap2icu
 file	arch/arm/omap/omap2_icu.c		(omap2 | omap3) & omapicu
 file	arch/arm/omap/omap2430_intr.c		omap2 & !omapicu
@@ -78,6 +78,11 @@ device	gpmc { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
 	      } : bus_space_generic
 attach	gpmc at mainbus
 file	arch/arm/omap/omap2_gpmc.c		gpmc
+
+# NAND flash controller
+device	omapnand: nandbus
+attach	omapnand at gpmc
+file	arch/arm/omap/omap2_nand.c		omapnand
 
 # PRCM interface
 device	prcm

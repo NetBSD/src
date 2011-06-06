@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.414 2011/01/13 07:25:50 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.414.2.1 2011/06/06 09:09:41 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -65,8 +65,12 @@
  *	@(#)vfs_syscalls.c	8.42 (Berkeley) 7/31/95
  */
 
+/*
+ * Virtual File System System Calls
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.414 2011/01/13 07:25:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.414.2.1 2011/06/06 09:09:41 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -108,21 +112,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.414 2011/01/13 07:25:50 pooka Exp
 #include <nfs/nfs.h>
 #include <nfs/nfs_var.h>
 
-MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
-
 static int change_flags(struct vnode *, u_long, struct lwp *);
 static int change_mode(struct vnode *, int, struct lwp *l);
 static int change_owner(struct vnode *, uid_t, gid_t, struct lwp *, int);
-
-void checkdirs(struct vnode *);
-
-/*
- * Virtual File System System Calls
- */
-
-/*
- * Mount a file system.
- */
 
 /*
  * This table is used to maintain compatibility with 4.3BSD
@@ -144,8 +136,47 @@ const char * const mountcompatnames[] = {
 	NULL,		/* 8 = MOUNT_DEVFS */
 	MOUNT_AFS,	/* 9 */
 };
-const int nmountcompatnames = sizeof(mountcompatnames) /
-    sizeof(mountcompatnames[0]);
+
+const int nmountcompatnames = __arraycount(mountcompatnames);
+
+static int
+open_setfp(struct lwp *l, file_t *fp, struct vnode *vp, int indx, int flags)
+{
+	int error;
+
+	fp->f_flag = flags & FMASK;
+	fp->f_type = DTYPE_VNODE;
+	fp->f_ops = &vnops;
+	fp->f_data = vp;
+
+	if (flags & (O_EXLOCK | O_SHLOCK)) {
+		struct flock lf;
+		int type;
+
+		lf.l_whence = SEEK_SET;
+		lf.l_start = 0;
+		lf.l_len = 0;
+		if (flags & O_EXLOCK)
+			lf.l_type = F_WRLCK;
+		else
+			lf.l_type = F_RDLCK;
+		type = F_FLOCK;
+		if ((flags & FNONBLOCK) == 0)
+			type |= F_WAIT;
+		VOP_UNLOCK(vp);
+		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
+		if (error) {
+			(void) vn_close(vp, fp->f_flag, fp->f_cred);
+			fd_abort(l->l_proc, fp, indx);
+			return error;
+		}
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		atomic_or_uint(&fp->f_flag, FHASLOCK);
+	}
+	if (flags & O_CLOEXEC)
+		fd_set_exclose(l, indx, true);
+	return 0;
+}
 
 static int
 mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
@@ -285,152 +316,6 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 		return 0;
 
 	return ENODEV;
-}
-
-static int
-mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
-    const char *path, int flags, void *data, size_t *data_len)
-{
-	struct mount *mp;
-	struct vnode *vp = *vpp;
-	struct vattr va;
-	struct pathbuf *pb;
-	struct nameidata nd;
-	int error;
-
-	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
-	    KAUTH_REQ_SYSTEM_MOUNT_NEW, vp, KAUTH_ARG(flags), data);
-	if (error) {
-		vfs_delref(vfsops);
-		return error;
-	}
-
-	/* Can't make a non-dir a mount-point (from here anyway). */
-	if (vp->v_type != VDIR) {
-		vfs_delref(vfsops);
-		return ENOTDIR;
-	}
-
-	/*
-	 * If the user is not root, ensure that they own the directory
-	 * onto which we are attempting to mount.
-	 */
-	if ((error = VOP_GETATTR(vp, &va, l->l_cred)) != 0 ||
-	    (va.va_uid != kauth_cred_geteuid(l->l_cred) &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)) {
-		vfs_delref(vfsops);
-		return error;
-	}
-
-	if (flags & MNT_EXPORTED) {
-		vfs_delref(vfsops);
-		return EINVAL;
-	}
-
-	if ((mp = vfs_mountalloc(vfsops, vp)) == NULL) {
-		vfs_delref(vfsops);
-		return ENOMEM;
-	}
-
-	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
-
-	/*
-	 * The underlying file system may refuse the mount for
-	 * various reasons.  Allow the user to force it to happen.
-	 *
-	 * Set the mount level flags.
-	 */
-	mp->mnt_flag = flags &
-	   (MNT_FORCE | MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG | MNT_IGNORE | MNT_RDONLY);
-
-	mutex_enter(&mp->mnt_updating);
-	error = VFS_MOUNT(mp, path, data, data_len);
-	mp->mnt_flag &= ~MNT_OP_FLAGS;
-
-	if (error != 0)
-		goto err_unmounted;
-
-	/*
-	 * Validate and prepare the mount point.
-	 */
-	error = pathbuf_copyin(path, &pb);
-	if (error != 0) {
-		goto err_mounted;
-	}
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
-	error = namei(&nd);
-	pathbuf_destroy(pb);
-	if (error != 0) {
-		goto err_mounted;
-	}
-	if (nd.ni_vp != vp) {
-		vput(nd.ni_vp);
-		error = EINVAL;
-		goto err_mounted;
-	}
-	if (vp->v_mountedhere != NULL) {
-		vput(nd.ni_vp);
-		error = EBUSY;
-		goto err_mounted;
-	}
-	error = vinvalbuf(vp, V_SAVE, l->l_cred, l, 0, 0);
-	if (error != 0) {
-		vput(nd.ni_vp);
-		goto err_mounted;
-	}
-
-	/*
-	 * Put the new filesystem on the mount list after root.
-	 */
-	cache_purge(vp);
-	mp->mnt_iflag &= ~IMNT_WANTRDWR;
-
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
-	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
-		error = vfs_allocate_syncvnode(mp);
-	if (error == 0)
-		vp->v_mountedhere = mp;
-	vput(nd.ni_vp);
-	if (error != 0)
-		goto err_onmountlist;
-
-	checkdirs(vp);
-	mutex_exit(&mp->mnt_updating);
-
-	/* Hold an additional reference to the mount across VFS_START(). */
-	vfs_unbusy(mp, true, NULL);
-	(void) VFS_STATVFS(mp, &mp->mnt_stat);
-	error = VFS_START(mp, 0);
-	if (error)
-		vrele(vp);
-	/* Drop reference held for VFS_START(). */
-	vfs_destroy(mp);
-	*vpp = NULL;
-	return error;
-
-err_onmountlist:
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
-	mp->mnt_iflag |= IMNT_GONE;
-	mutex_exit(&mountlist_lock);
-
-err_mounted:
-	if (VFS_UNMOUNT(mp, MNT_FORCE) != 0)
-		panic("Unmounting fresh file system failed");
-
-err_unmounted:
-	vp->v_mountedhere = NULL;
-	mutex_exit(&mp->mnt_updating);
-	vfs_unbusy(mp, false, NULL);
-	vfs_destroy(mp);
-
-	return error;
 }
 
 static int
@@ -577,74 +462,6 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 }
 
 /*
- * Scan all active processes to see if any of them have a current
- * or root directory onto which the new filesystem has just been
- * mounted. If so, replace them with the new mount point.
- */
-void
-checkdirs(struct vnode *olddp)
-{
-	struct cwdinfo *cwdi;
-	struct vnode *newdp, *rele1, *rele2;
-	struct proc *p;
-	bool retry;
-
-	if (olddp->v_usecount == 1)
-		return;
-	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
-		panic("mount: lost mount");
-
-	do {
-		retry = false;
-		mutex_enter(proc_lock);
-		PROCLIST_FOREACH(p, &allproc) {
-			if ((cwdi = p->p_cwdi) == NULL)
-				continue;
-			/*
-			 * Can't change to the old directory any more,
-			 * so even if we see a stale value it's not a
-			 * problem.
-			 */
-			if (cwdi->cwdi_cdir != olddp &&
-			    cwdi->cwdi_rdir != olddp)
-			    	continue;
-			retry = true;
-			rele1 = NULL;
-			rele2 = NULL;
-			atomic_inc_uint(&cwdi->cwdi_refcnt);
-			mutex_exit(proc_lock);
-			rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-			if (cwdi->cwdi_cdir == olddp) {
-				rele1 = cwdi->cwdi_cdir;
-				vref(newdp);
-				cwdi->cwdi_cdir = newdp;
-			}
-			if (cwdi->cwdi_rdir == olddp) {
-				rele2 = cwdi->cwdi_rdir;
-				vref(newdp);
-				cwdi->cwdi_rdir = newdp;
-			}
-			rw_exit(&cwdi->cwdi_lock);
-			cwdfree(cwdi);
-			if (rele1 != NULL)
-				vrele(rele1);
-			if (rele2 != NULL)
-				vrele(rele2);
-			mutex_enter(proc_lock);
-			break;
-		}
-		mutex_exit(proc_lock);
-	} while (retry);
-
-	if (rootvnode == olddp) {
-		vrele(rootvnode);
-		vref(newdp);
-		rootvnode = newdp;
-	}
-	vput(newdp);
-}
-
-/*
  * Unmount a file system.
  *
  * Note: unmount takes a path to the vnode mounted on as argument,
@@ -714,97 +531,6 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 }
 
 /*
- * Do the actual file system unmount.  File system is assumed to have
- * been locked by the caller.
- *
- * => Caller hold reference to the mount, explicitly for dounmount().
- */
-int
-dounmount(struct mount *mp, int flags, struct lwp *l)
-{
-	struct vnode *coveredvp;
-	int error;
-	int async;
-	int used_syncer;
-
-#if NVERIEXEC > 0
-	error = veriexec_unmountchk(mp);
-	if (error)
-		return (error);
-#endif /* NVERIEXEC > 0 */
-
-	/*
-	 * XXX Freeze syncer.  Must do this before locking the
-	 * mount point.  See dounmount() for details.
-	 */
-	mutex_enter(&syncer_mutex);
-	rw_enter(&mp->mnt_unmounting, RW_WRITER);
-	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
-		rw_exit(&mp->mnt_unmounting);
-		mutex_exit(&syncer_mutex);
-		return ENOENT;
-	}
-
-	used_syncer = (mp->mnt_syncer != NULL);
-
-	/*
-	 * XXX Syncer must be frozen when we get here.  This should really
-	 * be done on a per-mountpoint basis, but the syncer doesn't work
-	 * like that.
-	 *
-	 * The caller of dounmount() must acquire syncer_mutex because
-	 * the syncer itself acquires locks in syncer_mutex -> vfs_busy
-	 * order, and we must preserve that order to avoid deadlock.
-	 *
-	 * So, if the file system did not use the syncer, now is
-	 * the time to release the syncer_mutex.
-	 */
-	if (used_syncer == 0)
-		mutex_exit(&syncer_mutex);
-
-	mp->mnt_iflag |= IMNT_UNMOUNT;
-	async = mp->mnt_flag & MNT_ASYNC;
-	mp->mnt_flag &= ~MNT_ASYNC;
-	cache_purgevfs(mp);	/* remove cache entries for this file sys */
-	if (mp->mnt_syncer != NULL)
-		vfs_deallocate_syncvnode(mp);
-	error = 0;
-	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
-		error = VFS_SYNC(mp, MNT_WAIT, l->l_cred);
-	}
-	vfs_scrubvnlist(mp);
-	if (error == 0 || (flags & MNT_FORCE))
-		error = VFS_UNMOUNT(mp, flags);
-	if (error) {
-		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
-			(void) vfs_allocate_syncvnode(mp);
-		mp->mnt_iflag &= ~IMNT_UNMOUNT;
-		mp->mnt_flag |= async;
-		rw_exit(&mp->mnt_unmounting);
-		if (used_syncer)
-			mutex_exit(&syncer_mutex);
-		return (error);
-	}
-	vfs_scrubvnlist(mp);
-	mutex_enter(&mountlist_lock);
-	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
-		coveredvp->v_mountedhere = NULL;
-	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
-	mp->mnt_iflag |= IMNT_GONE;
-	mutex_exit(&mountlist_lock);
-	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
-		panic("unmount: dangling vnode");
-	if (used_syncer)
-		mutex_exit(&syncer_mutex);
-	vfs_hooks_unmount(mp);
-	rw_exit(&mp->mnt_unmounting);
-	vfs_destroy(mp);	/* reference from mount() */
-	if (coveredvp != NULLVP)
-		vrele(coveredvp);
-	return (0);
-}
-
-/*
  * Sync each mounted filesystem.
  */
 #ifdef DEBUG
@@ -812,15 +538,11 @@ int syncprt = 0;
 struct ctldebug debug0 = { "syncprt", &syncprt };
 #endif
 
-/* ARGSUSED */
-int
-sys_sync(struct lwp *l, const void *v, register_t *retval)
+void
+do_sys_sync(struct lwp *l)
 {
 	struct mount *mp, *nmp;
 	int asyncflag;
-
-	if (l == NULL)
-		l = &lwp0;
 
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
@@ -844,34 +566,53 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 	if (syncprt)
 		vfs_bufstats();
 #endif /* DEBUG */
+}
+
+/* ARGSUSED */
+int
+sys_sync(struct lwp *l, const void *v, register_t *retval)
+{
+	do_sys_sync(l);
 	return (0);
 }
+
 
 /*
  * Change filesystem quotas.
  */
 /* ARGSUSED */
 int
-sys_quotactl(struct lwp *l, const struct sys_quotactl_args *uap, register_t *retval)
+sys___quotactl50(struct lwp *l, const struct sys___quotactl50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const char *) path;
-		syscallarg(int) cmd;
-		syscallarg(int) uid;
-		syscallarg(void *) arg;
+		syscallarg(struct plistref *) pref;
 	} */
 	struct mount *mp;
 	int error;
 	struct vnode *vp;
+	prop_dictionary_t dict;
+	struct plistref pref;
 
 	error = namei_simple_user(SCARG(uap, path),
 				NSM_FOLLOW_TRYEMULROOT, &vp);
 	if (error != 0)
 		return (error);
 	mp = vp->v_mount;
-	error = VFS_QUOTACTL(mp, SCARG(uap, cmd), SCARG(uap, uid),
-	    SCARG(uap, arg));
+	error = copyin(SCARG(uap, pref), &pref, sizeof(pref));
+	if (error)
+		return error;
+	error = prop_dictionary_copyin(&pref, &dict);
+	if (error)
+		return error;
+	error = VFS_QUOTACTL(mp, dict);
 	vrele(vp);
+	if (!error)
+		error = prop_dictionary_copyout(&pref, dict);
+	if (!error)
+		error = copyout(&pref, SCARG(uap, pref), sizeof(pref));
+	prop_object_release(dict);
 	return (error);
 }
 
@@ -1341,8 +1082,7 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 	file_t *fp;
 	struct vnode *vp;
 	int flags, cmode;
-	int type, indx, error;
-	struct flock lf;
+	int indx, error;
 	struct pathbuf *pb;
 	struct nameidata nd;
 
@@ -1383,31 +1123,9 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 	vp = nd.ni_vp;
 	pathbuf_destroy(pb);
 
-	fp->f_flag = flags & FMASK;
-	fp->f_type = DTYPE_VNODE;
-	fp->f_ops = &vnops;
-	fp->f_data = vp;
-	if (flags & (O_EXLOCK | O_SHLOCK)) {
-		lf.l_whence = SEEK_SET;
-		lf.l_start = 0;
-		lf.l_len = 0;
-		if (flags & O_EXLOCK)
-			lf.l_type = F_WRLCK;
-		else
-			lf.l_type = F_RDLCK;
-		type = F_FLOCK;
-		if ((flags & FNONBLOCK) == 0)
-			type |= F_WAIT;
-		VOP_UNLOCK(vp);
-		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
-		if (error) {
-			(void) vn_close(vp, fp->f_flag, fp->f_cred);
-			fd_abort(p, fp, indx);
-			return (error);
-		}
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		atomic_or_uint(&fp->f_flag, FHASLOCK);
-	}
+	if ((error = open_setfp(l, fp, vp, indx, flags)))
+		return error;
+
 	VOP_UNLOCK(vp);
 	*retval = indx;
 	fd_affix(p, fp, indx);
@@ -1664,8 +1382,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	struct vnode *vp = NULL;
 	kauth_cred_t cred = l->l_cred;
 	file_t *nfp;
-	int type, indx, error=0;
-	struct flock lf;
+	int indx, error = 0;
 	struct vattr va;
 	fhandle_t *fh;
 	int flags;
@@ -1724,32 +1441,9 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	}
 
 	/* done with modified vn_open, now finish what sys_open does. */
+	if ((error = open_setfp(l, fp, vp, indx, flags)))
+		return error;
 
-	fp->f_flag = flags & FMASK;
-	fp->f_type = DTYPE_VNODE;
-	fp->f_ops = &vnops;
-	fp->f_data = vp;
-	if (flags & (O_EXLOCK | O_SHLOCK)) {
-		lf.l_whence = SEEK_SET;
-		lf.l_start = 0;
-		lf.l_len = 0;
-		if (flags & O_EXLOCK)
-			lf.l_type = F_WRLCK;
-		else
-			lf.l_type = F_RDLCK;
-		type = F_FLOCK;
-		if ((flags & FNONBLOCK) == 0)
-			type |= F_WAIT;
-		VOP_UNLOCK(vp);
-		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
-		if (error) {
-			(void) vn_close(vp, fp->f_flag, fp->f_cred);
-			fd_abort(p, fp, indx);
-			return (error);
-		}
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		atomic_or_uint(&fp->f_flag, FHASLOCK);
-	}
 	VOP_UNLOCK(vp);
 	*retval = indx;
 	fd_affix(p, fp, indx);
@@ -2074,14 +1768,18 @@ sys_link(struct lwp *l, const struct sys_link_args *uap, register_t *retval)
 	if ((error = namei(&nd)) != 0)
 		goto out2;
 	if (nd.ni_vp) {
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == nd.ni_vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
-		vrele(nd.ni_vp);
 		error = EEXIST;
-		goto out2;
+		goto abortop;
+	}
+	/* Prevent hard links on directories. */
+	if (vp->v_type == VDIR) {
+		error = EPERM;
+		goto abortop;
+	}
+	/* Prevent cross-mount operation. */
+	if (nd.ni_dvp->v_mount != vp->v_mount) {
+		error = EXDEV;
+		goto abortop;
 	}
 	error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
 out2:
@@ -2089,6 +1787,15 @@ out2:
 out1:
 	vrele(vp);
 	return (error);
+abortop:
+	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+	if (nd.ni_dvp == nd.ni_vp)
+		vrele(nd.ni_dvp);
+	else
+		vput(nd.ni_dvp);
+	if (nd.ni_vp != NULL)
+		vrele(nd.ni_vp);
+	goto out2;
 }
 
 int
@@ -2483,6 +2190,12 @@ sys_access(struct lwp *l, const struct sys_access_args *uap, register_t *retval)
 	int error, flags;
 	struct pathbuf *pb;
 	struct nameidata nd;
+
+	CTASSERT(F_OK == 0);
+	if ((SCARG(uap, flags) & ~(R_OK | W_OK | X_OK)) != 0) {
+		/* nonsense flags */
+		return EINVAL;
+	}
 
 	error = pathbuf_copyin(SCARG(uap, path), &pb);
 	if (error) {
@@ -3339,7 +3052,7 @@ sys_fsync_range(struct lwp *l, const struct sys_fsync_range_args *uap, register_
 		nflags |= FSYNC_CACHE;
 
 	len = SCARG(uap, length);
-	/* If length == 0, we do the whole file, and s = l = 0 will do that */
+	/* If length == 0, we do the whole file, and s = e = 0 will do that */
 	if (len) {
 		s = SCARG(uap, start);
 		e = s + len;
@@ -3551,7 +3264,14 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 		          fromnd.ni_cnd.cn_namelen))
 		error = -1;
 	}
-
+	/*
+	 * Prevent cross-mount operation.
+	 */
+	if (error == 0) {
+		if (tond.ni_dvp->v_mount != fromnd.ni_dvp->v_mount) {
+			error = EXDEV;
+		}
+	}
 #if NVERIEXEC > 0
 	if (!error) {
 		char *f1, *f2;

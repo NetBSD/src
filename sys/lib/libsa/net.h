@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.25 2009/01/18 02:59:02 tsutsui Exp $	*/
+/*	$NetBSD: net.h,v 1.25.8.1 2011/06/06 09:09:43 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -67,14 +67,27 @@
 #define RECV_SIZE 1536	/* XXX delete this */
 
 /*
- * How much room to leave for headers:
+ * How much room to leave for headers in UDP packets:
  *  14: struct ether_header
  *  20: struct ip
  *   8: struct udphdr
  * That's 42 but let's pad it out to 48 bytes.
  */
-#define ETHER_SIZE 14
-#define	HEADER_SIZE 48
+#define ETHERNET_HEADER_SIZE 14
+#define IP_HEADER_SIZE 20
+#define UDP_HEADER_SIZE 8
+
+#define	UDP_TOTAL_HEADER_SIZE (ETHERNET_HEADER_SIZE + IP_HEADER_SIZE + UDP_HEADER_SIZE)
+
+/*
+ * How much room to leave for headers in TCP packets:
+ *  14: struct ether_header
+ *  20: struct ip
+ *  20: struct tcphdr
+ */
+#define TCP_HEADER_SIZE 20
+
+#define TCP_TOTAL_HEADER_SIZE (ETHERNET_HEADER_SIZE + IP_HEADER_SIZE + TCP_HEADER_SIZE)
 
 extern	u_char bcea[6];
 extern	char rootpath[FNAME_SIZE];
@@ -98,8 +111,16 @@ int	rarp_getipaddress(int);
 ssize_t sendether(struct iodesc *, void *, size_t, u_char *, int);
 ssize_t readether(struct iodesc *, void *, size_t, saseconds_t, u_int16_t *);
 
+ssize_t	sendip __P((struct iodesc *, void *, size_t, u_int8_t));
+ssize_t	readip __P((struct iodesc *, void *, size_t, time_t, u_int8_t));
+
 ssize_t	sendudp(struct iodesc *, void *, size_t);
 ssize_t	readudp(struct iodesc *, void *, size_t, saseconds_t);
+
+int	tcp_connect __P((struct iodesc *));
+ssize_t	sendtcp __P((struct iodesc *, void *, size_t));
+ssize_t	readtcp __P((struct iodesc *, void *, size_t, time_t));
+
 ssize_t	sendrecv(struct iodesc *, ssize_t (*)(struct iodesc *, void *, size_t),
     void *, size_t, ssize_t (*)(struct iodesc *, void *, size_t, saseconds_t),
     void *, size_t);

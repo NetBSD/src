@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.20.28.1 2011/06/06 09:04:42 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.28.1 2011/06/06 09:04:42 jruoho Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -63,14 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2008/04/28 20:23:10 martin Exp $");
 #include "locators.h"
 #include "pci.h"
 
-int	mainbus_match(struct device *, struct cfdata *, void *);
-void	mainbus_attach(struct device *, struct device *, void *);
+int	mainbus_match(device_t, cfdata_t, void *);
+void	mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 int	mainbus_print(void *, const char *);
-int	mainbus_submatch(struct device *, struct cfdata *,
+int	mainbus_submatch(device_t, cfdata_t,
 			 const int *, void *);
 
 /* There can be only one. */
@@ -125,7 +125,7 @@ struct mainbusdev mainbusdevs[] = {
 #endif /* ALGOR_P6032 */
 
 int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (mainbus_found)
@@ -135,7 +135,7 @@ mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args ma;
 	struct mainbusdev *md;
@@ -194,7 +194,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #endif /* ALGOR_P4032 || ALGOR_P5064 || ALGOR_P6032 */
 
-	pci_configure_bus(pc, ioext, memext, NULL, 0, mips_dcache_align);
+	pci_configure_bus(pc, ioext, memext, NULL, 0, mips_cache_info.mci_dcache_align);
 	extent_destroy(ioext);
 	extent_destroy(memext);
 
@@ -247,7 +247,7 @@ mainbus_print(void *aux, const char *pnp)
 }
 
 int
-mainbus_submatch(struct device *parent, struct cfdata *cf,
+mainbus_submatch(device_t parent, cfdata_t cf,
 		 const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;

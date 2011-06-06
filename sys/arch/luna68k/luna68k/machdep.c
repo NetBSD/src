@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.76 2010/10/16 17:10:43 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.76.2.1 2011/06/06 09:05:56 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2010/10/16 17:10:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76.2.1 2011/06/06 09:05:56 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2010/10/16 17:10:43 tsutsui Exp $")
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
@@ -272,41 +273,6 @@ cpu_startup(void)
 	 * Say "Hi" to the world
 	 */
 	greeting();
-}
-
-/*
- * Set registers on exec.
- */
-void
-setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
-{
-	struct frame *frame = (struct frame *)l->l_md.md_regs;
-	struct pcb *pcb = lwp_getpcb(l);
-	extern int fputype;
-
-	frame->f_sr = PSL_USERSET;
-	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[D0] = 0;
-	frame->f_regs[D1] = 0;
-	frame->f_regs[D2] = 0;
-	frame->f_regs[D3] = 0;
-	frame->f_regs[D4] = 0;
-	frame->f_regs[D5] = 0;
-	frame->f_regs[D6] = 0;
-	frame->f_regs[D7] = 0;
-	frame->f_regs[A0] = 0;
-	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)l->l_proc->p_psstr;
-	frame->f_regs[A3] = 0;
-	frame->f_regs[A4] = 0;
-	frame->f_regs[A5] = 0;
-	frame->f_regs[A6] = 0;
-	frame->f_regs[SP] = stack;
-
-	/* restore a null state frame */
-	pcb->pcb_fpregs.fpf_null = 0;
-	if (fputype)
-		m68881_restore(&pcb->pcb_fpregs);
 }
 
 void

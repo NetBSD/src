@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.15 2009/12/17 05:29:56 matt Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.15.6.1 2011/06/06 09:06:20 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,9 +133,7 @@ outofworld:
 /*
  * Interrupt counters for vmstat.
  */
-	.data
-	.globl _C_LABEL(intrcnt)
-	.globl _C_LABEL(eintrcnt)
+	.rdata
 	.globl _C_LABEL(intrnames)
 	.globl _C_LABEL(eintrnames)
 _C_LABEL(intrnames):
@@ -155,7 +153,11 @@ _C_LABEL(intrnames):
 	.asciiz	"nmi"
 	.asciiz	"lostclock"
 _C_LABEL(eintrnames):
-	.align	2
+
+	.data
+	.globl _C_LABEL(intrcnt)
+	.globl _C_LABEL(eintrcnt)
+	.p2align 2
 _C_LABEL(intrcnt):
 	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0
 _C_LABEL(eintrcnt):

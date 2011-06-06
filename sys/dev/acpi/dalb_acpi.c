@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.16 2010/10/25 17:06:58 jruoho Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.16.2.1 2011/06/06 09:07:42 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.16 2010/10/25 17:06:58 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.16.2.1 2011/06/06 09:07:42 jruoho Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -261,29 +261,38 @@ acpi_dalb_resume(device_t dev, const pmf_qual_t *qual)
 	return true;
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpidalb, NULL);
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
-acpidalb_modcmd(modcmd_t cmd, void *context)
+acpidalb_modcmd(modcmd_t cmd, void *aux)
 {
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-		return config_init_component(cfdriver_ioconf_acpidalb,
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpidalb,
 		    cfattach_ioconf_acpidalb, cfdata_ioconf_acpidalb);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
-		return config_fini_component(cfdriver_ioconf_acpidalb,
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpidalb,
 		    cfattach_ioconf_acpidalb, cfdata_ioconf_acpidalb);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

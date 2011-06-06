@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.39 2010/12/22 07:24:10 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.39.2.1 2011/06/06 09:06:00 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.39 2010/12/22 07:24:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.39.2.1 2011/06/06 09:06:00 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -64,7 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.39 2010/12/22 07:24:10 macallan Exp $");
 struct awacs_softc {
 	device_t sc_dev;
 	int sc_flags;
-
+	bus_space_tag_t sc_tag;
+	bus_space_handle_t	sc_regh;
+	bus_space_handle_t	sc_idmah;
+	bus_space_handle_t	sc_odmah;
 	void (*sc_ointr)(void *);	/* DMA completion intr handler */
 	void *sc_oarg;			/* arg for sc_ointr() */
 	int sc_opages;			/* # of output pages */
@@ -89,7 +92,6 @@ struct awacs_softc {
 	device_t sc_sgsmix;
 #endif
 
-	char *sc_reg;
 	u_int sc_codecctl0;
 	u_int sc_codecctl1;
 	u_int sc_codecctl2;
@@ -313,7 +315,7 @@ static void
 awacs_attach(device_t parent, device_t self, void *aux)
 {
 	struct awacs_softc *sc;
-	struct confargs *ca;
+	struct confargs *ca = aux;
 	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type;
 	int len = -1, perch;
 	int root_node;
@@ -321,15 +323,21 @@ awacs_attach(device_t parent, device_t self, void *aux)
 
 	sc = device_private(self);
 	sc->sc_dev = self;
-	ca = aux;
+	sc->sc_tag = ca->ca_tag;
 
-	sc->sc_reg = mapiodev(ca->ca_baseaddr + ca->ca_reg[0], ca->ca_reg[1]);
+	if (bus_space_map(sc->sc_tag, ca->ca_baseaddr + ca->ca_reg[0],
+	    ca->ca_reg[1], 0, &sc->sc_regh) != 0)
+		printf("couldn't map codec registers\n");
+	if (bus_space_map(sc->sc_tag, ca->ca_baseaddr + ca->ca_reg[2],
+	    ca->ca_reg[3], BUS_SPACE_MAP_LINEAR, &sc->sc_odmah) != 0)
+		printf("couldn't map DMA out registers\n");
+	if (bus_space_map(sc->sc_tag, ca->ca_baseaddr + ca->ca_reg[4],
+	    ca->ca_reg[5], BUS_SPACE_MAP_LINEAR, &sc->sc_idmah) != 0)
+		printf("couldn't map DMA in registers\n");
 
-	/* out */
-	sc->sc_odma = mapiodev(ca->ca_baseaddr + ca->ca_reg[2], ca->ca_reg[3]);
+	sc->sc_odma = bus_space_vaddr(sc->sc_tag, sc->sc_odmah);
+	sc->sc_idma = bus_space_vaddr(sc->sc_tag, sc->sc_idmah);
 	sc->sc_odmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
-	/* in */
-	sc->sc_idma = mapiodev(ca->ca_baseaddr + ca->ca_reg[4], ca->ca_reg[5]);
 	sc->sc_idmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
 
 	if (strcmp(ca->ca_name, "i2s") == 0) {
@@ -464,7 +472,7 @@ awacs_attach(device_t parent, device_t self, void *aux)
 		sc->sc_need_parallel_output = 1;
 		sc->sc_codecctl1 |= AWACS_PARALLEL_OUTPUT;
 	}
-
+	
 	if (awacs_check_headphones(sc)) {
 
                 /* default output to headphones */
@@ -559,6 +567,9 @@ awacs_setup_sgsmix(device_t cookie)
 	printf("%s: using %s\n", device_xname(sc->sc_dev),
 	    device_xname(sc->sc_sgsmix));
 
+	sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
+	awacs_write_codec(sc, sc->sc_codecctl1);
+
 	awacs_select_output(sc, sc->sc_output_mask);
 	awacs_set_volume(sc, sc->vol_l, sc->vol_r);
 	awacs_set_bass(sc, 128);
@@ -572,19 +583,15 @@ awacs_setup_sgsmix(device_t cookie)
 static inline u_int
 awacs_read_reg(struct awacs_softc *sc, int reg)
 {
-	char *addr;
 
-	addr = sc->sc_reg;
-	return in32rb(addr + reg);
+	return bus_space_read_4(sc->sc_tag, sc->sc_regh, reg);
 }
 
 static inline void
 awacs_write_reg(struct awacs_softc *sc, int reg, int val)
 {
-	char *addr;
 
-	addr = sc->sc_reg;
-	out32rb(addr + reg, val);
+	bus_space_write_4(sc->sc_tag, sc->sc_regh, reg, val);
 }
 
 static void

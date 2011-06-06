@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.7 2009/05/18 11:39:30 nakayama Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.7.6.1 2011/06/06 09:06:48 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
@@ -70,7 +71,9 @@ static void*	ofw_memcpy(void *, const void *, size_t);
 static void*	ofw_memset(void *, int, size_t);
 static void	ofw_freeall(void);
 
+#if 0
 static int	nop_mapin(vaddr_t, vsize_t);
+#endif
 static ssize_t	nop_read(int, void *, size_t);
 static void*	nop_memcpy(void *, const void *, size_t);
 static void*	nop_memset(void *, int, size_t);
@@ -248,7 +251,8 @@ mmu_mapin(vaddr_t rva, vsize_t len)
 			if (itlb_slot >= itlb_slot_max)
 				panic("mmu_mapin: out of itlb_slots");
 
-			DPRINTF(("mmu_mapin: %p:%p.%p\n", va, hi(pa), lo(pa)));
+			DPRINTF(("mmu_mapin: 0x%lx:0x%x.0x%x\n", va,
+			    hi(pa), lo(pa)));
 
 			data = TSB_DATA(0,		/* global */
 					PGSZ_4M,	/* 4mb page */

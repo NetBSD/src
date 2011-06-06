@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.32 2011/01/14 02:06:28 rmind Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.32.2.1 2011/06/06 09:06:08 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32 2011/01/14 02:06:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32.2.1 2011/06/06 09:06:08 jruoho Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -107,26 +107,25 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32 2011/01/14 02:06:28 rmind E
 
 #include <mips/pcb.h>
 #include <mips/regnum.h>			/* symbolic register indices */
-
-CTASSERT(sizeof(struct reg) == sizeof(((struct frame *)0)->f_regs));
+#include <mips/locore.h>
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
 
-	memcpy(regs, l->l_md.md_regs->f_regs, sizeof(struct reg));
+	*regs = l->l_md.md_utf->tf_registers;
 	return 0;
 }
 
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
-	struct frame *f = l->l_md.md_regs;
+	struct trapframe * const tf = l->l_md.md_utf;
 	mips_reg_t sr;
 
-	sr = f->f_regs[_R_SR];
-	memcpy(l->l_md.md_regs, regs, sizeof(struct reg));
-	f->f_regs[_R_SR] = sr;
+	sr = tf->tf_regs[_R_SR];
+	tf->tf_registers = *regs;
+	tf->tf_regs[_R_SR] = sr;
 	return 0;
 }
 
@@ -145,9 +144,9 @@ process_read_xfpregs(struct lwp *l, struct fpreg *regs, size_t *regslen_p)
 		*regslen_p = sizeof(struct fpreg_oabi);
 #endif
 
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		savefpregs(l);
-	memcpy(regs, &pcb->pcb_fpregs, sizeof(struct fpreg));
+	KASSERT(l == curlwp);
+	fpu_save();
+	memcpy(regs, &pcb->pcb_fpregs, sizeof(*regs));
 	return 0;
 }
 
@@ -156,9 +155,11 @@ process_write_xfpregs(struct lwp *l, const struct fpreg *regs, size_t regslen)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
+#ifndef NOFPU
 	/* to load FPA contents next time when FP insn is executed */
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		fpcurlwp = &lwp0;
+	fpu_discard();
+#endif /* !NOFPU */
+
 #if defined(__mips_n32) || defined(__mips_n64)
 	KASSERT((_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi) ? sizeof(struct fpreg) : sizeof(struct fpreg_oabi)) == regslen);
 #else
@@ -182,6 +183,6 @@ int
 process_set_pc(struct lwp *l, void *addr)
 {
 
-	((struct frame *)l->l_md.md_regs)->f_regs[_R_PC] = (intptr_t)addr;
+	l->l_md.md_utf->tf_regs[_R_PC] = (intptr_t)addr;
 	return 0;
 }

@@ -389,7 +389,7 @@ void	armv5_ec_idcache_wbinv_all	(void);
 void	armv5_ec_idcache_wbinv_range	(vaddr_t, vsize_t);
 #endif
 
-#if defined (CPU_ARM10)
+#if defined (CPU_ARM10) || defined (CPU_ARM11MPCORE)
 void	armv5_setttb		(u_int);
 
 void	armv5_icache_sync_all	(void);
@@ -407,6 +407,10 @@ extern unsigned armv5_dcache_sets_max;
 extern unsigned armv5_dcache_sets_inc;
 extern unsigned armv5_dcache_index_max;
 extern unsigned armv5_dcache_index_inc;
+#endif
+
+#if defined(CPU_ARM11MPCORE)
+void	arm11mpcore_setup		(char *);
 #endif
 
 #if defined(CPU_ARM11) || defined(CPU_CORTEX)

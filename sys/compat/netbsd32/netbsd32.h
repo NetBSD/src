@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.84 2009/12/14 00:47:11 matt Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.84.6.1 2011/06/06 09:07:32 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -789,6 +789,12 @@ struct netbsd32_timex {
 	netbsd32_long stbcnt;	/* stability limit exceeded (ro) */
 };
 
+/* <prop/plistref.h> */
+struct netbsd32_plistref {
+	netbsd32_pointer_t pref_plist;
+	netbsd32_size_t pref_len;
+};
+
 /* from <ufs/lfs/lfs.h> */
 typedef netbsd32_pointer_t netbsd32_block_infop_t;  /* XXX broken */
 
@@ -842,6 +848,28 @@ struct netbsd32_mfs_args {
 	struct netbsd32_export_args30	_pad1;
 	netbsd32_voidp		base;
 	netbsd32_u_long		size;
+};
+
+/* from <nfs/nfsmount,h> */
+struct netbsd32_nfs_args {
+	int32_t		version;	/* args structure version number */
+	netbsd32_sockaddrp_t addr;	/* file server address */
+	int32_t		addrlen;	/* length of address */
+	int32_t		sotype;		/* Socket type */
+	int32_t		proto;		/* and Protocol */
+	netbsd32_u_charp fh;		/* File handle to be mounted */
+	int32_t		fhsize;		/* Size, in bytes, of fh */
+	int32_t		flags;		/* flags */
+	int32_t		wsize;		/* write size in bytes */
+	int32_t		rsize;		/* read size in bytes */
+	int32_t		readdirsize;	/* readdir size in bytes */
+	int32_t		timeo;		/* initial timeout in .1 secs */
+	int32_t		retrans;	/* times to retry send */
+	int32_t		maxgrouplist;	/* Max. size of group list */
+	int32_t		readahead;	/* # of blocks to readahead */
+	int32_t		leaseterm;	/* Ignored; Term (sec) of lease */
+	int32_t		deadthresh;	/* Retrans threshold */
+	netbsd32_charp	hostname;	/* server's name */
 };
 
 #if 0

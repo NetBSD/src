@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.10 2010/11/03 00:49:02 macallan Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.10.2.1 2011/06/06 09:08:26 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -200,10 +200,6 @@ struct radeonfb_display {
 
 #ifdef SPLASHSCREEN
 	struct splash_info	rd_splash;
-#endif
-
-#ifdef SPLASHSCREEN_PROGRESS
-	struct splash_progress	rd_progress;
 #endif
 };
 

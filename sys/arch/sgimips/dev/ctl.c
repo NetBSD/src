@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.1 2009/02/10 06:04:56 rumble Exp $	 */
+/*	$NetBSD: ctl.c,v 1.1.12.1 2011/06/06 09:06:39 jruoho Exp $	 */
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctl.c,v 1.1 2009/02/10 06:04:56 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctl.c,v 1.1.12.1 2011/06/06 09:06:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,17 +46,16 @@ __KERNEL_RCSID(0, "$NetBSD: ctl.c,v 1.1 2009/02/10 06:04:56 rumble Exp $");
 #include <sgimips/dev/ctlreg.h>
 
 struct ctl_softc {
-	struct device   	sc_dev;
+	device_t	   	sc_dev;
 
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
-
 };
 
-static int      ctl_match(struct device *, struct cfdata *, void *);
-static void     ctl_attach(struct device *, struct device *, void *);
+static int      ctl_match(device_t, cfdata_t, void *);
+static void     ctl_attach(device_t, device_t, void *);
 static void	ctl_bus_reset(void);
-static void	ctl_bus_error(uint32_t, uint32_t, uint32_t, uint32_t);
+static void	ctl_bus_error(vaddr_t, uint32_t, uint32_t);
 static void	ctl_watchdog_enable(void);
 static void	ctl_watchdog_disable(void);
 static void	ctl_watchdog_tickle(void);
@@ -66,14 +65,17 @@ static callout_t ctl_blink_ch;
 static void	ctl_blink(void *);
 #endif
 
-CFATTACH_DECL(ctl, sizeof(struct ctl_softc),
+CFATTACH_DECL_NEW(ctl, sizeof(struct ctl_softc),
     ctl_match, ctl_attach, NULL, NULL);
 
-static struct ctl_softc csc;
+static struct ctl_softc *csc;
 
 static int
-ctl_match(struct device * parent, struct cfdata * match, void *aux)
+ctl_match(device_t parent, cfdata_t match, void *aux)
 {
+	if (csc != NULL)
+		return 0;
+
 	/*
 	 * CTL exists on IP6/IP10 systems.
 	 */
@@ -84,17 +86,21 @@ ctl_match(struct device * parent, struct cfdata * match, void *aux)
 }
 
 static void
-ctl_attach(struct device * parent, struct device * self, void *aux)
+ctl_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
+	struct ctl_softc * const sc = device_private(self);
 
 #ifdef BLINK
 	callout_init(&ctl_blink_ch, 0);
 #endif
 
-	csc.iot = SGIMIPS_BUS_SPACE_NORMAL;
-	if (bus_space_map(csc.iot, ma->ma_addr, 0,
-	    BUS_SPACE_MAP_LINEAR, &csc.ioh))
+	sc->sc_dev = self;
+	csc = sc;
+
+	sc->iot = SGIMIPS_BUS_SPACE_NORMAL;
+	if (bus_space_map(sc->iot, ma->ma_addr, 0,
+	    BUS_SPACE_MAP_LINEAR, &sc->ioh))
 		panic("ctl_attach: could not allocate memory\n");
 
 	platform.bus_reset = ctl_bus_reset;
@@ -103,7 +109,7 @@ ctl_attach(struct device * parent, struct device * self, void *aux)
 	platform.watchdog_disable = ctl_watchdog_disable;
 	platform.watchdog_reset = ctl_watchdog_tickle;
 
-	bus_space_write_2(csc.iot, csc.ioh, CTL_CPUCTRL,
+	bus_space_write_2(sc->iot, sc->ioh, CTL_CPUCTRL,
 	    (CTL_CPUCTRL_PARITY | CTL_CPUCTRL_SLAVE));
 
 	printf("\n");
@@ -111,22 +117,23 @@ ctl_attach(struct device * parent, struct device * self, void *aux)
 	ctl_bus_reset();
 
 #if defined(BLINK)
-	ctl_blink(&csc);
+	ctl_blink(sc);
 #endif
 }
 
 static void
 ctl_bus_reset(void)
 {
+	struct ctl_softc * const sc = csc;
 
-	bus_space_read_1(csc.iot, csc.ioh, CTL_LAN_PAR_CLR);
-	bus_space_read_1(csc.iot, csc.ioh, CTL_DMA_PAR_CLR);
-	bus_space_read_1(csc.iot, csc.ioh, CTL_CPU_PAR_CLR);
-	bus_space_read_1(csc.iot, csc.ioh, CTL_VME_PAR_CLR);
+	bus_space_read_1(sc->iot, sc->ioh, CTL_LAN_PAR_CLR);
+	bus_space_read_1(sc->iot, sc->ioh, CTL_DMA_PAR_CLR);
+	bus_space_read_1(sc->iot, sc->ioh, CTL_CPU_PAR_CLR);
+	bus_space_read_1(sc->iot, sc->ioh, CTL_VME_PAR_CLR);
 }
 
 static void
-ctl_bus_error(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+ctl_bus_error(vaddr_t pc, uint32_t status, uint32_t ipending)
 {
 
 	printf("ctl0: bus error\n");
@@ -136,27 +143,29 @@ ctl_bus_error(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 static void
 ctl_watchdog_enable(void)
 {
+	struct ctl_softc * const sc = csc;
 	uint32_t reg;
 
 	/* XXX- doesn't seem to work properly */
 	return;
 
-	reg = bus_space_read_2(csc.iot, csc.ioh, CTL_CPUCTRL);
+	reg = bus_space_read_2(sc->iot, sc->ioh, CTL_CPUCTRL);
 	reg |= CTL_CPUCTRL_WDOG;
-	bus_space_write_2(csc.iot, csc.ioh, CTL_CPUCTRL, reg);
+	bus_space_write_2(sc->iot, sc->ioh, CTL_CPUCTRL, reg);
 }
 
 static void
 ctl_watchdog_disable(void)
 {
+	struct ctl_softc * const sc = csc;
 	uint16_t reg;
 
 	/* XXX- doesn't seem to work properly */
 	return;
 
-	reg = bus_space_read_2(csc.iot, csc.ioh, CTL_CPUCTRL_WDOG);
+	reg = bus_space_read_2(sc->iot, sc->ioh, CTL_CPUCTRL_WDOG);
 	reg &= ~(CTL_CPUCTRL_WDOG);
-	bus_space_write_2(csc.iot, csc.ioh, CTL_CPUCTRL, reg);
+	bus_space_write_2(sc->iot, sc->ioh, CTL_CPUCTRL, reg);
 }
 
 static void
@@ -169,9 +178,9 @@ ctl_watchdog_tickle(void)
 
 #if defined(BLINK)
 static void
-ctl_blink(void *self)
+ctl_blink(void *arg)
 {
-	struct ctl_softc *sc = (struct ctl_softc *) self;
+	struct ctl_softc *sc = arg;
 	int s, value;
 
 	s = splhigh();
@@ -188,7 +197,7 @@ ctl_blink(void *self)
 	 *      full cycle every 3 seconds if loadav = 2
 	 * etc.
 	 */
-	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
-	callout_reset(&ctl_blink_ch, s, ctl_blink, sc);
+	int ticks = ((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1);
+	callout_reset(&ctl_blink_ch, ticks, ctl_blink, sc);
 }
 #endif

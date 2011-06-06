@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.15 2006/09/04 20:33:24 tsutsui Exp $	*/
+/*      $NetBSD: clock.c,v 1.15.88.1 2011/06/06 09:06:20 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,15 +41,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2006/09/04 20:33:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15.88.1 2011/06/06 09:06:20 jruoho Exp $");
 
+#define __INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <machine/cpu.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 /*
  * Set up the real-time and statistics clocks.  Leave stathz 0 only

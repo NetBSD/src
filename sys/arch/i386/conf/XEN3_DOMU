@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.27 2010/11/23 11:14:00 hannken Exp $
+# $NetBSD: XEN3_DOMU,v 1.27.2.1 2011/06/06 09:05:48 jruoho Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -13,9 +13,8 @@ maxusers	32		# estimated number of users
 #
 options 	XEN
 #options 	DOM0OPS
-#options         XEN_BALLOON     # Xen memory ballooning - Experimental
 
-makeoptions 	CPUFLAGS="-march=i686"
+makeoptions	CPUFLAGS="-march=i686"
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
@@ -48,14 +47,15 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
-options 	DEBUG		# expensive debugging checks/support 
+options 	DEBUG		# expensive debugging checks/support
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
-#makeoptions 	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
+options DDB_COMMANDONENTER="trace;show registers"
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -80,10 +80,6 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options 	COMPAT_MACH	# binary compatibility with Mach binaries
-#options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
-#options 	EXEC_MACHO	# exec MACH-O binaries
-#options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
@@ -110,7 +106,8 @@ file-system 	TMPFS		# Efficient memory file-system
 file-system	NILFS		# experimental - NTT's NiLFS(2)
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -163,9 +160,9 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOTSTATIC_SERVADDR="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
 
-#options         __XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
+#options 	__XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
 options 	XEN_COMPAT_030001  #compatible with Xen3 before 3.0.2
-options 	MAXPHYS=32768   #xbd doesn't handle 64k transfers
+options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on wd0a type ffs
@@ -184,6 +181,7 @@ xencons*	at hypervisor?		# Xen virtual console
 xenbus* 	at hypervisor?		# Xen virtual bus
 xennet* 	at xenbus?		# Xen virtual network interface
 xbd*		at xenbus?		# Xen virtual block device
+balloon*	at xenbus?		# Xen balloon device
 
 cinclude "arch/i386/conf/GENERIC.local"
 
@@ -253,7 +251,7 @@ pseudo-device   drvctl
 options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 
-# PCI pass-through support: 
-#xpci* at xenbus ?			#Xen3 PCI front end driver
-#pci* at xpci ?
+# PCI pass-through support:
+xpci* at xenbus ?			#Xen3 PCI front end driver
+pci* at xpci ?
 # you then need to add your PCI devices drivers below.

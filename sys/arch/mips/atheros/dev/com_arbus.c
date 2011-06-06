@@ -1,4 +1,4 @@
-/* $Id: com_arbus.c,v 1.7 2008/04/28 20:23:28 martin Exp $ */
+/* $NetBSD: com_arbus.c,v 1.7.28.1 2011/06/06 09:06:02 jruoho Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.7 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.7.28.1 2011/06/06 09:06:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

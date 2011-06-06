@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.2 2010/11/23 11:13:56 hannken Exp $
+#	$NetBSD: MARVELL_NAS,v 1.2.2.1 2011/06/06 09:05:24 jruoho Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -52,7 +52,8 @@ file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
 file-system 	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.

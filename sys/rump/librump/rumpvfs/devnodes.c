@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.5 2010/04/30 21:02:36 pooka Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.5.2.1 2011/06/06 09:10:08 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.5 2010/04/30 21:02:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.5.2.1 2011/06/06 09:10:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -170,6 +170,7 @@ void
 rump_vfs_builddevs(struct devsw_conv *dcvec, size_t dcvecsize)
 {
 	char *pnbuf = PNBUF_GET();
+	devminor_t themin;
 	struct devsw_conv *dc;
 	size_t i;
 	int v1, v2;
@@ -181,8 +182,14 @@ rump_vfs_builddevs(struct devsw_conv *dcvec, size_t dcvecsize)
 		case DEVNODE_DONTBOTHER:
 			break;
 		case DEVNODE_SINGLE:
+			if (dc->d_flags & DEVNODE_FLAG_ISMINOR0) {
+				themin = dc->d_vectdim[0];
+			} else {
+				themin = 0;
+			}
 			makeonenode(pnbuf,
-			    dc->d_bmajor, dc->d_cmajor, 0, dc->d_name, -1, -1);
+			    dc->d_bmajor, dc->d_cmajor, themin,
+			    dc->d_name, -1, -1);
 			break;
 		case DEVNODE_VECTOR:
 			for (v1 = 0; v1 < dc->d_vectdim[0]; v1++) {

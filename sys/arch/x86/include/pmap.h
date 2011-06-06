@@ -1,7 +1,6 @@
-/*	$NetBSD: pmap.h,v 1.33 2010/07/24 00:45:56 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.33.2.1 2011/06/06 09:07:06 jruoho Exp $	*/
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -74,8 +67,6 @@
 #ifndef _X86_PMAP_H_
 #define	_X86_PMAP_H_
 
-#define ptei(VA)	(((VA_SIGN_POS(VA)) & L1_MASK) >> L1_SHIFT)
-
 /*
  * pl*_pi: index in the ptp page for a pde mapping a VA.
  * (pl*_i below is the index in the virtual array of all pdes per level)
@@ -87,6 +78,8 @@
 
 /*
  * pl*_i: generate index into pde/pte arrays in virtual space
+ *
+ * pl_i(va, X) == plX_i(va) <= pl_i_roundup(va, X)
  */
 #define pl1_i(VA)	(((VA_SIGN_POS(VA)) & L1_FRAME) >> L1_SHIFT)
 #define pl2_i(VA)	(((VA_SIGN_POS(VA)) & L2_FRAME) >> L2_SHIFT)
@@ -205,9 +198,18 @@ extern long nkptp[PTP_LEVELS];
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
 #define pmap_move(DP,SP,D,L,S)
-#define pmap_phys_address(ppn)		x86_ptob(ppn)
+#define pmap_phys_address(ppn)		(x86_ptob(ppn) & ~X86_MMAP_FLAG_MASK)
+#define pmap_mmap_flags(ppn)		x86_mmap_flags(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
+#if defined(__x86_64__) || defined(PAE)
+#define X86_MMAP_FLAG_SHIFT	(64 - PGSHIFT)
+#else
+#define X86_MMAP_FLAG_SHIFT	(32 - PGSHIFT)
+#endif
+
+#define X86_MMAP_FLAG_MASK	0xf
+#define X86_MMAP_FLAG_PREFETCH	0x1
 
 /*
  * prototypes
@@ -235,6 +237,8 @@ void		pmap_map_ptes(struct pmap *, struct pmap **, pd_entry_t **,
 void		pmap_unmap_ptes(struct pmap *, struct pmap *);
 
 int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
+
+u_int		x86_mmap_flags(paddr_t);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -368,13 +372,11 @@ bool	sse2_idlezero_page(void *);
 
 #ifdef XEN
 
+#include <sys/bitops.h>
+
 #define XPTE_MASK	L1_FRAME
-/* XPTE_SHIFT = L1_SHIFT - log2(sizeof(pt_entry_t)) */
-#if defined(__x86_64__) || defined(PAE)
-#define XPTE_SHIFT	9
-#else
-#define XPTE_SHIFT	10
-#endif
+/* Selects the index of a PTE in (A)PTE_BASE */
+#define XPTE_SHIFT	(L1_SHIFT - ilog2(sizeof(pt_entry_t)))
 
 /* PTE access inline fuctions */
 

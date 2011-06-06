@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2011/01/14 02:06:25 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.1 2011/06/06 09:05:30 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,6 +36,7 @@
  */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -71,53 +72,19 @@
  *	@(#)machdep.c   8.3 (Berkeley) 1/12/94
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department, The Mach Operating System project at
- * Carnegie-Mellon University and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)machdep.c   8.3 (Berkeley) 1/12/94
- *	from: Utah Hdr: machdep.c 1.63 91/04/24
- */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2011/01/14 02:06:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.2.1 2011/06/06 09:05:30 jruoho Exp $");
 
+#define __INTR_PRIVATE
+
+#include "opt_multiprocessor.h"
 #include "opt_ddb.h"
 #include "opt_com.h"
 #include "opt_execfmt.h"
 #include "opt_memsize.h"
+#include "rmixl_pcix.h"
+#include "rmixl_pcie.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,12 +108,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2011/01/14 02:06:25 rmind Exp $");
 #include "ksyms.h"
 
 #if NKSYMS || defined(DDB) || defined(LKM)
-#include <machine/db_machdep.h>
+#include <mips/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/psl.h>
+#include <mips/cpu.h>
+#include <mips/psl.h>
+#include <mips/cache.h>
+#include <mips/mips_opcode.h>
 
 #include "com.h"
 #if NCOM == 0
@@ -156,12 +125,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2011/01/14 02:06:25 rmind Exp $");
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
-#include <mips/rmi/rmixl_comvar.h>
-#include <mips/rmi/rmixlvar.h>
-#include <mips/rmi/rmixl_firmware.h>
-#include <mips/rmi/rmixlreg.h>
+#include <mips/include/intr.h>
 
-#define MACHDEP_DEBUG 1
+#include <mips/rmi/rmixlreg.h>
+#include <mips/rmi/rmixlvar.h>
+#include <mips/rmi/rmixl_intr.h>
+#include <mips/rmi/rmixl_firmware.h>
+#include <mips/rmi/rmixl_comvar.h>
+#include <mips/rmi/rmixl_pcievar.h>
+#include <mips/rmi/rmixl_pcixvar.h>
+
 #ifdef MACHDEP_DEBUG
 int machdep_debug=MACHDEP_DEBUG;
 # define DPRINTF(x)	do { if (machdep_debug) printf x ; } while(0)
@@ -170,7 +143,7 @@ int machdep_debug=MACHDEP_DEBUG;
 #endif
 
 #ifndef CONSFREQ
-# define CONSFREQ -1		/* inherit from firmware */
+# define CONSFREQ 66000000
 #endif
 #ifndef CONSPEED
 # define CONSPEED 38400
@@ -195,22 +168,20 @@ struct rmixl_config rmixl_configuration;
  * if you find new ones and they work
  * please add them
  */
-static uint64_t rmiclfw_psb_versions[] = {
-	0x4958d4fb00000056ULL,
-	0x49a5a8fa00000056ULL,
-	0x4aacdb6a00000056ULL,
+typedef struct rmiclfw_psb_id {
+	uint64_t		psb_version;
+	rmixlfw_psb_type_t	psb_type;
+} rmiclfw_psb_id_t;
+static rmiclfw_psb_id_t rmiclfw_psb_id[] = {
+	{	0x4958d4fb00000056ULL, PSB_TYPE_RMI  },
+	{	0x4aacdb6a00000056ULL, PSB_TYPE_RMI  },
+	{	0x4b67d03200000056ULL, PSB_TYPE_RMI  },
+	{	0x4c17058b00000056ULL, PSB_TYPE_RMI  },
+	{	0x49a5a8fa00000056ULL, PSB_TYPE_DELL },
+	{	0x4b8ead3100000056ULL, PSB_TYPE_DELL },
 };
 #define RMICLFW_PSB_VERSIONS_LEN \
-	(sizeof(rmiclfw_psb_versions)/sizeof(rmiclfw_psb_versions[0]))
-
-/*
- * kernel copies of firmware info
- */
-static rmixlfw_info_t rmixlfw_info;
-static rmixlfw_mmap_t rmixlfw_phys_mmap;
-static rmixlfw_mmap_t rmixlfw_avail_mmap;
-#define RMIXLFW_INFOP_LEGAL	0x8c000000
-
+	(sizeof(rmiclfw_psb_id)/sizeof(rmiclfw_psb_id[0]))
 
 /*
  * storage for fixed extent used to allocate physical address regions
@@ -238,24 +209,28 @@ int	netboot;		/* Are we netbooting? */
 
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
+u_quad_t mem_cluster_maxaddr;
 u_int mem_cluster_cnt;
 
 
 void configure(void);
 void mach_init(int, int32_t *, void *, int64_t);
-static u_long rmixlfw_init(int64_t);
-static u_long mem_clusters_init(rmixlfw_mmap_t *, rmixlfw_mmap_t *);
-static void __attribute__((__noreturn__)) rmixl_exit(int);
+static uint64_t rmixlfw_init(int64_t);
+static uint64_t mem_clusters_init(rmixlfw_mmap_t *, rmixlfw_mmap_t *);
+static void __attribute__((__noreturn__)) rmixl_reset(void);
 static void rmixl_physaddr_init(void);
 static u_int ram_seg_resv(phys_ram_seg_t *, u_int, u_quad_t, u_quad_t);
 void rmixlfw_mmap_print(rmixlfw_mmap_t *);
 
 
-/*
- * safepri is a safe priority for sleep to set for a spin-wait during
- * autoconfiguration or after a panic.  Used as an argument to splx().
- */
-int	safepri = MIPS1_PSL_LOWIPL;
+#ifdef MULTIPROCESSOR
+static bool rmixl_fixup_cop0_oscratch(int32_t, uint32_t [2]);
+void rmixl_get_wakeup_info(struct rmixl_config *);
+#ifdef MACHDEP_DEBUG
+static void rmixl_wakeup_info_print(volatile rmixlfw_cpu_wakeup_info_t *);
+#endif	/* MACHDEP_DEBUG */
+#endif	/* MULTIPROCESSOR */
+static void rmixl_fixup_curcpu(void);
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -265,21 +240,10 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 {
 	struct rmixl_config *rcp = &rmixl_configuration;
 	void *kernend;
-	u_long memsize;
-	u_int vm_cluster_cnt;
-	uint32_t r;
-	phys_ram_seg_t vm_clusters[VM_PHYSSEG_MAX];
+	uint64_t memsize;
 	extern char edata[], end[];
 
-	rmixl_mtcr(0, 1);		/* disable all threads except #0 */
-
-	r = rmixl_mfcr(0x300);
-	r &= ~__BIT(14);		/* disabled Unaligned Access */
-	rmixl_mtcr(0x300, r);
-
-	rmixl_mtcr(0x400, 0);		/* enable MMU clock gating */
-					/* set single MMU Thread Mode */
-					/* TLB is partitioned (1 partition) */
+	rmixl_pcr_init_core();
 
 	/*
 	 * Clear the BSS segment.
@@ -293,9 +257,19 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	 * before comcnattach() is called (or at least before the
 	 * first printf() after that is called).
 	 * Also clears the I+D caches.
+	 *
+	 * specify chip-specific EIRR/EIMR based spl functions
 	 */
-	mips_vector_init();
+#ifdef MULTIPROCESSOR
+	mips_vector_init(&rmixl_splsw, true);
+#else
+	mips_vector_init(&rmixl_splsw, false);
+#endif
 
+	/* mips_vector_init initialized mips_options */
+	strcpy(cpu_model, mips_options.mips_cpu->cpu_name);
+
+	/* get system info from firmware */
 	memsize = rmixlfw_init(infop);
 
 	/* set the VM page size */
@@ -303,7 +277,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 
 	physmem = btoc(memsize);
 
-	rmixl_obio_bus_mem_init(&rcp->rc_obio_memt, rcp); /* need for console */
+	rmixl_obio_eb_bus_mem_init(&rcp->rc_obio_eb_memt, rcp);
 
 #if NCOM > 0
 	rmixl_com_cnattach(comcnaddr, comcnspeed, comcnfreq,
@@ -311,7 +285,26 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 #endif
 
 	printf("\nNetBSD/rmixl\n");
-	printf("memsize = %#lx\n", memsize);
+	printf("memsize = %#"PRIx64"\n", memsize);
+#ifdef MEMLIMIT
+	printf("memlimit = %#"PRIx64"\n", (uint64_t)MEMLIMIT);
+#endif
+
+#if defined(MULTIPROCESSOR) && defined(MACHDEP_DEBUG)
+	rmixl_wakeup_info_print(rcp->rc_cpu_wakeup_info);
+	rmixl_wakeup_info_print(rcp->rc_cpu_wakeup_info + 1);
+	printf("cpu_wakeup_info %p, cpu_wakeup_end %p\n",
+		rcp->rc_cpu_wakeup_info,
+		rcp->rc_cpu_wakeup_end);
+	printf("userapp_cpu_map: %#"PRIx64"\n",
+		rcp->rc_psb_info.userapp_cpu_map);
+	printf("wakeup: %#"PRIx64"\n", rcp->rc_psb_info.wakeup);
+{
+	register_t sp;
+	asm volatile ("move	%0, $sp\n" : "=r"(sp));
+	printf("sp: %#"PRIx64"\n", sp);
+}
+#endif
 
 	rmixl_physaddr_init();
 
@@ -322,11 +315,12 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	 * Double the Hz if this CPU runs at twice the
          *  external/cp0-count frequency
 	 */
-	curcpu()->ci_cpu_freq = rmixlfw_info.cpu_frequency;
+	curcpu()->ci_cpu_freq = rcp->rc_psb_info.cpu_frequency;
+	curcpu()->ci_cctr_freq = curcpu()->ci_cpu_freq;
 	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
 	curcpu()->ci_divisor_delay =
 		((curcpu()->ci_cpu_freq + 500000) / 1000000);
-        if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+        if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		curcpu()->ci_cpu_freq *= 2;
 
 	/*
@@ -358,37 +352,45 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 
 	/*
 	 * Reserve pages from the VM system.
-	 * to maintain mem_clusters[] as a map of raw ram,
-	 * copy into temporary table vm_clusters[]
-	 * work on that and use it to feed vm_physload()
 	 */
-	KASSERT(sizeof(mem_clusters) == sizeof(vm_clusters));
-	memcpy(&vm_clusters, &mem_clusters, sizeof(vm_clusters));
-	vm_cluster_cnt = mem_cluster_cnt;
 
 	/* reserve 0..start..kernend pages */
-	vm_cluster_cnt = ram_seg_resv(vm_clusters, vm_cluster_cnt,
+	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
 		0, round_page(MIPS_KSEG0_TO_PHYS(kernend)));
 
 	/* reserve reset exception vector page */
 	/* should never be in our clusters anyway... */
-	vm_cluster_cnt = ram_seg_resv(vm_clusters, vm_cluster_cnt,
-		MIPS_RESET_EXC_VEC, MIPS_RESET_EXC_VEC+NBPG);
+	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
+		0x1FC00000, 0x1FC00000+NBPG);
+
+#ifdef MULTIPROCEESOR
+	/* reserve the cpu_wakeup_info area */
+	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
+		(u_quad_t)trunc_page(rcp->rc_cpu_wakeup_info),
+		(u_quad_t)round_page(rcp->rc_cpu_wakeup_end));
+#endif
+
+#ifdef MEMLIMIT
+	/* reserve everything >= MEMLIMIT */
+	mem_cluster_cnt = ram_seg_resv(mem_clusters, mem_cluster_cnt,
+		(u_quad_t)MEMLIMIT, (u_quad_t)~0);
+#endif
+
+	/* get maximum RAM address from the VM clusters */
+	mem_cluster_maxaddr = 0;
+	for (u_int i=0; i < mem_cluster_cnt; i++) {
+		u_quad_t tmp = round_page(
+			mem_clusters[i].start + mem_clusters[i].size);
+		if (tmp > mem_cluster_maxaddr)
+			mem_cluster_maxaddr = tmp;
+	}
+	DPRINTF(("mem_cluster_maxaddr %#"PRIx64"\n", mem_cluster_maxaddr));
 
 	/*
-	 * Load vm_clusters[] into the VM system.
+	 * Load mem_clusters[] into the VM system.
 	 */
-	for (u_int i=0; i < vm_cluster_cnt; i++) {
-		u_quad_t first, last;
-
-		first = trunc_page(vm_clusters[i].start);
-		last = round_page(vm_clusters[i].start + vm_clusters[i].size);
-		DPRINTF(("%s: %d: %#"PRIx64", %#"PRIx64"\n",
-			__func__, i, first, last));
-
-		uvm_page_physload(atop(first), atop(last), atop(first),
-			atop(last), VM_FREELIST_DEFAULT);
-	}
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t) kernend,
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -406,6 +408,119 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+	/*
+	 * store (cpu#0) curcpu in COP0 OSSCRATCH0
+	 * used in exception vector
+	 */
+	__asm __volatile("dmtc0 %0,$%1"
+		:: "r"(&cpu_info_store), "n"(MIPS_COP_0_OSSCRATCH));
+#ifdef MULTIPROCESSOR
+	mips_fixup_exceptions(rmixl_fixup_cop0_oscratch);
+#endif
+	rmixl_fixup_curcpu();
+}
+
+/*
+ * set up Processor Control Regs for this core
+ */
+void
+rmixl_pcr_init_core()
+{
+	uint32_t r;
+
+#ifdef MULTIPROCESSOR
+	rmixl_mtcr(RMIXL_PCR_MMU_SETUP, __BITS(2,0));
+						/* enable MMU clock gating */
+						/* 4 threads active -- why needed if Global? */
+						/* enable global TLB mode */
+#else
+	rmixl_mtcr(RMIXL_PCR_THREADEN, 1);	/* disable all threads except #0 */
+	rmixl_mtcr(RMIXL_PCR_MMU_SETUP, 0);	/* enable MMU clock gating */
+						/* set single MMU Thread Mode */
+						/* TLB is partitioned (1 partition) */
+#endif
+
+	r = rmixl_mfcr(RMIXL_PCR_L1D_CONFIG0);
+	r &= ~__BIT(14);			/* disable Unaligned Access */
+	rmixl_mtcr(RMIXL_PCR_L1D_CONFIG0, r);
+
+#if defined(DDB) && defined(MIPS_DDB_WATCH)
+	/*
+	 * clear IEU_DEFEATURE[DBE]
+	 * this enables COP0 watchpoint to trigger T_WATCH exception
+	 * instead of signaling JTAG.
+	 */
+	r = rmixl_mfcr(RMIXL_PCR_IEU_DEFEATURE);
+	r &= ~__BIT(7);
+	rmixl_mtcr(RMIXL_PCR_IEU_DEFEATURE, r);
+#endif
+}
+
+#ifdef MULTIPROCESSOR
+static bool
+rmixl_fixup_cop0_oscratch(int32_t load_addr, uint32_t new_insns[2])
+{
+	size_t offset = load_addr - (intptr_t)&cpu_info_store;
+
+	KASSERT(MIPS_KSEG0_P(load_addr));
+	KASSERT(offset < sizeof(struct cpu_info));
+
+	/*
+	 * Fixup this direct load cpu_info_store to actually get the current
+	 * CPU's cpu_info from COP0 OSSCRATCH0 and then fix the load to be
+	 * relative from the start of struct cpu_info.
+	 */
+
+	/* [0] = [d]mfc0 rX, $22 (OSScratch) */
+	new_insns[0] = (020 << 26)
+#ifdef _LP64
+	    | (1 << 21)		/* double move */
+#endif
+	    | (new_insns[0] & 0x001f0000)
+	    | (MIPS_COP_0_OSSCRATCH << 11) | (0 << 0);
+
+	/* [1] = [ls][dw] rX, offset(rX) */
+	new_insns[1] = (new_insns[1] & 0xffff0000) | offset;
+
+	return true;
+}
+#endif /* MULTIPROCESSOR */
+
+/*
+ * The following changes all	lX	rN, L_CPU(MIPS_CURLWP) [curlwp->l_cpu]
+ * to			     	[d]mfc0	rN, $22 [MIPS_COP_0_OSSCRATCH]
+ *
+ * the mfc0 is 3 cycles shorter than the load.
+ */
+#define	LOAD_CURCPU_0	((MIPS_CURLWP_REG << 21) | offsetof(lwp_t, l_cpu))
+#define	MFC0_CURCPU_0	((OP_COP0 << 26) | (MIPS_COP_0_OSSCRATCH << 11))
+#ifdef _LP64
+#define	LOAD_CURCPU	((uint32_t)(OP_LD << 26) | LOAD_CURCPU_0)
+#define	MFC0_CURCPU	((uint32_t)(OP_DMF << 21) | MFC0_CURCPU_0)
+#else
+#define	LOAD_CURCPU	((uint32_t)(OP_LW << 26) | LOAD_CURCPU_0)
+#define	MFC0_CURCPU	((uint32_t)(OP_MF << 21) | MFC0_CURCPU_0)
+#endif
+#define	LOAD_CURCPU_MASK	0xffe0ffff
+
+static void
+rmixl_fixup_curcpu(void)
+{
+	extern uint32_t _ftext[];
+	extern uint32_t _etext[];
+
+	for (uint32_t *insnp = _ftext; insnp < _etext; insnp++) {
+		const uint32_t insn = *insnp;
+		if (__predict_false((insn & LOAD_CURCPU_MASK) == LOAD_CURCPU)) {
+			/*
+			 * Since the register to loaded is located in bits
+			 * 16-20 for the mfc0 and the load instruction we can
+			 * just change the instruction bits around it.
+			 */
+			*insnp = insn ^ LOAD_CURCPU ^ MFC0_CURCPU;
+			mips_icache_sync_range((vaddr_t)insnp, 4);
+		}
+	}
 }
 
 /*
@@ -521,53 +636,22 @@ rmixl_physaddr_init(void)
 	}
 
 	/*
-	 * grab regions per PCIe CFG, ECFG, IO, MEM BARs
+	 * get chip-dependent physaddr regions
 	 */
-	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_CFG_BAR);
-	if ((r & RMIXL_PCIE_CFG_BAR_ENB) != 0) {
-		base = (u_long)(RMIXL_PCIE_CFG_BAR_TO_BA((uint64_t)r)
-			/ (1024 * 1024));
-		size = (u_long)RMIXL_PCIE_CFG_SIZE / (1024 * 1024);
-		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
-			__LINE__, "CFG", r, base * 1024 * 1024, size));
-		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
-			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
-				"failed", __func__, ext, base, size, EX_NOWAIT);
-	}
-	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_ECFG_BAR);
-	if ((r & RMIXL_PCIE_ECFG_BAR_ENB) != 0) {
-		base = (u_long)(RMIXL_PCIE_ECFG_BAR_TO_BA((uint64_t)r)
-			/ (1024 * 1024));
-		size = (u_long)RMIXL_PCIE_ECFG_SIZE / (1024 * 1024);
-		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
-			__LINE__, "ECFG", r, base * 1024 * 1024, size));
-		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
-			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
-				"failed", __func__, ext, base, size, EX_NOWAIT);
-	}
-	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_MEM_BAR);
-	if ((r & RMIXL_PCIE_MEM_BAR_ENB) != 0) {
-		base = (u_long)(RMIXL_PCIE_MEM_BAR_TO_BA((uint64_t)r)
-			/ (1024 * 1024));
-		size = (u_long)(RMIXL_PCIE_MEM_BAR_TO_SIZE((uint64_t)r)
-			/ (1024 * 1024));
-		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
-			__LINE__, "MEM", r, base * 1024 * 1024, size));
-		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
-			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
-				"failed", __func__, ext, base, size, EX_NOWAIT);
-	}
-	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_IO_BAR);
-	if ((r & RMIXL_PCIE_IO_BAR_ENB) != 0) {
-		base = (u_long)(RMIXL_PCIE_IO_BAR_TO_BA((uint64_t)r)
-			/ (1024 * 1024));
-		size = (u_long)(RMIXL_PCIE_IO_BAR_TO_SIZE((uint64_t)r)
-			/ (1024 * 1024));
-		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
-			__LINE__, "IO", r, base * 1024 * 1024, size));
-		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
-			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
-				"failed", __func__, ext, base, size, EX_NOWAIT);
+	switch(cpu_rmixl_chip_type(mips_options.mips_cpu)) {
+	case CIDFL_RMI_TYPE_XLR:
+#if NRMIXL_PCIX
+		rmixl_physaddr_init_pcix(ext);
+#endif
+		break;
+	case CIDFL_RMI_TYPE_XLS:
+#if NRMIXL_PCIE
+		rmixl_physaddr_init_pcie(ext);
+#endif
+		break;
+	case CIDFL_RMI_TYPE_XLP:
+		/* XXX TBD */
+		panic("%s: RMI XLP not yet supported", __func__);
 	}
 
 	/*
@@ -581,19 +665,25 @@ rmixl_physaddr_init(void)
 #endif
 }
 
-static u_long
+static uint64_t
 rmixlfw_init(int64_t infop)
 {
 	struct rmixl_config *rcp = &rmixl_configuration;
 
-	strcpy(cpu_model, "RMI XLS616ATX VIIA");	/* XXX */
+#ifdef MULTIPROCESSOR
+	rmixl_get_wakeup_info(rcp);
+#endif
 
 	infop |= MIPS_KSEG0_START;
-	rmixlfw_info = *(rmixlfw_info_t *)(intptr_t)infop;
+	rcp->rc_psb_info = *(rmixlfw_info_t *)(intptr_t)infop;
 
+	rcp->rc_psb_type = PSB_TYPE_UNKNOWN;
 	for (int i=0; i < RMICLFW_PSB_VERSIONS_LEN; i++) {
-		if (rmiclfw_psb_versions[i] == rmixlfw_info.psb_version)
+		if (rmiclfw_psb_id[i].psb_version ==
+		    rcp->rc_psb_info.psb_version) {
+			rcp->rc_psb_type = rmiclfw_psb_id[i].psb_type;
 			goto found;
+		}
 	}
 
 	rcp->rc_io_pbase = RMIXL_IO_DEV_PBASE;
@@ -601,32 +691,40 @@ rmixlfw_init(int64_t infop)
 
 #ifdef DIAGNOSTIC
 	rmixl_puts("\r\nWARNING: untested psb_version: ");
-	rmixl_puthex64(rmixlfw_info.psb_version);
+	rmixl_puthex64(rcp->rc_psb_info.psb_version);
 	rmixl_puts("\r\n");
 #endif
 
+#ifdef MEMSIZE
 	/* XXX trust and use MEMSIZE */
 	mem_clusters[0].start = 0;
 	mem_clusters[0].size = MEMSIZE;
 	mem_cluster_cnt = 1;
 	return MEMSIZE;
+#else
+	rmixl_puts("\r\nERROR: configure MEMSIZE\r\n");
+	cpu_reboot(RB_HALT, NULL);
+	/* NOTREACHED */
+#endif
 
  found:
-	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(rmixlfw_info.io_base);
+	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(rcp->rc_psb_info.io_base);
 	rmixl_putchar_init(rcp->rc_io_pbase);
 #ifdef MACHDEP_DEBUG
 	rmixl_puts("\r\ninfop: ");
 	rmixl_puthex64((uint64_t)(intptr_t)infop);
 #endif
 #ifdef DIAGNOSTIC
-	rmixl_puts("\r\nrecognized psb_version: ");
-	rmixl_puthex64(rmixlfw_info.psb_version);
+	rmixl_puts("\r\nrecognized psb_version=");
+	rmixl_puthex64(rcp->rc_psb_info.psb_version);
+	rmixl_puts(", psb_type=");
+	rmixl_puts(rmixlfw_psb_type_name(rcp->rc_psb_type));
 	rmixl_puts("\r\n");
 #endif
 
 	return mem_clusters_init(
-		(rmixlfw_mmap_t *)(intptr_t)rmixlfw_info.psb_physaddr_map,
-		(rmixlfw_mmap_t *)(intptr_t)rmixlfw_info.avail_mem_map);
+		(rmixlfw_mmap_t *)(intptr_t)rcp->rc_psb_info.psb_physaddr_map,
+		(rmixlfw_mmap_t *)(intptr_t)rcp->rc_psb_info.avail_mem_map);
 }
 
 void
@@ -656,19 +754,18 @@ rmixlfw_mmap_print(rmixlfw_mmap_t *map)
  * these will be limited by MEMSIZE if it is configured.
  * if neither are available, just use MEMSIZE.
  */
-static u_long
+static uint64_t
 mem_clusters_init(
 	rmixlfw_mmap_t *psb_physaddr_map,
 	rmixlfw_mmap_t *avail_mem_map)
 {
 	rmixlfw_mmap_t *map = NULL;
 	const char *mapname;
-	uint64_t tmp;
 	uint64_t sz;
 	uint64_t sum;
 	u_int cnt;
 #ifdef MEMSIZE
-	u_long memsize = MEMSIZE;
+	uint64_t memsize = MEMSIZE;
 #endif
 
 #ifdef MACHDEP_DEBUG
@@ -677,8 +774,7 @@ mem_clusters_init(
 	rmixl_puts("\r\n");
 #endif
 	if (psb_physaddr_map != NULL) {
-		rmixlfw_phys_mmap = *psb_physaddr_map;
-		map = &rmixlfw_phys_mmap;
+		map = psb_physaddr_map;
 		mapname = "psb_physaddr_map";
 		rmixlfw_mmap_print(map);
 	}
@@ -694,8 +790,7 @@ mem_clusters_init(
 	rmixl_puts("\r\n");
 #endif
 	if (avail_mem_map != NULL) {
-		rmixlfw_avail_mmap = *avail_mem_map;
-		map = &rmixlfw_avail_mmap;
+		map = avail_mem_map;
 		mapname = "avail_mem_map";
 		rmixlfw_mmap_print(map);
 	}
@@ -757,10 +852,13 @@ mem_clusters_init(
 		if (sum == memsize)
 			break;
 		if (sum > memsize) {
+			uint64_t tmp;
+
 			tmp = sum - memsize;
 			sz -= tmp;
 			sum -= tmp;
 			mem_clusters[cnt].size = sz;
+			cnt++;
 			break;
 		}
 #endif
@@ -769,6 +867,107 @@ mem_clusters_init(
 	mem_cluster_cnt = cnt;
 	return sum;
 }
+
+#ifdef MULTIPROCESSOR
+/*
+ * RMI firmware passes wakeup info structure in CP0 OS Scratch reg #7
+ * they do not explicitly give us the size of the wakeup area.
+ * we "know" that firmware loader sets wip->gp thusly:
+ *   gp = stack_start[vcpu] = round_page(wakeup_end) + (vcpu * (PAGE_SIZE * 2))
+ * so
+ *   round_page(wakeup_end) == gp - (vcpu * (PAGE_SIZE * 2))
+ * Only the "master" cpu runs this function, so
+ *   vcpu = wip->master_cpu
+ */
+void
+rmixl_get_wakeup_info(struct rmixl_config *rcp)
+{
+	volatile rmixlfw_cpu_wakeup_info_t *wip;
+	int32_t scratch_7;
+	intptr_t end;
+
+	__asm__ volatile(
+		".set push"				"\n"
+		".set noreorder"			"\n"
+		".set mips64"				"\n" 
+		"dmfc0	%0, $22, 7"			"\n"
+		".set pop"				"\n"
+			: "=r"(scratch_7));
+
+	wip = (volatile rmixlfw_cpu_wakeup_info_t *)
+			(intptr_t)scratch_7;
+	end = wip->entry.gp - (wip->master_cpu & (PAGE_SIZE * 2));;
+
+	if (wip->valid == 1) {
+		rcp->rc_cpu_wakeup_end = (const void *)end;
+		rcp->rc_cpu_wakeup_info = wip;
+	}
+};
+
+#ifdef MACHDEP_DEBUG
+static void
+rmixl_wakeup_info_print(volatile rmixlfw_cpu_wakeup_info_t *wip)
+{
+	int i;
+
+	printf("%s: wip %p, size %lu\n", __func__, wip, sizeof(*wip));
+
+	printf("cpu_status %#x\n",  wip->cpu_status);
+	printf("valid: %d\n", wip->valid);
+	printf("entry: addr %#x, args %#x, sp %#"PRIx64", gp %#"PRIx64"\n",
+		wip->entry.addr,
+		wip->entry.args,
+		wip->entry.sp,
+		wip->entry.gp);
+	printf("master_cpu %d\n", wip->master_cpu);
+	printf("master_cpu_mask %#x\n", wip->master_cpu_mask);
+	printf("buddy_cpu_mask %#x\n", wip->buddy_cpu_mask);
+	printf("psb_os_cpu_map %#x\n", wip->psb_os_cpu_map);
+	printf("argc %d\n", wip->argc);
+	printf("argv:");
+	for (i=0; i < wip->argc; i++)
+		printf(" %#x", wip->argv[i]);
+	printf("\n");
+	printf("valid_tlb_entries %d\n", wip->valid_tlb_entries);
+	printf("tlb_map:\n");
+	for (i=0; i < wip->valid_tlb_entries; i++) {
+		volatile const struct lib_cpu_tlb_mapping *m =
+			&wip->tlb_map[i];
+		printf(" %d", m->page_size);
+		printf(", %d", m->asid);
+		printf(", %d", m->coherency);
+		printf(", %d", m->coherency);
+		printf(", %d", m->attr);
+		printf(", %#x", m->virt);
+		printf(", %#"PRIx64"\n", m->phys);
+	}
+	printf("elf segs:\n");
+	for (i=0; i < MAX_ELF_SEGMENTS; i++) {
+		volatile const struct core_segment_info *e =
+			&wip->seg_info[i];
+		printf(" %#"PRIx64"", e->vaddr);
+		printf(", %#"PRIx64"", e->memsz);
+		printf(", %#x\n", e->flags);
+	}
+	printf("envc %d\n", wip->envc);
+	for (i=0; i < wip->envc; i++)
+		printf(" %#x \"%s\"", wip->envs[i],
+			(char *)(intptr_t)(int32_t)(wip->envs[i]));
+	printf("\n");
+	printf("app_mode %d\n", wip->app_mode);
+	printf("printk_lock %#x\n", wip->printk_lock);
+	printf("kseg_master %d\n", wip->kseg_master);
+	printf("kuseg_reentry_function %#x\n", wip->kuseg_reentry_function);
+	printf("kuseg_reentry_args %#x\n", wip->kuseg_reentry_args);
+	printf("app_shared_mem_addr %#"PRIx64"\n", wip->app_shared_mem_addr);
+	printf("app_shared_mem_size %#"PRIx64"\n", wip->app_shared_mem_size);
+	printf("app_shared_mem_orig %#"PRIx64"\n", wip->app_shared_mem_orig);
+	printf("loader_lock %#x\n", wip->loader_lock);
+	printf("global_wakeup_mask %#x\n", wip->global_wakeup_mask);
+	printf("unused_0 %#x\n", wip->unused_0);
+}
+#endif	/* MACHDEP_DEBUG */
+#endif 	/* MULTIPROCESSOR */
 
 void
 consinit(void)
@@ -793,7 +992,7 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob((uint64_t)physmem));
 	printf("total memory = %s\n", pbuf);
 
 	/*
@@ -826,8 +1025,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
-		savectx(curpcb);
+	savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -869,23 +1067,21 @@ haltsys:
 
 	printf("rebooting...\n\n");
 
-	rmixl_exit(0);
+	rmixl_reset();
 }
 
 /*
  * goodbye world
  */
-#define GPIO_CPU_RST 0xa0			/* XXX TMP */
 void __attribute__((__noreturn__))
-rmixl_exit(int howto)
+rmixl_reset(void)
 {
-	/* use firmware callbak to reboot */
-	void (*reset)(void) = (void *)(intptr_t)rmixlfw_info.warm_reset;
-	if (reset != 0) {
-		(*reset)();
-		printf("warm reset callback failed, spinning...\n");
-	} else {
-		printf("warm reset callback absent, spinning...\n");
-	}
+	uint32_t r;
+
+	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET);
+	r |= RMIXL_GPIO_RESET_RESET;
+	RMIXL_IOREG_WRITE(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET, r);
+
+	printf("soft reset failed, spinning...\n");
 	for (;;);
 }

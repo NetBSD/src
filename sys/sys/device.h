@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.137 2010/06/25 15:10:42 tsutsui Exp $ */
+/* $NetBSD: device.h,v 1.137.2.1 2011/06/06 09:10:10 jruoho Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -308,7 +308,7 @@ typedef int (*cfsubmatch_t)(device_t, cfdata_t, const int *, void *);
 struct cfattach {
 	const char *ca_name;		/* name of attachment */
 	LIST_ENTRY(cfattach) ca_list;	/* link on cfdriver's list */
-	size_t	  ca_devsize;		/* size of dev data (for malloc) */
+	size_t	  ca_devsize;		/* size of dev data (for alloc) */
 	int	  ca_flags;		/* flags for driver allocation etc */
 	int	(*ca_match)(device_t, cfdata_t, void *);
 	void	(*ca_attach)(device_t, device_t, void *);
@@ -495,12 +495,8 @@ void	null_childdetached(device_t, device_t);
 
 device_t	device_lookup(cfdriver_t, int);
 void		*device_lookup_private(cfdriver_t, int);
-#ifdef __HAVE_DEVICE_REGISTER
 void		device_register(device_t, void *);
-#endif
-#ifdef __HAVE_DEVICE_REGISTER_POSTCONFIG
 void		device_register_post_config(device_t, void *);
-#endif
 
 devclass_t	device_class(device_t);
 cfdata_t	device_cfdata(device_t);

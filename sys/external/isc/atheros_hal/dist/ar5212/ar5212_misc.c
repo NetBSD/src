@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_misc.c,v 1.1.1.1 2008/12/11 04:46:41 alc Exp $
+ * $Id: ar5212_misc.c,v 1.1.1.1.18.1 2011/06/06 09:09:18 jruoho Exp $
  */
 #include "opt_ah.h"
 
@@ -452,7 +452,7 @@ ar5212SetSifsTime(struct ath_hal *ah, u_int us)
 		return AH_FALSE;
 	} else {
 		/* convert to system clocks */
-		OS_REG_WRITE(ah, AR_D_GBL_IFS_SIFS, ath_hal_mac_clks(ah, us));
+		OS_REG_WRITE(ah, AR_D_GBL_IFS_SIFS, ath_hal_mac_clks(ah, us-2));
 		ahp->ah_slottime = us;
 		return AH_TRUE;
 	}
@@ -462,7 +462,7 @@ u_int
 ar5212GetSifsTime(struct ath_hal *ah)
 {
 	u_int clks = OS_REG_READ(ah, AR_D_GBL_IFS_SIFS) & 0xffff;
-	return ath_hal_mac_usec(ah, clks);	/* convert from system clocks */
+	return ath_hal_mac_usec(ah, clks)+2;	/* convert from system clocks */
 }
 
 HAL_BOOL
@@ -803,6 +803,7 @@ ar5212GetCapability(struct ath_hal *ah, HAL_CAPABILITY_TYPE type,
 			return (ahp->ah_staId1Defaults &
 			    AR_STA_ID1_CRPT_MIC_ENABLE) ?  HAL_OK : HAL_ENXIO;
 		}
+		return HAL_EINVAL;
 	case HAL_CAP_TKIP_SPLIT:	/* hardware TKIP uses split keys */
 		switch (capability) {
 		case 0:			/* hardware capability */
@@ -1069,6 +1070,42 @@ ar5212GetDiagState(struct ath_hal *ah, int request,
 				return AH_FALSE;
 			return ar5212AniSetParams(ah, args, args);
 		}
+	}
+	return AH_FALSE;
+}
+
+/*
+ * Check whether there's an in-progress NF completion.
+ *
+ * Returns AH_TRUE if there's a in-progress NF calibration, AH_FALSE
+ * otherwise.
+ */
+HAL_BOOL
+ar5212IsNFCalInProgress(struct ath_hal *ah)
+{
+	if (OS_REG_READ(ah, AR_PHY_AGC_CONTROL) & AR_PHY_AGC_CONTROL_NF)
+		return AH_TRUE;
+	return AH_FALSE;
+}
+
+/*
+ * Wait for an in-progress NF calibration to complete.
+ *
+ * The completion function waits "i" times 10uS.
+ * It returns AH_TRUE if the NF calibration completed (or was never
+ * in progress); AH_FALSE if it was still in progress after "i" checks.
+ */
+HAL_BOOL
+ar5212WaitNFCalComplete(struct ath_hal *ah, int i)
+{
+	int j;
+
+	if (i <= 0)
+		i = 1;	/* it should run at least once */
+	for (j = 0; j < i; i++) {
+		if (! ar5212IsNFCalInProgress(ah))
+			return AH_TRUE;
+		OS_DELAY(10);
 	}
 	return AH_FALSE;
 }

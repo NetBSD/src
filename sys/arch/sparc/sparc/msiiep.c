@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.39 2010/01/03 23:03:21 mrg Exp $ */
+/*	$NetBSD: msiiep.c,v 1.39.6.1 2011/06/06 09:06:47 jruoho Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.39 2010/01/03 23:03:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.39.6.1 2011/06/06 09:06:47 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -352,7 +352,7 @@ mspcic_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_dmat = sc->sc_dmat;
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &mspcic_pc_tag;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 
 	config_found_ia(self, "pcibus", &pba, mspcic_print);
 }

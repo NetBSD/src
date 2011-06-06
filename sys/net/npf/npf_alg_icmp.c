@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.5 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.5.2.1 2011/06/06 09:09:53 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.5 2010/12/18 01:07:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.5.2.1 2011/06/06 09:09:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -64,7 +64,7 @@ MODULE(MODULE_CLASS_MISC, npf_alg_icmp, "npf");
 #define	TR_PORT_RANGE	33484
 #define	TR_MAX_TTL	50
 
-static npf_alg_t *	alg_icmp;
+static npf_alg_t *	alg_icmp	__read_mostly;
 
 static bool		npfa_icmp_match(npf_cache_t *, nbuf_t *, void *);
 static bool		npfa_icmp_natin(npf_cache_t *, nbuf_t *, void *);
@@ -121,6 +121,11 @@ npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 
 	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_LAYER4));
 
+	/* Check for low TTL. */
+	if (ip->ip_ttl > TR_MAX_TTL) {
+		return false;
+	}
+
 	if (proto == IPPROTO_TCP) {
 		struct tcphdr *th = &npc->npc_l4.tcp;
 		dport = ntohs(th->th_dport);
@@ -133,11 +138,6 @@ npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 
 	/* Handle TCP/UDP traceroute - check for port range. */
 	if (dport < TR_BASE_PORT || dport > TR_PORT_RANGE) {
-		return false;
-	}
-
-	/* Check for low TTL. */
-	if (ip->ip_ttl > TR_MAX_TTL) {
 		return false;
 	}
 
@@ -205,21 +205,46 @@ npf_icmp_uniqid(const int type, npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 	return false;
 }
 
+static void
+npfa_srcdst_invert(npf_cache_t *npc)
+{
+	const int proto = npf_cache_ipproto(npc);
+	npf_addr_t *tmp_ip;
+
+	if (proto == IPPROTO_TCP) {
+		struct tcphdr *th = &npc->npc_l4.tcp;
+		in_port_t tmp_sport = th->th_sport;
+		th->th_sport = th->th_dport;
+		th->th_dport = tmp_sport;
+
+	} else if (proto == IPPROTO_UDP) {
+		struct udphdr *uh = &npc->npc_l4.udp;
+		in_port_t tmp_sport = uh->uh_sport;
+		uh->uh_sport = uh->uh_dport;
+		uh->uh_dport = tmp_sport;
+	}
+	tmp_ip = npc->npc_srcip;
+	npc->npc_srcip = npc->npc_dstip;
+	npc->npc_dstip = tmp_ip;
+}
+
 /*
- * npfa_icmp_session: ALG session inspector, determines unique identifiers.
+ * npfa_icmp_session: ALG session inspector, returns unique identifiers.
  */
 static bool
 npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, void *keyptr)
 {
 	npf_cache_t *key = keyptr;
+	KASSERT(key->npc_info == 0);
 
-	/* ICMP? Get unique identifiers from ICMP packet. */
+	/* IP + ICMP?  Get unique identifiers from ICMP packet. */
+	if (!npf_iscached(npc, NPC_IP4)) {
+		return false;
+	}
 	if (npf_cache_ipproto(npc) != IPPROTO_ICMP) {
 		return false;
 	}
-	KASSERT(npf_iscached(npc, NPC_IP46));
 	KASSERT(npf_iscached(npc, NPC_ICMP));
-	key->npc_info = NPC_ICMP;
 
 	/* Advance to ICMP header. */
 	struct ip *ip = &npc->npc_ip.v4;
@@ -242,7 +267,7 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, void *keyptr)
 		npc->npc_info |= NPC_ICMP_ID;
 		ic->icmp_id = keyic->icmp_id;
 
-		/* Note: return 'false', since key is the original cache. */
+		/* Note: return False, since key is the original cache. */
 		return false;
 	}
 
@@ -252,6 +277,7 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, void *keyptr)
 	 */
 	KASSERT(npf_iscached(key, NPC_IP46));
 	KASSERT(npf_iscached(key, NPC_LAYER4));
+	npfa_srcdst_invert(key);
 	key->npc_ipsz = npc->npc_ipsz;
 
 	return true;
@@ -264,47 +290,57 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, void *keyptr)
 static bool
 npfa_icmp_natin(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 {
-	npf_cache_t enpc;
+	npf_cache_t enpc = { .npc_info = 0 };
 
-	/* XXX: Duplicated work. */
+	/* XXX: Duplicated work (done at session inspection). */
 	if (!npfa_icmp_session(npc, nbuf, &enpc)) {
 		return false;
 	}
+	/* XXX: Restore inversion (inefficient). */
 	KASSERT(npf_iscached(&enpc, NPC_IP46 | NPC_LAYER4));
+	npfa_srcdst_invert(&enpc);
 
+	/*
+	 * Save ICMP and embedded IP with TCP/UDP header checksums, retrieve
+	 * the original address and port, and calculate ICMP checksum for
+	 * embedded packet changes, while data is not rewritten in the cache.
+	 */
 	const int proto = npf_cache_ipproto(&enpc);
-	void *n_ptr = nbuf_dataptr(nbuf);
-	void *cnbuf = nbuf, *cnptr = n_ptr;
-	struct icmp *ic = &npc->npc_l4.icmp;
-	uint16_t cksum = ic->icmp_cksum;
-	struct ip *ip = &enpc.npc_ip.v4;
-	uint16_t ecksum = ip->ip_sum, l4cksum;
-
-	/* Save TCP/UDP checksum for update. */
-	if (proto == IPPROTO_TCP) {
-		struct tcphdr *th = &enpc.npc_l4.tcp;
-		l4cksum = th->th_sum;
-	} else {
-		struct udphdr *uh = &enpc.npc_l4.udp;
-		l4cksum = uh->uh_sum;
-	}
-
-	/* Advance to the original IP header, which is embedded after ICMP. */
-	u_int offby = offsetof(struct icmp, icmp_ip);
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL) {
-		return false;
-	}
-
+	const struct ip * const ip = &npc->npc_ip.v4, *eip = &enpc.npc_ip.v4;
+	const struct icmp * const ic = &npc->npc_l4.icmp;
+	uint16_t cksum = ic->icmp_cksum, ecksum = eip->ip_sum, l4cksum;
 	npf_nat_t *nt = ntptr;
 	npf_addr_t *addr;
 	in_port_t port;
 
 	npf_nat_getorig(nt, &addr, &port);
 
+	if (proto == IPPROTO_TCP) {
+		struct tcphdr *th = &enpc.npc_l4.tcp;
+		cksum = npf_fixup16_cksum(cksum, th->th_sport, port);
+		l4cksum = th->th_sum;
+	} else {
+		struct udphdr *uh = &enpc.npc_l4.udp;
+		cksum = npf_fixup16_cksum(cksum, uh->uh_sport, port);
+		l4cksum = uh->uh_sum;
+	}
+	cksum = npf_addr_cksum(cksum, enpc.npc_ipsz, enpc.npc_srcip, addr);
+
+	/*
+	 * Save the original pointers to the main IP header and then advance
+	 * to the embedded IP header after ICMP header.
+	 */
+	void *n_ptr = nbuf_dataptr(nbuf), *cnbuf = nbuf, *cnptr = n_ptr;
+	u_int offby = (ip->ip_hl << 2) + offsetof(struct icmp, icmp_ip);
+
+	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL) {
+		return false;
+	}
+
 	/*
 	 * Rewrite source IP address and port of the embedded IP header,
 	 * which represents original packet - therefore passing PFIL_OUT.
-	 * Note: checksum is first, since it uses values from the cache.
+	 * Note: checksums are first, since it uses values from the cache.
 	 */
 	if (!npf_rwrcksum(&enpc, nbuf, n_ptr, PFIL_OUT, addr, port)) {
 		return false;
@@ -317,20 +353,21 @@ npfa_icmp_natin(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 	}
 
 	/*
-	 * Calculate ICMP checksum.
+	 * Finish calculation of the ICMP checksum.  Update for embedded IP
+	 * and TCP/UDP checksum changes.  Finally, rewrite ICMP checksum.
 	 */
 	if (proto == IPPROTO_TCP) {
 		struct tcphdr *th = &enpc.npc_l4.tcp;
-		cksum = npf_fixup16_cksum(cksum, th->th_sport, port);
 		cksum = npf_fixup16_cksum(cksum, l4cksum, th->th_sum);
-	} else {
+	} else if (l4cksum) {
 		struct udphdr *uh = &enpc.npc_l4.udp;
-		cksum = npf_fixup16_cksum(cksum, uh->uh_sport, port);
 		cksum = npf_fixup16_cksum(cksum, l4cksum, uh->uh_sum);
 	}
-	cksum = npf_addr_cksum(cksum, enpc.npc_ipsz, enpc.npc_srcip, addr);
-	cksum = npf_fixup16_cksum(cksum, ecksum, ip->ip_sum);
+	cksum = npf_fixup16_cksum(cksum, ecksum, eip->ip_sum);
 
-	/* Rewrite ICMP checksum. */
-	return nbuf_store_datum(cnbuf, cnptr, sizeof(uint16_t), &cksum);
+	offby = (ip->ip_hl << 2) + offsetof(struct icmp, icmp_cksum);
+	if (nbuf_advstore(&cnbuf, &cnptr, offby, sizeof(uint16_t), &cksum)) {
+		return false;
+	}
+	return true;
 }

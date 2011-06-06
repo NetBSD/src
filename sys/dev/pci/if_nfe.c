@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.53 2010/11/03 14:03:40 jakllsch Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.53.2.1 2011/06/06 09:08:14 jruoho Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.53 2010/11/03 14:03:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.53.2.1 2011/06/06 09:08:14 jruoho Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -396,8 +396,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
 
-	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, mii_flags);
+	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, 0, mii_flags);
 
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");

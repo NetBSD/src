@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.20 2009/05/12 14:47:04 cegger Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.20.6.1 2011/06/06 09:08:40 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -30,6 +30,8 @@
 #ifndef _DEV_TC_IOASICVAR_H_
 #define _DEV_TC_IOASICVAR_H_
 
+#include <sys/device.h>
+
 struct ioasic_dev {
 	const char	*iad_modname;
 	tc_offset_t	iad_offset;
@@ -45,7 +47,7 @@ struct ioasicdev_attach_args {
 };
 
 struct ioasic_softc {
-	struct	device sc_dv;
+	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 	bus_dma_tag_t sc_dmat;

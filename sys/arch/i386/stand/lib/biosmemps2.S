@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmemps2.S,v 1.4 2009/11/21 11:52:57 dsl Exp $	*/
+/*	$NetBSD: biosmemps2.S,v 1.4.6.1 2011/06/06 09:05:52 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ ENTRY(getextmemps2)
 	# do int15, function 0xc0 call to discover if C7h is supported
 	movb	$0xc0, %ah
 	int	$0x15
-	setc	%bl
+	setc	%cl
 	jc	out		# 0xc0 not supported if carry set
 
 	# check feature byte 2, bit 4 to see if return memory map is supported
@@ -64,8 +64,8 @@ ENTRY(getextmemps2)
 	andb	$0x10, %al
 	jnz	getmem		# 0xc7 supported
 	
-	# set %bl to indicate failure, and exit
-	movb	$2, %bl
+	# set %cl to indicate failure, and exit
+	movb	$2, %cl
 	jmp	out
 
 getmem:
@@ -81,15 +81,14 @@ getmem:
 	# actually call int15, function 0xc7 now
 	movb	$0xc7, %ah
 	int	$0x15
-	setc	%bl		# save carry
+	setc	%cl		# save carry
 	pop	%ds
 
 out:
 	calll	_C_LABEL(real_to_prot)
 	.code32
 
-	xorl	%eax, %eax
-	movb	%bl, %al	# return value in %ax
+	movzbl	%cl, %eax	# return value in %eax
 
 	pop	%edi
 	pop	%esi

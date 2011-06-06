@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.159 2011/01/03 06:07:43 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.159.2.1 2011/06/06 09:05:34 jruoho Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.159 $"
+#ident 		"GENERIC-$Revision: 1.159.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -59,7 +59,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	MODULAR		# new style module(7) framework
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
@@ -119,7 +119,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # Filesystem options
-options 	QUOTA		# User and group quotas in FFS
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -175,6 +176,15 @@ options 	USELEDS		# make the lights twinkle
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	DIOVERBOSE	# recognize "unknown" DIO devices
 
+# workstation console options
+options 	WSEMUL_VT100            # VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+
+options 	FONT_GALLANT12x22
+#options 	FONT_VT220ISO8x16
+
 config		netbsd root on ? type ?
 
 #
@@ -185,41 +195,54 @@ mainbus0	at root			# root "bus"
 
 intio0		at mainbus0		# internal i/o space
 dio0		at mainbus0		# DIO/DIO-II bus
+#sgc0		at mainbus0		# SGC bus
+
+# Human Interface Loop devices
+hil0		at intio?		# HIL controller
+hilkbd* 	at hil?			# keyboards
+wskbd*		at hilkbd? mux 1
+hilms*		at hil?			# mice, buttons and tablets
+wsmouse*	at hilms? mux 0
+hilid*		at hil?			# ID module
 
 rtc*		at intio?		# real-time clock (not optional)
 dma* 		at intio?		# DMA controller
-hil*		at intio?		# Human Interface Loop
-options 	UK_KEYBOARD		# include United Kingdom HIL keymap
-options 	SE_KEYBOARD		# include Swedish HIL keymap
-frodo*		at intio?		# Frodo utility chip found on 3x2, 4xx
+frodo*		at intio?		# Frodo utility chip found on 382, 4xx
 nhpib*		at intio?		# slow internal HP-IB
 
 # 8250-like serial ports found on Frodo ASIC
-#dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
+dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
+wskbd*		at dnkbd? mux 1
+wsmouse*	at dnkbd? mux 0
 com*		at frodo? offset ?	# tty flavor
 
-dvbox*		at intio? 		# Davinci framebuffer
+dvbox*		at intio?		# Davinci framebuffer
 dvbox*		at dio? scode ?
+wsdisplay*	at dvbox?
 
 gbox*		at intio?		# Gatorbox framebuffer
 gbox*		at dio? scode ?
+wsdisplay*	at gbox?
 
 hyper*		at dio? scode ?		# Hyperion framebuffer
+wsdisplay*	at hyper?
 
 rbox*		at intio?		# Renaissance framebuffer
 rbox*		at dio? scode ?
+wsdisplay*	at rbox?
 
 topcat*		at intio?		# Topcat/catseye framebuffers
 topcat*		at dio? scode ?
+wsdisplay*	at topcat?
 
-# Framebuffer abstraction
-grf*		at dvbox?
-grf*		at gbox?
-grf*		at hyper?
-grf*		at rbox?
-grf*		at topcat?
+tvrx*		at dio? scode ?		# TurboVRX framebuffer
+wsdisplay*	at tvrx?
 
-ite*		at grf?			# Internal Terminal Emulator
+gendiofb*	at dio? scode ?		# dumb framebuffer support for 362/382
+wsdisplay*	at gendiofb?
+
+#sti*		at sgc?	slot ?		# SGC EVRX framebuffers
+#wsdisplay*	at sti?
 
 com0		at dio0 scode 9		# DCA serial interfaces
 com*		at dio? scode ?
@@ -307,6 +330,10 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	putter			# for puffs and pud
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
 
 # Veriexec
 #

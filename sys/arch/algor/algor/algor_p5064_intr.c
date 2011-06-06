@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.23 2008/05/26 15:59:29 tsutsui Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.23.26.1 2011/06/06 09:04:41 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,9 +38,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.23 2008/05/26 15:59:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.23.26.1 2011/06/06 09:04:41 jruoho Exp $");
 
 #include "opt_ddb.h"
+#define	__INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -68,11 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.23 2008/05/26 15:59:29 tsutsu
 
 #include <dev/isa/isavar.h>
 
-#define	REGVAL(x)	*((volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
+#define	REGVAL(x)	*((volatile uint32_t *)(MIPS_PHYS_TO_KSEG1((x))))
 
 struct p5064_irqreg {
 	bus_addr_t	addr;
-	u_int32_t	val;
+	uint32_t	val;
 };
 
 #define	IRQREG_LOCINT		0
@@ -111,7 +112,7 @@ struct p5064_irqreg p5064_irqsteer[NSTEERREG] = {
 #define	IRQMAP_ISABASE		(IRQMAP_LOCBASE + NLOCIRQS)
 #define	NIRQMAPS		(IRQMAP_ISABASE + NISAIRQS)
 
-const char *p5064_intrnames[NIRQMAPS] = {
+const char * const p5064_intrnames[NIRQMAPS] = {
 	/*
 	 * PCI INTERRUPTS
 	 */
@@ -274,13 +275,13 @@ struct p5064_cpuintr {
 };
 
 struct p5064_cpuintr p5064_cpuintrs[NINTRS];
-const char *p5064_cpuintrnames[NINTRS] = {
+const char * const p5064_cpuintrnames[NINTRS] = {
 	"int 0 (isa)",
 	"int 1 (pci)",
 	"int 2 (local)",
 };
 
-const char *p5064_intrgroups[NINTRS] = {
+const char * const p5064_intrgroups[NINTRS] = {
 	"isa",
 	"pci",
 	"local",
@@ -289,14 +290,15 @@ const char *p5064_intrgroups[NINTRS] = {
 void	*algor_p5064_intr_establish(int, int (*)(void *), void *);
 void	algor_p5064_intr_disestablish(void *);
 
-int	algor_p5064_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int	algor_p5064_pci_intr_map(const struct pci_attach_args *,
+	    pci_intr_handle_t *);
 const char *algor_p5064_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *algor_p5064_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*algor_p5064_pci_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *);
 void	algor_p5064_pci_intr_disestablish(void *, void *);
 void	*algor_p5064_pciide_compat_intr_establish(void *, device_t,
-	    struct pci_attach_args *, int, int (*)(void *), void *);
+	    const struct pci_attach_args *, int, int (*)(void *), void *);
 void	algor_p5064_pci_conf_interrupt(void *, int, int, int, int, int *);
 
 const struct evcnt *algor_p5064_isa_intr_evcnt(void *, int);
@@ -305,7 +307,7 @@ void	*algor_p5064_isa_intr_establish(void *, int, int, int,
 void	algor_p5064_isa_intr_disestablish(void *, void *);
 int	algor_p5064_isa_intr_alloc(void *, int, int, int *);
 
-void	algor_p5064_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	algor_p5064_iointr(int, vaddr_t, uint32_t);
 
 void
 algor_p5064_intr_init(struct p5064_config *acp)
@@ -321,7 +323,6 @@ algor_p5064_intr_init(struct p5064_config *acp)
 		evcnt_attach_dynamic(&p5064_cpuintrs[i].cintr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", p5064_cpuintrnames[i]);
 	}
-	evcnt_attach_static(&mips_int5_evcnt);
 
 	for (i = 0; i < NIRQMAPS; i++) {
 		irqmap = &p5064_irqmap[i];
@@ -362,7 +363,7 @@ void
 algor_p5064_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 {
 	u_long ctrdiff[4], startctr, endctr, cps;
-	u_int32_t irr;
+	uint32_t irr;
 	int i;
 
 	/* Disable interrupts first. */
@@ -507,13 +508,12 @@ algor_p5064_intr_disestablish(void *cookie)
 }
 
 void
-algor_p5064_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
-    u_int32_t ipending)
+algor_p5064_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
 	const struct p5064_irqmap *irqmap;
 	struct algor_intrhand *ih;
 	int level, i;
-	u_int32_t irr[NIRQREG];
+	uint32_t irr[NIRQREG];
 
 	/* Check for PANIC interrupts. */
 	if (ipending & MIPS_INT_MASK_4) {
@@ -566,11 +566,7 @@ algor_p5064_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 				(*ih->ih_func)(ih->ih_arg);
 			}
 		}
-		cause &= ~(MIPS_INT_MASK_0 << level);
 	}
-
-	/* Re-enable anything that we have processed. */
-	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 }
 
 /*****************************************************************************
@@ -578,7 +574,7 @@ algor_p5064_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
  *****************************************************************************/
 
 int
-algor_p5064_pci_intr_map(struct pci_attach_args *pa,
+algor_p5064_pci_intr_map(const struct pci_attach_args *pa,
     pci_intr_handle_t *ihp)
 {
 	static const int pciirqmap[6/*device*/][4/*pin*/] = {
@@ -672,7 +668,7 @@ algor_p5064_pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz,
 
 void *
 algor_p5064_pciide_compat_intr_establish(void *v, device_t dev,
-    struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
+    const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc; 
 	void *cookie;

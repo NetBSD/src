@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 2011/01/14 02:06:29 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.65.2.1 2011/06/06 09:06:27 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2011/01/14 02:06:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65.2.1 2011/06/06 09:06:27 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -126,6 +126,10 @@ struct evcnt tlbflush_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbflush");
 struct evcnt tlbenter_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbenter");
+EVCNT_ATTACH_STATIC(tlbmiss_ev);
+EVCNT_ATTACH_STATIC(tlbhit_ev);
+EVCNT_ATTACH_STATIC(tlbflush_ev);
+EVCNT_ATTACH_STATIC(tlbenter_ev);
 
 struct pmap kernel_pmap_;
 struct pmap *const kernel_pmap_ptr = &kernel_pmap_;
@@ -411,11 +415,6 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	/* Setup TLB pid allocator so it knows we alreadu using PID 1 */
 	pmap_kernel()->pm_ctx = KERNEL_PID;
 	nextavail = avail->start;
-
-	evcnt_attach_static(&tlbmiss_ev);
-	evcnt_attach_static(&tlbhit_ev);
-	evcnt_attach_static(&tlbflush_ev);
-	evcnt_attach_static(&tlbenter_ev);
 
 	pmap_bootstrap_done = 1;
 }

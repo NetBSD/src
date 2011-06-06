@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah.c,v 1.2 2008/12/11 05:30:29 alc Exp $
+ * $Id: ah.c,v 1.2.18.1 2011/06/06 09:09:16 jruoho Exp $
  */
 #include "opt_ah.h"
 
@@ -525,6 +525,11 @@ ath_hal_getcapability(struct ath_hal *ah, HAL_CAPABILITY_TYPE type,
 	case HAL_CAP_RXTSTAMP_PREC:	/* rx desc tstamp precision (bits) */
 		*result = pCap->halTstampPrecision;
 		return HAL_OK;
+	case HAL_CAP_INTRMASK:		/* mask of supported interrupts */
+		*result = pCap->halIntrMask;
+		return HAL_OK;
+	case HAL_CAP_BSSIDMATCH:	/* hardware has disable bssid match */
+		return pCap->halBssidMatchSupport ? HAL_OK : HAL_ENOTSUPP;
 	default:
 		return HAL_EINVAL;
 	}

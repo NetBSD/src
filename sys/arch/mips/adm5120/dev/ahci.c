@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.5 2008/12/16 22:35:24 christos Exp $	*/
+/*	$NetBSD: ahci.c,v 1.5.8.1 2011/06/06 09:06:01 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.5 2008/12/16 22:35:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.5.8.1 2011/06/06 09:06:01 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ ahci_attach(device_t parent, device_t self, void *aux)
 
 	SIMPLEQ_INIT(&sc->sc_free_xfers);
 
-	usb_callout_init(sc->sc_poll_handle);
+	callout_init(&sc->sc_poll_handle, 0);
 
 	REG_WRITE(ADMHCD_REG_INTENABLE, 0); /* disable interrupts */
 	REG_WRITE(ADMHCD_REG_CONTROL, ADMHCD_SW_RESET); /* reset */
@@ -437,7 +437,7 @@ ahci_poll_hub(void *arg)
 	static int p0_state=0;
 	static int p1_state=0;
 
-	usb_callout(sc->sc_poll_handle, sc->sc_interval, ahci_poll_hub, xfer);
+	callout_reset(&sc->sc_poll_handle, sc->sc_interval, ahci_poll_hub, xfer);
 
 	/* USB spec 11.13.3 (p.260) */
 	p = KERNADDR(&xfer->dmabuf, 0);
@@ -996,7 +996,7 @@ ahci_root_intr_start(usbd_xfer_handle xfer)
 	DPRINTF(D_TRACE, ("SLRIstart "));
 
 	sc->sc_interval = MS_TO_TICKS(xfer->pipe->endpoint->edesc->bInterval);
-	usb_callout(sc->sc_poll_handle, sc->sc_interval, ahci_poll_hub, xfer);
+	callout_reset(&sc->sc_poll_handle, sc->sc_interval, ahci_poll_hub, xfer);
 	sc->sc_intr_xfer = xfer;
 	return USBD_IN_PROGRESS;
 }
@@ -1014,7 +1014,7 @@ ahci_root_intr_close(usbd_pipe_handle pipe)
 
 	DPRINTF(D_TRACE, ("SLRIclose "));
 
-	usb_uncallout(sc->sc_poll_handle, ahci_poll_hub, sc->sc_intr_xfer);
+	callout_stop(&sc->sc_poll_handle);
 	sc->sc_intr_xfer = NULL;
 }
 
@@ -1243,8 +1243,8 @@ ahci_device_intr_start(usbd_xfer_handle xfer)
 	xfer->hcpriv = sx;
 
 	/* initialize callout */
-	usb_callout_init(sx->sx_callout_t);
-	usb_callout(sx->sx_callout_t, 
+	callout_init(&sx->sx_callout_t, 0);
+	callout_reset(&sx->sx_callout_t, 
 		MS_TO_TICKS(pipe->endpoint->edesc->bInterval),
 		ahci_poll_device, sx);
 
@@ -1269,7 +1269,7 @@ ahci_poll_device(void *arg)
 
 	DPRINTF(D_TRACE, ("pldev"));
 
-	usb_callout(sx->sx_callout_t,
+	callout_reset(&sx->sx_callout_t,
 		MS_TO_TICKS(pipe->endpoint->edesc->bInterval),
 		ahci_poll_device, sx);
 
@@ -1304,7 +1304,7 @@ ahci_device_intr_abort(usbd_xfer_handle xfer)
 
 	sx = xfer->hcpriv;
 	if (sx) {
-		usb_uncallout(sx->sx_callout_t, ahci_poll_device, sx);
+		callout_stop(&sx->sx_callout_t);
 		free(sx, M_USB);
 		xfer->hcpriv = NULL;
 	} else {

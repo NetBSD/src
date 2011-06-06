@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.137 2010/12/20 00:25:42 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.137.2.1 2011/06/06 09:06:31 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2010/12/20 00:25:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137.2.1 2011/06/06 09:06:31 jruoho Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2010/12/20 00:25:42 matt Exp $");
 #include <machine/trap.h>
 #include <powerpc/altivec.h>
 #include <powerpc/userret.h>
+#include <powerpc/instr.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/oea/spr.h>
@@ -81,20 +82,24 @@ int badaddr(void *, size_t);
 int badaddr_read(void *, size_t, int *);
 
 void
-trap(struct trapframe *frame)
+trap(struct trapframe *tf)
 {
 	struct cpu_info * const ci = curcpu();
-	struct lwp *l = curlwp;
-	struct proc *p = l ? l->l_proc : NULL;
-	struct pcb *pcb = curpcb;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct pcb * const pcb = curpcb;
 	struct vm_map *map;
 	ksiginfo_t ksi;
-	int type = frame->exc;
+	const bool usertrap = (tf->tf_srr1 & PSL_PR);
+	int type = tf->tf_exc;
 	int ftype, rv;
 
 	ci->ci_ev_traps.ev_count++;
 
-	if (frame->srr1 & PSL_PR) {
+	KASSERTMSG(!usertrap || tf == l->l_md.md_utf,
+	    ("trap: tf=%p is invalid: trapframe(%p)=%p", tf, l, l->l_md.md_utf));
+
+	if (usertrap) {
 		type |= EXC_USER;
 #ifdef DIAGNOSTIC
 		if (l == NULL || p == NULL)
@@ -110,34 +115,33 @@ trap(struct trapframe *frame)
 	case EXC_RUNMODETRC|EXC_USER:
 		/* FALLTHROUGH */
 	case EXC_TRC|EXC_USER:
-		frame->srr1 &= ~PSL_SE;
+		tf->tf_srr1 &= ~PSL_SE;
 		if (p->p_raslist == NULL ||
-		    ras_lookup(p, (void *)frame->srr0) == (void *) -1) {
+		    ras_lookup(p, (void *)tf->tf_srr0) == (void *) -1) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = EXC_TRC;
-			ksi.ksi_addr = (void *)frame->srr0;
+			ksi.ksi_addr = (void *)tf->tf_srr0;
 			ksi.ksi_code = TRAP_TRACE;
 			(*p->p_emul->e_trapsignal)(l, &ksi);
 		}
 		break;
 	case EXC_DSI: {
-		struct faultbuf *fb;
-		vaddr_t va = frame->dar;
+		struct faultbuf * const fb = pcb->pcb_onfault;
+		vaddr_t va = tf->tf_dar;
 
 		ci->ci_ev_kdsi.ev_count++;
-		fb = pcb->pcb_onfault;
 
 		/*
 		 * Only query UVM if no interrupts are active.
 		 */
-		if (ci->ci_intrdepth < 0) {
+		if (ci->ci_idepth < 0) {
 			if ((va >> ADDR_SR_SHFT) == pcb->pcb_kmapsr) {
 				va &= ADDR_PIDX | ADDR_POFF;
 				va |= pcb->pcb_umapsr << ADDR_SR_SHFT;
 				map = &p->p_vmspace->vm_map;
 #ifdef PPC_OEA64
-				if ((frame->dsisr & DSISR_NOTFOUND) &&
+				if ((tf->tf_dsisr & DSISR_NOTFOUND) &&
 				    vm_map_pmap(map)->pm_ste_evictions > 0 &&
 				    pmap_ste_spill(vm_map_pmap(map),
 					    trunc_page(va), false)) {
@@ -145,7 +149,7 @@ trap(struct trapframe *frame)
 				}
 #endif
 
-				if ((frame->dsisr & DSISR_NOTFOUND) &&
+				if ((tf->tf_dsisr & DSISR_NOTFOUND) &&
 				    vm_map_pmap(map)->pm_evictions > 0 &&
 				    pmap_pte_spill(vm_map_pmap(map),
 					    trunc_page(va), false)) {
@@ -160,16 +164,16 @@ trap(struct trapframe *frame)
 			} else if ((va >> ADDR_SR_SHFT) == USER_SR) {
 				printf("trap: kernel %s DSI trap @ %#lx by %#lx"
 				    " (DSISR %#x): USER_SR unset\n",
-				    (frame->dsisr & DSISR_STORE)
+				    (tf->tf_dsisr & DSISR_STORE)
 					? "write" : "read",
-				    va, frame->srr0, frame->dsisr);
+				    va, tf->tf_srr0, tf->tf_dsisr);
 				goto brain_damage2;
 #endif
 			} else {
 				map = kernel_map;
 			}
 
-			if (frame->dsisr & DSISR_STORE)
+			if (tf->tf_dsisr & DSISR_STORE)
 				ftype = VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
@@ -198,23 +202,23 @@ trap(struct trapframe *frame)
 			rv = EFAULT;
 		}
 		if (fb != NULL) {
-			frame->srr0 = fb->fb_pc;
-			frame->fixreg[1] = fb->fb_sp;
-			frame->fixreg[2] = fb->fb_r2;
-			frame->fixreg[3] = rv;
-			frame->cr = fb->fb_cr;
-			memcpy(&frame->fixreg[13], fb->fb_fixreg,
+			tf->tf_srr0 = fb->fb_pc;
+			tf->tf_cr = fb->fb_cr;
+			tf->tf_fixreg[1] = fb->fb_sp;
+			tf->tf_fixreg[2] = fb->fb_r2;
+			tf->tf_fixreg[3] = rv;
+			memcpy(&tf->tf_fixreg[13], fb->fb_fixreg,
 			    sizeof(fb->fb_fixreg));
 			return;
 		}
 		printf("trap: kernel %s DSI trap @ %#lx by %#lx (DSISR %#x, err"
-		    "=%d), lr %#lx\n", (frame->dsisr & DSISR_STORE) ? "write" : "read",
-		    va, frame->srr0, frame->dsisr, rv, frame->lr);
+		    "=%d), lr %#lx\n", (tf->tf_dsisr & DSISR_STORE) ? "write" : "read",
+		    va, tf->tf_srr0, tf->tf_dsisr, rv, tf->tf_lr);
 		goto brain_damage2;
 	}
 	case EXC_DSI|EXC_USER:
 		ci->ci_ev_udsi.ev_count++;
-		if (frame->dsisr & DSISR_STORE)
+		if (tf->tf_dsisr & DSISR_STORE)
 			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
@@ -226,32 +230,32 @@ trap(struct trapframe *frame)
 		 */
 		map = &p->p_vmspace->vm_map;
 #ifdef PPC_OEA64
-		if ((frame->dsisr & DSISR_NOTFOUND) &&
+		if ((tf->tf_dsisr & DSISR_NOTFOUND) &&
 		    vm_map_pmap(map)->pm_ste_evictions > 0 &&
-		    pmap_ste_spill(vm_map_pmap(map), trunc_page(frame->dar),
+		    pmap_ste_spill(vm_map_pmap(map), trunc_page(tf->tf_dar),
 				   false)) {
 			break;
 		}
 #endif
 
-		if ((frame->dsisr & DSISR_NOTFOUND) &&
+		if ((tf->tf_dsisr & DSISR_NOTFOUND) &&
 		    vm_map_pmap(map)->pm_evictions > 0 &&
-		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->dar),
+		    pmap_pte_spill(vm_map_pmap(map), trunc_page(tf->tf_dar),
 				   false)) {
 			break;
 		}
 
 		if (l->l_flag & LW_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;
+			l->l_savp->savp_faultaddr = (vaddr_t)tf->tf_dar;
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 		KASSERT(pcb->pcb_onfault == NULL);
-		rv = uvm_fault(map, trunc_page(frame->dar), ftype);
+		rv = uvm_fault(map, trunc_page(tf->tf_dar), ftype);
 		if (rv == 0) {
 			/*
 			 * Record any stack growth...
 			 */
-			uvm_grow(p, trunc_page(frame->dar));
+			uvm_grow(p, trunc_page(tf->tf_dar));
 			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			break;
 		}
@@ -260,15 +264,15 @@ trap(struct trapframe *frame)
 			printf("trap: pid %d.%d (%s): user %s DSI trap @ %#lx "
 			    "by %#lx (DSISR %#x, err=%d)\n",
 			    p->p_pid, l->l_lid, p->p_comm,
-			    (frame->dsisr & DSISR_STORE) ? "write" : "read",
-			    frame->dar, frame->srr0, frame->dsisr, rv);
+			    (tf->tf_dsisr & DSISR_STORE) ? "write" : "read",
+			    tf->tf_dar, tf->tf_srr0, tf->tf_dsisr, rv);
 		}
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_DSI;
-		ksi.ksi_addr = (void *)frame->dar;
+		ksi.ksi_addr = (void *)tf->tf_dar;
 		ksi.ksi_code =
-		    (frame->dsisr & DSISR_PROTECT ? SEGV_ACCERR : SEGV_MAPERR);
+		    (tf->tf_dsisr & DSISR_PROTECT ? SEGV_ACCERR : SEGV_MAPERR);
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d.%d (%s), uid %d killed: "
 			       "out of swap\n",
@@ -285,7 +289,7 @@ trap(struct trapframe *frame)
 		ci->ci_ev_kisi.ev_count++;
 
 		printf("trap: kernel ISI by %#lx (SRR1 %#lx), lr: %#lx\n",
-		    frame->srr0, frame->srr1, frame->lr);
+		    tf->tf_srr0, tf->tf_srr1, tf->tf_lr);
 		goto brain_damage2;
 
 	case EXC_ISI|EXC_USER:
@@ -299,25 +303,25 @@ trap(struct trapframe *frame)
 		map = &p->p_vmspace->vm_map;
 #ifdef PPC_OEA64
 		if (vm_map_pmap(map)->pm_ste_evictions > 0 &&
-		    pmap_ste_spill(vm_map_pmap(map), trunc_page(frame->srr0),
+		    pmap_ste_spill(vm_map_pmap(map), trunc_page(tf->tf_srr0),
 				   true)) {
 			break;
 		}
 #endif
 
 		if (vm_map_pmap(map)->pm_evictions > 0 &&
-		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->srr0),
+		    pmap_pte_spill(vm_map_pmap(map), trunc_page(tf->tf_srr0),
 				   true)) {
 			break;
 		}
 
 		if (l->l_flag & LW_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)frame->srr0;
+			l->l_savp->savp_faultaddr = (vaddr_t)tf->tf_srr0;
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 		ftype = VM_PROT_EXECUTE;
 		KASSERT(pcb->pcb_onfault == NULL);
-		rv = uvm_fault(map, trunc_page(frame->srr0), ftype);
+		rv = uvm_fault(map, trunc_page(tf->tf_srr0), ftype);
 		if (rv == 0) {
 			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			break;
@@ -326,12 +330,12 @@ trap(struct trapframe *frame)
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d.%d (%s): user ISI trap @ %#lx "
 			    "(SRR1=%#lx)\n", p->p_pid, l->l_lid, p->p_comm,
-			    frame->srr0, frame->srr1);
+			    tf->tf_srr0, tf->tf_srr1);
 		}
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_ISI;
-		ksi.ksi_addr = (void *)frame->srr0;
+		ksi.ksi_addr = (void *)tf->tf_srr0;
 		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		l->l_pflag &= ~LP_SA_PAGEFAULT;
@@ -339,14 +343,11 @@ trap(struct trapframe *frame)
 
 	case EXC_FPU|EXC_USER:
 		ci->ci_ev_fpu.ev_count++;
-		if (pcb->pcb_fpcpu) {
-			save_fpu_lwp(l, FPU_SAVE);
-		}
-		enable_fpu();
+		fpu_load();
 		break;
 
 	case EXC_AST|EXC_USER:
-		ci->ci_astpending = 0;		/* we are about to do it */
+		l->l_md.md_astpending = 0;	/* we are about to do it */
 		//ci->ci_data.cpu_nast++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
@@ -359,22 +360,22 @@ trap(struct trapframe *frame)
 
 	case EXC_ALI|EXC_USER:
 		ci->ci_ev_ali.ev_count++;
-		if (fix_unaligned(l, frame) != 0) {
+		if (fix_unaligned(l, tf) != 0) {
 			ci->ci_ev_ali_fatal.ev_count++;
 			if (cpu_printfataltraps) {
 				printf("trap: pid %d.%d (%s): user ALI trap @ "
 				    "%#lx by %#lx (DSISR %#x)\n",
 				    p->p_pid, l->l_lid, p->p_comm,
-				    frame->dar, frame->srr0, frame->dsisr);
+				    tf->tf_dar, tf->tf_srr0, tf->tf_dsisr);
 			}
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_trap = EXC_ALI;
-			ksi.ksi_addr = (void *)frame->dar;
+			ksi.ksi_addr = (void *)tf->tf_dar;
 			ksi.ksi_code = BUS_ADRALN;
 			(*p->p_emul->e_trapsignal)(l, &ksi);
 		} else
-			frame->srr0 += 4;
+			tf->tf_srr0 += 4;
 		break;
 
 	case EXC_PERF|EXC_USER:
@@ -382,21 +383,19 @@ trap(struct trapframe *frame)
 	case EXC_VEC|EXC_USER:
 		ci->ci_ev_vec.ev_count++;
 #ifdef ALTIVEC
-		if (pcb->pcb_veccpu)
-			save_vec_lwp(l, ALTIVEC_SAVE);
-		enable_vec();
+		vec_load();
 		break;
 #else
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d.%d (%s): user VEC trap @ %#lx "
 			    "(SRR1=%#lx)\n",
 			    p->p_pid, l->l_lid, p->p_comm,
-			    frame->srr0, frame->srr1);
+			    tf->tf_srr0, tf->tf_srr1);
 		}
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_trap = EXC_PGM;
-		ksi.ksi_addr = (void *)frame->srr0;
+		ksi.ksi_addr = (void *)tf->tf_srr0;
 		ksi.ksi_code = ILL_ILLOPC;
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		break;
@@ -406,42 +405,42 @@ trap(struct trapframe *frame)
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d (%s): user MCHK trap @ %#lx "
 			    "(SRR1=%#lx)\n",
-			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
+			    p->p_pid, p->p_comm, tf->tf_srr0, tf->tf_srr1);
 		}
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGBUS;
 		ksi.ksi_trap = EXC_MCHK;
-		ksi.ksi_addr = (void *)frame->srr0;
+		ksi.ksi_addr = (void *)tf->tf_srr0;
 		ksi.ksi_code = BUS_OBJERR;
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		break;
 
 	case EXC_PGM|EXC_USER:
 		ci->ci_ev_pgm.ev_count++;
-		if (frame->srr1 & 0x00020000) {	/* Bit 14 is set if trap */
+		if (tf->tf_srr1 & 0x00020000) {	/* Bit 14 is set if trap */
 			if (p->p_raslist == NULL ||
-			    ras_lookup(p, (void *)frame->srr0) == (void *) -1) {
+			    ras_lookup(p, (void *)tf->tf_srr0) == (void *) -1) {
 				KSI_INIT_TRAP(&ksi);
 				ksi.ksi_signo = SIGTRAP;
 				ksi.ksi_trap = EXC_PGM;
-				ksi.ksi_addr = (void *)frame->srr0;
+				ksi.ksi_addr = (void *)tf->tf_srr0;
 				ksi.ksi_code = TRAP_BRKPT;
 				(*p->p_emul->e_trapsignal)(l, &ksi);
 			} else {
 				/* skip the trap instruction */
-				frame->srr0 += 4;
+				tf->tf_srr0 += 4;
 			}
 		} else {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGILL;
 			ksi.ksi_trap = EXC_PGM;
-			ksi.ksi_addr = (void *)frame->srr0;
-			if (frame->srr1 & 0x100000) {
+			ksi.ksi_addr = (void *)tf->tf_srr0;
+			if (tf->tf_srr1 & 0x100000) {
 				ksi.ksi_signo = SIGFPE;
-				ksi.ksi_code = get_fpu_fault_code();
-			} else if (frame->srr1 & 0x40000) {
-				if (emulated_opcode(l, frame)) {
-					frame->srr0 += 4;
+				ksi.ksi_code = fpu_get_fault_code();
+			} else if (tf->tf_srr1 & 0x40000) {
+				if (emulated_opcode(l, tf)) {
+					tf->tf_srr0 += 4;
 					break;
 				}
 				ksi.ksi_code = ILL_PRVOPC;
@@ -450,7 +449,7 @@ trap(struct trapframe *frame)
 			if (cpu_printfataltraps)
 				printf("trap: pid %d.%d (%s): user PGM trap @"
 				    " %#lx (SRR1=%#lx)\n", p->p_pid, l->l_lid,
-				    p->p_comm, frame->srr0, frame->srr1);
+				    p->p_comm, tf->tf_srr0, tf->tf_srr1);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
 		}
 		break;
@@ -459,36 +458,36 @@ trap(struct trapframe *frame)
 		struct faultbuf *fb;
 
 		if ((fb = pcb->pcb_onfault) != NULL) {
-			frame->srr0 = fb->fb_pc;
-			frame->fixreg[1] = fb->fb_sp;
-			frame->fixreg[2] = fb->fb_r2;
-			frame->fixreg[3] = EFAULT;
-			frame->cr = fb->fb_cr;
-			memcpy(&frame->fixreg[13], fb->fb_fixreg,
+			tf->tf_srr0 = fb->fb_pc;
+			tf->tf_fixreg[1] = fb->fb_sp;
+			tf->tf_fixreg[2] = fb->fb_r2;
+			tf->tf_fixreg[3] = EFAULT;
+			tf->tf_cr = fb->fb_cr;
+			memcpy(&tf->tf_fixreg[13], fb->fb_fixreg,
 			    sizeof(fb->fb_fixreg));
 			return;
 		}
 		printf("trap: pid %d.%d (%s): kernel MCHK trap @"
 		    " %#lx (SRR1=%#lx)\n", p->p_pid, l->l_lid,
-		    p->p_comm, frame->srr0, frame->srr1);
+		    p->p_comm, tf->tf_srr0, tf->tf_srr1);
 		goto brain_damage2;
 	}
 	case EXC_ALI:
 		printf("trap: pid %d.%d (%s): kernel ALI trap @ %#lx by %#lx "
 		    "(DSISR %#x)\n", p->p_pid, l->l_lid, p->p_comm,
-		    frame->dar, frame->srr0, frame->dsisr);
+		    tf->tf_dar, tf->tf_srr0, tf->tf_dsisr);
 		goto brain_damage2;
 	case EXC_PGM:
 		printf("trap: pid %d.%d (%s): kernel PGM trap @"
 		    " %#lx (SRR1=%#lx)\n", p->p_pid, l->l_lid,
-		    p->p_comm, frame->srr0, frame->srr1);
+		    p->p_comm, tf->tf_srr0, tf->tf_srr1);
 		goto brain_damage2;
 
 	default:
-		printf("trap type %x at %lx\n", type, frame->srr0);
+		printf("trap type %x at %lx\n", type, tf->tf_srr0);
 brain_damage2:
 #ifdef DDBX
-		if (kdb_trap(type, frame))
+		if (kdb_trap(type, tf))
 			return;
 #endif
 #ifdef TRAP_PANICWAIT
@@ -499,7 +498,7 @@ brain_damage2:
 #endif
 		panic("trap");
 	}
-	userret(l, frame);
+	userret(l, tf);
 }
 
 #ifdef _LP64
@@ -710,9 +709,9 @@ badaddr_read(void *addr, size_t size, int *rptr)
  */
 
 static int
-fix_unaligned(struct lwp *l, struct trapframe *frame)
+fix_unaligned(struct lwp *l, struct trapframe *tf)
 {
-	int indicator = EXC_ALI_OPCODE_INDICATOR(frame->dsisr);
+	int indicator = EXC_ALI_OPCODE_INDICATOR(tf->tf_dsisr);
 
 	switch (indicator) {
 	case EXC_ALI_DCBZ:
@@ -727,8 +726,8 @@ fix_unaligned(struct lwp *l, struct trapframe *frame)
 			static char zeroes[MAXCACHELINESIZE];
 			int error;
 			error = copyout(zeroes,
-					(void *)(frame->dar & -curcpu()->ci_ci.dcache_line_size),
-					curcpu()->ci_ci.dcache_line_size);
+			    (void *)(tf->tf_dar & -curcpu()->ci_ci.dcache_line_size),
+			    curcpu()->ci_ci.dcache_line_size);
 			if (error)
 				return -1;
 			return 0;
@@ -738,7 +737,7 @@ fix_unaligned(struct lwp *l, struct trapframe *frame)
 	case EXC_ALI_STFD:
 		{
 			struct pcb * const pcb = lwp_getpcb(l);
-			const int reg = EXC_ALI_RST(frame->dsisr);
+			const int reg = EXC_ALI_RST(tf->tf_dsisr);
 			double * const fpreg = &pcb->pcb_fpu.fpreg[reg];
 
 			/*
@@ -747,22 +746,23 @@ fix_unaligned(struct lwp *l, struct trapframe *frame)
 			 * the PCB.
 			 */
 
-			if (pcb->pcb_fpcpu)
-				save_fpu_lwp(l, FPU_SAVE);
-			if ((pcb->pcb_flags & PCB_FPU) == 0) {
+			KASSERT(l == curlwp);
+			if (!fpu_used_p(l)) {
 				memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
-				pcb->pcb_flags |= PCB_FPU;
+				fpu_mark_used(l);
+			} else {
+				fpu_save();
 			}
 			if (indicator == EXC_ALI_LFD) {
-				if (copyin((void *)frame->dar, fpreg,
+				if (copyin((void *)tf->tf_dar, fpreg,
 				    sizeof(double)) != 0)
 					return -1;
 			} else {
-				if (copyout(fpreg, (void *)frame->dar,
+				if (copyout(fpreg, (void *)tf->tf_dar,
 				    sizeof(double)) != 0)
 					return -1;
 			}
-			enable_fpu();
+			fpu_load();
 			return 0;
 		}
 		break;
@@ -775,40 +775,26 @@ int
 emulated_opcode(struct lwp *l, struct trapframe *tf)
 {
 	uint32_t opcode;
-	if (copyin((void *)tf->srr0, &opcode, sizeof(opcode)) != 0)
+	if (copyin((void *)tf->tf_srr0, &opcode, sizeof(opcode)) != 0)
 		return 0;
 
-#define	OPC_MFSPR_CODE		0x7c0002a6
-#define	OPC_MFSPR_MASK		(0xfc0007ff|0x001ff800)
-#define	OPC_MFSPR(spr)		(OPC_MFSPR_CODE |\
-				 (((spr) & 0x1f) << 16) |\
-				 (((spr) & 0x3e0) << 6))
-#define	OPC_MFSPR_REG(o)	(((o) >> 21) & 0x1f)
-#define	OPC_MFSPR_P(o, spr)	(((o) & OPC_MFSPR_MASK) == OPC_MFSPR(spr))
-
 	if (OPC_MFSPR_P(opcode, SPR_PVR)) {
-		__asm ("mfpvr %0" : "=r"(tf->fixreg[OPC_MFSPR_REG(opcode)]));
+		__asm ("mfpvr %0" : "=r"(tf->tf_fixreg[OPC_MFSPR_REG(opcode)]));
 		return 1;
 	}
 
-#define	OPC_MFMSR_CODE		0x7c0000a8
-#define	OPC_MFMSR_MASK		0xfc1fffff
-#define	OPC_MFMSR		OPC_MFMSR_CODE
-#define	OPC_MFMSR_REG(o)	(((o) >> 21) & 0x1f)
-#define	OPC_MFMSR_P(o)		(((o) & OPC_MFMSR_MASK) == OPC_MFMSR_CODE)
-
 	if (OPC_MFMSR_P(opcode)) {
 		struct pcb * const pcb = lwp_getpcb(l);
-		register_t msr = tf->srr1 & PSL_USERSRR1;
+		register_t msr = tf->tf_srr1 & PSL_USERSRR1;
 
-		if (pcb->pcb_flags & PCB_FPU)
+		if (fpu_used_p(l))
 			msr |= PSL_FP;
 		msr |= (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
 #ifdef ALTIVEC
-		if (pcb->pcb_flags & PCB_ALTIVEC)
+		if (vec_used_p(l))
 			msr |= PSL_VEC;
 #endif
-		tf->fixreg[OPC_MFMSR_REG(opcode)] = msr;
+		tf->tf_fixreg[OPC_MFMSR_REG(opcode)] = msr;
 		return 1;
 	}
 
@@ -820,7 +806,7 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 
 	if (OPC_MTMSR_P(opcode)) {
 		struct pcb * const pcb = lwp_getpcb(l);
-		register_t msr = tf->fixreg[OPC_MTMSR_REG(opcode)];
+		register_t msr = tf->tf_fixreg[OPC_MTMSR_REG(opcode)];
 
 		/*
 		 * Don't let the user muck with bits he's not allowed to.
@@ -836,9 +822,9 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 		 * If we think we have the FPU, update SRR1 too.  If we're
 		 * wrong userret() will take care of it.
 		 */
-		if (tf->srr1 & PSL_FP) {
-			tf->srr1 &= ~(PSL_FE0|PSL_FE1);
-			tf->srr1 |= msr & (PSL_FE0|PSL_FE1);
+		if (tf->tf_srr1 & PSL_FP) {
+			tf->tf_srr1 &= ~(PSL_FE0|PSL_FE1);
+			tf->tf_srr1 |= msr & (PSL_FE0|PSL_FE1);
 		}
 		return 1;
 	}
@@ -929,23 +915,23 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 void
 startlwp(void *arg)
 {
-	ucontext_t *uc = arg;
-	lwp_t *l = curlwp;
-	struct trapframe *frame = trapframe(l);
+	ucontext_t * const uc = arg;
+	lwp_t * const l = curlwp;
+	struct trapframe * const tf = l->l_md.md_utf;
 	int error;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
 
 	kmem_free(uc, sizeof(ucontext_t));
-	userret(l, frame);
+	userret(l, tf);
 }
 
 void
 upcallret(struct lwp *l)
 {
-        struct trapframe *frame = trapframe(l);
+        struct trapframe * const tf = l->l_md.md_utf;
 
 	KERNEL_UNLOCK_LAST(l);
-	userret(l, frame);
+	userret(l, tf);
 }

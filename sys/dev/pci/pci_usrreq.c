@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.22 2009/07/30 04:38:24 macallan Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.22.6.1 2011/06/06 09:08:17 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.22 2009/07/30 04:38:24 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.22.6.1 2011/06/06 09:08:17 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -114,6 +114,10 @@ static paddr_t
 pcimmap(dev_t dev, off_t offset, int prot)
 {
 	struct pci_softc *sc = device_lookup_private(&pci_cd, minor(dev));
+	struct pci_child *c;
+	struct pci_range *r;
+	int flags = 0;
+	int device, range;
 
 	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
 	    NULL) != 0) {
@@ -124,7 +128,7 @@ pcimmap(dev_t dev, off_t offset, int prot)
 	 * take the offset to be the address on the bus,
 	 * and pass 0 as the offset into that range.
 	 *
-	 * XXX Need a way to deal with linear/prefetchable/etc.
+	 * XXX Need a way to deal with linear/etc.
 	 *
 	 * XXX we rely on MD mmap() methods to enforce limits since these
 	 * are hidden in *_tag_t structs if they exist at all 
@@ -145,7 +149,24 @@ pcimmap(dev_t dev, off_t offset, int prot)
 		    0, prot, 0);
 	}
 #endif /* PCI_MAGIC_IO_RANGE */
-	return bus_space_mmap(sc->sc_memt, offset, 0, prot, 0);
+
+	for (device = 0; device < __arraycount(sc->sc_devices); device++) {
+		c = &sc->sc_devices[device];
+		if (c->c_dev == NULL)
+			continue;
+		for (range = 0; range < __arraycount(c->c_range); range++) {
+			r = &c->c_range[range];
+			if (r->r_size == 0)
+				break;
+			if (offset >= r->r_offset &&
+			    offset < r->r_offset + r->r_size) {
+				flags = r->r_flags;
+				break;
+			}
+		}
+	}
+
+	return bus_space_mmap(sc->sc_memt, offset, 0, prot, flags);
 }
 
 const struct cdevsw pci_cdevsw = {

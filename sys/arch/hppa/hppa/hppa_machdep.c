@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.23 2011/01/14 02:06:26 rmind Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.23.2.1 2011/06/06 09:05:46 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.23 2011/01/14 02:06:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.23.2.1 2011/06/06 09:05:46 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,9 +188,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	gr[_REG_SR2] = tf->tf_sr2;
 	gr[_REG_SR3] = tf->tf_sr3;
 	gr[_REG_SR4] = tf->tf_sr4;
+	gr[_REG_CR27] = tf->tf_cr27;
 #if 0
 	gr[_REG_CR26] = tf->tf_cr26;
-	gr[_REG_CR27] = tf->tf_cr27;
 #endif
 
 	ras_pc = (__greg_t)ras_lookup(l->l_proc,
@@ -303,6 +303,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 			tf->tf_iioq_tail |= HPPA_PC_PRIV_USER;
 		}
 
+		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_CR27]);
+		tf->tf_cr27	= gr[_REG_CR27];
+
 #if 0
 		tf->tf_sr0	= gr[_REG_SR0];
 		tf->tf_sr1	= gr[_REG_SR1];
@@ -310,7 +313,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_sr3	= gr[_REG_SR3];
 		tf->tf_sr4	= gr[_REG_SR4];
 		tf->tf_cr26	= gr[_REG_CR26];
-		tf->tf_cr27	= gr[_REG_CR27];
 #endif
 	}
 

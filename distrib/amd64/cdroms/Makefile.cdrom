@@ -1,4 +1,0 @@
-# $NetBSD: Makefile.cdrom,v 1.1 2007/03/06 21:52:44 bouyer Exp $
-
-CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot
-CDINSTKERNEL= ../../instkernel

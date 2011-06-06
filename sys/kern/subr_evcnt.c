@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.7 2010/12/11 22:30:54 matt Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.7.2.1 2011/06/06 09:09:34 jruoho Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,16 +77,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.7 2010/12/11 22:30:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.7.2.1 2011/06/06 09:09:34 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
+#include <sys/evcnt.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 
 /* list of all events */
 struct evcntlist allevents = TAILQ_HEAD_INITIALIZER(allevents);
-static kmutex_t evmtx;
+static kmutex_t evcnt_lock __cacheline_aligned;
+static bool init_done;
+static uint32_t evcnt_generation;
 
 /*
  * We need a dummy object to stuff into the evcnt link set to
@@ -105,7 +109,11 @@ evcnt_init(void)
 	__link_set_decl(evcnts, struct evcnt);
 	struct evcnt * const *evp;
 
-	mutex_init(&evmtx, MUTEX_DEFAULT, IPL_NONE);
+	KASSERT(!init_done);
+
+	mutex_init(&evcnt_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	init_done = true;
 
 	__link_set_foreach(evp, evcnts) {
 		if (*evp == &dummy_static_evcnt)
@@ -123,6 +131,10 @@ evcnt_attach_static(struct evcnt *ev)
 {
 	int len;
 
+	KASSERTMSG(init_done,
+	    ("%s: evcnt non initialized: group=<%s> name=<%s>",
+	    __func__, ev->ev_group, ev->ev_name));
+
 	len = strlen(ev->ev_group);
 #ifdef DIAGNOSTIC
 	if (len >= EVCNT_STRING_MAX)		/* ..._MAX includes NUL */
@@ -137,9 +149,9 @@ evcnt_attach_static(struct evcnt *ev)
 #endif
 	ev->ev_namelen = len;
 
-	mutex_enter(&evmtx);
+	mutex_enter(&evcnt_lock);
 	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
-	mutex_exit(&evmtx);
+	mutex_exit(&evcnt_lock);
 }
 
 /*
@@ -177,7 +189,171 @@ void
 evcnt_detach(struct evcnt *ev)
 {
 
-	mutex_enter(&evmtx);
+	mutex_enter(&evcnt_lock);
 	TAILQ_REMOVE(&allevents, ev, ev_list);
-	mutex_exit(&evmtx);
+	evcnt_generation++;
+	mutex_exit(&evcnt_lock);
+}
+
+struct xevcnt_sysctl {
+	struct evcnt_sysctl evs;
+	char ev_strings[2*EVCNT_STRING_MAX];
+};
+
+static size_t
+sysctl_fillevcnt(const struct evcnt *ev, struct xevcnt_sysctl *xevs,
+	size_t *copylenp)
+{
+	const size_t copylen = offsetof(struct evcnt_sysctl, ev_strings)
+	    + ev->ev_grouplen + 1 + ev->ev_namelen + 1;
+	const size_t len = roundup2(copylen, sizeof(uint64_t));
+	if (xevs != NULL) {
+		xevs->evs.ev_count = ev->ev_count;
+		xevs->evs.ev_addr = PTRTOUINT64(ev);
+		xevs->evs.ev_parent = PTRTOUINT64(ev->ev_parent);
+		xevs->evs.ev_type = ev->ev_type;
+		xevs->evs.ev_grouplen = ev->ev_grouplen;
+		xevs->evs.ev_namelen = ev->ev_namelen;
+		xevs->evs.ev_len = len / sizeof(uint64_t);
+		strcpy(xevs->evs.ev_strings, ev->ev_group);
+		strcpy(xevs->evs.ev_strings + ev->ev_grouplen + 1, ev->ev_name);
+	}
+
+	*copylenp = copylen;
+	return len;
+}
+
+static int
+sysctl_doevcnt(SYSCTLFN_ARGS)
+{       
+	struct xevcnt_sysctl *xevs0 = NULL, *xevs;
+	const struct evcnt *ev;
+	int error;
+	int retries;
+	size_t needed, len;
+	char *dp;
+ 
+        if (namelen == 1 && name[0] == CTL_QUERY)
+                return (sysctl_query(SYSCTLFN_CALL(rnode)));
+
+	if (namelen != 2)
+		return (EINVAL);
+
+	/*
+	 * We can filter on the type of evcnt.
+	 */
+	const int filter = name[0];
+	if (filter != EVCNT_TYPE_ANY
+	    && filter != EVCNT_TYPE_MISC
+	    && filter != EVCNT_TYPE_INTR
+	    && filter != EVCNT_TYPE_TRAP)
+		return (EINVAL);
+
+	const u_int count = name[1];
+	if (count != KERN_EVCNT_COUNT_ANY
+	    && count != KERN_EVCNT_COUNT_NONZERO)
+		return (EINVAL);
+
+	sysctl_unlock();
+
+	if (oldp != NULL && xevs0 == NULL)
+		xevs0 = kmem_alloc(sizeof(*xevs0), KM_SLEEP);
+
+	retries = 100;
+ retry:
+	dp = oldp;
+	len = (oldp != NULL) ? *oldlenp : 0;
+	xevs = xevs0;
+	error = 0;
+	needed = 0;
+
+	mutex_enter(&evcnt_lock);
+	TAILQ_FOREACH(ev, &allevents, ev_list) {
+		if (filter != EVCNT_TYPE_ANY && filter != ev->ev_type)
+			continue;
+		if (count == KERN_EVCNT_COUNT_NONZERO && ev->ev_count == 0)
+			continue;
+
+		/*
+		 * Prepare to copy.  If xevs is NULL, fillevcnt will just
+		 * how big the item is.
+		 */
+		size_t copylen;
+		const size_t elem_size = sysctl_fillevcnt(ev, xevs, &copylen);
+		needed += elem_size;
+
+		if (len < elem_size) {
+			xevs = NULL;
+			continue;
+		}
+
+		KASSERT(xevs != NULL);
+		KASSERT(xevs->evs.ev_grouplen != 0);
+		KASSERT(xevs->evs.ev_namelen != 0);
+		KASSERT(xevs->evs.ev_strings[0] != 0);
+
+		const uint32_t last_generation = evcnt_generation;
+		mutex_exit(&evcnt_lock);
+
+		/*
+		 * Only copy the actual number of bytes, not the rounded
+		 * number.  If we did the latter we'd have to zero them
+		 * first or we'd leak random kernel memory.
+		 */
+		error = copyout(xevs, dp, copylen);
+
+		mutex_enter(&evcnt_lock);
+		if (error)
+			break;
+
+		if (__predict_false(last_generation != evcnt_generation)) {
+			/*
+			 * This sysctl node is only for statistics.
+			 * Retry; if the queue keeps changing, then
+			 * bail out.
+			 */
+			if (--retries == 0) {
+				error = EAGAIN;
+				break;
+			}
+			mutex_exit(&evcnt_lock);
+			goto retry;
+		}
+
+		/*
+		 * Now we deal with the pointer/len since we aren't going to
+		 * toss their values away.
+		 */
+		dp += elem_size;
+		len -= elem_size;
+	}
+	mutex_exit(&evcnt_lock);
+
+	if (xevs0 != NULL)
+		kmem_free(xevs0, sizeof(*xevs0));
+
+	sysctl_relock();
+
+	*oldlenp = needed;
+	if (oldp == NULL)
+		*oldlenp += 1024;
+
+	return (error);
+}
+
+
+
+SYSCTL_SETUP(sysctl_evcnt_setup, "sysctl kern.evcnt subtree setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT, 
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "evcnt",
+		       SYSCTL_DESCR("Kernel evcnt information"),
+		       sysctl_doevcnt, 0, NULL, 0,
+		       CTL_KERN, KERN_EVCNT, CTL_EOL);
 }

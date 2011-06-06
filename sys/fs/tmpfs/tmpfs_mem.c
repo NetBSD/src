@@ -1,8 +1,11 @@
-/*	$NetBSD: tmpfs_mem.c,v 1.2 2010/06/28 19:32:43 rmind Exp $	*/
+/*	$NetBSD: tmpfs_mem.c,v 1.2.8.1 2011/06/06 09:09:24 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Mindaugas Rasiukevicius.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.2 2010/06/28 19:32:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.2.8.1 2011/06/06 09:09:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -42,17 +45,12 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.2 2010/06/28 19:32:43 rmind Exp $");
 
 #include <fs/tmpfs/tmpfs.h>
 
+extern struct pool	tmpfs_dirent_pool;
+extern struct pool	tmpfs_node_pool;
+
 void
 tmpfs_mntmem_init(struct tmpfs_mount *mp, uint64_t memlimit)
 {
-
-	sprintf(mp->tm_dwchan, "tmpfs_dirent_%p", mp);
-	pool_init(&mp->tm_dirent_pool, sizeof(struct tmpfs_dirent), 0, 0, 0,
-	    mp->tm_dwchan, &pool_allocator_nointr, IPL_NONE);
-
-	sprintf(mp->tm_nwchan, "tmpfs_node_%p", mp);
-	pool_init(&mp->tm_node_pool, sizeof(struct tmpfs_node), 0, 0, 0,
-	    mp->tm_dwchan, &pool_allocator_nointr, IPL_NONE);
 
 	mutex_init(&mp->tm_acc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mp->tm_mem_limit = memlimit;
@@ -65,8 +63,6 @@ tmpfs_mntmem_destroy(struct tmpfs_mount *mp)
 
 	KASSERT(mp->tm_bytes_used == 0);
 	mutex_destroy(&mp->tm_acc_lock);
-	pool_destroy(&mp->tm_dirent_pool);
-	pool_destroy(&mp->tm_node_pool);
 }
 
 /*
@@ -153,7 +149,7 @@ tmpfs_dirent_get(struct tmpfs_mount *mp)
 	if (!tmpfs_mem_incr(mp, sizeof(struct tmpfs_dirent))) {
 		return NULL;
 	}
-	return pool_get(&mp->tm_dirent_pool, PR_WAITOK);
+	return pool_get(&tmpfs_dirent_pool, PR_WAITOK);
 }
 
 void
@@ -161,25 +157,30 @@ tmpfs_dirent_put(struct tmpfs_mount *mp, struct tmpfs_dirent *de)
 {
 
 	tmpfs_mem_decr(mp, sizeof(struct tmpfs_dirent));
-	pool_put(&mp->tm_dirent_pool, de);
+	pool_put(&tmpfs_dirent_pool, de);
 }
 
 struct tmpfs_node *
 tmpfs_node_get(struct tmpfs_mount *mp)
 {
 
+	if (atomic_inc_uint_nv(&mp->tm_nodes_cnt) >= mp->tm_nodes_max) {
+		atomic_dec_uint(&mp->tm_nodes_cnt);
+		return NULL;
+	}
 	if (!tmpfs_mem_incr(mp, sizeof(struct tmpfs_node))) {
 		return NULL;
 	}
-	return pool_get(&mp->tm_node_pool, PR_WAITOK);
+	return pool_get(&tmpfs_node_pool, PR_WAITOK);
 }
 
 void
 tmpfs_node_put(struct tmpfs_mount *mp, struct tmpfs_node *tn)
 {
 
+	atomic_dec_uint(&mp->tm_nodes_cnt);
 	tmpfs_mem_decr(mp, sizeof(struct tmpfs_node));
-	pool_put(&mp->tm_node_pool, tn);
+	pool_put(&tmpfs_node_pool, tn);
 }
 
 /*

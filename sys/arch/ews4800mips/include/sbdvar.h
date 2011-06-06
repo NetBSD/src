@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdvar.h,v 1.5 2009/12/14 00:46:03 matt Exp $	*/
+/*	$NetBSD: sbdvar.h,v 1.5.6.1 2011/06/06 09:05:34 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct sbd {
 	int cpu_clock;
 
 	/* mainbus node table */
-	const char **mainbusdevs;
+	const char * const *mainbusdevs;
 
 	/* System Board I/O device table */
 	const struct sbdiodevdesc *sbdiodevs;
@@ -68,7 +68,7 @@ struct sbd {
 	void (*intr_init)(void);
 	void *(*intr_establish)(int, int (*)(void *), void *);
 	void (*intr_disestablish)(void *);
-	void (*intr)(uint32_t, uint32_t, vaddr_t, uint32_t);
+	void (*intr)(int, vaddr_t, uint32_t);
 
 	/* Interval timer helper routines */
 	void (*initclocks)(void);
@@ -88,14 +88,13 @@ void x ## _mem_init(void *, void *);					\
 void x ## _intr_init(void);						\
 void *x ## _intr_establish(int, int (*)(void *), void *);		\
 void x ## _intr_disestablish(void *);					\
-void x ## _intr(uint32_t, uint32_t, vaddr_t, uint32_t);			\
+void x ## _intr(int, vaddr_t, uint32_t);				\
 void x ## _initclocks(void);						\
 void x ## _consinit(void);						\
 int x ## _ipl_bootdev(void);						\
 void x ## _reboot(void);						\
 void x ## _poweroff(void);						\
 void x ## _ether_addr(uint8_t *);					\
-extern const uint32_t x ## _sr_bits[]
 
 #define	_SBD_OPS_SET(m, x)	platform . x = m ## _ ## x
 

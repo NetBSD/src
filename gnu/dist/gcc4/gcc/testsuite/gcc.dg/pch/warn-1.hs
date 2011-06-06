@@ -1,5 +1,0 @@
-enum {
-  DEFINED_VALUE
-};
-
-

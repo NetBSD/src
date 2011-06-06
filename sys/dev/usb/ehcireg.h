@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.31 2010/06/02 18:53:39 jakllsch Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.31.2.1 2011/06/06 09:08:40 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,6 +76,8 @@
 #define EHCI_HCIVERSION		0x02	/* RO Interface version number */
 
 #define EHCI_HCSPARAMS		0x04	/* RO Structural parameters */
+#define  EHCI_HCS_N_TT(x)	(((x) >> 20) & 0xf) /* # of xacts xlater ETTF */
+#define  EHCI_HCS_N_PTT(x)	(((x) >> 20) & 0xf) /* ports per xlater ETTF */
 #define  EHCI_HCS_DEBUGPORT(x)	(((x) >> 20) & 0xf)
 #define  EHCI_HCS_P_INDICATOR(x) ((x) & 0x10000)
 #define  EHCI_HCS_N_CC(x)	(((x) >> 12) & 0xf) /* # of companion ctlrs */
@@ -147,6 +149,10 @@
 #define  EHCI_CONF_CF		0x00000001 /* RW configure flag */
 
 #define EHCI_PORTSC(n)		(0x40+4*(n)) /* RO, RW, RWC Port Status reg */
+#define  EHCI_PS_PSPD		0x03000000 /* RO port speed (ETTF) */
+#define  EHCI_PS_PSPD_FS	0x00000000 /* Full speed (ETTF) */
+#define  EHCI_PS_PSPD_LS	0x01000000 /* Low speed (ETTF) */
+#define  EHCI_PS_PSPD_HS	0x02000000 /* High speed (ETTF) */
 #define  EHCI_PS_WKOC_E		0x00400000 /* RW wake on over current ena */
 #define  EHCI_PS_WKDSCNNT_E	0x00200000 /* RW wake on disconnect ena */
 #define  EHCI_PS_WKCNNT_E	0x00100000 /* RW wake on connect ena */
@@ -168,6 +174,15 @@
 #define  EHCI_PS_CLEAR		(EHCI_PS_OCC|EHCI_PS_PEC|EHCI_PS_CSC)
 
 #define EHCI_PORT_RESET_COMPLETE 2 /* ms */
+
+#define	EHCI_USBMODE		0xa8		/* USB Device mode */
+#define	  EHCI_USBMODE_SDIS	__BIT(4)	/* Stream disable mode 1=act */
+#define	  EHCI_USBMODE_SLOM	__BIT(3)	/* setup lockouts on */
+#define	  EHCI_USBMODE_ES	__BIT(2)	/* Endian Select ES=1 */
+#define	  EHCI_USBMODE_CM	__BITS(0,1)	/* Controller Mode */
+#define	  EHCI_USBMODE_CM_IDLE	0x00		/* Idle (combo host/device) */
+#define	  EHCI_USBMODE_CM_DEV	0x02		/* Device Controller */
+#define	  EHCI_USBMODE_CM_HOST	0x03		/* Host Controller */
 
 #define EHCI_FLALIGN_ALIGN	0x1000
 #define EHCI_MAX_PORTS		16 /* only 4 bits available in EHCI_HCS_N_PORTS */

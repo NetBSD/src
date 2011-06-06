@@ -1,4 +1,4 @@
-#	$NetBSD: files.adm5120,v 1.6 2009/08/02 17:12:29 matt Exp $
+#	$NetBSD: files.adm5120,v 1.6.6.1 2011/06/06 09:05:29 jruoho Exp $
 
 file	arch/evbmips/adm5120/autoconf.c
 file	arch/evbmips/adm5120/machdep.c
@@ -9,7 +9,6 @@ file	arch/evbmips/evbmips/interrupt.c
 
 file	arch/mips/mips/mips3_clock.c
 file	arch/mips/mips/mips3_clockintr.c
-file	arch/mips/mips/softintr.c
 
 # System bus
 device	mainbus { }: gpiobus

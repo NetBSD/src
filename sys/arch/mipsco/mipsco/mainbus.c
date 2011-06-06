@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9.6.1 2011/06/06 09:06:12 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.6.1 2011/06/06 09:06:12 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,43 +38,35 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2009/03/14 15:36:10 dsl Exp $");
 
 #include <machine/autoconf.h>
 
-struct mainbus_softc {
-	struct device sc_dev;
-};
-
 /* Definition of the mainbus driver. */
-static int	mbmatch(struct device *, struct cfdata *, void *);
-static void	mbattach(struct device *, struct device *, void *);
+static int	mbmatch(device_t, cfdata_t, void *);
+static void	mbattach(device_t, device_t, void *);
 static int	mbprint(void *, const char *);
 
-CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
+CFATTACH_DECL_NEW(mainbus, 0,
     mbmatch, mbattach, NULL, NULL);
 
-static int mb_attached;
+static bool mb_attached;
 
 static int
-mbmatch(struct device *parent, struct cfdata *cfdata, void *aux)
+mbmatch(device_t parent, cfdata_t cfdata, void *aux)
 {
 
-	if (mb_attached)
-		return 0;
-
-	return 1;
+	return !mb_attached;
 }
 
 static void
-mbattach(struct device *parent, struct device *self, void *aux)
+mbattach(device_t parent, device_t self, void *aux)
 {
-	register struct device *mb = self;
 	struct confargs nca;
 
-	mb_attached = 1;
+	mb_attached = true;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	nca.ca_name = "cpu";
 	nca.ca_addr = 0;
-	config_found(mb, &nca, mbprint);
+	config_found(self, &nca, mbprint);
 
 	nca.ca_name = "obio";
 	nca.ca_addr = 0;

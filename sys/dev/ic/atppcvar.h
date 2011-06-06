@@ -1,4 +1,4 @@
-/* $NetBSD: atppcvar.h,v 1.11 2008/05/01 12:06:28 cegger Exp $ */
+/* $NetBSD: atppcvar.h,v 1.11.28.1 2011/06/06 09:07:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -36,7 +36,8 @@
 #include <machine/types.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/simplelock.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #include <dev/ppbus/ppbus_conf.h>
 
@@ -44,12 +45,8 @@
 /* Maximum time to wait for device response */
 #define MAXBUSYWAIT	(5 * (hz))
 
-/* Poll interval when wating for device to become ready */
+/* Poll interval when waiting for device to become ready */
 #define ATPPC_POLL	((hz)/10)
-
-/* Interrupt priority level for atppc device */
-#define IPL_ATPPC	IPL_TTY
-#define splatppc        spltty
 
 
 /* Diagnostic and verbose printing macros */
@@ -78,21 +75,6 @@ extern int atppc_verbose;
 #define ATPPC_FLAG_DISABLE_INTR	0x01
 #define ATPPC_FLAG_DISABLE_DMA	0x02
 
-
-/* Locking for atppc device */
-#if defined(MULTIPROCESSOR) || defined (LOCKDEBUG)
-#include <sys/lock.h>
-#define ATPPC_SC_LOCK(sc) (&((sc)->sc_lock))
-#define ATPPC_LOCK_INIT(sc) simple_lock_init(ATPPC_SC_LOCK((sc)))
-#define ATPPC_LOCK(sc) simple_lock(ATPPC_SC_LOCK((sc)))
-#define ATPPC_UNLOCK(sc) simple_unlock(ATPPC_SC_LOCK((sc)))
-#else /* !(MULTIPROCESSOR) && !(LOCKDEBUG) */
-#define ATPPC_LOCK_INIT(sc)
-#define ATPPC_LOCK(sc)
-#define ATPPC_UNLOCK(sc)
-#define ATPPC_SC_LOCK(sc) NULL
-#endif /* MULTIPROCESSOR || LOCKDEBUG */
-
 /* Single softintr callback entry */
 struct atppc_handler_node {
 	void (*func)(void *);
@@ -105,10 +87,9 @@ struct atppc_softc {
 	/* Generic device attributes */
 	device_t sc_dev;
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/* Simple lock */
-	struct simplelock sc_lock;
-#endif
+	kmutex_t sc_lock;
+	kcondvar_t sc_out_cv;
+	kcondvar_t sc_in_cv;
 
 	/* Machine independent bus infrastructure */
 	bus_space_tag_t sc_iot;

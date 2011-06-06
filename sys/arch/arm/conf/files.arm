@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.100 2010/10/02 05:37:58 kiyohara Exp $
+#	$NetBSD: files.arm,v 1.100.2.1 2011/06/06 09:05:02 jruoho Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -15,6 +15,7 @@ defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_SHEEVA
 defflag	opt_cputypes.h		CPU_ARM1136: CPU_ARM11
 defflag	opt_cputypes.h		CPU_ARM1176: CPU_ARM11
+defflag	opt_cputypes.h		CPU_ARM11MPCORE: CPU_ARM11
 defflag	opt_cputypes.h		CPU_CORTEXA8: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA9: CPU_CORTEX
 defflag opt_cputypes.h		FPU_VFP
@@ -30,6 +31,9 @@ defflag  opt_cpuoptions.h	PROCESS_ID_IS_CURLWP
 defflag  opt_cpuoptions.h	PROCESS_ID_IS_CURCPU
 defflag  opt_cpuoptions.h	ARM11_PMC CORTEX_PMC
 defflag  opt_cpuoptions.h	ARM11_CACHE_WRITE_THROUGH
+defflag	 opt_cpuoptions.h	ARM11MPCORE_COMPAT_MMU
+# use extended small page in compatible MMU mode for ARMv6
+defflag  opt_cpuoptions.h	ARMV6_EXTENDED_SMALL_PAGE
 
 # Interrupt implementation header definition.
 defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
@@ -124,7 +128,7 @@ file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm9e |
 							cpu_xscale_pxa270 |
 							cpu_cortex |
 							cpu_sheeva
-file	arch/arm/arm/cpufunc_asm_armv5.S	cpu_arm10
+file	arch/arm/arm/cpufunc_asm_armv5.S	cpu_arm10 | cpu_arm11mpcore
 file	arch/arm/arm/cpufunc_asm_armv5_ec.S	cpu_arm9e | cpu_arm10 |
 							cpu_sheeva
 file	arch/arm/arm/cpufunc_asm_armv6.S	cpu_arm11 | cpu_cortex

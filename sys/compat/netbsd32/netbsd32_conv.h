@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.24 2011/01/16 23:21:16 njoly Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.24.2.1 2011/06/06 09:07:32 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -51,6 +51,8 @@
 #include <sys/event.h>
 
 #include <compat/sys/dirent.h>
+
+#include <prop/plistref.h>
 
 #include <compat/netbsd32/netbsd32.h>
 
@@ -273,7 +275,6 @@ netbsd32_to_msghdr(const struct netbsd32_msghdr *mhp32, struct msghdr *mhp)
 
 	mhp->msg_name = NETBSD32PTR64(mhp32->msg_name);
 	mhp->msg_namelen = mhp32->msg_namelen;
-	mhp->msg_iov = NETBSD32PTR64(mhp32->msg_iov);
 	mhp->msg_iovlen = (size_t)mhp32->msg_iovlen;
 	mhp->msg_control = NETBSD32PTR64(mhp32->msg_control);
 	mhp->msg_controllen = mhp32->msg_controllen;
@@ -754,6 +755,32 @@ netbsd32_to_dirent12(char *buf, int nbytes)
 		odp = _DIRENT_NEXT(odp);
 	}
 	return ((char *)(void *)odp) - buf;
+}
+
+static inline int
+netbsd32_copyin_plistref(netbsd32_pointer_t n32p, struct plistref *p)
+{
+	struct netbsd32_plistref n32plist;
+	int error;
+
+	error = copyin(NETBSD32PTR64(n32p), &n32plist,
+	    sizeof(struct netbsd32_plistref));
+	if (error)
+		return error;
+	p->pref_plist = NETBSD32PTR64(n32plist.pref_plist);
+	p->pref_len = n32plist.pref_len;
+	return 0;
+}
+
+static inline int
+netbsd32_copyout_plistref(netbsd32_pointer_t n32p, struct plistref *p)
+{
+	struct netbsd32_plistref n32plist;
+
+	NETBSD32PTR32(n32plist.pref_plist, p->pref_plist);
+	n32plist.pref_len = p->pref_len;
+	return copyout(&n32plist, NETBSD32PTR64(n32p),
+	    sizeof(struct netbsd32_plistref));
 }
 
 #endif /* _COMPAT_NETBSD32_NETBSD32_CONV_H_ */

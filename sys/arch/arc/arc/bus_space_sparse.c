@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.16 2009/11/07 07:27:41 cegger Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.16.6.1 2011/06/06 09:04:56 jruoho Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.16 2009/11/07 07:27:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.16.6.1 2011/06/06 09:04:56 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ arc_kseg2_make_cacheable(vaddr_t vaddr, vsize_t size)
 		pte = kvtopte(start);
 		entry = pte->pt_entry & mask;
 		pte->pt_entry &= entry;
-		MachTLBUpdate(start, entry);
+		tlb_update(start, entry);
 	}
 }
 

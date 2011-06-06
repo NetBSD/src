@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.20 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: profile.h,v 1.20.106.1 2011/06/06 09:06:04 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,8 +43,8 @@
   *  see MCOUNT_ENTER and MCOUNT_EXIT.
   */
 #define	_KERNEL_MCOUNT_DECL		\
-	int _splraise_noprof(int);	\
-	int _splset_noprof(int);
+	int splhigh_noprof(void);	\
+	void splx_noprof(int);
 #else   /* !_KERNEL */
 /* Make __mcount static. */
 #define	_KERNEL_MCOUNT_DECL	static
@@ -98,9 +98,9 @@
  * including profiling support.
  */
 
-#define	MCOUNT_ENTER	s = _splraise_noprof(MIPS_INT_MASK)
+#define	MCOUNT_ENTER	s = splhigh_noprof()
 
-#define	MCOUNT_EXIT	(void)_splset_noprof(s)
+#define	MCOUNT_EXIT	splx_noprof(s)
 #endif /* _KERNEL */
 
 #endif /* _MIPS_PROFILE_H_ */

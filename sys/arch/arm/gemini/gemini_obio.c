@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_obio.c,v 1.8 2010/01/05 13:14:56 mbalmer Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.8.6.1 2011/06/06 09:05:03 jruoho Exp $	*/
 
 /* adapted from:
  *      NetBSD: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp
@@ -104,7 +104,7 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.8 2010/01/05 13:14:56 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.8.6.1 2011/06/06 09:05:03 jruoho Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -219,7 +219,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_intrswiz = 0;
 	pba.pba_intrtag = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 
 	(void) config_found_ia(sc->sc_dev, "pcibus", &pba, pcibusprint);

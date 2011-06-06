@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.286 2011/01/03 13:22:32 pooka Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.286.2.1 2011/06/06 09:09:32 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.286 2011/01/03 13:22:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.286.2.1 2011/06/06 09:09:32 jruoho Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -128,13 +128,15 @@ syncobj_t sched_syncobj = {
 	syncobj_noowner,
 };
 
-unsigned	sched_pstats_ticks;
-kcondvar_t	lbolt;			/* once a second sleep address */
+/* "Lightning bolt": once a second sleep address. */
+kcondvar_t		lbolt			__cacheline_aligned;
 
-/* Preemption event counters */
-static struct evcnt kpreempt_ev_crit;
-static struct evcnt kpreempt_ev_klock;
-static struct evcnt kpreempt_ev_immed;
+u_int			sched_pstats_ticks	__cacheline_aligned;
+
+/* Preemption event counters. */
+static struct evcnt	kpreempt_ev_crit	__cacheline_aligned;
+static struct evcnt	kpreempt_ev_klock	__cacheline_aligned;
+static struct evcnt	kpreempt_ev_immed	__cacheline_aligned;
 
 /*
  * During autoconfiguration or after a panic, a sleep will simply lower the
@@ -739,6 +741,9 @@ mi_switch(lwp_t *l)
 		 * of the last lock - we must remain at IPL_SCHED during
 		 * the context switch.
 		 */
+		KASSERTMSG(ci->ci_mtx_count == -1,
+		    ("%s: cpu%u: ci_mtx_count (%d) != -1",
+		     __func__, cpu_index(ci), ci->ci_mtx_count));
 		oldspl = MUTEX_SPIN_OLDSPL(ci);
 		ci->ci_mtx_count--;
 		lwp_unlock(l);
@@ -787,6 +792,7 @@ mi_switch(lwp_t *l)
 		 */
 		pmap_activate(l);
 		uvm_emap_switch(l);
+		pcu_switchpoint(l);
 
 		if (prevlwp != NULL) {
 			/* Normalize the count of the spin-mutexes */

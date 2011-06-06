@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.16 2010/05/27 06:58:13 dholland Exp $
+#	$NetBSD: Makefile.gzboot,v 1.16.2.1 2011/06/06 09:05:27 jruoho Exp $
 
 NOMAN=  # defined
 
@@ -96,8 +96,8 @@ LIBLIST=${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBSA}
 
 .PHONY: vers.c
 vers.c: ${VERSIONFILE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} '${PLATFORM}' \
-	    ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.ALLSRC} '${PLATFORM}' ${NEWVERSWHAT}
 
 ${PROG}: ${PROGSYM}
 	${OBJCOPY} -O binary ${PROGSYM} ${.TARGET}

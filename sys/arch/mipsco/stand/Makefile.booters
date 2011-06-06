@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.16 2010/05/27 06:58:14 dholland Exp $
+#	$NetBSD: Makefile.booters,v 1.16.2.1 2011/06/06 09:06:12 jruoho Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -121,7 +121,8 @@ LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "mipsco"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    -N ${.CURDIR}/version "mipsco"
 
 ${PROG}: machine-links ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} ${OFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \

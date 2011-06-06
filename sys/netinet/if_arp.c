@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.149 2009/11/20 02:14:57 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.149.6.1 2011/06/06 09:09:55 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.149 2009/11/20 02:14:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.149.6.1 2011/06/06 09:09:55 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -151,6 +151,7 @@ static	struct llinfo_arp *arplookup1(struct mbuf *, const struct in_addr *,
 static	struct llinfo_arp *arplookup(struct mbuf *, const struct in_addr *,
 					  int, int);
 static	void in_arpinput(struct mbuf *);
+static	void arp_drainstub(void);
 
 LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	ifqueue arpintrq = {
@@ -188,6 +189,8 @@ static void db_print_llinfo(void *);
 static int db_show_rtentry(struct rtentry *, void *);
 #endif
 
+static int arp_drainwanted;
+
 /*
  * this should be elsewhere.
  */
@@ -224,6 +227,15 @@ lla_snprintf(u_int8_t *adrp, int len)
 
 DOMAIN_DEFINE(arpdomain);	/* forward declare and add to link set */
 
+static void
+arp_fasttimo(void)
+{
+	if (arp_drainwanted) {
+		arp_drain();
+		arp_drainwanted = 0;
+	}
+}
+
 const struct protosw arpsw[] = {
 	{ .pr_type = 0,
 	  .pr_domain = &arpdomain,
@@ -235,9 +247,9 @@ const struct protosw arpsw[] = {
 	  .pr_ctloutput = 0,
 	  .pr_usrreq =  0,
 	  .pr_init = arp_init,
-	  .pr_fasttimo = 0,
+	  .pr_fasttimo = arp_fasttimo,
 	  .pr_slowtimo = 0,
-	  .pr_drain = arp_drain,
+	  .pr_drain = arp_drainstub,
 	}
 };
 
@@ -326,6 +338,12 @@ arp_init(void)
 
 	sysctl_net_inet_arp_setup(NULL);
 	arpstat_percpu = percpu_alloc(sizeof(uint64_t) * ARP_NSTATS);
+}
+
+static void
+arp_drainstub(void)
+{
+	arp_drainwanted = 1;
 }
 
 /*
@@ -1555,9 +1573,9 @@ db_show_rtentry(struct rtentry *rt, void *w)
 {
 	db_printf("rtentry=%p", rt);
 
-	db_printf(" flags=0x%x refcnt=%d use=%ld expire=%lld\n",
+	db_printf(" flags=0x%x refcnt=%d use=%"PRId64" expire=%"PRId64"\n",
 			  rt->rt_flags, rt->rt_refcnt,
-			  rt->rt_use, (long long)rt->rt_expire);
+			  rt->rt_use, (uint64_t)rt->rt_expire);
 
 	db_printf(" key="); db_print_sa(rt_getkey(rt));
 	db_printf(" mask="); db_print_sa(rt_mask(rt));

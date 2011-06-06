@@ -1,10 +1,10 @@
-#	$NetBSD: WGT624V3,v 1.9 2010/11/23 11:13:57 hannken Exp $
+#	$NetBSD: WGT624V3,v 1.9.2.1 2011/06/06 09:05:29 jruoho Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.9 $"
+#ident 		"WGT624V3-$Revision: 1.9.2.1 $"
 
 maxusers	32
 
@@ -13,7 +13,7 @@ makeoptions	ATH_MACHINE_HAL=ap51
 
 options 	MIPS32
 options 	NOFPU		# No FPU
-options 	SOFTFLOAT	# emulate FPU insn
+options 	FPEMUL		# emulate FPU insn
 options		WISOC_AR5315	# WiSoC select
 options		COM_ARBUS_BAUD=9600
 
@@ -46,7 +46,7 @@ options 	DIAGNOSTIC	# extra kernel sanity checking
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=150000	# size for embedded symbol table
+options 	SYMTAB_SPACE=360000	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries
@@ -85,7 +85,8 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 
 # File system options
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

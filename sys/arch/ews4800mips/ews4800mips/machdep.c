@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2010/05/04 15:32:31 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.1 2011/06/06 09:05:34 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2010/05/04 15:32:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.2.1 2011/06/06 09:05:34 jruoho Exp $");
 
 #include "opt_ddb.h"
 
@@ -88,7 +88,7 @@ void
 mach_init(int argc, char *argv[], struct bootinfo *bi)
 {
 	extern char kernel_text[], edata[], end[];
-	vaddr_t v;
+	void *v;
 	int i;
 
 	/* Clear BSS */
@@ -115,7 +115,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	sbd_init();
 
 	__asm volatile("move %0, $29" : "=r"(v));
-	printf("kernel_text=%p edata=%p end=%p sp=%" PRIxVADDR "\n",
+	printf("kernel_text=%p edata=%p end=%p sp=%p\n",
 	    kernel_text, edata, end, v);
 
 	option(argc, argv, bi);
@@ -133,7 +133,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 */
 	cn_tab = NULL;
 
-	mips_vector_init();
+	mips_vector_init(NULL, false);
 
 	memcpy((void *)0x80000200, ews4800mips_nmi_vec, 32); /* NMI */
 	mips_dcache_wbinv_all();
@@ -143,7 +143,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
 	curcpu()->ci_divisor_delay =
 	    ((curcpu()->ci_cpu_freq + 500000) / 1000000);
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
+	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
 		curcpu()->ci_cycles_per_hz /= 2;
 		curcpu()->ci_divisor_delay /= 2;
 	}
@@ -254,8 +254,7 @@ cpu_reboot(int howto, char *bootstr)
 	static int waittime = -1;
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curlwp)
-		savectx(curpcb);
+	savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;

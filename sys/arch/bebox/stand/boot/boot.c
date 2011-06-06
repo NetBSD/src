@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.24 2010/10/27 10:37:38 kiyohara Exp $	*/
+/*	$NetBSD: boot.c,v 1.24.2.1 2011/06/06 09:05:11 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,7 +63,7 @@ struct btinfo_console btinfo_console;
 struct btinfo_clock btinfo_clock;
 struct btinfo_rootdevice btinfo_rootdevice;
 
-extern char bootprog_name[], bootprog_rev[], bootprog_maker[], bootprog_date[];
+extern char bootprog_name[], bootprog_rev[];
 
 void main(void);
 void exec_kernel(char *, void *);
@@ -119,7 +119,6 @@ main(void)
 	wait_for(&CPU1_alive);
 
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 	printf(">> Memory: %d k\n", btinfo_memory.memsize / 1024);
 
 	/*

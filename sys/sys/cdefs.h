@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.81 2010/12/25 22:30:52 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.81.2.1 2011/06/06 09:10:10 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -126,6 +126,17 @@
 #endif
 
 /*
+ * Compile Time Assertion.
+ */
+#ifdef __COUNTER__
+#define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __COUNTER__)
+#else
+#define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __LINE__)
+#endif
+#define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z)
+#define	__CTASSERT1(x, y, z)	typedef char y ## z[(x) ? 1 : -1];
+
+/*
  * The following macro is used to remove const cast-away warnings
  * from gcc -Wcast-qual; it should be used with caution because it
  * can hide valid errors; in particular most valid uses are in
@@ -216,6 +227,12 @@
 #define	__used		__attribute__((__used__))
 #else
 #define	__used		__unused
+#endif
+
+#if __GNUC_PREREQ__(3, 1)
+#define	__noprofile	__attribute__((__no_instrument_function__))
+#else
+#define	__noprofile	/* nothing */
 #endif
 
 #if defined(__cplusplus)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.52 2009/02/22 20:28:06 ad Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.52.6.1 2011/06/06 09:10:15 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.52 2009/02/22 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.52.6.1 2011/06/06 09:10:15 jruoho Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -320,6 +320,10 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			goto fail;
 		}
 		mutex_enter(&ump->um_lock);
+		/* Try to keep snapshot indirect blocks contiguous. */
+		if (i == num && (ip->i_flags & SF_SNAPSHOT) != 0)
+			pref = ffs_blkpref_ufs1(ip, lbn, indirs[i-1].in_off,
+			    flags | B_METAONLY, &bap[0]);
 		if (pref == 0)
 			pref = ffs_blkpref_ufs1(ip, lbn, 0, flags | B_METAONLY,
 			    NULL);
@@ -501,7 +505,7 @@ fail:
 		deallocated += fs->fs_bsize;
 	}
 	if (deallocated) {
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 		/*
 		 * Restore user's disk quota because allocation failed.
 		 */
@@ -846,6 +850,10 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			goto fail;
 		}
 		mutex_enter(&ump->um_lock);
+		/* Try to keep snapshot indirect blocks contiguous. */
+		if (i == num && (ip->i_flags & SF_SNAPSHOT) != 0)
+			pref = ffs_blkpref_ufs2(ip, lbn, indirs[i-1].in_off,
+			    flags | B_METAONLY, &bap[0]);
 		if (pref == 0)
 			pref = ffs_blkpref_ufs2(ip, lbn, 0, flags | B_METAONLY,
 			    NULL);
@@ -1029,7 +1037,7 @@ fail:
 		deallocated += fs->fs_bsize;
 	}
 	if (deallocated) {
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 		/*
 		 * Restore user's disk quota because allocation failed.
 		 */

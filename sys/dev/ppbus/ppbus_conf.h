@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.h,v 1.11 2008/04/29 14:07:37 cegger Exp $ */
+/* $NetBSD: ppbus_conf.h,v 1.11.28.1 2011/06/06 09:08:31 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -34,6 +34,7 @@
 #include "gpio.h"
 
 #include <sys/device.h>
+#include <sys/gpio.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
 

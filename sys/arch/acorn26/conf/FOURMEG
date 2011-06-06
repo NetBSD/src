@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.37 2010/11/23 11:13:52 hannken Exp $
+# $NetBSD: FOURMEG,v 1.37.2.1 2011/06/06 09:04:38 jruoho Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -48,7 +48,8 @@ file-system	FDESC		# /dev/fd
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	NFSSERVER	# Sun NFS-compatible file system server
 options 	FFS_EI		# FFS endianness-independence support
 options 	NFS_V2_ONLY	# Make a smaller NFS

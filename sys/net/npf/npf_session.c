@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_session.c,v 1.6 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.6.2.1 2011/06/06 09:09:53 jruoho Exp $	*/
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.6 2010/12/18 01:07:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.6.2.1 2011/06/06 09:09:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -97,8 +97,10 @@ __KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.6 2010/12/18 01:07:25 rmind Exp $"
 
 #include "npf_impl.h"
 
-#define	SESS_HASH_BUCKETS	1024	/* XXX tune + make tunable */
-#define	SESS_HASH_MASK		(SESS_HASH_BUCKETS - 1)
+/*
+ * Session structures: entry for embedding and the main structure.
+ * WARNING: update npf_session_restore() when adding fields.
+ */
 
 typedef struct {
 	/* Session entry node and backpointer to the actual session. */
@@ -125,13 +127,16 @@ struct npf_session {
 	int			s_type;
 	int			s_flags;
 	npf_state_t		s_state;
-	/* Association rule processing data. */
+	/* Association of rule procedure data. */
 	npf_rproc_t *		s_rproc;
 	/* NAT associated with this session (if any). */
 	npf_nat_t *		s_nat;
 	/* Last activity time (used to calculate expiration time). */
 	struct timespec 	s_atime;
 };
+
+#define	SESS_HASH_BUCKETS	1024	/* XXX tune + make tunable */
+#define	SESS_HASH_MASK		(SESS_HASH_BUCKETS - 1)
 
 LIST_HEAD(npf_sesslist, npf_session);
 
@@ -169,12 +174,6 @@ static lwp_t *			sess_gc_lwp;
 static void	sess_tracking_stop(void);
 static void	npf_session_destroy(npf_session_t *);
 static void	npf_session_worker(void *);
-
-#ifdef SE_DEBUG
-#define	SEPRINTF(x)	printf x
-#else
-#define	SEPRINTF(x)
-#endif
 
 /*
  * npf_session_sys{init,fini}: initialise/destroy session handling structures.
@@ -418,8 +417,7 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	 * Construct a key for hash and tree lookup.  Execute ALG session
 	 * helpers, which may construct a custom key.
 	 */
-	const int proto = npf_cache_ipproto(npc);
-	npf_cache_t algkey, *key;
+	npf_cache_t algkey = { .npc_info = 0 }, *key;
 	npf_sentry_t senkey;
 
 	if (!npf_alg_sessionid(npc, nbuf, &algkey)) {
@@ -429,14 +427,22 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 		/* Unique IDs filled by ALG in a separate key cache. */
 		key = &algkey;
 	}
+
+	/* Note: take protocol from the key. */
+	const int proto = npf_cache_ipproto(key);
+
 	if (proto == IPPROTO_TCP) {
 		const struct tcphdr *th = &key->npc_l4.tcp;
 		senkey.se_src_id = th->th_sport;
 		senkey.se_dst_id = th->th_dport;
-	} else {
+	} else if (proto == IPPROTO_UDP) {
 		const struct udphdr *uh = &key->npc_l4.udp;
 		senkey.se_src_id = uh->uh_sport;
 		senkey.se_dst_id = uh->uh_dport;
+	} else if (npf_iscached(key, NPC_ICMP_ID)) {
+		const struct icmp *ic = &key->npc_l4.icmp;
+		senkey.se_src_id = ic->icmp_id;
+		senkey.se_dst_id = ic->icmp_id;
 	}
 	KASSERT(key->npc_srcip && key->npc_dstip && key->npc_ipsz > 0);
 	memcpy(&senkey.se_src_addr, key->npc_srcip, key->npc_ipsz);
@@ -507,6 +513,7 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	if (__predict_false(se == NULL)) {
 		return NULL;
 	}
+	NPF_PRINTF(("NPF: create se %p\n", se));
 	npf_stats_inc(NPF_STAT_SESSION_CREATE);
 
 	/* Reference count and flags (indicate direction). */
@@ -549,7 +556,7 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 		break;
 	case IPPROTO_ICMP:
 		if (npf_iscached(npc, NPC_ICMP_ID)) {
-			/* ICMP query ID. (XXX) */
+			/* ICMP query ID. */
 			const struct icmp *ic = &npc->npc_l4.icmp;
 			fw->se_src_id = ic->icmp_id;
 			fw->se_dst_id = ic->icmp_id;
@@ -590,7 +597,7 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 			/* Success: insert session, count both entries. */
 			LIST_INSERT_HEAD(&sh->sh_list, se, s_list);
 			sh->sh_count += 2;
-			SEPRINTF(("NPF: new se %p\n", se));
+			NPF_PRINTF(("NPF: establish se %p\n", se));
 		} else {
 			/* Race with duplicate packet. */
 			rb_tree_remove_node(&sh->sh_tree, fw);
@@ -615,7 +622,7 @@ npf_session_destroy(npf_session_t *se)
 		npf_nat_expire(se->s_nat);
 	}
 	if (se->s_rproc) {
-		/* Release rule processing data. */
+		/* Release rule procedure. */
 		npf_rproc_release(se->s_rproc);
 	}
 
@@ -625,7 +632,7 @@ npf_session_destroy(npf_session_t *se)
 	/* Free the structure, increase the counter. */
 	pool_cache_put(sess_cache, se);
 	npf_stats_inc(NPF_STAT_SESSION_DESTROY);
-	SEPRINTF(("NPF: se %p destroyed\n", se));
+	NPF_PRINTF(("NPF: se %p destroyed\n", se));
 }
 
 /*
@@ -691,7 +698,7 @@ npf_session_setnat(npf_session_t *se, npf_nat_t *nt, const int di)
 	ok = (rb_tree_insert_node(&sh->sh_tree, sen) == sen);
 	if (__predict_true(ok)) {
 		sh->sh_count++;
-		SEPRINTF(("NPF: se %p assoc with nat %p\n", se, se->s_nat));
+		NPF_PRINTF(("NPF: se %p assoc with nat %p\n", se, se->s_nat));
 	} else {
 		/* FIXMEgc */
 		printf("npf_session_setnat: Houston, we've had a problem.\n");
@@ -707,7 +714,7 @@ void
 npf_session_expire(npf_session_t *se)
 {
 
-	KASSERT(se->s_refcnt > 0);
+	/* KASSERT(se->s_refcnt > 0); XXX: npf_nat_freepolicy() */
 	se->s_flags |= SE_EXPIRE;		/* XXXSMP */
 }
 
@@ -728,7 +735,7 @@ npf_session_pass(const npf_session_t *se, npf_rproc_t **rp)
 
 /*
  * npf_session_setpass: mark session as a "pass" one and associate rule
- * processing data with it.
+ * procedure with it.
  */
 void
 npf_session_setpass(npf_session_t *se, npf_rproc_t *rp)
@@ -922,8 +929,9 @@ npf_session_save(prop_array_t selist, prop_array_t nplist)
 	}
 
 	/*
-	 * Note: normally, saving should be done while tracking is disabled,
-	 * so there is no point to exclusively lock the entire hash table.
+	 * Note: hold the session lock to prevent G/C thread from session
+	 * expiring and removing.  Therefore, no need to exclusively lock
+	 * the entire hash table.
 	 */
 	mutex_enter(&sess_lock);
 	for (i = 0; i < SESS_HASH_BUCKETS; i++) {
@@ -944,8 +952,12 @@ npf_session_save(prop_array_t selist, prop_array_t nplist)
 			sedict = prop_dictionary_create();
 			sd = prop_data_create_data(se, sizeof(npf_session_t));
 			prop_dictionary_set(sedict, "data", sd);
-			prop_dictionary_set(sedict, "id-ptr",
-			    prop_number_create_unsigned_integer((uintptr_t)se));
+			prop_object_release(sd);
+
+			CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
+			prop_dictionary_set_uint64(
+			    sedict, "id-ptr", (uintptr_t)se);
+
 			if (se->s_nat) {
 				/* Save NAT entry and policy, if any. */
 				error = npf_nat_save(sedict, nplist, se->s_nat);
@@ -955,6 +967,7 @@ npf_session_save(prop_array_t selist, prop_array_t nplist)
 				}
 			}
 			prop_array_add(selist, sedict);
+			prop_object_release(sedict);
 		}
 		rw_exit(&sh->sh_lock);
 		if (error) {
@@ -990,11 +1003,12 @@ npf_session_restore(npf_sehash_t *stbl, prop_dictionary_t sedict)
 
 	/*
 	 * Copy the binary data of the structure.  Warning: must reset
-	 * reference count and state lock.
+	 * reference count, rule procedure and state lock.
 	 */
 	se = pool_cache_get(sess_cache, PR_WAITOK);
 	memcpy(se, d, sizeof(npf_session_t));
 	se->s_refcnt = 0;
+	se->s_rproc = NULL;
 
 	nst = &se->s_state;
 	mutex_init(&nst->nst_lock, MUTEX_DEFAULT, IPL_SOFTNET);

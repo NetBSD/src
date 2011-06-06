@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.18 2010/04/08 16:04:35 pooka Exp $	*/
+/*	$NetBSD: denode.h,v 1.18.2.1 2011/06/06 09:09:22 jruoho Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -249,9 +249,7 @@ struct defid {
 
 	u_int32_t defid_dirclust; /* cluster this dir entry came from */
 	u_int32_t defid_dirofs;	/* offset of entry within the cluster */
-#if 0
 	u_int32_t defid_gen;	/* generation number */
-#endif
 };
 
 /*
@@ -310,5 +308,9 @@ int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void msdosfs_gop_markupdate(struct vnode *, int);
 void msdosfs_detimes(struct denode *, const struct timespec *,
     const struct timespec *, const struct timespec *, int);
+int msdosfs_fh_enter(struct msdosfsmount *, uint32_t, uint32_t, uint32_t *);
+int msdosfs_fh_remove(struct msdosfsmount *, uint32_t, uint32_t);
+int msdosfs_fh_lookup(struct msdosfsmount *, uint32_t, uint32_t, uint32_t *);
+void msdosfs_fh_destroy(struct msdosfsmount *);
 #endif	/* _KERNEL */
 #endif /* _MSDOSFS_DENODE_H_ */

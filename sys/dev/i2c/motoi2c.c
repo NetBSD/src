@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.3 2011/01/12 18:06:26 phx Exp $ */
+/* $NetBSD: motoi2c.c,v 1.3.2.1 2011/06/06 09:07:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.3 2011/01/12 18:06:26 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.3.2.1 2011/06/06 09:07:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -98,7 +98,6 @@ motoi2c_attach_common(device_t self, struct motoi2c_softc *sc,
 
 	sc->sc_i2c = motoi2c;
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_start = false;
 	if (sc->sc_iord == NULL)
 		sc->sc_iord = motoi2c_iord1;
 	if (sc->sc_iowr == NULL)
@@ -131,7 +130,6 @@ motoi2c_release_bus(void *v, int flags)
 {
 	struct motoi2c_softc * const sc = v;
 
-	sc->sc_start = false;
 	I2C_WRITE(I2CCR, 0);		/* reset before changing anything */
 	mutex_exit(&sc->sc_buslock);
 }
@@ -289,9 +287,8 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 	if (I2C_OP_READ_P(op)) {
 		uint8_t *dataptr = databuf;
 		cr &= ~CR_MTX;		/* clear transmit flags */
-		if (datalen <= 1 && I2C_OP_STOP_P(op)) {
+		if (datalen <= 1)
 			cr |= CR_TXAK;
-		}
 		I2C_WRITE(I2CCR, cr);
 		DELAY(10);
 		(void)I2C_READ(I2CDR);		/* dummy read */
@@ -309,19 +306,20 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 				    __func__, i, error));
 				goto out;
 			}
-			if (I2C_OP_STOP_P(op)) {
-				if (i == datalen - 2) {
-					cr |= CR_TXAK;
-					I2C_WRITE(I2CCR, cr);
-				} else if (i == datalen - 1) {
-					cr = CR_MEN;
-					I2C_WRITE(I2CCR, cr);
-					sc->sc_start = false;
-				}
+			if (i == datalen - 2) {
+				cr |= CR_TXAK;
+				I2C_WRITE(I2CCR, cr);
+			} else if (i == datalen - 1 && I2C_OP_STOP_P(op)) {
+				cr = CR_MEN;
+				I2C_WRITE(I2CCR, cr);
 			}
 			*dataptr++ = I2C_READ(I2CDR);
 		}
 		if (datalen == 0) {
+			if (I2C_OP_STOP_P(op)) {
+				cr = CR_MEN;
+				I2C_WRITE(I2CCR, cr);
+			}
 			(void)I2C_READ(I2CDR);	/* dummy read */
 			error = motoi2c_busy_wait(sc, cr);
 			if (error) {

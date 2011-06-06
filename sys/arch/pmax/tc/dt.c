@@ -1,4 +1,4 @@
-/*	$NetBSD: dt.c,v 1.10 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: dt.c,v 1.10.28.1 2011/06/06 09:06:25 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.10 2008/04/28 20:23:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.10.28.1 2011/06/06 09:06:25 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,10 +168,9 @@ __KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.10 2008/04/28 20:23:31 martin Exp $");
 #define	DT_RX_AVAIL(poll)	((*(poll) & 1) != 0)
 #define	DT_TX_AVAIL(poll)	((*(poll) & 2) != 0)
 
-int	dt_match(struct device *, struct cfdata *, void *);
-void	dt_attach(struct device *, struct device *, void *);
+int	dt_match(device_t, cfdata_t, void *);
+void	dt_attach(device_t, device_t, void *);
 int	dt_intr(void *);
-int	dt_null_handler(struct device *, struct dt_msg *, int);
 int	dt_print(void *, const char *);
 void	dt_strvis(uint8_t *, char *, int);
 void	dt_dispatch(void *);
@@ -182,11 +181,11 @@ int	dt_ms_addr = DT_ADDR_MOUSE;
 struct	dt_device dt_ms_dv;
 struct	dt_state dt_state;
 
-CFATTACH_DECL(dt, sizeof(struct dt_softc),
+CFATTACH_DECL_NEW(dt, sizeof(struct dt_softc),
     dt_match, dt_attach, NULL, NULL);
 
 int
-dt_match(struct device *parent, struct cfdata *match, void *aux)
+dt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ioasicdev_attach_args *d;
 
@@ -202,7 +201,7 @@ dt_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-dt_attach(struct device *parent, struct device *self, void *aux)
+dt_attach(device_t parent, device_t self, void *aux)
 {
 	struct ioasicdev_attach_args *d;
 	struct dt_attach_args dta;
@@ -211,19 +210,20 @@ dt_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 
 	d = aux;
-	sc = (struct dt_softc*)self;
+	sc = device_private(self);
+	sc->sc_dev = self;
 
 	dt_cninit();
 
 	msg = malloc(sizeof(*msg) * DT_BUF_CNT, M_DEVBUF, M_NOWAIT);
 	if (msg == NULL) {
-		printf("%s: memory exhausted\n", sc->sc_dv.dv_xname);
+		printf("%s: memory exhausted\n", device_xname(self));
 		return;
 	}
 
 	sc->sc_sih = softint_establish(SOFTINT_SERIAL, dt_dispatch, sc);
 	if (sc->sc_sih == NULL) {
-		printf("%s: memory exhausted\n", sc->sc_dv.dv_xname);
+		printf("%s: memory exhausted\n", device_xname(self));
 		free(msg, M_DEVBUF);
 	}
 
@@ -260,10 +260,10 @@ dt_print(void *aux, const char *pnp)
 
 int
 dt_establish_handler(struct dt_softc *sc, struct dt_device *dtdv,
-    struct device *dv, void (*hdlr)(void *, struct dt_msg *))
+    void *arg, void (*hdlr)(void *, struct dt_msg *))
 {
 
-	dtdv->dtdv_dv = dv;
+	dtdv->dtdv_arg = arg;
 	dtdv->dtdv_handler = hdlr;
 	return (0);
 }
@@ -289,7 +289,7 @@ dt_intr(void *cookie)
 		sc->sc_msg.body[0] = DT_KBD_EMPTY;
 #ifdef DIAGNOSTIC
 		printf("%s: data overrun or stray interrupt\n",
-		    sc->sc_dv.dv_xname);
+		    device_xname(sc->sc_dev));
 #endif
 		break;
 
@@ -301,7 +301,7 @@ dt_intr(void *cookie)
 	}
 
 	if ((msg = SLIST_FIRST(&sc->sc_free)) == NULL) {
-		printf("%s: input overflow\n", sc->sc_dv.dv_xname);
+		printf("%s: input overflow\n", device_xname(sc->sc_dev));
 		return (1);
 	}
 	SLIST_REMOVE_HEAD(&sc->sc_free, chain.slist);
@@ -339,13 +339,13 @@ dt_dispatch(void *cookie)
 
 		if (msg->src != DT_ADDR_MOUSE && msg->src != DT_ADDR_KBD) {
 			printf("%s: message from unknown dev 0x%x\n",
-			    sc->sc_dv.dv_xname, sc->sc_msg.src);
+			    device_xname(sc->sc_dev), sc->sc_msg.src);
 			dt_msg_dump(msg);
 			continue;
 		}
 		if (DT_CTL_P(msg->ctl) != 0) {
 			printf("%s: received control message\n",
-			    sc->sc_dv.dv_xname);
+			    device_xname(sc->sc_dev));
 			dt_msg_dump(msg);
 			continue;
 		}
@@ -375,7 +375,7 @@ dt_dispatch(void *cookie)
 			dtdv = &dt_ms_dv;
 
 		if (dtdv->dtdv_handler != NULL)
-			(*dtdv->dtdv_handler)(dtdv->dtdv_dv, msg);
+			(*dtdv->dtdv_handler)(dtdv->dtdv_arg, msg);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.186 2010/06/03 10:40:17 pooka Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.186.2.1 2011/06/06 09:09:35 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.186 2010/06/03 10:40:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.186.2.1 2011/06/06 09:09:35 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -54,7 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.186 2010/06/03 10:40:17 pooka Exp $"
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
+#ifdef DIAGNOSTIC
+#include <uvm/uvm_km.h>	/* uvm_km_va_drain */
+#endif
 
 /*
  * Pool resource management utility.
@@ -178,6 +181,8 @@ static struct pool pcg_normal_pool;
 static struct pool pcg_large_pool;
 static struct pool cache_pool;
 static struct pool cache_cpu_pool;
+
+pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 
 /* List of all caches. */
 TAILQ_HEAD(,pool_cache) pool_cache_head =

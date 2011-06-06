@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.239 2010/11/19 06:44:43 dholland Exp $	*/
+/*	$NetBSD: tty.c,v 1.239.2.1 2011/06/06 09:09:38 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.239 2010/11/19 06:44:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.239.2.1 2011/06/06 09:09:38 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.239 2010/11/19 06:44:43 dholland Exp $");
 #undef	TTYDEFCHARS
 #include <sys/file.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/dkstat.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
@@ -2428,15 +2429,36 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 
 	mutex_enter(pick->p_lock);
 	LIST_FOREACH(l, &pick->p_lwps, l_sibling) {
+		const char *lp;
 		lwp_lock(l);
-		snprintf(lmsg, sizeof(lmsg), "%s%s",
-		    l->l_stat == LSONPROC ? "running" :
-		    l->l_stat == LSRUN ? "runnable" :
-		    l->l_wchan ? l->l_wmesg : "iowait",
-		    (LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
-		lwp_unlock(l);
-		strlcat(buf, lmsg, bufsz);
+#ifdef LWP_PC
+#define FMT_RUN "%#"PRIxVADDR
+#define VAL_RUNNING (vaddr_t)LWP_PC(l)
+#define VAL_RUNABLE (vaddr_t)LWP_PC(l)
+#else
+#define FMT_RUN "%s"
+#define VAL_RUNNING "running"
+#define VAL_RUNABLE "runnable"
+#endif
+		switch (l->l_stat) {
+		case LSONPROC:
+			snprintf(lmsg, sizeof(lmsg), FMT_RUN"/%d", VAL_RUNNING,
+			    cpu_index(l->l_cpu));
+			lp = lmsg;
+			break;
+		case LSRUN:
+			snprintf(lmsg, sizeof(lmsg), FMT_RUN, VAL_RUNABLE);
+			lp = lmsg;
+			break;
+		default:
+			lp = l->l_wchan ? l->l_wmesg : "iowait";
+			break;
+		} 
+		strlcat(buf, lp, bufsz);
+		strlcat(buf, LIST_NEXT(l, l_sibling) != NULL ? " " : "] ",
+		    bufsz);
 		pctcpu += l->l_pctcpu;
+		lwp_unlock(l);
 	}
 	pctcpu += pick->p_pctcpu;
 	calcru(pick, &utime, &stime, NULL, NULL);
@@ -2615,10 +2637,10 @@ ttysleep(struct tty *tp, kcondvar_t *cv, bool catch, int timo)
  * This should be called ONLY once per real tty (including pty's).
  * eg, on the sparc, the keyboard and mouse have struct tty's that are
  * distinctly NOT usable as tty's, and thus should not be attached to
- * the ttylist.  This is why this call is not done from ttymalloc().
+ * the ttylist.  This is why this call is not done from tty_alloc().
  *
  * Device drivers should attach tty's at a similar time that they are
- * ttymalloc()'ed, or, for the case of statically allocated struct tty's
+ * allocated, or, for the case of statically allocated struct tty's
  * either in the attach or (first) open routine.
  */
 void
@@ -2652,10 +2674,10 @@ tty_detach(struct tty *tp)
  * Allocate a tty structure and its associated buffers.
  */
 struct tty *
-ttymalloc(void)
+tty_alloc(void)
 {
-	struct tty	*tp;
-	int i;	
+	struct tty *tp;
+	int i;
 
 	tp = kmem_zalloc(sizeof(*tp), KM_SLEEP);
 	callout_init(&tp->t_rstrt_ch, 0);
@@ -2673,11 +2695,14 @@ ttymalloc(void)
 	cv_init(&tp->t_outcvf, "ttyoutf");
 	/* Set default line discipline. */
 	tp->t_linesw = ttyldisc_default();
+	tp->t_dev = NODEV;
 	selinit(&tp->t_rsel);
 	selinit(&tp->t_wsel);
-	for (i = 0; i < TTYSIG_COUNT; i++) 
+	for (i = 0; i < TTYSIG_COUNT; i++)  {
 		sigemptyset(&tp->t_sigs[i]);
-	return (tp);
+	}
+
+	return tp;
 }
 
 /*
@@ -2687,7 +2712,7 @@ ttymalloc(void)
  * tty_attach()ed.
  */
 void
-ttyfree(struct tty *tp)
+tty_free(struct tty *tp)
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.23 2011/01/12 23:52:38 jmcneill Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.23.2.1 2011/06/06 09:07:08 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.23 2011/01/12 23:52:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.23.2.1 2011/06/06 09:07:08 jruoho Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -481,6 +481,14 @@ i686_mtrr_validate(struct mtrr *mtrrp, struct proc *p)
 	    || mtrrp->type > MTRR_TYPE_WB) && (mtrrp->flags & MTRR_VALID))
 		return EINVAL;
 
+	/* 
+	 * If write-combining is requested, make sure that the WC feature   
+	 * is supported by the processor.
+	 */
+	if (mtrrp->type == MTRR_TYPE_WC &&
+	    !(i686_mtrr_cap & MTRR_I686_CAP_WC_MASK))
+		return ENODEV;
+
 	/*
 	 * Only use fixed ranges < 1M.
 	 */
@@ -604,7 +612,7 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 	 * XXX could be more sophisticated here by merging ranges.
 	 */
 	low = mtrrp->base;
-	high = low + mtrrp->len;
+	high = low + mtrrp->len - 1;
 	freep = NULL;
 	for (i = 0; i < i686_mtrr_vcnt; i++) {
 		if (!(mtrr_var[i].flags & MTRR_VALID)) {
@@ -612,7 +620,7 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 			continue;
 		}
 		curlow = mtrr_var[i].base;
-		curhigh = curlow + mtrr_var[i].len;
+		curhigh = curlow + mtrr_var[i].len - 1;
 		if (low == curlow && high == curhigh &&
 		    (!(mtrr_var[i].flags & MTRR_PRIVATE) ||
 		     ((mtrrp->flags & MTRR_PRIVATE) && (p != NULL) &&

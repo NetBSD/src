@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.19 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.19.32.1 2011/06/06 09:06:19 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,11 +53,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.19 2008/04/09 15:40:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.19.32.1 2011/06/06 09:06:19 jruoho Exp $");
 
+#define	__INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 

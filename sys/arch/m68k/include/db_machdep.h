@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.28 2011/01/14 02:06:27 rmind Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.28.2.1 2011/06/06 09:05:57 jruoho Exp $	*/
 
 /* 
  * Mach Operating System
@@ -46,6 +46,7 @@
 #include <machine/trap.h>
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
+#define	DDB_EXPR_FMT	"l"		/* expression is long */
 typedef	long		db_expr_t;	/* expression - signed */
 typedef struct trapframe db_regs_t;
 
@@ -104,9 +105,8 @@ int 	kdb_trap(int, db_regs_t *);
 #endif /* _KERNEL */
 
 /*
- * We use either a.out or Elf32 symbols in DDB.
+ * We use Elf32 symbols in DDB.
  */
-#define	DB_AOUT_SYMBOLS
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32
 

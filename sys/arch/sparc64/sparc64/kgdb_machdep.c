@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.14 2009/03/18 10:22:37 cegger Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.14.6.1 2011/06/06 09:06:53 jruoho Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.14 2009/03/18 10:22:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.14.6.1 2011/06/06 09:06:53 jruoho Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
@@ -385,15 +385,15 @@ kgdb_acc(vaddr_t va, size_t len)
 	eva = round_page(va + len);
 	va = trunc_page(va);
 
-	simple_lock(&pm->pm_lock);
+	mutex_enter(&pm->pm_lock);
 	for (; va < eva; va += PAGE_SIZE) {
 		data = pseg_get(pm, va);
 		if ((data & TLB_V) == 0) {
-			simple_unlock(&pm->pm_lock);
+			mutex_exit(&pm->pm_lock);
 			return 0;
 		}
 	}
-	simple_unlock(&pm->pm_lock);
+	mutex_exit(&pm->pm_lock);
 
 	return (1);
 }

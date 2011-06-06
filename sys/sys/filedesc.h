@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.57 2009/10/27 02:58:28 rmind Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.57.6.1 2011/06/06 09:10:11 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -193,6 +193,7 @@ void	fd_share(proc_t *);
 void	fd_hold(lwp_t *);
 void	fd_free(void);
 void	fd_closeexec(void);
+void	fd_ktrexecfd(void);
 int	fd_checkstd(void);
 file_t	*fd_getfile(unsigned);
 file_t	*fd_getfile2(proc_t *, unsigned);
@@ -205,12 +206,15 @@ int	fd_close(unsigned);
 int	fd_dup(file_t *, int, int *, bool);
 int	fd_dup2(file_t *, unsigned);
 int	fd_clone(file_t *, unsigned, int, const struct fileops *, void *);
+void	fd_set_exclose(struct lwp *, int, bool);
+int	pipe1(struct lwp *, register_t *, int);
 
 void	cwd_sys_init(void);
 struct cwdinfo *cwdinit(void);
 void	cwdshare(proc_t *);
 void	cwdunshare(proc_t *);
 void	cwdfree(struct cwdinfo *);
+void	cwdexec(struct proc *);
 
 #define GETCWD_CHECK_ACCESS 0x0001
 int	getcwd_common(struct vnode *, struct vnode *, char **, char *, int,

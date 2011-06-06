@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.16 2007/10/17 19:56:40 garbled Exp $	*/
+/*	$NetBSD: fpu.h,v 1.16.48.1 2011/06/06 09:06:27 jruoho Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
 #define	FPSCR_VXVC	0x00080000	/* Invalid Compare Op */
 #define	FPSCR_FR	0x00040000	/* Fraction Rounded */
 #define	FPSCR_FI	0x00020000	/* Fraction Inexact */
-#define	FPSCR_FPRF	0x0001f000	
+#define	FPSCR_FPRF	0x0001f000
 #define	FPSCR_C		0x00010000	/* FP Class Descriptor */
 #define	FPSCR_FPCC	0x0000f000
 #define	FPSCR_FL	0x00008000	/* < */
@@ -73,17 +73,47 @@
 #include "opt_multiprocessor.h"
 #endif
 
+#include <sys/pcu.h>
+#include <powerpc/mcontext.h>
+
+struct lwp;
+bool	fpu_used_p(struct lwp *);
+void	fpu_mark_used(struct lwp *);
+
+void	fpu_restore_from_mcontext(struct lwp *, const mcontext_t *);
+bool	fpu_save_to_mcontext(struct lwp *, mcontext_t *, unsigned int *);
+
+extern const pcu_ops_t fpu_ops;
+
 /* List of PowerPC architectures that support FPUs. */
 #if defined(PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #define PPC_HAVE_FPU
 
-#define	FPU_SAVE	0
-#define	FPU_DISCARD	1
+struct fpreg;
 
-void	enable_fpu(void);
-void	save_fpu_cpu(void);
-void	save_fpu_lwp(struct lwp *, int /*discard*/);
-int	get_fpu_fault_code(void);
+static inline void
+fpu_load(void)
+{
+	pcu_load(&fpu_ops);
+}
+
+static inline void
+fpu_save(void)
+{
+	pcu_save(&fpu_ops);
+}
+
+static inline void
+fpu_discard(void)
+{
+	pcu_discard(&fpu_ops);
+}
+
+void	fpu_load_from_fpreg(const struct fpreg *);
+void	fpu_unload_to_fpreg(struct fpreg *);
+
+int	fpu_get_fault_code(void);
+
 #endif /* PPC_HAVE_FPU */
 #endif /* _KERNEL */
 

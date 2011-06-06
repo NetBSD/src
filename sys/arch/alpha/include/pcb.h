@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.18 2008/01/04 21:47:20 ad Exp $ */
+/* $NetBSD: pcb.h,v 1.18.38.1 2011/06/06 09:04:44 jruoho Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 #endif
 
-#include <sys/simplelock.h>
+#include <sys/mutex.h>
 
 #include <machine/frame.h>
 #include <machine/reg.h>
@@ -61,16 +61,11 @@ struct pcb {
 	unsigned long	pcb_onfault;		/* for copy faults	[SW] */
 	unsigned long	pcb_accessaddr;		/* for [fs]uswintr	[SW] */
 	struct cpu_info * volatile pcb_fpcpu;	/* CPU with our FP state[SW] */
-	struct simplelock pcb_fpcpu_slock;	/* simple lock on fpcpu [SW] */
+	kmutex_t	pcb_fpcpu_lock;		/* lock on fpcpu	[SW] */
 };
 
-/*
- * MULTIPROCESSOR:
- * Need to block IPIs while holding the fpcpu_slock.  That is the
- * responsibility of the CALLER!
- */
-#define	FPCPU_LOCK(pcb)		simple_lock(&(pcb)->pcb_fpcpu_slock)
-#define	FPCPU_UNLOCK(pcb)	simple_unlock(&(pcb)->pcb_fpcpu_slock)
+#define	FPCPU_LOCK(pcb)		mutex_enter(&(pcb)->pcb_fpcpu_lock)
+#define	FPCPU_UNLOCK(pcb)	mutex_exit(&(pcb)->pcb_fpcpu_lock)
 
 /*
  * The pcb is augmented with machine-dependent additional data for

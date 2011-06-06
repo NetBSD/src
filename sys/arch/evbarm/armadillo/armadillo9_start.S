@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_start.S,v 1.4 2009/10/21 14:15:51 rmind Exp $ */
+/*	$NetBSD: armadillo9_start.S,v 1.4.6.1 2011/06/06 09:05:23 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -26,11 +26,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include "epcom.h"
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pte.h>
-#include "epcom.h"
+#include "assym.h"
+
+RCSID("$NetBSD: armadillo9_start.S,v 1.4.6.1 2011/06/06 09:05:23 jruoho Exp $")
 
 	.section .start,"ax",%progbits
 
@@ -92,7 +94,7 @@ Lunmapped:
 	ldr	r0, [r4]			/* r0 = &l1table */
 	mov	r1, #(L1_TABLE_SIZE / 4)	/* 4096 entry */
 	mov	r2, #(L1_S_SIZE)		/* 1MB / section */
-	mov	r3, #(L1_S_AP(AP_KRW))		/* kernel read/write */
+	mov	r3, #(L1_S_AP_KRW)		/* kernel read/write */
 	orr	r3, r3, #(L1_TYPE_S)		/* L1 entry is section */
 1:
 	str	r3, [r0], #0x04
@@ -105,7 +107,7 @@ Lunmapped:
 	 */
 	ldr	r0, [r4]
 	add	r0, r0, #(0xf00 * 4)		/* offset to 0xf0000000 */
-	mov	r3, #(L1_S_AP(AP_KRW))		/* kernel read/write */
+	mov	r3, #(L1_S_AP_KRW)		/* kernel read/write */
 	orr	r3, r3, #(L1_TYPE_S)		/* L1 entry is section */
 	orr	r3, r3, #0x80000000
 	str	r3, [r0], #4
@@ -113,7 +115,7 @@ Lunmapped:
 	/*
 	 * Step 3: Map VA 0xf0100000->0xf02fffff to PA 0x80800000->0x809fffff.
 	 */
-	mov	r3, #(L1_S_AP(AP_KRW))		/* kernel read/write */
+	mov	r3, #(L1_S_AP_KRW)		/* kernel read/write */
 	orr	r3, r3, #(L1_TYPE_S)		/* L1 entry is section */
 	orr	r3, r3, #0x80000000
 	orr	r3, r3, #0x00800000

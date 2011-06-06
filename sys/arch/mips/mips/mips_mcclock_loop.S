@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock_loop.S,v 1.4 2009/12/14 00:46:06 matt Exp $ */
+/* $NetBSD: mips_mcclock_loop.S,v 1.4.6.1 2011/06/06 09:06:07 jruoho Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ LEAF_NOPROFILE(mips_mcclock_loop_with_clock)
 	beqz		v0, 1b			# if zero then repeat
 	 move		v0, s0			# return iters
 	REG_L		ra, CALLFRAME_RA(sp)
-	REG_S		s0, CALLFRAME_S0(sp)
+	REG_L		s0, CALLFRAME_S0(sp)
 	j		ra
 	 PTR_ADDU	sp, CALLFRAME_SIZ
 END(mips_mcclock_loop_with_clock)

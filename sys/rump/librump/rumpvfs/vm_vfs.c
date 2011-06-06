@@ -1,10 +1,7 @@
-/*	$NetBSD: vm_vfs.c,v 1.24 2010/12/18 11:45:09 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.24.2.1 2011/06/06 09:10:09 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by the
- * Finnish Cultural Foundation.
+ * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.24 2010/12/18 11:45:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.24.2.1 2011/06/06 09:10:09 jruoho Exp $");
 
 #include <sys/param.h>
 
@@ -67,7 +64,6 @@ uvm_aio_aiodone(struct buf *bp)
 	}
 
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
-	uvm_pageout_done(pageout);
 
 	/* get uobj because we need it after pages might be recycled */
 	uobj = pgs[0]->uobject;
@@ -78,6 +74,8 @@ uvm_aio_aiodone(struct buf *bp)
 	uvm_page_unbusy(pgs, npages);
 	mutex_exit(&uvm_pageqlock);
 	mutex_exit(&uobj->vmobjlock);
+
+	uvm_pageout_done(pageout);
 
 	if (BUF_ISWRITE(bp) && (bp->b_cflags & BC_AGE) != 0) {
 		mutex_enter(bp->b_objlock);
@@ -108,6 +106,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 {
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct vm_page **pgs;
+	struct uvm_object *pguobj;
 	int maxpages = MIN(32, round_page(len) >> PAGE_SHIFT);
 	int rv, npages, i;
 
@@ -124,7 +123,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 		    0, PAGERFLAGS | PGO_PASTEOF);
 		KASSERT(npages > 0);
 
-		for (i = 0; i < npages; i++) {
+		for (i = 0, pguobj = NULL; i < npages; i++) {
 			struct vm_page *pg;
 			uint8_t *start;
 			size_t chunkoff, chunklen;
@@ -132,6 +131,9 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 			pg = pgs[i];
 			if (pg == NULL)
 				break;
+			if (pguobj == NULL)
+				pguobj = pg->uobject;
+			KASSERT(pguobj == pg->uobject);
 
 			chunkoff = off & PAGE_MASK;
 			chunklen = MIN(PAGE_SIZE - chunkoff, len);
@@ -143,8 +145,12 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 			off += chunklen;
 			len -= chunklen;
 		}
-		mutex_enter(&uobj->vmobjlock);
+		mutex_enter(&pguobj->vmobjlock);
 		uvm_page_unbusy(pgs, npages);
+		if (pguobj != uobj) {
+			mutex_exit(&pguobj->vmobjlock);
+			mutex_enter(&uobj->vmobjlock);
+		}
 	}
 	mutex_exit(&uobj->vmobjlock);
 	kmem_free(pgs, maxpages * sizeof(pgs));
@@ -160,9 +166,11 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 	int advice, int flags)
 {
 	struct vm_page **pgs;
+	struct uvm_object *pguobj;
 	int npages = len2npages(uio->uio_offset, todo);
 	size_t pgalloc;
 	int i, rv, pagerflags;
+	vm_prot_t prot;
 
 	pgalloc = npages * sizeof(pgs);
 	pgs = kmem_alloc(pgalloc, KM_SLEEP);
@@ -173,17 +181,20 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 	if (flags & UBC_FAULTBUSY)
 		pagerflags |= PGO_OVERWRITE;
 
+	prot = VM_PROT_READ;
+	if (flags & UBC_WRITE)
+		prot |= VM_PROT_WRITE;
+
 	mutex_enter(&uobj->vmobjlock);
 	do {
 		npages = len2npages(uio->uio_offset, todo);
 		memset(pgs, 0, pgalloc);
 		rv = uobj->pgops->pgo_get(uobj, trunc_page(uio->uio_offset),
-		    pgs, &npages, 0, VM_PROT_READ | VM_PROT_WRITE, 0,
-		    pagerflags);
+		    pgs, &npages, 0, prot, 0, pagerflags);
 		if (rv)
 			goto out;
 
-		for (i = 0; i < npages; i++) {
+		for (i = 0, pguobj = NULL; i < npages; i++) {
 			struct vm_page *pg;
 			size_t xfersize;
 			off_t pageoff;
@@ -191,6 +202,9 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 			pg = pgs[i];
 			if (pg == NULL)
 				break;
+			if (pguobj == NULL)
+				pguobj = pg->uobject;
+			KASSERT(pguobj == pg->uobject);
 
 			pageoff = uio->uio_offset & PAGE_MASK;
 			xfersize = MIN(MIN(todo, PAGE_SIZE), PAGE_SIZE-pageoff);
@@ -198,17 +212,21 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 			rv = uiomove((uint8_t *)pg->uanon + pageoff,
 			    xfersize, uio);
 			if (rv) {
-				mutex_enter(&uobj->vmobjlock);
+				mutex_enter(&pguobj->vmobjlock);
 				uvm_page_unbusy(pgs, npages);
-				mutex_exit(&uobj->vmobjlock);
+				mutex_exit(&pguobj->vmobjlock);
 				goto out;
 			}
 			if (uio->uio_rw == UIO_WRITE)
 				pg->flags &= ~(PG_CLEAN | PG_FAKE);
 			todo -= xfersize;
 		}
-		mutex_enter(&uobj->vmobjlock);
+		mutex_enter(&pguobj->vmobjlock);
 		uvm_page_unbusy(pgs, npages);
+		if (pguobj != uobj) {
+			mutex_exit(&pguobj->vmobjlock);
+			mutex_enter(&uobj->vmobjlock);
+		}
 	} while (todo);
 	mutex_exit(&uobj->vmobjlock);
 

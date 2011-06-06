@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.50 2010/06/06 12:13:36 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.50.2.1 2011/06/06 09:05:46 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@
  */
 
 #include "opt_compat_osf1.h"
+#include "opt_multiprocessor.h"
 #include "opt_cputype.h"
 
 /* 
@@ -203,7 +204,7 @@ syscall_entry:
 	 */
 
 	/* t2 = curlwp PCB */
-	GET_CURLWP(%t3)
+	GET_CURLWP_SPACE(%sr1, %t3)
 	ldw	L_PCB(%sr1, %t3), %t2			/* XXX can use ,sl */
 
 	/*
@@ -241,8 +242,8 @@ syscall_entry:
 
 	stw	%r0, HPPA_FRAME_CRP(%sr1, %sp)
 
-	ldil	L%kpsw, %t1
-	ldw	R%kpsw(%sr1, %t1), %t1
+	GET_CURCPU_SPACE(%sr1, %t1)
+	ldw	CI_PSW(%sr1, %t1), %t1
 	stw	%r1, TF_CR15-TRAPFRAME_SIZEOF(%sr1, %t3)	/* eiem ,bc */
 	stw	%t1, TF_CR22-TRAPFRAME_SIZEOF(%sr1, %t3)	/* ipsw */
  
@@ -365,6 +366,9 @@ syscall_entry:
 	stw	%arg3, TF_CR13-TRAPFRAME_SIZEOF(%sr1, %t3)
 #endif
 
+	mfctl	CR_TLS, %arg0
+	stw	%arg0, TF_CR27-TRAPFRAME_SIZEOF(%sr1, %t3)
+
 #if defined(DDB) || defined(KGDB)
 	/*
 	 * Save v2p translation table pointer
@@ -374,7 +378,9 @@ syscall_entry:
 	stw	%arg0, TF_CR23-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%arg1, TF_CR25-TRAPFRAME_SIZEOF(%sr1, %t3)
 
+	mfctl	%cr24, %arg0
 	mfctl	%cr28, %arg1
+	stw	%arg0, TF_CR24-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%arg1, TF_CR28-TRAPFRAME_SIZEOF(%sr1, %t3)
 #endif
 
@@ -501,18 +507,15 @@ syscall_return:
 	mtctl	%t1, %pidr3
 	mtctl	%t2, %pidr4
 #endif
+	ldw	TF_CR27(%sr3, %t3), %t1
+	ldw	TF_CR30(%sr3, %t3), %t2
+	mtctl	%t1, CR_TLS
+	mtctl	%t2, CR_FPPADDR
+
 	ldw	TF_CR0(%sr3, %t3), %t1
 	mtctl	%t1, %rctr
 
-	ldw	TF_CR30(%sr3, %t3), %t1
-	mtctl	%t1, CR_FPPADDR
-
-#ifdef MULTIPROCESSOR
-	mfctl	CR_CURCPU, %t3
-#else
-	mfctl	CR_CURLWP, %t3
-	ldw	L_CPU(%sr3, %t3), %t3
-#endif
+	GET_CURCPU_SPACE(%sr3, %t3)
 
 	/*
 	 * Clear the system mask, this puts us back into physical mode.  Reload
@@ -792,10 +795,10 @@ ALTENTRY(os_hpmc_cont)
 	mtctl	%r1, CR_VTOP
 
 	/* Disable interrupts for the long haul. */
-	ldil	L%kpsw, %t1
-	ldw	R%kpsw(%t1), %r1
+	GET_CURCPU(%t1)
+	ldw	CI_PSW(%t1), %r1
 	depi	0, PSW_I_POS, 1, %r1
-	stw	%r1, R%kpsw(%t1)
+	stw	%r1, CI_PSW(%t1)
 
 	/* Reload the global data pointer. */
 	ldil	L%$global$, %dp
@@ -841,8 +844,8 @@ ALTENTRY(os_hpmc_cont)
 L$check_do_rfi:
 
 	/* Load IPSW. */
-	ldil	L%kpsw, %r1
-	ldw	R%kpsw(%r1), %r1
+	GET_CURCPU(%r1)
+	ldw	CI_PSW(%r1), %r1
 	mtctl	%r1, %ipsw
 
 	/* Get the address of hppa_machine_check. */
@@ -941,9 +944,9 @@ ALTENTRY(hppa_fpu_nop0)
 
 	/*
 	 * The hardware FPU is disabled, so we need to swap in the FPU state of
-	 * the process whose uspace physical address in CR_UPADDR.  We may also
-	 * need to swap out the FPU state of any process whose uspace physical
-	 * address is in the fpu_cur_uspace variable.
+	 * the LWP whose uspace physical address in CR_UPADDR.  We may also
+	 * need to swap out the FPU state of any LWP whose uspace physical
+	 * address is in curcpu()->ci_fpu_state.
 	 */
 	
 	/*
@@ -952,12 +955,12 @@ ALTENTRY(hppa_fpu_nop0)
 	 * to use.  hppa_fpu_swap deliberately uses only these registers and %r1
 	 * and %arg0.
 	 */
-	mtctl	%arg1, %tr3
+	mtctl	%arg1, %tr4
 	mtctl	%rp, %tr5
 
 	/* Call hppa_fpu_swap. */
-	ldil	L%fpu_cur_uspace, %arg0
-	ldw	R%fpu_cur_uspace(%arg0), %arg0
+	GET_CURCPU(%arg0)
+	ldw	CI_FPU_STATE(%arg0), %arg0
 	mfctl	CR_FPPADDR, %arg1
 	blr	0, %rp
 	b	hppa_fpu_swap
@@ -965,7 +968,7 @@ ALTENTRY(hppa_fpu_nop0)
 	
 	/* Restore registers and rfi. */
 	mfctl	%tr5, %rp
-	mfctl	%tr3, %arg1
+	mfctl	%tr4, %arg1
 	mfctl	%tr2, %arg0
 	mfctl	%tr7, %r1
 	rfi
@@ -1108,18 +1111,18 @@ ALTENTRY(hppa_fpu_swap)
 L$fpu_swap_in:
 
 	/*
-	 * Stash the incoming user structure in fpu_cur_uspace.  Because this
-	 * variable holds a physical address, this means that hppa_fpu_swap can
-	 * only be called with a non-zero user_in from physical mode (i.e., from
-	 * the emulation assist trap handler).  And that's exactly what happens
-	 * now.
+	 * Stash the incoming user structure in curcpu->ci_fpu_state.  Because
+	 * this variable holds a physical address, this means that hppa_fpu_swap
+	 * can only be called with a non-zero user_in from physical mode (i.e.,
+	 * from the emulation assist trap handler).  And that's exactly what
+	 * happens now.
 	 *
-	 * So stash fpu_cur_uspace, branching past the swap-in code if it is
+	 * So stash ci->ci_fpu_state, branching past the swap-in code if it is
 	 * zero.
 	 */
-	ldil	L%fpu_cur_uspace, %r1
+	GET_CURCPU(%r1)
 	comb,=	%r0, %arg1, L$fpu_no_swap_in
-	stw	%arg1, R%fpu_cur_uspace(%r1)
+	stw	%arg1, CI_FPU_STATE(%r1)
 
 	/*
 	 * Swap in the new FPU state.
@@ -1911,7 +1914,6 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	 *  - tr7:	old r1
 	 */
 
-	/* do not overwrite %tr4(%cr28) it contains the contents of r24 */
 	mtctl	%t3, %tr2
 
 	GET_CURCPU(%t3)
@@ -1945,8 +1947,8 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	mtsp	%r0, %sr3
 
 	/* this will enable interrupts after `cold' */
-	ldil	L%kpsw, %t1
-	ldw	R%kpsw(%t1), %t2
+	GET_CURCPU(%t1)
+	ldw	CI_PSW(%t1), %t2
 	mtctl	%r0, %eiem
 	mtctl	%t2, %ipsw
 
@@ -1978,7 +1980,7 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	comb,<>	%t1, %t2, L$trap_from_kernel	/* if %t1 != %t2 => kernel */
 	dep	%r0, 31, 6, %sp			/* Assumed stack align step 2 */
 
-	mfctl	CR_CURLWP, %t2
+	GET_CURLWP(%t2)
 	depi	1, T_USER_POS, 1, %r1
 	depi	1, TFF_LAST_POS, 1, %r1
 	ldw	L_PCB(%t2), %sp
@@ -2189,11 +2191,16 @@ trapnowvirt:
 	stw	%t1, TF_CR23(%t3)
 	stw	%t2, TF_CR25(%t3)
 
+	mfctl	%cr24, %t1
 	mfctl	%cr28, %t2
+	stw	%t1, TF_CR24(%t3)
 	stw	%t2, TF_CR28(%t3)
+
 #endif
-	mfctl	CR_FPPADDR, %t1
-	stw	%t1, TF_CR30(%t3)
+	mfctl	CR_TLS, %t1
+	mfctl	CR_FPPADDR, %t2
+	stw	%t1, TF_CR27(%t3)
+	stw	%t2, TF_CR30(%t3)
 
 	/*
 	 * load the global pointer for the kernel
@@ -2224,6 +2231,7 @@ trapnowvirt:
 	bb,>=,n	%arg0, TFF_LAST_POS, L$trap_return
 	nop
 
+	/* load curlwp's trapframe pointer */
 	GET_CURLWP(%t2)
 	ldw	L_MD(%t2), %t3
 

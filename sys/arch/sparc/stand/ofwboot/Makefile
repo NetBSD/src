@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2010/08/25 20:16:49 christos Exp $
+#	$NetBSD: Makefile,v 1.25.2.1 2011/06/06 09:06:48 jruoho Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -7,7 +7,7 @@ S=	${CURDIR}/../../../..
 # Override normal settings
 #
 
-WARNS=		0
+WARNS?=		2
 
 PROG?=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
@@ -92,8 +92,11 @@ cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
 	-rm -rf lib
 
+.include <bsd.own.mk>
+
 vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
 
 CLEANFILES+= vers.c
 
@@ -117,10 +120,10 @@ AFLAGS+=		-Wa,-Av8plusa
 .endif
 
 .if CROSS
-AFLAGS+=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__
+AFLAGS+=		-x assembler-with-cpp -D_LOCORE -D__ELF__
 CEXTRAFLAGS?=		-D_LP64
 .else
-AFLAGS+=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -D__ELF__ ${CEXTRAFLAGS}
+AFLAGS+=		-x assembler-with-cpp -D_LOCORE -D__ELF__ ${CEXTRAFLAGS}
 .endif
 
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<

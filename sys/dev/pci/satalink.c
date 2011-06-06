@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.42 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: satalink.c,v 1.42.2.1 2011/06/06 09:08:26 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.42 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.42.2.1 2011/06/06 09:08:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,8 +262,10 @@ static void satalink_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(satalink, sizeof(struct pciide_softc),
     satalink_match, satalink_attach, NULL, NULL);
 
-static void sii3112_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void sii3114_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void sii3112_chip_map(struct pciide_softc*,
+    const struct pci_attach_args*);
+static void sii3114_chip_map(struct pciide_softc*,
+    const struct pci_attach_args*);
 static void sii3112_drv_probe(struct ata_channel*);
 static void sii3112_setup_channel(struct ata_channel*);
 
@@ -393,7 +395,8 @@ ba5_write_4(struct pciide_softc *sc, bus_addr_t reg, uint32_t val)
  * This may also happen on the 3114 (ragge 050527)
  */
 static void
-sii_fixup_cacheline(struct pciide_softc *sc, struct pci_attach_args *pa, int n)
+sii_fixup_cacheline(struct pciide_softc *sc, const struct pci_attach_args *pa,
+    int n)
 {
 	pcireg_t cls, reg;
 	int i;
@@ -420,7 +423,7 @@ sii_fixup_cacheline(struct pciide_softc *sc, struct pci_attach_args *pa, int n)
 }
 
 static void
-sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+sii3112_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface, scs_cmd, cfgctl;
@@ -527,7 +530,7 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-sii3114_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
+sii3114_mapreg_dma(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *pc;
 	int chan, reg;
@@ -664,7 +667,7 @@ sii3114_mapchan(struct pciide_channel *cp)
 }
 
 static void
-sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+sii3114_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t scs_cmd;

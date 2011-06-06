@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.19 2010/07/07 01:20:49 chs Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.19.2.1 2011/06/06 09:04:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.19 2010/07/07 01:20:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.19.2.1 2011/06/06 09:04:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,5 +238,7 @@ cpu_lwp_setprivate(lwp_t *l, void *addr)
 
 	pcb = lwp_getpcb(l);
 	pcb->pcb_hw.apcb_unique = (unsigned long)addr;
+	if (l == curlwp)
+		alpha_pal_wrunique(pcb->pcb_hw.apcb_unique);
 	return 0;
 }

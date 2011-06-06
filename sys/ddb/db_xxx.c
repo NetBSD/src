@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.62 2009/07/19 02:37:33 rmind Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.62.6.1 2011/06/06 09:07:38 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.62 2009/07/19 02:37:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.62.6.1 2011/06/06 09:07:38 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -80,8 +80,47 @@ void
 db_kill_proc(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
+#ifdef _KERNEL	/* XXX CRASH(8) */
+	struct proc *p;
+	ksiginfo_t	ksi;
+	db_expr_t pid, sig;
+	int t;
 
+	/* What pid? */
+	if (!db_expression(&pid)) {
+	       db_error("pid?\n");
+	       /*NOTREACHED*/
+	}
+	/* What sig? */
+	t = db_read_token();
+	if (t == tCOMMA) {
+	       if (!db_expression(&sig)) {
+		       db_error("sig?\n");
+		       /*NOTREACHED*/
+	       }
+	} else {
+	       db_unread_token(t);
+	       sig = 15;
+	}
+	if (db_read_token() != tEOL) {
+	       db_error("?\n");
+	       /*NOTREACHED*/
+	}
+
+	p = proc_find((pid_t)pid);
+	if (p == NULL) {
+	       db_error("no such proc\n");
+	       /*NOTREACHED*/
+	}
+	KSI_INIT(&ksi);
+	ksi.ksi_signo = sig;
+	ksi.ksi_code = SI_USER;
+	ksi.ksi_pid = 0;
+	ksi.ksi_uid = 0;
+	kpsignal2(p, &ksi);
+#else
 	db_printf("This command is not currently supported.\n");
+#endif
 }
 
 #ifdef KGDB

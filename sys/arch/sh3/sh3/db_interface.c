@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.59 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.59.6.1 2011/06/06 09:06:43 jruoho Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.59 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.59.6.1 2011/06/06 09:06:43 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -227,35 +227,21 @@ void
 db_set_single_step(db_regs_t *regs)
 {
 
-	_reg_write_2(SH_(BBRA), 0);		/* disable break */
-
+	/*
+	 * Channel A is set up for single stepping in sh_cpu_init().
+	 * Before RTE we write tf_ubc to BBRA and tf_spc to BARA.
+	 */
 #ifdef SH3
 	if (CPU_IS_SH3) {
-		/* A: compare all address bits */
-		_reg_write_4(SH_(BAMRA), 0x00000000);
-
-		/* A: break after execution, ignore ASID */
-		_reg_write_4(SH_(BRCR), (UBC_CTL_A_AFTER_INSN
-					 | SH3_UBC_CTL_A_MASK_ASID));
-
-		/* will be written to BBRA before RTE */
 		regs->tf_ubc = UBC_CYCLE_INSN | UBC_CYCLE_READ
 			| SH3_UBC_CYCLE_CPU;
 	}
-#endif	/* SH3 */
-
+#endif
 #ifdef SH4
 	if (CPU_IS_SH4) {
-		/* A: compare all address bits, ignore ASID */
-		_reg_write_1(SH_(BAMRA), SH4_UBC_MASK_NONE | SH4_UBC_MASK_ASID);
-
-		/* A: break after execution */
-		_reg_write_2(SH_(BRCR), UBC_CTL_A_AFTER_INSN);
-
-		/* will be written to BBRA before RTE */
 		regs->tf_ubc = UBC_CYCLE_INSN | UBC_CYCLE_READ;
 	}
-#endif	/* SH4 */
+#endif
 }
 
 void

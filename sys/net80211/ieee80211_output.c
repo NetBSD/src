@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.49 2010/01/19 22:08:17 pooka Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.49.6.1 2011/06/06 09:09:54 jruoho Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.49 2010/01/19 22:08:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.49.6.1 2011/06/06 09:09:54 jruoho Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1703,6 +1703,58 @@ bad:
 	}
 	return ret;
 #undef senderr
+}
+
+/*
+ * Build a RTS (Request To Send) control frame.
+ */
+struct mbuf *
+ieee80211_get_rts(struct ieee80211com *ic, const struct ieee80211_frame *wh,
+    uint16_t dur)
+{
+	struct ieee80211_frame_rts *rts;
+	struct mbuf *m;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return NULL;
+
+	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame_rts);
+
+	rts = mtod(m, struct ieee80211_frame_rts *);
+	rts->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_CTL |
+	    IEEE80211_FC0_SUBTYPE_RTS;
+	rts->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	*(uint16_t *)rts->i_dur = htole16(dur);
+	IEEE80211_ADDR_COPY(rts->i_ra, wh->i_addr1);
+	IEEE80211_ADDR_COPY(rts->i_ta, wh->i_addr2);
+
+	return m;
+}
+
+/*
+ * Build a CTS-to-self (Clear To Send) control frame.
+ */
+struct mbuf *
+ieee80211_get_cts_to_self(struct ieee80211com *ic, uint16_t dur)
+{
+	struct ieee80211_frame_cts *cts;
+	struct mbuf *m;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return NULL;
+
+	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame_cts);
+
+	cts = mtod(m, struct ieee80211_frame_cts *);
+	cts->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_CTL |
+	    IEEE80211_FC0_SUBTYPE_CTS;
+	cts->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	*(uint16_t *)cts->i_dur = htole16(dur);
+	IEEE80211_ADDR_COPY(cts->i_ra, ic->ic_myaddr);
+
+	return m;
 }
 
 /*

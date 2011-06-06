@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.33 2010/02/24 22:38:09 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.33.4.1 2011/06/06 09:09:30 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.33 2010/02/24 22:38:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.33.4.1 2011/06/06 09:09:30 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.33 2010/02/24 22:38:09 dyoung Exp $")
 #include <sys/pmf.h>
 #include <sys/queue.h>
 #include <sys/sched.h>
-#include <sys/syscallargs.h> /* for sys_sync */
 #include <sys/workqueue.h>
 #include <prop/proplib.h>
 #include <sys/condvar.h>
@@ -47,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.33 2010/02/24 22:38:09 dyoung Exp $")
 #include <sys/proc.h>
 #include <sys/reboot.h>	/* for RB_NOSYNC */
 #include <sys/sched.h>
+#include <sys/vfs_syscalls.h>
 
 /* XXX ugly special case, but for now the only client */
 #include "wsdisplay.h"
@@ -82,6 +82,7 @@ int pmf_debug_transition;
 
 /* #define PMF_DEBUG */
 
+#include <sys/mallocvar.h>
 MALLOC_DEFINE(M_PMF, "pmf", "device pmf messaging memory");
 
 static prop_dictionary_t pmf_platform = NULL;
@@ -321,7 +322,7 @@ pmf_system_suspend(const pmf_qual_t *qual)
 	 */
 	if (doing_shutdown == 0 && panicstr == NULL) {
 		printf("Flushing disk caches: ");
-		sys_sync(NULL, NULL, NULL);
+		do_sys_sync(&lwp0);
 		if (buf_syncwait() != 0)
 			printf("giving up\n");
 		else

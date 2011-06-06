@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.8 2008/04/28 20:23:31 martin Exp $ */
+/* $NetBSD: ofwpci.c,v 1.8.28.1 2011/06/06 09:06:22 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.8 2008/04/28 20:23:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.8.28.1 2011/06/06 09:06:22 jruoho Exp $");
 
 #include "opt_pci.h"
 
@@ -218,6 +218,6 @@ ofwpci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bus = pc->pc_bus;
 	pba.pba_bridgetag = NULL;
 	pba.pba_pc = pc;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }

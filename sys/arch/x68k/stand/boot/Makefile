@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2010/07/06 06:00:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2011/06/06 09:07:02 jruoho Exp $
 
 NOMAN=		# defined
 
@@ -32,7 +32,8 @@ SRCS+=		vers.c
 CLEANFILES+=	vers.c
 vers.c:	${VERSIONFILE}
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+=	-nostdinc -I$S -I${.OBJDIR} -I$M/stand/libsa
 CPPFLAGS+=	-I$M/stand/libiocs -I${COMMONDIR}
@@ -43,12 +44,14 @@ CFLAGS=		-Wno-main -Os -m68020-60
 LINKFLAGS=	-N -static -T ${.CURDIR}/boot.ldscript
 LIBIOCS!=	cd $M/stand/libiocs && ${PRINTOBJDIR}
 LIBSA!=		cd $M/stand/libsa && ${PRINTOBJDIR}
-LDLIBS=		-L${LIBSA} -lsa -L${LIBIOCS} -liocs
+L=		${LIBSA}/lib
+LDLIBS= 	${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
+LDLIBS+=	${LIBIOCS}/libiocs.a
 
 .include "../Makefile.booters"
 
 realall: ${PROG}
-${PROG}:	${OBJS} ${LIBSA}/libsa.a ${LIBIOCS}/libiocs.a
+${PROG}:	${OBJS} ${LDLIBS}
 	${_MKTARGET_LINK}
 	${LD} ${LINKFLAGS} -o ${PROG}.sym ${OBJS} ${LDLIBS}
 	${STRIP} -F ${BFDNAME} -o ${PROG} ${PROG}.sym

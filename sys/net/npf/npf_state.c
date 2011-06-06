@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state.c,v 1.2 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.2.2.1 2011/06/06 09:09:53 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.2 2010/12/18 01:07:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.2.2.1 2011/06/06 09:09:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,23 +43,41 @@ __KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.2 2010/12/18 01:07:25 rmind Exp $");
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_seq.h>
+#include <netinet/tcp_fsm.h>
 
 #include "npf_impl.h"
 
-#define	MAXACKWINDOW		66000
-
-/* Session expiration table.  XXX revisit later */
-static const u_int expire_table[ ] = {
-	[IPPROTO_TCP]		= 86400,	/* 24 hours */
-	[IPPROTO_UDP]		= 120,		/* 2 min */
-	[IPPROTO_ICMP]		= 30		/* 1 min */
+/* TCP session expiration table. */
+static const u_int tcp_expire_table[ ] __read_mostly = {
+	/* Initial synchronisation.  Timeout: 30 sec and 1 minute. */
+	[TCPS_SYN_SENT]		= 30,
+	[TCPS_SYN_RECEIVED]	= 60,
+	/* Established (synchronised).  Timeout: 24 hours. */
+	[TCPS_ESTABLISHED]	= 60 * 60 * 24,
+	[TCPS_FIN_WAIT_1]	= 60 * 60 * 24,
+	[TCPS_FIN_WAIT_2]	= 60 * 60 * 24,
+	/* UNUSED [TCPS_CLOSE_WAIT]	= 60 * 60 * 24, */
+	/* Closure.  Timeout: 4 minutes (2 * MSL). */
+	[TCPS_CLOSING]		= 60 * 4,
+	[TCPS_LAST_ACK]		= 60 * 4,
+	[TCPS_TIME_WAIT]	= 60 * 4,
+	/* Fully closed.  Timeout immediately. */
+	[TCPS_CLOSED]		= 0
 };
+
+/* Session expiration table. */
+static const u_int expire_table[ ] __read_mostly = {
+	[IPPROTO_UDP]		= 60,		/* 1 min */
+	[IPPROTO_ICMP]		= 30		/* 30 sec */
+};
+
+#define	MAXACKWINDOW		66000
 
 static bool
 npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
     const bool forw)
 {
-	const struct tcphdr *th = &npc->npc_l4.tcp;
+	const struct tcphdr * const th = &npc->npc_l4.tcp;
 	const int tcpfl = th->th_flags;
 	npf_tcpstate_t *fstate, *tstate;
 	int tcpdlen, wscale, ackskew;
@@ -191,56 +209,116 @@ static inline bool
 npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
     const bool forw)
 {
-	const struct tcphdr *th = &npc->npc_l4.tcp;
-	const int tcpfl = th->th_flags;
-	int nstate = 0;
-
+	const struct tcphdr * const th = &npc->npc_l4.tcp;
+	const int tcpfl = th->th_flags, state = nst->nst_state;
+#if 0
+	/* Determine whether TCP packet really belongs to this connection. */
+	if (!npf_tcp_inwindow(npc, nbuf, nst, forw)) {
+		return false;
+	}
+#endif
 	/*
-	 * Handle 3-way handshake (SYN -> SYN,ACK -> ACK).
+	 * Handle 3-way handshake (SYN -> SYN,ACK -> ACK), connection
+	 * reset (RST), half-open connections, connection closure, etc.
 	 */
-	switch (nst->nst_state) {
-	case ST_ESTABLISHED:
-		/* Common case - connection established. */
-		if (__predict_false(tcpfl & (TH_FIN | TH_RST))) {
-			/* Handle connection closure (FIN or RST). */
-			nstate = ST_CLOSING;
+	if (__predict_false(tcpfl & TH_RST)) {
+		nst->nst_state = TCPS_CLOSED;
+		return true;
+	}
+	switch (state) {
+	case TCPS_ESTABLISHED:
+	case TCPS_FIN_WAIT_2:
+		/* Common case - connection is established. */
+		if ((tcpfl & (TH_SYN | TH_ACK | TH_FIN)) == TH_ACK) {
+			return true;
 		}
-		break;
-	case ST_OPENING:
-		/* SYN has been sent, expecting SYN-ACK. */
+		/* Otherwise, can only be a FIN. */
+		if ((tcpfl & TH_FIN) == 0) {
+			break;
+		}
+		/* XXX see below TCPS_CLOSE_WAIT */
+		if (state != TCPS_FIN_WAIT_2) {
+			/* First FIN: closure of one end. */
+			nst->nst_state = TCPS_FIN_WAIT_1;
+		} else {
+			/* Second FIN: connection closure, wait for ACK. */
+			nst->nst_state = TCPS_LAST_ACK;
+		}
+		return true;
+	case TCPS_SYN_SENT:
+		/* After SYN expecting SYN-ACK. */
 		if (tcpfl == (TH_SYN | TH_ACK) && !forw) {
 			/* Received backwards SYN-ACK. */
-			nstate = ST_ACKNOWLEDGE;
-		} else if (tcpfl == TH_SYN && forw) {
+			nst->nst_state = TCPS_SYN_RECEIVED;
+			return true;
+		}
+		if (tcpfl == TH_SYN && forw) {
 			/* Re-transmission of SYN. */
-		} else {
-			return false;
+			return true;
 		}
 		break;
-	case ST_ACKNOWLEDGE:
+	case TCPS_SYN_RECEIVED:
 		/* SYN-ACK was seen, expecting ACK. */
-		if (tcpfl == TH_ACK && forw) {
-			nstate = ST_ESTABLISHED;
-		} else {
-			return false;
+		if ((tcpfl & (TH_SYN | TH_ACK | TH_FIN)) == TH_ACK) {
+			/* ACK - establish connection. */
+			nst->nst_state = TCPS_ESTABLISHED;
+			return true;
+		}
+		if (tcpfl == (TH_SYN | TH_ACK)) {
+			/* Re-transmission of SYN-ACK. */
+			return true;
 		}
 		break;
-	case ST_CLOSING:
-		/* XXX TODO */
+	case TCPS_CLOSE_WAIT:
+		/* UNUSED */
+	case TCPS_FIN_WAIT_1:
+		/*
+		 * XXX: FIN re-transmission is not handled, use TCPS_CLOSE_WAIT.
+		 */
+		/*
+		 * First FIN was seen, expecting ACK.  However, we may receive
+		 * a simultaneous FIN or exchange of FINs with FIN-ACK.
+		 */
+		if ((tcpfl & (TH_ACK | TH_FIN)) == (TH_ACK | TH_FIN)) {
+			/* Exchange of FINs with ACK.  Wait for last ACK. */
+			nst->nst_state = TCPS_LAST_ACK;
+			return true;
+		} else if (tcpfl & TH_ACK) {
+			/* ACK of first FIN. */
+			nst->nst_state = TCPS_FIN_WAIT_2;
+			return true;
+		} else if (tcpfl & TH_FIN) {
+			/* Simultaneous FIN.  Need to wait for ACKs. */
+			nst->nst_state = TCPS_CLOSING;
+			return true;
+		}
+		break;
+	case TCPS_CLOSING:
+	case TCPS_LAST_ACK:
+	case TCPS_TIME_WAIT:
+		/* Expecting only ACK. */
+		if ((tcpfl & (TH_SYN | TH_ACK | TH_FIN)) != TH_ACK) {
+			return false;
+		}
+		switch (state) {
+		case TCPS_CLOSING:
+			/* One ACK noted, wait for last one. */
+			nst->nst_state = TCPS_LAST_ACK;
+			break;
+		case TCPS_LAST_ACK:
+			/* Last ACK received, quiet wait now. */
+			nst->nst_state = TCPS_TIME_WAIT;
+			break;
+		}
+		return true;
+	case TCPS_CLOSED:
+		/* XXX: Drop or pass? */
 		break;
 	default:
 		npf_state_dump(nst);
 		KASSERT(false);
 	}
-#if 0
-	if (!npf_tcp_inwindow(npc, nbuf, nst, forw)) {
-		return false;
-	}
-#endif
-	if (__predict_false(nstate)) {
-		nst->nst_state = nstate;
-	}
-	return true;
+	return false;
 }
 
 bool
@@ -251,10 +329,10 @@ npf_state_init(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
 	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_LAYER4));
 
 	mutex_init(&nst->nst_lock, MUTEX_DEFAULT, IPL_SOFTNET);
-	nst->nst_state = ST_OPENING;
 
 	if (proto == IPPROTO_TCP) {
 		const struct tcphdr *th = &npc->npc_l4.tcp;
+
 		/* TCP case: must be SYN. */
 		KASSERT(npf_iscached(npc, NPC_TCP));
 		if (th->th_flags != TH_SYN) {
@@ -267,6 +345,12 @@ npf_state_init(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
 			return false;
 		}
 	}
+
+	/*
+	 * Initial state: SYN sent, waiting for response from the other side.
+	 * Note: for UDP or ICMP, reuse SYN-sent flag to note response.
+	 */
+	nst->nst_state = TCPS_SYN_SENT;
 	return true;
 }
 
@@ -274,7 +358,6 @@ void
 npf_state_destroy(npf_state_t *nst)
 {
 
-	KASSERT(nst->nst_state != 0);
 	mutex_destroy(&nst->nst_lock);
 }
 
@@ -292,9 +375,11 @@ npf_state_inspect(const npf_cache_t *npc, nbuf_t *nbuf,
 		ret = npf_state_tcp(npc, nbuf, nst, forw);
 		break;
 	default:
-		/* Handle UDP or ICMP response for opening session. */
-		if (nst->nst_state == ST_OPENING && !forw) {
-			nst->nst_state = ST_ESTABLISHED;
+		/*
+		 * Handle UDP or ICMP response for opening session.
+		 */
+		if (nst->nst_state == TCPS_SYN_SENT && !forw) {
+			nst->nst_state= TCPS_ESTABLISHED;
 		}
 		ret = true;
 	}
@@ -305,30 +390,32 @@ npf_state_inspect(const npf_cache_t *npc, nbuf_t *nbuf,
 	return ret;
 }
 
+/*
+ * npf_state_etime: return session expiration time according to the state.
+ */
 int
 npf_state_etime(const npf_state_t *nst, const int proto)
 {
+	const int state = nst->nst_state;
 
-	if (nst->nst_state == ST_ESTABLISHED) {
-		return expire_table[proto];
+	if (__predict_true(proto == IPPROTO_TCP)) {
+		return tcp_expire_table[state];
 	}
-	return 10;	/* XXX TODO */
+	return expire_table[proto];
 }
-
-#if defined(DDB) || defined(_NPF_TESTING)
 
 void
 npf_state_dump(npf_state_t *nst)
 {
+#if defined(DDB) || defined(_NPF_TESTING)
 	npf_tcpstate_t *fst = &nst->nst_tcpst[0], *tst = &nst->nst_tcpst[1];
 
 	printf("\tstate (%p) %d:\n\t\t"
 	    "F { seqend %u ackend %u mwin %u wscale %u }\n\t\t"
-	    "T { seqend %u, ackend %u mwin %u wscale %u }\n",
+	    "T { seqend %u ackend %u mwin %u wscale %u }\n",
 	    nst, nst->nst_state,
 	    fst->nst_seqend, fst->nst_ackend, fst->nst_maxwin, fst->nst_wscale,
 	    tst->nst_seqend, tst->nst_ackend, tst->nst_maxwin, tst->nst_wscale
 	);
-}
-
 #endif
+}

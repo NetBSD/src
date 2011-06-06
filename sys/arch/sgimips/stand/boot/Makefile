@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2010/05/27 06:58:15 dholland Exp $
+#	$NetBSD: Makefile,v 1.17.2.1 2011/06/06 09:06:42 jruoho Exp $
 
 
 # Don't strip the ECOFF'ed version on install -- strip gets confused by that,
@@ -7,7 +7,7 @@
 STRIPFLAG=
 
 SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
-	getopt.c disk.c
+	getopt.c disk.c arcbios_calls.S
 
 PROG=	aoutboot
 ${PROG}: ip2xboot ip3xboot
@@ -29,14 +29,16 @@ CLEANFILES+=	ip2xboot.map ip3xboot.map
 .include "../Makefile.booters"
 
 ip3xboot: ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} -Map ${.TARGET}.map -N -x -Ttext ${LOAD_ADDRESS_IP32} ${LDBUG} \
-	    -e start -o ${.TARGET}.elf ${OBJS} ${LIBS}
+	    -m elf32btsmip -e start -o ${.TARGET}.elf ${OBJS} ${LIBS}
 	@${STRIP} -s ${.TARGET}.elf -o ${.TARGET}
 	@${SIZE} ${.TARGET}
 
 ip2xboot: ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} -Map ${.TARGET}.map -N -x -Ttext ${LOAD_ADDRESS} ${LDBUG} \
-	    -e start -o ${.TARGET}.elf ${OBJS} ${LIBS}
+	    -m elf32btsmip -e start -o ${.TARGET}.elf ${OBJS} ${LIBS}
 	@${STRIP} -s ${.TARGET}.elf -o ${.TARGET}
 	@${SIZE} ${.TARGET}
 

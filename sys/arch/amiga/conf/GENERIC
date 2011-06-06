@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.265 2011/01/14 10:03:44 phx Exp $
+# $NetBSD: GENERIC,v 1.265.2.1 2011/06/06 09:04:52 jruoho Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.265 $"
+#ident 		"GENERIC-$Revision: 1.265.2.1 $"
 
 
 maxusers	8
@@ -127,7 +127,8 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 
-options 	QUOTA		# User and group quotas in FFS
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server side code
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

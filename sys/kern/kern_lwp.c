@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.153 2011/01/14 02:06:34 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.153.2.1 2011/06/06 09:09:29 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.153 2011/01/14 02:06:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.153.2.1 2011/06/06 09:09:29 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -240,12 +240,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.153 2011/01/14 02:06:34 rmind Exp $")
 #include <sys/filedesc.h>
 #include <sys/dtrace_bsd.h>
 #include <sys/sdt.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
 
 static pool_cache_t	lwp_cache	__read_mostly;
 struct lwplist		alllwp		__cacheline_aligned;
+
+static void		lwp_dtor(void *, void *);
 
 /* DTrace proc provider probes */
 SDT_PROBE_DEFINE(proc,,,lwp_create,
@@ -265,6 +268,9 @@ struct turnstile turnstile0;
 struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 #ifdef LWP0_CPU_INFO
 	.l_cpu = LWP0_CPU_INFO,
+#endif
+#ifdef LWP0_MD_INITIALIZER
+	.l_md = LWP0_MD_INITIALIZER,
 #endif
 	.l_proc = &proc0,
 	.l_lid = 1,
@@ -290,7 +296,7 @@ lwpinit(void)
 	lwpinit_specificdata();
 	lwp_sys_init();
 	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
-	    "lwppl", NULL, IPL_NONE, NULL, NULL, NULL);
+	    "lwppl", NULL, IPL_NONE, NULL, lwp_dtor, NULL);
 }
 
 void
@@ -313,6 +319,26 @@ lwp0_init(void)
 	lwp_initspecific(l);
 
 	SYSCALL_TIME_LWP_INIT(l);
+}
+
+static void
+lwp_dtor(void *arg, void *obj)
+{
+	lwp_t *l = obj;
+	uint64_t where;
+	(void)l;
+
+	/*
+	 * Provide a barrier to ensure that all mutex_oncpu() and rw_oncpu()
+	 * calls will exit before memory of LWP is returned to the pool, where
+	 * KVA of LWP structure might be freed and re-used for other purposes.
+	 * Kernel preemption is disabled around mutex_oncpu() and rw_oncpu()
+	 * callers, therefore cross-call to all CPUs will do the job.  Also,
+	 * the value of l->l_cpu must be still valid at this point.
+	 */
+	KASSERT(l->l_cpu != NULL);
+	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
+	xc_wait(where);
 }
 
 /*
@@ -694,6 +720,15 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	TAILQ_INIT(&l2->l_ld_locks);
 
 	/*
+	 * For vfork, borrow parent's lwpctl context if it exists.
+	 * This also causes us to return via lwp_userret.
+	 */
+	if (flags & LWP_VFORK && l1->l_lwpctl) {
+		l2->l_lwpctl = l1->l_lwpctl;
+		l2->l_flag |= LW_LWPCTL;
+	}
+
+	/*
 	 * If not the first LWP in the process, grab a reference to the
 	 * descriptor table.
 	 */
@@ -1073,6 +1108,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
 	KASSERT(l->l_inheritedprio == -1);
+	KASSERT(l->l_blcnt == 0);
 	kdtrace_thread_dtor(NULL, l);
 	if (!recycle)
 		pool_cache_put(lwp_cache, l);
@@ -1373,6 +1409,16 @@ lwp_userret(struct lwp *l)
 			KASSERT(0);
 			/* NOTREACHED */
 		}
+
+		/* update lwpctl processor (for vfork child_return) */
+		if (l->l_flag & LW_LWPCTL) {
+			lwp_lock(l);
+			KASSERT(kpreempt_disabled());
+			l->l_lwpctl->lc_curcpu = (int)cpu_index(l->l_cpu);
+			l->l_lwpctl->lc_pctr++;
+			l->l_flag &= ~LW_LWPCTL;
+			lwp_unlock(l);
+		}
 	}
 
 #ifdef KERN_SA
@@ -1526,6 +1572,10 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 	l = curlwp;
 	p = l->l_proc;
 
+	/* don't allow a vforked process to create lwp ctls */
+	if (p->p_lflag & PL_PPWAIT)
+		return EBUSY;
+
 	if (l->l_lcpage != NULL) {
 		lcp = l->l_lcpage;
 		*uaddr = lcp->lcp_uaddr + (vaddr_t)l->l_lwpctl - lcp->lcp_kaddr;
@@ -1650,11 +1700,18 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 void
 lwp_ctl_free(lwp_t *l)
 {
+	struct proc *p = l->l_proc;
 	lcproc_t *lp;
 	lcpage_t *lcp;
 	u_int map, offset;
 
-	lp = l->l_proc->p_lwpctl;
+	/* don't free a lwp context we borrowed for vfork */
+	if (p->p_lflag & PL_PPWAIT) {
+		l->l_lwpctl = NULL;
+		return;
+	}
+
+	lp = p->p_lwpctl;
 	KASSERT(lp != NULL);
 
 	lcp = l->l_lcpage;

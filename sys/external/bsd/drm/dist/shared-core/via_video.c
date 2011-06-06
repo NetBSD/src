@@ -1,4 +1,4 @@
-/*
+/*-
  * Copyright 2005 Thomas Hellstrom. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,6 +24,9 @@
  *
  * Video and XvMC related functions.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_video.c,v 1.1.1.1.30.1 2011/06/06 09:09:13 jruoho Exp $");
 
 #include "drmP.h"
 #include "via_drm.h"
@@ -75,7 +78,7 @@ int via_decoder_futex(struct drm_device *dev, void *data, struct drm_file *file_
 
 	DRM_DEBUG("\n");
 
-	if (fx->lock > VIA_NR_XVMC_LOCKS)
+	if (fx->lock >= VIA_NR_XVMC_LOCKS)
 		return -EFAULT;
 
 	lock = (volatile int *)XVMCLOCKPTR(sAPriv, fx->lock);

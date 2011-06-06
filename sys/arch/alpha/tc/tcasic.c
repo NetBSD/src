@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.42 2009/03/14 15:36:00 dsl Exp $ */
+/* $NetBSD: tcasic.c,v 1.42.6.1 2011/06/06 09:04:46 jruoho Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.42 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.42.6.1 2011/06/06 09:04:46 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,10 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.42 2009/03/14 15:36:00 dsl Exp $");
 #include <alpha/tc/tc_conf.h>
 
 /* Definition of the driver for autoconfig. */
-int	tcasicmatch(struct device *, struct cfdata *, void *);
-void	tcasicattach(struct device *, struct device *, void *);
+int	tcasicmatch(device_t, cfdata_t, void *);
+void	tcasicattach(device_t, device_t, void *);
 
-CFATTACH_DECL(tcasic, sizeof (struct device),
+CFATTACH_DECL_NEW(tcasic, 0,
     tcasicmatch, tcasicattach, NULL, NULL);
 
 extern struct cfdriver tcasic_cd;
@@ -60,7 +60,7 @@ int	tcasicprint(void *, const char *);
 int	tcasicfound;
 
 int
-tcasicmatch(struct device *parent, struct cfdata *cfdata, void *aux)
+tcasicmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -79,7 +79,7 @@ tcasicmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 }
 
 void
-tcasicattach(struct device *parent, struct device *self, void *aux)
+tcasicattach(device_t parent, device_t self, void *aux)
 {
 	struct tcbus_attach_args tba;
 	void (*intr_setup)(void);

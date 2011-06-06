@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.25 2010/08/25 16:33:51 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.25.2.1 2011/06/06 09:06:01 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -208,8 +208,7 @@ _rtt(void)
 void
 main(void)
 {
-	extern char bootprog_name[], bootprog_rev[],
-		    bootprog_maker[], bootprog_date[];
+	extern char bootprog_name[], bootprog_rev[];
 	int chosen, options, openprom;
 	char bootline[512];		/* Should check size? */
 	char *cp;
@@ -219,7 +218,6 @@ main(void)
 
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	/*
 	 * Figure out what version of Open Firmware...

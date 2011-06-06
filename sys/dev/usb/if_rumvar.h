@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rumvar.h,v 1.8 2010/11/03 22:30:50 dyoung Exp $	*/
+/*	$NetBSD: if_rumvar.h,v 1.8.2.1 2011/06/06 09:08:41 jruoho Exp $	*/
 /*	$OpenBSD: if_rumvar.h,v 1.7 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #define RUM_RX_LIST_COUNT	1
-#define RUM_TX_LIST_COUNT	1
+#define RUM_TX_LIST_COUNT	8
 
 struct rum_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
@@ -98,6 +98,7 @@ struct rum_softc {
 	usbd_pipe_handle		sc_tx_pipeh;
 
 	enum ieee80211_state		sc_state;
+	int				sc_arg;
 	struct usb_task			sc_task;
 
 	struct ieee80211_amrr		amrr;
@@ -106,6 +107,7 @@ struct rum_softc {
 	struct rum_rx_data		rx_data[RUM_RX_LIST_COUNT];
 	struct rum_tx_data		tx_data[RUM_TX_LIST_COUNT];
 	int				tx_queued;
+	int				tx_cur;
 
 	struct ieee80211_beacon_offsets	sc_bo;
 

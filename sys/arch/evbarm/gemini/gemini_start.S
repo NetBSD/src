@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_start.S,v 1.6 2009/10/21 14:15:51 rmind Exp $	*/
+/*	$NetBSD: gemini_start.S,v 1.6.6.1 2011/06/06 09:05:25 jruoho Exp $	*/
 
 /*
  * Machine dependant startup code for GEMINI boards.
@@ -86,16 +86,12 @@
 
 #include "opt_gemini.h"
 #include "opt_com.h"
-#include "assym.h"
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#undef DOMAIN_CLIENT	/* assym.h defines as 1, but pte.h defines as 0x01 */
-#include <arm/arm32/pmap.h>
-#include <arm/gemini/gemini_reg.h>
-#include <evbarm/gemini/gemini.h>
+#include "assym.h"
 
-RCSID("$NetBSD: gemini_start.S,v 1.6 2009/10/21 14:15:51 rmind Exp $")
+RCSID("$NetBSD: gemini_start.S,v 1.6.6.1 2011/06/06 09:05:25 jruoho Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -363,37 +359,37 @@ mmu_init_table:
 	/* Maintain current 1:1 addressability */
 	MMU_INIT(KERNEL_BASE_phys, KERNEL_BASE_phys,
 		(MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_AP(AP_KRW) | L1_S_B | L1_S_C)
+		L1_S_PROTO | L1_S_AP_KRW | L1_S_B | L1_S_C)
 
 	/* Map Kernel base VA:PA, write-back cacheable */
 	MMU_INIT(KERNEL_BASE_virt, KERNEL_BASE_phys,
 		(MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_AP(AP_KRW) | L1_S_B | L1_S_C)
+		L1_S_PROTO | L1_S_AP_KRW | L1_S_B | L1_S_C)
 
 	/* Map Gemini GLOBAL regs */
 	MMU_INIT(GEMINI_GLOBAL_VBASE, GEMINI_GLOBAL_BASE,
 		1,
-		L1_S_PROTO | L1_S_AP(AP_KRW))
+		L1_S_PROTO | L1_S_AP_KRW)
 
 	/* Map Gemini UART */
 	MMU_INIT(GEMINI_UART_VBASE, GEMINI_UART_BASE,
 		1,
-		L1_S_PROTO | L1_S_AP(AP_KRW))
+		L1_S_PROTO | L1_S_AP_KRW)
 
 	/* Map Gemini LPC Host Controlr Space */
 	MMU_INIT(GEMINI_LPCHC_VBASE, GEMINI_LPCHC_BASE,
 		1,
-		L1_S_PROTO | L1_S_AP(AP_KRW))
+		L1_S_PROTO | L1_S_AP_KRW)
 
 	/* Map Gemini LPC IO Space */
 	MMU_INIT(GEMINI_LPCIO_VBASE, GEMINI_LPCIO_BASE,
 		1,
-		L1_S_PROTO | L1_S_AP(AP_KRW))
+		L1_S_PROTO | L1_S_AP_KRW)
 
 	/* Map Gemini DRAM Controller Space */
 	MMU_INIT(GEMINI_DRAMC_VBASE, GEMINI_DRAMC_BASE,
 		1,
-		L1_S_PROTO | L1_S_AP(AP_KRW))
+		L1_S_PROTO | L1_S_AP_KRW)
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)

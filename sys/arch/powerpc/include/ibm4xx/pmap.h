@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 2008/12/09 20:45:45 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14.8.1 2011/06/06 09:06:29 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -128,9 +128,9 @@
  * Extra flags to pass to pmap_enter() -- make sure they don't conflict
  * w/PMAP_CANFAIL or PMAP_WIRED
  */
-#define	PME_NOCACHE	0x100
-#define	PME_WRITETHROUG	0x200
-#define	PMAP_NC		PME_NOCACHE	/* XXX: OEA pmap compat. for bus_dma */
+#define	PME_NOCACHE	0x1000000
+#define	PME_WRITETHROUG	0x2000000
+#define	PMAP_MD_NOCACHE	PME_NOCACHE	/* XXX: OEA pmap compat. for bus_dma */
 
 #ifndef _LOCORE
 

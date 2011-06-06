@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.4 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.4.2.1 2011/06/06 09:09:53 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.4 2010/12/18 01:07:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.4.2.1 2011/06/06 09:09:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,7 +78,7 @@ struct npf_table {
 	/* Table ID. */
 	u_int				t_id;
 	/* The storage type can be: 1. Hash 2. RB-tree. */
-	u_int				t_type;
+	int				t_type;
 	struct npf_hashl *		t_hashl;
 	u_long				t_hashmask;
 	rb_tree_t			t_rbtree;
@@ -310,18 +310,10 @@ npf_table_get(npf_tableset_t *tset, u_int tid)
 	if ((u_int)tid >= NPF_TABLE_SLOTS) {
 		return NULL;
 	}
-	if (tset == NULL) {
-		npf_core_enter();
-		rtset = npf_core_tableset();
-	} else {
-		rtset = tset;
-	}
+	rtset = tset ? tset : npf_core_tableset();
 	t = rtset[tid];
 	if (t != NULL) {
 		rw_enter(&t->t_lock, RW_READER);
-	}
-	if (tset == NULL) {
-		npf_core_exit();
 	}
 	return t;
 }
@@ -479,10 +471,8 @@ int
 npf_table_match_v4addr(u_int tid, in_addr_t ip4addr)
 {
 	struct npf_hashl *htbl;
-	npf_tblent_t *e;
+	npf_tblent_t *e = NULL;
 	npf_table_t *t;
-
-	e = NULL;
 
 	/* Locks the table. */
 	t = npf_table_get(NULL, tid);

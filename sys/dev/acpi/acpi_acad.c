@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.48 2011/01/04 05:48:48 jruoho Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.48.2.1 2011/06/06 09:07:40 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,12 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.48 2011/01/04 05:48:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.48.2.1 2011/06/06 09:07:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/module.h>
-#include <sys/mutex.h>
 #include <sys/systm.h>
 
 #include <dev/acpi/acpireg.h>
@@ -62,7 +61,6 @@ struct acpiacad_softc {
 	struct sysmon_envsys	*sc_sme;
 	struct sysmon_pswitch	 sc_smpsw;
 	envsys_data_t		 sc_sensor;
-	kmutex_t		 sc_mutex;
 	int			 sc_status;
 };
 
@@ -117,7 +115,6 @@ acpiacad_attach(device_t parent, device_t self, void *aux)
 	sc->sc_node = aa->aa_node;
 
 	acpiacad_init_envsys(self);
-	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_ACADAPTER;
@@ -138,8 +135,6 @@ acpiacad_detach(device_t self, int flags)
 	struct acpiacad_softc *sc = device_private(self);
 
 	acpi_deregister_notify(sc->sc_node);
-
-	mutex_destroy(&sc->sc_mutex);
 
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
@@ -177,8 +172,6 @@ acpiacad_get_status(void *arg)
 	ACPI_INTEGER status;
 	ACPI_STATUS rv;
 
-	mutex_enter(&sc->sc_mutex);
-
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_PSR", &status);
 
 	if (ACPI_FAILURE(rv))
@@ -208,8 +201,6 @@ acpiacad_get_status(void *arg)
 	sc->sc_sensor.state = ENVSYS_SVALID;
 	sc->sc_sensor.value_cur = sc->sc_status;
 
-	mutex_exit(&sc->sc_mutex);
-
 	return;
 
 fail:
@@ -218,8 +209,6 @@ fail:
 
 	aprint_debug_dev(dv, "failed to evaluate _PSR: %s\n",
 	    AcpiFormatException(rv));
-
-	mutex_exit(&sc->sc_mutex);
 }
 
 /*
@@ -291,82 +280,43 @@ acpiacad_init_envsys(device_t dv)
 
 fail:
 	aprint_error_dev(dv, "failed to initialize sysmon\n");
+
 	sysmon_envsys_destroy(sc->sc_sme);
 	sc->sc_sme = NULL;
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpiacad, NULL);
-CFDRIVER_DECL(acpiacad, DV_DULL, NULL);
 
-static int acpiacadloc[] = { -1 };
-extern struct cfattach acpiacad_ca;
-
-static struct cfparent acpiparent = {
-	"acpinodebus", NULL, DVUNIT_ANY
-};
-
-static struct cfdata acpiacad_cfdata[] = {
-	{
-		.cf_name = "acpiacad",
-		.cf_atname = "acpiacad",
-		.cf_unit = 0,
-		.cf_fstate = FSTATE_STAR,
-		.cf_loc = acpiacadloc,
-		.cf_flags = 0,
-		.cf_pspec = &acpiparent,
-	},
-
-	{ NULL, NULL, 0, 0, NULL, 0, NULL }
-};
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
 
 static int
-acpiacad_modcmd(modcmd_t cmd, void *context)
+acpiacad_modcmd(modcmd_t cmd, void *aux)
 {
-	int err;
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
 
-		err = config_cfdriver_attach(&acpiacad_cd);
-
-		if (err != 0)
-			return err;
-
-		err = config_cfattach_attach("acpiacad", &acpiacad_ca);
-
-		if (err != 0) {
-			config_cfdriver_detach(&acpiacad_cd);
-			return err;
-		}
-
-		err = config_cfdata_attach(acpiacad_cfdata, 1);
-
-		if (err != 0) {
-			config_cfattach_detach("acpiacad", &acpiacad_ca);
-			config_cfdriver_detach(&acpiacad_cd);
-			return err;
-		}
-
-		return 0;
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpiacad,
+		    cfattach_ioconf_acpiacad, cfdata_ioconf_acpiacad);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
 
-		err = config_cfdata_detach(acpiacad_cfdata);
-
-		if (err != 0)
-			return err;
-
-		config_cfattach_detach("acpiacad", &acpiacad_ca);
-		config_cfdriver_detach(&acpiacad_cd);
-
-		return 0;
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpiacad,
+		    cfattach_ioconf_acpiacad, cfdata_ioconf_acpiacad);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

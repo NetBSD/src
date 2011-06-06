@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.10 2009/12/12 14:44:10 tsutsui Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.10.6.1 2011/06/06 09:07:50 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.10 2009/12/12 14:44:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.10.6.1 2011/06/06 09:07:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,16 @@ rs5c372rtc_match(device_t parent, cfdata_t cf, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
 
-	if (ia->ia_addr == RS5C372_ADDR)
-		return (1);
-	return (0);
+	if (ia->ia_name) {
+		/* direct config - check name */
+		if (strcmp(ia->ia_name, "rs5c372rtc") == 0)
+			return 1;
+	} else {
+		/* indirect config - check typical address */
+		if (ia->ia_addr == RS5C372_ADDR)
+			return 1;
+	}
+	return 0;
 }
 
 static void

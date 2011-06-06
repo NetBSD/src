@@ -1,10 +1,10 @@
-/*	$NetBSD: readufs_lfs.c,v 1.11 2009/03/18 10:22:38 cegger Exp $	*/
+/*	$NetBSD: readufs_lfs.c,v 1.11.6.1 2011/06/06 09:07:02 jruoho Exp $	*/
 /*	from Id: readufs_lfs.c,v 1.7 2003/10/15 14:16:58 itohy Exp 	*/
 
 /*
  * FS specific support for 4.4BSD Log-structured Filesystem
  *
- * Written in 1999, 2002, 2003 by ITOH Yasufumi (itohy@NetBSD.org).
+ * Written in 1999, 2002, 2003 by ITOH Yasufumi.
  * Public domain.
  *
  * Intended to be used for boot programs (first stage).

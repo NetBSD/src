@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_hp.c,v 1.4 2010/10/25 07:53:22 jruoho Exp $ */
+/*	$NetBSD: wmi_hp.c,v 1.4.2.1 2011/06/06 09:07:44 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.4 2010/10/25 07:53:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.4.2.1 2011/06/06 09:07:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -531,78 +531,38 @@ wmi_hp_sensor_update(void *aux)
 	}
 }
 
+MODULE(MODULE_CLASS_DRIVER, wmihp, "acpiwmi");
+
 #ifdef _MODULE
-
-MODULE(MODULE_CLASS_DRIVER, wmihp, NULL);
-CFDRIVER_DECL(wmihp, DV_DULL, NULL);
-
-static int wmihploc[] = { -1 };
-extern struct cfattach wmihp_ca;
-
-static struct cfparent wmiparent = {
-	"acpiwmibus", NULL, DVUNIT_ANY
-};
-
-static struct cfdata wmihp_cfdata[] = {
-	{
-		.cf_name = "wmihp",
-		.cf_atname = "wmihp",
-		.cf_unit = 0,
-		.cf_fstate = FSTATE_STAR,
-		.cf_loc = wmihploc,
-		.cf_flags = 0,
-		.cf_pspec = &wmiparent,
-	},
-
-	{ NULL, NULL, 0, 0, NULL, 0, NULL }
-};
+#include "ioconf.c"
+#endif
 
 static int
-wmihp_modcmd(modcmd_t cmd, void *opaque)
+wmihp_modcmd(modcmd_t cmd, void *aux)
 {
-	int err;
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
 
-		err = config_cfdriver_attach(&wmihp_cd);
-
-		if (err != 0)
-			return err;
-
-		err = config_cfattach_attach("wmihp", &wmihp_ca);
-
-		if (err != 0) {
-			config_cfdriver_detach(&wmihp_cd);
-			return err;
-		}
-
-		err = config_cfdata_attach(wmihp_cfdata, 1);
-
-		if (err != 0) {
-			config_cfattach_detach("wmihp", &wmihp_ca);
-			config_cfdriver_detach(&wmihp_cd);
-			return err;
-		}
-
-		return 0;
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_wmihp,
+		    cfattach_ioconf_wmihp, cfdata_ioconf_wmihp);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
 
-		err = config_cfdata_detach(wmihp_cfdata);
-
-		if (err != 0)
-			return err;
-
-		config_cfattach_detach("wmihp", &wmihp_ca);
-		config_cfdriver_detach(&wmihp_cd);
-
-		return 0;
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_wmihp,
+		    cfattach_ioconf_wmihp, cfdata_ioconf_wmihp);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

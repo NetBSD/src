@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.18 2009/05/12 12:10:46 cegger Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.18.6.1 2011/06/06 09:07:46 jruoho Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.18 2009/05/12 12:10:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.18.6.1 2011/06/06 09:07:46 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.18 2009/05/12 12:10:46 cegger Exp $");
 #include <netbt/hci.h>
 
 #include <dev/bluetooth/bcsp.h>
-
-#include "ioconf.h"
 
 #ifdef BCSP_DEBUG
 #ifdef DPRINTF
@@ -186,6 +184,7 @@ static void bcsp_stats(device_t, struct bt_stats *, int);
 static void bcsp_packet_print(struct mbuf *m);
 #endif
 
+extern struct cfdriver bcsp_cd;
 
 /*
  * It doesn't need to be exported, as only bcspattach() uses it,

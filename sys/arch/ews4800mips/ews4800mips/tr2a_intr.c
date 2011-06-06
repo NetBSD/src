@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2a_intr.c,v 1.12 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: tr2a_intr.c,v 1.12.28.1 2011/06/06 09:05:34 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,12 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.12 2008/04/28 20:23:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.12.28.1 2011/06/06 09:05:34 jruoho Exp $");
 
+#define __INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/evcnt.h>
+#include <sys/lwp.h>
+#include <sys/cpu.h>
 #include <sys/intr.h>
 
 #include <machine/locore.h>	/* mips3_cp0* */
@@ -45,27 +48,16 @@ __KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.12 2008/04/28 20:23:18 martin Exp $"
 
 SBD_DECL(tr2a);
 
-const uint32_t tr2a_sr_bits[_IPL_N] = {
+const struct ipl_sr_map tr2a_ipl_sr_map = {
+    .sr_bits = {
 	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] =
-	    MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4,
-	[IPL_SCHED] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_INT_MASK & ~MIPS_INT_MASK_5,
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
 };
 
 #define	NIRQ		16
@@ -178,134 +170,125 @@ tr2a_intr_disestablish(void *arg)
 }
 
 void
-tr2a_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+tr2a_intr(int ppl, vaddr_t pc, uint32_t status)
 {
 	struct tr2a_intr_handler *ih;
 	struct clockframe cf;
-	uint32_t r, intc_cause, handled;
+	uint32_t r, intc_cause, ipending;
+	int ipl;
 
-	handled = 0;
 	intc_cause = *INTC_STATUS_REG & *INTC_MASK_REG;
 
-	if ((ipending & MIPS_INT_MASK_5) && (intc_cause & INTC_INT5)) {
-		cf.pc = pc;
-		cf.sr = status;
-		tr2a_wbflush();
-		*INTC_CLEAR_REG = 0x7c;
-		*INTC_STATUS_REG;
+	while (ppl < (ipl = splintr(&ipending))) {
+		if ((ipending & MIPS_INT_MASK_5) && (intc_cause & INTC_INT5)) {
+			cf.pc = pc;
+			cf.sr = status;
+			cf.intr = (curcpu()->ci_idepth > 1);
+			tr2a_wbflush();
+			*INTC_CLEAR_REG = 0x7c;
+			*INTC_STATUS_REG;
 
-		hardclock(&cf);
-		timer_tr2a_ev.ev_count++;
-		handled |= MIPS_INT_MASK_5;
-	}
-	_splset((status & handled) | MIPS_SR_INT_IE);
-
-
-	if ((ipending & MIPS_INT_MASK_4) && (intc_cause & INTC_INT4)) {
-		/* KBD, MOUSE, SERIAL */
-		r = *ASO_INT_STATUS_REG;
-		if (r & 0x300010) {
-			ih = &tr2a_intr_handler[4];
-			if (ih->func) {
-				ih->func(ih->arg);
-				ih->evcnt.ev_count++;
-			}
-		} else if (r & 0x40) {
-			/* kbms */
-			ih = &tr2a_intr_handler[9];
-			if (ih->func) {
-				ih->func(ih->arg);
-				ih->evcnt.ev_count++;
-			}
-		} else if (r & 0x20) {
-			printf("INT4 (1)\n");
-		} else if (r & 0x00800000) {
-			printf("INT4 (2)\n");
-		} else if (r & 0x00400000) {
-			printf("INT4 (3)\n");
-		} else if (r != 0) {
-			printf("not for INT4 %x\n", r);
+			hardclock(&cf);
+			timer_tr2a_ev.ev_count++;
 		}
 
-		tr2a_wbflush();
-		*INTC_CLEAR_REG = 0x68;
-		*INTC_STATUS_REG;
-
-		handled |= MIPS_INT_MASK_4;
-	}
-	_splset((status & handled) | MIPS_SR_INT_IE);
-
-	if ((ipending & MIPS_INT_MASK_3) && (intc_cause & INTC_INT3)) {
-		/* APbus HI */
-		printf("APbus HI\n");
-		tr2a_wbflush();
-		*INTC_CLEAR_REG = 0x54;
-		*INTC_STATUS_REG;
-		handled |= MIPS_INT_MASK_3;
-	}
-
-	if ((ipending & MIPS_INT_MASK_2) && (intc_cause & INTC_INT2)) {
-		/* SCSI, ETHER */
-		r = *ASO_INT_STATUS_REG;
-		if (r & 0x100) {	/* SCSI-A */
-			ih = &tr2a_intr_handler[6];
-			if (ih->func) {
-				ih->func(ih->arg);
-				ih->evcnt.ev_count++;
+		if ((ipending & MIPS_INT_MASK_4) && (intc_cause & INTC_INT4)) {
+			/* KBD, MOUSE, SERIAL */
+			r = *ASO_INT_STATUS_REG;
+			if (r & 0x300010) {
+				ih = &tr2a_intr_handler[4];
+				if (ih->func) {
+					ih->func(ih->arg);
+					ih->evcnt.ev_count++;
+				}
+			} else if (r & 0x40) {
+				/* kbms */
+				ih = &tr2a_intr_handler[9];
+				if (ih->func) {
+					ih->func(ih->arg);
+					ih->evcnt.ev_count++;
+				}
+			} else if (r & 0x20) {
+				printf("INT4 (1)\n");
+			} else if (r & 0x00800000) {
+				printf("INT4 (2)\n");
+			} else if (r & 0x00400000) {
+				printf("INT4 (3)\n");
+			} else if (r != 0) {
+				printf("not for INT4 %x\n", r);
 			}
-		} else if (r & 0x200) {	/* SCSI-B */
-			ih = &tr2a_intr_handler[10];
-			if (ih->func) {
-				ih->func(ih->arg);
-				ih->evcnt.ev_count++;
-			}
-		} else if (r & 0x1) {	/* LANCE */
-			ih = &tr2a_intr_handler[0];
-			if (ih->func) {
-				ih->func(ih->arg);
-				ih->evcnt.ev_count++;
-			}
-		} else if (r != 0) {
-			printf("not for INT2 %x %x\n", r,
-			    *ASO_DMAINT_STATUS_REG);
+
+			tr2a_wbflush();
+			*INTC_CLEAR_REG = 0x68;
+			*INTC_STATUS_REG;
 		}
 
-		tr2a_wbflush();
-		*INTC_CLEAR_REG = 0x40;
-		*INTC_STATUS_REG;
-		handled |= MIPS_INT_MASK_2;
-	}
-	_splset((status & handled) | MIPS_SR_INT_IE);
-
-	if ((ipending & MIPS_INT_MASK_1) && (intc_cause & INTC_INT1)) {
-		/* APbus LO */
-		printf("APbus LO\n");
-		tr2a_wbflush();
-		*INTC_CLEAR_REG = 0x2c;
-		*INTC_STATUS_REG;
-		handled |= MIPS_INT_MASK_1;
-	}
-
-	if ((ipending & MIPS_INT_MASK_0) && (intc_cause & INTC_INT0)) {
-		/* NMI etc. */
-		r = *ASO_INT_STATUS_REG;
-		printf("INT0 %08x\n", r);
-		if (r & 0x8000) {
-			printf("INT0(1) NMI\n");
-		} else if (r & 0x8) {
-			printf("INT0(2)\n");
-		} else if (r & 0x4) {
-			printf("INT0(3)\n");
-		} else if (r != 0) {
-			printf("not for INT0 %x\n", r);
+		if ((ipending & MIPS_INT_MASK_3) && (intc_cause & INTC_INT3)) {
+			/* APbus HI */
+			printf("APbus HI\n");
+			tr2a_wbflush();
+			*INTC_CLEAR_REG = 0x54;
+			*INTC_STATUS_REG;
 		}
-		tr2a_wbflush();
-		*INTC_CLEAR_REG = 0x14;
-		*INTC_STATUS_REG;
-		handled |= MIPS_INT_MASK_0;
+
+		if ((ipending & MIPS_INT_MASK_2) && (intc_cause & INTC_INT2)) {
+			/* SCSI, ETHER */
+			r = *ASO_INT_STATUS_REG;
+			if (r & 0x100) {	/* SCSI-A */
+				ih = &tr2a_intr_handler[6];
+				if (ih->func) {
+					ih->func(ih->arg);
+					ih->evcnt.ev_count++;
+				}
+			} else if (r & 0x200) {	/* SCSI-B */
+				ih = &tr2a_intr_handler[10];
+				if (ih->func) {
+					ih->func(ih->arg);
+					ih->evcnt.ev_count++;
+				}
+			} else if (r & 0x1) {	/* LANCE */
+				ih = &tr2a_intr_handler[0];
+				if (ih->func) {
+					ih->func(ih->arg);
+					ih->evcnt.ev_count++;
+				}
+			} else if (r != 0) {
+				printf("not for INT2 %x %x\n", r,
+				    *ASO_DMAINT_STATUS_REG);
+			}
+
+			tr2a_wbflush();
+			*INTC_CLEAR_REG = 0x40;
+			*INTC_STATUS_REG;
+		}
+
+		if ((ipending & MIPS_INT_MASK_1) && (intc_cause & INTC_INT1)) {
+			/* APbus LO */
+			printf("APbus LO\n");
+			tr2a_wbflush();
+			*INTC_CLEAR_REG = 0x2c;
+			*INTC_STATUS_REG;
+		}
+
+		if ((ipending & MIPS_INT_MASK_0) && (intc_cause & INTC_INT0)) {
+			/* NMI etc. */
+			r = *ASO_INT_STATUS_REG;
+			printf("INT0 %08x\n", r);
+			if (r & 0x8000) {
+				printf("INT0(1) NMI\n");
+			} else if (r & 0x8) {
+				printf("INT0(2)\n");
+			} else if (r & 0x4) {
+				printf("INT0(3)\n");
+			} else if (r != 0) {
+				printf("not for INT0 %x\n", r);
+			}
+			tr2a_wbflush();
+			*INTC_CLEAR_REG = 0x14;
+			*INTC_STATUS_REG;
+		}
+		intc_cause = *INTC_STATUS_REG & *INTC_MASK_REG;
 	}
-	cause &= ~handled;
-	_splset(((status & ~cause) & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 }
 
 void

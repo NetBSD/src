@@ -1,4 +1,4 @@
-/*	$NetBSD: bugsyscalls.S,v 1.2 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: bugsyscalls.S,v 1.2.28.1 2011/06/06 09:06:17 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 
-#define	BSYS(num)	addi r10,0,num ; sc
+#define	BSYS(num)	addi %r10,0,num ; sc
 
 
 /*
@@ -60,8 +60,8 @@ ENTRY(bugsys_outchr)
  */
 ENTRY(bugsys_instat)
 	BSYS(0x0002)
-	li	r4,0x8
-	and	r3,r3,r4
+	li	%r4,0x8
+	and	%r3,%r3,%r4
 	blr
 
 /*
@@ -74,8 +74,8 @@ ENTRY(bugsys_instat)
  */
 ENTRY(bugsys_dskrd)
 	BSYS(0x0010)
-	li	r4,0x8
-	and	r3,r3,r4
+	li	%r4,0x8
+	and	%r3,%r3,%r4
 	blr
 
 /*
@@ -88,8 +88,8 @@ ENTRY(bugsys_dskrd)
  */
 ENTRY(bugsys_dskwr)
 	BSYS(0x0011)
-	li	r4,0x8
-	and	r3,r3,r4
+	li	%r4,0x8
+	and	%r3,%r3,%r4
 	blr
 
 /*
@@ -102,8 +102,8 @@ ENTRY(bugsys_dskwr)
  */
 ENTRY(bugsys_netio)
 	BSYS(0x001d)
-	li	r4,0x8
-	and	r3,r3,r4
+	li	%r4,0x8
+	and	%r3,%r3,%r4
 	blr
 
 /*

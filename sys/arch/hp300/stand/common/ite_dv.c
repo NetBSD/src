@@ -1,6 +1,7 @@
-/*	$NetBSD: ite_dv.c,v 1.6 2006/01/28 12:00:56 tsutsui Exp $	*/
+/*	$NetBSD: ite_dv.c,v 1.6.104.1 2011/06/06 09:05:38 jruoho Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,57 +37,16 @@
  *
  *	@(#)ite_dv.c	8.1 (Berkeley) 6/10/93
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: ite_dv.c 1.2 92/01/20$
- *
- *	@(#)ite_dv.c	8.1 (Berkeley) 6/10/93
- */
 
 #ifdef ITECONSOLE
 
 #include <sys/param.h>
 
-#include <hp300/dev/itereg.h>
-#include <hp300/dev/grf_dvreg.h>
+#include <hp300/stand/common/itereg.h>
+#include <hp300/stand/common/grf_dvreg.h>
 
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
-
-#define WINDOWMOVER	dvbox_windowmove
 
 static void dv_reset(struct dvboxfb *);
 static void dvbox_windowmove(struct ite_data *, int, int, int, int,
@@ -97,7 +57,8 @@ dvbox_init(struct ite_data *ip)
 {
 	struct dvboxfb *regbase;
 	int i;
-	
+
+	ip->bmv = dvbox_windowmove;
 	regbase = (void *)ip->regbase;
 	dv_reset(regbase);
 	DELAY(4000);
@@ -109,7 +70,7 @@ dvbox_init(struct ite_data *ip)
 	 * Lastly, turn on the box.
 	 */
 	regbase->interrupt = 0x04;
-	regbase->drive     = 0x10;		
+	regbase->drive     = 0x10;
 	regbase->rep_rule  = RR_COPY << 4 | RR_COPY;
 	regbase->opwen     = 0x01;
 	regbase->fbwen     = 0x0;
@@ -149,11 +110,11 @@ dvbox_init(struct ite_data *ip)
 	}
 
 	regbase->cmapbank = 0;
-	
+
 	db_waitbusy(regbase);
 
 	ite_fontinfo(ip);
-	ite_fontinit(ip);
+	ite_fontinit8bpp(ip);
 
 	/*
 	 * Clear the (visible) framebuffer.
@@ -171,60 +132,14 @@ dvbox_init(struct ite_data *ip)
 }
 
 void
-dvbox_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
-{
-
-	dvbox_windowmove(ip, charY(ip, c), charX(ip, c),
-			 dy * ip->ftheight, dx * ip->ftwidth,
-			 ip->ftheight, ip->ftwidth, RR_COPY);
-}
-
-void
-dvbox_cursor(struct ite_data *ip, int flag)
-{
-	if (flag == DRAW_CURSOR)
-		draw_cursor(ip)
-	else if (flag == MOVE_CURSOR) {
-		erase_cursor(ip)
-		draw_cursor(ip)
-	}
-	else
-		erase_cursor(ip)
-}
-
-void
-dvbox_clear(struct ite_data *ip, int sy, int sx, int h, int w)
-{
-
-	dvbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			 sy * ip->ftheight, sx * ip->ftwidth,
-			 h  * ip->ftheight, w  * ip->ftwidth,
-			 RR_CLEAR);
-}
-
-void
-dvbox_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
-{
-	int dy = sy - count;
-	int height = ip->rows - sy;
-
-	dvbox_cursor(ip, ERASE_CURSOR);
-
-	dvbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			 dy * ip->ftheight, sx * ip->ftwidth,
-			 height * ip->ftheight,
-			 ip->cols * ip->ftwidth, RR_COPY);
-}
-
-void
-dvbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
-    int h, int w, int func)
+dvbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
+    int w, int func)
 {
 	struct dvboxfb *dp = (void *)ip->regbase;
 
 	if (h == 0 || w == 0)
 		return;
-	
+
 	db_waitbusy(dp);
 	dp->rep_rule = func << 4 | func;
 	dp->source_y = sy;
@@ -289,5 +204,4 @@ dv_reset(struct dvboxfb *dbp)
 	 * End of missing ROM code.
 	 */
 }
-
 #endif

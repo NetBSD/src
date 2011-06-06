@@ -1,7 +1,6 @@
-/*	$NetBSD: uvm_pager.c,v 1.98 2010/06/22 18:34:50 rmind Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.98.2.1 2011/06/06 09:10:23 jruoho Exp $	*/
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -39,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.98 2010/06/22 18:34:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.98.2.1 2011/06/06 09:10:23 jruoho Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -47,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.98 2010/06/22 18:34:50 rmind Exp $")
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 

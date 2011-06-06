@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.2 2008/04/28 20:23:36 martin Exp $ */
+/*	$NetBSD: promlib.c,v 1.2.28.1 2011/06/06 09:06:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
 
 #include <sys/types.h>
 #include <machine/promlib.h>
+
+#include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include "openfirm.h"
 
@@ -139,7 +142,7 @@ prom_init(void)
 
 	OF_initialize();
 
-	memset(promops, 0, sizeof(promops));
+	memset(&promops, 0, sizeof(promops));
 
 	/* Access to boot arguments */
 	promops.po_bootpath = openfirmware_bootpath;

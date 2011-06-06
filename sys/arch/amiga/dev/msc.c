@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.42 2010/05/25 02:21:30 jklos Exp $ */
+/*	$NetBSD: msc.c,v 1.42.2.1 2011/06/06 09:04:54 jruoho Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.42 2010/05/25 02:21:30 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.42.2.1 2011/06/06 09:04:54 jruoho Exp $");
 
 #include "msc.h"
 
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.42 2010/05/25 02:21:30 jklos Exp $");
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
@@ -208,13 +207,13 @@ const struct   speedtab *mscspeedtab;
 int mscmctl(dev_t dev, int bits, int howto);
 void mscmint(register void *data);
 
-int mscmatch(struct device *, struct cfdata *, void *);
-void mscattach(struct device *, struct device *, void *);
+int mscmatch(device_t, cfdata_t, void *);
+void mscattach(device_t, device_t, void *);
 
 #define	SWFLAGS(dev)	(msc->openflags | (MSCDIALIN(dev) ? 0 : TIOCFLAG_SOFTCAR))
 #define	DEBUG_CD	0
 
-CFATTACH_DECL(msc, sizeof(struct device),
+CFATTACH_DECL_NEW(msc, 0,
     mscmatch, mscattach, NULL, NULL);
 
 dev_type_open(mscopen);
@@ -232,7 +231,7 @@ const struct cdevsw msc_cdevsw = {
 };
 
 int
-mscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+mscmatch(device_t pdp, cfdata_t cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -244,7 +243,7 @@ mscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-mscattach(struct device *pdp, struct device *dp, void *auxp)
+mscattach(device_t pdp, device_t dp, void *auxp)
 {
 	volatile struct mscmemory *mscmem;
 	struct mscdevice *msc;
@@ -348,7 +347,7 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (!msc_tty[ttyn]) {
 
-		tp = ttymalloc();
+		tp = tty_alloc();
 		tty_attach(tp);
 		msc_tty[ttyn] = tp;
 		msc_tty[ttyn+1] = (struct tty *)NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.75 2011/01/14 10:18:21 martin Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.75.2.1 2011/06/06 09:09:29 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.75 2011/01/14 10:18:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.75.2.1 2011/06/06 09:09:29 jruoho Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.75 2011/01/14 10:18:21 martin Exp 
 #include <machine/stdarg.h>
 
 struct vm_map *module_map;
+char	*module_machine;
 char	module_base[MODULE_BASE_SIZE];
 
 struct modlist        module_list = TAILQ_HEAD_INITIALIZER(module_list);
@@ -338,12 +339,14 @@ module_init(void)
 	module_init_md();
 #endif
 
+	if (!module_machine)
+		module_machine = machine;
 #if __NetBSD_Version__ / 1000000 % 100 == 99	/* -current */
 	snprintf(module_base, sizeof(module_base), "/stand/%s/%s/modules",
-	    machine, osrelease);
+	    module_machine, osrelease);
 #else						/* release */
 	snprintf(module_base, sizeof(module_base), "/stand/%s/%d.%d/modules",
-	    machine, __NetBSD_Version__ / 100000000,
+	    module_machine, __NetBSD_Version__ / 100000000,
 	    __NetBSD_Version__ / 1000000 % 100);
 #endif
 
@@ -351,7 +354,7 @@ module_init(void)
 	    module_listener_cb, NULL);
 
 	__link_set_foreach(mip, modules) {
-		if ((rv = module_builtin_add(mip, 1, false) != 0))
+		if ((rv = module_builtin_add(mip, 1, false)) != 0)
 			module_error("builtin %s failed: %d\n",
 			    (*mip)->mi_name, rv);
 	}
@@ -1129,6 +1132,15 @@ module_do_unload(const char *name, bool load_requires_force)
 		module_print("module `%s' busy", name);
 		return EBUSY;
 	}
+
+	/*
+	 * Builtin secmodels are there to stay.
+	 */
+	if (mod->mod_source == MODULE_SOURCE_KERNEL &&
+	    mod->mod_info->mi_class == MODULE_CLASS_SECMODEL) {
+		return EPERM;
+	}
+
 	prev_active = module_active;
 	module_active = mod;
 	error = (*mod->mod_info->mi_modcmd)(MODULE_CMD_FINI, NULL);

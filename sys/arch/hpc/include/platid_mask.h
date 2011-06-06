@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.24 2010/04/06 16:23:17 nonaka Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.24.2.1 2011/06/06 09:05:42 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -946,3 +946,17 @@ extern platid_t platid_mask_MACH_AGENDA_VR_VR3;
 #  define AGENDA_VR_VR3 ((int)&platid_mask_MACH_AGENDA_VR_VR3)
 #endif
 #endif /* hpcmips */
+#ifdef hpcarm
+extern platid_t platid_mask_MACH_PSIONTEKLOGIX;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define PSIONTEKLOGIX ((int)&platid_mask_MACH_PSIONTEKLOGIX)
+#endif
+extern platid_t platid_mask_MACH_PSIONTEKLOGIX_NETBOOK;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define PSIONTEKLOGIX_NETBOOK ((int)&platid_mask_MACH_PSIONTEKLOGIX_NETBOOK)
+#endif
+extern platid_t platid_mask_MACH_PSIONTEKLOGIX_NETBOOK_PRO;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define PSIONTEKLOGIX_NETBOOK_PRO ((int)&platid_mask_MACH_PSIONTEKLOGIX_NETBOOK_PRO)
+#endif
+#endif /* hpcarm */

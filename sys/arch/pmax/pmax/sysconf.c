@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.12 2009/03/18 10:22:34 cegger Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.12.6.1 2011/06/06 09:06:24 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.12 2009/03/18 10:22:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.12.6.1 2011/06/06 09:06:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.12 2009/03/18 10:22:34 cegger Exp $");
 #endif
 
 
-struct sysinit sysinit[] = {
+const struct sysinit sysinit[] = {
 	sys_notsupp("???"),			     /*	 0: ??? */
 	sys_init(dec_3100_init,"DEC_3100"),	     /*	 1: PMAX */
 	sys_init(dec_3max_init,"DEC_3MAX"),	     /*	 2: 3MAX */
@@ -121,7 +121,7 @@ struct sysinit sysinit[] = {
 	sys_notsupp("DEC_5500"),		     /*	 11: 5500 */
 	sys_init(dec_5100_init,"DEC_5100"),	     /*	 12: 5100 */
 };
-int nsysinit = (sizeof(sysinit) / sizeof(sysinit[0]));
+const int nsysinit = __arraycount(sysinit);
 
 
 void

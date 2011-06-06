@@ -1,33 +1,26 @@
-/*	$NetBSD: elf_machdep.h,v 1.13 2009/12/14 03:20:27 mrg Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.13.6.1 2011/06/06 09:06:03 jruoho Exp $	*/
 
 #ifndef _MIPS_ELF_MACHDEP_H_
 #define  _MIPS_ELF_MACHDEP_H_
 
-#if defined(ELFSIZE)
+#ifdef _LP64
+#define ARCH_ELFSIZE		64	/* MD native binary size */
+#else
+#define ARCH_ELFSIZE		32	/* MD native binary size */
+#endif
+
 #if ELFSIZE == 32
 #define	ELF32_MACHDEP_ID_CASES						\
 		case EM_MIPS:						\
 			break;
 
 #define	ELF32_MACHDEP_ID	EM_MIPS
-#endif /* ELFSIZE == 32 */
-#if ELFSIZE == 64
-#ifdef _LP64
+#elif ELFSIZE == 64
 #define	ELF64_MACHDEP_ID_CASES						\
 		case EM_MIPS:						\
 			break;
-#else
-#define	ELF64_MACHDEP_ID_CASES		/* xxx */
-#endif /* _LP64 */
 
 #define	ELF64_MACHDEP_ID	EM_MIPS
-#endif /* ELFSIZE == 64 */
-#endif /* defined(ELFSIZE) */
-
-#ifdef _LP64
-#define ARCH_ELFSIZE		64	/* MD native binary size */
-#else
-#define ARCH_ELFSIZE		32	/* MD native binary size */
 #endif
 
 /* mips relocs.  */
@@ -149,7 +142,7 @@
 #define	EF_MIPS_ARCH_32		0x50000000	/* -mips32 code */
 #define	EF_MIPS_ARCH_64		0x60000000	/* -mips64 code */
 #define	EF_MIPS_ARCH_32R2	0x70000000	/* -mips32r2 code */
-#define	EF_MIPS_ARCH_64R4	0x80000000	/* -mips64r2 code */
+#define	EF_MIPS_ARCH_64R2	0x80000000	/* -mips64r2 code */
 
 #define	EF_MIPS_ABI		0x0000f000
 #define	EF_MIPS_ABI_O32		0x00001000

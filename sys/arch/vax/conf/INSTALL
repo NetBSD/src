@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.54 2010/11/23 11:14:07 hannken Exp $
+#	$NetBSD: INSTALL,v 1.54.2.1 2011/06/06 09:06:58 jruoho Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -63,7 +63,8 @@ file-system 	CD9660
 #file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
-#options 	QUOTA
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space

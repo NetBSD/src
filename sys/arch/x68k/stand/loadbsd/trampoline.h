@@ -1,10 +1,10 @@
 /*
  *	definitions for trampoline code
  *
- *	written by Yasha (ITOH Yasufumi)
+ *	written by ITOH Yasufumi
  *	public domain
  *
- *	$NetBSD: trampoline.h,v 1.1 1998/09/01 19:55:33 itohy Exp $
+ *	$NetBSD: trampoline.h,v 1.1.182.1 2011/06/06 09:07:04 jruoho Exp $
  */
 
 #define MPU_68030	3

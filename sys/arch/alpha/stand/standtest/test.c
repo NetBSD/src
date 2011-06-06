@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.4 2009/03/14 21:04:03 dsl Exp $ */
+/* $NetBSD: test.c,v 1.4.6.1 2011/06/06 09:04:46 jruoho Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -102,7 +102,6 @@ main(unsigned long pfn, unsigned long ptb, unsigned long bim, unsigned long bip,
 	printf("\n");
 	printf("NetBSD/alpha " NETBSD_VERS
 	    " Standalone Test Program, Revision %s\n", bootprog_rev);
-	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 	printf("\n");
 
 	arg_pfn = pfn;

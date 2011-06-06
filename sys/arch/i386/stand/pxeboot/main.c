@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2010/12/20 01:12:45 jakllsch Exp $	*/
+/*	$NetBSD: main.c,v 1.27.2.1 2011/06/06 09:05:53 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -76,6 +76,7 @@ const struct bootblk_command commands[] = {
 	{ "multiboot",  command_multiboot },
 	{ "load",	module_add },
 	{ "vesa",	command_vesa },
+	{ "userconf",	userconf_add },
 	{ NULL,		NULL },
 };
 
@@ -136,8 +137,11 @@ main(void)
 				 & X86_BP_FLAGS_NOMODULES);
 
 #ifndef SMALL
-	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF))
+	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
 		parsebootconf(BOOTCONF);
+	} else {
+		bootconf.timeout = boot_params.bp_timeout;
+	}
 
 	/*
 	 * If console set in boot.cfg, switch to it.
@@ -198,6 +202,7 @@ command_help(char *arg)
 	       "multiboot [filename] [<args>]\n"
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
+	       "userconf {command}\n"
 	       "help|?\n"
 	       "quit\n");
 }

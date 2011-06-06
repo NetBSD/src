@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.17 2010/12/10 00:38:49 matt Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.17.2.1 2011/06/06 09:07:52 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.17 2010/12/10 00:38:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.17.2.1 2011/06/06 09:07:52 jruoho Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -174,7 +174,7 @@ cpc_attach(device_t self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 	aa.pba.pba_memt = mem;
 	aa.pba.pba_dmat = dma;
 	aa.pba.pba_pc = pc;
-	aa.pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
+	aa.pba.pba_flags = PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY;
 	aa.pba.pba_bus = 0;
 
 	/* Save PCI error condition reg. */

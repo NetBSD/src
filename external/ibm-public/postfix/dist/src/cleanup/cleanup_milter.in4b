@@ -1,9 +1,0 @@
-#verbose on
-open test-queue-file4.tmp
-add_rcpt 01
-add_rcpt 02
-add_rcpt 03
-del_rcpt 01
-del_rcpt 02
-del_rcpt 03
-close

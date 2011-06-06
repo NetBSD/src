@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.576 2011/01/16 08:58:03 tsutsui Exp $
+$NetBSD: usbdevs,v 1.576.2.1 2011/06/06 09:08:44 jruoho Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ $NetBSD: usbdevs,v 1.576 2011/01/16 08:58:03 tsutsui Exp $
  */
 
 vendor EGALAX2		0x0123	eGalax, Inc.
+vendor CHIPSBANK	0x0204	Chipsbank
 vendor AOX		0x03e8	AOX
 vendor ATMEL		0x03eb	Atmel
 vendor MITSUMI		0x03ee	Mitsumi
@@ -509,6 +510,7 @@ vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor QUALCOMMINC	0x19d2	Qualcomm, Incorporated
 vendor QUANTA		0x1a32	Quanta
 vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
+vendor MPMAN		0x1cae	MPMan
 vendor PEGATRON		0x1d4d	Pegatron
 vendor AIRTIES		0x1eda	AirTies
 vendor DLINK		0x2001	D-Link
@@ -2687,6 +2689,7 @@ product TOPFIELD TF5000PVR	0x1000	TF5000PVR Digital Video Recorder
 
 /* Toshiba Corporation products */
 product TOSHIBA POCKETPC_E740	0x0706	PocketPC e740
+product TOSHIBA HSDPA_MODEM_EU870DT1	0x1302	HSDPA 3G Modem Card
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
@@ -2768,6 +2771,7 @@ product VTECH ZD1211B		0x3014	ZD1211B
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
 product WACOM GRAPHIRE		0x0010	Graphire
+product WACOM GRAPHIRE2		0x0011	Graphire2 ET-0405A-U
 product WACOM GRAPHIRE3_4X5	0x0013	Graphire3 4x5
 product WACOM GRAPHIRE3_6X8	0x0014	Graphire3 6x8
 product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 4x5

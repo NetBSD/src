@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.265 2011/01/14 10:05:14 phx Exp $
+#	$NetBSD: DEVNAMES,v 1.265.2.1 2011/06/06 09:07:38 jruoho Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -1006,6 +1006,7 @@ pcdisplay		MI
 pcdisplayops		MI		Attribute
 pceb			alpha
 pceb			i386
+pcf8563rtc		MI
 pchb			bebox
 pchb			cobalt
 pchb			evbmips
@@ -1149,6 +1150,7 @@ saip			hpcarm
 saost			hpcarm
 satalink		MI
 satlink			MI
+satmgr			sandpoint
 sb			MI
 sbc			mac68k
 sbdsp			MI		Attribute
@@ -1431,6 +1433,7 @@ vs			x68k
 vsbus			vax
 vsms			alpha
 vt			i386
+vte			MI
 vtpbc			algor
 vz			vax
 wbsio			MI

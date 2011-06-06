@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.51 2010/12/15 01:27:19 matt Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.51.2.1 2011/06/06 09:04:45 jruoho Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.51 2010/12/15 01:27:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.51.2.1 2011/06/06 09:04:45 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.51 2010/12/15 01:27:19 matt Exp $")
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_kn20aa_intr_map(struct pci_attach_args *,
+int	dec_kn20aa_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
 const char *dec_kn20aa_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *dec_kn20aa_intr_evcnt(void *, pci_intr_handle_t);
@@ -112,7 +112,7 @@ pci_kn20aa_pickintr(struct cia_config *ccp)
 }
 
 int     
-dec_kn20aa_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+dec_kn20aa_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;

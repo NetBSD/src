@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.46 2011/01/11 23:22:19 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.46.2.1 2011/06/06 09:07:11 jruoho Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.46 2011/01/11 23:22:19 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.46.2.1 2011/06/06 09:07:11 jruoho Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -224,6 +224,7 @@ static void xennet_free_rx_buffer(struct xennet_xenbus_softc *);
 static void xennet_tx_complete(struct xennet_xenbus_softc *);
 static void xennet_rx_mbuf_free(struct mbuf *, void *, size_t, void *);
 static int  xennet_handler(void *);
+static int  xennet_talk_to_backend(struct xennet_xenbus_softc *);
 #ifdef XENNET_DEBUG_DUMP
 static void xennet_hex_dump(const unsigned char *, size_t, const char *, int);
 #endif
@@ -372,6 +373,9 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
 #endif
+
+	/* resume shared structures and tell backend that we are ready */
+	xennet_xenbus_resume(sc);
 }
 
 static int
@@ -432,13 +436,10 @@ static int
 xennet_xenbus_resume(void *p)
 {
 	struct xennet_xenbus_softc *sc = p;
-	struct xenbus_transaction *xbt;
-	unsigned long rx_copy;
 	int error;
 	netif_tx_sring_t *tx_ring;
 	netif_rx_sring_t *rx_ring;
 	paddr_t ma;
-	const char *errmsg;
 
 	sc->sc_tx_ring_gntref = GRANT_INVALID_REF;
 	sc->sc_rx_ring_gntref = GRANT_INVALID_REF;
@@ -472,6 +473,17 @@ xennet_xenbus_resume(void *p)
 	event_set_handler(sc->sc_evtchn, &xennet_handler, sc,
 	    IPL_NET, device_xname(sc->sc_dev));
 
+	return 0;
+}
+
+static int
+xennet_talk_to_backend(struct xennet_xenbus_softc *sc)
+{
+	int error;
+	unsigned long rx_copy;
+	struct xenbus_transaction *xbt;
+	const char *errmsg;
+
 	error = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
 	    "feature-rx-copy", &rx_copy, 10);
 	if (error)
@@ -490,7 +502,7 @@ again:
 	if (xbt == NULL)
 		return ENOMEM;
 	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
-	    "vifname", device_xname(sc->sc_dev));
+	    "vifname", "%s", device_xname(sc->sc_dev));
 	if (error) {
 		errmsg = "vifname";
 		goto abort_transaction;
@@ -558,7 +570,9 @@ static void xennet_backend_changed(void *arg, XenbusState new_state)
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
 		break;
 	case XenbusStateInitWait:
-		if (xennet_xenbus_resume(sc) == 0)
+		if (sc->sc_backend_status == BEST_CONNECTED)
+			break;
+		if (xennet_talk_to_backend(sc) == 0)
 			xenbus_switch_state(sc->sc_xbusd, NULL,
 			    XenbusStateConnected);
 		break;
@@ -961,7 +975,7 @@ again:
 		}
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (__predict_false(m == NULL)) {
-			printf("xennet: rx no mbuf\n");
+			printf("%s: rx no mbuf\n", ifp->if_xname);
 			ifp->if_ierrors++;
 			xennet_rx_mbuf_free(NULL, (void *)va, PAGE_SIZE, req);
 			continue;

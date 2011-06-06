@@ -36,7 +36,7 @@
 #include "mga_drm.h"
 #include "mga_drv.h"
 
-u32 mga_get_vblank_counter(struct drm_device *dev, int crtc)
+u32 mga_get_vblank_counter(struct drm_device *dev, unsigned int crtc)
 {
 	const drm_mga_private_t *const dev_priv = 
 		(drm_mga_private_t *) dev->dev_private;
@@ -92,7 +92,7 @@ irqreturn_t mga_driver_irq_handler(DRM_IRQ_ARGS)
 	return IRQ_NONE;
 }
 
-int mga_enable_vblank(struct drm_device *dev, int crtc)
+int mga_enable_vblank(struct drm_device *dev, unsigned int crtc)
 {
 	drm_mga_private_t *dev_priv = (drm_mga_private_t *) dev->dev_private;
 
@@ -107,7 +107,7 @@ int mga_enable_vblank(struct drm_device *dev, int crtc)
 }
 
 
-void mga_disable_vblank(struct drm_device *dev, int crtc)
+void mga_disable_vblank(struct drm_device *dev, unsigned int crtc)
 {
 	if (crtc != 0) {
 		DRM_ERROR("tried to disable vblank on non-existent crtc %d\n",

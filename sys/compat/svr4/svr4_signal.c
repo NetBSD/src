@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.64 2008/04/28 20:23:45 martin Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.64.28.1 2011/06/06 09:07:35 jruoho Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.64 2008/04/28 20:23:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.64.28.1 2011/06/06 09:07:35 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,6 +461,8 @@ svr4_sys_context(struct lwp *l, const struct svr4_sys_context_args *uap, registe
 	int error;
 	svr4_ucontext_t uc;
 	*retval = 0;
+
+	memset(&uc, 0, sizeof(uc));
 
 	switch (SCARG(uap, func)) {
 	case SVR4_GETCONTEXT:

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.28 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.28.6.1 2011/06/06 09:06:31 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28.6.1 2011/06/06 09:06:31 jruoho Exp $");
 
 #include "opt_altivec.h"
 
@@ -47,21 +47,19 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.28 2009/11/21 17:40:29 rmind E
 
 #include <uvm/uvm_extern.h>
 
-#ifdef ALTIVEC
-#include <powerpc/altivec.h>
-#endif
+#include <powerpc/altivec.h>	/* also for e500 SPE */
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
-	struct trapframe * const tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 
-	memcpy(regs->fixreg, tf->fixreg, sizeof(regs->fixreg));
-	regs->lr = tf->lr;
-	regs->cr = tf->cr;
-	regs->xer = tf->xer;
-	regs->ctr = tf->ctr;
-	regs->pc = tf->srr0;
+	memcpy(regs->fixreg, tf->tf_fixreg, sizeof(regs->fixreg));
+	regs->lr = tf->tf_lr;
+	regs->cr = tf->tf_cr;
+	regs->xer = tf->tf_xer;
+	regs->ctr = tf->tf_ctr;
+	regs->pc = tf->tf_srr0;
 
 	return 0;
 }
@@ -69,14 +67,14 @@ process_read_regs(struct lwp *l, struct reg *regs)
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
-	struct trapframe * const tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 
-	memcpy(tf->fixreg, regs->fixreg, sizeof(regs->fixreg));
-	tf->lr = regs->lr;
-	tf->cr = regs->cr;
-	tf->xer = regs->xer;
-	tf->ctr = regs->ctr;
-	tf->srr0 = regs->pc;
+	memcpy(tf->tf_fixreg, regs->fixreg, sizeof(regs->fixreg));
+	tf->tf_lr = regs->lr;
+	tf->tf_cr = regs->cr;
+	tf->tf_xer = regs->xer;
+	tf->tf_ctr = regs->ctr;
+	tf->tf_srr0 = regs->pc;
 
 	return 0;
 }
@@ -87,15 +85,16 @@ process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 	struct pcb * const pcb = lwp_getpcb(l);
 
 	/* Is the process using the fpu? */
-	if ((pcb->pcb_flags & PCB_FPU) == 0) {
+	if (!fpu_used_p(l)) {
 		memset(fpregs, 0, sizeof (*fpregs));
-		return 0;
-	}
-
 #ifdef PPC_HAVE_FPU
-	save_fpu_lwp(l, FPU_SAVE);
+	} else {
+		KASSERT(l == curlwp);
+		fpu_save();
 #endif
+	}
 	*fpregs = pcb->pcb_fpu;
+	fpu_mark_used(l);
 
 	return 0;
 }
@@ -106,13 +105,11 @@ process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
 	struct pcb * const pcb = lwp_getpcb(l);
 
 #ifdef PPC_HAVE_FPU
-	save_fpu_lwp(l, FPU_DISCARD);
+	KASSERT(l == curlwp);
+	fpu_discard();
 #endif
-
 	pcb->pcb_fpu = *fpregs;
-
-	/* pcb_fpu is initialized now. */
-	pcb->pcb_flags |= PCB_FPU;
+	fpu_mark_used(l);		/* pcb_fpu is initialized now. */
 
 	return 0;
 }
@@ -123,21 +120,22 @@ process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
 int
 process_set_pc(struct lwp *l, void *addr)
 {
-	struct trapframe * const tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 	
-	tf->srr0 = (register_t)addr;
+	tf->tf_srr0 = (register_t)addr;
+
 	return 0;
 }
 
 int
 process_sstep(struct lwp *l, int sstep)
 {
-	struct trapframe *tf = trapframe(l);
+	struct trapframe * const tf = l->l_md.md_utf;
 	
 	if (sstep)
-		tf->srr1 |= PSL_SE;
+		tf->tf_srr1 |= PSL_SE;
 	else
-		tf->srr1 &= ~PSL_SE;
+		tf->tf_srr1 &= ~PSL_SE;
 	return 0;
 }
 
@@ -148,18 +146,22 @@ process_machdep_read_vecregs(struct lwp *l, struct vreg *vregs)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
+	KASSERT(l == curlwp);
+#ifdef ALTIVEC
 	if (cpu_altivec == 0)
-		return (EINVAL);
+		return EINVAL;
+#endif
 
 	/* Is the process using AltiVEC? */
-	if ((pcb->pcb_flags & PCB_ALTIVEC) == 0) {
+	if (!vec_used_p(l)) {
 		memset(vregs, 0, sizeof (*vregs));
-		return 0;
+	} else {
+		vec_save();
+		*vregs = pcb->pcb_vr;
 	}
-	save_vec_lwp(l, ALTIVEC_SAVE);
-	*vregs = pcb->pcb_vr;
+	vec_mark_used(l);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -167,13 +169,18 @@ process_machdep_write_vecregs(struct lwp *l, struct vreg *vregs)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
+	KASSERT(l == curlwp);
+
+#ifdef ALTIVEC
 	if (cpu_altivec == 0)
 		return (EINVAL);
+#endif
 
-	save_vec_lwp(l, ALTIVEC_DISCARD);
-
-	pcb->pcb_vr = *vregs;
-	pcb->pcb_flags |= PCB_ALTIVEC;	/* pcb_vr is initialized now. */
+#if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
+	vec_discard();
+#endif
+	pcb->pcb_vr = *vregs;		/* pcb_vr is initialized now. */
+	vec_mark_used(l);
 
 	return (0);
 }
@@ -255,6 +262,11 @@ process_machdep_validvecregs(struct proc *p)
 	if (p->p_flag & PK_SYSTEM)
 		return (0);
 
+#ifdef ALTIVEC
 	return (cpu_altivec);
+#endif
+#ifdef PPC_HAVE_SPE
+	return 1;
+#endif
 }
 #endif /* __HAVE_PTRACE_MACHDEP */

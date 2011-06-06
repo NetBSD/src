@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.24 2009/05/12 10:16:35 cegger Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.24.6.1 2011/06/06 09:07:58 jruoho Exp $ */
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.24 2009/05/12 10:16:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.24.6.1 2011/06/06 09:07:58 jruoho Exp $");
 
 #include "mpu_ym.h"
 
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.24 2009/05/12 10:16:35 cegger Exp $"
 int	ym_isapnp_match(device_t, cfdata_t, void *);
 void	ym_isapnp_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ym_isapnp, sizeof(struct ym_softc),
+CFATTACH_DECL_NEW(ym_isapnp, sizeof(struct ym_softc),
     ym_isapnp_match, ym_isapnp_attach, NULL, NULL);
 
 /*
@@ -108,6 +108,7 @@ ym_isapnp_attach(device_t parent, device_t self, void *aux)
 
 	sc = device_private(self);
 	ac = &sc->sc_ad1848.sc_ad1848;
+	ac->sc_dev = self;
 	ipa = aux;
 	printf("\n");
 

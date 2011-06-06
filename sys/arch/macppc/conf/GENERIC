@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.288 2011/01/03 06:07:43 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.288.2.1 2011/06/06 09:05:59 jruoho Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.288 $"
+#ident 		"GENERIC-$Revision: 1.288.2.1 $"
 
 maxusers	32
 
@@ -79,11 +79,6 @@ options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
-#options 	COMPAT_DARWIN	# Darwin binary compatibility (experimental)
-#options 	COMPAT_MACH	# Mach compatibility, needed for COMPAT_DARWIN 
-#options 	EXEC_MACHO	# Mach-O binary support, needed for COMPAT_MACH
-#options 	DEBUG_DARWIN	# COMPAT_DARWIN debugging
-#options 	DEBUG_MACH	# COMPAT_MACH debugging
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -110,7 +105,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -518,6 +514,7 @@ ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel at76c50x 802.11b
+otus*	at uhub? port ?		# Atheros AR9001U
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 #zyd*	at uhub? port ?		# Zydas ZD1211

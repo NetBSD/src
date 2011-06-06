@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.44 2009/11/21 03:11:01 rmind Exp $	*/
+/*	$NetBSD: lapic.c,v 1.44.6.1 2011/06/06 09:07:08 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.44 2009/11/21 03:11:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.44.6.1 2011/06/06 09:07:08 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -141,11 +141,6 @@ void
 lapic_enable(void)
 {
 	i82489_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
-}
-
-void
-lapic_suspend(void)
-{
 }
 
 void

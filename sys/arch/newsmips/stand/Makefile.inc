@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2006/06/29 01:45:03 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.6.90.1 2011/06/06 09:06:20 jruoho Exp $
 
 BINDIR= /usr/mdec
 
@@ -8,7 +8,8 @@ BINDIR= /usr/mdec
 .PHONY: vers.c
 vers.c: version
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version ${MACHINE}
 SRCS+=  vers.c
 CLEANFILES+= vers.c
 .endif

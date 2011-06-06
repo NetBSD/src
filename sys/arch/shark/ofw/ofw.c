@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.54 2010/11/12 13:40:10 uebayasi Exp $	*/
+/*	$NetBSD: ofw.c,v 1.54.2.1 2011/06/06 09:06:44 jruoho Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.54 2010/11/12 13:40:10 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.54.2.1 2011/06/06 09:06:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.54 2010/11/12 13:40:10 uebayasi Exp $");
 
 #include "isadma.h"
 #include "igsfb_ofbus.h"
+#include "chipsfb_ofbus.h"
 #include "vga_ofbus.h"
 
 #define IO_VIRT_BASE (OFW_VIRT_BASE + OFW_VIRT_SIZE)
@@ -145,7 +146,7 @@ static vaddr_t  virt_freeptr;
 
 int ofw_callbacks = 0;		/* debugging counter */
 
-#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if (NIGSFB_OFBUS > 0) || (NCHIPSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 int console_ihandle = 0;
 static void reset_screen(void);
 #endif
@@ -404,7 +405,7 @@ ofw_boot(int howto, char *bootstr)
 		*ap++ = 0;
 		if (ap[-2] == '-')
 			*ap1 = 0;
-#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if (NIGSFB_OFBUS > 0) || (NCHIPSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 		reset_screen();
 #endif
 		OF_boot(str);
@@ -413,7 +414,7 @@ ofw_boot(int howto, char *bootstr)
 
 ofw_exit:
 	printf("Calling OF_exit...\n");
-#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if (NIGSFB_OFBUS > 0) || (NCHIPSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 	reset_screen();
 #endif
 	OF_exit();
@@ -1946,7 +1947,7 @@ ofw_initallocator(void)
     
 }
 
-#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if (NIGSFB_OFBUS > 0) || (NCHIPSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 static void
 reset_screen(void)
 {

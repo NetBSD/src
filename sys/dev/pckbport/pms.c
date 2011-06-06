@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.30 2010/02/24 22:38:08 dyoung Exp $ */
+/* $NetBSD: pms.c,v 1.30.4.1 2011/06/06 09:08:30 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.30 2010/02/24 22:38:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.30.4.1 2011/06/06 09:08:30 jruoho Exp $");
 
 #include "opt_pms.h"
 
@@ -230,7 +230,7 @@ pmsattach(device_t parent, device_t self, void *aux)
 	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 
 	kthread_create(PRI_NONE, 0, NULL, pms_reset_thread, sc,
-	    &sc->sc_event_thread, device_xname(sc->sc_dev));
+	    &sc->sc_event_thread, "%s", device_xname(sc->sc_dev));
 
 #ifndef PMS_DISABLE_POWERHOOK
 	sc->sc_suspended = 0;

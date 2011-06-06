@@ -1,4 +1,4 @@
-/*	$NetBSD: criov.c,v 1.7 2009/03/14 21:04:26 dsl Exp $ */
+/*	$NetBSD: criov.c,v 1.7.6.1 2011/06/06 09:10:03 jruoho Exp $ */
 /*      $OpenBSD: criov.c,v 1.11 2002/06/10 19:36:43 espie Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.7 2009/03/14 21:04:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.7.6.1 2011/06/06 09:10:03 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,12 @@ cuio_copyback(struct uio *uio, int off, int len, void *cp)
 	if (len < 0)
 		panic("cuio_copyback: len %d < 0", len);
 	while (off > 0) {
-		if (iol == 0)
-			panic("cuio_copyback: empty in skip");
+		if (iol == 0) {
+#ifdef DEBUG
+			printf("cuio_copyback: empty in skip\n");
+#endif
+			return;
+		}
 		if (off < iov->iov_len)
 			break;
 		off -= iov->iov_len;
@@ -99,8 +103,12 @@ cuio_copyback(struct uio *uio, int off, int len, void *cp)
 		iov++;
 	}
 	while (len > 0) {
-		if (iol == 0)
-			panic("uio_copyback: empty");
+		if (iol == 0) {
+#ifdef DEBUG
+			printf("uio_copyback: empty\n");
+#endif
+			return;
+		}
 		count = min(iov->iov_len - off, len);
 		memcpy((char *)iov->iov_base + off, cp, count);
 		len -= count;

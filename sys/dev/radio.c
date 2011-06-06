@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.24 2010/01/21 02:19:55 dyoung Exp $ */
+/* $NetBSD: radio.c,v 1.24.6.1 2011/06/06 09:07:39 jruoho Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.24 2010/01/21 02:19:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.24.6.1 2011/06/06 09:07:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ radioprobe(device_t parent, cfdata_t match, void *aux)
 static void
 radioattach(device_t parent, device_t self, void *aux)
 {
-	struct radio_softc *sc = (void *)self;
+	struct radio_softc *sc = device_private(self);
 	struct radio_attach_args *sa = aux;
 	const struct radio_hw_if *hwp = sa->hwif;
 	void  *hdlp = sa->hdl;
@@ -87,7 +87,7 @@ radioattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
-	sc->sc_dev = parent;
+	sc->sc_dev = self;
 }
 
 static int
@@ -181,7 +181,6 @@ radioprint(void *aux, const char *pnp)
 static int
 radiodetach(device_t self, int flags)
 {
-	/*struct radio_softc *sc = (struct radio_softc *)self;*/
 	int maj, mn;
 
 	/* locate the major number */

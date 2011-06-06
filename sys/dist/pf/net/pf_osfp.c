@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_osfp.c,v 1.10 2010/04/12 13:57:38 ahoka Exp $	*/
+/*	$NetBSD: pf_osfp.c,v 1.10.2.1 2011/06/06 09:08:47 jruoho Exp $	*/
 /*	$OpenBSD: pf_osfp.c,v 1.12 2006/12/13 18:14:10 itojun Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_osfp.c,v 1.10 2010/04/12 13:57:38 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_osfp.c,v 1.10.2.1 2011/06/06 09:08:47 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -585,7 +585,7 @@ pf_osfp_validate(void)
 		if (find.fp_mss == 0)
 			find.fp_mss = 128;
 		if (f->fp_flags & PF_OSFP_WSIZE_MSS)
-			find.fp_wsize *= find.fp_mss, 1;
+			find.fp_wsize *= find.fp_mss;
 		else if (f->fp_flags & PF_OSFP_WSIZE_MTU)
 			find.fp_wsize *= (find.fp_mss + 40);
 		else if (f->fp_flags & PF_OSFP_WSIZE_MOD)

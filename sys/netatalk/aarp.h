@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.h,v 1.2 2005/12/10 23:29:05 elad Exp $	*/
+/*	$NetBSD: aarp.h,v 1.2.104.1 2011/06/06 09:09:54 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -75,5 +75,7 @@ struct aarptab {
 #define AARPOP_REQUEST	0x01
 #define AARPOP_RESPONSE	0x02
 #define AARPOP_PROBE	0x03
+
+extern struct mowner aarp_mowner;
 
 #endif /* !_NETATALK_AARP_H_ */

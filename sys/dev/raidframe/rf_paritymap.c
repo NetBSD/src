@@ -1,4 +1,4 @@
-/* $NetBSD: rf_paritymap.c,v 1.5 2010/03/14 21:11:41 jld Exp $ */
+/* $NetBSD: rf_paritymap.c,v 1.5.6.1 2011/06/06 09:08:33 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 Jed Davis.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.5 2010/03/14 21:11:41 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.5.6.1 2011/06/06 09:08:33 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -259,7 +259,10 @@ rf_paritymap_tick(void *arg)
 	mutex_enter(&pm->lk_flags);
 	pm->flags |= TICKED;
 	mutex_exit(&pm->lk_flags);
-	wakeup(&(pm->raid->iodone)); /* XXX */
+
+	rf_lock_mutex2(pm->raid->iodone_lock);
+	rf_signal_cond2(pm->raid->iodone_cv); /* XXX */
+	rf_unlock_mutex2(pm->raid->iodone_lock);
 }
 
 /*
@@ -409,6 +412,8 @@ rf_paritymap_nreg(RF_Raid_t *raid)
 	nreg = bytes_per_disk / REGION_MINSIZE;
 	if (nreg > RF_PARITYMAP_NREG)
 		nreg = RF_PARITYMAP_NREG;
+	if (nreg < 1)
+		nreg = 1;
 
 	return (u_int)nreg;
 }
@@ -580,10 +585,10 @@ rf_paritymap_detach(RF_Raid_t *raidPtr)
 	if (raidPtr->parity_map == NULL)
 		return;
 
-	simple_lock(&(raidPtr->iodone_lock));
+	rf_lock_mutex2(raidPtr->iodone_lock);
 	struct rf_paritymap *pm = raidPtr->parity_map;
 	raidPtr->parity_map = NULL;
-	simple_unlock(&(raidPtr->iodone_lock));
+	rf_unlock_mutex2(raidPtr->iodone_lock);
 	/* XXXjld is that enough locking?  Or too much? */
 	rf_paritymap_destroy(pm, 0);
 	kmem_free(pm, sizeof(*pm));

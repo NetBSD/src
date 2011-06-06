@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.225 2010/11/23 11:14:06 hannken Exp $
+# $NetBSD: GENERIC,v 1.225.2.1 2011/06/06 09:06:44 jruoho Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.225 $"
+#ident 		"GENERIC-$Revision: 1.225.2.1 $"
 
 maxusers	32
 
@@ -143,6 +143,8 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
 #options 	DEBUG
+#options 	LOCKDEBUG
+#options 	SYSCALL_DEBUG
 
 ## Make SCSI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.233 2011/01/13 05:58:05 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.233.2.1 2011/06/06 09:07:39 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.233 2011/01/13 05:58:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.233.2.1 2011/06/06 09:07:39 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.233 2011/01/13 05:58:05 jruoho Exp $");
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
@@ -123,43 +124,22 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.233 2011/01/13 05:58:05 jruoho Exp $");
 #include <dev/acpi/acpi_timer.h>
 #include <dev/acpi/acpi_wakedev.h>
 
-#define _COMPONENT	ACPI_BUS_COMPONENT
-ACPI_MODULE_NAME	("acpi")
-
-#if defined(ACPI_PCI_FIXUP)
-#error The option ACPI_PCI_FIXUP has been obsoleted by PCI_INTR_FIXUP_DISABLED.  Please adjust your kernel configuration file.
-#endif
-
-#ifdef PCI_INTR_FIXUP_DISABLED
-#include <dev/pci/pcidevs.h>
-#endif
-
-MALLOC_DECLARE(M_ACPI);
-
 #include <machine/acpi_machdep.h>
 
-#ifdef ACPI_DEBUGGER
-#define	ACPI_DBGR_INIT		0x01
-#define	ACPI_DBGR_TABLES	0x02
-#define	ACPI_DBGR_ENABLE	0x04
-#define	ACPI_DBGR_PROBE		0x08
-#define	ACPI_DBGR_RUNNING	0x10
-
-static int acpi_dbgr = 0x00;
-#endif
+#define _COMPONENT	ACPI_BUS_COMPONENT
+ACPI_MODULE_NAME	("acpi")
 
 /*
  * The acpi_active variable is set when the ACPI subsystem is active.
  * Machine-dependent code may wish to skip other steps (such as attaching
  * subsystems that ACPI supercedes) when ACPI is active.
  */
-uint32_t	acpi_cpus = 0;
 int		acpi_active = 0;
 int		acpi_suspended = 0;
 int		acpi_force_load = 0;
 int		acpi_verbose_loaded = 0;
 
-struct acpi_softc	*acpi_softc;
+struct acpi_softc	*acpi_softc = NULL;
 static uint64_t		 acpi_root_pointer;
 extern kmutex_t		 acpi_interrupt_list_mtx;
 extern struct		 cfdriver acpi_cd;
@@ -180,6 +160,7 @@ struct acpi_walkcontext {
  */
 static const char * const acpi_ignored_ids[] = {
 #if defined(i386) || defined(x86_64)
+	"ACPI0007",	/* ACPI CPUs do not attach to acpi(4) */
 	"PNP0000",	/* AT interrupt controller is handled internally */
 	"PNP0200",	/* AT DMA controller is handled internally */
 	"PNP0A??",	/* PCI Busses are handled internally */
@@ -260,42 +241,25 @@ int
 acpi_probe(void)
 {
 	ACPI_TABLE_HEADER *rsdt;
-	const char *func;
-	static int once;
-	bool initialized;
 	ACPI_STATUS rv;
+	int quirks;
 
-	if (once != 0)
+	if (acpi_softc != NULL)
 		panic("%s: already probed", __func__);
-
-	once = 1;
-	func = NULL;
-	acpi_softc = NULL;
-	initialized = false;
 
 	mutex_init(&acpi_interrupt_list_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
 	 * Start up ACPICA.
 	 */
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_INIT)
-		acpi_osd_debugger();
-#endif
-
-	CTASSERT(TRUE == true);
-	CTASSERT(FALSE == false);
-
 	AcpiGbl_AllMethodsSerialized = false;
 	AcpiGbl_EnableInterpreterSlack = true;
 
 	rv = AcpiInitializeSubsystem();
 
-	if (ACPI_SUCCESS(rv))
-		initialized = true;
-	else {
-		func = "AcpiInitializeSubsystem()";
-		goto fail;
+	if (ACPI_FAILURE(rv)) {
+		aprint_error("%s: failed to initialize subsystem\n", __func__);
+		return 0;
 	}
 
 	/*
@@ -305,49 +269,47 @@ acpi_probe(void)
 	rv = AcpiInitializeTables(NULL, 2, true);
 
 	if (ACPI_FAILURE(rv)) {
-		func = "AcpiInitializeTables()";
+		aprint_error("%s: failed to initialize tables\n", __func__);
 		goto fail;
 	}
-
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_TABLES)
-		acpi_osd_debugger();
-#endif
 
 	rv = AcpiLoadTables();
 
 	if (ACPI_FAILURE(rv)) {
-		func = "AcpiLoadTables()";
+		aprint_error("%s: failed to load tables\n", __func__);
 		goto fail;
 	}
 
 	rsdt = acpi_map_rsdt();
 
 	if (rsdt == NULL) {
-		func = "acpi_map_rsdt()";
-		rv = AE_ERROR;
+		aprint_error("%s: failed to map RSDT\n", __func__);
 		goto fail;
 	}
 
-	if (acpi_force_load == 0 && (acpi_find_quirks() & ACPI_QUIRK_BROKEN)) {
+	quirks = acpi_find_quirks();
+
+	if (acpi_force_load == 0 && (quirks & ACPI_QUIRK_BROKEN) != 0) {
+
 		aprint_normal("ACPI: BIOS is listed as broken:\n");
 		aprint_normal("ACPI: X/RSDT: OemId <%6.6s,%8.8s,%08x>, "
-		       "AslId <%4.4s,%08x>\n",
-			rsdt->OemId, rsdt->OemTableId,
-		        rsdt->OemRevision,
-			rsdt->AslCompilerId,
+		       "AslId <%4.4s,%08x>\n", rsdt->OemId, rsdt->OemTableId,
+		        rsdt->OemRevision, rsdt->AslCompilerId,
 		        rsdt->AslCompilerRevision);
 		aprint_normal("ACPI: Not used. Set acpi_force_load to use.\n");
+
 		acpi_unmap_rsdt(rsdt);
-		AcpiTerminate();
-		return 0;
+		goto fail;
 	}
-	if (acpi_force_load == 0 && (acpi_find_quirks() & ACPI_QUIRK_OLDBIOS)) {
-		aprint_normal("ACPI: BIOS is too old (%s). Set acpi_force_load to use.\n",
+
+	if (acpi_force_load == 0 && (quirks & ACPI_QUIRK_OLDBIOS) != 0) {
+
+		aprint_normal("ACPI: BIOS is too old (%s). "
+		    "Set acpi_force_load to use.\n",
 		    pmf_get_platform("firmware-date"));
+
 		acpi_unmap_rsdt(rsdt);
-		AcpiTerminate();
-		return 0;
+		goto fail;
 	}
 
 	acpi_unmap_rsdt(rsdt);
@@ -355,24 +317,14 @@ acpi_probe(void)
 	rv = AcpiEnableSubsystem(~(ACPI_NO_HARDWARE_INIT|ACPI_NO_ACPI_ENABLE));
 
 	if (ACPI_FAILURE(rv)) {
-		func = "AcpiEnableSubsystem()";
+		aprint_error("%s: failed to enable subsystem\n", __func__);
 		goto fail;
 	}
 
-	/*
-	 * Looks like we have ACPI!
-	 */
 	return 1;
 
 fail:
-	KASSERT(rv != AE_OK);
-	KASSERT(func != NULL);
-
-	aprint_error("%s: failed to probe ACPI: %s\n",
-	    func, AcpiFormatException(rv));
-
-	if (initialized != false)
-		(void)AcpiTerminate();
+	(void)AcpiTerminate();
 
 	return 0;
 }
@@ -468,13 +420,8 @@ acpi_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
-	 * Bring ACPI on-line.
+	 * Bring ACPICA on-line.
 	 */
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_ENABLE)
-		acpi_osd_debugger();
-#endif
-
 #define ACPI_ENABLE_PHASE1 \
     (ACPI_NO_HANDLER_INIT | ACPI_NO_EVENT_INIT)
 #define ACPI_ENABLE_PHASE2 \
@@ -532,21 +479,11 @@ acpi_attach(device_t parent, device_t self, void *aux)
 
 	acpitimer_init(sc);
 
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_PROBE)
-		acpi_osd_debugger();
-#endif
-
 	/*
 	 * Scan the namespace and build our device tree.
 	 */
 	acpi_build_tree(sc);
 	acpi_sleep_init(sc);
-
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_RUNNING)
-		acpi_osd_debugger();
-#endif
 
 #ifdef ACPI_DEBUG
 	acpi_debug_init();
@@ -602,9 +539,6 @@ acpi_detach(device_t self, int flags)
 	return 0;
 }
 
-/*
- * XXX: Need to reclaim any resources? Yes.
- */
 static void
 acpi_childdet(device_t self, device_t child)
 {
@@ -613,6 +547,9 @@ acpi_childdet(device_t self, device_t child)
 
 	if (sc->sc_apmbus == child)
 		sc->sc_apmbus = NULL;
+
+	if (sc->sc_wdrt == child)
+		sc->sc_wdrt = NULL;
 
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
@@ -683,6 +620,14 @@ acpi_build_tree(struct acpi_softc *sc)
 	(void)acpi_rescan(sc->sc_dev, NULL, NULL);
 
 	/*
+	 * Update GPE information.
+	 *
+	 * Note that this must be called after
+	 * all GPE handlers have been installed.
+	 */
+	(void)AcpiUpdateAllGpes();
+
+	/*
 	 * Defer rest of the configuration.
 	 */
 	(void)config_defer(sc->sc_dev, acpi_rescan_capabilities);
@@ -714,7 +659,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 	case ACPI_TYPE_THERMAL:
 	case ACPI_TYPE_POWER:
 
-		ad = malloc(sizeof(*ad), M_ACPI, M_NOWAIT | M_ZERO);
+		ad = kmem_zalloc(sizeof(*ad), KM_NOSLEEP);
 
 		if (ad == NULL)
 			return AE_NO_MEMORY;
@@ -722,6 +667,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		ad->ad_device = NULL;
 		ad->ad_notify = NULL;
 		ad->ad_pciinfo = NULL;
+		ad->ad_wakedev = NULL;
 
 		ad->ad_type = type;
 		ad->ad_handle = handle;
@@ -732,6 +678,13 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 
 		acpi_set_node(ad);
 		acpi_make_name(ad, devinfo->Name);
+
+		/*
+		 * Identify wake GPEs from the _PRW. Note that
+		 * AcpiUpdateAllGpes() must be called afterwards.
+		 */
+		if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE)
+			acpi_wakedev_init(ad);
 
 		SIMPLEQ_INIT(&ad->ad_child_head);
 		SIMPLEQ_INSERT_TAIL(&sc->ad_head, ad, ad_list);
@@ -806,6 +759,10 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 		sc->sc_apmbus = config_found_ia(sc->sc_dev,
 		    "acpiapmbus", NULL, NULL);
 
+	if (ifattr_match(ifattr, "acpiwdrtbus") && sc->sc_wdrt == NULL)
+		sc->sc_wdrt = config_found_ia(sc->sc_dev,
+		    "acpiwdrtbus", NULL, NULL);
+
 	return 0;
 }
 
@@ -847,7 +804,6 @@ acpi_rescan_early(struct acpi_softc *sc)
 static void
 acpi_rescan_nodes(struct acpi_softc *sc)
 {
-	const uint32_t ncpus = acpi_md_ncpus();
 	struct acpi_attach_args aa;
 	struct acpi_devnode *ad;
 	ACPI_DEVICE_INFO *di;
@@ -884,7 +840,7 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		if (di->Type == ACPI_TYPE_POWER)
 			continue;
 
-		if (di->Type == ACPI_TYPE_PROCESSOR && acpi_cpus >= ncpus)
+		if (di->Type == ACPI_TYPE_PROCESSOR)
 			continue;
 
 		if (acpi_match_hid(di, acpi_early_ids) != 0)
@@ -934,9 +890,7 @@ acpi_rescan_capabilities(device_t self)
 		/*
 		 * Scan wake-up capabilities.
 		 */
-		rv = AcpiGetHandle(ad->ad_handle, "_PRW", &tmp);
-
-		if (ACPI_SUCCESS(rv)) {
+		if (ad->ad_wakedev != NULL) {
 			ad->ad_flags |= ACPI_DEVICE_WAKEUP;
 			acpi_wakedev_add(ad);
 		}
@@ -1346,15 +1300,26 @@ acpi_enter_sleep_state(int state)
 
 		if (state == ACPI_STATE_S1) {
 
-			/* Just enter the state. */
+			/*
+			 * Before the transition to S1, CPU caches
+			 * must be flushed (see ACPI 4.0, 7.3.4.2).
+			 *
+			 * Note that interrupts must be off before
+			 * calling AcpiEnterSleepState(). Conversely,
+			 * AcpiLeaveSleepState() should always be
+			 * called with interrupts enabled.
+			 */
 			acpi_md_OsDisableInterrupt();
+
+			ACPI_FLUSH_CPU_CACHE();
 			rv = AcpiEnterSleepState(state);
 
 			if (ACPI_FAILURE(rv))
 				aprint_error_dev(sc->sc_dev, "failed to "
 				    "enter S1: %s\n", AcpiFormatException(rv));
 
-			(void)AcpiLeaveSleepState(state);
+			acpi_md_OsEnableInterrupt();
+			rv = AcpiLeaveSleepState(state);
 
 		} else {
 
@@ -1363,11 +1328,16 @@ acpi_enter_sleep_state(int state)
 			if (state == ACPI_STATE_S4)
 				AcpiEnable();
 
-			pmf_system_bus_resume(PMF_Q_NONE);
+			(void)pmf_system_bus_resume(PMF_Q_NONE);
 			(void)AcpiLeaveSleepState(state);
-			pmf_system_resume(PMF_Q_NONE);
+			(void)AcpiSetFirmwareWakingVector(0);
+			(void)pmf_system_resume(PMF_Q_NONE);
 		}
 
+		/*
+		 * No wake GPEs should be enabled at runtime.
+		 */
+		acpi_wakedev_commit(sc, ACPI_STATE_S0);
 		break;
 
 	case ACPI_STATE_S5:
@@ -1637,6 +1607,9 @@ acpi_map_rsdt(void)
 	return AcpiOsMapMemory(paddr, sizeof(ACPI_TABLE_HEADER));
 }
 
+/*
+ * XXX: Refactor to be a generic function that unmaps tables.
+ */
 static void
 acpi_unmap_rsdt(ACPI_TABLE_HEADER *rsdt)
 {
@@ -1754,6 +1727,8 @@ acpi_print_dev_stub(const char *pnpstr)
 	if (acpi_verbose_loaded != 0)
 		acpi_print_dev(pnpstr);
 }
+
+MALLOC_DECLARE(M_ACPI); /* XXX: ACPI_ACTIVATE_DEV should use kmem(9). */
 
 /*
  * ACPI_ACTIVATE_DEV.

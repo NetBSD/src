@@ -1,3 +1,5 @@
+/*	$NetBSD: subr_ndis.c,v 1.23.2.1 2011/06/06 09:07:32 jruoho Exp $	*/
+
 /*-
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -35,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.23 2010/07/26 22:33:23 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.23.2.1 2011/06/06 09:07:32 jruoho Exp $");
 #endif
 
 /*
@@ -2710,13 +2712,7 @@ NdisMSleep(uint32_t usecs)
 	tv.tv_sec = 0;
 	tv.tv_usec = usecs;
 
-#ifdef __FreeBSD__
-	ndis_thsuspend(curthread->td_proc, NULL, tvtohz(&tv));
-#else
 	ndis_thsuspend(curproc, NULL, tvtohz(&tv));
-#endif
-
-	return;
 }
 
 __stdcall static uint32_t

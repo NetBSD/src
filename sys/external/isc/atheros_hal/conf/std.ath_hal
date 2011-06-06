@@ -12,7 +12,8 @@ options ATHHAL_AR5311
 #options ATHHAL_AR2316
 #options ATHHAL_AR2317
 options ATHHAL_AR5416
-#options ATHHAL_AR9280
+options ATHHAL_AR9280
+options ATHHAL_AR9285
 
 # Atheros AR5212/AR5312 RF Support
 #

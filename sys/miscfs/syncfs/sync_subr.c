@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.43 2010/07/21 17:52:12 hannken Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.43.2.1 2011/06/06 09:09:44 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -60,8 +60,37 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * The filesystem synchronizer mechanism - syncer.
+ *
+ * It is useful to delay writes of file data and filesystem metadata for
+ * a certain amount of time so that quickly created and deleted files need
+ * not waste disk bandwidth being created and removed.  To implement this,
+ * vnodes are appended to a "workitem" queue.
+ *
+ * Most pending metadata should not wait for more than ten seconds.  Thus,
+ * mounted on block devices are delayed only about a half the time that file
+ * data is delayed.  Similarly, directory updates are more critical, so are
+ * only delayed about a third the time that file data is delayed.
+ *
+ * There are SYNCER_MAXDELAY queues that are processed in a round-robin
+ * manner at a rate of one each second (driven off the filesystem syner
+ * thread). The syncer_delayno variable indicates the next queue that is
+ * to be processed.  Items that need to be processed soon are placed in
+ * this queue:
+ *
+ *	syncer_workitem_pending[syncer_delayno]
+ *
+ * A delay of e.g. fifteen seconds is done by placing the request fifteen
+ * entries later in the queue:
+ *
+ *	syncer_workitem_pending[(syncer_delayno + 15) & syncer_mask]
+ *
+ * Flag VI_ONWORKLST indicates that vnode is added into the queue.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.43 2010/07/21 17:52:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.43.2.1 2011/06/06 09:09:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +107,10 @@ __KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.43 2010/07/21 17:52:12 hannken Exp $
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 
+typedef TAILQ_HEAD(synclist, vnode) synclist_t;
+
 static void	vn_syncer_add1(struct vnode *, int);
+static void	sysctl_vfs_syncfs_setup(struct sysctllog **);
 
 /*
  * Defines and variables for the syncer process.
@@ -90,19 +122,12 @@ time_t dirdelay  = 15;			/* time to delay syncing directories */
 time_t metadelay = 10;			/* time to delay syncing metadata */
 time_t lockdelay = 1;			/* time to delay if locking fails */
 
-kmutex_t syncer_mutex;			/* used to freeze syncer, long term */
-static kmutex_t syncer_data_lock;	/* short term lock on data structures */
+kmutex_t		syncer_mutex;	/* used to freeze syncer, long term */
+static kmutex_t		syncer_data_lock; /* short term lock on data structs */
 
-static int rushjob;			/* number of slots to run ASAP */
-static kcondvar_t syncer_cv;		/* cv for rushjob */
-static int stat_rush_requests;		/* number of times I/O speeded up */
-
-static int syncer_delayno = 0;
-static long syncer_last;
-static struct synclist *syncer_workitem_pending;
-struct lwp *updateproc = NULL;
-
-static void sysctl_vfs_syncfs_setup(struct sysctllog **);
+static int		syncer_delayno = 0;
+static long		syncer_last;
+static synclist_t *	syncer_workitem_pending;
 
 void
 vn_initialize_syncerd(void)
@@ -121,34 +146,7 @@ vn_initialize_syncerd(void)
 
 	mutex_init(&syncer_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&syncer_data_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&syncer_cv, "syncer");
 }
-
-/*
- * The workitem queue.
- *
- * It is useful to delay writes of file data and filesystem metadata
- * for tens of seconds so that quickly created and deleted files need
- * not waste disk bandwidth being created and removed. To realize this,
- * we append vnodes to a "workitem" queue. When running with a soft
- * updates implementation, most pending metadata dependencies should
- * not wait for more than a few seconds. Thus, mounted on block devices
- * are delayed only about a half the time that file data is delayed.
- * Similarly, directory updates are more critical, so are only delayed
- * about a third the time that file data is delayed. Thus, there are
- * SYNCER_MAXDELAY queues that are processed round-robin at a rate of
- * one each second (driven off the filesystem syner process). The
- * syncer_delayno variable indicates the next queue that is to be processed.
- * Items that need to be processed soon are placed in this queue:
- *
- *	syncer_workitem_pending[syncer_delayno]
- *
- * A delay of fifteen seconds is done by placing the request fifteen
- * entries later in the queue:
- *
- *	syncer_workitem_pending[(syncer_delayno + 15) & syncer_mask]
- *
- */
 
 /*
  * Add an item to the syncer work queue.
@@ -156,22 +154,19 @@ vn_initialize_syncerd(void)
 static void
 vn_syncer_add1(struct vnode *vp, int delayx)
 {
-	struct synclist *slp;
+	synclist_t *slp;
 
 	KASSERT(mutex_owned(&syncer_data_lock));
 
 	if (vp->v_iflag & VI_ONWORKLST) {
+		/*
+		 * Remove in order to adjust the position of the vnode.
+		 * Note: called from sched_sync(), which will not hold
+		 * interlock, therefore we cannot modify v_iflag here.
+		 */
 		slp = &syncer_workitem_pending[vp->v_synclist_slot];
 		TAILQ_REMOVE(slp, vp, v_synclist);
 	} else {
-		/*
-		 * We must not modify v_iflag if the vnode
-		 * is already on a synclist: sched_sync()
-		 * calls this routine while holding only
-		 * syncer_data_lock in order to adjust the
-		 * position of the vnode.  syncer_data_lock
-		 * does not protect v_iflag.
-		 */
 		KASSERT(mutex_owned(&vp->v_interlock));
 		vp->v_iflag |= VI_ONWORKLST;
 	}
@@ -201,18 +196,16 @@ vn_syncer_add_to_worklist(struct vnode *vp, int delayx)
 void
 vn_syncer_remove_from_worklist(struct vnode *vp)
 {
-	struct synclist *slp;
+	synclist_t *slp;
 
 	KASSERT(mutex_owned(&vp->v_interlock));
 
 	mutex_enter(&syncer_data_lock);
-
 	if (vp->v_iflag & VI_ONWORKLST) {
 		vp->v_iflag &= ~VI_ONWORKLST;
 		slp = &syncer_workitem_pending[vp->v_synclist_slot];
 		TAILQ_REMOVE(slp, vp, v_synclist);
 	}
-
 	mutex_exit(&syncer_data_lock);
 }
 
@@ -220,14 +213,12 @@ vn_syncer_remove_from_worklist(struct vnode *vp)
  * System filesystem synchronizer daemon.
  */
 void
-sched_sync(void *v)
+sched_sync(void *arg)
 {
-	struct synclist *slp;
+	synclist_t *slp;
 	struct vnode *vp;
 	time_t starttime;
 	bool synced;
-
-	updateproc = curlwp;
 
 	for (;;) {
 		mutex_enter(&syncer_mutex);
@@ -292,66 +283,25 @@ sched_sync(void *v)
 		mutex_exit(&syncer_mutex);
 
 		/*
-		 * Wait until there are more workitems to process.
+		 * If it has taken us less than a second to process the
+		 * current work, then wait.  Otherwise start right over
+		 * again.  We can still lose time if any single round
+		 * takes more than two seconds, but it does not really
+		 * matter as we are just trying to generally pace the
+		 * filesystem activity.
 		 */
-		if (rushjob > 0) {
-			/*
-			 * The variable rushjob allows the kernel to speed
-			 * up the processing of the filesystem syncer
-			 * process. A rushjob value of N tells the
-			 * filesystem syncer to process the next N seconds
-			 * worth of work on its queue ASAP. Currently
-			 * rushjob is used by the soft update code to
-			 * speed up the filesystem syncer process when the
-			 * incore state is getting so far ahead of the
-			 * disk that the kernel memory pool is being
-			 * threatened with exhaustion.
-			 */
-			rushjob--;
-		} else {
-			/*
-			 * If it has taken us less than a second to
-			 * process the current work, then wait. Otherwise
-			 * start right over again. We can still lose time
-			 * if any single round takes more than two
-			 * seconds, but it does not really matter as we
-			 * are just trying to generally pace the
-			 * filesystem activity.
-			 */
-			if (time_second == starttime)
-				cv_timedwait(&syncer_cv, &syncer_data_lock, hz);
+		if (time_second == starttime) {
+			kpause("syncer", false, hz, &syncer_data_lock);
 		}
 		mutex_exit(&syncer_data_lock);
 	}
-}
-
-/*
- * Request the syncer daemon to speed up its work.
- * We never push it to speed up more than half of its
- * normal turn time, otherwise it could take over the CPU.
- */
-int
-speedup_syncer(void)
-{
-
-	mutex_enter(&syncer_data_lock);
-	if (rushjob >= syncdelay / 2) {
-		mutex_exit(&syncer_data_lock);
-		return (0);
-	}
-	rushjob++;
-	cv_signal(&syncer_cv);
-	stat_rush_requests += 1;
-	mutex_exit(&syncer_data_lock);
-
-	return (1);
 }
 
 static void
 sysctl_vfs_syncfs_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode, *cnode;
-        
+
 	sysctl_createv(clog, 0, NULL, &rnode,
 			CTLFLAG_PERMANENT,
 			CTLTYPE_NODE, "vfs", NULL,

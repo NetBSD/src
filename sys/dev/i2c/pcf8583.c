@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.12 2009/12/12 14:44:10 tsutsui Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.12.6.1 2011/06/06 09:07:50 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.12 2009/12/12 14:44:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.12.6.1 2011/06/06 09:07:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ pcfrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
-	if ((err = pcfrtc_clock_write(sc, &dt, tv->tv_usec / 10000) == 0))
+	if ((err = pcfrtc_clock_write(sc, &dt, tv->tv_usec / 10000)) != 0)
 		return err;
 
 	return (0);

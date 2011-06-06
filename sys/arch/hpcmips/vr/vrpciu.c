@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.17 2005/12/11 12:17:35 christos Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.17.106.1 2011/06/06 09:05:45 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.17 2005/12/11 12:17:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.17.106.1 2011/06/06 09:05:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 			       0x11200000);
 	}
 
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY;
 	pba.pba_pc = pc;
 

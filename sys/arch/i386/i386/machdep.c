@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.699 2011/01/11 21:10:17 jruoho Exp $	*/
+/*	$NetBSD: machdep.c,v 1.699.2.1 2011/06/06 09:05:49 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,11 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.699 2011/01/11 21:10:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.699.2.1 2011/06/06 09:05:49 jruoho Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
-#include "opt_compat_mach.h"	/* need to get the right segment def */
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_cpureset_delay.h"
@@ -1034,7 +1033,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_edi = 0;
 	tf->tf_esi = 0;
 	tf->tf_ebp = 0;
-	tf->tf_ebx = (int)l->l_proc->p_psstr;
+	tf->tf_ebx = l->l_proc->p_psstrp;
 	tf->tf_edx = 0;
 	tf->tf_ecx = 0;
 	tf->tf_eax = 0;
@@ -1116,9 +1115,6 @@ extern vector *IDTVEC(exceptions)[];
 extern vector IDTVEC(svr4_fasttrap);
 void (*svr4_fasttrap_vec)(void) = (void (*)(void))nullop;
 krwlock_t svr4_fasttrap_lock;
-#ifdef COMPAT_MACH
-extern vector IDTVEC(mach_trap);
-#endif
 #ifdef XEN
 #define MAX_XEN_IDT 128
 trap_info_t xen_idt[MAX_XEN_IDT];
@@ -1153,10 +1149,6 @@ initgdt(union descriptor *tgdt)
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUDATA_SEL].sd, 0, 0xfffff,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
-#ifdef COMPAT_MACH
-	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
-	    SDT_SYS386CGT, SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
-#endif
 #if NBIOSCALL > 0
 	/* bios trampoline GDT entries */
 	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0,
@@ -1755,6 +1747,9 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
+	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
+	*flags |= _UC_TLSBASE;
+
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
@@ -1844,6 +1839,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_esp    = gr[_REG_UESP];
 		tf->tf_ss     = gr[_REG_SS];
 	}
+
+	if ((flags & _UC_TLSBASE) != 0)
+		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
 
 #if NNPX > 0
 	/*

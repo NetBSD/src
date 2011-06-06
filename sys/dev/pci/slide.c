@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.21 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: slide.c,v 1.21.2.1 2011/06/06 09:08:27 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.21 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.21.2.1 2011/06/06 09:08:27 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.21 2010/11/05 18:07:24 jakllsch Exp $");
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_sl82c105_reg.h>
 
-static void sl82c105_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void sl82c105_chip_map(struct pciide_softc*,
+    const struct pci_attach_args*);
 static void sl82c105_setup_channel(struct ata_channel*);
 
 static int  slide_match(device_t, cfdata_t, void *);
@@ -111,7 +112,7 @@ slide_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-sl82c105_bugchk(struct pci_attach_args *pa)
+sl82c105_bugchk(const struct pci_attach_args *pa)
 {
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_WINBOND ||
@@ -125,8 +126,9 @@ sl82c105_bugchk(struct pci_attach_args *pa)
 }
 
 static void
-sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+sl82c105_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
+	struct pci_attach_args pa0;
 	struct pciide_channel *cp;
 	pcireg_t interface, idecr;
 	int channel;
@@ -141,7 +143,8 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	 * Check to see if we're part of the Winbond 83c553 Southbridge.
 	 * If so, we need to disable DMA on rev. <= 5 of that chip.
 	 */
-	if (pci_find_device(pa, sl82c105_bugchk)) {
+	if (pci_find_device(&pa0, sl82c105_bugchk)) {
+		pa = &pa0;
 		aprint_verbose(" but disabled due to 83c553 rev. <= 0x05");
 		sc->sc_dma_ok = 0;
 	} else

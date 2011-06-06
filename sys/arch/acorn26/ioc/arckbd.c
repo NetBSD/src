@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.18 2009/02/16 21:36:09 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.18.6.1 2011/06/06 09:04:39 jruoho Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.18 2009/02/16 21:36:09 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arckbd.c,v 1.18.6.1 2011/06/06 09:04:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,8 +124,8 @@ struct arckbd_softc {
 	enum arckbd_state	sc_state;
 	u_char			sc_byteone;
 	u_char			sc_kbid;
-	struct device		*sc_wskbddev;
-	struct device		*sc_wsmousedev;
+	device_t		sc_wskbddev;
+	device_t		sc_wsmousedev;
 	struct wskbd_mapdata	sc_mapdata;
 	int			sc_cmdqueue;  /* Single-command queue */
 	enum arckbd_state	sc_statequeue;

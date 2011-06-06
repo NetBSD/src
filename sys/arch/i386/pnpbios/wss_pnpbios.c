@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.18 2009/05/04 12:13:19 cegger Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.18.6.1 2011/06/06 09:05:51 jruoho Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.18 2009/05/04 12:13:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.18.6.1 2011/06/06 09:05:51 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ void wss_pnpbios_attach(device_t, device_t, void *);
 int wss_pnpbios_hints_index(const char *);
 
 
-CFATTACH_DECL(wss_pnpbios, sizeof(struct wss_softc),
+CFATTACH_DECL_NEW(wss_pnpbios, sizeof(struct wss_softc),
     wss_pnpbios_match, wss_pnpbios_attach, NULL, NULL);
 
 struct wss_pnpbios_hint {
@@ -128,6 +128,7 @@ wss_pnpbios_attach(device_t parent, device_t self,
 		return;
 	}
 
+	sc->sc_ad1848.sc_ad1848.sc_dev = self;
 	sc->wss_ic = aa->ic;
 
 	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->wss_irq, NULL)) {

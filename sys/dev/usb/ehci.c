@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.171 2010/11/03 22:34:23 dyoung Exp $ */
+/*	$NetBSD: ehci.c,v 1.171.2.1 2011/06/06 09:08:40 jruoho Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.171 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.171.2.1 2011/06/06 09:08:40 jruoho Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -354,6 +354,7 @@ ehci_init(ehci_softc_t *sc)
 			sc->sc_ncomp = ncomp;
 	}
 	if (sc->sc_ncomp > 0) {
+		KASSERT(!(sc->sc_flags & EHCIF_ETTF));
 		aprint_normal("%s: companion controller%s, %d port%s each:",
 		    device_xname(sc->sc_dev), sc->sc_ncomp!=1 ? "s" : "",
 		    EHCI_HCS_N_PCC(sparams),
@@ -394,6 +395,17 @@ ehci_init(ehci_softc_t *sc)
 	}
 	if (sc->sc_vendor_init)
 		sc->sc_vendor_init(sc);
+
+	/*
+	 * If we are doing embedded transaction translation function, force
+	 * the controller to host mode.
+	 */
+	if (sc->sc_flags & EHCIF_ETTF) {
+		uint32_t usbmode = EREAD4(sc, EHCI_USBMODE);
+		usbmode &= ~EHCI_USBMODE_CM;
+		usbmode |= EHCI_USBMODE_CM_HOST;
+		EWRITE4(sc, EHCI_USBMODE, usbmode);
+	}
 
 	/* XXX need proper intr scheduling */
 	sc->sc_rand = 96;
@@ -1535,7 +1547,17 @@ ehci_open(usbd_pipe_handle pipe)
 		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
 
 	if (dev->myhsport) {
-		hshubaddr = dev->myhsport->parent->address;
+		/*
+		 * When directly attached FS/LS device while doing embedded
+		 * transaction translations and we are the hub, set the hub
+		 * adddress to 0 (us).
+		 */
+		if (!(sc->sc_flags & EHCIF_ETTF)
+		    || (dev->myhsport->parent->address != sc->sc_addr)) {
+			hshubaddr = dev->myhsport->parent->address;
+		} else {
+			hshubaddr = 0;
+		}
 		hshubport = dev->myhsport->portno;
 	} else {
 		hshubaddr = 0;
@@ -1545,7 +1567,8 @@ ehci_open(usbd_pipe_handle pipe)
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
-	epipe->nexttoggle = 0;
+	/* toggle state needed for bulk endpoints */
+	epipe->nexttoggle = pipe->endpoint->datatoggle;
 
 	if (addr == sc->sc_addr) {
 		switch (ed->bEndpointAddress) {
@@ -2249,7 +2272,18 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		v = EOREAD4(sc, EHCI_PORTSC(index));
 		DPRINTFN(8,("ehci_root_ctrl_start: port status=0x%04x\n",
 			    v));
-		i = UPS_HIGH_SPEED;
+
+		if (sc->sc_flags & EHCIF_ETTF) {
+			/*
+			 * If we are doing embedded transaction translation,
+			 * then directly attached LS/FS devices are reset by
+			 * the EHCI controller itself.  PSPD is encoded
+			 * the same way as in USBSTATUS. 
+			 */
+			i = __SHIFTOUT(v, EHCI_PS_PSPD) * UPS_LOW_SPEED;
+		} else {
+			i = UPS_HIGH_SPEED;
+		}
 		if (v & EHCI_PS_CS)	i |= UPS_CURRENT_CONNECT_STATUS;
 		if (v & EHCI_PS_PE)	i |= UPS_PORT_ENABLED;
 		if (v & EHCI_PS_SUSP)	i |= UPS_SUSPEND;
@@ -2293,8 +2327,13 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_PORT_RESET:
 			DPRINTFN(5,("ehci_root_ctrl_start: reset port %d\n",
 				    index));
-			if (EHCI_PS_IS_LOWSPEED(v) && sc->sc_ncomp > 0) {
-				/* Low speed device, give up ownership. */
+			if (EHCI_PS_IS_LOWSPEED(v)
+			    && sc->sc_ncomp > 0
+			    && !(sc->sc_flags & EHCIF_ETTF)) {
+				/*
+				 * Low speed device on non-ETTF controller or
+				 * unaccompanied controller, give up ownership.
+				 */
 				ehci_disown(sc, index, 1);
 				break;
 			}
@@ -2307,15 +2346,24 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 				err = USBD_IOERROR;
 				goto ret;
 			}
-			/* Terminate reset sequence. */
-			v = EOREAD4(sc, port);
-			EOWRITE4(sc, port, v & ~EHCI_PS_PR);
-			/* Wait for HC to complete reset. */
-			usb_delay_ms(&sc->sc_bus, EHCI_PORT_RESET_COMPLETE);
-			if (sc->sc_dying) {
-				err = USBD_IOERROR;
-				goto ret;
+			/*
+			 * An embedded transaction translater will automatically
+			 * terminate the reset sequence so there's no need to
+			 * it.
+			 */
+			if (!(sc->sc_flags & EHCIF_ETTF)) {
+				/* Terminate reset sequence. */
+				v = EOREAD4(sc, port);
+				EOWRITE4(sc, port, v & ~EHCI_PS_PR);
+				/* Wait for HC to complete reset. */
+				usb_delay_ms(&sc->sc_bus,
+				    EHCI_PORT_RESET_COMPLETE);
+				if (sc->sc_dying) {
+					err = USBD_IOERROR;
+					goto ret;
+				}
 			}
+
 			v = EOREAD4(sc, port);
 			DPRINTF(("ehci after reset, status=0x%08x\n", v));
 			if (v & EHCI_PS_PR) {
@@ -2703,7 +2751,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		usb_syncmem(&cur->dma, cur->offs, sizeof(cur->qtd),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: extend chain\n"));
-		dataphys += curlen;
+		if (len)
+			dataphys += curlen;
 		cur = next;
 	}
 	cur->qtd.qtd_status |= htole32(EHCI_QTD_IOC);
@@ -3521,8 +3570,10 @@ Static void
 ehci_device_bulk_close(usbd_pipe_handle pipe)
 {
 	ehci_softc_t *sc = pipe->device->bus->hci_private;
+	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
 
 	DPRINTF(("ehci_device_bulk_close: pipe=%p\n", pipe));
+	pipe->endpoint->datatoggle = epipe->nexttoggle;
 	ehci_close_pipe(pipe, sc->sc_async_head);
 }
 

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.84 2010/03/02 21:07:21 pooka Exp $
+	$NetBSD: syscalls.master,v 1.84.4.1 2011/06/06 09:07:34 jruoho Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -304,7 +304,7 @@
 			    netbsd32_orlimitp_t rlp); }
 146	COMPAT_43	{ int|netbsd32||killpg(int pgid, int signum); }
 147	NOARGS		{ int|sys||setsid(void); }
-148	STD		{ int|netbsd32||quotactl(netbsd32_charp path, int cmd, \
+148	COMPAT_50	{ int|netbsd32||quotactl(netbsd32_charp path, int cmd, \
 			    int uid, netbsd32_voidp arg); }
 149	COMPAT_43	{ int|sys||quota(void); } oquota
 150	COMPAT_43	{ int|netbsd32||ogetsockname(int fdec, \
@@ -969,3 +969,5 @@
 			    mode_t mode, netbsd32_dev_t dev); }
 451	STD	 	{ int|netbsd32|50|fhstat(const netbsd32_voidp fhp, \
 			    netbsd32_size_t fh_size, netbsd32_statp_t sb); }
+452	STD		{ int|netbsd32|50|quotactl(const netbsd32_charp path, \
+			    netbsd32_voidp pref); }

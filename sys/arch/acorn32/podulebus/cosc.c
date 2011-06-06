@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $	*/
+/*	$NetBSD: cosc.c,v 1.16.6.1 2011/06/06 09:04:40 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.16.6.1 2011/06/06 09:04:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $");
 #include <acorn32/podulebus/coscvar.h>
 #include <dev/podulebus/podules.h>
 
-void coscattach(struct device *, struct device *, void *);
-int coscmatch(struct device *, struct cfdata *, void *);
+void coscattach(device_t, device_t, void *);
+int coscmatch(device_t, cfdata_t, void *);
 
 CFATTACH_DECL(cosc, sizeof(struct cosc_softc),
     coscmatch, coscattach, NULL, NULL);
@@ -86,9 +86,9 @@ int cosc_poll = 1;
 #endif
 
 int
-coscmatch(struct device *pdp, struct cfdata *cf, void *auxp)
+coscmatch(device_t parent, cfdata_t cf, void *aux)
 {
-	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
+	struct podule_attach_args *pa = aux;
 
 	/* Look for the card */
 
@@ -106,14 +106,12 @@ coscmatch(struct device *pdp, struct cfdata *cf, void *auxp)
 static int dummy[6];
 
 void
-coscattach(struct device *pdp, struct device *dp, void *auxp)
+coscattach(device_t parent, device_t self, void *aux)
 {
-	struct cosc_softc *sc = (struct cosc_softc *)dp;
-	struct podule_attach_args *pa;
+	struct cosc_softc *sc = device_private(self);
+	struct podule_attach_args *pa = aux;
 	cosc_regmap_p	   rp = &sc->sc_regmap;
 	vu_char		  *esc;
-
-	pa = (struct podule_attach_args *)auxp;
 
 	if (pa->pa_podule_number == -1)
 		panic("Podule has disappeared !");
@@ -236,7 +234,7 @@ coscattach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_softc.sc_bump_sz = PAGE_SIZE;
 	sc->sc_softc.sc_bump_pa = 0x0;
 
-	escinitialize((struct esc_softc *)sc);
+	escinitialize(&sc->sc_softc);
 
 	sc->sc_softc.sc_adapter.adapt_dev = &sc->sc_softc.sc_dev;
 	sc->sc_softc.sc_adapter.adapt_nchannels = 1;
@@ -271,18 +269,18 @@ coscattach(struct device *pdp, struct device *dp, void *auxp)
 #endif
 	{
 		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-		    device_xname(dp), "intr");
+		    device_xname(self), "intr");
 		sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 		    cosc_intr, sc, &sc->sc_intrcnt);
 		if (sc->sc_ih == NULL)
 			panic("%s: Cannot install IRQ handler",
-			    dp->dv_xname);
+			    device_xname(self));
 	}
 
 	printf("\n");
 
 	/* attach all scsi units on us */
-	config_found(dp, &sc->sc_softc.sc_channel, scsiprint);
+	config_found(self, &sc->sc_softc.sc_channel, scsiprint);
 }
 
 

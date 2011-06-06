@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.5 2010/10/07 12:24:23 kiyohara Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.5.2.1 2011/06/06 09:08:37 jruoho Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -162,14 +162,16 @@
 
 /* MMC R2 response (CSD) */
 #define MMC_CSD_CSDVER(resp)		MMC_RSP_BITS((resp), 126, 2)
-#define  MMC_CSD_CSDVER_1_0		1
-#define  MMC_CSD_CSDVER_2_0		2
+#define  MMC_CSD_CSDVER_1_0		0
+#define  MMC_CSD_CSDVER_1_1		1
+#define  MMC_CSD_CSDVER_1_2		2 /* MMC 4.1 - 4.2 - 4.3 */
+#define  MMC_CSD_CSDVER_EXT_CSD		3 /* Version is coded in CSD_STRUCTURE in EXT_CSD */
 #define MMC_CSD_MMCVER(resp)		MMC_RSP_BITS((resp), 122, 4)
 #define  MMC_CSD_MMCVER_1_0		0 /* MMC 1.0 - 1.2 */
 #define  MMC_CSD_MMCVER_1_4		1 /* MMC 1.4 */
 #define  MMC_CSD_MMCVER_2_0		2 /* MMC 2.0 - 2.2 */
 #define  MMC_CSD_MMCVER_3_1		3 /* MMC 3.1 - 3.3 */
-#define  MMC_CSD_MMCVER_4_0		4 /* MMC 4 */
+#define  MMC_CSD_MMCVER_4_0		4 /* MMC 4.1 - 4.2 - 4.3 */
 #define MMC_CSD_TAAC(resp)		MMC_RSP_BITS((resp), 112, 8)
 #define MMC_CSD_TAAC_MANT(resp)		MMC_RSP_BITS((resp), 115, 4)
 #define MMC_CSD_TAAC_EXP(resp)		MMC_RSP_BITS((resp), 112, 3)

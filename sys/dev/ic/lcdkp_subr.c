@@ -1,4 +1,4 @@
-/* $NetBSD: lcdkp_subr.c,v 1.6 2009/03/14 15:36:17 dsl Exp $ */
+/* $NetBSD: lcdkp_subr.c,v 1.6.6.1 2011/06/06 09:07:53 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcdkp_subr.c,v 1.6 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcdkp_subr.c,v 1.6.6.1 2011/06/06 09:07:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,9 @@ static u_char lcdkp_scan(struct lcdkp_chip *, u_int8_t *);
 void
 lcdkp_attach_subr(struct lcdkp_chip *sc)
 {
+
 	sc->sc_flags = 0x0;
-	lcdkp_lock_init(sc);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -73,7 +74,7 @@ lcdkp_scankey(struct lcdkp_chip *sc)
 	if ((sc->sc_knum == 0) || (sc->sc_kpad == NULL))
 		return 0;
 
-	lcdkp_lock(sc);
+	mutex_enter(&sc->sc_lock);
 	if (!(sc->sc_flags & LCDKP_HAS_BUF)) {
 		u_int8_t b;
 		if (lcdkp_scan(sc, &b) != 0) {
@@ -82,7 +83,7 @@ lcdkp_scankey(struct lcdkp_chip *sc)
 		}
 	}
 	ret = (sc->sc_flags & LCDKP_HAS_BUF);
-	lcdkp_unlock(sc);
+	mutex_exit(&sc->sc_lock);
 
 	return ret;
 }
@@ -98,12 +99,12 @@ lcdkp_readkey(struct lcdkp_chip *sc, u_int8_t *result)
 	if ((sc->sc_knum == 0) || (sc->sc_kpad == NULL))
 		return EIO;
 
-	lcdkp_lock(sc);
+	mutex_enter(&sc->sc_lock);
 	if ( (error = lcdkp_poll(sc)) == 0) {
 		*result = sc->sc_buf;
 		sc->sc_flags &= ~LCDKP_HAS_BUF;
 	}
-	lcdkp_unlock(sc);
+	mutex_exit(&sc->sc_lock);
 
 	return 0;
 }
@@ -133,19 +134,24 @@ lcdkp_scan(struct lcdkp_chip *sc, u_int8_t *b)
 static int
 lcdkp_poll(struct lcdkp_chip *sc)
 {
-	if (!(sc->sc_flags & LCDKP_HAS_BUF)) {
-		u_int8_t b;
-		while(lcdkp_scan(sc, &b) == 0) {
-			int err = ltsleep((void*)sc, PRIBIO | PCATCH, "kppoll",
-					HD_POLL_RATE, lcdkp_lockaddr(sc));
-			if (err != EWOULDBLOCK) {
-				if (lcdkp_scan(sc, &b) != 0)
-					break;
-				return EINTR;
-			}
-		}
-		sc->sc_buf = b;
-		sc->sc_flags |= LCDKP_HAS_BUF;
+	int error;
+	uint8_t b;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	if (sc->sc_flags & LCDKP_HAS_BUF) {
+		return 0;
 	}
+	while (lcdkp_scan(sc, &b) == 0) {
+		error = mtsleep((void*)sc, PRIBIO | PCATCH, "kppoll",
+		    HD_POLL_RATE, &sc->sc_lock);
+		if (error != EWOULDBLOCK) {
+			if (lcdkp_scan(sc, &b) != 0)
+				break;
+			return EINTR;
+		}
+	}
+	sc->sc_buf = b;
+	sc->sc_flags |= LCDKP_HAS_BUF;
 	return 0;
 }

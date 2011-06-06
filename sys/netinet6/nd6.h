@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.53 2009/11/06 20:41:22 dyoung Exp $	*/
+/*	$NetBSD: nd6.h,v 1.53.6.1 2011/06/06 09:10:00 jruoho Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -372,6 +372,7 @@ extern int ip6_desync_factor;	/* seconds */
 extern u_int32_t ip6_temp_preferred_lifetime; /* seconds */
 extern u_int32_t ip6_temp_valid_lifetime; /* seconds */
 extern int ip6_temp_regen_advance; /* seconds */
+extern int nd6_numroutes;
 
 union nd_opts {
 	struct nd_opt_hdr *nd_opt_array[8];

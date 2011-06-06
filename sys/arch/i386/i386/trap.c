@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.260 2010/12/20 00:25:35 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.260.2.1 2011/06/06 09:05:50 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.260 2010/12/20 00:25:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.260.2.1 2011/06/06 09:05:50 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -102,22 +102,16 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.260 2010/12/20 00:25:35 matt Exp $");
 #include <machine/reg.h>
 #include <machine/trap.h>
 #include <machine/userret.h>
-#ifdef DDB
 #include <machine/db_machdep.h>
-#endif
 
 #include "mca.h"
-#if NMCA > 0
 #include <machine/mca_machdep.h>
-#endif
 
 #include <x86/nmi.h>
 
 #include "isa.h"
 
-#ifdef KGDB
 #include <sys/kgdb.h>
-#endif
 
 #include "npx.h"
 
@@ -388,24 +382,17 @@ trap(struct trapframe *frame)
 			check_dr0();
 		else
 			trap_print(type, frame);
-#ifdef DDB
 		if (kdb_trap(type, 0, frame))
 			return;
-#endif
-#ifdef KGDB
 		if (kgdb_trap(type, frame))
 			return;
-		else {
-			/*
-			 * If this is a breakpoint, don't panic
-			 * if we're not connected.
-			 */
-			if (type == T_BPTFLT) {
-				printf("kgdb: ignored %s\n", trap_type[type]);
-				return;
-			}
+		/*
+		 * If this is a breakpoint, don't panic if we're not connected.
+		 */
+		if (type == T_BPTFLT && kgdb_disconnected()) {
+			printf("kgdb: ignored %s\n", trap_type[type]);
+			return;
 		}
-#endif
 		panic("trap");
 		/*NOTREACHED*/
 
@@ -806,40 +793,16 @@ faultcommon:
 		break;
 
 	case T_NMI:
-#if !defined(XEN)
 		if (nmi_dispatch(frame))
 			return;
-#if (NISA > 0 || NMCA > 0)
-#if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
-		printf ("NMI ... going to debugger\n");
-#ifdef KGDB
-
 		if (kgdb_trap(type, frame))
 			return;
-#endif
-#ifdef DDB
 		if (kdb_trap(type, 0, frame))
 			return;
-#endif
-#endif /* KGDB || DDB */
 		/* machine/parity/power fail/"kitchen sink" faults */
-
-#if NMCA > 0
-		/* mca_nmi() takes care to call x86_nmi() if appropriate */
-		if (mca_nmi() != 0)
-			goto we_re_toast;
-		else
-			return;
-#else /* NISA > 0 */
-		if (x86_nmi() != 0)
-			goto we_re_toast;
-		else
-			return;
-#endif /* NMCA > 0 */
-#endif /* (NISA > 0 || NMCA > 0) */
-#endif /* !defined(XEN) */
-		;	/* avoid a label at end of compound statement */
+		mca_nmi();
+		x86_nmi();
 	}
 
 	if ((type & T_USER) == 0)

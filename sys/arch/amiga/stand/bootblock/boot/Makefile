@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.43 2010/07/06 06:09:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.43.2.1 2011/06/06 09:04:55 jruoho Exp $
 
+.include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
 
 ### what we need:
@@ -113,7 +114,8 @@ libboot.a: ${OBJS}
 
 vers.o: vers.c
 vers.c:	${.CURDIR}/version
-	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh -N ${.CURDIR}/version "amiga"
+	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh \
+	    ${${MKREPRO} == "yes" :?:-D} -N ${.CURDIR}/version "amiga"
 
 .if !make(obj) && !make(clean) && !make(cleandir)
 .NOPATH: machine m68k

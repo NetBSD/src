@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.51 2010/11/23 11:13:59 hannken Exp $
+# $NetBSD: VR41XX,v 1.51.2.1 2011/06/06 09:05:43 jruoho Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.51 $"
+#ident 		"GENERIC-$Revision: 1.51.2.1 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -86,7 +86,8 @@ file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	WAPBL		# File system journaling support - Experimental
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

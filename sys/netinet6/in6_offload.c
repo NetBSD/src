@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_offload.c,v 1.5 2010/12/11 22:37:47 matt Exp $	*/
+/*	$NetBSD: in6_offload.c,v 1.5.2.1 2011/06/06 09:09:58 jruoho Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.5 2010/12/11 22:37:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.5.2.1 2011/06/06 09:09:58 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -195,22 +195,27 @@ quit:
 void
 ip6_undefer_csum(struct mbuf *m, size_t hdrlen, int csum_flags)
 {
+	const size_t ip6_plen_offset =
+	    hdrlen + offsetof(struct ip6_hdr, ip6_plen);
+	size_t l4hdroff;
+	size_t l4offset;
+	uint16_t plen;
+	uint16_t csum;
+
 	KASSERT(m->m_flags & M_PKTHDR);
 	KASSERT((m->m_pkthdr.csum_flags & csum_flags) == csum_flags);
 	KASSERT(csum_flags == M_CSUM_UDPv6 || csum_flags == M_CSUM_TCPv6);
-
-	const size_t ip6_plen_offset = hdrlen + offsetof(struct ip6_hdr, ip6_plen);
-	uint16_t plen;
 
 	if (__predict_true(hdrlen + sizeof(struct ip6_hdr) <= m->m_len)) {
 		plen = *(uint16_t *)(mtod(m, char *) + ip6_plen_offset);
 	} else {
 		m_copydata(m, ip6_plen_offset, sizeof(plen), &plen);
 	}
+	plen = ntohs(plen);
 
-	const size_t l4hdroff = M_CSUM_DATA_IPv6_HL(m->m_pkthdr.csum_data);
-	size_t l4offset = hdrlen + l4hdroff;
-	uint16_t csum = in6_cksum(m, 0, l4offset, plen - l4hdroff);
+	l4hdroff = M_CSUM_DATA_IPv6_HL(m->m_pkthdr.csum_data);
+	l4offset = hdrlen + l4hdroff;
+	csum = in6_cksum(m, 0, l4offset, plen - l4hdroff);
 
 	if (csum == 0 && (csum_flags & M_CSUM_UDPv6) != 0)
 		csum = 0xffff;

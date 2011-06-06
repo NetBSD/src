@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.40 2010/07/21 17:52:10 hannken Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.40.2.1 2011/06/06 09:09:22 jruoho Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.40 2010/07/21 17:52:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.40.2.1 2011/06/06 09:09:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,53 @@ struct pool msdosfs_denode_pool;
 
 extern int prtactive;
 
+struct fh_key {
+	struct msdosfsmount *fhk_mount;
+	uint32_t fhk_dircluster;
+	uint32_t fhk_diroffset;
+};
+struct fh_node {
+	struct rb_node fh_rbnode;
+	struct fh_key fh_key;
+#define fh_mount	fh_key.fhk_mount
+#define fh_dircluster	fh_key.fhk_dircluster
+#define fh_diroffset	fh_key.fhk_diroffset
+	uint32_t fh_gen;
+};
+
+static int
+fh_compare_node_fh(void *ctx, const void *b, const void *key)
+{
+	const struct fh_node * const pnp = b;
+	const struct fh_key * const fhp = key;
+
+	/* msdosfs_fh_destroy() below depends on first sorting on fh_mount. */
+	if (pnp->fh_mount != fhp->fhk_mount)
+		return (intptr_t)pnp->fh_mount - (intptr_t)fhp->fhk_mount;
+	if (pnp->fh_dircluster != fhp->fhk_dircluster)
+		return pnp->fh_dircluster - fhp->fhk_dircluster;
+	return pnp->fh_diroffset - fhp->fhk_diroffset;
+}
+
+static int
+fh_compare_nodes(void *ctx, const void *parent, const void *node)
+{
+	const struct fh_node * const np = node;
+
+	return fh_compare_node_fh(ctx, parent, &np->fh_key);
+}
+
+static uint32_t fh_generation;
+static kmutex_t fh_lock;
+static struct pool fh_pool;
+static rb_tree_t fh_rbtree;
+static const rb_tree_ops_t fh_rbtree_ops = {
+	.rbto_compare_nodes = fh_compare_nodes,
+	.rbto_compare_key = fh_compare_node_fh,
+	.rbto_node_offset = offsetof(struct fh_node, fh_rbnode),
+	.rbto_context = NULL
+};
+
 static const struct genfs_ops msdosfs_genfsops = {
 	.gop_size = genfs_size,
 	.gop_alloc = msdosfs_gop_alloc,
@@ -106,8 +153,12 @@ msdosfs_init(void)
 	malloc_type_attach(M_MSDOSFSTMP);
 	pool_init(&msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0,
 	    "msdosnopl", &pool_allocator_nointr, IPL_NONE);
+	pool_init(&fh_pool, sizeof(struct fh_node), 0, 0, 0,
+	    "msdosfhpl", &pool_allocator_nointr, IPL_NONE);
 	dehashtbl = hashinit(desiredvnodes / 2, HASH_LIST, true, &dehash);
+	rb_tree_init(&fh_rbtree, &fh_rbtree_ops);
 	mutex_init(&msdosfs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&fh_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&msdosfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 }
 
@@ -147,7 +198,9 @@ msdosfs_done(void)
 {
 	hashdone(dehashtbl, HASH_LIST, dehash);
 	pool_destroy(&msdosfs_denode_pool);
+	pool_destroy(&fh_pool);
 	mutex_destroy(&msdosfs_ihash_lock);
+	mutex_destroy(&fh_lock);
 	mutex_destroy(&msdosfs_hashlock);
 	malloc_type_detach(M_MSDOSFSTMP);
 	malloc_type_detach(M_MSDOSFSFAT);
@@ -461,8 +514,6 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 		}
 	}
 
-	fc_purge(dep, lastblock + 1);
-
 	/*
 	 * If the new length is not a multiple of the cluster size then we
 	 * must zero the tail end of the new last cluster in case it
@@ -505,6 +556,8 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 	printf("detrunc(): allerror %d, eofentry %lu\n",
 	       allerror, eofentry);
 #endif
+
+	fc_purge(dep, lastblock + 1);
 
 	/*
 	 * If we need to break the cluster chain for the file then do it
@@ -583,7 +636,7 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 	uvm_vnp_setwritesize(DETOV(dep), (voff_t)dep->de_FileSize);
 	dep->de_flag |= DE_UPDATE|DE_MODIFIED;
 	uvm_vnp_zerorange(DETOV(dep), (off_t)osize,
-	    (size_t)(dep->de_FileSize - osize));
+	    (size_t)(round_page(dep->de_FileSize) - osize));
 	uvm_vnp_setsize(DETOV(dep), (voff_t)dep->de_FileSize);
 	return (deupdat(dep, 1));
 }
@@ -634,7 +687,6 @@ msdosfs_reclaim(void *v)
 	/*
 	 * Purge old data structures associated with the denode.
 	 */
-	cache_purge(vp);
 	if (dep->de_devvp) {
 		vrele(dep->de_devvp);
 		dep->de_devvp = 0;
@@ -686,6 +738,8 @@ msdosfs_inactive(void *v)
 			error = detrunc(dep, (u_long)0, 0, NOCRED);
 		}
 		dep->de_Name[0] = SLOT_DELETED;
+		msdosfs_fh_remove(dep->de_pmp,
+		    dep->de_dirclust, dep->de_diroffset);
 	}
 	deupdat(dep, 0);
 out:
@@ -726,4 +780,100 @@ msdosfs_gop_markupdate(struct vnode *vp, int flags)
 
 		dep->de_flag |= mask;
 	}
+}
+
+int
+msdosfs_fh_enter(struct msdosfsmount *pmp,
+     uint32_t dircluster, uint32_t diroffset, uint32_t *genp)
+{
+	struct fh_key fhkey;
+	struct fh_node *fhp;
+
+	fhkey.fhk_mount = pmp;
+	fhkey.fhk_dircluster = dircluster;
+	fhkey.fhk_diroffset = diroffset;
+
+	mutex_enter(&fh_lock);
+	fhp = rb_tree_find_node(&fh_rbtree, &fhkey);
+	if (fhp == NULL) {
+		mutex_exit(&fh_lock);
+		fhp = pool_get(&fh_pool, PR_WAITOK);
+		mutex_enter(&fh_lock);
+		fhp->fh_key = fhkey;
+		fhp->fh_gen = fh_generation++;
+		rb_tree_insert_node(&fh_rbtree, fhp);
+	}
+	*genp = fhp->fh_gen;
+	mutex_exit(&fh_lock);
+	return 0;
+}
+
+int
+msdosfs_fh_remove(struct msdosfsmount *pmp,
+     uint32_t dircluster, uint32_t diroffset)
+{
+	struct fh_key fhkey;
+	struct fh_node *fhp;
+
+	fhkey.fhk_mount = pmp;
+	fhkey.fhk_dircluster = dircluster;
+	fhkey.fhk_diroffset = diroffset;
+
+	mutex_enter(&fh_lock);
+	fhp = rb_tree_find_node(&fh_rbtree, &fhkey);
+	if (fhp == NULL) {
+		mutex_exit(&fh_lock);
+		return ENOENT;
+	}
+	rb_tree_remove_node(&fh_rbtree, fhp);
+	mutex_exit(&fh_lock);
+	pool_put(&fh_pool, fhp);
+	return 0;
+}
+
+int
+msdosfs_fh_lookup(struct msdosfsmount *pmp,
+     uint32_t dircluster, uint32_t diroffset, uint32_t *genp)
+{
+	struct fh_key fhkey;
+	struct fh_node *fhp;
+
+	fhkey.fhk_mount = pmp;
+	fhkey.fhk_dircluster = dircluster;
+	fhkey.fhk_diroffset = diroffset;
+
+	mutex_enter(&fh_lock);
+	fhp = rb_tree_find_node(&fh_rbtree, &fhkey);
+	if (fhp == NULL) {
+		mutex_exit(&fh_lock);
+		return ESTALE;
+	}
+	*genp = fhp->fh_gen;
+	mutex_exit(&fh_lock);
+	return 0;
+}
+
+void
+msdosfs_fh_destroy(struct msdosfsmount *pmp)
+{
+	struct fh_key fhkey;
+	struct fh_node *fhp, *nfhp;
+
+	fhkey.fhk_mount = pmp;
+	fhkey.fhk_dircluster = 0;
+	fhkey.fhk_diroffset = 0;
+
+	mutex_enter(&fh_lock);
+	for (fhp = rb_tree_find_node_geq(&fh_rbtree, &fhkey);
+	    fhp != NULL && fhp->fh_mount == pmp; fhp = nfhp) {
+		nfhp = rb_tree_iterate(&fh_rbtree, fhp, RB_DIR_RIGHT);
+		rb_tree_remove_node(&fh_rbtree, fhp);
+		pool_put(&fh_pool, fhp);
+	}
+#ifdef DIAGNOSTIC
+	RB_TREE_FOREACH(fhp, &fh_rbtree) {
+		KASSERT(fhp->fh_mount != pmp);
+	}
+#endif
+	mutex_exit(&fh_lock);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: au8522.c,v 1.2 2010/12/28 00:11:50 jmcneill Exp $ */
+/* $NetBSD: au8522.c,v 1.2.2.1 2011/06/06 09:07:49 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.2 2010/12/28 00:11:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au8522.c,v 1.2.2.1 2011/06/06 09:07:49 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,6 +255,20 @@ au8522_get_signal(struct au8522 *au)
 	printf("au8522: status=0x%02x\n", status);
 #endif
 	return (status & AU8522_STATUS_LOCK) == AU8522_STATUS_LOCK ? 1 : 0;
+}
+
+void
+au8522_set_audio(struct au8522 *au, bool onoff)
+{
+	if (onoff) {
+		au8522_write_1(au, AU8522_REG_AUDIO_VOL_L, 0x7f);
+		au8522_write_1(au, AU8522_REG_AUDIO_VOL_R, 0x7f);
+		au8522_write_1(au, AU8522_REG_AUDIO_VOL, 0xff);
+	} else {
+		au8522_write_1(au, AU8522_REG_AUDIO_VOL_L, 0x00);
+		au8522_write_1(au, AU8522_REG_AUDIO_VOL_R, 0x00);
+		au8522_write_1(au, AU8522_REG_AUDIO_VOL, 0x00);
+	}
 }
 
 MODULE(MODULE_CLASS_DRIVER, au8522, NULL);

@@ -1,7 +1,7 @@
-/*      $NetBSD: scheduler.c,v 1.24 2011/01/11 10:49:20 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.24.2.1 2011/06/06 09:10:08 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.24 2011/01/11 10:49:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.24.2.1 2011/06/06 09:10:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -77,6 +77,8 @@ int ncpu;
 static struct rumpuser_mtx *lwp0mtx;
 static struct rumpuser_cv *lwp0cv;
 static unsigned nextcpu;
+
+kmutex_t unruntime_lock; /* unruntime lwp lock.  practically unused */
 
 static bool lwp0isbusy = false;
 
@@ -165,6 +167,8 @@ rump_scheduler_init(int numcpu)
 		rumpuser_cv_init(&rcpu->rcpu_cv);
 		rumpuser_mutex_init(&rcpu->rcpu_mtx);
 	}
+
+	mutex_init(&unruntime_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -196,7 +200,7 @@ lwp0busy(void)
 {
 
 	/* busy lwp0 */
-	KASSERT(curlwp == NULL || curlwp->l_cpu == NULL);
+	KASSERT(curlwp == NULL || curlwp->l_stat != LSONPROC);
 	rumpuser_mutex_enter_nowrap(lwp0mtx);
 	while (lwp0isbusy)
 		rumpuser_cv_wait_nowrap(lwp0cv, lwp0mtx);
@@ -271,6 +275,8 @@ rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
 	bool domigrate;
 	bool bound = l->l_pflag & LP_BOUND;
 
+	l->l_stat = LSRUN;
+
 	/*
 	 * First, try fastpath: if we were the previous user of the
 	 * CPU, everything is in order cachewise and we can just
@@ -342,6 +348,7 @@ rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
 	l->l_cpu = l->l_target_cpu = rcpu->rcpu_ci;
 	l->l_mutex = rcpu->rcpu_ci->ci_schedstate.spc_mutex;
 	l->l_ncsw++;
+	l->l_stat = LSONPROC;
 
 	rcpu->rcpu_ci->ci_curlwp = l;
 }
@@ -359,7 +366,8 @@ rump_unschedule()
 
 	KASSERT(l->l_mutex == l->l_cpu->ci_schedstate.spc_mutex);
 	rump_unschedule_cpu(l);
-	l->l_mutex = NULL;
+	l->l_mutex = &unruntime_lock;
+	l->l_stat = LSSTOP;
 
 	/*
 	 * Check special conditions:
@@ -379,7 +387,7 @@ rump_unschedule()
 
 		/* release lwp0 */
 		rump_unschedule_cpu(&lwp0);
-		lwp0.l_mutex = NULL;
+		lwp0.l_mutex = &unruntime_lock;
 		lwp0.l_pflag &= ~LP_RUNNING;
 		lwp0rele();
 		rumpuser_set_curlwp(NULL);
@@ -415,7 +423,6 @@ rump_unschedule_cpu1(struct lwp *l, void *interlock)
 
 	ci = l->l_cpu;
 	ci->ci_curlwp = NULL;
-	l->l_cpu = NULL;
 	rcpu = &rcpu_storage[ci-&rump_cpus[0]];
 
 	KASSERT(rcpu->rcpu_ci == ci);

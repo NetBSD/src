@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.305 2011/01/14 02:06:31 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.305.2.1 2011/06/06 09:06:46 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305 2011/01/14 02:06:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305.2.1 2011/06/06 09:06:46 jruoho Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -356,7 +356,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	 * Set the registers to 0 except for:
 	 *	%o6: stack pointer, built in exec())
 	 *	%psr: (retain CWP and PSR_S bits)
-	 *	%g1: address of p->p_psstr (used by crt0)
+	 *	%g1: p->p_psstrp (used by crt0)
 	 *	%pc,%npc: entry point of program
 	 */
 	psr = tf->tf_psr & (PSR_S | PSR_CWP);
@@ -383,12 +383,12 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		}
 		l->l_md.md_fpu = NULL;
 		FPU_UNLOCK(s);
-		free((void *)fs, M_SUBPROC);
+		kmem_free(fs, sizeof(struct fpstate));
 		l->l_md.md_fpstate = NULL;
 	}
 	memset((void *)tf, 0, sizeof *tf);
 	tf->tf_psr = psr;
-	tf->tf_global[1] = (int)l->l_proc->p_psstr;
+	tf->tf_global[1] = l->l_proc->p_psstrp;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 	stack -= sizeof(struct rwindow);
@@ -777,6 +777,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_out[5] = r[_REG_O5];
 		tf->tf_out[6] = r[_REG_O6];
 		tf->tf_out[7] = r[_REG_O7];
+
+		lwp_setprivate(l, (void *)(uintptr_t)r[_REG_G7]);
 	}
 
 #ifdef FPU_CONTEXT

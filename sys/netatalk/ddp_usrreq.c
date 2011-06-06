@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.39 2009/04/16 21:37:17 elad Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.39.6.1 2011/06/06 09:09:54 jruoho Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.39 2009/04/16 21:37:17 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.39.6.1 2011/06/06 09:09:54 jruoho Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -554,6 +554,7 @@ ddp_init(void)
 
 	MOWNER_ATTACH(&atalk_tx_mowner);
 	MOWNER_ATTACH(&atalk_rx_mowner);
+	MOWNER_ATTACH(&aarp_mowner);
 }
 
 #if 0

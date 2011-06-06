@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.98 2010/06/26 14:24:27 kefren Exp $	*/
+/*	$NetBSD: socket.h,v 1.98.2.1 2011/06/06 09:10:13 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -184,7 +184,7 @@ struct	accept_filter_arg {
 #define AF_LAT		14		/* LAT */
 #define	AF_HYLINK	15		/* NSC Hyperchannel */
 #define	AF_APPLETALK	16		/* Apple Talk */
-#define	AF_ROUTE	17		/* Internal Routing Protocol */
+#define	AF_OROUTE	17		/* Internal Routing Protocol */
 #define	AF_LINK		18		/* Link layer interface */
 #if defined(_NETBSD_SOURCE)
 #define	pseudo_AF_XTP	19		/* eXpress Transfer Protocol (no AF) */
@@ -211,7 +211,8 @@ struct	accept_filter_arg {
 #define AF_BLUETOOTH	31		/* Bluetooth: HCI, SCO, L2CAP, RFCOMM */
 #define	AF_IEEE80211	32		/* IEEE80211 */
 #define	AF_MPLS		33		/* MultiProtocol Label Switching */
-#define	AF_MAX		34
+#define	AF_ROUTE	34		/* Internal Routing Protocol */
+#define	AF_MAX		35
 
 /*
  * Structure used by kernel to store most
@@ -279,7 +280,7 @@ struct sockaddr_storage {
 #define PF_LAT		AF_LAT
 #define	PF_HYLINK	AF_HYLINK
 #define	PF_APPLETALK	AF_APPLETALK
-#define	PF_ROUTE	AF_ROUTE
+#define	PF_OROUTE	AF_OROUTE
 #define	PF_LINK		AF_LINK
 #if defined(_NETBSD_SOURCE)
 #define	PF_XTP		pseudo_AF_XTP	/* really just proto family, no AF */
@@ -301,6 +302,7 @@ struct sockaddr_storage {
 #endif
 #define PF_BLUETOOTH	AF_BLUETOOTH
 #define	PF_MPLS		AF_MPLS
+#define	PF_ROUTE	AF_ROUTE
 
 #define	PF_MAX		AF_MAX
 
@@ -365,7 +367,7 @@ struct sockcred {
 	{ "lat", CTLTYPE_NODE }, \
 	{ "hylink", CTLTYPE_NODE }, \
 	{ "appletalk", CTLTYPE_NODE }, \
-	{ "route", CTLTYPE_NODE }, \
+	{ "oroute", CTLTYPE_NODE }, \
 	{ "link_layer", CTLTYPE_NODE }, \
 	{ "xtp", CTLTYPE_NODE }, \
 	{ "coip", CTLTYPE_NODE }, \
@@ -378,6 +380,9 @@ struct sockcred {
 	{ "natm", CTLTYPE_NODE }, \
 	{ "arp", CTLTYPE_NODE }, \
 	{ "key", CTLTYPE_NODE }, \
+	{ "ieee80211", CTLTYPE_NODE }, \
+	{ "mlps", CTLTYPE_NODE }, \
+	{ "route", CTLTYPE_NODE }, \
 }
 
 struct kinfo_pcb {

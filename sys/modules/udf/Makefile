@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/06/28 16:11:36 rumble Exp $
+#	$NetBSD: Makefile,v 1.1.32.1 2011/06/06 09:09:50 jruoho Exp $
 
 .include "../Makefile.inc"
 
@@ -8,6 +8,7 @@ KMOD=  	udf
 SRCS=	udf_allocation.c udf_osta.c udf_readwrite.c udf_strat_bootstrap.c \
 	udf_strat_direct.c udf_strat_rmw.c udf_strat_sequential.c udf_subr.c \
 	udf_vnops.c udf_vfsops.c
-	
+
+CWARNFLAGS.clang=	-Wno-self-assign
 
 .include <bsd.kmodule.mk>

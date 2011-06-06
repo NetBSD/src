@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.5 2009/03/18 16:00:23 cegger Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.5.6.1 2011/06/06 09:10:01 jruoho Exp $ */
 /*	$FreeBSD: sys/netipsec/xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 /* TCP MD5 Signature Option (RFC2385) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.5 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.5.6.1 2011/06/06 09:10:01 jruoho Exp $");
 
 #include "opt_inet.h"
 
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.5 2009/03/18 16:00:23 cegger Exp $")
  * Therefore we use this compromise in the meantime.
  */
 static int
-tcpsignature_init(struct secasvar *sav, struct xformsw *xsp)
+tcpsignature_init(struct secasvar *sav, const struct xformsw *xsp)
 {
 	int keylen;
 
@@ -137,7 +137,7 @@ tcpsignature_zeroize(struct secasvar *sav)
  * We do this from within tcp itself, so this routine is just a stub.
  */
 static int
-tcpsignature_input(struct mbuf *m, struct secasvar *sav, int skip,
+tcpsignature_input(struct mbuf *m, const struct secasvar *sav, int skip,
     int protoff)
 {
 

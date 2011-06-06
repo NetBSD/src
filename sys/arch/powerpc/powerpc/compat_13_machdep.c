@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.17 2009/11/27 03:23:12 rmind Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.17.6.1 2011/06/06 09:06:30 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.17 2009/11/27 03:23:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.17.6.1 2011/06/06 09:06:30 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -58,9 +58,9 @@ compat_13_sys_sigreturn(struct lwp *l,
 	/* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */
-	struct proc *p = l->l_proc;
+	struct proc * const p = l->l_proc;
+	struct trapframe * const tf = l->l_md.md_utf;
 	struct sigcontext13 sc;
-	struct trapframe *tf;
 	int error;
 	sigset_t mask;
 
@@ -72,22 +72,20 @@ compat_13_sys_sigreturn(struct lwp *l,
 	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
 		return (error);
 
-	/* Restore the register context. */
-	tf = trapframe(l);
 	if (!PSL_USEROK_P(sc.sc_frame.srr1))
 		return (EINVAL);
 
 	/* Restore register context. */
-	memcpy(tf->fixreg, sc.sc_frame.fixreg, sizeof(tf->fixreg));
-	tf->lr   = sc.sc_frame.lr;
-	tf->cr   = sc.sc_frame.cr;
-	tf->xer  = sc.sc_frame.xer;
-	tf->ctr  = sc.sc_frame.ctr;
-	tf->srr0 = sc.sc_frame.srr0;
-	tf->srr1 = sc.sc_frame.srr1;
+	memcpy(tf->tf_fixreg, sc.sc_frame.fixreg, sizeof(tf->tf_fixreg));
+	tf->tf_lr   = sc.sc_frame.lr;
+	tf->tf_cr   = sc.sc_frame.cr;
+	tf->tf_xer  = sc.sc_frame.xer;
+	tf->tf_ctr  = sc.sc_frame.ctr;
+	tf->tf_srr0 = sc.sc_frame.srr0;
+	tf->tf_srr1 = sc.sc_frame.srr1;
 #ifdef PPC_OEA
-	tf->tf_xtra[TF_VRSAVE] = sc.sc_frame.vrsave;
-	tf->tf_xtra[TF_MQ] = sc.sc_frame.mq;
+	tf->tf_vrsave = sc.sc_frame.vrsave;
+	tf->tf_mq = sc.sc_frame.mq;
 #endif
 
 	mutex_enter(p->p_lock);

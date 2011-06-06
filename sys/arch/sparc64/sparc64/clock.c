@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.101 2010/03/11 03:54:56 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.101.4.1 2011/06/06 09:06:52 jruoho Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.101 2010/03/11 03:54:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.101.4.1 2011/06/06 09:06:52 jruoho Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -90,10 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.101 2010/03/11 03:54:56 mrg Exp $");
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
 #include <sparc64/dev/iommureg.h>
-#include <sparc64/dev/sbusreg.h>
-#include <dev/sbus/sbusvar.h>
-#include <dev/ebus/ebusreg.h>
-#include <dev/ebus/ebusvar.h>
 
 
 /*
@@ -127,12 +123,12 @@ static struct intrhand level14 = { .ih_fun = statintr };
 static struct intrhand *schedint;
 #endif
 
-static int	timermatch(struct device *, struct cfdata *, void *);
-static void	timerattach(struct device *, struct device *, void *);
+static int	timermatch(device_t, cfdata_t, void *);
+static void	timerattach(device_t, device_t, void *);
 
 struct timerreg_4u	timerreg_4u;	/* XXX - need more cleanup */
 
-CFATTACH_DECL(timer, sizeof(struct device),
+CFATTACH_DECL_NEW(timer, 0,
     timermatch, timerattach, NULL, NULL);
 
 struct chiptime;
@@ -200,7 +196,7 @@ counter_get_timecount(struct timecounter *tc)
  * the lame UltraSPARC IIi PCI machines that don't have them.
  */
 static int
-timermatch(struct device *parent, struct cfdata *cf, void *aux)
+timermatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -208,7 +204,7 @@ timermatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-timerattach(struct device *parent, struct device *self, void *aux)
+timerattach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	u_int *va = ma->ma_address;
@@ -238,7 +234,7 @@ timerattach(struct device *parent, struct device *self, void *aux)
 	     (CPU_UPAID << INTMAP_TID_SHIFT));
 
 	/* Install the appropriate interrupt vector here */
-	level10.ih_number = ma->ma_interrupts[0];
+	level10.ih_number = INTVEC(ma->ma_interrupts[0]);
 	level10.ih_clr = &timerreg_4u.t_clrintr[0];
 	intr_establish(PIL_CLOCK, true, &level10);
 	printf(" irq vectors %lx", (u_long)level10.ih_number);
@@ -246,7 +242,7 @@ timerattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * On SMP kernel, don't establish interrupt to use it as timecounter.
 	 */
-	level14.ih_number = ma->ma_interrupts[1];
+	level14.ih_number = INTVEC(ma->ma_interrupts[1]);
 	level14.ih_clr = &timerreg_4u.t_clrintr[1];
 	intr_establish(PIL_STATCLOCK, true, &level14);
 	printf(" and %lx", (u_long)level14.ih_number);

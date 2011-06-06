@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.84 2010/11/15 20:31:41 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.84.2.1 2011/06/06 09:09:23 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.84 2010/11/15 20:31:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.84.2.1 2011/06/06 09:09:23 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -468,18 +468,18 @@ puffs_msg_wait(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	mutex_exit(&pmp->pmp_lock);
 
 	mutex_enter(&park->park_mtx);
-	if ((park->park_flags & PARKFLAG_WANTREPLY) == 0
-	    || (park->park_flags & PARKFLAG_CALL)) {
-		mutex_exit(&park->park_mtx);
-		rv = 0;
-		goto skipwait;
-	}
-
 	/* did the response beat us to the wait? */
 	if (__predict_false((park->park_flags & PARKFLAG_DONE)
 	    || (park->park_flags & PARKFLAG_HASERROR))) {
 		rv = park->park_preq->preq_rv;
 		mutex_exit(&park->park_mtx);
+		goto skipwait;
+	}
+
+	if ((park->park_flags & PARKFLAG_WANTREPLY) == 0
+	    || (park->park_flags & PARKFLAG_CALL)) {
+		mutex_exit(&park->park_mtx);
+		rv = 0;
 		goto skipwait;
 	}
 

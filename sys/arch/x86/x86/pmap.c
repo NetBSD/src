@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113 2010/07/24 00:45:56 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113.2.1 2011/06/06 09:07:08 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -42,7 +42,6 @@
  */
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -54,12 +53,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -123,7 +116,7 @@
 
 /*
  * pmap.c: i386 pmap module rewrite
- * Chuck Cranor <chuck@ccrc.wustl.edu>
+ * Chuck Cranor <chuck@netbsd>
  * 11-Aug-97
  *
  * history of this pmap module: in addition to my own input, i used
@@ -149,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113 2010/07/24 00:45:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113.2.1 2011/06/06 09:07:08 jruoho Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -774,7 +767,7 @@ pmap_unmap_apdp(void)
  *	Add a reference to the specified pmap.
  */
 
-inline void
+void
 pmap_reference(struct pmap *pmap)
 {
 
@@ -1504,7 +1497,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
 	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
 	/* Pin as L4 */
-	xpq_queue_pin_table(xpmap_ptom_masked(xen_dummy_user_pgd));
+	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
 #endif /* __x86_64__ */
 	idt_vaddr = virtual_avail;                      /* don't need pte */
 	idt_paddr = avail_start;                        /* steal a page */
@@ -1601,9 +1594,9 @@ pmap_bootstrap(vaddr_t kva_start)
 void
 pmap_prealloc_lowmem_ptps(void)
 {
-#ifdef XEN
 	int level;
 	paddr_t newp;
+#ifdef XEN
 	paddr_t pdes_pa;
 
 	pdes_pa = pmap_pdirpa(pmap_kernel(), 0);
@@ -1613,7 +1606,7 @@ pmap_prealloc_lowmem_ptps(void)
 		avail_start += PAGE_SIZE;
 		HYPERVISOR_update_va_mapping ((vaddr_t)early_zerop,
 		    xpmap_ptom_masked(newp) | PG_u | PG_V | PG_RW, UVMF_INVLPG);
-		memset((void *)early_zerop, 0, PAGE_SIZE);
+		memset(early_zerop, 0, PAGE_SIZE);
 		/* Mark R/O before installing */
 		HYPERVISOR_update_va_mapping ((vaddr_t)early_zerop,
 		    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
@@ -1621,9 +1614,10 @@ pmap_prealloc_lowmem_ptps(void)
 			HYPERVISOR_update_va_mapping (newp + KERNBASE,
 			    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
 		xpq_queue_pte_update (
-			xpmap_ptom_masked(pdes_pa)
-			+ (pl_i(0, level) * sizeof (pd_entry_t)),
-			xpmap_ptom_masked(newp) | PG_RW | PG_u | PG_V);
+		    xpmap_ptom_masked(pdes_pa)
+		    + (pl_i(0, level) * sizeof (pd_entry_t)),
+		    xpmap_ptom_masked(newp) | PG_RW | PG_u | PG_V);
+		pmap_pte_flush();
 		level--;
 		if (level <= 1)
 			break;
@@ -1631,15 +1625,14 @@ pmap_prealloc_lowmem_ptps(void)
 	}
 #else /* XEN */
 	pd_entry_t *pdes;
-	int level;
-	paddr_t newp;
 
 	pdes = pmap_kernel()->pm_pdir;
 	level = PTP_LEVELS;
 	for (;;) {
 		newp = avail_start;
 		avail_start += PAGE_SIZE;
-		*early_zero_pte = (newp & PG_FRAME) | PG_V | PG_RW;
+		pmap_pte_set(early_zero_pte, (newp & PG_FRAME) | PG_V | PG_RW);
+		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
 		pdes[pl_i(0, level)] = (newp & PG_FRAME) | PG_V | PG_RW;
@@ -1912,6 +1905,7 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 static inline void
 pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 {
+	lwp_t *l;
 	int lidx;
 	struct uvm_object *obj;
 
@@ -1927,8 +1921,10 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&obj->memq);
 	ptp->wire_count = 0;
 	uvm_pagerealloc(ptp, NULL, 0);
-	VM_PAGE_TO_PP(ptp)->pp_link = curlwp->l_md.md_gc_ptp;
-	curlwp->l_md.md_gc_ptp = ptp;
+	l = curlwp;
+	KASSERT((l->l_pflag & LP_INTR) == 0);
+	VM_PAGE_TO_PP(ptp)->pp_link = l->l_md.md_gc_ptp;
+	l->l_md.md_gc_ptp = ptp;
 	if (lidx != 0)
 		mutex_exit(&obj->vmobjlock);
 }
@@ -2186,12 +2182,17 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 		if (i == l2tol3(PDIR_SLOT_PTE))
 			continue;
 #endif
-		xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+
+#ifdef __x86_64__
+		xpq_queue_pin_l4_table(xpmap_ptom_masked(pdirpa));
+#else
+		xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
+#endif
 	}
 #ifdef PAE
 	object = ((vaddr_t)pdir) + PAGE_SIZE  * l2tol3(PDIR_SLOT_PTE);
 	(void)pmap_extract(pmap_kernel(), object, &pdirpa);
-	xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+	xpq_queue_pin_l2_table(xpmap_ptom_masked(pdirpa));
 #endif
 	splx(s);
 #endif /* XEN */
@@ -4211,11 +4212,8 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 		kpreempt_enable();
 	} else {
 		/* XXX */
-		PMAP_SUBOBJ_LOCK(kpm, level - 1);
-		ptp = uvm_pagealloc(&kpm->pm_obj[level - 1],
-				    ptp_va2o(va, level), NULL,
+		ptp = uvm_pagealloc(NULL, 0, NULL,
 				    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
-		PMAP_SUBOBJ_UNLOCK(kpm, level - 1);
 		if (ptp == NULL)
 			panic("pmap_get_physpage: out of memory");
 		ptp->flags &= ~PG_BUSY;
@@ -4683,7 +4681,8 @@ pmap_update(struct pmap *pmap)
 	 * but not from interrupt context.
 	 */
 	if (l->l_md.md_gc_ptp != NULL) {
-		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
+		KASSERT((l->l_pflag & LP_INTR) == 0);
+		if (cpu_intr_p()) {
 			return;
 		}
 
@@ -4778,4 +4777,16 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 #endif
 
 	return x86_tmp_pml_paddr[PTP_LEVELS - 1];
+}
+
+u_int
+x86_mmap_flags(paddr_t mdpgno)
+{
+	u_int nflag = (mdpgno >> X86_MMAP_FLAG_SHIFT) & X86_MMAP_FLAG_MASK;
+	u_int pflag = 0;
+
+	if (nflag & X86_MMAP_FLAG_PREFETCH)
+		pflag |= PMAP_WRITE_COMBINE;
+
+	return pflag;
 }

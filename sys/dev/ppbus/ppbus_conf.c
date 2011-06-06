@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.18 2009/11/11 15:34:37 he Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.18.6.1 2011/06/06 09:08:31 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.18 2009/11/11 15:34:37 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.18.6.1 2011/06/06 09:08:31 jruoho Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -155,7 +155,7 @@ ppbus_attach(device_t parent, device_t self, void *aux)
 		printf("%s: IEEE1284 device found.\n", device_xname(self));
 		/*
 		 * Detect device ID (interrupts must be disabled because we
-		 * cannot do a ltsleep() to wait for it - no context)
+		 * cannot do a block to wait for it - no context)
 		 */
 		if (args.capabilities & PPBUS_HAS_INTR) {
 			int val = 0;

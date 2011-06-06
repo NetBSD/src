@@ -1,4 +1,4 @@
-#	$NetBSD: T_SH7706LSR,v 1.4 2010/11/23 11:13:58 hannken Exp $
+#	$NetBSD: T_SH7706LSR,v 1.4.2.1 2011/06/06 09:05:33 jruoho Exp $
 #
 #	TAC T-SH7706LSR Rev.1 config file
 #
@@ -96,7 +96,7 @@ ne0 at mainbus?				# AX88796BLF
 # MMC SPI
 ssumci0 at mainbus?
 sdmmc* at ssumci?
-#options 	SCIMCI_DEBUG
+#options 	SSUMCI_DEBUG
 #options 	SDMMC_DEBUG
 #options 	SDMMC_DUMP_CSD
 ld* at sdmmc?				# MMC card

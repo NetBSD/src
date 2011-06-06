@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_mbuf.c,v 1.5 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.5.2.1 2011/06/06 09:09:53 jruoho Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.5 2010/11/11 06:30:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.5.2.1 2011/06/06 09:09:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -110,10 +110,9 @@ nbuf_advance(nbuf_t **nbuf, void *n_ptr, u_int n)
 #define	NBUF_DATA_WRITE		1
 
 static inline int
-nbuf_rw_datum(const int wr, nbuf_t *nbuf, void *n_ptr, size_t len, void *buf)
+nbuf_rw_datum(const int wr, struct mbuf *m, void *n_ptr, size_t len, void *buf)
 {
 	uint8_t *d = n_ptr, *b = buf;
-	struct mbuf *m = nbuf;
 	u_int off, wmark, end;
 
 	/* Current offset in mbuf. */
@@ -174,15 +173,18 @@ nbuf_rw_datum(const int wr, nbuf_t *nbuf, void *n_ptr, size_t len, void *buf)
 int
 nbuf_fetch_datum(nbuf_t *nbuf, void *n_ptr, size_t len, void *buf)
 {
+	struct mbuf *m = nbuf;
 
-	return nbuf_rw_datum(NBUF_DATA_READ, nbuf, n_ptr, len, buf);
+	return nbuf_rw_datum(NBUF_DATA_READ, m, n_ptr, len, buf);
 }
 
 int
 nbuf_store_datum(nbuf_t *nbuf, void *n_ptr, size_t len, void *buf)
 {
+	struct mbuf *m = nbuf;
 
-	return nbuf_rw_datum(NBUF_DATA_WRITE, nbuf, n_ptr, len, buf);
+	KASSERT((m->m_flags & M_PKTHDR) != 0 || !M_READONLY(m));
+	return nbuf_rw_datum(NBUF_DATA_WRITE, m, n_ptr, len, buf);
 }
 
 /*

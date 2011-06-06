@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.33 2010/07/27 05:29:05 jakllsch Exp $ */
+/* $NetBSD: piixpm.c,v 1.33.2.1 2011/06/06 09:08:25 jruoho Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.33 2010/07/27 05:29:05 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.33.2.1 2011/06/06 09:08:25 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.33 2010/07/27 05:29:05 jakllsch Exp $")
 #define DPRINTF(x)
 #endif
 
+#define PIIXPM_IS_CSB5(id) \
+	(PCI_VENDOR((id)) == PCI_VENDOR_SERVERWORKS && \
+	PCI_PRODUCT((id)) == PCI_PRODUCT_SERVERWORKS_CSB5)
 #define PIIXPM_DELAY	200
 #define PIIXPM_TIMEOUT	1
 
@@ -65,6 +68,7 @@ struct piixpm_softc {
 
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
+	pcireg_t		sc_id;
 
 	struct i2c_controller	sc_i2c_tag;
 	krwlock_t		sc_i2c_rwlock;
@@ -85,6 +89,7 @@ static void	piixpm_attach(device_t, device_t, void *);
 static bool	piixpm_suspend(device_t, const pmf_qual_t *);
 static bool	piixpm_resume(device_t, const pmf_qual_t *);
 
+static void	piixpm_csb5_reset(void *);
 static int	piixpm_i2c_acquire_bus(void *, int);
 static void	piixpm_i2c_release_bus(void *, int);
 static int	piixpm_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
@@ -144,6 +149,7 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr = NULL;
 
 	sc->sc_dev = self;
+	sc->sc_id = pa->pa_id;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
@@ -266,6 +272,27 @@ piixpm_resume(device_t dv, const pmf_qual_t *qual)
 	return true;
 }
 
+static void
+piixpm_csb5_reset(void *arg)
+{
+	struct piixpm_softc *sc = arg;
+	pcireg_t base, hostc, pmbase;
+
+	base = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PIIX_SMB_BASE);
+	hostc = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PIIX_SMB_HOSTC);
+
+	pmbase = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PIIX_PM_BASE);
+	pmbase |= PIIX_PM_BASE_CSB5_RESET;
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, PIIX_PM_BASE, pmbase);
+	pmbase &= ~PIIX_PM_BASE_CSB5_RESET;
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, PIIX_PM_BASE, pmbase);
+
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, PIIX_SMB_BASE, base);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, PIIX_SMB_HOSTC, hostc);
+
+	(void) tsleep(&sc, PRIBIO, "csb5reset", hz/2);
+}
+
 static int
 piixpm_i2c_acquire_bus(void *cookie, int flags)
 {
@@ -316,7 +343,8 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (cold || sc->sc_poll)
 		flags |= I2C_F_POLL;
 
-	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2)
+	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2 ||
+	    (cmdlen == 0 && len > 1))
 		return (1);
 
 	/* Setup transfer */
@@ -340,7 +368,10 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (I2C_OP_WRITE_P(op)) {
 		/* Write data */
 		b = buf;
-		if (len > 0)
+		if (cmdlen == 0 && len == 1)
+			bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+			    PIIX_SMB_HCMD, b[0]);
+		else if (len > 0)
 			bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HD0, b[0]);
 		if (len > 1)
@@ -349,8 +380,8 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	}
 
 	/* Set SMBus command */
-	if (len == 0) {
-		if (cmdlen == 0)
+	if (cmdlen == 0) {
+		if (len == 0)
 			ctl = PIIX_SMB_HC_CMD_QUICK;
 		else
 			ctl = PIIX_SMB_HC_CMD_BYTE;
@@ -368,7 +399,10 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 
 	if (flags & I2C_F_POLL) {
 		/* Poll for completion */
-		DELAY(PIIXPM_DELAY);
+		if (PIIXPM_IS_CSB5(sc->sc_id))
+			DELAY(2*PIIXPM_DELAY);
+		else
+			DELAY(PIIXPM_DELAY);
 		for (retries = 1000; retries > 0; retries--) {
 			st = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HS);
@@ -402,6 +436,11 @@ timeout:
 	if ((st & PIIX_SMB_HS_FAILED) == 0)
 		aprint_error_dev(sc->sc_dev, "transaction abort failed, status 0x%x\n", st);
 	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, st);
+	/*
+	 * CSB5 needs hard reset to unlock the smbus after timeout.
+	 */
+	if (PIIXPM_IS_CSB5(sc->sc_id))
+		piixpm_csb5_reset(sc);
 	return (1);
 }
 

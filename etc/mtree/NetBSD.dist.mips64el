@@ -1,8 +1,0 @@
-#	$NetBSD: NetBSD.dist.mips64el,v 1.1 2009/12/14 13:23:56 uebayasi Exp $
-
-./usr/lib/o32
-./usr/lib/o32/i18n
-./usr/lib/o32/security
-./usr/lib/64
-./usr/lib/64/i18n
-./usr/lib/64/security

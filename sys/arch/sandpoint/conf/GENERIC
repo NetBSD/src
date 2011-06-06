@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.52 2011/01/15 23:06:07 phx Exp $
+# $NetBSD: GENERIC,v 1.52.2.1 2011/06/06 09:06:34 jruoho Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.52 $"
+#ident 		"GENERIC-$Revision: 1.52.2.1 $"
 
 maxusers	32
 
@@ -38,7 +38,7 @@ maxusers	32
 #options 	MODULAR			# module(7) support
 
 #options 	DEBUG
-options 	DIAGNOSTIC
+#options 	DIAGNOSTIC
 options 	TRAP_PANICWAIT
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
@@ -94,15 +94,35 @@ file-system	PTYFS		# /dev/ptm support
 file-system	TMPFS		# Efficient memory file-system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 
-options 	INET
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires BPF)
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
+#options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -152,22 +172,28 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCI_NETBSD_CONFIGURE	# Have NetBSD configure PCI I/O & Mem
 
-mainbus0 at root
+mainbus0	at root
 
-cpu*	at mainbus0
-pci*	at mainbus0 bus ?
+cpu*		at mainbus0
+pci*		at mainbus0 bus ?
 
-pchb*	at pci? dev ? function ?	# PCI host bridge
+pchb*		at pci? dev ? function ?	# PCI host bridge
 
-eumb*	at mainbus0
-com0	at eumb? unit 0			# console at 0x4500
-#com1	at eumb? unit 1
-satmgr0 at eumb? unit 1 		# satmgr at 0x4600
-ociic*	at eumb?
-iic*	at ociic?
-rs5c372rtc* at iic? addr 0x32
+eumb*		at mainbus0
+com0		at eumb? unit 0			# console at 0x4500
+#com1		at eumb? unit 1
+satmgr0 	at eumb? unit 1 		# satmgr at 0x4600
+ociic*		at eumb?
+iic*		at ociic?
+dsrtc*		at iic? addr 0x68
+rs5c372rtc*	at iic? addr 0x32
+s390rtc*	at iic? addr 0x30
+strtc*		at iic? addr 0x68
+options 	STRTC_NO_WATCHDOG
+options 	STRTC_NO_USERRAM
 
 # PCI IDE controllers - see pciide(4) for supported hardware.
+acardide*	at pci? dev ? function ?	# Acard IDE controllers
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
@@ -179,12 +205,14 @@ atabus* at ata?
 wd*		at atabus? drive ? flags 0x0000	# the drives themselves
 
 # PCI network interfaces
-tlp*	at pci? dev ? function ?	# DEC Tulip and similar
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 skc*	at pci? dev ? function ?	# Marvell Yukon Gigabit Ethernet
 sk*	at skc?				# Marvell Yukon Gigabit Ethernet
-wm*	at pci? dev ? function ?	# Intel 8254x gigabit
-fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+stge*	at pci? dev ? function ?	# Sundance ST1023 Gigabit
+tlp*	at pci? dev ? function ?	# DEC Tulip and similar
+wm*	at pci? dev ? function ?	# Intel 8254x Gigabit Ethernet
 
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
@@ -208,6 +236,10 @@ uhub*	at uhub? port ?
 uhidev* at uhub? port ? configuration ? interface ?	# USB HID device
 uthum*	at uhidev? reportid ?				# TEMPerHUM sensors
 uhid*	at uhidev? reportid ?				# USB Generic HID
+
+# USB video
+uvideo* at uhub?			# USB Video Class capture devices
+video*	at videobus?
 
 # USB printer
 ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer

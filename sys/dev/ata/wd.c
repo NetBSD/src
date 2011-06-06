@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.385 2010/11/05 15:49:37 dyoung Exp $ */
+/*	$NetBSD: wd.c,v 1.385.2.1 2011/06/06 09:07:45 jruoho Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.385 2010/11/05 15:49:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.385.2.1 2011/06/06 09:07:45 jruoho Exp $");
 
 #include "opt_ata.h"
 
@@ -281,10 +281,11 @@ wdattach(device_t parent, device_t self, void *aux)
 	wd->drvp->drv_softc = wd->sc_dev;
 
 	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/* read our drive info */
 	if (wd_get_params(wd, AT_WAIT, &wd->sc_params) != 0) {
-		aprint_error("\n%s: IDENTIFY failed\n", device_xname(self));
+		aprint_error_dev(self, "IDENTIFY failed\n");
 		return;
 	}
 
@@ -304,7 +305,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	}
 	*q++ = '\0';
 
-	aprint_normal(": <%s>\n", tbuf);
+	aprint_normal_dev(self, "<%s>\n", tbuf);
 
 	wdq = wd_lookup_quirks(tbuf);
 	if (wdq != NULL)

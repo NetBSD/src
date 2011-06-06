@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.37 2010/11/10 09:27:24 uebayasi Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.37.2.1 2011/06/06 09:06:30 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,8 +30,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define _POWERPC_BUS_DMA_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.37 2010/11/10 09:27:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.37.2.1 2011/06/06 09:06:30 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,9 +44,16 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.37 2010/11/10 09:27:24 uebayasi Exp $"
 
 #include <uvm/uvm.h>
 
-#define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+#ifdef PPC_BOOKE
+#define	EIEIO	__asm volatile("mbar\t0")
+#define	SYNC	__asm volatile("msync")
+#else
+#define	EIEIO	__asm volatile("eieio")
+#define	SYNC	__asm volatile("sync")
+#endif
 
 int	_bus_dmamap_load_buffer (bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct vmspace *, int, paddr_t *, int *, int);
@@ -143,6 +151,9 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
+
+//	printf("%s(%p,%p,%p,%u,%p,%#x,%p,%p,%u)\n", __func__,
+//	    t, map, buf, buflen, vm, flags, lastaddrp, segp, first);
 
 	lastaddr = *lastaddrp;
 	bmask = ~(map->_dm_boundary - 1);
@@ -415,13 +426,16 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset, bus_size_
 	const int dcache_line_size = curcpu()->ci_ci.dcache_line_size;
 	const bus_dma_segment_t *ds = map->dm_segs;
 
+//	printf("%s(%p,%p,%#x,%u,%#x) from %p\n", __func__,
+//	    t, map, offset, len, ops, __builtin_return_address(0));
+
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
 		panic("_bus_dmamap_sync: invalid ops %#x", ops);
 
 #ifdef DIAGNOSTIC
 	if (offset + len > map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad offset and/or length");
+		panic("%s: ops %#x mapsize %u: bad offset (%u) and/or length (%u)", __func__, ops, map->dm_mapsize, offset, len);
 #endif
 
 	/*
@@ -431,7 +445,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset, bus_size_
 		offset -= ds->ds_len;
 		ds++;
 	}
-	__asm volatile("eieio");
+	EIEIO;
 	for (; len > 0; ds++, offset = 0) {
 		bus_size_t seglen = ds->ds_len - offset;
 		bus_addr_t addr = BUS_MEM_TO_PHYS(t, ds->ds_addr) + offset;
@@ -491,7 +505,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset, bus_size_
 				 */
 				seglen &= ~(dcache_line_size - 1);
 			}
-			__asm volatile("sync; eieio"); /* is this needed? */
+			SYNC;			/* is this needed? */
+			EIEIO;			/* is this needed? */
 			/* FALLTHROUGH */
 		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
 		case BUS_DMASYNC_POSTREAD:
@@ -528,18 +543,18 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset, bus_size_
 int
 _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags)
 {
-	paddr_t avail_start = 0xffffffff, avail_end = 0;
+	paddr_t start = 0xffffffff, end = 0;
 	int bank;
 
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		if (avail_start > VM_PHYSMEM_PTR(bank)->avail_start << PGSHIFT)
-			avail_start = VM_PHYSMEM_PTR(bank)->avail_start << PGSHIFT;
-		if (avail_end < VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT)
-			avail_end = VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT;
+		if (start > VM_PHYSMEM_PTR(bank)->avail_start << PGSHIFT)
+			start = VM_PHYSMEM_PTR(bank)->avail_start << PGSHIFT;
+		if (end < VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT)
+			end = VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT;
 	}
 
 	return _bus_dmamem_alloc_range(t, size, alignment, boundary, segs,
-	    nsegs, rsegs, flags, avail_start, avail_end - PAGE_SIZE);
+	    nsegs, rsegs, flags, start, end - PAGE_SIZE);
 }
 
 /*
@@ -608,9 +623,9 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size
 				dcbf(addr, PAGE_SIZE,
 				    curcpu()->ci_ci.dcache_line_size);
 			pmap_kenter_pa(va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE |
+			    VM_PROT_READ | VM_PROT_WRITE,
 			    PMAP_WIRED |
-			    ((flags & BUS_DMA_NOCACHE) ? PMAP_NC : 0), 0);
+			    ((flags & BUS_DMA_NOCACHE) ? PMAP_MD_NOCACHE : 0));
 		}
 	}
 

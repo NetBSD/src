@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.189 2010/11/14 05:34:56 uebayasi Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.189.2.1 2011/06/06 09:10:13 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -259,7 +259,8 @@ struct ctlname {
 #define	KERN_ARND		81	/* void *buf, size_t siz random */
 #define	KERN_SYSVIPC		82	/* node: SysV IPC parameters */
 #define	KERN_BOOTTIME		83	/* struct: time kernel was booted */
-#define	KERN_MAXID		84	/* number of valid kern ids */
+#define	KERN_EVCNT		84	/* struct: evcnts */
+#define	KERN_MAXID		85	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -347,6 +348,7 @@ struct ctlname {
 	{ "arandom", CTLTYPE_STRUCT }, \
 	{ "sysvipc", CTLTYPE_STRUCT }, \
 	{ "boottime", CTLTYPE_STRUCT }, \
+	{ "evcnt", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -592,7 +594,8 @@ struct kinfo_proc2 {
 #define	L_SINTR			0x00000080
 #define	P_SINTR		     /* 0x00000080 */	L_SINTR
 #define	P_SUGID			0x00000100
-#define	P_SYSTEM		0x00000200
+#define	L_SYSTEM	     	0x00000200
+#define	P_SYSTEM	     /*	0x00000200 */	L_SYSTEM
 #define	L_SA			0x00000400
 #define	P_SA		     /* 0x00000400 */	L_SA
 #define	P_TRACED		0x00000800
@@ -779,6 +782,30 @@ struct kinfo_file {
 #define	KERN_FILE_BYFILE	1
 #define	KERN_FILE_BYPID		2
 #define	KERN_FILESLOP		10
+
+/*
+ * kern.evcnt returns an array of these structures, which are designed both to
+ * be immune to 32/64 bit emulation issues.  Note that the struct here differs
+ * from the real struct evcnt but contains the same information in order to
+ * accomodate sysctl.
+ */
+struct evcnt_sysctl {
+	uint64_t	ev_count;		/* current count */
+	uint64_t	ev_addr;		/* kernel address of evcnt */
+	uint64_t	ev_parent;		/* kernel address of parent */
+	uint8_t		ev_type;		/* EVCNT_TRAP_* */
+	uint8_t		ev_grouplen;		/* length of group with NUL */
+	uint8_t		ev_namelen;		/* length of name with NUL */
+	uint8_t		ev_len;			/* multiply by 8 */
+	/*
+	 * Now the group and name strings follow (both include the trailing
+	 * NUL).  ev_name start at &ev_strings[ev_grouplen+1]
+	 */
+	char		ev_strings[0];
+};
+
+#define	KERN_EVCNT_COUNT_ANY		0
+#define	KERN_EVCNT_COUNT_NONZERO	1
 
 /*
  * CTL_HW identifiers
@@ -976,20 +1003,9 @@ struct kinfo_file {
  * Subsequent levels are specified in the emulations themselves.
  */
 #define	EMUL_LINUX	1
-#define	EMUL_IRIX	2
-#define	EMUL_DARWIN	3
-#define	EMUL_MACH	4
 #define	EMUL_LINUX32	5
 
 #define	EMUL_MAXID	6
-#define	CTL_EMUL_NAMES { \
-	{ 0, 0 }, \
-	{ "linux", CTLTYPE_NODE }, \
-	{ "irix", CTLTYPE_NODE }, \
-	{ "darwin", CTLTYPE_NODE }, \
-	{ "mach", CTLTYPE_NODE }, \
-	{ "linux32", CTLTYPE_NODE }, \
-}
 
 #ifdef _KERNEL
 
@@ -1180,8 +1196,16 @@ int	sysctl_needfunc(SYSCTLFN_PROTO);
 int	sysctl_notavail(SYSCTLFN_PROTO);
 int	sysctl_null(SYSCTLFN_PROTO);
 
+int	sysctl_copyin(struct lwp *, const void *, void *, size_t);
+int	sysctl_copyout(struct lwp *, const void *, void *, size_t);
+int	sysctl_copyinstr(struct lwp *, const void *, void *, size_t, size_t *);
+
+u_int	sysctl_map_flags(const u_int *, u_int);
+
 MALLOC_DECLARE(M_SYSCTLNODE);
 MALLOC_DECLARE(M_SYSCTLDATA);
+
+extern const u_int sysctl_lwpflagmap[];
 
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.43 2010/12/20 21:11:25 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.43.2.1 2011/06/06 09:06:03 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
 #ifndef _MIPS_ASM_H
 #define	_MIPS_ASM_H
 
-#include <machine/cdefs.h>	/* for API selection */
+#include <sys/cdefs.h>		/* for API selection */
 #include <mips/regdef.h>
 
 /*
@@ -87,11 +87,7 @@
 #ifdef __NO_LEADING_UNDERSCORES__
 # define _C_LABEL(x)	x
 #else
-# ifdef __STDC__
-#  define _C_LABEL(x)	_ ## x
-# else
-#  define _C_LABEL(x)	_/**/x
-# endif
+# define _C_LABEL(x)	__CONCAT(_,x)
 #endif
 
 #ifdef USE_AENT
@@ -117,17 +113,35 @@
 /*
  * WARN_REFERENCES: create a warning if the specified symbol is referenced.
  */
-#ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\
-	.pushsection .gnu.warning. ## sym;				\
+	.pushsection __CONCAT(.gnu.warning.,sym);			\
 	.ascii msg;							\
 	.popsection
-#else
-#define	WARN_REFERENCES(sym,msg)					\
-	.pushsection .gnu.warning./**/sym;				\
-	.ascii msg;							\
-	.popsection
-#endif /* __STDC__ */
+
+/*
+ * STATIC_LEAF_NOPROFILE
+ *	No profilable local leaf routine.
+ */
+#define	STATIC_LEAF_NOPROFILE(x)	\
+	.ent	_C_LABEL(x), 0;		\
+_C_LABEL(x): ;				\
+	.frame sp, 0, ra
+
+/*
+ * LEAF_NOPROFILE
+ *	No profilable leaf routine.
+ */
+#define	LEAF_NOPROFILE(x)		\
+	.globl	_C_LABEL(x);		\
+	STATIC_LEAF_NOPROFILE(x)
+
+/*
+ * STATIC_LEAF
+ *	Declare a local leaf function.
+ */
+#define	STATIC_LEAF(x)			\
+	STATIC_LEAF_NOPROFILE(x);	\
+	MCOUNT
 
 /*
  * LEAF
@@ -137,40 +151,8 @@
  *	- not use any local stack storage.
  */
 #define	LEAF(x)				\
-	.globl	_C_LABEL(x);		\
-	.ent	_C_LABEL(x), 0;		\
-_C_LABEL(x): ;				\
-	.frame sp, 0, ra;		\
+	LEAF_NOPROFILE(x);		\
 	MCOUNT
-
-/*
- * LEAF_NOPROFILE
- *	No profilable leaf routine.
- */
-#define	LEAF_NOPROFILE(x)		\
-	.globl	_C_LABEL(x);		\
-	.ent	_C_LABEL(x), 0;		\
-_C_LABEL(x): ;				\
-	.frame	sp, 0, ra
-
-/*
- * STATIC_LEAF
- *	Declare a local leaf function.
- */
-#define	STATIC_LEAF(x)			\
-	.ent	_C_LABEL(x), 0;		\
-_C_LABEL(x): ;				\
-	.frame sp, 0, ra;		\
-	MCOUNT
-
-/*
- * XLEAF
- *	declare alternate entry to leaf routine
- */
-#define	XLEAF(x)			\
-	.globl	_C_LABEL(x);		\
-	AENT (_C_LABEL(x));		\
-_C_LABEL(x):
 
 /*
  * STATIC_XLEAF
@@ -181,26 +163,46 @@ _C_LABEL(x):
 _C_LABEL(x):
 
 /*
+ * XLEAF
+ *	declare alternate entry to leaf routine
+ */
+#define	XLEAF(x)			\
+	.globl	_C_LABEL(x);		\
+	STATIC_XLEAF(x)
+
+/*
+ * STATIC_NESTED_NOPROFILE
+ *	No profilable local nested routine.
+ */
+#define	STATIC_NESTED_NOPROFILE(x, fsize, retpc)	\
+	.ent	_C_LABEL(x), 0;			\
+_C_LABEL(x): ;					\
+	.frame	sp, fsize, retpc
+
+/*
+ * NESTED_NOPROFILE
+ *	No profilable nested routine.
+ */
+#define	NESTED_NOPROFILE(x, fsize, retpc)	\
+	.globl	_C_LABEL(x);			\
+	STATIC_NESTED_NOPROFILE(x, fsize, retpc)
+
+/*
  * NESTED
  *	A function calls other functions and needs
  *	therefore stack space to save/restore registers.
  */
-#define	NESTED(x, fsize, retpc)		\
-	.globl	_C_LABEL(x);		\
-	.ent	_C_LABEL(x), 0; 	\
-_C_LABEL(x): ;				\
-	.frame	sp, fsize, retpc;	\
+#define	NESTED(x, fsize, retpc)			\
+	NESTED_NOPROFILE(x, fsize, retpc);	\
 	MCOUNT
 
 /*
- * NESTED_NOPROFILE(x)
- *	No profilable nested routine.
+ * STATIC_NESTED
+ *	No profilable local nested routine.
  */
-#define	NESTED_NOPROFILE(x, fsize, retpc)	\
-	.globl	_C_LABEL(x);		\
-	.ent	_C_LABEL(x), 0;		\
-_C_LABEL(x): ;				\
-	.frame	sp, fsize, retpc
+#define	STATIC_NESTED(x, fsize, retpc)			\
+	STATIC_NESTED_NOPROFILE(x, fsize, retpc);	\
+	MCOUNT
 
 /*
  * XNESTED
@@ -215,7 +217,7 @@ _C_LABEL(x):
  * END
  *	Mark end of a procedure.
  */
-#define	END(x) \
+#define	END(x)				\
 	.end _C_LABEL(x);		\
 	.size _C_LABEL(x), . - _C_LABEL(x)
 
@@ -241,15 +243,10 @@ _C_LABEL(x):
 	.ent	_C_LABEL(x),0;		\
 	EXPORT(x);			\
 
-#ifdef __STDC__
 #define	VECTOR_END(x)			\
-	EXPORT(x ## End);		\
-	END(x)
-#else
-#define	VECTOR_END(x)			\
-	EXPORT(x/**/End);		\
-	END(x)
-#endif
+	EXPORT(__CONCAT(x,_end));	\
+	END(x);				\
+	.org _C_LABEL(x) + 0x80
 
 /*
  * Macros to panic and printf from assembly language.
@@ -307,8 +304,8 @@ _C_LABEL(x):
 
 /*
  *  standard callframe {
- *	register_t cf_pad[N];		o32/64 (N=0), n32 (N=1) n64 (N=1)
  *  	register_t cf_args[4];		arg0 - arg3 (only on o32 and o64)
+ *	register_t cf_pad[N];		o32/64 (N=0), n32 (N=1) n64 (N=1)
  *  	register_t cf_gp;		global pointer (only on n32 and n64)
  *  	register_t cf_sp;		frame pointer
  *  	register_t cf_ra;		return address
@@ -619,7 +616,8 @@ _C_LABEL(x):
 #endif
 
 /* See lock_stubs.S. */
-#define	MIPS_LOCK_RAS_SIZE	256
+#define	LOG2_MIPS_LOCK_RAS_SIZE	8
+#define	MIPS_LOCK_RAS_SIZE	256	/* 16 bytes left over */
 
 #define	CPUVAR(off) _C_LABEL(cpu_info_store)+__CONCAT(CPU_INFO_,off)
 

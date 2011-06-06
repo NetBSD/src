@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.249 2010/11/15 22:42:36 pooka Exp $	*/
+/*	$NetBSD: if.c,v 1.249.2.1 2011/06/06 09:09:52 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.249 2010/11/15 22:42:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.249.2.1 2011/06/06 09:09:52 jruoho Exp $");
 
 #include "opt_inet.h"
 
@@ -1475,6 +1475,13 @@ ifunit(const char *name)
 			return ifp;
 	}
 	return NULL;
+}
+
+ifnet_t *
+if_byindex(u_int idx)
+{
+
+	return (idx < if_indexlim) ? ifindex2ifnet[idx] : NULL;
 }
 
 /* common */
