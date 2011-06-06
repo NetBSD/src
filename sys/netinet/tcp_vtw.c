@@ -77,7 +77,7 @@
 #include <machine/stdarg.h>
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.6 2011/06/03 20:01:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.7 2011/06/06 19:15:43 dyoung Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -2138,6 +2138,36 @@ vtw_restart(vestigial_inpcb_t *vp)
 }
 
 int
+sysctl_tcp_vtw_enable(SYSCTLFN_ARGS)
+{  
+	int en, rc;
+	struct sysctlnode node;
+
+	node = *rnode;
+	en = *(int *)rnode->sysctl_data;
+	node.sysctl_data = &en;
+
+	rc = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (rc != 0 || newp == NULL)
+		return rc;
+
+	if (rnode->sysctl_data != &tcp4_vtw_enable &&
+	    rnode->sysctl_data != &tcp6_vtw_enable)
+		rc = ENOENT;
+	else if ((en & 1) == 0)
+		rc = 0;
+	else if (rnode->sysctl_data == &tcp4_vtw_enable)
+		rc = vtw_control_init(AF_INET);
+	else /* rnode->sysctl_data == &tcp6_vtw_enable */
+		rc = vtw_control_init(AF_INET6);
+
+	if (rc == 0)
+		*(int *)rnode->sysctl_data = en;
+
+	return rc;
+}
+
+int
 vtw_earlyinit(void)
 {
 	int i, rc;
@@ -2150,7 +2180,11 @@ vtw_earlyinit(void)
 		vtw_tcpv6[i].is_v6 = 1;
 	}
 
-	if ((rc = vtw_control_init(AF_INET)) != 0 || 
+	if ((tcp4_vtw_enable & 1) != 0 &&
+	    (rc = vtw_control_init(AF_INET)) != 0)
+		return rc;
+
+	if ((tcp6_vtw_enable & 1) != 0 &&
 	    (rc = vtw_control_init(AF_INET6)) != 0)
 		return rc;
 
