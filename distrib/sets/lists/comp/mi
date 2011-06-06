@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1628 2011/06/03 18:43:38 rmind Exp $
+#	$NetBSD: mi,v 1.1629 2011/06/06 13:43:48 spz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1787,6 +1787,7 @@
 ./usr/include/openssl/buffer.h			comp-c-include		crypto
 ./usr/include/openssl/camellia.h		comp-c-include		crypto
 ./usr/include/openssl/cast.h			comp-c-include		crypto
+./usr/include/openssl/cmac.h			comp-c-include		crypto
 ./usr/include/openssl/cms.h			comp-c-include		crypto
 ./usr/include/openssl/comp.h			comp-c-include		crypto
 ./usr/include/openssl/conf.h			comp-c-include		crypto
@@ -1839,6 +1840,7 @@
 ./usr/include/openssl/rsaref.h			comp-obsolete		obsolete
 ./usr/include/openssl/safestack.h		comp-c-include		crypto
 ./usr/include/openssl/sha.h			comp-c-include		crypto
+./usr/include/openssl/srp.h			comp-c-include		crypto
 ./usr/include/openssl/ssl.h			comp-c-include		crypto
 ./usr/include/openssl/ssl2.h			comp-c-include		crypto
 ./usr/include/openssl/ssl23.h			comp-c-include		crypto
