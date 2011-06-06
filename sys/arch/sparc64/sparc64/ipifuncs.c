@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.40 2011/05/12 05:43:40 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.41 2011/06/06 01:16:48 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.40 2011/05/12 05:43:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.41 2011/06/06 01:16:48 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -434,17 +434,26 @@ smp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t activecpus)
 	dcache_flush_page(pa);
 }
 
+#if 0
+void
+smp_dcache_flush_page_allcpu(paddr_t pa)
+{
+
+	smp_dcache_flush_page_cpuset(pa, cpus_active);
+}
+#endif
+
 /*
- * Flush the D$ on this set of CPUs.
+ * Flush the D$ on all CPUs.
  */
 void
-smp_blast_dcache(sparc64_cpuset_t activecpus)
+smp_blast_dcache(void)
 {
 
 	if (CPU_ISSUN4US || CPU_ISSUN4V)
 		return;
 
-	sparc64_multicast_ipi(activecpus, sparc64_ipi_blast_dcache,
+	sparc64_multicast_ipi(cpus_active, sparc64_ipi_blast_dcache,
 			      dcache_size, dcache_line_size);
 	sp_blast_dcache(dcache_size, dcache_line_size);
 }
