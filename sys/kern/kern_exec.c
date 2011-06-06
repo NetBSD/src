@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.315 2011/06/01 21:24:59 alnsn Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.316 2011/06/06 22:04:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.315 2011/06/01 21:24:59 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.316 2011/06/06 22:04:34 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -1108,6 +1108,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* Provide a consistent LWP private setting */
 	(void)lwp_setprivate(l, NULL);
+
+	/* Discard all PCU state; need to start fresh */
+	pcu_discard_all(l);
 
 	/* map the process's signal trampoline code */
 	if ((error = exec_sigcode_map(p, pack.ep_esch->es_emul)) != 0) {
