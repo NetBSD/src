@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.32 2011/02/18 16:12:26 drochner Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.33 2011/06/06 16:48:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.32 2011/02/18 16:12:26 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.33 2011/06/06 16:48:35 drochner Exp $");
 
 /*
  * IPsec output processing.
@@ -608,9 +608,15 @@ ipsec4_process_packet(
 	 *     for reclaiming their resources.
 	 */
 	if (sav->tdb_xform->xf_type != XF_IP4) {
-		ip = mtod(m, struct ip *);
-		i = ip->ip_hl << 2;
-		off = offsetof(struct ip, ip_p);
+		union sockaddr_union *dst = &sav->sah->saidx.dst;
+		if (dst->sa.sa_family == AF_INET) {
+			ip = mtod(m, struct ip *);
+			i = ip->ip_hl << 2;
+			off = offsetof(struct ip, ip_p);
+		} else {
+			i = sizeof(struct ip6_hdr);
+			off = offsetof(struct ip6_hdr, ip6_nxt);
+		}
 		error = (*sav->tdb_xform->xf_output)(m, isr, NULL, i, off);
 	} else {
 		error = ipsec_process_done(m, isr);
