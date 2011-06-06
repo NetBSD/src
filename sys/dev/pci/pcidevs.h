@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1079 2011/05/28 22:54:08 phx Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1080 2011/06/06 14:31:51 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1083 2011/05/28 22:53:23 phx Exp
+ *	NetBSD: pcidevs,v 1.1084 2011/06/06 14:31:23 msaitoh Exp
  */
 
 /*
@@ -2615,7 +2615,7 @@
 #define	PCI_PRODUCT_INTEL_82801DB_USB_3	0x24C7		/* 82801DB USB UHCI Controller */
 #define	PCI_PRODUCT_INTEL_82801DBM_IDE	0x24CA		/* 82801DBM IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801DB_IDE	0x24CB		/* 82801DB IDE Controller (UltraATA/100) */
-#define	PCI_PRODUCT_INTEL_82801DB_ISA	0x24CC		/* 82801DB ISA Bridge */
+#define	PCI_PRODUCT_INTEL_82801DBM_LPC	0x24CC		/* 82801DB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801DB_USBC	0x24CD		/* 82801DB USB EHCI Controller */
 #define	PCI_PRODUCT_INTEL_82801EB_LPC	0x24D0		/* 82801EB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801EB_SATA	0x24D1		/* 82801EB Serial ATA Controller */
