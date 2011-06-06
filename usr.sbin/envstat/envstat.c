@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.86 2011/06/04 13:29:02 pgoyette Exp $ */
+/* $NetBSD: envstat.c,v 1.87 2011/06/06 20:48:56 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.86 2011/06/04 13:29:02 pgoyette Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.87 2011/06/06 20:48:56 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -763,7 +763,7 @@ print_sensors(void)
 			    mydevname ? "" : "  ", (int)maxlen,
 			    "", a, b, c, d, units);
 		else
-			(void)printf("%s%*s  %9s %8s %8s %8s %8s %4s\n",
+			(void)printf("%s%*s  %9s %8s %8s %8s %8s %5s\n",
 			    mydevname ? "" : "  ", (int)maxlen,
 			    "", a, b, c, d, e, units);
 		if (sensors && header_passes == 10)
@@ -914,43 +914,54 @@ do {								\
 			(void)printf(":%10d ", sensor->cur_value);
 
 			ilen = 8;
-			if (statistics) {
-				/* show statistics if flag set */
-				(void)printf("%8u %8u %8u ",
-				    stats->max, stats->min, stats->avg);
-				ilen += 2;
+
+/* Print percentage of max_value */
+#define PRINTPCT(a)							\
+do {									\
+	if (sensor->max_value) {					\
+		(void)printf("%*.3f%%", (int)ilen,			\
+			((a) * 100.0) / sensor->max_value);		\
+		ilen = 8;						\
+	} else								\
+		ilen += 9;						\
+} while ( /* CONSTCOND*/ 0 )
+
+/* Print an integer sensor value */
+#define PRINTINT(a)							\
+do {									\
+	(void)printf("%*u ", (int)ilen, (a));				\
+	ilen = 8;							\
+} while ( /* CONSTCOND*/ 0 )
+
+			if (!statistics) {
+				if (sensor->percentage) {
+					PRINTPCT(sensor->critmax_value);
+					PRINTPCT(sensor->warnmax_value);
+					PRINTPCT(sensor->warnmin_value);
+					PRINTPCT(sensor->critmin_value);
+				} else {
+					PRINTINT(sensor->critmax_value);
+					PRINTINT(sensor->warnmax_value);
+					PRINTINT(sensor->warnmin_value);
+					PRINTINT(sensor->critmin_value);
+				}
 			} else {
-				if (sensor->critmax_value) {
-					(void)printf("%*u ", (int)ilen,
-					    sensor->critmax_value);
-					ilen = 8;
-				} else
-					ilen += 9;
-
-				if (sensor->warnmax_value) {
-					(void)printf("%*u ", (int)ilen,
-					    sensor->warnmax_value);
-					ilen = 8;
-				} else
-					ilen += 9;
-
-				if (sensor->warnmin_value) {
-					(void)printf("%*u ", (int)ilen,
-					    sensor->warnmin_value);
-					ilen = 8;
-				} else
-					ilen += 9;
-
-				if (sensor->critmin_value) {
-					(void)printf( "%*u ", (int)ilen,
-					    sensor->critmin_value);
-					ilen = 8;
-				} else
-					ilen += 9;
-
+				if (sensor->percentage) {
+					PRINTPCT(stats->max);
+					PRINTPCT(stats->min);
+					PRINTPCT(stats->avg);
+				} else {
+					PRINTINT(stats->max);
+					PRINTINT(stats->min);
+					PRINTINT(stats->avg);
+				}
+				ilen += 2;
 			}
 
 			(void)printf("%*s", (int)ilen - 4, stype);
+
+#undef PRINTINT
+#undef PRINTPCT
 
 		/* drives  */
 		} else if (strcmp(sensor->type, "Drive") == 0) {
@@ -978,19 +989,20 @@ do {								\
 				stype = "Wh";
 			else if (strcmp(sensor->type, "Ampere hour") == 0)
 				stype = "Ah";
+			else
+				stype = "?";
 
 			(void)printf(":%10.3f ",
 			    sensor->cur_value / 1000000.0);
 
 			ilen = 8;
-			if (!statistics) {
 
 /* Print percentage of max_value */
 #define PRINTPCT(a)							\
 do {									\
-	if (sensor->a && sensor->max_value) {				\
+	if ((a) && sensor->max_value) {					\
 		(void)printf("%*.3f%%", (int)ilen,			\
-			(sensor->a * 100.0) / sensor->max_value);	\
+			((a) * 100.0) / sensor->max_value);		\
 		ilen = 8;						\
 	} else								\
 		ilen += 9;						\
@@ -999,40 +1011,42 @@ do {									\
 /* Print a generic sensor value */
 #define PRINTVAL(a)							\
 do {									\
-	if (sensor->a) {						\
-		(void)printf("%*.3f ", (int)ilen, sensor->a / 1000000.0); \
+	if ((a)) {							\
+		(void)printf("%*.3f ", (int)ilen, (a) / 1000000.0);	\
 		ilen = 8;						\
 	} else								\
 		ilen += 9;						\
 } while ( /* CONSTCOND*/ 0 )
 
-
+			if (!statistics) {
 				if (sensor->percentage) {
-					PRINTPCT(critmax_value);
-					PRINTPCT(warnmax_value);
-					PRINTPCT(warnmin_value);
-					PRINTPCT(critmin_value);
+					PRINTPCT(sensor->critmax_value);
+					PRINTPCT(sensor->warnmax_value);
+					PRINTPCT(sensor->warnmin_value);
+					PRINTPCT(sensor->critmin_value);
 				} else {
 
-					PRINTVAL(critmax_value);
-					PRINTVAL(warnmax_value);
-					PRINTVAL(warnmin_value);
-					PRINTVAL(critmin_value);
-#undef PRINTPCT
-#undef PRINTVAL
+					PRINTVAL(sensor->critmax_value);
+					PRINTVAL(sensor->warnmax_value);
+					PRINTVAL(sensor->warnmin_value);
+					PRINTVAL(sensor->critmin_value);
 				}
-			}
-
-			if (statistics && !sensor->percentage) {
-				/* show statistics if flag set */
-				(void)printf("%8.3f %8.3f %8.3f ",
-				    stats->max / 1000000.0,
-				    stats->min / 1000000.0,
-				    stats->avg / 1000000.0);
+			} else {
+				if (sensor->percentage) {
+					PRINTPCT(stats->max);
+					PRINTPCT(stats->min);
+					PRINTPCT(stats->avg);
+				} else {
+					PRINTVAL(stats->max);
+					PRINTVAL(stats->min);
+					PRINTVAL(stats->avg);
+				}
 				ilen += 2;
 			}
+#undef PRINTPCT
+#undef PRINTVAL
 
-			(void)printf("%*s", (int)ilen - 4, stype);
+			(void)printf("%*s", (int)ilen - 3, stype);
 
 			if (sensor->percentage && sensor->max_value) {
 				(void)printf(" (%5.2f%%)",
