@@ -1,4 +1,4 @@
-/*	$NetBSD: elb.c,v 1.6 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: elb.c,v 1.7 2011/06/06 16:42:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.6 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.7 2011/06/06 16:42:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -54,8 +54,8 @@ struct elb_dev {
 	bus_space_tag_t elb_bt;
 };
 
-static int	elb_match(struct device *, struct cfdata *, void *);
-static void	elb_attach(struct device *, struct device *, void *);
+static int	elb_match(device_t, cfdata_t, void *);
+static void	elb_attach(device_t, device_t, void *);
 static int	elb_print(void *, const char *);
 
 static struct powerpc_bus_space elb_tag = {
@@ -109,14 +109,14 @@ static struct elb_dev elb_devs[] = {
 	{ "le",		BASE_LE,	0,		28, &elb_fb_tag },
 };
 
-CFATTACH_DECL(elb, sizeof(struct device),
+CFATTACH_DECL_NEW(elb, 0,
     elb_match, elb_attach, NULL, NULL);
 
 /*
  * Probe for the elb; always succeeds.
  */
 static int
-elb_match(struct device *parent, struct cfdata *cf, void *aux)
+elb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
@@ -125,7 +125,7 @@ elb_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach the Explora local bus.
  */
 static void
-elb_attach(struct device *parent, struct device *self, void *aux)
+elb_attach(device_t parent, device_t self, void *aux)
 {
 	struct elb_attach_args eaa;
 	int i;
