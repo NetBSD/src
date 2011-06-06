@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.8 2009/09/14 10:42:42 jmcneill Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.8.6.1 2011/06/06 09:05:52 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -232,6 +232,8 @@ parsebootconf(const char *conf)
 			}
 		} else if (!strncmp(key, "clear", 5)) {
 			bootconf.clear = !!atoi(value);
+		} else if (!strncmp(key, "userconf", 8)) {
+			userconf_add(value);
 		}
 	}
 	switch (bootconf.menuformat) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.27 2010/10/07 02:14:02 chs Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.27.2.1 2011/06/06 09:09:25 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.27 2010/10/07 02:14:02 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.27.2.1 2011/06/06 09:09:25 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -454,6 +454,9 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 
 #ifdef notyet /* XXX cgd 960926 */
 	XXX cgd 960926: (maybe) VOP_OPEN it (and VOP_CLOSE in copyargs?)
+
+	XXXps: this problem will make it impossible to use an interpreter
+	from a file system which actually does something in VOP_OPEN
 #endif
 
 	error = vn_marktext(vp);
@@ -933,5 +936,6 @@ netbsd_elf_probe(struct lwp *l, struct exec_package *epp, void *eh, char *itp,
 #elif defined(ELF_INTERP_NON_RELOCATABLE)
 	*pos = ELF_LINK_ADDR;
 #endif
+	epp->ep_flags |= EXEC_FORCEAUX;
 	return 0;
 }

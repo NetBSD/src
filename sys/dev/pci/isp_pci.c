@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.113 2010/11/13 13:52:07 uebayasi Exp $ */
+/* $NetBSD: isp_pci.c,v 1.113.2.1 2011/06/06 09:08:16 jruoho Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.113 2010/11/13 13:52:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.113.2.1 2011/06/06 09:08:16 jruoho Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -130,6 +130,8 @@ static int isp_pci_intr(void *);
 #define	ISP_2400_RISC_CODE	NULL
 #define	ISP_2500_RISC_CODE	NULL
 #else
+#define	ISP_2500
+#define	ISP_2400
 #define	ISP_2400_RISC_CODE	(const uint32_t *) isp_2400_risc_code
 #define	ISP_2500_RISC_CODE	(const uint32_t *) isp_2500_risc_code
 #include <dev/microcode/isp/asm_2400.h>
@@ -717,7 +719,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 	if (isp->isp_dblev & ISP_LOGCONFIG) {
 		printf("\n");
 	} else {
-		printf(dstring);
+		printf("%s", dstring);
 	}
 
 	isp->isp_dmatag = pa->pa_dmat;

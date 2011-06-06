@@ -1,4 +1,4 @@
-/*	$NetBSD: mvgbereg.h,v 1.2 2010/10/02 05:57:42 kiyohara Exp $	*/
+/*	$NetBSD: mvgbereg.h,v 1.2.2.1 2011/06/06 09:07:59 jruoho Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -236,8 +236,8 @@
 #define MVGBE_SDC_BLMR			(1 << 4)
 #define MVGBE_SDC_BLMT			(1 << 5)
 #define MVGBE_SDC_SWAPMODE		(1 << 6)
-#define MVGBE_SDC_IPGINTRX(n)		((n) << 8)
-#define MVGBE_SDC_IPGINTRX_MASK		MVGBE_SDC_IPGINTRX(0x3fff)
+#define MVGBE_SDC_IPGINTRX_MASK		__BITS(21, 8)
+#define MVGBE_SDC_IPGINTRX(x)		__SHIFTIN(x, MVGBE_SDC_IPGINTRX_MASK)
 #define MVGBE_SDC_TXBSZ(x)		((x) << 22)
 #define MVGBE_SDC_TXBSZ_MASK		MVGBE_SDC_TXBSZ(7)
 #define MVGBE_SDC_TXBSZ_1_64BITWORDS	MVGBE_SDC_TXBSZ(0)
@@ -310,6 +310,10 @@
 #define MVGBE_ICE_INTADDRERR		(1 << 23)
 #define MVGBE_ICE_ETHERINTSUM		(1 << 31)
 
+/* Port Tx FIFO Urgent Threshold (MVGBE_PTFUT) */
+#define MVGBE_PTFUT_IPGINTTX_MASK	__BITS(17, 4)
+#define MVGBE_PTFUT_IPGINTTX(x)		__SHIFTIN(x, MVGBE_PTFUT_IPGINTTX_MASK)
+
 /* Port Rx Minimal Frame Size (MVGBE_PMFS) */
 #define MVGBE_PMFS_RXMFS(rxmfs)		(((rxmfs) - 40) & 0x7c)
 					/* RxMFS = 40,44,48,52,56,60,64 bytes */
@@ -331,16 +335,22 @@
 #define MVGBE_DF_QUEUE_MASK		((7) << 1)
 
 
-#define MVGBE_MRU		9700	/* The Maximal Receive Packet Size */
+/*
+ * Set the chip's packet size limit to 9022.
+ * (ETHER_MAX_LEN_JUMBO + ETHER_VLAN_ENCAP_LEN)
+ */
+#define MVGBE_MRU		9022
 
-#define MVGBE_BUF_ALIGN		8
-#define MVGBE_BUF_MASK		(MVGBE_BUF_ALIGN - 1)
+#define MVGBE_RXBUF_ALIGN	8
+#define MVGBE_RXBUF_MASK	(MVGBE_RXBUF_ALIGN - 1)
 #define MVGBE_HWHEADER_SIZE	2
 
 
 /*
  * DMA descriptors
- *    It is 32byte alignment.
+ *    Despite the documentation saying these descriptors only need to be
+ *    aligned to 16-byte bondaries, 32-byte alignment seems to be required
+ *    by the hardware.  We'll just pad them out to that to make it easier.
  */
 struct mvgbe_tx_desc {
 #if BYTE_ORDER == BIG_ENDIAN
@@ -356,10 +366,7 @@ struct mvgbe_tx_desc {
 	uint32_t bufptr;		/* Descriptor buffer pointer */
 	uint32_t nextdescptr;		/* Next descriptor pointer */
 #endif
-	u_long returninfo;		/* User resource return information */
-	uint8_t *alignbufptr;		/* Pointer to 8 byte aligned buffer */
-
-	uint32_t padding[2];		/* XXXX: required */
+	uint32_t _padding[4];
 } __packed;
 
 struct mvgbe_rx_desc {
@@ -376,9 +383,7 @@ struct mvgbe_rx_desc {
 	uint32_t bufptr;		/* Descriptor buffer pointer */
 	uint32_t nextdescptr;		/* Next descriptor pointer */
 #endif
-	u_long returninfo;		/* User resource return information */
-
-	uint32_t padding[3];		/* XXXX: required */
+	uint32_t _padding[4];
 } __packed;
 
 #define MVGBE_ERROR_SUMMARY		(1 << 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.20 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: artsata.c,v 1.20.2.1 2011/06/06 09:08:09 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.20 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.20.2.1 2011/06/06 09:08:09 jruoho Exp $");
 
 #include "opt_pciide.h"
 
@@ -49,7 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.20 2010/11/05 18:07:24 jakllsch Exp $"
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
 
-static void artisea_chip_map(struct pciide_softc*, struct pci_attach_args *);
+static void artisea_chip_map(struct pciide_softc*,
+    const struct pci_attach_args *);
 
 static int  artsata_match(device_t, cfdata_t, void *);
 static void artsata_attach(device_t, device_t, void *);
@@ -118,7 +119,7 @@ artsata_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-artisea_mapregs(struct pci_attach_args *pa, struct pciide_channel *cp,
+artisea_mapregs(const struct pci_attach_args *pa, struct pciide_channel *cp,
     int (*pci_intr)(void *))
 {
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
@@ -243,7 +244,7 @@ artisea_chansetup(struct pciide_softc *sc, int channel,
 }
 
 static void
-artisea_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
+artisea_mapreg_dma(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *pc;
 	int chan;
@@ -316,7 +317,7 @@ artisea_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-artisea_chip_map_dpa(struct pciide_softc *sc, struct pci_attach_args *pa)
+artisea_chip_map_dpa(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface;
@@ -383,7 +384,7 @@ artisea_chip_map_dpa(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+artisea_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface;

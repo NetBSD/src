@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.33 2010/12/15 01:27:19 matt Exp $ */
+/* $NetBSD: pci_550.c,v 1.33.2.1 2011/06/06 09:04:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.33 2010/12/15 01:27:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.33.2.1 2011/06/06 09:04:45 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.33 2010/12/15 01:27:19 matt Exp $");
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_550_intr_map(struct pci_attach_args *,
+int	dec_550_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
 const char *dec_550_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *dec_550_intr_evcnt(void *, pci_intr_handle_t);
@@ -97,7 +97,7 @@ void	*dec_550_intr_establish(void *, pci_intr_handle_t,
 void	dec_550_intr_disestablish(void *, void *);
 
 void	*dec_550_pciide_compat_intr_establish(void *, struct device *,
-	    struct pci_attach_args *, int, int (*)(void *), void *);
+	    const struct pci_attach_args *, int, int (*)(void *), void *);
 
 #define	DEC_550_PCI_IRQ_BEGIN	8
 #define	DEC_550_MAX_IRQ		(64 - DEC_550_PCI_IRQ_BEGIN)
@@ -168,7 +168,7 @@ pci_550_pickintr(struct cia_config *ccp)
 }
 
 int     
-dec_550_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+dec_550_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
@@ -350,7 +350,8 @@ dec_550_intr_disestablish(void *ccv, void *cookie)
 }
 
 void *
-dec_550_pciide_compat_intr_establish(void *v, struct device *dev, struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
+dec_550_pciide_compat_intr_establish(void *v, struct device *dev,
+    const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	void *cookie = NULL;

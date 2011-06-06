@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.148 2010/11/15 22:42:36 pooka Exp $	*/
+/*	$NetBSD: if.h,v 1.148.2.1 2011/06/06 09:09:52 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ struct ifqueue {
  */
 TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
 
-struct ifnet {				/* and the entries */
+typedef struct ifnet {
 	void	*if_softc;		/* lower-level data for this if */
 	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
@@ -296,7 +296,8 @@ struct ifnet {				/* and the entries */
 					 * same, they are the same ifnet.
 					 */
 	struct sysctllog	*if_sysctl_log;
-};
+} ifnet_t;
+
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
 #define	if_addrlen	if_data.ifi_addrlen
@@ -470,17 +471,25 @@ struct ifaddr {
 #define	IFA_ROUTE	RTF_UP	/* (0x01) route installed */
 
 /*
- * Message format for use in obtaining information about interfaces
- * from sysctl and the routing socket.
+ * Message format for use in obtaining information about interfaces from
+ * sysctl and the routing socket.  We need to force 64-bit alignment if we
+ * aren't using compatiblity definitons.
  */
+#if !defined(_KERNEL) || !defined(COMPAT_RTSOCK)
+#define	__align64	__aligned(sizeof(uint64_t))
+#else
+#define	__align64
+#endif
 struct if_msghdr {
-	u_short	ifm_msglen;	/* to skip over non-understood messages */
+	u_short	ifm_msglen __align64;
+				/* to skip over non-understood messages */
 	u_char	ifm_version;	/* future binary compatibility */
 	u_char	ifm_type;	/* message type */
 	int	ifm_addrs;	/* like rtm_addrs */
 	int	ifm_flags;	/* value of if_flags */
 	u_short	ifm_index;	/* index for associated ifp */
-	struct	if_data ifm_data;/* statistics and other data about if */
+	struct	if_data ifm_data __align64;
+				/* statistics and other data about if */
 };
 
 /*
@@ -488,20 +497,22 @@ struct if_msghdr {
  * from sysctl and the routing socket.
  */
 struct ifa_msghdr {
-	u_short	ifam_msglen;	/* to skip over non-understood messages */
+	u_short	ifam_msglen __align64;
+				/* to skip over non-understood messages */
 	u_char	ifam_version;	/* future binary compatibility */
 	u_char	ifam_type;	/* message type */
 	int	ifam_addrs;	/* like rtm_addrs */
 	int	ifam_flags;	/* value of ifa_flags */
-	u_short	ifam_index;	/* index for associated ifp */
 	int	ifam_metric;	/* value of ifa_metric */
+	u_short	ifam_index;	/* index for associated ifp */
 };
 
 /*
  * Message format announcing the arrival or departure of a network interface.
  */
 struct if_announcemsghdr {
-	u_short	ifan_msglen;	/* to skip over non-understood messages */
+	u_short	ifan_msglen __align64;
+				/* to skip over non-understood messages */
 	u_char	ifan_version;	/* future binary compatibility */
 	u_char	ifan_type;	/* message type */
 	u_short	ifan_index;	/* index for associated ifp */
@@ -511,6 +522,8 @@ struct if_announcemsghdr {
 
 #define	IFAN_ARRIVAL	0	/* interface arrival */
 #define	IFAN_DEPARTURE	1	/* interface departure */
+
+#undef __align64
 
 /*
  * Interface request structure used for socket
@@ -897,6 +910,9 @@ __END_DECLS
 #endif /* _KERNEL */ /* XXX really ALTQ? */
 
 #ifdef _KERNEL
+
+ifnet_t *	if_byindex(u_int);
+
 /*
  * ifq sysctl support
  */

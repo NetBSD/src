@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425.c,v 1.13 2009/10/21 14:15:50 rmind Exp $ */
+/*	$NetBSD: ixp425.c,v 1.13.6.1 2011/06/06 09:05:06 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -30,7 +30,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.13 2009/10/21 14:15:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.13.6.1 2011/06/06 09:05:06 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ ixp425_attach(struct ixp425_softc *sc)
 	pba.pba_bridgetag = NULL;
 	pba.pba_intrswiz = 0;	/* XXX */
 	pba.pba_intrtag = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 			PCI_FLAGS_MRL_OKAY   | PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY;
 	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);

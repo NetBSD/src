@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2010/02/08 19:02:32 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65.4.1 2011/06/06 09:06:55 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -129,11 +129,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -153,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2010/02/08 19:02:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65.4.1 2011/06/06 09:06:55 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -199,6 +195,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2010/02/08 19:02:32 joerg Exp $");
 #include <machine/idprom.h>
 #include <machine/kcore.h>
 #include <machine/reg.h>
+#include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #define _SUN68K_BUS_DMA_PRIVATE
@@ -368,40 +365,6 @@ cpu_startup(void)
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
-}
-
-/*
- * Set registers on exec.
- */
-void 
-setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
-{
-	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
-	struct pcb *pcb = lwp_getpcb(l);
-
-	tf->tf_sr = PSL_USERSET;
-	tf->tf_pc = pack->ep_entry & ~1;
-	tf->tf_regs[D0] = 0;
-	tf->tf_regs[D1] = 0;
-	tf->tf_regs[D2] = 0;
-	tf->tf_regs[D3] = 0;
-	tf->tf_regs[D4] = 0;
-	tf->tf_regs[D5] = 0;
-	tf->tf_regs[D6] = 0;
-	tf->tf_regs[D7] = 0;
-	tf->tf_regs[A0] = 0;
-	tf->tf_regs[A1] = 0;
-	tf->tf_regs[A2] = (int)l->l_proc->p_psstr;
-	tf->tf_regs[A3] = 0;
-	tf->tf_regs[A4] = 0;
-	tf->tf_regs[A5] = 0;
-	tf->tf_regs[A6] = 0;
-	tf->tf_regs[SP] = stack;
-
-	/* restore a null state frame */
-	pcb->pcb_fpregs.fpf_null = 0;
-
-	l->l_md.md_flags = 0;
 }
 
 /*

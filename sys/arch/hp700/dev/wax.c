@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.16 2010/12/05 12:19:09 skrll Exp $	*/
+/*	$NetBSD: wax.c,v 1.16.2.1 2011/06/06 09:05:40 jruoho Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.16 2010/12/05 12:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.16.2.1 2011/06/06 09:05:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ struct wax_regs {
 
 struct wax_softc {
 	device_t sc_dv;
-	struct hp700_int_reg sc_int_reg;
+	struct hp700_interrupt_register sc_ir;
 	struct wax_regs volatile *sc_regs;
 };
 
@@ -103,7 +103,7 @@ waxmatch(device_t parent, cfdata_t cf, void *aux)
 
 	/* Make sure we have an IRQ. */
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF) {
-		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
+		ca->ca_irq = hp700_intr_allocate_bit(&ir_cpu);
 	}
 
 	return 1;
@@ -148,10 +148,10 @@ waxattach(device_t parent, device_t self, void *aux)
 	splx(s);
 
 	/* Establish the interrupt register. */
-	hp700_intr_reg_establish(&sc->sc_int_reg);
-	sc->sc_int_reg.int_reg_name = device_xname(self);
-	sc->sc_int_reg.int_reg_mask = &sc->sc_regs->wax_imr;
-	sc->sc_int_reg.int_reg_req = &sc->sc_regs->wax_irr;
+	hp700_interrupt_register_establish(&sc->sc_ir);
+	sc->sc_ir.ir_name = device_xname(self);
+	sc->sc_ir.ir_mask = &sc->sc_regs->wax_imr;
+	sc->sc_ir.ir_req = &sc->sc_regs->wax_irr;
 
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
@@ -166,7 +166,7 @@ waxattach(device_t parent, device_t self, void *aux)
 	}
 
 	ga.ga_name = "gsc";
-	ga.ga_int_reg = &sc->sc_int_reg;
+	ga.ga_ir = &sc->sc_ir;
 	ga.ga_fix_args = wax_fix_args;
 	ga.ga_fix_args_cookie = sc;
 	ga.ga_scsi_target = 7; /* XXX */

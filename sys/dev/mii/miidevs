@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.98 2010/12/11 18:09:13 matt Exp $
+$NetBSD: miidevs,v 1.98.2.1 2011/06/06 09:08:07 jruoho Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ oui MARVELL			0x005043	Marvell Semiconductor
 oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
 oui PMCSIERRA			0x00e004	PMC-Sierra
+oui RDC				0x00d02d	RDC Semiconductor
 oui REALTEK			0x00e04c	RealTek
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui SEEQ			0x00a07d	Seeq
@@ -182,7 +183,7 @@ model CICADA CS8204		0x0004 Cicada CS8204 10/100/1000TX PHY
 model CICADA VSC8211		0x000b Cicada VSC8211 10/100/1000TX PHY
 model CICADA CS8201A		0x0020 Cicada CS8201 10/100/1000TX PHY
 model CICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
-model CICADA CS8244		0x002c Cicada CS8244 10/100/1000TX PHY
+model xxCICADA VSC8244		0x002c Vitesse VSC8244 Quad 10/100/1000BASE-T PHY
 model xxCICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
 
 /* Davicom Semiconductor PHYs */
@@ -209,6 +210,7 @@ model yyINTEL I82562ET		0x0033 i82562ET 10/100 media interface
 model yyINTEL I82553		0x0035 i82553 10/100 media interface
 model yyINTEL I82566		0x0039 i82566 10/100/1000 media interface
 model INTEL I82577		0x0005 i82577 10/100/1000 media interface
+model INTEL I82579		0x0009 i82579 10/100/1000 media interface
 model xxMARVELL I82563		0x000a i82563 10/100/1000 media interface
 
 model yyINTEL IGP01E1000	0x0038 Intel IGP01E1000 Gigabit PHY
@@ -259,6 +261,8 @@ model PMCSIERRA PM8354		0x0004 PM8354 QuadPHY Gigabit interface
 /* Quality Semiconductor PHYs */
 model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
 
+/* RDC Semiconductor PHYs */
+model RDC R6040			0x0003 R6040 10/100 media interface
 /* RealTek PHYs */
 model yyREALTEK RTL8201L	0x0020 RTL8201L 10/100 media interface
 model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S/8211 1000BASE-T media interface

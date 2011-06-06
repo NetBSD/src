@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.1 2010/10/03 06:03:10 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.1.6.1 2011/06/06 09:05:27 jruoho Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.1 2010/10/03 06:03:10 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.1.6.1 2011/06/06 09:05:27 jruoho Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -104,6 +104,7 @@ u_int cpu_reset_address = 0xffff0000;
 #endif
 
 BootConfig bootconfig;		/* Boot config storage */
+static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 
 vm_offset_t physical_start;
@@ -175,6 +176,18 @@ static void marvell_device_register(device_t, void *);
 static void marvell_startend_by_tag(int, uint64_t *, uint64_t *);
 #endif
 
+static void
+marvell_system_reset(void)
+{
+	/* unmask soft reset */
+	write_mlmbreg(MVSOC_MLMB_RSTOUTNMASKR,
+	    MVSOC_MLMB_RSTOUTNMASKR_SOFTRSTOUTEN);
+	/* assert soft reset */
+	write_mlmbreg(MVSOC_MLMB_SSRR, MVSOC_MLMB_SSRR_SYSTEMSOFTRST);
+	/* if we're still running, jump to the reset address */
+	cpu_reset();
+	/*NOTREACHED*/
+}
 
 void
 cpu_reboot(int howto, char *bootstr)
@@ -190,7 +203,7 @@ cpu_reboot(int howto, char *bootstr)
 		printf("Please press any key to reboot.\r\n");
 		cngetc();
 		printf("rebooting...\r\n");
-		cpu_reset();
+		marvell_system_reset();
 	}
 
 	/*
@@ -223,7 +236,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	printf("rebooting...\r\n");
-	cpu_reset();
+	marvell_system_reset();
 
 	/*NOTREACHED*/
 }
@@ -271,6 +284,7 @@ static const struct pmap_devmap marvell_devmap[] = {
 #undef  _A
 #undef  _S
 
+extern uint32_t *u_boot_args[];
 
 /*
  * u_int initarm(...)
@@ -417,6 +431,9 @@ initarm(void *arg)
 #define BDSTR(s)	_BDSTR(s)
 #define _BDSTR(s)	#s
 	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
+
+	/* copy command line U-Boot gave us */
+	strncpy(bootargs, (char *)u_boot_args[3], sizeof(bootargs));
 
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
@@ -741,6 +758,9 @@ initarm(void *arg)
 	md_root_setconf(memory_disk, sizeof memory_disk);
 #endif
 
+	boot_args = bootargs;
+	parse_mi_bootargs(boot_args);
+
 #ifdef BOOTHOWTO
 	boothowto |= BOOTHOWTO;
 #endif
@@ -750,11 +770,6 @@ initarm(void *arg)
 		kgdb_debug_init = 1;
 		kgdb_connect(1);
 	}
-#endif
-
-#if NKSYMS || defined(DDB) || defined(LKM)
-	/* Firmware doesn't load symbols. */
-	ksyms_init();
 #endif
 
 #ifdef DDB

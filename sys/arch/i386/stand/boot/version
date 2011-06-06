@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.13 2011/01/05 23:13:01 jakllsch Exp $
+$NetBSD: version,v 1.13.2.1 2011/06/06 09:05:52 jruoho Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -45,3 +45,5 @@ is taken as the current.
 5.5:	Adjust stack and heap areas to not overlap.
 5.6:	GUID Partition Table support.
 5.7:	Recognize 64-bit LBA from bootxx.
+5.8:	Support for splash images.
+5.9:	VESA VBE/DDC EDID support.

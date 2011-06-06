@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_mainbus.c,v 1.1 2009/08/06 00:50:25 matt Exp $	*/
+/*	$NetBSD: bonito_mainbus.c,v 1.1.8.1 2011/06/06 09:05:30 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.1 2009/08/06 00:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.1.8.1 2011/06/06 09:05:30 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ bonito_mainbus_attach(device_t parent, device_t self, void *aux)
 	    BONITO_REV_FPGA(rev) ? "FPGA" : "ASIC",
 	    BONITO_REV_MAJOR(rev), BONITO_REV_MINOR(rev));
 
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 

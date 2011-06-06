@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.90 2010/11/19 06:44:42 dholland Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.90.2.1 2011/06/06 09:09:26 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.90 2010/11/19 06:44:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.90.2.1 2011/06/06 09:09:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ acct_chkfree(void)
 {
 	int error;
 	struct statvfs *sb;
-	int64_t bavail;
+	fsblkcnt_t bavail;
 
 	sb = kmem_alloc(sizeof(*sb), KM_SLEEP);
 	if (sb == NULL)
@@ -185,7 +185,11 @@ acct_chkfree(void)
 		return (error);
 	}
 
-	bavail = sb->f_bfree - sb->f_bresvd;
+	if (sb->f_bfree < sb->f_bresvd) {
+		bavail = 0;
+	} else {
+		bavail = sb->f_bfree - sb->f_bresvd;
+	}
 
 	switch (acct_state) {
 	case ACCT_SUSPENDED:
@@ -419,7 +423,7 @@ acct_process(struct lwp *l)
 	 *
 	 * XXX We should think about the CPU limit, too.
 	 */
-	lim_privatise(p, false);
+	lim_privatise(p);
 	orlim = p->p_rlimit[RLIMIT_FSIZE];
 	/* Set current and max to avoid illegal values */
 	p->p_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;

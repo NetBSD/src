@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.2 2009/12/14 00:46:07 matt Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.2.8.1 2011/06/06 09:06:10 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.2 2009/12/14 00:46:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.2.8.1 2011/06/06 09:06:10 jruoho Exp $");
 
 #include "locators.h"
-#include "obio.h"
 #include "pci.h"
 
 #include <sys/param.h>
@@ -59,12 +58,15 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.2 2009/12/14 00:46:07 matt Exp $");
 
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
+#include <mips/rmi/rmixl_intr.h>
 #include <mips/rmi/rmixl_obiovar.h>
 #include <mips/rmi/rmixl_pcievar.h>
 
+#include <evbmips/rmixl/autoconf.h>
+
 #ifdef OBIO_DEBUG
-int obio_debug = OBIO_DEBUG;
-# define DPRINTF(x)	do { if (obio_debug) printf x ; } while (0)
+int obio_rmixl_debug = OBIO_DEBUG;
+# define DPRINTF(x)	do { if (obio_rmixl_debug) printf x ; } while (0)
 #else
 # define DPRINTF(x)
 #endif
@@ -74,11 +76,11 @@ static void obio_attach(device_t, device_t, void *);
 static int  obio_print(void *, const char *);
 static int  obio_search(device_t, cfdata_t, const int *, void *);
 static void obio_bus_init(struct obio_softc *);
-static void obio_dma_init_29(bus_dma_tag_t);
+static void obio_dma_init_64(bus_dma_tag_t);
 static int  rmixl_addr_error_intr(void *);
 
 
-CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
+CFATTACH_DECL_NEW(obio_rmixl, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
 
 int obio_found;
@@ -86,9 +88,13 @@ int obio_found;
 static int
 obio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	if (obio_found)
-		return 0;
-	return 1;
+	struct mainbus_attach_args *aa = aux;
+
+	if (obio_found == 0)
+		if (strncmp(aa->ma_name, cf->cf_name, strlen(cf->cf_name)) == 0)
+			return 1;
+
+	return 0;
 }
 
 static void
@@ -131,6 +137,8 @@ obio_print(void *aux, const char *pnp)
 		aprint_normal(" mult %d", obio->obio_mult);
 	if (obio->obio_intr != OBIOCF_INTR_DEFAULT)
 		aprint_normal(" intr %d", obio->obio_intr);
+	if (obio->obio_tmsk != OBIOCF_TMSK_DEFAULT)
+		aprint_normal(" tmsk %d", obio->obio_tmsk);
 
 	return (UNCONF);
 }
@@ -141,11 +149,13 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	struct obio_softc *sc = device_private(parent);
 	struct obio_attach_args obio;
 
-	obio.obio_bst = sc->sc_bst;
+	obio.obio_eb_bst = sc->sc_eb_bst;
+	obio.obio_el_bst = sc->sc_el_bst;
 	obio.obio_addr = cf->cf_loc[OBIOCF_ADDR];
 	obio.obio_size = cf->cf_loc[OBIOCF_SIZE];
 	obio.obio_mult = cf->cf_loc[OBIOCF_MULT];
 	obio.obio_intr = cf->cf_loc[OBIOCF_INTR];
+	obio.obio_tmsk = cf->cf_loc[OBIOCF_TMSK];
 	obio.obio_29bit_dmat = sc->sc_29bit_dmat;
 	obio.obio_32bit_dmat = sc->sc_32bit_dmat;
 	obio.obio_64bit_dmat = sc->sc_64bit_dmat;
@@ -161,73 +171,62 @@ obio_bus_init(struct obio_softc *sc)
 {
 	struct rmixl_config *rcp = &rmixl_configuration;
 	static int done = 0;
+	int error;
 
 	if (done)
 		return;
 	done = 1;
 
-	/* obio (devio) space */
-	if (rcp->rc_obio_memt.bs_cookie == 0)
-		rmixl_obio_bus_mem_init(&rcp->rc_obio_memt, rcp);
+	/* obio (devio) space, Big Endian */
+	if (rcp->rc_obio_eb_memt.bs_cookie == 0)
+		rmixl_obio_eb_bus_mem_init(&rcp->rc_obio_eb_memt, rcp);
+
+	/* obio (devio) space, Little Endian */
+	if (rcp->rc_obio_el_memt.bs_cookie == 0)
+		rmixl_obio_el_bus_mem_init(&rcp->rc_obio_el_memt, rcp);
+
+	/* dma space for all memory, including >= 4GB */
+	if (rcp->rc_dma_tag._cookie == 0)
+		obio_dma_init_64(&rcp->rc_dma_tag);
+	rcp->rc_64bit_dmat = &rcp->rc_dma_tag;
+
+	/* dma space for addr < 4GB */
+	if (rcp->rc_32bit_dmat == NULL) {
+		error = bus_dmatag_subregion(rcp->rc_64bit_dmat,
+		    0, (bus_addr_t)1 << 32, &rcp->rc_32bit_dmat, 0);
+		if (error)
+			panic("%s: failed to create 32bit dma tag: %d",
+			    __func__, error);
+	}
 
 	/* dma space for addr < 512MB */
-	if (rcp->rc_29bit_dmat._cookie == 0)
-		obio_dma_init_29(&rcp->rc_29bit_dmat);
-#ifdef NOTYET
-	/* dma space for addr < 4GB */
-	if (rcp->rc_32bit_dmat._cookie == 0)
-		obio_dma_init_32(&rcp->rc_32bit_dmat);
-	/* dma space for all memory, including >= 4GB */
-	if (rcp->rc_64bit_dmat._cookie == 0)
-		obio_dma_init_64(&rcp->rc_64bit_dmat);
-#endif
+	if (rcp->rc_29bit_dmat == NULL) {
+		error = bus_dmatag_subregion(rcp->rc_32bit_dmat,
+		    0, (bus_addr_t)1 << 29, &rcp->rc_29bit_dmat, 0);
+		if (error)
+			panic("%s: failed to create 29bit dma tag: %d",
+			    __func__, error);
+	}
 
 	sc->sc_base = (bus_addr_t)rcp->rc_io_pbase;
 	sc->sc_size = (bus_size_t)RMIXL_IO_DEV_SIZE;
-	sc->sc_bst = (bus_space_tag_t)&rcp->rc_obio_memt;
-	sc->sc_29bit_dmat = &rcp->rc_29bit_dmat;
-#ifdef NOTYET
-	sc->sc_32bit_dmat = &rcp->rc_32bit_dmat;
-	sc->sc_64bit_dmat = &rcp->rc_64bit_dmat;
-#else
-	sc->sc_32bit_dmat = NULL;
-	sc->sc_64bit_dmat = NULL;
-#endif
+	sc->sc_eb_bst = (bus_space_tag_t)&rcp->rc_obio_eb_memt;
+	sc->sc_el_bst = (bus_space_tag_t)&rcp->rc_obio_el_memt;
+	sc->sc_29bit_dmat = rcp->rc_29bit_dmat;
+	sc->sc_32bit_dmat = rcp->rc_32bit_dmat;
+	sc->sc_64bit_dmat = rcp->rc_64bit_dmat;
 }
 
 static void
-obio_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
-    bus_size_t len, int ops)
-{
-	return;
-}
-
-static void
-obio_dma_init_29(bus_dma_tag_t t)
+obio_dma_init_64(bus_dma_tag_t t)
 {
 	t->_cookie = t;
 	t->_wbase = 0;
-	t->_physbase = 0;
-#if _LP64
-	t->_wsize = ~0;
-#else
-	t->_wsize = MIPS_KSEG1_START - MIPS_KSEG0_START;
-#endif
-	t->_dmamap_create = _bus_dmamap_create;
-	t->_dmamap_destroy = _bus_dmamap_destroy;
-	t->_dmamap_load = _bus_dmamap_load;
-	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
-	t->_dmamap_load_uio = _bus_dmamap_load_uio;
-	t->_dmamap_load_raw = _bus_dmamap_load_raw;
-	t->_dmamap_unload = _bus_dmamap_unload;
-
-	t->_dmamap_sync = obio_bus_dmamap_sync;
-
-	t->_dmamem_alloc = _bus_dmamem_alloc;
-	t->_dmamem_free = _bus_dmamem_free;
-	t->_dmamem_map = _bus_dmamem_map;
-	t->_dmamem_unmap = _bus_dmamem_unmap;
-	t->_dmamem_mmap = _bus_dmamem_mmap;
+	t->_bounce_alloc_lo = 0;
+	t->_bounce_alloc_hi = 0;
+	t->_dmamap_ops = mips_bus_dmamap_ops;
+	t->_dmamem_ops = mips_bus_dmamem_ops;
+	t->_dmatag_ops = mips_bus_dmatag_ops;
 }
 
 void
@@ -281,10 +280,13 @@ rmixl_addr_error_init(void)
 
 	/*
 	 * establish address error ISR
-	 * XXX assuming "int 16 (bridge_tb)" is out irq
+	 * XXX assuming "int 16 (bridge_tb)" is our irq
+	 * XXX is true for XLS family only
 	 */
-	rmixl_intr_establish(16, IPL_HIGH, RMIXL_INTR_LEVEL, RMIXL_INTR_HIGH,
-		rmixl_addr_error_intr, NULL);
+	if (cpu_rmixls(mips_options.mips_cpu))
+		rmixl_intr_establish(16, 1, IPL_HIGH,
+			RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
+			rmixl_addr_error_intr, NULL, false);
 }
 
 int

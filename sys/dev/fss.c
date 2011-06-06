@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.72 2010/12/27 18:41:07 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.72.2.1 2011/06/06 09:07:39 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.72 2010/12/27 18:41:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.72.2.1 2011/06/06 09:07:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.72 2010/12/27 18:41:07 hannken Exp $");
 #include <sys/kthread.h>
 #include <sys/fstrans.h>
 #include <sys/simplelock.h>
+#include <sys/vfs_syscalls.h>		/* For do_sys_unlink(). */
 
 #include <miscfs/specfs/specdev.h>
 
@@ -303,6 +304,9 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct fss_get *fsg = (struct fss_get *)data;
 
 	switch (cmd) {
+	case FSSIOCSET50:
+		fss->fss_flags = 0;
+		/* Fall through */
 	case FSSIOCSET:
 		mutex_enter(&sc->sc_lock);
 		if ((flag & FWRITE) == 0)
@@ -311,6 +315,8 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EBUSY;
 		else
 			error = fss_create_snapshot(sc, fss, l);
+		if (error == 0)
+			sc->sc_uflags = fss->fss_flags;
 		mutex_exit(&sc->sc_lock);
 		break;
 
@@ -450,7 +456,7 @@ fss_softc_alloc(struct fss_softc *sc)
 
 	sc->sc_flags |= FSS_BS_THREAD;
 	if ((error = kthread_create(PRI_BIO, 0, NULL, fss_bs_thread, sc,
-	    &sc->sc_bs_lwp, device_xname(sc->sc_dev))) != 0) {
+	    &sc->sc_bs_lwp, "%s", device_xname(sc->sc_dev))) != 0) {
 		sc->sc_flags &= ~FSS_BS_THREAD;
 		return error;
 	}
@@ -613,11 +619,6 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 				NSM_FOLLOW_NOEMULROOT, &vp);
 	if (error != 0)
 		return error;
-	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (error != 0) {
-		vrele(vp);
-		return error;
-	}
 
 	if (vp->v_type == VREG && vp->v_mount == sc->sc_mount) {
 		sc->sc_flags |= FSS_PERSISTENT;
@@ -629,14 +630,20 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		    sc->sc_bs_bshift++)
 			if (FSS_FSBSIZE(sc) == fsbsize)
 				break;
-		if (sc->sc_bs_bshift >= bits) {
-			VOP_UNLOCK(sc->sc_bs_vp);
+		if (sc->sc_bs_bshift >= bits)
 			return EINVAL;
-		}
 
 		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
 		sc->sc_clshift = 0;
 
+		if ((fss->fss_flags & FSS_UNLINK_ON_CREATE) != 0) {
+			error = do_sys_unlink(fss->fss_bstore, UIO_USERSPACE);
+			if (error)
+				return error;
+		}
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error != 0)
+			return error;
 		error = VFS_SNAPSHOT(sc->sc_mount, sc->sc_bs_vp, &ts);
 		TIMESPEC_TO_TIMEVAL(&sc->sc_time, &ts);
 
@@ -644,7 +651,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 
 		return error;
 	}
-	vput(vp);
+	vrele(vp);
 
 	/*
 	 * Get the block device it is mounted on.
@@ -696,6 +703,11 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	}
 	pathbuf_destroy(pb2);
 
+	if ((fss->fss_flags & FSS_UNLINK_ON_CREATE) != 0) {
+		error = do_sys_unlink(fss->fss_bstore, UIO_USERSPACE);
+		if (error)
+			return error;
+	}
 	if (sc->sc_bs_vp->v_type == VREG) {
 		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
 		if (fsbsize & (fsbsize-1))	/* No power of two */
@@ -817,7 +829,7 @@ bad:
 	fss_softc_free(sc);
 	if (sc->sc_bs_vp != NULL) {
 		if (sc->sc_flags & FSS_PERSISTENT)
-			vn_close(sc->sc_bs_vp, FREAD, l->l_cred);
+			vrele(sc->sc_bs_vp);
 		else
 			vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_cred);
 	}
@@ -844,7 +856,7 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 
 	fss_softc_free(sc);
 	if (sc->sc_flags & FSS_PERSISTENT)
-		vn_close(sc->sc_bs_vp, FREAD, l->l_cred);
+		vrele(sc->sc_bs_vp);
 	else
 		vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_cred);
 	sc->sc_bs_vp = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.53 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: mfc.c,v 1.53.6.1 2011/06/06 09:04:54 jruoho Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.53 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.53.6.1 2011/06/06 09:04:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.53 2009/10/26 19:16:54 cegger Exp $");
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
@@ -490,7 +489,7 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sc->sc_tty)
 		tp = sc->sc_tty;
 	else {
-		tp = sc->sc_tty = ttymalloc();
+		tp = sc->sc_tty = tty_alloc();
 		tty_attach(tp);
 	}
 
@@ -603,7 +602,7 @@ mfcsclose(dev_t dev, int flag, int mode, struct lwp *l)
 #if not_yet
 	if (tp != &mfcs_cons) {
 		remove_vbl_function(&sc->vbl_node);
-		ttyfree(tp);
+		tty_free(tp);
 		sc->sc_tty = (struct tty *) NULL;
 	}
 #endif

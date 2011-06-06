@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isa.c,v 1.14 2008/04/16 09:39:01 cegger Exp $ */
+/* $NetBSD: atppc_isa.c,v 1.14.32.1 2011/06/06 09:07:57 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.14 2008/04/16 09:39:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.14.32.1 2011/06/06 09:07:57 jruoho Exp $");
 
 #include "opt_atppc.h"
 
@@ -166,7 +166,7 @@ atppc_isa_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_irq > 0) {
 		/* Establish interrupt handler. */
 		lsc->sc_ieh = isa_intr_establish(sc->sc_ic, sc->sc_irq,
-			IST_EDGE, IPL_ATPPC, atppcintr, lsc->sc_dev);
+			IST_EDGE, IPL_TTY, atppcintr, lsc->sc_dev);
 
 		lsc->sc_has |= ATPPC_HAS_INTR;
 	}

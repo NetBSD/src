@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.21 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: pcb.h,v 1.21.106.1 2011/06/06 09:06:28 jruoho Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,9 +36,13 @@
 #include <powerpc/reg.h>
 
 struct faultbuf {
-	register_t fb_pc;		/* PC */
 	register_t fb_sp;		/* R1 */
 	register_t fb_r2;		/* R2 (why?) */
+	/*
+	 * These are ordered so that one could use a stmw to save them.
+	 */
+	register_t fb_msr;		/* MSR */
+	register_t fb_pc;		/* PC */
 	register_t fb_cr;		/* CR */
 	register_t fb_fixreg[19];	/* R13-R31 */
 };
@@ -47,19 +51,14 @@ struct pcb {
 	struct pmap *pcb_pm;	/* pmap of our vmspace */
 	register_t pcb_sp;	/* saved SP */
 	int pcb_flags;
-#define	PCB_OWNFPU	1	/* Process owns FPU resources */
-#define	PCB_OWNALTIVEC	2	/* Process owns AltiVec resources */
-#define	PCB_FPU		4	/* Process had FPU initialized */
-#define	PCB_ALTIVEC	8	/* Process had AltiVec initialized */
 #define	PCB_FE1		PSL_FE1	/* 0x100 */
 #define	PCB_FE0		PSL_FE0	/* 0x800 */
-	struct cpu_info * volatile pcb_fpcpu; /* CPU with our FP state */
-	struct cpu_info * volatile pcb_veccpu;/* CPU with our VECTOR state */
 	struct faultbuf *pcb_onfault;	/* For use during copyin/copyout */
 	vaddr_t pcb_kmapsr;	/* where to map user segment in kernel */
 	vaddr_t pcb_umapsr;	/* the user segment mapped in kernel */
 	struct fpreg pcb_fpu;	/* Floating point processor */
 	struct vreg pcb_vr __attribute__((aligned(16)));
+	register_t pcb_usprg0;	/* User Special-Purpose Register General 0 */
 };
 
 struct md_coredump {

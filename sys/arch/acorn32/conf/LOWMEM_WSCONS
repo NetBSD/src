@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.55 2010/11/23 11:13:52 hannken Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.55.2.1 2011/06/06 09:04:39 jruoho Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -53,7 +53,8 @@ file-system	KERNFS		# /kern
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	NFSSERVER
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

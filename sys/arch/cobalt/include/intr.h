@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.32 2008/10/01 02:44:14 uebayasi Exp $	*/
+/*	$NetBSD: intr.h,v 1.32.22.1 2011/06/06 09:05:14 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -28,58 +28,13 @@
 #ifndef	_COBALT_INTR_H_
 #define	_COBALT_INTR_H_
 
-#define	IPL_NONE	0	/* Disable only this interrupt. */
-#define	IPL_SOFTCLOCK	1	/* generic software interrupts */
-#define	IPL_SOFTBIO	1	/* clock software interrupts */
-#define	IPL_SOFTNET	2	/* network software interrupts */
-#define	IPL_SOFTSERIAL	2	/* serial software interrupts */
-#define	IPL_VM		3	/* Memory allocation */
-#define	IPL_SCHED	4	/* Disable clock interrupts. */
-#define	IPL_HIGH	4	/* Disable all interrupts. */
-#define NIPL		5
-
-/* Interrupt sharing types. */
-#define IST_NONE	0	/* none */
-#define IST_PULSE	1	/* pulsed */
-#define IST_EDGE	2	/* edge-triggered */
-#define IST_LEVEL	3	/* level-triggered */
+#include <mips/intr.h>
 
 #ifdef _KERNEL
 #ifndef _LOCORE
 
 #include <sys/evcnt.h>
 #include <mips/cpuregs.h>
-#include <mips/locore.h>
-
-#define SPLVM		(MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 | \
-			MIPS_INT_MASK_1 | MIPS_INT_MASK_2 | \
-			MIPS_INT_MASK_3 | MIPS_INT_MASK_4)
-#define SPLSCHED	(SPLVM | MIPS_INT_MASK_5)
-
-#define spl0()          (void)_spllower(0)
-#define splx(s)         (void)_splset(s)
-#define splvm()		_splraise(SPLVM)
-#define splsched()	_splraise(SPLSCHED)
-#define splhigh()       _splraise(MIPS_INT_MASK)
-
-#define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
-#define splsoftbio()	_splraise(MIPS_SOFT_INT_MASK_0)
-#define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
-#define splsoftserial()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
-
-typedef int ipl_t;
-typedef struct {
-	int _spl;
-} ipl_cookie_t;
-
-ipl_cookie_t makeiplcookie(ipl_t);
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return _splraise(icookie._spl);
-}
 
 #define NCPU_INT	6
 #define NICU_INT	16
@@ -93,8 +48,6 @@ struct cobalt_intrhand {
 #define	COBALT_COOKIE_TYPE_CPU	0x1
 #define	COBALT_COOKIE_TYPE_ICU	0x2
 };
-
-#include <mips/softintr.h>
 
 void intr_init(void);
 void *cpu_intr_establish(int, int, int (*)(void *), void *);

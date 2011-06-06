@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.17 2010/10/07 07:53:53 macallan Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.17.2.1 2011/06/06 09:08:46 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.17 2010/10/07 07:53:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.17.2.1 2011/06/06 09:08:46 jruoho Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -51,9 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.17 2010/10/07 07:53:53 macallan Exp $
 #ifdef SPLASHSCREEN
 #define GENFB_DISABLE_TEXT
 #include <dev/splash/splash.h>
-/* XXX */
-extern const char _splash_header_data_cmap[64+32][3];
 #endif
+
+struct genfb_softc;
 
 struct genfb_ops {
 	int (*genfb_ioctl)(void *, void *, u_long, void *, int, struct lwp *);
@@ -77,6 +77,10 @@ struct genfb_pmf_callback {
 	bool (*gpc_resume)(device_t, const pmf_qual_t *);
 };
 
+struct genfb_mode_callback {
+	bool (*gmc_setmode)(struct genfb_softc *, int);
+};
+
 struct genfb_softc {
 	device_t sc_dev;
 	struct vcons_data vd;
@@ -88,6 +92,7 @@ struct genfb_softc {
 	struct genfb_colormap_callback *sc_cmcb;
 	struct genfb_pmf_callback *sc_pmfcb;
 	struct genfb_parameter_callback *sc_backlight;
+	struct genfb_mode_callback *sc_modecb;
 	int sc_backlight_level, sc_backlight_on;
 	void *sc_fbaddr;	/* kva */
 #ifdef GENFB_SHADOWFB
@@ -103,10 +108,8 @@ struct genfb_softc {
 	bool sc_want_clear;
 #ifdef SPLASHSCREEN
 	struct splash_info sc_splash;
-#ifdef SPLASHSCREEN_PROGRESS
-	struct splash_progress sc_progress;
 #endif
-#endif
+	struct wsdisplay_accessops sc_accessops;
 };
 
 void	genfb_cnattach(void);
@@ -117,6 +120,7 @@ void	genfb_init(struct genfb_softc *);
 int	genfb_attach(struct genfb_softc *, struct genfb_ops *);
 int	genfb_borrow(bus_addr_t, bus_space_handle_t *);
 void	genfb_restore_palette(struct genfb_softc *);
-
+void	genfb_enable_polling(device_t);
+void	genfb_disable_polling(device_t);
 
 #endif /* GENFBVAR_H */

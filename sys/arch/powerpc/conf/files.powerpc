@@ -1,7 +1,7 @@
-#	$NetBSD: files.powerpc,v 1.72 2010/03/09 22:35:12 matt Exp $
+#	$NetBSD: files.powerpc,v 1.72.4.1 2011/06/06 09:06:26 jruoho Exp $
 
-defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
-defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
+defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
+defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE OPENPIC_DISTRIBUTE
 defparam opt_ppcparam.h	L2CR_CONFIG L3CR_CONFIG INTSTK CLOCKBASE
 defflag	opt_ppcarch.h	PPC_OEA PPC_OEA601 PPC_OEA64 PPC_OEA64_BRIDGE PPC_MPC8XX PPC_IBM4XX PPC_IBM403 PPC_BOOKE
 defflag opt_pmap.h	PMAPDEBUG PMAPCHECK PMAPCOUNTERS
@@ -9,6 +9,7 @@ defparam opt_pmap.h	PTEGCOUNT PMAP_MEMLIMIT
 
 file	arch/powerpc/powerpc/copystr.c
 file	arch/powerpc/powerpc/core_machdep.c		coredump
+file	arch/powerpc/powerpc/fixup.c			ppc_booke | (ppc_oea & ppc_oea64) | (ppc_oea & ppc_oea64_bridge) | (ppc_oea64 & ppc_oea64_bridge)
 file	arch/powerpc/powerpc/fubyte.c
 file	arch/powerpc/powerpc/fuswintr.c
 file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
@@ -34,6 +35,7 @@ file	arch/powerpc/powerpc/db_memrw.c			ddb | kgdb
 file	arch/powerpc/powerpc/db_disasm.c		ddb
 file	arch/powerpc/powerpc/db_interface.c		ddb | kgdb
 file	arch/powerpc/powerpc/db_trace.c			ddb
+file	arch/powerpc/powerpc/fpu.c
 
 # IBM 4xx Family files (40x)
 file	arch/powerpc/ibm4xx/pmap.c			ppc_ibm4xx
@@ -52,34 +54,27 @@ file	arch/powerpc/oea/pmap.c				ppc_oea | ppc_oea601
 file	arch/powerpc/oea/pmap64.c			ppc_oea64
 file	arch/powerpc/oea/pmap64_bridge.c		ppc_oea64_bridge
 file	arch/powerpc/oea/pmap_kernel.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
-file	arch/powerpc/powerpc/fpu.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 file	arch/powerpc/powerpc/trap.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 
 # PPC BookE (MPC85xx) Family files
 file	arch/powerpc/booke/booke_machdep.c		ppc_booke
-file	arch/powerpc/booke/clock.c			ppc_booke
-file	arch/powerpc/booke/copyinstr.c			ppc_booke
-file	arch/powerpc/booke/copyoutstr.c			ppc_booke
-file	arch/powerpc/booke/pmap.c			ppc_booke
+file	arch/powerpc/booke/booke_cache.c		ppc_booke
+file	arch/powerpc/booke/booke_pmap.c			ppc_booke
+file	arch/powerpc/booke/booke_stubs.c		ppc_booke
+file	arch/powerpc/booke/copyin.c			ppc_booke
+file	arch/powerpc/booke/copyout.c			ppc_booke
+file	arch/powerpc/booke/kcopy.c			ppc_booke
+file	arch/powerpc/booke/spe.c			ppc_booke
 file	arch/powerpc/booke/trap.c			ppc_booke
+file	common/pmap/tlb/pmap.c				ppc_booke
+file	common/pmap/tlb/pmap_segtab.c			ppc_booke
+file	common/pmap/tlb/pmap_tlb.c			ppc_booke
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/powerpc/powerpc/compat_13_machdep.c	compat_13
 file	arch/powerpc/powerpc/compat_16_machdep.c	compat_16
 
-# MACH binary compatibility (COMPAT_MACH)
-include "compat/mach/files.mach"
-include "compat/mach/arch/powerpc/files.mach_powerpc"
-file	arch/powerpc/powerpc/mach_machdep.c		compat_mach
-file	arch/powerpc/powerpc/mach_sigcode.S		compat_mach
-file	arch/powerpc/powerpc/mach_syscall.c		compat_mach
-file	arch/powerpc/powerpc/macho_machdep.c		exec_macho
-
-# Darwin binary compatibility (COMPAT_DARWIN)
-include "compat/darwin/files.darwin"
 include "compat/freebsd/files.freebsd" 
-file	arch/powerpc/powerpc/darwin_machdep.c		compat_darwin
-file	arch/powerpc/powerpc/darwin_commpage_machdep.S	compat_darwin
 
 include "compat/netbsd32/files.netbsd32"
 file	arch/powerpc/powerpc/netbsd32_sigcode.S		compat_netbsd32

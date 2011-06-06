@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.21 2011/01/02 05:30:11 tsutsui Exp $
+#	$NetBSD: Makefile.booters,v 1.21.2.1 2011/06/06 09:06:16 jruoho Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -35,7 +35,7 @@ SRCS+= vers.c
 CLEANFILES+= vers.c
 
 vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.CURDIR}/version "mvme68k"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "mvme68k"
 .endif
 
 .include <bsd.klinks.mk>

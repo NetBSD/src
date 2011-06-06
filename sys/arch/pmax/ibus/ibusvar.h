@@ -1,4 +1,4 @@
-/*	$NetBSD: ibusvar.h,v 1.18 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: ibusvar.h,v 1.18.6.1 2011/06/06 09:06:22 jruoho Exp $	*/
 
 #ifndef _PMAX_IBUS_IBUSVAR_H_
 #define _PMAX_IBUS_IBUSVAR_H_
@@ -6,10 +6,6 @@
 #include <machine/bus.h>
 
 struct ibus_attach_args;
-
-struct ibus_softc {
-	struct device	sc_dev;
-};
 
 /*
  * Arguments used to attach an ibus "device" to its parent
@@ -27,14 +23,14 @@ struct ibus_dev_attach_args {
  */
 struct ibus_attach_args {
 	const char *ia_name;		/* device name */
-	int	ia_cookie;		/* device cookie */
-	u_int32_t ia_addr;		/* device address (KSEG1) */
-	int	ia_basz;		/* badaddr() size */
+	intptr_t ia_cookie;		/* device cookie */
+	bus_addr_t ia_addr;		/* device address (KSEG1) */
+	bus_size_t ia_basz;		/* badaddr() size */
 };
 
-void	ibusattach(struct device *, struct device *, void *);
+void	ibusattach(device_t, device_t, void *);
 int	ibusprint(void *, const char *);
-void	ibus_intr_establish(struct device *, void *cookie, int level,
+void	ibus_intr_establish(device_t, void *cookie, int level,
 	    int (*handler)(void *), void *arg);
 
 #endif	/* !_PMAX_IBUS_IBUSVAR_H_ */

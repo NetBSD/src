@@ -1,11 +1,11 @@
-#       $NetBSD: files.marvell,v 1.2 2010/10/06 05:24:01 kiyohara Exp $
+#       $NetBSD: files.marvell,v 1.2.6.1 2011/06/06 09:05:04 jruoho Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
 
 include "arch/arm/pic/files.pic"
 
-device	mvsoc { [unit = -1], [offset = -1], [irq = -1] } : bus_space_generic, pic
+device	mvsoc { [unit = -1], [offset = -1], [irq = -1] } : bus_space_generic, pic, pic_splfuncs
 attach	mvsoc at mainbus
 file	arch/arm/marvell/mvsoc.c		mvsoc
 file	arch/arm/marvell/mvsoc_space.c
@@ -28,6 +28,11 @@ device	mvsoctmr
 attach	mvsoctmr at mvsoc
 file	arch/arm/marvell/mvsoctmr.c		mvsoctmr
 
+
+# RTC
+device	mvsocrtc
+attach	mvsocrtc at mvsoc
+file	arch/arm/marvell/mvsocrtc.c		mvsocrtc
 
 # PCI Express Interface
 attach	mvpex at mvsoc with mvpex_mbus
@@ -63,7 +68,7 @@ attach	com at mvsoc with mvuart_mbus
 attach	gtidmac at mvsoc with gtidmac_mbus
 
 # General Purpose I/O Port Interface
-device	mvsocgpp: gpiobus, pic
+device	mvsocgpp: gpiobus, pic, pic_splfuncs
 attach	mvsocgpp at mvsoc
 file	arch/arm/marvell/mvsocgpp.c		mvsocgpp	needs-flag
 

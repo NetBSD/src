@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_attach.c,v 1.1.1.1 2008/12/11 04:46:40 alc Exp $
+ * $Id: ar5212_attach.c,v 1.1.1.1.18.1 2011/06/06 09:09:18 jruoho Exp $
  */
 #include "opt_ah.h"
 
@@ -29,6 +29,9 @@
 #define AH_5212_COMMON
 #include "ar5212/ar5212.ini"
 
+static void ar5212ConfigPCIE(struct ath_hal *ah, HAL_BOOL restore);
+static void ar5212DisablePCIE(struct ath_hal *ah);
+
 static const struct ath_hal_private ar5212hal = {{
 	.ah_magic			= AR5212_MAGIC,
 	.ah_abi				= HAL_ABI_VERSION,
@@ -41,6 +44,8 @@ static const struct ath_hal_private ar5212hal = {{
 	.ah_reset			= ar5212Reset,
 	.ah_phyDisable			= ar5212PhyDisable,
 	.ah_disable			= ar5212Disable,
+	.ah_configPCIE			= ar5212ConfigPCIE,
+	.ah_disablePCIE			= ar5212DisablePCIE,
 	.ah_setPCUConfig		= ar5212SetPCUConfig,
 	.ah_perCalibration		= ar5212PerCalibration,
 	.ah_perCalibrationN		= ar5212PerCalibrationN,
@@ -160,36 +165,6 @@ static const struct ath_hal_private ar5212hal = {{
 	.ah_getChipPowerLimits		= ar5212GetChipPowerLimits,
 };
 
-/*
- * Disable PLL when in L0s as well as receiver clock when in L1.
- * This power saving option must be enabled through the Serdes.
- *
- * Programming the Serdes must go through the same 288 bit serial shift
- * register as the other analog registers.  Hence the 9 writes.
- *
- * XXX Clean up the magic numbers.
- */
-static void
-configurePciePowerSave(struct ath_hal *ah)
-{
-	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x9248fc00);
-	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x24924924);
-
-	/* RX shut off when elecidle is asserted */
-	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x28000039);
-	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x53160824);
-	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0xe5980579);
-                                                                                           
-	/* Shut off PLL and CLKREQ active in L1 */
-	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x001defff);
-	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x1aaabe40);
-	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0xbe105554);
-	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x000e3007);
-                                                                                           
-	/* Load the new settings */
-	OS_REG_WRITE(ah, AR_PCIE_SERDES2, 0x00000000);
-}
-
 uint32_t
 ar5212GetRadioRev(struct ath_hal *ah)
 {
@@ -280,6 +255,9 @@ ar5212InitState(struct ath_hal_5212 *ahp, uint16_t devid, HAL_SOFTC sc,
 	ahp->ah_acktimeout = (u_int) -1;
 	ahp->ah_ctstimeout = (u_int) -1;
 	ahp->ah_sifstime = (u_int) -1;
+	ahp->ah_txTrigLev = INIT_TX_FIFO_THRESHOLD;
+	ahp->ah_maxTxTrigLev = MAX_TX_FIFO_THRESHOLD;
+
 	OS_MEMCPY(&ahp->ah_bssidmask, defbssidmask, IEEE80211_ADDR_LEN);
 #undef N
 }
@@ -326,7 +304,7 @@ ar5212Attach(uint16_t devid, HAL_SOFTC sc,
 	HAL_BUS_TAG st, HAL_BUS_HANDLE sh, HAL_STATUS *status)
 {
 #define	AH_EEPROM_PROTECT(ah) \
-	(IS_PCIE(ah) ? AR_EEPROM_PROTECT_PCIE : AR_EEPROM_PROTECT)
+	(AH_PRIVATE(ah)->ah_ispcie)? AR_EEPROM_PROTECT_PCIE : AR_EEPROM_PROTECT)
 	struct ath_hal_5212 *ahp;
 	struct ath_hal *ah;
 	struct ath_hal_rf *rf;
@@ -358,6 +336,7 @@ ar5212Attach(uint16_t devid, HAL_SOFTC sc,
 	val = OS_REG_READ(ah, AR_SREV) & AR_SREV_ID;
 	AH_PRIVATE(ah)->ah_macVersion = val >> AR_SREV_ID_S;
 	AH_PRIVATE(ah)->ah_macRev = val & AR_SREV_REVISION;
+	AH_PRIVATE(ah)->ah_ispcie = IS_5424(ah) || IS_2425(ah);
 
 	if (!ar5212IsMacSupported(AH_PRIVATE(ah)->ah_macVersion, AH_PRIVATE(ah)->ah_macRev)) {
 		HALDEBUG(ah, HAL_DEBUG_ANY,
@@ -380,9 +359,9 @@ ar5212Attach(uint16_t devid, HAL_SOFTC sc,
 
 	AH_PRIVATE(ah)->ah_phyRev = OS_REG_READ(ah, AR_PHY_CHIP_ID);
 
-	if (IS_PCIE(ah)) {
+	if (AH_PRIVATE(ah)->ah_ispcie) {
 		/* XXX: build flag to disable this? */
-		configurePciePowerSave(ah);
+		ath_hal_configPCIE(ah, AH_FALSE);
 	}
 
 	if (!ar5212ChipTest(ah)) {
@@ -472,7 +451,7 @@ ar5212Attach(uint16_t devid, HAL_SOFTC sc,
 	val = OS_REG_READ(ah, AR_PCICFG);
 	val = MS(val, AR_PCICFG_EEPROM_SIZE);
 	if (val == 0) {
-		if (!IS_PCIE(ah)) {
+		if (!AH_PRIVATE(ah)->ah_ispcie) {
 			HALDEBUG(ah, HAL_DEBUG_ANY,
 			    "%s: unsupported EEPROM size %u (0x%x) found\n",
 			    __func__, val, val);
@@ -669,6 +648,42 @@ ar5212GetChannelEdges(struct ath_hal *ah,
 }
 
 /*
+ * Disable PLL when in L0s as well as receiver clock when in L1.
+ * This power saving option must be enabled through the Serdes.
+ *
+ * Programming the Serdes must go through the same 288 bit serial shift
+ * register as the other analog registers.  Hence the 9 writes.
+ *
+ * XXX Clean up the magic numbers.
+ */
+static void
+ar5212ConfigPCIE(struct ath_hal *ah, HAL_BOOL restore)
+{
+	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x9248fc00);
+	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x24924924);
+
+	/* RX shut off when elecidle is asserted */
+	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x28000039);
+	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x53160824);
+	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0xe5980579);
+                                                                                           
+	/* Shut off PLL and CLKREQ active in L1 */
+	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x001defff);
+	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x1aaabe40);
+	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0xbe105554);
+	OS_REG_WRITE(ah, AR_PCIE_SERDES, 0x000e3007);
+                                                                                           
+	/* Load the new settings */
+	OS_REG_WRITE(ah, AR_PCIE_SERDES2, 0x00000000);
+}
+
+static void
+ar5212DisablePCIE(struct ath_hal *ah)
+{
+	/* NB: fill in for 9100 */
+}
+
+/*
  * Fill all software cached or static hardware state information.
  * Return failure if capabilities are to come from EEPROM and
  * cannot be read.
@@ -828,13 +843,27 @@ ar5212FillCapabilityInfo(struct ath_hal *ah)
 	ahpriv->ah_rxornIsFatal =
 	    (AH_PRIVATE(ah)->ah_macVersion < AR_SREV_VERSION_VENICE);
 
-	/* h/w phy counters first appeared in Hainan */
-	pCap->halHwPhyCounterSupport =
-	    (AH_PRIVATE(ah)->ah_macVersion == AR_SREV_VERSION_VENICE &&
+	/* enable features that first appeared in Hainan */
+	if ((AH_PRIVATE(ah)->ah_macVersion == AR_SREV_VERSION_VENICE &&
 	     AH_PRIVATE(ah)->ah_macRev == AR_SREV_HAINAN) ||
-	    AH_PRIVATE(ah)->ah_macVersion > AR_SREV_VERSION_VENICE;
+	    AH_PRIVATE(ah)->ah_macVersion > AR_SREV_VERSION_VENICE) {
+		/* h/w phy counters */
+		pCap->halHwPhyCounterSupport = AH_TRUE;
+		/* bssid match disable */
+		pCap->halBssidMatchSupport = AH_TRUE;
+	}
 
 	pCap->halTstampPrecision = 15;
+	pCap->halIntrMask = HAL_INT_COMMON
+			| HAL_INT_RX
+			| HAL_INT_TX
+			| HAL_INT_FATAL
+			| HAL_INT_BNR
+			| HAL_INT_BMISC
+			;
+
+	if (AH_PRIVATE(ah)->ah_macVersion < AR_SREV_VERSION_GRIFFIN)
+		pCap->halIntrMask &= ~HAL_INT_TBTT;
 
 	return AH_TRUE;
 #undef IS_COBRA

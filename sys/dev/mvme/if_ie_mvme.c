@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.17 2010/11/13 13:52:04 uebayasi Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.17.2.1 2011/06/06 09:08:07 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.17 2010/11/13 13:52:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.17.2.1 2011/06/06 09:08:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ struct ie_pcctwo_softc {
 	struct evcnt ps_evcnt;
 };
 
-CFATTACH_DECL(ie_pcctwo, sizeof(struct ie_pcctwo_softc),
+CFATTACH_DECL_NEW(ie_pcctwo, sizeof(struct ie_pcctwo_softc),
     ie_pcctwo_match, ie_pcctwo_attach, NULL, NULL);
 
 extern struct cfdriver ie_cd;
@@ -218,11 +218,11 @@ ie_write_24(struct ie_softc *sc, int offset, int addr)
 
 /* ARGSUSED */
 int
-ie_pcctwo_match(device_t parent, cfdata_t cf, void *args)
+ie_pcctwo_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcctwo_attach_args *pa;
 
-	pa = args;
+	pa = aux;
 
 	if (strcmp(pa->pa_name, ie_cd.cd_name))
 		return (0);
@@ -234,7 +234,7 @@ ie_pcctwo_match(device_t parent, cfdata_t cf, void *args)
 
 /* ARGSUSED */
 void
-ie_pcctwo_attach(device_t parent, device_t self, void *args)
+ie_pcctwo_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcctwo_attach_args *pa;
 	struct ie_pcctwo_softc *ps;
@@ -242,9 +242,10 @@ ie_pcctwo_attach(device_t parent, device_t self, void *args)
 	bus_dma_segment_t seg;
 	int rseg;
 
-	pa = (struct pcctwo_attach_args *) args;
+	pa = aux;
 	ps = device_private(self);
-	sc = device_private(self);
+	sc = &ps->ps_ie;
+	sc->sc_dev = self;
 
 	/* Map the MPU controller registers in PCCTWO space */
 	ps->ps_bust = pa->pa_bust;
@@ -308,7 +309,7 @@ ie_pcctwo_attach(device_t parent, device_t self, void *args)
 
 	/* Register the event counter */
 	evcnt_attach_dynamic(&ps->ps_evcnt, EVCNT_TYPE_INTR,
-	    pcctwointr_evcnt(pa->pa_ipl), "ether", device_xname(&sc->sc_dev));
+	    pcctwointr_evcnt(pa->pa_ipl), "ether", device_xname(self));
 
 	/* Finally, hook the hardware interrupt */
 	pcctwointr_establish(PCCTWOV_LANC_IRQ, i82586_intr, pa->pa_ipl, sc,

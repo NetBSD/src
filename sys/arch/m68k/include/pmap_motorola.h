@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.32 2011/01/06 13:49:16 tsutsui Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.32.2.1 2011/06/06 09:05:57 jruoho Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -80,7 +80,6 @@
 #include "opt_m68k_arch.h"
 #endif
 
-#include <sys/simplelock.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
@@ -93,8 +92,7 @@ struct pmap {
 	u_int			pm_stfree;	/* 040: free lev2 blocks */
 	st_entry_t		*pm_stpa;	/* 040: ST phys addr */
 	uint16_t		pm_sref;	/* segment table ref count */
-	uint16_t		pm_count;	/* pmap reference count */
-	struct simplelock	pm_lock;	/* lock on pmap */
+	u_int			pm_count;	/* pmap reference count */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	int			pm_ptpages;	/* more stats: PT pages */
 };

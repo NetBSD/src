@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_fan.c,v 1.3 2011/01/13 14:25:33 jruoho Exp $ */
+/*	$NetBSD: acpi_fan.c,v 1.3.2.1 2011/06/06 09:07:41 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.3 2011/01/13 14:25:33 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.3.2.1 2011/06/06 09:07:41 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -236,29 +236,38 @@ acpifan_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, acpifan_sensor_state, self);
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpifan, NULL);
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
-acpifan_modcmd(modcmd_t cmd, void *context)
+acpifan_modcmd(modcmd_t cmd, void *aux)
 {
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-		return config_init_component(cfdriver_ioconf_acpifan,
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpifan,
 		    cfattach_ioconf_acpifan, cfdata_ioconf_acpifan);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
-		return config_fini_component(cfdriver_ioconf_acpifan,
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpifan,
 		    cfattach_ioconf_acpifan, cfdata_ioconf_acpifan);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

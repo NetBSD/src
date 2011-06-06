@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2009/09/25 11:19:35 he Exp $
+#	$NetBSD: Makefile.inc,v 1.2.6.1 2011/06/06 09:06:58 jruoho Exp $
 
 S!=	cd ${SA_EXTRADIR}/../../../..; pwd
 
@@ -19,8 +19,8 @@ SRCS+=	ctrlsp.S
 SRCS+=	mulsi3.S divsi3.S udivsi3.S modsi3.S umodsi3.S
 
 vers.c: ${SA_EXTRADIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh \
-	    -MD ${SA_EXTRADIR}/version "${MACHINE}"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${SA_EXTRADIR}/version "${MACHINE}"
 
 SRCS+=	vers.c
 CLEANFILES+=	vers.c

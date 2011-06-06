@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.3 2010/11/15 06:01:29 uebayasi Exp $	*/
+/*	$NetBSD: uhso.c,v 1.3.2.1 2011/06/06 09:08:43 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.3 2010/11/15 06:01:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.3.2.1 2011/06/06 09:08:43 jruoho Exp $");
 
 #include "opt_inet.h"
 
@@ -87,9 +87,11 @@ __KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.3 2010/11/15 06:01:29 uebayasi Exp $");
  */
 int uhso_debug = 0;
 
-#define DPRINTF(n, fmt, args...)	do {		\
-	if (uhso_debug >= (n))				\
-		printf("%s: "fmt, __func__ , ##args);	\
+#define DPRINTF(n, ...)	do {			\
+	if (uhso_debug >= (n)) {		\
+		printf("%s: ", __func__);	\
+		printf(__VA_ARGS__);		\
+	}					\
 } while (/* CONSTCOND */0)
 #else
 #define DPRINTF(...)	((void)0)
@@ -1321,7 +1323,7 @@ uhso_tty_attach(struct uhso_port *hp)
 {
 	struct tty *tp;
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = uhso_tty_start;
 	tp->t_param = uhso_tty_param;
 
@@ -1340,7 +1342,7 @@ uhso_tty_detach(struct uhso_port *hp)
 	uhso_tty_clean(hp);
 
 	tty_detach(hp->hp_tp);
-	ttyfree(hp->hp_tp);
+	tty_free(hp->hp_tp);
 	hp->hp_tp = NULL;
 }
 

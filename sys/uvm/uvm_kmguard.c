@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_kmguard.c,v 1.4 2010/11/02 20:49:48 skrll Exp $	*/
+/*	$NetBSD: uvm_kmguard.c,v 1.4.2.1 2011/06/06 09:10:22 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,12 +38,10 @@
  * - Use-after-free
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.4 2010/11/02 20:49:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.4.2.1 2011/06/06 09:10:22 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/atomic.h>
 

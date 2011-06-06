@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.42 2010/09/06 18:03:57 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.42.2.1 2011/06/06 09:10:08 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.42 2010/09/06 18:03:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.42.2.1 2011/06/06 09:10:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -70,6 +70,15 @@ __KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.42 2010/09/06 18:03:57 pooka Exp $");
 
 #include "rump_private.h"
 #include "rump_vfs_private.h"
+
+/*
+ * O_DIRECT is the fastest alternative, but since it falls back to
+ * non-direct writes silently, I am not sure it will always be 100% safe.
+ * Use it and play with it, but do that with caution.
+ */
+#if 0
+#define HAS_ODIRECT
+#endif
 
 #if 0
 #define DPRINTF(x) printf x
@@ -99,7 +108,7 @@ struct blkwin {
 static struct rblkdev {
 	char *rblk_path;
 	int rblk_fd;
-	int rblk_opencnt;
+	int rblk_mode;
 #ifdef HAS_ODIRECT
 	int rblk_dfd;
 #endif
@@ -152,6 +161,9 @@ static const struct cdevsw rumpblk_cdevsw = {
 	rumpblk_open, rumpblk_close, rumpblk_read, rumpblk_write,
 	rumpblk_ioctl, nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
+
+static int backend_open(struct rblkdev *, const char *);
+static int backend_close(struct rblkdev *);
 
 /* fail every n out of BLKFAIL_MAX */
 #define BLKFAIL_MAX 10000
@@ -356,6 +368,7 @@ rumpblk_init(void)
 	for (i = 0; i < RUMPBLK_SIZE; i++) {
 		mutex_init(&minors[i].rblk_memmtx, MUTEX_DEFAULT, IPL_NONE);
 		cv_init(&minors[i].rblk_memcv, "rblkmcv");
+		minors[i].rblk_fd = -1;
 	}
 
 	evcnt_attach_dynamic(&ev_io_total, EVCNT_TYPE_MISC, NULL,
@@ -423,10 +436,12 @@ rumpblk_register(const char *path, devminor_t *dmin,
 	}
 
 	rblk = &minors[i];
+	rblk->rblk_path = __UNCONST("taken");
+	mutex_exit(&rumpblk_lock);
+
 	len = strlen(path);
 	rblk->rblk_path = malloc(len + 1, M_TEMP, M_WAITOK);
 	strcpy(rblk->rblk_path, path);
-	rblk->rblk_fd = -1;
 	rblk->rblk_hostoffset = offset;
 	if (size != RUMPBLK_SIZENOTSET) {
 		KASSERT(size + offset <= flen);
@@ -438,7 +453,13 @@ rumpblk_register(const char *path, devminor_t *dmin,
 	rblk->rblk_hostsize = flen;
 	rblk->rblk_ftype = ftype;
 	makedefaultlabel(&rblk->rblk_label, rblk->rblk_size, i);
-	mutex_exit(&rumpblk_lock);
+
+	if ((error = backend_open(rblk, path)) != 0) {
+		memset(&rblk->rblk_label, 0, sizeof(rblk->rblk_label));
+		free(rblk->rblk_path, M_TEMP);
+		rblk->rblk_path = NULL;
+		return error;
+	}
 
 	*dmin = i;
 	return 0;
@@ -466,41 +487,52 @@ rumpblk_deregister(const char *path)
 		return ENOENT;
 
 	rblk = &minors[i];
-	KASSERT(rblk->rblk_fd == -1);
-	KASSERT(rblk->rblk_opencnt == 0);
+	backend_close(rblk);
 
 	wincleanup(rblk);
 	free(rblk->rblk_path, M_TEMP);
-	rblk->rblk_path = NULL;
 	memset(&rblk->rblk_label, 0, sizeof(rblk->rblk_label));
+	rblk->rblk_path = NULL;
 
 	return 0;
 }
 
-int
-rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
+static int
+backend_open(struct rblkdev *rblk, const char *path)
 {
-	struct rblkdev *rblk = &minors[minor(dev)];
 	int error, fd;
 
-	if (rblk->rblk_path == NULL)
-		return ENXIO;
-
-	if (rblk->rblk_fd != -1)
-		return 0; /* XXX: refcount, open mode */
-	fd = rumpuser_open(rblk->rblk_path, OFLAGS(flag), &error);
-	if (error)
-		return error;
+	KASSERT(rblk->rblk_fd == -1);
+	fd = rumpuser_open(path, O_RDWR, &error);
+	if (error) {
+		fd = rumpuser_open(path, O_RDONLY, &error);
+		if (error)
+			return error;
+		rblk->rblk_mode = FREAD;
 
 #ifdef HAS_ODIRECT
-	rblk->rblk_dfd = rumpuser_open(rblk->rblk_path,
-	    OFLAGS(flag) | O_DIRECT, &error);
-	if (error)
-		return error;
+		rblk->rblk_dfd = rumpuser_open(path,
+		    O_RDONLY | O_DIRECT, &error);
+		if (error) {
+			close(fd);
+			return error;
+		}
 #endif
+	} else {
+		rblk->rblk_mode = FREAD|FWRITE;
+
+#ifdef HAS_ODIRECT
+		rblk->rblk_dfd = rumpuser_open(path,
+		    O_RDWR | O_DIRECT, &error);
+		if (error) {
+			close(fd);
+			return error;
+		}
+#endif
+	}
 
 	if (rblk->rblk_ftype == RUMPUSER_FT_REG) {
-		uint64_t fsize = rblk->rblk_size, off = rblk->rblk_hostoffset;
+		uint64_t fsize= rblk->rblk_hostsize, off= rblk->rblk_hostoffset;
 		struct blkwin *win;
 		int i, winsize;
 
@@ -511,9 +543,9 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		 */
 
 		rblk->rblk_mmflags = 0;
-		if (flag & FREAD)
+		if (rblk->rblk_mode & FREAD)
 			rblk->rblk_mmflags |= RUMPUSER_FILEMMAP_READ;
-		if (flag & FWRITE) {
+		if (rblk->rblk_mode & FWRITE) {
 			rblk->rblk_mmflags |= RUMPUSER_FILEMMAP_WRITE;
 			rblk->rblk_mmflags |= RUMPUSER_FILEMMAP_SHARED;
 		}
@@ -549,10 +581,9 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 	return 0;
 }
 
-int
-rumpblk_close(dev_t dev, int flag, int fmt, struct lwp *l)
+static int
+backend_close(struct rblkdev *rblk)
 {
-	struct rblkdev *rblk = &minors[minor(dev)];
 	int dummy;
 
 	if (rblk->rblk_mmflags)
@@ -560,6 +591,34 @@ rumpblk_close(dev_t dev, int flag, int fmt, struct lwp *l)
 	rumpuser_fsync(rblk->rblk_fd, &dummy);
 	rumpuser_close(rblk->rblk_fd, &dummy);
 	rblk->rblk_fd = -1;
+#ifdef HAS_ODIRECT
+	if (rblk->rblk_dfd != -1) {
+		rumpuser_close(rblk->rblk_dfd, &dummy);
+		rblk->rblk_dfd = -1;
+	}
+#endif
+
+	return 0;
+}
+
+int
+rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
+{
+	struct rblkdev *rblk = &minors[minor(dev)];
+
+	if (rblk->rblk_fd == -1)
+		return ENXIO;
+
+	if (((flag & (FREAD|FWRITE)) & ~rblk->rblk_mode) != 0) {
+		return EACCES;
+	}
+
+	return 0;
+}
+
+int
+rumpblk_close(dev_t dev, int flag, int fmt, struct lwp *l)
+{
 
 	return 0;
 }
@@ -631,6 +690,11 @@ dostrategy(struct buf *bp)
 	int async = bp->b_flags & B_ASYNC;
 	int error;
 
+	if (bp->b_bcount % (1<<sectshift) != 0) {
+		rump_biodone(bp, 0, EINVAL);
+		return;
+	}
+
 	/* collect statistics */
 	ev_io_total.ev_count++;
 	if (async)
@@ -643,7 +707,13 @@ dostrategy(struct buf *bp)
 		ev_bread_total.ev_count++;
 	}
 
-	off = bp->b_blkno << sectshift;
+	/*
+	 * b_blkno is always in terms of DEV_BSIZE, and since we need
+	 * to translate to a byte offset for the host read, this
+	 * calculation does not need sectshift.
+	 */
+	off = bp->b_blkno << DEV_BSHIFT;
+
 	/*
 	 * Do bounds checking if we're working on a file.  Otherwise
 	 * invalid file systems might attempt to read beyond EOF.  This

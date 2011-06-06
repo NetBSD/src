@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.12 2010/09/21 03:33:14 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.12.2.1 2011/06/06 09:08:46 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -73,6 +73,9 @@ struct vcons_screen {
 	int scr_offset_to_zero;
 	int scr_current_offset;
 #endif
+#ifdef VCONS_DRAW_INTR
+	unsigned int scr_dirty;
+#endif
 };
 
 #define SCREEN_IS_VISIBLE(scr) (((scr)->scr_status & VCONS_IS_VISIBLE) != 0)
@@ -112,16 +115,22 @@ struct vcons_data {
 	/* virtual screen management stuff */
 	void (*switch_cb)(void *, int, int);
 	void *switch_cb_arg;
-#ifdef VCONS_SWITCH_ASYNC
-	lwp_t *redraw_thread;
-	int start_drawing, done_drawing;	/* for the drawing thread */
-#endif
 	struct callout switch_callout;
 	uint32_t switch_pending;
 	LIST_HEAD(, vcons_screen) screens;
 	struct vcons_screen *active, *wanted;
 	const struct wsscreen_descr *currenttype;
 	int switch_poll_count;
+#ifdef VCONS_DRAW_INTR
+	int cells;
+	long *attrs;
+	uint16_t *chars;
+	int cursor_offset;
+	callout_t intr;
+	int intr_valid;
+	void *intr_softint;
+	int use_intr;		/* use intr drawing when non-zero */
+#endif
 };
 
 int	vcons_init(struct vcons_data *, void *cookie, struct wsscreen_descr *,
@@ -130,8 +139,21 @@ int	vcons_init(struct vcons_data *, void *cookie, struct wsscreen_descr *,
 int	vcons_init_screen(struct vcons_data *, struct vcons_screen *, int,
     long *);
 
+/* completely redraw the screen, clear it if RI_FULLCLEAR is set */
 void	vcons_redraw_screen(struct vcons_screen *);
 
+#ifdef VCONS_DRAW_INTR
+/* redraw all dirty character cells */
+void	vcons_update_screen(struct vcons_screen *);
+void	vcons_invalidate_cache(struct vcons_data *);
+#else
+#define vcons_update_screen vcons_redraw_screen
+#endif
+
 void	vcons_replay_msgbuf(struct vcons_screen *);
+
+void	vcons_enable_polling(struct vcons_data *);
+void	vcons_disable_polling(struct vcons_data *);
+void	vcons_hard_switch(struct vcons_screen *);
 
 #endif /* _WSDISPLAY_VCONS_H_ */

@@ -1,0 +1,10 @@
+#	$NetBSD: padlock.ioconf,v 1.1.8.2 2011/06/06 09:09:49 jruoho Exp $
+
+ioconf padlock
+
+include "conf/files"
+include "arch/x86/conf/files.x86"
+
+pseudo-root cpufeaturebus*
+
+padlock0 at cpufeaturebus?

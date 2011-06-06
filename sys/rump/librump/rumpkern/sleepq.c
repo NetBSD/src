@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.11 2011/01/12 12:51:21 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.11.2.1 2011/06/06 09:10:08 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.11 2011/01/12 12:51:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.11.2.1 2011/06/06 09:10:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -73,6 +73,7 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wc, const char *wmsg, syncobj_t *sob)
 	struct lwp *l = curlwp;
 
 	l->l_wchan = wc;
+	l->l_wmesg = wmsg;
 	l->l_sleepq = sq;
 	TAILQ_INSERT_TAIL(sq, l, l_sleepchain);
 }
@@ -86,11 +87,14 @@ sleepq_block(int timo, bool catch)
 	int biglocks = l->l_biglocks;
 
 	while (l->l_wchan) {
-		l->l_mutex = mp;
+		l->l_mutex = mp; /* keep sleepq lock until woken up */
 		error = cv_timedwait(&sq_cv, mp, timo);
 		if (error == EWOULDBLOCK || error == EINTR) {
-			TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
-			l->l_wchan = NULL;
+			if (l->l_wchan) {
+				TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
+				l->l_wchan = NULL;
+				l->l_wmesg = NULL;
+			}
 		}
 	}
 	mutex_spin_exit(mp);
@@ -115,7 +119,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 		if (l->l_wchan == wchan) {
 			found = true;
 			l->l_wchan = NULL;
-			l->l_mutex = NULL;
+			l->l_wmesg = NULL;
 			TAILQ_REMOVE(sq, l, l_sleepchain);
 		}
 	}
@@ -131,7 +135,7 @@ sleepq_unsleep(struct lwp *l, bool cleanup)
 {
 
 	l->l_wchan = NULL;
-	l->l_mutex = NULL;
+	l->l_wmesg = NULL;
 	TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
 	cv_broadcast(&sq_cv);
 

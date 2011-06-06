@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/11/07 17:56:14 skrll Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2011/06/06 09:06:31 jruoho Exp $
 
 BINDIR=	/usr/mdec
 PROG=	mkbootimage
@@ -15,7 +15,7 @@ LIBSA=${.CURDIR}/../../../../lib/libsa
 
 CPPFLAGS= -I${LIBSA} -I${.CURDIR} -I${BFDTOP}/include
 CPPFLAGS+=	-DATTRIBUTE_PACKED=
-DPADD=	${LIBZ}
-LDADD=	-lz
+DPADD+=	${LIBZ}
+LDADD+=	-lz
 
 .include <bsd.prog.mk>

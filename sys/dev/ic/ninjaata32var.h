@@ -1,7 +1,7 @@
-/*	$NetBSD: ninjaata32var.h,v 1.4 2008/03/18 20:46:36 cube Exp $	*/
+/*	$NetBSD: ninjaata32var.h,v 1.4.32.1 2011/06/06 09:07:54 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
+ * Copyright (c) 2006 ITOH Yasufumi.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

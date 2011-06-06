@@ -1,7 +1,7 @@
-/*	$Id: njata_cardbus.c,v 1.13 2010/03/11 17:27:40 dyoung Exp $	*/
+/*	$Id: njata_cardbus.c,v 1.13.4.1 2011/06/06 09:07:46 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
+ * Copyright (c) 2006 ITOH Yasufumi.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.13 2010/03/11 17:27:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.13.4.1 2011/06/06 09:07:46 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

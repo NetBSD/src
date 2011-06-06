@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.3 2009/04/22 17:13:36 tsutsui Exp $
+# $NetBSD: Makefile.boot,v 1.3.6.1 2011/06/06 09:05:55 jruoho Exp $
 
 PROG?=		boot
 
@@ -34,7 +34,8 @@ LIBLIST=	${LIBSA} ${LIBZ} ${LIBKERN}
 CLEANFILES+=	${PROG}.sym ${PROG}.map vers.c
 
 vers.c: ${VERSIONFILE} ${SOURCES} ${.CURDIR}/../Makefile.boot
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBLIST}
 	${LD} -o ${PROG}.sym ${LDFLAGS} -Ttext ${SECONDARY_LOAD_ADDRESS} \

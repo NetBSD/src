@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.11 2010/03/05 16:55:56 pooka Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.11.4.1 2011/06/06 09:07:15 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.11 2010/03/05 16:55:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.11.4.1 2011/06/06 09:07:15 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.11 2010/03/05 16:55:56 pooka Exp $"
 #include <sys/rwlock.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
-#include <sys/sched.h>	/* for cpuset_t */
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
@@ -231,6 +230,7 @@ static const struct syscall_package compat_syscalls[] = {
 # endif
 	{ SYS_compat_50___fhstat40, 0, (sy_call_t *)compat_50_sys___fhstat40 },
 	{ SYS_compat_50_aio_suspend, 0, (sy_call_t *)compat_50_sys_aio_suspend },
+	{ SYS_compat_50_quotactl, 0, (sy_call_t *)compat_50_sys_quotactl },
 #endif
 	{ 0, 0, NULL },
 };

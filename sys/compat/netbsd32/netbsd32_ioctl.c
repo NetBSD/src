@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.51 2010/09/24 13:12:53 njoly Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.51.2.1 2011/06/06 09:07:33 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.51 2010/09/24 13:12:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.51.2.1 2011/06/06 09:07:33 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,8 @@ static inline void netbsd32_to_oifreq(struct netbsd32_oifreq *, struct oifreq *,
 				       u_long cmd);
 static inline void netbsd32_to_ifreq(struct netbsd32_ifreq *, struct ifreq *,
 				       u_long cmd);
+static inline void netbsd32_to_if_addrprefreq(
+    const struct netbsd32_if_addrprefreq *, struct if_addrprefreq *, u_long);
 static inline void netbsd32_to_ifconf(struct netbsd32_ifconf *,
 					struct ifconf *, u_long);
 static inline void netbsd32_to_ifmediareq(struct netbsd32_ifmediareq *,
@@ -102,6 +104,9 @@ static inline void netbsd32_from_format_op(struct format_op *,
 					     struct netbsd32_format_op *,
 					     u_long);
 #endif
+static inline void netbsd32_from_if_addrprefreq(const struct if_addrprefreq *,
+					struct netbsd32_if_addrprefreq *,
+					u_long);
 static inline void netbsd32_from_ifreq(struct ifreq *,
                                          struct netbsd32_ifreq *, u_long);
 static inline void netbsd32_from_oifreq(struct oifreq *,
@@ -170,6 +175,16 @@ netbsd32_to_oifreq(struct netbsd32_oifreq *s32p, struct oifreq *p, u_long cmd)
 	 */
 	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
 		p->ifr_data = (void *)NETBSD32PTR64(s32p->ifr_data);
+}
+
+static inline void
+netbsd32_to_if_addrprefreq(const struct netbsd32_if_addrprefreq *ifap32,
+	struct if_addrprefreq *ifap, u_long cmd)
+{
+	strlcpy(ifap->ifap_name, ifap32->ifap_name, sizeof(ifap->ifap_name));
+	ifap->ifap_preference = ifap32->ifap_preference;
+	memcpy(&ifap->ifap_addr, &ifap32->ifap_addr,
+	    max(ifap32->ifap_addr.ss_len, _SS_MAXSIZE));
 }
 
 static inline void
@@ -322,6 +337,16 @@ netbsd32_from_oifreq(struct oifreq *p, struct netbsd32_oifreq *s32p, u_long cmd)
 }
 
 static inline void
+netbsd32_from_if_addrprefreq(const struct if_addrprefreq *ifap,
+	struct netbsd32_if_addrprefreq *ifap32, u_long cmd)
+{
+	strlcpy(ifap32->ifap_name, ifap->ifap_name, sizeof(ifap32->ifap_name));
+	ifap32->ifap_preference = ifap->ifap_preference;
+	memcpy(&ifap32->ifap_addr, &ifap->ifap_addr,
+	    max(ifap->ifap_addr.ss_len, _SS_MAXSIZE));
+}
+
+static inline void
 netbsd32_from_ifconf(struct ifconf *p, struct netbsd32_ifconf *s32p, u_long cmd)
 {
 
@@ -417,7 +442,6 @@ netbsd32_from_u_long(u_long *p, netbsd32_u_long *s32p, u_long cmd)
 	*s32p = (netbsd32_u_long)*p;
 }
 
-
 /*
  * main ioctl syscall.
  *
@@ -437,10 +461,11 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	struct filedesc *fdp;
 	u_long com;
 	int error = 0;
-	u_int size, size32;
+	size_t size;
+	size_t alloc_size32, size32;
 	void *data, *memp = NULL;
 	void *data32, *memp32 = NULL;
-	unsigned fd;
+	unsigned int fd;
 	fdfile_t *ff;
 	int tmp;
 #define STK_PARAMS	128
@@ -453,16 +478,25 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	 */
 #if 0
 	{
-char *dirs[8] = { "NONE!", "VOID", "OUT", "VOID|OUT!", "IN", "VOID|IN!",
-		"INOUT", "VOID|IN|OUT!" };
+		const char * const dirs[8] = {
+		    "NONE!", "VOID", "OUT", "VOID|OUT!", "IN", "VOID|IN!",
+		    "INOUT", "VOID|IN|OUT!"
+		};
 
-printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
-       SCARG(uap, fd), SCARG(uap, com), SCARG(uap, data),
-       dirs[((SCARG(uap, com) & IOC_DIRMASK)>>29)],
-       IOCGROUP(SCARG(uap, com)), IOCBASECMD(SCARG(uap, com)),
-       IOCPARM_LEN(SCARG(uap, com)));
+		printf("netbsd32_ioctl(%d, %x, %x): "
+		    "%s group %c base %d len %d\n",
+		    SCARG(uap, fd), SCARG(uap, com), SCARG(uap, data).i32,
+		    dirs[((SCARG(uap, com) & IOC_DIRMASK)>>29)],
+		    IOCGROUP(SCARG(uap, com)), IOCBASECMD(SCARG(uap, com)),
+		    IOCPARM_LEN(SCARG(uap, com)));
 	}
 #endif
+
+	memp = NULL;
+	memp32 = NULL;
+	alloc_size32 = 0;
+	size32 = 0;
+	size = 0;
 
 	fdp = p->p_fd;
 	fd = SCARG(uap, fd);
@@ -489,37 +523,72 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 	 * Interpret high order word to find amount of data to be
 	 * copied to/from the user's address space.
 	 */
-	size = 0;
 	size32 = IOCPARM_LEN(com);
-	if (size32 > IOCPARM_MAX) {
+	alloc_size32 = size32;
+
+	/*
+	 * The disklabel is now padded to a multiple of 8 bytes however the old
+	 * disklabel on 32bit platforms wasn't.  This leaves a difference in
+	 * size of 4 bytes between the two but are otherwise identical.
+	 * To deal with this, we allocate enough space for the new disklabel
+	 * but only copyin/out the smaller amount.
+	 */
+	if (IOCGROUP(com) == 'd') {
+		u_long ncom = com ^ (DIOCGDINFO ^ DIOCGDINFO32);
+		switch (ncom) {
+		case DIOCGDINFO:
+		case DIOCWDINFO:
+		case DIOCSDINFO:
+		case DIOCGDEFLABEL:
+			com = ncom;
+			if (IOCPARM_LEN(DIOCGDINFO32) < IOCPARM_LEN(DIOCGDINFO))
+				alloc_size32 = IOCPARM_LEN(DIOCGDINFO);
+			break;
+		}
+	}
+	if (alloc_size32 > IOCPARM_MAX) {
 		error = ENOTTY;
 		goto out;
 	}
-	if (size32 > sizeof(stkbuf)) {
-		memp32 = kmem_alloc((size_t)size32, KM_SLEEP);
+	if (alloc_size32 > sizeof(stkbuf)) {
+		memp32 = kmem_alloc(alloc_size32, KM_SLEEP);
 		data32 = memp32;
 	} else
 		data32 = (void *)stkbuf32;
-	if (com&IOC_IN) {
-		if (size32) {
-			error = copyin(SCARG_P32(uap, data), data32, size32);
-			if (error) {
-				if (memp32)
-					kmem_free(memp32, (size_t)size32);
-				goto out;
-			}
-			ktrgenio(fd, UIO_WRITE, SCARG_P32(uap, data),
-			    size32, 0);
-		} else
+	if ((com >> IOCPARM_SHIFT) == 0)  {
+		/* UNIX-style ioctl. */
+		data32 = SCARG_P32(uap, data);
+	} else {
+		if (com&IOC_IN) {
+			if (size32) {
+				error = copyin(SCARG_P32(uap, data), data32,
+				    size32);
+				if (error) {
+					goto out;
+				}
+				/*
+				 * The data between size and alloc_size has
+				 * not been overwritten.  It shouldn't matter
+				 * but let's clear that anyway.
+				 */
+				if (__predict_false(size32 < alloc_size32)) {
+					memset((char *)data32+size32, 0,
+					    alloc_size32 - size32);
+				}
+				ktrgenio(fd, UIO_WRITE, SCARG_P32(uap, data),
+				    size32, 0);
+			} else
+				*(void **)data32 = SCARG_P32(uap, data);
+		} else if ((com&IOC_OUT) && size32) {
+			/*
+			 * Zero the buffer so the user always
+			 * gets back something deterministic.
+			 */
+			memset(data32, 0, alloc_size32);
+		} else if (com&IOC_VOID) {
 			*(void **)data32 = SCARG_P32(uap, data);
-	} else if ((com&IOC_OUT) && size32)
-		/*
-		 * Zero the buffer so the user always
-		 * gets back something deterministic.
-		 */
-		memset(data32, 0, size32);
-	else if (com&IOC_VOID)
-		*(void **)data32 = SCARG_P32(uap, data);
+		}
+	}
 
 	/*
 	 * convert various structures, pointers, and other objects that
@@ -629,6 +698,12 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 	case SIOCSIFFLAGS32:
 		IOCTL_STRUCT_CONV_TO(SIOCSIFFLAGS, ifreq);
 
+	case SIOCGIFADDRPREF32:
+		IOCTL_STRUCT_CONV_TO(SIOCGIFADDRPREF, if_addrprefreq);
+	case SIOCSIFADDRPREF32:
+		IOCTL_STRUCT_CONV_TO(SIOCSIFADDRPREF, if_addrprefreq);
+
+
 	case OSIOCGIFFLAGS32:
 		IOCTL_STRUCT_CONV_TO(OSIOCGIFFLAGS, oifreq);
 	case OSIOCSIFFLAGS32:
@@ -690,12 +765,12 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		    size32, error);
 	}
 
+ out:
 	/* If we allocated data, free it here. */
 	if (memp32)
-		kmem_free(memp32, (size_t)size32);
+		kmem_free(memp32, alloc_size32);
 	if (memp)
-		kmem_free(memp, (size_t)size);
- out:
+		kmem_free(memp, size);
 	fd_putfile(fd);
 	return (error);
 }

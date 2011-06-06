@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.101 2010/07/10 10:07:40 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.101.2.1 2011/06/06 09:06:50 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.101 2010/07/10 10:07:40 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.101.2.1 2011/06/06 09:06:50 jruoho Exp $");
 
 #include "opt_ddb.h"
 
@@ -119,7 +119,7 @@ static void	psycho_pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 static void	*psycho_pci_intr_establish(pci_chipset_tag_t,
 					   pci_intr_handle_t,
 					   int, int (*)(void *), void *);
-static int	psycho_pci_find_ino(struct pci_attach_args *,
+static int	psycho_pci_find_ino(const struct pci_attach_args *,
 				    pci_intr_handle_t *);
 
 /* Interrupt handlers */
@@ -161,11 +161,11 @@ static void psycho_power_button_pressed(void *arg);
 /*
  * autoconfiguration
  */
-static	int	psycho_match(struct device *, struct cfdata *, void *);
-static	void	psycho_attach(struct device *, struct device *, void *);
+static	int	psycho_match(device_t, cfdata_t, void *);
+static	void	psycho_attach(device_t, device_t, void *);
 static	int	psycho_print(void *aux, const char *p);
 
-CFATTACH_DECL(psycho, sizeof(struct psycho_softc),
+CFATTACH_DECL_NEW(psycho, sizeof(struct psycho_softc),
     psycho_match, psycho_attach, NULL, NULL);
 
 /*
@@ -221,7 +221,7 @@ struct psycho_names {
 };
 
 static	int
-psycho_match(struct device *parent, struct cfdata *match, void *aux)
+psycho_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	char *model = prom_getpropstring(ma->ma_node, "model");
@@ -285,9 +285,9 @@ psycho_dump_intmap(struct psycho_softc *sc)
  *	  just copy it's tags and addresses.
  */
 static	void
-psycho_attach(struct device *parent, struct device *self, void *aux)
+psycho_attach(device_t parent, device_t self, void *aux)
 {
-	struct psycho_softc *sc = (struct psycho_softc *)self;
+	struct psycho_softc *sc = device_private(self);
 	struct psycho_softc *osc = NULL;
 	struct psycho_pbm *pp;
 	struct pcibus_attach_args pba;
@@ -299,9 +299,11 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	int psycho_br[2], n, i;
 	bus_space_handle_t pci_ctl;
 	char *model = prom_getpropstring(ma->ma_node, "model");
+	extern char machine_model[];
 
 	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_node = ma->ma_node;
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
@@ -475,8 +477,8 @@ found:
 	pp->pp_memt = psycho_alloc_mem_tag(pp);
 	pp->pp_iot = psycho_alloc_io_tag(pp);
 	pp->pp_dmat = psycho_alloc_dma_tag(pp);
-	pp->pp_flags = (pp->pp_memt ? PCI_FLAGS_MEM_ENABLED : 0) |
-		       (pp->pp_iot ? PCI_FLAGS_IO_ENABLED : 0);
+	pp->pp_flags = (pp->pp_memt ? PCI_FLAGS_MEM_OKAY : 0) |
+		       (pp->pp_iot ? PCI_FLAGS_IO_OKAY : 0);
 
 	/* allocate a chipset for this */
 	pp->pp_pc = psycho_alloc_chipset(pp, sc->sc_node, &_sparc_pci_chipset);
@@ -527,10 +529,15 @@ found:
 		psycho_set_intr(sc, 15, psycho_bus_a,
 			&sc->sc_regs->pciaerr_int_map,
 			&sc->sc_regs->pciaerr_clr_int);
-		psycho_set_intr(sc, 15, psycho_powerfail,
-			&sc->sc_regs->power_int_map,
-			&sc->sc_regs->power_clr_int);
-		psycho_register_power_button(sc);
+		/*
+		 * Netra X1 may hang when the powerfail interrupt is enabled.
+		 */
+		if (strcmp(machine_model, "SUNW,UltraAX-i2") != 0) {
+			psycho_set_intr(sc, 15, psycho_powerfail,
+				&sc->sc_regs->power_int_map,
+				&sc->sc_regs->power_clr_int);
+			psycho_register_power_button(sc);
+		}
 		if (sc->sc_mode != PSYCHO_MODE_SABRE) {
 			/* sabre doesn't have these interrupts */
 			psycho_set_intr(sc, 15, psycho_bus_b,
@@ -712,14 +719,14 @@ psycho_register_power_button(struct psycho_softc *sc)
 	sc->sc_powerpressed = 0;
 	sc->sc_smcontext = malloc(sizeof(struct sysmon_pswitch), M_DEVBUF, 0);
 	if (!sc->sc_smcontext) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate power button context\n");
+		aprint_error_dev(sc->sc_dev, "could not allocate power button context\n");
 		return;
 	}
 	memset(sc->sc_smcontext, 0, sizeof(struct sysmon_pswitch));
-	sc->sc_smcontext->smpsw_name = device_xname(&sc->sc_dev);
+	sc->sc_smcontext->smpsw_name = device_xname(sc->sc_dev);
 	sc->sc_smcontext->smpsw_type = PSWITCH_TYPE_POWER;
 	if (sysmon_pswitch_register(sc->sc_smcontext) != 0)
-		aprint_error_dev(&sc->sc_dev, "unable to register power button with sysmon\n");
+		aprint_error_dev(sc->sc_dev, "unable to register power button with sysmon\n");
 }
 
 static void
@@ -879,12 +886,12 @@ psycho_ue(void *arg)
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
 	snprintb(bits, sizeof(bits), PSYCHO_UE_AFSR_BITS, afsr);
-	aprint_error_dev(&sc->sc_dev,
+	aprint_error_dev(sc->sc_dev,
 	    "uncorrectable DMA error AFAR %" PRIx64 " AFSR %s\n", afar, bits);
 
 	/* Sometimes the AFAR points to an IOTSB entry */
 	if (afar >= is->is_ptsb && afar < is->is_ptsb + size) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "IOVA %" PRIx64 " IOTTE %" PRIx64 "\n",
 		    (afar - is->is_ptsb) / sizeof(is->is_tsb[0]) * PAGE_SIZE
 		    + is->is_dvmabase, ldxa(afar, ASI_PHYS_CACHED));
@@ -906,7 +913,7 @@ psycho_ce(void *arg)
 	/*
 	 * It's correctable.  Dump the regs and continue.
 	 */
-	aprint_error_dev(&sc->sc_dev,
+	aprint_error_dev(sc->sc_dev,
 	    "correctable DMA error AFAR %" PRIx64 " AFSR %" PRIx64 "\n",
 	    regs->psy_ce_afar, regs->psy_ce_afsr);
 	return (1);
@@ -923,7 +930,7 @@ psycho_bus_a(void *arg)
 	 */
 
 	panic("%s: PCI bus A error AFAR %" PRIx64 " AFSR %" PRIx64,
-	    device_xname(&sc->sc_dev),
+	    device_xname(sc->sc_dev),
 	    regs->psy_pcictl[0].pci_afar, regs->psy_pcictl[0].pci_afsr);
 	return (1);
 }
@@ -939,7 +946,7 @@ psycho_bus_b(void *arg)
 	 */
 
 	panic("%s: PCI bus B error AFAR %" PRIx64 " AFSR %" PRIx64,
-	    device_xname(&sc->sc_dev),
+	    device_xname(sc->sc_dev),
 	    regs->psy_pcictl[0].pci_afar, regs->psy_pcictl[0].pci_afsr);
 	return (1);
 }
@@ -969,7 +976,7 @@ int psycho_wakeup(void *arg)
 	 * Gee, we don't really have a framework to deal with this
 	 * properly.
 	 */
-	aprint_error_dev(&sc->sc_dev, "power management wakeup\n");
+	aprint_error_dev(sc->sc_dev, "power management wakeup\n");
 	return (1);
 }
 
@@ -1021,7 +1028,7 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
 	if (name == 0)
 		panic("couldn't malloc iommu name");
-	snprintf(name, 32, "%s dvma", device_xname(&sc->sc_dev));
+	snprintf(name, 32, "%s dvma", device_xname(sc->sc_dev));
 
 	iommu_init(name, is, tsbsize, iobase);
 }
@@ -1402,7 +1409,7 @@ psycho_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 }
 
 static int
-psycho_pci_find_ino(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+psycho_pci_find_ino(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct psycho_pbm *pp = pa->pa_pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;

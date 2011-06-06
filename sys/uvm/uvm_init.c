@@ -1,7 +1,6 @@
-/*	$NetBSD: uvm_init.c,v 1.38 2010/11/14 04:31:02 uebayasi Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.38.2.1 2011/06/06 09:10:22 jruoho Exp $	*/
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -39,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.38 2010/11/14 04:31:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.38.2.1 2011/06/06 09:10:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.38 2010/11/14 04:31:02 uebayasi Exp $
 #include <sys/resourcevar.h>
 #include <sys/kmem.h>
 #include <sys/mman.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 
 #include <uvm/uvm.h>
@@ -153,12 +144,6 @@ uvm_init(void)
 	uvm_pager_init();
 
 	/*
-	 * step 8: init the uvm_loan() facility.
-	 */
-
-	uvm_loan_init();
-
-	/*
 	 * Initialize pools.  This must be done before anyone manipulates
 	 * any vm_maps because we use a pool for some map entry structures.
 	 */
@@ -170,6 +155,12 @@ uvm_init(void)
 	 */
 
 	kmem_init();
+
+	/*
+	 * Initialize the uvm_loan() facility.
+	 */
+
+	uvm_loan_init();
 
 	/*
 	 * init emap subsystem.

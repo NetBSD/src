@@ -1,9 +1,16 @@
+/*	$NetBSD: trap.h,v 1.1.10.1 2011/06/06 09:06:28 jruoho Exp $	*/
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas of 3am Software Foundry.
+ * by Raytheon BBN Technologies Corp and Defense Advanced Research Projects
+ * Agency and which was developed by Matt Thomas of 3am Software Foundry.
+ *
+ * This material is based upon work supported by the Defense Advanced Research
+ * Projects Agency and Space and Naval Warfare Systems Center, Pacific, under
+ * Contract No. N66001-09-C-2073.
+ * Approved for Public Release, Distribution Unlimited
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +42,7 @@ enum ppc_booke_exceptions {
 	T_MACHINE_CHECK=1,
 	T_DSI=2,
 	T_ISI=3,
-	T_INTERRUPT=4,
+	T_EXTERNAL_INPUT=4,
 	T_ALIGNMENT=5,
 	T_PROGRAM=6,
 	T_FP_UNAVAILABLE=7,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.51 2010/04/10 16:07:04 tsutsui Exp $	*/
+/*	$NetBSD: ser.c,v 1.51.2.1 2011/06/06 09:05:09 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.51 2010/04/10 16:07:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.51.2.1 2011/06/06 09:05:09 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -375,7 +375,7 @@ seropen(dev_t dev, int flag, int mode, struct lwp *l)
 		return ENXIO;
 
 	if (!sc->sc_tty) {
-		tp = sc->sc_tty = ttymalloc();
+		tp = sc->sc_tty = tty_alloc();
 		tty_attach(tp);
 	} else
 		tp = sc->sc_tty;

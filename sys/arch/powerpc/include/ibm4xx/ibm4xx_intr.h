@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.18 2010/04/24 09:46:22 kiyohara Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.18.2.1 2011/06/06 09:06:29 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -52,8 +52,6 @@
 
 #ifndef _LOCORE
 
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
-
 void 	*intr_establish(int, int, int, int (*)(void *), void *);
 void 	intr_disestablish(void *);
 void 	intr_init(void);
@@ -92,7 +90,7 @@ splraiseipl(ipl_cookie_t icookie)
 
 #include <sys/spl.h>
 
-#define	spl0()			spllower(0)
+#define	spl0()			spllower(IPL_NONE)
 
 #endif /* !_LOCORE */
 #endif /* !_IBM4XX_INTR_H_ */

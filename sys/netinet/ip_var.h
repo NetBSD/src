@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.96 2010/11/05 00:21:51 rmind Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.96.2.1 2011/06/06 09:09:55 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -185,6 +185,7 @@ struct   sockopt;
 int	 ip_ctloutput(int, struct socket *, struct sockopt *);
 int	 ip_dooptions(struct mbuf *);
 void	 ip_drain(void);
+void	 ip_drainstub(void);
 void	 ip_forward(struct mbuf *, int);
 void	 ip_freemoptions(struct ip_moptions *);
 int	 ip_getmoptions(struct ip_moptions *, struct sockopt *);
@@ -206,6 +207,7 @@ void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 	   struct mbuf *);
 int	 ip_setmoptions(struct ip_moptions **, const struct sockopt *);
 void	 ip_slowtimo(void);
+void	 ip_fasttimo(void);
 struct mbuf *
 	 ip_srcroute(void);
 int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);

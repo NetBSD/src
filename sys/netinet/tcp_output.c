@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.169 2010/01/26 18:09:08 pooka Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.169.6.1 2011/06/06 09:09:56 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.169 2010/01/26 18:09:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.169.6.1 2011/06/06 09:09:56 jruoho Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -573,6 +573,7 @@ tcp_output(struct tcpcb *tp)
 	bool alwaysfrag;
 	int sack_rxmit;
 	int sack_bytes_rxmt;
+	int ecn_tos;
 	struct sackhole *p;
 #ifdef TCP_SIGNATURE
 	int sigoff = 0;
@@ -698,6 +699,7 @@ tcp_output(struct tcpcb *tp)
 
 	txsegsize_nosack = txsegsize;
 again:
+	ecn_tos = 0;
 	use_tso = has_tso;
 	if ((tp->t_flags & (TF_ECN_SND_CWR|TF_ECN_SND_ECE)) != 0) {
 		/* don't duplicate CWR/ECE. */
@@ -958,9 +960,7 @@ again:
 			 * stack (rather than big-small-big-small-...).
 			 */
 #ifdef INET6
-#if IPV6_MAXPACKET != IP_MAXPACKET
-#error IPV6_MAXPACKET != IP_MAXPACKET
-#endif
+			CTASSERT(IPV6_MAXPACKET == IP_MAXPACKET);
 #endif
 			len = (min(len, IP_MAXPACKET) / txsegsize) * txsegsize;
 			if (len <= txsegsize) {
@@ -1344,18 +1344,7 @@ send:
 		 */
 		if (len > 0 && SEQ_GEQ(tp->snd_nxt, tp->snd_max) &&
 		    !(tp->t_force && len == 1)) {
-			switch (af) {
-#ifdef INET
-			case AF_INET:
-				tp->t_inpcb->inp_ip.ip_tos |= IPTOS_ECN_ECT0;
-				break;
-#endif
-#ifdef INET6
-			case AF_INET6:
-				ip6->ip6_flow |= htonl(IPTOS_ECN_ECT0 << 20);
-				break;
-#endif
-			}
+			ecn_tos = IPTOS_ECN_ECT0;
 			TCP_STATINC(TCP_STAT_ECN_ECT);
 		}
 
@@ -1569,12 +1558,12 @@ timer:
 		packetlen = m->m_pkthdr.len;
 		if (tp->t_inpcb) {
 			ip->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;
-			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos;
+			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos | ecn_tos;
 		}
 #ifdef INET6
 		else if (tp->t_in6pcb) {
 			ip->ip_ttl = in6_selecthlim(tp->t_in6pcb, NULL); /*XXX*/
-			ip->ip_tos = 0;	/*XXX*/
+			ip->ip_tos = ecn_tos;	/*XXX*/
 		}
 #endif
 		break;
@@ -1594,7 +1583,8 @@ timer:
 				(rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp
 				                                    : NULL);
 		}
-		/* ip6->ip6_flow = ??? */
+		ip6->ip6_flow |= htonl(ecn_tos << 20);
+		/* ip6->ip6_flow = ??? (from template) */
 		/* ip6_plen will be filled in ip6_output(). */
 		break;
 #endif

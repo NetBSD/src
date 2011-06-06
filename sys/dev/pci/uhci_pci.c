@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.52 2010/05/25 08:50:54 cegger Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.52.2.1 2011/06/06 09:08:28 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.52 2010/05/25 08:50:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.52.2.1 2011/06/06 09:08:28 jruoho Exp $");
 
 #include "ehci.h"
 
@@ -203,11 +203,11 @@ uhci_pci_detach(device_t self, int flags)
 	struct uhci_pci_softc *sc = device_private(self);
 	int rv;
 
-	pmf_device_deregister(self);
-
 	rv = uhci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
+
+	pmf_device_deregister(self);
 
 	/* disable interrupts and acknowledge any pending */
 	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);

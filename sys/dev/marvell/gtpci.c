@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.27 2010/08/01 06:57:06 kiyohara Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.27.2.1 2011/06/06 09:07:58 jruoho Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.27 2010/08/01 06:57:06 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.27.2.1 2011/06/06 09:07:58 jruoho Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -483,16 +483,16 @@ gtpci_pci_config(struct gtpci_softc *sc, bus_space_tag_t iot,
 		if (iot == NULL)
 			aprint_error("io ");
 		else
-			pba.pba_flags |= PCI_FLAGS_IO_ENABLED;
+			pba.pba_flags |= PCI_FLAGS_IO_OKAY;
 		if (iot == NULL && memt == NULL)
 			aprint_error("and ");
 		if (memt == NULL)
 			aprint_error("mem");
 		else
-			pba.pba_flags |= PCI_FLAGS_MEM_ENABLED;
+			pba.pba_flags |= PCI_FLAGS_MEM_OKAY;
 		aprint_error(" access disabled\n");
 	} else
-		pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+		pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	command = GTPCI_READ(sc, GTPCI_C);
 	if (command & GTPCI_C_MRDMUL)
 		pba.pba_flags |= PCI_FLAGS_MRM_OKAY;

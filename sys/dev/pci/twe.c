@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.93 2010/11/14 05:31:59 uebayasi Exp $	*/
+/*	$NetBSD: twe.c,v 1.93.2.1 2011/06/06 09:08:28 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.93 2010/11/14 05:31:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.93.2.1 2011/06/06 09:08:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,7 +476,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
 				0, CTLTYPE_STRING, "driver_version",
 				SYSCTL_DESCR("twe0 driver version"),
-				NULL, 0, &twever, 0,
+				NULL, 0, __UNCONST(&twever), 0,
 				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
 				!= 0) {
 		aprint_error_dev(&sc->sc_dv, "could not create %s.%s.driver_version sysctl\n",

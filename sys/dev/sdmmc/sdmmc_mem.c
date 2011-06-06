@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.14 2010/11/13 13:52:11 uebayasi Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.14.2.1 2011/06/06 09:08:37 jruoho Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.14 2010/11/13 13:52:11 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.14.2.1 2011/06/06 09:08:37 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -342,8 +342,7 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 		csd->tran_speed = speed_exponent[e] * speed_mantissa[m] / 10;
 	} else {
 		csd->csdver = MMC_CSD_CSDVER(resp);
-		if (csd->csdver != MMC_CSD_CSDVER_1_0 &&
-		    csd->csdver != MMC_CSD_CSDVER_2_0) {
+		if (csd->csdver == MMC_CSD_CSDVER_1_0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unknown MMC CSD structure version 0x%x\n",
 			    csd->csdver);
@@ -425,11 +424,12 @@ sdmmc_print_csd(sdmmc_response resp, struct sdmmc_csd *csd)
 
 	printf("csdver = %d\n", csd->csdver);
 	printf("mmcver = %d\n", csd->mmcver);
-	printf("capacity = %08x\n", csd->capacity);
+	printf("capacity = 0x%08x\n", csd->capacity);
 	printf("read_bl_len = %d\n", csd->read_bl_len);
 	printf("write_cl_len = %d\n", csd->write_bl_len);
 	printf("r2w_factor = %d\n", csd->r2w_factor);
 	printf("tran_speed = %d\n", csd->tran_speed);
+	printf("ccc = 0x%x\n", csd->ccc);
 }
 #endif
 
@@ -574,10 +574,10 @@ sdmmc_mem_set_blocklen(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 static int
 sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
-	struct {
+	static const struct {
 		int v;
 		int freq;
-	} switch_group0_functions [] = {
+	} switch_group0_functions[] = {
 		/* Default/SDR12 */
 		{ MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V |
 		  MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V,	 25000 },
@@ -609,6 +609,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_4BIT_MODE) &&
 	    ISSET(sf->scr.bus_width, SCR_SD_BUS_WIDTHS_4BIT)) {
+		DPRINTF(("%s: change bus width\n", SDMMCDEVNAME(sc)));
 		error = sdmmc_set_bus_width(sf, 4);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
@@ -616,11 +617,11 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			return error;
 		}
 		sf->width = 4;
-	} else
-		sf->width = 1;
+	}
 
 	if (sf->scr.sd_spec >= SCR_SD_SPEC_VER_1_10 &&
 	    ISSET(sf->csd.ccc, SD_CSD_CCC_SWITCH)) {
+		DPRINTF(("%s: switch func mode 0\n", SDMMCDEVNAME(sc)));
 		error = sdmmc_mem_sd_switch(sf, 0, 1, 0, status);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
@@ -638,7 +639,10 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			if (g & support_func)
 				best_func = i;
 		}
-		if (best_func != 0) {
+		if (ISSET(sc->sc_caps, SMC_CAPS_SD_HIGHSPEED) &&
+		    best_func != 0) {
+			DPRINTF(("%s: switch func mode 1(func=%d)\n",
+			    SDMMCDEVNAME(sc), best_func));
 			error =
 			    sdmmc_mem_sd_switch(sf, 1, 1, best_func, status);
 			if (error) {
@@ -653,19 +657,16 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 			/* Wait 400KHz x 8 clock */
 			delay(1);
-			if (sc->sc_busclk > sf->csd.tran_speed)
-				sc->sc_busclk = sf->csd.tran_speed;
+		}
+	}
 
-			error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch,
-			    sc->sc_busclk);
-			if (error) {
-				aprint_error_dev(sc->sc_dev,
-				    "can't change bus clock\n");
-				return error;
-			}
-		} else
-			if (sc->sc_busclk > sf->csd.tran_speed)
-				sc->sc_busclk = sf->csd.tran_speed;
+	/* change bus clock */
+	if (sc->sc_busclk > sf->csd.tran_speed)
+		sc->sc_busclk = sf->csd.tran_speed;
+	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "can't change bus clock\n");
+		return error;
 	}
 
 	return 0;
@@ -684,9 +685,11 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			aprint_error_dev(sc->sc_dev, "can't read EXT_CSD\n");
 			return error;
 		}
-		if (ext_csd[EXT_CSD_STRUCTURE] > EXT_CSD_STRUCTURE_VER_1_2) {
+		if ((sf->csd.csdver == MMC_CSD_CSDVER_EXT_CSD) &&
+		    (ext_csd[EXT_CSD_STRUCTURE] > EXT_CSD_STRUCTURE_VER_1_2)) {
 			aprint_error_dev(sc->sc_dev,
-			    "unrecognised future version\n");
+			    "unrecognised future version (%d)\n",
+				ext_csd[EXT_CSD_STRUCTURE]);
 			return error;
 		}
 		hs_timing = 0;
@@ -698,14 +701,6 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		case EXT_CSD_CARD_TYPE_52M | EXT_CSD_CARD_TYPE_26M:
 			sf->csd.tran_speed = 52000;	/* 52MHz */
 			hs_timing = 1;
-
-			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
-			    EXT_CSD_HS_TIMING, hs_timing);
-			if (error) {
-				aprint_error_dev(sc->sc_dev,
-				    "can't change high speed\n");
-				return error;
-			}
 			break;
 
 		default:
@@ -714,6 +709,20 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			    ext_csd[EXT_CSD_CARD_TYPE]);
 			return error;
 		}
+
+		if (!ISSET(sc->sc_caps, SMC_CAPS_MMC_HIGHSPEED)) {
+			hs_timing = 0;
+		}
+		if (hs_timing) {
+			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
+			    EXT_CSD_HS_TIMING, hs_timing);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "can't change high speed\n");
+				return error;
+			}
+		}
+
 		if (sc->sc_busclk > sf->csd.tran_speed)
 			sc->sc_busclk = sf->csd.tran_speed;
 		error =
@@ -723,6 +732,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			    "can't change bus clock\n");
 			return error;
 		}
+
 		if (hs_timing) {
 			error = sdmmc_mem_send_cxd_data(sc,
 			    MMC_SEND_EXT_CSD, ext_csd, sizeof(ext_csd));
@@ -774,7 +784,6 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			    "can't change bus clock\n");
 			return error;
 		}
-		sf->width = 1;
 	}
 
 	return 0;
@@ -989,6 +998,9 @@ sdmmc_mem_send_cxd_data(struct sdmmc_softc *sc, int opcode, void *data,
 			    BUS_DMASYNC_POSTREAD);
 		}
 		memcpy(data, ptr, datalen);
+#ifdef SDMMC_DEBUG
+		sdmmc_dump_data("CXD", data, datalen);
+#endif
 	}
 
 out:

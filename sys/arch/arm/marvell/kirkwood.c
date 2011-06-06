@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwood.c,v 1.2 2010/10/30 06:37:49 kiyohara Exp $	*/
+/*	$NetBSD: kirkwood.c,v 1.2.2.1 2011/06/06 09:05:04 jruoho Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.2 2010/10/30 06:37:49 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.2.2.1 2011/06/06 09:05:04 jruoho Exp $");
 
 #define _INTR_PRIVATE
 
@@ -49,12 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.2 2010/10/30 06:37:49 kiyohara Exp $"
 
 static void kirkwood_intr_init(void);
 
-static void kirkwood_pic_unblock_low_irqs(struct pic_softc *, size_t, uint32_t);
-static void kirkwood_pic_unblock_high_irqs(struct pic_softc *, size_t,
-					   uint32_t);
-static void kirkwood_pic_block_low_irqs(struct pic_softc *, size_t, uint32_t);
-static void kirkwood_pic_block_high_irqs(struct pic_softc *, size_t, uint32_t);
-static int kirkwood_pic_find_pending_high_irqs(struct pic_softc *);
+static void kirkwood_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
+static void kirkwood_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
 static void kirkwood_pic_establish_irq(struct pic_softc *, struct intrsource *);
 static void kirkwood_pic_source_name(struct pic_softc *, int, char *, size_t);
 
@@ -80,28 +76,16 @@ static const char * const sources[64] = {
     "Reserved(60)",    "Reserved(61)",    "Reserved(62)",    "Reserved(63)"
 };
 
-static struct pic_ops kirkwood_picops_low = {
-	.pic_unblock_irqs = kirkwood_pic_unblock_low_irqs,
-	.pic_block_irqs = kirkwood_pic_block_low_irqs,
+static struct pic_ops kirkwood_picops = {
+	.pic_unblock_irqs = kirkwood_pic_unblock_irqs,
+	.pic_block_irqs = kirkwood_pic_block_irqs,
 	.pic_establish_irq = kirkwood_pic_establish_irq,
 	.pic_source_name = kirkwood_pic_source_name,
 };
-static struct pic_ops kirkwood_picops_high = {
-	.pic_unblock_irqs = kirkwood_pic_unblock_high_irqs,
-	.pic_block_irqs = kirkwood_pic_block_high_irqs,
-	.pic_find_pending_irqs = kirkwood_pic_find_pending_high_irqs,
-	.pic_establish_irq = kirkwood_pic_establish_irq,
-	.pic_source_name = kirkwood_pic_source_name,
-};
-static struct pic_softc kirkwood_pic_low = {
-	.pic_ops = &kirkwood_picops_low,
-	.pic_maxsources = 32,
-	.pic_name = "kirkwood_low",
-};
-static struct pic_softc kirkwood_pic_high = {
-	.pic_ops = &kirkwood_picops_high,
-	.pic_maxsources = 32,
-	.pic_name = "kirkwood_high",
+static struct pic_softc kirkwood_pic = {
+	.pic_ops = &kirkwood_picops,
+	.pic_maxsources = 64,
+	.pic_name = "kirkwood",
 };
 
 
@@ -141,12 +125,7 @@ kirkwood_intr_init(void)
 	extern struct pic_softc mvsoc_bridge_pic;
 	void *ih;
 
-	pic_add(&kirkwood_pic_low, 0);
-
-	pic_add(&kirkwood_pic_high, 32);
-	ih = intr_establish(KIRKWOOD_IRQ_HIGH, IPL_HIGH, IST_LEVEL_HIGH,
-	    pic_handle_intr, &kirkwood_pic_high);
-	KASSERT(ih != NULL);
+	pic_add(&kirkwood_pic, 0);
 
 	pic_add(&mvsoc_bridge_pic, 64);
 	ih = intr_establish(KIRKWOOD_IRQ_BRIDGE, IPL_HIGH, IST_LEVEL_HIGH,
@@ -158,55 +137,26 @@ kirkwood_intr_init(void)
 
 /* ARGSUSED */
 static void
-kirkwood_pic_unblock_low_irqs(struct pic_softc *pic, size_t irqbase,
-			      uint32_t irq_mask)
+kirkwood_pic_unblock_irqs(struct pic_softc *pic, size_t irqbase,
+			  uint32_t irq_mask)
 {
+	const size_t reg = KIRKWOOD_MLMB_MIRQIMLR
+	   + irqbase * (KIRKWOOD_MLMB_MIRQIMHR - KIRKWOOD_MLMB_MIRQIMLR) / 32;
 
-	write_mlmbreg(KIRKWOOD_MLMB_MIRQIMLR,
-	    read_mlmbreg(KIRKWOOD_MLMB_MIRQIMLR) | irq_mask);
+	KASSERT(irqbase < 64);
+	write_mlmbreg(reg, read_mlmbreg(reg) | irq_mask);
 }
 
 /* ARGSUSED */
 static void
-kirkwood_pic_unblock_high_irqs(struct pic_softc *pic, size_t irqbase,
-			       uint32_t irq_mask)
+kirkwood_pic_block_irqs(struct pic_softc *pic, size_t irqbase,
+			uint32_t irq_mask)
 {
+	const size_t reg = KIRKWOOD_MLMB_MIRQIMLR
+	   + irqbase * (KIRKWOOD_MLMB_MIRQIMHR - KIRKWOOD_MLMB_MIRQIMLR) / 32;
 
-	write_mlmbreg(KIRKWOOD_MLMB_MIRQIMHR,
-	    read_mlmbreg(KIRKWOOD_MLMB_MIRQIMHR) | irq_mask);
-}
-
-/* ARGSUSED */
-static void
-kirkwood_pic_block_low_irqs(struct pic_softc *pic, size_t irqbase,
-			    uint32_t irq_mask)
-{
-
-	write_mlmbreg(KIRKWOOD_MLMB_MIRQIMLR,
-	    read_mlmbreg(KIRKWOOD_MLMB_MIRQIMLR) & ~irq_mask);
-}
-
-/* ARGSUSED */
-static void
-kirkwood_pic_block_high_irqs(struct pic_softc *pic, size_t irqbase,
-			     uint32_t irq_mask)
-{
-
-	write_mlmbreg(KIRKWOOD_MLMB_MIRQIMHR,
-	    read_mlmbreg(KIRKWOOD_MLMB_MIRQIMHR) & ~irq_mask);
-}
-
-static int
-kirkwood_pic_find_pending_high_irqs(struct pic_softc *pic)
-{
-	uint32_t pending;
-
-	pending = read_mlmbreg(KIRKWOOD_MLMB_MICHR) &
-	    read_mlmbreg(KIRKWOOD_MLMB_MIRQIMHR);
-	if (pending == 0)
-		return 0;
-	pic_mark_pending_sources(pic, 0, pending);
-	return 1;
+	KASSERT(irqbase < 64);
+	write_mlmbreg(reg, read_mlmbreg(reg) & ~irq_mask);
 }
 
 /* ARGSUSED */
@@ -229,14 +179,23 @@ kirkwood_pic_source_name(struct pic_softc *pic, int irq, char *buf, size_t len)
 static int
 kirkwood_find_pending_irqs(void)
 {
-	uint32_t pending;
+	int ipl = 0;
 
-	pending = read_mlmbreg(KIRKWOOD_MLMB_MICLR) &
-	    read_mlmbreg(KIRKWOOD_MLMB_MIRQIMLR);
-	if (pending == 0)
-		return 0;
+	uint32_t causelow = read_mlmbreg(KIRKWOOD_MLMB_MICLR);
+	uint32_t pendinglow = read_mlmbreg(KIRKWOOD_MLMB_MIRQIMLR);
 
-	return pic_mark_pending_sources(&kirkwood_pic_low, 0, pending);
+	pendinglow &= causelow;
+	if (pendinglow != 0)
+		ipl |= pic_mark_pending_sources(&kirkwood_pic, 0, pendinglow);
+
+	if ((causelow & KIRKWOOD_IRQ_HIGH) == KIRKWOOD_IRQ_HIGH) {
+		uint32_t causehigh = read_mlmbreg(KIRKWOOD_MLMB_MICHR);
+		uint32_t pendinghigh = read_mlmbreg(KIRKWOOD_MLMB_MIRQIMHR);
+		pendinghigh &= causehigh;
+		ipl |= pic_mark_pending_sources(&kirkwood_pic, 32, pendinghigh);
+	}
+
+	return ipl;
 }
 
 /*
@@ -274,6 +233,7 @@ kirkwood_getclks(bus_addr_t iobase)
 		case 0x0040000a: mvPclk = 1000 MHz; break;
 		case 0x00000012: mvPclk = 1200 MHz; break;
 		case 0x00000018: mvPclk = 1200 MHz; break;
+		case 0x00000002: mvPclk = 1200 MHz; break;
 		default:
 			panic("unknown mvPclk\n");
 		}

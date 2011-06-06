@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbusvar.h,v 1.9 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: gscbusvar.h,v 1.9.6.1 2011/06/06 09:05:40 jruoho Exp $	*/
 
 /*	$OpenBSD: gscbusvar.h,v 1.3 1999/08/16 02:48:39 mickey Exp $	*/
 
@@ -43,7 +43,7 @@ struct gsc_attach_args {
 /*#define	ga_pdc_iodc_read	ga_ca.ca_pdc_iodc_read */
 
 	/* The interrupt register for this GSC bus. */
-	struct hp700_int_reg *ga_int_reg;
+	struct hp700_interrupt_register *ga_ir;
 
 	/* This fixes a module's attach arguments. */
 	void (*ga_fix_args)(void *, struct gsc_attach_args *);

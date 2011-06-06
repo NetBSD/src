@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.36 2011/01/12 23:12:11 joerg Exp $	*/
+/*	$NetBSD: vector.S,v 1.36.2.1 2011/06/06 09:04:47 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -579,7 +579,7 @@ IDTVEC(intr_lapic_tlb_bcast)
 	movq	_C_LABEL(pmap_mbox)+MB_GLOBAL, %rdi
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpq	$-1, %rax
-	je,pn	3f
+	je	3f
 1:
 	/* Invalidate a single page or a range of pages. */
 	invlpg	(%rax)

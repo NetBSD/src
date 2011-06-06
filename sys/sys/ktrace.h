@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.56 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.56.8.1 2011/06/06 09:10:11 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -190,40 +190,11 @@ struct ktr_user {
 };
 
 /*
- * KTR_MMSG - Mach message
- */
-#define KTR_MMSG		9
-struct ktr_mmsg {
-	/*
-	 * This is a Mach message header
-	 */
-	int	ktr_bits;
-	int	ktr_size;
-	int	ktr_remote_port;
-	int	ktr_local_port;
-	int	ktr_reserved;
-	int	ktr_id;
-	/*
-	 * Followed by ktr_size - sizeof(mach_msg_header_t) of message payload
-	 */
-};
-
-/*
  * KTR_EXEC_ARG, KTR_EXEC_ENV - Arguments and environment from exec
  */
 #define KTR_EXEC_ARG		10
 #define KTR_EXEC_ENV		11
 	/* record contains arg/env string */
-
-/*
- * KTR_MOOL - Mach Out Of Line data
- */
-#define KTR_MOOL		12
-struct ktr_mool {
-	const void 	*uaddr;	/* User address */
-	size_t		size;	/* Data len */
-	/* Followed by size bytes of data */
-};
 
 /*
  * KTR_SAUPCALL - scheduler activated upcall.
@@ -246,6 +217,14 @@ struct ktr_saupcall {
 #define KTR_MIB		14
 	/* Record contains MIB name */
 
+/*
+ * KTR_EXEC_FD - Opened file descriptor from exec
+ */
+#define KTR_EXEC_FD		15
+struct ktr_execfd {
+	int   ktr_fd;
+	u_int ktr_dtype; /* one of DTYPE_* constants */
+};
 
 /*
  * kernel trace points (in p_traceflag)
@@ -259,12 +238,11 @@ struct ktr_saupcall {
 #define KTRFAC_CSW	(1<<KTR_CSW)
 #define KTRFAC_EMUL	(1<<KTR_EMUL)
 #define	KTRFAC_USER	(1<<KTR_USER)
-#define KTRFAC_MMSG	(1<<KTR_MMSG)
 #define KTRFAC_EXEC_ARG	(1<<KTR_EXEC_ARG)
 #define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
-#define KTRFAC_MOOL	(1<<KTR_MOOL)
 #define	KTRFAC_SAUPCALL	(1<<KTR_SAUPCALL)
 #define	KTRFAC_MIB	(1<<KTR_MIB)
+#define	KTRFAC_EXEC_FD	(1<<KTR_EXEC_FD)
 /*
  * trace flags (also in p_traceflags)
  */
@@ -314,11 +292,10 @@ void ktr_psig(int, sig_t, const sigset_t *, const ksiginfo_t *);
 void ktr_syscall(register_t, const register_t [], int);
 void ktr_sysret(register_t, int, register_t *);
 void ktr_kuser(const char *, void *, size_t);
-void ktr_mmsg(const void *, size_t);
 void ktr_mib(const int *a , u_int b);
-void ktr_mool(const void *, size_t, const void *);
 void ktr_execarg(const void *, size_t);
 void ktr_execenv(const void *, size_t);
+void ktr_execfd(int, u_int);
 void ktr_saupcall(struct lwp *, int, int, int, void *, void *, void *);
 
 static inline bool
@@ -405,24 +382,10 @@ ktrkuser(const char *a, void *b, size_t c)
 }
 
 static inline void
-ktrmmsg(const void *a, size_t b)
-{
-	if (__predict_false(ktrace_on))
-		ktr_mmsg(a, b);
-}
-
-static inline void
 ktrmib(const int *a , u_int b)
 {
 	if (__predict_false(ktrace_on))
 		ktr_mib(a, b);
-}
-
-static inline void
-ktrmool(const void *a, size_t b, const void *c)
-{
-	if (__predict_false(ktrace_on))
-		ktr_mool(a, b, c);
 }
 
 static inline void
@@ -437,6 +400,13 @@ ktrexecenv(const void *a, size_t b)
 {
 	if (__predict_false(ktrace_on))
 		ktr_execenv(a, b);
+}
+
+static inline void
+ktrexecfd(int fd, u_int dtype)
+{
+	if (__predict_false(ktrace_on))
+		ktr_execfd(fd, dtype);
 }
 
 static inline void

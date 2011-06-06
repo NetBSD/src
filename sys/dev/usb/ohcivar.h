@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.49 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.49.2.1 2011/06/06 09:08:41 jruoho Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*

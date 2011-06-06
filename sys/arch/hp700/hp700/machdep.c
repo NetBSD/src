@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96 2011/01/13 21:15:15 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96.2.1 2011/06/06 09:05:41 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2011/01/13 21:15:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.2.1 2011/06/06 09:05:41 jruoho Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -136,6 +136,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2011/01/13 21:15:15 skrll Exp $");
  * Different kinds of flags used throughout the kernel.
  */
 void *msgbufaddr;
+
+/* The primary (aka monarch) cpu HPA */
+hppa_hpa_t hppa_mcpuhpa;
 
 /*
  * cache configuration, for most machines is the same
@@ -425,6 +428,7 @@ hppa_init(paddr_t start, void *bi)
 	int btlb_slot_i;
 	struct btinfo_symtab *bi_sym;
 	struct pcb *pcb0;
+	struct cpu_info *ci;
 
 #ifdef KGDB
 	boothowto |= RB_KDB;	/* go to kgdb early if compiled in. */
@@ -437,6 +441,15 @@ hppa_init(paddr_t start, void *bi)
 #endif
 	lwp0.l_cpu = &cpus[0];
 
+	/* curcpu() is now valid */
+	ci = curcpu();
+
+	ci->ci_psw =
+		PSW_Q |         /* Interrupt State Collection Enable */
+		PSW_P |         /* Protection Identifier Validation Enable */
+		PSW_C |         /* Instruction Address Translation Enable */
+		PSW_D;          /* Data Address Translation Enable */
+
 	/* Copy bootinfo */
 	if (bi != NULL)
 		memcpy(&bootinfo, bi, sizeof(struct bootinfo));
@@ -444,8 +457,15 @@ hppa_init(paddr_t start, void *bi)
 	pdc_init();	/* init PDC iface, so we can call em easy */
 
 	cpu_hzticks = (PAGE0->mem_10msec * 100) / hz;
+
 	delay_init();	/* calculate CPU clock ratio */
 
+	/* fetch the monarch/"default" cpu hpa */
+	
+	error =  pdcproc_hpa_processor(&hppa_mcpuhpa);
+	if (error < 0)
+		panic("%s: PDC_HPA failed", __func__);
+	
 	/* cache parameters */
 	error = pdcproc_cache(&pdc_cache);
 	if (error < 0) {
@@ -632,7 +652,6 @@ cpuid(void)
 	const char *model;
 	u_int cpu_version, cpu_features;
 	int error;
-	extern int kpsw;
 
 	/* may the scientific guessing begin */
 	cpu_type = hpc_unknown;
@@ -809,7 +828,7 @@ cpuid(void)
 
 	/* force strong ordering for now */
 	if (hppa_cpu_ispa20_p())
-		kpsw |= PSW_O;
+		curcpu()->ci_psw |= PSW_O;
 
 	snprintf(cpu_model, sizeof(cpu_model), "HP9000/%s", model);
 
@@ -1865,7 +1884,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_iioq_tail = 4 +
 	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
 	tf->tf_rp = 0;
-	tf->tf_arg0 = (u_long)p->p_psstr;
+	tf->tf_arg0 = p->p_psstrp;
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
 
 	tf->tf_sr7 = HPPA_SID_KERNEL;

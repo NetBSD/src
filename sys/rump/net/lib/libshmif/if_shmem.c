@@ -1,7 +1,7 @@
-/*	$NetBSD: if_shmem.c,v 1.33 2010/12/06 10:48:18 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.33.2.1 2011/06/06 09:10:09 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by The Nokia Foundation.
  *
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.33 2010/12/06 10:48:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.33.2.1 2011/06/06 09:10:09 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -38,7 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.33 2010/12/06 10:48:18 pooka Exp $");
 #include <sys/lock.h>
 #include <sys/vmem.h>
 
+#include <net/bpf.h>
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_ether.h>
 
 #include <netinet/in.h>
@@ -77,7 +79,6 @@ static void	shmif_stop(struct ifnet *, int);
 
 struct shmif_sc {
 	struct ethercom sc_ec;
-	uint8_t sc_myaddr[6];
 	struct shmif_mem *sc_busmem;
 	int sc_memfd;
 	int sc_kq;
@@ -159,7 +160,6 @@ allocif(int unit, struct shmif_sc **scp)
 	sc->sc_unit = unit;
 
 	ifp = &sc->sc_ec.ec_if;
-	memcpy(sc->sc_myaddr, enaddr, sizeof(enaddr));
 
 	sprintf(ifp->if_xname, "shmif%d", unit);
 	ifp->if_softc = sc;
@@ -169,6 +169,7 @@ allocif(int unit, struct shmif_sc **scp)
 	ifp->if_start = shmif_start;
 	ifp->if_stop = shmif_stop;
 	ifp->if_mtu = ETHERMTU;
+	ifp->if_dlt = DLT_EN10MB;
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_cv, "shmifcv");
@@ -218,10 +219,14 @@ initbackend(struct shmif_sc *sc, int memfd)
 		return ENOEXEC; 
 	}
 
-	/* Prefault in pages to minimize runtime penalty with buslock */
+	/*
+	 * Prefault in pages to minimize runtime penalty with buslock.
+	 * Use 512 instead of PAGE_SIZE to make sure we catch cases where
+	 * rump kernel PAGE_SIZE > host page size.
+	 */
 	for (p = (uint8_t *)sc->sc_busmem;
 	    p < (uint8_t *)sc->sc_busmem + BUSMEM_SIZE;
-	    p += PAGE_SIZE)
+	    p += 512)
 		v = *p;
 
 	shmif_lockbus(sc->sc_busmem);
@@ -517,6 +522,8 @@ shmif_start(struct ifnet *ifp)
 		sp.sp_sec = tv.tv_sec;
 		sp.sp_usec = tv.tv_usec;
 
+		bpf_mtap(ifp, m0);
+
 		shmif_lockbus(busmem);
 		KASSERT(busmem->shm_magic == SHMIF_MAGIC);
 		busmem->shm_last = shmif_nextpktoff(busmem, busmem->shm_last);
@@ -616,7 +623,7 @@ shmif_rcv(void *arg)
 	struct mbuf *m = NULL;
 	struct ether_header *eth;
 	uint32_t nextpkt;
-	bool wrap;
+	bool wrap, passup;
 	int error;
 
  reup:
@@ -697,14 +704,31 @@ shmif_rcv(void *arg)
 		m->m_len = m->m_pkthdr.len = sp.sp_len;
 		m->m_pkthdr.rcvif = ifp;
 
-		/* if it's from us, don't pass up and reuse storage space */
+		/*
+		 * Test if we want to pass the packet upwards
+		 */
 		eth = mtod(m, struct ether_header *);
-		if (memcmp(eth->ether_shost, sc->sc_myaddr, 6) != 0) {
+		if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
+		    ETHER_ADDR_LEN) == 0) {
+			passup = true;
+		} else if (memcmp(eth->ether_dhost, etherbroadcastaddr,
+		    ETHER_ADDR_LEN) == 0) {
+			passup = true;
+		} else if (ifp->if_flags & IFF_PROMISC) {
+			m->m_flags |= M_PROMISC;
+			passup = true;
+		} else {
+			passup = false;
+		}
+
+		if (passup) {
 			KERNEL_LOCK(1, NULL);
+			bpf_mtap(ifp, m);
 			ifp->if_input(ifp, m);
 			KERNEL_UNLOCK_ONE(NULL);
 			m = NULL;
 		}
+		/* else: reuse mbuf for a future packet */
 	}
 	m_freem(m);
 	m = NULL;

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.131 2010/11/23 11:14:00 hannken Exp $
+#	$NetBSD: INSTALL_TINY,v 1.131.2.1 2011/06/06 09:05:47 jruoho Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -12,7 +12,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions 	COPTS="-Os"		# Optimise for space. Implies -O2
+makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 makeoptions	USE_SSP="no"
 
 # Enable the hooks used for initializing the root memory-disk.
@@ -64,7 +64,7 @@ no options 	EXEC_AOUT	# we don't a.out support
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions 	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 #options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -107,7 +107,8 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system	TMPFS		# Efficient memory file-system
 
 # Filesystem options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	NFSSERVER	# Network File System server
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -234,8 +235,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-pcdisplay0 	at isa?			# CGA, MDA, EGA, HGA
-wsdisplay* 	at pcdisplay? console ?
+pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+wsdisplay*	at pcdisplay? console ?
 wskbd*		at pckbd? console ?
 #wsmouse*	at pms? mux 0
 

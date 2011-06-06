@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.19 2009/03/16 23:11:14 dsl Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.19.6.1 2011/06/06 09:06:25 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.19 2009/03/16 23:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.19.6.1 2011/06/06 09:06:25 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,10 +95,10 @@ static int kn03_builtin_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs) - 3;
 static int kn03_ioasic_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs);
 #endif
 
-static int	ioasicmatch(struct device *, struct cfdata *, void *);
-static void	ioasicattach(struct device *, struct device *, void *);
+static int	ioasicmatch(device_t, cfdata_t, void *);
+static void	ioasicattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ioasic, sizeof(struct ioasic_softc),
+CFATTACH_DECL_NEW(ioasic, sizeof(struct ioasic_softc),
     ioasicmatch, ioasicattach, NULL, NULL);
 
 tc_addr_t ioasic_base;	/* XXX XXX XXX */
@@ -107,7 +107,7 @@ tc_addr_t ioasic_base;	/* XXX XXX XXX */
 int ioasicfound;
 
 static int
-ioasicmatch(struct device *parent, struct cfdata *cfdata, void *aux)
+ioasicmatch(device_t parent, cfdata_t cfdata, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -122,19 +122,20 @@ ioasicmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 }
 
 static void
-ioasicattach(struct device *parent, struct device *self, void *aux)
+ioasicattach(device_t parent, device_t self, void *aux)
 {
-	struct ioasic_softc *sc = (struct ioasic_softc *)self;
+	struct ioasic_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;
 	struct ioasic_dev *ioasic_devs;
 	int ioasic_ndevs, builtin_ndevs;
 
 	ioasicfound = 1;
 
+	sc->sc_dev = self;
 	sc->sc_bst = ta->ta_memt;
 	if (bus_space_map(ta->ta_memt, ta->ta_addr,
 			0x400000, 0, &sc->sc_bsh)) {
-		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
+		printf("%s: unable to map device\n", device_xname(self));
 		return;
 	}
 	sc->sc_dmat = ta->ta_dmat;
@@ -187,7 +188,7 @@ ioasicattach(struct device *parent, struct device *self, void *aux)
 }
 
 const struct evcnt *
-ioasic_intr_evcnt(struct device *dev, void *cookie)
+ioasic_intr_evcnt(device_t dev, void *cookie)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -195,7 +196,8 @@ ioasic_intr_evcnt(struct device *dev, void *cookie)
 }
 
 void
-ioasic_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *val)
+ioasic_intr_establish(device_t dev, void *cookie, int level,
+    int (*handler)(void *), void *val)
 {
 	(*platform.intr_establish)(dev, cookie, level, handler, val);
 }

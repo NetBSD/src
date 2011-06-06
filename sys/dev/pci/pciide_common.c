@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.48 2010/11/17 19:36:54 dholland Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.48.2.1 2011/06/06 09:08:25 jruoho Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.48 2010/11/17 19:36:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.48.2.1 2011/06/06 09:08:25 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -113,7 +113,7 @@ pciide_lookup_product(pcireg_t id, const struct pciide_product_desc *pp)
 }
 
 void
-pciide_common_attach(struct pciide_softc *sc, struct pci_attach_args *pa, const struct pciide_product_desc *pp)
+pciide_common_attach(struct pciide_softc *sc, const struct pci_attach_args *pa, const struct pciide_product_desc *pp)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
@@ -262,24 +262,26 @@ pciide_detach(device_t self, int flags)
 
 /* tell whether the chip is enabled or not */
 int
-pciide_chipen(struct pciide_softc *sc, struct pci_attach_args *pa)
+pciide_chipen(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	pcireg_t csr;
 
-	if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0) {
-		csr = pci_conf_read(sc->sc_pc, sc->sc_tag,
-		    PCI_COMMAND_STATUS_REG);
+	if ((pa->pa_flags & PCI_FLAGS_IO_OKAY) == 0) {
 		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-		    "device disabled (at %s)\n",
-		   (csr & PCI_COMMAND_IO_ENABLE) == 0 ?
-		   "device" : "bridge");
+		    "I/O access disabled at bridge\n");
+		return 0;
+	}
+	csr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
+	if ((csr & PCI_COMMAND_IO_ENABLE) == 0) {
+		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "I/O access disabled at device\n");
 		return 0;
 	}
 	return 1;
 }
 
 void
-pciide_mapregs_compat(struct pci_attach_args *pa, struct pciide_channel *cp, int compatchan)
+pciide_mapregs_compat(const struct pci_attach_args *pa, struct pciide_channel *cp, int compatchan)
 {
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 	struct ata_channel *wdc_cp = &cp->ata_channel;
@@ -327,7 +329,7 @@ bad:
 }
 
 void
-pciide_mapregs_native(struct pci_attach_args *pa,
+pciide_mapregs_native(const struct pci_attach_args *pa,
 	struct pciide_channel *cp, int (*pci_intr)(void *))
 {
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
@@ -413,7 +415,7 @@ bad:
 
 #if NATA_DMA
 void
-pciide_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
+pciide_mapreg_dma(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	pcireg_t maptype;
 	bus_addr_t addr;
@@ -886,7 +888,7 @@ pciide_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
 
 /* some common code used by several chip channel_map */
 void
-pciide_mapchan(struct pci_attach_args *pa,
+pciide_mapchan(const struct pci_attach_args *pa,
 	struct pciide_channel *cp,
 	pcireg_t interface, int (*pci_intr)(void *))
 {
@@ -906,7 +908,7 @@ pciide_mapchan(struct pci_attach_args *pa,
  * generic code to map the compat intr.
  */
 void
-pciide_map_compat_intr(struct pci_attach_args *pa, struct pciide_channel *cp, int compatchan)
+pciide_map_compat_intr(const struct pci_attach_args *pa, struct pciide_channel *cp, int compatchan)
 {
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 
@@ -937,7 +939,7 @@ pciide_unmap_compat_intr(pci_chipset_tag_t pc, struct pciide_channel *cp, int co
 }
 
 void
-default_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+default_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);

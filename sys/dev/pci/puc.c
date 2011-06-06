@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.31 2008/07/09 14:46:15 joerg Exp $	*/
+/*	$NetBSD: puc.c,v 1.31.22.1 2011/06/06 09:08:26 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.31 2008/07/09 14:46:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.31.22.1 2011/06/06 09:08:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.31 2008/07/09 14:46:15 joerg Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pucvar.h>
+#include <dev/pci/pcidevs.h>
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -244,6 +245,21 @@ puc_attach(device_t parent, device_t self, void *aux)
 	 * XXX
 	 * XXX It's not pretty, but hey, what is?
 	 */
+
+	/* SB16C10xx board specific initialization */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SYSTEMBASE &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYSTEMBASE_SB16C1054 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYSTEMBASE_SB16C1058)) {
+		if (!sc->sc_bar_mappings[1].mapped) {
+			aprint_error_dev(self,
+			    "optional register is not mapped\n");
+			return;
+		}
+#define SB16C105X_OPT_IMRREG0 0x0000000c
+		/* enable port 0-7 interrupt */
+		bus_space_write_1(sc->sc_bar_mappings[1].t,
+		    sc->sc_bar_mappings[1].h, SB16C105X_OPT_IMRREG0, 0xff);
+	}
 
 	/* Configure each port. */
 	for (i = 0; PUC_PORT_VALID(sc->sc_desc, i); i++) {

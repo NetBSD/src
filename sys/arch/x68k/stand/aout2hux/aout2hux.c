@@ -4,7 +4,7 @@
  *	Read two a.out/ELF format executables with different load addresses
  *	and generate Human68k .x format executable.
  *
- *	written by Yasha (ITOH Yasufumi)
+ *	written by ITOH Yasufumi
  *	public domain
  *
  * usage:
@@ -21,7 +21,7 @@
  *	% cc -N -static -Wl,-Ttext,10203040 -o aout2 *.o
  *	% aout2hux -o foo.x aout1 0 aout2 10203040
  *
- *	$NetBSD: aout2hux.c,v 1.12 2009/11/15 18:27:40 dholland Exp $
+ *	$NetBSD: aout2hux.c,v 1.12.6.1 2011/06/06 09:07:02 jruoho Exp $
  */
 
 #include <sys/types.h>

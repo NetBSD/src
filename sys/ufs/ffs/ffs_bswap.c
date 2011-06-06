@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.34 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.34.6.1 2011/06/06 09:10:15 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.34 2009/10/19 18:41:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.34.6.1 2011/06/06 09:10:15 jruoho Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.34 2009/10/19 18:41:17 bouyer Exp $"
 #endif
 
 #include <ufs/ufs/dinode.h>
+#include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -75,6 +76,10 @@ ffs_sb_swap(struct fs *o, struct fs *n)
 	 * first half of the historic FS_42POSTBLFMT postbl table.
 	 */
 	n->fs_maxbsize = bswap32(o->fs_maxbsize);
+	/* XXX journal */
+	n->fs_quota_magic = bswap32(o->fs_quota_magic);
+	for (i = 0; i < MAXQUOTAS; i++)
+		n->fs_quotafile[i] = bswap64(o->fs_quotafile[i]);
 	n->fs_sblockloc = bswap64(o->fs_sblockloc);
 	ffs_csumtotal_swap(&o->fs_cstotal, &n->fs_cstotal);
 	n->fs_time = bswap64(o->fs_time);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cwd.c,v 1.3 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: vfs_cwd.c,v 1.3.6.1 2011/06/06 09:09:40 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cwd.c,v 1.3 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cwd.c,v 1.3.6.1 2011/06/06 09:09:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -147,4 +147,15 @@ cwdfree(struct cwdinfo *cwdi)
 	if (cwdi->cwdi_edir)
 		vrele(cwdi->cwdi_edir);
 	pool_cache_put(cwdi_cache, cwdi);
+}
+
+void
+cwdexec(struct proc *p)
+{
+
+	cwdunshare(p);
+
+	if (p->p_cwdi->cwdi_edir) {
+		vrele(p->p_cwdi->cwdi_edir);
+	}
 }

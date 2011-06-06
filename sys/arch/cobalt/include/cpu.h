@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2008/05/28 14:04:07 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14.26.1 2011/06/06 09:05:14 jruoho Exp $	*/
 
 #ifndef _COBALT_CPU_H_
 #define _COBALT_CPU_H_
@@ -12,7 +12,7 @@ extern u_int cobalt_id;
 #define COBALT_ID_QUBE2700	3
 #define COBALT_ID_RAQ		4
 #define COBALT_ID_QUBE2		5
-#define COBALT_ID_RAQ2		6 
+#define COBALT_ID_RAQ2		6
 
 /*
  * Memory map and register definitions.

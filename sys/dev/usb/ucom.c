@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.86 2010/11/30 15:26:22 bsh Exp $	*/
+/*	$NetBSD: ucom.c,v 1.86.2.1 2011/06/06 09:08:42 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.86 2010/11/30 15:26:22 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.86.2.1 2011/06/06 09:08:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_si = softint_establish(SOFTINT_NET, ucom_softintr, sc);
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = ucomstart;
 	tp->t_param = ucomparam;
 	tp->t_hwiflow = ucomhwiflow;
@@ -305,7 +305,7 @@ ucom_detach(device_t self, int flags)
 	/* Detach and free the tty. */
 	if (tp != NULL) {
 		tty_detach(tp);
-		ttyfree(tp);
+		tty_free(tp);
 		sc->sc_tty = NULL;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.25 2009/05/31 04:13:33 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.25.6.1 2011/06/06 09:09:33 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.25 2009/05/31 04:13:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.25.6.1 2011/06/06 09:09:33 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -236,7 +236,7 @@ sched_tick(struct cpu_info *ci)
  */
 
 /* calculations for digital decay to forget 90% of usage in 5*loadav sec */
-#define	loadfactor(loadav)	(2 * (loadav))
+#define	loadfactor(loadav)	(2 * (loadav) / ncpu)
 
 static fixpt_t
 decay_cpu(fixpt_t loadfac, fixpt_t estcpu)

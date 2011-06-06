@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.81 2010/12/22 20:46:42 jakllsch Exp $
+#	$NetBSD: Makefile.booters,v 1.81.2.1 2011/06/06 09:05:51 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -98,7 +98,7 @@ LDFLAGS+=-Wl,-M -Wl,-e,start 	# -N does not work properly.
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
 vers.c: ${VERSIONFILE} ${SOURCES} ${S}/conf/newvers_stand.sh
-	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${VERSIONFILE} x86 ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
 
 CLEANFILES+= ${BASE}.sym
 ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
@@ -113,7 +113,7 @@ ${BASE}.rom: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.rom.tmp
 	${GENPROM} ${ROM_SIZE} < ${BASE}.rom.tmp > ${BASE}.rom || \
-	    rm -f ${BASE}.rom
+	    ( rm -f ${BASE}.rom && false )
 	rm -f ${BASE}.rom.tmp
 
 CLEANFILES+= ${BASE}.com

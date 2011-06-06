@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar9160_attach.c,v 1.1.1.1 2008/12/11 04:46:51 alc Exp $
+ * $Id: ar9160_attach.c,v 1.1.1.1.18.1 2011/06/06 09:09:20 jruoho Exp $
  */
 #include "opt_ah.h"
 
@@ -150,7 +150,7 @@ ar9160Attach(uint16_t devid, HAL_SOFTC sc,
 	AH_PRIVATE(ah)->ah_macVersion =
 	    (val & AR_XSREV_VERSION) >> AR_XSREV_TYPE_S;
 	AH_PRIVATE(ah)->ah_macRev = MS(val, AR_XSREV_REVISION);
-	/* XXX extract pcie info */
+	AH_PRIVATE(ah)->ah_ispcie = (val & AR_XSREV_TYPE_HOST_MODE) == 0;
 
 	/* setup common ini data; rf backends handle remainder */
 	HAL_INI_INIT(&ahp->ah_ini_modes, ar9160Modes, 6);
@@ -167,6 +167,9 @@ ar9160Attach(uint16_t devid, HAL_SOFTC sc,
 		HAL_INI_INIT(&AH5416(ah)->ah_ini_addac, ar9160Addac_1_1, 2);
 	else
 		HAL_INI_INIT(&AH5416(ah)->ah_ini_addac, ar9160Addac, 2);
+
+	HAL_INI_INIT(&AH5416(ah)->ah_ini_pcieserdes, ar9160PciePhy, 2);
+	ar5416AttachPCIE(ah);
 
 	if (!ar5416ChipReset(ah, AH_NULL)) {	/* reset chip */
 		HALDEBUG(ah, HAL_DEBUG_ANY, "%s: chip reset failed\n", __func__);

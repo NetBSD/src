@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: boot.c,v 1.8.6.1 2011/06/06 09:06:13 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -118,7 +118,6 @@ main(int argc, char **argv)
 	printf("\n");
 	printf("NetBSD/mipsco " NETBSD_VERS " " BOOT_TYPE_NAME 
 	       " Bootstrap, Revision %s\n", bootprog_rev);
-	printf("(%s, %s)\n\n", bootprog_maker, bootprog_date);
 
 	/* initialise bootinfo structure early */
 	bi_init(BOOTINFO_ADDR);

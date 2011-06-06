@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.28 2009/11/18 12:26:22 yamt Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.28.6.1 2011/06/06 09:09:33 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.28 2009/11/18 12:26:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.28.6.1 2011/06/06 09:09:33 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -75,12 +75,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.28 2009/11/18 12:26:22 yamt Exp
 #define	TS_HASH_MASK	(TS_HASH_SIZE - 1)
 #define	TS_HASH(obj)	(((uintptr_t)(obj) >> 3) & TS_HASH_MASK)
 
-tschain_t	turnstile_tab[TS_HASH_SIZE];
-pool_cache_t	turnstile_cache;
+static tschain_t	turnstile_tab[TS_HASH_SIZE]	__cacheline_aligned;
+pool_cache_t		turnstile_cache			__read_mostly;
 
-int	turnstile_ctor(void *, void *, int);
+static int		turnstile_ctor(void *, void *, int);
 
-extern turnstile_t turnstile0;
+extern turnstile_t	turnstile0;
 
 /*
  * turnstile_init:
@@ -111,7 +111,7 @@ turnstile_init(void)
  *
  *	Constructor for turnstiles.
  */
-int
+static int
 turnstile_ctor(void *arg, void *obj, int flags)
 {
 	turnstile_t *ts = obj;

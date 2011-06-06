@@ -1,4 +1,4 @@
-/*	$NetBSD: edidreg.h,v 1.2 2006/05/13 00:39:19 gdamore Exp $	*/
+/*	$NetBSD: edidreg.h,v 1.2.102.1 2011/06/06 09:08:45 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -203,11 +203,11 @@
 #define	EDID_DET_TIMING_VBORDER(ptr)	((ptr)[16])
 #define	EDID_DET_TIMING_FLAGS(ptr)	((ptr)[17])
 #define	EDID_DET_TIMING_FLAG_INTERLACE		0x80
-#define	EDID_DET_TIMING_FLAG_STEREO		0x60	/* wtf? */
+#define	EDID_DET_TIMING_FLAG_STEREO		0x60	/* stereo or not */
 #define	EDID_DET_TIMING_FLAG_SYNC_SEPARATE	0x18
-#define	EDID_DET_TIMING_FLAG_HSYNC_POSITIVE	0x04
-#define	EDID_DET_TIMING_FLAG_VSYNC_POSITIVE	0x02
-#define	EDID_DET_TIMING_FLAG_STEREO1		0x01	/* wtf? */
+#define	EDID_DET_TIMING_FLAG_VSYNC_POSITIVE	0x04
+#define	EDID_DET_TIMING_FLAG_HSYNC_POSITIVE	0x02
+#define	EDID_DET_TIMING_FLAG_STEREO_MODE	0x01	/* stereo mode */
 
 
 /* N.B.: these tests assume that we already checked for detailed timing! */

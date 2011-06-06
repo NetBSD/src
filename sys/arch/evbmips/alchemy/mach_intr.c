@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_intr.c,v 1.3 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: mach_intr.c,v 1.3.28.1 2011/06/06 09:05:28 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.3 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.3.28.1 2011/06/06 09:05:28 jruoho Exp $");
 
 #include "opt_ddb.h"
 
@@ -63,8 +63,8 @@ evbmips_intr_init(void)
 }
 
 void
-evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+evbmips_iointr(int ipl, uint32_t pc, uint32_t ipending)
 {
 
-	au_iointr(status, cause, pc, ipending);
+	au_iointr(ipl, pc, ipending);
 }

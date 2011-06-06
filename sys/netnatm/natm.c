@@ -1,7 +1,6 @@
-/*	$NetBSD: natm.c,v 1.22 2009/04/18 14:58:06 tsutsui Exp $	*/
+/*	$NetBSD: natm.c,v 1.22.6.1 2011/06/06 09:10:02 jruoho Exp $	*/
 
 /*
- *
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.22 2009/04/18 14:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.22.6.1 2011/06/06 09:10:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,22 +63,12 @@ u_long natm0_recvspace = 16*1024;
  * user requests
  */
 
-#if defined(__NetBSD__)
 int natm_usrreq(so, req, m, nam, control, l)
-#elif defined(__OpenBSD__)
-int natm_usrreq(so, req, m, nam, control, p)
-#elif defined(__FreeBSD__)
-int natm_usrreq(so, req, m, nam, control)
-#endif
 
 struct socket *so;
 int req;
 struct mbuf *m, *nam, *control;
-#if defined(__NetBSD__)
 struct lwp *l;
-#elif deifned(__OpenBSD__)
-struct proc *p;
-#endif
 
 {
   int error = 0, s, s2;
@@ -277,12 +260,7 @@ struct proc *p;
       memset(snatm, 0, sizeof(*snatm));
       nam->m_len = snatm->snatm_len = sizeof(*snatm);
       snatm->snatm_family = AF_NATM;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
       memcpy(snatm->snatm_if, npcb->npcb_ifp->if_xname, sizeof(snatm->snatm_if));
-#elif defined(__FreeBSD__)
-      snprintf(snatm->snatm_if, sizeof(snatm->snatm_if), "%s%d",
-          npcb->npcb_ifp->if_name, npcb->npcb_ifp->if_unit);
-#endif
       snatm->snatm_vci = npcb->npcb_vci;
       snatm->snatm_vpi = npcb->npcb_vpi;
       break;
@@ -418,52 +396,3 @@ m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
 
   goto next;
 }
-
-#if defined(__FreeBSD__)
-NETISR_SET(NETISR_NATM, natmintr);
-#endif
-
-
-#ifdef notyet
-/*
- * natm0_sysctl: not used, but here in case we want to add something
- * later...
- */
-
-int natm0_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-
-int *name;
-u_int namelen;
-void *oldp;
-size_t *oldlenp;
-void *newp;
-size_t newlen;
-
-{
-  /* All sysctl names at this level are terminal. */
-  if (namelen != 1)
-    return (ENOTDIR);
-  return (ENOPROTOOPT);
-}
-
-/*
- * natm5_sysctl: not used, but here in case we want to add something
- * later...
- */
-
-int natm5_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-
-int *name;
-u_int namelen;
-void *oldp;
-size_t *oldlenp;
-void *newp;
-size_t newlen;
-
-{
-  /* All sysctl names at this level are terminal. */
-  if (namelen != 1)
-    return (ENOTDIR);
-  return (ENOPROTOOPT);
-}
-#endif

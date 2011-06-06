@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.33 2010/12/20 00:25:24 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.33.2.1 2011/06/06 09:04:47 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.33 2010/12/20 00:25:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.33.2.1 2011/06/06 09:04:47 jruoho Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -155,18 +155,16 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.33 2010/12/20 00:25:24 matt Exp $");
 void fpudna(struct cpu_info *);
 static int x86fpflags_to_ksiginfo(uint32_t);
 
-#ifndef XEN
 /*
  * Init the FPU.
  */
 void
 fpuinit(struct cpu_info *ci)
 {
-	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
+	clts();
 	fninit();
-	lcr0(rcr0() | (CR0_TS));
+	stts();
 }
-#endif
 
 /*
  * Record the FPU state and reinitialize it all except for the control word.

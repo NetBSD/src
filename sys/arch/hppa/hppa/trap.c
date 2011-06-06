@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.95 2010/12/20 00:25:34 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.95.2.1 2011/06/06 09:05:46 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2010/12/20 00:25:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95.2.1 2011/06/06 09:05:46 jruoho Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -411,7 +411,7 @@ frame_sanity_check(const char *func, int line, int type, struct trapframe *tf,
 	extern int kernel_text;
 	extern int etext;
 #endif
-	extern register_t kpsw;
+	struct cpu_info *ci = curcpu();
 
 #define SANITY(e)					\
 do {							\
@@ -423,8 +423,8 @@ do {							\
 } while (/* CONSTCOND */ 0)
 
 	KASSERT(l != NULL);
-	SANITY((tf->tf_ipsw & kpsw) == kpsw);
-	SANITY((kpsw & PSW_I) == 0 || tf->tf_eiem != 0);
+	SANITY((tf->tf_ipsw & ci->ci_psw) == ci->ci_psw);
+	SANITY((ci->ci_psw & PSW_I) == 0 || tf->tf_eiem != 0);
 	if (tf->tf_iisq_head == HPPA_SID_KERNEL) {
 		vaddr_t minsp, maxsp, uv;
 

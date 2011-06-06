@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.14 2010/05/08 05:55:52 kiyohara Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.14.2.1 2011/06/06 09:06:29 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.14 2010/05/08 05:55:52 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.14.2.1 2011/06/06 09:06:29 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -370,7 +370,7 @@ genofw_find_node_by_devfunc(int startnode, int bus, int dev, int func)
 }
 
 int
-genofw_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+genofw_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct genppc_pci_chipset_businfo *pbi;
 	prop_dictionary_t dict, devsub;

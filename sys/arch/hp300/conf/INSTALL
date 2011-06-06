@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.41 2010/04/16 13:48:31 pooka Exp $
+# $NetBSD: INSTALL,v 1.41.2.1 2011/06/06 09:05:34 jruoho Exp $
 #
 # INSTALL machine description file
 #
@@ -80,7 +80,8 @@ file-system	MFS		# Memory-based filesystem
 #file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
-#options 	QUOTA		# User and group quotas in FFS
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network filesystem server
@@ -120,12 +121,22 @@ options 	INET		# Internet protocols
 # (Warning: this compiles in a large string table)
 #options 	DIOVERBOSE	# recognize "unknown" DIO devices
 
+# workstation console options
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+
+#options 	FONT_GALLANT12x22
+options 	FONT_VT220ISO8x16
+
 config		netbsd root on ? type ?
 
 mainbus0	at root		# root "bus"
 
 intio0		at mainbus0	# internal i/o space
 dio0		at mainbus0	# DIO/DIO-II bus
+#sgc0		at mainbus0	# SGC bus
 
 # Real-time clock (not optional)
 rtc*		at intio?
@@ -134,45 +145,48 @@ rtc*		at intio?
 dma* 		at intio?
 
 # Human Interface Loop
-hil*		at intio?
-#options 	UK_KEYBOARD	# include United Kingdom HIL keymap
-#options 	SE_KEYBOARD	# include Swedish HIL keymap
+hil0		at intio?		# HIL controller
+hilkbd*		at hil?			# keyboards
+wskbd*		at hilkbd? mux 1
 
 # Frodo utility chip found on 4xx's
 frodo*		at intio?
 
 # 8250-like serial ports found on Frodo ASIC
 #dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
+#wskbd*		at dnkbd? mux 1
 com*		at frodo? offset ?	# tty flavor
 
 # Davinci framebuffer
 dvbox*		at intio?
 dvbox*		at dio? scode ?
+wsdisplay*	at dvbox?
 
 # Gatorbox framebuffer
 gbox*		at intio?
 gbox*		at dio? scode ?
+wsdisplay*	at gbox?
 
 # Hyperion framebuffer
 hyper*		at dio? scode ?
+wsdisplay*	at hyper?
 
 # Renaissance framebuffer
 rbox*		at intio?
 rbox*		at dio? scode ?
+wsdisplay*	at rbox?
 
 # Topcat/catseye framebuffers
 topcat*		at intio?
 topcat*		at dio? scode ?
+wsdisplay*	at topcat?
 
-# Framebuffer abstraction
-grf*		at dvbox?
-grf*		at gbox?
-grf*		at hyper?
-grf*		at rbox?
-grf*		at topcat?
+# TurboVRX framebuffer
+tvrx*		at dio? scode ?
+wsdisplay*	at tvrx?
 
-# Internal Terminal Emulator
-ite*		at grf?
+gendiofb*	at dio? scode ?
+wsdisplay*	at gendiofb?
 
 com*		at dio0 scode 9		# DCA serial interfaces
 com*		at dio? scode ?

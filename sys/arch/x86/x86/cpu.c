@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.79 2011/01/11 18:25:25 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.79.2.1 2011/06/06 09:07:07 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.79 2011/01/11 18:25:25 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.79.2.1 2011/06/06 09:07:07 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -117,9 +117,11 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.79 2011/01/11 18:25:25 jruoho Exp $");
 #error cpu_info contains 32bit bitmasks
 #endif
 
-int     cpu_match(device_t, cfdata_t, void *);
-void    cpu_attach(device_t, device_t, void *);
-
+static int	cpu_match(device_t, cfdata_t, void *);
+static void	cpu_attach(device_t, device_t, void *);
+static void	cpu_defer(device_t);
+static int	cpu_rescan(device_t, const char *, const int *);
+static void	cpu_childdetached(device_t, device_t);
 static bool	cpu_suspend(device_t, const pmf_qual_t *);
 static bool	cpu_resume(device_t, const pmf_qual_t *);
 static bool	cpu_shutdown(device_t, int);
@@ -136,8 +138,8 @@ const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 					    mp_cpu_start_cleanup };
 
 
-CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
-    cpu_match, cpu_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(cpu, sizeof(struct cpu_softc),
+    cpu_match, cpu_attach, NULL, NULL, cpu_rescan, cpu_childdetached);
 
 /*
  * Statically-allocated CPU info for the primary CPU (or the only
@@ -211,7 +213,7 @@ cpu_init_first(void)
 	pmap_update(pmap_kernel());
 }
 
-int
+static int
 cpu_match(device_t parent, cfdata_t match, void *aux)
 {
 
@@ -271,7 +273,7 @@ cpu_vm_init(struct cpu_info *ci)
 }
 
 
-void
+static void
 cpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_softc *sc = device_private(self);
@@ -445,6 +447,64 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #endif
 		);
 	}
+
+	(void)config_defer(self, cpu_defer);
+}
+
+static void
+cpu_defer(device_t self)
+{
+	cpu_rescan(self, NULL, NULL);
+}
+
+static int
+cpu_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct cpu_softc *sc = device_private(self);
+	struct cpufeature_attach_args cfaa;
+	struct cpu_info *ci = sc->sc_info;
+
+	memset(&cfaa, 0, sizeof(cfaa));
+	cfaa.ci = ci;
+
+	if (ifattr_match(ifattr, "cpufeaturebus")) {
+
+		if (ci->ci_frequency == NULL) {
+			cfaa.name = "frequency";
+			ci->ci_frequency = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+
+		if (ci->ci_padlock == NULL) {
+			cfaa.name = "padlock";
+			ci->ci_padlock = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+
+		if (ci->ci_temperature == NULL) {
+			cfaa.name = "temperature";
+			ci->ci_temperature = config_found_ia(self,
+			    "cpufeaturebus", &cfaa, NULL);
+		}
+	}
+
+	return 0;
+}
+
+static void
+cpu_childdetached(device_t self, device_t child)
+{
+	struct cpu_softc *sc = device_private(self);
+	struct cpu_info *ci = sc->sc_info;
+
+	if (ci->ci_frequency == child)
+		ci->ci_frequency = NULL;
+
+	if (ci->ci_padlock == child)
+		ci->ci_padlock = NULL;
+
+	if (ci->ci_temperature == child)
+		ci->ci_temperature = NULL;
 }
 
 /*
@@ -1080,9 +1140,10 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 	uint64_t last_tsc;
 
 	if (cpu_hascounter()) {
-		last_tsc = rdmsr(MSR_TSC);
+		last_tsc = cpu_counter_serializing();
 		i8254_delay(100000);
-		ci->ci_data.cpu_cc_freq = (rdmsr(MSR_TSC) - last_tsc) * 10;
+		ci->ci_data.cpu_cc_freq =
+		    (cpu_counter_serializing() - last_tsc) * 10;
 	}
 }
 

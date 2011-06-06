@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.245 2010/12/30 16:49:25 pooka Exp $	*/
+/*	$NetBSD: systm.h,v 1.245.2.1 2011/06/06 09:10:13 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -50,8 +50,9 @@
 #include <sys/types.h>
 #endif
 
+#include <sys/device_if.h>
+
 struct clockframe;
-struct device;
 struct lwp;
 struct proc;
 struct timeval;
@@ -89,7 +90,7 @@ extern const char *dumpspec;	/* how dump device was specified */
 
 extern dev_t rootdev;		/* root device */
 extern struct vnode *rootvp;	/* vnode equivalent to above */
-extern struct device *root_device; /* device equivalent to above */
+extern device_t root_device; /* device equivalent to above */
 extern const char *rootspec;	/* how root device was specified */
 
 extern int ncpu;		/* number of CPUs configured */
@@ -187,17 +188,18 @@ void	aprint_verbose(const char *, ...)
 void	aprint_debug(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 
-struct device;
+void device_printf(device_t, const char *fmt, ...)
+    __attribute__((__format__(__printf__,2,3)));
 
-void	aprint_normal_dev(struct device *, const char *, ...)
+void	aprint_normal_dev(device_t, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-void	aprint_error_dev(struct device *, const char *, ...)
+void	aprint_error_dev(device_t, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-void	aprint_naive_dev(struct device *, const char *, ...)
+void	aprint_naive_dev(device_t, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-void	aprint_verbose_dev(struct device *, const char *, ...)
+void	aprint_verbose_dev(device_t, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-void	aprint_debug_dev(struct device *, const char *, ...)
+void	aprint_debug_dev(device_t, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 
 struct ifnet;
@@ -367,10 +369,10 @@ void	dopowerhooks(int);
 #define	ROOT_FSTYPE_ANY	"?"
 
 extern const char *rootfstype;
-void	*mountroothook_establish(void (*)(struct device *), struct device *);
+void	*mountroothook_establish(void (*)(device_t), device_t);
 void	mountroothook_disestablish(void *);
 void	mountroothook_destroy(void);
-void	domountroothook(struct device *);
+void	domountroothook(device_t);
 
 /*
  * Exec hooks. Subsystems may want to do cleanup when a process

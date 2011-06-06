@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.57 2010/11/02 18:14:06 chs Exp $
+	$NetBSD: syscalls.master,v 1.57.2.1 2011/06/06 09:07:29 jruoho Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -425,7 +425,8 @@
 247	UNIMPL	io_getevents
 248	UNIMPL	io_submit
 249	UNIMPL	io_cancel
-250	UNIMPL	fadvise64
+250	STD	{ int|linux32_sys||fadvise64(int fd, uint32_t offlo, \
+		    uint32_t offhi, linux32_size_t len, int advice); }
 251	UNIMPL	/*	unused	*/
 252	STD	{ int|linux32_sys||exit_group(int error_code); }
 253	UNIMPL	lookup_dcookie
@@ -453,7 +454,8 @@
 		    netbsd32_size_t sz, linux32_statfs64p sp); }
 270	STD	{ int|linux32_sys||tgkill(int tgid, int tid, int sig); }
 271	UNIMPL	utimes
-272	UNIMPL	fadvise64_64
+272	STD	{ int|linux32_sys||fadvise64_64(int fd, uint32_t offlo, \
+		    uint32_t offhi, uint32_t lenlo, uint32_t lenhi, int advice); }
 273	UNIMPL	vserver
 274	UNIMPL	mbind
 275	UNIMPL	get_mempolicy
@@ -513,8 +515,8 @@
 327	UNIMPL	signalfd4
 328	UNIMPL	eventfd2
 329	UNIMPL	epoll_create1
-330	UNIMPL	dup3
-331	UNIMPL	pipe2
+330	STD	{ int|linux32_sys||dup3(int from, int to, int flags); }
+331     STD	{ int|linux32_sys||pipe2(netbsd32_intp fd, int flags); }
 332	UNIMPL	inotify_init1
 333	UNIMPL	preadv
 334	UNIMPL	pwritev

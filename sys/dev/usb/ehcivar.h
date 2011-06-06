@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.37 2010/10/16 05:23:42 kiyohara Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.37.2.1 2011/06/06 09:08:40 jruoho Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ typedef struct ehci_softc {
 	u_int sc_offs;			/* offset to operational regs */
 	int sc_flags;			/* misc flags */
 #define EHCIF_DROPPED_INTR_WORKAROUND	0x01
+#define EHCIF_ETTF			0x02 /* Emb. Transaction Translater func. */
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */

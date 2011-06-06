@@ -1,7 +1,6 @@
-# $NetBSD: files.splash,v 1.2 2006/02/19 01:39:54 macallan Exp $
+# $NetBSD: files.splash,v 1.2.106.1 2011/06/06 09:08:37 jruoho Exp $
 
-define splash
+define splash: stbi
 file dev/splash/splash.c	splash
 
-defflag opt_splash.h	SPLASHSCREEN SPLASHSCREEN_PROGRESS
-defparam opt_splash.h	SPLASHSCREEN_IMAGE
+defflag opt_splash.h	SPLASHSCREEN

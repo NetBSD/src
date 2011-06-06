@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.37 2011/01/11 23:22:19 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.37.2.1 2011/06/06 09:07:12 jruoho Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -24,6 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.37.2.1 2011/06/06 09:07:12 jruoho Exp $");
 
 #include "opt_xen.h"
 
@@ -271,7 +274,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 
 	ifp = &xneti->xni_if;
 	ifp->if_softc = xneti;
-	snprintf(ifp->if_xname, IFNAMSIZ, "xvif%d.%d",
+	snprintf(ifp->if_xname, IFNAMSIZ, "xvif%di%d",
 	    (int)domid, (int)handle);
 
 	/* read mac address */
@@ -319,40 +322,46 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	do {
 		xbt = xenbus_transaction_start();
 		if (xbt == NULL) {
-			printf("xbdback %s: can't start transaction\n",
+			aprint_error_ifnet(ifp,
+			    "%s: can't start transaction\n",
 			    xbusd->xbusd_path);
 			goto fail;
 		}
 		err = xenbus_printf(xbt, xbusd->xbusd_path,
-		    "vifname", ifp->if_xname);
+		    "vifname", "%s", ifp->if_xname);
 		if (err) {
-			printf("xbdback: failed to write %s/vifname: "
-			    "%d\n", xbusd->xbusd_path, err);
+			aprint_error_ifnet(ifp,
+			    "failed to write %s/vifname: %d\n",
+			    xbusd->xbusd_path, err);
 			goto abort_xbt;
 		}
 		err = xenbus_printf(xbt, xbusd->xbusd_path,
 		    "feature-rx-copy", "%d", 1);
 		if (err) {
-			printf("xbdback: failed to write %s/feature-rx-copy: "
-			    "%d\n", xbusd->xbusd_path, err);
+			aprint_error_ifnet(ifp,
+			    "failed to write %s/feature-rx-copy: %d\n",
+			    xbusd->xbusd_path, err);
 			goto abort_xbt;
 		}
 		err = xenbus_printf(xbt, xbusd->xbusd_path,
 		    "feature-rx-flip", "%d", 1);
 		if (err) {
-			printf("xbdback: failed to write %s/feature-rx-flip: "
-			    "%d\n", xbusd->xbusd_path, err);
+			aprint_error_ifnet(ifp,
+			    "failed to write %s/feature-rx-flip: %d\n",
+			    xbusd->xbusd_path, err);
 			goto abort_xbt;
 		}
 	} while ((err = xenbus_transaction_end(xbt, 0)) == EAGAIN);
 	if (err) {
-		printf("xbdback %s: can't end transaction: %d\n",
+		aprint_error_ifnet(ifp,
+		    "%s: can't end transaction: %d\n",
 		    xbusd->xbusd_path, err);
 	}
 
 	err = xenbus_switch_state(xbusd, NULL, XenbusStateInitWait);
 	if (err) {
-		printf("failed to switch state on %s: %d\n",
+		aprint_error_ifnet(ifp,
+		    "failed to switch state on %s: %d\n",
 		    xbusd->xbusd_path, err);
 		goto fail;
 	}
@@ -418,18 +427,177 @@ xennetback_xenbus_destroy(void *arg)
 	return 0;
 }
 
+static int
+xennetback_connect(struct xnetback_instance *xneti)
+{
+	int err;
+	netif_tx_sring_t *tx_ring;
+	netif_rx_sring_t *rx_ring;
+	struct gnttab_map_grant_ref op;
+	struct gnttab_unmap_grant_ref uop;
+	evtchn_op_t evop;
+	u_long tx_ring_ref, rx_ring_ref;
+	u_long revtchn, rx_copy;
+	struct xenbus_device *xbusd = xneti->xni_xbusd;
+
+	/* read comunication informations */
+	err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
+	    "tx-ring-ref", &tx_ring_ref, 10);
+	if (err) {
+		xenbus_dev_fatal(xbusd, err, "reading %s/tx-ring-ref",
+		    xbusd->xbusd_otherend);
+		return -1;
+	}
+	err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
+	    "rx-ring-ref", &rx_ring_ref, 10);
+	if (err) {
+		xenbus_dev_fatal(xbusd, err, "reading %s/rx-ring-ref",
+		    xbusd->xbusd_otherend);
+		return -1;
+	}
+	err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
+	    "event-channel", &revtchn, 10);
+	if (err) {
+		xenbus_dev_fatal(xbusd, err, "reading %s/event-channel",
+		    xbusd->xbusd_otherend);
+		return -1;
+	}
+	err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
+	    "request-rx-copy", &rx_copy, 10);
+	if (err == ENOENT)
+		rx_copy = 0;
+	else if (err) {
+		xenbus_dev_fatal(xbusd, err, "reading %s/request-rx-copy",
+		    xbusd->xbusd_otherend);
+		return -1;
+	}
+
+	if (rx_copy)
+		xneti->xni_softintr = softint_establish(SOFTINT_NET,
+		    xennetback_ifsoftstart_copy, xneti);
+	else
+		xneti->xni_softintr = softint_establish(SOFTINT_NET,
+		    xennetback_ifsoftstart_transfer, xneti);
+
+	if (xneti->xni_softintr == NULL) {
+		err = ENOMEM;
+		xenbus_dev_fatal(xbusd, ENOMEM,
+		    "can't allocate softint", xbusd->xbusd_otherend);
+		return -1;
+	}
+
+	/* allocate VA space and map rings */
+	xneti->xni_tx_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY);
+	if (xneti->xni_tx_ring_va == 0) {
+		xenbus_dev_fatal(xbusd, ENOMEM,
+		    "can't get VA for TX ring", xbusd->xbusd_otherend);
+		goto err1;
+	}
+	tx_ring = (void *)xneti->xni_tx_ring_va;
+
+	xneti->xni_rx_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY);
+	if (xneti->xni_rx_ring_va == 0) {
+		xenbus_dev_fatal(xbusd, ENOMEM,
+		    "can't get VA for RX ring", xbusd->xbusd_otherend);
+		goto err1;
+	}
+	rx_ring = (void *)xneti->xni_rx_ring_va;
+
+	op.host_addr = xneti->xni_tx_ring_va;
+	op.flags = GNTMAP_host_map;
+	op.ref = tx_ring_ref;
+	op.dom = xneti->xni_domid;
+	err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &op, 1);
+	if (err || op.status) {
+		aprint_error_ifnet(&xneti->xni_if,
+		    "can't map TX grant ref: err %d status %d\n",
+		    err, op.status);
+		goto err2;
+	}
+	xneti->xni_tx_ring_handle = op.handle;
+	BACK_RING_INIT(&xneti->xni_txring, tx_ring, PAGE_SIZE);
+
+	op.host_addr = xneti->xni_rx_ring_va;
+	op.flags = GNTMAP_host_map;
+	op.ref = rx_ring_ref;
+	op.dom = xneti->xni_domid;
+	err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &op, 1);
+	if (err || op.status) {
+		aprint_error_ifnet(&xneti->xni_if,
+		    "can't map RX grant ref: err %d status %d\n",
+		    err, op.status);
+		goto err2;
+	}
+	xneti->xni_rx_ring_handle = op.handle;
+	BACK_RING_INIT(&xneti->xni_rxring, rx_ring, PAGE_SIZE);
+
+	evop.cmd = EVTCHNOP_bind_interdomain;
+	evop.u.bind_interdomain.remote_dom = xneti->xni_domid;
+	evop.u.bind_interdomain.remote_port = revtchn;
+	err = HYPERVISOR_event_channel_op(&evop);
+	if (err) {
+		aprint_error_ifnet(&xneti->xni_if,
+		    "can't get event channel: %d\n", err);
+		goto err2;
+	}
+	xneti->xni_evtchn = evop.u.bind_interdomain.local_port;
+	xen_wmb();
+	xneti->xni_status = CONNECTED;
+	xen_wmb();
+
+	event_set_handler(xneti->xni_evtchn, xennetback_evthandler,
+	    xneti, IPL_NET, xneti->xni_if.if_xname);
+	xennetback_ifinit(&xneti->xni_if);
+	hypervisor_enable_event(xneti->xni_evtchn);
+	hypervisor_notify_via_evtchn(xneti->xni_evtchn);
+	return 0;
+
+err2:
+	/* unmap rings */
+	if (xneti->xni_tx_ring_handle != 0) {
+		uop.host_addr = xneti->xni_tx_ring_va;
+		uop.handle = xneti->xni_tx_ring_handle;
+		uop.dev_bus_addr = 0;
+		err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
+		    &uop, 1);
+		if (err)
+			aprint_error_ifnet(&xneti->xni_if,
+			    "unmap_grant_ref failed: %d\n", err);
+	}
+
+	if (xneti->xni_rx_ring_handle != 0) {
+		uop.host_addr = xneti->xni_rx_ring_va;
+		uop.handle = xneti->xni_rx_ring_handle;
+		uop.dev_bus_addr = 0;
+		err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
+		    &uop, 1);
+		if (err)
+			aprint_error_ifnet(&xneti->xni_if,
+			    "unmap_grant_ref failed: %d\n", err);
+	}
+
+err1:
+	/* free rings VA space */
+	if (xneti->xni_rx_ring_va != 0)
+		uvm_km_free(kernel_map, xneti->xni_rx_ring_va,
+		    PAGE_SIZE, UVM_KMF_VAONLY);
+
+	if (xneti->xni_tx_ring_va != 0)
+		uvm_km_free(kernel_map, xneti->xni_tx_ring_va,
+		    PAGE_SIZE, UVM_KMF_VAONLY);
+
+	softint_disestablish(xneti->xni_softintr);
+	return -1;
+
+}
+
 static void
 xennetback_frontend_changed(void *arg, XenbusState new_state)
 {
 	struct xnetback_instance *xneti = arg;
 	struct xenbus_device *xbusd = xneti->xni_xbusd;
-	int err;
-	netif_tx_sring_t *tx_ring;
-	netif_rx_sring_t *rx_ring;
-	struct gnttab_map_grant_ref op;
-	evtchn_op_t evop;
-	u_long tx_ring_ref, rx_ring_ref;
-	u_long revtchn, rx_copy;
 
 	XENPRINTF(("%s: new state %d\n", xneti->xni_if.if_xname, new_state));
 	switch(new_state) {
@@ -438,112 +606,10 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 		break;
 
 	case XenbusStateConnected:
-		/* read comunication informations */
-		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "tx-ring-ref", &tx_ring_ref, 10);
-		if (err) {
-			xenbus_dev_fatal(xbusd, err, "reading %s/tx-ring-ref",
-			    xbusd->xbusd_otherend);
+		if (xneti->xni_status == CONNECTED)
 			break;
-		}
-		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "rx-ring-ref", &rx_ring_ref, 10);
-		if (err) {
-			xenbus_dev_fatal(xbusd, err, "reading %s/rx-ring-ref",
-			    xbusd->xbusd_otherend);
-			break;
-		}
-		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "event-channel", &revtchn, 10);
-		if (err) {
-			xenbus_dev_fatal(xbusd, err, "reading %s/event-channel",
-			    xbusd->xbusd_otherend);
-			break;
-		}
-		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "request-rx-copy", &rx_copy, 10);
-		if (err == ENOENT)
-			rx_copy = 0;
-		else if (err) {
-			xenbus_dev_fatal(xbusd, err, "reading %s/request-rx-copy",
-			    xbusd->xbusd_otherend);
-			break;
-		}
-
-		if (rx_copy)
-			xneti->xni_softintr = softint_establish(SOFTINT_NET,
-			    xennetback_ifsoftstart_copy, xneti);
-		else
-			xneti->xni_softintr = softint_establish(SOFTINT_NET,
-			    xennetback_ifsoftstart_transfer, xneti);
-		if (xneti->xni_softintr == NULL) {
-			err = ENOMEM;
-			xenbus_dev_fatal(xbusd, ENOMEM,
-			    "can't allocate softint", xbusd->xbusd_otherend);
-			break;
-		}
-
-		/* allocate VA space and map rings */
-		xneti->xni_tx_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		    UVM_KMF_VAONLY);
-		if (xneti->xni_tx_ring_va == 0) {
-			xenbus_dev_fatal(xbusd, ENOMEM,
-			    "can't get VA for tx ring", xbusd->xbusd_otherend);
-			break;
-		}
-		tx_ring = (void *)xneti->xni_tx_ring_va;
-		xneti->xni_rx_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		    UVM_KMF_VAONLY);
-		if (xneti->xni_rx_ring_va == 0) {
-			xenbus_dev_fatal(xbusd, ENOMEM,
-			    "can't get VA for rx ring", xbusd->xbusd_otherend);
-			goto err1;
-		}
-		rx_ring = (void *)xneti->xni_rx_ring_va;
-		op.host_addr = xneti->xni_tx_ring_va;
-		op.flags = GNTMAP_host_map;
-		op.ref = tx_ring_ref;
-		op.dom = xneti->xni_domid;
-		err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &op, 1);
-		if (err || op.status) {
-			printf("%s: can't map TX grant ref: %d/%d\n",
-			    xneti->xni_if.if_xname, err, op.status);
-			goto err2;
-		}
-		xneti->xni_tx_ring_handle = op.handle;
-
-		op.host_addr = xneti->xni_rx_ring_va;
-		op.flags = GNTMAP_host_map;
-		op.ref = rx_ring_ref;
-		op.dom = xneti->xni_domid;
-		err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &op, 1);
-		if (err || op.status) {
-			printf("%s: can't map RX grant ref: %d/%d\n",
-			    xneti->xni_if.if_xname, err, op.status);
-			goto err2;
-		}
-		xneti->xni_rx_ring_handle = op.handle;
-		BACK_RING_INIT(&xneti->xni_txring, tx_ring, PAGE_SIZE);
-		BACK_RING_INIT(&xneti->xni_rxring, rx_ring, PAGE_SIZE);
-		evop.cmd = EVTCHNOP_bind_interdomain;
-		evop.u.bind_interdomain.remote_dom = xneti->xni_domid;
-		evop.u.bind_interdomain.remote_port = revtchn;
-		err = HYPERVISOR_event_channel_op(&evop);
-		if (err) {
-			printf("%s: can't get event channel: %d\n",
-			    xneti->xni_if.if_xname, err);
-			goto err2;
-		}
-		xneti->xni_evtchn = evop.u.bind_interdomain.local_port;
-		xen_wmb();
-		xneti->xni_status = CONNECTED;
-		xenbus_switch_state(xbusd, NULL, XenbusStateConnected);
-		xen_wmb();
-		event_set_handler(xneti->xni_evtchn, xennetback_evthandler,
-		    xneti, IPL_NET, xneti->xni_if.if_xname);
-		xennetback_ifinit(&xneti->xni_if);
-		hypervisor_enable_event(xneti->xni_evtchn);
-		hypervisor_notify_via_evtchn(xneti->xni_evtchn);
+		if (xennetback_connect(xneti) == 0)
+			xenbus_switch_state(xbusd, NULL, XenbusStateConnected);
 		break;
 
 	case XenbusStateClosing:
@@ -564,12 +630,7 @@ xennetback_frontend_changed(void *arg, XenbusState new_state)
 		break;
 	}
 	return;
-err2:
-	uvm_km_free(kernel_map, xneti->xni_rx_ring_va,
-	    PAGE_SIZE, UVM_KMF_VAONLY);
-err1:
-	uvm_km_free(kernel_map, xneti->xni_tx_ring_va,
-	    PAGE_SIZE, UVM_KMF_VAONLY);
+
 }
 
 /* lookup a xneti based on domain id and interface handle */

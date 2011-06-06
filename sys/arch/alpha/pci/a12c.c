@@ -1,4 +1,4 @@
-/* $NetBSD: a12c.c,v 1.22 2010/12/15 01:27:18 matt Exp $ */
+/* $NetBSD: a12c.c,v 1.22.2.1 2011/06/06 09:04:44 jruoho Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.22 2010/12/15 01:27:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.22.2.1 2011/06/06 09:04:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ a12cattach(struct device *parent, struct device *self, void *aux)
 	a12c_init(ccp, 1);
 
 	/* XXX print chipset information */
-	printf(": driver %s over logic %x\n", "$Revision: 1.22 $", 
+	printf(": driver %s over logic %x\n", "$Revision: 1.22.2.1 $", 
 		A12_ALL_EXTRACT(REGVAL(A12_VERS)));
 
 	pci_a12_pickintr(ccp);
@@ -146,7 +146,7 @@ a12cattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = &ccp->ac_pc;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
-	pba.pba_flags = PCI_FLAGS_MEM_ENABLED |
+	pba.pba_flags = PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);

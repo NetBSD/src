@@ -1,4 +1,4 @@
-/*	$NetBSD: pmppc_locore.S,v 1.8 2010/12/11 17:13:49 matt Exp $	*/
+/*	$NetBSD: pmppc_locore.S,v 1.8.2.1 2011/06/06 09:05:32 jruoho Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
-#define _NOREGNAMES
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.15 2010/10/26 04:24:21 jruoho Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.15.2.1 2011/06/06 09:07:42 jruoho Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.15 2010/10/26 04:24:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.15.2.1 2011/06/06 09:07:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -421,29 +421,38 @@ aibs_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	}
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, aibs, NULL);
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
-aibs_modcmd(modcmd_t cmd, void *context)
+aibs_modcmd(modcmd_t cmd, void *aux)
 {
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-		return config_init_component(cfdriver_ioconf_aibs,
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_aibs,
 		    cfattach_ioconf_aibs, cfdata_ioconf_aibs);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
-		return config_fini_component(cfdriver_ioconf_aibs,
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_aibs,
 		    cfattach_ioconf_aibs, cfdata_ioconf_aibs);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.15 2010/12/20 00:25:23 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.15.2.1 2011/06/06 09:04:41 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,8 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15 2010/12/20 00:25:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15.2.1 2011/06/06 09:04:41 jruoho Exp $");
 
+#define	__INTR_PRIVATE
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -62,42 +63,31 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15 2010/12/20 00:25:23 matt Exp $");
 void	*(*algor_intr_establish)(int, int (*)(void *), void *);
 void	(*algor_intr_disestablish)(void *);
 
-void	(*algor_iointr)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-
-u_long	cycles_per_hz;
+void	(*algor_iointr)(int, vaddr_t, uint32_t);
 
 /*
  * This is a mask of bits to clear in the SR when we go to a
  * given interrupt priority level.
  */
-const u_int32_t ipl_sr_bits[_IPL_N] = {
-	0,					/* IPL_NONE */
-
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3,		/* IPL_VM */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* IPL_SCHED */
+static const struct ipl_sr_map algor_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE]	=	0,
+	[IPL_SOFTCLOCK]	=	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTBIO]	=	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET]	=	MIPS_SOFT_INT_MASK,
+	[IPL_SOFTSERIAL] =	MIPS_SOFT_INT_MASK,
+	[IPL_VM]	=	MIPS_SOFT_INT_MASK
+				|MIPS_INT_MASK_0|MIPS_INT_MASK_1
+				|MIPS_INT_MASK_2|MIPS_INT_MASK_3,
+	[IPL_SCHED]	=	MIPS_INT_MASK,
+	[IPL_HIGH]	=	MIPS_INT_MASK,
+    },
 };
 
 void
 intr_init(void)
 {
+	ipl_sr_map = algor_ipl_sr_map;
 
 #if defined(ALGOR_P4032)
 	algor_p4032_intr_init(&p4032_configuration);
@@ -109,40 +99,29 @@ intr_init(void)
 }
 
 void
-cpu_intr(u_int32_t status, u_int32_t cause, vaddr_t pc, u_int32_t ipending)
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
-	struct clockframe cf;
-	struct cpu_info *ci;
+	uint32_t pending;
+	int ipl;
 
-	ci = curcpu();
-	ci->ci_idepth++;
-	ci->ci_data.cpu_nintr++;
+	curcpu()->ci_data.cpu_nintr++;
 
-	if (ipending & MIPS_INT_MASK_5) {
+	while (ppl < (ipl = splintr(&pending))) {
+		splx(ipl);
+		if (pending & MIPS_INT_MASK_5) {
+			struct clockframe cf;
 
-		cf.pc = pc;
-		cf.sr = status;
-		mips3_clockintr(&cf);
+			cf.pc = pc;
+			cf.sr = status;
+			cf.intr = (curcpu()->ci_idepth > 1);
+			mips3_clockintr(&cf);
+		}
 
-		/* Re-enable clock interrupts. */
-		cause &= ~MIPS_INT_MASK_5;
-		_splset(MIPS_SR_INT_IE |
-		    ((status & ~cause) & MIPS_HARD_INT_MASK));
+		if (pending & (MIPS_INT_MASK_0|MIPS_INT_MASK_1|MIPS_INT_MASK_2|
+				MIPS_INT_MASK_3|MIPS_INT_MASK_4)) {
+			/* Process I/O and error interrupts. */
+			(*algor_iointr)(ipl, pc, pending);
+		}
+		(void)splhigh();
 	}
-
-	if (ipending & (MIPS_INT_MASK_0|MIPS_INT_MASK_1|MIPS_INT_MASK_2|
-			MIPS_INT_MASK_3|MIPS_INT_MASK_4)) {
-		/* Process I/O and error interrupts. */
-		(*algor_iointr)(status, cause, pc, ipending);
-	}
-
-	ci->ci_idepth--;
-
-#ifdef __HAVE_FAST_SOFTINTS
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
-	if (ipending == 0)
-		return;
-	_clrsoftintr(ipending);
-	softintr_dispatch(ipending);
-#endif
 }

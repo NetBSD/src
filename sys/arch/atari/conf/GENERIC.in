@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.92 2010/12/12 09:56:15 tsutsui Exp $
+#	$NetBSD: GENERIC.in,v 1.92.2.1 2011/06/06 09:05:08 jruoho Exp $
 #
 # Generic atari
 #
@@ -134,7 +134,8 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	WAPBL		# File system journaling support - Experimental
 #if !defined(SMALL030_KERNEL)
-#options 	QUOTA		# Disk quotas for local disks
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server side code

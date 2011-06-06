@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24 2009/04/10 13:29:30 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.24.6.1 2011/06/06 09:06:19 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,56 +32,15 @@
 #ifndef _MACHINE_INTR_H_
 #define _MACHINE_INTR_H_
 
-#define IPL_NONE	0	/* disable only this interrupt */
-#define IPL_SOFTCLOCK	1	/* clock software interrupts (SI 0) */
-#define IPL_SOFTBIO	1	/* bio software interrupts (SI 0) */
-#define IPL_SOFTNET	2	/* network software interrupts (SI 1) */
-#define IPL_SOFTSERIAL	2	/* serial software interrupts (SI 1) */
-#define	IPL_VM		3
-#define IPL_SCHED	4	/* disable clock interrupts */
-#define IPL_HIGH	4	/* disable all interrupts */
-
-#define _IPL_N		5
-
-#define _IPL_SI0_FIRST	IPL_SOFTCLOCK
-#define _IPL_SI0_LAST	IPL_SOFTBIO
-
-#define _IPL_SI1_FIRST	IPL_SOFTNET
-#define _IPL_SI1_LAST	IPL_SOFTSERIAL
+#include <mips/intr.h>
 
 #ifdef _KERNEL
-#ifndef _LOCORE
+#ifdef __INTR_PRIVATE
 
 #include <sys/evcnt.h>
 #include <mips/locore.h>
 
-extern const uint32_t ipl_sr_bits[_IPL_N];
-
-#define spl0()		(void)_spllower(0)
-#define splx(s)		(void)_splset(s)
-
-#define splsoft()	_splraise(ipl_sr_bits[IPL_SOFT])
-
-typedef int ipl_t;
-typedef struct {
-	ipl_t _sr;
-} ipl_cookie_t;
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._sr = ipl_sr_bits[ipl]};
-}
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return _splraise(icookie._sr);
-}
-
-#include <sys/spl.h>
+extern const struct ipl_sr_map newmips_ipl_sr_map;
 
 struct newsmips_intrhand {
 	LIST_ENTRY(newsmips_intrhand) ih_q;
@@ -117,18 +76,14 @@ struct newsmips_intr {
 extern u_int intrcnt[];
 
 /* handle i/o device interrupts */
-#ifdef news3400
-void news3400_intr(uint32_t, uint32_t, uint32_t, uint32_t);
-#endif
-#ifdef news5000
-void news5000_intr(uint32_t, uint32_t, uint32_t, uint32_t);
-#endif
-extern void (*hardware_intr)(uint32_t, uint32_t, uint32_t, uint32_t);
+void news3400_intr(int, vaddr_t, uint32_t);
+void news5000_intr(int, vaddr_t, uint32_t);
+extern void (*hardware_intr)(int, vaddr_t, uint32_t);
 
 extern void (*enable_intr)(void);
 extern void (*disable_intr)(void);
 extern void (*enable_timer)(void);
 
-#endif /* !_LOCORE */
+#endif /* __INTR_PRIVATE */
 #endif /* _KERNEL */
 #endif /* _MACHINE_INTR_H_ */

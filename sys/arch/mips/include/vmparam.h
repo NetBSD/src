@@ -1,6 +1,7 @@
-/*	$NetBSD: vmparam.h,v 1.46 2010/11/14 13:33:22 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.46.2.1 2011/06/06 09:06:04 jruoho Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,48 +37,13 @@
  *
  *	@(#)vmparam.h	8.2 (Berkeley) 4/22/94
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah Hdr: vmparam.h 1.16 91/01/18
- *
- *	@(#)vmparam.h	8.2 (Berkeley) 4/22/94
- */
 
 #ifndef _MIPS_VMPARAM_H_
 #define	_MIPS_VMPARAM_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
 
 /*
  * Machine dependent VM constants for MIPS.
@@ -102,10 +68,11 @@
  *
  * USRSTACK needs to start a little below 0x8000000 because the R8000
  * and some QED CPUs perform some virtual address checks before the
- * offset is calculated.
+ * offset is calculated.  We use 0x8000 since that's the max displacement
+ * in an instruction.
  */
-#define	USRSTACK	(VM_MAXUSER_ADDRESS-PAGE_SIZE) /* Start of user stack */
-#define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-PAGE_SIZE)
+#define	USRSTACK	(VM_MAXUSER_ADDRESS-0x8000) /* Start of user stack */
+#define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-0x8000)
 
 /* alignment requirement for u-area space in bytes */
 #define	USPACE_ALIGN	USPACE
@@ -113,6 +80,7 @@
 /*
  * Virtual memory related constants, all in bytes
  */
+#if defined(__mips_o32)
 #ifndef MAXTSIZ
 #define	MAXTSIZ		(64*1024*1024)		/* max text size */
 #endif
@@ -128,6 +96,26 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
+#else
+/*
+ * 64-bit ABIs need more space.
+ */
+#ifndef MAXTSIZ
+#define	MAXTSIZ		(128*1024*1024)		/* max text size */
+#endif
+#ifndef DFLDSIZ
+#define	DFLDSIZ		(256*1024*1024)		/* initial data size limit */
+#endif
+#ifndef MAXDSIZ
+#define	MAXDSIZ		(1536*1024*1024)	/* max data size */
+#endif
+#ifndef	DFLSSIZ
+#define	DFLSSIZ		(16*1024*1024)		/* initial stack size limit */
+#endif
+#ifndef	MAXSSIZ
+#define	MAXSSIZ		(120*1024*1024)		/* max stack size */
+#endif
+#endif /* !__mips_o32 */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -166,11 +154,8 @@
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
 #ifdef _LP64
-#if 1
-#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 31)	/* 0x0000000080000000 */
-#else
-#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 62)	/* 0x4000000000000000 */
-#endif
+#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << (4*PGSHIFT-8))
+							/* 0x0000010000000000 */
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 3L << 62)	/* 0xC000000000000000 */
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t) -1L << 31)	/* 0xFFFFFFFF80000000 */
@@ -200,14 +185,17 @@
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_NOADD	/* can add RAM after vm_mem_init */
 
 #ifndef VM_NFREELIST
 #define	VM_NFREELIST		16	/* 16 distinct memory segments */
 #define VM_FREELIST_DEFAULT	0
-#define VM_FREELIST_FIRST16M	1	/* ISA DMA range */
-#define VM_FREELIST_FIRST512M	2	/* KSEG0/1 */
-#define VM_FREELIST_FIRST4G	3	/* 32bit addrs */
-#define VM_FREELIST_MAX		4
+#define VM_FREELIST_MAX		1
+#endif
+
+#ifdef _KERNEL
+#define	UVM_KM_VMFREELIST	mips_poolpage_vmfreelist
+extern int mips_poolpage_vmfreelist;
 #endif
 
 #endif /* ! _MIPS_VMPARAM_H_ */

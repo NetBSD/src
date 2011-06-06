@@ -1,6 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.72 2010/03/02 17:28:08 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72.4.1 2011/06/06 09:06:12 jruoho Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -35,48 +36,10 @@
  *
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department, The Mach Operating System project at
- * Carnegie-Mellon University and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
- */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2010/03/02 17:28:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72.4.1 2011/06/06 09:06:12 jruoho Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -149,8 +112,8 @@ char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void to_monitor(int) __attribute__((__noreturn__));
-void prom_halt(int) __attribute__((__noreturn__));
+void to_monitor(int) __dead;
+void prom_halt(int) __dead;
 
 #ifdef	KGDB
 void zs_kgdb_init(void);
@@ -171,22 +134,13 @@ int  memsize_scan(void *);
 extern void stacktrace(void); /*XXX*/
 #endif
 
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.  Used as an argument to splx().
- * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
- * disables mips1 FPU interrupts.
- */
-int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
-
 /* locore callback-vector setup */
-extern void mips_vector_init(void);
 extern void prom_init(void);
 extern void pizazz_init(void);
 
 /* platform-specific initialization vector */
 static void	unimpl_cons_init(void);
-static void	unimpl_iointr(unsigned, unsigned, unsigned, unsigned);
+static void	unimpl_iointr(uint32_t, vaddr_t, uint32_t);
 static int	unimpl_memsize(void *);
 static void	unimpl_intr_establish(int, int (*)(void *), void *);
 
@@ -239,7 +193,6 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 	struct btinfo_symtab *bi_syms;
 #endif
 
-
 	/* Check for valid bootinfo passed from bootstrap */
 	if (bim == BOOTINFO_MAGIC) {
 		struct btinfo_magic *bi_magic;
@@ -257,7 +210,14 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 	kernend = (void *)mips_round_page(end);
 	memset(edata, 0, end - edata);
 
-#if NKSYMS || defined(DDB) || defined(MODULAR)
+	/*
+	 * Copy exception-dispatch code down to exception vector.
+	 * Initialize locore-function vector.
+	 * Clear out the I and D caches.
+	 */
+	mips_vector_init(NULL, false);
+
+#if NKSYMS || defined(DDB) || defined(LKM)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 
 	/* Load sysmbol table if present */
@@ -290,13 +250,6 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 	mem_clusters[0].start = 0;		/* XXX is this correct? */
 	mem_clusters[0].size  = ctob(physmem);
 	mem_cluster_cnt = 1;
-
-	/*
-	 * Copy exception-dispatch code down to exception vector.
-	 * Initialize locore-function vector.
-	 * Clear out the I and D caches.
-	 */
-	mips_vector_init();
 
 	/* Look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
@@ -460,8 +413,7 @@ void
 cpu_reboot(volatile int howto, char *bootstr)
 {
 	/* take a snap shot before clobbering any registers */
-	if (curlwp)
-		savectx(curpcb);
+	savectx(curpcb);
 
 #ifdef DEBUG
 	if (panicstr)
@@ -535,7 +487,7 @@ unimpl_cons_init(void)
 }
 
 static void
-unimpl_iointr(u_int mask, u_int pc, u_int statusreg, u_int causereg)
+unimpl_iointr(uint32_t status, vaddr_t pc, uint32_t ipending)
 {
 
 	panic("sysconf.init didn't set intr");

@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_start.S,v 1.2 2005/12/11 12:17:08 christos Exp $ */
+/*	$NetBSD: g42xxeb_start.S,v 1.2.106.1 2011/06/06 09:05:25 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -31,8 +31,9 @@
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pte.h>
-#include <arm/arm32/pmap.h>		/* for PMAP_DOMAIN_KERNEL */
+#include "assym.h"
+
+RCSID("$NetBSD: g42xxeb_start.S,v 1.2.106.1 2011/06/06 09:05:25 jruoho Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0xa0000000
@@ -151,12 +152,12 @@ Lstart:
 Lstartup_pagetable	.word	STARTUP_PAGETABLE_ADDR
 mmu_init_table:	
 	/* fill all table VA==PA */
-	MMU_INIT(0x00000000, 0x00000000, 1<<(32-L1_S_SHIFT), L1_TYPE_S|L1_S_AP(AP_KRW))
+	MMU_INIT(0x00000000, 0x00000000, 1<<(32-L1_S_SHIFT), L1_TYPE_S|L1_S_AP_KRW)
 	/* map SDRAM VA==PA, WT cacheable */
-	MMU_INIT(SDRAM_START, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+	MMU_INIT(SDRAM_START, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
 #endif
 mmu_init_table2:	
 	/* map VA 0xc0000000..0xc3ffffff to PA 0xa0000000..0xa3ffffff */
-	MMU_INIT(0xc0000000, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+	MMU_INIT(0xc0000000, SDRAM_START, 64, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
 
 	.word 0	/* end of table */

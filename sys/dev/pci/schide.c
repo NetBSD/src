@@ -1,4 +1,4 @@
-/*	$NetBSD: schide.c,v 1.1 2010/11/06 14:56:12 jakllsch Exp $	*/
+/*	$NetBSD: schide.c,v 1.1.2.1 2011/06/06 09:08:27 jruoho Exp $	*/
 /*	$OpenBSD: pciide.c,v 1.305 2009/11/01 01:50:15 dlg Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schide.c,v 1.1 2010/11/06 14:56:12 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schide.c,v 1.1.2.1 2011/06/06 09:08:27 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: schide.c,v 1.1 2010/11/06 14:56:12 jakllsch Exp $");
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_sch_reg.h>
 
-static void sch_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void sch_chip_map(struct pciide_softc*, const struct pci_attach_args*);
 static void sch_setup_channel(struct ata_channel*);
 static int  schide_match(device_t, cfdata_t, void *);
 static void schide_attach(device_t, device_t, void *);
@@ -115,7 +115,7 @@ schide_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-sch_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+sch_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface;

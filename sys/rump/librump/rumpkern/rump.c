@@ -1,9 +1,7 @@
-/*	$NetBSD: rump.c,v 1.219 2011/01/12 12:51:21 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.219.2.1 2011/06/06 09:10:07 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.219 2011/01/12 12:51:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.219.2.1 2011/06/06 09:10:07 jruoho Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -53,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.219 2011/01/12 12:51:21 pooka Exp $");
 #include <sys/ksyms.h>
 #include <sys/msgbuf.h>
 #include <sys/module.h>
+#include <sys/namei.h>
 #include <sys/once.h>
 #include <sys/percpu.h>
 #include <sys/pipe.h>
@@ -100,8 +99,9 @@ int rump_threads = 1;
 #endif
 
 static int rump_proxy_syscall(int, void *, register_t *);
-static int rump_proxy_rfork(void *, int);
-static void rump_proxy_procexit(void);
+static int rump_proxy_rfork(void *, int, const char *);
+static void rump_proxy_lwpexit(void);
+static void rump_proxy_execnotify(const char *);
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
 
@@ -126,7 +126,6 @@ static int rump_inited;
 /*
  * Make sure pnbuf_cache is available even without vfs
  */
-struct pool_cache *pnbuf_cache;
 int rump_initpnbufpool(void);
 int rump_initpnbufpool(void)
 {
@@ -155,6 +154,7 @@ __weak_alias(usermount_common_policy,rump__unavailable_vfs_panic);
 
 /* easier to write vfs-less clients */
 __weak_alias(rump_pub_etfs_register,rump__unavailable);
+__weak_alias(rump_pub_etfs_register_withsize,rump__unavailable);
 __weak_alias(rump_pub_etfs_remove,rump__unavailable);
 
 rump_proc_vfs_init_fn rump_proc_vfs_init;
@@ -211,8 +211,9 @@ static const struct rumpuser_sp_ops spops = {
 	.spop_lwproc_rfork	= rump_proxy_rfork,
 	.spop_lwproc_newlwp	= rump_lwproc_newlwp,
 	.spop_lwproc_curlwp	= rump_lwproc_curlwp,
-	.spop_procexit		= rump_proxy_procexit,
+	.spop_lwpexit		= rump_proxy_lwpexit,
 	.spop_syscall		= rump_proxy_syscall,
+	.spop_execnotify	= rump_proxy_execnotify,
 	.spop_getpid		= spgetpid,
 };
 
@@ -346,7 +347,6 @@ rump__init(int rump_version)
 
 	rump_scheduler_init(numcpu);
 	/* revert temporary context and schedule a semireal context */
-	l->l_cpu = NULL;
 	rumpuser_set_curlwp(NULL);
 	initproc = &proc0; /* borrow proc0 before we get initproc started */
 	rump_schedule();
@@ -392,6 +392,7 @@ rump__init(int rump_version)
 	devsw_init();
 	pipe_init();
 	resource_init();
+	procinit_sysctl();
 
 	/* start page baroness */
 	if (rump_threads) {
@@ -469,8 +470,38 @@ rump__init(int rump_version)
 		    rump_sysent[i].sy_call == sys_nomodule)
 			continue;
 
-		/* if present, adjust symbol value */
-		sprintf(buf, "rumpns_sys_%s", syscallnames[i]);
+		/*
+		 * deal with compat wrappers.  makesyscalls.sh should
+		 * generate the necessary info instead of this hack,
+		 * though.  ugly, fix it later.
+		 */ 
+#define CPFX "compat_"
+#define CPFXLEN (sizeof(CPFX)-1)
+		if (strncmp(syscallnames[i], CPFX, CPFXLEN) == 0) {
+			const char *p = syscallnames[i] + CPFXLEN;
+			size_t namelen;
+
+			/* skip version number */
+			while (*p >= '0' && *p <= '9')
+				p++;
+			if (p == syscallnames[i] + CPFXLEN || *p != '_')
+				panic("invalid syscall name %s\n",
+				    syscallnames[i]);
+
+			/* skip over the next underscore */
+			p++;
+			namelen = p + (sizeof("rumpns_")-1) - syscallnames[i];
+
+			strcpy(buf, "rumpns_");
+			strcat(buf, syscallnames[i]);
+			/* XXX: no strncat in the kernel */
+			strcpy(buf+namelen, "sys_");
+			strcat(buf, p);
+#undef CPFX
+#undef CPFXLEN
+		} else {
+			sprintf(buf, "rumpns_sys_%s", syscallnames[i]);
+		}
 		if ((sym = rumpuser_dl_globalsym(buf)) != NULL
 		    && sym != rump_sysent[i].sy_call) {
 #if 0
@@ -498,9 +529,14 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 	int ruhow = 0;
+	void *finiarg;
 
 	printf("rump kernel halting...\n");
-	rumpuser_sp_fini();
+
+	if (!RUMP_LOCALPROC_P(curproc))
+		finiarg = curproc->p_vmspace->vm_map.pmap;
+	else
+		finiarg = NULL;
 
 	/* dump means we really take the dive here */
 	if ((howto & RB_DUMP) || panicstr) {
@@ -516,6 +552,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* your wish is my command */
 	if (howto & RB_HALT) {
 		printf("rump kernel halted\n");
+		rumpuser_sp_fini(finiarg);
 		for (;;) {
 			uint64_t sec = 5, nsec = 0;
 			int error;
@@ -527,6 +564,7 @@ cpu_reboot(int howto, char *bootstr)
 	/* this function is __dead, we must exit */
  out:
 	printf("halted\n");
+	rumpuser_sp_fini(finiarg);
 	rumpuser_exit(ruhow);
 }
 
@@ -716,9 +754,10 @@ rump_proxy_syscall(int num, void *arg, register_t *retval)
 }
 
 static int
-rump_proxy_rfork(void *priv, int flags)
+rump_proxy_rfork(void *priv, int flags, const char *comm)
 {
 	struct vmspace *newspace;
+	struct proc *p;
 	int error;
 
 	if ((error = rump_lwproc_rfork(flags)) != 0)
@@ -728,17 +767,23 @@ rump_proxy_rfork(void *priv, int flags)
 	 * Since it's a proxy proc, adjust the vmspace.
 	 * Refcount will eternally be 1.
 	 */
-	newspace = kmem_alloc(sizeof(*newspace), KM_SLEEP);
+	p = curproc;
+	newspace = kmem_zalloc(sizeof(*newspace), KM_SLEEP);
 	newspace->vm_refcnt = 1;
 	newspace->vm_map.pmap = priv;
-	KASSERT(curproc->p_vmspace == vmspace_kernel());
-	curproc->p_vmspace = newspace;
+	KASSERT(p->p_vmspace == vmspace_kernel());
+	p->p_vmspace = newspace;
+	if (comm)
+		strlcpy(p->p_comm, comm, sizeof(p->p_comm));
 
 	return 0;
 }
 
+/*
+ * Order all lwps in a process to exit.  does *not* wait for them to drain.
+ */
 static void
-rump_proxy_procexit(void)
+rump_proxy_lwpexit(void)
 {
 	struct proc *p = curproc;
 	uint64_t where;
@@ -746,13 +791,13 @@ rump_proxy_procexit(void)
 
 	mutex_enter(p->p_lock);
 	/*
-	 * First pass: mark all lwps in the process with LSDEAD
+	 * First pass: mark all lwps in the process with LW_RUMP_QEXIT
 	 * so that they know they should exit.
 	 */
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l == curlwp)
 			continue;
-		l->l_stat = LSDEAD;
+		l->l_flag |= LW_RUMP_QEXIT;
 	}
 	mutex_exit(p->p_lock);
 
@@ -772,24 +817,34 @@ rump_proxy_procexit(void)
 	 *  2) sleeping on l->l_private
 	 *  3) sleeping on p->p_waitcv
 	 *
-	 * Either way, l_private is stable until we change the lwps
-	 * state to LSZOMB.
+	 * Either way, l_private is stable until we set PS_RUMP_LWPEXIT
+	 * in p->p_sflag.
 	 */
 
 	mutex_enter(p->p_lock);
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l->l_private)
 			cv_broadcast(l->l_private);
-		l->l_stat = LSZOMB;
 	}
+	p->p_sflag |= PS_RUMP_LWPEXIT;
 	cv_broadcast(&p->p_waitcv);
 	mutex_exit(p->p_lock);
+}
 
-	/*
-	 * Don't wait for lwps to exit.  There's refcounting in the
-	 * rumpuser sp code which makes this safe.  Also, this routine
-	 * should sleep for a long time.
-	 */
+/*
+ * Notify process that all threads have been drained and exec is complete.
+ */
+static void
+rump_proxy_execnotify(const char *comm)
+{
+	struct proc *p = curproc;
+
+	fd_closeexec();
+	mutex_enter(p->p_lock);
+	KASSERT(p->p_nlwps == 1 && p->p_sflag & PS_RUMP_LWPEXIT);
+	p->p_sflag &= ~PS_RUMP_LWPEXIT;
+	mutex_exit(p->p_lock);
+	strlcpy(p->p_comm, comm, sizeof(p->p_comm));
 }
 
 int

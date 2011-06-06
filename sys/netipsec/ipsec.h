@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.24 2009/05/10 02:13:07 elad Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.24.6.1 2011/06/06 09:10:01 jruoho Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -93,10 +93,10 @@ struct secpolicy {
 	 * "lifetime" is passed by sadb_lifetime.sadb_lifetime_addtime.
 	 * "validtime" is passed by sadb_lifetime.sadb_lifetime_usetime.
 	 */
-	long created;		/* time created the policy */
-	long lastused;		/* updated every when kernel sends a packet */
-	long lifetime;		/* duration of the lifetime of this policy */
-	long validtime;		/* duration this policy is valid without use */
+	time_t created;		/* time created the policy */
+	time_t lastused;	/* updated every when kernel sends a packet */
+	time_t lifetime;	/* duration of the lifetime of this policy */
+	time_t validtime;	/* duration this policy is valid without use */
 };
 
 /* Request for IPsec */
@@ -146,7 +146,7 @@ struct secspacq {
 
 	struct secpolicyindex spidx;
 
-	long created;		/* for lifetime */
+	time_t created;		/* for lifetime */
 	int count;		/* for lifetime */
 	/* XXX: here is mbuf place holder to be sent ? */
 };
@@ -283,8 +283,8 @@ struct inpcb;
 int ipsec_init_policy (struct socket *so, struct inpcbpolicy **);
 int ipsec_copy_policy
 	(struct inpcbpolicy *, struct inpcbpolicy *);
-u_int ipsec_get_reqlevel (struct ipsecrequest *);
-int ipsec_in_reject (struct secpolicy *, struct mbuf *);
+u_int ipsec_get_reqlevel (const struct ipsecrequest *);
+int ipsec_in_reject (const struct secpolicy *, const struct mbuf *);
 
 int ipsec4_set_policy (struct inpcb *, int, void *, size_t, kauth_cred_t);
 int ipsec4_get_policy (struct inpcb *, void *, size_t, struct mbuf **);
@@ -299,8 +299,8 @@ int ipsec4_in_reject (struct mbuf *, struct inpcb *);
 
 struct secas;
 struct tcpcb;
-int ipsec_chkreplay (u_int32_t, struct secasvar *);
-int ipsec_updatereplay (u_int32_t, struct secasvar *);
+int ipsec_chkreplay (u_int32_t, const struct secasvar *);
+int ipsec_updatereplay (u_int32_t, const struct secasvar *);
 
 size_t ipsec4_hdrsiz (struct mbuf *, u_int, struct inpcb *);
 #ifdef __FreeBSD__
@@ -311,8 +311,8 @@ size_t ipsec4_hdrsiz_tcp (struct tcpcb *);
 #endif
 
 union sockaddr_union;
-const char *ipsec_address(union sockaddr_union* sa);
-const char *ipsec_logsastr (struct secasvar *);
+const char *ipsec_address(const union sockaddr_union* sa);
+const char *ipsec_logsastr (const struct secasvar *);
 
 void ipsec_dumpmbuf (struct mbuf *);
 

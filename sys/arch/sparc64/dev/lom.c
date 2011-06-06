@@ -1,4 +1,4 @@
-/*	$NetBSD: lom.c,v 1.6 2010/03/22 18:38:43 nakayama Exp $	*/
+/*	$NetBSD: lom.c,v 1.6.4.1 2011/06/06 09:06:50 jruoho Exp $	*/
 /*	$OpenBSD: lom.c,v 1.21 2010/02/28 20:44:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.6 2010/03/22 18:38:43 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.6.4.1 2011/06/06 09:06:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -217,6 +217,10 @@ static int	lom2_intr(void *);
 
 static int	lom_init_desc(struct lom_softc *);
 static void	lom_refresh(struct sysmon_envsys *, envsys_data_t *);
+static void	lom_refresh_alarm(struct lom_softc *, envsys_data_t *, uint32_t);
+static void	lom_refresh_fan(struct lom_softc *, envsys_data_t *, uint32_t);
+static void	lom_refresh_psu(struct lom_softc *, envsys_data_t *, uint32_t);
+static void	lom_refresh_temp(struct lom_softc *, envsys_data_t *, uint32_t);
 static void	lom1_write_hostname(struct lom_softc *);
 static void	lom2_write_hostname(struct lom_softc *);
 
@@ -947,72 +951,30 @@ static void
 lom_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct lom_softc *sc = sme->sme_cookie;
-	uint8_t val;
-	int i;
+	uint32_t i;
 
-	if (lom_read(sc, LOM_IDX_ALARM, &val)) {
-		for (i = 0; i < sc->sc_num_alarm; i++)
-			sc->sc_alarm[i].state = ENVSYS_SINVALID;
-	} else {
-		/* Fault LED */
-		if ((val & LOM_ALARM_FAULT) == LOM_ALARM_FAULT)
-			sc->sc_alarm[0].value_cur = 0;
+	/* Sensor number */
+	i = edata->sensor;
+
+	/* Sensor type */
+	switch (edata->units) {
+	case ENVSYS_INDICATOR:
+		if (i < sc->sc_num_alarm)
+			lom_refresh_alarm(sc, edata, i);
 		else
-			sc->sc_alarm[0].value_cur = 1;
-		sc->sc_alarm[0].state = ENVSYS_SVALID;
-
-		/* Alarms */
-		for (i = 1; i < sc->sc_num_alarm; i++) {
-			if ((val & (LOM_ALARM_1 << (i - 1))) == 0)
-				sc->sc_alarm[i].value_cur = 0;
-			else
-				sc->sc_alarm[i].value_cur = 1;
-			sc->sc_alarm[i].state = ENVSYS_SVALID;
-		}
-	}
-
-	for (i = 0; i < sc->sc_num_fan; i++) {
-		if (lom_read(sc, LOM_IDX_FAN1 + i, &val)) {
-			sc->sc_fan[i].state = ENVSYS_SINVALID;
-			continue;
-		}
-
-		sc->sc_fan[i].value_cur = (60 * sc->sc_fan_cal[i] * val) / 100;
-		if (val < sc->sc_fan_low[i])
-			sc->sc_fan[i].state = ENVSYS_SCRITICAL;
-		else
-			sc->sc_fan[i].state = ENVSYS_SVALID;
-	}
-
-	for (i = 0; i < sc->sc_num_psu; i++) {
-		if (lom_read(sc, LOM_IDX_PSU1 + i, &val) ||
-		    !ISSET(val, LOM_PSU_PRESENT)) {
-			sc->sc_psu[i].state = ENVSYS_SINVALID;
-			continue;
-		}
-
-		if (val & LOM_PSU_STANDBY) {
-			sc->sc_psu[i].value_cur = 0;
-			sc->sc_psu[i].state = ENVSYS_SVALID;
-		} else {
-			sc->sc_psu[i].value_cur = 1;
-			if (ISSET(val, LOM_PSU_INPUTA) &&
-			    ISSET(val, LOM_PSU_INPUTB) &&
-			    ISSET(val, LOM_PSU_OUTPUT))
-				sc->sc_psu[i].state = ENVSYS_SVALID;
-			else
-				sc->sc_psu[i].state = ENVSYS_SCRITICAL;
-		}
-	}
-
-	for (i = 0; i < sc->sc_num_temp; i++) {
-		if (lom_read(sc, LOM_IDX_TEMP1 + i, &val)) {
-			sc->sc_temp[i].state = ENVSYS_SINVALID;
-			continue;
-		}
-
-		sc->sc_temp[i].value_cur = val * 1000000 + 273150000;
-		sc->sc_temp[i].state = ENVSYS_SVALID;
+			lom_refresh_psu(sc, edata,
+			    i - sc->sc_num_alarm - sc->sc_num_fan);
+		break;
+	case ENVSYS_SFANRPM:
+		lom_refresh_fan(sc, edata, i - sc->sc_num_alarm);
+		break;
+	case ENVSYS_STEMP:
+		lom_refresh_temp(sc, edata,
+		    i - sc->sc_num_alarm - sc->sc_num_fan - sc->sc_num_psu);
+		break;
+	default:
+		edata->state = ENVSYS_SINVALID;
+		break;
 	}
 
 	/*
@@ -1022,13 +984,103 @@ lom_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	 * back to the LOM, otherwise the LOM will print any trailing
 	 * garbage.
 	 */
-	if (hostnamelen > 0 &&
+	if (i == 0 && hostnamelen > 0 &&
 	    strncmp(sc->sc_hostname, hostname, sizeof(hostname)) != 0) {
 		if (sc->sc_type < LOM_LOMLITE2)
 			lom1_write_hostname(sc);
 		else
 			lom2_write_hostname(sc);
 		strlcpy(sc->sc_hostname, hostname, sizeof(hostname));
+	}
+}
+
+static void
+lom_refresh_alarm(struct lom_softc *sc, envsys_data_t *edata, uint32_t i)
+{
+	uint8_t val;
+
+	/* Fault LED or Alarms */
+	KASSERT(i < sc->sc_num_alarm);
+
+	if (lom_read(sc, LOM_IDX_ALARM, &val)) {
+		edata->state = ENVSYS_SINVALID;
+	} else {
+		if (i == 0) {
+			/* Fault LED */
+			if ((val & LOM_ALARM_FAULT) == LOM_ALARM_FAULT)
+				edata->value_cur = 0;
+			else
+				edata->value_cur = 1;
+		} else {
+			/* Alarms */
+			if ((val & (LOM_ALARM_1 << (i - 1))) == 0)
+				edata->value_cur = 0;
+			else
+				edata->value_cur = 1;
+		}
+		edata->state = ENVSYS_SVALID;
+	}
+}
+
+static void
+lom_refresh_fan(struct lom_softc *sc, envsys_data_t *edata, uint32_t i)
+{
+	uint8_t val;
+
+	/* Fan speed */
+	KASSERT(i < sc->sc_num_fan);
+
+	if (lom_read(sc, LOM_IDX_FAN1 + i, &val)) {
+		edata->state = ENVSYS_SINVALID;
+	} else {
+		edata->value_cur = (60 * sc->sc_fan_cal[i] * val) / 100;
+		if (val < sc->sc_fan_low[i])
+			edata->state = ENVSYS_SCRITICAL;
+		else
+			edata->state = ENVSYS_SVALID;
+	}
+}
+
+static void
+lom_refresh_psu(struct lom_softc *sc, envsys_data_t *edata, uint32_t i)
+{
+	uint8_t val;
+
+	/* PSU status */
+	KASSERT(i < sc->sc_num_psu);
+
+	if (lom_read(sc, LOM_IDX_PSU1 + i, &val) ||
+	    !ISSET(val, LOM_PSU_PRESENT)) {
+		edata->state = ENVSYS_SINVALID;
+	} else {
+		if (val & LOM_PSU_STANDBY) {
+			edata->value_cur = 0;
+			edata->state = ENVSYS_SVALID;
+		} else {
+			edata->value_cur = 1;
+			if (ISSET(val, LOM_PSU_INPUTA) &&
+			    ISSET(val, LOM_PSU_INPUTB) &&
+			    ISSET(val, LOM_PSU_OUTPUT))
+				edata->state = ENVSYS_SVALID;
+			else
+				edata->state = ENVSYS_SCRITICAL;
+		}
+	}
+}
+
+static void
+lom_refresh_temp(struct lom_softc *sc, envsys_data_t *edata, uint32_t i)
+{
+	uint8_t val;
+
+	/* Temperature */
+	KASSERT(i < sc->sc_num_temp);
+
+	if (lom_read(sc, LOM_IDX_TEMP1 + i, &val)) {
+		edata->state = ENVSYS_SINVALID;
+	} else {
+		edata->value_cur = val * 1000000 + 273150000;
+		edata->state = ENVSYS_SVALID;
 	}
 }
 
@@ -1142,6 +1194,7 @@ lom_sysctl_alarm(SYSCTLFN_ARGS)
 
 	for (i = 0; i < sc->sc_num_alarm; i++) {
 		if (node.sysctl_num == sc->sc_sysctl_num[i]) {
+			lom_refresh_alarm(sc, &sc->sc_alarm[i], i);
 			tmp = sc->sc_alarm[i].value_cur;
 			node.sysctl_data = &tmp;
 			error = sysctl_lookup(SYSCTLFN_CALL(&node));

@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.16 2008/05/26 15:59:29 tsutsui Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.16.26.1 2011/06/06 09:04:41 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.16 2008/05/26 15:59:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.16.26.1 2011/06/06 09:04:41 jruoho Exp $");
 
 #include "opt_ddb.h"
+#define	__INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -84,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.16 2008/05/26 15:59:29 tsutsu
 
 #define	NIRQMAPS	10
 
-const char *p6032_intrnames[NIRQMAPS] = {
+const char * const p6032_intrnames[NIRQMAPS] = {
 	"gpin 0",
 	"gpin 1",
 	"gpin 2",
@@ -166,7 +167,7 @@ struct p6032_cpuintr {
 };
 
 struct p6032_cpuintr p6032_cpuintrs[NINTRS];
-const char *p6032_cpuintrnames[NINTRS] = {
+const char * const p6032_cpuintrnames[NINTRS] = {
 	"int 0 (pci)",
 	"int 1 (isa)",
 };
@@ -174,7 +175,8 @@ const char *p6032_cpuintrnames[NINTRS] = {
 void	*algor_p6032_intr_establish(int, int (*)(void *), void *);
 void	algor_p6032_intr_disestablish(void *);
 
-int	algor_p6032_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int	algor_p6032_pci_intr_map(const struct pci_attach_args *,
+	    pci_intr_handle_t *);
 const char *algor_p6032_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *algor_p6032_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*algor_p6032_pci_intr_establish(void *, pci_intr_handle_t, int,
@@ -182,7 +184,7 @@ void	*algor_p6032_pci_intr_establish(void *, pci_intr_handle_t, int,
 void	algor_p6032_pci_intr_disestablish(void *, void *);
 void	algor_p6032_pci_conf_interrupt(void *, int, int, int, int, int *);
 
-void	algor_p6032_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	algor_p6032_iointr(int, vaddr_t, uint32_t);
 
 void
 algor_p6032_intr_init(struct p6032_config *acp)
@@ -196,9 +198,8 @@ algor_p6032_intr_init(struct p6032_config *acp)
 		evcnt_attach_dynamic(&p6032_cpuintrs[i].cintr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", p6032_cpuintrnames[i]);
 	}
-	evcnt_attach_static(&mips_int5_evcnt);
 
-	for (i = 0; i <= NIRQMAPS; i++) {
+	for (i = 0; i < __arraycount(p6032_irqmap); i++) {
 		irqmap = &p6032_irqmap[i];
 
 		evcnt_attach_dynamic(&p6032_intrtab[i].intr_count,
@@ -240,7 +241,7 @@ void
 algor_p6032_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 {
 	u_long ctrdiff[4], startctr, endctr, cps;
-	u_int8_t regc;
+	uint8_t regc;
 	int i;
 
 	/* Disable interrupts first. */
@@ -371,13 +372,12 @@ algor_p6032_intr_disestablish(void *cookie)
 }
 
 void
-algor_p6032_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
-    u_int32_t ipending)
+algor_p6032_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
 	const struct p6032_irqmap *irqmap;
 	struct algor_intrhand *ih;
 	int level;
-	u_int32_t isr;
+	uint32_t isr;
 
 	/* Check for DEBUG interrupts. */
 	if (ipending & MIPS_INT_MASK_3) {
@@ -390,8 +390,6 @@ algor_p6032_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 		printf("Debug switch ignored -- "
 		    "no debugger configured\n");
 #endif
-
-		cause &= ~MIPS_INT_MASK_3;
 	}
 
 	/*
@@ -414,11 +412,7 @@ algor_p6032_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 				(*ih->ih_func)(ih->ih_arg);
 			}
 		}
-		cause &= ~(MIPS_INT_MASK_0 << level);
 	}
-
-	/* Re-enable anything that we have processed. */
-	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 }
 
 /*****************************************************************************
@@ -426,7 +420,7 @@ algor_p6032_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
  *****************************************************************************/
 
 int
-algor_p6032_pci_intr_map(struct pci_attach_args *pa,
+algor_p6032_pci_intr_map(const struct pci_attach_args *pa,
     pci_intr_handle_t *ihp)
 {
 	static const int pciirqmap[6/*device*/][4/*pin*/] = {

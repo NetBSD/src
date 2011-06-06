@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.18 2010/12/05 12:19:09 skrll Exp $	*/
+/*	$NetBSD: harmony.c,v 1.18.2.1 2011/06/06 09:05:40 jruoho Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -92,26 +92,29 @@
 #include <hp700/gsc/harmonyreg.h>
 #include <hp700/gsc/harmonyvar.h>
 
-int     harmony_open(void *, int);
-void    harmony_close(void *);
-int     harmony_query_encoding(void *, struct audio_encoding *);
-int     harmony_set_params(void *, int, int, audio_params_t *,
+int	harmony_open(void *, int);
+void	harmony_close(void *);
+int	harmony_query_encoding(void *, struct audio_encoding *);
+int	harmony_set_params(void *, int, int, audio_params_t *,
     audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
-int     harmony_round_blocksize(void *, int, int, const audio_params_t *);
-int     harmony_commit_settings(void *);
-int     harmony_halt_output(void *);
-int     harmony_halt_input(void *);
-int     harmony_getdev(void *, struct audio_device *);
-int     harmony_set_port(void *, mixer_ctrl_t *);
-int     harmony_get_port(void *, mixer_ctrl_t *);
-int     harmony_query_devinfo(void *, mixer_devinfo_t *);
-void * harmony_allocm(void *, int, size_t, struct malloc_type *, int);
-void    harmony_freem(void *, void *, struct malloc_type *);
-size_t  harmony_round_buffersize(void *, int, size_t);
-int     harmony_get_props(void *);
-int     harmony_trigger_output(void *, void *, void *, int,
+int	harmony_round_blocksize(void *, int, int, const audio_params_t *);
+
+int	harmony_control_wait(struct harmony_softc *);
+int	harmony_commit_settings(void *);
+
+int	harmony_halt_output(void *);
+int	harmony_halt_input(void *);
+int	harmony_getdev(void *, struct audio_device *);
+int	harmony_set_port(void *, mixer_ctrl_t *);
+int	harmony_get_port(void *, mixer_ctrl_t *);
+int	harmony_query_devinfo(void *, mixer_devinfo_t *);
+void *	harmony_allocm(void *, int, size_t, struct malloc_type *, int);
+void	harmony_freem(void *, void *, struct malloc_type *);
+size_t	harmony_round_buffersize(void *, int, size_t);
+int	harmony_get_props(void *);
+int	harmony_trigger_output(void *, void *, void *, int,
     void (*)(void *), void *, const audio_params_t *);
-int     harmony_trigger_input(void *, void *, void *, int,
+int	harmony_trigger_input(void *, void *, void *, int,
     void (*)(void *), void *, const audio_params_t *);
 
 const struct audio_hw_if harmony_sa_hw_if = {
@@ -280,7 +283,7 @@ harmony_attach(device_t parent, device_t self, void *aux)
 	    offsetof(struct harmony_empty, playback[0][0]),
 	    PLAYBACK_EMPTYS * HARMONY_BUFSIZE, BUS_DMASYNC_PREWRITE);
 
-	(void) hp700_intr_establish(IPL_AUDIO, harmony_intr, sc, ga->ga_int_reg,
+	(void) hp700_intr_establish(IPL_AUDIO, harmony_intr, sc, ga->ga_ir,
 	     ga->ga_irq);
 
 	/* set defaults */
@@ -623,6 +626,24 @@ harmony_round_blocksize(void *vsc, int blk,
 }
 
 int
+harmony_control_wait(struct harmony_softc *sc)
+{
+	uint32_t reg;
+	int j = 0;
+
+	while (j < 10) {
+		/* Wait for it to come out of control mode */
+		reg = READ_REG(sc, HARMONY_CNTL);
+		if ((reg & CNTL_C) == 0)
+			return 0;
+		DELAY(50000);		/* wait 0.05 */
+		j++;
+	}
+
+	return 1;
+}
+
+int
 harmony_commit_settings(void *vsc)
 {
 	struct harmony_softc *sc;
@@ -669,22 +690,12 @@ harmony_commit_settings(void *vsc)
 	    offsetof(struct harmony_empty, playback[0][0]),
 	    PLAYBACK_EMPTYS * HARMONY_BUFSIZE, BUS_DMASYNC_PREWRITE);
 
-	for (;;) {
-		/* Wait for it to come out of control mode */
-		reg = READ_REG(sc, HARMONY_CNTL);
-		if ((reg & CNTL_C) == 0)
-			break;
-	}
+	harmony_control_wait(sc);
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_CNTL,
 	    sc->sc_cntlbits | CNTL_C);
 
-	for (;;) {
-		/* Wait for it to come out of control mode */
-		reg = READ_REG(sc, HARMONY_CNTL);
-		if ((reg & CNTL_C) == 0)
-			break;
-	}
+	harmony_control_wait(sc);
 
 	sc->sc_need_commit = 0;
 

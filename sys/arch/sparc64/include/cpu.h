@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.93 2010/12/26 12:06:57 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.93.2.1 2011/06/06 09:06:51 jruoho Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
 #define	CPU_ARCH		4	/* integer: cpu architecture version */
 #define	CPU_MAXID		5	/* number of valid machdep ids */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 /*
  * Exported definitions unique to SPARC cpu support.
  */
@@ -66,11 +66,14 @@
 #include <machine/reg.h>
 #include <machine/pte.h>
 #include <machine/intr.h>
+#if defined(_KERNEL)
 #include <machine/cpuset.h>
 #include <sparc64/sparc64/intreg.h>
+#endif
 
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
+
 /*
  * The cpu_info structure is part of a 64KB structure mapped both the kernel
  * pmap and a single locked TTE a CPUINFO_VA for that particular processor.
@@ -172,6 +175,10 @@ struct cpu_info {
 	volatile void		*ci_ddb_regs;	/* DDB regs */
 };
 
+#endif /* _KERNEL || _KMEMUSER */
+
+#ifdef _KERNEL
+
 #define CPUF_PRIMARY	1
 
 /*
@@ -263,6 +270,9 @@ typedef void (*ipi_c_call_func_t)(void*);
 void	sparc64_generic_xcall(struct cpu_info*, ipi_c_call_func_t, void*);
 
 #endif
+
+/* Provide %pc of a lwp */
+#define	LWP_PC(l)	((l)->l_md.md_tf->tf_pc)
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
@@ -377,6 +387,16 @@ void kgdb_panic(void);
 /* emul.c */
 int	fixalign(struct lwp *, struct trapframe64 *);
 int	emulinstr(vaddr_t, struct trapframe64 *);
+
+#else /* _KERNEL */
+
+/*
+ * XXX: provide some definitions for crash(8), probably can share
+ */
+#if defined(_KMEMUSER)
+#define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
+#define curlwp		curcpu()->ci_curlwp
+#endif
 
 #endif /* _KERNEL */
 #endif /* _CPU_H_ */

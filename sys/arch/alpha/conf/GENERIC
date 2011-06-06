@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.338 2010/11/23 11:13:53 hannken Exp $
+# $NetBSD: GENERIC,v 1.338.2.1 2011/06/06 09:04:43 jruoho Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.338 $"
+ident		"GENERIC-$Revision: 1.338.2.1 $"
 
 maxusers 32
 
@@ -91,7 +91,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

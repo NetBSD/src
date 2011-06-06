@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.26 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: siside.c,v 1.26.2.1 2011/06/06 09:08:27 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.26 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.26.2.1 2011/06/06 09:08:27 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,13 +36,14 @@ __KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.26 2010/11/05 18:07:24 jakllsch Exp $")
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_sis_reg.h>
 
-static void sis_chip_map(struct pciide_softc *, struct pci_attach_args *);
-static void sis_sata_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void sis_chip_map(struct pciide_softc *, const struct pci_attach_args *);
+static void sis_sata_chip_map(struct pciide_softc *,
+    const struct pci_attach_args *);
 static void sis_setup_channel(struct ata_channel *);
 static void sis96x_setup_channel(struct ata_channel *);
 
-static int  sis_hostbr_match(struct pci_attach_args *);
-static int  sis_south_match(struct pci_attach_args *);
+static int  sis_hostbr_match(const struct pci_attach_args *);
+static int  sis_south_match(const struct pci_attach_args *);
 
 static int  siside_match(device_t, cfdata_t, void *);
 static void siside_attach(device_t, device_t, void *);
@@ -177,32 +178,32 @@ static struct sis_hostbr_type {
 static struct sis_hostbr_type *sis_hostbr_type_match;
 
 static int
-sis_hostbr_match(struct pci_attach_args *pa)
+sis_hostbr_match(const struct pci_attach_args *pa)
 {
 	int i;
-	pcireg_t id, reg;
+	pcireg_t id, masqid, reg;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_SIS)
+	id = pa->pa_id;
+
+	if (PCI_VENDOR(id) != PCI_VENDOR_SIS)
 		return 0;
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_85C503) {
+	if (PCI_PRODUCT(id) == PCI_PRODUCT_SIS_85C503) {
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, SIS96x_DETECT);
 		pci_conf_write(pa->pa_pc, pa->pa_tag, SIS96x_DETECT,
 		    reg | SIS96x_DETECT_MASQ);
-		id = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ID_REG);
-		if (((PCI_PRODUCT(id) & 0xfff0) != 0x0960)
-		    && (PCI_PRODUCT(id) != 0x0018)) {
+		masqid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ID_REG);
+		if (((PCI_PRODUCT(masqid) & 0xfff0) != 0x0960)
+		    && (PCI_PRODUCT(masqid) != 0x0018)) {
 			pci_conf_write(pa->pa_pc, pa->pa_tag, SIS96x_DETECT,
 			    reg);
 		} else {
-			pa->pa_id = id;
+			id = masqid;
 		}
 	}
-		
+
 	sis_hostbr_type_match = NULL;
-	for (i = 0;
-	    i < sizeof(sis_hostbr_type) / sizeof(sis_hostbr_type[0]);
-	    i++) {
-		if (PCI_PRODUCT(pa->pa_id) == sis_hostbr_type[i].id &&
+	for (i = 0; i < __arraycount(sis_hostbr_type); i++) {
+		if (PCI_PRODUCT(id) == sis_hostbr_type[i].id &&
 		    PCI_REVISION(pa->pa_class) >= sis_hostbr_type[i].rev)
 			sis_hostbr_type_match = &sis_hostbr_type[i];
 	}
@@ -210,7 +211,7 @@ sis_hostbr_match(struct pci_attach_args *pa)
 }
 
 static int
-sis_south_match(struct pci_attach_args *pa)
+sis_south_match(const struct pci_attach_args *pa)
 {
 
 	return (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SIS &&
@@ -219,7 +220,7 @@ sis_south_match(struct pci_attach_args *pa)
 }
 
 static void
-sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+sis_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;
@@ -261,7 +262,7 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			sc->sc_wdcdev.sc_atac.atac_udma_cap =
 		    	    sis_hostbr_type_match->udma_mode;
 		}
-		aprint_normal(sis_hostbr_type_match->name);
+		aprint_normal("%s", sis_hostbr_type_match->name);
 	} else {
 		aprint_normal("5597/5598");
 		if (rev >= 0xd0) {
@@ -506,7 +507,7 @@ pio:		switch (sc->sis_type) {
 }
 
 static void
-sis_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+sis_sata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);

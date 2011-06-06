@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.91 2009/05/26 14:59:31 hannken Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.91.6.1 2011/06/06 09:09:30 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.91 2009/05/26 14:59:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.91.6.1 2011/06/06 09:09:30 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,16 +324,23 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 
 			/*
 			 * Lock the part of the user address space involved
-			 * in the transfer.  Beware vmapbuf(); it clobbers
-			 * b_data and saves it in b_saveaddr.  However,
-			 * vunmapbuf() restores it.
+			 * in the transfer.
 			 */
 			error = uvm_vslock(p->p_vmspace, bp->b_data, todo,
 			    (flags & B_READ) ?  VM_PROT_WRITE : VM_PROT_READ);
 			if (error) {
 				goto done;
 			}
-			vmapbuf(bp, todo);
+
+			/*
+			 * Beware vmapbuf(); if succesful it clobbers
+			 * b_data and saves it in b_saveaddr.
+			 * However, vunmapbuf() restores b_data.
+			 */
+			if ((error = vmapbuf(bp, todo)) != 0) {
+				uvm_vsunlock(p->p_vmspace, bp->b_data, todo);
+				goto done;
+			}
 
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 

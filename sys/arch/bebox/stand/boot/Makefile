@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2010/10/14 06:58:22 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.29.2.1 2011/06/06 09:05:11 jruoho Exp $
 
 NOMAN= # defined
 
@@ -27,7 +27,7 @@ SRCS+= pci.c prf.c sd.c siop.c tgets.c vers.c vga.c video.c vreset.c wdc.c wd.c
 SRCS+= setjmp.S
 
 CFLAGS= -Wno-main -ffreestanding
-AFLAGS= -x assembler-with-cpp -traditional-cpp
+AFLAGS= -x assembler-with-cpp
 
 CPPFLAGS= -nostdinc
 CPPFLAGS+= -I${.OBJDIR} -I${S} -I${COMMONLIBDIR}/include -I${S}/lib/libsa
@@ -74,8 +74,8 @@ powerpc::
 .endif
 
 vers.c: ${.CURDIR}/../boot/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/../boot/version \
-		"bebox" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/../boot/version "bebox" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBS}
 	${LD} -o ${PROG}.elf -N -T ${.CURDIR}/../boot/ld.script \

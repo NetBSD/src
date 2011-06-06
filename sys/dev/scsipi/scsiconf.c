@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.258 2010/06/07 01:41:39 pgoyette Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.258.2.1 2011/06/06 09:08:36 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.258 2010/06/07 01:41:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.258.2.1 2011/06/06 09:08:36 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,12 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.258 2010/06/07 01:41:39 pgoyette Exp 
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
+#include <sys/once.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/scsiio.h>
 #include <sys/queue.h>
-#include <sys/simplelock.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -81,9 +82,10 @@ struct scsi_initq {
 	TAILQ_ENTRY(scsi_initq) scsi_initq;
 };
 
-static TAILQ_HEAD(, scsi_initq) scsi_initq_head =
-    TAILQ_HEAD_INITIALIZER(scsi_initq_head);
-static struct simplelock scsibus_interlock = SIMPLELOCK_INITIALIZER;
+static ONCE_DECL(scsi_conf_ctrl);
+static TAILQ_HEAD(, scsi_initq)	scsi_initq_head;
+static kmutex_t			scsibus_qlock;
+static kcondvar_t		scsibus_qcv;
 
 static int	scsi_probe_device(struct scsibus_softc *, int, int);
 
@@ -118,6 +120,16 @@ const struct scsipi_bustype scsi_bustype = {
 	scsi_print_addr,
 	scsi_kill_pending,
 };
+
+static int
+scsibus_init(void)
+{
+
+	TAILQ_INIT(&scsi_initq_head);
+	mutex_init(&scsibus_qlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&scsibus_qcv, "scsinitq");
+	return 0;
+}
 
 int
 scsiprint(void *aux, const char *pnp)
@@ -175,6 +187,8 @@ scsibusattach(device_t parent, device_t self, void *aux)
 	if (scsipi_adapter_addref(chan->chan_adapter))
 		return;
 
+	RUN_ONCE(&scsi_conf_ctrl, scsibus_init);
+
 	/* Initialize the channel structure first */
 	chan->chan_init_cb = scsibus_config;
 	chan->chan_init_cb_arg = sc;
@@ -209,25 +223,23 @@ scsibus_config(struct scsipi_channel *chan, void *arg)
 	}
 
 	/* Make sure the devices probe in scsibus order to avoid jitter. */
-	simple_lock(&scsibus_interlock);
+	mutex_enter(&scsibus_qlock);
 	for (;;) {
 		scsi_initq = TAILQ_FIRST(&scsi_initq_head);
 		if (scsi_initq->sc_channel == chan)
 			break;
-		ltsleep(&scsi_initq_head, PRIBIO, "scsi_initq", 0,
-		    &scsibus_interlock);
+		cv_wait(&scsibus_qcv, &scsibus_qlock);
 	}
-
-	simple_unlock(&scsibus_interlock);
+	mutex_exit(&scsibus_qlock);
 
 	scsi_probe_bus(sc, -1, -1);
 
-	simple_lock(&scsibus_interlock);
+	mutex_enter(&scsibus_qlock);
 	TAILQ_REMOVE(&scsi_initq_head, scsi_initq, scsi_initq);
-	simple_unlock(&scsibus_interlock);
+	cv_broadcast(&scsibus_qcv);
+	mutex_exit(&scsibus_qlock);
 
 	free(scsi_initq, M_DEVBUF);
-	wakeup(&scsi_initq_head);
 
 	scsipi_adapter_delref(chan->chan_adapter);
 
@@ -244,11 +256,20 @@ scsibusdetach(device_t self, int flags)
 	struct scsipi_xfer *xs;
 	int error;
 
+	/*
+	 * Detach all of the periphs.
+	 */
+	if ((error = scsipi_target_detach(chan, -1, -1, flags)) != 0)
+		return error;
+
 	pmf_device_deregister(self);
 
 	/*
 	 * Process outstanding commands (which will never complete as the
 	 * controller is gone).
+	 *
+	 * XXX Surely this is redundant?  If we get this far, the
+	 * XXX peripherals have all been detached.
 	 */
 	for (ctarget = 0; ctarget < chan->chan_ntargets; ctarget++) {
 		if (ctarget == chan->chan_id)
@@ -266,16 +287,10 @@ scsibusdetach(device_t self, int flags)
 	}
 
 	/*
-	 * Detach all of the periphs.
-	 */
-	error = scsipi_target_detach(chan, -1, -1, flags);
-
-	/*
 	 * Now shut down the channel.
-	 * XXX only if no errors ?
 	 */
 	scsipi_channel_shutdown(chan);
-	return (error);
+	return 0;
 }
 
 /*
@@ -604,9 +619,11 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "FUJITSU ", "M2624S-512      ", ""},     PQUIRK_CAP_SYNC},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "SX336704LC"   , ""}, PQUIRK_CAP_SYNC | PQUIRK_CAP_WIDE16},
+	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "SX173404LC",       ""},     PQUIRK_CAP_SYNC | PQUIRK_CAP_WIDE16},
 
 	{{T_DIRECT, T_REMOV,
-	 "IOMEGA", "ZIP 100",		 "J.03"}, PQUIRK_NOLUNS},
+	 "IOMEGA", "ZIP 100",		 "J.03"}, PQUIRK_NOLUNS|PQUIRK_NOSYNC},
 	{{T_DIRECT, T_REMOV,
 	 "INSITE", "I325VM",             ""},     PQUIRK_NOLUNS},
 

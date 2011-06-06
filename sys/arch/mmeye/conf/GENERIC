@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.103 2010/11/23 11:14:02 hannken Exp $
+# $NetBSD: GENERIC,v 1.103.2.1 2011/06/06 09:06:13 jruoho Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.103 $"
+#ident 		"GENERIC-$Revision: 1.103.2.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -30,10 +30,14 @@ maxusers	16		# estimated number of users
 options		SH3
 options 	SH7708R		# 100MHz
 options 	MMEYE
-options 	MMEYE_NEW_INT
+options 	MMEYE_NEW_INT=0xb000000e
 #options 	MMEYE_NO_CACHE
 options 	PCLOCK=33330000		# 33.33MHz
 options 	INITTODR_ALWAYS_USE_RTC
+
+options 	IOM_RAM_SIZE=0x01000000	# 16MB
+options 	IOM_RAM_BEGIN=0x0c000000
+makeoptions	DEFTEXTADDR="0x8c010000"
 
 # Standard system options
 #options 	INSECURE	# disable kernel security levels
@@ -99,7 +103,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -148,11 +153,7 @@ options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
-#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
-options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -167,12 +168,12 @@ shb*	at mainbus?
 
 rtc*	at shb?
 
-com0	at mainbus?
-com1	at mainbus?
+com0	at mainbus? addr1 0xa4000000 irq1 11
+com1	at mainbus? addr1 0xa4000008 irq1 12
 
 # SH PCMCIA controllers
-mmeyepcmcia0	at mainbus?
-mmeyepcmcia1	at mainbus?
+mmeyepcmcia0 at mainbus? addr1 0xb000000a addr2 0xb8000000 irq1 3 irq2 10
+mmeyepcmcia1 at mainbus? addr1 0xb000000c addr2 0xb9000000 irq1 4 irq2 9
 
 # PCMCIA bus support
 pcmcia*	at mmeyepcmcia? controller ? socket ?

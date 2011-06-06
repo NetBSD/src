@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.6 2010/10/07 12:40:34 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.6.2.1 2011/06/06 09:08:36 jruoho Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.6 2010/10/07 12:40:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.6.2.1 2011/06/06 09:08:36 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -346,7 +346,9 @@ sdmmc_card_attach(struct sdmmc_softc *sc)
 	 */
 	error = sdmmc_enable(sc);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "couldn't enable card\n");
+		if (!ISSET(sc->sc_caps, SMC_CAPS_POLL_CARD_DET)) {
+			aprint_error_dev(sc->sc_dev, "couldn't enable card\n");
+		}
 		goto err;
 	}
 
@@ -530,6 +532,7 @@ sdmmc_disable(struct sdmmc_softc *sc)
 	(void)sdmmc_chip_bus_width(sc->sc_sct, sc->sc_sch, 1);
 	(void)sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, SDMMC_SDCLK_OFF);
 	(void)sdmmc_chip_bus_power(sc->sc_sct, sc->sc_sch, 0);
+	sc->sc_busclk = sc->sc_clkmax;
 }
 
 /*
@@ -575,6 +578,7 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 	sf->cis.manufacturer = SDMMC_VENDOR_INVALID;
 	sf->cis.product = SDMMC_PRODUCT_INVALID;
 	sf->cis.function = SDMMC_FUNCTION_INVALID;
+	sf->width = 1;
 
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
 	    ISSET(sc->sc_caps, SMC_CAPS_DMA) &&

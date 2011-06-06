@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap.h,v 1.9 2009/09/13 18:45:11 pooka Exp $	*/
+/*	$NetBSD: l2cap.h,v 1.9.6.1 2011/06/06 09:09:54 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap.h,v 1.9 2009/09/13 18:45:11 pooka Exp $
+ * $Id: l2cap.h,v 1.9.6.1 2011/06/06 09:09:54 jruoho Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/l2cap.h,v 1.4 2005/08/31 18:13:23 emax Exp $
  */
 
@@ -166,7 +166,8 @@
 /* L2CAP Information request type codes */
 #define L2CAP_CONNLESS_MTU		0x0001
 #define L2CAP_EXTENDED_FEATURES		0x0002
-/* 0x0003 - 0xffff - reserved for future use */
+#define L2CAP_FIXED_CHANNELS		0x0003
+/* 0x0004 - 0xffff - reserved for future use */
 
 /* L2CAP Information response codes */
 #define L2CAP_NOT_SUPPORTED		0x0001
@@ -320,17 +321,9 @@ typedef struct {
 	uint16_t	type;   /* requested information type */
 	uint16_t	result; /* 0x00 - success */
 /*	uint8_t	info[]  -- info data (depends on type)
- *
- * L2CAP_CONNLESS_MTU - 2 bytes connectionless MTU
  */
 } __packed l2cap_info_rsp_cp;
 
-typedef union {
-	/* L2CAP_CONNLESS_MTU */
-	struct {
-		uint16_t	mtu;
-	} __packed mtu;
-} l2cap_info_rsp_data_t;
 
 /**************************************************************************
  **************************************************************************

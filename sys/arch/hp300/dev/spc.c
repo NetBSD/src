@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.7 2008/05/14 13:29:28 tsutsui Exp $ */
+/* $NetBSD: spc.c,v 1.7.26.1 2011/06/06 09:05:36 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -25,10 +25,11 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_useleds.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.7 2008/05/14 13:29:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.7.26.1 2011/06/06 09:05:36 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.7 2008/05/14 13:29:28 tsutsui Exp $");
 #include <hp300/dev/hp98265reg.h>
 #include <hp300/dev/dmareg.h>
 #include <hp300/dev/dmavar.h>
+
+#ifdef USELEDS
+#include <hp300/hp300/leds.h>
+#endif
 
 static int	spc_dio_match(device_t, cfdata_t, void *);
 static void	spc_dio_attach(device_t, device_t, void *);
@@ -227,6 +232,9 @@ spc_dio_dmago(void *arg)
 	bus_space_write_1(iot, iohspc, SCMD, cmd);
 
 	sc->sc_flags |= SPC_DOINGDMA;
+#ifdef USELEDS
+	ledcontrol(LED_DISK, 0, 0);
+#endif
 }
 
 static void
@@ -270,6 +278,9 @@ spc_dio_dmadone(struct spc_softc *sc)
 	sc->sc_dleft -= trans;
 
 	sc->sc_flags &= ~SPC_DOINGDMA;
+#ifdef USELEDS
+	ledcontrol(0, LED_DISK, 0);
+#endif
 }
 
 static void
@@ -286,4 +297,7 @@ spc_dio_dmastop(void *arg)
 
 	dsc->sc_dflags &= ~SCSI_HAVEDMA;
 	sc->sc_flags &= ~SPC_DOINGDMA;
+#ifdef USELEDS
+	ledcontrol(0, LED_DISK, 0);
+#endif
 }

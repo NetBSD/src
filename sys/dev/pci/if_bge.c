@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.190 2011/01/09 13:01:03 jruoho Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.190.2.1 2011/06/06 09:08:11 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.190 2011/01/09 13:01:03 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.190.2.1 2011/06/06 09:08:11 jruoho Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -604,6 +604,18 @@ static const struct bge_product {
 	{ PCI_VENDOR_3COM,
 	  PCI_PRODUCT_3COM_3C996,
 	  "3Com 3c996 Gigabit Ethernet",
+	  },
+	{ PCI_VENDOR_FUJITSU4,
+	  PCI_PRODUCT_FUJITSU4_PW008GE4,
+	  "Fujitsu PW008GE4 Gigabit Ethernet",
+	  },
+	{ PCI_VENDOR_FUJITSU4,
+	  PCI_PRODUCT_FUJITSU4_PW008GE5,
+	  "Fujitsu PW008GE5 Gigabit Ethernet",
+	  },
+	{ PCI_VENDOR_FUJITSU4,
+	  PCI_PRODUCT_FUJITSU4_PP250_450_LAN,
+	  "Fujitsu Primepower 250/450 Gigabit Ethernet",
 	  },
 	{ 0,
 	  0,
@@ -1866,7 +1878,7 @@ bge_chipinit(struct bge_softc *sc)
 	 */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS |
 	    BGE_MODECTL_MAC_ATTN_INTR | BGE_MODECTL_HOST_SEND_BDS |
-	    BGE_MODECTL_TX_NO_PHDR_CSUM | BGE_MODECTL_RX_NO_PHDR_CSUM);
+	    BGE_MODECTL_TX_NO_PHDR_CSUM);
 
 	/*
 	 * BCM5701 B5 have a bug causing data corruption when using
@@ -2959,9 +2971,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 		    sc->bge_flags |= BGE_PHY_FIBER_TBI;
 	}
 
-	/* set phyflags before mii_attach() */
+	/* set phyflags and chipid before mii_attach() */
 	dict = device_properties(self);
 	prop_dictionary_set_uint32(dict, "phyflags", sc->bge_flags);
+	prop_dictionary_set_uint32(dict, "chipid", sc->bge_chipid);
 
 	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,
@@ -3393,6 +3406,11 @@ bge_rxeof(struct bge_softc *sc)
 			stdcnt++;
 			dmamap = sc->bge_cdata.bge_rx_std_map[rxidx];
 			sc->bge_cdata.bge_rx_std_map[rxidx] = 0;
+			if (dmamap == NULL) {
+				ifp->if_ierrors++;
+				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
+				continue;
+			}
 			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0,
 			    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->bge_dmatag, dmamap);
@@ -3447,7 +3465,7 @@ bge_rxeof(struct bge_softc *sc)
 			    cur_rx->bge_tcp_udp_csum;
 			m->m_pkthdr.csum_flags |=
 			    (M_CSUM_TCPv4|M_CSUM_UDPv4|
-			     M_CSUM_DATA|M_CSUM_NO_PSEUDOHDR);
+			     M_CSUM_DATA);
 		}
 
 		/*

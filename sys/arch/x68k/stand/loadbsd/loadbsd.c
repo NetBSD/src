@@ -1,7 +1,7 @@
 /*
  *	Load and boot NetBSD kernel on Human68k
  *
- *	written by Yasha (ITOH Yasufumi)
+ *	written by ITOH Yasufumi
  *	public domain
  *
  *	loadbsd [-hvV] [-abDs] [-r root_device] netbsd
@@ -19,13 +19,13 @@
  *		-q	quiet boot
  *		-v	verbose boot (also turn on verbosity of loadbsd)
  *
- *	$NetBSD: loadbsd.c,v 1.13 2009/03/18 10:22:38 cegger Exp $
+ *	$NetBSD: loadbsd.c,v 1.13.6.1 2011/06/06 09:07:04 jruoho Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.13 2009/03/18 10:22:38 cegger Exp $");
-#define VERSION	"$Revision: 1.13 $ $Date: 2009/03/18 10:22:38 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.13.6.1 2011/06/06 09:07:04 jruoho Exp $");
+#define VERSION	"$Revision: 1.13.6.1 $ $Date: 2011/06/06 09:07:04 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>

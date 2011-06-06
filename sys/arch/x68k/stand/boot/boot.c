@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.15 2010/08/25 16:37:02 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.15.2.1 2011/06/06 09:07:02 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -275,8 +275,6 @@ bootmenu(void)
 
 extern const char bootprog_rev[];
 extern const char bootprog_name[];
-extern const char bootprog_date[];
-extern const char bootprog_maker[];
 
 /*
  * Arguments from the boot block:
@@ -321,8 +319,6 @@ bootmain(int bootdev)
 	default:
 		printf("Warning: unknown boot device: %x\n", bootdev);
 	}
-	print_title("%s, Revision %s\n\t(%s, %s)",
-		    bootprog_name, bootprog_rev,
-		    bootprog_maker, bootprog_date);
+	print_title("%s, Revision %s\n", bootprog_name, bootprog_rev);
 	bootmenu();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.16 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.16.6.1 2011/06/06 09:05:03 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -43,6 +43,7 @@
 /* end of mangling */
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
+#define	DDB_EXPR_FMT	"l"		/* expression is long */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef trapframe_t db_regs_t;

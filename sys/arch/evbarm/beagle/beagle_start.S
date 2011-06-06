@@ -84,16 +84,15 @@
 
 #include "opt_omap.h"
 #include "opt_com.h"
-#include "assym.h"
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#undef DOMAIN_CLIENT	/* assym.h defines as 1, but pte.h defines as 0x01 */
-#include <arm/arm32/pmap.h>
+#include "assym.h"
+
 #include <arm/omap/omap2_obioreg.h>
 #include <evbarm/beagle/beagle.h>  
 
-RCSID("$NetBSD: beagle_start.S,v 1.4 2010/06/16 22:06:54 jmcneill Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.4.2.1 2011/06/06 09:05:23 jruoho Exp $")
 
 #define Invalidate_I_cache(reg) \
 	mcr	p15, 0, reg, c7, c5, 0	/* Invalidate Entire I cache */
@@ -271,22 +270,22 @@ mmu_init_table:
 	/* Map KERNEL_BASE VA to SDRAM PA, write-back cacheable */
 	MMU_INIT(KERNEL_BASE, KERNEL_BASE,
 		(MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_AP(AP7_KRW) | L1_S_B | L1_S_C)
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C)
 
 	/* Map first 1MB of L4 CORE (so console will work) */
 	MMU_INIT(OMAP3530_L4_CORE_VBASE, OMAP3530_L4_CORE_BASE,
 		1,
-		L1_S_PROTO | L1_S_AP(AP7_KRW))
+		L1_S_PROTO | L1_S_APv7_KRW)
 
 	/* Map first(all) 1MB of L4 PERIPHERAL (so console will work) */
 	MMU_INIT(OMAP3530_L4_PERIPHERAL_VBASE, OMAP3530_L4_PERIPHERAL_BASE,
 		1,
-		L1_S_PROTO | L1_S_AP(AP7_KRW))
+		L1_S_PROTO | L1_S_APv7_KRW)
 
 	/* Map all 256KB of L4 WAKEUP (so console will work) */
 	MMU_INIT(OMAP3530_L4_WAKEUP_VBASE, OMAP3530_L4_WAKEUP_BASE,
 		1,
-		L1_S_PROTO | L1_S_AP(AP7_KRW))
+		L1_S_PROTO | L1_S_APv7_KRW)
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)

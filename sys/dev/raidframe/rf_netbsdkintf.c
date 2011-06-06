@@ -1,4 +1,5 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.280 2011/01/07 19:52:18 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.280.2.1 2011/06/06 09:08:33 jruoho Exp $	*/
+
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,6 +30,7 @@
  */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *      The Regents of the University of California.  All rights reserved.
  *
@@ -45,46 +47,6 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: cd.c 1.6 90/11/28$
- *
- *      @(#)cd.c        8.2 (Berkeley) 11/16/93
- */
-
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -139,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.280 2011/01/07 19:52:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.280.2.1 2011/06/06 09:08:33 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -200,7 +162,9 @@ int     rf_kdebug_level = 0;
 static RF_Raid_t **raidPtrs;	/* global raid device descriptors */
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
-RF_DECLARE_STATIC_MUTEX(rf_sparet_wait_mutex)
+static rf_declare_mutex2(rf_sparet_wait_mutex);
+static rf_declare_cond2(rf_sparet_wait_cv);
+static rf_declare_cond2(rf_sparet_resp_cv);
 
 static RF_SparetWait_t *rf_sparet_wait_queue;	/* requests to install a
 						 * spare table */
@@ -333,7 +297,7 @@ void rf_buildroothack(RF_ConfigSet_t *);
 RF_AutoConfig_t *rf_find_raid_components(void);
 RF_ConfigSet_t *rf_create_auto_sets(RF_AutoConfig_t *);
 static int rf_does_it_fit(RF_ConfigSet_t *,RF_AutoConfig_t *);
-static int rf_reasonable_label(RF_ComponentLabel_t *);
+static int rf_reasonable_label(RF_ComponentLabel_t *, uint64_t);
 void rf_create_configuration(RF_AutoConfig_t *,RF_Config_t *, RF_Raid_t *);
 int rf_set_autoconfig(RF_Raid_t *, int);
 int rf_set_rootpartition(RF_Raid_t *, int);
@@ -377,7 +341,9 @@ raidattach(int num)
 	}
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
-	rf_mutex_init(&rf_sparet_wait_mutex);
+	rf_init_mutex2(rf_sparet_wait_mutex, IPL_VM);
+	rf_init_cond2(rf_sparet_wait_cv, "sparetw");
+	rf_init_cond2(rf_sparet_resp_cv, "rfgst");
 
 	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
 #endif
@@ -867,8 +833,6 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 void
 raidstrategy(struct buf *bp)
 {
-	int s;
-
 	unsigned int raidID = raidunit(bp->b_dev);
 	RF_Raid_t *raidPtr;
 	struct raid_softc *rs = &raid_softc[raidID];
@@ -918,7 +882,8 @@ raidstrategy(struct buf *bp)
 			goto done;
 		}
 	}
-	s = splbio();
+
+	rf_lock_mutex2(raidPtr->iodone_lock);
 
 	bp->b_resid = 0;
 
@@ -926,9 +891,9 @@ raidstrategy(struct buf *bp)
 	bufq_put(rs->buf_queue, bp);
 
 	/* scheduled the IO to happen at the next convenient time */
-	wakeup(&(raidPtrs[raidID]->iodone));
+	rf_signal_cond2(raidPtr->iodone_cv);
+	rf_unlock_mutex2(raidPtr->iodone_lock);
 
-	splx(s);
 	return;
 
 done:
@@ -996,6 +961,8 @@ raid_detach_unlocked(struct raid_softc *rs)
 	dkwedge_delall(&rs->sc_dkdev);
 	disk_detach(&rs->sc_dkdev);
 	disk_destroy(&rs->sc_dkdev);
+
+	aprint_normal_dev(rs->sc_dev, "detached\n");
 
 	return 0;
 }
@@ -1337,8 +1304,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				ci_label->serial_number = 
 				    raidPtr->serial_number;
 				ci_label->row = 0; /* we dont' pretend to support more */
-				ci_label->partitionSize =
-				    diskPtr->partitionSize;
+				rf_component_label_set_partitionsize(ci_label,
+				    diskPtr->partitionSize);
 				ci_label->column = column;
 				raidflush_component_label(raidPtr, column);
 			}
@@ -1425,7 +1392,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return(EINVAL);
 		}
 
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		if ((raidPtr->Disks[column].status == rf_ds_optimal) &&
 		    (raidPtr->numFailures > 0)) {
 			/* XXX 0 above shouldn't be constant!!! */
@@ -1436,7 +1403,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			       raidPtr->raidid);
 			printf("raid%d:     Col: %d   Too many failures.\n",
 			       raidPtr->raidid, column);
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[column].status ==
@@ -1445,14 +1412,14 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			       raidPtr->raidid);
 			printf("raid%d:    Col: %d   Reconstruction already occuring!\n", raidPtr->raidid, column);
 
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[column].status == rf_ds_spared) {
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		RF_Malloc(rrcopy, sizeof(*rrcopy), (struct rf_recon_req *));
 		if (rrcopy == NULL)
@@ -1565,26 +1532,26 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return (EINVAL);
 
 
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		if (raidPtr->status == rf_rs_reconstructing) {
 			/* you can't fail a disk while we're reconstructing! */
 			/* XXX wrong for RAID6 */
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if ((raidPtr->Disks[rr->col].status ==
 		     rf_ds_optimal) && (raidPtr->numFailures > 0)) {
 			/* some other component has failed.  Let's not make
 			   things worse. XXX wrong for RAID6 */
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[rr->col].status == rf_ds_spared) {
 			/* Can't fail a spared disk! */
-			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			rf_unlock_mutex2(raidPtr->mutex);
 			return (EINVAL);
 		}
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		/* make a copy of the recon request so that we don't rely on
 		 * the user's buffer */
@@ -1727,12 +1694,12 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * character device) for delivering the table     -- XXX */
 #if 0
 	case RAIDFRAME_SPARET_WAIT:
-		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_lock_mutex2(rf_sparet_wait_mutex);
 		while (!rf_sparet_wait_queue)
-			mpsleep(&rf_sparet_wait_queue, (PZERO + 1) | PCATCH, "sparet wait", 0, (void *) simple_lock_addr(rf_sparet_wait_mutex), MS_LOCK_SIMPLE);
+			rf_wait_cond2(rf_sparet_wait_cv, rf_sparet_wait_mutex);
 		waitreq = rf_sparet_wait_queue;
 		rf_sparet_wait_queue = rf_sparet_wait_queue->next;
-		RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_unlock_mutex2(rf_sparet_wait_mutex);
 
 		/* structure assignment */
 		*((RF_SparetWait_t *) data) = *waitreq;
@@ -1745,11 +1712,11 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case RAIDFRAME_ABORT_SPARET_WAIT:
 		RF_Malloc(waitreq, sizeof(*waitreq), (RF_SparetWait_t *));
 		waitreq->fcol = -1;
-		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_lock_mutex2(rf_sparet_wait_mutex);
 		waitreq->next = rf_sparet_wait_queue;
 		rf_sparet_wait_queue = waitreq;
-		RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
-		wakeup(&rf_sparet_wait_queue);
+		rf_broadcast_conf2(rf_sparet_wait_cv);
+		rf_unlock_mutex2(rf_sparet_wait_mutex);
 		return (0);
 
 		/* used by the spare table daemon to deliver a spare table
@@ -1763,11 +1730,11 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * table installation is passed in the "fcol" field */
 		RF_Malloc(waitreq, sizeof(*waitreq), (RF_SparetWait_t *));
 		waitreq->fcol = retcode;
-		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_lock_mutex2(rf_sparet_wait_mutex);
 		waitreq->next = rf_sparet_resp_queue;
 		rf_sparet_resp_queue = waitreq;
-		wakeup(&rf_sparet_resp_queue);
-		RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
+		rf_broadcast_cond2(rf_sparet_resp_cv);
+		rf_unlock_mutex2(rf_sparet_wait_mutex);
 
 		return (retcode);
 #endif
@@ -1962,19 +1929,18 @@ rf_GetSpareTableFromDaemon(RF_SparetWait_t *req)
 {
 	int     retcode;
 
-	RF_LOCK_MUTEX(rf_sparet_wait_mutex);
+	rf_lock_mutex2(rf_sparet_wait_mutex);
 	req->next = rf_sparet_wait_queue;
 	rf_sparet_wait_queue = req;
-	wakeup(&rf_sparet_wait_queue);
+	rf_broadcast_cond2(rf_sparet_wait_cv);
 
 	/* mpsleep unlocks the mutex */
 	while (!rf_sparet_resp_queue) {
-		tsleep(&rf_sparet_resp_queue, PRIBIO,
-		    "raidframe getsparetable", 0);
+		rf_wait_cond2(rf_sparet_resp_cv, rf_sparet_wait_mutex);
 	}
 	req = rf_sparet_resp_queue;
 	rf_sparet_resp_queue = req->next;
-	RF_UNLOCK_MUTEX(rf_sparet_wait_mutex);
+	rf_unlock_mutex2(rf_sparet_wait_mutex);
 
 	retcode = req->fcol;
 	RF_Free(req, sizeof(*req));	/* this is not the same req as we
@@ -2008,18 +1974,18 @@ raidstart(RF_Raid_t *raidPtr)
 	rs = &raid_softc[unit];
 
 	/* quick check to see if anything has died recently */
-	RF_LOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
 	if (raidPtr->numNewFailures > 0) {
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 		rf_update_component_labels(raidPtr,
 					   RF_NORMAL_COMPONENT_UPDATE);
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		raidPtr->numNewFailures--;
 	}
 
 	/* Check to see if we're at the limit... */
 	while (raidPtr->openings > 0) {
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		/* get the next item, if any, from the queue */
 		if ((bp = bufq_get(rs->buf_queue)) == NULL) {
@@ -2060,7 +2026,7 @@ raidstart(RF_Raid_t *raidPtr)
 			bp->b_error = ENOSPC;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
-			RF_LOCK_MUTEX(raidPtr->mutex);
+			rf_lock_mutex2(raidPtr->mutex);
 			continue;
 		}
 		/*
@@ -2071,16 +2037,16 @@ raidstart(RF_Raid_t *raidPtr)
 			bp->b_error = EINVAL;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
-			RF_LOCK_MUTEX(raidPtr->mutex);
+			rf_lock_mutex2(raidPtr->mutex);
 			continue;
 
 		}
 		db1_printf(("Calling DoAccess..\n"));
 
 
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		raidPtr->openings--;
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		/*
 		 * Everything is async.
@@ -2107,9 +2073,9 @@ raidstart(RF_Raid_t *raidPtr)
 			/* continue loop */
 		}
 
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 	}
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_unlock_mutex2(raidPtr->mutex);
 }
 
 
@@ -2198,23 +2164,24 @@ KernelWakeupFunc(struct buf *bp)
 {
 	RF_DiskQueueData_t *req = NULL;
 	RF_DiskQueue_t *queue;
-	int s;
 
-	s = splbio();
 	db1_printf(("recovering the request queue:\n"));
+
 	req = bp->b_private;
 
 	queue = (RF_DiskQueue_t *) req->queue;
+
+	rf_lock_mutex2(queue->raidPtr->iodone_lock);
 
 #if RF_ACC_TRACE > 0
 	if (req->tracerec) {
 		RF_ETIMER_STOP(req->tracerec->timer);
 		RF_ETIMER_EVAL(req->tracerec->timer);
-		RF_LOCK_MUTEX(rf_tracing_mutex);
+		rf_lock_mutex2(rf_tracing_mutex);
 		req->tracerec->diskwait_us += RF_ETIMER_VAL_US(req->tracerec->timer);
 		req->tracerec->phys_io_us += RF_ETIMER_VAL_US(req->tracerec->timer);
 		req->tracerec->num_phys_ios++;
-		RF_UNLOCK_MUTEX(rf_tracing_mutex);
+		rf_unlock_mutex2(rf_tracing_mutex);
 	}
 #endif
 
@@ -2247,22 +2214,16 @@ KernelWakeupFunc(struct buf *bp)
 	}
 
 	/* Fill in the error value */
-
 	req->error = bp->b_error;
-
-	simple_lock(&queue->raidPtr->iodone_lock);
 
 	/* Drop this one on the "finished" queue... */
 	TAILQ_INSERT_TAIL(&(queue->raidPtr->iodone), req, iodone_entries);
 
 	/* Let the raidio thread know there is work to be done. */
-	wakeup(&(queue->raidPtr->iodone));
+	rf_signal_cond2(queue->raidPtr->iodone_cv);
 
-	simple_unlock(&queue->raidPtr->iodone_lock);
-
-	splx(s);
+	rf_unlock_mutex2(queue->raidPtr->iodone_lock);
 }
-
 
 
 /*
@@ -2986,9 +2947,8 @@ oomem:
 
 	if (!raidread_component_label(secsize, dev, vp, clabel)) {
 		/* Got the label.  Does it look reasonable? */
-		if (rf_reasonable_label(clabel) && 
-		    (clabel->partitionSize <= size)) {
-			rf_fix_old_label_size(clabel, numsecs);
+		if (rf_reasonable_label(clabel, numsecs) && 
+		    (rf_component_label_partitionsize(clabel) <= size)) {
 #ifdef DEBUG
 			printf("Component on: %s: %llu\n",
 				cname, (unsigned long long)size);
@@ -3034,8 +2994,6 @@ rf_find_raid_components(void)
 	RF_AutoConfig_t *ac_list;
 	uint64_t numsecs;
 	unsigned secsize;
-
-	RF_ASSERT(raidPtr->bytesPerSector < rf_component_info_offset());
 
 	/* initialize the AutoConfig list */
 	ac_list = NULL;
@@ -3175,7 +3133,7 @@ rf_find_raid_components(void)
 
 
 static int
-rf_reasonable_label(RF_ComponentLabel_t *clabel)
+rf_reasonable_label(RF_ComponentLabel_t *clabel, uint64_t numsecs)
 {
 
 	if (((clabel->version==RF_COMPONENT_LABEL_VERSION_1) ||
@@ -3189,8 +3147,17 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel)
 	    clabel->row < clabel->num_rows &&
 	    clabel->column < clabel->num_columns &&
 	    clabel->blockSize > 0 &&
-	    clabel->numBlocks > 0) {
-		/* label looks reasonable enough... */
+	    /*
+	     * numBlocksHi may contain garbage, but it is ok since
+	     * the type is unsigned.  If it is really garbage,
+	     * rf_fix_old_label_size() will fix it.
+	     */
+	    rf_component_label_numblocks(clabel) > 0) {
+		/*
+		 * label looks reasonable enough...
+		 * let's make sure it has no old garbage.
+		 */
+		rf_fix_old_label_size(clabel, numsecs);
 		return(1);
 	}
 	return(0);
@@ -3202,15 +3169,28 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel)
  * the newer numBlocksHi region, and this causes lossage.  Since those
  * disks will also have numsecs set to less than 32 bits of sectors,
  * we can determine when this corruption has occured, and fix it.
+ *
+ * The exact same problem, with the same unknown reason, happens to
+ * the partitionSizeHi member as well.
  */
 static void
 rf_fix_old_label_size(RF_ComponentLabel_t *clabel, uint64_t numsecs)
 {
 
-	if (clabel->numBlocksHi && numsecs < ((uint64_t)1 << 32)) {
-		printf("WARNING: total sectors < 32 bits, yet numBlocksHi set\n"
-		       "WARNING: resetting numBlocksHi to zero.\n");
-		clabel->numBlocksHi = 0;
+	if (numsecs < ((uint64_t)1 << 32)) {
+		if (clabel->numBlocksHi) {
+			printf("WARNING: total sectors < 32 bits, yet "
+			       "numBlocksHi set\n"
+			       "WARNING: resetting numBlocksHi to zero.\n");
+			clabel->numBlocksHi = 0;
+		}
+
+		if (clabel->partitionSizeHi) {
+			printf("WARNING: total sectors < 32 bits, yet "
+			       "partitionSizeHi set\n"
+			       "WARNING: resetting partitionSizeHi to zero.\n");
+			clabel->partitionSizeHi = 0;
+		}
 	}
 }
 
@@ -3219,9 +3199,9 @@ rf_fix_old_label_size(RF_ComponentLabel_t *clabel, uint64_t numsecs)
 void
 rf_print_component_label(RF_ComponentLabel_t *clabel)
 {
-	uint64_t numBlocks = clabel->numBlocks;
+	uint64_t numBlocks;
 
-	numBlocks |= (uint64_t)clabel->numBlocksHi << 32;
+	numBlocks = rf_component_label_numblocks(clabel);
 
 	printf("   Row: %d Column: %d Num Rows: %d Num Columns: %d\n",
 	       clabel->row, clabel->column,
@@ -3354,8 +3334,8 @@ rf_does_it_fit(RF_ConfigSet_t *cset, RF_AutoConfig_t *ac)
 	    (clabel1->parityConfig == clabel2->parityConfig) &&
 	    (clabel1->maxOutstanding == clabel2->maxOutstanding) &&
 	    (clabel1->blockSize == clabel2->blockSize) &&
-	    (clabel1->numBlocks == clabel2->numBlocks) &&
-	    (clabel1->numBlocksHi == clabel2->numBlocksHi) &&
+	    rf_component_label_numblocks(clabel1) ==
+	    rf_component_label_numblocks(clabel2) &&
 	    (clabel1->autoconfigure == clabel2->autoconfigure) &&
 	    (clabel1->root_partition == clabel2->root_partition) &&
 	    (clabel1->last_unit == clabel2->last_unit) &&
@@ -3619,8 +3599,7 @@ raid_init_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
 	clabel->SUsPerRU = raidPtr->Layout.SUsPerRU;
 
 	clabel->blockSize = raidPtr->bytesPerSector;
-	clabel->numBlocks = raidPtr->sectorsPerDisk;
-	clabel->numBlocksHi = raidPtr->sectorsPerDisk >> 32;
+	rf_component_label_set_numblocks(clabel, raidPtr->sectorsPerDisk);
 
 	/* XXX not portable */
 	clabel->parityConfig = raidPtr->Layout.map->parityConfig;

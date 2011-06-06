@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.22 2010/12/05 12:19:09 skrll Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.22.2.1 2011/06/06 09:05:40 jruoho Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.22 2010/12/05 12:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.22.2.1 2011/06/06 09:05:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ struct ie_gsc_softc {
 int	ie_gsc_probe(device_t, cfdata_t, void *);
 void	ie_gsc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ie_gsc, sizeof(struct ie_gsc_softc),
+CFATTACH_DECL_NEW(ie_gsc, sizeof(struct ie_gsc_softc),
     ie_gsc_probe, ie_gsc_attach, NULL, NULL);
 
 static int ie_gsc_media[] = {
@@ -340,7 +340,7 @@ i82596_probe(struct ie_softc *sc)
 	/* Make sure that BUSY got cleared. */
 	if (sc->ie_bus_read16(sc, IE_ISCP_BUSY(sc->iscp))) {
 #if I82596_DEBUG
-		printf ("%s: ISCP set failed\n", sc->sc_dev.dv_xname);
+		printf ("%s: ISCP set failed\n", device_xname(sc->sc_dev));
 #endif
 		return 0;
 	}
@@ -360,7 +360,7 @@ i82596_probe(struct ie_softc *sc)
 	printf (": test %x:%x\n%s",
 		*((volatile int32_t *)((char *)sc->sc_maddr + 0)),
 		*((volatile int32_t *)((char *)sc->sc_maddr + 4)),
-		sc->sc_dev.dv_xname);
+		device_xname(sc->sc_dev));
 #endif
 	return 1;
 }
@@ -407,6 +407,7 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Set up some initial glue. */
+	sc->sc_dev = self;
 	gsc->iot = ga->ga_iot;
 	gsc->iemt = ga->ga_dmatag;
 	sc->bt = ga->ga_iot;
@@ -471,7 +472,7 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 		(u_int)sc->sc_dmamap->dm_segs[0].ds_addr,
 		sc->sc_maddr,
 		sc->sc_msize,
-		sc->sc_dev.dv_xname);
+		device_xname(self));
 	sc->sc_debug = IED_ALL;
 #endif
 
@@ -559,5 +560,5 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 		      "i82596DX",
 		      myaddr, ie_gsc_media, IE_NMEDIA, ie_gsc_media[0]);
 	gsc->sc_ih = hp700_intr_establish(IPL_NET, i82586_intr, sc,
-	    ga->ga_int_reg, ga->ga_irq);
+	    ga->ga_ir, ga->ga_irq);
 }

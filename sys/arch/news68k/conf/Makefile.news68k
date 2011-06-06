@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news68k,v 1.19 2008/03/01 14:00:30 joerg Exp $
+#	$NetBSD: Makefile.news68k,v 1.19.32.1 2011/06/06 09:06:18 jruoho Exp $
 #
 # Makefile for NetBSD
 #
@@ -36,7 +36,7 @@ GENASSYM_CONF=	${NEWS68K}/news68k/genassym.cf
 ##
 CPPFLAGS+=	-Dnews68k
 CFLAGS+=	-msoft-float
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+AFLAGS+=	-x assembler-with-cpp
 
 ##
 ## (3) libkern and compat

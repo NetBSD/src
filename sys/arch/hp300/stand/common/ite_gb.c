@@ -1,6 +1,7 @@
-/*	$NetBSD: ite_gb.c,v 1.6 2006/01/28 12:00:56 tsutsui Exp $	*/
+/*	$NetBSD: ite_gb.c,v 1.6.104.1 2011/06/06 09:05:38 jruoho Exp $	*/
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,57 +37,16 @@
  *
  *	@(#)ite_gb.c	8.1 (Berkeley) 6/10/93
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: ite_gb.c 1.9 92/01/20$
- *
- *	@(#)ite_gb.c	8.1 (Berkeley) 6/10/93
- */
 
 #ifdef ITECONSOLE
 
 #include <sys/param.h>
 
-#include <hp300/dev/itereg.h>
-#include <hp300/dev/grf_gbreg.h>
+#include <hp300/stand/common/itereg.h>
+#include <hp300/stand/common/grf_gbreg.h>
 
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
-
-#define WINDOWMOVER 	gbox_windowmove
 
 void gbox_windowmove(struct ite_data *, int, int, int, int, int, int, int);
 
@@ -94,6 +54,8 @@ void
 gbox_init(struct ite_data *ip)
 {
 	struct gboxfb *regbase = (void *)ip->regbase;
+
+	ip->bmv = gbox_windowmove;
 
 	regbase->write_protect = 0x0;
 	regbase->interrupt = 0x4;
@@ -129,7 +91,7 @@ gbox_init(struct ite_data *ip)
 	gbcm_waitbusy(regbase);
 
 	ite_fontinfo(ip);
-	ite_fontinit(ip);
+	ite_fontinit8bpp(ip);
 
 	/*
 	 * Clear the display. This used to be before the font unpacking
@@ -147,62 +109,14 @@ gbox_init(struct ite_data *ip)
 }
 
 void
-gbox_putc(struct ite_data *ip, int c, int dy, int dx, int mode)
-{
-
-	gbox_windowmove(ip, charY(ip, c), charX(ip, c),
-			dy * ip->ftheight, dx * ip->ftwidth,
-			ip->ftheight, ip->ftwidth, RR_COPY);
-}
-
-void
-gbox_cursor(struct ite_data *ip, int flag)
-{
-
-	if (flag == DRAW_CURSOR)
-		draw_cursor(ip)
-	else if (flag == MOVE_CURSOR) {
-		erase_cursor(ip)
-		draw_cursor(ip)
-	} else
-		erase_cursor(ip)
-}
-
-void
-gbox_clear(struct ite_data *ip, int sy, int sx, int h, int w)
-{
-
-	gbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			sy * ip->ftheight, sx * ip->ftwidth,
-			h  * ip->ftheight, w  * ip->ftwidth,
-			RR_CLEAR);
-}
-
-#define	gbox_blockmove(ip, sy, sx, dy, dx, h, w) \
-	gbox_windowmove((ip), \
-			(sy) * ip->ftheight, \
-			(sx) * ip->ftwidth, \
-			(dy) * ip->ftheight, \
-			(dx) * ip->ftwidth, \
-			(h)  * ip->ftheight, \
-			(w)  * ip->ftwidth, \
-			RR_COPY)
-
-void
-gbox_scroll(struct ite_data *ip, int sy, int sx, int count, int dir)
+gbox_scroll(struct ite_data *ip)
 {
 	struct gboxfb *regbase = (void *)ip->regbase;
-	int height, dy, i;
 
 	tile_mover_waitbusy(regbase);
 	regbase->write_protect = 0x0;
 
-	gbox_cursor(ip, ERASE_CURSOR);
-
-	dy = sy - count;
-	height = ip->rows - sy;
-	for (i = 0; i < height; i++)
-		gbox_blockmove(ip, sy + i, sx, dy + i, 0, 1, ip->cols);
+	ite_dio_scroll(ip);
 }
 
 void

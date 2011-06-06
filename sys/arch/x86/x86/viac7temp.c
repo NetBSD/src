@@ -1,4 +1,4 @@
-/* $NetBSD: viac7temp.c,v 1.2 2010/03/14 18:04:29 pgoyette Exp $ */
+/* $NetBSD: viac7temp.c,v 1.2.6.1 2011/06/06 09:07:09 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,82 +27,131 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.2 2010/03/14 18:04:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.2.6.1 2011/06/06 09:07:09 jruoho Exp $");
 
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/xcall.h>
-#include <sys/cpu.h>
-#include <sys/device.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
 #include <machine/cpuvar.h>
-#include <machine/specialreg.h>
 #include <machine/cpufunc.h>
+#include <machine/cputypes.h>
+#include <machine/specialreg.h>
 
 struct viac7temp_softc {
+	device_t		 sc_dev;
 	struct cpu_info		*sc_ci;
 	struct sysmon_envsys 	*sc_sme;
-	envsys_data_t 		sc_sensor;
+	envsys_data_t 		 sc_sensor;
 };
 
+static int	viac7temp_match(device_t, cfdata_t, void *);
+static void	viac7temp_attach(device_t, device_t, void *);
+static int	viac7temp_detach(device_t, int);
 static void	viac7temp_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	viac7temp_refresh_xcall(void *, void *);
 
-void
-viac7temp_register(struct cpu_info *ci)
-{
-	struct viac7temp_softc *sc;
+CFATTACH_DECL_NEW(viac7temp, sizeof(struct viac7temp_softc),
+    viac7temp_match, viac7temp_attach, viac7temp_detach, NULL);
 
-	sc = kmem_zalloc(sizeof(struct viac7temp_softc), KM_SLEEP);
+static int
+viac7temp_match(device_t parent, cfdata_t cf, void *aux)
+{
+	struct cpufeature_attach_args *cfaa = aux;
+	struct cpu_info *ci = cfaa->ci;
+	uint32_t family, model;
+	uint32_t descs[4];
+
+	if (strcmp(cfaa->name, "temperature") != 0)
+		return 0;
+
+	if (cpu_vendor != CPUVENDOR_IDT)
+		return 0;
+
+	model = CPUID2MODEL(ci->ci_signature);
+	family = CPUID2FAMILY(ci->ci_signature);
+
+	if (family != 0x06 || model < 0x09)
+		return 0;
+
+	x86_cpuid(0xc0000000, descs);
+
+	if (descs[0] >= 0xc0000002)
+		return 1;
+
+	return 0;
+}
+
+static void
+viac7temp_attach(device_t parent, device_t self, void *aux)
+{
+	struct viac7temp_softc *sc = device_private(self);
+	struct cpufeature_attach_args *cfaa = aux;
+	struct cpu_info *ci = cfaa->ci;
+
+	sc->sc_ci = ci;
+	sc->sc_dev = self;
 
 	sc->sc_sensor.units = ENVSYS_STEMP;
 	sc->sc_sensor.flags = ENVSYS_FMONLIMITS;
-	strlcpy(sc->sc_sensor.desc, "temperature",
+
+	(void)strlcpy(sc->sc_sensor.desc, "temperature",
 	    sizeof(sc->sc_sensor.desc));
 
 	sc->sc_sme = sysmon_envsys_create();
-	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
-		sysmon_envsys_destroy(sc->sc_sme);
-		goto bad;
-	}
 
-	/*
-	 * Hook into the system monitor.
-	 */
-	sc->sc_sme->sme_name = device_xname(ci->ci_dev);
+	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor) != 0)
+		goto fail;
+
 	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_refresh = viac7temp_refresh;
 
-	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error_dev(ci->ci_dev,
-		    "unable to register with sysmon\n");
-		sysmon_envsys_destroy(sc->sc_sme);
-		goto bad;
-	}
+	if (sysmon_envsys_register(sc->sc_sme) != 0)
+		goto fail;
+
+	aprint_naive("\n");
+	aprint_normal(": VIA C7 temperature sensor\n");
+
+	(void)pmf_device_register(self, NULL, NULL);
 
 	return;
 
-bad:
-	kmem_free(sc, sizeof(struct viac7temp_softc));
+fail:
+	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
+}
+
+static int
+viac7temp_detach(device_t self, int flags)
+{
+	struct viac7temp_softc *sc = device_private(self);
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
+
+	pmf_device_deregister(self);
+
+	return 0;
 }
 
 static void
 viac7temp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct viac7temp_softc *sc = sme->sme_cookie;
-	uint64_t where;
+	uint64_t xc;
 
-	where = xc_unicast(0, viac7temp_refresh_xcall, sc, edata, sc->sc_ci);
-	xc_wait(where);
+	xc = xc_unicast(0, viac7temp_refresh_xcall, sc, edata, sc->sc_ci);
+	xc_wait(xc);
 }
 
 static void
 viac7temp_refresh_xcall(void *arg0, void *arg1)
 {
-	/* struct viac7temp_softc *sc = (struct viac7temp_softc *)arg0; */
-	envsys_data_t *edata = (envsys_data_t *)arg1;
+	envsys_data_t *edata = arg1;
 	uint32_t descs[4];
 
 	x86_cpuid(0xc0000002, descs);

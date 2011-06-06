@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 2010/12/22 04:15:01 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26.2.1 2011/06/06 09:07:06 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,12 @@
 #ifndef _X86_CPU_H_
 #define _X86_CPU_H_
 
+#if defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/types.h>
+#else
+#include <stdbool.h>
+#endif /* _KERNEL || _STANDALONE */
+
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #if defined(_KERNEL_OPT)
 #include "opt_xen.h"
@@ -56,7 +62,6 @@
 #include <machine/intrdefs.h>
 
 #include <x86/cacheinfo.h>
-#include <x86/via_padlock.h>
 
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
@@ -180,7 +185,9 @@ struct cpu_info {
 
 	struct evcnt ci_ipi_events[X86_NIPI];
 
-	struct via_padlock	ci_vp;	/* VIA PadLock private storage */
+	device_t	ci_frequency;	/* Frequency scaling technology */
+	device_t	ci_padlock;	/* VIA PadLock private storage */
+	device_t	ci_temperature;	/* Intel coretemp(4) or equivalent */
 
 	struct i386tss	ci_tss;		/* Per-cpu TSS; shared among LWPs */
 	char		ci_iomap[IOMAPSIZE]; /* I/O Bitmap */
@@ -433,12 +440,6 @@ void x86_bus_space_mallocok(void);
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 
 #endif /* _KERNEL || __KMEMUSER */
-
-#if defined(_KERNEL) || defined(_STANDALONE)
-#include <sys/types.h>
-#else
-#include <stdbool.h>
-#endif /* _KERNEL || _STANDALONE */
 
 /*
  * CTL_MACHDEP definitions.

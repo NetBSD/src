@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.25 2009/05/12 06:54:10 cegger Exp $ */
+/* $NetBSD: podulebus.c,v 1.25.6.1 2011/06/06 09:04:40 jruoho Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.25 2009/05/12 06:54:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.25.6.1 2011/06/06 09:04:40 jruoho Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -73,23 +73,22 @@ extern struct bus_space podulebus_bs_tag;
 /* Declare prototypes */
 
 u_int poduleread(u_int, int);
-int podulebusmatch(struct device *, struct cfdata *, void *);
-void podulebusattach(struct device *, struct device *, void *);
+int podulebusmatch(device_t, cfdata_t, void *);
+void podulebusattach(device_t, device_t, void *);
 int podulebusprint(void *, const char *);
-int podulebussubmatch(struct device *, struct cfdata *,
-		      const int *, void *);
+int podulebussubmatch(device_t, cfdata_t, const int *, void *);
 void podulechunkdirectory(podule_t *);
-void podulescan(struct device *);
+void podulescan(device_t);
 
 /*
- * int podulebusmatch(struct device *parent, void *match, void *aux)
+ * int podulebusmatch(device_t parent, void *match, void *aux)
  *
  * Probe for the podule bus. Currently all this does is return 1 to
  * indicate that the podule bus was found.
  */
  
 int
-podulebusmatch(struct device *parent, struct cfdata *cf, void *aux)
+podulebusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	switch (IOMD_ID) {
 	case RPC600_IOMD_ID:
@@ -123,7 +122,7 @@ podulebusprint(void *aux, const char *name)
 
 
 int
-podulebussubmatch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
+podulebussubmatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct podule_attach_args *pa = aux;
 
@@ -226,7 +225,7 @@ podulechunkdirectory(podule_t *podule)
 
 
 void
-poduleexamine(podule_t *podule, struct device *dev, int slottype)
+poduleexamine(podule_t *podule, device_t dev, int slottype)
 {
 	struct manufacturer_description *man_desc;
 	struct podule_description *pod_desc;
@@ -300,7 +299,7 @@ poduleread(u_int address, int offset)
 }
 
 void
-podulescan(struct device *dev)
+podulescan(device_t dev)
 {
 	int loop;
 	podule_t *podule;
@@ -391,7 +390,7 @@ podulescan(struct device *dev)
 
 
 /*
- * void podulebusattach(struct device *parent, struct device *dev, void *aux)
+ * void podulebusattach(device_t parent, device_t dev, void *aux)
  *
  * Attach podulebus.
  * This probes all the podules and sets up the podules array with
@@ -401,7 +400,7 @@ podulescan(struct device *dev)
  */
   
 void
-podulebusattach(struct device *parent, struct device *self, void *aux)
+podulebusattach(device_t parent, device_t self, void *aux)
 {
 	int loop;
 	struct podule_attach_args pa;
@@ -511,7 +510,7 @@ podulebusattach(struct device *parent, struct device *self, void *aux)
 }
 
 
-CFATTACH_DECL(podulebus, sizeof(struct device),
+CFATTACH_DECL_NEW(podulebus, 0,
 	podulebusmatch, podulebusattach, NULL, NULL);
 
 /* Useful functions that drivers may share */

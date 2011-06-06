@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_types.h,v 1.1 2001/11/18 08:19:40 takemura Exp $	*/
+/*	$NetBSD: bus_types.h,v 1.1.154.1 2011/06/06 09:05:44 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
@@ -31,8 +31,6 @@
 
 #ifndef _HPCMIPS_BUS_TYPES_H_
 #define _HPCMIPS_BUS_TYPES_H_
-
-#include <mips/locore.h>
 
 #define __BUS_SPACE_HAS_STREAM_METHODS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.7 2010/04/26 16:26:11 rmind Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.7.2.1 2011/06/06 09:09:35 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.7 2010/04/26 16:26:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.7.2.1 2011/06/06 09:09:35 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,12 +89,15 @@ tvtohz(const struct timeval *tv)
 	sec = tv->tv_sec;
 	usec = tv->tv_usec;
 
-	if (usec < 0) {
-		sec--;
-		usec += 1000000;
-	}
+	KASSERT(usec >= 0 && usec < 1000000);
 
-	if (sec < 0 || (sec == 0 && usec <= 0)) {
+	/* catch overflows in conversion time_t->int */
+	if (tv->tv_sec > INT_MAX)
+		return INT_MAX;
+	if (tv->tv_sec < 0)
+		return 0;
+
+	if (sec < 0 || (sec == 0 && usec == 0)) {
 		/*
 		 * Would expire now or in the past.  Return 0 ticks.
 		 * This is different from the legacy tvhzto() interface,

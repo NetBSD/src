@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.4 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.4.2.1 2011/06/06 09:09:53 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -33,9 +33,8 @@
  * NPF complex instructions.
  */
 
-#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.4 2010/11/11 06:30:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.4.2.1 2011/06/06 09:09:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -45,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.4 2010/11/11 06:30:39 rmind Exp $");
 #include <net/if_ether.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
-#endif
 
 #include "npf_impl.h"
 

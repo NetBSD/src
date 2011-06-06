@@ -1,4 +1,4 @@
-/*	$NetBSD: nside.c,v 1.1 2010/11/10 22:34:24 skrll Exp $	*/
+/*	$NetBSD: nside.c,v 1.1.2.1 2011/06/06 09:08:17 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nside.c,v 1.1 2010/11/10 22:34:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nside.c,v 1.1.2.1 2011/06/06 09:08:17 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,8 +36,9 @@ __KERNEL_RCSID(0, "$NetBSD: nside.c,v 1.1 2010/11/10 22:34:24 skrll Exp $");
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_natsemi_reg.h>
 
-static void natsemi_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void natsemi_setup_channel(struct ata_channel*);
+static void natsemi_chip_map(struct pciide_softc *,
+    const struct pci_attach_args *);
+static void natsemi_setup_channel(struct ata_channel *);
 static int  natsemi_pci_intr(void *);
 static void natsemi_irqack(struct ata_channel *);
 
@@ -92,7 +93,7 @@ nside_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-natsemi_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+natsemi_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;

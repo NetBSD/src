@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.93 2010/10/02 00:52:02 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.93.2.1 2011/06/06 09:08:46 jruoho Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -296,12 +296,12 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_SB_P9100	22	/* Tadpole SPARCbook P9100 */
 #define	WSDISPLAY_TYPE_EGA	23	/* (generic) EGA */
 #define	WSDISPLAY_TYPE_DCPVR	24	/* Dreamcast PowerVR */
-#define	WSDISPLAY_TYPE_GATOR	25	/* HP Gator */
+#define	WSDISPLAY_TYPE_GBOX	25	/* HP Gator */
 #define	WSDISPLAY_TYPE_TOPCAT	26	/* HP TopCat */
-#define	WSDISPLAY_TYPE_RENAISSANCE	27	/* HP Renaissance */
+#define	WSDISPLAY_TYPE_RBOX	27	/* HP Renaissance */
 #define	WSDISPLAY_TYPE_CATSEYE	28	/* HP CatsEye */
-#define	WSDISPLAY_TYPE_DAVINCI	29	/* HP DaVinci */
-#define	WSDISPLAY_TYPE_TIGER	30	/* HP Tiger */
+#define	WSDISPLAY_TYPE_DVBOX	29	/* HP DaVinci */
+#define	WSDISPLAY_TYPE_TVRX	30	/* HP TigerShark */
 #define	WSDISPLAY_TYPE_HYPERION	31	/* HP Hyperion */
 #define	WSDISPLAY_TYPE_AMIGACC	32	/* Amiga custom chips */
 #define	WSDISPLAY_TYPE_SUN24	33	/* Sun 24 bit framebuffers */
@@ -541,5 +541,27 @@ struct wsmux_device_list {
 
 #define	WSMUXIO_INJECTEVENT	_IOW('W', 100, struct wscons_event)
 #define	WSMUX_INJECTEVENT	WSMUXIO_INJECTEVENT /* XXX compat */
+
+/* Mapping information retrieval. */
+struct wsdisplayio_bus_id {
+    u_int bus_type;
+#define WSDISPLAYIO_BUS_PCI	0
+#define WSDISPLAYIO_BUS_SBUS	1
+    union bus_data {
+        struct bus_pci {
+            uint32_t domain;
+            uint32_t bus;
+            uint32_t device;
+            uint32_t function;
+        } pci;
+        struct bus_sbus {
+            uint32_t fb_instance;
+        } sbus;
+        /* so the size doesn't change if we add more bus types */
+        char pad[32];
+    } ubus;
+};
+
+#define WSDISPLAYIO_GET_BUSID	_IOR('W', 101, struct wsdisplayio_bus_id)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */

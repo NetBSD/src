@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.173 2010/12/22 01:34:17 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.173.2.1 2011/06/06 09:06:06 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
+#include <sys/errno.h>
 
 #include <machine/param.h>
 #include <mips/asm.h>
@@ -65,16 +66,26 @@
 
 #include "assym.h"
 
+#if defined(MIPS1) || defined(MIPS2)
+#define	NOP_L		nop
+#else
+#define	NOP_L		/* nothing */
+#endif
+
 	.set	noreorder
 
 	.globl	start
 	.globl	_C_LABEL(kernel_text)		# libkvm refers this
 start:
 _C_LABEL(kernel_text):
-#if defined(MIPS3_PLUS) && !defined(MIPS1)
+#if (defined(MIPS3_PLUS) && !defined(MIPS1)) || defined(emips)
 	/* keep firmware exception handler until we hook. */
 	mfc0	v0, MIPS_COP_0_STATUS
+#if defined(emips)
+	and	v0, MIPS_SR_TS | MIPS3_SR_RE
+#else
 	and	v0, MIPS_SR_BEV
+#endif
 	mtc0	v0, MIPS_COP_0_STATUS		# Disable interrupts
 	COP0_SYNC
 #else
@@ -100,13 +111,15 @@ _C_LABEL(kernel_text):
 #endif
 
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
+#if !defined(emips)   /*  XXX??? we have already disabled interrupts! */
 #ifdef _LP64
-	li	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
+	li	t0, MIPS_SR_KX | MIPS_SR_UX	# turn on XKSEG and XKPHYS
 #else
 	li	t0, 0				# Disable interrupts and
 #endif
 	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
 	COP0_SYNC
+#endif
 #ifdef HPCMIPS_L1CACHE_DISABLE
 	mfc0	t0, MIPS_COP_0_CONFIG
 	li	t1, 0xfffffff8
@@ -124,31 +137,37 @@ _C_LABEL(kernel_text):
 	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
 	COP0_HAZARD_FPUENABLE
 #endif
-	nop
-	nop
 	mfc0	t0, MIPS_COP_0_PRID		# read product revision ID
-	nop					# XXX r4000 pipeline:
-	nop					# wait for new SR
-	nop					# to be effective
+	COP0_SYNC
 	nop
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	add	t1, zero, zero
 #else
 	cfc1	t1, MIPS_FPU_ID			# read FPU ID register
 #endif
-	INT_S	t0, _C_LABEL(cpu_id)		# save PRID register
-	INT_S	t1, _C_LABEL(fpu_id)		# save FPU ID register
-	PTR_LA	MIPS_CURLWP, _C_LABEL(lwp0)	# set curlwp, curcpu
-	PTR_LA	t0, _C_LABEL(cpu_info_store)
-	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(t0)
-	PTR_S	t0, L_CPU(MIPS_CURLWP) 
+	INT_S	t0, _C_LABEL(mips_options)+MO_CPU_ID # save PRID register
+	INT_S	t1, _C_LABEL(mips_options)+MO_FPU_ID # save FPU ID register
+	PTR_LA	MIPS_CURLWP, _C_LABEL(lwp0)	# set curlwp
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
-	nop
+	 nop
 
 	# XXXuvm_lwp_getuarea
 	PTR_L	sp, L_PCB(MIPS_CURLWP)		# switch to lwp0 stack
 	nop
-	PTR_ADDU sp, USPACE - FRAME_SIZ - CALLFRAME_SIZ
+	PTR_ADDU sp, USPACE - TF_SIZ - CALLFRAME_SIZ
+	/*
+	 * Raise to IPLHIGH
+	 */
+	jal	_C_LABEL(splhigh_noprof)	# go to splhigh
+	 nop
+	/*
+	 * Now enable interrupts (but they are all masked).
+	 */
+	mfc0	v0, MIPS_COP_0_STATUS
+	or	v0, MIPS_SR_INT_IE
+	mfc0	v0, MIPS_COP_0_STATUS
+	COP0_SYNC
+
 	jal	_C_LABEL(main)			# main(void)
 	nop
 	PANIC("main() returned")		# main never returns
@@ -164,13 +183,30 @@ _C_LABEL(verylocore):
  *	a1	the LWP to switch to
  * Returns:
  *	v0	the LWP we have switched from
+ *
+ * called at IPL_SCHED
  */
 NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
-/*
- * Save old context, unless the LWP is exiting.
- */
+#ifdef PARANOIA
+	/*
+	 * Make sure we are at IPL_SCHED
+	 */
+	PTR_L	v0, L_CPU(MIPS_CURLWP)
+	INT_L	v1, CPU_INFO_CPL(v0)
+	li	v0, IPL_SCHED
+10:	bne	v0, v1, 10b
+	 nop
+
+	mfc0	t0, MIPS_COP_0_STATUS
+	and	t0, MIPS_SR_INT_IE
+11:	beqz	t0, 11b
+	 nop
+#endif /* PARANOIA */
+	/*
+	 * Save old context, unless the LWP is exiting.
+	 */
 	beq	a0, zero, 1f
-	nop
+	 nop
 	PTR_L	a2, L_PCB(a0)			# a2 = pcb of old lwp
 	mfc0	t0, MIPS_COP_0_STATUS
 	REG_PROLOGUE
@@ -182,6 +218,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_S	s5, PCB_CONTEXT+SF_REG_S5(a2)
 	REG_S	s6, PCB_CONTEXT+SF_REG_S6(a2)
 	REG_S	s7, PCB_CONTEXT+SF_REG_S7(a2)
+	#REG_S	t8, PCB_CONTEXT+SF_REG_T8(a2)	# no reason to save MIPS_CURLWP
 	REG_S	sp, PCB_CONTEXT+SF_REG_SP(a2)
 	REG_S	s8, PCB_CONTEXT+SF_REG_S8(a2)
 	REG_S	ra, PCB_CONTEXT+SF_REG_RA(a2)
@@ -189,56 +226,56 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, PCB_CONTEXT+SF_REG_GP(a2)
 #endif
-#ifdef IPL_ICU_MASK
-	INT_L	t0, _C_LABEL(md_imask)
-	INT_S	t0, PCB_PPL(a2)
-#endif
 	REG_EPILOGUE
 1:
+#ifdef PARANOIA
+	/*
+	 * Verify interrupt configuration matches IPL_SCHED
+	 */
+	jal	_C_LABEL(splcheck)
+	 nop
+#endif /* PARANOIA */
+
 	move	s6, a0				# s6 = old lwp
-	move	MIPS_CURLWP, a1			# s7 = new lwp
+	move	MIPS_CURLWP, a1			# t8 = new lwp
 	PTR_SUBU sp, CALLFRAME_SIZ
 	REG_S	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
 /*
  * Switch to new context.
  */
-	PTR_L	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
-	move	a0, MIPS_CURLWP
-	jal	ra, t2
-	nop
-	PTR_S	MIPS_CURLWP, CPUVAR(CURLWP)
+	jal	_C_LABEL(mips_cpu_switch_resume)
+	 move	a0, MIPS_CURLWP
+
+	PTR_L	t2, L_CPU(MIPS_CURLWP)
+	nop					# patchable load delay slot
+	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(t2)
 
 	/* Check for restartable atomic sequences (RAS) */
-	PTR_L	t1, L_PROC(MIPS_CURLWP)
-	PTR_L	a0, L_PCB(MIPS_CURLWP)		# XXXuvm_lwp_getuarea
-	PTR_L	v1, P_RASLIST(t1)
-	PTR_ADDU t0, a0, USPACE - FRAME_SIZ
-	beq	v1, zero, 1f
-	nop
-	move	a0, t1
-	jal	_C_LABEL(ras_lookup)
-	PTR_L	a1, FRAME_EPC(t0)
-	PTR_L	a0, L_PCB(MIPS_CURLWP)
-	li	v1, -1
-	beq	v1, v0, 1f
-	PTR_ADDU t0, a0, USPACE - FRAME_SIZ
-	PTR_S	v0, FRAME_EPC(t0)
+	PTR_L	a0, L_PROC(MIPS_CURLWP)		# argument to ras_lookup
+	PTR_L	s5, L_PCB(MIPS_CURLWP)		# XXXuvm_lwp_getuarea
+	PTR_L	v1, P_RASLIST(a0)		# get raslist
+	NOP_L					# load delay
+	beqz	v1, 1f				#   skip call if empty
+	 nop
+	jal	_C_LABEL(ras_lookup)		# ras_lookup(p, pc)
+	 PTR_L	a1, (USPACE - TF_SIZ - CALLFRAME_SIZ + TF_REG_EPC)(s5)
+	PTR_ADDU v1, v0, 1
+	beqz	v1, 1f				# branch if v0 + 1 == 0
+	 nop
+	PTR_S	v0, (USPACE - TF_SIZ - CALLFRAME_SIZ + TF_REG_EPC)(s5)
 1:
 	/* New context is now active */
-#ifdef IPL_ICU_MASK
-	# restore ICU state
-	PTR_L	a0, L_PCB(MIPS_CURLWP)
-	INT_L	t0, PCB_PPL(a0)
-	INT_S	t0, _C_LABEL(md_imask)
-	jal	_C_LABEL(md_imask_update)
-	nop
-#endif /* IPL_ICU_MASK */
-	PTR_L	a0, L_PCB(MIPS_CURLWP)
-	move	v0, s6				# Save return value
+	move	v0, s6				# Save return value (old lwp)
 	REG_PROLOGUE
-	REG_L	t0, PCB_CONTEXT+SF_REG_SR(a0)
-	DYNAMIC_STATUS_MASK(t0,ra)		# machine dependent masking
+	REG_L	t0, PCB_CONTEXT+SF_REG_SR(s5)
+#ifdef PARANOID_LOOP
+	and	t1, t0, MIPS_SR_INT_IE
+2:	beqz	t1, 2b			# status reg should not differ
+	 nop
+#endif /* PARANOID_LOOP */
+	DYNAMIC_STATUS_MASK(t0,ra)
+	move	a0, s5
 	REG_L	ra, PCB_CONTEXT+SF_REG_RA(a0)
 	REG_L	s0, PCB_CONTEXT+SF_REG_S0(a0)
 	REG_L	s1, PCB_CONTEXT+SF_REG_S1(a0)
@@ -247,7 +284,8 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_L	s4, PCB_CONTEXT+SF_REG_S4(a0)
 	REG_L	s5, PCB_CONTEXT+SF_REG_S5(a0)
 	REG_L	s6, PCB_CONTEXT+SF_REG_S6(a0)
-     /* REG_L	s7, PCB_CONTEXT+SF_REG_S7(a0)	don't touch MIPS_CURLWP */
+	REG_L	s7, PCB_CONTEXT+SF_REG_S7(a0)
+	#REG_L	t8, PCB_CONTEXT+SF_REG_T8(a0)	# no reason to load MIPS_CURLWP
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_L	gp, PCB_CONTEXT+SF_REG_GP(a0)
 #endif
@@ -255,16 +293,163 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_L	s8, PCB_CONTEXT+SF_REG_S8(a0)
 	REG_EPILOGUE
 	mtc0	t0, MIPS_COP_0_STATUS
+#ifdef PARANOIA
 	COP0_SYNC
-	j	ra
-	nop
+	/*
+	 * Verify interrupt configuration still matches IPL_SCHED
+	 */
+	j	_C_LABEL(splcheck)
+	 nop
+#else
+	JR_HB_RA
+#endif /* PARANOIA */
 END(cpu_switchto)
 
+#ifdef __HAVE_FAST_SOFTINTS
 /*
- * savectx(struct pcb *)
+ * void softint_fast_dispatch(struct lwp *l, int s);
+ *
+ * called at IPL_HIGH
+ *
+ */
+softint_cleanup:
+#ifdef PARANOIA
+	mfc0	t1, MIPS_COP_0_STATUS
+	and	v0, t1, MIPS_SR_INT_IE
+1:	beqz	v0, 1b
+	 nop
+#endif /* PARANOIA */
+	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	NOP_L					# load delay
+	INT_L	t1, CPU_INFO_MTX_COUNT(t0)
+	NOP_L					# load delay
+	INT_ADDU t1, 1
+	INT_S	t1, CPU_INFO_MTX_COUNT(t0)
+	REG_L	ra, CALLFRAME_RA(sp)
+	REG_L	v0, CALLFRAME_S0(sp)		# get softint lwp
+	NOP_L					# load delay
+	PTR_S	zero, L_CTXSWITCH(v0)		# clear l_ctxswtch
+#if IPL_SCHED != IPL_HIGH
+	j	_C_LABEL(splhigh_noprof)
+#else
+	j	ra
+#endif
+	 PTR_ADDU sp, CALLFRAME_SIZ
+
+/*
+ * Arguments:
+ *	a0	the LWP to switch to
+ *	a1	IPL to execute at
+ */
+NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
+	PTR_SUBU sp, CALLFRAME_SIZ
+	REG_S	a0, CALLFRAME_S0(sp)		# save softint lwp
+	REG_S	ra, CALLFRAME_RA(sp)		# save return address
+	.mask	0x80000000, -4
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# t0 = curlwp->l_addr
+
+	/*
+	 * Save our state in case softint_dispatch blocks and get switched back
+	 * to.
+ 	 */
+	mfc0	t1, MIPS_COP_0_STATUS
+#ifdef PARANOID_LOOP
+	and	v0, t1, MIPS_SR_INT_IE		# assert interrupts are on
+1:	beqz	v0, 1b
+	 nop
+#endif /* PARANOID_LOOP */
+	PTR_LA	t2, softint_cleanup		# if softint blocks, return here
+	REG_PROLOGUE
+	REG_S	s0, PCB_CONTEXT+SF_REG_S0(t0)
+	REG_S	s1, PCB_CONTEXT+SF_REG_S1(t0)
+	REG_S	s2, PCB_CONTEXT+SF_REG_S2(t0)
+	REG_S	s3, PCB_CONTEXT+SF_REG_S3(t0)
+	REG_S	s4, PCB_CONTEXT+SF_REG_S4(t0)
+	REG_S	s5, PCB_CONTEXT+SF_REG_S5(t0)
+	REG_S	s6, PCB_CONTEXT+SF_REG_S6(t0)
+	REG_S	s7, PCB_CONTEXT+SF_REG_S7(t0)
+	#REG_S	t8, PCB_CONTEXT+SF_REG_T8(t0)	# no reason to save MIPS_CURLWP
+	REG_S	sp, PCB_CONTEXT+SF_REG_SP(t0)
+	REG_S	s8, PCB_CONTEXT+SF_REG_S8(t0)
+	REG_S	t2, PCB_CONTEXT+SF_REG_RA(t0)
+	REG_S	t1, PCB_CONTEXT+SF_REG_SR(t0)
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_S	gp, PCB_CONTEXT+SF_REG_GP(t0)
+#endif
+	REG_EPILOGUE
+
+	/*
+	 * Switch to a fast softint thread.  We don't care about its existing
+	 * state and we use a private KSEG0/XKPHYS mapped stack so don't have
+	 * to do TLB manipulation.
+	 */
+	move	s0, MIPS_CURLWP				# remember current lwp
+	move	MIPS_CURLWP, a0				# switch to softint lwp
+	PTR_L	s1, L_CPU(MIPS_CURLWP)			# get curcpu()
+	nop					# patchable load delay slot
+	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ...
+	move	s2, sp					# remember sp
+	move	s3, t0					# remember curpcb
+
+	PTR_L	t2, L_PCB(MIPS_CURLWP)
+	move	a0, s0					# wants the pinned lwp
+	jal	_C_LABEL(softint_dispatch)
+	 PTR_ADDU sp, t2, USPACE - TF_SIZ - CALLFRAME_SIZ
+
+	move	sp, s2					# restore stack
+	move	MIPS_CURLWP, s0				# restore curlwp
+	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ....
+
+	REG_L	ra, CALLFRAME_RA(sp)		# load early since we use it
+
+	REG_PROLOGUE
+	REG_L	s0, PCB_CONTEXT+SF_REG_S0(s3)		# restore the saved
+	REG_L	s1, PCB_CONTEXT+SF_REG_S1(s3)		#    registers that we
+	REG_L	s2, PCB_CONTEXT+SF_REG_S2(s3)		#    used
+	REG_L	s3, PCB_CONTEXT+SF_REG_S3(s3)
+	REG_EPILOGUE
+
+	/*
+	 * Almost everything (all except sp) is restored so we can return.
+	 */
+	j	ra
+	 PTR_ADDU sp, CALLFRAME_SIZ
+END(softint_fast_dispatch)
+#endif /* __HAVE_FAST_SOFTINTS */
+
+/*
+ * int lwp_oncpu(lwp_t *);
+ */
+LEAF(lwp_oncpu)
+	PTR_L	t0, L_PCB(MIPS_CURLWP)		# get curpcb
+	li	v0, EFAULT			# assume failure
+	PTR_LA	t1, 1f				# load addr of cleanup
+	PTR_S	t1, PCB_ONFAULT(t0)		# save onfault handler
+	PTR_L	t2, L_CPU(a0)			# grab cpu of supplied lwp
+	NOP_L					# load delay
+	PTR_L	t3, CPU_INFO_CURLWP(t2)		# grab curlwp of that cpu
+	li	v0, ESRCH			# assume the lwp isn't curlwp
+	bne	a0, t3, 1f			# branch if true (not equal)
+	 nop
+	PTR_S	t2, 0(a1)			# return the cpu_info
+	li	v0, 0				# load success
+1:
+	PTR_S	zero, PCB_ONFAULT(t0)		# reset fault handler
+	j	ra				# and return.
+	 nop
+END(lwp_oncpu)
+	
+
+/*
+ * void savectx(struct pcb *)
  */
 LEAF(savectx)
+#ifdef PARANOIA
 	mfc0	v0, MIPS_COP_0_STATUS
+	and	t0, v0, MIPS_SR_INT_IE
+1:	beqz	t0, 1b
+	 nop
+#endif /* PARANOIA */
 	REG_PROLOGUE
 	REG_S	s0, PCB_CONTEXT+SF_REG_S0(a0)
 	REG_S	s1, PCB_CONTEXT+SF_REG_S1(a0)
@@ -274,6 +459,7 @@ LEAF(savectx)
 	REG_S	s5, PCB_CONTEXT+SF_REG_S5(a0)
 	REG_S	s6, PCB_CONTEXT+SF_REG_S6(a0)
 	REG_S	s7, PCB_CONTEXT+SF_REG_S7(a0)
+	REG_S	t8, PCB_CONTEXT+SF_REG_T8(a0)	# MIPS_CURLWP
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, PCB_CONTEXT+SF_REG_GP(a0)
 #endif
@@ -302,6 +488,7 @@ LEAF(setjmp)
 	REG_S	s5, SF_REG_S5(a0)
 	REG_S	s6, SF_REG_S6(a0)
 	REG_S	s7, SF_REG_S7(a0)
+	#REG_S	t8, SF_REG_T8(a0)		# no reason to save MIPS_CURLWP
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, SF_REG_GP(a0)
 #endif
@@ -327,6 +514,7 @@ LEAF(longjmp)
 	REG_L	s5, SF_REG_S5(a0)
 	REG_L	s6, SF_REG_S6(a0)
 	REG_L	s7, SF_REG_S7(a0)
+	#REG_L	t8, SF_REG_T8(a0)		# no reason to load MIPS_CURLWP
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_L	gp, SF_REG_GP(a0)
 #endif
@@ -336,142 +524,9 @@ LEAF(longjmp)
 	mtc0	v0, MIPS_COP_0_STATUS
 	COP0_SYNC
 	j	ra
-	li	v0, 1
+	 li	v0, 1
 END(longjmp)
 #endif
-
-
-/*
- * MIPS processor interrupt control
- *
- * Used as building blocks for spl(9) kernel interface.
- */
-LEAF(_splraise)
-XLEAF(_splraise_noprof)				# does not get mcount hooks
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	and	a0, a0, MIPS_INT_MASK		# extract INT bits
-	nor	a0, zero, a0			# bitwise inverse of A0
-	and	a0, a0, v0			# disable retaining other bits
-	DYNAMIC_STATUS_MASK(a0,t0)		# machine dependent masking
-	mtc0	a0, MIPS_COP_0_STATUS		# store back
-	COP0_SYNC
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	j	ra
-	nop
-END(_splraise)
-
-LEAF(_spllower)
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	li	v1, ~MIPS_INT_MASK
-	and	v1, v0, v1			# turn off INT bit
-	nor	a0, zero, a0			# bitwise inverse of A0
-	and	a0, a0, MIPS_INT_MASK		# extract INT bits
-	or	a0, a0, v1			# disable making other bits on
-	DYNAMIC_STATUS_MASK(a0,t0)		# machine dependent masking
-	mtc0	a0, MIPS_COP_0_STATUS		# store back
-	COP0_SYNC
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	j	ra
-	nop
-END(_spllower)
-
-LEAF(_splrestore)
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	and	a0, a0, MIPS_INT_MASK
-	li	v1, ~MIPS_INT_MASK
-	and	v1, v1, v0			# turn off every INT bit
-	or	v1, v1, a0			# set old INT bits
-	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
-	mtc0	v1, MIPS_COP_0_STATUS		# store back
-	COP0_SYNC
-	and	v0, v0, MIPS_INT_MASK
-	j	ra
-	nop
-END(_splrestore)
-
-LEAF(_splset)
-XLEAF(_splset_noprof)				# does not get mcount hooks
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	and	a0, a0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	li	v1, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
-	and	v1, v1, v0			# turn off every INT bit
-	or	v1, v1, a0			# set old INT bits
-	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
-	mtc0	v1, MIPS_COP_0_STATUS		# store back
-	COP0_SYNC
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	j	ra
-	nop
-END(_splset)
-
-LEAF(_splget)
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	j	ra
-	nop
-END(_splget)
-
-LEAF(_setsoftintr)
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-#if 0
-	li	a3, ~MIPS_SR_INT_IE
-	and	a3, v1
-	mtc0	a3, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-#else
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-#endif
-	COP0_SYNC
-	nop
-	nop
-	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
-	nop
-	or	v0, v0, a0			# set soft intr. bits
-	mtc0	v0, MIPS_COP_0_CAUSE		# store back
-	COP0_SYNC
-	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
-	COP0_SYNC
-	j	ra
-	nop
-END(_setsoftintr)
-
-LEAF(_clrsoftintr)
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-#if 0
-	li	a3, ~MIPS_SR_INT_IE
-	and	a3, v1
-	mtc0	a3, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-#else
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-#endif
-	COP0_SYNC
-	nop
-	nop
-	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
-	nor	a0, zero, a0			# bitwise inverse of A0
-	and	v0, v0, a0			# clear soft intr. bits
-	mtc0	v0, MIPS_COP_0_CAUSE		# store back
-	COP0_SYNC
-	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
-	COP0_SYNC
-	j	ra
-	nop
-END(_clrsoftintr)
-
-LEAF(_splnone)
-	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
-	COP0_SYNC
-#ifdef _LP64
-	li	v0, (MIPS_INT_MASK | MIPS_SR_INT_IE | MIPS_SR_KX)
-#else
-	li	v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-#endif
-	DYNAMIC_STATUS_MASK(v0,t0)		# machine dependent masking
-	mtc0	v0, MIPS_COP_0_STATUS		# enable all sources
-	COP0_SYNC
-	nop
-	j	ra
-	nop
-END(_splnone)
 
 /*
  * uint32_t mips_cp0_cause_read(void)
@@ -484,7 +539,7 @@ END(_splnone)
 LEAF_NOPROFILE(mips_cp0_cause_read)
 	mfc0	v0, MIPS_COP_0_CAUSE
 	j	ra
-	nop
+	 nop
 END(mips_cp0_cause_read)
 
 /*
@@ -494,11 +549,7 @@ END(mips_cp0_cause_read)
  */
 LEAF(mips_cp0_cause_write)
 	mtc0	a0, MIPS_COP_0_CAUSE
-	COP0_SYNC
-	nop
-	nop
-	j	ra
-	nop
+	JR_HB_RA
 END(mips_cp0_cause_write)
 
 
@@ -510,7 +561,7 @@ END(mips_cp0_cause_write)
 LEAF(mips_cp0_status_read)
 	mfc0	v0, MIPS_COP_0_STATUS
 	j	ra
-	nop
+	 nop
 END(mips_cp0_status_read)
 
 /*
@@ -524,126 +575,21 @@ END(mips_cp0_status_read)
  */
 LEAF(mips_cp0_status_write)
 	mtc0	a0, MIPS_COP_0_STATUS
-	COP0_SYNC
-	nop
-	nop
-	j	ra
-	nop
+	JR_HB_RA
 END(mips_cp0_status_write)
 
-#ifdef MIPS3_PLUS
-	.set	push
-	.set	mips3
-/*
- * uint64_t mips_cp0_tlb_entry_hi_probe(void);
- *
- * Write 1s to the VPN field of Entry_Hi0 to see how many VA bits
- * are implemented.  Assumes that interrupts are disabled.
- */
-LEAF(mips_cp0_tlb_entry_hi_probe)
-	dmfc0	t0, MIPS_COP_0_TLB_HI
-	li	v0, -4096	/* all 1s except low 12 bits */
-	dsll	v0, v0, 2	/* except the top 2 */
-	dsrl	v0, v0, 2
-	dmtc0	v0, MIPS_COP_0_TLB_HI
-	COP0_SYNC
-	nop
-	nop
-	dmfc0	v0, MIPS_COP_0_TLB_HI
-	dmtc0	t0, MIPS_COP_0_TLB_HI
-	COP0_SYNC
-	nop
-#ifdef __mips_o32
-	nop
-#if BYTE_ORDER == BIG_ENDIAN
-	srl	v1, v0, 0
-	dsra	v0, v0, 32
-#endif
-#if BYTE_ORDER == LITTLE_ENDIAN
-	dsra	v1, v0, 32
-	srl	v0, v0, 0
-#endif
-#endif /* __mips_o32 */
-	j	ra
-	 nop
-END(mips_cp0_tlb_entry_hi_probe)
-
-/*
- * uint64_t mips_cp0_tlb_entry_lo_probe(void);
- *
- * Write 1s to the PFN field of Entry_Lo0 to see how many
- * PA bits are implemented.  Assumes that interrupts are disabled.
- */
-LEAF(mips_cp0_tlb_entry_lo_probe)
-	dmfc0	t0, MIPS_COP_0_TLB_LO0
-	li	v0, -64		/* all 1s except low 6 bits */
-	dmtc0	v0, MIPS_COP_0_TLB_LO0
-	COP0_SYNC
-	nop
-	nop
-	dmfc0	v0, MIPS_COP_0_TLB_LO0
-	dmtc0	t0, MIPS_COP_0_TLB_LO0
-	COP0_SYNC
-	nop
-#ifdef __mips_o32
-	nop
-#if BYTE_ORDER == BIG_ENDIAN
-	srl	v1, v0, 0
-	dsra	v0, v0, 32
-#endif
-#if BYTE_ORDER == LITTLE_ENDIAN
-	dsra	v1, v0, 32
-	srl	v0, v0, 0
-#endif
-#endif /* __mips_o32 */
-	j	ra
-	 nop
-END(mips_cp0_tlb_entry_lo_probe)
-	.set	pop
-
-/*
- * uint32_t mips_cp0_tlb_page_mask_probe(void);
- *
- * Write 1s to the RPN field of Entry_Lo0 to see how many PA bits are implemented.
- * Assumes that interrupts are disabled.
- */
-LEAF(mips_cp0_tlb_page_mask_probe)
-	mfc0	t0, MIPS_COP_0_TLB_PG_MASK
-	lui	v0, 0xffff
-	srl	v0, v0, 3
-	mtc0	v0, MIPS_COP_0_TLB_PG_MASK
-	COP0_SYNC
-	nop
-	nop
-	mfc0	v0, MIPS_COP_0_TLB_PG_MASK
-	mtc0	t0, MIPS_COP_0_TLB_PG_MASK
-	COP0_SYNC
-	nop
-	j	ra
-	 nop
-END(mips_cp0_tlb_page_mask_probe)
-#endif /* MIPS3_PLUS */
-
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
+#if !defined(NOFPU) || defined(FPEMUL)
 /*----------------------------------------------------------------------------
  *
- * MachFPInterrupt --
- * MachFPTrap --
+ * mips_fpu_intr --
+ * mips_fpu_trap --
  *
  *	Handle a floating point interrupt (r3k) or trap (r4k).
  *	the handlers are indentical, only the reporting mechanisms differ.
  *
- *	MachFPInterrupt(status, cause, pc, frame)
- *		unsigned status;
- *		unsigned cause;
- *		unsigned pc;
- *		int *frame;
+ *	mips_fpu_intr(vaddr_t pc, struct trapframe *tf)
  *
- *	MachFPTrap(status, cause, pc, frame)
- *		unsigned status;
- *		unsigned cause;
- *		unsigned pc;
- *		int *frame;
+ *	mips_fpu_trap(vaddr_t pc, struct trapframe *tf)
  *
  * Results:
  *	None.
@@ -653,8 +599,8 @@ END(mips_cp0_tlb_page_mask_probe)
  *
  *----------------------------------------------------------------------------
  */
-NESTED(MachFPInterrupt, CALLFRAME_SIZ, ra)
-XNESTED(MachFPTrap)
+NESTED(mips_fpu_intr, CALLFRAME_SIZ, ra)
+XNESTED(mips_fpu_trap)
 	.mask	0x80000000, -4
 	PTR_SUBU	sp, CALLFRAME_SIZ
 	mfc0		t0, MIPS_COP_0_STATUS
@@ -663,61 +609,57 @@ XNESTED(MachFPTrap)
 	mtc0		t0, MIPS_COP_0_STATUS
 	COP0_HAZARD_FPUENABLE
 
+	REG_PROLOGUE
+	REG_L		a2, TF_REG_CAUSE(a1)
+	REG_EPILOGUE
+
 	cfc1		t0, MIPS_FPU_CSR	# stall til FP done
 	cfc1		t0, MIPS_FPU_CSR	# now get status
 	nop
 	sll		t2, t0, (31 - 17)	# unimplemented operation?
 	bgez		t2, 3f			# no, normal trap
-	nop
+	 nop
+
 /*
- * We got an unimplemented operation trap so
- * We received an unimplemented operation trap.
+ * We received an unimplemented operation trap so
+ * fetch the instruction and emulate the instruction.
  *
  * We check whether it's an unimplemented FP instruction here rather
- * than invoking MachEmulateInst(), since it is faster.
- *
- * fetch the instruction and emulate the instruction.
+ * than invoking mips_emul_inst(), since it is faster.
  */
-	bgez		a1, 1f			# Check the branch delay bit.
-	nop
-/*
- * The instruction is in the branch delay slot.
- */
-	b		2f
-	lw		a0, 4(a2)		# a0 = coproc instruction
-/*
- * This is not in the branch delay slot so calculate the resulting
- * PC (epc + 4) into v0 and continue to MachEmulateFP().
- */
-1:
-	lw		a0, 4(a2)		# a0 = coproc instruction
-2:
-	move		a2, a1
+	srl		v1, a2, 31		# move branch delay bit to LSB
+	sll		v1, 2			# shift it left by 2 (mult by 4)
+	PTR_ADDU	a0, v1			# add to a0
+	INT_L		a0, 0(a0)		# a0 = coproc instruction
+	NOP_L					# load delay
 
 /*
  * Check to see if the instruction to be emulated is a floating-point
  * instruction.
  */
-	srl		t0, a0, MIPS_OPCODE_SHIFT
-	beq		t0, MIPS_OPCODE_C1, 4f
-	nop
+	srl		t2, a0, MIPS_OPCODE_SHIFT
+	beq		t2, MIPS_OPCODE_C1, 4f
+	 nop
 
 /*
- * Send a floating point exception signal to the current LWP.
+ * Send an ILL signal to the current LWP if the instruction can't be emulated.
  */
-	li		t0, 0xFFFFFF00
-	and		a1, a1, t0
-	ori		a1, a1, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
+	srl		a2, 8
+	sll		a2, 8
+	ori		a2, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
 	REG_PROLOGUE
-	REG_S		a1, FRAME_CAUSE(a3)
+	REG_S		a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
+
+	and		t2, t0, ~MIPS_FPU_EXCEPTION_BITS
+	ctc1		t2, MIPS_FPU_CSR
 
 	move		a1, a0				# code = instruction
 	jal		_C_LABEL(mips_fpuillinst)
-	move		a0, MIPS_CURLWP			# get current LWP
+	 move		a0, MIPS_CURLWP			# get current LWP
 
 	b		FPReturn
-	nop
+	 nop
 
 /*
  * Send a FPE signal to the current LWP if it tripped the any of
@@ -725,7 +667,7 @@ XNESTED(MachFPTrap)
  */
 3:
 	REG_PROLOGUE
-	REG_S		a1, FRAME_CAUSE(a3)
+	REG_S		a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
 	and		a0, t0, ~MIPS_FPU_EXCEPTION_BITS
@@ -733,31 +675,32 @@ XNESTED(MachFPTrap)
 
 	move		a1, t0			# FPU status
 	jal		_C_LABEL(mips_fpuexcept)
-	move		a0, MIPS_CURLWP		# get current LWP
+	 move		a0, MIPS_CURLWP		# get current LWP
 
 	b		FPReturn
-	nop
+	 nop
 
 /*
- * Finally, we can call MachEmulateFP() where a0 is the instruction to emulate.
+ * Finally, we can call
+ * mips_emul_fp(uint32_t insn, struct trapframe *tf, uint32_t cause).
  */
 4:
-	jal		_C_LABEL(MachEmulateFP)
-	move		a1, a3
+	jal		_C_LABEL(mips_emul_fp)
+	 nop
 
 /*
  * Turn off the floating point coprocessor and return.
  */
 FPReturn:
 	mfc0		t0, MIPS_COP_0_STATUS
-	REG_S		ra, CALLFRAME_RA(sp)
-	and		t0, t0, ~MIPS_SR_COP_1_BIT
+	REG_L		ra, CALLFRAME_RA(sp)
+	and		t0, ~MIPS_SR_COP_1_BIT
 	mtc0		t0, MIPS_COP_0_STATUS
 	COP0_SYNC
 	j		ra
-	PTR_ADDU	sp, CALLFRAME_SIZ
-END(MachFPInterrupt)
-#endif /* !defined(NOFPU) && !defined(SOFTFLOAT) */
+	 PTR_ADDU	sp, CALLFRAME_SIZ
+END(mips_fpu_intr)
+#endif /* !defined(NOFPU) || defined(FPEMUL) */
 
 LEAF(mips_pagecopy)
 	.set	push
@@ -795,7 +738,7 @@ END(mips_pagecopy)
 LEAF(mips_pagezero)
 /* We can always safely store a 64-bit zero on MIPS3,4,64 */
 	.set	push
-#if !defined(MIPS1) && !defined(MIPS32)
+#if (MIPS1 + MIPS32 + MIPS32R2) == 0
 	.set	mips3
 #endif
 	li		a1, PAGE_SIZE / (8*SZREG)
@@ -882,13 +825,6 @@ END(stacktrace)
 	.globl	_C_LABEL(esym)
 _C_LABEL(esym):
 	.word 0
-
-	.globl	_C_LABEL(cpu_id)
-	.globl	_C_LABEL(fpu_id)
-_C_LABEL(cpu_id):
-	.word	0
-_C_LABEL(fpu_id):
-	.word	0
 
 #ifdef MIPS_DYNAMIC_STATUS_MASK
 	.globl	_C_LABEL(mips_dynamic_status_mask)

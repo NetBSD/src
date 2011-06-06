@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.12 2008/04/28 20:23:33 martin Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.12.28.1 2011/06/06 09:06:32 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.12 2008/04/28 20:23:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.12.28.1 2011/06/06 09:06:32 jruoho Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -72,10 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.12 2008/04/28 20:23:33 martin Exp $")
 
 
 /* autoconfiguration driver */
-static void paud_attach_isa(struct device *, struct device *, void *);
-static int  paud_match_isa(struct device *, struct cfdata *, void *);
+static void paud_attach_isa(device_t, device_t, void *);
+static int  paud_match_isa(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(paud_isa, sizeof(struct ad1848_isa_softc),
+CFATTACH_DECL_NEW(paud_isa, sizeof(struct ad1848_isa_softc),
     paud_match_isa, paud_attach_isa, NULL, NULL);
 
 /*
@@ -125,7 +125,7 @@ static const struct audio_hw_if paud_hw_if = {
 /* autoconfig routines */
 
 static int
-paud_match_isa(struct device *parent, struct cfdata *cf, void *aux)
+paud_match_isa(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ad1848_isa_softc probesc, *sc = &probesc;
 	struct isa_attach_args *ia = aux;
@@ -147,12 +147,13 @@ paud_match_isa(struct device *parent, struct cfdata *cf, void *aux)
  * Audio chip found.
  */
 static void
-paud_attach_isa(struct device *parent, struct device *self, void *aux)
+paud_attach_isa(device_t parent, device_t self, void *aux)
 {
 	struct ad1848_isa_softc *sc;
 	struct isa_attach_args *ia;
 
-	sc = (struct ad1848_isa_softc *)self;
+	sc = device_private(self);
+	sc->sc_ad1848.sc_dev = self;
 	ia = aux;
 	sc->sc_ad1848.sc_iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
@@ -167,7 +168,7 @@ paud_attach_isa(struct device *parent, struct device *self, void *aux)
 	    IST_EDGE, IPL_AUDIO, ad1848_isa_intr, sc);
 	ad1848_isa_attach(sc);
 	aprint_normal("\n");
-	audio_attach_mi(&paud_hw_if, &sc->sc_ad1848, &sc->sc_ad1848.sc_dev);
+	audio_attach_mi(&paud_hw_if, &sc->sc_ad1848, self);
 
 }
 

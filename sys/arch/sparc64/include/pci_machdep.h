@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.24 2010/01/06 05:55:01 mrg Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.24.6.1 2011/06/06 09:06:52 jruoho Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -67,11 +67,11 @@ struct sparc_pci_chipset {
 	pcireg_t	(*spc_conf_read)(pci_chipset_tag_t, pcitag_t, int);
 	void		(*spc_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
-	int		(*spc_intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
+	int		(*spc_intr_map)(const struct pci_attach_args *, pci_intr_handle_t *);
 	void		*(*spc_intr_establish)(pci_chipset_tag_t, pci_intr_handle_t, int, int (*)(void *), void *);
 
 	/* private interfaces */
-	int		(*spc_find_ino)(struct pci_attach_args *, pci_intr_handle_t *);
+	int		(*spc_find_ino)(const struct pci_attach_args *, pci_intr_handle_t *);
 
 	int		spc_busmax;
 	struct spc_busnode {
@@ -90,11 +90,12 @@ void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
 		    int *);
 const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
-int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int		pci_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
 int		sparc64_pci_enumerate_bus(struct pci_softc *, const int *,
-		    int (*)(struct pci_attach_args *),
+		    int (*)(const struct pci_attach_args *),
 		    struct pci_attach_args *);
 #define PCI_MACHDEP_ENUMERATE_BUS sparc64_pci_enumerate_bus
 

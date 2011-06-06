@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_start.S,v 1.1 2010/10/03 06:03:10 kiyohara Exp $ */
+/*	$NetBSD: marvell_start.S,v 1.1.6.1 2011/06/06 09:05:27 jruoho Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -62,8 +62,9 @@
 #include "opt_cputypes.h"
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pte.h>
-#include <arm/arm32/pmap.h>		/* for PMAP_DOMAIN_KERNEL */
+#include "assym.h"
+
+RCSID("$NetBSD: marvell_start.S,v 1.1.6.1 2011/06/06 09:05:27 jruoho Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0x00000000
@@ -193,14 +194,14 @@ sheeva_cores_end:
 mmu_init_table:
 	/* fill all table VA==PA */
 	MMU_INIT(0x00000000, 0x00000000,
-	    1 << (32 - L1_S_SHIFT), L1_TYPE_S | L1_S_AP(AP_KRW))
+	    1 << (32 - L1_S_SHIFT), L1_TYPE_S | L1_S_AP_KRW)
 
 	/* map SDRAM VA==PA, WT cacheable */
 	MMU_INIT(SDRAM_START, SDRAM_START,
-	    128, L1_TYPE_S | L1_S_C | L1_S_AP(AP_KRW))
+	    128, L1_TYPE_S | L1_S_C | L1_S_AP_KRW)
 
 	/* map VA 0xc0000000..0xc7ffffff to PA 0x00000000..0x07ffffff */
 	MMU_INIT(0xc0000000, SDRAM_START,
-	    128, L1_TYPE_S | L1_S_C | L1_S_AP(AP_KRW))
+	    128, L1_TYPE_S | L1_S_C | L1_S_AP_KRW)
 
 	.word	0			/* end of table */

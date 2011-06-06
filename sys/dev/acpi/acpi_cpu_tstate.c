@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.18 2010/12/30 12:05:02 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.18.2.1 2011/06/06 09:07:41 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,11 +27,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.18 2010/12/30 12:05:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.18.2.1 2011/06/06 09:07:41 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/evcnt.h>
 #include <sys/kmem.h>
+#include <sys/xcall.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -40,16 +40,17 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.18 2010/12/30 12:05:02 jruoho 
 #define _COMPONENT	 ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	 ("acpi_cpu_tstate")
 
-static void		 acpicpu_tstate_attach_print(struct acpicpu_softc *);
-static void		 acpicpu_tstate_attach_evcnt(struct acpicpu_softc *);
-static void		 acpicpu_tstate_detach_evcnt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_tss(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_tss_add(struct acpicpu_tstate *,
 						ACPI_OBJECT *);
 static ACPI_STATUS	 acpicpu_tstate_ptc(struct acpicpu_softc *);
+static ACPI_STATUS	 acpicpu_tstate_dep(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_fadt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_change(struct acpicpu_softc *);
 static void		 acpicpu_tstate_reset(struct acpicpu_softc *);
+static void		 acpicpu_tstate_set_xcall(void *, void *);
+
+extern struct acpicpu_softc **acpicpu_sc;
 
 void
 acpicpu_tstate_attach(device_t self)
@@ -78,6 +79,14 @@ acpicpu_tstate_attach(device_t self)
 		str = "_PTC";
 		goto out;
 	}
+
+	/*
+	 * Query the optional _TSD.
+	 */
+	rv = acpicpu_tstate_dep(sc);
+
+	if (ACPI_SUCCESS(rv))
+		sc->sc_flags |= ACPICPU_FLAG_T_DEP;
 
 	/*
 	 * Comparable to P-states, the _TPC object may
@@ -109,58 +118,6 @@ out:
 	sc->sc_flags |= ACPICPU_FLAG_T;
 
 	acpicpu_tstate_reset(sc);
-	acpicpu_tstate_attach_evcnt(sc);
-	acpicpu_tstate_attach_print(sc);
-}
-
-static void
-acpicpu_tstate_attach_print(struct acpicpu_softc *sc)
-{
-	const uint8_t method = sc->sc_tstate_control.reg_spaceid;
-	struct acpicpu_tstate *ts;
-	static bool once = false;
-	const char *str;
-	uint32_t i;
-
-	if (once != false)
-		return;
-
-	str = (method != ACPI_ADR_SPACE_FIXED_HARDWARE) ? "I/O" : "FFH";
-
-	for (i = 0; i < sc->sc_tstate_count; i++) {
-
-		ts = &sc->sc_tstate[i];
-
-		if (ts->ts_percent == 0)
-			continue;
-
-		aprint_debug_dev(sc->sc_dev, "T%u: %3s, "
-		    "lat %3u us, pow %5u mW, %3u %%\n", i, str,
-		    ts->ts_latency, ts->ts_power, ts->ts_percent);
-	}
-
-	once = true;
-}
-
-static void
-acpicpu_tstate_attach_evcnt(struct acpicpu_softc *sc)
-{
-	struct acpicpu_tstate *ts;
-	uint32_t i;
-
-	for (i = 0; i < sc->sc_tstate_count; i++) {
-
-		ts = &sc->sc_tstate[i];
-
-		if (ts->ts_percent == 0)
-			continue;
-
-		(void)snprintf(ts->ts_name, sizeof(ts->ts_name),
-		    "T%u (%u %%)", i, ts->ts_percent);
-
-		evcnt_attach_dynamic(&ts->ts_evcnt, EVCNT_TYPE_MISC,
-		    NULL, device_xname(sc->sc_dev), ts->ts_name);
-	}
 }
 
 int
@@ -178,24 +135,8 @@ acpicpu_tstate_detach(device_t self)
 		kmem_free(sc->sc_tstate, size);
 
 	sc->sc_flags &= ~ACPICPU_FLAG_T;
-	acpicpu_tstate_detach_evcnt(sc);
 
 	return 0;
-}
-
-static void
-acpicpu_tstate_detach_evcnt(struct acpicpu_softc *sc)
-{
-	struct acpicpu_tstate *ts;
-	uint32_t i;
-
-	for (i = 0; i < sc->sc_tstate_count; i++) {
-
-		ts = &sc->sc_tstate[i];
-
-		if (ts->ts_percent != 0)
-			evcnt_detach(&ts->ts_evcnt);
-	}
 }
 
 void
@@ -204,23 +145,23 @@ acpicpu_tstate_start(device_t self)
 	/* Nothing. */
 }
 
-bool
-acpicpu_tstate_suspend(device_t self)
+void
+acpicpu_tstate_suspend(void *aux)
 {
-	struct acpicpu_softc *sc = device_private(self);
+	struct acpicpu_softc *sc;
+	device_t self = aux;
+
+	sc = device_private(self);
 
 	mutex_enter(&sc->sc_mtx);
 	acpicpu_tstate_reset(sc);
 	mutex_exit(&sc->sc_mtx);
-
-	return true;
 }
 
-bool
-acpicpu_tstate_resume(device_t self)
+void
+acpicpu_tstate_resume(void *aux)
 {
-
-	return true;
+	/* Nothing. */
 }
 
 void
@@ -355,15 +296,6 @@ acpicpu_tstate_tss(struct acpicpu_softc *sc)
 		goto out;
 	}
 
-	/*
-	 * The first entry with 100 % duty cycle
-	 * should have zero in the control field.
-	 */
-	if (sc->sc_tstate[0].ts_control != 0) {
-		rv = AE_AML_BAD_RESOURCE_VALUE;
-		goto out;
-	}
-
 out:
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
@@ -409,7 +341,7 @@ acpicpu_tstate_tss_add(struct acpicpu_tstate *ts, ACPI_OBJECT *obj)
         if (ts->ts_percent < 10 || ts->ts_percent > 100)
 		return AE_BAD_DECIMAL_CONSTANT;
 
-	if (ts->ts_latency < 1)
+	if (ts->ts_latency == 0 || ts->ts_latency > 1000)
 		ts->ts_latency = 1;
 
 	return AE_OK;
@@ -516,6 +448,95 @@ out:
 }
 
 static ACPI_STATUS
+acpicpu_tstate_dep(struct acpicpu_softc *sc)
+{
+	ACPI_OBJECT *elm, *obj;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+	uint32_t val;
+	uint8_t i, n;
+
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_TSD", &buf);
+
+	if (ACPI_FAILURE(rv))
+		goto out;
+
+	obj = buf.Pointer;
+
+	if (obj->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	if (obj->Package.Count != 1) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	elm = &obj->Package.Elements[0];
+
+	if (obj->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	n = elm->Package.Count;
+
+	if (n != 5) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	elm = elm->Package.Elements;
+
+	for (i = 0; i < n; i++) {
+
+		if (elm[i].Type != ACPI_TYPE_INTEGER) {
+			rv = AE_TYPE;
+			goto out;
+		}
+
+		if (elm[i].Integer.Value > UINT32_MAX) {
+			rv = AE_AML_NUMERIC_OVERFLOW;
+			goto out;
+		}
+	}
+
+	val = elm[1].Integer.Value;
+
+	if (val != 0)
+		aprint_debug_dev(sc->sc_dev, "invalid revision in _TSD\n");
+
+	val = elm[3].Integer.Value;
+
+	if (val < ACPICPU_DEP_SW_ALL || val > ACPICPU_DEP_HW_ALL) {
+		rv = AE_AML_BAD_RESOURCE_VALUE;
+		goto out;
+	}
+
+	val = elm[4].Integer.Value;
+
+	if (val > sc->sc_ncpus) {
+		rv = AE_BAD_VALUE;
+		goto out;
+	}
+
+	sc->sc_tstate_dep.dep_domain = elm[2].Integer.Value;
+	sc->sc_tstate_dep.dep_type   = elm[3].Integer.Value;
+	sc->sc_tstate_dep.dep_ncpus  = elm[4].Integer.Value;
+
+out:
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
+		aprint_debug_dev(sc->sc_dev, "failed to evaluate "
+		    "_TSD: %s\n", AcpiFormatException(rv));
+
+	if (buf.Pointer != NULL)
+		ACPI_FREE(buf.Pointer);
+
+	return rv;
+}
+
+static ACPI_STATUS
 acpicpu_tstate_fadt(struct acpicpu_softc *sc)
 {
 	static const size_t size = sizeof(struct acpicpu_tstate);
@@ -527,8 +548,14 @@ acpicpu_tstate_fadt(struct acpicpu_softc *sc)
 		return AE_AML_ILLEGAL_ADDRESS;
 
 	/*
-	 * A zero DUTY_WIDTH is used announce that
-	 * T-states are not available via FADT.
+	 * A zero DUTY_WIDTH may be used announce
+	 * that T-states are not available via FADT
+	 * (ACPI 4.0, p. 121). See also (section 9.3):
+	 *
+	 *	Advanced Micro Devices: BIOS and Kernel
+	 *	Developer's Guide for AMD Athlon 64 and
+	 *	AMD Opteron Processors. Revision 3.30,
+	 *	February 2006.
 	 */
 	if (width == 0 || width + offset > 4)
 		return AE_AML_BAD_RESOURCE_VALUE;
@@ -626,14 +653,21 @@ acpicpu_tstate_reset(struct acpicpu_softc *sc)
 }
 
 int
-acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
+acpicpu_tstate_get(struct cpu_info *ci, uint32_t *percent)
 {
-	const uint8_t method = sc->sc_tstate_control.reg_spaceid;
 	struct acpicpu_tstate *ts = NULL;
+	struct acpicpu_softc *sc;
 	uint32_t i, val = 0;
 	uint8_t offset;
 	uint64_t addr;
 	int rv;
+
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (__predict_false(sc == NULL)) {
+		rv = ENXIO;
+		goto fail;
+	}
 
 	if (__predict_false(sc->sc_cold != false)) {
 		rv = EBUSY;
@@ -655,7 +689,7 @@ acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 
 	mutex_exit(&sc->sc_mtx);
 
-	switch (method) {
+	switch (sc->sc_tstate_status.reg_spaceid) {
 
 	case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
@@ -706,7 +740,7 @@ acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 	return 0;
 
 fail:
-	aprint_error_dev(sc->sc_dev, "failed "
+	aprint_debug_dev(sc->sc_dev, "failed "
 	    "to get T-state (err %d)\n", rv);
 
 	mutex_enter(&sc->sc_mtx);
@@ -716,15 +750,33 @@ fail:
 	return rv;
 }
 
-int
-acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
+void
+acpicpu_tstate_set(struct cpu_info *ci, uint32_t percent)
 {
-	const uint8_t method = sc->sc_tstate_control.reg_spaceid;
+	uint64_t xc;
+
+	xc = xc_broadcast(0, acpicpu_tstate_set_xcall, &percent, NULL);
+	xc_wait(xc);
+}
+
+static void
+acpicpu_tstate_set_xcall(void *arg1, void *arg2)
+{
 	struct acpicpu_tstate *ts = NULL;
-	uint32_t i, val;
+	struct cpu_info *ci = curcpu();
+	struct acpicpu_softc *sc;
+	uint32_t i, percent, val;
 	uint8_t offset;
 	uint64_t addr;
 	int rv;
+
+	percent = *(uint32_t *)arg1;
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (__predict_false(sc == NULL)) {
+		rv = ENXIO;
+		goto fail;
+	}
 
 	if (__predict_false(sc->sc_cold != false)) {
 		rv = EBUSY;
@@ -740,7 +792,7 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 
 	if (sc->sc_tstate_current == percent) {
 		mutex_exit(&sc->sc_mtx);
-		return 0;
+		return;
 	}
 
 	for (i = sc->sc_tstate_max; i <= sc->sc_tstate_min; i++) {
@@ -761,7 +813,7 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 		goto fail;
 	}
 
-	switch (method) {
+	switch (sc->sc_tstate_control.reg_spaceid) {
 
 	case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
@@ -826,15 +878,13 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 	sc->sc_tstate_current = percent;
 	mutex_exit(&sc->sc_mtx);
 
-	return 0;
+	return;
 
 fail:
-	aprint_error_dev(sc->sc_dev, "failed to "
+	aprint_debug_dev(sc->sc_dev, "failed to "
 	    "throttle to %u %% (err %d)\n", percent, rv);
 
 	mutex_enter(&sc->sc_mtx);
 	sc->sc_tstate_current = ACPICPU_T_STATE_UNKNOWN;
 	mutex_exit(&sc->sc_mtx);
-
-	return rv;
 }

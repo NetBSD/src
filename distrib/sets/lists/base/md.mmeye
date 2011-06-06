@@ -1,3 +1,0 @@
-# $NetBSD: md.mmeye,v 1.7 2008/11/29 17:57:34 tsutsui Exp $
-./usr/mdec/bootelf				base-sysutil-bin
-./usr/mdec/osloader				base-sysutil-bin

@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_locore.S,v 1.2 2011/01/14 02:06:25 rmind Exp $	*/
+/*	$NetBSD: obs600_locore.S,v 1.2.2.1 2011/06/06 09:05:32 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
@@ -27,7 +27,6 @@
  */
 
 #undef PPC_4XX_NOCACHE
-#define _NOREGNAMES
 
 #include "opt_ddb.h"
 #include "opt_ppcarch.h"

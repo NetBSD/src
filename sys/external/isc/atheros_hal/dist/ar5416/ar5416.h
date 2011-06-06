@@ -14,13 +14,14 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416.h,v 1.1.1.1 2008/12/11 04:46:46 alc Exp $
+ * $Id: ar5416.h,v 1.1.1.1.18.1 2011/06/06 09:09:19 jruoho Exp $
  */
 #ifndef _ATH_AR5416_H_
 #define _ATH_AR5416_H_
 
 #include "ar5212/ar5212.h"
 #include "ar5416_cal.h"
+#include "ah_eeprom_v14.h"	/* for CAL_TARGET_POWER_* */
 
 #define	AR5416_MAGIC	0x20065416
 
@@ -44,6 +45,9 @@ typedef struct {
 #define	AR5416_CCA_MAX_GOOD_VALUE	-85
 #define	AR5416_CCA_MAX_HIGH_VALUE	-62
 #define	AR5416_CCA_MIN_BAD_VALUE	-140
+#define	AR5416_CCA_MIN_GOOD_VALUE	-118
+
+#define AR5416_SPUR_RSSI_THRESH		40
 
 struct ath_hal_5416 {
 	struct ath_hal_5212 ah_5212;
@@ -57,8 +61,15 @@ struct ath_hal_5416 {
 	HAL_INI_ARRAY	ah_ini_bank6;
 	HAL_INI_ARRAY	ah_ini_bank7;
 	HAL_INI_ARRAY	ah_ini_addac;
+	HAL_INI_ARRAY	ah_ini_pcieserdes;
+
+	void		(*ah_writeIni)(struct ath_hal *,
+			    HAL_CHANNEL_INTERNAL *);
+	void		(*ah_spurMitigate)(struct ath_hal *,
+			    HAL_CHANNEL_INTERNAL *);
 
 	u_int       	ah_globaltxtimeout;	/* global tx timeout */
+	u_int		ah_gpioMask;
 	int		ah_hangs;		/* h/w hangs state */
 	uint8_t		ah_keytype[AR5416_KEYTABLE_SIZE];
 	/*
@@ -83,12 +94,14 @@ extern	HAL_BOOL ar2133RfAttach(struct ath_hal *, HAL_STATUS *);
 
 struct ath_hal;
 
+extern	uint32_t ar5416GetRadioRev(struct ath_hal *ah);
 extern	struct ath_hal * ar5416Attach(uint16_t devid, HAL_SOFTC sc,
 		HAL_BUS_TAG st, HAL_BUS_HANDLE sh, HAL_STATUS *status);
 extern	void ar5416InitState(struct ath_hal_5416 *, uint16_t devid,
 		HAL_SOFTC sc, HAL_BUS_TAG st, HAL_BUS_HANDLE sh,
 		HAL_STATUS *status);
 extern	void ar5416Detach(struct ath_hal *ah);
+extern	void ar5416AttachPCIE(struct ath_hal *ah);
 extern	HAL_BOOL ar5416FillCapabilityInfo(struct ath_hal *ah);
 
 #define	IS_5GHZ_FAST_CLOCK_EN(_ah, _c) \
@@ -120,7 +133,8 @@ extern	HAL_BOOL ar5416IsInterruptPending(struct ath_hal *ah);
 extern	HAL_BOOL ar5416GetPendingInterrupts(struct ath_hal *, HAL_INT *masked);
 extern	HAL_INT ar5416SetInterrupts(struct ath_hal *ah, HAL_INT ints);
 
-extern	HAL_BOOL ar5416GpioCfgOutput(struct ath_hal *, uint32_t gpio);
+extern	HAL_BOOL ar5416GpioCfgOutput(struct ath_hal *, uint32_t gpio,
+		HAL_GPIO_MUX_TYPE);
 extern	HAL_BOOL ar5416GpioCfgInput(struct ath_hal *, uint32_t gpio);
 extern	HAL_BOOL ar5416GpioSet(struct ath_hal *, uint32_t gpio, uint32_t val);
 extern	uint32_t ar5416GpioGet(struct ath_hal *ah, uint32_t gpio);
@@ -166,11 +180,25 @@ extern	HAL_RFGAIN ar5416GetRfgain(struct ath_hal *ah);
 extern	HAL_BOOL ar5416Disable(struct ath_hal *ah);
 extern	HAL_BOOL ar5416ChipReset(struct ath_hal *ah, HAL_CHANNEL *);
 extern	HAL_BOOL ar5416SetResetReg(struct ath_hal *, uint32_t type);
+extern	HAL_BOOL ar5416SetBoardValues(struct ath_hal *, HAL_CHANNEL *);
 extern	HAL_BOOL ar5416SetTxPowerLimit(struct ath_hal *ah, uint32_t limit);
+extern	HAL_BOOL ar5416SetTransmitPower(struct ath_hal *,
+		HAL_CHANNEL *, uint16_t *);
 extern	HAL_BOOL ar5416GetChipPowerLimits(struct ath_hal *ah,
 		HAL_CHANNEL *chans, uint32_t nchans);
 extern	void ar5416GetChannelCenters(struct ath_hal *,
 		HAL_CHANNEL_INTERNAL *chan, CHAN_CENTERS *centers);
+extern  void ar5416GetTargetPowers(struct ath_hal *ah, 
+		HAL_CHANNEL_INTERNAL *chan,
+		CAL_TARGET_POWER_HT *powInfo,
+		uint16_t numChannels, CAL_TARGET_POWER_HT *pNewPower,
+		uint16_t numRates, HAL_BOOL isHt40Target);
+extern  void ar5416GetTargetPowersLeg(struct ath_hal *ah, 
+		HAL_CHANNEL_INTERNAL *chan,
+		CAL_TARGET_POWER_LEG *powInfo,
+		uint16_t numChannels, CAL_TARGET_POWER_LEG *pNewPower,
+		uint16_t numRates, HAL_BOOL isExtTarget);
+
 
 extern	HAL_BOOL ar5416StopTxDma(struct ath_hal *ah, u_int q);
 extern	HAL_BOOL ar5416SetupTxDesc(struct ath_hal *ah, struct ath_desc *ds,

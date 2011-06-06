@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2010/12/30 18:38:50 jruoho Exp $
+# $NetBSD: Makefile,v 1.5.2.1 2011/06/06 09:09:45 jruoho Exp $
 
 .include "../Makefile.inc"
 
@@ -6,6 +6,7 @@
 .PATH:	${S}/arch/x86/acpi
 
 KMOD=	acpicpu
+IOCONF=	acpicpu.ioconf
 SRCS=	acpi_cpu.c \
 	acpi_cpu_md.c \
 	acpi_cpu_cstate.c \

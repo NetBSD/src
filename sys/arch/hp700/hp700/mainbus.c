@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.76 2011/01/13 21:15:15 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.76.2.1 2011/06/06 09:05:41 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.76 2011/01/13 21:15:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.76.2.1 2011/06/06 09:05:41 jruoho Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1182,7 +1182,7 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 			size -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return (0);
 }
 
@@ -1359,17 +1359,10 @@ mbattach(device_t parent, device_t self, void *aux)
 	struct mainbus_softc *sc = device_private(self);
 	struct confargs nca;
 	bus_space_handle_t ioh;
-	hppa_hpa_t prochpa;
 	int err;
 
 	sc->sc_dv = self;
 	mb_attached = 1;
-
-	/* fetch the "default" cpu hpa */
-
-	err =  pdcproc_hpa_processor(&prochpa);
-	if (err < 0)
-		panic("mbattach: PDC_HPA failed");
 
 	/*
 	 * Map all of Fixed Physical, Local Broadcast, and Global Broadcast
@@ -1382,18 +1375,19 @@ mbattach(device_t parent, device_t self, void *aux)
 	 */
 
 	/* map all the way till the end of the memory */
-	if (bus_space_map(&hppa_bustag, prochpa, (~0LU - prochpa + 1),
+	if (bus_space_map(&hppa_bustag, hppa_mcpuhpa, (~0LU - hppa_mcpuhpa + 1),
 	    0, &ioh))
 		panic("%s: cannot map mainbus IO space", __func__);
 
 	/*
 	 * Local-Broadcast the HPA to all modules on the bus
 	 */
-	((struct iomod *)(prochpa & HPPA_FLEX_MASK))[FPA_IOMOD].io_flex =
-		(void *)((prochpa & HPPA_FLEX_MASK) | DMA_ENABLE);
+	((struct iomod *)(hppa_mcpuhpa & HPPA_FLEX_MASK))[FPA_IOMOD].io_flex =
+		(void *)((hppa_mcpuhpa & HPPA_FLEX_MASK) | DMA_ENABLE);
 
-	sc->sc_hpa = prochpa;
-	aprint_normal(" [flex %lx]\n", prochpa & HPPA_FLEX_MASK);
+	sc->sc_hpa = hppa_mcpuhpa;
+
+	aprint_normal(" [flex %lx]\n", hppa_mcpuhpa & HPPA_FLEX_MASK);
 
 	/* PDC first */
 	memset(&nca, 0, sizeof(nca));
@@ -1407,7 +1401,7 @@ mbattach(device_t parent, device_t self, void *aux)
 	/* get some power */
 	memset(&nca, 0, sizeof(nca));
 	nca.ca_name = "power";
-	nca.ca_irq = -1;
+	nca.ca_irq = HP700CF_IRQ_UNDEF;
 	nca.ca_iot = &hppa_bustag;
 	config_found(self, &nca, mbprint);
 #endif
@@ -1420,7 +1414,7 @@ mbattach(device_t parent, device_t self, void *aux)
 		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] = 
 		nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 		nca.ca_dp.dp_mod = -1;
-		nca.ca_irq = -1;
+		nca.ca_irq = HP700CF_IRQ_UNDEF;
 		nca.ca_iot = &hppa_bustag;
 		nca.ca_hpa = nca.ca_pcl.cmd_addr;
 

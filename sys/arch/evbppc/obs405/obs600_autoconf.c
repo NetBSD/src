@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_autoconf.c,v 1.1 2010/03/18 14:15:38 kiyohara Exp $	*/
+/*	$NetBSD: obs600_autoconf.c,v 1.1.8.1 2011/06/06 09:05:32 jruoho Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.1 2010/03/18 14:15:38 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.1.8.1 2011/06/06 09:05:32 jruoho Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -56,8 +56,8 @@ cpu_configure(void)
 
 	/* Initialize intr and add UICs */
 	intr_init();
-	uic_add(DCR_UIC1_BASE, 28);	/* UIC1 cascade to irq 28 */
-	uic_add(DCR_UIC2_BASE, 30);	/* UIC2 cascade to irq 30 */
+	uic_add(DCR_UIC1_BASE, 30);	/* UIC1 cascade to irq 30 */
+	uic_add(DCR_UIC2_BASE, 28);	/* UIC2 cascade to irq 28 */
 
 	calc_delayconst();
 

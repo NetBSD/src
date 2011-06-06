@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.36 2008/05/05 13:41:30 ad Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.36.28.1 2011/06/06 09:10:00 jruoho Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.29 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.36 2008/05/05 13:41:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.36.28.1 2011/06/06 09:10:00 jruoho Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -148,6 +148,13 @@ ipcomp4_input(m, va_alist)
 	ipcomp = mtod(md, struct ipcomp *);
 	ip = mtod(m, struct ip *);
 	nxt = ipcomp->comp_nxt;
+	if (nxt == IPPROTO_IPCOMP || nxt == IPPROTO_AH || nxt == IPPROTO_ESP) {
+		/* nested ipcomp - possible attack, not likely useful */
+		ipseclog((LOG_DEBUG, "IPv4 IPComp input: nested ipcomp "
+		    "(bailing)\n"));
+		IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
+		goto fail;
+	}
 	hlen = ip->ip_hl << 2;
 
 	cpi = ntohs(ipcomp->comp_cpi);

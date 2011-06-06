@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.80 2009/10/19 18:41:12 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.80.6.1 2011/06/06 09:07:45 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -107,12 +107,6 @@ struct atabus_initq {
 	TAILQ_ENTRY(atabus_initq) atabus_initq;
 	struct atabus_softc *atabus_sc;
 };
-
-#ifdef _KERNEL
-TAILQ_HEAD(atabus_initq_head, atabus_initq);
-extern struct atabus_initq_head atabus_initq_head;
-extern struct simplelock atabus_interlock;
-#endif /* _KERNEL */
 
 /* High-level functions and structures used by both ATA and ATAPI devices */
 struct ataparams;
@@ -337,6 +331,7 @@ struct ata_channel {
 #define	ATACH_DISABLED 0x80	/* channel is disabled */
 #define ATACH_TH_RUN   0x100	/* the kernel thread is working */
 #define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
+#define ATACH_TH_RESCAN 0x400	/* rescan requested */
 	u_int8_t ch_status;	/* copy of status register */
 	u_int8_t ch_error;	/* copy of error register */
 

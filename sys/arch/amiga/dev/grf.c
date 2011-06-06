@@ -1,6 +1,7 @@
-/*	$NetBSD: grf.c,v 1.53 2010/12/20 00:25:25 matt Exp $ */
+/*	$NetBSD: grf.c,v 1.53.2.1 2011/06/06 09:04:53 jruoho Exp $ */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -36,48 +37,9 @@
  *
  *	@(#)grf.c	7.8 (Berkeley) 5/7/91
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: grf.c 1.31 91/01/21$
- *
- *	@(#)grf.c	7.8 (Berkeley) 5/7/91
- */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.53 2010/12/20 00:25:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.53.2.1 2011/06/06 09:04:53 jruoho Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -120,15 +82,15 @@ int grfon(dev_t);
 int grfoff(dev_t);
 int grfsinfo(dev_t, struct grfdyninfo *);
 
-void grfattach(struct device *, struct device *, void *);
-int grfmatch(struct device *, struct cfdata *, void *);
+void grfattach(device_t, device_t, void *);
+int grfmatch(device_t, cfdata_t, void *);
 int grfprint(void *, const char *);
 /*
  * pointers to grf drivers device structs
  */
 struct grf_softc *grfsp[NGRF];
 
-CFATTACH_DECL(grf, sizeof(struct device),
+CFATTACH_DECL_NEW(grf, 0,
     grfmatch, grfattach, NULL, NULL);
 
 dev_type_open(grfopen);
@@ -144,14 +106,14 @@ const struct cdevsw grf_cdevsw = {
 /*
  * only used in console init.
  */
-static struct cfdata *cfdata;
+static cfdata_t cfdata;
 
 /*
  * match if the unit of grf matches its perspective
  * low level board driver.
  */
 int
-grfmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+grfmatch(device_t pdp, cfdata_t cfp, void *auxp)
 {
 
 	if (cfp->cf_unit != ((struct grf_softc *)pdp)->g_unit)
@@ -166,7 +128,7 @@ grfmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * durring console init.
  */
 void
-grfattach(struct device *pdp, struct device *dp, void *auxp)
+grfattach(device_t pdp, device_t dp, void *auxp)
 {
 	struct grf_softc *gp;
 	int maj;

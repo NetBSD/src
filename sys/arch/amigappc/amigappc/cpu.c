@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2009/07/21 09:49:15 phx Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1.8.1 2011/06/06 09:04:55 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1 2009/07/21 09:49:15 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.8.1 2011/06/06 09:04:55 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,16 +41,16 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1 2009/07/21 09:49:15 phx Exp $");
 
 #include <amiga/amiga/device.h>
 
-int cpu_match(struct device *, struct cfdata *, void *);
-void cpu_attach(struct device *, struct device *, void *);
+int cpu_match(device_t, cfdata_t, void *);
+void cpu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
 
 int
-cpu_match(struct device *parent, struct cfdata *cf, void *aux)
+cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (strcmp((char *)aux, cpu_cd.cd_name) != 0)
@@ -61,7 +61,7 @@ cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
 
 	if (amiga_realconfig)

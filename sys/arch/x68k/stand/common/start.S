@@ -5,11 +5,11 @@
 |	  o no stdio support (DOS/IOCS only)
 |	  o HUPAIR support
 |
-|	written by Yasha (ITOH Yasufumi)
+|	written by ITOH Yasufumi
 |
 |	This file is in the public domain
 |
-|	$NetBSD: start.S,v 1.2 1999/11/11 08:12:50 itohy Exp $
+|	$NetBSD: start.S,v 1.2.162.1 2011/06/06 09:07:03 jruoho Exp $
 
 #include <machine/asm.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.9 2009/03/18 10:22:27 cegger Exp $	*/
+/*	$NetBSD: prf.c,v 1.9.6.1 2011/06/06 09:05:11 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -35,11 +35,13 @@
 void
 putchar(int c)
 {
+
 	cnputc(c);
 }
 
 int
 getchar(void)
 {
-	return (cngetc());
+
+	return cngetc();
 }

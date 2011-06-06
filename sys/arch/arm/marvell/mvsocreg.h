@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocreg.h,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: mvsocreg.h,v 1.1.6.1 2011/06/06 09:05:04 jruoho Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -102,7 +102,11 @@
 #define MVSOC_MLMB_CPUCR		  0x100	/* CPU Configuration Register */
 #define MVSOC_MLMB_CPUCSR		  0x104	/* CPU Control/Status Register*/
 #define MVSOC_MLMB_RSTOUTNMASKR		  0x108 /* RSTOUTn Mask Register */
+#define MVSOC_MLMB_RSTOUTNMASKR_PEXRSTOUTEN     (1 << 0)
+#define MVSOC_MLMB_RSTOUTNMASKR_WDRSTOUTEN      (1 << 1)
+#define MVSOC_MLMB_RSTOUTNMASKR_SOFTRSTOUTEN    (1 << 2)
 #define MVSOC_MLMB_SSRR			  0x10c	/* System Soft Reset Register */
+#define MVSOC_MLMB_SSRR_SYSTEMSOFTRST           (1 << 0)
 #define MVSOC_MLMB_MLMBICR		  0x110	/*Mb-L to Mb Bridge Intr Cause*/
 #define MVSOC_MLMB_MLMBIMR		  0x114	/*Mb-L to Mb Bridge Intr Mask */
 

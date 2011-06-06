@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.14 2008/02/20 21:43:35 drochner Exp $
+# $NetBSD: files.sbmips,v 1.14.38.1 2011/06/06 09:06:37 jruoho Exp $
 
 maxpartitions 8
 
@@ -14,8 +14,8 @@ file dev/cons.c
 file arch/sbmips/sbmips/sb1250_icu.c
 
 file arch/mips/cfe/cfe_api.c
-file arch/mips/mips/softintr.c
 file arch/mips/mips/mips3_clock.c
+file arch/mips/mips/bus_dma.c
 
 ###
 ### MI device inclusion

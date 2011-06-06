@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.26 2009/12/12 14:44:08 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.26.6.1 2011/06/06 09:05:45 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.26 2009/12/12 14:44:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.26.6.1 2011/06/06 09:05:45 jruoho Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.26 2009/12/12 14:44:08 tsutsui Exp $");
 #include <sys/systm.h>
 #include <sys/timetc.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <machine/sysconf.h>
 #include <machine/bus.h>
@@ -73,7 +74,7 @@ int vrrtc_debug = VRRTCDEBUG_CONF;
 #endif /* VRRTCDEBUG */
 
 struct vrrtc_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	void *sc_ih;
@@ -87,7 +88,7 @@ struct vrrtc_softc {
 	struct timecounter sc_tc;
 };
 
-void	vrrtc_init(struct device *);
+void	vrrtc_init(device_t);
 int	vrrtc_get(todr_chip_handle_t, struct timeval *);
 int	vrrtc_set(todr_chip_handle_t, struct timeval *);
 uint32_t vrrtc_get_timecount(struct timecounter *);
@@ -97,19 +98,19 @@ struct platform_clock vr_clock = {
 	CLOCK_RATE, vrrtc_init,
 };
 
-int	vrrtc_match(struct device *, struct cfdata *, void *);
-void	vrrtc_attach(struct device *, struct device *, void *);
-int	vrrtc_intr(void*, u_int32_t, u_int32_t);
+int	vrrtc_match(device_t, cfdata_t, void *);
+void	vrrtc_attach(device_t, device_t, void *);
+int	vrrtc_intr(void*, vaddr_t, uint32_t);
 void	vrrtc_dump_regs(struct vrrtc_softc *);
 
-CFATTACH_DECL(vrrtc, sizeof(struct vrrtc_softc),
+CFATTACH_DECL_NEW(vrrtc, sizeof(struct vrrtc_softc),
     vrrtc_match, vrrtc_attach, NULL, NULL);
 
 int
-vrrtc_match(struct device *parent, struct cfdata *cf, void *aux)
+vrrtc_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 #ifndef SINGLE_VRIP_BASE
@@ -121,10 +122,10 @@ vrrtc_match(struct device *parent, struct cfdata *cf, void *aux)
 #endif /* SINGLE_VRIP_BASE */
 
 void
-vrrtc_attach(struct device *parent, struct device *self, void *aux)
+vrrtc_attach(device_t parent, device_t self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
-	struct vrrtc_softc *sc = (void *)self;
+	struct vrrtc_softc *sc = device_private(self);
 	int year;
 
 #ifndef SINGLE_VRIP_BASE
@@ -134,15 +135,13 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_tclk_l_reg = VR4102_TCLK_L_REG_W;
 		sc->sc_tclk_cnt_h_reg = VR4102_TCLK_CNT_H_REG_W;
 		sc->sc_tclk_cnt_l_reg = VR4102_TCLK_CNT_L_REG_W;
-	} else
-	if (va->va_addr == VR4122_RTC_ADDR) {
+	} else if (va->va_addr == VR4122_RTC_ADDR) {
 		sc->sc_rtcint_reg = VR4122_RTCINT_REG_W;
 		sc->sc_tclk_h_reg = VR4122_TCLK_H_REG_W;
 		sc->sc_tclk_l_reg = VR4122_TCLK_L_REG_W;
 		sc->sc_tclk_cnt_h_reg = VR4122_TCLK_CNT_H_REG_W;
 		sc->sc_tclk_cnt_l_reg = VR4122_TCLK_CNT_L_REG_W;
-	} else
-	if (va->va_addr == VR4181_RTC_ADDR) {
+	} else if (va->va_addr == VR4181_RTC_ADDR) {
 		sc->sc_rtcint_reg = VR4181_RTCINT_REG_W;
 		sc->sc_tclk_h_reg = RTC_NO_REG_W;
 		sc->sc_tclk_l_reg = RTC_NO_REG_W;
@@ -150,7 +149,7 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_tclk_cnt_l_reg = RTC_NO_REG_W;
 	} else {
 		panic("%s: unknown base address 0x%lx",
-		    sc->sc_dev.dv_xname, va->va_addr);
+		    device_xname(self), va->va_addr);
 	}
 #endif /* SINGLE_VRIP_BASE */
 
@@ -218,35 +217,36 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	todr_attach(&sc->sc_todr);
 
-	platform_clock_attach(sc, &vr_clock);
+	platform_clock_attach(self, &vr_clock);
 }
 
 int
-vrrtc_intr(void *arg, u_int32_t pc, u_int32_t statusReg)
+vrrtc_intr(void *arg, vaddr_t pc, uint32_t status)
 {
 	struct vrrtc_softc *sc = arg;
 	struct clockframe cf;
 
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCINT_REG_W, RTCINT_ALL);
 	cf.pc = pc;
-	cf.sr = statusReg;
+	cf.sr = status;
+	cf.intr = (curcpu()->ci_idepth > 1);
 	hardclock(&cf);
 
 	return 0;
 }
 
 void
-vrrtc_init(struct device *dev)
+vrrtc_init(device_t self)
 {
-	struct vrrtc_softc *sc = (struct vrrtc_softc *)dev;
+	struct vrrtc_softc *sc = device_private(self);
 
 	DDUMP_REGS(sc);
 	/*
 	 * Set tick (CLOCK_RATE)
 	 */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCL1_H_REG_W, 0);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCL1_L_REG_W,
-	    RTCL1_L_HZ/CLOCK_RATE);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    RTCL1_L_REG_W, RTCL1_L_HZ / CLOCK_RATE);
 
 	/*
 	 * Initialize timecounter.
@@ -267,19 +267,18 @@ vrrtc_get_timecount(struct timecounter *tc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
-	return (bus_space_read_2(iot, ioh, ETIME_L_REG_W));
+	return bus_space_read_2(iot, ioh, ETIME_L_REG_W);
 }
 
 int
 vrrtc_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
-
 	struct vrrtc_softc *sc = (struct vrrtc_softc *)tch->cookie;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t timeh;	/* elapse time (2*timeh sec) */
-	u_int32_t timel;	/* timel/32768 sec */
-	int64_t sec, usec;
+	uint32_t timeh;		/* elapse time (2*timeh sec) */
+	uint32_t timel;		/* timel/32768 sec */
+	uint64_t sec, usec;
 
 	timeh = bus_space_read_2(iot, ioh, ETIME_H_REG_W);
 	timeh = (timeh << 16) | bus_space_read_2(iot, ioh, ETIME_M_REG_W);
@@ -288,7 +287,7 @@ vrrtc_get(todr_chip_handle_t tch, struct timeval *tvp)
 	DPRINTF(("clock_get: timeh %08x timel %08x\n", timeh, timel));
 
 	timeh -= EPOCHOFF;
-	sec = timeh * 2;
+	sec = (uint64_t)timeh * 2;
 	sec -= sc->sc_epoch;
 	tvp->tv_sec = sec;
 	tvp->tv_sec += timel / ETIME_L_HZ;
@@ -297,7 +296,7 @@ vrrtc_get(todr_chip_handle_t tch, struct timeval *tvp)
 	usec = (timel % ETIME_L_HZ);
 	usec *= 1000000;
 	usec /= ETIME_L_HZ;
-	tvp->tv_usec = (uint32_t)usec;
+	tvp->tv_usec = usec;
 
 	return 0;
 }
@@ -308,8 +307,8 @@ vrrtc_set(todr_chip_handle_t tch, struct timeval *tvp)
 	struct vrrtc_softc *sc = (struct vrrtc_softc *)tch->cookie;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t timeh;	/* elapse time (2*timeh sec) */
-	u_int32_t timel;	/* timel/32768 sec */
+	uint32_t timeh;		/* elapse time (2*timeh sec) */
+	uint32_t timel;		/* timel/32768 sec */
 	int64_t sec, cnt;
 
 	sec = tvp->tv_sec + sc->sc_epoch;
@@ -369,8 +368,10 @@ vrrtc_dump_regs(struct vrrtc_softc *sc)
 		timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, TCLK_L_REG_W);
 		printf("clock_init()  TCLK %04x%04x\n", timeh, timel);
 
-		timeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh, TCLK_CNT_H_REG_W);
-		timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, TCLK_CNT_L_REG_W);
+		timeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+		    TCLK_CNT_H_REG_W);
+		timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+		    TCLK_CNT_L_REG_W);
 		printf("clock_init()  TCLK CNTL %04x%04x\n", timeh, timel);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.68 2010/11/19 06:44:47 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.68.2.1 2011/06/06 09:10:18 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,8 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68 2010/11/19 06:44:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68.2.1 2011/06/06 09:10:18 jruoho Exp $");
 
+#if defined(_KERNEL_OPT)
+#include "opt_quota.h"
+#endif 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -51,119 +54,36 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68 2010/11/19 06:44:47 dholland Exp 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufs_quota.h>
+#include <quota/quotaprop.h>
+
+kmutex_t dqlock;
+kcondvar_t dqcv;
 
 /*
- * The following structure records disk usage for a user or group on a
- * filesystem. There is one allocated for each quota that exists on any
- * filesystem for the current user or group. A cache is kept of recently
- * used entries.
- * Field markings and the corresponding locks:
- * h:	dqlock
- * d:	dq_interlock
- *
- * Lock order is: dq_interlock -> dqlock
- *                dq_interlock -> dqvp
+ * Code pertaining to management of the in-core dquot data structures.
  */
-struct dquot {
-	LIST_ENTRY(dquot) dq_hash;	/* h: hash list */
-	u_int16_t dq_flags;		/* d: flags, see below */
-	u_int16_t dq_type;		/* d: quota type of this dquot */
-	u_int32_t dq_cnt;		/* h: count of active references */
-	u_int32_t dq_id;		/* d: identifier this applies to */
-	struct	ufsmount *dq_ump;	/* d: filesystem this is taken from */
-	kmutex_t dq_interlock;		/* d: lock this dquot */
-	struct	dqblk dq_dqb;		/* d: actual usage & quotas */
-};
-/*
- * Flag values.
- */
-#define	DQ_MOD		0x04		/* this quota modified since read */
-#define	DQ_FAKE		0x08		/* no limits here, just usage */
-#define	DQ_BLKS		0x10		/* has been warned about blk limit */
-#define	DQ_INODS	0x20		/* has been warned about inode limit */
-/*
- * Shorthand notation.
- */
-#define	dq_bhardlimit	dq_dqb.dqb_bhardlimit
-#define	dq_bsoftlimit	dq_dqb.dqb_bsoftlimit
-#define	dq_curblocks	dq_dqb.dqb_curblocks
-#define	dq_ihardlimit	dq_dqb.dqb_ihardlimit
-#define	dq_isoftlimit	dq_dqb.dqb_isoftlimit
-#define	dq_curinodes	dq_dqb.dqb_curinodes
-#define	dq_btime	dq_dqb.dqb_btime
-#define	dq_itime	dq_dqb.dqb_itime
-/*
- * If the system has never checked for a quota for this file, then it is
- * set to NODQUOT.  Once a write attempt is made the inode pointer is set
- * to reference a dquot structure.
- */
-#define	NODQUOT		NULL
+#define DQHASH(dqvp, id) \
+	(((((long)(dqvp)) >> 8) + id) & dqhash)
+static LIST_HEAD(dqhashhead, dquot) *dqhashtbl;
+static u_long dqhash;
+static pool_cache_t dquot_cache;
 
-static int chkdqchg(struct inode *, int64_t, kauth_cred_t, int);
-static int chkiqchg(struct inode *, int32_t, kauth_cred_t, int);
-#ifdef DIAGNOSTIC
-static void dqflush(struct vnode *);
-#endif
-static int dqget(struct vnode *, u_long, struct ufsmount *, int,
-		 struct dquot **);
-static void dqref(struct dquot *);
-static void dqrele(struct vnode *, struct dquot *); 
-static int dqsync(struct vnode *, struct dquot *);
 
-static kmutex_t dqlock;
-static kcondvar_t dqcv;
-/*
- * Quota name to error message mapping.
- */
-static const char *quotatypes[] = INITQFNAMES;
-
-/*
- * Set up the quotas for an inode.
- *
- * This routine completely defines the semantics of quotas.
- * If other criterion want to be used to establish quotas, the
- * MAXQUOTAS value in quotas.h should be increased, and the
- * additional dquots set up here.
- */
-int
-getinoquota(struct inode *ip)
-{
-	struct ufsmount *ump = ip->i_ump;
-	struct vnode *vp = ITOV(ip);
-	int i, error;
-	u_int32_t ino_ids[MAXQUOTAS];
-
-	/*
-	 * To avoid deadlocks never update quotas for quota files
-	 * on the same file system
-	 */
-	for (i = 0; i < MAXQUOTAS; i++)
-		if (ITOV(ip) == ump->um_quotas[i])
-			return 0;
-
-	ino_ids[USRQUOTA] = ip->i_uid;
-	ino_ids[GRPQUOTA] = ip->i_gid;
-	for (i = 0; i < MAXQUOTAS; i++) {
-		/*
-		 * If the file id changed the quota needs update.
-		 */
-		if (ip->i_dquot[i] != NODQUOT &&
-		    ip->i_dquot[i]->dq_id != ino_ids[i]) {
-			dqrele(ITOV(ip), ip->i_dquot[i]);
-			ip->i_dquot[i] = NODQUOT;
-		}
-		/*
-		 * Set up the quota based on file id.
-		 * EINVAL means that quotas are not enabled.
-		 */
-		if (ip->i_dquot[i] == NODQUOT &&
-		    (error = dqget(vp, ino_ids[i], ump, i, &ip->i_dquot[i])) &&
-		    error != EINVAL)
-			return (error);
-	}
-	return 0;
-}
-
+static int quota_handle_cmd_get_version(struct mount *, struct lwp *,
+    prop_dictionary_t, prop_array_t);
+static int quota_handle_cmd_get(struct mount *, struct lwp *,
+    prop_dictionary_t, int, prop_array_t);
+static int quota_handle_cmd_set(struct mount *, struct lwp *,
+    prop_dictionary_t, int, prop_array_t);
+static int quota_handle_cmd_getall(struct mount *, struct lwp *,
+    prop_dictionary_t, int, prop_array_t);
+static int quota_handle_cmd_clear(struct mount *, struct lwp *,
+    prop_dictionary_t, int, prop_array_t);
+static int quota_handle_cmd_quotaon(struct mount *, struct lwp *, 
+    prop_dictionary_t, int, prop_array_t);
+static int quota_handle_cmd_quotaoff(struct mount *, struct lwp *, 
+    prop_dictionary_t, int, prop_array_t);
 /*
  * Initialize the quota fields of an inode.
  */
@@ -196,104 +116,19 @@ ufsquota_free(struct inode *ip)
 int
 chkdq(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 {
-	struct dquot *dq;
-	int i;
-	int ncurblocks, error;
+	/* do not track snapshot usage, or we will deadlock */
+	if ((ip->i_flags & SF_SNAPSHOT) != 0)
+		return 0;
 
-	if ((error = getinoquota(ip)) != 0)
-		return error;
-	if (change == 0)
-		return (0);
-	if (change < 0) {
-		for (i = 0; i < MAXQUOTAS; i++) {
-			if ((dq = ip->i_dquot[i]) == NODQUOT)
-				continue;
-			mutex_enter(&dq->dq_interlock);
-			ncurblocks = dq->dq_curblocks + change;
-			if (ncurblocks >= 0)
-				dq->dq_curblocks = ncurblocks;
-			else
-				dq->dq_curblocks = 0;
-			dq->dq_flags &= ~DQ_BLKS;
-			dq->dq_flags |= DQ_MOD;
-			mutex_exit(&dq->dq_interlock);
-		}
-		return (0);
-	}
-	if ((flags & FORCE) == 0 &&
-	    kauth_authorize_system(cred, KAUTH_SYSTEM_FS_QUOTA,
-	    KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT, NULL, NULL, NULL) != 0) {
-		for (i = 0; i < MAXQUOTAS; i++) {
-			if ((dq = ip->i_dquot[i]) == NODQUOT)
-				continue;
-			mutex_enter(&dq->dq_interlock);
-			error = chkdqchg(ip, change, cred, i);
-			mutex_exit(&dq->dq_interlock);
-			if (error != 0)
-				return (error);
-		}
-	}
-	for (i = 0; i < MAXQUOTAS; i++) {
-		if ((dq = ip->i_dquot[i]) == NODQUOT)
-			continue;
-		mutex_enter(&dq->dq_interlock);
-		dq->dq_curblocks += change;
-		dq->dq_flags |= DQ_MOD;
-		mutex_exit(&dq->dq_interlock);
-	}
-	return (0);
-}
-
-/*
- * Check for a valid change to a users allocation.
- * Issue an error message if appropriate.
- */
-static int
-chkdqchg(struct inode *ip, int64_t change, kauth_cred_t cred, int type)
-{
-	struct dquot *dq = ip->i_dquot[type];
-	long ncurblocks = dq->dq_curblocks + change;
-
-	KASSERT(mutex_owned(&dq->dq_interlock));
-	/*
-	 * If user would exceed their hard limit, disallow space allocation.
-	 */
-	if (ncurblocks >= dq->dq_bhardlimit && dq->dq_bhardlimit) {
-		if ((dq->dq_flags & DQ_BLKS) == 0 &&
-		    ip->i_uid == kauth_cred_geteuid(cred)) {
-			uprintf("\n%s: write failed, %s disk limit reached\n",
-			    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
-			    quotatypes[type]);
-			dq->dq_flags |= DQ_BLKS;
-		}
-		return (EDQUOT);
-	}
-	/*
-	 * If user is over their soft limit for too long, disallow space
-	 * allocation. Reset time limit as they cross their soft limit.
-	 */
-	if (ncurblocks >= dq->dq_bsoftlimit && dq->dq_bsoftlimit) {
-		if (dq->dq_curblocks < dq->dq_bsoftlimit) {
-			dq->dq_btime = time_second + ip->i_ump->um_btime[type];
-			if (ip->i_uid == kauth_cred_geteuid(cred))
-				uprintf("\n%s: warning, %s %s\n",
-				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
-				    quotatypes[type], "disk quota exceeded");
-			return (0);
-		}
-		if (time_second > dq->dq_btime) {
-			if ((dq->dq_flags & DQ_BLKS) == 0 &&
-			    ip->i_uid == kauth_cred_geteuid(cred)) {
-				uprintf("\n%s: write failed, %s %s\n",
-				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
-				    quotatypes[type],
-				    "disk quota exceeded for too long");
-				dq->dq_flags |= DQ_BLKS;
-			}
-			return (EDQUOT);
-		}
-	}
-	return (0);
+#ifdef QUOTA
+	if (ip->i_ump->um_flags & UFS_QUOTA)
+		return chkdq1(ip, change, cred, flags);
+#endif
+#ifdef QUOTA2
+	if (ip->i_ump->um_flags & UFS_QUOTA2)
+		return chkdq2(ip, change, cred, flags);
+#endif
+	return 0;
 }
 
 /*
@@ -302,486 +137,444 @@ chkdqchg(struct inode *ip, int64_t change, kauth_cred_t cred, int type)
 int
 chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 {
-	struct dquot *dq;
-	int i;
-	int ncurinodes, error;
-
-	if ((error = getinoquota(ip)) != 0)
-		return error;
-	if (change == 0)
-		return (0);
-	if (change < 0) {
-		for (i = 0; i < MAXQUOTAS; i++) {
-			if ((dq = ip->i_dquot[i]) == NODQUOT)
-				continue;
-			mutex_enter(&dq->dq_interlock);
-			ncurinodes = dq->dq_curinodes + change;
-			if (ncurinodes >= 0)
-				dq->dq_curinodes = ncurinodes;
-			else
-				dq->dq_curinodes = 0;
-			dq->dq_flags &= ~DQ_INODS;
-			dq->dq_flags |= DQ_MOD;
-			mutex_exit(&dq->dq_interlock);
-		}
-		return (0);
-	}
-	if ((flags & FORCE) == 0 && kauth_authorize_system(cred,
-	    KAUTH_SYSTEM_FS_QUOTA, KAUTH_REQ_SYSTEM_FS_QUOTA_NOLIMIT, NULL,
-	    NULL, NULL) != 0) {
-		for (i = 0; i < MAXQUOTAS; i++) {
-			if ((dq = ip->i_dquot[i]) == NODQUOT)
-				continue;
-			mutex_enter(&dq->dq_interlock);
-			error = chkiqchg(ip, change, cred, i);
-			mutex_exit(&dq->dq_interlock);
-			if (error != 0)
-				return (error);
-		}
-	}
-	for (i = 0; i < MAXQUOTAS; i++) {
-		if ((dq = ip->i_dquot[i]) == NODQUOT)
-			continue;
-		mutex_enter(&dq->dq_interlock);
-		dq->dq_curinodes += change;
-		dq->dq_flags |= DQ_MOD;
-		mutex_exit(&dq->dq_interlock);
-	}
-	return (0);
+	/* do not track snapshot usage, or we will deadlock */
+	if ((ip->i_flags & SF_SNAPSHOT) != 0)
+		return 0;
+#ifdef QUOTA
+	if (ip->i_ump->um_flags & UFS_QUOTA)
+		return chkiq1(ip, change, cred, flags);
+#endif
+#ifdef QUOTA2
+	if (ip->i_ump->um_flags & UFS_QUOTA2)
+		return chkiq2(ip, change, cred, flags);
+#endif
+	return 0;
 }
 
-/*
- * Check for a valid change to a users allocation.
- * Issue an error message if appropriate.
- */
-static int
-chkiqchg(struct inode *ip, int32_t change, kauth_cred_t cred, int type)
-{
-	struct dquot *dq = ip->i_dquot[type];
-	long ncurinodes = dq->dq_curinodes + change;
-
-	KASSERT(mutex_owned(&dq->dq_interlock));
-	/*
-	 * If user would exceed their hard limit, disallow inode allocation.
-	 */
-	if (ncurinodes >= dq->dq_ihardlimit && dq->dq_ihardlimit) {
-		if ((dq->dq_flags & DQ_INODS) == 0 &&
-		    ip->i_uid == kauth_cred_geteuid(cred)) {
-			uprintf("\n%s: write failed, %s inode limit reached\n",
-			    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
-			    quotatypes[type]);
-			dq->dq_flags |= DQ_INODS;
-		}
-		return (EDQUOT);
-	}
-	/*
-	 * If user is over their soft limit for too long, disallow inode
-	 * allocation. Reset time limit as they cross their soft limit.
-	 */
-	if (ncurinodes >= dq->dq_isoftlimit && dq->dq_isoftlimit) {
-		if (dq->dq_curinodes < dq->dq_isoftlimit) {
-			dq->dq_itime = time_second + ip->i_ump->um_itime[type];
-			if (ip->i_uid == kauth_cred_geteuid(cred))
-				uprintf("\n%s: warning, %s %s\n",
-				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
-				    quotatypes[type], "inode quota exceeded");
-			return (0);
-		}
-		if (time_second > dq->dq_itime) {
-			if ((dq->dq_flags & DQ_INODS) == 0 &&
-			    ip->i_uid == kauth_cred_geteuid(cred)) {
-				uprintf("\n%s: write failed, %s %s\n",
-				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
-				    quotatypes[type],
-				    "inode quota exceeded for too long");
-				dq->dq_flags |= DQ_INODS;
-			}
-			return (EDQUOT);
-		}
-	}
-	return (0);
-}
-
-/*
- * Code to process quotactl commands.
- */
-
-/*
- * Q_QUOTAON - set up a quota file for a particular file system.
- */
 int
-quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
+quota_handle_cmd(struct mount *mp, struct lwp *l, prop_dictionary_t cmddict)
+{
+	int error = 0;
+	const char *cmd, *type;
+	prop_array_t datas;
+	int q2type;
+
+	if (!prop_dictionary_get_cstring_nocopy(cmddict, "command", &cmd))
+		return EINVAL;
+	if (!prop_dictionary_get_cstring_nocopy(cmddict, "type", &type))
+		return EINVAL;
+	if (!strcmp(type, QUOTADICT_CLASS_USER)) {
+		q2type = USRQUOTA;
+	} else if (!strcmp(type, QUOTADICT_CLASS_GROUP)) {
+		q2type = GRPQUOTA;
+	} else
+		return EOPNOTSUPP;
+	datas = prop_dictionary_get(cmddict, "data");
+	if (datas == NULL || prop_object_type(datas) != PROP_TYPE_ARRAY)
+		return EINVAL;
+
+	prop_object_retain(datas);
+	prop_dictionary_remove(cmddict, "data"); /* prepare for return */
+
+	if (strcmp(cmd, "get version") == 0) {
+		error = quota_handle_cmd_get_version(mp, l, cmddict, datas);
+		goto end;
+	}
+	if (strcmp(cmd, "quotaon") == 0) {
+		error = quota_handle_cmd_quotaon(mp, l, cmddict,
+		    q2type, datas);
+		goto end;
+	}
+	if (strcmp(cmd, "quotaoff") == 0) {
+		error = quota_handle_cmd_quotaoff(mp, l, cmddict,
+		    q2type, datas);
+		goto end;
+	}
+	if (strcmp(cmd, "get") == 0) {
+		error = quota_handle_cmd_get(mp, l, cmddict, q2type, datas);
+		goto end;
+	}
+	if (strcmp(cmd, "set") == 0) {
+		error = quota_handle_cmd_set(mp, l, cmddict, q2type, datas);
+		goto end;
+	}
+	if (strcmp(cmd, "getall") == 0) {
+		error = quota_handle_cmd_getall(mp, l, cmddict, q2type, datas);
+		goto end;
+	}
+	if (strcmp(cmd, "clear") == 0) {
+		error = quota_handle_cmd_clear(mp, l, cmddict, q2type, datas);
+		goto end;
+	}
+	error = EOPNOTSUPP;
+end:
+	error = (prop_dictionary_set_int8(cmddict, "return",
+	    error) ? 0 : ENOMEM);
+	prop_object_release(datas);
+	return error;
+}
+
+static int 
+quota_handle_cmd_get_version(struct mount *mp, struct lwp *l, 
+    prop_dictionary_t cmddict, prop_array_t datas)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	struct vnode *vp, **vpp, *mvp;
-	struct dquot *dq;
-	int error;
-	struct pathbuf *pb;
-	struct nameidata nd;
+	prop_array_t replies;
+	prop_dictionary_t data;
+	int error = 0;
 
-	/* XXX XXX XXX */
-	if (mp->mnt_wapbl != NULL) {
-		printf("%s: quotas cannot yet be used with -o log\n",
-		    mp->mnt_stat.f_mntonname);
-		return (EOPNOTSUPP);
-	}
+	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
+		return EOPNOTSUPP;
 
-	vpp = &ump->um_quotas[type];
-
-	error = pathbuf_copyin(fname, &pb);
-	if (error) {
-		return error;
-	}
-	NDINIT(&nd, LOOKUP, FOLLOW, pb);
-	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
-		pathbuf_destroy(pb);
-		return error;
-	}
-	vp = nd.ni_vp;
-	pathbuf_destroy(pb);
-
-	VOP_UNLOCK(vp);
-	if (vp->v_type != VREG) {
-		(void) vn_close(vp, FREAD|FWRITE, l->l_cred);
-		return (EACCES);
-	}
-	if (*vpp != vp)
-		quotaoff(l, mp, type);
-	mutex_enter(&dqlock);
-	while ((ump->um_qflags[type] & (QTF_CLOSING | QTF_OPENING)) != 0)
-		cv_wait(&dqcv, &dqlock);
-	ump->um_qflags[type] |= QTF_OPENING;
-	mutex_exit(&dqlock);
-	mp->mnt_flag |= MNT_QUOTA;
-	vp->v_vflag |= VV_SYSTEM;	/* XXXSMP */
-	*vpp = vp;
-	/*
-	 * Save the credential of the process that turned on quotas.
-	 * Set up the time limits for this quota.
-	 */
-	kauth_cred_hold(l->l_cred);
-	ump->um_cred[type] = l->l_cred;
-	ump->um_btime[type] = MAX_DQ_TIME;
-	ump->um_itime[type] = MAX_IQ_TIME;
-	if (dqget(NULLVP, 0, ump, type, &dq) == 0) {
-		if (dq->dq_btime > 0)
-			ump->um_btime[type] = dq->dq_btime;
-		if (dq->dq_itime > 0)
-			ump->um_itime[type] = dq->dq_itime;
-		dqrele(NULLVP, dq);
-	}
-	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL) {
-		error = ENOMEM;
-		goto out;
-	}
-	/*
-	 * Search vnodes associated with this mount point,
-	 * adding references to quota file being opened.
-	 * NB: only need to add dquot's for inodes being modified.
-	 */
-	mutex_enter(&mntvnode_lock);
-again:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		mutex_enter(&vp->v_interlock);
-		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
-		    vp->v_type == VNON || vp->v_writecount == 0 ||
-		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
-			mutex_exit(&vp->v_interlock);
-			continue;
-		}
-		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE)) {
-			mutex_enter(&mntvnode_lock);
-			(void)vunmark(mvp);
-			goto again;
-		}
-		if ((error = getinoquota(VTOI(vp))) != 0) {
-			vput(vp);
-			mutex_enter(&mntvnode_lock);
-			(void)vunmark(mvp);
-			break;
-		}
-		vput(vp);
-		mutex_enter(&mntvnode_lock);
-	}
-	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
- out:
-	mutex_enter(&dqlock);
-	ump->um_qflags[type] &= ~QTF_OPENING;
-	cv_broadcast(&dqcv);
-	mutex_exit(&dqlock);
-	if (error)
-		quotaoff(l, mp, type);
-	return (error);
-}
-
-/*
- * Q_QUOTAOFF - turn off disk quotas for a filesystem.
- */
-int
-quotaoff(struct lwp *l, struct mount *mp, int type)
-{
-	struct vnode *vp;
-	struct vnode *qvp, *mvp;
-	struct ufsmount *ump = VFSTOUFS(mp);
-	struct dquot *dq;
-	struct inode *ip;
-	kauth_cred_t cred;
-	int i, error;
-
-	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL)
+	replies = prop_array_create();
+	if (replies == NULL)
 		return ENOMEM;
 
-	mutex_enter(&dqlock);
-	while ((ump->um_qflags[type] & (QTF_CLOSING | QTF_OPENING)) != 0)
-		cv_wait(&dqcv, &dqlock);
-	if ((qvp = ump->um_quotas[type]) == NULLVP) {
-		mutex_exit(&dqlock);
-		vnfree(mvp);
-		return (0);
+	data = prop_dictionary_create();
+	if (data == NULL) {
+		prop_object_release(replies);
+		return ENOMEM;
 	}
-	ump->um_qflags[type] |= QTF_CLOSING;
-	mutex_exit(&dqlock);
-	/*
-	 * Search vnodes associated with this mount point,
-	 * deleting any references to quota file being closed.
-	 */
-	mutex_enter(&mntvnode_lock);
-again:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		mutex_enter(&vp->v_interlock);
-		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
-		    vp->v_type == VNON ||
-		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
-			mutex_exit(&vp->v_interlock);
-			continue;
-		}
-		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE)) {
-			mutex_enter(&mntvnode_lock);
-			(void)vunmark(mvp);
-			goto again;
-		}
-		ip = VTOI(vp);
-		dq = ip->i_dquot[type];
-		ip->i_dquot[type] = NODQUOT;
-		dqrele(vp, dq);
-		vput(vp);
-		mutex_enter(&mntvnode_lock);
-	}
-	mutex_exit(&mntvnode_lock);
-#ifdef DIAGNOSTIC
-	dqflush(qvp);
+
+#ifdef QUOTA
+	if (ump->um_flags & UFS_QUOTA) {
+		if (!prop_dictionary_set_int8(data, "version", 1))
+			error = ENOMEM;
+	} else
 #endif
-	qvp->v_vflag &= ~VV_SYSTEM;
-	error = vn_close(qvp, FREAD|FWRITE, l->l_cred);
-	mutex_enter(&dqlock);
-	ump->um_quotas[type] = NULLVP;
-	cred = ump->um_cred[type];
-	ump->um_cred[type] = NOCRED;
-	for (i = 0; i < MAXQUOTAS; i++)
-		if (ump->um_quotas[i] != NULLVP)
-			break;
-	ump->um_qflags[type] &= ~QTF_CLOSING;
-	cv_broadcast(&dqcv);
-	mutex_exit(&dqlock);
-	kauth_cred_free(cred);
-	if (i == MAXQUOTAS)
-		mp->mnt_flag &= ~MNT_QUOTA;
-	return (error);
-}
-
-/*
- * Q_GETQUOTA - return current values in a dqblk structure.
- */
-int
-getquota(struct mount *mp, u_long id, int type, void *addr)
-{
-	struct dquot *dq;
-	int error;
-
-	if ((error = dqget(NULLVP, id, VFSTOUFS(mp), type, &dq)) != 0)
-		return (error);
-	error = copyout((void *)&dq->dq_dqb, addr, sizeof (struct dqblk));
-	dqrele(NULLVP, dq);
-	return (error);
-}
-
-/*
- * Q_SETQUOTA - assign an entire dqblk structure.
- */
-int
-setquota(struct mount *mp, u_long id, int type, void *addr)
-{
-	struct dquot *dq;
-	struct dquot *ndq;
-	struct ufsmount *ump = VFSTOUFS(mp);
-	struct dqblk newlim;
-	int error;
-
-	error = copyin(addr, (void *)&newlim, sizeof (struct dqblk));
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		if (!prop_dictionary_set_int8(data, "version", 2))
+			error = ENOMEM;
+	} else
+#endif
+		error = 0;
 	if (error)
-		return (error);
-	if ((error = dqget(NULLVP, id, ump, type, &ndq)) != 0)
-		return (error);
-	dq = ndq;
-	mutex_enter(&dq->dq_interlock);
-	/*
-	 * Copy all but the current values.
-	 * Reset time limit if previously had no soft limit or were
-	 * under it, but now have a soft limit and are over it.
-	 */
-	newlim.dqb_curblocks = dq->dq_curblocks;
-	newlim.dqb_curinodes = dq->dq_curinodes;
-	if (dq->dq_id != 0) {
-		newlim.dqb_btime = dq->dq_btime;
-		newlim.dqb_itime = dq->dq_itime;
+		prop_object_release(data);
+	else if (!prop_array_add_and_rel(replies, data))
+		error = ENOMEM;
+	if (error)
+		prop_object_release(replies);
+	else if (!prop_dictionary_set_and_rel(cmddict, "data", replies))
+		error = ENOMEM;
+	return error;
+}
+
+/* XXX shouldn't all this be in kauth ? */
+static int
+quota_get_auth(struct mount *mp, struct lwp *l, uid_t id) {
+	/* The user can always query about his own quota. */
+	if (id == kauth_cred_getuid(l->l_cred))
+		return 0;
+	return kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, KAUTH_ARG(id), NULL);
+}
+
+static int 
+quota_handle_cmd_get(struct mount *mp, struct lwp *l, 
+    prop_dictionary_t cmddict, int type, prop_array_t datas)
+{
+	prop_array_t replies;
+	prop_object_iterator_t iter;
+	prop_dictionary_t data;
+	uint32_t id;
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int error, defaultq = 0;
+	const char *idstr;
+
+	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
+		return EOPNOTSUPP;
+	
+	replies = prop_array_create();
+	if (replies == NULL)
+		return ENOMEM;
+
+	iter = prop_array_iterator(datas);
+	if (iter == NULL) {
+		prop_object_release(replies);
+		return ENOMEM;
 	}
-	if (newlim.dqb_bsoftlimit &&
-	    dq->dq_curblocks >= newlim.dqb_bsoftlimit &&
-	    (dq->dq_bsoftlimit == 0 || dq->dq_curblocks < dq->dq_bsoftlimit))
-		newlim.dqb_btime = time_second + ump->um_btime[type];
-	if (newlim.dqb_isoftlimit &&
-	    dq->dq_curinodes >= newlim.dqb_isoftlimit &&
-	    (dq->dq_isoftlimit == 0 || dq->dq_curinodes < dq->dq_isoftlimit))
-		newlim.dqb_itime = time_second + ump->um_itime[type];
-	dq->dq_dqb = newlim;
-	if (dq->dq_curblocks < dq->dq_bsoftlimit)
-		dq->dq_flags &= ~DQ_BLKS;
-	if (dq->dq_curinodes < dq->dq_isoftlimit)
-		dq->dq_flags &= ~DQ_INODS;
-	if (dq->dq_isoftlimit == 0 && dq->dq_bsoftlimit == 0 &&
-	    dq->dq_ihardlimit == 0 && dq->dq_bhardlimit == 0)
-		dq->dq_flags |= DQ_FAKE;
-	else
-		dq->dq_flags &= ~DQ_FAKE;
-	dq->dq_flags |= DQ_MOD;
-	mutex_exit(&dq->dq_interlock);
-	dqrele(NULLVP, dq);
-	return (0);
-}
-
-/*
- * Q_SETUSE - set current inode and block usage.
- */
-int
-setuse(struct mount *mp, u_long id, int type, void *addr)
-{
-	struct dquot *dq;
-	struct ufsmount *ump = VFSTOUFS(mp);
-	struct dquot *ndq;
-	struct dqblk usage;
-	int error;
-
-	error = copyin(addr, (void *)&usage, sizeof (struct dqblk));
-	if (error)
-		return (error);
-	if ((error = dqget(NULLVP, id, ump, type, &ndq)) != 0)
-		return (error);
-	dq = ndq;
-	mutex_enter(&dq->dq_interlock);
-	/*
-	 * Reset time limit if have a soft limit and were
-	 * previously under it, but are now over it.
-	 */
-	if (dq->dq_bsoftlimit && dq->dq_curblocks < dq->dq_bsoftlimit &&
-	    usage.dqb_curblocks >= dq->dq_bsoftlimit)
-		dq->dq_btime = time_second + ump->um_btime[type];
-	if (dq->dq_isoftlimit && dq->dq_curinodes < dq->dq_isoftlimit &&
-	    usage.dqb_curinodes >= dq->dq_isoftlimit)
-		dq->dq_itime = time_second + ump->um_itime[type];
-	dq->dq_curblocks = usage.dqb_curblocks;
-	dq->dq_curinodes = usage.dqb_curinodes;
-	if (dq->dq_curblocks < dq->dq_bsoftlimit)
-		dq->dq_flags &= ~DQ_BLKS;
-	if (dq->dq_curinodes < dq->dq_isoftlimit)
-		dq->dq_flags &= ~DQ_INODS;
-	dq->dq_flags |= DQ_MOD;
-	mutex_exit(&dq->dq_interlock);
-	dqrele(NULLVP, dq);
-	return (0);
-}
-
-/*
- * Q_SYNC - sync quota files to disk.
- */
-int
-qsync(struct mount *mp)
-{
-	struct ufsmount *ump = VFSTOUFS(mp);
-	struct vnode *vp, *mvp;
-	struct dquot *dq;
-	int i, error;
-
-	/*
-	 * Check if the mount point has any quotas.
-	 * If not, simply return.
-	 */
-	for (i = 0; i < MAXQUOTAS; i++)
-		if (ump->um_quotas[i] != NULLVP)
-			break;
-	if (i == MAXQUOTAS)
-		return (0);
-
-	/* Allocate a marker vnode. */
-	if ((mvp = vnalloc(mp)) == NULL)
-		return (ENOMEM);
-
-	/*
-	 * Search vnodes associated with this mount point,
-	 * synchronizing any modified dquot structures.
-	 */
-	mutex_enter(&mntvnode_lock);
- again:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		mutex_enter(&vp->v_interlock);
-		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
-		    vp->v_type == VNON ||
-		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
-			mutex_exit(&vp->v_interlock);
-			continue;
-		}
-		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
-		if (error) {
-			mutex_enter(&mntvnode_lock);
-			if (error == ENOENT) {
-				(void)vunmark(mvp);
-				goto again;
-			}
-			continue;
-		}
-		for (i = 0; i < MAXQUOTAS; i++) {
-			dq = VTOI(vp)->i_dquot[i];
-			if (dq == NODQUOT)
+	while ((data = prop_object_iterator_next(iter)) != NULL) {
+		if (!prop_dictionary_get_uint32(data, "id", &id)) {
+			if (!prop_dictionary_get_cstring_nocopy(data, "id",
+			    &idstr))
 				continue;
-			mutex_enter(&dq->dq_interlock);
-			if (dq->dq_flags & DQ_MOD)
-				dqsync(vp, dq);
-			mutex_exit(&dq->dq_interlock);
+			if (strcmp(idstr, "default")) {
+				error = EINVAL;
+				goto err;
+			}
+			id = 0;
+			defaultq = 1;
+		} else {
+			defaultq = 0;
 		}
-		vput(vp);
-		mutex_enter(&mntvnode_lock);
+		error = quota_get_auth(mp, l, id);
+		if (error == EPERM)
+			continue;
+		if (error != 0) 
+			goto err;
+#ifdef QUOTA
+		if (ump->um_flags & UFS_QUOTA)
+			error = quota1_handle_cmd_get(ump, type, id, defaultq,
+			    replies);
+		else
+#endif
+#ifdef QUOTA2
+		if (ump->um_flags & UFS_QUOTA2) {
+			error = quota2_handle_cmd_get(ump, type, id, defaultq,
+			    replies);
+		} else
+#endif
+			panic("quota_handle_cmd_get: no support ?");
+		
+		if (error == ENOENT)
+			continue;
+		if (error != 0)
+			goto err;
 	}
-	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
-	return (0);
+	prop_object_iterator_release(iter);
+	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
+		error = ENOMEM;
+	} else {
+		error = 0;
+	}
+	return error;
+err:
+	prop_object_iterator_release(iter);
+	prop_object_release(replies);
+	return error;
 }
 
-/*
- * Code pertaining to management of the in-core dquot data structures.
- */
-#define DQHASH(dqvp, id) \
-	(((((long)(dqvp)) >> 8) + id) & dqhash)
-static LIST_HEAD(dqhashhead, dquot) *dqhashtbl;
-static u_long dqhash;
-static pool_cache_t dquot_cache;
+static int 
+quota_handle_cmd_set(struct mount *mp, struct lwp *l, 
+    prop_dictionary_t cmddict, int type, prop_array_t datas)
+{
+	prop_array_t replies;
+	prop_object_iterator_t iter;
+	prop_dictionary_t data;
+	uint32_t id;
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int error, defaultq = 0;
+	const char *idstr;
+
+	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
+		return EOPNOTSUPP;
+	
+	replies = prop_array_create();
+	if (replies == NULL)
+		return ENOMEM;
+
+	iter = prop_array_iterator(datas);
+	if (iter == NULL) {
+		prop_object_release(replies);
+		return ENOMEM;
+	}
+	while ((data = prop_object_iterator_next(iter)) != NULL) {
+		if (!prop_dictionary_get_uint32(data, "id", &id)) {
+			if (!prop_dictionary_get_cstring_nocopy(data, "id",
+			    &idstr))
+				continue;
+			if (strcmp(idstr, "default"))
+				continue;
+			id = 0;
+			defaultq = 1;
+		} else {
+			defaultq = 0;
+		}
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(id), NULL);
+		if (error != 0)
+			goto err;
+#ifdef QUOTA
+		if (ump->um_flags & UFS_QUOTA)
+			error = quota1_handle_cmd_set(ump, type, id, defaultq,
+			    data);
+		else
+#endif
+#ifdef QUOTA2
+		if (ump->um_flags & UFS_QUOTA2) {
+			error = quota2_handle_cmd_set(ump, type, id, defaultq,
+			    data);
+		} else
+#endif
+			panic("quota_handle_cmd_get: no support ?");
+		
+		if (error && error != ENOENT)
+			goto err;
+	}
+	prop_object_iterator_release(iter);
+	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
+		error = ENOMEM;
+	} else {
+		error = 0;
+	}
+	return error;
+err:
+	prop_object_iterator_release(iter);
+	prop_object_release(replies);
+	return error;
+}
+
+static int 
+quota_handle_cmd_clear(struct mount *mp, struct lwp *l, 
+    prop_dictionary_t cmddict, int type, prop_array_t datas)
+{
+	prop_array_t replies;
+	prop_object_iterator_t iter;
+	prop_dictionary_t data;
+	uint32_t id;
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int error, defaultq = 0;
+	const char *idstr;
+
+	if ((ump->um_flags & UFS_QUOTA2) == 0)
+		return EOPNOTSUPP;
+	
+	replies = prop_array_create();
+	if (replies == NULL)
+		return ENOMEM;
+
+	iter = prop_array_iterator(datas);
+	if (iter == NULL) {
+		prop_object_release(replies);
+		return ENOMEM;
+	}
+	while ((data = prop_object_iterator_next(iter)) != NULL) {
+		if (!prop_dictionary_get_uint32(data, "id", &id)) {
+			if (!prop_dictionary_get_cstring_nocopy(data, "id",
+			    &idstr))
+				continue;
+			if (strcmp(idstr, "default"))
+				continue;
+			id = 0;
+			defaultq = 1;
+		} else {
+			defaultq = 0;
+		}
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+		    KAUTH_REQ_SYSTEM_FS_QUOTA_MANAGE, mp, KAUTH_ARG(id), NULL);
+		if (error != 0)
+			goto err;
+#ifdef QUOTA2
+		if (ump->um_flags & UFS_QUOTA2) {
+			error = quota2_handle_cmd_clear(ump, type, id, defaultq,
+			    data);
+		} else
+#endif
+			panic("quota_handle_cmd_get: no support ?");
+		
+		if (error && error != ENOENT)
+			goto err;
+	}
+	prop_object_iterator_release(iter);
+	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
+		error = ENOMEM;
+	} else {
+		error = 0;
+	}
+	return error;
+err:
+	prop_object_iterator_release(iter);
+	prop_object_release(replies);
+	return error;
+}
+
+static int 
+quota_handle_cmd_getall(struct mount *mp, struct lwp *l, 
+    prop_dictionary_t cmddict, int type, prop_array_t datas)
+{
+	prop_array_t replies;
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int error;
+
+	if ((ump->um_flags & UFS_QUOTA2) == 0)
+		return EOPNOTSUPP;
+	
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, NULL, NULL);
+	if (error)
+		return error;
+		
+	replies = prop_array_create();
+	if (replies == NULL)
+		return ENOMEM;
+
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		error = quota2_handle_cmd_getall(ump, type, replies);
+	} else
+#endif
+		panic("quota_handle_cmd_getall: no support ?");
+	if (!prop_dictionary_set_and_rel(cmddict, "data", replies)) {
+		error = ENOMEM;
+	} else {
+		error = 0;
+	}
+	return error;
+}
+
+static int 
+quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l, 
+    prop_dictionary_t cmddict, int type, prop_array_t datas)
+{
+	prop_dictionary_t data;
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int error;
+	const char *qfile;
+
+	if ((ump->um_flags & UFS_QUOTA2) != 0)
+		return EBUSY;
+	
+	if (prop_array_count(datas) != 1)
+		return EINVAL;
+
+	data = prop_array_get(datas, 0);
+	if (data == NULL)
+		return ENOMEM;
+	if (!prop_dictionary_get_cstring_nocopy(data, "quotafile",
+	    &qfile))
+		return EINVAL;
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+	    KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF, mp, NULL, NULL);
+	if (error != 0) {
+		return error;
+	}
+#ifdef QUOTA
+	error = quota1_handle_cmd_quotaon(l, ump, type, qfile);
+#else
+	error = EOPNOTSUPP;
+#endif
+	
+	return error;
+}
+
+static int 
+quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l, 
+    prop_dictionary_t cmddict, int type, prop_array_t datas)
+{
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int error;
+
+	if ((ump->um_flags & UFS_QUOTA2) != 0)
+		return EOPNOTSUPP;
+	
+	if (prop_array_count(datas) != 0)
+		return EINVAL;
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
+	    KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF, mp, NULL, NULL);
+	if (error != 0) {
+		return error;
+	}
+#ifdef QUOTA
+	error = quota1_handle_cmd_quotaoff(l, ump, type);
+#else
+	error = EOPNOTSUPP;
+#endif
+	
+	return error;
+}
 
 /*
  * Initialize the quota system.
@@ -838,28 +631,91 @@ dqdone(void)
 }
 
 /*
+ * Set up the quotas for an inode.
+ *
+ * This routine completely defines the semantics of quotas.
+ * If other criterion want to be used to establish quotas, the
+ * MAXQUOTAS value in quotas.h should be increased, and the
+ * additional dquots set up here.
+ */
+int
+getinoquota(struct inode *ip)
+{
+	struct ufsmount *ump = ip->i_ump;
+	struct vnode *vp = ITOV(ip);
+	int i, error;
+	u_int32_t ino_ids[MAXQUOTAS];
+
+	/*
+	 * To avoid deadlocks never update quotas for quota files
+	 * on the same file system
+	 */
+	for (i = 0; i < MAXQUOTAS; i++)
+		if (vp == ump->um_quotas[i])
+			return 0;
+
+	ino_ids[USRQUOTA] = ip->i_uid;
+	ino_ids[GRPQUOTA] = ip->i_gid;
+	for (i = 0; i < MAXQUOTAS; i++) {
+		/*
+		 * If the file id changed the quota needs update.
+		 */
+		if (ip->i_dquot[i] != NODQUOT &&
+		    ip->i_dquot[i]->dq_id != ino_ids[i]) {
+			dqrele(ITOV(ip), ip->i_dquot[i]);
+			ip->i_dquot[i] = NODQUOT;
+		}
+		/*
+		 * Set up the quota based on file id.
+		 * ENODEV means that quotas are not enabled.
+		 */
+		if (ip->i_dquot[i] == NODQUOT &&
+		    (error = dqget(vp, ino_ids[i], ump, i, &ip->i_dquot[i])) &&
+		    error != ENODEV)
+			return (error);
+	}
+	return 0;
+}
+
+/*
  * Obtain a dquot structure for the specified identifier and quota file
  * reading the information from the file if necessary.
  */
-static int
+int
 dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
     struct dquot **dqp)
 {
 	struct dquot *dq, *ndq;
 	struct dqhashhead *dqh;
 	struct vnode *dqvp;
-	struct iovec aiov;
-	struct uio auio;
-	int error;
+	int error = 0; /* XXX gcc */
 
 	/* Lock to see an up to date value for QTF_CLOSING. */
 	mutex_enter(&dqlock);
-	dqvp = ump->um_quotas[type];
-	if (dqvp == NULLVP || (ump->um_qflags[type] & QTF_CLOSING)) {
+	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0) {
 		mutex_exit(&dqlock);
 		*dqp = NODQUOT;
-		return (EINVAL);
+		return (ENODEV);
 	}
+	dqvp = ump->um_quotas[type];
+#ifdef QUOTA
+	if (ump->um_flags & UFS_QUOTA) {
+		if (dqvp == NULLVP || (ump->umq1_qflags[type] & QTF_CLOSING)) {
+			mutex_exit(&dqlock);
+			*dqp = NODQUOT;
+			return (ENODEV);
+		}
+	}
+#endif
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2) {
+		if (dqvp == NULLVP) {
+			mutex_exit(&dqlock);
+			*dqp = NODQUOT;
+			return (ENODEV);
+		}
+	}
+#endif
 	KASSERT(dqvp != vp);
 	/*
 	 * Check the cache first.
@@ -911,19 +767,14 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	dqref(dq);
 	mutex_enter(&dq->dq_interlock);
 	mutex_exit(&dqlock);
-	vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	aiov.iov_base = (void *)&dq->dq_dqb;
-	aiov.iov_len = sizeof (struct dqblk);
-	auio.uio_resid = sizeof (struct dqblk);
-	auio.uio_offset = (off_t)(id * sizeof (struct dqblk));
-	auio.uio_rw = UIO_READ;
-	UIO_SETUP_SYSSPACE(&auio);
-	error = VOP_READ(dqvp, &auio, 0, ump->um_cred[type]);
-	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
-		memset((void *)&dq->dq_dqb, 0, sizeof(struct dqblk));
-	VOP_UNLOCK(dqvp);
+#ifdef QUOTA
+	if (ump->um_flags & UFS_QUOTA)
+		error = dq1get(dqvp, id, ump, type, dq);
+#endif
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2)
+		error = dq2get(dqvp, id, ump, type, dq);
+#endif
 	/*
 	 * I/O error in reading quota file, release
 	 * quota structure and reflect problem to caller.
@@ -937,19 +788,6 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 		*dqp = NODQUOT;
 		return (error);
 	}
-	/*
-	 * Check for no limit to enforce.
-	 * Initialize time values if necessary.
-	 */
-	if (dq->dq_isoftlimit == 0 && dq->dq_bsoftlimit == 0 &&
-	    dq->dq_ihardlimit == 0 && dq->dq_bhardlimit == 0)
-		dq->dq_flags |= DQ_FAKE;
-	if (dq->dq_id != 0) {
-		if (dq->dq_btime == 0)
-			dq->dq_btime = time_second + ump->um_btime[type];
-		if (dq->dq_itime == 0)
-			dq->dq_itime = time_second + ump->um_itime[type];
-	}
 	mutex_exit(&dq->dq_interlock);
 	*dqp = dq;
 	return (0);
@@ -958,7 +796,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 /*
  * Obtain a reference to a dquot.
  */
-static void
+void
 dqref(struct dquot *dq)
 {
 
@@ -970,7 +808,7 @@ dqref(struct dquot *dq)
 /*
  * Release a reference to a dquot.
  */
-static void
+void
 dqrele(struct vnode *vp, struct dquot *dq)
 {
 
@@ -988,7 +826,14 @@ dqrele(struct vnode *vp, struct dquot *dq)
 		if ((dq->dq_flags & DQ_MOD) == 0)
 			break;
 		mutex_exit(&dqlock);
-		(void) dqsync(vp, dq);
+#ifdef QUOTA
+		if (dq->dq_ump->um_flags & UFS_QUOTA)
+			(void) dq1sync(vp, dq);
+#endif
+#ifdef QUOTA2
+		if (dq->dq_ump->um_flags & UFS_QUOTA2)
+			(void) dq2sync(vp, dq);
+#endif
 	}
 	KASSERT(dq->dq_cnt == 1 && (dq->dq_flags & DQ_MOD) == 0);
 	LIST_REMOVE(dq, dq_hash);
@@ -998,47 +843,26 @@ dqrele(struct vnode *vp, struct dquot *dq)
 	pool_cache_put(dquot_cache, dq);
 }
 
-/*
- * Update the disk quota in the quota file.
- */
-static int
-dqsync(struct vnode *vp, struct dquot *dq)
+int
+qsync(struct mount *mp)
 {
-	struct vnode *dqvp;
-	struct iovec aiov;
-	struct uio auio;
-	int error;
-
-	if (dq == NODQUOT)
-		panic("dqsync: dquot");
-	KASSERT(mutex_owned(&dq->dq_interlock));
-	if ((dq->dq_flags & DQ_MOD) == 0)
-		return (0);
-	if ((dqvp = dq->dq_ump->um_quotas[dq->dq_type]) == NULLVP)
-		panic("dqsync: file");
-	KASSERT(dqvp != vp);
-	vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	aiov.iov_base = (void *)&dq->dq_dqb;
-	aiov.iov_len = sizeof (struct dqblk);
-	auio.uio_resid = sizeof (struct dqblk);
-	auio.uio_offset = (off_t)(dq->dq_id * sizeof (struct dqblk));
-	auio.uio_rw = UIO_WRITE;
-	UIO_SETUP_SYSSPACE(&auio);
-	error = VOP_WRITE(dqvp, &auio, 0, dq->dq_ump->um_cred[dq->dq_type]);
-	if (auio.uio_resid && error == 0)
-		error = EIO;
-	dq->dq_flags &= ~DQ_MOD;
-	VOP_UNLOCK(dqvp);
-	return (error);
+	struct ufsmount *ump = VFSTOUFS(mp);
+#ifdef QUOTA
+	if (ump->um_flags & UFS_QUOTA)
+		return q1sync(mp);
+#endif
+#ifdef QUOTA2
+	if (ump->um_flags & UFS_QUOTA2)
+		return q2sync(mp);
+#endif
+	return 0;
 }
 
 #ifdef DIAGNOSTIC
 /*
  * Check the hash chains for stray dquot's.
  */
-static void
+void
 dqflush(struct vnode *vp)
 {
 	struct dquot *dq;

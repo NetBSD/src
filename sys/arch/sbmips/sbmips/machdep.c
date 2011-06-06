@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.47 2010/02/08 19:02:31 joerg Exp $ */
+/* $NetBSD: machdep.c,v 1.47.4.1 2011/06/06 09:06:38 jruoho Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2010/02/08 19:02:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47.4.1 2011/06/06 09:06:38 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -99,6 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2010/02/08 19:02:31 joerg Exp $");
 #include <machine/nvram.h>
 #endif /* XXXCGD */
 #include <machine/leds.h>
+
+#include <mips/sibyte/dev/sbbuswatchvar.h>
 
 #include "ksyms.h"
 
@@ -141,12 +143,6 @@ int mem_cluster_cnt;
 void	configure(void);
 void	mach_init(long, long, long, long);
 
-/*
- * safepri is a safe priority for sleep to set for a spin-wait during
- * autoconfiguration or after a panic.  Used as an argument to splx().
- */
-int	safepri = MIPS_INT_MASK | MIPS_SR_INT_IE;
-
 extern void *esym;
 
 /*
@@ -156,9 +152,7 @@ void
 mach_init(long fwhandle, long magic, long bootdata, long reserved)
 {
 	void *kernend;
-	u_long first, last;
 	extern char edata[], end[];
-	int i;
 	uint32_t config;
 
 	/* XXX this code must run on the target CPU */
@@ -192,8 +186,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	kernend = (void *)mips_round_page(end);
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (magic == BOOTINFO_MAGIC) {
-		ksym_start = (void *)bootinfo.ssym;
-		ksym_end   = (void *)bootinfo.esym;
+		ksym_start = (void *)(intptr_t)bootinfo.ssym;
+		ksym_end   = (void *)(intptr_t)bootinfo.esym;
 		kernend = (void *)mips_round_page((vaddr_t)ksym_end);
 	}
 #endif
@@ -207,7 +201,15 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+#ifdef MULTIPROCESSOR
+	mips_vector_init(NULL, true);
+#else
+	mips_vector_init(NULL, false);
+#endif
+
+	mips_locoresw.lsw_bus_error = sibyte_bus_watch_check;
+
+	sb1250_ipl_map_init();
 
 #ifdef DEBUG
 	printf("fwhandle=%08X magic=%08X bootdata=%08X reserved=%08X\n",
@@ -267,7 +269,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	}
 
 
-	for (i = 0; i < sizeof(bootinfo.boot_flags); i++) {
+	for (u_int i = 0; i < sizeof(bootinfo.boot_flags); i++) {
 		switch (bootinfo.boot_flags[i]) {
 		case '\0':
 			break;
@@ -294,20 +296,9 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 
 	/*
 	 * Load the rest of the available pages into the VM system.
-	 * The first chunk is tricky because we have to avoid the
-	 * kernel, but the rest are easy.
 	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-		VM_FREELIST_DEFAULT);
-
-	for (i = 1; i < mem_cluster_cnt; i++) {
-		first = round_page(mem_clusters[i].start);
-		last = mem_clusters[i].start + mem_clusters[i].size;
-		uvm_page_physload(atop(first), atop(last), atop(first),
-		    atop(last), VM_FREELIST_DEFAULT);
-	}
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t) kernend,
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -334,6 +325,10 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		Debugger();
 #endif
 	}
+
+#ifdef MULTIPROCESSOR
+	mips_fixup_exceptions(mips_fixup_zero_relative);
+#endif
 }
 
 /*
@@ -342,32 +337,10 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
 	/*
-	 * Good {morning,afternoon,evening,night}.
+	 * Just do the common stuff.
 	 */
-	printf("%s%s", copyright, version);
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio.
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr, VM_PHYS_SIZE,
-	    0, false, NULL);
-
-
-	/*
-	 * (No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.)
-	 */
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 }
 
 int	waittime = -1;
@@ -377,8 +350,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curlwp)
-		savectx(curpcb);
+	savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -463,6 +435,8 @@ sbmips_cca_for_pa(paddr_t pa)
 {
 	int rv;
 
+	rv = 2;			/* Uncached. */
+
 	/* Check each DRAM region. */
 	if ((pa >= 0x0000000000   && pa <= 0x000fffffff) ||	/* DRAM 0 */
 	    (pa >= 0x0080000000   && pa <= 0x008fffffff) ||	/* DRAM 1 */
@@ -473,10 +447,7 @@ sbmips_cca_for_pa(paddr_t pa)
 #endif
 	   0) {
 		rv = 5;		/* Cacheable coherent. */
-		goto done;
 	}
 
-	rv = 2;			/* Uncached. */
-done:
 	return (rv);
 }

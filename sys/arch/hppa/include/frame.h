@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.11 2010/03/30 19:27:54 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.11.2.1 2011/06/06 09:05:46 jruoho Exp $	*/
 
 /*	$OpenBSD: frame.h,v 1.11 1999/11/25 18:28:06 mickey Exp $	*/
 
@@ -132,11 +132,13 @@ struct trapframe {
 	u_int	tf_rctr;	/* cr0 */
 	u_int	tf_ccr;		/* cr10 */
 	u_int	tf_eirr;	/* cr23 - DDB */
+	u_int	tf_cr24;	/* cr24 - DDB */
 	u_int	tf_vtop;	/* cr25 - DDB */
+	u_int	tf_cr27;	/*      - DDB */
 	u_int	tf_cr28;	/*      - DDB */
 	u_int	tf_cr30;	/* fpregs */
 
-	u_int	tf_pad[4];	/* pad to 256 bytes */
+	u_int	tf_pad[2];	/* pad to 256 bytes */
 };
 
 #endif /* !__ASSEMBLER__ */

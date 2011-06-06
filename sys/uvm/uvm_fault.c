@@ -1,7 +1,6 @@
-/*	$NetBSD: uvm_fault.c,v 1.180 2011/01/06 05:51:57 enami Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.180.2.1 2011/06/06 09:10:21 jruoho Exp $	*/
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -39,15 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.180 2011/01/06 05:51:57 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.180.2.1 2011/06/06 09:10:21 jruoho Exp $");
 
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 
 #include <uvm/uvm.h>
@@ -363,7 +354,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 
 			pg = uvm_pagealloc(NULL,
 			    ufi != NULL ? ufi->orig_rvaddr : 0,
-			    anon, UVM_FLAG_COLORMATCH);
+			    anon, ufi != NULL ? UVM_FLAG_COLORMATCH : 0);
 			if (pg == NULL) {		/* out of RAM.  */
 				uvmfault_unlockall(ufi, amap, NULL, anon);
 				uvmexp.fltnoram++;
@@ -543,6 +534,8 @@ released:
  * => if we fail (result != 0) we unlock everything.
  * => on success, return a new locked anon via 'nanon'.
  *    (*nanon)->an_page will be a resident, locked, dirty page.
+ * => it's caller's responsibility to put the promoted nanon->an_page to the
+ *    page queue.
  */
 
 static int
@@ -763,8 +756,7 @@ static inline int	uvm_fault_lower_promote(
 static int		uvm_fault_lower_enter(
 			    struct uvm_faultinfo *, const struct uvm_faultctx *,
 			    struct uvm_object *,
-			    struct vm_anon *, struct vm_page *,
-			    struct vm_page *);
+			    struct vm_anon *, struct vm_page *);
 static inline void	uvm_fault_lower_done(
 			    struct uvm_faultinfo *, const struct uvm_faultctx *,
 			    struct uvm_object *, struct vm_page *);
@@ -804,7 +796,7 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	ufi.orig_size = PAGE_SIZE;	/* can't get any smaller than this */
 
 	error = ERESTART;
-	while (error == ERESTART) {
+	while (error == ERESTART) { /* ReFault: */
 		anons = anons_store;
 		pages = pages_store;
 
@@ -1409,12 +1401,13 @@ uvm_fault_upper_promote(
 
 	pg = anon->an_page;
 	mutex_enter(&uvm_pageqlock);
-	uvm_pageactivate(pg);
+	uvm_pageenqueue(pg); /* uvm_fault_upper_done will activate the page */
 	mutex_exit(&uvm_pageqlock);
 	pg->flags &= ~(PG_BUSY|PG_FAKE);
 	UVM_PAGE_OWN(pg, NULL);
 
 	/* deref: can not drop to zero here by defn! */
+	KASSERT(oanon->an_ref > 1);
 	oanon->an_ref--;
 
 	/*
@@ -1761,7 +1754,7 @@ uvm_fault_lower_neighbor(
 	struct uvm_faultinfo *ufi, const struct uvm_faultctx *flt,
 	vaddr_t currva, struct vm_page *pg, bool readonly)
 {
-	UVMHIST_FUNC("uvm_fault_lower_neighor"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap(if there), uobj */
 
@@ -1982,7 +1975,8 @@ uvm_fault_lower_direct(
 	}
 	KASSERT(pg == uobjpage);
 
-	return uvm_fault_lower_enter(ufi, flt, uobj, NULL, pg, uobjpage);
+	KASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
+	return uvm_fault_lower_enter(ufi, flt, uobj, NULL, pg);
 }
 
 /*
@@ -2125,18 +2119,20 @@ uvm_fault_lower_promote(
 		    anon, pg, 0, 0);
 	}
 
-	return uvm_fault_lower_enter(ufi, flt, uobj, anon, pg, uobjpage);
+	KASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
+	return uvm_fault_lower_enter(ufi, flt, uobj, anon, pg);
 }
 
 /*
- * uvm_fault_lower_enter: enter h/w mapping of lower page.
+ * uvm_fault_lower_enter: enter h/w mapping of lower page or anon page promoted
+ * from the lower page.
  */
 
 int
 uvm_fault_lower_enter(
 	struct uvm_faultinfo *ufi, const struct uvm_faultctx *flt,
 	struct uvm_object *uobj,
-	struct vm_anon *anon, struct vm_page *pg, struct vm_page *uobjpage)
+	struct vm_anon *anon, struct vm_page *pg)
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	int error;
@@ -2144,14 +2140,13 @@ uvm_fault_lower_enter(
 
 	/*
 	 * locked:
-	 * maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj),
+	 * maps(read), amap(if !null), uobj(if !null),
 	 *   anon(if !null), pg(if anon)
 	 *
 	 * note: pg is either the uobjpage or the new page in the new anon
 	 */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
 	KASSERT(anon == NULL || mutex_owned(&anon->an_lock));
 	KASSERT((pg->flags & PG_BUSY) != 0);
 
@@ -2179,6 +2174,15 @@ uvm_fault_lower_enter(
 		 * We do, however, have to go through the ReFault path,
 		 * as the map may change while we're asleep.
 		 */
+
+		/*
+		 * ensure that the page is queued in the case that
+		 * we just promoted the page.
+		 */
+
+		mutex_enter(&uvm_pageqlock);
+		uvm_pageenqueue(pg);
+		mutex_exit(&uvm_pageqlock);
 
 		if (pg->flags & PG_WANTED)
 			wakeup(pg);

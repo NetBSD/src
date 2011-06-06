@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.16 2010/10/10 05:17:44 kiyohara Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.16.2.1 2011/06/06 09:07:49 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.16 2010/10/10 05:17:44 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.16.2.1 2011/06/06 09:07:49 jruoho Exp $");
 
 #include "opt_strtc.h"
 
@@ -93,10 +93,16 @@ strtc_match(device_t parent, cfdata_t cf, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
 
-	if (ia->ia_addr == M41ST84_ADDR)
-		return (1);
-
-	return (0);
+	if (ia->ia_name) {
+		/* direct config - check name */
+		if (strcmp(ia->ia_name, "strtc") == 0)
+			return 1;
+	} else {
+		/* indirect config - check typical address */
+		if (ia->ia_addr == M41ST84_ADDR)
+			return 1;
+	}
+	return 0;
 }
 
 static void
@@ -105,9 +111,13 @@ strtc_attach(device_t parent, device_t self, void *arg)
 	struct strtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 
+#ifndef STRTC_NO_USERRAM
 	aprint_naive(": Real-time Clock/NVRAM\n");
 	aprint_normal(": M41ST84 Real-time Clock/NVRAM\n");
-
+#else
+	aprint_naive(": Real-time Clock\n");
+	aprint_normal(": M41T8x Real-time Clock\n");
+#endif
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
 	sc->sc_dev = self;

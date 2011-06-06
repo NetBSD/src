@@ -34,11 +34,28 @@
  *    Thomas Hellstrom.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_dma.c,v 1.2.6.1 2011/06/06 09:09:13 jruoho Exp $");
+
 #include "drmP.h"
 #include "drm.h"
 #include "via_drm.h"
 #include "via_drv.h"
 #include "via_3d_reg.h"
+
+#define CMDBUF_ALIGNMENT_SIZE   (0x100)
+#define CMDBUF_ALIGNMENT_MASK   (0x0ff)
+
+/* defines for VIA 3D registers */
+#define VIA_REG_STATUS          0x400
+#define VIA_REG_TRANSET         0x43C
+#define VIA_REG_TRANSPACE       0x440
+
+/* VIA_REG_STATUS(0x400): Engine Status */
+#define VIA_CMD_RGTR_BUSY       0x00000080	/* Command Regulator is busy */
+#define VIA_2D_ENG_BUSY         0x00000001	/* 2D Engine is busy */
+#define VIA_3D_ENG_BUSY         0x00000002	/* 3D Engine is busy */
+#define VIA_VR_QUEUE_BUSY       0x00020000	/* Virtual Queue is busy */
 
 #define SetReg2DAGP(nReg, nData) {				\
 	*((uint32_t *)(vb)) = ((nReg) >> 2) | HALCYON_HEADER1;	\
@@ -54,19 +71,18 @@
 	*vb++ = (w2);				\
 	dev_priv->dma_low += 8;
 
-static void via_cmdbuf_start(drm_via_private_t *dev_priv);
-static void via_cmdbuf_pause(drm_via_private_t *dev_priv);
-static void via_cmdbuf_reset(drm_via_private_t *dev_priv);
-static void via_cmdbuf_rewind(drm_via_private_t *dev_priv);
-static int via_wait_idle(drm_via_private_t *dev_priv);
-static void via_pad_cache(drm_via_private_t *dev_priv, int qwords);
-
+static void via_cmdbuf_start(drm_via_private_t * dev_priv);
+static void via_cmdbuf_pause(drm_via_private_t * dev_priv);
+static void via_cmdbuf_reset(drm_via_private_t * dev_priv);
+static void via_cmdbuf_rewind(drm_via_private_t * dev_priv);
+static int via_wait_idle(drm_via_private_t * dev_priv);
+static void via_pad_cache(drm_via_private_t * dev_priv, int qwords);
 
 /*
  * Free space in command buffer.
  */
 
-static uint32_t via_cmdbuf_space(drm_via_private_t *dev_priv)
+static uint32_t via_cmdbuf_space(drm_via_private_t * dev_priv)
 {
 	uint32_t agp_base = dev_priv->dma_offset + (uint32_t) dev_priv->agpAddr;
 	uint32_t hw_addr = *(dev_priv->hw_addr_ptr) - agp_base;
@@ -80,7 +96,7 @@ static uint32_t via_cmdbuf_space(drm_via_private_t *dev_priv)
  * How much does the command regulator lag behind?
  */
 
-static uint32_t via_cmdbuf_lag(drm_via_private_t *dev_priv)
+static uint32_t via_cmdbuf_lag(drm_via_private_t * dev_priv)
 {
 	uint32_t agp_base = dev_priv->dma_offset + (uint32_t) dev_priv->agpAddr;
 	uint32_t hw_addr = *(dev_priv->hw_addr_ptr) - agp_base;
@@ -119,7 +135,6 @@ via_cmdbuf_wait(drm_via_private_t * dev_priv, unsigned int size)
 	return 0;
 }
 
-
 /*
  * Checks whether buffer head has reach the end. Rewind the ring buffer
  * when necessary.
@@ -143,9 +158,12 @@ static inline uint32_t *via_check_dma(drm_via_private_t * dev_priv,
 
 int via_dma_cleanup(struct drm_device * dev)
 {
+	drm_via_blitq_t *blitq;
+	int i;
+
 	if (dev->dev_private) {
 		drm_via_private_t *dev_priv =
-			(drm_via_private_t *) dev->dev_private;
+		    (drm_via_private_t *) dev->dev_private;
 
 		if (dev_priv->ring.virtual_start) {
 			via_cmdbuf_reset(dev_priv);
@@ -154,6 +172,10 @@ int via_dma_cleanup(struct drm_device * dev)
 			dev_priv->ring.virtual_start = NULL;
 		}
 
+		for (i=0; i< VIA_NUM_BLIT_ENGINES; ++i) {
+			blitq = dev_priv->blit_queues + i;
+			mutex_destroy(&blitq->blit_lock);
+		}
 	}
 
 	return 0;
@@ -189,7 +211,7 @@ static int via_initialize(struct drm_device * dev,
 	dev_priv->ring.map.flags = 0;
 	dev_priv->ring.map.mtrr = 0;
 
-	drm_core_ioremap(&dev_priv->ring.map, dev);
+	drm_core_ioremap_wc(&dev_priv->ring.map, dev);
 
 	if (dev_priv->ring.map.handle == NULL) {
 		via_dma_cleanup(dev);
@@ -246,8 +268,6 @@ static int via_dma_init(struct drm_device *dev, void *data, struct drm_file *fil
 	return retcode;
 }
 
-
-
 static int via_dispatch_cmdbuffer(struct drm_device * dev, drm_via_cmdbuffer_t * cmd)
 {
 	drm_via_private_t *dev_priv;
@@ -275,7 +295,7 @@ static int via_dispatch_cmdbuffer(struct drm_device * dev, drm_via_cmdbuffer_t *
 	 */
 
 	if ((ret =
-	     via_verify_command_stream((uint32_t *)dev_priv->pci_buf,
+	     via_verify_command_stream((uint32_t *) dev_priv->pci_buf,
 				       cmd->size, dev, 1))) {
 		return ret;
 	}
@@ -387,7 +407,7 @@ static inline uint32_t *via_align_buffer(drm_via_private_t * dev_priv,
 }
 
 /*
- * This function is used internally by ring buffer mangement code.
+ * This function is used internally by ring buffer management code.
  *
  * Returns virtual pointer to ring buffer.
  */
@@ -425,7 +445,7 @@ static int via_hook_segment(drm_via_private_t * dev_priv,
 	dev_priv->last_pause_ptr = via_get_dma(dev_priv) - 1;
 
 	/*
-	 * If there is a possibility that the command reader will 
+	 * If there is a possibility that the command reader will
 	 * miss the new pause address and pause on the old one,
 	 * In that case we need to program the new start address
 	 * using PCI.
@@ -435,7 +455,7 @@ static int via_hook_segment(drm_via_private_t * dev_priv,
 	count = 10000000;
 	while(diff == 0 && count--) {
 		paused = (VIA_READ(0x41c) & 0x80000000);
-		if (paused) 
+		if (paused)
 			break;
 		reader = *(dev_priv->hw_addr_ptr);
 		diff = (uint32_t) (ptr - reader) - dev_priv->dma_diff;
@@ -464,27 +484,26 @@ static int via_hook_segment(drm_via_private_t * dev_priv,
 			VIA_READ(VIA_REG_TRANSPACE);
 		}
 	}
-
 	return paused;
 }
 
-
-
-static int via_wait_idle(drm_via_private_t *dev_priv)
+static int via_wait_idle(drm_via_private_t * dev_priv)
 {
 	int count = 10000000;
 
-	while (!(VIA_READ(VIA_REG_STATUS) & VIA_VR_QUEUE_BUSY) && count--);
+	while (!(VIA_READ(VIA_REG_STATUS) & VIA_VR_QUEUE_BUSY) && --count)
+		;
 
-	while (count-- && (VIA_READ(VIA_REG_STATUS) &
+	while (count && (VIA_READ(VIA_REG_STATUS) &
 			   (VIA_CMD_RGTR_BUSY | VIA_2D_ENG_BUSY |
-			    VIA_3D_ENG_BUSY))) ;
+			    VIA_3D_ENG_BUSY)))
+		--count;
 	return count;
 }
 
-static uint32_t *via_align_cmd(drm_via_private_t *dev_priv, uint32_t cmd_type,
-			       uint32_t addr, uint32_t *cmd_addr_hi,
-			       uint32_t *cmd_addr_lo, int skip_wait)
+static uint32_t *via_align_cmd(drm_via_private_t * dev_priv, uint32_t cmd_type,
+			       uint32_t addr, uint32_t * cmd_addr_hi,
+			       uint32_t * cmd_addr_lo, int skip_wait)
 {
 	uint32_t agp_base;
 	uint32_t cmd_addr, addr_lo, addr_hi;
@@ -497,13 +516,12 @@ static uint32_t *via_align_cmd(drm_via_private_t *dev_priv, uint32_t cmd_type,
 	vb = via_get_dma(dev_priv);
 	VIA_OUT_RING_QW(HC_HEADER2 | ((VIA_REG_TRANSET >> 2) << 12) |
 			(VIA_REG_TRANSPACE >> 2), HC_ParaType_PreCR << 16);
-
 	agp_base = dev_priv->dma_offset + (uint32_t) dev_priv->agpAddr;
 	qw_pad_count = (CMDBUF_ALIGNMENT_SIZE >> 3) -
-		((dev_priv->dma_low & CMDBUF_ALIGNMENT_MASK) >> 3);
+	    ((dev_priv->dma_low & CMDBUF_ALIGNMENT_MASK) >> 3);
 
 	cmd_addr = (addr) ? addr :
-		agp_base + dev_priv->dma_low - 8 + (qw_pad_count << 3);
+	    agp_base + dev_priv->dma_low - 8 + (qw_pad_count << 3);
 	addr_lo = ((HC_SubA_HAGPBpL << 24) | (cmd_type & HC_HAGPBpID_MASK) |
 		   (cmd_addr & HC_HAGPBpL_MASK));
 	addr_hi = ((HC_SubA_HAGPBpH << 24) | (cmd_addr >> 24));
@@ -536,8 +554,8 @@ static void via_cmdbuf_start(drm_via_private_t * dev_priv)
 		   ((end_addr & 0xff000000) >> 16));
 
 	dev_priv->last_pause_ptr =
-		via_align_cmd(dev_priv, HC_HAGPBpID_PAUSE, 0,
-			      &pause_addr_hi, & pause_addr_lo, 1) - 1;
+	    via_align_cmd(dev_priv, HC_HAGPBpID_PAUSE, 0,
+			  &pause_addr_hi, &pause_addr_lo, 1) - 1;
 
 	via_flush_write_combine();
 	(void) *(volatile uint32_t *)dev_priv->last_pause_ptr;
@@ -572,7 +590,7 @@ static void via_cmdbuf_start(drm_via_private_t * dev_priv)
 	dev_priv->dma_diff = ptr - reader;
 }
 
-static void via_pad_cache(drm_via_private_t *dev_priv, int qwords)
+static void via_pad_cache(drm_via_private_t * dev_priv, int qwords)
 {
 	uint32_t *vb;
 
@@ -597,7 +615,7 @@ static void via_cmdbuf_jump(drm_via_private_t * dev_priv)
 	uint32_t jump_addr_lo, jump_addr_hi;
 	volatile uint32_t *last_pause_ptr;
 	uint32_t dma_low_save1, dma_low_save2;
-	
+
 	agp_base = dev_priv->dma_offset + (uint32_t) dev_priv->agpAddr;
 	via_align_cmd(dev_priv, HC_HAGPBpID_JUMP, 0, &jump_addr_hi,
 		      &jump_addr_lo, 0);
@@ -617,14 +635,14 @@ static void via_cmdbuf_jump(drm_via_private_t * dev_priv)
 	via_dummy_bitblt(dev_priv);
 
 	last_pause_ptr =
-		via_align_cmd(dev_priv, HC_HAGPBpID_PAUSE, 0, &pause_addr_hi,
+	    via_align_cmd(dev_priv, HC_HAGPBpID_PAUSE, 0, &pause_addr_hi,
 			  &pause_addr_lo, 0) - 1;
 	via_align_cmd(dev_priv, HC_HAGPBpID_PAUSE, 0, &pause_addr_hi,
 		      &pause_addr_lo, 0);
 
 	*last_pause_ptr = pause_addr_lo;
 	dma_low_save1 = dev_priv->dma_low;
-	
+
 	/*
 	 * Now, set a trap that will pause the regulator if it tries to rerun the old
 	 * command buffer. (Which may happen if via_hook_segment detecs a command regulator pause
@@ -640,7 +658,7 @@ static void via_cmdbuf_jump(drm_via_private_t * dev_priv)
 	via_align_cmd(dev_priv, HC_HAGPBpID_PAUSE, 0, &pause_addr_hi,
 		      &pause_addr_lo, 0);
 	*last_pause_ptr = pause_addr_lo;
-	
+
 	dma_low_save2 = dev_priv->dma_low;
 	dev_priv->dma_low = dma_low_save1;
 	via_hook_segment(dev_priv, jump_addr_hi, jump_addr_lo, 0);
@@ -661,7 +679,6 @@ static void via_cmdbuf_flush(drm_via_private_t * dev_priv, uint32_t cmd_type)
 	via_align_cmd(dev_priv, cmd_type, 0, &pause_addr_hi, &pause_addr_lo, 0);
 	via_hook_segment(dev_priv, pause_addr_hi, pause_addr_lo, 0);
 }
-
 
 static void via_cmdbuf_pause(drm_via_private_t * dev_priv)
 {
@@ -700,7 +717,7 @@ static int via_cmdbuf_size(struct drm_device *dev, void *data, struct drm_file *
 	switch (d_siz->func) {
 	case VIA_CMDBUF_SPACE:
 		while (((tmp_size = via_cmdbuf_space(dev_priv)) < d_siz->size)
-		       && count--) {
+		       && --count) {
 			if (!d_siz->wait) {
 				break;
 			}
@@ -712,7 +729,7 @@ static int via_cmdbuf_size(struct drm_device *dev, void *data, struct drm_file *
 		break;
 	case VIA_CMDBUF_LAG:
 		while (((tmp_size = via_cmdbuf_lag(dev_priv)) > d_siz->size)
-		       && count--) {
+		       && --count) {
 			if (!d_siz->wait) {
 				break;
 			}
@@ -729,19 +746,6 @@ static int via_cmdbuf_size(struct drm_device *dev, void *data, struct drm_file *
 
 	return ret;
 }
-
-#ifndef VIA_HAVE_DMABLIT
-int
-via_dma_blit_sync( struct drm_device *dev, void *data, struct drm_file *file_priv ) {
-	DRM_ERROR("PCI DMA BitBlt is not implemented for this system.\n");
-	return -EINVAL;
-}
-int
-via_dma_blit( struct drm_device *dev, void *data, struct drm_file *file_priv ) {
-	DRM_ERROR("PCI DMA BitBlt is not implemented for this system.\n");
-	return -EINVAL;
-}
-#endif
 
 struct drm_ioctl_desc via_ioctls[] = {
 	DRM_IOCTL_DEF(DRM_VIA_ALLOCMEM, via_mem_alloc, DRM_AUTH),

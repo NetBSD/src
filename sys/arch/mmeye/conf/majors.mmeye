@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mmeye,v 1.19 2008/11/12 12:36:04 ad Exp $
+#	$NetBSD: majors.mmeye,v 1.19.10.1 2011/06/06 09:06:13 jruoho Exp $
 #
 # Device majors for mmeye
 #
@@ -12,6 +12,9 @@ device-major	pts		char 5			pty
 device-major	ptc		char 6			pty
 device-major	log		char 7
 device-major	com		char 8			com
+
+device-major	scif		char 10			scif
+device-major	sci		char 11			sci
 
 device-major	sd		char 13  block 4	sd
 device-major	st		char 14  block 5	st

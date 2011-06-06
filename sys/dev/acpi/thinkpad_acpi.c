@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.32 2010/12/31 08:17:54 jruoho Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.32.2.1 2011/06/06 09:07:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.32 2010/12/31 08:17:54 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.32.2.1 2011/06/06 09:07:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,11 +37,9 @@ __KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.32 2010/12/31 08:17:54 jruoho Ex
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_ecvar.h>
+#include <dev/acpi/acpi_power.h>
 
-#if defined(__i386__) || defined(__amd64__)
 #include <dev/isa/isareg.h>
-#include <machine/pio.h>
-#endif
 
 #define _COMPONENT		ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME		("thinkpad_acpi")
@@ -54,8 +52,8 @@ typedef struct thinkpad_softc {
 	device_t		sc_dev;
 	device_t		sc_ecdev;
 	struct acpi_devnode	*sc_node;
+	ACPI_HANDLE		sc_powhdl;
 	ACPI_HANDLE		sc_cmoshdl;
-	bool			sc_cmoshdl_valid;
 
 #define	TP_PSW_SLEEP		0
 #define	TP_PSW_HIBERNATE	1
@@ -173,21 +171,14 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	ACPI_INTEGER val;
 	int i;
 
-	sc->sc_node = aa->aa_node;
 	sc->sc_dev = self;
+	sc->sc_powhdl = NULL;
+	sc->sc_cmoshdl = NULL;
+	sc->sc_node = aa->aa_node;
 	sc->sc_display_state = THINKPAD_DISPLAY_LCD;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
-
-	/* T61 uses \UCMS method for issuing CMOS commands */
-	rv = AcpiGetHandle(NULL, "\\UCMS", &sc->sc_cmoshdl);
-	if (ACPI_FAILURE(rv))
-		sc->sc_cmoshdl_valid = false;
-	else {
-		aprint_debug_dev(self, "using CMOS at \\UCMS\n");
-		sc->sc_cmoshdl_valid = true;
-	}
 
 	sc->sc_ecdev = NULL;
 	for (curdev = deviter_first(&di, DEVITER_F_ROOT_FIRST);
@@ -220,6 +211,19 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	(void)acpi_register_notify(sc->sc_node, thinkpad_notify_handler);
+
+	/*
+	 * Obtain a handle for CMOS commands. This is used by T61.
+	 */
+	(void)AcpiGetHandle(NULL, "\\UCMS", &sc->sc_cmoshdl);
+
+	/*
+	 * Obtain a handle to the power resource available on many models.
+	 * Since pmf(9) is not yet integrated with the ACPI power resource
+	 * code, this must be turned on manually upon resume. Otherwise the
+	 * system may, for instance, resume from S3 with usb(4) powered down.
+	 */
+	(void)AcpiGetHandle(NULL, "\\_SB.PCI0.LPC.EC.PUBS", &sc->sc_powhdl);
 
 	/* Register power switches with sysmon */
 	psw = sc->sc_smpsw;
@@ -585,23 +589,18 @@ thinkpad_wireless_toggle(thinkpad_softc_t *sc)
 {
 	/* Ignore return value, as the hardware may not support bluetooth */
 	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "BTGL", NULL, NULL);
+	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "GWAN", NULL, NULL);
 }
 
 static uint8_t
 thinkpad_brightness_read(thinkpad_softc_t *sc)
 {
-#if defined(__i386__) || defined(__amd64__)
-	/*
-	 * We have two ways to get the current brightness -- either via
-	 * magic RTC registers, or using the EC. Since I don't dare mess
-	 * with the EC, and Thinkpads are x86-only, this will have to do
-	 * for now.
-	 */
-	outb(IO_RTC, 0x6c);
-	return inb(IO_RTC+1) & 7;
-#else
-	return 0;
-#endif
+	uint32_t val = 0;
+
+	AcpiOsWritePort(IO_RTC, 0x6c, 8);
+	AcpiOsReadPort(IO_RTC + 1, &val, 8);
+
+	return val & 7;
 }
 
 static void
@@ -611,6 +610,7 @@ thinkpad_brightness_up(device_t self)
 
 	if (thinkpad_brightness_read(sc) == 7)
 		return;
+
 	thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_UP);
 }
 
@@ -621,6 +621,7 @@ thinkpad_brightness_down(device_t self)
 
 	if (thinkpad_brightness_read(sc) == 0)
 		return;
+
 	thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_DOWN);
 }
 
@@ -629,105 +630,61 @@ thinkpad_cmos(thinkpad_softc_t *sc, uint8_t cmd)
 {
 	ACPI_STATUS rv;
 
-	if (sc->sc_cmoshdl_valid == false)
+	if (sc->sc_cmoshdl == NULL)
 		return;
 
 	rv = acpi_eval_set_integer(sc->sc_cmoshdl, NULL, cmd);
+
 	if (ACPI_FAILURE(rv))
-		aprint_error_dev(sc->sc_dev, "couldn't evalute CMOS: %s\n",
+		aprint_error_dev(sc->sc_dev, "couldn't evaluate CMOS: %s\n",
 		    AcpiFormatException(rv));
 }
 
 static bool
 thinkpad_resume(device_t dv, const pmf_qual_t *qual)
 {
-	ACPI_STATUS rv;
-	ACPI_HANDLE pubs;
+	thinkpad_softc_t *sc = device_private(dv);
 
-	rv = AcpiGetHandle(NULL, "\\_SB.PCI0.LPC.EC.PUBS", &pubs);
-	if (ACPI_FAILURE(rv))
-		return true;	/* not fatal */
+	if (sc->sc_powhdl == NULL)
+		return true;
 
-	rv = AcpiEvaluateObject(pubs, "_ON", NULL, NULL);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(dv, "failed to execute PUBS._ON: %s\n",
-		    AcpiFormatException(rv));
+	(void)acpi_power_res(sc->sc_powhdl, sc->sc_node->ad_handle, true);
 
 	return true;
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, thinkpad, NULL);
-CFDRIVER_DECL(thinkpad, DV_DULL, NULL);
 
-static int thinkpadloc[] = { -1 };
-extern struct cfattach thinkpad_ca;
-
-static struct cfparent acpiparent = {
-	"acpinodebus", NULL, DVUNIT_ANY
-};
-
-static struct cfdata thinkpad_cfdata[] = {
-	{
-		.cf_name = "thinkpad",
-		.cf_atname = "thinkpad",
-		.cf_unit = 0,
-		.cf_fstate = FSTATE_STAR,
-		.cf_loc = thinkpadloc,
-		.cf_flags = 0,
-		.cf_pspec = &acpiparent,
-	},
-
-	{ NULL, NULL, 0, 0, NULL, 0, NULL }
-};
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
 
 static int
-thinkpad_modcmd(modcmd_t cmd, void *opaque)
+thinkpad_modcmd(modcmd_t cmd, void *aux)
 {
-	int err;
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
 
-		err = config_cfdriver_attach(&thinkpad_cd);
-
-		if (err != 0)
-			return err;
-
-		err = config_cfattach_attach("thinkpad", &thinkpad_ca);
-
-		if (err != 0) {
-			config_cfdriver_detach(&thinkpad_cd);
-			return err;
-		}
-
-		err = config_cfdata_attach(thinkpad_cfdata, 1);
-
-		if (err != 0) {
-			config_cfattach_detach("thinkpad", &thinkpad_ca);
-			config_cfdriver_detach(&thinkpad_cd);
-			return err;
-		}
-
-		return 0;
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_thinkpad,
+		    cfattach_ioconf_thinkpad, cfdata_ioconf_thinkpad);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
 
-		err = config_cfdata_detach(thinkpad_cfdata);
-
-		if (err != 0)
-			return err;
-
-		config_cfattach_detach("thinkpad", &thinkpad_ca);
-		config_cfdriver_detach(&thinkpad_cd);
-
-		return 0;
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_thinkpad,
+		    cfattach_ioconf_thinkpad, cfdata_ioconf_thinkpad);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

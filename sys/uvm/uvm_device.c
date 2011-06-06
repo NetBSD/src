@@ -1,7 +1,6 @@
-/*	$NetBSD: uvm_device.c,v 1.57 2010/02/05 03:49:11 uebayasi Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.57.6.1 2011/06/06 09:10:21 jruoho Exp $	*/
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -39,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57 2010/02/05 03:49:11 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57.6.1 2011/06/06 09:10:21 jruoho Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -51,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57 2010/02/05 03:49:11 uebayasi Exp
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
+#include <uvm/uvm_pmap.h>
 
 /*
  * private global data structure
@@ -216,7 +210,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 		}
 
 		/*
-		 * did not find it on main list.   need to malloc a new one.
+		 * Did not find it on main list.  Need to allocate a new one.
 		 */
 
 		mutex_exit(&udv_lock);
@@ -362,6 +356,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	vaddr_t curr_va;
 	off_t curr_offset;
 	paddr_t paddr, mdpgno;
+	u_int mmapflags;
 	int lcv, retval;
 	dev_t device;
 	vm_prot_t mapprot;
@@ -422,12 +417,13 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			break;
 		}
 		paddr = pmap_phys_address(mdpgno);
+		mmapflags = pmap_mmap_flags(mdpgno);
 		mapprot = ufi->entry->protection;
 		UVMHIST_LOG(maphist,
 		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%lx, at=%d",
 		    ufi->orig_map->pmap, curr_va, paddr, mapprot);
-		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr,
-		    mapprot, PMAP_CANFAIL | mapprot) != 0) {
+		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr, mapprot,
+		    PMAP_CANFAIL | mapprot | mmapflags) != 0) {
 			/*
 			 * pmap_enter() didn't have the resource to
 			 * enter this mapping.  Unlock everything,

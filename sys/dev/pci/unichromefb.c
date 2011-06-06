@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.17 2010/12/16 06:45:50 cegger Exp $ */
+/* $NetBSD: unichromefb.c,v 1.17.2.1 2011/06/06 09:08:28 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.17 2010/12/16 06:45:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.17.2.1 2011/06/06 09:08:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.17 2010/12/16 06:45:50 cegger Exp 
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include <dev/pci/unichromereg.h>
 #include <dev/pci/unichromemode.h>
@@ -478,6 +479,11 @@ unichromefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case PCI_IOC_CFGWRITE:
 		return (pci_devioctl(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag,
 		    cmd, data, flag, l));
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(sc->sc_dev,
+		    sc->sc_pa.pa_pc, sc->sc_pa.pa_tag, data);
+
 	}
 
 	return EPASSTHROUGH;

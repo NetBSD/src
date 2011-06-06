@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.8 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.8.108.1 2011/06/06 09:05:06 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.8 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.8.108.1 2011/06/06 09:05:06 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ void		becc_pci_decompose_tag(void *, pcitag_t, int *, int *,
 pcireg_t	becc_pci_conf_read(void *, pcitag_t, int);
 void		becc_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 
-int		becc_pci_intr_map(struct pci_attach_args *,
+int		becc_pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 const char	*becc_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *becc_pci_intr_evcnt(void *, pci_intr_handle_t);
@@ -326,7 +326,7 @@ becc_pci_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 }
 
 int
-becc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+becc_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int irq;
 

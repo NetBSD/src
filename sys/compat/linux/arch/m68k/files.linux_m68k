@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_m68k,v 1.5 2010/07/07 01:30:34 chs Exp $
+#	$NetBSD: files.linux_m68k,v 1.5.2.1 2011/06/06 09:07:24 jruoho Exp $
 #
 # Config file description for m68k-dependent Linux compat code.
 
@@ -19,3 +19,5 @@ file	compat/linux/common/linux_oldmmap.c		compat_linux
 file	compat/linux/common/linux_oldselect.c		compat_linux
 file	compat/linux/common/linux_uid16.c		compat_linux
 file	compat/linux/common/linux_futex.c		compat_linux
+file	compat/linux/common/linux_fadvise64.c		compat_linux
+file	compat/linux/common/linux_fadvise64_64.c	compat_linux

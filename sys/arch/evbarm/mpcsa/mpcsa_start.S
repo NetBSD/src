@@ -37,8 +37,9 @@
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pte.h>
-#include <arm/arm32/pmap.h>        /* for PMAP_DOMAIN_KERNEL */
+#include "assym.h"
+
+RCSID("$NetBSD: mpcsa_start.S,v 1.2.26.1 2011/06/06 09:05:27 jruoho Exp $")
 
 #ifndef	FLASH_START
 #define	FLASH_START	0x10020000
@@ -157,13 +158,13 @@ Lstartup_pagetable:
 	
 mmu_init_table:    
     /* fill all table VA==PA */
-    MMU_INIT(0x00000000, 0x00000000, 1<<(32-L1_S_SHIFT), L1_TYPE_S|L1_S_AP(AP_KRW))
+    MMU_INIT(0x00000000, 0x00000000, 1<<(32-L1_S_SHIFT), L1_TYPE_S|L1_S_AP_KRW)
     /* map in peripheral space */
-    MMU_INIT(0xfff00000, 0xfff00000, 1, L1_TYPE_S|L1_S_AP(AP_KRW))
+    MMU_INIT(0xfff00000, 0xfff00000, 1, L1_TYPE_S|L1_S_AP_KRW)
     /* map SDRAM VA==PA, WT cacheable */
-    MMU_INIT(0x20100000, 0x20100000, 63, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+    MMU_INIT(0x20100000, 0x20100000, 63, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
     /* map VA 0xc0000000..0xc0efffff to PA 0x20100000..0x23ffffff */
-    MMU_INIT(0xc0000000, 0x20000000, 63, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+    MMU_INIT(0xc0000000, 0x20000000, 63, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
     .word 0    /* end of table */
 
 	.align	7

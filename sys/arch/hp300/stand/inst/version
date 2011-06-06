@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.9 2008/07/16 13:44:51 tsutsui Exp $
+$NetBSD: version,v 1.9.22.1 2011/06/06 09:05:39 jruoho Exp $
 
 1.1:	Initial version
 1.2:	Added support for HP-IB cartridge tapes
@@ -9,3 +9,5 @@ $NetBSD: version,v 1.9 2008/07/16 13:44:51 tsutsui Exp $
 1.7:	Added APCI console support
 1.8:	Identify HP362 and HP382
 1.9:	Change boot messages to replace build date and maker with kernrev.
+1.10:	Pull OpenBSD's ite driver reorganization.
+1.11:	Add support for framebuffers on HP362 and HP382.

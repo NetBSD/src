@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.4 2005/12/11 12:18:43 christos Exp $ */
+/*	$NetBSD: instr.h,v 1.4.106.1 2011/06/06 09:06:28 jruoho Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,6 +40,9 @@
  *	@(#)instr.h	8.1 (Berkeley) 6/11/93
  */
 
+#ifndef _POWERPC_INSTR_H_
+#define _POWERPC_INSTR_H_
+
 /*
  * An instruction.
  */
@@ -74,11 +77,11 @@ union instr {
 	 */
 	struct {
 		u_int	i_opcd:6;
-		int	i_bo:5;
-		int	i_bi:5;
+		u_int	i_bo:5;
+		u_int	i_bi:5;
 		int	i_bd:14;
-		int	i_aa:1;
-		int	i_lk:1;
+		u_int	i_aa:1;
+		u_int	i_lk:1;
 	} i_b;
 
 	/*
@@ -307,6 +310,10 @@ union instr {
 #define	OPC31_FPMASK	0x31f
 #define	OPC31_FPOP	0x217
 
+/* m[ft]spr are also opcode 31; ra/rb encode the spr */
+#define	OPC31_MFSPR	0x153
+#define OPC31_MTSPR	0x1d3
+
 /*
  * Opcode 59 sub-types:
  */
@@ -377,6 +384,34 @@ union instr {
 #define	OPC63_FCFID	0x34e
 
 /*
+ * Branch instruction modifiers.
+ */
+#define	B_LK		0x01	/* Link flag (LR=CIA+4) */
+#define	B_AA		0x02	/* Absolute flag */
+
+/*
+ * Helpers for decoding mfspr
+ */
+#define	OPC_MFSPR_CODE		0x7c0002a6
+#define	OPC_MFSPR_MASK		(~(0x1f << 21))
+#define	OPC_MFSPR(spr)		(OPC_MFSPR_CODE |\
+				 (((spr) & 0x1f) << 16) |\
+				 (((spr) & 0x3e0) << 6))
+#define	OPC_MFSPR_REG(o)	(((o) >> 21) & 0x1f)
+#define	OPC_MFSPR_P(o, spr)	(((o) & OPC_MFSPR_MASK) == OPC_MFSPR(spr))
+
+#define	OPC_MFMSR_CODE		0x7c0000a8
+#define	OPC_MFMSR_MASK		0xfc1fffff
+#define	OPC_MFMSR		OPC_MFMSR_CODE
+#define	OPC_MFMSR_REG(o)	(((o) >> 21) & 0x1f)
+#define	OPC_MFMSR_P(o)		(((o) & OPC_MFMSR_MASK) == OPC_MFMSR_CODE)
+
+/*
+ * booke doesn't have lwsync even though gcc emits it so we have to emulate it.
+ */
+#define	OPC_LWSYNC		0x7c2004ac
+
+/*
  * FPU data types.
  */
 #define FTYPE_LNG	-1	/* data = 64-bit signed long integer */		
@@ -391,3 +426,19 @@ union instr {
 #define	  FSR_RD_RZ	1		/* round towards 0 */
 #define	  FSR_RD_RP	2		/* round towards +inf */
 #define	  FSR_RD_RM	3		/* round towards -inf */
+
+/*
+ * Convert an address to an offset used in a PowerPC branch instruction.
+ * We simply shift away the low bits since we are going convert the bl
+ * to a bla.
+ */
+#define	fixup_addr2offset(x)	((uintptr_t)(x) >> 2)
+struct powerpc_jump_fixup_info {
+	uint32_t jfi_stub;
+	uint32_t jfi_real;
+};
+ 
+void	powerpc_fixup_stubs(uint32_t *, uint32_t *, uint32_t *, uint32_t *);
+
+
+#endif /* !_POWERPC_INSTR_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.10 2010/07/23 00:43:21 jakllsch Exp $
+#	$NetBSD: files.pci,v 1.10.2.1 2011/06/06 09:07:06 jruoho Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -16,7 +16,7 @@ file	arch/x86/pci/pchb.c		pchb		needs-flag
 device	pcib: isabus
 attach	pcib at pci
 file	arch/x86/pci/pcib.c		pcib | ichlpcib | gscpcib | piixpcib |
-					viapcib | amdpcib | gcscpcib
+					viapcib | amdpcib | gcscpcib | rdcpcib
 
 device	amdpcib {} : isabus
 attach	amdpcib at pci
@@ -31,6 +31,10 @@ attach	amdtemp at pci
 file	arch/x86/pci/amdtemp.c		amdtemp
 
 # PCI-LPC bridges
+device rdcpcib: isabus, sysmon_wdog
+attach rdcpcib at pci
+file 	arch/x86/pci/rdcpcib.c 		rdcpcib
+
 define	fwhichbus {}
 define	hpetichbus {}
 device	ichlpcib: acpipmtimer, isabus, sysmon_wdog, fwhichbus, hpetichbus, gpiobus

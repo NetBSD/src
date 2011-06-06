@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 2010/07/07 01:30:34 chs Exp $  
+	$NetBSD: syscalls.master,v 1.38.2.1 2011/06/06 09:07:26 jruoho Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -88,8 +88,8 @@
 23	NOARGS		{ int|sys||setuid(uid_t uid); }
 24	NOARGS		{ uid_t|sys||getuid(void); }
 25	STD		{ int|linux_sys||stime(linux_time_t *t); }
-26	STD		{ int|linux_sys||ptrace(int request, int pid, \
-			  int addr, int data); }
+26	STD		{ int|linux_sys||ptrace(long request, long pid, \
+			  long addr, long data); }
 27	STD		{ int|linux_sys||alarm(unsigned int secs); }
 28	OBSOL		ofstat
 29	STD		{ int|linux_sys||pause(void); }
@@ -210,8 +210,8 @@
 			    int options, struct rusage50 *rusage); }
 115	STD		{ int|linux_sys||swapoff(const char *path); }
 116	STD		{ int|linux_sys||sysinfo(struct linux_sysinfo *arg); }
-117	STD		{ int|linux_sys||ipc(int what, int a1, int a2, int a3, \
-			    void *ptr); }
+117	STD		{ int|linux_sys||ipc(int what, long a1, long a2, \
+			    long a3, void *ptr); }
 118	NOARGS		{ int|sys||fsync(int fd); }
 119	STD		{ int|linux_sys||sigreturn(struct linux_sigframe *sf); }
 120	STD		{ int|linux_sys||clone(int flags, void *stack, \
@@ -255,8 +255,8 @@
 147	STD		{ int|linux_sys||cacheflush(void *addr, \
 			    int bytes, int cache); }
 148	UNIMPL		cachectl
-149	STD		{ int|linux_sys||sysmips(int cmd, int arg1, \
-			    int arg2, int arg3); }
+149	STD		{ int|linux_sys||sysmips(long cmd, long arg1, \
+			    long arg2, long arg3); }
 150	UNIMPL
 151	NOARGS		{ pid_t|sys||getsid(pid_t pid); }
 152	STD		{ int|linux_sys||fdatasync(int fd); }
@@ -428,7 +428,8 @@
 251	UNIMPL		remap_file_pages
 252	STD		{ int|linux_sys||set_tid_address(int *tid); }
 253	UNIMPL		restart_syscall
-254	UNIMPL		fadvise64
+254	STD		{ int|linux_sys||fadvise64(int fd, \
+			    linux_off_t offset, size_t len, int advice); }
 255	STD		{ int|linux_sys||statfs64(const char *path, \
 			    size_t sz, struct linux_statfs64 *sp); }
 256	STD		{ int|linux_sys||fstatfs64(int fd, \
@@ -511,8 +512,8 @@
 324	UNIMPL		signalfd4
 325	UNIMPL		eventfd2
 326	UNIMPL		epoll_create1
-327	UNIMPL		dup3
-328	UNIMPL		pipe2
+327	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
+328	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
 329	UNIMPL		inotify_init1
 330	UNIMPL		preadv
 331	UNIMPL		pwritev

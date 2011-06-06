@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.1.6.1 2011/06/06 09:05:04 jruoho Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.1.6.1 2011/06/06 09:05:04 jruoho Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -301,6 +301,7 @@ static const struct mvsoc_periph {
 #if defined(KIRKWOOD)
     { KIRKWOOD(88F6180),"mvsoctmr",0, MVSOC_TMR_BASE,	IRQ_DEFAULT },
     { KIRKWOOD(88F6180),"mvsocgpp",0, MVSOC_GPP_BASE,	KIRKWOOD_IRQ_GPIOLO7_0},
+    { KIRKWOOD(88F6180),"mvsocrtc",0, KIRKWOOD_RTC_BASE,IRQ_DEFAULT },
     { KIRKWOOD(88F6180),"com",     0, MVSOC_COM0_BASE,	KIRKWOOD_IRQ_UART0INT },
     { KIRKWOOD(88F6180),"com",     1, MVSOC_COM1_BASE,	KIRKWOOD_IRQ_UART1INT },
     { KIRKWOOD(88F6180),"ehci",    0, KIRKWOOD_USB_BASE,KIRKWOOD_IRQ_USB0CNT },
@@ -313,6 +314,7 @@ static const struct mvsoc_periph {
 
     { KIRKWOOD(88F6192),"mvsoctmr",0, MVSOC_TMR_BASE,	IRQ_DEFAULT },
     { KIRKWOOD(88F6192),"mvsocgpp",0, MVSOC_GPP_BASE,	KIRKWOOD_IRQ_GPIOLO7_0},
+    { KIRKWOOD(88F6192),"mvsocrtc",0, KIRKWOOD_RTC_BASE,IRQ_DEFAULT },
     { KIRKWOOD(88F6192),"com",     0, MVSOC_COM0_BASE,	KIRKWOOD_IRQ_UART0INT },
     { KIRKWOOD(88F6192),"com",     1, MVSOC_COM1_BASE,	KIRKWOOD_IRQ_UART1INT },
     { KIRKWOOD(88F6192),"ehci",    0, KIRKWOOD_USB_BASE,KIRKWOOD_IRQ_USB0CNT },
@@ -327,6 +329,7 @@ static const struct mvsoc_periph {
 
     { KIRKWOOD(88F6281),"mvsoctmr",0, MVSOC_TMR_BASE,	IRQ_DEFAULT },
     { KIRKWOOD(88F6281),"mvsocgpp",0, MVSOC_GPP_BASE,	KIRKWOOD_IRQ_GPIOLO7_0},
+    { KIRKWOOD(88F6281),"mvsocrtc",0, KIRKWOOD_RTC_BASE,IRQ_DEFAULT },
     { KIRKWOOD(88F6281),"com",     0, MVSOC_COM0_BASE,	KIRKWOOD_IRQ_UART0INT },
     { KIRKWOOD(88F6281),"com",     1, MVSOC_COM1_BASE,	KIRKWOOD_IRQ_UART1INT },
     { KIRKWOOD(88F6281),"ehci",    0, KIRKWOOD_USB_BASE,KIRKWOOD_IRQ_USB0CNT },

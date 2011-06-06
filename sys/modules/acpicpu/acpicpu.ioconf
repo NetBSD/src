@@ -1,0 +1,10 @@
+# $NetBSD: acpicpu.ioconf,v 1.2.6.2 2011/06/06 09:09:45 jruoho Exp $
+
+ioconf acpicpu
+
+include "conf/files"
+include "arch/x86/conf/files.x86"
+
+pseudo-root cpufeaturebus*
+
+acpicpu* at cpufeaturebus?

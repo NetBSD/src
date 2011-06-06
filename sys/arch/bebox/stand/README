@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.3 2008/05/25 16:21:07 kiyohara Exp $
+$NetBSD: README,v 1.3.26.1 2011/06/06 09:05:11 jruoho Exp $
 
 contents
 	boot:	     NetBSD/bebox booter.
@@ -21,20 +21,20 @@ boot:
 
 	if change CPPFLAGS after make, use 'make cleandir' before 'make'.
 
-	boot can read/exec kernel on ffs(floppy disk), cd9660(floppy disk),
-	attached image by powerpc's mkimageboot.
-
+	boot can read/exec kernel on ffs(floppy/ide/scsi) or attached
+	in-kernel image by powerpc's mkbootimage.
 
 
 Example of making bootable floppy disk:
-	% cd /sys/arch/bebox/stand
+	% cd sys/arch/bebox/stand
 	% $(TOOLDIR)/bin/nbmake-bebox
-	% gzip -c ../compile/GENERIC/netbsd > /tmp/netbsd.gz
-	% elf2pef/elf2pef boot/boot /tmp/boot.pef /tmp/netbsd.gz
+
+	% nbpowerpc-mkbootimage -I -m bebox -b boot/boot /tmp/fd.img
+
+	Or 
+
+	% nbpowerpc-mkbootimage -m bebox -b boot/boot \
+	      -k ../compile/INSTALL/netbsd /tmp/fd.img
+
 	[insert formatted floppy disk]
-	% mkbootimage/mkbootimage /tmp/boot.pef > /dev/rfd0a
-
-	% powerpc-mkbootimage -m bebox -b boot/boot \
-	      -k ../compile/GENERIC/netbsd /tmp/fd.img
 	% dd if=/tmp/fd.img of=/dev/rfd0a
-

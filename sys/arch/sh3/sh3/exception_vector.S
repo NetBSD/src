@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.46 2010/12/20 00:25:43 matt Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.46.2.1 2011/06/06 09:06:43 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
+#include "opt_ptrace.h"
+
 #include "assym.h"
 
 #include <sh3/param.h>
@@ -46,7 +48,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.46 2010/12/20 00:25:43 matt Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.46.2.1 2011/06/06 09:06:43 jruoho Exp $")
 
 
 /*
@@ -71,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.46 2010/12/20 00:25:43 matt E
  */
 NENTRY(sh_vector_generic)
 	__EXCEPTION_ENTRY
-	__INTR_MASK(r0, r1)
 	/* Identify exception cause */
 	MOV	(EXPEVT, r0)
 	mov.l	@r0, r0
@@ -88,7 +89,7 @@ NENTRY(sh_vector_generic)
 	bt	1f
 
 	/* tlb_exception(curlwp, tf, TEA); */
-	__EXCEPTION_UNBLOCK(r0, r1)
+	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 	mov.l	.Lg_tlb_exception, r0
 	jsr	@r0
 	 mov	r14, r5			/* 2nd arg */
@@ -97,13 +98,13 @@ NENTRY(sh_vector_generic)
 
 	/* general_exception(curlwp, tf, TEA); */
 1:	mov	r4, r8
-#ifdef DDB
+#if defined(PTRACE) || defined(DDB)
 	mov	#0, r2
 	MOV	(BBRA, r1)
-	mov.w	r2, @r1			/* disable UBC */
 	mov.l	r2, @(TF_UBC, r14)	/* clear tf->tf_ubc */
-#endif /* DDB */
-	__EXCEPTION_UNBLOCK(r0, r1)
+	mov.w	r2, @r1			/* disable UBC channel A */
+#endif
+	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 	mov.l	.Lg_general_exception, r0
 	jsr	@r0
 	 mov	r14, r5			/* 2nd arg */
@@ -114,9 +115,9 @@ NENTRY(sh_vector_generic)
 	jsr	@r0
 	 mov	r14, r5
 
-#ifdef DDB
+#if defined(PTRACE) || defined(DDB)
 	mov.l	@(TF_UBC, r14), r2
-	tst	r2, r2			! ddb single-step == 0?
+	tst	r2, r2			! single-step == 0?
 	bt	.Lg_return_from_exception
 
 	!! We are returning from DDB to do single step.  Channel A in
@@ -127,7 +128,7 @@ NENTRY(sh_vector_generic)
 	mov.l	@(TF_SPC, r14), r4
 	mov.l	r4, @r5			! BARA = tf->tf_spc
 	mov.w	r2, @r3			! BBRA = tf->tf_ubc
-#endif /* DDB */
+#endif /* PTRACE || DDB */
 .Lg_return_from_exception:
 	__EXCEPTION_RETURN
 
@@ -268,8 +269,7 @@ NENTRY(sh3_vector_tlbmiss)
 	mov.l	@r2, r2			! *SH3_EXPEVT
 	mov.l	@r0, r6			! arg3: va = *SH3_TEA
 	mov.l	@r1, r4			! arg1: curlwp
-	__INTR_MASK(r0, r1)
-	__EXCEPTION_UNBLOCK(r0, r1)
+	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 	mov.l	.L3_tlb_exception, r0
 	mov.l	r2, @(TF_EXPEVT, r14)	! tf->tf_expevt = EXPEVT
 	jsr	@r0
@@ -419,8 +419,7 @@ NENTRY(sh4_vector_tlbmiss)
 	mov.l	@(0x24, r0), r2		! *SH4_EXPEVT
 	mov.l	@(0x0c, r0), r6		! arg3: va = *SH4_TEA
 	mov.l	@r1, r4			! arg1: curlwp
-	__INTR_MASK(r0, r1)
-	__EXCEPTION_UNBLOCK(r0, r1)
+	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 	mov.l	.L4_tlb_exception, r0
 	mov.l	r2, @(TF_EXPEVT, r14)	! tf->tf_expevt = EXPEVT
 	jsr	@r0
@@ -456,10 +455,11 @@ VECTOR_END_MARKER(sh4_vector_tlbmiss_end)
  */
 NENTRY(sh_vector_interrupt)
 	__EXCEPTION_ENTRY
-	stc	r0_bank, r6		! ssp - 3rd arg to intc_intr()
-
-	__INTR_MASK(r0, r1)
-	__EXCEPTION_UNBLOCK(r0, r1)	! enable exceptions for P3 access
+	!! arguments for intc_intr(): for struct clockframe
+	stc	ssr, r4
+	stc	spc, r5
+	stc	r0_bank, r6		! ssp
+	__INTR_MASK_EXCEPTION_UNBLOCK(r0, r1, r3)
 
 	mov.l	.Li_ci_idepth, r8	! callee-saved
 	mov.l	.Li_intc_intr, r0

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.56 2010/07/18 09:29:12 jruoho Exp $
+#	$NetBSD: files.x86,v 1.56.2.1 2011/06/06 09:07:05 jruoho Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -13,39 +13,53 @@ defflag opt_intrdebug.h	INTRDEBUG
 defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
 
-# Intel Enhanced Speedstep
-defflag 			ENHANCED_SPEEDSTEP
-defflag	opt_est.h		EST_FREQ_USERWRITE
-
-# Intel On Die Temperature sensor
-defflag	opt_intel_coretemp.h	INTEL_CORETEMP:	sysmon_envsys
-
-# Pentium 4+ Thermal Monitor ODCM (aka On Demand Clock Modulation)
-defflag opt_intel_odcm.h 	INTEL_ONDEMAND_CLOCKMOD
-
-# AMD Powernow/Cool`n'Quiet Technology
-defflag opt_powernow_k8.h	POWERNOW_K8
-
-# VIA C7 Temperature sensor
-defflag	opt_via_c7temp.h	VIA_C7TEMP: sysmon_envsys
-
-# VIA PadLock support
-defflag	opt_viapadlock.h	VIA_PADLOCK:	opencrypto
-file	arch/x86/x86/via_padlock.c	via_padlock
-
 # To be able to test for NetBSD/xen in shared files
 defflag	opt_xen.h		DO_NOT_DEFINE
 
 define  cpubus { [apid = -1] }
+define	cpufeaturebus {}
 define  ioapicbus { [apid = -1] }
 define  ipmibus {}
 
 #
-# CPUs
+# CPU features
 #
-device	cpu
+device	cpu: cpufeaturebus
 attach	cpu at cpubus
 file 	arch/x86/x86/cpu.c 		cpu
+
+device	acpicpu
+attach	acpicpu at cpufeaturebus
+file	dev/acpi/acpi_cpu.c		acpi & acpicpu
+file	dev/acpi/acpi_cpu_cstate.c	acpi & acpicpu
+file	dev/acpi/acpi_cpu_pstate.c	acpi & acpicpu
+file	dev/acpi/acpi_cpu_tstate.c	acpi & acpicpu
+file	arch/x86/acpi/acpi_cpu_md.c	acpi & acpicpu
+
+device	coretemp: sysmon_envsys
+attach	coretemp at cpufeaturebus
+file	arch/x86/x86/coretemp.c		coretemp
+
+device	est
+attach	est at cpufeaturebus
+file	arch/x86/x86/est.c		est
+file	arch/x86/x86/intel_busclock.c	est
+
+device	odcm
+attach	odcm at cpufeaturebus
+file	arch/x86/x86/odcm.c		odcm
+
+device	padlock: opencrypto
+attach	padlock at cpufeaturebus
+file	arch/x86/x86/via_padlock.c	padlock
+
+device	powernow
+attach	powernow at cpufeaturebus
+file	arch/x86/x86/powernow.c		powernow
+
+device	viac7temp: sysmon_envsys
+attach	viac7temp at cpufeaturebus
+file	arch/x86/x86/viac7temp.c	viac7temp
 
 file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c
@@ -53,6 +67,7 @@ file	arch/x86/x86/bus_space.c
 file	arch/x86/x86/consinit.c
 file	arch/x86/x86/core_machdep.c	coredump
 file	arch/x86/x86/cpu_topology.c
+file	arch/x86/x86/db_trace.c		ddb
 file	arch/x86/x86/errata.c
 file	arch/x86/x86/genfb_machdep.c
 file	arch/x86/x86/identcpu.c
@@ -70,6 +85,7 @@ file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/syscall.c
 file	arch/x86/x86/vm_machdep.c
 file	arch/x86/x86/x86_autoconf.c
+file	arch/x86/x86/x86_userconf.c		userconf
 file	arch/x86/x86/x86_machdep.c
 
 define	lapic
@@ -91,26 +107,11 @@ file 	arch/x86/x86/mpacpi.c		acpi
 file	arch/x86/x86/acpi_machdep.c	acpi
 
 file	arch/x86/acpi/acpi_wakeup.c	acpi
-file	arch/x86/acpi/acpi_cpu_md.c	acpi & acpicpu
 
 file	arch/x86/isa/isa_machdep.c	isa
 
-# Powernow common functions
-file	arch/x86/x86/powernow_k8.c	powernow_k8
-file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
-
-# Intel On Demand Clock Modulation
-file	arch/x86/x86/iclockmod.c	intel_ondemand_clockmod
-
-# Intel Enhanced Speedstep
-file	arch/x86/x86/est.c		enhanced_speedstep
-file	arch/x86/x86/intel_busclock.c	enhanced_speedstep
-
-# Intel On-Die Temperature sensor
-file	arch/x86/x86/coretemp.c 	intel_coretemp
-
-# VIA C7 Temperature sensor
-file	arch/x86/x86/viac7temp.c	via_c7temp
+# Stubs for x86 routines not included in the system
+file	arch/x86/x86/x86_stub.c
 
 # IPMI device
 device	ipmi: sysmon_envsys, sysmon_wdog
@@ -119,7 +120,8 @@ file	arch/x86/x86/ipmi.c		ipmi needs-flag
 
 file	arch/x86/x86/vga_post.c		vga_post
 
-file	arch/x86/x86/tprof_pmi.c	tprof	needs-flag
+file	arch/x86/x86/tprof_pmi.c	tprof_pmi
+file	arch/x86/x86/tprof_amdpmi.c	tprof_amdpmi
 
 file	arch/x86/pci/pci_machdep.c	pci
 file	arch/x86/pci/pci_intr_machdep.c	pci

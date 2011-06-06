@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.56 2011/01/12 23:12:12 joerg Exp $	*/
+/*	$NetBSD: vector.S,v 1.56.2.1 2011/06/06 09:05:50 jruoho Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.56 2011/01/12 23:12:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.56.2.1 2011/06/06 09:05:50 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -280,7 +280,7 @@ IDTVEC(intr_lapic_tlb_bcast)
 	movl	%ss:_C_LABEL(pmap_mbox)+MB_GLOBAL, %ebx
 	movl	$0, %ss:_C_LABEL(local_apic)+LAPIC_EOI
 	cmpl	$-1, %eax
-	je,pn	3f
+	je	3f
 1:
 	/* Invalidate a single page or a range of pages. */
 	invlpg	%ss:(%eax)
@@ -435,8 +435,9 @@ IDTVEC(intr_ ## name ## num)						;\
 	addl	$1,IS_EVCNTLO(%ebp)	/* inc event counter */		;\
 	adcl	$0,IS_EVCNTHI(%ebp)					;\
 1:									\
-	pushl	%esi							;\
+	pushl	%esi			/* if_ppi */			;\
 	movl	%ebx,CPUVAR(ILEVEL)					;\
+	/* switch stack if necessary, and push a ptr to our intrframe */ \
 	IDEPTH_INCR							;\
 	sti								;\
 	movl	IS_HANDLERS(%ebp),%ebx					;\

@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.3 2009/10/20 19:10:12 snj Exp $	*/
+/*	$NetBSD: kcore.h,v 1.3.6.1 2011/06/06 09:10:11 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -39,7 +39,7 @@
  * Description of a memory segment. To make this suitable for sharing
  * between all architectures, u_quad_t seems to be the necessary type...
  */
-typedef struct {
+typedef struct phys_ram_seg {
 	u_quad_t	start;		/* Physical start address	*/
 	u_quad_t	size;		/* Size in bytes		*/
 } phys_ram_seg_t;

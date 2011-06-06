@@ -2,7 +2,7 @@ S=	${.CURDIR}/../../../../..
 
 VERSIONFILE= ${.CURDIR}/version
 
-.include <../Makefile.booters>
+.include "../Makefile.booters"
 
 PROG=		loader.sym
 
@@ -47,7 +47,8 @@ CLEANFILES+=	vers.c loader.efi ${OBJS}
 NEWVERSWHAT=	"EFI boot" ${MACHINE_ARCH}
 
 vers.c: ${VERSIONFILE} ${SOURCES}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 loader.efi: ${PROG}
 	if [ `${OBJDUMP} -t ${.ALLSRC} | fgrep '*UND*' | wc -l` != 0 ]; then \

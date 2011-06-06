@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.37 2009/09/20 16:18:21 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.37.6.1 2011/06/06 09:06:45 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
+/*
  * Copyright (c) 1995 Charles D. Cranor
  * All rights reserved.
  *
@@ -41,11 +41,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -78,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.37 2009/09/20 16:18:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.37.6.1 2011/06/06 09:06:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +123,7 @@ static void ie_obrun(struct ie_softc *);
 int ie_obio_match(device_t, cfdata_t, void *);
 void ie_obio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ie_obio, sizeof(struct ie_softc),
+CFATTACH_DECL_NEW(ie_obio, sizeof(struct ie_softc),
     ie_obio_match, ie_obio_attach, NULL, NULL);
 
 /* Supported media */
@@ -264,6 +259,7 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 	u_long iebase;
 	uint8_t myaddr[ETHER_ADDR_LEN];
 
+	sc->sc_dev = self;
 	sc->bt = oba->oba_bustag;
 
 	sc->hwreset = ie_obreset;

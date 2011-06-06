@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.90 2010/12/25 15:27:08 wiz Exp $	*/
+/*	$NetBSD: usb.h,v 1.90.2.1 2011/06/06 09:08:44 jruoho Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -436,6 +436,7 @@ typedef struct {
 #define UPS_OVERCURRENT_INDICATOR	0x0008
 #define UPS_RESET			0x0010
 #define UPS_PORT_POWER			0x0100
+#define UPS_FULL_SPEED			0x0000	/* for completeness */
 #define UPS_LOW_SPEED			0x0200
 #define UPS_HIGH_SPEED			0x0400
 #define UPS_PORT_TEST			0x0800

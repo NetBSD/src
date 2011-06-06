@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.33 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: intr.h,v 1.33.6.1 2011/06/06 09:06:23 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -36,67 +36,15 @@
 #include <sys/evcnt.h>
 #include <sys/queue.h>
 
-#define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_SOFTCLOCK	1	/* clock software interrupts (SI 0) */
-#define	IPL_SOFTBIO	1	/* generic software interrupts (SI 0) */
-#define	IPL_SOFTNET	2	/* network software interrupts (SI 1) */
-#define	IPL_SOFTSERIAL	2	/* serial software interrupts (SI 1) */
-#define	IPL_VM		3
-#define	IPL_SCHED	4
-#define	IPL_HIGH	5
-
-#define	_IPL_N		6
-
-#define	_IPL_SI0_FIRST	IPL_SOFTCLOCK
-#define	_IPL_SI0_LAST	IPL_SOFTBIO
-
-#define	_IPL_SI1_FIRST	IPL_SOFTNET
-#define	_IPL_SI1_LAST	IPL_SOFTSERIAL
+#include <mips/intr.h>
 
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-#include <mips/cpuregs.h>
-#include <mips/locore.h>
-
-#define spl0()		(void)_spllower(0)
-#define splx(s)		(void)_splset(s)
-#define splvm()		splraiseipl(makeiplcookie(IPL_VM))
-#define splsched()	splraiseipl(makeiplcookie(IPL_SCHED))
-#define splhigh()	_splraise(MIPS_INT_MASK)
-
-#define	_SPL_SOFT	MIPS_SOFT_INT_MASK_0
-#define	_SPL_SOFTCLOCK	MIPS_SOFT_INT_MASK_0
-#define	_SPL_SOFTNET	(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
-#define	_SPL_SOFTSERIAL	(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
-
-#define splsoftclock()	_splraise(_SPL_SOFTCLOCK)
-#define splsoftbio()	_splraise(_SPL_SOFTBIO)
-#define splsoftnet()	_splraise(_SPL_SOFTNET)
-#define splsoftserial()	_splraise(_SPL_SOFTSERIAL)
-
-extern const int *ipl2spl_table;
-
-typedef int ipl_t;
-typedef struct {
-	int _spl;
-} ipl_cookie_t;
-
-ipl_cookie_t makeiplcookie(ipl_t);
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return _splraise(icookie._spl);
-}
-
-/* Conventionals ... */
-
-#define MIPS_SPLHIGH (MIPS_INT_MASK)
-#define MIPS_SPL0 (MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
-#define MIPS_SPL1 (MIPS_INT_MASK_1|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
-#define MIPS_SPL3 (MIPS_INT_MASK_3|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+#define MIPS_SPLHIGH	(MIPS_INT_MASK)
+#define MIPS_SPL0	(MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK)
+#define MIPS_SPL1	(MIPS_INT_MASK_1|MIPS_SOFT_INT_MASK)
+#define MIPS_SPL3	(MIPS_INT_MASK_3|MIPS_SOFT_INT_MASK)
 #define MIPS_SPL_0_1	 (MIPS_INT_MASK_1|MIPS_SPL0)
 #define MIPS_SPL_0_1_2	 (MIPS_INT_MASK_2|MIPS_SPL_0_1)
 #define MIPS_SPL_0_1_3	 (MIPS_INT_MASK_3|MIPS_SPL_0_1)
@@ -127,8 +75,6 @@ struct pmax_intrhand {
 	int (*ih_func)(void *);
 	void *ih_arg;
 };
-
-#include <mips/softintr.h>
 
 extern struct evcnt pmax_clock_evcnt;
 extern struct evcnt pmax_fpu_evcnt;

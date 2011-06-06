@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
 # $FreeBSD: src/sys/boot/common/newvers.sh,v 1.5 2004/07/01 06:40:12 ps Exp $
-#	$NetBSD: newvers.sh,v 1.2 2006/04/22 07:58:53 cherry Exp $
+#	$NetBSD: newvers.sh,v 1.2.102.1 2011/06/06 09:05:53 jruoho Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -33,11 +33,8 @@
 #	@(#)newvers.sh	8.1 (Berkeley) 4/20/94
 
 LC_ALL=C; export LC_ALL
-u=${USER-root} h=${HOSTNAME-`hostname`} t=`date`
 #r=`head -n 6 $1 | tail -n 1 | awk -F: ' { print $1 } '`
 r=`awk -F: ' /^[0-9]\.[0-9]+:/ { print $1; exit }' $1`
 
 echo "char bootprog_name[] = \"FreeBSD/${3} ${2}\";" > vers.c
 echo "char bootprog_rev[] = \"${r}\";" >> vers.c
-echo "char bootprog_date[] = \"${t}\";" >> vers.c
-echo "char bootprog_maker[] = \"${u}@${h}\";" >> vers.c

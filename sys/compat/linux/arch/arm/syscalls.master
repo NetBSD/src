@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44 2010/07/07 01:30:33 chs Exp $
+	$NetBSD: syscalls.master,v 1.44.2.1 2011/06/06 09:07:23 jruoho Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -447,7 +447,8 @@
 			    size_t sz, struct linux_statfs64 *sp); }
 268	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
 269	UNIMPL		utimes
-270	UNIMPL		fadvise64_64
+270	STD		{ int|linux_sys||fadvise64_64(int fd, \
+			    linux_off_t offset, linux_off_t len, int advice); }
 271	UNIMPL		pciconfig_iobase
 272	UNIMPL		pciconfig_read
 273	UNIMPL		pciconfig_write
@@ -538,8 +539,8 @@
 355	UNIMPL		signalfd4
 356	UNIMPL		eventfd2
 357	UNIMPL		epoll_create1
-358	UNIMPL		dup3
-359	UNIMPL		pipe2
+358	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
+359	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }
 360	UNIMPL		inotify_init1
 361	UNIMPL		preadv
 362	UNIMPL		pwritev

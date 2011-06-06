@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2010/11/28 08:23:25 hannken Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21.2.1 2011/06/06 09:07:13 jruoho Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2010/11/28 08:23:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.2.1 2011/06/06 09:07:13 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -242,7 +242,12 @@ extern int pmap_debug_level;
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
-const char *console = "glass";
+const char *console =
+#ifdef FFUARTCONSOLE
+	"ffuart";
+#else
+	"glass";
+#endif
 int glass_console = 0;
 
 #ifdef KLOADER

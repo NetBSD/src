@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.72 2010/12/07 20:38:26 pooka Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.72.2.1 2011/06/06 09:09:52 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.72 2010/12/07 20:38:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.72.2.1 2011/06/06 09:09:52 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1080,7 +1080,7 @@ bridge_ifdetach(struct ifnet *ifp)
 	struct ifbreq breq;
 
 	memset(&breq, 0, sizeof(breq));
-	snprintf(breq.ifbr_ifsname, sizeof(breq.ifbr_ifsname), ifp->if_xname);
+	strlcpy(breq.ifbr_ifsname, ifp->if_xname, sizeof(breq.ifbr_ifsname));
 
 	(void) bridge_ioctl_del(sc, &breq);
 }

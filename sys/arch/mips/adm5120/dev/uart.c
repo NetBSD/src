@@ -1,4 +1,4 @@
-/* $NetBSD: uart.c,v 1.6 2009/11/21 17:40:27 rmind Exp $ */
+/* $NetBSD: uart.c,v 1.6.6.1 2011/06/06 09:06:01 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.6 2009/11/21 17:40:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.6.6.1 2011/06/06 09:06:01 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -145,7 +145,7 @@ uart_attach(struct device *parent, struct device *self, void *aux)
 	maj = cdevsw_lookup_major(&uart_cdevsw);
 	minor = sc->sc_dev.dv_unit;
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = uart_start;
 	tp->t_param = uart_param;
 	sc->sc_tty = tp;

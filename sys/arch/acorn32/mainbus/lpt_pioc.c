@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pioc.c,v 1.10 2008/04/13 01:14:26 chris Exp $	*/
+/*	$NetBSD: lpt_pioc.c,v 1.10.32.1 2011/06/06 09:04:40 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.10 2008/04/13 01:14:26 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.10.32.1 2011/06/06 09:04:40 jruoho Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -152,7 +152,7 @@ out:
 }
 
 /*
- * int lpt_pioc_probe(struct device *parent, struct cfdata *cf, void *aux)
+ * int lpt_pioc_probe(device_t parent, cfdata_t cf, void *aux)
  *
  * Make sure we are trying to attach a lpt device and then
  * probe for one.
@@ -181,7 +181,7 @@ lpt_pioc_probe(device_t parent, cfdata_t match, void *aux)
 }
 
 /*
- * void lpt_pioc_attach(struct device *parent, struct device *self, void *aux)
+ * void lpt_pioc_attach(device_t parent, device_t self, void *aux)
  *
  * attach the lpt device
  */

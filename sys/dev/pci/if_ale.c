@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.12 2010/07/20 09:17:24 cegger Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.12.2.1 2011/06/06 09:08:11 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.12 2010/07/20 09:17:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.12.2.1 2011/06/06 09:08:11 jruoho Exp $");
 
 #include "vlan.h"
 
@@ -367,12 +367,12 @@ ale_phy_reset(struct ale_softc *sc)
 	ale_miibus_writereg(sc->sc_dev, sc->ale_phyaddr,
 	    ATPHY_DBG_ADDR, 0x04);
 	ale_miibus_writereg(sc->sc_dev, sc->ale_phyaddr,
-	    ATPHY_DBG_ADDR, 0x8BBB);
+	    ATPHY_DBG_DATA, 0x8BBB);
 	/* 10BT center tap voltage. */
 	ale_miibus_writereg(sc->sc_dev, sc->ale_phyaddr,
 	    ATPHY_DBG_ADDR, 0x05);
 	ale_miibus_writereg(sc->sc_dev, sc->ale_phyaddr,
-	    ATPHY_DBG_ADDR, 0x2C46);
+	    ATPHY_DBG_DATA, 0x2C46);
 
 #undef	ATPHY_DBG_ADDR
 #undef	ATPHY_DBG_DATA
@@ -1910,7 +1910,7 @@ ale_stop_mac(struct ale_softc *sc)
 
 	reg = CSR_READ_4(sc, ALE_MAC_CFG);
 	if ((reg & (MAC_CFG_TX_ENB | MAC_CFG_RX_ENB)) != 0) {
-		reg &= ~MAC_CFG_TX_ENB | MAC_CFG_RX_ENB;
+		reg &= ~(MAC_CFG_TX_ENB | MAC_CFG_RX_ENB);
 		CSR_WRITE_4(sc, ALE_MAC_CFG, reg);
 	}
 
@@ -2015,7 +2015,7 @@ ale_rxfilter(struct ale_softc *sc)
 
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
-			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
 			ETHER_NEXT_MULTI(step, enm);
 		}

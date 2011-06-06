@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2008/01/04 22:03:25 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.22.38.1 2011/06/06 09:05:44 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -33,62 +33,17 @@
 #ifndef _HPCMIPS_INTR_H_
 #define _HPCMIPS_INTR_H_
 
-#define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_SOFTCLOCK	1	/* clock software interrupts (SI 0) */
-#define	IPL_SOFTBIO	1	/* bio software interrupts (SI 0) */
-#define	IPL_SOFTNET	2	/* network software interrupts (SI 1) */
-#define	IPL_SOFTSERIAL	2	/* serial software interrupts (SI 1) */
-#define	IPL_VM		3
-#define	IPL_SCHED	4
-#define	IPL_HIGH	4	/* disable all interrupts */
-
-#define	_IPL_N		5
-
-#define	_IPL_SI0_FIRST	IPL_SOFTCLOCK
-#define	_IPL_SI0_LAST	IPL_SOFTBIO
-
-#define	_IPL_SI1_FIRST	IPL_SOFTNET
-#define	_IPL_SI1_LAST	IPL_SOFTSERIAL
-
-/* Interrupt sharing types. */
-#define	IST_UNUSABLE	-1	/* interrupt cannot be used */
-#define	IST_NONE	0	/* none */
-#define	IST_PULSE	1	/* pulsed */
-#define	IST_EDGE	2	/* edge-triggered */
-#define	IST_LEVEL	3	/* level-triggered */
+#include <mips/intr.h>
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-#include <mips/cpuregs.h>
-#include <mips/locore.h>
-
-extern const u_int32_t *ipl_sr_bits;
 
 void	intr_init(void);
 
-#define	spl0()		(void) _spllower(0)
-#define	splx(s)		(void) _splset(s)
-
-typedef int ipl_t;
-typedef struct {
-	ipl_t _sr;
-} ipl_cookie_t;
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._sr = ipl_sr_bits[ipl]};
-}
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return _splraise(icookie._sr);
-}
-
-#include <sys/spl.h>
+#ifdef __INTR_PRIVATE
+extern const struct ipl_sr_map __ipl_sr_map_vr;
+extern const struct ipl_sr_map __ipl_sr_map_tx;
+#endif
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

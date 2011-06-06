@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.32 2009/07/03 21:17:40 elad Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.32.6.1 2011/06/06 09:09:21 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.32 2009/07/03 21:17:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.32.6.1 2011/06/06 09:09:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,7 @@ filecore_readdir(void *v)
 		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 	}
 
-	de = malloc(sizeof(struct dirent), M_FILECORETMP, M_WAITOK | M_ZERO);
+	de = kmem_zalloc(sizeof(struct dirent), KM_SLEEP);
 
 	for (; ; i++) {
 		switch (i) {
@@ -397,7 +397,7 @@ out:
 #endif
 	brelse (bp, 0);
 
-	free(de, M_FILECORETMP);
+	kmem_free(de, sizeof(*de));
 
 	return (error);
 }

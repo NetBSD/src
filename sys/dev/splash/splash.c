@@ -1,4 +1,4 @@
-/* $NetBSD: splash.c,v 1.8 2010/02/22 05:55:10 ahoka Exp $ */
+/* $NetBSD: splash.c,v 1.8.4.1 2011/06/06 09:08:37 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,12 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.8 2010/02/22 05:55:10 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.8.4.1 2011/06/06 09:08:37 jruoho Exp $");
 
 #include "opt_splash.h"
 
 /* XXX */
-#define	NSPLASH8 1
+#define NSPLASH8  1
 #define	NSPLASH16 1
 #define	NSPLASH32 1
 
@@ -51,29 +51,84 @@ __KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.8 2010/02/22 05:55:10 ahoka Exp $");
 #include <sys/kthread.h>
 
 #include <dev/splash/splash.h>
-
-#if !defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
-#error "options SPLASHSCREEN_PROGRESS requires SPLASHSCREEN"
-#endif
-
-#ifdef __HAVE_CPU_COUNTER
-#include <sys/cpu.h>
-#include <machine/cpu_counter.h>
-#endif
-
-#ifndef SPLASHSCREEN_IMAGE
-#define SPLASHSCREEN_IMAGE "dev/splash/images/netbsd.h"
-#endif
+#include <dev/stbi/stbi.h>
 
 #ifdef SPLASHSCREEN
-#include SPLASHSCREEN_IMAGE
 
-#ifdef SPLASHSCREEN_PROGRESS
-struct splash_progress *splash_progress_state;
-#ifdef __HAVE_CPU_COUNTER
-static uint64_t splash_last_update;
-#endif
-#endif
+static struct {
+	const u_char	*data;
+	size_t		datalen;
+} splash_image = { NULL, 0 };
+
+#define SPLASH_INDEX(r, g, b)						\
+	((((r) >> 6) << 4) | (((g) >> 6) << 2) | (((b) >> 6) << 0))
+
+static uint8_t splash_palette[SPLASH_CMAP_SIZE][3] = {
+	{ 0x00, 0x00, 0x00 },
+	{ 0x00, 0x00, 0x55 },
+	{ 0x00, 0x00, 0xaa },
+	{ 0x00, 0x00, 0xff },
+	{ 0x00, 0x55, 0x00 },
+	{ 0x00, 0x55, 0x55 },
+	{ 0x00, 0x55, 0xaa },
+	{ 0x00, 0x55, 0xff },
+	{ 0x00, 0xaa, 0x00 },
+	{ 0x00, 0xaa, 0x55 },
+	{ 0x00, 0xaa, 0xaa },
+	{ 0x00, 0xaa, 0xff },
+	{ 0x00, 0xff, 0x00 },
+	{ 0x00, 0xff, 0x55 },
+	{ 0x00, 0xff, 0xaa },
+	{ 0x00, 0xff, 0xff },
+	{ 0x55, 0x00, 0x00 },
+	{ 0x55, 0x00, 0x55 },
+	{ 0x55, 0x00, 0xaa },
+	{ 0x55, 0x00, 0xff },
+	{ 0x55, 0x55, 0x00 },
+	{ 0x55, 0x55, 0x55 },
+	{ 0x55, 0x55, 0xaa },
+	{ 0x55, 0x55, 0xff },
+	{ 0x55, 0xaa, 0x00 },
+	{ 0x55, 0xaa, 0x55 },
+	{ 0x55, 0xaa, 0xaa },
+	{ 0x55, 0xaa, 0xff },
+	{ 0x55, 0xff, 0x00 },
+	{ 0x55, 0xff, 0x55 },
+	{ 0x55, 0xff, 0xaa },
+	{ 0x55, 0xff, 0xff },
+	{ 0xaa, 0x00, 0x00 },
+	{ 0xaa, 0x00, 0x55 },
+	{ 0xaa, 0x00, 0xaa },
+	{ 0xaa, 0x00, 0xff },
+	{ 0xaa, 0x55, 0x00 },
+	{ 0xaa, 0x55, 0x55 },
+	{ 0xaa, 0x55, 0xaa },
+	{ 0xaa, 0x55, 0xff },
+	{ 0xaa, 0xaa, 0x00 },
+	{ 0xaa, 0xaa, 0x55 },
+	{ 0xaa, 0xaa, 0xaa },
+	{ 0xaa, 0xaa, 0xff },
+	{ 0xaa, 0xff, 0x00 },
+	{ 0xaa, 0xff, 0x55 },
+	{ 0xaa, 0xff, 0xaa },
+	{ 0xaa, 0xff, 0xff },
+	{ 0xff, 0x00, 0x00 },
+	{ 0xff, 0x00, 0x55 },
+	{ 0xff, 0x00, 0xaa },
+	{ 0xff, 0x00, 0xff },
+	{ 0xff, 0x55, 0x00 },
+	{ 0xff, 0x55, 0x55 },
+	{ 0xff, 0x55, 0xaa },
+	{ 0xff, 0x55, 0xff },
+	{ 0xff, 0xaa, 0x00 },
+	{ 0xff, 0xaa, 0x55 },
+	{ 0xff, 0xaa, 0xaa },
+	{ 0xff, 0xaa, 0xff },
+	{ 0xff, 0xff, 0x00 },
+	{ 0xff, 0xff, 0x55 },
+	{ 0xff, 0xff, 0xaa },
+	{ 0xff, 0xff, 0xff },
+};
 
 #if NSPLASH8 > 0
 static void	splash_render8(struct splash_info *, const char *, int,
@@ -88,75 +143,133 @@ static void	splash_render32(struct splash_info *, const char *, int,
 				int, int, int, int);
 #endif
 
-void
+int
+splash_setimage(const void *imgdata, size_t imgdatalen)
+{
+	if (splash_image.data != NULL) {
+		aprint_debug("WARNING: %s: already initialized\n", __func__);
+		return EBUSY;
+	}
+
+	aprint_verbose("%s: splash image @ %p, %zu bytes\n",
+	    __func__, imgdata, imgdatalen);
+	splash_image.data = imgdata;
+	splash_image.datalen = imgdatalen;
+
+	return 0;
+}
+
+int
+splash_get_cmap(int index, uint8_t *r, uint8_t *g, uint8_t *b)
+{
+	if (index < SPLASH_CMAP_OFFSET ||
+	    index >= SPLASH_CMAP_OFFSET + SPLASH_CMAP_SIZE)
+		return ERANGE;
+
+	*r = splash_palette[index - SPLASH_CMAP_OFFSET][0];
+	*g = splash_palette[index - SPLASH_CMAP_OFFSET][1];
+	*b = splash_palette[index - SPLASH_CMAP_OFFSET][2];
+
+	return 0;
+}
+
+int
 splash_render(struct splash_info *si, int flg)
 {
-	int xoff, yoff;
+	char *data = NULL;
+	int xoff, yoff, width, height, comp;
+	int error = 0;
+
+	if (splash_image.data == NULL) {
+		aprint_error("WARNING: %s: not initialized\n", __func__);
+		return ENXIO;
+	}
+
+	data = stbi_load_from_memory(splash_image.data,
+	    splash_image.datalen, &width, &height, &comp, STBI_rgb);
+	if (data == NULL) {
+		aprint_error("WARNING: couldn't load splash image: %s\n",
+		    stbi_failure_reason());
+		return EINVAL;
+	}
+	aprint_debug("%s: splash loaded, width %d height %d comp %d\n",
+	    __func__, width, height, comp);
 
 	/* XXX */
 	if (flg & SPLASH_F_CENTER) {
-		xoff = (si->si_width - _splash_width) / 2;
-		yoff = (si->si_height - _splash_height) / 2;
+		xoff = (si->si_width - width) / 2;
+		yoff = (si->si_height - height) / 2;
 	} else
 		xoff = yoff = 0;
 
 	switch (si->si_depth) {
 #if NSPLASH8 > 0
 	case 8:
-		splash_render8(si, _splash_header_data, xoff, yoff,
-		    _splash_width, _splash_height, flg);
+		splash_render8(si, data, xoff, yoff, width, height, flg);
 		break;
 #endif
 #if NSPLASH16 > 0
 	case 16:
-		splash_render16(si, _splash_header_data, xoff, yoff,
-		    _splash_width, _splash_height, flg);
+		splash_render16(si, data, xoff, yoff, width, height, flg);
 		break;
 #endif
 #if NSPLASH32 > 0
 	case 32:
-		splash_render32(si, _splash_header_data, xoff, yoff,
-		    _splash_width, _splash_height, flg);
+		splash_render32(si, data, xoff, yoff, width, height, flg);
 		break;
 #endif
 	default:
 		aprint_error("WARNING: Splash not supported at %dbpp\n",
 		    si->si_depth);
-		break;
+		error = EINVAL;
 	}
 
-	return;
+	if (data)
+		stbi_image_free(data);
+
+	return error;
 }
 
 #if NSPLASH8 > 0
+
 static void
 splash_render8(struct splash_info *si, const char *data, int xoff, int yoff,
 	       int swidth, int sheight, int flg)
 {
-	const char *p;
-	u_char *fb, pix;
+	const char *d;
+	u_char *fb, *p;
+	u_char pix[3];
 	int x, y, i;
 	int filled;
 
 	fb = si->si_bits;
+
 	if (flg & SPLASH_F_FILL)
 		filled = 0;
 	else
 		filled = 1;
 
-	p = data;
-	fb += xoff + (yoff * si->si_width);
+	d = data;
+	fb += xoff + yoff * si->si_stride;
+
 	for (y = 0; y < sheight; y++) {
 		for (x = 0; x < swidth; x++) {
-			pix = *p++;
-			pix += SPLASH_CMAP_OFFSET;
+			pix[0] = *d++;
+			pix[1] = *d++;
+			pix[2] = *d++;
 			if (filled == 0) {
-				for (i = 0; i < (si->si_width * si->si_height);
-				     i++)
-					si->si_bits[i] = pix;
+				p = si->si_bits;
+				i = 0;
+				while (i < si->si_height*si->si_stride) {
+					p[i] = SPLASH_INDEX(
+					    pix[0], pix[1], pix[2]) +
+					    SPLASH_CMAP_OFFSET;
+					i++;
+				}
 				filled = 1;
 			}
-			fb[x] = pix;
+			fb[x] = SPLASH_INDEX(pix[0], pix[1], pix[2]) +
+				    SPLASH_CMAP_OFFSET;
 		}
 		fb += si->si_width;
 	}
@@ -165,7 +278,7 @@ splash_render8(struct splash_info *si, const char *data, int xoff, int yoff,
 	if (si->si_hwbits) {
 		if (flg & SPLASH_F_FILL) {
 			memcpy(si->si_hwbits, si->si_bits,
-			    si->si_width*si->si_height);
+			    si->si_height*si->si_width);
 		} else {
 			u_char *rp, *hrp;
 
@@ -174,8 +287,8 @@ splash_render8(struct splash_info *si, const char *data, int xoff, int yoff,
 
 			for (y = 0; y < sheight; y++) {
 				memcpy(hrp, rp, swidth);
-				hrp += si->si_stride;
 				rp += si->si_stride;
+				hrp += si->si_stride;
 			}
 		}
 	}
@@ -215,7 +328,9 @@ splash_render16(struct splash_info *si, const char *data, int xoff, int yoff,
 
 	for (y = 0; y < sheight; y++) {
 		for (x = 0; x < swidth; x++) {
-			_SPLASH_HEADER_PIXEL(d, pix);
+			pix[0] = *d++;
+			pix[1] = *d++;
+			pix[2] = *d++;
 			if (filled == 0) {
 				p = si->si_bits;
 				i = 0;
@@ -278,7 +393,9 @@ splash_render32(struct splash_info *si, const char *data, int xoff, int yoff,
 
 	for (y = 0; y < sheight; y++) {
 		for (x = 0; x < swidth; x++) {
-			_SPLASH_HEADER_PIXEL(d, pix);
+			pix[0] = *d++;
+			pix[1] = *d++;
+			pix[2] = *d++;
 			if (filled == 0) {
 				p = si->si_bits;
 				i = 0;
@@ -321,116 +438,5 @@ splash_render32(struct splash_info *si, const char *data, int xoff, int yoff,
 	return;
 }
 #endif /* !NSPLASH32 > 0 */
-
-#ifdef SPLASHSCREEN_PROGRESS
-
-static void
-splash_progress_render(struct splash_progress *sp)
-{
-	struct splash_info *si;
-	int i;
-	int w;
-	int spacing;
-	int xoff;
-	int yoff;
-	int flg;
-
-	si = sp->sp_si;
-	flg = 0;
-
-	/* where should we draw the pulsers? */
-	yoff = (si->si_height / 8) * 7;
-	w = _pulse_off_width * SPLASH_PROGRESS_NSTATES;
-	xoff = (si->si_width / 4) * 3;
-	spacing = _pulse_off_width; /* XXX */
-
-	for (i = 0; i < SPLASH_PROGRESS_NSTATES; i++) {
-		const char *d = (sp->sp_state == i ? _pulse_on_header_data :
-				 _pulse_off_header_data);
-		switch (si->si_depth) {
-#if NSPLASH8 > 0
-		case 8:
-			splash_render8(si, d, (xoff + (i * spacing)),
-			    yoff, _pulse_off_width, _pulse_off_height, flg);
-			break;
-#endif
-#if NSPLASH16 > 0
-		case 16:
-			splash_render16(si, d, (xoff + (i * spacing)),
-			    yoff, _pulse_off_width, _pulse_off_height, flg);
-			break;
-#endif
-#if NSPLASH32 > 0
-		case 32:
-			splash_render32(si, d, (xoff + (i * spacing)),
-			    yoff, _pulse_off_width, _pulse_off_height, flg);
-			break;
-#endif
-		default:
-			/* do nothing */
-			break;
-		}
-	}
-}
-
-static int
-splash_progress_stop(device_t dev)
-{
-	struct splash_progress *sp;
-
-	sp = (struct splash_progress *)dev;
-	sp->sp_running = 0;
-
-	return 0;
-}
-
-void
-splash_progress_init(struct splash_progress *sp)
-{
-#ifdef __HAVE_CPU_COUNTER
-	if (cpu_hascounter())
-		splash_last_update = cpu_counter();
-	else
-		splash_last_update = 0;
-#endif
-
-	sp->sp_running = 1;
-	sp->sp_force = 0;
-	splash_progress_state = sp;
-	splash_progress_render(sp);
-	config_finalize_register((device_t)sp, splash_progress_stop);
-
-	return;
-}
-
-void
-splash_progress_update(struct splash_progress *sp)
-{
-	if (sp->sp_running == 0 && sp->sp_force == 0)
-		return;
-
-#ifdef __HAVE_CPU_COUNTER
-	if (cpu_hascounter()) {
-		uint64_t now;
-
-		if (splash_last_update == 0) {
-			splash_last_update = cpu_counter();
-		} else {
-			now = cpu_counter();
-			if (splash_last_update + cpu_frequency(curcpu())/4 >
-			    now)
-				return;
-			splash_last_update = now;
-		}
-	}
-#endif
-	sp->sp_state++;
-	if (sp->sp_state >= SPLASH_PROGRESS_NSTATES)
-		sp->sp_state = 0;
-
-	splash_progress_render(sp);
-}
-
-#endif /* !SPLASHSCREEN_PROGRESS */
 
 #endif /* !SPLASHSCREEN */

@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-sample.c,v 1.17 2008/12/11 05:45:29 alc Exp $ */
+/*	$NetBSD: athrate-sample.c,v 1.17.8.1 2011/06/06 09:07:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2005 John Bicket
@@ -41,14 +41,16 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.17 2008/12/11 05:45:29 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.17.8.1 2011/06/06 09:07:50 jruoho Exp $");
 #endif
 
 
 /*
  * John Bicket's SampleRate control algorithm.
  */
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h> 

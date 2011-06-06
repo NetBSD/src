@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.97 2010/11/23 11:13:52 hannken Exp $
+# 	$NetBSD: GENERIC,v 1.97.2.1 2011/06/06 09:04:39 jruoho Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.97 $"
+#ident		"GENERIC-$Revision: 1.97.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -69,7 +69,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

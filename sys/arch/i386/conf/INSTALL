@@ -1,0 +1,27 @@
+# $NetBSD: INSTALL,v 1.326.22.1 2011/06/06 09:05:47 jruoho Exp $
+#
+#	INSTALL - Installation kernel.
+#
+#	This kernel is derived from GENERIC with additional memory disk
+#	options.
+
+include	"arch/i386/conf/MONOLITHIC"
+
+#ident 		"INSTALL-$Revision: 1.326.22.1 $"
+
+no options	MEMORY_DISK_DYNAMIC
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
+
+# DRI driver
+no i915drm*	at drm?		# Intel i915, i945 DRM driver
+no mach64drm*	at drm?		# mach64 (3D Rage Pro, Rage) DRM driver
+no mgadrm*	at drm?		# Matrox G[24]00, G[45]50 DRM driver
+no r128drm*	at drm?		# ATI Rage 128 DRM driver
+no radeondrm*	at drm?		# ATI Radeon DRM driver
+no savagedrm*	at drm?		# S3 Savage DRM driver
+no sisdrm*	at drm?		# SiS DRM driver
+no tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
+no viadrm*	at drm?		# VIA DRM driver

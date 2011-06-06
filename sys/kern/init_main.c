@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.424 2010/12/16 00:42:22 eeh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.424.2.1 2011/06/06 09:09:26 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.424 2010/12/16 00:42:22 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.424.2.1 2011/06/06 09:09:26 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -217,7 +217,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.424 2010/12/16 00:42:22 eeh Exp $");
 
 #include <sys/cpu.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm.h>	/* extern struct uvm uvm */
 
 #if NSYSMON_TASKQ > 0
 #include <dev/sysmon/sysmon_taskq.h>
@@ -240,12 +240,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.424 2010/12/16 00:42:22 eeh Exp $");
 struct timeval50 boottime50;
 #endif
 
-#ifdef _KERNEL_OPT
-#include "opt_userconf.h"
-#endif
-#ifdef USERCONF
 #include <sys/userconf.h>
-#endif
 
 extern struct lwp lwp0;
 extern time_t rootfstime;
@@ -304,6 +299,7 @@ main(void)
 	once_init();
 	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 	kernconfig_lock_init();
+	kthread_sysinit();
 
 	/* Initialize the device switch tables. */
 	devsw_init();
@@ -325,6 +321,9 @@ main(void)
 
 	/* Initialize the extent manager. */
 	extent_init();
+
+	/* Initialize event counters */
+	evcnt_init();
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
@@ -368,7 +367,6 @@ main(void)
 	/*
 	 * The following things must be done before autoconfiguration.
 	 */
-	evcnt_init();		/* initialize event counters */
 #if NRND > 0
 	rnd_init();		/* initialize random number generator */
 #endif
@@ -582,6 +580,8 @@ main(void)
 
 	machdep_init();
 
+	procinit_sysctl();
+
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has
 	 * historically had init be process 1, and changing this would
@@ -723,10 +723,9 @@ configure(void)
 	drvctl_init();
 #endif
 
-#ifdef USERCONF
+	userconf_init();
 	if (boothowto & RB_USERCONF)
-		user_config();
-#endif
+		userconf_prompt();
 
 	if ((boothowto & (AB_SILENT|AB_VERBOSE)) == AB_SILENT) {
 		printf_nolog("Detecting hardware...");
@@ -1004,7 +1003,7 @@ start_init(void *arg)
 }
 
 /*
- * calculate cache size from physmem and vm_map size.
+ * calculate cache size (in bytes) from physmem and vm_map size.
  */
 vaddr_t
 calc_cache_size(struct vm_map *map, int pct, int va_pct)

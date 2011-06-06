@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5210.h,v 1.2 2009/05/14 09:07:49 reinoud Exp $
+ * $Id: ar5210.h,v 1.2.10.1 2011/06/06 09:09:16 jruoho Exp $
  */
 #ifndef _ATH_AR5210_H_
 #define _ATH_AR5210_H_
@@ -206,7 +206,8 @@ extern	HAL_BOOL ar5210SetRegulatoryDomain(struct ath_hal *,
 extern	u_int ar5210GetWirelessModes(struct ath_hal *ah);
 extern	void ar5210EnableRfKill(struct ath_hal *);
 extern	HAL_BOOL ar5210GpioCfgInput(struct ath_hal *, uint32_t gpio);
-extern	HAL_BOOL ar5210GpioCfgOutput(struct ath_hal *, uint32_t gpio);
+extern	HAL_BOOL ar5210GpioCfgOutput(struct ath_hal *, uint32_t gpio,
+		HAL_GPIO_MUX_TYPE);
 extern	uint32_t ar5210GpioGet(struct ath_hal *, uint32_t gpio);
 extern	HAL_BOOL ar5210GpioSet(struct ath_hal *, uint32_t gpio, uint32_t);
 extern	void ar5210Gpio0SetIntr(struct ath_hal *, u_int, uint32_t ilevel);

@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.19 2011/01/06 07:43:05 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.19.2.1 2011/06/06 09:08:26 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.19 2011/01/06 07:43:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.19.2.1 2011/06/06 09:08:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.19 2011/01/06 07:43:05 macallan Exp $")
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -349,8 +350,11 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	/* PCI config read/write passthrough. */
 	case PCI_IOC_CFGREAD:
 	case PCI_IOC_CFGWRITE:
-		return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-		    cmd, data, flag, l));
+		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, l);
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc, sc->sc_pcitag, data);
 
 	case WSDISPLAYIO_GINFO:
 		if (ms == NULL)
@@ -958,8 +962,7 @@ r128fb_set_backlight(struct r128fb_softc *sc, int level)
 	level = 255 - level;
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
 	reg &= ~R128_LEVEL_MASK;
-	reg |= (level << R128_LEVEL_SHIFT) | 
-	       (level != 255 ? R128_LVDS_BLON : 0);
+	reg |= (level << R128_LEVEL_SHIFT);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL, reg);
 	DPRINTF("backlight level: %d reg %08x\n", level, reg);
 }
@@ -975,10 +978,6 @@ r128fb_switch_backlight(struct r128fb_softc *sc, int on)
 	sc->sc_bl_on = on;
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
 	reg &= ~R128_LEVEL_MASK;
-	if (on) {
-		reg |= R128_LVDS_BLON;
-	} else
-		reg &= ~R128_LVDS_BLON;
 	level = on ? 255 - sc->sc_bl_level : 255;
 	reg |= level << R128_LEVEL_SHIFT;
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL, reg);

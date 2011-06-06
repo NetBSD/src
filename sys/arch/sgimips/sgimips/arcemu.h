@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.h,v 1.11 2009/02/12 06:33:57 rumble Exp $	*/
+/*	$NetBSD: arcemu.h,v 1.11.6.1 2011/06/06 09:06:41 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -68,14 +68,14 @@ static void	arcemu_prom_putc(dev_t, int);
 /* ARCBIOS Component Tree. Represented in linear fashion. */
 static struct arcbios_component arcemu_component_tree[] = {
 	{	COMPONENT_CLASS_ProcessorClass,	COMPONENT_TYPE_CPU,
-		-1, -1, -1, -1, -1, -1, -1, NULL			},
+		-1, -1, -1, -1, -1, -1, -1, 0			},
 
 	/* end of list */
-	{	-1, -1, -1, -1, -1, -1, -1, -1, -1, NULL		}
+	{	-1, -1, -1, -1, -1, -1, -1, -1, -1, 0		}
 };
 
 /* Unimplmented Vector */
-#define ARCEMU_UNIMPL ((void *)arcemu_unimpl)
+#define ARCEMU_UNIMPL ((int32_t)(intptr_t)arcemu_unimpl)
 static void	arcemu_unimpl(void);
 
 /*

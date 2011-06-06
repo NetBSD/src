@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.259 2011/01/13 05:20:27 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.259.2.1 2011/06/06 09:06:46 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1786,6 +1786,7 @@ ctw_invalid:
  */
 
 #if defined(SUN4)
+_ENTRY(memfault_sun4)
 memfault_sun4:
 	TRAP_SETUP(-CCFSZ-80)
 	! tally interrupt (curcpu()->cpu_data.cpu_nfault++) (clobbers %o0,%o1)
@@ -1851,8 +1852,9 @@ memfault_sun4:
 #endif /* SUN4C || SUN4M */
 #endif /* SUN4 */
 
-memfault_sun4c:
 #if defined(SUN4C)
+_ENTRY(memfault_sun4c)
+memfault_sun4c:
 	TRAP_SETUP(-CCFSZ-80)
 	! tally fault (curcpu()->cpu_data.cpu_nfault++) (clobbers %o0,%o1,%o2)
 	INCR64(CPUINFO_VA + CPUINFO_NFAULT)
@@ -1951,6 +1953,7 @@ memfault_sun4c:
 #endif /* SUN4C */
 
 #if defined(SUN4M)
+_ENTRY(memfault_sun4m)
 memfault_sun4m:
 	sethi	%hi(CPUINFO_VA), %l4
 	ld	[%l4 + %lo(CPUINFO_VA+CPUINFO_GETSYNCFLT)], %l5
@@ -2505,13 +2508,15 @@ softintr_common:
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	intrcnt, %l4		! intrcnt[intlev].ev_count++;
+
+	set	CPUINFO_VA + CPUINFO_SINTRCNT, %l4	! sintrcnt[intlev].ev_count++;
 	sll	%l3, EV_STRUCTSHIFT, %o2
 	ldd	[%l4 + %o2], %o0
-	std	%l2, [%sp + CCFSZ + 8]
+	std	%l2, [%sp + CCFSZ + 8]	! set up intrframe/clockframe
 	inccc   %o1
 	addx    %o0, 0, %o0
 	std	%o0, [%l4 + %o2]
+
 	set	_C_LABEL(sintrhand), %l4! %l4 = sintrhand[intlev];
 	ld	[%l4 + %l5], %l4
 
@@ -2639,7 +2644,8 @@ sparc_interrupt4m_bogus:
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	intrcnt, %l4		! intrcnt[intlev].ev_count++;
+
+	set	CPUINFO_VA + CPUINFO_INTRCNT, %l4	! intrcnt[intlev].ev_count++;
 	sll	%l3, EV_STRUCTSHIFT, %o2
 	ldd	[%l4 + %o2], %o0
 	std	%l2, [%sp + CCFSZ + 8]	! set up intrframe/clockframe
@@ -2687,13 +2693,15 @@ sparc_interrupt_common:
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	intrcnt, %l4		! intrcnt[intlev].ev_count++;
+
+	set	CPUINFO_VA + CPUINFO_INTRCNT, %l4	! intrcnt[intlev].ev_count++;
 	sll	%l3, EV_STRUCTSHIFT, %o2
 	ldd	[%l4 + %o2], %o0
 	std	%l2, [%sp + CCFSZ + 8]	! set up intrframe/clockframe
 	inccc   %o1
 	addx    %o0, 0, %o0
 	std	%o0, [%l4 + %o2]
+
 	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
 
@@ -2756,11 +2764,11 @@ sparc_interrupt_common:
  * %l6 = &cpuinfo
  */
 lev14_softint:
-	set	_C_LABEL(lev14_evcnt), %l7	! lev14_evcnt.ev_count++;
-	ldd	[%l7 + EV_COUNT], %l4
+	sethi	%hi(CPUINFO_VA), %l7
+	ldd	[%l7 + CPUINFO_LEV14], %l4
 	inccc	%l5
 	addx	%l4, %g0, %l4
-	std	%l4, [%l7 + EV_COUNT]
+	std	%l4, [%l7 + CPUINFO_LEV14]
 
 	ld	[%l6 + CPUINFO_XMSG_TRAP], %l7
 #ifdef DIAGNOSTIC
@@ -3057,9 +3065,7 @@ _ENTRY(_C_LABEL(nmi_common))
 
 #if defined(SUN4M)
 _ENTRY(_C_LABEL(nmi_sun4m))
-	INTR_SETUP(-CCFSZ-80)
-	! tally intr (curcpu()->cpu_data.cpu_nintr++) (clobbers %o0,%o1,%o2)
-	INCR64(CPUINFO_VA + CPUINFO_NINTR)
+	INTR_SETUP(-CCFSZ-80-8-8)	! normal frame, plus g2..g5
 
 #if !defined(MSIIEP) /* normal sun4m */
 
@@ -5906,25 +5912,13 @@ Lfp_finish:
 	 std	%f30, [%o0 + FS_REGS + (4*30)]
 
 /*
- * We really should panic here but while we figure out what the bug is
- * that a remote CPU gets a NULL struct fpstate *, this lets the system
- * work at least seemingly stably.
+ * We got a NULL struct fpstate * on the IPI.  We panic.
  */
 Lfp_null_fpstate:
-#if 1
-	sethi	%hi(CPUINFO_VA), %o5
-	ldd	[%o5 + CPUINFO_SAVEFPSTATE_NULL], %o2
-	inccc   %o3
-	addx    %o2, 0, %o2
-	retl
-	 std	%o2, [%o5 + CPUINFO_SAVEFPSTATE_NULL]
-#else
 	ld	[%o5 + CPUINFO_CPUNO], %o1
 	sethi	%hi(Lpanic_savefpstate), %o0
 	call	_C_LABEL(panic)
 	 or	%o0, %lo(Lpanic_savefpstate), %o0
-#endif
-1:
 
 /*
  * Store the (now known nonempty) FP queue.

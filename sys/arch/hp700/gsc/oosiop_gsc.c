@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop_gsc.c,v 1.11 2011/01/04 10:42:33 skrll Exp $	*/
+/*	$NetBSD: oosiop_gsc.c,v 1.11.2.1 2011/06/06 09:05:40 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop_gsc.c,v 1.11 2011/01/04 10:42:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop_gsc.c,v 1.11.2.1 2011/06/06 09:05:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ oosiop_gsc_attach(device_t parent, device_t self, void *aux)
 	oosiop_attach(sc);
 
 	(void)hp700_intr_establish(IPL_BIO, oosiop_gsc_intr, sc,
-	    ga->ga_int_reg, ga->ga_irq);
+	    ga->ga_ir, ga->ga_irq);
 }
 
 /*

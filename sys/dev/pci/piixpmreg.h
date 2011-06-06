@@ -1,4 +1,4 @@
-/* $NetBSD: piixpmreg.h,v 1.4 2006/06/26 17:33:40 drochner Exp $ */
+/* $NetBSD: piixpmreg.h,v 1.4.90.1 2011/06/06 09:08:26 jruoho Exp $ */
 /*	$OpenBSD: piixreg.h,v 1.3 2006/01/03 22:39:03 grange Exp $	*/
 
 /*
@@ -30,6 +30,7 @@
 
 /* PCI configuration registers */
 #define PIIX_PM_BASE	0x40		/* Power management base address */
+#define PIIX_PM_BASE_CSB5_RESET	0x10		/* CSB5 PM reset */
 #define PIIX_DEVACTA	0x54		/* Device activity A (function 3) */
 #define PIIX_DEVACTB	0x58		/* Device activity B (function 3) */
 #define PIIX_PMREGMISC	0x80		/* Misc. Power management */

@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.7 2010/03/11 04:00:36 mrg Exp $ */
+/*	$NetBSD: alipm.c,v 1.7.4.1 2011/06/06 09:08:09 jruoho Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.7 2010/03/11 04:00:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.7.4.1 2011/06/06 09:08:09 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -255,7 +255,8 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	    "flags 0x%x\n", device_xname(&sc->sc_dev), op, addr, cmdlen,
 	    len, flags));
 
-	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2)
+	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2 ||
+	    (cmdlen == 0 && len > 1))
 		return (EOPNOTSUPP);
 
 	/* Clear status bits */
@@ -298,7 +299,10 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (I2C_OP_WRITE_P(op)) {
 		/* Write data. */
 		b = buf;
-		if (len > 0)
+		if (cmdlen == 0 && len == 1)
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			    ALIPM_SMB_HCMD, b[0]);
+		else if (len > 0)
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 			    ALIPM_SMB_HD0, b[0]);
 		if (len > 1)
@@ -307,8 +311,8 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	}
 
 	/* Set SMBus command */
-	if (len == 0) {
-		if (cmdlen == 0)
+	if (cmdlen == 0) {
+		if (len == 0)
 			ctl = ALIPM_SMB_HC_CMD_QUICK;
 		else
 			ctl = ALIPM_SMB_HC_CMD_BYTE;

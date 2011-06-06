@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.33 2010/02/11 23:13:46 haad Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.33.4.1 2011/06/06 09:09:34 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.33 2010/02/11 23:13:46 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.33.4.1 2011/06/06 09:09:34 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -101,7 +101,7 @@ static size_t kmem_cache_mask;
 static int kmem_cache_shift;
 
 #if defined(DEBUG)
-int kmem_guard_depth;
+int kmem_guard_depth = 0;
 size_t kmem_guard_size;
 static struct uvm_kmguard kmem_guard;
 static void *kmem_freecheck;

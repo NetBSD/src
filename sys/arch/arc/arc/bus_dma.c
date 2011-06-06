@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.31 2010/11/12 13:18:56 uebayasi Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.31.2.1 2011/06/06 09:04:56 jruoho Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.31 2010/11/12 13:18:56 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.31.2.1 2011/06/06 09:04:56 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,6 @@ paddr_t	kvtophys(vaddr_t);	/* XXX */
 static int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t,
 		    void *, bus_size_t, struct vmspace *, int, paddr_t *,
 		    int *, int);
-
-extern paddr_t avail_start, avail_end;	/* from pmap.c */
 
 void
 _bus_dma_tag_init(bus_dma_tag_t t)
@@ -405,6 +403,7 @@ void
 _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
+	const struct mips_cache_info * const mci = &mips_cache_info;
 	bus_size_t minlen;
 	bus_addr_t addr, start, end, preboundary, firstboundary, lastboundary;
 	int i, useindex;
@@ -517,19 +516,19 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 		case BUS_DMASYNC_PREREAD:
 			end = start + minlen;
-			preboundary = start & ~mips_dcache_align_mask;
-			firstboundary = (start + mips_dcache_align_mask)
-			    & ~mips_dcache_align_mask;
-			lastboundary = end & ~mips_dcache_align_mask;
+			preboundary = start & ~mci->mci_dcache_align_mask;
+			firstboundary = (start + mci->mci_dcache_align_mask)
+			    & ~mci->mci_dcache_align_mask;
+			lastboundary = end & ~mci->mci_dcache_align_mask;
 			if (preboundary < start && preboundary < lastboundary)
 				mips_dcache_wbinv_range(preboundary,
-				    mips_dcache_align);
+				    mci->mci_dcache_align);
 			if (firstboundary < lastboundary)
 				mips_dcache_inv_range(firstboundary,
 				    lastboundary - firstboundary);
 			if (lastboundary < end)
 				mips_dcache_wbinv_range(lastboundary,
-				    mips_dcache_align);
+				    mci->mci_dcache_align);
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
@@ -555,7 +554,8 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 {
 
 	return _bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, avail_start, trunc_page(avail_end));
+	    segs, nsegs, rsegs, flags, mips_avail_start,
+	    trunc_page(mips_avail_end));
 }
 
 /*
@@ -575,7 +575,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	/* Always round the size. */
 	size = round_page(size);
 
-	high = avail_end - PAGE_SIZE;
+	high = mips_avail_end - PAGE_SIZE;
 
 	/*
 	 * Allocate pages from the VM system.
@@ -599,7 +599,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	for (; m != NULL; m = TAILQ_NEXT(m, pageq.queue)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
-		if (curaddr < avail_start || curaddr >= high) {
+		if (curaddr < mips_avail_start || curaddr >= high) {
 			printf("uvm_pglistalloc returned non-sensical"
 			    " address 0x%llx\n", (long long)curaddr);
 			panic("_bus_dmamem_alloc_range");

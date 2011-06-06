@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.82 2009/08/09 21:32:16 christos Exp $
+# $NetBSD: INSTALL,v 1.82.6.1 2011/06/06 09:04:48 jruoho Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -7,21 +7,30 @@
 
 include	"arch/amd64/conf/GENERIC"
 
-#ident 		"INSTALL-$Revision: 1.82 $"
+#ident 		"INSTALL-$Revision: 1.82.6.1 $"
+
+# INSTALL kernels do not have access to module(7)s. Compile some
+# file-systems statically.
+file-system	EXT2FS		# second extended file system (linux)
+file-system	LFS		# log-structured file system
+#file-system	MFS		# memory file system
+file-system	NTFS		# Windows/NT file system (experimental)
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
 
 no options	MEMORY_DISK_DYNAMIC
-options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
-options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=10000     # size of memory disk, in blocks
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 no options	MTRR
 # DRI driver
-no i915drm*	at vga?		# Intel i915, i945 DRM driver
-no mach64drm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
-no mgadrm*	at vga?		# Matrox G[24]00, G[45]50 DRM driver
-no r128drm*	at vga?		# ATI Rage 128 DRM driver
-no radeondrm*	at vga?		# ATI Radeon DRM driver
-no savagedrm*	at vga?		# S3 Savage DRM driver
-no sisdrm*	at vga?		# SiS DRM driver
-no tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
+no i915drm*	at drm?		# Intel i915, i945 DRM driver
+no mach64drm*	at drm?		# mach64 (3D Rage Pro, Rage) DRM driver
+no mgadrm*	at drm?		# Matrox G[24]00, G[45]50 DRM driver
+no r128drm*	at drm?		# ATI Rage 128 DRM driver
+no radeondrm*	at drm?		# ATI Radeon DRM driver
+no savagedrm*	at drm?		# S3 Savage DRM driver
+no sisdrm*	at drm?		# SiS DRM driver
+no tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver

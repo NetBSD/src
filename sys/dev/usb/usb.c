@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.123 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: usb.c,v 1.123.2.1 2011/06/06 09:08:43 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.123 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.123.2.1 2011/06/06 09:08:43 jruoho Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -302,7 +302,7 @@ usb_create_event_thread(device_t self)
 		taskq->taskcreated = 1;
 		taskq->name = taskq_names[i];
 		if (kthread_create(PRI_NONE, 0, NULL, usb_task_thread,
-		    taskq, &taskq->task_thread_lwp, taskq->name)) {
+		    taskq, &taskq->task_thread_lwp, "%s", taskq->name)) {
 			printf("unable to create task thread: %s\n", taskq->name);
 			panic("usb_create_event_thread task");
 		}

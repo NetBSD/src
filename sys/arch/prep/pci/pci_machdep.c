@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.33 2010/12/13 16:19:02 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.33.2.1 2011/06/06 09:06:32 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.33 2010/12/13 16:19:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.33.2.1 2011/06/06 09:06:32 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -143,7 +143,7 @@ prep_pci_bus_maxdevs(void *v, int busno)
 }
 
 int
-prep_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+prep_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct genppc_pci_chipset_businfo *pbi;
 	prop_dictionary_t dict, devsub;

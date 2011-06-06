@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.68 2011/01/07 14:08:29 cegger Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.68.2.1 2011/06/06 09:07:41 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.68 2011/01/07 14:08:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.68.2.1 2011/06/06 09:07:41 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -161,7 +161,7 @@ static bool acpiec_parse_gpe_package(device_t, ACPI_HANDLE,
 
 static void acpiec_callout(void *);
 static void acpiec_gpe_query(void *);
-static uint32_t acpiec_gpe_handler(void *);
+static uint32_t acpiec_gpe_handler(ACPI_HANDLE, uint32_t, void *);
 static ACPI_STATUS acpiec_space_setup(ACPI_HANDLE, uint32_t, void *, void **);
 static ACPI_STATUS acpiec_space_handler(uint32_t, ACPI_PHYSICAL_ADDRESS,
     uint32_t, ACPI_INTEGER *, void *, void *);
@@ -366,7 +366,7 @@ acpiec_common_attach(device_t parent, device_t self,
 		goto post_csr_map;
 	}
 
-	rv = AcpiEnableGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_GPE_TYPE_RUNTIME);
+	rv = AcpiEnableGpe(sc->sc_gpeh, sc->sc_gpebit);
 	if (rv != AE_OK) {
 		aprint_error_dev(self, "unable to enable GPE: %s\n",
 		    AcpiFormatException(rv));
@@ -844,7 +844,7 @@ acpiec_callout(void *arg)
 }
 
 static uint32_t
-acpiec_gpe_handler(void *arg)
+acpiec_gpe_handler(ACPI_HANDLE hdl, uint32_t gpebit, void *arg)
 {
 	device_t dv = arg;
 	struct acpiec_softc *sc = device_private(dv);
@@ -853,7 +853,7 @@ acpiec_gpe_handler(void *arg)
 	acpiec_gpe_state_machine(dv);
 	mutex_exit(&sc->sc_mtx);
 
-	return 0;
+	return ACPI_INTERRUPT_HANDLED | ACPI_REENABLE_GPE;
 }
 
 ACPI_STATUS

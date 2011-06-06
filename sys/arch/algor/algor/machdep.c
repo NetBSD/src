@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 2011/01/14 02:06:22 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47.2.1 2011/06/06 09:04:41 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -65,48 +66,9 @@
  *	@(#)machdep.c   8.3 (Berkeley) 1/12/94
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department, The Mach Operating System project at
- * Carnegie-Mellon University and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)machdep.c   8.3 (Berkeley) 1/12/94
- *	from: Utah Hdr: machdep.c 1.63 91/04/24
- */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2011/01/14 02:06:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47.2.1 2011/06/06 09:04:41 jruoho Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -137,6 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2011/01/14 02:06:22 rmind Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
+
+#include <mips/locore.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -208,14 +172,10 @@ mach_init(int argc, char *argv[], char *envp[])
 {
 	extern char kernel_text[], edata[], end[];
 	vaddr_t kernstart, kernend;
-	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
 	vsize_t size;
 	const char *cp;
 	char *cp0;
 	size_t i;
-
-	/* Disable interrupts. */
-	(void) splhigh();
 
 	/*
 	 * First, find the start and end of the kernel and clear
@@ -228,13 +188,20 @@ mach_init(int argc, char *argv[], char *envp[])
 	memset(edata, 0, kernend - (vaddr_t)edata);
 
 	/*
+	 * Copy the exception-dispatch code down to the exception vector.
+	 * Initialize the locore function vector.  Clear out the I- and
+	 * D-caches.
+	 *
+	 * We can no longer call into PMON after this.
+	 */
+	led_display('v', 'e', 'c', 'i');
+	mips_vector_init(NULL, false);
+
+	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
 	led_display('p', 'g', 's', 'z');
 	uvm_setpagesize();
-
-	kernstartpfn = atop(MIPS_KSEG0_TO_PHYS(kernstart));
-	kernendpfn   = atop(MIPS_KSEG0_TO_PHYS(kernend));
 
 	/*
 	 * Initialize bus space tags and bring up the console.
@@ -488,71 +455,23 @@ mach_init(int argc, char *argv[], char *envp[])
 	mem_cluster_cnt++;
 
 	/*
-	 * Copy the exception-dispatch code down to the exception vector.
-	 * Initialize the locore function vector.  Clear out the I- and
-	 * D-caches.
-	 *
-	 * We can no longer call into PMON after this.
-	 */
-	led_display('v', 'e', 'c', 'i');
-	mips_vector_init();
-
-	/*
 	 * Load the physical memory clusters into the VM system.
 	 */
 	led_display('v', 'm', 'p', 'g');
 	for (i = 0; i < mem_cluster_cnt; i++) {
 		physmem += atop(mem_clusters[i].size);
-		pfn0 = atop(mem_clusters[i].start);
-		pfn1 = pfn0 + atop(mem_clusters[i].size);
-		if (pfn0 <= kernstartpfn && kernendpfn <= pfn1) {
-			/*
-			 * Must compute the location of the kernel
-			 * within the segment.
-			 */
-#if 1
-			printf("Cluster %zu contains kernel\n", i);
-#endif
-			if (pfn0 < kernstartpfn) {
-				/*
-				 * There is a chunk before the kernel.
-				 */
-#if 1
-				printf("Loading chunk before kernel: "
-				    "%#"PRIxPADDR" / %#"PRIxPADDR"\n",
-				    pfn0, kernstartpfn);
-#endif
-				uvm_page_physload(pfn0, kernstartpfn,
-				    pfn0, kernstartpfn, VM_FREELIST_DEFAULT);
-			}
-			if (kernendpfn < pfn1) {
-				/*
-				 * There is a chunk after the kernel.
-				 */
-#if 1
-				printf("Loading chunk after kernel: "
-				    "%#"PRIxPADDR" / %#"PRIxPADDR"\n",
-				    kernendpfn, pfn1);
-#endif
-				uvm_page_physload(kernendpfn, pfn1,
-				    kernendpfn, pfn1, VM_FREELIST_DEFAULT);
-			}
-		} else {
-			/*
-			 * Just load this cluster as one chunk.
-			 */
-#if 1
-			printf("Loading cluster %zu: %#"PRIxPADDR
-			    " / %#"PRIxPADDR"\n", i, pfn0, pfn1);
-#endif
-			uvm_page_physload(pfn0, pfn1, pfn0, pfn1,
-			    VM_FREELIST_DEFAULT);
-		}
 	}
-
 	if (physmem == 0)
 		panic("can't happen: system seems to have no memory!");
 	maxmem = physmem;
+
+	static const struct mips_vmfreelist isadma = {
+		.fl_start = 8*1024*1024,
+		.fl_end = 16*1024*1024,
+		.fl_freelist = VM_FREELIST_ISADMA,
+	};
+	mips_page_physload(kernstart, kernend,
+	    mem_clusters, mem_cluster_cnt, &isadma, 1);
 
 	/*
 	 * Initialize message buffer (at end of core).
@@ -666,8 +585,7 @@ cpu_reboot(int howto, char *bootstr)
 	int tmp;
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curlwp)
-		savectx(curpcb);
+	savectx(curpcb);
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)

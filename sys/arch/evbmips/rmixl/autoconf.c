@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2009/12/20 04:11:37 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3.8.1 2011/06/06 09:05:30 jruoho Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2009/12/20 04:11:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.8.1 2011/06/06 09:05:30 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ findroot(void)
 		}
 		deviter_release(&di);
 	}
+
 	/*
 	 * XXX Match up MBR boot specification with BSD disklabel for root?
 	 */

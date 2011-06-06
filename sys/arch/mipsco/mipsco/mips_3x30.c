@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.12 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.12.6.1 2011/06/06 09:06:12 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,30 +29,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define	__INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.12 2009/03/14 21:04:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.12.6.1 2011/06/06 09:06:12 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
+#include <machine/locore.h>
 #include <machine/trap.h>
 #include <machine/psl.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/mainboard.h>
 #include <machine/sysconf.h>
 
-extern void MachFPInterrupt (u_int, u_int, u_int, struct frame *);
-
 /* Local functions */
-void pizazz_init (void);
-void pizazz_intr (u_int, u_int, u_int, u_int);
-int  pizazz_level0_intr (void *);
-void pizazz_level5_intr (int, int, int);
-void pizazz_intr_establish  (int, int (*)(void *), void *);
+void pizazz_init(void);
+void pizazz_intr(uint32_t, vaddr_t, uint32_t);
+int  pizazz_level0_intr(void *);
+void pizazz_level5_intr(uint32_t, vaddr_t);
+void pizazz_intr_establish (int, int (*)(void *), void *);
 
 #define INT_MASK_FPU MIPS_INT_MASK_3
 
@@ -63,6 +63,8 @@ pizazz_init(void)
 	platform.cons_init = NULL;
 	platform.iointr = pizazz_intr;
 	platform.intr_establish = pizazz_intr_establish;
+
+	ipl_sr_map = mipsco_ipl_sr_map;
 
 	pizazz_intr_establish(SYS_INTR_LEVEL0, pizazz_level0_intr, NULL);
 
@@ -78,10 +80,7 @@ pizazz_init(void)
 	} while (0)
 
 void
-pizazz_intr(u_int status, u_int cause, u_int pc, u_int ipending)
-	/* status:	 status register at time of the exception */
-	/* cause:	 cause register at time of exception */
-	/* pc:	 program counter where to continue */
+pizazz_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 {
 	/* handle clock interrupts ASAP */
 	if (ipending & MIPS_INT_MASK_2) {	        /* Timer Interrupt */
@@ -90,37 +89,27 @@ pizazz_intr(u_int status, u_int cause, u_int pc, u_int ipending)
 		
 		cf.pc = pc;
 		cf.sr = status;
+		cf.intr = (curcpu()->ci_idepth > 1);
 
 		rambo_clkintr(&cf);
-
-		/* keep clock interrupts enabled when we return */
-		cause &= ~MIPS_INT_MASK_2;
 	}
 
-	/* If clock interrupts were enabled, re-enable them ASAP. */
-	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
-
 	if (ipending & MIPS_INT_MASK_5)		/* level 5 interrupt */
-		pizazz_level5_intr(pc, cause, status);
+		pizazz_level5_intr(status, pc);
 
 	HANDLE_INTR(SYS_INTR_FDC,	MIPS_INT_MASK_4);
 	HANDLE_INTR(SYS_INTR_SCSI,	MIPS_INT_MASK_1);
 	HANDLE_INTR(SYS_INTR_LEVEL0,	MIPS_INT_MASK_0);
 
-	/* XXX:  Keep FDC interrupt masked off */
-	cause &= ~(MIPS_INT_MASK_0 | MIPS_INT_MASK_1 | MIPS_INT_MASK_5);
-
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
-
+#if !defined(NOFPU)
 	/* FPU nofiticaition */
 	if (ipending & INT_MASK_FPU) {
 		if (!USERMODE(status))
-			panic("kernel used FPU: PC %x, CR %x, SR %x",
-			      pc, cause, status);
-#if !defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
-#endif
+			panic("kernel used FPU: PC %x, SR %x",
+			      pc, status);
+		mips_fpu_intr(pc, curlwp->l_md.md_utf);
 	}
+#endif
 }
 
 /*
@@ -153,13 +142,13 @@ pizazz_level0_intr(void *arg)
  * Motherboard Parity Error
  */
 void
-pizazz_level5_intr(int pc, int cause, int status)
+pizazz_level5_intr(uint32_t status, vaddr_t pc)
 {
 	u_int32_t ereg;
 
 	ereg = *(u_int32_t *)RAMBO_ERREG;
 
-	printf("interrupt: pc=%p cr=%x sr=%x\n", (void *)pc, cause, status);
+	printf("interrupt: pc=%p sr=%x\n", (void *)pc, status);
 	printf("parity error: %p mask: 0x%x\n", (void *)ereg, ereg & 0xf);
 	panic("memory fault");
 }

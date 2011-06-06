@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.5 2010/10/07 12:40:34 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.5.2.1 2011/06/06 09:08:36 jruoho Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.5 2010/10/07 12:40:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.5.2.1 2011/06/06 09:08:36 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -194,7 +194,6 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	SDMMC_LOCK(sc);
 
 	if (sf->number == 0) {
-		sf->width = 1;
 		reg = sdmmc_io_read_1(sf, SD_IO_CCCR_CAPABILITY);
 		if (!(reg & CCCR_CAPS_LSC) || (reg & CCCR_CAPS_4BLS)) {
 			sdmmc_io_write_1(sf, SD_IO_CCCR_BUS_WIDTH,

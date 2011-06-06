@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.149 2010/07/07 01:30:34 chs Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.149.2.1 2011/06/06 09:07:23 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.149 2010/07/07 01:30:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.149.2.1 2011/06/06 09:07:23 jruoho Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -155,7 +155,7 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	tf->tf_edi = 0;
 	tf->tf_esi = 0;
 	tf->tf_ebp = 0;
-	tf->tf_ebx = (int)l->l_proc->p_psstr;
+	tf->tf_ebx = l->l_proc->p_psstrp;
 	tf->tf_edx = 0;
 	tf->tf_ecx = 0;
 	tf->tf_eax = 0;

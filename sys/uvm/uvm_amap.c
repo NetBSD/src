@@ -1,7 +1,6 @@
-/*	$NetBSD: uvm_amap.c,v 1.88 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.88.6.1 2011/06/06 09:10:20 jruoho Exp $	*/
 
 /*
- *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -13,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *      Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -42,13 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.88 2009/10/21 21:12:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.88.6.1 2011/06/06 09:10:20 jruoho Exp $");
 
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/pool.h>
@@ -105,8 +97,8 @@ amap_roundup_slots(int slots)
  * when enabled, an array of ints is allocated for the pprefs.  this
  * array is allocated only when a partial reference is added to the
  * map (either by unmapping part of the amap, or gaining a reference
- * to only a part of an amap).  if the malloc of the array fails
- * (M_NOWAIT), then we set the array pointer to PPREF_NONE to indicate
+ * to only a part of an amap).  if the allocation of the array fails
+ * (KM_NOSLEEP), then we set the array pointer to PPREF_NONE to indicate
  * that we tried to do ppref's but couldn't alloc the array so just
  * give up (after all, this is an optional feature!).
  *
@@ -197,6 +189,10 @@ amap_alloc1(int slots, int padslots, int waitf)
 	amap->am_nslot = slots;
 	amap->am_nused = 0;
 
+	/*
+	 * Note: since allocations are likely big, we expect to reduce the
+	 * memory fragmentation by allocating them in separate blocks.
+	 */
 	amap->am_slots = kmem_alloc(totalslots * sizeof(int), kmflags);
 	if (amap->am_slots == NULL)
 		goto fail1;
@@ -482,15 +478,15 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 	}
 
 	/*
-	 * case 3: we need to malloc a new amap and copy all the amap
-	 * data over from old amap to the new one.
+	 * Case 3: we need to allocate a new amap and copy all the amap
+	 * data over from old amap to the new one.  Drop the lock before
+	 * performing allocation.
 	 *
-	 * note that the use of a kernel realloc() probably would not
-	 * help here, since we wish to abort cleanly if one of the
-	 * three (or four) mallocs fails.
+	 * Note: since allocations are likely big, we expect to reduce the
+	 * memory fragmentation by allocating them in separate blocks.
 	 */
 
-	amap_unlock(amap);	/* unlock in case we sleep in malloc */
+	amap_unlock(amap);
 
 	if (slotneed >= UVM_AMAP_LARGE) {
 		return E2BIG;
@@ -499,8 +495,10 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 	slotalloc = amap_roundup_slots(slotneed);
 #ifdef UVM_AMAP_PPREF
 	newppref = NULL;
-	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
+	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
+		/* Will be handled later if fails. */
 		newppref = kmem_alloc(slotalloc * sizeof(*newppref), kmflags);
+	}
 #endif
 	newsl = kmem_alloc(slotalloc * sizeof(*newsl), kmflags);
 	newbck = kmem_alloc(slotalloc * sizeof(*newbck), kmflags);
@@ -526,7 +524,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 	KASSERT(amap->am_maxslot < slotneed);
 
 	/*
-	 * now copy everything over to new malloc'd areas...
+	 * Copy everything over to new allocated areas.
 	 */
 
 	slotadded = slotalloc - amap->am_nslot;
@@ -836,7 +834,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 	/*
 	 * need to double check reference count now that we've got the
 	 * src amap locked down.  the reference count could have
-	 * changed while we were in malloc.  if the reference count
+	 * changed while we were allocating.  if the reference count
 	 * dropped down to one we take over the old map rather than
 	 * copying the amap.
 	 */
@@ -1594,4 +1592,3 @@ amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, bool all)
 
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
 }
-

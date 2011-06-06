@@ -1,4 +1,4 @@
-/*	$NetBSD: schizoreg.h,v 1.7 2011/01/02 10:43:18 mrg Exp $	*/
+/*	$NetBSD: schizoreg.h,v 1.7.2.1 2011/06/06 09:06:51 jruoho Exp $	*/
 /*	$OpenBSD: schizoreg.h,v 1.20 2008/07/12 13:08:04 kettenis Exp $	*/
 
 /*
@@ -28,22 +28,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX merge with iommureg.h */
-/* iommmu registers */
-struct schizo_iommureg {
-	volatile u_int64_t	iommu_cr;	/* IOMMU control register */
-	volatile u_int64_t	iommu_tsb;	/* IOMMU TSB base register */
-	volatile u_int64_t	iommu_flush;	/* IOMMU flush register */
-	volatile u_int64_t	iommu_ctxflush;
-	volatile u_int64_t	iommu_reserved[28];
-	volatile u_int64_t	iommu_cache_flush;
-	volatile u_int64_t	iommu_cache_invalidate;
-	volatile u_int64_t	iommu_reserved2[30];
-};
-
 struct schizo_pbm_regs {
 	volatile u_int64_t	_unused1[64];		/* 0x0000 - 0x01ff */
-	struct schizo_iommureg	iommu;			/* 0x0200 - 0x03ff */
+	struct iommureg2	iommu;			/* 0x0200 - 0x03ff */
 	volatile u_int64_t	_unused2[384];
 	volatile u_int64_t	imap[64];
 	volatile u_int64_t	_unused3[64];
@@ -260,6 +247,7 @@ struct schizo_regs {
 #define	TOM_IOCACHE_CSR_NCP_RDM		(1UL << 18UL)	/* memory read multiple (NC) */
 #define	TOM_IOCACHE_CSR_NCP_ONE		(1UL << 17UL)	/* memory read (NC) */
 #define	TOM_IOCACHE_CSR_NCP_LINE	(1UL << 16UL)	/* memory read line (NC) */
+#define	TOM_IOCACHE_CSR_POFFSET_SHIFT	(1UL << 3UL)	/* prefetch offset */
 #define	TOM_IOCACHE_CSR_PEN_RDM		(1UL << 2UL)	/* memory read multiple */
 #define	TOM_IOCACHE_CSR_PEN_ONE		(1UL << 1UL)	/* memory read */
 #define	TOM_IOCACHE_CSR_PEN_LINE	(1UL << 0UL)	/* memory read line */

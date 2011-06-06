@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.27 2008/01/02 11:48:28 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.27.38.1 2011/06/06 09:06:43 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.27 2008/01/02 11:48:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.27.38.1 2011/06/06 09:06:43 jruoho Exp $");
 
 #include "opt_mbr.h"
 
@@ -240,6 +240,15 @@ dkcksum_mmeye(struct disklabel *lp)
 
 	while (start < end)
 		sum ^= *start++;
+
+#ifdef COMPAT_MMEYE_OLDLABEL_BROKEN
+	if (sum != 0 &&
+	    tdl.d_checksum == 0) {
+		printf("disklabel: mmeye oldlabel broken found\n");
+		sum = 0;	/* XXXX */
+	}
+#endif
+
 	return (sum);
 }
 #endif

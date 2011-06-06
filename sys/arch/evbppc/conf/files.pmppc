@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.4 2008/02/20 21:43:34 drochner Exp $
+#	$NetBSD: files.pmppc,v 1.4.38.1 2011/06/06 09:05:31 jruoho Exp $
 #
 #
 maxpartitions 16
@@ -46,9 +46,9 @@ device	rtc : mc146818
 attach	rtc at mainbus
 file	arch/evbppc/pmppc/dev/ds17485.c		rtc
 
-device	flash
-attach	flash at mainbus
-file	arch/evbppc/pmppc/dev/flash.c			flash
+device	pmflash
+attach	pmflash at mainbus
+file	arch/evbppc/pmppc/dev/flash.c			pmflash
 
 attach	cpc at mainbus with cpc_mainbus
 file	arch/evbppc/pmppc/dev/cpc_mainbus.c		cpc_mainbus

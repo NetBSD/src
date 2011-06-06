@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.212 2010/12/22 01:34:19 macallan Exp $	*/
+/*	$NetBSD: ohci.c,v 1.212.2.1 2011/06/06 09:08:41 jruoho Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.212 2010/12/22 01:34:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.212.2.1 2011/06/06 09:08:41 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2118,7 +2118,9 @@ ohci_open(usbd_pipe_handle pipe)
 			(dev->speed == USB_SPEED_LOW ? OHCI_ED_SPEED : 0) |
 			fmt |
 			OHCI_ED_SET_MAXP(UGETW(ed->wMaxPacketSize)));
-		sed->ed.ed_headp = sed->ed.ed_tailp = HTOO32(tdphys);
+		sed->ed.ed_headp = HTOO32(tdphys |
+		    (pipe->endpoint->datatoggle ? OHCI_TOGGLECARRY : 0));
+		sed->ed.ed_tailp = HTOO32(tdphys);
 		usb_syncmem(&sed->dma, sed->offs, sizeof(sed->ed),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
@@ -2205,6 +2207,8 @@ ohci_close_pipe(usbd_pipe_handle pipe, ohci_soft_ed_t *head)
 	ohci_rem_ed(sed, head);
 	/* Make sure the host controller is not touching this ED */
 	usb_delay_ms(&sc->sc_bus, 1);
+	pipe->endpoint->datatoggle =
+	    (O32TOH(sed->ed.ed_headp) & OHCI_TOGGLECARRY) ? 1 : 0;
 	splx(s);
 	ohci_free_sed(sc, opipe->sed);
 }

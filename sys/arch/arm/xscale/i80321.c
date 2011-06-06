@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.20 2007/10/17 19:53:43 garbled Exp $	*/
+/*	$NetBSD: i80321.c,v 1.20.48.1 2011/06/06 09:05:06 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.20 2007/10/17 19:53:43 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.20.48.1 2011/06/06 09:05:06 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +286,7 @@ i80321_attach(struct i80321_softc *sc)
 	pba.pba_bridgetag = NULL;
 	pba.pba_intrswiz = 0;	/* XXX what if busno != 0? */
 	pba.pba_intrtag = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
 }

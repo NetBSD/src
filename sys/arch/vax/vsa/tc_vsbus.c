@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_vsbus.c,v 1.5 2010/12/14 23:31:17 matt Exp $	*/
+/*	$NetBSD: tc_vsbus.c,v 1.5.2.1 2011/06/06 09:07:00 jruoho Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,7 +52,7 @@ struct tcbus_softc {
 
 static bus_dma_tag_t tcbus_dmat;
 
-CFATTACH_DECL(tcbus, sizeof(struct tcbus_softc),
+CFATTACH_DECL_NEW(tcbus, sizeof(struct tcbus_softc),
     tcbus_match, tcbus_attach, 0, 0);
 
 static bus_dma_tag_t
@@ -142,5 +142,6 @@ tcbus_attach(device_t parent, device_t self, void *aux)
 
 	tcbus_dmat = &sc->sc_dmatag;
 
+	/* XXX: why not config_found(9)?? */
 	tcattach(parent, self, &tba);
 }

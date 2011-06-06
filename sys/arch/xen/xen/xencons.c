@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.35 2009/10/23 02:32:34 snj Exp $	*/
+/*	$NetBSD: xencons.c,v 1.35.6.1 2011/06/06 09:07:12 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.35 2009/10/23 02:32:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.35.6.1 2011/06/06 09:07:12 jruoho Exp $");
 
 #include "opt_xen.h"
 
@@ -161,7 +161,7 @@ xencons_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Xen Virtual Console Driver\n");
 
 	sc->sc_dev = self;
-	sc->sc_tty = ttymalloc();
+	sc->sc_tty = tty_alloc();
 	tty_attach(sc->sc_tty);
 	sc->sc_tty->t_oproc = xencons_start;
 	sc->sc_tty->t_param = xencons_param;
@@ -249,7 +249,7 @@ xencons_close(dev_t dev, int flag, int mode, struct lwp *l)
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 #ifdef notyet /* XXX */
-	ttyfree(tp);
+	tty_free(tp);
 #endif
 	return (0);
 }

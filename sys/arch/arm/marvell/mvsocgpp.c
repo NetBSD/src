@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocgpp.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: mvsocgpp.c,v 1.1.6.1 2011/06/06 09:05:04 jruoho Exp $	*/
 /*
  * Copyright (c) 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.1.6.1 2011/06/06 09:05:04 jruoho Exp $");
 
 #include "gpio.h"
 
@@ -135,10 +135,12 @@ mvsocgpp_attach(device_t parent, device_t self, void *aux)
 #if NGPIO > 0
 	struct gpiobus_attach_args gba;
 	gpio_pin_t *pins;
-	uint32_t dir, valin, valout, polarity, mask;
+	uint32_t mask, dir, valin, valout, polarity, blink;
 #endif
 	int i, j;
 	void *ih;
+
+	dir = valin = valout = polarity = blink = 0;
 
 	aprint_normal(": Marvell SoC General Purpose I/O Port Interface\n");
 	aprint_naive("\n");
@@ -188,20 +190,22 @@ mvsocgpp_attach(device_t parent, device_t self, void *aux)
 #endif
 
 #if NGPIO > 0
-	sc->sc_pins = kmem_alloc(sizeof(gpio_pin_t) * gpp_npins, KM_SLEEP);
+	sc->sc_pins = kmem_zalloc(sizeof(gpio_pin_t) * gpp_npins, KM_SLEEP);
 
-	for (i = 0; i < gpp_npins; i += 32) {
-		dir = MVSOCGPP_READ(sc, MVSOCGPP_GPIODOEC(i));
-		valin = MVSOCGPP_READ(sc, MVSOCGPP_GPIODI(i));
-		valout = MVSOCGPP_READ(sc, MVSOCGPP_GPIODO(i));
-		polarity = MVSOCGPP_READ(sc, MVSOCGPP_GPIODIP(i));
-	}
 	for (i = 0, mask = 1; i < gpp_npins; i++, mask <<= 1) {
+		if ((i & (32 - 1)) == 0) {
+			mask = 1;
+			dir = MVSOCGPP_READ(sc, MVSOCGPP_GPIODOEC(i));
+			valin = MVSOCGPP_READ(sc, MVSOCGPP_GPIODI(i));
+			valout = MVSOCGPP_READ(sc, MVSOCGPP_GPIODO(i));
+			polarity = MVSOCGPP_READ(sc, MVSOCGPP_GPIODIP(i));
+			blink = MVSOCGPP_READ(sc, MVSOCGPP_GPIOBE(i));
+		}
 		pins = &sc->sc_pins[i];
 		pins->pin_num = i;
-		pins->pin_caps =
-		    (GPIO_PIN_INPUT | GPIO_PIN_OUTPUT | GPIO_PIN_INVIN);
-		if(dir & mask) {
+		pins->pin_caps = (GPIO_PIN_INPUT | GPIO_PIN_OUTPUT |
+		    GPIO_PIN_INVIN | GPIO_PIN_PULSATE);
+		if (dir & mask) {
 			pins->pin_flags = GPIO_PIN_INPUT;
 			pins->pin_state =
 			    (valin & mask) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
@@ -209,6 +213,12 @@ mvsocgpp_attach(device_t parent, device_t self, void *aux)
 			pins->pin_flags = GPIO_PIN_OUTPUT;
 			pins->pin_state =
 			    (valout & mask) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
+		}
+		if (polarity & mask) {
+			pins->pin_flags |= GPIO_PIN_INVIN;
+		}
+		if (blink & mask) {
+			pins->pin_flags |= GPIO_PIN_PULSATE;
 		}
 	}
 	sc->sc_gpio_chipset.gp_cookie = sc;

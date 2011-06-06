@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.11 2009/12/14 00:46:04 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.11.6.1 2011/06/06 09:06:03 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -125,30 +125,38 @@ typedef struct __fpregset_oabi __fpregset_t;
 typedef struct {
 	__gregset_t	__gregs;
 	__fpregset_t	__fpregs;
+	__greg_t	_mc_tlsbase;
+#if !__mips_n32
+	__greg_t	__mc_unused;
+#endif
 } mcontext_t;
 
-#if defined(_KERNEL) && defined(_LP64)
+#if defined(_KERNEL) && !defined(__mips_o32)
 typedef	__int32_t	__greg32_t;
 typedef __greg32_t	__gregset32_t[_NGREG];
 
 typedef struct {
 	__gregset32_t		__gregs;
 	struct __fpregset_oabi	__fpregs;
+	__greg32_t		_mc_tlsbase;
+	__greg32_t		__mc_unused;
 } mcontext_o32_t;
 
 typedef struct {
 	__gregset_t		__gregs;
 	struct __fpregset_nabi	__fpregs;
+	__greg_t		_mc_tlsbase;
 } mcontext32_t;
 
 #endif /* _KERNEL && _LP64 */
 
 #endif /* !__ASSEMBLER__ */
 
-#define _UC_MACHINE_PAD	16	/* Padding appended to ucontext_t */
+#define _UC_MACHINE_PAD		14	/* Padding appended to ucontext_t */
 
 #define	_UC_SETSTACK	0x00010000
 #define	_UC_CLRSTACK	0x00020000
+#define	_UC_TLSBASE	0x00040000
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_EPC])
@@ -159,7 +167,61 @@ typedef struct {
 #define _UC_MACHINE32_SP(uc)	_UC_MACHINE_SP(uc)
 #define _UC_MACHINE32_PC(uc)	_UC_MACHINE_PC(uc)
 #define _UC_MACHINE32_INTRV(uc)	_UC_MACHINE_INTRV(uc)
+#define _UC_MACHINE32_PAD	14	/* Padding appended to ucontext32_t */
 
 #define	_UC_MACHINE32_SET_PC(uc, pc)	_UC_MACHINE_PC((uc), (pc))
+
+#define	__UCONTEXT_SIZE_O32	(40 + 296 +  56)	/* 392 */
+#define	__UCONTEXT_SIZE_N32	(40 + 568 +  56)	/* 664 */
+#define	__UCONTEXT_SIZE_N64	(56 + 576 + 112)	/* 774 */
+
+#ifdef __mips_o32
+#define	__UCONTEXT_SIZE		__UCONTEXT_SIZE_O32
+#elif __mips_n32
+#define	__UCONTEXT_SIZE		__UCONTEXT_SIZE_N32
+#elif __mips_n64
+#define	__UCONTEXT_SIZE		__UCONTEXT_SIZE_N64
+#define	__UCONTEXT32_SIZE	__UCONTEXT_SIZE_N32
+#elif
+#error O64 is not supported
+#endif
+
+#if defined(_LIBC_SOURCE) || defined(_RTLD_SOURCE) || defined(__LIBPTHREAD_SOURCE__)
+#define	TLS_TP_OFFSET	0x7000
+#define	TLS_DTV_OFFSET	0x8000
+
+#include <sys/tls.h>
+
+__CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x8000);
+__CTASSERT(TLS_TP_OFFSET % sizeof(struct tls_tcb) == 0);
+
+static __inline struct tls_tcb *
+__lwp_gettcb_fast(void)
+{
+	struct tls_tcb *__tcb;
+
+	/*
+	 * Only emit a rdhwr $3, $29 so the kernel can quickly emulate it.
+	 */
+	__asm __volatile(".set push; .set mips32r2; "
+		"rdhwr $3,$29; .set pop;"
+#ifdef _LP64
+		"daddiu %[__tcb],$3,%1"
+#else
+		"addiu %[__tcb],$3,%1"
+#endif
+	    : [__tcb]"=r"(__tcb)
+	    : [__offset]"n"(-(TLS_TP_OFFSET + sizeof(*__tcb)))
+	    : "v1");
+	return __tcb;
+}
+
+static inline void
+__lwp_settcb(struct tls_tcb *__tcb)
+{
+	__tcb += TLS_TP_OFFSET / sizeof(*__tcb) + 1;
+	_lwp_setprivate(__tcb);
+}
+#endif
 
 #endif	/* _MIPS_MCONTEXT_H_ */

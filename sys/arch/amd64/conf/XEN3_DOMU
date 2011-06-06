@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.26 2010/11/23 11:13:54 hannken Exp $
+# $NetBSD: XEN3_DOMU,v 1.26.2.1 2011/06/06 09:04:50 jruoho Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,9 +11,8 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 maxusers	32		# estimated number of users
 
 #
-options 	MAXPHYS=32768   #xbd doesn't handle 64k transfers
+options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 #options 	DOM0OPS
-#options         XEN_BALLOON	# Xen memory ballooning - Experimental
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
@@ -41,15 +40,15 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
-options 	DEBUG		# expensive debugging checks/support 
+options 	DEBUG		# expensive debugging checks/support
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
-makeoptions 	DEBUG="-g"	# compile full symbol table
-makeoptions 	COPTS="-O2 -fno-omit-frame-pointer"
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 options DDB_COMMANDONENTER="trace;show registers"
 
 # Compatibility options
@@ -60,7 +59,7 @@ options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-options		COMPAT_50	# NetBSD 5.0
+options 	COMPAT_50	# NetBSD 5.0
 
 options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
@@ -92,9 +91,10 @@ file-system 	PTYFS		# /dev/pts/N support
 file-system 	TMPFS		# Efficient memory file-system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options		WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -154,13 +154,14 @@ mainbus0 at root
 hypervisor*	at mainbus?		# Xen hypervisor
 
 vcpu*		at hypervisor?		# Xen virtual CPUs
-xenbus*		at hypervisor?		# Xen virtual bus
-xennet*		at xenbus?		# Xen virtual network interface
+xenbus* 	at hypervisor?		# Xen virtual bus
+xennet* 	at xenbus?		# Xen virtual network interface
 xbd*		at xenbus?		# Xen virtual block device
+balloon*	at xenbus?		# Xen balloon device
 
 xencons*	at hypervisor?		# Xen virtual console
 
-# PCI pass-through support: 
+# PCI pass-through support:
 #xpci* at xenbus ?			#Xen3 PCI front end driver
 #pci* at xpci ?
 # you then need to add your PCI devices drivers below.

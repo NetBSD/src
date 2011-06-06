@@ -1,9 +1,9 @@
-/*	$NetBSD: iplsum.c,v 1.4 2009/03/18 13:24:38 tsutsui Exp $	*/
+/*	$NetBSD: iplsum.c,v 1.4.6.1 2011/06/06 09:05:41 jruoho Exp $	*/
 
 /*
  * Calculate 32bit checksum of IPL and store in a certain location
  *
- * Written in 2003 by ITOH Yasufumi (itohy@NetBSD.org).
+ * Written in 2003 by ITOH Yasufumi.
  * Public domain
  */
 

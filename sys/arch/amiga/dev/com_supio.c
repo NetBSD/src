@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.28 2010/02/02 19:03:31 phx Exp $ */
+/*	$NetBSD: com_supio.c,v 1.28.6.1 2011/06/06 09:04:53 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.28 2010/02/02 19:03:31 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.28.6.1 2011/06/06 09:04:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,7 @@ com_supio_attach(device_t parent, device_t self, void *aux)
 	COM_INIT_REGS(csc->sc_regs, iot, ioh, iobase);
 
 	csc->sc_frequency = supa->supio_arg;
+	csc->sc_frequency /= 4;	/* XXX IOBlix firmware sets MCR_PRESCALE? */
 
 	com_attach_subr(csc);
 

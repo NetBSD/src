@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.335 2010/12/11 18:18:09 matt Exp $
+#	$NetBSD: files.pci,v 1.335.2.1 2011/06/06 09:08:10 jruoho Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -27,6 +27,8 @@ file	dev/pci/pciconf.c		pci & pci_netbsd_configure
 file	dev/pci/pcibusprint.c		pcibus
 
 file	dev/pci/pci_verbose.c		pci & pciverbose
+
+file	dev/pci/wsdisplay_pci.c		wsdisplay & pci
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
 # with USB.  This is a combo chip:
@@ -303,6 +305,11 @@ file	dev/pci/pdcide.c		pdcide
 device	rccide: ata, ata_dma, ata_udma, pciide_common, wdc_common
 attach	rccide at pci
 file	dev/pci/rccide.c		rccide
+
+# RDC IDE controllers
+device	rdcide: ata, ata_dma, ata_udma, pciide_common, wdc_common
+attach	rdcide at pci
+file	dev/pci/rdcide.c		rdcide
 
 # ServerWorks SATA controllers
 device	svwsata: ata, ata_dma, ata_udma, pciide_common, wdc_common, sata
@@ -844,11 +851,8 @@ file	dev/pci/cxgb/cxgb_l2t.c		cxgbc | cxgb
 file	dev/pci/cxgb/cxgb_osdep.c	cxgbc | cxgb
 
 # Chips & Technologies 65550 framebuffer console driver
-device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
-attach	chipsfb at pci
-file	dev/pci/chipsfb.c		chipsfb
-defflag	opt_chipsfb.h	CHIPSFB_DEBUG
-defflag	opt_chipsfb.h	CHIPSFB_WAIT
+attach	chipsfb at pci with chipsfb_pci
+file	dev/pci/chipsfb.c		chipsfb_pci
 
 # 3Com 3c990
 device	txp: ether, ifnet, arp
@@ -970,6 +974,11 @@ device	age: ether, ifnet, arp, mii, mii_phy
 attach	age at pci
 file	dev/pci/if_age.c		age
 
+# Attansic/Atheros L1C/L2C Gigabit Ethernet
+device	alc: ether, ifnet, arp, mii, mii_phy
+attach	alc at pci
+file	dev/pci/if_alc.c		alc
+
 # Attanisc/Atheros L1E Gigabit Ethernet
 device	ale: ether, ifnet, arp, mii, mii_phy
 attach	ale at pci
@@ -1030,6 +1039,11 @@ attach	nca at pci with nca_pci
 file	dev/pci/nca_pci.c	nca_pci
 
 # Agere ET1310/1301 Ethernet
-device  et: ether, ifnet, arp, mii, mii_phy
-attach  et at pci
-file    dev/pci/if_et.c                 et
+device	et: ether, ifnet, arp, mii, mii_phy
+attach	et at pci
+file	dev/pci/if_et.c			et
+
+# RDC Semiconductor R6040 10/100 Ethernet
+device	vte: ether, ifnet, arp, mii, mii_phy
+attach	vte at pci
+file	dev/pci/if_vte.c		vte

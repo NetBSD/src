@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.12 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.12.28.1 2011/06/06 09:07:44 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.12 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.12.28.1 2011/06/06 09:07:44 jruoho Exp $");
 
 #include <sys/param.h>
 
@@ -87,7 +87,7 @@ arcbios_init(vaddr_t pblkva)
 	}
 
 	/* Initialize our pointer to the firmware vector. */
-	ARCBIOS = ARCBIOS_SPB->FirmwareVector;
+	ARCBIOS = (void *)(intptr_t)ARCBIOS_SPB->FirmwareVector;
 
 	/* Find the ARC BIOS console device major (needed by cnopen) */
 	maj = cdevsw_lookup_major(&arcbios_cdevsw);
@@ -100,7 +100,7 @@ arcbios_init(vaddr_t pblkva)
 	/*
 	 * Fetch the system ID.
 	 */
-	sid = (*ARCBIOS->GetSystemId)();
+	sid = arcbios_GetSystemId();
 	if (sid != NULL) {
 		memcpy(arcbios_sysid_vendor, sid->VendorId,
 		    sizeof(sid->VendorId));
@@ -148,9 +148,9 @@ arcbios_subtree_walk(struct arcbios_component *node,
     struct arcbios_treewalk_context *atc)
 {
 
-	for (node = (*ARCBIOS->GetChild)(node);
+	for (node = arcbios_GetChild(node);
 	     node != NULL && atc->atc_terminate == 0;
-	     node = (*ARCBIOS->GetPeer)(node)) {
+	     node = arcbios_GetPeer(node)) {
 		(*func)(node, atc);
 		if (atc->atc_terminate)
 			return;
@@ -178,7 +178,7 @@ arcbios_component_id_copy(struct arcbios_component *node,
 	dstsize--;
 	if (dstsize > node->IdentifierLength)
 		dstsize = node->IdentifierLength;
-	memcpy(dst, node->Identifier, dstsize);
+	memcpy(dst, (void *)(intptr_t)node->Identifier, dstsize);
 	dst[dstsize] = '\0';
 }
 
@@ -192,7 +192,7 @@ arcbios_cngetc(dev_t dev)
 	u_long count;
 	char c;
 
-	(*ARCBIOS->Read)(ARCBIOS_STDIN, &c, 1, &count);
+	arcbios_Read(ARCBIOS_STDIN, &c, 1, &count);
 	return (c);
 }
 
@@ -202,5 +202,5 @@ arcbios_cnputc(dev_t dev, int c)
 	u_long count;
 	char ch = c;
 
-	(*ARCBIOS->Write)(ARCBIOS_STDOUT, &ch, 1, &count);
+	arcbios_Write(ARCBIOS_STDOUT, &ch, 1, &count);
 }

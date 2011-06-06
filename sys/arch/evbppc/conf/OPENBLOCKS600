@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS600,v 1.3 2010/11/23 11:13:57 hannken Exp $
+#	$NetBSD: OPENBLOCKS600,v 1.3.2.1 2011/06/06 09:05:31 jruoho Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs600"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS600-$Revision: 1.3 $"
+#ident 		"OPENBLOCKS600-$Revision: 1.3.2.1 $"
 
 maxusers	32
 
@@ -98,7 +98,8 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 #
 
-options 	QUOTA			# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI			# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER		# Network File System server

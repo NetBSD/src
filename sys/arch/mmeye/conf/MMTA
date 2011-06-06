@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.43 2010/11/23 11:14:02 hannken Exp $
+#	$NetBSD: MMTA,v 1.43.2.1 2011/06/06 09:06:13 jruoho Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -20,6 +20,10 @@ options		SH3
 options 	SH7708R			# 100MHz
 options 	PCLOCK=33330000		# 33.33MHz
 options 	INITTODR_ALWAYS_USE_RTC
+
+options 	IOM_RAM_SIZE=0x01000000	# 16MB
+options 	IOM_RAM_BEGIN=0x0c000000
+makeoptions	DEFTEXTADDR="0x8c010000"
 
 options 	INSECURE	# disable kernel security levels
 
@@ -73,7 +77,8 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	NFSSERVER	# Network File System server
 #options 	FIFO		# FIFOs; RECOMMENDED
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -116,12 +121,12 @@ shb* at mainbus?
 
 rtc*	at shb?
 
-com0	at mainbus?
-com1	at mainbus?
+com0	at mainbus? addr1 0xa4000000 irq1 11
+com1	at mainbus? addr1 0xa4000008 irq1 12
 
 # SH PCMCIA controllers
-mmeyepcmcia0	at mainbus?
-mmeyepcmcia1	at mainbus?
+mmeyepcmcia0 at mainbus? addr1 0xb000000a addr2 0xb8000000 irq1 3 irq2 10
+mmeyepcmcia1 at mainbus? addr1 0xb000000c addr2 0xb9000000 irq1 4 irq2 9
 
 # PCMCIA bus support
 pcmcia*	at mmeyepcmcia? controller ? socket ?

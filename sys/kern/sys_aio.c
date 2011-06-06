@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.36 2010/12/17 22:05:36 yamt Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.36.2.1 2011/06/06 09:09:35 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.36 2010/12/17 22:05:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.36.2.1 2011/06/06 09:09:35 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1149,7 +1149,7 @@ sysctl_aio_init(void)
 void
 aio_print_jobs(void (*pr)(const char *, ...))
 {
-	struct proc *p = (curlwp == NULL ? NULL : curlwp->l_proc);
+	struct proc *p = curlwp->l_proc;
 	struct aioproc *aio;
 	struct aio_job *a_job;
 	struct aiocb *aiocbp;

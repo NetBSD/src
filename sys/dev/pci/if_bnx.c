@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.41 2011/01/06 03:37:55 jym Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.41.2.1 2011/06/06 09:08:12 jruoho Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.41 2011/01/06 03:37:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.41.2.1 2011/06/06 09:08:12 jruoho Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -717,9 +717,10 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc->bnx_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
 
-	/* set phyflags before mii_attach() */
+	/* set phyflags and chipid before mii_attach() */
 	dict = device_properties(self);
 	prop_dictionary_set_uint32(dict, "phyflags", sc->bnx_phy_flags);
+	prop_dictionary_set_uint32(dict, "chipid", sc->bnx_chipid);
 
 	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
 		mii_flags |= MIIF_HAVEFIBER;
@@ -5161,10 +5162,12 @@ bnx_intr(void *xsc)
 	const struct status_block *sblk;
 
 	sc = xsc;
-	if (!device_is_active(sc->bnx_dev))
-		return 0;
 
 	ifp = &sc->bnx_ec.ec_if;
+
+	if (!device_is_active(sc->bnx_dev) ||
+	    (ifp->if_flags & IFF_RUNNING) == 0)
+		return 0;
 
 	DBRUNIF(1, sc->interrupts_generated++);
 

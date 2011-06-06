@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.14 2010/06/24 13:03:09 hannken Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.14.2.1 2011/06/06 09:09:22 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.14 2010/06/24 13:03:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.14.2.1 2011/06/06 09:09:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,55 +366,38 @@ hfs_time_to_timespec(uint32_t hfstime, struct timespec *unixtime)
 uint16_t be16tohp(void** inout_ptr)
 {
 	uint16_t	result;
-	uint16_t *ptr;
 	
-	if(inout_ptr==NULL)
+	if(inout_ptr == NULL)
 		return 0;
 		
-	ptr = *inout_ptr;
-
-	result = be16toh(*ptr);
-
-	ptr++;
-	*inout_ptr = ptr;
+	memcpy(&result, *inout_ptr, sizeof(result));
+	*inout_ptr = (char *)*inout_ptr + sizeof(result);
 	
-	return result;
+	return be16toh(result);
 }
 
 uint32_t be32tohp(void** inout_ptr)
 {
 	uint32_t	result;
-	uint32_t *ptr;
 	
-	if(inout_ptr==NULL)
+	if(inout_ptr == NULL)
 		return 0;
 
-	ptr = *inout_ptr;
-
-	result = be32toh(*ptr);
-
-	ptr++;
-	*inout_ptr = ptr;
-	
-	return result;
+	memcpy(&result, *inout_ptr, sizeof(result));
+	*inout_ptr = (char *)*inout_ptr + sizeof(result);
+	return be32toh(result);
 }
 
 uint64_t be64tohp(void** inout_ptr)
 {
 	uint64_t	result;
-	uint64_t *ptr;
 	
-	if(inout_ptr==NULL)
+	if(inout_ptr == NULL)
 		return 0;
 
-	ptr = *inout_ptr;
-
-	result = be64toh(*ptr);
-
-	ptr++;
-	*inout_ptr = ptr;
-	
-	return result;
+	memcpy(&result, *inout_ptr, sizeof(result));
+	*inout_ptr = (char *)*inout_ptr + sizeof(result);
+	return be64toh(result);
 }
 
 enum vtype

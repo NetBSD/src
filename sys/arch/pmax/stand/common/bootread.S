@@ -1,4 +1,4 @@
-/*	$NetBSD: bootread.S,v 1.7 2011/01/10 16:43:29 tsutsui Exp $	*/
+/*	$NetBSD: bootread.S,v 1.7.2.1 2011/06/06 09:06:24 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,12 +33,9 @@
 #include <mips/cpuregs.h>
 #include <machine/dec_prom.h>
 
-	.set	noreorder
+	.set	reorder		# make as(1) handle hazard and BDslot
 LEAF(bootread)
 	lw	v0, _C_LABEL(callv)	# get pointer to call back vectors
-	nop
 	lw	v0, 0x58(v0)	# offset for callv->_bootread
-	nop
 	j	v0		# call PROM bootread
-	 nop
 END(bootread)

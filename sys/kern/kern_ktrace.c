@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.155 2010/11/19 06:44:42 dholland Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.155.2.1 2011/06/06 09:09:29 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.155 2010/11/19 06:44:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.155.2.1 2011/06/06 09:09:29 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -673,6 +673,25 @@ ktr_execenv(const void *bf, size_t len)
 	ktr_kmem(l, KTR_EXEC_ENV, bf, len);
 }
 
+void
+ktr_execfd(int fd, u_int dtype)
+{
+	struct ktrace_entry *kte;
+	struct ktr_execfd* ktp;
+
+	lwp_t *l = curlwp;
+
+	if (!KTRPOINT(l->l_proc, KTR_EXEC_FD))
+		return;
+
+	if (ktealloc(&kte, (void *)&ktp, l, KTR_EXEC_FD, sizeof(*ktp)))
+		return;
+
+	ktp->ktr_fd = fd;
+	ktp->ktr_dtype = dtype;
+	ktraddentry(l, kte, KTA_WAITOK);
+}
+
 static void
 ktr_kmem(lwp_t *l, int type, const void *bf, size_t len)
 {
@@ -960,39 +979,6 @@ ktr_kuser(const char *id, void *addr, size_t len)
 	strlcpy(ktp->ktr_id, id, KTR_USER_MAXIDLEN);
 
 	memcpy(ktp + 1, addr, len);
-
-	ktraddentry(l, kte, KTA_WAITOK);
-}
-
-void
-ktr_mmsg(const void *msgh, size_t size)
-{
-	lwp_t *l = curlwp;
-
-	if (!KTRPOINT(l->l_proc, KTR_MMSG))
-		return;
-
-	ktr_kmem(l, KTR_MMSG, msgh, size);
-}
-
-void
-ktr_mool(const void *kaddr, size_t size, const void *uaddr)
-{
-	struct ktrace_entry *kte;
-	struct ktr_mool *kp;
-	struct ktr_mool *bf;
-	lwp_t *l = curlwp;
-
-	if (!KTRPOINT(l->l_proc, KTR_MOOL))
-		return;
-
-	if (ktealloc(&kte, (void *)&kp, l, KTR_MOOL, size + sizeof(*kp)))
-		return;
-
-	kp->uaddr = uaddr;
-	kp->size = size;
-	bf = kp + 1; /* Skip uaddr and size */
-	(void)memcpy(bf, kaddr, size);
 
 	ktraddentry(l, kte, KTA_WAITOK);
 }

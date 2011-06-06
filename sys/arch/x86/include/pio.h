@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.8 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: pio.h,v 1.8.28.1 2011/06/06 09:07:06 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * Functions to provide access to x86 programmed I/O instructions.
  */
 
-u_int8_t	inb(unsigned);
+uint8_t		inb(unsigned);
 void		insb(unsigned, void *, int);
 uint16_t	inw(unsigned);
 void		insw(unsigned, void *, int);

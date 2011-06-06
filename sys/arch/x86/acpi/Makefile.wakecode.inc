@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.wakecode.inc,v 1.4 2009/01/18 13:55:31 hans Exp $
+# $NetBSD: Makefile.wakecode.inc,v 1.4.8.1 2011/06/06 09:07:05 jruoho Exp $
 # FreeBSD: src/sys/i386/acpica/Makefile,v 1.3 2002/05/01 21:54:07 peter Exp
 
 ACPI_WAKECODE_S=	${S}/arch/${MACHINE}/acpi/acpi_wakecode.S
@@ -8,9 +8,12 @@ ACPI_GENCMD=		AWK=${TOOL_AWK:Q} \
 			SED=${TOOL_SED:Q} \
 			${HOST_SH}
 
+AFLAGS.acpi_wakecode.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:} -I${.CURDIR}
+
+
 acpi_wakecode.h: ${ACPI_WAKECODE_S} ${ACPI_GENWAKECODE}
 	${_MKTARGET_CREATE}
-	${CC} -I${.CURDIR} -c ${ACPI_WAKECODE_S}
+	${CC} ${AFLAGS.acpi_wakecode.S} -c ${ACPI_WAKECODE_S}
 	${LD} -M -Map acpi_wakecode.bin.map -z defs -nostdlib \
 	    --oformat binary -e wakeup_16 -Ttext 0 \
 	    -o acpi_wakecode.bin acpi_wakecode.o

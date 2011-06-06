@@ -1,9 +1,7 @@
-/*	$NetBSD: emul.c,v 1.148 2011/01/06 11:22:55 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.148.2.1 2011/06/06 09:10:07 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.148 2011/01/06 11:22:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.148.2.1 2011/06/06 09:10:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -62,11 +60,21 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.148 2011/01/06 11:22:55 pooka Exp $");
 
 #include "rump_private.h"
 
+/*
+ * physmem is largely unused (except for nmbcluster calculations),
+ * so pick a default value which suits ZFS.  if an application wants
+ * a very small memory footprint, it can still adjust this before
+ * calling rump_init()
+ */
+#define PHYSMEM 512*256
+int physmem = PHYSMEM;
+int nkmempages = PHYSMEM/2; /* from le chapeau */
+#undef PHYSMEM
+
 struct lwp lwp0;
 struct vnode *rootvp;
 dev_t rootdev = NODEV;
-int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
-int nkmempages = 256*256/2; /* from le chapeau */
+
 const int schedppq = 1;
 int hardclock_ticks;
 bool mp_online = false;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.32 2011/01/11 00:49:50 macallan Exp $	*/
+/*	$NetBSD: dbri.c,v 1.32.2.1 2011/06/06 09:08:35 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.32 2011/01/11 00:49:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.32.2.1 2011/06/06 09:08:35 jruoho Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1729,8 +1729,12 @@ dbri_round_blocksize(void *hdl, int bs, int mode,
 			const audio_params_t *param)
 {
 
-	/* DBRI DMA segment size, rounded down to 32bit alignment */
-	return 0x1ffc;
+	/*
+	 * DBRI DMA segment size can be up to 0x1fff, sixes that are not powers
+	 * of two seem to confuse the upper audio layer so we're going with
+	 * 0x1000 here
+	 */
+	return 0x1000;
 }
 
 static int
@@ -1946,7 +1950,7 @@ static size_t
 dbri_round_buffersize(void *hdl, int dir, size_t bufsize)
 {
 #ifdef DBRI_BIG_BUFFER
-	return 16*0x1ffc;	/* use ~128KB buffer */
+	return 0x20000;	/* use 128KB buffer */
 #else
 	return bufsize;
 #endif

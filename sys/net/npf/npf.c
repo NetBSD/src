@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.2 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.2.2.1 2011/06/06 09:09:53 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.2 2010/12/18 01:07:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.2.2.1 2011/06/06 09:09:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,6 +59,7 @@ MODULE(MODULE_CLASS_MISC, npf, NULL);
 
 void		npfattach(int);
 
+static int	npf_fini(void);
 static int	npf_dev_open(dev_t, int, int, lwp_t *);
 static int	npf_dev_close(dev_t, int, int, lwp_t *);
 static int	npf_dev_ioctl(dev_t, u_long, void *, int, lwp_t *);
@@ -221,6 +222,9 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	case IOC_NPF_SESSIONS_LOAD:
 		error = npfctl_sessions_load(cmd, data);
 		break;
+	case IOC_NPF_UPDATE_RULE:
+		error = npfctl_update_rule(cmd, data);
+		break;
 	default:
 		error = ENOTTY;
 		break;
@@ -250,9 +254,9 @@ static void
 npf_core_destroy(npf_core_t *nc)
 {
 
-	npf_tableset_destroy(nc->n_tables);
 	npf_ruleset_destroy(nc->n_rules);
 	npf_ruleset_destroy(nc->n_nat_rules);
+	npf_tableset_destroy(nc->n_tables);
 	kmem_free(nc, sizeof(npf_core_t));
 }
 

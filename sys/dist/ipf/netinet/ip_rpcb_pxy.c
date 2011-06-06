@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.14 2009/08/19 08:36:12 darrenr Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.14.6.1 2011/06/06 09:08:47 jruoho Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rpcb_pxy.c,v 1.14 2009/08/19 08:36:12 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rpcb_pxy.c,v 1.14.6.1 2011/06/06 09:08:47 jruoho Exp $");
 
 #define	IPF_RPCB_PROXY
 
@@ -793,11 +793,13 @@ ippr_rpcb_modreq(fin, nat, rm, m, off)
 	bzero(uaddr, sizeof(uaddr)); /* Just in case we need padding. */
 #if defined(SNPRINTF) && defined(_KERNEL)
 	SNPRINTF(uaddr, sizeof(uaddr),
-#else
-	(void) sprintf(uaddr,
-#endif
 		       "%u.%u.%u.%u.%u.%u", i[0] & 0xff, i[1] & 0xff,
 		       i[2] & 0xff, i[3] & 0xff, p[0] & 0xff, p[1] & 0xff);
+#else
+	(void) sprintf(uaddr,
+		       "%u.%u.%u.%u.%u.%u", i[0] & 0xff, i[1] & 0xff,
+		       i[2] & 0xff, i[3] & 0xff, p[0] & 0xff, p[1] & 0xff);
+#endif
 	len = strlen(uaddr);
 	xlen = XDRALIGN(len);
 
@@ -1323,11 +1325,13 @@ ippr_rpcb_modv3(fin, nat, rm, m, off)
 	bzero(uaddr, sizeof(uaddr)); /* Just in case we need padding. */
 #if defined(SNPRINTF) && defined(_KERNEL)
 	SNPRINTF(uaddr, sizeof(uaddr),
-#else
-	(void) sprintf(uaddr,
-#endif
 		       "%u.%u.%u.%u.%u.%u", i[0] & 0xff, i[1] & 0xff,
 		       i[2] & 0xff, i[3] & 0xff, p[0] & 0xff, p[1] & 0xff);
+#else
+	(void) sprintf(uaddr,
+		       "%u.%u.%u.%u.%u.%u", i[0] & 0xff, i[1] & 0xff,
+		       i[2] & 0xff, i[3] & 0xff, p[0] & 0xff, p[1] & 0xff);
+#endif
 	len = strlen(uaddr);
 	xlen = XDRALIGN(len);
 
@@ -1403,12 +1407,15 @@ ippr_rpcb_modv4(fin, nat, rm, m, off)
 						padding. */
 #if defined(SNPRINTF) && defined(_KERNEL)
 		SNPRINTF(uaddr, sizeof(uaddr),
-#else
-		(void) sprintf(uaddr,
-#endif
 			       "%u.%u.%u.%u.%u.%u", i[0] & 0xff,
 			       i[1] & 0xff, i[2] & 0xff, i[3] & 0xff,
 			       p[0] & 0xff, p[1] & 0xff);
+#else
+		(void) sprintf(uaddr,
+			       "%u.%u.%u.%u.%u.%u", i[0] & 0xff,
+			       i[1] & 0xff, i[2] & 0xff, i[3] & 0xff,
+			       p[0] & 0xff, p[1] & 0xff);
+#endif
 		len = strlen(uaddr);
 		xlen = XDRALIGN(len);
 

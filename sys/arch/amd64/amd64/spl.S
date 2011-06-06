@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.23 2009/11/27 03:23:04 rmind Exp $	*/
+/*	$NetBSD: spl.S,v 1.23.6.1 2011/06/06 09:04:47 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -229,7 +229,7 @@ ENTRY(cx8_spllower)
 	movl	CPUVAR(ILEVEL),%edx
 	movq	%rbx,%r8
 	cmpl	%edx,%edi			/* new level is lower? */
-	jae,pn	1f
+	jae	1f
 0:
 	movl	CPUVAR(IPENDING),%eax
 	movl	%edi,%ecx
@@ -239,9 +239,9 @@ ENTRY(cx8_spllower)
 	 * On the P4 this jump is cheaper than patching in junk
 	 * using cmov.  Is cmpxchg expensive if it fails?
 	 */
-	jnz,pn	2f
+	jnz	2f
 	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
-	jnz,pn	0b
+	jnz	0b
 1:
 	movq	%r8,%rbx
 	ret

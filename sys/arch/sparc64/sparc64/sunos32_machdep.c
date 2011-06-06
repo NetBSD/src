@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.31 2009/12/10 14:13:52 matt Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.31.6.1 2011/06/06 09:06:53 jruoho Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.31 2009/12/10 14:13:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.31.6.1 2011/06/06 09:06:53 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -127,7 +127,7 @@ sunos32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	 * Set the registers to 0 except for:
 	 *	%o6: stack pointer, built in exec())
 	 *	%tstate: (retain icc and xcc and cwp bits)
-	 *	%g1: address of p->p_psstr (used by crt0)
+	 *	%g1: p->p_psstrp (used by crt0)
 	 *	%tpc,%tnpc: entry point of program
 	 */
 	tstate = ((PSTATE_USER32)<<TSTATE_PSTATE_SHIFT) 
@@ -147,7 +147,7 @@ sunos32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	}
 	memset(tf, 0, sizeof *tf);
 	tf->tf_tstate = tstate;
-	tf->tf_global[1] = (u_int)(u_long)p->p_psstr;
+	tf->tf_global[1] = (u_int)p->p_psstrp;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 

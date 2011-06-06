@@ -1,4 +1,4 @@
-/* $NetBSD: mtx-1.c,v 1.3 2006/02/23 04:52:49 gdamore Exp $ */
+/* $NetBSD: mtx-1.c,v 1.3.108.1 2011/06/06 09:05:28 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.3 2006/02/23 04:52:49 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.3.108.1 2011/06/06 09:05:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: mtx-1.c,v 1.3 2006/02/23 04:52:49 gdamore Exp $");
 	(*((volatile uint16_t *)MIPS_PHYS_TO_KSEG1(x)) = (v))
 
 static void mtx1_init(void);
-static int mtx1_pci_intr_map(struct pci_attach_args *,
+static int mtx1_pci_intr_map(const struct pci_attach_args *,
 				 pci_intr_handle_t *);
 static void mtx1_reboot(void);
 
@@ -80,7 +80,7 @@ void
 mtx1_init(void)
 {
 
-	if (MIPS_PRID_COPTS(cpu_id) != MIPS_AU1500)
+	if (MIPS_PRID_COPTS(mips_options.mips_cpu_id) != MIPS_AU1500)
 		panic("mtx-1: CPU not an AU1500!");
 
 	/*
@@ -93,7 +93,7 @@ mtx1_init(void)
 }
 
 int
-mtx1_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+mtx1_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	/*
 	 * The board has up to 4 adapters, each with two minipci slots,

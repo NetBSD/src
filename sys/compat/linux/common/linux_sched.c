@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.63 2010/07/07 01:30:35 chs Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.63.2.1 2011/06/06 09:07:27 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.63 2010/07/07 01:30:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.63.2.1 2011/06/06 09:07:27 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -696,4 +696,4 @@ linux_sys_sched_setaffinity(struct lwp *l, const struct linux_sys_sched_setaffin
 	printf("linux_sys_sched_setaffinity\n");
 #endif
 	return 0;
-};
+}

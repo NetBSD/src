@@ -1,5 +1,0 @@
-# $Heimdal: Makefile.am.common 10998 2002-05-19 18:35:37Z joda $
-# $NetBSD: Makefile.am.common,v 1.2 2008/03/22 08:36:49 mlelstv Exp $
-
-include $(top_srcdir)/cf/Makefile.am.common
-

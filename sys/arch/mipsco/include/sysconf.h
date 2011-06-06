@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.5 2009/03/14 14:46:02 dsl Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.5.6.1 2011/06/06 09:06:12 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -54,7 +54,7 @@ struct platform {
 	 *	clkinit		-	Initialize clocks
 	 */
 	void	(*cons_init)(void);
-	void	(*iointr)(unsigned, unsigned, unsigned, unsigned);
+	void	(*iointr)(uint32_t, vaddr_t, uint32_t);
 	int	(*memsize)(void *);
 	void	(*intr_establish)(int, int (*)(void *), void *); 
 	void	(*clkinit)(void);

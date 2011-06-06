@@ -1,9 +1,7 @@
-/*	$NetBSD: rumpuser.h,v 1.63 2011/01/14 13:11:08 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.63.2.1 2011/06/06 09:10:06 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +34,7 @@
 #include <stdint.h>
 #endif
 
-#define RUMPUSER_VERSION 10
+#define RUMPUSER_VERSION 14
 int rumpuser_getversion(void);
 
 int rumpuser_daemonize_begin(void);
@@ -104,7 +102,7 @@ int rumpuser_putchar(int, int *);
 int rumpuser_kill(int64_t, int, int *);
 
 #define RUMPUSER_PANIC (-1)
-void rumpuser_exit(int);
+void rumpuser_exit(int) __dead;
 void rumpuser_seterrno(int);
 
 int rumpuser_writewatchfile_setup(int, int, intptr_t, int *);
@@ -120,7 +118,7 @@ void rumpuser_biothread(void *);
 
 int  rumpuser_thread_create(void *(*f)(void *), void *, const char *, int,
 			    void **);
-void rumpuser_thread_exit(void);
+void rumpuser_thread_exit(void) __dead;
 int  rumpuser_thread_join(void *);
 
 struct rumpuser_mtx;
@@ -214,11 +212,12 @@ struct rumpuser_sp_ops {
 
 	void (*spop_lwproc_switch)(struct lwp *);
 	void (*spop_lwproc_release)(void);
-	int (*spop_lwproc_rfork)(void *, int);
+	int (*spop_lwproc_rfork)(void *, int, const char *);
 	int (*spop_lwproc_newlwp)(pid_t);
 	struct lwp * (*spop_lwproc_curlwp)(void);
 	int (*spop_syscall)(int, void *, register_t *);
-	void (*spop_procexit)(void);
+	void (*spop_lwpexit)(void);
+	void (*spop_execnotify)(const char *);
 	pid_t (*spop_getpid)(void);
 };
 
@@ -230,6 +229,6 @@ int	rumpuser_sp_copyout(void *, const void *, void *, size_t);
 int	rumpuser_sp_copyoutstr(void *, const void *, void *, size_t *);
 int	rumpuser_sp_anonmmap(void *, size_t, void **);
 int	rumpuser_sp_raise(void *, int);
-void	rumpuser_sp_fini(void);
+void	rumpuser_sp_fini(void *);
 
 #endif /* _RUMP_RUMPUSER_H_ */

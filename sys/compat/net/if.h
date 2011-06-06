@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.2 2009/01/11 03:03:07 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.2.12.1 2011/06/06 09:07:32 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ struct if_msghdr14 {
 	struct	if_data14 ifm_data; /* statistics and other data about if */
 };
 
-void compat_14_rt_ifmsg(struct ifnet *, struct if_msghdr *);
+void compat_14_rt_oifmsg(struct ifnet *);
 int compat_14_iflist(struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *,
     size_t);
 
@@ -153,8 +153,34 @@ struct if_msghdr50 {
 	struct	if_data50 ifm_data;/* statistics and other data about if */
 };
 
-void compat_50_rt_ifmsg(struct ifnet *, struct if_msghdr *);
+void compat_50_rt_oifmsg(struct ifnet *);
 int compat_50_iflist(struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *,
     size_t);
+
+/*
+ * Message format for use in obtaining information about interface addresses
+ * from sysctl and the routing socket.
+ */
+struct ifa_msghdr50 {
+	u_short	ifam_msglen;	/* to skip over non-understood messages */
+	u_char	ifam_version;	/* future binary compatibility */
+	u_char	ifam_type;	/* message type */
+	int	ifam_addrs;	/* like rtm_addrs */
+	int	ifam_flags;	/* value of ifa_flags */
+	u_short	ifam_index;	/* index for associated ifp */
+	int	ifam_metric;	/* value of ifa_metric */
+};
+
+/*
+ * Message format announcing the arrival or departure of a network interface.
+ */
+struct if_announcemsghdr50 {
+	u_short	ifan_msglen;	/* to skip over non-understood messages */
+	u_char	ifan_version;	/* future binary compatibility */
+	u_char	ifan_type;	/* message type */
+	u_short	ifan_index;	/* index for associated ifp */
+	char	ifan_name[IFNAMSIZ]; /* if name, e.g. "en0" */
+	u_short	ifan_what;	/* what type of announcement */
+};
 
 #endif /* _COMPAT_NET_IF_H_ */

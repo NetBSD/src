@@ -1,4 +1,4 @@
-/*	$NetBSD: board.h,v 1.4 2006/10/02 08:13:53 gdamore Exp $	*/
+/*	$NetBSD: board.h,v 1.4.84.1 2011/06/06 09:05:28 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -40,7 +40,7 @@ struct alchemy_board {
 	const char		*ab_name;
 	const struct obiodev	*ab_devices;
 	void		(*ab_init)(void);
-	int		(*ab_pci_intr_map)(struct pci_attach_args *,
+	int		(*ab_pci_intr_map)(const struct pci_attach_args *,
 					   pci_intr_handle_t *);
 
 	void		(*ab_reboot)(void);

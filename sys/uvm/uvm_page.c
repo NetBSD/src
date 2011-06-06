@@ -1,30 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.169 2011/01/04 08:26:33 matt Exp $	*/
-
-/*
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+/*	$NetBSD: uvm_page.c,v 1.169.2.1 2011/06/06 09:10:23 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -43,12 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and
- *      its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -97,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.169 2011/01/04 08:26:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.169.2.1 2011/06/06 09:10:23 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -477,7 +446,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 			VM_MDPAGE_INIT(&seg->pgs[i]);
 #endif
 			if (atop(paddr) >= seg->avail_start &&
-			    atop(paddr) <= seg->avail_end) {
+			    atop(paddr) < seg->avail_end) {
 				uvmexp.npages++;
 				/* add page to free pool */
 				uvm_pagefree(&seg->pgs[i]);
@@ -1747,6 +1716,7 @@ uvm_pageidlezero(void)
 	struct pgfreelist *pgfl, *gpgfl;
 	struct uvm_cpu *ucpu;
 	int free_list, firstbucket, nextbucket;
+	bool lcont = false;
 
 	ucpu = curcpu()->ci_data.cpu_uvm;
 	if (!ucpu->page_idle_zero ||
@@ -1754,7 +1724,10 @@ uvm_pageidlezero(void)
 	    	ucpu->page_idle_zero = false;
 		return;
 	}
-	mutex_enter(&uvm_fpageqlock);
+	if (!mutex_tryenter(&uvm_fpageqlock)) {
+		/* Contention: let other CPUs to use the lock. */
+		return;
+	}
 	firstbucket = ucpu->page_free_nextcolor;
 	nextbucket = firstbucket;
 	do {
@@ -1766,7 +1739,7 @@ uvm_pageidlezero(void)
 			gpgfl = &uvm.page_free[free_list];
 			while ((pg = LIST_FIRST(&pgfl->pgfl_buckets[
 			    nextbucket].pgfl_queues[PGFL_UNKNOWN])) != NULL) {
-				if (sched_curcpu_runnable_p()) {
+				if (lcont || sched_curcpu_runnable_p()) {
 					goto quit;
 				}
 				LIST_REMOVE(pg, pageq.list); /* global list */
@@ -1804,7 +1777,12 @@ uvm_pageidlezero(void)
 #endif /* PMAP_PAGEIDLEZERO */
 				pg->flags |= PG_ZERO;
 
-				mutex_spin_enter(&uvm_fpageqlock);
+				if (!mutex_tryenter(&uvm_fpageqlock)) {
+					lcont = true;
+					mutex_spin_enter(&uvm_fpageqlock);
+				} else {
+					lcont = false;
+				}
 				pg->pqflags = PQ_FREE;
 				LIST_INSERT_HEAD(&gpgfl->pgfl_buckets[
 				    nextbucket].pgfl_queues[PGFL_ZEROS],

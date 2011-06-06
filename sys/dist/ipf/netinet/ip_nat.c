@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.41 2010/04/17 21:00:44 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.41.2.1 2011/06/06 09:08:47 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -120,7 +120,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.41 2010/04/17 21:00:44 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.41.2.1 2011/06/06 09:08:47 jruoho Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.130 2010/03/16 02:24:52 darrenr Exp";
@@ -2037,7 +2037,7 @@ natinfo_t *ni;
 			/*
 			 * "ports auto" (without map-block)
 			 */
-			if ((l > 0) && (l % np->in_ppip == 0)) {
+			if ((l > 0) && np->in_ppip && (l % np->in_ppip == 0)) {
 				if (l > np->in_space) {
 					return -1;
 				} else if ((l > np->in_ppip) &&
@@ -2063,8 +2063,12 @@ natinfo_t *ni;
 			if (np->in_flags & IPN_SEQUENTIAL) {
 				port = np->in_pnext;
 			} else {
-				port = ipf_random() % (ntohs(np->in_pmax) -
-						       ntohs(np->in_pmin));
+				in_port_t d = ntohs(np->in_pmax) -
+				    ntohs(np->in_pmin) + 1;
+				if (d)
+					port = ipf_random() % d;
+				else
+					port = 0;
 				port += ntohs(np->in_pmin);
 			}
 			port = htons(port);

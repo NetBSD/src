@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.27 2011/01/03 06:07:43 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.27.2.1 2011/06/06 09:05:55 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.27 $"
+#ident          "GENERIC-$Revision: 1.27.2.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -118,7 +118,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

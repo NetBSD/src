@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.17 2008/02/20 21:43:35 drochner Exp $
+#	$NetBSD: files.shark,v 1.17.38.1 2011/06/06 09:06:44 jruoho Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -125,6 +125,10 @@ file	arch/shark/ofw/vga_ofbus.c		vga_ofbus	needs-flag
 # ofbus CyberPro
 attach	igsfb at ofbus with igsfb_ofbus
 file	arch/shark/ofw/igsfb_ofbus.c		igsfb_ofbus needs-flag
+
+# ofbus C&T 65550
+attach	chipsfb at ofbus with chipsfb_ofbus
+file	arch/shark/ofw/chipsfb_ofbus.c		chipsfb_ofbus needs-flag
 
 # Smart Card Reader
 device	scr: tty

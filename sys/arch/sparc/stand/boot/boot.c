@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.26 2010/08/25 20:16:48 christos Exp $ */
+/*	$NetBSD: boot.c,v 1.26.2.1 2011/06/06 09:06:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -60,7 +60,7 @@ paddr_t bstart, bend;	/* physical start & end address of the boot program */
 int	compatmode = 0;		/* For loading older kernels */
 u_long	loadaddrmask = -1UL;
 
-extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
+extern char bootprog_name[], bootprog_rev[];
 
 int	main(void);
 typedef void (*entry_t)(void *, int, int, int, long, long);
@@ -256,7 +256,6 @@ main(void)
 	mmu_init();
 
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	/* massage machine prom */
 	prom_patch();

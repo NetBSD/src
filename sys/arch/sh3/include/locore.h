@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.19 2008/06/01 00:46:01 uwe Exp $	*/
+/*	$NetBSD: locore.h,v 1.19.26.1 2011/06/06 09:06:42 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,6 +28,21 @@
 
 #ifdef _LOCORE
 
+#ifdef __STDC__
+#if defined(SH3) && defined(SH4)
+#define	MOV(x, r)	mov.l .L_ ## x, r; mov.l @r, r
+#define	REG_SYMBOL(x)	.L_ ## x:	.long	_C_LABEL(__sh_ ## x)
+#define	FUNC_SYMBOL(x)	.L_ ## x:	.long	_C_LABEL(__sh_ ## x)
+#elif defined(SH3)
+#define	MOV(x, r)	mov.l .L_ ## x, r
+#define	REG_SYMBOL(x)	.L_ ## x:	.long	SH3_ ## x
+#define	FUNC_SYMBOL(x)	.L_ ## x:	.long	_C_LABEL(sh3_ ## x)
+#elif defined(SH4)
+#define	MOV(x, r)	mov.l .L_ ## x, r
+#define	REG_SYMBOL(x)	.L_ ## x:	.long	SH4_ ## x
+#define	FUNC_SYMBOL(x)	.L_ ## x:	.long	_C_LABEL(sh4_ ## x)
+#endif /* SH3 && SH4 */
+#else /* !__STDC__ */
 #if defined(SH3) && defined(SH4)
 #define	MOV(x, r)	mov.l .L_/**/x, r; mov.l @r, r
 #define	REG_SYMBOL(x)	.L_/**/x:	.long	_C_LABEL(__sh_/**/x)
@@ -41,6 +56,7 @@
 #define	REG_SYMBOL(x)	.L_/**/x:	.long	SH4_/**/x
 #define	FUNC_SYMBOL(x)	.L_/**/x:	.long	_C_LABEL(sh4_/**/x)
 #endif /* SH3 && SH4 */
+#endif /* __STDC__ */
 
 /*
  * BANK1 r6 contains current trapframe pointer.
@@ -52,26 +68,24 @@
  *	+ save all registers to trapframe.
  *	+ setup kernel stack.
  *	+ change bank from 1 to 0
- *	+ set BANK0 (r4, r5, r6) = (ssr, spc, ssp)
+ *	+ NB: interrupt vector "knows" that r0_bank1 = ssp
  */
 #define	__EXCEPTION_ENTRY						;\
 	/* Check kernel/user mode. */					;\
 	mov	#0x40,	r3						;\
+	stc	ssr,	r2	/* r2 = SSR */				;\
 	swap.b	r3,	r3						;\
-	stc	ssr,	r2						;\
-	swap.w	r3,	r3	/* r3 = 0x40000000 */			;\
-	mov	r2,	r0	/* r2 = r0 = SSR */			;\
-	and	r3,	r0						;\
-	tst	r0,	r0	/* if (SSR.MD == 0) T = 1 */		;\
 	mov	r14,	r1						;\
-	mov	r6,	r14	/* frame pointer */			;\
+	swap.w	r3,	r3	/* r3 = PSL_MD */			;\
+	mov	r6,	r14	/* trapframe pointer */			;\
+	tst	r3,	r2	/* if (SSR.MD == 0) T = 1 */		;\
+	mov.l	r1,	@-r14	/* save tf_r14 */			;\
 	bf/s	1f		/* T==0 ...Exception from kernel mode */;\
 	 mov	r15,	r0						;\
 	/* Exception from user mode */					;\
 	mov	r7,	r15	/* change to kernel stack */		;\
 1:									;\
-	/* Save registers */						;\
-	mov.l	r1,	@-r14	/* tf_r14 */				;\
+	/* Save remaining registers */					;\
 	mov.l	r0,	@-r14	/* tf_r15 */				;\
 	stc.l	r0_bank,@-r14	/* tf_r0  */				;\
 	stc.l	r1_bank,@-r14	/* tf_r1  */				;\
@@ -96,14 +110,12 @@
 	add	#-8,	r14	/* skip tf_ubc, tf_expevt */		;\
 	mov	r14,	r6	/* store frame pointer */		;\
 	/* Change register bank to 0 */					;\
-	shlr	r3		/* r3 = 0x20000000 */			;\
+	shlr	r3		/* r3 = PSL_RB */			;\
 	stc	sr,	r1	/* r1 = SR */				;\
 	not	r3,	r3						;\
 	and	r1,	r3						;\
-	ldc	r3,	sr	/* SR.RB = 0 */				;\
-	/* Set up arguments. r4 = ssr, r5 = spc */			;\
-	stc	r2_bank,r4						;\
-	stc	spc,	r5
+	ldc	r3,	sr	/* SR.RB = 0 */
+
 
 /*
  * __EXCEPTION_RETURN:
@@ -188,6 +200,23 @@
 	stc	sr,	Rm						;\
 	and	Rn,	Rm						;\
 	ldc	Rm,	sr	/* unmask all interrupts */
+
+
+/*
+ * Since __INTR_MASK + __EXCEPTION_UNBLOCK is common sequence, provide
+ * this combo version that does stc/ldc just once.
+ */
+#define __INTR_MASK_EXCEPTION_UNBLOCK(Rs, Ri, Rb)			 \
+	mov	#0x78, Ri	/* 0xf0 >> 1 */				;\
+	mov	#0xef, Rb	/* ~0x10 */				;\
+	shll	Ri		/* Ri = PSL_IMASK */			;\
+	swap.b	Rb, Rb							;\
+	stc	sr, Rs							;\
+	swap.w	Rb, Rb		/* Rb = ~PSL_BL */			;\
+	or	Ri, Rs		/* SR |= PSL_IMASK */			;\
+	and	Rb, Rs		/* SR &= ~PSL_BL */			;\
+	ldc	Rs, sr
+
 
 #else /* !_LOCORE */
 

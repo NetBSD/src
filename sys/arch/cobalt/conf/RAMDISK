@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.4 2010/11/23 11:13:55 hannken Exp $
+#	$NetBSD: RAMDISK,v 1.4.2.1 2011/06/06 09:05:13 jruoho Exp $
 #
 #	memory disk based configuration file
 #
@@ -14,4 +14,4 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 makeoptions	COPTS="-Os -mmemcpy"	# generates smaller code than -O2, -O1
 
-pseudo-device	md	
+pseudo-device	md

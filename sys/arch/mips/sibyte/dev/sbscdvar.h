@@ -1,4 +1,4 @@
-/* $NetBSD: sbscdvar.h,v 1.3 2009/08/12 12:56:29 simonb Exp $ */
+/* $NetBSD: sbscdvar.h,v 1.3.6.1 2011/06/06 09:06:11 jruoho Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 /* sbscd pseudo-offset (from base) of an SCD sub-device */
-typedef u_int sbscd_offset;
+typedef u_long sbscd_offset;
 
 /* type of an on-board device.  Matches table in sbscd.c */
 enum sbscd_device_type {
@@ -45,12 +45,13 @@ enum sbscd_device_type {
 
 /* autoconfiguration match information for zbbus children */
 struct sbscd_attach_locs {
-	sbscd_offset		sa_addr;
+	sbscd_offset		sa_offset;
 	u_int			sa_intr[2];
 	enum sbscd_device_type	sa_type;
 };
 
-/* XXX can probably just get away without separate sbscd_attach_locs ? */
 struct sbscd_attach_args {
 	struct sbscd_attach_locs sa_locs;
+
+	sbscd_offset		sa_base;
 };

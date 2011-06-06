@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.5 2007/02/19 04:48:37 rumble Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.5.74.1 2011/06/06 09:06:39 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.5 2007/02/19 04:48:37 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.5.74.1 2011/06/06 09:06:39 jruoho Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -80,7 +80,8 @@ static int	giopci_bus_maxdevs(pci_chipset_tag_t, int);
 static pcireg_t	giopci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 static void	giopci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 static int	giopci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
-static int	giopci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int	giopci_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
 static const char *
 		giopci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 static void    *giopci_intr_establish(int, int, int (*)(void *), void *);
@@ -214,14 +215,15 @@ giopci_attach(struct device *parent, struct device *self, void *aux)
 #ifdef PCI_NETBSD_CONFIGURE
 	pc->pc_memext = extent_create("giopcimem", m_start, m_end,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
-	pci_configure_bus(pc, NULL, pc->pc_memext, NULL, 0, mips_dcache_align);
+	pci_configure_bus(pc, NULL, pc->pc_memext, NULL, 0,
+	    mips_cache_info.mci_dcache_align);
 #endif
 
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_memt	= SGIMIPS_BUS_SPACE_MEM;
 	pba.pba_dmat	= ga->ga_dmat;
 	pba.pba_pc	= pc;
-	pba.pba_flags	= PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags	= PCI_FLAGS_MEM_OKAY;
 	/* NB: do not set PCI_FLAGS_{MRL,MRM,MWI}_OKAY  -- true ?! */
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
@@ -289,7 +291,7 @@ giopci_conf_hook(pci_chipset_tag_t pc, int bus, int device, int function,
 }
 
 static int
-giopci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+giopci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct giopci_softc *sc = pa->pa_pc->cookie;
 

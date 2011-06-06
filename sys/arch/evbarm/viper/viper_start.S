@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_start.S,v 1.5 2007/10/17 19:54:14 garbled Exp $	*/
+/*	$NetBSD: viper_start.S,v 1.5.48.1 2011/06/06 09:05:28 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2005 Antti Kantee.  All Rights Reserved.
@@ -30,8 +30,9 @@
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pmap.h>
-#include <arm/arm32/pte.h>
+#include "assym.h"
+
+RCSID("$NetBSD: viper_start.S,v 1.5.48.1 2011/06/06 09:05:28 jruoho Exp $")
 
 /*
  * We start out with RAM mapped to the bottom 64MB.  We are jogging
@@ -86,9 +87,9 @@ _C_LABEL(viper_start):
 	add	r0, r0, #(0xa00 * 4)		/* offset to 0xa0.. */
 
 	mov	r3, #SDRAM_START		/* map to 0xa00.. */
-	orr	r3, r3, #(L1_S_AP(AP_KRW))	/* the usual perms & stuff */
+	orr	r3, r3, #(L1_S_AP_KRW)		/* the usual perms & stuff */
 	orr	r3, r3, #(L1_TYPE_S)
-	orr	r3, r3, #(L1_S_DOM(PMAP_DOMAIN_KERNEL))
+	orr	r3, r3, #(L1_S_DOM_KERNEL)
 	mov	r1, #0x40			/* 64 1MB entries */
 
 1:
@@ -106,9 +107,9 @@ _C_LABEL(viper_start):
 	add	r0, r0, #(0xc00 * 4)		/* start from 0xc00.. */
 
 	mov	r3, #SDRAM_START		/* map to 0xa00.. */
-	orr	r3, r3, #(L1_S_AP(AP_KRW))	/* the usual perms & stuff */
+	orr	r3, r3, #(L1_S_AP_KRW)		/* the usual perms & stuff */
 	orr	r3, r3, #(L1_TYPE_S)
-	orr	r3, r3, #(L1_S_DOM(PMAP_DOMAIN_KERNEL))
+	orr	r3, r3, #(L1_S_DOM_KERNEL)
 	mov	r1, #0x40			/* 64 1MB entries */
 
 1:
@@ -130,41 +131,41 @@ _C_LABEL(viper_start):
 
 	mov	r3,	#0x40000000	
 	orr	r3, r3,	#0x00d00000	
-	orr	r3, r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
-	orr	r3, r3, #(L1_S_DOM(PMAP_DOMAIN_KERNEL))
+	orr	r3, r3, #(L1_S_DOM_KERNEL)
 	str	r3, [r0], #4
 
 	/* GPIO */
 	mov	r3,	#0x40000000	
 	orr	r3, r3,	#0x00e00000	
-	orr	r3, r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
-	orr	r3, r3, #(L1_S_DOM(PMAP_DOMAIN_KERNEL))
+	orr	r3, r3, #(L1_S_DOM_KERNEL)
 	str	r3, [r0], #4
 
 	/* CLKMAN */
 	mov	r3,	#0x41000000	
 	orr	r3, r3, #0x00300000	
-	orr	r3, r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
-	orr	r3, r3, #(L1_S_DOM(PMAP_DOMAIN_KERNEL))
+	orr	r3, r3, #(L1_S_DOM_KERNEL)
 	str	r3, [r0], #4
 
 	/* FFUART */
 	mov	r3,	#0x40000000	
 	orr	r3, r3, #0x00100000	
-	orr	r3, r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
-	orr	r3, r3, #(L1_S_DOM(PMAP_DOMAIN_KERNEL))
+	orr	r3, r3, #(L1_S_DOM_KERNEL)
 	str	r3, [r0], #4
 
 	/* BTUART */
 	mov	r3,	#0x40000000	
 	orr	r3, r3, #0x00200000	
-	orr	r3, r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
-	orr	r3, r3, #(L1_S_DOM(PMAP_DOMAIN_KERNEL))
+	orr	r3, r3, #(L1_S_DOM_KERNEL)
 	str	r3, [r0], #4
 
 #if 0

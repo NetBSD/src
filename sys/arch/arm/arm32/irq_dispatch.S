@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.10 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.10.28.1 2011/06/06 09:05:01 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -91,8 +91,6 @@
  */
 	.text
 	.align	0
-.Lcurrent_intr_depth:
-	.word	_C_LABEL(cpu_info_store) + CI_INTR_DEPTH
 
 LOCK_CAS_CHECK_LOCALS
 
@@ -108,7 +106,7 @@ ASENTRY_NP(irq_entry)
 	 * Increment the interrupt nesting depth and call the interrupt
 	 * dispatch routine.  We've pushed a frame, so we can safely use
 	 * callee-saved regs here.  We use the following registers, which
-	 * we expect to presist:
+	 * we expect to persist:
 	 *
 	 *	r4	address of current cpu_info
 	 *	r6	old value of `ci_intr_depth'

@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppcvar.h,v 1.3 2008/04/16 06:25:23 cegger Exp $ */
+/* $NetBSD: pi1ppcvar.h,v 1.3.32.1 2011/06/06 09:06:40 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -129,17 +129,17 @@ struct pi1ppc_softc {
 	 /* Input buffer: working pointers, and size in bytes. */
 	char * sc_inb;
 	char * sc_inbstart;
-	u_int32_t sc_inb_nbytes;
+	uint32_t sc_inb_nbytes;
 	int sc_inerr;
 
 	/* Output buffer pointer, working pointer, and size in bytes. */
 	char * sc_outb;
 	char * sc_outbstart;
-	u_int32_t sc_outb_nbytes;
+	uint32_t sc_outb_nbytes;
 	int sc_outerr;
 
 	/* DMA functions: setup by bus specific attach code */
-	int (*sc_dma_start)(struct pi1ppc_softc *, void *, u_int, u_int8_t);
+	int (*sc_dma_start)(struct pi1ppc_softc *, void *, u_int, uint8_t);
 	int (*sc_dma_finish)(struct pi1ppc_softc *);
 	int (*sc_dma_abort)(struct pi1ppc_softc *);
 	int (*sc_dma_malloc)(device_t, void **, bus_addr_t *,
@@ -154,7 +154,7 @@ struct pi1ppc_softc {
 	/* Device attachment state */
 #define PI1PPC_ATTACHED 1
 #define PI1PPC_NOATTACH 0
-	u_int8_t sc_dev_ok;
+	uint8_t sc_dev_ok;
 
 	/*
 	 * Hardware capabilities flags: standard mode and nibble mode are
@@ -165,59 +165,59 @@ struct pi1ppc_softc {
 #define PI1PPC_HAS_DMA	0x02	/* DMA available */
 #define PI1PPC_HAS_FIFO	0x04	/* FIFO available */
 #define PI1PPC_HAS_PS2	0x08	/* PS2 mode capable */
-	u_int8_t sc_has;	/* Chipset detected capabilities */
+	uint8_t sc_has;		/* Chipset detected capabilities */
 
 	/* Flags specifying mode of chipset operation . */
 #define PI1PPC_MODE_STD	0x01	/* Use centronics-compatible mode */
 #define PI1PPC_MODE_PS2	0x02	/* Use PS2 mode */
 #define PI1PPC_MODE_NIBBLE 0x10	/* Use nibble mode */
-	u_int8_t sc_mode;	/* Current operational mode */
+	uint8_t sc_mode;	/* Current operational mode */
 
 	/* Flags which further define chipset operation */
 #define PI1PPC_USE_INTR	0x01	/* Use interrupts */
 #define PI1PPC_USE_DMA	0x02	/* Use DMA */
-	u_int8_t sc_use;	/* Capabilities to use */
+	uint8_t sc_use;		/* Capabilities to use */
 
 	/* Parallel Port Chipset model. */
 #define GENERIC         6
-	u_int8_t sc_model;	/* chipset model */
+	uint8_t sc_model;	/* chipset model */
 
 	/* EPP mode - UNUSED */
-	u_int8_t sc_epp;
+	uint8_t sc_epp;
 
 	/* Parallel Port Chipset Type.  Only Indy-style needed? */
 #define PI1PPC_TYPE_INDY 0
-	u_int8_t sc_type;
+	uint8_t sc_type;
 
 	/* Stored register values after an interrupt occurs */
-	u_int8_t sc_ecr_intr;
-	u_int8_t sc_ctr_intr;
-	u_int8_t sc_str_intr;
+	uint8_t sc_ecr_intr;
+	uint8_t sc_ctr_intr;
+	uint8_t sc_str_intr;
 
 #define PI1PPC_IRQ_NONE	0x0
 #define PI1PPC_IRQ_nACK	0x1
 #define PI1PPC_IRQ_DMA	0x2
 #define PI1PPC_IRQ_FIFO	0x4
 #define PI1PPC_IRQ_nFAULT	0x8
-	u_int8_t sc_irqstat;	/* Record irq settings */
+	uint8_t sc_irqstat;	/* Record irq settings */
 
 #define PI1PPC_DMA_INIT		0x01
 #define PI1PPC_DMA_STARTED	0x02
 #define PI1PPC_DMA_COMPLETE	0x03
 #define PI1PPC_DMA_INTERRUPTED	0x04
 #define PI1PPC_DMA_ERROR		0x05
-	u_int8_t sc_dmastat;	/* Record dma state */
+	uint8_t sc_dmastat;	/* Record dma state */
 
 #define PI1PPC_PWORD_MASK	0x30
 #define PI1PPC_PWORD_16	0x00
 #define PI1PPC_PWORD_8	0x10
 #define PI1PPC_PWORD_32	0x20
-	u_int8_t sc_pword;	/* PWord size: used for FIFO DMA transfers */
-	u_int8_t sc_fifo;	/* FIFO size */
+	uint8_t sc_pword;	/* PWord size: used for FIFO DMA transfers */
+	uint8_t sc_fifo;	/* FIFO size */
 
 	/* Indicates number of PWords in FIFO queues that generate interrupt */
-	u_int8_t sc_wthr;	/* writeIntrThresold */
-	u_int8_t sc_rthr;	/* readIntrThresold */
+	uint8_t sc_wthr;	/* writeIntrThresold */
+	uint8_t sc_rthr;	/* readIntrThresold */
 };
 
 

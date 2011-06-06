@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2009/08/30 02:00:56 dyoung Exp $
+#	$NetBSD: Makefile,v 1.38.6.1 2011/06/06 09:05:46 jruoho Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -18,8 +18,14 @@ SI386+=	${SYSDIR}/arch/x86/x86/*.[ch] \
 	${SYSDIR}/arch/x86/acpi/*.[ch] \
 	${SYSDIR}/arch/x86/include/*.h \
 	${SYSDIR}/arch/x86/isa/*.[ch] \
+	${SYSDIR}/arch/xen/include/*.h \
+	${SYSDIR}/arch/xen/i386/*.[ch] \
+	${SYSDIR}/arch/xen/x86/*.[ch] \
+	${SYSDIR}/arch/xen/xen/*.[ch] \
+	${SYSDIR}/arch/xen/xenbus/*.[ch] \
 	${SYSDIR}/arch/x86/pci/*.[ch]
-AI386=	${SYSDIR}/arch/i386/i386/*.[sS]
+AI386=	${SYSDIR}/arch/i386/i386/*.S \
+	${SYSDIR}/../common/lib/libc/arch/i386/*/*.S
 
 # Directories in which to place tags links
 DI386=	i386 eisa isa include pci
@@ -29,7 +35,7 @@ DI386=	i386 eisa isa include pci
 tags:
 	-rm -f ${TI386}
 	-echo ${SI386} | xargs ctags -wadtf ${TI386}
-	-find -H ${SYSDIR}/external/intel-public/acpica/dist/ -name '*.[ch]' | \
+	-find -H ${SYSDIR}/external/bsd/acpica/dist/ -name '*.[ch]' | \
 	    sort -t / -u | xargs ctags -wadtf ${TI386}
 	-${FINDCOMM} | xargs ctags -wadtf ${TI386}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AI386} | \

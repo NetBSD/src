@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.28 2010/11/23 11:13:57 hannken Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.28.2.1 2011/06/06 09:05:31 jruoho Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -80,7 +80,8 @@ file-system 	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server

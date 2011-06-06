@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.2 2010/06/03 10:44:21 phx Exp $ */
+/* $NetBSD: satmgr.c,v 1.2.6.1 2011/06/06 09:06:34 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
 #include <sandpoint/sandpoint/eumbvar.h>
 #include "locators.h"
 
+
+struct satops;
+
 struct satmgr_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
@@ -68,9 +71,14 @@ struct satmgr_softc {
 	uint32_t		sc_ierror, sc_overr;
 	kmutex_t		sc_lock;
 	kcondvar_t		sc_rdcv, sc_wrcv;
-	char sc_rd_buf[16], *sc_rd_lim, *sc_rd_cur, *sc_rd_ptr;
-	char sc_wr_buf[16], *sc_wr_lim, *sc_wr_cur, *sc_wr_ptr;
-	int sc_rd_cnt, sc_wr_cnt;
+	char			sc_rd_buf[16];
+	char			*sc_rd_lim, *sc_rd_cur, *sc_rd_ptr;
+	char			sc_wr_buf[16];
+	char			*sc_wr_lim, *sc_wr_cur, *sc_wr_ptr;
+	int			sc_rd_cnt, sc_wr_cnt;
+	struct satops		*sc_ops;
+	char			sc_btn_buf[8];
+	int			sc_btn_cnt;
 };
 
 static int  satmgr_match(device_t, cfdata_t, void *);
@@ -104,24 +112,36 @@ static void rxintr(struct satmgr_softc *);
 static void txintr(struct satmgr_softc *);
 static void startoutput(struct satmgr_softc *);
 static void swintr(void *);
+static void sinit(struct satmgr_softc *);
+static void qinit(struct satmgr_softc *);
+static void kreboot(struct satmgr_softc *);
+static void sreboot(struct satmgr_softc *);
+static void qreboot(struct satmgr_softc *);
+static void kpwroff(struct satmgr_softc *);
+static void spwroff(struct satmgr_softc *);
+static void qpwroff(struct satmgr_softc *);
+static void dpwroff(struct satmgr_softc *);
 static void kbutton(struct satmgr_softc *, int);
 static void sbutton(struct satmgr_softc *, int);
 static void qbutton(struct satmgr_softc *, int);
+static void dbutton(struct satmgr_softc *, int);
 static void guarded_pbutton(void *);
 static void sched_sysmon_pbutton(void *);
 
-struct satmsg {
+struct satops {
 	const char *family;
-	const char *reboot, *poweroff;
+	void (*init)(struct satmgr_softc *);
+	void (*reboot)(struct satmgr_softc *);
+	void (*pwroff)(struct satmgr_softc *);
 	void (*dispatch)(struct satmgr_softc *, int);
 };
 
-static const struct satmsg satmodel[] = {
-    { "kurobox",  "CCGG", "EEGG", kbutton },
-    { "synology", "C",    "1",    sbutton },
-    { "qnap",     "f",    "A",    qbutton }
+static struct satops satmodel[] = {
+    { "dlink",    NULL, NULL, dpwroff, dbutton },
+    { "kurobox",  NULL, kreboot, kpwroff, kbutton },
+    { "qnap",     qinit, qreboot, qpwroff, qbutton },
+    { "synology", sinit, sreboot, spwroff, sbutton }
 };
-static const struct satmsg *satmgr_msg;
 
 /* single byte stride register layout */
 #define RBR		0
@@ -144,10 +164,10 @@ satmgr_match(device_t parent, cfdata_t match, void *aux)
 	int unit = eaa->eumb_unit;
 
 	if (unit == EUMBCF_UNIT_DEFAULT && found == 0)
-		return (1);
+		return 1;
 	if (unit == 0 || unit == 1)
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 static void
@@ -156,23 +176,24 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	struct eumb_attach_args *eaa = aux;
 	struct satmgr_softc *sc = device_private(self);
 	struct btinfo_prodfamily *pfam;
+	struct satops *ops;
 	int i, sataddr, epicirq;
 
 	found = 1;
 	
 	if ((pfam = lookup_bootinfo(BTINFO_PRODFAMILY)) == NULL)
 		goto notavail;
-	satmgr_msg = NULL;
+	ops = NULL;
 	for (i = 0; i < (int)(sizeof(satmodel)/sizeof(satmodel[0])); i++) {
 		if (strcmp(pfam->name, satmodel[i].family) == 0) {
-			satmgr_msg = &satmodel[i];
+			ops = &satmodel[i];
 			break;
 		}
 	}
-	if (satmgr_msg == NULL)
+	if (ops == NULL)
 		goto notavail;
-	
-	aprint_normal(": button manager (%s)\n", satmgr_msg->family);
+	aprint_normal(": button manager (%s)\n", ops->family);
+	sc->sc_ops = ops;
 
 	sc->sc_dev = self;
 	sataddr = (eaa->eumb_unit == 0) ? 0x4500 : 0x4600;
@@ -192,9 +213,11 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 	cv_init(&sc->sc_rdcv, "satrd");
 	cv_init(&sc->sc_wrcv, "satwr");
+	sc->sc_btn_cnt = 0;
 
 	epicirq = (eaa->eumb_unit == 0) ? 24 : 25;
 	intr_establish(epicirq + 16, IST_LEVEL, IPL_SERIAL, hwintr, sc);
+	aprint_normal_dev(self, "interrupting at irq %d\n", epicirq + 16);
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, swintr, sc);
 
 	CSR_WRITE(sc, IER, 0x7f); /* all but MSR */
@@ -210,7 +233,7 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev,
 		    "unable to register power button with sysmon\n");
 
-	if (strcmp(satmgr_msg->family, "kurobox") == 0) {
+	if (strcmp(ops->family, "kurobox") == 0) {
 		const struct sysctlnode *rnode;
 		struct sysctllog *clog;
 
@@ -234,7 +257,9 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 			CTL_CREATE, CTL_EOL);
 	}
 
-	md_reboot = satmgr_reboot; /* cpu_reboot() hook */
+	md_reboot = satmgr_reboot;	/* cpu_reboot() hook */
+	if (ops->init != NULL)
+		(*ops->init)(sc);	/* init sat.cpu, LEDs, etc. */
 	return;
 
   notavail:
@@ -244,14 +269,17 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 static void
 satmgr_reboot(int howto)
 {
-	const char *msg;
 	struct satmgr_softc *sc = device_lookup_private(&satmgr_cd, 0);
 
-	if ((howto & RB_POWERDOWN) == RB_AUTOBOOT)
-		msg = satmgr_msg->reboot;	/* REBOOT */
-	else
-		msg = satmgr_msg->poweroff;	/* HALT or POWERDOWN */
-	send_sat(sc, msg);
+	if ((howto & RB_POWERDOWN) == RB_AUTOBOOT) {
+		if (sc->sc_ops->reboot != NULL)
+			(*sc->sc_ops->reboot)(sc);	/* REBOOT */
+		else
+			return;				/* default reboot */
+	} else
+		if (sc->sc_ops->pwroff != NULL)
+			(*sc->sc_ops->pwroff)(sc);	/* HALT or POWERDOWN */
+
 	tsleep(satmgr_reboot, PWAIT, "reboot", 0);
 	/*NOTREACHED*/
 }
@@ -278,8 +306,7 @@ satmgr_sysctl_wdogenable(SYSCTLFN_ARGS)
 		callout_setfunc(&sc->sc_ch_wdog, wdog_tickle, sc);
 		callout_schedule(&sc->sc_ch_wdog, 90 * hz);
 		send_sat(sc, "JJ");
-	}
-	else {
+	} else {
 		callout_stop(&sc->sc_ch_wdog);
 		send_sat(sc, "KK");
 	}
@@ -455,8 +482,9 @@ filt_read(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-static const struct filterops read_filtops =
-	{ 1, NULL, filt_rdetach, filt_read };			
+static const struct filterops read_filtops = {
+	1, NULL, filt_rdetach, filt_read
+};			
 
 static int
 satkqfilter(dev_t dev, struct knote *kn)
@@ -471,7 +499,7 @@ satkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	kn->kn_hook = sc;
@@ -480,7 +508,7 @@ satkqfilter(dev_t dev, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	mutex_exit(&sc->sc_lock);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -576,7 +604,7 @@ swintr(void *arg)
 	mutex_spin_enter(&sc->sc_lock);
 	ptr = sc->sc_rd_ptr;
 	for (n = 0; n < sc->sc_rd_cnt; n++) {
-		(*satmgr_msg->dispatch)(sc, *ptr);
+		(*sc->sc_ops->dispatch)(sc, *ptr);
 		if (++ptr == sc->sc_rd_lim)
 			ptr = &sc->sc_rd_buf[0];
 	}
@@ -584,11 +612,25 @@ swintr(void *arg)
 		sc->sc_rd_cnt = 0;
 		sc->sc_rd_ptr = ptr;
 		mutex_spin_exit(&sc->sc_lock);
-		return; /* drop characters down to floor */
+		return;		/* drop characters down to the floor */
 	}
 	cv_signal(&sc->sc_rdcv);
 	selnotify(&sc->sc_rsel, 0, 0);
 	mutex_spin_exit(&sc->sc_lock);
+}
+
+static void
+kreboot(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "CCGG");
+}
+
+static void
+kpwroff(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "EEGG");
 }
 
 static void
@@ -616,12 +658,33 @@ kbutton(struct satmgr_softc *sc, int ch)
 }
 
 static void
+sinit(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "8");	/* status LED green */
+}
+
+static void
+sreboot(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "C");
+}
+
+static void
+spwroff(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "1");
+}
+
+static void
 sbutton(struct satmgr_softc *sc, int ch)
 {
 
 	switch (ch) {
 	case '0':
-		/* notified after 3 secord guard time */
+		/* notified after 5 seconds guard time */
 		sysmon_task_queue_sched(0, sched_sysmon_pbutton, sc);
 		break;
 	case 'a':
@@ -631,9 +694,71 @@ sbutton(struct satmgr_softc *sc, int ch)
 }
 
 static void
+qinit(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "V");	/* status LED green */
+}
+
+static void
+qreboot(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "Pf");	/* beep and reboot */
+}
+
+static void
+qpwroff(struct satmgr_softc *sc)
+{
+
+	send_sat(sc, "PA");	/* beep and power off */
+}
+
+static void
 qbutton(struct satmgr_softc *sc, int ch)
 {
-	/* research in progress */
+
+	switch (ch) {
+	case '@':
+		/* power button, notified after 2 seconds guard time */
+		sysmon_task_queue_sched(0, sched_sysmon_pbutton, sc);
+		break;
+	case 'j':	/* reset to default button */
+	case 'h':	/* USB copy button */
+		break;
+	}
+}
+
+static void
+dpwroff(struct satmgr_softc *sc)
+{
+
+	/*
+	 * The DSM-G600 has no hardware-shutdown, so we flash the power LED
+	 * to indicate that the device can be switched off.
+	 */
+	send_sat(sc, "SYN\nSYN\n");
+
+	/* drops into default power-off handling (looping forever) */
+}
+
+static void
+dbutton(struct satmgr_softc *sc, int ch)
+{
+
+	if (ch == '\n' || ch == '\r') {
+		if (sc->sc_btn_cnt == 3) {
+			if (strncmp(sc->sc_btn_buf, "PKO", 3) == 0) {
+				/* notified after 5 seconds guard time */
+				sysmon_task_queue_sched(0,
+				    sched_sysmon_pbutton, sc);
+			} else if (strncmp(sc->sc_btn_buf, "RKO", 3) == 0) {
+				/* notified after 5 seconds guard time */
+			}
+		}
+		sc->sc_btn_cnt = 0;
+	} else if (sc->sc_btn_cnt < 7)
+		sc->sc_btn_buf[sc->sc_btn_cnt++] = ch;
 }
 
 static void

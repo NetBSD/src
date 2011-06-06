@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.56 2009/11/23 00:11:45 rmind Exp $	*/
+/*	$NetBSD: com.c,v 1.56.6.1 2011/06/06 09:07:00 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.56 2009/11/23 00:11:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.56.6.1 2011/06/06 09:07:00 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -393,7 +393,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return ENXIO;
 
 	if (!sc->sc_tty) {
-		tp = sc->sc_tty = ttymalloc();
+		tp = sc->sc_tty = tty_alloc();
 		tty_attach(tp);
 	} else
 		tp = sc->sc_tty;
@@ -528,7 +528,7 @@ comclose(dev_t dev, int flag, int mode, struct lwp *l)
 	ttyclose(tp);
 #ifdef notyet /* XXXX */
 	if (unit != comconsole) {
-		ttyfree(tp);
+		tty_free(tp);
 		sc->sc_tty = 0;
 	}
 #endif

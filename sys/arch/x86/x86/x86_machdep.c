@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.44 2010/10/21 11:17:54 yamt Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.44.2.1 2011/06/06 09:07:10 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.44 2010/10/21 11:17:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.44.2.1 2011/06/06 09:07:10 jruoho Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
+#include "opt_splash.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.44 2010/10/21 11:17:54 yamt Exp $"
 #include <x86/nmi.h>
 #include <x86/pio.h>
 
+#include <dev/splash/splash.h>
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8042reg.h>
 
@@ -150,15 +152,27 @@ module_init_md(void)
 	bi = (struct bi_modulelist_entry *)((uint8_t *)biml + sizeof(*biml));
 	bimax = bi + biml->num;
 	for (; bi < bimax; bi++) {
-		if (bi->type != BI_MODULE_ELF) {
+		switch (bi->type) {
+		case BI_MODULE_ELF:
+			aprint_debug("Prep module path=%s len=%d pa=%x\n", 
+			    bi->path, bi->len, bi->base);
+			KASSERT(trunc_page(bi->base) == bi->base);
+			module_prime((void *)((uintptr_t)bi->base + KERNBASE),
+			    bi->len);
+			break;
+		case BI_MODULE_IMAGE:
+#ifdef SPLASHSCREEN
+			aprint_debug("Splash image path=%s len=%d pa=%x\n", 
+			    bi->path, bi->len, bi->base);
+			KASSERT(trunc_page(bi->base) == bi->base);
+			splash_setimage(
+			    (void *)((uintptr_t)bi->base + KERNBASE), bi->len);
+#endif
+			break;
+		default:
 			aprint_debug("Skipping non-ELF module\n");
-			continue;
+			break;
 		}
-		aprint_debug("Prep module path=%s len=%d pa=%x\n", bi->path,
-		    bi->len, bi->base);
-		KASSERT(trunc_page(bi->base) == bi->base);
-		(void)module_prime((void *)((uintptr_t)bi->base + KERNBASE),
-		    bi->len);
 	}
 }
 #endif	/* MODULAR */
@@ -202,15 +216,16 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		} else {
 			x86_send_ipi(ci, X86_IPI_KPREEMPT);
 		}
+		return;
 #endif
-	} else {
-		aston(l, X86_AST_PREEMPT);
-		if (ci == cur) {
-			return;
-		}
-		if ((flags & RESCHED_IMMED) != 0) {
-			x86_send_ipi(ci, 0);
-		}
+	}
+
+	aston(l, X86_AST_PREEMPT);
+	if (ci == cur) {
+		return;
+	}
+	if ((flags & RESCHED_IMMED) != 0) {
+		x86_send_ipi(ci, 0);
 	}
 }
 

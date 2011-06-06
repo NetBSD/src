@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.3 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.3.6.1 2011/06/06 09:06:43 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,30 +81,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.3 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.3.6.1 2011/06/06 09:06:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
-#include <sys/vnode.h>
-#include <sys/buf.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
-#include <sys/syscall.h>
-#include <sys/ktrace.h>
 
-#include <sys/exec_aout.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <sh3/locore.h>
-#include <sh3/cpu.h>
 #include <sh3/reg.h>
-#include <sh3/mmu.h>
-#include <sh3/cache.h>
-#include <sh3/userret.h>
+
 
 /*
  * Dump the machine specific segment at the start of a core dump.

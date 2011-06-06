@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.10 2008/01/04 20:10:12 uwe Exp $	*/
+/*	$NetBSD: psl.h,v 1.10.38.1 2011/06/06 09:06:43 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,6 +45,7 @@
 #define	PSL_IMASK	0x000000f0	/* Interrupt Mask bit */
 #define	PSL_QBIT	0x00000100	/* Q bit */
 #define	PSL_MBIT	0x00000200	/* M bit */
+#define	PSL_FD		0x00008000	/* FPU Disable bit */
 #define	PSL_BL		0x10000000	/* Exception Block bit */
 #define	PSL_RB		0x20000000	/* Register Bank bit */
 #define	PSL_MD		0x40000000	/* Processor Mode bit */

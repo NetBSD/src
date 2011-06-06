@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.44 2011/01/10 13:29:29 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.44.2.1 2011/06/06 09:06:40 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.44 2011/01/10 13:29:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.44.2.1 2011/06/06 09:06:40 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "rnd.h"
@@ -509,7 +509,7 @@ mec_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tick_ch, 0);
 
 	/* get Ethernet address from ARCBIOS */
-	if ((macaddr = ARCBIOS->GetEnvironmentVariable("eaddr")) == NULL) {
+	if ((macaddr = arcbios_GetEnvironmentVariable("eaddr")) == NULL) {
 		aprint_error(": unable to get MAC address!\n");
 		goto fail_4;
 	}
@@ -523,7 +523,7 @@ mec_attach(device_t parent, device_t self, void *aux)
 	if (strcmp(macaddr, "ff:ff:ff:ff:ff:ff") == 0) {
 		uint32_t ui = 0;
 		const char * netaddr =
-			ARCBIOS->GetEnvironmentVariable("netaddr");
+			arcbios_GetEnvironmentVariable("netaddr");
 
 		/*
 		 * Create a MAC address by abusing the "netaddr" env var

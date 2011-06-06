@@ -1,7 +1,7 @@
-/*	$NetBSD: tprof.h,v 1.4 2009/11/18 12:24:05 yamt Exp $	*/
+/*	$NetBSD: tprof.h,v 1.4.6.1 2011/06/06 09:08:40 jruoho Exp $	*/
 
 /*-
- * Copyright (c)2008,2009 YAMAMOTO Takashi,
+ * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,14 @@
 #ifndef _DEV_TPROF_TPROF_H_
 #define _DEV_TPROF_TPROF_H_
 
+/*
+ * definitions used by backend drivers
+ */
+
+#include <sys/types.h>
+
+#include <dev/tprof/tprof_types.h>
+
 typedef struct tprof_backend_cookie tprof_backend_cookie_t;
 
 typedef struct tprof_backend_ops {
@@ -37,12 +45,13 @@ typedef struct tprof_backend_ops {
 	void (*tbo_stop)(tprof_backend_cookie_t *);
 } tprof_backend_ops_t;
 
-#define	TPROF_BACKEND_VERSION	2
+#define	TPROF_BACKEND_VERSION	3
 int tprof_backend_register(const char *, const tprof_backend_ops_t *, int);
 int tprof_backend_unregister(const char *);
 
 typedef struct {
-	uintptr_t tfi_pc;
+	uintptr_t tfi_pc;	/* program counter */
+	bool tfi_inkernel;	/* if tfi_pc is in the kernel address space */
 } tprof_frame_info_t;
 
 void tprof_sample(tprof_backend_cookie_t *, const tprof_frame_info_t *);

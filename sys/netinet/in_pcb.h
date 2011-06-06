@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.47 2009/07/17 22:02:54 minskim Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.47.6.1 2011/06/06 09:09:55 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -133,13 +133,14 @@ void	in_pcbdisconnect(void *);
 void	in_pcbinit(struct inpcbtable *, int, int);
 struct inpcb *
 	in_pcblookup_port(struct inpcbtable *,
-	    struct in_addr, u_int, int);
+			  struct in_addr, u_int, int, struct vestigial_inpcb *);
 struct inpcb *
 	in_pcblookup_bind(struct inpcbtable *,
 	    struct in_addr, u_int);
 struct inpcb *
 	in_pcblookup_connect(struct inpcbtable *,
-	    struct in_addr, u_int, struct in_addr, u_int);
+			     struct in_addr, u_int, struct in_addr, u_int,
+			     struct vestigial_inpcb *);
 int	in_pcbnotify(struct inpcbtable *, struct in_addr, u_int,
 	    struct in_addr, u_int, int, void (*)(struct inpcb *, int));
 void	in_pcbnotifyall(struct inpcbtable *, struct in_addr, int,

@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.4 2010/06/19 19:47:34 matt Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.4 2010/06/19 19:47:34 matt Exp $ */
+/*	$Id: at91dbgu.c,v 1.4.2.1 2011/06/06 09:05:02 jruoho Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.4.2.1 2011/06/06 09:05:02 jruoho Exp $ */
 
 /*
  *
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.4 2010/06/19 19:47:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.4.2.1 2011/06/06 09:05:02 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -243,7 +243,7 @@ at91dbgu_attach(device_t parent, device_t self, void *aux)
 		DBGUREG(DBGU_IER) = DBGU_INT_RXRDY; // @@@@@
 	}
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = at91dbgu_start;
 	tp->t_param = at91dbgu_param;
 	tp->t_hwiflow = at91dbgu_hwiflow;

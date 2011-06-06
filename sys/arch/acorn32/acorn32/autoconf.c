@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2009/05/12 06:56:59 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.6.1 2011/06/06 09:04:39 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2009/05/12 06:56:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.6.1 2011/06/06 09:04:39 jruoho Exp $");
 
 #include "opt_md.h"
 
@@ -185,7 +185,7 @@ cpu_configure(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 }
 /* End of autoconf.c */

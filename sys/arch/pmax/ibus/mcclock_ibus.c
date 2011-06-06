@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_ibus.c,v 1.16 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: mcclock_ibus.c,v 1.16.6.1 2011/06/06 09:06:22 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.16 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.16.6.1 2011/06/06 09:06:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -41,34 +41,33 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.16 2009/03/14 21:04:14 dsl Exp $"
 
 #include <pmax/ibus/ibusvar.h>
 
-static int	mcclock_ibus_match(struct device *, struct cfdata *,
-		    void *);
-static void	mcclock_ibus_attach(struct device *, struct device *,
-		    void *);
+static int	mcclock_ibus_match(device_t, cfdata_t, void *);
+static void	mcclock_ibus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mcclock_ibus, sizeof (struct mcclock_pad32_softc),
+CFATTACH_DECL_NEW(mcclock_ibus, sizeof (struct mcclock_pad32_softc),
     mcclock_ibus_match, mcclock_ibus_attach, NULL, NULL);
 
 static int
-mcclock_ibus_match(struct device *parent, struct cfdata *match, void *aux)
+mcclock_ibus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ibus_attach_args *ia = aux;
 
 	if (strcmp("mc146818", ia->ia_name) != 0)
 		return (0);
 
-	if (badaddr((void *)ia->ia_addr, sizeof(u_int32_t)))
+	if (badaddr((void *)ia->ia_addr, sizeof(uint32_t)))
 		return (0);
 
 	return (1);
 }
 
 static void
-mcclock_ibus_attach(struct device *parent, struct device *self, void *aux)
+mcclock_ibus_attach(device_t parent, device_t self, void *aux)
 {
-	struct ibus_attach_args *ia =aux;
-	struct mcclock_pad32_softc *sc = (struct mcclock_pad32_softc *)self;
+	struct ibus_attach_args *ia = aux;
+	struct mcclock_pad32_softc *sc = device_private(self);
 
+	sc->sc_mcclock.sc_dev = self;
 	sc->sc_dp = (struct mcclock_pad32_clockdatum*)ia->ia_addr;
 
 	/* Attach MI driver, using busfns with TC-style register padding */

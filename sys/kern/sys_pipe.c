@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.128 2010/08/11 11:46:32 pgoyette Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.128.2.1 2011/06/06 09:09:36 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.128 2010/08/11 11:46:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.128.2.1 2011/06/06 09:09:36 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.128 2010/08/11 11:46:32 pgoyette Exp 
 #include <sys/atomic.h>
 #include <sys/pipe.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * Use this to disable direct I/O and decrease the code size:
@@ -244,7 +244,7 @@ pipe_dtor(void *arg, void *obj)
  * The pipe system call for the DTYPE_PIPE type of pipes
  */
 int
-sys_pipe(struct lwp *l, const void *v, register_t *retval)
+pipe1(struct lwp *l, register_t *retval, int flags)
 {
 	struct pipe *rpipe, *wpipe;
 	file_t *rf, *wf;
@@ -266,7 +266,7 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 	if (error)
 		goto free2;
 	retval[0] = fd;
-	rf->f_flag = FREAD;
+	rf->f_flag = FREAD | flags;
 	rf->f_type = DTYPE_PIPE;
 	rf->f_data = (void *)rpipe;
 	rf->f_ops = &pipeops;
@@ -275,7 +275,7 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 	if (error)
 		goto free3;
 	retval[1] = fd;
-	wf->f_flag = FWRITE;
+	wf->f_flag = FWRITE | flags;
 	wf->f_type = DTYPE_PIPE;
 	wf->f_data = (void *)wpipe;
 	wf->f_ops = &pipeops;
@@ -293,6 +293,12 @@ free2:
 	pipeclose(rpipe);
 
 	return (error);
+}
+
+int
+sys_pipe(struct lwp *l, const void *v, register_t *retval)
+{
+	return pipe1(l, retval, 0);
 }
 
 /*

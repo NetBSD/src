@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.17 2010/03/02 21:52:32 matt Exp $	*/
+/*	$NetBSD: boot.c,v 1.17.4.1 2011/06/06 09:06:33 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,7 +61,7 @@ struct btinfo_clock btinfo_clock;
 RESIDUAL residual;
 
 extern u_long ns_per_tick;
-extern char bootprog_name[], bootprog_rev[], bootprog_maker[], bootprog_date[];
+extern char bootprog_name[], bootprog_rev[];
 
 void boot(void *, u_long);
 static void exec_kernel(char *);
@@ -138,7 +138,6 @@ boot(void *resp, u_long loadaddr)
 
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	for (;;) {
 		name = names[n++];

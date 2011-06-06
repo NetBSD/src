@@ -232,9 +232,6 @@ typedef struct drm_i915_private {
 	u8 saveDACDATA[256*3]; /* 256 3-byte colors */
 	u8 saveCR[37];
 	struct {
-#ifdef __linux__
-		struct drm_mm gtt_space;
-#endif
 		/**
 		 * List of objects currently involved in rendering from the
 		 * ringbuffer.
@@ -267,16 +264,6 @@ typedef struct drm_i915_private {
 		 * outstanding.
 		 */
 		struct list_head request_list;
-#ifdef __linux__
-		/**
-		 * We leave the user IRQ off as much as possible,
-		 * but this means that requests will finish and never
-		 * be retired once the system goes idle. Set a timer to
-		 * fire periodically while the ring is running. When it
-		 * fires, go retire requests.
-		 */
-		struct delayed_work retire_work;
-#endif
 		uint32_t next_gem_seqno;
 
 		/**
@@ -445,18 +432,18 @@ extern int i915_vblank_pipe_set(struct drm_device *dev, void *data,
 				struct drm_file *file_priv);
 extern int i915_vblank_pipe_get(struct drm_device *dev, void *data,
 				struct drm_file *file_priv);
-extern int i915_enable_vblank(struct drm_device *dev, int crtc);
-extern void i915_disable_vblank(struct drm_device *dev, int crtc);
-extern u32 i915_get_vblank_counter(struct drm_device *dev, int crtc);
-extern u32 gm45_get_vblank_counter(struct drm_device *dev, int crtc);
+extern int i915_enable_vblank(struct drm_device *dev, unsigned int crtc);
+extern void i915_disable_vblank(struct drm_device *dev, unsigned int crtc);
+extern u32 i915_get_vblank_counter(struct drm_device *dev, unsigned int crtc);
+extern u32 gm45_get_vblank_counter(struct drm_device *dev, unsigned int crtc);
 extern int i915_vblank_swap(struct drm_device *dev, void *data,
 			    struct drm_file *file_priv);
 
 void
-i915_enable_pipestat(drm_i915_private_t *dev_priv, int pipe, u32 mask);
+i915_enable_pipestat(drm_i915_private_t *dev_priv, unsigned int pipe, u32 mask);
 
 void
-i915_disable_pipestat(drm_i915_private_t *dev_priv, int pipe, u32 mask);
+i915_disable_pipestat(drm_i915_private_t *dev_priv, unsigned int pipe, u32 mask);
 
 
 /* i915_mem.c */
@@ -555,10 +542,6 @@ extern void opregion_enable_asle(struct drm_device *dev);
 	if (((drm_i915_private_t *)dev->dev_private)->ring.ring_obj == NULL) \
 		LOCK_TEST_WITH_RETURN(dev, file_priv);			\
 } while (0)
-
-#if defined(__FreeBSD__)
-typedef boolean_t bool;
-#endif
 
 #define I915_READ(reg)		DRM_READ32(dev_priv->mmio_map, (reg))
 #define I915_WRITE(reg,val)	DRM_WRITE32(dev_priv->mmio_map, (reg), (val))

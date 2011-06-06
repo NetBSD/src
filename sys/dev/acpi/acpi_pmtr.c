@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pmtr.c,v 1.1 2011/01/05 20:08:12 jruoho Exp $ */
+/*	$NetBSD: acpi_pmtr.c,v 1.1.2.1 2011/06/06 09:07:41 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,10 +27,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pmtr.c,v 1.1 2011/01/05 20:08:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pmtr.c,v 1.1.2.1 2011/06/06 09:07:41 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
+#include <sys/mutex.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -79,6 +80,7 @@ struct acpipmtr_softc {
 	envsys_data_t		 sc_sensor_o;
 	uint32_t		 sc_cap[ACPIPMTR_CAP_COUNT];
 	int32_t			 sc_interval;
+	kmutex_t		 sc_mtx;
 };
 
 const char * const acpi_pmtr_ids[] = {
@@ -128,6 +130,7 @@ acpipmtr_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ACPI Power Meter\n");
 
 	(void)pmf_device_register(self, NULL, NULL);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	if (acpipmtr_cap_get(self, true) != true)
 		return;
@@ -161,6 +164,8 @@ acpipmtr_detach(device_t self, int flags)
 
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
+
+	mutex_destroy(&sc->sc_mtx);
 
 	return 0;
 }
@@ -289,7 +294,7 @@ acpipmtr_dev_print(device_t self)
 
 		ad = acpi_get_node(hdl);
 
-		if (ACPI_FAILURE(rv))
+		if (ad == NULL)
 			continue;
 
 		aprint_debug("%s ", ad->ad_name);
@@ -369,6 +374,8 @@ acpipmtr_sensor_type(device_t self)
 {
 	struct acpipmtr_softc *sc = device_private(self);
 
+	mutex_enter(&sc->sc_mtx);
+
 	switch (sc->sc_cap[ACPIPMTR_CAP_TYPE]) {
 
 	case ACPIPMTR_POWER_INPUT:
@@ -386,6 +393,8 @@ acpipmtr_sensor_type(device_t self)
 		sc->sc_sensor_o.state = ENVSYS_SINVALID;
 		break;
 	}
+
+	mutex_exit(&sc->sc_mtx);
 }
 
 static int32_t
@@ -462,8 +471,14 @@ acpipmtr_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 
 	case ACPIPMTR_NOTIFY_CAP:
 
-		if (acpipmtr_cap_get(self, false) != true)
+		mutex_enter(&sc->sc_mtx);
+
+		if (acpipmtr_cap_get(self, false) != true) {
+			mutex_exit(&sc->sc_mtx);
 			break;
+		}
+
+		mutex_exit(&sc->sc_mtx);
 
 		acpipmtr_sensor_type(self);
 		break;
@@ -490,29 +505,38 @@ acpipmtr_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	}
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpipmtr, NULL);
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
-acpipmtr_modcmd(modcmd_t cmd, void *context)
+acpipmtr_modcmd(modcmd_t cmd, void *aux)
 {
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-		return config_init_component(cfdriver_ioconf_acpipmtr,
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpipmtr,
 		    cfattach_ioconf_acpipmtr, cfdata_ioconf_acpipmtr);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
-		return config_fini_component(cfdriver_ioconf_acpipmtr,
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpipmtr,
 		    cfattach_ioconf_acpipmtr, cfdata_ioconf_acpipmtr);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.14 2010/04/28 22:45:27 chs Exp $	*/
+/*	$NetBSD: mpt.c,v 1.14.2.1 2011/06/06 09:07:54 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.14 2010/04/28 22:45:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.14.2.1 2011/06/06 09:07:54 jruoho Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -1131,7 +1131,9 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
         int try;
         MSG_IOC_FACTS_REPLY facts;
         MSG_PORT_FACTS_REPLY pfp;
-	u_int32_t pptr;
+        prop_dictionary_t dict;
+        uint32_t ini_id;
+        uint32_t pptr;
         int val;
 
 	/* Put all request buffers (back) on the free list */
@@ -1150,6 +1152,8 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 	 */
 	if (mpt_hw_init(mpt) != 0)
 		return (EIO);
+
+	dict = device_properties(&mpt->sc_dev);
 
 	for (try = 0; try < MPT_MAX_TRYS; try++) {
 		/*
@@ -1209,7 +1213,11 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 			return (ENXIO);
 		}
 
-		mpt->mpt_ini_id = pfp.PortSCSIID;
+		if (!mpt->is_sas && !mpt->is_fc &&
+		    prop_dictionary_get_uint32(dict, "scsi-initiator-id", &ini_id))
+			mpt->mpt_ini_id = ini_id;
+		else
+			mpt->mpt_ini_id = pfp.PortSCSIID;
 
 		if (mpt_send_ioc_init(mpt, who) != MPT_OK) {
 			mpt_prt(mpt, "mpt_send_ioc_init failed");

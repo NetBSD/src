@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.26 2009/11/29 04:15:42 rmind Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.26.6.1 2011/06/06 09:04:38 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26 2009/11/29 04:15:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26.6.1 2011/06/06 09:04:38 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -173,7 +173,7 @@ cpu_lwp_free2(struct lwp *l)
  * do not need to pass an access_type to pmap_enter().
  */
 /* This code was originally stolen from the alpha port. */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
@@ -203,6 +203,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		taddr += PAGE_SIZE;
 	}
 	pmap_update(vm_map_pmap(phys_map));
+
+	return 0;
 }
 
 /*

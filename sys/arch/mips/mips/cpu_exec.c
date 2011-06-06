@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.60 2011/01/16 09:50:44 tsutsui Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.60.2.1 2011/06/06 09:06:05 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.60 2011/01/16 09:50:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.60.2.1 2011/06/06 09:06:05 jruoho Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -60,6 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.60 2011/01/16 09:50:44 tsutsui Exp $"
 #include <sys/exec_elf.h>			/* mandatory */
 #include <machine/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
+#include <mips/locore.h>
+
+#include <compat/common/compat_util.h>
 
 int	mips_elf_makecmds(struct lwp *, struct exec_package *);
 
@@ -68,9 +71,9 @@ void
 cpu_exec_ecoff_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
-	struct frame *f = l->l_md.md_regs;
+	struct trapframe *tf = l->l_md.md_utf;
 
-	f->f_regs[_R_GP] = (register_t)execp->a.gp_value;
+	tf->tf_regs[_R_GP] = (register_t)execp->a.gp_value;
 }
 
 /*
@@ -96,7 +99,7 @@ cpu_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
  */
 
 int
-mips_elf_makecmds (struct lwp *l, struct exec_package *epp)
+mips_elf_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	Elf32_Ehdr *ex = (Elf32_Ehdr *)epp->ep_hdr;
 	Elf32_Phdr ph;
@@ -260,24 +263,29 @@ mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	case EF_MIPS_ARCH_1:
 		break;
 	case EF_MIPS_ARCH_2:
-		if (cpu_arch < CPU_ARCH_MIPS2)
+		if (mips_options.mips_cpu_arch < CPU_ARCH_MIPS2)
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_3:
-		if (cpu_arch < CPU_ARCH_MIPS3)
+		if (mips_options.mips_cpu_arch < CPU_ARCH_MIPS3)
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_4:
-		if (cpu_arch < CPU_ARCH_MIPS4)
+		if (mips_options.mips_cpu_arch < CPU_ARCH_MIPS4)
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_5:
-		if (cpu_arch < CPU_ARCH_MIPS5)
+		if (mips_options.mips_cpu_arch < CPU_ARCH_MIPS5)
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_32:
 	case EF_MIPS_ARCH_64:
-		if (!CPUISMIPSNN)
+		if (!CPUISMIPSNN && !CPUISMIPS32R2 && !CPUISMIPS64R2)
+			return ENOEXEC;
+		break;
+	case EF_MIPS_ARCH_32R2:
+	case EF_MIPS_ARCH_64R2:
+		if (!CPUISMIPS32R2 && !CPUISMIPS64R2)
 			return ENOEXEC;
 		break;
 	}
@@ -319,17 +327,21 @@ coredump_elf32_setup(struct lwp *l, void *eh0)
 	/*
 	 * Mark the type of CPU that the dump happened on.
 	 */
-	if (cpu_arch & CPU_ARCH_MIPS64) {
+	if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS64R2) {
+		eh->e_flags |= EF_MIPS_ARCH_64R2;
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS64) {
 		eh->e_flags |= EF_MIPS_ARCH_64;
-	} else if (cpu_arch & CPU_ARCH_MIPS32) {
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS32R2) {
+		eh->e_flags |= EF_MIPS_ARCH_32R2;
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS32) {
 		eh->e_flags |= EF_MIPS_ARCH_32;
-	} else if (cpu_arch & CPU_ARCH_MIPS5) {
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS5) {
 		eh->e_flags |= EF_MIPS_ARCH_5;
-	} else if (cpu_arch & CPU_ARCH_MIPS4) {
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS4) {
 		eh->e_flags |= EF_MIPS_ARCH_4;
-	} else if (cpu_arch & CPU_ARCH_MIPS3) {
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS3) {
 		eh->e_flags |= EF_MIPS_ARCH_3;
-	} else if (cpu_arch & CPU_ARCH_MIPS2) {
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS2) {
 		eh->e_flags |= EF_MIPS_ARCH_2;
 	} else {
 		eh->e_flags |= EF_MIPS_ARCH_1;
@@ -360,25 +372,30 @@ mips_netbsd_elf64_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	case EF_MIPS_ARCH_1:
 		return ENOEXEC;
 	case EF_MIPS_ARCH_2:
-		if (cpu_arch < CPU_ARCH_MIPS2)
+		if (mips_options.mips_cpu_arch < CPU_ARCH_MIPS2)
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_3:
-		if (cpu_arch < CPU_ARCH_MIPS3)
+		if (mips_options.mips_cpu_arch < CPU_ARCH_MIPS3)
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_4:
-		if (cpu_arch < CPU_ARCH_MIPS4)
+		if (mips_options.mips_cpu_arch < CPU_ARCH_MIPS4)
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_5:
-		if (cpu_arch < CPU_ARCH_MIPS5)
+		if (mips_options.mips_cpu_arch < CPU_ARCH_MIPS5)
 			return ENOEXEC;
 		break;
 	case EF_MIPS_ARCH_32:
+	case EF_MIPS_ARCH_32R2:
 		return ENOEXEC;
 	case EF_MIPS_ARCH_64:
-		if (!CPUISMIPS64)
+		if (!CPUISMIPS64 && !CPUISMIPS64R2)
+			return ENOEXEC;
+		break;
+	case EF_MIPS_ARCH_64R2:
+		if (!CPUISMIPS64R2)
 			return ENOEXEC;
 		break;
 	}
@@ -413,17 +430,17 @@ coredump_elf64_setup(struct lwp *l, void *eh0)
 	/*
 	 * Mark the type of CPU that the dump happened on.
 	 */
-	if (cpu_arch & CPU_ARCH_MIPS64) {
+	if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS64) {
 		eh->e_flags |= EF_MIPS_ARCH_64;
-	} else if (cpu_arch & CPU_ARCH_MIPS32) {
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS32) {
 		eh->e_flags |= EF_MIPS_ARCH_32;
-	} else if (cpu_arch & CPU_ARCH_MIPS5) {
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS5) {
 		eh->e_flags |= EF_MIPS_ARCH_5;
-	} else if (cpu_arch & CPU_ARCH_MIPS4) {
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS4) {
 		eh->e_flags |= EF_MIPS_ARCH_4;
-	} else if (cpu_arch & CPU_ARCH_MIPS3) {
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS3) {
 		eh->e_flags |= EF_MIPS_ARCH_3;
-	} else if (cpu_arch & CPU_ARCH_MIPS2) {
+	} else if (mips_options.mips_cpu_arch & CPU_ARCH_MIPS2) {
 		eh->e_flags |= EF_MIPS_ARCH_2;
 	} else {
 		eh->e_flags |= EF_MIPS_ARCH_1;

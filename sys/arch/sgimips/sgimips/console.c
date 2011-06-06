@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.40 2009/04/03 15:41:14 uebayasi Exp $	*/
+/*	$NetBSD: console.c,v 1.40.6.1 2011/06/06 09:06:41 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.40 2009/04/03 15:41:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.40.6.1 2011/06/06 09:06:41 jruoho Exp $");
 
 #include "opt_kgdb.h"
 
@@ -87,7 +87,7 @@ consinit(void)
 	const char *consdev;
 	
 	/* Ask ARCS what it is using for console output. */
-	consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
+	consdev = arcbios_GetEnvironmentVariable("ConsoleOut");
 
 	if (consdev == NULL) {
 		printf("WARNING: ConsoleOut environment variable not set\n");
@@ -217,7 +217,7 @@ mace_serial_init(const char *consdev)
 	if ((strlen(consdev) == 9) && (!strncmp(consdev, "serial", 6)) &&
 	    (consdev[7] == '0' || consdev[7] == '1')) {
 		/* Get comm speed from ARCS */
-		dbaud = ARCBIOS->GetEnvironmentVariable("dbaud");
+		dbaud = arcbios_GetEnvironmentVariable("dbaud");
 		speed = strtoul(dbaud, NULL, 10);
 		base = (consdev[7] == '0') ? MACE_ISA_SER1_BASE :
 		    MACE_ISA_SER2_BASE;

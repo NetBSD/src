@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.304 2010/12/18 01:36:19 rmind Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.304.2.1 2011/06/06 09:09:27 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.304 2010/12/18 01:36:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.304.2.1 2011/06/06 09:09:27 jruoho Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -112,9 +112,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.304 2010/12/18 01:36:19 rmind Exp $"
 static int exec_sigcode_map(struct proc *, const struct emul *);
 
 #ifdef DEBUG_EXEC
-#define DPRINTF(a) uprintf a
+#define DPRINTF(a) printf a
+#define COPYPRINTF(s, a, b) printf("%s, %d: copyout%s @%p %zu\n", __func__, \
+    __LINE__, (s), (a), (b))
 #else
 #define DPRINTF(a)
+#define COPYPRINTF(s, a, b)
 #endif /* DEBUG_EXEC */
 
 /*
@@ -483,7 +486,6 @@ exec_autoload(void)
 		"compat_aoutm68k",
 		"compat_freebsd",
 		"compat_ibcs2",
-		"compat_irix",
 		"compat_linux",
 		"compat_linux32",
 		"compat_netbsd32",
@@ -522,7 +524,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	size_t			i, len;
 	char			*stack;
 	struct ps_strings	arginfo;
-	struct ps_strings	*aip = &arginfo;
+	struct ps_strings32	arginfo32;
+	void			*aip;
 	struct vmspace		*vm;
 	struct exec_fakearg	*tmpfap;
 	int			szsigcode;
@@ -534,6 +537,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	char			*resolvedpathbuf;
 	const char		*commandname;
 	u_int			modgen;
+	size_t			ps_strings_sz;
 
 	p = l->l_proc;
  	modgen = 0;
@@ -586,7 +590,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 */
 	error = pathbuf_copyin(path, &pb);
 	if (error) {
-		DPRINTF(("execve: pathbuf_copyin error %d", error));
+		DPRINTF(("%s: pathbuf_copyin path @%p %d\n", __func__,
+		    path, error));
 		goto clrflg;
 	}
 	pathstring = pathbuf_stringcopy_get(pb);
@@ -619,7 +624,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* see if we can run it. */
 	if ((error = check_exec(l, &pack, pb)) != 0) {
 		if (error != ENOENT) {
-			DPRINTF(("execve: check exec failed %d\n", error));
+			DPRINTF(("%s: check exec failed %d\n",
+			    __func__, error));
 		}
 		goto freehdr;
 	}
@@ -653,7 +659,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* Now get argv & environment */
 	if (args == NULL) {
-		DPRINTF(("execve: null args\n"));
+		DPRINTF(("%s: null args\n", __func__));
 		error = EINVAL;
 		goto bad;
 	}
@@ -665,13 +671,14 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	while (1) {
 		len = argp + ARG_MAX - dp;
 		if ((error = (*fetch_element)(args, i, &sp)) != 0) {
-			DPRINTF(("execve: fetch_element args %d\n", error));
+			DPRINTF(("%s: fetch_element args %d\n",
+			    __func__, error));
 			goto bad;
 		}
 		if (!sp)
 			break;
 		if ((error = copyinstr(sp, dp, len, &len)) != 0) {
-			DPRINTF(("execve: copyinstr args %d\n", error));
+			DPRINTF(("%s: copyinstr args %d\n", __func__, error));
 			if (error == ENAMETOOLONG)
 				error = E2BIG;
 			goto bad;
@@ -689,13 +696,15 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		while (1) {
 			len = argp + ARG_MAX - dp;
 			if ((error = (*fetch_element)(envs, i, &sp)) != 0) {
-				DPRINTF(("execve: fetch_element env %d\n", error));
+				DPRINTF(("%s: fetch_element env %d\n",
+				    __func__, error));
 				goto bad;
 			}
 			if (!sp)
 				break;
 			if ((error = copyinstr(sp, dp, len, &len)) != 0) {
-				DPRINTF(("execve: copyinstr env %d\n", error));
+				DPRINTF(("%s: copyinstr env %d\n",
+				    __func__, error));
 				if (error == ENAMETOOLONG)
 					error = E2BIG;
 				goto bad;
@@ -720,16 +729,21 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif
 
 	/* Now check if args & environ fit into new stack */
-	if (pack.ep_flags & EXEC_32)
+	if (pack.ep_flags & EXEC_32) {
+		aip = &arginfo32;
+		ps_strings_sz = sizeof(struct ps_strings32);
 		len = ((argc + envc + 2 + pack.ep_esch->es_arglen) *
 		    sizeof(int) + sizeof(int) + dp + RTLD_GAP +
-		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
+		    szsigcode + ps_strings_sz + STACK_PTHREADSPACE)
 		    - argp;
-	else
+	} else {
+		aip = &arginfo;
+		ps_strings_sz = sizeof(struct ps_strings);
 		len = ((argc + envc + 2 + pack.ep_esch->es_arglen) *
 		    sizeof(char *) + sizeof(int) + dp + RTLD_GAP +
-		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
+		    szsigcode + ps_strings_sz + STACK_PTHREADSPACE)
 		    - argp;
+	}
 
 #ifdef PAX_ASLR
 	if (pax_aslr_active(l))
@@ -743,7 +757,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif
 
 	if (len > pack.ep_ssize) { /* in effect, compare to initial limit */
-		DPRINTF(("execve: stack limit exceeded %zu\n", len));
+		DPRINTF(("%s: stack limit exceeded %zu\n", __func__, len));
 		error = ENOMEM;
 		goto bad;
 	}
@@ -803,7 +817,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
 	if (pack.ep_vmcmds.evs_used == 0)
-		panic("execve: no vmcmds");
+		panic("%s: no vmcmds", __func__);
 #endif
 	for (i = 0; i < pack.ep_vmcmds.evs_used && !error; i++) {
 		struct exec_vmcmd *vcp;
@@ -812,9 +826,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		if (vcp->ev_flags & VMCMD_RELATIVE) {
 #ifdef DIAGNOSTIC
 			if (base_vcp == NULL)
-				panic("execve: relative vmcmd with no base");
+				panic("%s: relative vmcmd with no base",
+				    __func__);
 			if (vcp->ev_flags & VMCMD_BASE)
-				panic("execve: illegal base & relative vmcmd");
+				panic("%s: illegal base & relative vmcmd",
+				    __func__);
 #endif
 			vcp->ev_addr += base_vcp->ev_addr;
 		}
@@ -823,10 +839,19 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		if (error) {
 			size_t j;
 			struct exec_vmcmd *vp = &pack.ep_vmcmds.evs_cmds[0];
+			uprintf("vmcmds %zu/%u, error %d\n", i, 
+			    pack.ep_vmcmds.evs_used, error);
 			for (j = 0; j <= i; j++)
-				uprintf(
-			"vmcmd[%zu] = %#lx/%#lx fd@%#lx prot=0%o flags=%d\n",
-				    j, vp[j].ev_addr, vp[j].ev_len,
+				uprintf("vmcmd[%zu] = vmcmd_map_%s %#"
+				    PRIxVADDR"/%#"PRIxVSIZE" fd@%#"
+				    PRIxVSIZE" prot=0%o flags=%d\n", j,
+				    vp[j].ev_proc == vmcmd_map_pagedvn ?
+				    "pagedvn" :
+				    vp[j].ev_proc == vmcmd_map_readvn ?
+				    "readvn" :
+				    vp[j].ev_proc == vmcmd_map_zero ?
+				    "zero" : "*unknown*",
+				    vp[j].ev_addr, vp[j].ev_len,
 				    vp[j].ev_offset, vp[j].ev_prot,
 				    vp[j].ev_flags);
 		}
@@ -844,7 +869,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* if an error happened, deallocate and punt */
 	if (error) {
-		DPRINTF(("execve: vmcmd %zu failed: %d\n", i - 1, error));
+		DPRINTF(("%s: vmcmd %zu failed: %d\n", __func__, i - 1, error));
 		goto exec_abort;
 	}
 
@@ -892,8 +917,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 
 	stack = (char *)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
-		STACK_PTHREADSPACE + sizeof(struct ps_strings) + szsigcode),
-		len - (sizeof(struct ps_strings) + szsigcode));
+		STACK_PTHREADSPACE + ps_strings_sz + szsigcode),
+		len - (ps_strings_sz + szsigcode));
 
 #ifdef __MACHINE_STACK_GROWS_UP
 	/*
@@ -928,30 +953,36 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		pack.ep_path = NULL;
 	}
 	if (error) {
-		DPRINTF(("execve: copyargs failed %d\n", error));
+		DPRINTF(("%s: copyargs failed %d\n", __func__, error));
 		goto exec_abort;
 	}
 	/* Move the stack back to original point */
 	stack = (char *)STACK_GROW(vm->vm_minsaddr, len);
 
 	/* fill process ps_strings info */
-	p->p_psstr = (struct ps_strings *)
-	    STACK_ALLOC(STACK_GROW(vm->vm_minsaddr, STACK_PTHREADSPACE),
-	    sizeof(struct ps_strings));
-	p->p_psargv = offsetof(struct ps_strings, ps_argvstr);
-	p->p_psnargv = offsetof(struct ps_strings, ps_nargvstr);
-	p->p_psenv = offsetof(struct ps_strings, ps_envstr);
-	p->p_psnenv = offsetof(struct ps_strings, ps_nenvstr);
+	p->p_psstrp = (vaddr_t)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
+	    STACK_PTHREADSPACE), ps_strings_sz);
+
+	if (pack.ep_flags & EXEC_32) {
+		arginfo32.ps_argvstr = (vaddr_t)arginfo.ps_argvstr;
+		arginfo32.ps_nargvstr = arginfo.ps_nargvstr;
+		arginfo32.ps_envstr = (vaddr_t)arginfo.ps_envstr;
+		arginfo32.ps_nenvstr = arginfo.ps_nenvstr;
+	}
 
 	/* copy out the process's ps_strings structure */
-	if ((error = copyout(aip, (char *)p->p_psstr,
-	    sizeof(arginfo))) != 0) {
-		DPRINTF(("execve: ps_strings copyout %p->%p size %ld failed\n",
-		       aip, (char *)p->p_psstr, (long)sizeof(arginfo)));
+	if ((error = copyout(aip, (void *)p->p_psstrp, ps_strings_sz)) != 0) {
+		DPRINTF(("%s: ps_strings copyout %p->%p size %zu failed\n",
+		    __func__, aip, (void *)p->p_psstrp, ps_strings_sz));
 		goto exec_abort;
 	}
 
+	cwdexec(p);
 	fd_closeexec();		/* handle close on exec */
+
+	if (__predict_false(ktrace_on))
+		fd_ktrexecfd();
+
 	execsigs(p);		/* reset catched signals */
 
 	l->l_ctxlink = NULL;	/* reset ucontext link */
@@ -977,6 +1008,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 */
 	if ((p->p_lflag & PL_PPWAIT) != 0) {
 		mutex_enter(proc_lock);
+		l->l_lwpctl = NULL; /* was on loan from blocked parent */
 		p->p_lflag &= ~PL_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 		mutex_exit(proc_lock);
@@ -1003,7 +1035,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 		/* Make sure file descriptors 0..2 are in use. */
 		if ((error = fd_checkstd()) != 0) {
-			DPRINTF(("execve: fdcheckstd failed %d\n", error));
+			DPRINTF(("%s: fdcheckstd failed %d\n",
+			    __func__, error));
 			goto exec_abort;
 		}
 
@@ -1073,9 +1106,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (pack.ep_esch->es_setregs)
 		(*pack.ep_esch->es_setregs)(l, &pack, (vaddr_t)stack);
 
+	/* Provide a consistent LWP private setting */
+	(void)lwp_setprivate(l, NULL);
+
 	/* map the process's signal trampoline code */
-	if (exec_sigcode_map(p, pack.ep_esch->es_emul)) {
-		DPRINTF(("execve: map sigcode failed %d\n", error));
+	if ((error = exec_sigcode_map(p, pack.ep_esch->es_emul)) != 0) {
+		DPRINTF(("%s: map sigcode failed %d\n", __func__, error));
 		goto exec_abort;
 	}
 
@@ -1256,7 +1292,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	return 0;
 }
 
-
 int
 copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
     char **stackp, void *argp)
@@ -1271,8 +1306,10 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	nullp = NULL;
 	argc = arginfo->ps_nargvstr;
 	envc = arginfo->ps_nenvstr;
-	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0)
+	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0) {
+		COPYPRINTF("", cpp - 1, sizeof(argc));
 		return error;
+	}
 
 	dp = (char *) (cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
 	sp = argp;
@@ -1280,23 +1317,39 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	/* XXX don't copy them out, remap them! */
 	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
 
-	for (; --argc >= 0; sp += len, dp += len)
-		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
-		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+	for (; --argc >= 0; sp += len, dp += len) {
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0) {
+			COPYPRINTF("", cpp - 1, sizeof(dp));
 			return error;
+		}
+		if ((error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0) {
+			COPYPRINTF("str", dp, (size_t)ARG_MAX);
+			return error;
+		}
+	}
 
-	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0) {
+		COPYPRINTF("", cpp - 1, sizeof(nullp));
 		return error;
+	}
 
 	arginfo->ps_envstr = cpp; /* remember location of envp for later */
 
-	for (; --envc >= 0; sp += len, dp += len)
-		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
-		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+	for (; --envc >= 0; sp += len, dp += len) {
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0) {
+			COPYPRINTF("", cpp - 1, sizeof(dp));
 			return error;
+		}
+		if ((error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0) {
+			COPYPRINTF("str", dp, (size_t)ARG_MAX);
+			return error;
+		}
+	}
 
-	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0) {
+		COPYPRINTF("", cpp - 1, sizeof(nullp));
 		return error;
+	}
 
 	*stackp = (char *)cpp;
 	return 0;
@@ -1437,7 +1490,7 @@ exec_init(int init_boot)
 			SLIST_INSERT_HEAD(&last, ex, ex_slist);
 			break;
 		default:
-			panic("exec_init");
+			panic("%s", __func__);
 			break;
 		}
 		sz++;
@@ -1550,6 +1603,10 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 			UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX, UVM_INH_SHARE,
 				    UVM_ADV_RANDOM, 0));
 	if (error) {
+		DPRINTF(("%s, %d: map %p "
+		    "uvm_map %#"PRIxVSIZE"@%#"PRIxVADDR" failed %d\n",
+		    __func__, __LINE__, &p->p_vmspace->vm_map, round_page(sz),
+		    va, error));
 		(*uobj->pgops->pgo_detach)(uobj);
 		return (error);
 	}

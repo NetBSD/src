@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.11 2009/01/11 02:45:49 christos Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.11.8.1 2011/06/06 09:07:33 jruoho Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.11 2009/01/11 02:45:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.11.8.1 2011/06/06 09:07:33 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,7 +55,8 @@ netbsd32__lwp_create(struct lwp *l, const struct netbsd32__lwp_create_args *uap,
 	} */
 	struct sys__lwp_create_args ua;
 
-	NETBSD32TOP_UAP(ucp, const ucontext_t);
+	CTASSERT(sizeof(ucontext32_t) <= sizeof(ucontext_t));
+	NETBSD32TOP_UAP(ucp, const ucontext_t); /* see startlwp32() */
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TOP_UAP(new_lwp, lwpid_t);
 

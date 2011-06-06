@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.17 2009/09/04 08:58:44 he Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.17.6.1 2011/06/06 09:10:03 jruoho Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -93,7 +93,7 @@
 #define CRYPTO_SW_SESSIONS	32
 
 /* HMAC values */
-#define HMAC_BLOCK_LEN		64
+#define HMAC_BLOCK_LEN		64 /* for compatibility */
 #define HMAC_IPAD_VAL		0x36
 #define HMAC_OPAD_VAL		0x5C
 
@@ -125,15 +125,27 @@
 #define CRYPTO_ARC4		12
 #define CRYPTO_MD5		13
 #define CRYPTO_SHA1		14
-#define	CRYPTO_SHA2_HMAC	15
+#define CRYPTO_SHA2_256_HMAC	15
+#define CRYPTO_SHA2_HMAC	CRYPTO_SHA2_256_HMAC /* for compatibility */
 #define CRYPTO_NULL_HMAC	16
 #define CRYPTO_NULL_CBC		17
 #define CRYPTO_DEFLATE_COMP	18 /* Deflate compression algorithm */
 #define CRYPTO_MD5_HMAC_96	19 
 #define CRYPTO_SHA1_HMAC_96	20
 #define CRYPTO_RIPEMD160_HMAC_96	21
-#define CRYPTO_GZIP_COMP	22 /* Deflate compression algorithm */
-#define CRYPTO_ALGORITHM_MAX	23 /* Keep updated - see below */
+#define CRYPTO_GZIP_COMP	22 /* gzip compression algorithm */
+#define CRYPTO_DEFLATE_COMP_NOGROW 23 /* Deflate, fail if not compressible */
+#define CRYPTO_SHA2_384_HMAC	24
+#define CRYPTO_SHA2_512_HMAC	25
+#define CRYPTO_CAMELLIA_CBC	26
+#define CRYPTO_AES_CTR		27
+#define CRYPTO_AES_XCBC_MAC_96	28
+#define CRYPTO_AES_GCM_16	29
+#define CRYPTO_AES_128_GMAC	30
+#define CRYPTO_AES_192_GMAC	31
+#define CRYPTO_AES_256_GMAC	32
+#define CRYPTO_AES_GMAC		33
+#define CRYPTO_ALGORITHM_MAX	33 /* Keep updated - see below */
 
 /* Algorithm flags */
 #define	CRYPTO_ALG_FLAG_SUPPORTED	0x01 /* Algorithm is supported */
@@ -618,9 +630,6 @@ void	crypto_init(void);
  * XXX these don't really belong here; but for now they're
  *     kept apart from the rest of the system.
  */
-struct mbuf;
-struct	mbuf	*m_getptr(struct mbuf *, int, int *);
-
 struct uio;
 extern	void cuio_copydata(struct uio* uio, int off, int len, void *cp);
 extern	void cuio_copyback(struct uio* uio, int off, int len, void *cp);

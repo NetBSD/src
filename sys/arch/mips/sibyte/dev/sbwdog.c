@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.9 2009/12/14 00:46:08 matt Exp $ */
+/* $NetBSD: sbwdog.c,v 1.9.6.1 2011/06/06 09:06:11 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.9 2009/12/14 00:46:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.9.6.1 2011/06/06 09:06:11 jruoho Exp $");
+
+#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,26 +60,27 @@ __KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.9 2009/12/14 00:46:08 matt Exp $");
 #define	SBWDOG_DEFAULT_PERIOD	5	/* Default to 5 seconds. */
 
 struct sbwdog_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct sysmon_wdog sc_smw;
 	u_long sc_addr;
 	int sc_wdog_armed;
 	int sc_wdog_period;
 };
 
-static int sbwdog_match(struct device *, struct cfdata *, void *);
-static void sbwdog_attach(struct device *, struct device *, void *);
+static int sbwdog_match(device_t, cfdata_t, void *);
+static void sbwdog_attach(device_t, device_t, void *);
 static int sbwdog_tickle(struct sysmon_wdog *);
 static int sbwdog_setmode(struct sysmon_wdog *);
+static void sbwdog_intr(void *, uint32_t, vaddr_t);
 
-CFATTACH_DECL(sbwdog, sizeof(struct sbwdog_softc),
+CFATTACH_DECL_NEW(sbwdog, sizeof(struct sbwdog_softc),
     sbwdog_match, sbwdog_attach, NULL, NULL);
 
 #define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
 #define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
 
 static int
-sbwdog_match(struct device *parent, struct cfdata *cf, void *aux)
+sbwdog_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbscd_attach_args *sa = aux;
 
@@ -88,25 +91,29 @@ sbwdog_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-sbwdog_attach(struct device *parent, struct device *self, void *aux)
+sbwdog_attach(device_t parent, device_t self, void *aux)
 {
-	struct sbwdog_softc *sc = (void *)self;
+	struct sbwdog_softc *sc = device_private(self);
 	struct sbscd_attach_args *sa = aux;
 
+	sc->sc_dev = self;
 	sc->sc_wdog_period = SBWDOG_DEFAULT_PERIOD;
-	sc->sc_addr = MIPS_PHYS_TO_KSEG1(sa->sa_locs.sa_addr);
+	sc->sc_addr = MIPS_PHYS_TO_KSEG1(sa->sa_base + sa->sa_locs.sa_offset);
 
-	printf(": %d second period\n", sc->sc_wdog_period);
+	aprint_normal(": %d second period\n", sc->sc_wdog_period);
 
-	sc->sc_smw.smw_name = sc->sc_dev.dv_xname;
+	sc->sc_smw.smw_name = device_xname(sc->sc_dev);
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = sbwdog_setmode;
 	sc->sc_smw.smw_tickle = sbwdog_tickle;
 	sc->sc_smw.smw_period = sc->sc_wdog_period;
 
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
-		printf("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to register with sysmon\n");
+
+	if (sa->sa_locs.sa_intr[0] != SBOBIOCF_INTR_DEFAULT)
+		cpu_intr_establish(sa->sa_locs.sa_intr[0], IPL_HIGH,
+		    sbwdog_intr, sc);
 }
 
 static int
@@ -117,6 +124,19 @@ sbwdog_tickle(struct sysmon_wdog *smw)
 	WRITE_REG(sc->sc_addr + R_SCD_WDOG_CFG, M_SCD_WDOG_ENABLE);
 	return (0);
 }
+
+static void
+sbwdog_intr(void *v, uint32_t cause, vaddr_t pc)
+{
+	struct sbwdog_softc *sc = v;
+
+	WRITE_REG(sc->sc_addr + R_SCD_WDOG_CFG, M_SCD_WDOG_ENABLE);
+	WRITE_REG(sc->sc_addr + R_SCD_WDOG_CFG, 0);
+	WRITE_REG(sc->sc_addr + R_SCD_WDOG_INIT,
+	    sc->sc_wdog_period * V_SCD_WDOG_FREQ);
+	WRITE_REG(sc->sc_addr + R_SCD_WDOG_CFG, M_SCD_WDOG_ENABLE);
+}
+
 
 static int
 sbwdog_setmode(struct sysmon_wdog *smw)

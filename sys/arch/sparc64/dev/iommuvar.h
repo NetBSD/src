@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.17 2008/10/18 03:31:10 nakayama Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.17.22.1 2011/06/06 09:06:49 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -55,6 +55,9 @@ struct iommu_state {
 	u_int			is_dvmaend;
 	int64_t			is_cr;		/* IOMMU control regiter value */
 	struct extent		*is_dvmamap;	/* DVMA map for this instance */
+	int			is_flags;
+#define IOMMU_FLUSH_CACHE	0x00000001
+#define IOMMU_TSBSIZE_IN_PTSB	0x00000002	/* PCIe */
 
 	struct strbuf_ctl	*is_sb[2];	/* Streaming buffers if any */
 

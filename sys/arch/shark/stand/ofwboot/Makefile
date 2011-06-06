@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.11 2009/01/12 07:32:32 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.11.8.1 2011/06/06 09:06:44 jruoho Exp $
+
+.include <bsd.own.mk>
 
 S=		${.CURDIR}/../../../..
 
@@ -64,7 +66,8 @@ LIBSA=		${SALIB}
 
 .PHONY: vers.c
 vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "shark" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version "shark" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${.TARGET}.aout \

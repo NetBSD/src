@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.155 2011/01/02 05:12:34 dholland Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.155.2.1 2011/06/06 09:10:02 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.155 2011/01/02 05:12:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.155.2.1 2011/06/06 09:10:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,9 +427,6 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			ind = nd;
 			VOP_UNLOCK(nd.ni_vp);
 			ind.ni_pathbuf = ipb;
-			ind.ni_pathlen = strlen(nfs_pub.np_index);
-			ind.ni_pnbuf = NULL;
-			ind.ni_cnd.cn_nameptr = NULL;
 
 			error = lookup_for_nfsd_index(&ind, nd.ni_vp);
 			if (!error) {
@@ -463,6 +460,12 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	}
 
 	if (error) {
+		if (nd.ni_pathbuf != NULL) {
+			pathbuf_destroy(nd.ni_pathbuf);
+		}
+		if (ipb != NULL) {
+			pathbuf_destroy(ipb);
+		}
 		nfsm_reply(NFSX_POSTOPATTR(v3));
 		nfsm_srvpostop_attr(dirattr_ret, &dirattr);
 		return (0);
@@ -1524,18 +1527,6 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			if (error) {
 				nfsm_reply(0);
 			}
-			if (nd.ni_cnd.cn_flags & ISSYMLINK) {
-				vput(nd.ni_vp);
-				vrele(nd.ni_dvp);
-				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-				if (nd.ni_pathbuf != NULL) {
-					pathbuf_destroy(nd.ni_pathbuf);
-					nd.ni_pathbuf = NULL;
-				}
-				error = EINVAL;
-				abort = 0;
-				nfsm_reply(0);
-			}
 		} else {
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			if (nd.ni_pathbuf != NULL) {
@@ -1740,11 +1731,6 @@ abort:
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 		if (error)
 			goto out;
-		if (nd.ni_cnd.cn_flags & ISSYMLINK) {
-			vput(nd.ni_vp);
-			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-			error = EINVAL;
-		}
 	}
 out:
 	vp = nd.ni_vp;
@@ -3486,7 +3472,7 @@ nfsmout:
  *     what the heck.
  *
  * The exception to rule 2 is EPERM. If a file is IMMUTABLE, VOP_ACCESS()
- * will return EPERM instead of EACCESS. EPERM is always an error.
+ * will return EPERM instead of EACCES. EPERM is always an error.
  */
 int
 nfsrv_access(struct vnode *vp, int flags, kauth_cred_t cred, int rdonly, struct lwp *lwp, int override)

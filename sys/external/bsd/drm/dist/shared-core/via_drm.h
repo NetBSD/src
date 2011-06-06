@@ -1,4 +1,4 @@
-/*
+/*-
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
  *
@@ -21,6 +21,10 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_drm.h,v 1.1.1.1.30.1 2011/06/06 09:09:13 jruoho Exp $");
+
 #ifndef _VIA_DRM_H_
 #define _VIA_DRM_H_
 
@@ -31,55 +35,51 @@
 #ifndef _VIA_DEFINES_
 #define _VIA_DEFINES_
 
-
 #if !defined(__KERNEL__) && !defined(_KERNEL)
 #include "via_drmclient.h"
 #endif
 
-/*
- * With the arrival of libdrm there is a need to version this file.
- * As usual, bump MINOR for new features, MAJOR for changes that create
- * backwards incompatibilities, (which should be avoided whenever possible).
- */
-
-#define VIA_DRM_DRIVER_DATE		"20070202"
-
-#define VIA_DRM_DRIVER_MAJOR		2
-#define VIA_DRM_DRIVER_MINOR		11
-#define VIA_DRM_DRIVER_PATCHLEVEL	1
-#define VIA_DRM_DRIVER_VERSION	  (((VIA_DRM_DRIVER_MAJOR) << 16) | (VIA_DRM_DRIVER_MINOR))
-
 #define VIA_NR_SAREA_CLIPRECTS		8
-#define VIA_NR_XVMC_PORTS	       10
-#define VIA_NR_XVMC_LOCKS	       5
-#define VIA_MAX_CACHELINE_SIZE	  64
+#define VIA_NR_XVMC_PORTS               10
+#define VIA_NR_XVMC_LOCKS               5
+#define VIA_MAX_CACHELINE_SIZE          64
 #define XVMCLOCKPTR(saPriv,lockNo)					\
 	((volatile struct drm_hw_lock *)(((((unsigned long) (saPriv)->XvMCLockArea) + \
 				      (VIA_MAX_CACHELINE_SIZE - 1)) &	\
 				     ~(VIA_MAX_CACHELINE_SIZE - 1)) +	\
 				    VIA_MAX_CACHELINE_SIZE*(lockNo)))
-#define VIA_NR_TEX_REGIONS 64
 
+/* Each region is a minimum of 64k, and there are at most 64 of them.
+ */
+#define VIA_NR_TEX_REGIONS 64
+#define VIA_LOG_MIN_TEX_REGION_SIZE 16
 #endif
 
-#define DRM_VIA_FENCE_TYPE_ACCEL 0x00000002
+#define VIA_UPLOAD_TEX0IMAGE  0x1	/* handled clientside */
+#define VIA_UPLOAD_TEX1IMAGE  0x2	/* handled clientside */
+#define VIA_UPLOAD_CTX        0x4
+#define VIA_UPLOAD_BUFFERS    0x8
+#define VIA_UPLOAD_TEX0       0x10
+#define VIA_UPLOAD_TEX1       0x20
+#define VIA_UPLOAD_CLIPRECTS  0x40
+#define VIA_UPLOAD_ALL        0xff
 
 /* VIA specific ioctls */
 #define DRM_VIA_ALLOCMEM	0x00
-#define DRM_VIA_FREEMEM		0x01
+#define DRM_VIA_FREEMEM	        0x01
 #define DRM_VIA_AGP_INIT	0x02
-#define DRM_VIA_FB_INIT		0x03
+#define DRM_VIA_FB_INIT	        0x03
 #define DRM_VIA_MAP_INIT	0x04
 #define DRM_VIA_DEC_FUTEX       0x05
 #define NOT_USED
 #define DRM_VIA_DMA_INIT	0x07
 #define DRM_VIA_CMDBUFFER	0x08
-#define DRM_VIA_FLUSH		0x09
-#define DRM_VIA_PCICMD		0x0a
+#define DRM_VIA_FLUSH	        0x09
+#define DRM_VIA_PCICMD	        0x0a
 #define DRM_VIA_CMDBUF_SIZE	0x0b
 #define NOT_USED
-#define DRM_VIA_WAIT_IRQ	0x0d
-#define DRM_VIA_DMA_BLIT	0x0e
+#define DRM_VIA_WAIT_IRQ        0x0d
+#define DRM_VIA_DMA_BLIT        0x0e
 #define DRM_VIA_BLIT_SYNC       0x0f
 
 #define DRM_IOCTL_VIA_ALLOCMEM	  DRM_IOWR(DRM_COMMAND_BASE + DRM_VIA_ALLOCMEM, drm_via_mem_t)
@@ -111,7 +111,6 @@
 #define VIA_BACK    0x2
 #define VIA_DEPTH   0x4
 #define VIA_STENCIL 0x8
-
 #define VIA_MEM_VIDEO   0	/* matches drm constant */
 #define VIA_MEM_AGP     1	/* matches drm constant */
 #define VIA_MEM_SYSTEM  2
@@ -255,8 +254,7 @@ typedef struct drm_via_blitsync {
 	unsigned engine;
 } drm_via_blitsync_t;
 
-/*
- * Below,"flags" is currently unused but will be used for possible future
+/* - * Below,"flags" is currently unused but will be used for possible future
  * extensions like kernel space bounce buffers for bad alignments and
  * blit engine busy-wait polling for better latency in the absence of
  * interrupts.
@@ -277,6 +275,5 @@ typedef struct drm_via_dmablit {
 
 	drm_via_blitsync_t sync;
 } drm_via_dmablit_t;
-
 
 #endif				/* _VIA_DRM_H_ */

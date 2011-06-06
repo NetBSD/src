@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.306 2010/07/01 02:38:30 rmind Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.306.2.1 2011/06/06 09:09:31 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,8 +65,12 @@
  *	@(#)kern_sig.c	8.14 (Berkeley) 5/14/95
  */
 
+/*
+ * Signal subsystem.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.306 2010/07/01 02:38:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.306.2.1 2011/06/06 09:09:31 jruoho Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -102,8 +106,20 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.306 2010/07/01 02:38:30 rmind Exp $")
 #include <sys/pax.h>
 #endif /* PAX_SEGVGUARD */
 
-#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_extern.h>
+
+static pool_cache_t	sigacts_cache	__read_mostly;
+static pool_cache_t	ksiginfo_cache	__read_mostly;
+static callout_t	proc_stop_ch	__cacheline_aligned;
+
+#ifdef KERN_SA
+static pool_cache_t	siginfo_cache;
+#endif
+
+sigset_t		contsigmask	__cacheline_aligned;
+static sigset_t		stopsigmask	__cacheline_aligned;
+sigset_t		sigcantmask	__cacheline_aligned;
 
 static void	ksiginfo_exechook(struct proc *, void *);
 static void	proc_stop_callout(void *);
@@ -113,13 +129,8 @@ static void	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
 static int	sigunwait(struct proc *, const ksiginfo_t *);
 static void	sigswitch(bool, int, int);
 
-sigset_t	contsigmask, stopsigmask, sigcantmask;
-static pool_cache_t sigacts_cache; /* memory pool for sigacts structures */
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
-static callout_t proc_stop_ch;
-static pool_cache_t siginfo_cache;
-static pool_cache_t ksiginfo_cache;
 
 void (*sendsig_sigcontext_vec)(const struct ksiginfo *, const sigset_t *);
 int (*coredump_vec)(struct lwp *, const char *) =
@@ -202,10 +213,10 @@ signal_init(void)
 	sigacts_cache = pool_cache_init(sizeof(struct sigacts), 0, 0, 0,
 	    "sigacts", sizeof(struct sigacts) > PAGE_SIZE ?
 	    &sigactspool_allocator : NULL, IPL_NONE, NULL, NULL, NULL);
-
+#ifdef KERN_SA
 	siginfo_cache = pool_cache_init(sizeof(siginfo_t), 0, 0, 0,
 	    "siginfo", NULL, IPL_NONE, NULL, NULL, NULL);
-
+#endif
 	ksiginfo_cache = pool_cache_init(sizeof(ksiginfo_t), 0, 0, 0,
 	    "ksiginfo", NULL, IPL_VM, NULL, NULL, NULL);
 

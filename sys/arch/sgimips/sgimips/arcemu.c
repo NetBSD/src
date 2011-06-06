@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.19 2009/03/18 10:22:35 cegger Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.19.6.1 2011/06/06 09:06:41 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.19 2009/03/18 10:22:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.19.6.1 2011/06/06 09:06:41 jruoho Exp $");
+
+#ifndef _LP64
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +76,7 @@ static struct arcbios_fv arcemu_v = {
 	.Restart = 			ARCEMU_UNIMPL,
 	.Reboot =			ARCEMU_UNIMPL,
 	.EnterInteractiveMode =		ARCEMU_UNIMPL,
-	.reserved0 =			NULL,
+	.ReturnFromMain =		0,
 	.GetPeer =			ARCEMU_UNIMPL,
 	.GetChild =			ARCEMU_UNIMPL,
 	.GetParent =			ARCEMU_UNIMPL,
@@ -85,7 +87,7 @@ static struct arcbios_fv arcemu_v = {
 	.SaveConfiguration =		ARCEMU_UNIMPL,
 	.GetSystemId =			ARCEMU_UNIMPL,
 	.GetMemoryDescriptor =		ARCEMU_UNIMPL,
-	.reserved1 =			NULL,
+	.Signal =			0,
 	.GetTime =			ARCEMU_UNIMPL,
 	.GetRelativeTime =		ARCEMU_UNIMPL,
 	.GetDirectoryEntry =		ARCEMU_UNIMPL,
@@ -309,18 +311,18 @@ static void
 arcemu_ipN_init(const char **env)
 {
 
-	arcemu_v.GetPeer =		  arcemu_GetPeer;
-	arcemu_v.GetChild =		  arcemu_GetChild;
-	arcemu_v.GetEnvironmentVariable = arcemu_GetEnvironmentVariable;
+	arcemu_v.GetPeer =		  (intptr_t)arcemu_GetPeer;
+	arcemu_v.GetChild =		  (intptr_t)arcemu_GetChild;
+	arcemu_v.GetEnvironmentVariable = (intptr_t)arcemu_GetEnvironmentVariable;
 
 	if (mach_type == MACH_SGI_IP6 || mach_type == MACH_SGI_IP10)
-		arcemu_v.GetMemoryDescriptor = arcemu_ip6_GetMemoryDescriptor;
+		arcemu_v.GetMemoryDescriptor = (intptr_t)arcemu_ip6_GetMemoryDescriptor;
 	else if (mach_type == MACH_SGI_IP12)
-		arcemu_v.GetMemoryDescriptor = arcemu_ip12_GetMemoryDescriptor;
+		arcemu_v.GetMemoryDescriptor = (intptr_t)arcemu_ip12_GetMemoryDescriptor;
 
-	arcemu_v.Reboot =                 (void *)sgi_prom_reset; 
-	arcemu_v.PowerDown =		  (void *)sgi_prom_reinit; 
-	arcemu_v.EnterInteractiveMode =   (void *)sgi_prom_reinit;	
+	arcemu_v.Reboot =                 (intptr_t)sgi_prom_reset; 
+	arcemu_v.PowerDown =		  (intptr_t)sgi_prom_reinit; 
+	arcemu_v.EnterInteractiveMode =   (intptr_t)sgi_prom_reinit;	
 
 	cn_tab = &arcemu_cn;
 
@@ -646,3 +648,4 @@ arcemu_unimpl(void)
 
 	panic("arcemu vector not established on IP%d", mach_type);
 }
+#endif /* !_LP64 */

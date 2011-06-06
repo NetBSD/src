@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_mips,v 1.6 2010/07/07 01:30:34 chs Exp $
+#	$NetBSD: files.linux_mips,v 1.6.2.1 2011/06/06 09:07:25 jruoho Exp $
 #
 # Config file description for mips-dependent Linux compat code.
 
@@ -18,3 +18,4 @@ file	compat/linux/common/linux_olduname.c		compat_linux
 file	compat/linux/common/linux_file64.c		compat_linux
 file	compat/linux/common/linux_fcntl64.c		compat_linux
 file	compat/linux/common/linux_futex.c		compat_linux
+file	compat/linux/common/linux_fadvise64.c		compat_linux

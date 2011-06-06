@@ -1,6 +1,6 @@
-/*	$NetBSD: if_ie_vme.c,v 1.28 2010/01/22 16:12:41 martin Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.28.6.1 2011/06/06 09:08:46 jruoho Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1995 Charles D. Cranor
  * All rights reserved.
  *
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -145,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.28 2010/01/22 16:12:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.28.6.1 2011/06/06 09:08:46 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +239,7 @@ struct ie_vme_softc {
 	bus_space_handle_t ievh;
 };
 
-CFATTACH_DECL(ie_vme, sizeof(struct ie_vme_softc),
+CFATTACH_DECL_NEW(ie_vme, sizeof(struct ie_vme_softc),
     ie_vme_match, ie_vme_attach, NULL, NULL);
 
 #define read_iev(sc, reg) \
@@ -296,7 +291,7 @@ ie_vmeintr(struct ie_softc *sc, int where)
          * check for parity error
          */
 	if (read_iev(vsc, status) & IEVME_PERR) {
-		aprint_error_dev(&sc->sc_dev, "parity error (ctrl 0x%x @ 0x%02x%04x)\n",
+		aprint_error_dev(sc->sc_dev, "parity error (ctrl 0x%x @ 0x%02x%04x)\n",
 		       read_iev(vsc, pectrl),
 		       read_iev(vsc, pectrl) & IEVME_HADDR,
 		       read_iev(vsc, peaddr));
@@ -464,7 +459,7 @@ void
 ie_vme_attach(device_t parent, device_t self, void *aux)
 {
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-	struct ie_vme_softc *vsc = (void *) self;
+	struct ie_vme_softc *vsc = device_private(self);
 	struct vme_attach_args *va = aux;
 	vme_chipset_tag_t ct = va->va_vct;
 	struct ie_softc *sc;
@@ -489,6 +484,7 @@ ie_vme_attach(device_t parent, device_t self, void *aux)
 		panic("if_ie: vme alloc");
 
 	sc = &vsc->ie;
+	sc->sc_dev = self;
 
 	sc->hwreset = ie_vmereset;
 	sc->hwinit = ie_vmerun;

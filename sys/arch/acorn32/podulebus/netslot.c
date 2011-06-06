@@ -1,4 +1,4 @@
-/*	$NetBSD: netslot.c,v 1.8 2009/03/14 15:35:59 dsl Exp $	*/
+/*	$NetBSD: netslot.c,v 1.8.6.1 2011/06/06 09:04:40 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.8 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.8.6.1 2011/06/06 09:04:40 jruoho Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -73,7 +73,7 @@ netslotread(u_int address, int offset)
 }
 
 void
-netslotscan(struct device *dev)
+netslotscan(device_t dev)
 {
 	podule_t *podule;
 	volatile u_char *address;

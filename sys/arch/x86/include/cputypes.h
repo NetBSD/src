@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.2 2008/05/11 13:36:33 ad Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.2.26.1 2011/06/06 09:07:06 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -68,6 +68,7 @@
 #define CPUVENDOR_AMD		4
 #define CPUVENDOR_IDT		5
 #define CPUVENDOR_TRANSMETA	6
+#define CPUVENDOR_VORTEX86	7
 
 /*
  * Some other defines, dealing with values returned by cpuid.

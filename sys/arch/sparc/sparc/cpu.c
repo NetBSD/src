@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.224 2011/01/13 05:20:27 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.224.2.1 2011/06/06 09:06:46 jruoho Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.224 2011/01/13 05:20:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.224.2.1 2011/06/06 09:06:46 jruoho Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.224 2011/01/13 05:20:27 mrg Exp $");
 #include <machine/pmap.h>
 
 #if defined(MULTIPROCESSOR) && defined(DDB)
+#include <ddb/db_output.h>
 #include <machine/db_machdep.h>
 #endif
 
@@ -296,19 +297,68 @@ cpu_cpuunit_attach(struct device *parent, struct device *self, void *aux)
 }
 #endif /* SUN4D */
 
+static const char * const hard_intr_names[] = {
+	"spur hard",
+	"lev1 hard",
+	"lev2 hard",
+	"lev3 hard",
+	"lev4 hard",
+	"lev5 hard",
+	"lev6 hard",
+	"lev7 hard",
+	"lev8 hard",
+	"lev9 hard",
+	"clock hard",
+	"lev11 hard",
+	"lev12 hard",
+	"lev13 hard",
+	"prof hard",
+	"nmi hard",
+};
+
+static const char * const soft_intr_names[] = {
+	"spur soft",
+	"lev1 soft",
+	"lev2 soft",
+	"lev3 soft",
+	"lev4 soft",
+	"lev5 soft",
+	"lev6 soft",
+	"lev7 soft",
+	"lev8 soft",
+	"lev9 soft",
+	"lev10 soft",
+	"lev11 soft",
+	"lev12 soft",
+	"xcall std",
+	"xcall fast",
+	"nmi soft",
+};
+
 static void
 cpu_init_evcnt(struct cpu_info *cpi)
 {
+	int i;
 
 	/*
-	 * Setup the per-cpu savefpstate counters.  The "savefp null"
-	 * counter should go away when the NULL struct fpstate * bug
-	 * is fixed.
+	 * Setup the per-cpu counters.
 	 */
 	evcnt_attach_dynamic(&cpi->ci_savefpstate, EVCNT_TYPE_MISC,
 			     NULL, cpu_name(cpi), "savefp ipi");
-	evcnt_attach_dynamic(&cpi->ci_savefpstate_null, EVCNT_TYPE_MISC,
-			     NULL, cpu_name(cpi), "savefp null ipi");
+	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail, EVCNT_TYPE_MISC,
+			     NULL, cpu_name(cpi), "IPI mutex_trylock fail");
+	evcnt_attach_dynamic(&cpi->ci_xpmsg_mutex_fail_call, EVCNT_TYPE_MISC,
+			     NULL, cpu_name(cpi), "IPI mutex_trylock fail/call");
+
+	/*
+	 * These are the per-cpu per-IPL hard & soft interrupt counters.
+	 */
+	for (i = 0; i < 16; i++) {
+		evcnt_attach_dynamic(&cpi->ci_intrcnt[i], EVCNT_TYPE_INTR,
+				     NULL, cpu_name(cpi), hard_intr_names[i]);
+		evcnt_attach_dynamic(&cpi->ci_sintrcnt[i], EVCNT_TYPE_INTR,
+				     NULL, cpu_name(cpi), soft_intr_names[i]);
+	}
 }
 
 /*
@@ -500,12 +550,10 @@ cpu_boot_secondary_processors(void)
 			continue;
 
 		printf(" cpu%d", cpi->ci_cpuid);
-		cpi->flags |= CPUFLG_READY;
 		cpu_ready_mask |= (1 << n);
 	}
 
 	/* Mark the boot CPU as ready */
-	cpuinfo.flags |= CPUFLG_READY;
 	cpu_ready_mask |= (1 << 0);
 
 	/* Tell the other CPU's to start up.  */
@@ -521,7 +569,7 @@ void
 cpu_init_system(void)
 {
 
-	mutex_init(&xpmsg_mutex, MUTEX_SPIN, IPL_VM);
+	mutex_init(&xpmsg_mutex, MUTEX_SPIN, IPL_SCHED);
 }
 
 /*
@@ -581,8 +629,12 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	struct cpu_info *cpi;
 	int n, i, done, callself, mybit;
 	volatile struct xpmsg_func *p;
+	u_int pil;
 	int fasttrap;
 	int is_noop = func == (xcall_func_t)sparc_noop;
+	static char errbuf[160];
+	char *bufp = errbuf;
+	size_t bufsz = sizeof errbuf, wrsz;
 
 	mybit = (1 << cpuinfo.ci_cpuid);
 	callself = func && (cpuset & mybit) != 0;
@@ -592,7 +644,34 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	cpuset &= cpu_ready_mask;
 
 	/* prevent interrupts that grab the kernel lock */
+#if 0
 	mutex_spin_enter(&xpmsg_mutex);
+#else
+	/*
+	 * There's a deadlock potential between multiple CPUs trying
+	 * to xcall() at the same time, and the thread that loses the
+	 * race to get xpmsg_lock is at an IPL above the incoming IPI
+	 * IPL level, so it sits around waiting to take the lock while
+	 * the other CPU is waiting for this CPU to handle the IPI and
+	 * mark it as completed.
+	 *
+	 * If we fail to get the mutex, and we're at high enough IPL,
+	 * call xcallintr() if there is a valid msg.tag.
+	 */
+	pil = (getpsr() & PSR_PIL) >> 8;
+	
+	if (cold || pil < 13)
+		mutex_spin_enter(&xpmsg_mutex);
+	else {
+		while (mutex_tryenter(&xpmsg_mutex) == 0) {
+			cpuinfo.ci_xpmsg_mutex_fail.ev_count++;
+			if (cpuinfo.msg.tag) {
+				cpuinfo.ci_xpmsg_mutex_fail_call.ev_count++;
+				xcallintr(xcallintr);
+			}
+		}
+	}
+#endif
 
 	/*
 	 * Firstly, call each CPU.  We do this so that they might have
@@ -620,7 +699,6 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	/*
 	 * Second, call ourselves.
 	 */
-	p = &cpuinfo.msg.u.xpmsg_func;
 	if (callself)
 		(*func)(arg0, arg1, arg2);
 
@@ -633,8 +711,11 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	i = 100000;	/* time-out, not too long, but still an _AGE_ */
 	while (!done) {
 		if (--i < 0) {
-			printf_nolog("xcall(cpu%d,%p): couldn't ping cpus:",
+			wrsz = snprintf(bufp, bufsz,
+			    "xcall(cpu%d,%p): couldn't ping cpus:",
 			    cpu_number(), func);
+			bufsz -= wrsz;
+			bufp += wrsz;
 		}
 
 		done = 1;
@@ -644,7 +725,13 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 
 			if (cpi->msg.complete == 0) {
 				if (i < 0) {
-					printf_nolog(" cpu%d", cpi->ci_cpuid);
+					wrsz = snprintf(bufp, bufsz,
+							" cpu%d", cpi->ci_cpuid);
+					bufsz -= wrsz;
+					bufp += wrsz;
+					/* insanity */
+					if (bufsz < 0)
+						break;
 				} else {
 					done = 0;
 					break;
@@ -653,9 +740,32 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 		}
 	}
 	if (i < 0)
-		printf_nolog("\n");
-
+		printf_nolog("%s\n", errbuf);
 	mutex_spin_exit(&xpmsg_mutex);
+
+#if 0
+	if (!timeout)
+		return;
+
+	/*
+	 * Let's make this a hard panic for now, and figure out why it happens.
+	 *
+	 * We call mp_pause_cpus() so we can capture their state *now* as opposed
+	 * to after we've written all the below to the console.
+	 */
+#ifdef DDB
+	mp_pause_cpus_ddb();
+#else
+	mp_pause_cpus();
+#endif
+	printf_nolog("xcall(cpu%d,%p) from %p: couldn't ping cpus:",
+	    cpu_number(), fasttrap ? trap : func, __builtin_return_address(0));
+	for (CPU_INFO_FOREACH(n, cpi))
+		if ((failed_cpuset & (1 << n)) == 0)
+			printf_nolog(" cpu%d", cpi->ci_cpuid);
+	printf_nolog("%s\n", i == 10000000 ? " [hard 10M timeout]" : "");
+	panic("failed to ping cpus");
+#endif
 }
 
 /*
@@ -2073,8 +2183,6 @@ fsrtoname(int impl, int vers, int fver)
 
 #include "ioconf.h"
 
-void cpu_debug_dump(void);
-
 /*
  * Dump CPU information from ddb.
  */
@@ -2097,4 +2205,35 @@ cpu_debug_dump(void)
 		    ci->curpcb);
 	}
 }
+
+#if defined(MULTIPROCESSOR)
+/*
+ * Dump CPU xcall from ddb.
+ */
+void
+cpu_xcall_dump(void)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	db_printf("%-4s %-10s %-10s %-10s %-10s %-10s "
+		    "%-4s %-4s %-4s\n",
+	          "CPU#", "FUNC", "TRAP", "ARG0", "ARG1", "ARG2",
+	            "TAG", "RECV", "COMPL");
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		db_printf("%-4d %-10p %-10p 0x%-8x 0x%-8x 0x%-8x "
+			    "%-4d %-4d %-4d\n",
+		    ci->ci_cpuid,
+		    ci->msg.u.xpmsg_func.func,
+		    ci->msg.u.xpmsg_func.trap,
+		    ci->msg.u.xpmsg_func.arg0,
+		    ci->msg.u.xpmsg_func.arg1,
+		    ci->msg.u.xpmsg_func.arg2,
+		    ci->msg.tag,
+		    ci->msg.received,
+		    ci->msg.complete);
+	}
+}
+#endif
+
 #endif

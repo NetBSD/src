@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.29 2010/04/05 07:19:28 joerg Exp $ */
+/* $NetBSD: if_ie.c,v 1.29.2.1 2011/06/06 09:04:40 jruoho Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.29 2010/04/05 07:19:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.29.2.1 2011/06/06 09:04:40 jruoho Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -173,8 +173,8 @@ static int command_and_wait( struct ie_softc *sc, u_short cmd,
 			      struct ie_sys_ctl_block *pscb,
 			      void *pcmd, int ocmd, int scmd, int mask );
 
-int ieprobe(struct device *, struct cfdata *, void *);
-void ieattach(struct device *, struct device *, void *);
+int ieprobe(device_t, cfdata_t, void *);
+void ieattach(device_t, device_t, void *);
 
 static inline void ie_cli(struct ie_softc *);
 static inline void ieattn(struct ie_softc *);
@@ -292,9 +292,9 @@ crc32(u_char *p, int l)
  */
 
 int
-ieprobe(struct device *parent, struct cfdata *cf, void *aux)
+ieprobe(device_t parent, cfdata_t cf, void *aux)
 {
-	struct podule_attach_args *pa = (void *)aux;
+	struct podule_attach_args *pa = aux;
 
 /* Look for a network slot interface */
 
@@ -305,10 +305,10 @@ ieprobe(struct device *parent, struct cfdata *cf, void *aux)
  * Attach our driver to the interfaces it uses
  */
   
-void ieattach ( struct device *parent, struct device *self, void *aux )
+void ieattach ( device_t parent, device_t self, void *aux )
 {
-	struct ie_softc *sc = (void *)self;
-	struct podule_attach_args *pa = (void *)aux;
+	struct ie_softc *sc = device_private(self);
+	struct podule_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;
 	char idrom[32];

@@ -1,7 +1,0 @@
-#!/bin/sh
-# $Heimdal: pfrom.in 5248 1998-11-24 13:25:47Z assar $
-# $NetBSD: pfrom.in,v 1.2 2008/03/22 08:36:55 mlelstv Exp $
-libexecdir=%libexecdir%
-PATH=$libexecdir:$PATH
-export PATH
-push --from $*

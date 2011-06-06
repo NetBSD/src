@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.46 2010/07/07 01:30:33 chs Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.46.2.1 2011/06/06 09:07:20 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.46 2010/07/07 01:30:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.46.2.1 2011/06/06 09:07:20 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 
 	/* Address of trampoline code.  End up at this PC after mi_switch */
 	tf->tf_regs[FRAME_PC] =
-	    (u_int64_t)(p->p_psstr - (linux_rt_esigcode - linux_rt_sigcode));
+	    (u_int64_t)(p->p_psstrp - (linux_rt_esigcode - linux_rt_sigcode));
 
 	/* Adjust the stack */
 	alpha_pal_wrusp((unsigned long)sfp);
@@ -294,7 +294,7 @@ void setup_linux_sigframe(tf, sig, mask)
 
 	/* Address of trampoline code.  End up at this PC after mi_switch */
 	tf->tf_regs[FRAME_PC] =
-	    (u_int64_t)(p->p_psstr - (linux_esigcode - linux_sigcode));
+	    (u_int64_t)(p->p_psstrp - (linux_esigcode - linux_sigcode));
 
 	/* Adjust the stack */
 	alpha_pal_wrusp((unsigned long)sfp);

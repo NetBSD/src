@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.6 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.6.6.1 2011/06/06 09:06:22 jruoho Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.6 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.6.6.1 2011/06/06 09:06:22 jruoho Exp $");
 
 #include "sii.h"
 
@@ -55,12 +55,10 @@ static void	kn01_copyfrombuf(volatile u_short *src, char *dst,
 /*
  * Autoconfig definition of driver front-end
  */
-static int	sii_ds_match(struct device* parent, struct cfdata *match,
-		    void *aux);
-static void	sii_ds_attach(struct device *parent, struct device *self,
-		    void *aux);
+static int	sii_ds_match(device_t, struct cfdata *, void *);
+static void	sii_ds_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sii_ds, sizeof(struct siisoftc),
+CFATTACH_DECL_NEW(sii_ds, sizeof(struct siisoftc),
     sii_ds_match, sii_ds_attach, NULL, NULL);
 
 /* define a safe address in the SCSI buffer for doing status & message DMA */
@@ -71,7 +69,7 @@ CFATTACH_DECL(sii_ds, sizeof(struct siisoftc),
  * Match driver on Decstation (2100, 3100, 5100) based on name and probe.
  */
 static int
-sii_ds_match(struct device *parent, struct cfdata *match, void *aux)
+sii_ds_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ibus_attach_args *ia = aux;
 	void *siiaddr;
@@ -85,11 +83,12 @@ sii_ds_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-sii_ds_attach(struct device *parent, struct device *self, void *aux)
+sii_ds_attach(device_t parent, device_t self, void *aux)
 {
 	struct ibus_attach_args *ia = aux;
-	struct siisoftc *sc = (struct siisoftc *) self;
+	struct siisoftc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_regs = (SIIRegs *)MIPS_PHYS_TO_KSEG1(ia->ia_addr);
 
 	/* set up scsi buffer.  XXX Why statically allocated? */

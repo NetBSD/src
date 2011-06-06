@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.10 2010/11/23 11:14:02 hannken Exp $
+# $NetBSD: GENERIC,v 1.10.2.1 2011/06/06 09:06:16 jruoho Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"MVME1600-$Revision: 1.10 $"
+ident		"GENERIC-$Revision: 1.10.2.1 $"
 
 maxusers	8
 
@@ -57,7 +57,8 @@ file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	WAPBL		# File system journaling support - Experimental

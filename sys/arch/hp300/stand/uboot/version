@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.16 2008/07/16 13:44:51 tsutsui Exp $
+$NetBSD: version,v 1.16.22.1 2011/06/06 09:05:39 jruoho Exp $
 
 1.1:	Initial version
 1.2:	Added support for network booting
@@ -16,3 +16,5 @@ $NetBSD: version,v 1.16 2008/07/16 13:44:51 tsutsui Exp $
 1.14:	Default to BOOTP network boot
 1.15:	Identify HP362 and HP382
 1.16:	Change boot messages to replace build date and maker with kernrev.
+1.17:	Pull OpenBSD's ite driver reorganization.
+1.18:	Add support for framebuffers on HP362 and HP382.

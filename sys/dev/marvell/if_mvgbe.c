@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.3 2010/10/02 05:57:42 kiyohara Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.3.2.1 2011/06/06 09:07:58 jruoho Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.3 2010/10/02 05:57:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.3.2.1 2011/06/06 09:07:58 jruoho Exp $");
 
 #include "rnd.h"
 
@@ -75,16 +75,25 @@ int mvgbe_debug = MVGBE_DEBUG;
 	bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg))
 #define MVGBE_WRITE(sc, reg, val) \
 	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
-#define MVGBE_READ_FILTER(sc, reg) \
-	bus_space_read_4((sc)->sc_iot, (sc)->sc_dafh, (reg))
+#define MVGBE_READ_FILTER(sc, reg, val, c) \
+	bus_space_read_region_4((sc)->sc_iot, (sc)->sc_dafh, (reg), (val), (c))
 #define MVGBE_WRITE_FILTER(sc, reg, val, c) \
-	bus_space_set_region_4((sc)->sc_iot, (sc)->sc_dafh, (reg), (val), (c))
+	bus_space_write_region_4((sc)->sc_iot, (sc)->sc_dafh, (reg), (val), (c))
 
 #define MVGBE_TX_RING_CNT	256
+#define MVGBE_TX_RING_MSK	(MVGBE_TX_RING_CNT - 1)
+#define MVGBE_TX_RING_NEXT(x)	(((x) + 1) & MVGBE_TX_RING_MSK)
 #define MVGBE_RX_RING_CNT	256
+#define MVGBE_RX_RING_MSK	(MVGBE_RX_RING_CNT - 1)
+#define MVGBE_RX_RING_NEXT(x)	(((x) + 1) & MVGBE_RX_RING_MSK)
+
+CTASSERT(MVGBE_TX_RING_CNT > 1 && MVGBE_TX_RING_NEXT(MVGBE_TX_RING_CNT) ==
+	(MVGBE_TX_RING_CNT + 1) % MVGBE_TX_RING_CNT);
+CTASSERT(MVGBE_RX_RING_CNT > 1 && MVGBE_RX_RING_NEXT(MVGBE_RX_RING_CNT) ==
+	(MVGBE_RX_RING_CNT + 1) % MVGBE_RX_RING_CNT);
 
 #define MVGBE_JSLOTS		384	/* XXXX */
-#define MVGBE_JLEN		(MVGBE_MRU + MVGBE_BUF_ALIGN)
+#define MVGBE_JLEN		((MVGBE_MRU + MVGBE_RXBUF_ALIGN)&~MVGBE_RXBUF_MASK)
 #define MVGBE_NTXSEG		30
 #define MVGBE_JPAGESZ		PAGE_SIZE
 #define MVGBE_RESID \
@@ -240,9 +249,10 @@ static int mvgbe_init(struct ifnet *);
 static void mvgbe_stop(struct ifnet *, int);
 static void mvgbe_watchdog(struct ifnet *);
 
-/* MII funcstions */
-static int mvgbe_ifmedia_upd(struct ifnet *);
-static void mvgbe_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+static int mvgbe_ifflags_cb(struct ethercom *);
+
+static int mvgbe_mediachange(struct ifnet *);
+static void mvgbe_mediastatus(struct ifnet *, struct ifmediareq *);
 
 static int mvgbe_init_rx_ring(struct mvgbe_softc *);
 static int mvgbe_init_tx_ring(struct mvgbe_softc *);
@@ -253,7 +263,8 @@ static void mvgbe_jfree(struct mbuf *, void *, size_t, void *);
 static int mvgbe_encap(struct mvgbe_softc *, struct mbuf *, uint32_t *);
 static void mvgbe_rxeof(struct mvgbe_softc *);
 static void mvgbe_txeof(struct mvgbe_softc *);
-static void mvgbe_setmulti(struct mvgbe_softc *);
+static uint8_t mvgbe_crc8(const uint8_t *, size_t);
+static void mvgbe_filter_setup(struct mvgbe_softc *);
 #ifdef MVGBE_DEBUG
 static void mvgbe_dump_txdesc(struct mvgbe_tx_desc *, int);
 #endif
@@ -266,6 +277,7 @@ CFATTACH_DECL_NEW(mvgbec_mbus, sizeof(struct mvgbec_softc),
 CFATTACH_DECL_NEW(mvgbe, sizeof(struct mvgbe_softc),
     mvgbe_match, mvgbe_attach, NULL, NULL);
 
+device_t mvgbec0 = NULL;
 
 struct mvgbe_port {
 	int model;
@@ -294,7 +306,7 @@ struct mvgbe_port {
 	{ MARVELL_KIRKWOOD_88F6192,	0, 1, { 11 }, FLAGS_FIX_TQTB },
 	{ MARVELL_KIRKWOOD_88F6192,	1, 1, { 14 }, FLAGS_FIX_TQTB },
 	{ MARVELL_KIRKWOOD_88F6281,	0, 1, { 11 }, FLAGS_FIX_TQTB },
-	{ MARVELL_KIRKWOOD_88F6281,	1, 1, { 14 }, FLAGS_FIX_TQTB },
+	{ MARVELL_KIRKWOOD_88F6281,	1, 1, { 15 }, FLAGS_FIX_TQTB },
 
 	{ MARVELL_MV78XX0_MV78100,	0, 1, { 40 }, FLAGS_FIX_TQTB },
 	{ MARVELL_MV78XX0_MV78100,	1, 1, { 44 }, FLAGS_FIX_TQTB },
@@ -347,6 +359,10 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "Cannot map registers\n");
 		return;
 	}
+
+	if (mvgbec0 == NULL)
+		mvgbec0 = self;
+		
 	phyaddr = 0;
 	MVGBE_WRITE(sc, MVGBE_PHYADDR, phyaddr);
 
@@ -421,10 +437,16 @@ static int
 mvgbec_miibus_readreg(device_t dev, int phy, int reg)
 {
 	struct mvgbe_softc *sc = device_private(dev);
-	struct mvgbec_softc *csc = device_private(device_parent(dev));
+	struct mvgbec_softc *csc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t smi, val;
 	int i;
+
+	if (mvgbec0 == NULL) {
+		aprint_error_ifnet(ifp, "SMI mvgbec0 not found\n");
+		return -1;
+	}
+	csc = device_private(mvgbec0);
 
 	mutex_enter(&csc->sc_mtx);
 
@@ -467,10 +489,16 @@ static void
 mvgbec_miibus_writereg(device_t dev, int phy, int reg, int val)
 {
 	struct mvgbe_softc *sc = device_private(dev);
-	struct mvgbec_softc *csc = device_private(device_parent(dev));
+	struct mvgbec_softc *csc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t smi;
 	int i;
+
+	if (mvgbec0 == NULL) {
+		aprint_error_ifnet(ifp, "SMI mvgbec0 not found\n");
+		return;
+	}
+	csc = device_private(mvgbec0);
 
 	DPRINTFN(9, ("mvgbec_miibus_writereg phy=%d reg=%#x val=%#x\n",
 	     phy, reg, val));
@@ -688,17 +716,12 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	sc->sc_rdata = (struct mvgbe_ring_data *)kva;
 	memset(sc->sc_rdata, 0, sizeof(struct mvgbe_ring_data));
 
-#if 0
 	/*
 	 * We can support 802.1Q VLAN-sized frames and jumbo
 	 * Ethernet frames.
 	 */
 	sc->sc_ethercom.ec_capabilities |=
-	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING | ETHERCAP_JUMBO_MTU;
-#else
-	/* XXXX: We don't know the usage of VLAN. */
-	sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
-#endif
+	    ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU;
 
 	/* Try to allocate memory for jumbo buffers. */
 	if (mvgbe_alloc_jumbo_mem(sc)) {
@@ -721,6 +744,10 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
+	/*
+	 * But, IPv6 packets in the stream can cause incorrect TCPv4 Tx sums.
+	 */
+	sc->sc_ethercom.ec_if.if_capabilities &= ~IFCAP_CSUM_TCPv4_Tx;
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(MVGBE_TX_RING_CNT - 1, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
@@ -737,9 +764,9 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0,
-	    mvgbe_ifmedia_upd, mvgbe_ifmedia_sts);
+	    mvgbe_mediachange, mvgbe_mediastatus);
 	mii_attach(self, &sc->sc_mii, 0xffffffff,
-	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	    MII_PHY_ANY, parent == mvgbec0 ? 0 : 1, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
 		ifmedia_add(&sc->sc_mii.mii_media,
@@ -754,6 +781,7 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 
 	ether_ifattach(ifp, sc->sc_enaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, mvgbe_ifflags_cb);
 
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
@@ -889,42 +917,26 @@ mvgbe_start(struct ifnet *ifp)
 }
 
 static int
-mvgbe_ioctl(struct ifnet *ifp, u_long command, void *data)
+mvgbe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mvgbe_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = data;
-	struct mii_data *mii;
 	int s, error = 0;
 
 	s = splnet();
 
-	switch (command) {
-	case SIOCSIFFLAGS:
-		DPRINTFN(2, ("mvgbe_ioctl IFFLAGS\n"));
-		if (ifp->if_flags & IFF_UP)
-			mvgbe_init(ifp);
-		else
-			if (ifp->if_flags & IFF_RUNNING)
-				mvgbe_stop(ifp, 0);
-		sc->sc_if_flags = ifp->if_flags;
-		error = 0;
-		break;
-
+	switch (cmd) {
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		DPRINTFN(2, ("mvgbe_ioctl MEDIA\n"));
-		mii = &sc->sc_mii;
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
-
 	default:
 		DPRINTFN(2, ("mvgbe_ioctl ETHER\n"));
-		error = ether_ioctl(ifp, command, data);
+		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
-				mvgbe_setmulti(sc);
-				DPRINTFN(2,
-				    ("mvgbe_ioctl setmulti called\n"));
+				mvgbe_filter_setup(sc);
 			}
 			error = 0;
 		}
@@ -936,6 +948,9 @@ mvgbe_ioctl(struct ifnet *ifp, u_long command, void *data)
 	return error;
 }
 
+int mvgbe_rximt = 0;
+int mvgbe_tximt = 0;
+
 static int
 mvgbe_init(struct ifnet *ifp)
 {
@@ -943,16 +958,9 @@ mvgbe_init(struct ifnet *ifp)
 	struct mvgbec_softc *csc = device_private(device_parent(sc->sc_dev));
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t reg;
-	int i, s;
+	int i;
 
 	DPRINTFN(2, ("mvgbe_init\n"));
-
-	s = splnet();
-
-	if (ifp->if_flags & IFF_RUNNING) {
-		splx(s);
-		return 0;
-	}
 
 	/* Cancel pending I/O and free all RX/TX buffers. */
 	mvgbe_stop(ifp, 0);
@@ -965,13 +973,11 @@ mvgbe_init(struct ifnet *ifp)
 	if (mvgbe_init_tx_ring(sc) == ENOBUFS) {
 		aprint_error_ifnet(ifp,
 		    "initialization failed: no memory for tx buffers\n");
-		splx(s);
 		return ENOBUFS;
 	}
 	if (mvgbe_init_rx_ring(sc) == ENOBUFS) {
 		aprint_error_ifnet(ifp,
 		    "initialization failed: no memory for rx buffers\n");
-		splx(s);
 		return ENOBUFS;
 	}
 
@@ -979,7 +985,7 @@ mvgbe_init(struct ifnet *ifp)
 	    MVGBE_PSC_ANFC |			/* Enable Auto-Neg Flow Ctrl */
 	    MVGBE_PSC_RESERVED |		/* Must be set to 1 */
 	    MVGBE_PSC_FLFAIL |			/* Do NOT Force Link Fail */
-	    MVGBE_PSC_MRU(MVGBE_PSC_MRU_9700) |	/* Always 9700 OK */
+	    MVGBE_PSC_MRU(MVGBE_PSC_MRU_9022) | /* we want 9k */
 	    MVGBE_PSC_SETFULLDX);		/* Set_FullDx */
 	/* XXXX: mvgbe(4) always use RGMII. */
 	MVGBE_WRITE(sc, MVGBE_PSC1,
@@ -1014,10 +1020,14 @@ mvgbe_init(struct ifnet *ifp)
 	MVGBE_WRITE(sc, MVGBE_SDC,
 	    MVGBE_SDC_RXBSZ_16_64BITWORDS |
 #if BYTE_ORDER == LITTLE_ENDIAN
-	    MVGBE_SDC_BLMR |	/* Big/Litlle Endian Receive Mode: No swap */
-	    MVGBE_SDC_BLMT |	/* Big/Litlle Endian Transmit Mode: No swap */
+	    MVGBE_SDC_BLMR |	/* Big/Little Endian Receive Mode: No swap */
+	    MVGBE_SDC_BLMT |	/* Big/Little Endian Transmit Mode: No swap */
 #endif
+	    MVGBE_SDC_IPGINTRX(mvgbe_rximt) |
 	    MVGBE_SDC_TXBSZ_16_64BITWORDS);
+	MVGBE_WRITE(sc, MVGBE_PTFUT, MVGBE_PTFUT_IPGINTTX(mvgbe_tximt));
+
+	mvgbe_filter_setup(sc);
 
 	mii_mediachg(mii);
 
@@ -1046,8 +1056,6 @@ mvgbe_init(struct ifnet *ifp)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-
-	splx(s);
 
 	return 0;
 }
@@ -1169,30 +1177,41 @@ mvgbe_watchdog(struct ifnet *ifp)
 	}
 }
 
+static int
+mvgbe_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct mvgbe_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+
+	if (change != 0)
+		sc->sc_if_flags = ifp->if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+
+	if ((change & IFF_PROMISC) != 0)
+		mvgbe_filter_setup(sc);
+
+	return 0;
+}
 
 /*
  * Set media options.
  */
 static int
-mvgbe_ifmedia_upd(struct ifnet *ifp)
+mvgbe_mediachange(struct ifnet *ifp)
 {
-	struct mvgbe_softc *sc = ifp->if_softc;
-
-	mii_mediachg(&sc->sc_mii);
-	return 0;
+	return ether_mediachange(ifp);
 }
 
 /*
  * Report current media status.
  */
 static void
-mvgbe_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
+mvgbe_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct mvgbe_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+	ether_mediastatus(ifp, ifmr);
 }
 
 
@@ -1203,7 +1222,7 @@ mvgbe_init_rx_ring(struct mvgbe_softc *sc)
 	struct mvgbe_ring_data *rd = sc->sc_rdata;
 	int i;
 
-	bzero((char *)rd->mvgbe_rx_ring,
+	memset(rd->mvgbe_rx_ring, 0,
 	    sizeof(struct mvgbe_rx_desc) * MVGBE_RX_RING_CNT);
 
 	for (i = 0; i < MVGBE_RX_RING_CNT; i++) {
@@ -1243,7 +1262,7 @@ mvgbe_init_tx_ring(struct mvgbe_softc *sc)
 	struct mvgbe_ring_data *rd = sc->sc_rdata;
 	int i;
 
-	bzero((char *)sc->sc_rdata->mvgbe_tx_ring,
+	memset(sc->sc_rdata->mvgbe_tx_ring, 0,
 	    sizeof(struct mvgbe_tx_desc) * MVGBE_TX_RING_CNT);
 
 	for (i = 0; i < MVGBE_TX_RING_CNT; i++) {
@@ -1314,16 +1333,18 @@ mvgbe_newbuf(struct mvgbe_softc *sc, int i, struct mbuf *m,
 		m_new->m_len = m_new->m_pkthdr.len = MVGBE_JLEN;
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
-	align = (u_long)m_new->m_data & MVGBE_BUF_MASK;
-	if (align != 0)
-		m_adj(m_new,  MVGBE_BUF_ALIGN - align);
+	align = (u_long)m_new->m_data & MVGBE_RXBUF_MASK;
+	if (align != 0) {
+		DPRINTFN(1,("align = %d\n", align));
+		m_adj(m_new,  MVGBE_RXBUF_ALIGN - align);
+	}
 
 	c = &sc->sc_cdata.mvgbe_rx_chain[i];
 	r = c->mvgbe_desc;
 	c->mvgbe_mbuf = m_new;
 	r->bufptr = dmamap->dm_segs[0].ds_addr +
 	    (((vaddr_t)m_new->m_data - (vaddr_t)sc->sc_cdata.mvgbe_jumbo_buf));
-	r->bufsize = MVGBE_JLEN & ~MVGBE_BUF_MASK;
+	r->bufsize = MVGBE_JLEN & ~MVGBE_RXBUF_MASK;
 	r->cmdsts = MVGBE_BUFFER_OWNED_BY_DMA | MVGBE_RX_ENABLE_INTERRUPT;
 
 	MVGBE_CDRXSYNC(sc, i, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -1379,7 +1400,7 @@ mvgbe_alloc_jumbo_mem(struct mvgbe_softc *sc)
 
 	state = 4;
 	sc->sc_cdata.mvgbe_jumbo_buf = (void *)kva;
-	DPRINTFN(1,("mvgbe_jumbo_buf = 0x%p\n", sc->sc_cdata.mvgbe_jumbo_buf));
+	DPRINTFN(1,("mvgbe_jumbo_buf = %p\n", sc->sc_cdata.mvgbe_jumbo_buf));
 
 	LIST_INIT(&sc->sc_jfree_listhead);
 	LIST_INIT(&sc->sc_jinuse_listhead);
@@ -1543,7 +1564,7 @@ mvgbe_encap(struct mvgbe_softc *sc, struct mbuf *m_head,
 		f->bytecnt = txseg[i].ds_len;
 		f->cmdsts = MVGBE_BUFFER_OWNED_BY_DMA;
 		last = current;
-		current = (current + 1) % MVGBE_TX_RING_CNT;
+		current = MVGBE_TX_RING_NEXT(current);
 	}
 
 	if (m_csumflags & M_CSUM_IPv4)
@@ -1650,7 +1671,7 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 
 		cdata->mvgbe_rx_map[idx] = NULL;
 
-		idx = (idx + 1) % MVGBE_RX_RING_CNT;
+		idx = MVGBE_RX_RING_NEXT(idx);
 
 		if (rxstat & MVGBE_ERROR_SUMMARY) {
 #if 0
@@ -1671,22 +1692,26 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 			continue;
 		}
 
-		if (total_len > MVGBE_RX_CSUM_MIN_BYTE) {
-			/* Check IP header checksum */
-			if (rxstat & MVGBE_RX_IP_FRAME_TYPE) {
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-				if (!(rxstat & MVGBE_RX_IP_HEADER_OK))
-					m->m_pkthdr.csum_flags |=
-					    M_CSUM_IPv4_BAD;
-			}
-			/* Check TCP/UDP checksum */
-			if (rxstat & MVGBE_RX_L4_TYPE_TCP)
+		if (total_len <= MVGBE_RX_CSUM_MIN_BYTE)  /* XXX documented? */
+			goto sw_csum;
+
+		if (rxstat & MVGBE_RX_IP_FRAME_TYPE) {
+			/* Check IPv4 header checksum */
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			if (!(rxstat & MVGBE_RX_IP_HEADER_OK))
+				m->m_pkthdr.csum_flags |=
+				    M_CSUM_IPv4_BAD;
+			/* Check TCPv4/UDPv4 checksum */
+			if ((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
+			    MVGBE_RX_L4_TYPE_TCP)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
-			else if (rxstat & MVGBE_RX_L4_TYPE_UDP)
+			else if ((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
+			    MVGBE_RX_L4_TYPE_UDP)
 				m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
 			if (!(rxstat & MVGBE_RX_L4_CHECKSUM))
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
+sw_csum:
 
 		/*
 		 * Try to allocate a new jumbo buffer. If that
@@ -1783,7 +1808,7 @@ mvgbe_txeof(struct mvgbe_softc *sc)
 			cdata->mvgbe_tx_map[idx] = NULL;
 		}
 		cdata->mvgbe_tx_cnt--;
-		idx = (idx + 1) % MVGBE_TX_RING_CNT;
+		idx = MVGBE_TX_RING_NEXT(idx);
 	}
 	if (cdata->mvgbe_tx_cnt == 0)
 		ifp->if_timer = 0;
@@ -1794,49 +1819,99 @@ mvgbe_txeof(struct mvgbe_softc *sc)
 	cdata->mvgbe_tx_cons = idx;
 }
 
-static void
-mvgbe_setmulti(struct mvgbe_softc *sc)
+static uint8_t
+mvgbe_crc8(const uint8_t *data, size_t size)
 {
-	struct ifnet *ifp= &sc->sc_ethercom.ec_if;
-	uint32_t pxc, dfut, upm = 0, filter = 0;
-	uint8_t ln = sc->sc_enaddr[5] & 0xf;		/* last nibble */
+	int bit;
+	uint8_t byte;
+	uint8_t crc = 0;
+	const uint8_t poly = 0x07;
 
-	if (ifp->if_flags & IFF_PROMISC) {
-		upm = MVGBE_PXC_UPM;
-		filter =
-		    MVGBE_DF(0, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
-		    MVGBE_DF(1, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
-		    MVGBE_DF(2, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
-		    MVGBE_DF(3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
-	} else if (ifp->if_flags & IFF_ALLMULTI) {
-		filter =
-		    MVGBE_DF(0, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
-		    MVGBE_DF(1, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
-		    MVGBE_DF(2, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
-		    MVGBE_DF(3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
+	while(size--)
+	  for (byte = *data++, bit = NBBY-1; bit >= 0; bit--)
+	    crc = (crc << 1) ^ ((((crc >> 7) ^ (byte >> bit)) & 1) ? poly : 0);
+
+	return crc;
+}
+
+CTASSERT(MVGBE_NDFSMT == MVGBE_NDFOMT);
+
+static void
+mvgbe_filter_setup(struct mvgbe_softc *sc)
+{
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp= &sc->sc_ethercom.ec_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint32_t *dfut, *dfsmt, *dfomt;
+	uint32_t pxc;
+	int i;
+	const uint8_t special[ETHER_ADDR_LEN] = {0x01,0x00,0x5e,0x00,0x00,0x00};
+
+	dfut = kmem_zalloc(sizeof(*dfut) * MVGBE_NDFUT, KM_SLEEP);
+	dfsmt = kmem_zalloc(sizeof(*dfsmt) * MVGBE_NDFSMT, KM_SLEEP);
+	dfomt = kmem_zalloc(sizeof(*dfomt) * MVGBE_NDFOMT, KM_SLEEP);
+
+	if (ifp->if_flags & (IFF_ALLMULTI|IFF_PROMISC)) {
+		goto allmulti;
 	}
 
-	/* Set Unicast Promiscuous mode */
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/* ranges are complex and somewhat rare */
+			goto allmulti;
+		}
+		/* chip handles some IPv4 multicast specially */
+		if (memcmp(enm->enm_addrlo, special, 5) == 0) {
+			i = enm->enm_addrlo[5];
+			dfsmt[i>>2] =
+			    MVGBE_DF(i&3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
+		} else {
+			i = mvgbe_crc8(enm->enm_addrlo, ETHER_ADDR_LEN);
+			dfomt[i>>2] =
+			    MVGBE_DF(i&3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
+		}
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	goto set;
+
+allmulti:
+	if (ifp->if_flags & (IFF_ALLMULTI|IFF_PROMISC)) {
+		for (i = 0; i < MVGBE_NDFSMT; i++) {
+			dfsmt[i] = dfomt[i] =
+			    MVGBE_DF(0, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
+			    MVGBE_DF(1, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
+			    MVGBE_DF(2, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
+			    MVGBE_DF(3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
+		}
+	}
+
+set:
 	pxc = MVGBE_READ(sc, MVGBE_PXC);
 	pxc &= ~MVGBE_PXC_UPM;
-	pxc |= upm;
+	pxc |= MVGBE_PXC_RB | MVGBE_PXC_RBIP | MVGBE_PXC_RBARP;
+	if (ifp->if_flags & IFF_BROADCAST) {
+		pxc &= ~(MVGBE_PXC_RB | MVGBE_PXC_RBIP | MVGBE_PXC_RBARP);
+	}
+	if (ifp->if_flags & IFF_PROMISC) {
+		pxc |= MVGBE_PXC_UPM;
+	}
 	MVGBE_WRITE(sc, MVGBE_PXC, pxc);
 
-	/* Set Destination Address Filter Multicast Tables */
-	MVGBE_WRITE_FILTER(sc, MVGBE_DFSMT, filter, MVGBE_NDFSMT);
-	MVGBE_WRITE_FILTER(sc, MVGBE_DFOMT, filter, MVGBE_NDFOMT);
-
-	if (ifp->if_flags & IFF_PROMISC) {
-		/* necessary ? */
-		MVGBE_WRITE_FILTER(sc, MVGBE_DFUT, filter, MVGBE_NDFUT);
-		return;
-	}
-
 	/* Set Destination Address Filter Unicast Table */
-	dfut = MVGBE_READ_FILTER(sc, MVGBE_DFUT + (ln & 0x0c));
-	dfut &= ~MVGBE_DF(ln & 0x03, MVGBE_DF_QUEUE_MASK);;
-	dfut |= MVGBE_DF(ln & 0x03, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
-	MVGBE_WRITE_FILTER(sc, MVGBE_DFUT + (ln & 0x0c), dfut, 1);
+	i = sc->sc_enaddr[5] & 0xf;		/* last nibble */
+	dfut[i>>2] = MVGBE_DF(i&3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
+	MVGBE_WRITE_FILTER(sc, MVGBE_DFUT, dfut, MVGBE_NDFUT);
+
+	/* Set Destination Address Filter Multicast Tables */
+	MVGBE_WRITE_FILTER(sc, MVGBE_DFSMT, dfsmt, MVGBE_NDFSMT);
+	MVGBE_WRITE_FILTER(sc, MVGBE_DFOMT, dfomt, MVGBE_NDFOMT);
+
+	kmem_free(dfut, sizeof(dfut[0]) * MVGBE_NDFUT);
+	kmem_free(dfsmt, sizeof(dfsmt[0]) * MVGBE_NDFSMT);
+	kmem_free(dfomt, sizeof(dfsmt[0]) * MVGBE_NDFOMT);
 }
 
 #ifdef MVGBE_DEBUG
@@ -1861,7 +1936,5 @@ mvgbe_dump_txdesc(struct mvgbe_tx_desc *desc, int idx)
        DESC_PRINT(desc->nextdescptr);
 #endif
 #undef DESC_PRINT
-       printf("txdesc[%d].desc->returninfo=%#lx\n", idx, desc->returninfo);
-       printf("txdesc[%d].desc->alignbufptr=%p\n", idx, desc->alignbufptr);
 }
 #endif

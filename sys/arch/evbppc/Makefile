@@ -1,32 +1,39 @@
-#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.136.1 2011/06/06 09:05:31 jruoho Exp $
 
-ETAGS?= etags
+.include <../powerpc/Makefile.inc>
 
 # XXX Fix this to deal with multiple "evbppc" ports.
-SEVBPPC=	evbppc/*.[ch] include/*.h
-AEVBPPC=
+TEVBPPC=	${SYSDIR}/arch/evbppc/tags
+SEVBPPC=	${SYSDIR}/arch/evbppc/evbppc/*.[ch]
+SEVBPPC+=	${SYSDIR}/arch/evbppc/include/*.h
+SEVBPPC+=	${SYSDIR}/arch/evbppc/pmppc/dev/*.[ch]
+SEVBPPC+=	${SYSDIR}/arch/evbppc/pmppc/pci/*.[ch]
+SEVBPPC+=	${SYSDIR}/arch/evbppc/pmppc/*.[ch]
+AEVBPPC=	${SYSDIR}/arch/evbppc/ev64260/*.S \
+		${SYSDIR}/arch/evbppc/explora/*.S \
+		${SYSDIR}/arch/evbppc/mpc85xx/*.S \
+		${SYSDIR}/arch/evbppc/obs405/*.S \
+		${SYSDIR}/arch/evbppc/pmppc/*.S \
+		${SYSDIR}/arch/evbppc/virtex/*.S \
+		${SYSDIR}/arch/evbppc/walnut/*.S
 
-SPPC=		../powerpc/ibm4xx/*.[ch] ../powerpc/powerpc/*.[ch] \
-		../powerpc/include/*.h ../powerpc/include/ibm4xx/*.h \
-		../powerpc/fpu/*.[ch]
-APPC=		../powerpc/ibm4xx/*.[sS] ../powerpc/powerpc/*.[sS]
-LPPC=		../../lib/libkern/arch/powerpc/*.[chsS] \
-		../../lib/libkern/*.[ch] \
-		../../lib/libsa/*.[ch]
+DEVBPPC=	include
 
-SYSDIR=		../..
 .include "../../kern/Make.tags.inc"
 
-.ifmake TAGS
-COMM!=  find ${SYSDIR} -name "arch" -prune -o -name "*.[ch]" -print 
-.endif
+tags:
+	-rm -f ${TEVBPPC}
+	-echo ${SEVBPPC} ${SPPC} | xargs ctags -wadtf ${TEVBPPC}
+	-${FINDCOMM} | xargs ctags -wadtf ${TEVBPPC}
+	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AEVBPPC} ${APPC} | \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
+	    >> ${TEVBPPC}
+	sort -o ${TEVBPPC} ${TEVBPPC}
 
-TAGS: ${SEVBPPC} ${COMM} ${SPPC} ${COMM} ${ASPARC64}
-	@echo Making TAGS...
-	@${ETAGS} ${SEVBPPC} ${COMM} ${SPPC} ${COMM} "--regex=/^GLOBAL(\(.*\))/\1/" \
-		"--regex=/^_C_LABEL(\(.*\)):/\1/" "--regex=/^\(.*\):/\1/" \
-		"--regex=/^ENTRY(\(.*\)):/\1/" "--regex=/^ASENTRY(\(.*\)):/\1/" \
-		${APPC} ${AEVBPPC}
+links:
+	-for i in ${DEVBPPC}; do \
+	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
 SUBDIR=	compile include

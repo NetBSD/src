@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.25 2009/03/16 23:11:14 dsl Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.25.6.1 2011/06/06 09:06:25 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.25 2009/03/16 23:11:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.25.6.1 2011/06/06 09:06:25 jruoho Exp $");
 
 /*
  * Which system models were configured?
@@ -64,16 +64,16 @@ extern struct tcbus_attach_args kmin_tc_desc[];	/* XXX */
 extern struct tcbus_attach_args xine_tc_desc[];	/* XXX */
 extern struct tcbus_attach_args kn03_tc_desc[];	/* XXX */
 
-static int	tcbus_match(struct device *, struct cfdata *, void *);
-static void	tcbus_attach(struct device *, struct device *, void *);
+static int	tcbus_match(device_t, cfdata_t, void *);
+static void	tcbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(tcbus, sizeof(struct tc_softc),
+CFATTACH_DECL_NEW(tcbus, sizeof(struct tc_softc),
     tcbus_match, tcbus_attach, NULL, NULL);
 
 static int tcbus_found;
 
 static int
-tcbus_match(struct device *parent, struct cfdata *cfdata, void *aux)
+tcbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -84,7 +84,7 @@ tcbus_match(struct device *parent, struct cfdata *cfdata, void *aux)
 }
 
 static void
-tcbus_attach(struct device *parent, struct device *self, void *aux)
+tcbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct tcbus_attach_args *tba;
 
@@ -118,6 +118,7 @@ tcbus_attach(struct device *parent, struct device *self, void *aux)
 	tba->tba_intr_disestablish = tc_ds_intr_disestablish;
 	tba->tba_get_dma_tag = tc_ds_get_dma_tag;
 
+	/* XXX why not config_found(9)? */
 	tcattach(parent, self, tba);
 }
 
@@ -125,7 +126,7 @@ tcbus_attach(struct device *parent, struct device *self, void *aux)
  * Dispatch to model specific interrupt line evcnt fetch rontine
  */
 static const struct evcnt *
-tc_ds_intr_evcnt(struct device *dev, void *cookie)
+tc_ds_intr_evcnt(device_t dev, void *cookie)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -136,14 +137,15 @@ tc_ds_intr_evcnt(struct device *dev, void *cookie)
  * Dispatch to model specific interrupt establishing routine
  */
 static void
-tc_ds_intr_establish(struct device *dev, void *cookie, int level, int (*handler)(void *), void *val)
+tc_ds_intr_establish(device_t dev, void *cookie, int level,
+    int (*handler)(void *), void *val)
 {
 
 	(*platform.intr_establish)(dev, cookie, level, handler, val);
 }
 
 static void
-tc_ds_intr_disestablish(struct device *dev, void *arg)
+tc_ds_intr_disestablish(device_t dev, void *arg)
 {
 
 	printf("cannot disestablish TC interrupts\n");
@@ -220,15 +222,16 @@ tcfb_cnattach(int slotno)
 	char tcname[TC_ROM_LLEN];
 	int i;
 
-	tcaddr = (*callv->_slot_address)(slotno);
+	tcaddr = promcall(callv->_slot_address, slotno);
 	if (tc_badaddr(tcaddr) || tc_checkslot(tcaddr, tcname) == 0)
 		panic("TC console designated by PROM does not exist!?");
 
-	for (i = 0; i < sizeof(cnboards) / sizeof(cnboards[0]); i++)
+	for (i = 0; i < __arraycount(cnboards); i++) {
 		if (strncmp(tcname, cnboards[i].cb_tcname, TC_ROM_LLEN) == 0)
 			break;
+	}
 
-	if (i == sizeof(cnboards) / sizeof(cnboards[0]))
+	if (i == __arraycount(cnboards))
 		return (0);
 
 	(cnboards[i].cb_cnattach)((tc_addr_t)TC_PHYS_TO_UNCACHED(tcaddr));

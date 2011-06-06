@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.28 2010/09/06 20:03:56 christos Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.28.2.1 2011/06/06 09:07:06 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.28 2010/09/06 20:03:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.28.2.1 2011/06/06 09:07:06 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -784,7 +784,7 @@ error:
  * Hub, which typically have an EST-enabled CPU.
  */
 static int
-speedstep_bad_hb_check(struct pci_attach_args *pa)
+speedstep_bad_hb_check(const struct pci_attach_args *pa)
 {
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82815_FULL_HUB &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.12 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.12.28.1 2011/06/06 09:07:44 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,22 +78,22 @@
  * 4.2.2: System Parameter Block
  */
 struct arcbios_spb {
-	u_long		SPBSignature;
-	u_long		SPBLength;
+	uint32_t	SPBSignature;
+	uint32_t	SPBLength;
 	uint16_t	Version;
 	uint16_t	Revision;
-	void		*RestartBlock;
-	void		*DebugBlock;
-	void		*GEVector;
-	void		*UTLBMissVector;
-	u_long		FirmwareVectorLength;
-	void		*FirmwareVector;
-	u_long		PrivateVectorLength;
-	void		*PrivateVector;
-	u_long		AdapterCount;
-	u_long		AdapterType;
-	u_long		AdapterVectorLength;
-	void		*AdapterVector;
+	int32_t		RestartBlock;
+	int32_t		DebugBlock;
+	int32_t		GEVector;
+	int32_t		UTLBMissVector;
+	uint32_t	FirmwareVectorLength;
+	int32_t		FirmwareVector;
+	uint32_t	PrivateVectorLength;
+	int32_t		PrivateVector;
+	uint32_t	AdapterCount;
+	uint32_t	AdapterType;
+	uint32_t	AdapterVectorLength;
+	int32_t		AdapterVector;
 };
 
 #define	ARCBIOS_SPB_SIGNATURE	0x53435241	/* A R C S */
@@ -108,11 +108,11 @@ struct arcbios_component {
 	uint32_t	Flags;
 	uint16_t	Version;
 	uint16_t	Revision;
-	u_long		Key;
-	u_long		AffinityMask;
-	u_long		ConfigurationDataSize;
-	u_long		IdentifierLength;
-	char		*Identifier;
+	uint32_t	Key;
+	uint32_t	AffinityMask;
+	uint32_t	ConfigurationDataSize;
+	uint32_t	IdentifierLength;
+	int32_t		Identifier;
 };
 
 /*
@@ -277,8 +277,8 @@ struct arcbios_sysid {
  */
 struct arcbios_mem {
 	uint32_t	Type;
-	u_long		BasePage;
-	u_long		PageCount;
+	uint32_t	BasePage;
+	uint32_t	PageCount;
 };
 
 #if defined(sgimips)
@@ -320,148 +320,89 @@ struct arcbios_dsp_stat {
  * ARC firmware vector
  */
 struct arcbios_fv {
-	long		(*Load)(
-			    char *,		/* image to load */
-			    u_long,		/* top address */
-			    u_long,		/* entry address */
-			    u_long *);		/* low address */
-
-	long		(*Invoke)(
-			    u_long,		/* entry address */
-			    u_long,		/* stack address */
-			    u_long,		/* argc */
-			    char **,		/* argv */
-			    char **);		/* envp */
-
-	long		(*Execute)(
-			    char *,		/* image path */
-			    u_long,		/* argc */
-			    char **,		/* argv */
-			    char **);		/* envp */
-
-	void		(*Halt)(void)
-			    __dead;
-
-	void		(*PowerDown)(void)
-			    __dead;
-
-	void		(*Restart)(void)
-			    __dead;
-
-	void		(*Reboot)(void)
-			    __dead;
-
-	void		(*EnterInteractiveMode)(void)
-			    __dead;
-#if defined(sgimips)
-	void		*reserved0;
-#else
-	void		(*ReturnFromMain)(void)
-			    __dead;
-#endif
-	void		*(*GetPeer)(
-			    void *);		/* component */
-
-	void		*(*GetChild)(
-			    void *);		/* component */
-
-	void		*(*GetParent)(
-			    void *);		/* component */
-
-	long		(*GetConfigurationData)(
-			    void *,		/* configuration data */
-			    void *);		/* component */
-
-	void		*(*AddChild)(
-			    void *,		/* component */
-			    void *);		/* new component */
-
-	long		(*DeleteComponent)(
-			    void *);		/* component */
-
-	void		*(*GetComponent)(
-			    char *);		/* path */
-
-	long		(*SaveConfiguration)(void);
-
-	void		*(*GetSystemId)(void);
-
-	void		*(*GetMemoryDescriptor)(
-			    void *);		/* memory descriptor */
-#if defined(sgimips)
-	void		*reserved1;
-#else
-	void		(*Signal)(
-			    u_long,		/* signal number */
-			    void *);		/* handler */
-#endif
-	void		*(*GetTime)(void);
-
-	u_long		(*GetRelativeTime)(void);
-
-	long		(*GetDirectoryEntry)(
-			    u_long,		/* file ID */
-			    void *,		/* directory entry */
-			    u_long,		/* length */
-			    u_long *);	/* count */
-
-	long		(*Open)(
-			    char *,		/* path */
-			    u_long,		/* open mode */
-			    u_long *);		/* file ID */
-
-	long		(*Close)(
-			    u_long);		/* file ID */
-
-	long		(*Read)(
-			    u_long,		/* file ID */
-			    void *,		/* buffer */
-			    u_long,		/* length */
-			    u_long *);		/* count */
-
-	long		(*GetReadStatus)(
-			    u_long);		/* file ID */
-
-	long		(*Write)(
-			    u_long,		/* file ID */
-			    void *,		/* buffer */
-			    u_long,		/* length */
-			    u_long *);		/* count */
-
-	long		(*Seek)(
-			    u_long,		/* file ID */
-			    int64_t *,		/* offset */
-			    u_long);		/* whence */
-
-	long		(*Mount)(
-			    char *,		/* path */
-			    u_long);		/* operation */
-
-	const char	*(*GetEnvironmentVariable)(
-			    const char *);	/* variable */
-
-	long		(*SetEnvironmentVariable)(
-			    const char *,	/* variable */
-			    const char *);	/* contents */
-
-	long		(*GetFileInformation)(
-			    u_long,		/* file ID */
-			    void *);		/* XXX */
-
-	long		(*SetFileInformation)(
-			    u_long,		/* file ID */
-			    u_long,		/* XXX */
-			    u_long);		/* XXX */
-
-	void		(*FlushAllCaches)(void);
-#if !defined(sgimips)
-	paddr_t		(*TestUnicode)(
-			    u_long,		/* file ID */
-			    uint16_t);		/* unicode character */
-
-	void		*(*GetDisplayStatus)(
-			    u_long);		/* file ID */
-#endif
+	int32_t		Load;
+	int32_t		Invoke;
+	int32_t		Execute;
+	int32_t		Halt;
+	int32_t		PowerDown;
+	int32_t		Restart;
+	int32_t		Reboot;
+	int32_t		EnterInteractiveMode;
+	int32_t		ReturnFromMain;		/* not on sgimips */
+	int32_t		GetPeer;
+	int32_t		GetChild;
+	int32_t		GetParent;
+	int32_t		GetConfigurationData;
+	int32_t		AddChild;
+	int32_t		DeleteComponent;
+	int32_t		GetComponent;
+	int32_t		SaveConfiguration;
+	int32_t		GetSystemId;
+	int32_t		GetMemoryDescriptor;
+	int32_t		Signal;			/* not on sgimips */
+	int32_t		GetTime;
+	int32_t		GetRelativeTime;
+	int32_t		GetDirectoryEntry;
+	int32_t		Open;
+	int32_t		Close;
+	int32_t		Read;
+	int32_t		GetReadStatus;
+	int32_t		Write;
+	int32_t		Seek;
+	int32_t		Mount;
+	int32_t		GetEnvironmentVariable;
+	int32_t		SetEnvironmentVariable;
+	int32_t		GetFileInformation;
+	int32_t		SetFileInformation;
+	int32_t		FlushAllCaches;
+	int32_t		TestUnicode;		/* not on sgimips */
+	int32_t		GetDisplayStatus;	/* not on sgimips */
 };
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+/*
+ * ARC firmware vector calls
+ */
+long	arcbios_Load(char *, u_long, u_long, u_long *);
+long	arcbios_Invoke(u_long, u_long, u_long, char **, char **);
+long	arcbios_Execute(char *, u_long, char **, char **);
+void	arcbios_Halt(void) __dead;
+void	arcbios_PowerDown(void) __dead;
+void	arcbios_Restart(void) __dead;
+void	arcbios_Reboot(void) __dead;
+void	arcbios_EnterInteractiveMode(void) __dead;
+void	arcbios_ReturnFromMain(void) __dead;		/* not on sgimips */
+void *	arcbios_GetPeer(void *);
+void *	arcbios_GetChild(void *);
+void *	arcbios_GetParent(void *);
+long	arcbios_GetConfigurationData(void *, void *);
+void *	arcbios_AddChild(void *, void *);
+long	arcbios_DeleteComponent(void *);
+void *	arcbios_GetComponent(char *);
+long	arcbios_SaveConfiguration(void);
+void *	arcbios_GetSystemId(void);
+void *	arcbios_GetMemoryDescriptor(void *);
+void	arcbios_Signal(u_long, void *);			/* not on sgimips */
+void *	arcbios_GetTime(void);
+u_long	arcbios_GetRelativeTime(void);
+
+long	arcbios_GetDirectoryEntry(u_long, void *, u_long, u_long *);
+long	arcbios_Open(const char *, u_long, u_long *);
+long	arcbios_Close(u_long);
+long	arcbios_Read(u_long, void *, u_long, u_long *);
+long	arcbios_GetReadStatus(u_long);
+long	arcbios_Write(u_long, void *, u_long, u_long *);
+long	arcbios_Seek(u_long, int64_t *, u_long);
+long	arcbios_Mount(char *, u_long);
+const char *
+	arcbios_GetEnvironmentVariable(const char *);
+long	arcbios_SetEnvironmentVariable(const char *, const char *);
+long	arcbios_GetFileInformation(u_long, void *);
+long	arcbios_SetFileInformation(u_long, u_long, u_long);
+void	arcbios_FlushAllCaches(void);
+paddr_t	arcbios_TestUnicode(u_long, uint16_t);		/* not on sgimips */
+void *	arcbios_GetDisplayStatus(u_long);		/* not on sgimips */
+
+#endif /* _KERNEL || _STANDALONE */
 
 #endif /* _ARCBIOS_H_ */

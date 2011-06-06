@@ -1,4 +1,4 @@
-/* $NetBSD: adm5120_mainbusvar.h,v 1.1 2007/03/20 08:52:03 dyoung Exp $ */
+/* $NetBSD: adm5120_mainbusvar.h,v 1.1.72.1 2011/06/06 09:06:01 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -50,7 +50,7 @@ struct mainbus_attach_args {
 };
 
 struct mainbus_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_obiot;
 	bus_space_handle_t	sc_gpioh;
 	struct gpio_chipset_tag	sc_gp;

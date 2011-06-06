@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.7 2008/06/11 23:52:36 cegger Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.7.24.1 2011/06/06 09:05:33 jruoho Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.7 2008/06/11 23:52:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.7.24.1 2011/06/06 09:05:33 jruoho Exp $");
 
 #include "opt_kgdb.h"
 
@@ -219,7 +219,7 @@ xlcom_attach(struct device *parent, struct device *self, void *aux)
 		return ;
 	}
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_dev = dev;
 	tp->t_oproc = xlcom_start;
 	tp->t_param = xlcom_param;

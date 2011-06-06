@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.158 2011/01/06 13:03:47 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.158.2.1 2011/06/06 09:05:37 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -571,7 +571,7 @@ Lenab1:
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
 	movl	_C_LABEL(lwp0uarea),%a1	|
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area  
+	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 
@@ -615,7 +615,7 @@ Lnocache0:
 
 /*
  * Trap/interrupt vector routines
- */ 
+ */
 #include <m68k/m68k/trap_subr.s>
 
 	.data
@@ -662,7 +662,7 @@ Lnobpe:
 Lberr3:
 	movl	%d1,%sp@-
 	movl	%d0,%sp@-		| code is FSLW now.
-	andw	#0x1f80,%d0 
+	andw	#0x1f80,%d0
 	jeq	Lberr60			| it is a bus error
 	movl	#T_MMUFLT,%sp@-		| show that we are an MMU fault
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
@@ -1220,7 +1220,7 @@ Laststkadj:
 
 /*
  * Primitives
- */ 
+ */
 
 /*
  * Use common m68k support routines.

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.103 2010/07/07 01:30:34 chs Exp $
+	$NetBSD: syscalls.master,v 1.103.2.1 2011/06/06 09:07:24 jruoho Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -419,7 +419,8 @@
 247	UNIMPL		io_getevents
 248	UNIMPL		io_submit
 249	UNIMPL		io_cancel
-250	UNIMPL		fadvise64
+250	STD		{ int|linux_sys||fadvise64(int fd, \
+			    linux_off_t offset, size_t len, int advice); }
 251	UNIMPL		/* unused */
 252	STD		{ int|linux_sys||exit_group(int error_code); }
 253	UNIMPL		lookup_dcookie
@@ -448,7 +449,8 @@
 			    size_t sz, struct linux_statfs64 *sp); }
 270	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
 271	UNIMPL		utimes
-272	UNIMPL		fadvise64_64
+272	STD		{ int|linux_sys||fadvise64_64(int fd, \
+			    linux_off_t offset, linux_off_t len, int advice); }
 273	UNIMPL		vserver
 274	UNIMPL		mbind
 275	UNIMPL		get_mempolicy
@@ -509,8 +511,9 @@
 327	UNIMPL		signalfd4
 328	UNIMPL		eventfd2
 329	UNIMPL		epoll_create1
-330	UNIMPL		dup3
-331	UNIMPL		pipe2
+330     STD             { int|linux_sys||dup3(u_int from, u_int to, \
+                            int flags); }
+331     STD             { int|linux_sys||pipe2( int *pfds, int flags); }
 332	UNIMPL		inotify_init1
 333	UNIMPL		preadv
 334	UNIMPL		pwritev

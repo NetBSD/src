@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.88 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.88.6.1 2011/06/06 09:10:00 jruoho Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.88 2009/09/16 15:23:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.88.6.1 2011/06/06 09:10:00 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -210,7 +210,7 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 */
 			if (in6_pcblookup_connect(&udbtable, &sa6->sin6_addr,
 			    uh.uh_dport, (const struct in6_addr *)&sa6_src->sin6_addr,
-			    uh.uh_sport, 0))
+						  uh.uh_sport, 0, 0))
 				valid++;
 #if 0
 			/*

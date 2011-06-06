@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.3 2009/10/02 04:38:47 uebayasi Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.3.10.1 2011/06/06 09:08:27 jruoho Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.3 2009/10/02 04:38:47 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.3.10.1 2011/06/06 09:08:27 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -85,6 +85,15 @@ static const struct sdhc_pci_quirk {
 		0xffff,
 		0xffff,
 		4,
+		SDHC_PCI_QUIRK_TI_HACK
+	},
+
+	{
+		PCI_VENDOR_TI,
+		PCI_PRODUCT_TI_PCIXX12SD,
+		0xffff,
+		0xffff,
+		3,
 		SDHC_PCI_QUIRK_TI_HACK
 	},
 
@@ -278,11 +287,19 @@ sdhc_pci_quirk_ti_hack(struct pci_attach_args *pa)
 	pcitag_t tag;
 	pcireg_t id, reg;
 
-	/* Look at func 3 for the flash device */
-	tag = pci_make_tag(pc, pa->pa_bus, pa->pa_device, 3);
+	/* Look at func - 1 for the flash device */
+	tag = pci_make_tag(pc, pa->pa_bus, pa->pa_device, pa->pa_function - 1);
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
-	if (PCI_PRODUCT(id) != PCI_PRODUCT_TI_PCI72111FM)
+	if (PCI_VENDOR(id) != PCI_VENDOR_TI) {
 		return;
+	}
+	switch (PCI_PRODUCT(id)) {
+	case PCI_PRODUCT_TI_PCI72111FM:
+	case PCI_PRODUCT_TI_PCIXX12FM:
+		break;
+	default:
+		return;
+	}
 
 	/*
 	 * Disable MMC/SD on the flash media controller so the

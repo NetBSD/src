@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.3.2.1 2011/06/06 09:09:53 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,9 +33,8 @@
  * NPF module for packet construction routines.
  */
 
-#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.3.2.1 2011/06/06 09:09:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.3 2010/11/11 06:30:39 rmind Exp $"
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
-#endif
 #include <sys/mbuf.h>
 
 #include "npf_impl.h"

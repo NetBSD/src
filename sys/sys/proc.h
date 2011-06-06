@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.299 2011/01/14 02:06:34 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.299.2.1 2011/06/06 09:10:12 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -123,7 +123,6 @@ struct pgrp {
  * One structure allocated per emulation.
  */
 struct exec_package;
-struct ps_strings;
 struct ras;
 struct kauth_cred;
 
@@ -195,15 +194,14 @@ struct emul {
  * which might be addressible only on a processor on which the process
  * is running.
  *
- * Field markings and the corresponding locks (not yet fully implemented,
- * more a statement of intent):
+ * Field markings and the corresponding locks:
  *
  * a:	p_auxlock
  * k:	ktrace_mutex
  * l:	proc_lock
  * t:	p_stmutex
  * p:	p_lock
- * q:	mqlist_mtx
+ * (:	updated atomically
  * ::	unlocked, stable
  */
 struct proc {
@@ -225,7 +223,7 @@ struct proc {
 	struct vmspace	*p_vmspace;	/* :: Address space */
 	struct sigacts	*p_sigacts;	/* :: Process sigactions */
 	struct aioproc	*p_aio;		/* p: Asynchronous I/O data */
-	u_int		p_mqueue_cnt;	/* q: Count of open mqueues */
+	u_int		p_mqueue_cnt;	/* (: Count of open message queues */
 	specificdata_reference
 			p_specdataref;	/*    subsystem proc-specific data */
 
@@ -308,11 +306,7 @@ struct proc {
 					/* p: basename of last exec file */
 	struct pgrp 	*p_pgrp;	/* l: Pointer to process group */
 
-	struct ps_strings *p_psstr;	/* :: address of process's ps_strings */
-	size_t 		p_psargv;	/* :: offset of ps_argvstr in above */
-	size_t 		p_psnargv;	/* :: offset of ps_nargvstr in above */
-	size_t 		p_psenv;	/* :: offset of ps_envstr in above */
-	size_t 		p_psnenv;	/* :: offset of ps_nenvstr in above */
+	vaddr_t		p_psstrp;	/* :: address of process's ps_strings */
 	u_int		p_pax;		/* :: PAX flags */
 
 /*
@@ -372,6 +366,7 @@ struct proc {
 #define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
 #define	PS_NOSA 	0x40000000 /* Do not enable SA */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
+#define	PS_RUMP_LWPEXIT PS_SA      /* LWPs in rump kernel should exit for g/c */
 
 /*
  * These flags are kept in p_sflag and are protected by the proc_lock
@@ -415,9 +410,6 @@ struct proclist_desc {
 };
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
-MALLOC_DECLARE(M_EMULDATA);
-MALLOC_DECLARE(M_SUBPROC);	/* XXX - only used by sparc/sparc64 */
 
 /*
  * We use process IDs <= PID_MAX until there are > 16k processes.
@@ -439,7 +431,6 @@ MALLOC_DECLARE(M_SUBPROC);	/* XXX - only used by sparc/sparc64 */
 #define	FORK_NOWAIT	0x0020		/* Make init the parent of the child */
 #define	FORK_CLEANFILES	0x0040		/* Start with a clean descriptor set */
 #define	FORK_SYSTEM	0x0080		/* Fork a kernel thread */
-#define	FORK_SHARELIMIT	0x0100		/* Share rlimit values */
 
 extern struct proc	proc0;		/* Process slot for swapper */
 extern u_int		nprocs;		/* Current number of procs */
@@ -463,6 +454,7 @@ proc_t *	proc_find(pid_t);		/* Find process by ID */
 struct pgrp *	pgrp_find(pid_t);		/* Find process group by ID */
 
 void	procinit(void);
+void	procinit_sysctl(void);
 int	proc_enterpgrp(struct proc *, pid_t, pid_t, bool);
 void	proc_leavepgrp(struct proc *);
 void	proc_sesshold(struct session *);
@@ -537,6 +529,20 @@ _proclist_skipmarker(struct proc *p0)
 #define	tsleep(chan, pri, wmesg, timo)					\
 	ltsleep(chan, pri, wmesg, timo, NULL)
 
+#ifdef KSTACK_CHECK_MAGIC
+void	kstack_setup_magic(const struct lwp *);
+void	kstack_check_magic(const struct lwp *);
+#else
+#define	kstack_setup_magic(x)
+#define	kstack_check_magic(x)
+#endif
+
+extern struct emul emul_netbsd;
+
+#endif	/* _KERNEL */
+
+#if defined(_KMEMUSER) || defined(_KERNEL)
+
 /*
  * Kernel stack parameters.
  *
@@ -554,15 +560,6 @@ _proclist_skipmarker(struct proc *p0)
 #define	KSTACK_SIZE		(USPACE - ALIGN(sizeof(struct pcb)))
 #endif
 
-#ifdef KSTACK_CHECK_MAGIC
-void	kstack_setup_magic(const struct lwp *);
-void	kstack_check_magic(const struct lwp *);
-#else
-#define	kstack_setup_magic(x)
-#define	kstack_check_magic(x)
-#endif
+#endif	/* _KMEMUSER || _KERNEL */
 
-extern struct emul emul_netbsd;
-
-#endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: toshide.c,v 1.3 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: toshide.c,v 1.3.2.1 2011/06/06 09:08:27 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.3 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.3.2.1 2011/06/06 09:08:27 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.3 2010/11/05 18:07:24 jakllsch Exp $")
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_piccolo_reg.h>
 
-static void piccolo_chip_map(struct pciide_softc *, struct pci_attach_args *);
+static void piccolo_chip_map(struct pciide_softc *,
+    const struct pci_attach_args *);
 static void piccolo_setup_channel(struct ata_channel *);
 
 static int  piccolo_match(device_t, cfdata_t, void *);
@@ -111,7 +112,7 @@ piccolo_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-piccolo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+piccolo_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface;

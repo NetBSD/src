@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.10 2009/11/29 04:15:42 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10.6.1 2011/06/06 09:05:53 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -142,11 +142,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 printf("%s: not yet\n", __func__);
-	return;
+	return 0;
 }
 
 /*

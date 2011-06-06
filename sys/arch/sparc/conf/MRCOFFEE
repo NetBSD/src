@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.31 2009/12/05 20:11:17 pooka Exp $
+# $NetBSD: MRCOFFEE,v 1.31.6.1 2011/06/06 09:06:45 jruoho Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.31 $"
+#ident 		"MRCOFFEE-$Revision: 1.31.6.1 $"
 
 maxusers	32
 
@@ -125,6 +125,8 @@ makeoptions	COPTS="-pipe -mcpu=supersparc -O2"
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
 #options 	DEBUG
+#options 	LOCKDEBUG
+#options 	SYSCALL_DEBUG
 
 ## Make SCSI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE
@@ -188,7 +190,8 @@ file-system	PTYFS		# /dev/pts/N support
 
 ## File system options.
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

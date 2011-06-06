@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata_pci.c,v 1.5 2010/08/01 07:38:17 kiyohara Exp $	*/
+/*	$NetBSD: mvsata_pci.c,v 1.5.2.1 2011/06/06 09:08:17 jruoho Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.5 2010/08/01 07:38:17 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.5.2.1 2011/06/06 09:08:17 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -116,12 +116,12 @@ struct mvsata_product mvsata_pci_products[] = {
 	{ PCI_VP(MARVELL, 88SX5081),		2, 4, gen1, 0 },
 	{ PCI_VP(MARVELL, 88SX6040),		1, 4, gen2, 0 },
 	{ PCI_VP(MARVELL, 88SX6041),		1, 4, gen2, 0 },
+	{ PCI_VP(ADP2, 1420SA),			1, 4, gen2, 0 }, /* 88SX6041 */
 	{ PCI_VP(MARVELL, 88SX6042),		1, 4, gen2e, 0 },
 	{ PCI_VP(MARVELL, 88SX6080),		2, 4, gen2, MVSATA_FLAGS_PCIE },
 	{ PCI_VP(MARVELL, 88SX6081),		2, 4, gen2, MVSATA_FLAGS_PCIE },
-	{ PCI_VP(ADP2, 1420SA),			2, 4, gen2, MVSATA_FLAGS_PCIE },
 	{ PCI_VP(MARVELL, 88SX7042),		1, 4, gen2e, 0 },
-	{ PCI_VP(ADP2, 1430SA),			1, 4, gen2e, 0 },
+	{ PCI_VP(ADP2, 1430SA),			1, 4, gen2e, 0 }, /* 88SX7042 */
 	{ PCI_VP(TRIONES, ROCKETRAID_2310),	1, 4, gen2e, 0 },
 #undef PCI_VP
 };

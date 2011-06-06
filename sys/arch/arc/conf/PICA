@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.68 2010/11/23 11:13:54 hannken Exp $
+#	$NetBSD: PICA,v 1.68.2.1 2011/06/06 09:04:58 jruoho Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -78,7 +78,8 @@ file-system 	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-options 	QUOTA		# FFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

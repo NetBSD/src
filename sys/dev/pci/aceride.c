@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.29 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: aceride.c,v 1.29.2.1 2011/06/06 09:08:08 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.29 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.29.2.1 2011/06/06 09:08:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,9 +36,9 @@ __KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.29 2010/11/05 18:07:24 jakllsch Exp $"
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_acer_reg.h>
 
-static int acer_pcib_match(struct pci_attach_args *);
+static int acer_pcib_match(const struct pci_attach_args *);
 static void acer_do_reset(struct ata_channel *, int);
-static void acer_chip_map(struct pciide_softc*, struct pci_attach_args*);
+static void acer_chip_map(struct pciide_softc*, const struct pci_attach_args*);
 static void acer_setup_channel(struct ata_channel*);
 static int  acer_pci_intr(void *);
 static int  acer_dma_init(void *, int, int, void *, size_t, int);
@@ -94,7 +94,7 @@ aceride_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-acer_pcib_match(struct pci_attach_args *pa)
+acer_pcib_match(const struct pci_attach_args *pa)
 {
 	/*
 	 * we need to access the PCI config space of the pcib, see
@@ -109,7 +109,7 @@ acer_pcib_match(struct pci_attach_args *pa)
 }
 
 static void
-acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+acer_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;

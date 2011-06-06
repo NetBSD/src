@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.35 2010/03/02 21:52:32 matt Exp $
+#	$NetBSD: Makefile,v 1.35.4.1 2011/06/06 09:06:27 jruoho Exp $
 
 .if !defined(INCSDIR)
 INCSDIR?= /usr/include/powerpc
 INCS+=	spr.h
 .endif
 
-INCS+=	ansi.h aout_machdep.h asm.h atomic.h \
+INCS+=	ansi.h aout_machdep.h asm.h \
 	bswap.h \
 	cdefs.h cpu.h \
 	elf_machdep.h endian.h endian_machdep.h \

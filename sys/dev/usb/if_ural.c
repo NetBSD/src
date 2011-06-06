@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.36 2010/11/03 22:28:31 dyoung Exp $ */
+/*	$NetBSD: if_ural.c,v 1.36.2.1 2011/06/06 09:08:41 jruoho Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.36 2010/11/03 22:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.36.2.1 2011/06/06 09:08:41 jruoho Exp $");
 
 
 #include <sys/param.h>
@@ -1486,6 +1486,9 @@ ural_reset(struct ifnet *ifp)
 Static int
 ural_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
+#define IS_RUNNING(ifp) \
+	(((ifp)->if_flags & IFF_UP) && ((ifp)->if_flags & IFF_RUNNING))
+
 	struct ural_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	int s, error = 0;
@@ -1512,13 +1515,20 @@ ural_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
+			error = 0;
+		}
+		break;
+
 	default:
 		error = ieee80211_ioctl(ic, cmd, data);
 	}
 
 	if (error == ENETRESET) {
-		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING))
+		if (IS_RUNNING(ifp) &&
+			(ic->ic_roaming != IEEE80211_ROAMING_MANUAL))
 			ural_init(ifp);
 		error = 0;
 	}
@@ -1526,6 +1536,7 @@ ural_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	splx(s);
 
 	return error;
+#undef IS_RUNNING
 }
 
 Static void

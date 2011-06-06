@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.15 2010/12/14 23:44:49 matt Exp $	*/
+/*	$NetBSD: ka88.c,v 1.15.2.1 2011/06/06 09:06:59 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.15 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.15.2.1 2011/06/06 09:06:59 jruoho Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -165,7 +165,7 @@ CFATTACH_DECL_NEW(cpu_nmi, 0,
     ka88_cpu_match, ka88_cpu_attach, NULL, NULL);
 
 struct mem_nmi_softc {
-	struct device *sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };

@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5413.c,v 1.2 2009/01/06 06:03:57 mrg Exp $
+ * $Id: ar5413.c,v 1.2.18.1 2011/06/06 09:09:19 jruoho Exp $
  */
 #include "opt_ah.h"
 
@@ -231,7 +231,7 @@ ar5413SetRfRegs(struct ath_hal *ah, HAL_CHANNEL_INTERNAL *chan, uint16_t modesIn
 			ar5212ModifyRfBuffer(priv->Bank6Data, 1 , 1, 291, 2);
 
 			/* Optimum value for rf_pwd_iclobuf2G for PCIe chips only */
-			if (IS_PCIE(ah)) {
+			if (AH_PRIVATE(ah)->ah_ispcie) {
 				ar5212ModifyRfBuffer(priv->Bank6Data, ath_hal_reverseBits(6, 3),
 						 3, 131, 3);
 			}

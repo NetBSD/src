@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.20 2009/08/31 15:18:55 tsutsui Exp $ */
+/* $NetBSD: panel.c,v 1.20.6.1 2011/06/06 09:05:13 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.20 2009/08/31 15:18:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.20.6.1 2011/06/06 09:05:13 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ panel_cbt_hdwritereg(struct hd44780_chip *hd, uint32_t en, uint32_t rs,
     uint8_t dat)
 {
 
-	if (rs) 
+	if (rs)
 		bus_space_write_4(hd->sc_iot, hd->sc_iodr, 0x00, dat << 24);
 	else
 		bus_space_write_4(hd->sc_iot, hd->sc_ioir, 0x00, dat << 24);

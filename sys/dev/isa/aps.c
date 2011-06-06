@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.12 2011/01/16 14:16:03 jmcneill Exp $	*/
+/*	$NetBSD: aps.c,v 1.12.2.1 2011/06/06 09:07:56 jruoho Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 /*	$OpenBSD: aps.c,v 1.17 2008/06/27 06:08:43 canacar Exp $	*/
 /*
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.12 2011/01/16 14:16:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.12.2.1 2011/06/06 09:07:56 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,15 +326,15 @@ aps_attach(device_t parent, device_t self, void *aux)
 	strlcpy(sc->sc_sensor[idx].desc, string,			\
 	    sizeof(sc->sc_sensor[idx].desc));
 
-	INITDATA(APS_SENSOR_XACCEL, ENVSYS_INTEGER, "X_ACCEL");
-	INITDATA(APS_SENSOR_YACCEL, ENVSYS_INTEGER, "Y_ACCEL");
-	INITDATA(APS_SENSOR_TEMP1, ENVSYS_STEMP, "TEMP_1");
-	INITDATA(APS_SENSOR_TEMP2, ENVSYS_STEMP, "TEMP_2");
-	INITDATA(APS_SENSOR_XVAR, ENVSYS_INTEGER, "X_VAR");
-	INITDATA(APS_SENSOR_YVAR, ENVSYS_INTEGER, "Y_VAR");
-	INITDATA(APS_SENSOR_KBACT, ENVSYS_INDICATOR, "Keyboard Active");
-	INITDATA(APS_SENSOR_MSACT, ENVSYS_INDICATOR, "Mouse Active");
-	INITDATA(APS_SENSOR_LIDOPEN, ENVSYS_INDICATOR, "Lid Open");
+	INITDATA(APS_SENSOR_XACCEL, ENVSYS_INTEGER, "x-acceleration");
+	INITDATA(APS_SENSOR_YACCEL, ENVSYS_INTEGER, "y-acceleration");
+	INITDATA(APS_SENSOR_TEMP1, ENVSYS_STEMP, "temperature 1");
+	INITDATA(APS_SENSOR_TEMP2, ENVSYS_STEMP, "temperature 2");
+	INITDATA(APS_SENSOR_XVAR, ENVSYS_INTEGER, "x-variable");
+	INITDATA(APS_SENSOR_YVAR, ENVSYS_INTEGER, "y-variable");
+	INITDATA(APS_SENSOR_KBACT, ENVSYS_INDICATOR, "keyboard active");
+	INITDATA(APS_SENSOR_MSACT, ENVSYS_INDICATOR, "mouse active");
+	INITDATA(APS_SENSOR_LIDOPEN, ENVSYS_INDICATOR, "lid open");
 
 	sc->sc_sme = sysmon_envsys_create();
 	for (i = 0; i < APS_NUM_SENSORS; i++) {
@@ -460,23 +460,35 @@ aps_refresh_sensor_data(struct aps_softc *sc)
 {
 	int64_t temp;
 
-	if (aps_read_data(sc))
+	if (aps_read_data(sc)) {
+		printf("aps0: read data failed\n");
 		return;
+	}
 
 	sc->sc_sensor[APS_SENSOR_XACCEL].value_cur = sc->aps_data.x_accel;
 	sc->sc_sensor[APS_SENSOR_YACCEL].value_cur = sc->aps_data.y_accel;
 
-	/* convert to micro (mu) degrees */
-	temp = sc->aps_data.temp1 * 1000000;	
-	/* convert to kelvin */
-	temp += 273150000; 
-	sc->sc_sensor[APS_SENSOR_TEMP1].value_cur = temp;
+	if (sc->aps_data.temp1 == 0xff)
+		sc->sc_sensor[APS_SENSOR_TEMP1].state = ENVSYS_SINVALID;
+	else {
+		/* convert to micro (mu) degrees */
+		temp = sc->aps_data.temp1 * 1000000;	
+		/* convert to kelvin */
+		temp += 273150000; 
+		sc->sc_sensor[APS_SENSOR_TEMP1].value_cur = temp;
+		sc->sc_sensor[APS_SENSOR_TEMP1].state = ENVSYS_SVALID;
+	}
 
-	/* convert to micro (mu) degrees */
-	temp = sc->aps_data.temp2 * 1000000;	
-	/* convert to kelvin */
-	temp += 273150000; 
-	sc->sc_sensor[APS_SENSOR_TEMP2].value_cur = temp;
+	if (sc->aps_data.temp2 == 0xff)
+		sc->sc_sensor[APS_SENSOR_TEMP2].state = ENVSYS_SINVALID;
+	else {
+		/* convert to micro (mu) degrees */
+		temp = sc->aps_data.temp2 * 1000000;	
+		/* convert to kelvin */
+		temp += 273150000; 
+		sc->sc_sensor[APS_SENSOR_TEMP2].value_cur = temp;
+		sc->sc_sensor[APS_SENSOR_TEMP2].state = ENVSYS_SVALID;
+	}
 
 	sc->sc_sensor[APS_SENSOR_XVAR].value_cur = sc->aps_data.x_var;
 	sc->sc_sensor[APS_SENSOR_YVAR].value_cur = sc->aps_data.y_var;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.8 2008/05/03 23:19:17 martin Exp $	*/
+/*	$NetBSD: pchb.c,v 1.8.28.1 2011/06/06 09:05:33 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.8 2008/05/03 23:19:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.8.28.1 2011/06/06 09:05:33 jruoho Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -183,7 +183,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
-	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
+	pba.pba_flags = PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY;
 	config_found_ia(self, "pcibus", &pba, pchbprint);
 }
 

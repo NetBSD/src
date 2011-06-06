@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2006/01/26 14:05:49 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.19.102.1 2011/06/06 09:09:43 jruoho Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -20,6 +20,8 @@
 SADST?=		${.OBJDIR}/lib/sa
 SA_AS?=		library
 SADOTDIR?= ../../.
+
+CWARNFLAGS.clang+=	-Wno-format-extra-args
 
 SADIR=		${S:S@^.@${SADOTDIR}@:Q}/lib/libsa
 .if (${SA_AS} == "obj")

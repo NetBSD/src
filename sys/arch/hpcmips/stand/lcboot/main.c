@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.5 2005/12/11 12:17:34 christos Exp $ */
+/* $NetBSD: main.c,v 1.5.106.1 2011/06/06 09:05:44 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -107,7 +107,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.5 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.5.106.1 2011/06/06 09:05:44 jruoho Exp $");
 
 #include <lib/libsa/stand.h>
 
@@ -131,8 +131,6 @@ __KERNEL_RCSID(0, "$NetBSD: main.c,v 1.5 2005/12/11 12:17:34 christos Exp $");
 
 extern const char bootprog_rev[];
 extern const char bootprog_name[];
-extern const char bootprog_date[];
-extern const char bootprog_maker[];
 
 static void command_help(char *opt);
 static void command_dump(char *opt);
@@ -178,7 +176,6 @@ print_banner(void)
 {
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 #if 0
 	printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
 #endif

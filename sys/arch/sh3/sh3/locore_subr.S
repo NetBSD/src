@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.53 2010/03/20 23:31:30 chs Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.53.2.1 2011/06/06 09:06:43 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.53 2010/03/20 23:31:30 chs Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.53.2.1 2011/06/06 09:06:43 jruoho Exp $")
 
 
 /*
@@ -388,7 +388,6 @@ NENTRY(lwp_trampoline)
 	mov	r0, r4		/* previous lwp returned by cpu_switchto */
 	jsr	@r1
 	 mov	r10, r5		/* my struct lwp */
-ALTENTRY(lwp_setfunc_trampoline)
 	jsr	@r12
 	 mov	r11, r4
 	__EXCEPTION_RETURN

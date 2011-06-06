@@ -1,6 +1,7 @@
-/*	$NetBSD: a34kbbc.c,v 1.20 2006/10/10 17:24:23 mhitch Exp $ */
+/*	$NetBSD: a34kbbc.c,v 1.20.84.1 2011/06/06 09:04:53 jruoho Exp $ */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -37,48 +38,8 @@
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
  */
 
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah $Hdr: clock.c 1.18 91/01/21$
- *
- *	@(#)clock.c	7.6 (Berkeley) 5/7/91
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.20 2006/10/10 17:24:23 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.20.84.1 2011/06/06 09:04:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -94,10 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.20 2006/10/10 17:24:23 mhitch Exp $");
 
 #include <dev/clock_subr.h>
 
-int a34kbbc_match(struct device *, struct cfdata *, void *);
-void a34kbbc_attach(struct device *, struct device *, void *);
+int a34kbbc_match(device_t, cfdata_t, void *);
+void a34kbbc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(a34kbbc, sizeof(struct device),
+CFATTACH_DECL_NEW(a34kbbc, 0,
     a34kbbc_match, a34kbbc_attach, NULL, NULL);
 
 void *a34kclockaddr;
@@ -106,7 +67,7 @@ int a34kusettod(todr_chip_handle_t, struct clock_ymdhms *);
 static struct todr_chip_handle a34ktodr;
 
 int
-a34kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
+a34kbbc_match(device_t pdp, cfdata_t cfp, void *auxp)
 {
 	struct clock_ymdhms dt;
 	static int a34kbbc_matched = 0;
@@ -133,7 +94,7 @@ a34kbbc_match(struct device *pdp, struct cfdata *cfp, void *auxp)
  * Attach us to the rtc function pointers.
  */
 void
-a34kbbc_attach(struct device *pdp, struct device *dp, void *auxp)
+a34kbbc_attach(device_t pdp, device_t dp, void *auxp)
 {
 	printf("\n");
 	a34kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));

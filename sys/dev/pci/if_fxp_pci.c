@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.74 2010/03/22 16:17:43 dyoung Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.74.2.1 2011/06/06 09:08:13 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.74 2010/03/22 16:17:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.74.2.1 2011/06/06 09:08:13 jruoho Exp $");
 
 #include "rnd.h"
 
@@ -267,7 +267,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct fxp_pci_softc *psc = device_private(self);
 	struct fxp_softc *sc = &psc->psc_fxp;
-	struct pci_attach_args *pa = aux;
+	const struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const struct fxp_pci_product *fpp;
@@ -315,7 +315,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	 */
 	memh_valid = 0;
 	memt = pa->pa_memt;
-	if (((pa->pa_flags & PCI_FLAGS_MEM_ENABLED) != 0) &&
+	if (((pa->pa_flags & PCI_FLAGS_MEM_OKAY) != 0) &&
 	    pci_mapreg_info(pa->pa_pc, pa->pa_tag, FXP_PCI_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT,
 	    &addr, &sc->sc_size, &flags) == 0) {

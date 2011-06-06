@@ -1,4 +1,4 @@
-/*	$NetBSD: cpi_nubus.c,v 1.4 2008/09/10 19:20:06 christos Exp $	*/
+/*	$NetBSD: cpi_nubus.c,v 1.4.24.1 2011/06/06 09:05:59 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.4 2008/09/10 19:20:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.4.24.1 2011/06/06 09:05:59 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,7 +386,7 @@ cpi_open(dev_t device, int flag, int mode, struct lwp *l)
 			return EBUSY;
 		}
 		/* sleep for a second, unless we get a signal */
-		err = ltsleep(sc, PZERO | PCATCH, "cpi_open", hz, NULL);
+		err = tsleep(sc, PZERO | PCATCH, "cpi_open", hz);
 		if (err != EWOULDBLOCK) {
 			sc->sc_lpstate = LP_INITIAL;
 			return err;
@@ -530,8 +530,8 @@ cpi_flush(struct cpi_softc *sc)
 			splx(s);
 		}
 		/* XXX Sure we want to wait forever for the printer? */
-		err = ltsleep((void *)sc, PZERO | PCATCH,
-		    "cpi_flush", (60 * hz), NULL);
+		err = tsleep((void *)sc, PZERO | PCATCH,
+		    "cpi_flush", (60 * hz));
 	}
 	return err;
 }

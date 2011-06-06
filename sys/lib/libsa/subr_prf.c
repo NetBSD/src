@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.17 2010/01/19 15:26:45 tsutsui Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.17.6.1 2011/06/06 09:09:43 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -66,8 +66,7 @@ static void kdoprnt(void (*)(int), const char *, va_list);
 
 static char *sbuf, *ebuf;
 
-const char HEXDIGITS[] = "0123456789ABCDEF";
-const char hexdigits[] = "0123456789abcdef";
+const char hexdigits[16] = "0123456789abcdef";
 
 #define LONG		0x01
 #ifdef LIBSA_PRINTF_LONGLONG_SUPPORT
@@ -235,7 +234,8 @@ reswitch:
 		case 's':
 			p = va_arg(ap, char *);
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
-			for (q = p; *q; ++q);
+			for (q = p; *q != '\0'; ++q)
+				continue;
 			width -= q - p;
 #endif
 			RPAD();

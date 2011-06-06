@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5210_attach.c,v 1.1.1.1 2008/12/11 04:46:27 alc Exp $
+ * $Id: ar5210_attach.c,v 1.1.1.1.18.1 2011/06/06 09:09:16 jruoho Exp $
  */
 #include "opt_ah.h"
 
@@ -33,6 +33,9 @@ static	HAL_BOOL ar5210GetChannelEdges(struct ath_hal *,
 static	HAL_BOOL ar5210GetChipPowerLimits(struct ath_hal *ah,
 		HAL_CHANNEL *chans, uint32_t nchans);
 
+static void ar5210ConfigPCIE(struct ath_hal *ah, HAL_BOOL restore);
+static void ar5210DisablePCIE(struct ath_hal *ah);
+
 static const struct ath_hal_private ar5210hal = {{
 	.ah_magic			= AR5210_MAGIC,
 	.ah_abi				= HAL_ABI_VERSION,
@@ -45,6 +48,8 @@ static const struct ath_hal_private ar5210hal = {{
 	.ah_reset			= ar5210Reset,
 	.ah_phyDisable			= ar5210PhyDisable,
 	.ah_disable			= ar5210Disable,
+	.ah_configPCIE			= ar5210ConfigPCIE,
+	.ah_disablePCIE			= ar5210DisablePCIE,
 	.ah_setPCUConfig		= ar5210SetPCUConfig,
 	.ah_perCalibration		= ar5210PerCalibration,
 	.ah_perCalibrationN		= ar5210PerCalibrationN,
@@ -330,6 +335,16 @@ ar5210GetChipPowerLimits(struct ath_hal *ah, HAL_CHANNEL *chans, uint32_t nchans
 	return AH_TRUE;
 }
 
+static void
+ar5210ConfigPCIE(struct ath_hal *ah, HAL_BOOL restore)
+{
+}
+
+static void
+ar5210DisablePCIE(struct ath_hal *ah)
+{
+}
+
 /*
  * Fill all software cached or static hardware state information.
  */
@@ -367,6 +382,11 @@ ar5210FillCapabilityInfo(struct ath_hal *ah)
 	}
 
 	pCap->halTstampPrecision = 15;		/* NB: s/w extended from 13 */
+	pCap->halIntrMask = (HAL_INT_COMMON - HAL_INT_BNR)
+			| HAL_INT_RX
+			| HAL_INT_TX
+			| HAL_INT_FATAL
+			;
 
 	ahpriv->ah_rxornIsFatal = AH_TRUE;
 	return AH_TRUE;

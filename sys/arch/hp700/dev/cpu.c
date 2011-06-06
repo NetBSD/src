@@ -1,6 +1,6 @@
-/*	$NetBSD: cpu.c,v 1.16 2010/12/08 09:48:27 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16.2.1 2011/06/06 09:05:39 jruoho Exp $	*/
 
-/*	$OpenBSD: cpu.c,v 1.28 2004/12/28 05:18:25 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -29,12 +29,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2010/12/08 09:48:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16.2.1 2011/06/06 09:05:39 jruoho Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+
+#include <uvm/uvm.h>
 
 #include <machine/cpufunc.h>
 #include <machine/pdc.h>
@@ -52,7 +56,11 @@ struct cpu_softc {
 };
 
 #ifdef MULTIPROCESSOR
-int hppa_ncpus;
+
+int hppa_ncpu;
+
+struct cpu_info *cpu_hatch_info;
+static volatile int start_secondary_cpu;
 #endif
 
 int	cpumatch(device_t, cfdata_t, void *);
@@ -61,18 +69,17 @@ void	cpuattach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
     cpumatch, cpuattach, NULL, NULL);
 
-static int cpu_attached;
-
 int
 cpumatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
-	/* there will be only one for now XXX */
 	/* probe any 1.0, 1.1 or 2.0 */
-	if (cpu_attached ||
-	    ca->ca_type.iodc_type != HPPA_TYPE_NPROC ||
+	if (ca->ca_type.iodc_type != HPPA_TYPE_NPROC ||
 	    ca->ca_type.iodc_sv_model != HPPA_NPROC_HPPA)
+		return 0;
+
+	if (cf->cf_unit >= MAXCPUS)
 		return 0;
 
 	return 1;
@@ -89,11 +96,22 @@ cpuattach(device_t parent, device_t self, void *aux)
 
 	struct cpu_softc *sc = device_private(self);
 	struct confargs *ca = aux;
-	const char lvls[4][4] = { "0", "1", "1.5", "2" };
+	struct cpu_info *ci;
+	static const char lvls[4][4] = { "0", "1", "1.5", "2" };
 	u_int mhz = 100 * cpu_ticksnum / cpu_ticksdenom;
+	int cpuno = device_unit(self);
+
+#ifdef MULTIPROCESSOR
+	struct pglist mlist;
+	struct vm_page *m;
+	int error;
+#endif
 
 	sc->sc_dev = self;
-	cpu_attached = 1;
+
+	ci = &cpus[cpuno];
+	ci->ci_cpuid = cpuno;
+	ci->ci_hpa = ca->ca_hpa;
 
 	/* Print the CPU chip name, nickname, and rev. */
 	aprint_normal(": %s", hppa_cpu_info->hci_chip_name);
@@ -151,12 +169,43 @@ cpuattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	/* sanity against luser amongst config editors */
-	if (ca->ca_irq == 31) {
-		sc->sc_ih = hp700_intr_establish(IPL_CLOCK, clock_intr,
-		    NULL /*clockframe*/, &int_reg_cpu, ca->ca_irq);
-	} else {
+	if (ca->ca_irq != 31) {
 		aprint_error_dev(self, "bad irq number %d\n", ca->ca_irq);
+		return;
 	}
+	
+	sc->sc_ih = hp700_intr_establish(IPL_CLOCK, clock_intr,
+	    NULL /*clockframe*/, &ir_cpu, 31);
+
+#ifdef MULTIPROCESSOR
+
+	/* Allocate stack for spin up and FPU emulation. */
+	TAILQ_INIT(&mlist);
+	error = uvm_pglistalloc(PAGE_SIZE, 0, -1L, PAGE_SIZE, 0, &mlist, 1,
+	    0);
+
+	if (error) {
+		aprint_error(": unable to allocate CPU stack!\n");
+		return;
+	}
+	m = TAILQ_FIRST(&mlist);
+	ci->ci_stack = VM_PAGE_TO_PHYS(m);
+
+	if (ci->ci_hpa == hppa_mcpuhpa) {
+		ci->ci_flags |= CPUF_PRIMARY|CPUF_RUNNING;
+		hppa_ncpu++;
+	} else {
+		int err;
+
+		err = mi_cpu_attach(ci);
+		if (err) {
+			aprint_error_dev(self,
+			    "mi_cpu_attach failed with %d\n", err);
+			return;
+		}
+	}
+
+#endif
 
 	/*
 	 * Set the allocatable bits in the CPU interrupt registers.
@@ -165,6 +214,83 @@ cpuattach(device_t parent, device_t self, void *aux)
 	 * ASP doesn't seem to like to use interrupt bits above 28
 	 * or below 27.
 	 */
-	int_reg_cpu.int_reg_allocatable_bits =
+	ir_cpu.ir_bits =
 		(1 << 28) | (1 << 27) | (1 << 26);
 }
+
+
+#ifdef MULTIPROCESSOR
+void
+cpu_boot_secondary_processors(void)
+{
+	struct cpu_info *ci;
+	struct iomod *cpu;
+	int i, j;
+
+	for (i = 0; i < HPPA_MAXCPUS; i++) {
+
+		ci = &cpus[i];
+		if (ci->ci_cpuid == 0)
+			continue;
+
+		if (ci->ci_data.cpu_idlelwp == NULL)
+			continue;
+
+		if (ci->ci_flags & CPUF_PRIMARY)
+			continue;
+
+		/* Release the specified CPU by triggering an EIR{0}. */
+		cpu_hatch_info = ci;
+		cpu = (struct iomod *)(ci->ci_hpa);
+		cpu->io_eir = 0;
+		membar_sync();
+
+		/* Wait for CPU to wake up... */
+		j = 0;
+		while (!(ci->ci_flags & CPUF_RUNNING) && j++ < 10000)
+			delay(1000);
+		if (!(ci->ci_flags & CPUF_RUNNING))
+			printf("failed to hatch cpu %i!\n", ci->ci_cpuid);
+	}
+
+	/* Release secondary CPUs. */
+	start_secondary_cpu = 1;
+	membar_sync();
+}
+
+void
+cpu_hw_init(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	/* Purge TLB and flush caches. */
+	ptlball();
+	fcacheall();
+
+	/* Enable address translations. */
+	ci->ci_psw = PSW_I | PSW_Q | PSW_P | PSW_C | PSW_D;
+	ci->ci_psw |= (cpus[0].ci_psw & PSW_O);
+
+	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
+}
+
+void
+cpu_hatch(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	ci->ci_flags |= CPUF_RUNNING;
+#if 0
+	hppa_ncpu++;
+#endif
+
+	/* Wait for additional CPUs to spinup. */
+	while (!start_secondary_cpu)
+		;
+
+	/* Spin for now */
+	for (;;)
+		;
+
+}
+#endif

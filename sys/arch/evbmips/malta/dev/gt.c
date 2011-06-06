@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.11 2009/03/14 15:36:06 dsl Exp $	*/
+/*	$NetBSD: gt.c,v 1.11.6.1 2011/06/06 09:05:30 jruoho Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.11 2009/03/14 15:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.11.6.1 2011/06/06 09:05:30 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ gt_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 #if NPCI > 0
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_iot = &mcp->mc_iot;

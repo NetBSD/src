@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2010/04/28 13:51:55 kiyohara Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.2.1 2011/06/06 09:05:31 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2010/04/28 13:51:55 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.2.1 2011/06/06 09:05:31 jruoho Exp $");
 
 #include "mainbus.h"
 #include "opt_multiprocessor.h"
@@ -54,7 +54,7 @@ int	mainbus_match(device_t, cfdata_t, void *);
 void	mainbus_attach(device_t, device_t, void *);
 int	mainbus_cfprint(void *, const char *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
 	mainbus_match, mainbus_attach, NULL, NULL);
 
 /*
@@ -125,7 +125,7 @@ mainbus_cfprint(void *aux, const char *pnp)
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu, sizeof(struct device), cpu_match, cpu_attach, NULL, NULL);
+CFATTACH_DECL_NEW(cpu, 0, cpu_match, cpu_attach, NULL, NULL);
 
 int
 cpu_match(device_t parent, cfdata_t cf, void *aux)

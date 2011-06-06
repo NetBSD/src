@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.69 2010/08/01 18:50:24 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.69.2.1 2011/06/06 09:08:26 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.69 2010/08/01 18:50:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.69.2.1 2011/06/06 09:08:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -721,7 +721,7 @@ const struct puc_device_description puc_devices[] = {
 
 	/* NetMos 1P PCI : 1P */
 	{   "NetMos NM9805 1284 Printer port",
-	    {	PCI_VENDOR_NETMOS,	0x9805,	0,	0	},
+	    {	PCI_VENDOR_NETMOS,	PCI_PRODUCT_NETMOS_NM9805, 0, 0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
@@ -730,7 +730,7 @@ const struct puc_device_description puc_devices[] = {
 
 	/* NetMos 2P PCI : 2P */
 	{   "NetMos NM9815 Dual 1284 Printer port",
-	    {	PCI_VENDOR_NETMOS,	0x9815,	0,	0	},
+	    {	PCI_VENDOR_NETMOS,	PCI_PRODUCT_NETMOS_NM9815, 0, 0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
@@ -740,7 +740,7 @@ const struct puc_device_description puc_devices[] = {
 
 	/* NetMos 1S PCI NM9835 : 1S */
 	{   "NetMos NM9835 UART",
-	    {	PCI_VENDOR_NETMOS, 0x9835, 0x1000, 0x0001	},
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835, 0x1000, 0x0001 },
 	    {	0xffff, 0xffff, 0xffff, 0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -749,7 +749,7 @@ const struct puc_device_description puc_devices[] = {
 
 	/* NetMos 2S PCI NM9835 : 2S */
 	{   "NetMos NM9835 Dual UART",
-	    {	PCI_VENDOR_NETMOS, 0x9835, 0x1000, 0x0002	},
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835, 0x1000, 0x0002 },
 	    {	0xffff, 0xffff, 0xffff, 0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -759,7 +759,7 @@ const struct puc_device_description puc_devices[] = {
 
 	/* NetMos 2S1P PCI 16C650 : 2S, 1P */
 	{   "NetMos NM9835 Dual UART and 1284 Printer port",
-	    {	PCI_VENDOR_NETMOS,	0x9835,	0,	0	},
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835, 0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -770,7 +770,7 @@ const struct puc_device_description puc_devices[] = {
 
 	/* NetMos 4S0P PCI NM9845 : 4S, 0P */
 	{   "NetMos NM9845 Quad UART",
-	   {   PCI_VENDOR_NETMOS, 0x9845, 0x1000, 0x0004  },
+	   {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 0x1000, 0x0004 },
 	   {   0xffff, 0xffff, 0xffff, 0xffff  },
 	   {
 	       { PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -782,7 +782,7 @@ const struct puc_device_description puc_devices[] = {
 
 	/* NetMos 4S1P PCI NM9845 : 4S, 1P */
 	{   "NetMos NM9845 Quad UART and 1284 Printer port",
-	   {   PCI_VENDOR_NETMOS, 0x9845, 0x1000, 0x0014  },
+	   {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 0x1000, 0x0014 },
 	   {   0xffff, 0xffff, 0xffff, 0xffff  },
 	   {
 	       { PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -795,7 +795,7 @@ const struct puc_device_description puc_devices[] = {
 
        /* NetMos 6S PCI 16C650 : 6S, 0P */
        {   "NetMos NM9845 6 UART",
-	   {   PCI_VENDOR_NETMOS, 0x9845, 0x1000, 0x0006  },
+	   {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 0x1000, 0x0006 },
 	   {   0xffff, 0xffff, 0xffff, 0xffff  },
 	   {
 	       { PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -809,7 +809,7 @@ const struct puc_device_description puc_devices[] = {
 
        /* NetMos 4S1P PCI NM9845 : 4S, 1P */
        {   "NetMos NM9845 Quad UART and 1284 Printer port (unknown type)",
-	    {	PCI_VENDOR_NETMOS,	0x9845,	0,	0	},
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -822,7 +822,7 @@ const struct puc_device_description puc_devices[] = {
 
        /* NetMos 4S1P PCI NM9855 : 4S, 1P */
        {   "NetMos NM9855 Quad UART and 1284 Printer port (unknown type)",
-	    {	PCI_VENDOR_NETMOS,	0x9855,	0x1000,	0x0014	},
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9855, 0x1000, 0x0014 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
@@ -835,7 +835,7 @@ const struct puc_device_description puc_devices[] = {
 
        /* NetMos 6S PCI NM9865 : 1S */
        {   "NetMos NM9865 1 UART",
-	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x1000	},
+	    {	PCI_VENDOR_NETMOS, 0x9865,	0xa000,	0x1000	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -844,7 +844,7 @@ const struct puc_device_description puc_devices[] = {
 
        /* NetMos 2S PCI NM9865 : 2S */
        {   "NetMos NM9865 2 UART",
-	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3002	},
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3002 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -854,7 +854,7 @@ const struct puc_device_description puc_devices[] = {
 
        /* NetMos 3S PCI NM9865 : 3S */
        {   "NetMos NM9865 3 UART",
-	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3003	},
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3003 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -865,7 +865,7 @@ const struct puc_device_description puc_devices[] = {
 
        /* NetMos 4S PCI NM9865 : 4S */
        {   "NetMos NM9865 4 UART",
-	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3004	},
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3004 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -877,7 +877,7 @@ const struct puc_device_description puc_devices[] = {
 
        /* NetMos PCI NM9865 : 1S 1P */
        {   "NetMos NM9865 Single UART and Single LPT",
-	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3011	},
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3011 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -887,7 +887,7 @@ const struct puc_device_description puc_devices[] = {
 
        /* NetMos PCI NM9865 : 2S 1P */
        {   "NetMos NM9865 Dual UART and Single LPT",
-	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3012	},
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3012 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -898,11 +898,31 @@ const struct puc_device_description puc_devices[] = {
 
        /* NetMos PCI NM9865 : 2P */
        {   "NetMos NM9865 Dual LPT",
-	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3020	},
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3020 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
 		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	/*
+	 * Two 1-port and one 2-port found on a 4-port
+	 * card sold as Sunsway/ST Lab I-430.
+	 */
+	{   "NetMos NM9865 1S",
+	    {	0x9710, 0x9865, 0xa000, 0x1000 },
+	    {	0xffff, 0xffff, 0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+	{   "NetMos NM9865 2S",
+	    {	0x9710, 0x9865, 0xa000, 0x3002 },
+	    {	0xffff, 0xffff, 0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -921,6 +941,24 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/* NetMos PCIe NM9904 (PCI multi function): 4S */
+	{   "NetMos NM9904 UART",
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9904, 0, 0 },
+	    {	0xffff,	0xffff,				      0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* NetMos PCIe NM9922 (PCI multi function): 2S */
+	{   "NetMos NM9922 UART",
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9922, 0, 0 },
+	    {	0xffff,	0xffff,				      0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -1106,6 +1144,116 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	{   "SUNIX 5008 1P",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0100 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 5016 8S",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0010 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x18, COM_FREQ * 8},
+/*
+ * PUC_MAX_PORTS needs to be raised in order to reach these ports
+ */
+#if PUC_MAX_PORTS >= 16
+		{ PUC_PORT_TYPE_COM, 0x14, 0x20, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x28, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x30, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x38, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x40, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x48, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x50, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x58, COM_FREQ * 8},
+#endif /* PUC_MAX_PORTS >= 16 */
+	    },
+	},
+
+	{   "SUNIX 5027 1S",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0001 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 5037 2S",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0002 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 5056 4S",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0004 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 5066 8S",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0008 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x18, COM_FREQ * 8},
+	    },
+	},
+
+	{   "SUNIX 5069 1S / 1P",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0101 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 5079 2S / 1P",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0102 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+	{   "SUNIX 5099 4S / 1P",
+	    {	PCI_VENDOR_SUNIX2,	0x1999,	0x1fd4,	0x0104 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
 	/*
 	 * XXX no entry because I have no data:
 	 * XXX Dolphin Peripherals 4006 (single parallel)
@@ -1145,6 +1293,35 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
+
+	/*
+	 * Nanjing QinHeng Electronics 
+	 * Products based on CH353 chip which can be
+	 * configured to provide various combinations
+	 * including 2 serial ports and a parallel port
+	 * or 4 serial ports (using a CH432 parallel to
+	 * 2 serial port converter. Product codes from
+	 * documentation (and physical 2 port serial card)
+	 */
+	{   "Nanjing QinHeng Electronics 2S",
+	    {	PCI_VENDOR_QINHENG, 0x3253, PCI_VENDOR_QINHENG, 0x3253	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+	{   "Nanjing QinHeng Electronics 2S, 1P",
+	    {	PCI_VENDOR_QINHENG, 0x7053, PCI_VENDOR_QINHENG, 0x7053	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
 
 	/* VScom PCI-200: 2S */
 	{   "VScom PCI-200",
@@ -1929,6 +2106,34 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x3e8, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x3f8, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x000, 0x00 },
+	    },
+	},
+
+	/* SystemBase SB16C1054 UARTs */
+	{   "SystemBase SB16C1054",
+	    {	PCI_VENDOR_SYSTEMBASE, PCI_PRODUCT_SYSTEMBASE_SB16C1054, 0, 0 },
+	    {	0xffff,	0xffff,						 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ },
+	    },
+	},
+
+	/* SystemBase SB16C1058 UARTs */
+	{   "SystemBase SB16C1058",
+	    {   PCI_VENDOR_SYSTEMBASE, PCI_PRODUCT_SYSTEMBASE_SB16C1058, 0, 0 },
+	    {	0xffff,	0xffff,						 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x20, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x28, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x30, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x38, COM_FREQ },
 	    },
 	},
 

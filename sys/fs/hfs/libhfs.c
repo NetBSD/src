@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.9 2009/11/27 15:58:39 pooka Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.9.6.1 2011/06/06 09:09:22 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.9 2009/11/27 15:58:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.9.6.1 2011/06/06 09:09:22 jruoho Exp $");
 
 #include "libhfs.h"
 
@@ -460,14 +460,11 @@ hfslib_path_to_cnid(hfs_volume* in_vol,
 		goto exit;
 	
 	/* copy only the bytes that are actually used */
-	memcpy(*out_unicode+2, path + path_offset, total_path_length*2);
+	memcpy(*out_unicode + 2, path + path_offset, total_path_length*2);
 
 	/* insert forward slash at start */
-	(*out_unicode)[0] = 0x00;
-	(*out_unicode)[1] = 0x2F;
-	ptr = (uint16_t*)*out_unicode;
-	uchar = be16tohp((void*)&ptr);
-	*(ptr-1) = uchar;
+	uchar = be16toh(0x2F);
+	memcpy(*out_unicode, &uchar, sizeof(uchar));
 
 	/* insert null char at end */
 	(*out_unicode)[total_path_length*2+2] = 0x00;

@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.7 2011/01/07 15:30:30 jmcneill Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.7.2.1 2011/06/06 09:08:30 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,6 +34,8 @@
 
 #include <dev/auconv.h>
 
+#include "hdaudio_config.h"
+
 #define	HDAUDIO_MAX_CODECS	15
 
 #define	hda_read1(sc, off)		\
@@ -54,10 +56,15 @@
 	aprint_normal(__VA_ARGS__)
 #define	hda_error(sc, ...)		\
 	aprint_error_dev((sc)->sc_dev, __VA_ARGS__)
+#ifdef HDAUDIO_DEBUG
 #define	hda_trace(sc, ...)		\
-	aprint_debug_dev((sc)->sc_dev, __VA_ARGS__)
+	aprint_normal_dev((sc)->sc_dev, __VA_ARGS__)
 #define	hda_trace1(sc, ...)		\
-	aprint_debug(__VA_ARGS__)
+	aprint_normal(__VA_ARGS__)
+#else
+#define hda_trace(sc, ...) do { } while (0)
+#define hda_trace1(sc, ...) do { } while (0)
+#endif
 #define	hda_delay(us)			\
 	delay((us))
 
@@ -76,6 +83,8 @@ struct hdaudio_function_group {
 	int				fg_nid;
 	uint16_t			fg_vendor;
 	uint16_t			fg_product;
+
+	int				(*fg_unsol)(device_t, uint8_t);
 };
 
 struct hdaudio_codec {

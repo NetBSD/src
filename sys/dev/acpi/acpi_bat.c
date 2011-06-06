@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.108 2011/01/13 13:05:13 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.108.2.1 2011/06/06 09:07:40 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.108 2011/01/13 13:05:13 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.108.2.1 2011/06/06 09:07:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -832,29 +832,38 @@ acpibat_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	*props |= PROP_BATTCAP | PROP_BATTWARN | PROP_DRIVER_LIMITS;
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpibat, NULL);
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
-acpibat_modcmd(modcmd_t cmd, void *context)
+acpibat_modcmd(modcmd_t cmd, void *aux)
 {
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-		return config_init_component(cfdriver_ioconf_acpibat,
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpibat,
 		    cfattach_ioconf_acpibat, cfdata_ioconf_acpibat);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
-		return config_fini_component(cfdriver_ioconf_acpibat,
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpibat,
 		    cfattach_ioconf_acpibat, cfdata_ioconf_acpibat);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

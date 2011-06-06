@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.20 2010/12/28 00:49:21 jmcneill Exp $ */
+/* $NetBSD: pseye.c,v 1.20.2.1 2011/06/06 09:08:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.20 2010/12/28 00:49:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.20.2.1 2011/06/06 09:08:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -812,7 +812,7 @@ pseye_start_transfer(void *opaque)
 	if (sc->sc_running == 0) {
 		sc->sc_running = 1;
 		err = kthread_create(PRI_PSEYE, 0, NULL, pseye_transfer_thread,
-		    opaque, NULL, device_xname(sc->sc_dev));
+		    opaque, NULL, "%s", device_xname(sc->sc_dev));
 	} else
 		aprint_error_dev(sc->sc_dev, "transfer already in progress\n");
 	mutex_exit(&sc->sc_mtx);

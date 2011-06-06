@@ -1,22 +1,11 @@
-/* $NetBSD: bus.h,v 1.2 2010/06/13 18:14:57 simonb Exp $ */
-
-/*
- * A very basic <machine/bus.h>.  If/once "proper" bus.h support is needed,
- * this can simply include:
- *
- *	#include <mips/bus_space.h>
- *	#include <mips/bus_dma.h>
- *
- * as sys/arch/evbmips/include/bus.h does.
- */
+/* $NetBSD: bus.h,v 1.2.4.1 2011/06/06 09:06:37 jruoho Exp $ */
 
 #ifndef _SBMIPS_BUS_H_
 #define	_SBMIPS_BUS_H_
 
-typedef paddr_t	bus_addr_t;
-typedef psize_t	bus_size_t;
+#define _MIPS_NEED_BUS_DMA_BOUNCE
 
-typedef int     bus_space_tag_t;
-typedef int     bus_space_handle_t;
+#include <mips/bus_space.h>
+#include <mips/bus_dma.h>
 
 #endif /* _SBMIPS_BUS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.31 2010/05/07 13:59:51 is Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.31.2.1 2011/06/06 09:08:08 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.31 2010/05/07 13:59:51 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.31.2.1 2011/06/06 09:08:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,6 +352,14 @@ static struct aac_ident {
 		AAC_HWIF_RKT,
 		0,
 		"IBM ServeRAID 8k"
+	},
+	{	PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2200S,
+		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_3405,
+		AAC_HWIF_I960RX,
+		0,
+		"Adaptec RAID 3405"
 	},
 	{
 		PCI_VENDOR_DEC,

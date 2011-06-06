@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.40 2010/11/23 11:14:02 hannken Exp $
+#	$NetBSD: MMEYE,v 1.40.2.1 2011/06/06 09:06:13 jruoho Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -13,10 +13,14 @@ maxusers	16		# estimated number of users
 options		SH3
 options 	SH7708R		# 100MHz
 options 	MMEYE
-options 	MMEYE_NEW_INT
+options 	MMEYE_NEW_INT=0xb000000e
 #options 	MMEYE_NO_CACHE
 options 	PCLOCK=33330000		# 33.33MHz
 options 	INITTODR_ALWAYS_USE_RTC
+
+options 	IOM_RAM_SIZE=0x01000000	# 16MB
+options 	IOM_RAM_BEGIN=0x0c000000
+makeoptions	DEFTEXTADDR="0x8c010000"
 
 # Standard system options
 #options 	INSECURE	# disable kernel security levels
@@ -64,8 +68,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
-#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
-#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 
 # Kernel root file system and dump configuration.
@@ -82,12 +84,12 @@ shb*	at mainbus?
 
 rtc*	at shb?
 
-com0	at mainbus?
-com1	at mainbus?
+com0	at mainbus? addr1 0xa4000000 irq1 11
+com1	at mainbus? addr1 0xa4000008 irq1 12
 
 # SH PCMCIA controllers
-mmeyepcmcia0	at mainbus?
-mmeyepcmcia1	at mainbus?
+mmeyepcmcia0 at mainbus? addr1 0xb000000a addr2 0xb8000000 irq1 3 irq2 10
+mmeyepcmcia1 at mainbus? addr1 0xb000000c addr2 0xb9000000 irq1 4 irq2 9
 
 # PCMCIA bus support
 pcmcia*	at mmeyepcmcia? controller ? socket ?

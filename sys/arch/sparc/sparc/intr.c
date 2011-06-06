@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.108 2010/01/05 21:38:50 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.108.6.1 2011/06/06 09:06:46 jruoho Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108 2010/01/05 21:38:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108.6.1 2011/06/06 09:06:46 jruoho Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108 2010/01/05 21:38:50 macallan Exp $");
 #include <sys/malloc.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
-#include <sys/simplelock.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -74,47 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108 2010/01/05 21:38:50 macallan Exp $");
 static int intr_biglock_wrapper(void *);
 
 void *xcall_cookie;
-
-/* Stats */
-struct evcnt lev13_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"xcall","std");
-struct evcnt lev14_evcnt = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"xcall","fast");
-EVCNT_ATTACH_STATIC(lev13_evcnt);
-EVCNT_ATTACH_STATIC(lev14_evcnt);
 #endif
-
-struct evcnt intrcnt[15] = {
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "spur", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev1", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev2", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev3", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev4", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev5", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev6", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev7", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev8", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev9", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "clock", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev11", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev12", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "lev13", "hard"),
-   EVCNT_INITIALIZER(EVCNT_TYPE_INTR, 0, "prof", "hard"),
-};
-
-EVCNT_ATTACH_STATIC2(intrcnt, 0);
-EVCNT_ATTACH_STATIC2(intrcnt, 1);
-EVCNT_ATTACH_STATIC2(intrcnt, 2);
-EVCNT_ATTACH_STATIC2(intrcnt, 3);
-EVCNT_ATTACH_STATIC2(intrcnt, 4);
-EVCNT_ATTACH_STATIC2(intrcnt, 5);
-EVCNT_ATTACH_STATIC2(intrcnt, 6);
-EVCNT_ATTACH_STATIC2(intrcnt, 7);
-EVCNT_ATTACH_STATIC2(intrcnt, 8);
-EVCNT_ATTACH_STATIC2(intrcnt, 9);
-EVCNT_ATTACH_STATIC2(intrcnt, 10);
-EVCNT_ATTACH_STATIC2(intrcnt, 11);
-EVCNT_ATTACH_STATIC2(intrcnt, 12);
-EVCNT_ATTACH_STATIC2(intrcnt, 13);
-EVCNT_ATTACH_STATIC2(intrcnt, 14);
 
 void	strayintr(struct clockframe *);
 #ifdef DIAGNOSTIC
@@ -132,6 +92,19 @@ strayintr(struct clockframe *fp)
 	static int straytime, nstray;
 	char bits[64];
 	int timesince;
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * XXX
+	 *
+	 * Don't whine about zs interrupts on MP.  We sometimes get
+	 * stray interrupts when polled kernel output on cpu>0 eats
+	 * the interrupt and cpu0 sees it.
+	 */
+#define ZS_INTR_IPL	12
+	if (fp->ipl == ZS_INTR_IPL)
+		return;
+#endif
 
 	snprintb(bits, sizeof(bits), PSR_BITS, fp->psr);
 	printf("stray interrupt cpu%d ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
@@ -214,9 +187,8 @@ int	(*vmeerr_handler)(void);
 int	(*moduleerr_handler)(void);
 
 #if defined(MULTIPROCESSOR)
-volatile int nmi_hard_wait = 0;
-struct simplelock nmihard_lock = SIMPLELOCK_INITIALIZER;
-int drop_into_rom_on_fatal = 1;
+static volatile u_int	nmi_hard_wait = 0;
+int			drop_into_rom_on_fatal = 1;
 #endif
 
 void
@@ -229,6 +201,10 @@ nmi_hard(void)
 	uint32_t si;
 	char bits[64];
 	u_int afsr, afva;
+
+	/* Tally */
+	cpuinfo.ci_intrcnt[15].ev_count++;
+	cpuinfo.ci_data.cpu_nintr++;
 
 	afsr = afva = 0;
 	if ((*cpuinfo.get_asyncflt)(&afsr, &afva) == 0) {
@@ -244,9 +220,7 @@ nmi_hard(void)
 	 * variable is non-zero.  If we are the master, loop while this
 	 * variable is less than the number of cpus.
 	 */
-	simple_lock(&nmihard_lock);
-	nmi_hard_wait++;
-	simple_unlock(&nmihard_lock);
+	atomic_inc_uint(&nmi_hard_wait);
 
 	if (cpuinfo.master == 0) {
 		while (nmi_hard_wait)
@@ -298,9 +272,7 @@ nmi_hard(void)
 	/*
 	 * Tell everyone else we've finished dealing with the hard NMI.
 	 */
-	simple_lock(&nmihard_lock);
 	nmi_hard_wait = 0;
-	simple_unlock(&nmihard_lock);
 	if (fatal && drop_into_rom_on_fatal) {
 		prom_abort();
 		return;
@@ -317,6 +289,11 @@ nmi_hard(void)
 void
 nmi_soft(struct trapframe *tf)
 {
+
+	/* Tally */
+	cpuinfo.ci_sintrcnt[15].ev_count++;
+	cpuinfo.ci_data.cpu_nintr++;
+
 	if (cpuinfo.mailbox) {
 		/* Check PROM messages */
 		uint8_t msg = *(uint8_t *)cpuinfo.mailbox;
@@ -325,7 +302,6 @@ nmi_soft(struct trapframe *tf)
 		case OPENPROM_MBX_WD:
 			/* In case there's an xcall in progress (unlikely) */
 			spl0();
-			cpuinfo.flags &= ~CPUFLG_READY;
 #ifdef MULTIPROCESSOR
 			cpu_ready_mask &= ~(1 << cpu_number());
 #endif
@@ -364,13 +340,21 @@ nmi_soft(struct trapframe *tf)
 #if defined(MULTIPROCESSOR)
 /*
  * Respond to an xcall() request from another CPU.
+ *
+ * This is also called directly from xcall() if we notice an
+ * incoming message while we're waiting to grab the xpmsg_lock.
+ * We pass the address of xcallintr() itself to indicate that
+ * this is not a real interrupt.
  */
-static void
+void
 xcallintr(void *v)
 {
 
+	kpreempt_disable();
+
 	/* Tally */
-	lev13_evcnt.ev_count++;
+	if (v != xcallintr)
+		cpuinfo.ci_sintrcnt[13].ev_count++;
 
 	/* notyet - cpuinfo.msg.received = 1; */
 	switch (cpuinfo.msg.tag) {
@@ -385,6 +369,8 @@ xcallintr(void *v)
 	}
 	cpuinfo.msg.tag = 0;
 	cpuinfo.msg.complete = 1;
+
+	kpreempt_enable();
 }
 #endif /* MULTIPROCESSOR */
 #endif /* SUN4M || SUN4D */
@@ -858,6 +844,11 @@ intr_biglock_wrapper(void *vp)
 bool
 cpu_intr_p(void)
 {
+	int idepth;
 
-	return curcpu()->ci_idepth != 0;
+	kpreempt_disable();
+	idepth = curcpu()->ci_idepth;
+	kpreempt_enable();
+
+	return idepth != 0;
 }

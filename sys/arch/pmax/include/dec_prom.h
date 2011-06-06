@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.22 2009/12/14 00:46:10 matt Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.22.6.1 2011/06/06 09:06:23 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,7 @@
 #ifndef _LOCORE
 #include <sys/types.h>
 #include <sys/cdefs.h>
+#include <machine/int_types.h>
 
 /*
  * Programs loaded by the new PROMs pass the following arguments:
@@ -144,6 +145,10 @@ extern const struct callback *callv;
 extern struct callback callvec;
 #else
 extern const struct callback callvec;
+#endif
+
+#ifdef _KERNEL
+intptr_t promcall(void *, ...);
 #endif
 
 #if defined(_STANDALONE) && !defined(_NO_PROM_DEFINES)

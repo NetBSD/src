@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.36 2010/11/23 11:14:05 hannken Exp $
+#	$NetBSD: OFWGENCFG,v 1.36.2.1 2011/06/06 09:06:44 jruoho Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -53,7 +53,8 @@ file-system	KERNFS		# /kern
 #file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	NFSSERVER
 options 	NFS_BOOT_DHCP	# NFS booting via DHCP
 options 	NFS_BOOT_RWSIZE=1024	# OFW driver can't cope with more

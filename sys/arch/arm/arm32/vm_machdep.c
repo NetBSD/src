@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.54 2011/01/14 02:06:23 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.54.2.1 2011/06/06 09:05:01 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.54 2011/01/14 02:06:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.54.2.1 2011/06/06 09:05:01 jruoho Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -256,7 +256,7 @@ cpu_lwp_free2(struct lwp *l)
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
@@ -293,6 +293,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		len -= PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
+
+	return 0;
 }
 
 /*

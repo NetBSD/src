@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.32 2010/06/24 13:03:06 hannken Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.32.2.1 2011/06/06 09:07:12 jruoho Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.32 2010/06/24 13:03:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.32.2.1 2011/06/06 09:07:12 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.32 2010/06/24 13:03:06 hannken 
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -143,7 +144,7 @@ struct xbdback_instance {
 	grant_handle_t xbdi_ring_handle; /* to unmap the ring */
 	vaddr_t xbdi_ring_va; /* to unmap the ring */
 	/* disconnection must be postponed until all I/O is done */
-	volatile unsigned xbdi_refcnt;
+	int xbdi_refcnt;
 	/* 
 	 * State for I/O processing/coalescing follows; this has to
 	 * live here instead of on the stack because of the
@@ -167,13 +168,10 @@ struct xbdback_instance {
 	uint xbdi_pendingreqs; /* number of I/O in fly */
 };
 /* Manipulation of the above reference count. */
-/* XXXjld@panix.com: not MP-safe, and move the i386 asm elsewhere. */
-#define xbdi_get(xbdip) (++(xbdip)->xbdi_refcnt)
+#define xbdi_get(xbdip) atomic_inc_uint(&(xbdip)->xbdi_refcnt)
 #define xbdi_put(xbdip)                                      \
 do {                                                         \
-	__asm volatile("decl %0"                           \
-	    : "=m"((xbdip)->xbdi_refcnt) : "m"((xbdip)->xbdi_refcnt)); \
-	if (0 == (xbdip)->xbdi_refcnt)                            \
+	if (atomic_dec_uint_nv(&(xbdip)->xbdi_refcnt) == 0)  \
                xbdback_finish_disconnect(xbdip);             \
 } while (/* CONSTCOND */ 0)
 
@@ -479,20 +477,152 @@ xbdback_xenbus_destroy(void *arg)
 	return 0;
 }
 
+static int
+xbdback_connect(struct xbdback_instance *xbdi)
+{
+	int len, err;
+	struct gnttab_map_grant_ref grop;
+	struct gnttab_unmap_grant_ref ungrop;
+	evtchn_op_t evop;
+	u_long ring_ref, revtchn;
+	char *xsproto;
+	char evname[16];
+	const char *proto;
+	struct xenbus_device *xbusd = xbdi->xbdi_xbusd;
+
+	/* read comunication informations */
+	err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
+	    "ring-ref", &ring_ref, 10);
+	if (err) {
+		xenbus_dev_fatal(xbusd, err, "reading %s/ring-ref",
+		    xbusd->xbusd_otherend);
+		return -1;
+	}
+	err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
+	    "event-channel", &revtchn, 10);
+	if (err) {
+		xenbus_dev_fatal(xbusd, err, "reading %s/event-channel",
+		    xbusd->xbusd_otherend);
+		return -1;
+	}
+	err = xenbus_read(NULL, xbusd->xbusd_otherend, "protocol",
+	    &len, &xsproto);
+	if (err) {
+		xbdi->xbdi_proto = XBDIP_NATIVE;
+		proto = "unspecified";
+	} else {
+		if (strcmp(xsproto, XEN_IO_PROTO_ABI_NATIVE) == 0) {
+			xbdi->xbdi_proto = XBDIP_NATIVE;
+			proto = XEN_IO_PROTO_ABI_NATIVE;
+		} else if (strcmp(xsproto, XEN_IO_PROTO_ABI_X86_32) == 0) {
+			xbdi->xbdi_proto = XBDIP_32;
+			proto = XEN_IO_PROTO_ABI_X86_32;
+		} else if (strcmp(xsproto, XEN_IO_PROTO_ABI_X86_64) == 0) {
+			xbdi->xbdi_proto = XBDIP_64;
+			proto = XEN_IO_PROTO_ABI_X86_64;
+		} else {
+			aprint_error("xbd domain %d: unknown proto %s\n",
+			    xbdi->xbdi_domid, xsproto);
+			free(xsproto, M_DEVBUF);
+			return -1;
+		}
+	}
+	free(xsproto, M_DEVBUF);
+
+	/* allocate VA space and map rings */
+	xbdi->xbdi_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY);
+	if (xbdi->xbdi_ring_va == 0) {
+		xenbus_dev_fatal(xbusd, ENOMEM,
+		    "can't get VA for ring", xbusd->xbusd_otherend);
+		return -1;
+	}
+
+	grop.host_addr = xbdi->xbdi_ring_va;
+	grop.flags = GNTMAP_host_map;
+	grop.ref = ring_ref;
+	grop.dom = xbdi->xbdi_domid;
+	err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref,
+	    &grop, 1);
+	if (err || grop.status) {
+		aprint_error("xbdback %s: can't map grant ref: %d/%d\n",
+		    xbusd->xbusd_path, err, grop.status);
+		xenbus_dev_fatal(xbusd, EINVAL,
+		    "can't map ring", xbusd->xbusd_otherend);
+		goto err;
+	}
+	xbdi->xbdi_ring_handle = grop.handle;
+
+	switch(xbdi->xbdi_proto) {
+	case XBDIP_NATIVE:
+	{
+		blkif_sring_t *sring = (void *)xbdi->xbdi_ring_va;
+		BACK_RING_INIT(&xbdi->xbdi_ring.ring_n, sring, PAGE_SIZE);
+		break;
+	}
+	case XBDIP_32:
+	{
+		blkif_x86_32_sring_t *sring = (void *)xbdi->xbdi_ring_va;
+		BACK_RING_INIT(&xbdi->xbdi_ring.ring_32, sring, PAGE_SIZE);
+		break;
+	}
+	case XBDIP_64:
+	{
+		blkif_x86_64_sring_t *sring = (void *)xbdi->xbdi_ring_va;
+		BACK_RING_INIT(&xbdi->xbdi_ring.ring_64, sring, PAGE_SIZE);
+		break;
+	}
+	}
+
+	evop.cmd = EVTCHNOP_bind_interdomain;
+	evop.u.bind_interdomain.remote_dom = xbdi->xbdi_domid;
+	evop.u.bind_interdomain.remote_port = revtchn;
+	err = HYPERVISOR_event_channel_op(&evop);
+	if (err) {
+		aprint_error("blkback %s: "
+		    "can't get event channel: %d\n",
+		    xbusd->xbusd_otherend, err);
+		xenbus_dev_fatal(xbusd, err,
+		    "can't bind event channel", xbusd->xbusd_otherend);
+		goto err2;
+	}
+	xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
+
+	snprintf(evname, sizeof(evname), "xbd%d.%d",
+	    xbdi->xbdi_domid, xbdi->xbdi_handle);
+	event_set_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
+	    xbdi, IPL_BIO, evname);
+	aprint_verbose("xbd backend 0x%x for domain %d "
+	    "using event channel %d, protocol %s\n", xbdi->xbdi_handle,
+	    xbdi->xbdi_domid, xbdi->xbdi_evtchn, proto);
+	hypervisor_enable_event(xbdi->xbdi_evtchn);
+	hypervisor_notify_via_evtchn(xbdi->xbdi_evtchn);
+	xbdi->xbdi_status = CONNECTED;
+	return 0;
+
+err2:
+	/* unmap ring */
+	ungrop.host_addr = xbdi->xbdi_ring_va;
+	ungrop.handle = xbdi->xbdi_ring_handle;
+	ungrop.dev_bus_addr = 0;
+	err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
+	    &ungrop, 1);
+	if (err)
+	    aprint_error("xbdback %s: unmap_grant_ref failed: %d\n",
+		xbusd->xbusd_path, err);
+
+err:
+	/* free ring VA space */
+	uvm_km_free(kernel_map, xbdi->xbdi_ring_va, PAGE_SIZE, UVM_KMF_VAONLY);
+	return -1;
+}
+
 static void
 xbdback_frontend_changed(void *arg, XenbusState new_state)
 {
 	struct xbdback_instance *xbdi = arg;
 	struct xenbus_device *xbusd = xbdi->xbdi_xbusd;
-	u_long ring_ref, revtchn;
-	struct gnttab_map_grant_ref grop;
-	struct gnttab_unmap_grant_ref ungrop;
-	evtchn_op_t evop;
-	char evname[16];
-	const char *proto;
-	char *xsproto;
-	int len;
-	int err, s;
+	int s;
 
 	XENPRINTF(("xbdback %s: new state %d\n", xbusd->xbusd_path, new_state));
 	switch(new_state) {
@@ -502,114 +632,7 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 	case XenbusStateConnected:
 		if (xbdi->xbdi_status == CONNECTED)
 			break;
-		/* read comunication informations */
-		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "ring-ref", &ring_ref, 10);
-		if (err) {
-			xenbus_dev_fatal(xbusd, err, "reading %s/ring-ref",
-			    xbusd->xbusd_otherend);
-			break;
-		}
-		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
-		    "event-channel", &revtchn, 10);
-		if (err) {
-			xenbus_dev_fatal(xbusd, err, "reading %s/event-channel",
-			    xbusd->xbusd_otherend);
-			break;
-		}
-		err = xenbus_read(NULL, xbusd->xbusd_otherend, "protocol",
-		    &len, &xsproto);
-		if (err) {
-			proto = "unspecified";
-			xbdi->xbdi_proto = XBDIP_NATIVE;
-		} else {
-			if(strcmp(xsproto, XEN_IO_PROTO_ABI_NATIVE) == 0) {
-				xbdi->xbdi_proto = XBDIP_NATIVE;
-				proto = XEN_IO_PROTO_ABI_NATIVE;
-			} else if(strcmp(xsproto, XEN_IO_PROTO_ABI_X86_32) == 0) {
-				xbdi->xbdi_proto = XBDIP_32;
-				proto = XEN_IO_PROTO_ABI_X86_32;
-			} else if(strcmp(xsproto, XEN_IO_PROTO_ABI_X86_64) == 0) {
-				xbdi->xbdi_proto = XBDIP_64;
-				proto = XEN_IO_PROTO_ABI_X86_64;
-			} else {
-				printf("xbd domain %d: unknown proto %s\n",
-				    xbdi->xbdi_domid, xsproto);
-				free(xsproto, M_DEVBUF);
-				return;
-			}
-			free(xsproto, M_DEVBUF);
-		}
-		/* allocate VA space and map rings */
-		xbdi->xbdi_ring_va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		    UVM_KMF_VAONLY);
-		if (xbdi->xbdi_ring_va == 0) {
-			xenbus_dev_fatal(xbusd, ENOMEM,
-			    "can't get VA for ring", xbusd->xbusd_otherend);
-			break;
-		}
-		grop.host_addr = xbdi->xbdi_ring_va;
-		grop.flags = GNTMAP_host_map;
-		grop.ref = ring_ref;
-		grop.dom = xbdi->xbdi_domid;
-		err = HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref,
-		    &grop, 1);
-		if (err || grop.status) {
-			printf("xbdback %s: can't map grant ref: %d/%d\n",
-			    xbusd->xbusd_path, err, grop.status);
-			xenbus_dev_fatal(xbusd, EINVAL,
-			    "can't map ring", xbusd->xbusd_otherend);
-			goto err;
-		}
-		xbdi->xbdi_ring_handle = grop.handle;
-		switch(xbdi->xbdi_proto) {
-		case XBDIP_NATIVE:
-		{
-			blkif_sring_t *sring = (void *)xbdi->xbdi_ring_va;
-			BACK_RING_INIT(&xbdi->xbdi_ring.ring_n,
-			    sring, PAGE_SIZE);
-			break;
-		}
-		case XBDIP_32:
-		{
-			blkif_x86_32_sring_t *sring =
-			    (void *)xbdi->xbdi_ring_va;
-			BACK_RING_INIT(&xbdi->xbdi_ring.ring_32,
-			    sring, PAGE_SIZE);
-			break;
-		}
-		case XBDIP_64:
-		{
-			blkif_x86_64_sring_t *sring =
-			    (void *)xbdi->xbdi_ring_va;
-			BACK_RING_INIT(&xbdi->xbdi_ring.ring_64,
-			    sring, PAGE_SIZE);
-			break;
-		}
-		}
-		evop.cmd = EVTCHNOP_bind_interdomain;
-		evop.u.bind_interdomain.remote_dom = xbdi->xbdi_domid;
-		evop.u.bind_interdomain.remote_port = revtchn;
-		err = HYPERVISOR_event_channel_op(&evop);
-		if (err) {
-			aprint_error("blkback %s: "
-			    "can't get event channel: %d\n",
-			    xbusd->xbusd_otherend, err);
-			xenbus_dev_fatal(xbusd, err,
-			    "can't bind event channel", xbusd->xbusd_otherend);
-			goto err2;
-		}
-		xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
-		snprintf(evname, sizeof(evname), "xbd%d.%d",
-		    xbdi->xbdi_domid, xbdi->xbdi_handle);
-		event_set_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
-		    xbdi, IPL_BIO, evname);
-		aprint_verbose("xbd backend 0x%x for domain %d "
-		    "using event channel %d, protocol %s\n", xbdi->xbdi_handle,
-		    xbdi->xbdi_domid, xbdi->xbdi_evtchn, proto);
-		hypervisor_enable_event(xbdi->xbdi_evtchn);
-		hypervisor_notify_via_evtchn(xbdi->xbdi_evtchn);
-		xbdi->xbdi_status = CONNECTED;
+		xbdback_connect(xbdi);
 		break;
 	case XenbusStateClosing:
 		hypervisor_mask_event(xbdi->xbdi_evtchn);
@@ -633,19 +656,6 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 		aprint_error("xbdback %s: invalid frontend state %d\n",
 		    xbusd->xbusd_path, new_state);
 	}
-	return;
-err2:
-	/* unmap ring */
-	ungrop.host_addr = xbdi->xbdi_ring_va;
-	ungrop.handle = xbdi->xbdi_ring_handle;
-	ungrop.dev_bus_addr = 0;
-	err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
-	    &ungrop, 1);
-	if (err)
-	    printf("xbdback %s: unmap_grant_ref failed: %d\n",
-		xbusd->xbusd_path, err);
-err:
-	uvm_km_free(kernel_map, xbdi->xbdi_ring_va, PAGE_SIZE, UVM_KMF_VAONLY);
 	return;
 }
 
@@ -863,7 +873,6 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj)
 	blkif_request_t *req = &xbdi->xbdi_xen_req;
 	blkif_x86_32_request_t *req32;
 	blkif_x86_64_request_t *req64;
-	int i;
 
 	(void)obj;
 	if (xbdi->xbdi_ring.ring_n.req_cons != xbdi->xbdi_req_prod) {
@@ -881,8 +890,6 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj)
 			req->handle = req32->handle;
 			req->id = req32->id;
 			req->sector_number = req32->sector_number;
-			for (i = 0; i < req->nr_segments; i++)
-				req->seg[i] = req32->seg[i];
 			break;
 			    
 		case XBDIP_64:
@@ -893,8 +900,6 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj)
 			req->handle = req64->handle;
 			req->id = req64->id;
 			req->sector_number = req64->sector_number;
-			for (i = 0; i < req->nr_segments; i++)
-				req->seg[i] = req64->seg[i];
 			break;
 		}
 		XENPRINTF(("xbdback op %d req_cons 0x%x req_prod 0x%x "
@@ -1009,17 +1014,24 @@ xbdback_co_cache_doflush(struct xbdback_instance *xbdi, void *obj)
 static void *
 xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 {	
-	int error;
+	int i, error;
+	blkif_request_t *req;
+	blkif_x86_32_request_t *req32;
+	blkif_x86_64_request_t *req64;
 
 	(void)obj;
-	if (xbdi->xbdi_xen_req.nr_segments < 1 ||
-	    xbdi->xbdi_xen_req.nr_segments > BLKIF_MAX_SEGMENTS_PER_REQUEST ) {
+
+	/* some sanity checks */
+	req = &xbdi->xbdi_xen_req;
+	if (req->nr_segments < 1 ||
+	    req->nr_segments > BLKIF_MAX_SEGMENTS_PER_REQUEST) {
 		printf("xbdback_io domain %d: %d segments\n",
 		       xbdi->xbdi_domid, xbdi->xbdi_xen_req.nr_segments);
 		error = EINVAL;
 		goto end;
 	}
-	if (xbdi->xbdi_xen_req.operation == BLKIF_OP_WRITE) {
+
+	if (req->operation == BLKIF_OP_WRITE) {
 		if (xbdi->xbdi_ro) {
 			error = EROFS;
 			goto end;
@@ -1027,6 +1039,25 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 	}
 
 	xbdi->xbdi_segno = 0;
+
+	/* copy request segments */
+	switch(xbdi->xbdi_proto) {
+	case XBDIP_NATIVE:
+		/* already copied in xbdback_co_main_loop */
+		break;
+	case XBDIP_32:
+		req32 = RING_GET_REQUEST(&xbdi->xbdi_ring.ring_32,
+		    xbdi->xbdi_ring.ring_n.req_cons);
+		for (i = 0; i < req->nr_segments; i++)
+			req->seg[i] = req32->seg[i];
+		break;
+	case XBDIP_64:
+		req64 = RING_GET_REQUEST(&xbdi->xbdi_ring.ring_64,
+		    xbdi->xbdi_ring.ring_n.req_cons);
+		for (i = 0; i < req->nr_segments; i++)
+			req->seg[i] = req64->seg[i];
+		break;
+	}
 
 	xbdi->xbdi_cont = xbdback_co_io_gotreq;
 	return xbdback_pool_get(&xbdback_request_pool, xbdi);
@@ -1370,6 +1401,7 @@ xbdback_iodone(struct buf *bp)
 	struct xbdback_io *xbd_io;
 	struct xbdback_instance *xbdi;
 	int errp;
+	int s;
 
 	xbd_io = bp->b_private;
 	xbdi = xbd_io->xio_xbdi;
@@ -1424,11 +1456,13 @@ xbdback_iodone(struct buf *bp)
 	atomic_dec_uint(&xbdi->xbdi_pendingreqs);
 	buf_destroy(&xbd_io->xio_buf);
 	xbdback_pool_put(&xbdback_io_pool, xbd_io);
+	s = splbio();
 	if (xbdi->xbdi_cont == NULL) {
 		/* check if there is more work to do */
 		xbdi->xbdi_cont = xbdback_co_main;
 		xbdback_trampoline(xbdi, xbdi);
 	}
+	splx(s);
 }
 
 /*

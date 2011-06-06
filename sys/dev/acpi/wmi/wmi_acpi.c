@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.11 2010/10/28 15:55:04 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.11.2.1 2011/06/06 09:07:44 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.11 2010/10/28 15:55:04 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.11.2.1 2011/06/06 09:07:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -800,78 +800,38 @@ acpi_wmi_method(device_t self, const char *guid, uint8_t idx,
 	return AcpiEvaluateObject(sc->sc_node->ad_handle, path, &arg, obuf);
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpiwmi, NULL);
-CFDRIVER_DECL(acpiwmi, DV_DULL, NULL);
 
-static int acpiwmiloc[] = { -1 };
-extern struct cfattach acpiwmi_ca;
-
-static struct cfparent acpiparent = {
-	"acpinodebus", NULL, DVUNIT_ANY
-};
-
-static struct cfdata acpiwmi_cfdata[] = {
-	{
-		.cf_name = "acpiwmi",
-		.cf_atname = "acpiwmi",
-		.cf_unit = 0,
-		.cf_fstate = FSTATE_STAR,
-		.cf_loc = acpiwmiloc,
-		.cf_flags = 0,
-		.cf_pspec = &acpiparent,
-	},
-
-	{ NULL, NULL, 0, 0, NULL, 0, NULL }
-};
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
 
 static int
-acpiwmi_modcmd(modcmd_t cmd, void *opaque)
+acpiwmi_modcmd(modcmd_t cmd, void *aux)
 {
-	int err;
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
 
-		err = config_cfdriver_attach(&acpiwmi_cd);
-
-		if (err != 0)
-			return err;
-
-		err = config_cfattach_attach("acpiwmi", &acpiwmi_ca);
-
-		if (err != 0) {
-			config_cfdriver_detach(&acpiwmi_cd);
-			return err;
-		}
-
-		err = config_cfdata_attach(acpiwmi_cfdata, 1);
-
-		if (err != 0) {
-			config_cfattach_detach("acpiwmi", &acpiwmi_ca);
-			config_cfdriver_detach(&acpiwmi_cd);
-			return err;
-		}
-
-		return 0;
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpiwmi,
+		    cfattach_ioconf_acpiwmi, cfdata_ioconf_acpiwmi);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
 
-		err = config_cfdata_detach(acpiwmi_cfdata);
-
-		if (err != 0)
-			return err;
-
-		config_cfattach_detach("acpiwmi", &acpiwmi_ca);
-		config_cfdriver_detach(&acpiwmi_cd);
-
-		return 0;
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpiwmi,
+		    cfattach_ioconf_acpiwmi, cfdata_ioconf_acpiwmi);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

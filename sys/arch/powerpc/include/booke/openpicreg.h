@@ -1,9 +1,16 @@
+/*	$NetBSD: openpicreg.h,v 1.1.10.1 2011/06/06 09:06:28 jruoho Exp $	*/
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas of 3am Software Foundry.
+ * by Raytheon BBN Technologies Corp and Defense Advanced Research Projects
+ * Agency and which was developed by Matt Thomas of 3am Software Foundry.
+ *
+ * This material is based upon work supported by the Defense Advanced Research
+ * Projects Agency and Space and Naval Warfare Systems Center, Pacific, under
+ * Contract No. N66001-09-C-2073.
+ * Approved for Public Release, Distribution Unlimited
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,9 +80,9 @@
 #define	OPENPIC_EOI		0x00b0
 
 #define	OPENPIC_FRR		0x1000			/* Feature Reporting */
-#define	 FRR_NIRQ(n)		(((n) >> 16) & 0x7ff)	/*  intr sources - 1 */
-#define	 FRR_NCPU(n)		(((n) >>  8) & 0x01f)	/*  cpus - 1 */
-#define	 FRR_VID(n)		(((n) >>  0) & 0x0ff)	/*  version id */
+#define	 FRR_NIRQ_GET(n)	(((n) >> 16) & 0x7ff)	/*  intr sources - 1 */
+#define	 FRR_NCPU_GET(n)	(((n) >>  8) & 0x01f)	/*  cpus - 1 */
+#define	 FRR_VID_GET(n)		(((n) >>  0) & 0x0ff)	/*  version id */
 #define	OPENPIC_GCR		0x1020			/* Global Configuration */
 #define	 GCR_RST		0x80000000		/* Reset */
 #define  GCR_M			0x20000000		/* Mixed Mode */
@@ -89,14 +96,14 @@
 #define  SVR_VECTOR_MAKE(n)	(((n) & 0xffff) <<  0)
 
 #define	OPENPIC_TFRR		0x10f0
-#define	OPENPIC_GTCCR(n)	(0x1100 + 0x40 * (n))
+#define	OPENPIC_GTCCR(cpu, n)	(0x1100 + 0x40 * (n) + 0x1000 * (cpu))
 #define	 GTCCR_TOG		0x80000000
 #define	 GTCCR_COUNT		0x7fffffff
-#define	OPENPIC_GTBCR(n)	(0x1110 + 0x40 * (n))
+#define	OPENPIC_GTBCR(cpu, n)	(0x1110 + 0x40 * (n) + 0x1000 * (cpu))
 #define	 GTBCR_CI		0x80000000		/* Count Inhibit */
 #define	 GTBCR_BASECNT		0x7fffffff		/* Base Count */
-#define	OPENPIC_GTVPR(n)	(0x1120 + 0x40 * (n))
-#define	OPENPIC_GTDR(n)		(0x1130 + 0x40 * (n))
+#define	OPENPIC_GTVPR(cpu, n)	(0x1120 + 0x40 * (n) + 0x1000 * (cpu))
+#define	OPENPIC_GTDR(cpu, n)	(0x1130 + 0x40 * (n) + 0x1000 * (cpu))
 #define	OPENPIC_TCR		0x1300
 #define	 TCR_ROVR(n)		(1 << (24 + (n)))	/* timer n rollover */
 #define	 TCR_RTM		0x00010000		/* real time source */
@@ -149,14 +156,14 @@
  * Message Registers
  */
 #define	OPENPIC_MSGR(cpu, n)	(0x1400 + 0x1000 * (cpu) + 0x10 * (n))
-#define	OPENPIC_MER(cpu		(0x1500 + 0x1000 * (cpu))
-#defien	 MER_MSG(n)		(1 << (n))
+#define	OPENPIC_MER(cpu)	(0x1500 + 0x1000 * (cpu))
+#define	 MER_MSG(n)		(1 << (n))
 #define	OPENPIC_MSR(cpu)	(0x1510 + 0x1000 * (cpu))
-#defien	 MSR_MSG(n)		(1 << (n))
+#define	 MSR_MSG(n)		(1 << (n))
 
 #define	OPENPIC_MSIR(n)		(0x1600 + 0x10 * (n))
 #define	OPENPIC_MSISR		0x1720
-#defien	 MSIR_SR(n)		(1 << (n))
+#define	 MSIR_SR(n)		(1 << (n))
 #define	OPENPIC_MSIIR		0x1740
 #define	 MSIIR_BIT(srs, ibs)	(((srs) << 29) | ((ibs) << 24))
 
@@ -172,36 +179,125 @@
 #define	OPENPIC_MSIVPR(n)	(0x11c00 + 0x20 * (n))
 #define	OPENPIC_MSIDR(n)	(0x11c10 + 0x20 * (n))
 
+#define	MPC8536_EXTERNALSOURCES	12
+#define	MPC8536_ONCHIPSOURCES	64
+#define	MPC8536_ONCHIPBITMAP	{ 0xfe07ffff, 0x05501c00 }
+#define	MPC8536_IPISOURCES	8
+#define	MPC8536_TIMERSOURCES	8
+#define	MPC8536_MISOURCES	4
+#define	MPC8536_MSIGROUPSOURCES	8
+#define	MPC8536_NCPUS		1
+#define	MPC8536_SOURCES		/* 104 */		\
+	(MPC8536_EXTERNALSOURCES			\
+	 + MPC8536_ONCHIPSOURCES			\
+	 + MPC8536_MSIGROUPSOURCES			\
+	 + MPC8536_NCPUS*(MPC8536_IPISOURCES		\
+			  + MPC8536_TIMERSOURCES	\
+			  + MPC8536_MISOURCES))
+
+#define	MPC8544_EXTERNALSOURCES	12
+#define	MPC8544_ONCHIPSOURCES	48
+#define	MPC8544_ONCHIPBITMAP	{ 0x3c3fefff, 0x00000000 }
+#define	MPC8544_IPISOURCES	4
+#define	MPC8544_TIMERSOURCES	4
+#define	MPC8544_MISOURCES	4
+#define	MPC8544_MSIGROUPSOURCES	8
+#define	MPC8544_NCPUS		1
+#define	MPC8544_SOURCES		/* 80 */		\
+	(MPC8544_EXTERNALSOURCES			\
+	 + MPC8544_ONCHIPSOURCES			\
+	 + MPC8544_MSIGROUPSOURCES			\
+	 + MPC8544_NCPUS*(MPC8544_IPISOURCES		\
+			  + MPC8544_TIMERSOURCES	\
+			  + MPC8544_MISOURCES))
+
 #define	MPC8548_EXTERNALSOURCES	12
-#define	MPC8548_INTERNALSOURCES	48
-#define	MPC8548_INTERNALBITMAP	{ 0x9effffff, 0x000000f3 }
+#define	MPC8548_ONCHIPSOURCES	48
+#define	MPC8548_ONCHIPBITMAP	{ 0x3dffffff, 0x000000f3 }
 #define	MPC8548_IPISOURCES	4
 #define	MPC8548_TIMERSOURCES	4
 #define	MPC8548_MISOURCES	4
-#define	MPC8548_MSISOURCES	8
+#define	MPC8548_MSIGROUPSOURCES	8
 #define	MPC8548_NCPUS		1
-#define	MPC8548_SOURCES					\
+#define	MPC8548_SOURCES		/* 80 */		\
 	(MPC8548_EXTERNALSOURCES			\
-	 + MPC8548_INTERNALSOURCES			\
-	 + MPC8548_MSISOURCES				\
+	 + MPC8548_ONCHIPSOURCES			\
+	 + MPC8548_MSIGROUPSOURCES			\
 	 + MPC8548_NCPUS*(MPC8548_IPISOURCES		\
 			  + MPC8548_TIMERSOURCES	\
 			  + MPC8548_MISOURCES))
 
+#define	MPC8555_EXTERNALSOURCES	12
+#define	MPC8555_ONCHIPSOURCES	32
+#define	MPC8555_ONCHIPBITMAP	{ 0x7d1c63ff, 0 }
+#define	MPC8555_IPISOURCES	4
+#define	MPC8555_TIMERSOURCES	4
+#define	MPC8555_MISOURCES	4
+#define	MPC8555_MSIGROUPSOURCES	0
+#define	MPC8555_NCPUS		1
+#define	MPC8555_SOURCES		/* 56 */		\
+	(MPC8555_EXTERNALSOURCES			\
+	 + MPC8555_ONCHIPSOURCES			\
+	 + MPC8555_MSIGROUPSOURCES			\
+	 + MPC8555_NCPUS*(MPC8555_IPISOURCES		\
+			  + MPC8555_TIMERSOURCES	\
+			  + MPC8555_MISOURCES))
+
+#define	MPC8568_EXTERNALSOURCES	12
+#define	MPC8568_ONCHIPSOURCES	48
+#define	MPC8568_ONCHIPBITMAP	{ 0xfd1c65ff, 0x000b9e7 }
+#define	MPC8568_IPISOURCES	4
+#define	MPC8568_TIMERSOURCES	4
+#define	MPC8568_MISOURCES	4
+#define	MPC8568_MSIGROUPSOURCES	8
+#define	MPC8568_NCPUS		1
+#define	MPC8568_SOURCES		/* 80 */		\
+	(MPC8568_EXTERNALSOURCES			\
+	 + MPC8568_ONCHIPSOURCES			\
+	 + MPC8568_MSIGROUPSOURCES			\
+	 + MPC8568_NCPUS*(MPC8568_IPISOURCES		\
+			  + MPC8568_TIMERSOURCES	\
+			  + MPC8568_MISOURCES))
+
 #define	MPC8572_EXTERNALSOURCES	12
-#define	MPC8572_INTERNALSOURCES	64
-#define	MPC8572_INTERNALBITMAP	{ 0xdeffffff, 0xf8ff93f3 }
+#define	MPC8572_ONCHIPSOURCES	64
+#define	MPC8572_ONCHIPBITMAP	{ 0xdeffffff, 0xf8ff93f3 }
 #define	MPC8572_IPISOURCES	4
 #define	MPC8572_TIMERSOURCES	4
 #define	MPC8572_MISOURCES	4
-#define	MPC8572_MSISOURCES	8
-#define	MPC8572_SOURCES					\
+#define	MPC8572_MSIGROUPSOURCES	8
+#define	MPC8572_NCPUS		2
+#define	MPC8572_SOURCES		/* 108 */		\
 	(MPC8572_EXTERNALSOURCES			\
-	 + MPC8572_INTERNALSOURCES			\
-	 + MPC8572_MSISOURCES				\
+	 + MPC8572_ONCHIPSOURCES			\
+	 + MPC8572_MSIGROUPSOURCES			\
 	 + MPC8572_NCPUS*(MPC8572_IPISOURCES		\
 			  + MPC8572_TIMERSOURCES	\
 			  + MPC8572_MISOURCES))
+
+#define	P20x0_EXTERNALSOURCES	12
+#define	P20x0_ONCHIPSOURCES	64
+#define	P20x0_ONCHIPBITMAP	{ 0xbd1ff7ff, 0xf17005e7 }
+#define	P20x0_IPISOURCES	4
+#define	P20x0_TIMERSOURCES	4
+#define	P20x0_MISOURCES		4
+#define	P20x0_MSIGROUPSOURCES	8
+#define	P2020_NCPUS		2
+#define	P2020_SOURCES		/* 108 */		\
+	(P20x0_EXTERNALSOURCES				\
+	 + P20x0_ONCHIPSOURCES				\
+	 + P20x0_MSIGROUPSOURCES			\
+	 + P2020_NCPUS*(P20x0_IPISOURCES		\
+			  + P20x0_TIMERSOURCES		\
+			  + P20x0_MISOURCES))
+#define	P2010_NCPUS		1
+#define	P2010_SOURCES					\
+	(P20x0_EXTERNALSOURCES				\
+	 + P20x0_ONCHIPSOURCES				\
+	 + P20x0_MSIGROUPSOURCES			\
+	 + P2010_NCPUS*(P20x0_IPISOURCES		\
+			  + P20x0_TIMERSOURCES		\
+			  + P20x0_MISOURCES))
 
 /*
  * Per-CPU Registers
@@ -212,71 +308,79 @@
 #define	OPENPIC_IACKn(cpu)	(0x200a0 + 0x1000 * (cpu))
 #define	OPENPIC_EOIn(cpu)	(0x200b0 + 0x1000 * (cpu))
 
+#define	IRQ_SPURIOUS		0xffff
+
 #define	ISOURCE_L2		0
 #define	ISOURCE_ECM		1
-#define	ISOURCE_DRAM		2
+#define	ISOURCE_DDR		2
 #define	ISOURCE_LBC		3
 #define	ISOURCE_DMA_CHAN1	4
 #define	ISOURCE_DMA_CHAN2	5
 #define	ISOURCE_DMA_CHAN3	6
 #define	ISOURCE_DMA_CHAN4	7
-#define	ISOURCE_PCIEX_P3	8	/* MPC8572 */
-#define	ISOURCE_PCIEX_P2	9	/* MPC8572 */
-#define	ISOURCE_PCI1		8	/* MPC8548 */
+#define	ISOURCE_PCIEX3_MPC8572	8	/* MPC8572/P20x0 */
+#define	ISOURCE_PCI1		8	/* MPC8548/MPC8544/MPC8536/MPC8555 */
 #define	ISOURCE_PCI2		9	/* MPC8548 */
+#define	ISOURCE_PCIEX2		9	/* MPC8544/MPC8572/MPC8536/P20x0 */
 #define	ISOURCE_PCIEX		10
-#define	ISOURCE_11		11
-#define	ISOURCE_12		12
+#define	ISOURCE_PCIEX3		11	/* MPC8544/MPC8536 */
+#define	ISOURCE_USB1		12	/* MPC8536/P20x0 */
 #define	ISOURCE_ETSEC1_TX	13
 #define	ISOURCE_ETSEC1_RX	14
 #define	ISOURCE_ETSEC3_TX	15
 #define	ISOURCE_ETSEC3_RX	16
 #define	ISOURCE_ETSEC3_ERR	17
 #define	ISOURCE_ETSEC1_ERR	18
-#define	ISOURCE_ETSEC2_TX	19
-#define	ISOURCE_ETSEC2_RX	20
-#define	ISOURCE_ETSEC4_TX	21
-#define	ISOURCE_ETSEC4_RX	22
-#define	ISOURCE_ETSEC4_ERR	23
-#define	ISOURCE_ETSEC2_ERR	24
+#define	ISOURCE_ETSEC2_TX	19	/* !MPC8544/!MPC8536 */
+#define	ISOURCE_ETSEC2_RX	20	/* !MPC8544/!MPC8536 */
+#define	ISOURCE_ETSEC4_TX	21	/* !MPC8544/!MPC8536/!P20x0 */
+#define	ISOURCE_ETSEC4_RX	22	/* !MPC8544/!MPC8536/!P20x0 */
+#define	ISOURCE_ETSEC4_ERR	23	/* !MPC8544/!MPC8536/!P20x0 */
+#define	ISOURCE_ETSEC2_ERR	24	/* !MPC8544/!MPC8536 */
 #define	ISOURCE_FEC		25	/* MPC8572 */
+#define	ISOURCE_SATA2		25	/* MPC8536 */
 #define	ISOURCE_DUART		26
 #define	ISOURCE_I2C		27
 #define	ISOURCE_PERFMON		28
 #define	ISOURCE_SECURITY1	29
-#define	ISOURCE_30		30
-#define	ISOURCE_MPC8572_GPIO	31	/* MPC8572 */
-#define	ISOURCE_SRIO_EWPU	32
-#define	ISOURCE_SRIO_ODBELL	33
-#define	ISOURCE_SRIO_IDBELL	34
+#define	ISOURCE_CPM		30	/* MPC8555 */
+#define	ISOURCE_QEB_LOW		30	/* MPC8568 */
+#define	ISOURCE_USB2		30	/* MPC8536 */
+#define	ISOURCE_GPIO		31	/* MPC8572/!MPC8548 */
+#define	ISOURCE_QEB_PORT	31	/* MPC8568 */
+#define	ISOURCE_SRIO_EWPU	32	/* !MPC8548&!P20x0 */
+#define	ISOURCE_SRIO_ODBELL	33	/* !MPC8548&!P20x0 */
+#define	ISOURCE_SRIO_IDBELL	34	/* !MPC8548&!P20x0 */
 #define	ISOURCE_35		35
 #define	ISOURCE_36		36
-#define	ISOURCE_SRIO_OMU1	37
-#define	ISOURCE_SRIO_IMU1	38
-#define	ISOURCE_SRIO_OMU2	39
-#define	ISOURCE_SRIO_IMU2	40
+#define	ISOURCE_SRIO_OMU1	37	/* !MPC8548&!P20x0 */
+#define	ISOURCE_SRIO_IMU1	38	/* !MPC8548&!P20x0 */
+#define	ISOURCE_SRIO_OMU2	39	/* !MPC8548&!P20x0 */
+#define	ISOURCE_SRIO_IMU2	40	/* !MPC8548&!P20x0 */
 #define	ISOURCE_PME_GENERAL	41	/* MPC8572 */
-#define	ISOURCE_SECURITY2	42	/* MPC8572 */
-#define	ISOURCE_43		43
-#define	ISOURCE_44		44
-#define	ISOURCE_TLU1		45	/* MPC8572 */
+#define	ISOURCE_SECURITY2	42	/* MPC8572|MPC8536|P20x0 */
+#define	ISOURCE_SPI		43	/* MPC8536|P20x0 */
+#define	ISOURCE_QEB_IECC	43	/* MPC8568 */
+#define	ISOURCE_USB3		44	/* MPC8536 */
+#define	ISOURCE_QEB_MUECC	44	/* MPC8568 */
+#define	ISOURCE_TLU1		45	/* MPC8568/MPC8572 */
 #define	ISOURCE_46		46
-#define	ISOURCE_47		47
+#define	ISOURCE_QEB_HIGH	47	/* MPC8548 */
 #define	ISOURCE_PME_CHAN1	48	/* MPC8572 */
 #define	ISOURCE_PME_CHAN2	49	/* MPC8572 */
 #define	ISOURCE_PME_CHAN3	50	/* MPC8572 */
 #define	ISOURCE_PME_CHAN4	51	/* MPC8572 */
-#define	ISOURCE_ETSEC1_PTP	52	/* MPC8572 */
-#define	ISOURCE_ETSEC2_PTP	53	/* MPC8572 */
-#define	ISOURCE_ETSEC3_PTP	54	/* MPC8572 */
+#define	ISOURCE_ETSEC1_PTP	52	/* MPC8572|MPC8536|P20x0 */
+#define	ISOURCE_ETSEC2_PTP	53	/* MPC8572|P20x0 */
+#define	ISOURCE_ETSEC3_PTP	54	/* MPC8572|MPC8536|P20x0 */
 #define	ISOURCE_ETSEC4_PTP	55	/* MPC8572 */
-#define	ISOURCE_56		56
+#define	ISOURCE_ESDHC		56	/* MPC8536|P20x0 */
 #define	ISOURCE_57		57
-#define	ISOURCE_58		58
+#define	ISOURCE_SATA1		58	/* MPC8536 */
 #define	ISOURCE_TLU2		59	/* MPC8572 */
-#define	ISOURCE_DMA2_CHAN1	60	/* MPC8572 */
-#define	ISOURCE_DMA2_CHAN2	61	/* MPC8572 */
-#define	ISOURCE_DMA2_CHAN3	62	/* MPC8572 */
-#define	ISOURCE_DMA2_CHAN4	63	/* MPC8572 */
+#define	ISOURCE_DMA2_CHAN1	60	/* MPC8572|P20x0 */
+#define	ISOURCE_DMA2_CHAN2	61	/* MPC8572|P20x0 */
+#define	ISOURCE_DMA2_CHAN3	62	/* MPC8572|P20x0 */
+#define	ISOURCE_DMA2_CHAN4	63	/* MPC8572|P20x0 */
 
 #endif /* _POWERPC_BOOKE_OPENPICREG_H_ */

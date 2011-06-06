@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2010/05/21 12:52:14 phx Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2.2.1 2011/06/06 09:04:55 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Frank Wille.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2010/05/21 12:52:14 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2.2.1 2011/06/06 09:04:55 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,22 +79,22 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2010/05/21 12:52:14 phx Exp $");
 #endif
 #endif
 
-void mbattach(struct device *, struct device *, void *);
+void mbattach(device_t, device_t, void *);
 int mbprint(void *, const char *);
-int mbmatch(struct device *, struct cfdata *, void *);
+int mbmatch(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mbmatch, mbattach, NULL, NULL);
 
 int
-mbmatch(struct device *parent, struct cfdata *cfp, void *aux)
+mbmatch(device_t parent, cfdata_t cfp, void *aux)
 {
 
 	return 1;
 }
 
 void
-mbattach(struct device *parent, struct device *self, void *aux)
+mbattach(device_t parent, device_t self, void *aux)
 {
 
 	printf("\n");

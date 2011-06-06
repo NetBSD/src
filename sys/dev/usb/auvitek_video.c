@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_video.c,v 1.2 2010/12/28 04:02:33 jmcneill Exp $ */
+/* $NetBSD: auvitek_video.c,v 1.2.2.1 2011/06/06 09:08:40 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.2 2010/12/28 04:02:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.2.2.1 2011/06/06 09:08:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,7 +523,11 @@ auvitek_set_frequency(void *opaque, struct video_frequency *vf)
 	else
 		params.signal_source = XC5K_SIGNAL_SOURCE_CABLE;
 	params.frequency = vf->frequency;
+	if (sc->sc_au8522)
+		au8522_set_audio(sc->sc_au8522, false);
 	error = xc5k_tune(sc->sc_xc5k, &params);
+	if (sc->sc_au8522)
+		au8522_set_audio(sc->sc_au8522, true);
 	if (error)
 		return error;
 

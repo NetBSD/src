@@ -2,10 +2,10 @@
  *	dos_errno.h
  *	Human68k DOS call errors
  *
- *	written by Yasha (ITOH Yasufumi)
+ *	written by ITOH Yasufumi
  *	public domain
  *
- *	$NetBSD: dos_errno.h,v 1.5 2009/03/14 14:46:07 dsl Exp $
+ *	$NetBSD: dos_errno.h,v 1.5.6.1 2011/06/06 09:07:03 jruoho Exp $
  */
 
 #ifndef X68K_DOS_ERRNO_H

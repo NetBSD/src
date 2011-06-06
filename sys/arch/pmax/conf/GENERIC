@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.166 2010/07/07 01:24:52 chs Exp $
+# $NetBSD: GENERIC,v 1.166.2.1 2011/06/06 09:06:22 jruoho Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.166 $"
+#ident		"GENERIC-$Revision: 1.166.2.1 $"
 
 maxusers	64
 
@@ -42,6 +42,7 @@ options 	DEC_3MAXPLUS	# DECstation 5000/240 (kn03), 5000/260 (kn05)
 #options 	DEC_5500	# DECsystem 5500 (kn220)
 #options 	DEC_5800	# DECsystem 58x0 (kn5800)
 
+makeoptions	DEBUG="-g"
 # Standard system options
 options 	DDB			# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
@@ -96,7 +97,8 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-options 	QUOTA		# UFS quotas
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

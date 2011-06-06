@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.20 2010/12/20 00:25:42 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.20.2.1 2011/06/06 09:06:34 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20 2010/12/20 00:25:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20.2.1 2011/06/06 09:06:34 jruoho Exp $");
 
 #include "opt_pci.h"
 
@@ -92,8 +92,11 @@ static int brdtype;
 #define BRD_SANDPOINTX3		3
 #define BRD_ENCOREPP1		10
 #define BRD_KUROBOX		100
-#define BRD_QNAPTS101		101
+#define BRD_QNAPTS		101
 #define BRD_SYNOLOGY		102
+#define BRD_STORCENTER		103
+#define BRD_DLINKDSM		104
+#define BRD_NH230NAS		105
 #define BRD_UNKNOWN		-1
 
 #define	PCI_CONFIG_ENABLE	0x80000000UL
@@ -103,7 +106,7 @@ pci_attach_hook(struct device *parent, struct device *self,
     struct pcibus_attach_args *pba)
 {
 	pcitag_t tag;
-	pcireg_t dev11, dev22, dev15;
+	pcireg_t dev11, dev22, dev15, dev13, dev16;
 
 	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 11, 0);
 	dev11 = pci_conf_read(pba->pba_pc, tag, PCI_CLASS_REG);
@@ -132,16 +135,37 @@ pci_attach_hook(struct device *parent, struct device *self,
 	}
 	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 15, 0);
 	dev15 = pci_conf_read(pba->pba_pc, tag, PCI_ID_REG);
-	if (PCI_VENDOR(dev15) == PCI_VENDOR_INTEL) {
-		/* Intel GbE at dev 15 */
-		brdtype = BRD_QNAPTS101;
-		return;
-	}
 	if (PCI_VENDOR(dev15) == PCI_VENDOR_MARVELL) {
 		/* Marvell GbE at dev 15 */
 		brdtype = BRD_SYNOLOGY;
 		return;
 	}
+	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 13, 0);
+	dev13 = pci_conf_read(pba->pba_pc, tag, PCI_ID_REG);
+	if (PCI_VENDOR(dev13) == PCI_VENDOR_VIATECH) {
+		/* VIA 6410 PCIIDE at dev 13 */
+		brdtype = BRD_STORCENTER;
+		return;
+	}
+	tag = pci_make_tag(pba->pba_pc, pba->pba_bus, 16, 0);
+	dev16 = pci_conf_read(pba->pba_pc, tag, PCI_ID_REG);
+	if (PCI_VENDOR(dev16) == PCI_VENDOR_ACARD) {
+		/* ACARD ATP865 at dev 16 */
+		brdtype = BRD_DLINKDSM;
+		return;
+	}
+	if (PCI_VENDOR(dev16) == PCI_VENDOR_ITE
+	    || PCI_VENDOR(dev16) == PCI_VENDOR_CMDTECH) {
+		brdtype = BRD_NH230NAS;
+		return;
+	}
+	if (PCI_VENDOR(dev15) == PCI_VENDOR_INTEL
+	    || PCI_VENDOR(dev15) == PCI_VENDOR_REALTEK) {
+		/* Intel or Realtek GbE at dev 15 */
+		brdtype = BRD_QNAPTS;
+		return;
+	}
+
 	brdtype = BRD_UNKNOWN;
 }
 
@@ -206,7 +230,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 }
 
 int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int	pin = pa->pa_intrpin;
 	int	line = pa->pa_intrline;
@@ -319,7 +343,7 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		/* map line 11,12,13,14 to EPIC IRQ0,1,4,3 */
 		*ihp = (line == 13) ? 4 : line - 11;
 		break;
-	case BRD_QNAPTS101:
+	case BRD_QNAPTS:
 		/* map line 13-16 to EPIC IRQ0-3 */
 		*ihp = line - 13;
 		break;
@@ -327,6 +351,19 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		/* map line 12,13-15 to EPIC IRQ4,0-2 */
 		*ihp = (line == 12) ? 4 : line - 13;
 		break;
+	case BRD_DLINKDSM:
+		/* map line 13,14,15,16 to EPIC IRQ0,1,3,4 */
+		*ihp = (line < 15) ? line - 13 : line - 12;
+		if (line == 14 && pin == 3)
+			*ihp += 1;	/* USB pin C (EHCI) uses next IRQ */
+		break;
+	case BRD_NH230NAS:
+		/* map line 13,14,15,16 to EPIC IRQ0,3,1,2 */
+		*ihp =  (line == 16) ? 2 :
+			(line == 15) ? 1 :
+			(line == 14) ? 3 : 0;
+		break;
+	case BRD_STORCENTER:
 	default:
 		/* map line 12-15 to EPIC IRQ0-3 */
 		*ihp = line - 12;

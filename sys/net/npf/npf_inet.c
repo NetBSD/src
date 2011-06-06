@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_inet.c,v 1.5 2010/12/18 01:07:25 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.5.2.1 2011/06/06 09:09:53 jruoho Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.5 2010/12/18 01:07:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.5.2.1 2011/06/06 09:09:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -215,11 +215,11 @@ next:
 		topts_len -= val;
 		step = val - 1;
 	}
-	/* Soft limit, in a case of invalid packet. */
+	/* Any options left? */
 	if (__predict_true(topts_len > 0)) {
 		goto next;
 	}
-	return false;
+	return true;
 }
 
 /*
@@ -329,7 +329,7 @@ npf_fetch_icmp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 {
 	struct ip *ip = &npc->npc_ip.v4;
 	struct icmp *ic;
-	u_int hlen, offby;
+	u_int hlen, iclen;
 
 	/* Must have IP header processed for its length and protocol. */
 	if (!npf_iscached(npc, NPC_IP46) && !npf_fetch_ip(npc, nbuf, n_ptr)) {
@@ -342,8 +342,8 @@ npf_fetch_icmp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 	ic = &npc->npc_l4.icmp;
 
 	/* Fetch basic ICMP header, up to the "data" point. */
-	offby = offsetof(struct icmp, icmp_data);
-	if (nbuf_advfetch(&nbuf, &n_ptr, hlen, offby, ic)) {
+	iclen = offsetof(struct icmp, icmp_data);
+	if (nbuf_advfetch(&nbuf, &n_ptr, hlen, iclen, ic)) {
 		return false;
 	}
 
@@ -455,7 +455,7 @@ npf_rwrport(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
 }
 
 /*
- * npf_rwrcksum: rewrite IPv4 and/or TCP/UDP checksum, update chache.
+ * npf_rwrcksum: rewrite IPv4 and/or TCP/UDP checksum, update the cache.
  */
 bool
 npf_rwrcksum(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
@@ -485,13 +485,13 @@ npf_rwrcksum(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
 	} else {
 		/* No checksum for IPv6. */
 		KASSERT(npf_iscached(npc, NPC_IP6));
-		KASSERT(false);	/* XXX: Not yet supported. */
 		oaddr = NULL;
 		offby = 0;
+		return false;	/* XXX: Not yet supported. */
 	}
 
 	/* Determine whether TCP/UDP checksum update is needed. */
-	if (port == 0) {
+	if (proto == IPPROTO_ICMP || port == 0) {
 		return true;
 	}
 	KASSERT(npf_iscached(npc, NPC_TCP | NPC_UDP));
@@ -557,7 +557,7 @@ npf_normalize_ip4(npf_cache_t *npc, nbuf_t *nbuf,
 
 		if (nbuf_advstore(&nbuf, &n_ptr,
 		    offsetof(struct ip, ip_off) - offby,
-		    sizeof(uint8_t), &nip_off)) {
+		    sizeof(uint16_t), &nip_off)) {
 			return false;
 		}
 		cksum = npf_fixup16_cksum(cksum, ip_off, nip_off);
@@ -601,10 +601,14 @@ npf_normalize(npf_cache_t *npc, nbuf_t *nbuf,
 		if (!npf_normalize_ip4(npc, nbuf, rnd, no_df, minttl)) {
 			return false;
 		}
+	} else if (!npf_iscached(npc, NPC_IP4)) {
+		/* XXX: no IPv6 */
+		return false;
 	}
 
 	/*
 	 * TCP Maximum Segment Size (MSS) "clamping".  Only if SYN packet.
+	 * Fetch MSS and check whether rewrite to lower is needed.
 	 */
 	if (maxmss == 0 || !npf_iscached(npc, NPC_TCP) ||
 	    (th->th_flags & TH_SYN) == 0) {
@@ -618,32 +622,16 @@ npf_normalize(npf_cache_t *npc, nbuf_t *nbuf,
 	if (ntohs(mss) <= maxmss) {
 		return true;
 	}
-	if (!npf_iscached(npc, NPC_IP4)) { /* XXX: IPv6 */
-		return false;
-	}
 
-	/* Calculate checksums. */
+	/* Calculate TCP checksum, then rewrite MSS and the checksum. */
 	maxmss = htons(maxmss);
 	cksum = npf_fixup16_cksum(th->th_sum, mss, maxmss);
-	ip->ip_sum = npf_fixup16_cksum(ip->ip_sum, mss, maxmss);
-	ip->ip_sum = npf_fixup16_cksum(ip->ip_sum, th->th_sum, cksum);
 	th->th_sum = cksum;
-
-	/* Rewrite MSS. */
 	mss = maxmss;
 	if (!npf_fetch_tcpopts(npc, nbuf, &mss, &wscale)) {
 		return false;
 	}
-
-	/* Update checksums. */
-	cksum = ip->ip_sum;
-	offby = offsetof(struct ip, ip_sum);
-	if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(cksum), &cksum)) {
-		return false;
-	}
-	cksum = th->th_sum;
-	offby = (ip->ip_hl << 2) - offsetof(struct ip, ip_sum) +
-	    offsetof(struct tcphdr, th_sum);
+	offby = (ip->ip_hl << 2) + offsetof(struct tcphdr, th_sum);
 	if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(cksum), &cksum)) {
 		return false;
 	}

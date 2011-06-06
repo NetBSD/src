@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.186 2011/01/02 05:09:32 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.186.2.1 2011/06/06 09:10:19 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.186 2011/01/02 05:09:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.186.2.1 2011/06/06 09:10:19 jruoho Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -211,8 +211,8 @@ ufs_mknod(void *v)
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
-	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
+	VOP_UNLOCK(*vpp);
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
 out:
@@ -275,11 +275,12 @@ ufs_close(void *v)
 }
 
 static int
-ufs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode)
+ufs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
+    kauth_cred_t cred)
 {
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	int error;
-#endif /* QUOTA */
+#endif
 
 	/*
 	 * Disallow write attempts on read-only file systems;
@@ -293,9 +294,9 @@ ufs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode)
 		case VREG:
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 			fstrans_start(vp->v_mount, FSTRANS_SHARED);
-			error = getinoquota(ip);
+			error = chkdq(ip, 0, cred, 0);
 			fstrans_done(vp->v_mount);
 			if (error != 0)
 				return error;
@@ -348,7 +349,7 @@ ufs_access(void *v)
 	ip = VTOI(vp);
 	mode = ap->a_mode;
 
-	error = ufs_check_possible(vp, ip, mode);
+	error = ufs_check_possible(vp, ip, mode, ap->a_cred);
 	if (error)
 		return error;
 
@@ -481,8 +482,8 @@ ufs_setattr(void *v)
 				goto out;
 			}
 			/* Snapshot flag cannot be set or cleared */
-			if ((vap->va_flags & SF_SNAPSHOT) !=
-			    (ip->i_flags & SF_SNAPSHOT)) {
+			if ((vap->va_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) !=
+			    (ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL))) {
 				error = EPERM;
 				goto out;
 			}
@@ -695,7 +696,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 {
 	struct inode	*ip;
 	int		error = 0;
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	uid_t		ouid;
 	gid_t		ogid;
 	int64_t		change;
@@ -713,7 +714,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 		return (error);
 
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	ogid = ip->i_gid;
 	ouid = ip->i_uid;
 	change = DIP(ip, blocks);
@@ -724,7 +725,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	DIP_ASSIGN(ip, gid, gid);
 	ip->i_uid = uid;
 	DIP_ASSIGN(ip, uid, uid);
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	if ((error = chkdq(ip, change, cred, 0)) == 0) {
 		if ((error = chkiq(ip, 1, cred, 0)) == 0)
 			goto good;
@@ -740,7 +741,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	fstrans_done(vp->v_mount);
 	return (error);
  good:
-#endif /* QUOTA */
+#endif /* QUOTA || QUOTA2 */
 	ip->i_flag |= IN_CHANGE;
 	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	fstrans_done(vp->v_mount);
@@ -785,7 +786,7 @@ ufs_remove(void *v)
 }
 
 /*
- * link vnode call
+ * ufs_link: create hard link.
  */
 int
 ufs_link(void *v)
@@ -795,28 +796,20 @@ ufs_link(void *v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	struct vnode		*vp, *dvp;
-	struct componentname	*cnp;
-	struct inode		*ip;
-	struct direct		*newdir;
-	int			error;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode *vp = ap->a_vp;
+	struct componentname *cnp = ap->a_cnp;
+	struct inode *ip;
+	struct direct *newdir;
+	int error;
 
-	dvp = ap->a_dvp;
-	vp = ap->a_vp;
-	cnp = ap->a_cnp;
+	KASSERT(dvp != vp);
+	KASSERT(vp->v_type != VDIR);
+	KASSERT(dvp->v_mount == vp->v_mount);
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-	if (vp->v_type == VDIR) {
-		VOP_ABORTOP(dvp, cnp);
-		error = EPERM;
-		goto out2;
-	}
-	if (dvp->v_mount != vp->v_mount) {
-		VOP_ABORTOP(dvp, cnp);
-		error = EXDEV;
-		goto out2;
-	}
-	if (dvp != vp && (error = vn_lock(vp, LK_EXCLUSIVE))) {
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error) {
 		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
@@ -854,8 +847,7 @@ ufs_link(void *v)
 	}
 	UFS_WAPBL_END(vp->v_mount);
  out1:
-	if (dvp != vp)
-		VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp);
  out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
@@ -1377,7 +1369,7 @@ ufs_mkdir(void *v)
 	DIP_ASSIGN(ip, uid, ip->i_uid);
 	ip->i_gid = dp->i_gid;
 	DIP_ASSIGN(ip, gid, ip->i_gid);
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	if ((error = chkiq(ip, 1, cnp->cn_cred, 0))) {
 		UFS_VFREE(tvp, ip->i_number, dmode);
 		UFS_WAPBL_END(dvp->v_mount);
@@ -2187,7 +2179,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		vput(dvp);
 		return (error);
 	}
-#ifdef QUOTA
+#if defined(QUOTA) || defined(QUOTA2)
 	if ((error = chkiq(ip, 1, cnp->cn_cred, 0))) {
 		UFS_VFREE(tvp, ip->i_number, mode);
 		UFS_WAPBL_END1(dvp->v_mount, dvp);

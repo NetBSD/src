@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.10 2009/11/11 17:05:11 macallan Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.10.6.1 2011/06/06 09:06:44 jruoho Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.10 2009/11/11 17:05:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.10.6.1 2011/06/06 09:06:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,10 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.10 2009/11/11 17:05:11 macallan Ex
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <uvm/uvm.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/ofw.h>
+#include <machine/pmap.h>
 
 #include <dev/isa/isavar.h>
 
@@ -255,6 +257,10 @@ igsfb_ofbus_mmap(void *v, void *vs, off_t offset, int prot)
 	 * registers on CyberPro at its physical address
 	 */
 	if ((offset >= igsfb_mem_paddr) && 
+	    (offset < (igsfb_mem_paddr + 0x00800000))) {
+		return (arm_btop(offset) | ARM32_MMAP_WRITECOMBINE);
+	}
+	if ((offset >= (igsfb_mem_paddr + 0x00800000)) && 
 	    (offset < (igsfb_mem_paddr + 0x01000000)))
 		return arm_btop(offset);
 

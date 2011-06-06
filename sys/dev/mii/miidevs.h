@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.101 2010/12/11 18:09:33 matt Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.101.2.1 2011/06/06 09:08:07 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.98 2010/12/11 18:09:13 matt Exp
+ *	NetBSD: miidevs,v 1.101 2011/05/28 05:55:58 matt Exp
  */
 
 /*-
@@ -75,6 +75,7 @@
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
+#define	MII_OUI_RDC	0x00d02d	/* RDC Semiconductor */
 #define	MII_OUI_REALTEK	0x00e04c	/* RealTek */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
@@ -245,8 +246,8 @@
 #define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
-#define	MII_MODEL_CICADA_CS8244	0x002c
-#define	MII_STR_CICADA_CS8244	"Cicada CS8244 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_VSC8244	0x002c
+#define	MII_STR_xxCICADA_VSC8244	"Vitesse VSC8244 Quad 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_CS8201B	0x0021
 #define	MII_STR_xxCICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
 
@@ -290,6 +291,8 @@
 #define	MII_STR_yyINTEL_I82566	"i82566 10/100/1000 media interface"
 #define	MII_MODEL_INTEL_I82577	0x0005
 #define	MII_STR_INTEL_I82577	"i82577 10/100/1000 media interface"
+#define	MII_MODEL_INTEL_I82579	0x0009
+#define	MII_STR_INTEL_I82579	"i82579 10/100/1000 media interface"
 #define	MII_MODEL_xxMARVELL_I82563	0x000a
 #define	MII_STR_xxMARVELL_I82563	"i82563 10/100/1000 media interface"
 
@@ -374,6 +377,9 @@
 #define	MII_MODEL_xxQUALSEMI_QS6612	0x0000
 #define	MII_STR_xxQUALSEMI_QS6612	"QS6612 10/100 media interface"
 
+/* RDC Semiconductor PHYs */
+#define	MII_MODEL_RDC_R6040	0x0003
+#define	MII_STR_RDC_R6040	"R6040 10/100 media interface"
 /* RealTek PHYs */
 #define	MII_MODEL_yyREALTEK_RTL8201L	0x0020
 #define	MII_STR_yyREALTEK_RTL8201L	"RTL8201L 10/100 media interface"

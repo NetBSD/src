@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.53 2010/07/03 13:32:36 kiyohara Exp $
+$NetBSD: README,v 1.53.2.1 2011/06/06 09:04:38 jruoho Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -14,6 +14,7 @@ cats:		Chalice Technologies, CATS motherboard (arm, 19981005)
 cesfic:		FIC8234 VME processor board (m68k, 20010514)
 cobalt:		Cobalt Networks Microservers (mips, 20000319)
 dreamcast:	SEGA Dreamcast (sh3, 20010107)
+emips:		Machines based on Extensible MIPS (mips, 20110126)
 evbarm:		ARM-based eval boards (arm, 20010905)
 evbmips:	MIPS-based eval boards (mips, 20020307)
 evbppc:		PowerPC-based eval boards (powerpc, 20021209)

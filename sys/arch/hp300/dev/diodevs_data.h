@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs_data.h,v 1.14 2010/12/31 22:49:55 tsutsui Exp $	*/
+/*	$NetBSD: diodevs_data.h,v 1.14.2.1 2011/06/06 09:05:34 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.11 2010/12/31 22:48:59 tsutsui Exp 
+ *	NetBSD: diodevs,v 1.14 2011/02/19 05:40:58 tsutsui Exp 
  */
 
 /*-
@@ -62,12 +62,12 @@ struct dio_devdata dio_devdatas[] = {
 	{ 0x39,	0x07,	1 },
 	{ 0x39,	0x08,	2 },
 	{ 0x39,	0x09,	1 },
+	{ 0x39,	0x0c,	3 },
 	{ 0x39,	0x0e,	1 },
-	{ 0x39,	0x0b,	1 },
-	{ 0x39,	0x0c,	1 },
-	{ 0x39,	0x0d,	1 },
 	{ 0x39,	0x10,	4 },
 	{ 0x39,	0x11,	4 },
+	{ 0x39,	0x0b,	1 },
+	{ 0x39,	0x0d,	1 },
 	{ 0x03,	0,	1 },
 	{ 0x04,	0,	1 },
 	{ 0x06,	0,	1 },
@@ -108,18 +108,18 @@ struct dio_devdesc dio_devdescs[] = {
 	{ 0x39,	0,	DIO_DEVICE_DESC_FRAMEBUFFER },
 	{ 0x39,	0x01,	DIO_DEVICE_DESC_GATORBOX },
 	{ 0x39,	0x02,	DIO_DEVICE_DESC_TOPCAT },
-	{ 0x39,	0x04,	DIO_DEVICE_DESC_RENASSIANCE },
+	{ 0x39,	0x04,	DIO_DEVICE_DESC_RENAISSANCE },
 	{ 0x39,	0x05,	DIO_DEVICE_DESC_LRCATSEYE },
 	{ 0x39,	0x06,	DIO_DEVICE_DESC_HRCCATSEYE },
 	{ 0x39,	0x07,	DIO_DEVICE_DESC_HRMCATSEYE },
 	{ 0x39,	0x08,	DIO_DEVICE_DESC_DAVINCI },
 	{ 0x39,	0x09,	DIO_DEVICE_DESC_XXXCATSEYE },
+	{ 0x39,	0x0c,	DIO_DEVICE_DESC_TIGERSHARK },
 	{ 0x39,	0x0e,	DIO_DEVICE_DESC_HYPERION },
-	{ 0x39,	0x0b,	DIO_DEVICE_DESC_XGENESIS },
-	{ 0x39,	0x0c,	DIO_DEVICE_DESC_TIGER },
-	{ 0x39,	0x0d,	DIO_DEVICE_DESC_YGENESIS },
 	{ 0x39,	0x10,	DIO_DEVICE_DESC_A1474MID },
 	{ 0x39,	0x11,	DIO_DEVICE_DESC_A147xVGA },
+	{ 0x39,	0x0b,	DIO_DEVICE_DESC_XGENESIS },
+	{ 0x39,	0x0d,	DIO_DEVICE_DESC_YGENESIS },
 	{ 0x03,	0,	DIO_DEVICE_DESC_MISC0 },
 	{ 0x04,	0,	DIO_DEVICE_DESC_MISC1 },
 	{ 0x06,	0,	DIO_DEVICE_DESC_PARALLEL },

@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.10 2011/01/13 15:38:29 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.10.2.1 2011/06/06 09:10:07 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.10 2011/01/13 15:38:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.10.2.1 2011/06/06 09:10:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -53,7 +53,8 @@ lwproc_proc_free(struct proc *p)
 
 	KASSERT(p->p_nlwps == 0);
 	KASSERT(LIST_EMPTY(&p->p_lwps));
-	KASSERT(p->p_stat == SIDL || p->p_stat == SDEAD);
+	KASSERT(p->p_stat == SACTIVE || p->p_stat == SDYING ||
+	    p->p_stat == SDEAD);
 
 	LIST_REMOVE(p, p_list);
 	LIST_REMOVE(p, p_sibling);
@@ -65,7 +66,7 @@ lwproc_proc_free(struct proc *p)
 	if (rump_proc_vfs_release)
 		rump_proc_vfs_release(p);
 
-	limfree(p->p_limit);
+	lim_free(p->p_limit);
 	pstatsfree(p->p_stats);
 	kauth_cred_free(p->p_cred);
 	proc_finispecific(p);
@@ -111,10 +112,24 @@ lwproc_newproc(struct proc *parent, int flags)
 	    offsetof(struct proc, p_endcopy)
 	      - offsetof(struct proc, p_startcopy));
 
+	/* some other garbage we need to zero */
+	p->p_sigacts = NULL;
+	p->p_aio = NULL;
+	p->p_dtrace = NULL;
+	p->p_mqueue_cnt = p->p_exitsig = 0;
+	p->p_flag = p->p_sflag = p->p_slflag = p->p_lflag = p->p_stflag = 0;
+	p->p_trace_enabled = 0;
+	p->p_xstat = p->p_acflag = 0;
+	p->p_stackbase = 0;
+
 	p->p_stats = pstatscopy(parent->p_stats);
 
 	p->p_vmspace = vmspace_kernel();
 	p->p_emul = &emul_netbsd;
+	if (*parent->p_comm)
+		strcpy(p->p_comm, parent->p_comm);
+	else
+		strcpy(p->p_comm, "rumproc");
 
 	if ((flags & RUMP_RFCFDG) == 0)
 		KASSERT(parent == curproc);
@@ -140,6 +155,7 @@ lwproc_newproc(struct proc *parent, int flags)
 
 	p->p_pptr = parent;
 	p->p_ppid = parent->p_pid;
+	p->p_stat = SACTIVE;
 
 	kauth_proc_fork(parent, p);
 
@@ -198,6 +214,8 @@ lwproc_freelwp(struct lwp *l)
 		lwproc_proc_free(p);	
 }
 
+extern kmutex_t unruntime_lock;
+
 /*
  * called with p_lock held, releases lock before return
  */
@@ -211,16 +229,16 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 
 	l->l_lid = p->p_nlwpid++;
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
+
+	l->l_fd = p->p_fd;
+	l->l_cpu = rump_cpu;
+	l->l_target_cpu = rump_cpu; /* Initial target CPU always the same */
+	l->l_stat = LSRUN;
+	l->l_mutex = &unruntime_lock;
+	TAILQ_INIT(&l->l_ld_locks);
 	mutex_exit(p->p_lock);
 
 	lwp_update_creds(l);
-
-	l->l_fd = p->p_fd;
-	l->l_cpu = NULL;
-	l->l_target_cpu = rump_cpu; /* Initial target CPU always the same */
-	l->l_stat = LSRUN;
-	TAILQ_INIT(&l->l_ld_locks);
-
 	lwp_initspecific(l);
 
 	if (doswitch) {
@@ -251,6 +269,7 @@ rump__lwproc_alloclwp(struct proc *p)
 	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 
 	mutex_enter(p->p_lock);
+	KASSERT((p->p_sflag & PS_RUMP_LWPEXIT) == 0);
 	lwproc_makelwp(p, l, false, newproc);
 
 	return l;
@@ -271,6 +290,12 @@ rump_lwproc_newlwp(pid_t pid)
 		return ESRCH;
 	}
 	mutex_enter(p->p_lock);
+	if (p->p_sflag & PS_RUMP_LWPEXIT) {
+		mutex_exit(proc_lock);
+		mutex_exit(p->p_lock);
+		kmem_free(l, sizeof(*l));
+		return EBUSY;
+	}
 	mutex_exit(proc_lock);
 	lwproc_makelwp(p, l, true, false);
 
@@ -290,6 +315,7 @@ rump_lwproc_rfork(int flags)
 	p = lwproc_newproc(curproc, flags);
 	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 	mutex_enter(p->p_lock);
+	KASSERT((p->p_sflag & PS_RUMP_LWPEXIT) == 0);
 	lwproc_makelwp(p, l, true, true);
 
 	return 0;
@@ -340,10 +366,10 @@ rump_lwproc_switch(struct lwp *newlwp)
 	}
 	mutex_exit(newlwp->l_proc->p_lock);
 
-	l->l_mutex = NULL;
-	l->l_cpu = NULL;
+	l->l_mutex = &unruntime_lock;
 	l->l_pflag &= ~LP_RUNNING;
 	l->l_flag &= ~LW_PENDSIG;
+	l->l_stat = LSRUN;
 
 	if (l->l_flag & LW_WEXIT) {
 		lwproc_freelwp(l);

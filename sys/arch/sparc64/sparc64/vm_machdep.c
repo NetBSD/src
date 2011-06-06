@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.93 2011/01/14 02:06:32 rmind Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.93.2.1 2011/06/06 09:06:54 jruoho Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.93 2011/01/14 02:06:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.93.2.1 2011/06/06 09:06:54 jruoho Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.93 2011/01/14 02:06:32 rmind Exp $"
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -75,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.93 2011/01/14 02:06:32 rmind Exp $"
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().   
  */
-void
+int
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *upmap, *kpmap;
@@ -107,6 +108,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 		len -= PAGE_SIZE;
 	} while (len);
 	pmap_update(pmap_kernel());
+
+	return 0;
 }
 
 /*
@@ -242,9 +245,6 @@ cpu_lwp_fork(register struct lwp *l1, register struct lwp *l2, void *stack, size
 	} else
 		l2->l_md.md_fpstate = NULL;
 
-	if (l1->l_proc->p_flag & PK_32)
-		l2->l_proc->p_flag |= PK_32;
-
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
 	 * out of the kernel. (The trap frame invariably resides at
@@ -354,4 +354,14 @@ cpu_lwp_free2(struct lwp *l)
 
 	if ((fs = l->l_md.md_fpstate) != NULL)
 		pool_cache_put(fpstate_cache, fs);
+}
+
+int
+cpu_lwp_setprivate(lwp_t *l, void *addr)
+{
+	struct trapframe *tf = l->l_md.md_tf;
+
+	tf->tf_global[7] = (uintptr_t)addr;
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2007/10/17 19:54:20 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2.54.1 2011/06/06 09:05:32 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2 2007/10/17 19:54:20 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2.54.1 2011/06/06 09:05:32 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,7 +137,7 @@ static bus_addr_t pci_to_phys(bus_dma_tag_t t, bus_addr_t a)
 }
 
 int
-pmppc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+pmppc_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int	pin = pa->pa_intrpin;
 	int	line = pa->pa_intrline;

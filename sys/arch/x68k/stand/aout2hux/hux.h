@@ -1,10 +1,10 @@
 /*
  *	Human68k .x file structure definitions
  *
- *	written by Yasha (ITOH Yasufumi)
+ *	written by ITOH Yasufumi
  *	public domain
  *
- *	$NetBSD: hux.h,v 1.3 1999/03/16 16:30:21 minoura Exp $
+ *	$NetBSD: hux.h,v 1.3.176.1 2011/06/06 09:07:02 jruoho Exp $
  */
 /*
  * Human68k ".x" executable format

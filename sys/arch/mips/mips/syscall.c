@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.42 2010/12/20 00:25:38 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.42.2.1 2011/06/06 09:06:08 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 /*
+ * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -65,49 +66,9 @@
  *
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
-/*
- * Copyright (c) 1988 University of Utah.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department and Ralph Campbell.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Utah Hdr: trap.c 1.32 91/04/06
- *
- *	@(#)trap.c	8.5 (Berkeley) 1/11/94
- */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42 2010/12/20 00:25:38 matt Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42.2.1 2011/06/06 09:06:08 jruoho Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -126,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42 2010/12/20 00:25:38 matt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
+#include <mips/locore.h>
 #include <mips/trap.h>
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
@@ -141,8 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42 2010/12/20 00:25:38 matt Exp $");
 
 void	EMULNAME(syscall_intern)(struct proc *);
 static void EMULNAME(syscall)(struct lwp *, uint32_t, uint32_t, vaddr_t);
-
-register_t MachEmulateBranch(struct frame *, register_t, u_int, int);
 
 void
 EMULNAME(syscall_intern)(struct proc *p)
@@ -160,11 +120,12 @@ EMULNAME(syscall_intern)(struct proc *p)
  */
 
 void
-EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
+EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 {
 	struct proc *p = l->l_proc;
-	struct frame *frame = l->l_md.md_regs;
-	mips_reg_t *fargs = &frame->f_regs[_R_A0];
+	struct trapframe *tf = l->l_md.md_utf;
+	struct reg *reg = &tf->tf_registers;
+	mips_reg_t *fargs = &reg->r_regs[_R_A0];
 	register_t *args = NULL;
 	register_t copyargs[2+SYS_MAXSYSARGS];
 	mips_reg_t saved_v0;
@@ -189,12 +150,12 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 	curcpu()->ci_data.cpu_nsyscall++;
 
 	if (cause & MIPS_CR_BR_DELAY)
-		frame->f_regs[_R_PC] = MachEmulateBranch(frame, opc, 0, 0);
+		reg->r_regs[_R_PC] = mips_emul_branch(tf, pc, 0, false);
 	else
-		frame->f_regs[_R_PC] = opc + sizeof(uint32_t);
+		reg->r_regs[_R_PC] = pc + sizeof(uint32_t);
 
 	callp = p->p_emul->e_sysent;
-	saved_v0 = code = frame->f_regs[_R_V0];
+	saved_v0 = code = reg->r_regs[_R_V0];
 
 	code -= SYSCALL_SHIFT;
 
@@ -227,14 +188,14 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 		callp += code;
 
 	nargs = callp->sy_narg;
-	frame->f_regs[_R_V0] = 0;
+	reg->r_regs[_R_V0] = 0;
 #if !defined(__mips_o32)
 	if (abi != _MIPS_BSD_API_O32) {
 #endif
 		CTASSERT(sizeof(copyargs[0]) == sizeof(fargs[0]));
 		if (nargs <= nregs) {
 			/*
-			 * Just use the frame for the source of arguments
+			 * Just use the trapframe for the source of arguments
 			 */
 			args = fargs;
 		} else {
@@ -242,15 +203,14 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 			KASSERT(nargs <= __arraycount(copyargs));
 			args = copyargs;
 			/*
-			 * Copy the arguments passed via register from the
-			 * trap frame to our argument array
+			 * Copy the arguments passed via register from the				 * trapframe to our argument array
 			 */
 			memcpy(copyargs, fargs, nregs * sizeof(register_t));
 			/*
 			 * Start copying args skipping the register slots
 			 * slots on the stack.
 			 */
-			usp = frame->f_regs[_R_SP] + nsaved*sizeof(register_t);
+			usp = reg->r_regs[_R_SP] + nsaved*sizeof(register_t);
 			error = copyin((register_t *)usp, &copyargs[nregs],
 			    (nargs - nregs) * sizeof(copyargs[0]));
 			if (error)
@@ -277,7 +237,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 
 		/*
 		 * If there are no 64bit arguments and all arguments were in
-		 * registers, just use the frame for the source of arguments
+		 * registers, just use the trapframe for the source of arguments
 		 */
 		if (nargs <= nregs && narg64 == 0) {
 			args = fargs;
@@ -290,7 +250,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 			 * after skipping the slots for the 4 register passed
 			 * arguments.
 			 */
-			usp = frame->f_regs[_R_SP] + 4*sizeof(int32_t);
+			usp = reg->r_regs[_R_SP] + 4*sizeof(int32_t);
 			error = copyin((int32_t *)usp, copy32args,
 			    (nargs + narg64 - nregs) * sizeof(copy32args[0]));
 			if (error)
@@ -372,7 +332,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 	    && (error = trace_enter(code, args, nargs)) != 0)
 		goto out;
 
-	error = (*callp->sy_call)(l, args, &frame->f_regs[_R_V0]);
+	error = (*callp->sy_call)(l, args, &reg->r_regs[_R_V0]);
 
     out:
 	switch (error) {
@@ -383,9 +343,9 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 			 * If this is from O32 and it's a 64bit quantity,
 			 * split it into 2 32bit values in adjacent registers.
 			 */
-			mips_reg_t tmp = frame->f_regs[_R_V0];
-			frame->f_regs[_R_V0 + _QUAD_LOWWORD] = (int32_t) tmp;
-			frame->f_regs[_R_V0 + _QUAD_HIGHWORD] = tmp >> 32; 
+			mips_reg_t tmp = reg->r_regs[_R_V0];
+			reg->r_regs[_R_V0 + _QUAD_LOWWORD] = (int32_t) tmp;
+			reg->r_regs[_R_V0 + _QUAD_HIGHWORD] = tmp >> 32; 
 		}
 #endif
 #ifdef MIPS_SYSCALL_DEBUG
@@ -394,13 +354,13 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 		else
 			printf("syscall %u:", code);
 		printf(" return v0=%#"PRIxREGISTER" v1=%#"PRIxREGISTER"\n",
-		    frame->f_regs[_R_V0], frame->f_regs[_R_V1]);
+		    reg->r_regs[_R_V0], reg->r_regs[_R_V1]);
 #endif
-		frame->f_regs[_R_A3] = 0;
+		reg->r_regs[_R_A3] = 0;
 		break;
 	case ERESTART:
-		frame->f_regs[_R_V0] = saved_v0; /* restore syscall code */
-		frame->f_regs[_R_PC] = opc;
+		reg->r_regs[_R_V0] = saved_v0; /* restore syscall code */
+		reg->r_regs[_R_PC] = pc;
 		break;
 	case EJUSTRETURN:
 		break;	/* nothing to do */
@@ -408,8 +368,8 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
-		frame->f_regs[_R_V0] = error;
-		frame->f_regs[_R_A3] = 1;
+		reg->r_regs[_R_V0] = error;
+		reg->r_regs[_R_A3] = 1;
 #ifdef MIPS_SYSCALL_DEBUG
 		if (p->p_emul->e_syscallnames)
 			printf("syscall %s:", p->p_emul->e_syscallnames[code]);
@@ -421,7 +381,10 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 	}
 
 	if (__predict_false(p->p_trace_enabled))
-		trace_exit(code, &frame->f_regs[_R_V0], error);
+		trace_exit(code, &reg->r_regs[_R_V0], error);
+
+	KASSERT(l->l_blcnt == 0);
+	KASSERT(curcpu()->ci_biglock_count == 0);
 
 	userret(l);
 }

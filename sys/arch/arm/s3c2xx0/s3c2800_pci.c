@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.13 2008/01/06 01:37:56 matt Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.13.38.1 2011/06/06 09:05:06 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.13 2008/01/06 01:37:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.13.38.1 2011/06/06 09:05:06 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,8 @@ pcitag_t s3c2800_pci_make_tag(void *, int, int, int);
 void	s3c2800_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t s3c2800_pci_conf_read(void *, pcitag_t, int);
 void	s3c2800_pci_conf_write(void *, pcitag_t, int, pcireg_t);
-int	s3c2800_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int	s3c2800_pci_intr_map(const struct pci_attach_args *,
+	    pci_intr_handle_t *);
 const char *s3c2800_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *s3c2800_pci_intr_evcnt(void *, pci_intr_handle_t);
 void *s3c2800_pci_intr_establish(void *, pci_intr_handle_t, int,
@@ -324,7 +325,7 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 	pci_pba.pba_memt = &sspci_mem_tag;
 	pci_pba.pba_dmat = pci_dma_tag;
 	pci_pba.pba_dmat64 = NULL;
-	pci_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pci_pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pci_pba.pba_bus = 0;
 	pci_pba.pba_bridgetag = NULL;
 
@@ -545,7 +546,7 @@ s3c2800_pci_intr_disestablish(void *pcv, void *cookie)
 }
 
 int
-s3c2800_pci_intr_map(struct pci_attach_args * pa, pci_intr_handle_t * ihp)
+s3c2800_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 #ifdef PCI_DEBUG
 	int pin = pa->pa_intrpin;

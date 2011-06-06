@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_40.c,v 1.2 2008/11/16 15:17:05 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls_40.c,v 1.2.18.1 2011/06/06 09:07:16 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,12 +63,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_40.c,v 1.2 2008/11/16 15:17:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_40.c,v 1.2.18.1 2011/06/06 09:07:16 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
-#include <sys/sched.h>
 #include <sys/syscallargs.h>
 
 int

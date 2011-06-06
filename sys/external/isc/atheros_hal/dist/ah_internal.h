@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_internal.h,v 1.3 2009/05/14 09:07:49 reinoud Exp $
+ * $Id: ah_internal.h,v 1.3.10.1 2011/06/06 09:09:16 jruoho Exp $
  */
 #ifndef _ATH_AH_INTERAL_H_
 #define _ATH_AH_INTERAL_H_
@@ -57,6 +57,11 @@ typedef struct {
 	uint16_t	end;		/* ending register or zero */
 } HAL_REGRANGE;
 
+typedef struct {
+	uint32_t	addr;		/* register address/offset */
+	uint32_t	value;		/* value to write */
+} HAL_REGWRITE;
+
 /*
  * Transmit power scale factor.
  *
@@ -87,12 +92,12 @@ struct ath_hal_chip {
 };
 #ifndef AH_CHIP
 #define	AH_CHIP(_name, _probe, _attach)				\
-static struct ath_hal_chip name##_chip = {			\
+static struct ath_hal_chip _name##_chip = {			\
 	.name		= #_name,				\
 	.probe		= _probe,				\
 	.attach		= _attach				\
 };								\
-OS_DATA_SET(ah_chips, name##_chip)
+OS_DATA_SET(ah_chips, _name##_chip)
 #endif
 
 /*
@@ -184,7 +189,8 @@ typedef struct {
 			halExtChanDfsSupport		: 1,
 			halForcePpmSupport		: 1,
 			halEnhancedPmSupport		: 1,
-			halMbssidAggrSupport		: 1;
+			halMbssidAggrSupport		: 1,
+			halBssidMatchSupport		: 1;
 	uint32_t	halWirelessModes;
 	uint16_t	halTotalQueues;
 	uint16_t	halKeyCacheSize;
@@ -197,6 +203,7 @@ typedef struct {
 	uint8_t		halNumGpioPins;
 	uint8_t		halNumAntCfg2GHz;
 	uint8_t		halNumAntCfg5GHz;
+	uint32_t	halIntrMask;
 } HAL_CAPABILITIES;
 
 /*
@@ -231,7 +238,8 @@ struct ath_hal_private {
 				uint16_t *data);
 	HAL_BOOL	(*ah_eepromWrite)(struct ath_hal *, u_int off,
 				uint16_t data);
-	HAL_BOOL	(*ah_gpioCfgOutput)(struct ath_hal *, uint32_t gpio);
+	HAL_BOOL	(*ah_gpioCfgOutput)(struct ath_hal *,
+				uint32_t gpio, HAL_GPIO_MUX_TYPE);
 	HAL_BOOL	(*ah_gpioCfgInput)(struct ath_hal *, uint32_t gpio);
 	uint32_t	(*ah_gpioGet)(struct ath_hal *, uint32_t gpio);
 	HAL_BOOL	(*ah_gpioSet)(struct ath_hal *,
@@ -264,6 +272,7 @@ struct ath_hal_private {
 	uint16_t	ah_phyRev;		/* PHY revision */
 	uint16_t	ah_analog5GhzRev;	/* 2GHz radio revision */
 	uint16_t	ah_analog2GhzRev;	/* 5GHz radio revision */
+	uint8_t		ah_ispcie;		/* PCIE, special treatment */
 
 
 	HAL_OPMODE	ah_opmode;		/* operating mode from reset */
@@ -307,8 +316,8 @@ struct ath_hal_private {
 	AH_PRIVATE(_ah)->ah_eepromRead(_ah, _off, _data)
 #define	ath_hal_eepromWrite(_ah, _off, _data) \
 	AH_PRIVATE(_ah)->ah_eepromWrite(_ah, _off, _data)
-#define	ath_hal_gpioCfgOutput(_ah, _gpio) \
-	AH_PRIVATE(_ah)->ah_gpioCfgOutput(_ah, _gpio)
+#define	ath_hal_gpioCfgOutput(_ah, _gpio, _type) \
+	AH_PRIVATE(_ah)->ah_gpioCfgOutput(_ah, _gpio, _type)
 #define	ath_hal_gpioCfgInput(_ah, _gpio) \
 	AH_PRIVATE(_ah)->ah_gpioCfgInput(_ah, _gpio)
 #define	ath_hal_gpioGet(_ah, _gpio) \
@@ -323,9 +332,18 @@ struct ath_hal_private {
 	AH_PRIVATE(_ah)->ah_getNfAdjust(_ah, _c)
 #define	ath_hal_getNoiseFloor(_ah, _nfArray) \
 	AH_PRIVATE(_ah)->ah_getNoiseFloor(_ah, _nfArray)
+#define	ath_hal_configPCIE(_ah, _reset) \
+	(_ah)->ah_configPCIE(_ah, _reset)
+#define	ath_hal_disablePCIE(_ah) \
+	(_ah)->ah_disablePCIE(_ah)
+#define	ath_hal_setInterrupts(_ah, _mask) \
+	(_ah)->ah_setInterrupts(_ah, _mask)
 
-#define	ath_hal_eepromDetach(_ah) \
-	AH_PRIVATE(_ah)->ah_eepromDetach(_ah)
+#define	ath_hal_eepromDetach(_ah)			\
+do {							\
+	if (AH_PRIVATE(_ah)->ah_eepromDetach != NULL)	\
+		AH_PRIVATE(_ah)->ah_eepromDetach(_ah);	\
+} while (/*CONSTCOND*/0)
 #define	ath_hal_eepromGet(_ah, _param, _val) \
 	AH_PRIVATE(_ah)->ah_eepromGet(_ah, _param, _val)
 #define	ath_hal_eepromSet(_ah, _param, _val) \
@@ -584,6 +602,17 @@ extern	void ath_hal_assert_failed(const char* filename,
 #else
 #define	HALASSERT(_x)
 #endif /* AH_ASSERT */
+
+/*
+ * Return the h/w frequency for a channel. This may be
+ * different from ic_freq if this is a GSM device that
+ * takes 2.4GHz frequencies and down-converts them.
+ */
+static OS_INLINE uint16_t
+ath_hal_gethwchannel(struct ath_hal *ah, const HAL_CHANNEL_INTERNAL *c)
+{
+	return ath_hal_checkchannel(ah, (const HAL_CHANNEL *)c)->channel;
+}
 
 /*
  * Convert between microseconds and core system clocks.

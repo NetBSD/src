@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.38 2010/11/23 11:13:57 hannken Exp $
+#	$NetBSD: TWINTAIL,v 1.38.2.1 2011/06/06 09:05:24 jruoho Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -50,7 +50,8 @@ file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental
@@ -140,7 +141,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	KGDB
 #options  	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=370000
+options 	SYMTAB_SPACE=5c0000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
@@ -194,7 +195,7 @@ options G4250_LCD_TOSHIBA_LTM035
 kmkbd* at obio?
 wskbd* at kmkbd? # console ?
 
-# GB-225 option board 
+# GB-225 option board
 opio0 	at obio?  intr 2
 
 # USB host

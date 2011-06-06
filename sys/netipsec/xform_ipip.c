@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.24 2008/04/27 12:58:48 degroote Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.24.28.1 2011/06/06 09:10:01 jruoho Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.24 2008/04/27 12:58:48 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.24.28.1 2011/06/06 09:10:01 jruoho Exp $");
 
 /*
  * IP-inside-IP processing
@@ -429,7 +429,7 @@ ipip_output(
     int protoff
 )
 {
-	struct secasvar *sav;
+	const struct secasvar *sav;
 	u_int8_t tp, otos;
 	struct secasindex *saidx;
 	int error;
@@ -651,7 +651,7 @@ bad:
 
 #ifdef FAST_IPSEC
 static int
-ipe4_init(struct secasvar *sav, struct xformsw *xsp)
+ipe4_init(struct secasvar *sav, const struct xformsw *xsp)
 {
 	sav->tdb_xform = xsp;
 	return 0;
@@ -667,7 +667,7 @@ ipe4_zeroize(struct secasvar *sav)
 static int
 ipe4_input(
     struct mbuf *m,
-    struct secasvar *sav,
+    const struct secasvar *sav,
     int skip,
     int protoff
 )

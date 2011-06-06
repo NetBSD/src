@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.231 2010/12/18 01:36:19 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.231.2.1 2011/06/06 09:09:28 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.231 2010/12/18 01:36:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.231.2.1 2011/06/06 09:09:28 jruoho Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -341,6 +341,7 @@ exit1(struct lwp *l, int rv)
 	 */
 	mutex_enter(proc_lock);
 	if (p->p_lflag & PL_PPWAIT) {
+		l->l_lwpctl = NULL; /* was on loan from blocked parent */
 		p->p_lflag &= ~PL_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 	}
@@ -969,7 +970,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	 * Release substructures.
 	 */
 
-	limfree(p->p_limit);
+	lim_free(p->p_limit);
 	pstatsfree(p->p_stats);
 	kauth_cred_free(cred1);
 	kauth_cred_free(cred2);

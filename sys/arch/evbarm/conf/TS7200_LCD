@@ -1,7 +1,7 @@
-#	$NetBSD: TS7200_LCD,v 1.2 2005/12/11 12:17:06 christos Exp $
+#	$NetBSD: TS7200_LCD,v 1.2.108.1 2011/06/06 09:05:24 jruoho Exp $
 #
 #	TS7200_LCD - standard TS7200, but with a 2x24 LCD attached
-#       to the LCD header and a 4x4 matrix keypad attached to the DIO 
+#       to the LCD header and a 4x4 matrix keypad attached to the DIO
 #       header.
 #
 

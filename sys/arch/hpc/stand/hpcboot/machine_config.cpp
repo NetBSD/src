@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.14 2008/04/28 20:23:20 martin Exp $	*/
+/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.14.28.1 2011/06/06 09:05:42 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -120,6 +120,7 @@ FrameBufferInfo::_table[] =
 	{ PLATID_CPU_ARM_STRONGARM_SA1110 , PLATID_MACH_COMPAQ_IPAQ_H3600  ,       16,      320,      240,        640, 0x00000000 },
 	// PXA250
 	{ PLATID_CPU_ARM_XSCALE_PXA250 ,    PLATID_MACH_COMPAQ_IPAQ_H3900  ,       16,      320,      240,        640, 0x00000000 },
+	{ PLATID_CPU_ARM_XSCALE_PXA250 ,    PLATID_MACH_PSIONTEKLOGIX_NETBOOK_PRO, 16,      800,      600,       1600, 0x14200000 },
 #endif // ARM
 	{ 0, 0, 0, 0, 0, 0, 0 } // TERMINATOR
 };

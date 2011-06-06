@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.53 2010/11/23 11:14:06 hannken Exp $
+# $NetBSD: KRUPS,v 1.53.2.1 2011/06/06 09:06:44 jruoho Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.53 $"
+#ident 		"KRUPS-$Revision: 1.53.2.1 $"
 
 maxusers	32
 
@@ -148,6 +148,8 @@ makeoptions	CPUFLAGS="-mcpu=supersparc"
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
 #options 	DEBUG
+#options 	LOCKDEBUG
+#options 	SYSCALL_DEBUG
 
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 
@@ -207,7 +209,8 @@ file-system	PTYFS		# /dev/pts/N support
 
 ## File system options.
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.24 2010/11/09 12:24:47 skrll Exp $
+#	$NetBSD: files.hp700,v 1.24.2.1 2011/06/06 09:05:39 jruoho Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -52,6 +52,11 @@ include "dev/isa/files.isa"
 # EISA Bus support
 #
 include "dev/eisa/files.eisa"
+
+#
+# HIL Human Interface Loop devices
+#
+include "dev/hil/files.hil"
 
 
 #
@@ -213,9 +218,8 @@ file	arch/hp700/gsc/osiop_gsc.c	osiop_gsc
 attach	oosiop at gsc with oosiop_gsc
 file	arch/hp700/gsc/oosiop_gsc.c	oosiop_gsc
 
-device	hil: tty
-attach	hil at gsc
-file	arch/hp700/gsc/hil.c		hil
+attach	hil at gsc with hil_gsc
+file	arch/hp700/gsc/hil_gsc.c	hil_gsc
 
 device	gsckbc: pckbport
 attach	gsckbc at gsc

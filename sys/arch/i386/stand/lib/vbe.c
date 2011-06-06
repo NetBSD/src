@@ -1,4 +1,4 @@
-/* $NetBSD: vbe.c,v 1.6 2010/06/25 15:35:08 tsutsui Exp $ */
+/* $NetBSD: vbe.c,v 1.6.2.1 2011/06/06 09:05:53 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,6 +37,8 @@
 #include "vbe.h"
 
 extern const uint8_t rasops_cmap[];
+static uint8_t *vbe_edid = NULL;
+static int vbe_edid_valid = 0;
 
 static struct _vbestate {
 	int		available;
@@ -185,7 +187,7 @@ vbe_farptr(uint32_t farptr)
 }
 
 static int
-vbe_parse_mode_str(char *str, int *x, int *y, int *bpp)
+vbe_parse_mode_str(char *str, int *x, int *y, int *depth)
 {
 	char *p;
 
@@ -202,11 +204,11 @@ vbe_parse_mode_str(char *str, int *x, int *y, int *bpp)
 		return 0;
 	p = strchr(p, 'x');
 	if (!p)
-		*bpp = 8;
+		*depth = 8;
 	else {
 		++p;
-		*bpp = strtoul(p, NULL, 0);
-		if (*bpp == 0)
+		*depth = strtoul(p, NULL, 0);
+		if (*depth == 0)
 			return 0;
 	}
 
@@ -214,17 +216,13 @@ vbe_parse_mode_str(char *str, int *x, int *y, int *bpp)
 }
 
 static int
-vbe_find_mode(char *str)
+vbe_find_mode_xyd(int x, int y, int depth)
 {
 	struct vbeinfoblock vbe;
 	struct modeinfoblock mi;
 	uint32_t farptr;
 	uint16_t mode;
-	int x, y, bpp;
 	int safety = 0;
-
-	if (!vbe_parse_mode_str(str, &x, &y, &bpp))
-		return 0;
 
 	memset(&vbe, 0, sizeof(vbe));
 	memcpy(vbe.VbeSignature, "VBE2", 4);
@@ -249,11 +247,22 @@ vbe_find_mode(char *str)
 		safety = 0;
 		if (mi.XResolution == x &&
 		    mi.YResolution == y &&
-		    mi.BitsPerPixel == bpp)
+		    mi.BitsPerPixel == depth)
 			return mode;
 	}
 
 	return 0;
+}
+
+static int
+vbe_find_mode(char *str)
+{
+	int x, y, depth;
+
+	if (!vbe_parse_mode_str(str, &x, &y, &depth))
+		return 0;
+
+	return vbe_find_mode_xyd(x, y, depth);
 }
 
 static void
@@ -261,6 +270,37 @@ vbe_dump_mode(int modenum, struct modeinfoblock *mi)
 {
 	printf("0x%x=%dx%dx%d", modenum,
 	    mi->XResolution, mi->YResolution, mi->BitsPerPixel);
+}
+
+static int
+vbe_get_edid(int *pwidth, int *pheight)
+{
+	const uint8_t magic[] = EDID_MAGIC;
+	int ddc_caps, ret;
+
+	ddc_caps = biosvbe_ddc_caps();
+	if (ddc_caps == 0) {
+		return 1;
+	}
+
+	if (vbe_edid == NULL) {
+		vbe_edid = alloc(128);
+	}
+	if (vbe_edid_valid == 0) {
+		ret = biosvbe_ddc_read_edid(0, vbe_edid);
+		if (ret != 0x004f)
+			return 1;
+		if (memcmp(vbe_edid, magic, sizeof(magic)) != 0)
+			return 1;
+		vbe_edid_valid = 1;
+	}
+
+	*pwidth = vbe_edid[EDID_DESC_BLOCK + 2] |
+	    (((int)vbe_edid[EDID_DESC_BLOCK + 4] & 0xf0) << 4);
+	*pheight = vbe_edid[EDID_DESC_BLOCK + 5] |
+	    (((int)vbe_edid[EDID_DESC_BLOCK + 7] & 0xf0) << 4);
+
+	return 0;
 }
 
 void
@@ -271,9 +311,24 @@ vbe_modelist(void)
 	uint32_t farptr;
 	uint16_t mode;
 	int nmodes = 0, safety = 0;
+	int ddc_caps, edid_width, edid_height;
 
 	if (!vbe_check())
 		return;
+
+	ddc_caps = biosvbe_ddc_caps();
+	if (ddc_caps & 3) {
+		printf("DDC");
+		if (ddc_caps & 1)
+			printf(" [DDC1]");
+		if (ddc_caps & 2)
+			printf(" [DDC2]");
+
+		if (vbe_get_edid(&edid_width, &edid_height) != 0)
+			printf(": no EDID information\n");
+		else
+			printf(": EDID %dx%d\n", edid_width, edid_height);
+	}
 
 	printf("Modes: ");
 	memset(&vbe, 0, sizeof(vbe));
@@ -317,7 +372,7 @@ void
 command_vesa(char *cmd)
 {
 	char arg[20];
-	int modenum;
+	int modenum, edid_width, edid_height;
 
 	if (!vbe_check())
 		return;
@@ -334,18 +389,25 @@ command_vesa(char *cmd)
 		return;
 	}
 
-	if (strcmp(arg, "enabled") == 0 || strcmp(arg, "on") == 0)
-		modenum = VBE_DEFAULT_MODE;
-	else if (strncmp(arg, "0x", 2) == 0)
+	if (strcmp(arg, "enabled") == 0 || strcmp(arg, "on") == 0) {
+		if (vbe_get_edid(&edid_width, &edid_height) != 0) {
+			modenum = VBE_DEFAULT_MODE;
+		} else {
+			modenum = vbe_find_mode_xyd(edid_width, edid_height, 8);
+			if (modenum == 0)
+				modenum = VBE_DEFAULT_MODE;
+		}
+	} else if (strncmp(arg, "0x", 2) == 0) {
 		modenum = strtoul(arg, NULL, 0);
-	else if (strchr(arg, 'x') != NULL) {
+	} else if (strchr(arg, 'x') != NULL) {
 		modenum = vbe_find_mode(arg);
 		if (modenum == 0) {
 			printf("mode %s not supported by firmware\n", arg);
 			return;
 		}
-	} else
+	} else {
 		modenum = 0;
+	}
 
 	if (modenum >= 0x100) {
 		vbestate.modenum = modenum;

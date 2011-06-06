@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_commons.c,v 1.10 2010/07/07 01:30:33 chs Exp $	*/
+/*	$NetBSD: linux_commons.c,v 1.10.2.1 2011/06/06 09:07:22 jruoho Exp $	*/
 
 /*
  * This file includes C files from the common
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_commons.c,v 1.10 2010/07/07 01:30:33 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_commons.c,v 1.10.2.1 2011/06/06 09:07:22 jruoho Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -39,3 +39,4 @@ __KERNEL_RCSID(1, "$NetBSD: linux_commons.c,v 1.10 2010/07/07 01:30:33 chs Exp $
 #include "../../common/linux_oldolduname.c"
 #include "../../common/linux_uid16.c"
 #include "../../common/linux_futex.c"
+#include "../../common/linux_fadvise64_64.c"

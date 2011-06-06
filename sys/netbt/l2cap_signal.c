@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.11 2010/11/17 20:19:25 plunky Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.11.2.1 2011/06/06 09:09:54 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.11 2010/11/17 20:19:25 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.11.2.1 2011/06/06 09:09:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -857,15 +857,14 @@ l2cap_recv_disconnect_rsp(struct mbuf *m, struct hci_link *link)
 }
 
 /*
- * Process Received Info Request. We must respond but alas dont
- * support anything as yet so thats easy.
+ * Process Received Info Request.
  */
 static void
 l2cap_recv_info_req(struct mbuf *m, struct hci_link *link)
 {
 	l2cap_cmd_hdr_t cmd;
 	l2cap_info_req_cp cp;
-	l2cap_info_rsp_cp rp;
+	uint8_t rsp[12];
 
 	m_copydata(m, 0, sizeof(cmd), &cmd);
 	m_adj(m, sizeof(cmd));
@@ -873,15 +872,51 @@ l2cap_recv_info_req(struct mbuf *m, struct hci_link *link)
 	m_copydata(m, 0, sizeof(cp), &cp);
 	m_adj(m, sizeof(cp));
 
-	switch(le16toh(cp.type)) {
-	case L2CAP_CONNLESS_MTU:
+	cp.type = le16toh(cp.type);
+	switch(cp.type) {
 	case L2CAP_EXTENDED_FEATURES:
-	default:
-		rp.type = cp.type;
-		rp.result = htole16(L2CAP_NOT_SUPPORTED);
+		/*
+		 * 32-bit data field, unused bits set to zero
+		 *
+		 * octet bit feature
+		 *   0   0   Flow control mode
+		 *   0   1   Retransmission mode
+		 *   0   2   Bi-directional QoS
+		 *   0   3   Enhanced retransmission mode
+		 *   0   4   Streaming mode
+		 *   0   5   FCS option
+		 *   0   6   Extended flow specification for BR/EDR
+		 *   0   7   Fixed channels (SET)
+		 *   1   0   Extended window size
+		 *   1   1   Unicast connectionless data reception
+		 */
+		le16enc(rsp + 0, cp.type);
+		le16enc(rsp + 2, L2CAP_SUCCESS);
+		le32enc(rsp + 4, 0x00000080);
+		l2cap_send_signal(link, L2CAP_INFO_RSP, cmd.ident, 8, rsp);
+		break;
 
-		l2cap_send_signal(link, L2CAP_INFO_RSP, cmd.ident,
-					sizeof(rp), &rp);
+	case L2CAP_FIXED_CHANNELS:
+		/*
+		 * 64-bit data field, unused bits set to zero
+		 *
+		 * octet bit channel
+		 *   0   0   0x0000 Null
+		 *   0   1   0x0001 L2CAP Signalling Channel (SET)
+		 *   0   2   0x0002 Connectionless Reception
+		 *   0   3   0x0003 AMP Manager Protocol Channel
+		 */
+		le16enc(rsp + 0, cp.type);
+		le16enc(rsp + 2, L2CAP_SUCCESS);
+		le64enc(rsp + 4, 0x0000000000000002);
+		l2cap_send_signal(link, L2CAP_INFO_RSP, cmd.ident, 12, rsp);
+		break;
+
+	case L2CAP_CONNLESS_MTU:
+	default:
+		le16enc(rsp + 0, cp.type);
+		le16enc(rsp + 2, L2CAP_NOT_SUPPORTED);
+		l2cap_send_signal(link, L2CAP_INFO_RSP, cmd.ident, 4, rsp);
 		break;
 	}
 }

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.153 2011/01/03 06:15:16 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.153.2.1 2011/06/06 09:07:00 jruoho Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153 $"
+#ident 		"GENERIC-$Revision: 1.153.2.1 $"
 
 maxusers	8
 
@@ -190,7 +190,8 @@ file-system	TMPFS		# Efficient memory file-system
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
-#options 	QUOTA		# FFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -352,8 +353,8 @@ bmd*	at intio0 addr 0xecebf0		# Nereid
 
 # USB Mass Storage; wd not supported
 #umass*	at uhub? port ? configuration ? interface ?
-#atapibus* at umass? channel ?
-#scsibus* at umass? channel ?
+#atapibus* at umass?
+#scsibus* at umass?
 #wd* at umass?
 
 # USB audio

@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.29 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.29.28.1 2011/06/06 09:07:50 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.29 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.29.28.1 2011/06/06 09:07:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ ad1848_from_vol(mixer_ctrl_t *cp, struct ad1848_volume *vol)
 }
 
 
-inline int
+int
 ad_read(struct ad1848_softc *sc, int reg)
 {
 	int x;
@@ -227,7 +227,7 @@ ad_read(struct ad1848_softc *sc, int reg)
 	return x;
 }
 
-inline void
+void
 ad_write(struct ad1848_softc *sc, int reg, int data)
 {
 
@@ -241,7 +241,7 @@ ad_write(struct ad1848_softc *sc, int reg, int data)
  * indirection through CS_XREG (I23).
  */
 
-inline int
+int
 ad_xread(struct ad1848_softc *sc, int reg)
 {
 	int x;
@@ -253,7 +253,7 @@ ad_xread(struct ad1848_softc *sc, int reg)
 	return x;
 }
 
-inline void
+void
 ad_xwrite(struct ad1848_softc *sc, int reg, int val)
 {
 

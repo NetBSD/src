@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 2010/07/07 01:20:49 chs Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11.2.1 2011/06/06 09:05:01 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.11 2010/07/07 01:20:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.11.2.1 2011/06/06 09:05:01 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,14 +115,11 @@ int
 cpu_lwp_setprivate(lwp_t *l, void *addr)
 {
 #ifdef _ARM_ARCH_6
-	struct pcb *pcb;
-
-	pcb = lwp_getpcb(l);
-	kpreempt_disable();
-	pcb->pcb_un.un_32.pcb32_user_pid_ro = (u_int)addr;
-	if (l == curlwp)
+	if (l == curlwp) {
+		kpreempt_disable();
 		__asm("mcr p15, 0, %0, c13, c0, 3" : : "r" (addr));
-	kpreempt_enable();
+		kpreempt_enable();
+	}
 	return 0;
 #else
 	return ENOSYS;

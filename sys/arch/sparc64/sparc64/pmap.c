@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.269 2010/11/12 07:59:27 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.269.2.1 2011/06/06 09:06:53 jruoho Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.269 2010/11/12 07:59:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.269.2.1 2011/06/06 09:06:53 jruoho Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -292,9 +292,9 @@ struct {
 #define	PDB_REMOVE		0x000004
 #define	PDB_CHANGEPROT		0x000008
 #define	PDB_ENTER		0x000010
-#define PDB_DEMAP		0x000020
+#define	PDB_DEMAP		0x000020	/* used in locore */
 #define	PDB_REF			0x000040
-#define PDB_COPY		0x000080
+#define	PDB_COPY		0x000080
 #define	PDB_MMU_ALLOC		0x000100
 #define	PDB_MMU_STEAL		0x000200
 #define	PDB_CTX_ALLOC		0x000400
@@ -683,6 +683,8 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	int prom_memlist_size;
 
 	BDPRINTF(PDB_BOOT, ("Entered pmap_bootstrap.\n"));
+
+	cache_setup_funcs();
 
 	/*
 	 * Calculate kernel size.
@@ -1975,11 +1977,7 @@ pmap_remove_all(struct pmap *pm)
 	 * XXXMRG: couldn't we do something less severe here, and
 	 * only flush the right context on each CPU?
 	 */
-#ifdef MULTIPROCESSOR
-	smp_blast_dcache(pmap_cpus_active);
-#else
-	sp_blast_dcache(dcache_size, dcache_line_size);
-#endif
+	blast_dcache();
 }
 
 /*
@@ -2338,7 +2336,7 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t blkno)
 
 	/* Fill in MD segment header (interpreted by MD part of libkvm) */
 	kcpu = (cpu_kcore_hdr_t *)((long)bp + ALIGN(sizeof(kcore_seg_t)));
-	kcpu->cputype = CPU_SUN4U;
+	kcpu->cputype = cputyp;
 	kcpu->kernbase = (uint64_t)KERNBASE;
 	kcpu->cpubase = (uint64_t)CPUINFO_VA;
 
@@ -3349,6 +3347,14 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 	pv_entry_t pv;
 	vaddr_t va;
 	int rv;
+
+#if 0
+	/*
+	 * Why is this?
+	 */
+	if (CPU_ISSUN4US || CPU_ISSUN4V)
+		return;
+#endif
 
 	KASSERT(mutex_owned(&pmap_lock));
 

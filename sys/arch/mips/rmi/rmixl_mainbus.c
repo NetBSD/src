@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_mainbus.c,v 1.2 2009/12/14 00:46:07 matt Exp $	*/
+/*	$NetBSD: rmixl_mainbus.c,v 1.2.8.1 2011/06/06 09:06:09 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.2 2009/12/14 00:46:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.2.8.1 2011/06/06 09:06:09 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,14 +51,18 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.2 2009/12/14 00:46:07 matt Exp $
 #include <sys/malloc.h>
 #include <sys/device.h>
 
+#include <evbmips/rmixl/autoconf.h>
 #include <machine/bus.h>
 #include "locators.h"
 
 static int  mainbusmatch(device_t,  cfdata_t, void *);
 static void mainbusattach(device_t,  device_t,  void *);
-static int  mainbussearch(device_t,  cfdata_t, const int *, void *);
+static int  mainbus_node_alloc(struct mainbus_softc *, int);
+static int  mainbus_search(device_t, cfdata_t, const int *, void *);
+static int  mainbus_print(void *, const char *);
 
-CFATTACH_DECL_NEW(mainbus, 0, mainbusmatch, mainbusattach, NULL, NULL);
+CFATTACH_DECL_NEW(mainbus, sizeof(struct mainbus_softc),
+	mainbusmatch, mainbusattach, NULL, NULL);
 
 static int mainbus_found;
 
@@ -70,21 +74,84 @@ mainbusmatch(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-static int
-mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
+static void
+mainbusattach(device_t parent, device_t self, void *aux)
 {
-	if (config_match(parent, cf, NULL) > 0)
-		config_attach(parent, cf, aux, NULL);
+	struct mainbus_softc *sc = device_private(self);
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	sc->sc_dev = self;
+	sc->sc_node_next = 0;
+	sc->sc_node_mask = 0;
+
+	mainbus_found = 1;
+
+	/*
+	 * attach mainbus devices 
+	 */
+        config_search_ia(mainbus_search, self, "mainbus", mainbus_print);
+}
+
+static int
+mainbus_print(void *aux, const char *pnp)
+{
+	struct mainbus_attach_args *ma = aux;
+
+	if (pnp != NULL)
+		aprint_normal("%s:", pnp);
+	aprint_normal(" node %d", ma->ma_node);
+
+	return (UNCONF);
+}
+
+static int
+mainbus_node_alloc(struct mainbus_softc *sc, int node)
+{
+	uint64_t bit;
+
+	if (node == MAINBUSCF_NODE_DEFAULT) {
+		for (node=sc->sc_node_next; node < 64; node++) {
+			bit = 1 << node;
+			if ((sc->sc_node_mask & bit) == 0) {
+				sc->sc_node_mask |= bit;
+				sc->sc_node_next = node + 1;
+				return node;
+			}
+		}
+		panic("%s: node mask underflow", __func__);   
+	} else {
+		if (node >= 64) 
+			panic("%s: node >= 64", __func__);   
+		if (node < 0)
+			panic("%s: bad node %d", __func__, node);   
+		bit = 1 << node;
+		if ((sc->sc_node_mask & bit) == 0) {
+			sc->sc_node_mask |= bit;
+			sc->sc_node_next = node + 1;
+			return node;
+		} else {
+			panic("%s: node %d already used\n",
+				__func__, node);
+		}
+	}
+
+	/*NOTREACHED*/
+	return -1;	/* as if */
+}
+
+static int
+mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
+{
+	struct mainbus_softc *sc = device_private(parent);
+	struct mainbus_attach_args ma;
+
+	ma.ma_node = mainbus_node_alloc(sc, cf->cf_loc[MAINBUSCF_NODE]);
+
+	if (config_match(parent, cf, &ma) > 0)
+		config_attach(parent, cf, &ma, mainbus_print);
 
 	return 0;
 }
 
-static void
-mainbusattach(device_t parent, device_t self, void *aux)
-{
-	aprint_naive("\n");
-	aprint_normal("\n");
-
-	mainbus_found = 1;
-	config_search_ia(mainbussearch, self, "mainbus", NULL);
-}

@@ -1,4 +1,4 @@
-/* 	$NetBSD: tftvar.h,v 1.2 2007/03/04 05:59:46 christos Exp $ */
+/* 	$NetBSD: tftvar.h,v 1.2.72.1 2011/06/06 09:05:33 jruoho Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -58,9 +58,6 @@ struct tft_softc {
 	/* splashscreen */
 #ifdef SPLASHSCREEN
 	struct splash_info 	sc_sp_info;
-#endif
-#ifdef SPLASHSCREEN_PROGRESS
-	struct splash_progress 	sc_sp_progress;
 #endif
 };
 

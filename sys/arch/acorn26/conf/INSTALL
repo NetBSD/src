@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.31 2010/11/23 11:13:52 hannken Exp $
+# $NetBSD: INSTALL,v 1.31.2.1 2011/06/06 09:04:38 jruoho Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -46,7 +46,8 @@ file-system	KERNFS		# /kern
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	NFSSERVER	# Sun NFS-compatible file system server
 options 	FFS_EI		# FFS endianness-independence support
 options 	WAPBL		# File system journaling support - Experimental

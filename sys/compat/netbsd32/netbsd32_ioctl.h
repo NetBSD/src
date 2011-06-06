@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.29 2010/09/24 13:12:53 njoly Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.29.2.1 2011/06/06 09:07:33 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -208,6 +208,19 @@ struct	netbsd32_ifreq {
 		} ifru_b;
 	} ifr_ifru;
 };
+
+struct netbsd32_if_addrprefreq {
+	char			ifap_name[IFNAMSIZ];
+	uint16_t		ifap_preference;
+	struct {
+		__uint8_t	ss_len;         /* address length */
+		sa_family_t	ss_family;      /* address family */
+		char		__ss_pad1[_SS_PAD1SIZE];
+		__int32_t	__ss_align[2];
+		char		__ss_pad2[_SS_PAD2SIZE];
+	} ifap_addr;
+};
+
 /* from <dev/pci/if_devar.h> */
 #define	SIOCGADDRROM32		_IOW('i', 240, struct netbsd32_ifreq)	/* get 128 bytes of ROM */
 #define	SIOCGCHIPID32		_IOWR('i', 241, struct netbsd32_ifreq)	/* get chipid */
@@ -256,6 +269,9 @@ struct	netbsd32_ifreq {
 
 #define	SIOCDIFADDR32	 _IOW('i', 25, struct netbsd32_ifreq)	/* delete IF addr */
 #define	OSIOCDIFADDR32	 _IOW('i', 25, struct netbsd32_oifreq)	/* delete IF addr */
+
+#define SIOCSIFADDRPREF32	 _IOW('i', 31, struct netbsd32_if_addrprefreq)
+#define SIOCGIFADDRPREF32	_IOWR('i', 32, struct netbsd32_if_addrprefreq)
 
 #define	SIOCADDMULTI32	 _IOW('i', 49, struct netbsd32_ifreq)	/* add m'cast addr */
 #define	OSIOCADDMULTI32	 _IOW('i', 49, struct netbsd32_oifreq)	/* add m'cast addr */
@@ -373,12 +389,6 @@ struct netbsd32_vnd_ioctl50 {
 #define VNDIOCSET5032	_IOWR('F', 0, struct netbsd32_vnd_ioctl50)
 #define VNDIOCCLR5032	_IOW('F', 1, struct netbsd32_vnd_ioctl50)
 
-struct netbsd32_plistref {
-	netbsd32_voidp	pref_plist;	/* plist data */
-	netbsd32_size_t	pref_len;	/* total length of plist data */
-};
-
 #define ENVSYS_GETDICTIONARY32	_IOWR('E', 0, struct netbsd32_plistref)
 #define ENVSYS_SETDICTIONARY32	_IOWR('E', 1, struct netbsd32_plistref)
 #define ENVSYS_REMOVEPROPS32	_IOWR('E', 2, struct netbsd32_plistref)
-

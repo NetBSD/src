@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.3 2010/11/30 13:07:29 bsh Exp $
+#	$NetBSD: NETWALKER,v 1.3.2.1 2011/06/06 09:05:24 jruoho Exp $
 #
 #	NETWALKER -- Sharp
 #
@@ -46,7 +46,8 @@ file-system	TMPFS		# memory file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support - Experimental

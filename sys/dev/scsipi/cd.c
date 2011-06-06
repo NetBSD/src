@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.302 2010/04/04 21:36:22 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.302.2.1 2011/06/06 09:08:36 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.302 2010/04/04 21:36:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.302.2.1 2011/06/06 09:08:36 jruoho Exp $");
 
 #include "rnd.h"
 
@@ -1850,7 +1850,7 @@ read_cd_capacity(struct scsipi_periph *periph, u_int *blksize, u_long *size)
 
 			/* overwrite only with a sane value */
 			if (track_start + track_size >= 100)
-				*size = track_start + track_size;
+				*size = (u_long) track_start + track_size;
 		}
 	}
 

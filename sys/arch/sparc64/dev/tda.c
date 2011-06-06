@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.3 2010/03/11 04:19:56 mrg Exp $	*/
+/*	$NetBSD: tda.c,v 1.3.8.1 2011/06/06 09:06:51 jruoho Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -88,6 +88,8 @@ tda_match(struct device *parent, struct cfdata *match, void *aux)
 	 * No need for "compatible" matching, we know exactly what
 	 * firmware calls us.
 	 */
+	if (ia->ia_name == NULL)
+		return(0);
 	return strcmp(ia->ia_name, "fan-control") == 0;
 }
 

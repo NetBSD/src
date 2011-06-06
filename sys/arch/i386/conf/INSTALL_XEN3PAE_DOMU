@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN3PAE_DOMU,v 1.5 2010/01/03 03:53:34 dholland Exp $
+# $NetBSD: INSTALL_XEN3PAE_DOMU,v 1.5.6.1 2011/06/06 09:05:47 jruoho Exp $
 #
 #	INSTALL_XEN3PAE_DOMU - Installation kernel for Xen 3/DomU with PAE.
 #
@@ -7,10 +7,10 @@
 
 include "arch/i386/conf/XEN3PAE_DOMU"
 
-#ident 		"INSTALL-$Revision: 1.5 $"
+#ident 		"INSTALL-$Revision: 1.5.6.1 $"
 
 options 	MEMORY_DISK_HOOKS
-options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
-options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=10000     # size of memory disk, in blocks
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode

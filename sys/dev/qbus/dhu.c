@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.55 2008/06/11 17:27:59 drochner Exp $	*/
+/*	$NetBSD: dhu.c,v 1.55.24.1 2011/06/06 09:08:31 jruoho Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.55 2008/06/11 17:27:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.55.24.1 2011/06/06 09:08:31 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,7 +287,8 @@ dhu_attach(device_t parent, device_t self, void *aux)
 
 	for (i = 0; i < sc->sc_lines; i++) {
 		struct tty *tp;
-		tp = sc->sc_dhu[i].dhu_tty = ttymalloc();
+
+		tp = sc->sc_dhu[i].dhu_tty = tty_alloc();
 		sc->sc_dhu[i].dhu_state = STATE_IDLE;
 		bus_dmamap_create(sc->sc_dmat, tp->t_outq.c_cn, 1,
 		    tp->t_outq.c_cn, 0, BUS_DMA_ALLOCNOW|BUS_DMA_NOWAIT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_start.S,v 1.1 2003/01/25 02:00:17 thorpej Exp $	*/
+/*	$NetBSD: brh_start.S,v 1.1.136.1 2011/06/06 09:05:23 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -35,13 +35,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pte.h>
+#include "assym.h"
 
 #include <arm/xscale/beccreg.h>
 
 #include <evbarm/adi_brh/brhreg.h>
+
+RCSID("$NetBSD: brh_start.S,v 1.1.136.1 2011/06/06 09:05:23 jruoho Exp $")
 
 	.section .start,"ax",%progbits
 
@@ -96,7 +99,7 @@ _C_LABEL(brh_start):
 	add	r0, pc, #(.Ltable - . - 8)
 	ldr	r0, [r0]			/* r0 = &l1table */
 
-	mov	r3, #(L1_S_AP(AP_KRW))
+	mov	r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
 	mov	r2, #0x100000			/* advance by 1MB */
 	mov	r1, #0x1000			/* 4096MB */
@@ -114,7 +117,7 @@ _C_LABEL(brh_start):
 	add	r0, pc, #(.Ltable - . - 8)	/* r0 = &l1table */
 	ldr	r0, [r0]
 
-	mov	r3, #(L1_S_AP(AP_KRW))
+	mov	r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
 	orr	r3, r3, #(BECC_PCI_CONF_BASE)
 	add	r0, r0, #((BRH_PCI_CONF_VBASE >> L1_S_SHIFT) * 4)
@@ -132,7 +135,7 @@ _C_LABEL(brh_start):
 	add	r0, pc, #(.Ltable - . - 8)	/* r0 = &l1table */
 	ldr	r0, [r0]
 
-	mov	r3, #(L1_S_AP(AP_KRW))
+	mov	r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
 
 	orr	r3, r3, #(BECC_REG_BASE)

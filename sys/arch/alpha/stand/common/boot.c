@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.31 2010/08/25 16:30:44 christos Exp $ */
+/* $NetBSD: boot.c,v 1.31.2.1 2011/06/06 09:04:46 jruoho Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,6 @@ main(long fd)
 	printf("\n");
 	printf("NetBSD/alpha " NETBSD_VERS " " BOOT_TYPE_NAME " Bootstrap, Revision %s\n",
 	    bootprog_rev);
-	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 	printf("\n");
 
 	/* set up the booted device descriptor */

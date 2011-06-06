@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.64 2010/03/02 21:07:21 pooka Exp $
+	$NetBSD: syscalls.master,v 1.64.4.1 2011/06/06 09:07:18 jruoho Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -278,8 +278,8 @@
 146	NOARGS		{ int|compat_43_sys||killpg(int pgid, int signum); } \
 			    okillpg
 147	NOARGS		{ int|sys||setsid(void); }
-148	NOARGS		{ int|sys||quotactl(char *path, int cmd, int uid, \
-			    void *arg); }
+148	NOARGS		{ int|compat_50_sys||quotactl(char *path, int cmd, \
+			    int uid, void *arg); }
 149	NOARGS		{ int|compat_43_sys||quota(void); } oquota
 150	NOARGS		{ int|compat_43_sys||getsockname(int fdec, void *asa, \
 			    int *alen); } ogetsockname

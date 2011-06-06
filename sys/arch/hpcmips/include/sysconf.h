@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.15 2009/12/15 06:01:43 mrg Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.15.6.1 2011/06/06 09:05:44 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -62,7 +62,7 @@ extern struct platform {
 	 *	reboot		-	reboot or powerdown
 	 *	clock		-
 	 */
-	void	(*cpu_intr)(uint32_t, uint32_t, vaddr_t, uint32_t);
+	void	(*cpu_intr)(int, vaddr_t, u_int32_t);
 	void	(*cpu_idle)(void);
 	void	(*cons_init)(void);
 	void	(*fb_init)(void **);
@@ -73,12 +73,12 @@ extern struct platform {
 
 struct platform_clock {
 	int	hz;
-	void	(*init)(struct device *);
+	void	(*init)(device_t);
 	void	*self;
 	int	start;
 };
 
-void platform_clock_attach(void *, struct platform_clock *);
+void platform_clock_attach(device_t, struct platform_clock *);
 
 #endif /* _KERNEL */
 #endif /* !_HPCMIPS_SYSCONF_H_ */

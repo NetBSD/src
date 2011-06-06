@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.4 2007/02/28 04:21:54 thorpej Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.4.72.1 2011/06/06 09:06:08 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tadpole Computer Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.4 2007/02/28 04:21:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.4.72.1 2011/06/06 09:06:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ int mips3_nwired_page;
 bool
 mips3_wired_enter_page(vaddr_t va, paddr_t pa, vsize_t pgsize)
 {
-	struct tlb tlb;
+	struct tlbmask tlb;
 	vaddr_t va0;
 	int found, index;
 
@@ -157,7 +157,7 @@ mips3_wired_enter_page(vaddr_t va, paddr_t pa, vsize_t pgsize)
 			mips3_wired_map[index].pa1) |
 		    MIPS3_PG_IOPAGE(
 			    PMAP_CCA_FOR_PA(mips3_wired_map[index].pa1));
-	MachTLBWriteIndexedVPS(MIPS3_TLB_WIRED_UPAGES + index, &tlb);
+	tlb_write_indexed(MIPS3_TLB_WIRED_UPAGES + index, &tlb);
 	return true;
 }
 

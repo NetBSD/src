@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.16 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.16.28.1 2011/06/06 09:07:50 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ struct ad1848_volume {
 };
 
 struct ad1848_softc {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.15 2008/05/14 13:29:27 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.15.26.1 2011/06/06 09:04:56 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -55,12 +55,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.15 2008/05/14 13:29:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.15.26.1 2011/06/06 09:04:56 jruoho Exp $");
 
+#define __INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kcore.h>
 #include <sys/device.h>
+#include <sys/intr.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
@@ -103,25 +106,19 @@ struct isabr_config isabr_nec_eisa_conf = {
  * This is a mask of bits to clear in the SR when we go to a
  * given interrupt priority level.
  */
-static const uint32_t nec_eisa_ipl_sr_bits[_IPL_N] = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] =
-	    MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2,
-	[IPL_SCHED] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
+static const struct ipl_sr_map nec_eisa_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1
+				| MIPS_INT_MASK_2,
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
 };
 
 int
@@ -161,7 +158,7 @@ c_nec_eisa_init(void)
 	/*
 	 * Initialize interrupt priority
 	 */
-	ipl_sr_bits = nec_eisa_ipl_sr_bits;
+	ipl_sr_map = nec_eisa_ipl_sr_map;
 
 	/*
 	 * Initialize I/O address offset

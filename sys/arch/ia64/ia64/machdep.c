@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2010/11/13 04:16:38 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27.2.1 2011/06/06 09:05:53 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -723,7 +723,7 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		kst = ksttop - 1;
 		if (((uintptr_t)kst & 0x1ff) == 0x1f8)
 			*kst-- = 0;
-		*kst-- = (uint64_t)l->l_proc->p_psstr;	/* in3 = ps_strings */
+		*kst-- = l->l_proc->p_psstrp;	/* in3 = ps_strings */
 		if (((uintptr_t)kst & 0x1ff) == 0x1f8)
 			*kst-- = 0;
 		*kst-- = 0;				/* in2 = *obj */
@@ -755,7 +755,7 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 		/* in3 = ps_strings */
 		suword((char *)tf->tf_special.bspstore - 8,
-		    (uint64_t)l->l_proc->p_psstr);
+		    l->l_proc->p_psstrp);
 
 	}
 

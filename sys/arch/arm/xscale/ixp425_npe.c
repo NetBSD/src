@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_npe.c,v 1.6 2009/10/26 19:16:55 cegger Exp $	*/
+/*	$NetBSD: ixp425_npe.c,v 1.6.6.1 2011/06/06 09:05:06 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -62,7 +62,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.6 2009/10/26 19:16:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.6.6.1 2011/06/06 09:05:06 jruoho Exp $");
 
 /*
  * Intel XScale Network Processing Engine (NPE) support.
@@ -1384,15 +1384,8 @@ ixpnpe_recvmsg_locked(struct ixpnpe_softc *sc, uint32_t msg[2])
 {
 
 	if (!sc->sc_msgwaiting) {
-#if 0
-		/*
-		 * This ltsleep() is dangerous because this function may be
-		 * called under interrupt context.
-		 */
-		ltsleep(sc, 0, "npemh", 0, &sc->sc_lock);
-#else
+		/* XXX interrupt context - cannot sleep */
 		delay(1000);	/* wait 1ms (is it ok?)*/
-#endif
 	}
 	memcpy(msg, sc->sc_msg, sizeof(sc->sc_msg));
 	/* NB: sc_msgwaiting != 1 means the ack fetch failed */

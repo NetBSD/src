@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2_intr.c,v 1.10 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: tr2_intr.c,v 1.10.28.1 2011/06/06 09:05:34 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,12 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.10 2008/04/28 20:23:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.10.28.1 2011/06/06 09:05:34 jruoho Exp $");
 
+#define	__INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/device.h>
+#include <sys/evcnt.h>
+#include <sys/cpu.h>
+#include <sys/lwp.h>
 #include <sys/intr.h>
 
 #include <machine/locore.h>	/* mips3_cp0* */
@@ -47,23 +50,24 @@ __KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.10 2008/04/28 20:23:18 martin Exp $")
 
 SBD_DECL(tr2);
 
-const uint32_t tr2_sr_bits[_IPL_N] = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_4,
-	[IPL_SCHED] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
+const struct ipl_sr_map tr2_ipl_sr_map = {
+    {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_2
+				| MIPS_INT_MASK_4,
+	[IPL_SCHED] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_2
+				| MIPS_INT_MASK_4
+				| MIPS_INT_MASK_5,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
 	/* !!! TEST !!! VME INTERRUPT IS NOT MASKED */
+    },
 };
 
 #define	NIRQ		8
@@ -139,121 +143,116 @@ tr2_intr_disestablish(void *arg)
 }
 
 void
-tr2_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+tr2_intr(int ppl, vaddr_t pc, uint32_t status)
 {
 	struct tr2_intr_handler *ih;
 	struct clockframe cf;
-	uint32_t r, handled;
+	uint32_t r, ipending;
+	int ipl;
 
-	handled = 0;
+	while (ppl < (ipl = splintr(&ipending))) {
+		if (ipending & MIPS_INT_MASK_5) {	/* CLOCK */
+			cf.pc = pc;
+			cf.sr = status;
+			cf.intr = (curcpu()->ci_idepth > 1);
 
-	if (ipending & MIPS_INT_MASK_5) {	/* CLOCK */
-		cf.pc = pc;
-		cf.sr = status;
+			*PICNIC_INT5_STATUS_REG = 0;
+			r = *PICNIC_INT5_STATUS_REG;
 
-		*PICNIC_INT5_STATUS_REG = 0;
-		r = *PICNIC_INT5_STATUS_REG;
-
-		hardclock(&cf);
-		timer_tr2_ev.ev_count++;
-		handled |= MIPS_INT_MASK_5;
-	}
-	_splset((status & handled) | MIPS_SR_INT_IE);
-
-	if (ipending & MIPS_INT_MASK_4) {	/* KBD, MOUSE, SERIAL */
-		r = *PICNIC_INT4_STATUS_REG;
-
-		if (r & PICNIC_INT_KBMS) {
-			ih = &tr2_intr_handler[0];
-			if (ih->func) {
-				ih->func(ih->arg);
-				ih->evcnt.ev_count++;
-			}
-			r &= ~PICNIC_INT_KBMS;
+			hardclock(&cf);
+			timer_tr2_ev.ev_count++;
 		}
 
-		if (r & PICNIC_INT_SERIAL) {
+		if (ipending & MIPS_INT_MASK_4) {	/* KBD, MOUSE, SERIAL */
+			r = *PICNIC_INT4_STATUS_REG;
+
+			if (r & PICNIC_INT_KBMS) {
+				ih = &tr2_intr_handler[0];
+				if (ih->func) {
+					ih->func(ih->arg);
+					ih->evcnt.ev_count++;
+				}
+				r &= ~PICNIC_INT_KBMS;
+			}
+
+			if (r & PICNIC_INT_SERIAL) {
 #if 0
-			printf("SIO interrupt\n");
+				printf("SIO interrupt\n");
 #endif
-			ih = &tr2_intr_handler[2];
-			if (ih->func) {
-				ih->func(ih->arg);
-				ih->evcnt.ev_count++;
+				ih = &tr2_intr_handler[2];
+				if (ih->func) {
+					ih->func(ih->arg);
+					ih->evcnt.ev_count++;
+				}
+				r &= ~PICNIC_INT_SERIAL;
 			}
-			r &= ~PICNIC_INT_SERIAL;
 		}
 
-		handled |= MIPS_INT_MASK_4;
-	}
-	_splset((status & handled) | MIPS_SR_INT_IE);
+		if (ipending & MIPS_INT_MASK_3) {	/* VME */
+			printf("VME interrupt\n");
 
-	if (ipending & MIPS_INT_MASK_3) {	/* VME */
-		printf("VME interrupt\n");
-
-		r = *(volatile uint32_t *)0xbfb00018; /* NABI? */
-		if ((r & 0x10) != 0) {
-			/* vme high interrupt */
-		} else if ((r & 0x4) != 0) {
-			/* vme lo interrupt */
-		} else {
-			/* error */
-		}
-	}
-
-	if (ipending & MIPS_INT_MASK_2) {	/* ETHER, SCSI */
-		r = *PICNIC_INT2_STATUS_REG;
-
-		if (r & PICNIC_INT_ETHER) {
-			ih = &tr2_intr_handler[6];
-			if (ih->func) {
-				ih->func(ih->arg);
-				ih->evcnt.ev_count++;
+			r = *(volatile uint32_t *)0xbfb00018; /* NABI? */
+			if ((r & 0x10) != 0) {
+				/* vme high interrupt */
+			} else if ((r & 0x4) != 0) {
+				/* vme lo interrupt */
+			} else {
+				/* error */
 			}
-			r &= ~PICNIC_INT_ETHER;
 		}
 
-		if (r & PICNIC_INT_SCSI) {
-			ih = &tr2_intr_handler[5];
-			if (ih->func) {
-				ih->func(ih->arg);
-				ih->evcnt.ev_count++;
+		if (ipending & MIPS_INT_MASK_2) {	/* ETHER, SCSI */
+			r = *PICNIC_INT2_STATUS_REG;
+
+			if (r & PICNIC_INT_ETHER) {
+				ih = &tr2_intr_handler[6];
+				if (ih->func) {
+					ih->func(ih->arg);
+					ih->evcnt.ev_count++;
+				}
+				r &= ~PICNIC_INT_ETHER;
 			}
-			r &= ~PICNIC_INT_SCSI;
-		}
 
-		if ((r & PICNIC_INT_FDDLPT) &&
-		    ((cause & status) & MIPS_INT_MASK_5)) {
+			if (r & PICNIC_INT_SCSI) {
+				ih = &tr2_intr_handler[5];
+				if (ih->func) {
+					ih->func(ih->arg);
+					ih->evcnt.ev_count++;
+				}
+				r &= ~PICNIC_INT_SCSI;
+			}
+
+			if ((r & PICNIC_INT_FDDLPT) &&
+			    (ipending & MIPS_INT_MASK_5)) {
 #ifdef DEBUG
-			printf("FDD LPT interrupt\n");
+				printf("FDD LPT interrupt\n");
 #endif
-			ih = &tr2_intr_handler[7];
-			if (ih->func) {
-				ih->func(ih->arg);
-				ih->evcnt.ev_count++;
+				ih = &tr2_intr_handler[7];
+				if (ih->func) {
+					ih->func(ih->arg);
+					ih->evcnt.ev_count++;
+				}
+				r &= ~PICNIC_INT_FDDLPT;
 			}
-			r &= ~PICNIC_INT_FDDLPT;
 		}
 
-		handled |= MIPS_INT_MASK_2;
-	}
-	_splset((status & handled) | MIPS_SR_INT_IE);
+		if (ipending & MIPS_INT_MASK_1)
+			panic("unknown interrupt INT1\n");
 
-	if (ipending & MIPS_INT_MASK_1)
-		panic("unknown interrupt INT1\n");
-
-	if (ipending & MIPS_INT_MASK_0) {	/* FDD, PRINTER */
-		printf("printer, printer interrupt\n");
-		r = *PICNIC_INT0_STATUS_REG;
-		if (r & PICNIC_INT_FDDLPT) {
-			printf("FDD, Printer interrupt.\n");
-		} else {
-			printf("unknown interrupt INT0\n");
+		if (ipending & MIPS_INT_MASK_0) {	/* FDD, PRINTER */
+#ifdef DEBUG
+			printf("printer, printer interrupt\n");
+#endif
+			r = *PICNIC_INT0_STATUS_REG;
+			if (r & PICNIC_INT_FDDLPT) {
+#ifdef DEBUG
+				printf("FDD, Printer interrupt.\n");
+#endif
+			} else {
+				printf("unknown interrupt INT0\n");
+			}
 		}
-		handled |= MIPS_INT_MASK_0;
 	}
-	cause &= ~handled;
-	_splset(((status & ~cause) & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 }
 
 void

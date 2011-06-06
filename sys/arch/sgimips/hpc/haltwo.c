@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.17 2009/09/24 14:09:18 tsutsui Exp $ */
+/* $NetBSD: haltwo.c,v 1.17.6.1 2011/06/06 09:06:39 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.17 2009/09/24 14:09:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.17.6.1 2011/06/06 09:06:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,11 +113,11 @@ static const struct audio_device haltwo_device = {
 	"haltwo"
 };
 
-static int  haltwo_match(struct device *, struct cfdata *, void *);
-static void haltwo_attach(struct device *, struct device *, void *);
+static int  haltwo_match(device_t, cfdata_t, void *);
+static void haltwo_attach(device_t, device_t, void *);
 static int  haltwo_intr(void *);
 
-CFATTACH_DECL(haltwo, sizeof(struct haltwo_softc),
+CFATTACH_DECL_NEW(haltwo, sizeof(struct haltwo_softc),
     haltwo_match, haltwo_attach, NULL, NULL);
 
 #define haltwo_write(sc,type,off,val) \
@@ -259,7 +259,7 @@ haltwo_setup_dma(struct haltwo_softc *sc, struct haltwo_codec *codec,
 }
 
 static int
-haltwo_match(struct device *parent, struct cfdata *cf, void *aux)
+haltwo_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hpc_attach_args *haa;
 	uint32_t rev;
@@ -269,12 +269,12 @@ haltwo_match(struct device *parent, struct cfdata *cf, void *aux)
 		return 0;
 
 	if ( platform.badaddr((void *)(vaddr_t)(haa->ha_sh + haa->ha_devoff),
-	    sizeof(u_int32_t)) )
+	    sizeof(uint32_t)) )
 		return 0;
 
 	if ( platform.badaddr(
 	    (void *)(vaddr_t)(haa->ha_sh + haa->ha_devoff + HAL2_REG_CTL_REV),
-	    sizeof(u_int32_t)) )
+	    sizeof(uint32_t)) )
 		return 0;
 
 	rev = *(uint32_t *)MIPS_PHYS_TO_KSEG1(haa->ha_sh + haa->ha_devoff +
@@ -288,14 +288,15 @@ haltwo_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-haltwo_attach(struct device *parent, struct device *self, void *aux)
+haltwo_attach(device_t parent, device_t self, void *aux)
 {
 	struct haltwo_softc *sc;
 	struct hpc_attach_args *haa;
 	uint32_t rev;
 
-	sc = (void *)self;
+	sc = device_private(self);
 	haa = aux;
+	sc->sc_dev = self;
 	sc->sc_st = haa->ha_st;
 	sc->sc_dma_tag = haa->ha_dmat;
 
@@ -356,7 +357,7 @@ haltwo_attach(struct device *parent, struct device *self, void *aux)
 	haltwo_write(sc, vol, HAL2_REG_VOL_LEFT, sc->sc_vol_left);
 	haltwo_write(sc, vol, HAL2_REG_VOL_RIGHT, sc->sc_vol_right);
 
-	audio_attach_mi(&haltwo_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&haltwo_hw_if, sc, self);
 
 	if (!pmf_device_register1(self, NULL, NULL, haltwo_shutdown))
 		aprint_error_dev(self,

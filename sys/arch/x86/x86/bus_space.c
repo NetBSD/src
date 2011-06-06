@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.32 2011/01/10 16:59:09 jruoho Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.32.2.1 2011/06/06 09:07:07 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.32 2011/01/10 16:59:09 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.32.2.1 2011/06/06 09:07:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -484,6 +484,7 @@ paddr_t
 bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
     int flags)
 {
+	paddr_t pflags = 0;
 
 	/* Can't mmap I/O space. */
 	if (x86_bus_space_is_io(t))
@@ -496,7 +497,10 @@ bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
 	 * Note we are called for each "page" in the device that
 	 * the upper layers want to map.
 	 */
-	return (x86_btop(addr + off));
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		pflags |= X86_MMAP_FLAG_PREFETCH;
+
+	return x86_btop(addr + off) | (pflags << X86_MMAP_FLAG_SHIFT);
 }
 
 void

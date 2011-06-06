@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.3 2010/11/06 17:20:07 christos Exp $	*/
+/*	$NetBSD: if_43.c,v 1.3.2.1 2011/06/06 09:07:15 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.3 2010/11/06 17:20:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.3.2.1 2011/06/06 09:07:15 jruoho Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.3 2010/11/06 17:20:07 christos Exp $");
 #include <sys/mbuf.h>		/* for MLEN */
 #include <sys/protosw.h>
 
-#include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <net/if.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.2 2009/03/26 01:52:24 mrg Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.2.14.1 2011/06/06 09:10:04 jruoho Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.2 2009/03/26 01:52:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.2.14.1 2011/06/06 09:10:04 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.2 2009/03/26 01:52:24 mrg Exp $");
 
 #include "opt_ocf.h"
 #include <opencrypto/cryptodev.h>
+#include <opencrypto/cryptodev_internal.h>
 #include <opencrypto/ocryptodev.h>
 #include <opencrypto/xform.h>
 
@@ -142,10 +143,10 @@ mbail:
 		kmem_free(osnop, osgop->count * sizeof(struct osession_n_op));
 		break;
 	case OCIOCCRYPT:
-		mutex_spin_enter(&crypto_mtx);
+		mutex_enter(&crypto_mtx);
 		ocop = (struct ocrypt_op *)data;
 		cse = cryptodev_csefind(fcr, ocop->ses);
-		mutex_spin_exit(&crypto_mtx);
+		mutex_exit(&crypto_mtx);
 		if (cse == NULL) {
 			DPRINTF(("csefind failed\n"));
 			return EINVAL;

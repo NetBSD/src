@@ -1,0 +1,38 @@
+#	$NetBSD: files.mpcore,v 1.1.6.2 2011/06/06 09:05:05 jruoho Exp $
+#
+# Configuration info for the ARM11 MPCore
+#
+
+define	bus_dma_generic
+define	bus_space_a2x
+define	bus_space_a4x
+
+file	arch/arm/mpcore/mpcore_space.c
+#file	arch/arm/imx/imx_dma.c		bus_dma_generic needs-flag
+file	arch/arm/mpcore/mpcore_a2x_space.c	bus_space_a2x needs-flag
+file	arch/arm/mpcore/mpcore_a2x_io.S  	bus_space_a2x
+file	arch/arm/mpcore/mpcore_a4x_space.c	bus_space_a4x needs-flag
+file	arch/arm/mpcore/mpcore_a4x_io.S  	bus_space_a4x
+
+# AXI/AHB bus interface and SoC domains
+device	axi { [addr=-1], [size=0], [irq=-1], [irqbase=-1]} : bus_space_generic
+attach	axi at mainbus
+file	arch/arm/mpcore/mpcore_axi.c		axi
+
+# Private Memory Region
+device mpcorepmr { [addr = -1], [irq=-1] }
+attach mpcorepmr at axi
+file   arch/arm/mpcore/mpcore_pmr.c		mpcorepmr
+
+include "arch/arm/pic/files.pic"
+
+# MPCore Distributed Interrupt Controller
+device	dic : pic
+attach	dic at mpcorepmr
+file	arch/arm/mpcore/dic.c		dic
+file	arch/arm/arm32/irq_dispatch.S
+defflag	opt_dic.h	DIC_CASCADED_IRQ
+
+device	mpcoreclk
+attach	mpcoreclk at mpcorepmr
+file	arch/arm/mpcore/mpcore_clock.c	mpcoreclk

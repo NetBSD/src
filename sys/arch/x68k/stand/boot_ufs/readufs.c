@@ -1,10 +1,10 @@
-/*	$NetBSD: readufs.c,v 1.13 2009/03/18 10:22:38 cegger Exp $	*/
+/*	$NetBSD: readufs.c,v 1.13.6.1 2011/06/06 09:07:02 jruoho Exp $	*/
 /*	from Id: readufs.c,v 1.8 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
  * Read UFS (FFS / LFS)
  *
- * Written in 1999, 2002, 2003 by ITOH Yasufumi (itohy@NetBSD.org).
+ * Written in 1999, 2002, 2003 by ITOH Yasufumi.
  * Public domain.
  *
  * Intended to be used for boot programs (first stage).

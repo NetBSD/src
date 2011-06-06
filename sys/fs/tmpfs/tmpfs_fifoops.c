@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_fifoops.c,v 1.8 2008/06/19 23:57:22 skd Exp $	*/
+/*	$NetBSD: tmpfs_fifoops.c,v 1.8.24.1 2011/06/06 09:09:24 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,15 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.8 2008/06/19 23:57:22 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.8.24.1 2011/06/06 09:09:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
 
 #include <fs/tmpfs/tmpfs.h>
 #include <fs/tmpfs/tmpfs_fifoops.h>
-
-/* --------------------------------------------------------------------- */
 
 /*
  * vnode operations vector used for fifos stored in a tmpfs file system.
@@ -93,41 +91,50 @@ const struct vnodeopv_entry_desc tmpfs_fifoop_entries[] = {
 	{ &vop_putpages_desc,		tmpfs_fifo_putpages },
 	{ NULL, NULL }
 };
-const struct vnodeopv_desc tmpfs_fifoop_opv_desc =
-	{ &tmpfs_fifoop_p, tmpfs_fifoop_entries };
 
-/* --------------------------------------------------------------------- */
+const struct vnodeopv_desc tmpfs_fifoop_opv_desc = {
+	&tmpfs_fifoop_p, tmpfs_fifoop_entries
+};
 
 int
 tmpfs_fifo_close(void *v)
 {
-	struct vnode *vp = ((struct vop_close_args *)v)->a_vp;
-
-	int error;
+	struct vop_close_args /* {
+		struct vnode	*a_vp;
+		int		a_fflag;
+		kauth_cred_t	a_cred;
+	} */ *ap = v;
+	vnode_t *vp = ap->a_vp;
 
 	tmpfs_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
-	error = VOCALL(fifo_vnodeop_p, VOFFSET(vop_close), v);
-
-	return error;
+	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_close), v);
 }
-
-/* --------------------------------------------------------------------- */
 
 int
 tmpfs_fifo_read(void *v)
 {
-	struct vnode *vp = ((struct vop_read_args *)v)->a_vp;
+	struct vop_read_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int a_ioflag;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	vnode_t *vp = ap->a_vp;
 
 	VP_TO_TMPFS_NODE(vp)->tn_status |= TMPFS_NODE_ACCESSED;
 	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_read), v);
 }
 
-/* --------------------------------------------------------------------- */
-
 int
 tmpfs_fifo_write(void *v)
 {
-	struct vnode *vp = ((struct vop_write_args *)v)->a_vp;
+	struct vop_write_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int a_ioflag;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	vnode_t *vp = ap->a_vp;
 
 	VP_TO_TMPFS_NODE(vp)->tn_status |= TMPFS_NODE_MODIFIED;
 	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), v);

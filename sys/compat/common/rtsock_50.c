@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.2 2009/01/11 02:45:47 christos Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.2.12.1 2011/06/06 09:07:15 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,40 +61,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.2 2009/01/11 02:45:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.2.12.1 2011/06/06 09:07:15 jruoho Exp $");
 
-#include "opt_inet.h"
+#include "opt_compat_netbsd.h"
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/mbuf.h>
-#include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-#include <sys/sysctl.h>
-#include <sys/kauth.h>
-#ifdef RTSOCK_DEBUG
-#include <netinet/in.h>
-#endif /* RTSOCK_DEBUG */
+#if defined(COMPAT_14) && !defined(COMPAT_50)
+#define	COMPAT_50	1	/* 1.4 needs 5.0 */
+#endif
 
-#include <net/if.h>
-#include <net/route.h>
-#include <net/raw_cb.h>
+#if defined(COMPAT_50)
+#define	COMPAT_RTSOCK
 
-#include <machine/stdarg.h>
-
-#include <compat/net/if.h>
+#include <net/rtsock.c>
 
 void
-compat_50_rt_ifmsg(struct ifnet *ifp, struct if_msghdr *ifm)
+compat_50_rt_oifmsg(struct ifnet *ifp)
 {
 	struct if_msghdr50 oifm;
 	struct mbuf *m;
 	struct rt_addrinfo info;
 
-	if (route_cb.any_count == 0)
+	if (COMPATNAME(route_info).ri_cb.any_count == 0)
 		return;
 	(void)memset(&info, 0, sizeof(info));
 	(void)memset(&oifm, 0, sizeof(oifm));
@@ -120,10 +107,10 @@ compat_50_rt_ifmsg(struct ifnet *ifp, struct if_msghdr *ifm)
 	TIMESPEC_TO_TIMEVAL(&oifm.ifm_data.ifi_lastchange,
 	    &ifp->if_data.ifi_lastchange);
 	oifm.ifm_addrs = 0;
-	m = rt_msg1(RTM_OIFINFO, &info, (void *)&oifm, sizeof(oifm));
+	m = COMPATNAME(rt_msg1)(RTM_OIFINFO, &info, (void *)&oifm, sizeof(oifm));
 	if (m == NULL)
 		return;
-	route_enqueue(m, 0);
+	COMPATNAME(route_enqueue)(m, 0);
 }
 
 int
@@ -162,3 +149,5 @@ compat_50_iflist(struct ifnet *ifp, struct rt_walkarg *w,
 	w->w_where = (char *)w->w_where + len;
 	return 0;
 }
+
+#endif /* COMPAT_50 */

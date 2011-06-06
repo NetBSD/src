@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.89 2010/08/07 09:41:19 jruoho Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.89.2.1 2011/06/06 09:07:08 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.89 2010/08/07 09:41:19 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.89.2.1 2011/06/06 09:07:08 jruoho Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -524,8 +524,10 @@ mpacpi_get_bbn(struct acpi_softc *acpi, ACPI_HANDLE handle, int *bus)
 {
 	ACPI_STATUS rv;
 	ACPI_INTEGER val;
+#if NPCHB > 0
 	pcireg_t class, dvid;
 	pcitag_t tag;
+#endif
 
 	rv = acpi_eval_integer(handle, METHOD_NAME__BBN, &val);
 	if (ACPI_SUCCESS(rv))
@@ -784,6 +786,11 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		    mpr->mpr_bus);
 
 	mpb = &mp_busses[mpr->mpr_bus];
+
+	if (mpb->mb_name != NULL)
+		printf("mpacpi: PCI bus %d int routing already done!\n",
+		    mpr->mpr_bus);
+
 	mpb->mb_intrs = NULL;
 	mpb->mb_name = "pci";
 	mpb->mb_idx = mpr->mpr_bus;

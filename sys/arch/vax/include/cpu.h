@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.91 2010/12/14 23:27:37 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.91.2.1 2011/06/06 09:06:58 jruoho Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -123,7 +123,7 @@ struct cpu_info {
 	 * Public members.
 	 */
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct device *ci_dev;		/* device struct for this cpu */
+	device_t ci_dev;		/* device struct for this cpu */
 	int ci_mtx_oldspl;		/* saved spl */
 	int ci_mtx_count;		/* negative count of mutexes */
 	int ci_cpuid;			/* h/w specific cpu id */
@@ -202,6 +202,8 @@ extern char vax_mp_tramp;
  */
 #define	IOSPSZ	((64*1024) / VAX_NBPG)	/* 64k == 128 pages */
 
+#define	LWP_PC(l)	cpu_lwp_pc(l)
+
 struct device;
 struct buf;
 struct pte;
@@ -215,6 +217,7 @@ void	cpu_boot_secondary_processors(void);
 void	cpu_send_ipi(int, int);
 void	cpu_handle_ipi(void);
 #endif
+vaddr_t	cpu_lwp_pc(struct lwp *);
 int	badaddr(volatile void *, int);
 void	dumpconf(void);
 void	dumpsys(void);

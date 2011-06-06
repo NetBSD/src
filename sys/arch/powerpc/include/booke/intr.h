@@ -1,11 +1,16 @@
-/*	$NetBSD: intr.h,v 1.1 2010/04/01 18:59:27 matt Exp $	*/
-
+/*	$NetBSD: intr.h,v 1.1.10.1 2011/06/06 09:06:28 jruoho Exp $	*/
 /*-
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Raytheon BBN Technologies Corp and Defense Advanced Research Projects
+ * Agency and which was developed by Matt Thomas of 3am Software Foundry.
+ *
+ * This material is based upon work supported by the Defense Advanced Research
+ * Projects Agency and Space and Naval Warfare Systems Center, Pacific, under
+ * Contract No. N66001-09-C-2073.
+ * Approved for Public Release, Distribution Unlimited
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,27 +49,57 @@
 #define	NIPL		8
 
 /* Interrupt sharing types. */
-#define	IST_NONE	0	/* none */
-#define	IST_EDGE	1	/* edge-triggered */
-#define	IST_LEVEL	2	/* level-triggered active-low */
+#define	IST_NONE	(NIPL+0) /* none */
+#define	IST_EDGE	(NIPL+1)	/* edge-triggered */
+#define	IST_LEVEL	(NIPL+2) /* level-triggered active-low */
 #define	IST_LEVEL_LOW	IST_LEVEL
-#define	IST_LEVEL_HIGH	3	/* level-triggered active-high */
-#define	IST_MSI		4	/* message signaling interrupt (PCI) */
-#define	IST_ONCHIP	5	/* on-chip device */
+#define	IST_LEVEL_HIGH	(NIPL+3) /* level-triggered active-high */
+#define	IST_MSI		(NIPL+4) /* message signaling interrupt (PCI) */
+#define	IST_ONCHIP	(NIPL+5) /* on-chip device */
 #ifdef __INTR_PRIVATE
-#define	IST_MSIGROUP	6	/* openpic msi groups */
-#define	IST_TIMER	7	/* openpic timers */
-#define	IST_IPI		8	/* openpic ipi */
-#define	IST_MI		9	/* openpic message */
+#define	IST_MSIGROUP	(NIPL+6) /* openpic msi groups */
+#define	IST_TIMER	(NIPL+7) /* openpic timers */
+#define	IST_IPI		(NIPL+8) /* openpic ipi */
+#define	IST_MI		(NIPL+9) /* openpic message */
+#define IST_MAX		(NIPL+10)
 #endif
+
+#define	IPI_DST_ALL	((cpuid_t)-2)
+#define	IPI_DST_NOTME	((cpuid_t)-1)
+
+#define IPI_NOMESG	0x0000
+#define IPI_HALT	0x0001
+#define IPI_XCALL	0x0002
+#define	IPI_KPREEMPT	0x0004
+#define IPI_TLB1SYNC	0x0008
+
+#define	__HAVE_FAST_SOFTINTS	1
+#define	SOFTINT_KPREEMPT	SOFTINT_COUNT
 
 #ifndef _LOCORE
 
 void 	*intr_establish(int, int, int, int (*)(void *), void *);
 void 	intr_disestablish(void *);
-int	spl0(void);
+void	intr_cpu_attach(struct cpu_info *);
+void	intr_cpu_hatch(struct cpu_info *);
+void	intr_init(void);
+const char *
+	intr_string(int, int);
+
+void	cpu_send_ipi(cpuid_t, uint32_t);
+
+void	spl0(void);
 int 	splraise(int);
 void 	splx(int);
+#ifdef __INTR_NOINLINE
+int	splhigh(void);
+int	splsched(void);
+int	splvm(void);
+int	splsoftserial(void);
+int	splsoftnet(void);
+int	splsoftbio(void);
+int	splsoftclock(void);
+#endif
 
 typedef int ipl_t;
 typedef struct {
@@ -72,12 +107,13 @@ typedef struct {
 } ipl_cookie_t;
 
 #ifdef __INTR_PRIVATE
-#include <sys/lwp.h>
 
 struct intrsw {
 	void *(*intrsw_establish)(int, int, int, int (*)(void *), void *);
 	void (*intrsw_disestablish)(void *);
-	void (*intrsw_cpu_init)(struct cpu_info *);
+	void (*intrsw_cpu_attach)(struct cpu_info *);
+	void (*intrsw_cpu_hatch)(struct cpu_info *);
+	void (*intrsw_cpu_send_ipi)(cpuid_t, uint32_t);
 	void (*intrsw_init)(void);
 	void (*intrsw_critintr)(struct trapframe *);
 	void (*intrsw_decrintr)(struct trapframe *);
@@ -85,17 +121,20 @@ struct intrsw {
 	void (*intrsw_fitintr)(struct trapframe *);
 	void (*intrsw_wdogintr)(struct trapframe *);
 	int (*intrsw_splraise)(int);
-	int (*intrsw_spl0)(void);
+	void (*intrsw_spl0)(void);
 	void (*intrsw_splx)(int);
+	const char *(*intrsw_string)(int, int);
 #ifdef __HAVE_FAST_SOFTINTS
-	void (*intrsw_softint_init_md)(lwp_t *, u_int, uintptr_t *);
+	void (*intrsw_softint_init_md)(struct lwp *, u_int, uintptr_t *);
 	void (*intrsw_softint_trigger)(uintptr_t);
 #endif
 };
 
-extern struct intrsw powerpc_intrsw;
+extern const struct intrsw *powerpc_intrsw;
+void	softint_fast_dispatch(struct lwp *, int);
 #endif /* __INTR_PRIVATE */
 
+#ifndef __INTR_NOINLINE
 static inline int 
 splhigh(void)
 {
@@ -158,6 +197,7 @@ makeiplcookie(ipl_t ipl)
 
 	return (ipl_cookie_t){._ipl = ipl};
 }
+#endif /* !__INTR_NOINLINE */
 
 #endif /* !_LOCORE */
 #endif /* !_BOOKE_INTR_H_ */

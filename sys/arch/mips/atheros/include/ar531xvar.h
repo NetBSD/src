@@ -1,4 +1,4 @@
-/* $Id: ar531xvar.h,v 1.5 2006/09/26 06:37:32 gdamore Exp $ */
+/* $Id: ar531xvar.h,v 1.5.84.1 2011/06/06 09:06:02 jruoho Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -66,7 +66,7 @@ void ar531x_cpu_intr_disestablish(void *);
 void *ar531x_misc_intr_establish(int, int (*)(void *), void *);
 void ar531x_misc_intr_disestablish(void *);
 
-void ar531x_cpuintr(uint32_t, uint32_t, uint32_t, uint32_t);
+void ar531x_cpuintr(int, vaddr_t, uint32_t);
 
 
 /*

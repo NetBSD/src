@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.16 2010/08/07 20:43:46 christos Exp $	*/
+/*	$NetBSD: u3g.c,v 1.16.2.1 2011/06/06 09:08:42 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.16 2010/08/07 20:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.16.2.1 2011/06/06 09:08:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,6 +241,9 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8781 },
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MINI5725 },
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_USB305 },
+
+	/* Toshiba */
+	{ USB_VENDOR_TOSHIBA, USB_PRODUCT_TOSHIBA_HSDPA_MODEM_EU870DT1 },
 };
 
 static int

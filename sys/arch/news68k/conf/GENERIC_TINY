@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.67 2010/11/23 11:14:03 hannken Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.67.2.1 2011/06/06 09:06:17 jruoho Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.67 $"
+#ident 		"GENERIC_TINY-$Revision: 1.67.2.1 $"
 
 maxusers	4
 
@@ -80,7 +80,8 @@ file-system	FDESC		# /dev/fd/*
 file-system	PTYFS		# /dev/pts/N support
 
 options 	NFSSERVER	# nfs server support
-#options 	QUOTA		# ffs quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# ffs endian independent support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

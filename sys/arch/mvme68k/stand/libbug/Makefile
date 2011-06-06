@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2009/12/06 13:31:16 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.15.6.1 2011/06/06 09:06:16 jruoho Exp $
 
 LIB=bug
 
@@ -22,7 +22,7 @@ libinstall::
 # separate rule for bugstart.c
 # this is build separately from rest of libbug
 bugstart.o: bugstart.s
-	${CC} -x assembler-with-cpp -traditional-cpp -nostdinc ${INCPATH} \
+	${CC} -x assembler-with-cpp -nostdinc ${INCPATH} \
 	-D_STANDALONE -c ${.IMPSRC}
 
 all realall: lib${LIB}.a

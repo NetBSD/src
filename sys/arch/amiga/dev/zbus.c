@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.62 2010/12/20 00:25:26 matt Exp $ */
+/*	$NetBSD: zbus.c,v 1.62.2.1 2011/06/06 09:04:54 jruoho Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.62 2010/12/20 00:25:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.62.2.1 2011/06/06 09:04:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -218,9 +218,9 @@ static struct preconfdata preconftab[] = {
 static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
 
-void zbusattach(struct device *, struct device *, void *);
+void zbusattach(device_t, device_t, void *);
 int zbusprint(void *, const char *);
-int zbusmatch(struct device *, struct cfdata *, void *);
+int zbusmatch(device_t, cfdata_t, void *);
 void *zbusmap(void *, u_int);
 static const char *aconflookup(int, int);
 
@@ -244,14 +244,14 @@ aconflookup(int mid, int pid)
  * mainbus driver
  */
 
-CFATTACH_DECL(zbus, sizeof(struct device),
+CFATTACH_DECL_NEW(zbus, 0,
     zbusmatch, zbusattach, NULL, NULL);
 
-static struct cfdata *early_cfdata;
+static cfdata_t early_cfdata;
 
 /*ARGSUSED*/
 int
-zbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+zbusmatch(device_t pdp, cfdata_t cfp, void *auxp)
 {
 
 	if (matchname(auxp, "zbus") == 0)
@@ -267,7 +267,7 @@ zbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * with that driver if matched else print a diag.
  */
 void
-zbusattach(struct device *pdp, struct device *dp, void *auxp)
+zbusattach(device_t pdp, device_t dp, void *auxp)
 {
 	struct zbus_args za;
 	struct preconfdata *pcp, *epcp;

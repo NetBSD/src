@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_var.h,v 1.12 2010/04/10 19:02:39 pgoyette Exp $ */
+/*	$NetBSD: dbcool_var.h,v 1.12.2.1 2011/06/06 09:07:49 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,12 +36,12 @@
 #ifndef DBCOOLVAR_H
 #define DBCOOLVAR_H
 
-/*
+#ifdef DEBUG
 #define DBCOOL_DEBUG
-*/
+#endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.12 2010/04/10 19:02:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.12.2.1 2011/06/06 09:07:49 jruoho Exp $");
 
 #include <dev/i2c/i2cvar.h>
 

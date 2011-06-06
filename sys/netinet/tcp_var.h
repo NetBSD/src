@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.162 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.162.6.1 2011/06/06 09:09:57 jruoho Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -191,6 +191,12 @@ struct tcpcb {
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
 	uint32_t t_rxtcur;		/* current retransmit value */
 	short	t_dupacks;		/* consecutive dup acks recd */
+	/*
+	 * t_partialacks:
+	 *	<0	not in fast recovery.
+	 *	==0	in fast recovery.  has not received partial acks
+	 *	>0	in fast recovery.  has received partial acks
+	 */
 	short	t_partialacks;		/* partials acks during fast rexmit */
 	u_short	t_peermss;		/* peer's maximum segment size */
 	u_short	t_ourmss;		/* our's maximum segment size */
@@ -233,8 +239,18 @@ struct tcpcb {
 	tcp_seq	snd_wl2;		/* window update seg ack number */
 	tcp_seq	iss;			/* initial send sequence number */
 	u_long	snd_wnd;		/* send window */
-	tcp_seq snd_recover;		/* for use in fast recovery */
-	tcp_seq	snd_high;		/* NewReno false fast rexmit seq */
+/*
+ * snd_recover
+ * 	it's basically same as the "recover" variable in RFC 2852 (NewReno).
+ * 	when entering fast retransmit, it's set to snd_max.
+ * 	newreno uses this to detect partial ack.
+ * snd_high
+ * 	it's basically same as the "send_high" variable in RFC 2852 (NewReno).
+ * 	on each RTO, it's set to snd_max.
+ * 	newreno uses this to avoid false fast retransmits.
+ */
+	tcp_seq snd_recover;
+	tcp_seq	snd_high;
 /* receive sequence variables */
 	u_long	rcv_wnd;		/* receive window */
 	tcp_seq	rcv_nxt;		/* receive next */
@@ -245,10 +261,16 @@ struct tcpcb {
  */
 /* receive variables */
 	tcp_seq	rcv_adv;		/* advertised window */
-/* retransmit variables */
-	tcp_seq	snd_max;		/* highest sequence number sent;
-					 * used to recognize retransmits
-					 */
+
+/*
+ * retransmit variables
+ *
+ * snd_max
+ * 	the highest sequence number we've ever sent.
+ *	used to recognize retransmits.
+ */
+	tcp_seq	snd_max;
+
 /* congestion control (for slow start, source quench, retransmit after loss) */
 	u_long	snd_cwnd;		/* congestion-controlled window */
 	u_long	snd_ssthresh;		/* snd_cwnd size threshhold for
@@ -336,6 +358,7 @@ struct tcpcb {
 	u_int	t_keepcnt;
 	u_int	t_maxidle;		/* t_keepcnt * t_keepintvl */
 
+	u_int	t_msl;			/* MSL to use for this connexion */
 };
 
 /*
@@ -524,19 +547,48 @@ struct syn_cache_head {
 #endif
 
 /*
- * The smoothed round-trip time and estimated variance
- * are stored as fixed point numbers scaled by the values below.
- * For convenience, these scales are also used in smoothing the average
- * (smoothed = (1/scale)sample + ((scale-1)/scale)smoothed).
- * With these scales, srtt has 3 bits to the right of the binary point,
- * and thus an "ALPHA" of 0.875.  rttvar has 2 bits to the right of the
- * binary point, and is smoothed with an ALPHA of 0.75.
+ * See RFC2988 for a discussion of RTO calculation; comments assume
+ * familiarity with that document.
+ *
+ * The smoothed round-trip time and estimated variance are stored as
+ * fixed point numbers.  Historically, srtt was scaled by
+ * TCP_RTT_SHIFT bits, and rttvar by TCP_RTTVAR_SHIFT bits.  Because
+ * the values coincide with the alpha and beta parameters suggested
+ * for RTO calculation (1/8 for srtt, 1/4 for rttvar), the combination
+ * of computing 1/8 of the new value and transforming it to the
+ * fixed-point representation required zero instructions.  However,
+ * the storage representations no longer coincide with the alpha/beta
+ * shifts; instead, more fractional bits are present.
+ *
+ * The storage representation of srtt is 1/32 slow ticks, or 1/64 s.
+ * (The assumption that a slow tick is 500 ms should not be present in
+ * the code.)
+ *
+ * The storage representation of rttvar is 1/16 slow ticks, or 1/32 s.
+ * There may be some confusion about this in the code.
+ *
+ * For historical reasons, these scales are also used in smoothing the
+ * average (smoothed = (1/scale)sample + ((scale-1)/scale)smoothed).
+ * This results in alpha of 0.125 and beta of 0.25, following RFC2988
+ * section 2.3
+ *
+ * XXX Change SHIFT values to LGWEIGHT and REP_SHIFT, and adjust
+ * the code to use the correct ones.
  */
 #define	TCP_RTT_SHIFT		3	/* shift for srtt; 3 bits frac. */
 #define	TCP_RTTVAR_SHIFT	2	/* multiplier for rttvar; 2 bits */
 
 /*
- * The initial retransmission should happen at rtt + 4 * rttvar.
+ * Compute TCP retransmission timer, following RFC2988.
+ * This macro returns a value in slow timeout ticks.
+ *
+ * Section 2.2 requires that the RTO value be
+ *  srtt + max(G, 4*RTTVAR)
+ * where G is the clock granularity.
+ *
+ * This comment has not necessarily been updated for the new storage
+ * representation:
+ *
  * Because of the way we do the smoothing, srtt and rttvar
  * will each average +1/2 tick of bias.  When we compute
  * the retransmit timer, we want 1/2 tick of rounding and
@@ -547,6 +599,11 @@ struct syn_cache_head {
  * the minimum feasible timer (which is 2 ticks).
  * This macro assumes that the value of 1<<TCP_RTTVAR_SHIFT
  * is the same as the multiplier for rttvar.
+ *
+ * This macro appears to be wrong; it should be checking rttvar*4 in
+ * ticks and making sure we use 1 instead if rttvar*4 rounds to 0.  It
+ * appears to be treating srtt as being in the old storage
+ * representation, resulting in a factor of 4 extra.
  */
 #define	TCP_REXMTVAL(tp) \
 	((((tp)->t_srtt >> TCP_RTT_SHIFT) + (tp)->t_rttvar) >> 2)
@@ -758,6 +815,17 @@ extern int tcp_sack_globalholes;	/* Number of holes present. */
 extern int tcp_do_abc;			/* RFC3465 ABC enabled/disabled? */
 extern int tcp_abc_aggressive;		/* 1: L=2*SMSS  0: L=1*SMSS */
 
+extern int tcp_msl_enable;		/* enable TIME_WAIT truncation	*/
+extern int tcp_msl_loop;		/* MSL for loopback		*/
+extern int tcp_msl_local;		/* MSL for 'local'		*/
+extern int tcp_msl_remote;		/* MSL otherwise		*/
+extern int tcp_msl_remote_threshold;	/* RTT threshold		*/
+extern int tcp_rttlocal;		/* Use RTT to decide who's 'local' */
+extern int tcp4_vtw_enable;
+extern int tcp6_vtw_enable;
+extern int tcp_vtw_was_enabled;
+extern int tcp_vtw_entries;
+
 extern	int tcp_rst_ppslim;
 extern	int tcp_ackdrop_ppslim;
 
@@ -837,6 +905,7 @@ int	 tcp_signature(struct mbuf *, struct tcphdr *, int, struct secasvar *,
 	    char *);
 #endif
 void	 tcp_drain(void);
+void	 tcp_drainstub(void);
 void	 tcp_established(struct tcpcb *);
 void	 tcp_init(void);
 #ifdef INET6
@@ -876,6 +945,7 @@ int	 tcp_signature_compute(struct mbuf *, struct tcphdr *, int, int,
 	    int, u_char *, u_int);
 #endif
 void	 tcp_slowtimo(void);
+void	 tcp_fasttimo(void);
 struct mbuf *
 	 tcp_template(struct tcpcb *);
 void	 tcp_trace(short, short, struct tcpcb *, struct mbuf *, int);

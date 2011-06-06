@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2010/05/27 06:58:14 dholland Exp $
+#	$NetBSD: Makefile,v 1.50.2.1 2011/06/06 09:06:00 jruoho Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -29,9 +29,9 @@ NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
 
-.if !defined(FIXCOFF)
 .include <bsd.own.mk>
 
+.if !defined(FIXCOFF)
 .if !defined(TOOL_MACPPCFIXCOFF)
 TOOL_MACPPCFIXCOFFDIR!=	cd ${.CURDIR}/../fixcoff && ${PRINTOBJDIR}
 TOOL_MACPPCFIXCOFF=	${TOOL_MACPPCFIXCOFFDIR}/fixcoff
@@ -77,7 +77,8 @@ cleanlibdir:
 
 .PHONY: vers.c
 vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "macppc" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version "macppc" ${NEWVERSWHAT}
 
 all realall: ${PROG} ${PROG}.xcf ${PROG}.elf
 

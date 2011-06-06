@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.17 2011/01/02 10:43:18 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.17.2.1 2011/06/06 09:06:51 jruoho Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -66,11 +66,11 @@ int schizo_debug = 0x0;
 
 extern struct sparc_pci_chipset _sparc_pci_chipset;
 
-static	int	schizo_match(struct device *, struct cfdata *, void *);
-static	void	schizo_attach(struct device *, struct device *, void *);
+static	int	schizo_match(device_t, cfdata_t, void *);
+static	void	schizo_attach(device_t, device_t, void *);
 static	int	schizo_print(void *aux, const char *p);
 
-CFATTACH_DECL(schizo, sizeof(struct schizo_softc),
+CFATTACH_DECL_NEW(schizo, sizeof(struct schizo_softc),
     schizo_match, schizo_attach, NULL, NULL);
 
 void schizo_init_iommu(struct schizo_softc *, struct schizo_pbm *);
@@ -100,14 +100,15 @@ static paddr_t schizo_bus_mmap(bus_space_tag_t t, bus_addr_t paddr,
                                off_t off, int prot, int flags);
 static void *schizo_intr_establish(bus_space_tag_t, int, int, int (*)(void *),
 	void *, void(*)(void));
-static int schizo_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int schizo_pci_intr_map(const struct pci_attach_args *,
+    pci_intr_handle_t *);
 static void *schizo_pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
                                        int, int (*)(void *), void *);
 static int schizo_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	bus_size_t, int, bus_dmamap_t *);
 
 int
-schizo_match(struct device *parent, struct cfdata *match, void *aux)
+schizo_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	char *str;
@@ -133,7 +134,7 @@ schizo_match(struct device *parent, struct cfdata *match, void *aux)
 void
 schizo_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct schizo_softc *sc = (struct schizo_softc *)self;
+	struct schizo_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	struct schizo_pbm *pbm;
 	struct iommu_state *is;
@@ -147,7 +148,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	str = prom_getpropstring(ma->ma_node, "compatible");
 	if (strcmp(str, "pci108e,a801") == 0)
 		sc->sc_tomatillo = 1;
-
+	sc->sc_dev = self;
 	sc->sc_node = ma->ma_node;
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bustag = ma->ma_bustag;
@@ -216,7 +217,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	pbm->sp_sb.sb_is = is;
 	no_sc = prom_getproplen(sc->sc_node, "no-streaming-cache") >= 0;
 	if (no_sc)
-		aprint_debug("%s: no streaming buffers\n", sc->sc_dv.dv_xname);
+		aprint_debug_dev(sc->sc_dev, "no streaming buffers\n");
 	else {
 		vaddr_t va = (vaddr_t)&pbm->sp_flush[0x40];
 
@@ -233,15 +234,15 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 			sizeof(struct iommu_strbuf), &is->is_sb[0]->sb_sb);
 	}
 
-	aprint_normal("%s: ", sc->sc_dv.dv_xname);
+	aprint_normal_dev(sc->sc_dev, " ");
 	schizo_init_iommu(sc, pbm);
 
 	pbm->sp_memt = schizo_alloc_mem_tag(pbm);
 	pbm->sp_iot = schizo_alloc_io_tag(pbm);
 	pbm->sp_cfgt = schizo_alloc_config_tag(pbm);
 	pbm->sp_dmat = schizo_alloc_dma_tag(pbm);
-	pbm->sp_flags = (pbm->sp_memt ? PCI_FLAGS_MEM_ENABLED : 0) |
-		        (pbm->sp_iot ? PCI_FLAGS_IO_ENABLED : 0);
+	pbm->sp_flags = (pbm->sp_memt ? PCI_FLAGS_MEM_OKAY : 0) |
+		        (pbm->sp_iot ? PCI_FLAGS_IO_OKAY : 0);
 
 	if (bus_space_map(pbm->sp_cfgt, 0, 0x1000000, 0, &pbm->sp_cfgh))
 		panic("schizo: could not map config space");
@@ -299,23 +300,22 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_safari_error, sc,
 	    SCZ_SERR_INO, "safari");
 
-#if 0
 	if (sc->sc_tomatillo) {
 		/*
-		 * We should enable the IOCACHE here.
+		 * Enable the IOCACHE.
 		 */
 		uint64_t iocache_csr;
-		char bits[128];
 
-		iocache_csr = schizo_pbm_read(pbm, SCZ_PCI_IOCACHE_CSR);
+		iocache_csr = TOM_IOCACHE_CSR_WRT_PEN |
+			      (1 << TOM_IOCACHE_CSR_POFFSET_SHIFT) |
+			      TOM_IOCACHE_CSR_PEN_RDM |
+			      TOM_IOCACHE_CSR_PEN_ONE |
+			      TOM_IOCACHE_CSR_PEN_LINE;
 
-		snprintb(bits, sizeof(bits), TOM_IOCACHE_CSR_BITS, iocache_csr);
-		printf("IOCACHE_CSR=%s\n", bits);
-		printf("IOCACHE_CSR=%" PRIx64 "\n", iocache_csr);
+		schizo_pbm_write(pbm, SCZ_PCI_IOCACHE_CSR, iocache_csr);
 	}
-#endif
 
-	config_found(&sc->sc_dv, &pba, schizo_print);
+	config_found(sc->sc_dev, &pba, schizo_print);
 }
 
 int
@@ -323,7 +323,7 @@ schizo_ue(void *vsc)
 {
 	struct schizo_softc *sc = vsc;
 
-	panic("%s: uncorrectable error", sc->sc_dv.dv_xname);
+	panic("%s: uncorrectable error", device_xname(sc->sc_dev));
 	return (1);
 }
 
@@ -332,7 +332,7 @@ schizo_ce(void *vsc)
 {
 	struct schizo_softc *sc = vsc;
 
-	panic("%s: correctable error", sc->sc_dv.dv_xname);
+	panic("%s: correctable error", device_xname(sc->sc_dev));
 	return (1);
 }
 
@@ -350,7 +350,7 @@ schizo_pci_error(void *vpbm)
 	ctrl = schizo_pbm_read(sp, SCZ_PCI_CTRL);
 	csr = schizo_cfg_read(sp, PCI_COMMAND_STATUS_REG);
 
-	printf("%s: pci bus %c error\n", sc->sc_dv.dv_xname,
+	printf("%s: pci bus %c error\n", device_xname(sc->sc_dev),
 	    sp->sp_bus_a ? 'A' : 'B');
 
 	snprintb(bits, sizeof(bits), SCZ_PCIAFSR_BITS, afsr);
@@ -386,7 +386,7 @@ schizo_pci_error(void *vpbm)
 		}
 	}
 
-	panic("%s: fatal", sc->sc_dv.dv_xname);
+	panic("%s: fatal", device_xname(sc->sc_dev));
 
  clear_error:
 	schizo_cfg_write(sp, PCI_COMMAND_STATUS_REG, csr);
@@ -400,7 +400,7 @@ schizo_safari_error(void *vsc)
 {
 	struct schizo_softc *sc = vsc;
 
-	printf("%s: safari error\n", sc->sc_dv.dv_xname);
+	printf("%s: safari error\n", device_xname(sc->sc_dev));
 
 	printf("ERRLOG=%" PRIx64 "\n", schizo_read(sc, SCZ_SAFARI_ERRLOG));
 	printf("UE_AFSR=%" PRIx64 "\n", schizo_read(sc, SCZ_UE_AFSR));
@@ -408,7 +408,7 @@ schizo_safari_error(void *vsc)
 	printf("CE_AFSR=%" PRIx64 "\n", schizo_read(sc, SCZ_CE_AFSR));
 	printf("CE_AFAR=%" PRIx64 "\n", schizo_read(sc, SCZ_CE_AFAR));
 
-	panic("%s: fatal", sc->sc_dv.dv_xname);
+	panic("%s: fatal", device_xname(sc->sc_dev));
 	return (1);
 }
 
@@ -424,7 +424,7 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 	is->is_bustag = pbm->sp_regt;
 	bus_space_subregion(is->is_bustag, pbm->sp_regh,
 		offsetof(struct schizo_pbm_regs, iommu),
-		sizeof(struct schizo_iommureg),
+		sizeof(struct iommureg2),
 		&is->is_iommu);
 
 	/*
@@ -455,7 +455,7 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
 	if (name == NULL)
 		panic("couldn't malloc iommu name");
-	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
+	snprintf(name, 32, "%s dvma", device_xname(sc->sc_dev));
 
 	iommu_init(name, is, tsbsize, iobase);
 }
@@ -721,7 +721,7 @@ schizo_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
  * Set the IGN for this schizo into the handle.
  */
 int
-schizo_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+schizo_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct schizo_pbm *pbm = pa->pa_pc->cookie;
 	struct schizo_softc *sc = pbm->sp_sc;

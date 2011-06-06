@@ -1,4 +1,4 @@
-/* $NetBSD: macekbc.c,v 1.4 2008/05/05 00:19:33 jmcneill Exp $ */
+/* $NetBSD: macekbc.c,v 1.4.28.1 2011/06/06 09:06:41 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.4 2008/05/05 00:19:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.4.28.1 2011/06/06 09:06:41 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -159,7 +159,7 @@ macekbc_attach(struct device *parent, struct device *self, void *aux)
 	macekbc_reset(t, PCKBPORT_KBD_SLOT);
 	macekbc_reset(t, PCKBPORT_AUX_SLOT);
 
-	consdev = ARCBIOS->GetEnvironmentVariable("ConsoleIn");
+	consdev = arcbios_GetEnvironmentVariable("ConsoleIn");
 	if (consdev != NULL && strcmp(consdev, "keyboard()") == 0)
 		pckbport_cnattach(t, &macekbc_ops, PCKBPORT_KBD_SLOT);
 

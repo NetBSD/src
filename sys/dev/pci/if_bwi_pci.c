@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.10 2010/10/09 19:46:15 phx Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.10.2.1 2011/06/06 09:08:12 jruoho Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.10 2010/10/09 19:46:15 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.10.2.1 2011/06/06 09:08:12 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.10 2010/10/09 19:46:15 phx Exp $");
 #include <sys/sockio.h>
 #include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

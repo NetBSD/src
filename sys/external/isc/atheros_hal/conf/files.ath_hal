@@ -1,4 +1,4 @@
-#	$NetBSD: files.ath_hal,v 1.1 2008/12/11 14:11:43 alc Exp $
+#	$NetBSD: files.ath_hal,v 1.1.18.1 2011/06/06 09:09:16 jruoho Exp $
 
 defflag opt_athhal.h	ATHHAL_ASSERT ATHHAL_DEBUG ATHHAL_DEBUG_ALQ
 defflag opt_athhal.h	ATHHAL_WRITE_EEPROM ATHHAL_WRITE_REGDOMAIN
@@ -6,11 +6,13 @@ defflag opt_athhal.h	ATHHAL_WRITE_EEPROM ATHHAL_WRITE_REGDOMAIN
 define athhal_eeprom_v1
 define athhal_eeprom_v3
 define athhal_eeprom_v14
+define athhal_eeprom_v4k
 
 file	external/isc/atheros_hal/dist/ah.c		ath
 file	external/isc/atheros_hal/dist/ah_eeprom_v1.c	ath & athhal_eeprom_v1
 file	external/isc/atheros_hal/dist/ah_eeprom_v3.c	ath & athhal_eeprom_v3
 file	external/isc/atheros_hal/dist/ah_eeprom_v14.c	ath & athhal_eeprom_v14
+file	external/isc/atheros_hal/dist/ah_eeprom_v4k.c	ath & athhal_eeprom_v4k
 file	external/isc/atheros_hal/dist/ah_regdomain.c	ath
 
 # Atheros HAL's OS dependant code
@@ -109,8 +111,9 @@ file	external/isc/atheros_hal/dist/ar5312/ar5315_gpio.c	ath & (athhal_ar2316 | a
 
 # Atheros AR5416 family
 #
-defflag opt_athhal.h	ATHHAL_AR5416: athhal_eeprom_v14, athhal_ar5212_subr
+defflag opt_athhal.h	ATHHAL_AR5416: athhal_eeprom_v14, athhal_eeprom_v4k, athhal_ar5212_subr
 defflag opt_athhal.h	ATHHAL_AR9280: ATHHAL_AR5416
+defflag opt_athhal.h	ATHHAL_AR9285: ATHHAL_AR5416
 
 file	external/isc/atheros_hal/dist/ar5416/ar2133.c		ath & athhal_ar5416
 file	external/isc/atheros_hal/dist/ar5416/ar5416_ani.c	ath & athhal_ar5416
@@ -131,6 +134,11 @@ file	external/isc/atheros_hal/dist/ar5416/ar5416_recv.c	ath & athhal_ar5416
 file	external/isc/atheros_hal/dist/ar5416/ar5416_reset.c	ath & athhal_ar5416
 file	external/isc/atheros_hal/dist/ar5416/ar5416_xmit.c	ath & athhal_ar5416
 file	external/isc/atheros_hal/dist/ar5416/ar9160_attach.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar9280.c		ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar9280_attach.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar9285.c		ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar9285_attach.c	ath & athhal_ar5416
+file	external/isc/atheros_hal/dist/ar5416/ar9285_reset.c	ath & athhal_ar5416
 
 #
 #

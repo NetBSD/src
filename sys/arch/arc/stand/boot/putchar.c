@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.3 2008/04/28 20:23:13 martin Exp $	 */
+/*	$NetBSD: putchar.c,v 1.3.28.1 2011/06/06 09:05:00 jruoho Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -32,8 +32,6 @@
 #include <lib/libsa/stand.h>
 #include <dev/arcbios/arcbios.h>
 
-extern const struct arcbios_fv *ARCBIOS;
-
 void
 putchar(int c)
 {
@@ -42,9 +40,9 @@ putchar(int c)
 
 	if (c == '\n') {
 		ch = '\r';
-		(*ARCBIOS->Write)(1, &ch, 1, &count);
+		arcbios_Write(1, &ch, 1, &count);
 	}
 
 	ch = c;
-	(*ARCBIOS->Write)(1, &ch, 1, &count);
+	arcbios_Write(1, &ch, 1, &count);
 }

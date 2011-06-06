@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.18 2009/03/14 21:04:05 dsl Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.18.6.1 2011/06/06 09:05:02 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.18 2009/03/14 21:04:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.18.6.1 2011/06/06 09:05:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ void		footbridge_pci_decompose_tag(void *, pcitag_t, int *,
 pcireg_t	footbridge_pci_conf_read(void *, pcitag_t, int);
 void		footbridge_pci_conf_write(void *, pcitag_t, int,
 		    pcireg_t);
-int		footbridge_pci_intr_map(struct pci_attach_args *,
+int		footbridge_pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 const char	*footbridge_pci_intr_string(void *, pci_intr_handle_t);
 void		*footbridge_pci_intr_establish(void *, pci_intr_handle_t,
@@ -233,7 +233,8 @@ footbridge_pci_conf_write(void *pcv, pcitag_t tag, int reg, pcireg_t data)
 }
 
 int
-footbridge_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+footbridge_pci_intr_map(const struct pci_attach_args *pa,
+    pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin, line = pa->pa_intrline;
 	int intr = -1;

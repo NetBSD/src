@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 2010/02/08 19:02:27 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109.4.1 2011/06/06 09:05:13 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2010/02/08 19:02:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109.4.1 2011/06/06 09:05:13 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -125,16 +125,10 @@ static const char * const cobalt_model[] =
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void	mach_init(intptr_t, u_int, int32_t);
+void	mach_init(int32_t, u_int, int32_t);
 void	decode_bootstring(void);
 static char *strtok_light(char *, const char);
 static u_int read_board_id(void);
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait during
- * autoconfiguration or after a panic.  Used as an argument to splx().
- */
-int	safepri = MIPS1_PSL_LOWIPL;
 
 extern char *esym;
 
@@ -142,10 +136,11 @@ extern char *esym;
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(intptr_t memsize, u_int bim, int32_t bip32)
+mach_init(int32_t memsize32, u_int bim, int32_t bip32)
 {
-	void *bip = (void *)(intptr_t)bip32;
+	intptr_t memsize = (int32_t)memsize32;
 	char *kernend;
+	char *bip = (char *)(intptr_t)(int32_t)bip32;
 	u_long first, last;
 	extern char edata[], end[];
 	const char *bi_msg;
@@ -183,15 +178,14 @@ mach_init(intptr_t memsize, u_int bim, int32_t bip32)
 		 */
 		memset(edata, 0, kernend - edata);
 
-		/*
-		 * XXX
-		 * lwp0 and cpu_info_store are allocated in BSS
-		 * and initialized before mach_init() is called,
-		 * so restore them again.
-		 */
-		lwp0.l_cpu = &cpu_info_store;
-		cpu_info_store.ci_curlwp = &lwp0;
 	}
+
+	/*
+	 * Copy exception-dispatch code down to exception vector.
+	 * Initialize locore-function vector.
+	 * Clear out the I and D caches.
+	 */
+	mips_vector_init(NULL, false);
 
 	/* Check for valid bootinfo passed from bootstrap */
 	if (bim == BOOTINFO_MAGIC) {
@@ -260,17 +254,11 @@ mach_init(intptr_t memsize, u_int bim, int32_t bip32)
 
 	consinit();
 
+	KASSERT(&lwp0 == curlwp);
 	if (bi_msg != NULL)
-		printf("%s: magic=%#x\n", bi_msg, bim);
+		printf("%s: magic=%#x bip=%p\n", bi_msg, bim, bip);
 
 	uvm_setpagesize();
-
-	/*
-	 * Copy exception-dispatch code down to exception vector.
-	 * Initialize locore-function vector.
-	 * Clear out the I and D caches.
-	 */
-	mips_vector_init();
 
 	/*
 	 * The boot command is passed in the top 512 bytes,
@@ -291,6 +279,7 @@ mach_init(intptr_t memsize, u_int bim, int32_t bip32)
 	if ((bi_syms != NULL) && (esym != NULL))
 		ksyms_addsyms_elf(esym - ssym, ssym, esym);
 #endif
+	KASSERT(&lwp0 == curlwp);
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -315,6 +304,9 @@ mach_init(intptr_t memsize, u_int bim, int32_t bip32)
 
 	pmap_bootstrap();
 
+	/*
+	 * Allocate space for proc0's USPACE.
+	 */
 	mips_init_lwp0_uarea();
 }
 
@@ -359,8 +351,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curlwp)
-		savectx(curpcb);
+	savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -516,7 +507,7 @@ lookup_bootinfo(unsigned int type)
 			return (void *)help;
 		help += bt->next;
 	} while (bt->next != 0 &&
-	    (size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
+	    (uintptr_t)help < (uintptr_t)bootinfo + BOOTINFO_SIZE);
 
 	return NULL;
 }

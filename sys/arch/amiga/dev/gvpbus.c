@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.24 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: gvpbus.c,v 1.24.6.1 2011/06/06 09:04:53 jruoho Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpbus.c,v 1.24 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpbus.c,v 1.24.6.1 2011/06/06 09:04:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,17 +40,17 @@ __KERNEL_RCSID(0, "$NetBSD: gvpbus.c,v 1.24 2009/10/26 19:16:54 cegger Exp $");
 #include <amiga/dev/zbusvar.h>
 #include <amiga/dev/gvpbusvar.h>
 
-void gvpbusattach(struct device *, struct device *, void *);
-int gvpbusmatch(struct device *, struct cfdata *, void *);
+void gvpbusattach(device_t, device_t, void *);
+int gvpbusmatch(device_t, cfdata_t, void *);
 int gvpbusprint(void *auxp, const char *);
 
 extern int sbic_no_dma;		/* Kludge for A1291 - mlh */
 
-CFATTACH_DECL(gvpbus, sizeof(struct device),
+CFATTACH_DECL_NEW(gvpbus, 0,
     gvpbusmatch, gvpbusattach, NULL, NULL);
 
 int
-gvpbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+gvpbusmatch(device_t pdp, cfdata_t cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -69,7 +69,7 @@ gvpbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-gvpbusattach(struct device *pdp, struct device *dp, void *auxp)
+gvpbusattach(device_t pdp, device_t dp, void *auxp)
 {
 	struct zbus_args *zap;
 	struct gvpbus_args ga;

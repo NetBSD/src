@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.19 2009/03/14 14:45:55 dsl Exp $ */
+/*	$NetBSD: epcom.c,v 1.19.6.1 2011/06/06 09:05:02 jruoho Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.19 2009/03/14 14:45:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.19.6.1 2011/06/06 09:05:02 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -201,7 +201,7 @@ epcom_attach_subr(struct epcom_softc *sc)
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
 	}
 
-	tp = ttymalloc();
+	tp = tty_alloc();
 	tp->t_oproc = epcomstart;
 	tp->t_param = epcomparam;
 	tp->t_hwiflow = epcomhwiflow;

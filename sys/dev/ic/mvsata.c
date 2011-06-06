@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.6 2010/07/13 12:57:22 kiyohara Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.6.2.1 2011/06/06 09:07:54 jruoho Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.6 2010/07/13 12:57:22 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.6.2.1 2011/06/06 09:07:54 jruoho Exp $");
 
 #include "opt_mvsata.h"
 
@@ -492,9 +492,9 @@ mvsata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_xfer *xfer;
 
-	DPRINTFN(1, ("%s:%d: mvsata_bio: drive=%d, blkno=%lld, bcount=%ld\n",
-	    device_xname(atac->atac_dev), chp->ch_channel, drvp->drive,
-	    ata_bio->blkno, ata_bio->bcount));
+	DPRINTFN(1, ("%s:%d: mvsata_bio: drive=%d, blkno=%" PRId64
+	    ", bcount=%ld\n", device_xname(atac->atac_dev), chp->ch_channel,
+	    drvp->drive, ata_bio->blkno, ata_bio->bcount));
 
 	xfer = ata_get_xfer(ATAXF_NOSLEEP);
 	if (xfer == NULL)
@@ -575,7 +575,7 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 		    mvport->port_sata_scontrol, mvport->port_sata_sstatus);
 	}
 
-	for (i = 0; MVSATA_EDMAQ_LEN; i++) {
+	for (i = 0; i < MVSATA_EDMAQ_LEN; i++) {
 		xfer = mvport->port_reqtbl[i].xfer;
 		if (xfer == NULL)
 			continue;
@@ -2330,7 +2330,7 @@ mvsata_edma_inqueue(struct mvsata_port *mvport, struct ata_bio *ata_bio,
 	int quetag, erqqip, erqqop, next, rv, i;
 
 	DPRINTFN(2, ("%s:%d:%d: mvsata_edma_inqueue:"
-	    " blkno=0x%llx, nbytes=%d, flags=0x%x\n",
+	    " blkno=0x%" PRIx64 ", nbytes=%d, flags=0x%x\n",
 	    device_xname(MVSATA_DEV2(mvport)), mvport->port_hc->hc,
 	    mvport->port, ata_bio->blkno, ata_bio->nbytes, ata_bio->flags));
 

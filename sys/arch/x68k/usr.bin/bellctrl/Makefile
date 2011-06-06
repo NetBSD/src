@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/12/12 01:49:59 tv Exp $
+#	$NetBSD: Makefile,v 1.8.150.1 2011/06/06 09:07:04 jruoho Exp $
 #
 # Makefile for bellctrl
 

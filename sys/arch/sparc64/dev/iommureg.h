@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.15 2008/12/07 08:56:10 mrg Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.15.10.1 2011/06/06 09:06:49 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,11 +48,26 @@
  * controllers.
  */
 
-/* iommmu registers */
+/*
+ * iommu registers - keep iommureg2 aligned with iommureg, so we can always
+ * use offsetof on iommureg2, regardless of the controller.
+ */
 struct iommureg {
-	uint64_t	iommu_cr;	/* IOMMU control register */
-	uint64_t	iommu_tsb;	/* IOMMU TSB base register */
-	uint64_t	iommu_flush;	/* IOMMU flush register */
+	volatile uint64_t	iommu_cr;	/* IOMMU control register */
+	volatile uint64_t	iommu_tsb;	/* IOMMU TSB base register */
+	volatile uint64_t	iommu_flush;	/* IOMMU flush register */
+};
+
+/* iommu registers for schizo and newer controllers.  */
+struct iommureg2 {
+	volatile uint64_t	iommu_cr;	/* IOMMU control register */
+	volatile uint64_t	iommu_tsb;	/* IOMMU TSB base register */
+	volatile uint64_t	iommu_flush;	/* IOMMU flush register */
+	volatile u_int64_t	iommu_ctxflush;
+	volatile u_int64_t	iommu_reserved[28];
+	volatile u_int64_t	iommu_cache_flush;
+	volatile u_int64_t	iommu_cache_invalidate;
+	volatile u_int64_t	iommu_reserved2[30];
 };
 
 /* streaming buffer registers */
@@ -62,8 +77,20 @@ struct iommu_strbuf {
 	uint64_t	strbuf_flushsync;/* streaming buffer flush sync */
 };
 
-#define	IOMMUREG(x)	(offsetof(struct iommureg, x))
+#define	IOMMUREG(x)	(offsetof(struct iommureg2, x))
 #define	STRBUFREG(x)	(offsetof(struct iommu_strbuf, x))
+
+#define IOMMUREG_READ(is, reg)				\
+	bus_space_read_8((is)->is_bustag,		\
+		(is)->is_iommu,				\
+		IOMMUREG(reg))	
+
+#define IOMMUREG_WRITE(is, reg, v)			\
+	bus_space_write_8((is)->is_bustag,		\
+		(is)->is_iommu,				\
+		IOMMUREG(reg),				\
+		(v))
+
 /* streaming buffer control register */
 #define STRBUF_EN	0x000000000000000001LL
 #define STRBUF_D	0x000000000000000002LL

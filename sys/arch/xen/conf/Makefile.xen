@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.31 2011/01/12 23:12:12 joerg Exp $
+#	$NetBSD: Makefile.xen,v 1.31.2.1 2011/06/06 09:07:10 jruoho Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -54,6 +54,10 @@ CFLAGS+=	-mno-red-zone
 ## (3) libkern and compat
 ##
 KERN_AS=	obj
+
+AFLAGS.linux32_sigcode.S+=	${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.netbsd32_sigcode.S+=	${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+CWARNFLAGS.ah_regdomain.c= ${${ACTIVE_CC} == "clang":?-Wno-error:}
 
 ##
 ## (4) local objects, compile rules, and dependencies

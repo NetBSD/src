@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.47 2009/09/18 12:23:16 tsutsui Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.47.6.1 2011/06/06 09:08:35 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.47 2009/09/18 12:23:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.47.6.1 2011/06/06 09:08:35 jruoho Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -83,7 +83,7 @@ static void	cs4231_sbus_attach(device_t, device_t, void *);
 static int	cs4231_sbus_pint(void *);
 static int	cs4231_sbus_rint(void *);
 
-CFATTACH_DECL(audiocs_sbus, sizeof(struct cs4231_sbus_softc),
+CFATTACH_DECL_NEW(audiocs_sbus, sizeof(struct cs4231_sbus_softc),
     cs4231_sbus_match, cs4231_sbus_attach, NULL, NULL);
 
 /* audio_hw_if methods specific to apc DMA */
@@ -184,7 +184,7 @@ cs4231_sbus_attach(device_t parent, device_t self, void *aux)
 	bus_space_subregion(sa->sa_bustag, bh, CS4231_APCDMA_OFFSET,
 		APC_DMA_SIZE, &sbsc->sc_bh);
 
-	cs4231_common_attach(sc, bh);
+	cs4231_common_attach(sc, self, bh);
 	printf("\n");
 
 	/* Establish interrupt channel */
@@ -529,7 +529,7 @@ cs4231_sbus_intr(void *arg)
 #ifdef AUDIO_DEBUG
 	snprintb(bits, sizeof(bits), AD_R2_BITS, status);
 #endif
-	DPRINTF(("%s: status: %s\n", device_xname(&sc->sc_ad1848.sc_dev),
+	DPRINTF(("%s: status: %s\n", device_xname(sc->sc_ad1848.sc_dev),
 	    bits));
 	if (status & INTERRUPT_STATUS) {
 #ifdef AUDIO_DEBUG
@@ -537,7 +537,7 @@ cs4231_sbus_intr(void *arg)
 
 		reason = ad_read(&sc->sc_ad1848, CS_IRQ_STATUS);
 		snprintb(bits, sizeof(bits), CS_I24_BITS, reason);
-		DPRINTF(("%s: i24: %s\n", device_xname(&sc->sc_ad1848.sc_dev),
+		DPRINTF(("%s: i24: %s\n", device_xname(sc->sc_ad1848.sc_dev),
 		    bits));
 #endif
 		/* clear ad1848 interrupt */
@@ -590,7 +590,7 @@ cs4231_sbus_intr(void *arg)
 #ifdef DIAGNOSTIC
 	        snprintb(bits, sizeof(bits), APC_BITS, csr);
 		printf("%s: unhandled csr=%s\n",
-		    device_xname(&sc->sc_ad1848.sc_dev), bits);
+		    device_xname(sc->sc_ad1848.sc_dev), bits);
 #endif
 		/* evcnt? */
 	}

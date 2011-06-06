@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.13 2010/12/11 14:28:38 martin Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.13.2.1 2011/06/06 09:08:12 jruoho Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -194,13 +194,15 @@
 
 /* chip num:16-31, rev:12-15, metal:4-11, bond_id:0-3 */
 
-#define BNX_CHIP_NUM(sc)			(((sc)->bnx_chipid) & 0xffff0000)
+#define _BNX_CHIP_NUM(chipid)			((chipid) & 0xffff0000)
+#define BNX_CHIP_NUM(sc)			_BNX_CHIP_NUM((sc)->bnx_chipid)
 #define BNX_CHIP_NUM_5706			0x57060000
 #define BNX_CHIP_NUM_5708			0x57080000
 #define BNX_CHIP_NUM_5709			0x57090000
 #define BNX_CHIP_NUM_5716			0x57160000
 
-#define BNX_CHIP_REV(sc)			(((sc)->bnx_chipid) & 0x0000f000)
+#define _BNX_CHIP_REV(chipid)			((chipid) & 0x0000f000)
+#define BNX_CHIP_REV(sc)			_BNX_CHIP_REV((sc)->bnx_chipid)
 #define BNX_CHIP_REV_Ax				0x00000000
 #define BNX_CHIP_REV_Bx				0x00001000
 #define BNX_CHIP_REV_Cx				0x00002000

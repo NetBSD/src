@@ -1,8 +1,7 @@
-/*	$NetBSD: midway.c,v 1.91 2010/04/05 07:19:35 joerg Exp $	*/
+/*	$NetBSD: midway.c,v 1.91.2.1 2011/06/06 09:07:53 jruoho Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
- *
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
@@ -14,12 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and
- *	Washington University.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -37,7 +30,7 @@
  *
  * m i d w a y . c   e n i 1 5 5   d r i v e r
  *
- * author: Chuck Cranor <chuck@ccrc.wustl.edu>
+ * author: Chuck Cranor <chuck@netbsd>
  * started: spring, 1996 (written from scratch).
  *
  * notes from the author:
@@ -68,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.91 2010/04/05 07:19:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.91.2.1 2011/06/06 09:07:53 jruoho Exp $");
 
 #include "opt_natm.h"
 

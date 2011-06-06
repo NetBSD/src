@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.c,v 1.35 2010/12/01 14:59:38 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.35.2.1 2011/06/06 09:10:07 jruoho Exp $	*/
 
 /*
- * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35 2010/12/01 14:59:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35.2.1 2011/06/06 09:10:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>

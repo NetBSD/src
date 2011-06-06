@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.77 2011/01/09 14:58:10 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.77.2.1 2011/06/06 09:07:42 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.77 2011/01/09 14:58:10 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.77.2.1 2011/06/06 09:07:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -133,6 +133,8 @@ static int		acpitz_get_fanspeed(device_t, uint32_t *,
 #ifdef notyet
 static ACPI_STATUS	acpitz_set_fanspeed(device_t, uint32_t);
 #endif
+static void		acpitz_print_processor_list(device_t);
+static struct cpu_info *acpitz_find_processor(uint32_t);
 
 CFATTACH_DECL_NEW(acpitz, sizeof(struct acpitz_softc),
     acpitz_match, acpitz_attach, acpitz_detach, NULL);
@@ -162,13 +164,14 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
-	aprint_naive("\n");
-	aprint_normal(": ACPI Thermal Zone\n");
-
 	sc->sc_first = true;
 	sc->sc_have_fan = false;
 	sc->sc_node = aa->aa_node;
 	sc->sc_zone.tzp = ATZ_TZP_RATE;
+
+	aprint_naive("\n");
+	acpitz_print_processor_list(self);
+	aprint_normal("\n");
 
 	/*
 	 * The _TZP (ACPI 4.0, p. 430) defines the recommended
@@ -701,6 +704,65 @@ acpitz_set_fanspeed(device_t dv, uint32_t fanspeed)
 #endif
 
 static void
+acpitz_print_processor_list(device_t dv)
+{
+	struct acpitz_softc *sc = device_private(dv);
+	ACPI_HANDLE handle = sc->sc_node->ad_handle;
+	ACPI_HANDLE prhandle;
+	ACPI_BUFFER buf, prbuf;
+	ACPI_OBJECT *obj, *pref, *pr;
+	ACPI_STATUS rv;
+	struct cpu_info *ci;
+	unsigned int i, cnt;
+
+	rv = acpi_eval_struct(handle, "_PSL", &buf);
+	if (ACPI_FAILURE(rv) || buf.Pointer == NULL)
+		return;
+	obj = buf.Pointer;
+	if (obj->Type != ACPI_TYPE_PACKAGE || obj->Package.Count == 0)
+		goto done;
+
+	for (i = 0, cnt = 0; i < obj->Package.Count; i++) {
+		pref = &obj->Package.Elements[i];
+		rv = acpi_eval_reference_handle(pref, &prhandle);
+		if (ACPI_FAILURE(rv))
+			continue;
+		rv = acpi_eval_struct(prhandle, NULL, &prbuf);
+		if (ACPI_FAILURE(rv) || prbuf.Pointer == NULL)
+			continue;
+		pr = prbuf.Pointer;
+		if (pr->Type != ACPI_TYPE_PROCESSOR)
+			goto next;
+
+		ci = acpitz_find_processor(pr->Processor.ProcId);
+		if (ci) {
+			if (cnt == 0)
+				aprint_normal(":");
+			aprint_normal(" %s", device_xname(ci->ci_dev));
+			++cnt;
+		}
+next:
+		ACPI_FREE(prbuf.Pointer);
+	}
+
+done:
+	ACPI_FREE(buf.Pointer);
+}
+
+static struct cpu_info *
+acpitz_find_processor(uint32_t id)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	for (CPU_INFO_FOREACH(cii, ci))
+		if (ci->ci_acpiid == id)
+			return ci;
+
+	return NULL;
+}
+
+static void
 acpitz_tick(void *opaque)
 {
 	device_t dv = opaque;
@@ -799,29 +861,38 @@ acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	}
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, acpitz, NULL);
 
+#ifdef _MODULE
 #include "ioconf.c"
+#endif
 
 static int
-acpitz_modcmd(modcmd_t cmd, void *context)
+acpitz_modcmd(modcmd_t cmd, void *aux)
 {
+	int rv = 0;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-		return config_init_component(cfdriver_ioconf_acpitz,
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_acpitz,
 		    cfattach_ioconf_acpitz, cfdata_ioconf_acpitz);
+#endif
+		break;
 
 	case MODULE_CMD_FINI:
-		return config_fini_component(cfdriver_ioconf_acpitz,
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_acpitz,
 		    cfattach_ioconf_acpitz, cfdata_ioconf_acpitz);
+#endif
+		break;
 
 	default:
-		return ENOTTY;
+		rv = ENOTTY;
 	}
-}
 
-#endif	/* _MODULE */
+	return rv;
+}

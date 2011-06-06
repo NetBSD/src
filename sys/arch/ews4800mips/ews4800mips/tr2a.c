@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2a.c,v 1.4 2010/11/15 06:23:05 uebayasi Exp $	*/
+/*	$NetBSD: tr2a.c,v 1.4.2.1 2011/06/06 09:05:34 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,8 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2a.c,v 1.4 2010/11/15 06:23:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2a.c,v 1.4.2.1 2011/06/06 09:05:34 jruoho Exp $");
 
+#define __INTR_PRIVATE
 #include "fb_sbdio.h"
 #include "kbms_sbdio.h"
 #include "zsc_sbdio.h"
@@ -60,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: tr2a.c,v 1.4 2010/11/15 06:23:05 uebayasi Exp $");
 SBD_DECL(tr2a);
 
 /* EWS4800/360 bus list */
-static const char *tr2a_mainbusdevs[] = {
+static const char * const tr2a_mainbusdevs[] = {
 	"sbdio",
 #ifdef notyet
 	"apbus",
@@ -152,7 +153,7 @@ tr2a_init(void)
 	if (have_fb_sbdio)
 		platform.sbdiodevs = tr2a_sbdiodevs;
 
-	ipl_sr_bits = tr2a_sr_bits;
+	ipl_sr_map = tr2a_ipl_sr_map;
 
 	kseg2iobufsize = 0x02000000;	/* 32MB for APbus and framebuffer */
 
@@ -171,7 +172,7 @@ void
 tr2a_cache_config(void)
 {
 
-	mips_sdcache_size = 1024 * 1024;	/* 1MB L2-cache */
+	mips_cache_info.mci_sdcache_size = 1024 * 1024;	/* 1MB L2-cache */
 }
 
 void

@@ -1,4 +1,4 @@
-/* $Id: ar5312_intr.c,v 1.6 2008/01/07 07:28:14 dyoung Exp $ */
+/* $Id: ar5312_intr.c,v 1.6.38.1 2011/06/06 09:06:02 jruoho Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5312_intr.c,v 1.6 2008/01/07 07:28:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5312_intr.c,v 1.6.38.1 2011/06/06 09:06:02 jruoho Exp $");
+
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -90,22 +92,22 @@ struct ar531x_intr {
 	struct evcnt	intr_count;
 };
 
-const uint32_t	ipl_sr_bits[_IPL_N] = {
-	0,				/* 0: IPL_NONE */
-	MIPS_SOFT_INT_MASK_0,		/* 1: IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_0,		/* 2: IPL_SOFTNET */
-
-	MIPS_SOFT_INT_MASK_0 |
-	MIPS_SOFT_INT_MASK_1 |
-	MIPS_INT_MASK_0 |
-	MIPS_INT_MASK_1 |
-	MIPS_INT_MASK_2 |
-	MIPS_INT_MASK_3,		/* 3: IPL_VM */
-
-	MIPS_INT_MASK,			/* 4: IPL_{SCHED,HIGH} */
+static const struct ipl_sr_map ar5312_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE]		= 0,
+	[IPL_SOFTCLOCK]		= MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTBIO]		= MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET]		= MIPS_SOFT_INT_MASK,
+	[IPL_SOFTSERIAL]	= MIPS_SOFT_INT_MASK,
+	[IPL_VM]		= MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0
+				    | MIPS_INT_MASK_1 | MIPS_INT_MASK_2
+				    | MIPS_INT_MASK_3,
+	[IPL_SCHED]		= MIPS_INT_MASK,
+	[IPL_HIGH]		= MIPS_INT_MASK,
+    },
 };
 
-static const char *ar5312_cpuintrnames[NINTRS] = {
+static const char * const ar5312_cpuintrnames[NINTRS] = {
 	"int 2 (wlan0)",
 	"int 3 (enet0)",
 	"int 4 (enet1)",
@@ -113,7 +115,7 @@ static const char *ar5312_cpuintrnames[NINTRS] = {
 	"int 6 (misc)",
 };
 
-static const char *ar5312_miscintrnames[NIRQS] = {
+static const char * const ar5312_miscintrnames[NIRQS] = {
 	"misc 0 (timer)",
 	"misc 1 (AHBproc error)",
 	"misc 2 (AHBdma error)",
@@ -131,15 +133,15 @@ static int ar531x_miscintr(void *);
 void
 ar531x_intr_init(void)
 {
-	int	i;
+	ipl_sr_map = ar5312_ipl_sr_map;
 
-	for (i = 0; i < NINTRS; i++) {
+	for (size_t i = 0; i < NINTRS; i++) {
 		LIST_INIT(&ar5312_cpuintrs[i].intr_l);
 		evcnt_attach_dynamic(&ar5312_cpuintrs[i].intr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", ar5312_cpuintrnames[i]);
 	}
 
-	for (i = 0; i < NIRQS; i++) {
+	for (size_t i = 0; i < NIRQS; i++) {
 		LIST_INIT(&ar5312_miscintrs[i].intr_l);
 		evcnt_attach_dynamic(&ar5312_miscintrs[i].intr_count,
 		    EVCNT_TYPE_INTR, NULL, "ar5312", ar5312_miscintrnames[i]);
@@ -280,24 +282,18 @@ ar531x_miscintr(void *arg)
 }
 
 void
-ar531x_cpuintr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+ar531x_cpuintr(int ipl, vaddr_t pc, uint32_t ipending)
 {
-	uint32_t		mask;
-	int			index;
 	struct ar531x_intrhand	*ih;
 
 	/* all others get normal handling */
-	for (index = NINTRS - 1; index >= 0; index--) {
-		mask = MIPS_INT_MASK_0 << index;
+	for (int index = NINTRS - 1; index >= 0; index--) {
+		uint32_t mask = MIPS_INT_MASK_0 << index;
 
 		if (ipending & mask) {
 			ar5312_cpuintrs[index].intr_count.ev_count++;
 			LIST_FOREACH(ih, &ar5312_cpuintrs[index].intr_l, ih_q)
 			    (*ih->ih_func)(ih->ih_arg);
-			cause &= ~mask;
 		}
 	}
-
-	/* re-enable the stuff we processed */
-	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 }

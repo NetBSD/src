@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.17 2007/12/03 15:33:13 ad Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.17.46.1 2011/06/06 09:04:56 jruoho Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,12 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.17 2007/12/03 15:33:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.17.46.1 2011/06/06 09:04:56 jruoho Exp $");
 
+#define __INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kcore.h>
 #include <sys/device.h>
+#include <sys/intr.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
@@ -110,25 +113,19 @@ struct mcclock_jazzio_config mcclock_nec_pci_conf = {
  * This is a mask of bits to clear in the SR when we go to a
  * given interrupt priority level.
  */
-static const uint32_t nec_pci_ipl_sr_bits[_IPL_N] = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] =
-	    MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 | 
-	    MIPS_INT_MASK_2,
-	[IPL_SCHED] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
+static const struct ipl_sr_map nec_pci_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK
+				| MIPS_INT_MASK_0
+				| MIPS_INT_MASK_1
+				| MIPS_INT_MASK_2,
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_DDB] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
 };
 
 static u_int
@@ -186,7 +183,7 @@ c_nec_pci_init(void)
 	/*
 	 * Initialize interrupt priority
 	 */
-	ipl_sr_bits = nec_pci_ipl_sr_bits;
+	ipl_sr_map = nec_pci_ipl_sr_map;
 
 	/*
 	 * Initialize I/O address offset

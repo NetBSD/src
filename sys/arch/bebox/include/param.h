@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.11 2010/08/01 06:13:19 kiyohara Exp $	*/
+/*	$NetBSD: param.h,v 1.11.2.1 2011/06/06 09:05:11 jruoho Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,7 +42,9 @@
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)
  */
+#ifdef _KERNEL
 #define	MACHINE		"bebox"
+#endif
 
 #define	__NO_FIXED_MSGBUF
 

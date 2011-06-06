@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.21 2009/03/07 22:02:17 ad Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.21.6.1 2011/06/06 09:07:37 jruoho Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.21 2009/03/07 22:02:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.21.6.1 2011/06/06 09:07:37 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,14 +150,11 @@ db_num_to_str(db_expr_t val)
 	static char buf[25];
 
 	if (db_radix == 16)
-		snprintf(buf, sizeof(buf), DB_EXPR_T_IS_QUAD ? "%#qx" : "%#lx",
-		    val);
+		snprintf(buf, sizeof(buf), "%" DDB_EXPR_FMT "x", val);
 	else if (db_radix == 8)
-		snprintf(buf, sizeof(buf), DB_EXPR_T_IS_QUAD ? "%#qo" : "%#lo",
-		    val);
+		snprintf(buf, sizeof(buf), "%" DDB_EXPR_FMT "o", val);
 	else
-		snprintf(buf, sizeof(buf), DB_EXPR_T_IS_QUAD ? "%qu" : "%lu",
-		    val);
+		snprintf(buf, sizeof(buf), "%" DDB_EXPR_FMT "u", val);
 
 	return (buf);
 }

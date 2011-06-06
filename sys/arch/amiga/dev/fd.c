@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.85 2010/12/20 00:25:25 matt Exp $ */
+/*	$NetBSD: fd.c,v 1.85.2.1 2011/06/06 09:04:53 jruoho Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.85 2010/12/20 00:25:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.85.2.1 2011/06/06 09:04:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ struct fdtype {
  * floppy disk device data
  */
 struct fd_softc {
-	struct device sc_dv;	/* generic device info; must come first */
+	device_t sc_dev;	/* generic device info; must come first */
 	struct disk dkdev;	/* generic disk info */
 	struct bufq_state *bufq;/* queue pending I/O operations */
 	struct buf curbuf;	/* state of current I/O operation */
@@ -189,11 +189,11 @@ struct fdcargs {
 	int unit;
 };
 
-int	fdcmatch(struct device *, struct cfdata *, void *);
-void	fdcattach(struct device *, struct device *, void *);
+int	fdcmatch(device_t, cfdata_t, void *);
+void	fdcattach(device_t, device_t, void *);
 int	fdcprint(void *, const char *);
-int	fdmatch(struct device *, struct cfdata *, void *);
-void	fdattach(struct device *, struct device *, void *);
+int	fdmatch(device_t, cfdata_t, void *);
+void	fdattach(device_t, device_t, void *);
 
 void	fdintr(int);
 void	fdidxintr(void);
@@ -241,7 +241,7 @@ struct fdtype fdtype[] = {
 };
 int nfdtype = __arraycount(fdtype);
 
-CFATTACH_DECL(fd, sizeof(struct fd_softc),
+CFATTACH_DECL_NEW(fd, sizeof(struct fd_softc),
     fdmatch, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
@@ -264,7 +264,7 @@ const struct cdevsw fd_cdevsw = {
 
 struct dkdriver fddkdriver = { fdstrategy };
 
-CFATTACH_DECL(fdc, sizeof(struct device),
+CFATTACH_DECL_NEW(fdc, 0,
     fdcmatch, fdcattach, NULL, NULL);
 
 /*
@@ -325,7 +325,7 @@ CFATTACH_DECL(fdc, sizeof(struct device),
 
 
 int
-fdcmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+fdcmatch(device_t pdp, cfdata_t cfp, void *auxp)
 {
 	static int fdc_matched = 0;
 
@@ -342,7 +342,7 @@ fdcmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-fdcattach(struct device *pdp, struct device *dp, void *auxp)
+fdcattach(device_t pdp, device_t dp, void *auxp)
 {
 	struct fdcargs args;
 
@@ -374,7 +374,7 @@ fdcprint(void *auxp, const char *pnp)
 
 /*ARGSUSED*/
 int
-fdmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+fdmatch(device_t pdp, cfdata_t cfp, void *auxp)
 {
 	struct fdcargs *fdap;
 
@@ -387,7 +387,7 @@ fdmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-fdattach(struct device *pdp, struct device *dp, void *auxp)
+fdattach(device_t pdp, device_t dp, void *auxp)
 {
 	struct fdcargs *ap;
 	struct fd_softc *sc;
@@ -395,6 +395,7 @@ fdattach(struct device *pdp, struct device *dp, void *auxp)
 
 	ap = auxp;
 	sc = device_private(dp);
+	sc->sc_dev = dp;
 
 	bufq_alloc(&sc->bufq, "disksort", BUFQ_SORT_CYLINDER);
 	callout_init(&sc->calibrate_ch, 0);
@@ -415,7 +416,7 @@ fdattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&sc->dkdev, sc->sc_dv.dv_xname, &fddkdriver);
+	disk_init(&sc->dkdev, device_xname(sc->sc_dev), &fddkdriver);
 	disk_attach(&sc->dkdev);
 
 	/*
@@ -1467,8 +1468,8 @@ fddmadone(struct fd_softc *sc, int timeo)
 		 */
 		sc->flags &= ~FDF_DIRTY;
 		if (timeo)
-			printf("%s: write of track cache timed out.\n",
-			    sc->sc_dv.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "write of track cache timed out.\n");
 		if (sc->flags & FDF_JUSTFLUSH) {
 			sc->flags &= ~FDF_JUSTFLUSH;
 			/*
@@ -1496,8 +1497,8 @@ fddmadone(struct fd_softc *sc, int timeo)
 	else {
 #ifdef FDDEBUG
 		if (timeo)
-			printf("%s: fddmadone: cache load timed out.\n",
-			    sc->sc_dv.dv_xname);
+			aprint_debug_dev(sc->sc_dev,
+			    "fddmadone: cache load timed out.\n");
 #endif
 		if (sc->retried >= sc->retries) {
 			sc->retried = 0;
@@ -1579,7 +1580,7 @@ fddone(struct fd_softc *sc)
 
 	biodone(bp);
 nobuf:
-	fdfindwork(device_unit(&sc->sc_dv));
+	fdfindwork(device_unit(sc->sc_dev));
 }
 
 void
@@ -1789,8 +1790,8 @@ amrawtocache(struct fd_softc *sc)
 again:
 	if (doagain == 0 || (rp = srp = fdfindsync(srp, erp)) == NULL) {
 #ifdef DIAGNOSTIC
-		printf("%s: corrupted track (%d) data.\n",
-		    sc->sc_dv.dv_xname, sc->cachetrk);
+		aprint_error_dev(sc->sc_dev, "corrupted track (%d) data.\n",
+		    sc->cachetrk);
 #endif
 		return(-1);
 	}
@@ -1812,8 +1813,9 @@ again:
 		}
 		if (((info >> 16) & 0xff) != sc->cachetrk) {
 #ifdef DEBUG
-			printf("%s: incorrect track found: 0x%lx %d\n",
-			    sc->sc_dv.dv_xname, info, sc->cachetrk);
+			aprint_debug_dev(sc->sc_dev,
+			    "incorrect track found: 0x%lx %d\n",
+			    info, sc->cachetrk);
 #endif
 			goto again;
 		}
@@ -1952,8 +1954,9 @@ msrawtocache(struct fd_softc *sc)
 			 */
 			if ((rp = (u_short *)fdfindsync((u_long *)rp, (u_long *)erp)) == NULL) {
 #ifdef DIAGNOSTIC
-				printf("%s: corrupted track (%d) data.\n",
-				sc->sc_dv.dv_xname, sc->cachetrk);
+				aprint_normal_dev(sc->sc_dev,
+				    "corrupted track (%d) data.\n",
+				    sc->cachetrk);
 #endif
 				return(-1);
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2009/04/13 09:37:50 he Exp $	*/
+/*	$NetBSD: intr.h,v 1.18.6.1 2011/06/06 09:06:12 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -33,42 +33,12 @@
 #ifndef _MACHINE_INTR_H_
 #define _MACHINE_INTR_H_
 
-#define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_SOFTCLOCK	1	/* generic software interrupts */
-#define	IPL_SOFTBIO	1	/* clock software interrupts */
-#define	IPL_SOFTNET	2	/* network software interrupts */
-#define	IPL_SOFTSERIAL	2	/* serial software interrupts */
-#define	IPL_VM		3
-#define	IPL_SCHED	4
-#define	IPL_HIGH	4	/* disable all interrupts */
-
-#define	IPL_N		5
-
-/* Interrupt sharing types. */
-#define IST_NONE	0	/* none */
-#define IST_PULSE	1	/* pulsed */
-#define IST_EDGE	2	/* edge-triggered */
-#define IST_LEVEL	3	/* level-triggered */
+#include <mips/intr.h>
 
 #ifdef _KERNEL
-#ifndef _LOCORE
-#include <sys/types.h>
+#ifdef __INTR_PRIVATE
 #include <sys/evcnt.h>
-#include <sys/queue.h>
-#include <mips/locore.h>
-
-/*
- * software simulated interrupt
- */
-#define setsoft(x)	do {			\
-	extern u_int ssir;			\
-	int _s;					\
-						\
-	_s = splhigh();				\
-	ssir |= 1 << (x);			\
-	_setsoftintr(MIPS_SOFT_INT_MASK_1);	\
-	splx(_s);				\
-} while (0)
+#include <mips/cpuregs.h>
 
 /*
  * nesting interrupt masks.
@@ -82,34 +52,8 @@
 #define MIPS_INT_MASK_SPL4	(MIPS_INT_MASK_4|MIPS_INT_MASK_SPL3)
 #define MIPS_INT_MASK_SPL5	(MIPS_INT_MASK_5|MIPS_INT_MASK_SPL4)
 
-#define spl0()		(void)_spllower(0)
-#define splx(s)		(void)_splset(s)
-#define splvm()		_splraise(MIPS_INT_MASK_SPL2)
-#define splsched()	_splraise(MIPS_INT_MASK_SPL2)
-#define splhigh()	_splraise(MIPS_INT_MASK_SPL2)
-
-#define splsoftclock()	_splraise(MIPS_INT_MASK_SPL_SOFT0)
-#define splsoftbio()	_splraise(MIPS_INT_MASK_SPL_SOFT0)
-#define	splsoftnet()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
-#define	splsoftserial()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
-
-typedef int ipl_t;
-typedef struct {
-	int _sr;
-} ipl_cookie_t;
-
-ipl_cookie_t makeiplcookie(ipl_t ipl);
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return _splraise(icookie._sr);
-}
-
 struct mipsco_intrhand {
-	LIST_ENTRY(mipsco_intrhand)
-		ih_q;
+	LIST_ENTRY(mipsco_intrhand) ih_q;
 	int	(*ih_fun)(void *);
 	void	 *ih_arg;
 	struct	mipsco_intr *ih_intrhead;
@@ -117,14 +61,18 @@ struct mipsco_intrhand {
 };
 
 struct mipsco_intr {
-	LIST_HEAD(,mipsco_intrhand)
-		intr_q;
+	LIST_HEAD(,mipsco_intrhand) intr_q;
 	struct	evcnt ih_evcnt;
 	unsigned long intr_siq;
 };
 
-
+extern const struct ipl_sr_map mipsco_ipl_sr_map;
 extern struct mipsco_intrhand intrtab[];
+#define	CALL_INTR(lev)	((*intrtab[lev].ih_fun)(intrtab[lev].ih_arg))
+
+#define MAX_INTR_COOKIES 16
+
+#endif /* __INTR_PRIVATE */
 
 #define SYS_INTR_LEVEL0	0
 #define SYS_INTR_LEVEL1	1
@@ -139,10 +87,5 @@ extern struct mipsco_intrhand intrtab[];
 #define SYS_INTR_FDC	10
 #define SYS_INTR_ATBUS	11
 
-#define MAX_INTR_COOKIES 16
-
-#define	CALL_INTR(lev)	((*intrtab[lev].ih_fun)(intrtab[lev].ih_arg))
-
-#endif /* !_LOCORE */
 #endif /* _KERNEL */
 #endif /* _MACHINE_INTR_H_ */

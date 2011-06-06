@@ -1,4 +1,4 @@
-#	$NetBSD: files.drm,v 1.5 2010/07/21 03:14:32 mrg Exp $
+#	$NetBSD: files.drm,v 1.5.2.1 2011/06/06 09:09:09 jruoho Exp $
 
 # direct rendering modules
 define	drmbase
@@ -8,7 +8,7 @@ defflag		opt_drm.h	DRM_DEBUG DRM_NO_AGP DRM_NO_MTRR
 
 makeoptions	drmbase		CPPFLAGS+="-I$S/external/bsd/drm/dist/bsd-core -I$S/external/bsd/drm/dist/shared-core"
 
-file	external/bsd/drm/dist/bsd-core/drm_agpsupport.c		drmbase
+file	external/bsd/drm/dist/bsd-core/drm_agpsupport.c		drmbase & agp
 file	external/bsd/drm/dist/bsd-core/drm_auth.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_bufs.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_context.c		drmbase
@@ -16,12 +16,15 @@ file	external/bsd/drm/dist/bsd-core/drm_dma.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_drawable.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_drv.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_fops.c		drmbase
+file	external/bsd/drm/dist/bsd-core/drm_hashtab.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_ioctl.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_irq.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_lock.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_memory.c		drmbase
+file	external/bsd/drm/dist/bsd-core/drm_mm.c			drmbase
 file	external/bsd/drm/dist/bsd-core/drm_pci.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_scatter.c		drmbase
+file	external/bsd/drm/dist/bsd-core/drm_sman.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_sysctl.c		drmbase
 file	external/bsd/drm/dist/bsd-core/drm_vm.c			drmbase
 
@@ -118,6 +121,7 @@ file	external/bsd/drm/dist/bsd-core/tdfx_drv.c		tdfxdrm
 device	viadrm: drmbase, drmpci
 attach	viadrm at drm
 file	external/bsd/drm/dist/bsd-core/via_drv.c		viadrm
+file	external/bsd/drm/dist/bsd-core/via_dmablit.c		viadrm
 file	external/bsd/drm/dist/shared-core/via_dma.c		viadrm
 file	external/bsd/drm/dist/shared-core/via_ds.c		viadrm
 file	external/bsd/drm/dist/shared-core/via_irq.c		viadrm

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.10 2011/01/14 02:06:26 rmind Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.10.2.1 2011/06/06 09:05:46 jruoho Exp $	*/
 
 /*	$OpenBSD: db_machdep.h,v 1.5 2001/02/16 19:20:13 mickey Exp $	*/
 
@@ -39,6 +39,7 @@
 
 /* types the generic ddb module needs */
 typedef	vaddr_t db_addr_t;
+#define	DDB_EXPR_FMT	"l"		/* expression is long */
 typedef	long db_expr_t;
 
 typedef struct trapframe db_regs_t;

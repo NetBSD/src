@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.30 2009/10/26 19:16:58 cegger Exp $ */
+/*	$NetBSD: boot.c,v 1.30.6.1 2011/06/06 09:06:58 jruoho Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -96,15 +96,14 @@ Xmain(void)
 	int io;
 	int j, nu;
 	u_long marks[MARK_MAX];
-	extern const char bootprog_rev[], bootprog_date[];
+	extern const char bootprog_rev[];
 
 	io = 0;
 	skip = 1;
 	autoconf();
 
 	askname = bootrpb.rpb_bootr5 & RB_ASKNAME;
-	printf("\n\r>> NetBSD/vax boot [%s %s] <<\n", bootprog_rev,
-		bootprog_date);
+	printf("\n\r>> NetBSD/vax boot [%s] <<\n", bootprog_rev);
 	printf(">> Press any key to abort autoboot  ");
 	sluttid = getsecs() + 5;
 	senast = 0;

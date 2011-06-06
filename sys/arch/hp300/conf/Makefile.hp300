@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.87 2005/12/11 12:17:13 christos Exp $
+#	$NetBSD: Makefile.hp300,v 1.87.106.1 2011/06/06 09:05:34 jruoho Exp $
 
 # Makefile for NetBSD
 #
@@ -33,7 +33,7 @@ GENASSYM_CONF=	${HP300}/hp300/genassym.cf
 ##
 CPPFLAGS+=	-Dhp300
 CFLAGS+=	-msoft-float
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+AFLAGS+=	-x assembler-with-cpp
 
 ##
 ## (3) libkern and compat

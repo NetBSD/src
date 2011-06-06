@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.44 2010/11/19 06:44:40 dholland Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.44.2.1 2011/06/06 09:08:32 jruoho Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.44 2010/11/19 06:44:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.44.2.1 2011/06/06 09:08:32 jruoho Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -205,11 +205,11 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 	rf_SuspendNewRequestsAndWait(raidPtr);
 
 	/* adjust state of the array and of the disks */
-	RF_LOCK_MUTEX(raidPtr->mutex);
+	rf_lock_mutex2(raidPtr->mutex);
 	raidPtr->Disks[desc->fcol].status = rf_ds_optimal;
 	raidPtr->status = rf_rs_optimal;
 	rf_copyback_in_progress = 1;	/* debug only */
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	rf_unlock_mutex2(raidPtr->mutex);
 
 	RF_GETTIME(desc->starttime);
 	rf_ContinueCopyback(desc);
@@ -222,8 +222,8 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 
 	c_label->row = 0;
 	c_label->column = fcol;
-	c_label->partitionSize = raidPtr->Disks[fcol].partitionSize;
-	c_label->partitionSizeHi = raidPtr->Disks[fcol].partitionSize >> 32;
+	rf_component_label_set_partitionsize(c_label,
+	    raidPtr->Disks[fcol].partitionSize);
 
 	raidflush_component_label(raidPtr, fcol);
 
@@ -350,17 +350,17 @@ rf_CopybackOne(RF_CopybackDesc_t *desc, int typ, RF_RaidAddr_t addr,
 	 * pair to complete. in the simulator, just return, since everything
 	 * will happen as callbacks */
 
-	RF_LOCK_MUTEX(desc->mcpair->mutex);
+	RF_LOCK_MCPAIR(desc->mcpair);
 	desc->mcpair->flag = 0;
-	RF_UNLOCK_MUTEX(desc->mcpair->mutex);
+	RF_UNLOCK_MCPAIR(desc->mcpair);
 
 	rf_DiskIOEnqueue(&raidPtr->Queues[spCol], desc->readreq, RF_IO_NORMAL_PRIORITY);
 
-	RF_LOCK_MUTEX(desc->mcpair->mutex);
+	RF_LOCK_MCPAIR(desc->mcpair);
 	while (!desc->mcpair->flag) {
 		RF_WAIT_MCPAIR(desc->mcpair);
 	}
-	RF_UNLOCK_MUTEX(desc->mcpair->mutex);
+	RF_UNLOCK_MCPAIR(desc->mcpair);
 	rf_FreeDiskQueueData(desc->readreq);
 	rf_FreeDiskQueueData(desc->writereq);
 
@@ -404,14 +404,14 @@ rf_CopybackComplete(RF_CopybackDesc_t *desc, int status)
 	struct timeval t, diff;
 
 	if (!status) {
-		RF_LOCK_MUTEX(raidPtr->mutex);
+		rf_lock_mutex2(raidPtr->mutex);
 		if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
 			RF_ASSERT(raidPtr->Layout.map->parityConfig == 'D');
 			rf_FreeSpareTable(raidPtr);
 		} else {
 			raidPtr->Disks[desc->spCol].status = rf_ds_spare;
 		}
-		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		rf_unlock_mutex2(raidPtr->mutex);
 
 		RF_GETTIME(t);
 		RF_TIMEVAL_DIFF(&desc->starttime, &t, &diff);

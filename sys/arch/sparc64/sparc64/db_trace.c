@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.44 2010/07/01 02:38:27 rmind Exp $ */
+/*	$NetBSD: db_trace.c,v 1.44.2.1 2011/06/06 09:06:53 jruoho Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,10 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.44 2010/07/01 02:38:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.44.2.1 2011/06/06 09:06:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 #include <sys/systm.h>
 #include <machine/db_machdep.h>
 #include <machine/ctlreg.h>
@@ -41,6 +42,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.44 2010/07/01 02:38:27 rmind Exp $");
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
+
 void db_print_window(uint64_t);
 
 #if 0
@@ -49,8 +54,21 @@ void db_print_window(uint64_t);
 #define INKERNEL(va)	1	/* Everything's in the kernel now. 8^) */
 #endif
 
+#ifdef _KERNEL
 #define	KLOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_PRIMARY, sizeof(x))	
-#define ULOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_AIUS, sizeof(x))	
+#else
+static long
+kload(db_addr_t addr)
+{
+	long val;
+
+	db_read_bytes(addr, sizeof val, (char *)&val);
+
+	return val;
+}
+#define	KLOAD(x)	kload((db_addr_t)(u_long)&(x))
+#define frame32 frame	/* XXX */
+#endif
 
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)
@@ -61,21 +79,21 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
  	void		(*pr) (const char *, ...);
 {
 	vaddr_t		frame;
-	bool		kernel_only = TRUE;
-	bool		trace_thread = FALSE;
-	bool		lwpaddr = FALSE;
+	bool		kernel_only = true;
+	bool		trace_thread = false;
+	bool		lwpaddr = false;
 	char		c;
 	const char	*cp = modif;
 
 	while ((c = *cp++) != 0) {
 		if (c == 'a') {
-			lwpaddr = TRUE;
-			trace_thread = TRUE;
+			lwpaddr = true;
+			trace_thread = true;
 		}
 		if (c == 't')
-			trace_thread = TRUE;
+			trace_thread = true;
 		if (c == 'u')
-			kernel_only = FALSE;
+			kernel_only = false;
 	}
 
 	if (!have_addr)
@@ -91,6 +109,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				(*pr)("trace: pid %d ", p->p_pid);
 			} else {
 				(*pr)("trace: pid %d ", (int)addr);
+#ifdef _KERNEL
 				p = proc_find_raw(addr);
 				if (p == NULL) {
 					(*pr)("not found\n");
@@ -98,6 +117,10 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				}
 				l = LIST_FIRST(&p->p_lwps);
 				KASSERT(l != NULL);
+#else
+				(*pr)("no proc_find_raw() in crash\n");
+				return;
+#endif
 			}
 			(*pr)("lid %d ", l->l_lid);
 			pcb = lwp_getpcb(l);
@@ -255,7 +278,7 @@ db_print_window(uint64_t frame)
 				  f->fr_local[4], f->fr_local[5], f->fr_local[6], f->fr_local[7]);
 			db_printf("%8x %8x %8x %8x %8x %8x %8x=sp %8x=pc:",
 				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3],
-				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
+				  f->fr_arg[4], f->fr_arg[5], (unsigned)(uintptr_t)f->fr_fp, f->fr_pc);
 			db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
 			db_printf("\n");
 		} else {
@@ -272,7 +295,7 @@ db_print_window(uint64_t frame)
 				  f->fr_arg[0], f->fr_arg[1], 
 				  f->fr_arg[2], f->fr_arg[3],
 				  f->fr_arg[4], f->fr_arg[5], 
-				  f->fr_fp, f->fr_pc);
+				  (unsigned)(uintptr_t)f->fr_fp, f->fr_pc);
 		}
 	}
 }
@@ -282,13 +305,13 @@ db_dump_stack(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif
 {
 	int		i;
 	uint64_t	frame, oldframe;
-	bool		kernel_only = TRUE;
+	bool		kernel_only = true;
 	char		c;
 	const char	*cp = modif;
 
 	while ((c = *cp++) != 0)
 		if (c == 'u')
-			kernel_only = FALSE;
+			kernel_only = false;
 
 	if (count == -1)
 		count = 65535;
@@ -513,9 +536,9 @@ db_dump_ts(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	ts = &DDB_REGS->db_ts[0];
 	tl = DDB_REGS->db_tl;
 	for (i=0; i<tl; i++) {
-		printf("%d tt=%lx tstate=%lx tpc=%p tnpc=%p\n",
-		       i+1, (long)ts[i].tt, (u_long)ts[i].tstate,
-		       (void*)(u_long)ts[i].tpc, (void*)(u_long)ts[i].tnpc);
+		db_printf("%d tt=%lx tstate=%lx tpc=%p tnpc=%p\n",
+		          i+1, (long)ts[i].tt, (u_long)ts[i].tstate,
+		          (void*)(u_long)ts[i].tpc, (void*)(u_long)ts[i].tnpc);
 	}
 
 }

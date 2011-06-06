@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.54 2009/12/10 14:13:52 matt Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.54.6.1 2011/06/06 09:06:54 jruoho Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.54 2009/12/10 14:13:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.54.6.1 2011/06/06 09:06:54 jruoho Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -76,7 +76,7 @@ svr4_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 
 	setregs(l, epp, stack);
 	
-	/* This should be the exit function, not p->p_psstr. */
+	/* This should be the exit function, not p->p_psstrp. */
 	tf->tf_global[1] = (vaddr_t)0;
 }
 

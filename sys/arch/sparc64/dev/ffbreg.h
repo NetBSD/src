@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbreg.h,v 1.6 2006/09/14 16:05:18 martin Exp $	*/
+/*	$NetBSD: ffbreg.h,v 1.6.86.1 2011/06/06 09:06:49 jruoho Exp $	*/
 /*	$OpenBSD: creatorreg.h,v 1.5 2002/07/29 06:21:45 jason Exp $	*/
 
 /*
@@ -61,14 +61,67 @@
 #define	FFB_DAC_TYPE2		0x8
 #define	FFB_DAC_VALUE2		0xc
 
-/* DAC "TYPE" commands */
+/* DAC "TYPE" commands (registers) */
+#define	FFB_DAC_PLL_CTRL	0x0000	/* PLL control (frequency) */
+#define	FFB_DAC_PIX_FMT		0x1000	/* Pixel format control */
+#define	FFB_DAC_USR_CTRL	0x1001	/* user control */
 #define	FFB_DAC_SCMAP		0x2000	/* set (load) cmap */
-#define	FFB_DAC_GSBLANK		0x6000	/* get/set blanking */
-#define	FFB_DAC_GVERS		0x8000	/* get DAC version */
+#define	FFB_DAC_DAC_CTRL	0x5001	/* DAC control */
+#define	FFB_DAC_TGC		0x6000	/* timing generator control */
+#define	FFB_DAC_VBE		0x6001	/* vertical blank end */
+#define	FFB_DAC_VBS		0x6002	/* vertical blank start */
+#define	FFB_DAC_VSE		0x6003	/* vertical sync end */
+#define	FFB_DAC_VSS		0x6004	/* vertical sync start */
+#define	FFB_DAC_HRE		0x6005	/* horizontal serration end */
+#define	FFB_DAC_HBE		0x6006	/* horizontal blank end */
+#define	FFB_DAC_HBS		0x6007	/* horizontal blank start */
+#define	FFB_DAC_HSE		0x6008	/* horizontal sync end */
+#define	FFB_DAC_HSS		0x6009	/* horizontal sync start */
+#define	FFB_DAC_HCE		0x600a	/* horiz. serial clock enable end */
+#define	FFB_DAC_HCS		0x600b	/* horiz. serial clock enable start */
+#define	FFB_DAC_EPE		0x600c	/* equalisation pulse end */
+#define	FFB_DAC_EIE		0x600d	/* equalisation interval end */
+#define	FFB_DAC_EIS		0x600e	/* equalisation interval start */
+#define	FFB_DAC_TVC		0x600f	/* timing generator vertical counter */
+#define	FFB_DAC_THC		0x6010	/* timing generator horiz. counter */
+#define	FFB_DAC_DEVID		0x8000	/* DAC device ID (version) */
+#define	FFB_DAC_CFG_MPDATA	0x8001	/* monitor serial port data */
+#define	FFB_DAC_CFG_MPSENSE	0x8002	/* monitor serial port sense */
 
-#define	FFB_DAC_BLANK_OFF		0x1
-#define	FFB_DAC_BLANK_HSYNC_DISABLE	0x4
-#define	FFB_DAC_BLANK_VSYNC_DISABLE	0x8
+/* 0x1000 pixel format control */
+#define	FFB_DAC_PIX_FMT_421		0x02	/* 4/2:1 */
+#define	FFB_DAC_PIX_FMT_821		0x03	/* 8/2:1 */
+
+/* 0x1001 user control */
+#define	FFB_DAC_USR_CTRL_BLANK		0x02	/* asynchronous blank */
+#define	FFB_DAC_USR_CTRL_DOUBLE		0x04	/* double-buffer enable */
+#define	FFB_DAC_USR_CTRL_OVERLAY	0x08	/* transparent overlay enable */
+#define	FFB_DAC_USR_CTRL_WMODE_C	0x00	/* window mode combined */
+#define	FFB_DAC_USR_CTRL_WMODE_S4	0x10	/* window mode separate 4 */
+#define	FFB_DAC_USR_CTRL_WMODE_S8	0x20	/* window mode separate 8 */
+
+/* 0x5001 DAC control */
+#define	FFB_DAC_DAC_CTRL_SYNC_G		0x0020	/* enable sync on green */
+#define FFB_DAC_DAC_CTRL_PED_ENABLE	0x0040	/* enable pedestal */
+#define FFB_DAC_DAC_CTRL_VSYNC_REV	0x0080	/* reverse vsync (BT497A) */
+#define FFB_DAC_DAC_CTRL_POS_SYNC	0x0100	/* enable pos. sync (BT497A) */
+
+/* 0x6000 timing generator control */
+#define	FFB_DAC_TGC_VIDEO_ENABLE	0x01	/* enable DAC outputs */
+#define	FFB_DAC_TGC_TIMING_ENABLE	0x02	/* enable timing generator */
+#define	FFB_DAC_TGC_HSYNC_DISABLE	0x04	/* disable hsync on csync */
+#define	FFB_DAC_TGC_VSYNC_DISABLE	0x08	/* disable vsync on csync */
+#define	FFB_DAC_TGC_EQUAL_DISABLE	0x10	/* disable equalisation */
+#define	FFB_DAC_TGC_MASTER_ENABLE	0x20	/* enable master mode */
+#define	FFB_DAC_TGC_ILACE_ENABLE	0x40	/* enable interlaced mode */
+
+/* 0x8001 monitor serial port data */
+#define	FFB_DAC_CFG_MPDATA_SCL		0x01	/* SCL Data */
+#define	FFB_DAC_CFG_MPDATA_SDA		0x02	/* SDA Data */
+
+/* 0x8002 monitor serial port sense */
+#define	FFB_DAC_CFG_MPSENSE_SCL		0x01	/* SCL Sense */
+#define	FFB_DAC_CFG_MPSENSE_SDA		0x02	/* SDA Sense */
 
 /* DAC "TYPE2" commands */
 #define	FFB_DAC_CURSENAB	0x100	/* cursor enable */
@@ -182,8 +235,16 @@
 #define	FFB_FBC_DEVID		0x800
 #define	FFB_FBC_UCSR		0x900	/* User Control & Status */
 #define	FFB_FBC_MER		0x980
+#define	FFB_FBC_RAMCNF0		0x10270	/* FBRAM Configuration 0 */
+#define	FFB_FBC_RAMCNF1		0x10274	/* FBRAM Configuration 1 */
+#define	FFB_FBC_RAMCNF2		0x10278	/* FBRAM Configuration 2 */
+#define	FFB_FBC_RAMCNF3		0x1027c	/* FBRAM Configuration 3 */
+#define	FFB_FBC_KCSR		0x10900	/* Kernel Control & Status */
 
 #define	FFB_FBC_WB_A		0x20000000
+#define	FFB_FBC_WB_B		0x40000000
+#define FFB_FBC_WE_FORCEOFF	0x00100000
+#define FFB_FBC_WE_FORCEON	0x00200000
 #define	FFB_FBC_WM_COMBINED	0x00080000
 #define	FFB_FBC_RB_A		0x00004000
 #define	FFB_FBC_SB_BOTH		0x00003000
@@ -192,6 +253,7 @@
 #define	FFB_FBC_XE_ON		0x00000080
 #define	FFB_FBC_XE_OFF		0x00000040
 #define	FFB_FBC_RGBE_ON		0x0000002a
+#define	FFB_FBC_RGBE_OFF	0x00000015
 #define	FFB_FBC_RGBE_MASK	0x0000003f
 
 #define	FBC_PPC_FW_DIS		0x00800000	/* force wid disable */
@@ -241,5 +303,10 @@
 #define	FBC_DRAWOP_FASTFILL	0x09
 #define	FBC_DRAWOP_BCOPY	0x0a	/* block copy: not implemented */
 #define	FBC_DRAWOP_VSCROLL	0x0b	/* vertical scroll */
+
+#define FBC_CFG0_RES_MASK	0x30	/* Resolution bits */
+#define FBC_CFG0_STEREO		0x10	/* Stereo */
+#define FBC_CFG0_SINGLE_BUF	0x20	/* Single buffer */
+#define FBC_CFG0_DOUBLE_BUF	0x30	/* Double buffer */
 
 #endif /* FFB_REG_H */

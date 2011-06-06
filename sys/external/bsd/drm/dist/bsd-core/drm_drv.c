@@ -401,7 +401,7 @@ drm_attach(device_t kdev, struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
 
 	memcpy(&dev->pa, pa, sizeof(dev->pa));
 
-	dev->irq = pa->pa_intrline;
+	dev->irq = pa->pa_intrpin;
 	dev->pci_domain = parent_unit;
 	dev->pci_bus = pa->pa_bus;
 	dev->pci_slot = pa->pa_device;

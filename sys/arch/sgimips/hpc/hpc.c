@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.63 2009/12/14 00:46:13 matt Exp $	*/
+/*	$NetBSD: hpc.c,v 1.63.6.1 2011/06/06 09:06:39 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.63 2009/12/14 00:46:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.63.6.1 2011/06/06 09:06:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ static const struct hpc_device hpc3_devices[] = {
 };
 
 struct hpc_softc {
-	struct device 		sc_dev;
+	device_t		sc_dev;
 
 	bus_addr_t		sc_base;
 
@@ -351,14 +351,13 @@ static struct hpc_values hpc3_values = {
 
 static int powerintr_established;
 
-static int	hpc_match(struct device *, struct cfdata *, void *);
-static void	hpc_attach(struct device *, struct device *, void *);
+static int	hpc_match(device_t, cfdata_t, void *);
+static void	hpc_attach(device_t, device_t, void *);
 static int	hpc_print(void *, const char *);
 
 static int	hpc_revision(struct hpc_softc *, struct gio_attach_args *);
 
-static int	hpc_submatch(struct device *, struct cfdata *,
-		     const int *, void *);
+static int	hpc_submatch(device_t, cfdata_t, const int *, void *);
 
 //static int	hpc_power_intr(void *);
 
@@ -370,11 +369,11 @@ static void	hpc_blink(void *);
 static int	hpc_read_eeprom(int, bus_space_tag_t, bus_space_handle_t,
 		    uint8_t *, size_t);
 
-CFATTACH_DECL(hpc, sizeof(struct hpc_softc),
+CFATTACH_DECL_NEW(hpc, sizeof(struct hpc_softc),
     hpc_match, hpc_attach, NULL, NULL);
 
 static int
-hpc_match(struct device *parent, struct cfdata *cf, void *aux)
+hpc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct gio_attach_args* ga = aux;
 
@@ -382,7 +381,7 @@ hpc_match(struct device *parent, struct cfdata *cf, void *aux)
 	    mach_type == MACH_SGI_IP22) {
 		/* Make sure it's actually there and readable */
 		if (!platform.badaddr((void*)MIPS_PHYS_TO_KSEG1(ga->ga_addr),
-		    sizeof(u_int32_t)))
+		    sizeof(uint32_t)))
 			return 1;
 	}
 
@@ -390,9 +389,9 @@ hpc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-hpc_attach(struct device *parent, struct device *self, void *aux)
+hpc_attach(device_t parent, device_t self, void *aux)
 {
-	struct hpc_softc *sc = (struct hpc_softc *)self;
+	struct hpc_softc *sc = device_private(self);
 	struct gio_attach_args* ga = aux;
 	struct hpc_attach_args ha;
 	const struct hpc_device *hd;
@@ -400,6 +399,8 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	int isonboard;
 	int isioplus;
 	int sysmask;
+
+	sc->sc_dev = self;
 
 #ifdef BLINK
 	callout_init(&hpc_blink_ch, 0);
@@ -467,11 +468,12 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		if (gio_arb_config(arb_slot, GIO_ARB_LB | GIO_ARB_MST |
 		    GIO_ARB_64BIT | GIO_ARB_HPC2_64BIT)) {
 			printf("%s: failed to configure GIO bus arbiter\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			return;
 		}
 
-		printf("%s: using EXP%d's DMA channel\n", sc->sc_dev.dv_xname,
+		printf("%s: using EXP%d's DMA channel\n",
+		    device_xname(sc->sc_dev),
 		    (arb_slot == GIO_SLOT_EXP0) ? 0 : 1);
 
 		bus_space_write_4(ga->ga_iot, ga->ga_ioh,
@@ -491,7 +493,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 
 		if (gio_arb_config(arb_slot, GIO_ARB_RT | GIO_ARB_MST)) {
 			printf("%s: failed to configure GIO bus arbiter\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			return;
 		}
 	}
@@ -590,7 +592,7 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 		return (0);
 
 	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20) {
-		u_int32_t reg;
+		uint32_t reg;
 
 		if (!platform.badaddr((void *)MIPS_PHYS_TO_KSEG1(ga->ga_addr +
 		    HPC1_BIGENDIAN), 4)) {
@@ -665,10 +667,10 @@ hpc_print(void *aux, const char *pnp)
 static int
 hpc_power_intr(void *arg)
 {
-	u_int32_t pwr_reg;
+	uint32_t pwr_reg;
 
-	pwr_reg = *((volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9850));
-	*((volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9850)) = pwr_reg;
+	pwr_reg = *((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9850));
+	*((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9850)) = pwr_reg;
 
 	printf("hpc_power_intr: panel reg = %08x\n", pwr_reg);
 
@@ -681,9 +683,9 @@ hpc_power_intr(void *arg)
 
 #if defined(BLINK)
 static void
-hpc_blink(void *self)
+hpc_blink(void *arg)
 {
-	struct hpc_softc *sc = (struct hpc_softc *) self;
+	struct hpc_softc *sc = arg;
 	register int	s;
 	int	value;
 
@@ -692,7 +694,7 @@ hpc_blink(void *self)
 	value = *(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(HPC_BASE_ADDRESS_0 +
 	    HPC1_AUX_REGS);
 	value ^= HPC1_AUX_CONSLED;
-	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(HPC_BASE_ADDRESS_0 +
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(HPC_BASE_ADDRESS_0 +
 	    HPC1_AUX_REGS) = value;
 	splx(s);
 

@@ -2,10 +2,10 @@
 #
 #	create  dos_strerror()  from dos_errno.h
 #
-#	written by Yasha (ITOH Yasufumi)
+#	written by ITOH Yasufumi
 #	public domain
 #
-#	$NetBSD: makestrerror.awk,v 1.2 1999/11/11 08:14:43 itohy Exp $
+#	$NetBSD: makestrerror.awk,v 1.2.162.1 2011/06/06 09:07:03 jruoho Exp $
 
 /^\/\* dos_errlist begin \*\/$/,/^\/\* dos_errlist end \*\/$/ {
 	if ($0 ~ /^\/\* dos_errlist begin \*\/$/) {

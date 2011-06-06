@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.25 2009/02/18 13:31:59 yamt Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.25.6.1 2011/06/06 09:07:37 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@ void		db_show_files_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/kern_proc.c */
 void		db_kill_proc(db_expr_t, bool, db_expr_t, const char *);
+void		db_show_proc(db_expr_t, bool, db_expr_t, const char *);
 void		db_show_all_procs(db_expr_t, bool, db_expr_t, const char *);
 void		db_show_all_pools(db_expr_t, bool, db_expr_t, const char *);
 void		db_show_sched_qs(db_expr_t, bool, db_expr_t, const char *);
@@ -70,11 +71,5 @@ void		db_show_module_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/subr_vmem.c */
 void		db_show_all_vmems(db_expr_t, bool, db_expr_t, const char *);
-
-/*
- * This is used in several places to determine which printf format
- * string is appropriate for displaying a variable of type db_expr_t.
- */
-#define	DB_EXPR_T_IS_QUAD (/* CONSTCOND */ sizeof(db_expr_t) > sizeof(long))
 
 #endif /* _DDB_DB_INTERFACE_H_ */

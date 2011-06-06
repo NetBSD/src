@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2010/05/27 06:58:13 dholland Exp $
+#	$NetBSD: Makefile,v 1.21.2.1 2011/06/06 09:05:14 jruoho Exp $
 
 NOMAN= # defined
 
@@ -53,7 +53,13 @@ CPPFLAGS+=	-DSUPPORT_DHCP -DSUPPORT_BOOTP
 #CPPFLAGS+=	-DRPC_DEBUG -DRARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
 
 # compiler flags for smallest code size
-CFLAGS=		-Os -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
+CFLAGS=		-O2 -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
+.if ${MACHINE_ARCH} == "mips64el"
+AFLAGS+=	-mips3 -mabi=32
+CFLAGS+=	-mips3 -mabi=32
+LINKFORMAT=	-m elf32ltsmip
+MACHINE_ARCH=	mipsel
+.endif
 
 CFLAGS+=	-Wall -Werror
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
@@ -97,10 +103,11 @@ LIBS=		${SALIB} ${ZLIB} ${KERNLIB}
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "cobalt"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/version "cobalt"
 
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
-	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
+	${LD} ${LINKFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
 	    -T ${LDSCRIPT} -e start -o ${PROG} ${OBJS} ${LIBS}
 	gzip -c9 ${PROG} > ${PROG}.gz
 	@${SIZE} ${PROG}

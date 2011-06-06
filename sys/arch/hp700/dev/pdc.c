@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.38 2011/01/13 21:15:14 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.38.2.1 2011/06/06 09:05:40 jruoho Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.38 2011/01/13 21:15:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.38.2.1 2011/06/06 09:05:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,10 +262,13 @@ pdcopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	s = spltty();
 
-	if (sc->sc_tty)
+	if (sc->sc_tty) {
 		tp = sc->sc_tty;
-	else
-		tty_attach(tp = sc->sc_tty = ttymalloc());
+	} else {
+		tp = tty_alloc();
+		sc->sc_tty = tp;
+		tty_attach(tp);
+	}
 
 	tp->t_oproc = pdcstart;
 	tp->t_param = pdcparam;

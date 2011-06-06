@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.22 2009/03/15 17:17:23 cegger Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.22.6.1 2011/06/06 09:08:33 jruoho Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.22 2009/03/15 17:17:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.22.6.1 2011/06/06 09:08:33 jruoho Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -75,8 +75,8 @@ rf_AllocMCPair(void)
 	RF_MCPair_t *t;
 
 	t = pool_get(&rf_pools.mcpair, PR_WAITOK);
-	simple_lock_init(&t->mutex);
-	t->cond = 0;
+	rf_init_mutex2(t->mutex, IPL_VM);
+	rf_init_cond2(t->cond, "mcpair");
 	t->flag = 0;
 
 	return (t);
@@ -85,6 +85,8 @@ rf_AllocMCPair(void)
 void
 rf_FreeMCPair(RF_MCPair_t *t)
 {
+	rf_destroy_cond2(t->cond);
+	rf_destroy_mutex2(t->mutex);
 	pool_put(&rf_pools.mcpair, t);
 }
 
@@ -93,8 +95,8 @@ rf_FreeMCPair(RF_MCPair_t *t)
 void
 rf_MCPairWakeupFunc(RF_MCPair_t *mcpair)
 {
-	RF_LOCK_MUTEX(mcpair->mutex);
+	RF_LOCK_MCPAIR(mcpair);
 	mcpair->flag = 1;
-	wakeup(&(mcpair->cond));
-	RF_UNLOCK_MUTEX(mcpair->mutex);
+	rf_broadcast_cond2(mcpair->cond);
+	RF_UNLOCK_MCPAIR(mcpair);
 }

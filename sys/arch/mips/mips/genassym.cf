@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.51 2011/01/14 02:06:28 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.51.2.1 2011/06/06 09:06:05 jruoho Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -71,6 +71,7 @@
 #	from @(#)genassym.c	8.2 (Berkeley) 9/23/93
 #
 
+quote #define	__INTR_PRIVATE
 quote #define	__MUTEX_PRIVATE	1
 
 include <sys/param.h>
@@ -90,6 +91,11 @@ include <mips/pte.h>
 include <mips/locore.h>
 
 define	PAGE_SIZE		PAGE_SIZE
+
+ifdef __HAVE_FAST_SOFTINTS
+define	__HAVE_FAST_SOFTINTS	1
+endif
+
 define	MIPS_KSEG0_START	MIPS_KSEG0_START
 define	MIPS_KSEG1_START	MIPS_KSEG1_START
 define	MIPS_KSEG2_START	MIPS_KSEG2_START
@@ -100,20 +106,20 @@ define	MIPS_XKPHYS_CCA4	MIPS_PHYS_TO_XKPHYS(4, 0)
 define	MIPS_XKSEG_START	MIPS_XKSEG_START
 
 # Important offsets into the lwp and proc structs & associated constants
+define	L_CPU			offsetof(struct lwp, l_cpu)
+define	L_CTXSWITCH		offsetof(struct lwp, l_ctxswtch)
 define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
-define	L_WCHAN			offsetof(struct lwp, l_wchan)
-define	L_STAT			offsetof(struct lwp, l_stat)
+define	L_PRIVATE		offsetof(struct lwp, l_private)
 define	L_PROC			offsetof(struct lwp, l_proc)
-
-# Process status constants
-define	L_CPU			offsetof(struct lwp, l_cpu)
+define	L_STAT			offsetof(struct lwp, l_stat)
+define	L_MD_UTF		offsetof(struct lwp, l_md.md_utf)
 if USPACE > PAGE_SIZE
-define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_UPTE_0		offsetof(struct lwp, l_md.md_upte[0])
 define	L_MD_UPTE_1		offsetof(struct lwp, l_md.md_upte[1])
 endif
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
+define	L_WCHAN			offsetof(struct lwp, l_wchan)
 
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
@@ -133,17 +139,10 @@ define	SIGFPE		 	SIGFPE
 define	SIGILL		 	SIGILL
 define	SIGSEGV			SIGSEGV
 
-# CPU info
-define	CPU_INFO_DIVISOR_DELAY	offsetof(struct cpu_info, ci_divisor_delay)
-define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
-define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
-
-
 #				/* XXX */
 define	MIPSX_FLUSHICACHE	0
-define	MIPSX_CPU_SWITCH_RESUME	offsetof(struct locoresw, lsw_cpu_switch_resume)
-define	MIPSX_CPU_IDLE		offsetof(struct locoresw, lsw_cpu_idle)
 
+define	PG_ASID			PG_ASID
 define	MIPS1_PG_G		MIPS1_PG_G
 define	MIPS1_PG_V		MIPS1_PG_V
 define	MIPS3_PG_G		MIPS3_PG_G
@@ -152,64 +151,67 @@ define	MIPS3_PG_HVPN		MIPS3_PG_HVPN
 define	MIPS3_PG_ASID		MIPS3_PG_ASID
 define	MIPS3_PG_ODDPG		MIPS3_PG_ODDPG
 
-define	FRAME_SIZ		sizeof(struct frame)
-define	FRAME_RZERO		offsetof(struct frame, f_regs[_R_ZERO])
-define	FRAME_AST		offsetof(struct frame, f_regs[_R_AST])
-define	FRAME_V0		offsetof(struct frame, f_regs[_R_V0])
-define	FRAME_V1		offsetof(struct frame, f_regs[_R_V1])
-define	FRAME_A0		offsetof(struct frame, f_regs[_R_A0])
-define	FRAME_A1		offsetof(struct frame, f_regs[_R_A1])
-define	FRAME_A2		offsetof(struct frame, f_regs[_R_A2])
-define	FRAME_A3		offsetof(struct frame, f_regs[_R_A3])
-define	FRAME_T0		offsetof(struct frame, f_regs[_R_T0])
-define	FRAME_T1		offsetof(struct frame, f_regs[_R_T1])
-define	FRAME_T2		offsetof(struct frame, f_regs[_R_T2])
-define	FRAME_T3		offsetof(struct frame, f_regs[_R_T3])
+define	TF_SIZ			sizeof(struct trapframe)
+define	TF_REG_ZERO		offsetof(struct trapframe, tf_regs[_R_ZERO])
+define	TF_REG_AST		offsetof(struct trapframe, tf_regs[_R_AST])
+define	TF_REG_V0		offsetof(struct trapframe, tf_regs[_R_V0])
+define	TF_REG_V1		offsetof(struct trapframe, tf_regs[_R_V1])
+define	TF_REG_A0		offsetof(struct trapframe, tf_regs[_R_A0])
+define	TF_REG_A1		offsetof(struct trapframe, tf_regs[_R_A1])
+define	TF_REG_A2		offsetof(struct trapframe, tf_regs[_R_A2])
+define	TF_REG_A3		offsetof(struct trapframe, tf_regs[_R_A3])
+define	TF_REG_T0		offsetof(struct trapframe, tf_regs[_R_T0])
+define	TF_REG_T1		offsetof(struct trapframe, tf_regs[_R_T1])
+define	TF_REG_T2		offsetof(struct trapframe, tf_regs[_R_T2])
+define	TF_REG_T3		offsetof(struct trapframe, tf_regs[_R_T3])
 
 # For old-ABI, these are T4-T7.  For new-ABI, these are A4-A7.
 # Use these in code shared by 32-bit and 64-bit processors.
-define	FRAME_TA0		offsetof(struct frame, f_regs[_R_TA0])
-define	FRAME_TA1		offsetof(struct frame, f_regs[_R_TA1])
-define	FRAME_TA2		offsetof(struct frame, f_regs[_R_TA2])
-define	FRAME_TA3		offsetof(struct frame, f_regs[_R_TA3])
+define	TF_REG_TA0		offsetof(struct trapframe, tf_regs[_R_TA0])
+define	TF_REG_TA1		offsetof(struct trapframe, tf_regs[_R_TA1])
+define	TF_REG_TA2		offsetof(struct trapframe, tf_regs[_R_TA2])
+define	TF_REG_TA3		offsetof(struct trapframe, tf_regs[_R_TA3])
 
 if !defined(__mips_n32) && !defined(__mips_n64)
 # Use these only in code used by 32-bit processors (which cannot
 # use new-ABI).
-define	FRAME_T4		offsetof(struct frame, f_regs[_R_T4])
-define	FRAME_T5		offsetof(struct frame, f_regs[_R_T5])
-define	FRAME_T6		offsetof(struct frame, f_regs[_R_T6])
-define	FRAME_T7		offsetof(struct frame, f_regs[_R_T7])
+define	TF_REG_T4		offsetof(struct trapframe, tf_regs[_R_T4])
+define	TF_REG_T5		offsetof(struct trapframe, tf_regs[_R_T5])
+define	TF_REG_T6		offsetof(struct trapframe, tf_regs[_R_T6])
+define	TF_REG_T7		offsetof(struct trapframe, tf_regs[_R_T7])
 else
-define	FRAME_A4		offsetof(struct frame, f_regs[_R_A4])
-define	FRAME_A5		offsetof(struct frame, f_regs[_R_A5])
-define	FRAME_A6		offsetof(struct frame, f_regs[_R_A6])
-define	FRAME_A7		offsetof(struct frame, f_regs[_R_A7])
+define	TF_REG_A4		offsetof(struct trapframe, tf_regs[_R_A4])
+define	TF_REG_A5		offsetof(struct trapframe, tf_regs[_R_A5])
+define	TF_REG_A6		offsetof(struct trapframe, tf_regs[_R_A6])
+define	TF_REG_A7		offsetof(struct trapframe, tf_regs[_R_A7])
 endif
 
-define	FRAME_S0		offsetof(struct frame, f_regs[_R_S0])
-define	FRAME_S1		offsetof(struct frame, f_regs[_R_S1])
-define	FRAME_S2		offsetof(struct frame, f_regs[_R_S2])
-define	FRAME_S3		offsetof(struct frame, f_regs[_R_S3])
-define	FRAME_S4		offsetof(struct frame, f_regs[_R_S4])
-define	FRAME_S5		offsetof(struct frame, f_regs[_R_S5])
-define	FRAME_S6		offsetof(struct frame, f_regs[_R_S6])
-define	FRAME_S7		offsetof(struct frame, f_regs[_R_S7])
-define	FRAME_T8		offsetof(struct frame, f_regs[_R_T8])
-define	FRAME_T9		offsetof(struct frame, f_regs[_R_T9])
-define	FRAME_K0		offsetof(struct frame, f_regs[_R_K0])
-define	FRAME_K1		offsetof(struct frame, f_regs[_R_K1])
-define	FRAME_GP		offsetof(struct frame, f_regs[_R_GP])
-define	FRAME_SP		offsetof(struct frame, f_regs[_R_SP])
-define	FRAME_S8		offsetof(struct frame, f_regs[_R_S8])
-define	FRAME_RA		offsetof(struct frame, f_regs[_R_RA])
-define	FRAME_SR		offsetof(struct frame, f_regs[_R_SR])
-define	FRAME_MULLO		offsetof(struct frame, f_regs[_R_MULLO])
-define	FRAME_MULHI		offsetof(struct frame, f_regs[_R_MULHI])
-define	FRAME_BADVADDR		offsetof(struct frame, f_regs[_R_BADVADDR])
-define	FRAME_CAUSE		offsetof(struct frame, f_regs[_R_CAUSE])
-define	FRAME_EPC		offsetof(struct frame, f_regs[_R_PC])
-define	FRAME_PPL		offsetof(struct frame, f_ppl)
+define	TF_REG_S0		offsetof(struct trapframe, tf_regs[_R_S0])
+define	TF_REG_S1		offsetof(struct trapframe, tf_regs[_R_S1])
+define	TF_REG_S2		offsetof(struct trapframe, tf_regs[_R_S2])
+define	TF_REG_S3		offsetof(struct trapframe, tf_regs[_R_S3])
+define	TF_REG_S4		offsetof(struct trapframe, tf_regs[_R_S4])
+define	TF_REG_S5		offsetof(struct trapframe, tf_regs[_R_S5])
+define	TF_REG_S6		offsetof(struct trapframe, tf_regs[_R_S6])
+define	TF_REG_S7		offsetof(struct trapframe, tf_regs[_R_S7])
+define	TF_REG_T8		offsetof(struct trapframe, tf_regs[_R_T8])
+define	TF_REG_T9		offsetof(struct trapframe, tf_regs[_R_T9])
+define	TF_REG_K0		offsetof(struct trapframe, tf_regs[_R_K0])
+define	TF_REG_K1		offsetof(struct trapframe, tf_regs[_R_K1])
+define	TF_REG_GP		offsetof(struct trapframe, tf_regs[_R_GP])
+define	TF_REG_SP		offsetof(struct trapframe, tf_regs[_R_SP])
+define	TF_REG_S8		offsetof(struct trapframe, tf_regs[_R_S8])
+define	TF_REG_RA		offsetof(struct trapframe, tf_regs[_R_RA])
+define	TF_REG_SR		offsetof(struct trapframe, tf_regs[_R_SR])
+define	TF_REG_MULLO		offsetof(struct trapframe, tf_regs[_R_MULLO])
+define	TF_REG_MULHI		offsetof(struct trapframe, tf_regs[_R_MULHI])
+define	TF_REG_BADVADDR		offsetof(struct trapframe, tf_regs[_R_BADVADDR])
+define	TF_REG_CAUSE		offsetof(struct trapframe, tf_regs[_R_CAUSE])
+define	TF_REG_EPC		offsetof(struct trapframe, tf_regs[_R_PC])
+define	TF_PPL			offsetof(struct trapframe, tf_ppl)
+# XXX Atheros HAL
+define	TF_PAD			offsetof(struct trapframe, tf_pad)
+
 
 define	FRAME_FSR		sizeof(mips_fpreg_t) * 32
 define	FRAME_FP0		sizeof(mips_fpreg_t) * 0
@@ -245,8 +247,6 @@ define	FRAME_FP29		sizeof(mips_fpreg_t) * 29
 define	FRAME_FP30		sizeof(mips_fpreg_t) * 30
 define	FRAME_FP31		sizeof(mips_fpreg_t) * 31
 
-
-#define	KERNFRAME_SIZ	(sizeof(register_t) * (6 + 2 ) + sizeof(mips_reg_t) * (17 + 5))
 define	KERNFRAME_SIZ	sizeof(struct kernframe)
 if defined(__mips_o32) || defined(__mips_o64)
 define	KERNFRAME_ARG5	offsetof(struct kernframe, cf_args[4])
@@ -258,43 +258,6 @@ define	KERNFRAME_RA	offsetof(struct kernframe, cf_ra)
 #  offset of trapframe in struct kernframe
 define	TF_BASE		offsetof(struct kernframe, cf_frame)
 
-define	TF_REG_AST	offsetof(struct trapframe, tf_regs[TF_AST])
-define	TF_REG_V0	offsetof(struct trapframe, tf_regs[TF_V0])
-define	TF_REG_V1	offsetof(struct trapframe, tf_regs[TF_V1])
-define	TF_REG_A0	offsetof(struct trapframe, tf_regs[TF_A0])
-define	TF_REG_A1	offsetof(struct trapframe, tf_regs[TF_A1])
-define	TF_REG_A2	offsetof(struct trapframe, tf_regs[TF_A2])
-define	TF_REG_A3	offsetof(struct trapframe, tf_regs[TF_A3])
-define	TF_REG_T0	offsetof(struct trapframe, tf_regs[TF_T0])
-define	TF_REG_T1	offsetof(struct trapframe, tf_regs[TF_T1])
-define	TF_REG_T2	offsetof(struct trapframe, tf_regs[TF_T2])
-define	TF_REG_T3	offsetof(struct trapframe, tf_regs[TF_T3])
-
-# For old-ABI, these are T4-T7.  For new-ABI, these are A4-A7.
-# Use these in code shared by 32-bit and 64-bit processors.
-define	TF_REG_TA0	offsetof(struct trapframe, tf_regs[TF_TA0])
-define	TF_REG_TA1	offsetof(struct trapframe, tf_regs[TF_TA1])
-define	TF_REG_TA2	offsetof(struct trapframe, tf_regs[TF_TA2])
-define	TF_REG_TA3	offsetof(struct trapframe, tf_regs[TF_TA3])
-
-if !defined(__mips_n32) && !defined(__mips_n64)
-# Use these only in code used by 32-bit processors (which cannot
-# use new-ABI).
-define	TF_REG_T4	offsetof(struct trapframe, tf_regs[TF_T4])
-define	TF_REG_T5	offsetof(struct trapframe, tf_regs[TF_T5])
-define	TF_REG_T6	offsetof(struct trapframe, tf_regs[TF_T6])
-define	TF_REG_T7	offsetof(struct trapframe, tf_regs[TF_T7])
-endif
-
-define	TF_REG_T8	offsetof(struct trapframe, tf_regs[TF_T8])
-define	TF_REG_T9	offsetof(struct trapframe, tf_regs[TF_T9])
-define	TF_REG_RA	offsetof(struct trapframe, tf_regs[TF_RA])
-define	TF_REG_SR	offsetof(struct trapframe, tf_regs[TF_SR])
-define	TF_REG_MULLO	offsetof(struct trapframe, tf_regs[TF_MULLO])
-define	TF_REG_MULHI	offsetof(struct trapframe, tf_regs[TF_MULHI])
-define	TF_REG_EPC	offsetof(struct trapframe, tf_regs[TF_EPC])
-define	TF_PPL		offsetof(struct trapframe, tf_ppl)
-
 define	CTXSWFRAME_SIZ	sizeof(label_t)
 define	SF_REG_S0	offsetof(label_t, val[_L_S0])
 define	SF_REG_S1	offsetof(label_t, val[_L_S1])
@@ -304,6 +267,7 @@ define	SF_REG_S4	offsetof(label_t, val[_L_S4])
 define	SF_REG_S5	offsetof(label_t, val[_L_S5])
 define	SF_REG_S6	offsetof(label_t, val[_L_S6])
 define	SF_REG_S7	offsetof(label_t, val[_L_S7])
+define	SF_REG_T8	offsetof(label_t, val[_L_T8])
 define	SF_REG_GP	offsetof(label_t, val[_L_GP])
 define	SF_REG_SP	offsetof(label_t, val[_L_SP])
 define	SF_REG_S8	offsetof(label_t, val[_L_S8])
@@ -314,6 +278,46 @@ define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
 define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)
 define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
 
+# CPU info
+define	CPU_INFO_CPL		offsetof(struct cpu_info, ci_cpl)
+define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
+define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
+define	CPU_INFO_EV_TLBMISSES	offsetof(struct cpu_info, ci_ev_tlbmisses.ev_count)
+define	CPU_INFO_PMAP_SEG0TAB	offsetof(struct cpu_info, ci_pmap_seg0tab)
+ifdef _LP64
+define	CPU_INFO_PMAP_SEGTAB	offsetof(struct cpu_info, ci_pmap_segtab)
+endif
+define	CPU_INFO_DIVISOR_DELAY	offsetof(struct cpu_info, ci_divisor_delay)
+define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
+define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
+ifdef MULTIPROCESSOR
+define	CPU_INFO_KSP_TLB_SLOT	offsetof(struct cpu_info, ci_ksp_tlb_slot)
+endif
 
+define	IPL_NONE		IPL_NONE
+define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
+define	IPL_SOFTBIO		IPL_SOFTBIO
+define	IPL_SOFTNET		IPL_SOFTNET
+define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
+define	IPL_VM			IPL_VM
+define	IPL_SCHED		IPL_SCHED
+define	IPL_DDB			IPL_DDB
+define	IPL_HIGH		IPL_HIGH
+
+ifdef __HAVE_PREEMPTION
+define	__HAVE_PREEMPTION	1
+define	CPU_INFO_SOFTINTS	offsetof(struct cpu_info, ci_softints)
+define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
+define	SOFTINT_KPREEMPT	SOFTINT_KPREEMPT
+endif
+define	TLBMASK_HI		offsetof(struct tlbmask, tlb_hi)
+define	TLBMASK_LO0		offsetof(struct tlbmask, tlb_lo0)
+define	TLBMASK_LO1		offsetof(struct tlbmask, tlb_lo1)
+define	TLBMASK_MASK		offsetof(struct tlbmask, tlb_mask)
+
+define	MO_CPU_ID		offsetof(struct mips_options, mips_cpu_id)
+define	MO_FPU_ID		offsetof(struct mips_options, mips_fpu_id)
+define	MO_NUM_TLB_ENTRIES	offsetof(struct mips_options, mips_num_tlb_entries)
+
+define	MCI_SDCACHE_SIZE	offsetof(struct mips_cache_info, mci_sdcache_size)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.19 2007/02/19 20:14:30 rumble Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.19.74.1 2011/06/06 09:06:40 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -43,10 +43,10 @@
  * HPC3 descriptor layout.
  */
 struct hpc_dma_desc {
-	u_int32_t	hdd_bufptr;	/* Physical address of buffer */
-	u_int32_t	hdd_ctl;	/* Control flags and byte count */
-	u_int32_t	hdd_descptr;	/* Physical address of next descr. */
-	u_int32_t	hdd_pad;	/* Pad out to quadword alignment */
+	uint32_t	hdd_bufptr;	/* Physical address of buffer */
+	uint32_t	hdd_ctl;	/* Control flags and byte count */
+	uint32_t	hdd_descptr;	/* Physical address of next descr. */
+	uint32_t	hdd_pad;	/* Pad out to quadword alignment */
 };
 
 /*

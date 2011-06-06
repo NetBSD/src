@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.44 2010/07/14 00:11:06 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.44.2.1 2011/06/06 09:08:16 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -192,6 +192,8 @@ struct livengood_tcpip_ctxdesc {
 #define CTRL_D_UD_POL	(1U << 14)	/* Defined polarity of Dock/Undock indication in SDP[0] */
 #define CTRL_F_PHY_R 	(1U << 15)	/* Reset both PHY ports, through PHYRST_N pin */
 #define CTRL_EXT_LINK_EN (1U << 16)	/* enable link status from external LINK_0 and LINK_1 pins */
+#define CTRL_LANPHYPC_OVERRIDE (1U << 16) /* SW control of LANPHYPC */
+#define CTRL_LANPHYPC_VALUE (1U << 17)	/* SW value of LANPHYPC */
 #define	CTRL_SWDPINS_SHIFT	18
 #define	CTRL_SWDPINS_MASK	0x0f
 #define	CTRL_SWDPIN(x)		(1U << (CTRL_SWDPINS_SHIFT + (x)))
@@ -675,6 +677,7 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_20K		0x0014
 #define	PBA_22K		0x0016
 #define	PBA_24K		0x0018
+#define	PBA_26K		0x001a
 #define	PBA_30K		0x001e
 #define	PBA_32K		0x0020
 #define	PBA_35K		0x0023
@@ -856,7 +859,8 @@ struct livengood_tcpip_ctxdesc {
 #define	FWSM_MODE_SHIFT		0x1
 #define	MNG_ICH_IAMT_MODE	0x2	/* PT mode? */
 #define	MNG_IAMT_MODE		0x3
-#define FWSM_RSPCIPHY	0x00000040	/* Reset PHY on PCI reset */
+#define FWSM_RSPCIPHY		0x00000040	/* Reset PHY on PCI reset */
+#define FWSM_FW_VALID		0x00008000 /* FW established a valid mode */
 
 #define	WMREG_SW_FW_SYNC 0x5b5c	/* software-firmware semaphore */
 #define	SWFW_EEP_SM		0x0001 /* eeprom access */
@@ -878,6 +882,7 @@ struct livengood_tcpip_ctxdesc {
 #define EXTCNFCTR_D_UD_OWNER		0x00000010
 #define EXTCNFCTR_MDIO_SW_OWNERSHIP	0x00000020
 #define EXTCNFCTR_MDIO_HW_OWNERSHIP	0x00000040
+#define EXTCNFCTR_GATE_PHY_CFG		0x00000080
 #define EXTCNFCTR_EXT_CNF_POINTER	0x0FFF0000
 #define E1000_EXTCNF_CTRL_SWFLAG	EXTCNFCTR_MDIO_SW_OWNERSHIP
 

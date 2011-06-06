@@ -31,13 +31,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.1 2010/03/21 21:11:13 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.1.8.1 2011/06/06 09:08:29 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <sys/ioccom.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>

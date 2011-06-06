@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.128 2010/09/21 03:26:20 macallan Exp $
+#	$NetBSD: files.sparc64,v 1.128.2.1 2011/06/06 09:06:48 jruoho Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -34,19 +34,24 @@ device	psycho: pcibus, sysmon_power, sysmon_taskq
 attach	psycho at mainbus
 device	schizo: pcibus, sysmon_power, sysmon_taskq
 attach	schizo at mainbus
+device	pyro: pcibus, sysmon_power, sysmon_taskq
+attach	pyro at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho
 file	arch/sparc64/dev/schizo.c		schizo
-file	arch/sparc64/dev/pci_machdep.c		psycho | schizo
+file	arch/sparc64/dev/pyro.c			pyro
+file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro
 
 # IOMMU is for both
-file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo
+file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro
 
 include "dev/ata/files.ata"
 
 device ebus {[addr = -1]}: pcibus
 attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
+attach ebus at mainbus with ebus_mainbus
+file	arch/sparc64/dev/ebus_mainbus.c		ebus_mainbus
 
 device clock: mk48txx
 attach clock at sbus with mkclock_sbus
@@ -163,7 +168,7 @@ device cgfourteen
 attach cgfourteen at sbus
 file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
 
-device ffb: wsemuldisplaydev, rasops8, rasops32, fb, vcons
+device ffb: wsemuldisplaydev, rasops8, rasops32, fb, vcons, i2cbus, iic, i2c_bitbang, ddc_read_edid, edid, videomode
 file	arch/sparc64/dev/ffb.c			ffb
 defflag opt_ffb.h FFB_DEBUG FFB_SYNC
 attach ffb at mainbus,upa with ffb_mainbus
@@ -200,6 +205,7 @@ file	arch/sparc/fpu/fpu_subr.c
 
 file	arch/sparc/sparc/promlib.c
 file	arch/sparc64/sparc64/autoconf.c
+file	arch/sparc64/sparc64/cache.c
 file	arch/sparc64/sparc64/clock.c
 file	arch/sparc64/sparc64/core_machdep.c	coredump
 file	arch/sparc64/sparc64/emul.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.5 2008/04/28 20:23:34 martin Exp $	*/
+/*	$NetBSD: start.S,v 1.5.28.1 2011/06/06 09:06:42 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -83,34 +83,35 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-#	.extern ARCBIOS, 4
+#include "assym.h"
 
 	.globl	start
 start:
 	.set	noreorder
 #ifdef __GP_SUPPORT__
-	la	gp, _C_LABEL (_gp)
+	PTR_LA	gp, _C_LABEL (_gp)
 #endif
-	addi	sp, -CALLFRAME_SIZ
-	sw	ra, CALLFRAME_RA(sp)		# Save RA
-	sw	a0, 0(sp)			# save argc
-	sw	a1, 4(sp)			# save argv
-	sw	a2, 8(sp)			# save envp
-	la	v0, 0x80001000			# ARCBIOS_SPB
-	la	a0, _C_LABEL (edata)		# clear BSS
-	lw	v0, 8 * 4(v0)			# FirmwareVector
+	/*
+	 * We assume the bootprom isn't expecting us to preserve the saved
+	 * registers.
+	 */
+	move	s0, a0				# save argc
+	move	s1, a1				# save argv
+	move	s2, a2				# save envp
+	move	s3, ra				# save RA
+	PTR_LA	v0, 0x80001000			# ARCBIOS_SPB
+	PTR_LA	a0, _C_LABEL (edata)		# clear BSS
+	INT_L	v0, SPB_FirmwareVector(v0)	# FirmwareVector
 	move	a1, zero
-	sw	v0, _C_LABEL(ARCBIOS)		# save ARCBIOS
-	la	a2, _C_LABEL (end)
+	PTR_S	v0, _C_LABEL(ARCBIOS)		# save ARCBIOS
+	PTR_LA	a2, _C_LABEL (end)
 	jal	_C_LABEL(memset)		# memset(edata, 0, end - edata)
-	subu	a2, a2, a0
-	lw	a0, 0(sp)			# restore argc
-	lw	a1, 4(sp)			# restore argv
-	jal	_C_LABEL(main)			# main(argc, argv)
-	lw	a2, 8(sp)			# restore envp
-	lw	ra, CALLFRAME_RA(sp)		# restore RA
-	j	ra				# return to PROM
-	addi	sp, CALLFRAME_SIZ		# BDslot: adjust stack
+	 PTR_SUBU a2, a2, a0
+	move	a0, s0				# restore argc
+	move	a1, s1				# restore argv
+	move	a2, s2				# restore envp
+	j	_C_LABEL(main)			# main(argc, argv)
+	 move	ra, s3				# restore RA
 
 	.globl	_rtt
 _rtt:
@@ -118,4 +119,4 @@ _rtt:
 
 	.data
 	.global	ARCBIOS
-ARCBIOS: .data	0
+ARCBIOS: PTR_WORD	0

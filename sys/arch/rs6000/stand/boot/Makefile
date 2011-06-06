@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/01/12 07:16:17 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2011/06/06 09:06:33 jruoho Exp $
 
 NOMAN= # defined
 
@@ -26,7 +26,7 @@ SRCS+= iplcb.c
 
 CFLAGS= -Os -mmultiple -ffreestanding
 CFLAGS+= -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-AFLAGS= -x assembler-with-cpp -traditional-cpp
+AFLAGS= -x assembler-with-cpp
 
 CPPFLAGS= -nostdinc -I${.OBJDIR} -I${MKBOOTIMAGE} -I${S}
 CPPFLAGS+= -D_STANDALONE -DRELOC=${RELOC} -DUSE_SCAN
@@ -64,7 +64,8 @@ powerpc::
 .endif
 
 vers.c: ${.CURDIR}/../boot/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/../boot/version "rs6000" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
+	    ${.CURDIR}/../boot/version "rs6000" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBS}
 	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \

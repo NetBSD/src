@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133 2010/02/08 19:02:31 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.133.4.1 2011/06/06 09:06:41 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2010/02/08 19:02:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133.4.1 2011/06/06 09:06:41 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2010/02/08 19:02:31 joerg Exp $");
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
 #include "opt_modular.h"
+
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,76 +128,48 @@ int arcsmem;		/* Memory used by the ARCS firmware */
 
 int ncpus;
 
-/* CPU interrupt masks */
-const int *ipl2spl_table;
+#define IPL2SPL_TABLE_COMMON					\
+	[IPL_NONE] =		0,				\
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,		\
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,		\
+	[IPL_DDB] =		MIPS_INT_MASK,			\
+	[IPL_HIGH] =		MIPS_INT_MASK
 
-#define	IPL2SPL_TABLE_COMMON \
-	[IPL_SOFTCLOCK]	= MIPS_SOFT_INT_MASK_1, \
-	[IPL_HIGH]	= MIPS_INT_MASK,
-
+/* CPU interrupt sr maps */
 #if defined(MIPS1)
-static const int sgi_ip6_ipl2spl_table[] = {
-	IPL2SPL_TABLE_COMMON
-
-	[IPL_VM]	= MIPS_INT_MASK_1 |
-			  MIPS_INT_MASK_0 |
-			  MIPS_SOFT_INT_MASK_1,
-			  MIPS_SOFT_INT_MASK_0,
-
-	[IPL_SCHED]	= MIPS_INT_MASK_4 |
-			  MIPS_INT_MASK_2 |
-			  MIPS_INT_MASK_1 |
-			  MIPS_INT_MASK_0 |
-			  MIPS_SOFT_INT_MASK_1,
-			  MIPS_SOFT_INT_MASK_0,
+static const struct ipl_sr_map sgi_ip6_ipl_sr_map = {
+    .sr_bits = {
+	IPL2SPL_TABLE_COMMON,
+	[IPL_VM] = MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK,
+	[IPL_SCHED] = MIPS_INT_MASK_4|MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK,
+    },
 };
-static const int sgi_ip12_ipl2spl_table[] = {
-	IPL2SPL_TABLE_COMMON
-
-	[IPL_VM]	= MIPS_INT_MASK_2 |
-			  MIPS_INT_MASK_1 |
-			  MIPS_INT_MASK_0 |
-			  MIPS_SOFT_INT_MASK_1,
-	    		  MIPS_SOFT_INT_MASK_0,
-
-	[IPL_SCHED]	= MIPS_INT_MASK_4 |
-			  MIPS_INT_MASK_3 |
-			  MIPS_INT_MASK_2 |
-	    		  MIPS_INT_MASK_1 |
-			  MIPS_INT_MASK_0 |
-			  MIPS_SOFT_INT_MASK_1,
-			  MIPS_SOFT_INT_MASK_0,
+static const struct ipl_sr_map sgi_ip12_ipl_sr_map = {
+    .sr_bits = {
+	IPL2SPL_TABLE_COMMON,
+	[IPL_VM] = MIPS_INT_MASK_2|MIPS_INT_MASK_1|MIPS_INT_MASK_0|
+	    MIPS_SOFT_INT_MASK,
+	[IPL_SCHED] = MIPS_INT_MASK_4|MIPS_INT_MASK_3|MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK,
+    },
 };
 #endif /* defined(MIPS1) */
 
 #if defined(MIPS3)
-static const int sgi_ip2x_ipl2spl_table[] = {
-	IPL2SPL_TABLE_COMMON
-
-	[IPL_VM]	= MIPS_INT_MASK_1 |
-			  MIPS_INT_MASK_0 |
-			  MIPS_SOFT_INT_MASK_1 |
-			  MIPS_SOFT_INT_MASK_0,
-
-	[IPL_SCHED]	= MIPS_INT_MASK_5 |
-			  MIPS_INT_MASK_3 |
-			  MIPS_INT_MASK_2 |
-			  MIPS_INT_MASK_1 |
-			  MIPS_INT_MASK_0 |
-			  MIPS_SOFT_INT_MASK_1 |
-			  MIPS_SOFT_INT_MASK_0,
+static const struct ipl_sr_map sgi_ip2x_ipl_sr_map = {
+    .sr_bits = {
+	IPL2SPL_TABLE_COMMON,
+	[IPL_VM] = MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK,
+	[IPL_SCHED] = MIPS_INT_MASK,
+    },
 };
-static const int sgi_ip3x_ipl2spl_table[] = {
-	IPL2SPL_TABLE_COMMON
-
-	[IPL_VM]	= MIPS_INT_MASK_0 | 
-			  MIPS_SOFT_INT_MASK_1 |
-			  MIPS_SOFT_INT_MASK_0,
-
-	[IPL_SCHED]	= MIPS_INT_MASK_5 |
-			  MIPS_INT_MASK_0 |
-	    		  MIPS_SOFT_INT_MASK_1 |
-			  MIPS_SOFT_INT_MASK_0,
+static const struct ipl_sr_map sgi_ip3x_ipl_sr_map = {
+    .sr_bits = {
+	IPL2SPL_TABLE_COMMON,
+	[IPL_VM] = MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK,
+	[IPL_SCHED] = MIPS_INT_MASK_5|MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK,
+    },
 };
 #endif /* defined(MIPS3) */
 
@@ -207,15 +181,11 @@ extern void	ip22_sdcache_disable(void);
 extern void	ip22_sdcache_enable(void);
 #endif
 
-#if defined(MIPS1)
-extern void mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-#endif
-
 #if defined(MIPS3)
-extern void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+extern void mips3_clock_intr(vaddr_t, uint32_t, uint32_t);
 #endif
 
-void	mach_init(int, char **, uintptr_t, void *);
+void	mach_init(int, int32_t *, uintptr_t, int32_t);
 
 void	sgimips_count_cpus(struct arcbios_component *,
 	    struct arcbios_treewalk_context *);
@@ -231,7 +201,7 @@ void mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_tr
 static void	unimpl_bus_reset(void);
 static void	unimpl_cons_init(void);
 static void	*unimpl_intr_establish(int, int, int (*)(void *), void *);
-static void	unimpl_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+static void	unimpl_intr(vaddr_t, uint32_t, uint32_t);
 static unsigned	long nulllong(void);
 static void	nullvoid(void);
 
@@ -256,12 +226,6 @@ struct platform platform = {
 	.intr5			= unimpl_intr
 };
 
-/*
- * safepri is a safe priority for sleep to set for a spin-wait during
- * autoconfiguration or after a panic.  Used as an argument to splx().
- */
-int	safepri = MIPS1_PSL_LOWIPL;
-
 extern u_int32_t ssir;
 extern char kernel_text[], edata[], end[];
 
@@ -276,22 +240,32 @@ static const char *bootinfo_msg = NULL;
  * Process arguments passed to us by the ARCS firmware.
  */
 void
-mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
+mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 {
 	paddr_t first, last;
-	int firstpfn, lastpfn;
 	vsize_t size;
+	void *bip = (void *)(intptr_t)bip32;
 	struct arcbios_mem *mem;
 	const char *cpufreq, *osload;
 	char *bootpath = NULL;
 	vaddr_t kernend;
 	int kernstartpfn, kernendpfn;
-	int i, rv;
+	u_int i;
+	int rv;
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	int nsym = 0;
 	char *ssym = NULL;
 	char *esym = NULL;
 	struct btinfo_symtab *bi_syms;
+#endif
+#ifdef _LP64
+	char *argv[argc+1];
+
+	for (i = 0; i < argc; i++) {
+		argv[i] = (void *)(intptr_t)argv32[i];
+	}
+#else
+	char **argv = (void *)argv32;
 #endif
 
 	/*
@@ -305,10 +279,14 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	 * there's no bootinfo.
 	 */
 	if (arcbios_init(ARCS_VECTOR) == 1) {
+#ifdef _LP64
+		panic("no ARCS firmware");
+#else
 		if (magic == BOOTINFO_MAGIC)
 			arcemu_init(NULL);	/* XXX - need some prom env */
 		else
 			arcemu_init((const char **)magic);
+#endif
 	}
 
 	strcpy(cpu_model, arcbios_system_identifier);
@@ -355,7 +333,7 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	kernstartpfn = atop(MIPS_KSEG0_TO_PHYS((vaddr_t) kernel_text)) - 1;
 	kernendpfn = atop(MIPS_KSEG0_TO_PHYS(kernend));
 
-	cpufreq = ARCBIOS->GetEnvironmentVariable("cpufreq");
+	cpufreq = arcbios_GetEnvironmentVariable("cpufreq");
 
 	if (cpufreq == 0)
 		panic("no $cpufreq");
@@ -420,7 +398,7 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	 * bacause bootpath is not set properly by old bootloaders and
 	 * argv[0] might be invalid on some machine.
 	 */
-	osload = ARCBIOS->GetEnvironmentVariable("OSLoadPartition");
+	osload = arcbios_GetEnvironmentVariable("OSLoadPartition");
 	if (osload != NULL)
 		makebootdev(osload);
 
@@ -456,7 +434,7 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	/* Set default to single user. */
 	boothowto = RB_SINGLE;
 
-	osload = ARCBIOS->GetEnvironmentVariable("OSLoadOptions");
+	osload = arcbios_GetEnvironmentVariable("OSLoadOptions");
 	if (osload != NULL && strcmp(osload, "auto") == 0)
 		boothowto &= ~RB_SINGLE;
 
@@ -541,8 +519,8 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	switch (mach_type) {
 #if defined(MIPS1)
 	case MACH_SGI_IP6 | MACH_SGI_IP10:
-		ipl2spl_table = sgi_ip6_ipl2spl_table;
 		platform.intr3 = mips1_fpu_intr;
+		ipl_sr_map = sgi_ip6_ipl_sr_map;
 		break;
 
 	case MACH_SGI_IP12:
@@ -561,7 +539,7 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 				mach_subtype = MACH_SGI_IP12_HPLC;
                 }
 
-		ipl2spl_table = sgi_ip12_ipl2spl_table;
+		ipl_sr_map = sgi_ip12_ipl_sr_map;
 		platform.intr0 = mips1_fpu_intr;
 		break;
 #endif /* MIPS1 */
@@ -570,19 +548,19 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	case MACH_SGI_IP20:
 		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
 		mach_boardrev = (i & 0x7000) >> 12;
-		ipl2spl_table = sgi_ip2x_ipl2spl_table;
+		ipl_sr_map = sgi_ip2x_ipl_sr_map;
 		platform.intr5 = mips3_clock_intr;
 		break;
 	case MACH_SGI_IP22:
-		ipl2spl_table = sgi_ip2x_ipl2spl_table;
+		ipl_sr_map = sgi_ip2x_ipl_sr_map;
 		platform.intr5 = mips3_clock_intr;
 		break;
 	case MACH_SGI_IP30:
-		ipl2spl_table = sgi_ip3x_ipl2spl_table;
+		ipl_sr_map = sgi_ip3x_ipl_sr_map;
 		platform.intr5 = mips3_clock_intr;
 		break;
 	case MACH_SGI_IP32:
-		ipl2spl_table = sgi_ip3x_ipl2spl_table;
+		ipl_sr_map = sgi_ip3x_ipl_sr_map;
 		platform.intr5 = mips3_clock_intr;
 		break;
 #endif /* MIPS3 */
@@ -600,7 +578,7 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	mem = NULL;
 
 	do {
-		if ((mem = ARCBIOS->GetMemoryDescriptor(mem)) != NULL) {
+		if ((mem = arcbios_GetMemoryDescriptor(mem)) != NULL) {
 			i++;
 			printf("Mem block %d: type %d, "
 			    "base 0x%04lx, size 0x%04lx\n",
@@ -615,7 +593,7 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	 */
 	mem = NULL;
 	for (i = 0; mem_cluster_cnt < VM_PHYSSEG_MAX; i++) {
-		mem = ARCBIOS->GetMemoryDescriptor(mem);
+		mem = arcbios_GetMemoryDescriptor(mem);
 
 		if (mem == NULL)
 			break;
@@ -624,51 +602,10 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 		last = trunc_page(first + mem->PageCount * ARCBIOS_PAGESIZE);
 		size = last - first;
 
-		firstpfn = atop(first);
-		lastpfn = atop(last);
-
 		switch (mem->Type) {
 		case ARCBIOS_MEM_FreeContiguous:
 		case ARCBIOS_MEM_FreeMemory:
 		case ARCBIOS_MEM_LoadedProgram:
-			if (kernstartpfn >= lastpfn ||
-			    kernendpfn <= firstpfn) {
-				/* Kernel is not in this cluster at all */
-				
-				aprint_debug("Loading cluster %d: "
-				    "0x%x / 0x%x\n",
-				    i, firstpfn, lastpfn);
-				uvm_page_physload(firstpfn, lastpfn,
-				    firstpfn, lastpfn, VM_FREELIST_DEFAULT);
-			} else {
-				if (firstpfn < kernstartpfn) {
-					/*
-					 * There is space before kernel in
-					 * this cluster
-					 */
-
-					aprint_debug("Loading cluster %d "
-					    "(before kernel): 0x%x / 0x%x\n",
-					    i, firstpfn, kernstartpfn);
-					uvm_page_physload(firstpfn,
-					    kernstartpfn, firstpfn,
-					    kernstartpfn, VM_FREELIST_DEFAULT);
-				}
-
-				if (lastpfn > kernendpfn) {
-					/*
-					 * There is space after kernel in
-					 * this cluster
-					 */
-
-					aprint_debug("Loading cluster %d "
-					    "(after kernel): 0x%x / 0x%x\n",
-					    i, kernendpfn, lastpfn);
-					uvm_page_physload(kernendpfn,
-					    lastpfn, kernendpfn,
-					    lastpfn, VM_FREELIST_DEFAULT);
-				}
-			}
 			mem_clusters[mem_cluster_cnt].start = first;
 			mem_clusters[mem_cluster_cnt].size = size;
 			mem_cluster_cnt++;
@@ -696,6 +633,9 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	if (mem_cluster_cnt == 0)
 		panic("no free memory descriptors found");
 
+	mips_page_physload((vaddr_t)kernel_text - PAGE_SIZE, (vaddr_t)kernend,
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
+
 	/* We can now no longer use bootinfo. */
 	bootinfo = NULL;
 
@@ -715,7 +655,7 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL, false);
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -789,8 +729,7 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 	/* Take a snapshot before clobbering any registers. */
-	if (curlwp)
-		savectx(curpcb);
+	savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -828,7 +767,7 @@ haltsys:
 	pmf_system_shutdown(boothowto);
 
 	/*
-	 * Calling ARCBIOS->PowerDown() results in a "CP1 unusable trap"
+	 * Calling arcbios_PowerDown() results in a "CP1 unusable trap"
 	 * which lands me back in DDB, at least on my Indy.  So, enable
 	 * the FPU before asking the PROM to power down to avoid this..
 	 * It seems to want the FPU to play the `poweroff tune' 8-/
@@ -845,7 +784,7 @@ haltsys:
 			mcclock_poweroff();
 		} else 
 #endif
-			ARCBIOS->PowerDown();
+			arcbios_PowerDown();
 		printf("WARNING: powerdown failed\n");
 		/*
 		 * RB_POWERDOWN implies RB_HALT... fall into it...
@@ -854,7 +793,7 @@ haltsys:
 
 	if (howto & RB_HALT) {
 		printf("halting...\n\n");
-		ARCBIOS->EnterInteractiveMode();
+		arcbios_EnterInteractiveMode();
 	}
 
 	printf("rebooting...\n\n");
@@ -863,7 +802,7 @@ haltsys:
 		crime_reboot();
 	} else
 #endif	
-		ARCBIOS->Reboot();
+		arcbios_Reboot();
 
 	for (;;);
 }
@@ -918,13 +857,13 @@ static void *
 unimpl_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 {
 	panic("target init didn't set intr_establish");
-	return (void *)NULL;
+	return NULL;
 }
 
 static void
-unimpl_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+unimpl_intr(vaddr_t pc, uint32_t status, uint32_t pending)
 {
-	printf("spurious interrupt, ipending %x\n", ipending);
+	printf("spurious interrupt pending %#x\n", pending);
 }
 
 static unsigned long
@@ -983,17 +922,18 @@ void ddb_trap_hook(int where)
 
 void mips_machdep_cache_config(void)
 {
+
 	arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
 
-	switch (MIPS_PRID_IMPL(cpu_id)) {
+	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 #if defined(INDY_R4600_CACHE)
 	case MIPS_R4600:
 		/*
 		 * R4600 is on Indy-class machines only.  Disable and
 		 * flush pcache.
 		 */
-		mips_sdcache_size = 0;
-		mips_sdcache_line_size = 0;
+		mips_cache_info.mci_sdcache_size = 0;
+		mips_cache_info.mci_sdcache_line_size = 0;
 		ip22_sdcache_disable();
 		break;
 #endif
@@ -1009,7 +949,8 @@ void mips_machdep_cache_config(void)
 void
 mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_treewalk_context *atc)
 {
-	struct device *self = atc->atc_cookie;
+	struct mips_cache_info * const mci = &mips_cache_info;
+	device_t self = atc->atc_cookie;
 
 	if (comp->Class != COMPONENT_CLASS_CacheClass)
 		return;
@@ -1019,18 +960,11 @@ mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_treewal
 		panic("%s: split L2 cache", self->dv_xname);
 	case COMPONENT_TYPE_SecondaryDCache:
 	case COMPONENT_TYPE_SecondaryCache:
-		mips_sdcache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
-		mips_sdcache_line_size =
+		mci->mci_sdcache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
+		mci->mci_sdcache_line_size =
 		    COMPONENT_KEY_Cache_LineSize(comp->Key);
 		/* XXX */
-		mips_sdcache_ways = 1;
+		mci->mci_sdcache_ways = 1;
 		break;
 	}
-}
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
 }

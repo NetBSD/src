@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.132 2010/11/19 06:44:34 dholland Exp $	*/
+/*	$NetBSD: exec.h,v 1.132.2.1 2011/06/06 09:10:10 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -114,6 +114,15 @@ struct ps_strings {
 	char	**ps_envstr;	/* first of 0 or more environment strings */
 	int	ps_nenvstr;	/* the number of environment strings */
 };
+
+#ifdef _KERNEL
+struct ps_strings32 {
+	uint32_t	ps_argvstr;	/* first of 0 or more argument strings */
+	int32_t		ps_nargvstr;	/* the number of argument strings */
+	uint32_t	ps_envstr;	/* first of 0 or more environment strings */
+	int32_t		ps_nenvstr;	/* the number of environment strings */
+};
+#endif
 
 /*
  * the following structures allow execve() to put together processes
@@ -245,6 +254,9 @@ int	vmcmd_readvn		(struct lwp *, struct exec_vmcmd *);
 int	vmcmd_map_zero		(struct lwp *, struct exec_vmcmd *);
 int	copyargs		(struct lwp *, struct exec_package *,
 				    struct ps_strings *, char **, void *);
+int	copyin_psstrings	(struct proc *, struct ps_strings *);
+int	copy_procargs		(struct proc *, int, size_t *,
+    int (*)(void *, const void *, size_t, size_t), void *);
 void	setregs			(struct lwp *, struct exec_package *, vaddr_t);
 int	check_veriexec		(struct lwp *, struct vnode *,
 				     struct exec_package *, int);

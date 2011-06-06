@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.32 2010/12/20 00:25:47 matt Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.32.2.1 2011/06/06 09:10:10 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@ struct lwp;
 
 #include <sys/sched.h>	/* for schedstate_percpu */
 #include <sys/condvar.h>
+#include <sys/pcu.h>
 #include <sys/percpu_types.h>
 #include <sys/queue.h>
 
@@ -74,6 +75,8 @@ struct cpu_data {
 	cpuid_t		cpu_package_id;
 	cpuid_t		cpu_core_id;
 	cpuid_t		cpu_smt_id;
+
+	struct lwp * volatile cpu_pcu_curlwp[PCU_UNIT_COUNT];
 
 	/*
 	 * This section is mostly CPU-private.
@@ -116,6 +119,7 @@ struct cpu_data {
 #define	ci_lockstat		ci_data.cpu_lockstat
 #define	ci_spin_locks2		ci_data.cpu_spin_locks2
 #define	ci_lkdebug_recurse	ci_data.cpu_lkdebug_recurse
+#define	ci_pcu_curlwp		ci_data.cpu_pcu_curlwp
 
 #define	ci_package_id		ci_data.cpu_package_id
 #define	ci_core_id		ci_data.cpu_core_id

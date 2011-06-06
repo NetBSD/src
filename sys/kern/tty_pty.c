@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.124 2010/11/16 23:58:11 dyoung Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.124.2.1 2011/06/06 09:09:38 jruoho Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.124 2010/11/16 23:58:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.124.2.1 2011/06/06 09:09:38 jruoho Exp $");
 
 #include "opt_ptm.h"
 
@@ -248,7 +248,7 @@ pty_check(int ptn)
 
 		selinit(&pti->pt_selr);
 		selinit(&pti->pt_selw);
-		pti->pt_tty = ttymalloc();
+		pti->pt_tty = tty_alloc();
 
 		mutex_enter(&pt_softc_mutex);
 
@@ -258,7 +258,7 @@ pty_check(int ptn)
 		 */
 		if (pt_softc[ptn]) {
 			mutex_exit(&pt_softc_mutex);
-			ttyfree(pti->pt_tty);
+			tty_free(pti->pt_tty);
 			seldestroy(&pti->pt_selr);
 			seldestroy(&pti->pt_selw);
 			kmem_free(pti, sizeof(*pti));
@@ -476,7 +476,10 @@ ptspoll(dev_t dev, int events, struct lwp *l)
 void
 ptsstart(struct tty *tp)
 {
-	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+	struct pt_softc *pti;
+
+	KASSERT(tp->t_dev != NODEV);
+	pti = pt_softc[minor(tp->t_dev)];
 
 	KASSERT(mutex_owned(&tty_lock));
 
@@ -497,7 +500,10 @@ ptsstart(struct tty *tp)
 void
 ptsstop(struct tty *tp, int flush)
 {
-	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+	struct pt_softc *pti;
+
+	KASSERT(tp->t_dev != NODEV);
+	pti = pt_softc[minor(tp->t_dev)];
 
 	KASSERT(mutex_owned(&tty_lock));
 
@@ -523,7 +529,13 @@ ptsstop(struct tty *tp, int flush)
 void
 ptcwakeup(struct tty *tp, int flag)
 {
-	struct pt_softc *pti = pt_softc[minor(tp->t_dev)];
+	struct pt_softc *pti;
+
+	if (tp->t_dev == NODEV)
+		return;	/* client side not open yet */
+
+	pti = pt_softc[minor(tp->t_dev)];
+	KASSERT(pti != NULL);
 
 	mutex_spin_enter(&tty_lock);
 	if (flag & FREAD) {
