@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.29 2011/04/04 20:37:55 dyoung Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.30 2011/06/06 14:33:31 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.29 2011/04/04 20:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.30 2011/06/06 14:33:31 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -183,7 +183,7 @@ static struct lpcib_device {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CAM_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC, 0, 0 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_ISA, 0, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DBM_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LPC, 0, 1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC, 1, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_LPC, 1, 0 },
@@ -805,7 +805,7 @@ speedstep_configure(device_t self)
 	int rv;
 
 	/* Supported on ICH2-M, ICH3-M and ICH4-M.  */
-	if (PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801DB_ISA ||
+	if (PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801DBM_LPC ||
 	    PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801CAM_LPC ||
 	    (PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC &&
 	     pci_find_device(&sc->sc_pa, speedstep_bad_hb_check) == 0)) {
