@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.71 2011/05/23 15:17:25 drochner Exp $	*/
+/*	$NetBSD: key.c,v 1.72 2011/06/06 16:48:35 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.71 2011/05/23 15:17:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.72 2011/06/06 16:48:35 drochner Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1942,24 +1942,6 @@ key_spdadd(struct socket *so, struct mbuf *m,
 		KFREE(newsp);
 		return key_senderror(so, m, EINVAL);
 	}
-#if 1
-	if (newsp->req && newsp->req->saidx.src.sa.sa_family) {
-		struct sockaddr *sa;
-		sa = (struct sockaddr *)(src0 + 1);
-		if (sa->sa_family != newsp->req->saidx.src.sa.sa_family) {
-			KFREE(newsp);
-			return key_senderror(so, m, EINVAL);
-		}
-	}
-	if (newsp->req && newsp->req->saidx.dst.sa.sa_family) {
-		struct sockaddr *sa;
-		sa = (struct sockaddr *)(dst0 + 1);
-		if (sa->sa_family != newsp->req->saidx.dst.sa.sa_family) {
-			KFREE(newsp);
-			return key_senderror(so, m, EINVAL);
-		}
-	}
-#endif
 
 	newsp->created = time_uptime;
 	newsp->lastused = newsp->created;
