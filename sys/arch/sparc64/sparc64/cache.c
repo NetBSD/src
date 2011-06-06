@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.7 2011/06/06 01:16:48 mrg Exp $	*/
+/*	$NetBSD: cache.c,v 1.8 2011/06/06 02:49:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 2011 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.7 2011/06/06 01:16:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.8 2011/06/06 02:49:39 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -58,7 +58,6 @@ blast_dcache_real(void)
 	sp_blast_dcache(dcache_size, dcache_line_size);
 }
 
-#if 0
 static void
 sp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t cs)
 {
@@ -69,35 +68,37 @@ sp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t cs)
 void    (*dcache_flush_page)(paddr_t) =	dcache_flush_page_us;
 void	(*dcache_flush_page_cpuset)(paddr_t, sparc64_cpuset_t) =
 					sp_dcache_flush_page_cpuset;
-#endif
 void	(*blast_dcache)(void) =		blast_dcache_real;
 void	(*blast_icache)(void) =		blast_icache_us;
+
+#ifdef MULTIPROCESSOR
+void    (*sp_dcache_flush_page)(paddr_t) = dcache_flush_page_us;
+#endif
 
 void
 cache_setup_funcs(void)
 {
 
 	if (CPU_ISSUN4US || CPU_ISSUN4V) {
-#if 0
 		dcache_flush_page = (void (*)(paddr_t)) cache_nop;
+#ifdef MULTIPROCESSOR
+		/* XXXMRG shouldn't be necessary -- only caller is nop'ed out */
+		sp_dcache_flush_page = (void (*)(paddr_t)) cache_nop;
 #endif
 		blast_dcache = cache_nop;
 		blast_icache = cache_nop;
 	} else {
 		if (CPU_IS_USIII_UP()) {
-#if 0
 			dcache_flush_page = dcache_flush_page_usiii;
+#ifdef MULTIPROCESSOR
+			sp_dcache_flush_page = dcache_flush_page_usiii;
 #endif
 			blast_icache = blast_icache_usiii;
-printf("set usIII dcache/icache funcs\n");
 		}
 #ifdef MULTIPROCESSOR
 		if (sparc_ncpus > 1 && (boothowto & RB_MD1) == 0) {
-printf("set MP dcache funcs\n");
-#if 0
 			dcache_flush_page = smp_dcache_flush_page_allcpu;
 			dcache_flush_page_cpuset = smp_dcache_flush_page_cpuset;
-#endif
 			blast_dcache = smp_blast_dcache;
 		}
 #endif
