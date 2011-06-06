@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.59 2011/05/31 14:45:36 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.60 2011/06/06 07:42:32 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.59 2011/05/31 14:45:36 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.60 2011/06/06 07:42:32 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -751,6 +751,18 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 
 		if (val == ps->ps_status) {
 			*freq = ps->ps_freq;
+			return 0;
+		}
+	}
+
+	/*
+	 * If the value was not found, try APERF/MPERF.
+	 * The state is P0 if the return value is 100 %.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_P_HWF) != 0) {
+
+		if (acpicpu_md_pstate_hwf(sc->sc_ci) == 100) {
+			*freq = sc->sc_pstate[0].ps_freq;
 			return 0;
 		}
 	}
