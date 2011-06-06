@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1083 2011/05/28 22:53:23 phx Exp $
+$NetBSD: pcidevs,v 1.1084 2011/06/06 14:31:23 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2608,7 +2608,7 @@ product INTEL 82801DB_MOD	0x24C6	82801DB AC97 Modem Controller
 product INTEL 82801DB_USB_3	0x24C7	82801DB USB UHCI Controller
 product INTEL 82801DBM_IDE	0x24CA	82801DBM IDE Controller
 product INTEL 82801DB_IDE	0x24CB	82801DB IDE Controller (UltraATA/100)
-product INTEL 82801DB_ISA	0x24CC	82801DB ISA Bridge
+product INTEL 82801DBM_LPC	0x24CC	82801DB LPC Interface Bridge
 product INTEL 82801DB_USBC	0x24CD	82801DB USB EHCI Controller
 product INTEL 82801EB_LPC	0x24D0	82801EB LPC Interface Bridge
 product INTEL 82801EB_SATA	0x24D1	82801EB Serial ATA Controller
