@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.21 2011/06/06 01:16:48 mrg Exp $ */
+/*	$NetBSD: cache.h,v 1.22 2011/06/06 02:49:39 mrg Exp $ */
 
 /*
  * Copyright (c) 2011 Matthew R. Green
@@ -102,17 +102,6 @@ void	cache_flush_phys_us(paddr_t, psize_t, int);
 void	cache_flush_phys_usiii(paddr_t, psize_t, int);
 
 static __inline__ void
-dcache_flush_page(paddr_t pa)
-{
-	if (CPU_ISSUN4US || CPU_ISSUN4V)
-		return;
-	if (CPU_IS_USIII_UP())
-		dcache_flush_page_usiii(pa);
-	else
-		dcache_flush_page_us(pa);
-}
-
-static __inline__ void
 cache_flush_phys(paddr_t pa, psize_t size, int ecache)
 {
 	if (CPU_IS_USIII_UP() || CPU_IS_SPARC64_V_UP())
@@ -146,25 +135,25 @@ sp_tlb_flush_all(void)
 		sp_tlb_flush_all_us();
 }
 
-#if 0
 extern	void	(*dcache_flush_page)(paddr_t);
 extern	void	(*dcache_flush_page_cpuset)(paddr_t, sparc64_cpuset_t);
-#endif
 extern	void	(*blast_dcache)(void);
 extern	void	(*blast_icache)(void);
 
 void cache_setup_funcs(void);
 
 #ifdef MULTIPROCESSOR
+extern	void	(*sp_dcache_flush_page)(paddr_t);
+
 void smp_tlb_flush_pte(vaddr_t, struct pmap *);
 void smp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t);
+void smp_dcache_flush_page_allcpu(paddr_t pa);
 void smp_blast_dcache(void);
-#define	tlb_flush_pte(va,pm	)	smp_tlb_flush_pte(va, pm)
+#define	tlb_flush_pte(va,pm)		smp_tlb_flush_pte(va, pm)
 #define	dcache_flush_page_all(pa)	smp_dcache_flush_page_cpuset(pa, cpus_active)
 #define	dcache_flush_page_cpuset(pa,cs)	smp_dcache_flush_page_cpuset(pa, cs)
 #else
 #define	tlb_flush_pte(va,pm)		sp_tlb_flush_pte(va, (pm)->pm_ctx[0])
 #define	dcache_flush_page_all(pa)	dcache_flush_page(pa)
 #define	dcache_flush_page_cpuset(pa,cs)	dcache_flush_page(pa)
-
 #endif
