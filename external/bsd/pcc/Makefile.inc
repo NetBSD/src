@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2011/06/03 13:31:25 plunky Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2011/06/07 13:07:26 plunky Exp $
 
 PCC_DIR:=${.PARSEDIR}
 PCC_DIST=${PCC_DIR}/dist/pcc
@@ -18,6 +18,7 @@ TARGMACH = ${MACHINE_ARCH}
 ERROR!= echo "ERROR: ${TARGMACH} not yet supported - write code!" >&2;echo
 .endif
 
+# this string will be updated by the prepare-import.sh script
 VERSSTR = PACKAGE_STRING " for ${TARGOS}-${TARGMACH}"
 
 CPPFLAGS+=	-DGCC_COMPAT
