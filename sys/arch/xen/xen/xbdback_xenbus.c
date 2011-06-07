@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.38 2011/05/26 22:16:42 jym Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.39 2011/06/07 16:41:14 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.38 2011/05/26 22:16:42 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.39 2011/06/07 16:41:14 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -588,13 +588,13 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	}
 	xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
 
-	snprintf(evname, sizeof(evname), "xbd%d.%d",
+	snprintf(evname, sizeof(evname), "xbdback%di%d",
 	    xbdi->xbdi_domid, xbdi->xbdi_handle);
 	event_set_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
 	    xbdi, IPL_BIO, evname);
-	aprint_verbose("xbd backend 0x%x for domain %d "
-	    "using event channel %d, protocol %s\n", xbdi->xbdi_handle,
-	    xbdi->xbdi_domid, xbdi->xbdi_evtchn, proto);
+	aprint_verbose("xbd backend domain %d handle %#x (%d) "
+	    "using event channel %d, protocol %s\n", xbdi->xbdi_domid,
+	    xbdi->xbdi_handle, xbdi->xbdi_handle, xbdi->xbdi_evtchn, proto);
 	hypervisor_enable_event(xbdi->xbdi_evtchn);
 	hypervisor_notify_via_evtchn(xbdi->xbdi_evtchn);
 	xbdi->xbdi_status = CONNECTED;
