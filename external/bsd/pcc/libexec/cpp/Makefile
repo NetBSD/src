@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/06/03 19:17:22 plunky Exp $
+#	$NetBSD: Makefile,v 1.9 2011/06/07 13:30:35 plunky Exp $
 
 .include <bsd.init.mk>
 
@@ -21,7 +21,6 @@ pcpp.1:	cpp.1
 		    -e "s,Dt CPP,Dt PCPP,"	\
 		    ${.ALLSRC} > ${.TARGET}
 
-CPPFLAGS+=	-DCPP_DEBUG
 CPPFLAGS+=	-I${.OBJDIR}
 CPPFLAGS+=	-I${PCC_DIST}/mip
 CPPFLAGS+=	-I${PCC_DIST}/cc/cpp
