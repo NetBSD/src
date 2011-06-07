@@ -1,4 +1,4 @@
-/* $NetBSD: t_stat.c,v 1.3 2011/06/05 13:49:46 jruoho Exp $ */
+/* $NetBSD: t_stat.c,v 1.4 2011/06/07 19:06:39 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stat.c,v 1.3 2011/06/05 13:49:46 jruoho Exp $");
+__RCSID("$NetBSD: t_stat.c,v 1.4 2011/06/07 19:06:39 jruoho Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -85,6 +85,10 @@ ATF_TC_HEAD(stat_dir, tc)
 
 ATF_TC_BODY(stat_dir, tc)
 {
+	/*
+	 * XXX: This panics qemu/i386 guest.
+	 */
+#if 0
 	const short depth = 3;
 	struct stat sa, sb;
 	char *argv[2];
@@ -144,6 +148,7 @@ ATF_TC_BODY(stat_dir, tc)
 	}
 
 	(void)fts_close(fts);
+#endif
 }
 
 ATF_TC(stat_err);
