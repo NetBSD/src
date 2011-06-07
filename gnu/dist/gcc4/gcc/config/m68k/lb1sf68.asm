@@ -599,6 +599,7 @@ ROUND_TO_MINUS    = 3 | round result towards minus infinity
 	.globl SYM (__divdf3)
 	.globl SYM (__negdf2)
 	.globl SYM (__cmpdf2)
+	.globl SYM (__cmpdf2_internal)
 
 	.text
 	.even
@@ -1285,7 +1286,12 @@ Ladddf$b:
 | Return b (if a is zero)
 	movel	d2,d0
 	movel	d3,d1
-	bra	1f
+	bne	1f			| Check if b is -0
+	cmpl	IMM (0x80000000),d0
+	bne	1f
+	andl	IMM (0x80000000),d7	| Use the sign of a
+	clrl	d0
+	bra	Ladddf$ret
 Ladddf$a:
 	movel	a6@(8),d0
 	movel	a6@(12),d1
@@ -1665,16 +1671,16 @@ Lmuldf$b$0:
 #ifndef __mcoldfire__
 	exg	d2,d0		| put b (==0) into d0-d1
 	exg	d3,d1		| and a (with sign bit cleared) into d2-d3
+	movel	a0,d0		| set result sign
 #else
-	movel	d2,d7
-	movel	d0,d2
-	movel	d7,d0
-	movel	d3,d7
+	movel	d0,d2		| put a into d2-d3
 	movel	d1,d3
-	movel	d7,d1
+	movel	a0,d0		| put result zero into d0-d1
+	movq	IMM(0),d1
 #endif
 	bra	1f
 Lmuldf$a$0:
+	movel	a0,d0		| set result sign
 	movel	a6@(16),d2	| put b into d2-d3 again
 	movel	a6@(20),d3	|
 	bclr	IMM (31),d2	| clear sign bit
@@ -1952,7 +1958,7 @@ Ldivdf$inop:
 Ldivdf$a$0:
 | If a is zero check to see whether b is zero also. In that case return
 | NaN; then check if b is NaN, and return NaN also in that case. Else
-| return zero.
+| return a properly signed zero.
 	moveq	IMM (DIVIDE),d5
 	bclr	IMM (31),d2	|
 	movel	d2,d4		| 
@@ -1963,8 +1969,8 @@ Ldivdf$a$0:
 	blt	1f		|
 	tstl	d3		|
 	bne	Ld$inop		|
-1:	movel	IMM (0),d0	| else return zero
-	movel	d0,d1		| 
+1:	movel	a0,d0		| else return signed zero
+	moveq	IMM(0),d1	| 
 	PICLEA	SYM (_fpCCR),a0	| clear exception flags
 	movew	IMM (0),a0@	|
 #ifndef __mcoldfire__
@@ -2218,8 +2224,8 @@ GREATER =  1
 LESS    = -1
 EQUAL   =  0
 
-| int __cmpdf2(double, double);
-SYM (__cmpdf2):
+| int __cmpdf2_internal(double, double, int);
+SYM (__cmpdf2_internal):
 #ifndef __mcoldfire__
 	link	a6,IMM (0)
 	moveml	d2-d7,sp@- 	| save registers
@@ -2238,15 +2244,15 @@ SYM (__cmpdf2):
 	bclr	IMM (31),d0	| and clear signs in d0 and d2
 	movel	d2,d7		|
 	bclr	IMM (31),d2	|
-	cmpl	IMM (0x7fff0000),d0 | check for a == NaN
-	bhi	Ld$inop		| if d0 > 0x7ff00000, a is NaN
+	cmpl	IMM (0x7ff00000),d0 | check for a == NaN
+	bhi	Lcmpd$inop		| if d0 > 0x7ff00000, a is NaN
 	beq	Lcmpdf$a$nf	| if equal can be INFINITY, so check d1
 	movel	d0,d4		| copy into d4 to test for zero
 	orl	d1,d4		|
 	beq	Lcmpdf$a$0	|
 Lcmpdf$0:
-	cmpl	IMM (0x7fff0000),d2 | check for b == NaN
-	bhi	Ld$inop		| if d2 > 0x7ff00000, b is NaN
+	cmpl	IMM (0x7ff00000),d2 | check for b == NaN
+	bhi	Lcmpd$inop		| if d2 > 0x7ff00000, b is NaN
 	beq	Lcmpdf$b$nf	| if equal can be INFINITY, so check d3
 	movel	d2,d4		|
 	orl	d3,d4		|
@@ -2335,6 +2341,24 @@ Lcmpdf$b$nf:
 	tstl	d3
 	bne	Ld$inop
 	bra	Lcmpdf$1
+
+Lcmpd$inop:
+	movl	a6@(24),d0
+	movew	IMM (INEXACT_RESULT+INVALID_OPERATION),d7
+	moveq	IMM (DOUBLE_FLOAT),d6
+	PICJUMP	$_exception_handler
+
+| int __cmpdf2(double, double);
+SYM (__cmpdf2):
+	link	a6,IMM (0)
+	pea	1
+	movl	a6@(20),sp@-
+	movl	a6@(16),sp@-
+	movl	a6@(12),sp@-
+	movl	a6@(8),sp@-
+	bsr	SYM (__cmpdf2_internal)
+	unlk	a6
+	rts
 
 |=============================================================================
 |                           rounding routines
@@ -2483,6 +2507,7 @@ ROUND_TO_MINUS    = 3 | round result towards minus infinity
 	.globl SYM (__divsf3)
 	.globl SYM (__negsf2)
 	.globl SYM (__cmpsf2)
+	.globl SYM (__cmpsf2_internal)
 
 | These are common routines to return and signal exceptions.	
 
@@ -2570,15 +2595,12 @@ SYM (__addsf3):
 #endif
 	movel	a6@(8),d0	| get first operand
 	movel	a6@(12),d1	| get second operand
-	movel	d0,d6		| get d0's sign bit '
+	movel	d0,a0		| get d0's sign bit '
 	addl	d0,d0		| check and clear sign bit of a
 	beq	Laddsf$b	| if zero return second operand
-	movel	d1,d7		| save b's sign bit '
+	movel	d1,a1		| save b's sign bit '
 	addl	d1,d1		| get rid of sign bit
 	beq	Laddsf$a	| if zero return first operand
-
-	movel	d6,a0		| save signs in address registers
-	movel	d7,a1		| so we can use d6 and d7
 
 | Get the exponents and check for denormalized and/or infinity.
 
@@ -2950,7 +2972,12 @@ Laddsf$b$den:
 Laddsf$b:
 | Return b (if a is zero).
 	movel	a6@(12),d0
-	bra	1f
+	cmpl	IMM (0x80000000),d0	| Check if b is -0
+	bne	1f
+	movel	a0,d7
+	andl	IMM (0x80000000),d7	| Use the sign of a
+	clrl	d0
+	bra	Laddsf$ret
 Laddsf$a:
 | Return a (if b is zero).
 	movel	a6@(8),d0
@@ -3203,7 +3230,6 @@ Lmulsf$inf:
 | or NaN, in which case we return NaN.
 Lmulsf$b$0:
 | Here d1 (==b) is zero.
-	movel	d1,d0		| put b into d0 (just a zero)
 	movel	a6@(8),d1	| get a again to check for non-finiteness
 	bra	1f
 Lmulsf$a$0:
@@ -3211,7 +3237,8 @@ Lmulsf$a$0:
 1:	bclr	IMM (31),d1	| clear sign bit 
 	cmpl	IMM (INFINITY),d1 | and check for a large exponent
 	bge	Lf$inop		| if b is +/-INFINITY or NaN return NaN
-	PICLEA	SYM (_fpCCR),a0	| else return zero
+	movel	d7,d0		| else return signed zero
+	PICLEA	SYM (_fpCCR),a0	|
 	movew	IMM (0),a0@	| 
 #ifndef __mcoldfire__
 	moveml	sp@+,d2-d7	| 
@@ -3405,12 +3432,12 @@ Ldivsf$a$0:
 	moveq	IMM (DIVIDE),d5
 | If a is zero check to see whether b is zero also. In that case return
 | NaN; then check if b is NaN, and return NaN also in that case. Else
-| return zero.
+| return a properly signed zero.
 	andl	IMM (0x7fffffff),d1	| clear sign bit and test b
 	beq	Lf$inop			| if b is also zero return NaN
 	cmpl	IMM (INFINITY),d1	| check for NaN
 	bhi	Lf$inop			| 
-	movel	IMM (0),d0		| else return zero
+	movel	d7,d0			| else return signed zero
 	PICLEA	SYM (_fpCCR),a0		|
 	movew	IMM (0),a0@		|
 #ifndef __mcoldfire__
@@ -3626,8 +3653,8 @@ GREATER =  1
 LESS    = -1
 EQUAL   =  0
 
-| int __cmpsf2(float, float);
-SYM (__cmpsf2):
+| int __cmpsf2_internal(float, float, int);
+SYM (__cmpsf2_internal):
 #ifndef __mcoldfire__
 	link	a6,IMM (0)
 	moveml	d2-d7,sp@- 	| save registers
@@ -3645,13 +3672,13 @@ SYM (__cmpsf2):
 	andl	IMM (0x7fffffff),d0
 	beq	Lcmpsf$a$0
 	cmpl	IMM (0x7f800000),d0
-	bhi	Lf$inop
+	bhi	Lcmpf$inop
 Lcmpsf$1:
 	movel	d1,d7
 	andl	IMM (0x7fffffff),d1
 	beq	Lcmpsf$b$0
 	cmpl	IMM (0x7f800000),d1
-	bhi	Lf$inop
+	bhi	Lcmpf$inop
 Lcmpsf$2:
 | Check the signs
 	eorl	d6,d7
@@ -3716,6 +3743,22 @@ Lcmpsf$a$0:
 Lcmpsf$b$0:
 	bclr	IMM (31),d7
 	bra	Lcmpsf$2
+
+Lcmpf$inop:
+	movl	a6@(16),d0
+	movew	IMM (INEXACT_RESULT+INVALID_OPERATION),d7
+	moveq	IMM (SINGLE_FLOAT),d6
+	PICJUMP	$_exception_handler
+
+| int __cmpsf2(float, float);
+SYM (__cmpsf2):
+	link	a6,IMM (0)
+	pea	1
+	movl	a6@(12),sp@-
+	movl	a6@(8),sp@-
+	bsr (__cmpsf2_internal)
+	unlk	a6
+	rts
 
 |=============================================================================
 |                           rounding routines
@@ -3801,6 +3844,8 @@ Lround$to$minus:
 | simply calls __cmpdf2.  It would be more efficient to give the
 | __cmpdf2 routine several names, but separating them out will make it
 | easier to write efficient versions of these routines someday.
+| If the operands recompare unordered unordered __gtdf2 and __gedf2 return -1.
+| The other routines return 1.
 
 #ifdef  L_eqdf2
 	.text
@@ -3808,11 +3853,12 @@ Lround$to$minus:
 	.globl	SYM (__eqdf2)
 SYM (__eqdf2):
 	link	a6,IMM (0)
+	pea	1
 	movl	a6@(20),sp@-
 	movl	a6@(16),sp@-
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
-	PICCALL	SYM (__cmpdf2)
+	PICCALL	SYM (__cmpdf2_internal)
 	unlk	a6
 	rts
 #endif /* L_eqdf2 */
@@ -3823,11 +3869,12 @@ SYM (__eqdf2):
 	.globl	SYM (__nedf2)
 SYM (__nedf2):
 	link	a6,IMM (0)
+	pea	1
 	movl	a6@(20),sp@-
 	movl	a6@(16),sp@-
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
-	PICCALL	SYM (__cmpdf2)
+	PICCALL	SYM (__cmpdf2_internal)
 	unlk	a6
 	rts
 #endif /* L_nedf2 */
@@ -3838,11 +3885,12 @@ SYM (__nedf2):
 	.globl	SYM (__gtdf2)
 SYM (__gtdf2):
 	link	a6,IMM (0)
+	pea	-1
 	movl	a6@(20),sp@-
 	movl	a6@(16),sp@-
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
-	PICCALL	SYM (__cmpdf2)
+	PICCALL	SYM (__cmpdf2_internal)
 	unlk	a6
 	rts
 #endif /* L_gtdf2 */
@@ -3853,11 +3901,12 @@ SYM (__gtdf2):
 	.globl	SYM (__gedf2)
 SYM (__gedf2):
 	link	a6,IMM (0)
+	pea	-1
 	movl	a6@(20),sp@-
 	movl	a6@(16),sp@-
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
-	PICCALL	SYM (__cmpdf2)
+	PICCALL	SYM (__cmpdf2_internal)
 	unlk	a6
 	rts
 #endif /* L_gedf2 */
@@ -3868,11 +3917,12 @@ SYM (__gedf2):
 	.globl	SYM (__ltdf2)
 SYM (__ltdf2):
 	link	a6,IMM (0)
+	pea	1
 	movl	a6@(20),sp@-
 	movl	a6@(16),sp@-
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
-	PICCALL	SYM (__cmpdf2)
+	PICCALL	SYM (__cmpdf2_internal)
 	unlk	a6
 	rts
 #endif /* L_ltdf2 */
@@ -3883,11 +3933,12 @@ SYM (__ltdf2):
 	.globl	SYM (__ledf2)
 SYM (__ledf2):
 	link	a6,IMM (0)
+	pea	1
 	movl	a6@(20),sp@-
 	movl	a6@(16),sp@-
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
-	PICCALL	SYM (__cmpdf2)
+	PICCALL	SYM (__cmpdf2_internal)
 	unlk	a6
 	rts
 #endif /* L_ledf2 */
@@ -3901,9 +3952,10 @@ SYM (__ledf2):
 	.globl	SYM (__eqsf2)
 SYM (__eqsf2):
 	link	a6,IMM (0)
+	pea	1
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
-	PICCALL	SYM (__cmpsf2)
+	PICCALL	SYM (__cmpsf2_internal)
 	unlk	a6
 	rts
 #endif /* L_eqsf2 */
@@ -3914,9 +3966,10 @@ SYM (__eqsf2):
 	.globl	SYM (__nesf2)
 SYM (__nesf2):
 	link	a6,IMM (0)
+	pea	1
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
-	PICCALL	SYM (__cmpsf2)
+	PICCALL	SYM (__cmpsf2_internal)
 	unlk	a6
 	rts
 #endif /* L_nesf2 */
@@ -3927,9 +3980,10 @@ SYM (__nesf2):
 	.globl	SYM (__gtsf2)
 SYM (__gtsf2):
 	link	a6,IMM (0)
+	pea	-1
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
-	PICCALL	SYM (__cmpsf2)
+	PICCALL	SYM (__cmpsf2_internal)
 	unlk	a6
 	rts
 #endif /* L_gtsf2 */
@@ -3940,9 +3994,10 @@ SYM (__gtsf2):
 	.globl	SYM (__gesf2)
 SYM (__gesf2):
 	link	a6,IMM (0)
+	pea	-1
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
-	PICCALL	SYM (__cmpsf2)
+	PICCALL	SYM (__cmpsf2_internal)
 	unlk	a6
 	rts
 #endif /* L_gesf2 */
@@ -3953,9 +4008,10 @@ SYM (__gesf2):
 	.globl	SYM (__ltsf2)
 SYM (__ltsf2):
 	link	a6,IMM (0)
+	pea	1
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
-	PICCALL	SYM (__cmpsf2)
+	PICCALL	SYM (__cmpsf2_internal)
 	unlk	a6
 	rts
 #endif /* L_ltsf2 */
@@ -3966,9 +4022,10 @@ SYM (__ltsf2):
 	.globl	SYM (__lesf2)
 SYM (__lesf2):
 	link	a6,IMM (0)
+	pea	1
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
-	PICCALL	SYM (__cmpsf2)
+	PICCALL	SYM (__cmpsf2_internal)
 	unlk	a6
 	rts
 #endif /* L_lesf2 */
