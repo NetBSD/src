@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.241 2011/06/07 00:48:31 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.242 2011/06/07 01:00:35 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.241 2011/06/07 00:48:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.242 2011/06/07 01:00:35 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1451,7 +1451,6 @@ void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
-	struct pcb * const pcb = lwp_getpcb(l);
 	struct proc * const p = l->l_proc;
 
 	memset(tf, 0, sizeof(struct trapframe));
