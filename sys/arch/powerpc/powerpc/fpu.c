@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.29 2011/05/02 02:01:33 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.30 2011/06/07 00:48:32 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.29 2011/05/02 02:01:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.30 2011/06/07 00:48:32 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -79,6 +79,10 @@ void
 fpu_state_load(lwp_t *l, bool used)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
+
+	if (__predict_false(!used)) {
+		memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
+	}
 
 	const register_t msr = mfmsr();
         mtmsr((msr & ~PSL_EE) | PSL_FP);
