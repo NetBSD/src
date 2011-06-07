@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2011/06/02 18:53:00 dsl Exp $
+#	$NetBSD: Makefile,v 1.34 2011/06/07 20:05:46 joerg Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -31,6 +31,7 @@ AFLAGS.message.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.message32.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.pvcopy.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.putstr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.putstr32.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.realprot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 CPPFLAGS= -I$S/lib/libsa ${I386CPPFLAGS} ${I386MISCCPPFLAGS}
