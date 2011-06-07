@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.59 2011/06/07 17:28:59 pgoyette Exp $
+.\"	$NetBSD: envstat.8,v 1.60 2011/06/07 17:47:24 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -231,12 +231,6 @@ invalid states every second:
 .Xr ug 4 ,
 .Xr viaenv 4 ,
 .Xr envsys.conf 5
-.Sh BUGS
-When displaying statistics using the
-.Fl T
-option, the average value is an average of the minimum, maximum, and
-current sensor values.
-It is not an average of all current values displayed during the session.
 .Sh HISTORY
 .Nm
 appeared in
@@ -253,3 +247,9 @@ was written by
 .An Juan Romero Pardines .
 The previous version was written by
 .An Bill Squier .
+.Sh BUGS
+When displaying statistics using the
+.Fl T
+option, the average value is an average of the minimum, maximum, and
+current sensor values.
+It is not an average of all current values displayed during the session.
