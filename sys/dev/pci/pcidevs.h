@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1080 2011/06/06 14:31:51 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1081 2011/06/07 10:08:02 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1084 2011/06/06 14:31:23 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1085 2011/06/07 10:07:35 cegger Exp
  */
 
 /*
@@ -1412,6 +1412,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_X850XT_S	0x5d72		/* Radeon X850 XT Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_X700	0x5e4b		/* Radeon X700 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_X700_S	0x5e6b		/* Radeon X700 Pro Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_HD5870	0x6898		/* Radeon HD 5870 Cypress */
 #define	PCI_PRODUCT_ATI_RADEON_HD5600_RD	0x68c1		/* Redwood */
 #define	PCI_PRODUCT_ATI_RADEON_X1300	0x7146		/* Radeon X1300 Series (RV515) */
 #define	PCI_PRODUCT_ATI_RADEON_X1300_S	0x7166		/* Radeon X1300 Series (RV515) Secondary */
@@ -3179,6 +3180,7 @@
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB Host Controller */
 #define	PCI_PRODUCT_LUCENT_USBHC2	0x5802		/* 2-port USB Host Controller */
 #define	PCI_PRODUCT_LUCENT_FW322_323	0x5811		/* FW322/323 IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_LUCENT_FW643_PCIE	0x5901		/* FW643 PCIE IEEE 1394b Host Controller */
 #define	PCI_PRODUCT_LUCENT_ET1310	0xed00		/* ET1310 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_LUCENT_ET1301	0xed01		/* ET1301 10/100 Ethernet */
 
