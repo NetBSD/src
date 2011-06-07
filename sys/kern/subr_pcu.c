@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.7 2011/06/06 22:04:34 matt Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.8 2011/06/07 17:51:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.7 2011/06/06 22:04:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.8 2011/06/07 17:51:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -108,7 +108,7 @@ pcu_discard_all(lwp_t *l)
 {
 	const uint32_t pcu_inuse = l->l_pcu_used;
 
-	KASSERT(l == curlwp);
+	KASSERT(l == curlwp || ((l->l_flag & LW_SYSTEM) && pcu_inuse == 0));
 
 	if (__predict_true(pcu_inuse == 0)) {
 		/* PCUs are not in use. */
@@ -138,7 +138,7 @@ pcu_save_all(lwp_t *l)
 {
 	const uint32_t pcu_inuse = l->l_pcu_used;
 
-	KASSERT(l == curlwp);
+	KASSERT(l == curlwp || ((l->l_flag & LW_SYSTEM) && pcu_inuse == 0));
 
 	if (__predict_true(pcu_inuse == 0)) {
 		/* PCUs are not in use. */
