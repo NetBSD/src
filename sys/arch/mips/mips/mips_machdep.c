@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.240 2011/04/29 22:04:42 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.241 2011/06/07 00:48:31 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.240 2011/04/29 22:04:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.241 2011/06/07 00:48:31 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1498,8 +1498,6 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_regs[_R_A2] = 0;
 	tf->tf_regs[_R_A3] = p->p_psstrp;
 
-	fpu_discard();
-	memset(&pcb->pcb_fpregs, 0, sizeof(struct fpreg));
 	l->l_md.md_ss_addr = 0;
 }
 
