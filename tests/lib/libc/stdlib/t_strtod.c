@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.19 2011/06/05 16:33:51 jruoho Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.20 2011/06/07 13:51:52 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.19 2011/06/05 16:33:51 jruoho Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.20 2011/06/07 13:51:52 martin Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -225,7 +225,9 @@ ATF_TC_BODY(strtold_nan, tc)
 #   ifdef __HAVE_LONG_DOUBLE
 	char *end;
 
+#ifndef __sparc64__
 	atf_tc_expect_fail("PR lib/45020");
+#endif
 
 	long double ld = strtold(nan_string, &end);
 	ATF_REQUIRE(isnan(ld) != 0);
