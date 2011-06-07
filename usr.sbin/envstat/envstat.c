@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.87 2011/06/06 20:48:56 pgoyette Exp $ */
+/* $NetBSD: envstat.c,v 1.88 2011/06/07 17:24:32 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,13 +27,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.87 2011/06/06 20:48:56 pgoyette Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.88 2011/06/07 17:24:32 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -347,6 +348,8 @@ find_stats_sensor(const char *desc)
 		return NULL;
 
 	(void)strlcpy(stats->desc, desc, sizeof(stats->desc));
+	stats->min = INT32_MAX;
+	stats->max = INT32_MIN;
 	SIMPLEQ_INSERT_TAIL(&sensor_stats_list, stats, entries);
 
 	return stats;
@@ -625,7 +628,7 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 				continue;
 
 			/* ignore invalid data */
-			if (sensor->invalid || !sensor->cur_value)
+			if (sensor->invalid)
 				continue;
 
 			/* find or allocate a new statistics sensor */
@@ -636,12 +639,7 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 				return ENOMEM;
 			}
 
-			/* collect data */
-			if (!stats->max)
-				stats->max = sensor->cur_value;
-			if (!stats->min)
-				stats->min = sensor->cur_value;
-
+			/* update data */
 			if (sensor->cur_value > stats->max)
 				stats->max = sensor->cur_value;
 
@@ -649,10 +647,8 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 				stats->min = sensor->cur_value;
 
 			/* compute avg value */
-			if (stats->max && stats->min)
-				stats->avg =
-				    (sensor->cur_value + stats->max +
-				    stats->min) / 3;
+			stats->avg =
+			    (sensor->cur_value + stats->max + stats->min) / 3;
 		}
 	}
 
