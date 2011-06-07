@@ -1,9 +1,7 @@
-/* $NetBSD: quota2.c,v 1.2 2011/03/06 17:08:16 bouyer Exp $ */
+/* $NetBSD: quota2.c,v 1.3 2011/06/07 14:56:12 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
-  * This software is distributed under the following condiions
-  * compliant with the NetBSD foundation policy.
   *
   * Redistribution and use in source and binary forms, with or without
   * modification, are permitted provided that the following conditions
