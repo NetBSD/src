@@ -1,4 +1,4 @@
-/* $NetBSD: t_stat.c,v 1.4 2011/06/07 19:06:39 jruoho Exp $ */
+/* $NetBSD: t_stat.c,v 1.5 2011/06/08 05:28:03 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_stat.c,v 1.4 2011/06/07 19:06:39 jruoho Exp $");
+__RCSID("$NetBSD: t_stat.c,v 1.5 2011/06/08 05:28:03 jruoho Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -41,6 +41,8 @@ __RCSID("$NetBSD: t_stat.c,v 1.4 2011/06/07 19:06:39 jruoho Exp $");
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <stdio.h>
 
 static const char *path = "stat";
 
@@ -85,16 +87,17 @@ ATF_TC_HEAD(stat_dir, tc)
 
 ATF_TC_BODY(stat_dir, tc)
 {
-	/*
-	 * XXX: This panics qemu/i386 guest.
-	 */
-#if 0
 	const short depth = 3;
 	struct stat sa, sb;
 	char *argv[2];
 	FTSENT *ftse;
 	FTS *fts;
 	int ops;
+
+	/*
+	 * XXX: This is verified to panic at least a qemu/i386 guest.
+	 */
+	atf_tc_skip("the test may cause a panic");
 
 	argv[1] = NULL;
 	argv[0] = __UNCONST("/");
@@ -148,7 +151,6 @@ ATF_TC_BODY(stat_dir, tc)
 	}
 
 	(void)fts_close(fts);
-#endif
 }
 
 ATF_TC(stat_err);
