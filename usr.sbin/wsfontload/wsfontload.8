@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsfontload.8,v 1.24 2009/03/09 19:24:33 joerg Exp $
+.\"	$NetBSD: wsfontload.8,v 1.25 2011/06/08 10:25:21 drochner Exp $
 .\"
 .\" Copyright (c) 1999, 2001
 .\" 	Matthias Drochner.  All rights reserved.
@@ -85,17 +85,24 @@ Default is 16.
 .It Fl e Ar encoding
 Sets the encoding of the font.
 This can be either a symbolic abbreviation or a numeric value.
-Currently recognized abbreviations are
-.Ql iso
-for ISO-8859-1 encoding,
-.Ql ibm
-for IBM encoded fonts and
-.Ql pcvt
-for the custom encoding of the supplemental fonts which came with
-the
+Currently recognized abbreviations are:
+.Bl -tag -width xxxxxxx
+.It Ql iso
+ISO-8859-1 encoding
+.It Ql ibm
+IBM encoded fonts
+.It Ql pcvt
+the custom encoding of the supplemental fonts which came with the
 .Bx
 .Dq pcvt
-console driver.
+console driver
+.It Ql iso2
+ISO-8859-2 (east european) encoding
+.It Ql iso7
+ISO-8859-7 (greek) encoding
+.It Ql koi8r
+KOI8-R (russian) encoding
+.El
 Per default,
 .Ql iso
 is assumed.
