@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtol.c,v 1.3 2011/06/05 13:51:46 jruoho Exp $ */
+/*	$NetBSD: t_strtol.c,v 1.4 2011/06/08 05:31:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtol.c,v 1.3 2011/06/05 13:51:46 jruoho Exp $");
+__RCSID("$NetBSD: t_strtol.c,v 1.4 2011/06/08 05:31:43 jruoho Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: t_strtol.c,v 1.3 2011/06/05 13:51:46 jruoho Exp $");
 
 struct test {
 	const char	*str;
-	long long int	 res;
+	int64_t		 res;
 	int		 base;
 	const char	*end;
 };
