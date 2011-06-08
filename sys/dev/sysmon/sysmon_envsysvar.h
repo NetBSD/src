@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.38 2010/12/30 03:59:59 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.39 2011/06/08 18:22:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -111,6 +111,7 @@ LIST_HEAD(, sysmon_envsys) sysmon_envsys_list;
  * functions to handle sysmon envsys devices.
  */
 int	sme_update_dictionary(struct sysmon_envsys *);
+int	sme_update_sensor_dictionary(prop_object_t, envsys_data_t *, bool);
 int	sme_userset_dictionary(struct sysmon_envsys *,
 			       prop_dictionary_t, prop_array_t);
 prop_dictionary_t sme_sensor_dictionary_get(prop_array_t, const char *);
