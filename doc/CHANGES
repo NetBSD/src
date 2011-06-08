@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1553 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1554 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1017,4 +1017,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	tmpfs: Many fixes and some performance improvements. [rmind 20110529]
 	powerpc: Initial SMP support for MPC85xx, reworked and unified IPI
 		code, various other improvements. [matt 20110605]
+	ktrace(1): Add a new trace point to list all open file descriptors
+		after exec(3). [alnsn 20110601]
 	alpha: Converted Alpha to use PCU to manage FPU. [matt 20110607]
