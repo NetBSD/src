@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.14 2009/04/19 02:25:48 lukem Exp $ */
+/* $NetBSD: wsfontload.c,v 1.15 2011/06/08 10:25:21 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -68,6 +68,7 @@ static struct {
 	{"pcvt", WSDISPLAY_FONTENC_PCVT},
 	{"iso7", WSDISPLAY_FONTENC_ISO7},
 	{"iso2", WSDISPLAY_FONTENC_ISO2},
+	{"koi8r", WSDISPLAY_FONTENC_KOI8_R},
 };
 
 static void
