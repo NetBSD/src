@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.37 2011/06/05 16:52:25 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.38 2011/06/08 05:11:07 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -214,6 +214,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	lis	%r13,_C_LABEL(lwp0)@h;					\
 	ori	%r13,%r13,_C_LABEL(lwp0)@l;				\
 	stptr	er,L_PCB(%r13);		/* XXXuvm_lwp_getuarea */	\
+	stptr	tmp1,L_CPU(%r13);	 				\
 	addi	er,er,USPACE;		/* stackpointer for lwp0 */	\
 	addi	sp,er,-FRAMELEN-CALLFRAMELEN;	/* stackpointer for lwp0 */ \
 	stptr	sp,L_MD_UTF(%r13);	/* save in lwp0.l_md.md_utf */	\
