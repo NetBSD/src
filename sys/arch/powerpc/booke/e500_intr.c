@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.8 2011/06/05 16:52:24 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.9 2011/06/08 05:13:00 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1120,6 +1120,18 @@ e500_intr_init(void)
 }
 
 static void
+e500_idlespin(void)
+{
+	KASSERTMSG(curcpu()->ci_cpl == IPL_NONE,
+	    ("%s: cpu%u: ci_cpl (%d) != 0", __func__, cpu_number(),
+	     curcpu()->ci_cpl));
+	KASSERTMSG(CTPR2IPL(openpic_read(curcpu()->ci_softc, OPENPIC_CTPR)) == IPL_NONE,
+	    ("%s: cpu%u: CTPR (%d) != IPL_NONE", __func__, cpu_number(),
+	     CTPR2IPL(openpic_read(curcpu()->ci_softc, OPENPIC_CTPR))));
+	KASSERT(mfmsr() & PSL_EE);
+}
+
+static void
 e500_intr_cpu_attach(struct cpu_info *ci)
 {
 	struct cpu_softc * const cpu = ci->ci_softc;
@@ -1180,6 +1192,8 @@ e500_intr_cpu_attach(struct cpu_info *ci)
 		evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR,
 		    NULL, xname, e500_mi_intr_names[j].in_name);
 	}
+
+	ci->ci_idlespin = e500_idlespin;
 }
 
 static void
