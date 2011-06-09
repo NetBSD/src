@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.40 2011/06/09 19:57:53 christos Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.41 2011/06/09 21:23:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.40 2011/06/09 19:57:53 christos Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.41 2011/06/09 21:23:30 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 	sblock->fs_clean = 0;	/* mark it dirty */
 	sbdirty();
 	markclean = 0;
-	ckfini();
+	ckfini(1);
 	printf("*** FILE SYSTEM MARKED DIRTY\n");
 	printf("*** BE SURE TO RUN FSCK TO CLEAN UP ANY DAMAGE\n");
 	printf("*** IF IT WAS MOUNTED, RE-MOUNT WITH -u -o reload\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.16 2011/06/09 19:57:50 christos Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.17 2011/06/09 21:23:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -25,6 +25,7 @@
  */
 
 #include <stdarg.h>
+#include <signal.h>
 
 void errexit(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));  
