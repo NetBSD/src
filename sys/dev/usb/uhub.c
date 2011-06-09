@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.113 2011/05/29 12:37:09 jmcneill Exp $	*/
+/*	$NetBSD: uhub.c,v 1.114 2011/06/09 19:08:32 matt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.113 2011/05/29 12:37:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.114 2011/06/09 19:08:32 matt Exp $");
+
+#include "opt_usb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,7 +548,7 @@ uhub_explore(usbd_device_handle dev)
 			  dev->depth + 1, speed, port, up);
 		/* XXX retry a few times? */
 		if (err) {
-			DPRINTFN(-1,("uhub_explore: usb_new_device failed, "
+			DPRINTFN(-1,("uhub_explore: usbd_new_device failed, "
 				     "error=%s\n", usbd_errstr(err)));
 			/* Avoid addressing problems by disabling. */
 			/* usbd_reset_port(dev, port, &up->status); */
