@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.28 2011/06/08 16:24:50 dyoung Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.29 2011/06/09 19:54:18 drochner Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -249,7 +249,7 @@ extern u_int ipsec_spdgen;
 #endif /* __NetBSD__ */
 
 struct tdb_ident;
-struct secpolicy *ipsec_getpolicy (struct tdb_ident*, u_int);
+struct secpolicy *ipsec_getpolicy (const struct tdb_ident*, u_int);
 struct inpcb;
 struct secpolicy *ipsec4_checkpolicy (struct mbuf *, u_int, u_int,
 	int *, struct inpcb *);
@@ -286,8 +286,8 @@ int ipsec_copy_policy
 u_int ipsec_get_reqlevel (const struct ipsecrequest *);
 int ipsec_in_reject (const struct secpolicy *, const struct mbuf *);
 
-int ipsec4_set_policy (struct inpcb *, int, void *, size_t, kauth_cred_t);
-int ipsec4_get_policy (struct inpcb *, void *, size_t, struct mbuf **);
+int ipsec4_set_policy (struct inpcb *, int, const void *, size_t, kauth_cred_t);
+int ipsec4_get_policy (struct inpcb *, const void *, size_t, struct mbuf **);
 int ipsec4_delete_pcbpolicy (struct inpcb *);
 int ipsec4_in_reject (struct mbuf *, struct inpcb *);
 /*
