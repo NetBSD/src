@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.35 2011/06/07 15:54:57 drochner Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.36 2011/06/09 21:04:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.35 2011/06/07 15:54:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.36 2011/06/09 21:04:37 drochner Exp $");
 
 /*
  * IPsec output processing.
@@ -632,6 +632,18 @@ bad:
 #endif
 
 #ifdef INET6
+static int
+in6_sa_equal_addrwithscope(const struct sockaddr_in6 *sa, const struct in6_addr *ia)
+{
+	struct in6_addr ia2;
+
+	memcpy(&ia2, &sa->sin6_addr, sizeof(ia2));
+	if (IN6_IS_SCOPE_LINKLOCAL(&sa->sin6_addr))
+		ia2.s6_addr16[1] = htons(sa->sin6_scope_id);
+
+	return IN6_ARE_ADDR_EQUAL(ia, &ia2);
+}
+
 int
 ipsec6_process_packet(
 	struct mbuf *m,
@@ -673,7 +685,7 @@ ipsec6_process_packet(
 	    dst->sa.sa_family != AF_INET6 ||        /* PF mismatch */
 	    ((dst->sa.sa_family == AF_INET6) &&
 	     (!IN6_IS_ADDR_UNSPECIFIED(&dst->sin6.sin6_addr)) &&
-	     (!IN6_ARE_ADDR_EQUAL(&dst->sin6.sin6_addr,
+	     (!in6_sa_equal_addrwithscope(&dst->sin6,
 				  &ip6->ip6_dst)))) {
 		struct mbuf *mp;
 
