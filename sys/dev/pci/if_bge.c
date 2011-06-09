@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.197 2011/06/03 09:51:40 cegger Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.198 2011/06/09 12:04:29 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.197 2011/06/03 09:51:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.198 2011/06/09 12:04:29 cegger Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -2617,8 +2617,9 @@ bge_attach(device_t parent, device_t self, void *aux)
 			    BGE_PCI_PRODID_ASICREV);
 	}
 
-	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PCIEXPRESS,
-	        &sc->bge_pciecap, NULL) != 0) {
+	if ((pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PCIEXPRESS,
+	        &sc->bge_pciecap, NULL) != 0)
+	    || (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785)) {
 		/* PCIe */
 		sc->bge_flags |= BGE_PCIE;
 		bge_set_max_readrq(sc);
