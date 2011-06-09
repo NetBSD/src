@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.15 2010/02/04 23:55:42 christos Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.16 2011/06/09 19:57:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -56,3 +56,9 @@ const char *print_mtime(time_t);
 struct fstab;
 int checkfstab(int, int, void *(*)(struct fstab *), 
     int (*) (const char *, const char *, const char *, void *, pid_t *));
+
+void (*ckfinish)(int);
+volatile sig_atomic_t returntosingle;
+void catch(int);
+void catchquit(int);
+void voidquit(int);

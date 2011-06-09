@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.39 2009/04/11 06:53:53 lukem Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.40 2011/06/09 19:57:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.39 2009/04/11 06:53:53 lukem Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.40 2011/06/09 19:57:53 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -85,7 +85,6 @@ static int find_indirblks32(uint32_t blk, int ind_level,
 static int find_indirblks64(uint64_t blk, int ind_level,
 						uint64_t *blknum);
 
-int     returntosingle = 0;
 union dinode *curinode;
 ino_t   curinum;
 
