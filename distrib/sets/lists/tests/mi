@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.348 2011/06/04 14:56:57 jruoho Exp $
+# $NetBSD: mi,v 1.349 2011/06/09 05:26:01 spz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -193,6 +193,7 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ecdsatest.debug	tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ectest.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_enginetest.debug	tests-crypto-debug	debug,crypto
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_evp_test.debug	tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_exptest.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ideatest.debug		tests-crypto-debug	debug,crypto_idea,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_hmactest.debug		tests-crypto-debug	debug,crypto
@@ -209,6 +210,7 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rsatest.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_shatest.debug		tests-crypto-debug	debug,crypto
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_srptest.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_threadstest.debug	tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/fs					tests-fs-debug
@@ -1214,6 +1216,8 @@
 ./usr/tests/crypto/libcrypto/h_ecdsatest	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_ectest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_enginetest	tests-crypto-tests	crypto
+./usr/tests/crypto/libcrypto/h_evp_test		tests-crypto-tests	crypto
+./usr/tests/crypto/libcrypto/evptests.txt	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_exptest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_hmactest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_ideatest		tests-crypto-tests	crypto_idea,crypto
@@ -1230,6 +1234,7 @@
 ./usr/tests/crypto/libcrypto/h_rsatest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_sha1test		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_shatest		tests-crypto-tests	crypto
+./usr/tests/crypto/libcrypto/h_srptest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_threadstest	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_x509v3test	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/t_certs		tests-crypto-tests	crypto
