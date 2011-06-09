@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.46 2011/03/20 17:38:11 tsutsui Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.47 2011/06/09 07:17:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.46 2011/03/20 17:38:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.47 2011/06/09 07:17:02 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -146,7 +146,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	p->size = size;
 	p->align = align;
 	error = bus_dmamem_alloc(tag, p->size, align, 0,
-				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
+				 p->segs, __arraycount(p->segs),
 				 &p->nsegs, BUS_DMA_NOWAIT);
 	if (error)
 		goto free0;
