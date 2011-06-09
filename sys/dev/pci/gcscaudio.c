@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.6 2010/11/13 13:52:05 uebayasi Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.7 2011/06/09 14:46:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.6 2010/11/13 13:52:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.7 2011/06/09 14:46:33 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ gcscaudio_wait_ready_codec(struct gcscaudio_softc *sc, const char *timeout_msg)
 		delay(1);
 
 	if (i < 0) {
-		aprint_error_dev(&sc->sc_dev, timeout_msg);
+		aprint_error_dev(&sc->sc_dev, "%s", timeout_msg);
 		return 1;
 	}
 
