@@ -1,4 +1,4 @@
-/* $NetBSD: gmac.c,v 1.2 2011/06/08 10:14:16 drochner Exp $ */
+/* $NetBSD: gmac.c,v 1.3 2011/06/09 14:47:42 drochner Exp $ */
 /* OpenBSD: gmac.c,v 1.3 2011/01/11 15:44:23 deraadt Exp */
 
 /*
@@ -29,14 +29,14 @@
 #include <crypto/rijndael/rijndael.h>
 #include <opencrypto/gmac.h>
 
-void	ghash_gfmul(const uint32_t *, const uint32_t *, uint32_t *);
+void	ghash_gfmul(const GMAC_INT *, const GMAC_INT *, GMAC_INT *);
 void	ghash_update(GHASH_CTX *, const uint8_t *, size_t);
 
 /* Computes a block multiplication in the GF(2^128) */
 void
-ghash_gfmul(const uint32_t *X, const uint32_t *Y, uint32_t *product)
+ghash_gfmul(const GMAC_INT *X, const GMAC_INT *Y, GMAC_INT *product)
 {
-	uint32_t	v[4];
+	GMAC_INT	v[GMAC_BLOCK_LEN/GMAC_INTLEN];
 	uint32_t	mul;
 	int		i;
 
@@ -45,35 +45,51 @@ ghash_gfmul(const uint32_t *X, const uint32_t *Y, uint32_t *product)
 
 	for (i = 0; i < GMAC_BLOCK_LEN * 8; i++) {
 		/* update Z */
+#if GMAC_INTLEN == 8
+		if (X[i >> 6] & (1ULL << (~i & 63))) {
+			product[0] ^= v[0];
+			product[1] ^= v[1];
+		} /* else: we preserve old values */
+#else
 		if (X[i >> 5] & (1 << (~i & 31))) {
 			product[0] ^= v[0];
 			product[1] ^= v[1];
 			product[2] ^= v[2];
 			product[3] ^= v[3];
 		} /* else: we preserve old values */
-
+#endif
 		/* update V */
+#if GMAC_INTLEN == 8
+		mul = v[1] & 1;
+		v[1] = (v[0] << 63) | (v[1] >> 1);
+		v[0] = (v[0] >> 1) ^ (0xe100000000000000ULL * mul);
+#else
 		mul = v[3] & 1;
 		v[3] = (v[2] << 31) | (v[3] >> 1);
 		v[2] = (v[1] << 31) | (v[2] >> 1);
 		v[1] = (v[0] << 31) | (v[1] >> 1);
 		v[0] = (v[0] >> 1) ^ (0xe1000000 * mul);
+#endif
 	}
 }
 
 void
 ghash_update(GHASH_CTX *ctx, const uint8_t *X, size_t len)
 {
-	uint32_t x;
-	uint32_t *s = ctx->S;
-	uint32_t *y = ctx->Z;
-	int i, j;
+	GMAC_INT x;
+	GMAC_INT *s = ctx->S;
+	GMAC_INT *y = ctx->Z;
+	int i, j, k;
 
 	for (i = 0; i < len / GMAC_BLOCK_LEN; i++) {
-		for (j = 0; j < GMAC_BLOCK_LEN/4; j++) {
-			x = (X[0] << 24) | (X[1] << 16) | (X[2] << 8) | X[3];
+		for (j = 0; j < GMAC_BLOCK_LEN/GMAC_INTLEN; j++) {
+			x = 0;
+			for (k = 0; k < GMAC_INTLEN; k++) {
+				x <<= 8;
+				x |= X[k];
+			}
 			s[j] = y[j] ^ x;
-			X += 4;
+			X += GMAC_INTLEN;
 		}
 
 		ghash_gfmul(ctx->H, ctx->S, ctx->S);
@@ -105,8 +121,13 @@ AES_GMAC_Setkey(AES_GMAC_CTX *ctx, const uint8_t *key, uint16_t klen)
 	/* prepare a hash subkey */
 	rijndaelEncrypt(ctx->K, ctx->rounds, (void *)ctx->ghash.H,
 			(void *)ctx->ghash.H);
+#if GMAC_INTLEN == 8
+	for (i = 0; i < 2; i++)
+		ctx->ghash.H[i] = be64toh(ctx->ghash.H[i]);
+#else
 	for (i = 0; i < 4; i++)
 		ctx->ghash.H[i] = be32toh(ctx->ghash.H[i]);
+#endif
 }
 
 void
@@ -145,6 +166,20 @@ AES_GMAC_Final(uint8_t digest[GMAC_DIGEST_LEN], AES_GMAC_CTX *ctx)
 	rijndaelEncrypt(ctx->K, ctx->rounds, ctx->J, keystream);
 	k = keystream;
 	d = digest;
+#if GMAC_INTLEN == 8
+	for (i = 0; i < GMAC_DIGEST_LEN/8; i++) {
+		d[0] = (uint8_t)(ctx->ghash.S[i] >> 56) ^ k[0];
+		d[1] = (uint8_t)(ctx->ghash.S[i] >> 48) ^ k[1];
+		d[2] = (uint8_t)(ctx->ghash.S[i] >> 40) ^ k[2];
+		d[3] = (uint8_t)(ctx->ghash.S[i] >> 32) ^ k[3];
+		d[4] = (uint8_t)(ctx->ghash.S[i] >> 24) ^ k[4];
+		d[5] = (uint8_t)(ctx->ghash.S[i] >> 16) ^ k[5];
+		d[6] = (uint8_t)(ctx->ghash.S[i] >> 8) ^ k[6];
+		d[7] = (uint8_t)ctx->ghash.S[i] ^ k[7];
+		d += 8;
+		k += 8;
+	}
+#else
 	for (i = 0; i < GMAC_DIGEST_LEN/4; i++) {
 		d[0] = (uint8_t)(ctx->ghash.S[i] >> 24) ^ k[0];
 		d[1] = (uint8_t)(ctx->ghash.S[i] >> 16) ^ k[1];
@@ -153,5 +188,6 @@ AES_GMAC_Final(uint8_t digest[GMAC_DIGEST_LEN], AES_GMAC_CTX *ctx)
 		d += 4;
 		k += 4;
 	}
+#endif
 	memset(keystream, 0, sizeof(keystream));
 }
