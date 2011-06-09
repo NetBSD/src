@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.54 2011/06/08 16:24:50 dyoung Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.55 2011/06/09 19:54:18 drochner Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.54 2011/06/08 16:24:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.55 2011/06/09 19:54:18 drochner Exp $");
 
 /*
  * IPsec controller part.
@@ -242,11 +242,11 @@ static int ipsec6_setspidx_ipaddr (struct mbuf *, struct secpolicyindex *);
 #endif
 static void ipsec_delpcbpolicy (struct inpcbpolicy *);
 static struct secpolicy *ipsec_deepcopy_policy (const struct secpolicy *);
-static int ipsec_set_policy (struct secpolicy **,int , void *, size_t ,
-    kauth_cred_t );
+static int ipsec_set_policy (struct secpolicy **, int, const void *, size_t,
+    kauth_cred_t);
 static int ipsec_get_policy (struct secpolicy *, struct mbuf **);
 static void vshiftl (unsigned char *, int, int);
-static size_t ipsec_hdrsiz (struct secpolicy *);
+static size_t ipsec_hdrsiz (const struct secpolicy *);
 
 #ifdef __NetBSD__
 /*
@@ -481,7 +481,7 @@ key_allocsp_default(int af, const char *where, int tag)
  * NOTE: IPv6 mapped address concern is implemented here.
  */
 struct secpolicy *
-ipsec_getpolicy(struct tdb_ident *tdbi, u_int dir)
+ipsec_getpolicy(const struct tdb_ident *tdbi, u_int dir)
 {
 	struct secpolicy *sp;
 
@@ -785,7 +785,7 @@ ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 #endif /* INET6 */
 
 static int
-ipsec4_setspidx_inpcb(struct mbuf *m ,struct inpcb *pcb)
+ipsec4_setspidx_inpcb(struct mbuf *m, struct inpcb *pcb)
 {
 	int error;
 
@@ -1224,7 +1224,7 @@ static struct secpolicy *
 ipsec_deepcopy_policy(const struct secpolicy *src)
 {
 	struct ipsecrequest *newchain = NULL;
-	struct ipsecrequest *p;
+	const struct ipsecrequest *p;
 	struct ipsecrequest **q;
 	struct ipsecrequest *r;
 	struct secpolicy *dst;
@@ -1268,10 +1268,9 @@ ipsec_deepcopy_policy(const struct secpolicy *src)
 	return dst;
 
 fail:
-	for (p = newchain; p; p = r) {
-		r = p->next;
-		free(p, M_SECA);
-		p = NULL;
+	for (q = &newchain; *q; q = &r) {
+		r = (*q)->next;
+		free(*q, M_SECA);
 	}
 	return NULL;
 }
@@ -1281,12 +1280,12 @@ static int
 ipsec_set_policy(
 	struct secpolicy **pcb_sp,
 	int optname,
-	void *request,
+	const void *request,
 	size_t len,
 	kauth_cred_t cred
 )
 {
-	struct sadb_x_policy *xpl;
+	const struct sadb_x_policy *xpl;
 	struct secpolicy *newsp = NULL;
 	int error;
 
@@ -1295,11 +1294,11 @@ ipsec_set_policy(
 		return EINVAL;
 	if (len < sizeof(*xpl))
 		return EINVAL;
-	xpl = (struct sadb_x_policy *)request;
+	xpl = (const struct sadb_x_policy *)request;
 
 	KEYDEBUG(KEYDEBUG_IPSEC_DUMP,
 		printf("ipsec_set_policy: passed policy\n");
-		kdebug_sadb_x_policy((struct sadb_ext *)xpl));
+		kdebug_sadb_x_policy((const struct sadb_ext *)xpl));
 
 	/* check policy type */
 	/* ipsec_set_policy() accepts IPSEC, ENTRUST and BYPASS. */
@@ -1354,10 +1353,10 @@ ipsec_get_policy(struct secpolicy *pcb_sp, struct mbuf **mp)
 }
 
 int
-ipsec4_set_policy(struct inpcb *inp, int optname ,void *request,
+ipsec4_set_policy(struct inpcb *inp, int optname, const void *request,
 		  size_t len, kauth_cred_t cred)
 {
-	struct sadb_x_policy *xpl;
+	const struct sadb_x_policy *xpl;
 	struct secpolicy **pcb_sp;
 
 	/* sanity check. */
@@ -1365,7 +1364,7 @@ ipsec4_set_policy(struct inpcb *inp, int optname ,void *request,
 		return EINVAL;
 	if (len < sizeof(*xpl))
 		return EINVAL;
-	xpl = (struct sadb_x_policy *)request;
+	xpl = (const struct sadb_x_policy *)request;
 
 	IPSEC_ASSERT(inp->inp_sp != NULL,
 			 ("ipsec4_set_policy(): null inp->in_sp"));
@@ -1388,10 +1387,10 @@ ipsec4_set_policy(struct inpcb *inp, int optname ,void *request,
 }
 
 int
-ipsec4_get_policy(struct inpcb *inp, void *request, size_t len, 
+ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len, 
 		  struct mbuf **mp)
 {
-	struct sadb_x_policy *xpl;
+	const struct sadb_x_policy *xpl;
 	struct secpolicy *pcb_sp;
 
 	/* sanity check. */
@@ -1400,7 +1399,7 @@ ipsec4_get_policy(struct inpcb *inp, void *request, size_t len,
 	IPSEC_ASSERT(inp->inp_sp != NULL, ("ipsec4_get_policy: null inp_sp"));
 	if (len < sizeof(*xpl))
 		return EINVAL;
-	xpl = (struct sadb_x_policy *)request;
+	xpl = (const struct sadb_x_policy *)request;
 
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
@@ -1446,10 +1445,10 @@ ipsec4_delete_pcbpolicy(struct inpcb *inp)
 
 #ifdef INET6
 int
-ipsec6_set_policy(struct in6pcb *in6p, int optname, void *request,
+ipsec6_set_policy(struct in6pcb *in6p, int optname, const void *request,
 		  size_t len, kauth_cred_t cred)
 {
-	struct sadb_x_policy *xpl;
+	const struct sadb_x_policy *xpl;
 	struct secpolicy **pcb_sp;
 
 	/* sanity check. */
@@ -1457,7 +1456,7 @@ ipsec6_set_policy(struct in6pcb *in6p, int optname, void *request,
 		return EINVAL;
 	if (len < sizeof(*xpl))
 		return EINVAL;
-	xpl = (struct sadb_x_policy *)request;
+	xpl = (const struct sadb_x_policy *)request;
 
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
@@ -1477,10 +1476,10 @@ ipsec6_set_policy(struct in6pcb *in6p, int optname, void *request,
 }
 
 int
-ipsec6_get_policy(struct in6pcb *in6p, void *request, size_t len,
+ipsec6_get_policy(struct in6pcb *in6p, const void *request, size_t len,
 		  struct mbuf **mp)
 {
-	struct sadb_x_policy *xpl;
+	const struct sadb_x_policy *xpl;
 	struct secpolicy *pcb_sp;
 
 	/* sanity check. */
@@ -1489,7 +1488,7 @@ ipsec6_get_policy(struct in6pcb *in6p, void *request, size_t len,
 	IPSEC_ASSERT(in6p->in6p_sp != NULL, ("ipsec6_get_policy: null in6p_sp"));
 	if (len < sizeof(*xpl))
 		return EINVAL;
-	xpl = (struct sadb_x_policy *)request;
+	xpl = (const struct sadb_x_policy *)request;
 
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
@@ -1795,9 +1794,9 @@ ipsec6_in_reject(struct mbuf *m, struct in6pcb *in6p)
  * NOTE: SP passed is free in this function.
  */
 static size_t
-ipsec_hdrsiz(struct secpolicy *sp)
+ipsec_hdrsiz(const struct secpolicy *sp)
 {
-	struct ipsecrequest *isr;
+	const struct ipsecrequest *isr;
 	size_t siz;
 
 	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
@@ -1843,7 +1842,7 @@ ipsec_hdrsiz(struct secpolicy *sp)
 			default:
 				ipseclog((LOG_ERR, "ipsec_hdrsiz: "
 					"unknown AF %d in IPsec tunnel SA\n",
-					((struct sockaddr *)&isr->saidx.dst)->sa_family));
+					((const struct sockaddr *)&isr->saidx.dst)->sa_family));
 				break;
 			}
 		}
