@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8548CDS,v 1.4 2011/06/08 05:03:44 matt Exp $
+#	$NetBSD: MPC8548CDS,v 1.5 2011/06/10 16:38:17 matt Exp $
 #
 #	MPC8548CDS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8548CDS-$Revision: 1.4 $"
+ident 		"MPC8548CDS-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -19,6 +19,7 @@ makeoptions	NEED_UBOOTIMAGE="yes"
 
 options 	MPC8548
 options 	CADMUS
+options 	GUR_BASE=0xe0000000
 #options 	HZ=1000
 
 #options 	INSECURE	# disable kernel security levels
