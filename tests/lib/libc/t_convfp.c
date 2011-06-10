@@ -1,4 +1,4 @@
-/*	$NetBSD: t_convfp.c,v 1.3 2011/06/10 15:43:59 njoly Exp $	*/
+/*	$NetBSD: t_convfp.c,v 1.4 2011/06/10 15:52:44 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,9 +42,6 @@
 /* The same for unsigned long */
 #define ULONG_TESTVALUE	(LONG_MAX+42UL)
 
-static void test1();
-static void test2();
-static void test3();
 
 ATF_TC(test1);
 
