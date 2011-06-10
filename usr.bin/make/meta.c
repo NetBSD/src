@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.17 2011/05/04 20:38:32 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.18 2011/06/10 23:57:39 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -767,7 +767,7 @@ fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
 		newsz = ROUNDUP(fs.st_size, BUFSIZ);
 	    if (DEBUG(META)) 
 		fprintf(debug_file, "growing buffer %u -> %u\n",
-			bufsz, newsz);
+			(unsigned int)bufsz, (unsigned int)newsz);
 	    p = bmake_realloc(buf, newsz);
 	    if (p) {
 		*bufp = buf = p;
