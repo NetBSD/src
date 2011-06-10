@@ -1,4 +1,4 @@
-/*	$NetBSD: t_convfp.c,v 1.1 2010/12/31 04:08:33 pgoyette Exp $	*/
+/*	$NetBSD: t_convfp.c,v 1.2 2011/06/10 15:21:25 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -85,11 +85,9 @@ ATF_TC_BODY(test1, tc)
 		    "sizeof(long double) = %d\n", 
 		    sizeof(ul), sizeof(d), sizeof(dt));
 
-	if (ul != ULONG_TESTVALUE) {
+	if (ul != ULONG_TESTVALUE)
 		atf_tc_fail("unsigned long %lu (0x%lx) != %lu (0x%lx)\n",
 		    ul, ul, ULONG_TESTVALUE, ULONG_TESTVALUE);
-		exit(1);
-	}
 }
 
 ATF_TC(test2);
