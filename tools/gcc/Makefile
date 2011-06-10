@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2011/03/24 13:33:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.36 2011/06/10 16:31:18 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,10 @@ MULTILIB_ARGS= --enable-multilib
 MULTILIB_ARGS= --disable-multilib
 .endif
 
+.if ${MKSOFTFLOAT} != "no"
+SOFTFLOAT_ARGS=	-with-float=soft
+.endif
+
 COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--enable-long-long \
 			--enable-threads \
@@ -31,6 +35,7 @@ COMMON_CONFIGURE_ARGS+=	--with-tune=${GCC_CONFIG_TUNE.${MACHINE_ARCH}}
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS} \
 		--disable-nls \
 		${MULTILIB_ARGS} \
+		${SOFTFLOAT_ARGS} \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
 		--enable-languages="${GCC_LANGUAGES}"
 
