@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.425 2011/06/05 09:04:22 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.426 2011/06/10 13:07:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.425 2011/06/05 09:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.426 2011/06/10 13:07:14 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3151,7 +3151,6 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	struct nameidata fromnd, tond;
 	struct mount *fs;
 	struct lwp *l = curlwp;
-	struct proc *p;
 	int error;
 
 	error = pathbuf_maybe_copyin(from, seg, &frompb);
@@ -3294,7 +3293,6 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 #endif /* NVERIEXEC > 0 */
 
 out:
-	p = l->l_proc;
 	if (!error) {
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
 				   tond.ni_dvp, tond.ni_vp, &tond.ni_cnd);
