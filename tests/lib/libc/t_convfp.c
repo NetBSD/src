@@ -1,4 +1,4 @@
-/*	$NetBSD: t_convfp.c,v 1.2 2011/06/10 15:21:25 njoly Exp $	*/
+/*	$NetBSD: t_convfp.c,v 1.3 2011/06/10 15:43:59 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ ATF_TC_BODY(test1, tc)
 	ui = (unsigned int)d;
 
 	if (ui != UINT_TESTVALUE)
-		atf_tc_fail("FAILED: unsigned int %u (0x%x) != %u (0x%x)\n",
+		atf_tc_fail("FAILED: unsigned int %u (0x%x) != %u (0x%x)",
 		    ui, ui, UINT_TESTVALUE, UINT_TESTVALUE);
 
 	/* unsigned long vs. {long} double test */
@@ -80,13 +80,13 @@ ATF_TC_BODY(test1, tc)
 		printf("testing long double vs. long\n");
 	} else
 		atf_tc_skip("no suitable {long} double type found, skipping "
-		    "\"unsigned long\" test\n"
+		    "\"unsigned long\" test: "
 		    "sizeof(long) = %d, sizeof(double) = %d, "
-		    "sizeof(long double) = %d\n", 
+		    "sizeof(long double) = %d", 
 		    sizeof(ul), sizeof(d), sizeof(dt));
 
 	if (ul != ULONG_TESTVALUE)
-		atf_tc_fail("unsigned long %lu (0x%lx) != %lu (0x%lx)\n",
+		atf_tc_fail("unsigned long %lu (0x%lx) != %lu (0x%lx)",
 		    ul, ul, ULONG_TESTVALUE, ULONG_TESTVALUE);
 }
 
@@ -107,7 +107,7 @@ ATF_TC_BODY(test2, tc)
 	uv = (unsigned long)nv;
 
 	ATF_REQUIRE_EQ_MSG(uv, 5,
-	    "%.3f casted to unsigned long is %lu\n", nv, uv);
+	    "%.3f casted to unsigned long is %lu", nv, uv);
 }
 
 ATF_TC(test3);
@@ -127,10 +127,10 @@ ATF_TC_BODY(test3, tc)
 	unsigned long l2 = ldv;
 
 	ATF_REQUIRE_EQ_MSG(l1, 1,
-	    "double 1.9 casted to unsigned long should be 1, but is %lu\n", l1);
+	    "double 1.9 casted to unsigned long should be 1, but is %lu", l1);
 
 	ATF_REQUIRE_EQ_MSG(l2, 1,
-	    "long double 1.9 casted to unsigned long should be 1, but is %lu\n",
+	    "long double 1.9 casted to unsigned long should be 1, but is %lu",
 	    l2);
 }
 
