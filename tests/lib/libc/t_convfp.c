@@ -1,4 +1,4 @@
-/*	$NetBSD: t_convfp.c,v 1.4 2011/06/10 15:52:44 njoly Exp $	*/
+/*	$NetBSD: t_convfp.c,v 1.5 2011/06/10 17:10:43 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,12 +75,13 @@ ATF_TC_BODY(test1, tc)
 		dt = ULONG_TESTVALUE;
 		ul = (unsigned long)dt;
 		printf("testing long double vs. long\n");
-	} else
-		atf_tc_skip("no suitable {long} double type found, skipping "
-		    "\"unsigned long\" test: "
-		    "sizeof(long) = %d, sizeof(double) = %d, "
-		    "sizeof(long double) = %d", 
+	} else {
+		printf("sizeof(long) = %d, sizeof(double) = %d, "
+		    "sizeof(long double) = %d\n", 
 		    sizeof(ul), sizeof(d), sizeof(dt));
+		atf_tc_skip("no suitable {long} double type found, skipping "
+		    "\"unsigned long\" test");
+	}
 
 	if (ul != ULONG_TESTVALUE)
 		atf_tc_fail("unsigned long %lu (0x%lx) != %lu (0x%lx)",
