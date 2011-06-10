@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8536DS,v 1.4 2011/06/08 05:03:43 matt Exp $
+#	$NetBSD: MPC8536DS,v 1.5 2011/06/10 16:38:17 matt Exp $
 #
 #	MPC8536DS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8536DS-$Revision: 1.4 $"
+ident 		"MPC8536DS-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -16,9 +16,6 @@ makeoptions	NEED_UBOOTIMAGE="yes"
 
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
-
-no options	GUR_BASE
-options 	GUR_BASE=0xffe00000
 
 options 	MPC8536
 options 	PIXIS
