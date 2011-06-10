@@ -1,4 +1,4 @@
-#	$NetBSD: RB800,v 1.6 2011/06/08 05:03:44 matt Exp $
+#	$NetBSD: RB800,v 1.7 2011/06/10 16:38:17 matt Exp $
 #
 #	RB800 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB800-$Revision: 1.6 $"
+ident 		"RB800-$Revision: 1.7 $"
 
 maxusers	32
 
@@ -16,6 +16,7 @@ maxusers	32
 
 options 	MPC8544
 options 	PPC_HAVE_SPE
+options 	GUR_BASE=0xe0000000
 
 #options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
