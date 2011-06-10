@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.178 2011/06/09 19:08:31 matt Exp $ */
+/*	$NetBSD: ehci.c,v 1.179 2011/06/10 14:20:34 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.178 2011/06/09 19:08:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.179 2011/06/10 14:20:34 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1796,7 +1796,7 @@ ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	sqh->qh.qh_curqtd = 0;
 	sqh->qh.qh_qtd.qtd_next = htole32(sqtd->physaddr);
-	sqh->qh.qh_qtd.qtd_altnext = 0;
+	sqh->qh.qh_qtd.qtd_altnext = EHCI_NULL;
 	for (i = 0; i < EHCI_QTD_NBUFFERS; i++)
 		sqh->qh.qh_qtd.qtd_buffer[i] = 0;
 	sqh->sqtd = sqtd;
