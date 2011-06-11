@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.4 2011/05/15 23:56:28 christos Exp $	*/
+/*	$NetBSD: director.c,v 1.5 2011/06/11 18:03:18 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -46,8 +46,8 @@ void yyparse(void);
 #define DEF_TERM "atf"
 #define DEF_SLAVE "./slave"
 
-char *def_check_path = "./"; /* default check path */
-char *def_include_path = "./"; /* default include path */
+const char *def_check_path = "./"; /* default check path */
+const char *def_include_path = "./"; /* default include path */
 
 extern size_t nvars;	/* In testlang_conf.y */
 saved_data_t  saved_output;	/* In testlang_conf.y */
@@ -55,9 +55,9 @@ int cmdpipe[2];		/* command pipe between director and slave */
 int slvpipe[2];		/* reply pipe back from slave */
 int master;		/* pty to the slave */
 int verbose;		/* control verbosity of tests */
-char *check_path;	/* path to prepend to check files for output
+const char *check_path;	/* path to prepend to check files for output
 			   validation */
-char *include_path;	/* path to prepend to include files */
+const char *include_path;	/* path to prepend to include files */
 char *cur_file;		/* name of file currently being read */
 
 void init_parse_variables(int); /* in testlang_parse.y */
@@ -66,17 +66,17 @@ void init_parse_variables(int); /* in testlang_parse.y */
  * Handle the slave exiting unexpectedly, try to recover the exit message
  * and print it out.
  */
-void
+static void
 slave_died(int param)
 {
 	char last_words[256];
-	int count;
+	size_t count;
 
 	fprintf(stderr, "ERROR: Slave has exited\n");
 	if (saved_output.count > 0) {
 		fprintf(stderr, "output from slave: ");
 		for (count = 0; count < saved_output.count; count ++) {
-			if (isprint(saved_output.data[count]))
+			if (isprint((unsigned char)saved_output.data[count]))
 			    fprintf(stderr, "%c", saved_output.data[count]);
 		}
 		fprintf(stderr, "\n");
@@ -120,7 +120,6 @@ main(int argc, char *argv[])
 	extern FILE *yyin;
 	char *arg1, *arg2, *arg3, *arg4;
 	struct termios term_attr;
-	int slavefd, on;
 
 	termpath = term = slave = NULL;
 	verbose = 0;
@@ -182,17 +181,11 @@ main(int argc, char *argv[])
 		include_path = def_include_path;
 	}
 
-	if (pipe(cmdpipe) < 0) {
-		fprintf(stderr, "Command pipe creation failed: ");
-		perror(NULL);
-		exit(2);
-	}
+	if (pipe(cmdpipe) < 0)
+		err(1, "Command pipe creation failed");
 
-	if (pipe(slvpipe) < 0) {
-		fprintf(stderr, "Slave pipe creation failed: ");
-		perror(NULL);
-		exit(2);
-	}
+	if (pipe(slvpipe) < 0)
+		err(1, "Slave pipe creation failed");
 
 	/*
 	 * Create default termios settings for later use
@@ -204,10 +197,8 @@ main(int argc, char *argv[])
 	term_attr.c_lflag = TTYDEF_LFLAG;
 	cfsetspeed(&term_attr, TTYDEF_SPEED);
 
-	if ((slave_pid = forkpty(&master, NULL, &term_attr, NULL)) < 0) {
-		fprintf(stderr, "Fork of pty for slave failed\n");
-		exit(2);
-	}
+	if ((slave_pid = forkpty(&master, NULL, &term_attr, NULL)) < 0)
+		err(1, "Fork of pty for slave failed\n");
 
 	if (slave_pid == 0) {
 		/* slave side, just exec the slave process */
@@ -223,22 +214,16 @@ main(int argc, char *argv[])
 		if (asprintf(&arg4, "%d", slvpipe[1]) < 0)
 			err(1, "arg4 conversion failed");
 
-		if (execl(slave, slave, arg1, arg2, arg3, arg4, NULL) < 0) {
-			fprintf(stderr, "Exec of slave %s failed: ", slave);
-			perror(NULL);
-			exit(2);
-		}
+		if (execl(slave, slave, arg1, arg2, arg3, arg4, NULL) < 0)
+			err(1, "Exec of slave %s failed", slave);
 
 		/* NOT REACHED */
 	}
 
 	fcntl(master, F_SETFL, O_NONBLOCK);
 
-	if ((yyin = fopen(argv[0], "r")) == NULL) {
-		fprintf(stderr, "Cannot open command file %s: ", argv[0]);
-		perror(NULL);
-		exit(2);
-	}
+	if ((yyin = fopen(argv[0], "r")) == NULL)
+		err(1, "Cannot open command file %s", argv[0]);
 
 	if ((cur_file = malloc(strlen(argv[0]) + 1)) == NULL)
 		err(2, "Failed to alloc memory for test file name");
