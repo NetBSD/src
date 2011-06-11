@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.427 2011/06/10 21:02:46 matt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.428 2011/06/11 03:00:19 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.427 2011/06/10 21:02:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.428 2011/06/11 03:00:19 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3284,7 +3284,7 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 		f2 = kmem_alloc(f2_len, KM_SLEEP);
 		strlcpy(f2, tond.ni_cnd.cn_nameptr, f2_len);
 
-		error = veriexec_renamechk(l, fvp, f1, tvp, f2);
+		error = veriexec_renamechk(curlwp, fvp, f1, tvp, f2);
 
 		kmem_free(f1, f1_len);
 		kmem_free(f2, f2_len);
