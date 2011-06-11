@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 #include <openssl/ebcdic.h>
 #endif
 
-static char *bf_key[2]={
+static const char *bf_key[2]={
 	"abcdefghijklmnopqrstuvwxyz",
 	"Who is John Galt?"
 	};
@@ -371,7 +371,7 @@ static int test(void)
 #ifdef CHARSET_EBCDIC
 		ebcdic2ascii(bf_key[n], bf_key[n], strlen(bf_key[n]));
 #endif
-		BF_set_key(&key,strlen(bf_key[n]),(unsigned char *)bf_key[n]);
+		BF_set_key(&key,strlen(bf_key[n]), (const unsigned char *)bf_key[n]);
 
 		data[0]=bf_plain[n][0];
 		data[1]=bf_plain[n][1];
