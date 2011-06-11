@@ -46,6 +46,8 @@
       builtin_assert ("machine=powerpc");	\
       if (TARGET_SECURE_PLT)			\
         builtin_define ("_SECURE_PLT");		\
+      if (TARGET_SOFT_FLOAT)			\
+        builtin_define ("_SOFT_FLOAT");		\
     }						\
   while (0)
 
