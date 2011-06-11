@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 #include <openssl/ebcdic.h>
 #endif
 
-static char *test[]={
+static const char *test[]={
 	"",
 	"a",
 	"abc",
@@ -87,7 +87,7 @@ static char *test[]={
 	NULL,
 	};
 
-static char *ret[]={
+static const char *ret[]={
 	"8350e5a3e24c153df2275c9f80692773",
 	"32ec01ec4a6dac72c0ab96fb34c0b5d1",
 	"da853b0d3f88d99b30283a69e6ded6bb",
@@ -101,7 +101,7 @@ static char *pt(unsigned char *md);
 int main(int argc, char *argv[])
 	{
 	int i,err=0;
-	char **P,**R;
+	const char **P,**R;
 	char *p;
 	unsigned char md[MD2_DIGEST_LENGTH];
 
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 	i=1;
 	while (*P != NULL)
 		{
-		EVP_Digest((unsigned char *)*P,strlen(*P),md,NULL,EVP_md2(), NULL);
+		EVP_Digest((const unsigned char *)*P,strlen(*P),md,NULL,EVP_md2(), NULL);
 		p=pt(md);
 		if (strcmp(p,*R) != 0)
 			{

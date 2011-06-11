@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 
-static char *test[]={
+static const char *test[]={
 	"",
 	"a",
 	"abc",
@@ -83,7 +83,7 @@ static char *test[]={
 	NULL,
 	};
 
-static char *ret[]={
+static const char *ret[]={
 	"d41d8cd98f00b204e9800998ecf8427e",
 	"0cc175b9c0f1b6a831c399e269772661",
 	"900150983cd24fb0d6963f7d28e17f72",
@@ -97,7 +97,7 @@ static char *pt(unsigned char *md);
 int main(int argc, char *argv[])
 	{
 	int i,err=0;
-	char **P,**R;
+	const char **P,**R;
 	char *p;
 	unsigned char md[MD5_DIGEST_LENGTH];
 
@@ -106,9 +106,9 @@ int main(int argc, char *argv[])
 	i=1;
 	while (*P != NULL)
 		{
-		EVP_Digest(&(P[0][0]),strlen((char *)*P),md,NULL,EVP_md5(), NULL);
+		EVP_Digest(&(P[0][0]),strlen((const char *)*P),md,NULL,EVP_md5(), NULL);
 		p=pt(md);
-		if (strcmp(p,(char *)*R) != 0)
+		if (strcmp(p,(const char *)*R) != 0)
 			{
 			printf("error calculating MD5 on '%s'\n",*P);
 			printf("got %s instead of %s\n",p,*R);
