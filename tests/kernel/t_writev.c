@@ -1,4 +1,4 @@
-/* $NetBSD: t_writev.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $ */
+/* $NetBSD: t_writev.c,v 1.2 2011/06/11 18:03:17 christos Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_writev.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $");
+__RCSID("$NetBSD: t_writev.c,v 1.2 2011/06/11 18:03:17 christos Exp $");
 
 #include <sys/uio.h>
 #include <sys/syslimits.h>
@@ -58,7 +58,7 @@ ATF_TC_BODY(writev, tc)
 	errno = 0;
 	retval = writev(2, NULL, IOV_MAX + 1);
 
-	ATF_REQUIRE_EQ_MSG(retval, -1, "got: %d", retval);
+	ATF_REQUIRE_EQ_MSG(retval, -1, "got: %zd", retval);
 	ATF_REQUIRE_EQ_MSG(errno, EINVAL, "got: %s", strerror(errno));
 }
 

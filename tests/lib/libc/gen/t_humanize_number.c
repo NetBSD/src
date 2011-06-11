@@ -1,4 +1,4 @@
-/*	$NetBSD: t_humanize_number.c,v 1.3 2011/04/06 10:06:49 jruoho Exp $	*/
+/*	$NetBSD: t_humanize_number.c,v 1.4 2011/06/11 18:03:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ ATF_TC_BODY(humanize_basic, tc)
 			buflen = ho->ho_len;
 			buf = realloc(buf, buflen);
 			if (buf == NULL)
-				atf_tc_fail("realloc(..., %d) failed", buflen);
+				atf_tc_fail("realloc(..., %zu) failed", buflen);
 		}
 
 		rv = humanize_number(buf, ho->ho_len, ho->ho_num,
