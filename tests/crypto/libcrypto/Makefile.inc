@@ -1,8 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.5 2011/05/26 12:56:32 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.6 2011/06/11 18:03:17 christos Exp $
 
 .include <bsd.own.mk>
-# Not yet
-# .include "../Makefile.inc"
+.include "../Makefile.inc"
 TESTSDIR=	${TESTSBASE}/crypto/libcrypto
 ATFFILE=	no
 
