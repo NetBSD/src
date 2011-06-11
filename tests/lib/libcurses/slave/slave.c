@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.3 2011/05/15 23:59:03 christos Exp $	*/
+/*	$NetBSD: slave.c,v 1.4 2011/06/11 18:03:18 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -42,21 +42,22 @@
 int cmdpipe[2];
 int slvpipe[2];
 
-char *returns_enum_names[] = {
+#if 0
+static const char *returns_enum_names[] = {
 	"unused", "numeric", "string", "byte", "ERR", "OK", "NULL", "not NULL",
 	"variable"
 };
+#endif
 
 /*
  * Read the command pipe for the function to execute, gather the args
  * and then process the command.
  */
-void
+static void
 process_commands(WINDOW *mainscr)
 {
 	int len, maxlen, argslen, i, ret, type;
 	char *cmdbuf, *tmpbuf, **args, **tmpargs;
-	int farg;
 
 	len = maxlen = 30;
 	if ((cmdbuf = malloc(maxlen)) == NULL)
@@ -124,7 +125,7 @@ process_commands(WINDOW *mainscr)
 						if (strcmp(args[argslen],
 							   "STDSCR") == 0) {
 							ret = asprintf(&tmpbuf,
-								 "%td",
+								 "%p",
 								 stdscr);
 							if (ret < 0)
 								err(2,
