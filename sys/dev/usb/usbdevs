@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.580 2011/06/01 13:57:55 njoly Exp $
+$NetBSD: usbdevs,v 1.581 2011/06/11 13:50:06 nonaka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1126,6 +1126,7 @@ product DISPLAYLINK LCD8000U	0x01bb	LCD-8000U
 product DISPLAYLINK HPDOCK	0x01d4	HP USB Docking
 product DISPLAYLINK M01061	0x01e2	Lenovo DVI
 product DISPLAYLINK SWDVI	0x024c	SUNWEIT DVI
+product DISPLAYLINK LCD8000UD_DVI	0x02b8	LCD-8000UD-DVI
 product DISPLAYLINK LDEWX015U	0x02e3	Logitec LDE-WX015U
 product DISPLAYLINK UM7X0	0x401a	nanovision MiMo
 
