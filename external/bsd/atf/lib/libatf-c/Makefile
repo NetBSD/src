@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2011/03/31 16:45:44 jmmv Exp $
+# $NetBSD: Makefile,v 1.11 2011/06/11 18:03:57 christos Exp $
 
 NOLINT=		# defined
 
@@ -75,8 +75,9 @@ MAN=		atf-c-api.3
 CLEANFILES+=	defs.h
 
 defs.h: defs.h.in
-	${TOOL_SED} -e \
-	    's,@ATTRIBUTE_NORETURN@,__attribute__((__noreturn__)),g' \
+	${TOOL_SED} \
+	    -e 's|@ATTRIBUTE_NORETURN@|__attribute__((__noreturn__))|g' \
+	    -e 's|@ATTRIBUTE_PRINTF(a,b)@|__attribute__((__format__(__printf__,a,b)))|g' \
 	    < ${.ALLSRC} > ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 
