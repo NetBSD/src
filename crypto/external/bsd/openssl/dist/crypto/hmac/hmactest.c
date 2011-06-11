@@ -81,28 +81,28 @@ int main(int argc, char *argv[])
 #ifndef OPENSSL_NO_MD5
 static struct test_st
 	{
-	unsigned char key[16];
+	const unsigned char key[16];
 	int key_len;
-	unsigned char data[64];
+	const unsigned char data[64];
 	int data_len;
-	unsigned char *digest;
+	const unsigned char *digest;
 	} test[4]={
 	{	"",
 		0,
 		"More text test vectors to stuff up EBCDIC machines :-)",
 		54,
-		(unsigned char *)"e9139d1e6ee064ef8cf514fc7dc83e86",
+		(const unsigned char *)"e9139d1e6ee064ef8cf514fc7dc83e86",
 	},{	{0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,
 		 0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,0x0b,},
 		16,
 		"Hi There",
 		8,
-		(unsigned char *)"9294727a3638bb1c13f48ef8158bfc9d",
+		(const unsigned char *)"9294727a3638bb1c13f48ef8158bfc9d",
 	},{	"Jefe",
 		4,
 		"what do ya want for nothing?",
 		28,
-		(unsigned char *)"750c783e6ab0b503eaa86e310a5db738",
+		(const unsigned char *)"750c783e6ab0b503eaa86e310a5db738",
 	},{
 		{0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,
 		 0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,0xaa,},
@@ -115,7 +115,7 @@ static struct test_st
 		 0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,0xdd,
 		 0xdd,0xdd},
 		50,
-		(unsigned char *)"56be34521d144c88dbb8c733f0e8b3f6",
+		(const unsigned char *)"56be34521d144c88dbb8c733f0e8b3f6",
 	},
 	};
 #endif
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 			test[i].data, test[i].data_len,
 			NULL,NULL));
 
-		if (strcmp(p,(char *)test[i].digest) != 0)
+		if (strcmp(p,(const char *)test[i].digest) != 0)
 			{
 			printf("error calculating HMAC on %d entry'\n",i);
 			printf("got %s instead of %s\n",p,test[i].digest);
