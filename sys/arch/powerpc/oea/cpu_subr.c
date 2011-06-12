@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.63 2011/06/05 16:52:25 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.64 2011/06/12 16:27:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.63 2011/06/05 16:52:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.64 2011/06/12 16:27:52 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -1295,7 +1295,7 @@ cpu_hatch(void)
 	if (msr != h->pir)
 		mtspr(SPR_PIR, h->pir);
 	
-	__asm volatile ("mtsprg 0,%0" :: "r"(ci));
+	__asm volatile ("mtsprg0 %0" :: "r"(ci));
 	cpu_spinstart_ack = 0;
 
 	/* Initialize MMU. */
