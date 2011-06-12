@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_ebus.c,v 1.2 2011/06/12 05:27:56 tsutsui Exp $	*/
+/*	$NetBSD: gpio_ebus.c,v 1.3 2011/06/12 05:31:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gpio_ebus.c,v 1.2 2011/06/12 05:27:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio_ebus.c,v 1.3 2011/06/12 05:31:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: gpio_ebus.c,v 1.2 2011/06/12 05:27:56 tsutsui Exp $"
 #define GPIO_NPINS 32
 
 struct epio_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct _Pio *sc_dp;
 	struct gpio_chipset_tag	sc_gpio_gc;
 	gpio_pin_t sc_gpio_pins[GPIO_NPINS];
@@ -58,7 +58,7 @@ struct epio_softc {
 static int	epio_ebus_match(device_t, cfdata_t, void *);
 static void	epio_ebus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(epio, sizeof (struct epio_softc),
+CFATTACH_DECL_NEW(epio, sizeof (struct epio_softc),
     epio_ebus_match, epio_ebus_attach, NULL, NULL);
 
 static int	epio_pin_read(void *, int);
@@ -83,12 +83,13 @@ epio_ebus_match(device_t parent, cfdata_t cf, void *aux)
 static void
 epio_ebus_attach(device_t parent, device_t self, void *aux)
 {
-	struct epio_softc *sc = (struct epio_softc *)self;
+	struct epio_softc *sc = device_private(self);
 	struct ebus_attach_args *ia =aux;
 	struct gpiobus_attach_args gba;
 	int i;
 	uint32_t data;
 
+	sc->sc_dev = self;
 	sc->sc_dp = (struct _Pio *)ia->ia_vaddr;
 	data = sc->sc_dp->PinData;
 
@@ -123,7 +124,7 @@ epio_ebus_attach(device_t parent, device_t self, void *aux)
 	gba.gba_npins = GPIO_NPINS;
 
 	/* Attach GPIO framework */
-	(void)config_found(&sc->sc_dev, &gba, gpiobus_print);
+	(void)config_found(self, &gba, gpiobus_print);
 }
 
 static int
