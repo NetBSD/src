@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ebus.c,v 1.4 2011/06/12 05:20:54 tsutsui Exp $	*/
+/*	$NetBSD: dz_ebus.c,v 1.5 2011/06/12 05:22:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.4 2011/06/12 05:20:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.5 2011/06/12 05:22:30 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -129,7 +129,7 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return ENXIO;
 
 	line = DZ_PORT(minor(dev));
-	if (line > 0) /* FIXME fo rmore than one line */
+	if (line > 0) /* FIXME for more than one line */
 		return ENXIO;
 
 	tp = sc->sc_dz.dz_tty;
@@ -192,7 +192,7 @@ dzclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	/* Do a hangup if so required. */
 	if ((tp->t_cflag & HUPCL) || tp->t_wopen || !(tp->t_state & TS_ISOPEN))
-		(void) dzmctl(sc, line, 0, DMSET);
+		(void)dzmctl(sc, line, 0, DMSET);
 
 	return ttyclose(tp);
 }
