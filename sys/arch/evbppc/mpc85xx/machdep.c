@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2011/06/05 16:52:23 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2011/06/12 03:42:41 mrg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <sys/bus.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -927,6 +928,11 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 #endif
 
 		printf(" initppc done!\n");
+
+	/*
+	 * Look for the Book-E modules in the right place.
+	 */
+	module_machine = module_machine_booke;
 }
 
 #ifdef MPC8548
