@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2011/06/12 03:14:03 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2011/06/12 03:21:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2011/06/12 03:14:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2011/06/12 03:21:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,9 @@ cpu_configure(void)
 
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
+
+	/* Interrupt initialization. */
+	intr_init();
 
 	evcnt_attach_static(&emips_clock_evcnt);
 	evcnt_attach_static(&emips_fpu_evcnt);
