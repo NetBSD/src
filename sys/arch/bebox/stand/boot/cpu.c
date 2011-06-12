@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7 2011/06/12 07:07:17 kiyohara Exp $	*/
 
 /*
  * This file contains information proprietary to Be Inc.
@@ -58,7 +58,6 @@ whichCPU(void)
 /*
  * Force CPU #1 into Hard RESET state
  */
-
 void
 resetCPU1(void)
 {
