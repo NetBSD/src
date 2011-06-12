@@ -1,4 +1,4 @@
-/*	$NetBSD: evbppc_machdep.c,v 1.9 2009/11/07 07:27:43 cegger Exp $	*/
+/*	$NetBSD: evbppc_machdep.c,v 1.10 2011/06/12 03:42:41 mrg Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.9 2009/11/07 07:27:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.10 2011/06/12 03:42:41 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,12 @@ __KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.9 2009/11/07 07:27:43 cegger Ex
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/pmap.h>
+
+/*
+ * ibm4xx/booke kernels need to set module_machine to this for modules to work.
+ */
+char module_machine_ibm4xx[] = "powerpc-ibm4xx";
+char module_machine_booke[] = "powerpc-booke";
 
 int fake_mapiodev = 1;
 

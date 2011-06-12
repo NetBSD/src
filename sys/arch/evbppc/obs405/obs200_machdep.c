@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_machdep.c,v 1.14 2011/04/04 20:37:50 dyoung Exp $	*/
+/*	$NetBSD: obs200_machdep.c,v 1.15 2011/06/12 03:42:41 mrg Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.14 2011/04/04 20:37:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.15 2011/06/12 03:42:41 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.14 2011/04/04 20:37:50 dyoung E
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -194,6 +195,11 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
 #endif
+
+	/*
+	 * Look for the ibm4xx modules in the right place.
+	 */
+	module_machine = module_machine_ibm4xx;
 }
 
 void
