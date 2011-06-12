@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.39 2011/06/07 16:41:14 jym Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.40 2011/06/12 03:35:50 rmind Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.39 2011/06/07 16:41:14 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.40 2011/06/12 03:35:50 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1223,7 +1223,7 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 	xbd_io->xio_buf.b_iodone = xbdback_iodone;
 	xbd_io->xio_buf.b_proc = NULL;
 	xbd_io->xio_buf.b_vp = xbdi->xbdi_vp;
-	xbd_io->xio_buf.b_objlock = &xbdi->xbdi_vp->v_interlock;
+	xbd_io->xio_buf.b_objlock = xbdi->xbdi_vp->v_interlock;
 	xbd_io->xio_buf.b_dev = xbdi->xbdi_dev;
 	xbd_io->xio_buf.b_blkno = xbdi->xbdi_next_sector;
 	xbd_io->xio_buf.b_bcount = 0;
@@ -1387,9 +1387,9 @@ xbdback_do_io(struct work *wk, void *dummy)
 	}
 #endif
 	if ((xbd_io->xio_buf.b_flags & B_READ) == 0) {
-		mutex_enter(&xbd_io->xio_buf.b_vp->v_interlock);
+		mutex_enter(xbd_io->xio_buf.b_vp->v_interlock);
 		xbd_io->xio_buf.b_vp->v_numoutput++;
-		mutex_exit(&xbd_io->xio_buf.b_vp->v_interlock);
+		mutex_exit(xbd_io->xio_buf.b_vp->v_interlock);
 	}
 	bdev_strategy(&xbd_io->xio_buf);
 }

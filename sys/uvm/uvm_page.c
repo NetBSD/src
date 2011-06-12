@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.173 2011/06/05 16:58:00 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.174 2011/06/12 03:36:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.173 2011/06/05 16:58:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.174 2011/06/12 03:36:03 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -210,7 +210,7 @@ uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
 {
 
 	KASSERT(uobj == pg->uobject);
-	KASSERT(mutex_owned(&uobj->vmobjlock));
+	KASSERT(mutex_owned(uobj->vmobjlock));
 	KASSERT((pg->flags & PG_TABLED) == 0);
 	KASSERT(where == NULL || (where->flags & PG_TABLED));
 	KASSERT(where == NULL || (where->uobject == uobj));
@@ -270,7 +270,7 @@ uvm_pageremove_list(struct uvm_object *uobj, struct vm_page *pg)
 {
 
 	KASSERT(uobj == pg->uobject);
-	KASSERT(mutex_owned(&uobj->vmobjlock));
+	KASSERT(mutex_owned(uobj->vmobjlock));
 	KASSERT(pg->flags & PG_TABLED);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
@@ -1191,8 +1191,8 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	KASSERT(obj == NULL || anon == NULL);
 	KASSERT(anon == NULL || (flags & UVM_FLAG_COLORMATCH) || off == 0);
 	KASSERT(off == trunc_page(off));
-	KASSERT(obj == NULL || mutex_owned(&obj->vmobjlock));
-	KASSERT(anon == NULL || mutex_owned(&anon->an_lock));
+	KASSERT(obj == NULL || mutex_owned(obj->vmobjlock));
+	KASSERT(anon == NULL || mutex_owned(anon->an_lock));
 
 	mutex_spin_enter(&uvm_fpageqlock);
 
@@ -1368,7 +1368,7 @@ uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 	KASSERT(uobj != NULL);
 	KASSERT((newpg->flags & PG_TABLED) == 0);
 	KASSERT(newpg->uobject == NULL);
-	KASSERT(mutex_owned(&uobj->vmobjlock));
+	KASSERT(mutex_owned(uobj->vmobjlock));
 
 	newpg->uobject = uobj;
 	newpg->offset = oldpg->offset;
@@ -1472,9 +1472,9 @@ uvm_pagefree(struct vm_page *pg)
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
 	KASSERT(!(pg->pqflags & PQ_FREE));
 	KASSERT(mutex_owned(&uvm_pageqlock) || !uvmpdpol_pageisqueued_p(pg));
-	KASSERT(pg->uobject == NULL || mutex_owned(&pg->uobject->vmobjlock));
+	KASSERT(pg->uobject == NULL || mutex_owned(pg->uobject->vmobjlock));
 	KASSERT(pg->uobject != NULL || pg->uanon == NULL ||
-		mutex_owned(&pg->uanon->an_lock));
+		mutex_owned(pg->uanon->an_lock));
 
 	/*
 	 * if the page is loaned, resolve the loan instead of freeing.
@@ -1617,9 +1617,9 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 		}
 
 		KASSERT(pg->uobject == NULL ||
-		    mutex_owned(&pg->uobject->vmobjlock));
+		    mutex_owned(pg->uobject->vmobjlock));
 		KASSERT(pg->uobject != NULL ||
-		    (pg->uanon != NULL && mutex_owned(&pg->uanon->an_lock)));
+		    (pg->uanon != NULL && mutex_owned(pg->uanon->an_lock)));
 
 		KASSERT(pg->flags & PG_BUSY);
 		KASSERT((pg->flags & PG_PAGEOUT) == 0);
@@ -1662,9 +1662,9 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 	uobj = pg->uobject;
 	anon = pg->uanon;
 	if (uobj != NULL) {
-		KASSERT(mutex_owned(&uobj->vmobjlock));
+		KASSERT(mutex_owned(uobj->vmobjlock));
 	} else if (anon != NULL) {
-		KASSERT(mutex_owned(&anon->an_lock));
+		KASSERT(mutex_owned(anon->an_lock));
 	}
 
 	KASSERT((pg->flags & PG_WANTED) == 0);
@@ -1817,7 +1817,7 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
 
-	KASSERT(mutex_owned(&obj->vmobjlock));
+	KASSERT(mutex_owned(obj->vmobjlock));
 
 	pg = rb_tree_find_node(&obj->rb_tree, &off);
 
@@ -1882,6 +1882,7 @@ uvm_pagedeactivate(struct vm_page *pg)
 {
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
+	KASSERT(uvm_page_locked_p(pg));
 	KASSERT(pg->wire_count != 0 || uvmpdpol_pageisqueued_p(pg));
 	uvmpdpol_pagedeactivate(pg);
 }
@@ -1897,6 +1898,7 @@ uvm_pageactivate(struct vm_page *pg)
 {
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
+	KASSERT(uvm_page_locked_p(pg));
 #if defined(READAHEAD_STATS)
 	if ((pg->pqflags & PQ_READAHEAD) != 0) {
 		uvm_ra_hit.ev_count++;
@@ -1992,6 +1994,24 @@ uvm_page_lookup_freelist(struct vm_page *pg)
 	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
 	KASSERT(lcv != -1);
 	return (VM_PHYSMEM_PTR(lcv)->free_list);
+}
+
+/*
+ * uvm_page_locked_p: return true if object associated with page is
+ * locked.  this is a weak check for runtime assertions only.
+ */
+
+bool
+uvm_page_locked_p(struct vm_page *pg)
+{
+
+	if (pg->uobject != NULL) {
+		return mutex_owned(pg->uobject->vmobjlock);
+	}
+	if (pg->uanon != NULL) {
+		return mutex_owned(pg->uanon->an_lock);
+	}
+	return true;
 }
 
 #if defined(DDB) || defined(DEBUGPRINT)

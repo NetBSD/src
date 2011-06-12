@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.44 2011/05/19 03:11:56 rmind Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.45 2011/06/12 03:35:53 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.44 2011/05/19 03:11:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.45 2011/06/12 03:35:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ loop:
 			if (flags == 0) {
 				mutex_exit(&msdosfs_ihash_lock);
 			} else {
-				mutex_enter(&vp->v_interlock);
+				mutex_enter(vp->v_interlock);
 				mutex_exit(&msdosfs_ihash_lock);
 				if (vget(vp, flags))
 					goto loop;
@@ -320,9 +320,8 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct denode
 	 * Directory entry was not in cache, have to create a vnode and
 	 * copy it from the passed disk buffer.
 	 */
-	/* getnewvnode() does a VREF() on the vnode */
-	error = getnewvnode(VT_MSDOSFS, pmp->pm_mountp,
-			    msdosfs_vnodeop_p, &nvp);
+	error = getnewvnode(VT_MSDOSFS, pmp->pm_mountp, msdosfs_vnodeop_p,
+	    NULL, &nvp);
 	if (error) {
 		*depp = 0;
 		return (error);

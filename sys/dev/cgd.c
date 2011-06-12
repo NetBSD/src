@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.72 2011/05/19 20:34:13 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.73 2011/06/12 03:35:51 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.72 2011/05/19 20:34:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.73 2011/06/12 03:35:51 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -422,9 +422,9 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 
 	if ((nbp->b_flags & B_READ) == 0) {
 		vp = nbp->b_vp;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_numoutput++;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 	VOP_STRATEGY(cs->sc_tvn, nbp);
 	return 0;

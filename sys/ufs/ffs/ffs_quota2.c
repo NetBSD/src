@@ -1,4 +1,4 @@
-/* $NetBSD: ffs_quota2.c,v 1.3 2011/06/07 14:56:13 bouyer Exp $ */
+/* $NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_quota2.c,v 1.3 2011/06/07 14:56:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,9 +90,9 @@ ffs_quota2_mount(struct mount *mp)
 		}
 		ump->um_quotas[USRQUOTA] = vp;
 		ump->um_cred[USRQUOTA] = l->l_cred;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_writecount++;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		VOP_UNLOCK(vp);
 	}
         if (fs->fs_quota_flags & FS_Q2_DO_TYPE(GRPQUOTA) &&
@@ -107,10 +107,10 @@ ffs_quota2_mount(struct mount *mp)
 		}
 		ump->um_quotas[GRPQUOTA] = vp;
 		ump->um_cred[GRPQUOTA] = l->l_cred;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_vflag |= VV_SYSTEM;
 		vp->v_writecount++;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		VOP_UNLOCK(vp);
 	}
 	mp->mnt_flag |= MNT_QUOTA;

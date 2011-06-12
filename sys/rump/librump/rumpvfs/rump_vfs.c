@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.65 2011/01/07 11:27:53 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.66 2011/06/12 03:35:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.65 2011/01/07 11:27:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.66 2011/06/12 03:35:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -374,7 +374,7 @@ void
 rump_vp_interlock(struct vnode *vp)
 {
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 }
 
 int

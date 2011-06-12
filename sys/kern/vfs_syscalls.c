@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.428 2011/06/11 03:00:19 uebayasi Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.429 2011/06/12 03:35:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.428 2011/06/11 03:00:19 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.429 2011/06/12 03:35:57 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1435,9 +1435,9 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	if ((error = VOP_OPEN(vp, flags, cred)) != 0)
 		goto bad;
 	if (flags & FWRITE) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_writecount++;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 
 	/* done with modified vn_open, now finish what sys_open does. */

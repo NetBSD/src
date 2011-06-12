@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.5 2011/06/05 09:04:22 dsl Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.6 2011/06/12 03:35:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.5 2011/06/05 09:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.6 2011/06/12 03:35:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -462,19 +462,19 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		 */
 		if (vp == skipvp)
 			continue;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		/*
 		 * Ignore clean but still referenced vnodes.
 		 */
 		if ((vp->v_iflag & VI_CLEAN) != 0) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		/*
 		 * Skip over a vnodes marked VSYSTEM.
 		 */
 		if ((flags & SKIPSYSTEM) && (vp->v_vflag & VV_SYSTEM)) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		/*
@@ -483,7 +483,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		 */
 		if ((flags & WRITECLOSE) &&
 		    (vp->v_writecount == 0 || vp->v_type != VREG)) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		/*
@@ -514,7 +514,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 			} else {
 				vclean(vp, 0);
 				vp->v_op = spec_vnodeop_p; /* XXXSMP */
-				mutex_exit(&vp->v_interlock);
+				mutex_exit(vp->v_interlock);
 				/*
 				 * The vnode isn't clean, but still resides
 				 * on the mount list.  Remove it. XXX This
@@ -530,7 +530,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		if (busyprt)
 			vprint("vflush: busy vnode", vp);
 #endif
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		busy++;
 	}
 	mutex_exit(&mntvnode_lock);
@@ -552,16 +552,16 @@ retry:
 	mutex_enter(&mntvnode_lock);
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		if ((vp->v_iflag & VI_CLEAN) != 0) {
 			TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
 			vp->v_mount = NULL;
 			mutex_exit(&mntvnode_lock);
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			vfs_destroy(mp);
 			goto retry;
 		}
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 	mutex_exit(&mntvnode_lock);
 }
