@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.77 2011/06/05 16:52:25 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.78 2011/06/12 16:27:14 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -203,7 +203,7 @@ curcpu(void)
 {
 	struct cpu_info *ci;
 
-	__asm volatile ("mfsprg %0,0" : "=r"(ci));
+	__asm volatile ("mfsprg0 %0" : "=r"(ci));
 	return ci;
 }
 
