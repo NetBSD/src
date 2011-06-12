@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.8 2011/01/13 03:40:50 jruoho Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.9 2011/06/12 10:11:52 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -73,6 +73,8 @@ void		acpi_md_OsEnableInterrupt(void);
 
 int		acpi_md_sleep(int);
 void		acpi_md_sleep_init(void);
+
+uint32_t	acpi_md_pdc(void);
 uint32_t	acpi_md_ncpus(void);
 void		acpi_md_callback(void);
 

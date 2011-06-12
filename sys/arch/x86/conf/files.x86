@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.69 2011/06/12 03:35:49 rmind Exp $
+#	$NetBSD: files.x86,v 1.70 2011/06/12 10:11:52 jruoho Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -107,6 +107,7 @@ file 	arch/x86/x86/mpacpi.c		acpi
 
 file	arch/x86/x86/acpi_machdep.c	acpi
 
+file	arch/x86/acpi/acpi_pdc.c	acpi
 file	arch/x86/acpi/acpi_wakeup.c	acpi
 
 file	arch/x86/isa/isa_machdep.c	isa
