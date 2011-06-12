@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.29 2011/05/10 08:29:32 manu Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.30 2011/06/12 03:36:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.29 2011/05/10 08:29:32 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.30 2011/06/12 03:36:02 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -327,9 +327,9 @@ ufs_extattr_enable_with_open(struct ufsmount *ump, struct vnode *vp,
 		return (error);
 	}
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	vp->v_writecount++;
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	vref(vp);
 

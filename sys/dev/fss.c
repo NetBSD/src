@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.74 2011/05/23 21:18:55 joerg Exp $	*/
+/*	$NetBSD: fss.c,v 1.75 2011/06/12 03:35:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.74 2011/05/23 21:18:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.75 2011/06/12 03:35:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -981,7 +981,7 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 	    data, len, off, UIO_SYSSPACE, IO_UNIT|IO_NODELOCKED,
 	    sc->sc_bs_lwp->l_cred, NULL, NULL);
 	if (error == 0) {
-		mutex_enter(&sc->sc_bs_vp->v_interlock);
+		mutex_enter(sc->sc_bs_vp->v_interlock);
 		error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(off),
 		    round_page(off+len), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
 	}
