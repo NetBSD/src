@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.9 2010/11/09 06:47:24 uebayasi Exp $ */
+/*	$NetBSD: rtas.c,v 1.10 2011/06/12 21:28:26 mrg Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.9 2010/11/09 06:47:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.10 2011/06/12 21:28:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -28,7 +28,6 @@ int machine_has_rtas = 0;
 struct rtas_softc *rtas0_softc;
 
 struct rtas_softc {
-	struct device ra_dev;
 	int ra_phandle;
 	int ra_version;
 
@@ -78,7 +77,7 @@ static int rtas_todr_gettime_ymdhms(struct todr_chip_handle *,
 static int rtas_todr_settime_ymdhms(struct todr_chip_handle *,
     struct clock_ymdhms *);
 
-CFATTACH_DECL(rtas, sizeof (struct rtas_softc),
+CFATTACH_DECL_NEW(rtas, sizeof (struct rtas_softc),
     rtas_match, rtas_attach, rtas_detach, rtas_activate);
 
 static int
@@ -96,7 +95,7 @@ static void
 rtas_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
-	struct rtas_softc *sc = (struct rtas_softc *) self;
+	struct rtas_softc *sc = device_private(self);
 	int ph = ca->ca_node;
 	int ih;
 	int rtas_size;
