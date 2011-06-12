@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusvar.h,v 1.2 2011/06/12 03:57:09 tsutsui Exp $	*/
+/*	$NetBSD: ebusvar.h,v 1.3 2011/06/12 04:00:33 tsutsui Exp $	*/
 
 #ifndef _EMIPS_EBUS_EBUSVAR_H_
 #define _EMIPS_EBUS_EBUSVAR_H_
@@ -6,10 +6,6 @@
 #include <machine/bus.h>
 
 struct ebus_attach_args;
-
-struct ebus_softc {
-	struct device	sc_dev;
-};
 
 /*
  * Arguments used to attach an ebus "device" to its parent

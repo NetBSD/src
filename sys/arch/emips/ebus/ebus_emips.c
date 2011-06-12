@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_emips.c,v 1.2 2011/06/12 03:52:13 tsutsui Exp $	*/
+/*	$NetBSD: ebus_emips.c,v 1.3 2011/06/12 04:00:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ebus_emips.c,v 1.2 2011/06/12 03:52:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_emips.c,v 1.3 2011/06/12 04:00:33 tsutsui Exp $");
 
 #include "opt_xilinx_ml40x.h"
 #include "opt_xs_bee3.h"
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ebus_emips.c,v 1.2 2011/06/12 03:52:13 tsutsui Exp $
 static int	ebus_emips_match(device_t, cfdata_t, void *);
 static void	ebus_emips_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ebus_emips, sizeof(struct ebus_softc),
+CFATTACH_DECL_NEW(ebus_emips, 0,
     ebus_emips_match, ebus_emips_attach, NULL, NULL);
 
 #if defined(XILINX_ML40x) || defined(XS_BEE3)
