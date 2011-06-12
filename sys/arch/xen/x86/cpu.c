@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56 2011/02/26 14:43:18 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.57 2011/06/12 03:35:50 rmind Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56 2011/02/26 14:43:18 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57 2011/06/12 03:35:50 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -455,7 +455,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		cpu_get_tsc_freq(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
-		pmap_cpu_init_late(ci);
 #if NLAPIC > 0
 		if (caa->cpu_role != CPU_ROLE_SP) {
 			/* Enable lapic. */
@@ -500,8 +499,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
 		cpu_set_tss_gates(ci);
-		pmap_cpu_init_early(ci);
-		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
 			struct cpu_info *tmp;
