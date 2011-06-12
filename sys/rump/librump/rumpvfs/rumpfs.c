@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.37.2.6 2011/05/19 03:43:04 rmind Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.37.2.7 2011/06/12 03:06:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.37.2.6 2011/05/19 03:43:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.37.2.7 2011/06/12 03:06:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -489,7 +489,7 @@ rump_etfs_remove(const char *key)
 
 		mutex_enter(&reclock);
 		if ((vp = et->et_rn->rn_vp) != NULL)
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 		mutex_exit(&reclock);
 		if (vp && vget(vp, 0) == 0)
 			vgone(vp);
