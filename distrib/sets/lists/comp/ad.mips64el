@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.34 2011/06/06 16:16:00 njoly Exp $
+# $NetBSD: ad.mips64el,v 1.35 2011/06/12 20:23:29 matt Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -1359,7 +1359,7 @@
 #./usr/libdata/debug/usr/lib/64/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libskey.so.2.0.debug	comp-sys-debug	skey,debug,compat
-./usr/libdata/debug/usr/lib/64/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/64/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/64/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/64/libssh.so.16.0.debug	comp-secsh-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libssl.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
@@ -1566,7 +1566,7 @@
 #./usr/libdata/debug/usr/lib/o32/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libskey.so.2.0.debug	comp-sys-debug	skey,debug,compat
-./usr/libdata/debug/usr/lib/o32/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/o32/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/o32/libssh.so.16.0.debug	comp-secsh-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libssl.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
