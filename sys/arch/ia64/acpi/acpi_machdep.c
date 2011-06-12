@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.4 2011/06/12 10:11:52 jruoho Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.5 2011/06/12 11:31:30 jruoho Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -28,7 +28,7 @@
  * Machine-dependent routines for ACPICA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.4 2011/06/12 10:11:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.5 2011/06/12 11:31:30 jruoho Exp $");
 
 #include <sys/param.h>
 
@@ -56,15 +56,6 @@ acpi_md_OsInitialize(void)
 	if (((ia64_get_cpuid(3) >> 24) & 0xff) == 0x07)
 		has_i8259 = 1; /* Firmware on old Itanium systems is broken */
 
-	return AE_OK;
-}
-
-ACPI_STATUS
-acpi_md_OsTerminate(void)
-{
-
-	/* nothing to do. */
-printf("%s\n", __func__);
 	return AE_OK;
 }
 
