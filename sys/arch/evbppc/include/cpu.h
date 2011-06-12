@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2011/06/12 03:42:41 mrg Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -56,5 +56,8 @@ extern int fake_mapiodev;
 #endif
 #include <powerpc/cpu.h>
 #endif
+
+extern char module_machine_booke[];
+extern char module_machine_ibm4xx[];
 
 #endif	/* _MACHINE_CPU_H_ */

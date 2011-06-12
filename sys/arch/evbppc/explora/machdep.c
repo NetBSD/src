@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2011/01/14 02:06:25 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2011/06/12 03:42:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2011/01/14 02:06:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2011/06/12 03:42:41 mrg Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2011/01/14 02:06:25 rmind Exp $");
 #include <sys/reboot.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -344,6 +345,11 @@ cpu_startup(void)
 	prop_object_release(pn);
 
 	intr_init();
+	
+	/*
+	 * Look for the ibm4xx modules in the right place.
+	 */
+	module_machine = module_machine_ibm4xx;
 }
 
 int
