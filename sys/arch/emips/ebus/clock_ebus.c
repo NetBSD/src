@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_ebus.c,v 1.3 2011/06/12 04:22:18 tsutsui Exp $	*/
+/*	$NetBSD: clock_ebus.c,v 1.4 2011/06/12 04:33:29 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.3 2011/06/12 04:22:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.4 2011/06/12 04:33:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.3 2011/06/12 04:22:18 tsutsui Exp $
 struct eclock_softc {
 	struct device sc_dev;
 	struct _Tc *sc_dp;
-	uint32_t reload;
+	uint32_t sc_reload;
 	struct timecounter sc_tc;
 	struct todr_chip_handle sc_todr;
 };
@@ -89,7 +89,7 @@ __eclock_init(device_t dev)
 {
 	struct eclock_softc *sc = (struct eclock_softc *)dev;
 	struct _Tc *tc = sc->sc_dp;
-	uint32_t reload = 10*1000000; /* 1sec in 100ns units (10MHz clock) */
+	uint32_t reload = 10 * 1000000; /* 1sec in 100ns units (10MHz clock) */
 
 	/*
 	 * Compute reload according to whatever value passed in,
@@ -104,11 +104,11 @@ __eclock_init(device_t dev)
 		reload = r;
 	}
 
-	sc->reload = reload;
+	sc->sc_reload = reload;
 
 	/* Start the counter */
 	tc->DownCounterHigh = 0;
-	tc->DownCounter = sc->reload;
+	tc->DownCounter = sc->sc_reload;
 	tc->Control = TCCT_ENABLE | TCCT_INT_ENABLE;
 }
 
@@ -188,18 +188,18 @@ eclock_settime(struct todr_chip_handle *todr, struct timeval *tv)
 {
 	struct eclock_softc *sc = todr->cookie;
 	struct _Tc *tc = sc->sc_dp;
-	uint64_t free;
-	uint32_t su, uu;
+	uint64_t free, su;
+	uint32_t uu;
 	int s;
 
 	/* Careful with what we do here, else the compilerbugs hit hard */
 	s = splhigh();
 
-	su = (uint32_t)tv->tv_sec;	/* 0(tv) */
-	uu = (uint32_t)tv->tv_usec;	/* 4(tv) */
+	su = (uint64_t)tv->tv_sec;	/* 0(tv) */
+	uu = (uint32_t)tv->tv_usec;	/* 8(tv) */
 
 
-	free  = 10 * 1000 * 1000 * (uint64_t)su;
+	free  = su * 10 * 1000 * 1000;
 	free += uu * 10;
 
 	tc->FreeRunning = free;
@@ -264,7 +264,7 @@ eclock_ebus_intr(void *cookie, void *f)
 
 	x = tc->Control;
 	tc->DownCounterHigh = 0;
-	tc->DownCounter = sc->reload;
+	tc->DownCounter = sc->sc_reload;
 
 	hardclock(cf);
 	emips_clock_evcnt.ev_count++;
