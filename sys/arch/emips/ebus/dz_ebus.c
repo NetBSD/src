@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ebus.c,v 1.3 2011/06/12 05:06:23 tsutsui Exp $	*/
+/*	$NetBSD: dz_ebus.c,v 1.4 2011/06/12 05:20:54 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.3 2011/06/12 05:06:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.4 2011/06/12 05:20:54 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.3 2011/06/12 05:06:23 tsutsui Exp $");
 #define DZ_PORT(u)	((u) & 07)	/* extract the port # */
 
 struct	dz_softc {
-	struct	device	sc_dev;		/* Autoconf blaha */
+	device_t	sc_dev;		/* Autoconf blaha */
 	struct	evcnt	sc_rintrcnt;	/* recevive interrupt counts */
 	struct	evcnt	sc_tintrcnt;	/* transmit interrupt counts */
 	struct	_Usart	*sc_dr;		/* reg pointers */
@@ -124,12 +124,11 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s, error = 0;
 
 	unit = DZ_I2C(minor(dev));
+	sc = device_lookup_private(&dz_cd, unit);
+	if (sc == NULL)
+		return ENXIO;
+
 	line = DZ_PORT(minor(dev));
-	if (unit >= dz_cd.cd_ndevs ||  dz_cd.cd_devs[unit] == NULL)
-		return (ENXIO);
-
-	sc = (void *)dz_cd.cd_devs[unit];
-
 	if (line > 0) /* FIXME fo rmore than one line */
 		return ENXIO;
 
@@ -181,8 +180,8 @@ dzclose(dev_t dev, int flag, int mode, struct lwp *l)
 	int unit, line;
 
 	unit = DZ_I2C(minor(dev));
+	sc = device_lookup_private(&dz_cd, unit);
 	line = DZ_PORT(minor(dev));
-	sc = (void *)dz_cd.cd_devs[unit];
 
 	tp = sc->sc_dz.dz_tty;
 
@@ -204,7 +203,7 @@ dzread(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp;
 	struct dz_softc *sc;
 
-	sc = (void *)dz_cd.cd_devs[DZ_I2C(minor(dev))];
+	sc = device_lookup_private(&dz_cd, DZ_I2C(minor(dev)));
 
 	tp = sc->sc_dz.dz_tty;
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
@@ -216,7 +215,7 @@ dzwrite(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp;
 	struct dz_softc *sc;
 
-	sc = (void *)dz_cd.cd_devs[DZ_I2C(minor(dev))];
+	sc = device_lookup_private(&dz_cd, DZ_I2C(minor(dev)));
 
 	tp = sc->sc_dz.dz_tty;
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
@@ -233,7 +232,7 @@ dzioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	unit = DZ_I2C(minor(dev));
 	line = 0;
-	sc = (void *)dz_cd.cd_devs[unit];
+	sc = device_lookup_private(&dz_cd, unit);
 	tp = sc->sc_dz.dz_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
@@ -297,8 +296,11 @@ dzstop(struct tty *tp, int flag)
 struct tty *
 dztty(dev_t dev)
 {
-	struct dz_softc *sc = (void *)dz_cd.cd_devs[DZ_I2C(minor(dev))];
-	struct tty *tp = sc->sc_dz.dz_tty;
+	struct dz_softc *sc;
+	struct tty *tp;
+
+	sc = device_lookup_private(&dz_cd, DZ_I2C(minor(dev)));
+	tp = sc->sc_dz.dz_tty;
 
 	return tp;
 }
@@ -309,7 +311,7 @@ dzpoll(dev_t dev, int events, struct lwp *l)
 	struct dz_softc *sc;
 	struct tty *tp;
 
-	sc = (void *)dz_cd.cd_devs[DZ_I2C(minor(dev))];
+	sc = device_lookup_private(&dz_cd, DZ_I2C(minor(dev)));
 
 	tp = sc->sc_dz.dz_tty;
 	return (*tp->t_linesw->l_poll)(tp, events, l);
@@ -323,7 +325,7 @@ dzstart(struct tty *tp)
 	int unit, s;
 
 	unit = DZ_I2C(minor(tp->t_dev));
-	sc = (void *)dz_cd.cd_devs[unit];
+	sc = device_lookup_private(&dz_cd, unit);
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP)) {
@@ -384,7 +386,7 @@ dzparam(struct tty *tp, struct termios *t)
 
 	unit = DZ_I2C(minor(tp->t_dev));
 	line = DZ_PORT(minor(tp->t_dev));
-	sc = (void *)dz_cd.cd_devs[unit];
+	sc = device_lookup_private(&dz_cd, unit);
 
 	/* check requested parameters */
 	if (t->c_ispeed != t->c_ospeed)
@@ -537,7 +539,7 @@ dzrint(struct dz_softc *sc, uint32_t csr)
 
 	if (csr & USI_OVRE) {
 		log(LOG_WARNING, "%s: silo overflow, line %d\n",
-		    sc->sc_dev.dv_xname, 0);
+		    device_xname(sc->sc_dev), 0);
 	}
 
 	if (csr & USI_FRAME)
@@ -604,7 +606,7 @@ void	dz_ebus_cnpollc(dev_t, int);
 
 static int	dz_ebus_getmajor(void);
 
-CFATTACH_DECL(dz_ebus, sizeof(struct dz_softc),
+CFATTACH_DECL_NEW(dz_ebus, sizeof(struct dz_softc),
     dz_ebus_match, dz_ebus_attach, NULL, NULL);
 
 struct consdev dz_ebus_consdev = {
@@ -642,9 +644,10 @@ dz_ebus_attach(device_t parent, device_t self, void *aux)
 	struct ebus_attach_args *iba;
 	struct dz_softc *sc;
 
+	sc = device_private(self);
 	iba = aux;
-	sc = (struct dz_softc *)self;
 
+	sc->sc_dev = self;
 	sc->sc_dr = (struct _Usart *)iba->ia_vaddr;
 #if DEBUG
 	printf(" virt=%p ", (void *)sc->sc_dr);
@@ -664,9 +667,9 @@ dz_ebus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dz.dz_tty = tty_alloc();
 
 	evcnt_attach_dynamic(&sc->sc_rintrcnt, EVCNT_TYPE_INTR, NULL,
-	    sc->sc_dev.dv_xname, "rintr");
+	    device_xname(self), "rintr");
 	evcnt_attach_dynamic(&sc->sc_tintrcnt, EVCNT_TYPE_INTR, NULL,
-	    sc->sc_dev.dv_xname, "tintr");
+	    device_xname(self), "tintr");
 
 	/* Initialize hw regs */
 #if 0
