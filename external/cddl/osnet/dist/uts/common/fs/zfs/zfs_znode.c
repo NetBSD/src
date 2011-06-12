@@ -485,7 +485,11 @@ zfs_create_share_dir(zfsvfs_t *zfsvfs, dmu_tx_t *tx)
 
 	vp = ZTOV(sharezp);
 	error = getnewvnode(VT_ZFS, zfsvfs->z_parent->z_vfs,
-	    zfs_vnodeop_p, &sharezp->z_vnode);
+	    zfs_vnodeop_p, NULL, &sharezp->z_vnode);
+	if (error) {
+		kmem_cache_free(znode_cache, sharezp);
+		return error;
+	}
 	vp->v_type = VDIR;
 
 	VERIFY(0 == zfs_acl_ids_create(sharezp, IS_ROOT_NODE, &vattr,
@@ -617,7 +621,7 @@ zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz)
 	for (;;) {
 
 		error = getnewvnode(VT_ZFS, zfsvfs->z_parent->z_vfs,
-		    zfs_vnodeop_p, &zp->z_vnode);
+		    zfs_vnodeop_p, NULL, &zp->z_vnode);
 		if (__predict_true(error == 0))
 			break;
 		printf("WARNING: zfs_znode_alloc: unable to get vnode, "
@@ -1556,7 +1560,7 @@ zfs_create_fs(objset_t *os, cred_t *cr, nvlist_t *zplprops, dmu_tx_t *tx)
 
 	for (;;) {
 		error = getnewvnode(VT_ZFS, NULL, zfs_vnodeop_p,
-		    &rootzp->z_vnode);
+		    NULL, &rootzp->z_vnode);
 		if (error == 0)
 			break;
 		printf("WARNING: zfs_create_fs: unable to get vnode, "
