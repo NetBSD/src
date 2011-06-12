@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.29.2.1 2011/03/05 20:51:37 rmind Exp $	*/
+/*	$NetBSD: asm.h,v 1.29.2.2 2011/06/12 00:24:04 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -211,12 +211,13 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	li	tmp2,-1;						\
 	stint	tmp2,CI_IDEPTH(tmp1);					\
 	li	tmp2,0;							\
-	lis	tmp1,_C_LABEL(lwp0)@h;					\
-	ori	tmp1,tmp1,_C_LABEL(lwp0)@l;				\
-	stptr	er,L_PCB(tmp1);		/* XXXuvm_lwp_getuarea */	\
+	lis	%r13,_C_LABEL(lwp0)@h;					\
+	ori	%r13,%r13,_C_LABEL(lwp0)@l;				\
+	stptr	er,L_PCB(%r13);		/* XXXuvm_lwp_getuarea */	\
+	stptr	tmp1,L_CPU(%r13);	 				\
 	addi	er,er,USPACE;		/* stackpointer for lwp0 */	\
 	addi	sp,er,-FRAMELEN-CALLFRAMELEN;	/* stackpointer for lwp0 */ \
-	stptr	sp,L_MD_UTF(tmp1);	/* save in lwp0.l_md.md_utf */	\
+	stptr	sp,L_MD_UTF(%r13);	/* save in lwp0.l_md.md_utf */	\
 		/* er = end of mem reserved for kernel */		\
 	li	tmp2,0;							\
 	stptr	tmp2,-CALLFRAMELEN(er);	/* end of stack chain */	\

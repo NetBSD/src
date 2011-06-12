@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.53 2009/11/01 01:51:35 snj Exp $	*/
+/*	$NetBSD: adb.c,v 1.53.4.1 2011/06/12 00:24:00 rmind Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.53 2009/11/01 01:51:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.53.4.1 2011/06/12 00:24:00 rmind Exp $");
 
 #include "opt_adb.h"
 
@@ -52,10 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.53 2009/11/01 01:51:35 snj Exp $");
 /*
  * Function declarations.
  */
-static int	adbmatch(struct device *, struct cfdata *, void *);
-static void	adbattach(struct device *, struct device *, void *);
+static int	adbmatch(device_t, cfdata_t, void *);
+static void	adbattach(device_t, device_t, void *);
 static int	adbprint(void *, const char *);
-void		adb_config_interrupts(struct device *);
+void		adb_config_interrupts(device_t);
 
 extern void	adb_jadbproc(void);
 
@@ -74,24 +74,24 @@ extern char	*adbHardwareDescr[];
 /*
  * Driver definition.
  */
-CFATTACH_DECL(adb, sizeof(struct device),
+CFATTACH_DECL_NEW(adb, 0,
     adbmatch, adbattach, NULL, NULL);
 
 static int
-adbmatch(struct device *parent, struct cfdata *cf, void *aux)
+adbmatch(device_t parent, cfdata_t cf, void *aux)
 {
-	static int adb_matched = 0;
+	static bool adb_matched;
 
 	/* Allow only one instance. */
 	if (adb_matched)
 		return (0);
 
-	adb_matched = 1;
+	adb_matched = true;
 	return (1);
 }
 
 static void
-adbattach(struct device *parent, struct device *self, void *aux)
+adbattach(device_t parent, device_t self, void *aux)
 {
 
 	adb_softintr_cookie = softint_establish(SOFTINT_SERIAL,
@@ -105,7 +105,7 @@ adbattach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-adb_config_interrupts(struct device *self)
+adb_config_interrupts(device_t self)
 {
 	ADBDataBlock adbdata;
 	struct adb_attach_args aa_args;

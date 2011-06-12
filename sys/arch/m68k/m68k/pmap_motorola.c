@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.55.4.3 2011/03/05 20:50:54 rmind Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.55.4.4 2011/06/12 00:24:00 rmind Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.55.4.3 2011/03/05 20:50:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.55.4.4 2011/06/12 00:24:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.55.4.3 2011/03/05 20:50:54 rmind
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <machine/pte.h>
 #include <machine/pcb.h>
@@ -362,7 +363,6 @@ pmap_bootstrap_finalize(void)
 	if (mmutype == MMU_68040)
 		pmap_kernel()->pm_stfree = protostfree;
 #endif
-	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
 
 	/*
@@ -791,7 +791,6 @@ pmap_pinit(struct pmap *pmap)
 		pmap->pm_stfree = protostfree;
 #endif
 	pmap->pm_count = 1;
-	simple_lock_init(&pmap->pm_lock);
 }
 
 /*
@@ -807,9 +806,7 @@ pmap_destroy(pmap_t pmap)
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_destroy(%p)\n", pmap));
 
-	simple_lock(&pmap->pm_lock);
-	count = --pmap->pm_count;
-	simple_unlock(&pmap->pm_lock);
+	count = atomic_dec_uint_nv(&pmap->pm_count);
 	if (count == 0) {
 		pmap_release(pmap);
 		pool_put(&pmap_pmap_pool, pmap);
@@ -831,7 +828,6 @@ pmap_release(pmap_t pmap)
 
 #ifdef notdef /* DIAGNOSTIC */
 	/* count would be 0 from pmap_destroy... */
-	simple_lock(&pmap->pm_lock);
 	if (pmap->pm_count != 1)
 		panic("pmap_release count");
 #endif
@@ -857,9 +853,7 @@ pmap_reference(pmap_t pmap)
 {
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_reference(%p)\n", pmap));
 
-	simple_lock(&pmap->pm_lock);
-	pmap->pm_count++;
-	simple_unlock(&pmap->pm_lock);
+	atomic_inc_uint(&pmap->pm_count);
 }
 
 /*

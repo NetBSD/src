@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.110.4.1 2011/03/05 20:52:13 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110.4.2 2011/06/12 00:24:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110.4.1 2011/03/05 20:52:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110.4.2 2011/06/12 00:24:09 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -117,6 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110.4.1 2011/03/05 20:52:13 rmind Exp $")
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/kcore.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
@@ -356,12 +357,6 @@ unsigned int	NUM_A_TABLES, NUM_B_TABLES, NUM_C_TABLES;
 #define	NUM_KERN_PTES	(KVAS_SIZE >> MMU_TIC_SHIFT)
 
 /*************************** MISCELANEOUS MACROS *************************/
-#define pmap_lock(pmap) simple_lock(&pmap->pm_lock)
-#define pmap_unlock(pmap) simple_unlock(&pmap->pm_lock)
-#define pmap_add_ref(pmap) ++pmap->pm_refcount
-#define pmap_del_ref(pmap) --pmap->pm_refcount
-#define pmap_refcount(pmap) pmap->pm_refcount
-
 void *pmap_bootstrap_alloc(int);
 
 static INLINE void *mmu_ptov(paddr_t);
@@ -835,7 +830,6 @@ pmap_bootstrap(vaddr_t nextva)
 	kernel_pmap.pm_a_tmgr = NULL;
 	kernel_pmap.pm_a_phys = kernAphys;
 	kernel_pmap.pm_refcount = 1; /* always in use */
-	simple_lock_init(&kernel_pmap.pm_lock);
 
 	kernel_crp.rp_attr = MMU_LONG_DTE_LU | MMU_DT_LONG;
 	kernel_crp.rp_addr = kernAphys;
@@ -2530,7 +2524,6 @@ pmap_pinit(pmap_t pmap)
 	pmap->pm_a_tmgr = NULL;
 	pmap->pm_a_phys = kernAphys;
 	pmap->pm_refcount = 1;
-	simple_lock_init(&pmap->pm_lock);
 }
 
 /* pmap_create			INTERFACE
@@ -2601,9 +2594,8 @@ pmap_release(pmap_t pmap)
 void 
 pmap_reference(pmap_t pmap)
 {
-	pmap_lock(pmap);
-	pmap_add_ref(pmap);
-	pmap_unlock(pmap);
+
+	atomic_inc_uint(&pmap->pm_refcount);
 }
 
 /* pmap_dereference			INTERNAL
@@ -2616,9 +2608,7 @@ pmap_dereference(pmap_t pmap)
 {
 	int rtn;
 
-	pmap_lock(pmap);
-	rtn = pmap_del_ref(pmap);
-	pmap_unlock(pmap);
+	rtn = atomic_dec_uint_nv(&pmap->pm_refcount);
 
 	return rtn;
 }

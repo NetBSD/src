@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.53 2009/12/12 13:10:36 phx Exp $ */
+/*	$NetBSD: kbd.c,v 1.53.4.1 2011/06/12 00:23:53 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.53 2009/12/12 13:10:36 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.53.4.1 2011/06/12 00:23:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,14 +143,14 @@ struct kbd_softc {
 
 	int k_console;		/* true if used as console keyboard */
 #if NWSKBD>0
-	struct device *k_wskbddev; /* pointer to wskbd for sending strokes */
+	device_t k_wskbddev; /* pointer to wskbd for sending strokes */
 	int k_pollingmode;         /* polling mode on? whatever it isss... */
 #endif
 };
 struct kbd_softc kbd_softc;
 
-int kbdmatch(struct device *, struct cfdata *, void *);
-void kbdattach(struct device *, struct device *, void *);
+int kbdmatch(device_t, cfdata_t, void *);
+void kbdattach(device_t, device_t, void *);
 void kbdintr(int);
 void kbdstuffchar(u_char);
 
@@ -160,7 +160,7 @@ int drkbdputc(u_int8_t);
 int drkbdputc2(u_int8_t, u_int8_t);
 int drkbdwaitfor(int);
 
-CFATTACH_DECL(kbd, sizeof(struct device),
+CFATTACH_DECL_NEW(kbd, 0,
     kbdmatch, kbdattach, NULL, NULL);
 
 dev_type_open(kbdopen);
@@ -177,7 +177,7 @@ const struct cdevsw kbd_cdevsw = {
 
 /*ARGSUSED*/
 int
-kbdmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+kbdmatch(device_t pdp, cfdata_t cfp, void *auxp)
 {
 
 	if (matchname((char *)auxp, "kbd"))
@@ -187,7 +187,7 @@ kbdmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 
 /*ARGSUSED*/
 void
-kbdattach(struct device *pdp, struct device *dp, void *auxp)
+kbdattach(device_t pdp, device_t dp, void *auxp)
 {
 #ifdef DRACO
 	kbdenable();

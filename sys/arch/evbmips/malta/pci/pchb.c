@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.9 2006/08/22 21:42:19 riz Exp $	*/
+/*	$NetBSD: pchb.c,v 1.9.82.1 2011/06/12 00:23:56 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.9 2006/08/22 21:42:19 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.9.82.1 2011/06/12 00:23:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -45,16 +45,16 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.9 2006/08/22 21:42:19 riz Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-static int	pchb_match(struct device *, struct cfdata *, void *);
-static void	pchb_attach(struct device *, struct device *, void *);
+static int	pchb_match(device_t, cfdata_t, void *);
+static void	pchb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pchb, sizeof(struct device),
+CFATTACH_DECL_NEW(pchb, 0,
     pchb_match, pchb_attach, NULL, NULL);
 
-static int pcifound = 0;
+static bool pcifound;
 
 static int
-pchb_match(struct device *parent, struct cfdata *match, void *aux)
+pchb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -76,13 +76,13 @@ pchb_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-pchb_attach(struct device *parent, struct device *self, void *aux)
+pchb_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
 	printf("\n");
-	pcifound++;
+	pcifound = true;
 
 	/*
 	 * All we do is print out a description.  Eventually, we

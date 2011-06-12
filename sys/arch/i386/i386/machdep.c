@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.684.2.4 2011/05/31 03:04:04 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.684.2.5 2011/06/12 00:23:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684.2.4 2011/05/31 03:04:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684.2.5 2011/06/12 00:23:58 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -529,7 +529,7 @@ i386_proc0_tss_ldt_init(void)
 #ifndef XEN
 	lldt(pmap_kernel()->pm_ldt_sel);
 #else
-	HYPERVISOR_fpu_taskswitch();
+	HYPERVISOR_fpu_taskswitch(1);
 	XENPRINTF(("lwp tss sp %p ss %04x/%04x\n",
 	    (void *)pcb->pcb_esp0,
 	    GSEL(GDATA_SEL, SEL_KPL),
@@ -554,7 +554,7 @@ i386_switch_context(lwp_t *l)
 	pcb = lwp_getpcb(l);
 	ci = curcpu();
 	if (ci->ci_fpused) {
-		HYPERVISOR_fpu_taskswitch();
+		HYPERVISOR_fpu_taskswitch(1);
 		ci->ci_fpused = 0;
 	}
 

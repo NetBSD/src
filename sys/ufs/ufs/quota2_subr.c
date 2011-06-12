@@ -1,9 +1,7 @@
-/* $NetBSD: quota2_subr.c,v 1.3.2.2 2011/04/21 01:42:21 rmind Exp $ */
+/* $NetBSD: quota2_subr.c,v 1.3.2.3 2011/06/12 00:24:31 rmind Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
-  * This software is distributed under the following condiions
-  * compliant with the NetBSD foundation policy.
   *
   * Redistribution and use in source and binary forms, with or without
   * modification, are permitted provided that the following conditions
@@ -28,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.3.2.2 2011/04/21 01:42:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.3.2.3 2011/06/12 00:24:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>

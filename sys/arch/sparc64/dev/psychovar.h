@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.17 2008/12/09 13:14:38 nakayama Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.17.6.1 2011/06/12 00:24:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -83,7 +83,7 @@ struct psycho_pbm {
  * per pair of psycho's.
  */
 struct psycho_softc {
-	struct	device			sc_dev;
+	device_t			sc_dev;
 
 	/*
 	 * one sabre has two simba's.  psycho's are separately attached,

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54.2.2 2011/03/05 20:51:36 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.54.2.3 2011/06/12 00:24:04 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.2.2 2011/03/05 20:51:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.2.3 2011/06/12 00:24:04 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -295,7 +295,7 @@ trap(struct trapframe *tf)
 		break;
 
 	case EXC_AST|EXC_USER:
-		curcpu()->ci_astpending = 0;	/* we are about to do it */
+		l->l_md.md_astpending = 0;	/* we are about to do it */
 		//curcpu()->ci_data.cpu_nast++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;

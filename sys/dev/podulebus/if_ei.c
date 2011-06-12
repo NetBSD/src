@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.16 2009/05/12 14:42:58 cegger Exp $ */
+/* $NetBSD: if_ei.c,v 1.16.4.1 2011/06/12 00:24:25 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.16 2009/05/12 14:42:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.16.4.1 2011/06/12 00:24:25 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -85,7 +85,7 @@ struct ei_softc {
 	struct		evcnt	sc_intrcnt;
 };
 
-CFATTACH_DECL(ei, sizeof(struct ei_softc),
+CFATTACH_DECL_NEW(ei, sizeof(struct ei_softc),
     ei_match, ei_attach, NULL, NULL);
 
 static inline void
@@ -117,6 +117,8 @@ ei_attach(device_t parent, device_t self, void *aux)
 	struct ei_softc *sc = device_private(self);
 	int i;
 	char descr[16];
+
+	sc->sc_ie.sc_dev = self;
 
 	/* Set up bus spaces */
 	sc->sc_ctl_t = sc->sc_mem_t = pa->pa_fast_t;
@@ -252,7 +254,7 @@ ei_copyin(struct ie_softc *sc_ie, void *dest, int src, size_t size)
 
 #ifdef DIAGNOSTIC
 	if (src % 2 != 0 || !ALIGNED_POINTER(dest, u_int16_t))
-		panic("%s: unaligned copyin", device_xname(&sc_ie->sc_dev));
+		panic("%s: unaligned copyin", device_xname(sc_ie->sc_dev));
 #endif
 	wptr = dest;
 	extra_byte = size % 2;
@@ -292,13 +294,13 @@ ei_copyout(struct ie_softc *sc_ie, const void *src, int dest, size_t size)
 
 #ifdef DIAGNOSTIC
 	if (dest % 2 != 0)
-		panic("%s: unaligned copyout", device_xname(&sc_ie->sc_dev));
+		panic("%s: unaligned copyout", device_xname(sc_ie->sc_dev));
 #endif
 	if (!ALIGNED_POINTER(src, u_int16_t)) {
 		bounce = (u_int16_t *) malloc(size, M_DEVBUF, M_NOWAIT);
 		if (bounce == NULL)
 			panic("%s: no memory to align copyout",
-			      device_xname(&sc_ie->sc_dev));
+			      device_xname(sc_ie->sc_dev));
 		memcpy(bounce, src, size);
 		src = bounce;
 	}
@@ -331,7 +333,7 @@ ei_read16(struct ie_softc *sc_ie, int addr)
 
 #ifdef DIAGNOSTIC
 	if (addr % 2 != 0)
-		panic("%s: unaligned read16", device_xname(&sc_ie->sc_dev));
+		panic("%s: unaligned read16", device_xname(sc_ie->sc_dev));
 #endif
 	s = splnet();
 	ei_setpage(sc, ei_atop(addr));
@@ -349,7 +351,7 @@ ei_write16(struct ie_softc *sc_ie, int addr, u_int16_t value)
 
 #ifdef DIAGNOSTIC
 	if (addr % 2 != 0)
-		panic("%s: unaligned write16", device_xname(&sc_ie->sc_dev));
+		panic("%s: unaligned write16", device_xname(sc_ie->sc_dev));
 #endif
 	s = splnet();
 	ei_setpage(sc, ei_atop(addr));
@@ -365,7 +367,7 @@ ei_write24(struct ie_softc *sc_ie, int addr, int value)
 
 #ifdef DIAGNOSTIC
 	if (addr % 2 != 0)
-		panic("%s: unaligned write24", device_xname(&sc_ie->sc_dev));
+		panic("%s: unaligned write24", device_xname(sc_ie->sc_dev));
 #endif
 	s = splnet();
 	ei_write16(sc_ie, addr, value & 0xffff);

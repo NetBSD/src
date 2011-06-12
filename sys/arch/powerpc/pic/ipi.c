@@ -1,4 +1,4 @@
-/* $NetBSD: ipi.c,v 1.4.22.3 2011/05/31 03:04:14 rmind Exp $ */
+/* $NetBSD: ipi.c,v 1.4.22.4 2011/06/12 00:24:05 rmind Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.4.22.3 2011/05/31 03:04:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.4.22.4 2011/06/12 00:24:05 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_pic.h"
@@ -39,10 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.4.22.3 2011/05/31 03:04:14 rmind Exp $");
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/xcall.h>
-
-#include <powerpc/atomic.h>
-#include <powerpc/fpu.h>
-#include <powerpc/altivec.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <arch/powerpc/pic/picvar.h>
 #include <arch/powerpc/pic/ipivar.h>
@@ -51,27 +49,27 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.4.22.3 2011/05/31 03:04:14 rmind Exp $");
 #ifdef MULTIPROCESSOR
 
 struct ipi_ops ipiops;
-volatile u_long IPI[CPU_MAXNUM];
 
 /* Process an actual IPI */
 
 int
-ppcipi_intr(void *v)
+ipi_intr(void *v)
 {
-	int cpu_id = curcpu()->ci_index;
+	struct cpu_info * const ci = curcpu();
+	int cpu_id = cpu_index(ci);
 	int msr;
-	u_long ipi;
+	uint32_t ipi;
 
-	curcpu()->ci_ev_ipi.ev_count++;
-	ipi = atomic_loadlatch_ulong(&IPI[cpu_id], 0);
+	ci->ci_ev_ipi.ev_count++;
+	ipi = atomic_swap_32(&ci->ci_pending_ipis, 0);
 
-	if (ipi == PPC_IPI_NOMESG)
+	if (ipi == IPI_NOMESG)
 		return 1;
 
-	if (ipi & PPC_IPI_XCALL)
+	if (ipi & IPI_XCALL)
 		xc_ipi_handler();
 
-	if (ipi & PPC_IPI_HALT) {
+	if (ipi & IPI_HALT) {
 		aprint_normal("halting CPU %d\n", cpu_id);
 		msr = (mfmsr() & ~PSL_EE) | PSL_POW;
 		for (;;) {
@@ -82,25 +80,4 @@ ppcipi_intr(void *v)
 
 	return 1;
 }
-
-/*
- * MD support for xcall(9) interface.
- */
-
-void
-xc_send_ipi(struct cpu_info *ci)
-{
-
-	KASSERT(kpreempt_disabled());
-	KASSERT(curcpu() != ci);
-
-	if (ci) {
-		/* Unicast: remote CPU. */
-		ppc_send_ipi(ci->ci_cpuid, PPC_IPI_XCALL);
-	} else {
-		/* Broadcast: all, but local CPU (caller will handle it). */
-		ppc_send_ipi(IPI_T_NOTME, PPC_IPI_XCALL);
-	}
-}
-
 #endif /*MULTIPROCESSOR*/

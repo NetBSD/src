@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.34 2009/03/14 15:36:00 dsl Exp $ */
+/* $NetBSD: tlsb.c,v 1.34.4.1 2011/06/12 00:23:52 rmind Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.34 2009/03/14 15:36:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.34.4.1 2011/06/12 00:23:52 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -62,10 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.34 2009/03/14 15:36:00 dsl Exp $");
 
 #define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-static int	tlsbmatch(struct device *, struct cfdata *, void *);
-static void	tlsbattach(struct device *, struct device *, void *);
+static int	tlsbmatch(device_t, cfdata_t, void *);
+static void	tlsbattach(device_t, device_t, void *);
 
-CFATTACH_DECL(tlsb, sizeof (struct device),
+CFATTACH_DECL_NEW(tlsb, 0,
     tlsbmatch, tlsbattach, NULL, NULL);
 
 extern struct cfdriver tlsb_cd;
@@ -100,7 +100,7 @@ tlsbprint(void *aux, const char *pnp)
 }
 
 static int
-tlsbmatch(struct device *parent, struct cfdata *cf, void *aux)
+tlsbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -120,7 +120,7 @@ tlsbmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-tlsbattach(struct device *parent, struct device *self, void *aux)
+tlsbattach(device_t parent, device_t self, void *aux)
 {
 	struct tlsb_dev_attach_args ta;
 	u_int32_t tldev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2.4.2 2011/03/05 20:52:38 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.4.3 2011/06/12 00:24:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,8 +126,8 @@ struct pmap_asid_info {
  */
 struct pmap {
 #ifdef MULTIPROCESSOR
-	volatile uint32_t	pm_active;	/* pmap was active on ... */
-	volatile uint32_t	pm_onproc;	/* pmap is active on ... */
+	__cpuset_t		pm_active;	/* pmap was active on ... */
+	__cpuset_t		pm_onproc;	/* pmap is active on ... */
 	volatile u_int		pm_shootdown_pending;
 #endif
 	struct pmap_segtab	*pm_segtab;	/* pointers to pages of PTEs */
@@ -161,7 +161,7 @@ struct pmap_tlb_info {
 #ifdef MULTIPROCESSOR
 	pmap_t ti_victim;
 	uint32_t ti_synci_page_bitmap;	/* page indices needing a syncicache */
-	uint32_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
+	__cpuset_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
 	enum tlb_invalidate_op ti_tlbinvop;
 	u_int ti_index;
 #define tlbinfo_index(ti)	((ti)->ti_index)

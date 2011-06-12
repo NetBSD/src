@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.16 2009/03/14 15:36:02 dsl Exp $ */
+/* $NetBSD: mainbus.c,v 1.16.4.1 2011/06/12 00:23:53 rmind Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16.4.1 2011/06/12 00:23:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,25 +68,25 @@ extern struct bus_space mainbus_bs_tag;
 
 /* Prototypes for functions provided */
 
-static int  mainbusmatch(struct device *, struct cfdata *, void *);
-static void mainbusattach(struct device *, struct device *, void *);
+static int  mainbusmatch(device_t, cfdata_t, void *);
+static void mainbusattach(device_t, device_t, void *);
 static int  mainbusprint(void *aux, const char *mainbus);
-static int  mainbussearch(struct device *, struct cfdata *,
+static int  mainbussearch(device_t, cfdata_t,
 				const int *, void *);
 
 /* attach and device structures for the device */
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbusmatch, mainbusattach, NULL, NULL);
 
 /*
- * int mainbusmatch(struct device *parent, struct cfdata *cf, void *aux)
+ * int mainbusmatch(device_t parent, cfdata_t cf, void *aux)
  *
  * Always match for unit 0
  */
 
 static int
-mainbusmatch(struct device *parent, struct cfdata *cf, void *aux)
+mainbusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
@@ -116,13 +116,13 @@ mainbusprint(void *aux, const char *mainbus)
 }
 
 /*
- * int mainbussearch(struct device *parent, struct device *self, void *aux)
+ * int mainbussearch(device_t parent, device_t self, void *aux)
  *
  * search routine used during the config of children
  */
 
 static int
-mainbussearch(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
+mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args mb;
 	int tryagain;
@@ -155,13 +155,13 @@ mainbussearch(struct device *parent, struct cfdata *cf, const int *ldesc, void *
 }
 
 /*
- * void mainbusattach(struct device *parent, struct device *self, void *aux)
+ * void mainbusattach(device_t parent, device_t self, void *aux)
  *
  * probe and attach all children
  */
 
 static void
-mainbusattach(struct device *parent, struct device *self, void *aux)
+mainbusattach(device_t parent, device_t self, void *aux)
 {
 	aprint_naive("\n");
 	aprint_normal("\n");

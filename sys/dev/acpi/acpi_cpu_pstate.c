@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.45.2.4 2011/04/21 01:41:45 rmind Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.45.2.5 2011/06/12 00:24:13 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.45.2.4 2011/04/21 01:41:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.45.2.5 2011/06/12 00:24:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -965,7 +965,7 @@ acpicpu_pstate_get(struct cpu_info *ci, uint32_t *freq)
 	return 0;
 
 fail:
-	aprint_error_dev(sc->sc_dev, "failed "
+	aprint_debug_dev(sc->sc_dev, "failed "
 	    "to get frequency (err %d)\n", rv);
 
 	mutex_enter(&sc->sc_mtx);
@@ -1099,7 +1099,7 @@ acpicpu_pstate_set_xcall(void *arg1, void *arg2)
 	return;
 
 fail:
-	aprint_error_dev(sc->sc_dev, "failed to set "
+	aprint_debug_dev(sc->sc_dev, "failed to set "
 	    "frequency to %u (err %d)\n", freq, rv);
 
 	mutex_enter(&sc->sc_mtx);

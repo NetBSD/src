@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.14 2007/06/30 09:37:57 pooka Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.14.56.1 2011/06/12 00:24:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.14 2007/06/30 09:37:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.14.56.1 2011/06/12 00:24:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,11 +268,11 @@ smb_fphelp(struct mbchain *mbp, struct smb_vc *vcp, struct smbnode *np,
 	struct smbnode **npp = smp->sm_npstack;
 	int i, error = 0;
 
-/*	simple_lock(&smp->sm_npslock);*/
+/*	mutex_enter(&smp->sm_npslock);*/
 	i = 0;
 	while (np->n_parent) {
 		if (i++ == SMBFS_MAXPATHCOMP) {
-/*			simple_unlock(&smp->sm_npslock);*/
+/*			mutex_exit(&smp->sm_npslock);*/
 			return ENAMETOOLONG;
 		}
 		*npp++ = np;
@@ -287,7 +287,7 @@ smb_fphelp(struct mbchain *mbp, struct smb_vc *vcp, struct smbnode *np,
 		if (error)
 			break;
 	}
-/*	simple_unlock(&smp->sm_npslock);*/
+/*	mutex_exit(&smp->sm_npslock);*/
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.88 2009/11/26 00:19:11 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.88.4.1 2011/06/12 00:23:51 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88 2009/11/26 00:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88.4.1 2011/06/12 00:23:51 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -660,16 +660,15 @@ cpu_debug_dump(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	db_printf("addr		dev	id	flags	ipis	curproc		fpcurproc\n");
+	db_printf("addr		dev	id	flags	ipis	curproc\n");
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		db_printf("%p	%s	%lu	%lx	%lx	%p	%p\n",
+		db_printf("%p	%s	%lu	%lx	%lx	%p\n",
 		    ci,
 		    ci->ci_softc->sc_dev.dv_xname,
 		    ci->ci_cpuid,
 		    ci->ci_flags,
 		    ci->ci_ipis,
-		    ci->ci_curlwp,
-		    ci->ci_fpcurlwp);
+		    ci->ci_curlwp);
 	}
 }
 

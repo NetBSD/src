@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.3 2008/01/08 13:28:22 dogcow Exp $ */
+/* $NetBSD: spivar.h,v 1.3.32.1 2011/06/12 00:24:26 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -109,7 +109,8 @@ struct spi_transfer {
 	int		st_slave;
 	void		*st_private;
 	void		(*st_done)(struct spi_transfer *);
-	struct simplelock	st_lock;
+	kmutex_t	st_lock;
+	kcondvar_t	st_cv;
 	void		*st_busprivate;
 };
 

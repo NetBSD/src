@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.5.2.2 2011/03/05 20:51:37 rmind Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.5.2.3 2011/06/12 00:24:04 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -165,6 +165,8 @@ void	booke_sstep(struct trapframe *);
 void	booke_fixup_stubs(void);
 void	booke_cpu_startup(const char *);	/* model name */
 struct powerpc_bus_dma_tag booke_bus_dma_tag;
+
+extern struct cpu_info cpu_info[];
 
 void	cpu_evcnt_attach(struct cpu_info *);
 uint32_t cpu_read_4(bus_size_t);

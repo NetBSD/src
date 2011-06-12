@@ -1,4 +1,4 @@
-/* $NetBSD: auaudio.c,v 1.7 2005/12/11 12:18:06 christos Exp $ */
+/* $NetBSD: auaudio.c,v 1.7.100.1 2011/06/12 00:24:01 rmind Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auaudio.c,v 1.7 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auaudio.c,v 1.7.100.1 2011/06/12 00:24:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,14 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: auaudio.c,v 1.7 2005/12/11 12:18:06 christos Exp $")
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/aubusvar.h>
 
-static int	auaudio_match(struct device *, struct cfdata *, void *);
-static void	auaudio_attach(struct device *, struct device *, void *);
+static int	auaudio_match(device_t, cfdata_t, void *);
+static void	auaudio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(auaudio, sizeof (struct device),
+CFATTACH_DECL_NEW(auaudio, sizeof (struct device),
     auaudio_match, auaudio_attach, NULL, NULL);
 
 int
-auaudio_match(struct device *parent, struct cfdata *match, void *aux)
+auaudio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct aubus_attach_args *aa = aux;
 
@@ -64,7 +64,7 @@ auaudio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-auaudio_attach(struct device *parent, struct device *self, void *aux)
+auaudio_attach(device_t parent, device_t self, void *aux)
 {
 
 	printf(": Au1X00 audio\n");	/* \n in clockattach */

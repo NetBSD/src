@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.121.4.3 2011/04/21 01:40:46 rmind Exp $ */
+/* $NetBSD: trap.c,v 1.121.4.4 2011/06/12 00:23:51 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121.4.3 2011/04/21 01:40:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121.4.4 2011/06/12 00:23:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,9 +122,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121.4.3 2011/04/21 01:40:46 rmind Exp $")
 static int unaligned_fixup(u_long, u_long, u_long, struct lwp *);
 static int handle_opdec(struct lwp *l, u_long *ucodep);
 static int alpha_ucode_to_ksiginfo(u_long ucode);
-
-struct evcnt fpevent_use;
-struct evcnt fpevent_reuse;
 
 /*
  * Initialize the trap vectors for the current processor.
@@ -360,8 +357,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			break;
 
 		case ALPHA_IF_CODE_FEN:
-			alpha_enable_fp(l, 0);
-			alpha_pal_wrfen(0);
+			fpu_load();
 			goto out;
 
 		default:
@@ -563,71 +559,6 @@ dopanic:
 }
 
 /*
- * Set the float-point enable for the current process, and return
- * the FPU context to the named process. If check == 0, it is an
- * error for the named process to already be fpcurlwp.
- */
-void
-alpha_enable_fp(struct lwp *l, int check)
-{
-#if defined(MULTIPROCESSOR)
-	int s;
-#endif
-	struct cpu_info *ci = curcpu();
-	struct pcb *pcb;
-
-	if (check && ci->ci_fpcurlwp == l) {
-		alpha_pal_wrfen(1);
-		return;
-	}
-	if (ci->ci_fpcurlwp == l)
-		panic("trap: fp disabled for fpcurlwp == %p", l);
-
-	if (ci->ci_fpcurlwp != NULL)
-		fpusave_cpu(ci, 1);
-
-	KDASSERT(ci->ci_fpcurlwp == NULL);
-
-	pcb = lwp_getpcb(l);
-#if defined(MULTIPROCESSOR)
-	if (pcb->pcb_fpcpu != NULL)
-		fpusave_proc(l, 1);
-#else
-	KDASSERT(pcb->pcb_fpcpu == NULL);
-#endif
-
-#if defined(MULTIPROCESSOR)
-	s = splhigh();		/* block IPIs */
-#endif
-	FPCPU_LOCK(pcb);
-
-	pcb->pcb_fpcpu = ci;
-	ci->ci_fpcurlwp = l;
-
-	FPCPU_UNLOCK(pcb);
-#if defined(MULTIPROCESSOR)
-	splx(s);
-#endif
-
-	/*
-	 * Instrument FP usage -- if a process had not previously
-	 * used FP, mark it as having used FP for the first time,
-	 * and count this event.
-	 *
-	 * If a process has used FP, count a "used FP, and took
-	 * a trap to use it again" event.
-	 */
-	if ((l->l_md.md_flags & MDP_FPUSED) == 0) {
-		atomic_inc_ulong(&fpevent_use.ev_count);
-		l->l_md.md_flags |= MDP_FPUSED;
-	} else
-		atomic_inc_ulong(&fpevent_reuse.ev_count);
-
-	alpha_pal_wrfen(1);
-	restorefpstate(&pcb->pcb_fp);
-}
-
-/*
  * Process an asynchronous software trap.
  * This is relatively easy.
  */
@@ -687,10 +618,6 @@ static const int reg_to_framereg[32] = {
 #define	frp(l, reg)							\
 	(&pcb->pcb_fp.fpr_regs[(reg)])
 
-#define	dump_fp_regs(pcb)						\
-	if (pcb->pcb_fpcpu != NULL)					\
-		fpusave_proc(l, 1)
-
 #define	unaligned_load(storage, ptrf, mod)				\
 	if (copyin((void *)va, &(storage), sizeof (storage)) != 0)	\
 		break;							\
@@ -714,14 +641,14 @@ static const int reg_to_framereg[32] = {
 	unaligned_store(storage, irp, )
 
 #define	unaligned_load_floating(storage, mod) do {			\
-	struct pcb *pcb = lwp_getpcb(l);				\
-	dump_fp_regs(pcb);						\
+	struct pcb * const pcb = lwp_getpcb(l);				\
+	fpu_save();							\
 	unaligned_load(storage, frp, mod)				\
 } while (/*CONSTCOND*/0)
 
 #define	unaligned_store_floating(storage, mod) do {			\
-	struct pcb *pcb = lwp_getpcb(l);				\
-	dump_fp_regs(pcb);						\
+	struct pcb * const pcb = lwp_getpcb(l);				\
+	fpu_save();							\
 	unaligned_store(storage, frp, mod)				\
 } while (/*CONSTCOND*/0)
 

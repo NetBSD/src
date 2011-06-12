@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.1.4.3 2011/05/31 03:04:14 rmind Exp $	*/
+/*	$NetBSD: spr.h,v 1.1.4.4 2011/06/12 00:24:04 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -483,6 +483,8 @@
 #define   HID0_DCFA		  0x00000040 /* Data Cache Flush Assist */
 #define   HID0_NOOPTI		  0x00000001 /* NO-OP Touch Instructions */
 #define	SPR_HID1		1009
+#define   HID1_ASTME		  0x00004000 /* Address Streaming Enable */
+#define   HID1_ABE		  0x00001000 /* Address Broadcast Enable */
 #define	SPR_L1CSR0		1010	/* E... L1 Cache Control and Status Register 0 (Data) */
 #define	SPR_L1CSR1		1011	/* E... L1 Cache Control and Status Register 1 (Instruction) */
 #define   L1CSR_CPE		  0x00010000 /* 15: Cache Parity Error */

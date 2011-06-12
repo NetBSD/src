@@ -387,8 +387,11 @@ typedef struct vestigial_inpcb {
 	struct vtw_ctl		*ctl;
 } vestigial_inpcb_t;
 
+#ifdef _KERNEL
 void vtw_restart(vestigial_inpcb_t*);
 int vtw_earlyinit(void);
+int sysctl_tcp_vtw_enable(SYSCTLFN_PROTO);
+#endif /* _KERNEL */
 
 #ifdef VTW_DEBUG
 typedef struct sin_either {

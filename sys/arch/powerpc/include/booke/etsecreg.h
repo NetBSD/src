@@ -1,4 +1,4 @@
-/*	$NetBSD: etsecreg.h,v 1.2.4.2 2011/03/05 20:51:37 rmind Exp $	*/
+/*	$NetBSD: etsecreg.h,v 1.2.4.3 2011/06/12 00:24:04 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -515,13 +515,13 @@ struct rxfcb {
 /* 0xb00-0xbff DMA system registers */
 
 #define ATTR		0xBF8 /* Attribute register */
-#define	ATTR_ELCWR	__PPCBITS(17,18)
-#define	ATTR_ELCWR_L2	__SHIFTIN(2, ATTR_ELCWR)
-#define	ATTR_BDCWR	__PPCBITS(20,21)
-#define	ATTR_BDCWR_L2	__SHIFTIN(2, ATTR_BDCWR)
+#define	ATTR_ELCWT	__PPCBITS(17,18)
+#define	ATTR_ELCWT_L2	__SHIFTIN(2, ATTR_ELCWT)
+#define	ATTR_BDLWT	__PPCBITS(20,21)
+#define	ATTR_BDLWT_L2	__SHIFTIN(2, ATTR_BDLWT)
 #define ATTR_RDSEN	__PPCBIT(24)
 #define ATTR_RBDSEN	__PPCBIT(25)
-#define	ATTR_DEFAULT	(ATTR_ELCWR_L2|ATTR_BDCWR_L2|ATTR_RDSEND|ATTR_RBDSEN)
+#define	ATTR_DEFAULT	(ATTR_ELCWT_L2|ATTR_BDLWT_L2|ATTR_RDSEN|ATTR_RBDSEN)
 
 #define ATTRELI		0xBFC /* Attribute extract length and extract index register [TSEC3] */
 #define	ATTRELI_EL	__PPCBITS(2,12)		/* extracted length */

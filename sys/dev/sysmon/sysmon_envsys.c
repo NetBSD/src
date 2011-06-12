@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.97.2.2 2011/03/05 20:54:08 rmind Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.97.2.3 2011/06/12 00:24:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.97.2.2 2011/03/05 20:54:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.97.2.3 2011/06/12 00:24:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -372,8 +372,8 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			tred->max.data_s = edata->value_max;
 			tred->min.data_us = edata->value_min;
 			tred->min.data_s = edata->value_min;
-			tred->avg.data_us = edata->value_avg;
-			tred->avg.data_s = edata->value_avg;
+			tred->avg.data_us = 0;
+			tred->avg.data_s = 0;
 			if (edata->units == ENVSYS_BATTERY_CHARGE)
 				tred->units = ENVSYS_INDICATOR;
 			else
@@ -1263,15 +1263,10 @@ static sme_event_drv_t *
 sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		    	  prop_dictionary_t dict, envsys_data_t *edata)
 {
-	const struct sme_descr_entry *sdt_state, *sdt_units, *sdt_battcap;
-	const struct sme_descr_entry *sdt_drive;
+	const struct sme_descr_entry *sdt;
+	int error;
 	sme_event_drv_t *sme_evdrv_t = NULL;
 	char indexstr[ENVSYS_DESCLEN];
-
-	/* 
-	 * Find the correct units for this sensor.
-	 */
-	sdt_units = sme_find_table_entry(SME_DESC_UNITS, edata->units);
 
 	/*
 	 * Add the index sensor string.
@@ -1287,32 +1282,11 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 
 	/*
 	 * 		...
-	 * 		<key>type</key>
-	 * 		<string>foo</string>
 	 * 		<key>description</key>
 	 * 		<string>blah blah</string>
 	 * 		...
 	 */
-	if (sme_sensor_upstring(dict, "type", sdt_units->desc))
-		goto bad;
-
 	if (sme_sensor_upstring(dict, "description", edata->desc))
-		goto bad;
-
-	/*
-	 * Add sensor's state description.
-	 *
-	 * 		...
-	 * 		<key>state</key>
-	 * 		<string>valid</string>
-	 * 		...
-	 */
-	sdt_state = sme_find_table_entry(SME_DESC_STATES, edata->state);
-
-	DPRINTF(("%s: sensor desc=%s type=%d state=%d\n",
-	    __func__, edata->desc, edata->units, edata->state));
-
-	if (sme_sensor_upstring(dict, "state", sdt_state->desc))
 		goto bad;
 
 	/*
@@ -1340,21 +1314,8 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	}
 
 	/*
-	 * Add the percentage boolean object, true if ENVSYS_FPERCENT
-	 * is set or false otherwise.
-	 *
-	 * 		...
-	 * 		<key>want-percentage</key>
-	 * 		<true/>
-	 * 		...
-	 */
-	if (edata->flags & ENVSYS_FPERCENT)
-		if (sme_sensor_upbool(dict, "want-percentage", true))
-			goto out;
-
-	/*
 	 * Add the allow-rfact boolean object, true if
-	 * ENVSYS_FCHANGERFACT if set or false otherwise.
+	 * ENVSYS_FCHANGERFACT is set, false otherwise.
 	 *
 	 * 		...
 	 * 		<key>allow-rfact</key>
@@ -1372,92 +1333,12 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		}
 	}
 
-	/*
-	 * Add the object for battery capacity sensors:
-	 *
-	 * 		...
-	 * 		<key>battery-capacity</key>
-	 * 		<string>NORMAL</string>
-	 * 		...
-	 */
-	if (edata->units == ENVSYS_BATTERY_CAPACITY) {
-		sdt_battcap = sme_find_table_entry(SME_DESC_BATTERY_CAPACITY,
-		    edata->value_cur);
-		if (sme_sensor_upstring(dict, "battery-capacity",
-					sdt_battcap->desc))
-			goto out;
-	}
-
-	/*
-	 * Add the drive-state object for drive sensors:
-	 *
-	 * 		...
-	 * 		<key>drive-state</key>
-	 * 		<string>drive is online</string>
-	 * 		...
-	 */
-	if (edata->units == ENVSYS_DRIVE) {
-		sdt_drive = sme_find_table_entry(SME_DESC_DRIVE_STATES,
-		    edata->value_cur);
-		if (sme_sensor_upstring(dict, "drive-state", sdt_drive->desc))
-			goto out;
-	}
-
-	/*
-	 * Add the following objects if sensor is enabled...
-	 */
-	if (edata->state == ENVSYS_SVALID) {
-		/*
-		 * Add the following objects:
-		 *
-		 * 	...
-		 * 	<key>rpms</key>
-		 * 	<integer>2500</integer>
-		 * 	<key>rfact</key>
-		 * 	<integer>10000</integer>
-		 * 	<key>cur-value</key>
-	 	 * 	<integer>1250</integer>
-	 	 * 	<key>min-value</key>
-	 	 * 	<integer>800</integer>
-	 	 * 	<key>max-value</integer>
-	 	 * 	<integer>3000</integer>
-	 	 * 	<key>avg-value</integer>
-	 	 * 	<integer>1400</integer>
-	 	 * 	...
-	 	 */
-		if (edata->units == ENVSYS_SFANRPM)
-			if (sme_sensor_upuint32(dict, "rpms", edata->rpms))
-				goto out;
-
-		if (edata->units == ENVSYS_SVOLTS_AC ||
-	    	    edata->units == ENVSYS_SVOLTS_DC)
-			if (sme_sensor_upint32(dict, "rfact", edata->rfact))
-				goto out;
-
-		if (sme_sensor_upint32(dict, "cur-value", edata->value_cur))
-			goto out;
-
-		if (edata->flags & ENVSYS_FVALID_MIN) {
-			if (sme_sensor_upint32(dict,
-					       "min-value",
-					       edata->value_min))
-			goto out;
-		}
-
-		if (edata->flags & ENVSYS_FVALID_MAX) {
-			if (sme_sensor_upint32(dict,
-					       "max-value",
-					       edata->value_max))
-			goto out;
-		}
-
-		if (edata->flags & ENVSYS_FVALID_AVG) {
-			if (sme_sensor_upint32(dict,
-					       "avg-value",
-					       edata->value_avg))
-			goto out;
-		}
-	}
+	error = sme_update_sensor_dictionary(dict, edata,
+			(edata->state == ENVSYS_SVALID));
+	if (error < 0)
+		goto bad;
+	else if (error)
+		goto out;
 
 	/*
 	 * 	...
@@ -1479,7 +1360,8 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		sme_evdrv_t->sed_sdict = dict;
 		sme_evdrv_t->sed_edata = edata;
 		sme_evdrv_t->sed_sme = sme;
-		sme_evdrv_t->sed_powertype = sdt_units->crittype;
+		sdt = sme_find_table_entry(SME_DESC_UNITS, edata->units);
+		sme_evdrv_t->sed_powertype = sdt->crittype;
 	}
 
 out:
@@ -1564,7 +1446,6 @@ sme_get_max_value(struct sysmon_envsys *sme,
 int
 sme_update_dictionary(struct sysmon_envsys *sme)
 {
-	const struct sme_descr_entry *sdt;
 	envsys_data_t *edata;
 	prop_object_t array, dict, obj, obj2;
 	int error = 0;
@@ -1637,93 +1518,92 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		/* 
 		 * update sensor's state.
 		 */
-		sdt = sme_find_table_entry(SME_DESC_STATES, edata->state);
+		error = sme_update_sensor_dictionary(dict, edata, true);
 
-		DPRINTFOBJ(("%s: sensor #%d type=%d (%s) flags=%d\n",
-		    __func__, edata->sensor, sdt->type, sdt->desc,
-		    edata->flags));
-
-		error = sme_sensor_upstring(dict, "state", sdt->desc);
 		if (error)
 			break;
+	}
 
-		/* 
-		 * update sensor's type.
-		 */
-		sdt = sme_find_table_entry(SME_DESC_UNITS, edata->units);
+	return error;
+}
 
-		DPRINTFOBJ(("%s: sensor #%d units=%d (%s)\n",
-		    __func__, edata->sensor, sdt->type, sdt->desc));
+int
+sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
+	bool value_update)
+{
+	const struct sme_descr_entry *sdt;
+	int error = 0;
 
-		error = sme_sensor_upstring(dict, "type", sdt->desc);
+	sdt = sme_find_table_entry(SME_DESC_STATES, edata->state);
+
+	DPRINTFOBJ(("%s: sensor #%d type=%d (%s) flags=%d\n", __func__,
+	    edata->sensor, sdt->type, sdt->desc, edata->flags));
+
+	error = sme_sensor_upstring(dict, "state", sdt->desc);
+	if (error)
+		return (-error);
+
+	/* 
+	 * update sensor's type.
+	 */
+	sdt = sme_find_table_entry(SME_DESC_UNITS, edata->units);
+
+	DPRINTFOBJ(("%s: sensor #%d units=%d (%s)\n", __func__, edata->sensor,
+	    sdt->type, sdt->desc));
+
+	error = sme_sensor_upstring(dict, "type", sdt->desc);
+	if (error)
+		return (-error);
+
+	/*
+	 * Battery charge and Indicator types do not
+	 * need the remaining objects, so skip them.
+	 */
+	if (edata->units == ENVSYS_INDICATOR ||
+	    edata->units == ENVSYS_BATTERY_CHARGE)
+		return error;
+
+	/* 
+	 * update sensor flags.
+	 */
+	if (edata->flags & ENVSYS_FPERCENT) {
+		error = sme_sensor_upbool(dict, "want-percentage", true);
 		if (error)
-			break;
+			return error;
+	}
 
+	if (value_update) {
 		/* 
 		 * update sensor's current value.
 		 */
-		error = sme_sensor_upint32(dict,
-					   "cur-value",
-					   edata->value_cur);
+		error = sme_sensor_upint32(dict, "cur-value", edata->value_cur);
 		if (error)
-			break;
+			return error;
 
 		/*
-		 * Battery charge, Integer and Indicator types do not
-		 * need the following objects, so skip them.
-		 */
-		if (edata->units == ENVSYS_INTEGER ||
-		    edata->units == ENVSYS_INDICATOR ||
-		    edata->units == ENVSYS_BATTERY_CHARGE)
-			continue;
-
-		/* 
-		 * update sensor flags.
-		 */
-		if (edata->flags & ENVSYS_FPERCENT) {
-			error = sme_sensor_upbool(dict,
-						  "want-percentage",
-						  true);
-			if (error)
-				break;
-		}
-
-		/*
-		 * update sensor's {avg,max,min}-value.
+		 * update sensor's {max,min}-value.
 		 */
 		if (edata->flags & ENVSYS_FVALID_MAX) {
-			error = sme_sensor_upint32(dict,
-						   "max-value",
+			error = sme_sensor_upint32(dict, "max-value",
 						   edata->value_max);
 			if (error)
-				break;
-		}
-						   
-		if (edata->flags & ENVSYS_FVALID_MIN) {
-			error = sme_sensor_upint32(dict,
-						   "min-value",
-						   edata->value_min);
-			if (error)
-				break;
+				return error;
 		}
 
-		if (edata->flags & ENVSYS_FVALID_AVG) {
-			error = sme_sensor_upint32(dict,
-						   "avg-value",
-						   edata->value_avg);
+		if (edata->flags & ENVSYS_FVALID_MIN) {
+			error = sme_sensor_upint32(dict, "min-value",
+						   edata->value_min);
 			if (error)
-				break;
+				return error;
 		}
 
 		/* 
 		 * update 'rpms' only for ENVSYS_SFANRPM sensors.
 		 */
 		if (edata->units == ENVSYS_SFANRPM) {
-			error = sme_sensor_upuint32(dict,
-						    "rpms",
-						    edata->rpms);
+			error = sme_sensor_upuint32(dict, "rpms", edata->rpms);
 			if (error)
-				break;
+				return error;
 		}
 
 		/* 
@@ -1731,37 +1611,34 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		 */
 		if (edata->units == ENVSYS_SVOLTS_AC ||
 		    edata->units == ENVSYS_SVOLTS_DC) {
-			error = sme_sensor_upint32(dict,
-						   "rfact",
-						   edata->rfact);
+			error = sme_sensor_upint32(dict, "rfact", edata->rfact);
 			if (error)
-				break;
+				return error;
 		}
-		
-		/* 
-		 * update 'drive-state' only for ENVSYS_DRIVE sensors.
-		 */
-		if (edata->units == ENVSYS_DRIVE) {
-			sdt = sme_find_table_entry(SME_DESC_DRIVE_STATES,
-			    edata->value_cur);
-			error = sme_sensor_upstring(dict, "drive-state",
-						    sdt->desc);
-			if (error)
-				break;
-		}
+	}
 
-		/* 
-		 * update 'battery-capacity' only for ENVSYS_BATTERY_CAPACITY
-		 * sensors.
-		 */
-		if (edata->units == ENVSYS_BATTERY_CAPACITY) {
-			sdt = sme_find_table_entry(SME_DESC_BATTERY_CAPACITY,
-			    edata->value_cur);
-			error = sme_sensor_upstring(dict, "battery-capacity",
-						    sdt->desc);
-			if (error)
-				break;
-		}
+	/* 
+	 * update 'drive-state' only for ENVSYS_DRIVE sensors.
+	 */
+	if (edata->units == ENVSYS_DRIVE) {
+		sdt = sme_find_table_entry(SME_DESC_DRIVE_STATES,
+					   edata->value_cur);
+		error = sme_sensor_upstring(dict, "drive-state", sdt->desc);
+		if (error)
+			return error;
+	}
+
+	/* 
+	 * update 'battery-capacity' only for ENVSYS_BATTERY_CAPACITY
+	 * sensors.
+	 */
+	if (edata->units == ENVSYS_BATTERY_CAPACITY) {
+		sdt = sme_find_table_entry(SME_DESC_BATTERY_CAPACITY,
+		    edata->value_cur);
+		error = sme_sensor_upstring(dict, "battery-capacity",
+					    sdt->desc);
+		if (error)
+			return error;
 	}
 
 	return error;

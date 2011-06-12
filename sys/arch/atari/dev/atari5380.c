@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.53.4.1 2010/05/30 05:16:39 rmind Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.53.4.2 2011/06/12 00:23:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.53.4.1 2010/05/30 05:16:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.53.4.2 2011/06/12 00:23:54 rmind Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -100,8 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.53.4.1 2010/05/30 05:16:39 rmind Exp
 
 static uint8_t	*alloc_bounceb(u_long);
 static void	free_bounceb(uint8_t *);
-static int	machine_match(struct device *, void *, void *,
-		    struct cfdriver *);
+static int	machine_match(device_t, cfdata_t, void *, struct cfdriver *);
 
 void	scsi_ctrl(int);
 void	scsi_dma(int);
@@ -1102,11 +1101,11 @@ can_access_5380(void)
  * Our autoconfig matching function
  */
 static int
-machine_match(struct device *pdp, void *match, void *auxp, struct cfdriver *cd)
+machine_match(device_t parent, cfdata_t cf, void *aux, struct cfdriver *cd)
 {
 	static int we_matched = 0; /* Only one unit	*/
 
-	if (strcmp(auxp, cd->cd_name) || we_matched)
+	if (strcmp(aux, cd->cd_name) || we_matched)
 		return 0;
 
 	we_matched = 1;

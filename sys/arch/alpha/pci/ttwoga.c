@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.11.22.1 2011/05/31 03:03:53 rmind Exp $ */
+/* $NetBSD: ttwoga.c,v 1.11.22.2 2011/06/12 00:23:52 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.11.22.1 2011/05/31 03:03:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.11.22.2 2011/06/12 00:23:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,18 +62,18 @@ __KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.11.22.1 2011/05/31 03:03:53 rmind Exp $
 
 #include "locators.h"
 
-int	ttwogamatch(struct device *, struct cfdata *, void *);
-void	ttwogaattach(struct device *, struct device *, void *);
+int	ttwogamatch(device_t, cfdata_t, void *);
+void	ttwogaattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ttwoga, sizeof(struct device),
+CFATTACH_DECL_NEW(ttwoga, 0,
     ttwogamatch, ttwogaattach, NULL, NULL);
 
 int	ttwogaprint(void *, const char *);
 
-int	ttwopcimatch(struct device *, struct cfdata *, void *);
-void	ttwopciattach(struct device *, struct device *, void *);
+int	ttwopcimatch(device_t, cfdata_t, void *);
+void	ttwopciattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ttwopci, sizeof(struct device),
+CFATTACH_DECL_NEW(ttwopci, 0,
     ttwopcimatch, ttwopciattach, NULL, NULL);
 
 int	ttwosableioprint(void *, const char *);
@@ -108,7 +108,7 @@ const struct ttwoga_sysmap ttwoga_sysmap[2] = {
 #undef MEGABYTE
 
 int
-ttwogamatch(struct device *parent, struct cfdata *match, void *aux)
+ttwogamatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -123,7 +123,7 @@ ttwogamatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ttwogaattach(struct device *parent, struct device *self, void *aux)
+ttwogaattach(device_t parent, device_t self, void *aux)
 {
 	struct pcibus_attach_args pba;
 	int hose;
@@ -205,7 +205,7 @@ ttwoga_init(int hose, int mallocsafe)
 }
 
 int
-ttwopcimatch(struct device *parent, struct cfdata *match, void *aux)
+ttwopcimatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -217,7 +217,7 @@ ttwopcimatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ttwopciattach(struct device *parent, struct device *self, void *aux)
+ttwopciattach(device_t parent, device_t self, void *aux)
 {
 	struct pcibus_attach_args *pba = aux, npba;
 	struct ttwoga_config *tcp;

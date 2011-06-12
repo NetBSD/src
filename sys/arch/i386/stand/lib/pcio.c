@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.27.4.2 2011/03/05 20:50:45 rmind Exp $	 */
+/*	$NetBSD: pcio.c,v 1.27.4.3 2011/06/12 00:23:59 rmind Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -38,10 +38,6 @@
 #include "libi386.h"
 #include "bootinfo.h"
 
-extern void conputc(int);
-extern int congetc(void);
-extern int conisshift(void);
-extern int coniskey(void);
 extern struct x86_boot_params boot_params;
 
 struct btinfo_console btinfo_console;

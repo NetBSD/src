@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.58.2.3 2011/05/31 03:04:41 rmind Exp $	*/
+/*	$NetBSD: machfb.c,v 1.58.2.4 2011/06/12 00:24:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.58.2.3 2011/05/31 03:04:41 rmind Exp $");
+	"$NetBSD: machfb.c,v 1.58.2.4 2011/06/12 00:24:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,7 @@ struct mach64_softc {
 	u_char sc_cmap_blue[256];
 	int sc_dacw, sc_blanked, sc_console;
 	struct vcons_data vd;
+	struct wsdisplay_accessops sc_accessops;
 };
 
 struct mach64_crtcregs {
@@ -378,16 +379,6 @@ static paddr_t	mach64_mmap(void *, void *, off_t, int);
 static int	mach64_load_font(void *, void *, struct wsdisplay_font *);
 #endif
 
-static struct wsdisplay_accessops mach64_accessops = {
-	mach64_ioctl,
-	mach64_mmap,
-	NULL,			/* vcons_alloc_screen */
-	NULL,			/* vcons_free_screen */
-	NULL,			/* vcons_show_screen */
-	NULL,			/* load_font */
-	NULL,			/* polls */
-	NULL,			/* scroll */
-};
 
 static struct vcons_screen mach64_console_screen;
 
@@ -533,6 +524,8 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	sc->sc_nfunc = pa->pa_function;
 	sc->sc_locked = 0;
 	sc->sc_iot = pa->pa_iot;
+	sc->sc_accessops.ioctl = mach64_ioctl;
+	sc->sc_accessops.mmap = mach64_mmap;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, 
@@ -763,7 +756,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	wsfont_init();
 	
 	sc->sc_bg = WS_DEFAULT_BG;
-	vcons_init(&sc->vd, sc, &mach64_defaultscreen, &mach64_accessops);
+	vcons_init(&sc->vd, sc, &mach64_defaultscreen, &sc->sc_accessops);
 	sc->vd.init_screen = mach64_init_screen;
 
 	mach64_init_lut(sc);
@@ -794,7 +787,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		
 	aa.console = sc->sc_console;
 	aa.scrdata = &mach64_screenlist;
-	aa.accessops = &mach64_accessops;
+	aa.accessops = &sc->sc_accessops;
 	aa.accesscookie = &sc->vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint);

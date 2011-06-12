@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.104.4.2 2011/03/05 20:49:18 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.104.4.3 2011/06/12 00:23:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.104.4.2 2011/03/05 20:49:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.104.4.3 2011/06/12 00:23:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.104.4.2 2011/03/05 20:49:18 rmind Exp
 #endif
 
 static void findroot(void);
-void mbattach(struct device *, struct device *, void *);
+void mbattach(device_t, device_t, void *);
 int mbprint(void *, const char *);
-int mbmatch(struct device *, struct cfdata *, void *);
+int mbmatch(device_t, cfdata_t, void *);
 
 #include <sys/kernel.h>
 
@@ -157,10 +157,10 @@ matchname(const char *fp, const char *sp)
  * by checking for NULL.
  */
 int
-amiga_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp, cfprint_t pfn)
+amiga_config_found(cfdata_t pcfp, device_t pdp, void *auxp, cfprint_t pfn)
 {
 	struct device temp;
-	struct cfdata *cf;
+	cfdata_t cf;
 	const struct cfattach *ca;
 
 	if (amiga_realconfig)
@@ -195,7 +195,7 @@ amiga_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp, cfprint_
 void
 config_console(void)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 
 	config_init();
 
@@ -229,11 +229,11 @@ config_console(void)
 /*
  * mainbus driver
  */
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mbmatch, mbattach, NULL, NULL);
 
 int
-mbmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+mbmatch(device_t pdp, cfdata_t cfp, void *auxp)
 {
 #if 0	/*
 	 * XXX is this right? but we need to be found twice
@@ -254,7 +254,7 @@ mbmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * "find" all the things that should be there.
  */
 void
-mbattach(struct device *pdp, struct device *dp, void *auxp)
+mbattach(device_t pdp, device_t dp, void *auxp)
 {
 	printf("\n");
 	config_found(dp, __UNCONST("clock"), simple_devprint);

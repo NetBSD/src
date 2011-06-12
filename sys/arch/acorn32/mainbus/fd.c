@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.47.2.1 2011/03/05 20:49:06 rmind Exp $	*/
+/*	$NetBSD: fd.c,v 1.47.2.2 2011/06/12 00:23:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47.2.1 2011/03/05 20:49:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47.2.2 2011/06/12 00:23:50 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -174,9 +174,9 @@ struct fdc_softc {
 };
 
 /* controller driver configuration */
-int fdcprobe(struct device *, struct cfdata *, void *);
+int fdcprobe(device_t, cfdata_t, void *);
 int fdprint(void *, const char *);
-void fdcattach(struct device *, struct device *, void *);
+void fdcattach(device_t, device_t, void *);
 
 CFATTACH_DECL(fdc, sizeof(struct fdc_softc),
     fdcprobe, fdcattach, NULL, NULL);
@@ -249,8 +249,8 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int fdprobe(struct device *, struct cfdata *, void *);
-void fdattach(struct device *, struct device *, void *);
+int fdprobe(device_t, cfdata_t, void *);
+void fdattach(device_t, device_t, void *);
 
 extern char floppy_read_fiq[], floppy_read_fiq_end[];
 extern char floppy_write_fiq[], floppy_write_fiq_end[];
@@ -289,7 +289,7 @@ void fd_motor_on(void *arg);
 int fdcresult(struct fdc_softc *fdc);
 int out_fdc(bus_space_tag_t iot, bus_space_handle_t ioh, u_char x);
 void fdcstart(struct fdc_softc *fdc);
-void fdcstatus(struct device *dv, int n, const char *s);
+void fdcstatus(device_t dv, int n, const char *s);
 void fdctimeout(void *arg);
 void fdcpseudointr(void *arg);
 int fdcintr(void *);
@@ -299,7 +299,7 @@ inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
 
 int
-fdcprobe(struct device *parent, struct cfdata *cf, void *aux)
+fdcprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pioc_attach_args *pa = aux;
 	bus_space_tag_t iot;
@@ -361,9 +361,9 @@ fdprint(void *aux, const char *fdc)
 }
 
 void
-fdcattach(struct device *parent, struct device *self, void *aux)
+fdcattach(device_t parent, device_t self, void *aux)
 {
-	struct fdc_softc *fdc = (void *)self;
+	struct fdc_softc *fdc = device_private(self);
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	struct pioc_attach_args *pa = aux;
@@ -388,10 +388,10 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 	callout_init(&fdc->sc_timo_ch, 0); 
 	callout_init(&fdc->sc_intr_ch, 0);
 
-	fdc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "fdc",
-	    fdcintr, fdc);
+	fdc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "fdc", fdcintr, fdc);
 	if (!fdc->sc_ih)
-		panic("%s: Cannot claim IRQ %d", self->dv_xname, pa->pa_irq);
+		panic("%s: Cannot claim IRQ %d",
+		    device_xname(self), pa->pa_irq);
 
 #if 0
 	/*
@@ -417,9 +417,9 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-fdprobe(struct device *parent, struct cfdata *cf, void *aux)
+fdprobe(device_t parent, cfdata_t cf, void *aux)
 {
-	struct fdc_softc *fdc = (void *)parent;
+	struct fdc_softc *fdc = device_private(parent);
 	struct fdc_attach_args *fa = aux;
 	int drive = fa->fa_drive;
 	bus_space_tag_t iot = fdc->sc_iot;
@@ -472,10 +472,10 @@ fdprobe(struct device *parent, struct cfdata *cf, void *aux)
  * Controller is working, and drive responded.  Attach it.
  */
 void
-fdattach(struct device *parent, struct device *self, void *aux)
+fdattach(device_t parent, device_t self, void *aux)
 {
-	struct fdc_softc *fdc = (void *)parent;
-	struct fd_softc *fd = (void *)self;
+	struct fdc_softc *fdc = device_private(parent);
+	struct fd_softc *fd = device_private(self);
 	struct fdc_attach_args *fa = aux;
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
@@ -840,7 +840,7 @@ fdcpstatus(int n, struct fdc_softc *fdc)
 }
 
 void
-fdcstatus(struct device *dv, int n, const char *s)
+fdcstatus(device_t dv, int n, const char *s)
 {
 	struct fdc_softc *fdc = (void *) device_parent(dv);
 
@@ -1028,7 +1028,8 @@ loop:
 		    fdc->sc_fr.fh_r12, (u_int)bp->b_data, fd->sc_skip);
 #endif
 		if (fiq_claim(&fdc->sc_fh) == -1)
-			panic("%s: Cannot claim FIQ vector", fdc->sc_dev.dv_xname);
+			panic("%s: Cannot claim FIQ vector",
+			    device_xname(&fdc->sc_dev));
 		IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x01);
 		bus_space_write_2(iot, ioh, fdctl, type->rate);
 #ifdef FD_DEBUG
