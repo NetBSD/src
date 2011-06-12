@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_ebus.c,v 1.5 2011/06/12 04:40:44 tsutsui Exp $	*/
+/*	$NetBSD: clock_ebus.c,v 1.6 2011/06/12 04:44:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.5 2011/06/12 04:40:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.6 2011/06/12 04:44:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.5 2011/06/12 04:40:44 tsutsui Exp $
  * Device softc
  */
 struct eclock_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct _Tc *sc_dp;
 	uint32_t sc_reload;
 	struct timecounter sc_tc;
@@ -59,7 +59,7 @@ struct eclock_softc {
 static int	eclock_ebus_match(device_t, cfdata_t, void *);
 static void	eclock_ebus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(eclock_ebus, sizeof (struct eclock_softc),
+CFATTACH_DECL_NEW(eclock_ebus, sizeof (struct eclock_softc),
     eclock_ebus_match, eclock_ebus_attach, NULL, NULL);
 
 void	eclock_init(device_t);
@@ -87,7 +87,7 @@ eclock_init(device_t dev)
 static void
 __eclock_init(device_t dev)
 {
-	struct eclock_softc *sc = (struct eclock_softc *)dev;
+	struct eclock_softc *sc = device_private(dev);
 	struct _Tc *tc = sc->sc_dp;
 	uint32_t reload = 10 * 1000000; /* 1sec in 100ns units (10MHz clock) */
 
@@ -100,7 +100,7 @@ __eclock_init(device_t dev)
 		if ((r * hz) != reload)
 			printf("%s: %d Hz clock will cause roundoffs"
 			    " with 10MHz xtal (%d)\n",
-			    sc->sc_dev.dv_xname, hz, reload - (r * hz));
+			    device_xname(sc->sc_dev), hz, reload - (r * hz));
 		reload = r;
 	}
 
@@ -300,9 +300,10 @@ eclock_ebus_match(device_t parent, cfdata_t cf, void *aux)
 static void
 eclock_ebus_attach(device_t parent, device_t self, void *aux)
 {
+	struct eclock_softc *sc = device_private(self);
 	struct ebus_attach_args *ia = aux;
-	struct eclock_softc *sc = (struct eclock_softc *)self;
 
+	sc->sc_dev = self;
 	sc->sc_dp = (struct _Tc *)ia->ia_vaddr;
 
 	/* NB: We are chopping our 64bit free-running down to 32bits */
@@ -328,7 +329,7 @@ eclock_ebus_attach(device_t parent, device_t self, void *aux)
 
 #ifdef EVCNT_COUNTERS
 	evcnt_attach_dynamic(&clock_intr_evcnt, EVCNT_TYPE_INTR, NULL,
-	    sc->sc_dev->dv_xname, "intr");
+	    device_xname(self), "intr");
 #endif
 
 	clockdev = self;
