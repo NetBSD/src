@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.242 2011/06/03 09:15:02 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.243 2011/06/12 10:11:52 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.242 2011/06/03 09:15:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.243 2011/06/12 10:11:52 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -441,9 +441,15 @@ acpi_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 
 	/*
-	 * Early EC handler initialization if ECDT table is available.
+	 * Early initialization of the _PDC control method
+	 * that may load additional SSDT tables dynamically.
 	 */
-	config_found_ia(self, "acpiecdtbus", aa, NULL);
+	(void)acpi_md_pdc();
+
+	/*
+	 * Early initialization of acpiec(4) via ECDT.
+	 */
+	(void)config_found_ia(self, "acpiecdtbus", aa, NULL);
 
 	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
 
