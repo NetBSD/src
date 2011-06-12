@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.40 2011/03/24 05:10:06 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.41 2011/06/12 10:11:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -260,7 +260,6 @@ void		 acpicpu_tstate_set(struct cpu_info *, uint32_t);
 struct cpu_info *acpicpu_md_match(device_t, cfdata_t, void *);
 struct cpu_info *acpicpu_md_attach(device_t, device_t, void *);
 
-uint32_t	 acpicpu_md_cap(void);
 uint32_t	 acpicpu_md_flags(void);
 void		 acpicpu_md_quirk_c1e(void);
 int		 acpicpu_md_cstate_start(struct acpicpu_softc *);

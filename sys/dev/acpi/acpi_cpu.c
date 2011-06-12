@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.40 2011/04/25 05:30:21 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.41 2011/06/12 10:11:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.40 2011/04/25 05:30:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.41 2011/06/12 10:11:52 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -60,7 +60,6 @@ static ACPI_STATUS	  acpicpu_object(ACPI_HANDLE, struct acpicpu_object *);
 static int		  acpicpu_find(struct cpu_info *,
 				       struct acpi_devnode **);
 static uint32_t		  acpicpu_cap(struct acpicpu_softc *);
-static ACPI_STATUS	  acpicpu_cap_pdc(struct acpicpu_softc *, uint32_t);
 static ACPI_STATUS	  acpicpu_cap_osc(struct acpicpu_softc *,
 					  uint32_t, uint32_t *);
 static void		  acpicpu_notify(ACPI_HANDLE, uint32_t, void *);
@@ -455,60 +454,24 @@ static uint32_t
 acpicpu_cap(struct acpicpu_softc *sc)
 {
 	uint32_t flags, cap = 0;
-	const char *str;
 	ACPI_STATUS rv;
 
 	/*
 	 * Query and set machine-dependent capabilities.
-	 * Note that the Intel-specific _PDC method was
+	 * Note that the Intel-specific _PDC method has
+	 * already been evaluated. It was furthermore
 	 * deprecated in the ACPI 3.0 in favor of _OSC.
 	 */
-	flags = acpicpu_md_cap();
+	flags = acpi_md_pdc();
 	rv = acpicpu_cap_osc(sc, flags, &cap);
 
 	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND) {
-		str = "_OSC";
-		goto fail;
+
+		aprint_error_dev(sc->sc_dev, "failed to evaluate "
+		    "_OSC: %s\n", AcpiFormatException(rv));
 	}
 
-	rv = acpicpu_cap_pdc(sc, flags);
-
-	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND) {
-		str = "_PDC";
-		goto fail;
-	}
-
-	if (cap == 0)
-		cap = flags;
-
-	return cap;
-
-fail:
-	aprint_error_dev(sc->sc_dev, "failed to evaluate "
-	    "%s: %s\n", str, AcpiFormatException(rv));
-
-	return 0;
-}
-
-static ACPI_STATUS
-acpicpu_cap_pdc(struct acpicpu_softc *sc, uint32_t flags)
-{
-	ACPI_OBJECT_LIST arg;
-	ACPI_OBJECT obj;
-	uint32_t cap[3];
-
-	arg.Count = 1;
-	arg.Pointer = &obj;
-
-	cap[0] = ACPICPU_PDC_REVID;
-	cap[1] = 1;
-	cap[2] = flags;
-
-	obj.Type = ACPI_TYPE_BUFFER;
-	obj.Buffer.Length = sizeof(cap);
-	obj.Buffer.Pointer = (void *)cap;
-
-	return AcpiEvaluateObject(sc->sc_node->ad_handle, "_PDC", &arg, NULL);
+	return (cap != 0) ? cap : flags;
 }
 
 static ACPI_STATUS
