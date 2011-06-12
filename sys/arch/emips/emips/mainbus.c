@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.2 2011/06/05 17:03:16 matt Exp $ */
+/* $NetBSD: mainbus.c,v 1.3 2011/06/12 03:21:21 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2011/06/05 17:03:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2011/06/12 03:21:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,9 +68,6 @@ mbattach(device_t parent, device_t self, void *aux)
 	mainbus_found = 1;
 
 	printf("\n");
-
-	/* Interrupt initialization, phase 1 */
-	intr_init(1);
 
  	ma.ma_name = "cpu";
 	ma.ma_slot = 0;
