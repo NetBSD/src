@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7 2011/06/05 16:52:24 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.8 2011/06/12 05:32:38 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.7 2011/06/05 16:52:24 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.8 2011/06/12 05:32:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,10 +287,19 @@ isi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	KASSERT(ptep != NULL);
 	pt_entry_t pte = *ptep;
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmapexechist);
+
 	if ((pte & PTE_UNSYNCED) == PTE_UNSYNCED) {
 		const paddr_t pa = pte_to_paddr(pte);
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 		KASSERT(pg);
+
+		UVMHIST_LOG(pmapexechist,
+		    "srr0=%#x pg=%p (pa %#"PRIxPADDR"): %s", 
+		    tf->tf_srr0, pg, pa, 
+		    (VM_PAGE_MD_EXECPAGE_P(pg)
+			? "no syncicache (already execpage)"
+			: "performed syncicache (now execpage)"));
 
 		if (!VM_PAGE_MD_EXECPAGE_P(pg)) {
 			ci->ci_softc->cpu_ev_exec_trap_sync.ev_count++;
@@ -301,10 +310,12 @@ isi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		pte &= ~PTE_UNSYNCED;
 		pte |= PTE_xX;
 		*ptep = pte;
+
 		pmap_tlb_update_addr(faultmap->pmap, trunc_page(faultva),
 		    pte, 0);
 		kpreempt_enable();
-		return false;
+		UVMHIST_LOG(pmapexechist, "<- 0", 0,0,0,0);
+		return 0;
 	}
 	kpreempt_enable();
 
@@ -323,6 +334,7 @@ isi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		ksi->ksi_code = SEGV_ACCERR;
 		ksi->ksi_addr = (void *)tf->tf_srr0; /* not truncated */
 	}
+	UVMHIST_LOG(pmapexechist, "<- %d", rv, 0,0,0);
 	return rv;
 }
 
@@ -441,6 +453,12 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 
 	if (!usertrap_p(tf))
 		return rv;
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmapexechist);
+
+	UVMHIST_LOG(pmapexechist, " srr0/1=%#x/%#x esr=%#x pte=%#x", 
+	    tf->tf_srr0, tf->tf_srr1, tf->tf_esr,
+	    *trap_pte_lookup(tf, trunc_page(tf->tf_srr0), PSL_IS));
 
 	ci->ci_ev_pgm.ev_count++;
 

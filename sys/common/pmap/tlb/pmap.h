@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 2011/06/05 16:52:27 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 2011/06/12 05:32:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,12 @@
 
 #ifndef	_COMMON_PMAP_H_
 #define	_COMMON_PMAP_H_
+
+#include <uvm/uvm_stat.h>
+#ifdef UVMHIST
+UVMHIST_DECL(pmapexechist);
+UVMHIST_DECL(pmaphist);
+#endif
 
 /*
  * The user address space is mapped using a two level structure where

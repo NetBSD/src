@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2011/06/05 16:52:27 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2011/06/12 05:32:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2011/06/05 16:52:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2011/06/12 05:32:38 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -189,21 +189,6 @@ PMAP_COUNTER(clear_modify, "clear_modifies");
 PMAP_COUNTER(protect, "protects");
 PMAP_COUNTER(page_protect, "page_protects");
 
-#define PDB_FOLLOW	0x0001
-#define PDB_INIT	0x0002
-#define PDB_ENTER	0x0004
-#define PDB_REMOVE	0x0008
-#define PDB_CREATE	0x0010
-#define PDB_PTPAGE	0x0020
-#define PDB_PVENTRY	0x0040
-#define PDB_BITS	0x0080
-#define PDB_PROTECT	0x0200
-#define PDB_TLBPID	0x0400
-#define PDB_PARANOIA	0x2000
-#define PDB_WIRING	0x4000
-#define PDB_PVDUMP	0x8000
-int pmapdebug = 0;
-
 #define PMAP_ASID_RESERVED 0
 CTASSERT(PMAP_ASID_RESERVED == 0);
 
@@ -241,6 +226,11 @@ struct poolpage_info {
 	vaddr_t hint;
 	pt_entry_t *sysmap;
 } poolpage;
+#endif
+
+#ifdef UVMHIST
+static struct kern_history_ent pmapexechistbuf[10000];
+static struct kern_history_ent pmaphistbuf[10000];
 #endif
 
 /*
@@ -441,10 +431,10 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 void
 pmap_init(void)
 {
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_INIT))
-		printf("pmap_init()\n");
-#endif
+        UVMHIST_INIT_STATIC(pmapexechist, pmapexechistbuf);
+        UVMHIST_INIT_STATIC(pmaphist, pmaphistbuf);
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 
 	/*
 	 * Set a low water mark on the pv_entry pool, so that we are
@@ -478,11 +468,8 @@ pmap_create(void)
 {
 	pmap_t pmap;
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 	PMAP_COUNT(create);
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
-		printf("pmap_create()\n");
-#endif
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 	memset(pmap, 0, PMAP_SIZE);
@@ -495,6 +482,7 @@ pmap_create(void)
 
 	pmap_segtab_alloc(pmap);
 
+	UVMHIST_LOG(pmaphist, "<- pmap %p", pmap,0,0,0);
 	return pmap;
 }
 
@@ -506,10 +494,9 @@ pmap_create(void)
 void
 pmap_destroy(pmap_t pmap)
 {
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
-		printf("pmap_destroy(%p)\n", pmap);
-#endif
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pmap=%p)", pmap, 0,0,0);
+
 	if (atomic_dec_uint_nv(&pmap->pm_count) > 0) {
 		PMAP_COUNT(dereference);
 		return;
@@ -523,6 +510,8 @@ pmap_destroy(pmap_t pmap)
 
 	pool_put(&pmap_pmap_pool, pmap);
 	kpreempt_enable();
+
+	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 }
 
 /*
@@ -532,14 +521,15 @@ void
 pmap_reference(pmap_t pmap)
 {
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_reference(%p)\n", pmap);
-#endif
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pmap=%p)", pmap, 0,0,0);
+	PMAP_COUNT(reference);
+
 	if (pmap != NULL) {
 		atomic_inc_uint(&pmap->pm_count);
 	}
-	PMAP_COUNT(reference);
+
+	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 }
 
 /*
@@ -550,6 +540,8 @@ pmap_activate(struct lwp *l)
 {
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(l=%p (pmap=%p))", l, pmap, 0,0);
 	PMAP_COUNT(activate);
 
 	kpreempt_disable();
@@ -558,6 +550,8 @@ pmap_activate(struct lwp *l)
 		pmap_segtab_activate(pmap, l);
 	}
 	kpreempt_enable();
+
+	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 }
 
 /*
@@ -566,39 +560,50 @@ pmap_activate(struct lwp *l)
 void
 pmap_deactivate(struct lwp *l)
 {
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(l=%p (pmap=%p))", l, pmap, 0,0);
 	PMAP_COUNT(deactivate);
 
 	kpreempt_disable();
 	curcpu()->ci_pmap_user_segtab = PMAP_INVALID_SEGTAB_ADDRESS;
-	pmap_tlb_asid_deactivate(l->l_proc->p_vmspace->vm_map.pmap);
+	pmap_tlb_asid_deactivate(pmap);
 	kpreempt_enable();
+
+	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 }
 
 void
-pmap_update(struct pmap *pm)
+pmap_update(struct pmap *pmap)
 {
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pmap=%p)", pmap, 0,0,0);
 	PMAP_COUNT(update);
 
 	kpreempt_disable();
 #ifdef MULTIPROCESSOR
-	u_int pending = atomic_swap_uint(&pm->pm_shootdown_pending, 0);
-	if (pending && pmap_tlb_shootdown_bystanders(pm))
+	u_int pending = atomic_swap_uint(&pmap->pm_shootdown_pending, 0);
+	if (pending && pmap_tlb_shootdown_bystanders(pmap))
 		PMAP_COUNT(shootdown_ipis);
 #endif
 #ifdef DEBUG
-	pmap_tlb_check(pm);
+	pmap_tlb_check(pmap);
 #endif /* DEBUG */
 
 	/*
 	 * If pmap_remove_all was called, we deactivated ourselves and nuked
 	 * our ASID.  Now we have to reactivate ourselves.
 	 */
-	if (__predict_false(pm->pm_flags & PMAP_DEFERRED_ACTIVATE)) {
-		pm->pm_flags ^= PMAP_DEFERRED_ACTIVATE;
-		pmap_tlb_asid_acquire(pm, curlwp);
-		pmap_segtab_activate(pm, curlwp);
+	if (__predict_false(pmap->pm_flags & PMAP_DEFERRED_ACTIVATE)) {
+		pmap->pm_flags ^= PMAP_DEFERRED_ACTIVATE;
+		pmap_tlb_asid_acquire(pmap, curlwp);
+		pmap_segtab_activate(pmap, curlwp);
 	}
 	kpreempt_enable();
+
+	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 }
 
 /*
@@ -615,12 +620,12 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 	const pt_entry_t npte = flags;
 	const bool is_kernel_pmap_p = (pmap == pmap_kernel());
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT)) {
-		printf("%s: %p, %"PRIxVADDR", %"PRIxVADDR", %p, %"PRIxPTR"\n",
-		   __func__, pmap, sva, eva, ptep, flags);
-	}
-#endif
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pmap=%p %sva=%"PRIxVADDR"..%"PRIxVADDR,
+	    pmap, (is_kernel_pmap_p ? "(kernel) " : ""), sva, eva);
+	UVMHIST_LOG(pmaphist, "ptep=%p, flags(npte)=%#"PRIxPTR")",
+	    ptep, flags, 0, 0);
+
 	KASSERT(kpreempt_disabled());
 
 	for (; sva < eva; sva += NBPG, ptep++) {
@@ -654,10 +659,9 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	const bool is_kernel_pmap_p = (pmap == pmap_kernel());
 	const pt_entry_t npte = pte_nv_entry(is_kernel_pmap_p);
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		printf("pmap_remove(%p, %#"PRIxVADDR", %#"PRIxVADDR")\n", pmap, sva, eva);
-#endif
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pmap=%p, va=%#"PRIxVADDR"..%#"PRIxVADDR")",
+	    pmap, sva, eva, 0);
 
 	if (is_kernel_pmap_p)
 		PMAP_COUNT(remove_kernel_calls);
@@ -679,6 +683,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	kpreempt_disable();
 	pmap_pte_process(pmap, sva, eva, pmap_pte_remove, npte);
 	kpreempt_enable();
+
+	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 }
 
 /*
@@ -692,13 +698,11 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	pv_entry_t pv;
 	vaddr_t va;
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pg=%p (pa %#"PRIxPADDR") prot=%#x)",
+	    pg, VM_PAGE_TO_PHYS(pg), prot, 0);
 	PMAP_COUNT(page_protect);
-#ifdef DEBUG
-	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
-	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
-		printf("pmap_page_protect(%#"PRIxPADDR", %x)\n",
-		    VM_PAGE_TO_PHYS(pg), prot);
-#endif
+
 	switch (prot) {
 	case VM_PROT_READ|VM_PROT_WRITE:
 	case VM_PROT_ALL:
@@ -738,6 +742,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		 * won't try to sync the icache.
 		 */
 		if (pmap_page_clear_attributes(pg, VM_PAGE_MD_EXECPAGE)) {
+			UVMHIST_LOG(pmapexechist, "pg %p (pa %#"PRIxPADDR
+			    "): execpage cleared", pg, VM_PAGE_TO_PHYS(pg),0,0);
 			PMAP_COUNT(exec_uncached_page_protect);
 		}
 		(void)VM_PAGE_PVLIST_LOCK(pg, false);
@@ -752,6 +758,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		}
 		VM_PAGE_PVLIST_UNLOCK(pg);
 	}
+
+	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 }
 
 static bool
@@ -759,6 +767,12 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 	uintptr_t flags)
 {
 	const vm_prot_t prot = (flags & VM_PROT_ALL);
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pmap=%p %sva=%"PRIxVADDR"..%"PRIxVADDR,
+	    pmap, (pmap == pmap_kernel() ? "(kernel) " : ""), sva, eva);
+	UVMHIST_LOG(pmaphist, "ptep=%p, flags(npte)=%#"PRIxPTR")",
+	    ptep, flags, 0, 0);
 
 	KASSERT(kpreempt_disabled());
 	/*
@@ -774,6 +788,10 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 			pmap_md_vca_clean(pg, sva, PMAP_WBINV);
 			if (VM_PAGE_MD_EXECPAGE_P(pg)) {
 				KASSERT(VM_PAGE_TO_MD(pg)->mdpg_first.pv_pmap != NULL);
+				UVMHIST_LOG(pmapexechist,
+				    "pg %p (pa %#"PRIxPADDR"): %s",
+				    pg, VM_PAGE_TO_PHYS(pg),
+				    "syncicached performed", 0);
 				if (pte_cached_p(pt_entry)) {
 					pmap_page_syncicache(pg);
 					PMAP_COUNT(exec_synced_protect);
@@ -801,14 +819,15 @@ void
 pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist,
+	    "  pmap=%p, va=%#"PRIxVADDR"..%#"PRIxVADDR" port=%#x)",
+	    pmap, sva, eva, prot);
 	PMAP_COUNT(protect);
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
-		printf("pmap_protect(%p, %#"PRIxVADDR", %#"PRIxVADDR", %x)\n",
-		    pmap, sva, eva, prot);
-#endif
+
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
+		UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 		return;
 	}
 
@@ -832,6 +851,8 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	kpreempt_disable();
 	pmap_pte_process(pmap, sva, eva, pmap_pte_protect, prot);
 	kpreempt_enable();
+
+	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 }
 
 #if defined(VM_PAGE_MD_CACHED)
@@ -843,12 +864,11 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 static void
 pmap_page_cache(struct vm_page *pg, bool cached)
 {
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pg=%p (pa %#"PRIxPADDR") cached=%s)",
+	    pg, VM_PAGE_TO_PHYS(pg), cached ? "true" : "false", 0);
 	KASSERT(kpreempt_disabled());
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_page_uncache(%#"PRIxPADDR")\n", VM_PAGE_TO_PHYS(pg));
-#endif
-	
+
 	if (cached) {
 		pmap_page_clear_attributes(pg, VM_PAGE_MD_UNCACHED);
 		PMAP_COUNT(page_cache_restorations);
@@ -878,6 +898,7 @@ pmap_page_cache(struct vm_page *pg, bool cached)
 			    PMAP_TLB_NEED_IPI);
 		}
 	}
+	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 }
 #endif	/* VM_PAGE_MD_CACHED */
 
@@ -899,12 +920,20 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	pt_entry_t npte;
 	const bool wired = (flags & PMAP_WIRED) != 0;
 	const bool is_kernel_pmap_p = (pmap == pmap_kernel());
-
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_enter(%p, %#"PRIxVADDR", %#"PRIxPADDR", %x, %x)\n",
-		    pmap, va, pa, prot, wired);
+#ifdef UVMHIST
+	struct kern_history * const histp = 
+	    ((prot & VM_PROT_EXECUTE) ? &pmapexechist : &pmaphist);
 #endif
+
+	UVMHIST_FUNC(__func__);
+#define VM_PROT_STRING(prot) \
+	&"\0    (R)\0  (W)\0  (RW)\0 (X)\0  (RX)\0 (WX)\0 (RWX)\0"[UVM_PROTECTION(prot)*6]
+	UVMHIST_CALLED(*histp);
+	UVMHIST_LOG(*histp, "(pmap=%p, va=%#"PRIxVADDR", pa=%#"PRIxPADDR,
+	    pmap, va, pa, 0);
+	UVMHIST_LOG(*histp, "prot=%#x%s flags=%#x%s)",
+	    prot, VM_PROT_STRING(prot), flags, VM_PROT_STRING(flags));
+
 	const bool good_color = PMAP_PAGE_COLOROK_P(pa, va);
 	if (is_kernel_pmap_p) {
 		PMAP_COUNT(kernel_mappings);
@@ -921,8 +950,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		    __func__, is_kernel_pmap_p ? "kva" : "uva", va);
 #endif
 
-	if (!(prot & VM_PROT_READ))
-		panic("%s: no READ in prot %u ", __func__, prot);
+	KASSERTMSG(prot & VM_PROT_READ,
+	    ("%s: no READ (%#x) in prot %#x", __func__, VM_PROT_READ, prot));
 
 	struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 
@@ -954,6 +983,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	pt_entry_t * const ptep = pmap_pte_reserve(pmap, va, flags);
 	if (__predict_false(ptep == NULL)) {
 		kpreempt_enable();
+		UVMHIST_LOG(*histp, "<- ENOMEM", 0,0,0,0);
 		return ENOMEM;
 	}
 	pt_entry_t opte = *ptep;
@@ -971,12 +1001,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		pmap->pm_stats.wired_count++;
 		npte |= pte_wired_entry();
 	}
-#if defined(DEBUG)
-	if (pmapdebug & PDB_ENTER) {
-		printf("pmap_enter: %p: %#"PRIxVADDR": new pte %#x (pa %#"PRIxPADDR")", pmap, va, npte, pa);
-		printf("\n");
-	}
-#endif
+
+	UVMHIST_LOG(*histp, "new pte %#x (pa %#"PRIxPADDR")", npte, pa, 0,0);
 
 	if (pte_valid_p(opte) && pte_to_paddr(opte) != pa) {
 		pmap_remove(pmap, va, va + NBPG);
@@ -995,22 +1021,44 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	kpreempt_enable();
 
 	if (pg != NULL && (prot == (VM_PROT_READ | VM_PROT_EXECUTE))) {
-#ifdef DEBUG
-		if (pmapdebug & PDB_ENTER)
-			printf("pmap_enter: flush I cache va %#"PRIxVADDR" (%#"PRIxPADDR")\n",
-			    va, pa);
-#endif
 		PMAP_COUNT(exec_mappings);
-		if ((flags & VM_PROT_EXECUTE)
-		    && !pte_deferred_exec_p(npte)
-		    && !VM_PAGE_MD_EXECPAGE_P(pg)
-		    && pte_cached_p(npte)) {
-			pmap_page_syncicache(pg);
-			pmap_page_set_attributes(pg, VM_PAGE_MD_EXECPAGE);
-			PMAP_COUNT(exec_synced_mappings);
+		if (!VM_PAGE_MD_EXECPAGE_P(pg) && pte_cached_p(npte)) {
+			if (!pte_deferred_exec_p(npte)) {
+				UVMHIST_LOG(*histp,
+				    "va=%#"PRIxVADDR" pg %p: %s syncicache%s",
+				    va, pg, "immediate", "");
+				pmap_page_syncicache(pg);
+				pmap_page_set_attributes(pg,
+				    VM_PAGE_MD_EXECPAGE);
+				PMAP_COUNT(exec_synced_mappings);
+			} else {
+				UVMHIST_LOG(*histp, "va=%#"PRIxVADDR
+				    " pg %p: %s syncicache: pte %#x",
+				    va, pg, "defer", npte);
+			}
+		} else {
+			UVMHIST_LOG(*histp,
+			    "va=%#"PRIxVADDR" pg %p: %s syncicache%s",
+			    va, pg, "no",
+			    (pte_cached_p(npte)
+				? " (already exec)"
+				: " (uncached)"));
 		}
+	} else if (pg != NULL && (prot & VM_PROT_EXECUTE)) {
+		KASSERT(prot & VM_PROT_WRITE);
+		PMAP_COUNT(exec_mappings);
+		pmap_page_syncicache(pg);
+		pmap_page_clear_attributes(pg, VM_PAGE_MD_EXECPAGE);
+		UVMHIST_LOG(pmapexechist,
+		    "va=%#"PRIxVADDR" pg %p: %s syncicache%s",
+		    va, pg, "immediate", " (writeable)");
 	}
 
+	if (prot & VM_PROT_EXECUTE) {
+		UVMHIST_LOG(pmapexechist, "<- 0 (OK)", 0,0,0,0);
+	} else {
+		UVMHIST_LOG(pmaphist, "<- 0 (OK)", 0,0,0,0);
+	}
 	return 0;
 }
 
@@ -1019,11 +1067,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_kenter_pa(%#"PRIxVADDR", %#"PRIxPADDR", %x, %x)\n", va, pa, prot, flags);
-#endif
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(va=%#"PRIxVADDR" pa=%#"PRIxPADDR
+	    ", prot=%#x, flags=%#x)", va, pa, prot, flags);
 	PMAP_COUNT(kenter_pa);
+
 	if (!PMAP_PAGE_COLOROK_P(pa, va) && pg != NULL)
 		PMAP_COUNT(kenter_pa_bad);
 
@@ -1053,6 +1101,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			    ((long *)va)[i], va, ((long *)pa)[i], pa);
 	}
 #endif
+	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 }
 
 static bool
@@ -1091,14 +1140,15 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	const vaddr_t sva = trunc_page(va);
 	const vaddr_t eva = round_page(va + len);
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE))
-		printf("pmap_kremove(%#"PRIxVADDR", %#"PRIxVSIZE")\n", va, len);
-#endif
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(va=%#"PRIxVADDR" len=%#"PRIxVSIZE")",
+	    va, len, 0,0);
 
 	kpreempt_disable();
 	pmap_pte_process(pmap_kernel(), sva, eva, pmap_pte_kremove, 0);
 	kpreempt_enable();
+
+	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 }
 
 void
@@ -1129,17 +1179,16 @@ void
 pmap_unwire(pmap_t pmap, vaddr_t va)
 {
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pmap=%p va=%#"PRIxVADDR")", pmap, va, 0,0);
 	PMAP_COUNT(unwire);
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_WIRING))
-		printf("pmap_unwire(%p, %#"PRIxVADDR")\n", pmap, va);
-#endif
+
 	/*
 	 * Don't need to flush the TLB since PG_WIRED is only in software.
 	 */
 #ifdef PARANOIADIAG
-		if (va < pmap->pm_minaddr || pmap->pm_maxaddr <= va)
-			panic("pmap_unwire");
+	if (va < pmap->pm_minaddr || pmap->pm_maxaddr <= va)
+		panic("pmap_unwire");
 #endif
 	kpreempt_disable();
 	pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
@@ -1180,10 +1229,8 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	paddr_t pa;
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_extract(%p, %#"PRIxVADDR") -> ", pmap, va);
-#endif
+	//UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	//UVMHIST_LOG(pmaphist, "(pmap=%p va=%#"PRIxVADDR")", pmap, va, 0,0);
 	if (pmap == pmap_kernel()) {
 		if (pmap_md_direct_mapped_vaddr_p(va)) {
 			pa = pmap_md_direct_mapped_vaddr_to_paddr(va);
@@ -1195,18 +1242,12 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	kpreempt_disable();
 	pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
 	if (ptep == NULL) {
-#ifdef DEBUG
-		if (pmapdebug & PDB_FOLLOW)
-			printf("not in segmap\n");
-#endif
+		//UVMHIST_LOG(pmaphist, "<- false (not in segmap)", 0,0,0,0);
 		kpreempt_enable();
 		return false;
 	}
 	if (!pte_valid_p(*ptep)) {
-#ifdef DEBUG
-		if (pmapdebug & PDB_FOLLOW)
-			printf("PTE not valid\n");
-#endif
+		//UVMHIST_LOG(pmaphist, "<- false (PTE not valid)", 0,0,0,0);
 		kpreempt_enable();
 		return false;
 	}
@@ -1216,10 +1257,7 @@ done:
 	if (pap != NULL) {
 		*pap = pa;
 	}
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pa %#"PRIxPADDR"\n", pa);
-#endif
+	//UVMHIST_LOG(pmaphist, "<- true (pa %#"PRIxPADDR")", pa, 0,0,0);
 	return true;
 }
 
@@ -1235,12 +1273,8 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
     vaddr_t src_addr)
 {
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 	PMAP_COUNT(copy);
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_copy(%p, %p, %#"PRIxVADDR", %#"PRIxVSIZE", %#"PRIxVADDR")\n",
-		    dst_pmap, src_pmap, dst_addr, len, src_addr);
-#endif
 }
 
 /*
@@ -1251,12 +1285,15 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
 bool
 pmap_clear_reference(struct vm_page *pg)
 {
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_reference(%#"PRIxPADDR")\n",
-		    VM_PAGE_TO_PHYS(pg));
-#endif
-	return pmap_page_clear_attributes(pg, VM_PAGE_MD_REFERENCED);
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pg=%p (pa %#"PRIxPADDR"))",
+	   pg, VM_PAGE_TO_PHYS(pg), 0,0);
+
+	bool rv = pmap_page_clear_attributes(pg, VM_PAGE_MD_REFERENCED);
+
+	UVMHIST_LOG(pmaphist, "<- %s", rv ? "true" : "false", 0,0,0);
+
+	return rv;
 }
 
 /*
@@ -1282,23 +1319,32 @@ pmap_clear_modify(struct vm_page *pg)
 	pv_entry_t pv_next;
 	uint16_t gen;
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pg=%p (%#"PRIxPADDR"))",
+	    pg, VM_PAGE_TO_PHYS(pg), 0,0);
 	PMAP_COUNT(clear_modify);
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_modify(%#"PRIxPADDR")\n", VM_PAGE_TO_PHYS(pg));
-#endif
+
 	if (VM_PAGE_MD_EXECPAGE_P(pg)) {
 		if (pv->pv_pmap == NULL) {
+			UVMHIST_LOG(pmapexechist,
+			    "pg %p (pa %#"PRIxPADDR"): %s",
+			    pg, VM_PAGE_TO_PHYS(pg), "execpage cleared", 0);
 			pmap_page_clear_attributes(pg, VM_PAGE_MD_EXECPAGE);
 			PMAP_COUNT(exec_uncached_clear_modify);
 		} else {
+			UVMHIST_LOG(pmapexechist,
+			    "pg %p (pa %#"PRIxPADDR"): %s",
+			    pg, VM_PAGE_TO_PHYS(pg), "syncicache performed", 0);
 			pmap_page_syncicache(pg);
 			PMAP_COUNT(exec_synced_clear_modify);
 		}
 	}
-	if (!pmap_page_clear_attributes(pg, VM_PAGE_MD_MODIFIED))
+	if (!pmap_page_clear_attributes(pg, VM_PAGE_MD_MODIFIED)) {
+		UVMHIST_LOG(pmaphist, "<- false", 0,0,0,0);
 		return false;
+	}
 	if (pv->pv_pmap == NULL) {
+		UVMHIST_LOG(pmaphist, "<- true (no mappings)", 0,0,0,0);
 		return true;
 	}
 
@@ -1333,6 +1379,8 @@ pmap_clear_modify(struct vm_page *pg)
 	}
 	VM_PAGE_PVLIST_UNLOCK(pg);
 	kpreempt_enable();
+
+	UVMHIST_LOG(pmaphist, "<- true (mappings changed)", 0,0,0,0);
 	return true;
 }
 
@@ -1386,17 +1434,19 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, u_int *npte)
 {
 	pv_entry_t pv, npv, apv;
 	int16_t gen;
+	bool first = false;
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist,
+	    "(pmap=%p va=%#"PRIxVADDR" pg=%p (%#"PRIxPADDR")",
+	    pmap, va, pg, VM_PAGE_TO_PHYS(pg));
+	UVMHIST_LOG(pmaphist, "nptep=%p (%#x))", npte, *npte, 0, 0);
 
         KASSERT(kpreempt_disabled());
 	KASSERT(pmap != pmap_kernel() || !pmap_md_direct_mapped_vaddr_p(va));
 
 	apv = NULL;
 	pv = &VM_PAGE_TO_MD(pg)->mdpg_first;
-#ifdef DEBUG
-	if (pmapdebug & PDB_ENTER)
-		printf("pmap_enter: pv %p: was %#"PRIxVADDR"/%p/%p\n",
-		    pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
-#endif
 	gen = VM_PAGE_PVLIST_LOCK(pg, true);
 	pmap_check_pvlist(pg);
 again:
@@ -1405,13 +1455,9 @@ again:
 		/*
 		 * No entries yet, use header as the first entry
 		 */
-#ifdef DEBUG
-		if (pmapdebug & PDB_PVENTRY)
-			printf("pmap_enter_pv: first pv: pmap %p va %#"PRIxVADDR"\n",
-			    pmap, va);
-#endif
 		PMAP_COUNT(primary_mappings);
 		PMAP_COUNT(mappings);
+		first = true;
 #ifdef VM_PAGE_MD_UNCACHED
 		pmap_page_clear_attributes(pg, VM_PAGE_MD_UNCACHED);
 #endif
@@ -1450,11 +1496,6 @@ again:
 				return;
 			}
 		}
-#ifdef DEBUG
-		if (pmapdebug & PDB_PVENTRY)
-			printf("pmap_enter_pv: new pv: pmap %p va %#"PRIxVADDR"\n",
-			    pmap, va);
-#endif
 		if (__predict_true(apv == NULL)) {
 #ifdef MULTIPROCESSOR
 			/*
@@ -1491,6 +1532,9 @@ again:
 	VM_PAGE_PVLIST_UNLOCK(pg);
 	if (__predict_false(apv != NULL))
 		pmap_pv_free(apv);
+
+	UVMHIST_LOG(pmaphist, "<- done pv=%p%s",
+	    pv, first ? " (first pv)" : "",0,0);
 }
 
 /*
@@ -1506,11 +1550,12 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 	pv_entry_t pv, npv;
 	bool last;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_PVENTRY))
-		printf("pmap_remove_pv(%p, %#"PRIxVADDR", %#"PRIxPADDR")\n", pmap, va,
-		    VM_PAGE_TO_PHYS(pg));
-#endif
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist,
+	    "(pmap=%p va=%#"PRIxVADDR" pg=%p (pa %#"PRIxPADDR")\n",
+	    pmap, va, pg, VM_PAGE_TO_PHYS(pg));
+	UVMHIST_LOG(pmaphist, "dirty=%s)", dirty ? "true" : "false", 0,0,0);
+
 	KASSERT(kpreempt_disabled());
 	pv = &VM_PAGE_TO_MD(pg)->mdpg_first;
 
@@ -1564,6 +1609,11 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 			 * If this was the page's last mapping, we no longer
 			 * care about its execness.
 			 */
+			UVMHIST_LOG(pmapexechist,
+			    "pg %p (pa %#"PRIxPADDR")%s: %s",
+			    pg, VM_PAGE_TO_PHYS(pg),
+			    last ? " [last mapping]" : "",
+			    "execpage cleared");
 			pmap_page_clear_attributes(pg, VM_PAGE_MD_EXECPAGE);
 			PMAP_COUNT(exec_uncached_remove);
 		} else {
@@ -1571,10 +1621,16 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 			 * Someone still has it mapped as an executable page
 			 * so we must sync it.
 			 */
+			UVMHIST_LOG(pmapexechist,
+			    "pg %p (pa %#"PRIxPADDR")%s: %s",
+			    pg, VM_PAGE_TO_PHYS(pg),
+			    last ? " [last mapping]" : "",
+			    "performed syncicache");
 			pmap_page_syncicache(pg);
 			PMAP_COUNT(exec_synced_remove);
 		}
 	}
+	UVMHIST_LOG(pmaphist, "<- done", 0,0,0,0);
 }
 
 #ifdef MULTIPROCESSOR
