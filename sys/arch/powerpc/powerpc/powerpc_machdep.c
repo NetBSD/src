@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.51 2011/06/12 03:35:45 rmind Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.52 2011/06/12 06:10:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.51 2011/06/12 03:35:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.52 2011/06/12 06:10:42 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -432,6 +432,17 @@ module_init_md(void)
 {
 }
 #endif /* MODULAR */
+
+bool
+mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
+{
+	if (atop(pa) < physmem) {
+		*vap = pa;
+		return true;
+	}
+
+	return false;
+}
 
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
