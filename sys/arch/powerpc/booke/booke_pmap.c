@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.4 2011/06/05 16:52:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.5 2011/06/12 05:32:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -263,8 +263,9 @@ pmap_md_alloc_poolpage(int flags)
 void
 pmap_zero_page(paddr_t pa)
 {
-//	printf("%s(%#lx): calling dcache_zero_page(%#lx)\n", __func__, pa, pa);
 	dcache_zero_page(pa);
+
+	KASSERT(!VM_PAGE_MD_EXECPAGE_P(PHYS_TO_VM_PAGE(pa)));
 }
 
 void
@@ -289,6 +290,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 			      "r28", "r29", "r30", "r31");
 		}
 	}
+
+	KASSERT(!VM_PAGE_MD_EXECPAGE_P(PHYS_TO_VM_PAGE(dst - PAGE_SIZE)));
 }
 
 void
