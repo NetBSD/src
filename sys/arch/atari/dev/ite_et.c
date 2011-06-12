@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.28.2.1 2010/05/30 05:16:40 rmind Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.28.2.2 2011/06/12 00:23:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.28.2.1 2010/05/30 05:16:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.28.2.2 2011/06/12 00:23:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,11 +90,11 @@ void et_scroll(struct ite_softc *ip, int sy, int sx, int count,
 /*
  * grfet config stuff
  */
-void grfetattach(struct device *, struct device *, void *);
-int  grfetmatch(struct device *, struct cfdata *, void *);
+void grfetattach(device_t, device_t, void *);
+int  grfetmatch(device_t, cfdata_t, void *);
 int  grfetprint(void *, const char *);
 
-CFATTACH_DECL(grfet, sizeof(struct grf_softc),
+CFATTACH_DECL_NEW(grfet, sizeof(struct grf_softc),
     grfetmatch, grfetattach, NULL, NULL);
 
 /*
@@ -103,11 +103,11 @@ CFATTACH_DECL(grfet, sizeof(struct grf_softc),
 static struct cfdata *cfdata_grf   = NULL;
 
 int
-grfetmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+grfetmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int	card_probed  = -1;
 	static int	did_consinit = 0;
-	grf_auxp_t	*grf_auxp = auxp;
+	grf_auxp_t	*grf_auxp = aux;
 	extern const struct cdevsw view_cdevsw;
 
 	if (card_probed <= 0) {
@@ -134,9 +134,9 @@ grfetmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 		 */
 		if (did_consinit)
 			return 0;
-		if ((*view_cdevsw.d_open)(cfp->cf_unit, 0, 0, NULL))
+		if ((*view_cdevsw.d_open)(cf->cf_unit, 0, 0, NULL))
 			return 0;
-		cfdata_grf = cfp;
+		cfdata_grf = cf;
 		did_consinit = 1;
 		return 1;
 	}
@@ -150,14 +150,14 @@ grfetmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 	    && ((did_consinit > 1) || !et_probe_card()))
 		return 0;
 
-	if (!grf_auxp->from_bus_match && (grf_auxp->unit != cfp->cf_unit))
+	if (!grf_auxp->from_bus_match && (grf_auxp->unit != cf->cf_unit))
 		return 0;
 
 	/*
 	 * Final constraint: each grf needs a view....
 	 */
 	if ((cfdata_grf == NULL) || (did_consinit > 1)) {
-		if ((*view_cdevsw.d_open)(cfp->cf_unit, 0, 0, NULL))
+		if ((*view_cdevsw.d_open)(cf->cf_unit, 0, 0, NULL))
 			return 0;
 	}
 	did_consinit = 2;
@@ -166,16 +166,16 @@ grfetmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 
 /*
  * attach: initialize the grf-structure and try to attach an ite to us.
- * note  : dp is NULL during early console init.
+ * note  : self is NULL during early console init.
  */
 void
-grfetattach(struct device *pdp, struct device *dp, void *auxp)
+grfetattach(device_t parent, device_t self, void *aux)
 {
 	static struct grf_softc		congrf;
 	static int			first_attach = 1;
-	       grf_auxp_t		*grf_bus_auxp = auxp;
+	       grf_auxp_t		*grf_bus_auxp = aux;
 	       grf_auxp_t		grf_auxp;
-	       struct grf_softc		*gp;
+	       struct grf_softc		*sc;
 	       int			maj;
 	extern const struct cdevsw grf_cdevsw;
 
@@ -187,7 +187,12 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * Handle exception case: early console init
 	 */
-	if (dp == NULL) {
+	if (self == NULL) {
+		struct device itedev;
+
+		memset(&itedev, 0, sizeof(itedev));
+		itedev.dv_private = &congrf;
+
 		congrf.g_unit    = cfdata_grf->cf_unit;
 		congrf.g_grfdev  = makedev(maj, congrf.g_unit);
 		congrf.g_itedev  = (dev_t)-1;
@@ -199,42 +204,43 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 		grf_viewsync(&congrf);
 
 		/* Attach console ite */
-		atari_config_found(cfdata_grf, NULL, &congrf, grfetprint);
+		atari_config_found(cfdata_grf, &itedev, &congrf, grfetprint);
 		return;
 	}
 
-	gp = (struct grf_softc *)dp;
-	gp->g_unit = device_unit(&gp->g_device);
-	grfsp[gp->g_unit] = gp;
+	sc = device_private(self);
+	sc->g_device = self;
+	sc->g_unit = device_unit(self);
+	grfsp[sc->g_unit] = sc;
 
-	if ((cfdata_grf != NULL) && (gp->g_unit == congrf.g_unit)) {
+	if ((cfdata_grf != NULL) && (sc->g_unit == congrf.g_unit)) {
 		/*
 		 * We inited earlier just copy the info, take care
 		 * not to copy the device struct though.
 		 */
-		memcpy(&gp->g_display, &congrf.g_display,
-			(char *)&gp[1] - (char *)&gp->g_display);
+		memcpy(&sc->g_display, &congrf.g_display,
+			(char *)&sc[1] - (char *)&sc->g_display);
 	} else {
-		gp->g_grfdev  = makedev(maj, gp->g_unit);
-		gp->g_itedev  = (dev_t)-1;
-		gp->g_flags   = GF_ALIVE;
-		gp->g_mode    = grf_mode;
-		gp->g_conpri  = 0;
-		gp->g_viewdev = gp->g_unit;
-		grfet_iteinit(gp);
-		grf_viewsync(gp);
+		sc->g_grfdev  = makedev(maj, sc->g_unit);
+		sc->g_itedev  = (dev_t)-1;
+		sc->g_flags   = GF_ALIVE;
+		sc->g_mode    = grf_mode;
+		sc->g_conpri  = 0;
+		sc->g_viewdev = sc->g_unit;
+		grfet_iteinit(sc);
+		grf_viewsync(sc);
 	}
 
-	printf(": %dx%d", gp->g_display.gd_dwidth, gp->g_display.gd_dheight);
-	if (gp->g_display.gd_colors == 2)
+	printf(": %dx%d", sc->g_display.gd_dwidth, sc->g_display.gd_dheight);
+	if (sc->g_display.gd_colors == 2)
 		printf(" monochrome\n");
 	else
-		printf(" colors %d\n", gp->g_display.gd_colors);
+		printf(" colors %d\n", sc->g_display.gd_colors);
 	
 	/*
 	 * try and attach an ite
 	 */
-	config_found(dp, gp, grfetprint);
+	config_found(self, sc /* XXX */, grfetprint);
 
 	/*
 	 * If attaching the first unit, go ahead and 'find' the rest of us
@@ -243,13 +249,14 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 		first_attach = 0;
 		grf_auxp.from_bus_match = 0;
 		for (grf_auxp.unit=0; grf_auxp.unit < NGRFET; grf_auxp.unit++) {
-		    config_found(pdp, (void*)&grf_auxp, grf_bus_auxp->busprint);
+			config_found(parent, (void*)&grf_auxp,
+			    grf_bus_auxp->busprint);
 		}
 	}
 }
 
 int
-grfetprint(void *auxp, const char *pnp)
+grfetprint(void *aux, const char *pnp)
 {
 
 	if (pnp) /* XXX */
@@ -261,15 +268,15 @@ grfetprint(void *auxp, const char *pnp)
  * Init ite portion of grf_softc struct
  */
 static void
-grfet_iteinit(struct grf_softc *gp)
+grfet_iteinit(struct grf_softc *sc)
 {
 
-	gp->g_itecursor = et_cursor;
-	gp->g_iteputc   = et_putc;
-	gp->g_iteclear  = et_clear;
-	gp->g_itescroll = et_scroll;
-	gp->g_iteinit   = view_init;
-	gp->g_itedeinit = view_deinit;
+	sc->g_itecursor = et_cursor;
+	sc->g_iteputc   = et_putc;
+	sc->g_iteclear  = et_clear;
+	sc->g_itescroll = et_scroll;
+	sc->g_iteinit   = view_init;
+	sc->g_itedeinit = view_deinit;
 }
 
 static void

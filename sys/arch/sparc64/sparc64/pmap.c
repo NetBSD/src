@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.259.2.6 2011/05/31 03:04:20 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.259.2.7 2011/06/12 00:24:09 rmind Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259.2.6 2011/05/31 03:04:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259.2.7 2011/06/12 00:24:09 rmind Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -292,9 +292,9 @@ struct {
 #define	PDB_REMOVE		0x000004
 #define	PDB_CHANGEPROT		0x000008
 #define	PDB_ENTER		0x000010
-#define PDB_DEMAP		0x000020
+#define	PDB_DEMAP		0x000020	/* used in locore */
 #define	PDB_REF			0x000040
-#define PDB_COPY		0x000080
+#define	PDB_COPY		0x000080
 #define	PDB_MMU_ALLOC		0x000100
 #define	PDB_MMU_STEAL		0x000200
 #define	PDB_CTX_ALLOC		0x000400
@@ -683,6 +683,8 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 	int prom_memlist_size;
 
 	BDPRINTF(PDB_BOOT, ("Entered pmap_bootstrap.\n"));
+
+	cache_setup_funcs();
 
 	/*
 	 * Calculate kernel size.

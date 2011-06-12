@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $	*/
+/*	$NetBSD: csc.c,v 1.16.4.1 2011/06/12 00:23:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.16.4.1 2011/06/12 00:23:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.16 2009/05/12 06:54:10 cegger Exp $");
 #include <dev/podulebus/podules.h>
 #include <dev/podulebus/powerromreg.h>
 
-int  cscmatch(struct device *, struct cfdata *, void *);
-void cscattach(struct device *, struct device *, void *);
+int  cscmatch(device_t, cfdata_t, void *);
+void cscattach(device_t, device_t, void *);
 
 CFATTACH_DECL(csc, sizeof(struct csc_softc),
     cscmatch, cscattach, NULL, NULL);
@@ -77,7 +77,7 @@ void csc_set_dma_mode(struct sfas_softc *, int);
  * if we are a Cumana SCSI-2 card
  */
 int
-cscmatch(struct device *pdp, struct cfdata *cf, void *auxp)
+cscmatch(device_t pdp, cfdata_t cf, void *auxp)
 {
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
 
@@ -95,7 +95,7 @@ cscmatch(struct device *pdp, struct cfdata *cf, void *auxp)
 }
 
 void
-cscattach(struct device *pdp, struct device *dp, void *auxp)
+cscattach(device_t pdp, device_t dp, void *auxp)
 {
 	struct csc_softc *sc = (struct csc_softc *)dp;
 	struct podule_attach_args  *pa;

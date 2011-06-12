@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.2.4.2 2011/03/05 20:51:34 rmind Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.2.4.3 2011/06/12 00:24:03 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: trap_subr.S,v 1.2.4.2 2011/03/05 20:51:34 rmind Exp $")
+RCSID("$NetBSD: trap_subr.S,v 1.2.4.3 2011/06/12 00:24:03 rmind Exp $")
 
 	.globl	_C_LABEL(critintr_call)
 	.globl	_C_LABEL(extintr_call)
@@ -202,6 +202,7 @@ RCSID("$NetBSD: trap_subr.S,v 1.2.4.2 2011/03/05 20:51:34 rmind Exp $")
 	stmw	%r3, FRAME_3(%r1);	/* save r2-r31 */		\
 	/* Now everything has been saved */				\
 	mr	%r31, %r0;		/* move SRR1 back to r31 */	\
+	mfsprg2	%r13;			/* put curlwp in r13 */		\
 	FRAME_SAVE_SPEFSCR;						\
 	li	%r7, exc;		/* load EXC_* */		\
 	stw	%r7, FRAME_EXC(%r1);	/* save into trapframe */	\
@@ -293,6 +294,7 @@ RCSID("$NetBSD: trap_subr.S,v 1.2.4.2 2011/03/05 20:51:34 rmind Exp $")
 	addi	%r2,%r2,-4*(32-start);	/* find our save area */	\
 	lmw	%r##start,0(%r2);	/* get start-r31 */		\
 	mtsprg3	%r2;			/* save updated pointer */	\
+	mfsprg2	%r13;			/* put curlwp into r13 */	\
 	li	%r7, exc;		/* load EXC_* */		\
 	stw	%r7, FRAME_EXC(%r1);	/* save into trapframe */	\
 	addi	%r3, %r1, FRAME_TF	/* only argument is trapframe */
@@ -385,8 +387,7 @@ _C_LABEL(trapexit):
 #	tweqi	%r0, 0
 	andi.	%r4, %r31, PSL_PR		/* lets look at PSL_PR */
 	beq	trapdone			/* if clear, skip to exit  */
-	GET_CPUINFO(%r3)			/* get curcpu() */
-	lwz	%r4, CI_ASTPENDING(%r3)		/* get ast pending */
+	lwz	%r4, L_MD_ASTPENDING(%r13)	/* get ast pending */
 	cmplwi	%r4, 0				/* is there an ast pending */
 	beq+	trapdone			/*    nope, proceed to exit */
 	li	%r6, EXC_AST			/* yes. */
@@ -420,7 +421,7 @@ _C_LABEL(intrcall):
 #	tweqi	%r0, 0
 	andi.	%r4, %r5, PSL_PR		/* lets look at PSL_PR */
 	beq	intrexit			/* if clear, skip to exit  */
-	lwz	%r4, CI_ASTPENDING(%r6)		/* get ast pending */
+	lwz	%r4, L_MD_ASTPENDING(%r13)	/* get ast pending */
 	cmplwi	%r4, 0				/* is there an ast pending */
 	beq+	intrexit			/*    nope, proceed to exit */
 	stmw	%r14, FRAME_14(%r1)		/* save rest of registers */
@@ -467,15 +468,14 @@ _C_LABEL(system_call_vector):
 	FRAME_ENTER(EXC_SC, %r3)
 
 	wrteei	1				/* enable interrupts */
-	mfspr	%r6, SPR_SPRG2			/* get curlwp */
-	lwz	%r7, L_PROC(%r6)		/* get proc for lwp */
+	lwz	%r7, L_PROC(%r13)		/* get proc for lwp */
 	lwz	%r8, P_MD_SYSCALL(%r7)		/* get syscall */
-	mtctr	%r8				/* need to call indirect */
-	bctrl					/* syscall(tf) */
+	mtlr	%r8				/* need to call indirect */
+	blrl					/* syscall(tf) */
 _C_LABEL(sctrapexit):
 	wrteei	0				/* disable interrupts */
-	GET_CPUINFO(%r3)			/* get curcpu() */
-	lwz	%r4, CI_ASTPENDING(%r3)		/* get ast pending */
+	mfsprg2	%r3				/* get curlwp */
+	lwz	%r4, L_MD_ASTPENDING(%r13)	/* get ast pending */
 	cmplwi	%r4, 0				/* is there an ast pending */
 	beq+	trapdone			/*    nope, proceed to exit */
 	li	%r0, EXC_AST			/* yes. */
@@ -858,6 +858,10 @@ _C_LABEL(exception_init):
 
 	ori	%r5,%r6,_C_LABEL(perfmon_vector)@l
 	mtspr	SPR_IVOR35, %r5
+
+	mfpir	%r5		/* get Process ID register */
+	cmplwi	%r5,0
+	bnelr			/* return if non-0 (non-primary) */
 
 	lis	%r5,_C_LABEL(critintr_call)@ha
 	lwzu	%r6,_C_LABEL(critintr_call)@l(%r5)

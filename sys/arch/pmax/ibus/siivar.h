@@ -1,4 +1,4 @@
-/*	$NetBSD: siivar.h,v 1.3 2009/03/14 14:46:04 dsl Exp $	*/
+/*	$NetBSD: siivar.h,v 1.3.4.1 2011/06/12 00:24:03 rmind Exp $	*/
 
 #ifndef _SIIVAR_H
 #define _SIIVAR_H
@@ -47,7 +47,7 @@ typedef struct scsi_state {
 
 #define SII_NCMD	8
 struct siisoftc {
-	struct device sc_dev;		/* us as a device */
+	device_t sc_dev;		/* us as a device */
 	struct scsipi_channel sc_channel;
 	struct scsipi_adapter sc_adapter;	/* scsipi adapter glue */
 	ScsiCmd sc_cmd_fake[SII_NCMD];		/* XXX - hack!!! */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.20 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.20.22.1 2011/06/12 00:24:04 rmind Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -99,7 +99,7 @@
 
 #if defined(_KERNEL_OPT) && !defined(BUS_DMA_COHERENT)
 #include "opt_ppcarch.h"
-#if defined(PPC_IBM4XX)
+#if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
 #define BUS_DMA_COHERENT BUS_DMA_NOCACHE
 #endif /* PPC_IBM4XX */
 #endif /* _KERNEL_OPT && !BUS_DMA_COHERENT */

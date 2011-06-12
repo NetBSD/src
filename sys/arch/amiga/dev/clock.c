@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.51.4.1 2011/03/05 20:49:20 rmind Exp $ */
+/*	$NetBSD: clock.c,v 1.51.4.2 2011/06/12 00:23:52 rmind Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.51.4.1 2011/03/05 20:49:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.51.4.2 2011/06/12 00:23:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,10 +79,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.51.4.1 2011/03/05 20:49:20 rmind Exp $")
  * periods where N is the value loaded into the counter.
  */
 
-int clockmatch(struct device *, struct cfdata *, void *);
-void clockattach(struct device *, struct device *, void *);
+int clockmatch(device_t, cfdata_t, void *);
+void clockattach(device_t, device_t, void *);
 void cpu_initclocks(void);
-static void calibrate_delay(struct device *);
+static void calibrate_delay(device_t);
 
 /* the clocks run at NTSC: 715.909kHz or PAL: 709.379kHz.
    We're using a 100 Hz clock. */
@@ -103,11 +103,11 @@ static struct timecounter clk_timecounter = {
 	NULL,		/* next */
 };
 
-CFATTACH_DECL(clock, sizeof(struct device),
+CFATTACH_DECL_NEW(clock, 0,
     clockmatch, clockattach, NULL, NULL);
 
 int
-clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+clockmatch(device_t pdp, cfdata_t cfp, void *auxp)
 {
 	if (matchname("clock", auxp))
 		return(1);
@@ -118,7 +118,7 @@ clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * Start the real-time clock.
  */
 void
-clockattach(struct device *pdp, struct device *dp, void *auxp)
+clockattach(device_t pdp, device_t dp, void *auxp)
 {
 	const char *clockchip;
 	unsigned short interval;
@@ -326,7 +326,7 @@ clk_getcounter(struct timecounter *tc)
  * off by 2.4%
  */
 static void
-calibrate_delay(struct device *dp)
+calibrate_delay(device_t dp)
 {
 	unsigned long t1, t2;
 	extern u_int32_t delaydivisor;

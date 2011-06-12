@@ -1,4 +1,4 @@
-#	$NetBSD: std.mpc85xx,v 1.2.4.3 2011/05/31 03:04:00 rmind Exp $
+#	$NetBSD: std.mpc85xx,v 1.2.4.4 2011/06/12 00:23:56 rmind Exp $
 #
 # Standard/required options for NetBSD/mpc85xx.
 
@@ -16,12 +16,12 @@ options 	EXEC_SCRIPT	# shell script support
 makeoptions	TEXTADDR=0x20000
 makeoptions	BOARDTYPE="mpc85xx"
 makeoptions	PPCDIR="booke"
-makeoptions	NEED_MDSETIMAGE="yes"
 
 options 	PPC_INTR_IMPL="<powerpc/booke/intr.h>"
 options 	PPC_PCI_MACHDEP_IMPL="<powerpc/pci_machdep.h>"
 options 	KERNBASE=0x20000
-options		GUR_BASE=0xe0000000
+options 	GUR_BASE=0xffe00000
+#options 	USB_FRAG_DMA_WORKAROUND
 
 include		"arch/powerpc/conf/files.booke"
 include		"arch/evbppc/conf/files.mpc85xx"

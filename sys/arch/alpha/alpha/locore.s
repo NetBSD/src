@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.119.2.1 2011/03/05 20:49:09 rmind Exp $ */
+/* $NetBSD: locore.s,v 1.119.2.2 2011/06/12 00:23:51 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.119.2.1 2011/03/05 20:49:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.119.2.2 2011/06/12 00:23:51 rmind Exp $");
 
 #include "assym.h"
 
@@ -275,11 +275,9 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	bne	t3, 7f				/* yes */
 	/* no: headed back to user space */
 
-	/* Enable the FPU based on whether the current proc is fpcurlwp. */
-4:	ldq	t2, CPU_INFO_FPCURLWP(v0)
-	cmpeq	t1, t2, t1
-	mov	zero, a0
-	cmovne	t1, 1, a0
+	/* Enable the FPU based on whether MDLWP_FPACTIVE is set. */
+4:	ldq	t2, L_MD_FLAGS(t1)
+	cmplt	t2, zero, a0
 	call_pal PAL_OSF1_wrfen
 
 	/* restore the registers, and return */

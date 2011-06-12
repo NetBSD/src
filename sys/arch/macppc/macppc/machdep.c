@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.153.4.1 2011/03/05 20:50:59 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.153.4.2 2011/06/12 00:24:01 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153.4.1 2011/03/05 20:50:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153.4.2 2011/06/12 00:24:01 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -180,7 +180,7 @@ cpu_reboot(int howto, char *what)
 
 #ifdef MULTIPROCESSOR
 	/* Halt other CPU */
-	ppc_send_ipi(IPI_T_NOTME, PPC_IPI_HALT);
+	cpu_send_ipi(IPI_DST_NOTME, IPI_HALT);
 	delay(100000);	/* XXX */
 #endif
 

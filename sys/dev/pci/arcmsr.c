@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.23.2.2 2011/03/05 20:53:35 rmind Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.23.2.3 2011/06/12 00:24:15 rmind Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.23.2.2 2011/03/05 20:53:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.23.2.3 2011/06/12 00:24:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1779,7 +1779,7 @@ arc_create_sensors(void *arg)
 			    sizeof(sc->sc_sensors[count].desc),
 			    "disk%d volume%d (%s)", j, i, bv.bv_dev);
 			sc->sc_sensors[count].value_max = i;
-			sc->sc_sensors[count].value_avg = j + 10;
+			sc->sc_sensors[count].private = j + 10;
 
 			if (sysmon_envsys_sensor_attach(sc->sc_sme,
 			    &sc->sc_sensors[count]))
@@ -1835,10 +1835,10 @@ arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 	}
 
 	/* Current sensor is handling a disk volume member */
-	if (edata->value_avg) {
+	if (edata->private) {
 		memset(&bd, 0, sizeof(bd));
 		bd.bd_volid = edata->value_max;
-		bd.bd_diskid = edata->value_avg - 10;
+		bd.bd_diskid = edata->private - 10;
 
 		if (arc_bio_disk_volume(sc, &bd)) {
 			edata->value_cur = ENVSYS_DRIVE_OFFLINE;

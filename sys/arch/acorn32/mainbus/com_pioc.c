@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.14 2008/04/28 20:23:09 martin Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.14.22.1 2011/06/12 00:23:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.14 2008/04/28 20:23:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.14.22.1 2011/06/12 00:23:50 rmind Exp $");
 
 #include <sys/systm.h>
 #include <sys/tty.h>
@@ -103,7 +103,7 @@ CFATTACH_DECL_NEW(com_pioc, sizeof(struct com_pioc_softc),
 extern bus_space_tag_t comconstag;	/* From pioc.c */
 
 /*
- * int com_pioc_probe(struct device *parent, struct cfdata *cf, void *aux)
+ * int com_pioc_probe(device_t parent, cfdata_t cf, void *aux)
  *
  * Make sure we are trying to attach a com device and then
  * probe for one.
@@ -141,7 +141,7 @@ com_pioc_probe(device_t parent, cfdata_t cf, void *aux)
 }
 
 /*
- * void com_pioc_attach(struct device *parent, struct device *self, void *aux)
+ * void com_pioc_attach(device_t parent, device_t self, void *aux)
  *
  * attach the com device
  */

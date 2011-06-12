@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.28.4.1 2011/03/05 20:54:19 rmind Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.28.4.2 2011/06/12 00:24:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.28.4.1 2011/03/05 20:54:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.28.4.2 2011/06/12 00:24:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ struct ie_vme_softc {
 	bus_space_handle_t ievh;
 };
 
-CFATTACH_DECL(ie_vme, sizeof(struct ie_vme_softc),
+CFATTACH_DECL_NEW(ie_vme, sizeof(struct ie_vme_softc),
     ie_vme_match, ie_vme_attach, NULL, NULL);
 
 #define read_iev(sc, reg) \
@@ -291,7 +291,7 @@ ie_vmeintr(struct ie_softc *sc, int where)
          * check for parity error
          */
 	if (read_iev(vsc, status) & IEVME_PERR) {
-		aprint_error_dev(&sc->sc_dev, "parity error (ctrl 0x%x @ 0x%02x%04x)\n",
+		aprint_error_dev(sc->sc_dev, "parity error (ctrl 0x%x @ 0x%02x%04x)\n",
 		       read_iev(vsc, pectrl),
 		       read_iev(vsc, pectrl) & IEVME_HADDR,
 		       read_iev(vsc, peaddr));
@@ -459,7 +459,7 @@ void
 ie_vme_attach(device_t parent, device_t self, void *aux)
 {
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-	struct ie_vme_softc *vsc = (void *) self;
+	struct ie_vme_softc *vsc = device_private(self);
 	struct vme_attach_args *va = aux;
 	vme_chipset_tag_t ct = va->va_vct;
 	struct ie_softc *sc;
@@ -484,6 +484,7 @@ ie_vme_attach(device_t parent, device_t self, void *aux)
 		panic("if_ie: vme alloc");
 
 	sc = &vsc->ie;
+	sc->sc_dev = self;
 
 	sc->hwreset = ie_vmereset;
 	sc->hwinit = ie_vmerun;

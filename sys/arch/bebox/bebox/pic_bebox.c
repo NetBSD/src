@@ -1,4 +1,4 @@
-/* $NetBSD: pic_bebox.c,v 1.6 2008/04/28 20:23:15 martin Exp $ */
+/* $NetBSD: pic_bebox.c,v 1.6.22.1 2011/06/12 00:23:55 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.6 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.6.22.1 2011/06/12 00:23:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.6 2008/04/28 20:23:15 martin Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/pio.h>
 
 #include <arch/powerpc/pic/picvar.h>

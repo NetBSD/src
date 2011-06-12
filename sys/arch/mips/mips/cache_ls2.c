@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_ls2.c,v 1.3 2009/08/11 00:34:29 matt Exp $	*/
+/*	$NetBSD: cache_ls2.c,v 1.3.6.1 2011/06/12 00:24:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_ls2.c,v 1.3 2009/08/11 00:34:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_ls2.c,v 1.3.6.1 2011/06/12 00:24:01 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -55,11 +55,12 @@ __asm(".set mips3");
 void
 ls2_icache_sync_range(vaddr_t va, vsize_t size)
 {
+	struct mips_cache_info * const mci = &mips_cache_info;
 	const vaddr_t eva = round_line(va + size);
 
 	va = trunc_line(va);
 
-	if (va + mips_picache_size <= eva) {
+	if (va + mci->mci_picache_size <= eva) {
 		ls2_icache_sync_all();
 		return;
 	}
@@ -81,6 +82,7 @@ void
 ls2_icache_sync_range_index(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva;
+	struct mips_cache_info * const mci = &mips_cache_info;
 
 	/*
 	 * Since we're doing Index ops, we expect to not be able
@@ -89,13 +91,13 @@ ls2_icache_sync_range_index(vaddr_t va, vsize_t size)
 	 * address out of them.
 	 */
 
-	va = MIPS_PHYS_TO_KSEG0(va & mips_picache_way_mask);
+	va = MIPS_PHYS_TO_KSEG0(va & mci->mci_picache_way_mask);
 	eva = round_line(va + size);
 	va = trunc_line(va);
 
-	if (va + mips_picache_way_size < eva) {
+	if (va + mci->mci_picache_way_size < eva) {
 		va = MIPS_PHYS_TO_KSEG0(0);
-		eva = mips_picache_way_size;
+		eva = mci->mci_picache_way_size;
 	}
 
 	for (; va + 8 * 32 <= eva; va += 8 * 32) {
@@ -114,7 +116,8 @@ ls2_icache_sync_range_index(vaddr_t va, vsize_t size)
 void
 ls2_icache_sync_all(void)
 {
-	ls2_icache_sync_range_index(0, mips_picache_way_size);
+	struct mips_cache_info * const mci = &mips_cache_info;
+	ls2_icache_sync_range_index(0, mci->mci_picache_way_size);
 }
 
 void
@@ -166,6 +169,7 @@ void
 ls2_pdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva;
+	struct mips_cache_info * const mci = &mips_cache_info;
 
 	/*
 	 * Since we're doing Index ops, we expect to not be able
@@ -173,14 +177,14 @@ ls2_pdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
+	va = MIPS_PHYS_TO_KSEG0(va & mci->mci_pdcache_way_mask);
 
 	eva = round_line(va + size);
 	va = trunc_line(va);
 
-	if (va + mips_pdcache_way_size > eva) {
+	if (va + mci->mci_pdcache_way_size > eva) {
 		va = MIPS_PHYS_TO_KSEG0(0);
-		eva = mips_pdcache_way_size;
+		eva = mci->mci_pdcache_way_size;
 	}
 
 	for (; va + 8 * 32 <= eva; va += 8 * 32) {
@@ -197,7 +201,8 @@ ls2_pdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 void
 ls2_pdcache_wbinv_all(void)
 {
-	ls2_pdcache_wbinv_range_index(0, mips_pdcache_way_size);
+	struct mips_cache_info * const mci = &mips_cache_info;
+	ls2_pdcache_wbinv_range_index(0, mci->mci_pdcache_way_size);
 }
 
 /*
@@ -262,6 +267,7 @@ void
 ls2_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva;
+	struct mips_cache_info * const mci = &mips_cache_info;
 
 	/*
 	 * Since we're doing Index ops, we expect to not be able
@@ -269,14 +275,14 @@ ls2_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & mips_sdcache_way_mask);
+	va = MIPS_PHYS_TO_KSEG0(va & mci->mci_sdcache_way_mask);
 
 	eva = round_line(va + size);
 	va = trunc_line(va);
 
-	if (va + mips_sdcache_way_size > eva) {
+	if (va + mci->mci_sdcache_way_size > eva) {
 		va = MIPS_PHYS_TO_KSEG0(0);
-		eva = va + mips_sdcache_way_size;
+		eva = va + mci->mci_sdcache_way_size;
 	}
 
 	for (; va + 8 * 32 <= eva; va += 8 * 32) {
@@ -295,5 +301,6 @@ ls2_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 void
 ls2_sdcache_wbinv_all(void)
 {
-	ls2_sdcache_wbinv_range_index(0, mips_sdcache_way_size);
+	struct mips_cache_info * const mci = &mips_cache_info;
+	ls2_sdcache_wbinv_range_index(0, mci->mci_sdcache_way_size);
 }

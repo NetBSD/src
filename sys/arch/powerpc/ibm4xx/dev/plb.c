@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.14.100.2 2011/03/05 20:51:36 rmind Exp $ */
+/* $NetBSD: plb.c,v 1.14.100.3 2011/06/12 00:24:04 rmind Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.14.100.2 2011/03/05 20:51:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.14.100.3 2011/06/12 00:24:04 rmind Exp $");
 
 #include "locators.h"
 #include "emac.h"
@@ -111,11 +111,11 @@ const struct plb_dev plb_devs [] = {
 	{ 0,		NULL }
 };
 
-static int	plb_match(struct device *, struct cfdata *, void *);
-static void	plb_attach(struct device *, struct device *, void *);
+static int	plb_match(device_t, cfdata_t, void *);
+static void	plb_attach(device_t, device_t, void *);
 static int	plb_print(void *, const char *);
 
-CFATTACH_DECL(plb, sizeof(struct device), plb_match, plb_attach, NULL, NULL);
+CFATTACH_DECL_NEW(plb, 0, plb_match, plb_attach, NULL, NULL);
 
 /*
  * "generic" DMA struct, nothing special.
@@ -143,7 +143,7 @@ struct powerpc_bus_dma_tag ibm4xx_default_bus_dma_tag = {
  * Probe for the plb; always succeeds.
  */
 static int
-plb_match(struct device *parent, struct cfdata *cf, void *aux)
+plb_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
@@ -153,7 +153,7 @@ plb_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach the processor local bus.
  */
 static void
-plb_attach(struct device *parent, struct device *self, void *aux)
+plb_attach(device_t parent, device_t self, void *aux)
 {
 	struct plb_attach_args paa;
 	struct plb_dev *local_plb_devs = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: spe.c,v 1.2.4.3 2011/05/31 03:04:13 rmind Exp $	*/
+/*	$NetBSD: spe.c,v 1.2.4.4 2011/06/12 00:24:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.2.4.3 2011/05/31 03:04:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.2.4.4 2011/06/12 00:24:03 rmind Exp $");
 
 #include "opt_altivec.h"
 
@@ -76,6 +76,11 @@ void
 vec_state_load(lwp_t *l, bool used)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
+
+	if (__predict_false(!vec_used_p(l))) {
+		memset(&pcb->pcb_vr, 0, sizeof(pcb->pcb_vr));
+		vec_mark_used(l);
+	}
 
 	/*
 	 * Enable SPE temporarily (and disable interrupts).

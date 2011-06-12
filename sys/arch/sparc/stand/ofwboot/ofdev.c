@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.26.2.2 2011/05/31 03:04:18 rmind Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.26.2.3 2011/06/12 00:24:07 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,7 +55,6 @@
 #include <machine/promlib.h>
 
 #include "ofdev.h"
-#include "net.h"
 #include "boot.h"
 #include "net.h"
 

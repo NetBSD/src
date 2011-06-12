@@ -1,4 +1,4 @@
-/*	$NetBSD: ka730.c,v 1.1.10.1 2011/03/05 20:52:18 rmind Exp $ */
+/*	$NetBSD: ka730.c,v 1.1.10.2 2011/06/12 00:24:10 rmind Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka730.c,v 1.1.10.1 2011/03/05 20:52:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka730.c,v 1.1.10.2 2011/06/12 00:24:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,16 +120,16 @@ ka730_attach_cpu(device_t self)
 	aprint_normal("KA730, ucode rev %d\n", V730UCODE(vax_cpudata));
 }
 
-static void ka730_memenable(struct device *, struct device *, void *);
-static int ka730_memmatch(struct device  *, struct cfdata *, void *);
+static void ka730_memenable(device_t, device_t, void *);
+static int ka730_memmatch(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(mem_ubi, sizeof(struct device),
+CFATTACH_DECL_NEW(mem_ubi, 0,
     ka730_memmatch, ka730_memenable, NULL, NULL);
 
 int
-ka730_memmatch(struct device *parent, struct cfdata *cf, void *aux)
+ka730_memmatch(device_t parent, cfdata_t cf, void *aux)
 {
-	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct	sbi_attach_args *sa = aux;
 
 	if (cf->cf_loc[UBICF_TR] != sa->sa_nexnum &&
 	    cf->cf_loc[UBICF_TR] > UBICF_TR_DEFAULT)
@@ -148,7 +148,7 @@ struct	mcr730 {
 
 /* enable crd interrupts */
 void
-ka730_memenable(struct device *parent, struct device *self, void *aux)
+ka730_memenable(device_t parent, device_t self, void *aux)
 {
 }
 

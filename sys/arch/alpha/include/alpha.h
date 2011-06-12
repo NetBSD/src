@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.24.4.2 2011/03/05 20:49:11 rmind Exp $ */
+/* $NetBSD: alpha.h,v 1.24.4.3 2011/06/12 00:23:51 rmind Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,8 @@ typedef union alpha_t_float {
 #include <machine/bus.h>
 #include <machine/stdarg.h>
 
+#include <sys/pcu.h>
+
 struct pcb;
 struct lwp;
 struct reg;
@@ -106,8 +108,29 @@ void	trap_init(void);
 void	enable_nsio_ide(bus_space_tag_t);
 char *	dot_conv(unsigned long);
 
-void	fpusave_cpu(struct cpu_info *, int);
-void	fpusave_proc(struct lwp *, int);
+extern const pcu_ops_t fpu_ops;
+
+void    fpu_state_load(struct lwp *, bool);
+void    fpu_state_save(struct lwp *);
+void    fpu_state_release(struct lwp *);
+
+static inline void
+fpu_load(void)
+{
+	pcu_load(&fpu_ops);
+}
+
+static inline void
+fpu_save(void)
+{
+	pcu_save(&fpu_ops);
+}
+
+static inline void
+fpu_discard(void)
+{
+	pcu_discard(&fpu_ops);
+}
 
 void	alpha_patch(bool);
 
@@ -138,7 +161,6 @@ void alpha_write_fpcr(u_int64_t);				/* MAGIC */
 u_int64_t alpha_read_fp_c(struct lwp *);
 void alpha_write_fp_c(struct lwp *, u_int64_t);
 
-void alpha_enable_fp(struct lwp *, int);
 int alpha_fp_complete(u_long, u_long, struct lwp *, u_int64_t *);
 
 /* Security sensitive rate limiting printf */

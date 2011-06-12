@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.34.4.3 2011/05/31 03:04:14 rmind Exp $	*/
+/*	$NetBSD: types.h,v 1.34.4.4 2011/06/12 00:24:04 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -67,6 +67,7 @@ typedef struct label_t {
 #endif
 
 typedef volatile int __cpu_simple_lock_t;
+typedef volatile __uint32_t __cpuset_t;
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0

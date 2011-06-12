@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.27.4.1 2010/05/30 05:17:02 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.27.4.2 2011/06/12 00:24:04 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27.4.1 2010/05/30 05:17:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27.4.2 2011/06/12 00:24:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,10 +72,10 @@ static struct cputab models[] = {
 	{ 0, 		0,		NULL 		}
 };
 
-static int	cpumatch(struct device *, struct cfdata *, void *);
-static void	cpuattach(struct device *, struct device *, void *);
+static int	cpumatch(device_t, cfdata_t, void *);
+static void	cpuattach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpumatch, cpuattach, NULL, NULL);
 
 int ncpus;
@@ -102,7 +102,7 @@ char cpu_model[80];
 int cpufound = 0;
 
 static int
-cpumatch(struct device *parent, struct cfdata *cf, void *aux)
+cpumatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct plb_attach_args *paa = aux;
 
@@ -114,7 +114,7 @@ cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-cpuattach(struct device *parent, struct device *self, void *aux)
+cpuattach(device_t parent, device_t self, void *aux)
 {
 	struct cputab *cp = models;
 	u_int pvr;

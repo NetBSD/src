@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.29 2009/05/12 14:31:00 cegger Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.29.4.1 2011/06/12 00:24:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.29 2009/05/12 14:31:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.29.4.1 2011/06/12 00:24:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,7 @@ elmc_mca_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_dev = self;
 	pbram_addr = ELMC_MADDR_BASE + (((pos2 & 0x18) >> 3) * 0x8000);
 
 	printf(" slot %d irq %d: 3Com EtherLink/MC Ethernet Adapter (3C523)\n",
@@ -151,7 +152,7 @@ elmc_mca_attach(device_t parent, device_t self, void *aux)
 
 	/* map the pio registers */
 	if (bus_space_map(ma->ma_iot, iobase, ELMC_IOADDR_SIZE, 0, &ioh)) {
-		aprint_error_dev(&sc->sc_dev, "unable to map i/o space\n");
+		aprint_error_dev(self, "unable to map i/o space\n");
 		return;
 	}
 
@@ -161,9 +162,9 @@ elmc_mca_attach(device_t parent, device_t self, void *aux)
 	 * about. Just use the first 16K.
 	 */
 	if (bus_space_map(ma->ma_memt, pbram_addr, ELMC_MADDR_SIZE, 0, &memh)) {
-		aprint_error_dev(&sc->sc_dev, "unable to map memory space\n");
+		aprint_error_dev(self, "unable to map memory space\n");
 		if (pbram_addr == 0xc0000) {
-			aprint_error_dev(&sc->sc_dev, "memory space 0xc0000 may conflict with vga\n");
+			aprint_error_dev(self, "memory space 0xc0000 may conflict with vga\n");
 		}
 
 		bus_space_unmap(ma->ma_iot, ioh, ELMC_IOADDR_SIZE);
@@ -234,7 +235,7 @@ elmc_mca_attach(device_t parent, device_t self, void *aux)
 	bus_space_barrier(sc->bt, sc->bh, 0, sc->sc_msize,
 			  BUS_SPACE_BARRIER_WRITE);
 	if (!i82586_proberam(sc)) {
-		aprint_error_dev(&sc->sc_dev, "can't talk to i82586!\n");
+		aprint_error_dev(self, "can't talk to i82586!\n");
 
 		bus_space_unmap(asc->sc_regt, asc->sc_regh, ELMC_IOADDR_SIZE);
 		bus_space_unmap(sc->bt, sc->bh, ELMC_MADDR_SIZE);
@@ -247,7 +248,7 @@ elmc_mca_attach(device_t parent, device_t self, void *aux)
 
 	/* dump known info */
 	printf("%s: rev %d, i/o %#04x-%#04x, mem %#06x-%#06x, %sternal xcvr\n",
-		device_xname(&sc->sc_dev), revision,
+		device_xname(self), revision,
 		iobase, iobase + ELMC_IOADDR_SIZE - 1,
 		pbram_addr, pbram_addr + ELMC_MADDR_SIZE - 1,
 		(pos2 & 0x20) ? "ex" : "in");
@@ -259,14 +260,14 @@ elmc_mca_attach(device_t parent, device_t self, void *aux)
 	for(i=0; i < MIN(6, ETHER_ADDR_LEN); i++)
 		myaddr[i] = bus_space_read_1(asc->sc_regt, asc->sc_regh, i);
 
-	printf("%s:", device_xname(&sc->sc_dev));
-	i82586_attach((void *)sc, "3C523", myaddr, NULL, 0, 0);
+	printf("%s:", device_xname(self));
+	i82586_attach(sc, "3C523", myaddr, NULL, 0, 0);
 
 	/* establish interrupt handler */
 	asc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET, i82586_intr,
 			sc);
 	if (asc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
+		aprint_error_dev(self, "couldn't establish interrupt handler\n");
 		return;
 	}
 }
@@ -405,5 +406,5 @@ elmc_mca_intrhook(struct ie_softc *sc, int why)
 	return (0);
 }
 
-CFATTACH_DECL(elmc_mca, sizeof(struct elmc_mca_softc),
+CFATTACH_DECL_NEW(elmc_mca, sizeof(struct elmc_mca_softc),
     elmc_mca_match, elmc_mca_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.302.2.6 2011/05/31 03:04:17 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.302.2.7 2011/06/12 00:24:07 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302.2.6 2011/05/31 03:04:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302.2.7 2011/06/12 00:24:07 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -309,10 +309,10 @@ cpu_startup(void)
 
 		/* Clip max data & stack to avoid running into the MMU hole */
 #if MAXDSIZ > 256*1024*1024
-		*(rlim_t*)__UNCONST(&maxdmap) = 256*1024*1024;
+		maxdmap = 256*1024*1024;
 #endif
 #if MAXSSIZ > 256*1024*1024
-		*(rlim_t*)__UNCONST(&maxsmap) = 256*1024*1024;
+		maxsmap = 256*1024*1024;
 #endif
 	}
 

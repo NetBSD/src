@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.45.2.3 2011/04/21 01:41:01 rmind Exp $
+#	$NetBSD: WALNUT,v 1.45.2.4 2011/06/12 00:23:56 rmind Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -260,7 +260,6 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	raid		4	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT

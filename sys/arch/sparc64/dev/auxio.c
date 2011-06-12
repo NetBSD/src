@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.20.18.1 2011/04/21 01:41:26 rmind Exp $	*/
+/*	$NetBSD: auxio.c,v 1.20.18.2 2011/06/12 00:24:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.20.18.1 2011/04/21 01:41:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.20.18.2 2011/06/12 00:24:08 rmind Exp $");
 
 #include "opt_auxio.h"
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.20.18.1 2011/04/21 01:41:26 rmind Exp $"
  */
 
 struct auxio_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	/* parent's tag */
 	bus_space_tag_t		sc_tag;
@@ -81,15 +81,15 @@ struct auxio_softc {
 #define	AUXIO_ROM_NAME		"auxio"
 
 void	auxio_attach_common(struct auxio_softc *);
-int	auxio_ebus_match(struct device *, struct cfdata *, void *);
-void	auxio_ebus_attach(struct device *, struct device *, void *);
-int	auxio_sbus_match(struct device *, struct cfdata *, void *);
-void	auxio_sbus_attach(struct device *, struct device *, void *);
+int	auxio_ebus_match(device_t, cfdata_t, void *);
+void	auxio_ebus_attach(device_t, device_t, void *);
+int	auxio_sbus_match(device_t, cfdata_t, void *);
+void	auxio_sbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(auxio_ebus, sizeof(struct auxio_softc),
+CFATTACH_DECL_NEW(auxio_ebus, sizeof(struct auxio_softc),
     auxio_ebus_match, auxio_ebus_attach, NULL, NULL);
 
-CFATTACH_DECL(auxio_sbus, sizeof(struct auxio_softc),
+CFATTACH_DECL_NEW(auxio_sbus, sizeof(struct auxio_softc),
     auxio_sbus_match, auxio_sbus_attach, NULL, NULL);
 
 extern struct cfdriver auxio_cd;
@@ -153,7 +153,7 @@ auxio_attach_common(struct auxio_softc *sc)
 }
 
 int
-auxio_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
+auxio_ebus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -161,11 +161,12 @@ auxio_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-auxio_ebus_attach(struct device *parent, struct device *self, void *aux)
+auxio_ebus_attach(device_t parent, device_t self, void *aux)
 {
-	struct auxio_softc *sc = (struct auxio_softc *)self;
+	struct auxio_softc *sc = device_private(self);
 	struct ebus_attach_args *ea = aux;
 
+	sc->sc_dev = self;
 	sc->sc_tag = ea->ea_bustag;
 
 	if (ea->ea_nreg < 1) {
@@ -212,19 +213,20 @@ auxio_ebus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-auxio_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
+auxio_sbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(AUXIO_ROM_NAME, sa->sa_name) == 0);
+	return strcmp(AUXIO_ROM_NAME, sa->sa_name) == 0;
 }
 
 void
-auxio_sbus_attach(struct device *parent, struct device *self, void *aux)
+auxio_sbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct auxio_softc *sc = (struct auxio_softc *)self;
+	struct auxio_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = aux;
 
+	sc->sc_dev = self;
 	sc->sc_tag = sa->sa_bustag;
 
 	if (sa->sa_nreg < 1) {

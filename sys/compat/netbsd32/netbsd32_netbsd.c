@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.166.2.4 2011/05/31 03:04:32 rmind Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.166.2.5 2011/06/12 00:24:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.166.2.4 2011/05/31 03:04:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.166.2.5 2011/06/12 00:24:13 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1863,7 +1863,7 @@ netbsd32___sigsuspend14(struct lwp *l, const struct netbsd32___sigsuspend14_args
 
 	NETBSD32TOP_UAP(set, sigset_t);
 	return (sys___sigsuspend14(l, &ua, retval));
-};
+}
 
 int
 netbsd32_fchroot(struct lwp *l, const struct netbsd32_fchroot_args *uap, register_t *retval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.404.2.5 2011/05/31 03:05:04 rmind Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.404.2.6 2011/06/12 00:24:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.404.2.5 2011/05/31 03:05:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.404.2.6 2011/06/12 00:24:30 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -538,15 +538,11 @@ int syncprt = 0;
 struct ctldebug debug0 = { "syncprt", &syncprt };
 #endif
 
-/* ARGSUSED */
-int
-sys_sync(struct lwp *l, const void *v, register_t *retval)
+void
+do_sys_sync(struct lwp *l)
 {
 	struct mount *mp, *nmp;
 	int asyncflag;
-
-	if (l == NULL)
-		l = &lwp0;
 
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
@@ -570,8 +566,16 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 	if (syncprt)
 		vfs_bufstats();
 #endif /* DEBUG */
+}
+
+/* ARGSUSED */
+int
+sys_sync(struct lwp *l, const void *v, register_t *retval)
+{
+	do_sys_sync(l);
 	return (0);
 }
+
 
 /*
  * Change filesystem quotas.
@@ -3048,7 +3052,7 @@ sys_fsync_range(struct lwp *l, const struct sys_fsync_range_args *uap, register_
 		nflags |= FSYNC_CACHE;
 
 	len = SCARG(uap, length);
-	/* If length == 0, we do the whole file, and s = l = 0 will do that */
+	/* If length == 0, we do the whole file, and s = e = 0 will do that */
 	if (len) {
 		s = SCARG(uap, start);
 		e = s + len;
@@ -3146,8 +3150,6 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	struct pathbuf *frompb, *topb;
 	struct nameidata fromnd, tond;
 	struct mount *fs;
-	struct lwp *l = curlwp;
-	struct proc *p;
 	int error;
 
 	error = pathbuf_maybe_copyin(from, seg, &frompb);
@@ -3282,7 +3284,7 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 		f2 = kmem_alloc(f2_len, KM_SLEEP);
 		strlcpy(f2, tond.ni_cnd.cn_nameptr, f2_len);
 
-		error = veriexec_renamechk(l, fvp, f1, tvp, f2);
+		error = veriexec_renamechk(curlwp, fvp, f1, tvp, f2);
 
 		kmem_free(f1, f1_len);
 		kmem_free(f2, f2_len);
@@ -3290,7 +3292,6 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 #endif /* NVERIEXEC > 0 */
 
 out:
-	p = l->l_proc;
 	if (!error) {
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
 				   tond.ni_dvp, tond.ni_vp, &tond.ni_cnd);

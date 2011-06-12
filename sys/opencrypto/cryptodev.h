@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.17.4.2 2011/05/31 03:05:10 rmind Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.17.4.3 2011/06/12 00:24:31 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -442,9 +442,6 @@ struct cryptodesc {
 struct cryptop {
 	TAILQ_ENTRY(cryptop) crp_next;
 	u_int64_t	crp_sid;	/* Session ID */
-	
-	u_int32_t	crp_reqid;	/* request id */
-	void *		crp_usropaque;	/* Opaque pointer from user, passed along */
 
 	int		crp_ilen;	/* Input data total length */
 	int		crp_olen;	/* Result total length */
@@ -479,6 +476,12 @@ struct cryptop {
 	int (*crp_callback)(struct cryptop *); /* Callback function */
 
 	void *		crp_mac;
+
+	/*
+	 * everything below is private to crypto(4)
+	 */
+	u_int32_t	crp_reqid;	/* request id */
+	void *		crp_usropaque;	/* Opaque pointer from user, passed along */
 	struct timespec	crp_tstamp;	/* performance time stamp */
 	kcondvar_t	crp_cv;
 	struct fcrypt 	*fcrp;

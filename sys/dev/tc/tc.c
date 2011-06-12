@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.50 2009/05/12 14:47:04 cegger Exp $	*/
+/*	$NetBSD: tc.c,v 1.50.4.1 2011/06/12 00:24:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.50 2009/05/12 14:47:04 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.50.4.1 2011/06/12 00:24:26 rmind Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.50 2009/05/12 14:47:04 cegger Exp $");
 /* Definition of the driver for autoconfig. */
 static int	tcmatch(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(tc, sizeof(struct tc_softc),
+CFATTACH_DECL_NEW(tc, sizeof(struct tc_softc),
     tcmatch, tcattach, NULL, NULL);
 
 extern struct cfdriver tc_cd;
@@ -77,6 +77,8 @@ tcattach(device_t parent, device_t self, void *aux)
 	tc_addr_t tcaddr;
 	int i;
 	int locs[TCCF_NLOCS];
+
+	sc->sc_dev = self;
 
 	printf(": %s MHz clock\n",
 	    tba->tba_speed == TC_SPEED_25_MHZ ? "25" : "12.5");

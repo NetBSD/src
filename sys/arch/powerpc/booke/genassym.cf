@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2.4.2 2011/03/05 20:51:34 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.2.4.3 2011/06/12 00:24:03 rmind Exp $
 
 #-
 # Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -154,6 +154,7 @@ define	PCB_USPRG0	offsetof(struct pcb, pcb_usprg0)
 define	L_PCB		offsetof(struct lwp, l_addr)
 define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_CTXSWTCH	offsetof(struct lwp, l_ctxswtch)
+define	L_MD_ASTPENDING	offsetof(struct lwp, l_md.md_astpending)
 define	L_MD_UTF	offsetof(struct lwp, l_md.md_utf)
 define	L_PROC		offsetof(struct lwp, l_proc)
 
@@ -163,11 +164,11 @@ define	CI_SIZE		sizeof(struct cpu_info)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
 define	CI_CURPM	offsetof(struct cpu_info, ci_curpm)
-define	CI_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CI_CPL		offsetof(struct cpu_info, ci_cpl)
 define	CI_IDEPTH	offsetof(struct cpu_info, ci_idepth)
 define	CI_IDLESPIN	offsetof(struct cpu_info, ci_idlespin)
+define	CI_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CI_SAVELIFO	offsetof(struct cpu_info, ci_savelifo)

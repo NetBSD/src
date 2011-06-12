@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.42.4.2 2011/04/21 01:41:11 rmind Exp $	*/
+/*	$NetBSD: cache.c,v 1.42.4.3 2011/06/12 00:24:01 rmind Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.42.4.2 2011/04/21 01:41:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.42.4.3 2011/06/12 00:24:01 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -586,40 +586,40 @@ primary_cache_is_2way:
 #endif /* ENABLE_MIPS4_CACHE_R10K */
 #ifdef MIPS3_LOONGSON2
 	case MIPS_LOONGSON2:
-		mips_picache_ways = 4;
-		mips_pdcache_ways = 4;
+		mci->mci_picache_ways = 4;
+		mci->mci_pdcache_ways = 4;
 
 		mips3_get_cache_config(csizebase);
 
-		mips_sdcache_line_size = 32;	/* don't trust config reg */
+		mci->mci_sdcache_line_size = 32;	/* don't trust config reg */
 
-		if (mips_picache_size / mips_picache_ways > PAGE_SIZE ||
-		    mips_pdcache_size / mips_pdcache_ways > PAGE_SIZE)
-			mips_cache_virtual_alias = 1;
+		if (mci->mci_picache_size / mci->mci_picache_ways > PAGE_SIZE ||
+		    mci->mci_pdcache_size / mci->mci_pdcache_ways > PAGE_SIZE)
+			mci->mci_cache_virtual_alias = 1;
 
-		mips_cache_ops.mco_icache_sync_all =
+		mco->mco_icache_sync_all =
 		    ls2_icache_sync_all;
-		mips_cache_ops.mco_icache_sync_range =
+		mco->mco_icache_sync_range =
 		    ls2_icache_sync_range;
-		mips_cache_ops.mco_icache_sync_range_index =
+		mco->mco_icache_sync_range_index =
 		    ls2_icache_sync_range_index;
 
-		mips_cache_ops.mco_pdcache_wbinv_all =
+		mco->mco_pdcache_wbinv_all =
 		    ls2_pdcache_wbinv_all;
-		mips_cache_ops.mco_pdcache_wbinv_range =
+		mco->mco_pdcache_wbinv_range =
 		    ls2_pdcache_wbinv_range;
-		mips_cache_ops.mco_pdcache_wbinv_range_index =
+		mco->mco_pdcache_wbinv_range_index =
 		    ls2_pdcache_wbinv_range_index;
-		mips_cache_ops.mco_pdcache_inv_range =
+		mco->mco_pdcache_inv_range =
 		    ls2_pdcache_inv_range;
-		mips_cache_ops.mco_pdcache_wb_range =
+		mco->mco_pdcache_wb_range =
 		    ls2_pdcache_wb_range;
 
 		/*
 		 * For current version chips, [the] operating system is
 		 * obliged to eliminate the potential for virtual aliasing.
 		 */
-		uvmexp.ncolors = mips_pdcache_ways;
+		uvmexp.ncolors = mci->mci_pdcache_ways;
 		break;
 #endif
 #endif /* MIPS3 || MIPS4 */
@@ -768,19 +768,19 @@ primary_cache_is_2way:
 #endif /* ENABLE_MIPS4_CACHE_R10K */
 #ifdef MIPS3_LOONGSON2
 	case MIPS_LOONGSON2:
-		mips_sdcache_ways = 4;
-		mips_sdcache_size = 512*1024;
-		mips_scache_unified = 1;
+		mci->mci_sdcache_ways = 4;
+		mci->mci_sdcache_size = 512*1024;
+		mci->mci_scache_unified = 1;
 
-		mips_cache_ops.mco_sdcache_wbinv_all =
+		mco->mco_sdcache_wbinv_all =
 		    ls2_sdcache_wbinv_all;
-		mips_cache_ops.mco_sdcache_wbinv_range =
+		mco->mco_sdcache_wbinv_range =
 		    ls2_sdcache_wbinv_range;
-		mips_cache_ops.mco_sdcache_wbinv_range_index =
+		mco->mco_sdcache_wbinv_range_index =
 		    ls2_sdcache_wbinv_range_index;
-		mips_cache_ops.mco_sdcache_inv_range =
+		mco->mco_sdcache_inv_range =
 		    ls2_sdcache_inv_range;
-		mips_cache_ops.mco_sdcache_wb_range =
+		mco->mco_sdcache_wb_range =
 		    ls2_sdcache_wb_range;
 
 		/*

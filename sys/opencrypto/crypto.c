@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.34.4.2 2011/05/31 03:05:10 rmind Exp $ */
+/*	$NetBSD: crypto.c,v 1.34.4.3 2011/06/12 00:24:31 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.34.4.2 2011/05/31 03:05:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.34.4.3 2011/06/12 00:24:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -720,8 +720,8 @@ crypto_dispatch(struct cryptop *crp)
 	int result;
 
 	mutex_spin_enter(&crypto_q_mtx);
-	DPRINTF(("crypto_dispatch: crp %p, reqid 0x%x, alg %d\n",
-		crp, crp->crp_reqid, crp->crp_desc->crd_alg));
+	DPRINTF(("crypto_dispatch: crp %p, alg %d\n",
+		crp, crp->crp_desc->crd_alg));
 
 	cryptostats.cs_ops++;
 
@@ -928,7 +928,6 @@ crypto_invoke(struct cryptop *crp, int hint)
 
 	hid = CRYPTO_SESID2HID(crp->crp_sid);
 
-	mutex_enter(&crypto_mtx);
 	if (hid < crypto_drivers_num) {
 		int (*process)(void *, struct cryptop *, int);
 		void *arg;
@@ -940,7 +939,6 @@ crypto_invoke(struct cryptop *crp, int hint)
 		}
 		process = crypto_drivers[hid].cc_process;
 		arg = crypto_drivers[hid].cc_arg;
-		mutex_exit(&crypto_mtx);
 
 		/*
 		 * Invoke the driver to process the request.
@@ -957,8 +955,6 @@ crypto_invoke(struct cryptop *crp, int hint)
 		 */
 		for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
 			crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
-
-		mutex_exit(&crypto_mtx);
 
 		if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
 			crp->crp_sid = nid;
@@ -992,7 +988,6 @@ crypto_freereq(struct cryptop *crp)
 		crp->crp_desc = crd->crd_next;
 		pool_put(&cryptodesc_pool, crd);
 	}
-	cv_destroy(&crp->crp_cv);
 	pool_put(&cryptop_pool, crp);
 }
 
@@ -1010,7 +1005,6 @@ crypto_getreq(int num)
 		return NULL;
 	}
 	memset(crp, 0, sizeof(struct cryptop));
-	cv_init(&crp->crp_cv, "crydev");
 
 	while (num--) {
 		crd = pool_get(&cryptodesc_pool, 0);

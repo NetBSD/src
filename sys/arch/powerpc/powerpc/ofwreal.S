@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.11.42.1 2011/03/05 20:51:41 rmind Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.11.42.2 2011/06/12 00:24:05 rmind Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -95,8 +95,10 @@ ENTRY(ofwr_init)
 fwentry:
 	mflr	%r0			/* save return address */
 	stw	%r0,4(%r1)
-	stwu	%r1,-16(%r1)		/* setup stack frame */
+	stwu	%r1,-32(%r1)		/* setup stack frame */
 	stw	%r3,8(%r1)		/* save arg */
+	stw	%r2,16(%r1)		/* save r2 */
+	stw	%r13,20(%r1)		/* save r13 */
 
 	lis	%r3,clsave@ha		/* save mmu values of client */
 	addi	%r3,%r3,clsave@l
@@ -133,6 +135,8 @@ fwentry:
 	addi	%r3,%r3,clsave@l
 	bl	restoremmu
 
+	lwz	%r13,20(%r1)		/* restore saved value */
+	lwz	%r2,16(%r1)		/* restore saved value */
 	lwz	%r3,8(%r1)		/* restore return value */
 	lwz	%r1,0(%r1)		/* and return */
 	lwz	%r0,4(%r1)

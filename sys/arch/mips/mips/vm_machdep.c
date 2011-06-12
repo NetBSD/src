@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.130.4.2 2011/05/31 03:04:10 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.130.4.3 2011/06/12 00:24:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.130.4.2 2011/05/31 03:04:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.130.4.3 2011/06/12 00:24:01 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -97,11 +97,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_ss_addr = 0;
 	l2->l_md.md_ss_instr = 0;
 	l2->l_md.md_astpending = 0;
-
-#ifndef NOFPU
-	/* If parent LWP was using FPU, then save the FPU h/w state. */
-	fpu_save();
-#endif
 
 	/* Copy the PCB from parent. */
 	*pcb2 = *pcb1;
@@ -260,9 +255,8 @@ cpu_uarea_free(void *va)
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-	KASSERT(l == curlwp);
 
-	fpu_discard();
+	(void)l;
 }
 
 vaddr_t

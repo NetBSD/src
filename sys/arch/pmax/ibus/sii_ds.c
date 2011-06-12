@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.6.4.1 2011/03/05 20:51:30 rmind Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.6.4.2 2011/06/12 00:24:03 rmind Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.6.4.1 2011/03/05 20:51:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.6.4.2 2011/06/12 00:24:03 rmind Exp $");
 
 #include "sii.h"
 
@@ -58,7 +58,7 @@ static void	kn01_copyfrombuf(volatile u_short *src, char *dst,
 static int	sii_ds_match(device_t, struct cfdata *, void *);
 static void	sii_ds_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sii_ds, sizeof(struct siisoftc),
+CFATTACH_DECL_NEW(sii_ds, sizeof(struct siisoftc),
     sii_ds_match, sii_ds_attach, NULL, NULL);
 
 /* define a safe address in the SCSI buffer for doing status & message DMA */
@@ -88,6 +88,7 @@ sii_ds_attach(device_t parent, device_t self, void *aux)
 	struct ibus_attach_args *ia = aux;
 	struct siisoftc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_regs = (SIIRegs *)MIPS_PHYS_TO_KSEG1(ia->ia_addr);
 
 	/* set up scsi buffer.  XXX Why statically allocated? */

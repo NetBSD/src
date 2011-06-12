@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.12 2008/04/28 20:23:12 martin Exp $ */
+/* $NetBSD: toccata.c,v 1.12.22.1 2011/06/12 00:23:53 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.12 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.12.22.1 2011/06/12 00:23:53 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -222,14 +222,14 @@ struct toccata_softc {
 	void			 *sc_playarg;
 };
 
-int toccata_match(struct device *, struct cfdata *, void *);
-void toccata_attach(struct device *, struct device *, void *);
+int toccata_match(device_t, cfdata_t, void *);
+void toccata_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(toccata, sizeof(struct toccata_softc),
+CFATTACH_DECL_NEW(toccata, sizeof(struct toccata_softc),
     toccata_match, toccata_attach, NULL, NULL);
 
 int
-toccata_match(struct device *parent, struct cfdata *cfp, void *aux)
+toccata_match(device_t parent, cfdata_t cfp, void *aux)
 {
 	struct zbus_args *zap;
 
@@ -245,15 +245,16 @@ toccata_match(struct device *parent, struct cfdata *cfp, void *aux)
 }
 
 void
-toccata_attach(struct device *parent, struct device *self, void *aux)
+toccata_attach(device_t parent, device_t self, void *aux)
 {
 	struct toccata_softc *sc;
 	struct ad1848_softc *asc;
 	struct zbus_args *zap;
 	volatile uint8_t *boardp;
 
-	sc = (struct toccata_softc *)self;
+	sc = device_private(self);
 	asc = &sc->sc_ad;
+	asc->sc_dev = self;
 	zap = aux;
 
 	boardp = (volatile uint8_t *)zap->va;
@@ -280,7 +281,7 @@ toccata_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_isr.isr_intr = toccata_intr;
 	add_isr(&sc->sc_isr);
 
-	audio_attach_mi(&audiocs_hw_if, sc, &asc->sc_dev);
+	audio_attach_mi(&audiocs_hw_if, sc, self);
 
 }
 
@@ -329,8 +330,8 @@ toccata_intr(void *tag) {
 	 * FIFO interrupt.
 	 */
 #ifdef DEBUG
-	printf("%s: got unexpected interrupt %x\n", sc->sc_ad.sc_dev.dv_xname,
-	    status);
+	printf("%s: got unexpected interrupt %x\n",
+	    device_xname(sc->sc_ad.sc_dev), status);
 #endif
 	*sc->sc_boardp = TOCC_ACT;
 	return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3.4.2 2011/03/05 20:52:38 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3.4.3 2011/06/12 00:24:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3.4.2 2011/03/05 20:52:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3.4.3 2011/06/12 00:24:12 rmind Exp $");
 
 /*
  *	Manages physical address maps.
@@ -97,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3.4.2 2011/03/05 20:52:38 rmind Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
+
+#define __PMAP_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,27 +319,34 @@ pmap_page_set_attributes(struct vm_page *pg, u_int set_attributes)
 #endif
 }
 
-static inline void
+static void
 pmap_page_syncicache(struct vm_page *pg)
 {
-#ifdef MULTIPROCESSOR
+#ifndef MULTIPROCESSOR
+	struct pmap * const curpmap = curcpu()->ci_curpm;
+#endif
 	pv_entry_t pv = &VM_PAGE_TO_MD(pg)->mdpg_first;
-	uint32_t onproc = 0;
+	__cpuset_t onproc = CPUSET_NULLSET;
 	(void)VM_PAGE_PVLIST_LOCK(pg, false);
 	if (pv->pv_pmap != NULL) {
 		for (; pv != NULL; pv = pv->pv_next) {
-			onproc |= pv->pv_pmap->pm_onproc;
-			if (onproc == cpus_running)
+#ifdef MULTIPROCESSOR
+			CPUSET_MERGE(onproc, pv->pv_pmap->pm_onproc);
+			if (CPUSET_EQUAL_P(onproc, cpus_running)) {
 				break;
+			}
+#else
+			if (pv->pv_pmap == curpmap) {
+				onproc = CPUSET_SINGLE(0);
+				break;
+			}
+#endif
 		}
 	}
 	VM_PAGE_PVLIST_UNLOCK(pg);
 	kpreempt_disable();
-	pmap_tlb_syncicache(VM_PAGE_TO_MD(pg)->mdpg_first.pv_va, onproc);
+	pmap_md_page_syncicache(pg, onproc);
 	kpreempt_enable();
-#else
-	pmap_md_page_syncicache(pg);
-#endif
 }
 
 /*
@@ -1582,7 +1591,7 @@ pmap_pvlist_lock_init(size_t cache_line_size)
 	struct pmap_pvlist_info * const pli = &pmap_pvlist_info;
 	const vaddr_t lock_page = uvm_pageboot_alloc(PAGE_SIZE);
 	vaddr_t lock_va = lock_page;
-	if (sizeof(kmutex_t) > dcache_line_size) {
+	if (sizeof(kmutex_t) > cache_line_size) {
 		cache_line_size = roundup2(sizeof(kmutex_t), cache_line_size);
 	}
 	const size_t nlocks = PAGE_SIZE / cache_line_size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.22.2.4 2011/05/31 03:05:02 rmind Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.22.2.5 2011/06/12 00:24:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.22.2.4 2011/05/31 03:05:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.22.2.5 2011/06/12 00:24:29 rmind Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.22.2.4 2011/05/31 03:05:02 rmind Exp
 #include <sys/cpu.h>
 #include <sys/module.h>
 #include <sys/bus.h>
+#include <sys/userconf.h>
 
 bool default_bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
 
@@ -110,6 +111,7 @@ __weak_alias(ktr_kuser,nullop);
 __weak_alias(ktr_mib,nullop);
 __weak_alias(ktr_execarg,nullop);
 __weak_alias(ktr_execenv,nullop);
+__weak_alias(ktr_execfd,nullop);
 
 __weak_alias(sys_fktrace,sys_nosys);	/* Syscalls */
 __weak_alias(sys_ktrace,sys_nosys);
@@ -130,6 +132,9 @@ __weak_alias(pci_chipset_tag_destroy, voidop);
 __weak_alias(bus_space_tag_create, eopnotsupp);
 __weak_alias(bus_space_tag_destroy, voidop);
 __weak_alias(bus_space_is_equal, default_bus_space_is_equal);
+__weak_alias(userconf_bootinfo, voidop);
+__weak_alias(userconf_init, voidop);
+__weak_alias(userconf_prompt, voidop);
 
 __weak_alias(kobj_renamespace, nullop);
 

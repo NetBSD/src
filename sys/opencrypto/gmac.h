@@ -1,4 +1,4 @@
-/* $NetBSD: gmac.h,v 1.1.2.2 2011/05/31 03:05:10 rmind Exp $ */
+/* $NetBSD: gmac.h,v 1.1.2.3 2011/06/12 00:24:31 rmind Exp $ */
 /* OpenBSD: gmac.h,v 1.1 2010/09/22 11:54:23 mikeb Exp */
 
 /*
@@ -25,10 +25,18 @@
 #define GMAC_BLOCK_LEN		16
 #define GMAC_DIGEST_LEN		16
 
+#ifdef _LP64
+#define GMAC_INT uint64_t
+#define GMAC_INTLEN 8
+#else
+#define GMAC_INT uint32_t
+#define GMAC_INTLEN 4
+#endif
+
 typedef struct _GHASH_CTX {
-	uint32_t	H[GMAC_BLOCK_LEN/4];		/* hash subkey */
-	uint32_t	S[GMAC_BLOCK_LEN/4];		/* state */
-	uint32_t	Z[GMAC_BLOCK_LEN/4];		/* initial state */
+	GMAC_INT	H[GMAC_BLOCK_LEN/GMAC_INTLEN];	/* hash subkey */
+	GMAC_INT	S[GMAC_BLOCK_LEN/GMAC_INTLEN];	/* state */
+	GMAC_INT	Z[GMAC_BLOCK_LEN/GMAC_INTLEN];	/* initial state */
 } GHASH_CTX;
 
 typedef struct _AES_GMAC_CTX {

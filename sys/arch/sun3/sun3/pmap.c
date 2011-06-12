@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164.4.1 2011/03/05 20:52:13 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.4.2 2011/06/12 00:24:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.4.1 2011/03/05 20:52:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.4.2 2011/06/12 00:24:09 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.4.1 2011/03/05 20:52:13 rmind Exp $")
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/kcore.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
@@ -247,12 +248,6 @@ struct pmap_stats {
 	int	ps_vac_uncached;	/* non-cached due to bad alias */
 	int	ps_vac_recached;	/* re-cached when bad alias gone */
 } pmap_stats;
-
-#define pmap_lock(pmap) simple_lock(&pmap->pm_lock)
-#define pmap_unlock(pmap) simple_unlock(&pmap->pm_lock)
-#define pmap_add_ref(pmap) ++pmap->pm_refcount
-#define pmap_del_ref(pmap) --pmap->pm_refcount
-#define pmap_refcount(pmap) pmap->pm_refcount
 
 #ifdef	PMAP_DEBUG
 #define	CHECK_SPL() do { \
@@ -1490,7 +1485,6 @@ pmap_common_init(pmap_t pmap)
 	pmap->pm_refcount = 1;
 	pmap->pm_version = pmap_version++;
 	pmap->pm_ctxnum = EMPTY_CONTEXT;
-	simple_lock_init(&pmap->pm_lock);
 }
 
 /*
@@ -1929,9 +1923,7 @@ pmap_destroy(pmap_t pmap)
 #endif
 	if (pmap == kernel_pmap)
 		panic("pmap_destroy: kernel_pmap!");
-	pmap_lock(pmap);
-	count = pmap_del_ref(pmap);
-	pmap_unlock(pmap);
+	count = atomic_dec_uint_nv(&pmap->pm_refcount);
 	if (count == 0) {
 		pmap_release(pmap);
 		pool_put(&pmap_pmap_pool, pmap);
@@ -1944,9 +1936,8 @@ pmap_destroy(pmap_t pmap)
 void 
 pmap_reference(pmap_t pmap)
 {
-	pmap_lock(pmap);
-	pmap_add_ref(pmap);
-	pmap_unlock(pmap);
+
+	atomic_inc_uint(&pmap->pm_refcount);
 }
 
 

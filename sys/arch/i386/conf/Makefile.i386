@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.166.4.2 2011/05/31 03:04:03 rmind Exp $
+#	$NetBSD: Makefile.i386,v 1.166.4.3 2011/06/12 00:23:58 rmind Exp $
 
 # Makefile for NetBSD
 #
@@ -35,8 +35,11 @@ GENASSYM_CONF=	${I386}/i386/genassym.cf
 ##
 CPPFLAGS+=	-Di386
 
+AFLAGS.via_padlock.c= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.mptramp.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 CWARNFLAGS.ah_regdomain.c= ${${ACTIVE_CC} == "clang":?-Wno-error:}
+AFLAGS.spl.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.lock_stubs.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 ##
 ## (3) libkern and compat

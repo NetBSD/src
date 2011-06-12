@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusvar.h,v 1.8.86.1 2011/04/21 01:41:26 rmind Exp $	*/
+/*	$NetBSD: ebusvar.h,v 1.8.86.2 2011/06/12 00:24:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -46,7 +46,7 @@
 #include <dev/ebus/ebusvar.h>
 
 struct ebus_softc {
-	struct device			sc_dev;
+	device_t			sc_dev;
 
 	int				sc_node;
 

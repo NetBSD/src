@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.33.2.2 2011/03/05 20:54:08 rmind Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.33.2.3 2011/06/12 00:24:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -83,7 +83,7 @@ struct envsys_data {
 	int32_t		value_cur;	/* current value */
 	int32_t		value_max;	/* max value */
 	int32_t		value_min;	/* min value */
-	int32_t		value_avg;	/* avg value */
+	int32_t		private;	/* private data for drivers */
 	sysmon_envsys_lim_t limits;	/* thresholds for monitoring */
 	int		upropset;	/* userland property set? */
 	char		desc[ENVSYS_DESCLEN];	/* sensor description */
@@ -95,7 +95,7 @@ typedef struct envsys_data envsys_data_t;
 #define ENVSYS_FPERCENT 	0x00000001	/* sensor wants a percentage */
 #define ENVSYS_FVALID_MAX	0x00000002	/* max value is ok */
 #define ENVSYS_FVALID_MIN	0x00000004	/* min value is ok */
-#define ENVSYS_FVALID_AVG	0x00000008	/* avg value is ok */
+#define ENVSYS_F_OBSOLETE	0x00000008
 #define ENVSYS_FCHANGERFACT	0x00000010	/* sensor can change rfact */
 
 /* monitoring flags */

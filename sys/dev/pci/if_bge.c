@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.180.4.5 2011/05/31 03:04:39 rmind Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.180.4.6 2011/06/12 00:24:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.4.5 2011/05/31 03:04:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.4.6 2011/06/12 00:24:16 rmind Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -2617,8 +2617,9 @@ bge_attach(device_t parent, device_t self, void *aux)
 			    BGE_PCI_PRODID_ASICREV);
 	}
 
-	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PCIEXPRESS,
-	        &sc->bge_pciecap, NULL) != 0) {
+	if ((pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PCIEXPRESS,
+	        &sc->bge_pciecap, NULL) != 0)
+	    || (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785)) {
 		/* PCIe */
 		sc->bge_flags |= BGE_PCIE;
 		bge_set_max_readrq(sc);
@@ -3406,6 +3407,11 @@ bge_rxeof(struct bge_softc *sc)
 			stdcnt++;
 			dmamap = sc->bge_cdata.bge_rx_std_map[rxidx];
 			sc->bge_cdata.bge_rx_std_map[rxidx] = 0;
+			if (dmamap == NULL) {
+				ifp->if_ierrors++;
+				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
+				continue;
+			}
 			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0,
 			    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->bge_dmatag, dmamap);

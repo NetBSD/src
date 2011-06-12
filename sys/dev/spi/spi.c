@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.3.22.1 2011/03/05 20:54:06 rmind Exp $ */
+/* $NetBSD: spi.c,v 1.3.22.2 2011/06/12 00:24:26 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.3.22.1 2011/03/05 20:54:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.3.22.2 2011/06/12 00:24:26 rmind Exp $");
 
 #include "locators.h"
 
@@ -50,7 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.3.22.1 2011/03/05 20:54:06 rmind Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/errno.h>
 
 #include <dev/spi/spivar.h>
@@ -90,7 +91,7 @@ spibus_print(void *aux, const char *pnp)
 static int
 spi_match(device_t parent, cfdata_t cf, void *aux)
 {
-	
+
 	return 1;
 }
 
@@ -188,7 +189,7 @@ spi_configure(struct spi_handle *sh, int mode, int speed)
 	if ((sc->sc_mode >= 0) && (sc->sc_mode != mode))
 		return EINVAL;
 
-	s = splserial();
+	s = splbio();
 	/* pick lowest configured speed */
 	if (speed == 0)
 		speed = sc->sc_speed;
@@ -210,7 +211,9 @@ void
 spi_transfer_init(struct spi_transfer *st)
 {
 
-	simple_lock_init(&st->st_lock);
+	mutex_init(&st->st_lock, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&st->st_cv, "spicv");
+
 	st->st_flags = 0;
 	st->st_errno = 0;
 	st->st_done = NULL;
@@ -267,24 +270,19 @@ spi_transfer(struct spi_handle *sh, struct spi_transfer *st)
 void
 spi_wait(struct spi_transfer *st)
 {
-	int	s;
 
-	s = splserial();
-	simple_lock(&st->st_lock);
+	mutex_enter(&st->st_lock);
 	while (!(st->st_flags & SPI_F_DONE)) {
-		ltsleep(st, PWAIT, "spi_wait", 0, &st->st_lock);
+		cv_wait(&st->st_cv, &st->st_lock);
 	}
-	simple_unlock(&st->st_lock);
-	splx(s);
+	mutex_exit(&st->st_lock);
 }
 
 void
 spi_done(struct spi_transfer *st, int err)
 {
-	int	s;
 
-	s = splserial();
-	
+	mutex_enter(&st->st_lock);
 	if ((st->st_errno = err) != 0) {
 		st->st_flags |= SPI_F_ERROR;
 	}
@@ -292,12 +290,9 @@ spi_done(struct spi_transfer *st, int err)
 	if (st->st_done != NULL) {
 		(*st->st_done)(st);
 	} else {
-
-		simple_lock(&st->st_lock);
-		wakeup(st);
-		simple_unlock(&st->st_lock);
+		cv_broadcast(&st->st_cv);
 	}
-	splx(s);
+	mutex_exit(&st->st_lock);
 }
 
 /*

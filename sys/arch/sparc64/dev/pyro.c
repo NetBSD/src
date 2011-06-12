@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.4.2.3 2011/05/31 03:04:18 rmind Exp $	*/
+/*	$NetBSD: pyro.c,v 1.4.2.4 2011/06/12 00:24:08 rmind Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -79,11 +79,11 @@ int pyro_debug = 0x4;
 
 extern struct sparc_pci_chipset _sparc_pci_chipset;
 
-int pyro_match(struct device *, struct cfdata *, void *);
-void pyro_attach(struct device *, struct device *, void *);
+int pyro_match(device_t, cfdata_t, void *);
+void pyro_attach(device_t, device_t, void *);
 int pyro_print(void *, const char *);
 
-CFATTACH_DECL(pyro, sizeof(struct pyro_softc),
+CFATTACH_DECL_NEW(pyro, sizeof(struct pyro_softc),
     pyro_match, pyro_attach, NULL, NULL);
 
 void pyro_init(struct pyro_softc *, int);
@@ -119,7 +119,7 @@ int pyro_dmamap_create(bus_dma_tag_t, bus_size_t, int,
     bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
 int
-pyro_match(struct device *parent, struct cfdata *match, void *aux)
+pyro_match(struct device *parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	char *str;
@@ -138,11 +138,12 @@ pyro_match(struct device *parent, struct cfdata *match, void *aux)
 void
 pyro_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pyro_softc *sc = (struct pyro_softc *)self;
+	struct pyro_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	char *str;
 	int busa;
 
+	sc->sc_dev = self;
 	sc->sc_node = ma->ma_node;
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bustag = ma->ma_bustag;
@@ -201,7 +202,7 @@ pyro_init(struct pyro_softc *sc, int busa)
 	    prom_getpropint(sc->sc_node, "module-revision#", 0), sc->sc_ign,
 	    busa ? 'A' : 'B', busranges[0], busranges[1]);
 
-	printf("%s: ", sc->sc_dv.dv_xname);
+	printf("%s: ", device_xname(sc->sc_dev));
 	pyro_init_iommu(sc, pbm);
 
 	pbm->pp_memt = pyro_alloc_mem_tag(pbm);
@@ -237,7 +238,7 @@ pyro_init(struct pyro_softc *sc, int busa)
 
 	free(busranges, M_DEVBUF);
 
-	config_found(&sc->sc_dv, &pba, pyro_print);
+	config_found(sc->sc_dev, &pba, pyro_print);
 }
 
 void
@@ -262,7 +263,7 @@ pyro_init_iommu(struct pyro_softc *sc, struct pyro_pbm *pbm)
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
 	if (name == NULL)
 		panic("couldn't malloc iommu name");
-	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
+	snprintf(name, 32, "%s dvma", device_xname(sc->sc_dev));
 
 	/* Tell iommu how to set the TSB size.  */
 	is->is_flags = IOMMU_TSBSIZE_IN_PTSB;
@@ -387,7 +388,7 @@ pyro_alloc_bus_tag(struct pyro_pbm *pbm, const char *name, int type)
 
 #if 0
 	snprintf(bt->name, sizeof(bt->name), "%s-pbm_%s(%d/%2.2x)",
-	    sc->sc_dv.dv_xname, name, ss, asi);
+	    device_xname(sc->sc_dev), name, ss, asi);
 #endif
 
 	bt->cookie = pbm;

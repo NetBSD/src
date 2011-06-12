@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbvar.h,v 1.8.80.2 2011/04/21 01:41:26 rmind Exp $	*/
+/*	$NetBSD: ffbvar.h,v 1.8.80.3 2011/06/12 00:24:08 rmind Exp $	*/
 /*	$OpenBSD: creatorvar.h,v 1.6 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #define EDID_DATA_LEN		128
 
 struct ffb_softc {
-	struct device sc_dv;
+	device_t sc_dev;
 	struct fbdevice sc_fb;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_dac_h;

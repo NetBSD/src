@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.56.6.1 2011/05/31 03:05:12 rmind Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.56.6.2 2011/06/12 00:24:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -217,6 +217,14 @@ struct ktr_saupcall {
 #define KTR_MIB		14
 	/* Record contains MIB name */
 
+/*
+ * KTR_EXEC_FD - Opened file descriptor from exec
+ */
+#define KTR_EXEC_FD		15
+struct ktr_execfd {
+	int   ktr_fd;
+	u_int ktr_dtype; /* one of DTYPE_* constants */
+};
 
 /*
  * kernel trace points (in p_traceflag)
@@ -234,6 +242,7 @@ struct ktr_saupcall {
 #define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
 #define	KTRFAC_SAUPCALL	(1<<KTR_SAUPCALL)
 #define	KTRFAC_MIB	(1<<KTR_MIB)
+#define	KTRFAC_EXEC_FD	(1<<KTR_EXEC_FD)
 /*
  * trace flags (also in p_traceflags)
  */
@@ -286,6 +295,7 @@ void ktr_kuser(const char *, void *, size_t);
 void ktr_mib(const int *a , u_int b);
 void ktr_execarg(const void *, size_t);
 void ktr_execenv(const void *, size_t);
+void ktr_execfd(int, u_int);
 void ktr_saupcall(struct lwp *, int, int, int, void *, void *, void *);
 
 static inline bool
@@ -390,6 +400,13 @@ ktrexecenv(const void *a, size_t b)
 {
 	if (__predict_false(ktrace_on))
 		ktr_execenv(a, b);
+}
+
+static inline void
+ktrexecfd(int fd, u_int dtype)
+{
+	if (__predict_false(ktrace_on))
+		ktr_execfd(fd, dtype);
 }
 
 static inline void

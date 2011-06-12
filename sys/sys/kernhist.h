@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.1.2.2 2011/05/31 03:05:12 rmind Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.1.2.3 2011/06/12 00:24:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -150,25 +150,26 @@ do { \
 		_i_ = (NAME).f; \
 		_j_ = (_i_ + 1 < (NAME).n) ? _i_ + 1 : 0; \
 	} while (atomic_cas_uint(&(NAME).f, _i_, _j_) != _i_); \
-	if (!cold) \
-		microtime(&(NAME).e[_i_].tv); \
-	(NAME).e[_i_].cpunum = cpu_number(); \
-	(NAME).e[_i_].fmt = (FMT); \
-	(NAME).e[_i_].fmtlen = strlen(FMT); \
-	(NAME).e[_i_].fn = _kernhist_name; \
-	(NAME).e[_i_].fnlen = strlen(_kernhist_name); \
-	(NAME).e[_i_].call = _kernhist_call; \
-	(NAME).e[_i_].v[0] = (u_long)(A); \
-	(NAME).e[_i_].v[1] = (u_long)(B); \
-	(NAME).e[_i_].v[2] = (u_long)(C); \
-	(NAME).e[_i_].v[3] = (u_long)(D); \
-	KERNHIST_PRINTNOW(&((NAME).e[_i_])); \
+	struct kern_history_ent * const _e_ = &(NAME).e[_i_]; \
+	if (__predict_true(!cold)) \
+		microtime(&_e_->tv); \
+	_e_->cpunum = cpu_number(); \
+	_e_->fmt = (FMT); \
+	_e_->fmtlen = strlen(FMT); \
+	_e_->fn = _kernhist_name; \
+	_e_->fnlen = strlen(_kernhist_name); \
+	_e_->call = _kernhist_call; \
+	_e_->v[0] = (u_long)(A); \
+	_e_->v[1] = (u_long)(B); \
+	_e_->v[2] = (u_long)(C); \
+	_e_->v[3] = (u_long)(D); \
+	KERNHIST_PRINTNOW(_e_); \
 } while (/*CONSTCOND*/ 0)
 
 #define KERNHIST_CALLED(NAME) \
 do { \
 	_kernhist_call = atomic_inc_uint_nv(&_kernhist_cnt); \
-	KERNHIST_LOG(NAME,"called!", 0, 0, 0, 0); \
+	KERNHIST_LOG(NAME, "called!", 0, 0, 0, 0); \
 } while (/*CONSTCOND*/ 0)
 
 #define KERNHIST_FUNC(FNAME) \
@@ -176,11 +177,10 @@ do { \
 	static const char *const _kernhist_name = FNAME; \
 	int _kernhist_call = 0;
 
-static inline void kernhist_entry_print(struct kern_history_ent *);
+static inline void kernhist_entry_print(const struct kern_history_ent *);
 
 static inline void
-kernhist_entry_print(e)
-	struct kern_history_ent *e;
+kernhist_entry_print(const struct kern_history_ent *e)
 {
 	printf("%06" PRIu64 ".%06d ", e->tv.tv_sec, e->tv.tv_usec);
 	printf("%s#%ld@%d: ", e->fn, e->call, e->cpunum);

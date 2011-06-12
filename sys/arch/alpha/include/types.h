@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.42.4.3 2011/04/21 01:40:46 rmind Exp $ */
+/* $NetBSD: types.h,v 1.42.4.4 2011/06/12 00:23:52 rmind Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -84,6 +84,11 @@ typedef	volatile int		__cpu_simple_lock_t;
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS
+#endif
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
+#define	PCU_FPU		0	/* FPU */
+#define	PCU_UNIT_COUNT	1
 #endif
 
 #endif	/* _MACHTYPES_H_ */

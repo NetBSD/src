@@ -1,5 +1,5 @@
-/*	$Id: at91aic.c,v 1.3.4.2 2011/03/05 20:49:31 rmind Exp $	*/
-/*	$NetBSD: at91aic.c,v 1.3.4.2 2011/03/05 20:49:31 rmind Exp $	*/
+/*	$Id: at91aic.c,v 1.3.4.3 2011/06/12 00:23:53 rmind Exp $	*/
+/*	$NetBSD: at91aic.c,v 1.3.4.3 2011/06/12 00:23:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -75,7 +75,7 @@ volatile u_int32_t aic_intr_enabled;
 static int	at91aic_match(device_t, cfdata_t, void *);
 static void	at91aic_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(at91aic, sizeof(struct device),
+CFATTACH_DECL_NEW(at91aic, 0,
 	      at91aic_match, at91aic_attach, NULL, NULL);
 
 static int

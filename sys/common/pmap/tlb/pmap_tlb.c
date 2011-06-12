@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.3.2.2 2011/03/05 20:52:38 rmind Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.3.2.3 2011/06/12 00:24:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.2.2 2011/03/05 20:52:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.2.3 2011/06/12 00:24:12 rmind Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.3.2.2 2011/03/05 20:52:38 rmind Exp $
  * a lot of overhead for not much gain.
  */
 
-#define _PMAP_PRIVATE
+#define __PMAP_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ pmap_pai_reset(struct pmap_tlb_info *ti, struct pmap_asid_info *pai,
 	 * The bits in pm_active belonging to this TLB can only be changed
 	 * while this TLB's lock is held.
 	 */
-	atomic_and_32(&pm->pm_active, ~ti->ti_cpu_mask);
+	CPUSET_DELSET(pm->pm_active, ti->ti_cpu_mask);
 #endif /* MULTIPROCESSOR */
 }
 
@@ -278,15 +278,15 @@ pmap_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 	KASSERT(cold);
 
 	TLBINFO_LOCK(ti);
-	uint32_t cpu_mask = 1 << cpu_index(ci);
-	ti->ti_cpu_mask |= cpu_mask;
+	const __cpuset_t cpu_mask = CPUSET_SINGLE(cpu_index(ci));
+	CPUSET_ADDSET(ti->ti_cpu_mask, cpu_mask);
 	ci->ci_tlb_info = ti;
 	ci->ci_ksp_tlb_slot = ti->ti_wired++;
 	/*
 	 * Mark the kernel as active and "onproc" for this cpu.
 	 */
-	pmap_kernel()->pm_active |= cpu_mask;
-	pmap_kernel()->pm_onproc |= cpu_mask;
+	CPUSET_ADDSET(pmap_kernel()->pm_active, cpu_mask);
+	CPUSET_ADDSET(pmap_kernel()->pm_onproc, cpu_mask);
 	TLBINFO_UNLOCK(ti);
 }
 #endif /* MULTIPROCESSOR */
@@ -367,7 +367,7 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 		KASSERT(pm != pmap_kernel());
 		KASSERT(pai->pai_asid > KERNEL_PID);
 #ifdef MULTIPROCESSOR
-		if (pm->pm_onproc & ti->ti_cpu_mask) {
+		if (!CPUSET_EMPTY_P(CPUSET_SUBSET(pm->pm_onproc, ti->ti_cpu_mask)) {
 			if (!TLBINFO_ASID_INUSE_P(ti, pai->pai_asid)) {
 				TLBINFO_ASID_MARK_USED(ti, pai->pai_asid);
 				ti->ti_asids_free--;
@@ -406,7 +406,7 @@ pmap_tlb_shootdown_process(void)
 		 */
 		struct pmap_asid_info * const pai = PMAP_PAI(ti->ti_victim, ti);
 		KASSERT(ti->ti_victim != pmap_kernel());
-		if (ti->ti_victim->pm_onproc & ti->ti_cpu_mask) {
+		if (!CPU_EMPTY(CPUSET_SUBSET(ti->ti_victim->pm_onproc, ti->ti_cpu_mask)) {
 			/*
 			 * The victim is an active pmap so we will just
 			 * invalidate its TLB entries.
@@ -420,7 +420,7 @@ pmap_tlb_shootdown_process(void)
 			 * next called for this pmap, it will allocate a new
 			 * ASID.
 			 */
-			KASSERT((pm->pm_onproc & ti->ti_cpu_mask) == 0);
+			KASSERT(!CPUSET_EMPTY_P(CPUSET_SUBSET(pm->pm_onproc, ti->ti_cpu_mask)));
 			pmap_pai_reset(ti, pai, PAI_PMAP(pai, ti));
 		}
 		break;
@@ -485,7 +485,8 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 	/*
 	 * We don't need to deal our own TLB.
 	 */
-	uint32_t pm_active = pm->pm_active & ~curcpu()->ci_tlb_info->ti_cpu_mask;
+	__cpuset_t pm_active =
+	   CPUSET_EXCLUDE(pm->pm_active, curcpu()->ci_tlb_info->ti_cpu_mask);
 	const bool kernel_p = (pm == pmap_kernel());
 	bool ipi_sent = false;
 
@@ -494,19 +495,20 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 	 * have been made so they will already be cognizant of them.
 	 */
 
-	for (size_t i = 0; pm_active != 0; i++) {
+	for (size_t i = 0; !CPUSET_EMPTY_P(pm_active); i++) {
 		KASSERT(i < pmap_ntlbs);
 		struct pmap_tlb_info * const ti = pmap_tlbs[i];
 		KASSERT(tlbinfo_index(ti) == i);
 		/*
 		 * Skip this TLB if there are no active mappings for it.
 		 */
-		if ((pm_active & ti->ti_cpu_mask) == 0)
+		if (CPUSET_EMPTY_P(CPUSET_SUBSET(pm_active, ti->ti_cpu_mask)))
 			continue;
 		struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
-		pm_active &= ~ti->ti_cpu_mask;
+		CPUSET_DELSET(pm_active, ti->ti_cpu_mask);
 		TLBINFO_LOCK(ti);
-		const uint32_t onproc = (pm->pm_onproc & ti->ti_cpu_mask);
+		const __cpuset onproc = CPUSET_SUBSET(pm->pm_onproc,
+		    ti->ti_cpu_mask);
 		if (onproc != 0) {
 			if (kernel_p) {
 				ti->ti_tlbinvop =
@@ -539,13 +541,13 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 			 * change now that we have released the lock but we
 			 * can tolerate spurious shootdowns.
 			 */
-			KASSERT(onproc != 0);
-			u_int j = ffs(onproc) - 1;
+			KASSERT(!CPU_EMPTY_P(onproc));
+			u_int j = CPUSET_NEXT(onproc);
 			cpu_send_ipi(cpu_lookup(j), IPI_SHOOTDOWN);
 			ipi_sent = true;
 			continue;
 		}
-		if (pm->pm_active & ti->ti_cpu_mask) {
+		if (!CPUSET_EMPTY_P(CPUSET_SUBSET(pm->pm_active, ti->ti_cpu_mask) {
 			/*
 			 * If this pmap has an ASID assigned but it's not
 			 * currently running, nuke its ASID.  Next time the
@@ -611,8 +613,8 @@ pmap_tlb_asid_alloc(struct pmap_tlb_info *ti, pmap_t pm,
 	KASSERT(pai->pai_asid == 0);
 	KASSERT(pai->pai_link.le_prev == NULL);
 #ifdef MULTIPROCESSOR
-	KASSERT((pm->pm_onproc & ti->ti_cpu_mask) == 0);
-	KASSERT((pm->pm_active & ti->ti_cpu_mask) == 0);
+	KASSERT(CPU_EMPTY_P(CPUSET_INTESECTION(pm->pm_onproc, ti->ti_cpu_mask)));
+	KASSERT(CPU_EMPTY_P(CPUSET_INTESECTION(pm->pm_active, ti->ti_cpu_mask)));
 #endif
 	KASSERT(ti->ti_asids_free > 0);
 	KASSERT(ti->ti_asid_hint <= ti->ti_asid_max);
@@ -716,7 +718,7 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 		 * The bits in pm_onproc belonging to this TLB can only
 		 * be changed while this TLBs lock is held.
 		 */
-		atomic_or_32(&pm->pm_onproc, 1 << cpu_index(ci));
+		CPUSET_ADD(&pm->pm_onproc, cpu_index(ci));
 #endif
 		tlb_set_asid(pai->pai_asid);
 	}
@@ -748,7 +750,7 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 		 * The bits in pm_onproc belonging to this TLB can only
 		 * be changed while this TLBs lock is held.
 		 */
-		atomic_and_32(&pm->pm_onproc, ~(1 << cpu_index(ci)));
+		CPUSET_DEL(pm->pm_onproc, cpu_index(ci));
 		TLBINFO_UNLOCK(ti);
 	}
 #endif
@@ -759,11 +761,11 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 {
 #if defined(MULTIPROCESSOR)
 	KASSERT(pm != pmap_kernel());
-	KASSERT(pm->pm_onproc == 0);
-	for (u_int i = 0; pm->pm_active != 0; i++) {
+	KASSERT(CPUSET_EMPTY(pm->pm_onproc));
+	for (u_int i = 0; !CPUSET_EMPTY(pm->pm_active); i++) {
 		KASSERT(i < pmap_ntlbs);
 		struct pmap_tlb_info * const ti = pmap_tlbs[i];
-		if (pm->pm_active & ti->ti_cpu_mask) {
+		if (!CPU_EMPTY_P(CPUSET_INTESECTION(pm->pm_active, ti->ti_cpu_mask))) {
 			struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 			TLBINFO_LOCK(ti);
 			KASSERT(ti->ti_victim != pm);

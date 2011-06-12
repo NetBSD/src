@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.173.2.3 2011/05/31 03:04:19 rmind Exp $ */
+/*	$NetBSD: autoconf.c,v 1.173.2.4 2011/06/12 00:24:08 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.173.2.3 2011/05/31 03:04:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.173.2.4 2011/06/12 00:24:08 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -149,8 +149,8 @@ char	ofbootpath[OFPATHLEN], *ofboottarget, *ofbootpartition;
 int	ofbootpackage;
 
 static	int mbprint(void *, const char *);
-int	mainbus_match(struct device *, struct cfdata *, void *);
-static	void mainbus_attach(struct device *, struct device *, void *);
+int	mainbus_match(device_t, cfdata_t, void *);
+static	void mainbus_attach(device_t, device_t, void *);
 static  void get_ncpus(void);
 static	void get_bootpath_from_prom(void);
 
@@ -190,7 +190,7 @@ int autoconf_debug = 0x0;
 int console_node, console_instance;
 struct genfb_colormap_callback gfb_cb;
 static void of_set_palette(void *, int, int, int, int);
-static void copyprops(struct device *busdev, int, prop_dictionary_t);
+static void copyprops(device_t, int, prop_dictionary_t, int);
 
 static void
 get_ncpus(void)
@@ -525,8 +525,7 @@ mbprint(void *aux, const char *name)
 }
 
 int
-mainbus_match(struct device * parent, struct cfdata * cf,
-	void *aux)
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
@@ -540,8 +539,7 @@ mainbus_match(struct device * parent, struct cfdata * cf,
  * We also record the `node id' of the default frame buffer, if any.
  */
 static void
-mainbus_attach(struct device * parent, struct device *dev,
-	void *aux)
+mainbus_attach(device_t parent, device_t dev, void *aux)
 {
 extern struct sparc_bus_dma_tag mainbus_dma_tag;
 extern struct sparc_bus_space_tag mainbus_space_tag;
@@ -602,7 +600,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	/*
 	 * Init static interrupt eventcounters
 	 */
-	for (i = 0; i < sizeof(intr_evcnts)/sizeof(intr_evcnts[0]); i++)
+	for (i = 0; i < __arraycount(intr_evcnts); i++)
 		evcnt_attach_static(&intr_evcnts[i]);
 
 	node = findroot();
@@ -714,7 +712,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	(void) config_found(dev, (void *)&ma, mbprint);
 }
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 
@@ -745,7 +743,7 @@ romgetcursoraddr(int **rowp, int **colp)
  * exactly, we found the boot device.
  */
 static void
-dev_path_exact_match(struct device *dev, int ofnode)
+dev_path_exact_match(device_t dev, int ofnode)
 {
 
 	if (ofnode != ofbootpackage)
@@ -762,7 +760,7 @@ dev_path_exact_match(struct device *dev, int ofnode)
  * the bootpath remainder.
  */
 static void
-dev_path_drive_match(struct device *dev, int ctrlnode, int target,
+dev_path_drive_match(device_t dev, int ctrlnode, int target,
     uint64_t wwn, int lun)
 {
 	int child = 0;
@@ -814,7 +812,7 @@ dev_path_drive_match(struct device *dev, int ctrlnode, int target,
  * dictionary.
  */
 static int
-device_ofnode(struct device *dev)
+device_ofnode(device_t dev)
 {
 	prop_dictionary_t props;
 	prop_object_t obj;
@@ -836,7 +834,7 @@ device_ofnode(struct device *dev)
  * of a struct device.
  */
 static void
-device_setofnode(struct device *dev, int node)
+device_setofnode(device_t dev, int node)
 {
 	prop_dictionary_t props;
 	prop_object_t obj;
@@ -859,9 +857,9 @@ device_setofnode(struct device *dev, int node)
  * Called back during autoconfiguration for each device found
  */
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
-	struct device *busdev = device_parent(dev);
+	device_t busdev = device_parent(dev);
 	int ofnode = 0;
 
 	/*
@@ -1079,12 +1077,13 @@ noether:
 				console = true;
 			}
 		}
-		
+
+		copyprops(busdev, ofnode, dict, console);
+
 		if (console) {
 			uint64_t cmap_cb;
 			prop_dictionary_set_uint32(dict,
 			    "instance_handle", console_instance);
-			copyprops(busdev, console_node, dict);
 
 			gfb_cb.gcc_cookie = 
 			    (void *)(intptr_t)console_instance;
@@ -1093,6 +1092,20 @@ noether:
 			prop_dictionary_set_uint64(dict,
 			    "cmap_callback", cmap_cb);
 		}
+#ifdef notyet 
+		else {
+			int width;
+
+			/*
+			 * the idea is to 'open' display devices with no useful
+			 * properties, in the hope that the firmware will
+			 * properly initialize them and we can run things like
+			 * genfb on them
+			 */
+			if (OF_getprop(node, "width", &width, sizeof(width))
+			    != 4) {
+				instance = OF_open(name);
+#endif
 	}
 }
 
@@ -1100,7 +1113,7 @@ noether:
  * Called back after autoconfiguration of a device is done
  */
 void
-device_register_post_config(struct device *dev, void *aux)
+device_register_post_config(device_t dev, void *aux)
 {
 	if (booted_device == NULL && device_is_a(dev, "sd")) {
 		struct scsipibus_attach_args *sa = aux;
@@ -1136,9 +1149,9 @@ device_register_post_config(struct device *dev, void *aux)
 }
 
 static void
-copyprops(struct device *busdev, int node, prop_dictionary_t dict)
+copyprops(device_t busdev, int node, prop_dictionary_t dict, int is_console)
 {
-	struct device *cntrlr;
+	device_t cntrlr;
 	prop_dictionary_t psycho;
 	paddr_t fbpa, mem_base = 0;
 	uint32_t temp, fboffset;
@@ -1153,21 +1166,15 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		prop_dictionary_get_uint64(psycho, "mem_base", &mem_base);
 	}
 
-	prop_dictionary_set_bool(dict, "is_console", 1);
-	if (!of_to_uint32_prop(dict, node, "width", "width")) {
+	if (is_console)
+		prop_dictionary_set_bool(dict, "is_console", 1);
 
-		OF_interpret("screen-width", 0, 1, &temp);
-		prop_dictionary_set_uint32(dict, "width", temp);
-	}
-	if (!of_to_uint32_prop(dict, console_node, "height", "height")) {
-
-		OF_interpret("screen-height", 0, 1, &temp);
-		prop_dictionary_set_uint32(dict, "height", temp);
-	}
-	of_to_uint32_prop(dict, console_node, "linebytes", "linebytes");
-	if (!of_to_uint32_prop(dict, console_node, "depth", "depth") &&
+	of_to_uint32_prop(dict, node, "width", "width");
+	of_to_uint32_prop(dict, node, "height", "height");
+	of_to_uint32_prop(dict, node, "linebytes", "linebytes");
+	if (!of_to_uint32_prop(dict, node, "depth", "depth") &&
 	    /* Some cards have an extra space in the property name */
-	    !of_to_uint32_prop(dict, console_node, "depth ", "depth")) {
+	    !of_to_uint32_prop(dict, node, "depth ", "depth")) {
 		/*
 		 * XXX we should check linebytes vs. width but those
 		 * FBs that don't have a depth property ( /chaos/control... )
@@ -1175,7 +1182,8 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		 */
 		prop_dictionary_set_uint32(dict, "depth", 8);
 	}
-	OF_getprop(console_node, "address", &fbaddr, sizeof(fbaddr));
+
+	OF_getprop(node, "address", &fbaddr, sizeof(fbaddr));
 	if (fbaddr != 0) {
 	
 		pmap_extract(pmap_kernel(), fbaddr, &fbpa);
@@ -1190,22 +1198,28 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 			fboffset = (uint32_t)(fbpa - mem_base);
 		prop_dictionary_set_uint32(dict, "address", fboffset);
 	}
-	if (!of_to_dataprop(dict, console_node, "EDID", "EDID"))
-		of_to_dataprop(dict, console_node, "edid", "EDID");
+
+	if (!of_to_dataprop(dict, node, "EDID", "EDID"))
+		of_to_dataprop(dict, node, "edid", "EDID");
 
 	temp = 0;
-	if (OF_getprop(console_node, "ATY,RefCLK", &temp, sizeof(temp)) != 4) {
+	if (OF_getprop(node, "ATY,RefCLK", &temp, sizeof(temp)) != 4) {
 
-		OF_getprop(OF_parent(console_node), "ATY,RefCLK", &temp,
+		OF_getprop(OF_parent(node), "ATY,RefCLK", &temp,
 		    sizeof(temp));
 	}
 	if (temp != 0)
 		prop_dictionary_set_uint32(dict, "refclk", temp / 10);
+
 	/*
 	 * finally, let's see if there's a video mode specified in
 	 * output-device and pass it on so drivers like radeonfb
 	 * can do their thing
 	 */
+
+	if (!is_console)
+		return;
+
 	options = OF_finddevice("/options");
 	if ((options == 0) || (options == -1))
 		return;

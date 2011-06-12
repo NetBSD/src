@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.25 2009/12/19 10:34:18 tsutsui Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.25.4.1 2011/06/12 00:24:07 rmind Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.25 2009/12/19 10:34:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.25.4.1 2011/06/12 00:24:07 rmind Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -108,13 +108,13 @@ int	audioamd_sbus_match(device_t, cfdata_t, void *);
 void	audioamd_sbus_attach(device_t, device_t, void *);
 void	audioamd_attach(struct audioamd_softc *, int);
 
-CFATTACH_DECL(audioamd_mainbus, sizeof(struct audioamd_softc),
+CFATTACH_DECL_NEW(audioamd_mainbus, sizeof(struct audioamd_softc),
     audioamd_mainbus_match, audioamd_mainbus_attach, NULL, NULL);
 
-CFATTACH_DECL(audioamd_obio, sizeof(struct audioamd_softc),
+CFATTACH_DECL_NEW(audioamd_obio, sizeof(struct audioamd_softc),
     audioamd_obio_match, audioamd_obio_attach, NULL, NULL);
 
-CFATTACH_DECL(audioamd_sbus, sizeof(struct audioamd_softc),
+CFATTACH_DECL_NEW(audioamd_sbus, sizeof(struct audioamd_softc),
     audioamd_sbus_match, audioamd_sbus_attach, NULL, NULL);
 
 /*
@@ -227,6 +227,7 @@ audioamd_mainbus_attach(device_t parent, device_t self, void *aux)
 
 	ma = aux;
 	sc = device_private(self);
+	sc->sc_am7930.sc_dev = self;
 	sc->sc_bt = ma->ma_bustag;
 
 	if (bus_space_map(
@@ -253,6 +254,7 @@ audioamd_obio_attach(device_t parent, device_t self, void *aux)
 	uoba = aux;
 	sa = &uoba->uoba_sbus;
 	sc = device_private(self);
+	sc->sc_am7930.sc_dev = self;
 	sc->sc_bt = sa->sa_bustag;
 
 	if (sbus_bus_map(sa->sa_bustag,
@@ -275,6 +277,7 @@ audioamd_sbus_attach(device_t parent, device_t self, void *aux)
 
 	sa = aux;
 	sc = device_private(self);
+	sc->sc_am7930.sc_dev = self;
 	sc->sc_bt = sa->sa_bustag;
 
 	if (sbus_bus_map(sa->sa_bustag,
@@ -296,7 +299,7 @@ audioamd_attach(struct audioamd_softc *sc, int pri)
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
-	self = &sc->sc_am7930.sc_dev;
+	self = sc->sc_am7930.sc_dev;
 	sc->sc_am7930.sc_glue = &audioamd_glue;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 

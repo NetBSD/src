@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.104.4.2 2011/05/31 03:03:52 rmind Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.104.4.3 2011/06/12 00:23:51 rmind Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104.4.2 2011/05/31 03:03:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104.4.3 2011/06/12 00:23:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,12 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104.4.2 2011/05/31 03:03:52 rmind E
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-
-	if (pcb->pcb_fpcpu != NULL)
-		fpusave_proc(l, 0);
-
-	mutex_destroy(&pcb->pcb_fpcpu_lock);
+	(void) l;
 }
 
 void
@@ -93,7 +88,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2 = lwp_getpcb(l2);
 
 	l2->l_md.md_tf = l1->l_md.md_tf;
-	l2->l_md.md_flags = l1->l_md.md_flags & (MDP_FPUSED | MDP_FP_C);
+	l2->l_md.md_flags = l1->l_md.md_flags & (MDLWP_FPUSED | MDLWP_FP_C);
 	l2->l_md.md_astpending = 0;
 
 	/*
@@ -103,23 +98,15 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_pcbpaddr = (void *)vtophys((vaddr_t)pcb2);
 
 	/*
-	 * Copy floating point state from the FP chip to the PCB
-	 * if this process has state stored there.
-	 */
-	if (pcb1->pcb_fpcpu != NULL)
-		fpusave_proc(l1, 1);
-
-	/*
 	 * Copy pcb and user stack pointer from proc p1 to p2.
 	 * If specificed, give the child a different stack.
+	 * Floating point state from the FP chip has already been saved.
 	 */
 	*pcb2 = *pcb1;
 	if (stack != NULL)
 		pcb2->pcb_hw.apcb_usp = (u_long)stack + stacksize;
 	else
 		pcb2->pcb_hw.apcb_usp = alpha_pal_rdusp();
-
-	mutex_init(&pcb2->pcb_fpcpu_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/*
 	 * Arrange for a non-local goto when the new process

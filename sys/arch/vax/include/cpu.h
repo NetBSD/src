@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.87.4.3 2011/04/21 01:41:29 rmind Exp $      */
+/*      $NetBSD: cpu.h,v 1.87.4.4 2011/06/12 00:24:10 rmind Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -123,7 +123,7 @@ struct cpu_info {
 	 * Public members.
 	 */
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct device *ci_dev;		/* device struct for this cpu */
+	device_t ci_dev;		/* device struct for this cpu */
 	int ci_mtx_oldspl;		/* saved spl */
 	int ci_mtx_count;		/* negative count of mutexes */
 	int ci_cpuid;			/* h/w specific cpu id */

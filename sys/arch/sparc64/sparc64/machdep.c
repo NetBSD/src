@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.252.2.6 2011/03/05 20:52:08 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.252.2.7 2011/06/12 00:24:08 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252.2.6 2011/03/05 20:52:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252.2.7 2011/06/12 00:24:08 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252.2.6 2011/03/05 20:52:08 rmind Exp 
 #include <sys/ucontext.h>
 #include <sys/cpu.h>
 #include <sys/module.h>
+#include <sys/ksyms.h>
 
 #include <sys/exec_aout.h>
 
@@ -133,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252.2.6 2011/03/05 20:52:08 rmind Exp 
 #include <sparc64/sparc64/cache.h>
 
 /* #include "fb.h" */
+#include "ksyms.h"
 
 int bus_space_debug = 0; /* This may be used by macros elsewhere. */
 #ifdef DEBUG
@@ -881,6 +883,31 @@ trapdump(struct trapframe64* tf)
 	       (unsigned long long)tf->tf_out[6],
 	       (unsigned long long)tf->tf_out[7]);
 }
+
+static void
+get_symbol_and_offset(const char **mod, const char **sym, vaddr_t *offset, vaddr_t pc)
+{
+	static char symbuf[256];
+	unsigned long symaddr;
+
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	if (ksyms_getname(mod, sym, pc,
+			  KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY) == 0) {
+		if (ksyms_getval(*mod, *sym, &symaddr,
+				 KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY) != 0)
+			goto failed;
+
+		*offset = (vaddr_t)(pc - symaddr);
+		return;
+	}
+#endif
+ failed:
+	snprintf(symbuf, sizeof symbuf, "%llx", (unsigned long long)pc);
+	*mod = "netbsd";
+	*sym = symbuf;
+	*offset = 0;
+}
+
 /*
  * get the fp and dump the stack as best we can.  don't leave the
  * current stack page
@@ -890,6 +917,8 @@ stackdump(void)
 {
 	struct frame32 *fp = (struct frame32 *)getfp(), *sfp;
 	struct frame64 *fp64;
+	const char *mod, *sym;
+	vaddr_t offset;
 
 	sfp = fp;
 	printf("Frame pointer is at %p\n", fp);
@@ -898,8 +927,10 @@ stackdump(void)
 		if( ((long)fp) & 1 ) {
 			fp64 = (struct frame64*)(((char*)fp)+BIAS);
 			/* 64-bit frame */
-			printf("%llx(%llx, %llx, %llx, %llx, %llx, %llx, %llx) fp = %llx\n",
-			       (unsigned long long)fp64->fr_pc,
+			get_symbol_and_offset(&mod, &sym, &offset, fp64->fr_pc);
+			printf(" %s:%s+%#llx(%llx, %llx, %llx, %llx, %llx, %llx, %llx) fp = %llx\n",
+			       mod, sym,
+			       (unsigned long long)offset,
 			       (unsigned long long)fp64->fr_arg[0],
 			       (unsigned long long)fp64->fr_arg[1],
 			       (unsigned long long)fp64->fr_arg[2],
@@ -911,11 +942,19 @@ stackdump(void)
 			fp = (struct frame32 *)(u_long)fp64->fr_fp;
 		} else {
 			/* 32-bit frame */
-			printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x, %x) fp = %x\n",
-			       fp->fr_pc, fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2],
-			       fp->fr_arg[3], fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6],
+			get_symbol_and_offset(&mod, &sym, &offset, fp->fr_pc);
+			printf(" %s:%s+%#lx(%x, %x, %x, %x, %x, %x, %x) fp = %x\n",
+			       mod, sym,
+			       (unsigned long)offset,
+			       fp->fr_arg[0],
+			       fp->fr_arg[1],
+			       fp->fr_arg[2],
+			       fp->fr_arg[3],
+			       fp->fr_arg[4],
+			       fp->fr_arg[5],
+			       fp->fr_arg[6],
 			       fp->fr_fp);
-			fp = (struct frame32*)(u_long)(u_short)fp->fr_fp;
+			fp = (struct frame32*)(u_long)fp->fr_fp;
 		}
 	}
 }

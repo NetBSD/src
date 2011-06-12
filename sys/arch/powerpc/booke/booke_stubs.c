@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.4.2.2 2011/03/05 20:51:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.4.2.3 2011/06/12 00:24:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -248,12 +248,20 @@ softint_trigger(uintptr_t machdep)
 	(*powerpc_intrsw->intrsw_softint_trigger)(machdep);
 }
 
-void intr_cpu_init(struct cpu_info *) __stub;
+void intr_cpu_attach(struct cpu_info *) __stub;
 
 void
-intr_cpu_init(struct cpu_info *ci)
+intr_cpu_attach(struct cpu_info *ci)
 {
-	(*powerpc_intrsw->intrsw_cpu_init)(ci);
+	(*powerpc_intrsw->intrsw_cpu_attach)(ci);
+}
+
+void intr_cpu_hatch(struct cpu_info *) __stub;
+
+void
+intr_cpu_hatch(struct cpu_info *ci)
+{
+	(*powerpc_intrsw->intrsw_cpu_hatch)(ci);
 }
 
 void intr_init(void) __stub;

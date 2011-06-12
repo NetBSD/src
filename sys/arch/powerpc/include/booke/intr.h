@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.4.3 2011/03/05 20:51:37 rmind Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.4.4 2011/06/12 00:24:04 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -64,21 +64,29 @@
 #define IST_MAX		(NIPL+10)
 #endif
 
-#define	IPI_DST_ALL	-2
-#define	IPI_DST_NOTME	-1
+#define	IPI_DST_ALL	((cpuid_t)-2)
+#define	IPI_DST_NOTME	((cpuid_t)-1)
+
+#define IPI_NOMESG	0x0000
+#define IPI_HALT	0x0001
+#define IPI_XCALL	0x0002
+#define	IPI_KPREEMPT	0x0004
+#define IPI_TLB1SYNC	0x0008
 
 #define	__HAVE_FAST_SOFTINTS	1
+#define	SOFTINT_KPREEMPT	SOFTINT_COUNT
 
 #ifndef _LOCORE
 
 void 	*intr_establish(int, int, int, int (*)(void *), void *);
 void 	intr_disestablish(void *);
-void	intr_cpu_init(struct cpu_info *);
+void	intr_cpu_attach(struct cpu_info *);
+void	intr_cpu_hatch(struct cpu_info *);
 void	intr_init(void);
 const char *
 	intr_string(int, int);
 
-void	cpu_send_ipi(cpuid_t, uintptr_t);
+void	cpu_send_ipi(cpuid_t, uint32_t);
 
 void	spl0(void);
 int 	splraise(int);
@@ -103,7 +111,9 @@ typedef struct {
 struct intrsw {
 	void *(*intrsw_establish)(int, int, int, int (*)(void *), void *);
 	void (*intrsw_disestablish)(void *);
-	void (*intrsw_cpu_init)(struct cpu_info *);
+	void (*intrsw_cpu_attach)(struct cpu_info *);
+	void (*intrsw_cpu_hatch)(struct cpu_info *);
+	void (*intrsw_cpu_send_ipi)(cpuid_t, uint32_t);
 	void (*intrsw_init)(void);
 	void (*intrsw_critintr)(struct trapframe *);
 	void (*intrsw_decrintr)(struct trapframe *);
@@ -114,7 +124,6 @@ struct intrsw {
 	void (*intrsw_spl0)(void);
 	void (*intrsw_splx)(int);
 	const char *(*intrsw_string)(int, int);
-	void (*intrsw_send_ipi)(cpuid_t, uintptr_t);
 #ifdef __HAVE_FAST_SOFTINTS
 	void (*intrsw_softint_init_md)(struct lwp *, u_int, uintptr_t *);
 	void (*intrsw_softint_trigger)(uintptr_t);

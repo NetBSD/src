@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.203.2.5 2011/05/31 03:05:02 rmind Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.203.2.6 2011/06/12 00:24:29 rmind Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.203.2.5 2011/05/31 03:05:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.203.2.6 2011/06/12 00:24:29 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1330,6 +1330,9 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		dev = kmem_zalloc(sizeof(*dev), KM_SLEEP);
 	} else {
 		dev = dev_private;
+#ifdef DIAGNOSTIC
+		printf("%s has not been converted to device_t\n", cd->cd_name);
+#endif
 	}
 	if (dev == NULL)
 		panic("config_devalloc: memory allocation for device_t failed");

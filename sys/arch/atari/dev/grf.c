@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.41.4.2 2011/03/05 20:49:42 rmind Exp $	*/
+/*	$NetBSD: grf.c,v 1.41.4.3 2011/06/12 00:23:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41.4.2 2011/03/05 20:49:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41.4.3 2011/06/12 00:23:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -90,16 +90,16 @@ int grfon(dev_t);
 int grfoff(dev_t);
 int grfsinfo(dev_t, struct grfdyninfo *);
 
-int grfbusprint(void *auxp, const char *);
-int grfbusmatch(struct device *, struct cfdata *, void *);
-void grfbusattach(struct device *, struct device *, void *);
+int grfbusprint(void *, const char *);
+int grfbusmatch(device_t, cfdata_t, void *);
+void grfbusattach(device_t, device_t, void *);
 
 /*
  * pointers to grf drivers device structs 
  */
 struct grf_softc *grfsp[NGRF]; /* XXX */
 
-CFATTACH_DECL(grfbus, sizeof(struct device),
+CFATTACH_DECL_NEW(grfbus, 0,
     grfbusmatch, grfbusattach, NULL, NULL);
 
 dev_type_open(grfopen);
@@ -115,38 +115,38 @@ const struct cdevsw grf_cdevsw = {
 /*
  * only used in console init.
  */
-static struct cfdata *cfdata_gbus  = NULL;
+static cfdata_t cfdata_gbus  = NULL;
 
 int
-grfbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+grfbusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (strcmp(auxp, grfbus_cd.cd_name))
+	if (strcmp(aux, grfbus_cd.cd_name))
 		return 0;
 
 	if (atari_realconfig == 0)
-		cfdata_gbus = cfp;
+		cfdata_gbus = cf;
 	return 1;	/* Always there	*/
 }
 
 void
-grfbusattach(struct device *pdp, struct device *dp, void *auxp)
+grfbusattach(device_t parent, device_t self, void *aux)
 {
 	grf_auxp_t	grf_auxp;
 
 	grf_auxp.busprint       = grfbusprint;
 	grf_auxp.from_bus_match = 1;
 
-	if (dp == NULL) /* Console init	*/
+	if (self == NULL) /* Console init	*/
 		atari_config_found(cfdata_gbus, NULL, &grf_auxp, grfbusprint);
 	else {
 		printf("\n");
-		config_found(dp, &grf_auxp, grfbusprint);
+		config_found(self, &grf_auxp, grfbusprint);
 	}
 }
 
 int
-grfbusprint(void *auxp, const char *name)
+grfbusprint(void *aux, const char *name)
 {
 
 	if (name == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.28 2009/12/11 18:40:08 tsutsui Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.28.4.1 2011/06/12 00:24:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -29,22 +29,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL
 /*
  * Physical map structures exported to the VM code.
- * XXX - Does user-level code really see this struct?
  */
-
-#include <sys/simplelock.h>
 
 struct pmap {
 	struct a_tmgr_struct	*pm_a_tmgr; 	/* Level-A table manager */
-	u_long              	pm_a_phys;  	/* MMU level-A phys addr */
-	struct simplelock	pm_lock;    	/* lock on pmap */
-	int             	pm_refcount;	/* reference count */
+	paddr_t              	pm_a_phys;  	/* MMU level-A phys addr */
+	u_int             	pm_refcount;	/* reference count */
 	int             	pm_version;
 };
 
-#ifdef _KERNEL
 /* Common function for pmap_resident_count(), pmap_wired_count() */
 segsz_t pmap_count(pmap_t, int);
 

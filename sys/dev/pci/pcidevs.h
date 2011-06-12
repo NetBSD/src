@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1022.2.6 2011/05/31 03:04:42 rmind Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1022.2.7 2011/06/12 00:24:16 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1083 2011/05/28 22:53:23 phx Exp
+ *	NetBSD: pcidevs,v 1.1085 2011/06/07 10:07:35 cegger Exp
  */
 
 /*
@@ -1412,6 +1412,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_X850XT_S	0x5d72		/* Radeon X850 XT Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_X700	0x5e4b		/* Radeon X700 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_X700_S	0x5e6b		/* Radeon X700 Pro Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_HD5870	0x6898		/* Radeon HD 5870 Cypress */
 #define	PCI_PRODUCT_ATI_RADEON_HD5600_RD	0x68c1		/* Redwood */
 #define	PCI_PRODUCT_ATI_RADEON_X1300	0x7146		/* Radeon X1300 Series (RV515) */
 #define	PCI_PRODUCT_ATI_RADEON_X1300_S	0x7166		/* Radeon X1300 Series (RV515) Secondary */
@@ -2615,7 +2616,7 @@
 #define	PCI_PRODUCT_INTEL_82801DB_USB_3	0x24C7		/* 82801DB USB UHCI Controller */
 #define	PCI_PRODUCT_INTEL_82801DBM_IDE	0x24CA		/* 82801DBM IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801DB_IDE	0x24CB		/* 82801DB IDE Controller (UltraATA/100) */
-#define	PCI_PRODUCT_INTEL_82801DB_ISA	0x24CC		/* 82801DB ISA Bridge */
+#define	PCI_PRODUCT_INTEL_82801DBM_LPC	0x24CC		/* 82801DB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801DB_USBC	0x24CD		/* 82801DB USB EHCI Controller */
 #define	PCI_PRODUCT_INTEL_82801EB_LPC	0x24D0		/* 82801EB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801EB_SATA	0x24D1		/* 82801EB Serial ATA Controller */
@@ -3179,6 +3180,7 @@
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB Host Controller */
 #define	PCI_PRODUCT_LUCENT_USBHC2	0x5802		/* 2-port USB Host Controller */
 #define	PCI_PRODUCT_LUCENT_FW322_323	0x5811		/* FW322/323 IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_LUCENT_FW643_PCIE	0x5901		/* FW643 PCIE IEEE 1394b Host Controller */
 #define	PCI_PRODUCT_LUCENT_ET1310	0xed00		/* ET1310 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_LUCENT_ET1301	0xed01		/* ET1301 10/100 Ethernet */
 

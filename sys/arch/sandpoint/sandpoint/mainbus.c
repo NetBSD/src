@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.21.4.1 2011/05/31 03:04:16 rmind Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21.4.2 2011/06/12 00:24:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.4.1 2011/05/31 03:04:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.4.2 2011/06/12 00:24:06 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -52,11 +52,11 @@ struct conf_args {
 	const char *ca_name;
 };
 
-int	mainbus_match(struct device *, struct cfdata *, void *);
-void	mainbus_attach(struct device *, struct device *, void *);
+int	mainbus_match(device_t, cfdata_t, void *);
+void	mainbus_attach(device_t, device_t, void *);
 int	mainbus_print(void *, const char *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 struct powerpc_isa_chipset genppc_ict;
@@ -65,7 +65,7 @@ struct powerpc_isa_chipset genppc_ict;
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
@@ -75,7 +75,7 @@ mainbus_match(struct device *parent, struct cfdata *match, void *aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct conf_args ca;
 	struct pcibus_attach_args pba;
@@ -122,16 +122,16 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-static int	cpu_match(struct device *, struct cfdata *, void *);
-static void	cpu_attach(struct device *, struct device *, void *);
+static int	cpu_match(device_t, cfdata_t, void *);
+static void	cpu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
 
 int
-cpu_match(struct device *parent, struct cfdata *cf, void *aux)
+cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct conf_args *ca = aux;
 
@@ -144,7 +144,7 @@ cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
 
 	(void) cpu_attach_common(self, 0);

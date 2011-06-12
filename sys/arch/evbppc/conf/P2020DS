@@ -1,4 +1,4 @@
-#	$NetBSD: P2020DS,v 1.2.2.2 2011/05/31 03:04:00 rmind Exp $
+#	$NetBSD: P2020DS,v 1.2.2.3 2011/06/12 00:23:56 rmind Exp $
 #
 #	P2020DS -- everything that's currently supported
 #
@@ -8,15 +8,12 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020DS-$Revision: 1.2.2.2 $"
+ident 		"P2020DS-$Revision: 1.2.2.3 $"
 
 maxusers	32
 
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
-
-no options	GUR_BASE
-options 	GUR_BASE=0xffe00000
 
 options 	P2020
 options 	PIXIS
@@ -25,13 +22,6 @@ options 	PIXIS
 
 makeoptions	NEED_BINARY="yes"
 makeoptions	NEED_UBOOTIMAGE="yes"
-
-# Options for necessary to use MD
-options 	MEMORY_DISK_HOOKS
-options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
-options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=6144	# size of memory disk, in blocks
-
 
 #options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
@@ -145,7 +135,8 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Kernel root file system and dump configuration.
 config		netbsd		root on ? type ?
-config		netbsdnfs	root on tsec0 type nfs
+config		nfsnetbsd	root on tsec0 type nfs
+config		netbsd-esata	root on wd1a type ffs
 
 #
 # Device configuration
@@ -172,7 +163,7 @@ tsec1		at cpunode? flags 0x102	# Enhanced 3-Speed Ethernet Controller
 tsec2		at cpunode? flags 0x103 # Enhanced 3-Speed Ethernet Controller
 options 	ETSEC_EVENT_COUNTERS
 
-#ehci*		at cpunode?		# usb
+ehci*		at cpunode?		# usb
 
 diic*		at cpunode?		# i2c bus
 iic*		at diic?
@@ -192,28 +183,30 @@ pci*		at ppb?
 #ohci*		at pci? dev ? function ?
 #ehci*		at pci? dev ? function ?
 #uhci*		at pci? dev ? function ?
-#usb*		at ehci?
+usb*		at ehci?
 #usb*		at ohci?
 #usb*		at uhci?
-#uhub*		at usb?
-#umass*		at uhub? port ?
-#scsibus*	at umass? channel ?
-#sd*		at scsibus? target ? lun ?
+uhub*		at usb?
+umass*		at uhub? port ?
+scsibus*	at umass? channel ?
+sd*		at scsibus? target ? lun ?
+ugen*		at uhub? port ?
+uhub*		at uhub? port ?
 
 #sdhc*		at cpunode?		# sdmmc
 #sdmmc*		at sdhc?		# SD/MMC bus
 #ld*		at sdmmc?
 
-#siisata*	at pci? dev ? function ?
-#atabus* 	at siisata? channel ?
-#jmide*		at pci? dev ? function ?	# JMicron PCI-e PATA/SATA controllers
-#ahcisata*	at jmide?
-#atabus* 	at ahcisata? channel ?
-
 ahcisata*	at pci? dev ? function ?
+atabus0 	at ahcisata? channel 0
+atabus1 	at ahcisata? channel 1
+atabus2 	at ahcisata? channel 2
+atabus3 	at ahcisata? channel 3
 atabus*		at ahcisata? channel ?
 aceride*	at pci? dev ? function ?
 atabus*		at aceride? channel ?
+wd0		at atabus0 drive ?
+wd1		at atabus3 drive ?
 wd*		at atabus? drive ?
 
 #wm*		at pci? dev ? function ?	# Intel Ethernet
@@ -224,7 +217,6 @@ wd*		at atabus? drive ?
 #makphy* 	at mii? phy ?			# Marvell PHYs
 ukphy*		at mii? phy ?			# generic unknown PHYs
 
-pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	rnd			# /dev/random and in-kernel generator

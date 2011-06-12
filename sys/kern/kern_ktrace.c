@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.151.2.3 2011/05/31 03:05:01 rmind Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.151.2.4 2011/06/12 00:24:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.151.2.3 2011/05/31 03:05:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.151.2.4 2011/06/12 00:24:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -671,6 +671,25 @@ ktr_execenv(const void *bf, size_t len)
 		return;
 
 	ktr_kmem(l, KTR_EXEC_ENV, bf, len);
+}
+
+void
+ktr_execfd(int fd, u_int dtype)
+{
+	struct ktrace_entry *kte;
+	struct ktr_execfd* ktp;
+
+	lwp_t *l = curlwp;
+
+	if (!KTRPOINT(l->l_proc, KTR_EXEC_FD))
+		return;
+
+	if (ktealloc(&kte, (void *)&ktp, l, KTR_EXEC_FD, sizeof(*ktp)))
+		return;
+
+	ktp->ktr_fd = fd;
+	ktp->ktr_dtype = dtype;
+	ktraddentry(l, kte, KTA_WAITOK);
 }
 
 static void

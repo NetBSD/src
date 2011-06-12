@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.28.2.3 2011/04/21 01:41:45 rmind Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.28.2.4 2011/06/12 00:24:13 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.28.2.3 2011/04/21 01:41:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.28.2.4 2011/06/12 00:24:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -577,10 +577,6 @@ thinkpad_fan_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	}
 
 	edata->value_cur = rpm;
-	if (rpm < edata->value_min || edata->value_min == -1)
-		edata->value_min = rpm;
-	if (rpm > edata->value_max || edata->value_max == -1)
-		edata->value_max = rpm;
 	edata->state = ENVSYS_SVALID;
 }
 

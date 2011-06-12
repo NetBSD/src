@@ -33,11 +33,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define _PMAP_PRIVATE
+#define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.3.2.2 2011/03/05 20:51:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.3.2.3 2011/06/12 00:24:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -87,8 +87,15 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 }
 
 void
-pmap_md_page_syncicache(struct vm_page *pg)
+pmap_md_page_syncicache(struct vm_page *pg, __cpuset_t onproc)
 {
+	/*
+	 * If onproc is empty, we could do a
+	 * pmap_page_protect(pg, VM_PROT_NONE) and remove all
+	 * mappings of the page and clear its execness.  Then
+	 * the next time page is faulted, it will get icache
+	 * synched.  But this is easier. :)
+	 */
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	dcache_wb_page(pa);
 	icache_inv_page(pa);

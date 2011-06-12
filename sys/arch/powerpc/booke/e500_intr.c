@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.3.2.4 2011/05/31 03:04:13 rmind Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.3.2.5 2011/06/12 00:24:03 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,6 +45,8 @@
 #include <sys/kmem.h>
 #include <sys/atomic.h>
 #include <sys/bus.h>
+#include <sys/xcall.h>
+#include <sys/bitops.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -61,9 +63,16 @@
 
 #define	IST_PERCPU_P(ist)	((ist) >= IST_TIMER)
 
+#ifdef __HAVE_PREEMPTION
+#define	IPL_PREEMPT_SOFTMASK	(1 << IPL_NONE)
+#else
+#define	IPL_PREEMPT_SOFTMASK	0
+#endif
+
 #define	IPL_SOFTMASK \
 	    ((1 << IPL_SOFTSERIAL) | (1 << IPL_SOFTNET   )	\
-	    |(1 << IPL_SOFTBIO   ) | (1 << IPL_SOFTCLOCK ))
+	    |(1 << IPL_SOFTBIO   ) | (1 << IPL_SOFTCLOCK )	\
+	    |IPL_PREEMPT_SOFTMASK)
 
 #define SOFTINT2IPL_MAP \
 	    ((IPL_SOFTSERIAL << (4*SOFTINT_SERIAL))	\
@@ -352,7 +361,9 @@ static const struct intr_source *e500_intr_last_source;
 
 static void 	*e500_intr_establish(int, int, int, int (*)(void *), void *);
 static void 	e500_intr_disestablish(void *);
-static void 	e500_intr_cpu_init(struct cpu_info *ci);
+static void 	e500_intr_cpu_attach(struct cpu_info *ci);
+static void 	e500_intr_cpu_hatch(struct cpu_info *ci);
+static void	e500_intr_cpu_send_ipi(cpuid_t, uintptr_t);
 static void 	e500_intr_init(void);
 static const char *e500_intr_string(int, int);
 static void 	e500_critintr(struct trapframe *tf);
@@ -372,7 +383,9 @@ const struct intrsw e500_intrsw = {
 	.intrsw_establish = e500_intr_establish,
 	.intrsw_disestablish = e500_intr_disestablish,
 	.intrsw_init = e500_intr_init,
-	.intrsw_cpu_init = e500_intr_cpu_init,
+	.intrsw_cpu_attach = e500_intr_cpu_attach,
+	.intrsw_cpu_hatch = e500_intr_cpu_hatch,
+	.intrsw_cpu_send_ipi = e500_intr_cpu_send_ipi,
 	.intrsw_string = e500_intr_string,
 
 	.intrsw_critintr = e500_critintr,
@@ -455,7 +468,8 @@ e500_softint_deliver(struct cpu_info *ci, struct cpu_softc *cpu,
 }
 
 static inline void
-e500_softint(struct cpu_info *ci, struct cpu_softc *cpu, int old_ipl)
+e500_softint(struct cpu_info *ci, struct cpu_softc *cpu, int old_ipl,
+	vaddr_t pc)
 {
 	const u_int softint_mask = (IPL_SOFTMASK << old_ipl) & IPL_SOFTMASK;
 	u_int softints;
@@ -487,6 +501,13 @@ e500_softint(struct cpu_info *ci, struct cpu_softc *cpu, int old_ipl)
 			    SOFTINT_CLOCK);
 			continue;
 		}
+#ifdef __HAVE_PREEMPTION
+		KASSERT(old_ipl == IPL_NONE);
+		if (softints & (1 << IPL_NONE)) {
+			ci->ci_data.cpu_softints ^= (1 << IPL_NONE);
+			kpreempt(pc);
+		}
+#endif
 	}
 }
 #endif /* __HAVE_FAST_SOFTINTS */
@@ -526,7 +547,8 @@ e500_spl0(void)
 #ifdef __HAVE_FAST_SOFTINTS
 	if (__predict_false(ci->ci_data.cpu_softints != 0)) {
 		e500_splset(ci, IPL_HIGH);
-		e500_softint(ci, ci->ci_softc, IPL_NONE);
+		e500_softint(ci, ci->ci_softc, IPL_NONE,
+		    (vaddr_t)__builtin_return_address(0));
 	}
 #endif /* __HAVE_FAST_SOFTINTS */
 	e500_splset(ci, IPL_NONE);
@@ -558,7 +580,8 @@ e500_splx(int ipl)
 	const u_int softints = (ci->ci_data.cpu_softints << ipl) & IPL_SOFTMASK;
 	if (__predict_false(softints != 0)) {
 		e500_splset(ci, IPL_HIGH);
-		e500_softint(ci, ci->ci_softc, ipl);
+		e500_softint(ci, ci->ci_softc, ipl,
+		    (vaddr_t)__builtin_return_address(0));
 	}
 #endif /* __HAVE_FAST_SOFTINTS */
 	e500_splset(ci, ipl);
@@ -652,7 +675,7 @@ e500_intr_irq_info_get(struct cpu_info *ci, u_int irq, int ipl, int ist,
 	}
 
 	ii->irq_vector = irq + info->ii_ist_vectors[ist];
-	if (IST_PERCPU_P(ist))
+	if (IST_PERCPU_P(ist) && ist != IST_IPI)
 		ii->irq_vector += ci->ci_cpuid * info->ii_percpu_sources;
 
 	switch (ist) {
@@ -764,7 +787,9 @@ e500_intr_cpu_establish(struct cpu_info *ci, int irq, int ipl, int ist,
 	 * All interrupts go to the primary except per-cpu interrupts which get
 	 * routed to the appropriate cpu.
 	 */
-	uint32_t dr = IST_PERCPU_P(ist) ? 1 << ci->ci_cpuid : 1;
+	uint32_t dr = openpic_read(cpu, ii.irq_dr);
+
+	dr |= 1 << (IST_PERCPU_P(ist) ? ci->ci_cpuid : 0);
 
 	/*
 	 * Update the vector/priority and destination registers keeping the
@@ -997,7 +1022,8 @@ e500_extintr(struct trapframe *tf)
 	if (__predict_false(softints != 0)) {
 		KASSERT(old_ipl < IPL_VM);
 		e500_splset(ci, IPL_HIGH);	/* pop to high */
-		e500_softint(ci, cpu, old_ipl);	/* deal with them */
+		e500_softint(ci, cpu, old_ipl,	/* deal with them */
+		    tf->tf_srr0);
 		e500_splset(ci, old_ipl);	/* and drop back */
 	}
 #endif /* __HAVE_FAST_SOFTINTS */
@@ -1094,7 +1120,19 @@ e500_intr_init(void)
 }
 
 static void
-e500_intr_cpu_init(struct cpu_info *ci)
+e500_idlespin(void)
+{
+	KASSERTMSG(curcpu()->ci_cpl == IPL_NONE,
+	    ("%s: cpu%u: ci_cpl (%d) != 0", __func__, cpu_number(),
+	     curcpu()->ci_cpl));
+	KASSERTMSG(CTPR2IPL(openpic_read(curcpu()->ci_softc, OPENPIC_CTPR)) == IPL_NONE,
+	    ("%s: cpu%u: CTPR (%d) != IPL_NONE", __func__, cpu_number(),
+	     CTPR2IPL(openpic_read(curcpu()->ci_softc, OPENPIC_CTPR))));
+	KASSERT(mfmsr() & PSL_EE);
+}
+
+static void
+e500_intr_cpu_attach(struct cpu_info *ci)
 {
 	struct cpu_softc * const cpu = ci->ci_softc;
 	const char * const xname = device_xname(ci->ci_dev);
@@ -1155,12 +1193,96 @@ e500_intr_cpu_init(struct cpu_info *ci)
 		    NULL, xname, e500_mi_intr_names[j].in_name);
 	}
 
+	ci->ci_idlespin = e500_idlespin;
+}
+
+static void
+e500_intr_cpu_send_ipi(cpuid_t target, uint32_t ipimsg)
+{
+	struct cpu_info * const ci = curcpu();
+	struct cpu_softc * const cpu = ci->ci_softc;
+	uint32_t dstmask;
+
+	if (target >= ncpu) {
+		CPU_INFO_ITERATOR cii;
+		struct cpu_info *dst_ci;
+
+		KASSERT(target == IPI_DST_NOTME || target == IPI_DST_ALL);
+
+		dstmask = 0;
+		for (CPU_INFO_FOREACH(cii, dst_ci)) {
+			if (target == IPI_DST_ALL || ci != dst_ci) {
+				dstmask |= 1 << cpu_index(ci);
+				if (ipimsg)
+					atomic_or_32(&dst_ci->ci_pending_ipis,
+					    ipimsg);
+			}
+		}
+	} else {
+		struct cpu_info * const dst_ci = cpu_lookup(target);
+		KASSERT(target == cpu_index(dst_ci));
+		dstmask = (1 << target);
+		if (ipimsg)
+			atomic_or_32(&dst_ci->ci_pending_ipis, ipimsg);
+	}
+
+	openpic_write(cpu, OPENPIC_IPIDR(0), dstmask);
+}
+
+typedef void (*ipifunc_t)(void);
+
+#ifdef __HAVE_PREEEMPTION
+static void
+e500_ipi_kpreempt(void)
+{
+	e500_softint_trigger(1 << IPL_NONE);
+}
+#endif
+
+static const ipifunc_t e500_ipifuncs[] = {
+	[ilog2(IPI_XCALL)] =	xc_ipi_handler,
+	[ilog2(IPI_HALT)] =	e500_ipi_halt,
+#ifdef __HAVE_PREEMPTION
+	[ilog2(IPI_KPREEMPT)] =	e500_ipi_kpreempt,
+#endif
+	[ilog2(IPI_TLB1SYNC)] =	e500_tlb1_sync,
+};
+
+static int
+e500_ipi_intr(void *v)
+{
+	struct cpu_info * const ci = curcpu();
+
+	ci->ci_ev_ipi.ev_count++;
+
+	uint32_t pending_ipis = atomic_swap_32(&ci->ci_pending_ipis, 0);
+	for (u_int ipi = 31; pending_ipis != 0; ipi--, pending_ipis <<= 1) {
+		const u_int bits = __builtin_clz(pending_ipis);
+		ipi -= bits;
+		pending_ipis <<= bits;
+		KASSERT(e500_ipifuncs[ipi] != NULL);
+		(*e500_ipifuncs[ipi])();
+	}
+	
+	return 1;
+}
+
+static void
+e500_intr_cpu_hatch(struct cpu_info *ci)
+{
 	/*
-	 * Establish interrupt for this CPU.
+	 * Establish clock interrupt for this CPU.
 	 */
 	if (e500_intr_cpu_establish(ci, E500_CLOCK_TIMER, IPL_CLOCK, IST_TIMER,
 	    e500_clock_intr, NULL) == NULL)
 		panic("%s: failed to establish clock interrupt!", __func__);
+
+	/*
+	 * Establish the IPI interrupts for this CPU.
+	 */
+	if (e500_intr_cpu_establish(ci, 0, IPL_VM, IST_IPI, e500_ipi_intr,
+	    NULL) == NULL)
+		panic("%s: failed to establish ipi interrupt!", __func__);
 
 	/*
 	 * Enable watchdog interrupts.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_alpha,v 1.7.132.1 2011/03/05 20:52:41 rmind Exp $
+#	$NetBSD: files.linux_alpha,v 1.7.132.2 2011/06/12 00:24:12 rmind Exp $
 #
 # Config file description for alpha-dependent Linux compat code.
 
@@ -6,6 +6,7 @@ file	compat/linux/arch/alpha/linux_machdep.c		compat_linux
 file	compat/linux/arch/alpha/linux_pipe.c		compat_linux
 file	compat/linux/arch/alpha/linux_syscalls.c	compat_linux
 file	compat/linux/arch/alpha/linux_sysent.c		compat_linux
+file	compat/linux/common/linux_fadvise64.c		compat_linux
 file	compat/linux/common/linux_file64.c		compat_linux
 file	compat/linux/common/linux_futex.c		compat_linux
 file	compat/linux/common/linux_olduname.c		compat_linux

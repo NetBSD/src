@@ -1,4 +1,4 @@
-/*	$NetBSD: pcu.h,v 1.4.4.3 2011/05/31 03:05:12 rmind Exp $	*/
+/*	$NetBSD: pcu.h,v 1.4.4.4 2011/06/12 00:24:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@ typedef struct {
 } pcu_ops_t;
 
 void	pcu_switchpoint(lwp_t *);
+void	pcu_discard_all(lwp_t *);
+void	pcu_save_all(lwp_t *);
 
 void	pcu_load(const pcu_ops_t *);
 void	pcu_save(const pcu_ops_t *);
@@ -65,6 +67,8 @@ bool	pcu_used_p(const pcu_ops_t *);
 
 #else
 #define	pcu_switchpoint(l)
+#define	pcu_discard_all(l)
+#define	pcu_save_all(l)
 #endif
 
 #endif

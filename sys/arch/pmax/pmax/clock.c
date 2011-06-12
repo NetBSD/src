@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.37.4.1 2011/03/05 20:51:31 rmind Exp $ */
+/* $NetBSD: clock.c,v 1.37.4.2 2011/06/12 00:24:03 rmind Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37.4.1 2011/03/05 20:51:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37.4.2 2011/06/12 00:24:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37.4.1 2011/03/05 20:51:31 rmind Exp $")
 
 #include "opt_ntp.h"
 
-struct device *clockdev;
+device_t clockdev;
 const struct clockfns *clockfns;
 int clockinitted;
 
@@ -61,7 +61,7 @@ extern int fixtick;		/* XXX */
 #endif
 
 void
-clockattach(struct device *dev, const struct clockfns *fns)
+clockattach(device_t dev, const struct clockfns *fns)
 {
 
 	/*
@@ -75,7 +75,7 @@ clockattach(struct device *dev, const struct clockfns *fns)
 	clockfns = fns;
 #ifdef EVCNT_COUNTERS
 	evcnt_attach_dynamic(&clock_intr_evcnt, EVCNT_TYPE_INTR, NULL,
-	    dev->dv_xname, "intr");
+	    device_xname(dev), "intr");
 #endif
 }
 

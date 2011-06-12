@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.3.2.2 2011/04/21 01:41:26 rmind Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.3.2.3 2011/06/12 00:24:08 rmind Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -53,10 +53,10 @@ extern int ebus_debug;
 #include <dev/ebus/ebusvar.h>
 #include <sparc64/dev/ebusvar.h>
 
-int	ebus_mainbus_match(struct device *, struct cfdata *, void *);
-void	ebus_mainbus_attach(struct device *, struct device *, void *);
+int	ebus_mainbus_match(device_t, cfdata_t, void *);
+void	ebus_mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ebus_mainbus, sizeof(struct ebus_softc),
+CFATTACH_DECL_NEW(ebus_mainbus, sizeof(struct ebus_softc),
     ebus_mainbus_match, ebus_mainbus_attach, NULL, NULL);
 
 int ebus_mainbus_bus_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
@@ -67,7 +67,7 @@ bus_space_tag_t ebus_mainbus_alloc_bus_tag(struct ebus_softc *, bus_space_tag_t,
 void ebus_mainbus_intr_ack(struct intrhand *);
 
 int
-ebus_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+ebus_mainbus_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -79,7 +79,7 @@ ebus_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 void
 ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ebus_softc *sc = (struct ebus_softc *)self;
+	struct ebus_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	struct ebus_attach_args eba;
 	struct ebus_interrupt_map_mask *immp;
@@ -87,6 +87,7 @@ ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	struct pyro_softc *psc;
 	int i;
 
+	sc->sc_dev = self;
 	sc->sc_node = node = ma->ma_node;
 	sc->sc_ign = INTIGN((ma->ma_upaid) << INTMAP_IGN_SHIFT);
 
