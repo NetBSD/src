@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.50 2011/06/07 00:48:32 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.51 2011/06/12 03:35:45 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.50 2011/06/07 00:48:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.51 2011/06/12 03:35:45 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.50 2011/06/07 00:48:32 matt Ex
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/exec.h>
+#include <sys/kauth.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/sa.h>
@@ -55,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.50 2011/06/07 00:48:32 matt Ex
 #include <sys/pcu.h>
 #include <sys/atomic.h>
 #include <sys/xcall.h>
+
+#include <dev/mm.h>
 
 #include <powerpc/pcb.h>
 #include <powerpc/fpu.h>
@@ -429,3 +432,10 @@ module_init_md(void)
 {
 }
 #endif /* MODULAR */
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (atop(pa) < physmem) ? 0 : EFAULT;
+}
