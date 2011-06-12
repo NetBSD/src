@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.3 2011/03/16 05:31:03 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.4 2011/06/12 05:37:54 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -587,6 +587,9 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal("\n");
+
+	etsec_write(sc, ATTR, ATTR_DEFAULT);
+	etsec_write(sc, ATTRELI, ATTRELI_DEFAULT);
 
 	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
 
@@ -1458,6 +1461,7 @@ pq3etsec_rxq_consume(
 		if (consumer == rxq->rxq_producer) {
 			rxq->rxq_consumer = consumer;
 			rxq->rxq_inuse -= rxconsumed;
+			KASSERT(rxq->rxq_inuse == 0);
 			return;
 		}
 		pq3etsec_rxq_desc_postsync(sc, rxq, consumer, 1);
