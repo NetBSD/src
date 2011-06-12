@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 2011/03/06 20:34:57 he Exp $	*/
+/*	$NetBSD: param.h,v 1.13 2011/06/12 07:04:55 kiyohara Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,7 +38,6 @@
 #endif
 
 
-//#define DELAY(ms) delay(ms)                
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)
  */
