@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2011/06/12 03:42:41 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2011/06/12 04:20:18 mrg Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -92,6 +92,11 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #ifdef PIXIS
 #include <evbppc/mpc85xx/pixisreg.h>
 #endif
+
+/*
+ * booke kernels need to set module_machine to this for modules to work.
+ */
+char module_machine_booke[] = "powerpc-booke";
 
 void	initppc(vaddr_t, vaddr_t);
 
