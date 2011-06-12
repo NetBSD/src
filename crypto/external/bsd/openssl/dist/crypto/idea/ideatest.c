@@ -79,7 +79,7 @@ unsigned char in[8]={0x00,0x00,0x00,0x01,0x00,0x02,0x00,0x03};
 unsigned char  c[8]={0x11,0xFB,0xED,0x2B,0x01,0x98,0x6D,0xE5};
 unsigned char out[80];
 
-char *text="Hello to all people out there";
+const char *text="Hello to all people out there";
 
 static unsigned char cfb_key[16]={
 	0xe1,0xf0,0xc3,0xd2,0xa5,0xb4,0x87,0x96,
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
 	if (err == 0) printf("ecb idea ok\n");
 
 	memcpy(iv,k,8);
-	idea_cbc_encrypt((unsigned char *)text,out,strlen(text)+1,&key,iv,1);
+	idea_cbc_encrypt((const unsigned char *)text,out,strlen(text)+1,&key,iv,1);
 	memcpy(iv,k,8);
 	idea_cbc_encrypt(out,out,8,&dkey,iv,0);
 	idea_cbc_encrypt(&(out[8]),&(out[8]),strlen(text)+1-8,&dkey,iv,0);
@@ -220,7 +220,7 @@ static char *pt(unsigned char *p)
 	static int bnum=0;
 	char *ret;
 	int i;
-	static char *f="0123456789ABCDEF";
+	static const char *f="0123456789ABCDEF";
 
 	ret= &(bufs[bnum++][0]);
 	bnum%=10;
