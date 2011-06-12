@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/02/26 02:41:33 pgoyette Exp $
+# $NetBSD: Makefile,v 1.3 2011/06/12 19:22:01 plunky Exp $
 
 NOMAN=		# defined
 
@@ -7,8 +7,6 @@ NOMAN=		# defined
 WARNS=	4
 
 CPPFLAGS+=	-D_FORTIFY_SOURCE=2
-CFLAGS+=	-fstack-protector-all -Wstack-protector
-LDFLAGS+=	-fstack-protector-all -Wstack-protector
 
 # Bootstrap hack
 
