@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.9 2011/06/12 10:11:52 jruoho Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.10 2011/06/12 11:31:31 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -46,7 +46,6 @@
 #include <machine/i82489reg.h>
 
 ACPI_STATUS		acpi_md_OsInitialize(void);
-ACPI_STATUS		acpi_md_OsTerminate(void);
 ACPI_PHYSICAL_ADDRESS	acpi_md_OsGetRootPointer(void);
 
 #define	acpi_md_OsIn8(x)	inb((x))
