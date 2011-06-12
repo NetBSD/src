@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.48 2011/06/09 19:08:32 matt Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.49 2011/06/12 03:26:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.48 2011/06/09 19:08:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.49 2011/06/12 03:26:20 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -130,7 +130,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 			splx(s);
 			*dmap = b;
 			DPRINTFN(6,("usb_block_allocmem: free list size=%zu\n",
-			    p->size));
+			    b->size));
 			return (USBD_NORMAL_COMPLETION);
 		}
 	}
@@ -208,7 +208,7 @@ usb_block_real_freemem(usb_dma_block_t *b)
 #endif
 
 #ifdef DEBUG
-Static bool
+static bool
 usb_valid_block_p(usb_dma_block_t *b, struct usb_dma_block_qh *qh)
 {
 	usb_dma_block_t *xb;
