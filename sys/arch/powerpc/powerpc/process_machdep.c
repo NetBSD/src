@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.31 2011/05/02 02:01:33 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.32 2011/06/12 20:38:10 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.31 2011/05/02 02:01:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32 2011/06/12 20:38:10 matt Exp $");
 
 #include "opt_altivec.h"
 
@@ -89,7 +89,8 @@ process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 		memset(fpregs, 0, sizeof (*fpregs));
 #ifdef PPC_HAVE_FPU
 	} else {
-		KASSERT(l == curlwp);
+		KASSERTMSG(l == curlwp,
+		    ("%s: l (%p) != curlwp (%p)", __func__, l, curlwp));
 		fpu_save();
 #endif
 	}
