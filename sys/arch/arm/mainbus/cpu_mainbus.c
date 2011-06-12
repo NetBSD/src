@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.10 2009/03/14 15:36:02 dsl Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.10.4.1 2011/06/12 00:23:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.10 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.10.4.1 2011/06/12 00:23:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,33 +63,33 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.10 2009/03/14 15:36:02 dsl Exp $")
 /*
  * Prototypes
  */
-static int cpu_mainbus_match(struct device *, struct cfdata *, void *);
-static void cpu_mainbus_attach(struct device *, struct device *, void *);
+static int cpu_mainbus_match(device_t, cfdata_t, void *);
+static void cpu_mainbus_attach(device_t, device_t, void *);
  
 /*
- * int cpumatch(struct device *parent, struct cfdata *cf, void *aux)
+ * int cpumatch(device_t parent, cfdata_t cf, void *aux)
  *
  * Probe for the main cpu. Currently all this does is return 1 to
  * indicate that the cpu was found.
  */ 
  
 static int
-cpu_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+cpu_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return(1);
 }
 
 /*
- * void cpusattach(struct device *parent, struct device *dev, void *aux)
+ * void cpusattach(device_t parent, device_t dev, void *aux)
  *
  * Attach the main cpu
  */
   
 static void
-cpu_mainbus_attach(struct device *parent, struct device *self, void *aux)
+cpu_mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	cpu_attach(self);
 }
 
-CFATTACH_DECL(cpu_mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu_mainbus, 0,
     cpu_mainbus_match, cpu_mainbus_attach, NULL, NULL);

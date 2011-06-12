@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.8.4.2 2011/05/31 03:04:14 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.8.4.3 2011/06/12 00:24:04 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,6 +39,7 @@
  */
 struct mdlwp {
 	volatile int md_flags;
+	volatile int md_astpending;
 	struct trapframe *md_utf;		/* user trampframe */
 };
 #define MDLWP_USEDFPU	__BIT(PCU_FPU)	/* this thread has used the FPU */

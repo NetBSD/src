@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.13 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: itevar.h,v 1.13.4.1 2011/06/12 00:23:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -53,7 +53,7 @@ enum ite_attr {
 };
 
 struct ite_softc {
-	struct	device		device;		/* _Must_ be first	*/
+	device_t		device;		/* _Must_ be first	*/
 	char			argbuf[MAX_ARGSIZE];
 	struct  grf_softc	*grf;		/* XXX */
 	char			*ap;

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.63.4.2 2011/05/31 03:05:09 rmind Exp $	*/
+/*	$NetBSD: key.c,v 1.63.4.3 2011/06/12 00:24:31 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.63.4.2 2011/05/31 03:05:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.63.4.3 2011/06/12 00:24:31 rmind Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1428,7 +1428,7 @@ key_newsp(const char* where, int tag)
  * so must be set properly later.
  */
 struct secpolicy *
-key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
+key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 {
 	struct secpolicy *newsp;
 
@@ -1463,7 +1463,8 @@ key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
 	case IPSEC_POLICY_IPSEC:
 	    {
 		int tlen;
-		struct sadb_x_ipsecrequest *xisr;
+		const struct sadb_x_ipsecrequest *xisr;
+		uint16_t xisr_reqid;
 		struct ipsecrequest **p_isr = &newsp->req;
 
 		/* validity check */
@@ -1476,7 +1477,7 @@ key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
 		}
 
 		tlen = PFKEY_EXTLEN(xpl0) - sizeof(*xpl0);
-		xisr = (struct sadb_x_ipsecrequest *)(xpl0 + 1);
+		xisr = (const struct sadb_x_ipsecrequest *)(xpl0 + 1);
 
 		while (tlen > 0) {
 			/* length check */
@@ -1538,22 +1539,22 @@ key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
 			case IPSEC_LEVEL_REQUIRE:
 				break;
 			case IPSEC_LEVEL_UNIQUE:
+				xisr_reqid = xisr->sadb_x_ipsecrequest_reqid;
 				/* validity check */
 				/*
 				 * If range violation of reqid, kernel will
 				 * update it, don't refuse it.
 				 */
-				if (xisr->sadb_x_ipsecrequest_reqid
-						> IPSEC_MANUAL_REQID_MAX) {
+				if (xisr_reqid > IPSEC_MANUAL_REQID_MAX) {
 					ipseclog((LOG_DEBUG,
 					    "key_msg2sp: reqid=%d range "
 					    "violation, updated by kernel.\n",
-					    xisr->sadb_x_ipsecrequest_reqid));
-					xisr->sadb_x_ipsecrequest_reqid = 0;
+					    xisr_reqid));
+					xisr_reqid = 0;
 				}
 
 				/* allocate new reqid id if reqid is zero. */
-				if (xisr->sadb_x_ipsecrequest_reqid == 0) {
+				if (xisr_reqid == 0) {
 					u_int16_t reqid;
 					if ((reqid = key_newreqid()) == 0) {
 						KEY_FREESP(&newsp);
@@ -1561,11 +1562,9 @@ key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
 						return NULL;
 					}
 					(*p_isr)->saidx.reqid = reqid;
-					xisr->sadb_x_ipsecrequest_reqid = reqid;
 				} else {
 				/* set it for manual keying. */
-					(*p_isr)->saidx.reqid =
-						xisr->sadb_x_ipsecrequest_reqid;
+					(*p_isr)->saidx.reqid = xisr_reqid;
 				}
 				break;
 
@@ -1580,9 +1579,9 @@ key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
 
 			/* set IP addresses if there */
 			if (xisr->sadb_x_ipsecrequest_len > sizeof(*xisr)) {
-				struct sockaddr *paddr;
+				const struct sockaddr *paddr;
 
-				paddr = (struct sockaddr *)(xisr + 1);
+				paddr = (const struct sockaddr *)(xisr + 1);
 
 				/* validity check */
 				if (paddr->sa_len
@@ -1595,7 +1594,7 @@ key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
 				}
 				memcpy(&(*p_isr)->saidx.src, paddr, paddr->sa_len);
 
-				paddr = (struct sockaddr *)((char *)paddr
+				paddr = (const struct sockaddr *)((const char *)paddr
 							+ paddr->sa_len);
 
 				/* validity check */
@@ -1625,7 +1624,7 @@ key_msg2sp(struct sadb_x_policy *xpl0, size_t len, int *error)
 				return NULL;
 			}
 
-			xisr = (struct sadb_x_ipsecrequest *)((char *)xisr
+			xisr = (const struct sadb_x_ipsecrequest *)((const char *)xisr
 			                 + xisr->sadb_x_ipsecrequest_len);
 		}
 	    }
@@ -1817,9 +1816,10 @@ static int
 key_spdadd(struct socket *so, struct mbuf *m, 
 	   const struct sadb_msghdr *mhp)
 {
-	struct sadb_address *src0, *dst0;
-	struct sadb_x_policy *xpl0, *xpl;
-	struct sadb_lifetime *lft = NULL;
+	const struct sadb_address *src0, *dst0;
+	const struct sadb_x_policy *xpl0;
+	struct sadb_x_policy *xpl;
+	const struct sadb_lifetime *lft = NULL;
 	struct secpolicyindex spidx;
 	struct secpolicy *newsp;
 	int error;
@@ -1932,34 +1932,16 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	                &newsp->spidx);
 
 	/* sanity check on addr pair */
-	if (((struct sockaddr *)(src0 + 1))->sa_family !=
-			((struct sockaddr *)(dst0+ 1))->sa_family) {
+	if (((const struct sockaddr *)(src0 + 1))->sa_family !=
+			((const struct sockaddr *)(dst0+ 1))->sa_family) {
 		KFREE(newsp);
 		return key_senderror(so, m, EINVAL);
 	}
-	if (((struct sockaddr *)(src0 + 1))->sa_len !=
-			((struct sockaddr *)(dst0+ 1))->sa_len) {
+	if (((const struct sockaddr *)(src0 + 1))->sa_len !=
+			((const struct sockaddr *)(dst0+ 1))->sa_len) {
 		KFREE(newsp);
 		return key_senderror(so, m, EINVAL);
 	}
-#if 1
-	if (newsp->req && newsp->req->saidx.src.sa.sa_family) {
-		struct sockaddr *sa;
-		sa = (struct sockaddr *)(src0 + 1);
-		if (sa->sa_family != newsp->req->saidx.src.sa.sa_family) {
-			KFREE(newsp);
-			return key_senderror(so, m, EINVAL);
-		}
-	}
-	if (newsp->req && newsp->req->saidx.dst.sa.sa_family) {
-		struct sockaddr *sa;
-		sa = (struct sockaddr *)(dst0 + 1);
-		if (sa->sa_family != newsp->req->saidx.dst.sa.sa_family) {
-			KFREE(newsp);
-			return key_senderror(so, m, EINVAL);
-		}
-	}
-#endif
 
 	newsp->created = time_uptime;
 	newsp->lastused = newsp->created;

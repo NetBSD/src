@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.16.4.1 2010/07/03 01:19:15 rmind Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.16.4.2 2011/06/12 00:23:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.16.4.1 2010/07/03 01:19:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.16.4.2 2011/06/12 00:23:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.16.4.1 2010/07/03 01:19:15 rmind E
 /*
  * INTC autoconf glue
  */
-static int	pxaintc_match(struct device *, struct cfdata *, void *);
-static void	pxaintc_attach(struct device *, struct device *, void *);
+static int	pxaintc_match(device_t, cfdata_t, void *);
+static void	pxaintc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pxaintc, sizeof(struct device),
+CFATTACH_DECL_NEW(pxaintc, 0,
     pxaintc_match, pxaintc_attach, NULL, NULL);
 
 static int pxaintc_attached;
@@ -98,7 +98,7 @@ static int extirq_level[ICU_LEN];
 
 
 static int
-pxaintc_match(struct device *parent, struct cfdata *cf, void *aux)
+pxaintc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
 
@@ -109,7 +109,7 @@ pxaintc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-pxaintc_attach(struct device *parent, struct device *self, void *args)
+pxaintc_attach(device_t parent, device_t self, void *args)
 {
 	int i;
 

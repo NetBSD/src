@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.11.42.2 2011/05/31 03:04:13 rmind Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.11.42.3 2011/06/12 00:24:04 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -92,7 +92,7 @@
 	stmw	%r30,(savearea+CPUSAVE_SRR0)(%r1); /* save srr0/srr1 */	\
 	mfsprg1	%r1;			/* restore SP */ 	\
 	mtcr	%r31;						\
-	bc	%cr4,MSR_PR,1f;	/* branch if MSR[PR] is clear */	\
+	bf	MSR_PR,1f;		/* branch if MSR[PR] is clear */ \
 	GET_PCB(%r1);						\
 	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
 1:
@@ -111,7 +111,7 @@
 	stmw	%r30,(savearea+CPUSAVE_SRR0)(%r1); /* save srr0/srr1 */	\
 	mfsprg1	%r1;			/* restore SP */ 	\
 	mtcr	%r31;						\
-	bc	%cr4,MSR_PR,1f;	/* branch if MSR[PR] is clear */	\
+	bf	MSR_PR,1f;		/* branch if MSR[PR] is clear */ \
 	GET_PCB(%r1);						\
 	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
 1:
@@ -127,7 +127,7 @@
 	stmw	%r30,(savearea+CPUSAVE_SRR0)(%r1); /* save srr0/srr1 */	\
 	mfsprg1	%r1;			/* restore SP */ 	\
 	mtcr	%r31;						\
-	bc	%cr4,MSR_PR,1f;	/* branch if MSR[PR] is clear */	\
+	bf	MSR_PR,1f;		/* branch if MSR[PR] is clear */ \
 	GET_PCB(%r1);						\
 	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
 1:
@@ -273,6 +273,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	lmw	%r28,(savearea+CPUSAVE_R28)(%r2);			\
 	stmw	%r3,FRAME_R3(%r1);					\
 	lmw	%r28,(savearea+CPUSAVE_DEAR)(%r2);			\
+	lwz	%r13,CI_CURLWP(%r2);					\
 	mfxer	%r3;							\
 	mfctr	%r4;							\
 	mflr	%r5;							\
@@ -301,6 +302,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtctr	%r9;							\
 	mtsrr0	%r10;							\
 	mtsrr1	%r11;							\
+	lwz	%r13,FRAME_R13(%r1);					\
 	lwz	%r12,FRAME_R12(%r1);					\
 	lwz	%r11,FRAME_R11(%r1);					\
 	lwz	%r10,FRAME_R10(%r1);					\
@@ -335,10 +337,9 @@ _C_LABEL(trapexit):
 
 	/* Test AST pending: */
 	mtcr	%r31
-	bc	%cr4,MSR_PR,trapleave_to_kernel /* branch if MSR[PR] is false */
+	bf	MSR_PR,trapleave_to_kernel /* branch if MSR[PR] is false */
 
-	GET_CPUINFO(%r3)
-	lwz	%r4,CI_ASTPENDING(%r3)
+	lwz	%r4,L_MD_ASTPENDING(%r13)
 	andi.	%r4,%r4,1
 	beq	trapleave_to_user
 
@@ -347,7 +348,7 @@ _C_LABEL(trapexit):
 	b	trapagain
 
 trapleave_to_kernel:
-	lmw	%r13, FRAME_R13(%r1)	/* restore callee registers */
+	lmw	%r14, FRAME_R14(%r1)	/* restore callee registers */
 
 intrleave_to_kernel:
 	FRAME_RESTORE		/* old SP is now in sprg1 */
@@ -410,9 +411,7 @@ s_sctrap:
 	wrteei	1			/* Enable interrupts */
 /* Call the appropriate syscall handler: */
 	addi	%r3,%r1,FRAME_TF
-	GET_CPUINFO(%r4)
-	lwz	%r4,CI_CURLWP(%r4)
-	lwz	%r4,L_PROC(%r4)
+	lwz	%r4,L_PROC(%r13)
 	lwz	%r4,P_MD_SYSCALL(%r4)
 	mtctr	%r4
 	bctrl
@@ -444,6 +443,7 @@ _C_LABEL(sctrapexit):
 	stmw	%r28,FRAME_LR(%r1);	/* save LR, CR, XER, CTR */	\
 	GET_CPUINFO(%r5);						\
 	lmw	%r28,(tempsave+CPUSAVE_R28)(%r5); /* restore r28-r31 */	\
+	lwz	%r13,CI_CURLWP(%r5);					\
 	lwz	%r5,CI_IDEPTH(%r5);					\
 	mfsrr0	%r4;							\
 	mfsrr1	%r3;							\
@@ -469,12 +469,12 @@ intr_exit:
 	addi	%r4,%r4,-1		/* adjust reentrancy count */
 	stw	%r4,CI_IDEPTH(%r5)
 
-	lwz	%r5,FRAME_SRR1(%r1)
+	lwz	%r4,FRAME_SRR1(%r1)
 /* Returning to user mode? */
-	mtcr	%r5			/* saved SRR1 */
-	bc	%cr4,MSR_PR,intrleave_to_kernel /* branch if MSR[PR] is false */
+	mtcr	%r4			/* saved SRR1 */
+	bf	MSR_PR,intrleave_to_kernel /* branch if MSR[PR] is false */
 
-	lwz	%r4,CI_ASTPENDING(%r5)	/* Test AST pending */
+	lwz	%r4,L_MD_ASTPENDING(%r13)/* Test AST pending */
 	andi.	%r4,%r4,1
 	beq	intrleave_to_user
 

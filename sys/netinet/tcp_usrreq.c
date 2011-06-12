@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.158.4.1 2011/05/31 03:05:08 rmind Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.158.4.2 2011/06/12 00:24:30 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.158.4.1 2011/05/31 03:05:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.158.4.2 2011/06/12 00:24:30 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2093,7 +2093,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "enable",
 		       SYSCTL_DESCR("Enable Vestigial TIME_WAIT"),
-		       NULL, 0,
+		       sysctl_tcp_vtw_enable, 0,
 	               (pf == AF_INET) ? &tcp4_vtw_enable : &tcp6_vtw_enable,
 		       0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &vtw_node, NULL,

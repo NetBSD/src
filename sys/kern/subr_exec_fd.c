@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.2.4.2 2011/03/05 20:55:18 rmind Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.2.4.3 2011/06/12 00:24:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.2.4.2 2011/03/05 20:55:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.2.4.3 2011/06/12 00:24:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -36,6 +36,35 @@ __KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.2.4.2 2011/03/05 20:55:18 rmind E
 #include <sys/namei.h>
 #include <sys/syslog.h>
 #include <sys/vnode.h>
+#include <sys/ktrace.h>
+
+void
+fd_ktrexecfd(void)
+{
+	proc_t *p;
+	filedesc_t *fdp;
+	fdfile_t *ff;
+	lwp_t *l;
+	fdtab_t *dt;
+	int fd;
+
+	l = curlwp;
+	p = l->l_proc;
+	fdp = p->p_fd;
+	dt = fdp->fd_dt;
+
+	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
+		if ((ff = dt->dt_ff[fd]) == NULL) {
+			KASSERT(fd >= NDFDFILE);
+			continue;
+		}
+		KASSERT(fd >= NDFDFILE ||
+		    ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
+		if (ff->ff_file == NULL)
+			continue;
+		ktr_execfd(fd, ff->ff_file->f_type);
+	}
+}
 
 /*
  * It is unsafe for set[ug]id processes to be started with file

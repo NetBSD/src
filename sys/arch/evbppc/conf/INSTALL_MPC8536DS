@@ -1,0 +1,9 @@
+# 	$NetBSD: INSTALL_MPC8536DS,v 1.1.2.2 2011/06/12 00:23:56 rmind Exp $
+
+include "arch/evbppc/conf/MPC8536DS"
+
+#ident 		"INSTALL_MPC8536DS-$Revision: 1.1.2.2 $"
+
+include "arch/evbppc/conf/INSTALL.inc"
+
+no config nfsnetbsd

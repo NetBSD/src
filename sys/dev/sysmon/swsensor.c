@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.7.6.2 2011/03/05 20:54:08 rmind Exp $ */
+/*	$NetBSD: swsensor.c,v 1.7.6.3 2011/06/12 00:24:26 rmind Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.7.6.2 2011/03/05 20:54:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.7.6.3 2011/06/12 00:24:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -234,6 +234,33 @@ swsensor_init(void *arg)
 	if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER)
 		sw_sensor_value = prop_number_integer_value(po);
 
+	/* Retrieve any value_{max,min} that might be present */
+	if (pd != NULL) {
+		po = prop_dictionary_get(pd, "value_max");
+		if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER) {
+			swsensor_edata.value_max =
+			    prop_number_integer_value(po);
+			swsensor_edata.flags |= ENVSYS_FVALID_MAX;
+		}
+
+		po = prop_dictionary_get(pd, "value_min");
+		if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER) {
+			swsensor_edata.value_min =
+			    prop_number_integer_value(po);
+			swsensor_edata.flags |= ENVSYS_FVALID_MIN;
+		}
+	}
+
+	/* See if this sensor should report percentages vs raw values */
+	if (pd != NULL) {
+		po = prop_dictionary_get(pd, "percentage");
+		if (po != NULL &&
+		    prop_object_type(po) == PROP_TYPE_BOOL &&
+		    prop_bool_true(po))
+			swsensor_edata.flags |= ENVSYS_FPERCENT;
+	}
+
+	swsensor_edata.state = ENVSYS_SVALID;
 	swsensor_edata.value_cur = 0;
 
 	strlcpy(swsensor_edata.desc, "sensor", ENVSYS_DESCLEN);

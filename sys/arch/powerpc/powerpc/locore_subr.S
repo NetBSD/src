@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.39.4.1 2011/03/05 20:51:41 rmind Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.39.4.2 2011/06/12 00:24:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -98,7 +98,7 @@
 	streg	%r10,(SFRAME_USER_SR)(t0);	/* USER_SR */	\
 	streg	%r11,(SFRAME_CR)(t0);		/* CR */	\
 	streg	%r12,(SFRAME_R2)(t0);		/* R2 */	\
-	streg	%r13,(SFRAME_R13)(t0);		/* volatile */	\
+     /* streg	%r13,(SFRAME_R13)(t0); */	/* volatile */	\
 	streg	%r14,(SFRAME_R14)(t0);				\
 	streg	%r15,(SFRAME_R15)(t0);				\
 	streg	%r16,(SFRAME_R16)(t0);				\
@@ -120,7 +120,7 @@
 	ldreg	%r10,(SFRAME_USER_SR)(t0);	/* USER_SR */	\
 	ldreg	%r11,(SFRAME_CR)(t0);		/* CR */	\
 	ldreg	%r12,(SFRAME_R2)(t0);		/* R2 */	\
-	ldreg	%r13,(SFRAME_R13)(t0);		/* volatile */	\
+     /* ldreg	%r13,(SFRAME_R13)(t0); */	/* volatile */	\
 	ldreg	%r14,(SFRAME_R14)(t0);				\
 	ldreg	%r15,(SFRAME_R15)(t0);				\
 	ldreg	%r16,(SFRAME_R16)(t0);				\
@@ -217,6 +217,7 @@ switchto_restore:
 
 	GET_CPUINFO(%r7)
 	stptr	%r31,CI_CURLWP(%r7)
+	mr	%r13,%r31
 #ifdef PPC_BOOKE
 	mtsprg2	%r31			/* save curlwp in sprg2 */
 #endif
@@ -381,6 +382,7 @@ _ENTRY(softint_fast_dispatch)
 	 */
 
 	stptr	%r3, CI_CURLWP(%r7)
+	mr	%r13, %r3
 #ifdef PPC_BOOKE
 	mtsprg2	%r3
 #endif
@@ -414,6 +416,7 @@ _ENTRY(softint_fast_dispatch)
 
 	GET_CPUINFO(%r7)
 	stptr	%r30, CI_CURLWP(%r7)
+	mr	%r13, %r30
 #ifdef PPC_BOOKE
 	mtsprg2	%r30
 #endif
@@ -484,6 +487,7 @@ _ENTRY(cpu_lwp_bootstrap)
 	 * r3 (old lwp) and r4 (new lwp) are setup in cpu_switchto.
 	 */
 	bl	_C_LABEL(lwp_startup)
+
 	/*
 	 * Fall through into setfunc_trampoline
 	 */
@@ -504,8 +508,13 @@ _ENTRY(setfunc_trampoline)
 	tweqi	%r0,0
 #endif
 	li	%r4, 1			/* make sure userret gets called */
+#if 0
 	GET_CPUINFO(%r3)
-	stint	%r4, CI_ASTPENDING(%r3)
+	ldptr	%r3, CI_CURLWP(%r3)
+	stint	%r4, L_MD_ASTPENDING(%r3)
+#else
+	stint	%r4, L_MD_ASTPENDING(%r13)
+#endif
 	b	trapexit
 
 #if defined(MULTIPROCESSOR) && (defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE))

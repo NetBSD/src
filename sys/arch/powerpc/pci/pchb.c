@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.4 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: pchb.c,v 1.4.22.1 2011/06/12 00:24:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.4 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.4.22.1 2011/06/12 00:24:05 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,14 +52,14 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.4 2008/04/28 20:23:32 martin Exp $");
 
 #include "agp.h"
 
-int	pchbmatch(struct device *, struct cfdata *, void *);
-void	pchbattach(struct device *, struct device *, void *);
+int	pchbmatch(device_t, cfdata_t, void *);
+void	pchbattach(device_t, device_t, void *);
 
-CFATTACH_DECL(pchb, sizeof(struct device),
+CFATTACH_DECL_NEW(pchb, 0,
     pchbmatch, pchbattach, NULL, NULL);
 
 int
-pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
+pchbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -75,7 +75,7 @@ pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-mpc105_print(struct pci_attach_args *pa, struct device *self)
+mpc105_print(struct pci_attach_args *pa, device_t self)
 {
 	pcireg_t reg1, reg2;
 	const char *s1;
@@ -118,7 +118,7 @@ mpc105_print(struct pci_attach_args *pa, struct device *self)
 }
 
 static void
-mpc106_print(struct pci_attach_args *pa, struct device *self)
+mpc106_print(struct pci_attach_args *pa, device_t self)
 {
 	pcireg_t reg1, reg2;
 	const char *s1;
@@ -177,7 +177,7 @@ mpc106_print(struct pci_attach_args *pa, struct device *self)
 }
 
 static void
-ibm82660_print(struct pci_attach_args *pa, struct device *self)
+ibm82660_print(struct pci_attach_args *pa, device_t self)
 {
 	pcireg_t reg1;
 #ifdef PREP_BUS_SPACE_IO
@@ -231,7 +231,7 @@ ibm82660_print(struct pci_attach_args *pa, struct device *self)
 }
 
 void
-pchbattach(struct device *parent, struct device *self, void *aux)
+pchbattach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];

@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.12.4.2 2011/05/31 03:05:10 rmind Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.12.4.3 2011/06/12 00:24:31 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.12.4.2 2011/05/31 03:05:10 rmind Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.12.4.3 2011/06/12 00:24:31 rmind Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -96,6 +96,7 @@ static  int skipjack_setkey(u_int8_t **, const u_int8_t *, int);
 static  int rijndael128_setkey(u_int8_t **, const u_int8_t *, int);
 static  int cml_setkey(u_int8_t **, const u_int8_t *, int);
 static  int aes_ctr_setkey(u_int8_t **, const u_int8_t *, int);
+static	int aes_gmac_setkey(u_int8_t **, const u_int8_t *, int);
 static	void des1_encrypt(void *, u_int8_t *);
 static	void des3_encrypt(void *, u_int8_t *);
 static	void blf_encrypt(void *, u_int8_t *);
@@ -119,8 +120,10 @@ static	void skipjack_zerokey(u_int8_t **);
 static	void rijndael128_zerokey(u_int8_t **);
 static  void cml_zerokey(u_int8_t **);
 static  void aes_ctr_zerokey(u_int8_t **);
+static	void aes_gmac_zerokey(u_int8_t **);
 static  void aes_ctr_reinit(void *, const u_int8_t *, u_int8_t *);
 static  void aes_gcm_reinit(void *, const u_int8_t *, u_int8_t *);
+static	void aes_gmac_reinit(void *, const u_int8_t *, u_int8_t *);
 
 static	void null_init(void *);
 static	int null_update(void *, const u_int8_t *, u_int16_t);
@@ -231,9 +234,9 @@ static const struct swcr_enc_xform swcr_enc_xform_aes_gmac = {
 	&enc_xform_aes_gmac,
 	NULL,
 	NULL,
-	NULL,
-	NULL,
-	NULL
+	aes_gmac_setkey,
+	aes_gmac_zerokey,
+	aes_gmac_reinit
 };
 
 static const struct swcr_enc_xform swcr_enc_xform_camellia = {
@@ -786,6 +789,49 @@ aes_gcm_reinit(void *key, const u_int8_t *iv, u_int8_t *ivout)
 	/* reset counter */
 	memset(ctx->ac_block + AESCTR_NONCESIZE + AESCTR_IVSIZE, 0, 4);
 	ctx->ac_block[AESCTR_BLOCKSIZE - 1] = 1; /* GCM starts with 1 */
+}
+
+struct aes_gmac_ctx {
+	struct {
+		u_int64_t lastiv;
+	} ivgenctx;
+};
+
+int
+aes_gmac_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+{
+	struct aes_gmac_ctx *ctx;
+
+	ctx = malloc(sizeof(struct aes_gmac_ctx), M_CRYPTO_DATA,
+		     M_NOWAIT|M_ZERO);
+	if (!ctx)
+		return ENOMEM;
+
+	/* random start value for simple counter */
+	arc4randbytes(&ctx->ivgenctx.lastiv, sizeof(ctx->ivgenctx.lastiv));
+	*sched = (void *)ctx;
+	return 0;
+}
+
+void
+aes_gmac_zerokey(u_int8_t **sched)
+{
+
+	free(*sched, M_CRYPTO_DATA);
+	*sched = NULL;
+}
+
+void
+aes_gmac_reinit(void *key, const u_int8_t *iv, u_int8_t *ivout)
+{
+	struct aes_gmac_ctx *ctx = key;
+
+	if (!iv) {
+		ctx->ivgenctx.lastiv++;
+		iv = (const u_int8_t *)&ctx->ivgenctx.lastiv;
+	}
+	if (ivout)
+		memcpy(ivout, iv, AESCTR_IVSIZE);
 }
 
 /*

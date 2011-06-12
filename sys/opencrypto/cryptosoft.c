@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.25.4.2 2011/05/31 03:05:10 rmind Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.25.4.3 2011/06/12 00:24:31 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.25.4.2 2011/05/31 03:05:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.25.4.3 2011/06/12 00:24:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -852,6 +852,9 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		case CRYPTO_AES_GCM_16:
 			txf = &swcr_enc_xform_aes_gcm;
 			goto enccommon;
+		case CRYPTO_AES_GMAC:
+			txf = &swcr_enc_xform_aes_gmac;
+			goto enccommon;
 		case CRYPTO_NULL_CBC:
 			txf = &swcr_enc_xform_null;
 			goto enccommon;
@@ -862,11 +865,6 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 				swcr_freesession(NULL, i);
 				return error;
 			}
-			(*swd)->sw_exf = txf;
-			break;
-
-		case CRYPTO_AES_GMAC:
-			txf = &swcr_enc_xform_aes_gmac;
 			(*swd)->sw_exf = txf;
 			break;
 
@@ -1070,14 +1068,12 @@ swcr_freesession(void *arg, u_int64_t tid)
 		case CRYPTO_CAMELLIA_CBC:
 		case CRYPTO_AES_CTR:
 		case CRYPTO_AES_GCM_16:
+		case CRYPTO_AES_GMAC:
 		case CRYPTO_NULL_CBC:
 			txf = swd->sw_exf;
 
 			if (swd->sw_kschedule)
 				txf->zerokey(&(swd->sw_kschedule));
-			break;
-
-		case CRYPTO_AES_GMAC:
 			break;
 
 		case CRYPTO_MD5_HMAC:

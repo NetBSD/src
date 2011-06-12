@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.52.4.1 2011/03/05 20:52:18 rmind Exp $	*/
+/*	$NetBSD: ka820.c,v 1.52.4.2 2011/06/12 00:24:10 rmind Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.52.4.1 2011/03/05 20:52:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.52.4.2 2011/06/12 00:24:10 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -279,7 +279,7 @@ static int ms820_match(device_t, cfdata_t, void *);
 static void ms820_attach(device_t, device_t, void*);
 
 struct mem_bi_softc {
-	struct device *sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };

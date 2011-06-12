@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.141.2.4 2011/04/21 01:42:08 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.141.2.5 2011/06/12 00:24:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.141.2.4 2011/04/21 01:42:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.141.2.5 2011/06/12 00:24:29 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -762,6 +762,12 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	if (rnewlwpp != NULL)
 		*rnewlwpp = l2;
 
+	/*
+	 * PCU state needs to be saved before calling uvm_lwp_fork() so that
+	 * the MD cpu_lwp_fork() can copy the saved state to the new LWP.
+	 */
+	pcu_save_all(l1);
+
 	uvm_lwp_setuarea(l2, uaddr);
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
@@ -968,6 +974,11 @@ lwp_exit(struct lwp *l)
 			lwp_unlock(l2);
 		}
 	}
+
+	/*
+	 * Release any PCU resources before becoming a zombie.
+	 */
+	pcu_discard_all(l);
 
 	lwp_lock(l);
 	l->l_stat = LSZOMB;

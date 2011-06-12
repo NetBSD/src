@@ -1,4 +1,4 @@
-/* $NetBSD: ioeb.c,v 1.5 2002/10/02 03:25:47 thorpej Exp $ */
+/* $NetBSD: ioeb.c,v 1.5.134.1 2011/06/12 00:23:50 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.5 2002/10/02 03:25:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.5.134.1 2011/06/12 00:23:50 rmind Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -46,19 +46,19 @@ struct ioeb_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-static int ioeb_match(struct device *, struct cfdata *, void *);
-static void ioeb_attach(struct device *, struct device *, void *);
+static int ioeb_match(device_t, cfdata_t, void *);
+static void ioeb_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(ioeb, sizeof(struct ioeb_softc),
     ioeb_match, ioeb_attach, NULL, NULL);
 
-struct device *the_ioeb;
+device_t the_ioeb;
 
 /* IOEB is only four bits wide */
 #define ioeb_read(t, h, o) (bus_space_read_1(t, h, o) & 0xf)
 
 static int
-ioeb_match(struct device *parent, struct cfdata *cf, void *aux)
+ioeb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ioc_attach_args *ioc = aux;
 	int id;
@@ -72,9 +72,9 @@ ioeb_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ioeb_attach(struct device *parent, struct device *self, void *aux)
+ioeb_attach(device_t parent, device_t self, void *aux)
 {
-	struct ioeb_softc *sc = (void *)self;
+	struct ioeb_softc *sc = device_private(self);
 	struct ioc_attach_args *ioc = aux;
 
 	if (the_ioeb == NULL)
@@ -87,7 +87,7 @@ ioeb_attach(struct device *parent, struct device *self, void *aux)
 void
 ioeb_irq_clear(int mask)
 {
-	struct ioeb_softc *sc = (void *)the_ioeb;
+	struct ioeb_softc *sc = device_private(the_ioeb);
 
 	/* The IOEB only controls interrupt 0 */
 	if (mask & IOEB_IRQ_CLEARABLE_MASK)

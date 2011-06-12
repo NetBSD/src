@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.17 2009/03/14 15:36:02 dsl Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.17.4.1 2011/06/12 00:23:53 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.17 2009/03/14 15:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.17.4.1 2011/06/12 00:23:53 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -88,8 +88,8 @@ extern u_int undefined_handler_address;
 extern void data_abort_handler(trapframe_t *frame);
 extern void prefetch_abort_handler(trapframe_t *frame);
 extern void undefinedinstruction_bounce(trapframe_t *frame);
-int	ofbus_match(struct device *, struct cfdata *, void *);
-void	ofbus_attach(struct device *, struct device *, void *);
+int	ofbus_match(device_t, cfdata_t, void *);
+void	ofbus_attach(device_t, device_t, void *);
 
 /* Local routines */
 static void process_kernel_args(void);
@@ -106,7 +106,7 @@ int max_processes = 64;			/* Default number */
 
 int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
 
-CFATTACH_DECL(ofbus_root, sizeof(struct device),
+CFATTACH_DECL_NEW(ofbus_root, 0,
     ofbus_match, ofbus_attach, NULL, NULL);
 
 /**************************************************************/

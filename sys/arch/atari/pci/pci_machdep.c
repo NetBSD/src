@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.47.4.3 2011/05/31 03:03:57 rmind Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.47.4.4 2011/06/12 00:23:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.47.4.3 2011/05/31 03:03:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.47.4.4 2011/06/12 00:23:54 rmind Exp $");
 
 #include "opt_mbtype.h"
 
@@ -120,16 +120,16 @@ struct atari_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamap_sync,
 };
 
-int	ataripcibusprint(void *auxp, const char *);
-int	pcibusmatch(struct device *, struct cfdata *, void *);
-void	pcibusattach(struct device *, struct device *, void *);
+int	ataripcibusprint(void *, const char *);
+int	pcibusmatch(device_t, cfdata_t, void *);
+void	pcibusattach(device_t, device_t, void *);
 
 static void enable_pci_devices(void);
 static void insert_into_list(PCI_MEMREG *head, struct pci_memreg *elem);
 static int overlap_pci_areas(struct pci_memreg *p,
 	struct pci_memreg *self, u_int addr, u_int size, u_int what);
 
-CFATTACH_DECL(pcib, sizeof(struct device),
+CFATTACH_DECL_NEW(pcib, 0,
     pcibusmatch, pcibusattach, NULL, NULL);
 
 /*
@@ -139,11 +139,11 @@ CFATTACH_DECL(pcib, sizeof(struct device),
 static struct atari_bus_space	bs_storage[2];	/* 1 iot, 1 memt */
 
 int
-pcibusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+pcibusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int	nmatched = 0;
 
-	if (strcmp((char *)auxp, "pcib"))
+	if (strcmp((char *)aux, "pcib"))
 		return 0;	/* Wrong number... */
 
 	if (atari_realconfig == 0)
@@ -162,7 +162,7 @@ pcibusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-pcibusattach(struct device *pdp, struct device *dp, void *auxp)
+pcibusattach(device_t parent, device_t self, void *aux)
 {
 	struct pcibus_attach_args	pba;
 
@@ -180,7 +180,7 @@ pcibusattach(struct device *pdp, struct device *dp, void *auxp)
 	pba.pba_iot->base  = PCI_IO_PHYS;
 	pba.pba_memt->base = PCI_MEM_PHYS;
 
-	if (dp == NULL) {
+	if (self == NULL) {
 		/*
 		 * Scan the bus for a VGA-card that we support. If we
 		 * find one, try to initialize it to a 'standard' text
@@ -198,11 +198,11 @@ pcibusattach(struct device *pdp, struct device *dp, void *auxp)
 
 	printf("\n");
 
-	config_found_ia(dp, "pcibus", &pba, ataripcibusprint);
+	config_found_ia(self, "pcibus", &pba, ataripcibusprint);
 }
 
 int
-ataripcibusprint(void *auxp, const char *name)
+ataripcibusprint(void *aux, const char *name)
 {
 
 	if (name == NULL)
@@ -211,7 +211,7 @@ ataripcibusprint(void *auxp, const char *name)
 }
 
 void
-pci_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
+pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 }
 

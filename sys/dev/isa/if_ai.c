@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.32 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.32.4.1 2011/06/12 00:24:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.32 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.32.4.1 2011/06/12 00:24:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,7 +304,7 @@ out:
 void
 ai_attach(device_t parent, device_t self, void *aux)
 {
-	struct ai_softc *asc = (void *)self;
+	struct ai_softc *asc = device_private(self);
 	struct ie_softc *sc = &asc->sc_ie;
 	struct isa_attach_args *ia = aux;
 
@@ -313,10 +313,12 @@ ai_attach(device_t parent, device_t self, void *aux)
 	u_int8_t ethaddr[ETHER_ADDR_LEN];
 	char name[80];
 
+	sc->sc_dev = self;
+
 	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr,
 			  ia->ia_io[0].ir_size, 0, &ioh) != 0) {
 		DPRINTF(("\n%s: can't map i/o space 0x%x-0x%x\n",
-			 device_xname(&sc->sc_dev),
+			 device_xname(self),
 		         ia->ia_io[0].ir_addr, ia->ia_io[0].ir_addr +
 		         ia->ia_io[0].ir_size - 1));
 		return;
@@ -325,7 +327,7 @@ ai_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr,
 			  ia->ia_iomem[0].ir_size, 0, &memh) != 0) {
 		DPRINTF(("\n%s: can't map iomem space 0x%x-0x%x\n",
-			 device_xname(&sc->sc_dev),
+			 device_xname(self),
 			 ia->ia_iomem[0].ir_addr, ia->ia_iomem[0].ir_addr +
 			 ia->ia_iomem[0].ir_size - 1));
 		bus_space_unmap(ia->ia_iot, ioh, ia->ia_io[0].ir_size);
@@ -386,7 +388,7 @@ ai_attach(device_t parent, device_t self, void *aux)
 			  BUS_SPACE_BARRIER_WRITE);
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: can't talk to i82586!\n",
-			device_xname(&sc->sc_dev)));
+			device_xname(self)));
 		bus_space_unmap(ia->ia_iot, ioh, ia->ia_io[0].ir_size);
 		bus_space_unmap(ia->ia_memt, memh, ia->ia_iomem[0].ir_size);
 		return;
@@ -404,7 +406,7 @@ ai_attach(device_t parent, device_t self, void *aux)
 	    IST_EDGE, IPL_NET, i82586_intr, sc);
 	if (asc->sc_ih == NULL) {
 		DPRINTF(("\n%s: can't establish interrupt\n",
-			device_xname(&sc->sc_dev)));
+			device_xname(self)));
 	}
 }
 
@@ -475,5 +477,5 @@ check_ie_present(struct ie_softc* sc, bus_space_tag_t memt, bus_space_handle_t m
 	return (size);
 }
 
-CFATTACH_DECL(ai, sizeof(struct ai_softc),
+CFATTACH_DECL_NEW(ai, sizeof(struct ai_softc),
     ai_match, ai_attach, NULL, NULL);

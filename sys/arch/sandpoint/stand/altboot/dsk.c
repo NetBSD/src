@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.4.2.3 2011/04/21 01:41:22 rmind Exp $ */
+/* $NetBSD: dsk.c,v 1.4.2.4 2011/06/12 00:24:07 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ static struct dskdv ldskdv[] = {
 };
 static int ndskdv = sizeof(ldskdv)/sizeof(ldskdv[0]);
 
-static int disk_scan(void *);
+static void disk_scan(void *);
 static int probe_drive(struct dkdev_ata *, int);
 static void drive_ident(struct disk *, char *);
 static char *mkident(char *, int);
@@ -80,7 +80,8 @@ static void issue48(struct dvata_chan *, int64_t, int);
 static void issue28(struct dvata_chan *, int64_t, int);
 static struct disk *lookup_disk(int);
 
-static struct disk ldisk[4];
+#define MAX_UNITS 8
+static struct disk ldisk[MAX_UNITS];
 
 int
 dskdv_init(void *self)
@@ -103,15 +104,15 @@ dskdv_init(void *self)
 	return 1;
 }
 
-static int
+static void
 disk_scan(void *drv)
 {
 	struct dkdev_ata *l = drv;
 	struct disk *d;
-	int n, ndrive;
+	static int ndrive = 0;
+	int n;
 
-	ndrive = 0;
-	for (n = 0; n < 4; n++) {
+	for (n = 0; n < 4 && ndrive < MAX_UNITS; n++) {
 		if (l->presense[n] == 0)
 			continue;
 		if (probe_drive(l, n) == 0) {
@@ -127,7 +128,6 @@ disk_scan(void *drv)
 		decode_dlabel(d, l->iobuf);
 		ndrive += 1;
 	}
-	return ndrive;
 }
 
 int

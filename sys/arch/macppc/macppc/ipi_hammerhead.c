@@ -1,4 +1,4 @@
-/* $NetBSD: ipi_hammerhead.c,v 1.3.22.1 2011/03/05 20:50:59 rmind Exp $ */
+/* $NetBSD: ipi_hammerhead.c,v 1.3.22.2 2011/06/12 00:24:01 rmind Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,15 +29,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi_hammerhead.c,v 1.3.22.1 2011/03/05 20:50:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi_hammerhead.c,v 1.3.22.2 2011/06/12 00:24:01 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <machine/pio.h>
-#include <powerpc/atomic.h>
 
 #include <arch/powerpc/pic/picvar.h>
 #include <arch/powerpc/pic/ipivar.h>
@@ -45,8 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipi_hammerhead.c,v 1.3.22.1 2011/03/05 20:50:59 rmin
 #ifdef MULTIPROCESSOR
 
 extern struct ipi_ops ipiops;
-extern volatile u_long IPI[CPU_MAXNUM];
-static void hh_send_ipi(int, u_long);
+static void hh_send_ipi(cpuid_t, uint32_t);
 static void hh_establish_ipi(int, int, void *);
 
 #define HH_INTR_SECONDARY	0xf80000c0
@@ -62,30 +61,24 @@ setup_hammerhead_ipi(void)
 }
 
 static void
-hh_send_ipi(int target, u_long mesg)
+hh_send_ipi(cpuid_t target, uint32_t mesg)
 {
 	int cpu_id = target;
 
-	if (target == IPI_T_ALL) {
-		atomic_setbits_ulong(&IPI[0], mesg);
-		atomic_setbits_ulong(&IPI[1], mesg);
+	if (target == IPI_DST_ALL) {
+		atomic_or_32(&cpu_info[0].ci_pending_ipis, mesg);
+		atomic_or_32(&cpu_info[1].ci_pending_ipis, mesg);
 		in32(HH_INTR_PRIMARY);
 		out32(HH_INTR_SECONDARY, ~0);
 		out32(HH_INTR_SECONDARY, 0);
 		return;
 	}
 
-	if (target == IPI_T_NOTME) {
-		switch (cpu_number()) {
-		case 0:
-			cpu_id = 1;
-			break;
-		case 1:
-			cpu_id = 0;
-		}
+	if (target == IPI_DST_NOTME) {
+		cpu_id = cpu_number() ^ 1;
 	}
 
-	atomic_setbits_ulong(&IPI[cpu_id], mesg);
+	atomic_or_32(&cpu_info[cpu_id].ci_pending_ipis, mesg);
 	switch (cpu_id) {
 	case 0:
 		in32(HH_INTR_PRIMARY);
@@ -100,8 +93,7 @@ hh_send_ipi(int target, u_long mesg)
 static void
 hh_establish_ipi(int type, int level, void *ih_args)
 {
-	intr_establish(ipiops.ppc_ipi_vector, type, level, ppcipi_intr,
-	    ih_args);
+	intr_establish(ipiops.ppc_ipi_vector, type, level, ipi_intr, ih_args);
 }
 
 #endif /*MULTIPROCESSOR*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.167.4.5 2011/05/31 03:04:56 rmind Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.167.4.6 2011/06/12 00:24:27 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167.4.5 2011/05/31 03:04:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167.4.6 2011/06/12 00:24:27 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -1161,7 +1161,7 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	}
 	if (err) {
 		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting first desc "
-			      "failed\n", addr));
+			      "failed: %d\n", addr, err));
 		usbd_remove_device(dev, up);
 		return (err);
 	}

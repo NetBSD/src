@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5.2.3 2011/05/31 03:04:13 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.5.2.4 2011/06/12 00:24:03 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.5.2.3 2011/05/31 03:04:13 rmind Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.5.2.4 2011/06/12 00:24:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -772,7 +772,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		break;
 	case T_AST:
 		KASSERT(usertrap);
-		ci->ci_astpending = 0;		/* we are about to do it */
+		l->l_md.md_astpending = 0;	/* we are about to do it */
 		ci->ci_data.cpu_nsoft++;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.7.20.1 2010/05/30 05:17:01 rmind Exp $	*/
+/*	$NetBSD: pm.c,v 1.7.20.2 2011/06/12 00:24:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.7.20.1 2010/05/30 05:17:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.7.20.2 2011/06/12 00:24:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ struct hwcursor64 {
 };
 
 struct pm_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	size_t			sc_cmap_size;
 	size_t			sc_fb_size;
 	int			sc_type;
@@ -89,8 +89,8 @@ struct pm_softc {
 };
 #define	WSDISPLAY_CMAP_DOLUT	0x20
 
-int	pm_match(struct device *, struct cfdata *, void *);
-void	pm_attach(struct device *, struct device *, void *);
+int	pm_match(device_t, cfdata_t, void *);
+void	pm_attach(device_t, device_t, void *);
 int	pm_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 paddr_t	pm_mmap(void *, void *, off_t, int);
 int	pm_alloc_screen(void *, const struct wsscreen_descr *,
@@ -110,7 +110,7 @@ int	pm_get_cursor(struct pm_softc *, struct wsdisplay_cursor *);
 void	pm_set_curpos(struct pm_softc *, struct wsdisplay_curpos *);
 void	pm_init_cmap(struct pm_softc *);
 
-CFATTACH_DECL(pm, sizeof(struct pm_softc),
+CFATTACH_DECL_NEW(pm, sizeof(struct pm_softc),
    pm_match, pm_attach, NULL, NULL);
 
 struct rasops_info pm_ri;
@@ -142,7 +142,7 @@ const struct wsdisplay_accessops pm_accessops = {
 u_int	pm_creg;
 
 int
-pm_match(struct device *parent, struct cfdata *match, void *aux)
+pm_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ibus_attach_args *ia;
 	void *pmaddr;
@@ -160,14 +160,15 @@ pm_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-pm_attach(struct device *parent, struct device *self, void *aux)
+pm_attach(device_t parent, device_t self, void *aux)
 {
 	struct pm_softc *sc;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;
 	int console;
 
-	sc = (struct pm_softc *)self;
+	sc = device_private(self);
+	sc->sc_dev = self;
 	ri = &pm_ri;
 	console = (ri->ri_bits != NULL);
 

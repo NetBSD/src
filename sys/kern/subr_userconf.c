@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.19.4.2 2011/05/31 03:05:02 rmind Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.19.4.3 2011/06/12 00:24:29 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -29,9 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.19.4.2 2011/05/31 03:05:02 rmind Exp $");
-
-#include "opt_userconf.h"
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.19.4.3 2011/06/12 00:24:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,9 +93,7 @@ userconf_init(void)
 	userconf_maxdev = i - 1;
 	userconf_totdev = i - 1;
 
-#ifdef __HAVE_USERCONF_BOOTINFO
 	userconf_bootinfo();
-#endif
 }
 
 static int

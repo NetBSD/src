@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4.2.2 2011/03/05 20:51:38 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4.2.3 2011/06/12 00:24:04 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,8 +43,9 @@
 #include <sys/cpu.h>
 #include <sys/kcore.h>
 #include <uvm/uvm_page.h>
-#ifdef _PMAP_PRIVATE
+#ifdef __PMAP_PRIVATE
 #include <powerpc/booke/cpuvar.h>
+#include <powerpc/cpuset.h>
 #endif
 
 #define	PMAP_MD_NOCACHE		0x01000000
@@ -78,7 +79,7 @@ paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
 vaddr_t	pmap_md_direct_map_paddr(paddr_t);
 void	pmap_md_init(void);
 
-void	pmap_md_page_syncicache(struct vm_page *);
+void	pmap_md_page_syncicache(struct vm_page *, __cpuset_t);
 void	pmap_bootstrap(vaddr_t, vaddr_t, const phys_ram_seg_t *, size_t);
 bool	pmap_extract(struct pmap *, vaddr_t, paddr_t *);
 

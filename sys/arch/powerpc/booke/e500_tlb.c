@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.2.4.2 2011/03/05 20:51:34 rmind Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.2.4.3 2011/06/12 00:24:03 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.2.4.2 2011/03/05 20:51:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.2.4.3 2011/06/12 00:24:03 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -271,6 +271,38 @@ tlb_to_hwtlb(const struct e500_tlb tlb)
 	hwtlb.hwtlb_mas3 |= tlb.tlb_pte & PTE_RPN_MASK;
 
 	return hwtlb;
+}
+
+void *
+e500_tlb1_fetch(size_t slot)
+{
+	struct e500_tlb1 * const tlb1 = &e500_tlb1;
+
+	return &tlb1->tlb1_entries[slot].e_hwtlb;
+}
+
+void
+e500_tlb1_sync(void)
+{
+	struct e500_tlb1 * const tlb1 = &e500_tlb1;
+	for (u_int slot = 1; slot < tlb1->tlb1_numentries; slot++) {
+		const struct e500_hwtlb * const new_hwtlb =
+		    &tlb1->tlb1_entries[slot].e_hwtlb;
+		const struct e500_hwtlb old_hwtlb =
+		    hwtlb_read(MAS0_TLBSEL_TLB1, slot);
+#define CHANGED(n,o,f)	((n)->f != (o).f)
+		bool mas1_changed_p = CHANGED(new_hwtlb, old_hwtlb, hwtlb_mas1);
+		bool mas2_changed_p = CHANGED(new_hwtlb, old_hwtlb, hwtlb_mas2);
+		bool mas3_changed_p = CHANGED(new_hwtlb, old_hwtlb, hwtlb_mas3);
+#undef CHANGED
+		bool new_valid_p = (new_hwtlb->hwtlb_mas1 & MAS1_V) != 0;
+		bool old_valid_p = (old_hwtlb.hwtlb_mas1 & MAS1_V) != 0;
+		if ((new_valid_p || old_valid_p)
+		    && (mas1_changed_p
+			|| (new_valid_p
+			    && (mas2_changed_p || mas3_changed_p))))
+			hwtlb_write(*new_hwtlb, true);
+	}
 }
 
 static int

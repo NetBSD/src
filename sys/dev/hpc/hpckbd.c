@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.28 2009/05/12 14:22:39 cegger Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.28.4.1 2011/06/12 00:24:14 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.28 2009/05/12 14:22:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.28.4.1 2011/06/12 00:24:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ struct hpckbd_core {
 };
 
 struct hpckbd_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct hpckbd_core	*sc_core;
 	struct hpckbd_core	sc_coredata;
 };
@@ -104,7 +104,7 @@ void	hpckbd_keymap_setup(struct hpckbd_core *, const keysym_t *, int);
 int	__hpckbd_input(void *, int, int);
 void	__hpckbd_input_hook(void *);
 
-CFATTACH_DECL(hpckbd, sizeof(struct hpckbd_softc),
+CFATTACH_DECL_NEW(hpckbd, sizeof(struct hpckbd_softc),
     hpckbd_match, hpckbd_attach, NULL, NULL);
 
 /* wskbd accessopts */
@@ -139,8 +139,7 @@ struct wskbd_mapdata hpckbd_keymapdata = {
 };
 
 int
-hpckbd_match(device_t parent,
-	     cfdata_t cf, void *aux)
+hpckbd_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
@@ -152,6 +151,8 @@ hpckbd_attach(device_t parent, device_t self, void *aux)
 	struct hpckbd_softc *sc = device_private(self);
 	struct hpckbd_ic_if *ic = haa->haa_ic;
 	struct wskbddev_attach_args wa;
+
+	sc->sc_dev = self;
 
 	/*
 	 * Initialize core if it isn't console

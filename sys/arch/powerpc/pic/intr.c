@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.7.2.2 2011/03/05 20:51:40 rmind Exp $ */
+/*	$NetBSD: intr.c,v 1.7.2.3 2011/06/12 00:24:05 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7.2.2 2011/03/05 20:51:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7.2.3 2011/06/12 00:24:05 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -590,7 +590,7 @@ start:
 #ifdef MULTIPROCESSOR
 	/* THIS IS WRONG XXX */
 	while (realirq == ipiops.ppc_ipi_vector) {
-		ppcipi_intr(NULL);
+		ipi_intr(NULL);
 		pic->pic_ack_irq(pic, realirq);
 		realirq = pic->pic_get_irq(pic, PIC_GET_RECHECK);
 	}

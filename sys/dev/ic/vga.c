@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.102.2.2 2011/03/05 20:53:22 rmind Exp $ */
+/* $NetBSD: vga.c,v 1.102.2.3 2011/06/12 00:24:14 rmind Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.102.2.2 2011/03/05 20:53:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.102.2.3 2011/06/12 00:24:14 rmind Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -311,7 +311,9 @@ const struct wsdisplay_accessops vga_accessops = {
 #define vga_valid_primary_font(f) \
 	(f->wsfont->encoding == WSDISPLAY_FONTENC_IBM || \
 	f->wsfont->encoding == WSDISPLAY_FONTENC_ISO || \
-	f->wsfont->encoding == WSDISPLAY_FONTENC_ISO7)
+	f->wsfont->encoding == WSDISPLAY_FONTENC_ISO2 || \
+	f->wsfont->encoding == WSDISPLAY_FONTENC_ISO7 || \
+	f->wsfont->encoding == WSDISPLAY_FONTENC_KOI8_R)
 
 struct egavga_font *
 egavga_getfont(struct vga_config *vc, struct vgascreen *scr, const char *name,
@@ -1335,6 +1337,32 @@ vga_iso7_mapchar(int uni, u_int *index)
 
 #endif /* WSCONS_SUPPORT_ISO7FONTS */
 
+static const uint16_t iso2_unichars[0x60] = {
+	0x00A0, 0x0104, 0x02D8, 0x0141, 0x00A4, 0x013D, 0x015A, 0x00A7,
+	0x00A8, 0x0160, 0x015E, 0x0164, 0x0179, 0x00AD, 0x017D, 0x017B,
+	0x00B0, 0x0105, 0x02DB, 0x0142, 0x00B4, 0x013E, 0x015B, 0x02C7,
+	0x00B8, 0x0161, 0x015F, 0x0165, 0x017A, 0x02DD, 0x017E, 0x017C,
+	0x0154, 0x00C1, 0x00C2, 0x0102, 0x00C4, 0x0139, 0x0106, 0x00C7,
+	0x010C, 0x00C9, 0x0118, 0x00CB, 0x011A, 0x00CD, 0x00CE, 0x010E,
+	0x0110, 0x0143, 0x0147, 0x00D3, 0x00D4, 0x0150, 0x00D6, 0x00D7,
+	0x0158, 0x016E, 0x00DA, 0x0170, 0x00DC, 0x00DD, 0x0162, 0x00DF,
+	0x0155, 0x00E1, 0x00E2, 0x0103, 0x00E4, 0x013A, 0x0107, 0x00E7,
+	0x010D, 0x00E9, 0x0119, 0x00EB, 0x011B, 0x00ED, 0x00EE, 0x010F,
+	0x0111, 0x0144, 0x0148, 0x00F3, 0x00F4, 0x0151, 0x00F6, 0x00F7,
+	0x0159, 0x016F, 0x00FA, 0x0171, 0x00FC, 0x00FD, 0x0163, 0x02D9
+};
+
+static const uint16_t koi8_unichars[0x40] = {
+	0x044E, 0x0430, 0x0431, 0x0446, 0x0434, 0x0435, 0x0444, 0x0433,
+	0x0445, 0x0438, 0x0439, 0x043A, 0x043B, 0x043C, 0x043D, 0x043E,
+	0x043F, 0x044F, 0x0440, 0x0441, 0x0442, 0x0443, 0x0436, 0x0432,
+	0x044C, 0x044B, 0x0437, 0x0448, 0x044D, 0x0449, 0x0447, 0x044A,
+	0x042E, 0x0410, 0x0411, 0x0426, 0x0414, 0x0415, 0x0424, 0x0413,
+	0x0425, 0x0418, 0x0419, 0x041A, 0x041B, 0x041C, 0x041D, 0x041E,
+	0x041F, 0x042F, 0x0420, 0x0421, 0x0422, 0x0423, 0x0416, 0x0412,
+	0x042C, 0x042B, 0x0417, 0x0428, 0x042D, 0x0429, 0x0427, 0x042A
+};
+
 static int _vga_mapchar(void *, const struct egavga_font *, int, u_int *);
 
 static int
@@ -1348,6 +1376,36 @@ _vga_mapchar(void *id, const struct egavga_font *font, int uni, u_int *index)
 			return (5);
 		} else {
 			*index = ' ';
+			return (0);
+		}
+	case WSDISPLAY_FONTENC_ISO2:
+		if (uni < 0xa0) {
+			*index = uni;
+			return (5);
+		} else {
+			int i;
+			for (i = 0; i < 0x60; i++) {
+				if (uni == iso2_unichars[i]) {
+					*index = i + 0xa0;
+					return (5);
+				}
+			}
+			*index = 0xa4; /* currency sign */
+			return (0);
+		}
+	case WSDISPLAY_FONTENC_KOI8_R:
+		if (uni < 0x80) {
+			*index = uni;
+			return (5);
+		} else {
+			int i;
+			for (i = 0; i < 0x40; i++) {
+				if (uni == koi8_unichars[i]) {
+					*index = i + 0xc0;
+					return (5);
+				}
+			}
+			*index = 0x94; /* box */
 			return (0);
 		}
 	case WSDISPLAY_FONTENC_IBM:

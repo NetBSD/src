@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29.4.2 2011/05/31 03:04:05 rmind Exp $
+#	$NetBSD: Makefile,v 1.29.4.3 2011/06/12 00:23:59 rmind Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -31,6 +31,7 @@ AFLAGS.message.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.message32.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.pvcopy.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.putstr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+AFLAGS.putstr32.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.realprot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 CPPFLAGS= -I$S/lib/libsa ${I386CPPFLAGS} ${I386MISCCPPFLAGS}
@@ -46,7 +47,7 @@ SRCS+= pread.c menuutils.c parseutils.c
 SRCS+= bootinfo.c bootinfo_biosgeom.c bootinfo_memmap.c
 SRCS+= startprog.S multiboot.S
 SRCS+= biosgetsystime.S cpufunc.S bootmenu.c
-SRCS+= realprot.S message.S message32.S dump_eax.S pvcopy.S putstr.S
+SRCS+= realprot.S message.S message32.S dump_eax.S pvcopy.S putstr.S putstr32.S
 SRCS+= rasops.c vbe.c biosvbe.S
 .if (${I386_INCLUDE_DISK} == "yes")
 SRCS+= biosdisk.c biosdisk_ll.c bios_disk.S

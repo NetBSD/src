@@ -1,4 +1,4 @@
-/* $NetBSD: mcclockvar.h,v 1.7 2008/01/03 23:02:25 joerg Exp $ */
+/* $NetBSD: mcclockvar.h,v 1.7.32.1 2011/06/12 00:24:13 rmind Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 struct mcclock_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	const struct mcclock_busfns *sc_busfns;
 	struct todr_chip_handle sc_todr;
 };

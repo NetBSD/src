@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.232.2.3 2011/05/31 03:04:56 rmind Exp $	*/
+/*	$NetBSD: uhci.c,v 1.232.2.4 2011/06/12 00:24:26 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.232.2.3 2011/05/31 03:04:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.232.2.4 2011/06/12 00:24:26 rmind Exp $");
+
+#include "opt_usb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

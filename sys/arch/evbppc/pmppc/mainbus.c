@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3.22.1 2011/06/12 00:23:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3.22.1 2011/06/12 00:23:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,10 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2008/04/28 20:23:17 martin Exp $");
 #error	A cpu device is now required
 #endif
 
-int	mainbus_match(struct device *, struct cfdata *, void *);
-void	mainbus_attach(struct device *, struct device *, void *);
+int	mainbus_match(device_t, cfdata_t, void *);
+void	mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 static int mainbus_print(void *, const char *);
@@ -61,14 +61,14 @@ static int mainbus_print(void *, const char *);
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
 }
 
 static int
-mainbus_submatch(struct device *parent, struct cfdata *cf,
+mainbus_submatch(device_t parent, cfdata_t cf,
 		 const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
@@ -97,7 +97,7 @@ mainbus_print(void *aux, const char *pnp)
  * Attach the mainbus.
  */
 void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args maa;
 
@@ -150,16 +150,16 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &maa, mainbus_print);
 }
 
-static int	cpu_match(struct device *, struct cfdata *, void *);
-static void	cpu_attach(struct device *, struct device *, void *);
+static int	cpu_match(device_t, cfdata_t, void *);
+static void	cpu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
 
 int
-cpu_match(struct device *parent, struct cfdata *cf, void *aux)
+cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 
@@ -173,7 +173,7 @@ cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
 	(void) cpu_attach_common(self, 0);
 }

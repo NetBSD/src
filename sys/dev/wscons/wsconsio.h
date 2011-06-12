@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.92.4.1 2011/03/05 20:54:19 rmind Exp $ */
+/* $NetBSD: wsconsio.h,v 1.92.4.2 2011/06/12 00:24:28 rmind Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -404,6 +404,7 @@ struct wsdisplay_font {
 #define	WSDISPLAY_FONTENC_PCVT 2
 #define	WSDISPLAY_FONTENC_ISO7 3 /* greek */
 #define	WSDISPLAY_FONTENC_ISO2 4 /* east european */
+#define	WSDISPLAY_FONTENC_KOI8_R 5 /* russian */
 	u_int fontwidth, fontheight, stride;
 #define	WSDISPLAY_MAXFONTSZ	(512*1024)
 	int bitorder, byteorder;

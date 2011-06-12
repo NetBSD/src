@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.94.2.3 2011/04/21 01:42:09 rmind Exp $
+#	$NetBSD: makesyscalls.sh,v 1.94.2.4 2011/06/12 00:24:29 rmind Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -951,6 +951,7 @@ cat $sysdcl $sysent > $syssw
 cat $sysnamesbottom >> $sysnames
 cat $rumpsysent >> $rumpcalls
 
+touch $rumptypes
 cat $rumptypes >> $rumpcallshdr
 echo >> $rumpcallshdr
 cat $rumpprotos >> $rumpcallshdr

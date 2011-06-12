@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68.2.3 2011/05/31 03:04:14 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68.2.4 2011/06/12 00:24:04 rmind Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -68,11 +68,8 @@ struct cpu_info {
 
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
-	struct lwp * volatile ci_fpulwp;
-	struct lwp * volatile ci_veclwp;
-	int ci_cpuid;
+	int ci_cpuid;			/* from SPR_PIR */
 
-	volatile int ci_astpending;
 	int ci_want_resched;
 	volatile uint64_t ci_lastintr;
 	volatile u_long ci_lasttb;
@@ -83,6 +80,7 @@ struct cpu_info {
 #ifndef PPC_BOOKE
 	volatile imask_t ci_ipending;
 #endif
+	volatile uint32_t ci_pending_ipis;
 	int ci_mtx_oldspl;
 	int ci_mtx_count;
 #ifdef PPC_IBM4XX
@@ -199,6 +197,7 @@ void	cpu_boot_secondary_processors(void);
 
 extern struct cpu_info cpu_info[];
 
+static __inline struct cpu_info * curcpu(void) __pure;
 static __inline struct cpu_info *
 curcpu(void)
 {
@@ -208,7 +207,8 @@ curcpu(void)
 	return ci;
 }
 
-#define curlwp			(curcpu()->ci_curlwp)
+register struct lwp *powerpc_curlwp __asm("r13");
+#define	curlwp			powerpc_curlwp
 #define curpcb			(curcpu()->ci_curpcb)
 #define curpm			(curcpu()->ci_curpm)
 
@@ -397,10 +397,10 @@ void cpu_spinup_trampoline(void);
 
 #define	DELAY(n)		delay(n)
 
-#define	cpu_need_resched(ci, v)	(ci->ci_want_resched = ci->ci_astpending = 1)
-#define	cpu_did_resched(l)	((void)(curcpu()->ci_want_resched = 0))
-#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
-#define	cpu_signotify(l)	(curcpu()->ci_astpending = 1)	/* XXXSMP */
+void	cpu_need_resched(struct cpu_info *, int);
+void	cpu_signotify(struct lwp *);
+void	cpu_need_proftick(struct lwp *);
+#define	cpu_did_resched(l)			((l)->l_md.md_astpending = 0)
 
 #if !defined(PPC_IBM4XX) && !defined(PPC_BOOKE)
 void oea_init(void (*)(void));

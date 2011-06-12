@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5.2.3 2011/05/31 03:04:01 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.4 2011/06/12 00:23:57 rmind Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -709,9 +709,29 @@ e500_cpu_attach(device_t self, u_int instance)
 	e500_tlb_print(self, "tlb0", mfspr(SPR_TLB0CFG));
 	e500_tlb_print(self, "tlb1", mfspr(SPR_TLB1CFG));
 
-	intr_cpu_init(ci);
+	intr_cpu_attach(ci);
 	cpu_evcnt_attach(ci);
+
+	if (ci == curcpu())
+		intr_cpu_hatch(ci);
 }
+
+void
+e500_ipi_halt(void)
+{
+	register_t msr, hid0;
+
+	msr = wrtee(0);
+
+	hid0 = mfspr(SPR_HID0);
+	hid0 = (hid0 & ~HID0_TBEN) | HID0_DOZE;
+	mtspr(SPR_HID0, hid0);
+
+	msr = (msr & ~(PSL_EE|PSL_CE|PSL_ME)) | PSL_WE;
+	mtmsr(msr);
+	for (;;);	/* loop forever */
+}
+
 
 static void
 calltozero(void)

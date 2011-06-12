@@ -1,4 +1,4 @@
-/* $NetBSD: tcvar.h,v 1.24.4.1 2011/03/05 20:54:09 rmind Exp $ */
+/* $NetBSD: tcvar.h,v 1.24.4.2 2011/06/12 00:24:26 rmind Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -64,7 +64,7 @@
 #endif /* 1 */
 
 struct tc_softc {
-	struct	device sc_dv;
+	device_t sc_dev;
 
 	int	sc_speed;
 	int	sc_nslots;

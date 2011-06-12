@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.6.22.1 2011/05/31 03:04:14 rmind Exp $	*/
+/*	$NetBSD: pchb.c,v 1.6.22.2 2011/06/12 00:24:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6.22.1 2011/05/31 03:04:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6.22.2 2011/06/12 00:24:04 rmind Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -51,12 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6.22.1 2011/05/31 03:04:14 rmind Exp $");
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
 
-static int	pchbmatch(struct device *, struct cfdata *, void *);
-static void	pchbattach(struct device *, struct device *, void *);
+static int	pchbmatch(device_t, cfdata_t, void *);
+static void	pchbattach(device_t, device_t, void *);
 static int	pchbprint(void *, const char *);
 static pci_chipset_tag_t	alloc_chipset_tag(int);
 
-CFATTACH_DECL(pchb, sizeof(struct device),
+CFATTACH_DECL_NEW(pchb, 0,
     pchbmatch, pchbattach, NULL, NULL);
 
 static int pcifound = 0;
@@ -79,7 +79,7 @@ static struct powerpc_bus_space pchb_mem_tag = {
 
 
 static int
-pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
+pchbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct plb_attach_args *paa = aux;
 	/* XXX chipset tag unused by walnut, so just pass 0 */
@@ -115,7 +115,7 @@ pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pchbattach(struct device *parent, struct device *self, void *aux)
+pchbattach(device_t parent, device_t self, void *aux)
 {
 	struct plb_attach_args *paa = aux;
 	struct pcibus_attach_args pba;

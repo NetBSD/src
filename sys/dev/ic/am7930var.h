@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930var.h,v 1.11 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: am7930var.h,v 1.11.98.1 2011/06/12 00:24:14 rmind Exp $	*/
 
 struct am7930_softc;
 
@@ -15,7 +15,7 @@ struct am7930_glue {
 };
 
 struct am7930_softc {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;	/* base device */
 
 	uint8_t	sc_rlevel;	/* record level */
 	uint8_t	sc_plevel;	/* play level */
