@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_ebus.c,v 1.4 2011/06/12 04:33:29 tsutsui Exp $	*/
+/*	$NetBSD: clock_ebus.c,v 1.5 2011/06/12 04:40:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.4 2011/06/12 04:33:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.5 2011/06/12 04:40:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -309,7 +309,7 @@ eclock_ebus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tc.tc_get_timecount = eclock_counter;
 	sc->sc_tc.tc_poll_pps = 0;
 	sc->sc_tc.tc_counter_mask = 0xffffffff;
-	sc->sc_tc.tc_frequency = 10*1000*1000; /* 10 MHz */
+	sc->sc_tc.tc_frequency = 10 * 1000 * 1000; /* 10 MHz */
 	sc->sc_tc.tc_name = "eclock"; /* BUGBUG is it unique per instance?? */
 	sc->sc_tc.tc_quality = 2000; /* uhu? */
 	sc->sc_tc.tc_priv = sc;
@@ -332,7 +332,7 @@ eclock_ebus_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	clockdev = self;
-	memset(&sc->sc_todr,0,sizeof sc->sc_todr);
+	memset(&sc->sc_todr, 0, sizeof sc->sc_todr);
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = eclock_gettime;
 	sc->sc_todr.todr_settime = eclock_settime;
