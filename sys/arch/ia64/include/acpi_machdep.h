@@ -1,8 +1,7 @@
-/*	$NetBSD: acpi_machdep.h,v 1.4 2011/06/12 10:11:52 jruoho Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.5 2011/06/12 11:31:30 jruoho Exp $	*/
 
-ACPI_STATUS acpi_md_OsInitialize(void);
-ACPI_STATUS acpi_md_OsTerminate(void);
-ACPI_PHYSICAL_ADDRESS acpi_md_OsGetRootPointer(void);
+ACPI_STATUS		acpi_md_OsInitialize(void);
+ACPI_PHYSICAL_ADDRESS	acpi_md_OsGetRootPointer(void);
 
 #define acpi_md_OsIn8(x)	inb((x))
 #define acpi_md_OsIn16(x)	inw((x))
