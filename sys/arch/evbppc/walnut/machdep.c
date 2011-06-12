@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2011/04/04 20:37:50 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 2011/06/12 03:42:42 mrg Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2011/04/04 20:37:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2011/06/12 03:42:42 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2011/04/04 20:37:50 dyoung Exp $");
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -336,6 +337,11 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
 #endif
+
+	/*
+	 * Look for the ibm4xx modules in the right place.
+	 */
+	module_machine = module_machine_ibm4xx;
 }
 
 static void
