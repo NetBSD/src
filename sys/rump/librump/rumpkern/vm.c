@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.115 2011/06/12 03:35:59 rmind Exp $	*/
+/*	$NetBSD: vm.c,v 1.116 2011/06/12 06:36:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.115 2011/06/12 03:35:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.116 2011/06/12 06:36:38 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -632,6 +632,20 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
 {
 
 	return EBUSY;
+}
+
+struct vm_page *
+uvm_loanbreak(struct vm_page *pg)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+void
+ubc_purge(struct uvm_object *uobj)
+{
+
+	panic("%s: unimplemented", __func__);
 }
 
 #ifdef DEBUGPRINT
