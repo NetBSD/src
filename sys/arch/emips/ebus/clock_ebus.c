@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_ebus.c,v 1.2 2011/06/12 04:17:30 tsutsui Exp $	*/
+/*	$NetBSD: clock_ebus.c,v 1.3 2011/06/12 04:22:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.2 2011/06/12 04:17:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.3 2011/06/12 04:22:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,9 +53,7 @@ struct eclock_softc {
 	struct _Tc *sc_dp;
 	uint32_t reload;
 	struct timecounter sc_tc;
-#ifdef __HAVE_GENERIC_TODR
 	struct todr_chip_handle sc_todr;
-#endif
 };
 
 static int	eclock_ebus_match(device_t, cfdata_t, void *);
@@ -333,14 +331,12 @@ eclock_ebus_attach(device_t parent, device_t self, void *aux)
 	    sc->sc_dev->dv_xname, "intr");
 #endif
 
-#ifdef __HAVE_GENERIC_TODR
 	clockdev = self;
 	memset(&sc->sc_todr,0,sizeof sc->sc_todr);
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = eclock_gettime;
 	sc->sc_todr.todr_settime = eclock_settime;
 	todr_attach(&sc->sc_todr);
-#endif
 
 	tc_init(&sc->sc_tc);
 }
