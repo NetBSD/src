@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.15.4.4 2011/04/21 01:42:18 rmind Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.15.4.5 2011/06/12 03:06:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.15.4.4 2011/04/21 01:42:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.15.4.5 2011/06/12 03:06:00 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -69,11 +69,11 @@ uvm_aio_aiodone(struct buf *bp)
 	uobj = pgs[0]->uobject;
 	KASSERT(uobj);
 
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	mutex_enter(&uvm_pageqlock);
 	uvm_page_unbusy(pgs, npages);
 	mutex_exit(&uvm_pageqlock);
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 
 	uvm_pageout_done(pageout);
 
