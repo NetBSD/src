@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.120 2011/06/12 16:31:57 jruoho Exp $
+#	$NetBSD: files.xen,v 1.121 2011/06/13 00:53:15 pgoyette Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -275,6 +275,7 @@ file	arch/x86/x86/apic.c		ioapic
 file	arch/x86/x86/nmi.c
 
 file	arch/x86/acpi/acpi_machdep.c	acpi
+file	arch/x86/acpi/acpi_pdc.c	acpi
 
 device ioapic
 attach ioapic at ioapicbus
