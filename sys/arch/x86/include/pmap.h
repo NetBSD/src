@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.39 2011/06/12 03:35:50 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.40 2011/06/13 04:30:40 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -242,6 +242,8 @@ void		pmap_unmap_ptes(struct pmap *, struct pmap *);
 int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
 
 u_int		x86_mmap_flags(paddr_t);
+
+bool		pmap_is_curpmap(struct pmap *);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
