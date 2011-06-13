@@ -104,7 +104,8 @@ void ENGINE_load_aesni (void)
 	ENGINE *toadd = ENGINE_aesni();
 	if (!toadd)
 		return;
-	ENGINE_add (toadd);
+	if (ENGINE_add (toadd))
+		ENGINE_register_complete (toadd);
 	ENGINE_free (toadd);
 	ERR_clear_error ();
 #endif
@@ -149,6 +150,12 @@ static const char   aesni_id[] = "aesni",
 		    no_aesni_name[] = "Intel AES-NI engine (no-aesni)";
 
 /* ===== Engine "management" functions ===== */
+
+#if defined(_WIN32)
+typedef unsigned __int64 IA32CAP;
+#else
+typedef unsigned long long IA32CAP;
+#endif
 
 /* Prepare the ENGINE structure for registration */
 static int
