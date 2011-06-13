@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.122 2011/06/12 03:35:50 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.123 2011/06/13 04:30:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2011/06/12 03:35:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2011/06/13 04:30:40 tls Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -564,7 +564,6 @@ static void		 pmap_freepage(struct pmap *, struct vm_page *, int);
 static void		 pmap_free_ptp(struct pmap *, struct vm_page *,
 				       vaddr_t, pt_entry_t *,
 				       pd_entry_t * const *);
-static bool		 pmap_is_curpmap(struct pmap *);
 static bool		 pmap_is_active(struct pmap *, struct cpu_info *, bool);
 static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
 					 pt_entry_t *, vaddr_t,
@@ -676,7 +675,7 @@ pv_pte_next(struct pmap_page *pp, struct pv_pte *pvpte)
  *		of course the kernel is always loaded
  */
 
-inline static bool
+bool
 pmap_is_curpmap(struct pmap *pmap)
 {
 #if defined(XEN) && defined(__x86_64__)
