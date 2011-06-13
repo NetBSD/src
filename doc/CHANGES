@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1557 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1558 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1023,3 +1023,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	sparc: enable options MODULAR in the GENERIC* kernels.  [mrg 20110611]
 	kernel: Merge of the rmind-uvmplock branch. [rmind 20110612]
 	resolvconf(8): import openresolv-3.4.2 [roy 20110613]
+	openssl(1): Import openssl-1.0.1-stable-SNAP-20110605 [spz 20110605]
