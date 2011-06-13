@@ -1,4 +1,4 @@
-.file	"/home/spz/cvs/src/crypto/external/bsd/openssl/dist/crypto/bn/asm/x86.s"
+.file	"x86.s"
 .text
 .globl	bn_mul_add_words
 .type	bn_mul_add_words,@function
