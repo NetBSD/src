@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.39 2011/06/08 15:19:57 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.40 2011/06/13 21:19:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.39 2011/06/08 15:19:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2011/06/13 21:19:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,10 +547,10 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment, bus_si
 	int bank;
 
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		if (start > VM_PHYSMEM_PTR(bank)->avail_start << PGSHIFT)
-			start = VM_PHYSMEM_PTR(bank)->avail_start << PGSHIFT;
-		if (end < VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT)
-			end = VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT;
+		if (start > ptoa(VM_PHYSMEM_PTR(bank)->avail_start))
+			start = ptoa(VM_PHYSMEM_PTR(bank)->avail_start);
+		if (end < ptoa(VM_PHYSMEM_PTR(bank)->avail_end))
+			end = ptoa(VM_PHYSMEM_PTR(bank)->avail_end);
 	}
 
 	return _bus_dmamem_alloc_range(t, size, alignment, boundary, segs,
