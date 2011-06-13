@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.72 2011/06/12 03:35:46 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.73 2011/06/13 05:23:33 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.72 2011/06/12 03:35:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73 2011/06/13 05:23:33 uch Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.72 2011/06/12 03:35:46 rmind Exp $"
 #include <dev/mm.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_page.h>
 
 #include <sh3/locore.h>
 #include <sh3/cpu.h>
