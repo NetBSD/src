@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.100 2011/06/11 14:37:36 christos Exp $
+.\"	$NetBSD: sh.1,v 1.101 2011/06/13 00:17:15 uebayasi Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1238,7 +1238,7 @@ If
 .Ar directory
 is
 .Sq - ,
-then she current working directory is changed to the previous current
+then the current working directory is changed to the previous current
 working directory as set in
 .Ev OLDPWD .
 Otherwise if an entry for
@@ -1683,7 +1683,8 @@ may be null, which cause the specified signals to be ignored.
 With
 .Ar action
 omitted or set to 
-.Sq - the specified signals are set to their default action.
+.Sq -
+the specified signals are set to their default action.
 When the shell forks off a subshell, it resets trapped (but not ignored)
 signals to the default action.
 On non-interactive shells, the
