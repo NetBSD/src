@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.85 2011/06/06 22:04:34 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86 2011/06/13 21:19:02 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85 2011/06/06 22:04:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.86 2011/06/13 21:19:02 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -281,3 +281,61 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
+
+#ifdef __HAVE_CPU_UAREA_ROUTINES
+void *
+cpu_uarea_alloc(bool system)
+{
+	struct pglist pglist;
+	int error;
+
+	/*
+	 * Allocate a new physically contiguous uarea which can be
+	 * direct-mapped.
+	 */
+	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
+	if (error) {
+#ifdef _LP64
+		if (!system)
+			return NULL;
+#endif
+		panic("%s: uvm_pglistalloc failed: %d", __func__, error);
+	}
+
+	/*
+	 * Get the physical address from the first page.
+	 */
+	const struct vm_page * const pg = TAILQ_FIRST(&pglist);
+	KASSERT(pg != NULL);
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+	/*
+	 * we need to return a direct-mapped VA for the pa.  But since
+	 * we map vajpa 1:1 that's easy/
+	 */
+
+	return (void *)(uintptr_t) pa;
+}
+
+/*
+ * Return true if we freed it, false if we didn't.
+ */
+bool
+cpu_uarea_free(void *vva)
+{
+	vaddr_t va = (vaddr_t) vva;
+	if (va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS)
+		return false;
+
+	/*
+	 * Since the pages are physically contiguous, the vm_page structurs
+	 * will be as well.
+	 */
+	struct vm_page *pg = PHYS_TO_VM_PAGE((paddr_t)va);
+	KASSERT(pg != NULL);
+	for (size_t i = 0; i < UPAGES; i++, pg++) {
+		uvm_pagefree(pg);
+	}
+	return true;
+}
+#endif /* __HAVE_CPU_UAREA_ROUTINES */

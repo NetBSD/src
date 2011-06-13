@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.78 2011/06/12 16:27:14 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.79 2011/06/13 21:19:01 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -357,9 +357,8 @@ extern int cpu_timebase;
 extern int cpu_printfataltraps;
 extern char cpu_model[];
 
-void cpu_uarea_remap(struct lwp *);
-struct cpu_info *cpu_attach_common(struct device *, int);
-void cpu_setup(struct device *, struct cpu_info *);
+struct cpu_info *cpu_attach_common(device_t, int);
+void cpu_setup(device_t, struct cpu_info *);
 void cpu_identify(char *, size_t);
 int cpu_get_dfs(void);
 void cpu_set_dfs(int);
@@ -397,6 +396,8 @@ void cpu_spinup_trampoline(void);
 
 #define	DELAY(n)		delay(n)
 
+void *	cpu_uarea_alloc(bool);
+bool	cpu_uarea_free(void *);
 void	cpu_need_resched(struct cpu_info *, int);
 void	cpu_signotify(struct lwp *);
 void	cpu_need_proftick(struct lwp *);
