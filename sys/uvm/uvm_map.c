@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.298 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.299 2011/06/13 23:19:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.298 2011/06/12 03:36:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.299 2011/06/13 23:19:40 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -5204,11 +5204,11 @@ void
 uvm_map_lock_entry(struct vm_map_entry *entry)
 {
 
-	if (UVM_ET_ISOBJ(entry)) {
-		mutex_enter(entry->object.uvm_obj->vmobjlock);
-	}
 	if (entry->aref.ar_amap != NULL) {
 		amap_lock(entry->aref.ar_amap);
+	}
+	if (UVM_ET_ISOBJ(entry)) {
+		mutex_enter(entry->object.uvm_obj->vmobjlock);
 	}
 }
 
@@ -5216,11 +5216,11 @@ void
 uvm_map_unlock_entry(struct vm_map_entry *entry)
 {
 
-	if (entry->aref.ar_amap != NULL) {
-		amap_unlock(entry->aref.ar_amap);
-	}
 	if (UVM_ET_ISOBJ(entry)) {
 		mutex_exit(entry->object.uvm_obj->vmobjlock);
+	}
+	if (entry->aref.ar_amap != NULL) {
+		amap_unlock(entry->aref.ar_amap);
 	}
 }
 
