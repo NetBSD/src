@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.101 2011/06/13 00:17:15 uebayasi Exp $
+.\"	$NetBSD: sh.1,v 1.102 2011/06/13 20:41:00 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1682,7 +1682,7 @@ the action is executed when the shell exits.
 may be null, which cause the specified signals to be ignored.
 With
 .Ar action
-omitted or set to 
+omitted or set to
 .Sq -
 the specified signals are set to their default action.
 When the shell forks off a subshell, it resets trapped (but not ignored)
@@ -1868,15 +1868,6 @@ in the buffer using the control key.
 uses the
 .Xr editline 3
 library.
-.Sh EXIT STATUS
-Errors that are detected by the shell, such as a syntax error, will cause the
-shell to exit with a non-zero exit status.
-If the shell is not an
-interactive shell, the execution of the shell file will be aborted.
-Otherwise
-the shell will return the exit status of the last command executed, or
-if the exit built-in is used with a numeric argument, it will return the
-argument.
 .Sh ENVIRONMENT
 .Bl -tag -width MAILCHECK
 .It Ev HOME
@@ -1956,6 +1947,15 @@ The number of lines in the history buffer for the shell.
 .It
 .Pa /etc/profile
 .El
+.Sh EXIT STATUS
+Errors that are detected by the shell, such as a syntax error, will cause the
+shell to exit with a non-zero exit status.
+If the shell is not an
+interactive shell, the execution of the shell file will be aborted.
+Otherwise
+the shell will return the exit status of the last command executed, or
+if the exit built-in is used with a numeric argument, it will return the
+argument.
 .Sh SEE ALSO
 .Xr csh 1 ,
 .Xr echo 1 ,
