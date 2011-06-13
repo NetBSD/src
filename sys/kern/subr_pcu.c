@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.8 2011/06/07 17:51:58 matt Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.9 2011/06/13 21:32:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.8 2011/06/07 17:51:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.9 2011/06/13 21:32:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -137,8 +137,17 @@ void
 pcu_save_all(lwp_t *l)
 {
 	const uint32_t pcu_inuse = l->l_pcu_used;
+	const int flags = PCU_SAVE | (l->l_flag & LW_WCORE ? PCU_RELEASE : 0);
 
-	KASSERT(l == curlwp || ((l->l_flag & LW_SYSTEM) && pcu_inuse == 0));
+	/*
+	 * Normally we save for the current LWP, but sometimes we get called
+	 * with a different LWP (forking a system LWP or doing a coredump of
+	 * a process with multiple threads) and we need to deal with that.
+	 */
+	KASSERT(l == curlwp
+	    || (((l->l_flag & LW_SYSTEM)
+		 || (curlwp->l_proc == l->l_proc && l->l_stat == LSSUSPENDED))
+	        && pcu_inuse == 0));
 
 	if (__predict_true(pcu_inuse == 0)) {
 		/* PCUs are not in use. */
@@ -157,7 +166,7 @@ pcu_save_all(lwp_t *l)
 		 * We aren't releasing since this LWP isn't giving up PCU,
 		 * just saving it.
 		 */
-		pcu_lwp_op(pcu, l, PCU_SAVE);
+		pcu_lwp_op(pcu, l, flags);
 	}
 	splx(s);
 }
