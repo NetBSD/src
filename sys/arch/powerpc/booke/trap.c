@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 2011/06/12 05:32:38 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 2011/06/13 21:12:50 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.8 2011/06/12 05:32:38 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.9 2011/06/13 21:12:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,6 +177,8 @@ pagefault(struct vm_map *map, vaddr_t va, vm_prot_t ftype, bool usertrap)
 		rv = uvm_fault(map, trunc_page(va), ftype);
 		if (rv == 0)
 			uvm_grow(l->l_proc, trunc_page(va));
+		if (rv == EACCES)
+			rv = EFAULT;
 #ifdef KERN_SA
 		l->l_pflag &= ~LP_SA_PAGEFAULT;
 #endif
