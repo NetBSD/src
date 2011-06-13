@@ -1,4 +1,4 @@
-.file	"/home/spz/cvs/src/crypto/external/bsd/openssl/dist/crypto/aes/asm/aesni-x86.s"
+.file	"aesni-x86.s"
 .text
 .globl	aesni_encrypt
 .type	aesni_encrypt,@function
