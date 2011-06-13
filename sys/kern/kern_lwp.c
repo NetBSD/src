@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.158 2011/06/06 22:04:34 matt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.159 2011/06/13 21:32:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.158 2011/06/06 22:04:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.159 2011/06/13 21:32:42 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1395,14 +1395,16 @@ lwp_userret(struct lwp *l)
 		/*
 		 * Core-dump or suspend pending.
 		 *
-		 * In case of core dump, suspend ourselves, so that the
-		 * kernel stack and therefore the userland registers saved
-		 * in the trapframe are around for coredump() to write them
-		 * out.  We issue a wakeup on p->p_lwpcv so that sigexit()
-		 * will write the core file out once all other LWPs are
-		 * suspended.
+		 * In case of core dump, suspend ourselves, so that the kernel
+		 * stack and therefore the userland registers saved in the
+		 * trapframe are around for coredump() to write them out.
+		 * We also need to save any PCU resources that we have so that
+		 * they accessible for coredump().  We issue a wakeup on
+		 * p->p_lwpcv so that sigexit() will write the core file out
+		 * once all other LWPs are suspended.  
 		 */
 		if ((l->l_flag & LW_WSUSPEND) != 0) {
+			pcu_save_all(l);
 			mutex_enter(p->p_lock);
 			p->p_nrlwps--;
 			cv_broadcast(&p->p_lwpcv);

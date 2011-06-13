@@ -1,4 +1,4 @@
-/* $NetBSD: core_machdep.c,v 1.5 2011/06/07 00:48:29 matt Exp $ */
+/* $NetBSD: core_machdep.c,v 1.6 2011/06/13 21:32:42 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2011/06/07 00:48:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.6 2011/06/13 21:32:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,12 +66,11 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 		return 0;
 	}
 
+	pcu_save_all(l);
 	cpustate.md_tf = *l->l_md.md_tf;
 	cpustate.md_tf.tf_regs[FRAME_SP] = alpha_pal_rdusp();	/* XXX */
 	if (fpu_used_p(l)) {
-		struct pcb *pcb = lwp_getpcb(l);
-		fpu_save();
-		cpustate.md_fpstate = pcb->pcb_fp;
+		cpustate.md_fpstate = ((struct pcb *)lwp_getpcb(l))->pcb_fp;
 	} else
 		memset(&cpustate.md_fpstate, 0, sizeof(cpustate.md_fpstate));
 
