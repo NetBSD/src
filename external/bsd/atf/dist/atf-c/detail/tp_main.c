@@ -44,6 +44,7 @@
 #include "atf-c/utils.h"
 
 #include "dynstr.h"
+#include "env.h"
 #include "fs.h"
 #include "map.h"
 #include "sanity.h"
@@ -125,6 +126,13 @@ print_error(const atf_error_t err)
     if (atf_error_is(err, "usage"))
         fprintf(stderr, "%s: See atf-test-program(1) for usage details.\n",
                 progname);
+}
+
+static
+void
+print_warning(const char *message)
+{
+    fprintf(stderr, "%s: WARNING: %s\n", progname, message);
 }
 
 /* ---------------------------------------------------------------------
@@ -486,6 +494,14 @@ run_tc(const atf_tp_t *tp, struct params *p, int *exitcode)
     if (!atf_tp_has_tc(tp, p->m_tcname)) {
         err = usage_error("Unknown test case `%s'", p->m_tcname);
         goto out;
+    }
+
+    if (!atf_env_has("__RUNNING_INSIDE_ATF_RUN") || strcmp(atf_env_get(
+        "__RUNNING_INSIDE_ATF_RUN"), "internal-yes-value") != 0)
+    {
+        print_warning("Running test cases without atf-run(1) is unsupported");
+        print_warning("No isolation nor timeout control is being applied; you "
+                      "may get unexpected failures; see atf-test-case(4)");
     }
 
     switch (p->m_tcpart) {

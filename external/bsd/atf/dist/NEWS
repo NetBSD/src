@@ -2,6 +2,35 @@ Major changes between releases                  Automated Testing Framework
 ===========================================================================
 
 
+Changes in version 0.14
+***********************
+
+Experimental version released on June 14th, 2011.
+
+* Added a pkg-config file for atf-sh and an aclocal file to ease the
+  detection of atf-sh from autoconf scripts.
+
+* Made the default test case body defined by atf_sh fail.  This is to
+  ensure that test cases are properly defined in test programs and helps
+  in catching typos in the names of the body functions.
+
+* PR bin/44882: Made atf-run connect the stdin of test cases to /dev/zero.
+  This provides more consistent results with "normal" execution (in
+  particular, when tests are executed detached from a terminal).
+
+* Made atf-run hardcode TZ=UTC for test cases.  It used to undefine TZ, but
+  that does not take into account that libc determines the current timezone
+  from a configuration file.
+
+* All test programs will now print a warning when they are not run through
+  atf-run(1) stating that this is unsupported and may deliver incorrect
+  results.
+
+* Added support for the 'require.files' test-case property.  This allows
+  test cases to specify installed files that must be present for the test
+  case to run.
+
+
 Changes in version 0.13
 ***********************
 

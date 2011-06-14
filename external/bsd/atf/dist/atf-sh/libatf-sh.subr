@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -394,7 +394,7 @@ atf_test_case()
     Defined_Test_Cases="${Defined_Test_Cases} ${1}"
 
     eval "${1}_head() { :; }"
-    eval "${1}_body() { :; }"
+    eval "${1}_body() { atf_fail 'Test case not implemented'; }"
     if [ "${2}" = cleanup ]; then
         Test_Cases_With_Cleanup="${Test_Cases_With_Cleanup} ${1}"
         eval "${1}_cleanup() { :; }"
@@ -520,6 +520,17 @@ _atf_error()
 
     echo "${Prog_Name}: ERROR:" "$@" 1>&2
     exit ${_error_code}
+}
+
+#
+# _atf_warning msg1 [.. msgN]
+#
+#   Prints the given warning message (which can be composed of multiple
+#   arguments, in which case are joined by a single space).
+#
+_atf_warning()
+{
+    echo "${Prog_Name}: WARNING:" "$@" 1>&2
 }
 
 #
@@ -685,6 +696,12 @@ _atf_run_tc()
     esac
 
     if _atf_has_tc ${_tcname}; then
+        if [ "${__RUNNING_INSIDE_ATF_RUN}" != "internal-yes-value" ]; then
+            _atf_warning "Running test cases without atf-run(1) is unsupported"
+            _atf_warning "No isolation nor timeout control is being applied;" \
+                "you may get unexpected failures; see atf-test-case(4)"
+        fi
+
         _atf_parse_head ${_tcname}
 
         _atf_internal_set srcdir "${Source_Dir}"
