@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.243 2011/06/12 03:35:44 rmind Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.244 2011/06/14 05:30:40 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.243 2011/06/12 03:35:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.244 2011/06/14 05:30:40 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -2206,16 +2206,19 @@ std_splsw_test(void)
 #endif /* PARANOIA */
 
 bool
-mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
 {
-
-	/* XXX: Broken. */
 #ifdef _LP64
-	*vaddr = MIPS_PHYS_TO_XKPHYS_CACHED(paddr);
-#else
-	*vaddr = MIPS_PHYS_TO_KSEG0(paddr);
+	if (MIPS_XKSEG_P(pa)) {
+		*vap = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
+		return true;
+	}
 #endif
-	return true;
+	if (MIPS_KSEG0_P(pa)) {
+		*vap = MIPS_PHYS_TO_KSEG0(pa);
+		return true;
+	}
+	return false;
 }
 
 int
