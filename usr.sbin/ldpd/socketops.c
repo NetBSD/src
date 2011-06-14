@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.6 2011/05/24 13:03:19 joerg Exp $ */
+/* $NetBSD: socketops.c,v 1.7 2011/06/14 11:28:51 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,14 +37,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <errno.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <strings.h>
-#include <stdio.h>
 #include <ifaddrs.h>
 #include <poll.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
+#include <unistd.h>
 
 #include "fsm.h"
 #include "ldp.h"
@@ -72,6 +73,7 @@ extern struct com_sock	csockets[MAX_COMMAND_SOCKETS];
 int	ldp_hello_time = LDP_HELLO_TIME;
 int	ldp_keepalive_time = LDP_KEEPALIVE_TIME;
 int	ldp_holddown_time = LDP_HOLDTIME;
+int	no_default_route = 1;
 
 void	recv_pdu(int);
 void	send_hello_alarm(int);
@@ -526,7 +528,7 @@ bail_out(int x)
  * The big poll that catches every single event
  * on every socket.
  */
-void 
+int
 the_big_loop(void)
 {
 	int		sock_error;
@@ -535,6 +537,8 @@ the_big_loop(void)
 	struct ldp_peer *p;
 	struct com_sock	*cs;
 	struct pollfd	pfd[MAX_POLL_FDS];
+
+	assert(MAX_POLL_FDS > 3);
 
 	SLIST_INIT(&hello_info_head);
 
@@ -545,8 +549,11 @@ the_big_loop(void)
 
 	route_socket = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
 
-	if (bind_current_routes() != LDP_E_OK)
+	sock_error = bind_current_routes();
+	if (sock_error != LDP_E_OK) {
 		fatalp("Cannot get current routes\n");
+		return sock_error;
+	}
 
 	for (;;) {
 		nfds_t pollsum = 4;
@@ -571,6 +578,8 @@ the_big_loop(void)
 		/* Command sockets */
 		for (i=0; i < MAX_COMMAND_SOCKETS; i++)
 			if (csockets[i].socket != -1) {
+				if (pollsum >= MAX_POLL_FDS)
+					break;
 				pfd[pollsum].fd = csockets[i].socket;
 				pfd[pollsum].events = POLLIN;
 				pfd[pollsum].revents = 0;
@@ -584,12 +593,16 @@ the_big_loop(void)
 			switch (p->state) {
 			    case LDP_PEER_CONNECTED:
 			    case LDP_PEER_ESTABLISHED:
+				if (pollsum >= MAX_POLL_FDS)
+					break;
 				pfd[pollsum].fd = p->socket;
 				pfd[pollsum].events = POLLRDNORM;
 				pfd[pollsum].revents = 0;
 				pollsum++;
 				break;
 			    case LDP_PEER_CONNECTING:
+				if (pollsum >= MAX_POLL_FDS)
+					break;
 				pfd[pollsum].fd = p->socket;
 				pfd[pollsum].events = POLLWRNORM;
 				pfd[pollsum].revents = 0;
@@ -600,7 +613,7 @@ the_big_loop(void)
 
 		if (pollsum >= MAX_POLL_FDS) {
 			fatalp("Too many sockets. Increase MAX_POLL_FDS\n");
-			return;
+			return LDP_E_TOO_MANY_FDS;
 			}
 		if (poll(pfd, pollsum, INFTIM) < 0) {
 			if (errno != EINTR)
