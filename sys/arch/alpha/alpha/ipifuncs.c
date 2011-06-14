@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.46 2011/06/07 00:48:30 matt Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.47 2011/06/14 15:34:22 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.46 2011/06/07 00:48:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.47 2011/06/14 15:34:22 matt Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -98,16 +98,16 @@ const char * const ipinames[ALPHA_NIPIS] = {
 void
 alpha_ipi_init(struct cpu_info *ci)
 {
-	struct cpu_softc *sc = ci->ci_softc;
+	struct cpu_softc * const sc = ci->ci_softc;
+	const char * const xname = device_xname(sc->sc_dev);
 	int i;
 
 	evcnt_attach_dynamic(&sc->sc_evcnt_ipi, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "ipi");
+	    NULL, xname, "ipi");
 
 	for (i = 0; i < ALPHA_NIPIS; i++) {
 		evcnt_attach_dynamic(&sc->sc_evcnt_which_ipi[i],
-		    EVCNT_TYPE_INTR, NULL, sc->sc_dev.dv_xname,
-		    ipinames[i]);
+		    EVCNT_TYPE_INTR, NULL, xname, ipinames[i]);
 	}
 }
 
@@ -117,7 +117,7 @@ alpha_ipi_init(struct cpu_info *ci)
 void
 alpha_ipi_process(struct cpu_info *ci, struct trapframe *framep)
 {
-	struct cpu_softc *sc = ci->ci_softc;
+	struct cpu_softc * const sc = ci->ci_softc;
 	u_long pending_ipis, bit;
 
 #ifdef DIAGNOSTIC

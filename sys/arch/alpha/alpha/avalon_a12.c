@@ -1,4 +1,4 @@
-/* $NetBSD: avalon_a12.c,v 1.15 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: avalon_a12.c,v 1.16 2011/06/14 15:34:21 matt Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.15 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.16 2011/06/14 15:34:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.15 2009/03/14 15:35:59 dsl Exp $");
 
 void avalon_a12_init(void);
 static void avalon_a12_cons_init(void);
-static void avalon_a12_device_register(struct device *, void *);
+static void avalon_a12_device_register(device_t, void *);
 static int  a12env(int);
 
 void
@@ -145,12 +145,12 @@ avalon_a12_cons_init()
 }
 
 void
-avalon_a12_device_register(struct device *dev, void *aux)
+avalon_a12_device_register(device_t dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
-	static struct device *pcidev, *ctrlrdev;
+	static device_t pcidev, *ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = device_parent(dev);
+	device_t parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -176,7 +176,7 @@ avalon_a12_device_register(struct device *dev, void *aux)
 	
 			pcidev = dev;
 #if 0
-			printf("\npcidev = %s\n", dev->dv_xname);
+			printf("\npcidev = %s\n", device_xname(dev));
 #endif
 			return;
 		}
@@ -197,13 +197,13 @@ avalon_a12_device_register(struct device *dev, void *aux)
 			if (netboot) {
 				booted_device = dev;
 #if 0
-				printf("\nbooted_device = %s\n", dev->dv_xname);
+				printf("\nbooted_device = %s\n", device_xname(dev));
 #endif
 				found = 1;
 			} else {
 				ctrlrdev = dev;
 #if 0
-				printf("\nctrlrdev = %s\n", dev->dv_xname);
+				printf("\nctrlrdev = %s\n", device_xname(dev));
 #endif
 			}
 			return;
@@ -232,7 +232,7 @@ avalon_a12_device_register(struct device *dev, void *aux)
 		/* we've found it! */
 		booted_device = dev;
 #if 0
-		printf("\nbooted_device = %s\n", dev->dv_xname);
+		printf("\nbooted_device = %s\n", device_xname(dev));
 #endif
 		found = 1;
 	}
