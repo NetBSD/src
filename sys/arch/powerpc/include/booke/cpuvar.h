@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.6 2011/06/05 16:52:25 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.7 2011/06/14 22:36:12 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,7 +57,6 @@ struct cpu_softc {
 
 	u_int cpu_pcpls[5];
 	struct evcnt cpu_evcnt_spurious_intr;
-	struct lwp *cpu_softlwps[SOFTINT_COUNT];
 
 	struct evcnt cpu_ev_late_clock;
 	u_long cpu_ticks_per_clock_intr;

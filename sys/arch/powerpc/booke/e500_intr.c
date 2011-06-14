@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.9 2011/06/08 05:13:00 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.10 2011/06/14 22:36:12 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,6 +50,10 @@
 
 #include <uvm/uvm_extern.h>
 
+#ifdef __HAVE_FAST_SOFTINTS
+#include <powerpc/softint.h>
+#endif
+
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
 
@@ -62,24 +66,6 @@
 #define CTPR2IPL(ctpr)		((ctpr) - (15 - IPL_HIGH))
 
 #define	IST_PERCPU_P(ist)	((ist) >= IST_TIMER)
-
-#ifdef __HAVE_PREEMPTION
-#define	IPL_PREEMPT_SOFTMASK	(1 << IPL_NONE)
-#else
-#define	IPL_PREEMPT_SOFTMASK	0
-#endif
-
-#define	IPL_SOFTMASK \
-	    ((1 << IPL_SOFTSERIAL) | (1 << IPL_SOFTNET   )	\
-	    |(1 << IPL_SOFTBIO   ) | (1 << IPL_SOFTCLOCK )	\
-	    |IPL_PREEMPT_SOFTMASK)
-
-#define SOFTINT2IPL_MAP \
-	    ((IPL_SOFTSERIAL << (4*SOFTINT_SERIAL))	\
-	    |(IPL_SOFTNET    << (4*SOFTINT_NET   ))	\
-	    |(IPL_SOFTBIO    << (4*SOFTINT_BIO   ))	\
-	    |(IPL_SOFTCLOCK  << (4*SOFTINT_CLOCK )))
-#define	SOFTINT2IPL(si_level)	((SOFTINT2IPL_MAP >> (4 * si_level)) & 0x0f)
 
 struct e500_intr_irq_info {
 	bus_addr_t irq_vpr;
@@ -374,10 +360,6 @@ static void 	e500_wdogintr(struct trapframe *tf);
 static void	e500_spl0(void);
 static int 	e500_splraise(int);
 static void 	e500_splx(int);
-#ifdef __HAVE_FAST_SOFTINTS
-static void 	e500_softint_init_md(lwp_t *l, u_int si_level, uintptr_t *machdep_p);
-static void 	e500_softint_trigger(uintptr_t machdep);
-#endif
 
 const struct intrsw e500_intrsw = {
 	.intrsw_establish = e500_intr_establish,
@@ -399,8 +381,8 @@ const struct intrsw e500_intrsw = {
 	.intrsw_spl0 = e500_spl0,
 
 #ifdef __HAVE_FAST_SOFTINTS
-	.intrsw_softint_init_md = e500_softint_init_md,
-	.intrsw_softint_trigger = e500_softint_trigger,
+	.intrsw_softint_init_md = powerpc_softint_init_md,
+	.intrsw_softint_trigger = powerpc_softint_trigger,
 #endif
 };
 
@@ -454,64 +436,6 @@ e500_intr_onchip_name_lookup(int irq)
 	return name;
 }
 
-#ifdef __HAVE_FAST_SOFTINTS
-static inline void
-e500_softint_deliver(struct cpu_info *ci, struct cpu_softc *cpu,
-	int ipl, int si_level)
-{
-	KASSERT(ci->ci_data.cpu_softints & (1 << ipl));
-	ci->ci_data.cpu_softints ^= 1 << ipl;
-	softint_fast_dispatch(cpu->cpu_softlwps[si_level], ipl);
-	KASSERT(cpu->cpu_softlwps[si_level]->l_ctxswtch == 0);
-	KASSERTMSG(ci->ci_cpl == IPL_HIGH,
-	    ("%s: cpl (%d) != HIGH", __func__, ci->ci_cpl));
-}
-
-static inline void
-e500_softint(struct cpu_info *ci, struct cpu_softc *cpu, int old_ipl,
-	vaddr_t pc)
-{
-	const u_int softint_mask = (IPL_SOFTMASK << old_ipl) & IPL_SOFTMASK;
-	u_int softints;
-
-	KASSERT(ci->ci_mtx_count == 0);
-	KASSERT(ci->ci_cpl == IPL_HIGH);
-	while ((softints = (ci->ci_data.cpu_softints & softint_mask)) != 0) {
-		KASSERT(old_ipl < IPL_SOFTSERIAL);
-		if (softints & (1 << IPL_SOFTSERIAL)) {
-			e500_softint_deliver(ci, cpu, IPL_SOFTSERIAL,
-			    SOFTINT_SERIAL);
-			continue;
-		}
-		KASSERT(old_ipl < IPL_SOFTNET);
-		if (softints & (1 << IPL_SOFTNET)) {
-			e500_softint_deliver(ci, cpu, IPL_SOFTNET,
-			    SOFTINT_NET);
-			continue;
-		}
-		KASSERT(old_ipl < IPL_SOFTBIO);
-		if (softints & (1 << IPL_SOFTBIO)) {
-			e500_softint_deliver(ci, cpu, IPL_SOFTBIO,
-			    SOFTINT_BIO);
-			continue;
-		}
-		KASSERT(old_ipl < IPL_SOFTCLOCK);
-		if (softints & (1 << IPL_SOFTCLOCK)) {
-			e500_softint_deliver(ci, cpu, IPL_SOFTCLOCK,
-			    SOFTINT_CLOCK);
-			continue;
-		}
-#ifdef __HAVE_PREEMPTION
-		KASSERT(old_ipl == IPL_NONE);
-		if (softints & (1 << IPL_NONE)) {
-			ci->ci_data.cpu_softints ^= (1 << IPL_NONE);
-			kpreempt(pc);
-		}
-#endif
-	}
-}
-#endif /* __HAVE_FAST_SOFTINTS */
-
 static inline void
 e500_splset(struct cpu_info *ci, int ipl)
 {
@@ -547,7 +471,7 @@ e500_spl0(void)
 #ifdef __HAVE_FAST_SOFTINTS
 	if (__predict_false(ci->ci_data.cpu_softints != 0)) {
 		e500_splset(ci, IPL_HIGH);
-		e500_softint(ci, ci->ci_softc, IPL_NONE,
+		powerpc_softint(ci, IPL_NONE,
 		    (vaddr_t)__builtin_return_address(0));
 	}
 #endif /* __HAVE_FAST_SOFTINTS */
@@ -580,7 +504,7 @@ e500_splx(int ipl)
 	const u_int softints = (ci->ci_data.cpu_softints << ipl) & IPL_SOFTMASK;
 	if (__predict_false(softints != 0)) {
 		e500_splset(ci, IPL_HIGH);
-		e500_softint(ci, ci->ci_softc, ipl,
+		powerpc_softint(ci, ipl,
 		    (vaddr_t)__builtin_return_address(0));
 	}
 #endif /* __HAVE_FAST_SOFTINTS */
@@ -621,27 +545,6 @@ e500_splraise(int ipl)
 
 	return old_ipl;
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-static void
-e500_softint_init_md(lwp_t *l, u_int si_level, uintptr_t *machdep_p)
-{
-	struct cpu_info * const ci = l->l_cpu;
-	struct cpu_softc * const cpu = ci->ci_softc;
-
-	*machdep_p = 1 << SOFTINT2IPL(si_level);
-	KASSERT(*machdep_p & IPL_SOFTMASK);
-	cpu->cpu_softlwps[si_level] = l;
-}
-
-static void
-e500_softint_trigger(uintptr_t machdep)
-{
-	struct cpu_info * const ci = curcpu();
-
-	atomic_or_uint(&ci->ci_data.cpu_softints, machdep);
-}
-#endif /* __HAVE_FAST_SOFTINTS */
 
 static int
 e500_intr_spurious(void *arg)
@@ -1022,7 +925,7 @@ e500_extintr(struct trapframe *tf)
 	if (__predict_false(softints != 0)) {
 		KASSERT(old_ipl < IPL_VM);
 		e500_splset(ci, IPL_HIGH);	/* pop to high */
-		e500_softint(ci, cpu, old_ipl,	/* deal with them */
+		powerpc_softint(ci, old_ipl,	/* deal with them */
 		    tf->tf_srr0);
 		e500_splset(ci, old_ipl);	/* and drop back */
 	}
@@ -1235,7 +1138,7 @@ typedef void (*ipifunc_t)(void);
 static void
 e500_ipi_kpreempt(void)
 {
-	e500_softint_trigger(1 << IPL_NONE);
+	poowerpc_softint_trigger(1 << IPL_NONE);
 }
 #endif
 
