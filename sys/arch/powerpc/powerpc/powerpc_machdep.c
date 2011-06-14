@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.53 2011/06/14 03:12:43 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.54 2011/06/14 05:50:25 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.53 2011/06/14 03:12:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.54 2011/06/14 05:50:25 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -55,11 +55,13 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.53 2011/06/14 03:12:43 matt Ex
 #include <sys/device.h>
 #include <sys/pcu.h>
 #include <sys/atomic.h>
+#include <sys/kmem.h>
 #include <sys/xcall.h>
 
 #include <dev/mm.h>
 
 #include <powerpc/pcb.h>
+#include <powerpc/userret.h>
 #include <powerpc/fpu.h>
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 #include <powerpc/altivec.h>
@@ -299,6 +301,33 @@ cpu_dumpconf(void)
 		dumplo = nblks - ctod(dumpsize);
 }
 
+/* 
+ * Start a new LWP
+ */
+void
+startlwp(void *arg)
+{
+	ucontext_t * const uc = arg;
+	lwp_t * const l = curlwp;
+	struct trapframe * const tf = l->l_md.md_utf;
+	int error;
+
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
+
+	kmem_free(uc, sizeof(ucontext_t));
+	userret(l, tf);
+}
+
+void
+upcallret(struct lwp *l)
+{
+	struct trapframe * const tf = l->l_md.md_utf;
+
+	KERNEL_UNLOCK_LAST(l);
+	userret(l, tf);
+}
+
 void 
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	void *sas, void *ap, void *sp, sa_upcall_t upcall)
@@ -377,9 +406,9 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
 		if (ci == cur_ci) {
 			softint_trigger(SOFTINT_KPREEMPT);
-                } else {
-                        cpu_send_ipi(cpu_index(ci), IPI_KPREEMPT);
-                }
+		} else {
+			cpu_send_ipi(cpu_index(ci), IPI_KPREEMPT);
+		}
 		return;
 	}
 #endif
