@@ -1,4 +1,4 @@
-/* $NetBSD: hpet_acpi.c,v 1.6 2011/06/14 13:59:23 jruoho Exp $ */
+/* $NetBSD: hpet_acpi.c,v 1.7 2011/06/14 16:33:51 jruoho Exp $ */
 
 /*
  * Copyright (c) 2006, 2011 Nicolas Joly
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.6 2011/06/14 13:59:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.7 2011/06/14 16:33:51 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,6 +47,7 @@ static int		hpet_acpi_dev_match(device_t, cfdata_t, void *);
 static void		hpet_acpi_dev_attach(device_t, device_t, void *);
 static int		hpet_acpi_tab_match(device_t, cfdata_t, void *);
 static void		hpet_acpi_tab_attach(device_t, device_t, void *);
+static int		hpet_acpi_detach(device_t, int);
 
 static const char * const hpet_acpi_ids[] = {
 	"PNP0103",
@@ -54,10 +55,10 @@ static const char * const hpet_acpi_ids[] = {
 };
 
 CFATTACH_DECL_NEW(hpet_acpi_tab, sizeof(struct hpet_softc),
-    hpet_acpi_tab_match, hpet_acpi_tab_attach, NULL, NULL);
+    hpet_acpi_tab_match, hpet_acpi_tab_attach, hpet_acpi_detach, NULL);
 
 CFATTACH_DECL_NEW(hpet_acpi_dev, sizeof(struct hpet_softc),
-    hpet_acpi_dev_match, hpet_acpi_dev_attach, NULL, NULL);
+    hpet_acpi_dev_match, hpet_acpi_dev_attach, hpet_acpi_detach, NULL);
 
 static int
 hpet_acpi_tab_match(device_t parent, cfdata_t match, void *aux)
@@ -87,21 +88,26 @@ hpet_acpi_tab_attach(device_t parent, device_t self, void *aux)
 	ACPI_TABLE_HPET *hpet;
 	ACPI_STATUS rv;
 
+	sc->sc_mapped = false;
+
 	rv = AcpiGetTable(ACPI_SIG_HPET, 1, (ACPI_TABLE_HEADER **)&hpet);
 
 	if (ACPI_FAILURE(rv))
 		return;
 
 	sc->sc_memt = aa->aa_memt;
+	sc->sc_mems = HPET_MEM_WIDTH;
 
 	if (hpet->Address.Address == 0xfed0000000000000UL) /* A quirk. */
 		hpet->Address.Address >>= 32;
 
 	if (bus_space_map(sc->sc_memt, hpet->Address.Address,
-		HPET_MEM_WIDTH, 0, &sc->sc_memh) != 0) {
+		sc->sc_mems, 0, &sc->sc_memh) != 0) {
 		aprint_error(": failed to map mem space\n");
 		return;
 	}
+
+	sc->sc_mapped = true;
 
 	aprint_naive("\n");
 	aprint_normal(": mem 0x%"PRIx64"-0x%"PRIx64"\n",
@@ -130,6 +136,8 @@ hpet_acpi_dev_attach(device_t parent, device_t self, void *aux)
 	struct acpi_mem *mem;
 	ACPI_STATUS rv;
 
+	sc->sc_mapped = false;
+
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
 
@@ -149,15 +157,33 @@ hpet_acpi_dev_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_memt = aa->aa_memt;
+	sc->sc_mems = mem->ar_length;
 
 	if (bus_space_map(sc->sc_memt, mem->ar_base,
-		mem->ar_length, 0, &sc->sc_memh) != 0) {
+		sc->sc_mems, 0, &sc->sc_memh) != 0) {
 		aprint_error(": failed to map mem space\n");
 		goto out;
 	}
+
+	sc->sc_mapped = true;
 
 	hpet_attach_subr(self);
 
 out:
 	acpi_resource_cleanup(&res);
+}
+
+static int
+hpet_acpi_detach(device_t self, int flags)
+{
+	struct hpet_softc *sc = device_private(self);
+	int rv;
+
+	if (sc->sc_mapped != true)
+		return 0;
+
+	rv = hpet_detach(self, flags);
+	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
+
+	return rv;
 }
