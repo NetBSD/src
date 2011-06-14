@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2011/06/11 18:03:57 christos Exp $
+# $NetBSD: Makefile,v 1.12 2011/06/14 15:27:11 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -76,8 +76,8 @@ CLEANFILES+=	defs.h
 
 defs.h: defs.h.in
 	${TOOL_SED} \
+	    -e 's|@ATTRIBUTE_FORMAT_PRINTF@|__attribute__((__format__(__printf__, a, b)))|g' \
 	    -e 's|@ATTRIBUTE_NORETURN@|__attribute__((__noreturn__))|g' \
-	    -e 's|@ATTRIBUTE_PRINTF(a,b)@|__attribute__((__format__(__printf__,a,b)))|g' \
 	    < ${.ALLSRC} > ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 
@@ -87,7 +87,7 @@ FILESDIR=	/usr/lib/pkgconfig
 
 realall: atf-c.pc
 atf-c.pc: Makefile atf-c.pc.in
-	${TOOL_SED} -e 's,__ATF_VERSION__,0.13,g' \
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.14,g' \
 	    -e 's,__CC__,gcc,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \
