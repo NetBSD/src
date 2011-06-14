@@ -33,6 +33,7 @@
 
 extern "C" {
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -67,6 +68,12 @@ extern "C" {
 
 namespace impl = atf::atf_run;
 
+#if defined(MAXCOMLEN)
+static const std::string::size_type max_core_name_length = MAXCOMLEN;
+#else
+static const std::string::size_type max_core_name_length = std::string::npos;
+#endif
+
 class atf_run : public atf::application::app {
     static const char* m_description;
 
@@ -100,6 +107,18 @@ public:
 };
 
 static void
+sanitize_gdb_env(void)
+{
+    try {
+        atf::env::unset("TERM");
+    } catch (...) {
+        // Just swallow exceptions here; they cannot propagate into C, which
+        // is where this function is called from, and even if these exceptions
+        // appear they are benign.
+    }
+}
+
+static void
 dump_stacktrace(const atf::fs::path& tp, const atf::process::status& s,
                 const atf::fs::path& workdir, impl::atf_tps_writer& w)
 {
@@ -107,7 +126,8 @@ dump_stacktrace(const atf::fs::path& tp, const atf::process::status& s,
 
     w.stderr_tc("Test program crashed; attempting to get stack trace");
 
-    const atf::fs::path corename = workdir / (tp.leaf_name() + ".core");
+    const atf::fs::path corename = workdir /
+        (tp.leaf_name().substr(0, max_core_name_length) + ".core");
     if (!atf::fs::exists(corename)) {
         w.stderr_tc("Expected file " + corename.str() + " not found");
         return;
@@ -121,7 +141,8 @@ dump_stacktrace(const atf::fs::path& tp, const atf::process::status& s,
     atf::process::status status = atf::process::exec(
         gdb, args,
         atf::process::stream_redirect_path(gdbout),
-        atf::process::stream_redirect_path(atf::fs::path("/dev/null")));
+        atf::process::stream_redirect_path(atf::fs::path("/dev/null")),
+        sanitize_gdb_env);
     if (!status.exited() || status.exitstatus() != EXIT_SUCCESS) {
         w.stderr_tc("Execution of " GDB " failed");
         return;
