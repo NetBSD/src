@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.202 2011/06/12 03:35:48 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.203 2011/06/14 15:23:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202 2011/06/12 03:35:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2011/06/14 15:23:19 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -720,7 +720,7 @@ mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
 
 	if (paddr >= avail_start) 
 		return false;
-	*vaddr = KERNBASE + paddr;
+	*vaddr = KERNBASE3 + paddr;
 	return true;
 }
 
