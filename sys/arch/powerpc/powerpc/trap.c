@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.141 2011/06/05 16:52:26 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.142 2011/06/14 05:50:25 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.141 2011/06/05 16:52:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.142 2011/06/14 05:50:25 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.141 2011/06/05 16:52:26 matt Exp $");
 #include <sys/savar.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
-#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -907,31 +906,4 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
  out2:
 	curpcb->pcb_onfault = 0;
 	return rv;
-}
-
-/* 
- * Start a new LWP
- */
-void
-startlwp(void *arg)
-{
-	ucontext_t * const uc = arg;
-	lwp_t * const l = curlwp;
-	struct trapframe * const tf = l->l_md.md_utf;
-	int error;
-
-	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-	KASSERT(error == 0);
-
-	kmem_free(uc, sizeof(ucontext_t));
-	userret(l, tf);
-}
-
-void
-upcallret(struct lwp *l)
-{
-        struct trapframe * const tf = l->l_md.md_utf;
-
-	KERNEL_UNLOCK_LAST(l);
-	userret(l, tf);
 }

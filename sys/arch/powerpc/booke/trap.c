@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 2011/06/13 21:12:50 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.10 2011/06/14 05:50:24 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.9 2011/06/13 21:12:50 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.10 2011/06/14 05:50:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.9 2011/06/13 21:12:50 matt Exp $");
 #include <sys/savar.h>
 #endif
 #include <sys/kauth.h>
-#include <sys/kmem.h>
 #include <sys/ras.h>
 
 #include <uvm/uvm_extern.h>
@@ -896,27 +895,4 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 #endif
 		userret(l, tf);
 	}
-}
-
-void            
-upcallret(struct lwp *l)
-{       
-                
-	mi_userret(l);		/* Invoke MI userret code */
-}               
-
-/* 
- * Start a new LWP
- */
-void
-startlwp(void *arg)
-{
-	ucontext_t * const uc = arg;
-	struct lwp * const l = curlwp;
-
-	int error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-	KASSERT(error == 0);
-	(void)error;
-        kmem_free(uc, sizeof(ucontext_t)); 
-	upcallret(l);
 }
