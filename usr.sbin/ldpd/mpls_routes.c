@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.5 2011/02/14 11:43:59 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.6 2011/06/14 11:28:51 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 extern int      route_socket;
 int             rt_seq = 0;
 int		dont_catch = 0;
+extern int	no_default_route;
 
 struct rt_msg   replay_rt[REPLAY_MAX];
 int             replay_index = 0;
@@ -625,7 +626,13 @@ check_route(struct rt_msg * rg, uint rlen)
 
 	switch (rg->m_rtm.rtm_type) {
 	case RTM_CHANGE:
-		warnp("XXX: RTM_CHANGE\n");
+		lab = label_get(so_dest, so_pref);
+		if (lab) {
+			send_withdraw_tlv_to_all(&so_dest->sin.sin_addr,
+			    prefixlen);
+			label_reattach_route(lab, LDP_READD_NODEL);
+			label_del(lab);
+		}
 	/* Fallthrough */
 	case RTM_ADD:
 		/*
@@ -668,7 +675,7 @@ check_route(struct rt_msg * rg, uint rlen)
 		if (!lab)
 			break;
 		send_withdraw_tlv_to_all(&so_dest->sin.sin_addr, prefixlen);
-		/* No readd as IPv4. Also don't even try to delete it */
+		/* No readd or delete IP route. Just delete the MPLS route */
 		label_reattach_route(lab, LDP_READD_NODEL);
 		label_del(lab);
 		break;
@@ -775,7 +782,7 @@ bind_current_routes()
 		}
 
 		/* Check if it's the default gateway */
-		if (so_dst->sin.sin_addr.s_addr == 0)
+		if (so_dst->sin.sin_addr.s_addr == 0 && no_default_route != 0)
 			continue;
 
 		/* XXX: Check if it's loopback */
