@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.18 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: ciavar.h,v 1.19 2011/06/14 15:34:22 matt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -66,7 +66,7 @@ struct cia_config {
 };
 
 struct cia_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 
 	struct	cia_config *sc_ccp;
 };

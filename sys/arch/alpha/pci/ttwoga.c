@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.13 2011/06/06 17:30:32 matt Exp $ */
+/* $NetBSD: ttwoga.c,v 1.14 2011/06/14 15:34:22 matt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.13 2011/06/06 17:30:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.14 2011/06/14 15:34:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,14 +230,12 @@ ttwopciattach(device_t parent, device_t self, void *aux)
 
 	ttwoga_dma_init(tcp);
 
-	if (tcp->tc_rev < TRN_T3)
-		printf(": T2 Gate Array rev. %d\n", tcp->tc_rev);
-	else
-		printf(": T3 or T4 Gate Array rev. %d\n", tcp->tc_rev);
+	aprint_normal(": %s Gate Array rev. %d\n", 
+	    (tcp->tc_rev < TRN_T3) ? "T2" : "T3 or T4",
+	    tcp->tc_rev);
 
 	if (tcp->tc_rev < 1)
-		printf("%s: WARNING: T2 NOT PASS2... NO BETS...\n",
-		    self->dv_xname);
+		aprint_normal_dev(self, "WARNING: T2 NOT PASS2... NO BETS...\n");
 
 	switch (cputype) {
 #if defined(DEC_2100_A500) || defined(DEC_2100A_A500)

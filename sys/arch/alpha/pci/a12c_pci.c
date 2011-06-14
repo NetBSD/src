@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_pci.c,v 1.7 2010/12/15 01:27:18 matt Exp $ */
+/* $NetBSD: a12c_pci.c,v 1.8 2011/06/14 15:34:22 matt Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.7 2010/12/15 01:27:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_pci.c,v 1.8 2011/06/14 15:34:22 matt Exp $");
 __KERNEL_COPYRIGHT(0,
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -56,7 +56,7 @@ __KERNEL_COPYRIGHT(0,
 
 #define	A12C_PCI()	/* Generate ctags(1) key */
 
-void		a12c_attach_hook(struct device *, struct device *,
+void		a12c_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		a12c_bus_maxdevs(void *, int);
 pcitag_t	a12c_make_tag(void *, int, int, int);
@@ -79,7 +79,7 @@ a12c_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 void
-a12c_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
+a12c_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 }
 

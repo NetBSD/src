@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.26 2010/04/05 07:19:28 joerg Exp $ */
+/* $NetBSD: if_xb.c,v 1.27 2011/06/14 15:34:21 matt Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.26 2010/04/05 07:19:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.27 2011/06/14 15:34:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,14 +133,10 @@ static int  xb_put_blk(struct mbuf *);
 static int  xb_put(struct mbuf *);
 static long xb_fifo_empty(void);
 
-int	xbmatch(struct device *, struct cfdata *, void *);
-void	xbattach(struct device *, struct device *, void *);
+int	xbmatch(device_t, cfdata_t, void *);
+void	xbattach(device_t, device_t, void *);
 
-struct xb_softc {
-	struct	device d;
-} xb_softc;
-
-CFATTACH_DECL(xb, sizeof(struct xb_softc),
+CFATTACH_DECL_NEW(xb, 0,
     xbmatch, xbattach, NULL, NULL);
 
 extern struct cfdriver xb_cd;
@@ -210,7 +206,7 @@ static void a12_xbar_setup(void);
 int xbfound;
 
 int
-xbmatch(struct device *parent, struct cfdata *match, void *aux)
+xbmatch(device_t parent, cfdata_t match, void *aux)
 {
 
 	return	cputype == ST_AVALON_A12
@@ -218,15 +214,15 @@ xbmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-xbattach(struct device *parent, struct device *self, void *aux)
+xbattach(device_t parent, device_t self, void *aux)
 {
 	struct xb_config *ccp;
 
-	strcpy(xbi.if_xname, self->dv_xname);
+	strcpy(xbi.if_xname, device_xname(self));
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %lu\n", "$Revision: 1.26 $", xbi.if_mtu);
+	printf(": driver %s mtu %lu\n", "$Revision: 1.27 $", xbi.if_mtu);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.25 2011/04/24 16:26:52 rmind Exp $ */
+/* $NetBSD: a12dc.c,v 1.26 2011/06/14 15:34:21 matt Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.25 2011/04/24 16:26:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.26 2011/06/14 15:34:21 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,14 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.25 2011/04/24 16:26:52 rmind Exp $");
 
 #define	MAX_MODULES 1
 
-int	a12dcmatch(struct device *, struct cfdata *, void *);
-void	a12dcattach(struct device *, struct device *, void *);
+int	a12dcmatch(device_t, cfdata_t, void *);
+void	a12dcattach(device_t, device_t, void *);
 
-struct a12dc_softc {
-	struct  device sc_dev;
-} a12dc_softc;
-
-CFATTACH_DECL(a12dc, sizeof(struct a12dc_softc),
+CFATTACH_DECL_NEW(a12dc, 0,
     a12dcmatch, a12dcattach, NULL, NULL);
 
 extern	struct cfdriver a12dc_cd;
@@ -140,7 +136,7 @@ static void a12_worry(int worry_number);
 static void A12InitBackDriver(int);
 
 int
-a12dcmatch(struct device *parent, struct cfdata *match, void *aux)
+a12dcmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -149,7 +145,7 @@ a12dcmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-a12dcattach(struct device *parent, struct device *self, void *aux)
+a12dcattach(device_t parent, device_t self, void *aux)
 {
 	struct tty *tp;
 	struct a12dc_config *ccp;
@@ -157,7 +153,7 @@ a12dcattach(struct device *parent, struct device *self, void *aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.25 $");
+	aprintf_normal(": driver %s\n", "$Revision: 1.26 $");
 
 	tp = a12dc_tty[0] = tty_alloc();
 	tp->t_oproc = a12dcstart;

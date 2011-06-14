@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.47 2009/03/18 07:42:36 cegger Exp $ */
+/* $NetBSD: autoconf.c,v 1.48 2011/06/14 15:34:21 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2009/03/18 07:42:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.48 2011/06/14 15:34:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ atoi(char *s)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	if (bootdev_data == NULL) {
 		/*
