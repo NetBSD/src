@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -227,6 +227,7 @@ ATF_TEST_CASE_BODY(tp_3)
         "timeout: 300\n"
         "require.arch: thearch\n"
         "require.config: foo-bar\n"
+        "require.files: /a/1 /b/2\n"
         "require.machine: themachine\n"
         "require.progs: /bin/cp mv\n"
         "require.user: root\n"
@@ -234,7 +235,7 @@ ATF_TEST_CASE_BODY(tp_3)
 
     // NO_CHECK_STYLE_BEGIN
     const char* exp_calls[] = {
-        "got_tc(single_test, {descr=Some description, ident=single_test, require.arch=thearch, require.config=foo-bar, require.machine=themachine, require.progs=/bin/cp mv, require.user=root, timeout=300})",
+        "got_tc(single_test, {descr=Some description, ident=single_test, require.arch=thearch, require.config=foo-bar, require.files=/a/1 /b/2, require.machine=themachine, require.progs=/bin/cp mv, require.user=root, timeout=300})",
         "got_eof()",
         NULL
     };
