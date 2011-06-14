@@ -1,11 +1,12 @@
-# $NetBSD: Makefile,v 1.31 2011/06/04 09:29:44 jruoho Exp $
+# $NetBSD: Makefile,v 1.32 2011/06/14 03:50:47 jruoho Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/syscall
 
 TESTS_C+=	t_access t_cmsg t_dup t_fsync
-TESTS_C+=	t_getgroups t_getpid t_getrusage t_getsid t_gettimeofday
+TESTS_C+=	t_getgroups t_getlogin t_getpid
+TESTS_C+=	t_getrusage t_getsid t_gettimeofday
 TESTS_C+=	t_itimer t_kill
 TESTS_C+=	t_mincore t_mmap t_mprotect t_msync t_nanosleep
 TESTS_C+=	t_poll t_pollts t_pselect
