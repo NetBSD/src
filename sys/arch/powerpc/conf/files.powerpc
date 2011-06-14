@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.78 2011/06/12 03:35:45 rmind Exp $
+#	$NetBSD: files.powerpc,v 1.79 2011/06/14 22:36:12 matt Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE OPENPIC_DISTRIBUTE
@@ -23,6 +23,7 @@ file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/setfault.S
 file	arch/powerpc/powerpc/sig_machdep.c
 file	arch/powerpc/powerpc/sigcode.S
+file	arch/powerpc/powerpc/softint_machdep.c
 file	arch/powerpc/powerpc/subyte.c
 file	arch/powerpc/powerpc/suword.c
 file	arch/powerpc/powerpc/suswintr.c

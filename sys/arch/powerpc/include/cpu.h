@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.79 2011/06/13 21:19:01 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.80 2011/06/14 22:36:12 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -68,6 +68,7 @@ struct cpu_info {
 
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
+	struct lwp *ci_softlwps[SOFTINT_COUNT];
 	int ci_cpuid;			/* from SPR_PIR */
 
 	int ci_want_resched;
