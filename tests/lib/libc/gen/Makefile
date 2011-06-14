@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.25 2011/06/03 05:42:09 jruoho Exp $
+# $NetBSD: Makefile,v 1.26 2011/06/14 05:25:21 jruoho Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/gen
 
 TESTS_C+=	t_alarm
+TESTS_C+=	t_assert
 TESTS_C+=	t_basedirname
 TESTS_C+=	t_closefrom
 TESTS_C+=	t_dir
