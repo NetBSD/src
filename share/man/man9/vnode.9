@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.53 2011/06/14 00:56:02 rmind Exp $
+.\"     $NetBSD: vnode.9,v 1.54 2011/06/14 07:49:09 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -598,11 +598,15 @@ If a vnode is successfully retrieved zero is returned, otherwise an
 appropriate error code is returned.
 If
 .Fa slock
-is not NULL, it specifies the lock to share for
+is not
+.Dv NULL ,
+it specifies the lock to share for
 .Em v_interlock .
 The reference will be held on the lock and sharing noted.
 Reference will be released and lock unshared when the vnode gets recycled.
-If NULL (regular case), vnode will use its own interlock.
+If
+.Dv NULL
+(regular case), vnode will use its own interlock.
 .It Fn ungetnewvnode "vp"
 Undo the operation of
 .Fn getnewvnode .
@@ -632,7 +636,9 @@ Remove any vnodes in the vnode table belonging to mount point
 .Fa mp .
 If
 .Fa skipvp
-is not NULL it is exempt from being flushed.
+is not
+.Dv NULL
+it is exempt from being flushed.
 The argument
 .Fa flags
 is a set of flags modifying the operation of
