@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86 2011/06/13 21:19:02 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.87 2011/06/14 05:49:14 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.86 2011/06/13 21:19:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.87 2011/06/14 05:49:14 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.86 2011/06/13 21:19:02 matt Exp $")
 #include <sys/vnode.h>
 #include <sys/buf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 #include <powerpc/altivec.h>
