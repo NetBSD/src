@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1629 2011/06/06 13:43:48 spz Exp $
+#	$NetBSD: mi,v 1.1630 2011/06/14 15:27:46 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2983,6 +2983,7 @@
 ./usr/lib/pkgconfig				comp-c-lib
 ./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib		atf,share
+./usr/lib/pkgconfig/atf-sh.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
