@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -106,6 +106,23 @@ check_config(const std::string& variables, const atf::tests::vars_map& config)
 
 static
 std::string
+check_files(const std::string& progs)
+{
+    const std::vector< std::string > v = atf::text::split(progs, " ");
+    for (std::vector< std::string >::const_iterator iter = v.begin();
+         iter != v.end(); iter++) {
+        const atf::fs::path file(*iter);
+        if (!file.is_absolute())
+            throw std::runtime_error("Relative paths are not allowed when "
+                "checking for a required file (" + file.str() + ")");
+        if (!atf::fs::exists(file))
+            return "Required file '" + file.str() + "' not found";
+    }
+    return "";
+}
+
+static
+std::string
 check_machine(const std::string& machines)
 {
     const std::vector< std::string > v = atf::text::split(machines, " ");
@@ -186,6 +203,8 @@ impl::check_requirements(const atf::tests::vars_map& metadata,
             failure_reason = check_arch(value);
         else if (name == "require.config")
             failure_reason = check_config(value, config);
+        else if (name == "require.files")
+            failure_reason = check_files(value);
         else if (name == "require.machine")
             failure_reason = check_machine(value);
         else if (name == "require.progs")
