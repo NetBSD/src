@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1561 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1562 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1019,6 +1019,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[uebayasi 20110526]
 	kernel: add SOCK_SEQPACKET for local sockets [manu 20110529]
 	bind: Update to 9.8.0-P2: Security fixes. [spz 20110529]
+	makefs(8): Fix a corrupted RRIP entry problem in deep directories on
+		cd9660 fs with rockridge extension. [tsutsui 20110529]
 	tmpfs: Many fixes and some performance improvements. [rmind 20110529]
 	powerpc: Initial SMP support for MPC85xx, reworked and unified IPI
 		code, various other improvements. [matt 20110605]
