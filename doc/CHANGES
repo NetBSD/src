@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1562 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1563 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1033,3 +1033,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	openssl(1): Import openssl-1.0.1-stable-SNAP-20110605 [spz 20110605]
 	powerpc: Switch to using direct-mapped uareas (pcb + kernel stacks).
 		[matt 20110613]
+	atf(7): Import 0.14.  [jmmv 20110614]
