@@ -1,4 +1,4 @@
-/* $NetBSD: a12cvar.h,v 1.5 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: a12cvar.h,v 1.6 2011/06/14 15:34:22 matt Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -65,7 +65,7 @@ struct a12c_config {
 };
 
 struct a12c_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 
 	struct	a12c_config *sc_ccp;
 };

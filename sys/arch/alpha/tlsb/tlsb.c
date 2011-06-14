@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.35 2011/06/06 17:30:33 matt Exp $ */
+/* $NetBSD: tlsb.c,v 1.36 2011/06/14 15:34:23 matt Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.35 2011/06/06 17:30:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.36 2011/06/14 15:34:23 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -171,7 +171,7 @@ tlsbattach(device_t parent, device_t self, void *aux)
 		 * Deal with hooking CPU instances to TurboLaser nodes.
 		 */
 		if (TLDEV_ISCPU(tldev)) {
-			printf("%s node %d: %s\n", self->dv_xname,
+			aprint_normal("%s node %d: %s\n", device_xname(self),
 			    node, tlsb_node_type_str(tldev));
 		}
 		/*
@@ -206,8 +206,8 @@ tlsbattach(device_t parent, device_t self, void *aux)
 			 * XXX per-CPU interrupt queue?
 			 */
 			printf("%s node %d: routing interrupts to %s\n",
-			  self->dv_xname, node,
-			  cpu_info[hwrpb->rpb_primary_cpu_id]->ci_softc->sc_dev.dv_xname);
+			  device_xname(self), node,
+			  device_xname(cpu_info[hwrpb->rpb_primary_cpu_id]->ci_softc->sc_dev));
 			TLSB_PUT_NODEREG(node, TLCPUMASK,
 			    (1UL << hwrpb->rpb_primary_cpu_id));
 #else
