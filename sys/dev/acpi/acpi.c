@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.244 2011/06/13 09:37:23 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.245 2011/06/14 13:59:23 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.244 2011/06/13 09:37:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.245 2011/06/14 13:59:23 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -554,6 +554,9 @@ acpi_childdet(device_t self, device_t child)
 	if (sc->sc_apmbus == child)
 		sc->sc_apmbus = NULL;
 
+	if (sc->sc_hpet == child)
+		sc->sc_hpet = NULL;
+
 	if (sc->sc_wdrt == child)
 		sc->sc_wdrt = NULL;
 
@@ -752,6 +755,16 @@ static int
 acpi_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct acpi_softc *sc = device_private(self);
+	struct acpi_attach_args aa;
+
+	/*
+	 * Try to attach hpet(4) first via a specific table.
+	 */
+	aa.aa_memt = sc->sc_memt;
+
+	if (ifattr_match(ifattr, "acpihpetbus") && sc->sc_hpet == NULL)
+		sc->sc_hpet = config_found_ia(sc->sc_dev,
+		    "acpihpetbus", &aa, NULL);
 
 	/*
 	 * A two-pass scan for acpinodebus.
@@ -761,6 +774,9 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 		acpi_rescan_nodes(sc);
 	}
 
+	/*
+	 * Attach APM emulation and acpiwdrt(4).
+	 */
 	if (ifattr_match(ifattr, "acpiapmbus") && sc->sc_apmbus == NULL)
 		sc->sc_apmbus = config_found_ia(sc->sc_dev,
 		    "acpiapmbus", NULL, NULL);
@@ -810,6 +826,7 @@ acpi_rescan_early(struct acpi_softc *sc)
 static void
 acpi_rescan_nodes(struct acpi_softc *sc)
 {
+	const char * const hpet_ids[] = { "PNP0103", NULL };
 	struct acpi_attach_args aa;
 	struct acpi_devnode *ad;
 	ACPI_DEVICE_INFO *di;
@@ -853,6 +870,9 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 			continue;
 
 		if (acpi_match_hid(di, acpi_ignored_ids) != 0)
+			continue;
+
+		if (acpi_match_hid(di, hpet_ids) != 0 && sc->sc_hpet != NULL)
 			continue;
 
 		aa.aa_node = ad;

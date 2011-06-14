@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1032 2011/05/28 13:01:49 ryo Exp $
+# $NetBSD: GENERIC,v 1.1033 2011/06/14 13:59:23 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1032 $"
+#ident 		"GENERIC-$Revision: 1.1033 $"
 
 maxusers	64		# estimated number of users
 
@@ -366,7 +366,8 @@ attimer*	at acpi?		# AT Timer
 fujbp*		at acpi?		# Fujitsu Brightness & Pointer
 fujhk*		at acpi?		# Fujitsu Hotkeys
 hpqlb*		at acpi?		# HP Quick Launch Buttons
-hpet*		at acpi?		# High Precision Event Timer
+hpet*		at acpihpetbus?		# High Precision Event Timer (table)
+hpet*		at acpinodebus?		# High Precision Event Timer (device)
 joy*		at acpi?		# Joystick/Game port
 #lpt*		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
