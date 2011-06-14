@@ -412,6 +412,24 @@ out:
 }
 
 static
+atf_error_t
+silence_stdin(void)
+{
+    atf_error_t err;
+
+    close(STDIN_FILENO);
+    int fd = open("/dev/zero", O_RDONLY);
+    if (fd == -1)
+        err = atf_libc_error(errno, "Could not open /dev/zero");
+    else {
+        INV(fd == STDIN_FILENO);
+        err = atf_no_error();
+    }
+
+    return err;
+}
+
+static
 void
 do_child(void (*)(void *),
          void *,
@@ -426,6 +444,10 @@ do_child(void (*start)(void *),
          const stream_prepare_t *errsp)
 {
     atf_error_t err;
+
+    err = silence_stdin();
+    if (atf_is_error(err))
+        goto out;
 
     err = child_connect(outsp, STDOUT_FILENO);
     if (atf_is_error(err))

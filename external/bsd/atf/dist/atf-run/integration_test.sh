@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -118,6 +118,18 @@ atf_init_test_cases()
     atf_add_test_case main
 }
 EOF
+}
+
+atf_test_case no_warnings
+no_warnings_head()
+{
+    atf_set "descr" "Tests that atf-run suppresses warnings about not running" \
+                    "within atf-run"
+}
+no_warnings_body()
+{
+    create_helper pass
+    atf_check -s eq:0 -o ignore -e not-match:'WARNING.*atf-run' atf-run helper
 }
 
 atf_test_case config
@@ -583,8 +595,8 @@ isolation_env_head()
 isolation_env_body()
 {
     undef_vars="LANG LC_ALL LC_COLLATE LC_CTYPE LC_MESSAGES LC_MONETARY \
-                LC_NUMERIC LC_TIME TZ"
-    def_vars="HOME"
+                LC_NUMERIC LC_TIME"
+    def_vars="HOME TZ"
 
     mangleenv="env"
     for v in ${undef_vars} ${def_vars}; do
@@ -607,6 +619,8 @@ isolation_env_body()
     for v in ${def_vars}; do
         atf_check -s eq:0 -o ignore -e empty grep "^tc-so:${v}=" stdout
     done
+
+    atf_check -s eq:0 -o ignore -e empty grep "^tc-so:TZ=UTC" stdout
 }
 
 atf_test_case isolation_home
@@ -619,6 +633,18 @@ isolation_home_body()
     create_helper env_home
     create_atffile helper
     atf_check -s eq:0 -o ignore -e ignore env HOME=foo atf-run helper
+}
+
+atf_test_case isolation_stdin
+isolation_stdin_head()
+{
+    atf_set "descr" "Tests that atf-run nullifies the stdin of test cases"
+}
+isolation_stdin_body()
+{
+    create_helper read_stdin
+    create_atffile helper
+    atf_check -s eq:0 -o ignore -e ignore -x 'echo hello world | atf-run helper'
 }
 
 atf_test_case isolation_umask
@@ -855,6 +881,36 @@ require_config_body()
         -v var1=a -v var2=' ' helper
 }
 
+atf_test_case require_files
+require_files_head()
+{
+    atf_set "descr" "Tests that atf-run validates the require.files property"
+}
+require_files_body()
+{
+    create_helper require_files
+    create_atffile helper
+
+    touch i-exist
+
+    echo "Checking absolute paths"
+    atf_check -s eq:0 -o match:"${TESTCASE}, passed" -e ignore atf-run \
+        -v files='/bin/cp' helper
+    atf_check -s eq:0 -o match:"${TESTCASE}, passed" -e ignore atf-run \
+        -v files="$(pwd)/i-exist" helper
+    atf_check -s eq:0 \
+        -o match:"${TESTCASE}, skipped, .*/dont-exist" \
+        -e ignore atf-run -v files="$(pwd)/i-exist $(pwd)/dont-exist" helper
+
+    echo "Checking that relative paths are not allowed"
+    atf_check -s eq:1 \
+        -o match:"${TESTCASE}, failed, Relative paths.*not allowed.*hello" \
+        -e ignore atf-run -v files='hello' helper
+    atf_check -s eq:1 \
+        -o match:"${TESTCASE}, failed, Relative paths.*not allowed.*a/b" \
+        -e ignore atf-run -v files='a/b' helper
+}
+
 atf_test_case require_machine
 require_machine_head()
 {
@@ -1031,6 +1087,7 @@ ignore_deprecated_use_fs_body()
 
 atf_init_test_cases()
 {
+    atf_add_test_case no_warnings
     atf_add_test_case config
     atf_add_test_case vflag
     atf_add_test_case atffile
@@ -1047,6 +1104,7 @@ atf_init_test_cases()
     atf_add_test_case hooks
     atf_add_test_case isolation_env
     atf_add_test_case isolation_home
+    atf_add_test_case isolation_stdin
     atf_add_test_case isolation_umask
     atf_add_test_case cleanup_pass
     atf_add_test_case cleanup_fail
@@ -1057,6 +1115,7 @@ atf_init_test_cases()
     atf_add_test_case cleanup_symlink
     atf_add_test_case require_arch
     atf_add_test_case require_config
+    atf_add_test_case require_files
     atf_add_test_case require_machine
     atf_add_test_case require_progs
     atf_add_test_case require_user_root
