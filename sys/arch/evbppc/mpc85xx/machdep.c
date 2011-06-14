@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2011/06/12 04:20:18 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2011/06/14 05:32:59 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -93,12 +93,34 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <evbppc/mpc85xx/pixisreg.h>
 #endif
 
+struct uboot_bdinfo {
+	uint32_t bd_memstart;
+	uint32_t bd_memsize;
+	uint32_t bd_flashstart;
+	uint32_t bd_flashsize;
+/*10*/	uint32_t bd_flashoffset;
+	uint32_t bd_sramstart;
+	uint32_t bd_sramsize;
+	uint32_t bd_immrbase;
+/*20*/	uint32_t bd_bootflags;
+	uint32_t bd_ipaddr;
+	uint8_t bd_etheraddr[6];
+	uint16_t bd_ethspeed;
+/*30*/	uint32_t bd_intfreq;
+	uint32_t bd_cpufreq;
+	uint32_t bd_baudrate;
+/*3c*/	uint8_t bd_etheraddr1[6];
+/*42*/	uint8_t bd_etheraddr2[6];
+/*48*/	uint8_t bd_etheraddr3[6];
+/*4e*/	uint16_t bd_pad;
+};
+
 /*
  * booke kernels need to set module_machine to this for modules to work.
  */
 char module_machine_booke[] = "powerpc-booke";
 
-void	initppc(vaddr_t, vaddr_t);
+void	initppc(vaddr_t, vaddr_t, void *, void *, void *, void *);
 
 #define	MEMREGIONS	4
 phys_ram_seg_t physmemr[MEMREGIONS];         /* All memory */
@@ -746,13 +768,15 @@ calltozero(void)
 }
 
 void
-initppc(vaddr_t startkernel, vaddr_t endkernel)
+initppc(vaddr_t startkernel, vaddr_t endkernel,
+	void *a0, void *a1, void *a2, void *a3)
 {
 	struct cpu_info * const ci = curcpu();
 	struct cpu_softc * const cpu = ci->ci_softc;
 
 	cn_tab = &e500_earlycons;
-	printf(" initppc<enter>");
+	printf(" initppc(%#"PRIxVADDR", %#"PRIxVADDR", %p, %p, %p, %p)<enter>",
+	    startkernel, endkernel, a0, a1, a2, a3);
 
 	const register_t hid0 = mfspr(SPR_HID0);
 	mtspr(SPR_HID0, hid0 | HID0_TBEN | HID0_EMCP);
