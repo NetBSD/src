@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.h,v 1.2 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: if_xb.h,v 1.3 2011/06/14 15:34:21 matt Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -65,7 +65,7 @@ struct a12c_config {
 };
 
 struct a12c_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 
 	struct	a12c_config *sc_ccp;
 };

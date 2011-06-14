@@ -1,4 +1,4 @@
-/* $NetBSD: a12c.c,v 1.23 2011/05/17 17:34:47 dyoung Exp $ */
+/* $NetBSD: a12c.c,v 1.24 2011/06/14 15:34:22 matt Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.23 2011/05/17 17:34:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.24 2011/06/14 15:34:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,19 +62,19 @@ __KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.23 2011/05/17 17:34:47 dyoung Exp $");
 
 #define	A12C()	/* Generate ctags(1) key */
 
-int	a12cmatch(struct device *, struct cfdata *, void *);
-void	a12cattach(struct device *, struct device *, void *);
+int	a12cmatch(device_t, cfdata_t, void *);
+void	a12cattach(device_t, device_t, void *);
 
-CFATTACH_DECL(a12c, sizeof(struct a12c_softc),
+CFATTACH_DECL_NEW(a12c, sizeof(struct a12c_softc),
     a12cmatch, a12cattach, NULL, NULL);
 
 extern struct cfdriver a12c_cd;
 
 static const struct clocktime zeroct;
 
-static void noclock_init(struct device *);
-static void noclock_get(struct device *, time_t, struct clocktime *);
-static void noclock_set(struct device *, struct clocktime *);
+static void noclock_init(device_t);
+static void noclock_get(device_t, time_t, struct clocktime *);
+static void noclock_set(device_t, struct clocktime *);
 
 static const struct clockfns noclock_fns = {
 	noclock_init, noclock_get, noclock_set
@@ -86,7 +86,7 @@ int a12cfound;
 struct a12c_config a12c_configuration;
 
 int
-a12cmatch(struct device *parent, struct cfdata *match, void *aux)
+a12cmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -114,14 +114,15 @@ a12c_init(struct a12c_config *ccp, int mallocsafe)
 }
 
 void
-a12cattach(struct device *parent, struct device *self, void *aux)
+a12cattach(device_t parent, device_t self, void *aux)
 {
-	struct a12c_softc *sc = (struct a12c_softc *)self;
+	struct a12c_softc *sc = device_private(self);
 	struct a12c_config *ccp;
 	struct pcibus_attach_args pba;
 
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12cfound = 1;
+	sc->sc_dev = self;
 
 	/*
 	 * set up the chipset's info; done once at console init time
@@ -132,7 +133,7 @@ a12cattach(struct device *parent, struct device *self, void *aux)
 	a12c_init(ccp, 1);
 
 	/* XXX print chipset information */
-	printf(": driver %s over logic %x\n", "$Revision: 1.23 $", 
+	aprint_normal(": driver %s over logic %x\n", "$Revision: 1.24 $", 
 		A12_ALL_EXTRACT(REGVAL(A12_VERS)));
 
 	pci_a12_pickintr(ccp);
