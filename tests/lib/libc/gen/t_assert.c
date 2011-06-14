@@ -1,4 +1,4 @@
-/* $NetBSD: t_assert.c,v 1.1 2011/06/14 05:25:21 jruoho Exp $ */
+/* $NetBSD: t_assert.c,v 1.2 2011/06/14 05:28:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_assert.c,v 1.1 2011/06/14 05:25:21 jruoho Exp $");
+__RCSID("$NetBSD: t_assert.c,v 1.2 2011/06/14 05:28:00 jruoho Exp $");
 
 #include <sys/wait.h>
 
@@ -39,8 +39,6 @@ __RCSID("$NetBSD: t_assert.c,v 1.1 2011/06/14 05:25:21 jruoho Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <stdio.h>
 
 static void		handler(int);
 
@@ -73,8 +71,8 @@ ATF_TC_BODY(assert_false, tc)
 		sa.sa_flags = 0;
 		sa.sa_handler = handler;
 
-		ATF_REQUIRE(sigemptyset(&sa.sa_mask) == 0);
-		ATF_REQUIRE(sigaction(SIGABRT, &sa, 0) == 0);
+		(void)sigemptyset(&sa.sa_mask);
+		(void)sigaction(SIGABRT, &sa, 0);
 
 		assert(1 == 1);
 
@@ -110,8 +108,8 @@ ATF_TC_BODY(assert_true, tc)
 		sa.sa_flags = 0;
 		sa.sa_handler = handler;
 
-		ATF_REQUIRE(sigemptyset(&sa.sa_mask) == 0);
-		ATF_REQUIRE(sigaction(SIGABRT, &sa, 0) == 0);
+		(void)sigemptyset(&sa.sa_mask);
+		(void)sigaction(SIGABRT, &sa, 0);
 
 		assert(1 == 2);
 
