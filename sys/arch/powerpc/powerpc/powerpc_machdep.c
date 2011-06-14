@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.52 2011/06/12 06:10:42 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.53 2011/06/14 03:12:43 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.52 2011/06/12 06:10:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.53 2011/06/14 03:12:43 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -450,3 +450,20 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 
 	return (atop(pa) < physmem) ? 0 : EFAULT;
 }
+
+int
+mm_md_kernacc(void *va, vm_prot_t prot, bool *handled)
+{
+	if (atop((paddr_t)va) < physmem) {
+		*handled = true;
+		return 0;
+	}
+
+	if ((vaddr_t)va < VM_MIN_KERNEL_ADDRESS
+	    || (vaddr_t)va >= VM_MAX_KERNEL_ADDRESS)
+		return EFAULT;
+
+	*handled = false;
+	return 0;
+}
+
