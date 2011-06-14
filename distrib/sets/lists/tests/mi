@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.351 2011/06/14 03:50:47 jruoho Exp $
+# $NetBSD: mi,v 1.352 2011/06/14 05:25:20 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -353,6 +353,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/db/h_db.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_alarm.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_assert.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_basedirname.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_closefrom.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/t_dir.debug			tests-lib-debug		debug,atf
@@ -1797,6 +1798,7 @@
 ./usr/tests/lib/libc/gen			tests-lib-tests
 ./usr/tests/lib/libc/gen/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_alarm		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_assert		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_basedirname		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_closefrom		tests-lib-tests		atf
 ./usr/tests/lib/libc/gen/t_dir			tests-lib-tests		atf
