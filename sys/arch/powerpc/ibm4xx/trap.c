@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.59 2011/06/05 16:52:25 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.60 2011/06/14 05:50:24 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.59 2011/06/05 16:52:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2011/06/14 05:50:24 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.59 2011/06/05 16:52:25 matt Exp $");
 #include <sys/savar.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
-#include <sys/kmem.h>
 
 #if defined(KGDB)
 #include <sys/kgdb.h>
@@ -706,32 +705,4 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 {
 
 	return -1;
-}
-
-/* 
- * Start a new LWP
- */
-void
-startlwp(void *arg)
-{
-	ucontext_t *uc = arg;
-	lwp_t *l = curlwp;
-	int error;
-
-	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-	KASSERT(error == 0);
-
-	kmem_free(uc, sizeof(ucontext_t));
-	upcallret(l);
-}
-
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
-
-	/* Invoke MI userret code */
-	mi_userret(l);
 }
