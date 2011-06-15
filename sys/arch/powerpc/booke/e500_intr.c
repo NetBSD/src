@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.10 2011/06/14 22:36:12 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.11 2011/06/15 15:11:50 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -215,6 +215,7 @@ static const struct e500_intr_info lc_chip##_intr_info = {		\
 		[IST_EDGE]		= 0,				\
 		[IST_LEVEL_LOW]		= 0,				\
 		[IST_LEVEL_HIGH]	= 0,				\
+		[IST_PULSE]		= 0,				\
 		[IST_ONCHIP]		= UC_CHIP ## _EXTERNALSOURCES,	\
 		[IST_MSIGROUP]		= UC_CHIP ## _EXTERNALSOURCES	\
 					    + UC_CHIP ## _ONCHIPSOURCES, \
@@ -334,6 +335,7 @@ static const char ist_names[][12] = {
 	[IST_EDGE] = "edge",
 	[IST_LEVEL_LOW] = "level-",
 	[IST_LEVEL_HIGH] = "level+",
+	[IST_PULSE] = "pulse",
 	[IST_MSI] = "msi",
 	[IST_ONCHIP] = "onchip",
 	[IST_MSIGROUP] = "msigroup",
@@ -352,6 +354,7 @@ static void 	e500_intr_cpu_hatch(struct cpu_info *ci);
 static void	e500_intr_cpu_send_ipi(cpuid_t, uintptr_t);
 static void 	e500_intr_init(void);
 static const char *e500_intr_string(int, int);
+static const char *e500_intr_typename(int);
 static void 	e500_critintr(struct trapframe *tf);
 static void 	e500_decrintr(struct trapframe *tf);
 static void 	e500_extintr(struct trapframe *tf);
@@ -369,6 +372,7 @@ const struct intrsw e500_intrsw = {
 	.intrsw_cpu_hatch = e500_intr_cpu_hatch,
 	.intrsw_cpu_send_ipi = e500_intr_cpu_send_ipi,
 	.intrsw_string = e500_intr_string,
+	.intrsw_typename = e500_intr_typename,
 
 	.intrsw_critintr = e500_critintr,
 	.intrsw_decrintr = e500_decrintr,
@@ -590,6 +594,9 @@ e500_intr_irq_info_get(struct cpu_info *ci, u_int irq, int ipl, int ist,
 			|| ist == IST_LEVEL_LOW
 			|| ist == IST_LEVEL_HIGH);
 		break;
+	case IST_PULSE:
+		ok = false;
+		break;
 	case IST_ONCHIP:
 		ii->irq_vpr = OPENPIC_IIVPR(irq);
 		ii->irq_dr  = OPENPIC_IIDR(irq);
@@ -645,6 +652,17 @@ e500_intr_string(int irq, int ist)
 		return NULL;
 
 	return cpu->cpu_evcnt_intrs[ii.irq_vector].ev_name;
+}
+
+__CTASSERT(__arraycount(ist_names) == IST_MAX);
+
+static const char *
+e500_intr_typename(int ist)
+{
+	if (IST_NONE <= ist && ist < IST_MAX)
+		return ist_names[ist];
+
+	return NULL;
 }
 
 static void *
