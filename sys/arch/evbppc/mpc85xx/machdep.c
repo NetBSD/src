@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2011/06/14 05:32:59 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2011/06/15 15:18:20 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -912,7 +912,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 	 * Let's take all the indirect calls via our stubs and patch 
 	 * them to be direct calls.
 	 */
-	booke_fixup_stubs();
+	cpu_fixup_stubs();
 #if 0
 	/*
 	 * As a debug measure we can change the TLB entry that maps all of
