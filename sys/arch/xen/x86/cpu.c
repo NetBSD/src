@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.58 2011/06/15 19:54:16 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.59 2011/06/15 20:50:02 rmind Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58 2011/06/15 19:54:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59 2011/06/15 20:50:02 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1170,9 +1170,9 @@ cpu_load_pmap(struct pmap *pmap)
 			if ((new_pgd[i] & PG_V) || (old_pgd[i] & PG_V))
 				xpq_queue_pte_update(addr, new_pgd[i]);
 		}
-		tlbflush();
 		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
 		ci->ci_xen_current_user_pgd = pmap_pdirpa(pmap, 0);
+		tlbflush();
 		splx(s);
 	}
 #endif /* __x86_64__ */
