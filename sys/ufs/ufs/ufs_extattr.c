@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.30 2011/06/12 03:36:02 rmind Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.31 2011/06/15 12:54:32 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.30 2011/06/12 03:36:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.31 2011/06/15 12:54:32 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -99,6 +99,8 @@ static int	ufs_extattr_set(struct vnode *vp, int attrnamespace,
 		    struct lwp *l);
 static int	ufs_extattr_rm(struct vnode *vp, int attrnamespace,
 		    const char *name, kauth_cred_t cred, struct lwp *l);
+static struct ufs_extattr_list_entry *ufs_extattr_find_attr(struct ufsmount *,
+		    int, const char *);
 
 /*
  * Per-FS attribute lock protecting attribute operations.
@@ -146,6 +148,142 @@ ufs_extattr_valid_attrname(int attrnamespace, const char *attrname)
 		return (0);
 	return (1);
 }
+
+#ifdef UFS_EXTATTR_AUTOCREATE
+/*
+ * Autocreate an attribute storage
+ */
+static struct ufs_extattr_list_entry *
+ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
+    const char *attrname, struct lwp *l)
+{
+	struct mount *mp = vp->v_mount;
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct vnode *backing_vp;
+	struct nameidata nd;
+	struct pathbuf *pb;
+	char *path;
+	struct ufs_extattr_fileheader uef;
+	struct ufs_extattr_list_entry *uele;
+	int error;
+
+	path = PNBUF_GET();
+
+	/* 
+	 * We only support system and user namespace autocreation
+	 */ 
+	switch (attrnamespace) {
+	case EXTATTR_NAMESPACE_SYSTEM:
+		(void)snprintf(path, PATH_MAX, "%s/%s/%s/%s", 
+			       mp->mnt_stat.f_mntonname,
+			       UFS_EXTATTR_FSROOTSUBDIR,
+			       UFS_EXTATTR_SUBDIR_SYSTEM,
+			       attrname);
+		break;
+	case EXTATTR_NAMESPACE_USER:
+		(void)snprintf(path, PATH_MAX, "%s/%s/%s/%s", 
+			       mp->mnt_stat.f_mntonname,
+			       UFS_EXTATTR_FSROOTSUBDIR,
+			       UFS_EXTATTR_SUBDIR_USER,
+			       attrname);
+		break;
+	default:
+		PNBUF_PUT(path);
+		return NULL;
+		break;
+	}
+
+	/*
+	 * When setting attribute on the root vnode, we get it 
+	 * already locked, and vn_open/namei/VFS_ROOT will try to
+	 * look it, causing a panic. Unlock it first.
+	 */ 
+	if (vp->v_vflag && VV_ROOT) {
+		KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+		VOP_UNLOCK(vp);
+	}
+	KASSERT(VOP_ISLOCKED(vp) == 0);
+
+	pb = pathbuf_create(path);
+	NDINIT(&nd, CREATE, LOCKPARENT, pb);
+	
+	error = vn_open(&nd, O_CREAT|O_RDWR, 0600);
+
+	/*
+	 * Reacquire the lock on the vnode if it was root.
+	 */
+	KASSERT(VOP_ISLOCKED(vp) == 0);
+	if (vp->v_vflag && VV_ROOT)
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
+	if (error != 0) {
+		pathbuf_destroy(pb);
+		PNBUF_PUT(path);
+		return NULL;
+	}
+
+	KASSERT(nd.ni_vp != NULL);
+	KASSERT(VOP_ISLOCKED(nd.ni_vp) == LK_EXCLUSIVE);
+	KASSERT(VOP_ISLOCKED(nd.ni_dvp) == 0);
+
+	/*
+ 	 * backing_vp is the backing store. 
+	 */	
+	backing_vp = nd.ni_vp;
+	pathbuf_destroy(pb);
+	PNBUF_PUT(path);
+
+	uef.uef_magic = UFS_EXTATTR_MAGIC;
+	uef.uef_version = UFS_EXTATTR_VERSION;
+	uef.uef_size = UFS_EXTATTR_AUTOCREATE;
+
+	error = vn_rdwr(UIO_WRITE, backing_vp, &uef, sizeof(uef), 0,
+		        UIO_SYSSPACE, IO_NODELOCKED|IO_APPEND, 
+			l->l_cred, NULL, l);
+
+	VOP_UNLOCK(backing_vp);
+
+	if (error != 0) {
+		printf("%s: write uef header failed for %s, error = %d\n", 
+		       __func__, attrname, error);
+		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
+		return NULL;
+	}
+
+	/*
+	 * ufs_extattr_enable_with_open increases the vnode reference
+	 * count. Not sure why, but do the same here.
+	 */
+	vref(vp);
+
+	/*
+	 * Now enable attribute. 
+	 */
+	error = ufs_extattr_enable(ump,attrnamespace, attrname, backing_vp, l);
+	KASSERT(VOP_ISLOCKED(backing_vp) == 0);
+
+	if (error != 0) {
+		printf("%s: enable %s failed, error %d\n", 
+		       __func__, attrname, error);
+		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
+		return NULL;
+	}
+
+	uele = ufs_extattr_find_attr(ump, attrnamespace, attrname);
+	if (uele == NULL) {
+		printf("%s: atttribute %s created but not found!\n",
+		       __func__, attrname);
+		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
+		return NULL;
+	}
+
+	printf("%s: EA backing store autocreated for %s\n",
+	       mp->mnt_stat.f_mntonname, attrname);
+
+	return uele;
+}
+#endif /* UFS_EXTATTR_AUTOCREATE */
 
 /*
  * Locate an attribute given a name and mountpoint.
@@ -354,6 +492,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
     int attrnamespace, struct lwp *l)
 {
 	struct vop_readdir_args vargs;
+	struct statvfs *sbp = &ump->um_mountp->mnt_stat;
 	struct dirent *dp, *edp;
 	struct vnode *attr_vp;
 	struct uio auio;
@@ -408,7 +547,9 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 				goto next;
 			error = ufs_extattr_lookup(dvp, LOCKPARENT,
 			    dp->d_name, &attr_vp, l);
-			if (error) {
+			if (error == ENOENT) {
+				goto next; /* keep silent */
+			} else if (error) {
 				printf("ufs_extattr_iterate_directory: lookup "
 				    "%s %d\n", dp->d_name, error);
 			} else if (attr_vp == dvp) {
@@ -423,9 +564,9 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 					printf("ufs_extattr_iterate_directory: "
 					    "enable %s %d\n", dp->d_name,
 					    error);
-				} else if (1 || bootverbose) {
-					printf("UFS autostarted EA %s\n",
-					    dp->d_name);
+				} else if (bootverbose) {
+					printf("%s: EA %s loaded\n",
+					       sbp->f_mntonname, dp->d_name);
 				}
 			}
  next:
@@ -738,7 +879,11 @@ ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename_vp,
 		if (attrname != NULL)
 			return (EINVAL);
 
+#ifdef UFS_EXTATTR_AUTOSTART
+		error = ufs_extattr_autostart(mp, l);
+#else
 		error = ufs_extattr_start(mp, l);
+#endif
 		return (error);
 		
 	case UFS_EXTATTR_CMD_STOP:
@@ -1061,8 +1206,16 @@ ufs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
 		return (error);
 
 	attribute = ufs_extattr_find_attr(ump, attrnamespace, name);
-	if (!attribute)
+	if (!attribute) {
+#ifdef UFS_EXTATTR_AUTOCREATE
+		attribute =  ufs_extattr_autocreate_attr(vp, attrnamespace, 
+							 name, l);
+		if  (!attribute)
+			return (ENOATTR);
+#else /* UFS_EXTATTR_AUTOCREATE */
 		return (ENOATTR);
+#endif /* UFS_EXTATTR_AUTOCREATE */
+	}
 
 	/*
 	 * Early rejection of invalid offsets/length.
