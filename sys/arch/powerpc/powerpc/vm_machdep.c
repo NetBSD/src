@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.87 2011/06/14 05:49:14 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.88 2011/06/15 05:48:31 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.87 2011/06/14 05:49:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88 2011/06/15 05:48:31 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -295,10 +295,8 @@ cpu_uarea_alloc(bool system)
 	 */
 	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
 	if (error) {
-#ifdef _LP64
 		if (!system)
 			return NULL;
-#endif
 		panic("%s: uvm_pglistalloc failed: %d", __func__, error);
 	}
 
@@ -310,11 +308,10 @@ cpu_uarea_alloc(bool system)
 	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 	/*
-	 * we need to return a direct-mapped VA for the pa.  But since
-	 * we map vajpa 1:1 that's easy/
+	 * We need to return a direct-mapped VA for the pa.
 	 */
 
-	return (void *)(uintptr_t) pa;
+	return (void *)(uintptr_t)PMAP_MAP_POOLPAGE(pa);
 }
 
 /*
@@ -331,7 +328,7 @@ cpu_uarea_free(void *vva)
 	 * Since the pages are physically contiguous, the vm_page structurs
 	 * will be as well.
 	 */
-	struct vm_page *pg = PHYS_TO_VM_PAGE((paddr_t)va);
+	struct vm_page *pg = PHYS_TO_VM_PAGE(PMAP_UNMAP_POOLPAGE(va));
 	KASSERT(pg != NULL);
 	for (size_t i = 0; i < UPAGES; i++, pg++) {
 		uvm_pagefree(pg);
