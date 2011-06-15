@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.34 2011/06/12 03:35:36 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.35 2011/06/15 15:03:51 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2011/06/12 03:35:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2011/06/15 15:03:51 tsutsui Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -217,7 +217,7 @@ int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 
-	return (pa > MEMC_PHYS_BASE + ptoa(physmem)) ? EFAULT : 0;
+	return (pa > (paddr_t)MEMC_PHYS_BASE + ptoa(physmem)) ? EFAULT : 0;
 }
 
 int
@@ -225,6 +225,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
 	const vaddr_t v = (vaddr_t)ptr;
 
-	*handled = (v >= MEMC_PHYS_BASE && v < MEMC_PHYS_BASE + ptoa(physmem));
+	*handled = (v >= (vaddr_t)MEMC_PHYS_BASE &&
+	    v < (vaddr_t)MEMC_PHYS_BASE + ptoa(physmem));
 	return 0;
 }
