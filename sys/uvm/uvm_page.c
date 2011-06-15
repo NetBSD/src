@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.174 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.175 2011/06/15 19:46:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.174 2011/06/12 03:36:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.175 2011/06/15 19:46:11 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1192,7 +1192,8 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	KASSERT(anon == NULL || (flags & UVM_FLAG_COLORMATCH) || off == 0);
 	KASSERT(off == trunc_page(off));
 	KASSERT(obj == NULL || mutex_owned(obj->vmobjlock));
-	KASSERT(anon == NULL || mutex_owned(anon->an_lock));
+	KASSERT(anon == NULL || anon->an_lock == NULL ||
+	    mutex_owned(anon->an_lock));
 
 	mutex_spin_enter(&uvm_fpageqlock);
 
