@@ -159,8 +159,6 @@ void *startsym, *endsym;
 
 int fake_mapiodev = 1;
 
-void lcsplx(int);
-
 void
 booke_cpu_startup(const char *model)
 {
@@ -285,11 +283,6 @@ cpu_reboot(int howto, char *what)
 	for (;;)
 		/* nothing */;
 #endif
-}
-void
-lcsplx(int spl)
-{
-	splx(spl);
 }
 
 /*
