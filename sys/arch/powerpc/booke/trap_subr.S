@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.3 2011/06/05 16:52:24 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.4 2011/06/15 17:47:45 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,13 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: trap_subr.S,v 1.3 2011/06/05 16:52:24 matt Exp $")
-
-	.globl	_C_LABEL(critintr_call)
-	.globl	_C_LABEL(extintr_call)
-	.globl	_C_LABEL(decrintr_call)
-	.globl	_C_LABEL(fitintr_call)
-	.globl	_C_LABEL(wdogintr_call)
+RCSID("$NetBSD: trap_subr.S,v 1.4 2011/06/15 17:47:45 matt Exp $")
 
 	.globl	_C_LABEL(sctrapexit), _C_LABEL(trapexit), _C_LABEL(intrcall)
 
@@ -348,8 +342,7 @@ _C_LABEL(critical_input_vector):
 	/* MSR[ME] is unchanged, all others cleared */
 	FRAME_CRIT_PROLOGUE			/* save SP r26-31 CR LR XER */
 	FRAME_CRIT_ENTER(EXC_CII)
-_C_LABEL(critintr_call):
-	bl	_C_LABEL(critintr_call)		/* critintr(tf) */
+	bl	_C_LABEL(intr_critintr)		/* critintr(tf) */
 	FRAME_CRIT_EXIT
 
 	.p2align 4
@@ -412,8 +405,7 @@ _ENTRY(external_input_vector)
 	FRAME_INTR_PROLOGUE			/* save SP r25-31 CR LR XER */
 	FRAME_INTR_ENTER(EXC_EXI)
 
-_C_LABEL(extintr_call):
-	bl	_C_LABEL(extintr_call)
+	bl	_C_LABEL(intr_extintr)
 _C_LABEL(intrcall):
 	GET_CPUINFO(%r6)			/* get curcpu() */
 	lwz	%r5, FRAME_SRR1(%r1)		/* get saved SRR1 */
@@ -500,8 +492,7 @@ _C_LABEL(decrementer_vector):
 	FRAME_INTR_PROLOGUE			/* save SP r25-31 CR LR XER */
 	FRAME_INTR_ENTER(EXC_DECR)
 
-_C_LABEL(decrintr_call):
-	bl	_C_LABEL(decrintr_call)
+	bl	_C_LABEL(intr_decrintr)
 	b	intrexit
 
 	.p2align 4
@@ -510,8 +501,7 @@ _C_LABEL(fixed_interval_timer_vector):
 	FRAME_PROLOGUE				/* save SP r25-31 CR LR XER */
 	FRAME_INTR_ENTER(EXC_FIT)
 
-_C_LABEL(fitintr_call):
-	bl	_C_LABEL(fitintr_call)
+	bl	_C_LABEL(intr_fitintr)
 	b	intrexit
 
 	.data
@@ -528,8 +518,7 @@ _C_LABEL(watchdog_timer_vector):
 	stb	%r11,-65(%r11)
 #endif
 
-_C_LABEL(wdogintr_call):
-	bl	_C_LABEL(wdogintr_call)
+	bl	_C_LABEL(intr_wdogintr)
 	FRAME_CRIT_EXIT
 
 	.p2align 4
@@ -862,51 +851,6 @@ _C_LABEL(exception_init):
 	mfpir	%r5		/* get Process ID register */
 	cmplwi	%r5,0
 	bnelr			/* return if non-0 (non-primary) */
-
-	lis	%r5,_C_LABEL(critintr_call)@ha
-	lwzu	%r6,_C_LABEL(critintr_call)@l(%r5)
-	lwz	%r7,INTRSW_CRITINTR(%r3)
-	sub	%r8,%r7,%r5
-	add	%r0,%r8,%r6
-	stw	%r0,0(%r5)
-	dcbf	0,%r5	
-	icbi	0,%r5
-
-	lis	%r5,_C_LABEL(decrintr_call)@ha
-	lwzu	%r6,_C_LABEL(decrintr_call)@l(%r5)
-	lwz	%r7,INTRSW_DECRINTR(%r3)
-	sub	%r8,%r7,%r5
-	add	%r0,%r8,%r6
-	stw	%r0,0(%r5)
-	dcbf	0,%r5	
-	icbi	0,%r5
-
-	lis	%r5,_C_LABEL(fitintr_call)@ha
-	lwzu	%r6,_C_LABEL(fitintr_call)@l(%r5)
-	lwz	%r7,INTRSW_FITINTR(%r3)
-	sub	%r8,%r7,%r5
-	add	%r0,%r8,%r6
-	stw	%r0,0(%r5)
-	dcbf	0,%r5	
-	icbi	0,%r5
-
-	lis	%r5,_C_LABEL(wdogintr_call)@ha
-	lwzu	%r6,_C_LABEL(wdogintr_call)@l(%r5)
-	lwz	%r7,INTRSW_WDOGINTR(%r3)
-	sub	%r8,%r7,%r5
-	add	%r0,%r8,%r6
-	stw	%r0,0(%r5)
-	dcbf	0,%r5	
-	icbi	0,%r5
-
-	lis	%r5,_C_LABEL(extintr_call)@ha
-	lwzu	%r6,_C_LABEL(extintr_call)@l(%r5)
-	lwz	%r7,INTRSW_EXTINTR(%r3)
-	sub	%r8,%r7,%r5
-	add	%r0,%r8,%r6
-	stw	%r0,0(%r5)
-	dcbf	0,%r5	
-	icbi	0,%r5
 
 	lis	%r5,_C_LABEL(powerpc_intrsw)@ha
 	stw	%r3,_C_LABEL(powerpc_intrsw)@l(%r5)
