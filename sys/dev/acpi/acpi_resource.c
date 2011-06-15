@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.32 2010/03/05 14:00:17 jruoho Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.33 2011/06/15 08:04:49 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.32 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.33 2011/06/15 08:04:49 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -647,10 +647,12 @@ acpi_res_parse_init(device_t dev, void *arg, void **contextp)
 static void
 acpi_res_parse_fini(device_t dev, void *context)
 {
+#ifdef ACPI_DEBUG
 	struct acpi_resources *res = context;
 
 	/* Print the resources we're using. */
 	acpi_resource_print(dev, res);
+#endif
 }
 
 static void
