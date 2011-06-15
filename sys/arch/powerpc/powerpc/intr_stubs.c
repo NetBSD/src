@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: intr_stubs.c,v 1.1 2011/06/15 15:22:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr_stubs.c,v 1.2 2011/06/15 17:47:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -163,4 +163,49 @@ void
 intr_init(void)
 {
 	(*powerpc_intrsw->intrsw_init)();
+}
+
+void intr_critintr(struct trapframe *) __stub;
+
+void
+intr_critintr(struct trapframe *tf)
+{
+	(*powerpc_intrsw->intrsw_critintr)(tf);
+	
+}
+
+void intr_extintr(struct trapframe *) __stub;
+
+void
+intr_extintr(struct trapframe *tf)
+{
+	(*powerpc_intrsw->intrsw_extintr)(tf);
+	
+}
+
+void intr_decrintr(struct trapframe *) __stub;
+
+void
+intr_decrintr(struct trapframe *tf)
+{
+	(*powerpc_intrsw->intrsw_decrintr)(tf);
+	
+}
+
+void intr_fitintr(struct trapframe *) __stub;
+
+void
+intr_fitintr(struct trapframe *tf)
+{
+	(*powerpc_intrsw->intrsw_fitintr)(tf);
+	
+}
+
+void intr_wdogintr(struct trapframe *) __stub;
+
+void
+intr_wdogintr(struct trapframe *tf)
+{
+	(*powerpc_intrsw->intrsw_wdogintr)(tf);
+	
 }
