@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.42 2011/06/12 03:35:50 rmind Exp $ */
+/* $NetBSD: privcmd.c,v 1.43 2011/06/15 19:51:50 rmind Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.42 2011/06/12 03:35:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.43 2011/06/15 19:51:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,6 +416,8 @@ privcmd_ioctl(void *v)
 			va = va0 + (i * PAGE_SIZE);
 			error = copyin(&pmb->arr[i], &mfn, sizeof(mfn));
 			if (error != 0) {
+				/* XXX: mappings */
+				pmap_update(pmap_kernel());
 				kmem_free(maddr, sizeof(paddr_t) * pmb->num);
 				uvm_km_free(kernel_map, trymap, PAGE_SIZE,
 				    UVM_KMF_VAONLY);
@@ -433,6 +435,8 @@ privcmd_ioctl(void *v)
 				maddr[i] = ma;
 			}
 		}
+		pmap_update(pmap_kernel());
+
 		error = privcmd_map_obj(vmm, va0, maddr, pmb->num, pmb->dom);
 		uvm_km_free(kernel_map, trymap, PAGE_SIZE, UVM_KMF_VAONLY);
 
@@ -518,8 +522,9 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			    vaddr + PAGE_SIZE);
 		}
 	}
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 	pmap_update(ufi->orig_map->pmap);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
+
 	if (error == ERESTART) {
 		uvm_wait("privpgop_fault");
 	}
