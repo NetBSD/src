@@ -1,4 +1,4 @@
-/* $NetBSD: hpet_acpi.c,v 1.8 2011/06/15 04:20:47 jruoho Exp $ */
+/* $NetBSD: hpet_acpi.c,v 1.9 2011/06/15 04:52:52 jruoho Exp $ */
 
 /*
  * Copyright (c) 2006, 2011 Nicolas Joly
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.8 2011/06/15 04:20:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.9 2011/06/15 04:52:52 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -36,12 +36,12 @@ __KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.8 2011/06/15 04:20:47 jruoho Exp $")
 #include <sys/timetc.h>
 
 #include <dev/acpi/acpivar.h>
+
+#include <dev/ic/hpetreg.h>
 #include <dev/ic/hpetvar.h>
 
 #define _COMPONENT	ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME	("acpi_hpet")
-
-#define HPET_MEM_WIDTH	0x3ff   /* Expected memory region size. */
 
 static int		hpet_acpi_dev_match(device_t, cfdata_t, void *);
 static void		hpet_acpi_dev_attach(device_t, device_t, void *);
@@ -96,7 +96,7 @@ hpet_acpi_tab_attach(device_t parent, device_t self, void *aux)
 		return;
 
 	sc->sc_memt = aa->aa_memt;
-	sc->sc_mems = HPET_MEM_WIDTH;
+	sc->sc_mems = HPET_WINDOW_SIZE;
 
 	if (hpet->Address.Address == 0xfed0000000000000UL) /* A quirk. */
 		hpet->Address.Address >>= 32;
@@ -111,7 +111,7 @@ hpet_acpi_tab_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": mem 0x%"PRIx64"-0x%"PRIx64"\n",
-	    hpet->Address.Address, hpet->Address.Address + HPET_MEM_WIDTH);
+	    hpet->Address.Address, hpet->Address.Address + sc->sc_mems);
 
 	hpet_attach_subr(self);
 }
@@ -151,7 +151,7 @@ hpet_acpi_dev_attach(device_t parent, device_t self, void *aux)
 		goto out;
 	}
 
-	if (mem->ar_length < HPET_MEM_WIDTH) {
+	if (mem->ar_length < HPET_WINDOW_SIZE) {
 		aprint_error(": invalid memory region size\n");
 		goto out;
 	}
@@ -166,7 +166,6 @@ hpet_acpi_dev_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_mapped = true;
-
 	hpet_attach_subr(self);
 
 out:

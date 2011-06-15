@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib_hpet.c,v 1.5 2011/06/15 04:20:47 jruoho Exp $ */
+/* $NetBSD: amdpcib_hpet.c,v 1.6 2011/06/15 04:52:52 jruoho Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.5 2011/06/15 04:20:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.6 2011/06/15 04:52:52 jruoho Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.5 2011/06/15 04:20:47 jruoho Exp 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/ic/hpetreg.h>
 #include <dev/ic/hpetvar.h>
 
 static int	amdpcib_hpet_match(device_t , cfdata_t , void *);
@@ -76,8 +77,8 @@ amdpcib_hpet_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_mems = 1024;
 	sc->sc_memt = pa->pa_memt;
+	sc->sc_mems = HPET_WINDOW_SIZE;
 
 	addr = conf & 0xfffffc00;
 
