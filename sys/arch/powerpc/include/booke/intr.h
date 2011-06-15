@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2011/06/05 16:52:25 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2011/06/15 15:11:50 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,18 +50,19 @@
 
 /* Interrupt sharing types. */
 #define	IST_NONE	(NIPL+0) /* none */
-#define	IST_EDGE	(NIPL+1)	/* edge-triggered */
+#define	IST_EDGE	(NIPL+1) /* edge-triggered */
 #define	IST_LEVEL	(NIPL+2) /* level-triggered active-low */
 #define	IST_LEVEL_LOW	IST_LEVEL
 #define	IST_LEVEL_HIGH	(NIPL+3) /* level-triggered active-high */
-#define	IST_MSI		(NIPL+4) /* message signaling interrupt (PCI) */
-#define	IST_ONCHIP	(NIPL+5) /* on-chip device */
+#define	IST_PULSE	(NIPL+4) /* pulsed */
+#define	IST_MSI		(NIPL+5) /* message signaling interrupt (PCI) */
+#define	IST_ONCHIP	(NIPL+6) /* on-chip device */
 #ifdef __INTR_PRIVATE
-#define	IST_MSIGROUP	(NIPL+6) /* openpic msi groups */
-#define	IST_TIMER	(NIPL+7) /* openpic timers */
-#define	IST_IPI		(NIPL+8) /* openpic ipi */
-#define	IST_MI		(NIPL+9) /* openpic message */
-#define IST_MAX		(NIPL+10)
+#define	IST_MSIGROUP	(NIPL+7) /* openpic msi groups */
+#define	IST_TIMER	(NIPL+8) /* openpic timers */
+#define	IST_IPI		(NIPL+9) /* openpic ipi */
+#define	IST_MI		(NIPL+10) /* openpic message */
+#define	IST_MAX		(NIPL+11)
 #endif
 
 #define	IPI_DST_ALL	((cpuid_t)-2)
@@ -85,6 +86,8 @@ void	intr_cpu_hatch(struct cpu_info *);
 void	intr_init(void);
 const char *
 	intr_string(int, int);
+const char *
+	intr_typename(int);
 
 void	cpu_send_ipi(cpuid_t, uint32_t);
 
@@ -124,6 +127,7 @@ struct intrsw {
 	void (*intrsw_spl0)(void);
 	void (*intrsw_splx)(int);
 	const char *(*intrsw_string)(int, int);
+	const char *(*intrsw_typename)(int);
 #ifdef __HAVE_FAST_SOFTINTS
 	void (*intrsw_softint_init_md)(struct lwp *, u_int, uintptr_t *);
 	void (*intrsw_softint_trigger)(uintptr_t);
