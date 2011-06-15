@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.71 2011/06/15 03:22:40 jruoho Exp $
+#	$NetBSD: Makefile,v 1.72 2011/06/15 08:19:43 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -92,6 +92,7 @@ SUBDIR+=	exec_elf64
 SUBDIR+=	amdtemp
 SUBDIR+=	coretemp
 SUBDIR+=	est
+SUBDIR+=	hpet
 SUBDIR+=	odcm
 SUBDIR+=	powernow
 SUBDIR+=	tprof_pmi

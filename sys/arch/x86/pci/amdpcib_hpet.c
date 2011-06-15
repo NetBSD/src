@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib_hpet.c,v 1.6 2011/06/15 04:52:52 jruoho Exp $ */
+/* $NetBSD: amdpcib_hpet.c,v 1.7 2011/06/15 08:19:43 jruoho Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.6 2011/06/15 04:52:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.7 2011/06/15 08:19:43 jruoho Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.6 2011/06/15 04:52:52 jruoho Exp 
 static int	amdpcib_hpet_match(device_t , cfdata_t , void *);
 static void	amdpcib_hpet_attach(device_t, device_t, void *);
 static int	amdpcib_hpet_detach(device_t, int);
+static pcireg_t amdpcib_hpet_addr(struct pci_attach_args *);
 
 CFATTACH_DECL_NEW(amdpcib_hpet, sizeof(struct hpet_softc),
     amdpcib_hpet_match, amdpcib_hpet_attach, amdpcib_hpet_detach, NULL);
@@ -56,6 +57,23 @@ CFATTACH_DECL_NEW(amdpcib_hpet, sizeof(struct hpet_softc),
 static int
 amdpcib_hpet_match(device_t parent, cfdata_t match, void *aux)
 {
+	struct pci_attach_args *pa = aux;
+	bus_space_handle_t bh;
+	bus_space_tag_t bt;
+	pcireg_t addr;
+
+	addr = amdpcib_hpet_addr(pa);
+
+	if (addr == 0)
+		return 0;
+
+	bt = pa->pa_memt;
+
+	if (bus_space_map(bt, addr, HPET_WINDOW_SIZE, 0, &bh) != 0)
+		return 0;
+
+	bus_space_unmap(bt, bh, HPET_WINDOW_SIZE);
+
 	return 1;
 }
 
@@ -64,28 +82,27 @@ amdpcib_hpet_attach(device_t parent, device_t self, void *aux)
 {
 	struct hpet_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
-	pcireg_t conf, addr;
-
-	aprint_naive("\n");
-	aprint_normal(": HPET timer\n");
+	pcireg_t addr;
 
 	sc->sc_mapped = false;
-	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, 0xa0);
+	addr = amdpcib_hpet_addr(pa);
 
-	if ((conf & 1) == 0) {
-		aprint_normal_dev(self, "HPET timer is disabled\n");
+	if (addr == 0) {
+		aprint_error(": failed to get address\n");
 		return;
 	}
 
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_mems = HPET_WINDOW_SIZE;
 
-	addr = conf & 0xfffffc00;
-
 	if (bus_space_map(sc->sc_memt, addr, sc->sc_mems, 0, &sc->sc_memh)) {
-		aprint_error_dev(self, "failed to map mem space\n");
+		aprint_error(": failed to map mem space\n");
 		return;
 	}
+
+	aprint_naive("\n");
+	aprint_normal(": high precision event timer (mem 0x%08x-0x%08x)\n",
+	    addr, addr + HPET_WINDOW_SIZE);
 
 	sc->sc_mapped = true;
 	hpet_attach_subr(self);
@@ -108,4 +125,17 @@ amdpcib_hpet_detach(device_t self, int flags)
 	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
 
 	return 0;
+}
+
+static pcireg_t
+amdpcib_hpet_addr(struct pci_attach_args *pa)
+{
+	pcireg_t conf;
+
+	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, 0xa0);
+
+	if ((conf & 1) == 0)
+		return 0;
+
+	return conf & 0xfffffc00;
 }
