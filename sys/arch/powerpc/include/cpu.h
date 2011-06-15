@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.80 2011/06/14 22:36:12 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.81 2011/06/15 15:18:20 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -403,6 +403,8 @@ void	cpu_need_resched(struct cpu_info *, int);
 void	cpu_signotify(struct lwp *);
 void	cpu_need_proftick(struct lwp *);
 #define	cpu_did_resched(l)			((l)->l_md.md_astpending = 0)
+
+void	cpu_fixup_stubs(void);
 
 #if !defined(PPC_IBM4XX) && !defined(PPC_BOOKE)
 void oea_init(void (*)(void));
