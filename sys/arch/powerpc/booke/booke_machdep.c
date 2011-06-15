@@ -95,26 +95,6 @@ booke_dma_bus_mem_to_phys(bus_dma_tag_t t, bus_addr_t a)
 	return a;
 }
 
-static int
-null_splraise(int ipl)
-{
-	int cpl = curcpu()->ci_cpl;
-	curcpu()->ci_cpl = ipl;
-	return cpl;
-}
-
-static void
-null_splx(int ipl)
-{
-	curcpu()->ci_cpl = ipl;
-}
-
-static const struct intrsw null_intrsw = {
-	.intrsw_splraise = null_splraise,
-	.intrsw_splx = null_splx,
-};
-
-const struct intrsw *powerpc_intrsw = &null_intrsw;
 struct cpu_md_ops cpu_md_ops;
 
 struct cpu_softc cpu_softc[] = {
