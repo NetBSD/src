@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.26 2011/05/08 00:18:25 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.27 2011/06/15 19:54:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.26 2011/05/08 00:18:25 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.27 2011/06/15 19:54:16 rmind Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -854,6 +854,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 		pte++;
 	}
 	xpq_flush_queue();
+	xpq_queue_tlb_flush();
 }
 
 
