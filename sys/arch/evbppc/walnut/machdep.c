@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2011/06/12 03:42:42 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2011/06/15 05:50:49 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2011/06/12 03:42:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/06/15 05:50:49 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -142,7 +142,6 @@ vaddr_t msgbuf_vaddr;
 void *startsym, *endsym;
 #endif
 
-int lcsplx(int);
 void initppc(u_int, u_int, char *, void *);
 
 static void dumpsys(void);
@@ -543,13 +542,6 @@ cpu_reboot(int howto, char *what)
 	while (1)
 		/* nothing */;
 #endif
-}
-
-int
-lcsplx(int ipl)
-{
-
-	return spllower(ipl); 	/* XXX */
 }
 
 void

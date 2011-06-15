@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2011/06/12 03:42:41 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2011/06/15 05:50:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2011/06/12 03:42:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2011/06/15 05:50:48 matt Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -87,7 +87,6 @@ static struct mem_region avail_mem[MEMREGIONS];
 
 void		bootstrap(u_int, u_int);
 static void	install_extint(void (*)(void));
-int		lcsplx(int);
 
 /*
  * Trap vectors
@@ -350,12 +349,6 @@ cpu_startup(void)
 	 * Look for the ibm4xx modules in the right place.
 	 */
 	module_machine = module_machine_ibm4xx;
-}
-
-int
-lcsplx(int ipl)
-{
-	return spllower(ipl);	/*XXX*/
 }
 
 void
