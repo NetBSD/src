@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.15 2011/06/05 16:52:25 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.16 2011/06/15 06:28:39 cliff Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -287,7 +287,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	stw	%r31,FRAME_SRR1(%r1)
 
 #define	FRAME_SAVE_CALLEE						\
-	stmw	%r13, FRAME_R13(%r1)
+	stmw	%r14, FRAME_R14(%r1)
 
 #define	FRAME_RESTORE							\
 	lwz	%r6,FRAME_LR(%r1);					\
@@ -439,6 +439,7 @@ _C_LABEL(sctrapexit):
 	stw	%r10,FRAME_R10(%r1);					\
 	stw	%r11,FRAME_R11(%r1);					\
 	stw	%r12,FRAME_R12(%r1);					\
+	stw	%r13,FRAME_R13(%r1);					\
 	mfctr	%r31;							\
 	stmw	%r28,FRAME_LR(%r1);	/* save LR, CR, XER, CTR */	\
 	GET_CPUINFO(%r5);						\
@@ -491,7 +492,7 @@ intr_exit:
 _C_LABEL(pitint):
 	INTR_PROLOG(CI_TEMPSAVE)
 	INTR_SAVE(CI_TEMPSAVE)
-	addi	%r3,%r1,FRAME_CF	/* intr frame */
+	addi	%r3,%r1,FRAME_CF	/* clock frame */
 	bl	_C_LABEL(decr_intr)
 	b	intr_exit
 
@@ -502,7 +503,7 @@ _C_LABEL(pitint):
 _C_LABEL(fitint):
 	INTR_PROLOG(CI_TEMPSAVE)
 	INTR_SAVE(CI_TEMPSAVE)
-	addi	%r3,%r1,FRAME_TF	/* intr frame */
+	addi	%r3,%r1,FRAME_CF	/* clock frame */
 	bl	_C_LABEL(stat_intr)
 	b	intr_exit
 
