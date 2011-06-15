@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2011/06/15 08:19:43 jruoho Exp $
+#	$NetBSD: Makefile,v 1.73 2011/06/15 09:45:59 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -188,6 +188,10 @@ SUBDIR+=        solaris
 
 .if (${MKZFS} != "no")
 SUBDIR+=	zfs
+.endif
+
+.if (${MKCOMPATMODULES} != "no")
+SUBDIR+=	arch
 .endif
 
 .include <bsd.subdir.mk>
