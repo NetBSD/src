@@ -1,4 +1,4 @@
-/* $NetBSD: hpet_acpi.c,v 1.7 2011/06/14 16:33:51 jruoho Exp $ */
+/* $NetBSD: hpet_acpi.c,v 1.8 2011/06/15 04:20:47 jruoho Exp $ */
 
 /*
  * Copyright (c) 2006, 2011 Nicolas Joly
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.7 2011/06/14 16:33:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.8 2011/06/15 04:20:47 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -183,7 +183,11 @@ hpet_acpi_detach(device_t self, int flags)
 		return 0;
 
 	rv = hpet_detach(self, flags);
+
+	if (rv != 0)
+		return rv;
+
 	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
 
-	return rv;
+	return 0;
 }
