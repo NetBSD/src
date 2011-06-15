@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.57 2011/06/12 03:35:50 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.58 2011/06/15 19:54:16 rmind Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57 2011/06/12 03:35:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58 2011/06/15 19:54:16 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -157,6 +157,7 @@ struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 	.ci_curldt = -1,
+	.ci_cpumask = 1,
 #ifdef TRAPLOG
 	.ci_tlog = &tlog_primary,
 #endif
@@ -172,7 +173,7 @@ struct cpu_info *phycpu_info_list = &phycpu_info_primary;
 
 static void	cpu_set_tss_gates(struct cpu_info *ci);
 
-uint32_t cpus_attached = 0;
+uint32_t cpus_attached = 1;
 uint32_t cpus_running = 0;
 
 uint32_t phycpus_attached = 0;
@@ -739,6 +740,7 @@ cpu_hatch(void *v)
 	/* Because the text may have been patched in x86_patch(). */
 	wbinvd();
 	x86_flush();
+	tlbflushg();
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
