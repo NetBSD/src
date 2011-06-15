@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.7 2011/06/14 11:28:51 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.8 2011/06/15 13:24:48 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -614,37 +614,30 @@ the_big_loop(void)
 		if (pollsum >= MAX_POLL_FDS) {
 			fatalp("Too many sockets. Increase MAX_POLL_FDS\n");
 			return LDP_E_TOO_MANY_FDS;
-			}
+		}
 		if (poll(pfd, pollsum, INFTIM) < 0) {
 			if (errno != EINTR)
 				fatalp("poll: %s", strerror(errno));
 			continue;
-			}
+		}
 
 		for (i = 0; i < pollsum; i++) {
 			if ((pfd[i].revents & POLLRDNORM) ||
 			    (pfd[i].revents & POLLIN)) {
-				if(pfd[i].fd == ls) {
+				if(pfd[i].fd == ls)
 					new_peer_connection();
-				} else if (pfd[i].fd == route_socket) {
+				else if (pfd[i].fd == route_socket) {
 					struct rt_msg xbuf;
-					int l, to_read;
+					int l;
 					do {
-					    l = recv(route_socket, &xbuf,
-					      sizeof(struct rt_msg), MSG_PEEK);
+						l = read(route_socket, &xbuf,
+						    sizeof(xbuf));
 					} while ((l == -1) && (errno == EINTR));
 
 					if (l == -1)
 						break;
 
-					to_read = l;
-					l = 0;
-					do {
-					    l += recv(route_socket, &xbuf,
-						to_read - l, MSG_WAITALL);
-					} while (l != to_read);
-
-					check_route(&xbuf, to_read);
+					check_route(&xbuf, l);
 
 				} else if (pfd[i].fd == hello_socket) {
 					/* Receiving hello socket */
