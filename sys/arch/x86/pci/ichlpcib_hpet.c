@@ -1,4 +1,4 @@
-/* $NetBSD: ichlpcib_hpet.c,v 1.1 2011/06/15 06:43:21 jruoho Exp $ */
+/* $NetBSD: ichlpcib_hpet.c,v 1.2 2011/06/15 08:19:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib_hpet.c,v 1.1 2011/06/15 06:43:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib_hpet.c,v 1.2 2011/06/15 08:19:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,10 +59,8 @@ lpcib_hpet_match(device_t parent, cfdata_t match, void *aux)
 
 	bt = arg->hpet_mem_t;
 
-	if (bus_space_map(bt, arg->hpet_reg, HPET_WINDOW_SIZE, 0, &bh) != 0) {
-		aprint_verbose_dev(parent, "mem space not mapped, skipping\n");
+	if (bus_space_map(bt, arg->hpet_reg, HPET_WINDOW_SIZE, 0, &bh) != 0)
 		return 0;
-	}
 
 	bus_space_unmap(bt, bh, HPET_WINDOW_SIZE);
 
@@ -80,15 +78,15 @@ lpcib_hpet_attach(device_t parent, device_t self, void *aux)
 	sc->sc_memt = arg->hpet_mem_t;
 	sc->sc_mems = HPET_WINDOW_SIZE;
 
-	aprint_naive("\n");
-	aprint_normal(": mem 0x%08x-0x%08x\n",
-	    arg->hpet_reg, arg->hpet_reg + HPET_WINDOW_SIZE);
-
 	if (bus_space_map(sc->sc_memt, arg->hpet_reg,
 		sc->sc_mems, 0, &sc->sc_memh) != 0) {
-		aprint_error_dev(self, "failed to map mem space\n");
+		aprint_error(": failed to map mem space\n");
 		return;
 	}
+
+	aprint_naive("\n");
+	aprint_normal(": high precision event timer (mem 0x%08x-0x%08x)\n",
+	    arg->hpet_reg, arg->hpet_reg + HPET_WINDOW_SIZE);
 
 	sc->sc_mapped = true;
 	hpet_attach_subr(self);
