@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.282 2011/01/29 16:56:26 jym Exp $
+#	$NetBSD: Makefile,v 1.283 2011/06/15 09:45:58 mrg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -239,7 +239,7 @@ BUILDTARGET+=	do-libpcc
 .endif
 BUILDTARGETS+=	do-lib-libc
 BUILDTARGETS+=	do-lib
-.if (${MACHINE} != "evbppc") && ${MKKMOD} != "no"
+.if ${MKKMOD} != "no"
 BUILDTARGETS+=	do-sys-modules
 .endif
 BUILDTARGETS+=	do-sys-rump-dev-lib do-sys-rump-fs-lib

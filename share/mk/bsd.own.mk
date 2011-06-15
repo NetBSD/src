@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.669 2011/05/27 17:06:54 drochner Exp $
+#	$NetBSD: bsd.own.mk,v 1.670 2011/06/15 09:45:59 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -725,6 +725,14 @@ MKCOMPAT?=	yes
 MKCOMPAT:=	no
 .endif
 
+#.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386" || \
+
+.if ${MACHINE} == "evbppc"
+MKCOMPATMODULES?=	yes
+.else
+MKCOMPATMODULES:=	no
+.endif
+
 #
 # Default mips64 to softfloat now.
 # emips is always softfloat.
@@ -783,9 +791,9 @@ ${var}?=	yes
 #
 # Exceptions to the above:
 #
-.if ${MACHINE} == "evbppc"
-MKKMOD=		no
-.endif
+#.if ${MACHINE} == "evbppc"
+#MKKMOD=		no
+#.endif
 
 #
 # MK* options which default to "no".  Note that MKZFS has a different
