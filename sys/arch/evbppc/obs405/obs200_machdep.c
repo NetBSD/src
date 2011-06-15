@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_machdep.c,v 1.15 2011/06/12 03:42:41 mrg Exp $	*/
+/*	$NetBSD: obs200_machdep.c,v 1.16 2011/06/15 05:50:49 matt Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.15 2011/06/12 03:42:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.16 2011/06/15 05:50:49 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -132,8 +132,6 @@ void *startsym, *endsym;
 #endif
 
 void initppc(u_int, u_int, char *, void *);
-int lcsplx(int);
-
 
 void
 initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
@@ -210,14 +208,6 @@ consinit(void)
 	com_opb_cnattach(OBS200_COM_FREQ, CONADDR, CONSPEED, CONMODE);
 #endif
 }
-
-int
-lcsplx(int ipl)
-{
-
-	return spllower(ipl); 	/* XXX */
-}
-
 
 /*
  * Machine dependent startup code.
