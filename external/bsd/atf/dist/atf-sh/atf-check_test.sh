@@ -400,6 +400,17 @@ eflag_negated_body()
     h_fail "echo foo bar 1>&2" -e not-match:foo
 }
 
+atf_test_case stdin
+stdin_head()
+{
+    atf_set "descr" "Tests that stdin is preserved"
+}
+stdin_body()
+{
+    echo "hello" | ${Atf_Check} -o match:"hello" cat || \
+        atf_fail "atf-check does not seem to respect stdin"
+}
+
 atf_test_case invalid_umask
 invalid_umask_head()
 {
@@ -443,6 +454,8 @@ atf_init_test_cases()
     atf_add_test_case eflag_save
     atf_add_test_case eflag_multiple
     atf_add_test_case eflag_negated
+
+    atf_add_test_case stdin
 
     atf_add_test_case invalid_umask
 }
