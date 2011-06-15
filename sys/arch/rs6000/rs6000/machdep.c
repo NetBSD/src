@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2009/11/27 03:23:13 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2011/06/15 05:50:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2009/11/27 03:23:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2011/06/15 05:50:49 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -94,7 +94,6 @@ void comsoft(void);
 void initppc(u_long, u_long, u_int, void *);
 void dumpsys(void);
 void strayintr(int);
-int lcsplx(int);
 void rs6000_bus_space_init(void);
 void setled(uint32_t);
 void say_hi(void);
