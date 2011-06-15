@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.114 2011/06/08 18:22:24 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.115 2011/06/15 13:34:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.114 2011/06/08 18:22:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.115 2011/06/15 13:34:13 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1555,6 +1555,15 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 	if (error)
 		return (-error);
 
+	if (value_update) {
+		/* 
+		 * update sensor's current value.
+		 */
+		error = sme_sensor_upint32(dict, "cur-value", edata->value_cur);
+		if (error)
+			return error;
+	}
+
 	/*
 	 * Battery charge and Indicator types do not
 	 * need the remaining objects, so skip them.
@@ -1573,13 +1582,6 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 	}
 
 	if (value_update) {
-		/* 
-		 * update sensor's current value.
-		 */
-		error = sme_sensor_upint32(dict, "cur-value", edata->value_cur);
-		if (error)
-			return error;
-
 		/*
 		 * update sensor's {max,min}-value.
 		 */
