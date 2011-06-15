@@ -1,4 +1,4 @@
-/* $NetBSD: h_raw.c,v 1.3 2011/06/12 21:12:46 plunky Exp $ */
+/* $NetBSD: h_raw.c,v 1.4 2011/06/15 06:09:21 plunky Exp $ */
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,20 +29,22 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: h_raw.c,v 1.3 2011/06/12 21:12:46 plunky Exp $");
+__RCSID("$NetBSD: h_raw.c,v 1.4 2011/06/15 06:09:21 plunky Exp $");
 
 #include <stdlib.h>
 
-static void
-poke(char *b, size_t index)
+void poke(int *, size_t);
+
+void
+poke(int *b, size_t index)
 {
-	b[index] = 'A';
+	b[index] = 42;
 }
 
 int
 main(int argc, char *argv[])
 {
-	char b[10];
+	int b[10];
 
 	poke(b, atoi(argv[1]));
 	return 0;
