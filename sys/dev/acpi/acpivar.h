@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.70 2011/06/14 13:59:23 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.71 2011/06/15 09:02:38 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -291,6 +291,7 @@ extern struct acpi_softc *acpi_softc;
 extern int acpi_active;
 
 extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
+extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_quiet;
 
 int		acpi_probe(void);
 void		acpi_disable(void);
