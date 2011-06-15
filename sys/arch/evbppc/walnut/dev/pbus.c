@@ -1,4 +1,4 @@
-/*	$NetBSD: pbus.c,v 1.11 2011/06/06 16:42:18 matt Exp $	*/
+/*	$NetBSD: pbus.c,v 1.12 2011/06/15 05:21:38 cliff Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.11 2011/06/06 16:42:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.12 2011/06/15 05:21:38 cliff Exp $");
 
 #include "locators.h"
 #include "pckbc.h"
@@ -152,7 +152,12 @@ pbus_attach(device_t parent, device_t self, void *aux)
 		pba.pb_bt = &pbus_tag;
 		pba.pb_dmat = paa->plb_dmat;
 
-		(void) config_found_sm_loc(self, "pbus", NULL, &pba, pbus_print,
+		const int locs[PBUSCF_NLOCS] = {
+		    [PBUSCF_ADDR] = pba.pb_addr,
+		    [PBUSCF_IRQ] = pba.pb_irq
+		};
+
+		(void) config_found_sm_loc(self, "pbus", locs, &pba, pbus_print,
 		    config_stdsubmatch);
 	}
 
