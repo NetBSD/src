@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.10 2011/06/15 03:22:39 jruoho Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.11 2011/06/15 03:30:15 jruoho Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.10 2011/06/15 03:22:39 jruoho Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.11 2011/06/15 03:30:15 jruoho Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -201,8 +201,8 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 	}
 
-	cpu_signature = pci_conf_read(pa->pa_pc, pa->pa_tag,
-				CPUID_FAMILY_MODEL_R);
+	cpu_signature = pci_conf_read(pa->pa_pc,
+	    pa->pa_tag, CPUID_FAMILY_MODEL_R);
 
 	/* This CPUID northbridge register has been introduced
 	 * in Revision F */
@@ -242,15 +242,19 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": AMD CPU Temperature Sensors");
 
-	cpu_signature = pci_conf_read(pa->pa_pc, pa->pa_tag,
-				CPUID_FAMILY_MODEL_R);
+	cpu_signature = pci_conf_read(pa->pa_pc,
+	    pa->pa_tag, CPUID_FAMILY_MODEL_R);
 
 	/* If we hit this, then match routine is wrong. */
 	KASSERT(cpu_signature != 0x0);
 
-	sc->sc_family = CPUID2FAMILY(cpu_signature)
-		+ CPUID2EXTFAMILY(cpu_signature);
+	sc->sc_family = CPUID2FAMILY(cpu_signature);
+	sc->sc_family += CPUID2EXTFAMILY(cpu_signature);
+
 	KASSERT(sc->sc_family >= 0xf);
+
+	sc->sc_sme = NULL;
+	sc->sc_sensor = NULL;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -279,9 +283,10 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor_len = sizeof(envsys_data_t) * sc->sc_numsensors;
-	sc->sc_sensor = kmem_zalloc(sc->sc_sensor_len, KM_NOSLEEP);
+	sc->sc_sensor = kmem_zalloc(sc->sc_sensor_len, KM_SLEEP);
+
 	if (sc->sc_sensor == NULL)
-		goto bad2;
+		goto bad;
 
 	switch (sc->sc_family) {
 	case 0xf:
@@ -325,18 +330,20 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	(void)pmf_device_register(self, NULL, NULL);
 
 	return;
 
 bad:
-	kmem_free(sc->sc_sensor, sc->sc_sensor_len);
-	sc->sc_sensor = NULL;
+	if (sc->sc_sme != NULL) {
+		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
+	}
 
-bad2:
-	sysmon_envsys_destroy(sc->sc_sme);
-	sc->sc_sme = NULL;
+	if (sc->sc_sensor != NULL) {
+		kmem_free(sc->sc_sensor, sc->sc_sensor_len);
+		sc->sc_sensor = NULL;
+	}
 }
 
 static int
@@ -504,13 +511,13 @@ amdtemp_family10_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	pcireg_t status;
 	uint32_t value;
 
-	status = pci_conf_read(sc->sc_pc, sc->sc_pcitag, F10_TEMPERATURE_CTL_R);
+	status = pci_conf_read(sc->sc_pc,
+	    sc->sc_pcitag, F10_TEMPERATURE_CTL_R);
 
 	value = (status >> 21);
 
 	edata->state = ENVSYS_SVALID;
-	/* envsys(4) wants uK... convert from Celsius. */
-	edata->value_cur = (value * 125000) + 273150000;
+	edata->value_cur = (value * 125000) + 273150000; /* From C to uK. */
 }
 
 MODULE(MODULE_CLASS_DRIVER, amdtemp, NULL);
