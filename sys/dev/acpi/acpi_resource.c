@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.33 2011/06/15 08:04:49 jruoho Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.34 2011/06/15 09:02:38 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.33 2011/06/15 08:04:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.34 2011/06/15 09:02:38 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -618,6 +618,23 @@ const struct acpi_resource_parse_ops acpi_resource_parse_ops_default = {
 	.end_dep = acpi_res_parse_end_dep,
 };
 
+const struct acpi_resource_parse_ops acpi_resource_parse_ops_quiet = {
+	.init = acpi_res_parse_init,
+	.fini = NULL,
+
+	.ioport = acpi_res_parse_ioport,
+	.iorange = acpi_res_parse_iorange,
+
+	.memory = acpi_res_parse_memory,
+	.memrange = acpi_res_parse_memrange,
+
+	.irq = acpi_res_parse_irq,
+	.drq = acpi_res_parse_drq,
+
+	.start_dep = acpi_res_parse_start_dep,
+	.end_dep = acpi_res_parse_end_dep,
+};
+
 static void
 acpi_res_parse_init(device_t dev, void *arg, void **contextp)
 {
@@ -647,12 +664,10 @@ acpi_res_parse_init(device_t dev, void *arg, void **contextp)
 static void
 acpi_res_parse_fini(device_t dev, void *context)
 {
-#ifdef ACPI_DEBUG
 	struct acpi_resources *res = context;
 
 	/* Print the resources we're using. */
 	acpi_resource_print(dev, res);
-#endif
 }
 
 static void

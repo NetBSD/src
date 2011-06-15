@@ -1,4 +1,4 @@
-/* $NetBSD: hpet_acpi.c,v 1.10 2011/06/15 08:19:43 jruoho Exp $ */
+/* $NetBSD: hpet_acpi.c,v 1.11 2011/06/15 09:02:38 jruoho Exp $ */
 
 /*
  * Copyright (c) 2011 Jukka Ruohonen
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.10 2011/06/15 08:19:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.11 2011/06/15 09:02:38 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -210,7 +210,7 @@ hpet_acpi_dev_addr(device_t self, void *aux, bus_size_t *len)
 	ACPI_STATUS rv;
 
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
-	    &res, &acpi_resource_parse_ops_default);
+	    &res, &acpi_resource_parse_ops_quiet);
 
 	if (ACPI_FAILURE(rv))
 		return 0;
