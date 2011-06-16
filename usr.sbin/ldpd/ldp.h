@@ -1,4 +1,4 @@
-/* $NetBSD: ldp.h,v 1.2 2010/12/30 11:29:21 kefren Exp $ */
+/* $NetBSD: ldp.h,v 1.3 2011/06/16 14:48:30 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ extern char     my_ldp_id[20];
 /* Various timers */
 #define	LDP_HELLO_TIME 5
 #define	LDP_HELLO_KEEP 15
+#define	LDP_THELLO_KEEP 45
 #define	LDP_KEEPALIVE_TIME 4
 #define	LDP_HOLDTIME 15
 
