@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.73 2011/06/12 03:35:54 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.74 2011/06/16 09:21:02 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005-2011 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.73 2011/06/12 03:35:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.74 2011/06/16 09:21:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -803,6 +803,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 {
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(vp->v_mount);
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
+	struct uvm_object *uobj = node->tn_spec.tn_reg.tn_aobj;
 	size_t newpages, oldpages;
 	off_t oldsize;
 
@@ -822,8 +823,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	} else if (newsize < oldsize) {
 		int zerolen = MIN(round_page(newsize), node->tn_size) - newsize;
 
-		/* Zero out the truncated part of the last page. */
-		uvm_vnp_zerorange(vp, newsize, zerolen);
+		ubc_zerorange(uobj, newsize, zerolen, UBC_UNMAP_FLAG(vp));
 	}
 
 	node->tn_spec.tn_reg.tn_aobj_pages = newpages;
@@ -834,9 +834,6 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	 * Free "backing store".
 	 */
 	if (newpages < oldpages) {
-		struct uvm_object *uobj;
-
-		uobj = node->tn_spec.tn_reg.tn_aobj;
 		KASSERT(uobj->vmobjlock == vp->v_interlock);
 
 		mutex_enter(uobj->vmobjlock);

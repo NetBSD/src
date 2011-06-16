@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.76 2011/06/12 03:35:53 rmind Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.77 2011/06/16 09:21:02 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.76 2011/06/12 03:35:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.77 2011/06/16 09:21:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,7 +627,8 @@ msdosfs_write(void *v)
 		/* zero out the remainder of the last page */
 		rem = round_page(dep->de_FileSize) - dep->de_FileSize;
 		if (rem > 0)
-			uvm_vnp_zerorange(vp, (off_t)dep->de_FileSize, rem);
+			ubc_zerorange(&vp->v_uobj, (off_t)dep->de_FileSize,
+			    rem, UBC_UNMAP_FLAG(vp));
 		extended = 1;
 	}
 
