@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 2011/06/16 02:43:43 macallan Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2011/06/16 02:43:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -141,7 +141,7 @@ decr_intr(struct clockframe *cfp)
 	ci->ci_ev_clock.ev_count++;
 
 	pri = splclock();
-	if (pri & (1 << SPL_CLOCK)) {
+	if (pri >= IPL_CLOCK) {
 		ci->ci_tickspending += nticks;
 	} else {
 		nticks += ci->ci_tickspending;

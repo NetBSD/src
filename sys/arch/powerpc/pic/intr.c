@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 2011/06/05 16:52:26 matt Exp $ */
+/*	$NetBSD: intr.c,v 1.12 2011/06/16 02:43:43 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,9 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2011/06/05 16:52:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2011/06/16 02:43:43 macallan Exp $");
 
 #include "opt_multiprocessor.h"
+
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -45,6 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2011/06/05 16:52:26 matt Exp $");
 
 #ifdef MULTIPROCESSOR
 #include <arch/powerpc/pic/ipivar.h>
+#endif
+
+#ifdef __HAVE_FAST_SOFTINTS
+#include <powerpc/softint.h>
 #endif
 
 #define MAX_PICS	8	/* 8 PICs ought to be enough for everyone */
@@ -353,19 +359,6 @@ intr_calculatemasks(void)
 	}
 
 	/*
-	 * IPL_CLOCK should mask clock interrupt even if interrupt handler
-	 * is not registered.
-	 */
-	imask[IPL_CLOCK] |= 1ULL << SPL_CLOCK;
-
-	/*
-	 * Initialize soft interrupt masks to block themselves.
-	 */
-	imask[IPL_SOFTCLOCK] = 1ULL << SIR_CLOCK;
-	imask[IPL_SOFTNET] = 1ULL << SIR_NET;
-	imask[IPL_SOFTSERIAL] = 1ULL << SIR_SERIAL;
-
-	/*
 	 * IPL_NONE is used for hardware interrupts that are never blocked,
 	 * and do not block anything else.
 	 */
@@ -483,12 +476,14 @@ pic_do_pending_int(void)
 
 	pcpl = ci->ci_cpl;
 #ifdef __HAVE_FAST_SOFTINTS
+#if 0
 again:
+#endif
 #endif
 
 	/* Do now unmasked pendings */
 	ci->ci_idepth++;
-	while ((hwpend = (ci->ci_ipending & ~pcpl & HWIRQ_MASK)) != 0) {
+	while ((hwpend = (ci->ci_ipending & ~imask[pcpl] & HWIRQ_MASK)) != 0) {
 		/* Get most significant pending bit */
 		irq = MS_PENDING(hwpend);
 		KASSERT(irq <= virq_max);
@@ -500,7 +495,7 @@ again:
 		is = &intrsources[irq];
 		pic = is->is_pic;
 
-		splraise(is->is_mask);
+		splraise(is->is_level);
 		mtmsr(emsr);
 		ih = is->is_hand;
 		while (ih) {
@@ -530,6 +525,7 @@ again:
 	ci->ci_idepth--;
 
 #ifdef __HAVE_FAST_SOFTINTS
+#if 0
 	if ((ci->ci_ipending & ~pcpl) & (1ULL << SIR_SERIAL)) {
 		ci->ci_ipending &= ~(1ULL << SIR_SERIAL);
 		splsoftserial();
@@ -560,6 +556,16 @@ again:
 		ci->ci_ev_softclock.ev_count++;
 		goto again;
 	}
+#else
+	const u_int softints = (ci->ci_data.cpu_softints << pcpl) & IPL_SOFTMASK;
+
+	if (__predict_false(softints != 0)) {
+		splhigh();
+		powerpc_softint(ci, pcpl,
+		    (vaddr_t)__builtin_return_address(0));
+		ci->ci_cpl = pcpl;
+	}
+#endif
 #endif
 
 	ci->ci_cpl = pcpl;	/* Don't use splx... we are here already! */
@@ -610,7 +616,7 @@ start:
 	r_imen = 1ULL << irq;
 	is = &intrsources[irq];
 
-	if ((pcpl & r_imen) != 0) {
+	if ((imask[pcpl] & r_imen) != 0) {
 
 		ci->ci_ipending |= r_imen; /* Masked! Mark this as pending */
 		pic->pic_disable_irq(pic, realirq);
@@ -620,7 +626,7 @@ start:
 		ci->ci_ipending &= ~r_imen;
 		ci->ci_idepth++;
 
-		splraise(is->is_mask);
+		splraise(is->is_level);
 		mtmsr(msr | PSL_EE);
 		ih = is->is_hand;
 		bail = 0;
@@ -677,11 +683,13 @@ splraise(int ncpl)
 	struct cpu_info *ci = curcpu();
 	int ocpl;
 
+	if (ncpl == ci->ci_cpl) return ncpl;
 	__asm volatile("sync; eieio");	/* don't reorder.... */
-
 	ocpl = ci->ci_cpl;
-	ci->ci_cpl = ocpl | ncpl;
+	KASSERT(ncpl < NIPL);
+	ci->ci_cpl = max(ncpl, ocpl);
 	__asm volatile("sync; eieio");	/* reorder protect */
+	__insn_barrier();
 	return ocpl;
 }
 
@@ -690,9 +698,11 @@ splx(int ncpl)
 {
 	struct cpu_info *ci = curcpu();
 
+	__insn_barrier();
 	__asm volatile("sync; eieio");	/* reorder protect */
 	ci->ci_cpl = ncpl;
-	if (ci->ci_ipending & ~ncpl)
+	if ((ci->ci_ipending & ~imask[ncpl]) ||
+	   ((ci->ci_data.cpu_softints << ncpl) & IPL_SOFTMASK))
 		pic_do_pending_int();
 	__asm volatile("sync; eieio");	/* reorder protect */
 }
@@ -703,27 +713,15 @@ spllower(int ncpl)
 	struct cpu_info *ci = curcpu();
 	int ocpl;
 
+	__insn_barrier();
 	__asm volatile("sync; eieio");	/* reorder protect */
 	ocpl = ci->ci_cpl;
 	ci->ci_cpl = ncpl;
-	if (ci->ci_ipending & ~ncpl)
+	if ((ci->ci_ipending & ~imask[ncpl]) ||
+	   ((ci->ci_data.cpu_softints << ncpl) & IPL_SOFTMASK))
 		pic_do_pending_int();
 	__asm volatile("sync; eieio");	/* reorder protect */
 	return ocpl;
-}
-
-/* Following code should be implemented with lwarx/stwcx to avoid
- * the disable/enable. i need to read the manual once more.... */
-void
-softintr(int ipl)
-{
-	struct cpu_info *ci = curcpu();
-	int msrsave;
-
-	msrsave = mfmsr();
-	mtmsr(msrsave & ~PSL_EE);
-	ci->ci_ipending |= 1ULL << ipl;
-	mtmsr(msrsave);
 }
 
 void
