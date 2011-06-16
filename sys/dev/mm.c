@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.14 2011/06/12 03:35:51 rmind Exp $	*/
+/*	$NetBSD: mm.c,v 1.15 2011/06/16 16:20:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.14 2011/06/12 03:35:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.15 2011/06/16 16:20:28 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -168,6 +168,7 @@ dev_mem_readwrite(struct uio *uio, struct iovec *iov)
 	/* Is physical address directly mapped?  Return VA. */
 	have_direct = mm_md_direct_mapped_phys(paddr, &vaddr);
 #else
+	vaddr = 0;
 	have_direct = false;
 #endif
 	if (!have_direct) {
