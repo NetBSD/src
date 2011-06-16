@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2010/04/25 12:26:07 kiyohara Exp $ */
+/*	$NetBSD: intr.h,v 1.6 2011/06/16 02:43:42 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -26,16 +26,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.5 2010/04/25 12:26:07 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.6 2011/06/16 02:43:42 macallan Exp $");
+#endif
 
 #ifndef POWERPC_INTR_MACHDEP_H
 #define POWERPC_INTR_MACHDEP_H
 
+#define	__HAVE_FAST_SOFTINTS	1
+
+#ifndef _LOCORE
 void *intr_establish(int, int, int, int (*)(void *), void *);
 void intr_disestablish(void *);
 const char *intr_typename(int);
 void genppc_cpu_configure(void);
+#endif
 
 /* Interrupt priority `levels'. */
 #define	IPL_NONE	0	/* nothing */
@@ -54,6 +60,10 @@ void genppc_cpu_configure(void);
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
+#ifdef _LOCORE
+#define splhigh __splhigh
+#endif
+
 #ifndef _LOCORE
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
@@ -70,7 +80,11 @@ struct intrhand {
 int splraise(int);
 int spllower(int);
 void splx(int);
-void softintr(int);
+
+void softint_fast_dispatch(struct lwp *, int);
+
+#define softint_init_md	powerpc_softint_init_md
+#define softint_trigger		powerpc_softint_trigger
 
 typedef u_int imask_t;
 extern imask_t imask[];
@@ -82,18 +96,6 @@ extern imask_t imask[];
 #define HWIRQ_MASK      0x07ffffff
 
 #define MS_PENDING(p)	(31 - cntlzw(p))
-
-/* Soft interrupt masks. */
-#define SIR_CLOCK	27
-#define SIR_BIO		28
-#define SIR_NET		29
-#define SIR_SERIAL	30
-#define SPL_CLOCK	31
-
-#define setsoftclock()	softintr(SIR_CLOCK)
-#define setsoftbio()	softintr(SIR_BIO)
-#define setsoftnet()	softintr(SIR_NET)
-#define setsoftserial()	softintr(SIR_SERIAL)
 
 #define spl0()		spllower(0)
 
@@ -113,7 +115,7 @@ static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
-	return splraise(imask[icookie._ipl]);
+	return splraise(icookie._ipl);
 }
 
 #include <sys/spl.h>
