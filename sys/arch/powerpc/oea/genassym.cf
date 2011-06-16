@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.19 2011/06/16 02:43:43 macallan Exp $
+#	$NetBSD: genassym.cf,v 1.20 2011/06/16 03:54:40 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,6 +50,10 @@ include <machine/pmap.h>
 
 include <powerpc/cpu.h>
 include <powerpc/oea/cpufeat.h>
+
+ifdef	__HAVE_FAST_SOFTINTS
+define	__HAVE_FAST_SOFTINTS	__HAVE_FAST_SOFTINTS
+endif
 
 define	FRAMELEN	FRAMELEN
 define	FRAME_TF	offsetof(struct ktrapframe, ktf_tf)
