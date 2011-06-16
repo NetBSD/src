@@ -1,8 +1,6 @@
-# $NetBSD: Makefile.bootxx,v 1.40 2011/05/20 22:29:55 joerg Exp $
+# $NetBSD: Makefile.bootxx,v 1.41 2011/06/16 16:39:53 joerg Exp $
 
 S=	${.CURDIR}/../../../../..
-
-UNSUPPORTED_COMPILER.clang=	# defined
 
 AFLAGS.bootxx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.label.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
@@ -55,7 +53,8 @@ CPPFLAGS+= -DFS=${FS}
 # CPPFLAGS+= -DBOOT_MSG_COM0
 
 # Make sure we override any optimization options specified by the user
-COPTS=  -Os -momit-leaf-frame-pointer
+.include "${.PARSEDIR}/../Makefile.inc"
+COPTS=	${OPT_SIZE.${ACTIVE_CC}}
 DBG=
 
 CPPFLAGS+= -DNO_LBA_CHECK
@@ -77,7 +76,6 @@ CPUFLAGS=  -march=i386 -mtune=i386
 .endif
 .endif
 
-COPTS+=    -ffreestanding
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
