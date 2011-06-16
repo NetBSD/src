@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.7 2011/06/16 07:11:51 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.8 2011/06/16 20:42:15 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -208,11 +208,7 @@ union sockunion *
 from_cidr_to_union(uint8_t prefixlen)
 {
 	union sockunion *u;
-	int32_t n = -1;
-	uint32_t *m = (uint32_t*)&n;
-
-	*m = (*m >> (32 - prefixlen) ) << (32 - prefixlen);
-	*m = ntohl(*m);
+	uint32_t m = 0xFFFFFFFF;
 
 	u = calloc(1, sizeof(*u));
 
@@ -222,10 +218,12 @@ from_cidr_to_union(uint8_t prefixlen)
 	}
 	u->sin.sin_len = sizeof(struct sockaddr_in);
 	u->sin.sin_family = AF_INET;
-	u->sin.sin_addr.s_addr = *m;
-
+	if (prefixlen != 0) {
+		m = (m >> (32 - prefixlen) ) << (32 - prefixlen);
+		m = ntohl(m);
+		u->sin.sin_addr.s_addr = m;
+	}
 	return u;
-
 }
 
 uint8_t 
