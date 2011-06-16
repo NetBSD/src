@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.3 2010/06/27 13:39:11 kefren Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.4 2011/06/16 19:47:31 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.3 2010/06/27 13:39:11 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.4 2011/06/16 19:47:31 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -389,7 +389,8 @@ mpls_send_frame(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt)
 	rt->rt_use++;
 
 	msh.s_addr = MPLS_GETSADDR(rt);
-	if (msh.shim.label == MPLS_LABEL_IMPLNULL) {
+	if (msh.shim.label == MPLS_LABEL_IMPLNULL ||
+	    (m->m_flags & (M_MCAST | M_BCAST))) {
 		m_adj(m, sizeof(union mpls_shim));
 		m->m_pkthdr.csum_flags = 0;
 	}
