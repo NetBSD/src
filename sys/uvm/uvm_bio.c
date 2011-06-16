@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.73 2011/06/12 03:36:02 rmind Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.74 2011/06/16 09:21:03 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.73 2011/06/12 03:36:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.74 2011/06/16 09:21:03 hannken Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -744,14 +744,13 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
 }
 
 /*
- * uvm_vnp_zerorange:  set a range of bytes in a file to zero.
+ * ubc_zerorange: set a range of bytes in an object to zero.
  */
 
 void
-uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
+ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 {
 	void *win;
-	int flags;
 
 	/*
 	 * XXXUBC invent kzero() and use it
@@ -760,15 +759,25 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 	while (len) {
 		vsize_t bytelen = len;
 
-		win = ubc_alloc(&vp->v_uobj, off, &bytelen, UVM_ADV_NORMAL,
-		    UBC_WRITE);
+		win = ubc_alloc(uobj, off, &bytelen, UVM_ADV_NORMAL, UBC_WRITE);
 		memset(win, 0, bytelen);
-		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 		ubc_release(win, flags);
 
 		off += bytelen;
 		len -= bytelen;
 	}
+}
+
+/*
+ * uvm_vnp_zerorange: set a range of bytes in a file to zero.
+ * WILL BE REMOVED AFTER THE NEXT KERNEL VERSION BUMP (5.99.54)!
+ */
+void uvm_vnp_zerorange(struct vnode *, off_t, size_t);
+void
+uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
+{
+
+	ubc_zerorange(&vp->v_uobj, off, len, UBC_UNMAP_FLAG(vp));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.29 2011/06/12 03:35:59 rmind Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.30 2011/06/16 09:21:03 hannken Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.29 2011/06/12 03:35:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.30 2011/06/16 09:21:03 hannken Exp $");
 
 #include <sys/param.h>
 
@@ -102,9 +102,8 @@ uvm_aio_biodone(struct buf *bp)
 #define PAGERFLAGS (PGO_SYNCIO | PGO_NOBLOCKALLOC | PGO_NOTIMESTAMP)
 
 void
-uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
+ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 {
-	struct uvm_object *uobj = &vp->v_uobj;
 	struct vm_page **pgs;
 	struct uvm_object *pguobj;
 	int maxpages = MIN(32, round_page(len) >> PAGE_SHIFT);

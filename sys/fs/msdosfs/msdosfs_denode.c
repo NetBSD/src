@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.45 2011/06/12 03:35:53 rmind Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.46 2011/06/16 09:21:02 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.45 2011/06/12 03:35:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.46 2011/06/16 09:21:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,8 +537,9 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 			else
 				bdwrite(bp);
 		} else {
-			uvm_vnp_zerorange(DETOV(dep), length,
-					  pmp->pm_bpcluster - boff);
+			ubc_zerorange(&DETOV(dep)->v_uobj, length,
+				      pmp->pm_bpcluster - boff,
+				      UBC_UNMAP_FLAG(DETOV(dep)));
 		}
 	}
 
@@ -626,7 +627,7 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 	}
 
 	/*
-	 * Zero extend file range; uvm_vnp_zerorange() uses ubc_alloc() and a
+	 * Zero extend file range; ubc_zerorange() uses ubc_alloc() and a
 	 * memset(); we set the write size so ubc won't read in file data that
 	 * is zero'd later.
 	 */
@@ -634,8 +635,9 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 	dep->de_FileSize = length;
 	uvm_vnp_setwritesize(DETOV(dep), (voff_t)dep->de_FileSize);
 	dep->de_flag |= DE_UPDATE|DE_MODIFIED;
-	uvm_vnp_zerorange(DETOV(dep), (off_t)osize,
-	    (size_t)(round_page(dep->de_FileSize) - osize));
+	ubc_zerorange(&DETOV(dep)->v_uobj, (off_t)osize,
+	    (size_t)(round_page(dep->de_FileSize) - osize),
+	    UBC_UNMAP_FLAG(DETOV(dep)));
 	uvm_vnp_setsize(DETOV(dep), (voff_t)dep->de_FileSize);
 	return (deupdat(dep, 1));
 }
