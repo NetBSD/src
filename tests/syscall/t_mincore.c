@@ -1,4 +1,4 @@
-/* $NetBSD: t_mincore.c,v 1.1 2011/06/02 10:48:55 jruoho Exp $ */
+/* $NetBSD: t_mincore.c,v 1.2 2011/06/16 15:33:25 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mincore.c,v 1.1 2011/06/02 10:48:55 jruoho Exp $");
+__RCSID("$NetBSD: t_mincore.c,v 1.2 2011/06/16 15:33:25 joerg Exp $");
 
 #include <sys/mman.h>
 
@@ -168,7 +168,7 @@ out:
 	}
 
 	if (str != NULL)
-		atf_tc_fail(str);
+		atf_tc_fail("%s", str);
 }
 
 ATF_TC_CLEANUP(mincore_incore, tc)
