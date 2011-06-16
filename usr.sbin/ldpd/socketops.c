@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.8 2011/06/15 13:24:48 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.9 2011/06/16 06:05:47 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -657,13 +657,14 @@ the_big_loop(void)
 				p = get_ldp_peer_by_socket(pfd[i].fd);
 				if (!p)
 					continue;
-				if ((getsockopt(pfd[i].fd, SOL_SOCKET, SO_ERROR,
-					&sock_error, &sock_error_size) != 0) ||
-					    (sock_error)) {
-						ldp_peer_holddown(p);
-					} else {
-						p->state = LDP_PEER_CONNECTED;
-						send_initialize(p);
+				if (getsockopt(pfd[i].fd, SOL_SOCKET, SO_ERROR,
+				    &sock_error, &sock_error_size) != 0 ||
+				    sock_error != 0) {
+					ldp_peer_holddown(p);
+					sock_error = 0;
+				} else {
+					p->state = LDP_PEER_CONNECTED;
+					send_initialize(p);
 				}
 			}
 		}
