@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.83 2011/04/09 00:26:52 joerg Exp $
+#	$NetBSD: Makefile.booters,v 1.84 2011/06/16 16:39:53 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ CPUFLAGS=  -march=i386 -mtune=i386
 .endif
 .endif
 .endif
-COPTS=	-Os -ffreestanding
+COPTS=	${OPT_SIZE.${ACTIVE_CC}}
 
 I386_STAND_DIR?= $S/arch/i386/stand
 
