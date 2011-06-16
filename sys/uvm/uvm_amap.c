@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.91 2011/06/12 03:36:02 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.92 2011/06/16 19:42:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.91 2011/06/12 03:36:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.92 2011/06/16 19:42:20 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1391,68 +1391,68 @@ next:
 #endif /* defined(VMSWAP) */
 
 /*
- * amap_lookup: look up a page in an amap
+ * amap_lookup: look up a page in an amap.
  *
  * => amap should be locked by caller.
  */
 struct vm_anon *
 amap_lookup(struct vm_aref *aref, vaddr_t offset)
 {
-	struct vm_anon *an;
-	int slot;
 	struct vm_amap *amap = aref->ar_amap;
+	struct vm_anon *an;
+	u_int slot;
+
 	UVMHIST_FUNC("amap_lookup"); UVMHIST_CALLED(maphist);
 	KASSERT(mutex_owned(amap->am_lock));
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
-	KASSERT(slot < amap->am_nslot);
+	an = amap->am_anon[slot];
 
 	UVMHIST_LOG(maphist, "<- done (amap=0x%x, offset=0x%x, result=0x%x)",
-	    amap, offset, amap->am_anon[slot], 0);
-	an = amap->am_anon[slot];
+	    amap, offset, an, 0);
+
+	KASSERT(slot < amap->am_nslot);
 	KASSERT(an == NULL || an->an_ref != 0);
+	KASSERT(an == NULL || an->an_lock == amap->am_lock);
 	return an;
 }
 
 /*
- * amap_lookups: look up a range of pages in an amap
+ * amap_lookups: look up a range of pages in an amap.
  *
  * => amap should be locked by caller.
- * => XXXCDC: this interface is biased toward array-based amaps.  fix.
  */
 void
 amap_lookups(struct vm_aref *aref, vaddr_t offset, struct vm_anon **anons,
     int npages)
 {
-	int slot;
 	struct vm_amap *amap = aref->ar_amap;
-#if defined(DIAGNOSTIC)
-	int i;
-#endif /* defined(DIAGNOSTIC) */
+	u_int slot;
+
 	UVMHIST_FUNC("amap_lookups"); UVMHIST_CALLED(maphist);
 	KASSERT(mutex_owned(amap->am_lock));
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
 
-	UVMHIST_LOG(maphist, "  slot=%d, npages=%d, nslot=%d", slot, npages,
-		amap->am_nslot, 0);
+	UVMHIST_LOG(maphist, "  slot=%u, npages=%d, nslot=%d",
+	    slot, npages, amap->am_nslot, 0);
 
 	KASSERT((slot + (npages - 1)) < amap->am_nslot);
 	memcpy(anons, &amap->am_anon[slot], npages * sizeof(struct vm_anon *));
 
 #if defined(DIAGNOSTIC)
-	for (i = 0; i < npages; i++) {
+	for (int i = 0; i < npages; i++) {
 		struct vm_anon * const an = anons[i];
-
-		if (an != NULL && an->an_ref == 0) {
-			panic("%s: ref=0 anon", __func__);
+		if (an == NULL) {
+			continue;
 		}
+		KASSERT(an->an_ref != 0);
+		KASSERT(an->an_lock == amap->am_lock);
 	}
-#endif /* defined(DIAGNOSTIC) */
+#endif
 	UVMHIST_LOG(maphist, "<- done", 0, 0, 0, 0);
-	return;
 }
 
 /*
