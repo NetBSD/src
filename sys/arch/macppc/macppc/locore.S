@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.66 2011/01/17 08:23:55 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.67 2011/06/16 02:44:38 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,6 +53,7 @@
 
 #include <powerpc/spr.h>
 #include <powerpc/oea/spr.h>
+#include <powerpc/intr.h>
 
 /*
  * Some instructions gas doesn't understand (yet?)
