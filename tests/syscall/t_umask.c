@@ -1,4 +1,4 @@
-/* $NetBSD: t_umask.c,v 1.2 2011/04/25 22:29:35 njoly Exp $ */
+/* $NetBSD: t_umask.c,v 1.3 2011/06/16 15:33:25 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_umask.c,v 1.2 2011/04/25 22:29:35 njoly Exp $");
+__RCSID("$NetBSD: t_umask.c,v 1.3 2011/06/16 15:33:25 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -152,7 +152,7 @@ out:
 	(void)umask(S_IWGRP | S_IWOTH);
 
 	if (str != NULL)
-		atf_tc_fail(str);
+		atf_tc_fail("%s", str);
 }
 
 ATF_TC_CLEANUP(umask_open, tc)

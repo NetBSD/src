@@ -1,4 +1,4 @@
-/* $NetBSD: t_mprotect.c,v 1.6 2011/05/06 22:24:41 njoly Exp $ */
+/* $NetBSD: t_mprotect.c,v 1.7 2011/06/16 15:33:25 joerg Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mprotect.c,v 1.6 2011/05/06 22:24:41 njoly Exp $");
+__RCSID("$NetBSD: t_mprotect.c,v 1.7 2011/06/16 15:33:25 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -218,7 +218,7 @@ out:
 		(void)paxset(pax_global, pax_enabled);
 
 	if (str != NULL)
-		atf_tc_fail(str);
+		atf_tc_fail("%s", str);
 }
 
 ATF_TC(mprotect_write);
