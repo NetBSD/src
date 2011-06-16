@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.73 2010/02/08 20:45:22 roy Exp $	*/
+/*	$NetBSD: refresh.c,v 1.74 2011/06/16 22:45:46 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.73 2010/02/08 20:45:22 roy Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.74 2011/06/16 22:45:46 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -174,7 +174,7 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 			    orig, sub_win);
 #endif
 			for (sy = 0; sy < sub_win->maxy; sy++) {
-				if (sub_win->alines[sy]->flags == __ISDIRTY) {
+				if (sub_win->alines[sy]->flags & __ISDIRTY) {
 					orig->alines[sy + sub_win->begy - orig->begy]->flags
 					    |= __ISDIRTY;
 					sub_win->alines[sy]->flags
