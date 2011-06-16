@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18 2011/06/05 16:52:25 matt Exp $
+#	$NetBSD: genassym.cf,v 1.19 2011/06/16 02:43:43 macallan Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -217,6 +217,7 @@ define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_MD_ASTPENDING	offsetof(struct lwp, l_md.md_astpending)
 define	L_MD_UTF	offsetof(struct lwp, l_md.md_utf)
 define	L_PROC		offsetof(struct lwp, l_proc)
+define	L_CTXSWTCH	offsetof(struct lwp, l_ctxswtch)
 
 define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
 
@@ -232,6 +233,7 @@ define	CI_DDBSAVE	offsetof(struct cpu_info, ci_ddbsave)
 define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_ipkdbsave)
 define	CI_DISISAVE	offsetof(struct cpu_info, ci_disisave)
 define	CI_IDLESPIN	offsetof(struct cpu_info, ci_idlespin)
+define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 
 define	CPUSAVE_R28	CPUSAVE_R28*sizeof(register_t)
 define	CPUSAVE_R29	CPUSAVE_R29*sizeof(register_t)
