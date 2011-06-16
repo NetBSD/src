@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.12 2011/06/16 02:43:43 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.13 2011/06/16 04:37:48 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2011/06/16 02:43:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2011/06/16 04:37:48 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -693,6 +693,18 @@ splraise(int ncpl)
 	return ocpl;
 }
 
+static inline bool
+have_pending_intr_p(struct cpu_info *ci, int ncpl)
+{
+	if (ci->ci_ipending & ~imask[ncpl])
+		return true;
+#ifdef __HAVE_FAST_SOFTINTS
+	if ((ci->ci_data.cpu_softints << ncpl) & IPL_SOFTMASK)
+		return true;
+#endif
+	return false;
+}
+
 void
 splx(int ncpl)
 {
@@ -701,9 +713,9 @@ splx(int ncpl)
 	__insn_barrier();
 	__asm volatile("sync; eieio");	/* reorder protect */
 	ci->ci_cpl = ncpl;
-	if ((ci->ci_ipending & ~imask[ncpl]) ||
-	   ((ci->ci_data.cpu_softints << ncpl) & IPL_SOFTMASK))
+	if (have_pending_intr_p(ci, ncpl))
 		pic_do_pending_int();
+
 	__asm volatile("sync; eieio");	/* reorder protect */
 }
 
@@ -717,8 +729,7 @@ spllower(int ncpl)
 	__asm volatile("sync; eieio");	/* reorder protect */
 	ocpl = ci->ci_cpl;
 	ci->ci_cpl = ncpl;
-	if ((ci->ci_ipending & ~imask[ncpl]) ||
-	   ((ci->ci_data.cpu_softints << ncpl) & IPL_SOFTMASK))
+	if (have_pending_intr_p(ci, ncpl))
 		pic_do_pending_int();
 	__asm volatile("sync; eieio");	/* reorder protect */
 	return ocpl;
