@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.173 2011/06/12 03:36:02 rmind Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.174 2011/06/16 09:21:03 hannken Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -574,6 +574,7 @@ void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
 void			ubc_release(void *, int);
 int			ubc_uiomove(struct uvm_object *, struct uio *, vsize_t,
 			    int, int);
+void			ubc_zerorange(struct uvm_object *, off_t, size_t, int);
 void			ubc_purge(struct uvm_object *);
 
 /* uvm_emap.c */
@@ -756,7 +757,6 @@ void			uvm_vnp_setsize(struct vnode *, voff_t);
 void			uvm_vnp_setwritesize(struct vnode *, voff_t);
 int			uvn_findpages(struct uvm_object *, voff_t,
 			    int *, struct vm_page **, int);
-void			uvm_vnp_zerorange(struct vnode *, off_t, size_t);
 bool			uvn_text_p(struct uvm_object *);
 bool			uvn_clean_p(struct uvm_object *);
 bool			uvn_needs_writefault_p(struct uvm_object *);
