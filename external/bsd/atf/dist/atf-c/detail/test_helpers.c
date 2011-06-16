@@ -62,7 +62,7 @@ build_check_c_o_aux(const char *path, const char *failmsg)
     atf_dynstr_fini(&iflag);
 
     if (!success)
-        atf_tc_fail(failmsg);
+        atf_tc_fail("%s", failmsg);
 }
 
 void
