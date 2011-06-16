@@ -1,8 +1,10 @@
-/*	$NetBSD: cdefs.h,v 1.7 2008/10/26 06:57:30 mrg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.8 2011/06/16 13:27:59 joerg Exp $	*/
 
 #ifndef	_I386_CDEFS_H_
 #define	_I386_CDEFS_H_
 
-/* No arch-specific cdefs. */
+#if defined(_STANDALONE)
+#define	__compactcall	__attribute__((__regparm__(3)))
+#endif
 
 #endif /* !_I386_CDEFS_H_ */
