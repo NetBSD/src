@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.9 2011/06/16 06:05:47 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.10 2011/06/16 14:48:30 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -504,7 +504,8 @@ send_hello_alarm(int unused)
 
 	/* Decrement hello info keepalives */
 	SLIST_FOREACH(hi, &hello_info_head, infos)
-		hi->keepalive--;
+		if (hi->keepalive != 0xFFFF)
+			hi->keepalive--;
 
 	/* Check hello keepalives */
 	SLIST_FOREACH_SAFE(hi, &hello_info_head, infos, hinext)
@@ -544,6 +545,7 @@ the_big_loop(void)
 
 	signal(SIGALRM, send_hello_alarm);
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGINT, bail_out);
 	signal(SIGTERM, bail_out);
 	send_hello_alarm(1);
 

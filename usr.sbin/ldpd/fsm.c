@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.4 2011/06/14 11:23:02 kefren Exp $ */
+/* $NetBSD: fsm.c,v 1.5 2011/06/16 14:48:30 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -91,8 +91,14 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 	debugp("Common hello Type: 0x%.4X Length: %.2d R:%d T:%d"
 	    "Hold time: %d\n", ht->ch.type, ht->ch.length,
 	    ht->ch.tr / 2, ht->ch.tr % 2, ht->ch.holdtime);
-	if (ht->ch.holdtime)
+	if (ht->ch.holdtime != 0)
 		hi->keepalive = ht->ch.holdtime;
+	else {
+		if (ht->ch.res >> 15 == 0)
+			hi->keepalive = LDP_HELLO_KEEP;
+		else
+			hi->keepalive = LDP_THELLO_KEEP;
+	}
 	if (!get_ldp_peer(&pduid->ldp_id)) {
 		/* First of all set peer_addr to announced LDP_ID */
 		memcpy(&peer_addr, &pduid->ldp_id,
