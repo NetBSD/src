@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.28 2011/06/05 16:52:23 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.29 2011/06/17 05:18:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@ struct cpu_info;
 #include <powerpc/pic/ipivar.h>
 #endif /* MULTIPROCESSOR */
 
-#endif /* _LOCORE */
 
 #ifdef _KERNEL
 
@@ -58,5 +57,6 @@ int init_heathrow(void);
 int init_grandcentral(void);
 void setup_hammerhead_ipi(void);
 #endif
+#endif /* _LOCORE */
 
 #endif /* _MACPPC_INTR_H_ */
