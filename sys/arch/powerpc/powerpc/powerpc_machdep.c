@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.54 2011/06/14 05:50:25 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.55 2011/06/17 19:03:01 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.54 2011/06/14 05:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.55 2011/06/17 19:03:01 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -167,9 +167,11 @@ sysctl_machdep_booted_device(SYSCTLFN_ARGS)
 	if (booted_device == NULL)
 		return (EOPNOTSUPP);
 
+	const char * const xname = device_xname(booted_device);
+
 	node = *rnode;
-	node.sysctl_data = booted_device->dv_xname;
-	node.sysctl_size = strlen(booted_device->dv_xname) + 1;
+	node.sysctl_data = __UNCONST(xname);
+	node.sysctl_size = strlen(xname) + 1;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 

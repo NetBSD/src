@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.5 2011/06/06 16:42:18 matt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.6 2011/06/17 19:03:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.5 2011/06/06 16:42:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6 2011/06/17 19:03:00 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,7 @@ mpc105_print(struct pci_attach_args *pa, device_t self)
 
 	reg1 = pci_conf_read(pa->pa_pc, pa->pa_tag, MPC105_PICR1);
 	reg2 = pci_conf_read(pa->pa_pc, pa->pa_tag, MPC105_PICR2);
-	aprint_normal("%s: L2 cache: ", self->dv_xname);
+	aprint_normal_dev(self, "L2 cache: ");
 
 	switch (reg2 & MPC105_PICR2_L2_SIZE) {
 	case MPC105_PICR2_L2_SIZE_256K:
@@ -125,7 +125,7 @@ mpc106_print(struct pci_attach_args *pa, device_t self)
 
 	reg1 = pci_conf_read(pa->pa_pc, pa->pa_tag, MPC106_PICR1);
 	reg2 = pci_conf_read(pa->pa_pc, pa->pa_tag, MPC106_PICR2);
-	aprint_normal("%s: L2 cache: ", self->dv_xname);
+	aprint_normal_dev(self, "L2 cache: ");
 
 	switch (reg2 & MPC106_PICR2_L2_SIZE) {
 	case MPC106_PICR2_L2_SIZE_256K:
@@ -195,9 +195,9 @@ ibm82660_print(struct pci_attach_args *pa, device_t self)
 		else
 			s1 = "enabled";
 		if (reg2 & IBM_82660_SYSTEM_CTRL_L2_MI)
-			s2 = "(normal operation)";
+			s2 = " (normal operation)";
 		else
-			s2 = "(miss updates inhibited)";
+			s2 = " (miss updates inhibited)";
 	} else {
 		s1 = "disabled";
 		s2 = "";
@@ -209,24 +209,24 @@ ibm82660_print(struct pci_attach_args *pa, device_t self)
 		s1 = "disabled";
 	s2 = "";
 #endif
-	aprint_normal("%s: L1: %s L2: %s %s\n", self->dv_xname,
+	aprint_normal_dev(self, "L1 %s L2 %s%s\n",
 	    (reg1 & IBM_82660_CACHE_STATUS_L1_EN) ? "enabled" : "disabled",
 	    s1, s2);
 
 	reg1 = pci_conf_read(pa->pa_pc, pa->pa_tag, IBM_82660_OPTIONS_1);
-	aprint_verbose("%s: MCP# assertion %s "
-	    "TEA# assertion %s\n", self->dv_xname,
+	aprint_verbose_dev(self, "MCP# assertion %s "
+	    "TEA# assertion %s\n",
 	    (reg1 & IBM_82660_OPTIONS_1_MCP) ? "enabled" : "disabled",
 	    (reg1 & IBM_82660_OPTIONS_1_TEA) ? "enabled" : "disabled");
-	aprint_verbose("%s: PCI/ISA I/O mapping %s\n", self->dv_xname,
+	aprint_verbose_dev(self, "PCI/ISA I/O mapping %s\n",
 	    (reg1 & IBM_82660_OPTIONS_1_ISA) ? "contiguous" : "non-contiguous");
 
 	reg1 = pci_conf_read(pa->pa_pc, pa->pa_tag, IBM_82660_OPTIONS_3);
-	aprint_normal("%s: DRAM %s (%s) SRAM %s\n", self->dv_xname,
+	aprint_normal_dev(self, "DRAM %s (%s) SRAM %s\n",
 	    (reg1 & IBM_82660_OPTIONS_3_DRAM) ? "EDO" : "standard",
 	    (reg1 & IBM_82660_OPTIONS_3_ECC) ? "ECC" : "parity",
 	    (reg1 & IBM_82660_OPTIONS_3_SRAM) ? "sync" : "async");
-	aprint_verbose("%s: Snoop mode %s\n", self->dv_xname,
+	aprint_verbose_dev(self, "Snoop mode %s\n",
 	    (reg1 & IBM_82660_OPTIONS_3_SNOOP) ? "603" : "601/604");
 }
 
@@ -250,7 +250,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 	 */
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	switch (PCI_VENDOR(pa->pa_id)) {

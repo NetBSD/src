@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.4 2011/06/12 05:37:54 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.5 2011/06/17 19:03:03 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -458,6 +458,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	struct pq3etsec_softc * const sc = device_private(self);
 	struct cpunode_attach_args * const cna = aux;
 	struct cpunode_locators * const cnl = &cna->cna_locs;
+	cfdata_t cf = device_cfdata(self);
 	int error;
 
 	psc->sc_children |= cna->cna_childmask;
@@ -468,15 +469,13 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * If we have a common MDIO bus, if all off instance 1.
 	 */
-	device_t miiself = (self->dv_cfdata->cf_flags & 0x100)
-	    ? tsec_cd.cd_devs[0]
-	    : self;
+	device_t miiself = (cf->cf_flags & 0x100) ? tsec_cd.cd_devs[0] : self;
 
 	/*
 	 * See if the phy is in the config file...
 	 */
-	if (self->dv_cfdata->cf_flags & 0x3f) {
-		sc->sc_phy_addr = (self->dv_cfdata->cf_flags & 0x3f) - 1;
+	if (cf->cf_flags & 0x3f) {
+		sc->sc_phy_addr = (cf->cf_flags & 0x3f) - 1;
 	} else {
 		unsigned char prop_name[20];
 		snprintf(prop_name, sizeof(prop_name), "tsec%u-phy-addr",

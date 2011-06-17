@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 2011/06/17 19:03:03 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@ extern char bootpath[];
 #include <prop/proplib.h>
 
 /* export from ibm4xx/autoconf.c */
-extern void (*md_device_register)(struct device *dev, void *aux);
+extern void (*md_device_register)(device_t dev, void *aux);
 
 /* export from ibm4xx/machdep.c */
 extern void (*md_consinit)(void);
@@ -90,7 +90,7 @@ extern void ibm4xx_dumpsys(void);
 extern void ibm4xx_install_extint(void (*)(void));
 
 /* export from ibm4xx/ibm4xx_autoconf.c */
-extern void ibm4xx_device_register(struct device *dev, void *aux);
+extern void ibm4xx_device_register(device_t dev, void *aux);
 
 /* export from ibm4xx/clock.c */
 extern void calc_delayconst(void);

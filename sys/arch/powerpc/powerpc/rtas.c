@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.10 2011/06/12 21:28:26 mrg Exp $ */
+/*	$NetBSD: rtas.c,v 1.11 2011/06/17 19:03:01 matt Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.10 2011/06/12 21:28:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.11 2011/06/17 19:03:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,10 +68,10 @@ static struct {
 	{ "thaw-time-base", RTAS_FUNC_THAW_TIME_BASE },
 };
 
-static int rtas_match(struct device *, struct cfdata *, void *);
-static void rtas_attach(struct device *, struct device *, void *);
-static int rtas_detach(struct device *, int);
-static int rtas_activate(struct device *, enum devact);
+static int rtas_match(device_t, cfdata_t, void *);
+static void rtas_attach(device_t, device_t, void *);
+static int rtas_detach(device_t, int);
+static int rtas_activate(device_t, enum devact);
 static int rtas_todr_gettime_ymdhms(struct todr_chip_handle *,
     struct clock_ymdhms *);
 static int rtas_todr_settime_ymdhms(struct todr_chip_handle *,
@@ -81,7 +81,7 @@ CFATTACH_DECL_NEW(rtas, sizeof (struct rtas_softc),
     rtas_match, rtas_attach, rtas_detach, rtas_activate);
 
 static int
-rtas_match(struct device *parent, struct cfdata *match, void *aux)
+rtas_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -92,7 +92,7 @@ rtas_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-rtas_attach(struct device *parent, struct device *self, void *aux)
+rtas_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct rtas_softc *sc = device_private(self);
@@ -179,13 +179,13 @@ fail:
 }
 
 static int
-rtas_detach(struct device *self, int flags)
+rtas_detach(device_t self, int flags)
 {
 	return EOPNOTSUPP;
 }
 
 static int
-rtas_activate(struct device *self, enum devact act)
+rtas_activate(device_t self, enum devact act)
 {
 	return EOPNOTSUPP;
 }

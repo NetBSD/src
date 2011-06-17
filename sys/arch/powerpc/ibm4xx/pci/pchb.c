@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.8 2011/06/06 16:42:18 matt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.9 2011/06/17 19:03:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.8 2011/06/06 16:42:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.9 2011/06/17 19:03:02 matt Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -135,7 +135,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 
-	printf("\n");
+	aprint_normal("\n");
 	pcifound++;
 	/*
 	 * All we do is print out a description.  Eventually, we
@@ -144,7 +144,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 	 */
 
 	pci_devinfo(id, class, 0, devinfo, sizeof(devinfo));
-	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(class));
 
 	pci_machdep_init(); /* Redundant... */
