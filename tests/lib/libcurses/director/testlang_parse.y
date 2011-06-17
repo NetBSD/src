@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.5 2011/06/17 02:15:28 christos Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.6 2011/06/17 16:32:31 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -40,6 +40,7 @@
 #include <string.h>
 #include <sys/syslimits.h>
 #include <time.h>
+#include <vis.h>
 #include "returns.h"
 
 #define YYDEBUG 1
@@ -413,6 +414,24 @@ eol		: EOL
 
 %%
 
+static void
+excess(const char *fname, size_t lineno, const char *func, const char *comment,
+    const void *data, size_t datalen)
+{
+	size_t dstlen = datalen * 4 + 1;
+	char *dst = malloc(dstlen);
+
+	if (dst == NULL)
+		err(1, "malloc");
+
+	if (strnvisx(dst, dstlen, data, datalen, VIS_WHITE | VIS_OCTAL) == -1)
+		err(1, "strnvisx");
+
+	warnx("%s, %zu: [%s] Excess %zu bytes%s [%s]",
+	    fname, lineno, func, datalen, comment, dst);
+	free(dst);
+}
+
 /*
  * Get the value of a variable, error if the variable has not been set or
  * is not a numeric type.
@@ -752,10 +771,8 @@ compare_streams(char *filename, bool discard)
 
 
 	if (saved_output.count > 0)
-		warnx("%s, %zu: [%s] Excess %zu bytes from slave [%.*s]",
-		    cur_file, line, __func__, saved_output.count,
-		    (int)saved_output.count,
-		    &saved_output.data[saved_output.readp]);
+		excess(cur_file, line, __func__, " from slave",
+		    &saved_output.data[saved_output.readp], saved_output.count);
 
 	/* discard any excess saved output if required */
 	if (discard) {
@@ -784,8 +801,8 @@ compare_streams(char *filename, bool discard)
 				err(1, "read of data file failed");
 
 			if (result > 0) {
-				warnx("%s: Excess %zd bytes [%.*s]",
-				    check_file, result, (int)result, drain);
+				excess(check_file, 0, __func__, "", drain,
+				    result);
 				if (!verbose)
 					exit(2);
 			}
@@ -951,10 +968,8 @@ do_function_call(size_t nresults)
 	}
 #if 0
 	if (saved_output.count > 0)
-		warnx("%s, %zu: [%s] Excess %zu bytes from slave [%.*s]",
-		    cur_file, line, __func__, saved_output.count,
-		    (int)saved_output.count,
-		    &saved_output.data[saved_output.readp]);
+		excess(cur_file, line, __func__, " from slave",
+		    &saved_output.data[saved_output.readp], saved_output.count);
 #endif
 
 	init_parse_variables(0);
