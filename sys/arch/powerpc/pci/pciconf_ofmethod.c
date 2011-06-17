@@ -1,4 +1,4 @@
-/* $NetBSD: pciconf_ofmethod.c,v 1.2 2008/04/28 20:23:32 martin Exp $ */
+/* $NetBSD: pciconf_ofmethod.c,v 1.3 2011/06/17 19:03:01 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf_ofmethod.c,v 1.2 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf_ofmethod.c,v 1.3 2011/06/17 19:03:01 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciconf_ofmethod.c,v 1.2 2008/04/28 20:23:32 martin 
 #include <dev/pci/pcidevs.h>
 
 void
-genppc_pci_ofmethod_attach_hook(struct device *parent, struct device *self,
+genppc_pci_ofmethod_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 

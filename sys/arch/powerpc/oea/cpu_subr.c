@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.65 2011/06/16 04:25:13 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.66 2011/06/17 19:03:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.65 2011/06/16 04:25:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.66 2011/06/17 19:03:04 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -402,8 +402,9 @@ cpu_attach_common(device_t self, int id)
 	 */
 	if (id != 0) {
 		aprint_normal(": ID %d\n", id);
-		aprint_normal("%s: processor off-line; multiprocessor support "
-		    "not present in kernel\n", self->dv_xname);
+		aprint_normal_dev(self,
+		    "processor off-line; "
+		    "multiprocessor support not present in kernel\n");
 		return (NULL);
 	}
 #endif
@@ -455,6 +456,7 @@ void
 cpu_setup(device_t self, struct cpu_info *ci)
 {
 	u_int hid0, hid0_save, pvr, vers;
+	const char * const xname = device_xname(self);
 	const char *bitmask;
 	char hidbuf[128];
 	char model[80];
@@ -593,8 +595,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 		break;
 	}
 	snprintb(hidbuf, sizeof hidbuf, bitmask, hid0);
-	aprint_normal("%s: HID0 %s, powersave: %d\n", self->dv_xname, hidbuf,
-	    powersave);
+	aprint_normal_dev(self, "HID0 %s, powersave: %d\n", hidbuf, powersave);
 
 	ci->ci_khz = 0;
 
@@ -615,7 +616,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	case MPC7450:
 	case MPC7455:
 	case MPC7457:
-		aprint_normal("%s: ", self->dv_xname);
+		aprint_normal_dev(self, "");
 		cpu_probe_speed(ci);
 		aprint_normal("%u.%02u MHz",
 			      ci->ci_khz / 1000, (ci->ci_khz / 10) % 100);
@@ -653,51 +654,51 @@ cpu_setup(device_t self, struct cpu_info *ci)
 #endif
 
 	evcnt_attach_dynamic(&ci->ci_ev_clock, EVCNT_TYPE_INTR,
-		NULL, self->dv_xname, "clock");
+		NULL, xname, "clock");
 	evcnt_attach_dynamic(&ci->ci_ev_softclock, EVCNT_TYPE_INTR,
-		NULL, self->dv_xname, "soft clock");
+		NULL, xname, "soft clock");
 	evcnt_attach_dynamic(&ci->ci_ev_softnet, EVCNT_TYPE_INTR,
-		NULL, self->dv_xname, "soft net");
+		NULL, xname, "soft net");
 	evcnt_attach_dynamic(&ci->ci_ev_softserial, EVCNT_TYPE_INTR,
-		NULL, self->dv_xname, "soft serial");
+		NULL, xname, "soft serial");
 	evcnt_attach_dynamic(&ci->ci_ev_traps, EVCNT_TYPE_TRAP,
-		NULL, self->dv_xname, "traps");
+		NULL, xname, "traps");
 	evcnt_attach_dynamic(&ci->ci_ev_kdsi, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_traps, self->dv_xname, "kernel DSI traps");
+		&ci->ci_ev_traps, xname, "kernel DSI traps");
 	evcnt_attach_dynamic(&ci->ci_ev_udsi, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_traps, self->dv_xname, "user DSI traps");
+		&ci->ci_ev_traps, xname, "user DSI traps");
 	evcnt_attach_dynamic(&ci->ci_ev_udsi_fatal, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_udsi, self->dv_xname, "user DSI failures");
+		&ci->ci_ev_udsi, xname, "user DSI failures");
 	evcnt_attach_dynamic(&ci->ci_ev_kisi, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_traps, self->dv_xname, "kernel ISI traps");
+		&ci->ci_ev_traps, xname, "kernel ISI traps");
 	evcnt_attach_dynamic(&ci->ci_ev_isi, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_traps, self->dv_xname, "user ISI traps");
+		&ci->ci_ev_traps, xname, "user ISI traps");
 	evcnt_attach_dynamic(&ci->ci_ev_isi_fatal, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_isi, self->dv_xname, "user ISI failures");
+		&ci->ci_ev_isi, xname, "user ISI failures");
 	evcnt_attach_dynamic(&ci->ci_ev_scalls, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_traps, self->dv_xname, "system call traps");
+		&ci->ci_ev_traps, xname, "system call traps");
 	evcnt_attach_dynamic(&ci->ci_ev_pgm, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_traps, self->dv_xname, "PGM traps");
+		&ci->ci_ev_traps, xname, "PGM traps");
 	evcnt_attach_dynamic(&ci->ci_ev_fpu, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_traps, self->dv_xname, "FPU unavailable traps");
+		&ci->ci_ev_traps, xname, "FPU unavailable traps");
 	evcnt_attach_dynamic(&ci->ci_ev_fpusw, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_fpu, self->dv_xname, "FPU context switches");
+		&ci->ci_ev_fpu, xname, "FPU context switches");
 	evcnt_attach_dynamic(&ci->ci_ev_ali, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_traps, self->dv_xname, "user alignment traps");
+		&ci->ci_ev_traps, xname, "user alignment traps");
 	evcnt_attach_dynamic(&ci->ci_ev_ali_fatal, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_ali, self->dv_xname, "user alignment traps");
+		&ci->ci_ev_ali, xname, "user alignment traps");
 	evcnt_attach_dynamic(&ci->ci_ev_umchk, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_umchk, self->dv_xname, "user MCHK failures");
+		&ci->ci_ev_umchk, xname, "user MCHK failures");
 	evcnt_attach_dynamic(&ci->ci_ev_vec, EVCNT_TYPE_TRAP,
-		&ci->ci_ev_traps, self->dv_xname, "AltiVec unavailable");
+		&ci->ci_ev_traps, xname, "AltiVec unavailable");
 #ifdef ALTIVEC
 	if (cpu_altivec) {
 		evcnt_attach_dynamic(&ci->ci_ev_vecsw, EVCNT_TYPE_TRAP,
-		    &ci->ci_ev_vec, self->dv_xname, "AltiVec context switches");
+		    &ci->ci_ev_vec, xname, "AltiVec context switches");
 	}
 #endif
 	evcnt_attach_dynamic(&ci->ci_ev_ipi, EVCNT_TYPE_INTR,
-		NULL, self->dv_xname, "IPIs");
+		NULL, xname, "IPIs");
 }
 
 /*
@@ -1130,13 +1131,13 @@ cpu_tau_setup(struct cpu_info *ci)
 		return;
 	}
 
-	sme->sme_name = ci->ci_dev->dv_xname;	
+	sme->sme_name = device_xname(ci->ci_dev);	
 	sme->sme_cookie = ci;
 	sme->sme_refresh = cpu_tau_refresh;
 
 	if ((error = sysmon_envsys_register(sme)) != 0) {
-		aprint_error("%s: unable to register with sysmon (%d)\n",
-		    ci->ci_dev->dv_xname, error);
+		aprint_error_dev(ci->ci_dev,
+		    " unable to register with sysmon (%d)\n", error);
 		sysmon_envsys_destroy(sme);
 	}
 }
