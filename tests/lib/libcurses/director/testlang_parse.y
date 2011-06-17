@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.4 2011/06/11 18:03:18 christos Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.5 2011/06/17 02:15:28 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -227,8 +227,8 @@ check		: CHECK var returns eol {
 
 	if (verbose)
 		fprintf(stderr, "Checking contents of variable %s for %s\n",
-			vars[command.returns[0].return_index].name,
-			returns_enum_names[command.returns[1].return_type]);
+		    vars[command.returns[0].return_index].name,
+		    returns_enum_names[command.returns[1].return_type]);
 
 	if (((command.returns[1].return_type == arg_byte) &&
 	     (vars[command.returns[0].return_index].type != ret_byte)) ||
@@ -265,12 +265,12 @@ check		: CHECK var returns eol {
 	case ret_number:
 		if (verbose)
 			fprintf(stderr, " %s == returned %s\n",
-				(const char *)command.returns[1].return_value,
-				(const char *)
-				vars[command.returns[0].return_index].value);
+			    (const char *)command.returns[1].return_value,
+			    (const char *)
+			    vars[command.returns[0].return_index].value);
 		validate_variable(0, ret_string,
-				  command.returns[1].return_value,
-				  command.returns[0].return_index, 0);
+		    command.returns[1].return_value,
+		    command.returns[0].return_index, 0);
 		break;
 
 	case ret_byte:
@@ -315,8 +315,8 @@ delay		: DELAY numeric eol {
 
 input		: INPUT STRING eol {
 	if (input_str != NULL) {
-		fprintf(stderr, "WARNING: Discarding unused input string at "
-			"line %zu of file %s\n", line, cur_file);
+		warnx("%s, %zu: Discarding unused input string",
+		    cur_file, line);
 		free(input_str);
 	}
 
@@ -330,8 +330,8 @@ input		: INPUT STRING eol {
 
 noinput		: NOINPUT eol {
 	if (input_str != NULL) {
-		fprintf(stderr, "WARNING: Discarding unused input string at "
-			"line %zu of file %s\n", line, cur_file);
+		warnx("%s, %zu: Discarding unused input string",
+		    cur_file, line);
 		free(input_str);
 	}
 
@@ -447,10 +447,9 @@ numeric_or(char *n1, char *n2)
 	asprintf(&ret, "%lu", result);
 
 	if (verbose)
-		fprintf(stderr,
-			"numeric or of 0x%lx (%s) and 0x%lx (%s) results"
-			" in 0x%lx (%s)\n",
-			i1, n1, i2, n2, result, ret);
+		fprintf(stderr, "numeric or of 0x%lx (%s) and 0x%lx (%s)"
+		    " results in 0x%lx (%s)\n",
+		    i1, n1, i2, n2, result, ret);
 
 	return ret;
 }
@@ -666,9 +665,10 @@ static int check_function_table(char *function, const char *table[],
 static void
 compare_streams(char *filename, bool discard)
 {
-	char check_file[PATH_MAX], drain, ref, data;
+	char check_file[PATH_MAX], drain[100], ref, data;
 	struct pollfd fds[2];
-	int nfd, check_fd, result;
+	int nfd, check_fd;
+	ssize_t result;
 
 	/*
 	 * Don't prepend check path iff check file has an absolute
@@ -712,9 +712,7 @@ compare_streams(char *filename, bool discard)
 	while (poll(&fds[0], nfd, 500) == nfd) {
 		if ((result = read(check_fd, &ref, 1)) < 1) {
 			if (result != 0) {
-				fprintf(stderr, "Bad read on file %s\n",
-					check_file);
-				exit(2);
+				err(2, "Bad read on file %s", check_file);
 			} else {
 				break;
 			}
@@ -740,10 +738,9 @@ compare_streams(char *filename, bool discard)
 		}
 
 		if (ref != data) {
-			fprintf(stderr, "refresh data from slave does "
-				"not match expected from file %s, "
-				"line %zu of file %s\n",
-				check_file, line, cur_file);
+			warnx("%s, %zu: refresh data from slave does "
+			    "not match expected from file %s",
+			    cur_file, line, check_file);
 
 			if (!verbose)
 				exit(2);
@@ -755,8 +752,10 @@ compare_streams(char *filename, bool discard)
 
 
 	if (saved_output.count > 0)
-		fprintf(stderr, "Warning: excess saved data from "
-			"slave at line %zu of file %s\n", line, cur_file);
+		warnx("%s, %zu: [%s] Excess %zu bytes from slave [%.*s]",
+		    cur_file, line, __func__, saved_output.count,
+		    (int)saved_output.count,
+		    &saved_output.data[saved_output.readp]);
 
 	/* discard any excess saved output if required */
 	if (discard) {
@@ -770,7 +769,7 @@ compare_streams(char *filename, bool discard)
 		if (result == -1)
 			err(2, "poll of file descriptors failed");
 
-		if ((fds[1].revents && POLLIN) == POLLIN) {
+		if ((fds[1].revents & POLLIN) == POLLIN) {
 			save_slave_output(true);
 		} else {
 			/*
@@ -780,13 +779,13 @@ compare_streams(char *filename, bool discard)
 			 * the file really has more data than the
 			 * slave produced so flag this as a warning.
 			 */
-			result = read(check_fd, &drain, 1);
+			result = read(check_fd, drain, sizeof(drain));
 			if (result == -1)
 				err(1, "read of data file failed");
 
 			if (result > 0) {
-				fprintf(stderr, "Error: excess data "
-					"in file %s\n", check_file);
+				warnx("%s: Excess %zd bytes [%.*s]",
+				    check_file, result, (int)result, drain);
 				if (!verbose)
 					exit(2);
 			}
@@ -815,7 +814,7 @@ do_function_call(size_t nresults)
 	assert(nresults <= MAX_RESULTS);
 
 	do_input = check_function_table(command.function, input_functions,
-					ninput_functions);
+	    ninput_functions);
 
 	write_func_and_args();
 
@@ -824,7 +823,7 @@ do_function_call(size_t nresults)
 	 * doing input otherwise it will confuse the input poll
 	 */
 	read_cmd_pipe(&returns_count);
-	if (returns_count.return_type != ret_count )
+	if (returns_count.return_type != ret_count)
 		err(2, "expected return type of ret_count but received %s",
 		    returns_enum_names[returns_count.return_type]);
 
@@ -837,12 +836,9 @@ do_function_call(size_t nresults)
 			fprintf(stderr, "doing input with inputstr >%s<\n",
 				input_str);
 
-		if (input_str == NULL) {
-			fprintf(stderr, "Error: Call to input function at "
-				" line %zu of file %s but no input defined",
-				line, cur_file);
-			exit(2);
-		}
+		if (input_str == NULL)
+			errx(2, "%s, %zu: Call to input function "
+			    "but no input defined", cur_file, line);
 
 		fds[0].fd = slvpipe[READ_PIPE];
 		fds[0].events = POLLIN;
@@ -865,10 +861,9 @@ do_function_call(size_t nresults)
 
 			/* check for slave function returning unexpectedly */
 			if ((poll(&fds[0], 1, 10) > 0) && (*p != '\0')) {
-				fprintf(stderr, "Warning: slave function "
-					"returned before end of input string"
-					" at line %zu of file %s\n",
-					line, cur_file);
+				warnx("%s, %zu: Slave function "
+				    "returned before end of input string",
+				    cur_file, line);
 				break;
 			}
 		}
@@ -938,7 +933,7 @@ do_function_call(size_t nresults)
 				fprintf(stderr, "received");
 
 			fprintf(stderr, " return_type %s\n",
-				returns_enum_names[command.returns[i].return_type]);
+			    returns_enum_names[command.returns[i].return_type]);
 		}
 	}
 
@@ -954,10 +949,13 @@ do_function_call(size_t nresults)
 				response[i].return_type;
 		}
 	}
-
+#if 0
 	if (saved_output.count > 0)
-		fprintf(stderr, "Warning: excess data from slave at line %zu"
-			" of file %s\n", line, cur_file);
+		warnx("%s, %zu: [%s] Excess %zu bytes from slave [%.*s]",
+		    cur_file, line, __func__, saved_output.count,
+		    (int)saved_output.count,
+		    &saved_output.data[saved_output.readp]);
+#endif
 
 	init_parse_variables(0);
 }
@@ -1044,10 +1042,7 @@ init_parse_variables(int initial)
 	if (result < 0)
 		err(2, "Poll of slave pty failed");
 	else if (result > 0)
-		fprintf(stderr,
-			"Warning: unexpected data from slave at line %zu"
-			" of file %s\n",
-			line, cur_file);
+		warnx("%s, %zu: Unexpected data from slave", cur_file, line);
 }
 
 /*
@@ -1389,13 +1384,9 @@ read_cmd_pipe(returns_t *response)
 		rfd[0].revents = 0;
 		rfd[1].revents = 0;
 
-		if (poll(rfd, 2, 4000) == 0) {
-			fprintf(stderr,
-				"command pipe read timeout on line %zu"
-				" of file %s\n",
-				line, cur_file);
-			exit(2);
-		}
+		if (poll(rfd, 2, 4000) == 0)
+			errx(2, "%s, %zu: Command pipe read timeout",
+			    cur_file, line);
 
 		if ((rfd[1].revents & POLLIN) == POLLIN) {
 			if (verbose)
@@ -1480,7 +1471,7 @@ save_slave_output(bool discard)
 		}
 
 		fd.revents = 0;
-		if (discard != true) {
+		if (!discard) {
 			if ((size_t)result >
 			    (saved_output.allocated - saved_output.count)) {
 				to_allocate = 1024 * ((result / 1024) + 1);
@@ -1494,13 +1485,13 @@ save_slave_output(bool discard)
 			}
 
 			if (verbose) {
-				fprintf(stderr, "count = %zu, allocated = %zu\n",
-					saved_output.count,
-					saved_output.allocated);
+				fprintf(stderr, "count = %zu, "
+				    "allocated = %zu\n", saved_output.count,
+				    saved_output.allocated);
 				for (i = 0; i < (size_t)result; i++) {
 					fprintf(stderr, "Saving slave output "
-						"0x%x (%c)\n", drain[i],
-						(drain[i] >= ' ')? drain[i] : '-');
+					    "0x%x (%c)\n", drain[i],
+					    (drain[i] >= ' ')? drain[i] : '-');
 				}
 			}
 
@@ -1509,17 +1500,17 @@ save_slave_output(bool discard)
 			saved_output.count += result;
 
 			if (verbose) {
-				fprintf(stderr, "count = %zu, allocated = %zu\n",
-					saved_output.count,
-					saved_output.allocated);
+				fprintf(stderr, "count = %zu, "
+				    "allocated = %zu\n", saved_output.count,
+				    saved_output.allocated);
 			}
 		} else {
 			if (verbose) {
 				for (i=0; i < (size_t)result; i++) {
 					fprintf(stderr, "Discarding slave "
-						"output 0x%x (%c)\n",
-						drain[i],
-						(drain[i] >= ' ')? drain[i] : '-');
+					    "output 0x%x (%c)\n",
+					    drain[i],
+					    (drain[i] >= ' ')? drain[i] : '-');
 				}
 			}
 		}
