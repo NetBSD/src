@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.429 2011/06/12 03:35:57 rmind Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.430 2011/06/17 14:23:51 manu Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.429 2011/06/12 03:35:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.430 2011/06/17 14:23:51 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.429 2011/06/12 03:35:57 rmind Exp
 #ifdef FILEASSOC
 #include <sys/fileassoc.h>
 #endif /* FILEASSOC */
+#include <sys/extattr.h>
 #include <sys/verified_exec.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
@@ -232,12 +233,12 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG);
+	    MNT_LOG | MNT_EXTATTR);
 	mp->mnt_flag |= flags &
 	   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG | MNT_IGNORE);
+	    MNT_LOG | MNT_EXTATTR | MNT_IGNORE);
 
 	error = VFS_MOUNT(mp, path, data, data_len);
 
@@ -275,6 +276,25 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	mutex_exit(&mp->mnt_updating);
 	vfs_unbusy(mp, false, NULL);
 
+	if ((error == 0) && !(saved_flags & MNT_EXTATTR) && 
+	    (flags & MNT_EXTATTR)) {
+		if (VFS_EXTATTRCTL(vp->v_mount, EXTATTR_CMD_START, 
+				   NULL, 0, NULL) != 0) {
+			printf("%s: failed to start extattr, error = %d",
+			       vp->v_mount->mnt_stat.f_mntonname, error);
+			mp->mnt_flag &= ~MNT_EXTATTR;
+		}
+	}
+
+	if ((error == 0) && (saved_flags & MNT_EXTATTR) && 
+	    !(flags & MNT_EXTATTR)) {
+		if (VFS_EXTATTRCTL(vp->v_mount, EXTATTR_CMD_STOP, 
+				   NULL, 0, NULL) != 0) {
+			printf("%s: failed to stop extattr, error = %d",
+			       vp->v_mount->mnt_stat.f_mntonname, error);
+			mp->mnt_flag |= MNT_RDONLY;
+		}
+	}
  out:
 	return (error);
 }
@@ -448,6 +468,14 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
 		    &data_len);
 		vfsopsrele = false;
+
+		if ((error == 0) && (flags & MNT_EXTATTR)) {
+			if (VFS_EXTATTRCTL(vp->v_mount, EXTATTR_CMD_START, 
+					   NULL, 0, NULL) != 0)
+				printf("%s: failed to start extattr",
+				       vp->v_mount->mnt_stat.f_mntonname);
+				/* XXX remove flag */
+		}
 	}
 
     done:
