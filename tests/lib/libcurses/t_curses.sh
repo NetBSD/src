@@ -3,11 +3,6 @@ h_run()
 {
 	file="$(atf_get_srcdir)/tests/${1}"
 
-	HOME=$(atf_get_srcdir)
-	CHECK_PATH=
-	INCLUDE_PATH=$(atf_get_srcdir)/tests
-	export CHECK_PATH INCLUDE_PATH HOME
-
 	$(atf_get_srcdir)/director \
 	    -T $(atf_get_srcdir) \
 	    -t atf \
