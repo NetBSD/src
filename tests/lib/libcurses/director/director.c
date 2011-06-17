@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.6 2011/06/17 02:15:28 christos Exp $	*/
+/*	$NetBSD: director.c,v 1.7 2011/06/17 16:59:51 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -199,16 +199,14 @@ main(int argc, char *argv[])
 
 	if (S_ISDIR(st.st_mode)) {
 		char tinfo[MAXPATHLEN];
-		snprintf(tinfo, sizeof(tinfo), "%s/%s", termpath,
-		    ".terminfo.db");
-		if (stat(tinfo, &st) == -1) {
-			snprintf(tinfo, sizeof(tinfo), "%s/%s", termpath,
-			    "terminfo.db");
-			if (stat(tinfo, &st) == -1)
-				err(1, "Cannot stat `%s/%s' or `%s/%s'",
-				    termpath, "terminfo.db", termpath,
-				    ".terminfo.db");
-		}
+		int l = snprintf(tinfo, sizeof(tinfo), "%s/%s", termpath,
+		    "terminfo.db");
+		if (stat(tinfo, &st) == -1)
+			err(1, "Cannot stat `%s'", tinfo);
+		if (l >= 3)
+			tinfo[l - 3] = '\0';
+		if (setenv("TERMINFO", tinfo, 1) != 0)
+			err(1, "Failed to set TERMINFO variable");
 	} else {
 		int fd;
 		char *tinfo;
@@ -218,7 +216,7 @@ main(int argc, char *argv[])
 			fd, 0)) == MAP_FAILED)
 			err(1, "Cannot map `%s'", termpath);
 		if (setenv("TERMINFO", tinfo, 1) != 0)
-			err(2, "Failed to set TERMINFO variable");
+			err(1, "Failed to set TERMINFO variable");
 		close(fd);
 		munmap(tinfo, (size_t)st.st_size);
 	}
