@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.81 2011/06/15 15:18:20 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.82 2011/06/17 19:04:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -157,7 +157,7 @@ struct cpu_info {
 #ifdef MULTIPROCESSOR
 
 struct cpu_hatch_data {
-	struct device *self;
+	device_t self;
 	struct cpu_info *ci;
 	int running;
 	int pir;
@@ -390,7 +390,7 @@ void md_presync_timebase(volatile struct cpu_hatch_data *);
 void md_start_timebase(volatile struct cpu_hatch_data *);
 void md_sync_timebase(volatile struct cpu_hatch_data *);
 void md_setup_interrupts(void);
-int cpu_spinup(struct device *, struct cpu_info *);
+int cpu_spinup(device_t, struct cpu_info *);
 register_t cpu_hatch(void);
 void cpu_spinup_trampoline(void);
 #endif
