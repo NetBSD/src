@@ -1,4 +1,4 @@
-.\"	$NetBSD: extattrctl.8,v 1.4 2011/06/17 14:23:52 manu Exp $
+.\"	$NetBSD: extattrctl.8,v 1.5 2011/06/17 18:20:40 wiz Exp $
 .\"
 .\" Copyright (c) 2000-2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" Developed by the TrustedBSD Project.
 .\" Support for file system extended attribute.
 .\"
-.Dd July 11, 2005
+.Dd June 17, 2011
 .Dt EXTATTRCTL 8
 .Os
 .Sh NAME
@@ -82,16 +82,17 @@ Start extended attribute support on the file system named using
 .Ar path .
 The file system must be a UFS1 file system, and the
 .Dv UFS_EXTATTR
-kernel option must have been enabled. If 
-.Pa .attribute/user 
-and 
+kernel option must have been enabled.
+If
+.Pa .attribute/user
+and
 .Pa .attribute/system
-exist at the filesystem root, extended attribute backed by files
-in theses directories will be automatically enabled. Note that
-extended attributes can be automatically started at mount time 
-by using the 
+exist at the filesystem root, extended attributes backed by files
+in these directories will be automatically enabled.
+Note that extended attributes can be automatically started at mount
+time by using the
 .Cm -o extattr
-option to 
+option to
 .Xr mount 8 .
 .It Cm stop Ar path
 Stop extended attribute support on the file system named using
@@ -121,7 +122,7 @@ from denying attribute service.
 This file should not exist before running
 .Cm initattr .
 .Pp
-When a user attempt to set a
+When a user attempts to set a
 .Dq user
 or
 .Dq system
@@ -130,7 +131,7 @@ the kernel will attempt to automatically create it, provided
 .Pa .attribute/user
 or
 .Pa .attribute/system
-exist and are writtable by the  requesting user.
+exist and are writable by the requesting user.
 .It Cm showattr Ar attrfile
 Show the attribute header values in the attribute file named by
 .Ar attrfile .
@@ -192,9 +193,9 @@ Disable the attribute named md5 on the root file system.
 .Pp
 Stop extended attributes on the root file system.
 .Sh SEE ALSO
+.Xr getextattr 1 ,
 .Xr extattr_get_file 2 ,
 .\" .Xr ffs 7 ,
-.Xr getextattr 8 ,
 .Xr extattr 9
 .Sh HISTORY
 Extended attribute support was developed as part of the TrustedBSD
@@ -203,9 +204,9 @@ Project, and introduced in
 and
 .Nx 4.0 .
 It was developed to support security extensions requiring additional
-labels to be associated with each file or directory. Backing file
-autocreation was added in
-.Nx 6.0
+labels to be associated with each file or directory.
+Backing file autocreation was added in
+.Nx 6.0 .
 .Sh AUTHORS
 .An Robert N M Watson
 .Sh BUGS
