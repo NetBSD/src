@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.32 2011/06/12 20:38:10 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.33 2011/06/17 23:12:40 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,13 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.32 2011/06/12 20:38:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.33 2011/06/17 23:12:40 matt Exp $");
 
 #include "opt_altivec.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/ptrace.h>
 
 #include <machine/fpu.h>
@@ -88,10 +89,12 @@ process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 	if (!fpu_used_p(l)) {
 		memset(fpregs, 0, sizeof (*fpregs));
 #ifdef PPC_HAVE_FPU
-	} else {
-		KASSERTMSG(l == curlwp,
-		    ("%s: l (%p) != curlwp (%p)", __func__, l, curlwp));
+	} else if (l == curlwp) {
 		fpu_save();
+	} else {
+		KASSERTMSG(l->l_pcu_cpu[PCU_FPU] == NULL,
+		    ("%s: FPU of l (%p) active on cpu%u",
+		     __func__, l, cpu_index(l->l_pcu_cpu[PCU_FPU])));
 #endif
 	}
 	*fpregs = pcb->pcb_fpu;
@@ -156,9 +159,13 @@ process_machdep_read_vecregs(struct lwp *l, struct vreg *vregs)
 	/* Is the process using AltiVEC? */
 	if (!vec_used_p(l)) {
 		memset(vregs, 0, sizeof (*vregs));
-	} else {
+	} else if (l == curlwp) {
 		vec_save();
 		*vregs = pcb->pcb_vr;
+	} else {
+		KASSERTMSG(l->l_pcu_cpu[PCU_VEC] == NULL,
+		    ("%s: VEC of l (%p) active on cpu%u",
+		     __func__, l, cpu_index(l->l_pcu_cpu[PCU_FPU])));
 	}
 	vec_mark_used(l);
 
