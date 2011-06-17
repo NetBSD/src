@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.88 2011/06/15 05:48:31 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.89 2011/06/17 18:59:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88 2011/06/15 05:48:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.89 2011/06/17 18:59:33 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -286,6 +286,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 void *
 cpu_uarea_alloc(bool system)
 {
+#ifdef PMAP_MAP_POOLPAGE
 	struct pglist pglist;
 	int error;
 
@@ -312,6 +313,9 @@ cpu_uarea_alloc(bool system)
 	 */
 
 	return (void *)(uintptr_t)PMAP_MAP_POOLPAGE(pa);
+#else
+	return NULL;
+#endif
 }
 
 /*
@@ -320,6 +324,7 @@ cpu_uarea_alloc(bool system)
 bool
 cpu_uarea_free(void *vva)
 {
+#ifdef PMAP_UNMAP_POOLPAGE
 	vaddr_t va = (vaddr_t) vva;
 	if (va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS)
 		return false;
@@ -334,5 +339,8 @@ cpu_uarea_free(void *vva)
 		uvm_pagefree(pg);
 	}
 	return true;
+#else
+	return false;
+#endif
 }
 #endif /* __HAVE_CPU_UAREA_ROUTINES */
