@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.4 2011/06/16 19:47:31 kefren Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.5 2011/06/17 09:15:24 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.4 2011/06/16 19:47:31 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.5 2011/06/17 09:15:24 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -396,11 +396,11 @@ mpls_send_frame(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt)
 	}
 
 	switch(ifp->if_type) {
-	/* only these two are supported for now */
+	/* only these are supported for now */
 	case IFT_ETHER:
 	case IFT_TUNNEL:
-		return (*ifp->if_output)(ifp, m, rt->rt_gateway, rt);
 	case IFT_LOOP:
+		return (*ifp->if_output)(ifp, m, rt->rt_gateway, rt);
 		break;
 	default:
 		return ENETUNREACH;
