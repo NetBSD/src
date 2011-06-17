@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.31 2011/06/15 12:54:32 manu Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.32 2011/06/17 14:23:52 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.31 2011/06/15 12:54:32 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.32 2011/06/17 14:23:52 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.31 2011/06/15 12:54:32 manu Exp $"
 static MALLOC_JUSTDEFINE(M_UFS_EXTATTR, "ufs_extattr","ufs extended attribute");
 
 int ufs_extattr_sync = 1;
+int ufs_extattr_autocreate = 1024;
 
 static int	ufs_extattr_valid_attrname(int attrnamespace,
 		    const char *attrname);
@@ -149,7 +150,6 @@ ufs_extattr_valid_attrname(int attrnamespace, const char *attrname)
 	return (1);
 }
 
-#ifdef UFS_EXTATTR_AUTOCREATE
 /*
  * Autocreate an attribute storage
  */
@@ -236,7 +236,7 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 
 	uef.uef_magic = UFS_EXTATTR_MAGIC;
 	uef.uef_version = UFS_EXTATTR_VERSION;
-	uef.uef_size = UFS_EXTATTR_AUTOCREATE;
+	uef.uef_size = ufs_extattr_autocreate;
 
 	error = vn_rdwr(UIO_WRITE, backing_vp, &uef, sizeof(uef), 0,
 		        UIO_SYSSPACE, IO_NODELOCKED|IO_APPEND, 
@@ -283,7 +283,6 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 
 	return uele;
 }
-#endif /* UFS_EXTATTR_AUTOCREATE */
 
 /*
  * Locate an attribute given a name and mountpoint.
@@ -380,7 +379,6 @@ ufs_extattr_start(struct mount *mp, struct lwp *l)
 	return (error);
 }
 
-#ifdef UFS_EXTATTR_AUTOSTART
 /*
  * Helper routine: given a locked parent directory and filename, return
  * the locked vnode of the inode associated with the name.  Will not
@@ -442,7 +440,6 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 	*vp = target_vp;
 	return (0);
 }
-#endif /* !UFS_EXTATTR_AUTOSTART */
 
 /*
  * Enable an EA using the passed filesystem, backing vnode, attribute name,
@@ -479,7 +476,6 @@ ufs_extattr_enable_with_open(struct ufsmount *ump, struct vnode *vp,
 	return (error);
 }
 
-#ifdef UFS_EXTATTR_AUTOSTART
 /*
  * Given a locked directory vnode, iterate over the names in the directory
  * and use ufs_extattr_lookup() to retrieve locked vnodes of potential
@@ -680,7 +676,6 @@ ufs_extattr_autostart(struct mount *mp, struct lwp *l)
 
 	return (error);
 }
-#endif /* !UFS_EXTATTR_AUTOSTART */
 
 /*
  * Stop extended attribute support on an FS.
@@ -879,11 +874,7 @@ ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename_vp,
 		if (attrname != NULL)
 			return (EINVAL);
 
-#ifdef UFS_EXTATTR_AUTOSTART
 		error = ufs_extattr_autostart(mp, l);
-#else
-		error = ufs_extattr_start(mp, l);
-#endif
 		return (error);
 		
 	case UFS_EXTATTR_CMD_STOP:
@@ -1207,14 +1198,10 @@ ufs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
 
 	attribute = ufs_extattr_find_attr(ump, attrnamespace, name);
 	if (!attribute) {
-#ifdef UFS_EXTATTR_AUTOCREATE
 		attribute =  ufs_extattr_autocreate_attr(vp, attrnamespace, 
 							 name, l);
 		if  (!attribute)
 			return (ENOATTR);
-#else /* UFS_EXTATTR_AUTOCREATE */
-		return (ENOATTR);
-#endif /* UFS_EXTATTR_AUTOCREATE */
 	}
 
 	/*
