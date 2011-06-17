@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.69 2011/06/05 16:52:26 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.70 2011/06/17 05:10:53 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1084,8 +1084,6 @@ _C_LABEL(sctrapexit):
 	ldreg	%r12,(savearea+CPUSAVE_SRR1)(%r2); /* get saved SRR1 */	\
 	ldptr	%r13,CI_CURLWP(%r2);	/* get curlwp */	\
 	ldint	%r3,CI_IDEPTH(%r2);					\
-	addi	%r4,%r3,1;						\
-	stint	%r4,CI_IDEPTH(%r2);					\
 	stint	%r3,FRAME_IDEPTH(%r1);					\
 	mfxer	%r3;							\
 	mfctr	%r4;							\
@@ -1117,22 +1115,12 @@ intr_exit:
 	mtmsr	%r3
 	isync
 
-	GET_CPUINFO(%r5)
-	ldint	%r4,CI_IDEPTH(%r5)
-	addi	%r4,%r4,-1		/* adjust reentrancy count */
-	stint	%r4,CI_IDEPTH(%r5)
-
 /* Returning to user mode? */
 	ldreg	%r4,FRAME_SRR1(%r1)
 	mtcr	%r4			/* saved SRR1 */
 	bf	MSR_PR,intrleave	/* branch if PSL_PR is false */
 
-#if 0
-	ldptr	%r3,CI_CURLWP(%r5)
-	ldint	%r3,L_MD_ASTPENDING(%r3) /* Test AST pending */
-#else
 	ldint	%r3,L_MD_ASTPENDING(%r13) /* Test AST pending */
-#endif
 	andi.	%r3,%r3,1
 	beq	intrleave		/* common frame exit */
 
@@ -1166,7 +1154,7 @@ intr_exit:
 	li	%r6,EXC_AST
 	stint	%r6,FRAME_EXC(%r1)
 
-	mr	%r31, %r5		/* trapagain wants SRR1 in %r31 */
+	mr	%r31, %r4		/* trapagain wants SRR1 in %r31 */
 	b	trapagain
 
 /*
