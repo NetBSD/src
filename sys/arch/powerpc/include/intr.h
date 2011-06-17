@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2011/06/17 05:15:22 matt Exp $ */
+/*	$NetBSD: intr.h,v 1.8 2011/06/17 23:36:17 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.7 2011/06/17 05:15:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.8 2011/06/17 23:36:17 matt Exp $");
 #endif
 
 #ifndef POWERPC_INTR_MACHDEP_H
@@ -60,10 +60,6 @@ void genppc_cpu_configure(void);
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-#ifdef _LOCORE
-#define splhigh __splhigh
-#endif
-
 #ifndef _LOCORE
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
@@ -74,7 +70,7 @@ struct intrhand {
 	void	*ih_arg;
 	struct	intrhand *ih_next;
 	int	ih_ipl;
-	int	ih_irq;
+	int	ih_virq;
 };
 
 int splraise(int);
@@ -86,16 +82,24 @@ void softint_fast_dispatch(struct lwp *, int);
 #define softint_init_md	powerpc_softint_init_md
 #define softint_trigger		powerpc_softint_trigger
 
-typedef u_int imask_t;
+#ifdef __IMASK_T
+typedef __IMASK_T imask_t;
+#else
+typedef uint32_t imask_t;
+#endif
+
 extern imask_t imask[];
 
-#define NVIRQ		32	/* 32 virtual IRQs */
+#define NVIRQ		(sizeof(imask_t)*8)	/* 32 virtual IRQs */
+#ifndef NIRQ
 #define NIRQ		128	/* up to 128 HW IRQs */
+#endif
 
-#define HWIRQ_MAX       (NVIRQ - 5 - 1)
-#define HWIRQ_MASK      0x07ffffff
+#define HWIRQ_MAX       (NVIRQ - 1)
+#define HWIRQ_MASK     	(~(imask_t)0 >> 1)
 
-#define MS_PENDING(p)	(31 - cntlzw(p))
+#define	PIC_VIRQ_TO_MASK(v)	__BIT(HWIRQ_MAX - (v))
+#define PIC_VIRQ_MS_PENDING(p)	__builtin_clz(p)
 
 #define spl0()		spllower(0)
 

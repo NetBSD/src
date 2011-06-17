@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.29 2011/06/17 05:18:10 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.30 2011/06/17 23:36:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,8 +32,6 @@
 #ifndef _MACPPC_INTR_H_
 #define _MACPPC_INTR_H_
 
-#include <powerpc/intr.h>
-
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
 #endif
@@ -58,5 +56,7 @@ int init_grandcentral(void);
 void setup_hammerhead_ipi(void);
 #endif
 #endif /* _LOCORE */
+
+#include <powerpc/intr.h>
 
 #endif /* _MACPPC_INTR_H_ */

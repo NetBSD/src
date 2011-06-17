@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_pnpbus.c,v 1.5 2009/03/14 21:04:14 dsl Exp $	*/
+/*	$NetBSD: if_we_pnpbus.c,v 1.6 2011/06/17 23:36:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.5 2009/03/14 21:04:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.6 2011/06/17 23:36:18 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -238,7 +238,7 @@ we_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 		/* some cards think they are level.  force them to edge */
 		if (irq->flags & 0x0c)
 			irq->flags = 0x01;
-		if (!LEGAL_IRQ(irqnum))
+		if (!LEGAL_HWIRQ_P(irqnum))
 			continue;
 		if (irqnum < 2)
 			continue;
