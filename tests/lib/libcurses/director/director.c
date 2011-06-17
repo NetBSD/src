@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.5 2011/06/11 18:03:18 christos Exp $	*/
+/*	$NetBSD: director.c,v 1.6 2011/06/17 02:15:28 christos Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -29,6 +29,9 @@
  *
  */
 
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -93,19 +96,21 @@ slave_died(int param)
 
 
 static void
-usage(char *name)
+usage(void)
 {
-	fprintf(stderr, "Curses automated test director\n");
-	fprintf(stderr, "%s [-v] [-p termcappath] [-s pathtoslave] [-t term]"
-		" commandfile\n", name);
+	fprintf(stderr, "Usage: %s [-v] [-I include-path] [-C check-path] "
+	    "[-T terminfo-file] [-s pathtoslave] [-t term] "
+	    "commandfile\n", getprogname());
 	fprintf(stderr, " where:\n");
 	fprintf(stderr, "    -v enables verbose test output\n");
-	fprintf(stderr, "    termcappath is the path to the directory"
-		"holding the termpcap file\n");
-	fprintf(stderr, "    pathtoslave is the path to the slave exectuable\n");
-	fprintf(stderr, "    term is value to set TERM to for the test\n");
+	fprintf(stderr, "    -T is a directory containing the terminfo.db "
+	    "file, or a file holding the terminfo description n");
+	fprintf(stderr, "    -s is the path to the slave executable\n");
+	fprintf(stderr, "    -t is value to set TERM to for the test\n");
+	fprintf(stderr, "    -I is the directory to include files\n");
+	fprintf(stderr, "    -C is the directory for config files\n");
 	fprintf(stderr, "    commandfile is a file of test directives\n");
-	exit(2);
+	exit(1);
 }
 
 
@@ -114,71 +119,108 @@ main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
-	char *termpath, *term, *slave;
+	const char *termpath, *term, *slave;
 	int ch;
 	pid_t slave_pid;
 	extern FILE *yyin;
 	char *arg1, *arg2, *arg3, *arg4;
 	struct termios term_attr;
+	struct stat st;
 
 	termpath = term = slave = NULL;
 	verbose = 0;
 
-	while ((ch = getopt(argc, argv, "vp:s:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "vC:I:p:s:t:T:")) != -1) {
 		switch(ch) {
+		case 'I':
+			include_path = optarg;
+			break;
+		case 'C':
+			check_path = optarg;
+			break;
+		case 'T':
+			termpath = optarg;
+			break;
 		case 'p':
-			asprintf(&termpath, "%s", optarg);
+			termpath = optarg;
 			break;
 		case 's':
-			asprintf(&slave, "%s", optarg);
+			slave = optarg;
 			break;
 		case 't':
-			asprintf(&term, "%s", optarg);
+			term = optarg;
 			break;
 		case 'v':
 			verbose = 1;
 			break;
 		case '?':
 		default:
-			usage(argv[0]);
+			usage();
 			break;
 		}
 	}
 
+	argc -= optind;
+	argv += optind;
+	if (argc < 1)
+		usage();
+
 	if (termpath == NULL)
-		asprintf(&termpath, "%s", DEF_TERMPATH);
+		termpath = DEF_TERMPATH;
 
 	if (slave == NULL)
-		asprintf(&slave, "%s", DEF_SLAVE);
+		slave = DEF_SLAVE;
 
 	if (term == NULL)
-		asprintf(&term, "%s", DEF_TERM);
+		term = DEF_TERM;
 
-	argc -= optind;
-	if (argc < 1)
-		usage(argv[0]);
+	if (check_path == NULL)
+		check_path = getenv("CHECK_PATH");
+	if ((check_path == NULL) || (check_path[0] == '\0')) {
+		warn("$CHECK_PATH not set, defaulting to %s", def_check_path);
+		check_path = def_check_path;
+	}
+
+	if (include_path == NULL)
+		include_path = getenv("INCLUDE_PATH");
+	if ((include_path == NULL) || (include_path[0] == '\0')) {
+		warn("$INCLUDE_PATH not set, defaulting to %s",
+			def_include_path);
+		include_path = def_include_path;
+	}
 
 	signal(SIGCHLD, slave_died);
-
-	argv += optind;
 
 	if (setenv("TERM", term, 1) != 0)
 		err(2, "Failed to set TERM variable");
 
-	check_path = getenv("CHECK_PATH");
-	if ((check_path == NULL) || (check_path[0] == '\0')) {
-		fprintf(stderr,
-			"WARNING: CHECK_PATH not set, defaulting to %s\n",
-			def_check_path);
-		check_path = def_check_path;
-	}
+	if (stat(termpath, &st) == -1)
+		err(1, "Cannot stat %s", termpath);
 
-	include_path = getenv("INCLUDE_PATH");
-	if ((include_path == NULL) || (include_path[0] == '\0')) {
-		fprintf(stderr,
-			"WARNING: INCLUDE_PATH not set, defaulting to %s\n",
-			def_include_path);
-		include_path = def_include_path;
+	if (S_ISDIR(st.st_mode)) {
+		char tinfo[MAXPATHLEN];
+		snprintf(tinfo, sizeof(tinfo), "%s/%s", termpath,
+		    ".terminfo.db");
+		if (stat(tinfo, &st) == -1) {
+			snprintf(tinfo, sizeof(tinfo), "%s/%s", termpath,
+			    "terminfo.db");
+			if (stat(tinfo, &st) == -1)
+				err(1, "Cannot stat `%s/%s' or `%s/%s'",
+				    termpath, "terminfo.db", termpath,
+				    ".terminfo.db");
+		}
+	} else {
+		int fd;
+		char *tinfo;
+		if ((fd = open(termpath, O_RDONLY)) == -1)
+			err(1, "Cannot open `%s'", termpath);
+		if ((tinfo = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_FILE,
+			fd, 0)) == MAP_FAILED)
+			err(1, "Cannot map `%s'", termpath);
+		if (setenv("TERMINFO", tinfo, 1) != 0)
+			err(2, "Failed to set TERMINFO variable");
+		close(fd);
+		munmap(tinfo, (size_t)st.st_size);
 	}
 
 	if (pipe(cmdpipe) < 0)
