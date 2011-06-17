@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.74 2011/06/16 09:21:03 hannken Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.75 2011/06/17 09:50:52 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.74 2011/06/16 09:21:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.75 2011/06/17 09:50:52 hannken Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -507,8 +507,6 @@ again:
 		 */
 
 		if (oobj != NULL) {
-			LIST_REMOVE(umap, hash);
-			LIST_REMOVE(umap, list);
 			if (umap->flags & UMAP_MAPPING_CACHED) {
 				umap->flags &= ~UMAP_MAPPING_CACHED;
 				mutex_enter(oobj->vmobjlock);
@@ -517,6 +515,8 @@ again:
 				pmap_update(pmap_kernel());
 				mutex_exit(oobj->vmobjlock);
 			}
+			LIST_REMOVE(umap, hash);
+			LIST_REMOVE(umap, list);
 		} else {
 			KASSERT((umap->flags & UMAP_MAPPING_CACHED) == 0);
 		}
