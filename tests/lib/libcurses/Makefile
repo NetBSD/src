@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/04/10 09:55:08 blymn Exp $
+# $NetBSD: Makefile,v 1.2 2011/06/17 16:59:51 christos Exp $
 
 NOMAN=		# defined
 
@@ -9,7 +9,7 @@ SUBDIR=		director slave tests check_files
 TESTSDIR=	${TESTSBASE}/lib/libcurses
 
 TEST_TERMINFO=	atf.terminfo
-TERMINFO_DB=	.terminfo
+TERMINFO_DB=	terminfo
 TERMINFODIR=	${TESTSDIR}
 
 FILESDIR=	${TESTSDIR}
