@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.43 2011/06/17 05:11:48 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.44 2011/06/17 23:14:40 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -314,7 +314,8 @@ _ENTRY(softint_cleanup)
 	ldreg	%r0, CFRAME_LR(%r1)
 	mtlr	%r0
 #if IPL_SCHED != IPL_HIGH
-	b	_C_LABEL(splhigh)
+	li	%r3, IPL_HIGH
+	b	_C_LABEL(splraise)
 #else
 	blr
 #endif /* IPL SCHED != IPL_HIGH */
