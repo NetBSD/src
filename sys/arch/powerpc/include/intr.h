@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2011/06/16 02:43:42 macallan Exp $ */
+/*	$NetBSD: intr.h,v 1.7 2011/06/17 05:15:22 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.6 2011/06/16 02:43:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.7 2011/06/17 05:15:22 matt Exp $");
 #endif
 
 #ifndef POWERPC_INTR_MACHDEP_H
@@ -73,7 +73,7 @@ struct intrhand {
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	struct	intrhand *ih_next;
-	int	ih_level;
+	int	ih_ipl;
 	int	ih_irq;
 };
 

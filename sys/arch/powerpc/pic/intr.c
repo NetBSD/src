@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13 2011/06/16 04:37:48 matt Exp $ */
+/*	$NetBSD: intr.c,v 1.14 2011/06/17 05:15:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2011/06/16 04:37:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.14 2011/06/17 05:15:23 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -75,9 +75,7 @@ static struct intr_source intrsources[NVIRQ];
 void
 pic_init(void)
 {
-	int i;
-
-	for (i = 0; i < NIRQ; i++)
+	for (u_int i = 0; i < NIRQ; i++)
 		virq[i] = 0;
 	memset(intrsources, 0, sizeof(intrsources));
 }
@@ -113,18 +111,12 @@ pic_finish_setup(void)
 static struct pic_ops *
 find_pic_by_irq(int irq)
 {
-	struct pic_ops *current;
-	int base = 0;
-
-	while (base < num_pics) {
-
-		current = pics[base];
-		if ((irq >= current->pic_intrbase) &&
-		    (irq < (current->pic_intrbase + current->pic_numintrs))) {
-
-			return current;
+	for (u_int base = 0; base < num_pics; base++) {
+		struct pic_ops * const pic = pics[base];
+		if (pic->pic_intrbase <= irq
+		    && irq < pic->pic_intrbase + pic->pic_numintrs) {
+			return pic;
 		}
-		base++;
 	}
 	return NULL;
 }
@@ -140,17 +132,17 @@ fakeintr(void *arg)
  * Register an interrupt handler.
  */
 void *
-intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
+intr_establish(int hwirq, int type, int ipl, int (*ih_fun)(void *),
     void *ih_arg)
 {
 	struct intrhand **p, *q, *ih;
 	struct intr_source *is;
 	struct pic_ops *pic;
 	static struct intrhand fakehand;
-	int irq, maxlevel = level;
+	int irq, maxipl = ipl;
 
-	if (maxlevel == IPL_NONE)
-		maxlevel = IPL_HIGH;
+	if (maxipl == IPL_NONE)
+		maxipl = IPL_HIGH;
 
 	if (hwirq >= max_base) {
 
@@ -204,8 +196,7 @@ intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
 	 * generally small.
 	 */
 	for (p = &is->is_hand; (q = *p) != NULL; p = &q->ih_next) {
-
-		maxlevel = max(maxlevel, q->ih_level);
+		maxipl = max(maxipl, q->ih_ipl);
 	}
 
 	/*
@@ -213,7 +204,7 @@ intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
 	 * this with interrupts enabled and don't want the real routine called
 	 * until masking is set up.
 	 */
-	fakehand.ih_level = level;
+	fakehand.ih_ipl = ipl;
 	fakehand.ih_fun = fakeintr;
 	*p = &fakehand;
 
@@ -223,13 +214,18 @@ intr_establish(int hwirq, int type, int level, int (*ih_fun)(void *),
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
 	ih->ih_next = NULL;
-	ih->ih_level = level;
+	ih->ih_ipl = ipl;
 	ih->ih_irq = irq;
 	*p = ih;
 
 	if (pic->pic_establish_irq != NULL)
 		pic->pic_establish_irq(pic, hwirq - pic->pic_intrbase,
-		    is->is_type, maxlevel);
+		    is->is_type, maxipl);
+
+	/*
+	 * Remember the highest IPL used by this handler.
+	 */
+	is->is_ipl = maxipl;
 
 	/*
 	 * now that the handler is established we're actually ready to
@@ -252,10 +248,11 @@ dummy_pic_establish_intr(struct pic_ops *pic, int irq, int type, int pri)
 void
 intr_disestablish(void *arg)
 {
-	struct intrhand *ih = arg;
-	int irq = ih->ih_irq;
-	struct intr_source *is = &intrsources[irq];
-	struct intrhand **p, *q;
+	struct intrhand * const ih = arg;
+	const int irq = ih->ih_irq;
+	struct intr_source * const is = &intrsources[irq];
+	struct intrhand **p, **q;
+	int maxipl = IPL_NONE;
 
 	if (!LEGAL_VIRQ(irq))
 		panic("intr_disestablish: bogus irq %d", irq);
@@ -264,13 +261,24 @@ intr_disestablish(void *arg)
 	 * Remove the handler from the chain.
 	 * This is O(n^2), too.
 	 */
-	for (p = &is->is_hand; (q = *p) != NULL && q != ih; p = &q->ih_next)
-		;
+	for (p = &is->is_hand, q = NULL; (*p) != NULL; p = &(*p)->ih_next) {
+		struct intrhand * const tmp_ih = *p;
+		if (tmp_ih == ih) {
+			q = p;
+		} else {
+			maxipl = max(maxipl, tmp_ih->ih_ipl);
+		}
+	}
 	if (q)
-		*p = q->ih_next;
+		*q = ih->ih_next;
 	else
 		panic("intr_disestablish: handler not registered");
 	free((void *)ih, M_DEVBUF);
+
+	/*
+	 * Reset the IPL for this source now that we've removed a handler.
+	 */
+	is->is_ipl = maxipl;
 
 	intr_calculatemasks();
 
@@ -336,88 +344,59 @@ intr_typename(int type)
 static void
 intr_calculatemasks(void)
 {
+	imask_t newmask[NIPL] = { [IPL_NONE...IPL_HIGH] = 0 };
 	struct intr_source *is;
-	struct intrhand *q;
-	struct pic_ops *current;
-	int irq, level, i, base;
+	int irq;
 
-	/* First, figure out which levels each IRQ uses. */
-	for (irq = 0, is = intrsources; irq < NVIRQ; irq++, is++) {
-		register int levels = 0;
-		for (q = is->is_hand; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
-		is->is_level = levels;
+	for (u_int ipl = IPL_NONE; ipl < NIPL; ipl++) {
+		newmask[ipl] = 0;
 	}
 
-	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < NIPL; level++) {
-		register imask_t irqs = 0;
-		for (irq = 0, is = intrsources; irq < NVIRQ; irq++, is++)
-			if (is->is_level & (1 << level))
-				irqs |= 1ULL << irq;
-		imask[level] = irqs;
+	/* First, figure out which ipl each IRQ uses. */
+	for (irq = 0, is = intrsources; irq < NVIRQ; irq++, is++) {
+		newmask[is->is_ipl] |= 1ULL << irq;
 	}
 
 	/*
 	 * IPL_NONE is used for hardware interrupts that are never blocked,
 	 * and do not block anything else.
 	 */
-	imask[IPL_NONE] = 0;
+	newmask[IPL_NONE] = 0;
 
-#ifdef SLOPPY_IPLS
-	/*
-	 * Enforce a sloppy hierarchy as in spl(9)
-	 */
-	/* everything above softclock must block softclock */
-	for (i = IPL_SOFTCLOCK; i < NIPL; i++)
-		imask[i] |= imask[IPL_SOFTCLOCK];
-
-	/* everything above softnet must block softnet */
-	for (i = IPL_SOFTNET; i < NIPL; i++)
-		imask[i] |= imask[IPL_SOFTNET];
-
-	/* IPL_TTY must block softserial */
-	imask[IPL_TTY] |= imask[IPL_SOFTSERIAL];
-
-	/* IPL_VM must block net, block IO and tty */
-	imask[IPL_VM] |= (imask[IPL_NET] | imask[IPL_BIO] | imask[IPL_TTY]);
-
-	/* IPL_SERIAL must block IPL_TTY */
-	imask[IPL_SERIAL] |= imask[IPL_TTY];
-
-	/* IPL_HIGH must block all other priority levels */
-	for (i = IPL_NONE; i < IPL_HIGH; i++)
-		imask[IPL_HIGH] |= imask[i];
-#else	/* !SLOPPY_IPLS */
 	/*
 	 * strict hierarchy - all IPLs block everything blocked by any lower
 	 * IPL
 	 */
-	for (i = 1; i < NIPL; i++)
-		imask[i] |= imask[i - 1];
-#endif	/* !SLOPPY_IPLS */
+	for (u_int ipl = 1; ipl < NIPL; ipl++) {
+		newmask[ipl] |= newmask[ipl - 1];
+	}
 
 #ifdef DEBUG_IPL
-	for (i = 0; i < NIPL; i++) {
-		printf("%2d: %08x\n", i, imask[i]);
+	for (u_int ipl = 0; ipl < NIPL; ipl++) {
+		printf("%u: %08x -> %08x\n", ipl, imask[ipl], newmask[ipl]);
 	}
 #endif
 
-	/* And eventually calculate the complete masks. */
-	for (irq = 0, is = intrsources; irq < NVIRQ; irq++, is++) {
-		register imask_t irqs = 1ULL << irq;
-		for (q = is->is_hand; q; q = q->ih_next)
-			irqs |= imask[q->ih_level];
-		is->is_mask = irqs;
+	/*
+	 * Disable all interrupts.
+	 */
+	for (u_int base = 0; base < num_pics; base++) {
+		struct pic_ops * const pic = pics[base];
+		for (u_int i = 0; i < pic->pic_numintrs; i++) {
+			pic->pic_disable_irq(pic, i);
+		}
 	}
 
-	/* Lastly, enable IRQs actually in use. */
-	for (base = 0; base < num_pics; base++) {
-		current = pics[base];
-		for (i = 0; i < current->pic_numintrs; i++)
-			current->pic_disable_irq(current, i);
+	/*
+	 * Now that all interrupts are disabled, update the ipl masks.
+	 */
+	for (u_int ipl = 0; ipl < NIPL; ipl++) {
+		imask[ipl] = newmask[ipl];
 	}
 
+	/*
+	 * Lastly, enable IRQs actually in use.
+	 */
 	for (irq = 0, is = intrsources; irq < NVIRQ; irq++, is++) {
 		if (is->is_hand)
 			pic_enable_irq(is->is_hwirq);
@@ -482,8 +461,8 @@ again:
 #endif
 
 	/* Do now unmasked pendings */
-	ci->ci_idepth++;
 	while ((hwpend = (ci->ci_ipending & ~imask[pcpl] & HWIRQ_MASK)) != 0) {
+		ci->ci_idepth++;
 		/* Get most significant pending bit */
 		irq = MS_PENDING(hwpend);
 		KASSERT(irq <= virq_max);
@@ -495,7 +474,7 @@ again:
 		is = &intrsources[irq];
 		pic = is->is_pic;
 
-		splraise(is->is_level);
+		splraise(is->is_ipl);
 		mtmsr(emsr);
 		ih = is->is_hand;
 		while (ih) {
@@ -506,11 +485,11 @@ again:
 					irq, is->is_hwirq, is);
 			}
 #endif
-			if (ih->ih_level == IPL_VM) {
+			if (ih->ih_ipl == IPL_VM) {
 				KERNEL_LOCK(1, NULL);
 			}
 			(*ih->ih_fun)(ih->ih_arg);
-			if (ih->ih_level == IPL_VM) {
+			if (ih->ih_ipl == IPL_VM) {
 				KERNEL_UNLOCK_ONE(NULL);
 			}
 			ih = ih->ih_next;
@@ -521,8 +500,8 @@ again:
 		is->is_ev.ev_count++;
 		pic->pic_reenable_irq(pic, is->is_hwirq - pic->pic_intrbase,
 		    is->is_type);
+		ci->ci_idepth--;
 	}
-	ci->ci_idepth--;
 
 #ifdef __HAVE_FAST_SOFTINTS
 #if 0
@@ -626,7 +605,7 @@ start:
 		ci->ci_ipending &= ~r_imen;
 		ci->ci_idepth++;
 
-		splraise(is->is_level);
+		splraise(is->is_ipl);
 		mtmsr(msr | PSL_EE);
 		ih = is->is_hand;
 		bail = 0;
@@ -634,11 +613,11 @@ start:
 			if (ih->ih_fun == NULL)
 				panic("bogus handler for IRQ %s %d",
 				    pic->pic_name, realirq);
-			if (ih->ih_level == IPL_VM) {
+			if (ih->ih_ipl == IPL_VM) {
 				KERNEL_LOCK(1, NULL);
 			}
 			(*ih->ih_fun)(ih->ih_arg);
-			if (ih->ih_level == IPL_VM) {
+			if (ih->ih_ipl == IPL_VM) {
 				KERNEL_UNLOCK_ONE(NULL);
 			}
 			ih = ih->ih_next;
