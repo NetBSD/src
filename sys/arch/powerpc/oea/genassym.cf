@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.21 2011/06/16 04:38:21 matt Exp $
+#	$NetBSD: genassym.cf,v 1.22 2011/06/17 23:15:09 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,6 +50,9 @@ include <machine/pmap.h>
 
 include <powerpc/cpu.h>
 include <powerpc/oea/cpufeat.h>
+
+define	IPL_HIGH	IPL_HIGH
+define	IPL_SCHED	IPL_SCHED
 
 define	FRAMELEN	FRAMELEN
 define	FRAME_TF	offsetof(struct ktrapframe, ktf_tf)
