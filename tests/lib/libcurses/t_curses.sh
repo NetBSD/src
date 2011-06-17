@@ -10,7 +10,6 @@ h_run()
 
 	$(atf_get_srcdir)/director \
 	    -T $(atf_get_srcdir) \
-	    -v \
 	    -t atf \
 	    -I $(atf_get_srcdir)/tests \
 	    -C $(atf_get_srcdir)/check_files \
