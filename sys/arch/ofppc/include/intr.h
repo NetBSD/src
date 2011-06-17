@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2011/06/05 16:52:24 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2011/06/17 23:36:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -32,21 +32,19 @@
 #ifndef	_OFPPC_INTR_H_
 #define	_OFPPC_INTR_H_
 
+#ifndef _LOCORE
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
 #endif
-
-#include <powerpc/intr.h>
-
-#ifndef _LOCORE
 #ifdef MULTIPROCESSOR
 #include <powerpc/pic/ipivar.h>
 #endif
-#include <machine/cpu.h>
 
 #define ICU_LEN		32
 #define IRQ_SLAVE	2
 
 #endif
+
+#include <powerpc/intr.h>
 
 #endif	/* _OFPPC_INTR_H_ */
