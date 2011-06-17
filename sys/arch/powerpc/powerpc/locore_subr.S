@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.42 2011/06/05 16:52:26 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.43 2011/06/17 05:11:48 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -189,7 +189,7 @@ ENTRY(cpu_switchto)
 	SWITCHFRAME_SAVE(%r1)		/* save USER_SR, CR, R2, non-volatile */
 	ldptr	%r4,L_PCB(%r30)		/* put PCB addr in r4 */
 	streg	%r1,PCB_SP(%r4)		/* store old lwp's SP */
-#ifdef PCB_USPRG0
+#if defined(PPC_BOOKE)
 	mfspr	%r9,SPR_USPRG0
 	streg	%r9,PCB_USPRG0(%r4)	/* save in PCB, not switchframe. */
 #endif
@@ -234,7 +234,7 @@ switchto_restore:
 	 */
 	ldreg	%r1,PCB_SP(%r4)		/* get new lwp's SP */
 	SWITCHFRAME_RESTORE(%r1)	/* get non-volatile, CR, R2, USER_SR */
-#ifdef PCB_USPRG0
+#if defined(PPC_BOOKE)
 	ldreg	%r9,PCB_USPRG0(%r4)
 	mtspr	SPR_USPRG0,%r9
 #endif
@@ -360,7 +360,7 @@ _ENTRY(softint_fast_dispatch)
 	mr	%r31, %r1
 	ldptr	%r5, L_PCB(%r30)	/* put PCB addr in r5 */
 	streg	%r1, PCB_SP(%r5)	/* store old lwp's SP */
-#ifdef PCB_USPRG0
+#if defined(PPC_BOOKE)
 	mfspr	%r9,SPR_USPRG0
 	streg	%r9,PCB_USPRG0(%r5)	/* save in PCB, not switchframe. */
 #endif
