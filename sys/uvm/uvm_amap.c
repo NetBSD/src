@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.92 2011/06/16 19:42:20 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.93 2011/06/18 20:29:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.92 2011/06/16 19:42:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.93 2011/06/18 20:29:56 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1525,96 +1525,89 @@ amap_unadd(struct vm_aref *aref, vaddr_t offset)
 }
 
 /*
- * amap_ref: gain a reference to an amap
+ * amap_adjref_anons: adjust the reference count(s) on anons of the amap.
+ */
+static void
+amap_adjref_anons(struct vm_amap *amap, vaddr_t offset, vsize_t len,
+    int refv, bool all)
+{
+#ifdef UVM_AMAP_PPREF
+	KASSERT(mutex_owned(amap->am_lock));
+
+	if (amap->am_ppref == NULL && !all && len != amap->am_nslot) {
+		amap_pp_establish(amap, offset);
+	}
+	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
+		struct vm_anon *tofree = NULL;
+
+		if (all) {
+			amap_pp_adjref(amap, 0, amap->am_nslot, refv, &tofree);
+		} else {
+			amap_pp_adjref(amap, offset, len, refv, &tofree);
+		}
+		uvm_anfree(tofree);
+	}
+#endif
+}
+
+/*
+ * amap_ref: gain a reference to an amap.
  *
- * => amap must not be locked (we will lock)
- * => "offset" and "len" are in units of pages
- * => called at fork time to gain the child's reference
+ * => amap must not be locked (we will lock).
+ * => "offset" and "len" are in units of pages.
+ * => Called at fork time to gain the child's reference.
  */
 void
 amap_ref(struct vm_amap *amap, vaddr_t offset, vsize_t len, int flags)
 {
-
 	UVMHIST_FUNC("amap_ref"); UVMHIST_CALLED(maphist);
 
 	amap_lock(amap);
-	if (flags & AMAP_SHARED)
+	if (flags & AMAP_SHARED) {
 		amap->am_flags |= AMAP_SHARED;
-#ifdef UVM_AMAP_PPREF
-	if (amap->am_ppref == NULL && (flags & AMAP_REFALL) == 0 &&
-	    len != amap->am_nslot)
-		amap_pp_establish(amap, offset);
-#endif
-	amap->am_ref++;
-#ifdef UVM_AMAP_PPREF
-	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-		struct vm_anon *tofree = NULL;
-		if (flags & AMAP_REFALL)
-			amap_pp_adjref(amap, 0, amap->am_nslot, 1, &tofree);
-		else
-			amap_pp_adjref(amap, offset, len, 1, &tofree);
-		uvm_anfree(tofree); /* must be last action before unlock */
 	}
-#endif
+	amap->am_ref++;
+	amap_adjref_anons(amap, offset, len, 1, (flags & AMAP_REFALL) != 0);
 	amap_unlock(amap);
+
 	UVMHIST_LOG(maphist,"<- done!  amap=0x%x", amap, 0, 0, 0);
 }
 
 /*
- * amap_unref: remove a reference to an amap
+ * amap_unref: remove a reference to an amap.
  *
- * => caller must remove all pmap-level references to this amap before
- *	dropping the reference
- * => called from uvm_unmap_detach [only]  ... note that entry is no
- *	longer part of a map
- * => amap must be unlocked (we will lock it).
+ * => All pmap-level references to this amap must be already removed.
+ * => Called from uvm_unmap_detach(); entry is already removed from the map.
+ * => We will lock amap, so it must be unlocked.
  */
 void
 amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, bool all)
 {
-	struct vm_anon *tofree;
-
 	UVMHIST_FUNC("amap_unref"); UVMHIST_CALLED(maphist);
 
-	/*
-	 * lock it
-	 */
 	amap_lock(amap);
+
 	UVMHIST_LOG(maphist,"  amap=0x%x  refs=%d, nused=%d",
 	    amap, amap->am_ref, amap->am_nused, 0);
+	KASSERT(amap->am_ref > 0);
 
-	KASSERT(amap_refs(amap) > 0);
-
-	/*
-	 * if we are the last reference, free the amap and return.
-	 */
-
-	amap->am_ref--;
-
-	if (amap_refs(amap) == 0) {
-		amap_wipeout(amap);	/* drops final ref and frees */
+	if (--amap->am_ref == 0) {
+		/*
+		 * If the last reference - wipeout and destroy the amap.
+		 */
+		amap_wipeout(amap);
 		UVMHIST_LOG(maphist,"<- done (was last ref)!", 0, 0, 0, 0);
-		return;			/* no need to unlock */
+		return;
 	}
 
 	/*
-	 * otherwise just drop the reference count(s)
+	 * Otherwise, drop the reference count(s) on anons.
 	 */
 
-	if (amap_refs(amap) == 1 && (amap->am_flags & AMAP_SHARED) != 0)
-		amap->am_flags &= ~AMAP_SHARED;	/* clear shared flag */
-	tofree = NULL;
-#ifdef UVM_AMAP_PPREF
-	if (amap->am_ppref == NULL && all == 0 && len != amap->am_nslot)
-		amap_pp_establish(amap, offset);
-	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-		if (all)
-			amap_pp_adjref(amap, 0, amap->am_nslot, -1, &tofree);
-		else
-			amap_pp_adjref(amap, offset, len, -1, &tofree);
+	if (amap->am_ref == 1 && (amap->am_flags & AMAP_SHARED) != 0) {
+		amap->am_flags &= ~AMAP_SHARED;
 	}
-#endif
-	uvm_anfree(tofree);
+	amap_adjref_anons(amap, offset, len, -1, all);
 	amap_unlock(amap);
 
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
