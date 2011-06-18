@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.85 2011/06/18 17:03:14 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.86 2011/06/18 17:21:32 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5313,3 +5313,9 @@ sys/ufs/ffs/ffs_snapshot.c			1.90, 1.98, 1.100-1.101, 1.103-1.110, 1.111, 1.112-
 	  gets created.  With this change dump(8) no longer dumps the
 	  zero-sized, but named snapshot it is working on.
 	[hannken, ticket #1627]
+
+lib/libc/gen/getgrent.c				1.63
+
+	_gr_copy() can get called with fromgrp->gr_mem == NULL.
+	[sjg, ticket #1636]
+
