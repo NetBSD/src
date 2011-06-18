@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.93 2011/06/18 20:29:56 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.94 2011/06/18 20:51:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.93 2011/06/18 20:29:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.94 2011/06/18 20:51:22 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1456,34 +1456,37 @@ amap_lookups(struct vm_aref *aref, vaddr_t offset, struct vm_anon **anons,
 }
 
 /*
- * amap_add: add (or replace) a page to an amap
+ * amap_add: add (or replace) a page to an amap.
  *
- * => caller must lock amap.
+ * => amap should be locked by caller.
+ * => anon must have the lock associated with this amap.
  */
 void
 amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
     bool replace)
 {
-	int slot;
 	struct vm_amap *amap = aref->ar_amap;
+	u_int slot;
+
 	UVMHIST_FUNC("amap_add"); UVMHIST_CALLED(maphist);
 	KASSERT(mutex_owned(amap->am_lock));
+	KASSERT(anon->an_lock == amap->am_lock);
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
 	KASSERT(slot < amap->am_nslot);
 
 	if (replace) {
-		KASSERT(amap->am_anon[slot] != NULL);
-		if (amap->am_anon[slot]->an_page != NULL &&
-		    (amap->am_flags & AMAP_SHARED) != 0) {
-			pmap_page_protect(amap->am_anon[slot]->an_page,
-			    VM_PROT_NONE);
+		struct vm_anon *oanon = amap->am_anon[slot];
+
+		KASSERT(oanon != NULL);
+		if (oanon->an_page && (amap->am_flags & AMAP_SHARED) != 0) {
+			pmap_page_protect(oanon->an_page, VM_PROT_NONE);
 			/*
 			 * XXX: suppose page is supposed to be wired somewhere?
 			 */
 		}
-	} else {   /* !replace */
+	} else {
 		KASSERT(amap->am_anon[slot] == NULL);
 		amap->am_bckptr[slot] = amap->am_nused;
 		amap->am_slots[amap->am_nused] = slot;
@@ -1496,15 +1499,16 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 }
 
 /*
- * amap_unadd: remove a page from an amap
+ * amap_unadd: remove a page from an amap.
  *
- * => caller must lock amap
+ * => amap should be locked by caller.
  */
 void
 amap_unadd(struct vm_aref *aref, vaddr_t offset)
 {
-	int ptr, slot;
 	struct vm_amap *amap = aref->ar_amap;
+	u_int slot, ptr, last;
+
 	UVMHIST_FUNC("amap_unadd"); UVMHIST_CALLED(maphist);
 	KASSERT(mutex_owned(amap->am_lock));
 
@@ -1512,13 +1516,16 @@ amap_unadd(struct vm_aref *aref, vaddr_t offset)
 	slot += aref->ar_pageoff;
 	KASSERT(slot < amap->am_nslot);
 	KASSERT(amap->am_anon[slot] != NULL);
+	KASSERT(amap->am_anon[slot]->an_lock == amap->am_lock);
 
 	amap->am_anon[slot] = NULL;
 	ptr = amap->am_bckptr[slot];
 
-	if (ptr != (amap->am_nused - 1)) {	/* swap to keep slots contig? */
-		amap->am_slots[ptr] = amap->am_slots[amap->am_nused - 1];
-		amap->am_bckptr[amap->am_slots[ptr]] = ptr;	/* back link */
+	last = amap->am_nused - 1;
+	if (ptr != last) {
+		/* Move the last entry to keep the slots contiguous. */
+		amap->am_slots[ptr] = amap->am_slots[last];
+		amap->am_bckptr[amap->am_slots[ptr]] = ptr;
 	}
 	amap->am_nused--;
 	UVMHIST_LOG(maphist, "<- done (amap=0x%x, slot=0x%x)", amap, slot,0, 0);
