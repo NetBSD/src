@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405.h,v 1.7 2010/03/18 14:15:38 kiyohara Exp $	*/
+/*	$NetBSD: obs405.h,v 1.8 2011/06/18 06:44:26 matt Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -39,6 +39,6 @@
 /*
  * extern variables and functions
  */
-extern void obs405_device_register(struct device *dev, void *aux, int com_freq);
+extern void obs405_device_register(device_t dev, void *aux, int com_freq);
 
 #endif	/* _EVBPPC_OBS405_H_ */

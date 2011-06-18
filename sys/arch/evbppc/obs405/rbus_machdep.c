@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.6 2011/01/18 01:08:55 matt Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.7 2011/06/18 06:44:26 matt Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -30,12 +30,11 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-
 #include <sys/extent.h>
+#include <sys/bus.h>
+
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>

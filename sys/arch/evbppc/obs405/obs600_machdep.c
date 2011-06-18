@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_machdep.c,v 1.5 2011/06/15 05:50:49 matt Exp $	*/
+/*	$NetBSD: obs600_machdep.c,v 1.6 2011/06/18 06:44:26 matt Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.5 2011/06/15 05:50:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.6 2011/06/18 06:44:26 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -85,20 +85,22 @@ __KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.5 2011/06/15 05:50:49 matt Exp 
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/module.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-#include <machine/cpu.h>
 #include <machine/obs600.h>
 
 #include <powerpc/ibm4xx/amcc405ex.h>
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/dev/comopbvar.h>
 #include <powerpc/ibm4xx/dev/gpiicreg.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
-#include <powerpc/ibm4xx/spr.h>
+
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 
 #include <dev/ic/comreg.h>
 

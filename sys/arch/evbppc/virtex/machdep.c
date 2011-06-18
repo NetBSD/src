@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2011/06/15 05:50:49 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.18 2011/06/18 06:44:27 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2011/06/15 05:50:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2011/06/18 06:44:27 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2011/06/15 05:50:49 matt Exp $");
 #include <sys/ksyms.h>
 #include <sys/device.h>
 #include <sys/module.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -67,13 +68,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2011/06/15 05:50:49 matt Exp $");
 
 #include <dev/cons.h>
 
-#include <machine/bus.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 #include <machine/pcb.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
+
+#include <powerpc/ibm4xx/cpu.h>
 
 #include <evbppc/virtex/dcr.h>
 #include <evbppc/virtex/virtex.h>
