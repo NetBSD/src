@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.119.4.3 2009/11/08 21:47:45 snj Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.119.4.4 2011/06/18 16:42:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.119.4.3 2009/11/08 21:47:45 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.119.4.4 2011/06/18 16:42:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.119.4.3 2009/11/08 21:47:45 snj Ex
  * Unix communications domain.
  *
  * TODO:
- *	SEQPACKET, RDM
+ *	RDM
  *	rethink name space problems
  *	need a proper out-of-band
  *
@@ -486,6 +486,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			panic("uipc 1");
 			/*NOTREACHED*/
 
+		case SOCK_SEQPACKET: /* FALLTHROUGH */
 		case SOCK_STREAM:
 #define	rcv (&so->so_rcv)
 #define snd (&so2->so_snd)
@@ -566,6 +567,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			break;
 		}
 
+		case SOCK_SEQPACKET: /* FALLTHROUGH */
 		case SOCK_STREAM:
 #define	rcv (&so2->so_rcv)
 #define	snd (&so->so_snd)
@@ -578,7 +580,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			if (unp->unp_conn->unp_flags & UNP_WANTCRED) {
 				/*
 				 * Credentials are passed only once on
-				 * SOCK_STREAM.
+				 * SOCK_STREAM and SOCK_SEQPACKET.
 				 */
 				unp->unp_conn->unp_flags &= ~UNP_WANTCRED;
 				control = unp_addsockcred(l, control);
@@ -591,8 +593,19 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			if (control) {
 				if (sbappendcontrol(rcv, m, control) != 0)
 					control = NULL;
-			} else
-				sbappend(rcv, m);
+			} else {
+				switch(so->so_type) {
+				case SOCK_SEQPACKET:
+					sbappendrecord(rcv, m);
+					break;
+				case SOCK_STREAM:
+					sbappend(rcv, m);
+					break;
+				default:
+					panic("uipc_usrreq");
+					break;
+				}
+			}
 			snd->sb_mbmax -=
 			    rcv->sb_mbcnt - unp->unp_conn->unp_mbcnt;
 			unp->unp_conn->unp_mbcnt = rcv->sb_mbcnt;
@@ -628,10 +641,18 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_SENSE:
 		((struct stat *) m)->st_blksize = so->so_snd.sb_hiwat;
-		if (so->so_type == SOCK_STREAM && unp->unp_conn != 0) {
+		switch (so->so_type) {
+		case SOCK_SEQPACKET: /* FALLTHROUGH */
+		case SOCK_STREAM:
+			if (unp->unp_conn == 0) 
+				break;
+
 			so2 = unp->unp_conn->unp_socket;
 			KASSERT(solocked2(so, so2));
 			((struct stat *) m)->st_blksize += so2->so_rcv.sb_cc;
+			break;
+		default:
+			break;
 		}
 		((struct stat *) m)->st_dev = NODEV;
 		if (unp->unp_ino == 0)
@@ -766,6 +787,7 @@ unp_attach(struct socket *so)
 	int error;
 
 	switch (so->so_type) {
+	case SOCK_SEQPACKET: /* FALLTHROUGH */
 	case SOCK_STREAM:
 		if (so->so_lock == NULL) {
 			/* 
@@ -1071,6 +1093,7 @@ unp_connect2(struct socket *so, struct socket *so2, int req)
 		soisconnected(so);
 		break;
 
+	case SOCK_SEQPACKET: /* FALLTHROUGH */
 	case SOCK_STREAM:
 		unp2->unp_conn = unp;
 		if (req == PRU_CONNECT &&
@@ -1126,6 +1149,7 @@ unp_disconnect(struct unpcb *unp)
 		so->so_state &= ~SS_ISCONNECTED;
 		break;
 
+	case SOCK_SEQPACKET: /* FALLTHROUGH */
 	case SOCK_STREAM:
 		KASSERT(solocked2(so, unp2->unp_socket));
 		soisdisconnected(so);
@@ -1147,9 +1171,15 @@ unp_shutdown(struct unpcb *unp)
 {
 	struct socket *so;
 
-	if (unp->unp_socket->so_type == SOCK_STREAM && unp->unp_conn &&
-	    (so = unp->unp_conn->unp_socket))
-		socantrcvmore(so);
+	switch(unp->unp_socket->so_type) {
+	case SOCK_SEQPACKET: /* FALLTHROUGH */
+	case SOCK_STREAM:
+		if (unp->unp_conn && (so = unp->unp_conn->unp_socket))
+			socantrcvmore(so);
+		break;
+	default:
+		break;
+	}
 }
 
 bool
