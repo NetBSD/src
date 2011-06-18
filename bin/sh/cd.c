@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.42 2011/06/10 02:19:10 uebayasi Exp $	*/
+/*	$NetBSD: cd.c,v 1.43 2011/06/18 21:18:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.42 2011/06/10 02:19:10 uebayasi Exp $");
+__RCSID("$NetBSD: cd.c,v 1.43 2011/06/18 21:18:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: cd.c,v 1.42 2011/06/10 02:19:10 uebayasi Exp $");
 #include "nodes.h"	/* for jobs.h */
 #include "jobs.h"
 #include "options.h"
+#include "builtins.h"
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"

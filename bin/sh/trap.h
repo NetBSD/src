@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.18 2005/07/11 02:37:31 christos Exp $	*/
+/*	$NetBSD: trap.h,v 1.19 2011/06/18 21:18:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,7 +36,6 @@
 
 extern int pendingsigs;
 
-int trapcmd(int, char **);
 void clear_traps(int);
 sig_t setsignal(int, int);
 void ignoresig(int, int);
