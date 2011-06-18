@@ -652,6 +652,7 @@ dns_tkey_processgssresponse
 dns_tkey_processquery
 dns_tkeyctx_create
 dns_tkeyctx_destroy
+dns_trust_totext
 dns_tsig_sign
 dns_tsig_verify
 dns_tsigkey_attach
@@ -893,6 +894,7 @@ dst_gssapi_acceptctx
 dst_gssapi_acquirecred
 dst_gssapi_initctx
 dst_key_alg
+dst_key_attach
 dst_key_buildfilename
 dst_key_class
 dst_key_compare

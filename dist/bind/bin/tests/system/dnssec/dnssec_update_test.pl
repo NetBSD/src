@@ -32,7 +32,7 @@
 #
 #    perl -MCPAN -e "install Net::DNS"
 #
-# Id: dnssec_update_test.pl,v 1.5.558.2 2010/08/13 23:46:28 tbox Exp
+# Id: dnssec_update_test.pl,v 1.5.558.2 2010-08-13 23:46:28 tbox Exp
 #
 
 use Getopt::Std;

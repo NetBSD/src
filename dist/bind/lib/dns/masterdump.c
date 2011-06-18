@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.1.1.6.4.1.2.1 2011/01/09 20:42:22 riz Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.1.1.6.4.1.2.2 2011/06/18 11:28:25 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: masterdump.c,v 1.99 2009/11/17 23:55:18 marka Exp */
+/* Id: masterdump.c,v 1.99.334.1 2011-05-27 00:43:06 each Exp */
 
 /*! \file */
 
@@ -837,26 +837,6 @@ dump_order_compare(const void *a, const void *b) {
 
 #define MAXSORT 64
 
-static const char *trustnames[] = {
-	"none",
-	"pending-additional",
-	"pending-answer",
-	"additional",
-	"glue",
-	"answer",
-	"authauthority",
-	"authanswer",
-	"secure",
-	"local" /* aka ultimate */
-};
-
-const char *
-dns_trust_totext(dns_trust_t trust) {
-	if (trust >= sizeof(trustnames)/sizeof(*trustnames))
-		return ("bad");
-	return (trustnames[trust]);
-}
-
 static isc_result_t
 dump_rdatasets_text(isc_mem_t *mctx, dns_name_t *name,
 		    dns_rdatasetiter_t *rdsiter, dns_totext_ctx_t *ctx,
@@ -896,10 +876,7 @@ dump_rdatasets_text(isc_mem_t *mctx, dns_name_t *name,
 	for (i = 0; i < n; i++) {
 		dns_rdataset_t *rds = sorted[i];
 		if (ctx->style.flags & DNS_STYLEFLAG_TRUST) {
-			unsigned int trust = rds->trust;
-			INSIST(trust < (sizeof(trustnames) /
-					sizeof(trustnames[0])));
-			fprintf(f, "; %s\n", trustnames[trust]);
+			fprintf(f, "; %s\n", dns_trust_totext(rds->trust));
 		}
 		if (rds->type == 0 &&
 		    (ctx->style.flags & DNS_STYLEFLAG_NCACHE) == 0) {

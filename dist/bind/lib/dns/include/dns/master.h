@@ -1,4 +1,4 @@
-/*	$NetBSD: master.h,v 1.1.1.5.12.1 2011/01/09 20:42:24 riz Exp $	*/
+/*	$NetBSD: master.h,v 1.1.1.5.12.2 2011/06/18 11:28:33 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: master.h,v 1.53 2009/07/01 23:47:36 tbox Exp */
+/* Id: master.h,v 1.53 2009-07-01 23:47:36 tbox Exp */
 
 #ifndef DNS_MASTER_H
 #define DNS_MASTER_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: symtype.h,v 1.1.1.5 2008/06/21 18:30:33 christos Exp $	*/
+/*	$NetBSD: symtype.h,v 1.1.1.5.12.1 2011/06/18 11:29:12 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: symtype.h,v 1.10 2007/08/28 07:20:43 tbox Exp */
+/* Id: symtype.h,v 1.10 2007-08-28 07:20:43 tbox Exp */
 
 #ifndef ISCCC_SYMTYPE_H
 #define ISCCC_SYMTYPE_H 1

@@ -1,4 +1,4 @@
-/*        $NetBSD: keydata_65533.c,v 1.1.4.2 2011/01/09 20:42:26 riz Exp $      */
+/*        $NetBSD: keydata_65533.c,v 1.1.4.3 2011/06/18 11:28:40 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keydata_65533.c,v 1.3 2009/12/04 21:09:33 marka Exp */
+/* Id: keydata_65533.c,v 1.3 2009-12-04 21:09:33 marka Exp */
 
 #ifndef GENERIC_KEYDATA_65533_C
 #define GENERIC_KEYDATA_65533_C 1

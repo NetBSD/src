@@ -1,4 +1,4 @@
-/*        $NetBSD: filter-aaaa.c,v 1.1.4.2 2011/01/09 20:41:28 riz Exp $      */
+/*        $NetBSD: filter-aaaa.c,v 1.1.4.3 2011/06/18 11:27:26 bouyer Exp $      */
 
 /*
  * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: filter-aaaa.c,v 1.2.2.2 2010/06/22 04:02:40 marka Exp */
+/* Id: filter-aaaa.c,v 1.2.2.2 2010-06-22 04:02:40 marka Exp */
 
 #include <config.h>
 

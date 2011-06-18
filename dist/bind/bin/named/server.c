@@ -1,7 +1,7 @@
-/*	$NetBSD: server.c,v 1.1.1.9.4.1.2.1 2011/01/09 20:41:14 riz Exp $	*/
+/*	$NetBSD: server.c,v 1.1.1.9.4.1.2.2 2011/06/18 11:26:54 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.c,v 1.556.8.27.6.3 2010/11/16 02:26:24 sar Exp */
+/* Id: server.c,v 1.556.8.35 2011-02-03 00:28:08 each Exp */
 
 /*! \file */
 
@@ -636,6 +636,8 @@ load_view_keys(const cfg_obj_t *keys, const cfg_obj_t *vconfig,
 	}
 
  cleanup:
+	if (dstkey != NULL)
+		dst_key_free(&dstkey);
 	if (secroots != NULL)
 		dns_keytable_detach(&secroots);
 	if (result == DST_R_NOCRYPTO)
@@ -3044,6 +3046,7 @@ configure_zone(const cfg_obj_t *config, const cfg_obj_t *zconfig,
 static isc_result_t
 add_keydata_zone(dns_view_t *view, const char *directory, isc_mem_t *mctx) {
 	isc_result_t result;
+	dns_view_t *pview = NULL;
 	dns_zone_t *zone = NULL;
 	dns_acl_t *none = NULL;
 	char filename[PATH_MAX];
@@ -3052,8 +3055,22 @@ add_keydata_zone(dns_view_t *view, const char *directory, isc_mem_t *mctx) {
 
 	REQUIRE(view != NULL);
 
-	CHECK(dns_zone_create(&zone, mctx));
+	/* See if we can re-use an existing keydata zone. */
+	result = dns_viewlist_find(&ns_g_server->viewlist,
+				   view->name, view->rdclass,
+				   &pview);
+	if (result != ISC_R_NOTFOUND &&
+	    result != ISC_R_SUCCESS)
+		return (result);
 
+	if (pview != NULL && pview->managed_keys != NULL) {
+		dns_zone_attach(pview->managed_keys, &view->managed_keys);
+		dns_view_detach(&pview);
+		return (ISC_R_SUCCESS);
+	}
+
+	/* No existing keydata zone was found; create one */
+	CHECK(dns_zone_create(&zone, mctx));
 	CHECK(dns_zone_setorigin(zone, dns_rootname));
 
 	isc_sha256_data((void *)view->name, strlen(view->name), buffer);
@@ -3570,7 +3587,6 @@ generate_session_key(const char *filename, const char *keynamestr,
 	CHECK(dns_tsigkey_createfromkey(dst_key_name(key), algname, key,
 					ISC_FALSE, NULL, now, now, mctx, NULL,
 					&tsigkey));
-	key = NULL;		/* ownership of key has been transferred */
 
 	/* Dump the key to the key file. */
 	fp = ns_os_openfile(filename, S_IRUSR|S_IWUSR, ISC_TRUE);
@@ -3590,6 +3606,8 @@ generate_session_key(const char *filename, const char *keynamestr,
 
 	RUNTIME_CHECK(isc_stdio_flush(fp) == ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_stdio_close(fp) == ISC_R_SUCCESS);
+
+	dst_key_free(&key);
 
 	*tsigkeyp = tsigkey;
 
@@ -4616,11 +4634,14 @@ load_new_zones(ns_server_t *server, isc_boolean_t stop) {
 	     view = ISC_LIST_NEXT(view, link))
 	{
 		CHECK(dns_view_loadnew(view, stop));
+
+		/* Load managed-keys data */
+		if (view->managed_keys != NULL)
+			CHECK(dns_zone_loadnew(view->managed_keys));
 	}
+
 	/*
-	 * Force zone maintenance.  Do this after loading
-	 * so that we know when we need to force AXFR of
-	 * slave zones whose master files are missing.
+	 * Resume zone XFRs.
 	 */
 	dns_zonemgr_resumexfrs(server->zonemgr);
  cleanup:
@@ -6892,7 +6913,7 @@ ns_server_del_zone(ns_server_t *server, char *args) {
 	/* Rewrite zone list */
 	result = isc_stdio_open(filename, "r", &ifp);
 	if (ifp != NULL && result == ISC_R_SUCCESS) {
-		char *found = NULL, *p;
+		char *found = NULL, *p = NULL;
 		size_t n;
 
 		/* Create a temporary file */

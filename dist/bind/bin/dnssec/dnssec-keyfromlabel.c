@@ -1,4 +1,4 @@
-/*        $NetBSD: dnssec-keyfromlabel.c,v 1.1.4.2 2011/01/09 20:41:11 riz Exp $      */
+/*        $NetBSD: dnssec-keyfromlabel.c,v 1.1.4.3 2011/06/18 11:26:48 bouyer Exp $      */
 
 /*
  * Copyright (C) 2007-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-keyfromlabel.c,v 1.29.8.2 2010/01/19 23:48:12 tbox Exp */
+/* Id: dnssec-keyfromlabel.c,v 1.29.8.2 2010-01-19 23:48:12 tbox Exp */
 
 /*! \file */
 

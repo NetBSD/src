@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.1.1.6.4.2.2.1 2011/01/09 20:42:24 riz Exp $	*/
+/*	$NetBSD: db.h,v 1.1.1.6.4.2.2.2 2011/06/18 11:28:32 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db.h,v 1.102 2009/11/25 23:49:22 tbox Exp */
+/* Id: db.h,v 1.102 2009-11-25 23:49:22 tbox Exp */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1

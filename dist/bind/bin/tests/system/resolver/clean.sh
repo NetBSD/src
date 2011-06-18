@@ -14,12 +14,14 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.3.310.2 2010/11/17 23:46:50 tbox Exp
+# Id: clean.sh,v 1.3.142.3 2010-12-18 02:15:17 each Exp
 
 #
 # Clean up after resolver tests.
 #
 rm -f */named.memstats
-rm -f dig.out
+rm -f dig.out dig.*.out.*
 rm -f ns6/K*
 rm -f ns6/example.net.db.signed ns6/example.net.db
+rm -f ns6/dsset-example.net. ns6/example.net.db.signed.jnl
+rm -f random.data

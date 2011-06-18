@@ -1,4 +1,4 @@
-/*	$NetBSD: aaaa_28.c,v 1.1.1.5.12.1 2011/01/09 20:42:27 riz Exp $	*/
+/*	$NetBSD: aaaa_28.c,v 1.1.1.5.12.2 2011/06/18 11:28:44 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: aaaa_28.c,v 1.47 2009/12/04 22:06:37 tbox Exp */
+/* Id: aaaa_28.c,v 1.47 2009-12-04 22:06:37 tbox Exp */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
