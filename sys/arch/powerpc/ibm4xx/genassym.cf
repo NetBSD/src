@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.19 2011/06/05 16:52:25 matt Exp $
+#	$NetBSD: genassym.cf,v 1.20 2011/06/18 20:28:48 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -132,12 +132,17 @@ define	PM_CTX		offsetof(struct pmap, pm_ctx)
 define	MSR_PR		31-ilog2(PSL_PR)
 
 define	L_CPU		offsetof(struct lwp, l_cpu)
+define	L_CTXSWTCH	offsetof(struct lwp, l_ctxswtch)
 define	L_MD_ASTPENDING	offsetof(struct lwp, l_md.md_astpending)
 define	L_MD_UTF	offsetof(struct lwp, l_md.md_utf)
 define	L_PCB		offsetof(struct lwp, l_addr)
 define	L_PROC		offsetof(struct lwp, l_proc)
 
 define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
+
+ifdef __HAVE_FAST_SOFTINTS
+define	__HAVE_FAST_SOFTINTS	__HAVE_FAST_SOFTINTS
+endif
 
 define	CI_SIZE		sizeof(struct cpu_info)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
@@ -152,7 +157,7 @@ define	CI_DDBSAVE	offsetof(struct cpu_info, ci_ddbsave)
 define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_ipkdbsave)
 define	CI_TLBMISSSAVE	offsetof(struct cpu_info, ci_tlbmisssave)
 define	CI_IDLESPIN	offsetof(struct cpu_info, ci_idlespin)
-define	CI_NINTR	offsetof(struct cpu_info, ci_data.cpu_nintr)
+define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 
 define	CPUSAVE_R28	CPUSAVE_R28*sizeof(register_t)
 define	CPUSAVE_R29	CPUSAVE_R29*sizeof(register_t)
