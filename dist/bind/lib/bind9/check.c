@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.1.1.5.8.2 2011/01/10 00:39:36 riz Exp $	*/
+/*	$NetBSD: check.c,v 1.1.1.5.8.3 2011/06/18 11:36:47 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check.c,v 1.114.4.6 2010/08/11 18:19:57 each Exp */
+/* Id: check.c,v 1.114.4.6 2010-08-11 18:19:57 each Exp */
 
 /*! \file */
 

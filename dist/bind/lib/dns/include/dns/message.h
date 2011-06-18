@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.1.1.5.8.2 2011/01/10 00:39:46 riz Exp $	*/
+/*	$NetBSD: message.h,v 1.1.1.5.8.3 2011/06/18 11:37:04 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.h,v 1.130 2009/10/26 23:47:35 tbox Exp */
+/* Id: message.h,v 1.130 2009-10-26 23:47:35 tbox Exp */
 
 #ifndef DNS_MESSAGE_H
 #define DNS_MESSAGE_H 1

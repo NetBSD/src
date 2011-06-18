@@ -1,4 +1,4 @@
-/*	$NetBSD: fsaccess.c,v 1.1.1.5 2008/06/21 18:31:33 christos Exp $	*/
+/*	$NetBSD: fsaccess.c,v 1.1.1.5.8.1 2011/06/18 11:37:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: fsaccess.c,v 1.13 2007/06/19 23:47:18 tbox Exp */
+/* Id: fsaccess.c,v 1.13 2007-06-19 23:47:18 tbox Exp */
 
 #include <config.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.h,v 1.1.1.7.8.2 2011/01/10 00:39:45 riz Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.1.1.7.8.3 2011/06/18 11:37:03 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dispatch.h,v 1.62 2009/01/27 23:47:54 tbox Exp */
+/* Id: dispatch.h,v 1.62 2009-01-27 23:47:54 tbox Exp */
 
 #ifndef DNS_DISPATCH_H
 #define DNS_DISPATCH_H 1

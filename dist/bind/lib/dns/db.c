@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.1.1.5.8.2 2011/01/10 00:39:38 riz Exp $	*/
+/*	$NetBSD: db.c,v 1.1.1.5.8.3 2011/06/18 11:36:50 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db.c,v 1.95 2009/10/08 23:13:06 marka Exp */
+/* Id: db.c,v 1.95 2009-10-08 23:13:06 marka Exp */
 
 /*! \file */
 

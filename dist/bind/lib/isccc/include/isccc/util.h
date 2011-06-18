@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.1.1.5 2008/06/21 18:30:33 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.1.1.5.8.1 2011/06/18 11:37:51 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: util.h,v 1.11 2007/08/28 07:20:43 tbox Exp */
+/* Id: util.h,v 1.11 2007-08-28 07:20:43 tbox Exp */
 
 #ifndef ISCCC_UTIL_H
 #define ISCCC_UTIL_H 1

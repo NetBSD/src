@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.c,v 1.1.1.5.8.2 2011/01/10 00:39:42 riz Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.1.1.5.8.3 2011/06/18 11:36:56 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.c,v 1.84.186.2 2010/02/25 05:25:51 tbox Exp */
+/* Id: rdataset.c,v 1.84.186.2.48.1 2011-05-27 00:43:06 each Exp */
 
 /*! \file */
 
@@ -35,6 +35,26 @@
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include <dns/compress.h>
+
+static const char *trustnames[] = {
+	"none",
+	"pending-additional",
+	"pending-answer",
+	"additional",
+	"glue",
+	"answer",
+	"authauthority",
+	"authanswer",
+	"secure",
+	"local" /* aka ultimate */
+};
+
+const char *
+dns_trust_totext(dns_trust_t trust) {
+	if (trust >= sizeof(trustnames)/sizeof(*trustnames))
+		return ("bad");
+	return (trustnames[trust]);
+}
 
 void
 dns_rdataset_init(dns_rdataset_t *rdataset) {

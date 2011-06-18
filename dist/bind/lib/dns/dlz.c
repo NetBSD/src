@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz.c,v 1.1.1.2.8.2 2011/01/10 00:39:38 riz Exp $	*/
+/*	$NetBSD: dlz.c,v 1.1.1.2.8.3 2011/06/18 11:36:50 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dlz.c,v 1.7 2009/01/17 23:47:42 tbox Exp */
+/* Id: dlz.c,v 1.7 2009-01-17 23:47:42 tbox Exp */
 
 /*! \file */
 

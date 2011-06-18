@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.7.8.2 2011/01/10 00:40:25 riz Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.1.1.7.8.3 2011/06/18 11:37:52 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.c,v 1.113.4.10 2010/08/11 18:19:58 each Exp */
+/* Id: namedconf.c,v 1.113.4.10 2010-08-11 18:19:58 each Exp */
 
 /*! \file */
 

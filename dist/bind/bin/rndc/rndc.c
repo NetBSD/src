@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc.c,v 1.4.8.2 2011/01/10 00:37:23 riz Exp $	*/
+/*	$NetBSD: rndc.c,v 1.4.8.3 2011/06/18 11:35:13 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc.c,v 1.126.66.4 2010/07/11 00:12:18 each Exp */
+/* Id: rndc.c,v 1.126.66.7 2011-02-03 12:17:22 tbox Exp */
 
 /*! \file */
 
@@ -98,7 +98,7 @@ usage(int status) ISC_PLATFORM_NORETURN_POST;
 static void
 usage(int status) {
 	fprintf(stderr, "\
-Usage: %s [-c config] [-s server] [-p port]\n\
+Usage: %s [-b address] [-c config] [-s server] [-p port]\n\
 	[-k key-file ] [-y key] [-V] command\n\
 \n\
 command is one of the following:\n\
@@ -121,6 +121,8 @@ command is one of the following:\n\
   reconfig	Reload configuration file and new zones only.\n\
   sign zone [class [view]]\n\
 		Update zone keys, and sign as needed.\n\
+  loadkeys zone [class [view]]\n\
+		Update keys without signing immediately.\n\
   stats		Write server statistics to the statistics file.\n\
   querylog	Toggle query logging.\n\
   dumpdb [-all|-cache|-zones] [view ...]\n\
