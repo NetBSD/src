@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.29 2011/06/05 17:03:17 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.30 2011/06/18 06:41:41 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,18 +36,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 2011/06/05 17:03:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2011/06/18 06:41:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/evcnt.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
 
-#include <machine/cpu.h>
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
 struct cputab {

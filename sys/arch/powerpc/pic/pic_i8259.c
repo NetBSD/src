@@ -1,4 +1,4 @@
-/* $NetBSD: pic_i8259.c,v 1.3 2008/04/28 20:23:32 martin Exp $ */
+/* $NetBSD: pic_i8259.c,v 1.4 2011/06/18 06:41:43 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,16 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.3 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_i8259.c,v 1.4 2011/06/18 06:41:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/pio.h>
-#include <machine/intr.h>
 
 #include <arch/powerpc/pic/picvar.h>
 
