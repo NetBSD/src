@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.3.8.5 2011/03/07 04:09:28 riz Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.3.8.6 2011/06/18 17:00:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3.8.5 2011/03/07 04:09:28 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3.8.6 2011/06/18 17:00:25 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -401,7 +401,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	wl->wl_bufcount_max = (nbuf / 2) * 1024;
 
 	/* XXX tie this into resource estimation */
-	wl->wl_dealloclim = 2 * btodb(wl->wl_bufbytes_max);
+	wl->wl_dealloclim = wl->wl_bufbytes_max / mp->mnt_stat.f_bsize / 2;
 	
 #if WAPBL_UVM_ALLOC
 	wl->wl_deallocblks = (void *) uvm_km_zalloc(kernel_map,
@@ -830,8 +830,7 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 		  ((wl->wl_bufcount + (lockcount * 10)) >
 		   wl->wl_bufcount_max / 2) ||
 		  (wapbl_transaction_len(wl) > wl->wl_circ_size / 2) ||
-		  (wl->wl_dealloccnt >=
-		   (wl->wl_dealloclim - (wl->wl_dealloclim >> 8)));
+		  (wl->wl_dealloccnt >= (wl->wl_dealloclim / 2));
 	mutex_exit(&wl->wl_mtx);
 
 	if (doflush) {
