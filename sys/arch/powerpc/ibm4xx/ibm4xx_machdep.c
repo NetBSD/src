@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.15 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.16 2011/06/18 06:41:41 matt Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.15 2011/01/18 01:02:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.16 2011/06/18 06:41:41 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.15 2011/01/18 01:02:54 matt Exp
 #include <sys/param.h>
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -96,9 +97,12 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.15 2011/01/18 01:02:54 matt Exp
 
 #include <machine/powerpc.h>
 #include <powerpc/pcb.h>
+#include <machine/trap.h>
+
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
-#include <machine/trap.h>
+
+#include <powerpc/ibm4xx/cpu.h>
 
 /*
  * Global variables used here and there
