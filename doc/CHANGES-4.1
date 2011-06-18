@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.224 2011/05/09 19:39:18 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.225 2011/06/18 10:37:45 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4459,4 +4459,21 @@ lib/libc/resolv/res_init.c			1.11, 1.12 via patch
 	pre-inited like before. Fixes issues with programs passing random
 	uninitialized data as res_state.
 	[taca, ticket #1429]
+
+dist/bind/CHANGES:				patch
+dist/bind/version:				patch
+dist/bind/lib/dns/api:				patch
+dist/bind/lib/dns/ncache.c:			patch
+dist/bind/lib/dns/rdataset.c:			patch
+dist/bind/lib/dns/validator.c:			patch
+dist/bind/lib/dns/include/dns/rdataset.h:	patch
+
+	Fix security issue: An authoritative name server sending a negative
+	 response containing a very large RRset could
+	 trigger an off-by-one error in the ncache code
+	 and crash named.
+	Fix bug: Named could fail to validate zones listed in a DLV
+	 that validated insecure without using DLV and had
+	 DS records in the parent zone.
+	[spz, ticket #1430]
 
