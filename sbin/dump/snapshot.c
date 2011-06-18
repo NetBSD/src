@@ -1,4 +1,4 @@
-/*	$NetBSD: snapshot.c,v 1.4 2008/04/28 20:23:08 martin Exp $	*/
+/*	$NetBSD: snapshot.c,v 1.4.4.1 2011/06/18 17:00:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 int
 snap_open(char *mountpoint, char *backup, time_t *snap_date, char **snap_dev)
 {
-	int i, fd, israw, fsinternal, dounlink, flags;
+	int i, fd, israw, fsinternal, dounlink;
 	char path[MAXPATHLEN], fss_dev[14];
 	dev_t mountdev;
 	struct fss_set fss;
@@ -118,15 +118,15 @@ snap_open(char *mountpoint, char *backup, time_t *snap_date, char **snap_dev)
 	if (close(fd) < 0)
 		goto fail;
 
+	fss.fss_flags = FSS_UNCONFIG_ON_CLOSE;
+	if (dounlink)
+		fss.fss_flags |= FSS_UNLINK_ON_CREATE;
 	/*
 	 * Create the snapshot on the first free snapshot device.
 	 */
 	for (i = 0; ; i++) {
 		snprintf(fss_dev, sizeof(fss_dev), "/dev/rfss%d", i);
 		if ((fd = open(fss_dev, O_RDWR, 0)) < 0)
-			goto fail;
-
-		if (ioctl(fd, FSSIOFGET, &flags) < 0)
 			goto fail;
 
 		if (ioctl(fd, FSSIOCSET, &fss) < 0) {
@@ -136,6 +136,7 @@ snap_open(char *mountpoint, char *backup, time_t *snap_date, char **snap_dev)
 			fd = -1;
 			continue;
 		}
+		dounlink = 0;
 
 		if (snap_dev != NULL) {
 			*snap_dev = strdup(fss_dev);
@@ -145,10 +146,7 @@ snap_open(char *mountpoint, char *backup, time_t *snap_date, char **snap_dev)
 			}
 		}
 
-		flags |= FSS_UNCONFIG_ON_CLOSE;
-		if (ioctl(fd, FSSIOCGET, &fsg) < 0 ||
-		    ioctl(fd, FSSIOFSET, &flags) < 0 ||
-		    (!israw && unlink(fss.fss_bstore) < 0)) {
+		if (ioctl(fd, FSSIOCGET, &fsg) < 0) {
 			ioctl(fd, FSSIOCCLR);
 			goto fail;
 		}

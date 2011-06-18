@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.51 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.51.4.1 2011/06/18 17:00:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.51 2008/07/31 05:38:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.51.4.1 2011/06/18 17:00:25 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -340,6 +340,10 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			goto fail;
 		}
 		mutex_enter(&ump->um_lock);
+		/* Try to keep snapshot indirect blocks contiguous. */
+		if (i == num && (ip->i_flags & SF_SNAPSHOT) != 0)
+			pref = ffs_blkpref_ufs1(ip, lbn, indirs[i-1].in_off,
+			    flags | B_METAONLY, &bap[0]);
 		if (pref == 0)
 			pref = ffs_blkpref_ufs1(ip, lbn, 0, flags | B_METAONLY,
 			    NULL);
@@ -932,6 +936,10 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			goto fail;
 		}
 		mutex_enter(&ump->um_lock);
+		/* Try to keep snapshot indirect blocks contiguous. */
+		if (i == num && (ip->i_flags & SF_SNAPSHOT) != 0)
+			pref = ffs_blkpref_ufs2(ip, lbn, indirs[i-1].in_off,
+			    flags | B_METAONLY, &bap[0]);
 		if (pref == 0)
 			pref = ffs_blkpref_ufs2(ip, lbn, 0, flags | B_METAONLY,
 			    NULL);
