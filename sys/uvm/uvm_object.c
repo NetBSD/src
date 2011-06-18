@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.9 2011/06/12 06:36:38 mrg Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.10 2011/06/18 21:14:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.9 2011/06/12 06:36:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.10 2011/06/18 21:14:43 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -84,10 +84,9 @@ uvm_obj_destroy(struct uvm_object *uo, bool dlock)
 
 	KASSERT(rb_tree_iterate(&uo->rb_tree, NULL, RB_DIR_LEFT) == NULL);
 
-	/* Purge any UBC entries with this object. */
-	if (__predict_false(!LIST_EMPTY(&uo->uo_ubc))) {
-		ubc_purge(uo);
-	}
+	/* Purge any UBC entries associated with this object. */
+	ubc_purge(uo);
+
 	/* Destroy the lock, if requested. */
 	if (dlock) {
 		mutex_obj_free(uo->vmobjlock);
