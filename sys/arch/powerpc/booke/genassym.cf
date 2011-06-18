@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2011/06/15 17:47:45 matt Exp $
+#	$NetBSD: genassym.cf,v 1.5 2011/06/18 06:37:38 matt Exp $
 
 #-
 # Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -66,38 +66,38 @@ include <powerpc/booke/pte.h>
 
 define	FRAMELEN	FRAMELEN
 define	FRAME_TF	offsetof(struct ktrapframe, ktf_tf)
-define	FRAME_0		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[0])
-define	FRAME_1		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[1])
-define	FRAME_2		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[2])
-define	FRAME_3		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[3])
-define	FRAME_4		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[4])
-define	FRAME_5		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[5])
-define	FRAME_6		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[6])
-define	FRAME_7		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[7])
-define	FRAME_8		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[8])
-define	FRAME_9		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[9])
-define	FRAME_10	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[10])
-define	FRAME_11	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[11])
-define	FRAME_12	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[12])
-define	FRAME_13	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[13])
-define	FRAME_14	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[14])
-define	FRAME_15	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[15])
-define	FRAME_16	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[16])
-define	FRAME_17	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[17])
-define	FRAME_18	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[18])
-define	FRAME_19	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[19])
-define	FRAME_20	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[20])
-define	FRAME_21	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[21])
-define	FRAME_22	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[22])
-define	FRAME_23	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[23])
-define	FRAME_24	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[24])
-define	FRAME_25	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[25])
-define	FRAME_26	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[26])
-define	FRAME_27	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[27])
-define	FRAME_28	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[28])
-define	FRAME_29	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[29])
-define	FRAME_30	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[30])
-define	FRAME_31	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[31])
+define	FRAME_R0	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[0])
+define	FRAME_R1	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[1])
+define	FRAME_R2	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[2])
+define	FRAME_R3	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[3])
+define	FRAME_R4	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[4])
+define	FRAME_R5	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[5])
+define	FRAME_R6	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[6])
+define	FRAME_R7	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[7])
+define	FRAME_R8	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[8])
+define	FRAME_R9	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[9])
+define	FRAME_R10	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[10])
+define	FRAME_R11	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[11])
+define	FRAME_R12	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[12])
+define	FRAME_R13	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[13])
+define	FRAME_R14	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[14])
+define	FRAME_R15	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[15])
+define	FRAME_R16	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[16])
+define	FRAME_R17	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[17])
+define	FRAME_R18	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[18])
+define	FRAME_R19	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[19])
+define	FRAME_R20	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[20])
+define	FRAME_R21	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[21])
+define	FRAME_R22	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[22])
+define	FRAME_R23	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[23])
+define	FRAME_R24	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[24])
+define	FRAME_R25	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[25])
+define	FRAME_R26	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[26])
+define	FRAME_R27	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[27])
+define	FRAME_R28	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[28])
+define	FRAME_R29	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[29])
+define	FRAME_R30	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[30])
+define	FRAME_R31	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[31])
 define	FRAME_LR	offsetof(struct ktrapframe, ktf_tf.tf_lr)
 define	FRAME_CR	offsetof(struct ktrapframe, ktf_tf.tf_cr)
 define	FRAME_CTR	offsetof(struct ktrapframe, ktf_tf.tf_ctr)
@@ -262,16 +262,9 @@ define	RW_READER	RW_READER
 
 define	PTE_SCALESHIFT	ilog2(sizeof(pt_entry_t))
 define	PTR_SCALESHIFT	ilog2(sizeof(void *))
-define	PSL_CE		PSL_CE
-define	PSL_DE		PSL_DE
-define	PSL_EE		PSL_EE
-define	PSL_ME		PSL_ME
-define	PSL_PR		PSL_PR
-define	MSR_PR		31 - ilog2(PSL_PR)
-define	PSL_DS		PSL_DS
-define	MSR_DS		31 - ilog2(PSL_DS)
-define	PSL_IS		PSL_IS
-define	MSR_IS		31 - ilog2(PSL_IS)
-
 define	NSEGPG_SCALESHIFT	PAGE_SHIFT - ilog2(sizeof(void *))
 define	NPTEPG_SCALESHIFT	PAGE_SHIFT - ilog2(sizeof(pt_entry_t))
+
+define	MSR_PR		31 - ilog2(PSL_PR)
+define	MSR_DS		31 - ilog2(PSL_DS)
+define	MSR_IS		31 - ilog2(PSL_IS)

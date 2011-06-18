@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc85xx_start.S,v 1.4 2011/06/08 05:09:21 matt Exp $	*/
+/*	$NetBSD: mpc85xx_start.S,v 1.5 2011/06/18 06:37:38 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: mpc85xx_start.S,v 1.4 2011/06/08 05:09:21 matt Exp $")
+RCSID("$NetBSD: mpc85xx_start.S,v 1.5 2011/06/18 06:37:38 matt Exp $")
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -54,6 +54,7 @@ RCSID("$NetBSD: mpc85xx_start.S,v 1.4 2011/06/08 05:09:21 matt Exp $")
 
 #include <powerpc/spr.h>
 #include <powerpc/trap.h>
+#include <powerpc/psl.h>
 #include <powerpc/booke/pte.h>
 #include <powerpc/booke/spr.h>
 #define	LBC_PRIVATE
