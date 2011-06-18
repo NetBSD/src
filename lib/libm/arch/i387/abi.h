@@ -1,4 +1,4 @@
-/*	$NetBSD: abi.h,v 1.6 2011/06/18 18:16:40 joerg Exp $	*/
+/*	$NetBSD: abi.h,v 1.7 2011/06/18 22:19:52 joerg Exp $	*/
 
 /*
  * Written by Frank van der Linden (fvdl@wasabisystems.com)
@@ -51,8 +51,8 @@
 
 #else
 
-#define ARG_LONG_DOUBLE_ONE	4(%rsp)
-#define ARG_LONG_DOUBLE_TWO	16(%rsp)
+#define ARG_LONG_DOUBLE_ONE	4(%esp)
+#define ARG_LONG_DOUBLE_TWO	16(%esp)
 #define ARG_DOUBLE_ONE		4(%esp)
 #define ARG_DOUBLE_ONE_LSW	4(%esp)
 #define ARG_DOUBLE_ONE_MSW	8(%esp)
