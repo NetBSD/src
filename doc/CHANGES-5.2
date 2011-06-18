@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.86 2011/06/18 17:21:32 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.87 2011/06/18 22:48:29 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5248,7 +5248,7 @@ sys/ufs/ufs/ufs_extattr.c			1.29 via patch
 	longer sleep forever in the kernel to acquire the lock.
 	[manu, ticket #1624]
 
-sys/dev/isa/pcppi.c				1.36
+sys/dev/isa/pcppi.c				1.36, 1.37
 sys/dev/isa/pcppivar.h				1.10
 
 	convert a lockless + spltty() combo to a IPL_VM mutex and cv.
