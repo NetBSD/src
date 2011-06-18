@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.78 2008/09/15 19:50:28 jdc Exp $ */
+/*	$NetBSD: gem.c,v 1.78.6.1 2011/06/18 16:40:43 bouyer Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.78 2008/09/15 19:50:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.78.6.1 2011/06/18 16:40:43 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2386,14 +2386,6 @@ gem_statuschange(struct gem_softc* sc)
 	sc->sc_mif_config = bus_space_read_4(t, mac, GEM_MIF_CONFIG);
 	if ((sc->sc_flags &(GEM_SERDES | GEM_SERIAL)) == 0) {
 		if ((sc->sc_mif_config & GEM_MIF_CONFIG_MDI1) != 0) {
-			/* External MII needs echo disable if half duplex. */
-			if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) &
-			    IFM_FDX) != 0)
-				/* turn on full duplex LED */
-				v |= GEM_MAC_XIF_FDPLX_LED;
-			else
-				/* half duplex -- disable echo */
-				v |= GEM_MAC_XIF_ECHO_DISABL;
 			if (gigabit)
 				v |= GEM_MAC_XIF_GMII_MODE;
 			else
@@ -2401,6 +2393,13 @@ gem_statuschange(struct gem_softc* sc)
 		} else
 			/* Internal MII needs buf enable */
 			v |= GEM_MAC_XIF_MII_BUF_ENA;
+		/* MII needs echo disable if half duplex. */
+		if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
+			/* turn on full duplex LED */
+			v |= GEM_MAC_XIF_FDPLX_LED;
+		else
+			/* half duplex -- disable echo */
+			v |= GEM_MAC_XIF_ECHO_DISABL;
 	} else {
 		if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
 			v |= GEM_MAC_XIF_FDPLX_LED;
