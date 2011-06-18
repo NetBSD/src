@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.83 2011/06/18 11:21:43 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.84 2011/06/18 16:43:07 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5233,4 +5233,62 @@ lib/libisc/shlib_version				patch
 
 	Update bind to 9.7.3-P1, fixing CVE-2011-1910 and CVE-2011-0414
 	[spz, ticket #1634]
+
+lib/libpuffs/puffs.c				1.116 via patch
+sys/fs/puffs/puffs_vnops.c			1.151 via patch
+sys/fs/puffs/puffs_sys.h			patch
+
+	Call advlock method if supplied
+	[manu, ticket #1623]
+
+sys/ufs/ufs/ufs_extattr.c			1.29 via patch
+
+	Fix filesystem root leaked lock when using UFS_EXTATTR_AUTOSTART.
+	This way, statvfs(2) calls obtained by df(1) or umount(8) will no
+	longer sleep forever in the kernel to acquire the lock.
+	[manu, ticket #1624]
+
+sys/dev/isa/pcppi.c				1.36
+sys/dev/isa/pcppivar.h				1.10
+
+	convert a lockless + spltty() combo to a IPL_VM mutex and cv.
+	hopefully this will avoid the beep-didn't-stop problem i had recently
+	that i was able to fix by calling wakeup() on pcppi's softc from ddb.
+	[mrg, ticket #1625]
+
+sys/arch/m68k/fpe/fpu_emulate.c			1.31
+
+	Fix botch in rev 1.28 that causes wrong results of fcmp and ftst
+	in FPE.  fpu_upd_fpsr() should be called even in discard_result
+	case if an emulated instruction gets proper result without signal.
+	Fixes weird behavior of awk(1) seen on /etc/rc.d/postfix on XM6i and
+	TME emulating sun3 without 68881.
+	[tsutsui, ticket #1626]
+
+sys/kern/kern_fork.c				1.181
+
+	Inherit proc_t::p_mqueue_cnt on fork().
+	[rmind, ticket #1629]
+
+sys/arch/xen/xen/xbdback_xenbus.c		1.37
+
+	In xbdback(4), move the code that copies segments after the bound checks
+	of the ``nr_segments'' variable. Fix a possible DoS against xbdback(4)
+	[jym, ticket #1630]
+
+sys/dev/ic/gem.c				1.97
+
+	Fix corrupted packet problem on 100Mb/s half duplex links.
+	We need to set "echo disable" on the internal phy too, not just on the
+	external phy.
+	[jdc, ticket #1632]
+
+sys/kern/uipc_domain.c				1.86
+sys/kern/uipc_proto.c				1.22
+sys/kern/uipc_usrreq.c				1.134
+
+	Add SOCK_SEQPACKET to PL_LOCAL sockets. Based on patch from Jesse Off,
+	submitted 8 years ago:
+	http://mail-index.netbsd.org/tech-kern/2003/04/14/0006.html
+	[manu, ticket #1633]
 
