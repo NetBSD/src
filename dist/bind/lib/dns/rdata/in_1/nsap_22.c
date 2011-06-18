@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_22.c,v 1.1.1.5.4.1 2011/01/06 21:41:51 riz Exp $	*/
+/*	$NetBSD: nsap_22.c,v 1.1.1.5.4.2 2011/06/18 11:20:36 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsap_22.c,v 1.44 2009/12/04 22:06:37 tbox Exp */
+/* Id: nsap_22.c,v 1.44 2009-12-04 22:06:37 tbox Exp */
 
 /* Reviewed: Fri Mar 17 10:41:07 PST 2000 by gson */
 

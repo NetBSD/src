@@ -1,4 +1,4 @@
-/*	$NetBSD: sdb.c,v 1.1.1.6.4.2 2011/01/06 21:41:47 riz Exp $	*/
+/*	$NetBSD: sdb.c,v 1.1.1.6.4.3 2011/06/18 11:20:29 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdb.c,v 1.71.54.3 2010/08/16 05:14:15 marka Exp */
+/* Id: sdb.c,v 1.71.54.3 2010-08-16 05:14:15 marka Exp */
 
 /*! \file */
 

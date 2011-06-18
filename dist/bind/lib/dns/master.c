@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.2.4.2 2011/01/06 21:41:46 riz Exp $	*/
+/*	$NetBSD: master.c,v 1.2.4.3 2011/06/18 11:20:28 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: master.c,v 1.178 2009/09/01 00:22:26 jinmei Exp */
+/* Id: master.c,v 1.178 2009-09-01 00:22:26 jinmei Exp */
 
 /*! \file */
 

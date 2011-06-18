@@ -1,4 +1,4 @@
-/*	$NetBSD: tsigconf.c,v 1.1.1.5.4.1 2011/01/06 21:40:37 riz Exp $	*/
+/*	$NetBSD: tsigconf.c,v 1.1.1.5.4.2 2011/06/18 11:19:48 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsigconf.c,v 1.33 2009/09/01 00:22:25 jinmei Exp */
+/* Id: tsigconf.c,v 1.33 2009-09-01 00:22:25 jinmei Exp */
 
 /*! \file */
 

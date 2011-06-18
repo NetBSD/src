@@ -1,4 +1,4 @@
-/*	$NetBSD: hmacsha.c,v 1.1.1.2.4.1 2011/01/06 21:41:58 riz Exp $	*/
+/*	$NetBSD: hmacsha.c,v 1.1.1.2.4.2 2011/06/18 11:20:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2005-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hmacsha.c,v 1.10 2009/02/06 23:47:42 tbox Exp */
+/* Id: hmacsha.c,v 1.10 2009-02-06 23:47:42 tbox Exp */
 
 /*
  * This code implements the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256, HMAC-SHA384

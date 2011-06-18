@@ -1,4 +1,4 @@
-/*        $NetBSD: client.c,v 1.1.2.1 2011/01/06 21:41:46 riz Exp $      */
+/*        $NetBSD: client.c,v 1.1.2.2 2011/06/18 11:20:27 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.6.32.4 2010/05/19 07:11:19 marka Exp */
+/* Id: client.c,v 1.6.32.6 2010-12-03 12:04:24 marka Exp */
 
 #include <config.h>
 
@@ -1426,6 +1426,8 @@ dns_client_addtrustedkey(dns_client_t *client, dns_rdataclass_t rdclass,
 	result = dns_keytable_add(secroots, ISC_FALSE, &dstkey);
 
  cleanup:
+	if (dstkey != NULL)
+		dst_key_free(&dstkey);
 	if (view != NULL)
 		dns_view_detach(&view);
 	if (secroots != NULL)

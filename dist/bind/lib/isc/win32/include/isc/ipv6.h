@@ -1,7 +1,7 @@
-/*	$NetBSD: ipv6.h,v 1.1.1.6 2008/06/21 18:31:28 christos Exp $	*/
+/*	$NetBSD: ipv6.h,v 1.1.1.6.4.1 2011/06/18 11:20:48 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ipv6.h,v 1.19 2007/06/18 23:47:49 tbox Exp */
+/* Id: ipv6.h,v 1.19.558.2 2011-02-03 12:17:23 tbox Exp */
 
 #ifndef ISC_IPV6_H
 #define ISC_IPV6_H 1
@@ -113,14 +113,14 @@ LIBISC_EXTERNAL_DATA extern const struct in6_addr isc_in6addr_loopback;
  */
 #ifndef IN6_IS_ADDR_LINKLOCAL
 #define IN6_IS_ADDR_LINKLOCAL(a)	(\
-(*((u_long *)((a)->s6_addr)    ) == 0xfe) && \
-((*((u_long *)((a)->s6_addr) + 1) & 0xc0) == 0x80))
+       ((a)->s6_addr[0] == 0xfe) && \
+       (((a)->s6_addr[1] & 0xc0) == 0x80))
 #endif
 
 #ifndef IN6_IS_ADDR_SITELOCAL
 #define IN6_IS_ADDR_SITELOCAL(a)	(\
-(*((u_long *)((a)->s6_addr)    ) == 0xfe) && \
-((*((u_long *)((a)->s6_addr) + 1) & 0xc0) == 0xc0))
+       ((a)->s6_addr[0] == 0xfe) && \
+       (((a)->s6_addr[1] & 0xc0) == 0xc0))
 #endif
 
 #endif /* ISC_IPV6_H */

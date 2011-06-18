@@ -1,4 +1,4 @@
-/*        $NetBSD: backtrace.c,v 1.1.2.2 2011/01/06 23:46:13 riz Exp $      */
+/*        $NetBSD: backtrace.c,v 1.1.2.3 2011/06/18 11:20:39 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: backtrace.c,v 1.3 2009/09/02 23:48:02 tbox Exp */
+/* Id: backtrace.c,v 1.3 2009-09-02 23:48:02 tbox Exp */
 
 /*! \file */
 

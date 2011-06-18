@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.1.1.5.4.2 2011/01/06 21:41:48 riz Exp $	*/
+/*	$NetBSD: view.c,v 1.1.1.5.4.3 2011/06/18 11:20:31 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.c,v 1.159.8.9.6.1 2010/09/24 06:32:57 marka Exp */
+/* Id: view.c,v 1.159.8.11 2010-09-24 05:54:06 marka Exp */
 
 /*! \file */
 
@@ -1643,6 +1643,16 @@ dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
 	REQUIRE((cfgctx != NULL && cfg_destroy != NULL) || !allow);
 
 #ifdef BIND9
+	if (view->new_zone_file != NULL) {
+		isc_mem_free(view->mctx, view->new_zone_file);
+		view->new_zone_file = NULL;
+	}
+
+	if (view->new_zone_config != NULL) {
+		view->cfg_destroy(&view->new_zone_config);
+		view->cfg_destroy = NULL;
+	}
+
 	if (allow) {
 		char buffer[ISC_SHA256_DIGESTSTRINGLENGTH + sizeof(NZF)];
 		isc_sha256_data((void *)view->name, strlen(view->name), buffer);
@@ -1651,16 +1661,6 @@ dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
 		view->new_zone_file = isc_mem_strdup(view->mctx, buffer);
 		view->new_zone_config = cfgctx;
 		view->cfg_destroy = cfg_destroy;
-	} else {
-		if (view->new_zone_file != NULL) {
-			isc_mem_free(view->mctx, view->new_zone_file);
-			view->new_zone_file = NULL;
-		}
-
-		if (view->new_zone_config != NULL) {
-			view->cfg_destroy(&view->new_zone_config);
-			view->cfg_destroy = NULL;
-		}
 	}
 #else
 	UNUSED(allow);

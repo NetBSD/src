@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.4.4.2 2011/01/06 21:40:33 riz Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.4.4.3 2011/06/18 11:19:46 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-signzone.c,v 1.258.4.4 2010/06/03 23:49:23 tbox Exp */
+/* Id: dnssec-signzone.c,v 1.258.4.4 2010-06-03 23:49:23 tbox Exp */
 
 /*! \file */
 

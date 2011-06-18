@@ -1,4 +1,4 @@
-/*	$NetBSD: peer.c,v 1.1.1.5.4.1 2011/01/06 21:41:47 riz Exp $	*/
+/*	$NetBSD: peer.c,v 1.1.1.5.4.2 2011/06/18 11:20:28 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: peer.c,v 1.33 2009/09/02 23:48:02 tbox Exp */
+/* Id: peer.c,v 1.33 2009-09-02 23:48:02 tbox Exp */
 
 /*! \file */
 

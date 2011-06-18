@@ -1,4 +1,4 @@
-/*	$NetBSD: ssu.h,v 1.1.1.5.4.1 2011/01/06 21:41:49 riz Exp $	*/
+/*	$NetBSD: ssu.h,v 1.1.1.5.4.2 2011/06/18 11:20:33 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ssu.h,v 1.24 2008/01/18 23:46:58 tbox Exp */
+/* Id: ssu.h,v 1.24 2008-01-18 23:46:58 tbox Exp */
 
 #ifndef DNS_SSU_H
 #define DNS_SSU_H 1

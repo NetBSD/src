@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setpk11provider.pl,v 1.2 2009/10/12 16:41:13 each Exp
+# Id: setpk11provider.pl,v 1.2 2009-10-12 16:41:13 each Exp
 
 # setpk11provider.pl
 # This script sets the PKCS#11 provider name in the build scripts.

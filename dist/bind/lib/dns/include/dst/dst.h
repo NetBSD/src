@@ -1,7 +1,7 @@
-/*	$NetBSD: dst.h,v 1.1.1.3.4.1 2011/01/06 21:41:49 riz Exp $	*/
+/*	$NetBSD: dst.h,v 1.1.1.3.4.2 2011/06/18 11:20:33 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst.h,v 1.25 2009/10/26 21:18:24 each Exp */
+/* Id: dst.h,v 1.25.36.2 2010-12-09 04:31:30 tbox Exp */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -591,6 +591,16 @@ dst_key_paramcompare(const dst_key_t *key1, const dst_key_t *key2);
  * Returns:
  *\li 	ISC_TRUE
  * \li	ISC_FALSE
+ */
+
+void
+dst_key_attach(dst_key_t *source, dst_key_t **target);
+/*
+ * Attach to a existing key increasing the reference count.
+ *
+ * Requires:
+ *\li 'source' to be a valid key.
+ *\li 'target' to be non-NULL and '*target' to be NULL.
  */
 
 void

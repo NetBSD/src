@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.6.4.2 2011/01/06 21:41:47 riz Exp $	*/
+/*	$NetBSD: rbt.c,v 1.6.4.3 2011/06/18 11:20:28 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.c,v 1.146 2009/10/27 04:46:58 marka Exp */
+/* Id: rbt.c,v 1.146 2009-10-27 04:46:58 marka Exp */
 
 /*! \file */
 

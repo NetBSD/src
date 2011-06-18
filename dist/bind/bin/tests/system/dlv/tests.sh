@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.4.558.2 2010/05/27 23:49:55 tbox Exp
+# Id: tests.sh,v 1.4.558.2.44.1 2011-05-27 00:43:04 each Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -37,6 +37,22 @@ status=`expr $status + $ret`
 echo "I:checking that child DNSKEY reference by DLV validates as secure ($n)"
 ret=0
 $DIG $DIGOPTS grand.child1.utld dnskey @10.53.0.5 > dig.out.ns5.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns5.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that SOA reference by DLV in a DRUZ with DS validates as secure ($n)"
+ret=0
+$DIG $DIGOPTS child1.druz soa @10.53.0.5 > dig.out.ns5.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns5.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that child SOA reference by DLV in a DRUZ with DS validates as secure ($n)"
+ret=0
+$DIG $DIGOPTS grand.child1.druz soa @10.53.0.5 > dig.out.ns5.test$n || ret=1
 grep "flags:.*ad.*QUERY" dig.out.ns5.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi

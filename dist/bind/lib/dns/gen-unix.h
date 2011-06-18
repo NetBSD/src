@@ -1,4 +1,4 @@
-/*	$NetBSD: gen-unix.h,v 1.1.1.5.4.2 2011/01/06 21:41:46 riz Exp $	*/
+/*	$NetBSD: gen-unix.h,v 1.1.1.5.4.3 2011/06/18 11:20:27 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gen-unix.h,v 1.21 2009/01/17 23:47:42 tbox Exp */
+/* Id: gen-unix.h,v 1.21 2009-01-17 23:47:42 tbox Exp */
 
 /*! \file
  * \brief

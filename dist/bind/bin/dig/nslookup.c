@@ -1,4 +1,4 @@
-/*	$NetBSD: nslookup.c,v 1.1.1.6.4.2 2011/01/06 21:40:32 riz Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.1.1.6.4.3 2011/06/18 11:19:46 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nslookup.c,v 1.124 2009/10/20 01:04:03 marka Exp */
+/* Id: nslookup.c,v 1.124 2009-10-20 01:04:03 marka Exp */
 
 #include <config.h>
 
