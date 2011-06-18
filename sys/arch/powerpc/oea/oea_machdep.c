@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.56 2011/01/18 02:25:42 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.57 2011/06/18 20:34:39 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.56 2011/01/18 02:25:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.57 2011/06/18 20:34:39 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -420,6 +420,12 @@ oea_init(void (*handler)(void))
 	    : "=r"(scratch)
 	    : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 #endif
+
+	/*
+	 * Let's take all the indirect calls via our stubs and patch 
+	 * them to be direct calls.
+	 */
+	cpu_fixup_stubs();
 
 	KASSERT(curcpu() == ci);
 }
