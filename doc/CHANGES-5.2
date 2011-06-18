@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.82 2011/05/22 15:34:12 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.83 2011/06/18 11:21:43 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5223,4 +5223,14 @@ sys/arch/x68k/x68k/disksubr.c			1.34
 	DIAGNOSTIC pool assertions.
 	Also fix bp->b_flags in writedisklabel(9) error path.
 	[tsutsui, ticket #1621]
+
+dist/bind/						patch
+distrib/sets/lists/base/md.amd64			patch
+distrib/sets/lists/base/md.sparc64			patch
+distrib/sets/lists/base/shl.mi				patch
+lib/libdns/shlib_version				patch
+lib/libisc/shlib_version				patch
+
+	Update bind to 9.7.3-P1, fixing CVE-2011-1910 and CVE-2011-0414
+	[spz, ticket #1634]
 
