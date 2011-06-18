@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.41 2011/05/21 13:32:27 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.42 2011/06/18 11:46:32 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2747,4 +2747,14 @@ external/bsd/dhcpcd/dist/dhcpcd-hooks/30-hostname	patch
 	Document the need for input validation in dhcpcd-run-hooks(8).
 	Fixes CVE-2011-996
 	[spz, ticket #1603]
+
+dist/bind/						patch
+distrib/sets/lists/base/md.amd64			patch
+distrib/sets/lists/base/md.sparc64			patch
+distrib/sets/lists/base/shl.mi				patch
+lib/libdns/shlib_version				patch
+lib/libisc/shlib_version				patch
+
+	Update bind to 9.7.3-P1, fixing CVE-2011-1910 and CVE-2011-0414
+	[spz, ticket #1634]
 
