@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2011/06/15 05:50:49 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2011/06/18 06:44:28 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/06/15 05:50:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2011/06/18 06:44:28 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/06/15 05:50:49 matt Exp $");
 #include <sys/ksyms.h>
 #include <sys/device.h>
 #include <sys/module.h>
+#include <sys/cpu.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -98,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/06/15 05:50:49 matt Exp $");
 
 #include <prop/proplib.h>
 
-#include <machine/bus.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 #include <machine/walnut.h>
@@ -106,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/06/15 05:50:49 matt Exp $");
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 
 #include <dev/cons.h>
