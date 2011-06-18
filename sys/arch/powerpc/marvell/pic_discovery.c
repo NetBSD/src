@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_discovery.c,v 1.3 2010/04/28 13:51:55 kiyohara Exp $	*/
+/*	$NetBSD: pic_discovery.c,v 1.4 2011/06/18 06:41:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,13 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_discovery.c,v 1.3 2010/04/28 13:51:55 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_discovery.c,v 1.4 2011/06/18 06:41:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/malloc.h>
-
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #include <powerpc/pic/picvar.h>
 

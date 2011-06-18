@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 2011/02/07 07:02:24 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.67 2011/06/18 06:41:41 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2011/02/07 07:02:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2011/06/18 06:41:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -76,16 +76,18 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2011/02/07 07:02:24 matt Exp $");
 #include <sys/systm.h>
 #include <sys/pool.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
-#include <machine/cpu.h>
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
+#include <machine/tlb.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
-#include <machine/tlb.h>
+
+#include <powerpc/ibm4xx/cpu.h>
 
 /*
  * kernmap is an array of PTEs large enough to map in

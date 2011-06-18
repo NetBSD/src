@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.8 2011/06/17 05:15:23 matt Exp $ */
+/*	$NetBSD: picvar.h,v 1.9 2011/06/18 06:41:44 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,12 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.8 2011/06/17 05:15:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.9 2011/06/18 06:41:44 matt Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
 
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 struct pic_ops {
 	void *pic_cookie;	/* private stuff / hardware info */

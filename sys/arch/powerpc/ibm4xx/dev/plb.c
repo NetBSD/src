@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.19 2011/06/06 16:42:18 matt Exp $ */
+/* $NetBSD: plb.c,v 1.20 2011/06/18 06:41:42 matt Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,24 +66,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.19 2011/06/06 16:42:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.20 2011/06/18 06:41:42 matt Exp $");
 
 #include "locators.h"
 #include "emac.h"
+
+#define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
-#define _POWERPC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
-
-#include <powerpc/cpu.h>
+#include <powerpc/ibm4xx/cpu.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dev/malvar.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
-#include <powerpc/ibm4xx/spr.h>
 
 /*
  * The devices that attach to the processor local bus on the 405GP CPU.

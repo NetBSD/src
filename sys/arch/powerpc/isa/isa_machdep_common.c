@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep_common.c,v 1.6 2011/06/17 19:05:20 matt Exp $	*/
+/*	$NetBSD: isa_machdep_common.c,v 1.7 2011/06/18 06:41:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,15 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep_common.c,v 1.6 2011/06/17 19:05:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep_common.c,v 1.7 2011/06/18 06:41:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/intr.h>
 
 #include <machine/pio.h>
-#include <machine/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

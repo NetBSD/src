@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.24 2010/12/20 00:25:41 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.25 2011/06/18 06:41:41 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,19 +36,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2010/12/20 00:25:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2011/06/18 06:41:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/evcnt.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
-#include <machine/intr.h>
-#include <machine/psl.h>
-
-#include <powerpc/cpu.h>
+#include <powerpc/psl.h>
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
+#include <powerpc/ibm4xx/cpu.h>
 
 
 /*

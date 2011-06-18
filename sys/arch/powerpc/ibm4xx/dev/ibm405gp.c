@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.c,v 1.4 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: ibm405gp.c,v 1.5 2011/06/18 06:41:42 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,14 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm405gp.c,v 1.4 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm405gp.c,v 1.5 2011/06/18 06:41:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/extent.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <dev/pci/pcivar.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>

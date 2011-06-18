@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.38 2011/06/17 19:03:02 matt Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.39 2011/06/18 06:41:42 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.38 2011/06/17 19:03:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.39 2011/06/18 06:41:42 matt Exp $");
 
 #include "opt_emac.h"
 
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.38 2011/06/17 19:03:02 matt Exp $");
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
@@ -72,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.38 2011/06/17 19:03:02 matt Exp $");
 
 #include <net/bpf.h>
 
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/mal405gp.h>
 #include <powerpc/ibm4xx/dev/emacreg.h>

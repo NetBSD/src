@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.13 2011/06/17 19:03:01 matt Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.14 2011/06/18 06:41:42 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,17 +36,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.13 2011/06/17 19:03:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.14 2011/06/18 06:41:42 matt Exp $");
 
 #include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <prop/proplib.h>
 
-#include <machine/cpu.h>
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
