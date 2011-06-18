@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.20.4.4 2011/03/07 04:19:13 riz Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.20.4.5 2011/06/18 16:38:26 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.20.4.4 2011/03/07 04:19:13 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.20.4.5 2011/06/18 16:38:26 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -869,7 +869,6 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj)
 	blkif_request_t *req = &xbdi->xbdi_xen_req;
 	blkif_x86_32_request_t *req32;
 	blkif_x86_64_request_t *req64;
-	int i;
 
 	(void)obj;
 	if (xbdi->xbdi_ring.ring_n.req_cons != xbdi->xbdi_req_prod) {
@@ -887,8 +886,6 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj)
 			req->handle = req32->handle;
 			req->id = req32->id;
 			req->sector_number = req32->sector_number;
-			for (i = 0; i < req->nr_segments; i++)
-				req->seg[i] = req32->seg[i];
 			break;
 			    
 		case XBDIP_64:
@@ -899,8 +896,6 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj)
 			req->handle = req64->handle;
 			req->id = req64->id;
 			req->sector_number = req64->sector_number;
-			for (i = 0; i < req->nr_segments; i++)
-				req->seg[i] = req64->seg[i];
 			break;
 		}
 		XENPRINTF(("xbdback op %d req_cons 0x%x req_prod 0x%x "
@@ -1015,16 +1010,23 @@ xbdback_co_cache_doflush(struct xbdback_instance *xbdi, void *obj)
 static void *
 xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 {	
-	int error;
+	int i, error;
+	blkif_request_t *req;
+	blkif_x86_32_request_t *req32;
+	blkif_x86_64_request_t *req64;
 
 	(void)obj;
-	if (xbdi->xbdi_xen_req.nr_segments < 1 ||
-	    xbdi->xbdi_xen_req.nr_segments > BLKIF_MAX_SEGMENTS_PER_REQUEST ) {
+
+	/* some sanity checks */
+	req = &xbdi->xbdi_xen_req;
+	if (req->nr_segments < 1 ||
+	    req->nr_segments > BLKIF_MAX_SEGMENTS_PER_REQUEST) {
 		printf("xbdback_io domain %d: %d segments\n",
 		       xbdi->xbdi_domid, xbdi->xbdi_xen_req.nr_segments);
 		error = EINVAL;
 		goto end;
 	}
+
 	if (xbdi->xbdi_xen_req.operation == BLKIF_OP_WRITE) {
 		if (xbdi->xbdi_ro) {
 			error = EROFS;
@@ -1033,6 +1035,25 @@ xbdback_co_io(struct xbdback_instance *xbdi, void *obj)
 	}
 
 	xbdi->xbdi_segno = 0;
+
+	/* copy request segments */
+	switch(xbdi->xbdi_proto) {
+	case XBDIP_NATIVE:
+		/* already copied in xbdback_co_main_loop */
+		break;
+	case XBDIP_32:
+		req32 = RING_GET_REQUEST(&xbdi->xbdi_ring.ring_32,
+		    xbdi->xbdi_ring.ring_n.req_cons);
+		for (i = 0; i < req->nr_segments; i++)
+			req->seg[i] = req32->seg[i];
+		break;
+	case XBDIP_64:
+		req64 = RING_GET_REQUEST(&xbdi->xbdi_ring.ring_64,
+		    xbdi->xbdi_ring.ring_n.req_cons);
+		for (i = 0; i < req->nr_segments; i++)
+			req->seg[i] = req64->seg[i];
+		break;
+	}
 
 	xbdi->xbdi_cont = xbdback_co_io_gotreq;
 	return xbdback_pool_get(&xbdback_request_pool, xbdi);
