@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.129.4.7 2010/01/16 17:52:13 bouyer Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.129.4.8 2011/06/18 16:17:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.4.7 2010/01/16 17:52:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.4.8 2011/06/18 16:17:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129.4.7 2010/01/16 17:52:13 bouyer
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/lockf.h>
 
 #include <uvm/uvm.h>
 
@@ -2124,24 +2125,25 @@ puffs_vnop_advlock(void *v)
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, advlock);
 	struct vnode *vp = ap->a_vp;
+	struct puffs_node *pn = VPTOPP(vp);
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	int error;
 
+	if (!EXISTSOP(pmp, ADVLOCK))
+		return lf_advlock(ap, &pn->pn_lockf, vp->v_size); 
+	
 	PUFFS_MSG_ALLOC(vn, advlock);
-	error = copyin(ap->a_fl, &advlock_msg->pvnr_fl, sizeof(struct flock));
-	if (error)
-		goto out;
+	(void)memcpy(&advlock_msg->pvnr_fl, ap->a_fl, 
+		     sizeof(advlock_msg->pvnr_fl));
 	advlock_msg->pvnr_id = ap->a_id;
 	advlock_msg->pvnr_op = ap->a_op;
 	advlock_msg->pvnr_flags = ap->a_flags;
 	puffs_msg_setinfo(park_advlock, PUFFSOP_VN,
 	    PUFFS_VN_ADVLOCK, VPTOPNC(vp));
-
 	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_advlock, vp->v_data, NULL, error);
 	error = checkerr(pmp, error, __func__);
-
- out:
 	PUFFS_MSG_RELEASE(advlock);
+ 
 	return error;
 }
 
