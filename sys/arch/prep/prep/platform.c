@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.24 2008/04/28 20:23:33 martin Exp $	*/
+/*	$NetBSD: platform.c,v 1.25 2011/06/18 08:08:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.24 2008/04/28 20:23:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.25 2011/06/18 08:08:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ find_platform_quirk(const char *model)
 
 /* XXX This should be conditional on finding L2 in residual */
 void
-cpu_setup_prep_generic(struct device *dev)
+cpu_setup_prep_generic(device_t dev)
 {
 	u_int8_t l2ctrl, cpuinf;
 
