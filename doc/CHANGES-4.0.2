@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.85 2011/04/07 17:33:43 riz Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.86 2011/06/18 10:39:12 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1210,4 +1210,21 @@ dist/dhcp/client/dhclient.c			1.21
 	CVE-2011-0997 dhclient: insufficient sanitization of certain DHCP
 	response values.
 	[christos, ticket #1427]
+
+dist/bind/CHANGES:				patch
+dist/bind/version:				patch
+dist/bind/lib/dns/api:				patch
+dist/bind/lib/dns/ncache.c:			patch
+dist/bind/lib/dns/rdataset.c:			patch
+dist/bind/lib/dns/validator.c:			patch
+dist/bind/lib/dns/include/dns/rdataset.h:	patch
+
+	Fix security issue: An authoritative name server sending a negative
+	 response containing a very large RRset could
+	 trigger an off-by-one error in the ncache code
+	 and crash named.
+	Fix bug: Named could fail to validate zones listed in a DLV
+	 that validated insecure without using DLV and had
+	 DS records in the parent zone.
+	[spz, ticket #1430]
 
