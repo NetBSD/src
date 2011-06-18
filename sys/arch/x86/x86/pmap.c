@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.123 2011/06/13 04:30:40 tls Exp $	*/
+/*	$NetBSD: pmap.c,v 1.124 2011/06/18 21:18:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2011/06/13 04:30:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2011/06/18 21:18:20 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3532,6 +3532,7 @@ startover:
 			killlist = pve;
 		}
 	}
+	pmap_tlb_shootnow();
 	kpreempt_enable();
 
 	/* Now free unused pvs. */
