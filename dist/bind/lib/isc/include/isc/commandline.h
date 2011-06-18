@@ -1,4 +1,4 @@
-/*	$NetBSD: commandline.h,v 1.1.1.5 2008/06/21 18:31:18 christos Exp $	*/
+/*	$NetBSD: commandline.h,v 1.1.1.5.4.1 2011/06/18 11:20:42 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: commandline.h,v 1.16 2007/06/19 23:47:18 tbox Exp */
+/* Id: commandline.h,v 1.16 2007-06-19 23:47:18 tbox Exp */
 
 #ifndef ISC_COMMANDLINE_H
 #define ISC_COMMANDLINE_H 1

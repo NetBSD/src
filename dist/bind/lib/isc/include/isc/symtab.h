@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.h,v 1.1.1.5.4.2 2011/01/06 21:42:00 riz Exp $	*/
+/*	$NetBSD: symtab.h,v 1.1.1.5.4.3 2011/06/18 11:20:43 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: symtab.h,v 1.26 2009/01/18 23:48:14 tbox Exp */
+/* Id: symtab.h,v 1.26 2009-01-18 23:48:14 tbox Exp */
 
 #ifndef ISC_SYMTAB_H
 #define ISC_SYMTAB_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.h,v 1.1.1.5.4.1 2011/01/06 21:41:48 riz Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.1.1.5.4.2 2011/06/18 11:20:32 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec.h,v 1.40.10.1 2010/01/13 19:31:53 each Exp */
+/* Id: dnssec.h,v 1.40.10.1 2010-01-13 19:31:53 each Exp */
 
 #ifndef DNS_DNSSEC_H
 #define DNS_DNSSEC_H 1

@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_internal.h,v 1.1.1.3.4.1 2011/01/06 21:41:46 riz Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.1.1.3.4.2 2011/06/18 11:20:27 bouyer Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_internal.h,v 1.23 2009/10/27 22:25:37 marka Exp */
+/* Id: dst_internal.h,v 1.23.32.2 2010-12-09 04:31:30 tbox Exp */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -43,6 +43,7 @@
 #include <isc/region.h>
 #include <isc/types.h>
 #include <isc/md5.h>
+#include <isc/refcount.h>
 #include <isc/sha1.h>
 #include <isc/sha2.h>
 #include <isc/stdtime.h>
@@ -88,6 +89,7 @@ typedef struct dst_hmacsha512_key dst_hmacsha512_key_t;
 /*% DST Key Structure */
 struct dst_key {
 	unsigned int	magic;
+	isc_refcount_t	refs;
 	dns_name_t *	key_name;	/*%< name of the key */
 	unsigned int	key_size;	/*%< size of the key in bits */
 	unsigned int	key_proto;	/*%< protocols this key is used for */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.c,v 1.1.1.3.4.2 2011/01/06 21:41:46 riz Exp $	*/
+/*	$NetBSD: dst_parse.c,v 1.1.1.3.4.3 2011/06/18 11:20:27 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * Id: dst_parse.c,v 1.23.36.3 2010/01/13 19:31:52 each Exp
+ * Id: dst_parse.c,v 1.23.36.3 2010-01-13 19:31:52 each Exp
  */
 
 #include <config.h>

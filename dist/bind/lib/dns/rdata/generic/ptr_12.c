@@ -1,4 +1,4 @@
-/*	$NetBSD: ptr_12.c,v 1.1.1.5.4.1 2011/01/06 21:41:51 riz Exp $	*/
+/*	$NetBSD: ptr_12.c,v 1.1.1.5.4.2 2011/06/18 11:20:35 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ptr_12.c,v 1.45 2009/12/04 22:06:37 tbox Exp */
+/* Id: ptr_12.c,v 1.45 2009-12-04 22:06:37 tbox Exp */
 
 /* Reviewed: Thu Mar 16 14:05:12 PST 2000 by explorer */
 

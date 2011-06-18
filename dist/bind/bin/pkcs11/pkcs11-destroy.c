@@ -1,4 +1,4 @@
-/*        $NetBSD: pkcs11-destroy.c,v 1.1.2.1 2011/01/06 21:40:39 riz Exp $      */
+/*        $NetBSD: pkcs11-destroy.c,v 1.1.2.2 2011/06/18 11:19:50 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Id: pkcs11-destroy.c,v 1.7.36.1 2010/01/13 21:21:33 fdupont Exp */
+/* Id: pkcs11-destroy.c,v 1.7.36.1 2010-01-13 21:21:33 fdupont Exp */
 
 /* pkcs11-destroy [-m module] [-s $slot] [-i $id | -l $label] [-p $pin] */
 

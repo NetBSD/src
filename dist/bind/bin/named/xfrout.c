@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.5.4.2 2011/01/06 21:40:37 riz Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.1.1.5.4.3 2011/06/18 11:19:48 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrout.c,v 1.136.132.2 2010/05/27 23:49:54 tbox Exp */
+/* Id: xfrout.c,v 1.136.132.2 2010-05-27 23:49:54 tbox Exp */
 
 #include <config.h>
 

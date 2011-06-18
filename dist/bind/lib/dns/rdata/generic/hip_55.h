@@ -1,4 +1,4 @@
-/*        $NetBSD: hip_55.h,v 1.1.2.1 2011/01/06 21:41:50 riz Exp $      */
+/*        $NetBSD: hip_55.h,v 1.1.2.2 2011/06/18 11:20:34 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hip_55.h,v 1.2 2009/02/26 06:09:19 marka Exp */
+/* Id: hip_55.h,v 1.2 2009-02-26 06:09:19 marka Exp */
 
 #ifndef GENERIC_HIP_5_H
 #define GENERIC_HIP_5_H 1

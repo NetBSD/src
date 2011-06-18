@@ -1,4 +1,4 @@
-/*	$NetBSD: portset.h,v 1.1.4.3 2011/01/06 21:42:00 riz Exp $	*/
+/*	$NetBSD: portset.h,v 1.1.4.4 2011/06/18 11:20:42 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: portset.h,v 1.6 2009/06/25 05:28:34 marka Exp */
+/* Id: portset.h,v 1.6 2009-06-25 05:28:34 marka Exp */
 
 /*! \file isc/portset.h
  * \brief Transport Protocol Port Manipulation Module

@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapictx.c,v 1.1.1.3.4.1 2011/01/06 21:41:46 riz Exp $	*/
+/*	$NetBSD: gssapictx.c,v 1.1.1.3.4.2 2011/06/18 11:20:27 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gssapictx.c,v 1.14.104.4 2010/07/09 05:14:08 each Exp */
+/* Id: gssapictx.c,v 1.14.104.5 2010-12-22 02:36:17 marka Exp */
 
 #include <config.h>
 
@@ -360,7 +360,7 @@ dst_gssapi_identitymatchesrealmkrb5(dns_name_t *signer, dns_name_t *name,
 	if (rname == NULL)
 		return (isc_boolean_false);
 	*rname = '\0';
-	rname += 2;
+	rname++;
 
 	/*
 	 * Find the host portion of the signer's name.  We do this by

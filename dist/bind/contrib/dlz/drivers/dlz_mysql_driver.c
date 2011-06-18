@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_mysql_driver.c,v 1.1.1.2.22.2 2011/01/06 21:41:05 riz Exp $	*/
+/*	$NetBSD: dlz_mysql_driver.c,v 1.1.1.2.22.3 2011/06/18 11:20:14 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -885,7 +885,7 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 			      "mysql driver could not create "
 			      "database instance object.");
 		result = ISC_R_FAILURE;
-		goto full_cleanup;
+		goto cleanup;
 	}
 
 	/* create and set db connection */

@@ -1,6 +1,6 @@
-/*	$NetBSD: utf8.h,v 1.1.1.1 2004/05/17 23:43:42 christos Exp $	*/
+/*	$NetBSD: utf8.h,v 1.1.1.1.32.1 2011/06/18 11:20:16 bouyer Exp $	*/
 
-/* Id: utf8.h,v 1.1.1.1 2003/06/04 00:25:46 marka Exp */
+/* Id: utf8.h,v 1.1.1.1 2003-06-04 00:25:46 marka Exp */
 /*
  * Copyright (c) 2000 Japan Network Information Center.  All rights reserved.
  *  

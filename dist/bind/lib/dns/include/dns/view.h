@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.1.1.5.4.2 2011/01/06 21:41:49 riz Exp $	*/
+/*	$NetBSD: view.h,v 1.1.1.5.4.3 2011/06/18 11:20:33 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.h,v 1.120.8.6.6.1 2010/09/24 06:32:57 marka Exp */
+/* Id: view.h,v 1.120.8.7 2010-09-24 05:54:06 marka Exp */
 
 #ifndef DNS_VIEW_H
 #define DNS_VIEW_H 1

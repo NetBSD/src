@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.5.4.2 2011/01/06 21:42:01 riz Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.5.4.3 2011/06/18 11:20:46 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -50,7 +50,7 @@
  * SUCH DAMAGE.
  */
 
-/* Id: file.c,v 1.55 2009/08/28 03:13:08 each Exp */
+/* Id: file.c,v 1.55 2009-08-28 03:13:08 each Exp */
 
 /*! \file */
 

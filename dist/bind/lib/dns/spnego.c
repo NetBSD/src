@@ -1,4 +1,4 @@
-/*	$NetBSD: spnego.c,v 1.1.1.1.6.2 2011/01/06 21:41:47 riz Exp $	*/
+/*	$NetBSD: spnego.c,v 1.1.1.1.6.3 2011/06/18 11:20:30 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2006-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: spnego.c,v 1.12 2009/07/21 06:53:09 marka Exp */
+/* Id: spnego.c,v 1.12 2009-07-21 06:53:09 marka Exp */
 
 /*! \file
  * \brief

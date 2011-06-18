@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.1.1.5.4.2 2011/01/06 21:40:37 riz Exp $	*/
+/*	$NetBSD: globals.h,v 1.1.1.5.4.3 2011/06/18 11:19:49 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: globals.h,v 1.86.60.2.8.1 2010/09/15 12:13:29 marka Exp */
+/* Id: globals.h,v 1.86.60.3 2010-09-15 12:10:53 marka Exp */
 
 #ifndef NAMED_GLOBALS_H
 #define NAMED_GLOBALS_H 1

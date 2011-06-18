@@ -1,4 +1,4 @@
-/*	$NetBSD: callbacks.c,v 1.1.1.5 2008/06/21 18:31:50 christos Exp $	*/
+/*	$NetBSD: callbacks.c,v 1.1.1.5.4.1 2011/06/18 11:20:27 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: callbacks.c,v 1.17 2007/06/19 23:47:16 tbox Exp */
+/* Id: callbacks.c,v 1.17 2007-06-19 23:47:16 tbox Exp */
 
 /*! \file */
 

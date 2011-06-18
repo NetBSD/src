@@ -1,4 +1,4 @@
-/*	$NetBSD: soa_6.h,v 1.1.1.5 2008/06/21 18:32:44 christos Exp $	*/
+/*	$NetBSD: soa_6.h,v 1.1.1.5.4.1 2011/06/18 11:20:35 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #ifndef GENERIC_SOA_6_H
 #define GENERIC_SOA_6_H 1
 
-/* Id: soa_6.h,v 1.32 2007/06/19 23:47:17 tbox Exp */
+/* Id: soa_6.h,v 1.32 2007-06-19 23:47:17 tbox Exp */
 
 typedef struct dns_rdata_soa {
 	dns_rdatacommon_t	common;

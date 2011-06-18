@@ -1,4 +1,4 @@
-/*	$NetBSD: soa_6.c,v 1.1.1.5.4.2 2011/01/06 21:41:51 riz Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.1.1.5.4.3 2011/06/18 11:20:35 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: soa_6.c,v 1.64 2009/12/04 21:09:34 marka Exp */
+/* Id: soa_6.c,v 1.64 2009-12-04 21:09:34 marka Exp */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 

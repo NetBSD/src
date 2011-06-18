@@ -12,13 +12,43 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: root.db,v 1.4 2007/06/19 23:47:02 tbox Exp
+; Id: druz.db.in,v 1.4.4.2 2011-05-27 00:43:05 each Exp
 
 $TTL	120
-@		SOA	ns.rootservers.utld hostmaster.ns.rootservers.utld (
-			1 3600 1200 604800 60 )
-@		NS	ns.rootservers.utld
-ns		A	10.53.0.1
+@		SOA	ns hostmaster.ns 1 3600 1200 604800 60
+@		NS	ns
+ns		A	10.53.0.2
 ;
-utld		NS	ns.utld
-ns.utld		A	10.53.0.2
+rootservers	NS	ns.rootservers
+ns.rootservers	A	10.53.0.1
+;
+;
+child1		NS	ns.child1
+ns.child1	A	10.53.0.3
+;
+child2		NS	ns.child2
+ns.child2	A	10.53.0.4
+;
+child3		NS	ns.child3
+ns.child3	A	10.53.0.3
+;
+child4		NS	ns.child4
+ns.child4	A	10.53.0.3
+;
+child5		NS	ns.child5
+ns.child5	A	10.53.0.3
+;
+child6		NS	ns.child6
+ns.child6	A	10.53.0.4
+;
+child7		NS	ns.child7
+ns.child7	A	10.53.0.3
+;
+child8		NS	ns.child8
+ns.child8	A	10.53.0.3
+;
+child9		NS	ns.child9
+ns.child9	A	10.53.0.3
+;
+child10		NS	ns.child10
+ns.child10	A	10.53.0.3

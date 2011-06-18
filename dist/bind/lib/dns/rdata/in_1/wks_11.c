@@ -1,4 +1,4 @@
-/*	$NetBSD: wks_11.c,v 1.6.4.2 2011/01/06 21:41:51 riz Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.6.4.3 2011/06/18 11:20:36 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: wks_11.c,v 1.57 2009/12/04 21:09:34 marka Exp */
+/* Id: wks_11.c,v 1.57 2009-12-04 21:09:34 marka Exp */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 

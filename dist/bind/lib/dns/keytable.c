@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable.c,v 1.1.1.5.4.1 2011/01/06 21:41:46 riz Exp $	*/
+/*	$NetBSD: keytable.c,v 1.1.1.5.4.2 2011/06/18 11:20:28 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keytable.c,v 1.39.4.2 2010/06/25 23:46:33 tbox Exp */
+/* Id: keytable.c,v 1.39.4.2 2010-06-25 23:46:33 tbox Exp */
 
 /*! \file */
 

@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: conf.sh.in,v 1.43.8.8.6.1 2010/11/16 02:26:24 sar Exp
+# Id: conf.sh.in,v 1.43.8.10 2010-12-07 03:01:37 marka Exp
 
 #
 # Common configuration data for system tests, to be sourced into
@@ -47,6 +47,7 @@ CHECKCONF=$TOP/bin/check/named-checkconf
 PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -s 0 -p 1234"
 PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s 0 -p 1234"
 PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s 0 -p 1234"
+JOURNALPRINT=$TOP/bin/tools/named-journalprint
 
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
@@ -72,4 +73,5 @@ else
 fi
 
 export NAMED LWRESD DIG NSUPDATE KEYGEN KEYFRLAB SIGNER KEYSIGNER KEYSETTOOL \
-       PERL SUBDIRS RNDC CHECKZONE PK11GEN PK11LIST PK11DEL TESTSOCK6
+       PERL SUBDIRS RNDC CHECKZONE PK11GEN PK11LIST PK11DEL TESTSOCK6 \
+       JOURNALPRINT
