@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.27.54.1 2009/01/26 00:24:55 snj Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.27.54.1.6.1 2011/06/18 16:27:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.27.54.1 2009/01/26 00:24:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.27.54.1.6.1 2011/06/18 16:27:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -922,27 +922,34 @@ fpu_emul_arith(fe, insn)
     if (res == NULL)
 	sig = SIGILL;
 
-    if (!discard_result && sig == 0) {
-	fpu_implode(fe, res, FTYPE_EXT, &fpregs[regnum * 3]);
+    if (sig == 0) {
+	if (!discard_result)
+	    fpu_implode(fe, res, FTYPE_EXT, &fpregs[regnum * 3]);
 
 	/* update fpsr according to the result of operation */
 	fpu_upd_fpsr(fe, res);
 #if DEBUG_FPE
-	printf("fpu_emul_arith: %08x,%08x,%08x stored in FP%d\n",
-	       fpregs[regnum*3], fpregs[regnum*3+1],
-	       fpregs[regnum*3+2], regnum);
-    } else if (sig == 0) {
-	static const char *class_name[] =
-	    { "SNAN", "QNAN", "ZERO", "NUM", "INF" };
-	printf("fpu_emul_arith: result(%s,%c,%d,%08x,%08x,%08x) discarded\n",
-	       class_name[res->fp_class + 2],
-	       res->fp_sign ? '-' : '+', res->fp_exp,
-	       res->fp_mant[0], res->fp_mant[1],
-	       res->fp_mant[2]);
-    } else {
-	printf("fpu_emul_arith: received signal %d\n", sig);
+	if (!discard_result) {
+	    printf("fpu_emul_arith: %08x,%08x,%08x stored in FP%d\n",
+		fpregs[regnum*3], fpregs[regnum*3+1],
+		fpregs[regnum*3+2], regnum);
+	} else {
+	    static const char *class_name[] =
+		{ "SNAN", "QNAN", "ZERO", "NUM", "INF" };
+	    printf("fpu_emul_arith: result(%s,%c,%d,%08x,%08x,%08x)"
+		" discarded\n",
+		class_name[res->fp_class + 2],
+		res->fp_sign ? '-' : '+', res->fp_exp,
+		res->fp_mant[0], res->fp_mant[1],
+		res->fp_mant[2]);
+	}
 #endif
     }
+#if DEBUG_FPE
+    else {
+	printf("fpu_emul_arith: received signal %d\n", sig);
+    }
+#endif
 
 #if DEBUG_FPE
     printf("fpu_emul_arith: FPSR = %08x, FPCR = %08x\n",
