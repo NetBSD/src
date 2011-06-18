@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.32.14.1 2010/11/20 17:41:27 riz Exp $ */
+/* $NetBSD: pcppi.c,v 1.32.14.2 2011/06/18 16:24:10 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.32.14.1 2010/11/20 17:41:27 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.32.14.2 2011/06/18 16:24:10 bouyer Exp $");
 
 #include "attimer.h"
 
@@ -39,8 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.32.14.1 2010/11/20 17:41:27 riz Exp $");
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-
 #include <sys/bus.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #include <dev/ic/attimervar.h>
 
@@ -193,6 +194,10 @@ pcppi_detach(device_t self, int flags)
 	callout_stop(&sc->sc_bell_ch);
 	callout_destroy(&sc->sc_bell_ch);
 	bus_space_unmap(sc->sc_iot, sc->sc_ppi_ioh, sc->sc_size);
+
+	mutex_destroy(&sc->sc_lock);
+	cv_destroy(&sc->sc_stop_cv);
+
 	return 0;
 }
 
@@ -205,6 +210,9 @@ pcppi_attach(struct pcppi_softc *sc)
         callout_init(&sc->sc_bell_ch, 0);
 
         sc->sc_bellactive = sc->sc_bellpitch = sc->sc_slp = 0;
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&sc->sc_stop_cv, "bell");
 
 #if NPCKBD > 0
 	/* Provide a beeper for the PC Keyboard, if there isn't one already. */
@@ -251,21 +259,20 @@ void
 pcppi_bell(pcppi_tag_t self, int pitch, int period, int slp)
 {
 	struct pcppi_softc *sc = self;
-	int s;
 
-	s = spltty(); /* ??? */
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_bellactive) {
 		if (sc->sc_timeout) {
 			sc->sc_timeout = 0;
 			callout_stop(&sc->sc_bell_ch);
 		}
 		if (sc->sc_slp)
-			wakeup(pcppi_bell_stop);
+			cv_broadcast(&sc->sc_stop_cv);
 	}
 	if (pitch == 0 || period == 0) {
 		pcppi_bell_stop(sc);
 		sc->sc_bellpitch = 0;
-		splx(s);
+		mutex_exit(&sc->sc_lock);
 		return;
 	}
 	if (!sc->sc_bellactive || sc->sc_bellpitch != pitch) {
@@ -289,20 +296,19 @@ pcppi_bell(pcppi_tag_t self, int pitch, int period, int slp)
 		callout_reset(&sc->sc_bell_ch, period, pcppi_bell_stop, sc);
 		if (slp & PCPPI_BELL_SLEEP) {
 			sc->sc_slp = 1;
-			tsleep(pcppi_bell_stop, PCPPIPRI | PCATCH, "bell", 0);
+			cv_wait_sig(&sc->sc_stop_cv, &sc->sc_lock);
 			sc->sc_slp = 0;
 		}
 	}
-	splx(s);
+	mutex_exit(&sc->sc_lock);
 }
 
 static void
 pcppi_bell_stop(void *arg)
 {
 	struct pcppi_softc *sc = arg;
-	int s;
 
-	s = spltty(); /* ??? */
+	mutex_enter(&sc->sc_lock);
 	sc->sc_timeout = 0;
 
 	/* disable bell */
@@ -311,8 +317,8 @@ pcppi_bell_stop(void *arg)
 			  & ~PIT_SPKR);
 	sc->sc_bellactive = 0;
 	if (sc->sc_slp)
-		wakeup(pcppi_bell_stop);
-	splx(s);
+		cv_broadcast(&sc->sc_stop_cv);
+	mutex_exit(&sc->sc_lock);
 }
 
 #if NPCKBD > 0
