@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.98 2010/11/06 11:46:03 uebayasi Exp $ */
+/*	$NetBSD: cpu.c,v 1.99 2011/06/18 18:51:18 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.98 2010/11/06 11:46:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.99 2011/06/18 18:51:18 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -173,6 +173,7 @@ alloc_cpuinfo(u_int cpu_node)
 	cpi->ci_curlwp = NULL;
 	cpi->ci_cpuid = portid;
 	cpi->ci_fplwp = NULL;
+	cpi->ci_eintstack = NULL;
 	cpi->ci_spinup = NULL;
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
