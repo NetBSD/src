@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2011/06/18 06:44:25 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 2011/06/18 08:08:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2011/06/18 06:44:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2011/06/18 08:08:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -140,7 +140,7 @@ device_register(device_t dev, void *aux)
 		case ETH2_BASE: enaddr[5] |= 2; break;
 		default:
 			aprint_error("WARNING: unknown mac-no. for %s\n",
-			    dev->dv_xname);
+			    device_xname(dev));
 		}
 
 		mac = prop_data_create_data_nocopy(enaddr, ETHER_ADDR_LEN);
@@ -148,7 +148,7 @@ device_register(device_t dev, void *aux)
 		if (prop_dictionary_set(dict, "mac-addr", mac) == false)
 			aprint_error(
 			    "WARNING: unable to set mac-addr property for %s\n",
-			    dev->dv_xname);
+			    device_xname(dev));
 		prop_object_release(mac);
 	}
 	if (device_is_a(dev, "gtpci")) {
@@ -219,7 +219,7 @@ device_register(device_t dev, void *aux)
 		if (prop_dictionary_set(dict, "bus-tag", bstd) == false)
 			aprint_error(
 			    "WARNING: unable to set bus-tag property for %s\n",
-			    dev->dv_xname);
+			    device_xname(dev));
 		prop_object_release(bstd);
 	}
 }

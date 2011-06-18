@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2011/06/05 17:03:18 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 2011/06/18 08:08:27 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2011/06/05 17:03:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2011/06/18 08:08:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,11 +101,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args maa;
 
-	printf(": Artesyn PM/PPC\n");
-	printf("%s: %sPCI bus Monarch\n", self->dv_xname,
+	aprint_normal(": Artesyn PM/PPC\n");
+	aprint_normal_dev(self, "%sPCI bus Monarch\n",
 	       a_config.a_is_monarch ? "" : "not");
-	printf("%s: boot from %s, %sECC, %s L2 cache\n",
-	       self->dv_xname,
+	aprint_normal_dev(self, "boot from %s, %sECC, %s L2 cache\n",
 	       a_config.a_boot_device == A_BOOT_ROM ? "ROM" : "flash",
 	       a_config.a_has_ecc ? "" : "no ",
 	       a_config.a_l2_cache == A_CACHE_PARITY ? "parity" :

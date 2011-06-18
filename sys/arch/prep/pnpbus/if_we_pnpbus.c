@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_pnpbus.c,v 1.6 2011/06/17 23:36:18 matt Exp $	*/
+/*	$NetBSD: if_we_pnpbus.c,v 1.7 2011/06/18 08:08:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.6 2011/06/17 23:36:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.7 2011/06/18 08:08:29 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,8 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.6 2011/06/17 23:36:18 matt Exp $"
 
 #include <prep/pnpbus/pnpbusvar.h>
 
-int	we_pnpbus_probe(struct device *, struct cfdata *, void *);
-void	we_pnpbus_attach(struct device *, struct device *, void *);
+int	we_pnpbus_probe(device_t, cfdata_t, void *);
+void	we_pnpbus_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(we_pnpbus, sizeof(struct we_softc),
     we_pnpbus_probe, we_pnpbus_attach, NULL, NULL);
@@ -124,7 +124,7 @@ do { \
 } while (0)
 
 int
-we_pnpbus_probe(struct device *parent, struct cfdata *cf, void *aux)
+we_pnpbus_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pnpbus_dev_attach_args *pna = aux;
 	int ret = 0;
@@ -142,9 +142,9 @@ we_pnpbus_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-we_pnpbus_attach(struct device *parent, struct device *self, void *aux)
+we_pnpbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct we_softc *wsc = (struct we_softc *)self;
+	struct we_softc *wsc = device_private(self);
 	struct dp8390_softc *sc = &wsc->sc_dp8390;
 	struct pnpbus_dev_attach_args *pna = aux;
 	struct pnpbus_irq *irq;
