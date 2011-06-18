@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.30 2011/06/18 06:41:41 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.31 2011/06/18 08:21:20 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2011/06/18 06:41:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2011/06/18 08:21:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ struct cputab {
 	u_int mask;
 	const char *name;
 };
-static struct cputab models[] = {
+static const struct cputab models[] = {
 	{ PVR_401A1, 	0xffff0000,	"401A1" 	},
 	{ PVR_401B2, 	0xffff0000,	"401B21" 	},
 	{ PVR_401C2, 	0xffff0000,	"401C2" 	},
@@ -117,7 +117,7 @@ cpumatch(device_t parent, cfdata_t cf, void *aux)
 static void
 cpuattach(device_t parent, device_t self, void *aux)
 {
-	struct cputab *cp = models;
+	const struct cputab *cp = models;
 	u_int pvr;
 	u_int processor_freq;
 	prop_number_t freq;
@@ -166,7 +166,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 void
 cpu_probe_cache(void)
 {
-	struct cputab *cp = models;
+	const struct cputab *cp = models;
 	u_int pvr;
 
 	pvr = mfpvr();
