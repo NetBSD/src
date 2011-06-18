@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.75 2011/06/17 09:50:52 hannken Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.76 2011/06/18 21:14:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.75 2011/06/17 09:50:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.76 2011/06/18 21:14:43 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -481,12 +481,12 @@ ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
 	slot_offset = (vaddr_t)(offset & ((voff_t)ubc_winsize - 1));
 	*lenp = MIN(*lenp, ubc_winsize - slot_offset);
 
-	/*
-	 * The object is already referenced, so we do not need to add a ref.
-	 * Lock order: UBC object -> ubc_map::uobj.
-	 */
 	mutex_enter(ubc_object.uobj.vmobjlock);
 again:
+	/*
+	 * The UVM object is already referenced.
+	 * Lock order: UBC object -> ubc_map::uobj.
+	 */
 	umap = ubc_find_mapping(uobj, umap_offset);
 	if (umap == NULL) {
 		struct uvm_object *oobj;
@@ -503,10 +503,14 @@ again:
 		oobj = umap->uobj;
 
 		/*
-		 * remove from old hash (if any), add to new hash.
+		 * Remove from old hash (if any), add to new hash.
 		 */
 
 		if (oobj != NULL) {
+			/*
+			 * Mapping must be removed before the list entry,
+			 * since there is a race with ubc_purge().
+			 */
 			if (umap->flags & UMAP_MAPPING_CACHED) {
 				umap->flags &= ~UMAP_MAPPING_CACHED;
 				mutex_enter(oobj->vmobjlock);
@@ -792,6 +796,13 @@ ubc_purge(struct uvm_object *uobj)
 
 	KASSERT(uobj->uo_npages == 0);
 
+	/*
+	 * Safe to check without lock held, as ubc_alloc() removes
+	 * the mapping and list entry in the correct order.
+	 */
+	if (__predict_true(LIST_EMPTY(&uobj->uo_ubc))) {
+		return;
+	}
 	mutex_enter(ubc_object.uobj.vmobjlock);
 	while ((umap = LIST_FIRST(&uobj->uo_ubc)) != NULL) {
 		KASSERT(umap->refcount == 0);
