@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.70.20.1 2010/01/09 01:22:57 snj Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.70.20.2 2011/06/18 16:19:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -203,6 +203,7 @@ struct puffs_node {
 	u_quad_t	pn_mc_size;
 
 	voff_t		pn_serversize;
+	struct lockf *  pn_lockf;
 
 	LIST_ENTRY(puffs_node) pn_hashent;
 };
