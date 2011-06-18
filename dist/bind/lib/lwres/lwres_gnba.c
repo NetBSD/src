@@ -1,4 +1,4 @@
-/*	$NetBSD: lwres_gnba.c,v 1.1.1.5 2008/06/21 18:30:42 christos Exp $	*/
+/*	$NetBSD: lwres_gnba.c,v 1.1.1.5.8.1 2011/06/18 11:37:55 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwres_gnba.c,v 1.28 2007/09/24 17:18:25 each Exp */
+/* Id: lwres_gnba.c,v 1.28 2007-09-24 17:18:25 each Exp */
 
 /*! \file lwres_gnba.c
    These are low-level routines for creating and parsing lightweight

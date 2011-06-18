@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.23.2.2.2.3 2010/01/22 22:05:42 snj Exp $
+# $NetBSD: md.sparc64,v 1.23.2.2.2.4 2011/06/18 11:38:07 bouyer Exp $
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/sparc					base-compat-lib		compat
@@ -74,7 +74,7 @@
 ./usr/lib/sparc/libdes.so.7			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdes.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns.so.1			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdns.so.1.2			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdns.so.1.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libedit.so.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libedit.so.2.11			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libevent.so.2			base-compat-shlib	compat,pic
@@ -98,7 +98,7 @@
 ./usr/lib/sparc/libipsec.so.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libipsec.so.2.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libisc.so.1			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisc.so.1.2			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisc.so.1.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libisccc.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libisccc.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libisccfg.so.1			base-compat-shlib	compat,pic

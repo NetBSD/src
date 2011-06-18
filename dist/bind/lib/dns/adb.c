@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.6.8.2 2011/01/10 00:39:38 riz Exp $	*/
+/*	$NetBSD: adb.c,v 1.6.8.3 2011/06/18 11:36:49 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: adb.c,v 1.247.172.2 2010/08/13 23:46:28 tbox Exp */
+/* Id: adb.c,v 1.247.172.2 2010-08-13 23:46:28 tbox Exp */
 
 /*! \file
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: builtin.c,v 1.1.1.3.8.1 2011/01/10 00:37:14 riz Exp $	*/
+/*	$NetBSD: builtin.c,v 1.1.1.3.8.2 2011/06/18 11:35:03 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: builtin.c,v 1.15.154.2 2010/08/03 23:46:17 tbox Exp */
+/* Id: builtin.c,v 1.15.154.2 2010-08-03 23:46:17 tbox Exp */
 
 /*! \file
  * \brief

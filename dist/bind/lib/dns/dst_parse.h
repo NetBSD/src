@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.h,v 1.1.1.3.8.1 2011/01/10 00:39:39 riz Exp $	*/
+/*	$NetBSD: dst_parse.h,v 1.1.1.3.8.2 2011/06/18 11:36:51 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_parse.h,v 1.15 2009/10/26 21:18:24 each Exp */
+/* Id: dst_parse.h,v 1.15 2009-10-26 21:18:24 each Exp */
 
 /*! \file */
 #ifndef DST_DST_PARSE_H

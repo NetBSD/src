@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.c,v 1.1.1.6 2008/06/21 18:31:15 christos Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.1.1.6.8.1 2011/06/18 11:37:26 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: netaddr.c,v 1.38 2007/06/18 23:47:44 tbox Exp */
+/* Id: netaddr.c,v 1.38 2007-06-18 23:47:44 tbox Exp */
 
 /*! \file */
 

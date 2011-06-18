@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.1.5.8.3 2011/01/10 00:39:48 riz Exp $	*/
+/*	$NetBSD: types.h,v 1.1.1.5.8.4 2011/06/18 11:37:07 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: types.h,v 1.138.16.4 2010/06/22 04:02:45 marka Exp */
+/* Id: types.h,v 1.138.16.4 2010-06-22 04:02:45 marka Exp */
 
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H 1

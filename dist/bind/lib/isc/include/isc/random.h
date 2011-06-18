@@ -1,4 +1,4 @@
-/*	$NetBSD: random.h,v 1.1.1.5.8.2 2011/01/10 00:40:14 riz Exp $	*/
+/*	$NetBSD: random.h,v 1.1.1.5.8.3 2011/06/18 11:37:34 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: random.h,v 1.20 2009/01/17 23:47:43 tbox Exp */
+/* Id: random.h,v 1.20 2009-01-17 23:47:43 tbox Exp */
 
 #ifndef ISC_RANDOM_H
 #define ISC_RANDOM_H 1

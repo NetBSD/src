@@ -1,4 +1,4 @@
-/*	$NetBSD: ttl.h,v 1.1.1.5 2008/06/21 18:32:28 christos Exp $	*/
+/*	$NetBSD: ttl.h,v 1.1.1.5.8.1 2011/06/18 11:37:07 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ttl.h,v 1.19 2007/06/19 23:47:17 tbox Exp */
+/* Id: ttl.h,v 1.19 2007-06-19 23:47:17 tbox Exp */
 
 #ifndef DNS_TTL_H
 #define DNS_TTL_H 1

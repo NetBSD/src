@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.1.1.6.8.1 2011/01/10 00:39:48 riz Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.6.8.2 2011/06/18 11:37:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: result.h,v 1.118.50.2 2010/02/25 05:25:53 tbox Exp */
+/* Id: result.h,v 1.118.50.2 2010-02-25 05:25:53 tbox Exp */
 
 #ifndef DNS_RESULT_H
 #define DNS_RESULT_H 1

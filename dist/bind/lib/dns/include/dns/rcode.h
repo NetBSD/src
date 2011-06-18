@@ -1,4 +1,4 @@
-/*	$NetBSD: rcode.h,v 1.1.1.5.8.1 2011/01/10 00:39:47 riz Exp $	*/
+/*	$NetBSD: rcode.h,v 1.1.1.5.8.2 2011/06/18 11:37:05 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rcode.h,v 1.21 2008/09/25 04:02:39 tbox Exp */
+/* Id: rcode.h,v 1.21 2008-09-25 04:02:39 tbox Exp */
 
 #ifndef DNS_RCODE_H
 #define DNS_RCODE_H 1

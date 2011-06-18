@@ -1,4 +1,4 @@
-/*	$NetBSD: tkeyconf.c,v 1.1.1.6.8.1 2011/01/10 00:37:15 riz Exp $	*/
+/*	$NetBSD: tkeyconf.c,v 1.1.1.6.8.2 2011/06/18 11:35:07 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tkeyconf.c,v 1.31 2009/09/02 23:48:01 tbox Exp */
+/* Id: tkeyconf.c,v 1.31 2009-09-02 23:48:01 tbox Exp */
 
 /*! \file */
 

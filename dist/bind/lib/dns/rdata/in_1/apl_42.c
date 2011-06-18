@@ -1,4 +1,4 @@
-/*	$NetBSD: apl_42.c,v 1.5.8.1 2011/01/10 00:39:55 riz Exp $	*/
+/*	$NetBSD: apl_42.c,v 1.5.8.2 2011/06/18 11:37:15 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: apl_42.c,v 1.16 2009/12/04 22:06:37 tbox Exp */
+/* Id: apl_42.c,v 1.16 2009-12-04 22:06:37 tbox Exp */
 
 /* RFC3123 */
 

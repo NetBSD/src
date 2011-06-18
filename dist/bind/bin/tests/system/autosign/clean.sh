@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.3.6.3 2010/05/19 07:47:11 marka Exp
+# Id: clean.sh,v 1.3.6.4 2010-12-18 02:15:17 each Exp
 
 rm -f */K* */dsset-* */*.signed */trusted.conf */tmp* */*.jnl */*.bk
 rm -f active.key inact.key del.key unpub.key standby.key rev.key
@@ -42,3 +42,6 @@ rm -f ns3/secure.example.db
 rm -f ns3/secure.nsec3.example.db
 rm -f ns3/secure.optout.example.db
 rm -f ns3/secure-to-insecure.example.db
+rm -f ns3/prepub.example.db
+rm -f ns3/prepub.example.db.in
+rm -f ns3/secure-to-insecure2.example.db

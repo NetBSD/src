@@ -1,4 +1,4 @@
-/*        $NetBSD: dnssec-dsfromkey.c,v 1.1.6.2 2011/01/10 00:37:12 riz Exp $      */
+/*        $NetBSD: dnssec-dsfromkey.c,v 1.1.6.3 2011/06/18 11:35:00 bouyer Exp $      */
 
 /*
  * Copyright (C) 2008-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-dsfromkey.c,v 1.16.50.1 2010/01/13 19:31:51 each Exp */
+/* Id: dnssec-dsfromkey.c,v 1.16.50.1 2010-01-13 19:31:51 each Exp */
 
 /*! \file */
 
