@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.4 2011/06/11 18:03:18 christos Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.5 2011/06/18 20:05:28 joerg Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -155,7 +155,7 @@ LHB		\(
 RHB		\)
 
 %x incl
-%option nounput
+%option noinput nounput
 
 %%
 
