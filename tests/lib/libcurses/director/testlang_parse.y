@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.6 2011/06/17 16:32:31 christos Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.7 2011/06/18 20:05:56 joerg Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -1241,6 +1241,7 @@ validate_variable(int ret, returns_enum_t type, const void *value, int i,
 	returns_t *retval;
 	var_t *varptr;
 
+	retval = &command.returns[ret];
 	varptr = &vars[command.returns[ret].return_index];
 
 	if (varptr->value == NULL)
