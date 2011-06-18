@@ -1,4 +1,4 @@
-/* $NetBSD: iic_eumb.c,v 1.14 2011/04/30 11:14:04 phx Exp $ */
+/* $NetBSD: iic_eumb.c,v 1.15 2011/06/18 08:08:30 matt Exp $ */
 
 /*-
  * Copyright (c) 2010,2011 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.14 2011/04/30 11:14:04 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.15 2011/06/18 08:08:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,8 +44,8 @@ struct iic_eumb_softc {
 	struct motoi2c_softc	sc_motoi2c;
 };
 
-static int  iic_eumb_match(struct device *, struct cfdata *, void *);
-static void iic_eumb_attach(struct device *, struct device *, void *);
+static int  iic_eumb_match(device_t, cfdata_t, void *);
+static void iic_eumb_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(iic_eumb, sizeof(struct iic_eumb_softc),
     iic_eumb_match, iic_eumb_attach, NULL, NULL);
