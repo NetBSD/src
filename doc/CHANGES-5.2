@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.84 2011/06/18 16:43:07 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.85 2011/06/18 17:03:14 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -5292,3 +5292,24 @@ sys/kern/uipc_usrreq.c				1.134
 	http://mail-index.netbsd.org/tech-kern/2003/04/14/0006.html
 	[manu, ticket #1633]
 
+sys/kern/vfs_wapbl.c				1.41-1.42
+sbin/dump/snapshot.c				1.6 (patch)
+share/man/man4/fss.4				1.15 (patch)
+sys/dev/fss.c					1.73 (patch)
+sys/dev/fssvar.h				1.25
+usr.sbin/fssconfig/fssconfig.c			1.7
+sys/ufs/ffs/ffs_balloc.c			1.54
+sys/ufs/ffs/ffs_snapshot.c			1.90, 1.98, 1.100-1.101, 1.103-1.110, 1.111, 1.112-1.115 (patch)
+
+	- Try to keep snapshot indirect blocks contiguous.  This speeds up
+	  snapshot creation by a factor of ~3 and reduces the file system
+	  suspension time by a factor of ~5.
+	- Refine the scope of WAPBL transactions and the limit for
+	  deallocations in one transaction so we should no longer get a
+	  "wapbl_flush: current transaction too big to flush" panic when
+	  creating or removing snapshots on larger logging disks.
+	- fss(4): Allow FSSIOCSET to set the initial flags.  Add a new flag
+	  "FSS_UNLINK_ON_CREATE" to unlink the backing store before the snapshot
+	  gets created.  With this change dump(8) no longer dumps the
+	  zero-sized, but named snapshot it is working on.
+	[hannken, ticket #1627]
