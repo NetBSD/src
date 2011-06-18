@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-revoke.docbook,v 1.7 2009/11/03 21:44:46 each Exp -->
+<!-- Id: dnssec-revoke.docbook,v 1.7 2009-11-03 21:44:46 each Exp -->
 <refentry id="man.dnssec-revoke">
   <refentryinfo>
     <date>June 1, 2009</date>

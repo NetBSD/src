@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: prereq.sh,v 1.2.2.2 2010/06/17 05:43:51 marka Exp
+# Id: prereq.sh,v 1.2.2.2 2010-06-17 05:43:51 marka Exp
 
 echo "I:This test is not yet written." >&2
 exit 1

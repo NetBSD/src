@@ -1,7 +1,7 @@
-/*	$NetBSD: delimitermap.c,v 1.1.1.1 2004/05/17 23:43:43 christos Exp $	*/
+/*	$NetBSD: delimitermap.c,v 1.1.1.1.40.1 2011/06/18 11:28:01 bouyer Exp $	*/
 
 #ifndef lint
-static char *rcsid = "Id: delimitermap.c,v 1.1.1.1 2003/06/04 00:25:52 marka Exp";
+static char *rcsid = "Id: delimitermap.c,v 1.1.1.1 2003-06-04 00:25:52 marka Exp";
 #endif
 
 /*

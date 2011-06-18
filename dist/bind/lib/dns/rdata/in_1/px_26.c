@@ -1,4 +1,4 @@
-/*	$NetBSD: px_26.c,v 1.1.1.5.12.1 2011/01/09 20:42:27 riz Exp $	*/
+/*	$NetBSD: px_26.c,v 1.1.1.5.12.2 2011/06/18 11:28:45 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: px_26.c,v 1.45 2009/12/04 22:06:37 tbox Exp */
+/* Id: px_26.c,v 1.45 2009-12-04 22:06:37 tbox Exp */
 
 /* Reviewed: Mon Mar 20 10:44:27 PST 2000 */
 

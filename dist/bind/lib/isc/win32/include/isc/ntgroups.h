@@ -1,4 +1,4 @@
-/*	$NetBSD: ntgroups.h,v 1.1.1.3 2008/06/21 18:31:29 christos Exp $	*/
+/*	$NetBSD: ntgroups.h,v 1.1.1.3.12.1 2011/06/18 11:29:10 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ntgroups.h,v 1.5 2007/06/19 23:47:20 tbox Exp */
+/* Id: ntgroups.h,v 1.5 2007-06-19 23:47:20 tbox Exp */
 
 #ifndef ISC_NTGROUPS_H
 #define ISC_NTGROUPS_H 1

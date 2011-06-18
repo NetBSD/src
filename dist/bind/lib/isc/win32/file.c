@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.5.12.1 2011/01/09 20:42:38 riz Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.5.12.2 2011/06/18 11:29:08 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: file.c,v 1.35 2009/09/02 17:58:06 each Exp */
+/* Id: file.c,v 1.35 2009-09-02 17:58:06 each Exp */
 
 #include <config.h>
 

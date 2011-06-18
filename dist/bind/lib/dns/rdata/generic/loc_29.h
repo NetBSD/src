@@ -1,4 +1,4 @@
-/*	$NetBSD: loc_29.h,v 1.1.1.5 2008/06/21 18:32:44 christos Exp $	*/
+/*	$NetBSD: loc_29.h,v 1.1.1.5.12.1 2011/06/18 11:28:41 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_LOC_29_H
 #define GENERIC_LOC_29_H 1
 
-/* Id: loc_29.h,v 1.19 2007/06/19 23:47:17 tbox Exp */
+/* Id: loc_29.h,v 1.19 2007-06-19 23:47:17 tbox Exp */
 
 /*!
  * \brief Per RFC1876 */

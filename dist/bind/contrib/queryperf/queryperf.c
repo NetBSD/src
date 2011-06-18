@@ -1,4 +1,4 @@
-/*	$NetBSD: queryperf.c,v 1.1.1.6 2008/06/21 18:30:19 christos Exp $	*/
+/*	$NetBSD: queryperf.c,v 1.1.1.6.12.1 2011/06/18 11:28:09 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2000, 2001  Nominum, Inc.
@@ -20,7 +20,7 @@
 /***
  ***	DNS Query Performance Testing Tool  (queryperf.c)
  ***
- ***	Version Id: queryperf.c,v 1.12 2007/09/05 07:36:04 marka Exp
+ ***	Version Id: queryperf.c,v 1.12 2007-09-05 07:36:04 marka Exp
  ***
  ***	Stephen Jacob <sj@nominum.com>
  ***/
@@ -222,7 +222,7 @@ void
 show_startup_info(void) {
 	printf("\n"
 "DNS Query Performance Testing Tool\n"
-"Version: Id: queryperf.c,v 1.12 2007/09/05 07:36:04 marka Exp\n"
+"Version: Id: queryperf.c,v 1.12 2007-09-05 07:36:04 marka Exp\n"
 "\n");
 }
 

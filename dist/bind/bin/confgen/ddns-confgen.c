@@ -1,4 +1,4 @@
-/*        $NetBSD: ddns-confgen.c,v 1.1.4.2 2011/01/09 20:41:09 riz Exp $      */
+/*        $NetBSD: ddns-confgen.c,v 1.1.4.3 2011/06/18 11:26:42 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ddns-confgen.c,v 1.9 2009/09/29 15:06:05 fdupont Exp */
+/* Id: ddns-confgen.c,v 1.9 2009-09-29 15:06:05 fdupont Exp */
 
 /*! \file */
 

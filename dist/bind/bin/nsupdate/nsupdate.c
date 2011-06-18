@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.13.4.1.2.1 2011/01/09 20:41:15 riz Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.13.4.1.2.2 2011/06/18 11:26:57 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsupdate.c,v 1.173.66.8 2010/08/10 23:47:45 tbox Exp */
+/* Id: nsupdate.c,v 1.173.66.12 2010-12-09 04:31:30 tbox Exp */
 
 /*! \file */
 
@@ -643,6 +643,9 @@ setup_keyfile(isc_mem_t *mctx, isc_log_t *lctx) {
 
 	debug("Creating key...");
 
+	if (sig0key != NULL)
+		dst_key_free(&sig0key);
+
 	/* Try reading the key from a K* pair */
 	result = dst_key_fromnamedfile(keyfile, NULL,
 				       DST_TYPE_PRIVATE | DST_TYPE_KEY, mctx,
@@ -687,14 +690,14 @@ setup_keyfile(isc_mem_t *mctx, isc_log_t *lctx) {
 						   hmacname, dstkey, ISC_FALSE,
 						   NULL, 0, 0, mctx, NULL,
 						   &tsigkey);
+		dst_key_free(&dstkey);
 		if (result != ISC_R_SUCCESS) {
 			fprintf(stderr, "could not create key from %s: %s\n",
 				keyfile, isc_result_totext(result));
-			dst_key_free(&dstkey);
 			return;
 		}
 	} else
-		sig0key = dstkey;
+		dst_key_attach(dstkey, &sig0key);
 }
 
 static void
@@ -903,9 +906,12 @@ setup_system(void) {
 
 	if (keystr != NULL)
 		setup_keystr();
-	else if (local_only)
-		read_sessionkey(mctx, lctx);
-	else if (keyfile != NULL)
+	else if (local_only) {
+		result = read_sessionkey(mctx, lctx);
+		if (result != ISC_R_SUCCESS)
+			fatal("can't read key from %s: %s\n",
+			      keyfile, isc_result_totext(result));
+	} else if (keyfile != NULL)
 		setup_keyfile(mctx, lctx);
 }
 

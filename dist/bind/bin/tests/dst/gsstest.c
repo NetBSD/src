@@ -1,4 +1,4 @@
-/*	$NetBSD: gsstest.c,v 1.1.1.1.14.1 2011/01/09 20:41:19 riz Exp $	*/
+/*	$NetBSD: gsstest.c,v 1.1.1.1.14.2 2011/06/18 11:27:04 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2006, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gsstest.c,v 1.8 2009/09/02 23:48:01 tbox Exp */
+/* Id: gsstest.c,v 1.8 2009-09-02 23:48:01 tbox Exp */
 
 #include <config.h>
 

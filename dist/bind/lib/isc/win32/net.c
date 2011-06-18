@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1.1.5.4.1.2.1 2011/01/09 20:42:38 riz Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.5.4.1.2.2 2011/06/18 11:29:08 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: net.c,v 1.20 2009/09/08 23:41:50 tbox Exp */
+/* Id: net.c,v 1.20 2009-09-08 23:41:50 tbox Exp */
 
 #include <config.h>
 

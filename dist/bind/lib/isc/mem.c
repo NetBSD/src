@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.1.5.4.1.2.1 2011/01/09 20:42:34 riz Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.1.5.4.1.2.2 2011/06/18 11:28:54 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem.c,v 1.153.104.6 2010/08/11 23:46:20 tbox Exp */
+/* Id: mem.c,v 1.153.104.6 2010-08-11 23:46:20 tbox Exp */
 
 /*! \file */
 

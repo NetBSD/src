@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpaths.c,v 1.1.1.5.12.1 2011/01/09 20:42:38 riz Exp $	*/
+/*	$NetBSD: ntpaths.c,v 1.1.1.5.12.2 2011/06/18 11:29:08 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ntpaths.c,v 1.15 2009/07/14 22:54:57 each Exp */
+/* Id: ntpaths.c,v 1.15 2009-07-14 22:54:57 each Exp */
 
 /*
  * This module fetches the required path information that is specific

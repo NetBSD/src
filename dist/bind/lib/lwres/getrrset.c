@@ -1,4 +1,4 @@
-/*	$NetBSD: getrrset.c,v 1.1.1.5 2008/06/21 18:30:46 christos Exp $	*/
+/*	$NetBSD: getrrset.c,v 1.1.1.5.12.1 2011/06/18 11:29:15 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getrrset.c,v 1.18 2007/06/19 23:47:22 tbox Exp */
+/* Id: getrrset.c,v 1.18 2007-06-19 23:47:22 tbox Exp */
 
 /*! \file */
 

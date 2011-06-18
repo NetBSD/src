@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.c,v 1.1.1.3.4.1.2.1 2011/01/09 20:42:39 riz Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.1.1.3.4.1.2.2 2011/06/18 11:29:13 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: aclconf.c,v 1.27.62.2 2010/08/13 23:46:28 tbox Exp */
+/* Id: aclconf.c,v 1.27.62.2 2010-08-13 23:46:28 tbox Exp */
 
 #include <config.h>
 

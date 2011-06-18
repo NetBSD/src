@@ -48,6 +48,10 @@ BIND 9
 	For a detailed list of user-visible changes from
 	previous releases, see the CHANGES file.
 
+BIND 9.7.3
+
+	BIND 9.7.3 is a maintenance release, fixing bugs in 9.7.2.
+
 BIND 9.7.2
 
 	BIND 9.7.2 will address bugs in 9.7.1, and also introduces

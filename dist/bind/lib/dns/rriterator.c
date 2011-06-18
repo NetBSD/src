@@ -1,4 +1,4 @@
-/*        $NetBSD: rriterator.c,v 1.1.4.2 2011/01/09 20:42:23 riz Exp $      */
+/*        $NetBSD: rriterator.c,v 1.1.4.3 2011/06/18 11:28:28 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rriterator.c,v 1.2 2009/06/30 02:52:32 each Exp */
+/* Id: rriterator.c,v 1.2 2009-06-30 02:52:32 each Exp */
 
 /*! \file */
 

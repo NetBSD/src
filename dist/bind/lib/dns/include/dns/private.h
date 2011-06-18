@@ -1,4 +1,4 @@
-/*        $NetBSD: private.h,v 1.1.4.2 2011/01/09 20:42:25 riz Exp $      */
+/*        $NetBSD: private.h,v 1.1.4.3 2011/06/18 11:28:34 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: private.h,v 1.3 2009/10/09 23:48:09 tbox Exp */
+/* Id: private.h,v 1.3 2009-10-09 23:48:09 tbox Exp */
 
 #include <isc/lang.h>
 #include <isc/types.h>

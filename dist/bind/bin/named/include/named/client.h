@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.1.1.6.4.1.2.1 2011/01/09 20:41:14 riz Exp $	*/
+/*	$NetBSD: client.h,v 1.1.1.6.4.1.2.2 2011/06/18 11:26:55 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.h,v 1.91 2009/10/26 23:14:53 each Exp */
+/* Id: client.h,v 1.91 2009-10-26 23:14:53 each Exp */
 
 #ifndef NAMED_CLIENT_H
 #define NAMED_CLIENT_H 1

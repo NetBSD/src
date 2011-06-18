@@ -1,4 +1,4 @@
-/*	$NetBSD: timedb.c,v 1.1.1.5 2008/06/21 18:30:16 christos Exp $	*/
+/*	$NetBSD: timedb.c,v 1.1.1.5.12.1 2011/06/18 11:28:11 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: timedb.c,v 1.10 2007/06/19 23:47:10 tbox Exp */
+/* Id: timedb.c,v 1.10 2007-06-19 23:47:10 tbox Exp */
 
 /*
  * A simple database driver that enables the server to return the

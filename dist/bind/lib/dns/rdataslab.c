@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.c,v 1.1.1.5.4.1.2.1 2011/01/09 20:42:23 riz Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.1.1.5.4.1.2.2 2011/06/18 11:28:28 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataslab.c,v 1.50.186.2 2010/02/25 05:25:52 tbox Exp */
+/* Id: rdataslab.c,v 1.50.186.2 2010-02-25 05:25:52 tbox Exp */
 
 /*! \file */
 

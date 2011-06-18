@@ -1,4 +1,4 @@
-/*	$NetBSD: keycreate.c,v 1.1.1.6.12.1 2011/01/09 20:41:36 riz Exp $	*/
+/*	$NetBSD: keycreate.c,v 1.1.1.6.12.2 2011/06/18 11:27:45 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keycreate.c,v 1.18 2009/09/01 00:22:25 jinmei Exp */
+/* Id: keycreate.c,v 1.18 2009-09-01 00:22:25 jinmei Exp */
 
 #include <config.h>
 

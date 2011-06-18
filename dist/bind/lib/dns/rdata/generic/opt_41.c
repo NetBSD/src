@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.c,v 1.1.1.5.12.1 2011/01/09 20:42:26 riz Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.1.1.5.12.2 2011/06/18 11:28:42 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: opt_41.c,v 1.35 2009/12/04 22:06:37 tbox Exp */
+/* Id: opt_41.c,v 1.35 2009-12-04 22:06:37 tbox Exp */
 
 /* Reviewed: Thu Mar 16 14:06:44 PST 2000 by gson */
 
