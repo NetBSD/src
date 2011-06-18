@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1566 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1567 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1039,3 +1039,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	powerpc: the generic PIC code now supports matt@'s fast softintr
 		code [macallan 20110615]
 	alpha: support for Avalon A12 removed [matt 20110617]
+	sparc64: Add fast softint(9) support. [nakayama 20110618]
