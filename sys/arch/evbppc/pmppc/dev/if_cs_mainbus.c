@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.4 2009/09/22 14:55:19 tsutsui Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.5 2011/06/18 06:44:27 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.4 2009/09/22 14:55:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.5 2011/06/18 06:44:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.4 2009/09/22 14:55:19 tsutsui Ex
 
 static void	cs_check_eeprom(struct cs_softc *sc);
 
-static int	cs_mainbus_match(struct device *, struct cfdata *, void *);
-static void	cs_mainbus_attach(struct device *, struct device *, void *);
+static int	cs_mainbus_match(device_t, cfdata_t, void *);
+static void	cs_mainbus_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(cs_mainbus, sizeof(struct cs_softc),
     cs_mainbus_match, cs_mainbus_attach, NULL, NULL);
