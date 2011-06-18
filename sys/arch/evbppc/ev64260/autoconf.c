@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2010/06/02 06:44:33 kiyohara Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 2011/06/18 06:44:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,13 +44,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2010/06/02 06:44:33 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2011/06/18 06:44:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
+#include <sys/device_if.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -77,11 +77,6 @@ cpu_configure(void)
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
-	aprint_normal("biomask %jx netmask %jx ttymask %jx\n",
-	    imask[IPL_BIO] & 0x3fffffffffffffff,
-	    imask[IPL_NET] & 0x3fffffffffffffff,
-	    imask[IPL_TTY] & 0x3fffffffffffffff);
-
 	spl0();
 }
 
@@ -91,7 +86,7 @@ cpu_rootconf(void)
 	findroot();
 
 	printf("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
+	    booted_device ? device_xname(booted_device) : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }
@@ -128,7 +123,7 @@ findroot(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict = device_properties(dev);
 
