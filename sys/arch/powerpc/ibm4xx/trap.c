@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.60 2011/06/14 05:50:24 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.61 2011/06/18 06:41:41 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2011/06/14 05:50:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61 2011/06/18 06:41:41 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2011/06/14 05:50:24 matt Exp $");
 #include <sys/savar.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
+#include <sys/cpu.h>
 
 #if defined(KGDB)
 #include <sys/kgdb.h>
@@ -91,18 +92,20 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2011/06/14 05:50:24 matt Exp $");
 
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
-#include <machine/db_machdep.h>
 #include <machine/fpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 
+#include <powerpc/db_machdep.h>
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
+
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/pmap.h>
 #include <powerpc/ibm4xx/tlb.h>
+
 #include <powerpc/fpu/fpu_extern.h>
 
 /* These definitions should probably be somewhere else			XXX */

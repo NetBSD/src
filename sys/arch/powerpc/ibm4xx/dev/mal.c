@@ -1,4 +1,4 @@
-/* $NetBSD: mal.c,v 1.1 2010/03/18 13:47:04 kiyohara Exp $ */
+/* $NetBSD: mal.c,v 1.2 2011/06/18 06:41:42 matt Exp $ */
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,14 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mal.c,v 1.1 2010/03/18 13:47:04 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mal.c,v 1.2 2011/06/18 06:41:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
-#include <machine/intr.h>
-
-#include <powerpc/cpu.h>
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/dev/if_emacvar.h>
 #include <powerpc/ibm4xx/dev/malvar.h>
