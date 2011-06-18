@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.342 2011/06/12 03:35:46 rmind Exp $ */
+/*	$NetBSD: pmap.c,v 1.343 2011/06/18 02:05:08 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.342 2011/06/12 03:35:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.343 2011/06/18 02:05:08 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3859,7 +3859,6 @@ pmap_bootstrap4m(void *top)
 	/*
 	 * Setup the cpus[] array and the ci_self links.
 	 */
-	prom_printf("setting cpus self reference\n");
 	for (i = 0; i < sparc_ncpus; i++) {
 		sva = (vaddr_t) (cpuinfo_data + (cpuinfo_len * i));
 		cpuinfo_va = sva +
@@ -3876,8 +3875,6 @@ pmap_bootstrap4m(void *top)
 				paddr_t pa =
 				    PMAP_BOOTSTRAP_VA2PA(CPUINFO_VA + off);
 
-				prom_printf("going to pmap_kenter_pa"
-					    "(va=%p, pa=%p)\n", va, pa);
 				pmap_kremove(va, NBPG);
 				pmap_kenter_pa(va, pa,
 					       VM_PROT_READ | VM_PROT_WRITE, 0);
@@ -3888,7 +3885,6 @@ pmap_bootstrap4m(void *top)
 
 		cpus[i] = (struct cpu_info *)cpuinfo_va;
 		cpus[i]->ci_self = cpus[i];
-		prom_printf("set cpu%d ci_self address: %p\n", i, cpus[i]);
 
 		/* Unmap and prepare to return unused pages */
 		if (cpuinfo_va != sva) {
@@ -3920,8 +3916,6 @@ pmap_bootstrap4m(void *top)
 		panic("cpuinfo inconsistent");
 	}
 #endif
-
-	prom_printf("pmap_bootstrap4m done\n");
 }
 
 static u_long prom_ctxreg;
