@@ -1,4 +1,4 @@
-/* $NetBSD: pciconf_ofmethod.c,v 1.3 2011/06/17 19:03:01 matt Exp $ */
+/* $NetBSD: pciconf_ofmethod.c,v 1.4 2011/06/18 06:41:43 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf_ofmethod.c,v 1.3 2011/06/17 19:03:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf_ofmethod.c,v 1.4 2011/06/18 06:41:43 matt Exp $");
+
+#define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,13 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: pciconf_ofmethod.c,v 1.3 2011/06/17 19:03:01 matt Ex
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
-#define _POWERPC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
-#include <machine/intr.h>
 #include <machine/pio.h>
+
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
 
