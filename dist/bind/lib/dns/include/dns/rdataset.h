@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.h,v 1.1.1.3.4.2 2011/01/23 21:47:41 bouyer Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.1.1.3.4.3 2011/06/18 10:36:32 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2006, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.h,v 1.51.18.11 2010/02/26 23:46:37 tbox Exp */
+/* Id: rdataset.h,v 1.51.18.11.10.1 2011-05-26 23:56:27 each Exp */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -609,6 +609,12 @@ dns_rdataset_expire(dns_rdataset_t *rdataset);
 /*%<
  * Mark the rdataset to be expired in the backing database.
  */
+
+const char *
+dns_trust_totext(dns_trust_t trust);
+/*
+ *  * Display trust in textual form.
+ *   */
 
 ISC_LANG_ENDDECLS
 

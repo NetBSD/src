@@ -1,4 +1,4 @@
-/*	$NetBSD: ncache.c,v 1.1.1.3.4.2 2011/01/23 21:47:38 bouyer Exp $	*/
+/*	$NetBSD: ncache.c,v 1.1.1.3.4.3 2011/06/18 10:36:31 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ncache.c,v 1.36.18.8 2010/06/03 23:46:10 tbox Exp */
+/* Id: ncache.c,v 1.36.18.8.10.1 2011-05-26 23:56:27 each Exp */
 
 /*! \file */
 
@@ -177,7 +177,7 @@ dns_ncache_add(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 					 */
 					isc_buffer_availableregion(&buffer,
 								   &r);
-					if (r.length < 2)
+					if (r.length < 3)
 						return (ISC_R_NOSPACE);
 					isc_buffer_putuint16(&buffer,
 							     rdataset->type);
