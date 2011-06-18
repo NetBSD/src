@@ -1,4 +1,4 @@
-/*	$NetBSD: mempool_test.c,v 1.1.1.5 2008/06/21 18:33:59 christos Exp $	*/
+/*	$NetBSD: mempool_test.c,v 1.1.1.5.12.1 2011/06/18 11:27:02 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mempool_test.c,v 1.17 2007/06/19 23:46:59 tbox Exp */
+/* Id: mempool_test.c,v 1.17 2007-06-19 23:46:59 tbox Exp */
 
 #include <config.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnskey_48.c,v 1.5.12.1 2011/01/09 20:42:26 riz Exp $	*/
+/*	$NetBSD: dnskey_48.c,v 1.5.12.2 2011/06/18 11:28:39 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnskey_48.c,v 1.10 2009/12/04 22:06:37 tbox Exp */
+/* Id: dnskey_48.c,v 1.10 2009-12-04 22:06:37 tbox Exp */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.

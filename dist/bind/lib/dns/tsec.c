@@ -1,7 +1,7 @@
-/*        $NetBSD: tsec.c,v 1.1.4.2 2011/01/09 20:42:23 riz Exp $      */
+/*        $NetBSD: tsec.c,v 1.1.4.3 2011/06/18 11:28:29 bouyer Exp $      */
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsec.c,v 1.4 2009/09/02 23:48:02 tbox Exp */
+/* Id: tsec.c,v 1.4.104.3 2010-12-09 01:05:28 marka Exp */
 
 #include <config.h>
 
@@ -109,7 +109,6 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 	tsec->magic = DNS_TSEC_MAGIC;
 
 	*tsecp = tsec;
-
 	return (ISC_R_SUCCESS);
 }
 

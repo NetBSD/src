@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.h,v 1.1.1.5.12.1 2011/01/09 20:42:24 riz Exp $	*/
+/*	$NetBSD: masterdump.h,v 1.1.1.5.12.2 2011/06/18 11:28:34 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: masterdump.h,v 1.42 2008/09/24 02:46:23 marka Exp */
+/* Id: masterdump.h,v 1.42.604.1 2011-05-27 00:43:06 each Exp */
 
 #ifndef DNS_MASTERDUMP_H
 #define DNS_MASTERDUMP_H 1
@@ -336,6 +336,9 @@ dns_master_styledestroy(dns_master_style_t **style, isc_mem_t *mctx);
 
 const char *
 dns_trust_totext(dns_trust_t trust);
+/*%<
+ * Display trust in textual form.
+ */
 
 ISC_LANG_ENDDECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_getifaddrs.c,v 1.1.1.3.12.1 2011/01/09 20:42:37 riz Exp $	*/
+/*	$NetBSD: ifiter_getifaddrs.c,v 1.1.1.3.12.2 2011/06/18 11:29:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ifiter_getifaddrs.c,v 1.13 2009/09/24 23:48:13 tbox Exp */
+/* Id: ifiter_getifaddrs.c,v 1.13 2009-09-24 23:48:13 tbox Exp */
 
 /*! \file
  * \brief

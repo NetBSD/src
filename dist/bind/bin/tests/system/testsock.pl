@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: testsock.pl,v 1.16.558.2 2010/08/17 23:46:28 tbox Exp
+# Id: testsock.pl,v 1.16.558.2 2010-08-17 23:46:28 tbox Exp
 
 # Test whether the interfaces on 10.53.0.* are up.
 

@@ -18,7 +18,7 @@ AC_DIVERT_PUSH(1)dnl
 esyscmd([sed "s/^/# /" COPYRIGHT])dnl
 AC_DIVERT_POP()dnl
 
-AC_REVISION(Revision: 1.489.22.12 )
+AC_REVISION(Revision: 1.489.22.15 )
 
 AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.59)
@@ -437,7 +437,7 @@ AC_ARG_ENABLE(devpoll,
 	      want_devpoll="$enableval",  want_devpoll="yes")
 case $want_devpoll in
 yes)
-	AC_CHECK_HEADERS(sys/devpoll.h,
+	AC_CHECK_HEADERS(sys/devpoll.h devpoll.h,
 	ISC_PLATFORM_HAVEDEVPOLL="#define ISC_PLATFORM_HAVEDEVPOLL 1"
 	,
 	ISC_PLATFORM_HAVEDEVPOLL="#undef ISC_PLATFORM_HAVEDEVPOLL"
@@ -2545,7 +2545,7 @@ main() {
 	alpha*-*)
 		arch=alpha
 	;;
-	powerpc-*)
+	powerpc-*|powerpc64-*)
 		arch=powerpc
 	;;
 	mips-*|mipsel-*|mips64-*|mips64el-*)
@@ -3280,6 +3280,7 @@ AC_CONFIG_FILES([
 	bin/tests/timers/Makefile
 	bin/tests/dst/Makefile
 	bin/tests/mem/Makefile
+	bin/tests/hashes/Makefile
 	bin/tests/net/Makefile
 	bin/tests/sockaddr/Makefile
 	bin/tests/system/Makefile

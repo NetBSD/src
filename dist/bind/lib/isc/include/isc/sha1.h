@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.h,v 1.1.1.5.12.1 2011/01/09 20:42:36 riz Exp $	*/
+/*	$NetBSD: sha1.h,v 1.1.1.5.12.2 2011/06/18 11:29:00 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,9 @@
 #ifndef ISC_SHA1_H
 #define ISC_SHA1_H 1
 
-/* Id: sha1.h,v 1.19 2009/02/06 23:47:42 tbox Exp */
+/* Id: sha1.h,v 1.19 2009-02-06 23:47:42 tbox Exp */
 
-/*	$NetBSD: sha1.h,v 1.1.1.5.12.1 2011/01/09 20:42:36 riz Exp $	*/
+/*	$NetBSD: sha1.h,v 1.1.1.5.12.2 2011/06/18 11:29:00 bouyer Exp $	*/
 
 /*! \file isc/sha1.h
  * \brief SHA-1 in C

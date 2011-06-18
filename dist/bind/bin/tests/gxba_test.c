@@ -1,4 +1,4 @@
-/*	$NetBSD: gxba_test.c,v 1.1.1.5 2008/06/21 18:34:01 christos Exp $	*/
+/*	$NetBSD: gxba_test.c,v 1.1.1.5.12.1 2011/06/18 11:27:01 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gxba_test.c,v 1.13 2007/06/19 23:46:59 tbox Exp */
+/* Id: gxba_test.c,v 1.13 2007-06-19 23:46:59 tbox Exp */
 
 /*! \file */
 #include <config.h>

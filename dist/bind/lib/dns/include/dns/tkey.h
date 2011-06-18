@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.h,v 1.1.1.5.4.1.2.1 2011/01/09 20:42:25 riz Exp $	*/
+/*	$NetBSD: tkey.h,v 1.1.1.5.4.1.2.2 2011/06/18 11:28:36 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tkey.h,v 1.28 2009/01/17 23:47:43 tbox Exp */
+/* Id: tkey.h,v 1.28 2009-01-17 23:47:43 tbox Exp */
 
 #ifndef DNS_TKEY_H
 #define DNS_TKEY_H 1

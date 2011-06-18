@@ -1,4 +1,4 @@
-/*	$NetBSD: cname_5.h,v 1.1.1.5 2008/06/21 18:32:38 christos Exp $	*/
+/*	$NetBSD: cname_5.h,v 1.1.1.5.12.1 2011/06/18 11:28:38 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cname_5.h,v 1.26 2007/06/19 23:47:17 tbox Exp */
+/* Id: cname_5.h,v 1.26 2007-06-19 23:47:17 tbox Exp */
 
 #ifndef GENERIC_CNAME_5_H
 #define GENERIC_CNAME_5_H 1
