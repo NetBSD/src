@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.42 2011/06/18 11:46:32 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.43 2011/06/18 16:44:07 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -2757,4 +2757,25 @@ lib/libisc/shlib_version				patch
 
 	Update bind to 9.7.3-P1, fixing CVE-2011-1910 and CVE-2011-0414
 	[spz, ticket #1634]
+
+sys/arch/m68k/fpe/fpu_emulate.c			1.31
+
+	Fix botch in rev 1.28 that causes wrong results of fcmp and ftst
+	in FPE.  fpu_upd_fpsr() should be called even in discard_result
+	case if an emulated instruction gets proper result without signal.
+	Fixes weird behavior of awk(1) seen on /etc/rc.d/postfix on XM6i and
+	TME emulating sun3 without 68881.
+	[tsutsui, ticket #1626]
+
+sys/kern/kern_fork.c				1.181
+
+	Inherit proc_t::p_mqueue_cnt on fork().
+	[rmind, ticket #1629]
+
+sys/dev/ic/gem.c				1.97
+
+	Fix corrupted packet problem on 100Mb/s half duplex links.
+	We need to set "echo disable" on the internal phy too, not just on the
+	external phy.
+	[jdc, ticket #1632]
 
