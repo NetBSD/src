@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.26 2011/05/20 19:32:58 bouyer Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.27 2011/06/18 11:30:29 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.1.1
 release:
@@ -2430,4 +2430,14 @@ include/wchar.h					1.28
 	Don't define wchar_t for c++; it is native in the language.
 	From Alexander Nasonov
 	[joerg, ticket #1611]
+
+dist/bind/						patch
+distrib/sets/lists/base/md.amd64			patch
+distrib/sets/lists/base/md.sparc64			patch
+distrib/sets/lists/base/shl.mi				patch
+lib/libdns/shlib_version				patch
+lib/libisc/shlib_version				patch
+
+	Update bind to 9.7.3-P1, fixing CVE-2011-1910 and CVE-2011-0414
+	[spz, ticket #1634]
 
