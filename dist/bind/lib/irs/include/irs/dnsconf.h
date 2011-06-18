@@ -1,4 +1,4 @@
-/*        $NetBSD: dnsconf.h,v 1.1.2.1 2011/01/06 21:41:57 riz Exp $      */
+/*        $NetBSD: dnsconf.h,v 1.1.2.2 2011/06/18 11:20:39 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnsconf.h,v 1.3 2009/09/02 23:48:02 tbox Exp */
+/* Id: dnsconf.h,v 1.3 2009-09-02 23:48:02 tbox Exp */
 
 #ifndef IRS_DNSCONF_H
 #define IRS_DNSCONF_H 1

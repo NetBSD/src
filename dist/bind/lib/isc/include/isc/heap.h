@@ -1,4 +1,4 @@
-/*	$NetBSD: heap.h,v 1.1.1.5.4.2 2011/01/06 21:42:00 riz Exp $	*/
+/*	$NetBSD: heap.h,v 1.1.1.5.4.3 2011/06/18 11:20:42 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: heap.h,v 1.26 2009/01/17 23:47:43 tbox Exp */
+/* Id: heap.h,v 1.26 2009-01-17 23:47:43 tbox Exp */
 
 #ifndef ISC_HEAP_H
 #define ISC_HEAP_H 1

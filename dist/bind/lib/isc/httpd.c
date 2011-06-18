@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.c,v 1.1.1.1.6.2 2011/01/06 21:41:58 riz Exp $	*/
+/*	$NetBSD: httpd.c,v 1.1.1.1.6.3 2011/06/18 11:20:40 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2006-2008, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: httpd.c,v 1.16.284.2 2010/02/04 23:48:30 tbox Exp */
+/* Id: httpd.c,v 1.16.284.2 2010-02-04 23:48:30 tbox Exp */
 
 /*! \file */
 

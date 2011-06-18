@@ -1,4 +1,4 @@
-/*	$NetBSD: t_api.c,v 1.1.1.6.4.2 2011/01/06 21:42:06 riz Exp $	*/
+/*	$NetBSD: t_api.c,v 1.1.1.6.4.3 2011/06/18 11:20:54 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_api.c,v 1.65.154.2 2010/06/08 23:49:11 tbox Exp */
+/* Id: t_api.c,v 1.65.154.3 2010-12-21 04:30:15 marka Exp */
 
 /*! \file */
 
@@ -244,15 +244,6 @@ main(int argc, char **argv) {
 
 	sa.sa_flags = 0;
 	sigfillset(&sa.sa_mask);
-
-#ifdef SIGCHLD
-	/*
-	 * This is mostly here for NetBSD's pthread implementation, until
-	 * people catch up to the latest unproven-pthread package.
-	 */
-	sa.sa_handler = SIG_DFL;
-	(void)sigaction(SIGCHLD, &sa, NULL);
-#endif
 
 	sa.sa_handler = t_sighandler;
 	(void)sigaction(SIGINT,  &sa, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: print_p.h,v 1.1.1.3.4.1 2011/01/06 21:42:05 riz Exp $	*/
+/*	$NetBSD: print_p.h,v 1.1.1.3.4.2 2011/06/18 11:20:51 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: print_p.h,v 1.4.558.2 2010/08/16 23:46:31 tbox Exp */
+/* Id: print_p.h,v 1.4.558.2 2010-08-16 23:46:31 tbox Exp */
 
 #ifndef LWRES_PRINT_P_H
 #define LWRES_PRINT_P_H 1

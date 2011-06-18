@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.2.4.2 2010/11/16 02:26:24 sar Exp
+# Id: tests.sh,v 1.2.2.3 2010-12-02 23:26:56 marka Exp
 
 # Test of allow-query statement.
 # allow-query takes an address match list and can be included in either the
@@ -68,7 +68,7 @@ n=0
 n=`expr $n + 1`
 echo "I:test $n: default - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -82,7 +82,7 @@ sleep 5
 
 echo "I:test $n: explicit any - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -96,7 +96,7 @@ sleep 5
 
 echo "I:test $n: none - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -110,7 +110,7 @@ sleep 5
 
 echo "I:test $n: address allowed - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -124,7 +124,7 @@ sleep 5
 
 echo "I:test $n: address not allowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -138,7 +138,7 @@ sleep 5
 
 echo "I:test $n: address disallowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -152,7 +152,7 @@ sleep 5
 
 echo "I:test $n: acl allowed - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -166,7 +166,7 @@ sleep 5
 
 echo "I:test $n: acl not allowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -181,7 +181,7 @@ sleep 5
 
 echo "I:test $n: acl disallowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -195,7 +195,7 @@ sleep 5
 
 echo "I:test $n: key allowed - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 -y one:1234abcd8765 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 -y one:1234abcd8765 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -209,7 +209,7 @@ sleep 5
 
 echo "I:test $n: key not allowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 -y two:1234efgh8765 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 -y two:1234efgh8765 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -223,7 +223,7 @@ sleep 5
 
 echo "I:test $n: key disallowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 -y one:1234abcd8765 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 -y one:1234abcd8765 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -240,7 +240,7 @@ sleep 5
 
 echo "I:test $n: views default - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -254,7 +254,7 @@ sleep 5
 
 echo "I:test $n: views explicit any - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -268,7 +268,7 @@ sleep 5
 
 echo "I:test $n: views none - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -282,7 +282,7 @@ sleep 5
 
 echo "I:test $n: views address allowed - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -296,7 +296,7 @@ sleep 5
 
 echo "I:test $n: views address not allowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -310,7 +310,7 @@ sleep 5
 
 echo "I:test $n: views address disallowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -324,7 +324,7 @@ sleep 5
 
 echo "I:test $n: views acl allowed - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -338,7 +338,7 @@ sleep 5
 
 echo "I:test $n: views acl not allowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -352,7 +352,7 @@ sleep 5
 
 echo "I:test $n: views acl disallowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -366,7 +366,7 @@ sleep 5
 
 echo "I:test $n: views key allowed - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 -y one:1234abcd8765 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 -y one:1234abcd8765 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -380,7 +380,7 @@ sleep 5
 
 echo "I:test $n: views key not allowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 -y two:1234efgh8765 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 -y two:1234efgh8765 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -394,7 +394,7 @@ sleep 5
 
 echo "I:test $n: views key disallowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 -y one:1234abcd8765 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 -y one:1234abcd8765 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -408,7 +408,7 @@ sleep 5
 
 echo "I:test $n: views over options, views allow - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -422,7 +422,7 @@ sleep 5
 
 echo "I:test $n: views over options, views disallow - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -440,7 +440,7 @@ sleep 5
 
 echo "I:test $n: zone default - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -450,7 +450,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:test $n: zone explicit any - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.any.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.any.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.any.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -460,7 +460,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:test $n: zone none - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.none.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.none.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.none.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -470,7 +470,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:test $n: zone address allowed - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.addrallow.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.addrallow.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.addrallow.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -480,7 +480,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:test $n: zone address not allowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.addrnotallow.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.addrnotallow.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.addrnotallow.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -490,7 +490,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:test $n: zone address disallowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.addrdisallow.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.addrdisallow.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.addrdisallow.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -500,7 +500,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:test $n: zone acl allowed - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.aclallow.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.aclallow.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.aclallow.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -510,7 +510,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:test $n: zone acl not allowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.aclnotallow.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.aclnotallow.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.aclnotallow.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -520,7 +520,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:test $n: zone acl disallowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.acldisallow.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.acldisallow.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.acldisallow.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -530,7 +530,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:test $n: zone key allowed - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 -y one:1234abcd8765 a.keyallow.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 -y one:1234abcd8765 a.keyallow.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.keyallow.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -540,7 +540,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:test $n: zone key not allowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 -y two:1234efgh8765 a.keyallow.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 -y two:1234efgh8765 a.keyallow.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.keyallow.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -550,7 +550,7 @@ status=`expr $status + $ret`
 n=`expr $n + 1`
 echo "I:test $n: zone key disallowed - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 -y one:1234abcd8765 a.keydisallow.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 -y one:1234abcd8765 a.keydisallow.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.keydisallow.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -564,7 +564,7 @@ sleep 5
 
 echo "I:test $n: views over options, views allow - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -578,7 +578,7 @@ sleep 5
 
 echo "I:test $n: views over options, views disallow - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -592,7 +592,7 @@ sleep 5
 
 echo "I:test $n: zones over views, views allow - query allowed"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -606,7 +606,7 @@ sleep 5
 
 echo "I:test $n: zones over views, views disallow - query refused"
 ret=0
-$DIG $DIGOPTS @10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi

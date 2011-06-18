@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.1.1.5.4.2 2011/01/06 21:41:49 riz Exp $	*/
+/*	$NetBSD: zone.h,v 1.1.1.5.4.3 2011/06/18 11:20:33 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone.h,v 1.174.4.4 2010/08/16 22:27:18 marka Exp */
+/* Id: zone.h,v 1.174.4.5 2010-12-14 00:46:41 marka Exp */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1
@@ -1688,7 +1688,7 @@ void
 dns_zone_setcheckmx(dns_zone_t *zone, dns_checkmxfunc_t checkmx);
 /*%<
  *	Set the post load integrity callback function 'checkmx'.
- *	'checkmx' will be called if the MX is not within the zone.
+ *	'checkmx' will be called if the MX TARGET is not within the zone.
  *
  * Require:
  *	'zone' to be a valid zone.
@@ -1707,8 +1707,8 @@ dns_zone_setchecksrv(dns_zone_t *zone, dns_checkmxfunc_t checksrv);
 void
 dns_zone_setcheckns(dns_zone_t *zone, dns_checknsfunc_t checkns);
 /*%<
- *	Set the post load integrity callback function 'checkmx'.
- *	'checkmx' will be called if the MX is not within the zone.
+ *	Set the post load integrity callback function 'checkns'.
+ *	'checkns' will be called if the NS TARGET is not within the zone.
  *
  * Require:
  *	'zone' to be a valid zone.

@@ -1,4 +1,4 @@
-/*	$NetBSD: app.h,v 1.1.1.5.4.1 2011/01/06 21:41:59 riz Exp $	*/
+/*	$NetBSD: app.h,v 1.1.1.5.4.2 2011/06/18 11:20:42 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: app.h,v 1.11 2009/09/02 23:48:03 tbox Exp */
+/* Id: app.h,v 1.11 2009-09-02 23:48:03 tbox Exp */
 
 #ifndef ISC_APP_H
 #define ISC_APP_H 1

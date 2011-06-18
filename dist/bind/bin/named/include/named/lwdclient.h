@@ -1,4 +1,4 @@
-/*	$NetBSD: lwdclient.h,v 1.1.1.5.4.2 2011/01/06 21:40:37 riz Exp $	*/
+/*	$NetBSD: lwdclient.h,v 1.1.1.5.4.3 2011/06/18 11:19:49 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwdclient.h,v 1.20 2009/01/17 23:47:42 tbox Exp */
+/* Id: lwdclient.h,v 1.20 2009-01-17 23:47:42 tbox Exp */
 
 #ifndef NAMED_LWDCLIENT_H
 #define NAMED_LWDCLIENT_H 1
