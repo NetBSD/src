@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.40 2011/06/13 21:19:38 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.41 2011/06/18 06:41:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2011/06/13 21:19:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.41 2011/06/18 06:41:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,11 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2011/06/13 21:19:38 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #ifdef PPC_BOOKE
 #define	EIEIO	__asm volatile("mbar\t0")
