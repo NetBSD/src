@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc_mainbus.c,v 1.4 2011/06/06 16:42:17 matt Exp $	*/
+/*	$NetBSD: cpc_mainbus.c,v 1.5 2011/06/18 06:44:27 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc_mainbus.c,v 1.4 2011/06/06 16:42:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc_mainbus.c,v 1.5 2011/06/18 06:44:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -94,5 +94,5 @@ cpc_mainbus_attach(device_t parent, device_t self, void *aux)
 		   a_config.a_bus_freq);
 
 	if (!a_config.a_is_monarch)
-		printf("%s: not Monarch, pci not attached\n", self->dv_xname);
+		aprint_error_dev(self, "not Monarch, pci not attached\n");
 }
