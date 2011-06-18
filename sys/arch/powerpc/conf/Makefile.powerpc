@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.45 2011/06/04 17:51:09 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.46 2011/06/18 21:17:29 matt Exp $
 #
 # Makefile for NetBSD
 #
@@ -27,10 +27,10 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 THISPPC=	$S/arch/${MACHINE}
 POWERPC=	$S/arch/powerpc
+GENASSYM_CONF=	${POWERPC}/powerpc/genassym.cf
+GENASSYM_CONF+=	${POWERPC}/${PPCDIR}/genassym.cf
 .if exists(${THISPPC}/${MACHINE}/genassym.cf)
-GENASSYM_CONF=	${THISPPC}/${MACHINE}/genassym.cf
-.else
-GENASSYM_CONF=	${POWERPC}/${PPCDIR}/genassym.cf
+GENASSYM_CONF+=	${THISPPC}/${MACHINE}/genassym.cf
 .endif
 .-include "${THISPPC}/conf/Makefile.${MACHINE}.inc"
 
