@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.156 2011/06/05 16:52:24 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.157 2011/06/18 08:08:28 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2011/06/05 16:52:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2011/06/18 08:08:28 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -262,7 +262,7 @@ callback(void *p)
 #endif
 
 void
-copy_disp_props(struct device *dev, int node, prop_dictionary_t dict)
+copy_disp_props(device_t dev, int node, prop_dictionary_t dict)
 {
 	uint32_t temp;
 	uint64_t cmap_cb, backlight_cb;

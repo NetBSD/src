@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.4 2011/06/06 16:42:18 matt Exp $	*/
+/*	$NetBSD: pceb.c,v 1.5 2011/06/18 08:08:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.4 2011/06/06 16:42:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.5 2011/06/18 08:08:29 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,7 +107,7 @@ pcebattach(device_t parent, device_t self, void *aux)
 	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	prep_eisa_io_space_tag.pbs_extent = prep_io_space_tag.pbs_extent;
