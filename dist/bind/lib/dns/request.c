@@ -1,4 +1,4 @@
-/*	$NetBSD: request.c,v 1.1.1.6.8.2 2011/01/10 00:39:42 riz Exp $	*/
+/*	$NetBSD: request.c,v 1.1.1.6.8.3 2011/06/18 11:36:56 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: request.c,v 1.85 2009/09/01 00:22:26 jinmei Exp */
+/* Id: request.c,v 1.85 2009-09-01 00:22:26 jinmei Exp */
 
 /*! \file */
 

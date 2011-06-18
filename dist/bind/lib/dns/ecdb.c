@@ -1,4 +1,4 @@
-/*        $NetBSD: ecdb.c,v 1.1.6.2 2011/01/10 00:39:39 riz Exp $      */
+/*        $NetBSD: ecdb.c,v 1.1.6.3 2011/06/18 11:36:52 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ecdb.c,v 1.4.24.2 2010/02/25 05:25:51 tbox Exp */
+/* Id: ecdb.c,v 1.4.24.2 2010-02-25 05:25:51 tbox Exp */
 
 #include "config.h"
 

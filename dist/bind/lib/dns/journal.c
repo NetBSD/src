@@ -1,4 +1,4 @@
-/*	$NetBSD: journal.c,v 1.1.1.6.8.2 2011/01/10 00:39:40 riz Exp $	*/
+/*	$NetBSD: journal.c,v 1.1.1.6.8.3 2011/06/18 11:36:52 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: journal.c,v 1.110.194.2 2010/11/17 23:46:50 tbox Exp */
+/* Id: journal.c,v 1.110.24.2 2010-11-17 23:46:32 tbox Exp */
 
 #include <config.h>
 

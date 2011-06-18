@@ -1,4 +1,4 @@
-/*        $NetBSD: ecdb.h,v 1.1.6.2 2011/01/10 00:39:45 riz Exp $      */
+/*        $NetBSD: ecdb.h,v 1.1.6.3 2011/06/18 11:37:03 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ecdb.h,v 1.3 2009/09/02 23:48:02 tbox Exp */
+/* Id: ecdb.h,v 1.3 2009-09-02 23:48:02 tbox Exp */
 
 #ifndef DNS_ECDB_H
 #define DNS_ECDB_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey_249.c,v 1.1.1.5.8.1 2011/01/10 00:39:54 riz Exp $	*/
+/*	$NetBSD: tkey_249.c,v 1.1.1.5.8.2 2011/06/18 11:37:14 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tkey_249.c,v 1.59 2009/12/04 22:06:37 tbox Exp */
+/* Id: tkey_249.c,v 1.59 2009-12-04 22:06:37 tbox Exp */
 
 /*
  * Reviewed: Thu Mar 16 17:35:30 PST 2000 by halley.

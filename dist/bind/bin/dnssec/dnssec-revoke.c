@@ -1,4 +1,4 @@
-/*        $NetBSD: dnssec-revoke.c,v 1.1.6.2 2011/01/10 00:37:12 riz Exp $      */
+/*        $NetBSD: dnssec-revoke.c,v 1.1.6.3 2011/06/18 11:35:02 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-revoke.c,v 1.18.34.4 2010/05/06 23:49:37 tbox Exp */
+/* Id: dnssec-revoke.c,v 1.18.34.4 2010-05-06 23:49:37 tbox Exp */
 
 /*! \file */
 

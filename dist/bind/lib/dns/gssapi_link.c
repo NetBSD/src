@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_link.c,v 1.1.1.4.8.2 2011/01/10 00:39:39 riz Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.1.1.4.8.3 2011/06/18 11:36:52 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: gssapi_link.c,v 1.14 2009/10/24 23:47:36 tbox Exp
+ * Id: gssapi_link.c,v 1.14 2009-10-24 23:47:36 tbox Exp
  */
 
 #include <config.h>

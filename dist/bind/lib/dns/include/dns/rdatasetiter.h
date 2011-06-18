@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatasetiter.h,v 1.1.1.5 2008/06/21 18:32:25 christos Exp $	*/
+/*	$NetBSD: rdatasetiter.h,v 1.1.1.5.8.1 2011/06/18 11:37:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdatasetiter.h,v 1.21 2007/06/19 23:47:17 tbox Exp */
+/* Id: rdatasetiter.h,v 1.21 2007-06-19 23:47:17 tbox Exp */
 
 #ifndef DNS_RDATASETITER_H
 #define DNS_RDATASETITER_H 1

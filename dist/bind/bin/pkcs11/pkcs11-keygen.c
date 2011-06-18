@@ -1,4 +1,4 @@
-/*        $NetBSD: pkcs11-keygen.c,v 1.1.6.2 2011/01/10 00:37:18 riz Exp $      */
+/*        $NetBSD: pkcs11-keygen.c,v 1.1.6.3 2011/06/18 11:35:12 bouyer Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Id: pkcs11-keygen.c,v 1.9 2009/10/26 23:36:53 each Exp */
+/* Id: pkcs11-keygen.c,v 1.9 2009-10-26 23:36:53 each Exp */
 
 /* pkcs11-keygen - pkcs11 rsa key generator
 *

@@ -1,7 +1,7 @@
-/*	$NetBSD: check-tool.c,v 1.1.1.5.8.2 2011/01/10 00:37:03 riz Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.1.1.5.8.3 2011/06/18 11:34:55 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,13 +17,17 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check-tool.c,v 1.39 2009/09/01 00:22:24 jinmei Exp */
+/* Id: check-tool.c,v 1.39.104.2 2010-09-07 23:46:37 tbox Exp */
 
 /*! \file */
 
 #include <config.h>
 
 #include <stdio.h>
+
+#ifdef _WIN32
+#include <Winsock2.h>
+#endif
 
 #include "check-tool.h"
 #include <isc/buffer.h>
@@ -663,3 +667,26 @@ dump_zone(const char *zonename, dns_zone_t *zone, const char *filename,
 
 	return (result);
 }
+
+#ifdef _WIN32
+void
+InitSockets(void) {
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	int err;
+
+	wVersionRequested = MAKEWORD(2, 0);
+
+	err = WSAStartup( wVersionRequested, &wsaData );
+	if (err != 0) {
+		fprintf(stderr, "WSAStartup() failed: %d\n", err);
+		exit(1);
+	}
+}
+
+void
+DestroySockets(void) {
+	WSACleanup();
+}
+#endif
+

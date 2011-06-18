@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.7 2008/06/21 18:59:26 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.7.8.1 2011/06/18 11:37:54 bouyer Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getnameinfo.c,v 1.39 2007/06/19 23:47:22 tbox Exp */
+/* Id: getnameinfo.c,v 1.39 2007-06-19 23:47:22 tbox Exp */
 
 /*! \file */
 

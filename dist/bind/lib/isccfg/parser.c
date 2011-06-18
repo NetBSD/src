@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.1.1.6.8.1 2011/01/10 00:40:25 riz Exp $	*/
+/*	$NetBSD: parser.c,v 1.1.1.6.8.2 2011/06/18 11:37:52 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: parser.c,v 1.132.104.3 2010/08/11 18:19:58 each Exp */
+/* Id: parser.c,v 1.132.104.3 2010-08-11 18:19:58 each Exp */
 
 /*! \file */
 
