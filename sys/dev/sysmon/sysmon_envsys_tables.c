@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_tables.c,v 1.6 2010/12/15 17:17:17 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_tables.c,v 1.7 2011/06/19 03:09:43 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.6 2010/12/15 17:17:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.7 2011/06/19 03:09:43 pgoyette Exp $");
 
 #include <sys/types.h>
 
@@ -129,3 +129,29 @@ sme_find_table_entry(enum sme_descr_type table_id, int key)
 
 	return table;
 }
+const struct sme_descr_entry *
+sme_find_table_desc(enum sme_descr_type table_id, const char *str)
+{
+	const struct sme_descr_entry *table = NULL;
+
+	switch (table_id) {
+	case SME_DESC_UNITS:
+		table = sme_units_description;
+		break;
+	case SME_DESC_STATES:
+		table = sme_state_description;
+		break;
+	case SME_DESC_DRIVE_STATES:
+		table = sme_drivestate_description;
+		break;
+	case SME_DESC_BATTERY_CAPACITY:
+		table = sme_batterycap_description;
+		break;
+	}
+
+	for (; table->type != -1; table++)
+		if (strcmp(table->desc, str) == 0)
+			break;
+	return table;
+}
+
