@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.9 2011/06/04 13:26:51 pgoyette Exp $ */
+/*	$NetBSD: swsensor.c,v 1.10 2011/06/19 03:12:31 pgoyette Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.9 2011/06/04 13:26:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.10 2011/06/19 03:12:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.9 2011/06/04 13:26:51 pgoyette Exp $"
 #include <sys/sysctl.h>
 
 #include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_envsysvar.h>
 
 #include <prop/proplib.h>
 
@@ -159,8 +160,12 @@ int
 swsensor_init(void *arg)
 {
 	int error;
+	const char *key, *str;
 	prop_dictionary_t pd = (prop_dictionary_t)arg;
-	prop_object_t po = NULL;
+	prop_object_t po, obj;
+	prop_object_iterator_t iter;
+	prop_type_t type;
+	const struct sme_descr_entry *descr;
 
 	swsensor_sme = sysmon_envsys_create();
 	if (swsensor_sme == NULL)
@@ -172,116 +177,163 @@ swsensor_init(void *arg)
 	swsensor_sme->sme_set_limits = NULL;
 	swsensor_sme->sme_get_limits = NULL;
 
-	/* See if prop dictionary supplies a sensor type */
-	if (pd != NULL)
-		po = prop_dictionary_get(pd, "type");
+	/* Set defaults in case no prop dictionary given */
 
-	if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER)
-		swsensor_edata.units = prop_number_integer_value(po);
-	else
-		swsensor_edata.units = ENVSYS_INTEGER;
+	swsensor_edata.units = ENVSYS_INTEGER;
+	swsensor_edata.flags = 0;
+	sw_sensor_mode = 0;
+	sw_sensor_value = 0;
+	sw_sensor_limit = 0;
 
-	/* See if prop dictionary supplies sensor flags */
-	if (pd != NULL)
-		po = prop_dictionary_get(pd, "flags");
+	/* Iterate over the provided dictionary, if any */
+	if (pd != NULL) {
+		iter = prop_dictionary_iterator(pd);
+		if (iter == NULL)
+			return ENOMEM;
 
-	if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER)
-		swsensor_edata.flags = prop_number_integer_value(po);
-	else
-		swsensor_edata.flags = 0;
+		while ((obj = prop_object_iterator_next(iter)) != NULL) {
+			key = prop_dictionary_keysym_cstring_nocopy(obj);
+			po  = prop_dictionary_get_keysym(pd, obj);
+			type = prop_object_type(po);
 
-	/*
-	 * Get requested sensor limit behavior
-	 *	0 - simple sensor, no hw limits
-	 *	1 - simple sensor, hw provides an initial limit
-	 *	2 - complex sensor, hw provides settable limits and
-	 *	    does its own limit checking
-	 */
-	if (pd != NULL)
-		po = prop_dictionary_get(pd, "mode");
+			/* Sensor type/units */
+			if (strcmp(key, "type") == 0) {
+				if (type == PROP_TYPE_NUMBER) {
+					swsensor_edata.units =
+					    prop_number_integer_value(po);
+					continue;
+				}
+				if (type != PROP_TYPE_STRING)
+					return EINVAL;
+				str = prop_dictionary_keysym_cstring_nocopy(po);
+				descr = sme_find_table_desc(SME_DESC_UNITS,
+							    str);
+				if (descr->type < 0)
+					return EINVAL;
+				swsensor_edata.units = descr->type;
+				continue;
+			}
 
-	if  (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER) {
-		sw_sensor_mode = prop_number_integer_value(po);
-		if (sw_sensor_mode > 2)
-			sw_sensor_mode = 2;
-	} else
-		sw_sensor_mode = 0;
+			/* Sensor flags */
+			if (strcmp(key, "flags") == 0) {
+				if (type != PROP_TYPE_NUMBER)
+					return EINVAL;
+				swsensor_edata.flags =
+				    prop_number_integer_value(po);
+				continue;
+			}
 
+			/* Sensor limit behavior
+			 *	0 - simple sensor, no hw limits
+			 *	1 - simple sensor, hw provides initial limit
+			 *	2 - complex sensor, hw provides settable 
+			 *	    limits and does its own limit checking
+			 */
+			if (strcmp(key, "mode") == 0) {
+				if (type != PROP_TYPE_NUMBER)
+					return EINVAL;
+				sw_sensor_mode = prop_number_integer_value(po);
+				if (sw_sensor_mode > 2)
+					sw_sensor_mode = 2;
+				else if (sw_sensor_mode < 0)
+					sw_sensor_mode = 0;
+				continue;
+			}
+
+			/* Grab any limit that might be specified */
+			if (strcmp(key, "limit") == 0) {
+				if (type != PROP_TYPE_NUMBER)
+					return EINVAL;
+				sw_sensor_limit = prop_number_integer_value(po);
+				continue;
+			}
+
+			/* Grab the initial value */
+			if (strcmp(key, "value") == 0) {
+				if (type != PROP_TYPE_NUMBER)
+					return EINVAL;
+				sw_sensor_value = prop_number_integer_value(po);
+				continue;
+			}
+
+			/* Grab value_min and value_max */
+			if (strcmp(key, "value_min") == 0) {
+				if (type != PROP_TYPE_NUMBER)
+					return EINVAL;
+				swsensor_edata.value_min =
+				    prop_number_integer_value(po);
+				swsensor_edata.flags |= ENVSYS_FVALID_MIN;
+				continue;
+			}
+			if (strcmp(key, "value_max") == 0) {
+				if (type != PROP_TYPE_NUMBER)
+					return EINVAL;
+				swsensor_edata.value_max =
+				    prop_number_integer_value(po);
+				swsensor_edata.flags |= ENVSYS_FVALID_MAX;
+				continue;
+			}
+
+			/* See if sensor reports percentages vs raw values */
+			if (strcmp(key, "percentage") == 0) {
+				if (type != PROP_TYPE_BOOL)
+					return EINVAL;
+				if (prop_bool_true(po))
+					swsensor_edata.flags |= ENVSYS_FPERCENT;
+				continue;
+			}
+
+			/* Unrecognized dicttionary object */
+			return EINVAL;
+
+		} /* while */
+		prop_object_iterator_release(iter);
+	}
+
+	/* Initialize limit processing */
 	if (sw_sensor_mode >= 1)
 		swsensor_sme->sme_get_limits = swsensor_get_limits;
 
 	if (sw_sensor_mode == 2)
 		swsensor_sme->sme_set_limits = swsensor_set_limits;
 
-	/* See if a limit value was provided - if not, use 0 */
 	if (sw_sensor_mode != 0) {
 		swsensor_edata.flags |= ENVSYS_FMONLIMITS;
-		sw_sensor_limit = 0;
-		if (pd != NULL)
-			po = prop_dictionary_get(pd, "limit");
-
-		if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER)
-			sw_sensor_limit = prop_number_integer_value(po);
-
 		swsensor_get_limits(swsensor_sme, &swsensor_edata,
 		    &sw_sensor_deflims, &sw_sensor_defprops);
 	}
 
-	/* See if an initial value was specified */
-	if (pd != NULL)
-		po = prop_dictionary_get(pd, "value");
-
-	if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER)
-		sw_sensor_value = prop_number_integer_value(po);
-
-	/* Retrieve any value_{max,min} that might be present */
-	if (pd != NULL) {
-		po = prop_dictionary_get(pd, "value_max");
-		if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER) {
-			swsensor_edata.value_max =
-			    prop_number_integer_value(po);
-			swsensor_edata.flags |= ENVSYS_FVALID_MAX;
-		}
-
-		po = prop_dictionary_get(pd, "value_min");
-		if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER) {
-			swsensor_edata.value_min =
-			    prop_number_integer_value(po);
-			swsensor_edata.flags |= ENVSYS_FVALID_MIN;
-		}
-	}
-
-	/* See if this sensor should report percentages vs raw values */
-	if (pd != NULL) {
-		po = prop_dictionary_get(pd, "percentage");
-		if (po != NULL &&
-		    prop_object_type(po) == PROP_TYPE_BOOL &&
-		    prop_bool_true(po))
-			swsensor_edata.flags |= ENVSYS_FPERCENT;
-	}
-
-	swsensor_edata.state = ENVSYS_SVALID;
-	swsensor_edata.value_cur = 0;
+	/*
+	 * If {min, max} value range was specified, make sure that the
+	 * current value is within the range.
+	 */
+	if (swsensor_edata.flags & ENVSYS_FVALID_MAX &&
+	    sw_sensor_value > swsensor_edata.value_max)
+		swsensor_edata.state = ENVSYS_SINVALID;
+	if (swsensor_edata.flags & ENVSYS_FVALID_MIN &&
+	    sw_sensor_value < swsensor_edata.value_min)
+		swsensor_edata.state = ENVSYS_SINVALID;
+	else
+		swsensor_edata.state = ENVSYS_SVALID;
+	swsensor_edata.value_cur = sw_sensor_value;
 
 	strlcpy(swsensor_edata.desc, "sensor", ENVSYS_DESCLEN);
 
 	error = sysmon_envsys_sensor_attach(swsensor_sme, &swsensor_edata);
-
-	if (error == 0)
-		error = sysmon_envsys_register(swsensor_sme);
-	else {
+	if (error != 0) {
 		aprint_error("sysmon_envsys_sensor_attach failed: %d\n", error);
 		return error;
 	}
 
-	if (error == 0)
-		sysctl_swsensor_setup();
-	else
+	error = sysmon_envsys_register(swsensor_sme);
+	if (error != 0)
 		aprint_error("sysmon_envsys_register failed: %d\n", error);
+		return error;
 
-	if (error == 0)
-		aprint_normal("swsensor: initialized\n");
-	return error;
+	sysctl_swsensor_setup();
+	aprint_normal("swsensor: initialized\n");
+
+	return 0;
 }
 
 static
