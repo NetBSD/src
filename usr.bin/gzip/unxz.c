@@ -9,33 +9,29 @@ static off_t
 unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 {
 	lzma_stream strm = LZMA_STREAM_INIT;
+	static const int flags = LZMA_TELL_UNSUPPORTED_CHECK|LZMA_CONCATENATED;
 	lzma_ret ret;
 	off_t x = 0;
-
-	// Initialize the decoder
-	ret = lzma_alone_decoder(&strm, UINT64_MAX);
-	if (ret != LZMA_OK) {
-		errno = ret == LZMA_MEM_ERROR ? ENOMEM : EINVAL;
-		maybe_errx("Cannot initialize decoder");
-	}
-
-	// Input and output buffers
 	uint8_t ibuf[BUFSIZ];
 	uint8_t obuf[BUFSIZ];
 
-	*bytes_in = prelen;
 	strm.next_in = ibuf;
+	memcpy(ibuf, pre, prelen);
 	strm.avail_in = read(i, ibuf + prelen, sizeof(ibuf) - prelen);
 	if (strm.avail_in == (size_t)-1)
 		maybe_errx("Read failed");
+	*bytes_in = prelen + strm.avail_in;
 
-	memcpy(ibuf, pre, prelen);
-	*bytes_in += strm.avail_in;
+	if ((ret = lzma_stream_decoder(&strm, UINT64_MAX, flags)) != LZMA_OK)
+		maybe_errx("Can't initialize decoder (%d)", ret);
+
+	strm.next_out = NULL;
+	strm.avail_out = 0;
+	if ((ret = lzma_code(&strm, LZMA_RUN)) != LZMA_OK)
+		maybe_errx("Can't read headers (%d)", ret);
 
 	strm.next_out = obuf;
 	strm.avail_out = sizeof(obuf);
-	if ((ret = lzma_stream_decoder(&strm, UINT64_MAX, 0)) != LZMA_OK)
-		maybe_errx("Can't initialize decoder");
 
 	for (;;) {
 		if (strm.avail_in == 0) {
@@ -101,13 +97,12 @@ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 				msg = "Reached memory limit";
 				break;
 
-
 			default:
-				msg = "Internal error (bug)";
+				msg = "Unknown error (%d)";
 				break;
 			}
 
-			maybe_errx("%s", msg);
+			maybe_errx(msg, ret);
 		}
 	}
 }
