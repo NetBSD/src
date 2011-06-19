@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.11 2011/06/19 04:08:48 pgoyette Exp $ */
+/*	$NetBSD: swsensor.c,v 1.12 2011/06/19 15:52:48 pgoyette Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.11 2011/06/19 04:08:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.12 2011/06/19 15:52:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -103,6 +103,15 @@ swsensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	edata->value_cur = sw_sensor_value;
 
+	/* If value outside of legal range, mark it invalid */
+	if ((edata->flags & ENVSYS_FVALID_MIN &&
+	     edata->value_cur < edata->value_min) ||
+	    (edata->flags & ENVSYS_FVALID_MAX &&
+	     edata->value_cur > edata->value_max)) {
+		edata->state = ENVSYS_SINVALID;
+		return;
+	}
+
 	/*
 	 * Set state.  If we're handling the limits ourselves, do the
 	 * compare; otherwise just assume the value is valid.
@@ -159,7 +168,7 @@ static
 int
 swsensor_init(void *arg)
 {
-	int error;
+	int error, val = 0;
 	const char *key, *str;
 	prop_dictionary_t pd = (prop_dictionary_t)arg;
 	prop_object_t po, obj;
@@ -195,12 +204,17 @@ swsensor_init(void *arg)
 			key = prop_dictionary_keysym_cstring_nocopy(obj);
 			po  = prop_dictionary_get_keysym(pd, obj);
 			type = prop_object_type(po);
+			if (type == PROP_TYPE_NUMBER)
+				val = prop_number_integer_value(po);
 
 			/* Sensor type/units */
 			if (strcmp(key, "type") == 0) {
 				if (type == PROP_TYPE_NUMBER) {
-					swsensor_edata.units =
-					    prop_number_integer_value(po);
+					descr = sme_find_table_entry(
+							SME_DESC_UNITS, val);
+					if (descr == NULL)
+						return EINVAL;
+					swsensor_edata.units = descr->type;
 					continue;
 				}
 				if (type != PROP_TYPE_STRING)
@@ -208,7 +222,7 @@ swsensor_init(void *arg)
 				str = prop_string_cstring_nocopy(po);
 				descr = sme_find_table_desc(SME_DESC_UNITS,
 							    str);
-				if (descr->type < 0)
+				if (descr == NULL)
 					return EINVAL;
 				swsensor_edata.units = descr->type;
 				continue;
@@ -218,8 +232,7 @@ swsensor_init(void *arg)
 			if (strcmp(key, "flags") == 0) {
 				if (type != PROP_TYPE_NUMBER)
 					return EINVAL;
-				swsensor_edata.flags =
-				    prop_number_integer_value(po);
+				swsensor_edata.flags = val;
 				continue;
 			}
 
@@ -232,7 +245,7 @@ swsensor_init(void *arg)
 			if (strcmp(key, "mode") == 0) {
 				if (type != PROP_TYPE_NUMBER)
 					return EINVAL;
-				sw_sensor_mode = prop_number_integer_value(po);
+				sw_sensor_mode = val;
 				if (sw_sensor_mode > 2)
 					sw_sensor_mode = 2;
 				else if (sw_sensor_mode < 0)
@@ -244,7 +257,7 @@ swsensor_init(void *arg)
 			if (strcmp(key, "limit") == 0) {
 				if (type != PROP_TYPE_NUMBER)
 					return EINVAL;
-				sw_sensor_limit = prop_number_integer_value(po);
+				sw_sensor_limit = val;
 				continue;
 			}
 
@@ -252,7 +265,7 @@ swsensor_init(void *arg)
 			if (strcmp(key, "value") == 0) {
 				if (type != PROP_TYPE_NUMBER)
 					return EINVAL;
-				sw_sensor_value = prop_number_integer_value(po);
+				sw_sensor_value = val;
 				continue;
 			}
 
@@ -260,16 +273,14 @@ swsensor_init(void *arg)
 			if (strcmp(key, "value_min") == 0) {
 				if (type != PROP_TYPE_NUMBER)
 					return EINVAL;
-				swsensor_edata.value_min =
-				    prop_number_integer_value(po);
+				swsensor_edata.value_min = val;
 				swsensor_edata.flags |= ENVSYS_FVALID_MIN;
 				continue;
 			}
 			if (strcmp(key, "value_max") == 0) {
 				if (type != PROP_TYPE_NUMBER)
 					return EINVAL;
-				swsensor_edata.value_max =
-				    prop_number_integer_value(po);
+				swsensor_edata.value_max = val;
 				swsensor_edata.flags |= ENVSYS_FVALID_MAX;
 				continue;
 			}
@@ -284,6 +295,9 @@ swsensor_init(void *arg)
 			}
 
 			/* Unrecognized dicttionary object */
+#ifdef DEBUG
+			printf("%s: unknown attribute %s\n", __func__, key);
+#endif
 			return EINVAL;
 
 		} /* while */
@@ -303,21 +317,10 @@ swsensor_init(void *arg)
 		    &sw_sensor_deflims, &sw_sensor_defprops);
 	}
 
-	/*
-	 * If {min, max} value range was specified, make sure that the
-	 * current value is within the range.
-	 */
-	if (swsensor_edata.flags & ENVSYS_FVALID_MAX &&
-	    sw_sensor_value > swsensor_edata.value_max)
-		swsensor_edata.state = ENVSYS_SINVALID;
-	if (swsensor_edata.flags & ENVSYS_FVALID_MIN &&
-	    sw_sensor_value < swsensor_edata.value_min)
-		swsensor_edata.state = ENVSYS_SINVALID;
-	else
-		swsensor_edata.state = ENVSYS_SVALID;
-	swsensor_edata.value_cur = sw_sensor_value;
-
 	strlcpy(swsensor_edata.desc, "sensor", ENVSYS_DESCLEN);
+
+	/* Wait for refresh to validate the sensor value */
+	swsensor_edata.state = ENVSYS_SINVALID;
 
 	error = sysmon_envsys_sensor_attach(swsensor_sme, &swsensor_edata);
 	if (error != 0) {
@@ -326,9 +329,10 @@ swsensor_init(void *arg)
 	}
 
 	error = sysmon_envsys_register(swsensor_sme);
-	if (error != 0)
+	if (error != 0) {
 		aprint_error("sysmon_envsys_register failed: %d\n", error);
 		return error;
+	}
 
 	sysctl_swsensor_setup();
 	aprint_normal("swsensor: initialized\n");
