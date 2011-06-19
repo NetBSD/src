@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.76.12.1 2011/06/18 16:42:03 bouyer Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.76.12.2 2011/06/19 20:47:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.76.12.1 2011/06/18 16:42:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.76.12.2 2011/06/19 20:47:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -496,7 +496,7 @@ SYSCTL_SETUP(sysctl_net_setup, "sysctl net subtree setup")
 		       SYSCTL_DESCR("SOCK_SEQPACKET settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_LOCAL, SOCK_SEQPACKET, CTL_EOL);
-	sysctl_createv(&domain_sysctllog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "dgram",
 		       SYSCTL_DESCR("SOCK_DGRAM settings"),
@@ -516,7 +516,7 @@ SYSCTL_SETUP(sysctl_net_setup, "sysctl net subtree setup")
 				    "block list"),
 		       sysctl_unpcblist, 0, NULL, 0,
 		       CTL_NET, PF_LOCAL, SOCK_SEQPACKET, CTL_CREATE, CTL_EOL);
-	sysctl_createv(&domain_sysctllog, 0, NULL, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "pcblist",
 		       SYSCTL_DESCR("SOCK_DGRAM protocol control block list"),
