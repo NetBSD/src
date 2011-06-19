@@ -11,16 +11,21 @@ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 	lzma_stream strm = LZMA_STREAM_INIT;
 	static const int flags = LZMA_TELL_UNSUPPORTED_CHECK|LZMA_CONCATENATED;
 	lzma_ret ret;
-	off_t x = 0;
+	lzma_action action = LZMA_RUN;
+	off_t bytes_out, bp;
 	uint8_t ibuf[BUFSIZ];
 	uint8_t obuf[BUFSIZ];
+
+	if (bytes_in == NULL)
+		bytes_in = &bp;
 
 	strm.next_in = ibuf;
 	memcpy(ibuf, pre, prelen);
 	strm.avail_in = read(i, ibuf + prelen, sizeof(ibuf) - prelen);
 	if (strm.avail_in == (size_t)-1)
-		maybe_errx("Read failed");
-	*bytes_in = prelen + strm.avail_in;
+		maybe_err("read failed");
+	strm.avail_in += prelen;
+	*bytes_in = strm.avail_in;
 
 	if ((ret = lzma_stream_decoder(&strm, UINT64_MAX, flags)) != LZMA_OK)
 		maybe_errx("Can't initialize decoder (%d)", ret);
@@ -30,6 +35,7 @@ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 	if ((ret = lzma_code(&strm, LZMA_RUN)) != LZMA_OK)
 		maybe_errx("Can't read headers (%d)", ret);
 
+	bytes_out = 0;
 	strm.next_out = obuf;
 	strm.avail_out = sizeof(obuf);
 
@@ -37,13 +43,20 @@ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 		if (strm.avail_in == 0) {
 			strm.next_in = ibuf;
 			strm.avail_in = read(i, ibuf, sizeof(ibuf));
-//			fprintf(stderr, "read = %zu\n", strm.avail_in);
-			if (strm.avail_in == (size_t)-1)
-				maybe_errx("Read failed");
+			switch (strm.avail_in) {
+			case (size_t)-1:
+				maybe_err("read failed");
+				/*NOTREACHED*/
+			case 0:
+				action = LZMA_FINISH;
+				break;
+			default:
+				*bytes_in += strm.avail_in;
+				break;
+			}
 		}
 
-		ret = lzma_code(&strm, LZMA_RUN);
-//		fprintf(stderr, "ret = %d %zu %zu\n", ret, strm.avail_in, strm.avail_out);
+		ret = lzma_code(&strm, action);
 
 		// Write and check write error before checking decoder error.
 		// This way as much data as possible gets written to output
@@ -56,7 +69,7 @@ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 
 			strm.next_out = obuf;
 			strm.avail_out = sizeof(obuf);
-			x += write_size;
+			bytes_out += write_size;
 		}
 
 		if (ret != LZMA_OK) {
@@ -66,7 +79,7 @@ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 					ret = LZMA_DATA_ERROR;
 				else {
 					lzma_end(&strm);
-					return x;
+					return bytes_out;
 				}
 			}
 
