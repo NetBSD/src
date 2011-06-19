@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_tables.c,v 1.9 2011/06/19 05:17:38 nonaka Exp $ */
+/* $NetBSD: sysmon_envsys_tables.c,v 1.10 2011/06/19 05:26:31 nonaka Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.9 2011/06/19 05:17:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.10 2011/06/19 05:26:31 nonaka Exp $");
 
 #include <sys/types.h>
 
@@ -127,7 +127,7 @@ sme_find_table(enum sme_descr_type table_id)
 const struct sme_descr_entry *
 sme_find_table_entry(enum sme_descr_type table_id, int key)
 {
-	const struct sme_descr_entry *table = sme_find_table();
+	const struct sme_descr_entry *table = sme_find_table(table_id);
 
 	if (table != NULL)
 		for (; table->type != -1; table++)
@@ -140,7 +140,7 @@ sme_find_table_entry(enum sme_descr_type table_id, int key)
 const struct sme_descr_entry *
 sme_find_table_desc(enum sme_descr_type table_id, const char *str)
 {
-	const struct sme_descr_entry *table = sme_find_table();
+	const struct sme_descr_entry *table = sme_find_table(table_id);
 
 	if (table != NULL)
 		for (; table->type != -1; table++)
