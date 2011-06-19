@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.115 2011/06/15 13:34:13 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.116 2011/06/19 11:40:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.115 2011/06/15 13:34:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.116 2011/06/19 11:40:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1535,6 +1535,11 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 	int error = 0;
 
 	sdt = sme_find_table_entry(SME_DESC_STATES, edata->state);
+	if (sdt == NULL) {
+		printf("sme_update_sensor_dictionary: can not update sensor "
+		    "state %d unknown\n", edata->state);
+		return EINVAL;
+	}
 
 	DPRINTFOBJ(("%s: sensor #%d type=%d (%s) flags=%d\n", __func__,
 	    edata->sensor, sdt->type, sdt->desc, edata->flags));
