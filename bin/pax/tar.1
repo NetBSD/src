@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.30 2010/04/05 16:16:53 joerg Exp $
+.\" $NetBSD: tar.1,v 1.31 2011/06/19 00:55:09 christos Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"	OpenBSD: tar.1,v 1.28 2000/11/09 23:58:56 aaron Exp
 .\"
-.Dd March 23, 2010
+.Dd June 18, 2011
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -209,8 +209,12 @@ This option causes
 .Nm
 to prompt the user for the filename to use when storing or
 extracting files in an archive.
+.It Fl -xz
+Compress/decompress archive using 
+.Xr xz  1 .
 .It Fl z , -gzip , -gunzip
-Compress archive using gzip.
+Compress/decompress archive using
+.Xr gzip 1 .
 .It Fl B , -read-full-blocks
 Reassemble small reads into full blocks (For reading from 4.2BSD pipes).
 .It Fl C Ar directory , Fl -directory Ar directory
