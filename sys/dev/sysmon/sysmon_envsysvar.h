@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.39 2011/06/08 18:22:24 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.40 2011/06/19 03:09:43 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -145,5 +145,7 @@ int	sme_sensor_upuint32(prop_dictionary_t, const char *, uint32_t);
 int	sme_sensor_upstring(prop_dictionary_t, const char *, const char *);
 
 const struct sme_descr_entry *sme_find_table_entry(enum sme_descr_type, int);
+const struct sme_descr_entry * sme_find_table_desc(enum sme_descr_type,
+						   const char *);
 
 #endif /* _DEV_SYSMON_ENVSYSVAR_H_ */
