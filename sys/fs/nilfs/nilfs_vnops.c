@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.12 2011/06/12 03:35:53 rmind Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.13 2011/06/19 02:42:53 rmind Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.12 2011/06/12 03:35:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.13 2011/06/19 02:42:53 rmind Exp $");
 #endif /* not lint */
 
 
@@ -144,7 +144,6 @@ nilfs_read(void *v)
 	uint64_t file_size;
 	vsize_t len;
 	int error;
-	int flags;
 
 	DPRINTF(READ, ("nilfs_read called\n"));
 
@@ -168,7 +167,6 @@ nilfs_read(void *v)
 
 	/* read contents using buffercache */
 	uobj = &vp->v_uobj;
-	flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 	error = 0;
 	while (uio->uio_resid > 0) {
 		/* reached end? */
@@ -216,8 +214,7 @@ nilfs_write(void *v)
 	struct nilfs_node      *nilfs_node = VTOI(vp);
 	uint64_t file_size, old_size;
 	vsize_t len;
-	int error;
-	int flags, resid, extended;
+	int error, resid, extended;
 
 	DPRINTF(WRITE, ("nilfs_write called\n"));
 
@@ -263,7 +260,6 @@ return EIO;
 
 	/* write contents using buffercache */
 	uobj = &vp->v_uobj;
-	flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 	resid = uio->uio_resid;
 	error = 0;
 
