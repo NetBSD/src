@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.116 2011/06/12 06:36:38 mrg Exp $	*/
+/*	$NetBSD: vm.c,v 1.117 2011/06/19 18:29:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.116 2011/06/12 06:36:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.117 2011/06/19 18:29:25 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -645,7 +645,6 @@ void
 ubc_purge(struct uvm_object *uobj)
 {
 
-	panic("%s: unimplemented", __func__);
 }
 
 #ifdef DEBUGPRINT
