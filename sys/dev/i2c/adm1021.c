@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.5 2010/03/11 04:19:55 mrg Exp $ */
+/*	$NetBSD: adm1021.c,v 1.6 2011/06/19 11:44:03 martin Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.5 2010/03/11 04:19:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.6 2011/06/19 11:44:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,9 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
+	sc->sc_sensor[ADMTEMP_INT].state = ENVSYS_SINVALID;
 	sc->sc_sensor[ADMTEMP_INT].units = ENVSYS_STEMP;
+	sc->sc_sensor[ADMTEMP_EXT].state = ENVSYS_SINVALID;
 	sc->sc_sensor[ADMTEMP_EXT].units = ENVSYS_STEMP;
 	strlcpy(sc->sc_sensor[ADMTEMP_INT].desc, "internal",sizeof("internal"));
 	strlcpy(sc->sc_sensor[ADMTEMP_EXT].desc, "external",sizeof("external"));
