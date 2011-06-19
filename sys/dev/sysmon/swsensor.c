@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.10 2011/06/19 03:12:31 pgoyette Exp $ */
+/*	$NetBSD: swsensor.c,v 1.11 2011/06/19 04:08:48 pgoyette Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.10 2011/06/19 03:12:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.11 2011/06/19 04:08:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -205,7 +205,7 @@ swsensor_init(void *arg)
 				}
 				if (type != PROP_TYPE_STRING)
 					return EINVAL;
-				str = prop_dictionary_keysym_cstring_nocopy(po);
+				str = prop_string_cstring_nocopy(po);
 				descr = sme_find_table_desc(SME_DESC_UNITS,
 							    str);
 				if (descr->type < 0)
