@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.26 2011/06/19 02:25:45 tsutsui Exp $
+#	$NetBSD: list,v 1.27 2011/06/19 02:27:41 tsutsui Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin
 
@@ -66,7 +66,7 @@ LIBS	-ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${DISTRIBDIR}/common/protocols	etc/protocols
+COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
 
 #COPY	${CURDIR}/inst.sh			usr/local/sbin/inst	555
