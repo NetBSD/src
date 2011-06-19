@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.3 2011/06/19 02:25:46 tsutsui Exp $
+#	$NetBSD: list,v 1.4 2011/06/19 02:40:38 tsutsui Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin sys/arch/emips/stand
 
@@ -20,6 +20,7 @@ PROG	bin/sh
 PROG	bin/stty
 PROG	bin/sync
 
+PROG	sbin/dmesg
 PROG	sbin/disklabel
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
@@ -29,7 +30,6 @@ PROG	sbin/mknod
 PROG	sbin/mount
 PROG	sbin/mount_cd9660
 PROG	sbin/mount_ffs
-PROG	sbin/mount_kernfs
 PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
