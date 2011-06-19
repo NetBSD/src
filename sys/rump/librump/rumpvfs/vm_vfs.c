@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.30 2011/06/16 09:21:03 hannken Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.31 2011/06/19 11:22:42 hannken Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.30 2011/06/16 09:21:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.31 2011/06/19 11:22:42 hannken Exp $");
 
 #include <sys/param.h>
 
@@ -232,4 +232,10 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
  out:
 	kmem_free(pgs, pgalloc);
 	return rv;
+}
+
+void
+ubc_purge(struct uvm_object *uobj)
+{
+
 }
