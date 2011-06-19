@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_heathrow.c,v 1.5 2010/12/20 00:25:37 matt Exp $ */
+/*	$NetBSD: pic_heathrow.c,v 1.6 2011/06/19 07:59:47 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.5 2010/12/20 00:25:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.6 2011/06/19 07:59:47 matt Exp $");
 
 #include "opt_interrupt.h"
 
@@ -232,14 +232,14 @@ heathrow_get_irq(struct pic_ops *pic, int mode)
 		return 255;
 
 	if (heathrow->pending_events_l != 0) {
-		bit = 31 - cntlzw(heathrow->pending_events_l);
+		bit = 31 - __builtin_clz(heathrow->pending_events_l);
 		mask = 1 << bit;
 		heathrow->pending_events_l &= ~mask;
 		return bit;
 	}
 
 	if (heathrow->pending_events_h != 0) {
-		bit = 31 - cntlzw(heathrow->pending_events_h);
+		bit = 31 - __builtin_clz(heathrow->pending_events_h);
 		mask = 1 << bit;
 		heathrow->pending_events_h &= ~mask;
 		return bit + 32;
