@@ -1,4 +1,4 @@
-.\"    $NetBSD: pax.1,v 1.60 2011/06/19 00:55:09 christos Exp $
+.\"    $NetBSD: pax.1,v 1.61 2011/06/19 07:34:24 wiz Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -740,13 +740,13 @@ as the result of any specific archive format restrictions.
 The individual archive formats may impose additional restrictions on use.
 Typical archive format restrictions include (but are not limited to):
 file pathname length, file size, link pathname length and the type of the file.
+.It Fl Fl xz
+Use
+.Xr xz 1
+compression, when reading or writing archive files.
 .It Fl z
 Use
 .Xr gzip 1
-compression, when reading or writing archive files.
-.It Fl -xz
-Use
-.Xr xz 1
 compression, when reading or writing archive files.
 .It Fl A
 Do not strip leading `/'s from file names.
