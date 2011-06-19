@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.76 2011/06/18 21:14:43 rmind Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.77 2011/06/19 02:42:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.76 2011/06/18 21:14:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.77 2011/06/19 02:42:53 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -686,6 +686,7 @@ ubc_release(void *va, int flags)
 
 			umap->flags &= ~UMAP_MAPPING_CACHED;
 			LIST_REMOVE(umap, hash);
+			LIST_REMOVE(umap, list);
 			umap->uobj = NULL;
 			TAILQ_INSERT_HEAD(UBC_QUEUE(umap->offset), umap,
 			    inactive);
