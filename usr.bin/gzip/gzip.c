@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.100 2011/06/19 00:43:54 christos Exp $	*/
+/*	$NetBSD: gzip.c,v 1.101 2011/06/19 01:20:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -30,7 +30,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006\
  Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.100 2011/06/19 00:43:54 christos Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.101 2011/06/19 01:20:19 tsutsui Exp $");
 #endif /* not lint */
 
 /*
@@ -184,7 +184,8 @@ static	char	*infile;		/* name of file coming in */
 
 static	void	maybe_err(const char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-#if !defined(NO_BZIP2_SUPPORT) || !defined(NO_PACK_SUPPORT)
+#if !defined(NO_BZIP2_SUPPORT) || !defined(NO_PACK_SUPPORT) ||	\
+    !defined(NO_XZ_SUPPORT)
 static	void	maybe_errx(const char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 #endif
@@ -440,7 +441,8 @@ maybe_err(const char *fmt, ...)
 	exit(2);
 }
 
-#if !defined(NO_BZIP2_SUPPORT) || !defined(NO_PACK_SUPPORT)
+#if !defined(NO_BZIP2_SUPPORT) || !defined(NO_PACK_SUPPORT) ||	\
+    !defined(NO_XZ_SUPPORT)
 /* ... without an errno. */
 void
 maybe_errx(const char *fmt, ...)
