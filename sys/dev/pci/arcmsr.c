@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.29 2011/06/20 17:29:06 pgoyette Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.30 2011/06/20 22:03:16 pgoyette Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.29 2011/06/20 17:29:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.30 2011/06/20 22:03:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1747,6 +1747,8 @@ arc_create_sensors(void *arg)
 
 		sc->sc_arc_sensors[count].arc_sensor.units = ENVSYS_DRIVE;
 		sc->sc_arc_sensors[count].arc_sensor.state = ENVSYS_SINVALID;
+		sc->sc_arc_sensors[count].arc_sensor.value_cur =
+		    ENVSYS_DRIVE_EMPTY;
 		sc->sc_arc_sensors[count].arc_sensor.flags =
 		    ENVSYS_FMONSTCHANGED;
 
@@ -1778,6 +1780,8 @@ arc_create_sensors(void *arg)
 			    ENVSYS_SINVALID;
 			sc->sc_arc_sensors[count].arc_sensor.units =
 			    ENVSYS_DRIVE;
+			sc->sc_arc_sensors[count].arc_sensor.value_cur =
+			    ENVSYS_DRIVE_EMPTY;
 			sc->sc_arc_sensors[count].arc_sensor.flags =
 			    ENVSYS_FMONSTCHANGED;
 
