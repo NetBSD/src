@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.353 2011/06/17 17:00:58 christos Exp $
+# $NetBSD: mi,v 1.354 2011/06/20 18:03:41 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -637,6 +637,7 @@
 ./usr/libdata/debug/usr/tests/syscall/t_setuid.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_stat.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_timer.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/syscall/t_truncate.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_umask.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/usr.bin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/usr.sbin					tests-sbin-tests
@@ -2355,6 +2356,7 @@
 ./usr/tests/syscall/t_setuid			tests-syscall-tests	atf
 ./usr/tests/syscall/t_stat			tests-syscall-tests	atf
 ./usr/tests/syscall/t_timer			tests-syscall-tests	atf
+./usr/tests/syscall/t_truncate			tests-syscall-tests	atf
 ./usr/tests/syscall/t_umask			tests-syscall-tests	atf
 ./usr/tests/toolchain				tests-syscall-tests	atf
 ./usr/tests/toolchain/Atffile			tests-syscall-tests	atf
