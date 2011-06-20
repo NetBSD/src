@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.29 2011/03/12 13:33:18 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.30 2011/06/20 20:16:19 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.29 2011/03/12 13:33:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.30 2011/06/20 20:16:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1601,6 +1601,7 @@ dbcool_setup_sensors(struct dbcool_softc *sc)
 		switch (chip->table[i].type) {
 		case DBC_TEMP:
 			sc->sc_sensor[i].units = ENVSYS_STEMP;
+			sc->sc_sensor[i].state = ENVSYS_SINVALID;
 			sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
 			error = dbcool_attach_sensor(sc, i);
 			break;
@@ -1616,16 +1617,19 @@ dbcool_setup_sensors(struct dbcool_softc *sc)
 				break;
 
 			sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
+			sc->sc_sensor[i].state = ENVSYS_SINVALID;
 			sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
 			error = dbcool_attach_sensor(sc, i);
 			break;
 		case DBC_FAN:
 			sc->sc_sensor[i].units = ENVSYS_SFANRPM;
+			sc->sc_sensor[i].state = ENVSYS_SINVALID;
 			sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
 			error = dbcool_attach_sensor(sc, i);
 			break;
 		case DBC_VID:
 			sc->sc_sensor[i].units = ENVSYS_INTEGER;
+			sc->sc_sensor[i].state = ENVSYS_SINVALID;
 			sc->sc_sensor[i].flags |= ENVSYS_FMONNOTSUPP;
 
 			/* retrieve 5- or 6-bit value */
