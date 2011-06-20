@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.21 2011/06/12 16:35:10 matt Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.22 2011/06/20 06:21:45 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.21 2011/06/12 16:35:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.22 2011/06/20 06:21:45 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.21 2011/06/12 16:35:10 matt Exp
 #include <powerpc/ofw_bus.h>
 #include <powerpc/ofw_cons.h>
 #include <powerpc/spr.h>
-#include <arch/powerpc/pic/picvar.h>
+#include <powerpc/pic/picvar.h>
 
 #include "opt_oea.h"
 
