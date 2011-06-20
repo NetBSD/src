@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.6 2011/06/08 18:06:02 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.7 2011/06/20 19:48:05 jdc Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 
 #include <sys/disklabel.h>
 #include <sys/bootblock.h>
+#include <sys/param.h>
+#include <dev/raidframe/raidframevar.h>
 
 #include <machine/bootinfo.h>
 #include <machine/stdarg.h>
@@ -296,7 +298,7 @@ decode_dlabel(struct disk *d, char *iobuf)
 	struct disklabel *dlp;
 	struct partition *pp;
 	char *dp;
-	int i, first;
+	int i, first, rf_offset;
 
 	bsdp = NULL;
 	(*d->lba_read)(d, 0, 1, iobuf);
@@ -310,24 +312,39 @@ decode_dlabel(struct disk *d, char *iobuf)
 		}
 	}
   skip:
+	rf_offset = 0;
 	first = (bsdp) ? bswap32(bsdp->mbrp_start) : 0;
 	(*d->lba_read)(d, first + LABELSECTOR, 1, iobuf);
 	dp = iobuf /* + LABELOFFSET */;
 	for (i = 0; i < 512 - sizeof(struct disklabel); i++, dp += 4) {
 		dlp = (struct disklabel *)dp;
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
-			goto found;
+			if (dlp->d_partitions[0].p_fstype == FS_RAID) {
+				printf("%s%c: raid\n", d->xname, i + 'a');
+				snprintf(d->xname, sizeof(d->xname), "raid.");
+				rf_offset = dlp->d_partitions[0].p_offset +
+				    RF_PROTECTED_SECTORS;
+				(*d->lba_read)(d, rf_offset + LABELSECTOR, 1,
+				    iobuf);
+				dp = iobuf /* + LABELOFFSET */;
+				for (i = 0; i < 512 - sizeof(struct disklabel); i++, dp += 4) {
+					dlp = (struct disklabel *)dp;
+					if (dlp->d_magic == DISKMAGIC &&
+					    dlp->d_magic2 == DISKMAGIC)
+						goto found;
+				}
+			} else	/* Not RAID */
+				goto found;
 		}
 	}
 	d->dlabel = NULL;
 	printf("%s: no disklabel\n", d->xname);
 	return;
   found:
-	d->dlabel = allocaligned(sizeof(struct disklabel), 4);
-	memcpy(d->dlabel, dlp, sizeof(struct disklabel));
 	for (i = 0; i < dlp->d_npartitions; i += 1) {
 		const char *type;
 		pp = &dlp->d_partitions[i];
+		pp->p_offset += rf_offset;
 		type = NULL;
 		switch (pp->p_fstype) {
 		case FS_SWAP: /* swap */
@@ -341,8 +358,11 @@ decode_dlabel(struct disk *d, char *iobuf)
 			break;
 		}
 		if (type != NULL)
-			printf("%s%c: %s\n", d->xname, i + 'a', type);
+			printf("%s%c: %s\t(%u)\n", d->xname, i + 'a', type,
+			    pp->p_offset);
 	}
+	d->dlabel = allocaligned(sizeof(struct disklabel), 4);
+	memcpy(d->dlabel, dlp, sizeof(struct disklabel));
 }
 
 static void
