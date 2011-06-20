@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.6 2010/11/02 16:45:48 gsutre Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.7 2011/06/20 15:31:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,17 +65,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.6 2010/11/02 16:45:48 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.7 2011/06/20 15:31:52 jruoho Exp $");
 
 #include <sys/param.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
-#define _COMPONENT		ACPI_BUS_COMPONENT
-ACPI_MODULE_NAME		("acpi_util")
+#define _COMPONENT	ACPI_BUS_COMPONENT
+ACPI_MODULE_NAME	("acpi_util")
 
-static void	acpi_clean_node(ACPI_HANDLE, void *);
+static void		acpi_clean_node(ACPI_HANDLE, void *);
+
+static const char * const acpicpu_ids[] = {
+	"ACPI0007",
+	NULL
+};
 
 /*
  * Evaluate an integer object.
@@ -367,3 +372,138 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 	return 0;
 }
 
+/*
+ * Match a handle from a cpu_info. Returns NULL on failure.
+ *
+ * Note that if also acpi_devnode is needed, a subsequent
+ * call to acpi_get_node() will work.
+ */
+ACPI_HANDLE
+acpi_match_cpu_info(struct cpu_info *ci)
+{
+	struct acpi_softc *sc = acpi_softc;
+	struct acpi_devnode *ad;
+	ACPI_INTEGER val;
+	ACPI_OBJECT *obj;
+	ACPI_BUFFER buf;
+	ACPI_HANDLE hdl;
+	ACPI_STATUS rv;
+
+	if (sc == NULL || acpi_active == 0)
+		return NULL;
+
+	/*
+	 * CPUs are declared in the ACPI namespace
+	 * either as a Processor() or as a Device().
+	 * In both cases the MADT entries are used
+	 * for the match (see ACPI 4.0, section 8.4).
+	 */
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+
+		hdl = ad->ad_handle;
+
+		switch (ad->ad_type) {
+
+		case ACPI_TYPE_DEVICE:
+
+			if (acpi_match_hid(ad->ad_devinfo, acpicpu_ids) == 0)
+				break;
+
+			rv = acpi_eval_integer(hdl, "_UID", &val);
+
+			if (ACPI_SUCCESS(rv) && val == ci->ci_acpiid)
+				return hdl;
+
+			break;
+
+		case ACPI_TYPE_PROCESSOR:
+
+			rv = acpi_eval_struct(hdl, NULL, &buf);
+
+			if (ACPI_FAILURE(rv))
+				break;
+
+			obj = buf.Pointer;
+
+			if (obj->Processor.ProcId == ci->ci_acpiid) {
+				ACPI_FREE(buf.Pointer);
+				return hdl;
+			}
+
+			ACPI_FREE(buf.Pointer);
+			break;
+		}
+	}
+
+	return NULL;
+}
+
+/*
+ * Match a CPU from a handle. Returns NULL on failure.
+ */
+struct cpu_info *
+acpi_match_cpu_handle(ACPI_HANDLE hdl)
+{
+	struct cpu_info *ci;
+	ACPI_DEVICE_INFO *di;
+	CPU_INFO_ITERATOR cii;
+	ACPI_INTEGER val;
+	ACPI_OBJECT *obj;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+
+	ci = NULL;
+	di = NULL;
+	buf.Pointer = NULL;
+
+	rv = AcpiGetObjectInfo(hdl, &di);
+
+	if (ACPI_FAILURE(rv))
+		return NULL;
+
+	switch (di->Type) {
+
+	case ACPI_TYPE_DEVICE:
+
+		if (acpi_match_hid(di, acpicpu_ids) == 0)
+			goto out;
+
+		rv = acpi_eval_integer(hdl, "_UID", &val);
+
+		if (ACPI_FAILURE(rv))
+			goto out;
+
+		break;
+
+	case ACPI_TYPE_PROCESSOR:
+
+		rv = acpi_eval_struct(hdl, NULL, &buf);
+
+		if (ACPI_FAILURE(rv))
+			goto out;
+
+		obj = buf.Pointer;
+		val = obj->Processor.ProcId;
+		break;
+
+	default:
+		goto out;
+	}
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+
+		if (ci->ci_acpiid == val)
+			goto out;
+	}
+
+	ci = NULL;
+
+out:
+	if (di != NULL)
+		ACPI_FREE(di);
+
+	if (buf.Pointer != NULL)
+		ACPI_FREE(buf.Pointer);
+
+	return ci;
+}
