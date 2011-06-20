@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_machdep.c,v 1.17 2011/06/18 06:44:26 matt Exp $	*/
+/*	$NetBSD: obs200_machdep.c,v 1.18 2011/06/20 17:44:33 matt Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
 
 /*
@@ -68,12 +68,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.17 2011/06/18 06:44:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.18 2011/06/20 17:44:33 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
-#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -130,14 +129,10 @@ char bootpath[256];
 
 extern paddr_t msgbuf_paddr;
 
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-void *startsym, *endsym;
-#endif
-
-void initppc(u_int, u_int, char *, void *);
+void initppc(vaddr_t, vaddr_t, char *, void *);
 
 void
-initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
+initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 {
 	u_int32_t pllmode;
 	u_int32_t psr;
@@ -163,17 +158,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 
 	/* Initialize IBM405GPr CPU */
 	ibm40x_memsize_init(memsize, startkernel);
-	ibm4xx_init((void (*)(void))ext_intr);
-
-	/*
-	 * Set the page size.
-	 */
-	uvm_setpagesize();
-
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
+	ibm4xx_init(startkernel, endkernel, pic_ext_intr);
 
 #ifdef DEBUG
 	bios_board_print();
@@ -181,9 +166,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	printf("  Chip Pin Strapping Register = 0x%08x\n", psr);
 #endif
 
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
-#endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();

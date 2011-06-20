@@ -1,4 +1,4 @@
-/*	$NetBSD: explora_start.S,v 1.8 2011/01/17 08:23:54 matt Exp $	*/
+/*	$NetBSD: explora_start.S,v 1.9 2011/06/20 17:44:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ stage2:
 	ori	3,3,__start@l
 
 /* Run the remaining setup in C. */
-	bl	_C_LABEL(bootstrap)
+	bl	_C_LABEL(initppc)
 
 	bl	_C_LABEL(main)
 
