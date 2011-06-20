@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.66 2011/06/17 19:03:04 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.67 2011/06/20 06:21:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.66 2011/06/17 19:03:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.67 2011/06/20 06:21:45 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.66 2011/06/17 19:03:04 matt Exp $");
 #include <uvm/uvm.h>
 
 #include <powerpc/pcb.h>
+#include <powerpc/psl.h>
 #include <powerpc/spr.h>
 #include <powerpc/oea/hid.h>
 #include <powerpc/oea/hid_601.h>
@@ -238,8 +239,8 @@ volatile struct cpu_hatch_data *cpu_hatch_data;
 volatile int cpu_hatch_stack;
 extern int ticks_per_intr;
 #include <powerpc/oea/bat.h>
-#include <arch/powerpc/pic/picvar.h>
-#include <arch/powerpc/pic/ipivar.h>
+#include <powerpc/pic/picvar.h>
+#include <powerpc/pic/ipivar.h>
 extern struct bat battable[];
 #else
 struct cpu_info cpu_info[1] = {
@@ -250,7 +251,9 @@ struct cpu_info cpu_info[1] = {
 #endif /*MULTIPROCESSOR*/
 
 int cpu_altivec;
-int cpu_psluserset, cpu_pslusermod;
+register_t cpu_psluserset;
+register_t cpu_pslusermod;
+register_t cpu_pslusermask = 0xffff;
 char cpu_model[80];
 
 /* This is to be called from locore.S, and nowhere else. */

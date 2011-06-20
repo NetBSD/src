@@ -1,4 +1,4 @@
-/* $NetBSD: i8259_common.c,v 1.5 2011/06/18 06:41:43 matt Exp $ */
+/* $NetBSD: i8259_common.c,v 1.6 2011/06/20 06:21:45 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259_common.c,v 1.5 2011/06/18 06:41:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259_common.c,v 1.6 2011/06/20 06:21:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: i8259_common.c,v 1.5 2011/06/18 06:41:43 matt Exp $"
 
 #include <machine/pio.h>
 
-#include <arch/powerpc/pic/picvar.h>
+#include <powerpc/pic/picvar.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_distopenpic.c,v 1.5 2011/06/05 16:52:26 matt Exp $ */
+/*	$NetBSD: pic_distopenpic.c,v 1.6 2011/06/20 06:21:45 matt Exp $ */
 
 /*-
  * Copyright (c) 2008 Tim Rightnour
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_distopenpic.c,v 1.5 2011/06/05 16:52:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_distopenpic.c,v 1.6 2011/06/20 06:21:45 matt Exp $");
 
 #include "opt_openpic.h"
 #include "opt_interrupt.h"
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic_distopenpic.c,v 1.5 2011/06/05 16:52:26 matt Exp
 #include <machine/pio.h>
 #include <powerpc/openpic.h>
 
-#include <arch/powerpc/pic/picvar.h>
+#include <powerpc/pic/picvar.h>
 
 /* distributed stuff */
 static int opic_isu_from_irq(struct openpic_ops *, int, int *);
