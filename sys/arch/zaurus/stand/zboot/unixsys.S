@@ -1,4 +1,4 @@
-/*	$NetBSD: unixsys.S,v 1.1 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: unixsys.S,v 1.2 2011/06/20 12:39:21 nonaka Exp $	*/
 /*	$OpenBSD: unixsys.S,v 1.6 2005/05/24 20:38:20 uwe Exp $	*/
 
 /*
@@ -36,6 +36,7 @@ RSYSCALL(close)
 RSYSCALL(lseek32)
 RSYSCALL(ioctl)
 RSYSCALL(stat)
+RSYSCALL(fstat)
 
 1:
 	cmn	r0, #4096
