@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pdc.c,v 1.1 2011/06/12 10:11:52 jruoho Exp $ */
+/* $NetBSD: acpi_pdc.c,v 1.2 2011/06/20 15:39:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pdc.c,v 1.1 2011/06/12 10:11:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pdc.c,v 1.2 2011/06/20 15:39:54 jruoho Exp $");
 
 #include <sys/param.h>
 
@@ -47,12 +47,11 @@ ACPI_MODULE_NAME	("acpi_pdc")
 static uint32_t		flags = 0;
 
 static ACPI_STATUS	acpi_md_pdc_walk(ACPI_HANDLE, uint32_t,void *,void **);
-static ACPI_STATUS	acpi_md_pdc_set(ACPI_HANDLE, uint32_t);
+static void		acpi_md_pdc_set(ACPI_HANDLE, uint32_t);
 
 uint32_t
 acpi_md_pdc(void)
 {
-	char *hid = __UNCONST("ACPI0007");
 	struct cpu_info *ci = curcpu();
 	uint32_t regs[4];
 
@@ -104,21 +103,26 @@ acpi_md_pdc(void)
 	 * As the _PDC must be evaluated before the internal namespace
 	 * is built, we have no option but to walk with the interpreter.
 	 */
-	(void)AcpiGetDevices(hid, acpi_md_pdc_walk, NULL, NULL);
-
-	(void)AcpiWalkNamespace(ACPI_TYPE_PROCESSOR, ACPI_ROOT_OBJECT,
+	(void)AcpiWalkNamespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
 	    UINT32_MAX, acpi_md_pdc_walk, NULL, NULL, NULL);
 
 	return flags;
 }
 
 static ACPI_STATUS
-acpi_md_pdc_walk(ACPI_HANDLE hdl, uint32_t level, void *context, void **status)
+acpi_md_pdc_walk(ACPI_HANDLE hdl, uint32_t level, void *aux, void **sta)
 {
-	return acpi_md_pdc_set(hdl, flags);
+	struct cpu_info *ci;
+
+	ci = acpi_match_cpu_handle(hdl);
+
+	if (ci != NULL)
+		acpi_md_pdc_set(hdl, flags);
+
+	return AE_OK;
 }
 
-static ACPI_STATUS
+static void
 acpi_md_pdc_set(ACPI_HANDLE hdl, uint32_t val)
 {
 	ACPI_OBJECT_LIST arg;
@@ -137,6 +141,4 @@ acpi_md_pdc_set(ACPI_HANDLE hdl, uint32_t val)
 	obj.Buffer.Pointer = (void *)cap;
 
 	(void)AcpiEvaluateObject(hdl, "_PDC", &arg, NULL);
-
-	return AE_OK;
 }
