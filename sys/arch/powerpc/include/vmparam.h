@@ -1,8 +1,51 @@
-/*	$NetBSD: vmparam.h,v 1.14 2011/06/20 08:01:14 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15 2011/06/20 20:24:28 matt Exp $	*/
+
+#ifndef _POWERPC_VMPARAM_H_
+#define _POWERPC_VMPARAM_H_
 
 #ifdef _KERNEL_OPT
+#include "opt_modular.h"
 #include "opt_ppcarch.h"
+#include "opt_uvm.h"
 #endif
+
+/*
+ * These are common for BOOKE, IBM4XX, and OEA
+ */
+#define	VM_FREELIST_DEFAULT	0
+#define	VM_FREELIST_FIRST256	1
+#define	VM_FREELIST_FIRST16	2
+#define	VM_NFREELIST		3
+
+#define	VM_PHYSSEG_MAX		16
+
+/*
+ * The address to which unspecified mapping requests default
+ * Put the stack in it's own segment and start mmaping at the
+ * top of the next lower segment.
+ */
+#define	__USE_TOPDOWN_VM
+#define	VM_DEFAULT_ADDRESS(da, sz) \
+	((VM_MAXUSER_ADDRESS - MAXSSIZ) - round_page(sz))
+
+#if defined(_MODULE)
+/*
+ * If we are a module, then we need with varible page sizes since BOOKE and OEA
+ * use 4KB pages while IBM4XX use 16KB pages.
+ */
+#define	MIN_PAGE_SIZE	4096		/* BOOKE/OEA */
+#define	MAX_PAGE_SIZE	16384		/* IBM4XX */
+
+/*
+ * Some modules need some of the constants but those vary between the variants
+ * so those constants are exported as linker symbols so they don't take up any
+ * space but also avoid an extra load to put into a register.
+ */
+extern const char __USRSTACK;		/* let the linker resolve it */
+
+#define USRSTACK	((vaddr_t)(uintptr_t)&__USRSTACK)
+
+#else /* !_MODULE */
 
 #if defined(PPC_BOOKE)
 #include <powerpc/booke/vmparam.h>
@@ -13,3 +56,23 @@
 #else
 #error unknown PPC variant
 #endif
+
+#endif /* !_MODULE */
+
+#if defined(MODULAR) || defined(_MODULAR)
+/*
+ * If we are a module or support modules, we need to define a compatible
+ * pmap_physseg since IBM4XX uses one.  This will waste a tiny of space
+ * but is needed for compatibility.
+ */
+#ifndef __HAVE_PMAP_PHYSSEG
+#define	__HAVE_PMAP_PHYSSEG
+struct pmap_physseg {
+	uintptr_t pmseg_dummy[2];
+};
+#endif
+
+__CTASSERT(sizeof(struct pmap_physseg) == sizeof(uintptr_t) * 2);
+#endif /* MODULAR || _MODULE */
+
+#endif /* !_POWERPC_VMPARAM_H_ */
