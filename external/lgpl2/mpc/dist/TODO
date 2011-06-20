@@ -1,0 +1,19 @@
+Bench:
+- from Andreas Enge 9 June 2009:
+  Scripts and web page comparing timings with different systems,
+  as done for mpfr at http://www.mpfr.org/mpfr-2.4.0/timings.html
+
+New functions to implement:
+- from Andreas Enge and Philippe Théveny 17 July 2008
+  agm (and complex logarithm with agm ?)
+- from Andreas Enge 25 June 2009:
+  correctly rounded roots of unity zeta_n^i
+- implement a root-finding algorithm using the Durand-Kerner method
+  (cf http://en.wikipedia.org/wiki/Durand%E2%80%93Kerner_method)
+  See also the CEVAL algorithm from Yap and Sagraloff:
+  http://www.mpi-inf.mpg.de/~msagralo/ceval.pdf
+
+New tests to add:
+- from Andreas Enge and Philippe Théveny 9 April 2008
+  correct handling of Nan and infinities in the case of
+  intermediate overflows while the result may fit (we need special code)
