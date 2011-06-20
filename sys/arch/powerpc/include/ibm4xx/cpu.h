@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 2011/06/18 17:06:52 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 2011/06/20 06:24:30 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,7 @@
 #ifndef	_IBM4XX_CPU_H_
 #define	_IBM4XX_CPU_H_
 
+#include <powerpc/psl.h>
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
