@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.83 2011/06/20 08:47:12 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.84 2011/06/20 17:15:38 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -77,55 +77,56 @@ struct cpu_info {
 	volatile int ci_cpl;
 	volatile int ci_iactive;
 	volatile int ci_idepth;
-#ifndef PPC_BOOKE
-	volatile imask_t ci_ipending;
+	union {
+#if !defined(PPC_BOOKE) && !defined(_MODULE)
+		volatile imask_t un1_ipending;
+#define	ci_ipending	ci_un1.un1_ipending
 #endif
+		uint64_t un1_pad64;
+	} ci_un1;
 	volatile uint32_t ci_pending_ipis;
 	int ci_mtx_oldspl;
 	int ci_mtx_count;
-#ifdef PPC_IBM4XX
+#if defined(PPC_IBM4XX) || defined(MODULAR) || defined(_MODULE)
 	char *ci_intstk;
 #endif
-#ifndef PPC_BOOKE
+#define	CI_SAVETEMP	(0*CPUSAVE_LEN)
+#define	CI_SAVEDDB	(1*CPUSAVE_LEN)
+#define	CI_SAVEIPKDB	(2*CPUSAVE_LEN)
+#define	CI_SAVEMMU	(3*CPUSAVE_LEN)
+#define	CI_SAVEMAX	(4*CPUSAVE_LEN)
 #define	CPUSAVE_LEN	8
-	register_t ci_tempsave[CPUSAVE_LEN];
-	register_t ci_ddbsave[CPUSAVE_LEN];
-	register_t ci_ipkdbsave[CPUSAVE_LEN];
+#if !defined(PPC_BOOKE) && !defined(MODULAR) && !defined(_MODULE)
+#define	CPUSAVE_SIZE	(CI_SAVEMAX*CPUSAVE_LEN)
+#else
+#define	CPUSAVE_SIZE	128
+#endif
 #define	CPUSAVE_R28	0		/* where r28 gets saved */
 #define	CPUSAVE_R29	1		/* where r29 gets saved */
 #define	CPUSAVE_R30	2		/* where r30 gets saved */
 #define	CPUSAVE_R31	3		/* where r31 gets saved */
-#if defined(PPC_IBM4XX)
-#define	CPUSAVE_DEAR	4		/* where SPR_DEAR gets saved */
-#define	CPUSAVE_ESR	5		/* where SPR_ESR gets saved */
-	register_t ci_tlbmisssave[CPUSAVE_LEN];
-#else
-#define	CPUSAVE_DAR	4		/* where SPR_DAR gets saved */
-#define	CPUSAVE_DSISR	5		/* where SPR_DSISR gets saved */
-#define	DISISAVE_LEN	4
-	register_t ci_disisave[DISISAVE_LEN];
-#endif
+#define	CPUSAVE_DEAR	4		/* where IBM4XX SPR_DEAR gets saved */
+#define	CPUSAVE_DAR	4		/* where OEA SPR_DAR gets saved */
+#define	CPUSAVE_ESR	5		/* where IBM4XX SPR_ESR gets saved */
+#define	CPUSAVE_DSISR	5		/* where OEA SPR_DSISR gets saved */
 #define	CPUSAVE_SRR0	6		/* where SRR0 gets saved */
 #define	CPUSAVE_SRR1	7		/* where SRR1 gets saved */
-#else /* PPC_BOOKE */
-#define	CPUSAVE_LEN	128
-	register_t ci_savelifo[CPUSAVE_LEN];
+	register_t ci_savearea[CPUSAVE_SIZE];
+#if defined(PPC_BOOKE) || defined(MODULAR) || defined(_MODULE)
 	struct pmap_segtab *ci_pmap_segtabs[2];
 #define	ci_pmap_kern_segtab	ci_pmap_segtabs[0]
 #define	ci_pmap_user_segtab	ci_pmap_segtabs[1]
 	struct pmap_tlb_info *ci_tlb_info;
-#endif /* PPC_BOOKE */
+#endif /* PPC_BOOKE || MODULAR || _MODULE */
 	struct cache_info ci_ci;		
 	void *ci_sysmon_cookie;
 	void (*ci_idlespin)(void);
 	uint32_t ci_khz;
 	struct evcnt ci_ev_clock;	/* clock intrs */
 	struct evcnt ci_ev_statclock; 	/* stat clock */
-#ifndef PPC_BOOKE
 	struct evcnt ci_ev_softclock;	/* softclock intrs */
 	struct evcnt ci_ev_softnet;	/* softnet intrs */
 	struct evcnt ci_ev_softserial;	/* softserial intrs */
-#endif
 	struct evcnt ci_ev_traps;	/* calls to trap() */
 	struct evcnt ci_ev_kdsi;	/* kernel DSI traps */
 	struct evcnt ci_ev_udsi;	/* user DSI traps */
@@ -220,6 +221,7 @@ mtmsr(register_t msr)
 	__asm volatile ("mtmsr %0" : : "r"(msr));
 }
 
+#if !defined(_MODULE)
 static __inline uint32_t
 mftbl(void)
 {
@@ -294,6 +296,7 @@ mfrtc(uint32_t *rtcp)
 	    : [rtcu] "=r"(rtcp[0]), [rtcl] "=r"(rtcp[1]), [tmp] "=r"(tmp)
 	    :: "cr0");
 }
+#endif /* !_MODULE */
 
 static __inline uint32_t
 mfpvr(void)
@@ -303,6 +306,15 @@ mfpvr(void)
 	__asm volatile ("mfpvr %0" : "=r"(pvr));
 	return (pvr);
 }
+
+#ifdef _MODULE
+extern const char __CPU_MAXNUM;
+/*
+ * Make with 0xffff to force a R_PPC_ADDR16_LO without the
+ * corresponding R_PPC_ADDR16_HI relocation.
+ */
+#define	CPU_MAXNUM	(((uintptr_t)&__CPU_MAXNUM)&0xffff)
+#endif /* _MODULE */
 
 #if !defined(_MODULE)
 extern int powersave;
