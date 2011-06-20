@@ -1,0 +1,107 @@
+Changes in version 0.9:
+  - New functions:
+    - mpc_set_dc, mpc_set_ldc, mpc_get_dc, mpc_get_ldc for converting
+      between mpc type variables and C variables of type double _Complex
+      or long double _Complex
+    - mpc_sin_cos, computing simultaneously the sine and cosine
+  - Speed-ups:
+    - mpc_pow_si through binary exponentiation
+    - mpc_pow_z when the exponent fits in a long
+    - mpc_tan through the use of mpc_sin_cos
+  - Bug fixes:
+    - trigonometric functions: infinite loop due to overflow for large arguments
+    - exp: close to infinite loop for argument close to 0
+    - sqrt: close to infinite loop for argument close to 1
+    - add_si: replaced macro by function, since the macro evaluated the same
+      expression twice
+  - Logging feature for debugging:
+      ./configure --enable-logging
+      #include "mpc-log.h" instead of #include "mpc.h"
+  - Minimally required library versions: gmp 4.3.2, mpfr 2.4.2
+
+Changes in version 0.8.2:
+  - Speed-up of mpc_pow_ui through binary exponentiation
+
+Changes in version 0.8.1:
+  - Bug fixes:
+    - acosh, asinh, atanh: swap of precisions between real and imaginary parts
+    - atan: memory leak
+    - log: wrong ternary value in data file; masked by bug in mpfr-2.4.1
+
+Changes in version 0.8 ("Dianthus deltoides"):
+  - New functions:
+    - mpc_asin, mpc_acos, mpc_atan, mpc_asinh, mpc_acosh, mpc_atanh,
+      mpc_pow_d, mpc_pow_ld, mpc_pow_si, mpc_pow_ui, mpc_pow_z, mpc_pow_fr
+  - Bug fixes:
+    - ui_div: real divisor
+
+Changes in version 0.7 ("Campanula uniflora"):
+  - New functions: mpc_pow, mpc_set_nan, mpc_swap
+  - Bug fixes:
+    - log: along branch cut
+    - norm: infinite loop in case of overflow
+    - ui_div, div, fr_div: handling of division by 0 and infinities
+      following the example code of the C99 standard
+    - compilation with g++
+  - Makefile.vc updated (thanks to Mickael Gastineau)
+  - Minimal gmp version is 4.2
+  - Changed MPC_SET_X_Y macro
+  - Functions mpc_random and mpc_random2 removed
+
+Changes in version 0.6 ("Bellis perennis"):
+  - New functions: mpc_get_str, mpc_set_str, mpc_strtoc, mpc_set_uj,
+    mpc_set_sj, mpc_set_ld, mpc_set_ld_ld, mpc_set_si_si, mpc_set_uj_uj,
+    mpc_set_sj_sj, mpc_set_f, mpc_set_f_f, mpc_set_q, mpc_set_q_q, mpc_set_z,
+    mpc_set_z_z and mpc_free_str
+  - New macro: MPC_SET_X_Y
+  - mpc_set_ui_fr removed
+  - Default precision removed, as well as init and all init_set
+    combinations; use init2 and init3, followed by set, instead
+  - exp, log, cos, sin, tan, cosh, sinh, tanh and sqrt return
+    inexact value
+  - inp_str returns inexact value and the number of read characters
+    in an additional parameter
+  - Get default $CC and $CFLAGS from gmp.h (__GMP_CC / __GMP_CFLAGS,
+    which are available as of GMP 4.2.3)
+  - Bug fixes:
+    - mpc_get_version and MPC_VERSION_STRING agree
+    - Compilation on i686-pc-cygwin and i686-pc-mingw32 fixed
+
+Changes in version 0.5.2:
+  - New macros:
+    - version number: MPC_VERSION_NUM, MPC_VERSION
+  - Makefile.vc updated (thanks to Mickael Gastineau)
+  - Compilation on Debian-Gnu-Linux-PowerPC and MacOsX
+    fixed (thanks to Laurent Fousse and Mickael Gastineau)
+
+Changes in version 0.5.1:
+  - New functions:
+    - mpc_set_fr_fr
+    - mpc_real, mpc_imag
+    - mpc_arg, mpc_proj
+  - New macros:
+    - version number: MPC_VERSION_MAJOR, MPC_VERSION_MINOR,
+      MPC_VERSION_PATCHLEVEL, MPC_VERSION_STRING
+    - references to number parts: mpc_realref and mpc_imagref
+  - Test framework rewritten
+  - Configure checks for recent gmp (>= 4.2) and mpfr (>= 2.3.1)
+    libraries
+  - New configure options: --with-gmp-lib, --with-gmp-include,
+     --with-mpfr-lib, and --with-mpfr-include
+  - Export declarations for MSWindows, makefile.vc updated (thanks to
+    Mickael Gastineau)
+  - Optimisations:
+    - mul_fr, sin, cos
+  - Bug fixes:
+    - configure looks for gmp first, then for mpfr
+    - cos, div, div_fr, fr_sub, mul_fr, set_fr, sqr
+    - fix handling of special values: exp, log, mul, norm, sqr, sqrt
+
+Changes in version 0.5 ("Aconitum neomontanum"):
+  - Support for autotools
+  - New functions:
+     - logarithm
+     - trigonometric functions: cos, tan
+     - hyperbolic functions: cosh, sinh, tanh
+  - Bug fixes:
+    - sqrt with directed rounding
