@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 2011/06/16 16:47:53 joerg Exp $
+#	$NetBSD: Makefile,v 1.74 2011/06/20 08:22:43 mrg Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -85,6 +85,6 @@ lib${LIB}.o:: ${OBJS}
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 CPPFLAGS+=	-Wno-pointer-sign
 .endif
