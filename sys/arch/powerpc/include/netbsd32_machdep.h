@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.6 2009/12/10 14:13:51 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.7 2011/06/20 06:21:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -45,7 +45,7 @@ typedef	u_int32_t netbsd32_pointer_t;
 #include <compat/netbsd32/netbsd32.h>
 #include <powerpc/frame.h>
 
-/* from <arch/sparc/include/signal.h> */
+/* from <sparc/include/signal.h> */
 typedef u_int32_t netbsd32_sigcontextp_t;
 
 struct netbsd32_sigcontext {
