@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.35 2010/03/09 22:40:06 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.36 2011/06/20 08:07:03 matt Exp $	*/
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -11,4 +11,5 @@
 #elif defined(PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/pmap.h>
 #else
+#error unknown PPC variant
 #endif
