@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.44 2011/06/17 23:14:40 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.45 2011/06/20 08:18:28 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,6 +77,7 @@
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
+#include "opt_modular.h"
 
 #ifdef DDB
 #define	CFRAME_LRSAVE(t0)					\
@@ -141,6 +142,13 @@
 	.data
 GLOBAL(powersave)
 	.long	-1
+
+#ifdef MODULAR
+	.global	__USRSTACK
+	.equ	__USRSTACK, USRSTACK
+	.global	__CPU_MAXNUM
+	.equ	__CPU_MAXNUM, CPU_MAXNUM
+#endif
 
 	.text
 	.align 2
