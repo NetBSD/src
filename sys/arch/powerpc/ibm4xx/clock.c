@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.25 2011/06/18 06:41:41 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.26 2011/06/20 17:44:33 matt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 2011/06/18 06:41:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 2011/06/20 17:44:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -97,15 +97,17 @@ stat_intr(struct clockframe *frame)
 	ci->ci_ev_statclock.ev_count++;
 
 	/* Nobody can interrupt us, but see if we're allowed to run. */
-	if (! (ci->ci_cpl & mask_statclock))
+	int s = splclock();
+	if (IPL_CLOCK > s)
   		statclock(frame);
+	splx(s);
 }
 
 void
 decr_intr(struct clockframe *frame)
 {
 	struct cpu_info * const ci = curcpu();
-	int pri;
+	int pcpl;
 	long tbtick, xticks;
 	int nticks;
 
@@ -125,8 +127,8 @@ decr_intr(struct clockframe *frame)
 
 	ci->ci_data.cpu_nintr++;
 	ci->ci_ev_clock.ev_count++;
-	pri = splclock();
-	if (pri & mask_clock) {
+	pcpl = splclock();
+	if (pcpl >= IPL_CLOCK) {
 		tickspending += nticks;
 		ticksmissed += nticks;
 	} else {
@@ -152,7 +154,7 @@ decr_intr(struct clockframe *frame)
 			hardclock(frame);
 		hardclock(frame);
 	}
-	splx(pri);
+	splx(pcpl);
 }
 
 void
