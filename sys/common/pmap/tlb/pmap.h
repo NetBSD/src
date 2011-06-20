@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 2011/06/12 05:32:38 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 2011/06/20 20:24:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -221,8 +221,8 @@ extern struct pmap_limits pmap_limits;
  */
 void	pmap_remove_all(pmap_t);
 void	pmap_set_modified(paddr_t);
-bool	pmap_page_clear_attributes(struct vm_page *, u_int);
-void	pmap_page_set_attributes(struct vm_page *, u_int);
+bool	pmap_page_clear_attributes(struct vm_page_md *, u_int);
+void	pmap_page_set_attributes(struct vm_page_md *, u_int);
 void	pmap_pvlist_lock_init(size_t);
 
 #define	PMAP_WB		0
@@ -247,7 +247,7 @@ int	pmap_tlb_update_addr(pmap_t, vaddr_t, uint32_t, u_int);
 void	pmap_tlb_invalidate_addr(pmap_t, vaddr_t);
 void	pmap_tlb_check(pmap_t);
 
-uint16_t pmap_pvlist_lock(struct vm_page *, bool);
+uint16_t pmap_pvlist_lock(struct vm_page_md *, bool);
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
 

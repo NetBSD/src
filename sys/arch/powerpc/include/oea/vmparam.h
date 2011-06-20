@@ -163,21 +163,6 @@
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) (KERNEL_SR << ADDR_SR_SHFT))
 #define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + 2*SEGMENT_LENGTH)
 
-/*
- * The address to which unspecified mapping requests default
- * Put the stack in it's own segment and start mmaping at the
- * top of the next lower segment.
- */
-#ifdef _KERNEL_OPT
-#include "opt_uvm.h"
-#endif
-#define	__USE_TOPDOWN_VM
-#define	VM_DEFAULT_ADDRESS(da, sz) \
-	(((VM_MAXUSER_ADDRESS - MAXSSIZ) & SEGMENT_MASK) - round_page(sz))
-
-#ifndef VM_PHYSSEG_MAX
-#define	VM_PHYSSEG_MAX		16
-#endif
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
 #ifndef VM_PHYS_SIZE
@@ -187,11 +172,5 @@
 #ifndef VM_MAX_KERNEL_BUF
 #define	VM_MAX_KERNEL_BUF	(SEGMENT_LENGTH * 3 / 4)
 #endif
-
-#define	VM_NFREELIST		16	/* 16 distinct memory segments */
-#define	VM_FREELIST_DEFAULT	0
-#define	VM_FREELIST_FIRST256	1
-#define	VM_FREELIST_FIRST16	2
-#define	VM_FREELIST_MAX		3
 
 #endif /* _POWERPC_OEA_VMPARAM_H_ */
