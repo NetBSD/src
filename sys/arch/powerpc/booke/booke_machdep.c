@@ -38,6 +38,8 @@
 
 #include <sys/cdefs.h>
 
+#include "opt_modular.h"
+
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -60,6 +62,12 @@
 paddr_t msgbuf_paddr;
 psize_t pmemsize;
 struct vm_map *phys_map;
+
+#ifdef MODULAR
+register_t cpu_psluserset = PSL_USERSET;
+register_t cpu_pslusermod = PSL_USERMOD;
+register_t cpu_pslusermask = PSL_USERMASK;
+#endif
 
 static bus_addr_t booke_dma_phys_to_bus_mem(bus_dma_tag_t, bus_addr_t);
 static bus_addr_t booke_dma_bus_mem_to_phys(bus_dma_tag_t, bus_addr_t);
