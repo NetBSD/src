@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22 2011/06/20 17:15:38 matt Exp $
+#	$NetBSD: genassym.cf,v 1.23 2011/06/20 19:56:12 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,6 +41,7 @@ define	FRAME_ESR	offsetof(struct ktrapframe, ktf_tf.tf_esr)
 define	FRAME_PID	offsetof(struct ktrapframe, ktf_tf.tf_pid)
 
 define	PM_CTX		offsetof(struct pmap, pm_ctx)
+define	KERNEL_PID	KERNEL_PID
 
 define	CI_INTSTK	offsetof(struct cpu_info, ci_intstk)
 define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVETEMP])

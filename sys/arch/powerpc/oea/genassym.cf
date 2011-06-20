@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24 2011/06/20 17:15:38 matt Exp $
+#	$NetBSD: genassym.cf,v 1.25 2011/06/20 19:56:12 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -84,6 +84,11 @@ define	OEACPU_HIGHBAT	OEACPU_HIGHBAT
 define	OEACPU_601	OEACPU_601
 define	OEACPU_HIGHSPRG	OEACPU_HIGHSPRG
 define	OEACPU_ALTIVEC	OEACPU_ALTIVEC
+
+define	PTE_REF		PTE_REF
+define	PTE_CHG		PTE_CHG
+define	PTE_HID		PTE_HID
+define	PTE_G		PTE_G
 
 define	FPREG_F0	offsetof(struct fpreg, fpreg[0])
 define	FPREG_F1	offsetof(struct fpreg, fpreg[1])
