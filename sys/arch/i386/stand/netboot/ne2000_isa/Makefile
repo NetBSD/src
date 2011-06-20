@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/29 00:02:24 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.3 2011/06/20 08:46:28 mrg Exp $
 
 USE_NETIF=	ne2000_isa
 
@@ -6,7 +6,7 @@ CPPFLAGS+= -DBASEREG=0x300
 
 .include "../Makefile.netboot"
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.dp8390.c +=	-Wno-pointer-sign
 .endif
 
