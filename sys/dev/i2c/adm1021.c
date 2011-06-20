@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.6 2011/06/19 11:44:03 martin Exp $ */
+/*	$NetBSD: adm1021.c,v 1.7 2011/06/20 20:16:19 pgoyette Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.6 2011/06/19 11:44:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.7 2011/06/20 20:16:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,8 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor[ADMTEMP_INT].units = ENVSYS_STEMP;
 	sc->sc_sensor[ADMTEMP_EXT].state = ENVSYS_SINVALID;
 	sc->sc_sensor[ADMTEMP_EXT].units = ENVSYS_STEMP;
+	sc->sc_sensor[ADMTEMP_INT].state = ENVSYS_SINVALID;
+	sc->sc_sensor[ADMTEMP_EXT].state = ENVSYS_SINVALID;
 	strlcpy(sc->sc_sensor[ADMTEMP_INT].desc, "internal",sizeof("internal"));
 	strlcpy(sc->sc_sensor[ADMTEMP_EXT].desc, "external",sizeof("external"));
 	sc->sc_sme = sysmon_envsys_create();
