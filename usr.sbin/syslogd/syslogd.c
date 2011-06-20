@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.103 2011/06/20 00:42:11 enami Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.104 2011/06/20 08:27:15 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.103 2011/06/20 00:42:11 enami Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.104 2011/06/20 08:27:15 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,10 +273,11 @@ char timestamp[TIMESTAMPBUFSIZE];
 
 /*
  * Global line buffer.	Since we only process one event at a time,
- * a global one will do.
+ * a global one will do.  But for klog, we use own buffer so that
+ * partial line at the end of buffer can be deferred.
  */
-char *linebuf;
-size_t linebufsize, linebufoff;
+char *linebuf, *klog_linebuf;
+size_t linebufsize, klog_linebufoff;
 
 static const char *bindhostname = NULL;
 
@@ -457,6 +458,11 @@ getgroup:
 		logerror("Couldn't allocate buffer");
 		die(0, 0, NULL);
 	}
+	if (!(klog_linebuf = malloc(linebufsize))) {
+		logerror("Couldn't allocate buffer for klog");
+		die(0, 0, NULL);
+	}
+
 
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
@@ -662,16 +668,16 @@ static void
 dispatch_read_klog(int fd, short event, void *ev)
 {
 	ssize_t rv;
-	size_t resid = linebufsize - linebufoff;
+	size_t resid = linebufsize - klog_linebufoff;
 
 	DPRINTF((D_CALL|D_EVENT), "Kernel log active (%d, %d, %p)"
 		" with linebuf@%p, length %zu)\n", fd, event, ev,
-		linebuf, linebufsize);
+		klog_linebuf, linebufsize);
 
-	rv = read(fd, &linebuf[linebufoff], resid - 1);
+	rv = read(fd, &klog_linebuf[klog_linebufoff], resid - 1);
 	if (rv > 0) {
-		linebuf[linebufoff + rv] = '\0';
-		printsys(linebuf);
+		klog_linebuf[klog_linebufoff + rv] = '\0';
+		printsys(klog_linebuf);
 	} else if (rv < 0 && errno != EINTR) {
 		/*
 		 * /dev/klog has croaked.  Disable the event
@@ -1504,7 +1510,7 @@ printsys(char *msg)
 	char *p, *q;
 	struct buf_msg *buffer;
 
-	linebufoff = 0;
+	klog_linebufoff = 0;
 	for (p = msg; *p != '\0'; ) {
 		bool bsdsyslog = true;
 
@@ -1537,7 +1543,7 @@ printsys(char *msg)
 		if (*q != '\0')
 			*q++ = '\0';
 		else {
-			memcpy(linebuf, p, linebufoff = q - p);
+			memcpy(linebuf, p, klog_linebufoff = q - p);
 			break;
 		}
 
