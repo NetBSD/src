@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2009/04/22 15:23:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2011/06/20 07:44:01 mrg Exp $
 
 PROG=	cron
 SRCS=	cron.c database.c do_command.c entry.c env.c job.c \
@@ -9,6 +9,6 @@ MAN=	cron.8
 
 .include <bsd.prog.mk>
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.misc.c+=	-Wno-pointer-sign
 .endif
