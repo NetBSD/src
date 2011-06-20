@@ -1,4 +1,4 @@
-/*	$NetBSD: explora_start.S,v 1.9 2011/06/20 17:44:33 matt Exp $	*/
+/*	$NetBSD: explora_start.S,v 1.10 2011/06/20 19:56:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
-#include <powerpc/ibm4xx/pmap.h>
 
 #include "opt_ddb.h"
 #include "opt_ppcparam.h"
