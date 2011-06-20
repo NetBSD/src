@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.5 2011/06/18 06:44:27 matt Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.6 2011/06/20 05:15:59 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.5 2011/06/18 06:44:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.6 2011/06/20 05:15:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
+#include <sys/bus.h>
 
 #include "rnd.h"
 #if NRND > 0
@@ -50,10 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_mainbus.c,v 1.5 2011/06/18 06:44:27 matt Exp $
 #include <netinet/if_inarp.h>
 #endif
 
-#include <machine/bus.h>
+#include <powerpc/psl.h>
+
 #include <machine/pio.h>
 #include <machine/pmppc.h>
-#include <arch/evbppc/pmppc/dev/mainbus.h>
+#include <evbppc/pmppc/dev/mainbus.h>
 
 #include <dev/ic/cs89x0reg.h>
 #include <dev/ic/cs89x0var.h>

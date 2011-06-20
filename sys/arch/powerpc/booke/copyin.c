@@ -1,4 +1,4 @@
-/*	$NetBSD: copyin.c,v 1.3 2011/02/17 13:53:32 matt Exp $	*/
+/*	$NetBSD: copyin.c,v 1.4 2011/06/20 05:20:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -36,12 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyin.c,v 1.3 2011/02/17 13:53:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyin.c,v 1.4 2011/06/20 05:20:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
 
-#include <machine/pcb.h>
+#include <powerpc/pcb.h>
 
 #include <powerpc/booke/cpuvar.h>
 
