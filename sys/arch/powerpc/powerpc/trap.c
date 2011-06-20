@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.142 2011/06/14 05:50:25 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.143 2011/06/20 05:59:06 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.142 2011/06/14 05:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.143 2011/06/20 05:59:06 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -47,22 +47,21 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.142 2011/06/14 05:50:25 matt Exp $");
 #include <sys/savar.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
-#include <machine/db_machdep.h>
-#include <machine/fpu.h>
-#include <machine/frame.h>
-#include <machine/pcb.h>
-#include <machine/pmap.h>
-#include <machine/psl.h>
-#include <machine/trap.h>
 #include <powerpc/altivec.h>
-#include <powerpc/userret.h>
+#include <powerpc/db_machdep.h>
+#include <powerpc/fpu.h>
+#include <powerpc/frame.h>
 #include <powerpc/instr.h>
+#include <powerpc/pcb.h>
+#include <powerpc/pmap.h>
+#include <powerpc/trap.h>
+#include <powerpc/userret.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/oea/spr.h>

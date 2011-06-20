@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.46 2011/06/18 06:41:44 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.47 2011/06/20 05:59:06 matt Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.46 2011/06/18 06:41:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.47 2011/06/20 05:59:06 matt Exp $");
 
 #define USERACC
 
@@ -17,10 +17,11 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.46 2011/06/18 06:41:44 matt Exp $
 
 #include <dev/cons.h>
 
-#include <machine/db_machdep.h>
-#include <machine/frame.h>
+#include <powerpc/db_machdep.h>
+#include <powerpc/frame.h>
 #include <powerpc/spr.h>
 #include <powerpc/pte.h>
+#include <powerpc/psl.h>
 
 #if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/spr.h>
