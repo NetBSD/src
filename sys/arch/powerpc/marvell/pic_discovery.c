@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_discovery.c,v 1.4 2011/06/18 06:41:43 matt Exp $	*/
+/*	$NetBSD: pic_discovery.c,v 1.5 2011/06/20 06:22:23 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_discovery.c,v 1.4 2011/06/18 06:41:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_discovery.c,v 1.5 2011/06/20 06:22:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: pic_discovery.c,v 1.4 2011/06/18 06:41:43 matt Exp $
 #include <dev/marvell/gtintrreg.h>
 #include <dev/marvell/gtintrvar.h>
 
+
+__CTASSERT(sizeof(imask_t) == sizeof(uint64_t));
 
 struct discovery_gpp_pic_ops;
 
