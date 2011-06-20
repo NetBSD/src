@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 2011/06/20 20:24:28 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16 2011/06/20 21:45:16 matt Exp $	*/
 
 #ifndef _POWERPC_VMPARAM_H_
 #define _POWERPC_VMPARAM_H_
@@ -36,6 +36,17 @@
 #define	MIN_PAGE_SIZE	4096		/* BOOKE/OEA */
 #define	MAX_PAGE_SIZE	16384		/* IBM4XX */
 
+#if defined(_RUMPKERNEL)
+/*
+ * Safe definitions for RUMP kernels
+ */
+#define	VM_MAXUSER_ADDRESS	0x7fff8000
+#define	VM_MIN_ADDRESS		0x00000000
+#define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
+#define	MAXDSIZ			(1024*1024*1024)
+#define	MAXSSIZ			(32*1024*1024)
+#define	MAXTSIZ			(256*1024*1024)
+#else /* !_RUMPKERNEL */
 /*
  * Some modules need some of the constants but those vary between the variants
  * so those constants are exported as linker symbols so they don't take up any
@@ -44,6 +55,7 @@
 extern const char __USRSTACK;		/* let the linker resolve it */
 
 #define USRSTACK	((vaddr_t)(uintptr_t)&__USRSTACK)
+#endif /* !_RUMPKERNEL */
 
 #else /* !_MODULE */
 
@@ -53,7 +65,7 @@ extern const char __USRSTACK;		/* let the linker resolve it */
 #include <powerpc/ibm4xx/vmparam.h>
 #elif defined(PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/vmparam.h>
-#else
+#elif defined(_KERNEL)
 #error unknown PPC variant
 #endif
 
