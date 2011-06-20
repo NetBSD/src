@@ -1,0 +1,29 @@
+# Data file for mpc_exp.
+#
+# Copyright (C) INRIA, 2008, 2010
+#
+# This file is part of the MPC Library.
+#
+# The MPC Library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 2.1 of the License, or (at your
+# option) any later version.
+#
+# The MPC Library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the MPC Library; see the file COPYING.LIB.  If not, write to
+# the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# The line format respects the parameter order in function prototype as
+# follow:
+#
+# INEX_RE  INEX_IM  PREC_ROP_RE  ROP_RE  PREC_ROP_IM  ROP_IM  PREC_OP1_RE  OP1_RE  PREC_OP1_IM  OP1_IM  PREC_OP2_RE  OP2_RE  PREC_OP2_IM  OP2_IM  PREC_OP3_RE  OP3_RE  PREC_OP3_IM  OP3_IM  RND_RE  RND_IM
+#
+# see sin.dat for precisions
+
++ - 53 -0x189281b52abc03p-55 53 0x178a1d3cd134e5p-49 53 0x16A09E667F3BCDp-52 53 0x9CC470A049097p-50 53 0x23C6EF372FE95p-48 53 0x9CC470A049097p-50 53 0xA953FD4E97C75p-50 53 0x16A09E667F3BCDp-51 N N

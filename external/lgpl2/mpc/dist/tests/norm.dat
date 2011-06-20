@@ -1,0 +1,81 @@
+# Data file for mpc_norm.
+#
+# Copyright (C) INRIA, 2008, 2010
+#
+# This file is part of the MPC Library.
+#
+# The MPC Library is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 2.1 of the License, or (at your
+# option) any later version.
+#
+# The MPC Library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with the MPC Library; see the file COPYING.LIB.  If not, write to
+# the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# For explanations on the file format, see abs.dat.
+
+# special values
+0 7 +inf   7 -inf 7 -inf N
+0 7 +inf   7 -inf 7   -1 N
+0 7 +inf   7 -inf 7   -0 N
+0 7 +inf   7 -inf 7   +0 N
+0 7 +inf   7 -inf 7    1 N
+0 7 +inf   7 -inf 7 +inf N
+0 7 +inf   7 -inf 7  nan N
+0 7 +inf   7   -1 7 -inf N
+0 7 +inf   7   -1 7 +inf N
+0 7  nan   7   -1 7  nan N
+0 7 +inf   7   -0 7 -inf N
+0 7 +inf   7   -0 7 +inf N
+0 7  nan   7   -0 7  nan N
+0 7 +inf   7   +0 7 -inf N
+0 7 +inf   7   +0 7 +inf N
+0 7  nan   7   +0 7  nan N
+0 7 +inf   7    1 7 -inf N
+0 7 +inf   7    1 7 +inf N
+0 7  nan   7    1 7  nan N
+0 7 +inf   7 +inf 7 -inf N
+0 7 +inf   7 +inf 7   -1 N
+0 7 +inf   7 +inf 7   -0 N
+0 7 +inf   7 +inf 7   +0 N
+0 7 +inf   7 +inf 7    1 N
+0 7 +inf   7 +inf 7 +inf N
+0 7 +inf   7 +inf 7  nan N
+0 7 +inf   7  nan 7 -inf N
+0 7  nan   7  nan 7   -1 N
+0 7  nan   7  nan 7   -0 N
+0 7  nan   7  nan 7   +0 N
+0 7  nan   7  nan 7    1 N
+0 7 +inf   7  nan 7 +inf N
+0 7  nan   7  nan 7  nan N
+
+# values with only 1, -1, +0, -0
+0 7    2   7   -1 7   -1 N
+0 7    1   7   -1 7   -0 N
+0 7    1   7   -1 7   +0 N
+0 7    2   7   -1 7    1 N
+0 7    1   7   -0 7   -1 N
+0 7   +0   7   -0 7   -0 N
+0 7   +0   7   -0 7   +0 N
+0 7    1   7   -0 7    1 N
+0 7    1   7   +0 7   -1 N
+0 7   +0   7   +0 7   -0 N
+0 7   +0   7   +0 7   +0 N
+0 7    1   7   +0 7    1 N
+0 7    2   7    1 7   -1 N
+0 7    1   7    1 7   -0 N
+0 7    1   7    1 7   +0 N
+0 7    2   7    1 7    1 N
+
+# overflow
++ 53 +inf  2 0x1p536870912 2 0x1p536870912 U
+
+# infinite loop reported by E. Thome
+- 250 +0 250 -0xf.fdda3457c3e69e5841461d505b42987feb42867a4a2d2872179c4efa20054c0@-136943039 250 -0xc.670d1beda685fdd771b6246e32ff49ec4fd70aec25367444e00933e6965d3c0@-136943040 N
