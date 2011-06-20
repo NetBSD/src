@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2010/12/20 00:25:32 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2011/06/20 07:18:06 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2010/12/20 00:25:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2011/06/20 07:18:06 matt Exp $");
 
 #include "opt_marvell.h"
 #include "opt_modular.h"
@@ -62,11 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2010/12/20 00:25:32 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <net/netisr.h>
-
-#include <machine/db_machdep.h>
-#include <machine/pmap.h>
 #include <machine/powerpc.h>
+
+#include <powerpc/db_machdep.h>
+#include <powerpc/pmap.h>
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/pic/picvar.h>
