@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.23 2011/06/18 21:17:29 matt Exp $
+#	$NetBSD: genassym.cf,v 1.24 2011/06/20 17:15:38 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,10 +63,10 @@ define	PM_USRSR	offsetof(struct pmap, pm_sr[USER_SR])
 define	PM_KERNELSR	offsetof(struct pmap, pm_sr[KERNEL_SR])
 endif
 
-define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_tempsave)
-define	CI_DDBSAVE	offsetof(struct cpu_info, ci_ddbsave)
-define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_ipkdbsave)
-define	CI_DISISAVE	offsetof(struct cpu_info, ci_disisave)
+define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVETEMP])
+define	CI_DDBSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVEDDB])
+define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVEIPKDB])
+define	CI_DISISAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVEMMU])
 
 define	CPUSAVE_R28	CPUSAVE_R28*sizeof(register_t)
 define	CPUSAVE_R29	CPUSAVE_R29*sizeof(register_t)

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2011/06/18 21:17:29 matt Exp $
+#	$NetBSD: genassym.cf,v 1.7 2011/06/20 17:15:38 matt Exp $
 
 #-
 # Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ define	FRAME_MCAR	offsetof(struct ktrapframe, ktf_tf.tf_mcar)
 define	FRAME_SPRG1	offsetof(struct ktrapframe, ktf_tf.tf_sprg1)
 define	FRAME_SPEFSCR	offsetof(struct ktrapframe, ktf_tf.tf_spefscr)
 
-define	CI_SAVELIFO	offsetof(struct cpu_info, ci_savelifo)
+define	CI_SAVELIFO	offsetof(struct cpu_info, ci_savearea[0])
 define	CI_PMAP_SEGTAB	offsetof(struct cpu_info, ci_pmap_segtabs[0])
 define	CI_EV_TLBMISS_SOFT offsetof(struct cpu_info, ci_ev_tlbmiss_soft.ev_count)
 
