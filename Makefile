@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.283 2011/06/15 09:45:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.284 2011/06/20 06:52:36 mrg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -199,10 +199,10 @@ postinstall-fix-obsolete: .NOTMAIN .PHONY
 # Targets (in order!) called by "make build".
 #
 .if defined(HAVE_GCC)
-.if ${HAVE_GCC} == "3"
-LIBGCC_EXT=3
-.else
+.if ${HAVE_GCC} == "4"
 LIBGCC_EXT=4
+.else
+LIBGCC_EXT=45
 .endif
 .endif
 
@@ -444,9 +444,7 @@ do-libgcc: .PHONY .MAKE
 .if defined(HAVE_GCC)
 .if ${MKGCC} != "no"
 .if ${USE_COMPILERCRTSTUFF} == "yes"
-.if (${HAVE_GCC} == "3" || ${HAVE_GCC} == "4")
 	${MAKEDIRTARGET} . do-gnu-lib-crtstuff${LIBGCC_EXT}
-.endif
 .endif
 	${MAKEDIRTARGET} . do-gnu-lib-libgcc${LIBGCC_EXT}
 .endif
