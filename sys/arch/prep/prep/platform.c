@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.25 2011/06/18 08:08:30 matt Exp $	*/
+/*	$NetBSD: platform.c,v 1.26 2011/06/20 07:18:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,21 +30,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.25 2011/06/18 08:08:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.26 2011/06/20 07:18:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/intr.h>
 #include <sys/inttypes.h>
+
+#include <powerpc/pio.h>
+#include <powerpc/psl.h>
 
 #include <dev/pci/pcivar.h>
 
-#include <machine/intr.h>
 #include <machine/platform.h>
-#include <machine/residual.h>
-#include <powerpc/pio.h>
-
 #include <machine/pcipnp.h>
+#include <machine/residual.h>
 
 u_int32_t prep_pci_baseaddr = 0x80000cf8;
 u_int32_t prep_pci_basedata = 0x80000cfc;
