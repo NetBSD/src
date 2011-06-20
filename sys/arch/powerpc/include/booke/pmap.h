@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.5 2011/06/05 16:52:25 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6 2011/06/20 20:24:28 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,6 +40,10 @@
 #error use assym.h instead
 #endif
 
+#if defined(_MODULE)
+#error this file should not be included by loadable kernel modules
+#endif
+
 #include <sys/cpu.h>
 #include <sys/kcore.h>
 #include <uvm/uvm_page.h>
@@ -50,6 +54,8 @@
 
 #define	PMAP_MD_NOCACHE		0x01000000
 #define	PMAP_NEED_PROCWR
+
+#include <common/pmap/tlb/vmpagemd.h>
 
 #include <powerpc/booke/pte.h>
 
@@ -64,7 +70,6 @@
 #define	PMAP_TLB_NUM_PIDS		256
 #define	PMAP_INVALID_SEGTAB_ADDRESS	((struct pmap_segtab *)0xfeeddead)
 
-#ifndef _LOCORE
 #define	pmap_phys_address(x)		(x)
 
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
@@ -120,6 +125,5 @@ pmap_md_vca_clean(struct vm_page *pg, vaddr_t va, int op)
 #define	POOL_PHYSTOV(pa)	((vaddr_t)(paddr_t)(pa))
 
 #include <common/pmap/tlb/pmap.h>
-#endif /* _LOCORE */
 
 #endif /* !_POWERPC_BOOKE_PMAP_H_ */

@@ -37,13 +37,13 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.5 2011/06/12 05:32:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.6 2011/06/20 20:24:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
 #include <sys/buf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/pmap.h>
 
@@ -265,7 +265,7 @@ pmap_zero_page(paddr_t pa)
 {
 	dcache_zero_page(pa);
 
-	KASSERT(!VM_PAGE_MD_EXECPAGE_P(PHYS_TO_VM_PAGE(pa)));
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(pa))));
 }
 
 void
@@ -291,7 +291,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		}
 	}
 
-	KASSERT(!VM_PAGE_MD_EXECPAGE_P(PHYS_TO_VM_PAGE(dst - PAGE_SIZE)));
+	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(dst - PAGE_SIZE))));
 }
 
 void

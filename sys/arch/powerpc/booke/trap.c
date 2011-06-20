@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 2011/06/14 05:50:24 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.11 2011/06/20 20:24:28 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.10 2011/06/14 05:50:24 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.11 2011/06/20 20:24:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,9 +233,10 @@ dsi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		const paddr_t pa = pte_to_paddr(pte);
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 		KASSERT(pg);
+		struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
-		if (!VM_PAGE_MD_MODIFIED_P(pg)) {
-			pmap_page_set_attributes(pg, VM_PAGE_MD_MODIFIED);
+		if (!VM_PAGEMD_MODIFIED_P(mdpg)) {
+			pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED);
 		}
 		pte &= ~PTE_UNMODIFIED;
 		*ptep = pte;
@@ -294,19 +295,20 @@ isi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		const paddr_t pa = pte_to_paddr(pte);
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 		KASSERT(pg);
+		struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
 		UVMHIST_LOG(pmapexechist,
 		    "srr0=%#x pg=%p (pa %#"PRIxPADDR"): %s", 
 		    tf->tf_srr0, pg, pa, 
-		    (VM_PAGE_MD_EXECPAGE_P(pg)
+		    (VM_PAGEMD_EXECPAGE_P(mdpg)
 			? "no syncicache (already execpage)"
 			: "performed syncicache (now execpage)"));
 
-		if (!VM_PAGE_MD_EXECPAGE_P(pg)) {
+		if (!VM_PAGEMD_EXECPAGE_P(mdpg)) {
 			ci->ci_softc->cpu_ev_exec_trap_sync.ev_count++;
 			dcache_wb_page(pa);
 			icache_inv_page(pa);
-			pmap_page_set_attributes(pg, VM_PAGE_MD_EXECPAGE);
+			pmap_page_set_attributes(mdpg, VM_PAGEMD_EXECPAGE);
 		}
 		pte &= ~PTE_UNSYNCED;
 		pte |= PTE_xX;
