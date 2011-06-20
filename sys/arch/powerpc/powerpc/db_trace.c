@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.55 2011/06/15 17:47:45 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.56 2011/06/20 05:59:06 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.55 2011/06/15 17:47:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.56 2011/06/20 05:59:06 matt Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.55 2011/06/15 17:47:45 matt Exp $");
 #include <machine/pmap.h>
 
 #include <powerpc/pcb.h>
+#include <powerpc/psl.h>
 #include <powerpc/spr.h>
 #if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/spr.h>
