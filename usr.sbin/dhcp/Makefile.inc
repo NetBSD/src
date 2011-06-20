@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.24 2011/05/26 12:56:33 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.25 2011/06/20 07:44:02 mrg Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -17,7 +17,7 @@ OMOBJDIR!=cd $(.CURDIR)/../omapip && ${PRINTOBJDIR}
 MROBJDIR!=cd $(.CURDIR)/../minires && ${PRINTOBJDIR}
 DSTOBJDIR!=cd $(.CURDIR)/../dst && ${PRINTOBJDIR}
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
+.if defined(HAVE_GCC)
 COPTS+=	-fno-strict-aliasing
 .endif
 

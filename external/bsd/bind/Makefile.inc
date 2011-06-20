@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2011/05/26 12:56:25 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2011/06/20 07:43:57 mrg Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -52,7 +52,7 @@ CPPFLAGS+=-I${BIND_SRCDIR}/include \
 CPPFLAGS+=	-DWANT_IPV6
 .endif
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
+.if defined(HAVE_GCC)
 COPTS+=	-Wno-pointer-sign
 .endif
 
