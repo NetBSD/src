@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_fan.c,v 1.4 2011/02/16 09:05:12 jruoho Exp $ */
+/*	$NetBSD: acpi_fan.c,v 1.5 2011/06/20 17:21:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.4 2011/02/16 09:05:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fan.c,v 1.5 2011/06/20 17:21:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -172,6 +172,7 @@ acpifan_sensor_init(device_t self)
 
 	acpifan_sensor_state(self);
 	sc->sc_sensor.units = ENVSYS_INDICATOR;
+	sc->sc_sensor.state = ENVSYS_SINVALID;
 
 	(void)strlcpy(sc->sc_sensor.desc, "state", sizeof(sc->sc_sensor.desc));
 
