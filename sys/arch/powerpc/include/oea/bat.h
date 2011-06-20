@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.13 2009/07/21 07:08:57 nisimura Exp $	*/
+/*	$NetBSD: bat.h,v 1.14 2011/06/20 06:04:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,6 +64,8 @@
 #define	_POWERPC_OEA_BAT_H_
 
 #if defined(_KERNEL) && !defined(_LOCORE)
+#include <powerpc/psl.h>
+
 struct bat {
 	register_t batu;
 	register_t batl;
