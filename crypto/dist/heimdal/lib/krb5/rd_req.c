@@ -34,7 +34,7 @@
 #include <krb5_locl.h>
 
 __RCSID("$Heimdal: rd_req.c 22235 2007-12-08 21:52:07Z lha $"
-        "$NetBSD: rd_req.c,v 1.2 2008/03/22 08:37:15 mlelstv Exp $");
+        "$NetBSD: rd_req.c,v 1.3 2011/06/20 09:11:16 mrg Exp $");
 
 static krb5_error_code
 decrypt_tkt_enc_part (krb5_context context,
@@ -482,7 +482,7 @@ krb5_verify_ap_req2(krb5_context context,
 
     if (ap_req_options) {
 	*ap_req_options = 0;
-	if (ac->keytype != ETYPE_NULL)
+	if (ac->keytype != (krb5_keytype)ETYPE_NULL)
 	    *ap_req_options |= AP_OPTS_USE_SUBKEY;
 	if (ap_req->ap_options.use_session_key)
 	    *ap_req_options |= AP_OPTS_USE_SESSION_KEY;
