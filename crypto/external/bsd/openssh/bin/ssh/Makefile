@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/06/04 02:08:50 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5 2011/06/20 07:43:56 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
 	roaming_common.c roaming_client.c
 
 COPTS.sshconnect1.c=	-fno-strict-aliasing
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.mux.c=		-Wno-pointer-sign
 COPTS.sshconnect2.c=	-Wno-pointer-sign
 .endif
