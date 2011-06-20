@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 2011/06/20 06:24:30 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 2011/06/20 17:44:33 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -46,6 +46,12 @@
 #if defined(_KERNEL)
 extern char bootpath[];
 
+struct exc_info {
+	vaddr_t exc_vector;
+	const uint32_t *exc_addr; 
+	uintptr_t exc_size;
+}; 
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <prop/proplib.h>
@@ -61,7 +67,7 @@ extern void (*md_cpu_startup)(void);
 extern void ibm40x_memsize_init(u_int, u_int);
 
 /* export from ibm4xx/ibm4xx_machdep.c */
-extern void ibm4xx_init(void (*)(void));
+extern void ibm4xx_init(vaddr_t, vaddr_t, void (*)(void));
 extern void ibm4xx_cpu_startup(const char *);
 extern void ibm4xx_dumpsys(void);
 extern void ibm4xx_install_extint(void (*)(void));
@@ -74,6 +80,8 @@ extern void calc_delayconst(void);
 
 /* export from ibm4xx/4xx_locore.S */
 extern void ppc4xx_reset(void) __dead;
+
+extern void intr_init(void);
 
 /*
  * DCR (Device Control Register) access. These have to be
@@ -122,6 +130,13 @@ mfsdr(int reg)
 	mtdcr(DCR_SDR0_CFGADDR, reg);
 	return mfdcr(DCR_SDR0_CFGDATA);
 }
+
+#include <powerpc/pic/picvar.h>
+
+extern struct pic_ops pic_uic403;
+extern struct pic_ops pic_uic0;
+extern struct pic_ops pic_uic1;
+extern struct pic_ops pic_uic2;
 #endif /* _KERNEL */
 
 /* Board info dictionary */
