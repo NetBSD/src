@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.9 2011/06/18 21:17:30 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.10 2011/06/20 19:56:13 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/syscall.h>
 
 #include <machine/param.h>
-#include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/asm.h>
