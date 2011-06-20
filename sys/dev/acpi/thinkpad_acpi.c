@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.38 2011/06/06 17:53:01 pgoyette Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.39 2011/06/20 15:00:04 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.38 2011/06/06 17:53:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.39 2011/06/20 15:00:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -472,6 +472,7 @@ thinkpad_sensors_init(thinkpad_softc_t *sc)
 	for (i = j = 0; i < THINKPAD_NTEMPSENSORS; i++) {
 
 		sc->sc_sensor[i].units = ENVSYS_STEMP;
+		sc->sc_sensor[i].state = ENVSYS_SINVALID;
 
 		(void)snprintf(sc->sc_sensor[i].desc,
 		    sizeof(sc->sc_sensor[i].desc), "temperature %d", i);
@@ -484,6 +485,7 @@ thinkpad_sensors_init(thinkpad_softc_t *sc)
 	for (i = THINKPAD_NTEMPSENSORS; i < THINKPAD_NSENSORS; i++, j++) {
 
 		sc->sc_sensor[i].units = ENVSYS_SFANRPM;
+		sc->sc_sensor[i].state = ENVSYS_SINVALID;
 
 		(void)snprintf(sc->sc_sensor[i].desc,
 		    sizeof(sc->sc_sensor[i].desc), "fan speed %d", j);
