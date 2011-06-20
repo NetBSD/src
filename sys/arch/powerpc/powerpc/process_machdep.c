@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.33 2011/06/17 23:12:40 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.34 2011/06/20 05:50:39 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,21 +32,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.33 2011/06/17 23:12:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.34 2011/06/20 05:50:39 matt Exp $");
 
 #include "opt_altivec.h"
 
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/proc.h>
 #include <sys/ptrace.h>
-
-#include <machine/fpu.h>
-#include <machine/pcb.h>
-#include <machine/reg.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <powerpc/fpu.h>
+#include <powerpc/pcb.h>
+#include <powerpc/psl.h>
+#include <powerpc/reg.h>
 
 #include <powerpc/altivec.h>	/* also for e500 SPE */
 
