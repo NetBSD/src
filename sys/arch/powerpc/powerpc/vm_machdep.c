@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.89 2011/06/17 18:59:33 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.90 2011/06/20 05:50:39 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.89 2011/06/17 18:59:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.90 2011/06/20 05:50:39 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.89 2011/06/17 18:59:33 matt Exp $")
 #endif
 #include <machine/fpu.h>
 #include <machine/pcb.h>
+#include <machine/psl.h>
 
 #ifdef PPC_IBM4XX
 vaddr_t vmaprange(struct proc *, vaddr_t, vsize_t, int);
