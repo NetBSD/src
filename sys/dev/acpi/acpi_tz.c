@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.81 2011/06/20 15:36:49 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.82 2011/06/20 17:21:50 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.81 2011/06/20 15:36:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.82 2011/06/20 17:21:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -774,6 +774,7 @@ acpitz_init_envsys(device_t dv)
 
 	sc->sc_temp_sensor.flags = flags;
 	sc->sc_temp_sensor.units = ENVSYS_STEMP;
+	sc->sc_temp_sensor.state = ENVSYS_SINVALID;
 
 	(void)strlcpy(sc->sc_temp_sensor.desc, "temperature",
 	    sizeof(sc->sc_temp_sensor.desc));
@@ -785,6 +786,7 @@ acpitz_init_envsys(device_t dv)
 
 		sc->sc_fan_sensor.flags = flags;
 		sc->sc_fan_sensor.units = ENVSYS_SFANRPM;
+		sc->sc_fan_sensor.state = ENVSYS_SINVALID;
 
 		(void)strlcpy(sc->sc_fan_sensor.desc,
 		    "FAN", sizeof(sc->sc_fan_sensor.desc));

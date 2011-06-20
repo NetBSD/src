@@ -1,4 +1,4 @@
-/* $NetBSD: aibs_acpi.c,v 1.1 2011/06/12 07:25:43 jruoho Exp $ */
+/* $NetBSD: aibs_acpi.c,v 1.2 2011/06/20 17:21:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aibs_acpi.c,v 1.1 2011/06/12 07:25:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aibs_acpi.c,v 1.2 2011/06/20 17:21:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -465,6 +465,7 @@ aibs_sensor_add(device_t self, ACPI_OBJECT *obj)
 	}
 
 	(void)strlcpy(as->as_sensor.desc, name, sizeof(as->as_sensor.desc));
+	as->as_sensor.state = ENVSYS_SINVALID;
 
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &as->as_sensor) != 0) {
 		rv = AE_AML_INTERNAL;
