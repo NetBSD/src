@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2011/06/16 02:43:43 macallan Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 2011/06/20 05:50:39 matt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2011/06/16 02:43:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2011/06/20 05:50:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2011/06/16 02:43:43 macallan Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <powerpc/psl.h>
 #include <powerpc/spr.h>
 #if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/spr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.11 2011/06/17 19:03:01 matt Exp $ */
+/*	$NetBSD: rtas.c,v 1.12 2011/06/20 05:50:39 matt Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.11 2011/06/17 19:03:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.12 2011/06/20 05:50:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -19,11 +19,14 @@ __KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.11 2011/06/17 19:03:01 matt Exp $");
 
 #include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
-#include <machine/autoconf.h>
-#include <machine/stdarg.h>
-#include <powerpc/rtas.h>
 
-int machine_has_rtas = 0;
+#include <powerpc/stdarg.h>
+#include <powerpc/rtas.h>
+#include <powerpc/psl.h>
+
+#include <machine/autoconf.h>
+
+bool machine_has_rtas;
 
 struct rtas_softc *rtas0_softc;
 
@@ -104,7 +107,7 @@ rtas_attach(device_t parent, device_t self, void *aux)
 	char buf[4];
 	int i;
 
-	machine_has_rtas = 1;
+	machine_has_rtas = true;
 	
 	sc->ra_phandle = ph;
 	if (OF_getprop(ph, "rtas-version", buf, sizeof buf) != sizeof buf)
