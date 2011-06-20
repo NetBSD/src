@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.41 2011/06/16 16:39:53 joerg Exp $
+# $NetBSD: Makefile.bootxx,v 1.42 2011/06/20 06:52:38 mrg Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -68,11 +68,7 @@ LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .else
 CPPFLAGS+= -DEPIA_HACK
-.if ${HAVE_GCC} == 3
-CPUFLAGS=  -mcpu=i386
-.else
 CPUFLAGS=  -march=i386 -mtune=i386
-.endif
 .endif
 .endif
 

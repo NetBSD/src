@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.670 2011/06/15 09:45:59 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.671 2011/06/20 06:52:37 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -46,7 +46,7 @@ NEED_OWN_INSTALL_TARGET?=	yes
 #
 TOOLCHAIN_MISSING?=	no
 
-# default to GCC4
+# default to GCC4.1
 .if !defined(HAVE_GCC) && !defined(HAVE_PCC)
 HAVE_GCC=	4
 .endif
@@ -574,7 +574,7 @@ NOPIC=		# defined
 MKISCSI=	no
 # XXX GCC 4 outputs mcount() calling sequences that try to load values
 # from over 64KB away and this fails to assemble.
-.if defined(HAVE_GCC) && (${HAVE_GCC} == 4)
+.if defined(HAVE_GCC)
 NOPROFILE=	# defined
 .endif
 .endif

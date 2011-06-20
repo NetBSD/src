@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.32 2009/12/13 08:52:38 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.33 2011/06/20 06:52:36 mrg Exp $
 
 .if !defined(ELFSIZE)
 ELFSIZE=32
@@ -14,7 +14,7 @@ CPPFLAGS+=	-DDWARF2_EH
 CPPFLAGS+=	-DJCR
 CPPFLAGS+=	-DDSO_HANDLE
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} > 3
+.if defined(HAVE_GCC)
 CFLAGS+=	-fno-unit-at-a-time
 .endif
 
