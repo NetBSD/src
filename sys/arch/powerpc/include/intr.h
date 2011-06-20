@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2011/06/17 23:36:17 matt Exp $ */
+/*	$NetBSD: intr.h,v 1.9 2011/06/20 20:24:28 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.8 2011/06/17 23:36:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.9 2011/06/20 20:24:28 matt Exp $");
 #endif
 
 #ifndef POWERPC_INTR_MACHDEP_H
@@ -36,12 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.8 2011/06/17 23:36:17 matt Exp $");
 
 #define	__HAVE_FAST_SOFTINTS	1
 
-#ifndef _LOCORE
-void *intr_establish(int, int, int, int (*)(void *), void *);
-void intr_disestablish(void *);
-const char *intr_typename(int);
-void genppc_cpu_configure(void);
-#endif
 
 /* Interrupt priority `levels'. */
 #define	IPL_NONE	0	/* nothing */
@@ -60,7 +54,20 @@ void genppc_cpu_configure(void);
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-#ifndef _LOCORE
+#if !defined(_LOCORE)
+void *	intr_establish(int, int, int, int (*)(void *), void *);
+void	intr_disestablish(void *);
+const char *
+	intr_typename(int);
+
+int	splraise(int);
+int	spllower(int);
+void	splx(int);
+
+#if !defined(_MODULE)
+
+void	genppc_cpu_configure(void);
+
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
  * the list.  The handler is called with its (single) argument.
@@ -73,13 +80,9 @@ struct intrhand {
 	int	ih_virq;
 };
 
-int splraise(int);
-int spllower(int);
-void splx(int);
-
 void softint_fast_dispatch(struct lwp *, int);
 
-#define softint_init_md	powerpc_softint_init_md
+#define softint_init_md		powerpc_softint_init_md
 #define softint_trigger		powerpc_softint_trigger
 
 #ifdef __IMASK_T
@@ -100,6 +103,8 @@ extern imask_t imask[];
 
 #define	PIC_VIRQ_TO_MASK(v)	__BIT(HWIRQ_MAX - (v))
 #define PIC_VIRQ_MS_PENDING(p)	__builtin_clz(p)
+
+#endif /* !_MODULE */
 
 #define spl0()		spllower(0)
 
