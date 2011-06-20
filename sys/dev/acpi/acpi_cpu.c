@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.41 2011/06/12 10:11:52 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.42 2011/06/20 15:33:49 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.41 2011/06/12 10:11:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.42 2011/06/20 15:33:49 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -57,8 +57,6 @@ static void		  acpicpu_start(device_t);
 static void		  acpicpu_sysctl(device_t);
 
 static ACPI_STATUS	  acpicpu_object(ACPI_HANDLE, struct acpicpu_object *);
-static int		  acpicpu_find(struct cpu_info *,
-				       struct acpi_devnode **);
 static uint32_t		  acpicpu_cap(struct acpicpu_softc *);
 static ACPI_STATUS	  acpicpu_cap_osc(struct acpicpu_softc *,
 					  uint32_t, uint32_t *);
@@ -83,11 +81,6 @@ static const struct {
 	const char	 *vers;
 } acpicpu_quirks[] = {
 	{ "Supermicro", "PDSMi-LN4", "0123456789" },
-};
-
-static const char * const acpicpu_hid[] = {
-	"ACPI0007",
-	NULL
 };
 
 CFATTACH_DECL_NEW(acpicpu, sizeof(struct acpicpu_softc),
@@ -123,7 +116,10 @@ acpicpu_match(device_t parent, cfdata_t match, void *aux)
 	if (ci == NULL)
 		return 0;
 
-	return acpicpu_find(ci, NULL);
+	if (acpi_match_cpu_info(ci) == NULL)
+		return 0;
+
+	return 10;
 }
 
 static void
@@ -131,6 +127,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpicpu_softc *sc = device_private(self);
 	struct cpu_info *ci;
+	ACPI_HANDLE hdl;
 	cpuid_t id;
 	int rv;
 
@@ -142,14 +139,15 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ci = ci;
 	sc->sc_dev = self;
 	sc->sc_cold = true;
-	sc->sc_node = NULL;
 
-	rv = acpicpu_find(ci, &sc->sc_node);
+	hdl = acpi_match_cpu_info(ci);
 
-	if (rv == 0) {
+	if (hdl == NULL) {
 		aprint_normal(": failed to match processor\n");
 		return;
 	}
+
+	sc->sc_node = acpi_get_node(hdl);
 
 	if (acpicpu_once_attach() != 0) {
 		aprint_normal(": failed to initialize\n");
@@ -402,52 +400,6 @@ out:
 		ACPI_FREE(buf.Pointer);
 
 	return rv;
-}
-
-static int
-acpicpu_find(struct cpu_info *ci, struct acpi_devnode **ptr)
-{
-	struct acpi_softc *sc = acpi_softc;
-	struct acpicpu_object ao;
-	struct acpi_devnode *ad;
-	ACPI_INTEGER val;
-	ACPI_STATUS rv;
-
-	if (sc == NULL || acpi_active == 0)
-		return 0;
-
-	/*
-	 * CPUs are declared in the ACPI namespace
-	 * either as a Processor() or as a Device().
-	 * In both cases the MADT entries are used
-	 * for the match (see ACPI 4.0, section 8.4).
-	 */
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
-
-		if (ad->ad_type == ACPI_TYPE_PROCESSOR) {
-
-			rv = acpicpu_object(ad->ad_handle, &ao);
-
-			if (ACPI_SUCCESS(rv) && ci->ci_acpiid == ao.ao_procid)
-				goto out;
-		}
-
-		if (acpi_match_hid(ad->ad_devinfo, acpicpu_hid) != 0) {
-
-			rv = acpi_eval_integer(ad->ad_handle, "_UID", &val);
-
-			if (ACPI_SUCCESS(rv) && ci->ci_acpiid == val)
-				goto out;
-		}
-	}
-
-	return 0;
-
-out:
-	if (ptr != NULL)
-		*ptr = ad;
-
-	return 10;
 }
 
 static uint32_t
