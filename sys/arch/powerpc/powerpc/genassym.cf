@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 2011/06/18 21:17:29 matt Exp $
+#	$NetBSD: genassym.cf,v 1.8 2011/06/20 08:18:28 matt Exp $
 
 #-
 # Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -48,22 +48,25 @@ quote #define __RWLOCK_PRIVATE
 quote #define __INTR_PRIVATE
 
 include <sys/param.h>
-include <sys/intr.h>
-include <sys/cpu.h>
-include <sys/mutex.h>
-include <sys/rwlock.h>
-include <sys/lwp.h>
-include <sys/proc.h>
 include <sys/bitops.h>
+include <sys/cpu.h>
+include <sys/intr.h>
+include <sys/lwp.h>
+include <sys/mutex.h>
+include <sys/proc.h>
+include <sys/rwlock.h>
 
 include <uvm/uvm_extern.h>
 
-include <machine/pcb.h>
-include <machine/frame.h>
+include <powerpc/frame.h>
+include <powerpc/pcb.h>
+include <powerpc/psl.h>
 
 define	IPL_HIGH		IPL_HIGH
 define	IPL_SCHED		IPL_SCHED
 define	IPL_VM			IPL_VM
+
+define	CPU_MAXNUM		CPU_MAXNUM
 
 define	FRAMELEN	FRAMELEN
 define	FRAME_TF	offsetof(struct ktrapframe, ktf_tf)
@@ -198,6 +201,7 @@ define	CACHELINESIZE	CACHELINESIZE
 define	PAGE_SIZE	PAGE_SIZE
 define	PAGE_MASK	PAGE_MASK
 define	PAGE_SHIFT	PAGE_SHIFT
+define	USRSTACK	USRSTACK
 
 ifdef	__HAVE_FAST_SOFTINTS
 define	__HAVE_FAST_SOFTINTS	__HAVE_FAST_SOFTINTS
