@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.102 2011/05/24 13:26:04 joerg Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.103 2011/06/20 00:42:11 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.102 2011/05/24 13:26:04 joerg Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.103 2011/06/20 00:42:11 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,7 +276,7 @@ char timestamp[TIMESTAMPBUFSIZE];
  * a global one will do.
  */
 char *linebuf;
-size_t linebufsize;
+size_t linebufsize, linebufoff;
 
 static const char *bindhostname = NULL;
 
@@ -662,14 +662,15 @@ static void
 dispatch_read_klog(int fd, short event, void *ev)
 {
 	ssize_t rv;
+	size_t resid = linebufsize - linebufoff;
 
 	DPRINTF((D_CALL|D_EVENT), "Kernel log active (%d, %d, %p)"
 		" with linebuf@%p, length %zu)\n", fd, event, ev,
 		linebuf, linebufsize);
 
-	rv = read(fd, linebuf, linebufsize - 1);
+	rv = read(fd, &linebuf[linebufoff], resid - 1);
 	if (rv > 0) {
-		linebuf[rv] = '\0';
+		linebuf[linebufoff + rv] = '\0';
 		printsys(linebuf);
 	} else if (rv < 0 && errno != EINTR) {
 		/*
@@ -1503,6 +1504,7 @@ printsys(char *msg)
 	char *p, *q;
 	struct buf_msg *buffer;
 
+	linebufoff = 0;
 	for (p = msg; *p != '\0'; ) {
 		bool bsdsyslog = true;
 
@@ -1534,6 +1536,10 @@ printsys(char *msg)
 			 * trust the kernel to send ASCII only */;
 		if (*q != '\0')
 			*q++ = '\0';
+		else {
+			memcpy(linebuf, p, linebufoff = q - p);
+			break;
+		}
 
 		if (pri &~ (LOG_FACMASK|LOG_PRIMASK))
 			pri = DEFSPRI;
