@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.22 2007/11/14 18:34:12 garbled Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.23 2011/06/20 08:01:14 matt Exp $	*/
 
 /*
  * These are based on the segments that are least commonly used, and when
@@ -7,8 +7,10 @@
  * uses all, or some of the segments after 0x8.
  */
 
-#define USER_SR		0xe
+#if !defined(_MODULE)
 #define KERNEL_SR	0xa
 #define KERNEL2_SR	0xb
+#define USER_SR		0xe
+#endif
 
-#include <powerpc/oea/vmparam.h>
+#include <powerpc/vmparam.h>
