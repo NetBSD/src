@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.15 2011/06/17 23:36:18 matt Exp $ */
+/*	$NetBSD: intr.c,v 1.16 2011/06/20 06:23:52 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,26 +27,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.15 2011/06/17 23:36:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16 2011/06/20 06:23:52 matt Exp $");
 
+#include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
+#include "opt_pic.h"
 
 #define __INTR_PRIVATE
 
 #include <sys/param.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/cpu.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
 
-#include <arch/powerpc/pic/picvar.h>
-#include "opt_pic.h"
-#include "opt_interrupt.h"
+#include <powerpc/psl.h>
+#include <powerpc/pic/picvar.h>
+
 #if defined(PIC_I8259) || defined (PIC_PREPIVR)
 #include <machine/isa_machdep.h>
 #endif
 
 #ifdef MULTIPROCESSOR
-#include <arch/powerpc/pic/ipivar.h>
+#include <powerpc/pic/ipivar.h>
 #endif
 
 #ifdef __HAVE_FAST_SOFTINTS
