@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.8 2011/06/15 15:18:20 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.9 2011/06/20 06:00:46 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,8 +37,9 @@
 #ifndef _POWERPC_BOOKE_CPUVAR_H_
 #define _POWERPC_BOOKE_CPUVAR_H_
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <prop/proplib.h>
+#include <powerpc/psl.h>
 
 struct cpunode_softc {
 	device_t sc_dev;
