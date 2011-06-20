@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2011/06/18 06:44:27 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.19 2011/06/20 07:18:06 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2011/06/18 06:44:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2011/06/20 07:18:06 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -44,33 +44,32 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2011/06/18 06:44:27 matt Exp $");
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
+#include <sys/boot_flag.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
+#include <sys/kernel.h>
+#include <sys/ksyms.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/boot_flag.h>
-#include <sys/ksyms.h>
-#include <sys/device.h>
-#include <sys/module.h>
-#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>
 
 #include <dev/cons.h>
 
 #include <machine/powerpc.h>
-#include <machine/trap.h>
-#include <machine/pcb.h>
+
+#include <powerpc/trap.h>
+#include <powerpc/pcb.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
@@ -83,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2011/06/18 06:44:27 matt Exp $");
 #include "ksyms.h"
 
 #if defined(DDB)
-#include <machine/db_machdep.h>
+#include <powerpc/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 

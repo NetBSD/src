@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.57 2011/06/18 20:34:39 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.58 2011/06/20 07:18:07 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.57 2011/06/18 20:34:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.58 2011/06/20 07:18:07 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -45,7 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.57 2011/06/18 20:34:39 matt Exp $"
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/boot_flag.h>
 #include <sys/exec.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -55,15 +57,11 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.57 2011/06/18 20:34:39 matt Exp $"
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <net/netisr.h>
-
 #ifdef DDB
-#include <machine/db_machdep.h>
+#include <powerpc/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
@@ -75,13 +73,14 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.57 2011/06/18 20:34:39 matt Exp $"
 #include <ipkdb/ipkdb.h>
 #endif
 
+#include <machine/powerpc.h>
+
 #include <powerpc/trap.h>
 #include <powerpc/stdarg.h>
 #include <powerpc/spr.h>
 #include <powerpc/pte.h>
 #include <powerpc/altivec.h>
 #include <powerpc/pcb.h>
-#include <machine/powerpc.h>
 
 #include <powerpc/oea/spr.h>
 #include <powerpc/oea/bat.h>
