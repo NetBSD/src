@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.31 2011/05/27 12:41:18 nakayama Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.32 2011/06/20 09:25:48 nakayama Exp $ */
 
 /*
  * Mach Operating System
@@ -37,6 +37,9 @@
 
 #include <uvm/uvm_extern.h>
 
+#ifndef SUN4U
+#define SUN4U	/* see .../sparc/include/frame.h for the reason */
+#endif
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/psl.h>
