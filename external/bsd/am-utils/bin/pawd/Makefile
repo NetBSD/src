@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/08 07:56:38 plunky Exp $
+#	$NetBSD: Makefile,v 1.4 2011/06/20 07:43:57 mrg Exp $
 
 BINDIR=	/usr/bin
 
@@ -15,7 +15,7 @@ MAN+=	pawd.1
 CPPFLAGS+=	-I${DIST}
 LDADD+=		${LIBAMU}
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
+.if defined(HAVE_GCC)
 COPTS.amq_xdr.c+=	-fno-strict-aliasing
 .endif
 

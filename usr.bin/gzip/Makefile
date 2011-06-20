@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2011/06/19 00:43:54 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2011/06/20 07:44:01 mrg Exp $
 
 USE_FORT?= yes	# data-driven bugs?
 
@@ -26,6 +26,6 @@ LINKS+=		${BINDIR}/gzip ${BINDIR}/gunzip \
 
 .include <bsd.prog.mk>
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.gzip.c+=	-Wno-pointer-sign
 .endif

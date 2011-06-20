@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/02/16 03:47:21 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2011/06/20 07:43:57 mrg Exp $
 
 LIB=dns
 
@@ -12,7 +12,7 @@ DIST=	${IDIST}/lib/dns
 .PATH.c:	${DIST}/unix ${DIST}/sec/dst ${DIST}
 CPPFLAGS+=	-I${BIND_SRCDIR}/include/dns -I${DIST}
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 .for f in lookup byaddr request sdb validator
 COPTS.${f}.c+=  -Wno-pointer-sign -fno-strict-aliasing
 .endfor
