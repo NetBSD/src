@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.26 2011/06/20 17:48:45 pgoyette Exp $	*/
+/*	$NetBSD: ciss.c,v 1.27 2011/06/20 22:02:55 pgoyette Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.26 2011/06/20 17:48:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.27 2011/06/20 22:02:55 pgoyette Exp $");
 
 #include "bio.h"
 
@@ -1422,6 +1422,7 @@ ciss_create_sensors(struct ciss_softc *sc)
 	for (i = 0; i < nsensors; i++) {
 		sc->sc_sensor[i].units = ENVSYS_DRIVE;
 		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+		sc->sc_sensor[i].value_cur = ENVSYS_DRIVE_EMPTY;
 		/* Enable monitoring for drive state changes */
 		sc->sc_sensor[i].flags |= ENVSYS_FMONSTCHANGED;
 		/* logical drives */
