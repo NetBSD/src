@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.82 2011/06/17 19:04:00 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.83 2011/06/20 08:47:12 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -45,13 +45,12 @@ struct cache_info {
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
 #endif
 
 #ifdef _KERNEL
-#include <machine/frame.h>
-#include <machine/psl.h>
 #include <machine/intr.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
@@ -154,8 +153,7 @@ struct cpu_info {
 
 #ifdef _KERNEL
 
-#ifdef MULTIPROCESSOR
-
+#if defined(MULTIPROCESSOR) && !defined(_MODULE)
 struct cpu_hatch_data {
 	device_t self;
 	struct cpu_info *ci;
@@ -168,33 +166,25 @@ struct cpu_hatch_data {
 	int batu[4], batl[4];
 	int tbu, tbl;
 };
+#endif /* MULTIPROCESSOR && !_MODULE */
 
-static __inline int
-cpu_number(void)
-{
-	int pir;
-
-	__asm ("mfspr %0,1023" : "=r"(pir));
-	return pir;
-}
-
-void	cpu_boot_secondary_processors(void);
-
+#if defined(MULTIPROCESSOR) || defined(_MODULE)
+#define	cpu_number()		(curcpu()->ci_index + 0)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
-#define CPU_INFO_ITERATOR		int
-#define CPU_INFO_FOREACH(cii, ci)					\
+#define CPU_INFO_ITERATOR	int
+#define CPU_INFO_FOREACH(cii, ci)				\
 	cii = 0, ci = &cpu_info[0]; cii < ncpu; cii++, ci++
 
 #else
-
 #define cpu_number()		0
 
-#define CPU_INFO_ITERATOR		int
-#define CPU_INFO_FOREACH(cii, ci)					\
+#define CPU_IS_PRIMARY(ci)	true
+#define CPU_INFO_ITERATOR	int
+#define CPU_INFO_FOREACH(cii, ci)				\
 	cii = 0, ci = curcpu(); ci != NULL; ci = NULL
 
-#endif /* MULTIPROCESSOR */
+#endif /* MULTIPROCESSOR || _MODULE */
 
 extern struct cpu_info cpu_info[];
 
@@ -314,88 +304,69 @@ mfpvr(void)
 	return (pvr);
 }
 
-static __inline int
-cntlzw(uint32_t val)
-{
-	int 			cnt;
-
-	__asm volatile ("cntlzw %0,%1" : "=r"(cnt) : "r"(val));
-	return (cnt);
-}
-
-/*
- * functions to access the G3's cache throttling register
- * bits 1 - 9 specify additional waits on cache acess
- * bit 0 enables cache throttling
- */
-
-static __inline int
-mfictc(void)
-{
-	int reg;
-
-	__asm ("mfspr %0,1019" : "=r"(reg));
-	return reg;
-}
-
-static __inline void
-mtictc(uint32_t reg)
-{
-
-	__asm ("mtspr 1019,%0" :: "r"(reg));
-}
-
-#define	CLKF_USERMODE(frame)	(((frame)->cf_srr1 & PSL_PR) != 0)
-#define	CLKF_PC(frame)		((frame)->cf_srr0)
-#define	CLKF_INTR(frame)	((frame)->cf_idepth > 0)
-
-#define	LWP_PC(l)		(trapframe(l)->tf_srr0)
-
-#define	cpu_proc_fork(p1, p2)
-
+#if !defined(_MODULE)
 extern int powersave;
 extern int cpu_timebase;
 extern int cpu_printfataltraps;
 extern char cpu_model[];
 
-struct cpu_info *cpu_attach_common(device_t, int);
-void cpu_setup(device_t, struct cpu_info *);
-void cpu_identify(char *, size_t);
-int cpu_get_dfs(void);
-void cpu_set_dfs(int);
-void delay (unsigned int);
-void cpu_probe_cache(void);
+struct cpu_info *
+	cpu_attach_common(device_t, int);
+void	cpu_setup(device_t, struct cpu_info *);
+void	cpu_identify(char *, size_t);
+int	cpu_get_dfs(void);
+void	cpu_set_dfs(int);
+void	cpu_probe_cache(void);
 #ifndef PPC_BOOKE
-void dcache_flush_page(vaddr_t);
-void icache_flush_page(vaddr_t);
-void dcache_flush(vaddr_t, vsize_t);
-void icache_flush(vaddr_t, vsize_t);
+void	dcache_flush_page(vaddr_t);
+void	icache_flush_page(vaddr_t);
+void	dcache_flush(vaddr_t, vsize_t);
+void	icache_flush(vaddr_t, vsize_t);
 #else
-void dcache_wb_page(vaddr_t);
-void dcache_wbinv_page(vaddr_t);
-void dcache_inv_page(vaddr_t);
-void dcache_zero_page(vaddr_t);
-void icache_inv_page(vaddr_t);
-void dcache_wb(vaddr_t, vsize_t);
-void dcache_wbinv(vaddr_t, vsize_t);
-void dcache_inv(vaddr_t, vsize_t);
-void icache_inv(vaddr_t, vsize_t);
+void	dcache_wb_page(vaddr_t);
+void	dcache_wbinv_page(vaddr_t);
+void	dcache_inv_page(vaddr_t);
+void	dcache_zero_page(vaddr_t);
+void	icache_inv_page(vaddr_t);
+void	dcache_wb(vaddr_t, vsize_t);
+void	dcache_wbinv(vaddr_t, vsize_t);
+void	dcache_inv(vaddr_t, vsize_t);
+void	icache_inv(vaddr_t, vsize_t);
 #endif
-void *mapiodev(paddr_t, psize_t);
-void unmapiodev(vaddr_t, vsize_t);
+void *	mapiodev(paddr_t, psize_t);
+void	unmapiodev(vaddr_t, vsize_t);
 
 #ifdef MULTIPROCESSOR
-int md_setup_trampoline(volatile struct cpu_hatch_data *, struct cpu_info *);
-void md_presync_timebase(volatile struct cpu_hatch_data *);
-void md_start_timebase(volatile struct cpu_hatch_data *);
-void md_sync_timebase(volatile struct cpu_hatch_data *);
-void md_setup_interrupts(void);
-int cpu_spinup(device_t, struct cpu_info *);
-register_t cpu_hatch(void);
-void cpu_spinup_trampoline(void);
-#endif
+int	md_setup_trampoline(volatile struct cpu_hatch_data *,
+	    struct cpu_info *);
+void	md_presync_timebase(volatile struct cpu_hatch_data *);
+void	md_start_timebase(volatile struct cpu_hatch_data *);
+void	md_sync_timebase(volatile struct cpu_hatch_data *);
+void	md_setup_interrupts(void);
+int	cpu_spinup(device_t, struct cpu_info *);
+register_t
+	cpu_hatch(void);
+void	cpu_spinup_trampoline(void);
+void	cpu_boot_secondary_processors(void);
+#endif /* MULTIPROCESSOR */
+#endif /* !_MODULE */
+
+#define	cpu_proc_fork(p1, p2)
 
 #define	DELAY(n)		delay(n)
+void	delay(unsigned int);
+
+#define	CLKF_USERMODE(cf)	cpu_clkf_usermode(cf)
+#define	CLKF_PC(cf)		cpu_clkf_pc(cf)
+#define	CLKF_INTR(cf)		cpu_clkf_intr(cf)
+
+bool	cpu_clkf_usermode(const struct clockframe *);
+vaddr_t	cpu_clkf_pc(const struct clockframe *);
+bool	cpu_clkf_intr(const struct clockframe *);
+
+#define	LWP_PC(l)		cpu_lwp_pc(l)
+
+vaddr_t	cpu_lwp_pc(struct lwp *);
 
 void *	cpu_uarea_alloc(bool);
 bool	cpu_uarea_free(void *);
@@ -406,13 +377,12 @@ void	cpu_need_proftick(struct lwp *);
 
 void	cpu_fixup_stubs(void);
 
-#if !defined(PPC_IBM4XX) && !defined(PPC_BOOKE)
-void oea_init(void (*)(void));
-void oea_startup(const char *);
-void oea_dumpsys(void);
-void oea_install_extint(void (*)(void));
-paddr_t kvtop(void *); 
-void softnet(int);
+#if !defined(PPC_IBM4XX) && !defined(PPC_BOOKE) && !defined(_MODULE)
+void	oea_init(void (*)(void));
+void	oea_startup(const char *);
+void	oea_dumpsys(void);
+void	oea_install_extint(void (*)(void));
+paddr_t	kvtop(void *); 
 
 extern paddr_t msgbuf_paddr;
 extern int cpu_altivec;
@@ -422,13 +392,12 @@ extern int cpu_altivec;
 
 /* XXX The below breaks unified pmap on ppc32 */
 
-#if defined(_KERNEL) || defined(_STANDALONE)
-#if !defined(CACHELINESIZE)
-#ifdef PPC_IBM403
+#if !defined(CACHELINESIZE) && !defined(_MODULE) \
+    && (defined(_KERNEL) || defined(_STANDALONE))
+#if defined(PPC_IBM403)
 #define	CACHELINESIZE		16
 #define MAXCACHELINESIZE	16
-#else
-#if defined (PPC_OEA64_BRIDGE)
+#elif defined (PPC_OEA64_BRIDGE)
 #define	CACHELINESIZE		128
 #define MAXCACHELINESIZE	128
 #else
@@ -436,10 +405,8 @@ extern int cpu_altivec;
 #define MAXCACHELINESIZE	32
 #endif /* PPC_OEA64_BRIDGE */
 #endif
-#endif
-#endif
 
-void __syncicache(void *, size_t);
+void	__syncicache(void *, size_t);
 
 /*
  * CTL_MACHDEP definitions.

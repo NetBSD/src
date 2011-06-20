@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.55 2011/06/17 19:03:01 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.56 2011/06/20 08:47:13 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.55 2011/06/17 19:03:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.56 2011/06/20 08:47:13 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -60,9 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.55 2011/06/17 19:03:01 matt Ex
 
 #include <dev/mm.h>
 
-#include <powerpc/pcb.h>
-#include <powerpc/userret.h>
 #include <powerpc/fpu.h>
+#include <powerpc/pcb.h>
+#include <powerpc/psl.h>
+#include <powerpc/userret.h>
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 #include <powerpc/altivec.h>
 #endif
@@ -433,6 +434,30 @@ void
 cpu_signotify(lwp_t *l)
 {
 	l->l_md.md_astpending = 1;
+}
+
+vaddr_t
+cpu_lwp_pc(lwp_t *l)
+{
+	return l->l_md.md_utf->tf_srr0;
+}
+
+bool
+cpu_clkf_usermode(const struct clockframe *cf)
+{
+	return (cf->cf_srr1 & PSL_PR) != 0;
+}
+
+vaddr_t
+cpu_clkf_pc(const struct clockframe *cf)
+{
+	return cf->cf_srr0;
+}
+
+bool
+cpu_clkf_intr(const struct clockframe *cf)
+{
+	return cf->cf_idepth > 0;
 }
 
 #ifdef MULTIPROCESSOR
