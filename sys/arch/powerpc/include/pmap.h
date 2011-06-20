@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 2011/06/20 20:24:28 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.38 2011/06/20 21:45:16 matt Exp $	*/
 
 #ifndef _POWERPC_PMAP_H_
 #define _POWERPC_PMAP_H_
@@ -16,7 +16,7 @@
 #include <powerpc/ibm4xx/pmap.h>
 #elif defined(PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/pmap.h>
-#else
+#elif defined(_KERNEL)
 #error unknown PPC variant
 #endif
 
