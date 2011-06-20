@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.52 2011/06/02 18:48:55 dsl Exp $
+# $NetBSD: Makefile.boot,v 1.53 2011/06/20 06:52:37 mrg Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -47,11 +47,7 @@ CPUFLAGS=  -m32
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .else
-.if ${HAVE_GCC} == 3
-CPUFLAGS=  -mcpu=i386
-.else
 CPUFLAGS=  -march=i386 -mtune=i386
-.endif
 .endif
 .endif
 
