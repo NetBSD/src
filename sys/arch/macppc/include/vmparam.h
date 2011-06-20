@@ -1,3 +1,3 @@
-/*	$NetBSD: vmparam.h,v 1.23 2003/02/03 17:09:56 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.24 2011/06/20 08:01:14 matt Exp $	*/
 
-#include <powerpc/oea/vmparam.h>
+#include <powerpc/vmparam.h>
