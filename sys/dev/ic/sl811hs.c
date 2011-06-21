@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.28 2011/05/17 04:18:06 mrg Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.29 2011/06/21 15:13:34 kiyohara Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.28 2011/05/17 04:18:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.29 2011/06/21 15:13:34 kiyohara Exp $");
 
 #include "opt_slhci.h"
 
@@ -1142,7 +1142,7 @@ slhci_supported_rev(uint8_t rev)
  * Note max_current argument is actual current, but stored as current/2 */
 void
 slhci_preinit(struct slhci_softc *sc, PowerFunc pow, bus_space_tag_t iot, 
-    bus_space_handle_t ioh, uint16_t max_current, uint8_t stride)
+    bus_space_handle_t ioh, uint16_t max_current, uint32_t stride)
 {
 	struct slhci_transfers *t;
 	int i;
