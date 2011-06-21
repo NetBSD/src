@@ -1,0 +1,66 @@
+# Copyright (C) 2006, 2007, 2010 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+
+load_lib gcc-dg.exp
+
+# Define gcc callbacks for dg.exp.
+
+proc gnat-dg-test { prog do_what extra_tool_flags } {
+  if { $do_what == "compile" } {
+    lappend extra_tool_flags "-c"
+  }
+  return [gcc-dg-test-1 gnat_target_compile $prog $do_what $extra_tool_flags]
+}
+
+proc gnat-dg-prune { system text } {
+    global additional_prunes
+
+    lappend additional_prunes "gnatmake"
+    lappend additional_prunes "compilation abandoned"
+    lappend additional_prunes "fatal error: maximum errors reached"
+    lappend additional_prunes "linker input file"
+
+    return [gcc-dg-prune $system $text]
+}
+
+# Utility routines.
+
+# Modified dg-runtest that can cycle through a list of optimization options
+# as c-torture does.
+proc gnat-dg-runtest { testcases default-extra-flags } {
+    return [gcc-dg-runtest $testcases ${default-extra-flags}]
+}
+
+#
+# gnat_load -- wrapper around default gnat_load to declare tasking tests
+# unsupported on platforms that lack such support
+#
+
+if { [info procs gnat_load] != [list] \
+      && [info procs prev_gnat_load] == [list] } {
+    rename gnat_load prev_gnat_load
+
+    proc gnat_load { program args } {
+	upvar name testcase
+
+	set result [eval [list prev_gnat_load $program] $args]
+	set output [lindex $result 1]
+	if { [regexp "tasking not implemented" $output] } {
+	    return [list "unsupported" $output]
+	}
+	return $result
+    }
+}
