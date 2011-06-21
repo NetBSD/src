@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.11 2011/06/15 15:11:50 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.12 2011/06/21 06:24:25 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -454,11 +454,8 @@ e500_splset(struct cpu_info *ci, int ipl)
 	u_int ctpr = (ipl >= IPL_VM ? 15 : ipl);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == old_ctpr);
 #else
-#ifdef DIAGNOSTIC
-	u_int old_ctpr = IPL2CTPR(ci->ci_cpl);
-#endif
 	u_int ctpr = IPL2CTPR(ipl);
-	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == old_ctpr);
+	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == IPL2CTPR(ci->ci_cpl));
 #endif
 	openpic_write(cpu, OPENPIC_CTPR, ctpr);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == ctpr);
@@ -468,9 +465,9 @@ e500_splset(struct cpu_info *ci, int ipl)
 static void
 e500_spl0(void)
 {
-	struct cpu_info * const ci = curcpu();
-
 	wrtee(0);
+
+	struct cpu_info * const ci = curcpu();
 
 #ifdef __HAVE_FAST_SOFTINTS
 	if (__predict_false(ci->ci_data.cpu_softints != 0)) {
