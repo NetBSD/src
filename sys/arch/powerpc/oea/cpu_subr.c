@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.68 2011/06/20 16:31:28 pgoyette Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.69 2011/06/21 04:21:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.68 2011/06/20 16:31:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.69 2011/06/21 04:21:17 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -658,12 +658,6 @@ cpu_setup(device_t self, struct cpu_info *ci)
 
 	evcnt_attach_dynamic(&ci->ci_ev_clock, EVCNT_TYPE_INTR,
 		NULL, xname, "clock");
-	evcnt_attach_dynamic(&ci->ci_ev_softclock, EVCNT_TYPE_INTR,
-		NULL, xname, "soft clock");
-	evcnt_attach_dynamic(&ci->ci_ev_softnet, EVCNT_TYPE_INTR,
-		NULL, xname, "soft net");
-	evcnt_attach_dynamic(&ci->ci_ev_softserial, EVCNT_TYPE_INTR,
-		NULL, xname, "soft serial");
 	evcnt_attach_dynamic(&ci->ci_ev_traps, EVCNT_TYPE_TRAP,
 		NULL, xname, "traps");
 	evcnt_attach_dynamic(&ci->ci_ev_kdsi, EVCNT_TYPE_TRAP,
