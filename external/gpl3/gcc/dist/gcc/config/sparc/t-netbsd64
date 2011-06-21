@@ -1,8 +1,9 @@
-# Disable multilib fow now, as NetBSD/sparc64 does not ship with
-# a 32-bit environment.
-#MULTILIB_OPTIONS = m32/m64
-#MULTILIB_DIRNAMES = 32 64
-#MULTILIB_MATCHES =
+# NetBSD has (will have) "non-native" libraries in /usr/lib/<arch>.
+# For NetBSD/sparc64 we thus have /usr/lib and /usr/lib/sparc.
 
-#LIBGCC = stmp-multilib
-#INSTALL_LIBGCC = install-multilib
+MULTILIB_OPTIONS = m64/m32
+MULTILIB_DIRNAMES = 64 32 
+MULTILIB_OSDIRNAMES = . ../lib/sparc
+
+LIBGCC = stmp-multilib
+INSTALL_LIBGCC = install-multilib
