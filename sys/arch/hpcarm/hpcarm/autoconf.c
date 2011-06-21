@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2010/04/17 13:36:21 nonaka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 2011/06/21 15:28:05 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2010/04/17 13:36:21 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2011/06/21 15:28:05 kiyohara Exp $");
 
 #include "opt_md.h"
 
@@ -188,14 +188,20 @@ device_register(struct device *dev, void *aux)
  * known algorithm unless we see a pressing need otherwise.
  */
 
+#include "biconsdev.h"
+
 #include <dev/cons.h>
 
-cons_decl(com);   
 cons_decl(sacom);
+#define biconscnpollc	nullcnpollc
+cons_decl(bicons);   
 
 struct consdev constab[] = {
 #if (NSACOM > 0)
 	cons_init(sacom),
+#endif
+#if (NBICONSDEV > 0)
+	cons_init(bicons),
 #endif
 	{ NULL },
 };
