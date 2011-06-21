@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.12 2011/06/19 16:20:09 nonaka Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.13 2011/06/21 17:17:27 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.12 2011/06/19 16:20:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.13 2011/06/21 17:17:27 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +169,7 @@ static void	lcd_set_brightness(int);
 static void	lcd_set_brightness_internal(int);
 static int	lcd_get_backlight(void);
 static void	lcd_set_backlight(int);
+static void	lcd_blank(int);
 
 static int
 lcd_match(device_t parent, cfdata_t cf, void *aux)
@@ -266,14 +267,12 @@ lcd_display_on(device_t dv)
 {
 
 	lcd_blank(0);
-	lcd_set_backlight(1);
 }
 
 static void
 lcd_display_off(device_t dv)
 {
 
-	lcd_set_backlight(0);
 	lcd_blank(1);
 }
 
@@ -501,7 +500,7 @@ lcd_set_brightness(int newval)
 	else if (newval > maxval)
 		newval = maxval;
 
-	if (lcd_get_backlight() && !lcdisblank)
+	if (lcdislit && !lcdisblank)
 		lcd_set_brightness_internal(newval);
 
 	if (newval > 0)
@@ -565,7 +564,7 @@ lcd_set_backlight(int onoff)
 	}
 }
 
-void
+static void
 lcd_blank(int blank)
 {
 
