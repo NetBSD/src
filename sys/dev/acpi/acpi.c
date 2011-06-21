@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.245 2011/06/14 13:59:23 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.246 2011/06/21 03:37:21 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.245 2011/06/14 13:59:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.246 2011/06/21 03:37:21 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -685,7 +685,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		ad->ad_root = sc->sc_dev;
 		ad->ad_parent = awc->aw_parent;
 
-		acpi_set_node(ad);
+		acpi_match_node_init(ad);
 		acpi_make_name(ad, devinfo->Name);
 
 		/*
