@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.102 2011/06/19 02:19:09 christos Exp $	*/
+/*	$NetBSD: gzip.c,v 1.103 2011/06/21 13:25:45 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -30,7 +30,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006\
  Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.102 2011/06/19 02:19:09 christos Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.103 2011/06/21 13:25:45 joerg Exp $");
 #endif /* not lint */
 
 /*
@@ -580,7 +580,7 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 		i++;
 #endif
 
-	z.next_out = outbufp + i;
+	z.next_out = (unsigned char *)outbufp + i;
 	z.avail_out = BUFLEN - i;
 
 	error = deflateInit2(&z, numflag, Z_DEFLATED,
@@ -601,7 +601,7 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 			}
 
 			out_tot += BUFLEN;
-			z.next_out = outbufp;
+			z.next_out = (unsigned char *)outbufp;
 			z.avail_out = BUFLEN;
 		}
 
@@ -617,7 +617,7 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 
 			crc = crc32(crc, (const Bytef *)inbufp, (unsigned)in_size);
 			in_tot += in_size;
-			z.next_in = inbufp;
+			z.next_in = (unsigned char *)inbufp;
 			z.avail_in = in_size;
 		}
 
@@ -650,7 +650,7 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 			goto out;
 		}
 		out_tot += len;
-		z.next_out = outbufp;
+		z.next_out = (unsigned char *)outbufp;
 		z.avail_out = BUFLEN;
 
 		if (error == Z_STREAM_END)
@@ -744,9 +744,9 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 
 	memset(&z, 0, sizeof z);
 	z.avail_in = prelen;
-	z.next_in = pre;
+	z.next_in = (unsigned char *)pre;
 	z.avail_out = BUFLEN;
-	z.next_out = outbufp;
+	z.next_out = (unsigned char *)outbufp;
 	z.zalloc = NULL;
 	z.zfree = NULL;
 	z.opaque = 0;
@@ -761,7 +761,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 			if (z.avail_in > 0) {
 				memmove(inbufp, z.next_in, z.avail_in);
 			}
-			z.next_in = inbufp;
+			z.next_in = (unsigned char *)inbufp;
 			in_size = read(in, z.next_in + z.avail_in,
 			    BUFLEN - z.avail_in);
 
@@ -956,7 +956,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				state++;
 			}
 
-			z.next_out = outbufp;
+			z.next_out = (unsigned char *)outbufp;
 			z.avail_out = BUFLEN;
 
 			break;
@@ -1671,12 +1671,12 @@ handle_stdin(void)
 #endif
 	case FT_GZIP:
 		usize = gz_uncompress(STDIN_FILENO, STDOUT_FILENO, 
-			      header1, sizeof header1, &gsize, "(stdin)");
+			      (char *)header1, sizeof header1, &gsize, "(stdin)");
 		break;
 #ifndef NO_BZIP2_SUPPORT
 	case FT_BZIP2:
 		usize = unbzip2(STDIN_FILENO, STDOUT_FILENO,
-				header1, sizeof header1, &gsize);
+				(char *)header1, sizeof header1, &gsize);
 		break;
 #endif
 #ifndef NO_COMPRESS_SUPPORT
@@ -1686,7 +1686,8 @@ handle_stdin(void)
 			return;
 		}
 
-		usize = zuncompress(in, stdout, header1, sizeof header1, &gsize);
+		usize = zuncompress(in, stdout, (char *)header1,
+		    sizeof header1, &gsize);
 		fclose(in);
 		break;
 #endif
