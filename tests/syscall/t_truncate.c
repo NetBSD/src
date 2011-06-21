@@ -1,4 +1,4 @@
-/* $NetBSD: t_truncate.c,v 1.1 2011/06/20 18:03:41 jruoho Exp $ */
+/* $NetBSD: t_truncate.c,v 1.2 2011/06/21 01:45:26 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_truncate.c,v 1.1 2011/06/20 18:03:41 jruoho Exp $");
+__RCSID("$NetBSD: t_truncate.c,v 1.2 2011/06/21 01:45:26 jruoho Exp $");
 
 #include <sys/stat.h>
 
@@ -84,6 +84,7 @@ ATF_TC(ftruncate_err);
 ATF_TC_HEAD(ftruncate_err, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test errors from ftruncate(2)");
+	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
 
 ATF_TC_BODY(ftruncate_err, tc)
@@ -143,6 +144,7 @@ ATF_TC(truncate_err);
 ATF_TC_HEAD(truncate_err, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test errors from truncate(2)");
+	atf_tc_set_md_var(tc, "require.user", "unprivileged");
 }
 
 ATF_TC_BODY(truncate_err, tc)
