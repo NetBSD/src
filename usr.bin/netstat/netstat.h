@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.42 2011/05/03 18:28:46 dyoung Exp $	*/
+/*	$NetBSD: netstat.h,v 1.43 2011/06/21 19:42:45 kefren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -174,5 +174,7 @@ void	bpf_stats(void);
 void	bpf_dump(const char *);
 
 kvm_t *get_kvmd(void);
+
+char	*mpls_ntoa(const struct sockaddr *);
 
 #define PLEN    (LONG_BIT / 4 + 2)
