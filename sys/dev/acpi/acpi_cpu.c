@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.42 2011/06/20 15:33:49 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.43 2011/06/21 03:37:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.42 2011/06/20 15:33:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.43 2011/06/21 03:37:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -147,7 +147,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_node = acpi_get_node(hdl);
+	sc->sc_node = acpi_match_node(hdl);
 
 	if (acpicpu_once_attach() != 0) {
 		aprint_normal(": failed to initialize\n");

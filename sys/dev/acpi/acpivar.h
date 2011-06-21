@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.71 2011/06/15 09:02:38 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.72 2011/06/21 03:37:21 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -114,7 +114,7 @@ struct acpi_pci_info {
  *	ad_handle	never NULL
  *
  * Each ACPI device node is associated with its handle. The function
- * acpi_get_node() can be used to get the node structure from a handle.
+ * acpi_match_node() can be used to get the node structure from a handle.
  */
 struct acpi_devnode {
 	device_t		 ad_device;	/* Device */

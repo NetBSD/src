@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.7 2011/06/20 15:31:52 jruoho Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.8 2011/06/21 03:37:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.7 2011/06/20 15:31:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.8 2011/06/21 03:37:21 jruoho Exp $");
 
 #include <sys/param.h>
 
@@ -273,42 +273,6 @@ acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
 }
 
 /*
- * Get a device node from a handle.
- */
-struct acpi_devnode *
-acpi_get_node(ACPI_HANDLE handle)
-{
-	struct acpi_devnode *ad;
-	ACPI_STATUS rv;
-
-	if (handle == NULL)
-		return NULL;
-
-	rv = AcpiGetData(handle, acpi_clean_node, (void **)&ad);
-
-	if (ACPI_FAILURE(rv))
-		return NULL;
-
-	return ad;
-}
-
-/*
- * Associate a device node with a handle.
- */
-void
-acpi_set_node(struct acpi_devnode *ad)
-{
-
-	(void)AcpiAttachData(ad->ad_handle, acpi_clean_node, ad);
-}
-
-static void
-acpi_clean_node(ACPI_HANDLE handle, void *aux)
-{
-	/* Nothing. */
-}
-
-/*
  * Return a complete pathname from a handle.
  *
  * Note that the function uses static data storage;
@@ -373,10 +337,45 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 }
 
 /*
+ * Match a device node from a handle.
+ */
+struct acpi_devnode *
+acpi_match_node(ACPI_HANDLE handle)
+{
+	struct acpi_devnode *ad;
+	ACPI_STATUS rv;
+
+	if (handle == NULL)
+		return NULL;
+
+	rv = AcpiGetData(handle, acpi_clean_node, (void **)&ad);
+
+	if (ACPI_FAILURE(rv))
+		return NULL;
+
+	return ad;
+}
+
+/*
+ * Permanently associate a device node with a handle.
+ */
+void
+acpi_match_node_init(struct acpi_devnode *ad)
+{
+	(void)AcpiAttachData(ad->ad_handle, acpi_clean_node, ad);
+}
+
+static void
+acpi_clean_node(ACPI_HANDLE handle, void *aux)
+{
+	/* Nothing. */
+}
+
+/*
  * Match a handle from a cpu_info. Returns NULL on failure.
  *
- * Note that if also acpi_devnode is needed, a subsequent
- * call to acpi_get_node() will work.
+ * Note that acpi_match_node() can be used if the device node
+ * is also required.
  */
 ACPI_HANDLE
 acpi_match_cpu_info(struct cpu_info *ci)
