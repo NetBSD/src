@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.5 2011/06/17 19:03:03 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.6 2011/06/21 06:25:19 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2385,6 +2385,8 @@ pq3etsec_mii_tick(void *arg)
 		softint_schedule(sc->sc_soft_ih);
 	splx(s);
 	callout_schedule(&sc->sc_mii_callout, hz);
+#ifdef DEBUG
 	sc->sc_mii_last_tick = now;
+#endif
 	mutex_exit(sc->sc_lock);
 }
