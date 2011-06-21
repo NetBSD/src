@@ -1,0 +1,499 @@
+2011-04-28  Release Manager
+
+	* GCC 4.5.3 released.
+
+2010-12-16  Release Manager
+
+	* GCC 4.5.2 released.
+
+2010-07-31  Release Manager
+
+	* GCC 4.5.1 released.
+
+2010-06-02  Richard Guenther  <rguenther@suse.de>
+
+	PR lto/44385
+	Backport from mainline
+	2010-05-21  Richard Guenther  <rguenther@suse.de>
+
+	* lto-plugin.c (write_resolution): Do not assert syms is non-NULL.
+
+2010-04-14  Release Manager
+
+	* GCC 4.5.0 released.
+
+2010-04-02  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* Makefile.in: Regenerate.
+	* aclocal.m4: Regenerate.
+
+2010-03-16  Dmitry Gorbachev  <d.g.gorbachev@gmail.com>
+
+	PR lto/43336
+	* lto-plugin.c (cleanup_handler): Delete temporary output files.
+
+2010-01-11  Richard Guenther  <rguenther@suse.de>
+
+	PR lto/41569
+	* Makefile.am: Disable dependencies.
+	* Makefile.in: Regenerated.
+
+2010-01-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR lto/42520
+	* lto-plugin.c (exec_lto_wrapper): Output lto-wrapper command
+	if -v is passed.
+
+2009-12-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/42306
+	* configure: Regenerated.
+	* Makefile.in: Likewise.
+
+2009-11-19  Rafael Avila de Espindola  <espindola@google.com>
+
+	PR bootstrap/42096
+	* lto-plugin.c (claim_file_handler): Print offsets in hex.
+
+2009-11-12  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (write_resolution): Assume resolution_file is set.
+	Print the symbol name.
+	(all_symbols_read_handler): Create a resolution file.
+	Pass it to gcc.
+	(cleanup_handler): Remove the resolution file.
+	(process_option): Drop the -resolution option.
+
+2009-11-05  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (temp_obj_dir_name): Remove.
+	(arguments_file_name): New.
+	(free_2): Free arguments_file_name instead of temp_obj_dir_name.
+	(exec_lto_wrapper):  Create arguments file with make_temp_file.
+	(cleanup_handler): Don't remove the temporary directory. Remove the
+	arguments file.
+	(onload): Don't create the temporary directory.
+
+2009-11-04  Richard Guenther  <rguenther@suse.de>
+            Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (plugin_file_info): Remove temp field.
+	(cleanup_handler): Don't delete temporary objects.
+	(claim_file_handler): Don't create temporary objects.
+
+2009-11-04  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (cleanup_handler): Don't cleanup if debugging.
+
+2009-10-30  Rafael Avila de Espindola  <espindola@google.com>
+
+	PR41871
+	* lto-plugin.c (claim_file_handler): Close files that we created.
+
+2009-10-28  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (all_symbols_read_handler): Use LDPL_FATAL instead of
+	LDPL_ERROR
+
+2009-10-27  Dmitry Gorbachev  <d.g.gorbachev@gmail.com>
+
+	PR lto/41652
+	* configure.ac: Call AC_SYS_LARGEFILE before AC_OUTPUT.
+	* configure: Regenerate.
+
+2009-10-26  Richard Guenther  <rguenther@suse.de>
+
+	* configure.ac: Use AM_MAINTAINER_MODE.
+	* acinclude.m4: Remove.
+	* configure: Re-generate.
+	* Makefile.in: Likewise.
+	* aclocal.m4: Likewise.
+
+2009-10-19  Rafael Avila de Espindola  <espindola@google.com>
+    
+        PR40790
+        * configure: Regenerate.
+        * configure.ac: Add AC_TYPE_UINT64_T.
+
+2009-10-16  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (message): New variable.
+	(check): New function.
+	(parse_table_entry, translate, write_resolution,add_output_files,
+	exec_lto_wrapper,claim_file_handler, onload): Use check instead of
+	assert.
+	(cleanup_handler): Use check instead of assert. Remove the arguments
+	file if it exists.
+
+2009-10-15  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (resolution_file): New.
+	(free_1): Update comment.
+	(free_2): Free resolution_file.
+	(write_resolution): Write resolution to specified file. Use the
+	syms array from the symbol table.
+	(all_symbols_read_handler): Delay call to free_1 past call to
+	write_resolution.
+	(process_option): Add a -resolution option.
+
+2009-10-13  Richard Guenther  <rguenther@suse.de>
+
+	* Makefile.am (liblto_plugin_la_LIBADD): Link against the
+	correct libiberty.
+	* Makefile.in: Regenerated.
+
+2009-10-08  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (add_input_library): New.
+	(all_symbols_read_handler): Use add_input_library for items that
+	start with -l.
+	(process_option): Fit in 80 columns.
+	(onload): Handle LDPT_ADD_INPUT_LIBRARY.
+
+2009-10-02  Diego Novillo  <dnovillo@google.com>
+
+	* Makefile.am (AM_CPPFLAGS): Remove -D_LARGEFILE_SOURCE
+	and -D_FILE_OFFSET_BITS=64.
+	* configure.ac: Add AC_SYS_LARGEFILE.
+	* configure: Regenerate.
+	* Makefile.in: Regenerate.
+	* lto-plugin.c: Fix copyright boilerplate.
+
+2009-10-02  Diego Novillo  <dnovillo@google.com>
+
+	* Makefile.am (ACLOCAL_AMFLAGS): Define.
+	* aclocal.m4: Regenerate with aclocal-2.64
+	* acinclude.m4: Remove.
+	* Makefile.in: Regenerate with automake-1.11
+	* configure.ac (AC_PREREQ): Update to 2.64.
+	* configure: Regenerate.
+
+2009-10-02  Diego Novillo  <dnovillo@google.com>
+
+	* Makefile.am (AM_CPPFLAGS): Remove -D_LARGEFILE_SOURCE
+	and -D_FILE_OFFSET_BITS=64.
+	* configure.ac: Add AC_SYS_LARGEFILE.
+	* configure: Regenerate.
+	* Makefile.in: Regenerate.
+	* lto-plugin.c: Fix copyright boilerplate.
+
+2009-10-02  Diego Novillo  <dnovillo@google.com>
+
+	* Makefile.am (ACLOCAL_AMFLAGS): Define.
+	* aclocal.m4: Regenerate with aclocal-2.64
+	* acinclude.m4: Remove.
+	* Makefile.in: Regenerate with automake-1.11
+	* configure.ac (AC_PREREQ): Update to 2.64.
+	* configure: Regenerate.
+
+2009-10-02  Rafael Avila de Espindola  <espindola@google.com>
+
+	* Makefile.am (liblto_plugin_la_SOURCES): Remove
+	$(top_srcdir)/../gcc/lto/common.c
+	* Makefile.in: Regenerate.
+
+2009-10-01  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (pass_through_items): New.
+	(num_pass_through_items): New.
+	(all_symbols_read_handler): Update to use the -pass-through option.
+	(process_option): Replace -libgcc with -pass-through.
+	
+2009-09-30  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (onload): Return a ld_plugin_status. Don't require
+	register_cleanup to be set.
+
+2009-09-30  Rafael Avila de Espindola  <espindola@google.com>
+
+	* Makefile.am: Remove all reference to ltosymtab.
+	* Makefile.in: Regenerate.
+	* lto-symtab.c: Remove.
+
+2009-05-21  Diego Novillo  <dnovillo@google.com>
+
+	* configure.ac: Remove call to AC_CHECK_GELF.
+	Call AC_ARG_VAR for LIBELFLIBS and LIBELFINC.
+	* acinclude.m4: Do not include ../config/libelf.m4
+	* Makefile.am (LIBELFLIBS): Define.
+	(LIBELFINC): Define.
+	(AM_CPPFLAGS): Add $(LIBELFINC).
+	(ltosymtab_LDADD): Add $(LIBELFLIBS).
+	(liblto_plugin_la_LIBADD): Add $(LIBELFLIBS)
+	* lto-plugin.c: Always include <gelf.h>
+	* lto-symtab.c: Likewise.
+	* configure: Regenerate.
+	* Makefile.in: Regenerate.
+
+2009-03-23  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (libgcc_filename): New.
+	(all_symbols_read_handler): Pass libgcc to the linker.
+	(all_symbols_read_handler): Parse -libgcc
+
+2009-02-05  Rafael Avila de Espindola  <espindola@google.com>
+
+	* Makefile.am (liblto_plugin_la_LIBADD): Link with libiberty.
+	* Makefile.in: Regenerate.
+	* lto-plugin.c (add_output_files): Argument is now a FILE.
+	(exec_lto_wrapper): Use writeargv and pex.
+
+2009-02-04  Rafael Avila de Espindola  <espindola@google.com>
+
+	Revert:
+	2009-02-04  Rafael Avila de Espindola  <espindola@google.com>
+	* lto-plugin.c (exec_lto_wrapper): Use writeargv.
+
+
+2009-02-04  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (exec_lto_wrapper): Use writeargv.
+
+2009-01-29  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c: Include libiberty.h.
+	(exec_lto_wrapper, claim_file_handler): Use asprintf instead of
+	snprintf.
+
+2009-01-29  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (exec_lto_wrapper): Write argv to a file. Pass that
+	file to lto-wrapper.
+
+2009-01-28  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (plugin_file_info): Remove fd and elf.
+	(parse_table_entry): strdup entry->name and entry->comdat_key.
+	(free_1): Free name and comdat_key. Don't close the file. Don't call
+	elf_end.
+	(claim_file_handler): Always call elf_end.
+
+2008-12-23  Rafael Avila de Espindola  <espindola@google.com>
+
+	* Makefile.am (AM_CPPFLAGS): Add -D_LARGEFILE_SOURCE
+	-D_FILE_OFFSET_BITS=64
+	* Makefile.in: Regenerate
+
+2008-12-22  Rafael Avila de Espindola  <espindola@google.com>
+
+	* Makefile.am (gcc_version, target_noncanonical, libexecsubdir): New.
+	(lib_LTLIBRARIES): Rename to libexecsub_LTLIBRARIES.
+	* Makefile.in: Regenerate.
+	* acinclude.m4: Include ../config/acx.m4 and ../lt~obsolete.m4
+	* configure: Regenerate.
+	* configure.ac: Add AC_SUBST(target_noncanonical).
+
+2008-12-08  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c: Include stdbool.h.
+	(debug, nop): Declare as bool.
+
+2008-12-08  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (nop): New.
+	(use_original_files): New.
+	(all_symbols_read_handler): Call use_original_files if nop is true.
+	(process_option): Parse the -nop option.
+
+2008-12-08  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (debug): New.
+	(exec_lto_wrapper): Print argv if debug is true.
+	(process_option): Process the -debug command line option.
+
+2008-12-03  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (process_option): The argument is now a single option,
+	not a space separated list.
+
+2008-12-02  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c: Include sys/types.h and sys/wait.h
+	(output_files, num_output_files, lto_wrapper_argv,
+	lto_wrapper_num_args): New.
+	(free_2): Free output_files.
+	(write_resolution): Disable.
+	(add_output_files): New.
+	(exec_lto_wrapper): New.
+	(all_symbols_read_handler): Run lto-wrapper.
+	(claim_file_handler): Free lto_file.name and call elf_end.
+	(process_option): New.
+
+2008-11-26  Rafael Espindola  <espindola@google.com>
+
+	* lto-plugin.c (add_input_file): New.
+	(get_section): Return NULL if get_section fails.
+	(write_resolution): New.
+	(all_symbols_read_handler): Call add_input_file.
+	(claim_file_handler): Unlink the correct file.
+	(onload): Record add_input_file.
+
+2008-09-23 Rafael Espindola  <espindola@google.com>
+
+	* Makefile.am (ltosymtab_SOURCES, liblto_plugin_la_SOURCES):
+	Update the location of common.c.
+	* Makefile.in: Regenerate.
+	* common.c: Moved to gcc/lto.
+	* common.h: Moved to gcc/lto.
+	* lto-plugin.c: Update the location of common.h.
+	* lto-symtab.c: Update the location of common.h.
+
+2008-09-23 Rafael Espindola  <espindola@google.com>
+
+	* common.c: Include common.h.
+	(lto_kind_str, lto_visibility_str, lto_resolution_str): Use explicit
+	sizes.
+	* common.h (lto_kind_str, lto_visibility_str, lto_resolution_str): Use
+	explicit sizes.
+
+2008-09-23 Rafael Espindola  <espindola@google.com>
+
+	* lto-plugin.c (plugin_file_info): Add temp.
+	(cleanup_handler): Only delete temporary files.
+	(claim_file_handler): Initialize lto_file.temp.
+
+2008-09-23  Rafael Espindola  <espindola@google.com>
+
+        * plugin-api.h: Moved to include.
+
+2008-09-23 Rafael Espindola  <espindola@google.com>
+
+	* lto-plugin.c (all_symbols_read_handler): Print resolution in a new
+	format.
+
+2008-09-22 Rafael Espindola  <espindola@google.com>
+
+	* plugin-api.h: Copy from binutils' cvs.
+
+2008-09-22 Rafael Espindola  <espindola@google.com>
+
+	* lto-symtab.c (get_symbols, add_symbols): Update signature.
+	* plugin-api.h: Copy from binutils' cvs.
+
+2008-09-22 Rafael Espindola  <espindola@google.com>
+
+	* common.h (lto_kind_str, lto_visibility_str, lto_resolution_str):
+	Make extern
+
+2008-09-10 Rafael Espindola  <espindola@google.com>
+
+	* lto-plugin.c (onload): add missing break statements and asserts.
+	* lto-symtab.c (claim_file_handler): Make it static.
+	(all_symbols_read_handler): Make it static.
+	(all_file_handles): Make it static.
+	(num_file_handles): Make it static.
+	(register_claim_file): Make it static.
+	(register_object): Indent properly.
+
+2008-09-10  Rafael Avila de Espindola  <espindola@google.com>
+
+	* Makefile.am (ltosymtab_LDADD): Add -lelf.
+	* Makefiel.in: Regenerate.
+	* lto-plugin.c: Include ar.h.
+	(claim_file_handler): Handle file->offset != 0.
+	* lto-symtab.c: Include gelf.h.
+	(all_file_handles): Change type.
+	(register_object): New.
+	(register_file): Add support for archives.
+	(resolve): Update to new type of all_file_handles.
+	(print): Update to new type of all_file_handles.
+	(free_all): Update to new type of all_file_handles.
+	(main): Update to new type of all_file_handles.
+
+2008-09-10  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-plugin.c (get_string_table): Remove.
+	(get_section): Use elf_strptr instead of get_string_table.
+
+2008-09-08  Doug Kwan  <dougkwan@google.com>
+
+	* lto-plugin.c (all_symbols_read_handler): Widen fprintf arguments
+	to 64-bit to fix a 32-bit bootstrap failure due to format warnings.
+
+2008-09-08  Rafael Avila de Espindola  <espindola@google.com>
+
+	* Makefile.am (ltosymtab_SOURCES): add common.c.
+	(ltosymtab_CFLAGS): New.
+	(liblto_plugin_la_SOURCES): Add common.c.
+	* Makefile.in: Regenerate.
+	* common.c: New.
+	* common.h: New.
+	* lto-plugin.c: Include stdio.h, inttypes.h and common.h.
+	(plugin_symtab): New.
+	(plugin_file_info): New.
+	(register_all_symbols_read): New.
+	(get_symbols): New.
+	(claimed_files): New.
+	(num_claimed_files): New.
+	(translate): Don't drop the slot number.
+	(free_1): New.
+	(free_2): New.
+	(all_symbols_read_handler): New.
+	(claim_file_handler): Record every claimed file.
+	(onload): Handle LDPT_REGISTER_ALL_SYMBOLS_READ_HOOK and
+	LDPT_GET_SYMBOLS.
+	* lto-symtab.c: Include stdlib.h, string.h and common.h.
+	(current_file_handle): Remove.
+	(ld_plugin_all_symbols_read_handler): New.
+	(plugin_handle): New.
+	(file_handle): New.
+	(all_file_handles): New.
+	(num_file_handles): New.
+	(get_symbols): New.
+	(register_all_symbols_read): New.
+	(add_symbols): Don't print the symbols, just record them.
+	(ld_plugin_tv): Add LDPT_REGISTER_ALL_SYMBOLS_READ_HOOK and
+	LDPT_GET_SYMBOLS.
+	(load_plugin): Use plugin_handle.
+	(register_file): Add the file handle to all_file_handles.
+	(resolve): New.
+	(print): New.
+	(unload_plugin): New.
+	(free_all): New.
+	(main): Call all_symbols_read_handler and free resources.
+
+2008-09-03  Rafael Avila de Espindola  <espindola@google.com>
+
+	* Makefile.am (AM_CFLAGS): New.
+	(ltosymtab_LDADD): Remove -lelf. Add -ldl.
+	(lib_LTLIBRARIES): New.
+	(liblto_plugin_la_SOURCES): New.
+	(liblto_plugin_la_LIBADD): New.
+	* Makefile.in: Regenerate.
+	* acinclude.m4: Don't include ../config/acx.m4 and
+	../config/no-executables.m4.
+	Include ../ltsugar.m4, ../ltoptions.m4, ../ltversion.m4 and
+	../libtool.m4.
+	* aclocal.m4: Regenerate.
+	* configure: Regenerate.
+	* configure.ac: Use AM_PROG_LIBTOOL.
+	* lto-plugin.c: New.
+	* lto-symtab.c: Rewrite to use the plugin.
+	* plugin-api.h: New.
+
+2008-08-25  Rafael Avila de Espindola  <espindola@google.com>
+
+	* configure: Regenerate.
+	* configure.ac: Use AC_CHECK_GELF.
+	* lto-symtab.c: Include gelf.h.
+	(get_string_table): Use size independent API.
+	(printTable): Use lld to print 64 bit integers.
+
+2008-08-22  Rafael Avila de Espindola  <espindola@google.com>
+
+	* lto-symtab.c (parse_table_entry): Assert entry->kind and
+	entry->visibility are valid.
+
+2008-07-22  Rafael Avila de Espindola  <espindola@google.com>
+	* lto-symtab.c (table_entry): Add comdat.
+	(parse_table_entry): Read comdat.
+
+2008-08-21  Rafael Espindola  <espindola@google.com>
+
+	* Makefile.am: New.
+	* Makefile.in: New.
+	* acinclude.m4: New.
+	* aclocal.m4: New.
+	* configure: New.
+	* configure.ac: New.
+	* lto-symtab.c: New.
