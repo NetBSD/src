@@ -1880,6 +1880,7 @@ multilib.h: s-mlib; @true
 s-mlib: $(srcdir)/genmultilib Makefile
 	if test @enable_multilib@ = yes \
 	   || test -n "$(MULTILIB_OSDIRNAMES)"; then \
+	  CONFIG_SHELL="$(SHELL)" \
 	  $(SHELL) $(srcdir)/genmultilib \
 	    "$(MULTILIB_OPTIONS)" \
 	    "$(MULTILIB_DIRNAMES)" \
@@ -3926,7 +3927,7 @@ s-fixinc_list : $(GCC_PASSES)
 # Abort if no system headers available, unless building a crosscompiler.
 # FIXME: abort unless building --without-headers would be more accurate and less ugly
 stmp-fixinc: gsyslimits.h macro_list fixinc_list \
-  $(build_objdir)/fixincludes/fixincl \
+  $(build_objdir)/fixincludes/fixincl$(build_exeext) \
   $(build_objdir)/fixincludes/fixinc.sh
 	rm -rf include-fixed; mkdir include-fixed
 	-chmod a+rx include-fixed
@@ -4389,6 +4390,8 @@ install-info:: doc installdirs \
 	lang.install-info
 
 $(DESTDIR)$(infodir)/%.info: doc/%.info installdirs
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_info:
 	rm -f $@
 	if [ -f $< ]; then \
 	  for f in $(<)*; do \
