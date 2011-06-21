@@ -464,8 +464,12 @@ $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENC
 	$(SHELL) ./config.status --recheck
 
 $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_configure:
 	$(am__cd) $(srcdir) && $(AUTOCONF)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_aclocal:
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
 mparam.h: $(top_builddir)/config.status $(srcdir)/mparam_h.in
@@ -2048,6 +2052,8 @@ uninstall-am: uninstall-dvi-am uninstall-html-am \
 # should not be a problem in practice, in particular because "make dist"
 # automatically rebuilds get_patches.c before generating the archives.
 $(srcdir)/get_patches.c: PATCHES get_patches.sh
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_get_patches.c:
 	(cd $(srcdir) && ./get_patches.sh) > $@ || rm -f $@
 
 tune:
