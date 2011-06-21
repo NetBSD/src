@@ -1,0 +1,39 @@
+#	$NetBSD: files.wzero3,v 1.1 2011/06/21 15:23:57 kiyohara Exp $
+#
+# WZERO3 specific configuration info
+#
+
+file	arch/hpcarm/hpcarm/wzero3_machdep.c
+
+# LCD frame buffer
+attach lcd at pxaip with wzero3lcd
+file arch/hpcarm/dev/wzero3_lcd.c	wzero3lcd needs-flag
+
+# MMC/SD controller
+attach pxamci at pxaip with wzero3mci
+file arch/hpcarm/dev/wzero3_mci.c	wzero3mci
+
+# Dedicated SSP unit for touch screen, keypad
+device wzero3ssp
+attach wzero3ssp at pxaip
+file arch/hpcarm/dev/wzero3_ssp.c	wzero3ssp
+
+# keyboard
+device wzero3kbd: hpckbdif, sysmon_power, sysmon_taskq
+attach wzero3kbd at pxaip
+file arch/hpcarm/dev/wzero3_kbd.c	wzero3kbd
+
+# keypad
+device wzero3keypad: wskbddev
+attach wzero3keypad at pxaip
+file arch/hpcarm/dev/wzero3_keypad.c	wzero3keypad
+
+# touchpad
+device wzero3tp: wsmousedev, hpctpanel
+attach wzero3tp at pxaip
+file arch/hpcarm/dev/wzero3_tp.c	wzero3tp
+
+# USB power control
+device wzero3usb
+attach wzero3usb at pxaip
+file arch/hpcarm/dev/wzero3_usb.c	wzero3usb
