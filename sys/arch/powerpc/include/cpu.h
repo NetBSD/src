@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.85 2011/06/21 04:21:17 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.86 2011/06/21 06:32:36 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -113,6 +113,7 @@ struct cpu_info {
 #define	CPUSAVE_SRR1	7		/* where SRR1 gets saved */
 	register_t ci_savearea[CPUSAVE_SIZE];
 #if defined(PPC_BOOKE) || defined(MODULAR) || defined(_MODULE)
+	uint32_t ci_pmap_asid_cur;
 	struct pmap_segtab *ci_pmap_segtabs[2];
 #define	ci_pmap_kern_segtab	ci_pmap_segtabs[0]
 #define	ci_pmap_user_segtab	ci_pmap_segtabs[1]
@@ -370,6 +371,7 @@ bool	cpu_clkf_intr(const struct clockframe *);
 
 vaddr_t	cpu_lwp_pc(struct lwp *);
 
+void	cpu_ast(struct lwp *, struct cpu_info *);
 void *	cpu_uarea_alloc(bool);
 bool	cpu_uarea_free(void *);
 void	cpu_need_resched(struct cpu_info *, int);
