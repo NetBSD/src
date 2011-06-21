@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.76 2011/06/21 12:41:24 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.77 2011/06/21 13:59:41 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.76 2011/06/21 12:41:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.77 2011/06/21 13:59:41 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -455,8 +455,9 @@ fss_softc_alloc(struct fss_softc *sc)
 	}
 
 	sc->sc_flags |= FSS_BS_THREAD;
-	if ((error = kthread_create(PRI_BIO, 0, NULL, fss_bs_thread, sc,
-	    &sc->sc_bs_lwp, "%s", device_xname(sc->sc_dev))) != 0) {
+	if ((error = kthread_create(PRI_BIO, KTHREAD_JOINABLE, NULL,
+	    fss_bs_thread, sc, &sc->sc_bs_lwp,
+	    "%s", device_xname(sc->sc_dev))) != 0) {
 		sc->sc_flags &= ~FSS_BS_THREAD;
 		return error;
 	}
@@ -478,9 +479,8 @@ fss_softc_free(struct fss_softc *sc)
 		mutex_enter(&sc->sc_slock);
 		sc->sc_flags &= ~FSS_BS_THREAD;
 		cv_signal(&sc->sc_work_cv);
-		while (sc->sc_bs_lwp != NULL)
-			kpause("fssdetach", false, 1, &sc->sc_slock);
 		mutex_exit(&sc->sc_slock);
+		kthread_join(sc->sc_bs_lwp);
 
 		disk_detach(sc->sc_dkdev);
 	}
@@ -1056,7 +1056,6 @@ fss_bs_thread(void *arg)
 			cv_wait(&sc->sc_work_cv, &sc->sc_slock);
 		thread_idle = true;
 		if ((sc->sc_flags & FSS_BS_THREAD) == 0) {
-			sc->sc_bs_lwp = NULL;
 			mutex_exit(&sc->sc_slock);
 			kthread_exit(0);
 		}
