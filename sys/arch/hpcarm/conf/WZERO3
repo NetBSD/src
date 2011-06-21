@@ -1,13 +1,14 @@
-#	$NetBSD: WZERO3,v 1.19 2011/03/06 17:08:25 bouyer Exp $
+#	$NetBSD: WZERO3,v 1.20 2011/06/21 15:23:57 kiyohara Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
 
 include	"arch/hpcarm/conf/std.pxa2x0"
+include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.19 $"
+#ident 		"GENERIC-$Revision: 1.20 $"
 
 # estimated number of users
 maxusers	32
