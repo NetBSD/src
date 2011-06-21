@@ -294,6 +294,28 @@ the performance impact for storing such information would be prohibitive.
 There are a number of allocator implementations available on the Internet
 which focus on detecting and pinpointing problems by trading performance for
 extra sanity checks and detailed diagnostics.
+.Sh ENVIRONMENT
+The following environment variables affect the execution of the allocation
+functions:
+.Bl -tag -width ".Ev MALLOC_OPTIONS"
+.It Ev MALLOC_OPTIONS
+If the environment variable
+.Ev MALLOC_OPTIONS
+is set, the characters it contains will be interpreted as flags to the
+allocation functions.
+.El
+.Sh EXAMPLES
+To dump core whenever a problem occurs:
+.Pp
+.Bd -literal -offset indent
+ln -s 'A' /etc/malloc.conf
+.Ed
+.Pp
+To specify in the source that a program does no return value checking
+on calls to these functions:
+.Bd -literal -offset indent
+_malloc_options = "X";
+.Ed
 .Sh DIAGNOSTICS
 If any of the memory allocation/deallocation functions detect an error or
 warning condition, a message will be printed to file descriptor
@@ -319,28 +341,6 @@ this function is likely to result in a crash or deadlock.
 .Pp
 All messages are prefixed by
 .Dq Ao Ar progname Ac Ns Li \&: Pq malloc .
-.Sh ENVIRONMENT
-The following environment variables affect the execution of the allocation
-functions:
-.Bl -tag -width ".Ev MALLOC_OPTIONS"
-.It Ev MALLOC_OPTIONS
-If the environment variable
-.Ev MALLOC_OPTIONS
-is set, the characters it contains will be interpreted as flags to the
-allocation functions.
-.El
-.Sh EXAMPLES
-To dump core whenever a problem occurs:
-.Pp
-.Bd -literal -offset indent
-ln -s 'A' /etc/malloc.conf
-.Ed
-.Pp
-To specify in the source that a program does no return value checking
-on calls to these functions:
-.Bd -literal -offset indent
-_malloc_options = "X";
-.Ed
 .Sh SEE ALSO
 .Xr emalloc 3 ,
 .Xr malloc 3 ,
