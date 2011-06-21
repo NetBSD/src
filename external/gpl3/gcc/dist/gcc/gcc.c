@@ -1753,14 +1753,34 @@ init_gcc_specs (struct obstack *obstack, const char *shared_name,
 {
   char *buf;
 
-  buf = concat ("%{static|static-libgcc:", static_name, " ", eh_name, "}"
+  buf = concat ("%{static",
+#ifdef LIBGCC_PICSUFFIX
+		": ", static_name, " ", eh_name, "}",
+		"%{static-libgcc: ",
+		"%{!shared:", static_name, " ", eh_name, "}",
+		"%{shared:", static_name, LIBGCC_PICSUFFIX, " ",
+		eh_name, LIBGCC_PICSUFFIX, "}",
+#else
+ 		"|static-libgcc:", static_name, " ", eh_name,
+#endif
+		"}"
 		"%{!static:%{!static-libgcc:"
 #if USE_LD_AS_NEEDED
+		"%{!shared:"
 		"%{!shared-libgcc:",
 		static_name, " --as-needed ", shared_name, " --no-as-needed"
 		"}"
 		"%{shared-libgcc:",
 		shared_name, "%{!shared: ", static_name, "}"
+		"}"
+		"}"
+		"%{shared:"
+		"%{shared-libgcc: --as-needed", shared_name, " --no-as-needed} ",
+		"%{!shared-libgcc:", static_name,
+#ifdef LIBGCC_PICSUFFIX
+		LIBGCC_PICSUFFIX,
+#endif
+		"}"
 		"}"
 #else
 		"%{!shared:"
@@ -1770,7 +1790,11 @@ init_gcc_specs (struct obstack *obstack, const char *shared_name,
 #ifdef LINK_EH_SPEC
 		"%{shared:"
 		"%{shared-libgcc:", shared_name, "}"
-		"%{!shared-libgcc:", static_name, "}"
+		"%{!shared-libgcc:", static_name,
+#ifdef LIBGCC_PICSUFFIX
+		LIBGCC_PICSUFFIX,
+#endif
+		"}"
 		"}"
 #else
 		"%{shared:", shared_name, "}"
@@ -3629,6 +3653,10 @@ process_command (int argc, const char **argv)
   /* FIXME: make_relative_prefix doesn't yet work for VMS.  */
   if (!gcc_exec_prefix)
     {
+#ifdef NETBSD_NATIVE
+      add_prefix (&exec_prefixes, standard_libexec_prefix, "GCC",
+		  PREFIX_PRIORITY_LAST, 0, 0);
+#else
       gcc_exec_prefix = get_relative_prefix (argv[0],
 					     standard_bindir_prefix,
 					     standard_exec_prefix);
@@ -3638,6 +3666,7 @@ process_command (int argc, const char **argv)
       if (gcc_exec_prefix)
 	xputenv (concat ("GCC_EXEC_PREFIX=", gcc_exec_prefix, NULL));
     }
+#endif
   else
     {
       /* make_relative_prefix requires a program name, but
@@ -6938,6 +6967,7 @@ main (int argc, char **argv)
   else
     init_spec ();
 
+#ifndef NETBSD_NATIVE
   /* We need to check standard_exec_prefix/just_machine_suffix/specs
      for any override of as, ld and libraries.  */
   specs_file = (char *) alloca (strlen (standard_exec_prefix)
@@ -6948,6 +6978,7 @@ main (int argc, char **argv)
   strcat (specs_file, "specs");
   if (access (specs_file, R_OK) == 0)
     read_specs (specs_file, TRUE);
+#endif
 
   /* Process any configure-time defaults specified for the command line
      options, via OPTION_DEFAULT_SPECS.  */
@@ -7085,6 +7116,7 @@ main (int argc, char **argv)
 		      NULL, PREFIX_PRIORITY_LAST, 0, 1);
 	}
 
+#ifndef NETBSD_NATIVE
       /* Sysrooted prefixes are relocated because target_system_root is
 	 also relocated by gcc_exec_prefix.  */
       if (*standard_startfile_prefix_1)
@@ -7095,6 +7127,7 @@ main (int argc, char **argv)
 	add_sysrooted_prefix (&startfile_prefixes,
 			      standard_startfile_prefix_2, "BINUTILS",
 			      PREFIX_PRIORITY_LAST, 0, 1);
+#endif /* NETBSD_NATIVE */
     }
 
   /* Process any user specified specs in the order given on the command

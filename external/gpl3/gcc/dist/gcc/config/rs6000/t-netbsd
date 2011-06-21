@@ -18,14 +18,11 @@
 # along with GCC; see the file COPYING3.  If not see
 # <http://www.gnu.org/licenses/>.
 
-LIB2FUNCS_EXTRA = tramp.S
+LIB2FUNCS_EXTRA = $(srcdir)/config/rs6000/tramp.asm
 
 LIB2FUNCS_STATIC_EXTRA = crtsavfpr.S crtresfpr.S \
   crtsavgpr.S crtresgpr.S \
   crtresxfpr.S crtresxgpr.S
-
-tramp.S: $(srcdir)/config/rs6000/tramp.asm
-	cat $(srcdir)/config/rs6000/tramp.asm > tramp.S
 
 crtsavfpr.S: $(srcdir)/config/rs6000/crtsavfpr.asm
 	cat $(srcdir)/config/rs6000/crtsavfpr.asm >crtsavfpr.S
