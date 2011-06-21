@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.73 2011/06/12 03:35:51 rmind Exp $ */
+/* $NetBSD: cgd.c,v 1.74 2011/06/21 06:23:38 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.73 2011/06/12 03:35:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.74 2011/06/21 06:23:38 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.73 2011/06/12 03:35:51 rmind Exp $");
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/pool.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
@@ -939,20 +940,22 @@ hexprint(const char *start, void *buf, int len)
 }
 #endif
 
-#ifdef _MODULE
-
-#include <sys/module.h>
-
 MODULE(MODULE_CLASS_DRIVER, cgd, NULL);
+
+#ifdef _MODULE
 CFDRIVER_DECL(cgd, DV_DISK, NULL);
+#endif
 
 static int
 cgd_modcmd(modcmd_t cmd, void *arg)
 {
-	int bmajor = -1, cmajor = -1,  error = 0;
-	
+	int bmajor, cmajor, error = 0;
+
+	bmajor = cmajor = -1;
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		error = config_cfdriver_attach(&cgd_cd);
 		if (error)
 			break;
@@ -964,7 +967,7 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 			    cgd_cd.cd_name);
 			break;
 		}
-		
+
 		error = devsw_attach("cgd", &cgd_bdevsw, &bmajor,
 		    &cgd_cdevsw, &cmajor);
 		if (error) {
@@ -972,15 +975,17 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 			config_cfdriver_detach(&cgd_cd);
 			break;
 		}
-		
+#endif
 		break;
 
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		error = config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
 		if (error)
 			break;
 		config_cfdriver_detach(&cgd_cd);
 		devsw_detach(&cgd_bdevsw, &cgd_cdevsw);
+#endif
 		break;
 
 	case MODULE_CMD_STAT:
@@ -992,5 +997,3 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 
 	return error;
 }
-
-#endif
