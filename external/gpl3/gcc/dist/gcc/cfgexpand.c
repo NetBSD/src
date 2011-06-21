@@ -1080,7 +1080,9 @@ stack_protect_classify_type (tree type)
 	  else
 	    len = tree_low_cst (TYPE_SIZE_UNIT (type), 1);
 
-	  if (len < max)
+	  if (len == 0)
+	    ret = SPCT_HAS_ARRAY;
+	  else if (len < max)
 	    ret = SPCT_HAS_SMALL_CHAR_ARRAY | SPCT_HAS_ARRAY;
 	  else
 	    ret = SPCT_HAS_LARGE_CHAR_ARRAY | SPCT_HAS_ARRAY;

@@ -2511,7 +2511,7 @@ rs6000_override_options (const char *default_cpu)
   if (!rs6000_explicit_options.long_double)
     rs6000_long_double_type_size = RS6000_DEFAULT_LONG_DOUBLE_SIZE;
 
-#ifndef POWERPC_LINUX
+#if !defined(POWERPC_LINUX) && !defined(POWERPC_NETBSD)
   if (!rs6000_explicit_options.ieee)
     rs6000_ieeequad = 1;
 #endif

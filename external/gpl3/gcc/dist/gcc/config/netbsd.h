@@ -46,15 +46,19 @@ along with GCC; see the file COPYING3.  If not see
 #undef GPLUSPLUS_INCLUDE_DIR
 #define GPLUSPLUS_INCLUDE_DIR "/usr/include/g++"
 
+#undef GPLUSPLUS_BACKWARD_INCLUDE_DIR
+#define GPLUSPLUS_BACKWARD_INCLUDE_DIR "/usr/include/g++/backward"
+
 #undef GCC_INCLUDE_DIR
 #define GCC_INCLUDE_DIR "/usr/include"
 
 #undef INCLUDE_DEFAULTS
-#define INCLUDE_DEFAULTS			\
-  {						\
-    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },	\
-    { GCC_INCLUDE_DIR, "GCC", 0, 0 },		\
-    { 0, 0, 0, 0 }				\
+#define INCLUDE_DEFAULTS				\
+  {							\
+    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },		\
+    { GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1 },	\
+    { GCC_INCLUDE_DIR, "GCC", 0, 0 },			\
+    { 0, 0, 0, 0 }					\
   }
 
 /* Under NetBSD, the normal location of the compiler back ends is the
@@ -68,6 +72,15 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef STANDARD_STARTFILE_PREFIX
 #define STANDARD_STARTFILE_PREFIX	"/usr/lib/"
+
+#undef TOOLDIR_BASE_PREFIX
+#define TOOLDIR_BASE_PREFIX		"/usr/"
+
+#undef STANDARD_BINDIR_PREFIX
+#define STANDARD_BINDIR_PREFIX		"/usr/bin"
+
+#undef STANDARD_LIBEXEC_PREFIX
+#define STANDARD_LIBEXEC_PREFIX		STANDARD_EXEC_PREFIX
 
 #endif /* NETBSD_NATIVE */
 
@@ -97,6 +110,7 @@ along with GCC; see the file COPYING3.  If not see
        %{!pg:-lposix}}		\
      %{p:-lposix_p}		\
      %{pg:-lposix_p}}		\
+   %{shared:-lc}		\
    %{!shared:			\
      %{!symbolic:		\
        %{!p:			\
@@ -110,6 +124,7 @@ along with GCC; see the file COPYING3.  If not see
        %{!pg:-lposix}}		\
      %{p:-lposix_p}		\
      %{pg:-lposix_p}}		\
+   %{shared:-lc}		\
    %{!shared:			\
      %{!symbolic:		\
        %{!p:			\
@@ -121,24 +136,22 @@ along with GCC; see the file COPYING3.  If not see
 #undef LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
 
-/* Provide a LIBGCC_SPEC appropriate for NetBSD.  We also want to exclude
-   libgcc with -symbolic.  */
+/* Don't provide a LIBGCC_SPEC appropriate for NetBSD as the default
+   is correct. In the --disabled-shared case -lgcc is perfect.  */
 
-#ifdef NETBSD_NATIVE
-#define NETBSD_LIBGCC_SPEC	\
-  "%{!symbolic:			\
-     %{!shared:			\
-       %{!p:			\
-	 %{!pg: -lgcc}}}	\
-     %{shared: -lgcc_pic}	\
-     %{p: -lgcc_p}		\
-     %{pg: -lgcc_p}}"
-#else
-#define NETBSD_LIBGCC_SPEC "%{!shared:%{!symbolic: -lgcc}}"
+#if defined(NETBSD_TOOLS) || defined(NETBSD_NATIVE)
+#define LIBGCC_PICSUFFIX	"_pic"
 #endif
 
-#undef LIBGCC_SPEC
-#define LIBGCC_SPEC NETBSD_LIBGCC_SPEC
+/* Pass -cxx-isystem to cc1/cc1plus.  */
+#define NETBSD_CC1_AND_CC1PLUS_SPEC		\
+  "%{cxx-isystem}"
+
+#undef CC1_SPEC
+#define CC1_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC
+
+#undef CC1PLUS_SPEC
+#define CC1PLUS_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC
 
 /* When building shared libraries, the initialization and finalization 
    functions for the library are .init and .fini respectively.  */

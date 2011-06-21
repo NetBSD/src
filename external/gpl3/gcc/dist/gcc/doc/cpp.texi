@@ -1160,6 +1160,9 @@ command line.  If the same directory is named by both @option{-I} and
 @option{-isystem}, the @option{-I} option is ignored.  GCC provides an
 informative message when this occurs if @option{-v} is used.
 
+The @option{-cxx-isystem} command line option adds its argument to the
+list of C++ system headers, similar to @option{-isystem} for C headers.
+
 @findex #pragma GCC system_header
 There is also a directive, @code{@w{#pragma GCC system_header}}, which
 tells GCC to consider the rest of the current include file a system
@@ -4349,6 +4352,7 @@ without notice.
 @c man begin SYNOPSIS
 cpp [@option{-D}@var{macro}[=@var{defn}]@dots{}] [@option{-U}@var{macro}]
     [@option{-I}@var{dir}@dots{}] [@option{-iquote}@var{dir}@dots{}]
+    [@option{-iremap}@var{src}:@var{dst}]
     [@option{-W}@var{warn}@dots{}]
     [@option{-M}|@option{-MM}] [@option{-MG}] [@option{-MF} @var{filename}]
     [@option{-MP}] [@option{-MQ} @var{target}@dots{}]
