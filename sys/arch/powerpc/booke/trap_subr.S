@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.5 2011/06/18 06:37:38 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.6 2011/06/21 05:33:04 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: trap_subr.S,v 1.5 2011/06/18 06:37:38 matt Exp $")
+RCSID("$NetBSD: trap_subr.S,v 1.6 2011/06/21 05:33:04 matt Exp $")
 
 	.globl	_C_LABEL(sctrapexit), _C_LABEL(trapexit), _C_LABEL(intrcall)
 
@@ -466,7 +466,6 @@ _C_LABEL(system_call_vector):
 	blrl					/* syscall(tf) */
 _C_LABEL(sctrapexit):
 	wrteei	0				/* disable interrupts */
-	mfsprg2	%r3				/* get curlwp */
 	lwz	%r4, L_MD_ASTPENDING(%r13)	/* get ast pending */
 	cmplwi	%r4, 0				/* is there an ast pending */
 	beq+	trapdone			/*    nope, proceed to exit */
