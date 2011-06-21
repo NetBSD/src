@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.2 2011/01/18 01:11:50 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.3 2011/06/21 06:43:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.2 2011/01/18 01:11:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.3 2011/06/21 06:43:38 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -94,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.2 2011/01/18 01:11:50 matt Exp $")
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#define __PMAP_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
