@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.5 2011/06/18 14:47:36 joerg Exp $
+# $NetBSD: Makefile.cdrom,v 1.6 2011/06/21 21:49:22 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -43,6 +43,7 @@ CDRUNTIME+=	./usr/lib/libedit.so*
 CDRUNTIME+=	./usr/lib/libgcc_s.so*
 CDRUNTIME+=	./usr/lib/libintl.so*
 CDRUNTIME+=	./usr/lib/libkvm.so*
+CDRUNTIME+=	./usr/lib/liblzma.so*
 CDRUNTIME+=	./usr/lib/libterminfo.so*
 CDRUNTIME+=	./usr/lib/libutil.so*
 CDRUNTIME+=	./usr/lib/libz.so*
