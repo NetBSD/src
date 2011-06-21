@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pmtr.c,v 1.6 2011/06/21 03:37:21 jruoho Exp $ */
+/*	$NetBSD: acpi_pmtr.c,v 1.7 2011/06/21 09:49:05 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pmtr.c,v 1.6 2011/06/21 03:37:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pmtr.c,v 1.7 2011/06/21 09:49:05 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -338,8 +338,6 @@ acpipmtr_sensor_init(device_t self)
 	sc->sc_sensor_o.units = ENVSYS_SWATTS;
 	sc->sc_sensor_i.value_cur = val * 1000;
 	sc->sc_sensor_o.value_cur = val * 1000;
-	sc->sc_sensor_i.state = ENVSYS_SINVALID;
-	sc->sc_sensor_o.state = ENVSYS_SINVALID;
 
 	acpipmtr_sensor_type(self);
 
