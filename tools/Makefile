@@ -1,12 +1,15 @@
-#	$NetBSD: Makefile,v 1.145 2011/04/15 18:05:45 elric Exp $
+#	$NetBSD: Makefile,v 1.146 2011/06/21 02:15:41 mrg Exp $
 
 .include <bsd.own.mk>
 
 .if defined(HAVE_GCC)
-.if ${HAVE_GCC} == "4"
 TOOLCHAIN_BITS= gmake .WAIT
-.endif
 .if ${TOOLCHAIN_MISSING} == "no"
+.if ${HAVE_GCC} >= 45
+TOOLCHAIN_BITS+= gmp .WAIT
+TOOLCHAIN_BITS+= mpfr .WAIT
+TOOLCHAIN_BITS+= mpc .WAIT
+.endif
 TOOLCHAIN_BITS+= binutils .WAIT
 TOOLCHAIN_BITS+= gcc
 .  if ${MKCROSSGDB:Uno} != "no"
