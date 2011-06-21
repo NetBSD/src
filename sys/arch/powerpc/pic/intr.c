@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.16 2011/06/20 06:23:52 matt Exp $ */
+/*	$NetBSD: intr.c,v 1.17 2011/06/21 18:02:43 rjs Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16 2011/06/20 06:23:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17 2011/06/21 18:02:43 rjs Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -319,7 +319,7 @@ mapirq(int hwirq)
 	is->is_pic = pic;
 	virq_map[hwirq] = virq;
 #ifdef PIC_DEBUG
-	printf("mapping hwirq %d to virq %d\n", irq, virq);
+	printf("mapping hwirq %d to virq %d\n", hwirq, virq);
 #endif
 	return virq;
 }
