@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.9 2011/06/14 14:33:50 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.10 2011/06/21 15:23:57 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.9 2011/06/14 14:33:50 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.10 2011/06/21 15:23:57 kiyohara Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.9 2011/06/14 14:33:50 kiyoh
 #include <sys/boot_flag.h>
 #include <sys/conf.h>	/* XXX for consinit related hacks */
 #include <sys/device.h>
-#include <sys/termios.h>
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
@@ -89,21 +88,11 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.9 2011/06/14 14:33:50 kiyoh
 #include <machine/intr.h>
 #include <machine/io.h>
 #include <machine/platid.h>
-#include <machine/platid_mask.h>
 #include <machine/rtc.h>
 #include <machine/signal.h>
 
-#include <dev/cons.h>
 #include <dev/hpc/apm/apmvar.h>
-#include <dev/hpc/bicons.h>
-
-#include "com.h"
-#if (NCOM > 0)
-#include "opt_com.h"
-#include <dev/ic/comvar.h>
-#endif	/* NCOM > 0 */
-#include "lcd.h"
-#include "wzero3lcd.h"
+#include <dev/ic/comreg.h>
 
 #include <sys/mount.h>
 #include <nfs/rpcv2.h>
@@ -181,11 +170,12 @@ u_int cpu_get_control(void);
 
 u_int initarm(int, char **, struct bootinfo *);
 
+/* Machine dependent initialize function */
+extern void pxa2x0_machdep_init(void);
+
 /* Mode dependent sleep function holder */
 extern void (*__sleep_func)(void *);
 extern void *__sleep_ctx;
-
-extern void (*__cpu_reset)(void);
 
 #ifdef DEBUG_BEFOREMMU
 static void	fakecninit(void);
@@ -261,85 +251,8 @@ const struct pmap_devmap pxa2x0_devmap[] = {
 };
 #undef	_A
 #undef	_S
+extern const struct pmap_devmap machdep_devmap[];
 
-static void
-ws003sh_cpu_reset(void)
-{
-	uint32_t rv;
-
-	rv = pxa2x0_memctl_read(MEMCTL_MSC0);
-	if ((rv & 0xffff0000) == 0x7ff00000) {
-		pxa2x0_memctl_write(MEMCTL_MSC0, (rv & 0xffff) | 0x7ee00000);
-	}
-
-	pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
-	for (;;)
-		continue;
-}
-
-static struct pxa2x0_gpioconf ws003sh_boarddep_gpioconf[] = {
-	/* FFUART */
-	{  98, GPIO_ALT_FN_3_OUT },	/* FFRTS */
-	{  99, GPIO_ALT_FN_3_OUT },	/* FFTXD */
-	/* SSP3 */
-	{  34, GPIO_ALT_FN_3_OUT },	/* SSPSCLK3 */
-	{  38, GPIO_ALT_FN_1_OUT },	/* SSPTXD3 */
-	{  82, GPIO_ALT_FN_1_IN },	/* SSPRXD3 */
-
-	{ -1 }
-};
-
-static struct pxa2x0_gpioconf ws007sh_boarddep_gpioconf[] = {
-	/* FFUART */
-	{  98, GPIO_ALT_FN_3_OUT },	/* FFRTS */
-	{  99, GPIO_ALT_FN_3_OUT },	/* FFTXD */
-	/* SSP2 */
-	{  19, GPIO_ALT_FN_1_OUT },	/* SSPSCLK2 */
-	{  86, GPIO_ALT_FN_1_IN },	/* SSPRXD2 */
-	{  87, GPIO_ALT_FN_1_OUT },	/* SSPTXD2 */
-	/* SSP3 */
-	{  38, GPIO_ALT_FN_1_OUT },	/* SSPTXD3 */
-	{  52, GPIO_ALT_FN_2_OUT },	/* SSPSCLK3 */
-	{  89, GPIO_ALT_FN_1_IN },	/* SSPRXD3 */
-
-	{ -1 }
-};
-
-static struct pxa2x0_gpioconf ws011sh_boarddep_gpioconf[] = {
-	/* FFUART */
-	{  98, GPIO_ALT_FN_3_OUT },	/* FFRTS */
-	{  99, GPIO_ALT_FN_3_OUT },	/* FFTXD */
-	/* SSP2 */
-	{  19, GPIO_ALT_FN_1_OUT },	/* SSPSCLK2 */
-	{  86, GPIO_ALT_FN_1_IN },	/* SSPRXD2 */
-	{  87, GPIO_ALT_FN_1_OUT },	/* SSPTXD2 */
-
-	{ -1 }
-};
-
-static struct pxa2x0_gpioconf *ws003sh_gpioconf[] = {
-	pxa27x_com_ffuart_gpioconf,
-	pxa27x_pxamci_gpioconf,
-	pxa27x_ohci_gpioconf,
-	ws003sh_boarddep_gpioconf,
-	NULL
-};
-
-static struct pxa2x0_gpioconf *ws007sh_gpioconf[] = {
-	pxa27x_com_ffuart_gpioconf,
-	pxa27x_pxamci_gpioconf,
-	pxa27x_ohci_gpioconf,
-	ws007sh_boarddep_gpioconf,
-	NULL
-};
-
-static struct pxa2x0_gpioconf *ws011sh_gpioconf[] = {
-	pxa27x_com_ffuart_gpioconf,
-	pxa27x_pxamci_gpioconf,
-	pxa27x_ohci_gpioconf,
-	ws011sh_boarddep_gpioconf,
-	NULL
-};
 
 static inline pd_entry_t *
 read_ttb(void)
@@ -440,38 +353,16 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	pxa2x0_clkman_bootstrap(PXA2X0_CLKMAN_VBASE);
 	pxa2x0_gpio_bootstrap(PXA2X0_GPIO_VBASE);
 
-	if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS003SH)
-	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS004SH)
-	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS007SH)
-	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS011SH)
-	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS020SH)) {
-		if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS003SH)
-		 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS004SH)) {
-			pxa2x0_gpio_config(ws003sh_gpioconf);
-			__cpu_reset = ws003sh_cpu_reset;
-		} else if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS007SH)) {
-			pxa2x0_gpio_config(ws007sh_gpioconf);
-		} else if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS011SH)) {
-			pxa2x0_gpio_config(ws011sh_gpioconf);
-		}
-		pxa2x0_clkman_config(CKEN_FFUART, 1);
-		pxa2x0_clkman_config(CKEN_OST, 1);
-		pxa2x0_clkman_config(CKEN_USBHC, 0);
-		pxa2x0_clkman_config(CKEN_USBDC, 0);
-		pxa2x0_clkman_config(CKEN_AC97, 0);
-		pxa2x0_clkman_config(CKEN_SSP, 0);
-		pxa2x0_clkman_config(CKEN_HWUART, 0);
-		pxa2x0_clkman_config(CKEN_STUART, 0);
-		pxa2x0_clkman_config(CKEN_BTUART, 0);
-		pxa2x0_clkman_config(CKEN_I2S, 0);
-		pxa2x0_clkman_config(CKEN_MMC, 0);
-		pxa2x0_clkman_config(CKEN_FICP, 0);
-		pxa2x0_clkman_config(CKEN_I2C, 0);
-		pxa2x0_clkman_config(CKEN_PWM1, 0);
-		if (!platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS011SH)) {
-			pxa2x0_clkman_config(CKEN_PWM0, 0); /* WS011SH: DON'T DISABLE */
-		}
-	}
+	/*
+	 * XXX for now, overwrite bootconfig to hardcoded values in
+	 * XXX pxa2x0_machdep_init().
+	 * XXX kill bootconfig and directly call uvm_physload
+	 */
+	bootconfig.dram[0].address = 0xa0000000;
+	bootconfig.dram[0].pages = DRAM_PAGES;
+	bootconfig.dramblocks = 1;
+
+	pxa2x0_machdep_init();
 
 #ifdef DEBUG_BEFOREMMU
 	/*
@@ -481,24 +372,6 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	 */
 	fakecninit();
 #endif
-
-	/*
-	 * XXX for now, overwrite bootconfig to hardcoded values.
-	 * XXX kill bootconfig and directly call uvm_physload
-	 */
-	bootconfig.dram[0].address = 0xa0000000;
-	bootconfig.dram[0].pages = DRAM_PAGES;
-	bootconfig.dramblocks = 1;
-
-	if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS003SH)
-	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS004SH)
-	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS007SH)) {
-		bootconfig.dram[0].pages = 16384; /* 64MiB */
-	} else
-	if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS011SH)
-	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS020SH)) {
-		bootconfig.dram[0].pages = 32768; /* 128MiB */
-	}
 
 	kerneldatasize = (uint32_t)&end - (uint32_t)KERNEL_TEXT_BASE;
 	symbolsize = 0;
@@ -730,6 +603,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	 * so that we can continue to use console.
 	 */
 	pmap_devmap_bootstrap(l1pagetable, pxa2x0_devmap);
+	pmap_devmap_bootstrap(l1pagetable, machdep_devmap);
 
 	/*
 	 * Give the XScale global cache clean code an appropriately
@@ -861,60 +735,6 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 
 	/* We return the new stack pointer address */
 	return (kernelstack.pv_va + USPACE_SVC_STACK_TOP);
-}
-
-#if (NCOM > 0) && defined(COM_PXA2X0)
-#ifndef	CONSPEED
-#define	CONSPEED 9600
-#endif
-#ifndef	CONMODE
-#define	CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-#endif
-
-int comcnspeed = CONSPEED;
-int comcnmode = CONMODE;
-
-#if defined(HWUARTCONSOLE)
-#define	CONADDR	PXA2X0_HWUART_BASE
-#elsif defined(BTUARTCONSOLE)
-#define	CONADDR	PXA2X0_BTUART_BASE
-#elsif defined(STUARTCONSOLE)
-#define	CONADDR	PXA2X0_STUART_BASE
-#else
-#define	CONADDR	PXA2X0_FFUART_BASE
-#endif
-
-bus_addr_t comcnaddr = CONADDR;
-#endif	/* NCOM > 0 && COM_PXA2X0 */
-
-void
-consinit(void)
-{
-	static int consinit_called = 0;
-
-	if (consinit_called != 0)
-		return;
-
-	consinit_called = 1;
-	if (bootinfo->bi_cnuse == BI_CNUSE_SERIAL) {
-#if (NCOM > 0) && defined(COM_PXA2X0)
-		comcnattach(&pxa2x0_a4x_bs_tag, comcnaddr, comcnspeed,
-		    PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode);
-#endif
-	} else {
-#if (NLCD > 0)
-#if NWZERO3LCD > 0
-		if (platid_match(&platid,&platid_mask_MACH_SHARP_WZERO3_WS003SH)
-		 || platid_match(&platid,&platid_mask_MACH_SHARP_WZERO3_WS004SH)
-		 || platid_match(&platid,&platid_mask_MACH_SHARP_WZERO3_WS007SH)
-		 || platid_match(&platid,&platid_mask_MACH_SHARP_WZERO3_WS011SH)
-		 || platid_match(&platid,&platid_mask_MACH_SHARP_WZERO3_WS020SH)) {
-			extern void wzero3lcd_cnattach(void);
-			wzero3lcd_cnattach();
-		}
-#endif
-#endif
-	}
 }
 
 #ifdef DEBUG_BEFOREMMU
