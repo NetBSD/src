@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.61 2011/06/18 06:41:41 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.62 2011/06/21 06:38:50 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61 2011/06/18 06:41:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2011/06/21 06:38:50 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -297,17 +297,8 @@ trap(struct trapframe *tf)
 		break;
 
 	case EXC_AST|EXC_USER:
-		l->l_md.md_astpending = 0;	/* we are about to do it */
-		//curcpu()->ci_data.cpu_nast++;
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
-		/* Check whether we are being preempted. */
-		if (curcpu()->ci_want_resched)
-			preempt();
+		cpu_ast(l, curcpu());
 		break;
-
 
 	case EXC_ALI|EXC_USER:
 		if (fix_unaligned(l, tf) != 0) {
