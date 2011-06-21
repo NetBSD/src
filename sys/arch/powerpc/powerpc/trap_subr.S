@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.70 2011/06/17 05:10:53 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.71 2011/06/21 05:15:44 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -962,13 +962,7 @@ trapexit:
 /* Test AST pending: */
 	mtcr	%r31
 	bf	MSR_PR,trapleave	/* branch if PSL_PR is false */
-#if 0
-	GET_CPUINFO(%r3)
-	ldptr	%r3,CI_CURLWP(%r3)
-	ldint	%r4,L_MD_ASTPENDING(%r3)
-#else
 	ldint	%r4,L_MD_ASTPENDING(%r13)
-#endif
 	andi.	%r4,%r4,1
 	beq	trapleave
 
