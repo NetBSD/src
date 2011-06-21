@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68 2011/06/20 08:13:17 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69 2011/06/21 04:21:44 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2011/06/20 08:13:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2011/06/21 04:21:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -702,7 +702,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 {
 
 	memcpy((void *)dst, (void *)src, PAGE_SIZE);
-	dcache_flush_page(dst);
+	dcache_wbinv_page(dst);
 }
 
 /*
