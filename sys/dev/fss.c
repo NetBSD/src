@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.75 2011/06/12 03:35:51 rmind Exp $	*/
+/*	$NetBSD: fss.c,v 1.76 2011/06/21 12:41:24 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.75 2011/06/12 03:35:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.76 2011/06/21 12:41:24 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -978,12 +978,13 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 	vn_lock(sc->sc_bs_vp, LK_EXCLUSIVE|LK_RETRY);
 
 	error = vn_rdwr((rw == FSS_READ ? UIO_READ : UIO_WRITE), sc->sc_bs_vp,
-	    data, len, off, UIO_SYSSPACE, IO_UNIT|IO_NODELOCKED,
+	    data, len, off, UIO_SYSSPACE,
+	    IO_ADV_ENCODE(POSIX_FADV_NOREUSE) | IO_NODELOCKED,
 	    sc->sc_bs_lwp->l_cred, NULL, NULL);
 	if (error == 0) {
 		mutex_enter(sc->sc_bs_vp->v_interlock);
 		error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(off),
-		    round_page(off+len), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
+		    round_page(off+len), PGO_CLEANIT | PGO_FREE | PGO_SYNCIO);
 	}
 
 	VOP_UNLOCK(sc->sc_bs_vp);
