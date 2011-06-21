@@ -185,6 +185,7 @@ MAC		({B}:{B}:{B}:{B}:{B}:{B}|{B}\-{B}\-{B}\-{B}\-{B}\-{B}|{B}\.{B}\.{B}\.{B}\.{
 
 
 %option nounput
+%option noinput
 
 %%
 dst		return DST;
