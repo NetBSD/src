@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.13 2011/06/21 17:17:27 nonaka Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.14 2011/06/21 18:13:19 nonaka Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.13 2011/06/21 17:17:27 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.14 2011/06/21 18:13:19 nonaka Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #if 0	/* XXX */
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.13 2011/06/21 17:17:27 nonaka Exp $");
 
 #include <zaurus/zaurus/zaurus_var.h>
 #include <zaurus/dev/zkbdmap.h>
+#include <zaurus/dev/zlcdvar.h>
 
 static const int gpio_sense_pins_c3000[] = {
 	12,
@@ -298,10 +299,11 @@ zkbd_poll(void *v)
 {
 	struct zkbd_softc *sc = (struct zkbd_softc *)v;
 	int i, j, col, pin, type, keysdown = 0;
+	int stuck;
 	int keystate;
 	int s;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	int npress = 0, ncbuf = 0;
+	int npress = 0, ncbuf = 0, c;
 	char cbuf[MAXKEYS * 2];
 #endif
 
@@ -372,7 +374,7 @@ zkbd_poll(void *v)
 		(sc->sc_keystate[14] ? (1 << 2) : 0)); /* 'alt' */
 
 	for (i = 0; i < sc->sc_nsense * sc->sc_nstrobe; i++) {
-		int stuck = 0;
+		stuck = 0;
 		/* extend  xt_keymap to do this faster. */
 		/* ignore 'stuck' keys' */
 		for (j = 0; j < __arraycount(stuck_keys); j++) {
@@ -388,9 +390,9 @@ zkbd_poll(void *v)
 		keysdown |= keystate; /* if any keys held */
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-		if (!sc->sc_polling && sc->sc_rawkbd) {
-			if (keystate || sc->sc_okeystate[i] != keystate) {
-				int c = sc->sc_xt_keymap[i];
+		if (sc->sc_polling == 0 && sc->sc_rawkbd) {
+			if ((keystate) || (sc->sc_okeystate[i] != keystate)) {
+				c = sc->sc_xt_keymap[i];
 				if (c & 0x80) {
 					cbuf[ncbuf++] = 0xe0;
 				}
@@ -410,7 +412,7 @@ zkbd_poll(void *v)
 		}
 #endif
 
-		if (!sc->sc_rawkbd && (sc->sc_okeystate[i] != keystate)) {
+		if ((!sc->sc_rawkbd) && (sc->sc_okeystate[i] != keystate)) {
 			type = keystate ? WSCONS_EVENT_KEY_DOWN :
 			    WSCONS_EVENT_KEY_UP;
 
@@ -426,7 +428,7 @@ zkbd_poll(void *v)
 	}
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	if (!sc->sc_polling && sc->sc_rawkbd) {
+	if (sc->sc_polling == 0 && sc->sc_rawkbd) {
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, ncbuf);
 		sc->sc_nrep = npress;
 		if (npress != 0)
@@ -511,9 +513,9 @@ zkbd_hinge(void *v)
 		if (lid_suspend)
 			apm_suspends++;
 #endif
-		pmf_event_inject(NULL, PMFE_DISPLAY_OFF);
+		lcd_blank(1);
 	} else {
-		pmf_event_inject(NULL, PMFE_DISPLAY_ON);
+		lcd_blank(0);
 	}
 
 	return 1;
