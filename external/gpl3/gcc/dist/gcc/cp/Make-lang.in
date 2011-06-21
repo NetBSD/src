@@ -107,6 +107,8 @@ cc1plus$(exeext): $(CXX_OBJS) cc1plus-checksum.o $(BACKEND) $(LIBDEPS)
 
 # Special build rules.
 $(srcdir)/cp/cfns.h: $(srcdir)/cp/cfns.gperf
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_cfns.h:
 	gperf -o -C -E -k '1-6,$$' -j1 -D -N 'libc_name_p' -L ANSI-C \
 		$(srcdir)/cp/cfns.gperf > $(srcdir)/cp/cfns.h
 
