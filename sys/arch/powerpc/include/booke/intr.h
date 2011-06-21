@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2011/06/15 15:11:50 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2011/06/21 04:19:22 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -79,6 +79,8 @@
 
 #ifndef _LOCORE
 
+struct cpu_info;
+
 void 	*intr_establish(int, int, int, int (*)(void *), void *);
 void 	intr_disestablish(void *);
 void	intr_cpu_attach(struct cpu_info *);
@@ -110,6 +112,8 @@ typedef struct {
 } ipl_cookie_t;
 
 #ifdef __INTR_PRIVATE
+
+struct trapframe;
 
 struct intrsw {
 	void *(*intrsw_establish)(int, int, int, int (*)(void *), void *);
