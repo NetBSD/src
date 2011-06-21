@@ -1,4 +1,4 @@
-/* $NetBSD: ibmhawk.c,v 1.2 2011/02/14 14:15:25 hannken Exp $ */
+/* $NetBSD: ibmhawk.c,v 1.3 2011/06/21 12:38:27 hannken Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -313,9 +313,6 @@ ibmhawk_set(struct ibmhawk_softc *sc,
 			    ibmhawk_normalize(sd->ihs_warnmax, dp->units);
 			dp->flags |= ENVSYS_FMONLIMITS;
 		}
-		if (sysmon_envsys_sensor_attach(sc->sc_sme, dp))
-			aprint_error_dev(sc->sc_dev,
-			    "failed to attach \"%s\"\n", dp->desc);
 	}
 
 	if (valid) {
@@ -323,6 +320,12 @@ ibmhawk_set(struct ibmhawk_softc *sc,
 		dp->state = ENVSYS_SVALID;
 	} else
 		dp->state = ENVSYS_SINVALID;
+
+	if (create) {
+		if (sysmon_envsys_sensor_attach(sc->sc_sme, dp))
+			aprint_error_dev(sc->sc_dev,
+			    "failed to attach \"%s\"\n", dp->desc);
+	}
 }
 
 static void
