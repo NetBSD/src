@@ -1,4 +1,4 @@
-/*	$NetBSD: softint_machdep.c,v 1.1 2011/06/14 22:36:13 matt Exp $	*/
+/*	$NetBSD: softint_machdep.c,v 1.2 2011/06/21 04:22:25 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -69,6 +69,9 @@ powerpc_softint(struct cpu_info *ci, int old_ipl, vaddr_t pc)
 	const u_int softint_mask = (IPL_SOFTMASK << old_ipl) & IPL_SOFTMASK;
 	u_int softints;
 
+	KASSERTMSG(ci->ci_idepth == -1,
+	    ("%s: cpu%u: idepth (%d) != -1", __func__,
+	     cpu_index(ci), ci->ci_idepth));
 	KASSERT(ci->ci_mtx_count == 0);
 	KASSERT(ci->ci_cpl == IPL_HIGH);
 	while ((softints = (ci->ci_data.cpu_softints & softint_mask)) != 0) {
