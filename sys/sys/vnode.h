@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.231 2011/06/12 03:36:00 rmind Exp $	*/
+/*	$NetBSD: vnode.h,v 1.232 2011/06/21 17:28:11 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -228,7 +228,7 @@ typedef struct vnode vnode_t;
 #define	VSIZENOTSET	((voff_t)-1)
 
 /*
- * v_usecount; see the comment in vfs_subr.c
+ * v_usecount; see the comment near the top of vfs_vnode.c
  */
 #define	VC_XLOCK	0x80000000
 #define	VC_MASK		0x7fffffff
