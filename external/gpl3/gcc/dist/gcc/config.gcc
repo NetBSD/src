@@ -1749,7 +1749,7 @@ mips-sgi-irix[56]*)
 	esac
 	;;
 mips64*-*-netbsd*)			# NetBSD/mips64, either endian.
-	target_cpu_default="MASK_ABICALLS|MASK_64BIT|MASK_FLOAT64"
+	target_cpu_default="MASK_ABICALLS|MASK_64BIT|MASK_FLOAT64|MASK_SOFT_FLOAT"
 	tm_file="elfos.h ${tm_file} mips/elf.h netbsd.h netbsd-elf.h mips/netbsd.h mips/netbsd64.h"
 	tmake_file="${tmake_file} mips/t-netbsd64"
 #	tm_defines="${tm_defines} MIPS_ISA_DEFAULT=64"
@@ -1986,6 +1986,9 @@ powerpc*-*-netbsd*)
 	tmake_file="${tmake_file} rs6000/t-netbsd"
 	    ;;
 	esac
+	if test x${enable_secureplt} != xno; then
+	  tm_file="rs6000/secureplt.h ${tm_file}"
+	fi
 	extra_options="${extra_options} rs6000/sysv4.opt rs6000/linux64.opt"
 	;;
 powerpc-*-eabispe*)
