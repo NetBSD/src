@@ -34,7 +34,7 @@
 .\"     @(#)malloc.3	8.1 (Berkeley) 6/4/93
 .\" $FreeBSD: src/lib/libc/stdlib/malloc.3,v 1.73 2007/06/15 22:32:33 jasone Exp $
 .\"
-.Dd May 14, 2010
+.Dd June 21, 2011
 .Dt JEMALLOC 3
 .Os
 .Sh NAME
@@ -172,8 +172,11 @@ does not zero memory that was previously allocated.
 This is intended for debugging and will impact performance negatively.
 .El
 .Pp
+Extra care should be taken when enabling
+any of the options in production environments.
 The
-.Em J
+.Em A ,
+.Em J ,
 and
 .Em Z
 options are intended for testing and debugging.
