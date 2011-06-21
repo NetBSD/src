@@ -720,6 +720,9 @@ arm*-*-freebsd*)
 arm*-*-netbsdelf*)
 	tm_file="dbxelf.h elfos.h netbsd.h netbsd-elf.h arm/elf.h arm/aout.h arm/arm.h arm/netbsd-elf.h"
 	tmake_file="${tmake_file} arm/t-arm arm/t-netbsd"
+	case ${target} in
+	armeb*) tm_defines="${tm_defines} TARGET_ENDIAN_DEFAULT=MASK_BIG_END" ;;
+	esac
 	;;
 arm*-*-netbsd*)
 	tm_file="arm/aout.h arm/arm.h netbsd.h netbsd-aout.h arm/netbsd.h"
@@ -956,6 +959,12 @@ hppa*-*-linux*)
 	    tmake_file="$tmake_file pa/t-slibgcc-dwarf-ver"
 	fi
 	;;
+hppa*-*-netbsd* | parisc*-*-netbsd*)
+	target_cpu_default="MASK_PA_11"
+	tm_file="${tm_file} dbxelf.h elfos.h svr4.h netbsd.h netbsd-elf.h \
+		 pa/pa-netbsd.h pa/pa32-regs.h pa/pa32-netbsd.h"
+	tmake_file="${tmake_file} pa/t-netbsd"
+	;;
 # port not yet contributed.
 #hppa*-*-openbsd*)
 #	target_cpu_default="MASK_PA_11"
@@ -1129,7 +1138,7 @@ i[34567]86-*-netbsd*)
 	;;
 x86_64-*-netbsd*)
 	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h netbsd.h netbsd-elf.h i386/x86-64.h i386/netbsd64.h"
-	tmake_file="${tmake_file} i386/t-crtstuff"
+	tmake_file="${tmake_file} i386/t-netbsd64"
 	;;
 i[34567]86-*-openbsd2.*|i[34567]86-*openbsd3.[0123])
 	tm_file="i386/i386.h i386/unix.h i386/bsd.h i386/gas.h i386/gstabs.h openbsd-oldgas.h openbsd.h i386/openbsd.h"
@@ -1468,6 +1477,12 @@ ia64*-*-elf*)
 	fi
 	extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o crtfastmath.o"
 	;;
+ia64*-*-netbsd*)
+	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h ia64/sysv4.h ia64/netbsd.h"
+	target_cpu_default="MASK_GNU_AS|MASK_GNU_LD"
+	tmake_file="${tmake_file} ia64/t-ia64"
+	extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o crtfastmath.o"
+	;;
 ia64*-*-freebsd*)
 	tm_file="${tm_file} dbxelf.h elfos.h ${fbsd_tm_file} ia64/sysv4.h ia64/freebsd.h"
 	target_cpu_default="MASK_GNU_AS|MASK_GNU_LD"
@@ -1733,6 +1748,16 @@ mips-sgi-irix[56]*)
 	  "":yes | yes:yes ) thread_file=posix ;;
 	esac
 	;;
+mips64*-*-netbsd*)			# NetBSD/mips64, either endian.
+	target_cpu_default="MASK_ABICALLS|MASK_64BIT|MASK_FLOAT64"
+	tm_file="elfos.h ${tm_file} mips/elf.h netbsd.h netbsd-elf.h mips/netbsd.h mips/netbsd64.h"
+	tmake_file="${tmake_file} mips/t-netbsd64"
+#	tm_defines="${tm_defines} MIPS_ISA_DEFAULT=64"
+	tm_defines="${tm_defines} MIPS_ABI_DEFAULT=ABI_N32"
+#	tm_defines="${tm_defines} MIPS_CPU_STRING_DEFAULT=\\\"mips64\\\""
+	gnu_ld=yes
+	gas=yes
+	;;
 mips*-*-netbsd*)			# NetBSD/mips, either endian.
 	target_cpu_default="MASK_ABICALLS"
 	tm_file="elfos.h ${tm_file} mips/elf.h netbsd.h netbsd-elf.h mips/netbsd.h"
@@ -1949,10 +1974,19 @@ powerpc*-*-freebsd*)
 	tmake_file="rs6000/t-fprules rs6000/t-fprules-fpbit rs6000/t-ppcos ${tmake_file} rs6000/t-ppccomm"
 	extra_options="${extra_options} rs6000/sysv4.opt"
 	;;
-powerpc-*-netbsd*)
-	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h freebsd-spec.h rs6000/sysv4.h rs6000/netbsd.h"
+powerpc*-*-netbsd*)
+	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h freebsd-spec.h rs6000/sysv4.h"
+	case ${target} in
+	  powerpc64*)
+	    tm_file="rs6000/biarch64.h ${tm_file} rs6000/default64.h rs6000/netbsd64.h"
+	    tmake_file="${tmake_file} rs6000/t-netbsd64"
+	    ;;
+	  *)
+	    tm_file="${tm_file} rs6000/netbsd.h"
 	tmake_file="${tmake_file} rs6000/t-netbsd"
-	extra_options="${extra_options} rs6000/sysv4.opt"
+	    ;;
+	esac
+	extra_options="${extra_options} rs6000/sysv4.opt rs6000/linux64.opt"
 	;;
 powerpc-*-eabispe*)
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h freebsd-spec.h newlib-stdint.h rs6000/sysv4.h rs6000/eabi.h rs6000/e500.h rs6000/eabispe.h"
@@ -2489,6 +2523,7 @@ sparc64-*-netbsd*)
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h netbsd.h netbsd-elf.h sparc/netbsd-elf.h"
 	extra_options="${extra_options} sparc/long-double-switch.opt"
 	tmake_file="${tmake_file} sparc/t-netbsd64"
+	with_cpu=ultrasparc
 	;;
 spu-*-elf*)
 	tm_file="dbxelf.h elfos.h spu/spu-elf.h spu/spu.h newlib-stdint.h"
