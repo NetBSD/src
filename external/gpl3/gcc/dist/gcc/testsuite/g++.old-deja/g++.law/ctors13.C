@@ -1,0 +1,18 @@
+// { dg-do assemble  }
+// GROUPS passed constructors
+#include <iostream>
+
+class A {
+   A() {}    // private constructor// { dg-error "" } .*
+};
+
+int main() {
+  A* a = new A();// { dg-error "" } .*
+  if (a) {
+     std::cout << "a != NULL\n";
+  } else {
+     std::cout << "a == NULL\n";
+  }
+}
+
+
