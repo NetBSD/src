@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.77 2011/02/04 14:31:23 martin Exp $	*/
+/*	$NetBSD: route.c,v 1.78 2011/06/21 19:42:45 kefren Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.77 2011/02/04 14:31:23 martin Exp $");
+__RCSID("$NetBSD: route.c,v 1.78 2011/06/21 19:42:45 kefren Exp $");
 #endif
 #endif /* not lint */
 
@@ -270,13 +270,15 @@ p_krtentry(rt)
 	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
 	if (tagflag == 1) {
 		if (rt->rt_tag != NULL) {
-			const struct sockaddr_mpls *sampls = 
-			    (const struct sockaddr_mpls*)kgetsa(rt->rt_tag);
-			union mpls_shim shim;
+			const struct sockaddr *tagsa = kgetsa(rt->rt_tag);
+			char *tagstr;
 
-			if (sampls->smpls_family == AF_MPLS) {
-				shim.s_addr = ntohl(sampls->smpls_addr.s_addr);
-				printf("%7d", shim.shim.label);
+			if (tagsa->sa_family == AF_MPLS) {
+				tagstr = mpls_ntoa(tagsa);
+				if (strlen(tagstr) < 7)
+					printf("%7s", tagstr);
+				else
+					printf("%s", tagstr);
 			}
 			else
 				printf("%7s", "-");

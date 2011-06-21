@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.13 2011/02/04 14:31:23 martin Exp $	*/
+/*	$NetBSD: show.c,v 1.14 2011/06/21 19:42:45 kefren Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -61,7 +61,6 @@
 
 char	*any_ntoa(const struct sockaddr *);
 char	*link_print(struct sockaddr *);
-char	*mpls_ntoa(const struct sockaddr *); 
 
 #define PFKEYV2_CHUNK sizeof(u_int64_t)
 
@@ -382,17 +381,17 @@ p_flags(int f, const char *format)
 static void
 p_tag(const struct sockaddr *sa)
 {
-	const struct sockaddr_mpls *sampls =
-	    (const struct sockaddr_mpls *)sa;
-	union mpls_shim mshim;
+	char *line;
 
 	if (sa == NULL || sa->sa_family != AF_MPLS) {
 		printf("%7s", "-");
 		return;
 	}
-
-	mshim.s_addr = ntohl(sampls->smpls_addr.s_addr);
-	printf("%7d", mshim.shim.label);
+	line = mpls_ntoa(sa);
+	if (strlen(line) < 7)
+		printf("%7s", line);
+	else
+		printf("%s", line);
 }
 
 static char line[MAXHOSTNAMELEN];
@@ -718,15 +717,22 @@ link_print(struct sockaddr *sa)
 char *
 mpls_ntoa(const struct sockaddr *sa)
 {
-	static char obuf[100];
-	const struct sockaddr_mpls *sm;
+	static char obuf[16];
+	const union mpls_shim *pms;
 	union mpls_shim ms;
+	int psize = sizeof(struct sockaddr_mpls);
 
-	sm = (const struct sockaddr_mpls*)sa;
-	ms.s_addr = ntohl(sm->smpls_addr.s_addr);
+	pms = &((const struct sockaddr_mpls*)sa)->smpls_addr;
+	ms.s_addr = ntohl(pms->s_addr);
 
-	snprintf(obuf, sizeof(obuf), "%u",
-	     ms.shim.label);
+	snprintf(obuf, sizeof(obuf), "%u", ms.shim.label);
 
+	while(psize < sa->sa_len) {
+		pms++;
+		ms.s_addr = ntohl(pms->s_addr);
+		snprintf(obuf, sizeof(obuf), "%s,%u", obuf,
+		    ms.shim.label);
+		psize+=sizeof(ms);
+	}
 	return obuf;
 }
