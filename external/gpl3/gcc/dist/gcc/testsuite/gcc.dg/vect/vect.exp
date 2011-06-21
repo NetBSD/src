@@ -1,0 +1,305 @@
+# Copyright (C) 1997, 2004, 2005, 2006, 2007, 2008, 2010
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+
+# GCC testsuite that uses the `dg.exp' driver.
+
+# Load support procs.
+load_lib gcc-dg.exp
+
+# Set up flags used for tests that don't specify options.
+set DEFAULT_VECTCFLAGS ""
+
+# These flags are used for all targets.
+lappend DEFAULT_VECTCFLAGS "-ftree-vectorize" "-fno-vect-cost-model"
+
+# If the target system supports vector instructions, the default action
+# for a test is 'run', otherwise it's 'compile'.  Save current default.
+# Executing vector instructions on a system without hardware vector support
+# is also disabled by a call to check_vect, but disabling execution here is
+# more efficient.
+global dg-do-what-default
+set save-dg-do-what-default ${dg-do-what-default}
+
+# Skip these tests for targets that do not support generating vector
+# code.  Set additional target-dependent vector flags, which can be
+# overridden by using dg-options in individual tests.
+if  [istarget "powerpc-*paired*"]  {
+   lappend DEFAULT_VECTCFLAGS "-mpaired"
+    if [check_750cl_hw_available] {
+        set dg-do-what-default run 
+    } else {
+        set dg-do-what-default compile
+    }
+} elseif [istarget "powerpc*-*-*"] {
+    # Skip targets not supporting -maltivec.
+    if ![is-effective-target powerpc_altivec_ok] {
+	return
+    }
+
+    lappend DEFAULT_VECTCFLAGS "-maltivec"
+    if [check_vsx_hw_available]  {
+      lappend DEFAULT_VECTCFLAGS "-mvsx" "-mno-allow-movmisalign"
+    }
+
+    if [check_vmx_hw_available] {
+	set dg-do-what-default run
+    } else {
+	if [is-effective-target ilp32] {
+	    # Specify a cpu that supports VMX for compile-only tests.
+	    lappend DEFAULT_VECTCFLAGS "-mcpu=970"
+	}
+	set dg-do-what-default compile
+    }
+} elseif { [istarget  "spu-*-*"] } {
+   set dg-do-what-default run
+} elseif { [istarget "i?86-*-*"] || [istarget "x86_64-*-*"] } {
+    if { ![check_effective_target_sse2] } then {
+	return
+    }
+    lappend DEFAULT_VECTCFLAGS "-msse2"
+    if { [check_sse2_hw_available] && [check_sse_os_support_available] } {
+	set dg-do-what-default run
+    } else {
+	set dg-do-what-default compile
+    }
+} elseif { [istarget "mips*-*-*"]
+	   && [check_effective_target_mpaired_single]
+	   && [check_effective_target_nomips16] } {
+    lappend DEFAULT_VECTCFLAGS "-mpaired-single"
+    set dg-do-what-default run
+} elseif [istarget "sparc*-*-*"] {
+    lappend DEFAULT_VECTCFLAGS "-mcpu=ultrasparc" "-mvis"
+    if [check_effective_target_ultrasparc_hw] {
+	set dg-do-what-default run
+    } else {
+	set dg-do-what-default compile
+    }
+} elseif [istarget "alpha*-*-*"] {
+    # Alpha's vectorization capabilities are extremely limited.
+    # It's more effort than its worth disabling all of the tests
+    # that it cannot pass.  But if you actually want to see what
+    # does work, command out the return.
+    return
+
+    lappend DEFAULT_VECTCFLAGS "-mmax"
+    if [check_alpha_max_hw_available] {
+	set dg-do-what-default run
+    } else {
+	set dg-do-what-default compile
+    }
+} elseif [istarget "ia64-*-*"] {
+    set dg-do-what-default run
+} elseif [is-effective-target arm_neon_ok] {
+    lappend DEFAULT_VECTCFLAGS "-mfpu=neon" "-mfloat-abi=softfp"
+    if [is-effective-target arm_neon_hw] {
+      set dg-do-what-default run
+    } else {
+      set dg-do-what-default compile
+    }
+} else {
+    return
+}
+
+# Initialize `dg'.
+dg-init
+
+global O1_VECTCFLAGS
+set O1_VECTCFLAGS $DEFAULT_VECTCFLAGS
+lappend O1_VECTCFLAGS "-O1"
+lappend O1_VECTCFLAGS "-fdump-tree-vect-details"
+
+global O_VECTCFLAGS
+set O_VECTCFLAGS $DEFAULT_VECTCFLAGS
+lappend O_VECTCFLAGS "-O"
+lappend O_VECTCFLAGS "-fdump-tree-vect-details"
+
+lappend DEFAULT_VECTCFLAGS "-O2"
+
+# Tests that should be run without generating dump info
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/nodump-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+
+set VECT_SLP_CFLAGS $DEFAULT_VECTCFLAGS
+
+lappend DEFAULT_VECTCFLAGS "-fdump-tree-vect-details" 
+lappend VECT_SLP_CFLAGS "-fdump-tree-slp-details"
+
+# Main loop.
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/pr*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/vect-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/slp-*.\[cS\]]]  \
+        "" $DEFAULT_VECTCFLAGS
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/bb-slp*.\[cS\]]]  \
+        "" $VECT_SLP_CFLAGS
+
+
+#### Tests with special options
+global SAVED_DEFAULT_VECTCFLAGS
+set SAVED_DEFAULT_VECTCFLAGS $DEFAULT_VECTCFLAGS
+set SAVED_VECT_SLP_CFLAGS $VECT_SLP_CFLAGS
+
+# --param vect-max-version-for-alias-checks=0 tests
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "--param" "vect-max-version-for-alias-checks=0"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/no-vfa-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+
+# -ffast-math tests
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-ffast-math"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/fast-math-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+
+# -fno-math-errno tests
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fno-math-errno"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/no-math-errno-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+
+# -fwrapv tests
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fwrapv"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/wrapv-*.\[cS\]]]  \
+        "" $DEFAULT_VECTCFLAGS
+
+# -ftrapv tests
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-ftrapv"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/trapv-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+
+# -fdump-tree-dceloop-details tests
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fdump-tree-dceloop-details"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/dump-tree-dceloop-*.\[cS\]]]  \
+        "" $DEFAULT_VECTCFLAGS
+
+# -fno-tree-dce tests
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fno-tree-dce"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/no-tree-dce-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+
+# -fsection-anchors tests
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fsection-anchors"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/section-anchors-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+
+# alignment-sensitive -fsection-anchors tests
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fsection-anchors" "-fdump-ipa-increase_alignment"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/aligned-section-anchors-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+
+# -fno-section-anchors tests
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fno-section-anchors"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/no-section-anchors-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+
+# -funswitch-loops tests
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-funswitch-loops"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/unswitch-loops-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+
+# -fno-trapping-math tests
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fno-trapping-math"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/no-trapping-math-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+
+# -fno-tree-scev-cprop
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fno-tree-scev-cprop"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/no-scevccp-vect-*.\[cS\]]]  \
+        "" $DEFAULT_VECTCFLAGS
+
+# -fno-tree-scev-cprop
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fno-tree-scev-cprop"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/no-scevccp-outer-*.\[cS\]]]  \
+        "" $DEFAULT_VECTCFLAGS
+
+# -fno-tree-scev-cprop -fno-tree-reassoc
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fno-tree-scev-cprop" "-fno-tree-reassoc"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/no-scevccp-noreassoc-*.\[cS\]]]  \
+        "" $DEFAULT_VECTCFLAGS
+
+# -fno-tree-scev-cprop
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fno-tree-scev-cprop"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/no-scevccp-slp-*.\[cS\]]]  \
+        "" $DEFAULT_VECTCFLAGS
+
+# -fno-tree-dominator-opts
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fno-tree-dominator-opts"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/no-tree-dom-*.\[cS\]]]  \
+	"" $DEFAULT_VECTCFLAGS
+
+# -fno-tree-pre
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-fno-tree-pre"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/no-tree-pre-*.\[cS\]]]  \
+        "" $DEFAULT_VECTCFLAGS
+
+# With -Os
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-Os"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/Os-vect-*.\[cS\]]]  \
+        "" $DEFAULT_VECTCFLAGS
+
+# With --param ggc-min-expand=0 --param ggc-min-heapsize=0 
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "--param" "ggc-min-expand=0" "--param" "ggc-min-heapsize=0"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/ggc-*.\[cS\]]]  \
+        "" $DEFAULT_VECTCFLAGS
+
+# With -O3.
+# Don't allow IPA cloning, because it throws our counts out of whack.
+set DEFAULT_VECTCFLAGS $SAVED_DEFAULT_VECTCFLAGS
+lappend DEFAULT_VECTCFLAGS "-O3" "-fno-ipa-cp-clone"
+if  [istarget "spu-*-*"] {
+  lappend DEFAULT_VECTCFLAGS "-funroll-loops"
+}
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/O3-*.\[cS\]]]  \
+        "" $DEFAULT_VECTCFLAGS
+
+# With -O1
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/O1-*.\[cS\]]]  \
+        "" $O1_VECTCFLAGS
+
+# With -O
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/O-*.\[cS\]]]  \
+        "" $O_VECTCFLAGS
+
+# -fno-tree-reassoc
+set VECT_SLP_CFLAGS $SAVED_VECT_SLP_CFLAGS
+lappend VECT_SLP_CFLAGS "-fno-tree-reassoc"
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/no-tree-reassoc-bb-slp-*.\[cS\]]]  \
+        "" $VECT_SLP_CFLAGS
+
+# Clean up.
+set dg-do-what-default ${save-dg-do-what-default}
+
+# All done.
+dg-finish

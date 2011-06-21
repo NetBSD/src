@@ -1,0 +1,293 @@
+# Copyright (C) 2000, 2002, 2003, 2007, 2008 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+
+# Various utilities for scanning assembler output, used by gcc-dg.exp and
+# g++-dg.exp.
+
+# Utility for scanning compiler result, invoked via dg-final.
+
+# Transform newline and similar characters into their escaped form.
+proc make_pattern_printable { pattern } {
+    return [string map {\t \\t \n \\n \r \\r \\ \\\\} $pattern]
+}
+
+# Scan the OUTPUT_FILE for a pattern.  If it is present and POSITIVE
+# is non-zero, or it is not present and POSITIVE is zero, the test
+# passes.  The ORIG_ARGS is the list of arguments provided by dg-final
+# to scan-assembler.  The first element in ORIG_ARGS is the regular
+# expression to look for in the file.  The second element, if present,
+# is a DejaGNU target selector.
+
+proc dg-scan { name positive testcase output_file orig_args } {
+    if { [llength $orig_args] < 1 } {
+	error "$name: too few arguments"
+        return
+    }
+    if { [llength $orig_args] > 2 } {
+	error "$name: too many arguments"
+	return
+    }
+    if { [llength $orig_args] >= 2 } {
+	switch [dg-process-target [lindex $orig_args 1]] {
+	    "S" { }
+	    "N" { return }
+	    "F" { setup_xfail "*-*-*" }
+	    "P" { }
+	}
+    }
+
+    if { [is_remote host] } {
+	remote_upload host "$output_file"
+    } 
+    set fd [open $output_file r]
+    set text [read $fd]
+    close $fd
+
+    set pattern [lindex $orig_args 0]
+    set printable_pattern [make_pattern_printable $pattern]
+
+    set match [regexp -- $pattern $text]
+    if { $match == $positive } {
+	pass "$testcase $name $printable_pattern"
+    } else {
+	fail "$testcase $name $printable_pattern"
+    }
+}
+
+# Look for a pattern in the .s file produced by the compiler.  See
+# dg-scan for details.
+
+proc scan-assembler { args } {
+    upvar 2 name testcase
+    set testcase [lindex $testcase 0]
+    set output_file "[file rootname [file tail $testcase]].s"
+
+    dg-scan "scan-assembler" 1 $testcase $output_file $args
+}
+
+# Check that a pattern is not present in the .s file produced by the
+# compiler.  See dg-scan for details.
+
+proc scan-assembler-not { args } {
+    upvar 2 name testcase
+    set testcase [lindex $testcase 0]
+    set output_file "[file rootname [file tail $testcase]].s"
+
+    dg-scan "scan-assembler-not" 0 $testcase $output_file $args
+}
+
+# Return the scan for the assembly for hidden visibility. 
+
+proc hidden-scan-for { symbol } {
+
+    set objformat [gcc_target_object_format]
+
+    switch $objformat {
+        elf      { return "hidden\[ \t_\]*$symbol" }
+        mach-o   { return "private_extern\[ \t_\]*_?$symbol" }
+        default  { return "" }
+    }
+
+}
+
+
+# Check that a symbol is defined as a hidden symbol in the .s file
+# produced by the compiler.
+
+proc scan-hidden { args } {
+    upvar 2 name testcase
+    set testcase [lindex $testcase 0]
+    set output_file "[file rootname [file tail $testcase]].s"
+
+    set symbol [lindex $args 0]
+
+    set hidden_scan [hidden-scan-for $symbol]
+
+    set args [lreplace $args 0 0 "$hidden_scan"]
+
+    dg-scan "scan-hidden" 1 $testcase $output_file $args
+}
+
+# Check that a symbol is not defined as a hidden symbol in the .s file
+# produced by the compiler.
+
+proc scan-not-hidden { args } {
+    upvar 2 name testcase
+    set testcase [lindex $testcase 0]
+    set output_file "[file rootname [file tail $testcase]].s"
+
+    set symbol [lindex $args 0]
+    set hidden_scan [hidden-scan-for $symbol]
+
+    set args [lreplace $args 0 0 "$hidden_scan"]
+
+    dg-scan "scan-not-hidden" 0 $testcase $output_file $args
+}
+
+# Look for a pattern in OUTPUT_FILE.  See dg-scan for details.
+
+proc scan-file { output_file args } {
+    upvar 2 name testcase
+    set testcase [lindex $testcase 0]
+    dg-scan "scan-file" 1 $testcase $output_file $args
+}
+
+# Check that a pattern is not present in the OUTPUT_FILE.  See dg-scan
+# for details.
+
+proc scan-file-not { output_file args } {
+    upvar 2 name testcase
+    set testcase [lindex $testcase 0]
+    dg-scan "scan-file-not" 0 $testcase $output_file $args
+}
+
+# Call pass if pattern is present given number of times, otherwise fail.
+proc scan-assembler-times { args } {
+    if { [llength $args] < 2 } {
+	error "scan-assembler: too few arguments"
+        return
+    }
+    if { [llength $args] > 3 } {
+	error "scan-assembler: too many arguments"
+	return
+    }
+    if { [llength $args] >= 3 } {
+	switch [dg-process-target [lindex $args 2]] {
+	    "S" { }
+	    "N" { return }
+	    "F" { setup_xfail "*-*-*" }
+	    "P" { }
+	}
+    }
+
+    # This assumes that we are two frames down from dg-test, and that
+    # it still stores the filename of the testcase in a local variable "name".
+    # A cleaner solution would require a new dejagnu release.
+    upvar 2 name testcase
+    set testcase [lindex $testcase 0]
+
+    # This must match the rule in gcc-dg.exp.
+    set output_file "[file rootname [file tail $testcase]].s"
+
+    set fd [open $output_file r]
+    set text [read $fd]
+    close $fd
+
+    set pattern [lindex $args 0]
+    set pp_pattern [make_pattern_printable $pattern]
+    if { [llength [regexp -inline -all -- $pattern $text]] == [lindex $args 1]} {
+	pass "$testcase scan-assembler-times $pp_pattern [lindex $args 1]"
+    } else {
+	fail "$testcase scan-assembler-times $pp_pattern [lindex $args 1]"
+    }
+}
+
+# Utility for scanning demangled compiler result, invoked via dg-final.
+# Call pass if pattern is present, otherwise fail.
+proc scan-assembler-dem { args } {
+    global cxxfilt
+    global base_dir
+
+    if { [llength $args] < 1 } {
+	error "scan-assembler-dem: too few arguments"
+        return
+    }
+    if { [llength $args] > 2 } {
+	error "scan-assembler-dem: too many arguments"
+	return
+    }
+    if { [llength $args] >= 2 } {
+	switch [dg-process-target [lindex $args 1]] {
+	    "S" { }
+	    "N" { return }
+	    "F" { setup_xfail "*-*-*" }
+	    "P" { }
+	}
+    }
+
+    # Find c++filt like we find g++ in g++.exp.
+    if ![info exists cxxfilt]  {
+	set cxxfilt [findfile $base_dir/../../../binutils/cxxfilt \
+		     $base_dir/../../../binutils/cxxfilt \
+	             [findfile $base_dir/../../c++filt $base_dir/../../c++filt \
+		      [findfile $base_dir/c++filt $base_dir/c++filt \
+		       [transform c++filt]]]]
+	verbose -log "c++filt is $cxxfilt"
+    }
+
+    upvar 2 name testcase
+    set testcase [lindex $testcase 0]
+    set output_file "[file rootname [file tail $testcase]].s"
+
+    set output [remote_exec host "$cxxfilt" "" "$output_file"]
+    set text [lindex $output 1]
+
+    set pattern [lindex $args 0]
+    set pp_pattern [make_pattern_printable $pattern]
+    if [regexp -- $pattern $text] {
+	pass "$testcase scan-assembler-dem $pp_pattern"
+    } else {
+	fail "$testcase scan-assembler-dem $pp_pattern"
+    }
+}
+
+# Call pass if demangled pattern is not present, otherwise fail.
+proc scan-assembler-dem-not { args } {
+    global cxxfilt
+    global base_dir
+
+    if { [llength $args] < 1 } {
+	error "scan-assembler-dem-not: too few arguments"
+        return
+    }
+    if { [llength $args] > 2 } {
+	error "scan-assembler-dem-not: too many arguments"
+	return
+    }
+    if { [llength $args] >= 2 } {
+	switch [dg-process-target [lindex $args 1]] {
+	    "S" { }
+	    "N" { return }
+	    "F" { setup_xfail "*-*-*" }
+	    "P" { }
+	}
+    }
+
+    # Find c++filt like we find g++ in g++.exp.
+    if ![info exists cxxfilt]  {
+	set cxxfilt [findfile $base_dir/../../../binutils/cxxfilt \
+		     $base_dir/../../../binutils/cxxfilt \
+		     [findfile $base_dir/../../c++filt $base_dir/../../c++filt \
+		      [findfile $base_dir/c++filt $base_dir/c++filt \
+		       [transform c++filt]]]]
+	verbose -log "c++filt is $cxxfilt"
+    }
+
+    upvar 2 name testcase
+    set testcase [lindex $testcase 0]
+    set output_file "[file rootname [file tail $testcase]].s"
+
+    set output [remote_exec host "$cxxfilt" "" "$output_file"]
+    set text [lindex $output 1]
+
+    set pattern [lindex $args 0]
+    set pp_pattern [make_pattern_printable $pattern]
+    if ![regexp -- $pattern $text] {
+	pass "$testcase scan-assembler-dem-not $pp_pattern"
+    } else {
+	fail "$testcase scan-assembler-dem-not $pp_pattern"
+    }
+}
