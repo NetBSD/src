@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/06/06 06:44:57 spz Exp $
+#	$NetBSD: Makefile,v 1.5 2011/06/21 02:19:30 mrg Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -50,7 +50,7 @@ OS_VERSION!= ${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 ${SRCS}: buildinf.h
 buildinf.h: Makefile
 	@echo "#ifndef MK1MF_BUILD" >buildinf.h
-	@echo "#define CFLAGS \"`${CC} -v 2>&1 | grep version`\"" >>buildinf.h
+	@echo "#define CFLAGS \"`${CC} -v 2>&1 | grep 'gcc version'`\"" >>buildinf.h
 	@echo "#define PLATFORM \"NetBSD-${MACHINE_ARCH}\"" >>buildinf.h
 	@echo "#define DATE \"NetBSD ${OS_VERSION}\"" >>buildinf.h
 	@echo "#endif" >>buildinf.h
