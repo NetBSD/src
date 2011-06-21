@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 2011/06/20 20:24:28 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 2011/06/21 06:38:50 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.11 2011/06/20 20:24:28 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.12 2011/06/21 06:38:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -793,15 +793,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		break;
 	case T_AST:
 		KASSERT(usertrap);
-		l->l_md.md_astpending = 0;	/* we are about to do it */
-		ci->ci_data.cpu_nsoft++;
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
-		/* Check whether we are being preempted. */
-		if (ci->ci_want_resched)
-			preempt();
+		cpu_ast(l, ci);
 		if (tf->tf_fixreg[1] & 0x80000000) {
 			printf("%s(ast-exit): pid %d.%d (%s): invalid sp %#lx\n",
 			    __func__, p->p_pid, l->l_lid, p->p_comm,
