@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.56 2011/06/20 08:47:13 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.57 2011/06/21 06:32:36 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.56 2011/06/20 08:47:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.57 2011/06/21 06:32:36 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -66,6 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.56 2011/06/20 08:47:13 matt Ex
 #include <powerpc/userret.h>
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 #include <powerpc/altivec.h>
+#endif
+
+#ifdef MULTIPROCESOR
+#include <powerpc/pic/ipivar.h>
 #endif
 
 int cpu_timebase;
@@ -364,6 +368,22 @@ cpu_idle(void)
 	KASSERT(mfmsr() & PSL_EE);
 	KASSERT(curcpu()->ci_cpl == IPL_NONE);
 	(*curcpu()->ci_idlespin)();
+}
+
+void
+cpu_ast(struct lwp *l, struct cpu_info *ci)
+{
+	l->l_md.md_astpending = 0;	/* we are about to do it */
+
+	if (l->l_pflag & LP_OWEUPC) {
+		l->l_pflag &= ~LP_OWEUPC;
+		ADDUPROF(l);
+	}
+
+	/* Check whether we are being preempted. */
+	if (ci->ci_want_resched) {
+		preempt();
+	}
 }
 
 void
