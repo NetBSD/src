@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1569 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1570 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1041,4 +1041,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	alpha: support for Avalon A12 removed [matt 20110617]
 	sparc64: Add fast softint(9) support. [nakayama 20110618]
 	zaurus: Add ioexp driver for SL-C1000. [nonaka 20110619]
+	mpc: Import mpc 0.9.  [mrg 20110619]
+	mpfr: Import mpfr 3.0.1.  [mrg 20110619]
+	GMP: Import GNU MP 5.0.2.  [mrg 20110619]
 	sandpoint: Add support for booting from RAID 1 [jdc 20110620]
+	GCC: Import version 4.5.3.  [mrg 20110620]
