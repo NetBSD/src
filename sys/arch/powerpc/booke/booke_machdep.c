@@ -341,14 +341,6 @@ cpu_evcnt_attach(struct cpu_info *ci)
 		NULL, xname, "late clock");
 	evcnt_attach_dynamic_nozero(&cpu->cpu_ev_exec_trap_sync, EVCNT_TYPE_TRAP,
 		NULL, xname, "exec pages synced (trap)");
-#ifndef __HAVE_FAST_SOFTINTS
-	evcnt_attach_dynamic_nozero(&ci->ci_ev_softclock, EVCNT_TYPE_INTR,
-		NULL, xname, "soft clock");
-	evcnt_attach_dynamic_nozero(&ci->ci_ev_softnet, EVCNT_TYPE_INTR,
-		NULL, xname, "soft net");
-	evcnt_attach_dynamic_nozero(&ci->ci_ev_softserial, EVCNT_TYPE_INTR,
-		NULL, xname, "soft serial");
-#endif
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_traps, EVCNT_TYPE_TRAP,
 		NULL, xname, "traps");
 	evcnt_attach_dynamic_nozero(&ci->ci_ev_kdsi, EVCNT_TYPE_TRAP,
