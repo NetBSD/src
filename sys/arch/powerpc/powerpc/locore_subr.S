@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.45 2011/06/20 08:18:28 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.46 2011/06/21 05:14:26 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -517,13 +517,7 @@ _ENTRY(setfunc_trampoline)
 	tweqi	%r0,0
 #endif
 	li	%r4, 1			/* make sure userret gets called */
-#if 0
-	GET_CPUINFO(%r3)
-	ldptr	%r3, CI_CURLWP(%r3)
-	stint	%r4, L_MD_ASTPENDING(%r3)
-#else
 	stint	%r4, L_MD_ASTPENDING(%r13)
-#endif
 	b	trapexit
 
 #if defined(MULTIPROCESSOR) && (defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE))
