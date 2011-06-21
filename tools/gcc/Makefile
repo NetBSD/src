@@ -1,10 +1,15 @@
-#	$NetBSD: Makefile,v 1.36 2011/06/10 16:31:18 matt Exp $
+#	$NetBSD: Makefile,v 1.37 2011/06/21 04:11:12 mrg Exp $
 
 .include <bsd.own.mk>
 
 GCC_LANGUAGES=c c++ objc
 MODULE=			gcc4
+.if ${HAVE_GCC} == 45
+MKNATIVE_TARGET=	gcc45
+GNUHOSTDIST=		${.CURDIR}/../../external/gpl3/gcc/dist
+.else
 MKNATIVE_TARGET=	gcc4
+.endif
 MKNATIVE_CONFIG_TARGET_LIBS=
 BINENV=		/usr/bin/env -i
 
@@ -23,6 +28,8 @@ SOFTFLOAT_ARGS=	-with-float=soft
 COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--enable-long-long \
 			--enable-threads \
+			--with-bugurl=http://www.NetBSD.org/Misc/send-pr.html \
+			--with-pkgversion="NetBSD nb1 20110620" \
 			${VAX_CONFIGURE_ARGS} \
 			--enable-__cxa_atexit
 .if defined(GCC_CONFIG_ARCH.${MACHINE_ARCH})
@@ -32,7 +39,14 @@ COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
 COMMON_CONFIGURE_ARGS+=	--with-tune=${GCC_CONFIG_TUNE.${MACHINE_ARCH}}
 .endif
 
-CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS} \
+CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
+.if ${HAVE_GCC} >= 45
+CONFIGURE_ARGS+= \
+		--with-mpc=${TOOLDIR} \
+		--with-mpfr=${TOOLDIR} \
+		--with-gmp=${TOOLDIR}
+.endif
+CONFIGURE_ARGS+= \
 		--disable-nls \
 		${MULTILIB_ARGS} \
 		${SOFTFLOAT_ARGS} \
@@ -74,6 +88,16 @@ INSTALL_TARGET=	install-gcc
 .include "${.CURDIR}/../Makefile.gmakehost"
 BUILD_MAKE=${TOOL_GMAKE}
 
+#
+# mknative-gcc specific stuff
+#
+
+.if ${HAVE_GCC} >= 45
+GCCSRCDIR=${.CURDIR}/../../gnu/dist/gcc4
+.else
+GCCSRCDIR=${.CURDIR}/../../external/gpl3/gcc/dist
+.endif
+
 CXXADDFLAGS=	${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++
 CCADDFLAGS=	${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
 
@@ -90,10 +114,17 @@ native-gcc: .native/.configure_done
 	@MAKE=${BUILD_MAKE:Q} ${HOST_SH} ${MKNATIVE} ${MKNATIVE_TARGET} \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
-NATIVE_CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS} \
+NATIVE_CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
+.if ${HAVE_GCC} >= 45
+NATIVE_CONFIGURE_ARGS+=	\
+			--with-mpc=${DESTDIR}/usr \
+			--with-mpfr=${DESTDIR}/usr \
+			--with-gmp=${DESTDIR}/usr
+.endif
+NATIVE_CONFIGURE_ARGS+=	\
 			--disable-multilib \
 			--disable-symvers \
-			--build=`${.CURDIR}/../../gnu/dist/${MODULE}/config.guess` \
+			--build=`${GCCSRCDIR}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
@@ -103,7 +134,6 @@ NATIVE_CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS} \
 			${HOST_SH} ${GNUHOSTDIST}/configure \
 			${NATIVE_CONFIGURE_ARGS}) && \
 		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} all-build-libiberty)
-.if ${HAVE_GCC} == 4
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} configure-gcc configure-libcpp) && \
 		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} configure-libiberty)
@@ -112,11 +142,6 @@ NATIVE_CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS} \
 			${TOOL_SED} -e 's/\(maybe-all-gcc:\) all-gcc/\1/' \
 				< Makefile.config > Makefile) && \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e tree-check.h config.h multilib.h gcov-iov.h)
-.else
-	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
-		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} all-libiberty) && \
-		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} tree-check.h config.h)
-.endif
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && touch gcc/cc1obj gcc/cc1plus gcc/f771 gcc/libgcc.a gcc/libgcc_s.so && \
 			${MKNATIVE_ENV} ${BUILD_MAKE} configure-target-libiberty \
