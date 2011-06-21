@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.84 2011/06/20 17:15:38 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.85 2011/06/21 04:21:17 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -124,9 +124,6 @@ struct cpu_info {
 	uint32_t ci_khz;
 	struct evcnt ci_ev_clock;	/* clock intrs */
 	struct evcnt ci_ev_statclock; 	/* stat clock */
-	struct evcnt ci_ev_softclock;	/* softclock intrs */
-	struct evcnt ci_ev_softnet;	/* softnet intrs */
-	struct evcnt ci_ev_softserial;	/* softserial intrs */
 	struct evcnt ci_ev_traps;	/* calls to trap() */
 	struct evcnt ci_ev_kdsi;	/* kernel DSI traps */
 	struct evcnt ci_ev_udsi;	/* user DSI traps */
@@ -326,15 +323,8 @@ struct cpu_info *
 	cpu_attach_common(device_t, int);
 void	cpu_setup(device_t, struct cpu_info *);
 void	cpu_identify(char *, size_t);
-int	cpu_get_dfs(void);
-void	cpu_set_dfs(int);
 void	cpu_probe_cache(void);
-#ifndef PPC_BOOKE
-void	dcache_flush_page(vaddr_t);
-void	icache_flush_page(vaddr_t);
-void	dcache_flush(vaddr_t, vsize_t);
-void	icache_flush(vaddr_t, vsize_t);
-#else
+
 void	dcache_wb_page(vaddr_t);
 void	dcache_wbinv_page(vaddr_t);
 void	dcache_inv_page(vaddr_t);
@@ -344,7 +334,7 @@ void	dcache_wb(vaddr_t, vsize_t);
 void	dcache_wbinv(vaddr_t, vsize_t);
 void	dcache_inv(vaddr_t, vsize_t);
 void	icache_inv(vaddr_t, vsize_t);
-#endif
+
 void *	mapiodev(paddr_t, psize_t);
 void	unmapiodev(vaddr_t, vsize_t);
 
@@ -390,6 +380,9 @@ void	cpu_need_proftick(struct lwp *);
 void	cpu_fixup_stubs(void);
 
 #if !defined(PPC_IBM4XX) && !defined(PPC_BOOKE) && !defined(_MODULE)
+int	cpu_get_dfs(void);
+void	cpu_set_dfs(int);
+
 void	oea_init(void (*)(void));
 void	oea_startup(const char *);
 void	oea_dumpsys(void);
