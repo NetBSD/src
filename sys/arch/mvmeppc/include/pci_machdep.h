@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7 2011/06/22 18:06:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 
-void mvmeppc_pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
+void mvmeppc_pci_conf_interrupt(void *, int, int, int, int, int *);
 void mvmeppc_pci_get_chipset_tag(pci_chipset_tag_t);
 
 extern struct powerpc_bus_dma_tag pci_bus_dma_tag;

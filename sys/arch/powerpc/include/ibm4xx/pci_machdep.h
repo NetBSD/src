@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6 2011/06/17 19:03:03 matt Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7 2011/06/22 18:06:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,13 +36,16 @@
 
 #define __HAVE_PCI_CONF_HOOK
 
+#include <dev/pci/pcivar.h>
+#include <powerpc/pci_machdep.h>
+
 /*
  * Forward declarations.
  */
 struct pci_attach_args;
 
 /*
- * macppc-specific PCI structure and type definitions.
+ * ibm4xx-specific PCI structure and type definitions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  *
  * Configuration tag; created from a {bus,device,function} triplet by
@@ -52,43 +55,30 @@ struct pci_attach_args;
  */
 
 /*
- * Types provided to machine-independent PCI code
- */
-typedef struct ibm4xx_pci_chipset *pci_chipset_tag_t;
-typedef int pcitag_t;
-typedef int pci_intr_handle_t;
-
-struct ibm4xx_pci_chipset {
-	int rootnode;		/* PCI controller */
-	struct extent *ioext;	/* PCI I/O extent */
-	struct extent *memext;	/* PCI memory extent */
-};
-
-/*
  * Functions provided to machine-independent PCI code.
  */
-void		pci_attach_hook(device_t, device_t,
+void		ibm4xx_pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
-int		pci_bus_maxdevs(pci_chipset_tag_t, int);
-pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
-void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
-		    int *, int *, int *);
-pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
-void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
-		    pcireg_t);
-int		pci_intr_map(const struct pci_attach_args *,
-		    pci_intr_handle_t *);
-const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
-const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
-void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
-		    int, int (*)(void *), void *);
-void		pci_intr_disestablish(pci_chipset_tag_t, void *);
-int		pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
+int		ibm4xx_pci_bus_maxdevs(void *, int);
+pcitag_t	ibm4xx_pci_make_tag(void *, int, int, int);
+void		ibm4xx_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
+pcireg_t	ibm4xx_pci_conf_read(void *, pcitag_t, int);
+void		ibm4xx_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 
-void		pci_machdep_init(void);
+int		ibm4xx_pci_intr_map(const struct pci_attach_args *,
+		    pci_intr_handle_t *);
+int		ibm4xx_pci_intr_setattr(void *, pci_intr_handle_t *,
+		    int, uint64_t);
+
+void		ibm4xx_pci_conf_interrupt(void *, int, int, int, int, int *);
+int		ibm4xx_pci_conf_hook(void *, int, int, int, pcireg_t);
+
+void		ibm4xx_pci_machdep_init(void);
+pci_chipset_tag_t
+		ibm4xx_get_pci_chipset_tag(void);
 
 
 /*
  * Internal functions.
  */
-void		pci_init(int);
+void		ibm4xx_pci_init(int);

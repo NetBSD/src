@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.16 2011/06/18 06:41:43 matt Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.17 2011/06/22 18:06:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.16 2011/06/18 06:41:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.17 2011/06/22 18:06:34 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -455,9 +455,9 @@ bad:
 }
 
 int
-genofw_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
-	pcireg_t id)
+genofw_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
+	pci_chipset_tag_t pct = v;
 	struct genppc_pci_chipset_businfo *pbi;
 	prop_number_t pbus;
 	pcitag_t tag;
