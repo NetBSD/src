@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2011/05/18 06:36:48 dsl Exp $
+#	$NetBSD: Makefile,v 1.54 2011/06/22 02:49:44 mrg Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -49,3 +49,8 @@ DPADD+=${LIBUTIL}
 # A simple unit-test driver to help catch regressions
 accept test:
 	cd ${.CURDIR}/unit-tests && ${.MAKE} -r -m / TEST_MAKE=${TEST_MAKE:U${.OBJDIR}/${PROG:T}} ${.TARGET}
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.compat.c+=	-Wno-error
+.endif

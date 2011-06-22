@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2009/05/12 18:37:50 plunky Exp $
+# $NetBSD: Makefile,v 1.7 2011/06/22 02:49:44 mrg Exp $
 
 USE_FORT?= yes	# network client
 
@@ -10,3 +10,9 @@ DPADD+=		${LIBBLUETOOTH}
 LDADD+=		-lbluetooth
 
 .include <bsd.prog.mk>
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.sdpquery.c+=	-Wno-error
+COPTS.print.c+=	-Wno-error
+.endif

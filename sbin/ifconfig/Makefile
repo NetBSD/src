@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2010/12/13 17:35:08 pooka Exp $
+#	$NetBSD: Makefile,v 1.51 2011/06/22 02:49:43 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -32,3 +32,8 @@ COPTS.ifconfig.c+= -fno-loop-optimize
 .endif
 
 .include <bsd.prog.mk>
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.af_atalk.c+=	-fno-strict-aliasing
+.endif

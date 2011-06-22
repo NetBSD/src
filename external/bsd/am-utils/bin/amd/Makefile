@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/06/20 07:43:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2011/06/22 02:49:42 mrg Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -83,3 +83,8 @@ build_version.h: get_args.c
 
 
 .include <bsd.prog.mk>
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.readdir.c+=	-fno-strict-aliasing
+.endif

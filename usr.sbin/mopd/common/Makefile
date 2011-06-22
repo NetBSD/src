@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2011/06/20 07:44:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2011/06/22 02:49:45 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -22,4 +22,9 @@ version.c: VERSION
 
 .if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.print.c+=	-Wno-pointer-sign
+.endif
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.file.c+=	-Wno-error
 .endif

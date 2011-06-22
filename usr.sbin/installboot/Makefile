@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2011/06/20 07:44:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.45 2011/06/22 02:49:45 mrg Exp $
 #
 
 .include <bsd.own.mk>
@@ -52,3 +52,8 @@ COPTS.${f}.c+=  -Wno-pointer-sign
 .endif
 
 .include <bsd.prog.mk>
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.i386.c+=	-Wno-error
+.endif
