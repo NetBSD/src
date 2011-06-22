@@ -7108,15 +7108,18 @@ main (int argc, char **argv)
 			      PREFIX_PRIORITY_LAST, 0, 1);
       else if (*cross_compile == '0')
 	{
+/* XXXMRG not sure this one is right? */
+#if !defined(NETBSD_NATIVE) && !defined(NETBSD_TOOLS)
 	  add_prefix (&startfile_prefixes,
 		      concat (gcc_exec_prefix
 			      ? gcc_exec_prefix : standard_exec_prefix,
 			      machine_suffix,
 			      standard_startfile_prefix, NULL),
 		      NULL, PREFIX_PRIORITY_LAST, 0, 1);
+#endif /* NETBSD_NATIVE */
 	}
 
-#ifndef NETBSD_NATIVE
+#if !defined(NETBSD_NATIVE) && !defined(NETBSD_TOOLS)
       /* Sysrooted prefixes are relocated because target_system_root is
 	 also relocated by gcc_exec_prefix.  */
       if (*standard_startfile_prefix_1)
