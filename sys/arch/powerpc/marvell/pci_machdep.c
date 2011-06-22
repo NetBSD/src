@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2010/12/13 16:19:02 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3 2011/06/22 18:06:34 matt Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2 2010/12/13 16:19:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3 2011/06/22 18:06:34 matt Exp $");
 
 #include "gtpci.h"
 #include "pci.h"
@@ -48,47 +48,49 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2 2010/12/13 16:19:02 matt Exp $")
 
 
 #if NGTPCI > 0
-extern void gtpci_md_conf_interrupt(pci_chipset_tag_t, int, int, int, int,
-				    int *);
-extern int gtpci_md_conf_hook(void *, int, int, int, pcireg_t);
+void gtpci_md_conf_interrupt(void *, int, int, int, int, int *);
+int gtpci_md_conf_hook(void *, int, int, int, pcireg_t);
 
 
 struct genppc_pci_chipset genppc_gtpci0_chipset = {
-	NULL,				/* pc_conf_v */
-	gtpci_attach_hook,
-	gtpci_bus_maxdevs,
-	gtpci_make_tag,
-	gtpci_conf_read,
-	gtpci_conf_write,
+	.pc_conf_v = NULL,
+	.pc_attach_hook = gtpci_attach_hook,
+	.pc_bus_maxdevs = gtpci_bus_maxdevs,
+	.pc_make_tag = gtpci_make_tag,
+	.pc_conf_read = gtpci_conf_read,
+	.pc_conf_write = gtpci_conf_write,
 
-	&genppc_gtpci0_chipset,		/* pc_intr_v */
-	genppc_pci_intr_map,
-	genppc_pci_intr_string,
-	genppc_pci_intr_evcnt,
-	genppc_pci_intr_establish,
-	genppc_pci_intr_disestablish,
+	.pc_intr_v = &genppc_gtpci0_chipset,
+	.pc_intr_map = genppc_pci_intr_map,
+	.pc_intr_string = genppc_pci_intr_string,
+	.pc_intr_evcnt = genppc_pci_intr_evcnt,
+	.pc_intr_establish = genppc_pci_intr_establish,
+	.pc_intr_disestablish = genppc_pci_intr_disestablish,
+	.pc_intr_setattr = genppc_pci_intr_setattr,
 
-	gtpci_md_conf_interrupt,
-	gtpci_decompose_tag,
-	(int (*)(pci_chipset_tag_t, int, int, int, pcireg_t))gtpci_md_conf_hook,
+	.pc_conf_interrupt = gtpci_md_conf_interrupt,
+	.pc_decompose_tag = gtpci_decompose_tag,
+	.pc_conf_hook = gtpci_md_conf_hook,
 };
 struct genppc_pci_chipset genppc_gtpci1_chipset = {
-	NULL,				/* pc_conf_v */
-	gtpci_attach_hook,
-	gtpci_bus_maxdevs,
-	gtpci_make_tag,
-	gtpci_conf_read,
-	gtpci_conf_write,
+	.pc_conf_v = NULL,
+	.pc_attach_hook = gtpci_attach_hook,
+	.pc_bus_maxdevs = gtpci_bus_maxdevs,
+	.pc_make_tag = gtpci_make_tag,
+	.pc_conf_read = gtpci_conf_read,
+	.pc_conf_write = gtpci_conf_write,
 
-	&genppc_gtpci1_chipset,		/* pc_intr_v */
-	genppc_pci_intr_map,
-	genppc_pci_intr_string,
-	genppc_pci_intr_evcnt,
-	genppc_pci_intr_establish,
-	genppc_pci_intr_disestablish,
+	.pc_intr_v = &genppc_gtpci1_chipset,
+	.pc_intr_map = genppc_pci_intr_map,
+	.pc_intr_string = genppc_pci_intr_string,
+	.pc_intr_evcnt = genppc_pci_intr_evcnt,
+	.pc_intr_establish = genppc_pci_intr_establish,
+	.pc_intr_disestablish = genppc_pci_intr_disestablish,
+	.pc_intr_setattr = genppc_pci_intr_setattr,
+	.pc_intr_map = genppc_pci_intr_map,
 
-	gtpci_md_conf_interrupt,
-	gtpci_decompose_tag,
-	(int (*)(pci_chipset_tag_t, int, int, int, pcireg_t))gtpci_md_conf_hook,
+	.pc_conf_interrupt = gtpci_md_conf_interrupt,
+	.pc_decompose_tag = gtpci_decompose_tag,
+	.pc_conf_hook = gtpci_md_conf_hook,
 };
 #endif
