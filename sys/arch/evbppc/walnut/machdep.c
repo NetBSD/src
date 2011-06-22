@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 2011/06/20 17:44:33 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 2011/06/22 18:06:32 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2011/06/20 17:44:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2011/06/22 18:06:32 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -107,6 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2011/06/20 17:44:33 matt Exp $");
 #include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
+
+#include <powerpc/ibm4xx/pci_machdep.h>
 
 #include <powerpc/pic/picvar.h>
 
@@ -411,7 +413,7 @@ mem_regions(struct mem_region **mem, struct mem_region **avail)
 
 
 int
-pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+ibm4xx_pci_bus_maxdevs(void *v, int busno)
 {
 
 	/*
@@ -422,7 +424,7 @@ pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 }
 
 int
-pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+ibm4xx_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin;
 	int dev = pa->pa_device;
@@ -432,7 +434,7 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		goto bad;
 
 	if (pin > 4) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
+		printf("%s: bad interrupt pin %d\n", __func__, pin);
 		goto bad;
 	}
 
@@ -460,11 +462,11 @@ bad:
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
-		   int swiz, int *iline)
+ibm4xx_pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz,
+    int *iline)
 {
 
-	if (bus == 0)
+	if (bus == 0) {
 		switch(dev) {
 		case 1:
 		case 2:
@@ -472,6 +474,6 @@ pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
 		case 4:
 			*iline = 31 - dev;
 		}
-	else
+	} else
 		*iline = 20 + ((swiz + dev + 1) & 3);
 }

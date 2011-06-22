@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.c,v 1.5 2011/06/18 06:41:42 matt Exp $	*/
+/*	$NetBSD: ibm405gp.c,v 1.6 2011/06/22 18:06:34 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm405gp.c,v 1.5 2011/06/18 06:41:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm405gp.c,v 1.6 2011/06/22 18:06:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibm405gp.c,v 1.5 2011/06/18 06:41:42 matt Exp $");
 #include <dev/pci/pcivar.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/pci_machdep.h>
 #include <powerpc/ibm4xx/dev/pcicreg.h>
 
 static struct powerpc_bus_space pcicfg_tag = {
@@ -60,7 +61,35 @@ static bus_space_handle_t pcicfg_ioh = 0;
 
 #define PCI0_MEM_BASE	0x80000000
 
-static void setup_pcicfg_window(void)
+static struct genppc_pci_chipset genppc_ibm4xx_chipset = {
+	.pc_conf_v =		NULL,
+	.pc_attach_hook =	ibm4xx_pci_attach_hook,
+	.pc_bus_maxdevs =	ibm4xx_pci_bus_maxdevs,
+	.pc_make_tag =		ibm4xx_pci_make_tag,
+	.pc_conf_read =		ibm4xx_pci_conf_read,
+	.pc_conf_write =	ibm4xx_pci_conf_write,
+
+	.pc_intr_v =		&genppc_ibm4xx_chipset,
+	.pc_intr_map =		genppc_pci_intr_map,
+	.pc_intr_string =	genppc_pci_intr_string,
+	.pc_intr_evcnt =	genppc_pci_intr_evcnt,
+	.pc_intr_establish =	genppc_pci_intr_establish,
+	.pc_intr_disestablish =	genppc_pci_intr_disestablish,
+	.pc_intr_setattr =	ibm4xx_pci_intr_setattr,
+
+	.pc_conf_interrupt =	ibm4xx_pci_conf_interrupt,
+	.pc_decompose_tag =	ibm4xx_pci_decompose_tag,
+	.pc_conf_hook =		ibm4xx_pci_conf_hook,
+};
+
+pci_chipset_tag_t
+ibm4xx_get_pci_chipset_tag(void)
+{
+	return &genppc_ibm4xx_chipset;
+}
+
+static void
+setup_pcicfg_window(void)
 {
 	if (pcicfg_ioh)
 		return;
@@ -74,8 +103,10 @@ static void setup_pcicfg_window(void)
  * Setup proper Local<->PCI mapping
  * PCI memory window: 256M @ PCI0MEMBASE with direct memory translation
  */
-void ibm4xx_setup_pci(void)
+void
+ibm4xx_setup_pci(void)
 {
+	pci_chipset_tag_t pc = &genppc_ibm4xx_chipset;
 	pcitag_t tag;
 
 	setup_pcicfg_window();
@@ -96,18 +127,20 @@ void ibm4xx_setup_pci(void)
 	bus_space_write_4(pcicfg_iot, pcicfg_ioh, PCIL_PMM0PCIHA, 0);
 
 	/* Configure PCI bridge */
-	tag = pci_make_tag(0, 0, 0, 0);
-	// x = pci_conf_read(0, tag, PCI0_CMD);		/* Read PCI command register */
-	// pci_conf_write(0, tag, PCI0_CMD, x | MA | ME);	/* enable bus mastering and memory space */
+	tag = pci_make_tag(pc, 0, 0, 0);
+	// x = pci_conf_read(pc, tag, PCI0_CMD);		/* Read PCI command register */
+	// pci_conf_write(pc, tag, PCI0_CMD, x | MA | ME);	/* enable bus mastering and memory space */
   
 	bus_space_write_4(pcicfg_iot, pcicfg_ioh, PCIL_PTM1MS, 0xF0000001);	/* Enable PTM1 */
 	bus_space_write_4(pcicfg_iot, pcicfg_ioh, PCIL_PTM1LA, 0);
-	pci_conf_write(0, tag, PCIC_PTM1BAR, 0);	/* Set up proper PCI->Local address base.  Always enabled */
-	pci_conf_write(0, tag, PCIC_PTM2BAR, 0);
+	pci_conf_write(pc, tag, PCIC_PTM1BAR, 0);	/* Set up proper PCI->Local address base.  Always enabled */
+	pci_conf_write(pc, tag, PCIC_PTM2BAR, 0);
 }
 
-void ibm4xx_show_pci_map(void)
+void
+ibm4xx_show_pci_map(void)
 {
+	pci_chipset_tag_t pc = &genppc_ibm4xx_chipset;
 	paddr_t la, lm, pl, ph;
 	pcitag_t tag;
 
@@ -137,13 +170,13 @@ void ibm4xx_show_pci_map(void)
 	    (lm & 1) ? "enabled":"disabled");
 	printf("PCI -> Local map\n");
 
-	tag = pci_make_tag(0, 0, 0, 0);
-	pl = pci_conf_read(0, tag, PCIC_PTM1BAR);
+	tag = pci_make_tag(pc, 0, 0, 0);
+	pl = pci_conf_read(pc, tag, PCIC_PTM1BAR);
 	la = bus_space_read_4(pcicfg_iot, pcicfg_ioh, PCIL_PTM1LA);
 	lm = bus_space_read_4(pcicfg_iot, pcicfg_ioh, PCIL_PTM1MS);
 	printf("1: %08lx -> %08lx,%08lx %s\n", pl, la, lm,
 	    (lm & 1)?"enabled":"disabled");
-	pl = pci_conf_read(0, tag, PCIC_PTM2BAR);
+	pl = pci_conf_read(pc, tag, PCIC_PTM2BAR);
 	la = bus_space_read_4(pcicfg_iot, pcicfg_ioh, PCIL_PTM2LA);
 	lm = bus_space_read_4(pcicfg_iot, pcicfg_ioh, PCIL_PTM2MS);
 	printf("2: %08lx -> %08lx,%08lx %s\n", pl, la, lm,

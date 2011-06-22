@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.9 2011/06/17 19:03:02 matt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.10 2011/06/22 18:06:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.9 2011/06/17 19:03:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10 2011/06/22 18:06:34 matt Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.9 2011/06/17 19:03:02 matt Exp $");
 #define _IBM4XX_BUS_DMA_PRIVATE
 
 #include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/pci_machdep.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
 #include <dev/pci/pcivar.h>
@@ -54,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.9 2011/06/17 19:03:02 matt Exp $");
 static int	pchbmatch(device_t, cfdata_t, void *);
 static void	pchbattach(device_t, device_t, void *);
 static int	pchbprint(void *, const char *);
-static pci_chipset_tag_t	alloc_chipset_tag(int);
 
 CFATTACH_DECL_NEW(pchb, 0,
     pchbmatch, pchbattach, NULL, NULL);
@@ -83,7 +83,7 @@ pchbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct plb_attach_args *paa = aux;
 	/* XXX chipset tag unused by walnut, so just pass 0 */
-	pci_chipset_tag_t pc = alloc_chipset_tag(0);
+	pci_chipset_tag_t pc = ibm4xx_get_pci_chipset_tag();
 	pcitag_t tag; 
 	int class, id;
 
@@ -91,7 +91,7 @@ pchbmatch(device_t parent, cfdata_t cf, void *aux)
 	if (strcmp(paa->plb_name, cf->cf_name) != 0)
 		return 0;
 
-	pci_machdep_init();
+	ibm4xx_pci_machdep_init();
 	tag = pci_make_tag(pc, 0, 0, 0);
 
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
@@ -125,11 +125,11 @@ pchbattach(device_t parent, device_t self, void *aux)
 
 	pci_conf_debug = 1;
 #endif
-	pci_chipset_tag_t pc = alloc_chipset_tag(0);
+	pci_chipset_tag_t pc = ibm4xx_get_pci_chipset_tag();
 	pcitag_t tag; 
 	int class, id;
 
-	pci_machdep_init();
+	ibm4xx_pci_machdep_init();
 	tag = pci_make_tag(pc, 0, 0, 0);
 
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
@@ -147,7 +147,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(class));
 
-	pci_machdep_init(); /* Redundant... */
+	ibm4xx_pci_machdep_init(); /* Redundant... */
 	ibm4xx_setup_pci();
 #ifdef PCI_CONFIGURE_VERBOSE
 	ibm4xx_show_pci_map();
@@ -159,12 +159,16 @@ pchbattach(device_t parent, device_t self, void *aux)
 		panic("pchbattach: can't init MEM tag");
 
 #ifdef PCI_NETBSD_CONFIGURE
-	pc->memext = extent_create("pcimem", IBM405GP_PCI_MEM_START,
+	struct extent *memext = extent_create("pcimem",
+	    IBM405GP_PCI_MEM_START,
 	    IBM405GP_PCI_MEM_START + 0x1fffffff, M_DEVBUF, NULL, 0,
 	    EX_NOWAIT);
-	pc->ioext = extent_create("pciio", IBM405GP_PCI_PCI_IO_START,
+	struct extent *ioext = extent_create("pciio",
+	    IBM405GP_PCI_PCI_IO_START,
 	    IBM405GP_PCI_PCI_IO_START + 0xffff, M_DEVBUF, NULL, 0, EX_NOWAIT);
-	pci_configure_bus(pc, pc->ioext, pc->memext, NULL, 0, 32);
+	pci_configure_bus(pc, ioext, memext, NULL, 0, 32);
+	extent_destroy(ioext);
+	extent_destroy(memext);
 #endif /* PCI_NETBSD_CONFIGURE */
 
 #ifdef PCI_CONFIGURE_VERBOSE
@@ -197,12 +201,13 @@ pchbprint(void *aux, const char *p)
 static void
 scan_pci_bus(void)
 {
+	pci_chipset_tag_t pc = ibm4xx_get_pci_chipset_tag();
 	pcitag_t tag;
 	int i, x;
 
 	for (i=0;i<32;i++){
-		tag = pci_make_tag(0, 0, i, 0);
-		x = pci_conf_read(0, tag, 0);
+		tag = pci_make_tag(pc, 0, i, 0);
+		x = pci_conf_read(pc, tag, 0);
 		printf("%d tag=%08x : %08x\n", i, tag, x);
 #if 0
 		if (PCI_VENDOR(x) == PCI_VENDOR_INTEL
@@ -210,23 +215,10 @@ scan_pci_bus(void)
 			/* Do not configure PCI bus analyzer */
 			continue;
 		}
-		x = pci_conf_read(0, tag, PCI_COMMAND_STATUS_REG);
+		x = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 		x |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(0, tag, PCI_COMMAND_STATUS_REG, x);
 #endif
 	}
 }
 #endif
-
-static pci_chipset_tag_t
-alloc_chipset_tag(int node)
-{
-	pci_chipset_tag_t npc;
-
-	npc = malloc(sizeof *npc, M_DEVBUF, M_NOWAIT);
-	if (npc == NULL)
-		panic("could not allocate pci_chipset_tag_t");
-	npc->rootnode = node;
-
-	return (npc);
-}
