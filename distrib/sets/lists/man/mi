@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1320 2011/06/22 19:34:53 jruoho Exp $
+# $NetBSD: mi,v 1.1321 2011/06/22 20:29:38 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -704,6 +704,7 @@
 ./usr/share/man/cat4/alpha/ttwoga.0		man-sys-catman		.cat
 ./usr/share/man/cat4/alpha/ttwopci.0		man-sys-catman		.cat
 ./usr/share/man/cat4/altmem.0			man-sys-catman		.cat
+./usr/share/man/cat4/altq.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amdpm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amdtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amhphy.0			man-sys-catman		.cat
@@ -3533,6 +3534,7 @@
 ./usr/share/man/html4/alpha/ttwoga.html		man-sys-htmlman		html
 ./usr/share/man/html4/alpha/ttwopci.html	man-sys-htmlman		html
 ./usr/share/man/html4/altmem.html		man-sys-htmlman		html
+./usr/share/man/html4/altq.html			man-sys-htmlman		html
 ./usr/share/man/html4/amdpm.html		man-sys-htmlman		html
 ./usr/share/man/html4/amdtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/amhphy.html		man-sys-htmlman		html
@@ -6059,6 +6061,7 @@
 ./usr/share/man/man4/alpha/ttwoga.4		man-sys-man		.man
 ./usr/share/man/man4/alpha/ttwopci.4		man-sys-man		.man
 ./usr/share/man/man4/altmem.4			man-sys-man		.man
+./usr/share/man/man4/altq.4			man-sys-man		.man
 ./usr/share/man/man4/amdpm.4			man-sys-man		.man
 ./usr/share/man/man4/amdtemp.4			man-sys-man		.man
 ./usr/share/man/man4/amhphy.4			man-sys-man		.man
