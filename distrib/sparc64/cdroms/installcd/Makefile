@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2011/06/19 10:52:08 martin Exp $
+#	$NetBSD: Makefile,v 1.13 2011/06/22 14:05:38 martin Exp $
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 
@@ -44,6 +44,7 @@ CDRUNTIME+=	./usr/lib/libedit.so*
 CDRUNTIME+=	./usr/lib/libgcc_s.so*
 CDRUNTIME+=	./usr/lib/libintl.so*
 CDRUNTIME+=	./usr/lib/libkvm.so*
+CDRUNTIME+=	./usr/lib/liblzma.so*
 CDRUNTIME+=	./usr/lib/libterminfo.so*
 CDRUNTIME+=	./usr/lib/libutil.so*
 CDRUNTIME+=	./usr/lib/libz.so*
