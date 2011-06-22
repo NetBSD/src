@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/03/05 04:11:51 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2011/06/22 05:23:54 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,3 +17,8 @@ DPADD+=	${LIBUTIL} ${LIBM}
 LDADD+=	-lutil -lm
 
 .include <bsd.prog.mk>
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.altqd.c+=	-Wno-array-bounds
+.endif
