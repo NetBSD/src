@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.22 2010/12/01 15:13:24 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.23 2011/06/22 04:01:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.22 2010/12/01 15:13:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.23 2011/06/22 04:01:08 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -319,7 +319,7 @@ virtif_sender(void *arg)
 	mutex_enter(&sc->sc_mtx);
 	KERNEL_LOCK(1, NULL);
 	while (!sc->sc_dying) {
-		if (!ifp->if_flags & IFF_RUNNING) {
+		if (!(ifp->if_flags & IFF_RUNNING)) {
 			cv_wait(&sc->sc_cv, &sc->sc_mtx);
 			continue;
 		}
