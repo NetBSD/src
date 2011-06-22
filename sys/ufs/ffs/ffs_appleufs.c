@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_appleufs.c,v 1.10 2010/04/24 19:58:13 dbj Exp $	*/
+/*	$NetBSD: ffs_appleufs.c,v 1.11 2011/06/22 04:01:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 Darrin B. Jewell
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.10 2010/04/24 19:58:13 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.11 2011/06/22 04:01:33 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -108,7 +108,7 @@ ffs_appleufs_validate(const char *name, const struct appleufslabel *o,
 		n->ul_namelen = APPLEUFS_MAX_LABEL_NAME;
 	}
 	/* if len is max, will set ul_unused1 */
-	n->ul_name[n->ul_namelen] = '\0';
+	n->ul_name[n->ul_namelen - 1] = '\0';
 
 #ifdef DEBUG
 	printf("%s: found APPLE UFS label v%d: \"%s\"\n",
