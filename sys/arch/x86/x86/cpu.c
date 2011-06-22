@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.88 2011/06/12 03:35:50 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.89 2011/06/22 09:28:08 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88 2011/06/12 03:35:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.89 2011/06/22 09:28:08 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -448,6 +448,11 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		);
 	}
 
+	/*
+	 * Postpone the "cpufeaturebus" scan.
+	 * It is safe to scan the pseudo-bus
+	 * only after all CPUs have attached.
+	 */
 	(void)config_defer(self, cpu_defer);
 }
 
