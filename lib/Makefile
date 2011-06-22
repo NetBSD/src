@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.168 2011/06/21 04:04:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.169 2011/06/22 05:16:37 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -6,10 +6,18 @@
 SUBDIR=		csu
 
 .if (${MKGCC} != "no")
-.if (${USE_COMPILERCRTSTUFF} == "yes")
+. if ${HAVE_GCC} == 4
+.  if (${USE_COMPILERCRTSTUFF} == "yes")
 SUBDIR+=	../gnu/lib/crtstuff4
-.endif
+.  endif
 SUBDIR+=	../gnu/lib/libgcc4
+. else
+.  if (${USE_COMPILERCRTSTUFF} == "yes")
+# XXX not yet
+#SUBDIR+=	../external/gpl3/gcc/lib/crtstuff
+.  endif
+#SUBDIR+=	../external/gpl3/gcc/lib/libgcc
+. endif
 .endif
 
 SUBDIR+=	libc
@@ -70,9 +78,10 @@ SUBDIR+=	../gnu/lib/libobjc4
 .endif
 
 . if ${HAVE_GCC} >= 45
-SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
-SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
-SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
+# XXX not yet
+#SUBDIR+=	../external/lgpl3/gmp/lib/libgmp
+#SUBDIR+=	../external/lgpl3/mpfr/lib/libmpfr
+#SUBDIR+=	../external/lgpl2/mpc/lib/libmpc
 .endif
 
 #
