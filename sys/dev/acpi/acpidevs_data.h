@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.25 2011/06/20 15:56:36 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.26 2011/06/22 19:26:36 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.34 2011/06/20 15:56:07 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.35 2011/06/22 19:26:22 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -1455,5 +1455,9 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "LEN0014",
 	    "Lenovo ThinkPad Extras",
+	},
+	{
+	    "SMO8800",
+	    "ST Microelectronics Accelerometer",
 	},
 };
