@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/02/26 19:17:37 plunky Exp $
+#	$NetBSD: Makefile,v 1.9 2011/06/22 02:49:42 mrg Exp $
 
 #NOGCCERROR=yes
 
@@ -96,3 +96,7 @@ CLEANFILES+=ntpd.8
 # kill default .y.c rule - to rebuild ntp_parser.c we need bison which is not part of the toolchain
 .y.c:
 
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.ntp_request.c+= -Wno-error -fno-strict-aliasing
+.endif

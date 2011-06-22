@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2008/10/25 19:07:26 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2011/06/22 02:49:43 mrg Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/rpc
@@ -166,3 +166,8 @@ MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		xdr.3 xdr_vector.3 \
 		xdr.3 xdr_void.3 \
 		xdr.3 xdr_wrapstring.3
+
+# XXX
+.if ${HAVE_GCC} == 45 || ${MACHINE} == "vax"
+COPTS.xdr_float.c+= -fno-strict-aliasing
+.endif

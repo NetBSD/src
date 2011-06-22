@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2009/09/06 18:39:04 pooka Exp $
+#	$NetBSD: Makefile,v 1.11 2011/06/22 02:49:44 mrg Exp $
 
 WARNS?=	3	# XXX: sign-compare issues
 
@@ -17,3 +17,8 @@ FILES=		dot.nsmbrc
 .endif
 
 .include <bsd.prog.mk>
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.rap.c+=	-Wno-error
+.endif

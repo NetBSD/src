@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/09/19 21:38:40 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/22 02:49:42 mrg Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -14,3 +14,8 @@ CPPFLAGS+=	-I${DIST}
 LDADD+=		${LIBAMU} -lrpcsvc
 
 .include <bsd.prog.mk>
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.stubs.c+=	-fno-strict-aliasing
+.endif
