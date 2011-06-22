@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.12 2011/06/18 06:41:43 matt Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.13 2011/06/22 18:06:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,20 +37,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.12 2011/06/18 06:41:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.13 2011/06/22 18:06:34 matt Exp $");
 
 #define _POWERPC_BUS_DMA_PRIVATE
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/extent.h>
-#include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/bus.h>
 #include <sys/intr.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
+#include <sys/time.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -92,6 +91,7 @@ genppc_pci_intr_string(void *v, pci_intr_handle_t ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
+#ifdef ICU_LEN
 	if (ih == 0 || ih >= ICU_LEN
 /* XXX on macppc it's completely legal to have PCI interrupts on a slave PIC */
 #ifdef IRQ_SLAVE
@@ -99,6 +99,7 @@ genppc_pci_intr_string(void *v, pci_intr_handle_t ih)
 #endif
 	    )
 		panic("pci_intr_string: bogus handle 0x%x", ih);
+#endif
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
@@ -118,12 +119,14 @@ genppc_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
 
+#ifdef ICU_LEN
 	if (ih == 0 || ih >= ICU_LEN
 #ifdef IRQ_SLAVE
 	    || ih == IRQ_SLAVE
 #endif
 	    )
 		panic("pci_intr_establish: bogus handle 0x%x", ih);
+#endif
 
 	return intr_establish(ih, IST_LEVEL, level, func, arg);
 }
@@ -135,16 +138,23 @@ genppc_pci_intr_disestablish(void *v, void *cookie)
 	intr_disestablish(cookie);
 }
 
+int
+genppc_pci_intr_setattr(void *v, pci_intr_handle_t *ihp, int attr,
+    uint64_t data)
+{
+
+	return ENODEV;
+}
+
 void
-genppc_pci_conf_interrupt(pci_chipset_tag_t pct, int bus, int dev, int pin,
+genppc_pci_conf_interrupt(void *v, int bus, int dev, int pin,
     int swiz, int *iline)
 {
 	/* do nothing */
 }
 
 int
-genppc_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
-	pcireg_t id)
+genppc_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
 	return (PCI_CONF_DEFAULT);
 }
@@ -187,11 +197,13 @@ genppc_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	if (line == 0 || line == 255) {
 		aprint_error("pci_intr_map: no mapping for pin %c\n", '@' + pin);
 		goto bad;
+#ifdef ICU_LEN
 	} else {
 		if (line >= ICU_LEN) {
 			aprint_error("pci_intr_map: bad interrupt line %d\n", line);
 			goto bad;
 		}
+#endif
 	}
 
 	*ihp = line;

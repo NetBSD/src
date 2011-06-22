@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.18 2010/11/03 05:23:11 kiyohara Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.19 2011/06/22 18:06:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.18 2010/11/03 05:23:11 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.19 2011/06/22 18:06:32 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,6 +86,7 @@ bebox_pci_get_chipset_tag(pci_chipset_tag_t pc)
 	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
 	pc->pc_intr_establish = genppc_pci_intr_establish;
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
+	pc->pc_intr_setattr = genppc_pci_intr_setattr;
 
 	pc->pc_conf_interrupt = bebox_pci_conf_interrupt;
 	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
@@ -100,8 +101,8 @@ bebox_pci_get_chipset_tag(pci_chipset_tag_t pc)
 }
 
 void
-bebox_pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
-    int swiz, int *iline)
+bebox_pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz,
+    int *iline)
 {
 
 	if (bus == 0) {

@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.96 2008/10/07 19:32:29 pgoyette Exp $
+#	$NetBSD: files.macppc,v 1.97 2011/06/22 18:06:33 matt Exp $
 #
 # macppc-specific configuration info
 
@@ -97,6 +97,7 @@ file arch/macppc/pci/pci_machdep.c		pci
 file arch/macppc/pci/agp_machdep.c		agp
 file arch/powerpc/pci/pciconf_indirect.c	pci
 file arch/powerpc/pci/pci_machdep_common.c	pci
+file    arch/powerpc/pci/pci_module.c		pci & modular
 
 device bandit: pcibus, pic_ohare, ipi_hammerhead
 attach bandit at mainbus

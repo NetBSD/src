@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 2010/12/13 16:19:03 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7 2011/06/22 18:06:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -78,6 +78,7 @@ ibmnws_pci_get_chipset_tag_indirect(pci_chipset_tag_t pc)
 	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
 	pc->pc_intr_establish = genppc_pci_intr_establish;
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
+	pc->pc_intr_setattr = genppc_pci_intr_setattr;
 
 	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
 	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
@@ -103,7 +104,7 @@ ibmnws_pci_bus_maxdevs(void *v, int busno)
 }
 
 int
-ibmnws_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func, pcireg_t id)
+ibmnws_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
 
 	/*

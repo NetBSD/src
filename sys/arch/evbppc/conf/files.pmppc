@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.5 2011/03/02 08:25:08 ahoka Exp $
+#	$NetBSD: files.pmppc,v 1.6 2011/06/22 18:06:32 matt Exp $
 #
 #
 maxpartitions 16
@@ -57,6 +57,7 @@ include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
 include "dev/pci/files.agp"
 file	arch/powerpc/pci/pci_machdep_common.c		pci
+file	arch/powerpc/pci/pci_module.c			pci & modular
 file	arch/powerpc/pci/pciconf_indirect.c		pci
 file	arch/evbppc/pmppc/pci/pci_machdep.c		pci
 

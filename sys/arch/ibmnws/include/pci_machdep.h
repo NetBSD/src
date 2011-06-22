@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.7 2010/12/13 16:19:03 matt Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.8 2011/06/22 18:06:33 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,10 +38,9 @@
  */
 int ibmnws_pci_bus_maxdevs(void *, int);
 int ibmnws_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-int ibmnws_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
+int ibmnws_pci_conf_hook(void *, int, int, int, pcireg_t);
 
 void ibmnws_pci_get_chipset_tag_indirect(pci_chipset_tag_t);
-void ibmnws_pci_get_chipset_tag(pci_chipset_tag_t pc);
 
 /*
  * ibmnws-specific PCI data.

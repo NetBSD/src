@@ -1,4 +1,4 @@
-#	$NetBSD: files.ev64260,v 1.13 2010/04/28 13:51:56 kiyohara Exp $
+#	$NetBSD: files.ev64260,v 1.14 2011/06/22 18:06:32 matt Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #
@@ -52,6 +52,7 @@ file	arch/evbppc/ev64260/gt_mainbus.c	gt
 
 file	arch/powerpc/marvell/pci_machdep.c	pci
 file	arch/powerpc/pci/pci_machdep_common.c	pci
+file    arch/powerpc/pci/pci_module.c		pci & modular
 
 device	pchb: pcibus
 attach	pchb at pci
