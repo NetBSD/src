@@ -1,4 +1,4 @@
-/*	$NetBSD: string.c,v 1.10 2009/04/14 08:50:06 lukem Exp $	*/
+/*	$NetBSD: string.c,v 1.11 2011/06/22 06:23:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)string.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: string.c,v 1.10 2009/04/14 08:50:06 lukem Exp $");
+__RCSID("$NetBSD: string.c,v 1.11 2011/06/22 06:23:07 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ str_alloc(size_t l)
 {
 	struct string *s;
 
-	s = (struct string *) malloc(l + str_offset);
+	s = malloc(l + str_offset);
 	if (s == 0)
 		return 0;
 	if (str_head.s_forw == 0)
