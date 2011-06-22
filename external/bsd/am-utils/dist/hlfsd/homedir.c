@@ -1,4 +1,4 @@
-/*	$NetBSD: homedir.c,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: homedir.c,v 1.2 2011/06/22 03:58:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 Erez Zadok
@@ -498,7 +498,7 @@ readent:
   buf[0] = '\0';
   fgets(buf, 256, passwd_fp);
   passwd_line++;
-  if (!buf || buf[0] == '\0')
+  if (buf[0] == '\0')
     goto readent;
 
   /* read user name */
