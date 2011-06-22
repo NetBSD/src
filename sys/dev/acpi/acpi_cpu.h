@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.41 2011/06/12 10:11:52 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.42 2011/06/22 08:49:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -232,7 +232,7 @@ struct acpicpu_softc {
 };
 
 void		 acpicpu_cstate_attach(device_t);
-int		 acpicpu_cstate_detach(device_t);
+void		 acpicpu_cstate_detach(device_t);
 void		 acpicpu_cstate_start(device_t);
 void		 acpicpu_cstate_suspend(void *);
 void		 acpicpu_cstate_resume(void *);
@@ -240,7 +240,7 @@ void		 acpicpu_cstate_callback(void *);
 void		 acpicpu_cstate_idle(void);
 
 void		 acpicpu_pstate_attach(device_t);
-int		 acpicpu_pstate_detach(device_t);
+void		 acpicpu_pstate_detach(device_t);
 void		 acpicpu_pstate_start(device_t);
 void		 acpicpu_pstate_suspend(void *);
 void		 acpicpu_pstate_resume(void *);
@@ -249,7 +249,7 @@ int		 acpicpu_pstate_get(struct cpu_info *, uint32_t *);
 void		 acpicpu_pstate_set(struct cpu_info *, uint32_t);
 
 void		 acpicpu_tstate_attach(device_t);
-int		 acpicpu_tstate_detach(device_t);
+void		 acpicpu_tstate_detach(device_t);
 void		 acpicpu_tstate_start(device_t);
 void		 acpicpu_tstate_suspend(void *);
 void		 acpicpu_tstate_resume(void *);
