@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_sense.c,v 1.8 2008/04/28 20:23:09 martin Exp $	*/
+/*	$NetBSD: scsi_sense.c,v 1.9 2011/06/22 05:18:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsi_sense.c,v 1.8 2008/04/28 20:23:09 martin Exp $");
+__RCSID("$NetBSD: scsi_sense.c,v 1.9 2011/06/22 05:18:03 mrg Exp $");
 #endif
 
 
@@ -380,7 +380,7 @@ scsi_print_sense_data(const unsigned char *s, int slen, int verbosity)
 	 * nonzero data. If we have some, go back and print the lot,
 	 * otherwise we're done.
 	 */
-	if (sbs)
+	if (cp)
 		i = 18;
 	else
 		i = 15;
