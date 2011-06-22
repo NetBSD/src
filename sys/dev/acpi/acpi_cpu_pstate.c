@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.50 2011/06/22 08:05:10 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.51 2011/06/22 08:49:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,11 +27,10 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.50 2011/06/22 08:05:10 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.51 2011/06/22 08:49:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
-#include <sys/once.h>
 #include <sys/xcall.h>
 
 #include <dev/acpi/acpireg.h>
@@ -153,21 +152,16 @@ fail:
 	}
 }
 
-int
+void
 acpicpu_pstate_detach(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
-	static ONCE_DECL(once_detach);
 	size_t size;
-	int rv;
 
 	if ((sc->sc_flags & ACPICPU_FLAG_P) == 0)
-		return 0;
+		return;
 
-	rv = RUN_ONCE(&once_detach, acpicpu_md_pstate_stop);
-
-	if (rv != 0)
-		return rv;
+	(void)acpicpu_md_pstate_stop();
 
 	size = sc->sc_pstate_count * sizeof(*sc->sc_pstate);
 
@@ -175,8 +169,6 @@ acpicpu_pstate_detach(device_t self)
 		kmem_free(sc->sc_pstate, size);
 
 	sc->sc_flags &= ~ACPICPU_FLAG_P;
-
-	return 0;
 }
 
 void
