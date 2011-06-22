@@ -1,4 +1,4 @@
-/*	$NetBSD: pmppc_intr.h,v 1.4 2011/06/17 23:36:17 matt Exp $	*/
+/*	$NetBSD: pmppc_intr.h,v 1.5 2011/06/22 05:08:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <powerpc/intr.h>
 
-#ifndef _LOCORE
+#if !defined(_LOCORE) && !defined(_MODULE)
 
 struct pic_ops *setup_cpc700(void);
 
@@ -46,6 +46,6 @@ struct pic_ops *setup_cpc700(void);
 
 #define	LEGAL_HWIRQ_P(x) ((u_int)(x) < ICU_LEN && (ICU_MASK & (0x80000000 >> (x))))
 
-#endif /* !_LOCORE */
+#endif /* !_LOCORE && !_MODULE */
 
 #endif /* !_PMPPC_INTR_H_ */
