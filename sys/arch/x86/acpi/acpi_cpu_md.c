@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.61 2011/06/12 10:11:52 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.62 2011/06/22 08:49:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.61 2011/06/12 10:11:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.62 2011/06/22 08:49:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -373,8 +373,15 @@ acpicpu_md_cstate_start(struct acpicpu_softc *sc)
 int
 acpicpu_md_cstate_stop(void)
 {
+	static char text[16];
+	void (*func)(void);
 	uint64_t xc;
 	bool ipi;
+
+	x86_cpu_idle_get(&func, text, sizeof(text));
+
+	if (func == native_idle)
+		return EALREADY;
 
 	ipi = (native_idle != x86_cpu_idle_halt) ? false : true;
 	x86_cpu_idle_set(native_idle, native_idle_text, ipi);
@@ -424,7 +431,25 @@ acpicpu_md_cstate_enter(int method, int state)
 int
 acpicpu_md_pstate_start(struct acpicpu_softc *sc)
 {
-	uint64_t xc;
+	uint64_t xc, val;
+
+	/*
+	 * Make sure EST is enabled.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_P_FFH) != 0) {
+
+		val = rdmsr(MSR_MISC_ENABLE);
+
+		if ((val & MSR_MISC_ENABLE_EST) == 0) {
+
+			val |= MSR_MISC_ENABLE_EST;
+			wrmsr(MSR_MISC_ENABLE, val);
+			val = rdmsr(MSR_MISC_ENABLE);
+
+			if ((val & MSR_MISC_ENABLE_EST) == 0)
+				return ENOTTY;
+		}
+	}
 
 	/*
 	 * Reset the APERF and MPERF counters.
@@ -440,8 +465,12 @@ acpicpu_md_pstate_start(struct acpicpu_softc *sc)
 int
 acpicpu_md_pstate_stop(void)
 {
-	if (acpicpu_log != NULL)
-		sysctl_teardown(&acpicpu_log);
+
+	if (acpicpu_log == NULL)
+		return EALREADY;
+
+	sysctl_teardown(&acpicpu_log);
+	acpicpu_log = NULL;
 
 	return 0;
 }
@@ -452,7 +481,6 @@ acpicpu_md_pstate_init(struct acpicpu_softc *sc)
 	struct cpu_info *ci = sc->sc_ci;
 	struct acpicpu_pstate *ps, msr;
 	uint32_t family, i = 0;
-	uint64_t val;
 
 	(void)memset(&msr, 0, sizeof(struct acpicpu_pstate));
 
@@ -460,24 +488,6 @@ acpicpu_md_pstate_init(struct acpicpu_softc *sc)
 
 	case CPUVENDOR_IDT:
 	case CPUVENDOR_INTEL:
-
-		/*
-		 * Make sure EST is enabled.
-		 */
-		if ((sc->sc_flags & ACPICPU_FLAG_P_FFH) != 0) {
-
-			val = rdmsr(MSR_MISC_ENABLE);
-
-			if ((val & MSR_MISC_ENABLE_EST) == 0) {
-
-				val |= MSR_MISC_ENABLE_EST;
-				wrmsr(MSR_MISC_ENABLE, val);
-				val = rdmsr(MSR_MISC_ENABLE);
-
-				if ((val & MSR_MISC_ENABLE_EST) == 0)
-					return ENOTTY;
-			}
-		}
 
 		/*
 		 * If the so-called Turbo Boost is present,

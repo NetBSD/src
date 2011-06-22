@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.52 2011/03/19 12:57:31 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.53 2011/06/22 08:49:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,13 +27,12 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.52 2011/03/19 12:57:31 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.53 2011/06/22 08:49:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/once.h>
 #include <sys/mutex.h>
 #include <sys/timetc.h>
 
@@ -109,21 +108,17 @@ acpicpu_cstate_attach(device_t self)
 	acpicpu_cstate_quirks(sc);
 }
 
-int
+void
 acpicpu_cstate_detach(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
-	static ONCE_DECL(once_detach);
-	int rv;
 
-	rv = RUN_ONCE(&once_detach, acpicpu_md_cstate_stop);
+	if ((sc->sc_flags & ACPICPU_FLAG_C) == 0)
+		return;
 
-	if (rv != 0)
-		return rv;
+	(void)acpicpu_md_cstate_stop();
 
 	sc->sc_flags &= ~ACPICPU_FLAG_C;
-
-	return 0;
 }
 
 void
