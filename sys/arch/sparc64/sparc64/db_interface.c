@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.128 2011/04/13 03:34:37 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.129 2011/06/22 05:50:47 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.128 2011/04/13 03:34:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.129 2011/06/22 05:50:47 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -243,8 +243,8 @@ const struct db_variable db_regs[] = {
 	{ "i3",		dbregfr(arg[3]),	db_sparc_regop, 0 },
 	{ "i4",		dbregfr(arg[4]),	db_sparc_regop, 0 },
 	{ "i5",		dbregfr(arg[5]),	db_sparc_regop, 0 },
-	{ "i6",		dbregfr(arg[6]),	db_sparc_regop, 0 },
-	{ "i7",		dbregfr(arg[7]),	db_sparc_regop, 0 },
+	{ "i6",		dbregfr(fp),		db_sparc_regop, 0 },
+	{ "i7",		dbregfr(pc),		db_sparc_regop, 0 },
 	{ "f0",		dbregfp(regs[0]),	db_sparc_regop, 0 },
 	{ "f2",		dbregfp(regs[2]),	db_sparc_regop, 0 },
 	{ "f4",		dbregfp(regs[4]),	db_sparc_regop, 0 },
