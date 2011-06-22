@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.43 2011/06/21 03:37:21 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.44 2011/06/22 08:49:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.43 2011/06/21 03:37:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.44 2011/06/22 08:49:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -202,33 +202,17 @@ static int
 acpicpu_detach(device_t self, int flags)
 {
 	struct acpicpu_softc *sc = device_private(self);
-	int rv = 0;
 
 	sc->sc_cold = true;
 
 	acpicpu_evcnt_detach(self);
 	acpi_deregister_notify(sc->sc_node);
 
-	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
-		rv = acpicpu_cstate_detach(self);
-
-	if (rv != 0)
-		return rv;
-
-	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
-		rv = acpicpu_pstate_detach(self);
-
-	if (rv != 0)
-		return rv;
-
-	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
-		rv = acpicpu_tstate_detach(self);
-
-	if (rv != 0)
-		return rv;
+	acpicpu_cstate_detach(self);
+	acpicpu_pstate_detach(self);
+	acpicpu_tstate_detach(self);
 
 	mutex_destroy(&sc->sc_mtx);
-
 	sc->sc_node->ad_device = NULL;
 
 	acpicpu_count--;

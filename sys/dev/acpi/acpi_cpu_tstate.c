@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.29 2011/06/22 08:05:10 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.30 2011/06/22 08:49:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.29 2011/06/22 08:05:10 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.30 2011/06/22 08:49:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -120,14 +120,14 @@ out:
 	acpicpu_tstate_reset(sc);
 }
 
-int
+void
 acpicpu_tstate_detach(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 	size_t size;
 
 	if ((sc->sc_flags & ACPICPU_FLAG_T) == 0)
-		return 0;
+		return;
 
 	size = sc->sc_tstate_count * sizeof(*sc->sc_tstate);
 
@@ -135,8 +135,6 @@ acpicpu_tstate_detach(device_t self)
 		kmem_free(sc->sc_tstate, size);
 
 	sc->sc_flags &= ~ACPICPU_FLAG_T;
-
-	return 0;
 }
 
 void
