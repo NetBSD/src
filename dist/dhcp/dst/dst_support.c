@@ -1,4 +1,4 @@
-static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/dst_support.c,v 1.3 2005/08/11 17:13:21 drochner Exp $";
+static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/dst_support.c,v 1.4 2011/06/22 03:57:20 mrg Exp $";
 
 
 /*
@@ -155,7 +155,7 @@ dst_s_conv_bignum_b64_to_u8(const char **buf,
 	}
 	bp = strchr(*buf, '\n');	/* find length of input line */
 	if (bp != NULL)
-		*bp = (u_char) NULL;
+		*bp = 0;
 
 	blen = b64_pton(*buf, bstr, sizeof(bstr));
 	if (blen <= 0) {
