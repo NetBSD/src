@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.h,v 1.3 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: mainbus.h,v 1.4 2011/06/22 05:08:56 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -29,6 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _PMPPC_DEV_MAINBUS_H_
+#define _PMPPC_DEV_MAINBUS_H_
+
+#include <dev/pci/pcivar.h>
+#include <machine/pci_machdep.h>
+
 struct mainbus_attach_args {
 	const char *mb_name;
 	u_long mb_addr;
@@ -46,3 +52,10 @@ struct mainbus_attach_args {
 
 extern struct powerpc_bus_space pmppc_mem_tag;
 extern struct powerpc_bus_space pmppc_pci_io_tag;
+extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
+
+int pmppc_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
+void pmppc_pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
+void pmppc_pci_get_chipset_tag(pci_chipset_tag_t);
+
+#endif /* _PMPPC_DEV_MAINBUS_H_ */
