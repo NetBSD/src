@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.34 2011/06/20 15:56:07 jruoho Exp $
+# $NetBSD: acpidevs,v 1.35 2011/06/22 19:26:22 jruoho Exp $
 #
 # Originally extracted from:
 
@@ -395,3 +395,4 @@ IBM0079		IBM Docking Station
 INT0800		Intel Firmware Hub Device
 IPI0001		Intelligent Platform Management Interface
 LEN0014		Lenovo ThinkPad Extras
+SMO8800		ST Microelectronics Accelerometer
