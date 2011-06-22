@@ -1,4 +1,4 @@
-/*	$NetBSD: window_string.h,v 1.8 2009/04/14 08:50:06 lukem Exp $	*/
+/*	$NetBSD: window_string.h,v 1.9 2011/06/22 06:22:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -62,7 +62,7 @@ struct string {
 
 EXTERN struct string str_head;
 
-#define str_offset ((unsigned)str_head.s_data - (unsigned)&str_head)
+#define str_offset offsetof(struct string, s_data)
 #define str_stos(s) ((struct string *)((unsigned)(s) - str_offset))
 
 char	*str_alloc(size_t);
