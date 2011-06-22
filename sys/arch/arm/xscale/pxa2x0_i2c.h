@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2c.h,v 1.3 2011/06/19 16:16:42 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_i2c.h,v 1.4 2011/06/22 16:18:55 kiyohara Exp $	*/
 /*	$OpenBSD: pxa2x0_i2c.h,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
@@ -27,6 +27,7 @@ struct pxa2x0_i2c_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
+	bus_addr_t sc_addr;
 	bus_size_t sc_size;
 
 	uint32_t sc_icr;
