@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2009/04/11 07:58:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2011/06/22 02:49:43 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	lfs_inode.c		LFS filestore-specific routines
@@ -29,3 +29,8 @@ COPTS.lfs_inode.c+=	-fno-tree-ter
 	${NETBSDSRCDIR}/sys/ufs/ffs
 
 .include <bsd.prog.mk>
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.lfs_inode.c+=	-fno-strict-aliasing
+.endif
