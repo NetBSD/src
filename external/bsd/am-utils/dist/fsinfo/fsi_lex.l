@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_lex.l,v 1.3 2009/03/20 20:30:52 christos Exp $	*/
+/*	$NetBSD: fsi_lex.l,v 1.4 2011/06/22 03:58:52 mrg Exp $	*/
 
 %{
 /*
@@ -166,6 +166,7 @@ struct r {
 /* This option causes Solaris lex to fail.  Use flex.  See BUGS file */
 /* no need to use yyunput() */
 %option nounput
+%option noinput
 
 /* allocate more output slots so lex scanners don't run out of mem */
 %o 1024

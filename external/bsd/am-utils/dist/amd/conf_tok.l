@@ -1,4 +1,4 @@
-/*	$NetBSD: conf_tok.l,v 1.3 2009/03/20 20:30:52 christos Exp $	*/
+/*	$NetBSD: conf_tok.l,v 1.4 2011/06/22 03:58:51 mrg Exp $	*/
 
 %{
 /*
@@ -110,6 +110,7 @@ int yywrap(void);
 /* This option causes Solaris lex to fail.  Use flex.  See BUGS file */
 /* no need to use yyunput() */
 %option nounput
+%option noinput
 
 /* allocate more output slots so lex scanners don't run out of mem */
 %o 1024
