@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2c.c,v 1.5 2011/06/19 16:16:42 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_i2c.c,v 1.6 2011/06/22 16:18:55 kiyohara Exp $	*/
 /*	$OpenBSD: pxa2x0_i2c.c,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.5 2011/06/19 16:16:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.6 2011/06/22 16:18:55 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ pxa2x0_i2c_attach_sub(struct pxa2x0_i2c_softc *sc)
 {
 	int error;
 
-	error = bus_space_map(sc->sc_iot, PXA2X0_I2C_BASE, sc->sc_size, 0,
+	error = bus_space_map(sc->sc_iot, sc->sc_addr, sc->sc_size, 0,
 	    &sc->sc_ioh);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "unable to map register\n");
