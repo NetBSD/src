@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.4 2011/06/22 03:59:49 mrg Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -2455,7 +2455,7 @@ parsestatus(
 		{
 			if (buffer[0])
 				strncat(buffer, "; ", size);
-			strncat(buffer, flagstrings[i].name, size);
+			strncat(buffer, flagstrings[i].name, size - 2);
 		}
 		i++;
 	}
