@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.8 2008/08/24 18:26:05 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.9 2011/06/22 04:03:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.8 2008/08/24 18:26:05 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.9 2011/06/22 04:03:23 mrg Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: fs.c,v 1.8 2008/08/24 18:26:05 pooka Exp $");
 	puffs_framebuf_seekset(a2, 0);					\
 	*(a4) = 0;							\
 	rv = fname(a1, a2, a3, a4);					\
-	if (rv || a4 == 0) errx(1, "p9p_handshake io failed %d, %d", rv, *a4) 
+	if (rv) errx(1, "p9p_handshake io failed %d, %d", rv, *a4) 
 
 struct puffs_node *
 p9p_handshake(struct puffs_usermount *pu,

@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.23 2010/10/29 16:13:51 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.24 2011/06/22 04:03:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.23 2010/10/29 16:13:51 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.24 2011/06/22 04:03:23 mrg Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -46,7 +46,7 @@ do {									\
 	puffs_framebuf_seekset(a2, 0);					\
 	*(a4) = 0;							\
 	rv = fname(a1, a2, a3, a4);					\
-	if (rv || a4 == 0) {						\
+	if (rv) {							\
 		return rv ? rv : EPROTO;				\
 	}								\
 } while (/*CONSTCOND*/0)
