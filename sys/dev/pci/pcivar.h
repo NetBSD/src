@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.93 2011/05/17 17:34:54 dyoung Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.94 2011/06/22 18:03:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -120,6 +120,16 @@ struct pcibus_attach_args {
 };
 
 /*
+ * This is used by <machine/pci_machdep.h> to access the pba_pc member.  It
+ * can't use it directly since pcibus_attach_args has yet to be defined.
+ */
+static inline pci_chipset_tag_t
+pcibus_attach_args_pc(struct pcibus_attach_args *pba)
+{
+	return pba->pba_pc;
+}
+
+/*
  * PCI device attach arguments.
  */
 struct pci_attach_args {
@@ -150,6 +160,16 @@ struct pci_attach_args {
 	pci_intr_line_t	pa_intrline;	/* intr. routing information */
 	pci_intr_pin_t  pa_rawintrpin; 	/* unswizzled pin */
 };
+
+/*
+ * This is used by <machine/pci_machdep.h> to access the pa_pc member.  It
+ * can't use it directly since pci_attach_args has yet to be defined.
+ */
+static inline pci_chipset_tag_t
+pci_attach_args_pc(const struct pci_attach_args *pa)
+{
+	return pa->pa_pc;
+}
 
 /*
  * Flags given in the bus and device attachment args.
