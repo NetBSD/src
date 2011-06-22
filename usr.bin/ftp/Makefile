@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2010/02/03 15:34:45 roy Exp $
+#	$NetBSD: Makefile,v 1.34 2011/06/22 02:49:44 mrg Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/3/94
 
 .include <bsd.own.mk>
@@ -28,3 +28,9 @@ cmds.o fetch.o: version.h
 main.o:	ftp_var.h
 
 .include <bsd.prog.mk>
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.main.c+=	-Wno-error
+COPTS.ftp.c+=	-Wno-error
+.endif

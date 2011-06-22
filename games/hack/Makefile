@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2010/02/03 15:34:38 roy Exp $
+#	$NetBSD: Makefile,v 1.43 2011/06/22 02:49:43 mrg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
@@ -57,3 +57,8 @@ clobber:
 	rm -f ${DESTDIR}/var/games/hackdir/bones*
 
 .include <bsd.prog.mk>
+
+# XXX
+.if ${HAVE_GCC} == 45
+COPTS.hack.vault.c+=	-fno-strict-aliasing
+.endif

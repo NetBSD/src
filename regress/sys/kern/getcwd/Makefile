@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/10/14 21:23:01 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.6 2011/06/22 02:49:43 mrg Exp $
 
 NOMAN=		# defined
 LDSTATIC=	-static
@@ -15,3 +15,8 @@ long-regress:
 	@find /usr -type d -print | ./getcwd -s
 
 .include <bsd.prog.mk>
+
+# getcwd.c has an on-purpuse array bounds violation
+.if ${HAVE_GCC} == 45
+COPTS.getcwd.c+= -Wno-error
+.endif
