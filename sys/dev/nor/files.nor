@@ -1,0 +1,11 @@
+# $NetBSD: files.nor,v 1.1 2011/06/22 21:59:15 ahoka Exp $
+
+define	norbus	{ }
+
+device	nor: flashbus
+attach	nor at norbus
+file	dev/nor/nor.c		nor
+#file	dev/nor/nor_io.c	nor
+
+defflag opt_nor.h		NOR_DEBUG
+defflag opt_nor.h		NOR_VERBOSE
