@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.19 2011/06/11 02:10:48 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.20 2011/06/22 21:13:12 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -809,6 +809,17 @@ string_match(const void *p, const void *q)
  */
 #define LDIR_VNAME_FMT ".meta.%d.ldir"
 
+/*
+ * It is possible that a .meta file is corrupted,
+ * if we detect this we want to reproduce it.
+ * Setting oodate TRUE will have that effect.
+ */
+#define CHECK_VALID_META(p) if (!(p && *p)) { \
+    warnx("%s: %d: malformed", fname, lineno); \
+    oodate = TRUE; \
+    continue; \
+    }
+
 Boolean
 meta_oodate(GNode *gn, Boolean oodate)
 {
@@ -882,9 +893,11 @@ meta_oodate(GNode *gn, Boolean oodate)
 	    lineno++;
 	    if (buf[x - 1] == '\n')
 		buf[x - 1] = '\0';
-	    else
+	    else {
 		warnx("%s: %d: line truncated at %u", fname, lineno, x);
-
+		oodate = TRUE;
+		break;
+	    }
 	    /* Find the start of the build monitor section. */
 	    if (!f) {
 		if (strncmp(buf, "-- filemon", 10) == 0) {
@@ -940,6 +953,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		     * re-initialize 'latestdir' to any pre-saved
 		     * value for the current 'pid' and 'CWD' if none.
 		     */
+		    CHECK_VALID_META(p);
 		    pid = atoi(p);
 		    if (pid > 0 && pid != lastpid) {
 			char *ldir;
@@ -968,6 +982,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 #endif
 		    break;
 		}
+
+		CHECK_VALID_META(p);
 
 		/* Process according to record type. */
 		switch (buf[0]) {
@@ -1020,6 +1036,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    /* we want the target */
 		    if (strsep(&p, " ") == NULL)
 			continue;
+		    CHECK_VALID_META(p);
 		    /* 'L' and 'M' put single quotes around the args */
 		    if (*p == '\'') {
 			char *ep;
