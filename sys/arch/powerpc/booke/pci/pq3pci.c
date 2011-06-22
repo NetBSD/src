@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.7 2011/06/08 05:21:42 matt Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.8 2011/06/22 18:06:34 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.7 2011/06/08 05:21:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.8 2011/06/22 18:06:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1038,12 +1038,11 @@ pq3pci_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 }
 
 static int
-pq3pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func,
-	pcireg_t id)
+pq3pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
-	struct pq3pci_softc * const sc = pc->pc_conf_v;
+	struct pq3pci_softc * const sc = v;
 	if (sc->sc_pcie && bus != 0) {
-		pcireg_t slot_status = pci_conf_read(pc, 0, 0x64);
+		pcireg_t slot_status = pci_conf_read(&sc->sc_pc, 0, 0x64);
 		if ((slot_status & __BIT(6+16)) == 0)
 			return 0;
 	}
@@ -1443,8 +1442,7 @@ pq3pci_intr_disestablish(void *v, void *ih)
 }
 
 static void
-pq3pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
-	int swiz, int *iline)
+pq3pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz, int *iline)
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.h,v 1.4 2011/06/22 05:08:56 matt Exp $	*/
+/*	$NetBSD: mainbus.h,v 1.5 2011/06/22 18:06:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ extern struct powerpc_bus_space pmppc_pci_io_tag;
 extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
 int pmppc_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
-void pmppc_pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
+void pmppc_pci_conf_interrupt(void *, int, int, int, int, int *);
 void pmppc_pci_get_chipset_tag(pci_chipset_tag_t);
 
 #endif /* _PMPPC_DEV_MAINBUS_H_ */

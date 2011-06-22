@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34 2011/04/04 20:37:53 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35 2011/06/22 18:06:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34 2011/04/04 20:37:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.35 2011/06/22 18:06:35 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,6 +90,7 @@ prep_pci_get_chipset_tag_indirect(pci_chipset_tag_t pc)
 	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
 	pc->pc_intr_establish = genppc_pci_intr_establish;
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
+	pc->pc_intr_setattr = genppc_pci_intr_setattr;
 
 	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
 	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
@@ -258,9 +259,9 @@ extern pcireg_t prep_pci_direct_conf_read(void *, pcitag_t, int);
 extern pcireg_t genppc_pci_indirect_conf_read(void *, pcitag_t, int);
 
 int
-prep_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
-	pcireg_t id)
+prep_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
+	pci_chipset_tag_t pc = v;
 	struct genppc_pci_chipset_businfo *pbi;
 	prop_number_t bmax, pbus;
 	pcitag_t tag;
@@ -298,12 +299,12 @@ prep_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 		return PCI_CONF_DEFAULT;
 
 	if (prep_pci_config_mode) {
-		tag = genppc_pci_indirect_make_tag(pct, bus, dev, func);
-		class = genppc_pci_indirect_conf_read(pct, tag,
+		tag = genppc_pci_indirect_make_tag(pc, bus, dev, func);
+		class = genppc_pci_indirect_conf_read(pc, tag,
 		    PCI_CLASS_REG);
 	} else {
-		tag = prep_pci_direct_make_tag(pct, bus, dev, func);
-		class = prep_pci_direct_conf_read(pct, tag,
+		tag = prep_pci_direct_make_tag(pc, bus, dev, func);
+		class = prep_pci_direct_conf_read(pc, tag,
 		    PCI_CLASS_REG);
 	}
 

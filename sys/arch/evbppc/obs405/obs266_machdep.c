@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.19 2011/06/20 17:44:33 matt Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.20 2011/06/22 18:06:32 matt Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.19 2011/06/20 17:44:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.20 2011/06/22 18:06:32 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -91,9 +91,10 @@ __KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.19 2011/06/20 17:44:33 matt Exp
 
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/cpu.h>
-#include <powerpc/ibm4xx/dev/comopbvar.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/pci_machdep.h>
 #include <powerpc/ibm4xx/openbios.h>
+#include <powerpc/ibm4xx/dev/comopbvar.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
@@ -295,7 +296,7 @@ cpu_reboot(int howto, char *what)
 }
 
 int
-pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+ibm4xx_pci_bus_maxdevs(void *v, int busno)
 {
 
 	/*
@@ -306,7 +307,7 @@ pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 }
 
 int
-pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+ibm4xx_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	/*
 	 * We need to map the interrupt pin to the interrupt bit
@@ -359,18 +360,18 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
-			int swiz, int *iline)
+ibm4xx_pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz,
+    int *iline)
 {
 
 	static const int ilinemap[4/*device*/] = {
-		3, 4, 5 ,6
+		28, 29, 30, 31
 	};
 
 	if ((dev < 1) || (dev > 4)) {
-		printf("pci_intr_map: bad device %d\n", dev);
+		printf("%s: bad device %d\n", __func__, dev);
 		*iline = 0;
 		return;
 	}
-	*iline = ilinemap[dev - 1] + 25;
+	*iline = ilinemap[dev - 1];
 }
