@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.6 2011/06/21 14:30:19 kefren Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.7 2011/06/22 19:08:29 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.6 2011/06/21 14:30:19 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.7 2011/06/22 19:08:29 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -218,7 +218,8 @@ mpls_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst, struc
 
 	while (psize <= rt_gettag(rt)->sa_len - sizeof(mh)) {
 		pms++;
-		m = mpls_prepend_shim(m, &mh);
+		if ((m = mpls_prepend_shim(m, &mh)) == NULL)
+			return ENOBUFS;
 		memset(&mh, 0, sizeof(mh));
 		mh.s_addr = ntohl(pms->s_addr);
 		mh.shim.bos = mh.shim.exp = 0;
@@ -305,6 +306,7 @@ mpls_lse(struct mbuf *m)
 	union mpls_shim tshim, *htag;
 	struct rtentry *rt = NULL;
 	int error = ENOBUFS;
+	uint psize = sizeof(struct sockaddr_mpls);
 
 	if (m->m_len < sizeof(union mpls_shim) &&
 	    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL)
@@ -381,6 +383,19 @@ mpls_lse(struct mbuf *m)
 	htag->s_addr = ntohl(htag->s_addr);
 	htag->shim.label = tshim.shim.label;
 	htag->s_addr = htonl(htag->s_addr);
+
+	/* check if there is anything more to prepend */
+	htag = &((struct sockaddr_mpls*)rt_gettag(rt))->smpls_addr;
+	while (psize <= rt_gettag(rt)->sa_len - sizeof(tshim)) {
+		htag++;
+		memset(&tshim, 0, sizeof(tshim));
+		tshim.s_addr = ntohl(htag->s_addr);
+		tshim.shim.bos = tshim.shim.exp = 0;
+		tshim.shim.ttl = mpls_defttl;
+		if ((m = mpls_prepend_shim(m, &tshim)) == NULL)
+			return ENOBUFS;
+		psize += sizeof(tshim);
+	}
 
 	error = mpls_send_frame(m, rt->rt_ifp, rt);
 
