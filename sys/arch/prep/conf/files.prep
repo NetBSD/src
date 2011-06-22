@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.60 2008/02/20 21:43:35 drochner Exp $
+#	$NetBSD: files.prep,v 1.61 2011/06/22 18:06:35 matt Exp $
 #
 # prep-specific configuration info
 #
@@ -75,6 +75,7 @@ include "dev/pci/files.agp"
 file	arch/prep/pci/pci_machdep.c		pci
 file	arch/prep/pci/prep_pciconf_direct.c	pci
 file	arch/powerpc/pci/pci_machdep_common.c	pci
+file    arch/powerpc/pci/pci_module.c		pci & modular
 file	arch/powerpc/pci/pciconf_indirect.c	pci
 
 # PCI-Host bridge chipsets

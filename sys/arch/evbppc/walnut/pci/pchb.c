@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.12 2011/06/18 06:44:28 matt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.13 2011/06/22 18:06:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.12 2011/06/18 06:44:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.13 2011/06/22 18:06:33 matt Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.12 2011/06/18 06:44:28 matt Exp $");
 #include <sys/malloc.h>
 
 #define _IBM4XX_BUS_DMA_PRIVATE
+
 #include <machine/walnut.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
