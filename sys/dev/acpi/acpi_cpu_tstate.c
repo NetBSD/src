@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.28 2011/06/04 18:03:10 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.29 2011/06/22 08:05:10 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.28 2011/06/04 18:03:10 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.29 2011/06/22 08:05:10 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -740,7 +740,7 @@ acpicpu_tstate_get(struct cpu_info *ci, uint32_t *percent)
 	return 0;
 
 fail:
-	aprint_debug_dev(sc->sc_dev, "failed "
+	aprint_error_dev(sc->sc_dev, "failed "
 	    "to get T-state (err %d)\n", rv);
 
 	mutex_enter(&sc->sc_mtx);
@@ -881,8 +881,9 @@ acpicpu_tstate_set_xcall(void *arg1, void *arg2)
 	return;
 
 fail:
-	aprint_debug_dev(sc->sc_dev, "failed to "
-	    "throttle to %u %% (err %d)\n", percent, rv);
+	if (rv != EINVAL)
+		aprint_error_dev(sc->sc_dev, "failed to "
+		    "throttle to %u %% (err %d)\n", percent, rv);
 
 	mutex_enter(&sc->sc_mtx);
 	sc->sc_tstate_current = ACPICPU_T_STATE_UNKNOWN;
