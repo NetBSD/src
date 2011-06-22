@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.129 2011/06/21 14:33:14 kefren Exp $	*/
+/*	$NetBSD: route.c,v 1.130 2011/06/22 04:57:28 kefren Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.129 2011/06/21 14:33:14 kefren Exp $");
+__RCSID("$NetBSD: route.c,v 1.130 2011/06/22 04:57:28 kefren Exp $");
 #endif
 #endif /* not lint */
 
@@ -1384,6 +1384,7 @@ netdone:
 	/*NOTREACHED*/
 }
 
+#ifndef SMALL
 static sup
 readtag(sup su, const char *s)
 {
@@ -1433,6 +1434,7 @@ addtag(sup su, const char *s, int where)
 	ms[where].shim.label = atoi(s);
 	ms[where].s_addr = htonl(ms[where].s_addr);
 }
+#endif	/* SMALL */
 
 int
 prefixlen(const char *s, struct sou *soup)
