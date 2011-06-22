@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.11 2009/04/25 05:11:37 lukem Exp $	*/
+/*	$NetBSD: vi.c,v 1.12 2011/06/22 03:56:17 mrg Exp $	*/
 
 /*
  *	vi command editing
@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: vi.c,v 1.11 2009/04/25 05:11:37 lukem Exp $");
+__RCSID("$NetBSD: vi.c,v 1.12 2011/06/22 03:56:17 mrg Exp $");
 #endif
 
 #include "config.h"
@@ -1763,7 +1763,7 @@ redraw_line(newlinex)
 	int newlinex;
 {
 	(void) memset(wbuf[win], ' ', wbuf_len);
-	if (newline) {
+	if (newlinex) {
 		x_putc('\r');
 		x_putc('\n');
 	}
