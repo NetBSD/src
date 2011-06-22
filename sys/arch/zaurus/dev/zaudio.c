@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.13 2011/06/19 16:20:09 nonaka Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.14 2011/06/22 16:18:54 kiyohara Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.13 2011/06/19 16:20:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.14 2011/06/22 16:18:54 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,6 +344,7 @@ zaudio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_i2s.sc_iot = &pxa2x0_bs_tag;
 	sc->sc_i2s.sc_dmat = &pxa2x0_bus_dma_tag;
+	sc->sc_i2c.sc_addr = PXA2X0_I2C_BASE;
 	sc->sc_i2s.sc_size = PXA2X0_I2S_SIZE;
 	if (pxa2x0_i2s_attach_sub(&sc->sc_i2s)) {
 		aprint_error_dev(self, "unable to attach I2S\n");
