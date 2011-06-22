@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.17 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.18 2011/06/22 04:00:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -44,7 +44,11 @@ typedef _BSD_VA_LIST_	va_list;
 #endif
 
 #if __GNUC_PREREQ__(2, 96)
+#if __GNUC_PREREQ__(4, 5)
+#define	va_start(ap, last)	__builtin_va_start((ap), (last))
+#else
 #define	va_start(ap, last)	__builtin_stdarg_start((ap), (last))
+#endif
 #define	va_arg			__builtin_va_arg
 #define	va_end			__builtin_va_end
 #define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
