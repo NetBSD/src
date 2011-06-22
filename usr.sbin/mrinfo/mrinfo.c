@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.27 2009/04/17 14:07:45 lukem Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.28 2011/06/22 04:02:46 mrg Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,7 +80,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.27 2009/04/17 14:07:45 lukem Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.28 2011/06/22 04:02:46 mrg Exp $");
 #endif
 #endif
 
@@ -373,7 +373,7 @@ main(int argc, char *argv[])
 		hp->h_addr_list[0] = malloc(hp->h_length);
 		if (hp->h_addr_list[0] == NULL)
 			logit(LOG_ERR, errno, "malloc");
-		memcpy(hp->h_addr_list[0], &target_addr, sizeof(hp->h_addr_list[0]));
+		memcpy(hp->h_addr_list[0], &target_addr, hp->h_length);
 		hp->h_addr_list[1] = NULL;
 	} else
 		hp = gethostbyname(host);
