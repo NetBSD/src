@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1319 2011/06/06 16:52:15 jruoho Exp $
+# $NetBSD: mi,v 1.1320 2011/06/22 19:34:53 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1598,6 +1598,7 @@
 ./usr/share/man/cat4/swsensor.0			man-sys-catman		.cat
 ./usr/share/man/cat4/swwdog.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sysbeep.0			man-sys-catman		.cat
+./usr/share/man/cat4/sysmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/systrace.0			man-obsolete		obsolete
 ./usr/share/man/cat4/tap.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tb.0			man-obsolete		obsolete
@@ -4315,6 +4316,7 @@
 ./usr/share/man/html4/swsensor.html		man-sys-htmlman		html
 ./usr/share/man/html4/swwdog.html		man-sys-htmlman		html
 ./usr/share/man/html4/sysbeep.html		man-sys-htmlman		html
+./usr/share/man/html4/sysmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/tap.html			man-sys-htmlman		html
 ./usr/share/man/html4/tc.html			man-sys-htmlman		html
 ./usr/share/man/html4/tcds.html			man-sys-htmlman		html
@@ -6951,6 +6953,7 @@
 ./usr/share/man/man4/swsensor.4			man-sys-man		.man
 ./usr/share/man/man4/swwdog.4			man-sys-man		.man
 ./usr/share/man/man4/sysbeep.4			man-sys-man		.man
+./usr/share/man/man4/sysmon.4			man-sys-man		.man
 ./usr/share/man/man4/systrace.4			man-obsolete		obsolete
 ./usr/share/man/man4/tap.4			man-sys-man		.man
 ./usr/share/man/man4/tb.4			man-obsolete		obsolete
