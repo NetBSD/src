@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/11/21 19:19:22 adam Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2011/06/23 14:17:50 cherry Exp $
 
 BINDIR=	/usr/bin
 
@@ -7,6 +7,6 @@ SRCS=	ssh-keygen.c moduli.c
 
 .include <bsd.prog.mk>
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.ssh-keygen.c=	-Wno-pointer-sign
 .endif

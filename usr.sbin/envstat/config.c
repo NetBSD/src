@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.10 2010/10/05 05:03:49 pgoyette Exp $	*/
+/* 	$NetBSD: config.c,v 1.10.4.1 2011/06/23 14:20:46 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.10 2010/10/05 05:03:49 pgoyette Exp $");
+__RCSID("$NetBSD: config.c,v 1.10.4.1 2011/06/23 14:20:46 cherry Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -623,7 +623,7 @@ config_devblock_check_sensorprops(prop_dictionary_t ksdict,
 }
 
 /*
- * Conversions for critical-max and critical-min properties.
+ * Conversions for {critical,warning}-{max,min} properties.
  */
 prop_number_t
 convert_val_to_pnumber(prop_dictionary_t kdict, const char *prop,
@@ -639,17 +639,15 @@ convert_val_to_pnumber(prop_dictionary_t kdict, const char *prop,
 	val = max = min = 0;
 
 	/*
-	 * critical-max and critical-min are not allowed in
-	 * battery sensors.
+	 * Not allowed in battery sensors.
 	 */
-	obj = prop_dictionary_get(kdict, "want-percentage");
-	if (prop_bool_true(obj))
+	obj = prop_dictionary_get(kdict, "type");
+	if (prop_string_equals_cstring(obj, "Battery capacity"))
 		config_errmsg(PROP_ERR, prop, sensor);
 
 	/*
 	 * Make the conversion for sensor's type.
 	 */
-	obj = prop_dictionary_get(kdict, "type");
 	if (prop_string_equals_cstring(obj, "Temperature")) {
 		tmp = strchr(value, 'C');
 		if (tmp)

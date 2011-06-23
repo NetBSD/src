@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.20 2010/12/29 22:40:46 jakllsch Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.20.6.1 2011/06/23 14:19:16 cherry Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -63,13 +63,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *			%al = 0x0 on success; err code on failure
  */
 ENTRY(biosdisk_reset)
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ebx
-	push	%edx
-	push	%edi
+	pusha
 
-	movb	8(%ebp), %dl	# device
+	movb	%al, %dl	# device
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
@@ -83,11 +79,9 @@ ENTRY(biosdisk_reset)
 	.code32
 
 	movzwl	%bx, %eax	# return value in %eax
+	movl	%eax, 28(%esp)
 
-	pop	%edi
-	pop	%edx
-	popl	%ebx
-	popl	%ebp
+	popa
 	ret
 
 /*
@@ -108,24 +102,18 @@ ENTRY(biosdisk_reset)
  *        sending another command.
  */
 ENTRY(biosdisk_read)
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ebx
-	push	%ecx
-	push	%edx
-	push	%esi
-	push	%edi
+	pusha
 
-	movb	16(%ebp), %dh
-	movw	12(%ebp), %cx
+	movb	44(%esp), %dh
+	movw	40(%esp), %cx
 	xchgb	%ch, %cl	# cylinder; the highest 2 bits of cyl is in %cl
 	rorb	$2, %cl
-	movb	20(%ebp), %al
+	movb	48(%esp), %al
 	orb	%al, %cl
 	incb	%cl		# sector; sec starts from 1, not 0
-	movb	8(%ebp), %dl	# device
-	movl	28(%ebp), %ebx	# buffer address (may be >64k)
-	movb	24(%ebp), %al	# number of sectors
+	movb	36(%esp), %dl	# device
+	movl	56(%esp), %ebx	# buffer address (may be >64k)
+	movb	52(%esp), %al	# number of sectors
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
@@ -145,14 +133,9 @@ ENTRY(biosdisk_read)
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
 
-	movzwl	%ax, %eax	# return value in %eax
+	movl	%eax, 28(%esp)
 
-	pop	%edi
-	pop	%esi
-	pop	%edx
-	pop	%ecx
-	popl	%ebx
-	popl	%ebp
+	popa
 	ret
 
 /*
@@ -160,16 +143,10 @@ ENTRY(biosdisk_read)
  *	max number of sectors, heads and cylinders for this device
  */
 ENTRY(biosdisk_getinfo)
-	pushl	%ebp
-	movl	%esp, %ebp
 	push	%es
-	pushl	%ebx
-	push	%ecx
-	push	%edx
-	push	%esi
-	push	%edi
+	pusha
 
-	movb	8(%ebp), %dl		# diskinfo(drive #)
+	movb	%al, %dl		# diskinfo(drive #)
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
@@ -209,14 +186,10 @@ ok:
 	shrl	$8, %ecx
 	movb	%dh, %cl		# max head
 	orl	%ecx, %eax		# return value in %eax
+	movl	%eax, 28(%esp)
 
-	pop	%edi
-	pop	%esi
-	pop	%edx
-	pop	%ecx
-	popl	%ebx
+	popa
 	pop	%es
-	popl	%ebp
 	ret
 
 /*
@@ -224,15 +197,9 @@ ok:
  *	check for availibility of int13 extensions.
  */
 ENTRY(biosdisk_int13ext)
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ebx
-	pushl	%ecx
-	pushl	%edx
-	pushl	%esi
-	pushl	%edi
+	pusha
 
-	movb	8(%ebp), %dl		# drive #
+	movb	%al, %dl		# drive #
 	movw	$0x55aa, %bx
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
@@ -252,13 +219,9 @@ ENTRY(biosdisk_int13ext)
 	andb	%dl, %al
 
 	andb	%cl, %al
+	movl	%eax, 28(%esp)
 
-	popl	%edi
-	popl	%esi
-	popl	%edx
-	popl	%ecx
-	popl	%ebx
-	popl	%ebp
+	popa
 	ret
 
 /*
@@ -271,16 +234,10 @@ ENTRY(biosdisk_int13ext)
  *			%al = 0x0 on success; err code on failure
  */
 ENTRY(biosdisk_extread)
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ebx
-	push	%ecx
-	push	%edx
-	push	%esi
-	push	%edi
+	pusha
 
-	movb	8(%ebp), %dl	# device
-	movl	12(%ebp), %esi	# parameter block
+	movl	%edx, %esi	# parameter block
+	movb	%al, %dl	# device
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
@@ -303,26 +260,16 @@ ENTRY(biosdisk_extread)
 	.code32
 
 	movzwl	%bx, %eax	# return value in %eax
+	movl	%eax, 28(%esp)
 
-	pop	%edi
-	pop	%esi
-	pop	%edx
-	pop	%ecx
-	popl	%ebx
-	popl	%ebp
+	popa
 	ret
 
 ENTRY(biosdisk_getextinfo)
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ebx
-	push	%ecx
-	push	%edx
-	push	%esi
-	push	%edi
+	pusha
 
-	movb	8(%ebp), %dl	# device
-	movl	12(%ebp), %esi	# parameter block
+	movl	%edx, %esi	# parameter block
+	movb	%al, %dl	# device
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
@@ -344,11 +291,7 @@ ENTRY(biosdisk_getextinfo)
 	.code32
 
 	movzbl	%bl, %eax	# return value in %eax
+	movl	%eax, 28(%esp)
 
-	pop	%edi
-	pop	%esi
-	pop	%edx
-	pop	%ecx
-	popl	%ebx
-	popl	%ebp
+	popa
 	ret

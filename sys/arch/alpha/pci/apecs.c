@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.52 2011/05/17 17:34:47 dyoung Exp $ */
+/* $NetBSD: apecs.c,v 1.52.2.1 2011/06/23 14:18:53 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.52 2011/05/17 17:34:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.52.2.1 2011/06/23 14:18:53 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,11 +178,11 @@ apecsattach(device_t parent, device_t self, void *aux)
 
 	apecs_dma_init(acp);
 
-	printf(": DECchip %s Core Logic chipset\n",
+	aprint_normal(": DECchip %s Core Logic chipset\n",
 	    acp->ac_memwidth == 128 ? "21072" : "21071");
-	printf("%s: DC21071-CA pass %d, %d-bit memory bus\n",
-	    self->dv_xname, acp->ac_comanche_pass2 ? 2 : 1, acp->ac_memwidth);
-	printf("%s: DC21071-DA pass %d\n", self->dv_xname,
+	aprint_normal_dev(self, "DC21071-CA pass %d, %d-bit memory bus\n",
+	    acp->ac_comanche_pass2 ? 2 : 1, acp->ac_memwidth);
+	aprint_normal_dev(self, "DC21071-DA pass %d\n",
 	    acp->ac_epic_pass2 ? 2 : 1);
 	/* XXX print bcache size */
 

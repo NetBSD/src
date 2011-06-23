@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.13 2010/12/23 14:58:14 mlelstv Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.13.6.1 2011/06/23 14:19:58 cherry Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -243,7 +243,7 @@ dm_target_stripe_strategy(dm_table_entry_t * table_en, struct buf * bp)
 		nestbuf->b_blkno = stripe_blknr * tsc->stripe_chunksize + stripe_off;
 
 		tlc = TAILQ_FIRST(&tsc->stripe_devs);
-		for (i = 0; i < stripe_devnr && tlc == NULL; i++)
+		for (i = 0; i < stripe_devnr && tlc != NULL; i++)
 			tlc = TAILQ_NEXT(tlc, entries);
 
 		/* by this point we should have an tlc */

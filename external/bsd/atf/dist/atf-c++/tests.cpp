@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010, 2011 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -640,6 +640,16 @@ tp::run_tc(const std::string& tcarg)
     const std::pair< std::string, tc_part > fields = process_tcarg(tcarg);
 
     impl::tc* tc = find_tc(init_tcs(), fields.first);
+
+    if (!atf::env::has("__RUNNING_INSIDE_ATF_RUN") || atf::env::get(
+        "__RUNNING_INSIDE_ATF_RUN") != "internal-yes-value")
+    {
+        std::cerr << m_prog_name << ": WARNING: Running test cases without "
+            "atf-run(1) is unsupported\n";
+        std::cerr << m_prog_name << ": WARNING: No isolation nor timeout "
+            "control is being applied; you may get unexpected failures; see "
+            "atf-test-case(4)\n";
+    }
 
     try {
         switch (fields.second) {

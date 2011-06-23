@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.11 2008/10/23 07:35:46 aymeric Exp $ */
+/*	$NetBSD: battery.c,v 1.11.26.1 2011/06/23 14:19:19 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.11 2008/10/23 07:35:46 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.11.26.1 2011/06/23 14:19:19 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.11 2008/10/23 07:35:46 aymeric Exp $")
 #define BAT_NSENSORS		10  /* number of sensors */
 
 struct battery_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct pmu_ops *sc_pmu_ops;
 	int sc_type;
 	
@@ -89,18 +89,18 @@ struct battery_softc {
 	uint32_t sc_timestamp;
 };
 
-static void battery_attach(struct device *, struct device *, void *);
-static int battery_match(struct device *, struct cfdata *, void *);
+static void battery_attach(device_t, device_t, void *);
+static int battery_match(device_t, cfdata_t, void *);
 static int battery_update(struct battery_softc *, int);
 static void battery_setup_envsys(struct battery_softc *);
 static void battery_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void battery_poll(void *);
 
-CFATTACH_DECL(battery, sizeof(struct battery_softc),
+CFATTACH_DECL_NEW(battery, sizeof(struct battery_softc),
     battery_match, battery_attach, NULL, NULL);
 
 static int
-battery_match(struct device *parent, struct cfdata *cf, void *aux)
+battery_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct battery_attach_args *baa = aux;
 
@@ -111,14 +111,14 @@ battery_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-battery_attach(struct device *parent, struct device *self, void *aux)
+battery_attach(device_t parent, device_t self, void *aux)
 {
 	struct battery_attach_args *baa = aux;
-	struct battery_softc *sc = (struct battery_softc *)self;
+	struct battery_softc *sc = device_private(self);
 	uint32_t reg;
 
 	sc->sc_pmu_ops = baa->baa_pmu_ops;
-	printf(": legacy battery ");
+	aprint_normal(": legacy battery ");
 
 	reg = in32rb(0xf3000034);
 	DPRINTF("reg: %08x\n", reg);
@@ -145,9 +145,8 @@ battery_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sm_acpower.smpsw_name = "AC Power";
 	sc->sc_sm_acpower.smpsw_type = PSWITCH_TYPE_ACADAPTER;
 	if (sysmon_pswitch_register(&sc->sc_sm_acpower) != 0)
-		printf("%s: unable to register AC power status with sysmon\n",
-		    sc->sc_dev.dv_xname);
-
+		aprint_error_dev(self,
+		    "unable to register AC power status with sysmon\n");
 }
 
 static int
@@ -260,13 +259,13 @@ battery_setup_envsys(struct battery_softc *sc)
 		}
 	}
 
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = battery_refresh;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 	}
 }

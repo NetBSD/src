@@ -1,4 +1,4 @@
-/*	$NetBSD: smsc.c,v 1.9 2009/05/12 09:10:16 cegger Exp $ */
+/*	$NetBSD: smsc.c,v 1.9.10.1 2011/06/23 14:20:01 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.9 2009/05/12 09:10:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.9.10.1 2011/06/23 14:20:01 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,6 +212,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	INITSENSOR(7, "Fan3", SMSC_FAN4_LSB, ENVSYS_SFANRPM);
 
 	for (i = 0; i < SMSC_MAX_SENSORS; i++) {
+		sc->sc_sensor[i].state = ENVSYS_SINVALID;
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 						&sc->sc_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_sme);

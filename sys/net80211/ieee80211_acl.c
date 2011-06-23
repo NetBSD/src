@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_acl.c,v 1.4 2005/08/13 17:31:48 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.8 2008/12/17 20:51:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.8.12.1 2011/06/23 14:20:25 cherry Exp $");
 #endif
 
 /*
@@ -79,7 +79,7 @@ struct acl {
 struct aclstate {
 	acl_lock_t		as_lock;
 	int			as_policy;
-	int			as_nacls;
+	uint32_t		as_nacls;
 	TAILQ_HEAD(, acl)	as_list;	/* list of all ACL's */
 	LIST_HEAD(, acl)	as_hash[ACL_HASHSIZE];
 	struct ieee80211com	*as_ic;
@@ -281,7 +281,8 @@ acl_getioctl(struct ieee80211com *ic, struct ieee80211req *ireq)
 	struct aclstate *as = ic->ic_as;
 	struct acl *acl;
 	struct ieee80211req_maclist *ap;
-	int error, space, i;
+	int error;
+	uint32_t i, space;
 
 	switch (ireq->i_val) {
 	case IEEE80211_MACCMD_POLICY:

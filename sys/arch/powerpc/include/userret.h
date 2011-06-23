@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.20 2011/05/02 02:01:33 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.20.2.1 2011/06/23 14:19:31 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,7 @@
 #include <sys/userret.h>
 
 #include <powerpc/fpu.h>
+#include <powerpc/psl.h>
 
 #ifdef PPC_BOOKE
 #include <powerpc/spr.h>

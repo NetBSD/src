@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.19 2011/02/09 13:19:19 jmcneill Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.19.2.1 2011/06/23 14:20:12 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.19 2011/02/09 13:19:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.19.2.1 2011/06/23 14:20:12 cherry Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -109,6 +109,7 @@ struct genfb_softc {
 #ifdef SPLASHSCREEN
 	struct splash_info sc_splash;
 #endif
+	struct wsdisplay_accessops sc_accessops;
 };
 
 void	genfb_cnattach(void);

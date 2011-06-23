@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.8 2011/04/24 16:26:55 rmind Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.8.2.1 2011/06/23 14:19:10 cherry Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.8 2011/04/24 16:26:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.8.2.1 2011/06/23 14:19:10 cherry Exp $");
 
 #include "opt_kgdb.h"
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.8 2011/04/24 16:26:55 rmind Exp $");
 #define XLCOM_RXBUF_SIZE 	1024
 
 struct xlcom_softc {
-	struct device 		sc_dev;
+	device_t 		sc_dev;
 	struct tty 		*sc_tty;
 	void 			*sc_ih;
 
@@ -149,34 +149,35 @@ static int 	xlcom_param(struct tty *, struct termios *);
 static void 	xlcom_start(struct tty *);
 
 /* Generic device. */
-static void 	xlcom_attach(struct device *, struct device *, void *);
+static void 	xlcom_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(xlcom, sizeof(struct xlcom_softc),
+CFATTACH_DECL_NEW(xlcom, sizeof(struct xlcom_softc),
     xcvbus_child_match, xlcom_attach, NULL, NULL);
 
 
 static void
-xlcom_attach(struct device *parent, struct device *self, void *aux)
+xlcom_attach(device_t parent, device_t self, void *aux)
 {
 	struct xcvbus_attach_args 	*vaa = aux;
-	struct xlcom_softc 		*sc = (struct xlcom_softc *)self;
+	struct xlcom_softc 		*sc = device_private(self);
 	struct tty 			*tp;
 	dev_t 				dev;
 
-	printf(": UartLite serial port\n");
+	aprint_normal(": UartLite serial port\n");
+
+	sc->sc_dev = self;
 
 #if defined(KGDB)
 	/* We don't want to share kgdb port with the user. */
 	if (sc->sc_iot == kgdb_iot && sc->sc_ioh == kgdb_ioh) {
-		printf("%s: already in use by kgdb\n", device_xname(self));
+		aprint_error_dev(self, "already in use by kgdb\n");
 		return;
 	}
 #endif /* KGDB */
 
 	if ((sc->sc_ih = intr_establish(vaa->vaa_intr, IST_LEVEL, IPL_SERIAL,
 	    xlcom_intr, sc)) == NULL) {
-		printf("%s: could not establish interrupt\n",
-		    device_xname(self));
+		aprint_error_dev(self, "could not establish interrupt\n");
 		return ;
 	}
 
@@ -189,15 +190,14 @@ xlcom_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_iot = consdev_iot;
 		sc->sc_ioh = consdev_ioh;
 
-		printf("%s: console\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(self, "console\n");
 	} else {
 		sc->sc_iot = vaa->vaa_iot;
 
 		if (bus_space_map(vaa->vaa_iot, vaa->vaa_addr, XLCOM_SIZE, 0,
 		    &sc->sc_ioh) != 0) {
-			printf("%s: could not map registers\n",
-			    device_xname(self));
-			return ;
+			aprint_error_dev(self, "could not map registers\n");
+			return;
 		}
 
 		/* Reset FIFOs. */
@@ -214,9 +214,9 @@ xlcom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tx_soft = softint_establish(SOFTINT_SERIAL, xlcom_tx_soft, sc);
 
 	if (sc->sc_rx_soft == NULL || sc->sc_tx_soft == NULL) {
-		printf("%s: could not establish Rx or Tx softintr\n",
-		    sc->sc_dev.dv_xname);
-		return ;
+		aprint_error_dev(self,
+		    "could not establish Rx or Tx softintr\n");
+		return;
 	}
 
 	tp = tty_alloc();

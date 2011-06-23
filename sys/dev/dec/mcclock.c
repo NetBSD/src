@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.26 2011/04/06 14:51:12 tsutsui Exp $ */
+/* $NetBSD: mcclock.c,v 1.26.2.1 2011/06/23 14:19:58 cherry Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.26 2011/04/06 14:51:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.26.2.1 2011/06/23 14:19:58 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,10 +59,10 @@ const struct clockfns mcclock_clockfns = {
 	mcclock_init, 
 };
 
-#define	mc146818_write(dev, reg, datum)					\
-	    (*(dev)->sc_busfns->mc_bf_write)(dev, reg, datum)
-#define	mc146818_read(dev, reg)						\
-	    (*(dev)->sc_busfns->mc_bf_read)(dev, reg)
+#define	mc146818_write(sc, reg, datum)					\
+	    (*(sc)->sc_busfns->mc_bf_write)(sc, reg, datum)
+#define	mc146818_read(sc, reg)						\
+	    (*(sc)->sc_busfns->mc_bf_read)(sc, reg)
 
 void
 mcclock_attach(struct mcclock_softc *sc, const struct mcclock_busfns *busfns)
@@ -75,7 +75,7 @@ mcclock_attach(struct mcclock_softc *sc, const struct mcclock_busfns *busfns)
 	/* Turn interrupts off, just in case. */
 	mc146818_write(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 
-	clockattach(&sc->sc_dev, &mcclock_clockfns);
+	clockattach(sc->sc_dev, &mcclock_clockfns);
 
 	sc->sc_todr.todr_gettime = mcclock_get;
 	sc->sc_todr.todr_settime = mcclock_set;
@@ -86,7 +86,7 @@ mcclock_attach(struct mcclock_softc *sc, const struct mcclock_busfns *busfns)
 void
 mcclock_init(device_t dev)
 {
-	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
+	struct mcclock_softc *sc = device_private(dev);
 	int rate;
 
 again:
@@ -126,7 +126,7 @@ again:
 		break;
 	default:
 		printf("%s: Cannot get %d Hz clock; using %d Hz\n",
-		    device_xname(&sc->sc_dev), hz, MC_DEFAULTHZ);
+		    device_xname(dev), hz, MC_DEFAULTHZ);
 		hz = MC_DEFAULTHZ;
 		goto again;
 	}
@@ -151,7 +151,7 @@ again:
 int
 mcclock_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct mcclock_softc *sc = (struct mcclock_softc *)tch->cookie;
+	struct mcclock_softc *sc = tch->cookie;
 	uint32_t yearsecs;
 	mc_todregs regs;
 	int s;
@@ -197,7 +197,7 @@ mcclock_get(todr_chip_handle_t tch, struct timeval *tvp)
 int
 mcclock_set(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct mcclock_softc *sc = (struct mcclock_softc *)tch->cookie;
+	struct mcclock_softc *sc = tch->cookie;
 	struct clock_ymdhms dt;
 	uint32_t yearsecs;
 	mc_todregs regs;

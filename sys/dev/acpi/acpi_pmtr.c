@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pmtr.c,v 1.3 2011/02/16 09:05:12 jruoho Exp $ */
+/*	$NetBSD: acpi_pmtr.c,v 1.3.4.1 2011/06/23 14:19:56 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,10 +27,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pmtr.c,v 1.3 2011/02/16 09:05:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pmtr.c,v 1.3.4.1 2011/06/23 14:19:56 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
+#include <sys/mutex.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -79,6 +80,7 @@ struct acpipmtr_softc {
 	envsys_data_t		 sc_sensor_o;
 	uint32_t		 sc_cap[ACPIPMTR_CAP_COUNT];
 	int32_t			 sc_interval;
+	kmutex_t		 sc_mtx;
 };
 
 const char * const acpi_pmtr_ids[] = {
@@ -128,6 +130,7 @@ acpipmtr_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ACPI Power Meter\n");
 
 	(void)pmf_device_register(self, NULL, NULL);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	if (acpipmtr_cap_get(self, true) != true)
 		return;
@@ -161,6 +164,8 @@ acpipmtr_detach(device_t self, int flags)
 
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
+
+	mutex_destroy(&sc->sc_mtx);
 
 	return 0;
 }
@@ -287,7 +292,7 @@ acpipmtr_dev_print(device_t self)
 		if (ACPI_FAILURE(rv))
 			continue;
 
-		ad = acpi_get_node(hdl);
+		ad = acpi_match_node(hdl);
 
 		if (ad == NULL)
 			continue;
@@ -369,6 +374,8 @@ acpipmtr_sensor_type(device_t self)
 {
 	struct acpipmtr_softc *sc = device_private(self);
 
+	mutex_enter(&sc->sc_mtx);
+
 	switch (sc->sc_cap[ACPIPMTR_CAP_TYPE]) {
 
 	case ACPIPMTR_POWER_INPUT:
@@ -386,6 +393,8 @@ acpipmtr_sensor_type(device_t self)
 		sc->sc_sensor_o.state = ENVSYS_SINVALID;
 		break;
 	}
+
+	mutex_exit(&sc->sc_mtx);
 }
 
 static int32_t
@@ -462,8 +471,14 @@ acpipmtr_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 
 	case ACPIPMTR_NOTIFY_CAP:
 
-		if (acpipmtr_cap_get(self, false) != true)
+		mutex_enter(&sc->sc_mtx);
+
+		if (acpipmtr_cap_get(self, false) != true) {
+			mutex_exit(&sc->sc_mtx);
 			break;
+		}
+
+		mutex_exit(&sc->sc_mtx);
 
 		acpipmtr_sensor_type(self);
 		break;

@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.20 2008/03/14 15:09:10 cube Exp $ */
+/* $NetBSD: com_opb.c,v 1.20.36.1 2011/06/23 14:19:29 cherry Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,16 +61,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.20 2008/03/14 15:09:10 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.20.36.1 2011/06/23 14:19:29 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <lib/libkern/libkern.h>
 
-#include <machine/cpu.h>
+#include <powerpc/ibm4xx/cpu.h>
 
 #include <powerpc/ibm4xx/dev/opbvar.h>
 #include <powerpc/ibm4xx/dev/comopbvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.3 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: platform.h,v 1.3.32.1 2011/06/23 14:19:24 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@ struct platform {
 	void		(*pic_setup)(void);
 	int		(*match)(struct platform *);
 	void		(*pci_intr_fixup)(int, int, int *);
-	void		(*cpu_setup)(struct device *);
+	void		(*cpu_setup)(device_t);
 	void		(*reset)(void);
 };
 

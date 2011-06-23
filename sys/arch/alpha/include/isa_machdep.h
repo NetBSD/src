@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.h,v 1.12 2009/08/19 15:09:56 dyoung Exp $ */
+/* $NetBSD: isa_machdep.h,v 1.12.10.1 2011/06/23 14:18:53 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct alpha_isa_chipset {
 
 	struct isa_dma_state ic_dmastate;
 
-	void	(*ic_attach_hook)(struct device *, struct device *,
+	void	(*ic_attach_hook)(device_t, device_t,
 		    struct isabus_attach_args *);
 	const struct evcnt *(*ic_intr_evcnt)(void *, int);
 	void	*(*ic_intr_establish)(void *, int, int, int,

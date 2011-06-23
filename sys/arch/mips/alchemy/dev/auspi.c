@@ -1,4 +1,4 @@
-/* $NetBSD: auspi.c,v 1.3 2007/02/28 04:21:53 thorpej Exp $ */
+/* $NetBSD: auspi.c,v 1.3.76.1 2011/06/23 14:19:22 cherry Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.3 2007/02/28 04:21:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.3.76.1 2011/06/23 14:19:22 cherry Exp $");
 
 #include "locators.h"
 
@@ -158,7 +158,7 @@ auspi_attach(struct device *parent, struct device *self, void *aux)
 	PUTREG(sc, AUPSC_SPIMSK, SPIMSK_ALL);
 
 	/* enable device interrupts */
-	sc->sc_ih = au_intr_establish(aa->aupsc_irq, 0, IPL_SERIAL, IST_LEVEL,
+	sc->sc_ih = au_intr_establish(aa->aupsc_irq, 0, IPL_BIO, IST_LEVEL,
 	    auspi_intr, sc);
 
 	(void) config_found_ia(&sc->sc_dev, "spibus", &sba, spibus_print);
@@ -428,7 +428,7 @@ auspi_transfer(void *arg, struct spi_transfer *st)
 	int			s;
 
 	/* make sure we select the right chip */
-	s = splserial();
+	s = splbio();
 	spi_transq_enqueue(&sc->sc_q, st);
 	if (sc->sc_running == 0) {
 		auspi_sched(sc);

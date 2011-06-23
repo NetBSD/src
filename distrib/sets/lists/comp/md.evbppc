@@ -1,10 +1,10 @@
-# $NetBSD: md.evbppc,v 1.10 2010/03/02 21:54:06 matt Exp $
+# $NetBSD: md.evbppc,v 1.10.4.1 2011/06/23 14:18:21 cherry Exp $
 ./usr/include/evbppc				comp-c-include
 ./usr/include/evbppc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbppc/ansi.h			comp-c-include
 ./usr/include/evbppc/aout_machdep.h		comp-c-include
 ./usr/include/evbppc/asm.h			comp-c-include
-./usr/include/evbppc/atomic.h			comp-c-include
+./usr/include/evbppc/atomic.h			comp-obsolete		obsolete
 ./usr/include/evbppc/bswap.h			comp-c-include
 ./usr/include/evbppc/bus.h			comp-obsolete		obsolete
 ./usr/include/evbppc/cdefs.h			comp-c-include

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.41 2011/02/17 15:13:49 pooka Exp $	*/
+/*	$NetBSD: cd.c,v 1.41.2.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.41 2011/02/17 15:13:49 pooka Exp $");
+__RCSID("$NetBSD: cd.c,v 1.41.2.1 2011/06/23 14:17:48 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: cd.c,v 1.41 2011/02/17 15:13:49 pooka Exp $");
 #include "nodes.h"	/* for jobs.h */
 #include "jobs.h"
 #include "options.h"
+#include "builtins.h"
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
@@ -264,9 +265,10 @@ updatepwd(const char *dir)
 		curdir = NULL;
 		getpwd(1);
 		INTON;
-		if (curdir)
+		if (curdir) {
+			setvar("OLDPWD", prevdir, VEXPORT);
 			setvar("PWD", curdir, VEXPORT);
-		else
+		} else
 			unsetvar("PWD", 0);
 		return;
 	}
@@ -297,6 +299,7 @@ updatepwd(const char *dir)
 		ckfree(prevdir);
 	prevdir = curdir;
 	curdir = savestr(stackblock());
+	setvar("OLDPWD", prevdir, VEXPORT);
 	setvar("PWD", curdir, VEXPORT);
 	INTON;
 }
@@ -325,6 +328,7 @@ pwdcmd(int argc, char **argv)
 	else
 		find_curdir(0);
 
+	setvar("OLDPWD", prevdir, VEXPORT);
 	setvar("PWD", curdir, VEXPORT);
 	out1str(curdir);
 	out1c('\n');

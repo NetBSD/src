@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.15 2009/12/06 22:49:48 dyoung Exp $ */
+/*	$NetBSD: owtemp.c,v 1.15.10.1 2011/06/23 14:20:03 cherry Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.15 2009/12/06 22:49:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.15.10.1 2011/06/23 14:20:03 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ owtemp_attach(device_t parent, device_t self, void *aux)
 
 	/* Initialize sensor */
 	sc->sc_sensor.units = ENVSYS_STEMP;
+	sc->sc_sensor.state = ENVSYS_SINVALID;
 	(void)strlcpy(sc->sc_sensor.desc,
 	    device_xname(self), sizeof(sc->sc_sensor.desc));
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {

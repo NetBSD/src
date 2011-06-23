@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsfont.9,v 1.15 2010/12/02 12:54:13 wiz Exp $
+.\"     $NetBSD: wsfont.9,v 1.15.4.1 2011/06/23 14:18:45 cherry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,6 @@
 .Nm wsfont_enum ,
 .Nm wsfont_lock ,
 .Nm wsfont_unlock ,
-.Nm wsfont_getflg ,
 .Nm wsfont_map_unichar
 .Nd wscons font support
 .Sh SYNOPSIS
@@ -65,8 +64,6 @@
 .Ft int
 .Fn wsfont_unlock "int cookie"
 .Ft int
-.Fn wsfont_getflg "int cookie" "int *flg" "int *lc"
-.Ft int
 .Fn wsfont_map_unichar "struct wsdisplay_font *font" "int c"
 .Sh DESCRIPTION
 The
@@ -86,12 +83,12 @@ structure in
 .Pa dev/wscons/wsconsio.h :
 .Bd -literal
 struct wsdisplay_font {
-	char *name;		/* font name */
+	const char *name;	/* font name */
 	int firstchar;
 	int numchars;		/* size of font table */
-	int encoding;		/* font encoding
+	int encoding;		/* font encoding */
 	u_int fontwidth;	/* character width */
-	u_int fontheight;	/* character width */
+	u_int fontheight;	/* character height */
 	u_int stride;
 	int bitorder;
 	int byteorder;

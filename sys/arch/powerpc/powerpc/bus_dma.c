@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.38 2011/01/18 01:02:55 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.38.4.1 2011/06/23 14:19:34 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38.4.1 2011/06/23 14:19:34 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,11 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38 2011/01/18 01:02:55 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #ifdef PPC_BOOKE
 #define	EIEIO	__asm volatile("mbar\t0")
@@ -547,10 +546,10 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment, bus_si
 	int bank;
 
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		if (start > VM_PHYSMEM_PTR(bank)->avail_start << PGSHIFT)
-			start = VM_PHYSMEM_PTR(bank)->avail_start << PGSHIFT;
-		if (end < VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT)
-			end = VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT;
+		if (start > ptoa(VM_PHYSMEM_PTR(bank)->avail_start))
+			start = ptoa(VM_PHYSMEM_PTR(bank)->avail_start);
+		if (end < ptoa(VM_PHYSMEM_PTR(bank)->avail_end))
+			end = ptoa(VM_PHYSMEM_PTR(bank)->avail_end);
 	}
 
 	return _bus_dmamem_alloc_range(t, size, alignment, boundary, segs,
@@ -601,6 +600,19 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size
 
 	size = round_page(size);
 
+#ifdef PMAP_MAP_POOLPAGE
+	/*
+	 * If we are mapping a cacheable physically contiguous segment, treat
+	 * it as if we are mapping a poolpage and avoid consuming any KVAs.
+	 */
+	if (nsegs == 1 && (flags & BUS_DMA_NOCACHE) == 0) {
+		KASSERT(size == segs->ds_len);
+		addr = BUS_MEM_TO_PHYS(t, segs->ds_addr);
+		*kvap = (void *)PMAP_MAP_POOLPAGE(addr);
+		return 0;
+	}
+#endif
+
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 
 	if (va == 0)
@@ -639,16 +651,18 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size
 void
 _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
+	vaddr_t va = (vaddr_t) kva;
 
 #ifdef DIAGNOSTIC
-	if ((u_long)kva & PGOFSET)
+	if (va & PGOFSET)
 		panic("_bus_dmamem_unmap");
 #endif
 
-	size = round_page(size);
-
-	pmap_kremove((vaddr_t)kva, size);
-	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
+	if (va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS) {
+		size = round_page(size);
+		pmap_kremove(va, size);
+		uvm_km_free(kernel_map, va, size, UVM_KMF_VAONLY);
+	}
 }
 
 /*

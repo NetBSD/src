@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.15 2008/06/08 03:56:09 tsutsui Exp $ */
+/* $NetBSD: pic16lc.c,v 1.15.30.1 2011/06/23 14:19:59 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.15 2008/06/08 03:56:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.15.30.1 2011/06/23 14:19:59 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,10 +113,12 @@ pic16lc_attach(device_t parent, device_t self, void *opaque)
 
 	/* initialize CPU sensor */
 	sc->sc_sensor[XBOX_SENSOR_CPU].units = ENVSYS_STEMP;
+	sc->sc_sensor[XBOX_SENSOR_CPU].state = ENVSYS_SINVALID;
 	(void)strlcpy(sc->sc_sensor[XBOX_SENSOR_CPU].desc, "Xbox CPU Temp",
 	    sizeof(sc->sc_sensor[XBOX_SENSOR_CPU]));
 	/* initialize board sensor */
 	sc->sc_sensor[XBOX_SENSOR_BOARD].units = ENVSYS_STEMP;
+	sc->sc_sensor[XBOX_SENSOR_BOARD].state = ENVSYS_SINVALID;
 	(void)strlcpy(sc->sc_sensor[XBOX_SENSOR_BOARD].desc, "Xbox Board Temp",
 	    sizeof(sc->sc_sensor[XBOX_SENSOR_BOARD]));
 

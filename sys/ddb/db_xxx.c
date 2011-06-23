@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.63 2011/05/31 03:40:22 christos Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.63.2.1 2011/06/23 14:19:54 cherry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.63 2011/05/31 03:40:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.63.2.1 2011/06/23 14:19:54 cherry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -169,7 +169,7 @@ db_show_files_cmd(db_expr_t addr, bool haddr,
 
 #ifdef LOCKDEBUG
 				db_printf("\nv_uobj.vmobjlock lock details:\n");
-				lockdebug_lock_print(&(vn->v_uobj.vmobjlock),
+				lockdebug_lock_print(vn->v_uobj.vmobjlock,
 					     db_printf);
 				db_printf("\n");
 #endif

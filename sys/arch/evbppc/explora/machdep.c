@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2011/01/14 02:06:25 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32.6.1 2011/06/23 14:19:08 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2011/01/14 02:06:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32.6.1 2011/06/23 14:19:08 cherry Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -46,13 +46,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2011/01/14 02:06:25 rmind Exp $");
 #include <sys/reboot.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/module.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
 
 #include <machine/explora.h>
-#include <machine/bus.h>
 #include <machine/powerpc.h>
 #include <machine/tlb.h>
 #include <machine/pcb.h>
@@ -60,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2011/01/14 02:06:25 rmind Exp $");
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
+
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
@@ -84,69 +88,13 @@ paddr_t msgbuf_paddr;
 static struct mem_region phys_mem[MEMREGIONS];
 static struct mem_region avail_mem[MEMREGIONS];
 
-void		bootstrap(u_int, u_int);
-static void	install_extint(void (*)(void));
-int		lcsplx(int);
-
-/*
- * Trap vectors
- */
-extern int defaulttrap, defaultsize;
-extern int sctrap, scsize;
-extern int alitrap, alisize;
-extern int dsitrap, dsisize;
-extern int isitrap, isisize;
-extern int mchktrap, mchksize;
-extern int tlbimiss4xx, tlbim4size;
-extern int tlbdmiss4xx, tlbdm4size;
-extern int pitfitwdog, pitfitwdogsize;
-extern int debugtrap, debugsize;
-extern int errata51handler, errata51size;
-#ifdef DDB
-extern int ddblow, ddbsize;
-#endif
-static struct {
-	int vector;
-	void *addr;
-	void *size;
-} trap_table[] = {
-	{ EXC_SC,	&sctrap,	&scsize },
-	{ EXC_ALI,	&alitrap,	&alisize },
-	{ EXC_DSI,	&dsitrap,	&dsisize },
-	{ EXC_ISI,	&isitrap,	&isisize },
-	{ EXC_MCHK,	&mchktrap,	&mchksize },
-	{ EXC_ITMISS,	&tlbimiss4xx,	&tlbim4size },
-	{ EXC_DTMISS,	&tlbdmiss4xx,	&tlbdm4size },
-	{ EXC_PIT,	&pitfitwdog,	&pitfitwdogsize },
-	{ EXC_DEBUG,	&debugtrap,	&debugsize },
-	{ (EXC_DTMISS|EXC_ALI), &errata51handler, &errata51size },
-#if defined(DDB)
-	{ EXC_PGM,	&ddblow,	&ddbsize },
-#endif /* DDB */
-};
-
-/*
- * Install a trap vector. We cannot use memcpy because the
- * destination may be zero.
- */
-static void
-trap_copy(void *src, int dest, size_t len)
-{
-	uint32_t *src_p = src;
-	uint32_t *dest_p = (void *)dest;
-
-	while (len > 0) {
-		*dest_p++ = *src_p++;
-		len -= sizeof(uint32_t);
-	}
-}
+void		initppc(vaddr_t, vaddr_t);
 
 void
-bootstrap(u_int startkernel, u_int endkernel)
+initppc(vaddr_t startkernel, vaddr_t endkernel)
 {
 	u_int i, j, t, br[4];
 	u_int maddr, msize, size;
-	struct cpu_info * const ci = &cpu_info[0];
 
 	br[0] = mfdcr(DCR_BR4);
 	br[1] = mfdcr(DCR_BR5);
@@ -194,100 +142,13 @@ bootstrap(u_int startkernel, u_int endkernel)
 	ppc4xx_tlb_reserve(BASE_FB2, BASE_FB2, TLB_PG_SIZE, TLB_I | TLB_G);
 #endif
 
-	consinit();
-
 	/* Disable all external interrupts */
 	mtdcr(DCR_EXIER, 0);
 
 	/* Disable all timer interrupts */
 	mtspr(SPR_TCR, 0);
 
-	/* Initialize cache info for memcpy, etc. */
-	cpu_probe_cache();
-
-	/*
-	 * Initialize lwp0 and current pcb and pmap pointers.
-	 */
-	lwp0.l_cpu = ci;
-
-	curpcb = lwp_getpcb(&lwp0);
-	memset(curpcb, 0, sizeof(struct pcb));	/* XXX why? */
-	curpcb->pcb_pm = pmap_kernel();
-
-	/*
-	 * Install trap vectors.
-	 */
-
-	for (i = EXC_RSVD; i <= EXC_LAST; i += 0x100)
-		trap_copy(&defaulttrap, i, (size_t)&defaultsize);
-
-	for (i = 0; i < sizeof(trap_table)/sizeof(trap_table[0]); i++) {
-		trap_copy(trap_table[i].addr, trap_table[i].vector,
-		    (size_t)trap_table[i].size);
-	}
-
-	__syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
-
-	/*
-	 * Set Exception vector base.
-	 * Handle trap instruction as PGM exception.
-	 */
-
-	mtspr(SPR_EVPR, 0);
-
-	t = mfspr(SPR_DBCR0);
-	t &= ~DBCR0_TDE;
-	mtspr(SPR_DBCR0, t);
-
-	/*
-	 * External interrupt handler install.
-	 */
-
-	install_extint(ext_intr);
-
-	/*
-	 * Now enable translation (and machine checks/recoverable interrupts).
-	 */
-	__asm volatile (
-	    "	mfmsr %0	\n"
-	    "	ori %0,%0,%1	\n"
-	    "	mtmsr %0	\n"
-	    "	sync		\n"
-	    : : "r" (0), "K" (PSL_IR|PSL_DR|PSL_ME) );
-
-	uvm_setpagesize();
-
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
-	fake_mapiodev = 0;
-}
-
-static void
-install_extint(void (*handler)(void))
-{
-	extern int extint, extsize;
-	extern u_long extint_call;
-	u_long offset = (u_long)handler - (u_long)&extint_call;
-	int omsr, msr;
-
-#ifdef	DIAGNOSTIC
-	if (offset > 0x1ffffff)
-		panic("install_extint: too far away");
-#endif
-	__asm volatile (
-	    "	mfmsr %0	\n"
-	    "	andi. %1,%0,%2	\n"
-	    "	mtmsr %1	\n"
-	    : "=r" (omsr), "=r" (msr) : "K" ((u_short)~PSL_EE) );
-	extint_call = (extint_call & 0xfc000003) | offset;
-	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
-	__syncicache((void *)&extint_call, sizeof extint_call);
-	__syncicache((void *)EXC_EXI, (int)&extsize);
-	__asm volatile (
-	    "	mtmsr %0	\n"
-	    : : "r" (omsr) );
+	ibm4xx_init(startkernel, endkernel, pic_ext_intr);
 }
 
 void
@@ -344,12 +205,12 @@ cpu_startup(void)
 	prop_object_release(pn);
 
 	intr_init();
-}
-
-int
-lcsplx(int ipl)
-{
-	return spllower(ipl);	/*XXX*/
+	
+	/*
+	 * Look for the ibm4xx modules in the right place.
+	 */
+	module_machine = module_machine_ibm4xx;
+	fake_mapiodev = 0;
 }
 
 void

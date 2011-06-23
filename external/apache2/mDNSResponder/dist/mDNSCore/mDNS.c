@@ -3594,7 +3594,7 @@ mDNSlocal void SendQueries(mDNS *const m)
 	// go through our interface list sending the appropriate queries on each interface
 	while (intf)
 		{
-		const int os = !intf->MAC.l[0] ? 0 : DNSOpt_Header_Space + mDNSSameEthAddress(&m->PrimaryMAC, &intf->MAC) ? DNSOpt_OwnerData_ID_Space : DNSOpt_OwnerData_ID_Wake_Space;
+		const int os = !intf->MAC.l[0] ? 0 : DNSOpt_Header_Space + (mDNSSameEthAddress(&m->PrimaryMAC, &intf->MAC) ? DNSOpt_OwnerData_ID_Space : DNSOpt_OwnerData_ID_Wake_Space);
 		int OwnerRecordSpace = 0;
 		AuthRecord *rr;
 		mDNSu8 *queryptr = m->omsg.data;

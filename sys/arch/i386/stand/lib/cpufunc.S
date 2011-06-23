@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.3 2008/10/22 08:42:38 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.3.26.1 2011/06/23 14:19:16 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -149,8 +149,4 @@ NENTRY(outsl)
 	rep
 	outsl
 	popl	%esi
-	ret
-
-NENTRY(wbinvd)
-	wbinvd
 	ret

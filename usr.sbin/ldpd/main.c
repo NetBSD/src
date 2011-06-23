@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.4 2010/12/31 06:16:17 wiz Exp $ */
+/* $NetBSD: main.c,v 1.4.4.1 2011/06/23 14:20:48 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -152,12 +152,12 @@ main(int argc, char *argv[])
 	}
 
 	if (dontfork == 1)
-		the_big_loop();
+		return the_big_loop();
 
 	forkres = fork();
 	if (forkres == 0) {
 		syslog_f = 1;
-		the_big_loop();
+		return the_big_loop();
 	}
 	if (forkres < 0)
 		perror("fork");

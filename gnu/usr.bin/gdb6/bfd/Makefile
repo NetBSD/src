@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/03/14 00:26:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2011/06/23 14:18:34 cherry Exp $
 
 .include <bsd.own.mk>
 
@@ -26,12 +26,6 @@ CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h \
 .PATH: ${DIST}/bfd
 
 .include <bsd.lib.mk>
-
-# XXX
-.if ${MACHINE_CPU} == "sh5"
-COPTS.elf32.c=                -O1
-COPTS.elf64.c=                -O1
-.endif
 
 ${OBJS} ${SOBJS}: elf32-target.h elf64-target.h
 targets.o targets.pico: targmatch.h Makefile

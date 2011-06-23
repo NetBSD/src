@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.15 2007/11/26 19:58:30 garbled Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.15.50.1 2011/06/23 14:19:21 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -65,7 +65,7 @@ void model_init(void);
 void *mapiodev(paddr_t, psize_t);
 paddr_t kvtop(void *);
 void dumpsys(void);
-void copy_disp_props(struct device *, int, prop_dictionary_t);
+void copy_disp_props(device_t, int, prop_dictionary_t);
 
 /* these are in extintr.c */
 void init_interrupt(void);

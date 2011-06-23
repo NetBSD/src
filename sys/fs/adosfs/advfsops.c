@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.61 2011/05/23 22:00:30 rmind Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.61.2.1 2011/06/23 14:20:13 cherry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.61 2011/05/23 22:00:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.61.2.1 2011/06/23 14:20:13 cherry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -362,7 +362,7 @@ adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
 	if ((*vpp = adosfs_ahashget(mp, an)) != NULL)
 		return (0);
 
-	error = getnewvnode(VT_ADOSFS, mp, adosfs_vnodeop_p, &vp);
+	error = getnewvnode(VT_ADOSFS, mp, adosfs_vnodeop_p, NULL, &vp);
 	if (error)
 		return (error);
 

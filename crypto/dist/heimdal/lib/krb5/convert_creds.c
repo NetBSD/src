@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 __RCSID("$Heimdal: convert_creds.c 22050 2007-11-11 11:20:46Z lha $"
-        "$NetBSD: convert_creds.c,v 1.2 2008/03/22 08:37:13 mlelstv Exp $");
+        "$NetBSD: convert_creds.c,v 1.2.22.1 2011/06/23 14:17:49 cherry Exp $");
 
 #include "krb5-v4compat.h"
 
@@ -172,7 +172,7 @@ krb524_convert_creds_kdc_ccache(krb5_context context,
 
     keytype = v5_creds->session.keytype;
 
-    if (keytype != ENCTYPE_DES_CBC_CRC) {
+    if (keytype != (krb5_keytype)ENCTYPE_DES_CBC_CRC) {
 	/* MIT krb524d doesn't like nothing but des-cbc-crc tickets,
            so go get one */
 	krb5_creds template;

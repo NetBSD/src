@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2011/01/26 01:18:44 pooka Exp $
+#	$NetBSD: list,v 1.1.4.1 2011/06/23 14:18:17 cherry Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -34,8 +34,6 @@ COPY	${DESTDIR}/boot.emips	boot.emips
 
 # copy the kernel(s)
 COPY	${KERNOBJDIR}/GENERIC/netbsd		netbsd
-COPY	${KERNOBJDIR}/GENERIC/netbsd.ecoff	netbsd.ecoff
-COPY	${KERNOBJDIR}/INSTALL/nfsnetbsd.ecoff	nfsnetbsd.ecoff
 
 # various files that we need in /etc for the install
 #SYMLINK	/tmp/fstab.shadow		etc/fstab

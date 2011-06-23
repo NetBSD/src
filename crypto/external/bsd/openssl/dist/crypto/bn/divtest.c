@@ -8,7 +8,7 @@ static int Rand(void)
     return (x[0] + 2*x[1]);
 }
 
-static void bug(char *m, BIGNUM *a, BIGNUM *b)
+static void bug(const char *m, BIGNUM *a, BIGNUM *b)
 {
     printf("%s!\na=",m);
     BN_print_fp(stdout, a);

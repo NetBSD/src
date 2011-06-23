@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.423 2011/04/24 21:35:29 rmind Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.423.2.1 2011/06/23 14:20:21 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.423 2011/04/24 21:35:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.423.2.1 2011/06/23 14:20:21 cherry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.423 2011/04/24 21:35:29 rmind Exp
 #ifdef FILEASSOC
 #include <sys/fileassoc.h>
 #endif /* FILEASSOC */
+#include <sys/extattr.h>
 #include <sys/verified_exec.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
@@ -232,12 +233,12 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG);
+	    MNT_LOG | MNT_EXTATTR);
 	mp->mnt_flag |= flags &
 	   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG | MNT_IGNORE);
+	    MNT_LOG | MNT_EXTATTR | MNT_IGNORE);
 
 	error = VFS_MOUNT(mp, path, data, data_len);
 
@@ -275,6 +276,25 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	mutex_exit(&mp->mnt_updating);
 	vfs_unbusy(mp, false, NULL);
 
+	if ((error == 0) && !(saved_flags & MNT_EXTATTR) && 
+	    (flags & MNT_EXTATTR)) {
+		if (VFS_EXTATTRCTL(vp->v_mount, EXTATTR_CMD_START, 
+				   NULL, 0, NULL) != 0) {
+			printf("%s: failed to start extattr, error = %d",
+			       vp->v_mount->mnt_stat.f_mntonname, error);
+			mp->mnt_flag &= ~MNT_EXTATTR;
+		}
+	}
+
+	if ((error == 0) && (saved_flags & MNT_EXTATTR) && 
+	    !(flags & MNT_EXTATTR)) {
+		if (VFS_EXTATTRCTL(vp->v_mount, EXTATTR_CMD_STOP, 
+				   NULL, 0, NULL) != 0) {
+			printf("%s: failed to stop extattr, error = %d",
+			       vp->v_mount->mnt_stat.f_mntonname, error);
+			mp->mnt_flag |= MNT_RDONLY;
+		}
+	}
  out:
 	return (error);
 }
@@ -448,6 +468,14 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
 		    &data_len);
 		vfsopsrele = false;
+
+		if ((error == 0) && (flags & MNT_EXTATTR)) {
+			if (VFS_EXTATTRCTL(vp->v_mount, EXTATTR_CMD_START, 
+					   NULL, 0, NULL) != 0)
+				printf("%s: failed to start extattr",
+				       vp->v_mount->mnt_stat.f_mntonname);
+				/* XXX remove flag */
+		}
 	}
 
     done:
@@ -538,15 +566,11 @@ int syncprt = 0;
 struct ctldebug debug0 = { "syncprt", &syncprt };
 #endif
 
-/* ARGSUSED */
-int
-sys_sync(struct lwp *l, const void *v, register_t *retval)
+void
+do_sys_sync(struct lwp *l)
 {
 	struct mount *mp, *nmp;
 	int asyncflag;
-
-	if (l == NULL)
-		l = &lwp0;
 
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
@@ -570,8 +594,16 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 	if (syncprt)
 		vfs_bufstats();
 #endif /* DEBUG */
+}
+
+/* ARGSUSED */
+int
+sys_sync(struct lwp *l, const void *v, register_t *retval)
+{
+	do_sys_sync(l);
 	return (0);
 }
+
 
 /*
  * Change filesystem quotas.
@@ -1431,9 +1463,9 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	if ((error = VOP_OPEN(vp, flags, cred)) != 0)
 		goto bad;
 	if (flags & FWRITE) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_writecount++;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 
 	/* done with modified vn_open, now finish what sys_open does. */
@@ -3048,7 +3080,7 @@ sys_fsync_range(struct lwp *l, const struct sys_fsync_range_args *uap, register_
 		nflags |= FSYNC_CACHE;
 
 	len = SCARG(uap, length);
-	/* If length == 0, we do the whole file, and s = l = 0 will do that */
+	/* If length == 0, we do the whole file, and s = e = 0 will do that */
 	if (len) {
 		s = SCARG(uap, start);
 		e = s + len;
@@ -3146,8 +3178,6 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	struct pathbuf *frompb, *topb;
 	struct nameidata fromnd, tond;
 	struct mount *fs;
-	struct lwp *l = curlwp;
-	struct proc *p;
 	int error;
 
 	error = pathbuf_maybe_copyin(from, seg, &frompb);
@@ -3282,7 +3312,7 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 		f2 = kmem_alloc(f2_len, KM_SLEEP);
 		strlcpy(f2, tond.ni_cnd.cn_nameptr, f2_len);
 
-		error = veriexec_renamechk(l, fvp, f1, tvp, f2);
+		error = veriexec_renamechk(curlwp, fvp, f1, tvp, f2);
 
 		kmem_free(f1, f1_len);
 		kmem_free(f2, f2_len);
@@ -3290,7 +3320,6 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 #endif /* NVERIEXEC > 0 */
 
 out:
-	p = l->l_proc;
 	if (!error) {
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
 				   tond.ni_dvp, tond.ni_vp, &tond.ni_cnd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405_autoconf.c,v 1.4 2006/02/26 05:24:52 thorpej Exp $	*/
+/*	$NetBSD: obs405_autoconf.c,v 1.4.104.1 2011/06/23 14:19:09 cherry Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,15 +33,17 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs405_autoconf.c,v 1.4 2006/02/26 05:24:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs405_autoconf.c,v 1.4.104.1 2011/06/23 14:19:09 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
-#include <sys/device.h>
+#include <sys/device_if.h>
+#include <sys/cpu.h>
 
 #include <machine/obs405.h>
 
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/comopbvar.h>
 
 
@@ -53,9 +55,9 @@ cpu_rootconf(void)
 }
 
 void
-obs405_device_register(struct device *dev, void *aux, int com_freq)
+obs405_device_register(device_t dev, void *aux, int com_freq)
 {
-	struct device *parent = device_parent(dev);
+	device_t parent = device_parent(dev);
 
 	/* register "com" device */
 	if (device_is_a(dev, "com") && device_is_a(parent, "opb")) {

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.25 2010/03/06 23:45:39 plunky Exp $
+#	$NetBSD: majors.alpha,v 1.25.8.1 2011/06/23 14:18:52 cherry Exp $
 #
 # Device majors for alpha
 #
@@ -37,7 +37,7 @@ device-major	wd		char 36  block 4	wd
 device-major	se		char 37			se
 device-major	satlink		char 38			satlink
 device-major	rnd		char 39			rnd
-device-major	a12dc		char 40			a12dc
+#device-major	obsolete	char 40			obsolete
 device-major	spkr		char 41			spkr
 device-major	scsibus		char 42			scsibus
 device-major	raid		char 43  block 16	raid

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2011/01/16 01:22:50 agc Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.4.1 2011/06/23 14:18:38 cherry Exp $
 
 .include <bsd.own.mk>
 
@@ -14,3 +14,7 @@ INCSDIR=/usr/include
 WARNS=	4
 
 .include <bsd.lib.mk>
+
+.if ${HAVE_GCC} >= 45
+COPTS.isns_pdu.c+=	-fno-strict-aliasing
+.endif

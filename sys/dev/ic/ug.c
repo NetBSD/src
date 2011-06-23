@@ -1,4 +1,4 @@
-/* $NetBSD: ug.c,v 1.11 2008/03/26 16:09:37 xtraeme Exp $ */
+/* $NetBSD: ug.c,v 1.11.36.1 2011/06/23 14:20:00 cherry Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.11 2008/03/26 16:09:37 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.11.36.1 2011/06/23 14:20:00 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,6 +429,10 @@ ug_setup_sensors(struct ug_softc *sc)
 	COPYDESCR(sc->sc_sensor[16].desc, "SYS Fan");
 	COPYDESCR(sc->sc_sensor[17].desc, "AUX Fan 1");
 	COPYDESCR(sc->sc_sensor[18].desc, "AUX Fan 2");
+
+	/* All sensors */
+	for (i = 0; i < UG_NUM_SENSORS; i++)
+		sc->sc_sensor[i].units = ENVSYS_SINVALID;
 }
 
 void

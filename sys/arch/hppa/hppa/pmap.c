@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 2011/01/14 02:06:26 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80.6.1 2011/06/23 14:19:13 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2011/01/14 02:06:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80.6.1 2011/06/23 14:19:13 cherry Exp $");
 
 #include "opt_cputype.h"
 
@@ -237,13 +237,13 @@ int pmap_check_alias(struct vm_page *, vaddr_t, pt_entry_t);
 #define PMAP_LOCK(pm)					\
 	do {						\
 		if ((pm) != pmap_kernel())		\
-			mutex_enter(&(pm)->pm_lock);	\
+			mutex_enter((pm)->pm_lock);	\
 	} while (/*CONSTCOND*/0)
 
 #define PMAP_UNLOCK(pm)					\
 	do {						\
 		if ((pm) != pmap_kernel())		\
-			mutex_exit(&(pm)->pm_lock);	\
+			mutex_exit((pm)->pm_lock);	\
 	} while (/*CONSTCOND*/0)
 
 struct vm_page *
@@ -343,7 +343,7 @@ pmap_pde_alloc(pmap_t pm, vaddr_t va, struct vm_page **pdep)
 	    ("%s(%p, 0x%lx, %p)\n", __func__, pm, va, pdep));
 
 	KASSERT(pm != pmap_kernel());
-	KASSERT(mutex_owned(&pm->pm_lock));
+	KASSERT(mutex_owned(pm->pm_lock));
 
 	pg = pmap_pagealloc(&pm->pm_obj, va);
 
@@ -504,13 +504,11 @@ pmap_dump_pv(paddr_t pa)
 
 	pg = PHYS_TO_VM_PAGE(pa);
 	md = VM_PAGE_TO_MD(pg);
-	mutex_enter(&md->pvh_lock);
 	db_printf("pg %p attr 0x%08x aliases %d\n", pg, md->pvh_attrs,
 	    md->pvh_aliases);
 	for (pve = md->pvh_list; pve; pve = pve->pv_next)
 		db_printf("%x:%lx\n", pve->pv_pmap->pm_space,
 		    pve->pv_va & PV_VAMASK);
-	mutex_exit(&md->pvh_lock);
 }
 #endif
 
@@ -576,7 +574,7 @@ pmap_pv_enter(struct vm_page *pg, struct pv_entry *pve, pmap_t pm,
 	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s(%p, %p, %p, 0x%lx, %p, 0x%x)\n",
 	    __func__, pg, pve, pm, va, pdep, flags));
 
-	KASSERT(mutex_owned(&md->pvh_lock));
+	KASSERT(pm == pmap_kernel() || uvm_page_locked_p(pg));
 
 	pve->pv_pmap = pm;
 	pve->pv_va = va | flags;
@@ -591,7 +589,7 @@ pmap_pv_remove(struct vm_page *pg, pmap_t pmap, vaddr_t va)
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	struct pv_entry **pve, *pv;
 
-	KASSERT(mutex_owned(&md->pvh_lock));
+	KASSERT(pmap == pmap_kernel() || uvm_page_locked_p(pg));
 
 	for (pv = *(pve = &md->pvh_list);
 	    pv; pv = *(pve = &(*pve)->pv_next))
@@ -681,7 +679,10 @@ pmap_bootstrap(vaddr_t vstart)
 	kpm = pmap_kernel();
 	memset(kpm, 0, sizeof(*kpm));
 
-	UVM_OBJ_INIT(&kpm->pm_obj, NULL, 1);
+	mutex_init(&kpm->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
+	uvm_obj_init(&kpm->pm_obj, NULL, false, 1);
+	uvm_obj_setlock(&kpm->pm_obj, &kpm->pm_obj_lock);
+
 	kpm->pm_space = HPPA_SID_KERNEL;
 	kpm->pm_pid = HPPA_PID_KERNEL;
 	kpm->pm_pdir_pg = NULL;
@@ -1041,7 +1042,9 @@ pmap_create(void)
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s: pmap = %p\n", __func__, pmap));
 
-	UVM_OBJ_INIT(&pmap->pm_obj, NULL, 1);
+	mutex_init(&pmap->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
+	uvm_obj_init(&pmap->pm_obj, NULL, false, 1);
+	uvm_obj_setlock(&pmap->pm_obj, &pmap->pm_obj_lock);
 
 	mutex_enter(&pmaps_lock);
 
@@ -1090,9 +1093,9 @@ pmap_destroy(pmap_t pmap)
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s(%p)\n", __func__, pmap));
 
-	mutex_enter(&pmap->pm_lock);
+	mutex_enter(pmap->pm_lock);
 	refs = --pmap->pm_obj.uo_refs;
-	mutex_exit(&pmap->pm_lock);
+	mutex_exit(pmap->pm_lock);
 
 	if (refs > 0)
 		return;
@@ -1140,11 +1143,12 @@ pmap_destroy(pmap_t pmap)
 	}
 #endif
 	pmap_sdir_set(pmap->pm_space, 0);
-	mutex_enter(&pmap->pm_lock);
+	mutex_enter(pmap->pm_lock);
 	pmap_pagefree(pmap->pm_pdir_pg);
-	mutex_exit(&pmap->pm_lock);
-	mutex_destroy(&pmap->pm_lock);
-	pmap->pm_pdir_pg = NULL;
+	mutex_exit(pmap->pm_lock);
+
+	uvm_obj_destroy(&pmap->pm_obj, false);
+	mutex_destroy(&pmap->pm_obj_lock);
 	pool_put(&pmap_pool, pmap);
 }
 
@@ -1157,9 +1161,9 @@ pmap_reference(pmap_t pmap)
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s(%p)\n", __func__, pmap));
 
-	mutex_enter(&pmap->pm_lock);
+	mutex_enter(pmap->pm_lock);
 	pmap->pm_obj.uo_refs++;
-	mutex_exit(&pmap->pm_lock);
+	mutex_exit(pmap->pm_lock);
 }
 
 /*
@@ -1215,11 +1219,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		}
 
 		pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
-		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-		mutex_enter(&md->pvh_lock);
 		pve = pmap_pv_remove(pg, pmap, va);
+
+		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 		md->pvh_attrs |= pmap_pvh_attrs(pte);
-		mutex_exit(&md->pvh_lock);
 	} else {
 		DPRINTF(PDB_ENTER, ("%s: new mapping 0x%lx -> 0x%lx\n",
 		    __func__, va, pa));
@@ -1233,22 +1236,18 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 
 	if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(pa))) {
-		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-
 		if (!pve && !(pve = pmap_pv_alloc())) {
 			if (flags & PMAP_CANFAIL) {
- 				mutex_exit(&md->pvh_lock);
  				PMAP_UNLOCK(pmap);
 				return (ENOMEM);
 			}
 			panic("%s: no pv entries available", __func__);
 		}
                 pte |= PTE_PROT(pmap_prot(pmap, prot));
-		mutex_enter(&md->pvh_lock);
 		if (pmap_check_alias(pg, va, pte))
-			pmap_page_remove_locked(pg);
+			pmap_page_remove(pg);
 		pmap_pv_enter(pg, pve, pmap, va, ptp, 0);
-		mutex_exit(&md->pvh_lock);
+
 	} else if (pve) {
 		pmap_pv_free(pve);
 	}
@@ -1317,12 +1316,9 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			    (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte)))) {
 				struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 
-				mutex_enter(&md->pvh_lock);
 
 				pve = pmap_pv_remove(pg, pmap, sva);
 				md->pvh_attrs |= pmap_pvh_attrs(pte);
-
-				mutex_exit(&md->pvh_lock);
 
 				if (pve != NULL)
 					pmap_pv_free(pve);
@@ -1373,9 +1369,7 @@ pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 			pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
 			struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-			mutex_enter(&md->pvh_lock);
 			md->pvh_attrs |= pmap_pvh_attrs(pte);
-			mutex_exit(&md->pvh_lock);
 
 			pmap_pte_flush(pmap, sva, pte);
 			pte &= ~PTE_PROT(TLB_AR_MASK);
@@ -1389,16 +1383,6 @@ pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 void
 pmap_page_remove(struct vm_page *pg)
-{
-	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-
-	mutex_enter(&md->pvh_lock);
-	pmap_page_remove_locked(pg);
-	mutex_exit(&md->pvh_lock);
-}
-
-void
-pmap_page_remove_locked(struct vm_page *pg)
 {
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	struct pv_entry *pve, *npve, **pvp;
@@ -1495,8 +1479,6 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 	KASSERT((set & ~(PVF_REF|PVF_UNCACHEABLE)) == 0);
 	KASSERT((clear & ~(PVF_MOD|PVF_WRITE|PVF_UNCACHEABLE)) == 0);
 
-	mutex_enter(&md->pvh_lock);
-
 	/* preserve other bits */
 	res = md->pvh_attrs & (set | clear);
 	md->pvh_attrs ^= res;
@@ -1531,7 +1513,6 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 			}
 		}
 	}
-	mutex_exit(&md->pvh_lock);
 
 	return ((res & (clear | set)) != 0);
 }
@@ -1546,8 +1527,6 @@ pmap_testbit(struct vm_page *pg, u_int bit)
 
 	DPRINTF(PDB_FOLLOW|PDB_BITS, ("%s(%p, %x)\n", __func__, pg, bit));
 
-	mutex_enter(&md->pvh_lock);
-
 	for (pve = md->pvh_list; !(md->pvh_attrs & bit) && pve;
 	    pve = pve->pv_next) {
 		pmap_t pm = pve->pv_pmap;
@@ -1559,7 +1538,6 @@ pmap_testbit(struct vm_page *pg, u_int bit)
 		md->pvh_attrs |= pmap_pvh_attrs(pte);
 	}
 	ret = ((md->pvh_attrs & bit) != 0);
-	mutex_exit(&md->pvh_lock);
 
 	return ret;
 }
@@ -1735,8 +1713,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 		pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
 		if (pg != NULL) {
-			struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-
 			KASSERT(pa < HPPA_IOBEGIN);
 
 			struct pv_entry *pve;
@@ -1749,12 +1725,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			    ("%s(%lx, %lx, %x) TLB_KENTER\n", __func__,
 			    va, pa, pte));
 
-			mutex_enter(&md->pvh_lock);
 			if (pmap_check_alias(pg, va, pte))
-				pmap_page_remove_locked(pg);
+				pmap_page_remove(pg);
 			pmap_pv_enter(pg, pve, pmap_kernel(), va, NULL,
 			    PV_KENTER);
-			mutex_exit(&md->pvh_lock);
 		}
 	}
 	pmap_pte_set(pde, va, pte);
@@ -1823,13 +1797,8 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		pmap_pte_flush(pmap, va, pte);
 		pmap_pte_set(pde, va, 0);
 		if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte)))) {
-			struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-
-			mutex_enter(&md->pvh_lock);
-
 			pve = pmap_pv_remove(pg, pmap, va);
 
-			mutex_exit(&md->pvh_lock);
 			if (pve != NULL)
 				pmap_pv_free(pve);
 		}

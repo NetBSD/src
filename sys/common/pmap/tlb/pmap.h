@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2011/01/18 01:11:50 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.6.1 2011/06/23 14:19:52 cherry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,6 +74,12 @@
 #ifndef	_COMMON_PMAP_H_
 #define	_COMMON_PMAP_H_
 
+#include <uvm/uvm_stat.h>
+#ifdef UVMHIST
+UVMHIST_DECL(pmapexechist);
+UVMHIST_DECL(pmaphist);
+#endif
+
 /*
  * The user address space is mapped using a two level structure where
  * virtual address bits 31..22 are used to index into a segment table which
@@ -126,8 +132,8 @@ struct pmap_asid_info {
  */
 struct pmap {
 #ifdef MULTIPROCESSOR
-	volatile uint32_t	pm_active;	/* pmap was active on ... */
-	volatile uint32_t	pm_onproc;	/* pmap is active on ... */
+	__cpuset_t		pm_active;	/* pmap was active on ... */
+	__cpuset_t		pm_onproc;	/* pmap is active on ... */
 	volatile u_int		pm_shootdown_pending;
 #endif
 	struct pmap_segtab	*pm_segtab;	/* pointers to pages of PTEs */
@@ -161,7 +167,7 @@ struct pmap_tlb_info {
 #ifdef MULTIPROCESSOR
 	pmap_t ti_victim;
 	uint32_t ti_synci_page_bitmap;	/* page indices needing a syncicache */
-	uint32_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
+	__cpuset_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
 	enum tlb_invalidate_op ti_tlbinvop;
 	u_int ti_index;
 #define tlbinfo_index(ti)	((ti)->ti_index)
@@ -215,8 +221,8 @@ extern struct pmap_limits pmap_limits;
  */
 void	pmap_remove_all(pmap_t);
 void	pmap_set_modified(paddr_t);
-bool	pmap_page_clear_attributes(struct vm_page *, u_int);
-void	pmap_page_set_attributes(struct vm_page *, u_int);
+bool	pmap_page_clear_attributes(struct vm_page_md *, u_int);
+void	pmap_page_set_attributes(struct vm_page_md *, u_int);
 void	pmap_pvlist_lock_init(size_t);
 
 #define	PMAP_WB		0
@@ -241,7 +247,7 @@ int	pmap_tlb_update_addr(pmap_t, vaddr_t, uint32_t, u_int);
 void	pmap_tlb_invalidate_addr(pmap_t, vaddr_t);
 void	pmap_tlb_check(pmap_t);
 
-uint16_t pmap_pvlist_lock(struct vm_page *, bool);
+uint16_t pmap_pvlist_lock(struct vm_page_md *, bool);
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
 

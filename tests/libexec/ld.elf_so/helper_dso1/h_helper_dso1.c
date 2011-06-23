@@ -39,7 +39,7 @@ extern int sleep_init;
 extern int sleep_fini;
 extern int dlopen_cookie;
 
-void __attribute__((__constructor__))
+static void __attribute__((__constructor__))
 init1(void)
 {
 	dlopen_cookie = 1;
@@ -51,7 +51,7 @@ init1(void)
 
 extern int dlclose_cookie;
 
-void __attribute__((__destructor__))
+static void __attribute__((__destructor__))
 fini1(void)
 {
 	dlclose_cookie = 1;
@@ -63,7 +63,7 @@ fini1(void)
 
 static __thread int tls_callback_var;
 
-void
+static void __attribute__((__used__))
 tls_callback(void)
 {
 	tls_callback_var = 1;

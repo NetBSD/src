@@ -1,4 +1,4 @@
-/*	$NetBSD: smartbat.c,v 1.4 2010/09/14 02:45:25 macallan Exp $ */
+/*	$NetBSD: smartbat.c,v 1.4.6.1 2011/06/23 14:19:21 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.4 2010/09/14 02:45:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.4.6.1 2011/06/23 14:19:21 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,8 @@ struct smartbat_softc {
 	uint32_t sc_timestamp;
 };
 
-static void smartbat_attach(struct device *, struct device *, void *);
-static int smartbat_match(struct device *, struct cfdata *, void *);
+static void smartbat_attach(device_t, device_t, void *);
+static int smartbat_match(device_t, cfdata_t, void *);
 static void smartbat_setup_envsys(struct smartbat_softc *);
 static void smartbat_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void smartbat_poll(void *);
@@ -92,7 +92,7 @@ CFATTACH_DECL(smartbat, sizeof(struct smartbat_softc),
     smartbat_match, smartbat_attach, NULL, NULL);
 
 static int
-smartbat_match(struct device *parent, struct cfdata *cf, void *aux)
+smartbat_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct battery_attach_args *baa = aux;
 
@@ -103,10 +103,10 @@ smartbat_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-smartbat_attach(struct device *parent, struct device *self, void *aux)
+smartbat_attach(device_t parent, device_t self, void *aux)
 {
 	struct battery_attach_args *baa = aux;
-	struct smartbat_softc *sc = (struct smartbat_softc *)self;
+	struct smartbat_softc *sc = device_private(self);
 
 	sc->sc_pmu_ops = baa->baa_pmu_ops;
 	sc->sc_num = baa->baa_num;

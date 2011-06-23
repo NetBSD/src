@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.30 2011/05/22 10:49:37 tsutsui Exp $
+#	$NetBSD: list,v 1.30.2.1 2011/06/23 14:18:25 cherry Exp $
 
-SRCDIRS bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/x68k/stand
+SRCDIRS bin sbin usr.bin usr.sbin sys/arch/x68k/stand
 
 # copy the crunched binary, link to it, and kill it
 PROG	bin/cat

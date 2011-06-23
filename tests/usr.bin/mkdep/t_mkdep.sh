@@ -1,4 +1,4 @@
-# $NetBSD: t_mkdep.sh,v 1.2 2011/05/31 13:22:56 njoly Exp $
+# $NetBSD: t_mkdep.sh,v 1.2.2.1 2011/06/23 14:20:42 cherry Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,6 +31,7 @@
 atf_test_case suffixes
 suffixes_head() {
 	atf_set "descr" "Test suffixes list"
+	atf_set "require.progs" "mkdep cc"
 }
 
 suffixes_body() {

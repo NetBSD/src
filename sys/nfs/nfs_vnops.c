@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.290 2011/04/24 21:35:30 rmind Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.290.2.1 2011/06/23 14:20:27 cherry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.290 2011/04/24 21:35:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.290.2.1 2011/06/23 14:20:27 cherry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -3160,7 +3160,7 @@ nfs_flush(struct vnode *vp, kauth_cred_t cred, int waitfor, struct lwp *l,
 	int flushflags = PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO;
 	UVMHIST_FUNC("nfs_flush"); UVMHIST_CALLED(ubchist);
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	error = VOP_PUTPAGES(vp, 0, 0, flushflags);
 	if (np->n_flag & NWRITEERR) {
 		error = np->n_error;

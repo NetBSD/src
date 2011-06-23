@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.52.2.1 2011/06/03 13:27:42 cherry Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.52.2.2 2011/06/23 14:20:29 cherry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -118,8 +118,8 @@ void	ruadd(struct rusage *, struct rusage *);
 void	rulwps(proc_t *, struct rusage *);
 struct	pstats *pstatscopy(struct pstats *);
 void	pstatsfree(struct pstats *);
-extern const rlim_t maxdmap;
-extern const rlim_t maxsmap;
+extern rlim_t maxdmap;
+extern rlim_t maxsmap;
 
 #endif
 

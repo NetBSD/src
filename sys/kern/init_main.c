@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.431 2011/05/31 23:28:53 dyoung Exp $	*/
+/*	$NetBSD: init_main.c,v 1.431.2.1 2011/06/23 14:20:18 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.431 2011/05/31 23:28:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.431.2.1 2011/06/23 14:20:18 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -304,6 +304,9 @@ main(void)
 	/* Initialize the device switch tables. */
 	devsw_init();
 
+	/* Initialize event counters. */
+	evcnt_init();
+
 	uvm_init();
 
 	prop_kern_init();
@@ -321,9 +324,6 @@ main(void)
 
 	/* Initialize the extent manager. */
 	extent_init();
-
-	/* Initialize event counters */
-	evcnt_init();
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
@@ -501,6 +501,8 @@ main(void)
 	ssp_init();
 
 	ubc_init();		/* must be after autoconfig */
+
+	mm_init();
 
 	configure2();
 	/* Now timer is working.  Enable preemption. */

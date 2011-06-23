@@ -1,4 +1,4 @@
-/* $NetBSD: mal.c,v 1.1 2010/03/18 13:47:04 kiyohara Exp $ */
+/* $NetBSD: mal.c,v 1.1.12.1 2011/06/23 14:19:30 cherry Exp $ */
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,20 +26,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mal.c,v 1.1 2010/03/18 13:47:04 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mal.c,v 1.1.12.1 2011/06/23 14:19:30 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
-#include <machine/intr.h>
-
-#include <powerpc/cpu.h>
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/dev/if_emacvar.h>
 #include <powerpc/ibm4xx/dev/malvar.h>
 #include <powerpc/ibm4xx/spr.h>
 
-#define STAT_TO_CHAN(stat)	cntlzw(stat)
+#define STAT_TO_CHAN(stat)	__builtin_clz(stat)
 
 
 static int mal_txeob_intr(void *);

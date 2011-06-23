@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.37 2011/01/26 01:18:55 pooka Exp $	*/
+/*	$NetBSD: machines.c,v 1.37.2.1 2011/06/23 14:20:47 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: machines.c,v 1.37 2011/01/26 01:18:55 pooka Exp $");
+__RCSID("$NetBSD: machines.c,v 1.37.2.1 2011/06/23 14:20:47 cherry Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -68,7 +68,7 @@ struct ib_mach
     ib_mach_vax,
     ib_mach_x68k;
 
-struct ib_mach *machines[] = {
+struct ib_mach * const machines[] = {
     &ib_mach_alpha,
     &ib_mach_amd64,
     &ib_mach_amiga,

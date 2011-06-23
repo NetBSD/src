@@ -1,4 +1,4 @@
-/* $NetBSD: lca_pci.c,v 1.19 2010/12/15 01:27:19 matt Exp $ */
+/* $NetBSD: lca_pci.c,v 1.19.6.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.19 2010/12/15 01:27:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.19.6.1 2011/06/23 14:18:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,12 +41,11 @@ __KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.19 2010/12/15 01:27:19 matt Exp $");
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
 
-void		lca_attach_hook(struct device *, struct device *,
+void		lca_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		lca_bus_maxdevs(void *, int);
 pcitag_t	lca_make_tag(void *, int, int, int);
-void		lca_decompose_tag(void *, pcitag_t, int *, int *,
-		    int *);
+void		lca_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t	lca_conf_read(void *, pcitag_t, int);
 void		lca_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -64,7 +63,7 @@ lca_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 void
-lca_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
+lca_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 }
 

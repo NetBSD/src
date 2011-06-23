@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.12 2011/02/08 20:20:10 rmind Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.12.2.1 2011/06/23 14:19:02 cherry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,7 +55,7 @@ struct ite_softc;
  * uses it... 
  */
 struct	grf_softc {
-	struct device	g_device;	/* config sets this up.		*/
+	device_t	g_device;	/* config sets this up.		*/
 	struct grfinfo	g_display;	/* hardware descr. (for ioctl)	*/
 	int		g_flags;	/* software flags		*/
 	int		g_unit;		/* grf unit we want/have	*/

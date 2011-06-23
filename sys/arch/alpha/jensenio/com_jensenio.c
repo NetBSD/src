@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.11 2009/11/21 05:35:41 rmind Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.11.10.1 2011/06/23 14:18:53 cherry Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.11 2009/11/21 05:35:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.11.10.1 2011/06/23 14:18:53 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ com_jensenio_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	scb_set(ja->ja_irq[0], com_jensenio_intr, sc, IPL_VM);
+	scb_set(ja->ja_irq[0], com_jensenio_intr, jsc, IPL_VM);
 	aprint_normal_dev(self, "interrupting at vector 0x%x\n",
 	    ja->ja_irq[0]);
 

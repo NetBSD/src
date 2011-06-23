@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.46 2011/05/19 03:11:58 rmind Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.46.2.1 2011/06/23 14:20:16 cherry Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.46 2011/05/19 03:11:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.46.2.1 2011/06/23 14:20:16 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ retry:
 		    || memcmp(name, np->n_name, nmlen) != 0)
 			continue;
 		vp = SMBTOV(np);
-		mutex_enter(&(vp)->v_interlock);
+		mutex_enter((vp)->v_interlock);
 		mutex_exit(&smp->sm_hashlock);
 		if (vget(vp, LK_EXCLUSIVE) != 0)
 			goto retry;
@@ -154,7 +154,7 @@ retry:
 	np = pool_get(&smbfs_node_pool, PR_WAITOK);
 	memset(np, 0, sizeof(*np));
 
-	error = getnewvnode(VT_SMBFS, mp, smbfs_vnodeop_p, &vp);
+	error = getnewvnode(VT_SMBFS, mp, smbfs_vnodeop_p, NULL, &vp);
 	if (error) {
 		pool_put(&smbfs_node_pool, np);
 		return error;

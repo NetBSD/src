@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.72 2011/05/19 20:34:13 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.72.2.1 2011/06/23 14:19:54 cherry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.72 2011/05/19 20:34:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.72.2.1 2011/06/23 14:19:54 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.72 2011/05/19 20:34:13 riastradh Exp $");
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/pool.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
@@ -422,9 +423,9 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 
 	if ((nbp->b_flags & B_READ) == 0) {
 		vp = nbp->b_vp;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_numoutput++;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 	VOP_STRATEGY(cs->sc_tvn, nbp);
 	return 0;
@@ -939,20 +940,22 @@ hexprint(const char *start, void *buf, int len)
 }
 #endif
 
-#ifdef _MODULE
-
-#include <sys/module.h>
-
 MODULE(MODULE_CLASS_DRIVER, cgd, NULL);
+
+#ifdef _MODULE
 CFDRIVER_DECL(cgd, DV_DISK, NULL);
+#endif
 
 static int
 cgd_modcmd(modcmd_t cmd, void *arg)
 {
-	int bmajor = -1, cmajor = -1,  error = 0;
-	
+	int bmajor, cmajor, error = 0;
+
+	bmajor = cmajor = -1;
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		error = config_cfdriver_attach(&cgd_cd);
 		if (error)
 			break;
@@ -964,7 +967,7 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 			    cgd_cd.cd_name);
 			break;
 		}
-		
+
 		error = devsw_attach("cgd", &cgd_bdevsw, &bmajor,
 		    &cgd_cdevsw, &cmajor);
 		if (error) {
@@ -972,15 +975,17 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 			config_cfdriver_detach(&cgd_cd);
 			break;
 		}
-		
+#endif
 		break;
 
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		error = config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
 		if (error)
 			break;
 		config_cfdriver_detach(&cgd_cd);
 		devsw_detach(&cgd_bdevsw, &cgd_cdevsw);
+#endif
 		break;
 
 	case MODULE_CMD_STAT:
@@ -992,5 +997,3 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 
 	return error;
 }
-
-#endif

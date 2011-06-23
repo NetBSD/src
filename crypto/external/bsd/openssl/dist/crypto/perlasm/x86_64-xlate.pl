@@ -55,6 +55,8 @@
 #    Win64 prologue copies %rsp value to %rax. For further details
 #    see SEH paragraph at the end.
 # 9. .init segment is allowed to contain calls to functions only.
+# a. If function accepts more than 4 arguments *and* >4th argument
+#    is declared as non 64-bit value, do clear its upper part.
 
 my $flavour = shift;
 my $output  = shift;
@@ -80,7 +82,10 @@ my $PTR=" PTR";
 my $nasmref=2.03;
 my $nasm=0;
 
-if    ($flavour eq "mingw64")	{ $gas=1; $elf=0; $win64=1; $prefix="_"; }
+if    ($flavour eq "mingw64")	{ $gas=1; $elf=0; $win64=1;
+				  $prefix=`echo __USER_LABEL_PREFIX__ | $ENV{CC} -E -P -`;
+				  chomp($prefix);
+				}
 elsif ($flavour eq "macosx")	{ $gas=1; $elf=0; $prefix="_"; $decor="L\$"; }
 elsif ($flavour eq "masm")	{ $gas=0; $elf=0; $masm=$masmref; $win64=1; $decor="\$L\$"; }
 elsif ($flavour eq "nasm")	{ $gas=0; $elf=0; $nasm=$nasmref; $win64=1; $decor="\$L\$"; $PTR=""; }
@@ -115,7 +120,9 @@ my %globals;
 		$self->{op} = $1;
 		$self->{sz} = "b";
 	    } elsif ($self->{op} =~ /call|jmp/) {
-		$self->{sz} = ""
+		$self->{sz} = "";
+	    } elsif ($self->{op} =~ /^p/ && $' !~ /^(ush|op)/) { # SSEn
+		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /([a-z]{3,})([qlwb])$/) {
 		$self->{op} = $1;
 		$self->{sz} = $2;
@@ -160,7 +167,7 @@ my %globals;
 	    } elsif ($self->{op} =~ /^(pop|push)f/) {
 		$self->{op} .= $self->{sz};
 	    } elsif ($self->{op} eq "call" && $current_segment eq ".CRT\$XCU") {
-		$self->{op} = "ALIGN\t8\n\tDQ";
+		$self->{op} = "\tDQ";
 	    } 
 	    $self->{op};
 	}
@@ -191,7 +198,7 @@ my %globals;
 	if ($gas) {
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{value}
-	    $self->{value} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)/egi;
+	    $self->{value} =~ s/(?<![\w\$\.])(0x?[0-9a-f]+)/oct($1)/egi;
 	    $self->{value} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
 	    sprintf "\$%s",$self->{value};
 	} else {
@@ -243,8 +250,9 @@ my %globals;
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{label}, new gas requires sign extension...
 	    use integer;
-	    $self->{label} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)<<32>>32/egi;
+	    $self->{label} =~ s/(?<![\w\$\.])(0x?[0-9a-f]+)/oct($1)/egi;
 	    $self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
+	    $self->{label} =~ s/([0-9]+)/$1<<32>>32/eg;
 	    $self->{label} =~ s/^___imp_/__imp__/   if ($flavour eq "mingw64");
 
 	    if (defined($self->{index})) {
@@ -258,7 +266,7 @@ my %globals;
 	    %szmap = ( b=>"BYTE$PTR", w=>"WORD$PTR", l=>"DWORD$PTR", q=>"QWORD$PTR" );
 
 	    $self->{label} =~ s/\./\$/g;
-	    $self->{label} =~ s/0x([0-9a-f]+)/0$1h/ig;
+	    $self->{label} =~ s/(?<![\w\$\.])0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
 	    $sz="q" if ($self->{asterisk});
 
@@ -537,6 +545,8 @@ my %globals;
 					if ($line=~/\.([px])data/) {
 					    $v.=" rdata align=";
 					    $v.=$1 eq "p"? 4 : 8;
+					} elsif ($line=~/\.CRT\$/i) {
+					    $v.=" rdata align=8";
 					}
 				    } else {
 					$v="$current_segment\tENDS\n" if ($current_segment);
@@ -544,6 +554,8 @@ my %globals;
 					if ($line=~/\.([px])data/) {
 					    $v.=" READONLY";
 					    $v.=" ALIGN(".($1 eq "p" ? 4 : 8).")" if ($masm>=$masmref);
+					} elsif ($line=~/\.CRT\$/i) {
+					    $v.=" READONLY DWORD";
 					}
 				    }
 				    $current_segment = $line;
@@ -573,7 +585,7 @@ my %globals;
 		/\.align/   && do { $self->{value} = "ALIGN\t".$line; last; };
 		/\.(value|long|rva|quad)/
 			    && do { my $sz  = substr($1,0,1);
-				    my @arr = split(',',$line);
+				    my @arr = split(/,\s*/,$line);
 				    my $last = pop(@arr);
 				    my $conv = sub  {	my $var=shift;
 							$var=~s/^(0b[0-1]+)/oct($1)/eig;
@@ -589,7 +601,7 @@ my %globals;
 				    $self->{value} .= &$conv($last);
 				    last;
 				  };
-		/\.byte/    && do { my @str=split(",",$line);
+		/\.byte/    && do { my @str=split(/,\s*/,$line);
 				    map(s/(0b[0-1]+)/oct($1)/eig,@str);
 				    map(s/0x([0-9a-f]+)/0$1h/ig,@str) if ($masm);	
 				    while ($#str>15) {
@@ -663,7 +675,7 @@ while($line=<>) {
 		$insn = $opcode->out($#args>=1?$args[$#args]->size():$sz);
 	    } else {
 		$insn = $opcode->out();
-		$insn .= $sz if (map($_->out() =~ /xmm|mmx/,@args));
+		$insn .= $sz if (map($_->out() =~ /x?mm/,@args));
 		@args = reverse(@args);
 		undef $sz if ($nasm && $opcode->mnemonic() eq "lea");
 	    }

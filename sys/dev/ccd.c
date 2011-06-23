@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.138 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: ccd.c,v 1.138.2.1 2011/06/23 14:19:54 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.138 2011/02/08 20:20:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.138.2.1 2011/06/23 14:19:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.138 2011/02/08 20:20:26 rmind Exp $");
 #include <sys/buf.h>
 #include <sys/kmem.h>
 #include <sys/pool.h>
+#include <sys/module.h>
 #include <sys/namei.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -792,9 +793,9 @@ ccdstart(struct ccd_softc *cs)
 		addr += rcount;
 		vp = cbp->cb_buf.b_vp;
 		if ((cbp->cb_buf.b_flags & B_READ) == 0) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			vp->v_numoutput++;
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		}
 		(void)VOP_STRATEGY(vp, &cbp->cb_buf);
 	}
@@ -886,7 +887,7 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, void *addr,
 	cbp->cb_buf.b_blkno = cbn + cboff;
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_vp = ci->ci_vp;
-	cbp->cb_buf.b_objlock = &ci->ci_vp->v_interlock;
+	cbp->cb_buf.b_objlock = ci->ci_vp->v_interlock;
 	if (cs->sc_ileave == 0)
 		cbc = dbtob((u_int64_t)(ci->ci_size - cbn));
 	else
@@ -1532,27 +1533,29 @@ printiinfo(struct ccdiinfo *ii)
 }
 #endif
 
-#ifdef _MODULE
-
-#include <sys/module.h>
-
 MODULE(MODULE_CLASS_DRIVER, ccd, NULL);
 
 static int
 ccd_modcmd(modcmd_t cmd, void *arg)
 {
-	int bmajor = -1, cmajor = -1,  error = 0;
-	
+	int bmajor, cmajor, error = 0;
+
+	bmajor = cmajor = -1;
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		ccdattach(4);
-		
+
 		return devsw_attach("ccd", &ccd_bdevsw, &bmajor,
 		    &ccd_cdevsw, &cmajor);
+#endif
 		break;
 
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		return devsw_detach(&ccd_bdevsw, &ccd_cdevsw);
+#endif
 		break;
 
 	case MODULE_CMD_STAT:
@@ -1564,5 +1567,3 @@ ccd_modcmd(modcmd_t cmd, void *arg)
 
 	return error;
 }
-
-#endif

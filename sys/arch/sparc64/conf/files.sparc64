@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.130 2011/04/09 19:31:14 jdc Exp $
+#	$NetBSD: files.sparc64,v 1.130.2.1 2011/06/23 14:19:41 cherry Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -205,6 +205,7 @@ file	arch/sparc/fpu/fpu_subr.c
 
 file	arch/sparc/sparc/promlib.c
 file	arch/sparc64/sparc64/autoconf.c
+file	arch/sparc64/sparc64/cache.c
 file	arch/sparc64/sparc64/clock.c
 file	arch/sparc64/sparc64/core_machdep.c	coredump
 file	arch/sparc64/sparc64/emul.c
@@ -217,7 +218,6 @@ file	arch/sparc64/sparc64/machdep.c
 file	arch/sparc64/sparc64/memcpyset.s
 file	arch/sparc64/sparc64/process_machdep.c
 file	arch/sparc64/sparc64/procfs_machdep.c	procfs
-file	arch/sparc64/sparc64/mem.c
 file	arch/sparc/sparc/openprom.c
 file	arch/sparc/sparc/openfirm.c
 file	arch/sparc64/sparc64/ofw_machdep.c

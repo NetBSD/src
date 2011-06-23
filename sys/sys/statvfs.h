@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.15 2008/07/31 05:38:06 simonb Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.15.26.1 2011/06/23 14:20:29 cherry Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@ struct statvfs {
 #define	ST_NODEVMTIME	MNT_NODEVMTIME
 #define	ST_SOFTDEP	MNT_SOFTDEP
 #define	ST_LOG		MNT_LOG
+#define	ST_EXTATTR	MNT_EXTATTR
 
 #define	ST_EXRDONLY	MNT_EXRDONLY
 #define	ST_EXPORTED	MNT_EXPORTED

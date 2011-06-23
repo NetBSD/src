@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.32 2011/03/16 05:08:29 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.32.2.1 2011/06/23 14:19:20 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.32 2011/03/16 05:08:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.32.2.1 2011/06/23 14:19:20 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.32 2011/03/16 05:08:29 macallan Exp $");
 # define DPRINTF while (0) printf
 #endif
 
-static void obio_attach(struct device *, struct device *, void *);
-static int obio_match(struct device *, struct cfdata *, void *);
+static void obio_attach(device_t, device_t, void *);
+static int obio_match(device_t, cfdata_t, void *);
 static int obio_print(void *, const char *);
 
 struct obio_softc {
@@ -95,7 +95,7 @@ CFATTACH_DECL(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
 
 int
-obio_match(struct device *parent, struct cfdata *cf, void *aux)
+obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -119,9 +119,9 @@ obio_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach all the sub-devices we can find
  */
 void
-obio_attach(struct device *parent, struct device *self, void *aux)
+obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct obio_softc *sc = (struct obio_softc *)self;
+	struct obio_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct confargs ca;
 	bus_space_handle_t bsh;

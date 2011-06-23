@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.131 2011/05/24 18:07:11 spz Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.131.2.1 2011/06/23 14:20:26 cherry Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.131 2011/05/24 18:07:11 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.131.2.1 2011/06/23 14:20:26 cherry Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -137,8 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.131 2011/05/24 18:07:11 spz Exp $");
 #endif
 
 #include <net/net_osdep.h>
-
-extern  struct inpcbtable tcbtable; /* XXX include of tcp_var.h no good */
 
 extern struct domain inet6domain;
 

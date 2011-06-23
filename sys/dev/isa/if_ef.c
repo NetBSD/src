@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.30 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.30.10.1 2011/06/23 14:20:01 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.30 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.30.10.1 2011/06/23 14:20:01 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,7 +472,7 @@ ef_match(device_t parent, cfdata_t cf, void *aux)
 void
 ef_attach(device_t parent, device_t self, void *aux)
 {
-	struct ef_softc *esc = (void *)self;
+	struct ef_softc *esc = device_private(self);
 	struct ie_softc *sc = &esc->sc_ie;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -484,6 +484,7 @@ ef_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh, memh;
 	u_int8_t ethaddr[ETHER_ADDR_LEN];
 
+	sc->sc_dev = self;
 	sc->hwinit = ef_hwinit;
 	sc->hwreset = ef_reset;
 	sc->chan_attn = ef_atten;
@@ -518,14 +519,14 @@ ef_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (bus == NULL)
-		panic("%s: Can't find parent bus!", device_xname(&sc->sc_dev));
+		panic("%s: Can't find parent bus!", device_xname(self));
 
 
 	/* If the bus hasn't been transitioned to the RUN state, do so now */
 	if (bus->bus_state == 1) {
 		if (bus_space_map(iot, ELINK_ID_PORT, 1, 0, &ioh) != 0) {
 			DPRINTF(("\n%s: Can't map Elink ID port!\n",
-				device_xname(&sc->sc_dev)));
+				device_xname(self)));
 			return;
 		}
 
@@ -542,7 +543,7 @@ ef_attach(device_t parent, device_t self, void *aux)
 			  ia->ia_io[0].ir_size, 0, &ioh) != 0) {
 
 		DPRINTF(("\n%s: can't map i/o space 0x%x-0x%x\n",
-			  device_xname(&sc->sc_dev), ia->ia_io[0].ir_addr,
+			  device_xname(self), ia->ia_io[0].ir_addr,
 			  ia->ia_io[0].ir_addr + ia->ia_io[0].ir_size - 1));
 		return;
 	}
@@ -554,7 +555,7 @@ ef_attach(device_t parent, device_t self, void *aux)
 			  ia->ia_iomem[0].ir_size, 0, &memh) != 0) {
 
 		DPRINTF(("\n%s: can't map iomem space 0x%x-0x%x\n",
-			device_xname(&sc->sc_dev), ia->ia_maddr,
+			device_xname(self), ia->ia_maddr,
 			ia->ia_maddr + ia->ia_msize - 1));
 		bus_space_unmap(ia->ia_iot, ioh, ia->ia_io[0].ir_size);
 		return;
@@ -592,7 +593,7 @@ ef_attach(device_t parent, device_t self, void *aux)
 			  BUS_SPACE_BARRIER_WRITE);
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: can't talk to i82586!\n",
-			device_xname(&sc->sc_dev)));
+			device_xname(self)));
 		bus_space_unmap(ia->ia_iot, ioh, ia->ia_io[0].ir_size);
 		bus_space_unmap(ia->ia_memt, memh, ia->ia_iomem[0].ir_size);
 		return;
@@ -644,7 +645,7 @@ ef_attach(device_t parent, device_t self, void *aux)
 	    IST_EDGE, IPL_NET, i82586_intr, sc);
 	if (esc->sc_ih == NULL) {
 		DPRINTF(("\n%s: can't establish interrupt\n",
-			device_xname(&sc->sc_dev)));
+			device_xname(self)));
 	}
 }
 
@@ -669,6 +670,6 @@ ef_port_check(bus_space_tag_t iot, bus_space_handle_t ioh)
 	return 1;
 }
 
-CFATTACH_DECL(ef, sizeof(struct ef_softc),
+CFATTACH_DECL_NEW(ef, sizeof(struct ef_softc),
     ef_match, ef_attach, NULL, NULL);
 

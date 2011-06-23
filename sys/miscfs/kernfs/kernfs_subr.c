@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.23 2010/07/21 17:52:12 hannken Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.23.6.1 2011/06/23 14:20:24 cherry Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.23 2010/07/21 17:52:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.23.6.1 2011/06/23 14:20:24 cherry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -143,7 +143,8 @@ static kmutex_t kfs_ihash_lock;
  * the vnode free list.
  */
 int
-kernfs_allocvp(struct mount *mp, struct vnode **vpp, kfstype kfs_type, const struct kern_target *kt, u_int32_t value)
+kernfs_allocvp(struct mount *mp, struct vnode **vpp, kfstype kfs_type,
+    const struct kern_target *kt, u_int32_t value)
 {
 	struct kernfs_node *kfs = NULL, *kfsp;
 	struct vnode *vp = NULL;
@@ -185,7 +186,8 @@ kernfs_allocvp(struct mount *mp, struct vnode **vpp, kfstype kfs_type, const str
 		return (0);
 	}
 
-	if ((error = getnewvnode(VT_KERNFS, mp, kernfs_vnodeop_p, &vp)) != 0) {
+	error = getnewvnode(VT_KERNFS, mp, kernfs_vnodeop_p, NULL, &vp);
+	if (error) {
 		*vpp = NULL;
 		mutex_exit(&kfs_hashlock);
 		return (error);
@@ -315,7 +317,7 @@ kernfs_hashget(kfstype type, struct mount *mp, const struct kern_target *kt, u_i
 		vp = KERNFSTOV(pp);
 		if (pp->kfs_type == type && vp->v_mount == mp &&
 		    pp->kfs_kt == kt && pp->kfs_value == value) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			mutex_exit(&kfs_ihash_lock);
 			if (vget(vp, LK_EXCLUSIVE))
 				goto loop;

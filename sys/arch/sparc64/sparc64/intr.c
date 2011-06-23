@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.62 2009/12/03 05:06:16 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.62.10.1 2011/06/23 14:19:43 cherry Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.62 2009/12/03 05:06:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.62.10.1 2011/06/23 14:19:43 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -269,3 +269,46 @@ sparc_softintr_schedule(void *cookie)
 
 	send_softint(-1, ih->ih_pil, ih);
 }
+
+#ifdef __HAVE_FAST_SOFTINTS
+/*
+ * MD implementation of FAST software interrupt framework
+ */
+
+int softint_fastintr(void *);
+
+void
+softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
+{
+	struct intrhand *ih;
+	int pil;
+
+	switch (level) {
+	case SOFTINT_BIO:
+		pil = IPL_SOFTBIO;
+		break;
+	case SOFTINT_NET:
+		pil = IPL_SOFTNET;
+		break;
+	case SOFTINT_SERIAL:
+		pil = IPL_SOFTSERIAL;
+		break;
+	case SOFTINT_CLOCK:
+		pil = IPL_SOFTCLOCK;
+		break;
+	default:
+		panic("softint_init_md");
+	}
+
+	ih = sparc_softintr_establish(pil, softint_fastintr, l);
+	*machdep = (uintptr_t)ih;
+}
+
+void
+softint_trigger(uintptr_t machdep)
+{
+	struct intrhand *ih = (struct intrhand *)machdep;
+
+	send_softint(-1, ih->ih_pil, ih);
+}
+#endif /* __HAVE_FAST_SOFTINTS */

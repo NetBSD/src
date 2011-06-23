@@ -1,5 +1,5 @@
 
-/*	$NetBSD: vnode.h,v 1.8 2011/01/21 12:24:24 pooka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.8.2.1 2011/06/23 14:18:33 cherry Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -298,8 +298,8 @@ int	vn_is_readonly(vnode_t *);
 #define	VN_URELE(v)	vput(v)
 #define	VN_SET_VFS_TYPE_DEV(vp, vfs, type, flag)	(0)
 
-#define VI_LOCK(vp)     mutex_enter(&(vp)->v_interlock)
-#define VI_UNLOCK(vp)   mutex_exit(&(vp)->v_interlock)
+#define VI_LOCK(vp)     mutex_enter((vp)->v_interlock)
+#define VI_UNLOCK(vp)   mutex_exit((vp)->v_interlock)
 
 #define	VOP_REALVP(vp, vpp, ct)	(*(vpp) = (vp), 0)
 
@@ -654,7 +654,7 @@ zfs_vop_putpage(vnode_t *vp, off_t off, size_t len, int flag)
 		nbflag |= PGO_CLEANIT;
 	}
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	return VOP_PUTPAGES(vp, off, len, nbflag);
 }
 #define	VOP_PUTPAGE(vp, off, len, flag, cr, ct)	zfs_vop_putpage((vp), (off), (len), (flag))

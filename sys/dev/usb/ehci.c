@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.177 2011/05/28 15:47:17 tsutsui Exp $ */
+/*	$NetBSD: ehci.c,v 1.177.2.1 2011/06/23 14:20:09 cherry Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,10 +52,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.177 2011/05/28 15:47:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.177.2.1 2011/06/23 14:20:09 cherry Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
+#include "opt_usb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1795,7 +1796,7 @@ ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	sqh->qh.qh_curqtd = 0;
 	sqh->qh.qh_qtd.qtd_next = htole32(sqtd->physaddr);
-	sqh->qh.qh_qtd.qtd_altnext = 0;
+	sqh->qh.qh_qtd.qtd_altnext = EHCI_NULL;
 	for (i = 0; i < EHCI_QTD_NBUFFERS; i++)
 		sqh->qh.qh_qtd.qtd_buffer[i] = 0;
 	sqh->sqtd = sqtd;
@@ -2270,9 +2271,10 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			goto ret;
 		}
 		v = EOREAD4(sc, EHCI_PORTSC(index));
-		DPRINTFN(8,("ehci_root_ctrl_start: port status=0x%04x\n",
-			    v));
+		DPRINTFN(8,("ehci_root_ctrl_start: port status=0x%04x\n", v));
 
+		i = UPS_HIGH_SPEED;
+#if 0
 		if (sc->sc_flags & EHCIF_ETTF) {
 			/*
 			 * If we are doing embedded transaction translation,
@@ -2281,9 +2283,8 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			 * the same way as in USBSTATUS. 
 			 */
 			i = __SHIFTOUT(v, EHCI_PS_PSPD) * UPS_LOW_SPEED;
-		} else {
-			i = UPS_HIGH_SPEED;
 		}
+#endif
 		if (v & EHCI_PS_CS)	i |= UPS_CURRENT_CONNECT_STATUS;
 		if (v & EHCI_PS_PE)	i |= UPS_PORT_ENABLED;
 		if (v & EHCI_PS_SUSP)	i |= UPS_SUSPEND;
@@ -2351,9 +2352,9 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			 * terminate the reset sequence so there's no need to
 			 * it.
 			 */
-			if (!(sc->sc_flags & EHCIF_ETTF)) {
+			v = EOREAD4(sc, port);
+			if (v & EHCI_PS_PR) {
 				/* Terminate reset sequence. */
-				v = EOREAD4(sc, port);
 				EOWRITE4(sc, port, v & ~EHCI_PS_PR);
 				/* Wait for HC to complete reset. */
 				usb_delay_ms(&sc->sc_bus,

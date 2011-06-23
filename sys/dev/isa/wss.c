@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.68 2007/10/19 12:00:24 ad Exp $	*/
+/*	$NetBSD: wss.c,v 1.68.52.1 2011/06/23 14:20:01 cherry Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.68 2007/10/19 12:00:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.68.52.1 2011/06/23 14:20:01 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,14 +161,14 @@ wssattach(struct wss_softc *sc)
 
 	ac->parent = sc;
 
-	audio_attach_mi(&wss_hw_if, &sc->sc_ad1848, &ac->sc_dev);
+	audio_attach_mi(&wss_hw_if, &sc->sc_ad1848, ac->sc_dev);
 
 	if (sc->mad_chip_type != MAD_NONE) {
 		struct audio_attach_args arg;
 		arg.type = AUDIODEV_TYPE_OPL;
 		arg.hwif = 0;
 		arg.hdl = 0;
-		(void)config_found(&ac->sc_dev, &arg, audioprint);
+		(void)config_found(ac->sc_dev, &arg, audioprint);
 	}
 }
 
@@ -449,7 +449,7 @@ madattach(struct wss_softc *sc)
 		return;
 
 	/* Do we want the joystick disabled? */
-	joy = device_cfdata(&ac->sc_dev)->cf_flags & 2 ? MC1_JOYDISABLE : 0;
+	joy = device_cfdata(ac->sc_dev)->cf_flags & 2 ? MC1_JOYDISABLE : 0;
 
 	/* enable WSS emulation at the I/O port */
 	mad_write(sc, MC1_PORT, M_WSS_PORT_SELECT(sc->mad_ioindex) | joy);

@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.3 2010/12/13 01:25:19 christos Exp $ */
+/* $NetBSD: fsm.c,v 1.3.4.1 2011/06/23 14:20:47 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ char            my_ldp_id[20];
 struct sockaddr	mplssockaddr;
 
 /* Processing a hello */
-void 
+void
 run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
     struct in_addr * padd, struct in_addr * ladd, int mysock)
 {
@@ -62,7 +62,7 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 	if ((!pduid) || (!ht))
 		return;
 
-	debugp("Received it on address: %s\n", inet_ntoa(*ladd));
+	debugp("Hello received for address: %s\n", inet_ntoa(*ladd));
 	debugp("Hello: Type: 0x%.4X Length: %.2d ID: %.8X\n", ht->type,
 	    ht->length, ht->messageid);
 
@@ -73,7 +73,7 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 	if (hi == NULL) {
 		hi = malloc(sizeof(*hi));
 		if (!hi) {
-			fatalp("Cannot alloc a hello info");
+			fatalp("Cannot alloc a hello info structure");
 			return;
 		}
 		hi->ldp_id.s_addr = pduid->ldp_id.s_addr;
@@ -91,8 +91,14 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 	debugp("Common hello Type: 0x%.4X Length: %.2d R:%d T:%d"
 	    "Hold time: %d\n", ht->ch.type, ht->ch.length,
 	    ht->ch.tr / 2, ht->ch.tr % 2, ht->ch.holdtime);
-	if (ht->ch.holdtime)
+	if (ht->ch.holdtime != 0)
 		hi->keepalive = ht->ch.holdtime;
+	else {
+		if (ht->ch.res >> 15 == 0)
+			hi->keepalive = LDP_HELLO_KEEP;
+		else
+			hi->keepalive = LDP_THELLO_KEEP;
+	}
 	if (!get_ldp_peer(&pduid->ldp_id)) {
 		/* First of all set peer_addr to announced LDP_ID */
 		memcpy(&peer_addr, &pduid->ldp_id,
@@ -143,13 +149,14 @@ build_address_list_tlv(void)
 		if ((ifb->ifa_addr->sa_family == AF_INET) &&
 		    (ifb->ifa_flags & IFF_UP)) {
 			sa = (struct sockaddr_in *) ifb->ifa_addr;
-			if (sa->sin_addr.s_addr << 24 >> 24 != 127)
+			if (ntohl(sa->sin_addr.s_addr) >> 24 != IN_LOOPBACKNET)
 				adrcount++;
 		}
 	t = malloc(sizeof(*t) + (adrcount - 1) * sizeof(struct in_addr));
 
 	if (!t) {
 		fatalp("build_address_list_tlv: malloc problem\n");
+		freeifaddrs(ifa);
 		return NULL;
 	}
 
@@ -191,7 +198,7 @@ set_my_ldp_id()
 	struct sockaddr_in *sa;
 
 	a.s_addr = 0;
-	my_ldp_id[0] = 0;
+	my_ldp_id[0] = '\0';
 	mplssockaddr.sa_len = 0;
 
 	if (getifaddrs(&ifa) == -1)
@@ -208,7 +215,7 @@ set_my_ldp_id()
 				continue;
 
 			sa = (struct sockaddr_in *) ifb->ifa_addr;
-			if (ntohl(sa->sin_addr.s_addr) >> 24 == 127)
+			if (ntohl(sa->sin_addr.s_addr) >> 24 == IN_LOOPBACKNET)
 				continue;	/* No 127/8 */
 			if (ntohl(sa->sin_addr.s_addr) > ntohl(a.s_addr))
 				a.s_addr = sa->sin_addr.s_addr;

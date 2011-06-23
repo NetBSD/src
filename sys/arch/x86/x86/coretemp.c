@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.25 2011/03/19 06:15:12 ahoka Exp $ */
+/* $NetBSD: coretemp.c,v 1.25.2.1 2011/06/23 14:19:48 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.25 2011/03/19 06:15:12 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.25.2.1 2011/06/23 14:19:48 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -172,6 +172,7 @@ coretemp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_sensor.units = ENVSYS_STEMP;
 	sc->sc_sensor.flags = ENVSYS_FMONCRITICAL;
+	sc->sc_sensor.state = ENVSYS_SINVALID;
 
 	(void)pmf_device_register(self, NULL, NULL);
 	(void)snprintf(sc->sc_sensor.desc, sizeof(sc->sc_sensor.desc),

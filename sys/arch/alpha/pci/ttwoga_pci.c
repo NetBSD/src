@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_pci.c,v 1.5 2011/05/24 20:26:35 rmind Exp $ */
+/* $NetBSD: ttwoga_pci.c,v 1.5.2.1 2011/06/23 14:18:55 cherry Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga_pci.c,v 1.5 2011/05/24 20:26:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga_pci.c,v 1.5.2.1 2011/06/23 14:18:55 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ttwoga_pci.c,v 1.5 2011/05/24 20:26:35 rmind Exp $")
 #include <alpha/pci/ttwogareg.h>
 #include <alpha/pci/ttwogavar.h>
 
-void		ttwoga_attach_hook(struct device *, struct device *,
+void		ttwoga_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		ttwoga_bus_maxdevs(void *, int);
 pcitag_t	ttwoga_make_tag(void *, int, int, int);
@@ -96,7 +96,7 @@ ttwoga_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 void
-ttwoga_attach_hook(struct device *parent, struct device *self,
+ttwoga_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 }

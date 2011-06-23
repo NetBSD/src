@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.h,v 1.1 2010/12/08 07:20:14 kefren Exp $ */
+/* $NetBSD: ldp_command.h,v 1.1.4.1 2011/06/23 14:20:48 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -52,28 +52,5 @@ void	command_accept(int);
 int	add_command_socket(int);
 void	command_dispatch(struct com_sock *);
 void	command_close(int);
-
-void	send_prompt(int);
-void	send_pwd_prompt(int);
-int	command_match(struct com_func*, int, char*, char*);
-
-/* Main functions */
-int	show_func(int, char *);
-int	set_func(int, char *);
-int	exit_func(int, char *);
-
-/* Show functions */
-int	show_neighbours(int, char *);
-int	show_bindings(int, char *);
-int	show_debug(int, char *);
-int	show_hellos(int, char *);
-int	show_parameters(int, char *);
-int	show_version(int, char *);
-int	show_warning(int, char *);
-
-/* Set functions */
-int	set_hello_time(int, char *);
-int	set_debug(int, char *);
-int	set_warning(int, char *);
 
 #endif	/* !_LDP_COMMAND_H_ */

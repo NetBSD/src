@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.282 2011/01/29 16:56:26 jym Exp $
+#	$NetBSD: Makefile,v 1.282.2.1 2011/06/23 14:17:47 cherry Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -199,10 +199,10 @@ postinstall-fix-obsolete: .NOTMAIN .PHONY
 # Targets (in order!) called by "make build".
 #
 .if defined(HAVE_GCC)
-.if ${HAVE_GCC} == "3"
-LIBGCC_EXT=3
-.else
+.if ${HAVE_GCC} == "4"
 LIBGCC_EXT=4
+.else
+LIBGCC_EXT=45
 .endif
 .endif
 
@@ -239,7 +239,7 @@ BUILDTARGET+=	do-libpcc
 .endif
 BUILDTARGETS+=	do-lib-libc
 BUILDTARGETS+=	do-lib
-.if (${MACHINE} != "evbppc") && ${MKKMOD} != "no"
+.if ${MKKMOD} != "no"
 BUILDTARGETS+=	do-sys-modules
 .endif
 BUILDTARGETS+=	do-sys-rump-dev-lib do-sys-rump-fs-lib
@@ -444,9 +444,7 @@ do-libgcc: .PHONY .MAKE
 .if defined(HAVE_GCC)
 .if ${MKGCC} != "no"
 .if ${USE_COMPILERCRTSTUFF} == "yes"
-.if (${HAVE_GCC} == "3" || ${HAVE_GCC} == "4")
 	${MAKEDIRTARGET} . do-gnu-lib-crtstuff${LIBGCC_EXT}
-.endif
 .endif
 	${MAKEDIRTARGET} . do-gnu-lib-libgcc${LIBGCC_EXT}
 .endif

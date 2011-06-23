@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.30 2010/12/15 01:27:18 matt Exp $ */
+/* $NetBSD: cia_pci.c,v 1.30.6.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.30 2010/12/15 01:27:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.30.6.1 2011/06/23 14:18:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,12 +41,11 @@ __KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.30 2010/12/15 01:27:18 matt Exp $");
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
 
-void		cia_attach_hook(struct device *, struct device *,
+void		cia_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		cia_bus_maxdevs(void *, int);
 pcitag_t	cia_make_tag(void *, int, int, int);
-void		cia_decompose_tag(void *, pcitag_t, int *, int *,
-		    int *);
+void		cia_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t	cia_conf_read(void *, pcitag_t, int);
 void		cia_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -64,7 +63,7 @@ cia_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 void
-cia_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
+cia_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 }
 

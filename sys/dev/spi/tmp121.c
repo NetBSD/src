@@ -1,4 +1,4 @@
-/* $NetBSD: tmp121.c,v 1.4 2008/04/04 10:13:59 xtraeme Exp $ */
+/* $NetBSD: tmp121.c,v 1.4.36.1 2011/06/23 14:20:08 cherry Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.4 2008/04/04 10:13:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.4.36.1 2011/06/23 14:20:08 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ tmp121temp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor.units = ENVSYS_STEMP;
+	sc->sc_sensor.state = ENVSYS_SINVALID;
 	strlcpy(sc->sc_sensor.desc, device_xname(self),
 	    sizeof(sc->sc_sensor.desc));
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {

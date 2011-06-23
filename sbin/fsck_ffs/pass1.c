@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.47 2011/03/06 17:08:16 bouyer Exp $	*/
+/*	$NetBSD: pass1.c,v 1.47.2.1 2011/06/23 14:18:42 cherry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.47 2011/03/06 17:08:16 bouyer Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.47.2.1 2011/06/23 14:18:42 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -385,7 +385,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			markclean = 0;
 			pfatal("LINK COUNT TABLE OVERFLOW");
 			if (reply("CONTINUE") == 0) {
-				ckfini();
+				ckfini(1);
 				exit(FSCK_EXIT_CHECK_FAILED);
 			}
 		} else {
@@ -504,7 +504,7 @@ pass1check(struct inodesc *idesc)
 				printf(" (SKIPPING)\n");
 			else if (reply("CONTINUE") == 0) {
 				markclean = 0;
-				ckfini();
+				ckfini(1);
 				exit(FSCK_EXIT_CHECK_FAILED);
 			}
 			return (STOP);
@@ -525,7 +525,7 @@ pass1check(struct inodesc *idesc)
 					printf(" (SKIPPING)\n");
 				else if (reply("CONTINUE") == 0) {
 					markclean = 0;
-					ckfini();
+					ckfini(1);
 					exit(FSCK_EXIT_CHECK_FAILED);
 				}
 				return (STOP);
@@ -536,7 +536,7 @@ pass1check(struct inodesc *idesc)
 				pfatal("DUP TABLE OVERFLOW.");
 				if (reply("CONTINUE") == 0) {
 					markclean = 0;
-					ckfini();
+					ckfini(1);
 					exit(FSCK_EXIT_CHECK_FAILED);
 				}
 				return (STOP);

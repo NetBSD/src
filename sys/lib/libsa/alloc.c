@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.24 2010/12/25 01:08:44 jakllsch Exp $	*/
+/*	$NetBSD: alloc.c,v 1.24.6.1 2011/06/23 14:20:23 cherry Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -162,7 +162,7 @@ extern char end[];
 static char *top = (char *)HEAP_START;
 #endif /* HEAP_VARIABLE */
 
-void *
+__compactcall void *
 alloc(size_t size)
 {
 	struct fl **f = &freelist, **bestf = NULL;
@@ -239,7 +239,7 @@ found:
 	return help + ALIGN(sizeof(unsigned int));
 }
 
-void
+__compactcall void
 /*ARGSUSED*/
 dealloc(void *ptr, size_t size)
 {

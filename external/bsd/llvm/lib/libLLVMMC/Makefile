@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/18 23:32:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2011/06/23 14:18:31 cherry Exp $
 
 LIB=	LLVMMC
 
@@ -37,6 +37,7 @@ SRCS+=	ELFObjectWriter.cpp \
 	MCStreamer.cpp \
 	MCSymbol.cpp \
 	MCValue.cpp \
+	MCWin64EH.cpp \
 	MachObjectWriter.cpp \
 	WinCOFFStreamer.cpp \
 	WinCOFFObjectWriter.cpp \

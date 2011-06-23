@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.49 2011/02/16 08:35:51 jruoho Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.49.2.1 2011/06/23 14:19:55 cherry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,12 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.49 2011/02/16 08:35:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.49.2.1 2011/06/23 14:19:55 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/module.h>
-#include <sys/mutex.h>
 #include <sys/systm.h>
 
 #include <dev/acpi/acpireg.h>
@@ -62,7 +61,6 @@ struct acpiacad_softc {
 	struct sysmon_envsys	*sc_sme;
 	struct sysmon_pswitch	 sc_smpsw;
 	envsys_data_t		 sc_sensor;
-	kmutex_t		 sc_mutex;
 	int			 sc_status;
 };
 
@@ -117,7 +115,6 @@ acpiacad_attach(device_t parent, device_t self, void *aux)
 	sc->sc_node = aa->aa_node;
 
 	acpiacad_init_envsys(self);
-	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_ACADAPTER;
@@ -138,8 +135,6 @@ acpiacad_detach(device_t self, int flags)
 	struct acpiacad_softc *sc = device_private(self);
 
 	acpi_deregister_notify(sc->sc_node);
-
-	mutex_destroy(&sc->sc_mutex);
 
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
@@ -177,8 +172,6 @@ acpiacad_get_status(void *arg)
 	ACPI_INTEGER status;
 	ACPI_STATUS rv;
 
-	mutex_enter(&sc->sc_mutex);
-
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_PSR", &status);
 
 	if (ACPI_FAILURE(rv))
@@ -208,8 +201,6 @@ acpiacad_get_status(void *arg)
 	sc->sc_sensor.state = ENVSYS_SVALID;
 	sc->sc_sensor.value_cur = sc->sc_status;
 
-	mutex_exit(&sc->sc_mutex);
-
 	return;
 
 fail:
@@ -218,8 +209,6 @@ fail:
 
 	aprint_debug_dev(dv, "failed to evaluate _PSR: %s\n",
 	    AcpiFormatException(rv));
-
-	mutex_exit(&sc->sc_mutex);
 }
 
 /*
@@ -291,6 +280,7 @@ acpiacad_init_envsys(device_t dv)
 
 fail:
 	aprint_error_dev(dv, "failed to initialize sysmon\n");
+
 	sysmon_envsys_destroy(sc->sc_sme);
 	sc->sc_sme = NULL;
 }

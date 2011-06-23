@@ -1,4 +1,4 @@
-#	$NetBSD: std.obs405,v 1.4 2010/03/18 14:15:38 kiyohara Exp $
+#	$NetBSD: std.obs405,v 1.4.6.1 2011/06/23 14:19:08 cherry Exp $
 #
 # Standard/required options for NetBSD/obs405.
 
@@ -16,7 +16,7 @@ options 	EXEC_SCRIPT	# shell script support
 makeoptions	BOARDTYPE="obs405"
 makeoptions	PPCDIR="ibm4xx"
 
-options 	PPC_INTR_IMPL="<powerpc/ibm4xx/ibm4xx_intr.h>"
+options 	PPC_INTR_IMPL="<powerpc/intr.h>"
 options 	PPC_PCI_MACHDEP_IMPL="<powerpc/ibm4xx/pci_machdep.h>"
 
 options 	INTSTK=16384

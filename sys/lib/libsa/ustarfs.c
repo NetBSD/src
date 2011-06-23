@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.32 2009/01/17 14:00:36 tsutsui Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.32.12.1 2011/06/23 14:20:23 cherry Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -381,7 +381,7 @@ init_volzero_sig(struct open_file *f)
 	return 0;
 }
 
-int
+__compactcall int
 ustarfs_open(const char *path, struct open_file *f)
 {
 	ust_active_t *ustf;
@@ -442,7 +442,7 @@ ustarfs_open(const char *path, struct open_file *f)
 }
 
 #ifndef LIBSA_NO_FS_WRITE
-int
+__compactcall int
 ustarfs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 
@@ -451,7 +451,7 @@ ustarfs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 #endif /* !LIBSA_NO_FS_WRITE */
 
 #ifndef LIBSA_NO_FS_SEEK
-off_t
+__compactcall off_t
 ustarfs_seek(struct open_file *f, off_t offs, int whence)
 {
 	ust_active_t *ustf;
@@ -474,7 +474,7 @@ ustarfs_seek(struct open_file *f, off_t offs, int whence)
 }
 #endif /* !LIBSA_NO_FS_SEEK */
 
-int
+__compactcall int
 ustarfs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	ust_active_t *ustf;
@@ -517,7 +517,7 @@ ustarfs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 	return e;
 }
 
-int
+__compactcall int
 ustarfs_stat(struct open_file *f, struct stat *sb)
 {
 	int	mode, uid, gid;
@@ -538,7 +538,7 @@ ustarfs_stat(struct open_file *f, struct stat *sb)
 }
 
 #ifndef LIBSA_NO_FS_CLOSE
-int
+__compactcall int
 ustarfs_close(struct open_file *f)
 {
 	if (f == NULL || f->f_fsdata == NULL)

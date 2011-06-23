@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.68 2008/12/21 17:16:11 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.68.6.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.68 2008/12/21 17:16:11 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.68.6.1 2011/06/23 14:17:48 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: jobs.c,v 1.68 2008/12/21 17:16:11 christos Exp $");
 #include "nodes.h"
 #include "jobs.h"
 #include "options.h"
+#include "builtins.h"
 #include "trap.h"
 #include "syntax.h"
 #include "input.h"

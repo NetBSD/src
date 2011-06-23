@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/05/26 12:56:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2011/06/23 14:18:33 cherry Exp $
 
 WARNS?= 4
 CWARNFLAGS.clang+=	-Wno-array-bounds -Wno-self-assign
@@ -17,7 +17,7 @@ LDADD+=	-lm
 DPADD+=	${LIBM}
 .endif
 YHEADER=	yes
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS+=	-Wno-pointer-sign
 .endif
 

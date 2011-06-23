@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2009/05/03 17:33:29 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.14.10.1 2011/06/23 14:19:12 cherry Exp $
 
 PROG=	xxboot
 NOMAN=	# defined
@@ -17,10 +17,6 @@ CPPFLAGS+=	-Dconst=
 COPTS+=		-funsigned-char	-mdisable-fpregs
 
 .include <bsd.own.mk>
-
-.if defined(HAVE_GCC) && ${HAVE_GCC} != 4
-COPTS+=	-fwritable-strings
-.endif
 
 LINKS=	${BINDIR}/${PROG} ${BINDIR}/sdboot
 

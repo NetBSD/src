@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2003/03/04 07:50:59 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.2.140.1 2011/06/23 14:19:09 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,10 @@
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)
  */
-#define	MACHINE		"evbppc"
-#define	MID_MACHINE	MID_POWERPC
+#if defined(_KERNEL) && !defined(_MODULE)
+
+#define	MACHINE			"evbppc"
+
+#endif /* _KERNEL && !_MODULE */
 
 #include <powerpc/param.h>

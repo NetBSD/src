@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.49 2011/05/17 17:34:47 dyoung Exp $ */
+/* $NetBSD: lca.c,v 1.49.2.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.49 2011/05/17 17:34:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.49.2.1 2011/06/23 14:18:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,10 +91,10 @@ __KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.49 2011/05/17 17:34:47 dyoung Exp $");
 #include <alpha/pci/pci_eb66.h>
 #endif
 
-int	lcamatch(struct device *, struct cfdata *, void *);
-void	lcaattach(struct device *, struct device *, void *);
+int	lcamatch(device_t, cfdata_t, void *);
+void	lcaattach(device_t, device_t, void *);
 
-CFATTACH_DECL(lca, sizeof(struct lca_softc),
+CFATTACH_DECL_NEW(lca, sizeof(struct lca_softc),
     lcamatch, lcaattach, NULL, NULL);
 
 extern struct cfdriver lca_cd;
@@ -107,7 +107,7 @@ int lcafound;
 struct lca_config lca_configuration;
 
 int
-lcamatch(struct device *parent, struct cfdata *match, void *aux)
+lcamatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -182,15 +182,16 @@ lca_init(struct lca_config *lcp, int mallocsafe)
 }
 
 void
-lcaattach(struct device *parent, struct device *self, void *aux)
+lcaattach(device_t parent, device_t self, void *aux)
 {
-	struct lca_softc *sc = (struct lca_softc *)self;
+	struct lca_softc *sc = device_private(self);
 	struct lca_config *lcp;
 	struct pcibus_attach_args pba;
 
 	/* note that we've attached the chipset; can't have 2 LCAs. */
 	/* Um, not sure about this.  XXX JH */
 	lcafound = 1;
+	sc->sc_dev = self;
 
 	/*
 	 * set up the chipset's info; done once at console init time
@@ -201,7 +202,7 @@ lcaattach(struct device *parent, struct device *self, void *aux)
 	lca_init(lcp, 1);
 
 	/* XXX print chipset information */
-	printf("\n");
+	aprint_normal("\n");
 
 	lca_dma_init(lcp);
 

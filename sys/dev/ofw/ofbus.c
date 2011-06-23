@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.24 2009/05/12 14:39:22 cegger Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.24.10.1 2011/06/23 14:20:03 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.24 2009/05/12 14:39:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.24.10.1 2011/06/23 14:20:03 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ int ofbus_match(device_t, cfdata_t, void *);
 void ofbus_attach(device_t, device_t, void *);
 static int ofbus_print(void *, const char *);
 
-CFATTACH_DECL(ofbus, sizeof(struct device),
+CFATTACH_DECL_NEW(ofbus, 0,
     ofbus_match, ofbus_attach, NULL, NULL);
 
 static int

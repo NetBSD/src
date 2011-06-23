@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_autoconf.c,v 1.2 2011/02/25 10:16:59 kiyohara Exp $	*/
+/*	$NetBSD: obs600_autoconf.c,v 1.2.2.1 2011/06/23 14:19:09 cherry Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,12 +33,13 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.2 2011/02/25 10:16:59 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.2.2.1 2011/06/23 14:19:09 cherry Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
-#include <machine/intr.h>
 #include <machine/obs600.h>
 
 #include <powerpc/ibm4xx/cpu.h>
@@ -56,8 +57,8 @@ cpu_configure(void)
 
 	/* Initialize intr and add UICs */
 	intr_init();
-	uic_add(DCR_UIC1_BASE, 30);	/* UIC1 cascade to irq 30 */
-	uic_add(DCR_UIC2_BASE, 28);	/* UIC2 cascade to irq 28 */
+	pic_add(&pic_uic1);
+	pic_add(&pic_uic2);
 
 	calc_delayconst();
 
@@ -78,7 +79,8 @@ cpu_configure(void)
 	__asm volatile ("wrteei 1");
 }
 
-void device_register(struct device *dev, void *aux)
+void
+device_register(device_t dev, void *aux)
 {
 
 	obs405_device_register(dev, aux, OBS600_COM_FREQ);

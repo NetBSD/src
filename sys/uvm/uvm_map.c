@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.297 2011/05/17 04:18:07 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.297.2.1 2011/06/23 14:20:35 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.297 2011/05/17 04:18:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.297.2.1 2011/06/23 14:20:35 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2400,6 +2400,9 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			 * remove mappings from pmap and drop the pages
 			 * from the object.  offsets are always relative
 			 * to vm_map_min(kernel_map).
+			 *
+			 * don't need to lock object as the kernel is
+			 * always self-consistent.
 			 */
 
 			pmap_remove(pmap_kernel(), entry->start,
@@ -2414,12 +2417,15 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			entry->etype &= ~UVM_ET_OBJ;
 			entry->object.uvm_obj = NULL;
 		} else if (UVM_ET_ISOBJ(entry) || entry->aref.ar_amap) {
-
 			/*
-			 * remove mappings the standard way.
+			 * remove mappings the standard way.  lock object
+			 * and/or amap to ensure vm_page state does not
+			 * change while in pmap_remove().
 			 */
 
+			uvm_map_lock_entry(entry);
 			pmap_remove(map->pmap, entry->start, entry->end);
+			uvm_map_unlock_entry(entry);
 		}
 
 #if defined(DEBUG)
@@ -2980,8 +2986,10 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 			/* we advance "entry" in the following if statement */
 			if (flags & UVM_EXTRACT_REMOVE) {
+				uvm_map_lock_entry(entry);
 				pmap_remove(srcmap->pmap, entry->start,
 						entry->end);
+				uvm_map_unlock_entry(entry);
 				oldentry = entry;	/* save entry */
 				entry = entry->next;	/* advance */
 				uvm_map_entry_unlink(srcmap, oldentry);
@@ -3215,8 +3223,10 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 		if (current->protection != old_prot) {
 			/* update pmap! */
+			uvm_map_lock_entry(current);
 			pmap_protect(map->pmap, current->start, current->end,
 			    current->protection & MASK(entry));
+			uvm_map_unlock_entry(current);
 
 			/*
 			 * If this entry points at a vnode, and the
@@ -3925,7 +3935,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 	struct vm_map_entry *current, *entry;
 	struct uvm_object *uobj;
 	struct vm_amap *amap;
-	struct vm_anon *anon;
+	struct vm_anon *anon, *anon_tofree;
 	struct vm_page *pg;
 	vaddr_t offset;
 	vsize_t size;
@@ -3985,6 +3995,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 			goto flush_object;
 
 		amap_lock(amap);
+		anon_tofree = NULL;
 		offset = start - current->start;
 		size = MIN(end, current->end) - start;
 		for ( ; size != 0; size -= PAGE_SIZE, offset += PAGE_SIZE) {
@@ -3992,10 +4003,9 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 			if (anon == NULL)
 				continue;
 
-			mutex_enter(&anon->an_lock);
+			KASSERT(anon->an_lock == amap->am_lock);
 			pg = anon->an_page;
 			if (pg == NULL) {
-				mutex_exit(&anon->an_lock);
 				continue;
 			}
 
@@ -4019,13 +4029,11 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 				if (pg->loan_count != 0 ||
 				    pg->wire_count != 0) {
 					mutex_exit(&uvm_pageqlock);
-					mutex_exit(&anon->an_lock);
 					continue;
 				}
 				KASSERT(pg->uanon == anon);
 				uvm_pagedeactivate(pg);
 				mutex_exit(&uvm_pageqlock);
-				mutex_exit(&anon->an_lock);
 				continue;
 
 			case PGO_FREE:
@@ -4040,17 +4048,18 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 
 				/* skip the page if it's wired */
 				if (pg->wire_count != 0) {
-					mutex_exit(&anon->an_lock);
 					continue;
 				}
 				amap_unadd(&current->aref, offset);
 				refs = --anon->an_ref;
-				mutex_exit(&anon->an_lock);
-				if (refs == 0)
-					uvm_anfree(anon);
+				if (refs == 0) {
+					anon->an_link = anon_tofree;
+					anon_tofree = anon;
+				}
 				continue;
 			}
 		}
+		uvm_anfree(anon_tofree);
 		amap_unlock(amap);
 
  flush_object:
@@ -4064,7 +4073,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		uoff = current->offset + (start - current->start);
 		size = MIN(end, current->end) - start;
 		if (uobj != NULL) {
-			mutex_enter(&uobj->vmobjlock);
+			mutex_enter(uobj->vmobjlock);
 			if (uobj->pgops->pgo_put != NULL)
 				error = (uobj->pgops->pgo_put)(uobj, uoff,
 				    uoff + size, flags | PGO_CLEANIT);
@@ -5189,6 +5198,30 @@ vm_map_starved_p(struct vm_map *map)
 		return true;
 	}
 	return false;
+}
+
+void
+uvm_map_lock_entry(struct vm_map_entry *entry)
+{
+
+	if (entry->aref.ar_amap != NULL) {
+		amap_lock(entry->aref.ar_amap);
+	}
+	if (UVM_ET_ISOBJ(entry)) {
+		mutex_enter(entry->object.uvm_obj->vmobjlock);
+	}
+}
+
+void
+uvm_map_unlock_entry(struct vm_map_entry *entry)
+{
+
+	if (UVM_ET_ISOBJ(entry)) {
+		mutex_exit(entry->object.uvm_obj->vmobjlock);
+	}
+	if (entry->aref.ar_amap != NULL) {
+		amap_unlock(entry->aref.ar_amap);
+	}
 }
 
 #if defined(DDB) || defined(DEBUGPRINT)

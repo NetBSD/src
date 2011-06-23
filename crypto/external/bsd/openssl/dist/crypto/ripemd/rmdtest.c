@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 #include <openssl/ebcdic.h>
 #endif
 
-static char *test[]={
+static const char *test[]={
 	"",
 	"a",
 	"abc",
@@ -88,7 +88,7 @@ static char *test[]={
 	NULL,
 	};
 
-static char *ret[]={
+static const char *ret[]={
 	"9c1185a5c5e9fc54612808977ee8f548b2258d31",
 	"0bdc9d2d256b3ee9daae347be6f4dc835a467ffe",
 	"8eb208f7e05d987a9b044a8e98c6b087f15a0bfc",
@@ -103,7 +103,7 @@ static char *pt(unsigned char *md);
 int main(int argc, char *argv[])
 	{
 	int i,err=0;
-	char **P,**R;
+	const char **P,**R;
 	char *p;
 	unsigned char md[RIPEMD160_DIGEST_LENGTH];
 
@@ -113,11 +113,11 @@ int main(int argc, char *argv[])
 	while (*P != NULL)
 		{
 #ifdef CHARSET_EBCDIC
-		ebcdic2ascii((char *)*P, (char *)*P, strlen((char *)*P));
+		ebcdic2ascii((const char *)*P, (const char *)*P, strlen((const char *)*P));
 #endif
-		EVP_Digest(&(P[0][0]),strlen((char *)*P),md,NULL,EVP_ripemd160(), NULL);
+		EVP_Digest(&(P[0][0]),strlen((const char *)*P),md,NULL,EVP_ripemd160(), NULL);
 		p=pt(md);
-		if (strcmp(p,(char *)*R) != 0)
+		if (strcmp(p,(const char *)*R) != 0)
 			{
 			printf("error calculating RIPEMD160 on '%s'\n",*P);
 			printf("got %s instead of %s\n",p,*R);

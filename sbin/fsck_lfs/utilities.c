@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.30 2010/01/07 04:21:28 christos Exp $	 */
+/* $NetBSD: utilities.c,v 1.30.4.1 2011/06/23 14:18:43 cherry Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -61,7 +61,6 @@
 
 long diskreads, totalreads;	/* Disk cache statistics */
 
-extern volatile sig_atomic_t returntosingle;
 extern off_t locked_queue_bytes;
 
 int
@@ -243,43 +242,6 @@ namelookup:
 	memcpy(namebuf, cp, (size_t) (&namebuf[MAXPATHLEN] - cp));
 }
 
-void
-catch(int n)
-{
-	ckfini(0);
-	_exit(FSCK_EXIT_SIGNALLED);
-}
-/*
- * When preening, allow a single quit to signal
- * a special exit after filesystem checks complete
- * so that reboot sequence may be interrupted.
- */
-void
-catchquit(int n)
-{
-	static const char msg[] =
-	    "returning to single-user after filesystem check\n";
-	int serrno = errno;
-
-	(void)write(STDOUT_FILENO, msg, sizeof(msg) - 1);
-	returntosingle = 1;
-	(void) signal(SIGQUIT, SIG_DFL);
-	serrno = errno;
-}
-/*
- * Ignore a single quit signal; wait and flush just in case.
- * Used by child processes in preen.
- */
-void
-voidquit(int n)
-{
-	int serrno = errno;
-
-	sleep(1);
-	(void) signal(SIGQUIT, SIG_IGN);
-	(void) signal(SIGQUIT, SIG_DFL);
-	errno = serrno;
-}
 /*
  * determine whether an inode should be fixed.
  */

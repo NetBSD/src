@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.60 2011/03/03 03:39:08 christos Exp $	*/
+/*	$NetBSD: dk.c,v 1.60.2.1 2011/06/23 14:19:58 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.60 2011/03/03 03:39:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.60.2.1 2011/06/23 14:19:58 cherry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1021,9 +1021,9 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 				goto popen_fail;
 			}
 			/* VOP_OPEN() doesn't do this for us. */
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			vp->v_writecount++;
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			VOP_UNLOCK(vp);
 			sc->sc_parent->dk_rawvp = vp;
 		}
@@ -1206,9 +1206,9 @@ dkstart(struct dkwedge_softc *sc)
 
 		vp = nbp->b_vp;
 		if ((nbp->b_flags & B_READ) == 0) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			vp->v_numoutput++;
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		}
 		VOP_STRATEGY(vp, nbp);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.28 2008/11/12 12:36:12 ad Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.28.14.1 2011/06/23 14:20:01 cherry Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.28 2008/11/12 12:36:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.28.14.1 2011/06/23 14:20:01 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,6 +309,7 @@ nsclpcsio_envsys_init(struct nsclpcsio_softc *sc)
 
 	sme = sysmon_envsys_create();
 	for (i = 0; i < SIO_NUM_SENSORS; i++) {
+		sc->sc_sensor[i].state = ENVSYS_SINVALID;
 		if (sysmon_envsys_sensor_attach(sme, &sc->sc_sensor[i]) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not attach sensor %d", i);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.18 2011/02/22 05:07:36 joerg Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.18.2.1 2011/06/23 14:18:56 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -136,10 +136,14 @@ ENTRY(rcr8)
  * modify the PSE, PGE, or PAE flag."
  *
  * (the alternatives not quoted above are not an option here.)
+ *
+ * If PGE is not in use, we reload CR3.
  */
 #ifndef XEN
 ENTRY(tlbflushg)
 	movq	%cr4, %rax
+	testq	$CR4_PGE, %rax
+	jz	1f
 	movq	%rax, %rdx
 	andq	$~CR4_PGE, %rdx
 	movq	%rdx, %cr4
@@ -147,6 +151,7 @@ ENTRY(tlbflushg)
 	ret
 
 ENTRY(tlbflush)
+1:
 	movq	%cr3, %rax
 	movq	%rax, %cr3
 	ret

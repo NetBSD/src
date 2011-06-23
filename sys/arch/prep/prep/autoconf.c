@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 2009/11/05 18:12:31 dyoung Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23.10.1 2011/06/23 14:19:36 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2009/11/05 18:12:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23.10.1 2011/06/23 14:19:36 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ cpu_rootconf(void)
 	findroot();
 
 	aprint_normal("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
+	    booted_device ? device_xname(booted_device) : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }
@@ -102,9 +102,9 @@ cpu_rootconf(void)
  */
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
-	struct device *parent;
+	device_t parent;
 	char devpath[256];
 	prop_string_t str1;
 
@@ -208,9 +208,9 @@ device_register(struct device *dev, void *aux)
 }
 
 static void
-gen_fwpath(struct device *dev)
+gen_fwpath(device_t dev)
 {
-	struct device *parent;
+	device_t parent;
 	prop_string_t str1, str2, str3;
 
 	parent = device_parent(dev);
@@ -337,7 +337,7 @@ findroot(void)
 		if (str == NULL)
 			continue;
 #if defined(NVRAM_DUMP)
-		printf("dev %s: fw-path: %s\n", d->dv_xname,
+		printf("dev %s: fw-path: %s\n", device_xname(d),
 		    prop_string_cstring_nocopy(str));
 #endif
 		if (strncmp(prop_string_cstring_nocopy(str), bootpath,

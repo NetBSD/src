@@ -1,4 +1,4 @@
-/*	$NetBSD: virtex_start.S,v 1.7 2011/01/17 08:23:55 matt Exp $ */
+/*	$NetBSD: virtex_start.S,v 1.7.4.1 2011/06/23 14:19:10 cherry Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -54,7 +54,6 @@
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
-#include <powerpc/ibm4xx/pmap.h>
 
 
 /* N megabytes. */

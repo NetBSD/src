@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.29 2009/12/12 14:44:09 tsutsui Exp $	*/
+/*	$NetBSD: adb.c,v 1.29.10.1 2011/06/23 14:19:19 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.29 2009/12/12 14:44:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.29.10.1 2011/06/23 14:19:19 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.29 2009/12/12 14:44:09 tsutsui Exp $");
 /*
  * Function declarations.
  */
-static int	adbmatch(struct device *, struct cfdata *, void *);
-static void	adbattach(struct device *, struct device *, void *);
+static int	adbmatch(device_t, cfdata_t, void *);
+static void	adbattach(device_t, device_t, void *);
 static int	adbprint(void *, const char *);
 static void	adb_todr_init(void);
 
@@ -76,7 +76,7 @@ CFATTACH_DECL(adb, sizeof(struct adb_softc),
     adbmatch, adbattach, NULL, NULL);
 
 static int
-adbmatch(struct device *parent, struct cfdata *cf, void *aux)
+adbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -96,9 +96,9 @@ adbmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-adbattach(struct device *parent, struct device *self, void *aux)
+adbattach(device_t parent, device_t self, void *aux)
 {
-	struct adb_softc *sc = (struct adb_softc *)self;
+	struct adb_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 	int irq = ca->ca_intr[0];
 	int node;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.2.4.1 2011/06/23 14:19:31 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -180,17 +180,17 @@ pte_prot_downgrade(pt_entry_t pt_entry, vm_prot_t newprot)
 }
 
 static inline pt_entry_t
-pte_prot_bits(struct vm_page *pg, vm_prot_t prot)
+pte_prot_bits(struct vm_page_md *mdpg, vm_prot_t prot)
 {
 	KASSERT(prot & VM_PROT_READ);
 	pt_entry_t pt_entry = PTE_xR;
 	if (prot & VM_PROT_EXECUTE) {
 #if 0
 		pt_entry |= PTE_xX;
-		if (pg != NULL && !VM_PAGE_MD_EXECPAGE_P(pg))
+		if (mdpg != NULL && !VM_PAGEMD_EXECPAGE_P(mdpg))
 			pt_entry |= PTE_UNSYNCED;
 #elif 1
-		if (pg != NULL && !VM_PAGE_MD_EXECPAGE_P(pg))
+		if (mdpg != NULL && !VM_PAGEMD_EXECPAGE_P(mdpg))
 			pt_entry |= PTE_UNSYNCED;
 		else
 			pt_entry |= PTE_xX;
@@ -200,23 +200,23 @@ pte_prot_bits(struct vm_page *pg, vm_prot_t prot)
 	}
 	if (prot & VM_PROT_WRITE) {
 		pt_entry |= PTE_xW;
-		if (pg != NULL && !VM_PAGE_MD_MODIFIED_P(pg))
+		if (mdpg != NULL && !VM_PAGEMD_MODIFIED_P(mdpg))
 			pt_entry |= PTE_UNMODIFIED;
 	}
 	return pt_entry;
 }
 
 static inline pt_entry_t
-pte_flag_bits(struct vm_page *pg, int flags)
+pte_flag_bits(struct vm_page_md *mdpg, int flags)
 {
 	if (__predict_false(flags & PMAP_MD_NOCACHE)) {
-		if (__predict_true(pg != NULL)) {
+		if (__predict_true(mdpg != NULL)) {
 			return pte_nocached_bits();
 		} else {
 			return pte_ionocached_bits();
 		}
 	} else {
-		if (__predict_false(pg != NULL)) {
+		if (__predict_false(mdpg != NULL)) {
 			return pte_cached_bits();
 		} else {
 			return pte_iocached_bits();
@@ -225,24 +225,24 @@ pte_flag_bits(struct vm_page *pg, int flags)
 }
 
 static inline pt_entry_t
-pte_make_enter(paddr_t pa, struct vm_page *pg, vm_prot_t prot,
+pte_make_enter(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 	int flags, bool kernel)
 {
 	pt_entry_t pt_entry = (pt_entry_t) pa & PTE_RPN_MASK;
 
-	pt_entry |= pte_flag_bits(pg, flags);
-	pt_entry |= pte_prot_bits(pg, prot);
+	pt_entry |= pte_flag_bits(mdpg, flags);
+	pt_entry |= pte_prot_bits(mdpg, prot);
 
 	return pt_entry;
 }
 
 static inline pt_entry_t
-pte_make_kenter_pa(paddr_t pa, struct vm_page *pg, vm_prot_t prot,
+pte_make_kenter_pa(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 	int flags)
 {
 	pt_entry_t pt_entry = (pt_entry_t) pa & PTE_RPN_MASK;
 
-	pt_entry |= pte_flag_bits(pg, flags);
+	pt_entry |= pte_flag_bits(mdpg, flags);
 	pt_entry |= pte_prot_bits(NULL, prot); /* pretend unmanaged */
 
 	return pt_entry;

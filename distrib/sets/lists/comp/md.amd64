@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.116 2011/05/30 02:10:25 christos Exp $
+# $NetBSD: md.amd64,v 1.116.2.1 2011/06/23 14:18:21 cherry Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -977,7 +977,7 @@
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libcrypt.so.1.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libcrypto.so.6.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libcrypto.so.6.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libcurses.so.7.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdes.so.8.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libdevmapper.so.1.0.debug	comp-compat-shlib	compat,pic,lvm,debug
@@ -1066,7 +1066,7 @@
 ./usr/libdata/debug/usr/lib/i386/libsl.so.5.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libss.so.6.0.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libssh.so.16.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libssl.so.8.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libssl.so.8.2.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libterminfo.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libukfs.so.1.0.debug	comp-compat-shlib	compat,pic,debug

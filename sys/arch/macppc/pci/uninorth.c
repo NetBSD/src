@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.13 2011/05/17 17:34:50 dyoung Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.13.2.1 2011/06/23 14:19:22 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.13 2011/05/17 17:34:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.13.2.1 2011/06/23 14:19:22 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,8 +47,8 @@ struct uninorth_softc {
 	struct powerpc_bus_space sc_memt;
 };
 
-static void uninorth_attach(struct device *, struct device *, void *);
-static int uninorth_match(struct device *, struct cfdata *, void *);
+static void uninorth_attach(device_t, device_t, void *);
+static int uninorth_match(device_t, cfdata_t, void *);
 
 static pcireg_t uninorth_conf_read(void *, pcitag_t, int);
 static void uninorth_conf_write(void *, pcitag_t, int, pcireg_t);
@@ -57,7 +57,7 @@ CFATTACH_DECL(uninorth, sizeof(struct uninorth_softc),
     uninorth_match, uninorth_attach, NULL, NULL);
 
 static int
-uninorth_match(struct device *parent, struct cfdata *cf, void *aux)
+uninorth_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char compat[32];
@@ -74,9 +74,9 @@ uninorth_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-uninorth_attach(struct device *parent, struct device *self, void *aux)
+uninorth_attach(device_t parent, device_t self, void *aux)
 {
-	struct uninorth_softc *sc = (void *)self;
+	struct uninorth_softc *sc = device_private(self);
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct confargs *ca = aux;
 	struct pcibus_attach_args pba;

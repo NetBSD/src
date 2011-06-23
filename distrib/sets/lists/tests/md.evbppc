@@ -1,6 +1,0 @@
-# $NetBSD: md.evbppc,v 1.1 2011/01/28 20:36:20 matt Exp $
-#
-# Note: don't delete entries from here - mark them as "obsolete" instead.
-#
--./usr/libdata/debug/usr/tests/modules/t_builtin.debug
--./usr/libdata/debug/usr/tests/modules/t_modctl.debug

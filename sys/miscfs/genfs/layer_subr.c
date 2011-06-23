@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.31 2010/07/21 17:52:12 hannken Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.31.6.1 2011/06/23 14:20:24 cherry Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.31 2010/07/21 17:52:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.31.6.1 2011/06/23 14:20:24 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ loop:
 		if (vp->v_mount != mp) {
 			continue;
 		}
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		/*
 		 * If we find a node being cleaned out, then ignore it and
 		 * continue.  A thread trying to clean out the extant layer
@@ -153,7 +153,7 @@ loop:
 		 * lower file system.
 		 */
 		if ((vp->v_iflag & VI_XLOCK) != 0) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		mutex_exit(&lmp->layerm_hashlock);
@@ -189,14 +189,16 @@ layer_node_alloc(struct mount *mp, struct vnode *lowervp, struct vnode **vpp)
 	int error;
 	extern int (**dead_vnodeop_p)(void *);
 
-	error = getnewvnode(lmp->layerm_tag, mp, lmp->layerm_vnodeop_p, &vp);
+	/* Get a new vnode and share its interlock with underlying vnode. */
+	error = getnewvnode(lmp->layerm_tag, mp, lmp->layerm_vnodeop_p,
+	    lowervp->v_interlock, &vp);
 	if (error) {
 		return error;
 	}
 	vp->v_type = lowervp->v_type;
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	vp->v_iflag |= VI_LAYER;
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	xp = kmem_alloc(lmp->layerm_size, KM_SLEEP);
 	if (xp == NULL) {

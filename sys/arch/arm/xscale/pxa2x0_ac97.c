@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.7 2007/10/17 19:53:44 garbled Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.7.52.1 2011/06/23 14:19:01 cherry Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -75,7 +75,7 @@ struct acu_dma {
 #define KERNADDR(ad) ((void *)((ad)->ad_addr))
 
 struct acu_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_bust;
 	bus_dma_tag_t sc_dmat;
 	bus_space_handle_t sc_bush;
@@ -113,10 +113,10 @@ struct acu_softc {
 	struct audio_encoding_set *sc_encodings;
 };
 
-static int	pxaacu_match(struct device *, struct cfdata *, void *);
-static void	pxaacu_attach(struct device *, struct device *, void *);
+static int	pxaacu_match(device_t, cfdata_t, void *);
+static void	pxaacu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pxaacu, sizeof(struct acu_softc),
+CFATTACH_DECL_NEW(pxaacu, sizeof(struct acu_softc),
     pxaacu_match, pxaacu_attach, NULL, NULL);
 
 static int acu_codec_attach(void *, struct ac97_codec_if *);
@@ -230,7 +230,7 @@ acu_wait_gsr(struct acu_softc *sc, u_int32_t bit)
 }
 
 static int
-pxaacu_match(struct device *parent, struct cfdata *cf, void *aux)
+pxaacu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
 	struct pxa2x0_gpioconf *gpioconf;
@@ -256,11 +256,12 @@ pxaacu_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pxaacu_attach(struct device *parent, struct device *self, void *aux)
+pxaacu_attach(device_t parent, device_t self, void *aux)
 {
-	struct acu_softc *sc = (struct acu_softc *)self;
+	struct acu_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
 
+	sc->sc_dev = self;
 	sc->sc_bust = pxa->pxa_iot;
 	sc->sc_dmat = pxa->pxa_dmat;
 
@@ -269,7 +270,7 @@ pxaacu_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sc->sc_bust, pxa->pxa_addr, pxa->pxa_size, 0,
 	    &sc->sc_bush)) {
-		aprint_error("%s: Can't map registers!\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "Can't map registers!\n");
 		return;
 	}
 
@@ -293,8 +294,7 @@ pxaacu_attach(struct device *parent, struct device *self, void *aux)
 		delay(100);
 		pxa2x0_clkman_config(CKEN_AC97, false);
 		bus_space_unmap(sc->sc_bust, sc->sc_bush, pxa->pxa_size);
-		aprint_error("%s: Primary codec not ready\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "Primary codec not ready\n");
 		return;
 	}
 
@@ -311,9 +311,8 @@ pxaacu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_in_reset = 0;
 	sc->sc_dac_rate = sc->sc_adc_rate = 0;
 
-	if (ac97_attach(&sc->sc_host_if, &sc->sc_dev)) {
-		aprint_error("%s: Failed to attach primary codec\n",
-		    sc->sc_dev.dv_xname);
+	if (ac97_attach(&sc->sc_host_if, sc->sc_dev)) {
+		aprint_error_dev(self, "Failed to attach primary codec\n");
  fail:
 		acu_reg_write(sc, AC97_GCR, 0);
 		delay(100);
@@ -324,14 +323,13 @@ pxaacu_attach(struct device *parent, struct device *self, void *aux)
 
 	if (auconv_create_encodings(acu_formats, ACU_NFORMATS,
 	    &sc->sc_encodings)) {
-		aprint_error("%s: Failed to create encodings\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "Failed to create encodings\n");
 		if (sc->sc_codec_if != NULL)
 			(sc->sc_codec_if->vtbl->detach)(sc->sc_codec_if);
 		goto fail;
 	}
 
-	sc->sc_audiodev = audio_attach_mi(&acu_hw_if, sc, &sc->sc_dev);
+	sc->sc_audiodev = audio_attach_mi(&acu_hw_if, sc, sc->sc_dev);
 
 	/*
 	 * As a work-around for braindamage in the PXA250's AC97 controller
@@ -463,8 +461,8 @@ acu_codec_reset(void *arg)
 	delay(100);
 
 	if (acu_wait_gsr(sc, GSR_PCR)) {
-		printf("%s: acu_codec_reset: failed to ready after reset\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "acu_codec_reset: failed to ready after reset\n");
 		return (ETIMEDOUT);
 	}
 
@@ -488,7 +486,7 @@ acu_intr(void *arg)
 		acu_reg_write(sc, AC97_POCR, 0);
 		reg = acu_reg_read(sc, AC97_POSR);
 		acu_reg_write(sc, AC97_POSR, reg);
-		printf("%s: Tx PCM Fifo underrun\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "Tx PCM Fifo underrun\n");
 	}
 
 	/*
@@ -502,7 +500,7 @@ acu_intr(void *arg)
 		acu_reg_write(sc, AC97_PICR, 0);
 		reg = acu_reg_read(sc, AC97_PISR);
 		acu_reg_write(sc, AC97_PISR, reg);
-		printf("%s: Rx PCM Fifo overrun\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "Rx PCM Fifo overrun\n");
 	}
 
 	return (1);
@@ -925,9 +923,9 @@ acu_tx_loop_segment(struct dmac_xfer *dx, int status)
 		panic("acu_tx_loop_segment: xfer mismatch!");
 
 	if (status) {
-		printf(
-		    "%s: acu_tx_loop_segment: non-zero completion status %d\n",
-		    sc->sc_dev.dv_xname, status);
+		aprint_error_dev(sc->sc_dev,
+		    "acu_tx_loop_segment: non-zero completion status %d\n",
+		    status);
 	}
 
 	s = splaudio();
@@ -949,9 +947,9 @@ acu_rx_loop_segment(struct dmac_xfer *dx, int status)
 		panic("acu_rx_loop_segment: xfer mismatch!");
 
 	if (status) {
-		printf(
-		    "%s: acu_rx_loop_segment: non-zero completion status %d\n",
-		    sc->sc_dev.dv_xname, status);
+		aprint_error_dev(sc->sc_dev,
+		    "acu_rx_loop_segment: non-zero completion status %d\n",
+		    status);
 	}
 
 	s = splaudio();

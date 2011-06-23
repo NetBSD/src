@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.19 2011/05/22 04:27:15 rmind Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.19.2.1 2011/06/23 14:19:50 cherry Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.19 2011/05/22 04:27:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.19.2.1 2011/06/23 14:19:50 cherry Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -730,13 +730,15 @@ xenwatch_thread(void *unused)
 	SIMPLEQ_INIT(&events_to_proces);
 	for (;;) {
 		mutex_enter(&watch_events_lock);
-		cv_wait(&watch_cv, &watch_events_lock);
+		while (SIMPLEQ_EMPTY(&watch_events))
+			cv_wait(&watch_cv, &watch_events_lock);
 		SIMPLEQ_CONCAT(&events_to_proces, &watch_events);
 		mutex_exit(&watch_events_lock);
 
 		DPRINTK("xenwatch_thread: processing events");
 
 		while ((msg = SIMPLEQ_FIRST(&events_to_proces)) != NULL) {
+			DPRINTK("xenwatch_thread: got event");
 			SIMPLEQ_REMOVE_HEAD(&events_to_proces, msg_next);
 			msg->u.watch.handle->xbw_callback(
 				msg->u.watch.handle,

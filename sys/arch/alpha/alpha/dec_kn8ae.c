@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.39 2009/03/14 15:35:59 dsl Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.39.10.1 2011/06/23 14:18:51 cherry Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.39 2009/03/14 15:35:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.39.10.1 2011/06/23 14:18:51 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.39 2009/03/14 15:35:59 dsl Exp $");
 
 void dec_kn8ae_init(void);
 void dec_kn8ae_cons_init(void);
-static void dec_kn8ae_device_register(struct device *, void *);
+static void dec_kn8ae_device_register(device_t, void *);
 
 static void dec_kn8ae_mcheck_handler
 (unsigned long, struct trapframe *, unsigned long, unsigned long);
@@ -115,12 +115,12 @@ dec_kn8ae_cons_init()
 
 /* #define	BDEBUG	1 */
 static void
-dec_kn8ae_device_register(struct device *dev, void *aux)
+dec_kn8ae_device_register(device_t dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
-	static struct device *primarydev, *pcidev, *ctrlrdev;
+	static device_t primarydev, pcidev, ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = device_parent(dev);
+	device_t parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -154,7 +154,7 @@ dec_kn8ae_device_register(struct device *dev, void *aux)
 				return;
 			primarydev = dev;
 #ifdef BDEBUG
-			printf("\nprimarydev = %s\n", dev->dv_xname);
+			printf("\nprimarydev = %s\n", device_xname(dev));
 #endif
 			return;
 		}
@@ -182,7 +182,7 @@ dec_kn8ae_device_register(struct device *dev, void *aux)
 	
 			pcidev = dev;
 #if	BDEBUG
-			printf("\npcidev = %s\n", dev->dv_xname);
+			printf("\npcidev = %s\n", device_xname(dev));
 #endif
 			return;
 		}
@@ -203,13 +203,13 @@ dec_kn8ae_device_register(struct device *dev, void *aux)
 			if (netboot) {
 				booted_device = dev;
 #ifdef BDEBUG
-				printf("\nbooted_device = %s\n", dev->dv_xname);
+				printf("\nbooted_device = %s\n", device_xname(dev));
 #endif
 				found = 1;
 			} else {
 				ctrlrdev = dev;
 #if	BDEBUG
-				printf("\nctrlrdev = %s\n", dev->dv_xname);
+				printf("\nctrlrdev = %s\n", device_xname(dev));
 #endif
 			}
 			return;
@@ -238,7 +238,7 @@ dec_kn8ae_device_register(struct device *dev, void *aux)
 		/* we've found it! */
 		booted_device = dev;
 #if	BDEBUG
-		printf("\nbooted_device = %s\n", dev->dv_xname);
+		printf("\nbooted_device = %s\n", device_xname(dev));
 #endif
 		found = 1;
 	}

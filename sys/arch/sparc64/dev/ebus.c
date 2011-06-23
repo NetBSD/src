@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.56 2011/03/18 09:52:54 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.56.2.1 2011/06/23 14:19:41 cherry Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.56 2011/03/18 09:52:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.56.2.1 2011/06/23 14:19:41 cherry Exp $");
 
 #include "opt_ddb.h"
 
@@ -76,10 +76,10 @@ int ebus_debug = 0x0;
 #include <dev/ebus/ebusvar.h>
 #include <sparc64/dev/ebusvar.h>
 
-int	ebus_match(struct device *, struct cfdata *, void *);
-void	ebus_attach(struct device *, struct device *, void *);
+int	ebus_match(device_t, cfdata_t, void *);
+void	ebus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ebus, sizeof(struct ebus_softc),
+CFATTACH_DECL_NEW(ebus, sizeof(struct ebus_softc),
     ebus_match, ebus_attach, NULL, NULL);
 
 /*
@@ -91,7 +91,7 @@ static void *ebus_intr_establish(bus_space_tag_t, int, int, int (*)(void *),
 	void *, void(*)(void));
 
 int
-ebus_match(struct device *parent, struct cfdata *match, void *aux)
+ebus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char *name;
@@ -131,14 +131,16 @@ ebus_match(struct device *parent, struct cfdata *match, void *aux)
  * after the sbus code which does similar things.
  */
 void
-ebus_attach(struct device *parent, struct device *self, void *aux)
+ebus_attach(device_t parent, device_t self, void *aux)
 {
-	struct ebus_softc *sc = (struct ebus_softc *)self;
+	struct ebus_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ebus_attach_args eba;
 	struct ebus_interrupt_map_mask *immp;
 	int node, nmapmask, error;
 	char devinfo[256];
+
+	sc->sc_dev = self;
 
 	aprint_normal("\n");
 	aprint_naive("\n");

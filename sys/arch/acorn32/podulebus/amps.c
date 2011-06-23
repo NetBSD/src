@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.17 2009/11/27 03:23:03 rmind Exp $	*/
+/*	$NetBSD: amps.c,v 1.17.10.1 2011/06/23 14:18:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.17 2009/11/27 03:23:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.17.10.1 2011/06/23 14:18:48 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,8 @@ struct amps_softc {
 	bus_space_tag_t		sc_iot;			/* Bus tag */
 };
 
-int	amps_probe(struct device *, struct cfdata *, void *);
-void	amps_attach(struct device *, struct device *, void *);
+int	amps_probe(device_t, cfdata_t, void *);
+void	amps_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(amps, sizeof(struct amps_softc),
     amps_probe, amps_attach, NULL, NULL);
@@ -130,9 +130,9 @@ amps_print(void *aux, const char *name)
  */
 
 int
-amps_probe(struct device *parent, struct cfdata *cf, void *aux)
+amps_probe(device_t parent, cfdata_t cf, void *aux)
 {
-	struct podule_attach_args *pa = (void *)aux;
+	struct podule_attach_args *pa = aux;
 
 	return (pa->pa_product == PODULE_ATOMWIDE_SERIAL);
 }
@@ -145,10 +145,10 @@ amps_probe(struct device *parent, struct cfdata *cf, void *aux)
  */
 
 void
-amps_attach(struct device *parent, struct device *self, void *aux)
+amps_attach(device_t parent, device_t self, void *aux)
 {
-	struct amps_softc *sc = (void *)self;
-	struct podule_attach_args *pa = (void *)aux;
+	struct amps_softc *sc = device_private(self);
+	struct podule_attach_args *pa = aux;
 	struct amps_attach_args aa;
 
 	/* Note the podule number and validate */

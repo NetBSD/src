@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2010/06/30 17:50:34 phx Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22.6.1 2011/06/23 14:19:38 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2010/06/30 17:50:34 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22.6.1 2011/06/23 14:19:38 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,12 +82,12 @@ cpu_rootconf(void)
 		booted_kernel = bi_path->bootpath;
 
 	aprint_normal("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
+	    booted_device ? device_xname(booted_device) : "<unknown>");
 	setroot(booted_device, booted_partition);
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	struct pci_attach_args *pa;
 	static device_t boot_parent = NULL, net_parent = NULL;
@@ -106,7 +106,7 @@ device_register(struct device *dev, void *aux)
 		}
 	}
 
-	if (dev->dv_class == DV_IFNET) {
+	if (device_class(dev) == DV_IFNET) {
 		if (device_is_a(device_parent(dev), "pci")) {
 			pa = aux;
 			tag = pa->pa_tag;
@@ -131,14 +131,14 @@ device_register(struct device *dev, void *aux)
 			if (prop_dictionary_set(device_properties(dev),
 			    "mac-address", pd) == false)
 				printf("WARNING: unable to set mac-addr "
-				    "property for %s\n", dev->dv_xname);
+				    "property for %s\n", device_xname(dev));
 			prop_object_release(pd);
 			bi_net = NULL;	/* do it just once */
 		}
 	}
-	if (bi_rdev != NULL && dev->dv_class == DV_DISK
+	if (bi_rdev != NULL && device_class(dev) == DV_DISK
 	    && device_is_a(dev, bi_rdev->devname)
-	    && dev->dv_unit == bi_rdev->cookie) {
+	    && device_unit(dev) == bi_rdev->cookie) {
 		booted_device = dev;
 		booted_partition = 0;
 	}

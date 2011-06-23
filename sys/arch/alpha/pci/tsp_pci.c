@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_pci.c,v 1.8 2010/12/15 01:27:19 matt Exp $ */
+/* $NetBSD: tsp_pci.c,v 1.8.6.1 2011/06/23 14:18:55 cherry Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.8 2010/12/15 01:27:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.8.6.1 2011/06/23 14:18:55 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.8 2010/12/15 01:27:19 matt Exp $");
 
 #define tsp_pci() { Generate ctags(1) key. }
 
-void		tsp_attach_hook(struct device *, struct device *,
+void		tsp_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		tsp_bus_maxdevs(void *, int);
 pcitag_t	tsp_make_tag(void *, int, int, int);
@@ -73,7 +73,7 @@ tsp_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 void
-tsp_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
+tsp_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 }
 

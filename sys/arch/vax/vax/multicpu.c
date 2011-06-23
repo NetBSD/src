@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.31 2010/12/14 23:44:49 matt Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.31.6.1 2011/06/23 14:19:47 cherry Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.31 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.31.6.1 2011/06/23 14:19:47 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -57,7 +57,7 @@ const struct cpu_mp_dep *mp_dep_call;
 struct cpuq {
 	SIMPLEQ_ENTRY(cpuq) cq_q;
 	struct cpu_info *cq_ci;
-	struct device *cq_dev;
+	device_t cq_dev;
 };
 
 SIMPLEQ_HEAD(, cpuq) cpuq = SIMPLEQ_HEAD_INITIALIZER(cpuq);

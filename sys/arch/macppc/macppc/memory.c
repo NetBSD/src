@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.c,v 1.3 2010/11/14 03:57:17 uebayasi Exp $	*/
+/*	$NetBSD: memory.c,v 1.3.6.1 2011/06/23 14:19:21 cherry Exp $	*/
 /*	$OpenBSD: mem.c,v 1.15 2007/10/14 17:29:04 kettenis Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.3 2010/11/14 03:57:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.3.6.1 2011/06/23 14:19:21 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ struct memory_softc {
 /* Size of a single SPD entry in "dimm-info" property. */
 #define SPD_SIZE	128
 
-int	memory_match(struct device *, struct cfdata *, void *);
-void	memory_attach(struct device *, struct device *, void *);
+int	memory_match(device_t, cfdata_t, void *);
+void	memory_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(memory, sizeof(struct memory_softc), memory_match, memory_attach,
               NULL, NULL);
@@ -81,7 +81,7 @@ int	memory_i2c_exec(void *, i2c_op_t, i2c_addr_t,
    	                const void *, size_t, void *, size_t, int);
 
 int
-memory_match(struct device *parent, struct cfdata *cf, void *aux)
+memory_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -91,9 +91,9 @@ memory_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-memory_attach(struct device *parent, struct device *self, void *aux)
+memory_attach(device_t parent, device_t self, void *aux)
 {
-	struct memory_softc *sc = (struct memory_softc *)self;
+	struct memory_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 	struct i2c_controller ic;
 	struct i2c_attach_args ia;

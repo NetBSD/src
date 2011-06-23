@@ -1,4 +1,4 @@
-/* 	$NetBSD: tftvar.h,v 1.3 2011/02/06 23:25:17 jmcneill Exp $ */
+/* 	$NetBSD: tftvar.h,v 1.3.2.1 2011/06/23 14:19:10 cherry Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -33,9 +33,9 @@
 #define	_VIRTEX_DEV_TFTVAR_H_
 
 struct tft_softc {
-	struct device 		sc_dev;
+	device_t 		sc_dev;
 
-	void *		sc_image;
+	void *			sc_image;
 	size_t 			sc_size;
 
 	bus_space_tag_t 	sc_iot;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.117 2010/07/01 19:50:11 ragge Exp $
+#	$NetBSD: files.vax,v 1.117.6.1 2011/06/23 14:19:46 cherry Exp $
 #
 # new style config file for vax architecture
 #
@@ -319,7 +319,6 @@ file	arch/vax/uba/dh.c		dh needs-flag
 file	dev/cons.c
 file	dev/cninit.c
 file	arch/vax/vax/locore.c
-file	arch/vax/vax/mem.c
 file	arch/vax/vax/clock.c
 file	arch/vax/vax/core_machdep.c	coredump
 file	arch/vax/vax/gencons.c		vax8600 | vax780 | vax750 | vax630 |

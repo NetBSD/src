@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.20 2010/03/14 10:03:49 kiyohara Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.20.8.1 2011/06/23 14:19:32 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.20 2010/03/14 10:03:49 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.20.8.1 2011/06/23 14:19:32 cherry Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.20 2010/03/14 10:03:49 kiyohara
 #include <powerpc/ofw_bus.h>
 #include <powerpc/ofw_cons.h>
 #include <powerpc/spr.h>
-#include <arch/powerpc/pic/picvar.h>
+#include <powerpc/pic/picvar.h>
 
 #include "opt_oea.h"
 
@@ -120,7 +120,6 @@ u_int timebase_freq = TIMEBASE_FREQ;
 u_int timebase_freq = 0;
 #endif
 
-extern int ofmsr;
 extern int chosen;
 extern uint32_t ticks_per_sec;
 extern uint32_t ns_per_tick;
@@ -195,8 +194,6 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	ofmaplen = save_ofmap(NULL, 0);
 	if (ofmaplen > 0)
 		save_ofmap(ofmap, ofmaplen);
-
-	ofmsr &= ~PSL_IP;
 
 	/* Parse the args string */
 	if (args) {

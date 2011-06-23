@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.21 2010/05/15 12:17:34 kiyohara Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.21.6.1 2011/06/23 14:19:01 cherry Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -240,12 +240,27 @@ struct pxa2x0_dma_desc {
 #define  ICR_MA  	(1<<4)
 #define  ICR_SCLE	(1<<5)		/* PXA270? */
 #define  ICR_IUE	(1<<6)		/* PXA270? */
+#define  ICR_GCD	(1<<7)		/* PXA270? */
+#define  ICR_ITEIE	(1<<8)		/* PXA270? */
+#define  ICR_DRFIE	(1<<9)		/* PXA270? */
+#define  ICR_BEIE	(1<<10)		/* PXA270? */
+#define  ICR_SSDIE	(1<<11)		/* PXA270? */
+#define  ICR_ALDIE	(1<<12)		/* PXA270? */
+#define  ICR_SADIE	(1<<13)		/* PXA270? */
 #define  ICR_UR		(1<<14)		/* PXA270? */
 #define  ICR_FM		(1<<15)		/* PXA270? */
 #define I2C_ISR  	0x1698		/* Status register */
+#define  ISR_RWM	(1<<0)
 #define  ISR_ACKNAK	(1<<1)
+#define  ISR_UE		(1<<2)
+#define  ISR_IBB	(1<<3)
+#define  ISR_SSD	(1<<4)
+#define  ISR_ALD	(1<<5)
 #define  ISR_ITE	(1<<6)
 #define  ISR_IRF	(1<<7)
+#define  ISR_GCAD	(1<<8)
+#define  ISR_SAD	(1<<9)
+#define  ISR_BED	(1<<10)
 #define I2C_ISAR	0x16a0		/* Slave address */
 
 /* Clock Manager */

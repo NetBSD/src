@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.45 2008/07/20 00:52:40 lukem Exp $	*/
+/*	$NetBSD: pax.c,v 1.45.18.1 2011/06/23 14:17:47 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.45 2008/07/20 00:52:40 lukem Exp $");
+__RCSID("$NetBSD: pax.c,v 1.45.18.1 2011/06/23 14:17:47 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,14 +79,12 @@ int	cflag;			/* match all EXCEPT pattern/file */
 int	cwdfd = -1;		/* starting cwd */
 int	dflag;			/* directory member match only  */
 int	iflag;			/* interactive file/archive rename */
-int	jflag;			/* pass through bzip2 */
 int	kflag;			/* do not overwrite existing files */
 int	lflag;			/* use hard links when possible */
 int	nflag;			/* select first archive member match */
 int	tflag;			/* restore access time after read */
 int	uflag;			/* ignore older modification time files */
 int	vflag;			/* produce verbose output */
-int	zflag;			/* use gzip */
 int	Aflag;			/* honor absolute path */
 int	Dflag;			/* same as uflag except inode change time */
 int	Hflag;			/* follow command line symlinks (write only) */

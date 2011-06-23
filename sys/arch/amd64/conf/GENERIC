@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.319 2011/05/28 16:58:51 ryo Exp $
+# $NetBSD: GENERIC,v 1.319.2.1 2011/06/23 14:18:56 cherry Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.319 $"
+#ident 		"GENERIC-$Revision: 1.319.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -300,8 +300,9 @@ attimer*	at acpi?		# AT Timer
 #fdc*		at acpi?		# Floppy disk controller
 fujbp*		at acpi?		# Fujitsu Brightness & Pointer
 fujhk*		at acpi?		# Fujitsu Hotkeys
-hpqlb*		at acpi?		# HP Quick Launch Buttons
-hpet*		at acpi?		# High Precision Event Timer
+#hpqlb*		at acpi?		# HP Quick Launch Buttons
+hpet*		at acpihpetbus?		# High Precision Event Timer (table)
+hpet*		at acpinodebus?		# High Precision Event Timer (device)
 joy*		at acpi?		# Joystick/Game port
 #lpt*		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
@@ -315,7 +316,7 @@ ug*		at acpi?		# Abit uGuru Hardware monitor
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
 wmidell*	at acpiwmibus?		# Dell WMI mappings
-#wmihp*		at acpiwmibus?		# HP WMI mappings
+wmihp*		at acpiwmibus?		# HP WMI mappings
 wmimsi* 	at acpiwmibus?		# MSI WMI mappings
 
 # Basic Bus Support

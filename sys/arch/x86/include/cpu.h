@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34.2.1 2011/06/03 13:27:38 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34.2.2 2011/06/23 14:19:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -102,7 +102,6 @@ struct cpu_info {
 	 */
 	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
-	struct pmap_cpu *ci_pmap_cpu;	/* per-CPU pmap data */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
 	int	ci_fpused;		/* XEN: FPU was used by curlwp */
@@ -125,6 +124,7 @@ struct cpu_info {
 	int ci_curldt;		/* current LDT descriptor */
 	int ci_nintrhand;	/* number of H/W interrupt handlers */
 	uint64_t ci_scratch;
+	uintptr_t ci_pmap_data[128 / sizeof(uintptr_t)];
 
 #ifdef XEN
 	struct iplsource  *ci_isources[NIPL];

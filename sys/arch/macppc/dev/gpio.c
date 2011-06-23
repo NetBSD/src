@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.9 2008/06/13 11:54:31 cegger Exp $	*/
+/*	$NetBSD: gpio.c,v 1.9.28.1 2011/06/23 14:19:20 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.9 2008/06/13 11:54:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.9.28.1 2011/06/23 14:19:20 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,12 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.9 2008/06/13 11:54:31 cegger Exp $");
 
 #include "adb.h"
 
-static void gpio_obio_attach (struct device *, struct device *, void *);
-static int gpio_obio_match (struct device *, struct cfdata *, void *);
+static void gpio_obio_attach (device_t, device_t, void *);
+static int gpio_obio_match (device_t, cfdata_t, void *);
 static int gpio_obio_print (void *aux, const char *gpio);
 
-static void gpio_gpio_attach (struct device *, struct device *, void *);
-static int gpio_gpio_match (struct device *, struct cfdata *, void *);
+static void gpio_gpio_attach (device_t, device_t, void *);
+static int gpio_gpio_match (device_t, cfdata_t, void *);
 static int gpio_intr (void *);
 
 struct gpio_softc {
@@ -69,7 +69,7 @@ CFATTACH_DECL(gpio_gpio, sizeof(struct gpio_softc),
 extern struct cfdriver gpio_cd;
 
 int
-gpio_obio_match(struct device *parent, struct cfdata *cf, void *aux)
+gpio_obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -83,7 +83,7 @@ gpio_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-gpio_obio_attach(struct device *parent, struct device *self, void *aux)
+gpio_obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpio_softc *sc = device_private(self);
 	struct confargs *ca = aux, ca2;
@@ -138,7 +138,7 @@ gpio_obio_print(void *aux, const char *gpio)
 }
 
 int
-gpio_gpio_match(struct device *parent, struct cfdata *cf, void *aux)
+gpio_gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -152,7 +152,7 @@ gpio_gpio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-gpio_gpio_attach(struct device *parent, struct device *self, void *aux)
+gpio_gpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpio_softc *sc = device_private(self);
 	struct confargs *ca = aux;

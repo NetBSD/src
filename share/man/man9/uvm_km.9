@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm_km.9,v 1.1 2011/06/01 02:22:19 rmind Exp $
+.\"	$NetBSD: uvm_km.9,v 1.1.2.1 2011/06/23 14:18:45 cherry Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 1, 2011
+.Dd June 3, 2011
 .Dt UVM_KM 9
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Fn uvm_km_free "struct vm_map *map" "vaddr_t addr" "vsize_t size" "uvm_flag_t flags"
 .Ft struct vm_map *
 .Fn uvm_km_suballoc "struct vm_map *map" "vaddr_t *min" "vaddr_t *max" \
-"vsize_t size" "int flags" "bool fixed" "struct vm_map *submap"
+"vsize_t size" "int flags" "bool fixed" "struct vm_map_kernel *submap"
 .Sh DESCRIPTION
 The UVM facility for allocation of kernel memory or address space in pages.
 Both wired and pageable memory can be allocated by this facility, as well
@@ -72,8 +72,8 @@ Demand-paged zero-filled memory.
 .It UVM_KMF_VAONLY
 Virtual address only.
 No physical pages are mapped in the allocated region.
-If necessary, it's the caller's responsibility to enter page mappings.
-It's also the caller's responsibility to clean up the mappings before freeing
+If necessary, it is the caller's responsibility to enter page mappings.
+It is also the caller's responsibility to clean up the mappings before freeing
 the address range.
 .El
 .Pp
@@ -89,16 +89,16 @@ is specified.
 Request zero-filled memory.
 Only supported for
 .Dv UVM_KMF_WIRED .
-Shouldn't be used with other types.
+Should not be used with other types.
 .It UVM_KMF_TRYLOCK
-Fail if we can't lock the map.
+Fail if cannot lock the map without sleeping.
 .It UVM_KMF_NOWAIT
 Fail immediately if no memory is available.
 .It UVM_KMF_WAITVA
 Sleep to wait for the virtual address resources if needed.
 .El
 .Pp
-(If neither
+If neither
 .Dv UVM_KMF_NOWAIT
 nor
 .Dv UVM_KMF_CANFAIL
@@ -106,7 +106,7 @@ are specified and
 .Dv UVM_KMF_WAITVA
 is specified,
 .Fn uvm_km_alloc
-will never fail, but rather sleep indefinitely until the allocation succeeds.)
+will never fail, but rather sleep indefinitely until the allocation succeeds.
 .Pp
 Pageability of the pages allocated with
 .Dv UVM_KMF_PAGEABLE
@@ -129,7 +129,7 @@ must be the same as the ones used for the corresponding
 .Fa flags
 must be the allocation type used for the corresponding
 .Fn uvm_km_alloc .
-.Pp
+Note that
 .Fn uvm_km_free
 is the only way to free memory ranges allocated by
 .Fn uvm_km_alloc .
@@ -143,7 +143,7 @@ creating a new map if
 .Fa submap
 is
 .Dv NULL .
-The addresses of the submap can be specified exactly by setting the
+The addresses of the submap can be specified explicitly by setting the
 .Fa fixed
 argument to true, which causes the
 .Fa min
@@ -161,7 +161,7 @@ and
 The
 .Fa flags
 are used to initialize the created submap.
-The following flags could be set:
+The following flags can be set:
 .Bl -tag -width VM_MAP_PAGEABLE
 .It VM_MAP_PAGEABLE
 Entries in the map may be paged out.

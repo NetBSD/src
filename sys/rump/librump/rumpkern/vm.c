@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.114 2011/03/21 16:41:08 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.114.2.1 2011/06/23 14:20:28 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.114 2011/03/21 16:41:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.114.2.1 2011/06/23 14:20:28 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -173,7 +173,7 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 {
 	struct vm_page *pg;
 
-	KASSERT(uobj && mutex_owned(&uobj->vmobjlock));
+	KASSERT(uobj && mutex_owned(uobj->vmobjlock));
 	KASSERT(anon == NULL);
 
 	pg = pool_cache_get(&pagecache, PR_NOWAIT);
@@ -220,7 +220,7 @@ uvm_pagefree(struct vm_page *pg)
 	struct uvm_object *uobj = pg->uobject;
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
-	KASSERT(mutex_owned(&uobj->vmobjlock));
+	KASSERT(mutex_owned(uobj->vmobjlock));
 
 	if (pg->flags & PG_WANTED)
 		wakeup(pg);
@@ -569,7 +569,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 	int i;
 
 	KASSERT(npgs > 0);
-	KASSERT(mutex_owned(&pgs[0]->uobject->vmobjlock));
+	KASSERT(mutex_owned(pgs[0]->uobject->vmobjlock));
 
 	for (i = 0; i < npgs; i++) {
 		pg = pgs[i];
@@ -632,6 +632,19 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
 {
 
 	return EBUSY;
+}
+
+struct vm_page *
+uvm_loanbreak(struct vm_page *pg)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+void
+ubc_purge(struct uvm_object *uobj)
+{
+
 }
 
 #ifdef DEBUGPRINT
@@ -952,23 +965,23 @@ processpage(struct vm_page *pg, bool *lockrunning)
 	struct uvm_object *uobj;
 
 	uobj = pg->uobject;
-	if (mutex_tryenter(&uobj->vmobjlock)) {
+	if (mutex_tryenter(uobj->vmobjlock)) {
 		if ((pg->flags & PG_BUSY) == 0) {
 			mutex_exit(&uvm_pageqlock);
 			uobj->pgops->pgo_put(uobj, pg->offset,
 			    pg->offset + PAGE_SIZE,
 			    PGO_CLEANIT|PGO_FREE);
-			KASSERT(!mutex_owned(&uobj->vmobjlock));
+			KASSERT(!mutex_owned(uobj->vmobjlock));
 			return true;
 		} else {
-			mutex_exit(&uobj->vmobjlock);
+			mutex_exit(uobj->vmobjlock);
 		}
 	} else if (*lockrunning == false && ncpu > 1) {
 		CPU_INFO_ITERATOR cii;
 		struct cpu_info *ci;
 		struct lwp *l;
 
-		l = mutex_owner(&uobj->vmobjlock);
+		l = mutex_owner(uobj->vmobjlock);
 		for (CPU_INFO_FOREACH(cii, ci)) {
 			if (ci->ci_curlwp == l) {
 				*lockrunning = true;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2011/05/28 05:21:40 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6.2.1 2011/06/23 14:19:09 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <sys/bus.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -92,7 +93,34 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <evbppc/mpc85xx/pixisreg.h>
 #endif
 
-void	initppc(vaddr_t, vaddr_t);
+struct uboot_bdinfo {
+	uint32_t bd_memstart;
+	uint32_t bd_memsize;
+	uint32_t bd_flashstart;
+	uint32_t bd_flashsize;
+/*10*/	uint32_t bd_flashoffset;
+	uint32_t bd_sramstart;
+	uint32_t bd_sramsize;
+	uint32_t bd_immrbase;
+/*20*/	uint32_t bd_bootflags;
+	uint32_t bd_ipaddr;
+	uint8_t bd_etheraddr[6];
+	uint16_t bd_ethspeed;
+/*30*/	uint32_t bd_intfreq;
+	uint32_t bd_cpufreq;
+	uint32_t bd_baudrate;
+/*3c*/	uint8_t bd_etheraddr1[6];
+/*42*/	uint8_t bd_etheraddr2[6];
+/*48*/	uint8_t bd_etheraddr3[6];
+/*4e*/	uint16_t bd_pad;
+};
+
+/*
+ * booke kernels need to set module_machine to this for modules to work.
+ */
+char module_machine_booke[] = "powerpc-booke";
+
+void	initppc(vaddr_t, vaddr_t, void *, void *, void *, void *);
 
 #define	MEMREGIONS	4
 phys_ram_seg_t physmemr[MEMREGIONS];         /* All memory */
@@ -709,9 +737,29 @@ e500_cpu_attach(device_t self, u_int instance)
 	e500_tlb_print(self, "tlb0", mfspr(SPR_TLB0CFG));
 	e500_tlb_print(self, "tlb1", mfspr(SPR_TLB1CFG));
 
-	intr_cpu_init(ci);
+	intr_cpu_attach(ci);
 	cpu_evcnt_attach(ci);
+
+	if (ci == curcpu())
+		intr_cpu_hatch(ci);
 }
+
+void
+e500_ipi_halt(void)
+{
+	register_t msr, hid0;
+
+	msr = wrtee(0);
+
+	hid0 = mfspr(SPR_HID0);
+	hid0 = (hid0 & ~HID0_TBEN) | HID0_DOZE;
+	mtspr(SPR_HID0, hid0);
+
+	msr = (msr & ~(PSL_EE|PSL_CE|PSL_ME)) | PSL_WE;
+	mtmsr(msr);
+	for (;;);	/* loop forever */
+}
+
 
 static void
 calltozero(void)
@@ -720,13 +768,15 @@ calltozero(void)
 }
 
 void
-initppc(vaddr_t startkernel, vaddr_t endkernel)
+initppc(vaddr_t startkernel, vaddr_t endkernel,
+	void *a0, void *a1, void *a2, void *a3)
 {
 	struct cpu_info * const ci = curcpu();
 	struct cpu_softc * const cpu = ci->ci_softc;
 
 	cn_tab = &e500_earlycons;
-	printf(" initppc<enter>");
+	printf(" initppc(%#"PRIxVADDR", %#"PRIxVADDR", %p, %p, %p, %p)<enter>",
+	    startkernel, endkernel, a0, a1, a2, a3);
 
 	const register_t hid0 = mfspr(SPR_HID0);
 	mtspr(SPR_HID0, hid0 | HID0_TBEN | HID0_EMCP);
@@ -862,7 +912,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	 * Let's take all the indirect calls via our stubs and patch 
 	 * them to be direct calls.
 	 */
-	booke_fixup_stubs();
+	cpu_fixup_stubs();
 #if 0
 	/*
 	 * As a debug measure we can change the TLB entry that maps all of
@@ -907,6 +957,11 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 #endif
 
 		printf(" initppc done!\n");
+
+	/*
+	 * Look for the Book-E modules in the right place.
+	 */
+	module_machine = module_machine_booke;
 }
 
 #ifdef MPC8548

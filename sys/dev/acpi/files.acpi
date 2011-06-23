@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.88 2011/02/27 17:10:33 jruoho Exp $
+#	$NetBSD: files.acpi,v 1.88.2.1 2011/06/23 14:19:57 cherry Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -10,9 +10,10 @@ defparam opt_acpi.h	ACPI_BLACKLIST_YEAR = 2000
 define	acpiapmbus { }
 define	acpinodebus { }
 define	acpiecdtbus { }
+define	acpihpetbus { }
 define	acpiwdrtbus { }
 
-device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, acpiwdrtbus, sysmon_power, sysmon_taskq
+device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, acpihpetbus, acpiwdrtbus, sysmon_power, sysmon_taskq
 attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi
 file	dev/acpi/acpi_debug.c		acpi
@@ -130,8 +131,9 @@ attach	ym at acpinodebus with ym_acpi
 file	dev/acpi/ym_acpi.c		ym_acpi
 
 # High Precision Event Timer
-attach 	hpet at acpinodebus with hpet_acpi
-file 	dev/acpi/hpet_acpi.c		hpet_acpi
+attach 	hpet at acpinodebus with hpet_acpi_dev
+attach 	hpet at acpihpetbus with hpet_acpi_tab
+file 	dev/acpi/hpet_acpi.c		hpet_acpi_dev|hpet_acpi_tab
 
 # ASUS hotkey device
 device	asus: sysmon_envsys, sysmon_power
@@ -180,10 +182,10 @@ file	dev/acpi/dalb_acpi.c		acpidalb
 attach	wb at acpinodebus with wb_acpi
 file	dev/acpi/wb_acpi.c		wb_acpi
 
-# ASUSTeK AI Booster ATK0110
+# ASUSTeK AI Booster
 device	aibs: sysmon_envsys
 attach	aibs at acpinodebus
-file	dev/acpi/atk0110.c		aibs
+file	dev/acpi/aibs_acpi.c		aibs
 
 # ACPI SMBus controller
 device	acpismbus: i2cbus

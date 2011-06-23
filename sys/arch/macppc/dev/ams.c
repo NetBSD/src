@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.26 2010/12/10 00:17:08 macallan Exp $	*/
+/*	$NetBSD: ams.c,v 1.26.6.1 2011/06/23 14:19:19 cherry Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.26 2010/12/10 00:17:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.26.6.1 2011/06/23 14:19:19 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.26 2010/12/10 00:17:08 macallan Exp $");
 /*
  * Function declarations.
  */
-static int	amsmatch(struct device *, struct cfdata *, void *);
-static void	amsattach(struct device *, struct device *, void *);
+static int	amsmatch(device_t, cfdata_t, void *);
+static void	amsattach(device_t, device_t, void *);
 static void	ems_init(struct ams_softc *);
 static void	ms_processevent(adb_event_t *event, struct ams_softc *);
 static void	init_trackpad(struct ams_softc *);
@@ -88,7 +88,7 @@ const struct wsmouse_accessops ams_accessops = {
 };
 
 static int
-amsmatch(struct device *parent, struct cfdata *cf, void *aux)
+amsmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct adb_attach_args *aa_args = aux;
 
@@ -99,10 +99,10 @@ amsmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-amsattach(struct device *parent, struct device *self, void *aux)
+amsattach(device_t parent, device_t self, void *aux)
 {
 	ADBSetInfoBlock adbinfo;
-	struct ams_softc *sc = (struct ams_softc *)self;
+	struct ams_softc *sc = device_private(self);
 	struct adb_attach_args *aa_args = aux;
 	int error;
 	struct wsmousedev_attach_args a;

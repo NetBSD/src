@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.74 2010/11/28 08:23:22 hannken Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.74.6.1 2011/06/23 14:18:59 cherry Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.74 2010/11/28 08:23:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.74.6.1 2011/06/23 14:18:59 cherry Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.74 2010/11/28 08:23:22 hannken E
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -64,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.74 2010/11/28 08:23:22 hannken E
 #include <sys/module.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
@@ -480,3 +482,10 @@ module_init_md(void)
 {
 }
 #endif /* MODULAR */
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (pa < ctob(physmem)) ? 0 : EFAULT;
+}

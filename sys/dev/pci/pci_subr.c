@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.86 2010/12/11 18:22:24 matt Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.86.6.1 2011/06/23 14:20:04 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.86 2010/12/11 18:22:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.86.6.1 2011/06/23 14:20:04 cherry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1068,6 +1068,12 @@ pci_conf_print_caplist(
 			break;
 		case PCI_CAP_MSIX:
 			printf("MSI-X");
+			break;
+		case PCI_CAP_SATA:
+			printf("SATA");
+			break;
+		case PCI_CAP_PCIAF:
+			printf("Advanced Features");
 			break;
 		default:
 			printf("unknown");

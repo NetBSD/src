@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.54 2008/11/19 12:36:41 ad Exp $	*/
+/*	$NetBSD: ufs.c,v 1.54.14.1 2011/06/23 14:20:23 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -513,7 +513,7 @@ ffs_find_superblock(struct open_file *f, struct fs *fs)
 /*
  * Open a file.
  */
-int
+__compactcall int
 ufs_open(const char *path, struct open_file *f)
 {
 #ifndef LIBSA_FS_SINGLECOMPONENT
@@ -750,7 +750,7 @@ out:
 	return rc;
 }
 
-int
+__compactcall int
 ufs_close(struct open_file *f)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
@@ -770,7 +770,7 @@ ufs_close(struct open_file *f)
  * Copy a portion of a file into kernel memory.
  * Cross block boundaries when necessary.
  */
-int
+__compactcall int
 ufs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
@@ -807,7 +807,7 @@ ufs_read(struct open_file *f, void *start, size_t size, size_t *resid)
  * Not implemented.
  */
 #ifndef LIBSA_NO_FS_WRITE
-int
+__compactcall int
 ufs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 
@@ -816,7 +816,7 @@ ufs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 #endif /* !LIBSA_NO_FS_WRITE */
 
 #ifndef LIBSA_NO_FS_SEEK
-off_t
+__compactcall off_t
 ufs_seek(struct open_file *f, off_t offset, int where)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
@@ -838,7 +838,7 @@ ufs_seek(struct open_file *f, off_t offset, int where)
 }
 #endif /* !LIBSA_NO_FS_SEEK */
 
-int
+__compactcall int
 ufs_stat(struct open_file *f, struct stat *sb)
 {
 	struct file *fp = (struct file *)f->f_fsdata;

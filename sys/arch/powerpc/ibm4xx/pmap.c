@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 2011/02/07 07:02:24 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66.2.1 2011/06/23 14:19:29 cherry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,25 +67,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2011/02/07 07:02:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66.2.1 2011/06/23 14:19:29 cherry Exp $");
 
 #include <sys/param.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
-#include <sys/pool.h>
-#include <sys/device.h>
 
 #include <uvm/uvm.h>
 
-#include <machine/cpu.h>
-#include <machine/pcb.h>
 #include <machine/powerpc.h>
+#include <machine/tlb.h>
+
+#include <powerpc/pcb.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
-#include <machine/tlb.h>
+
+#include <powerpc/ibm4xx/cpu.h>
 
 /*
  * kernmap is an array of PTEs large enough to map in
@@ -156,8 +159,8 @@ static char *pmap_attrib;
 
 struct pv_entry {
 	struct pv_entry *pv_next;	/* Linked list of mappings */
-	vaddr_t pv_va;			/* virtual address of mapping */
 	struct pmap *pv_pm;
+	vaddr_t pv_va;			/* virtual address of mapping */
 };
 
 /* Each index corresponds to TLB_SIZE_* value. */
@@ -179,7 +182,7 @@ static int pmap_initialized;
 
 static int ctx_flush(int);
 
-inline struct pv_entry *pa_to_pv(paddr_t);
+struct pv_entry *pa_to_pv(paddr_t);
 static inline char *pa_to_attr(paddr_t);
 
 static inline volatile u_int *pte_find(struct pmap *, vaddr_t);
@@ -191,7 +194,7 @@ static void pmap_remove_pv(struct pmap *, vaddr_t, paddr_t);
 static int ppc4xx_tlb_size_mask(size_t, int *, int *);
 
 
-inline struct pv_entry *
+struct pv_entry *
 pa_to_pv(paddr_t pa)
 {
 	int bank, pg;
@@ -699,7 +702,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 {
 
 	memcpy((void *)dst, (void *)src, PAGE_SIZE);
-	dcache_flush_page(dst);
+	dcache_wbinv_page(dst);
 }
 
 /*

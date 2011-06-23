@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2008/08/29 00:02:23 gmcgarry Exp $
+# $NetBSD: Makefile,v 1.3.16.1 2011/06/23 14:18:44 cherry Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ MAN=	newfs_sysvbfs.8
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
+.if defined(HAVE_GCC)
 COPTS.newfs_sysvbfs.c+=	-Wno-pointer-sign
 .endif
 

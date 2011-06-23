@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.307 2011/05/20 08:12:46 matt Exp $
+#	$NetBSD: BRANCHES,v 1.307.2.1 2011/06/23 14:18:25 cherry Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -285,6 +285,16 @@ Notes:		This code was on a branch because it involves changes to
 		cpuswitch.S which would otherwise make merging the
 		nathanw_sa branch difficult.
 
+Branch:		cherry-xenmp
+Description:	Port i386 and amd64 Xen kernels to run MP
+Status:		Active
+Start Date:	1st June 2011
+End Date:
+Base Tag:	cherry-xenmp-base
+Maintainer:	Cherry G. Mathew <cherry@NetBSD.org>
+Scope:		kernel
+Notes:
+
 Branch:		chris-arm-intr-rework
 Description:	Rework arm interrupt handling code
 Status:		Dormant
@@ -484,29 +494,6 @@ Scope:		pkgsrc, basesrc/usr.sbin/pkg_install
 Notes:		A more flexible infrastructure for third-party packages by
 		allowing multiple conflicting packages and versions to co-exist
 		within the same tree
-
-Branch:		rmind-uvmplock
-Description:	Reorganize locking in UVM and improve x86 pmap(9)
-Status:		Active
-Start Date:	15 March 2010
-End Date:	
-Base Tag:	rmind-uvmplock-base
-Maintainer:	Mindaugas Rasiukevicius <rmind@netbsd.org>
-Scope:		Kernel
-Notes:		Goals:
-
-		- Reorganize locking in UVM and serialize pmap(9) operations
-		  on same page(s).  New lock order: [vmpage-lock] -> pmap-lock.
-		  Based on the patch from ad@.
-		- Simplify locking in pmap(9) modules by removing P->V locking.
-		- Use mutex_obj(9) on vmobjlock (and thus vnode_t::v_interlock)
-		  to share locks among UVM objects where necessary.
-		- Rewrite and optimize x86 TLB shootdown code.
-		- Unify /dev/mem et al in MI code and provide required locking.
-
-		Future work:
-
-		- Optimize pmap_remove() with tracking in struct vm_map_entry.
 
 Branch:		rpaulo-netinet-merge-pcb
 Description:	merge in6pcb with inpcb
@@ -1068,6 +1055,29 @@ Maintainer:	Peter Postma <peter@NetBSD.org>,
 Scope:		dist/pf dist/ipf distrib/sets/lists sys usr.sbin/altq
 Notes:		Only the first item in the description was finished
 		in this branch.
+
+Branch:		rmind-uvmplock
+Description:	Reorganize locking in UVM and improve x86 pmap(9)
+Status:		Terminated; merged to -current
+Start Date:	15 March 2010
+End Date:	12 June 2011
+Base Tag:	rmind-uvmplock-base
+Maintainer:	Mindaugas Rasiukevicius <rmind@netbsd.org>
+Scope:		Kernel
+Notes:		Goals:
+
+		- Reorganize locking in UVM and serialize pmap(9) operations
+		  on same page(s).  New lock order: [vmpage-lock] -> pmap-lock.
+		  Based on the patch from ad@.
+		- Simplify locking in pmap(9) modules by removing P->V locking.
+		- Use mutex_obj(9) on vmobjlock (and thus vnode_t::v_interlock)
+		  to share locks among UVM objects where necessary.
+		- Rewrite and optimize x86 TLB shootdown code.
+		- Unify /dev/mem et al in MI code and provide required locking.
+
+		Future work:
+
+		- Optimize pmap_remove() with tracking in struct vm_map_entry.
 
 Branch:		sommerfeld_i386mp_1
 Description:	Multiprocessor support for i386 using Intel MP BIOS.

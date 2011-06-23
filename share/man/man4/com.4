@@ -1,4 +1,4 @@
-.\"	$NetBSD: com.4,v 1.16 2010/05/31 09:30:55 skrll Exp $
+.\"	$NetBSD: com.4,v 1.16.4.1 2011/06/23 14:18:44 cherry Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,12 +32,13 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd May 31, 2010
+.Dd June 7, 2011
 .Dt COM 4
 .Os
 .Sh NAME
 .Nm com
-.Nd serial communications interface
+.Nd serial communications interface for
+.Tn RS-232C
 .Sh SYNOPSIS
 .Cd "com0 at isa? port" \&"IO_COM1\&" irq 4
 .Cd "com1 at isa? port" \&"IO_COM2\&" irq 3
@@ -53,6 +54,8 @@
 .Cd "com* at puc? port ?"
 .Cd "com* at xirc?"
 .Cd options COM_HAYESP
+.Cd options PPS_SYNC
+.Cd options PPS_TRAILING_EDGE
 .Cd options RND_COM
 .Ss Arm32
 .Cd "com0 at mainbus? base 0x00210fe0"
@@ -93,6 +96,22 @@ used for dial-out.
 .Pp
 .Cd options COM_HAYESP
 adds support for the Hayes ESP serial board.
+.Pp
+.Cd options PPS_SYNC
+enables code to use the Data Carrier Detect (DCD) signal line for attachment
+to an external precision clock source
+.Po
+e.g.,
+.Tn GPS ,
+.Tn CDMA
+.Pc
+which generates a Pulse Per Second (PPS) signal.
+This is used by
+.Xr ntpd 8
+to discipline the system clock, and more accurately count/measure time.
+See
+.Xr options 4
+for more discussion.
 .Pp
 With
 .Cd options RND_COM
@@ -142,13 +161,15 @@ with the code listed.
 .Xr mca 4 ,
 .Xr mhzc 4 ,
 .Xr ofisa 4 ,
+.Xr options 4 ,
 .Xr pcmcia 4 ,
 .Xr pcmcom 4 ,
 .Xr pnpbios 4 ,
 .Xr puc 4 ,
 .Xr rtfps 4 ,
 .Xr tty 4 ,
-.Xr xirc 4
+.Xr xirc 4 ,
+.Xr ntpd 8
 .Sh HISTORY
 The
 .Nm

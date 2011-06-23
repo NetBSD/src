@@ -1,4 +1,4 @@
-# $NetBSD: files.usermode,v 1.2 2008/01/25 21:12:13 joerg Exp $
+# $NetBSD: files.usermode,v 1.2.44.1 2011/06/23 14:19:45 cherry Exp $
 
 maxpartitions 8
 maxusers 8 16 64
@@ -25,7 +25,6 @@ file	arch/usermode/dev/ttycons.c		ttycons
 
 file	arch/usermode/usermode/copy.c
 file	arch/usermode/usermode/machdep.c
-file	arch/usermode/usermode/mem.c
 file	arch/usermode/usermode/pmap.c
 file	arch/usermode/usermode/process_machdep.c
 file	arch/usermode/usermode/sys_machdep.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.4 2011/04/04 20:37:54 dyoung Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.4.2.1 2011/06/23 14:19:38 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.4 2011/04/04 20:37:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.4.2.1 2011/06/23 14:19:38 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.4 2011/04/04 20:37:54 dyoung Ex
 #include "isa.h"
 
 void *
-pciide_machdep_compat_intr_establish(struct device *dev,
+pciide_machdep_compat_intr_establish(device_t dev,
     const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 #if NISA > 0
@@ -68,7 +68,7 @@ pciide_machdep_compat_intr_establish(struct device *dev,
 	cookie = isa_intr_establish(NULL, irq, IST_LEVEL, IPL_BIO, func, arg);
 	if (cookie == NULL)
 		return (NULL);
-	printf("%s: %s channel interrupting at irq %d\n", dev->dv_xname,
+	aprint_normal_dev(dev, "%s channel interrupting at irq %d\n",
 	    PCIIDE_CHANNEL_NAME(chan), irq);
 	return (cookie);
 #else

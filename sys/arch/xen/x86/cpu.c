@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56.2.1 2011/06/03 13:27:41 cherry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56.2.2 2011/06/23 14:19:50 cherry Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.1 2011/06/03 13:27:41 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.2.2 2011/06/23 14:19:50 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -161,6 +161,7 @@ struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 	.ci_curldt = -1,
+	.ci_cpumask = 1,
 #ifdef TRAPLOG
 	.ci_tlog = &tlog_primary,
 #endif
@@ -176,7 +177,7 @@ struct cpu_info *phycpu_info_list = &phycpu_info_primary;
 
 static void	cpu_set_tss_gates(struct cpu_info *ci);
 
-uint32_t cpus_attached = 0;
+uint32_t cpus_attached = 1;
 uint32_t cpus_running = 0;
 
 uint32_t phycpus_attached = 0;
@@ -506,8 +507,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		//gdt_init_cpu(ci);
 
 		cpu_set_tss_gates(ci);
-		pmap_cpu_init_early(ci);
-		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 
 		if (ci->ci_flags & CPUF_PRESENT) {
@@ -742,6 +741,7 @@ cpu_hatch(void *v)
 
 	/* Because the text may have been patched in x86_patch(). */
 	x86_flush();
+	tlbflushg();
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 

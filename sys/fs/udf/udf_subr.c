@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.114 2011/04/26 11:32:39 hannken Exp $ */
+/* $NetBSD: udf_subr.c,v 1.114.2.1 2011/06/23 14:20:17 cherry Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.114 2011/04/26 11:32:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.114.2.1 2011/06/23 14:20:17 cherry Exp $");
 #endif /* not lint */
 
 
@@ -3467,7 +3467,7 @@ loop:
 	if (udf_node) {
 		vp = udf_node->vnode;
 		assert(vp);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		mutex_exit(&ump->ihash_lock);
 		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
@@ -5344,8 +5344,8 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 
 	DPRINTF(NODE, ("\tget new vnode\n"));
 	/* give it a vnode */
-	error = getnewvnode(VT_UDF, ump->vfs_mountp, udf_vnodeop_p, &nvp);
-        if (error) {
+	error = getnewvnode(VT_UDF, ump->vfs_mountp, udf_vnodeop_p, NULL, &nvp);
+	if (error) {
 		pool_put(&udf_node_pool, udf_node);
 		mutex_exit(&ump->get_node_lock);
 		return error;
@@ -5801,8 +5801,8 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	*vpp = NULL;
 
 	/* allocate vnode */
-	error = getnewvnode(VT_UDF, ump->vfs_mountp, vnodeops, &nvp);
-        if (error)
+	error = getnewvnode(VT_UDF, ump->vfs_mountp, vnodeops, NULL, &nvp);
+	if (error)
 		return error;
 
 	/* lock node */
@@ -6409,7 +6409,7 @@ derailed:
 		udf_node->i_flags &= ~IN_SYNCED;
 		vp = udf_node->vnode;
 
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		n_udf_node = rb_tree_iterate(&ump->udf_node_tree,
 		    udf_node, RB_DIR_RIGHT);
 
@@ -6418,7 +6418,7 @@ derailed:
 
 		/* system nodes are not synced this way */
 		if (vp->v_vflag & VV_SYSTEM) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 
@@ -6430,7 +6430,7 @@ derailed:
 			&& UVM_OBJ_IS_CLEAN(&vp->v_uobj);
 		if (on_type || (on_flags || on_vnode)) { /* XXX */
 			/* not dirty (enough?) */
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 

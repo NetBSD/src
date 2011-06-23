@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.19 2010/12/20 00:25:37 matt Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.19.6.1 2011/06/23 14:19:20 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.19 2010/12/20 00:25:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.19.6.1 2011/06/23 14:19:20 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,7 +52,7 @@ struct mediabay_softc {
 	u_int *sc_addr;
 	u_int *sc_fcr;
 	u_int sc_baseaddr;
-	struct device *sc_content;
+	device_t sc_content;
 	lwp_t *sc_kthread;
 	enum mediabay_controller sc_type;
 };
@@ -62,8 +62,8 @@ static const char *mediabay_keylargo[] = {
 	NULL
 };
 
-void mediabay_attach(struct device *, struct device *, void *);
-int mediabay_match(struct device *, struct cfdata *, void *);
+void mediabay_attach(device_t, device_t, void *);
+int mediabay_match(device_t, cfdata_t, void *);
 int mediabay_print(void *, const char *);
 void mediabay_attach_content(struct mediabay_softc *);
 int mediabay_intr(void *);
@@ -102,7 +102,7 @@ CFATTACH_DECL(mediabay, sizeof(struct mediabay_softc),
 #define MEDIABAY_ID_NONE	7
 
 int
-mediabay_match(struct device *parent, struct cfdata *cf, void *aux)
+mediabay_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -116,9 +116,9 @@ mediabay_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach all the sub-devices we can find
  */
 void
-mediabay_attach(struct device *parent, struct device *self, void *aux)
+mediabay_attach(device_t parent, device_t self, void *aux)
 {
-	struct mediabay_softc *sc = (struct mediabay_softc *)self;
+	struct mediabay_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 	int irq, itype;
 
@@ -160,7 +160,7 @@ mediabay_attach_content(struct mediabay_softc *sc)
 {
 	int child;
 	u_int fcr = 0;
-	struct device *content;
+	device_t content;
 	struct confargs ca;
 	u_int reg[20], intr[5];
 	char name[32];

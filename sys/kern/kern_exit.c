@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.233 2011/05/01 00:11:52 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.233.2.1 2011/06/23 14:20:19 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.233 2011/05/01 00:11:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.233.2.1 2011/06/23 14:20:19 cherry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -532,6 +532,11 @@ exit1(struct lwp *l, int rv)
 		cv_broadcast(&initproc->p_waitcv);
 
 	callout_destroy(&l->l_timeout_ch);
+
+	/*
+	 * Release any PCU resources before becoming a zombie.
+	 */
+	pcu_discard_all(l);
 
 	/*
 	 * Remaining lwp resources will be freed in lwp_exit2() once we've

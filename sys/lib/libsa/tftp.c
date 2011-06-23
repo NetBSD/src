@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.31 2011/05/11 16:23:40 zoltan Exp $	 */
+/*	$NetBSD: tftp.c,v 1.31.2.1 2011/06/23 14:20:23 cherry Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -248,7 +248,7 @@ tftp_terminate(struct tftp_handle *h)
 }
 #endif
 
-int
+__compactcall int
 tftp_open(const char *path, struct open_file *f)
 {
 	struct tftp_handle *tftpfile;
@@ -275,7 +275,7 @@ tftp_open(const char *path, struct open_file *f)
 	return 0;
 }
 
-int
+__compactcall int
 tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 {
 	struct tftp_handle *tftpfile;
@@ -356,7 +356,7 @@ tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 	return 0;
 }
 
-int
+__compactcall int
 tftp_close(struct open_file *f)
 {
 	struct tftp_handle *tftpfile;
@@ -372,7 +372,7 @@ tftp_close(struct open_file *f)
 	return 0;
 }
 
-int
+__compactcall int
 tftp_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 
@@ -415,7 +415,7 @@ tftp_size_of_file(struct tftp_handle *tftpfile)
 	return filesize;
 }
 
-int
+__compactcall int
 tftp_stat(struct open_file *f, struct stat *sb)
 {
 	struct tftp_handle *tftpfile;
@@ -429,7 +429,7 @@ tftp_stat(struct open_file *f, struct stat *sb)
 	return 0;
 }
 
-off_t
+__compactcall off_t
 tftp_seek(struct open_file *f, off_t offset, int where)
 {
 	struct tftp_handle *tftpfile;

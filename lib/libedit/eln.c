@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.9.4.1 2011/06/23 14:18:38 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.9.4.1 2011/06/23 14:18:38 cherry Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -275,7 +275,7 @@ el_get(EditLine *el, int op, ...)
 	case EL_RPROMPT_ESC: {
 		el_pfunc_t *p = va_arg(ap, el_pfunc_t *);
 		char *c = va_arg(ap, char *);
-		wchar_t wc;
+		wchar_t wc = 0;
 		ret = prompt_get(el, p, &wc, op);
 		*c = (unsigned char)wc;
 		break;

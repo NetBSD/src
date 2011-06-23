@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.24 2011/04/14 15:45:28 yamt Exp $
+# $NetBSD: md.i386,v 1.24.2.1 2011/06/23 14:18:23 cherry Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -25,6 +25,8 @@
 ./@MODULEDIR@/acpiwmi/acpiwmi.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/aibs				base-kernel-modules	kmod
 ./@MODULEDIR@/aibs/aibs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/amdtemp				base-kernel-modules	kmod
+./@MODULEDIR@/amdtemp/amdtemp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/aps				base-kernel-modules	kmod
 ./@MODULEDIR@/aps/aps.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/asus				base-kernel-modules	kmod
@@ -57,6 +59,8 @@
 ./@MODULEDIR@/fujbp/fujbp.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/fujhk				base-kernel-modules	kmod
 ./@MODULEDIR@/fujhk/fujhk.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/hpet				base-kernel-modules	kmod
+./@MODULEDIR@/hpet/hpet.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/hpqlb				base-kernel-modules	kmod
 ./@MODULEDIR@/hpqlb/hpqlb.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/i915drm				base-kernel-modules	kmod

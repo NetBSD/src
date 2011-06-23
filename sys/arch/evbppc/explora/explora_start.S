@@ -1,4 +1,4 @@
-/*	$NetBSD: explora_start.S,v 1.8 2011/01/17 08:23:54 matt Exp $	*/
+/*	$NetBSD: explora_start.S,v 1.8.4.1 2011/06/23 14:19:08 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
-#include <powerpc/ibm4xx/pmap.h>
 
 #include "opt_ddb.h"
 #include "opt_ppcparam.h"
@@ -188,7 +187,7 @@ stage2:
 	ori	3,3,__start@l
 
 /* Run the remaining setup in C. */
-	bl	_C_LABEL(bootstrap)
+	bl	_C_LABEL(initppc)
 
 	bl	_C_LABEL(main)
 

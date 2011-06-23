@@ -1,10 +1,8 @@
-/*	$NetBSD: getufsquota.c,v 1.1 2011/03/24 17:05:43 bouyer Exp $ */
+/*	$NetBSD: getufsquota.c,v 1.1.2.1 2011/06/23 14:18:40 cherry Exp $ */
 
 /*-
   * Copyright (c) 2011 Manuel Bouyer
   * All rights reserved.
-  * This software is distributed under the following condiions
-  * compliant with the NetBSD foundation policy.
   *
   * Redistribution and use in source and binary forms, with or without
   * modification, are permitted provided that the following conditions
@@ -29,7 +27,7 @@
   */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getufsquota.c,v 1.1 2011/03/24 17:05:43 bouyer Exp $");
+__RCSID("$NetBSD: getufsquota.c,v 1.1.2.1 2011/06/23 14:18:40 cherry Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>

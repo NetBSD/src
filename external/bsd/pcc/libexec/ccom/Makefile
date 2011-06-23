@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/05/22 11:53:46 plunky Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2011/06/23 14:18:32 cherry Exp $
 
 WARNS?=	2
 
@@ -22,7 +22,6 @@ MAN=    ccom.1
 # generate cgram.h
 YHEADER=
 
-CPPFLAGS+=	-DPCC_DEBUG
 CPPFLAGS+=	-I${.OBJDIR}
 CPPFLAGS+=	-I${PCC_DIST}/mip
 CPPFLAGS+=	-I${PCC_DIST}/os/${TARGOS}

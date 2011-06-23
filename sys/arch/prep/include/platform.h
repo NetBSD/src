@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.16 2008/04/28 20:23:33 martin Exp $	*/
+/*	$NetBSD: platform.h,v 1.16.32.1 2011/06/23 14:19:36 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,11 +66,11 @@ extern struct platform *platform;
 extern struct pciroutinginfo *pciroutinginfo;
 
 int find_platform_quirk(const char *model);
-void cpu_setup_unknown(struct device *);
+void cpu_setup_unknown(device_t);
 void reset_prep(void);
 void setup_pciroutinginfo(void);
 int pci_chipset_tag_type(void);
-void cpu_setup_prep_generic(struct device *);
+void cpu_setup_prep_generic(device_t);
 void setup_pciintr_map(struct genppc_pci_chipset_businfo *, int bus, int device,
 	int func);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.h,v 1.10 2003/08/07 09:05:34 agc Exp $	*/
+/*	$NetBSD: main.h,v 1.10.52.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,5 +39,3 @@ extern int rootshell;	/* true if we aren't a child of the main shell */
 
 void readcmdfile(char *);
 void cmdloop(int);
-int dotcmd(int, char **);
-int exitcmd(int, char **);

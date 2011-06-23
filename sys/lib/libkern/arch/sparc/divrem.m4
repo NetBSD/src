@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: divrem.m4,v 1.4 92/06/25 13:23:57 torek Exp
- * $NetBSD: divrem.m4,v 1.8 2005/12/11 12:24:44 christos Exp $
+ * $NetBSD: divrem.m4,v 1.8.108.1 2011/06/23 14:20:22 cherry Exp $
  */
 
 /*
@@ -89,7 +89,7 @@ define(V, `%o5')
 
 /* m4 reminder: ifelse(a,b,c,d) => if a is b, then c, else d */
 define(T, `%g1')
-define(SC, `%g7')
+define(SC, `%g5')
 ifelse(S, `true', `define(SIGN, `%g6')')
 
 /*

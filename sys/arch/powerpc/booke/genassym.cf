@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 2011/01/18 01:02:52 matt Exp $
+#	$NetBSD: genassym.cf,v 1.2.6.1 2011/06/23 14:19:28 cherry Exp $
 
 #-
 # Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -41,167 +41,28 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #+
 
-include "opt_ppcarch.h"
-
-quote #define __MUTEX_PRIVATE
-quote #define __RWLOCK_PRIVATE
-quote #define __INTR_PRIVATE
-
 include <sys/param.h>
-include <sys/time.h>
-include <sys/mutex.h>
-include <sys/rwlock.h>
-include <sys/proc.h>
 include <sys/bitops.h>
 
 include <uvm/uvm_extern.h>
 
-include <machine/pcb.h>
 include <machine/frame.h>
+include <machine/psl.h>
 include <machine/pmap.h>
 
-include <powerpc/cpu.h>
 include <powerpc/booke/trap.h>
 include <powerpc/booke/pte.h>
 
-define	FRAMELEN	FRAMELEN
-define	FRAME_TF	offsetof(struct ktrapframe, ktf_tf)
-define	FRAME_0		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[0])
-define	FRAME_1		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[1])
-define	FRAME_2		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[2])
-define	FRAME_3		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[3])
-define	FRAME_4		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[4])
-define	FRAME_5		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[5])
-define	FRAME_6		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[6])
-define	FRAME_7		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[7])
-define	FRAME_8		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[8])
-define	FRAME_9		offsetof(struct ktrapframe, ktf_tf.tf_fixreg[9])
-define	FRAME_10	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[10])
-define	FRAME_11	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[11])
-define	FRAME_12	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[12])
-define	FRAME_13	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[13])
-define	FRAME_14	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[14])
-define	FRAME_15	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[15])
-define	FRAME_16	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[16])
-define	FRAME_17	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[17])
-define	FRAME_18	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[18])
-define	FRAME_19	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[19])
-define	FRAME_20	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[20])
-define	FRAME_21	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[21])
-define	FRAME_22	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[22])
-define	FRAME_23	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[23])
-define	FRAME_24	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[24])
-define	FRAME_25	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[25])
-define	FRAME_26	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[26])
-define	FRAME_27	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[27])
-define	FRAME_28	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[28])
-define	FRAME_29	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[29])
-define	FRAME_30	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[30])
-define	FRAME_31	offsetof(struct ktrapframe, ktf_tf.tf_fixreg[31])
-define	FRAME_LR	offsetof(struct ktrapframe, ktf_tf.tf_lr)
-define	FRAME_CR	offsetof(struct ktrapframe, ktf_tf.tf_cr)
-define	FRAME_CTR	offsetof(struct ktrapframe, ktf_tf.tf_ctr)
-define	FRAME_XER	offsetof(struct ktrapframe, ktf_tf.tf_xer)
-define	FRAME_CF	offsetof(struct ktrapframe, ktf_tf.tf_cf)
-define	FRAME_SRR0	offsetof(struct ktrapframe, ktf_tf.tf_srr0)
-define	FRAME_SRR1	offsetof(struct ktrapframe, ktf_tf.tf_srr1)
-define	FRAME_IDEPTH	offsetof(struct ktrapframe, ktf_tf.tf_idepth)
 define	FRAME_DEAR	offsetof(struct ktrapframe, ktf_tf.tf_dear)
 define	FRAME_ESR	offsetof(struct ktrapframe, ktf_tf.tf_esr)
-define	FRAME_EXC	offsetof(struct ktrapframe, ktf_tf.tf_exc)
 define	FRAME_MCSR	offsetof(struct ktrapframe, ktf_tf.tf_mcsr)
 define	FRAME_MCAR	offsetof(struct ktrapframe, ktf_tf.tf_mcar)
 define	FRAME_SPRG1	offsetof(struct ktrapframe, ktf_tf.tf_sprg1)
 define	FRAME_SPEFSCR	offsetof(struct ktrapframe, ktf_tf.tf_spefscr)
 
-define	CALLFRAMELEN	CALLFRAMELEN
-define	CFRAME_SP	offsetof(struct callframe, cf_sp)
-define	CFRAME_LR	offsetof(struct callframe, cf_lr)
-define	CFRAME_R30	offsetof(struct callframe, cf_r30)
-define	CFRAME_R31	offsetof(struct callframe, cf_r31)
-
-define	SFRAMELEN	SFRAMELEN
-define	SFRAME_SP	offsetof(struct switchframe, sf_sp)
-define	SFRAME_LR	offsetof(struct switchframe, sf_lr)
-define	SFRAME_USER_SR	offsetof(struct switchframe, sf_user_sr)
-define	SFRAME_CR	offsetof(struct switchframe, sf_cr)
-define	SFRAME_R2	offsetof(struct switchframe, sf_fixreg2)
-define	SFRAME_R13	offsetof(struct switchframe, sf_fixreg[0])
-define	SFRAME_R14	offsetof(struct switchframe, sf_fixreg[1])
-define	SFRAME_R15	offsetof(struct switchframe, sf_fixreg[2])
-define	SFRAME_R16	offsetof(struct switchframe, sf_fixreg[3])
-define	SFRAME_R17	offsetof(struct switchframe, sf_fixreg[4])
-define	SFRAME_R18	offsetof(struct switchframe, sf_fixreg[5])
-define	SFRAME_R19	offsetof(struct switchframe, sf_fixreg[6])
-define	SFRAME_R20	offsetof(struct switchframe, sf_fixreg[7])
-define	SFRAME_R21	offsetof(struct switchframe, sf_fixreg[8])
-define	SFRAME_R22	offsetof(struct switchframe, sf_fixreg[9])
-define	SFRAME_R23	offsetof(struct switchframe, sf_fixreg[10])
-define	SFRAME_R24	offsetof(struct switchframe, sf_fixreg[11])
-define	SFRAME_R25	offsetof(struct switchframe, sf_fixreg[12])
-define	SFRAME_R26	offsetof(struct switchframe, sf_fixreg[13])
-define	SFRAME_R27	offsetof(struct switchframe, sf_fixreg[14])
-define	SFRAME_R28	offsetof(struct switchframe, sf_fixreg[15])
-define	SFRAME_R29	offsetof(struct switchframe, sf_fixreg[16])
-define	SFRAME_R30	offsetof(struct switchframe, sf_fixreg[17])
-define	SFRAME_R31	offsetof(struct switchframe, sf_fixreg[18])
-
-define	PCB_PM		offsetof(struct pcb, pcb_pm)
-define	PCB_SP		offsetof(struct pcb, pcb_sp)
-define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
-define	PCB_USPRG0	offsetof(struct pcb, pcb_usprg0)
-
-define	L_PCB		offsetof(struct lwp, l_addr)
-define	L_CPU		offsetof(struct lwp, l_cpu)
-define	L_CTXSWTCH	offsetof(struct lwp, l_ctxswtch)
-define	L_MD_UTF	offsetof(struct lwp, l_md.md_utf)
-define	L_PROC		offsetof(struct lwp, l_proc)
-
-define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
-
-define	CI_SIZE		sizeof(struct cpu_info)
-define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
-define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
-define	CI_CURPM	offsetof(struct cpu_info, ci_curpm)
-define	CI_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
-define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
-define	CI_CPL		offsetof(struct cpu_info, ci_cpl)
-define	CI_IDEPTH	offsetof(struct cpu_info, ci_idepth)
-define	CI_IDLESPIN	offsetof(struct cpu_info, ci_idlespin)
-define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
-define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
-define	CI_SAVELIFO	offsetof(struct cpu_info, ci_savelifo)
+define	CI_SAVELIFO	offsetof(struct cpu_info, ci_savearea[0])
 define	CI_PMAP_SEGTAB	offsetof(struct cpu_info, ci_pmap_segtabs[0])
 define	CI_EV_TLBMISS_SOFT offsetof(struct cpu_info, ci_ev_tlbmiss_soft.ev_count)
-
-define	FB_PC		offsetof(struct faultbuf, fb_pc)
-define	FB_MSR		offsetof(struct faultbuf, fb_msr)
-define	FB_SP		offsetof(struct faultbuf, fb_sp)
-define	FB_R2		offsetof(struct faultbuf, fb_r2)
-define	FB_CR		offsetof(struct faultbuf, fb_cr)
-define	FB_R13		offsetof(struct faultbuf, fb_fixreg[0])
-define	FB_R14		offsetof(struct faultbuf, fb_fixreg[1])
-define	FB_R15		offsetof(struct faultbuf, fb_fixreg[2])
-define	FB_R16		offsetof(struct faultbuf, fb_fixreg[3])
-define	FB_R17		offsetof(struct faultbuf, fb_fixreg[4])
-define	FB_R18		offsetof(struct faultbuf, fb_fixreg[5])
-define	FB_R19		offsetof(struct faultbuf, fb_fixreg[6])
-define	FB_R20		offsetof(struct faultbuf, fb_fixreg[7])
-define	FB_R21		offsetof(struct faultbuf, fb_fixreg[8])
-define	FB_R22		offsetof(struct faultbuf, fb_fixreg[9])
-define	FB_R23		offsetof(struct faultbuf, fb_fixreg[10])
-define	FB_R24		offsetof(struct faultbuf, fb_fixreg[11])
-define	FB_R25		offsetof(struct faultbuf, fb_fixreg[12])
-define	FB_R26		offsetof(struct faultbuf, fb_fixreg[13])
-define	FB_R27		offsetof(struct faultbuf, fb_fixreg[14])
-define	FB_R28		offsetof(struct faultbuf, fb_fixreg[15])
-define	FB_R29		offsetof(struct faultbuf, fb_fixreg[16])
-define	FB_R30		offsetof(struct faultbuf, fb_fixreg[17])
-define	FB_R31		offsetof(struct faultbuf, fb_fixreg[18])
-
-define	CACHELINESIZE	CACHELINESIZE
-
-define	CPU_CI		offsetof(struct cpu_info, ci_ci)
 
 define	PAGE_SIZE	PAGE_SIZE
 define	PAGE_MASK	PAGE_MASK
@@ -231,52 +92,10 @@ define	T_EMBEDDED_FP_ROUND	T_EMBEDDED_FP_ROUND
 define	T_EMBEDDED_PERF_MONITOR	T_EMBEDDED_PERF_MONITOR
 define	T_AST			T_AST
 
-ifdef	__HAVE_FAST_SOFTINTS
-define	__HAVE_FAST_SOFTINTS	__HAVE_FAST_SOFTINTS
-endif
-
-define	INTRSW_CRITINTR		offsetof(struct intrsw, intrsw_critintr)
-define	INTRSW_DECRINTR		offsetof(struct intrsw, intrsw_decrintr)
-define	INTRSW_FITINTR		offsetof(struct intrsw, intrsw_fitintr)
-define	INTRSW_WDOGINTR		offsetof(struct intrsw, intrsw_wdogintr)
-define	INTRSW_EXTINTR		offsetof(struct intrsw, intrsw_extintr)
-
-define	IPL_HIGH		IPL_HIGH
-define	IPL_SCHED		IPL_SCHED
-define	IPL_VM			IPL_VM
-
-ifdef	__HAVE_MUTEX_STUBS
-define	__HAVE_MUTEX_STUBS	__HAVE_MUTEX_STUBS
-endif
-ifdef	__HAVE_MUTEX_SPIN_STUBS
-define	__HAVE_MUTEX_SPIN_STUBS	__HAVE_MUTEX_SPIN_STUBS
-endif
-define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
-define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)
-define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
-
-ifdef	__HAVE_RW_STUBS
-define	__HAVE_RW_STUBS	__HAVE_RW_STUBS
-endif
-define	RW_OWNER	offsetof(struct krwlock, rw_owner)
-define	RW_WRITE_LOCKED	RW_WRITE_LOCKED
-define	RW_READ_INCR	RW_READ_INCR
-define	RW_READER	RW_READER
-
-##define	USPACE		USPACE
-
 define	PTE_SCALESHIFT	ilog2(sizeof(pt_entry_t))
 define	PTR_SCALESHIFT	ilog2(sizeof(void *))
-define	PSL_CE		PSL_CE
-define	PSL_DE		PSL_DE
-define	PSL_EE		PSL_EE
-define	PSL_ME		PSL_ME
-define	PSL_PR		PSL_PR
-define	MSR_PR		31 - ilog2(PSL_PR)
-define	PSL_DS		PSL_DS
-define	MSR_DS		31 - ilog2(PSL_DS)
-define	PSL_IS		PSL_IS
-define	MSR_IS		31 - ilog2(PSL_IS)
-
 define	NSEGPG_SCALESHIFT	PAGE_SHIFT - ilog2(sizeof(void *))
 define	NPTEPG_SCALESHIFT	PAGE_SHIFT - ilog2(sizeof(pt_entry_t))
+
+define	MSR_DS		31 - ilog2(PSL_DS)
+define	MSR_IS		31 - ilog2(PSL_IS)

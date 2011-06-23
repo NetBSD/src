@@ -88,6 +88,17 @@ NETDB_DEFINE_CONTEXT
 static int wsa_init_done=0;
 #endif
 
+/*
+ * WSAAPI specifier is required to make indirect calls to run-time
+ * linked WinSock 2 functions used in this module, to be specific
+ * [get|free]addrinfo and getnameinfo. This is because WinSock uses
+ * uses non-C calling convention, __stdcall vs. __cdecl, on x86
+ * Windows. On non-WinSock platforms WSAAPI needs to be void.
+ */
+#ifndef WSAAPI
+#define WSAAPI
+#endif
+
 #if 0
 static unsigned long BIO_ghbn_hits=0L;
 static unsigned long BIO_ghbn_miss=0L;
@@ -540,7 +551,30 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
 #ifdef __DJGPP__
 	i=ioctlsocket(fd,type,(char *)arg);
 #else
-	i=ioctlsocket(fd,type,arg);
+# if defined(OPENSSL_SYS_VMS)
+	/* 2011-02-18 SMS.
+	 * VMS ioctl() can't tolerate a 64-bit "void *arg", but we
+	 * observe that all the consumers pass in an "unsigned long *",
+	 * so we arrange a local copy with a short pointer, and use
+	 * that, instead.
+	 */
+#  if __INITIAL_POINTER_SIZE == 64
+#   define ARG arg_32p
+#   pragma pointer_size save
+#   pragma pointer_size 32
+	unsigned long arg_32;
+	unsigned long *arg_32p;
+#   pragma pointer_size restore
+	arg_32p = &arg_32;
+	arg_32 = *((unsigned long *) arg);
+#  else /* __INITIAL_POINTER_SIZE == 64 */
+#   define ARG arg
+#  endif /* __INITIAL_POINTER_SIZE == 64 [else] */
+# else /* defined(OPENSSL_SYS_VMS) */
+#  define ARG arg
+# endif /* defined(OPENSSL_SYS_VMS) [else] */
+
+	i=ioctlsocket(fd,type,ARG);
 #endif /* __DJGPP__ */
 	if (i < 0)
 		SYSerr(SYS_F_IOCTLSOCKET,get_last_socket_error());
@@ -595,7 +629,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 		struct sockaddr_in6 sa_in6;
 #endif
 	} server,client;
-	int s=INVALID_SOCKET,cs;
+	int s=INVALID_SOCKET,cs,addrlen;
 	unsigned char ip[4];
 	unsigned short port;
 	char *str=NULL,*e;
@@ -627,12 +661,12 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 #ifdef EAI_FAMILY
 	do {
 	static union {	void *p;
-			int (*f)(const char *,const char *,
+			int (WSAAPI *f)(const char *,const char *,
 				 const struct addrinfo *,
 				 struct addrinfo **);
 			} p_getaddrinfo = {NULL};
 	static union {	void *p;
-			void (*f)(struct addrinfo *);
+			void (WSAAPI *f)(struct addrinfo *);
 			} p_freeaddrinfo = {NULL};
 	struct addrinfo *res,hint;
 
@@ -649,6 +683,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 	 * note that commonly IPv6 wildchard socket can service
 	 * IPv4 connections just as well...  */
 	memset(&hint,0,sizeof(hint));
+	hint.ai_flags = AI_PASSIVE;
 	if (h)
 		{
 		if (strchr(h,':'))
@@ -661,15 +696,20 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 #endif
 			}
 	    	else if (h[0]=='*' && h[1]=='\0')
+			{
+			hint.ai_family = AF_INET;
 			h=NULL;
+			}
 		}
 	/* XXX: below we cast to sockaddr_in! */
 	hint.ai_family = AF_INET;
 
 	if ((*p_getaddrinfo.f)(h,p,&hint,&res)) break;
 
-	memcpy(&server, res->ai_addr,
-		res->ai_addrlen<=sizeof(server)?res->ai_addrlen:sizeof(server));
+	addrlen = res->ai_addrlen<=sizeof(server) ?
+			res->ai_addrlen :
+			sizeof(server);
+	memcpy(&server, res->ai_addr, addrlen);
 
 	(*p_freeaddrinfo.f)(res);
 	goto again;
@@ -681,6 +721,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 	memset((char *)&server,0,sizeof(server));
 	server.sa_in.sin_family=AF_INET;
 	server.sa_in.sin_port=htons(port);
+	addrlen = sizeof(server.sa_in);
 
 	if (h == NULL || strcmp(h,"*") == 0)
 		server.sa_in.sin_addr.s_addr=INADDR_ANY;
@@ -714,12 +755,19 @@ again:
 		bind_mode=BIO_BIND_NORMAL;
 		}
 #endif
-	if (bind(s,&server.sa,sizeof(server)) == -1)
+	if (bind(s,&server.sa,addrlen) == -1)
 		{
 #ifdef SO_REUSEADDR
 		err_num=get_last_socket_error();
 		if ((bind_mode == BIO_BIND_REUSEADDR_IF_UNUSED) &&
+#ifdef OPENSSL_SYS_WINDOWS
+			/* Some versions of Windows define EADDRINUSE to
+			 * a dummy value.
+			 */
+			(err_num == WSAEADDRINUSE))
+#else
 			(err_num == EADDRINUSE))
+#endif
 			{
 			client = server;
 			if (h == NULL || strcmp(h,"*") == 0)
@@ -742,7 +790,7 @@ again:
 			if (cs != INVALID_SOCKET)
 				{
 				int ii;
-				ii=connect(cs,&client.sa,sizeof(client));
+				ii=connect(cs,&client.sa,addrlen);
 				closesocket(cs);
 				if (ii == INVALID_SOCKET)
 					{
@@ -842,7 +890,7 @@ int BIO_accept(int sock, char **addr)
 	char   h[NI_MAXHOST],s[NI_MAXSERV];
 	size_t nl;
 	static union {	void *p;
-			int (*f)(const struct sockaddr *,size_t/*socklen_t*/,
+			int (WSAAPI *f)(const struct sockaddr *,size_t/*socklen_t*/,
 				 char *,size_t,char *,size_t,int);
 			} p_getnameinfo = {NULL};
 			/* 2nd argument to getnameinfo is specified to

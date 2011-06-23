@@ -1,4 +1,4 @@
-.\"	$NetBSD: extattrctl.8,v 1.3 2009/03/11 18:05:37 joerg Exp $
+.\"	$NetBSD: extattrctl.8,v 1.3.4.1 2011/06/23 14:20:46 cherry Exp $
 .\"
 .\" Copyright (c) 2000-2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" Developed by the TrustedBSD Project.
 .\" Support for file system extended attribute.
 .\"
-.Dd July 11, 2005
+.Dd June 17, 2011
 .Dt EXTATTRCTL 8
 .Os
 .Sh NAME
@@ -83,6 +83,17 @@ Start extended attribute support on the file system named using
 The file system must be a UFS1 file system, and the
 .Dv UFS_EXTATTR
 kernel option must have been enabled.
+If
+.Pa .attribute/user
+and
+.Pa .attribute/system
+exist at the filesystem root, extended attributes backed by files
+in these directories will be automatically enabled.
+Note that extended attributes can be automatically started at mount
+time by using the
+.Cm -o extattr
+option to
+.Xr mount 8 .
 .It Cm stop Ar path
 Stop extended attribute support on the file system named using
 .Ar path .
@@ -110,6 +121,17 @@ from denying attribute service.
 .Pp
 This file should not exist before running
 .Cm initattr .
+.Pp
+When a user attempts to set a
+.Dq user
+or
+.Dq system
+extended attribute that lacks a backing file,
+the kernel will attempt to automatically create it, provided
+.Pa .attribute/user
+or
+.Pa .attribute/system
+exist and are writable by the requesting user.
 .It Cm showattr Ar attrfile
 Show the attribute header values in the attribute file named by
 .Ar attrfile .
@@ -146,25 +168,6 @@ The file system must have attributes started on it, and the attribute
 most have been enabled using
 .Cm enable .
 .El
-.Pp
-The kernel also includes support for automatic starting of extended
-attributes on a file system at mount time once configured with
-.Nm .
-If the kernel is built with the
-.Dv UFS_EXTATTR_AUTOSTART
-option, UFS will search for a
-.Pa .attribute
-sub-directory of the file system root during the mount operation.
-If found, extended attribute support will be started for the file system.
-UFS will then search for
-.Pa system
-and
-.Pa user
-sub-directories of the
-.Pa .attribute
-directory for any potential backing files and enable an extended attribute
-for each valid backing file with the backing file name as the attribute
-name.
 .Sh EXAMPLES
 .Dl extattrctl start /
 .Pp
@@ -190,9 +193,9 @@ Disable the attribute named md5 on the root file system.
 .Pp
 Stop extended attributes on the root file system.
 .Sh SEE ALSO
+.Xr getextattr 1 ,
 .Xr extattr_get_file 2 ,
 .\" .Xr ffs 7 ,
-.Xr getextattr 8 ,
 .Xr extattr 9
 .Sh HISTORY
 Extended attribute support was developed as part of the TrustedBSD
@@ -202,6 +205,8 @@ and
 .Nx 4.0 .
 It was developed to support security extensions requiring additional
 labels to be associated with each file or directory.
+Backing file autocreation was added in
+.Nx 6.0 .
 .Sh AUTHORS
 .An Robert N M Watson
 .Sh BUGS

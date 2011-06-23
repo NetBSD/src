@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29 2010/11/14 13:33:21 uebayasi Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.6.1 2011/06/23 14:19:13 cherry Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -51,6 +51,7 @@
 struct pmap {
 	struct uvm_object pm_obj;	/* object (lck by object lock) */
 #define	pm_lock	pm_obj.vmobjlock
+	kmutex_t	pm_obj_lock;	/* lock for pm_obj */
 	struct vm_page	*pm_ptphint;
 	struct vm_page	*pm_pdir_pg;	/* vm_page for pdir */
 	volatile uint32_t *pm_pdir;	/* page dir (read-only after create) */
@@ -197,7 +198,6 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 struct pv_entry;
 
 struct vm_page_md {
-	struct kmutex	pvh_lock;	/* locks every pv on this list */
 	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
 	u_int		pvh_attrs;	/* to preserve ref/mod */
 	int		pvh_aliases;	/* alias counting */
@@ -205,7 +205,6 @@ struct vm_page_md {
 
 #define	VM_MDPAGE_INIT(pg) \
 do {									\
-	mutex_init(&(pg)->mdpage.pvh_lock, MUTEX_NODEBUG, IPL_VM);	\
 	(pg)->mdpage.pvh_list = NULL;					\
 	(pg)->mdpage.pvh_attrs = 0;					\
 	(pg)->mdpage.pvh_aliases = 0;					\

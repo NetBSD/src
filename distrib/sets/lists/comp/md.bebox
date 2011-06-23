@@ -1,10 +1,10 @@
-# $NetBSD: md.bebox,v 1.32 2010/03/14 23:19:18 mrg Exp $
+# $NetBSD: md.bebox,v 1.32.4.1 2011/06/23 14:18:21 cherry Exp $
 ./usr/include/bebox				comp-c-include
 ./usr/include/bebox/_G_config.h			comp-obsolete		obsolete
 ./usr/include/bebox/ansi.h			comp-c-include
 ./usr/include/bebox/aout_machdep.h		comp-c-include
 ./usr/include/bebox/asm.h			comp-c-include
-./usr/include/bebox/atomic.h			comp-c-include
+./usr/include/bebox/atomic.h			comp-obsolete		obsolete
 ./usr/include/bebox/bat.h			comp-obsolete		obsolete
 ./usr/include/bebox/bootinfo.h			comp-c-include
 ./usr/include/bebox/bswap.h			comp-c-include

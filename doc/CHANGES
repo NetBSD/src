@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1552 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1552.2.1 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -996,6 +996,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.2.12. [roy 20110406]
 	sparc64: Add EDID (Extended Display Identification Data) reading,
 		and video mode setting support, to ffb(4). [jdc 20110408]
+	x68k: Fix hangup on floppy access. [tsutsui 20110410]
 	kernel: Bug fixes and improvements to POSIX semaphore. [rmind 20110411]
 	kerberos(8): Upgrade to Heimdal-1.5pre1. [elric 20110416]
 	kernel: Support for Darwin, Mach, IRIX and PECOFF emulation was
@@ -1004,13 +1005,44 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[jym 20110429]
 	powerpc: Converted PowerPC to use PCU to manage FPU/AltiVec/SPE.
 		[matt 20110502]
+	x68k: Fix a buffercache overrun bug that causes unexpected panic
+		during sysinst. [tsutsui 20110505]
 	perfuse: Add the PUFFS RElay to FUSE library, which bridges the kernel
 		 level API for FUSE filesystems with native PUFFS. 
 		 [manu 20110509]
 	postfix(1): Import version 2.8.3 [tron 20110511]
-	file(1): Import 5.07 (christos 20110512)
+	file(1): Import 5.07 [christos 20110512]
+	m68k: Fix a regression bug in FPU_EMULATE code that causes weird awk(1)
+		behavior. [tsutsui 20110514]
 	userconf(4), boot.cfg(5), boot(8), i386, amd64: Support userconf(4)
 		command in boot.cfg(5)/boot(8) on i386/amd64.
 		[uebayasi 20110526]
 	kernel: add SOCK_SEQPACKET for local sockets [manu 20110529]
 	bind: Update to 9.8.0-P2: Security fixes. [spz 20110529]
+	makefs(8): Fix a corrupted RRIP entry problem in deep directories on
+		cd9660 fs with rockridge extension. [tsutsui 20110529]
+	tmpfs: Many fixes and some performance improvements. [rmind 20110529]
+	powerpc: Initial SMP support for MPC85xx, reworked and unified IPI
+		code, various other improvements. [matt 20110605]
+	ktrace(1): Add a new trace point to list all open file descriptors
+		after exec(3). [alnsn 20110601]
+	alpha: Converted Alpha to use PCU to manage FPU. [matt 20110607]
+	sparc: enable options MODULAR in the GENERIC* kernels.  [mrg 20110611]
+	kernel: Merge of the rmind-uvmplock branch. [rmind 20110612]
+	resolvconf(8): import openresolv-3.4.2 [roy 20110613]
+	openssl(1): Import openssl-1.0.1-stable-SNAP-20110605 [spz 20110605]
+	powerpc: Switch to using direct-mapped uareas (pcb + kernel stacks).
+		[matt 20110613]
+	atf(7): Import 0.14.  [jmmv 20110614]
+	evbppc: Enable builds for OEA, ibm4xx and Book-E modules.
+		[mrg 20110615]
+	powerpc: the generic PIC code now supports matt@'s fast softintr
+		code [macallan 20110615]
+	alpha: support for Avalon A12 removed [matt 20110617]
+	sparc64: Add fast softint(9) support. [nakayama 20110618]
+	zaurus: Add ioexp driver for SL-C1000. [nonaka 20110619]
+	mpc: Import mpc 0.9.  [mrg 20110619]
+	mpfr: Import mpfr 3.0.1.  [mrg 20110619]
+	GMP: Import GNU MP 5.0.2.  [mrg 20110619]
+	sandpoint: Add support for booting from RAID 1 [jdc 20110620]
+	GCC: Import version 4.5.3.  [mrg 20110620]

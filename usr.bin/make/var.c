@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.166 2011/05/21 07:30:42 tsutsui Exp $	*/
+/*	$NetBSD: var.c,v 1.166.2.1 2011/06/23 14:20:44 cherry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.166 2011/05/21 07:30:42 tsutsui Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.166.2.1 2011/06/23 14:20:44 cherry Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.166 2011/05/21 07:30:42 tsutsui Exp $");
+__RCSID("$NetBSD: var.c,v 1.166.2.1 2011/06/23 14:20:44 cherry Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2498,13 +2498,27 @@ ApplyModifiers(char *nstr, const char *tstr,
 
 	if (*tstr == '$') {
 	    /*
-	     * We have some complex modifiers in a variable.
+	     * We may have some complex modifiers in a variable.
 	     */
 	    void *freeIt;
 	    char *rval;
 	    int rlen;
+	    int c;
 
 	    rval = Var_Parse(tstr, ctxt, errnum, &rlen, &freeIt);
+
+	    /*
+	     * If we have not parsed up to endc or ':',
+	     * we are not interested.
+	     */
+	    if (rval != NULL && *rval &&
+		(c = tstr[rlen]) != '\0' &&
+		c != ':' &&
+		c != endc) {
+		if (freeIt)
+		    free(freeIt);
+		goto apply_mods;
+	    }
 
 	    if (DEBUG(VAR)) {
 		fprintf(debug_file, "Got '%s' from '%.*s'%.*s\n",
@@ -2537,6 +2551,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    }
 	    continue;
 	}
+    apply_mods:
 	if (DEBUG(VAR)) {
 	    fprintf(debug_file, "Applying :%c to \"%s\"\n", *tstr, nstr);
 	}

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2011/02/20 20:18:57 jmmv Exp $
+# $NetBSD: Makefile,v 1.4.2.1 2011/06/23 14:18:29 cherry Exp $
 
 .include <bsd.own.mk>
 
@@ -19,9 +19,20 @@ CPPFLAGS+=	-I${SRCDIR}
 WARNS?=		2
 
 .if ${MKSHARE} != "no"
-FILESDIR=	/usr/share/atf
 FILESMODE=	444
-FILES+=		libatf-sh.subr
+
+FILES+=				libatf-sh.subr
+FILESDIR_libatf-sh.subr=	/usr/share/atf
+
+FILES+=			atf-sh.pc
+FILESDIR_atf-sh.pc=	/usr/lib/pkgconfig
+
+realall: atf-sh.pc
+atf-sh.pc: Makefile atf-sh.pc.in
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.14,g' \
+	    -e 's,__EXEC_PREFIX__,/usr,g' \
+	    <${SRCDIR}/atf-sh/atf-sh.pc.in >atf-sh.pc
+CLEANFILES+=	atf-sh.pc
 .endif
 
 .include <bsd.prog.mk>

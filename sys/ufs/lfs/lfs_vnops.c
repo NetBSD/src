@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.234 2011/01/05 19:34:27 martin Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.234.6.1 2011/06/23 14:20:32 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.234 2011/01/05 19:34:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.234.6.1 2011/06/23 14:20:32 cherry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -310,7 +310,7 @@ lfs_fsync(void *v)
 
 	wait = (ap->a_flags & FSYNC_WAIT);
 	do {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
 				     round_page(ap->a_offhi),
 				     PGO_CLEANIT | (wait ? PGO_SYNCIO : 0));
@@ -473,16 +473,18 @@ lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
 	ASSERT_NO_SEGLOCK(fs);
 	if (fs->lfs_ronly)
 		return EROFS;
-	if (vpp && (error = getnewvnode(VT_LFS, dvp->v_mount, lfs_vnodeop_p, vpp))) {
+	if (vpp == NULL) {
+		return lfs_set_dirop(dvp, NULL);
+	}
+	error = getnewvnode(VT_LFS, dvp->v_mount, lfs_vnodeop_p, NULL, vpp);
+	if (error) {
 		DLOG((DLOG_ALLOC, "lfs_set_dirop_create: dvp %p error %d\n",
 		      dvp, error));
 		return error;
 	}
 	if ((error = lfs_set_dirop(dvp, NULL)) != 0) {
-		if (vpp) {
-			ungetnewvnode(*vpp);
-			*vpp = NULL;
-		}
+		ungetnewvnode(*vpp);
+		*vpp = NULL;
 		return error;
 	}
 	return 0;
@@ -540,7 +542,7 @@ lfs_mark_vnode(struct vnode *vp)
 	mutex_enter(&lfs_lock);
 	if (!(ip->i_flag & IN_ADIROP)) {
 		if (!(vp->v_uflag & VU_DIROP)) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			(void)lfs_vref(vp);
 			++lfs_dirvcount;
 			++fs->lfs_dirvcount;
@@ -1387,13 +1389,13 @@ lfs_flush_pchain(struct lfs *fs)
 		if (!(ip->i_flags & IN_PAGING))
 			goto top;
 
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		if ((vp->v_iflag & VI_XLOCK) || (vp->v_uflag & VU_DIROP) != 0) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		if (vp->v_type != VREG) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		if (lfs_vref(vp))
@@ -1673,7 +1675,7 @@ segwait_common:
 		wakeup(&fs->lfs_wrappass);
 		/* Wait for the log to wrap, if asked */
 		if (*(int *)ap->a_data) {
-			mutex_enter(&ap->a_vp->v_interlock);
+			mutex_enter(ap->a_vp->v_interlock);
 			lfs_vref(ap->a_vp);
 			VTOI(ap->a_vp)->i_lfs_iflags |= LFSI_WRAPWAIT;
 			log(LOG_NOTICE, "LFCNPASS waiting for log wrap\n");
@@ -1758,8 +1760,8 @@ wait_for_page(struct vnode *vp, struct vm_page *pg, const char *label)
 #endif
 
 	pg->flags |= PG_WANTED;
-	UVM_UNLOCK_AND_WAIT(pg, &vp->v_interlock, 0, "lfsput", 0);
-	mutex_enter(&vp->v_interlock);
+	UVM_UNLOCK_AND_WAIT(pg, vp->v_interlock, 0, "lfsput", 0);
+	mutex_enter(vp->v_interlock);
 }
 
 /*
@@ -1788,7 +1790,7 @@ write_and_wait(struct lfs *fs, struct vnode *vp, struct vm_page *pg,
 
 	while (pg->flags & PG_BUSY &&
 	    pg->uobject == &vp->v_uobj) {
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		if (sp->cbpp - sp->bpp > 1) {
 			/* Write gathered pages */
 			lfs_updatemeta(sp);
@@ -1803,7 +1805,7 @@ write_and_wait(struct lfs *fs, struct vnode *vp, struct vm_page *pg,
 					  ip->i_gen);
 		}
 		++count;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		wait_for_page(vp, pg, label);
 	}
 	if (label != NULL && count > 1)
@@ -2055,7 +2057,7 @@ lfs_putpages(void *v)
 
 	/* Putpages does nothing for metadata. */
 	if (vp == fs->lfs_ivnode || vp->v_type != VREG) {
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		return 0;
 	}
 
@@ -2069,7 +2071,7 @@ lfs_putpages(void *v)
 			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			vn_syncer_remove_from_worklist(vp);
 		}
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		
 		/* Remove us from paging queue, if we were on it */
 		mutex_enter(&lfs_lock);
@@ -2097,9 +2099,9 @@ lfs_putpages(void *v)
 			KASSERT(pg != NULL);
 			while (pg->flags & PG_BUSY) {
 				pg->flags |= PG_WANTED;
-				UVM_UNLOCK_AND_WAIT(pg, &vp->v_interlock, 0,
+				UVM_UNLOCK_AND_WAIT(pg, vp->v_interlock, 0,
 						    "lfsput2", 0);
-				mutex_enter(&vp->v_interlock);
+				mutex_enter(vp->v_interlock);
 			}
 			mutex_enter(&uvm_pageqlock);
 			uvm_pageactivate(pg);
@@ -2107,7 +2109,7 @@ lfs_putpages(void *v)
 		}
 		ap->a_offlo = blkeof;
 		if (ap->a_offhi > 0 && ap->a_offhi <= ap->a_offlo) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			return 0;
 		}
 	}
@@ -2133,7 +2135,7 @@ lfs_putpages(void *v)
 	KASSERT(startoffset > 0 || endoffset >= startoffset);
 	if (startoffset == endoffset) {
 		/* Nothing to do, why were we called? */
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		DLOG((DLOG_PAGE, "lfs_putpages: startoffset = endoffset = %"
 		      PRId64 "\n", startoffset));
 		return 0;
@@ -2167,7 +2169,7 @@ lfs_putpages(void *v)
 				ap->a_flags, 1, NULL);
 		if (r < 0) {
 			/* Pages are busy with another process */
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			return EDEADLK;
 		}
 		if (r > 0) /* Some pages are dirty */
@@ -2187,7 +2189,7 @@ lfs_putpages(void *v)
 			return r;
 
 		/* One of the pages was busy.  Start over. */
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		wait_for_page(vp, busypg, "dirtyclean");
 #ifdef DEBUG
 		++debug_n_dirtyclean;
@@ -2211,7 +2213,7 @@ lfs_putpages(void *v)
 	 * get a nasty deadlock with lfs_flush_pchain().
 	 */
 	if (pagedaemon) {
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		mutex_enter(&lfs_lock);
 		if (!(ip->i_flags & IN_PAGING)) {
 			ip->i_flags |= IN_PAGING;
@@ -2236,7 +2238,7 @@ lfs_putpages(void *v)
 		DLOG((DLOG_PAGE, "lfs_putpages: flushing VU_DIROP\n"));
 		/* XXX VOP_ISLOCKED() may not be used for lock decisions. */
 		locked = (VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		lfs_writer_enter(fs, "ppdirop");
 		if (locked)
 			VOP_UNLOCK(vp); /* XXX why? */
@@ -2247,7 +2249,7 @@ lfs_putpages(void *v)
 
 		if (locked)
 			VOP_LOCK(vp, LK_EXCLUSIVE);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		lfs_writer_leave(fs);
 
 		/* XXX the flush should have taken care of this one too! */
@@ -2276,11 +2278,11 @@ lfs_putpages(void *v)
 	 */
 	seglocked = (ap->a_flags & PGO_LOCKED) != 0;
 	if (!seglocked) {
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		error = lfs_seglock(fs, SEGM_PROT | (sync ? SEGM_SYNC : 0));
 		if (error != 0)
 			return error;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 	}
 	sp = fs->lfs_sp;
@@ -2307,15 +2309,15 @@ lfs_putpages(void *v)
 		busypg = NULL;
 		if (check_dirty(fs, vp, startoffset, endoffset, blkeof,
 				ap->a_flags, 0, &busypg) < 0) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			write_and_wait(fs, vp, busypg, seglocked, NULL);
 			if (!seglocked) {
-				mutex_exit(&vp->v_interlock);
+				mutex_exit(vp->v_interlock);
 				lfs_release_finfo(fs);
 				lfs_segunlock(fs);
-				mutex_enter(&vp->v_interlock);
+				mutex_enter(vp->v_interlock);
 			}
 			sp->vp = NULL;
 			goto get_seglock;
@@ -2331,7 +2333,7 @@ lfs_putpages(void *v)
 			      ip->i_number, fs->lfs_offset,
 			      dtosn(fs, fs->lfs_offset)));
 
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			write_and_wait(fs, vp, busypg, seglocked, "again");
 		}
 #ifdef DEBUG
@@ -2401,13 +2403,13 @@ lfs_putpages(void *v)
 	 * aiodoned might not have got around to our buffers yet.
 	 */
 	if (sync) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		while (vp->v_numoutput > 0) {
 			DLOG((DLOG_PAGE, "lfs_putpages: ino %d sleeping on"
 			      " num %d\n", ip->i_number, vp->v_numoutput));
-			cv_wait(&vp->v_cv, &vp->v_interlock);
+			cv_wait(&vp->v_cv, vp->v_interlock);
 		}
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 	return error;
 }

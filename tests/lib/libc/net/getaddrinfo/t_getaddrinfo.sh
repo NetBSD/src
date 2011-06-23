@@ -1,4 +1,4 @@
-#	$NetBSD: t_getaddrinfo.sh,v 1.1 2011/01/12 02:58:41 pgoyette Exp $
+#	$NetBSD: t_getaddrinfo.sh,v 1.1.4.1 2011/06/23 14:20:39 cherry Exp $
 
 #
 # Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, and 2002 WIDE Project.
@@ -154,7 +154,7 @@ sock_raw_body()
 	check_output sock_raw hosts
 }
 
-atf_test_case unspported_family
+atf_test_case unsupported_family
 unsupported_family_head()
 {
 	atf_set "descr" "Testing unsupported family"
@@ -193,6 +193,6 @@ atf_init_test_cases()
 	atf_add_test_case empty_hostname
 	atf_add_test_case empty_servname
 	atf_add_test_case sock_raw
-	atf_add_test_case unspported_family
+	atf_add_test_case unsupported_family
 	atf_add_test_case scopeaddr
 }

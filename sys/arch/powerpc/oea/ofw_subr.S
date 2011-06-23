@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.8 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.8.36.1 2011/06/23 14:19:32 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,20 +37,12 @@
 	.local	ofwsrsave
 	.local	OF_buffer
 
-	.data
-GLOBAL(ofmsr)
-	.long	0,0,0,0,0		/* msr & sprg[0-3] used in OF */
-
-GLOBAL(ofwsprg0save)
-	.long	0
-
-GLOBAL(ofwreal_incharge)
-	.long	0
-
-	.comm	firmstk,NBPG,8
-	.comm	OF_buffer,NBPG,4
+	.lcomm	firmstk,NBPG,16
+	.lcomm	OF_buffer,NBPG,4
 	.comm	openfirmware_entry,4,4	/* openfirmware entry point */
-	.comm	ofwsrsave,64,4		/* openfirmware SR savearea */
+	.lcomm	ofwsrsave,64,4		/* openfirmware SR savearea */
+	.lcomm	ofwmsr,20,4		/* msr & sprg[0-3] used in OF */
+	.comm	ofwreal_incharge,4,4
 
 /*
  * Called by start to save the initial OFW state so we can restore it
@@ -64,7 +56,7 @@ ENTRY_NOPROFILE(ofwinit)
 
 	li	%r8,1
 	lis	%r9,ofwreal_incharge@ha
-	stw	%r8,ofwreal_incharge@l(9)
+	stw	%r8,ofwreal_incharge@l(%r9)
 
 	mflr	%r30
 	bl	_C_LABEL(ofwr_init)
@@ -75,17 +67,19 @@ ENTRY_NOPROFILE(ofwinit)
 	stw	%r5,openfirmware_entry@l(%r8) /* save client interface handler*/
 
 	mfmsr	%r0
-	lis	%r9,ofmsr@ha
-	stwu	%r0,ofmsr@l(%r9)		/* save initial MSR value */
+	li	%r8,PSL_IP
+	andc	%r0,%r0,%r8			/* make sure PSL_IP is off */
+	lis	%r9,ofwmsr@ha
+	stwu	%r0,ofwmsr@l(%r9)		/* save initial MSR value */
 
-        mfsprg  %r0,0			/* save SPRGs */
-       	stwu	%r0,4(%r9)
-        mfsprg  %r0,1
-       	stwu	%r0,4(%r9)
-        mfsprg  %r0,2
-       	stwu	%r0,4(%r9)
-        mfsprg  %r0,3
-       	stw	%r0,4(%r9)
+	mfsprg0	%r0				/* save SPRGs */
+	stw	%r0,4(%r9)
+	mfsprg1	%r0
+	stw	%r0,8(%r9)
+	mfsprg2	%r0
+	stw	%r0,12(%r9)
+	mfsprg3	%r0
+	stw	%r0,16(%r9)
 
 	lis	%r8,OF_buffer@ha
 	addi	%r8,%r8,OF_buffer@l
@@ -101,16 +95,20 @@ ENTRY_NOPROFILE(ofwinit)
 ENTRY(openfirmware)
 	mflr	%r0			/* save return address */
 	stw	%r0,4(%r1)
-	stwu	%r1,-16(%r1)		/* setup stack frame */
+	stwu	%r1,-32(%r1)		/* setup stack frame */
 
 	lis	%r4,openfirmware_entry@ha	/* get firmware entry point */
 	lwz	%r4,openfirmware_entry@l(%r4)
 	mtlr	%r4
 
-	mfsprg	%r5,0			/* save current sprg0 (curcpu) */
-	lis	%r4,ofwsprg0save@ha
-	addi	%r4,%r4,ofwsprg0save@l
-	stw	%r5,0(%r4)
+	mfsprg0	%r5			/* save current sprg0 (curcpu) */
+	stw	%r5,16(%r1)
+	mfsprg1	%r5			/* save current sprg1 */
+	stw	%r5,20(%r1)
+	mfsprg2	%r5			/* save current sprg1 */
+	stw	%r5,24(%r1)
+	mfsprg3	%r5			/* save current sprg3 */
+	stw	%r5,28(%r1)
 
 #ifdef FIRMWORKSBUGS
 	lis	%r4,ofwreal_incharge@ha
@@ -156,16 +154,16 @@ ENTRY(openfirmware)
 	cmpwi	%r5,0
 	bne	1b
 2:
-	lis	%r4,ofmsr@ha		/* Open Firmware msr + sprg[0-3] */
-	lwzu	%r5,ofmsr+16@l(%r4)
-	mtsprg	3,%r5
-	lwzu	%r5,-4(%r4)
-	mtsprg	2,%r5
-	lwzu	%r5,-4(%r4)
-	mtsprg	1,%r5
-	lwzu	%r5,-4(%r4)
-	mtsprg	0,%r5
+	lis	%r4,ofwmsr+16@ha	/* Open Firmware msr + sprg[0-3] */
+	lwzu	%r5,ofwmsr+16@l(%r4)
+	mtsprg3	%r5
 	lwz	%r5,-4(%r4)
+	mtsprg2	%r5
+	lwz	%r5,-8(%r4)
+	mtsprg1	%r5
+	lwz	%r5,-12(%r4)
+	mtsprg0	%r5
+	lwz	%r5,-16(%r4)
 	mtmsr	%r5
 	isync
 
@@ -185,10 +183,14 @@ ENTRY(openfirmware)
 	mtmsr	%r4
 	isync
 4:	
-	lis	%r4,ofwsprg0save@ha	/* restore saved sprg0 (curcpu) */
-	addi	%r4,%r4,ofwsprg0save@l
-	lwz	%r5,0(%r4)
-	mtsprg	0,%r5
+	lwz	%r5,16(%r1)		/* restore saved sprgs (curcpu) */
+	mtsprg0	%r5
+	lwz	%r5,20(%r1)
+	mtsprg1	%r5
+	lwz	%r5,24(%r1)
+	mtsprg2	%r5
+	lwz	%r5,28(%r1)
+	mtsprg3	%r5
 
 	lwz	%r1,0(%r1)		/* and return */
 	lwz	%r0,4(%r1)

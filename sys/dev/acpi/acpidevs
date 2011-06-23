@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.33 2011/01/10 17:04:22 jruoho Exp $
+# $NetBSD: acpidevs,v 1.33.6.1 2011/06/23 14:19:56 cherry Exp $
 #
 # Originally extracted from:
 
@@ -389,6 +389,7 @@ ACPI000C	Processor Aggregator
 ACPI000D	Power Meter
 ACPI000E	Wake Alarm Device
 # **** Others ****
+ENE0100		KB3924-based CIR Port Reciever
 HPQ0004		Hewlett-Packard 3D DriveGuard accelerometer
 IBM0079		IBM Docking Station
 INT0800		Intel Firmware Hub Device

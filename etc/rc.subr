@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.86 2010/09/26 18:37:14 apb Exp $
+# $NetBSD: rc.subr,v 1.86.4.1 2011/06/23 14:18:25 cherry Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -248,10 +248,17 @@ _find_processes()
 		read _interp < ${_chroot:-}/$_procname	# read interpreter name
 		_interp=${_interp#\#!}		# strip #!
 		set -- $_interp
+		if [ $1 = "/usr/bin/env" ]; then
+			shift
+			set -- $(type $1)
+			shift $(($# - 1))
+			_interp="${1##*/} $_procname"
+		else
+			_interp="$* $_procname"
+		fi
 		if [ $_interpreter != $1 ]; then
 			warn "\$command_interpreter $_interpreter != $1"
 		fi
-		_interp="$* $_procname"		# cleanup spaces, add _procname
 		_interpbn=${1##*/}
 		_fp_args='_argv'
 		_fp_match='case "$_argv" in

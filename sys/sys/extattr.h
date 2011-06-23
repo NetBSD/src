@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.4 2006/05/14 21:38:18 elad Exp $	*/
+/*	$NetBSD: extattr.h,v 1.4.96.1 2011/06/23 14:20:29 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -45,6 +45,10 @@
 #define	EXTATTR_NAMESPACE_USER_STRING	"user"
 #define	EXTATTR_NAMESPACE_SYSTEM	0x00000002
 #define	EXTATTR_NAMESPACE_SYSTEM_STRING	"system"
+
+/* for sys_extattrctl */
+#define EXTATTR_CMD_START		0x00000001
+#define EXTATTR_CMD_STOP		0x00000002
 
 #ifdef _KERNEL
 

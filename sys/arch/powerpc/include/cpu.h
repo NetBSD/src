@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.76 2011/05/04 04:33:37 macallan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.76.2.1 2011/06/23 14:19:30 cherry Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -45,13 +45,12 @@ struct cache_info {
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
 #endif
 
 #ifdef _KERNEL
-#include <machine/frame.h>
-#include <machine/psl.h>
 #include <machine/intr.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
@@ -68,11 +67,9 @@ struct cpu_info {
 
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
-	struct lwp * volatile ci_fpulwp;
-	struct lwp * volatile ci_veclwp;
-	int ci_cpuid;
+	struct lwp *ci_softlwps[SOFTINT_COUNT];
+	int ci_cpuid;			/* from SPR_PIR */
 
-	volatile int ci_astpending;
 	int ci_want_resched;
 	volatile uint64_t ci_lastintr;
 	volatile u_long ci_lasttb;
@@ -80,54 +77,54 @@ struct cpu_info {
 	volatile int ci_cpl;
 	volatile int ci_iactive;
 	volatile int ci_idepth;
-#ifndef PPC_BOOKE
-	volatile imask_t ci_ipending;
+	union {
+#if !defined(PPC_BOOKE) && !defined(_MODULE)
+		volatile imask_t un1_ipending;
+#define	ci_ipending	ci_un1.un1_ipending
 #endif
+		uint64_t un1_pad64;
+	} ci_un1;
+	volatile uint32_t ci_pending_ipis;
 	int ci_mtx_oldspl;
 	int ci_mtx_count;
-#ifdef PPC_IBM4XX
+#if defined(PPC_IBM4XX) || defined(MODULAR) || defined(_MODULE)
 	char *ci_intstk;
 #endif
-#ifndef PPC_BOOKE
+#define	CI_SAVETEMP	(0*CPUSAVE_LEN)
+#define	CI_SAVEDDB	(1*CPUSAVE_LEN)
+#define	CI_SAVEIPKDB	(2*CPUSAVE_LEN)
+#define	CI_SAVEMMU	(3*CPUSAVE_LEN)
+#define	CI_SAVEMAX	(4*CPUSAVE_LEN)
 #define	CPUSAVE_LEN	8
-	register_t ci_tempsave[CPUSAVE_LEN];
-	register_t ci_ddbsave[CPUSAVE_LEN];
-	register_t ci_ipkdbsave[CPUSAVE_LEN];
+#if !defined(PPC_BOOKE) && !defined(MODULAR) && !defined(_MODULE)
+#define	CPUSAVE_SIZE	(CI_SAVEMAX*CPUSAVE_LEN)
+#else
+#define	CPUSAVE_SIZE	128
+#endif
 #define	CPUSAVE_R28	0		/* where r28 gets saved */
 #define	CPUSAVE_R29	1		/* where r29 gets saved */
 #define	CPUSAVE_R30	2		/* where r30 gets saved */
 #define	CPUSAVE_R31	3		/* where r31 gets saved */
-#if defined(PPC_IBM4XX)
-#define	CPUSAVE_DEAR	4		/* where SPR_DEAR gets saved */
-#define	CPUSAVE_ESR	5		/* where SPR_ESR gets saved */
-	register_t ci_tlbmisssave[CPUSAVE_LEN];
-#else
-#define	CPUSAVE_DAR	4		/* where SPR_DAR gets saved */
-#define	CPUSAVE_DSISR	5		/* where SPR_DSISR gets saved */
-#define	DISISAVE_LEN	4
-	register_t ci_disisave[DISISAVE_LEN];
-#endif
+#define	CPUSAVE_DEAR	4		/* where IBM4XX SPR_DEAR gets saved */
+#define	CPUSAVE_DAR	4		/* where OEA SPR_DAR gets saved */
+#define	CPUSAVE_ESR	5		/* where IBM4XX SPR_ESR gets saved */
+#define	CPUSAVE_DSISR	5		/* where OEA SPR_DSISR gets saved */
 #define	CPUSAVE_SRR0	6		/* where SRR0 gets saved */
 #define	CPUSAVE_SRR1	7		/* where SRR1 gets saved */
-#else /* PPC_BOOKE */
-#define	CPUSAVE_LEN	128
-	register_t ci_savelifo[CPUSAVE_LEN];
+	register_t ci_savearea[CPUSAVE_SIZE];
+#if defined(PPC_BOOKE) || defined(MODULAR) || defined(_MODULE)
+	uint32_t ci_pmap_asid_cur;
 	struct pmap_segtab *ci_pmap_segtabs[2];
 #define	ci_pmap_kern_segtab	ci_pmap_segtabs[0]
 #define	ci_pmap_user_segtab	ci_pmap_segtabs[1]
 	struct pmap_tlb_info *ci_tlb_info;
-#endif /* PPC_BOOKE */
+#endif /* PPC_BOOKE || MODULAR || _MODULE */
 	struct cache_info ci_ci;		
 	void *ci_sysmon_cookie;
 	void (*ci_idlespin)(void);
 	uint32_t ci_khz;
 	struct evcnt ci_ev_clock;	/* clock intrs */
 	struct evcnt ci_ev_statclock; 	/* stat clock */
-#ifndef PPC_BOOKE
-	struct evcnt ci_ev_softclock;	/* softclock intrs */
-	struct evcnt ci_ev_softnet;	/* softnet intrs */
-	struct evcnt ci_ev_softserial;	/* softserial intrs */
-#endif
 	struct evcnt ci_ev_traps;	/* calls to trap() */
 	struct evcnt ci_ev_kdsi;	/* kernel DSI traps */
 	struct evcnt ci_ev_udsi;	/* user DSI traps */
@@ -155,10 +152,9 @@ struct cpu_info {
 
 #ifdef _KERNEL
 
-#ifdef MULTIPROCESSOR
-
+#if defined(MULTIPROCESSOR) && !defined(_MODULE)
 struct cpu_hatch_data {
-	struct device *self;
+	device_t self;
 	struct cpu_info *ci;
 	int running;
 	int pir;
@@ -169,46 +165,40 @@ struct cpu_hatch_data {
 	int batu[4], batl[4];
 	int tbu, tbl;
 };
+#endif /* MULTIPROCESSOR && !_MODULE */
 
-static __inline int
-cpu_number(void)
-{
-	int pir;
-
-	__asm ("mfspr %0,1023" : "=r"(pir));
-	return pir;
-}
-
-void	cpu_boot_secondary_processors(void);
-
+#if defined(MULTIPROCESSOR) || defined(_MODULE)
+#define	cpu_number()		(curcpu()->ci_index + 0)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
-#define CPU_INFO_ITERATOR		int
-#define CPU_INFO_FOREACH(cii, ci)					\
+#define CPU_INFO_ITERATOR	int
+#define CPU_INFO_FOREACH(cii, ci)				\
 	cii = 0, ci = &cpu_info[0]; cii < ncpu; cii++, ci++
 
 #else
-
 #define cpu_number()		0
 
-#define CPU_INFO_ITERATOR		int
-#define CPU_INFO_FOREACH(cii, ci)					\
+#define CPU_IS_PRIMARY(ci)	true
+#define CPU_INFO_ITERATOR	int
+#define CPU_INFO_FOREACH(cii, ci)				\
 	cii = 0, ci = curcpu(); ci != NULL; ci = NULL
 
-#endif /* MULTIPROCESSOR */
+#endif /* MULTIPROCESSOR || _MODULE */
 
 extern struct cpu_info cpu_info[];
 
+static __inline struct cpu_info * curcpu(void) __pure;
 static __inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *ci;
 
-	__asm volatile ("mfsprg %0,0" : "=r"(ci));
+	__asm volatile ("mfsprg0 %0" : "=r"(ci));
 	return ci;
 }
 
-#define curlwp			(curcpu()->ci_curlwp)
+register struct lwp *powerpc_curlwp __asm("r13");
+#define	curlwp			powerpc_curlwp
 #define curpcb			(curcpu()->ci_curpcb)
 #define curpm			(curcpu()->ci_curpm)
 
@@ -229,6 +219,7 @@ mtmsr(register_t msr)
 	__asm volatile ("mtmsr %0" : : "r"(msr));
 }
 
+#if !defined(_MODULE)
 static __inline uint32_t
 mftbl(void)
 {
@@ -303,6 +294,7 @@ mfrtc(uint32_t *rtcp)
 	    : [rtcu] "=r"(rtcp[0]), [rtcl] "=r"(rtcp[1]), [tmp] "=r"(tmp)
 	    :: "cr0");
 }
+#endif /* !_MODULE */
 
 static __inline uint32_t
 mfpvr(void)
@@ -313,102 +305,91 @@ mfpvr(void)
 	return (pvr);
 }
 
-static __inline int
-cntlzw(uint32_t val)
-{
-	int 			cnt;
-
-	__asm volatile ("cntlzw %0,%1" : "=r"(cnt) : "r"(val));
-	return (cnt);
-}
-
+#ifdef _MODULE
+extern const char __CPU_MAXNUM;
 /*
- * functions to access the G3's cache throttling register
- * bits 1 - 9 specify additional waits on cache acess
- * bit 0 enables cache throttling
+ * Make with 0xffff to force a R_PPC_ADDR16_LO without the
+ * corresponding R_PPC_ADDR16_HI relocation.
  */
+#define	CPU_MAXNUM	(((uintptr_t)&__CPU_MAXNUM)&0xffff)
+#endif /* _MODULE */
 
-static __inline int
-mfictc(void)
-{
-	int reg;
-
-	__asm ("mfspr %0,1019" : "=r"(reg));
-	return reg;
-}
-
-static __inline void
-mtictc(uint32_t reg)
-{
-
-	__asm ("mtspr 1019,%0" :: "r"(reg));
-}
-
-#define	CLKF_USERMODE(frame)	(((frame)->cf_srr1 & PSL_PR) != 0)
-#define	CLKF_PC(frame)		((frame)->cf_srr0)
-#define	CLKF_INTR(frame)	((frame)->cf_idepth > 0)
-
-#define	LWP_PC(l)		(trapframe(l)->tf_srr0)
-
-#define	cpu_proc_fork(p1, p2)
-
+#if !defined(_MODULE)
 extern int powersave;
 extern int cpu_timebase;
 extern int cpu_printfataltraps;
 extern char cpu_model[];
 
-void cpu_uarea_remap(struct lwp *);
-struct cpu_info *cpu_attach_common(struct device *, int);
-void cpu_setup(struct device *, struct cpu_info *);
-void cpu_identify(char *, size_t);
-int cpu_get_dfs(void);
-void cpu_set_dfs(int);
-void delay (unsigned int);
-void cpu_probe_cache(void);
-#ifndef PPC_BOOKE
-void dcache_flush_page(vaddr_t);
-void icache_flush_page(vaddr_t);
-void dcache_flush(vaddr_t, vsize_t);
-void icache_flush(vaddr_t, vsize_t);
-#else
-void dcache_wb_page(vaddr_t);
-void dcache_wbinv_page(vaddr_t);
-void dcache_inv_page(vaddr_t);
-void dcache_zero_page(vaddr_t);
-void icache_inv_page(vaddr_t);
-void dcache_wb(vaddr_t, vsize_t);
-void dcache_wbinv(vaddr_t, vsize_t);
-void dcache_inv(vaddr_t, vsize_t);
-void icache_inv(vaddr_t, vsize_t);
-#endif
-void *mapiodev(paddr_t, psize_t);
-void unmapiodev(vaddr_t, vsize_t);
+struct cpu_info *
+	cpu_attach_common(device_t, int);
+void	cpu_setup(device_t, struct cpu_info *);
+void	cpu_identify(char *, size_t);
+void	cpu_probe_cache(void);
+
+void	dcache_wb_page(vaddr_t);
+void	dcache_wbinv_page(vaddr_t);
+void	dcache_inv_page(vaddr_t);
+void	dcache_zero_page(vaddr_t);
+void	icache_inv_page(vaddr_t);
+void	dcache_wb(vaddr_t, vsize_t);
+void	dcache_wbinv(vaddr_t, vsize_t);
+void	dcache_inv(vaddr_t, vsize_t);
+void	icache_inv(vaddr_t, vsize_t);
+
+void *	mapiodev(paddr_t, psize_t);
+void	unmapiodev(vaddr_t, vsize_t);
 
 #ifdef MULTIPROCESSOR
-int md_setup_trampoline(volatile struct cpu_hatch_data *, struct cpu_info *);
-void md_presync_timebase(volatile struct cpu_hatch_data *);
-void md_start_timebase(volatile struct cpu_hatch_data *);
-void md_sync_timebase(volatile struct cpu_hatch_data *);
-void md_setup_interrupts(void);
-int cpu_spinup(struct device *, struct cpu_info *);
-register_t cpu_hatch(void);
-void cpu_spinup_trampoline(void);
-#endif
+int	md_setup_trampoline(volatile struct cpu_hatch_data *,
+	    struct cpu_info *);
+void	md_presync_timebase(volatile struct cpu_hatch_data *);
+void	md_start_timebase(volatile struct cpu_hatch_data *);
+void	md_sync_timebase(volatile struct cpu_hatch_data *);
+void	md_setup_interrupts(void);
+int	cpu_spinup(device_t, struct cpu_info *);
+register_t
+	cpu_hatch(void);
+void	cpu_spinup_trampoline(void);
+void	cpu_boot_secondary_processors(void);
+#endif /* MULTIPROCESSOR */
+#endif /* !_MODULE */
+
+#define	cpu_proc_fork(p1, p2)
 
 #define	DELAY(n)		delay(n)
+void	delay(unsigned int);
 
-#define	cpu_need_resched(ci, v)	(ci->ci_want_resched = ci->ci_astpending = 1)
-#define	cpu_did_resched(l)	((void)(curcpu()->ci_want_resched = 0))
-#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
-#define	cpu_signotify(l)	(curcpu()->ci_astpending = 1)	/* XXXSMP */
+#define	CLKF_USERMODE(cf)	cpu_clkf_usermode(cf)
+#define	CLKF_PC(cf)		cpu_clkf_pc(cf)
+#define	CLKF_INTR(cf)		cpu_clkf_intr(cf)
 
-#if !defined(PPC_IBM4XX) && !defined(PPC_BOOKE)
-void oea_init(void (*)(void));
-void oea_startup(const char *);
-void oea_dumpsys(void);
-void oea_install_extint(void (*)(void));
-paddr_t kvtop(void *); 
-void softnet(int);
+bool	cpu_clkf_usermode(const struct clockframe *);
+vaddr_t	cpu_clkf_pc(const struct clockframe *);
+bool	cpu_clkf_intr(const struct clockframe *);
+
+#define	LWP_PC(l)		cpu_lwp_pc(l)
+
+vaddr_t	cpu_lwp_pc(struct lwp *);
+
+void	cpu_ast(struct lwp *, struct cpu_info *);
+void *	cpu_uarea_alloc(bool);
+bool	cpu_uarea_free(void *);
+void	cpu_need_resched(struct cpu_info *, int);
+void	cpu_signotify(struct lwp *);
+void	cpu_need_proftick(struct lwp *);
+#define	cpu_did_resched(l)			((l)->l_md.md_astpending = 0)
+
+void	cpu_fixup_stubs(void);
+
+#if !defined(PPC_IBM4XX) && !defined(PPC_BOOKE) && !defined(_MODULE)
+int	cpu_get_dfs(void);
+void	cpu_set_dfs(int);
+
+void	oea_init(void (*)(void));
+void	oea_startup(const char *);
+void	oea_dumpsys(void);
+void	oea_install_extint(void (*)(void));
+paddr_t	kvtop(void *); 
 
 extern paddr_t msgbuf_paddr;
 extern int cpu_altivec;
@@ -418,13 +399,12 @@ extern int cpu_altivec;
 
 /* XXX The below breaks unified pmap on ppc32 */
 
-#if defined(_KERNEL) || defined(_STANDALONE)
-#if !defined(CACHELINESIZE)
-#ifdef PPC_IBM403
+#if !defined(CACHELINESIZE) && !defined(_MODULE) \
+    && (defined(_KERNEL) || defined(_STANDALONE))
+#if defined(PPC_IBM403)
 #define	CACHELINESIZE		16
 #define MAXCACHELINESIZE	16
-#else
-#if defined (PPC_OEA64_BRIDGE)
+#elif defined (PPC_OEA64_BRIDGE)
 #define	CACHELINESIZE		128
 #define MAXCACHELINESIZE	128
 #else
@@ -432,10 +412,8 @@ extern int cpu_altivec;
 #define MAXCACHELINESIZE	32
 #endif /* PPC_OEA64_BRIDGE */
 #endif
-#endif
-#endif
 
-void __syncicache(void *, size_t);
+void	__syncicache(void *, size_t);
 
 /*
  * CTL_MACHDEP definitions.

@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -135,6 +135,54 @@ ATF_TEST_CASE_BODY(require_config_many_fail) {
     config["var3"] = "third-value";
     do_check("Required configuration variable 'var2' not defined", metadata,
              config);
+}
+
+// -------------------------------------------------------------------------
+// Tests for the require.files metadata property.
+// -------------------------------------------------------------------------
+
+ATF_TEST_CASE_WITHOUT_HEAD(require_files_one_ok);
+ATF_TEST_CASE_BODY(require_files_one_ok) {
+    atf::tests::vars_map metadata;
+    metadata["require.files"] = "/bin/ls";
+    do_check("", metadata);
+}
+
+ATF_TEST_CASE_WITHOUT_HEAD(require_files_one_missing);
+ATF_TEST_CASE_BODY(require_files_one_missing) {
+    atf::tests::vars_map metadata;
+    metadata["require.files"] = "/non-existent/foo";
+    do_check("Required file '/non-existent/foo' not found", metadata);
+}
+
+ATF_TEST_CASE_WITHOUT_HEAD(require_files_one_fail);
+ATF_TEST_CASE_BODY(require_files_one_fail) {
+    atf::tests::vars_map metadata;
+    metadata["require.files"] = "/bin/cp this-is-relative";
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Relative.*(this-is-relative)",
+                         impl::check_requirements(metadata, no_config));
+}
+
+ATF_TEST_CASE_WITHOUT_HEAD(require_files_many_ok);
+ATF_TEST_CASE_BODY(require_files_many_ok) {
+    atf::tests::vars_map metadata;
+    metadata["require.files"] = "/bin/ls /bin/cp";
+    do_check("", metadata);
+}
+
+ATF_TEST_CASE_WITHOUT_HEAD(require_files_many_missing);
+ATF_TEST_CASE_BODY(require_files_many_missing) {
+    atf::tests::vars_map metadata;
+    metadata["require.files"] = "/bin/ls /non-existent/bar /bin/cp";
+    do_check("Required file '/non-existent/bar' not found", metadata);
+}
+
+ATF_TEST_CASE_WITHOUT_HEAD(require_files_many_fail);
+ATF_TEST_CASE_BODY(require_files_many_fail) {
+    atf::tests::vars_map metadata;
+    metadata["require.files"] = "/bin/cp also-relative";
+    ATF_REQUIRE_THROW_RE(std::runtime_error, "Relative.*(also-relative)",
+                         impl::check_requirements(metadata, no_config));
 }
 
 // -------------------------------------------------------------------------
@@ -283,6 +331,14 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, require_config_one_fail);
     ATF_ADD_TEST_CASE(tcs, require_config_many_ok);
     ATF_ADD_TEST_CASE(tcs, require_config_many_fail);
+
+    // Add test cases for require.files.
+    ATF_ADD_TEST_CASE(tcs, require_files_one_ok);
+    ATF_ADD_TEST_CASE(tcs, require_files_one_missing);
+    ATF_ADD_TEST_CASE(tcs, require_files_one_fail);
+    ATF_ADD_TEST_CASE(tcs, require_files_many_ok);
+    ATF_ADD_TEST_CASE(tcs, require_files_many_missing);
+    ATF_ADD_TEST_CASE(tcs, require_files_many_fail);
 
     // Add test cases for require.machine.
     ATF_ADD_TEST_CASE(tcs, require_machine_one_ok);

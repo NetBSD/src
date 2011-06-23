@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pollts.c,v 1.3 2011/06/01 03:39:45 jruoho Exp $	*/
+/*	$NetBSD: t_pollts.c,v 1.3.2.1 2011/06/23 14:20:41 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -131,13 +131,13 @@ ATF_TC_BODY(pollts_err, tc)
 	timeout.tv_nsec = 0;
 
 	errno = 0;
-	ATF_REQUIRE_ERRNO(EFAULT, pollts((void *)-1, 1, &timeout, NULL) != 0);
+	ATF_REQUIRE_ERRNO(EFAULT, pollts((void *)-1, 1, &timeout, NULL) == -1);
 
 	timeout.tv_sec = -1;
 	timeout.tv_nsec = -1;
 
 	errno = 0;
-	ATF_REQUIRE_ERRNO(EINVAL, pollts(&pfd, 1, &timeout, NULL) != 0);
+	ATF_REQUIRE_ERRNO(EINVAL, pollts(&pfd, 1, &timeout, NULL) == -1);
 }
 
 ATF_TC(pollts_sigmask);

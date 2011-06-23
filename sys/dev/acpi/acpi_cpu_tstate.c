@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.27 2011/03/19 12:57:31 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.27.2.1 2011/06/23 14:19:56 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.27 2011/03/19 12:57:31 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.27.2.1 2011/06/23 14:19:56 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -740,7 +740,7 @@ acpicpu_tstate_get(struct cpu_info *ci, uint32_t *percent)
 	return 0;
 
 fail:
-	aprint_error_dev(sc->sc_dev, "failed "
+	aprint_debug_dev(sc->sc_dev, "failed "
 	    "to get T-state (err %d)\n", rv);
 
 	mutex_enter(&sc->sc_mtx);
@@ -881,7 +881,7 @@ acpicpu_tstate_set_xcall(void *arg1, void *arg2)
 	return;
 
 fail:
-	aprint_error_dev(sc->sc_dev, "failed to "
+	aprint_debug_dev(sc->sc_dev, "failed to "
 	    "throttle to %u %% (err %d)\n", percent, rv);
 
 	mutex_enter(&sc->sc_mtx);

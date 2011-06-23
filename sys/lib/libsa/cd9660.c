@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.26 2010/10/18 11:08:26 ws Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.26.6.1 2011/06/23 14:20:23 cherry Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -129,7 +129,7 @@ dirmatch(const char *path, struct iso_directory_record *dp)
 	return 1;
 }
 
-int
+__compactcall int
 cd9660_open(const char *path, struct open_file *f)
 {
 	struct file *fp = 0;
@@ -291,7 +291,7 @@ out:
 }
 
 #if !defined(LIBSA_NO_FS_CLOSE)
-int
+__compactcall int
 cd9660_close(struct open_file *f)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
@@ -303,7 +303,7 @@ cd9660_close(struct open_file *f)
 }
 #endif /* !defined(LIBSA_NO_FS_CLOSE) */
 
-int
+__compactcall int
 cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
@@ -354,7 +354,7 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 }
 
 #if !defined(LIBSA_NO_FS_WRITE)
-int
+__compactcall int
 cd9660_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 
@@ -363,7 +363,7 @@ cd9660_write(struct open_file *f, void *start, size_t size, size_t *resid)
 #endif /* !defined(LIBSA_NO_FS_WRITE) */
 
 #if !defined(LIBSA_NO_FS_SEEK)
-off_t
+__compactcall off_t
 cd9660_seek(struct open_file *f, off_t offset, int where)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
@@ -385,7 +385,7 @@ cd9660_seek(struct open_file *f, off_t offset, int where)
 }
 #endif /* !defined(LIBSA_NO_FS_SEEK) */
 
-int
+__compactcall int
 cd9660_stat(struct open_file *f, struct stat *sb)
 {
 	struct file *fp = (struct file *)f->f_fsdata;

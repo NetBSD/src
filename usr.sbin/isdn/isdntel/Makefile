@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/03 15:34:46 roy Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2011/06/23 14:20:47 cherry Exp $
 
 PROG	 =	isdntel
 SRCS	 =	main.c display.c files.c alias.c
@@ -7,6 +7,6 @@ MAN      =	isdntel.8
 
 .include <bsd.prog.mk>
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.alias.c+=		-Wno-pointer-sign
 .endif

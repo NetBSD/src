@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.44 2011/01/18 01:02:53 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.44.4.1 2011/06/23 14:19:28 cherry Exp $
 #
 # Makefile for NetBSD
 #
@@ -27,10 +27,10 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 THISPPC=	$S/arch/${MACHINE}
 POWERPC=	$S/arch/powerpc
+GENASSYM_CONF=	${POWERPC}/powerpc/genassym.cf
+GENASSYM_CONF+=	${POWERPC}/${PPCDIR}/genassym.cf
 .if exists(${THISPPC}/${MACHINE}/genassym.cf)
-GENASSYM_CONF=	${THISPPC}/${MACHINE}/genassym.cf
-.else
-GENASSYM_CONF=	${POWERPC}/${PPCDIR}/genassym.cf
+GENASSYM_CONF+=	${THISPPC}/${MACHINE}/genassym.cf
 .endif
 .-include "${THISPPC}/conf/Makefile.${MACHINE}.inc"
 
@@ -43,6 +43,7 @@ CWARNFLAGS+=	-Wreturn-type
 CFLAGS+=	-mno-strict-align
 CFLAGS+=	-Wa,-maltivec
 .endif
+CFLAGS+=	-msdata=none
 CFLAGS+=	-msoft-float ${CCPUOPTS}
 AFLAGS+=	${AOPTS} -D_NOREGNAMES
 

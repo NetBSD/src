@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.3 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: flash.c,v 1.3.32.1 2011/06/23 14:19:10 cherry Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.3 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.3.32.1 2011/06/23 14:19:10 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.3 2008/04/28 20:23:17 martin Exp $");
 #include <arch/evbppc/pmppc/dev/mainbus.h>
 
 struct flash_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_tag;
 	bus_space_handle_t sc_handle;
 	u_int32_t sc_addr;
@@ -48,14 +48,14 @@ struct flash_softc {
 	u_int32_t sc_width;
 };
 
-static int	flash_match(struct device *, struct cfdata *, void *);
-static void	flash_attach(struct device *, struct device *, void *);
+static int	flash_match(device_t, cfdata_t, void *);
+static void	flash_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(flash, sizeof(struct flash_softc),
+CFATTACH_DECL_NEW(flash, sizeof(struct flash_softc),
     flash_match, flash_attach, NULL, NULL);
 
 int
-flash_match(struct device *parent, struct cfdata *cf, void *aux)
+flash_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 
@@ -63,26 +63,26 @@ flash_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-flash_attach(struct device *parent, struct device *self, void *aux)
+flash_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
-	struct flash_softc *sc = (struct flash_softc *)self;
+	struct flash_softc *sc = device_private(self);
 
 	sc->sc_tag = maa->mb_bt;
 	sc->sc_addr = maa->mb_addr;
 	sc->sc_size = maa->u.mb_flash.size / 8; /* bytes */
 	sc->sc_width = maa->u.mb_flash.width;
 
-	printf(": %d Mbyte, %d bits wide\n", sc->sc_size / (1024*1024),
+	aprint_normal(": %d Mbyte, %d bits wide\n", sc->sc_size / (1024*1024),
 	       sc->sc_width);
 #if 0
 	/* The extend map doesn't cover this area. */
 	if (bus_space_map(sc->sc_tag, sc->sc_addr, sc->sc_size, 0,
 			  &sc->sc_handle)) {
-		printf("%s: can't map i/o space\n", self->dv_xname);
+		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
 #endif
 
-	printf("%s: driver not implemented\n", self->dv_xname);
+	aprint_error_dev(self, "driver not implemented\n");
 }

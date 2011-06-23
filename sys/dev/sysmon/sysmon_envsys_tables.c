@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_tables.c,v 1.6 2010/12/15 17:17:17 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_tables.c,v 1.6.6.1 2011/06/23 14:20:09 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.6 2010/12/15 17:17:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.6.6.1 2011/06/23 14:20:09 cherry Exp $");
 
 #include <sys/types.h>
 
@@ -100,32 +100,51 @@ static const struct sme_descr_entry sme_batterycap_description[] = {
 	{ -1,					-1, 	"UNKNOWN" }
 };
 
+static const struct sme_descr_entry *
+sme_find_table(enum sme_descr_type table_id)
+{
+	switch (table_id) {
+	case SME_DESC_UNITS:
+		return sme_units_description;
+		break;
+	case SME_DESC_STATES:
+		return sme_state_description;
+		break;
+	case SME_DESC_DRIVE_STATES:
+		return sme_drivestate_description;
+		break;
+	case SME_DESC_BATTERY_CAPACITY:
+		return sme_batterycap_description;
+		break;
+	default:
+		return NULL;
+	}
+}
+
 /*
  * Returns the entry from specified table with type == key
  */
 const struct sme_descr_entry *
 sme_find_table_entry(enum sme_descr_type table_id, int key)
 {
-	const struct sme_descr_entry *table = NULL;
+	const struct sme_descr_entry *table = sme_find_table(table_id);
 
-	switch (table_id) {
-	case SME_DESC_UNITS:
-		table = sme_units_description;
-		break;
-	case SME_DESC_STATES:
-		table = sme_state_description;
-		break;
-	case SME_DESC_DRIVE_STATES:
-		table = sme_drivestate_description;
-		break;
-	case SME_DESC_BATTERY_CAPACITY:
-		table = sme_batterycap_description;
-		break;
-	}
+	if (table != NULL)
+		for (; table->type != -1; table++)
+			if (table->type == key)
+				return table;
 
-	for (; table->type != -1; table++)
-		if (table->type == key)
-			break;
+	return NULL;
+}
 
-	return table;
+const struct sme_descr_entry *
+sme_find_table_desc(enum sme_descr_type table_id, const char *str)
+{
+	const struct sme_descr_entry *table = sme_find_table(table_id);
+
+	if (table != NULL)
+		for (; table->type != -1; table++)
+			if (strcmp(table->desc, str) == 0)
+				return table;
+	return NULL;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 2009/07/21 09:49:16 phx Exp $	*/
+/*	$NetBSD: param.h,v 1.12.10.1 2011/06/23 14:18:59 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,19 +31,15 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef	_KERNEL
-#ifndef	_LOCORE
-#include <machine/cpu.h>
-#endif	/* _LOCORE */
-#endif
-
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)
  */
-#define	MACHINE		"amigappc"
+#if defined(_KERNEL) && !defined(_MODULE)
 
+#define	MACHINE			"amigappc"
+#define	KERNBASE		0x8000000 /* XXX valid for CyberstormPPC */
 #define	__NO_FIXED_MSGBUF
 
-#define	KERNBASE	0x8000000	/* XXX valid for CyberstormPPC */
+#endif /* _KERNEL && !_MODULE */
 
 #include <powerpc/param.h>

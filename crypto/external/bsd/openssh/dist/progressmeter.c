@@ -1,4 +1,4 @@
-/*	$NetBSD: progressmeter.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
+/*	$NetBSD: progressmeter.c,v 1.2.4.1 2011/06/23 14:17:50 cherry Exp $	*/
 /* $OpenBSD: progressmeter.c,v 1.37 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: progressmeter.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.2.4.1 2011/06/23 14:17:50 cherry Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -182,7 +182,7 @@ refresh_progress_meter(void)
 		percent = ((float)cur_pos / end_pos) * 100;
 	else
 		percent = 100;
-	snprintf(buf + strlen(buf), win_size - strlen(buf-8),
+	snprintf(buf + strlen(buf), win_size - strlen(buf) - 8,
 	    " %3d%% ", percent);
 
 	/* amount transferred */

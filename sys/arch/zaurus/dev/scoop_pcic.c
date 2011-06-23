@@ -1,4 +1,4 @@
-/*	$NetBSD: scoop_pcic.c,v 1.3 2009/01/29 12:28:15 nonaka Exp $	*/
+/*	$NetBSD: scoop_pcic.c,v 1.3.12.1 2011/06/23 14:19:51 cherry Exp $	*/
 /*	$OpenBSD: scoop_pcic.c,v 1.1 2005/07/01 23:51:55 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scoop_pcic.c,v 1.3 2009/01/29 12:28:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scoop_pcic.c,v 1.3.12.1 2011/06/23 14:19:51 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ static int
 scoop_pcic_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	return (ZAURUS_ISC860 || ZAURUS_ISC3000);
+	return 1;
 }
 
 static void
@@ -79,6 +79,10 @@ scoop_pcic_attach(device_t parent, device_t self, void *aux)
 		sc->sc_nslots = 1;
 		sc->sc_irqpin[0] = C860_CF0_IRQ;
 		sc->sc_irqcfpin[0] = C860_CF0_IRQ_PIN;
+	} else if (ZAURUS_ISC1000) {
+		sc->sc_nslots = 1;
+		sc->sc_irqpin[0] = C3000_CF0_IRQ;
+		sc->sc_irqcfpin[0] = C3000_CF0_IRQ_PIN;
 	} else if (ZAURUS_ISC3000) {
 		sc->sc_nslots = 2;
 		sc->sc_irqpin[0] = C3000_CF0_IRQ;

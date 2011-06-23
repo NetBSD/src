@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.106 2011/05/24 20:26:34 rmind Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.106.2.1 2011/06/23 14:18:52 cherry Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.106 2011/05/24 20:26:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.106.2.1 2011/06/23 14:18:52 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,12 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.106 2011/05/24 20:26:34 rmind Exp $
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-
-	if (pcb->pcb_fpcpu != NULL)
-		fpusave_proc(l, 0);
-
-	mutex_destroy(&pcb->pcb_fpcpu_lock);
+	(void) l;
 }
 
 void
@@ -93,7 +88,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2 = lwp_getpcb(l2);
 
 	l2->l_md.md_tf = l1->l_md.md_tf;
-	l2->l_md.md_flags = l1->l_md.md_flags & (MDP_FPUSED | MDP_FP_C);
+	l2->l_md.md_flags = l1->l_md.md_flags & (MDLWP_FPUSED | MDLWP_FP_C);
 	l2->l_md.md_astpending = 0;
 
 	/*
@@ -103,23 +98,15 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_pcbpaddr = (void *)vtophys((vaddr_t)pcb2);
 
 	/*
-	 * Copy floating point state from the FP chip to the PCB
-	 * if this process has state stored there.
-	 */
-	if (pcb1->pcb_fpcpu != NULL)
-		fpusave_proc(l1, 1);
-
-	/*
 	 * Copy pcb and user stack pointer from proc p1 to p2.
 	 * If specificed, give the child a different stack.
+	 * Floating point state from the FP chip has already been saved.
 	 */
 	*pcb2 = *pcb1;
 	if (stack != NULL)
 		pcb2->pcb_hw.apcb_usp = (u_long)stack + stacksize;
 	else
 		pcb2->pcb_hw.apcb_usp = alpha_pal_rdusp();
-
-	mutex_init(&pcb2->pcb_fpcpu_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/*
 	 * Arrange for a non-local goto when the new process
@@ -245,3 +232,58 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
+
+#ifdef __HAVE_CPU_UAREA_ROUTINES
+void *
+cpu_uarea_alloc(bool system)
+{
+	struct pglist pglist;
+	int error;
+
+	/*
+	 * Allocate a new physically contiguous uarea which can be
+	 * direct-mapped.
+	 */
+	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
+	if (error) {
+		if (!system)
+			return NULL;
+		panic("%s: uvm_pglistalloc failed: %d", __func__, error);
+	}
+
+	/*
+	 * Get the physical address from the first page.
+	 */
+	const struct vm_page * const pg = TAILQ_FIRST(&pglist);
+	KASSERT(pg != NULL);
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+	/*
+	 * We need to return a direct-mapped VA for the pa.
+	 */
+
+	return (void *)PMAP_MAP_POOLPAGE(pa);
+}
+
+/*
+ * Return true if we freed it, false if we didn't.
+ */
+bool
+cpu_uarea_free(void *vva)
+{
+	vaddr_t va = (vaddr_t) vva;
+	if (va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS)
+		return false;
+
+	/*
+	 * Since the pages are physically contiguous, the vm_page structurs
+	 * will be as well.
+	 */
+	struct vm_page *pg = PHYS_TO_VM_PAGE(PMAP_UNMAP_POOLPAGE(va));
+	KASSERT(pg != NULL);
+	for (size_t i = 0; i < UPAGES; i++, pg++) {
+		uvm_pagefree(pg);
+	}
+	return true;
+}
+#endif /* __HAVE_CPU_UAREA_ROUTINES */

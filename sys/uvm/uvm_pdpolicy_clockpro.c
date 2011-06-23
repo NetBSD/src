@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.16 2011/02/05 13:33:47 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.16.2.1 2011/06/23 14:20:37 cherry Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.16 2011/02/05 13:33:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.16.2.1 2011/06/23 14:20:37 cherry Exp $");
 
 #include "opt_ddb.h"
 
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.16 2011/02/05 13:33:47 y
 #include <sys/hash.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_pdaemon.h>	/* for uvmpd_trylockowner */
 #include <uvm/uvm_pdpolicy.h>
 #include <uvm/uvm_pdpolicy_impl.h>
 
@@ -116,6 +117,9 @@ PDPOL_EVCNT_DEFINE(speculativeenqueue)
 PDPOL_EVCNT_DEFINE(speculativehit1)
 PDPOL_EVCNT_DEFINE(speculativehit2)
 PDPOL_EVCNT_DEFINE(speculativemiss)
+
+PDPOL_EVCNT_DEFINE(locksuccess)
+PDPOL_EVCNT_DEFINE(lockfail)
 
 #define	PQ_REFERENCED	PQ_PRIVATE1
 #define	PQ_HOT		PQ_PRIVATE2
@@ -630,21 +634,37 @@ clockpro_tune(void)
 }
 
 static void
-clockpro_movereferencebit(struct vm_page *pg)
+clockpro_movereferencebit(struct vm_page *pg, bool locked)
 {
+	kmutex_t *lock;
 	bool referenced;
 
+	KASSERT(!locked || uvm_page_locked_p(pg));
+	if (!locked) {
+		lock = uvmpd_trylockowner(pg);
+		if (lock == NULL) {
+			/*
+			 * XXXuvmplock
+			 */
+			PDPOL_EVCNT_INCR(lockfail);
+			return;
+		}
+		PDPOL_EVCNT_INCR(locksuccess);
+	}
 	referenced = pmap_clear_reference(pg);
+	if (!locked) {
+		mutex_exit(lock);
+	}
 	if (referenced) {
 		pg->pqflags |= PQ_REFERENCED;
 	}
 }
 
 static void
-clockpro_clearreferencebit(struct vm_page *pg)
+clockpro_clearreferencebit(struct vm_page *pg, bool locked)
 {
 
-	clockpro_movereferencebit(pg);
+	clockpro_movereferencebit(pg, locked);
 	pg->pqflags &= ~PQ_REFERENCED;
 }
 
@@ -660,7 +680,7 @@ clockpro___newqrotate(int len)
 		KASSERT(pg != NULL);
 		KASSERT(clockpro_getq(pg) == CLOCKPRO_NEWQ);
 		if ((pg->pqflags & PQ_INITIALREF) != 0) {
-			clockpro_clearreferencebit(pg);
+			clockpro_clearreferencebit(pg, false);
 			pg->pqflags &= ~PQ_INITIALREF;
 		}
 		/* place at the list head */
@@ -763,7 +783,7 @@ clockpro_pageenqueue(struct vm_page *pg)
 		pg->pqflags |= PQ_TEST;
 	}
 	s->s_ncold++;
-	clockpro_clearreferencebit(pg);
+	clockpro_clearreferencebit(pg, false);
 	clockpro___enqueuetail(pg);
 #else /* defined(USEONCE2) */
 	if (speculative) {
@@ -929,7 +949,7 @@ again:
 		dump("hot done");
 		return;
 	}
-	clockpro_movereferencebit(pg);
+	clockpro_movereferencebit(pg, false);
 	if ((pg->pqflags & PQ_REFERENCED) == 0) {
 		PDPOL_EVCNT_INCR(hhotunref);
 		uvmexp.pddeact++;
@@ -1016,7 +1036,7 @@ gotcold:
 #endif /* defined(LISTQ) */
 		KASSERT((pg->pqflags & PQ_HOT) == 0);
 		uvmexp.pdscans++;
-		clockpro_movereferencebit(pg);
+		clockpro_movereferencebit(pg, false);
 		if ((pg->pqflags & PQ_SPECULATIVE) != 0) {
 			KASSERT((pg->pqflags & PQ_TEST) == 0);
 			if ((pg->pqflags & PQ_REFERENCED) != 0) {
@@ -1088,7 +1108,7 @@ void
 uvmpdpol_pagedeactivate(struct vm_page *pg)
 {
 
-	clockpro_clearreferencebit(pg);
+	clockpro_clearreferencebit(pg, true);
 }
 
 void
@@ -1110,7 +1130,7 @@ uvmpdpol_pageenqueue(struct vm_page *pg)
 	if (uvmpdpol_pageisqueued_p(pg)) {
 		return;
 	}
-	clockpro_clearreferencebit(pg);
+	clockpro_clearreferencebit(pg, true);
 	pg->pqflags |= PQ_SPECULATIVE;
 	clockpro_pageenqueue(pg);
 #else
@@ -1267,6 +1287,12 @@ uvmpdpol_sysctlsetup(void)
 
 #if defined(DDB)
 
+#if 0 /* XXXuvmplock */
+#define	_pmap_is_referenced(pg)	pmap_is_referenced(pg)
+#else
+#define	_pmap_is_referenced(pg)	false
+#endif
+
 void clockpro_dump(void);
 
 void
@@ -1299,7 +1325,7 @@ clockpro_dump(void)
 		if ((pg->pqflags & PQ_INITIALREF) != 0) { \
 			ninitialref++; \
 		} else if ((pg->pqflags & PQ_REFERENCED) != 0 || \
-		    pmap_is_referenced(pg)) { \
+		    _pmap_is_referenced(pg)) { \
 			nref++; \
 		} \
 	}
@@ -1381,7 +1407,7 @@ pdsim_dumpq(int qidx)
 		    (pg->pqflags & PQ_HOT) ? "H" : "",
 		    (pg->pqflags & PQ_TEST) ? "T" : "",
 		    (pg->pqflags & PQ_REFERENCED) ? "R" : "",
-		    pmap_is_referenced(pg) ? "r" : "",
+		    _pmap_is_referenced(pg) ? "r" : "",
 		    (pg->pqflags & PQ_INITIALREF) ? "I" : "",
 		    (pg->pqflags & PQ_SPECULATIVE) ? "S" : ""
 		    );

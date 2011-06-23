@@ -1,4 +1,4 @@
-/* $NetBSD: strtof.c,v 1.4 2011/03/20 23:15:35 christos Exp $ */
+/* $NetBSD: strtof.c,v 1.4.2.1 2011/06/23 14:18:36 cherry Exp $ */
 
 /****************************************************************
 
@@ -82,6 +82,11 @@ strtof(CONST char *s, char **sp)
 
 	  case STRTOG_NaN:
 		u.L[0] = f_QNAN;
+		break;
+
+	  default:
+		u.L[0] = 0; /* for gcc warning */
+		break;
 	  }
 	if (k & STRTOG_Neg)
 		u.L[0] |= 0x80000000L;

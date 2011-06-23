@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/02/26 02:41:33 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2011/06/23 14:20:39 cherry Exp $
 
 NOMAN=		# defined
 
@@ -7,8 +7,8 @@ NOMAN=		# defined
 WARNS=	4
 
 CPPFLAGS+=	-D_FORTIFY_SOURCE=2
-CFLAGS+=	-fstack-protector-all -Wstack-protector
-LDFLAGS+=	-fstack-protector-all -Wstack-protector
+
+COPTS.h_raw.c=	-fstack-protector-all -Wstack-protector --param=ssp-buffer-size=1
 
 # Bootstrap hack
 
@@ -32,6 +32,7 @@ PROGS+=		h_getcwd
 PROGS+=		h_memcpy
 PROGS+=		h_memmove
 PROGS+=		h_memset
+PROGS+=		h_raw
 PROGS+=		h_read
 PROGS+=		h_readlink
 PROGS+=		h_snprintf

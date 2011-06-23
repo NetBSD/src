@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.23 2011/05/26 15:34:13 joerg Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.23.2.1 2011/06/23 14:19:30 cherry Exp $	*/
 
 /* 
  * Mach Operating System
@@ -134,17 +134,29 @@ extern db_addr_t branch_taken(int, db_addr_t, db_regs_t *);
  * and up to 64 4-byte non-standard OES special-purpose registers.
  * GDB keeps some extra space, so the total size of the register array
  * they use is 880 bytes (gdb-5.0).
+ * KGDB_NUMREGS 220
+ */
+/*
+ * GDB's register array of gdb-6.0 is defined in
+ * usr/src/gnu/dist/gdb6/gdb/regformats/reg-ppc.dat
+ * GDB's register array is:
+ *  32 4-byte GPRs
+ *  32 8-byte FPRs
+ *   7 4-byte UISA special-purpose registers: pc, ps, cr, lr, ctr, xer, fpscr
+ * index of pc in array: 32 + 2*32 = 96
+ * size 32 * 4 + 32 * 8 + 7 * 4 = 103 * 4 = 412 bytes
+ * KGD_NUMREGS 103
  */
 typedef long	kgdb_reg_t;
-#define KGDB_NUMREGS	220	/* Treat all registers as 4-byte */
-#define KGDB_BUFLEN	(2*KGDB_NUMREGS*sizeof(kgdb_reg_t)+1)
 #define KGDB_PPC_PC_REG		96	/* first UISA SP register */
 #define KGDB_PPC_MSR_REG	97
 #define KGDB_PPC_CR_REG		98
 #define KGDB_PPC_LR_REG		99
 #define KGDB_PPC_CTR_REG	100
 #define KGDB_PPC_XER_REG	101
-#define KGDB_PPC_MQ_REG		102
+#define KGDB_PPC_FPSCR_REG	102
+#define KGDB_NUMREGS		103	/* Treat all registers as 4-byte */
+#define KGDB_BUFLEN		(2*KGDB_NUMREGS*sizeof(kgdb_reg_t)+1)
 
 #ifdef _KERNEL
 

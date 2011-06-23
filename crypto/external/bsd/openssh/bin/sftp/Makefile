@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/11/21 19:19:22 adam Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2011/06/23 14:17:50 cherry Exp $
 
 BINDIR=	/usr/bin
 
@@ -11,7 +11,7 @@ DPADD+=	${LIBEDIT} ${LIBTERMINFO}
 
 .include <bsd.prog.mk>
 
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.sftp.c+=		-Wno-pointer-sign
 COPTS.sftp-client.c+=	-Wno-pointer-sign
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.21 2010/02/28 11:36:27 martin Exp $	*/
+/*	$NetBSD: lm75.c,v 1.21.8.1 2011/06/23 14:19:59 cherry Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.21 2010/02/28 11:36:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.21.8.1 2011/06/23 14:19:59 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,6 +177,7 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme = sysmon_envsys_create();
 	/* Initialize sensor data. */
 	sc->sc_sensor.units =  ENVSYS_STEMP;
+	sc->sc_sensor.state =  ENVSYS_SINVALID;
 	(void)strlcpy(sc->sc_sensor.desc,
 	    ia->ia_name? ia->ia_name : device_xname(self),
 	    sizeof(sc->sc_sensor.desc));

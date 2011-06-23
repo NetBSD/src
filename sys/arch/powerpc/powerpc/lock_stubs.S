@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.7 2011/01/17 08:23:56 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.7.4.1 2011/06/23 14:19:34 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -69,13 +69,11 @@ ENTRY(_lock_cas)
  * void mutex_enter(kmutex_t *);
  */
 ENTRY(mutex_enter)
-	GET_CPUINFO(%r8)
-	ldptr	%r9,CI_CURLWP(%r8)
 1:
 	lptrarx	%r10,0,%r3
 	cmpwi	%r10,0
 	bne-	2f
-	stptrcx. %r9,0,%r3
+	stptrcx. %r13,0,%r3
 	bne-	1b
 	ISYNC
 	blr
@@ -86,13 +84,11 @@ ENTRY(mutex_enter)
  * void mutex_exit(kmutex_t *);
  */
 ENTRY(mutex_exit)
-	GET_CPUINFO(%r8)
-	ldptr	%r9,CI_CURLWP(%r8)
 	SYNC
 	li	%r7,0
 1:
 	lptrarx	%r10,0,%r3
-	cmpw	%r10,%r9
+	cmpw	%r10,%r13
 	bne-	2f
 	stptrcx. %r7,0,%r3
 	bne-	1b
@@ -124,9 +120,7 @@ ENTRY(rw_enter)
 	b	2f
 1:
 	li	%r9,0
-	GET_CPUINFO(%r8)
-	ldptr	%r7,CI_CURLWP(%r8)
-	ori	%r7,%r7,RW_WRITE_LOCKED
+	ori	%r7,%r13,RW_WRITE_LOCKED
 
 2:	lptrarx	%r10,0,%r3
 	cmpw	%r10,%r9
@@ -151,9 +145,7 @@ ENTRY(rw_tryenter)
 	b	2f
 
 1:	li	%r9,0
-	GET_CPUINFO(%r8)
-	ldptr	%r7,CI_CURLWP(%r8)
-	ori	%r7,%r7,RW_WRITE_LOCKED
+	ori	%r7,%r13,RW_WRITE_LOCKED
 
 2:	lptrarx	%r10,0,%r3
 	cmpw	%r10,%r9
@@ -184,9 +176,7 @@ ENTRY(rw_exit)
 	b	2f
 1:
 	li	%r7,0
-	GET_CPUINFO(%r8)
-	ldptr	%r9,CI_CURLWP(%r8)
-	ori	%r9,%r9,RW_WRITE_LOCKED
+	ori	%r9,%r13,RW_WRITE_LOCKED
 
 2:	lptrarx	%r10,0,%r3
 	cmpw	%r10,%r9

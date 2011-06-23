@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.16 2009/03/16 23:11:13 dsl Exp $	*/
+/*	$NetBSD: obio.c,v 1.16.10.1 2011/06/23 14:19:23 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.16 2009/03/16 23:11:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.16.10.1 2011/06/23 14:19:23 cherry Exp $");
 
 #include "locators.h"
 
@@ -43,15 +43,14 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.16 2009/03/16 23:11:13 dsl Exp $");
 #include <machine/bus.h>
 #include <machine/sysconf.h>
 
-static int	obio_match(struct device *, struct cfdata *, void *);
-static void	obio_attach(struct device *, struct device *, void *);
-static int	obio_search(struct device *, struct cfdata *,
-				 const int *, void *);
+static int	obio_match(device_t, cfdata_t, void *);
+static void	obio_attach(device_t, device_t, void *);
+static int	obio_search(device_t, cfdata_t, const int *, void *);
 static int	obio_print(void *, const char *);
 static void	obio_intr_establish(bus_space_tag_t, int, int, int,
-					  int (*)(void *), void *);
+		    int (*)(void *), void *);
 
-CFATTACH_DECL(obio, sizeof(struct device),
+CFATTACH_DECL_NEW(obio, 0,
     obio_match, obio_attach, NULL, NULL);
 
 extern struct cfdriver obio_cd;
@@ -60,7 +59,7 @@ struct mipsco_bus_space obio_bustag;
 struct mipsco_bus_dma_tag obio_dmatag;
  
 static int
-obio_match(struct device *parent, struct cfdata *cf, void *aux)
+obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -71,7 +70,7 @@ obio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-obio_attach(struct device *parent, struct device *self, void *aux)
+obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -91,7 +90,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-obio_search(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
+obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -123,7 +122,8 @@ obio_print(void *args, const char *name)
 }
 
 void
-obio_intr_establish(bus_space_tag_t bst, int level, int pri, int flags, int (*func)(void *), void *arg)
+obio_intr_establish(bus_space_tag_t bst, int level, int pri, int flags,
+	int (*func)(void *), void *arg)
 {
 	(*platform.intr_establish)(level, func, arg);
 }

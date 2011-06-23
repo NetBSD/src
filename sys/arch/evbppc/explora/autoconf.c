@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10.32.1 2011/06/23 14:19:08 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,12 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10.32.1 2011/06/23 14:19:08 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
-#include <sys/device.h>
+#include <sys/device_if.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+
+#include <powerpc/ibm4xx/cpu.h>
 
 void
 cpu_configure(void)
@@ -63,6 +66,6 @@ cpu_rootconf(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 }

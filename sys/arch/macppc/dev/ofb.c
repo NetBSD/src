@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.65 2010/12/20 00:25:37 matt Exp $	*/
+/*	$NetBSD: ofb.c,v 1.65.6.1 2011/06/23 14:19:20 cherry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.65 2010/12/20 00:25:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.65.6.1 2011/06/23 14:19:20 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -82,8 +82,8 @@ struct ofb_softc {
 	struct vcons_data vd;
 };
 
-static int	ofbmatch(struct device *, struct cfdata *, void *);
-static void	ofbattach(struct device *, struct device *, void *);
+static int	ofbmatch(device_t, cfdata_t, void *);
+static void	ofbattach(device_t, device_t, void *);
 
 CFATTACH_DECL(ofb, sizeof(struct ofb_softc),
     ofbmatch, ofbattach, NULL, NULL);
@@ -125,7 +125,7 @@ extern int console_node;
 extern int console_instance;
 
 static int
-ofbmatch(struct device *parent, struct cfdata *match, void *aux)
+ofbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -140,9 +140,9 @@ ofbmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ofbattach(struct device *parent, struct device *self, void *aux)
+ofbattach(device_t parent, device_t self, void *aux)
 {
-	struct ofb_softc *sc = (struct ofb_softc *)self;
+	struct ofb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct wsemuldisplaydev_attach_args a;
 	struct rasops_info *ri = &rascons_console_screen.scr_ri;

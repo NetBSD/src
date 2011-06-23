@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.99 2010/06/03 02:05:02 dholland Exp $
+.\"	$NetBSD: sh.1,v 1.99.4.1 2011/06/23 14:17:48 cherry Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd June 2, 2010
+.Dd June 11, 2011
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1234,6 +1234,13 @@ the first occurrence of
 .Ar directory
 in the current directory name with
 .Ar replace .
+If
+.Ar directory
+is
+.Sq - ,
+then the current working directory is changed to the previous current
+working directory as set in
+.Ev OLDPWD .
 Otherwise if an entry for
 .Ev CDPATH
 appears in the environment of the
@@ -1254,14 +1261,18 @@ The
 .Fl P
 option instructs the shell to update
 .Ev PWD
-with the specified directory and change to that directory.
+with the specified physical directory path and change to that directory.
 This is the default.
+.Pp
+When the directory changes, the variable
+.Ev OLDPWD
+is set to the working directory before the change.
 .Pp
 Some shells also support a
 .Fl L
 option, which instructs the shell to update
 .Ev PWD
-with incorrect information and to change the current directory
+with the logical path and to change the current directory
 accordingly.
 This is not supported.
 .Pp
@@ -1479,7 +1490,7 @@ do
 	\e?)	echo $USAGE; exit 1;;
 	esac
 done
-shift `expr $OPTIND - 1`
+shift $(expr $OPTIND - 1)
 .Ed
 .Pp
 This code will accept any of the following as equivalent:
@@ -1671,7 +1682,9 @@ the action is executed when the shell exits.
 may be null, which cause the specified signals to be ignored.
 With
 .Ar action
-omitted or set to `-' the specified signals are set to their default action.
+omitted or set to
+.Sq -
+the specified signals are set to their default action.
 When the shell forks off a subshell, it resets trapped (but not ignored)
 signals to the default action.
 On non-interactive shells, the
@@ -1855,15 +1868,6 @@ in the buffer using the control key.
 uses the
 .Xr editline 3
 library.
-.Sh EXIT STATUS
-Errors that are detected by the shell, such as a syntax error, will cause the
-shell to exit with a non-zero exit status.
-If the shell is not an
-interactive shell, the execution of the shell file will be aborted.
-Otherwise
-the shell will return the exit status of the last command executed, or
-if the exit built-in is used with a numeric argument, it will return the
-argument.
 .Sh ENVIRONMENT
 .Bl -tag -width MAILCHECK
 .It Ev HOME
@@ -1943,6 +1947,15 @@ The number of lines in the history buffer for the shell.
 .It
 .Pa /etc/profile
 .El
+.Sh EXIT STATUS
+Errors that are detected by the shell, such as a syntax error, will cause the
+shell to exit with a non-zero exit status.
+If the shell is not an
+interactive shell, the execution of the shell file will be aborted.
+Otherwise
+the shell will return the exit status of the last command executed, or
+if the exit built-in is used with a numeric argument, it will return the
+argument.
 .Sh SEE ALSO
 .Xr csh 1 ,
 .Xr echo 1 ,

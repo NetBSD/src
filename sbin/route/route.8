@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.41 2010/05/12 17:56:13 christos Exp $
+.\"	$NetBSD: route.8,v 1.41.4.1 2011/06/23 14:18:44 cherry Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -239,7 +239,8 @@ specify that all subsequent addresses are in the
 or
 .Tn AppleTalk
 address families,
-or are specified as link-level addresses,
+or are specified as link-level addresses in the form described in
+.Xr link_addr 3 ,
 and the names must be numeric specifications rather than
 symbolic names.
 .Pp

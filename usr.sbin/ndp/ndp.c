@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.38 2009/11/06 20:51:19 dyoung Exp $	*/
+/*	$NetBSD: ndp.c,v 1.38.4.1 2011/06/23 14:20:49 cherry Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -105,11 +105,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "gmt2local.h"
-
-/* packing rule for routing socket */
-#define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static pid_t pid;
 static int nflag;
@@ -387,7 +382,7 @@ set(int argc, char **argv)
 		/* NOTREACHED */
 	}
 	mysin = (struct sockaddr_in6 *)(void *)(rtm + 1);
-	sdl = (struct sockaddr_dl *)(void *)(ROUNDUP(mysin->sin6_len) + (char *)(void *)mysin);
+	sdl = (struct sockaddr_dl *)(void *)(RT_ROUNDUP(mysin->sin6_len) + (char *)(void *)mysin);
 	if (IN6_ARE_ADDR_EQUAL(&mysin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
@@ -482,7 +477,7 @@ delete(char *host)
 	if (rtmsg(RTM_GET) < 0)
 		errx(1, "RTM_GET(%s) failed", host);
 	mysin = (struct sockaddr_in6 *)(void *)(rtm + 1);
-	sdl = (struct sockaddr_dl *)(void *)(ROUNDUP(mysin->sin6_len) +
+	sdl = (struct sockaddr_dl *)(void *)(RT_ROUNDUP(mysin->sin6_len) +
 	    (char *)(void *)mysin);
 	if (IN6_ARE_ADDR_EQUAL(&mysin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK &&
@@ -574,7 +569,7 @@ again:;
 
 		rtm = (struct rt_msghdr *)(void *)next;
 		mysin = (struct sockaddr_in6 *)(void *)(rtm + 1);
-		sdl = (struct sockaddr_dl *)(void *)((char *)(void *)mysin + ROUNDUP(mysin->sin6_len));
+		sdl = (struct sockaddr_dl *)(void *)((char *)(void *)mysin + RT_ROUNDUP(mysin->sin6_len));
 
 		/*
 		 * Some OSes can produce a route that has the LINK flag but
@@ -850,7 +845,7 @@ rtmsg(int cmd)
 #define NEXTADDR(w, s) \
 	if (rtm->rtm_addrs & (w)) { \
 		(void)memcpy(cp, &s, sizeof(s)); \
-		ADVANCE(cp, (struct sockaddr *)(void *)&s); \
+		RT_ADVANCE(cp, (struct sockaddr *)(void *)&s); \
 	}
 
 	NEXTADDR(RTA_DST, sin_m);

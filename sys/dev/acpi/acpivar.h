@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.69 2011/02/20 06:45:32 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.69.2.1 2011/06/23 14:19:56 cherry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -114,7 +114,7 @@ struct acpi_pci_info {
  *	ad_handle	never NULL
  *
  * Each ACPI device node is associated with its handle. The function
- * acpi_get_node() can be used to get the node structure from a handle.
+ * acpi_match_node() can be used to get the node structure from a handle.
  */
 struct acpi_devnode {
 	device_t		 ad_device;	/* Device */
@@ -149,8 +149,8 @@ struct acpi_devnode {
 struct acpi_softc {
 	device_t		 sc_dev;	/* base device info */
 	device_t		 sc_apmbus;	/* APM pseudo-bus */
-
-	device_t		 sc_wdrt;	/* WDRT watchdog */
+	device_t		 sc_hpet;	/* hpet(4) pseudo-bus */
+	device_t		 sc_wdrt;	/* acpiwdrt(4) pseudo-bus */
 
 	struct acpi_devnode	*sc_root;	/* root of the device tree */
 
@@ -291,6 +291,7 @@ extern struct acpi_softc *acpi_softc;
 extern int acpi_active;
 
 extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
+extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_quiet;
 
 int		acpi_probe(void);
 void		acpi_disable(void);

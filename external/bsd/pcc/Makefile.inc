@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2010/06/03 19:17:22 plunky Exp $
+#	$NetBSD: Makefile.inc,v 1.11.4.1 2011/06/23 14:18:32 cherry Exp $
 
 PCC_DIR:=${.PARSEDIR}
 PCC_DIST=${PCC_DIR}/dist/pcc
@@ -18,15 +18,12 @@ TARGMACH = ${MACHINE_ARCH}
 ERROR!= echo "ERROR: ${TARGMACH} not yet supported - write code!" >&2;echo
 .endif
 
+# this string will be updated by the prepare-import.sh script
 VERSSTR = PACKAGE_STRING " for ${TARGOS}-${TARGMACH}"
 
-libexecdir = /usr/libexec
-includedir = /usr/include
-
 CPPFLAGS+=	-DGCC_COMPAT
+CPPFLAGS+=	-DPCC_DEBUG
 CPPFLAGS+=	-DVERSSTR=${VERSSTR:Q}
-CPPFLAGS+=	-DLIBEXECDIR=\"${libexecdir}/\"
-CPPFLAGS+=	-DINCLUDEDIR=\"${includedir}/\"
 CPPFLAGS+=	-Dos_${TARGOS}
 CPPFLAGS+=	-Dmach_${TARGMACH}
 CPPFLAGS+=	-I${PCC_DIR}/include

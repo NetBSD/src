@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.177 2011/05/16 13:22:55 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.177.2.1 2011/06/23 14:19:47 cherry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2011/05/16 13:22:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177.2.1 2011/06/23 14:19:47 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2011/05/16 13:22:55 tsutsui Exp $"
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
@@ -97,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2011/05/16 13:22:55 tsutsui Exp $"
 #include <machine/kcore.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm.h>
@@ -1185,4 +1187,17 @@ cpu_intr_p(void)
 {
 
 	return idepth != 0;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+	int i;
+
+	for (i = 0; i < vm_nphysseg; i++) {
+		if (ctob(vm_physmem[i].start) <= pa &&
+		    pa < ctob(vm_physmem[i].end))
+			return 0;
+	}
+	return EFAULT;
 }

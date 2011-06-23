@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.47 2009/12/11 18:40:08 tsutsui Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.47.10.1 2011/06/23 14:19:44 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,22 +29,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL
 /*
  * Physical map structures exported to the VM code.
- * XXX - Does user-level code really see this struct?
  */
-
-#include <sys/simplelock.h>
 
 struct pmap {
 	unsigned char   	*pm_segmap; 	/* soft copy of segmap */
 	int             	pm_ctxnum;	/* MMU context number */
-	struct simplelock	pm_lock;    	/* lock on pmap */
-	int             	pm_refcount;	/* reference count */
+	u_int             	pm_refcount;	/* reference count */
 	int             	pm_version;
 };
 
-#ifdef _KERNEL
 /*
  * We give the pmap code a chance to resolve faults by
  * reloading translations that it was forced to unload.

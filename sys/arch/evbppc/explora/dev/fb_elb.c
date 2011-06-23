@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.11 2010/05/15 08:53:26 tsutsui Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.11.6.1 2011/06/23 14:19:08 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.11 2010/05/15 08:53:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.11.6.1 2011/06/23 14:19:08 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -58,13 +58,13 @@ struct fb_dev {
 };
 
 struct fb_elb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct fb_dev *sc_fb;
 	int sc_nscreens;
 };
 
-static int	fb_elb_probe(struct device *, struct cfdata *, void *);
-static void	fb_elb_attach(struct device *, struct device *, void *);
+static int	fb_elb_probe(device_t, cfdata_t, void *);
+static void	fb_elb_attach(device_t, device_t, void *);
 void		fb_cnattach(bus_space_tag_t, bus_addr_t, void *);
 static void	fb_init(struct fb_dev *, int);
 static int	fb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
@@ -108,14 +108,14 @@ static const struct wsscreen_descr *scrlist[] = {
 };
 
 static struct wsscreen_list screenlist = {
-	sizeof(scrlist)/sizeof(scrlist[0]), scrlist
+	__arraycount(scrlist), scrlist
 };
 
-CFATTACH_DECL(fb_elb, sizeof(struct fb_elb_softc),
+CFATTACH_DECL_NEW(fb_elb, sizeof(struct fb_elb_softc),
     fb_elb_probe, fb_elb_attach, NULL, NULL);
 
 static int
-fb_elb_probe(struct device *parent, struct cfdata *cf, void *aux)
+fb_elb_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct elb_attach_args *oaa = aux;
 
@@ -126,14 +126,16 @@ fb_elb_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-fb_elb_attach(struct device *parent, struct device *self, void *aux)
+fb_elb_attach(device_t parent, device_t self, void *aux)
 {
-	struct fb_elb_softc *sc = (void *)self;
+	struct fb_elb_softc *sc = device_private(self);
 	struct elb_attach_args *eaa = aux;
 	struct wsemuldisplaydev_attach_args waa;
 	struct rasops_info *ri;
 	bus_space_handle_t ioh;
 	int is_console;
+
+	sc->sc_dev = self;
 
 	is_console = ((void *)eaa->elb_base == console_dev.fb_vram);
 

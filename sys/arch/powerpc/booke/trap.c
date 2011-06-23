@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6 2011/05/02 02:01:32 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.6.2.1 2011/06/23 14:19:28 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.6 2011/05/02 02:01:32 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.6.2.1 2011/06/23 14:19:28 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.6 2011/05/02 02:01:32 matt Exp $");
 #include <sys/savar.h>
 #endif
 #include <sys/kauth.h>
-#include <sys/kmem.h>
 #include <sys/ras.h>
 
 #include <uvm/uvm_extern.h>
@@ -177,6 +176,8 @@ pagefault(struct vm_map *map, vaddr_t va, vm_prot_t ftype, bool usertrap)
 		rv = uvm_fault(map, trunc_page(va), ftype);
 		if (rv == 0)
 			uvm_grow(l->l_proc, trunc_page(va));
+		if (rv == EACCES)
+			rv = EFAULT;
 #ifdef KERN_SA
 		l->l_pflag &= ~LP_SA_PAGEFAULT;
 #endif
@@ -232,9 +233,10 @@ dsi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		const paddr_t pa = pte_to_paddr(pte);
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 		KASSERT(pg);
+		struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
-		if (!VM_PAGE_MD_MODIFIED_P(pg)) {
-			pmap_page_set_attributes(pg, VM_PAGE_MD_MODIFIED);
+		if (!VM_PAGEMD_MODIFIED_P(mdpg)) {
+			pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED);
 		}
 		pte &= ~PTE_UNMODIFIED;
 		*ptep = pte;
@@ -287,24 +289,36 @@ isi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	KASSERT(ptep != NULL);
 	pt_entry_t pte = *ptep;
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmapexechist);
+
 	if ((pte & PTE_UNSYNCED) == PTE_UNSYNCED) {
 		const paddr_t pa = pte_to_paddr(pte);
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 		KASSERT(pg);
+		struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
-		if (!VM_PAGE_MD_EXECPAGE_P(pg)) {
+		UVMHIST_LOG(pmapexechist,
+		    "srr0=%#x pg=%p (pa %#"PRIxPADDR"): %s", 
+		    tf->tf_srr0, pg, pa, 
+		    (VM_PAGEMD_EXECPAGE_P(mdpg)
+			? "no syncicache (already execpage)"
+			: "performed syncicache (now execpage)"));
+
+		if (!VM_PAGEMD_EXECPAGE_P(mdpg)) {
 			ci->ci_softc->cpu_ev_exec_trap_sync.ev_count++;
 			dcache_wb_page(pa);
 			icache_inv_page(pa);
-			pmap_page_set_attributes(pg, VM_PAGE_MD_EXECPAGE);
+			pmap_page_set_attributes(mdpg, VM_PAGEMD_EXECPAGE);
 		}
 		pte &= ~PTE_UNSYNCED;
 		pte |= PTE_xX;
 		*ptep = pte;
+
 		pmap_tlb_update_addr(faultmap->pmap, trunc_page(faultva),
 		    pte, 0);
 		kpreempt_enable();
-		return false;
+		UVMHIST_LOG(pmapexechist, "<- 0", 0,0,0,0);
+		return 0;
 	}
 	kpreempt_enable();
 
@@ -323,6 +337,7 @@ isi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		ksi->ksi_code = SEGV_ACCERR;
 		ksi->ksi_addr = (void *)tf->tf_srr0; /* not truncated */
 	}
+	UVMHIST_LOG(pmapexechist, "<- %d", rv, 0,0,0);
 	return rv;
 }
 
@@ -441,6 +456,12 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 
 	if (!usertrap_p(tf))
 		return rv;
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmapexechist);
+
+	UVMHIST_LOG(pmapexechist, " srr0/1=%#x/%#x esr=%#x pte=%#x", 
+	    tf->tf_srr0, tf->tf_srr1, tf->tf_esr,
+	    *trap_pte_lookup(tf, trunc_page(tf->tf_srr0), PSL_IS));
 
 	ci->ci_ev_pgm.ev_count++;
 
@@ -772,15 +793,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		break;
 	case T_AST:
 		KASSERT(usertrap);
-		ci->ci_astpending = 0;		/* we are about to do it */
-		ci->ci_data.cpu_nsoft++;
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
-		/* Check whether we are being preempted. */
-		if (ci->ci_want_resched)
-			preempt();
+		cpu_ast(l, ci);
 		if (tf->tf_fixreg[1] & 0x80000000) {
 			printf("%s(ast-exit): pid %d.%d (%s): invalid sp %#lx\n",
 			    __func__, p->p_pid, l->l_lid, p->p_comm,
@@ -876,27 +889,4 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 #endif
 		userret(l, tf);
 	}
-}
-
-void            
-upcallret(struct lwp *l)
-{       
-                
-	mi_userret(l);		/* Invoke MI userret code */
-}               
-
-/* 
- * Start a new LWP
- */
-void
-startlwp(void *arg)
-{
-	ucontext_t * const uc = arg;
-	struct lwp * const l = curlwp;
-
-	int error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-	KASSERT(error == 0);
-	(void)error;
-        kmem_free(uc, sizeof(ucontext_t)); 
-	upcallret(l);
 }

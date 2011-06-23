@@ -1,4 +1,4 @@
-/* $NetBSD: t_wctomb.c,v 1.1 2011/04/09 17:45:25 pgoyette Exp $ */
+/* $NetBSD: t_wctomb.c,v 1.1.2.1 2011/06/23 14:20:39 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_wctomb.c,v 1.1 2011/04/09 17:45:25 pgoyette Exp $");
+__RCSID("$NetBSD: t_wctomb.c,v 1.1.2.1 2011/06/23 14:20:39 cherry Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -125,7 +125,7 @@ h_wctomb(const struct test *t, char tc)
 	pcs = t->data;
 	sz = mbsrtowcs(wcs, &pcs, t->wclen + 2, NULL);
 	ATF_REQUIRE_EQ_MSG(sz, t->wclen, "mbsrtowcs() returned: "
-		"%d, expected: %d", sz, t->wclen);
+		"%zu, expected: %zu", sz, t->wclen);
 	ATF_REQUIRE_EQ(wcs[t->wclen], 0);
 
 	for (i = 0; i < t->wclen + 1; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.18 2010/12/20 00:25:37 matt Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.18.6.1 2011/06/23 14:19:20 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.18 2010/12/20 00:25:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.18.6.1 2011/06/23 14:19:20 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.18 2010/12/20 00:25:37 matt Exp $");
 
 #define MC_BUFSIZE 0x800
 
-hide int	mc_match(struct device *, struct cfdata *, void *);
-hide void	mc_attach(struct device *, struct device *, void *);
+hide int	mc_match(device_t, cfdata_t, void *);
+hide void	mc_attach(device_t, device_t, void *);
 hide void	mc_init(struct mc_softc *sc);
 hide void	mc_putpacket(struct mc_softc *sc, u_int len);
 hide int	mc_dmaintr(void *arg);
@@ -83,7 +83,7 @@ CFATTACH_DECL(mc, sizeof(struct mc_softc),
     mc_match, mc_attach, NULL, NULL);
 
 hide int
-mc_match(struct device *parent, struct cfdata *cf, void *aux)
+mc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -102,10 +102,10 @@ mc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 hide void
-mc_attach(struct device *parent, struct device *self, void *aux)
+mc_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
-	struct mc_softc *sc = (struct mc_softc *)self;
+	struct mc_softc *sc = device_private(self);
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	u_int *reg;
 

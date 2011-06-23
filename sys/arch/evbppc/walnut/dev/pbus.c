@@ -1,4 +1,4 @@
-/*	$NetBSD: pbus.c,v 1.10 2006/05/04 10:53:06 simonb Exp $	*/
+/*	$NetBSD: pbus.c,v 1.10.98.1 2011/06/23 14:19:11 cherry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.10 2006/05/04 10:53:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.10.98.1 2011/06/23 14:19:11 cherry Exp $");
 
 #include "locators.h"
 #include "pckbc.h"
@@ -96,11 +96,11 @@ const struct pbus_dev {
 	{ NULL }
 };
 
-static int	pbus_match(struct device *, struct cfdata *, void *);
-static void	pbus_attach(struct device *, struct device *, void *);
+static int	pbus_match(device_t, cfdata_t, void *);
+static void	pbus_attach(device_t, device_t, void *);
 static int	pbus_print(void *, const char *);
 
-CFATTACH_DECL(pbus, sizeof(struct device),
+CFATTACH_DECL_NEW(pbus, 0,
     pbus_match, pbus_attach, NULL, NULL);
 
 static struct powerpc_bus_space pbus_tag = {
@@ -114,7 +114,7 @@ static struct powerpc_bus_space pbus_tag = {
  * Probe for the peripheral bus.
  */
 static int
-pbus_match(struct device *parent, struct cfdata *cf, void *aux)
+pbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pbus_attach_args *pba = aux;
 
@@ -129,7 +129,7 @@ pbus_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach the peripheral bus.
  */
 static void
-pbus_attach(struct device *parent, struct device *self, void *aux)
+pbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct plb_attach_args *paa = aux;
 	struct pbus_attach_args pba;
@@ -152,7 +152,12 @@ pbus_attach(struct device *parent, struct device *self, void *aux)
 		pba.pb_bt = &pbus_tag;
 		pba.pb_dmat = paa->plb_dmat;
 
-		(void) config_found_sm_loc(self, "pbus", NULL, &pba, pbus_print,
+		const int locs[PBUSCF_NLOCS] = {
+		    [PBUSCF_ADDR] = pba.pb_addr,
+		    [PBUSCF_IRQ] = pba.pb_irq
+		};
+
+		(void) config_found_sm_loc(self, "pbus", locs, &pba, pbus_print,
 		    config_stdsubmatch);
 	}
 

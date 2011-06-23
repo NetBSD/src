@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.10 2010/02/24 22:37:58 dyoung Exp $ */
+/* $NetBSD: hpet.c,v 1.10.8.1 2011/06/23 14:19:59 cherry Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,11 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.10 2010/02/24 22:37:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.10.8.1 2011/06/23 14:19:59 cherry Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/module.h>
 
 #include <sys/time.h>
 #include <sys/timetc.h>
@@ -123,4 +123,40 @@ hpet_resume(device_t dv, const pmf_qual_t *qual)
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, HPET_CONFIG, val);
 
 	return true;
+}
+
+MODULE(MODULE_CLASS_DRIVER, hpet, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+hpet_modcmd(modcmd_t cmd, void *aux)
+{
+	int rv = 0;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+#ifdef _MODULE
+		rv = config_init_component(cfdriver_ioconf_hpet,
+		    cfattach_ioconf_hpet, cfdata_ioconf_hpet);
+#endif
+		break;
+
+	case MODULE_CMD_FINI:
+
+#ifdef _MODULE
+		rv = config_fini_component(cfdriver_ioconf_hpet,
+		    cfattach_ioconf_hpet, cfdata_ioconf_hpet);
+#endif
+		break;
+
+	default:
+		rv = ENOTTY;
+	}
+
+	return rv;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmr.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.1.12.1 2011/06/23 14:19:00 cherry Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.1 2010/10/03 05:49:24 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.1.12.1 2011/06/23 14:19:00 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -60,18 +60,12 @@ static int mvsoctmr_match(device_t, struct cfdata *, void *);
 static void mvsoctmr_attach(device_t, device_t, void *);
 
 static int clockhandler(void *);
-static int statclockhandler(void *);
 
 static u_int mvsoctmr_get_timecount(struct timecounter *);
 
 static void mvsoctmr_cntl(struct mvsoctmr_softc *, int, u_int, int, int);
 
-#ifndef STATHZ
-#define STATHZ	64
-#endif
-
 static struct mvsoctmr_softc *mvsoctmr_sc;
-static uint32_t clock_ticks, statclock_ticks;
 static struct timecounter mvsoctmr_timecounter = {
 	mvsoctmr_get_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
@@ -82,7 +76,6 @@ static struct timecounter mvsoctmr_timecounter = {
 	NULL,			/* prev */
 	NULL,			/* next */
 };
-static volatile uint32_t mvsoctmr_base;
 
 CFATTACH_DECL_NEW(mvsoctmr, sizeof(struct mvsoctmr_softc),
     mvsoctmr_match, mvsoctmr_attach, NULL, NULL);
@@ -121,6 +114,9 @@ mvsoctmr_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh,
 	    mva->mva_offset, mva->mva_size, &sc->sc_ioh))
 		panic("%s: Cannot map registers", device_xname(self));
+
+	mvsoctmr_timecounter.tc_name = device_xname(self);
+	mvsoctmr_cntl(sc, MVSOCTMR_TIMER1, 0xffffffff, 1, 1);
 }
 
 /*
@@ -133,48 +129,20 @@ clockhandler(void *arg)
 {
 	struct clockframe *frame = arg;
 
-	atomic_add_32(&mvsoctmr_base, clock_ticks);
-
 	hardclock(frame);
 
 	return 1;
 }
 
 /*
- * statclockhandler:
- *
- *	Handle the statclock interrupt.
- */
-static int
-statclockhandler(void *arg)
-{
-	struct clockframe *frame = arg;
-
-	statclock(frame);
-
-	return 1;
-}
-
-
-/*
  * setstatclockrate:
  *
  *	Set the rate of the statistics clock.
- *
- *	We assume that hz is either stathz or profhz, and that neither
- *	will change after being set by cpu_initclocks().  We could
- *	recalculate the intervals here, but that would be a pain.
  */
 /* ARGSUSED */
 void
 setstatclockrate(int newhz)
 {
-	struct mvsoctmr_softc *sc = mvsoctmr_sc;
-	const int en = 1, autoen = 1;
-
-	statclock_ticks = mvTclk / newhz;
-
-	mvsoctmr_cntl(sc, MVSOCTMR_TIMER1, statclock_ticks, en, autoen);
 }
 
 /*
@@ -188,31 +156,25 @@ cpu_initclocks()
 	struct mvsoctmr_softc *sc;
 	void *clock_ih;
 	const int en = 1, autoen = 1;
+	uint32_t timer0_tval;
 
 	sc = mvsoctmr_sc;
 	if (sc == NULL)
 		panic("cpu_initclocks: mvsoctmr not found");
 
-	stathz = profhz = STATHZ;
+	mvsoctmr_timecounter.tc_priv = sc;
 	mvsoctmr_timecounter.tc_frequency = mvTclk;
-	clock_ticks = mvTclk / hz;
 
-	mvsoctmr_cntl(sc, MVSOCTMR_TIMER0, clock_ticks, en, autoen);
+	timer0_tval = (mvTclk * 2) / (u_long) hz;
+	timer0_tval = (timer0_tval / 2) + (timer0_tval & 1);
+
+	mvsoctmr_cntl(sc, MVSOCTMR_TIMER0, timer0_tval, en, autoen);
+	mvsoctmr_cntl(sc, MVSOCTMR_TIMER1, 0xffffffff, en, autoen);
 
 	clock_ih = mvsoc_bridge_intr_establish(MVSOC_MLMB_MLMBI_CPUTIMER0INTREQ,
 	    IPL_CLOCK, clockhandler, NULL);
 	if (clock_ih == NULL)
 		panic("cpu_initclocks: unable to register timer interrupt");
-
-	if (stathz) {
-		setstatclockrate(stathz);
-		clock_ih = mvsoc_bridge_intr_establish(
-		    MVSOC_MLMB_MLMBI_CPUTIMER1INTREQ, IPL_HIGH,
-		    statclockhandler, NULL);
-		if (clock_ih == NULL)
-			panic("cpu_initclocks:"
-			    " unable to register statclock timer interrupt");
-	}
 
 	tc_init(&mvsoctmr_timecounter);
 }
@@ -237,7 +199,7 @@ delay(unsigned int n)
 	 * counted.
 	 */
 	initial_tick = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-	    MVSOCTMR_TIMER(MVSOCTMR_TIMER0));
+	    MVSOCTMR_TIMER(MVSOCTMR_TIMER1));
 
 	if (n <= UINT_MAX / mvTclk) {
 		/*
@@ -255,9 +217,9 @@ delay(unsigned int n)
 
 	while (remaining > 0) {
 		cur_tick = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    MVSOCTMR_TIMER(MVSOCTMR_TIMER0));
+		    MVSOCTMR_TIMER(MVSOCTMR_TIMER1));
 		if (cur_tick > initial_tick)
-			remaining -= clock_ticks - cur_tick + initial_tick;
+			remaining -= 0xffffffff - cur_tick + initial_tick;
 		else
 			remaining -= (initial_tick - cur_tick);
 		initial_tick = cur_tick;
@@ -267,19 +229,11 @@ delay(unsigned int n)
 static u_int
 mvsoctmr_get_timecount(struct timecounter *tc)
 {
-	struct mvsoctmr_softc *sc = mvsoctmr_sc;
-	uint32_t counter, base;
-	u_int intrstat;
+	struct mvsoctmr_softc *sc = tc->tc_priv;
 
-	intrstat = disable_interrupts(I32_bit);
-	base = mvsoctmr_base;
-	counter = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-	    MVSOCTMR_TIMER(MVSOCTMR_TIMER0));
-	restore_interrupts(intrstat);
-
-	return base - counter;
+	return 0xffffffff - bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+	    MVSOCTMR_TIMER(MVSOCTMR_TIMER1));
 }
-
 
 static void
 mvsoctmr_cntl(struct mvsoctmr_softc *sc, int num, u_int ticks, int en,

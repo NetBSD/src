@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2010/08/07 06:16:22 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71.6.1 2011/06/23 14:19:36 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,17 +32,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2010/08/07 06:16:22 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71.6.1 2011/06/23 14:19:36 cherry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/extent.h>
+#include <sys/intr.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -53,28 +55,24 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2010/08/07 06:16:22 kiyohara Exp $"
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/sysctl.h>
-
-#include <net/netisr.h>
-
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
-#include <machine/pmap.h>
 #include <machine/platform.h>
 #include <machine/powerpc.h>
 #include <machine/residual.h>
-#include <machine/trap.h>
+
+#include <powerpc/pmap.h>
+#include <powerpc/trap.h>
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/openpic.h>
-#include <arch/powerpc/pic/picvar.h>
+#include <powerpc/pic/picvar.h>
 #ifdef MULTIPROCESSOR
-#include <arch/powerpc/pic/ipivar.h>
+#include <powerpc/pic/ipivar.h>
 #endif
 
 #include <dev/cons.h>

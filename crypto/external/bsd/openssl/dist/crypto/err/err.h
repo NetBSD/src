@@ -137,6 +137,12 @@ extern "C" {
 #define ERR_PUT_error(a,b,c,d,e)	ERR_put_error(a,b,c,NULL,0)
 #endif
 
+#ifdef OPENSSL_FIPS
+void FIPS_set_error_callbacks(
+	void (*put_cb)(int lib, int func,int reason,const char *file,int line),
+	void (*add_cb)(int num, va_list args) );
+#endif
+
 #include <errno.h>
 
 #define ERR_TXT_MALLOCED	0x01
@@ -344,8 +350,9 @@ void ERR_print_errors_fp(FILE *fp);
 #endif
 #ifndef OPENSSL_NO_BIO
 void ERR_print_errors(BIO *bp);
-void ERR_add_error_data(int num, ...);
 #endif
+void ERR_add_error_data(int num, ...);
+void ERR_add_error_vdata(int num, va_list args);
 void ERR_load_strings(int lib,ERR_STRING_DATA str[]);
 void ERR_unload_strings(int lib,ERR_STRING_DATA str[]);
 void ERR_load_ERR_strings(void);

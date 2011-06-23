@@ -1,10 +1,10 @@
-# $NetBSD: md.ibmnws,v 1.8 2010/03/02 21:54:06 matt Exp $
+# $NetBSD: md.ibmnws,v 1.8.4.1 2011/06/23 14:18:21 cherry Exp $
 ./usr/include/ibmnws				comp-c-include
 ./usr/include/ibmnws/_G_config.h		comp-obsolete		obsolete
 ./usr/include/ibmnws/ansi.h			comp-c-include
 ./usr/include/ibmnws/aout_machdep.h		comp-c-include
 ./usr/include/ibmnws/asm.h			comp-c-include
-./usr/include/ibmnws/atomic.h			comp-c-include
+./usr/include/ibmnws/atomic.h			comp-obsolete		obsolete
 ./usr/include/ibmnws/bat.h			comp-obsolete		obsolete
 ./usr/include/ibmnws/bswap.h			comp-c-include
 ./usr/include/ibmnws/bus.h			comp-obsolete		obsolete

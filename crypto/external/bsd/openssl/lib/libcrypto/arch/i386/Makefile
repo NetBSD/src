@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2009/07/19 23:30:45 christos Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2011/06/23 14:18:09 cherry Exp $
 
 .include "bsd.own.mk"
 
-CRYPTODIST=${NETBSDSRCDIR}/crypto/dist
+CRYPTODIST=${NETBSDSRCDIR}/crypto
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 
 regen:

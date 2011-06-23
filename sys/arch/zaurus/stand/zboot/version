@@ -1,7 +1,8 @@
-$NetBSD: version,v 1.1 2009/03/02 09:33:02 nonaka Exp $
+$NetBSD: version,v 1.1.16.1 2011/06/23 14:19:52 cherry Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
 is taken as the current.
 
 1.0:	Initial version.
+1.1:	Support SL-C1000.

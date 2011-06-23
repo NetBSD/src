@@ -1,3 +1,4 @@
+.machine	"any"
 .text
 
 .globl	sha256_block_data_order

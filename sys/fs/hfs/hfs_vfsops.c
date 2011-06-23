@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.26 2010/06/24 13:03:09 hannken Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.26.6.1 2011/06/23 14:20:14 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.26 2010/06/24 13:03:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.26.6.1 2011/06/23 14:20:14 cherry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -546,8 +546,10 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 		return 0;
 
 	/* Allocate a new vnode/inode. */
-	if ((error = getnewvnode(VT_HFS, mp, hfs_vnodeop_p, &vp)) != 0)
+	error = getnewvnode(VT_HFS, mp, hfs_vnodeop_p, NULL, &vp);
+	if (error) {
 		goto error;
+	}
 	hnode = malloc(sizeof(struct hfsnode), M_TEMP,
 		M_WAITOK | M_ZERO);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.30 2011/02/02 15:13:34 chuck Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.30.2.1 2011/06/23 14:20:36 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -34,6 +34,7 @@
  * uvm_object.h
  */
 
+#include <sys/queue.h>
 #include <sys/rbtree.h>
 #include <uvm/uvm_pglist.h>
 
@@ -42,12 +43,13 @@
  */
 
 struct uvm_object {
-	kmutex_t		vmobjlock;	/* lock on memq */
+	kmutex_t *		vmobjlock;	/* lock on memq */
 	const struct uvm_pagerops *pgops;	/* pager ops */
 	struct pglist		memq;		/* pages in this object */
 	int			uo_npages;	/* # of pages in memq */
 	unsigned		uo_refs;	/* reference count */
 	struct rb_tree		rb_tree;	/* tree of pages */
+	LIST_HEAD(,ubc_map)	uo_ubc;		/* ubc mappings */
 };
 
 /*
@@ -100,32 +102,6 @@ extern const struct uvm_pagerops aobj_pager;
 	((uobj)->pgops == &aobj_pager)
 
 extern const rb_tree_ops_t uvm_page_tree_ops;
-
-#define	UVM_OBJ_INIT(uobj, ops, refs)					\
-	do {								\
-		mutex_init(&(uobj)->vmobjlock, MUTEX_DEFAULT, IPL_NONE);\
-		(uobj)->pgops = (ops);					\
-		TAILQ_INIT(&(uobj)->memq);				\
-		(uobj)->uo_npages = 0;					\
-		(uobj)->uo_refs = (refs);				\
-		rb_tree_init(&(uobj)->rb_tree, &uvm_page_tree_ops);	\
-	} while (/* CONSTCOND */ 0)
-
-#ifdef DIAGNOSTIC
-#define	UVM_OBJ_DESTROY(uobj)						\
-	do {								\
-		voff_t _xo = 0;						\
-		void *_xn;						\
-		mutex_destroy(&(uobj)->vmobjlock);			\
-		_xn = rb_tree_find_node_geq(&(uobj)->rb_tree, &_xo);	\
-		KASSERT(_xn == NULL);					\
-	} while (/* CONSTCOND */ 0)
-#else
-#define	UVM_OBJ_DESTROY(uobj)						\
-	do {								\
-		mutex_destroy(&(uobj)->vmobjlock);			\
-	} while (/* CONSTCOND */ 0)
-#endif	/* DIAGNOSTIC */
 
 #endif /* _KERNEL */
 

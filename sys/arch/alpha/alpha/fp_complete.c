@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.12 2008/05/10 15:31:04 martin Exp $ */
+/* $NetBSD: fp_complete.c,v 1.12.30.1 2011/06/23 14:18:51 cherry Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,13 +35,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.12 2008/05/10 15:31:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.12.30.1 2011/06/23 14:18:51 cherry Exp $");
 
 #include "opt_compat_osf1.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
+#include <sys/evcnt.h>
 
 #ifdef COMPAT_OSF1
 #include <compat/osf1/osf1_exec.h>
@@ -98,6 +100,9 @@ __KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.12 2008/05/10 15:31:04 martin Exp 
 	/* Move bits from sw fp_c to hw fpcr. */
 
 #define	CRBLIT(sw, hw, m, offs) (((sw) & ~(m)) | ((hw) >> (offs) & (m)))
+
+struct evcnt fpevent_use;
+struct evcnt fpevent_reuse;
 
 /*
  * Temporary trap shadow instrumentation. The [un]resolved counters
@@ -398,12 +403,13 @@ alpha_write_fp_c(struct lwp *l, u_int64_t fp_c)
 {
 	u_int64_t md_flags;
 
-	fp_c &= MDP_FP_C;
+	fp_c &= MDLWP_FP_C;
 	md_flags = l->l_md.md_flags;
-	if ((md_flags & MDP_FP_C) == fp_c)
+	if ((md_flags & MDLWP_FP_C) == fp_c)
 		return;
-	l->l_md.md_flags = (md_flags & ~MDP_FP_C) | fp_c;
-	alpha_enable_fp(l, 1);
+	l->l_md.md_flags = (md_flags & ~MDLWP_FP_C) | fp_c;
+	fpu_load();
+	alpha_pal_wrfen(1);
 	fp_c_to_fpcr(l);
 	alpha_pal_wrfen(0);
 }
@@ -417,7 +423,7 @@ alpha_read_fp_c(struct lwp *l)
 	 * but in a transparent way. Some of the code for that would need to
 	 * go right here.
 	 */
-	return l->l_md.md_flags & MDP_FP_C;
+	return l->l_md.md_flags & MDLWP_FP_C;
 }
 
 static float64
@@ -579,7 +585,8 @@ alpha_fp_complete_at(alpha_instruction *trigger_pc, struct lwp *l,
 		this_cannot_happen(6, -1);
 		return SIGSEGV;
 	}
-	alpha_enable_fp(l, 1);
+	fpu_load();
+	alpha_pal_wrfen(1);
 	/*
 	 * If necessary, lie about the dynamic rounding mode so emulation
 	 * software need go to only one place for it, and so we don't have to
@@ -706,4 +713,56 @@ done:
 		return sig;
 	}
 	return 0;
+}
+
+/*
+ * Load the float-point context for the current lwp.
+ */
+void
+fpu_state_load(struct lwp *l, bool used)
+{
+	struct pcb * const pcb = lwp_getpcb(l);
+
+	/*
+	 * Instrument FP usage -- if a process had not previously
+	 * used FP, mark it as having used FP for the first time,
+	 * and count this event.
+	 *
+	 * If a process has used FP, count a "used FP, and took
+	 * a trap to use it again" event.
+	 */
+	if (!fpu_used_p(l)) {
+		atomic_inc_ulong(&fpevent_use.ev_count);
+		fpu_mark_used(l);
+	} else
+		atomic_inc_ulong(&fpevent_reuse.ev_count);
+
+	alpha_pal_wrfen(1);
+	restorefpstate(&pcb->pcb_fp);
+	alpha_pal_wrfen(0);
+
+	l->l_md.md_flags |= MDLWP_FPACTIVE;
+}
+
+/*
+ * Save the FPU state.
+ */
+
+void
+fpu_state_save(struct lwp *l)
+{
+	struct pcb * const pcb = lwp_getpcb(l);
+
+	alpha_pal_wrfen(1);
+	savefpstate(&pcb->pcb_fp);
+	alpha_pal_wrfen(0);
+}
+
+/*
+ * Release the FPU.
+ */
+void
+fpu_state_release(struct lwp *l)
+{
+	l->l_md.md_flags &= ~MDLWP_FPACTIVE;
 }

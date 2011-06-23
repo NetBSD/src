@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith.y,v 1.19 2009/11/13 13:49:09 gson Exp $	*/
+/*	$NetBSD: arith.y,v 1.19.4.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)arith.y	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith.y,v 1.19 2009/11/13 13:49:09 gson Exp $");
+__RCSID("$NetBSD: arith.y,v 1.19.4.1 2011/06/23 14:17:48 cherry Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
 #include "expand.h"
+#include "builtins.h"
 #include "shell.h"
 #include "error.h"
 #include "output.h"

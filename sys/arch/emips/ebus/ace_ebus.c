@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $");
 
 #include "rnd.h"
 
@@ -75,49 +75,49 @@ __KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
  * NB: Beware of mis-alignment for all 32bit things
  */
 typedef struct _CFLASH_IDENTIFY {
-    uint16_t Signature;                              /* Word 0 */
+	uint16_t Signature;				/* Word 0 */
 #define CFLASH_SIGNATURE 0x848a
-    uint16_t DefaultNumberOfCylinders;               /* Word 1 */
-    uint16_t Reserved1;                              /* Word 2 */
-    uint16_t DefaultNumberOfHeads;                   /* Word 3 */
-    uint16_t Obsolete1[2];                           /* Word 4 */
-    uint16_t DefaultSectorsPerTrack;                 /* Word 6 */
-    uint16_t SectorsPerCard[2];                      /* Word 7 */
-    uint16_t Obsolete2;                              /* Word 9 */
-    uint8_t  SerialNumber[20]; /* padded, right-justified Word 10 */
-    uint16_t Obsolete3[2];                           /* Word 20 */
-    uint16_t EccBytesInRWLong;                       /* Word 22 */
-    uint8_t  FirmwareRevision[8];                    /* Word 23 */
-    uint8_t  ModelNumber[40];                        /* Word 27 */
-    uint16_t SectorsInRWMultiple;                    /* Word 47 */
-    uint16_t Reserved2;                              /* Word 48 */
-    uint16_t Capabilities;                           /* Word 49 */
-    uint16_t Reserved3;                              /* Word 50 */
-    uint16_t PioMode;                                /* Word 51 */
-    uint16_t Obsolete4;                              /* Word 52 */
-    uint16_t FieldValidity;                          /* Word 53 */
-    uint16_t CurrentNumberOfCylinders;               /* Word 54 */
-    uint16_t CurrentNumberOfHeads;                   /* Word 55 */
-    uint16_t CurrentSectorsPerTrack;                 /* Word 56 */
-    uint16_t CurrentCapacity[2];                     /* Word 57 */
-    uint16_t MultiSectorSettings;                    /* Word 59 */
-    uint16_t NumberOfAddressableSectors[2];          /* Word 60 */
-    uint16_t Reserved4;                              /* Word 62 */
-    uint16_t MultiWordDmaTransfer;                   /* Word 63 */
-    uint16_t AdvancedPioModes;                       /* Word 64 */
-    uint16_t MinimumMultiWordDmaTiming;              /* Word 65 */
-    uint16_t RecommendedMultiWordDmaTiming;          /* Word 66 */
-    uint16_t PioTimingNoFlowControl;                 /* Word 67 */
-    uint16_t PioTimingWithFlowControl;               /* Word 68 */
-    uint16_t Reserved5[13];                          /* Word 69 */
-    uint16_t FeaturesSupported[3];                   /* Word 82 */
-    uint16_t FeaturesEnabled[3];                     /* Word 85 */
-    uint16_t UdmaMode;                               /* Word 88 */
-    uint16_t SecurityEraseTime;                      /* Word 89 */
-    uint16_t EnhancedSecurityEraseTime;              /* Word 90 */
-    uint16_t CurrentPowerManagementValue;            /* Word 91 */
-    uint8_t  Reserved6[72];                          /* Word 92-127 */
-    uint8_t  SecondHalf[256];                        /* Word 128-255 */
+	uint16_t DefaultNumberOfCylinders;		/* Word 1 */
+	uint16_t Reserved1;				/* Word 2 */
+	uint16_t DefaultNumberOfHeads;			/* Word 3 */
+	uint16_t Obsolete1[2];				/* Word 4 */
+	uint16_t DefaultSectorsPerTrack;		/* Word 6 */
+	uint16_t SectorsPerCard[2];			/* Word 7 */
+	uint16_t Obsolete2;				/* Word 9 */
+	uint8_t  SerialNumber[20]; /* padded, right-justified Word 10 */
+	uint16_t Obsolete3[2];				/* Word 20 */
+	uint16_t EccBytesInRWLong;			/* Word 22 */
+	uint8_t  FirmwareRevision[8];			/* Word 23 */
+	uint8_t  ModelNumber[40];			/* Word 27 */
+	uint16_t SectorsInRWMultiple;			/* Word 47 */
+	uint16_t Reserved2;				/* Word 48 */
+	uint16_t Capabilities;				/* Word 49 */
+	uint16_t Reserved3;				/* Word 50 */
+	uint16_t PioMode;				/* Word 51 */
+	uint16_t Obsolete4;				/* Word 52 */
+	uint16_t FieldValidity;				/* Word 53 */
+	uint16_t CurrentNumberOfCylinders;		/* Word 54 */
+	uint16_t CurrentNumberOfHeads;			/* Word 55 */
+	uint16_t CurrentSectorsPerTrack;		/* Word 56 */
+	uint16_t CurrentCapacity[2];			/* Word 57 */
+	uint16_t MultiSectorSettings;			/* Word 59 */
+	uint16_t NumberOfAddressableSectors[2];		/* Word 60 */
+	uint16_t Reserved4;				/* Word 62 */
+	uint16_t MultiWordDmaTransfer;			/* Word 63 */
+	uint16_t AdvancedPioModes;			/* Word 64 */
+	uint16_t MinimumMultiWordDmaTiming;		/* Word 65 */
+	uint16_t RecommendedMultiWordDmaTiming;		/* Word 66 */
+	uint16_t PioTimingNoFlowControl;		/* Word 67 */
+	uint16_t PioTimingWithFlowControl;		/* Word 68 */
+	uint16_t Reserved5[13];				/* Word 69 */
+	uint16_t FeaturesSupported[3];			/* Word 82 */
+	uint16_t FeaturesEnabled[3];			/* Word 85 */
+	uint16_t UdmaMode;				/* Word 88 */
+	uint16_t SecurityEraseTime;			/* Word 89 */
+	uint16_t EnhancedSecurityEraseTime;		/* Word 90 */
+	uint16_t CurrentPowerManagementValue;		/* Word 91 */
+	uint8_t  Reserved6[72];				/* Word 92-127 */
+	uint8_t  SecondHalf[256];			/* Word 128-255 */
 } CFLASH_IDENTIFY, *PCFLASH_IDENTIFY;
 
 #define SIZEOF_IDENTIFY CF_SECTOR_SIZE /* must be a sector multiple */
@@ -135,14 +135,15 @@ struct ace_bio {
 	daddr_t		blkno;	/* block addr */
 	daddr_t		blkdone;/* number of blks transferred */
 	size_t		nblks;	/* number of blocks currently transferring */
-	size_t	    nbytes;	/* number of bytes currently transferring */
+	size_t		nbytes;	/* number of bytes currently transferring */
 	char		*databuf;/* data buffer address */
 	volatile int	error;
-#define	NOERROR 	0	/* There was no error (r_error invalid), else see acedone()*/
+#define	NOERROR		0	/* There was no error (r_error invalid),
+				   else see acedone()*/
 #define FAILED(er) (er != 0)
 #define EDOOFUS EIO
 
-	u_int32_t	r_error;/* copy of status register */
+	uint32_t	r_error;/* copy of status register */
 #ifdef HAS_BAD144_HANDLING
 	daddr_t		badsect[127];/* 126 plus trailing -1 marker */
 #endif
@@ -160,11 +161,11 @@ struct ace_softc {
 	/* IDE disk soft states */
 	struct buf *sc_bp; /* buf being transfered */
 	struct buf *active_xfer; /* buf handoff to thread  */
-    /* current transfer data */
+	/* current transfer data */
 	struct ace_bio sc_bio; /* current transfer */
 
-    struct proc *ch_thread;
-    int ch_flags;
+	struct proc *ch_thread;
+	int ch_flags;
 #define ATACH_SHUTDOWN 0x02        /* thread is shutting down */
 #define ATACH_IRQ_WAIT 0x10        /* thread is waiting for irq */
 #define ATACH_DISABLED 0x80        /* channel is disabled */
@@ -172,7 +173,7 @@ struct ace_softc {
 #define ATACH_TH_RESET 0x200       /* someone ask the thread to reset */
 
 	int openings;
-    int media_has_changed;
+	int media_has_changed;
 #define    ACECE_MC    0x20    /* media changed */
 #define    ACECE_MCR   0x08    /* media change requested */
 	struct _CFLASH_IDENTIFY sc_params;/* drive characteristics found */
@@ -184,11 +185,11 @@ struct ace_softc {
 #define ACEF_WAIT	0x020 /* waiting for resources */
 #define ACEF_KLABEL	0x080 /* retain label after 'full' close */
 
-	u_int64_t sc_capacity;
+	uint64_t sc_capacity;
 	uint32_t sc_multi; /* max sectors per xfer */
 
 	struct	_Sac   *sc_dr;		/* reg pointers */
-    int hw_busy;
+	int hw_busy;
 	int retries; /* number of xfer retry */
 
 #if NRND > 0
@@ -196,11 +197,11 @@ struct ace_softc {
 #endif
 };
 
-int  ace_ebus_match(struct device *, struct cfdata *, void *);
-void ace_ebus_attach(struct device *, struct device *, void *);
+int  ace_ebus_match(device_t, cfdata_t, void *);
+void ace_ebus_attach(device_t, device_t, void *);
 void aceattach(struct ace_softc *);
-int	 acedetach(struct device *, int);
-int	 aceactivate(struct device *, enum devact);
+int	 acedetach(device_t, int);
+int	 aceactivate(device_t, enum devact);
 
 void  acedone(struct ace_softc *);
 static void ace_params_to_properties(struct ace_softc *ace);
@@ -213,21 +214,21 @@ int  ace_ebus_intr(void *cookie, void *f);
 static void sysace_thread(void *arg);
 
 int
-ace_ebus_match(struct device *parent, struct cfdata *match, void *aux)
+ace_ebus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *d = aux;
-    struct _Sac *sac = (struct _Sac *)d->ia_vaddr;
+	struct _Sac *sac = (struct _Sac *)d->ia_vaddr;
 
-    if (strcmp("ace", d->ia_name) != 0)
-		return (0);
-    if ((sac == NULL) ||
-        ((sac->Tag & SAC_TAG) != PMTTAG_SYSTEM_ACE))
-        return 0;
-	return (1);
+	if (strcmp("ace", d->ia_name) != 0)
+		return 0;
+	if ((sac == NULL) ||
+	    ((sac->Tag & SAC_TAG) != PMTTAG_SYSTEM_ACE))
+		return 0;
+	return 1;
 }
 
 void
-ace_ebus_attach(struct device *parent, struct device *self, void *aux)
+ace_ebus_attach(device_t parent, device_t self, void *aux)
 {
 	struct ace_softc *ace = device_private(self);
 	struct ebus_attach_args *ia = aux;
@@ -255,7 +256,8 @@ ace_ebus_attach(struct device *parent, struct device *self, void *aux)
 		    "thread: error %d\n", error);
 }
 
-/* Sysace driver I(af) wrote for FreeBsd.
+/*
+ * Sysace driver I(af) wrote for FreeBsd.
  */
 #define CF_SECBITS     9
 #define CF_SECTOR_SIZE (1 << CF_SECBITS)
@@ -265,12 +267,13 @@ static int sysace_reset(struct ace_softc *sc);
 static int sysace_identify(struct ace_softc *sc);
 static int sysace_lock_registers(struct ace_softc *sc);
 static int sysace_unlock_registers(struct ace_softc *sc);
-static int sysace_start(struct ace_softc *sc, uint32_t Command, uint32_t Lba, uint32_t nSectors);
+static int sysace_start(struct ace_softc *sc, uint32_t Command, uint32_t Lba,
+			uint32_t nSectors);
 static int sysace_validate(struct ace_softc *sc, daddr_t start, size_t *pSize);
-static int sysace_read_at (struct ace_softc *sc, daddr_t start_sector, char *buffer,
-                           size_t nblocks, size_t * pSizeRead);
-static int sysace_write_at(struct ace_softc *sc, daddr_t start_sector, char *buffer,
-                           size_t nblocks, size_t * pSizeWritten);
+static int sysace_read_at (struct ace_softc *sc, daddr_t start_sector,
+			   char *buffer, size_t nblocks, size_t * pSizeRead);
+static int sysace_write_at(struct ace_softc *sc, daddr_t start_sector,
+			   char *buffer, size_t nblocks, size_t * pSizeWritten);
 #ifdef USE_ACE_FOR_RECONFIG /* Old code, despised and replaced by ICAP */
 static int sysace_send_config(struct ace_softc *sc,
                               uint32_t *Data, unsigned int nBytes);
@@ -285,7 +288,7 @@ static int sysace_send_config(struct ace_softc *sc,
 #define DEBUG_READS  0x40
 #define DEBUG_ERRORS 0x80
 #ifdef DEBUG
-int ace_debug = DEBUG_ERRORS;//|DEBUG_WRITES;
+int ace_debug = DEBUG_ERRORS /*|DEBUG_WRITES*/;
 #define ACE_DEBUG(x) (ace_debug & (x))
 #define DBGME(_lev_,_x_) if ((_lev_) & ace_debug) _x_
 #else
@@ -297,49 +300,54 @@ int ace_debug = DEBUG_ERRORS;//|DEBUG_WRITES;
 static int
 sysace_attach(struct ace_softc *sc)
 {
-    int error;
-	
-    DBGME(DEBUG_FUNCS,printf("Sysace::delayed_attach %p\n", sc));
+	int error;
 
-    sc->media_has_changed = TRUE;
-    sc->sc_capacity = 0;
+	DBGME(DEBUG_FUNCS, printf("Sysace::delayed_attach %p\n", sc));
 
-    error = sysace_reset(sc);
-    if (error) {
-        device_printf(sc->sc_dev,"failed to reset, errno=%d\n", error);
-        goto Out;
-    }
+	sc->media_has_changed = TRUE;
+	sc->sc_capacity = 0;
 
-    error = sysace_identify(sc);
-    if (error) {
-        device_printf(sc->sc_dev,"failed to identify card, errno=%d.\n", error);
-        goto Out;
-    }
+	error = sysace_reset(sc);
+	if (error) {
+		device_printf(sc->sc_dev,
+		    "failed to reset, errno=%d\n", error);
+		goto Out;
+	}
 
-    DBGME(DEBUG_PROBE,device_printf(sc->sc_dev,"Card has %qx sectors.\n", sc->sc_capacity));
+	error = sysace_identify(sc);
+	if (error) {
+		device_printf(sc->sc_dev,
+		    "failed to identify card, errno=%d.\n", error);
+		goto Out;
+	}
+
+	DBGME(DEBUG_PROBE, device_printf(sc->sc_dev,
+	    "Card has %qx sectors.\n", sc->sc_capacity));
 	if (sc->sc_capacity == 0) {
-        device_printf(sc->sc_dev,"size 0, no card? Wont work.\n");
-        error = EDOOFUS;
-	goto Out;
-    }
+		device_printf(sc->sc_dev, "size 0, no card? Wont work.\n");
+		error = EDOOFUS;
+		goto Out;
+	}
 
-    sc->media_has_changed = FALSE;
+	sc->media_has_changed = FALSE;
 Out:
-    return error;
+	return error;
 }
 
 static void
 sysace_wedges(void *arg);
 extern int	dkwedge_autodiscover;
 
-/* Aux temp thread to avoid deadlock when doing the partitio.. ahem wedges thing.
+/*
+ * Aux temp thread to avoid deadlock when doing
+ * the partitio.. ahem wedges thing.
  */
 static void
 sysace_wedges(void *arg)
 {
-	struct ace_softc *sc = (struct ace_softc*)arg;
+	struct ace_softc *sc = arg;
 
-	DBGME(DEBUG_STATUS,printf("Sysace::wedges started for %p\n", sc));
+	DBGME(DEBUG_STATUS, printf("Sysace::wedges started for %p\n", sc));
 
 	/* Discover wedges on this disk. */
 	dkwedge_autodiscover = 1;
@@ -347,18 +355,18 @@ sysace_wedges(void *arg)
 
 	config_pending_decr();
 
-	DBGME(DEBUG_STATUS,printf("Sysace::thread done for %p\n", sc));
-	    kthread_exit(0);
+	DBGME(DEBUG_STATUS, printf("Sysace::thread done for %p\n", sc));
+	kthread_exit(0);
 }
 
 static void
 sysace_thread(void *arg)
 {
-	struct ace_softc *sc = (struct ace_softc*)arg;
+	struct ace_softc *sc = arg;
 	struct buf *bp;
 	int s, error;
 
-	DBGME(DEBUG_STATUS,printf("Sysace::thread started for %p\n", sc));
+	DBGME(DEBUG_STATUS, printf("Sysace::thread started for %p\n", sc));
 
 	s = splbio();
 	aceattach(sc);
@@ -370,58 +378,63 @@ sysace_thread(void *arg)
 		aprint_error_dev(sc->sc_dev, "wedges: unable to create "
 		    "kernel thread: error %d\n", error);
 
-    DBGME(DEBUG_STATUS,printf("Sysace::thread service active for %p\n", sc));
+	DBGME(DEBUG_STATUS,
+	    printf("Sysace::thread service active for %p\n", sc));
 
-    s = splbio();
+	s = splbio();
 	for (;;) {
-        /* Get next I/O request, wait if necessary
-         */
+		/* Get next I/O request, wait if necessary */
 		if ((sc->ch_flags & (ATACH_TH_RESET | ATACH_SHUTDOWN)) == 0 &&
 		    (sc->active_xfer == NULL)) {
 			sc->ch_flags &= ~ATACH_TH_RUN;
 			(void) tsleep(&sc->ch_thread, PRIBIO, "aceth", 0);
 			sc->ch_flags |= ATACH_TH_RUN;
 		}
-		if (sc->ch_flags & ATACH_SHUTDOWN) {
+		if (sc->ch_flags & ATACH_SHUTDOWN)
 			break;
-        }
-        bp = sc->active_xfer;
-        sc->active_xfer = NULL;
+		bp = sc->active_xfer;
+		sc->active_xfer = NULL;
 		if (bp != NULL) {
+			size_t sz, bnow;
 
-            size_t sz, bnow;
+			DBGME(DEBUG_XFERS,
+			    printf("Sysace::task %p %p %x %p %qx %d (%zd)\n",
+			    sc, bp, sc->sc_bio.flags, sc->sc_bio.databuf,
+			    sc->sc_bio.blkno, sc->sc_bio.nbytes,
+			    sc->sc_bio.nblks));
 
-            DBGME(DEBUG_XFERS,printf("Sysace::task %p %p %x %p %qx %d (%zd)\n", sc, bp,
-                                     sc->sc_bio.flags, sc->sc_bio.databuf, sc->sc_bio.blkno,
-                                     sc->sc_bio.nbytes, sc->sc_bio.nblks));
+			sc->sc_bio.error = 0;
+			for (; sc->sc_bio.nblks > 0;) {
 
-            sc->sc_bio.error = 0;
-            for (; sc->sc_bio.nblks > 0;) {
+				bnow = sc->sc_bio.nblks;
+				if (sc->sc_bio.flags & ATA_SINGLE)
+					bnow = 1;
 
-                bnow = sc->sc_bio.nblks;
-                if (sc->sc_bio.flags & ATA_SINGLE) bnow = 1;
+				if (sc->sc_bio.flags & ATA_READ) {
+					sc->sc_bio.error =
+					    sysace_read_at(sc,
+					    sc->sc_bio.blkno,
+					    sc->sc_bio.databuf, bnow, &sz);
+				} else {
+					sc->sc_bio.error =
+					    sysace_write_at(sc,
+					    sc->sc_bio.blkno,
+					    sc->sc_bio.databuf, bnow, &sz);
+				}
 
-                if (sc->sc_bio.flags & ATA_READ) {
-                    sc->sc_bio.error = 
-                        sysace_read_at(sc, sc->sc_bio.blkno, sc->sc_bio.databuf, bnow, &sz);
-                } else {
-                    sc->sc_bio.error = 
-                        sysace_write_at(sc, sc->sc_bio.blkno, sc->sc_bio.databuf, bnow, &sz);
-                }
+				if (FAILED(sc->sc_bio.error))
+					break;
 
-                if (FAILED(sc->sc_bio.error))
-                    break;
+				sc->sc_bio.blkno += sz; /* in blocks */
+				sc->sc_bio.nblks -= sz;
+				sc->sc_bio.blkdone += sz;
+				sz = sz << CF_SECBITS; /* in bytes */
+				sc->sc_bio.databuf += sz;
+				sc->sc_bio.nbytes  -= sz;
+			}
 
-                sc->sc_bio.blkno += sz; /* in blocks */
-                sc->sc_bio.nblks -= sz;
-                sc->sc_bio.blkdone += sz;
-                sz = sz << CF_SECBITS; /* in bytes */
-                sc->sc_bio.databuf += sz;
-                sc->sc_bio.nbytes  -= sz;
-            }
-
-            acedone(sc);
-        }
+			acedone(sc);
+		}
 	}
 
 	splx(s);
@@ -435,533 +448,611 @@ sysace_thread(void *arg)
 #if _DEBUG
 typedef char *NAME;
 typedef struct _REGDESC {
-    NAME RegisterName;
-    NAME BitNames[32];
+	NAME RegisterName;
+	NAME BitNames[32];
 } REGDESC, *PREGDESC;
 
-static void SysacePrintRegister(const REGDESC *Desc, uint32_t Value)
+static void
+SysacePrintRegister(const REGDESC *Desc, uint32_t Value)
 {
-    int i;
-    printf("\t%s %x =", Desc->RegisterName, Value);
-    for (i = 31; i >= 0; i--) {
-        if (Value & (1 << i))
-            printf(" %s", 
-                     (Desc->BitNames[i]) ? Desc->BitNames[i] : "?");
-    }
-    printf("\n");            
+	int i;
+
+	printf("\t%s %x =", Desc->RegisterName, Value);
+	for (i = 31; i >= 0; i--) {
+		if (Value & (1 << i))
+			printf(" %s",
+			    (Desc->BitNames[i]) ? Desc->BitNames[i] : "?");
+	}
+	printf("\n");
 }
 
-static uint32_t SysaceDumpRegisters(struct _Sac *regs)
+static uint32_t
+SysaceDumpRegisters(struct _Sac *regs)
 {
-	const REGDESC Control_Names =
-        { "Control",
-          {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-          "RST", //			0x00010000
-          "BUS8", //		0x00020000
-          "BUS16", //		0x00040000
-          "BUS32", //		0x00080000
-          "IRQ", //			0x00100000
-          "BRDY", //		0x00200000
-          "IMSK0", //		0x00400000
-          "IMSK1", //		0x00800000
-          "TD0", //	    	0x0f000000
-          "TD1", //		    0x0f000000
-          "TD2", //	    	0x0f000000
-          "TD3", //	    	0x0f000000
-          "BUFW8", //		0x10000000
-          "BUFW16", //		0x20000000
-          "BUFW32", //		0x40000000
-          "DEBUG"} //		0x80000000
-        };
+	const REGDESC Control_Names = {
+		"Control",
+		{
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			"RST",		/* 0x00010000 */
+			"BUS8",		/* 0x00020000 */
+			"BUS16",	/* 0x00040000 */
+			"BUS32",	/* 0x00080000 */
+			"IRQ",		/* 0x00100000 */
+			"BRDY",		/* 0x00200000 */
+			"IMSK0",	/* 0x00400000 */
+			"IMSK1",	/* 0x00800000 */
+			"TD0",		/* 0x0f000000 */
+			"TD1",		/* 0x0f000000 */
+			"TD2",		/* 0x0f000000 */
+			"TD3",		/* 0x0f000000 */
+			"BUFW8",	/* 0x10000000 */
+			"BUFW16",	/* 0x20000000 */
+			"BUFW32",	/* 0x40000000 */
+			"DEBUG"		/* 0x80000000 */
+		}
+	};
 
-	const REGDESC STATUS_Names =
-        { "STATUS",
-          {"CFGLOCK", //	0x00000001
-          "MPULOCK", //		0x00000002
-          "CFGERROR", //	0x00000004
-          "CFCERROR", //	0x00000008
-          "CFDETECT", //	0x00000010
-          "DATABUFRDY", //	0x00000020
-          "DATABUFWRITE", //0x00000040
-          "CFGDONE", //		0x00000080
-          "RDYFORCFCMD", //	0x00000100
-          "CFGMODEPIN", //	0x00000200
-          0,0,0,
-          "CFGADDRPIN0", //	0x0000e000
-          "CFGADDRPIN1", //	0x0000e000
-          "CFGADDRPIN2", //	0x0000e000
-          0,
-          "CFBSY", //		0x00020000
-          "CFRDY", //		0x00040000
-          "CFDWF", //		0x00080000
-          "CFDSC", //		0x00100000
-          "CFDRQ", //		0x00200000
-          "CFCORR", //		0x00400000
-          "CFERR", //		0x00800000
-          0,}
-        };
+	const REGDESC STATUS_Names = {
+		"STATUS",
+		{
+			"CFGLOCK",	/* 0x00000001 */
+			"MPULOCK",	/* 0x00000002 */
+			"CFGERROR",	/* 0x00000004 */
+			"CFCERROR",	/* 0x00000008 */
+			"CFDETECT",	/* 0x00000010 */
+			"DATABUFRDY",	/* 0x00000020 */
+			"DATABUFWRITE",	/* 0x00000040 */
+			"CFGDONE",	/* 0x00000080 */
+			"RDYFORCFCMD",	/* 0x00000100 */
+			"CFGMODEPIN",	/* 0x00000200 */
+			0,0,0,
+			"CFGADDRPIN0",	/* 0x0000e000 */
+			"CFGADDRPIN1",	/* 0x0000e000 */
+			"CFGADDRPIN2",	/* 0x0000e000 */
+			0,
+			"CFBSY",	/* 0x00020000 */
+			"CFRDY",	/* 0x00040000 */
+			"CFDWF",	/* 0x00080000 */
+			"CFDSC",	/* 0x00100000 */
+			"CFDRQ",	/* 0x00200000 */
+			"CFCORR",	/* 0x00400000 */
+			"CFERR",	/* 0x00800000 */
+			0,
+		}
+	};
 
-	const REGDESC ERRORREG_Names =
-        { "ERRORREG",
-          {"CARDRESETERR", //			0x00000001
-          "CARDRDYERR", //				0x00000002
-          "CARDREADERR", //				0x00000004
-          "CARDWRITEERR", //			0x00000008
-          "SECTORRDYERR", //			0x00000010
-          "CFGADDRERR", //				0x00000020
-          "CFGFAILED", //				0x00000040
-          "CFGREADERR", //				0x00000080
-          "CFGINSTRERR", //				0x00000100
-          "CFGINITERR", //				0x00000200
-          0,
-          "CFBBK", //					0x00000800
-          "CFUNC", //					0x00001000
-          "CFIDNF", //					0x00002000
-          "CFABORT", //					0x00004000
-          "CFAMNF", //					0x00008000
-           0,}
-        };
+	const REGDESC ERRORREG_Names = {
+		"ERRORREG",
+		{
+			"CARDRESETERR",	/* 0x00000001 */
+			"CARDRDYERR",	/* 0x00000002 */
+			"CARDREADERR",	/* 0x00000004 */
+			"CARDWRITEERR",	/* 0x00000008 */
+			"SECTORRDYERR",	/* 0x00000010 */
+			"CFGADDRERR",	/* 0x00000020 */
+			"CFGFAILED",	/* 0x00000040 */
+			"CFGREADERR",	/* 0x00000080 */
+			"CFGINSTRERR",	/* 0x00000100 */
+			"CFGINITERR",	/* 0x00000200 */
+			0,
+			"CFBBK",	/* 0x00000800 */
+			"CFUNC",	/* 0x00001000 */
+			"CFIDNF",	/* 0x00002000 */
+			"CFABORT",	/* 0x00004000 */
+			"CFAMNF",	/* 0x00008000 */
+			0,
+		}
+	};
 
-    const NAME CommandNames[8] =
-        { "0", //     				0x0000
-          "RESETMEMCARD", //   		0x0100
-          "IDENTIFYMEMCARD", //		0x0200
-          "READMEMCARDDATA", //		0x0300
-          "WRITEMEMCARDDATA", //  	0x0400
-          "5", //     				0x0500
-          "ABORT", //			    0x0600
-          "7" //     			    0x0700
-        };
+	const NAME CommandNames[8] = {
+		"0",			/* 0x0000 */
+		"RESETMEMCARD",		/* 0x0100 */
+		"IDENTIFYMEMCARD",	/* 0x0200 */
+		"READMEMCARDDATA",	/* 0x0300 */
+		"WRITEMEMCARDDATA",	/* 0x0400 */
+		"5",			/* 0x0500 */
+		"ABORT",		/* 0x0600 */
+		"7"			/* 0x0700 */
+	};
 
-	const REGDESC CONTROLREG_Names =
-        { "CONTROLREG",
-          {"FORCELOCKREQ", //			0x00000001
-          "LOCKREQ", //					0x00000002
-          "FORCECFGADDR", //			0x00000004
-          "FORCECFGMODE", //			0x00000008
-          "CFGMODE", //					0x00000010
-          "CFGSTART", //				0x00000020
-          "CFGSEL_MPU", //  			0x00000040
-          "CFGRESET", //				0x00000080
-          "DATABUFRDYIRQ", //			0x00000100
-          "ERRORIRQ", //				0x00000200
-          "CFGDONEIRQ", //				0x00000400
-          "RESETIRQ", //				0x00000800
-          "CFGPROG", //					0x00001000
-          "CFGADDR_B0", //				0x00002000
-          "CFGADDR_B1", //				0x00004000
-          "CFGADDR_B2", //				0x00008000
-          0,}
-        };
+	const REGDESC CONTROLREG_Names = {
+		"CONTROLREG",
+		{
+			"FORCELOCKREQ",	/* 0x00000001 */
+			"LOCKREQ",	/* 0x00000002 */
+			"FORCECFGADDR",	/* 0x00000004 */
+			"FORCECFGMODE",	/* 0x00000008 */
+			"CFGMODE",	/* 0x00000010 */
+			"CFGSTART",	/* 0x00000020 */
+			"CFGSEL_MPU",	/* 0x00000040 */
+			"CFGRESET",	/* 0x00000080 */
+			"DATABUFRDYIRQ",/* 0x00000100 */
+			"ERRORIRQ",	/* 0x00000200 */
+			"CFGDONEIRQ",	/* 0x00000400 */
+			"RESETIRQ",	/* 0x00000800 */
+			"CFGPROG",	/* 0x00001000 */
+			"CFGADDR_B0",	/* 0x00002000 */
+			"CFGADDR_B1",	/* 0x00004000 */
+			"CFGADDR_B2",	/* 0x00008000 */
+			0,
+		}
+	};
 
-	const REGDESC FATSTATREG_Names =
-        { "FATSTATREG",
-          {"MBRVALID", //				0x00000001
-          "PBRVALID", //				0x00000002
-          "MBRFAT12", //				0x00000004
-          "PBRFAT12", //				0x00000008
-          "MBRFAT16", //				0x00000010
-          "PBRFAT16", //				0x00000020
-          "CALCFAT12", //				0x00000040
-          "CALCFAT16", //				0x00000080
-          0, }
-        };
+	const REGDESC FATSTATREG_Names = {
+		"FATSTATREG",
+		{
+			"MBRVALID",	/* 0x00000001 */
+			"PBRVALID",	/* 0x00000002 */
+			"MBRFAT12",	/* 0x00000004 */
+			"PBRFAT12",	/* 0x00000008 */
+			"MBRFAT16",	/* 0x00000010 */
+			"PBRFAT16",	/* 0x00000020 */
+			"CALCFAT12",	/* 0x00000040 */
+			"CALCFAT16",	/* 0x00000080 */
+			0,
+		}
+	};
 
-    printf("Sysace@%p:\n", regs);
-    printf("\tTag %x\n", regs->Tag);
-    SysacePrintRegister(&Control_Names, regs->Control);
-    printf("\tBUSMODEREG %x\n", regs->BUSMODEREG);
-    SysacePrintRegister(&STATUS_Names, regs->STATUS);
-    SysacePrintRegister(&ERRORREG_Names, regs->ERRORREG);
-    printf("\tCFGLBAREG %x\n", regs->CFGLBAREG);
-    printf("\tMPULBAREG %x\n", regs->MPULBAREG);
-    printf("\tVERSIONREG %x\n", regs->VERSIONREG);
-    printf("\tSECCNTCMDREG %x = %s cnt=%d\n", regs->SECCNTCMDREG,
-             CommandNames[(regs->SECCNTCMDREG >> 8)&7],
-             regs->SECCNTCMDREG & SAC_SECCCNT);
-    SysacePrintRegister(&CONTROLREG_Names, regs->CONTROLREG);
-    SysacePrintRegister(&FATSTATREG_Names, regs->FATSTATREG);
+	printf("Sysace@%p:\n", regs);
+	printf("\tTag %x\n", regs->Tag);
+	SysacePrintRegister(&Control_Names, regs->Control);
+	printf("\tBUSMODEREG %x\n", regs->BUSMODEREG);
+	SysacePrintRegister(&STATUS_Names, regs->STATUS);
+	SysacePrintRegister(&ERRORREG_Names, regs->ERRORREG);
+	printf("\tCFGLBAREG %x\n", regs->CFGLBAREG);
+	printf("\tMPULBAREG %x\n", regs->MPULBAREG);
+	printf("\tVERSIONREG %x\n", regs->VERSIONREG);
+	printf("\tSECCNTCMDREG %x = %s cnt=%d\n", regs->SECCNTCMDREG,
+	    CommandNames[(regs->SECCNTCMDREG >> 8) & 7],
+	    regs->SECCNTCMDREG & SAC_SECCCNT);
+	SysacePrintRegister(&CONTROLREG_Names, regs->CONTROLREG);
+	SysacePrintRegister(&FATSTATREG_Names, regs->FATSTATREG);
 
-    return 1;
+	return 1;
 }
 
 #else
 #define SysaceDumpRegisters(_c_)
 #endif
 
-/* Reset the device and the interface
+/*
+ * Reset the device and the interface
  */
-static int sysace_reset(struct ace_softc *sc)
+static int
+sysace_reset(struct ace_softc *sc)
 {
-    struct _Sac *regs = sc->sc_dr;
+	struct _Sac *regs = sc->sc_dr;
 
-    DBGME(DEBUG_FUNCS,printf("Sysace::Reset %p\n", sc));
+	DBGME(DEBUG_FUNCS, printf("Sysace::Reset %p\n", sc));
 
-    /* 16bit etc etc */
+	/* 16bit etc etc */
 	uint32_t BusMode, Control;
 
-    /* reset our interface */
-    regs->Control = SAC_RST;
-    DELAY(200);
+	/* reset our interface */
+	regs->Control = SAC_RST;
+	DELAY(200);
 
-    /* repeat on both byte lanes */
+	/* repeat on both byte lanes */
 	regs->BUSMODEREG = SAC_MODE16 | (SAC_MODE16 << 8);
-    DELAY(1);
+	DELAY(1);
 
-    /* check what our interface does and what the SysACE expects */
+	/* check what our interface does and what the SysACE expects */
 	Control = regs->Control;
 	BusMode = regs->BUSMODEREG;
 
-    /* get them to agree */
-	if (BusMode & SAC_MODE16)
-	{
+	/* get them to agree */
+	if (BusMode & SAC_MODE16) {
 		regs->Control = Control | SAC_BUS16;
 		regs->Control = regs->Control & ~SAC_BUS8;
-	}
-	else
-	{
+	} else {
 		regs->Control = Control | SAC_BUS8;
 		regs->Control = regs->Control & ~SAC_BUS16;
 	}
 
-    /* check that it worked */
+	/* check that it worked */
 	BusMode = regs->BUSMODEREG;
 	Control = regs->Control;
 
-	if (((BusMode & SAC_MODE16) == 0) && ((Control & SAC_BUS8) == 0)) return EDOOFUS;
-	if (((BusMode & SAC_MODE16) > 0) && ((Control & SAC_BUS16) == 0)) return EDOOFUS;
+	if (((BusMode & SAC_MODE16) == 0) && ((Control & SAC_BUS8) == 0))
+		return EDOOFUS;
+	if (((BusMode & SAC_MODE16) > 0) && ((Control & SAC_BUS16) == 0))
+		return EDOOFUS;
 
-    /* interrupts off for now */
-    regs->Control &= ~SAC_INTMASK;
-#define SAC_INTERRUPTS (SAC_DATABUFRDYIRQ |	SAC_ERRORIRQ )// | SAC_CFGDONEIRQ)
-    Control = regs->CONTROLREG;
-    Control = (Control & ~SAC_INTERRUPTS) | SAC_RESETIRQ | SAC_FORCECFGMODE;
-    regs->CONTROLREG = Control;
-    regs->CONTROLREG = Control & ~SAC_RESETIRQ;
+	/* interrupts off for now */
+	regs->Control &= ~SAC_INTMASK;
+#define SAC_INTERRUPTS (SAC_DATABUFRDYIRQ | SAC_ERRORIRQ /* | SAC_CFGDONEIRQ */)
+	Control = regs->CONTROLREG;
+	Control = (Control & ~SAC_INTERRUPTS) | SAC_RESETIRQ | SAC_FORCECFGMODE;
+	regs->CONTROLREG = Control;
+	regs->CONTROLREG = Control & ~SAC_RESETIRQ;
 
-    /* no command */
-    regs->MPULBAREG = 0;
+	/* no command */
+	regs->MPULBAREG = 0;
 
-    return 0;
+	return 0;
 }
 
-/* Take control of the ACE datapath
+/*
+ * Take control of the ACE datapath
  */
-static int sysace_lock_registers(struct ace_softc *sc)
+static int
+sysace_lock_registers(struct ace_softc *sc)
 {
-    uint32_t Status;
-    int i;
+	uint32_t Status;
+	int i;
 
-    DBGME(DEBUG_FUNCS,printf("Sysace::Lock %p\n", sc));
+	DBGME(DEBUG_FUNCS, printf("Sysace::Lock %p\n", sc));
 
-    /* Locked already?
-     */
-    Status = sc->sc_dr->STATUS;
-    if (Status & SAC_MPULOCK)
-        return TRUE;
+	/*
+	 * Locked already?
+	 */
+	Status = sc->sc_dr->STATUS;
+	if (Status & SAC_MPULOCK)
+		return TRUE;
 
-    /* Request lock
-     */
-    sc->sc_dr->CONTROLREG |= SAC_LOCKREQ;
+	/*
+	 * Request lock
+	 */
+	sc->sc_dr->CONTROLREG |= SAC_LOCKREQ;
 
-    /* Spin a bit until we get it
-     */
-    for (i = 0; i < 200; i++) {
-        Status = sc->sc_dr->STATUS;
-        if (Status & SAC_MPULOCK)
-            return TRUE;
-        DELAY(100);
-        DBGME(DEBUG_FUNCS,printf("Sysace::Lock loops.. (st=%x)\n",Status));
-    }
+	/*
+	 * Spin a bit until we get it
+	 */
+	for (i = 0; i < 200; i++) {
+		Status = sc->sc_dr->STATUS;
+		if (Status & SAC_MPULOCK)
+			return TRUE;
+		DELAY(100);
+		DBGME(DEBUG_FUNCS,
+		    printf("Sysace::Lock loops.. (st=%x)\n",Status));
+	}
 
-    /* oopsie!
-     */
-    DBGME(DEBUG_ERRORS,printf("Sysace::Lock timeout (st=%x)\n",Status));
-    SysaceDumpRegisters(sc->sc_dr);
-    return FALSE;
+	/*
+	 * oopsie!
+	 */
+	DBGME(DEBUG_ERRORS, printf("Sysace::Lock timeout (st=%x)\n",Status));
+	SysaceDumpRegisters(sc->sc_dr);
+	return FALSE;
 }
 
-/* Release control of the ACE datapath
+/*
+ * Release control of the ACE datapath
  */
-static int sysace_unlock_registers(struct ace_softc *sc)
+static int
+sysace_unlock_registers(struct ace_softc *sc)
 {
-    uint32_t Status;
-    int i;
+	uint32_t Status;
+	int i;
 
-    DBGME(DEBUG_FUNCS,printf("Sysace::Unlock %p\n", sc));
+	DBGME(DEBUG_FUNCS, printf("Sysace::Unlock %p\n", sc));
 
-    /* Clear reset 
-     */
-    sc->sc_dr->CONTROLREG &= ~SAC_CFGRESET;
+	/*
+	 * Clear reset
+	 */
+	sc->sc_dr->CONTROLREG &= ~SAC_CFGRESET;
 
-    /* Unlocked already?
-     */
-    Status = sc->sc_dr->STATUS;
-    if (0 == (Status & SAC_MPULOCK))
-        return TRUE;
+	/*
+	 * Unlocked already?
+	 */
+	Status = sc->sc_dr->STATUS;
+	if ((Status & SAC_MPULOCK) == 0)
+		return TRUE;
 
-    /* Request unlock
-     */
-    sc->sc_dr->CONTROLREG &= ~SAC_LOCKREQ;
+	/*
+	 * Request unlock
+	 */
+	sc->sc_dr->CONTROLREG &= ~SAC_LOCKREQ;
 
-    /* Spin a bit until we get it
-     */
-    for (i = 0; i < 200; i++) {
-        Status = sc->sc_dr->STATUS;
-        if (0 == (Status & SAC_MPULOCK))
-            return TRUE;
-        DELAY(100);
-        DBGME(DEBUG_FUNCS,printf("Sysace::Unlock loops.. (st=%x)\n",Status));
-    }
+	/*
+	 * Spin a bit until we get it
+	 */
+	for (i = 0; i < 200; i++) {
+		Status = sc->sc_dr->STATUS;
+		if ((Status & SAC_MPULOCK) == 0)
+			return TRUE;
+		DELAY(100);
+		DBGME(DEBUG_FUNCS,
+		    printf("Sysace::Unlock loops.. (st=%x)\n",Status));
+	}
 
-    /* oopsie!
-     */
-    DBGME(DEBUG_ERRORS,printf("Sysace::Unlock timeout (st=%x)\n",Status));
-    SysaceDumpRegisters(sc->sc_dr);
-    return FALSE;
+	/*
+	 * oopsie!
+	 */
+	DBGME(DEBUG_ERRORS, printf("Sysace::Unlock timeout (st=%x)\n",Status));
+	SysaceDumpRegisters(sc->sc_dr);
+	return FALSE;
 }
 
-/* Check if the ACE is waiting for a comamnd
+/*
+ * Check if the ACE is waiting for a comamnd
  */
 #define sysace_ready(_s_) ((_s_)->sc_dr->STATUS & SAC_RDYFORCFCMD)
 
-/* Check if the ACE is executing a comamnd
+/*
+ * Check if the ACE is executing a comamnd
  */
 #define sysace_busy(_s_) ((_s_)->sc_dr->STATUS & SAC_CFBSY)
 
-/* Turn on interrupts from the ACE
+/*
+ * Turn on interrupts from the ACE
  */
 #define sysace_inton(_s_) { \
-          (_s_)->sc_dr->CONTROLREG |= SAC_INTERRUPTS; \
-          (_s_)->sc_dr->Control |= SAC_INTMASK; \
+	(_s_)->sc_dr->CONTROLREG |= SAC_INTERRUPTS; \
+	(_s_)->sc_dr->Control |= SAC_INTMASK; \
 }
 
-/* Turn off interrupts from the ACE
+/*
+ * Turn off interrupts from the ACE
  */
 #define sysace_intoff(_s_) { \
-          (_s_)->sc_dr->CONTROLREG &= ~SAC_INTERRUPTS; \
-          (_s_)->sc_dr->Control &= ~SAC_INTMASK; \
+	(_s_)->sc_dr->CONTROLREG &= ~SAC_INTERRUPTS; \
+	(_s_)->sc_dr->Control &= ~SAC_INTMASK; \
 }
 
-/* Start a command on the ACE, such as read or identify.
+/*
+ * Start a command on the ACE, such as read or identify.
  */
-static int sysace_start(struct ace_softc *sc,
-                        uint32_t Command,
-                        uint32_t Lba,
-                        uint32_t nSectors)
+static int
+sysace_start(struct ace_softc *sc, uint32_t Command, uint32_t Lba,
+    uint32_t nSectors)
 {
-    /* Lock it if not already
-     */
-    if (!sysace_lock_registers(sc)) {
-        /* printed already */
-        return ETIMEDOUT;
-    }
 
-    /* Is there a CF inserted
-     */
-    if (! (sc->sc_dr->STATUS & SAC_CFDETECT)) {
-        /* NB: Not a failure state */
-        DBGME(DEBUG_ERRORS,printf("Sysace:: no media (st=%x)\n",sc->sc_dr->STATUS));
-        if (sc->sc_capacity) {
-            sc->media_has_changed = TRUE;
-            sc->sc_capacity = 0;
-        }
-        return ENODEV;
-    }
+	/*
+	 * Lock it if not already
+	 */
+	if (!sysace_lock_registers(sc)) {
+		/* printed already */
+		return ETIMEDOUT;
+	}
 
-    /* Is it ready for a command
-     */
-    if (!sysace_ready(sc)) {
-        DBGME(DEBUG_ERRORS,printf("Sysace:: not ready (st=%x)\n",sc->sc_dr->STATUS));
-        SysaceDumpRegisters(sc->sc_dr);
-        return EBUSY;
-    }
+	/*
+	 * Is there a CF inserted
+	 */
+	if (!(sc->sc_dr->STATUS & SAC_CFDETECT)) {
+		/* NB: Not a failure state */
+		DBGME(DEBUG_ERRORS,
+		    printf("Sysace:: no media (st=%x)\n", sc->sc_dr->STATUS));
+		if (sc->sc_capacity) {
+			sc->media_has_changed = TRUE;
+			sc->sc_capacity = 0;
+		}
+		return ENODEV;
+	}
 
-    /* sector number and command
-     */
-    sc->sc_dr->MPULBAREG = Lba;
-    sc->sc_dr->SECCNTCMDREG = (uint16_t)(Command | (nSectors & SAC_SECCCNT));
+	/*
+	 * Is it ready for a command
+	 */
+	if (!sysace_ready(sc)) {
+		DBGME(DEBUG_ERRORS,
+		    printf("Sysace:: not ready (st=%x)\n", sc->sc_dr->STATUS));
+		SysaceDumpRegisters(sc->sc_dr);
+		return EBUSY;
+	}
 
-    /* re-route the chip
-     * NB: The "RESET" is actually not much of a misnomer.
-     * The chip was designed for a one-shot execution at reset time,
-     * namely loading the configuration data into the FPGA. So.
-     */
-    sc->hw_busy = TRUE;
-    sc->sc_dr->CONTROLREG |= SAC_CFGRESET;
-    return 0;
+	/*
+	 * sector number and command
+	 */
+	sc->sc_dr->MPULBAREG = Lba;
+	sc->sc_dr->SECCNTCMDREG =
+	    (uint16_t)(Command | (nSectors & SAC_SECCCNT));
+
+	/*
+	 *  re-route the chip
+	 * NB: The "RESET" is actually not much of a misnomer.
+	 * The chip was designed for a one-shot execution at reset time,
+	 * namely loading the configuration data into the FPGA. So.
+	 */
+	sc->hw_busy = TRUE;
+	sc->sc_dr->CONTROLREG |= SAC_CFGRESET;
+	return 0;
 }
 
-/* Identify the (size of the) CompactFlash card inserted in the slot.
+/*
+ * Identify the (size of the) CompactFlash card inserted in the slot.
  */
-static int sysace_identify(struct ace_softc *sc)
+static int
+sysace_identify(struct ace_softc *sc)
 {
-    PCFLASH_IDENTIFY Identify = &sc->sc_params;
-    uint32_t Status = 0;
-    int i, j, error;
+	PCFLASH_IDENTIFY Identify = &sc->sc_params;
+	uint32_t Status = 0;
+	int i, j, error;
 
-    DBGME(DEBUG_FUNCS,printf("Sysace::Identify %p\n", sc));
+	DBGME(DEBUG_FUNCS, printf("Sysace::Identify %p\n", sc));
 
-    /* Turn on interrupts before we start the command
-     */
-    sysace_inton(sc); /* BUGBUG we should add polling mode (for dump too) */
+	/*
+	 * Turn on interrupts before we start the command
+	 */
+	sysace_inton(sc); /* BUGBUG we should add polling mode (for dump too) */
 
-    /* This will invalidate the ACE's current sector data 
-     */
-    sc->sc_capacity = 0;
+	/*
+	 * This will invalidate the ACE's current sector data
+	 */
+	sc->sc_capacity = 0;
 
-    /* Get it going
-     */
-    error = sysace_start(sc,
-                         SAC_CMD_IDENTIFYMEMCARD,
-                         0,
-                         1);
+	/*
+	 * Get it going
+	 */
+	error = sysace_start(sc, SAC_CMD_IDENTIFYMEMCARD, 0, 1);
 
-    /* Wait until its done
-     */
-    if (!FAILED(error)) {
+	/*
+	 * Wait until its done
+	 */
+	if (!FAILED(error)) {
 
-        /* Might be called during autoconf, no interrupts */
-        if (cold) {
-            do {
-                DELAY(10);
-                Status = sc->sc_dr->STATUS;
-            } while (0 == (Status & (SAC_DATABUFRDY|SAC_CFCERROR|SAC_CFGERROR)));
-        } else {
-            while (sc->hw_busy) {
-                DBGME(DEBUG_FUNCS,printf("Sysace:: cwait.. (st=%x) sizeof=%d\n",sc->sc_dr->STATUS, sizeof(*Identify)));
-                error = tsleep(&sc->media_has_changed, PRIBIO, "aceidfy", 0);
-            }
-        }
+		/* Might be called during autoconf, no interrupts */
+		if (cold) {
+			do {
+				DELAY(10);
+				Status = sc->sc_dr->STATUS;
+			} while ((Status &
+			    (SAC_DATABUFRDY|SAC_CFCERROR|SAC_CFGERROR)) == 0);
+		} else {
+			while (sc->hw_busy) {
+				DBGME(DEBUG_FUNCS,
+				    printf("Sysace:: cwait.. (st=%x)"
+				    " sizeof=%d\n",
+				    sc->sc_dr->STATUS, sizeof(*Identify)));
+				error = tsleep(&sc->media_has_changed, PRIBIO,
+				    "aceidfy", 0);
+			}
+		}
 
-        /* Did it work?
-         */
-        Status = sc->sc_dr->STATUS;
+		/*
+		 * Did it work?
+		 */
+		Status = sc->sc_dr->STATUS;
 
-        if (Status & SAC_DATABUFRDY) {
+		if (Status & SAC_DATABUFRDY) {
 
-            /* Yes, pull out all the data.
-             * NB: Until we do so the chip will not be ready for another command
-             */
-            for (i = 0; i < sizeof(*Identify); i += 4) {
+			/*
+			 * Yes, pull out all the data.
+			 * NB: Until we do so the chip will not be ready for
+			 *     another command
+			 */
+			for (i = 0; i < sizeof(*Identify); i += 4) {
 
-                /* Verify the (32-bytes) FIFO has reloaded 
-                 */
-                for (j = 0; j < 10; j++) {
-                    Status = sc->sc_dr->STATUS;
-                    if (Status & SAC_DATABUFRDY)
-                        break;
-                    DELAY(10);
-                }
-                if (Status & SAC_DATABUFRDY)
-                {
-                    uint32_t Data32;
+				/*
+				 * Verify the (32-bytes) FIFO has reloaded
+				 */
+				for (j = 0; j < 10; j++) {
+					Status = sc->sc_dr->STATUS;
+					if (Status & SAC_DATABUFRDY)
+						break;
+					DELAY(10);
+				}
+				if (Status & SAC_DATABUFRDY) {
+					uint32_t Data32;
 
-                    /* This pulls two 16-bit words out of the FIFO.
-                     * They are ordered in LE.
-                     * NB: Yes this is different from regular data accesses
-                     */
-                    Data32 = sc->sc_dr->DATABUFREG[0];
+					/*
+					 * This pulls two 16-bit words out of
+					 * the FIFO.
+					 * They are ordered in LE.
+					 * NB: Yes this is different from
+					 *     regular data accesses
+					 */
+					Data32 = sc->sc_dr->DATABUFREG[0];
 #if _BYTE_ORDER == _LITTLE_ENDIAN
-                    /* all is fine */
+					/* all is fine */
 #else
-                    Data32 = (Data32 >> 16) | (Data32 << 16);
+					Data32 =
+					    (Data32 >> 16) | (Data32 << 16);
 #endif
-                    memcpy(((char*)Identify)+i,&Data32,4);
-                }
-                else
-                /* Ooops, what's going on here?
-                 */
-                {
-                    DBGME(DEBUG_ERRORS,printf("Sysace::!DATABUFRDY %x\n",Status));
-                    error = EIO;
-                    break;
-                }
-            }
+					memcpy(((char *)Identify) + i,
+					    &Data32, 4);
+				} else {
+					/*
+					 * Ooops, what's going on here?
+					 */
+					DBGME(DEBUG_ERRORS,
+					    printf("Sysace::!DATABUFRDY %x\n",
+					    Status));
+					error = EIO;
+					break;
+				}
+			}
 
-            /* Make sure we did ok and pick up the relevant info
-             */
-            if (Status & SAC_DATABUFRDY)
-            {
-                DBGME(DEBUG_XFERS,device_printf(sc->sc_dev,"model: %.40s/%.20s\n",
-                              Identify->ModelNumber, Identify->SerialNumber));
-                if (Identify->Signature == CFLASH_SIGNATURE)
-                {
-                    DBGME(DEBUG_PROBE,printf("Sysace::Card is %.40s::%.20s\n",
-                               Identify->ModelNumber, Identify->SerialNumber));
+			/*
+			 * Make sure we did ok and pick up the relevant info
+			 */
+			if (Status & SAC_DATABUFRDY) {
+				DBGME(DEBUG_XFERS,
+				    device_printf(sc->sc_dev,
+				    "model: %.40s/%.20s\n",
+				    Identify->ModelNumber,
+				    Identify->SerialNumber));
+				if (Identify->Signature == CFLASH_SIGNATURE) {
+					DBGME(DEBUG_PROBE,
+					    printf("Sysace::Card is"
+					    " %.40s::%.20s\n",
+					    Identify->ModelNumber,
+					    Identify->SerialNumber));
 
-                    sc->sc_capacity = 
-                        (Identify->SectorsPerCard[0] << 16) | Identify->SectorsPerCard[1];
-                    DBGME(DEBUG_PROBE,printf("Sysace::sc_capacity x%qx\n", sc->sc_capacity));
-                    ace_params_to_properties(sc);
-                } else {
-                    DBGME(DEBUG_ERRORS,printf("Sysace::Bad card signature? %x != %x\n",
-                                 Identify->Signature, CFLASH_SIGNATURE));
-                    sc->sc_capacity = 0;
-                    error = ENXIO;
-                }
-            }
-            else
-            {
-                error = ETIMEDOUT;
-            }
-        }
-        else
-        /* No, it did not work. Maybe there is no card inserted
-         */
-        {
-            DBGME(DEBUG_ERRORS,printf("Sysace::Identify failed, missing CFLASH card?\n"));
-            SysaceDumpRegisters(sc->sc_dr);
-            /* BUGBUG Fix the error code accordingly */
-            error = ETIMEDOUT;
-        }
-    }
+					sc->sc_capacity =
+					    (Identify->SectorsPerCard[0] << 16)
+					    | Identify->SectorsPerCard[1];
+					DBGME(DEBUG_PROBE,
+					    printf("Sysace::sc_capacity x%qx\n",
+					    sc->sc_capacity));
+					ace_params_to_properties(sc);
+				} else {
+					DBGME(DEBUG_ERRORS,
+					    printf("Sysace::Bad card signature?"
+					    " %x != %x\n",
+					    Identify->Signature,
+					    CFLASH_SIGNATURE));
+					sc->sc_capacity = 0;
+					error = ENXIO;
+				}
+			} else {
+				error = ETIMEDOUT;
+			}
+		} else {
+			/*
+			 * No, it did not work. Maybe there is no card inserted
+			 */
+			DBGME(DEBUG_ERRORS,
+			    printf("Sysace::Identify failed,"
+			    " missing CFLASH card?\n"));
+			SysaceDumpRegisters(sc->sc_dr);
+			/* BUGBUG Fix the error code accordingly */
+			error = ETIMEDOUT;
+		}
+	}
 
-    /* remember this jic */
-    sc->sc_bio.r_error = Status;
+	/* remember this jic */
+	sc->sc_bio.r_error = Status;
 
-    /* Free the ACE for the JTAG, just in case */
-    sysace_unlock_registers(sc);
+	/* Free the ACE for the JTAG, just in case */
+	sysace_unlock_registers(sc);
 
-    /* Done
-     */
-    return error;
+	/*
+	 * Done
+	 */
+	return error;
 }
 
-/* Common code for read&write argument validation
+/*
+ * Common code for read&write argument validation
  */
-static int sysace_validate(struct ace_softc *sc, daddr_t start, size_t *pSize)
+static int
+sysace_validate(struct ace_softc *sc, daddr_t start, size_t *pSize)
 {
-    daddr_t Size;
+	daddr_t Size;
 
-    /* Verify that we know the media size
-     */
-    if (sc->sc_capacity == 0) {
-        int error = sysace_identify(sc);
-        if (FAILED(error))
-            return error;
-    }
+	/*
+	 * Verify that we know the media size
+	 */
+	if (sc->sc_capacity == 0) {
+		int error = sysace_identify(sc);
+		if (FAILED(error))
+			return error;
+	}
 
-    /* Validate args
-     */
-    if (start >= sc->sc_capacity) {
-        *pSize = 0;
-        DBGME(DEBUG_ERRORS,printf("Sysace::ValidateArg(%qx) EOF\n", start));
-        return E2BIG;
-    }
+	/*
+	 * Validate args
+	 */
+	if (start >= sc->sc_capacity) {
+		*pSize = 0;
+		DBGME(DEBUG_ERRORS,
+		    printf("Sysace::ValidateArg(%qx) EOF\n", start));
+		return E2BIG;
+	}
 
-    /* Adjust size if necessary
-     */
-    Size = start + *pSize;
-    if (Size > sc->sc_capacity) {
-        /* At most this many sectors 
-         */
-        Size = sc->sc_capacity - start;
-        *pSize = (size_t)Size;
-    }
+	/*
+	 * Adjust size if necessary
+	 */
+	Size = start + *pSize;
+	if (Size > sc->sc_capacity) {
+		/*
+		 * At most this many sectors
+		 */
+		Size = sc->sc_capacity - start;
+		*pSize = (size_t)Size;
+	}
 
-    DBGME(DEBUG_FUNCS,printf("Sysace::Validate %qx %zd\n",  start,*pSize));
-    return 0;
+	DBGME(DEBUG_FUNCS,
+	    printf("Sysace::Validate %qx %zd\n", start, *pSize));
+	return 0;
 }
 
 /* Read SIZE bytes from sysace device, at offset Position
@@ -969,365 +1060,414 @@ static int sysace_validate(struct ace_softc *sc, daddr_t start, size_t *pSize)
 uint32_t ace_maxatatime = 255;
 #define MAXATATIME ace_maxatatime //255 /* BUGBUG test me on real hardware!! */
 
-static int sysace_read_at (struct ace_softc *sc,
-                           daddr_t start_sector, char *buffer, size_t nblocks,
-                           size_t * pSizeRead)
+static int
+sysace_read_at(struct ace_softc *sc, daddr_t start_sector, char *buffer,
+    size_t nblocks, size_t *pSizeRead)
 {
-    int error;
-    uint32_t BlocksThisTime;
-    uint32_t Status = 0, SizeRead = 0;
-    uint32_t i, j;
+	int error;
+	uint32_t BlocksThisTime;
+	uint32_t Status = 0, SizeRead = 0;
+	uint32_t i, j;
 
-    DBGME(DEBUG_XFERS|DEBUG_READS,printf("SysaceReadAt(%p %qx %p %zd %p)\n",
-                     sc, start_sector, buffer, nblocks, pSizeRead));
+	DBGME(DEBUG_XFERS|DEBUG_READS,
+	    printf("SysaceReadAt(%p %qx %p %zd %p)\n",
+	    sc, start_sector, buffer, nblocks, pSizeRead));
 
-    /* Validate & trim arguments
-     */
-    error = sysace_validate(sc, start_sector, &nblocks);
+	/*
+	 * Validate & trim arguments
+	 */
+	error = sysace_validate(sc, start_sector, &nblocks);
 
-    /* Repeat until we are done or error
-     */
-    while (error == 0) {
+	/*
+	 * Repeat until we are done or error
+	 */
+	while (error == 0) {
 
-        /* .. one bunch of sectors at a time
-         */
-        BlocksThisTime = nblocks;
-        if (BlocksThisTime > MAXATATIME)
-            BlocksThisTime = MAXATATIME;
+		/*
+		 * .. one bunch of sectors at a time
+		 */
+		BlocksThisTime = nblocks;
+		if (BlocksThisTime > MAXATATIME)
+			BlocksThisTime = MAXATATIME;
 
-        /* Yes, start a sector read
-         */
-        sysace_inton(sc);
-        error = sysace_start(sc,
-                             SAC_CMD_READMEMCARDDATA,
-                             (uint32_t)start_sector,  /* BUGBUG trims here, no warn. */
-                             BlocksThisTime);
-        /* And wait until done, if ok
-         */
-        if (!FAILED(error)) {
-            start_sector += BlocksThisTime;
-            /* Might be called during autoconf, no interrupts */
-            /* BUGBUG timeouts! */
-            if (cold) {
-                do {
-                    DELAY(10);
-                    Status = sc->sc_dr->STATUS;
-                } while (0 == (Status & (SAC_DATABUFRDY|SAC_CFCERROR|SAC_CFGERROR)));
-            } else {
-                while (sc->hw_busy) {
-                    error = tsleep(&sc->media_has_changed, PRIBIO, "aceread", 0);
-                }
-            }
-        }
+		/*
+		 * Yes, start a sector read
+		 */
+		sysace_inton(sc);
+		error = sysace_start(sc,
+		    SAC_CMD_READMEMCARDDATA,
+		    (uint32_t)start_sector,  /* BUGBUG trims here, no warn. */
+		    BlocksThisTime);
+		/*
+		 * And wait until done, if ok
+		 */
+		if (!FAILED(error)) {
+			start_sector += BlocksThisTime;
+			/* Might be called during autoconf, no interrupts */
+			/* BUGBUG timeouts! */
+			if (cold) {
+				do {
+					DELAY(10);
+					Status = sc->sc_dr->STATUS;
+				} while ((Status &
+				    (SAC_DATABUFRDY|SAC_CFCERROR|SAC_CFGERROR))
+				    == 0);
+			} else {
+				while (sc->hw_busy) {
+					error = tsleep(&sc->media_has_changed,
+					    PRIBIO, "aceread", 0);
+				}
+			}
+		}
 
-        /* Are we doing ok
-         */
-        if (!FAILED(error)) {
+		/*
+		 * Are we doing ok
+		 */
+		if (!FAILED(error)) {
 
-            /* Get the data out of the ACE
-             */
-            for (i = 0; i < (BlocksThisTime << CF_SECBITS); i += 4) {
+		/*
+		 * Get the data out of the ACE
+		 */
+			for (i = 0; i < (BlocksThisTime << CF_SECBITS);
+			    i += 4) {
 
-                /* Make sure the FIFO is ready
-                 */
-                for (j = 0; j < 10; j++) {
-                    Status = sc->sc_dr->STATUS;
-                    if (Status & SAC_DATABUFRDY)
-                        break;
-                    DELAY(1000);
-                }
+				/*
+				 * Make sure the FIFO is ready
+				 */
+				for (j = 0; j < 10; j++) {
+					Status = sc->sc_dr->STATUS;
+					if (Status & SAC_DATABUFRDY)
+						break;
+					DELAY(1000);
+				}
 
-                /* Got it?
-                 */
-                if (Status & SAC_DATABUFRDY) {
-                    uint32_t Data32;
-                    
-                    Data32 = sc->sc_dr->DATABUFREG[0];
-                    Data32 = le32toh(Data32);
-                    memcpy(buffer+i,&Data32,4);
-                }
-                else
-                {
-                    /* Ooops, get out of here
-                     */
-                    DBGME(DEBUG_ERRORS,printf("Sysace::READ timeout\n"));
-                    SysaceDumpRegisters(sc->sc_dr);
-                    error = ETIMEDOUT;
-                    break;
-                }
-            }
+				/*
+				 * Got it?
+				 */
+				if (Status & SAC_DATABUFRDY) {
+					uint32_t Data32;
 
-            /* Still doing ok?
-             */
-            if (!FAILED(error)) {
-                nblocks   -= BlocksThisTime;
-                SizeRead  += BlocksThisTime;
-                buffer    += BlocksThisTime << CF_SECBITS;
-            }
-            else
-                /* remember this jic */
-                sc->sc_bio.r_error = Status;
-        }
+					Data32 = sc->sc_dr->DATABUFREG[0];
+					Data32 = le32toh(Data32);
+					memcpy(buffer + i, &Data32, 4);
+				} else {
+					/*
+					 * Ooops, get out of here
+					 */
+					DBGME(DEBUG_ERRORS,
+					    printf("Sysace::READ timeout\n"));
+					SysaceDumpRegisters(sc->sc_dr);
+					error = ETIMEDOUT;
+					break;
+				}
+			}
 
-        /* Free the ACE for the JTAG, just in case */
-        sysace_unlock_registers(sc);
+			/*
+			 * Still doing ok?
+			 */
+			if (!FAILED(error)) {
+				nblocks   -= BlocksThisTime;
+				SizeRead  += BlocksThisTime;
+				buffer    += BlocksThisTime << CF_SECBITS;
+			} else {
+				/* remember this jic */
+				sc->sc_bio.r_error = Status;
+			}
+		}
 
-        /* Are we done yet?
-         */
-        if (nblocks == 0)
-            break;
-    }
+		/* Free the ACE for the JTAG, just in case */
+		sysace_unlock_registers(sc);
 
-    if (pSizeRead)
-        *pSizeRead = SizeRead;
-    return error;
+		/*
+		 * Are we done yet?
+		 */
+		if (nblocks == 0)
+			break;
+	}
+
+	if (pSizeRead)
+		*pSizeRead = SizeRead;
+	return error;
 }
 
-/* Write SIZE bytes to device.
+/*
+ * Write SIZE bytes to device.
  */
-static int sysace_write_at (struct ace_softc *sc,
-                           daddr_t start_sector, char *buffer, size_t nblocks,
-                           size_t * pSizeWritten)
+static int
+sysace_write_at(struct ace_softc *sc, daddr_t start_sector, char *buffer,
+    size_t nblocks, size_t *pSizeWritten)
 {
-    int error;
-    uint32_t BlocksThisTime;
-    uint32_t Status = 0, SizeWritten = 0;
-    uint32_t i, j;
+	int error;
+	uint32_t BlocksThisTime;
+	uint32_t Status = 0, SizeWritten = 0;
+	uint32_t i, j;
 
-    DBGME(DEBUG_XFERS|DEBUG_WRITES,printf("SysaceWriteAt(%p %qx %p %zd %p)\n",
-                     sc, start_sector, buffer, nblocks, pSizeWritten));
+	DBGME(DEBUG_XFERS|DEBUG_WRITES,
+	    printf("SysaceWriteAt(%p %qx %p %zd %p)\n",
+	    sc, start_sector, buffer, nblocks, pSizeWritten));
 
-    /* Validate & trim arguments
-     */
-    error = sysace_validate(sc, start_sector, &nblocks);
+	/*
+	 * Validate & trim arguments
+	 */
+	error = sysace_validate(sc, start_sector, &nblocks);
 
-    /* Repeat until we are done or error
-     */
-    while (error == 0) {
+	/*
+	 * Repeat until we are done or error
+	 */
+	while (error == 0) {
 
-        /* .. one sector at a time
-         * BUGBUG Supposedly we can do up to 256 sectors?
-         */
-        BlocksThisTime = nblocks;
-        if (BlocksThisTime > MAXATATIME)
-            BlocksThisTime = MAXATATIME;
+		/*
+		 * .. one sector at a time
+		 * BUGBUG Supposedly we can do up to 256 sectors?
+		 */
+		BlocksThisTime = nblocks;
+		if (BlocksThisTime > MAXATATIME)
+			BlocksThisTime = MAXATATIME;
 
-        /* Yes, start a sector write
-         */
-        sysace_inton(sc);
-        error = sysace_start(sc,
-                             SAC_CMD_WRITEMEMCARDDATA,
-                             (uint32_t)start_sector,  /* BUGBUG trims here, no warn. */
-                             BlocksThisTime);
-        /* And wait until done, if ok
-         */
-        if (!FAILED(error)) {
-            start_sector += BlocksThisTime;
-            /* BUGBUG timeouts! */
-            while (sc->hw_busy) {
-                error = tsleep(&sc->media_has_changed, PRIBIO, "acewrite", 0);
-            }
-        }
+		/*
+		 * Yes, start a sector write
+		 */
+		sysace_inton(sc);
+		error = sysace_start(sc,
+		    SAC_CMD_WRITEMEMCARDDATA,
+		    (uint32_t)start_sector,  /* BUGBUG trims here, no warn. */
+		    BlocksThisTime);
+		/*
+		 * And wait until done, if ok
+		 */
+		if (!FAILED(error)) {
+			start_sector += BlocksThisTime;
+			/* BUGBUG timeouts! */
+			while (sc->hw_busy) {
+				error = tsleep(&sc->media_has_changed,
+				    PRIBIO, "acewrite", 0);
+			}
+		}
 
-        /* Are we doing ok
-         */
-        if (!FAILED(error)) {
+		/*
+		 * Are we doing ok
+		 */
+		if (!FAILED(error)) {
 
-            /* Get the data out to the ACE
-             */
-            for (i = 0; i < (BlocksThisTime << CF_SECBITS); i += 4) {
+			/*
+			 * Get the data out to the ACE
+			 */
+			for (i = 0; i < (BlocksThisTime << CF_SECBITS);
+			    i += 4) {
 
-                /* Make sure the FIFO is ready
-                 */
-                for (j = 0; j < 10; j++) {
-                    Status = sc->sc_dr->STATUS;
-                    if (Status & SAC_DATABUFRDY)
-                        break;
-                    DELAY(1000);
-                }
+				/*
+				 * Make sure the FIFO is ready
+				 */
+				for (j = 0; j < 10; j++) {
+					Status = sc->sc_dr->STATUS;
+					if (Status & SAC_DATABUFRDY)
+						break;
+					DELAY(1000);
+				}
 
-                /* Got it?
-                 */
-                if (Status & SAC_DATABUFRDY) {
-                    uint32_t Data32;
+				/*
+				 * Got it?
+				 */
+				if (Status & SAC_DATABUFRDY) {
+					uint32_t Data32;
 
-                    memcpy(&Data32,buffer+i,4);
-                    Data32 = htole32(Data32);
-                    sc->sc_dr->DATABUFREG[0] = Data32;
-                }
-                else
-                {
-                    /* Ooops, get out of here
-                     */
-                    DBGME(DEBUG_ERRORS,printf("Sysace::WRITE timeout\n"));
-                    SysaceDumpRegisters(sc->sc_dr);
-                    error = ETIMEDOUT;
-                    /* remember this jic */
-                    sc->sc_bio.r_error = Status;
-                    break;
-                }
-            }
+					memcpy(&Data32, buffer + i, 4);
+					Data32 = htole32(Data32);
+					sc->sc_dr->DATABUFREG[0] = Data32;
+				} else {
+					/*
+					 * Ooops, get out of here
+					 */
+					DBGME(DEBUG_ERRORS,
+					    printf("Sysace::WRITE timeout\n"));
+					SysaceDumpRegisters(sc->sc_dr);
+					error = ETIMEDOUT;
+					/* remember this jic */
+					sc->sc_bio.r_error = Status;
+					break;
+				}
+			}
 
-            /* Still doing ok?
-             */
-            if (!FAILED(error)) {
-                nblocks     -= BlocksThisTime;
-                SizeWritten += BlocksThisTime;
-                buffer      += BlocksThisTime << CF_SECBITS;
-            }
-        }
+			/*
+			 * Still doing ok?
+			 */
+			if (!FAILED(error)) {
+				nblocks     -= BlocksThisTime;
+				SizeWritten += BlocksThisTime;
+				buffer      += BlocksThisTime << CF_SECBITS;
+			}
+		}
 
-        /* We need to wait until the device is ready for the next command
-         * Experimentation shows that it can take longer than 10msec.
-         */
-        if (!FAILED(error)) {
-            for (j = 0; j < 300; j++) {
-                Status = sc->sc_dr->STATUS;
-                if (Status & SAC_RDYFORCFCMD)
-                    break;
-                (void) tsleep(&sc->media_has_changed, PRIBIO, "acewrite", 2);
-            }
-            if (! (Status & SAC_RDYFORCFCMD)) {
-                DBGME(DEBUG_ERRORS,printf("Sysace::WRITE-COMPLETE timeout St=%x\n", Status));
-                SysaceDumpRegisters(sc->sc_dr);
-                /* Ignore,  we'll handle it the next time around
-                 * BUGBUG To be revised along with non-existant error handling
-                 */
-            }
-        }
+		/*
+		 * We need to wait until the device is ready for the
+		 * next command
+		 * Experimentation shows that it can take longer than 10msec.
+		 */
+		if (!FAILED(error)) {
+			for (j = 0; j < 300; j++) {
+				Status = sc->sc_dr->STATUS;
+				if (Status & SAC_RDYFORCFCMD)
+					break;
+				(void)tsleep(&sc->media_has_changed,
+				    PRIBIO, "acewrite", 2);
+			}
+			if (!(Status & SAC_RDYFORCFCMD)) {
+				DBGME(DEBUG_ERRORS,
+				    printf("Sysace::WRITE-COMPLETE timeout"
+				    " St=%x\n", Status));
+				SysaceDumpRegisters(sc->sc_dr);
+				/*
+				 * Ignore, we'll handle it the next time around
+				 * BUGBUG To be revised along with non-existant
+				 * error handling
+				 */
+			}
+		}
 
-        /* Free the ACE for the JTAG, just in case */
-        sysace_unlock_registers(sc);
+		/* Free the ACE for the JTAG, just in case */
+		sysace_unlock_registers(sc);
 
-        /* Are we done yet?
-         */
-        if (nblocks == 0)
-            break;
-    }
+		/*
+		 * Are we done yet?
+		 */
+		if (nblocks == 0)
+			break;
+	}
 
-    if (pSizeWritten)
-        *pSizeWritten = SizeWritten;
-    return error;
+	if (pSizeWritten)
+		*pSizeWritten = SizeWritten;
+	return error;
 }
 
 int
 ace_ebus_intr(void *cookie, void *f)
 {
 	struct ace_softc *sc = cookie;
-    uint32_t Control;
+	uint32_t Control;
 
-    /* Turn off interrupts and ACK them
-     */
-    sysace_intoff(sc);
+	/*
+	 * Turn off interrupts and ACK them
+	 */
+	sysace_intoff(sc);
 
-    Control = sc->sc_dr->CONTROLREG & (~(SAC_RESETIRQ|SAC_INTERRUPTS));
-    sc->sc_dr->CONTROLREG = Control | SAC_RESETIRQ;
-    sc->sc_dr->CONTROLREG = Control;
+	Control = sc->sc_dr->CONTROLREG & (~(SAC_RESETIRQ|SAC_INTERRUPTS));
+	sc->sc_dr->CONTROLREG = Control | SAC_RESETIRQ;
+	sc->sc_dr->CONTROLREG = Control;
 
-    /* ... read status and do whatever ... */
+	/* ... read status and do whatever ... */
 
-    sc->hw_busy = FALSE;
-    wakeup(&sc->media_has_changed);
-    return 1;
+	sc->hw_busy = FALSE;
+	wakeup(&sc->media_has_changed);
+	return 1;
 }
 
 #ifdef USE_ACE_FOR_RECONFIG
-static int sysace_send_config(struct ace_softc *sc,
-                              uint32_t *Data, unsigned int nBytes)
+static int
+sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
 {
-    struct _Sac *Interface = sc->sc_dr;
-    unsigned int i, j, nWords;
-    uint32_t CtlWas;
-    uint32_t Status;
+	struct _Sac *Interface = sc->sc_dr;
+	unsigned int i, j, nWords;
+	uint32_t CtlWas;
+	uint32_t Status;
 
-    CtlWas = Interface->CONTROLREG;
+	CtlWas = Interface->CONTROLREG;
 
-    /* Set the bits but in RESET (pag 49-50 of specs)*/
+	/* Set the bits but in RESET (pag 49-50 of specs)*/
 #define CFGCMD (SAC_FORCELOCKREQ | SAC_LOCKREQ | SAC_CFGSEL | \
-                SAC_FORCECFGMODE |/* SAC_CFGMODE |*/ SAC_CFGSTART)
+		SAC_FORCECFGMODE |/* SAC_CFGMODE |*/ SAC_CFGSTART)
 
-    Interface->CONTROLREG = CFGCMD | SAC_CFGRESET;
+	Interface->CONTROLREG = CFGCMD | SAC_CFGRESET;
 
-    /* Take it out of RESET */
-    Interface->CONTROLREG = CFGCMD;
+	/* Take it out of RESET */
+	Interface->CONTROLREG = CFGCMD;
 
-    /* Must wait till it says READY
-     * It can take a looong time
-     */
-    for (j = 0; j < 1000; j++) {
-        Status = Interface->STATUS;
-        if (Status & SAC_RDYFORCFCMD)
-            break;
-        DELAY(1000);
-    }
+	/*
+	 * Must wait till it says READY
+	 * It can take a looong time
+	 */
+	for (j = 0; j < 1000; j++) {
+		Status = Interface->STATUS;
+		if (Status & SAC_RDYFORCFCMD)
+			break;
+		DELAY(1000);
+	}
 
-    if (0 == (Status & SAC_RDYFORCFCMD)) {
-        DBGME(DEBUG_ERRORS,printf("Sysace::CMD error %x (j=%d)\n", Status, j));
-        goto Error;
-    }
+	if (0 == (Status & SAC_RDYFORCFCMD)) {
+		DBGME(DEBUG_ERRORS,
+		    printf("Sysace::CMD error %x (j=%d)\n", Status, j));
+		goto Error;
+	}
 
-    /* Get the data out to the ACE
-     */
+	/*
+	 * Get the data out to the ACE
+	 */
 #define ACEROUNDUP 32
-    nBytes = (nBytes + ACEROUNDUP - 1) & ~(ACEROUNDUP-1);
-    nWords = (nBytes + 3) / 4;
-    DBGME(DEBUG_FUNCS,printf("Sending %d bytes (as %d words) to %p ", 
-                     nBytes, nWords, Interface));
-    for (i = 0; i < nWords; i += 1/*word*/) {
+	nBytes = (nBytes + ACEROUNDUP - 1) & ~(ACEROUNDUP-1);
+	nWords = (nBytes + 3) / 4;
+	DBGME(DEBUG_FUNCS,
+	    printf("Sending %d bytes (as %d words) to %p ",
+	    nBytes, nWords, Interface));
+	for (i = 0; i < nWords; i += 1/*word*/) {
 
-        /* Stop on errors */
-        Status = Interface->ERRORREG;
-        if (Status) {
-            /* Ooops, get out of here
-             */
-            DBGME(DEBUG_ERRORS,printf("Sysace::CFG error %x (i=%d)\n", Status, i));
-            goto Error;
-        }
+		/* Stop on errors */
+		Status = Interface->ERRORREG;
+		if (Status) {
+			/*
+			 * Ooops, get out of here
+			 */
+			DBGME(DEBUG_ERRORS,
+			    printf("Sysace::CFG error %x (i=%d)\n", Status, i));
+			goto Error;
+		}
 
-        /* Make sure the FIFO is ready
-         */
-        for (j = 0; j < 100; j++) {
-            Status = Interface->STATUS;
-            if (Status & SAC_DATABUFRDY)
-                break;
-            DELAY(1000);
-        }
+		/*
+		 * Make sure the FIFO is ready
+		 */
+		for (j = 0; j < 100; j++) {
+			Status = Interface->STATUS;
+			if (Status & SAC_DATABUFRDY)
+				break;
+			DELAY(1000);
+		}
 
-        /* Got it?
-         */
-        if (Status & SAC_DATABUFRDY) {
-            uint32_t Data32;
+		/*
+		 * Got it?
+		 */
+		if (Status & SAC_DATABUFRDY) {
+			uint32_t Data32;
 
-            Data32 = Data[i];
-            Data32 = htole32(Data32);
-            Interface->DATABUFREG[0] = Data32;
-        }
-        else
-        {
-            /* Ooops, get out of here
-             */
-            DBGME(DEBUG_ERRORS,printf("Sysace::WRITE timeout %x (i=%d)\n", Status, i));
-            goto Error;
-        }
-    }
-    DBGME(DEBUG_FUNCS,printf("done ok.\n"));
+			Data32 = Data[i];
+			Data32 = htole32(Data32);
+			Interface->DATABUFREG[0] = Data32;
+		} else {
+			/*
+			 * Ooops, get out of here
+			 */
+			DBGME(DEBUG_ERRORS,
+			    printf("Sysace::WRITE timeout %x (i=%d)\n",
+			    Status, i));
+			goto Error;
+		}
+	}
+	DBGME(DEBUG_FUNCS, printf("done ok.\n"));
 
-    /* Put it back the way it was (try to.. :-( )*/
-    Interface->CONTROLREG = CtlWas;
-    return 0;
+	/* Put it back the way it was (try to.. :-( )*/
+	Interface->CONTROLREG = CtlWas;
+	return 0;
 
  Error:
-    SysaceDumpRegisters(Interface);
-    Interface->CONTROLREG = CtlWas;
-    return (EIO);
+	SysaceDumpRegisters(Interface);
+	Interface->CONTROLREG = CtlWas;
+	return EIO;
 }
 #endif /* USE_ACE_FOR_RECONFIG */
 
 
-/* Rest of code lifted with mods from the dev\ata\wd.c driver
+/*
+ * Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: ace_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $ */
+/*	$NetBSD: ace_ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1452,8 +1592,8 @@ aceattach(struct ace_softc *ace)
 	callout_init(&ace->sc_restart_ch, 0);
 	bufq_alloc(&ace->sc_q, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
-    ace->openings = 1; /* wazziz?*/
-    ace->sc_multi = MAXATATIME;
+	ace->openings = 1; /* wazziz?*/
+	ace->sc_multi = MAXATATIME;
 
 	aprint_naive("\n");
 
@@ -1493,8 +1633,10 @@ aceattach(struct ace_softc *ace)
 	    "%d bytes/sect x %llu sectors\n",
 	    self->dv_xname, pbuf,
 	    (int)(ace->sc_capacity /
-              (ace->sc_params.CurrentNumberOfHeads * ace->sc_params.CurrentSectorsPerTrack)),
-	    ace->sc_params.CurrentNumberOfHeads, ace->sc_params.CurrentSectorsPerTrack,
+	    (ace->sc_params.CurrentNumberOfHeads *
+	    ace->sc_params.CurrentSectorsPerTrack)),
+	    ace->sc_params.CurrentNumberOfHeads,
+	    ace->sc_params.CurrentSectorsPerTrack,
 	    DEV_BSIZE, (unsigned long long)ace->sc_capacity);
 
 	/*
@@ -1523,7 +1665,7 @@ aceactivate(struct device *self, enum devact act)
 	default:
 		rv = EOPNOTSUPP;
 	}
-	return (rv);
+	return rv;
 }
 
 int
@@ -1552,7 +1694,9 @@ acedetach(struct device *self, int flags)
 	bufq_drain(sc->sc_q);
 
 	bufq_free(sc->sc_q);
-	//sc->atabus->ata_killpending(sc->drvp);
+#if 0
+	sc->atabus->ata_killpending(sc->drvp);
+#endif
 
 	splx(s);
 
@@ -1564,9 +1708,11 @@ acedetach(struct device *self, int flags)
 	rnd_detach_source(&sc->rnd_source);
 #endif
 
-	//sc->drvp->drive_flags = 0; /* no drive any more here */
+#if 0
+	sc->drvp->drive_flags = 0; /* no drive any more here */
+#endif
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1576,19 +1722,22 @@ acedetach(struct device *self, int flags)
 void
 acestrategy(struct buf *bp)
 {
-	struct ace_softc *ace = device_lookup_private(&ace_cd, ACEUNIT(bp->b_dev));
+	struct ace_softc *ace;
 	struct disklabel *lp;
 	daddr_t blkno;
 	int s;
 
+	ace = device_lookup_private(&ace_cd, ACEUNIT(bp->b_dev));
+
 	if (ace == NULL) {
-	    bp->b_error = ENXIO;
-	    biodone(bp);
-	    return;
+		bp->b_error = ENXIO;
+		biodone(bp);
+		return;
 	}
 	lp = ace->sc_dk.dk_label;
 
-	DEBUG_PRINT(("acestrategy (%s) %lld\n", device_xname(ace->sc_dev), bp->b_blkno), DEBUG_XFERS);
+	DEBUG_PRINT(("acestrategy (%s) %lld\n",
+	    device_xname(ace->sc_dev), bp->b_blkno), DEBUG_XFERS);
 
 	/* Valid request?  */
 	if (bp->b_blkno < 0 ||
@@ -1677,6 +1826,7 @@ acestart(void *arg)
 void
 __acestart(struct ace_softc *sc, struct buf *bp)
 {
+
 	sc->sc_bp = bp;
 	/*
 	 * If we're retrying, retry in single-sector mode. This will give us
@@ -1696,8 +1846,8 @@ __acestart(struct ace_softc *sc, struct buf *bp)
 	sc->sc_bio.databuf = bp->b_data;
 	/* Instrumentation. */
 	disk_busy(&sc->sc_dk);
-    sc->active_xfer = bp;
-    wakeup(&sc->ch_thread);
+	sc->active_xfer = bp;
+	wakeup(&sc->ch_thread);
 }
 
 void
@@ -1716,7 +1866,7 @@ acedone(struct ace_softc *ace)
 	switch (ace->sc_bio.error) {
 	case ETIMEDOUT:
 		errmsg = "device timeout";
-        do_perror = 1;
+	do_perror = 1;
 		goto retry;
 	case EBUSY:
 	case EDOOFUS:
@@ -1740,7 +1890,7 @@ retry:		/* Just reset and retry. Can we do more ? */
 		bp->b_error = EIO;
 		break;
 	case 0:
-        if ((ace->sc_bio.flags & ATA_CORR) || ace->retries > 0)
+		if ((ace->sc_bio.flags & ATA_CORR) || ace->retries > 0)
 			printf("%s: soft error (corrected)\n",
 			    device_xname(ace->sc_dev));
 		break;
@@ -1754,8 +1904,8 @@ retry:		/* Just reset and retry. Can we do more ? */
 #if NRND > 0
 	rnd_add_uint32(&ace->rnd_source, bp->b_blkno);
 #endif
-    biodone(bp);
-    ace->openings++;
+	biodone(bp);
+	ace->openings++;
 	acestart(ace);
 }
 
@@ -1765,7 +1915,8 @@ acerestart(void *v)
 	struct ace_softc *ace = v;
 	struct buf *bp = ace->sc_bp;
 	int s;
-	DEBUG_PRINT(("acerestart %s\n", device_xname(ace->sc_dev)),DEBUG_XFERS);
+	DEBUG_PRINT(("acerestart %s\n",
+	    device_xname(ace->sc_dev)), DEBUG_XFERS);
 
 	s = splbio();
 	__acestart(v, bp);
@@ -1789,7 +1940,7 @@ acewrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	DEBUG_PRINT(("acewrite\n"), DEBUG_XFERS);
-	return (physio(acestrategy, NULL, dev, B_WRITE, minphys, uio));
+	return physio(acestrategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
 int
@@ -1801,10 +1952,10 @@ aceopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	DEBUG_PRINT(("aceopen\n"), DEBUG_FUNCS);
 	ace = device_lookup_private(&ace_cd, ACEUNIT(dev));
 	if (ace == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	if (! device_is_active(ace->sc_dev))
-		return (ENODEV);
+		return ENODEV;
 
 	part = ACEPART(dev);
 
@@ -1833,10 +1984,11 @@ aceopen(dev_t dev, int flag, int fmt, struct lwp *l)
 			ace->sc_flags |= ACEF_LOADED;
 
 			/* Load the physical device parameters. */
-            if (ace->sc_capacity == 0) {
-                error = sysace_identify(ace);
-                if (error) goto bad;
-            }
+			if (ace->sc_capacity == 0) {
+				error = sysace_identify(ace);
+				if (error)
+					goto bad;
+			}
 
 			/* Load the partition info if not already loaded. */
 			acegetdisklabel(ace);
@@ -1896,7 +2048,7 @@ aceclose(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	if (ace->sc_dk.dk_openmask == 0) {
 
-		if (! (ace->sc_flags & ACEF_KLABEL))
+		if (!(ace->sc_flags & ACEF_KLABEL))
 			ace->sc_flags &= ~ACEF_LOADED;
 
 	}
@@ -1916,10 +2068,11 @@ acegetdefaultlabel(struct ace_softc *ace, struct disklabel *lp)
 	lp->d_ntracks = ace->sc_params.CurrentNumberOfHeads;
 	lp->d_nsectors = ace->sc_params.CurrentSectorsPerTrack;
 	lp->d_ncylinders = ace->sc_capacity /
-		(ace->sc_params.CurrentNumberOfHeads * ace->sc_params.CurrentSectorsPerTrack);
+	    (ace->sc_params.CurrentNumberOfHeads *
+	     ace->sc_params.CurrentSectorsPerTrack);
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-    lp->d_type = DTYPE_ST506; /* ?!? */
+	lp->d_type = DTYPE_ST506; /* ?!? */
 
 	strncpy(lp->d_typename, ace->sc_params.ModelNumber, 16);
 	strncpy(lp->d_packname, "fictitious", 16);
@@ -1970,16 +2123,16 @@ acegetdisklabel(struct ace_softc *ace)
 	}
 
 #if DEBUG
-    if (ACE_DEBUG(DEBUG_WRITES)) {
-        int i, n = ace->sc_dk.dk_label->d_npartitions;
-        printf("%s: %d parts\n", device_xname(ace->sc_dev), n);
-        for (i = 0; i < n; i++) {
-            printf("\t[%d]: t=%x s=%d o=%d\n", i,
-                   ace->sc_dk.dk_label->d_partitions[i].p_fstype,
-                   ace->sc_dk.dk_label->d_partitions[i].p_size,
-                   ace->sc_dk.dk_label->d_partitions[i].p_offset);
-        }
-    }
+	if (ACE_DEBUG(DEBUG_WRITES)) {
+		int i, n = ace->sc_dk.dk_label->d_npartitions;
+		printf("%s: %d parts\n", device_xname(ace->sc_dev), n);
+		for (i = 0; i < n; i++) {
+			printf("\t[%d]: t=%x s=%d o=%d\n", i,
+			    ace->sc_dk.dk_label->d_partitions[i].p_fstype,
+			    ace->sc_dk.dk_label->d_partitions[i].p_size,
+			    ace->sc_dk.dk_label->d_partitions[i].p_offset);
+		}
+	}
 #endif
 
 #ifdef HAS_BAD144_HANDLING
@@ -1992,14 +2145,14 @@ void
 aceperror(const struct ace_softc *ace)
 {
 	const char *devname = device_xname(ace->sc_dev);
-	u_int32_t Status = ace->sc_bio.r_error;
+	uint32_t Status = ace->sc_bio.r_error;
 
 	printf("%s: (", devname);
 
 	if (Status == 0)
 		printf("error not notified");
-    else
-        printf("status=x%x", Status);
+	else
+		printf("status=x%x", Status);
 
 	printf(")\n");
 }
@@ -2017,7 +2170,7 @@ aceioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 
 	error = disk_ioctl(&ace->sc_dk, xfer, addr, flag, l);
 	if (error != EPASSTHROUGH)
-		return (error);
+		return error;
 
 	switch (xfer) {
 #ifdef HAS_BAD144_HANDLING
@@ -2092,33 +2245,33 @@ aceioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 
 	case DIOCAWEDGE:
 	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
+		struct dkwedge_info *dkw = (void *) addr;
 
 		if ((flag & FWRITE) == 0)
-			return (EBADF);
+			return EBADF;
 
 		/* If the ioctl happens here, the parent is us. */
 		strcpy(dkw->dkw_parent, device_xname(ace->sc_dev));
-		return (dkwedge_add(dkw));
+		return dkwedge_add(dkw);
 	    }
 
 	case DIOCDWEDGE:
 	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
+		struct dkwedge_info *dkw = (void *) addr;
 
 		if ((flag & FWRITE) == 0)
-			return (EBADF);
+			return EBADF;
 
 		/* If the ioctl happens here, the parent is us. */
 		strcpy(dkw->dkw_parent, device_xname(ace->sc_dev));
-		return (dkwedge_del(dkw));
+		return dkwedge_del(dkw);
 	    }
 
 	case DIOCLWEDGES:
 	    {
-	    	struct dkwedge_list *dkwl = (void *) addr;
+		struct dkwedge_list *dkwl = (void *) addr;
 
-		return (dkwedge_list(&ace->sc_dk, dkwl, l));
+		return dkwedge_list(&ace->sc_dk, dkwl, l);
 	    }
 
 	case DIOCGSTRATEGY:
@@ -2133,7 +2286,7 @@ aceioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 
 		return 0;
 	    }
-	
+
 	case DIOCSSTRATEGY:
 	    {
 		struct disk_strategy *dks = (void *)addr;
@@ -2163,21 +2316,30 @@ aceioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	    }
 
 #ifdef USE_ACE_FOR_RECONFIG
-        /* Ok, how do I get this standardized [nothing to do with disks either] */
+	/*
+	 * Ok, how do I get this standardized
+	 * [nothing to do with disks either]
+	 */
 #define DIOC_FPGA_RECONFIGURE _IOW('d',166, struct ioctl_pt)
 	case DIOC_FPGA_RECONFIGURE:
 	    {
-            /* BUGBUG This is totally wrong, we need to fault in all data in advance.
-             * Otherwise we get back here with the sysace in a bad state (its NOT reentrant!)
-             */
-            struct ioctl_pt *pt = (struct ioctl_pt *)addr;
-            return sysace_send_config(ace,(uint32_t*)pt->data,pt->com);
+		/*
+		 * BUGBUG This is totally wrong, we need to fault in
+		 * all data in advance.
+		 * Otherwise we get back here with the sysace in a bad state
+		 * (its NOT reentrant!)
+		 */
+		struct ioctl_pt *pt = (struct ioctl_pt *)addr;
+		return sysace_send_config(ace,(uint32_t*)pt->data,pt->com);
 	    }
 #endif /* USE_ACE_FOR_RECONFIG */
 
 	default:
-        /* NB: we get a DIOCGWEDGEINFO, but nobody else handles it either */
-        DEBUG_PRINT(("aceioctl: unsup x%lx\n", xfer), DEBUG_FUNCS);
+		/*
+		 * NB: we get a DIOCGWEDGEINFO, but nobody else handles it
+		 * either
+		 */
+		DEBUG_PRINT(("aceioctl: unsup x%lx\n", xfer), DEBUG_FUNCS);
 		return ENOTTY;
 	}
 }
@@ -2193,21 +2355,21 @@ acesize(dev_t dev)
 
 	ace = device_lookup_private(&ace_cd, ACEUNIT(dev));
 	if (ace == NULL)
-		return (-1);
+		return -1;
 
 	part = ACEPART(dev);
 	omask = ace->sc_dk.dk_openmask & (1 << part);
 
 	if (omask == 0 && aceopen(dev, 0, S_IFBLK, NULL) != 0)
-		return (-1);
+		return -1;
 	if (ace->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
 		size = ace->sc_dk.dk_label->d_partitions[part].p_size *
 		    (ace->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 	if (omask == 0 && aceclose(dev, 0, S_IFBLK, NULL) != 0)
-		return (-1);
-	return (size);
+		return -1;
+	return size;
 }
 
 /* #define ACE_DUMP_NOT_TRUSTED if you just want to watch */
@@ -2232,7 +2394,7 @@ acedump(dev_t dev, daddr_t blkno, void *va, size_t size)
 
 	ace = device_lookup_private(&ace_cd, ACEUNIT(dev));
 	if (ace == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	part = ACEPART(dev);
 
@@ -2256,9 +2418,9 @@ acedump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	ace->sc_bio.nbytes = nblks * lp->d_secsize;
 	ace->sc_bio.databuf = va;
 #ifndef ACE_DUMP_NOT_TRUSTED
-    ace->active_xfer = bp;
-    wakeup(&ace->ch_thread);
-    
+	ace->active_xfer = bp;
+	wakeup(&ace->ch_thread);
+
 	switch(ace->sc_bio.error) {
 	case ETIMEDOUT:
 		printf("acedump: device timed out");
@@ -2279,7 +2441,7 @@ acedump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	device_printf(ace->sc_dev, ": dump addr 0x%p, size %zu blkno %llx\n",
 	    va, size, blkno);
 	DELAY(500 * 1000);	/* half a second */
-    err = 0;
+	err = 0;
 #endif
 
 	acedoingadump = 0;
@@ -2320,7 +2482,7 @@ ace_params_to_properties(struct ace_softc *ace)
 
 	disk_info = prop_dictionary_create();
 
-    cp = ST506;
+	cp = ST506;
 
 	prop_dictionary_set_cstring_nocopy(disk_info, "type", cp);
 
@@ -2329,24 +2491,24 @@ ace_params_to_properties(struct ace_softc *ace)
 	prop_dictionary_set_uint64(geom, "sectors-per-unit", ace->sc_capacity);
 
 	prop_dictionary_set_uint32(geom, "sector-size",
-				   DEV_BSIZE /* XXX 512? */);
+	    DEV_BSIZE /* XXX 512? */);
 
 	prop_dictionary_set_uint16(geom, "sectors-per-track",
-				   ace->sc_params.CurrentSectorsPerTrack);
+	    ace->sc_params.CurrentSectorsPerTrack);
 
 	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
-				   ace->sc_params.CurrentNumberOfHeads);
+	    ace->sc_params.CurrentNumberOfHeads);
 
-    prop_dictionary_set_uint64(geom, "cylinders-per-unit",
-                               ace->sc_capacity /
-                               (ace->sc_params.CurrentNumberOfHeads *
-                                ace->sc_params.CurrentSectorsPerTrack));
+	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+	    ace->sc_capacity /
+	    (ace->sc_params.CurrentNumberOfHeads *
+	     ace->sc_params.CurrentSectorsPerTrack));
 
 	prop_dictionary_set(disk_info, "geometry", geom);
 	prop_object_release(geom);
 
 	prop_dictionary_set(device_properties(ace->sc_dev),
-			    "disk-info", disk_info);
+	    "disk-info", disk_info);
 
 	/*
 	 * Don't release disk_info here; we keep a reference to it.
@@ -2358,4 +2520,3 @@ ace_params_to_properties(struct ace_softc *ace)
 	if (odisk_info)
 		prop_object_release(odisk_info);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.16 2008/11/24 11:27:20 ad Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.16.14.1 2011/06/23 14:20:23 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -218,7 +218,7 @@ dosunmount(DOS_FS *fs)
 /*
  * Open DOS file
  */
-int
+__compactcall int
 dosfs_open(const char *path, struct open_file *fd)
 {
 	const struct direntry *de;
@@ -270,7 +270,7 @@ out:
 /*
  * Read from file
  */
-int
+__compactcall int
 dosfs_read(struct open_file *fd, void *vbuf, size_t nbyte, size_t *resid)
 {
 	off_t   size;
@@ -327,7 +327,7 @@ out:
 /*
  * Not implemented.
  */
-int
+__compactcall int
 dosfs_write(struct open_file *fd, void *start, size_t size, size_t *resid)
 {
 
@@ -339,7 +339,7 @@ dosfs_write(struct open_file *fd, void *start, size_t size, size_t *resid)
 /*
  * Reposition within file
  */
-off_t
+__compactcall off_t
 dosfs_seek(struct open_file *fd, off_t offset, int whence)
 {
 	off_t   off;
@@ -373,7 +373,7 @@ dosfs_seek(struct open_file *fd, off_t offset, int whence)
 /*
  * Close open file
  */
-int
+__compactcall int
 dosfs_close(struct open_file *fd)
 {
 	DOS_FILE *f = (DOS_FILE *)fd->f_fsdata;
@@ -389,7 +389,7 @@ dosfs_close(struct open_file *fd)
 /*
  * Return some stat information on a file.
  */
-int
+__compactcall int
 dosfs_stat(struct open_file *fd, struct stat *sb)
 {
 	DOS_FILE *f = (DOS_FILE *)fd->f_fsdata;

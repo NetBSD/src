@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2009/02/13 20:58:15 jmmv Exp $
+# $NetBSD: Makefile,v 1.1.6.1 2011/06/23 14:20:38 cherry Exp $
 
 HELPER_NAME=	ideatest
 HELPER_DIR=	idea
 
-LDADD+=		-lcrypto_idea
+LDADD+=		-Wl,--no-fatal-warnings
 
 .include <bsd.init.mk>

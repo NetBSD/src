@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.4.1 2011/06/23 14:19:31 cherry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,43 +38,26 @@
 #ifndef	_IBM4XX_CPU_H_
 #define	_IBM4XX_CPU_H_
 
+#include <powerpc/psl.h>
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 
-/* PVRs for different IBM CPUs */
-#define	PVR_401A1		0x00210000
-#define	PVR_401B2		0x00220000
-#define	PVR_401C2		0x00230000
-#define	PVR_401D2		0x00240000
-#define	PVR_401E2		0x00250000
-#define	PVR_401F2		0x00260000
-#define	PVR_401G2		0x00270000
-
-#define	PVR_403			0x00200000
-
-#define PVR_405GP		0x40110000
-#define PVR_405GP_PASS1 	0x40110000	/* RevA */
-#define PVR_405GP_PASS2 	0x40110040	/* RevB */
-#define PVR_405GP_PASS2_1 	0x40110082	/* RevC */
-#define PVR_405GP_PASS3 	0x401100c4	/* RevD */
-#define PVR_405GPR		0x50910000
-#define PVR_405GPR_REVB		0x50910951
-
-#define	PVR_405D5X1 		0x20010000 	/* Virtex II Pro */
-#define	PVR_405D5X2 		0x20011000 	/* Virtex 4 FX */
-
-#define PVR_405EX		0x12910000
-
 #if defined(_KERNEL)
 extern char bootpath[];
+
+struct exc_info {
+	vaddr_t exc_vector;
+	const uint32_t *exc_addr; 
+	uintptr_t exc_size;
+}; 
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <prop/proplib.h>
 
 /* export from ibm4xx/autoconf.c */
-extern void (*md_device_register)(struct device *dev, void *aux);
+extern void (*md_device_register)(device_t dev, void *aux);
 
 /* export from ibm4xx/machdep.c */
 extern void (*md_consinit)(void);
@@ -84,19 +67,21 @@ extern void (*md_cpu_startup)(void);
 extern void ibm40x_memsize_init(u_int, u_int);
 
 /* export from ibm4xx/ibm4xx_machdep.c */
-extern void ibm4xx_init(void (*)(void));
+extern void ibm4xx_init(vaddr_t, vaddr_t, void (*)(void));
 extern void ibm4xx_cpu_startup(const char *);
 extern void ibm4xx_dumpsys(void);
 extern void ibm4xx_install_extint(void (*)(void));
 
 /* export from ibm4xx/ibm4xx_autoconf.c */
-extern void ibm4xx_device_register(struct device *dev, void *aux);
+extern void ibm4xx_device_register(device_t dev, void *aux);
 
 /* export from ibm4xx/clock.c */
 extern void calc_delayconst(void);
 
 /* export from ibm4xx/4xx_locore.S */
 extern void ppc4xx_reset(void) __dead;
+
+extern void intr_init(void);
 
 /*
  * DCR (Device Control Register) access. These have to be
@@ -145,9 +130,14 @@ mfsdr(int reg)
 	mtdcr(DCR_SDR0_CFGADDR, reg);
 	return mfdcr(DCR_SDR0_CFGDATA);
 }
-#endif /* _KERNEL */
 
-#include <powerpc/cpu.h>
+#include <powerpc/pic/picvar.h>
+
+extern struct pic_ops pic_uic403;
+extern struct pic_ops pic_uic0;
+extern struct pic_ops pic_uic1;
+extern struct pic_ops pic_uic2;
+#endif /* _KERNEL */
 
 /* Board info dictionary */
 extern prop_dictionary_t board_properties;

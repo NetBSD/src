@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.4 2011/04/03 06:22:02 jdc Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.4.2.1 2011/06/23 14:19:42 cherry Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -137,6 +137,7 @@ ecadc_attach(device_t parent, device_t self, void *aux)
 		sensor = &sc->sc_channels[sc->sc_nchan].chan_sensor;
 		sensor->units = ENVSYS_STEMP;
 		sensor->flags |= ENVSYS_FMONLIMITS;
+		sensor->state = ENVSYS_SINVALID;
 		strlcpy(sensor->desc, desc, sizeof(sensor->desc));
 
 		if (strncmp(desc, "CPU", 3) == 0)

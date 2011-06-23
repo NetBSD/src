@@ -62,7 +62,7 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
-#ifdef OPENSSL_SYS_WIN32
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS)
 #include <sys/timeb.h>
 #endif
 
@@ -129,26 +129,33 @@ int dtls1_new(SSL *s)
 	return(1);
 	}
 
-void dtls1_free(SSL *s)
+static void dtls1_clear_queues(SSL *s)
 	{
     pitem *item = NULL;
     hm_fragment *frag = NULL;
-
-	ssl3_free(s);
+	DTLS1_RECORD_DATA *rdata;
 
     while( (item = pqueue_pop(s->d1->unprocessed_rcds.q)) != NULL)
         {
+		rdata = (DTLS1_RECORD_DATA *) item->data;
+		if (rdata->rbuf.buf)
+			{
+			OPENSSL_free(rdata->rbuf.buf);
+			}
         OPENSSL_free(item->data);
         pitem_free(item);
         }
-    pqueue_free(s->d1->unprocessed_rcds.q);
 
     while( (item = pqueue_pop(s->d1->processed_rcds.q)) != NULL)
         {
+		rdata = (DTLS1_RECORD_DATA *) item->data;
+		if (rdata->rbuf.buf)
+			{
+			OPENSSL_free(rdata->rbuf.buf);
+			}
         OPENSSL_free(item->data);
         pitem_free(item);
         }
-    pqueue_free(s->d1->processed_rcds.q);
 
     while( (item = pqueue_pop(s->d1->buffered_messages)) != NULL)
         {
@@ -157,7 +164,6 @@ void dtls1_free(SSL *s)
         OPENSSL_free(frag);
         pitem_free(item);
         }
-    pqueue_free(s->d1->buffered_messages);
 
     while ( (item = pqueue_pop(s->d1->sent_messages)) != NULL)
         {
@@ -166,7 +172,6 @@ void dtls1_free(SSL *s)
         OPENSSL_free(frag);
         pitem_free(item);
         }
-	pqueue_free(s->d1->sent_messages);
 
 	while ( (item = pqueue_pop(s->d1->buffered_app_data.q)) != NULL)
 		{
@@ -175,6 +180,18 @@ void dtls1_free(SSL *s)
 		OPENSSL_free(frag);
 		pitem_free(item);
 		}
+	}
+
+void dtls1_free(SSL *s)
+	{
+	ssl3_free(s);
+
+	dtls1_clear_queues(s);
+
+    pqueue_free(s->d1->unprocessed_rcds.q);
+    pqueue_free(s->d1->processed_rcds.q);
+    pqueue_free(s->d1->buffered_messages);
+	pqueue_free(s->d1->sent_messages);
 	pqueue_free(s->d1->buffered_app_data.q);
 
 	OPENSSL_free(s->d1);
@@ -182,6 +199,36 @@ void dtls1_free(SSL *s)
 
 void dtls1_clear(SSL *s)
 	{
+    pqueue unprocessed_rcds;
+    pqueue processed_rcds;
+    pqueue buffered_messages;
+	pqueue sent_messages;
+	pqueue buffered_app_data;
+	
+	if (s->d1)
+		{
+		unprocessed_rcds = s->d1->unprocessed_rcds.q;
+		processed_rcds = s->d1->processed_rcds.q;
+		buffered_messages = s->d1->buffered_messages;
+		sent_messages = s->d1->sent_messages;
+		buffered_app_data = s->d1->buffered_app_data.q;
+
+		dtls1_clear_queues(s);
+
+		memset(s->d1, 0, sizeof(*(s->d1)));
+
+		if (s->server)
+			{
+			s->d1->cookie_len = sizeof(s->d1->cookie);
+			}
+
+		s->d1->unprocessed_rcds.q = unprocessed_rcds;
+		s->d1->processed_rcds.q = processed_rcds;
+		s->d1->buffered_messages = buffered_messages;
+		s->d1->sent_messages = sent_messages;
+		s->d1->buffered_app_data.q = buffered_app_data;
+		}
+
 	ssl3_clear(s);
 	if (s->options & SSL_OP_CISCO_ANYCONNECT)
 		s->version=DTLS1_BAD_VER;
@@ -283,6 +330,16 @@ struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft)
 		timeleft->tv_usec += 1000000;
 		}
 
+	/* If remaining time is less than 15 ms, set it to 0
+	 * to prevent issues because of small devergences with
+	 * socket timeouts.
+	 */
+	if (timeleft->tv_sec == 0 && timeleft->tv_usec < 15000)
+		{
+		memset(timeleft, 0, sizeof(struct timeval));
+		}
+	
+
 	return timeleft;
 	}
 
@@ -320,6 +377,8 @@ void dtls1_stop_timer(SSL *s)
 	memset(&(s->d1->next_timeout), 0, sizeof(struct timeval));
 	s->d1->timeout_duration = 1;
 	BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0, &(s->d1->next_timeout));
+	/* Clear retransmission buffer */
+	dtls1_clear_record_buffer(s);
 	}
 
 int dtls1_handle_timeout(SSL *s)

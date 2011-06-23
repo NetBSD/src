@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.22 2010/11/19 06:44:41 dholland Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.22.6.1 2011/06/23 14:20:15 cherry Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.22 2010/11/19 06:44:41 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.22.6.1 2011/06/23 14:20:15 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,8 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
 	if ((*vpp = ptyfs_used_get(type, pty, mp, LK_EXCLUSIVE)) != NULL)
 		return 0;
 
-	if ((error = getnewvnode(VT_PTYFS, mp, ptyfs_vnodeop_p, &vp)) != 0) {
+	error = getnewvnode(VT_PTYFS, mp, ptyfs_vnodeop_p, NULL, &vp);
+	if (error) {
 		*vpp = NULL;
 		return error;
 	}
@@ -377,7 +378,7 @@ loop:
 		    	if (flags == 0) {
 				mutex_exit(&ptyfs_used_slock);
 			} else {
-				mutex_enter(&vp->v_interlock);
+				mutex_enter(vp->v_interlock);
 				mutex_exit(&ptyfs_used_slock);
 				if (vget(vp, flags))
 					goto loop;

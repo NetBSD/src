@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.36 2011/05/17 17:34:47 dyoung Exp $ */
+/* $NetBSD: dwlpx.c,v 1.36.2.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.36 2011/05/17 17:34:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.36.2.1 2011/06/23 14:18:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.36 2011/05/17 17:34:47 dyoung Exp $");
 	     (1LL					<< 39))
 
 
-static int	dwlpxmatch(struct device *, struct cfdata *, void *);
-static void	dwlpxattach(struct device *, struct device *, void *);
-CFATTACH_DECL(dwlpx, sizeof(struct dwlpx_softc),
+static int	dwlpxmatch(device_t, cfdata_t, void *);
+static void	dwlpxattach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(dwlpx, sizeof(struct dwlpx_softc),
     dwlpxmatch, dwlpxattach, NULL, NULL);
 
 extern struct cfdriver dwlpx_cd;
@@ -72,7 +73,7 @@ extern struct cfdriver dwlpx_cd;
 void	dwlpx_errintr(void *, u_long vec);
 
 static int
-dwlpxmatch(struct device *parent, struct cfdata *cf, void *aux)
+dwlpxmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct kft_dev_attach_args *ka = aux;
 	unsigned long ls;
@@ -102,15 +103,16 @@ dwlpxmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-dwlpxattach(struct device *parent, struct device *self, void *aux)
+dwlpxattach(device_t parent, device_t self, void *aux)
 {
 	static int once = 0;
-	struct dwlpx_softc *sc = (struct dwlpx_softc *)self;
+	struct dwlpx_softc *sc = device_private(self);
 	struct dwlpx_config *ccp = &sc->dwlpx_cc;
 	struct kft_dev_attach_args *ka = aux;
 	struct pcibus_attach_args pba;
 	u_int32_t pcia_present;
 
+	sc->dwlpx_dev = self;
 	sc->dwlpx_node = ka->ka_node;
 	sc->dwlpx_dtype = ka->ka_dtype;
 	sc->dwlpx_hosenum = ka->ka_hosenum;
@@ -119,7 +121,7 @@ dwlpxattach(struct device *parent, struct device *self, void *aux)
 	dwlpx_dma_init(ccp);
 
 	pcia_present = REGVAL(PCIA_PRESENT + ccp->cc_sysbase);
-	printf(": PCIA rev. %d, STD I/O %spresent, %dK S/G entries\n",
+	aprint_normal(": PCIA rev. %d, STD I/O %spresent, %dK S/G entries\n",
 	    (pcia_present >> PCIA_PRESENT_REVSHIFT) & PCIA_PRESENT_REVMASK,
 	    (pcia_present & PCIA_PRESENT_STDIO) == 0 ? "not " : "",
 	    sc->dwlpx_sgmapsz == DWLPX_SG128K ? 128 : 32);
@@ -147,8 +149,9 @@ dwlpxattach(struct device *parent, struct device *self, void *aux)
 					str = "7.5";
 					break;
 				}
-				printf("%s: hpc %d slot %d: %s watt module\n",
-				    sc->dwlpx_dev.dv_xname, hpc, slot, str);
+				aprint_normal_dev(sc->dwlpx_dev,
+				    "hpc %d slot %d: %s watt module\n",
+				    hpc, slot, str);
 			}
 		}
 	}
@@ -251,9 +254,9 @@ dwlpx_init(struct dwlpx_softc *sc)
 	vec = scb_alloc(dwlpx_errintr, sc);
 	if (vec == SCB_ALLOC_FAILED)
 		panic("%s: unable to allocate error vector",
-		    sc->dwlpx_dev.dv_xname);
-	printf("%s: error interrupt at vector 0x%lx\n",
-	    sc->dwlpx_dev.dv_xname, vec);
+		    device_xname(sc->dwlpx_dev));
+	aprint_normal_dev(sc->dwlpx_dev, "error interrupt at vector 0x%lx\n",
+	    vec);
 	for (i = 0; i < NHPC; i++) {
 		REGVAL(PCIA_IMASK(i) + ccp->cc_sysbase) = DWLPX_IMASK_DFLT;
 		REGVAL(PCIA_ERRVEC(i) + ccp->cc_sysbase) = vec;
@@ -315,52 +318,52 @@ dwlpx_errintr(void *arg, unsigned long vec)
 		hpcs[i].err = REGVAL(PCIA_ERR(i) + ccp->cc_sysbase);
 		hpcs[i].addr = REGVAL(PCIA_FADR(i) + ccp->cc_sysbase);
 	}
-	printf("%s: node %d hose %d error interrupt\n",
-	    sc->dwlpx_dev.dv_xname, sc->dwlpx_node, sc->dwlpx_hosenum);
+	aprint_error_dev(sc->dwlpx_dev, "node %d hose %d error interrupt\n",
+	    sc->dwlpx_node, sc->dwlpx_hosenum);
 	
 	for (i = 0; i < sc->dwlpx_nhpc; i++) {
 		if ((hpcs[i].err & PCIA_ERR_ERROR) == 0)
 			continue;
-		printf("\tHPC %d: ERR=0x%08x; DMA %s Memory, "
+		aprint_error("\tHPC %d: ERR=0x%08x; DMA %s Memory, "
 			"Failing Address 0x%x\n",
 			i, hpcs[i].err, hpcs[i].addr & 0x1? "write to" :
 			"read from", hpcs[i].addr & ~3);
 		if (hpcs[i].err & PCIA_ERR_SERR_L)
-			printf("\t       PCI device asserted SERR_L\n");
+			aprint_error("\t       PCI device asserted SERR_L\n");
 		if (hpcs[i].err & PCIA_ERR_ILAT)
-			printf("\t       Incremental Latency Exceeded\n");
+			aprint_error("\t       Incremental Latency Exceeded\n");
 		if (hpcs[i].err & PCIA_ERR_SGPRTY)
-			printf("\t       CPU access of SG RAM Parity Error\n");
+			aprint_error("\t       CPU access of SG RAM Parity Error\n");
 		if (hpcs[i].err & PCIA_ERR_ILLCSR)
-			printf("\t       Illegal CSR Address Error\n");
+			aprint_error("\t       Illegal CSR Address Error\n");
 		if (hpcs[i].err & PCIA_ERR_PCINXM)
-			printf("\t       Nonexistent PCI Address Error\n");
+			aprint_error("\t       Nonexistent PCI Address Error\n");
 		if (hpcs[i].err & PCIA_ERR_DSCERR)
-			printf("\t       PCI Target Disconnect Error\n");
+			aprint_error("\t       PCI Target Disconnect Error\n");
 		if (hpcs[i].err & PCIA_ERR_ABRT)
-			printf("\t       PCI Target Abort Error\n");
+			aprint_error("\t       PCI Target Abort Error\n");
 		if (hpcs[i].err & PCIA_ERR_WPRTY)
-			printf("\t       PCI Write Parity Error\n");
+			aprint_error("\t       PCI Write Parity Error\n");
 		if (hpcs[i].err & PCIA_ERR_DPERR)
-			printf("\t       PCI Data Parity Error\n");
+			aprint_error("\t       PCI Data Parity Error\n");
 		if (hpcs[i].err & PCIA_ERR_APERR)
-			printf("\t       PCI Address Parity Error\n");
+			aprint_error("\t       PCI Address Parity Error\n");
 		if (hpcs[i].err & PCIA_ERR_DFLT)
-			printf("\t       SG Map RAM Invalid Entry Error\n");
+			aprint_error("\t       SG Map RAM Invalid Entry Error\n");
 		if (hpcs[i].err & PCIA_ERR_DPRTY)
-			printf("\t       DMA access of SG RAM Parity Error\n");
+			aprint_error("\t       DMA access of SG RAM Parity Error\n");
 		if (hpcs[i].err & PCIA_ERR_DRPERR)
-			printf("\t       DMA Read Return Parity Error\n");
+			aprint_error("\t       DMA Read Return Parity Error\n");
 		if (hpcs[i].err & PCIA_ERR_MABRT)
-			printf("\t       PCI Master Abort Error\n");
+			aprint_error("\t       PCI Master Abort Error\n");
 		if (hpcs[i].err & PCIA_ERR_CPRTY)
-			printf("\t       CSR Parity Error\n");
+			aprint_error("\t       CSR Parity Error\n");
 		if (hpcs[i].err & PCIA_ERR_COVR)
-			printf("\t       CSR Overrun Error\n");
+			aprint_error("\t       CSR Overrun Error\n");
 		if (hpcs[i].err & PCIA_ERR_MBPERR)
-			printf("\t       Mailbox Parity Error\n");
+			aprint_error("\t       Mailbox Parity Error\n");
 		if (hpcs[i].err & PCIA_ERR_MBILI)
-			printf("\t       Mailbox Illegal Length Error\n");
+			aprint_error("\t       Mailbox Illegal Length Error\n");
 		REGVAL(PCIA_ERR(i) + ccp->cc_sysbase) = hpcs[i].err;
 	}
 }

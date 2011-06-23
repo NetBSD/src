@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.7 2010/04/24 09:39:57 kiyohara Exp $ */
+/*	$NetBSD: picvar.h,v 1.7.6.1 2011/06/23 14:19:34 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,12 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.7 2010/04/24 09:39:57 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.7.6.1 2011/06/23 14:19:34 cherry Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
 
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 struct pic_ops {
 	void *pic_cookie;	/* private stuff / hardware info */
@@ -56,7 +56,7 @@ struct pic_ops {
 
 struct intr_source {
 	int is_type;
-	int is_level;
+	int is_ipl;
 	int is_hwirq;
 	imask_t is_mask;
 	struct intrhand *is_hand;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/05/26 12:56:25 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2011/06/23 14:18:09 cherry Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -50,7 +50,7 @@ OS_VERSION!= ${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 ${SRCS}: buildinf.h
 buildinf.h: Makefile
 	@echo "#ifndef MK1MF_BUILD" >buildinf.h
-	@echo "#define CFLAGS \"`${CC} -v 2>&1 | grep version`\"" >>buildinf.h
+	@echo "#define CFLAGS \"`${CC} -v 2>&1 | grep 'gcc version'`\"" >>buildinf.h
 	@echo "#define PLATFORM \"NetBSD-${MACHINE_ARCH}\"" >>buildinf.h
 	@echo "#define DATE \"NetBSD ${OS_VERSION}\"" >>buildinf.h
 	@echo "#endif" >>buildinf.h
@@ -60,12 +60,12 @@ CLEANFILES+= buildinf.h
 # This list is built from the contents of the include/openssl
 # directory in the OpenSSL source distribution.
 INCS+=	aes.h asn1.h asn1_mac.h asn1t.h bio.h blowfish.h bn.h \
-	buffer.h cast.h cms.h comp.h conf.h conf_api.h crypto.h des.h \
+	buffer.h cast.h cmac.h cms.h comp.h conf.h conf_api.h crypto.h des.h \
 	dh.h dsa.h dso.h e_os2.h ebcdic.h ec.h ecdh.h ecdsa.h engine.h \
 	err.h evp.h hmac.h krb5_asn.h lhash.h md2.h md4.h md5.h modes.h \
 	obj_mac.h objects.h ocsp.h opensslconf.h opensslv.h ossl_typ.h \
 	pem.h pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h ripemd.h \
-	rsa.h safestack.h sha.h stack.h store.h symhacks.h ts.h txt_db.h \
+	rsa.h safestack.h sha.h srp.h stack.h store.h symhacks.h ts.h txt_db.h \
 	ui.h ui_compat.h x509.h x509_vfy.h x509v3.h pqueue.h camellia.h
 #	des_old.h 
 

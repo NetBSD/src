@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/01/26 01:18:44 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2011/06/23 14:18:17 cherry Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,9 +19,6 @@ RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
 MDSETTARGETS=		RAMDISK ${RAMDISK} netbsd-INSTALL
 MDSET_RELEASEDIR=	binary/kernel
-
-MDSET_SUFFIXES.netbsd-INSTALL=	ecoff create-ecoff
-create-ecoff=			${ELF2ECOFF} ${.TARGET:R} ${.TARGET}
 
 IMAGE_RELEASEDIR=	installation/diskimage
 

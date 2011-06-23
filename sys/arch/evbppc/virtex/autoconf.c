@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2010/03/18 14:04:07 kiyohara Exp $ */
+/*	$NetBSD: autoconf.c,v 1.2.6.1 2011/06/23 14:19:10 cherry Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -61,14 +61,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2010/03/18 14:04:07 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.6.1 2011/06/23 14:19:10 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
-#include <sys/device.h>
+#include <sys/cpu.h>
+#include <sys/device_if.h>
 #include <sys/systm.h>
 
 #include <powerpc/ibm4xx/spr.h>
+
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
 
@@ -90,9 +93,6 @@ cpu_configure(void)
 	if (config_rootfound("plb", &local_plb_devs) == NULL)
 		panic("configure: plb not configured");
 
-	printf("biomask %#08x netmask %#08x ttymask %#08x\n",
-	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
-	
 	(void)spl0();
 
 	/* Now allow hardware interrupts. */

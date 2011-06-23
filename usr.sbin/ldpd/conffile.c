@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.2 2010/12/30 21:26:00 christos Exp $ */
+/* $NetBSD: conffile.c,v 1.2.4.1 2011/06/23 14:20:47 cherry Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #define LINEMAXSIZE 1024
 
 extern int ldp_hello_time, ldp_keepalive_time, ldp_holddown_time, command_port,
-	min_label, max_label;
+	min_label, max_label, no_default_route;
 int confh;
 struct in_addr conf_ldp_id;
 
@@ -61,6 +61,7 @@ static int Fminlabel(char*);
 static int Fldpid(char*);
 static int Fneighbour(char*);
 static int Gneighbour(struct conf_neighbour *, char *);
+static int Fnodefault(char*);
 
 struct conf_func {
 	char com[64];
@@ -77,6 +78,7 @@ struct conf_func main_commands[] = {
 	{ "LDP-ID", Fldpid },
 	{ "neighbor", Fneighbour },
 	{ "neighbour", Fneighbour },
+	{ "no-default-route", Fnodefault },
 	{ "", NULL },
 };
 
@@ -299,4 +301,14 @@ Gneighbour(struct conf_neighbour *nei, char *line)
 		return 0;
 	}
 	return -1;
+}
+
+int
+Fnodefault(char *line)
+{
+	int nd = atoi(line);
+	if (nd < 0)
+		return E_CONF_PARAM;
+	no_default_route = nd;
+	return 0;
 }

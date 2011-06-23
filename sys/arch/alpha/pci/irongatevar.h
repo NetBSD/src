@@ -1,4 +1,4 @@
-/* $NetBSD: irongatevar.h,v 1.4 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: irongatevar.h,v 1.4.32.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ struct irongate_config {
 };
 
 struct irongate_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 
 	struct	irongate_config *sc_icp;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getdents.c,v 1.3 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: compat_getdents.c,v 1.3.22.1 2011/06/23 14:18:36 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getdents.c,v 1.3 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: compat_getdents.c,v 1.3.22.1 2011/06/23 14:18:36 cherry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -50,6 +50,7 @@ getdents(int fd, char *buf, size_t nbytes)
 {
 	struct dirent *ndp, *nndp, *endp;
 	struct dirent12 *odp;
+	ino_t ino;
 	int rv;
 
 	if ((rv = __getdents30(fd, buf, nbytes)) == -1)
@@ -67,7 +68,9 @@ getdents(int fd, char *buf, size_t nbytes)
 	for (; ndp < endp; ndp = nndp) {
 		nndp = _DIRENT_NEXT(ndp);
 		/* XXX: avoid unaligned 64-bit access on sparc64 */
-		odp->d_ino = ((u_int32_t *)(void *)&ndp->d_ino)[_QUAD_LOWWORD];
+		/* XXX: does this work? */
+		memcpy(&ino, &ndp->d_ino, sizeof(ino_t));
+		odp->d_ino = (uint32_t)ino;
 		if (ndp->d_namlen >= sizeof(odp->d_name))
 			odp->d_namlen = sizeof(odp->d_name) - 1;
 		else

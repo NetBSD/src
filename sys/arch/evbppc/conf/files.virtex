@@ -1,4 +1,4 @@
-#	$NetBSD: files.virtex,v 1.4 2010/03/18 13:47:04 kiyohara Exp $
+#	$NetBSD: files.virtex,v 1.4.6.1 2011/06/23 14:19:08 cherry Exp $
 #
 # Xilinx Virtex specific configuration
 
@@ -17,6 +17,8 @@ file	arch/evbppc/virtex/dcr.c
 
 file 	arch/evbppc/virtex/design_gsrd1.c 	design_gsrd1
 file 	arch/evbppc/virtex/design_gsrd2.c 	design_gsrd2 | design_dfc
+
+file	arch/powerpc/ibm4xx/ibm4xx_machdep.c
 
 # Memory Disk for install kernel
 file	dev/md_root.c				memory_disk_hooks

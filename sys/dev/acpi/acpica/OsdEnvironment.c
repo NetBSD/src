@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdEnvironment.c,v 1.5 2009/08/23 15:16:16 jmcneill Exp $	*/
+/*	$NetBSD: OsdEnvironment.c,v 1.5.10.1 2011/06/23 14:19:57 cherry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.5 2009/08/23 15:16:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.5.10.1 2011/06/23 14:19:57 cherry Exp $");
 
 #include <sys/types.h>
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.5 2009/08/23 15:16:16 jmcneill 
 #include <machine/acpi_machdep.h>
 
 #define	_COMPONENT	ACPI_OS_SERVICES
-ACPI_MODULE_NAME("ENVIRONMENT");
+ACPI_MODULE_NAME	("ENVIRONMENT");
 
 /*
  * AcpiOsInitialize:
@@ -77,7 +77,7 @@ AcpiOsInitialize(void)
 ACPI_STATUS
 AcpiOsTerminate(void)
 {
-	return acpi_md_OsTerminate();
+	return AE_OK;
 }
 
 /*

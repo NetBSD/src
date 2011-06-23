@@ -1,4 +1,4 @@
-#	$NetBSD: files.ia64,v 1.5 2009/07/20 04:41:36 kiyohara Exp $
+#	$NetBSD: files.ia64,v 1.5.10.1 2011/06/23 14:19:17 cherry Exp $
 #
 # new style config file for ia64 architecture
 #
@@ -16,7 +16,6 @@ define cpubus {}
 file	arch/ia64/ia64/autoconf.c
 file	arch/ia64/ia64/machdep.c
 file	arch/ia64/ia64/clock.c
-file	arch/ia64/ia64/mem.c
 file	arch/ia64/ia64/process_machdep.c
 file	arch/ia64/ia64/pmap.c
 file	arch/ia64/ia64/sys_machdep.c

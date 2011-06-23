@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2011/04/05 16:37:06 jmmv Exp $
+# $NetBSD: Makefile,v 1.10.2.1 2011/06/23 14:18:29 cherry Exp $
 
 NOLINT=		# defined
 
@@ -55,7 +55,7 @@ FILESDIR=	/usr/lib/pkgconfig
 
 realall: atf-c++.pc
 atf-c++.pc: Makefile atf-c++.pc.in
-	${TOOL_SED} -e 's,__ATF_VERSION__,0.13,g' \
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.14,g' \
 	    -e 's,__CXX__,g++,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \

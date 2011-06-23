@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 2011/04/14 15:45:27 yamt Exp $
+#	$NetBSD: Makefile,v 1.70.2.1 2011/06/23 14:20:25 cherry Exp $
 
 .include <bsd.own.mk>
 
@@ -89,8 +89,10 @@ SUBDIR+=	exec_elf64
 
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	amdtemp
 SUBDIR+=	coretemp
 SUBDIR+=	est
+SUBDIR+=	hpet
 SUBDIR+=	odcm
 SUBDIR+=	powernow
 SUBDIR+=	tprof_pmi
@@ -186,6 +188,10 @@ SUBDIR+=        solaris
 
 .if (${MKZFS} != "no")
 SUBDIR+=	zfs
+.endif
+
+.if (${MKCOMPATMODULES} != "no")
+SUBDIR+=	arch
 .endif
 
 .include <bsd.subdir.mk>

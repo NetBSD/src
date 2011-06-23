@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.26 2011/02/18 20:40:58 drochner Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.26.2.1 2011/06/23 14:20:27 cherry Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.26 2011/02/18 20:40:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.26.2.1 2011/06/23 14:20:27 cherry Exp $");
 
 /*
  * IP-inside-IP processing
@@ -203,7 +203,6 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	struct ip6_hdr *ip6 = NULL;
 	u_int8_t itos;
 #endif
-	u_int8_t nxt;
 	int isr;
 	u_int8_t otos;
 	u_int8_t v;
@@ -322,14 +321,12 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 #ifdef INET
     	case 4:
                 ipo = mtod(m, struct ip *);
-                nxt = ipo->ip_p;
 		ip_ecn_egress(ip4_ipsec_ecn, &otos, &ipo->ip_tos);
                 break;
 #endif /* INET */
 #ifdef INET6
     	case 6:
                 ip6 = (struct ip6_hdr *) ipo;
-                nxt = ip6->ip6_nxt;
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		ip_ecn_egress(ip6_ipsec_ecn, &otos, &itos);
 		ip6->ip6_flow &= ~htonl(0xff << 20);
@@ -549,12 +546,14 @@ ipip_output(
 			goto bad;
 		}
 
-		/* scoped address handling */
-		ip6 = mtod(m, struct ip6_hdr *);
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-			ip6->ip6_src.s6_addr16[1] = 0;
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-			ip6->ip6_dst.s6_addr16[1] = 0;
+		if (tp == (IPV6_VERSION >> 4)) {
+			/* scoped address handling */
+			ip6 = mtod(m, struct ip6_hdr *);
+			if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+				ip6->ip6_src.s6_addr16[1] = 0;
+			if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+				ip6->ip6_dst.s6_addr16[1] = 0;
+		}
 
 		M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 		if (m == 0) {
@@ -573,6 +572,10 @@ ipip_output(
 		ip6o->ip6_hlim = ip_defttl;
 		ip6o->ip6_dst = saidx->dst.sin6.sin6_addr;
 		ip6o->ip6_src = saidx->src.sin6.sin6_addr;
+		if (IN6_IS_SCOPE_LINKLOCAL(&ip6o->ip6_dst))
+			ip6o->ip6_dst.s6_addr16[1] = htons(saidx->dst.sin6.sin6_scope_id);
+		if (IN6_IS_SCOPE_LINKLOCAL(&ip6o->ip6_src))
+			ip6o->ip6_src.s6_addr16[1] = htons(saidx->src.sin6.sin6_scope_id);
 
 #ifdef INET
 		if (tp == IPVERSION) {
@@ -636,7 +639,7 @@ nofamily:
 			tdb->tdb_cur_bytes +=
 			    m->m_pkthdr.len - sizeof(struct ip6_hdr);
 #endif
-		IPIP_STATADD(IPIP_STAT_IBYTES,
+		IPIP_STATADD(IPIP_STAT_OBYTES,
 		    m->m_pkthdr.len - sizeof(struct ip6_hdr));
 	}
 #endif /* INET6 */

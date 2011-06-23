@@ -1,4 +1,4 @@
-/*	$NetBSD: gtenvar.h,v 1.5 2008/04/28 20:23:33 martin Exp $	*/
+/*	$NetBSD: gtenvar.h,v 1.5.32.1 2011/06/23 14:19:36 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 struct rasops_info;
 
 struct gten_softc {
-	struct device gt_dev;
+	device_t gt_dev;
 
 	struct rasops_info *gt_ri;
 	paddr_t gt_paddr;

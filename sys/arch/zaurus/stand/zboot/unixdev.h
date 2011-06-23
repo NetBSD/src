@@ -1,4 +1,4 @@
-/*	$NetBSD: unixdev.h,v 1.1 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: unixdev.h,v 1.1.16.1 2011/06/23 14:19:52 cherry Exp $	*/
 /*	$OpenBSD: unixdev.h,v 1.1 2005/05/24 20:38:20 uwe Exp $	*/
 
 /*
@@ -59,6 +59,7 @@ off_t ulseek(int, off_t, int);
 void uexit(int) __attribute__((noreturn));
 int uselect(int, fd_set *, fd_set *, fd_set *, struct linux_timeval *);
 int ustat(const char *, struct linux_stat *);
+int ufstat(int, struct linux_stat *);
 int syscall(int, ...);
 int __syscall(quad_t, ...);
 

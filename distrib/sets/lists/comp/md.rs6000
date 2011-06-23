@@ -1,10 +1,10 @@
-# $NetBSD: md.rs6000,v 1.3 2010/03/14 23:19:18 mrg Exp $
+# $NetBSD: md.rs6000,v 1.3.4.1 2011/06/23 14:18:21 cherry Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/rs6000				comp-c-include
 ./usr/include/rs6000/ansi.h			comp-c-include
 ./usr/include/rs6000/aout_machdep.h		comp-c-include
 ./usr/include/rs6000/asm.h			comp-c-include
-./usr/include/rs6000/atomic.h			comp-c-include
+./usr/include/rs6000/atomic.h			comp-obsolete		obsolete
 ./usr/include/rs6000/bootinfo.h			comp-c-include
 ./usr/include/rs6000/bswap.h			comp-c-include
 ./usr/include/rs6000/cdefs.h			comp-c-include

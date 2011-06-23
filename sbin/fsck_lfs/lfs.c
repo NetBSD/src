@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.33 2010/02/21 16:24:21 mlelstv Exp $ */
+/* $NetBSD: lfs.c,v 1.33.4.1 2011/06/23 14:18:43 cherry Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1020,8 +1020,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 						    lastblock,
 						    (bpp ? &bp : NULL))))
 				return (error);
-			ip->i_ffs1_size = ip->i_ffs1_size =
-			    (lastblock + 1) * fs->lfs_bsize;
+			ip->i_ffs1_size = (lastblock + 1) * fs->lfs_bsize;
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (bpp)
 				(void) VOP_BWRITE(bp);

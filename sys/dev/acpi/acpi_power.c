@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.31 2011/05/22 22:13:33 joerg Exp $ */
+/* $NetBSD: acpi_power.c,v 1.31.2.1 2011/06/23 14:19:56 cherry Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.31 2011/05/22 22:13:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.31.2.1 2011/06/23 14:19:56 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -199,7 +199,7 @@ acpi_power_register(ACPI_HANDLE hdl)
 void
 acpi_power_deregister(ACPI_HANDLE hdl)
 {
-	struct acpi_devnode *ad = acpi_get_node(hdl);
+	struct acpi_devnode *ad = acpi_match_node(hdl);
 	struct acpi_power_res *res;
 
 	if (ad == NULL)
@@ -218,7 +218,7 @@ acpi_power_deregister(ACPI_HANDLE hdl)
 bool
 acpi_power_get(ACPI_HANDLE hdl, int *state)
 {
-	struct acpi_devnode *ad = acpi_get_node(hdl);
+	struct acpi_devnode *ad = acpi_match_node(hdl);
 	ACPI_STATUS rv;
 
 	if (ad == NULL)
@@ -331,7 +331,7 @@ out:
 bool
 acpi_power_set(ACPI_HANDLE hdl, int state)
 {
-	struct acpi_devnode *ad = acpi_get_node(hdl);
+	struct acpi_devnode *ad = acpi_match_node(hdl);
 	ACPI_STATUS rv;
 	char path[5];
 	int old;

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.24 2008/10/16 14:36:40 dholland Exp $	*/
+/*	$NetBSD: var.h,v 1.24.16.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -121,13 +121,9 @@ char *bltinlookup(const char *, int);
 char **environment(void);
 void shprocvar(void);
 int showvars(const char *, int, int);
-int exportcmd(int, char **);
-int localcmd(int, char **);
 void mklocal(const char *, int);
 void listmklocal(struct strlist *, int);
 void poplocalvars(void);
-int setvarcmd(int, char **);
-int unsetcmd(int, char **);
 int unsetvar(const char *, int);
 int setvarsafe(const char *, const char *, int);
 void print_quoted(const char *);

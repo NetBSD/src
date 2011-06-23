@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.25 2011/04/24 16:26:56 rmind Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.25.2.1 2011/06/23 14:19:21 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.25 2011/04/24 16:26:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.25.2.1 2011/06/23 14:19:21 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -63,8 +63,8 @@ struct ofcons_softc {
 
 static int stdin, stdout;
 
-static int ofcmatch(struct device *, struct cfdata *, void *);
-static void ofcattach(struct device *, struct device *, void *);
+static int ofcmatch(device_t, cfdata_t, void *);
+static void ofcattach(device_t, device_t, void *);
 
 CFATTACH_DECL(macofcons, sizeof(struct ofcons_softc),
     ofcmatch, ofcattach, NULL, NULL);
@@ -95,7 +95,7 @@ static int ofcparam(struct tty *, struct termios *);
 static int ofcons_probe(void);
 
 static int
-ofcmatch(struct device *parent, struct cfdata *match, void *aux)
+ofcmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	static int attached = 0;
@@ -114,7 +114,7 @@ ofcmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ofcattach(struct device *parent, struct device *self, void *aux)
+ofcattach(device_t parent, device_t self, void *aux)
 {
 	printf("\n");
 }

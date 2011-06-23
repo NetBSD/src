@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.9 2011/05/20 07:57:07 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.9.2.1 2011/06/23 14:19:51 cherry Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -6,7 +6,7 @@
 include 	"arch/zaurus/conf/GENERIC"
 
 # Enable the hooks used for initializing the root memory-disk.
-options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_HOOKS	# enable root ramdisk
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=4096	# size of memory disk, in blocks
@@ -38,16 +38,19 @@ options 		PIPE_SOCKETPAIR
 no options 		WSDISPLAY_COMPAT_PCVT
 no options 		WSDISPLAY_COMPAT_USL
 no options 		WSDISPLAY_COMPAT_RAWKBD
+options 		RASOPS_SMALL
 
 no options 		DIAGNOSTIC
 no options 		DDB
 no options 		DDB_HISTORY_SIZE
 no options 		SYMTAB_SPACE
 
+no zrc0 at pxaip?
+
 no ztp0 at pxaip?
 no wsmouse* at ztp?
 
-no zaudio0 at pxaip?
+no zaudio0 at iic?
 no audio* at zaudio?
 
 no ums* at uhidev?

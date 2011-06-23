@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.32 2010/12/21 07:07:44 jnemeth Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.32.6.1 2011/06/23 14:20:09 cherry Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.32 2010/12/21 07:07:44 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.32.6.1 2011/06/23 14:20:09 cherry Exp $");
 #ifdef	__NetBSD__
 #include "opt_inet.h"
 #endif
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.32 2010/12/21 07:07:44 jnemeth Exp $")
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
@@ -96,16 +95,21 @@ Static void	 cdce_watchdog(struct ifnet *);
 Static void	 cdce_stop(struct cdce_softc *);
 
 Static const struct cdce_type cdce_devs[] = {
+  {{ USB_VENDOR_ACERLABS, USB_PRODUCT_ACERLABS_M5632 }, CDCE_NO_UNION },
+  {{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_IPAQLINUX }, CDCE_NO_UNION },
+  {{ USB_VENDOR_GMATE, USB_PRODUCT_GMATE_YP3X00 }, CDCE_NO_UNION },
+  {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN }, CDCE_ZAURUS | CDCE_NO_UNION },
+  {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN2 }, CDCE_ZAURUS | CDCE_NO_UNION },
+  {{ USB_VENDOR_NETCHIP, USB_PRODUCT_NETCHIP_ETHERNETGADGET }, CDCE_NO_UNION },
   {{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2501 }, CDCE_NO_UNION },
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5500 }, CDCE_ZAURUS },
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_A300 }, CDCE_ZAURUS | CDCE_NO_UNION },
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5600 }, CDCE_ZAURUS | CDCE_NO_UNION },
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C700 }, CDCE_ZAURUS | CDCE_NO_UNION },
   {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C750 }, CDCE_ZAURUS | CDCE_NO_UNION },
-  {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN }, CDCE_ZAURUS | CDCE_NO_UNION },
-  {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN2 }, CDCE_ZAURUS | CDCE_NO_UNION },
 };
-#define cdce_lookup(v, p) ((const struct cdce_type *)usb_lookup(cdce_devs, v, p))
+#define cdce_lookup(v, p) \
+	((const struct cdce_type *)usb_lookup(cdce_devs, v, p))
 
 int cdce_match(device_t, cfdata_t, void *);
 void cdce_attach(device_t, device_t, void *);
@@ -135,7 +139,7 @@ cdce_attach(device_t parent, device_t self, void *aux)
 {
 	struct cdce_softc *sc = device_private(self);
 	struct usbif_attach_arg *uaa = aux;
-	char				 *devinfop;
+	char				*devinfop;
 	int				 s;
 	struct ifnet			*ifp;
 	usbd_device_handle		 dev = uaa->device;
@@ -378,7 +382,8 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 	c->cdce_mbuf = m;
 
 	usbd_setup_xfer(c->cdce_xfer, sc->cdce_bulkout_pipe, c, c->cdce_buf,
-	    m->m_pkthdr.len + extra, USBD_NO_COPY, 10000, cdce_txeof);
+	    m->m_pkthdr.len + extra, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+	    10000, cdce_txeof);
 	err = usbd_transfer(c->cdce_xfer);
 	if (err != USBD_IN_PROGRESS) {
 		cdce_stop(sc);
@@ -429,7 +434,8 @@ cdce_stop(struct cdce_softc *sc)
 			sc->cdce_cdata.cdce_rx_chain[i].cdce_mbuf = NULL;
 		}
 		if (sc->cdce_cdata.cdce_rx_chain[i].cdce_xfer != NULL) {
-			usbd_free_xfer(sc->cdce_cdata.cdce_rx_chain[i].cdce_xfer);
+			usbd_free_xfer
+			    (sc->cdce_cdata.cdce_rx_chain[i].cdce_xfer);
 			sc->cdce_cdata.cdce_rx_chain[i].cdce_xfer = NULL;
 		}
 	}
@@ -440,7 +446,8 @@ cdce_stop(struct cdce_softc *sc)
 			sc->cdce_cdata.cdce_tx_chain[i].cdce_mbuf = NULL;
 		}
 		if (sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer != NULL) {
-			usbd_free_xfer(sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer);
+			usbd_free_xfer(
+				sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer);
 			sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer = NULL;
 		}
 	}
@@ -629,7 +636,8 @@ cdce_rx_list_init(struct cdce_softc *sc)
 			c->cdce_xfer = usbd_alloc_xfer(sc->cdce_udev);
 			if (c->cdce_xfer == NULL)
 				return (ENOBUFS);
-			c->cdce_buf = usbd_alloc_buffer(c->cdce_xfer, CDCE_BUFSZ);
+			c->cdce_buf = usbd_alloc_buffer(c->cdce_xfer,
+			    CDCE_BUFSZ);
 			if (c->cdce_buf == NULL)
 				return (ENOBUFS);
 		}

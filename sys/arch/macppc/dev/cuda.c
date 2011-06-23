@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.15 2009/12/12 14:44:09 tsutsui Exp $ */
+/*	$NetBSD: cuda.c,v 1.15.10.1 2011/06/23 14:19:19 cherry Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.15 2009/12/12 14:44:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.15.10.1 2011/06/23 14:19:19 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,22 +169,22 @@ cuda_match(device_t parent, struct cfdata *cf, void *aux)
 }
 
 static void
-cuda_attach(device_t parent, device_t dev, void *aux)
+cuda_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
-	struct cuda_softc *sc = device_private(dev);
+	struct cuda_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 	static struct cuda_attach_args caa;
 	int irq = ca->ca_intr[0];
 	int node, i, child;
 	char name[32];
 
-	sc->sc_dev = dev;
+	sc->sc_dev = self;
 	node = of_getnode_byname(OF_parent(ca->ca_node), "extint-gpio1");
 	if (node)
 		OF_getprop(node, "interrupts", &irq, 4);
 
-	printf(" irq %d", irq);
+	aprint_normal(" irq %d", irq);
 
 	sc->sc_node = ca->ca_node;
 	sc->sc_memt = ca->ca_tag;
@@ -200,7 +200,7 @@ cuda_attach(device_t parent, device_t dev, void *aux)
 	if (bus_space_map(sc->sc_memt, ca->ca_reg[0] + ca->ca_baseaddr,
 	    ca->ca_reg[1], 0, &sc->sc_memh) != 0) {
 
-		printf(": unable to map registers\n");
+		aprint_normal(": unable to map registers\n");
 		return;
 	}
 	sc->sc_ih = intr_establish(irq, IST_EDGE, IPL_TTY, cuda_intr, sc);
@@ -214,7 +214,7 @@ cuda_attach(device_t parent, device_t dev, void *aux)
 	cuda_init(sc);
 
 	/* now attach children */
-	config_interrupts(dev, cuda_final);
+	config_interrupts(self, cuda_final);
 	cuda_set_handler(sc, CUDA_ERROR, cuda_error_handler, sc);
 	cuda_set_handler(sc, CUDA_PSEUDO, cuda_todr_handler, sc);
 
@@ -231,7 +231,7 @@ cuda_attach(device_t parent, device_t dev, void *aux)
 			sc->sc_adbops.poll = cuda_adb_poll;
 			sc->sc_adbops.autopoll = cuda_autopoll;
 			sc->sc_adbops.set_handler = cuda_adb_set_handler;
-			config_found_ia(dev, "adb_bus", &sc->sc_adbops,
+			config_found_ia(self, "adb_bus", &sc->sc_adbops,
 			    nadb_print);
 		} else if (strncmp(name, "rtc", 4) == 0) {
 
@@ -248,7 +248,7 @@ cuda_attach(device_t parent, device_t dev, void *aux)
 	caa.send = cuda_send;
 	caa.poll = cuda_poll;
 #if notyet
-	config_found(dev, &caa, cuda_print);
+	config_found(self, &caa, cuda_print);
 #endif
 	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 	iba.iba_tag = &sc->sc_i2c;
@@ -261,7 +261,7 @@ cuda_attach(device_t parent, device_t dev, void *aux)
 	sc->sc_i2c.ic_read_byte = NULL;
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = cuda_i2c_exec;
-	config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	config_found_ia(self, "i2cbus", &iba, iicbus_print);
 
 	if (cuda0 == NULL)
 		cuda0 = &caa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.34 2010/06/24 13:03:10 hannken Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.34.6.1 2011/06/23 14:20:15 cherry Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.34 2010/06/24 13:03:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.34.6.1 2011/06/23 14:20:15 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -756,10 +756,10 @@ ptyfs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	if (vp->v_usecount > 1)
 		PTYFS_ITIMES(ptyfs, NULL, NULL, NULL);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:

@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $	*/
+/*	$NetBSD: gpio_ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gpio_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio_ebus.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,16 +49,16 @@ __KERNEL_RCSID(0, "$NetBSD: gpio_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
 #define GPIO_NPINS 32
 
 struct epio_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct _Pio *sc_dp;
 	struct gpio_chipset_tag	sc_gpio_gc;
-	gpio_pin_t		sc_gpio_pins[GPIO_NPINS];
+	gpio_pin_t sc_gpio_pins[GPIO_NPINS];
 };
 
-static int	epio_ebus_match (struct device *, struct cfdata *, void *);
-static void	epio_ebus_attach (struct device *, struct device *, void *);
+static int	epio_ebus_match(device_t, cfdata_t, void *);
+static void	epio_ebus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(epio, sizeof (struct epio_softc),
+CFATTACH_DECL_NEW(epio, sizeof (struct epio_softc),
     epio_ebus_match, epio_ebus_attach, NULL, NULL);
 
 static int	epio_pin_read(void *, int);
@@ -66,47 +66,50 @@ static void	epio_pin_write(void *, int, int);
 static void	epio_pin_ctl(void *, int, int);
 
 static int
-epio_ebus_match(struct device *parent, struct cfdata *match, void *aux)
+epio_ebus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ia = aux;
-    struct _Pio *f = (struct _Pio *)ia->ia_vaddr;
+	struct _Pio *f = (struct _Pio *)ia->ia_vaddr;
 
 	if (strcmp("gpio", ia->ia_name) != 0)
-		return (0);
-    if ((f == NULL) ||
-        (f->Tag != PMTTAG_GPIO))
-		return (0);
+		return 0;
+	if ((f == NULL) ||
+		(f->Tag != PMTTAG_GPIO))
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void
-epio_ebus_attach(struct device *parent, struct device *self, void *aux)
+epio_ebus_attach(device_t parent, device_t self, void *aux)
 {
+	struct epio_softc *sc = device_private(self);
 	struct ebus_attach_args *ia =aux;
-	struct epio_softc *sc = (struct epio_softc *)self;
 	struct gpiobus_attach_args gba;
-    int i;
+	int i;
 	uint32_t data;
 
-	sc->sc_dp = (struct _Pio*)ia->ia_vaddr;
+	sc->sc_dev = self;
+	sc->sc_dp = (struct _Pio *)ia->ia_vaddr;
 	data = sc->sc_dp->PinData;
 
 #if DEBUG
-    printf(" virt=%p data=%zx", (void*)sc->sc_dp, data);
+	printf(" virt=%p data=%zx", (void*)sc->sc_dp, data);
 #endif
 	printf(": GPIO controller\n");
 
 	/* BUGBUG Initialize pins properly */
 	for (i = 0 ; i < GPIO_NPINS ; i++) {
 		sc->sc_gpio_pins[i].pin_num = i;
-		sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INOUT
-						| GPIO_PIN_OPENDRAIN
-						| GPIO_PIN_TRISTATE;
+		sc->sc_gpio_pins[i].pin_caps =
+		    GPIO_PIN_INOUT |
+		    GPIO_PIN_OPENDRAIN |
+		    GPIO_PIN_TRISTATE;
 
 		/* current defaults */
 		sc->sc_gpio_pins[i].pin_flags = GPIO_PIN_INOUT;
-		sc->sc_gpio_pins[i].pin_state = (data & (1 << i)) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
+		sc->sc_gpio_pins[i].pin_state =
+		    (data & (1 << i)) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
 		sc->sc_gpio_pins[i].pin_mapped = 0;
 	}
 
@@ -121,7 +124,7 @@ epio_ebus_attach(struct device *parent, struct device *self, void *aux)
 	gba.gba_npins = GPIO_NPINS;
 
 	/* Attach GPIO framework */
-	(void) config_found(&sc->sc_dev, &gba, gpiobus_print);
+	(void)config_found(self, &gba, gpiobus_print);
 }
 
 static int
@@ -143,11 +146,11 @@ epio_pin_write(void *arg, int pin, int value)
 	int p;
 
 	p = pin % GPIO_NPINS;
-    data = 1 << p;
-    if (value)
-        sc->sc_dp->PinData = data;
-    else
-        sc->sc_dp->ClearData = data;
+	data = 1 << p;
+	if (value)
+		sc->sc_dp->PinData = data;
+	else
+		sc->sc_dp->ClearData = data;
 }
 
 static void
@@ -158,17 +161,17 @@ epio_pin_ctl(void *arg, int pin, int flags)
 	int p;
 
 	p = pin % GPIO_NPINS;
-    data = (1 << p);
+	data = (1 << p);
 
 	if (flags & GPIO_PIN_INOUT) {
-        sc->sc_dp->Direction = data;
+		sc->sc_dp->Direction = data;
 	}
 
 	if (flags & GPIO_PIN_TRISTATE) {
-        sc->sc_dp->OutDisable = data;
+		sc->sc_dp->OutDisable = data;
 	}
 
 	if (flags & GPIO_PIN_OPENDRAIN) {
-        sc->sc_dp->Enable = data;
+		sc->sc_dp->Enable = data;
 	}
 }

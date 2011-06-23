@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.13 2010/03/18 13:47:05 kiyohara Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.13.6.1 2011/06/23 14:19:29 cherry Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,24 +33,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.13 2010/03/18 13:47:05 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.13.6.1 2011/06/23 14:19:29 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
 
-#include <machine/cpu.h>
-
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
 
 void
-ibm4xx_device_register(struct device *dev, void *aux)
+ibm4xx_device_register(device_t dev, void *aux)
 {
-	struct device *parent = device_parent(dev);
+	device_t parent = device_parent(dev);
 
 	if (device_is_a(dev, "emac") && device_is_a(parent, "opb")) {
 		/* Set the mac-address of the on-chip Ethernet. */
@@ -73,7 +73,7 @@ ibm4xx_device_register(struct device *dev, void *aux)
 			if (prop_dictionary_set(dict, "mac-address", pd) ==
 			    false)
 				printf("WARNING: unable to set mac-address "
-				    "property for %s\n", dev->dv_xname);
+				    "property for %s\n", device_xname(dev));
 
 			snprintf(prop_name, sizeof(prop_name),
 			    "emac%d-mii-phy", oaa->opb_instance);

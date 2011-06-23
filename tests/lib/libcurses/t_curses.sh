@@ -3,12 +3,12 @@ h_run()
 {
 	file="$(atf_get_srcdir)/tests/${1}"
 
-	HOME=$(atf_get_srcdir)
-	CHECK_PATH=$(atf_get_srcdir)/check_files
-	INCLUDE_PATH=$(atf_get_srcdir)/tests
-	export CHECK_PATH INCLUDE_PATH HOME
-
-	$(atf_get_srcdir)/director -s $(atf_get_srcdir)/slave $file || atf_fail "test ${file} failed"
+	$(atf_get_srcdir)/director \
+	    -T $(atf_get_srcdir) \
+	    -t atf \
+	    -I $(atf_get_srcdir)/tests \
+	    -C $(atf_get_srcdir)/check_files \
+	    -s $(atf_get_srcdir)/slave $file || atf_fail "test ${file} failed"
 }
 
 atf_test_case startup

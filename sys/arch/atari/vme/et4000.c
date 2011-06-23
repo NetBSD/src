@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.23 2010/12/12 09:56:16 tsutsui Exp $	*/
+/*	$NetBSD: et4000.c,v 1.23.6.1 2011/06/23 14:19:03 cherry Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.23 2010/12/12 09:56:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.23.6.1 2011/06/23 14:19:03 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.23 2010/12/12 09:56:16 tsutsui Exp $");
 #define VGA_MAPPABLE	(128 * 1024)		/* 0x20000 */
 #define VGA_BASE	0xa0000
 
-static int	et4k_vme_match(struct device *, struct cfdata *, void *);
-static void	et4k_vme_attach(struct device *, struct device *, void *);
+static int	et4k_vme_match(device_t, cfdata_t, void *);
+static void	et4k_vme_attach(device_t, device_t, void *);
 static int	et4k_probe_addresses(struct vme_attach_args *);
 static void	et4k_start(bus_space_tag_t *, bus_space_handle_t *, int *,
 		    u_char *);
@@ -113,7 +113,7 @@ struct grfabs_et4k_priv {
 } et4k_priv;
 
 struct et4k_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_ioh;
@@ -127,7 +127,7 @@ struct et4k_softc {
 
 #define ET_SC_FLAGS_INUSE 1
 
-CFATTACH_DECL(et4k, sizeof(struct et4k_softc),
+CFATTACH_DECL_NEW(et4k, sizeof(struct et4k_softc),
     et4k_vme_match, et4k_vme_attach, NULL, NULL);
 
 dev_type_open(et4kopen);
@@ -147,9 +147,9 @@ const struct cdevsw et4k_cdevsw = {
  * match Spektrum cards too (untested).
  */
 int 
-et4k_vme_match(struct device *pdp, struct cfdata *cfp, void *auxp)
+et4k_vme_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct vme_attach_args *va = auxp;
+	struct vme_attach_args *va = aux;
 
 	return et4k_probe_addresses(va);
 }
@@ -329,12 +329,14 @@ et4k_detect(bus_space_tag_t *iot, bus_space_tag_t *memt, bus_space_handle_t *ioh
 }
 
 static void
-et4k_vme_attach(struct device *parent, struct device *self, void *aux)
+et4k_vme_attach(device_t parent, device_t self, void *aux)
 {
-	struct et4k_softc *sc = (struct et4k_softc *)self;
+	struct et4k_softc *sc = device_private(self);
 	struct vme_attach_args *va = aux;
 	bus_space_handle_t ioh;
 	bus_space_handle_t memh;
+
+	sc->sc_dev = self;
 
 	printf("\n");
 

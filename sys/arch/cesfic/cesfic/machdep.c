@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2011/05/16 13:22:52 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59.2.1 2011/06/23 14:19:04 cherry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2011/05/16 13:22:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59.2.1 2011/06/23 14:19:04 cherry Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2011/05/16 13:22:52 tsutsui Exp $")
 #include <sys/sysctl.h>
 #include <sys/device.h>
 #include <dev/cons.h>
+#include <dev/mm.h>
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
 #include <cesfic/dev/zsvar.h>
@@ -629,6 +630,13 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #endif /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
 
 	return ENOEXEC;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
 }
 
 #ifdef MODULAR

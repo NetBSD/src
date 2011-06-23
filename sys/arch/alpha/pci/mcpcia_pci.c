@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_pci.c,v 1.9 2010/12/15 01:27:19 matt Exp $ */
+/* $NetBSD: mcpcia_pci.c,v 1.9.6.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.9 2010/12/15 01:27:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.9.6.1 2011/06/23 14:18:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.9 2010/12/15 01:27:19 matt Exp $");
 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-static void mcpcia_attach_hook(struct device *, struct device *,
+static void mcpcia_attach_hook(device_t, device_t,
 	struct pcibus_attach_args *);
 static int
 mcpcia_bus_maxdevs(void *, int);
@@ -72,7 +72,7 @@ mcpcia_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 static void
-mcpcia_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
+mcpcia_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 }
 

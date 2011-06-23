@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.13 2001/07/27 00:25:19 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.13.160.1 2011/06/23 14:18:52 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -65,7 +65,7 @@ struct platform {
 	 *	mcheck_handler	-	Platform Specific Machine Check Handler
 	 */
 	void	(*cons_init)(void);
-	void	(*device_register)(struct device *, void *);
+	void	(*device_register)(device_t, void *);
 	void	(*clockintr)(struct clockframe *);
 	void	(*mcheck_handler)(unsigned long, struct trapframe *,
 		    unsigned long, unsigned long);

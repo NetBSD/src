@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.46 2011/03/06 17:08:16 bouyer Exp $	*/
+/*	$NetBSD: pass2.c,v 1.46.2.1 2011/06/23 14:18:42 cherry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.46 2011/03/06 17:08:16 bouyer Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.46.2.1 2011/06/23 14:18:42 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ pass2(void)
 		pfatal("ROOT INODE UNALLOCATED");
 		if (reply("ALLOCATE") == 0) {
 			markclean = 0;
-			ckfini();
+			ckfini(1);
 			exit(FSCK_EXIT_CHECK_FAILED);
 		}
 		if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
@@ -96,7 +96,7 @@ pass2(void)
 		}
 		markclean = 0;
 		if (reply("CONTINUE") == 0) {
-			ckfini();
+			ckfini(1);
 			exit(FSCK_EXIT_CHECK_FAILED);
 		}
 		break;
@@ -112,7 +112,7 @@ pass2(void)
 		}
 		if (reply("FIX") == 0) {
 			markclean = 0;
-			ckfini();
+			ckfini(1);
 			exit(FSCK_EXIT_CHECK_FAILED);
 		}
 		dp = ginode(ROOTINO);

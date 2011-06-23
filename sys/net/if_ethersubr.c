@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.187 2011/05/24 17:16:43 matt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.187.2.1 2011/06/23 14:20:25 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.187 2011/05/24 17:16:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.187.2.1 2011/06/23 14:20:25 cherry Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -453,7 +453,8 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 #ifdef MPLS
 	if (rt0 != NULL && rt_gettag(rt0) != NULL &&
-	    rt_gettag(rt0)->sa_family == AF_MPLS) {
+	    rt_gettag(rt0)->sa_family == AF_MPLS &&
+	    (m->m_flags & (M_MCAST | M_BCAST)) == 0) {
 		union mpls_shim msh;
 		msh.s_addr = MPLS_GETSADDR(rt0);
 		if (msh.shim.label != MPLS_LABEL_IMPLNULL)

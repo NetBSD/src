@@ -118,6 +118,14 @@ int RAND_load_file(const char *file, long bytes)
 	if (file == NULL) return(0);
 
 #ifndef OPENSSL_NO_POSIX_IO
+#ifdef PURIFY
+	/* struct stat can have padding and unused fields that may not be
+	 * initialized in the call to stat(). We need to clear the entire
+	 * structure before calling RAND_add() to avoid complaints from
+	 * applications such as Valgrind.
+	 */
+	memset(&sb, 0, sizeof(sb));
+#endif
 	if (stat(file,&sb) < 0) return(0);
 	RAND_add(&sb,sizeof(sb),0.0);
 #endif
@@ -136,7 +144,9 @@ int RAND_load_file(const char *file, long bytes)
 	   * I/O because we will waste system entropy. 
 	   */
 	  bytes = (bytes == -1) ? 2048 : bytes; /* ok, is 2048 enough? */
+#ifndef OPENSSL_NO_SETVBUF_IONBF
 	  setvbuf(in, NULL, _IONBF, 0); /* don't do buffered reads */
+#endif /* ndef OPENSSL_NO_SETVBUF_IONBF */
 	}
 #endif
 	for (;;)
@@ -261,7 +271,6 @@ err:
 const char *RAND_file_name(char *buf, size_t size)
 	{
 	char *s=NULL;
-	int ok = 0;
 #if defined(__OpenBSD__) || defined(__NetBSD__)
 	struct stat sb;
 #endif
@@ -290,25 +299,21 @@ const char *RAND_file_name(char *buf, size_t size)
 			BUF_strlcat(buf,"/",size);
 #endif
 			BUF_strlcat(buf,RFILE,size);
-			ok = 1;
 			}
 		else
 		  	buf[0] = '\0'; /* no file name */
 		}
 
-#if defined(__OpenBSD__) || defined(__NetBSD__)
-#define FALLBACK "/dev/arandom"
-#else
+#if defined(__NetBSD__)
 #define FALLBACK "/dev/urandom"
-#endif
 	/* given that all random loads just fail if the file can't be 
 	 * seen on a stat, we stat the file we're returning, if it
-	 * fails, use /dev/arandom instead. this allows the user to 
+	 * fails, use /dev/urandom instead. this allows the user to 
 	 * use their own source for good random data, but defaults
 	 * to something hopefully decent if that isn't available. 
 	 */
 
-	if (!ok)
+	if (!buf[0])
 		if (BUF_strlcpy(buf,FALLBACK,size) >= size) {
 			return(NULL);
 		}	
@@ -316,6 +321,6 @@ const char *RAND_file_name(char *buf, size_t size)
 		if (BUF_strlcpy(buf,FALLBACK,size) >= size) {
 			return(NULL);
 		}	
-
+#endif
 	return(buf);
 	}

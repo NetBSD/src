@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.43 2008/11/22 02:12:45 uwe Exp $
+#	$NetBSD: files.sh3,v 1.43.14.1 2011/06/23 14:19:39 cherry Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
@@ -35,7 +35,6 @@ file	arch/sh3/sh3/kobj_machdep.c		modular
 file	arch/sh3/sh3/lock_stubs.S
 file	arch/sh3/sh3/locore_c.c
 file	arch/sh3/sh3/locore_subr.S
-file	arch/sh3/sh3/mem.c
 file	arch/sh3/sh3/mmu.c
 file	arch/sh3/sh3/mmu_sh3.c			sh3
 file	arch/sh3/sh3/mmu_sh4.c			sh4

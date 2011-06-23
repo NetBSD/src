@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.17 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: abtn.c,v 1.17.10.1 2011/06/23 14:19:19 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.17 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.17.10.1 2011/06/23 14:19:19 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,15 +61,15 @@ struct abtn_softc {
 	int volume;		/* speaker volume (not yet) */
 };
 
-static int abtn_match(struct device *, struct cfdata *, void *);
-static void abtn_attach(struct device *, struct device *, void *);
+static int abtn_match(device_t, cfdata_t, void *);
+static void abtn_attach(device_t, device_t, void *);
 static void abtn_adbcomplete(uint8_t *, uint8_t *, int);
 
 CFATTACH_DECL(abtn, sizeof(struct abtn_softc),
     abtn_match, abtn_attach, NULL, NULL);
 
 int
-abtn_match(struct device *parent, struct cfdata *cf, void *aux)
+abtn_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct adb_attach_args *aa = aux;
 
@@ -81,9 +81,9 @@ abtn_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-abtn_attach(struct device *parent, struct device *self, void *aux)
+abtn_attach(device_t parent, device_t self, void *aux)
 {
-	struct abtn_softc *sc = (struct abtn_softc *)self;
+	struct abtn_softc *sc = device_private(self);
 	struct adb_attach_args *aa = aux;
 	ADBSetInfoBlock adbinfo;
 	int bright;

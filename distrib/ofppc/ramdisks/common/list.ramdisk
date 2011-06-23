@@ -1,6 +1,6 @@
-#	$NetBSD: list.ramdisk,v 1.8 2010/02/11 09:06:49 roy Exp $
+#	$NetBSD: list.ramdisk,v 1.8.4.1 2011/06/23 14:18:19 cherry Exp $
 
-SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin libexec
+SRCDIRS	bin sbin usr.bin usr.sbin libexec
 
 # init invokes the shell as -sh
 ARGVLN	sh -sh
@@ -12,7 +12,7 @@ LIBS	libhack.o -lbz2 -lutil -ll -lm
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${DISTRIBDIR}/common/protocols	etc/protocols
+COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
 
 # we need the boot block in /usr/mdec + the MBR copy

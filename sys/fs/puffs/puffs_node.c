@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.17 2010/07/25 10:03:59 hannken Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.17.6.1 2011/06/23 14:20:16 cherry Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.17 2010/07/25 10:03:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.17.6.1 2011/06/23 14:20:16 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -90,9 +90,10 @@ puffs_getvnode(struct mount *mp, puffs_cookie_t ck, enum vtype type,
 		goto bad;
 	}
 
-	error = getnewvnode(VT_PUFFS, mp, puffs_vnodeop_p, &vp);
-	if (error)
+	error = getnewvnode(VT_PUFFS, mp, puffs_vnodeop_p, NULL, &vp);
+	if (error) {
 		goto bad;
+	}
 	vp->v_type = type;
 
 	/*
@@ -313,7 +314,7 @@ puffs_makeroot(struct puffs_mount *pmp)
 	mutex_enter(&pmp->pmp_lock);
 	vp = pmp->pmp_root;
 	if (vp) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		mutex_exit(&pmp->pmp_lock);
 		if (vget(vp, 0) == 0)
 			return 0;
@@ -394,7 +395,7 @@ puffs_cookie2vnode(struct puffs_mount *pmp, puffs_cookie_t ck, int lock,
 		return PUFFS_NOSUCHCOOKIE;
 	}
 	vp = pnode->pn_vp;
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	mutex_exit(&pmp->pmp_lock);
 
 	vgetflags = 0;

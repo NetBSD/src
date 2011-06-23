@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.c,v 1.13 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: hd64465.c,v 1.13.32.1 2011/06/23 14:19:13 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465.c,v 1.13 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465.c,v 1.13.32.1 2011/06/23 14:19:13 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,21 +62,19 @@ STATIC const struct hd64465_module {
 	[HD64465_MODULE_OHCI]		= { "hd64465ohci" },
 	[HD64465_MODULE_ADC]		= { "hd64465adc" }
 };
-#define HD64465_NMODULE							\
-	(sizeof hd64465_modules / sizeof(struct hd64465_module))
 
-STATIC int hd64465_match(struct device *, struct cfdata *, void *);
-STATIC void hd64465_attach(struct device *, struct device *, void *);
+STATIC int hd64465_match(device_t, cfdata_t, void *);
+STATIC void hd64465_attach(device_t, device_t, void *);
 STATIC int hd64465_print(void *, const char *);
 #ifdef DEBUG
 STATIC void hd64465_info(void);
 #endif
 
-CFATTACH_DECL(hd64465if, sizeof(struct device),
+CFATTACH_DECL_NEW(hd64465if, 0,
     hd64465_match, hd64465_attach, NULL, NULL);
 
 int
-hd64465_match(struct device *parent, struct cfdata *cf, void *aux)
+hd64465_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (strcmp("hd64465if", cf->cf_name))
@@ -91,12 +89,12 @@ hd64465_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-hd64465_attach(struct device *parent, struct device *self, void *aux)
+hd64465_attach(device_t parent, device_t self, void *aux)
 {
 	const struct hd64465_module *module;
 	struct hd64465_attach_args ha;
 	uint16_t r;
-	int i;
+	size_t i;
 
 	printf("\n");
 #ifdef DEBUG
@@ -116,7 +114,8 @@ hd64465_attach(struct device *parent, struct device *self, void *aux)
 	hd64465_reg_write_2(HD64465_NIRR, 0x0000);
 
 	/* Attach all sub modules */
-	for (i = 0, module = hd64465_modules; i < HD64465_NMODULE;
+	for (i = 0, module = hd64465_modules;
+	    i < __arraycount(hd64465_modules);
 	    i++, module++) {
 		if (module->name == 0)
 			continue;

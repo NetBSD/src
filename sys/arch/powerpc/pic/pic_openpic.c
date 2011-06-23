@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.5 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.5.32.1 2011/06/23 14:19:33 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.5 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.5.32.1 2011/06/23 14:19:33 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.5 2008/04/29 06:53:02 martin Exp $
 #include <machine/pio.h>
 #include <powerpc/openpic.h>
 
-#include <arch/powerpc/pic/picvar.h>
+#include <powerpc/pic/picvar.h>
 
 #include "opt_interrupt.h"
 

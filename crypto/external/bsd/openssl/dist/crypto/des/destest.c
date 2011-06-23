@@ -386,7 +386,7 @@ int main(int argc, char *argv[])
 	DES_ede3_cbcm_encrypt(cbc_out,cbc_in,i,&ks,&ks2,&ks3,&iv3,&iv2,DES_DECRYPT);
 	if (memcmp(cbc_in,cbc_data,strlen((char *)cbc_data)+1) != 0)
 		{
-		int n;
+		unsigned int n;
 
 		printf("DES_ede3_cbcm_encrypt decrypt error\n");
 		for(n=0 ; n < i ; ++n)
@@ -535,7 +535,7 @@ int main(int argc, char *argv[])
 	if (memcmp(cbc_out,cbc3_ok,
 		(unsigned int)(strlen((char *)cbc_data)+1+7)/8*8) != 0)
 		{
-		int n;
+		unsigned int n;
 
 		printf("DES_ede3_cbc_encrypt encrypt error\n");
 		for(n=0 ; n < i ; ++n)
@@ -551,7 +551,7 @@ int main(int argc, char *argv[])
 	DES_ede3_cbc_encrypt(cbc_out,cbc_in,i,&ks,&ks2,&ks3,&iv3,DES_DECRYPT);
 	if (memcmp(cbc_in,cbc_data,strlen((char *)cbc_data)+1) != 0)
 		{
-		int n;
+		unsigned int n;
 
 		printf("DES_ede3_cbc_encrypt decrypt error\n");
 		for(n=0 ; n < i ; ++n)
@@ -828,7 +828,7 @@ static char *pt(unsigned char *p)
 	static int bnum=0;
 	char *ret;
 	int i;
-	static char *f="0123456789ABCDEF";
+	static const char *f="0123456789ABCDEF";
 
 	ret= &(bufs[bnum++][0]);
 	bnum%=10;

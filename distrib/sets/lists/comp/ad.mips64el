@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.33 2011/05/30 02:10:25 christos Exp $
+# $NetBSD: ad.mips64el,v 1.33.2.1 2011/06/23 14:18:20 cherry Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -1206,7 +1206,7 @@
 ./usr/libdata/debug/usr/lib/64/libcom_err.so.6.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/64/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/64/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/64/libcrypto.so.6.1.debug	comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/64/libcrypto.so.6.2.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/64/libcurses.so.7.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
@@ -1359,10 +1359,10 @@
 #./usr/libdata/debug/usr/lib/64/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libskey.so.2.0.debug	comp-sys-debug	skey,debug,compat
-./usr/libdata/debug/usr/lib/64/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/64/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/64/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/64/libssh.so.16.0.debug	comp-secsh-debug	crypto,debug,compat
-./usr/libdata/debug/usr/lib/64/libssl.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/64/libssl.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat
 ./usr/libdata/debug/usr/lib/64/libterminfo.so.1.0.debug	comp-sys-debug	debug,compat
@@ -1413,7 +1413,7 @@
 ./usr/libdata/debug/usr/lib/o32/libcom_err.so.6.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/o32/libcom_err.so.7.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/o32/libcrypto.so.6.1.debug	comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/o32/libcrypto.so.6.2.debug	comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libcurses.so.7.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libdes.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
@@ -1566,10 +1566,10 @@
 #./usr/libdata/debug/usr/lib/o32/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libsaslc.so.0.0.debug	comp-sys-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libskey.so.2.0.debug	comp-sys-debug	skey,debug,compat
-./usr/libdata/debug/usr/lib/o32/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug,compat
+./usr/libdata/debug/usr/lib/o32/libsl.so.5.0.debug		comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libss.so.6.0.debug		comp-krb5-debug	obsolete
 ./usr/libdata/debug/usr/lib/o32/libssh.so.16.0.debug	comp-secsh-debug	crypto,debug,compat
-./usr/libdata/debug/usr/lib/o32/libssl.so.8.1.debug		comp-crypto-debug	crypto,debug,compat
+./usr/libdata/debug/usr/lib/o32/libssl.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libterminfo.so.1.0.debug	comp-sys-debug	debug,compat

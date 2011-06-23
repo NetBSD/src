@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.40 2011/03/08 04:47:10 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.40.2.1 2011/06/23 14:20:12 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.40 2011/03/08 04:47:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.40.2.1 2011/06/23 14:20:12 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,17 +84,6 @@ extern const u_char rasops_cmap[768];
 
 static int genfb_cnattach_called = 0;
 static int genfb_enabled = 1;
-
-struct wsdisplay_accessops genfb_accessops = {
-	genfb_ioctl,
-	genfb_mmap,
-	NULL,	/* alloc_screen */
-	NULL,	/* free_screen */
-	NULL,	/* show_screen */
-	NULL, 	/* load_font */
-	NULL,	/* pollc */
-	NULL	/* scroll */
-};
 
 static struct genfb_softc *genfb_softc = NULL;
 
@@ -217,14 +206,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	    == false)
 		sc->sc_want_clear = true;
 
-	/* do not attach when we're not console */
-	if (!console) {
-		aprint_normal_dev(sc->sc_dev, "no console, unable to continue\n");
-		return -1;
-	}
-
-	aprint_verbose_dev(sc->sc_dev, "framebuffer at %p, size %dx%d, depth %d, "
-	    "stride %d\n",
+	aprint_verbose_dev(sc->sc_dev, "framebuffer at %p, size %dx%d,"
+	    "depth %d, stride %d\n",
 	    sc->sc_fboffset ? (void *)(intptr_t)sc->sc_fboffset : sc->sc_fbaddr,
 	    sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
 
@@ -243,6 +226,9 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	if (sc->sc_modecb != NULL)
 		sc->sc_modecb->gmc_setmode(sc, sc->sc_mode);
 
+	sc->sc_accessops.ioctl = genfb_ioctl;
+	sc->sc_accessops.mmap = genfb_mmap;
+
 #ifdef GENFB_SHADOWFB
 	sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
 	if (sc->sc_want_clear == false && sc->sc_shadowfb != NULL)
@@ -250,7 +236,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 #endif
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
-	    &genfb_accessops);
+	    &sc->sc_accessops);
 	sc->vd.init_screen = genfb_init_screen;
 
 	/* Do not print anything between this point and the screen
@@ -275,8 +261,10 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-	wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, crow,
-	    defattr);
+
+	if (console)
+		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, crow,
+		    defattr);
 
 	/* Clear the whole screen to bring it to a known state. */
 	if (sc->sc_want_clear)
@@ -331,7 +319,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 	aa.console = console;
 	aa.scrdata = &sc->sc_screenlist;
-	aa.accessops = &genfb_accessops;
+	aa.accessops = &sc->sc_accessops;
 	aa.accesscookie = &sc->vd;
 
 #ifdef GENFB_DISABLE_TEXT

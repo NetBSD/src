@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.h,v 1.1 2010/12/08 07:20:15 kefren Exp $ */
+/* $NetBSD: socketops.h,v 1.1.4.1 2011/06/23 14:20:48 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ int	create_hello_socket(void);
 int	create_listening_socket(void);
 void	send_hello(void);
 int	get_message_id(void);
-void	the_big_loop(void);
+int	the_big_loop(void);
 void	new_peer_connection(void);
 void	send_initialize(struct ldp_peer *);
 void	keep_alive(struct ldp_peer *);

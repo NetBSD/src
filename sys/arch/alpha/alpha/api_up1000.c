@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.26 2009/03/18 07:42:36 cegger Exp $ */
+/* $NetBSD: api_up1000.c,v 1.26.10.1 2011/06/23 14:18:49 cherry Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.26 2009/03/18 07:42:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.26.10.1 2011/06/23 14:18:49 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ static int comcnrate = CONSPEED;
 
 void api_up1000_init(void);
 static void api_up1000_cons_init(void);
-static void api_up1000_device_register(struct device *, void *);
+static void api_up1000_device_register(device_t, void *);
 
 #ifdef KGDB
 #include <machine/db_machdep.h>
@@ -170,12 +170,12 @@ api_up1000_cons_init(void)
 }
 
 static void
-api_up1000_device_register(struct device *dev, void *aux)
+api_up1000_device_register(device_t dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
-	static struct device *pcidev, *ctrlrdev;
+	static device_t pcidev, ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = device_parent(dev);
+	device_t parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -199,7 +199,7 @@ api_up1000_device_register(struct device *dev, void *aux)
 				return;
 	
 			pcidev = dev;
-			DPRINTF(("\npcidev = %s\n", dev->dv_xname));
+			DPRINTF(("\npcidev = %s\n", device_xname(dev)));
 			return;
 		}
 	}
@@ -219,11 +219,11 @@ api_up1000_device_register(struct device *dev, void *aux)
 			if (netboot) {
 				booted_device = dev;
 				DPRINTF(("\nbooted_device = %s\n",
-				    dev->dv_xname));
+				    device_xname(dev)));
 				found = 1;
 			} else {
 				ctrlrdev = dev;
-				DPRINTF(("\nctrlrdev = %s\n", dev->dv_xname));
+				DPRINTF(("\nctrlrdev = %s\n", device_xname(dev)));
 			}
 			return;
 		}
@@ -250,7 +250,7 @@ api_up1000_device_register(struct device *dev, void *aux)
 
 		/* we've found it! */
 		booted_device = dev;
-		DPRINTF(("\nbooted_device = %s\n", dev->dv_xname));
+		DPRINTF(("\nbooted_device = %s\n", device_xname(dev)));
 		found = 1;
 	}
 
@@ -275,7 +275,7 @@ api_up1000_device_register(struct device *dev, void *aux)
 
 		/* we've found it! */
 		booted_device = dev;
-		DPRINTF(("booted_device = %s\n", dev->dv_xname));
+		DPRINTF(("booted_device = %s\n", device_xname(dev)));
 		found = 1;
 	}
 }

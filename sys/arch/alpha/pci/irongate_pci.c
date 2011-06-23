@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_pci.c,v 1.7 2010/12/15 01:27:19 matt Exp $ */
+/* $NetBSD: irongate_pci.c,v 1.7.6.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.7 2010/12/15 01:27:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.7.6.1 2011/06/23 14:18:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.7 2010/12/15 01:27:19 matt Exp $"
 #include <alpha/pci/irongatereg.h>
 #include <alpha/pci/irongatevar.h>
 
-void		irongate_attach_hook(struct device *, struct device *,
+void		irongate_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		irongate_bus_maxdevs(void *, int);
 pcitag_t	irongate_make_tag(void *, int, int, int);
@@ -80,7 +80,7 @@ irongate_pci_init(pci_chipset_tag_t pc, void *v)
 }
 
 void
-irongate_attach_hook(struct device *parent, struct device *self,
+irongate_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 }

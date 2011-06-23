@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7 2011/04/04 08:30:46 mbalmer Exp $	*/
+/*	$NetBSD: md.c,v 1.7.2.1 2011/06/23 14:18:24 cherry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -111,6 +111,38 @@ md_post_disklabel(void)
 int
 md_post_newfs(void)
 {
+	struct mbr_sector pbr;
+	char adevname[STRSIZE];
+	ssize_t sz;
+	int fd = -1;
+
+	snprintf(adevname, sizeof(adevname), "/dev/r%sa", diskdev);
+	fd = open(adevname, O_RDWR);
+	if (fd < 0)
+		goto out;
+
+	/* Read partition boot record */
+	sz = pread(fd, &pbr, sizeof(pbr), 0);
+	if (sz != sizeof(pbr))
+		goto out;
+
+	/* Check magic number */
+	if (pbr.mbr_magic != le16toh(MBR_MAGIC))
+		goto out;
+
+#define	OSNAME	"NetBSD60"
+	/* Update oemname */
+	memcpy(&pbr.mbr_oemname, OSNAME, sizeof(OSNAME) - 1);
+
+	/* Clear BPB */
+	memset(&pbr.mbr_bpb, 0, sizeof(pbr.mbr_bpb));
+
+	/* write-backed new patition boot record */
+	(void)pwrite(fd, &pbr, sizeof(pbr), 0);
+
+out:
+	if (fd >= 0)
+		close(fd);
 	return 0;
 }
 

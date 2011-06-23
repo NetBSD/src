@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2011/02/08 06:28:56 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.2.1 2011/06/23 14:19:31 cherry Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,35 +50,48 @@
 
 /* Interrupt sharing types. */
 #define	IST_NONE	(NIPL+0) /* none */
-#define	IST_EDGE	(NIPL+1)	/* edge-triggered */
+#define	IST_EDGE	(NIPL+1) /* edge-triggered */
 #define	IST_LEVEL	(NIPL+2) /* level-triggered active-low */
 #define	IST_LEVEL_LOW	IST_LEVEL
 #define	IST_LEVEL_HIGH	(NIPL+3) /* level-triggered active-high */
-#define	IST_MSI		(NIPL+4) /* message signaling interrupt (PCI) */
-#define	IST_ONCHIP	(NIPL+5) /* on-chip device */
+#define	IST_PULSE	(NIPL+4) /* pulsed */
+#define	IST_MSI		(NIPL+5) /* message signaling interrupt (PCI) */
+#define	IST_ONCHIP	(NIPL+6) /* on-chip device */
 #ifdef __INTR_PRIVATE
-#define	IST_MSIGROUP	(NIPL+6) /* openpic msi groups */
-#define	IST_TIMER	(NIPL+7) /* openpic timers */
-#define	IST_IPI		(NIPL+8) /* openpic ipi */
-#define	IST_MI		(NIPL+9) /* openpic message */
-#define IST_MAX		(NIPL+10)
+#define	IST_MSIGROUP	(NIPL+7) /* openpic msi groups */
+#define	IST_TIMER	(NIPL+8) /* openpic timers */
+#define	IST_IPI		(NIPL+9) /* openpic ipi */
+#define	IST_MI		(NIPL+10) /* openpic message */
+#define	IST_MAX		(NIPL+11)
 #endif
 
-#define	IPI_DST_ALL	-2
-#define	IPI_DST_NOTME	-1
+#define	IPI_DST_ALL	((cpuid_t)-2)
+#define	IPI_DST_NOTME	((cpuid_t)-1)
+
+#define IPI_NOMESG	0x0000
+#define IPI_HALT	0x0001
+#define IPI_XCALL	0x0002
+#define	IPI_KPREEMPT	0x0004
+#define IPI_TLB1SYNC	0x0008
 
 #define	__HAVE_FAST_SOFTINTS	1
+#define	SOFTINT_KPREEMPT	SOFTINT_COUNT
 
 #ifndef _LOCORE
 
+struct cpu_info;
+
 void 	*intr_establish(int, int, int, int (*)(void *), void *);
 void 	intr_disestablish(void *);
-void	intr_cpu_init(struct cpu_info *);
+void	intr_cpu_attach(struct cpu_info *);
+void	intr_cpu_hatch(struct cpu_info *);
 void	intr_init(void);
 const char *
 	intr_string(int, int);
+const char *
+	intr_typename(int);
 
-void	cpu_send_ipi(cpuid_t, uintptr_t);
+void	cpu_send_ipi(cpuid_t, uint32_t);
 
 void	spl0(void);
 int 	splraise(int);
@@ -100,10 +113,14 @@ typedef struct {
 
 #ifdef __INTR_PRIVATE
 
+struct trapframe;
+
 struct intrsw {
 	void *(*intrsw_establish)(int, int, int, int (*)(void *), void *);
 	void (*intrsw_disestablish)(void *);
-	void (*intrsw_cpu_init)(struct cpu_info *);
+	void (*intrsw_cpu_attach)(struct cpu_info *);
+	void (*intrsw_cpu_hatch)(struct cpu_info *);
+	void (*intrsw_cpu_send_ipi)(cpuid_t, uint32_t);
 	void (*intrsw_init)(void);
 	void (*intrsw_critintr)(struct trapframe *);
 	void (*intrsw_decrintr)(struct trapframe *);
@@ -114,7 +131,7 @@ struct intrsw {
 	void (*intrsw_spl0)(void);
 	void (*intrsw_splx)(int);
 	const char *(*intrsw_string)(int, int);
-	void (*intrsw_send_ipi)(cpuid_t, uintptr_t);
+	const char *(*intrsw_typename)(int);
 #ifdef __HAVE_FAST_SOFTINTS
 	void (*intrsw_softint_init_md)(struct lwp *, u_int, uintptr_t *);
 	void (*intrsw_softint_trigger)(uintptr_t);

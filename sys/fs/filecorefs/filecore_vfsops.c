@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.65 2011/05/23 22:00:31 rmind Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.65.2.1 2011/06/23 14:20:13 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.65 2011/05/23 22:00:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.65.2.1 2011/06/23 14:20:13 cherry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -216,9 +216,9 @@ filecore_mountroot(void)
 		vfs_destroy(mp);
 		return (error);
 	}
-	simple_lock(&mountlist_slock);
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	simple_unlock(&mountlist_slock);
+	mutex_exit(&mountlist_lock);
 	(void)filecore_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp, false, NULL);
 	return (0);
@@ -575,8 +575,8 @@ filecore_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		return (0);
 
 	/* Allocate a new vnode/filecore_node. */
-	if ((error = getnewvnode(VT_FILECORE, mp, filecore_vnodeop_p, &vp))
-	    != 0) {
+	error = getnewvnode(VT_FILECORE, mp, filecore_vnodeop_p, NULL, &vp);
+	if (error) {
 		*vpp = NULLVP;
 		return (error);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.34 2010/03/14 18:06:28 pgoyette Exp $ */
+/* $NetBSD: mfi.c,v 1.34.8.1 2011/06/23 14:19:59 cherry Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.34 2010/03/14 18:06:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.34.8.1 2011/06/23 14:19:59 cherry Exp $");
 
 #include "bio.h"
 
@@ -2021,6 +2021,8 @@ mfi_create_sensors(struct mfi_softc *sc)
 
 	for (i = 0; i < nsensors; i++) {
 		sc->sc_sensor[i].units = ENVSYS_DRIVE;
+		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+		sc->sc_sensor[i].value_cur = ENVSYS_DRIVE_EMPTY;
 		/* Enable monitoring for drive state changes */
 		sc->sc_sensor[i].flags |= ENVSYS_FMONSTCHANGED;
 		/* logical drives */

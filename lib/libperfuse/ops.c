@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.29 2011/06/01 07:57:24 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.29.2.1 2011/06/23 14:18:39 cherry Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1439,12 +1439,14 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	struct perfuse_state *ps;
 	struct fuse_getattr_in *fgi;
 	struct fuse_attr_out *fao;
+	u_quad_t va_size;
 	int error;
 	
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
 
 	ps = puffs_getspecific(pu);
+	va_size = vap->va_size;
 
 	/*
 	 * FUSE_GETATTR_FH must be set in fgi->flags 
@@ -1476,6 +1478,13 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	 */
 	fuse_attr_to_vap(ps, vap, &fao->attr);
 
+	/*
+	 * If a write is in progress, do not trust filesystem opinion 
+	 * of file size, use the one from kernel.
+	 */
+	if ((PERFUSE_NODE_DATA(opc)->pnd_flags & PND_INWRITE) &&
+	    (va_size != (u_quad_t)PUFFS_VNOVAL))
+		vap->va_size = MAX(va_size, vap->va_size);;
 out:
 	ps->ps_destroy_msg(pm);
 
@@ -1496,6 +1505,7 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	struct fuse_setattr_in *fsi;
 	struct fuse_attr_out *fao;
 	struct vattr *old_va;
+	u_quad_t va_size;
 	int error;
 
 	ps = puffs_getspecific(pu);
@@ -1552,13 +1562,14 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 		return EACCES;
 	
 	/*
-	 * It seems troublesome to resize a file while
-	 * a write is just beeing done. Wait for
-	 * it to finish.
+	 * If a write is in progress, set the highest
+	 * value in the filesystem, otherwise we break 
+	 * IO_APPEND.
 	 */
-	if (vap->va_size != (u_quad_t)PUFFS_VNOVAL)
-		while (pnd->pnd_flags & PND_INWRITE)
-			requeue_request(pu, opc, PCQ_AFTERWRITE);
+	va_size = vap->va_size;
+	if ((pnd->pnd_flags & PND_INWRITE) &&
+	    (va_size != (u_quad_t)PUFFS_VNOVAL))
+		va_size = MAX(va_size, old_va->va_size);
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_SETATTR, sizeof(*fsi), pcr);
 	fsi = GET_INPAYLOAD(ps, pm, fuse_setattr_in);
@@ -1573,8 +1584,8 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 		fsi->valid |= FUSE_FATTR_FH;
 	}
 
-	if (vap->va_size != (u_quad_t)PUFFS_VNOVAL) {
-		fsi->size = vap->va_size;
+	if (va_size != (u_quad_t)PUFFS_VNOVAL) {
+		fsi->size = va_size;
 		fsi->valid |= FUSE_FATTR_SIZE;
 	}
 

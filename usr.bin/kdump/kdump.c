@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.111 2011/04/27 00:00:47 joerg Exp $	*/
+/*	$NetBSD: kdump.c,v 1.111.2.1 2011/06/23 14:20:43 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,12 +39,14 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.111 2011/04/27 00:00:47 joerg Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.111.2.1 2011/06/23 14:20:43 cherry Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/proc.h> /* XXX #include <sys/file.h> fails without this header */
 #define _KERNEL
+#include <sys/file.h>
 #include <sys/errno.h>
 #undef _KERNEL
 #include <sys/time.h>
@@ -115,6 +117,7 @@ static void	ktrpsig(void *, int);
 static void	ktrcsw(struct ktr_csw *);
 static void	ktruser(struct ktr_user *, int);
 static void	ktrmib(int *, int);
+static void	ktrexecfd(struct ktr_execfd *);
 static void	usage(void) __dead;
 static void	eprint(int);
 static void	rprint(register_t);
@@ -294,6 +297,9 @@ main(int argc, char **argv)
 		case KTR_EXEC_ENV:
 			visdump_buf(m, ktrlen, col);
 			break;
+		case KTR_EXEC_FD:
+			ktrexecfd(m);
+			break;
 		case KTR_MIB:
 			ktrmib(m, ktrlen);
 			break;
@@ -362,6 +368,9 @@ dumpheader(struct ktr_header *kth)
 		break;
 	case KTR_EXEC_ARG:
 		type = "ARG";
+		break;
+	case KTR_EXEC_FD:
+		type = "FD";
 		break;
 	case KTR_SAUPCALL:
 		type = "SAU";
@@ -629,6 +638,16 @@ ktrsysret(struct ktr_sysret *ktr, int len)
 		break;
 	}
 	(void)putchar('\n');
+}
+
+static void
+ktrexecfd(struct ktr_execfd *ktr)
+{
+	static const char *dnames[] = { DTYPE_NAMES };
+	if (ktr->ktr_dtype < __arraycount(dnames))
+		printf("%s %d\n", dnames[ktr->ktr_dtype], ktr->ktr_fd);
+	else
+		printf("UNKNOWN(%u) %d\n", ktr->ktr_dtype, ktr->ktr_fd);
 }
 
 static void

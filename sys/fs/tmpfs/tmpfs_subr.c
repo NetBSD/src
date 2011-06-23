@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.72 2011/05/29 22:43:32 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.72.2.1 2011/06/23 14:20:17 cherry Exp $	*/
 
 /*
  * Copyright (c) 2005-2011 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.72 2011/05/29 22:43:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.72.2.1 2011/06/23 14:20:17 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -259,12 +259,13 @@ int
 tmpfs_vnode_get(struct mount *mp, tmpfs_node_t *node, vnode_t **vpp)
 {
 	vnode_t *vp;
+	kmutex_t *slock;
 	int error;
 again:
 	/* If there is already a vnode, try to reclaim it. */
 	if ((vp = node->tn_vnode) != NULL) {
 		atomic_or_ulong(&node->tn_gen, TMPFS_RECLAIMING_BIT);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		mutex_exit(&node->tn_vlock);
 		error = vget(vp, LK_EXCLUSIVE);
 		if (error == ENOENT) {
@@ -279,8 +280,17 @@ again:
 		atomic_and_ulong(&node->tn_gen, ~TMPFS_RECLAIMING_BIT);
 	}
 
-	/* Get a new vnode and associate it with our node. */
-	error = getnewvnode(VT_TMPFS, mp, tmpfs_vnodeop_p, &vp);
+	/*
+	 * Get a new vnode and associate it with our inode.  Share the
+	 * lock with underlying UVM object, if there is one (VREG case).
+	 */
+	if (node->tn_type == VREG) {
+		struct uvm_object *uobj = node->tn_spec.tn_reg.tn_aobj;
+		slock = uobj->vmobjlock;
+	} else {
+		slock = NULL;
+	}
+	error = getnewvnode(VT_TMPFS, mp, tmpfs_vnodeop_p, slock, &vp);
 	if (error) {
 		mutex_exit(&node->tn_vlock);
 		return error;
@@ -793,6 +803,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 {
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(vp->v_mount);
 	tmpfs_node_t *node = VP_TO_TMPFS_NODE(vp);
+	struct uvm_object *uobj = node->tn_spec.tn_reg.tn_aobj;
 	size_t newpages, oldpages;
 	off_t oldsize;
 
@@ -812,8 +823,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	} else if (newsize < oldsize) {
 		int zerolen = MIN(round_page(newsize), node->tn_size) - newsize;
 
-		/* Zero out the truncated part of the last page. */
-		uvm_vnp_zerorange(vp, newsize, zerolen);
+		ubc_zerorange(uobj, newsize, zerolen, UBC_UNMAP_FLAG(vp));
 	}
 
 	node->tn_spec.tn_reg.tn_aobj_pages = newpages;
@@ -824,13 +834,11 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	 * Free "backing store".
 	 */
 	if (newpages < oldpages) {
-		struct uvm_object *uobj;
+		KASSERT(uobj->vmobjlock == vp->v_interlock);
 
-		uobj = node->tn_spec.tn_reg.tn_aobj;
-
-		mutex_enter(&uobj->vmobjlock);
+		mutex_enter(uobj->vmobjlock);
 		uao_dropswap_range(uobj, newpages, oldpages);
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 
 		/* Decrease the used-memory counter. */
 		tmpfs_mem_decr(tmp, (oldpages - newpages) << PAGE_SHIFT);

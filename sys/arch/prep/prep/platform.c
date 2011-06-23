@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.24 2008/04/28 20:23:33 martin Exp $	*/
+/*	$NetBSD: platform.c,v 1.24.32.1 2011/06/23 14:19:37 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,21 +30,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.24 2008/04/28 20:23:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.24.32.1 2011/06/23 14:19:37 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/intr.h>
 #include <sys/inttypes.h>
+
+#include <powerpc/pio.h>
+#include <powerpc/psl.h>
 
 #include <dev/pci/pcivar.h>
 
-#include <machine/intr.h>
 #include <machine/platform.h>
-#include <machine/residual.h>
-#include <powerpc/pio.h>
-
 #include <machine/pcipnp.h>
+#include <machine/residual.h>
 
 u_int32_t prep_pci_baseaddr = 0x80000cf8;
 u_int32_t prep_pci_basedata = 0x80000cfc;
@@ -82,7 +83,7 @@ find_platform_quirk(const char *model)
 
 /* XXX This should be conditional on finding L2 in residual */
 void
-cpu_setup_prep_generic(struct device *dev)
+cpu_setup_prep_generic(device_t dev)
 {
 	u_int8_t l2ctrl, cpuinf;
 

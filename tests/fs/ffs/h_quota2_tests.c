@@ -1,4 +1,4 @@
-/*	$NetBSD: h_quota2_tests.c,v 1.2 2011/03/06 17:08:40 bouyer Exp $	*/
+/*	$NetBSD: h_quota2_tests.c,v 1.2.2.1 2011/06/23 14:20:38 cherry Exp $	*/
 
 /*
  * rump server for advanced quota tests
@@ -38,18 +38,18 @@ quota_test0(const char *testopts)
 	rump_sys_chmod(".", 0777);
 	if (rump_sys_setegid(TEST_NONROOT_ID) != 0) {
 		error = errno;
-		perror("rump_sys_setegid");
+		warn("rump_sys_setegid");
 		return error;
 	}
 	if (rump_sys_seteuid(TEST_NONROOT_ID) != 0) {
 		error = errno;
-		perror("rump_sys_seteuid");
+		warn("rump_sys_seteuid");
 		return error;
 	}
 	fd = rump_sys_open("test_fillup", O_CREAT | O_RDWR, 0644);
 	if (fd < 0) {
 		error = errno;
-		perror("rump_sys_open");
+		warn("rump_sys_open");
 	} else {
 		while (rump_sys_write(fd, buf, sizeof(buf)) == sizeof(buf))
 			error = 0;
@@ -71,18 +71,18 @@ quota_test1(const char *testopts)
 	rump_sys_chmod(".", 0777);
 	if (rump_sys_setegid(TEST_NONROOT_ID) != 0) {
 		error = errno;
-		perror("rump_sys_setegid");
+		warn("rump_sys_setegid");
 		return error;
 	}
 	if (rump_sys_seteuid(TEST_NONROOT_ID) != 0) {
 		error = errno;
-		perror("rump_sys_seteuid");
+		warn("rump_sys_seteuid");
 		return error;
 	}
 	fd = rump_sys_open("test_fillup", O_CREAT | O_RDWR, 0644);
 	if (fd < 0) {
 		error = errno;
-		perror("rump_sys_open");
+		warn("rump_sys_open");
 	} else {
 		/*
 		 * write up to the soft limit, wait a bit, an try to
@@ -120,12 +120,12 @@ quota_test2(const char *testopts)
 	rump_sys_chmod(".", 0777);
 	if (rump_sys_setegid(TEST_NONROOT_ID) != 0) {
 		error = errno;
-		perror("rump_sys_setegid");
+		warn("rump_sys_setegid");
 		return error;
 	}
 	if (rump_sys_seteuid(TEST_NONROOT_ID) != 0) {
 		error = errno;
-		perror("rump_sys_seteuid");
+		warn("rump_sys_seteuid");
 		return error;
 	}
 
@@ -157,12 +157,12 @@ quota_test3(const char *testopts)
 	rump_sys_chmod(".", 0777);
 	if (rump_sys_setegid(TEST_NONROOT_ID) != 0) {
 		error = errno;
-		perror("rump_sys_setegid");
+		warn("rump_sys_setegid");
 		return error;
 	}
 	if (rump_sys_seteuid(TEST_NONROOT_ID) != 0) {
 		error = errno;
-		perror("rump_sys_seteuid");
+		warn("rump_sys_seteuid");
 		return error;
 	}
 

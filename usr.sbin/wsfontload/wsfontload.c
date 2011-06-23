@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.14 2009/04/19 02:25:48 lukem Exp $ */
+/* $NetBSD: wsfontload.c,v 1.14.4.1 2011/06/23 14:20:50 cherry Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -68,6 +68,7 @@ static struct {
 	{"pcvt", WSDISPLAY_FONTENC_PCVT},
 	{"iso7", WSDISPLAY_FONTENC_ISO7},
 	{"iso2", WSDISPLAY_FONTENC_ISO2},
+	{"koi8r", WSDISPLAY_FONTENC_KOI8_R},
 };
 
 static void
@@ -75,8 +76,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-		"usage: %s [-f wsdev] [-w width] [-h height] [-e encoding]"
-		" [-N name] [-b] [-B] [fontfile]\n",
+		"usage: %s [-Bbv] [-e encoding] [-f wsdev] [-h height]"
+		" [-N name] [-w width] [fontfile]\n",
 		      getprogname());
 	exit(1);
 }

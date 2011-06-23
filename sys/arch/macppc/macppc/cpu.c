@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.54 2010/12/20 00:25:37 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.54.6.1 2011/06/23 14:19:21 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2010/12/20 00:25:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54.6.1 2011/06/23 14:19:21 cherry Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2010/12/20 00:25:37 matt Exp $");
 #include <powerpc/oea/hid.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/openpic.h>
-#include <powerpc/atomic.h>
 #include <powerpc/spr.h>
 #include <powerpc/oea/spr.h>
 #ifdef ALTIVEC
@@ -76,13 +75,13 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2010/12/20 00:25:37 matt Exp $");
 #endif /* NOPENPIC > 0 */
 #endif /* OPENPIC */
 
-int cpumatch(struct device *, struct cfdata *, void *);
-void cpuattach(struct device *, struct device *, void *);
+int cpumatch(device_t, cfdata_t, void *);
+void cpuattach(device_t, device_t, void *);
 
 void identifycpu(char *);
 static void ohare_init(void);
 
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpumatch, cpuattach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
@@ -97,7 +96,7 @@ extern void openpic_set_priority(int, int);
 #endif
 
 int
-cpumatch(struct device *parent, struct cfdata *cf, void *aux)
+cpumatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	int *reg = ca->ca_reg;
@@ -129,10 +128,10 @@ cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 	return 0;
 }
 
-void cpu_OFgetspeed(struct device *, struct cpu_info *);
+void cpu_OFgetspeed(device_t, struct cpu_info *);
 
 void
-cpu_OFgetspeed(struct device *self, struct cpu_info *ci)
+cpu_OFgetspeed(device_t self, struct cpu_info *ci)
 {
 	int	node;
 
@@ -155,7 +154,7 @@ cpu_OFgetspeed(struct device *self, struct cpu_info *ci)
 }
 
 void
-cpuattach(struct device *parent, struct device *self, void *aux)
+cpuattach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_info *ci;
 	struct confargs *ca = aux;
@@ -243,7 +242,7 @@ md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
 #endif /* OPENPIC */
 		/* Start secondary CPU and stop timebase. */
 		out32(0xf2800000, (int)cpu_spinup_trampoline);
-		ppc_send_ipi(1, PPC_IPI_NOMESG);
+		cpu_send_ipi(1, IPI_NOMESG);
 #ifdef OPENPIC
 	}
 #endif
@@ -297,7 +296,7 @@ md_start_timebase(volatile struct cpu_hatch_data *h)
 
 		/* Start timebase. */
 		out32(0xf2800000, 0x100);
-		ppc_send_ipi(1, PPC_IPI_NOMESG);
+		cpu_send_ipi(1, IPI_NOMESG);
 #ifdef OPENPIC
 	}
 #endif

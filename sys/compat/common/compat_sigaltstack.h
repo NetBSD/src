@@ -1,4 +1,4 @@
-/*      $NetBSD: compat_sigaltstack.h,v 1.2 2007/06/16 20:04:27 dsl Exp $        */
+/*      $NetBSD: compat_sigaltstack.h,v 1.2.70.1 2011/06/23 14:19:53 cherry Exp $        */
 
 /* Wrapper for calling sigaltstack1() from compat (or other) code */
 
@@ -34,7 +34,7 @@
 			    | (css.ss_flags & ss_disable ? SS_DISABLE : 0); \
 	} \
 \
-	error = sigaltstack1(l, SCARG_COMPAT_PTR(uap, nss) ? &nss : 0, \
+	error = sigaltstack1(curlwp, SCARG_COMPAT_PTR(uap, nss) ? &nss : 0, \
 				SCARG_COMPAT_PTR(uap, oss) ? &oss : 0); \
 	if (error) \
 		return (error); \

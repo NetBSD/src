@@ -1,4 +1,4 @@
-/* $NetBSD: opbvar.h,v 1.5 2010/03/18 13:47:04 kiyohara Exp $ */
+/* $NetBSD: opbvar.h,v 1.5.6.1 2011/06/23 14:19:30 cherry Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 struct opb_softc {
 	device_t sc_dev;

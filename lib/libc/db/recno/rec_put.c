@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_put.c,v 1.17 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: rec_put.c,v 1.17.20.1 2011/06/23 14:18:36 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rec_put.c,v 1.17 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: rec_put.c,v 1.17.20.1 2011/06/23 14:18:36 cherry Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -208,7 +208,7 @@ __rec_iput(BTREE *t, recno_t nrec, const DBT *data, u_int flags)
 			return (RET_ERROR);
 		tdata.data = db;
 		tdata.size = NOVFLSIZE;
-		*(pgno_t *)(void *)db = pg;
+		memcpy(db, &pg, sizeof(*db));
 		_DBFIT(data->size, uint32_t);
 		*(uint32_t *)(void *)(db + sizeof(pgno_t)) =
 		    (uint32_t)data->size;

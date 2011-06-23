@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.19 2009/10/17 22:36:23 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.19.4.1 2011/06/23 14:20:45 cherry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.19 2009/10/17 22:36:23 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.19.4.1 2011/06/23 14:20:45 cherry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -385,7 +385,7 @@ playback(FILE *fp)
 
 		if (reg && stamp.scr_len >
 		    (uint64_t)(pst.st_size - save_len) - nread)
-			err(1, "invalid stamp");
+			errx(1, "invalid stamp");
 
 		save_len += stamp.scr_len;
 		tclock = stamp.scr_sec;
@@ -430,7 +430,7 @@ playback(FILE *fp)
 			}
 			break;
 		default:
-			err(1, "invalid direction");
+			errx(1, "invalid direction");
 		}
 	}
 	(void)fclose(fp);

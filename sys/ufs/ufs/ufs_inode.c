@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.86 2011/05/19 03:25:11 manu Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.86.2.1 2011/06/23 14:20:33 cherry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.86 2011/05/19 03:25:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.86.2.1 2011/06/23 14:20:33 cherry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -262,14 +262,14 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	len += delta;
 
 	genfs_node_wrlock(vp);
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
 	    VM_PROT_WRITE, 0, PGO_SYNCIO | PGO_PASTEOF | PGO_NOBLOCKALLOC |
 	    PGO_NOTIMESTAMP | PGO_GLOCKHELD);
 	if (error) {
 		goto out;
 	}
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	mutex_enter(&uvm_pageqlock);
 	for (i = 0; i < npages; i++) {
 		UVMHIST_LOG(ubchist, "got pgs[%d] %p", i, pgs[i],0,0);
@@ -278,7 +278,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 		uvm_pageactivate(pgs[i]);
 	}
 	mutex_exit(&uvm_pageqlock);
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 
 	/*
 	 * now allocate the range.
@@ -293,7 +293,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	 */
 
 	GOP_SIZE(vp, off + len, &eob, 0);
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	for (i = 0; i < npages; i++) {
 		if (off <= pagestart + (i << PAGE_SHIFT) &&
 		    pagestart + ((i + 1) << PAGE_SHIFT) <= eob) {
@@ -309,7 +309,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	} else {
 		uvm_page_unbusy(pgs, npages);
 	}
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 
  out:
  	kmem_free(pgs, pgssize);

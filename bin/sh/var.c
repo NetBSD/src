@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.39 2008/10/16 14:36:40 dholland Exp $	*/
+/*	$NetBSD: var.c,v 1.39.16.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.39 2008/10/16 14:36:40 dholland Exp $");
+__RCSID("$NetBSD: var.c,v 1.39.16.1 2011/06/23 14:17:48 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: var.c,v 1.39 2008/10/16 14:36:40 dholland Exp $");
 #include "exec.h"
 #include "syntax.h"
 #include "options.h"
+#include "builtins.h"
 #include "mail.h"
 #include "var.h"
 #include "memalloc.h"

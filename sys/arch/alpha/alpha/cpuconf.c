@@ -1,4 +1,4 @@
-/* $NetBSD: cpuconf.c,v 1.33 2009/03/18 10:22:22 cegger Exp $ */
+/* $NetBSD: cpuconf.c,v 1.33.10.1 2011/06/23 14:18:50 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.33 2009/03/18 10:22:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.33.10.1 2011/06/23 14:18:50 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,13 +122,6 @@ extern void dec_eb64plus_init(void);
 extern void dec_eb164_init(void);
 #else
 #define	dec_eb164_init		platform_not_configured
-#endif
-
-#include "opt_avalon_a12.h"
-#ifdef AVALON_A12
-extern void avalon_a12_init(void);
-#else
-#define	avalon_a12_init		platform_not_configured
 #endif
 
 #include "opt_dec_kn300.h"
@@ -219,7 +212,6 @@ static const struct cpuinit cpuinit[] = {
 	cpu_init(ST_DEC_3000_500, dec_3000_500_init, "DEC_3000_500"),
 	cpu_init(ST_DEC_2000_300, dec_2000_300_init, "DEC_2000_300"),
 	cpu_init(ST_DEC_3000_300, dec_3000_300_init, "DEC_3000_300"),
-	cpu_init(ST_AVALON_A12, avalon_a12_init, "AVALON_A12"),
 	cpu_init(ST_DEC_2100_A500, dec_2100_a500_init, "DEC_2100_A500"),
 	cpu_notsupp(ST_DEC_APXVME_64, "AXPvme 64"),
 	cpu_init(ST_DEC_AXPPCI_33, dec_axppci_33_init, "DEC_AXPPCI_33"),

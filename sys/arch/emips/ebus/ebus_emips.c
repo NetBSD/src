@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_emips.c,v 1.1 2011/01/26 01:18:50 pooka Exp $	*/
+/*	$NetBSD: ebus_emips.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ebus_emips.c,v 1.1 2011/01/26 01:18:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_emips.c,v 1.1.6.1 2011/06/23 14:19:05 cherry Exp $");
 
 #include "opt_xilinx_ml40x.h"
 #include "opt_xs_bee3.h"
@@ -48,27 +48,27 @@ __KERNEL_RCSID(0, "$NetBSD: ebus_emips.c,v 1.1 2011/01/26 01:18:50 pooka Exp $")
 #include <machine/emipsreg.h>
 #include <emips/emips/emipstype.h>
 
-static int	ebus_emips_match __P((struct device *, struct cfdata *, void *));
-static void	ebus_emips_attach __P((struct device *, struct device *, void *));
+static int	ebus_emips_match(device_t, cfdata_t, void *);
+static void	ebus_emips_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ebus_emips, sizeof(struct ebus_softc),
+CFATTACH_DECL_NEW(ebus_emips, 0,
     ebus_emips_match, ebus_emips_attach, NULL, NULL);
 
 #if defined(XILINX_ML40x) || defined(XS_BEE3)
 struct ebus_attach_args ebus_emips_devs[] = {
    /* NAME     INTERRUPT        PHYS                      VIRT  PHYS_SIZE */
-   { "eclock", AIC_TIMER,    	TIMER_DEFAULT_ADDRESS,    NULL, sizeof(struct _Tc) },
-   { "dz",     AIC_USART,	    USART_DEFAULT_ADDRESS,    NULL, sizeof(struct _Usart)},
+   { "eclock", AIC_TIMER,       TIMER_DEFAULT_ADDRESS,    NULL, sizeof(struct _Tc) },
+   { "dz",     AIC_USART,       USART_DEFAULT_ADDRESS,    NULL, sizeof(struct _Usart)},
    { "ace",    AIC_SYSTEM_ACE,  IDE_DEFAULT_ADDRESS,      NULL, sizeof(struct _Sac) },
    { "ace",    AIC_SYSTEM_ACE2, IDE_DEFAULT_ADDRESS+256,  NULL, sizeof(struct _Sac) },
-   { "enic",   AIC_ETHERNET,	ETHERNET_DEFAULT_ADDRESS, NULL, sizeof(struct _Enic) },
-   { "icap",   AIC_ICAP,		ICAP_DEFAULT_ADDRESS, 	  NULL, sizeof(struct _Icap) },
-   { "gpio",   AIC_GPIO,		GPIO_DEFAULT_ADDRESS, 	  NULL, sizeof(struct _Pio) },
-   { "flash",  0,				FLASH_0_DEFAULT_ADDRESS,  NULL, sizeof(struct _Flash) },
-   { "lcd",    0,				LCD_DEFAULT_ADDRESS, 	  NULL, sizeof(struct _Lcd) },
-   { "evga",   AIC_VGA,			VGA_DEFAULT_ADDRESS, 	  NULL, sizeof(struct _Evga) },
-   { "ps2",    AIC_PS2,			PS2_DEFAULT_ADDRESS, 	  NULL, sizeof(struct _Cpbdi) },
-   { "ac97",   AIC_AC97,		AC97_DEFAULT_ADDRESS, 	  NULL, sizeof(struct _Cpbdi) },
+   { "enic",   AIC_ETHERNET,    ETHERNET_DEFAULT_ADDRESS, NULL, sizeof(struct _Enic) },
+   { "icap",   AIC_ICAP,        ICAP_DEFAULT_ADDRESS,     NULL, sizeof(struct _Icap) },
+   { "gpio",   AIC_GPIO,        GPIO_DEFAULT_ADDRESS,     NULL, sizeof(struct _Pio) },
+   { "flash",  0,               FLASH_0_DEFAULT_ADDRESS,  NULL, sizeof(struct _Flash) },
+   { "lcd",    0,               LCD_DEFAULT_ADDRESS,      NULL, sizeof(struct _Lcd) },
+   { "evga",   AIC_VGA,         VGA_DEFAULT_ADDRESS,      NULL, sizeof(struct _Evga) },
+   { "ps2",    AIC_PS2,         PS2_DEFAULT_ADDRESS,      NULL, sizeof(struct _Cpbdi) },
+   { "ac97",   AIC_AC97,        AC97_DEFAULT_ADDRESS,     NULL, sizeof(struct _Cpbdi) },
 };
 static const int ebus_emips_ndevs =
 	sizeof(ebus_emips_devs)/sizeof(ebus_emips_devs[0]);
@@ -77,22 +77,22 @@ static const int ebus_emips_ndevs =
 static int ebus_attached;
 
 static int
-ebus_emips_match(struct device *parent, struct cfdata *cfdata, void *aux)
+ebus_emips_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
 	if (ebus_attached)
-		return (0);
+		return 0;
 	if (systype != XS_ML40x && systype != XS_BE3 && systype != XS_ML50x)
-		return (0);
+		return 0;
 	if (strcmp(ma->ma_name, "baseboard") != 0)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void
-ebus_emips_attach(struct device *parent, struct device *self, void *aux)
+ebus_emips_attach(device_t parent, device_t self, void *aux)
 {
 	struct ebus_dev_attach_args ida;
 
@@ -109,7 +109,8 @@ ebus_emips_attach(struct device *parent, struct device *self, void *aux)
 		break;
 #endif
 	default:
-		panic("ebus_emips_attach: no ebus configured for systype = %d", systype);
+		panic("ebus_emips_attach: no ebus configured for systype = %d",
+		    systype);
 	}
 
 	ebusattach(parent, self, &ida);

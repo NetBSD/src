@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.29 2011/05/26 21:50:02 drochner Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.29.2.1 2011/06/23 14:20:25 cherry Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -430,11 +430,11 @@ struct sadb_x_nat_t_frag {
 /* Utilities */
 #define PFKEY_ALIGN8(a) (1 + (((a) - 1) | (8 - 1)))
 #define	PFKEY_EXTLEN(msg) \
-	PFKEY_UNUNIT64(((struct sadb_ext *)(void *)(msg))->sadb_ext_len)
+	PFKEY_UNUNIT64(((const struct sadb_ext *)(const void *)(msg))->sadb_ext_len)
 #define PFKEY_ADDR_PREFIX(ext) \
-	(((struct sadb_address *)(void *)(ext))->sadb_address_prefixlen)
+	(((const struct sadb_address *)(const void *)(ext))->sadb_address_prefixlen)
 #define PFKEY_ADDR_PROTO(ext) \
-	(((struct sadb_address *)(void *)(ext))->sadb_address_proto)
+	(((const struct sadb_address *)(const void *)(ext))->sadb_address_proto)
 #define PFKEY_ADDR_SADDR(ext) \
 	((struct sockaddr *)(void *)((char *)(void *)(ext) + \
 	sizeof(struct sadb_address)))

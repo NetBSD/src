@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.21 2011/02/20 08:03:22 matt Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.21.2.1 2011/06/23 14:20:09 cherry Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -47,7 +47,7 @@ struct ioasicdev_attach_args {
 };
 
 struct ioasic_softc {
-	struct	device sc_dv;
+	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 	bus_dma_tag_t sc_dmat;

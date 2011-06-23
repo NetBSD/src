@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.34 2011/04/04 20:37:44 dyoung Exp $ */
+/* $NetBSD: pci_550.c,v 1.34.2.1 2011/06/23 14:18:55 cherry Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.34 2011/04/04 20:37:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.34.2.1 2011/06/23 14:18:55 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,7 +96,7 @@ void	*dec_550_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *);
 void	dec_550_intr_disestablish(void *, void *);
 
-void	*dec_550_pciide_compat_intr_establish(void *, struct device *,
+void	*dec_550_pciide_compat_intr_establish(void *, device_t,
 	    const struct pci_attach_args *, int, int (*)(void *), void *);
 
 #define	DEC_550_PCI_IRQ_BEGIN	8
@@ -350,7 +350,7 @@ dec_550_intr_disestablish(void *ccv, void *cookie)
 }
 
 void *
-dec_550_pciide_compat_intr_establish(void *v, struct device *dev,
+dec_550_pciide_compat_intr_establish(void *v, device_t dev,
     const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -371,7 +371,7 @@ dec_550_pciide_compat_intr_establish(void *v, struct device *dev,
 	    func, arg);
 	if (cookie == NULL)
 		return (NULL);
-	printf("%s: %s channel interrupting at %s\n", dev->dv_xname,
+	aprint_normal_dev(dev, "%s channel interrupting at %s\n",
 	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq));
 #endif
 	return (cookie);

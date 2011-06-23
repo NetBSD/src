@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.10 2011/05/23 15:17:25 drochner Exp $	*/
+/*	$NetBSD: key.h,v 1.10.2.1 2011/06/23 14:20:27 cherry Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -92,7 +92,7 @@ void key_freeso (struct socket *);
 int key_checktunnelsanity (struct secasvar *, u_int, void *, void *);
 int key_checkrequest (struct ipsecrequest *isr, const struct secasindex *);
 
-struct secpolicy *key_msg2sp (struct sadb_x_policy *, size_t, int *);
+struct secpolicy *key_msg2sp (const struct sadb_x_policy *, size_t, int *);
 struct mbuf *key_sp2msg (const struct secpolicy *);
 int key_ismyaddr (const struct sockaddr *);
 int key_cmpspidx_exactly (const struct secpolicyindex *, const struct secpolicyindex *);

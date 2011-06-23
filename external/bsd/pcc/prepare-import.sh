@@ -46,22 +46,27 @@ done
 echo "====> Creating pcc \"config.h\" file..."
 mkdir work/tmp
 cd work/tmp
-sh ../pcc/configure
+env -i PATH=/bin:/usr/bin /bin/sh ../pcc/configure
 cd ../..
 #
 # comment out items we provide at build time from Makefile.inc
-# modify the PACKAGE_STRING to include the checkout date
 # define PREPROCESSOR as pcpp to avoid conflicts with GCC
 #
-datestamp=$(cat work/pcc/DATESTAMP)
 sed -e "s,^\(#define[[:space:]]*VERSSTR[[:>:]].*\)\$,/* \1 */,"					\
     -e "s,^\(#define[[:space:]]*HOST_BIG_ENDIAN[[:>:]].*\)\$,/* \1 */,"				\
     -e "s,^\(#define[[:space:]]*HOST_LITTLE_ENDIAN[[:>:]].*\)\$,/* \1 */,"			\
     -e "s,^\(#define[[:space:]]*TARGET_BIG_ENDIAN[[:>:]].*\)\$,/* \1 */,"			\
     -e "s,^\(#define[[:space:]]*TARGET_LITTLE_ENDIAN[[:>:]].*\)\$,/* \1 */,"			\
-    -e "s,^\(#define[[:space:]]*PACKAGE_STRING[[:>:]].*\".*\)\(\".*\)\$,\1 [${datestamp}]\2,"	\
     -e "s,^\(.*[[:<:]]PREPROCESSOR[[:>:]].*\)\$,#define PREPROCESSOR \"pcpp\","			\
     < work/tmp/config.h > work/config.h
+
+#
+# update Makefile.inc to create version string at build time
+#
+datestamp=$(cat work/pcc/DATESTAMP)
+version=$(sed -n -e "/PACKAGE_VERSION/s/.*\"\(.*\)\"/\1/p" < work/config.h)
+sed -e "s,^VERSSTR=.*$,VERSSTR=\"pcc ${version} ${datestamp} for \${TARGMACH}-\${TARGOS}\","	\
+	< Makefile.inc > work/Makefile.inc
 
 echo "====> Replacing pcc sources..."
 rm -Rf dist/pcc dist/pcc-libs
@@ -69,6 +74,10 @@ mv work/pcc work/pcc-libs dist
 if cmp -s work/config.h include/config.h; then :; else
     echo "====> Updating include/config.h..."
     mv work/config.h include/config.h
+fi
+if cmp -s work/Makefile.inc Makefile.inc; then :; else
+    echo "====> Updating Makefile.inc..."
+    mv work/Makefile.inc Makefile.inc
 fi
 
 echo "====> Done."

@@ -1,4 +1,4 @@
-/*	$NetBSD: board_prop.c,v 1.3 2006/05/05 18:04:41 thorpej Exp $	*/
+/*	$NetBSD: board_prop.c,v 1.3.98.1 2011/06/23 14:19:28 cherry Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,14 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: board_prop.c,v 1.3 2006/05/05 18:04:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: board_prop.c,v 1.3.98.1 2011/06/23 14:19:28 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <prop/proplib.h>
 
-#include <machine/cpu.h>
+#include <powerpc/ibm4xx/cpu.h>
 
 prop_dictionary_t board_properties;
 

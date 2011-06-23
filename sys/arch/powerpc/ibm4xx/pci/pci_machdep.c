@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 2010/03/18 13:58:38 kiyohara Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7.6.1 2011/06/23 14:19:30 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7 2010/03/18 13:58:38 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7.6.1 2011/06/23 14:19:30 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,11 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.7 2010/03/18 13:58:38 kiyohara Exp
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/extent.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -86,7 +85,7 @@ pci_machdep_init(void)
 }
 
 void
-pci_attach_hook(struct device *parent, struct device *self,
+pci_attach_hook(device_t parent, device_t self,
 		struct pcibus_attach_args *pba)
 {
 

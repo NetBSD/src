@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.79 2011/05/16 13:22:53 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.79.2.1 2011/06/23 14:19:18 cherry Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2011/05/16 13:22:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.1 2011/06/23 14:19:18 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2011/05/16 13:22:53 tsutsui Exp $")
 #include <sys/exec.h>
 #include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
+#include <sys/kauth.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
@@ -80,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2011/05/16 13:22:53 tsutsui Exp $")
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #if defined(DDB)
 #include <machine/db_machdep.h>
@@ -107,6 +109,8 @@ int	physmem;		/* set by locore */
  * during autoconfiguration or after a panic.
  */
 int	safepri = PSL_LOWIPL;
+
+extern	u_int lowram;
 
 void luna68k_init(void);
 void identifycpu(void);
@@ -836,3 +840,10 @@ romcngetc(dev_t dev)
 	return c;
 }
 #endif
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
+}

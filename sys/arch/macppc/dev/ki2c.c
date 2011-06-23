@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.16 2010/12/20 00:25:37 matt Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.16.6.1 2011/06/23 14:19:20 cherry Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -37,8 +37,8 @@
 
 #include <macppc/dev/ki2cvar.h>
 
-int ki2c_match(struct device *, struct cfdata *, void *);
-void ki2c_attach(struct device *, struct device *, void *);
+int ki2c_match(device_t, cfdata_t, void *);
+void ki2c_attach(device_t, device_t, void *);
 inline u_int ki2c_readreg(struct ki2c_softc *, int);
 inline void ki2c_writereg(struct ki2c_softc *, int, u_int);
 u_int ki2c_getmode(struct ki2c_softc *);
@@ -63,7 +63,7 @@ CFATTACH_DECL(ki2c, sizeof(struct ki2c_softc), ki2c_match, ki2c_attach,
 	NULL, NULL);
 
 int
-ki2c_match(struct device *parent, struct cfdata *match, void *aux)
+ki2c_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -74,9 +74,9 @@ ki2c_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ki2c_attach(struct device *parent, struct device *self, void *aux)
+ki2c_attach(device_t parent, device_t self, void *aux)
 {
-	struct ki2c_softc *sc = (struct ki2c_softc *)self;
+	struct ki2c_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 	int node = ca->ca_node;
 	int rate, child, namelen, i2cbus;

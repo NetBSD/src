@@ -1,4 +1,4 @@
-/* $NetBSD: t_extent.c,v 1.2 2010/11/03 16:10:20 christos Exp $ */
+/* $NetBSD: t_extent.c,v 1.2.4.1 2011/06/23 14:20:39 cherry Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_extent.c,v 1.2 2010/11/03 16:10:20 christos Exp $");
+__RCSID("$NetBSD: t_extent.c,v 1.2.4.1 2011/06/23 14:20:39 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -82,7 +82,7 @@ h_alloc_subregion(u_long substart, u_long subend, u_long size,
 
 static void
 h_require(const char *name, u_long start,
-	u_long end, long flags, const char *exp)
+	u_long end, int flags, const char *exp)
 {
 	char buf[4096];
 	struct extent_region *rp;
@@ -95,7 +95,7 @@ h_require(const char *name, u_long start,
 	ATF_REQUIRE_EQ_MSG(ex->ex_end, end,
 	    "expected: %#lx, got: %#lx", end, ex->ex_end);
 	ATF_REQUIRE_EQ_MSG(ex->ex_flags, flags,
-	    "expected: %#lx, got: %#lx", flags, ex->ex_flags);
+	    "expected: %#x, got: %#x", flags, ex->ex_flags);
 
 	(void)memset(buf, 0, sizeof(buf));
 	LIST_FOREACH(rp, &ex->ex_regions, er_link)

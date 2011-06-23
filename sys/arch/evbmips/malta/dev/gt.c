@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.12 2011/05/17 17:34:49 dyoung Exp $	*/
+/*	$NetBSD: gt.c,v 1.12.2.1 2011/06/23 14:19:07 cherry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.12 2011/05/17 17:34:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.12.2.1 2011/06/23 14:19:07 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.12 2011/05/17 17:34:49 dyoung Exp $");
 #define	PCI_CONF_LOCK(s)	(s) = splhigh()
 #define	PCI_CONF_UNLOCK(s)	splx((s))
 
-static void	gt_attach_hook(struct device *, struct device *,
-		    struct pcibus_attach_args *);
+static void	gt_attach_hook(device_t, device_t, struct pcibus_attach_args *);
 static int	gt_bus_maxdevs(void *, int);
 static pcitag_t	gt_make_tag(void *, int, int, int);
 static void	gt_decompose_tag(void *, pcitag_t, int *, int *, int *);
@@ -80,28 +79,27 @@ gt_pci_init(pci_chipset_tag_t pc, struct gt_config *mcp)
 }
 
 static void
-gt_attach_hook(struct device *parent, struct device *self,
-    struct pcibus_attach_args *pba)
+gt_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 
 	/* Nothing to do... */
 }
 
-static int	gt_match(struct device *, struct cfdata *, void *);
-static void	gt_attach(struct device *, struct device *, void *);
+static int	gt_match(device_t, cfdata_t, void *);
+static void	gt_attach(device_t, device_t, void *);
 static int	gt_print(void *aux, const char *pnp);
 
-CFATTACH_DECL(gt, sizeof(struct device),
+CFATTACH_DECL_NEW(gt, 0,
     gt_match, gt_attach, NULL, NULL);
 
 static int
-gt_match(struct device *parent, struct cfdata *match, void *aux)
+gt_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 static void
-gt_attach(struct device *parent, struct device *self, void *aux)
+gt_attach(device_t parent, device_t self, void *aux)
 {
 	struct malta_config *mcp = &malta_configuration;
 	struct pcibus_attach_args pba;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 2011/04/19 18:06:19 phx Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56.2.1 2011/06/23 14:19:38 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2011/04/19 18:06:19 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.2.1 2011/06/23 14:19:38 cherry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -42,41 +42,40 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2011/04/19 18:06:19 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/extent.h>
+#include <sys/intr.h>
 #include <sys/kernel.h>
+#include <sys/ksyms.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/syscallargs.h>
-#include <sys/syslog.h>
 #include <sys/sysctl.h>
+#include <sys/syslog.h>
 #include <sys/systm.h>
-#include <sys/ksyms.h>
-#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <net/netisr.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
-#include <machine/pmap.h>
 #include <machine/powerpc.h>
-#include <machine/trap.h>
 #include <machine/bootinfo.h>
+
+#include <powerpc/pmap.h>
+#include <powerpc/trap.h>
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/openpic.h>
 #include <powerpc/pic/picvar.h>
 
 #ifdef DDB
-#include <machine/db_machdep.h>
+#include <powerpc/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 

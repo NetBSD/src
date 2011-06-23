@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.37 2010/04/05 07:19:31 joerg Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.37.6.1 2011/06/23 14:19:29 cherry Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.37 2010/04/05 07:19:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.37.6.1 2011/06/23 14:19:29 cherry Exp $");
 
 #include "opt_emac.h"
 
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.37 2010/04/05 07:19:31 joerg Exp $");
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
@@ -72,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.37 2010/04/05 07:19:31 joerg Exp $");
 
 #include <net/bpf.h>
 
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/mal405gp.h>
 #include <powerpc/ibm4xx/dev/emacreg.h>
@@ -332,6 +335,7 @@ emac_attach(device_t parent, device_t self, void *aux)
 	struct emac_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
+	const char * xname = device_xname(self);
 	bus_dma_segment_t seg;
 	int error, i, nseg, opb_freq, opbc, mii_phy = MII_PHY_ANY;
 	const uint8_t *enaddr;
@@ -526,7 +530,7 @@ emac_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
 
 	ifp = &sc->sc_ethercom.ec_if;
-	strcpy(ifp->if_xname, self->dv_xname);
+	strcpy(ifp->if_xname, xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = emac_start;
@@ -552,26 +556,26 @@ emac_attach(device_t parent, device_t self, void *aux)
 	 * Attach the event counters.
 	 */
 	evcnt_attach_dynamic(&sc->sc_ev_txintr, EVCNT_TYPE_INTR,
-	    NULL, self->dv_xname, "txintr");
+	    NULL, xname, "txintr");
 	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
-	    NULL, self->dv_xname, "rxintr");
+	    NULL, xname, "rxintr");
 	evcnt_attach_dynamic(&sc->sc_ev_txde, EVCNT_TYPE_INTR,
-	    NULL, self->dv_xname, "txde");
+	    NULL, xname, "txde");
 	evcnt_attach_dynamic(&sc->sc_ev_rxde, EVCNT_TYPE_INTR,
-	    NULL, self->dv_xname, "rxde");
+	    NULL, xname, "rxde");
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
-	    NULL, self->dv_xname, "intr");
+	    NULL, xname, "intr");
 
 	evcnt_attach_dynamic(&sc->sc_ev_txreap, EVCNT_TYPE_MISC,
-	    NULL, self->dv_xname, "txreap");
+	    NULL, xname, "txreap");
 	evcnt_attach_dynamic(&sc->sc_ev_txsstall, EVCNT_TYPE_MISC,
-	    NULL, self->dv_xname, "txsstall");
+	    NULL, xname, "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
-	    NULL, self->dv_xname, "txdstall");
+	    NULL, xname, "txdstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdrop, EVCNT_TYPE_MISC,
-	    NULL, self->dv_xname, "txdrop");
+	    NULL, xname, "txdrop");
 	evcnt_attach_dynamic(&sc->sc_ev_tu, EVCNT_TYPE_MISC,
-	    NULL, self->dv_xname, "tu");
+	    NULL, xname, "tu");
 #endif /* EMAC_EVENT_COUNTERS */
 
 	/*

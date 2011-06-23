@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_parse.c,v 1.2 2011/05/30 01:15:30 dyoung Exp $	*/
+/*	$NetBSD: aml_parse.c,v 1.2.2.1 2011/06/23 14:20:45 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_parse.c,v 1.7 2001/10/23 14:54:15 takawata Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_parse.c,v 1.2 2011/05/30 01:15:30 dyoung Exp $");
+__RCSID("$NetBSD: aml_parse.c,v 1.2.2.1 2011/06/23 14:20:45 cherry Exp $");
 
 #include <sys/param.h>
 
@@ -798,7 +798,7 @@ aml_parse_deffield(struct aml_environ *env, int indent)
 	aml_print_namestring(name = aml_parse_namestring(env));
 	fieldtemplate.type = aml_t_field;
 	flags = aml_parse_bytedata(env);
-	fieldtemplate.flags = fieldtemplate.flags = flags;
+	fieldtemplate.flags = flags;
 
 	*copy = *env;
 	env->dp = copy->end = start + pkglength;

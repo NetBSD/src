@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 2008/02/15 17:26:06 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.34.24.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.34 2008/02/15 17:26:06 matt Exp $");
+__RCSID("$NetBSD: trap.c,v 1.34.24.1 2011/06/23 14:17:48 cherry Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: trap.c,v 1.34 2008/02/15 17:26:06 matt Exp $");
 #include "jobs.h"
 #include "show.h"
 #include "options.h"
+#include "builtins.h"
 #include "syntax.h"
 #include "output.h"
 #include "memalloc.h"

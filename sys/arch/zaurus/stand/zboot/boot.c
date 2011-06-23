@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2011/01/22 19:19:25 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.2.2.1 2011/06/23 14:19:52 cherry Exp $	*/
 
 /*
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -128,7 +128,7 @@ parsebootfile(const char *fname, char **fsname, char **devname,
 			} while (isnum(fname[i]));
 		}
 
-#define isvalidpart(c) ((c) >= 'a' && (c) <= 'a' + MAXPARTITIONS)
+#define isvalidpart(c) ((c) >= 'a' && (c) < 'a' + MAXPARTITIONS)
 		if (i < devlen) {
 			if (!isvalidpart(fname[i]))
 				return (EPART);

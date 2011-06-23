@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26 2010/06/09 04:41:42 kiyohara Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.6.1 2011/06/23 14:19:26 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2010/06/09 04:41:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26.6.1 2011/06/23 14:19:26 cherry Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -52,10 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2010/06/09 04:41:42 kiyohara Exp $"
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-int	mainbus_match(struct device *, struct cfdata *, void *);
-void	mainbus_attach(struct device *, struct device *, void *);
+int	mainbus_match(device_t, cfdata_t, void *);
+void	mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 int mainbus_found = 0;
@@ -208,7 +208,7 @@ init_openpic(int node)
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	if (mainbus_found)
 		return 0;
@@ -219,7 +219,7 @@ mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct ofbus_attach_args oba;
 	struct confargs ca;

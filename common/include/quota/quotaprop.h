@@ -1,9 +1,7 @@
-/* $NetBSD: quotaprop.h,v 1.1 2011/03/24 17:05:39 bouyer Exp $ */
+/* $NetBSD: quotaprop.h,v 1.1.2.1 2011/06/23 14:17:49 cherry Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
-  * This software is distributed under the following condiions
-  * compliant with the NetBSD foundation policy.
   *
   * Redistribution and use in source and binary forms, with or without
   * modification, are permitted provided that the following conditions

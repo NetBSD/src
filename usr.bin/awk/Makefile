@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2010/12/15 08:09:23 he Exp $
+#	$NetBSD: Makefile,v 1.15.4.1 2011/06/23 14:20:42 cherry Exp $
 
 WARNS?=	1	# fails -Wshadow -Wcast-qual
 
@@ -15,7 +15,7 @@ LDADD+=	-lm
 DPADD+=	${LIBM}
 .endif
 YHEADER=	yes
-.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS+=	-Wno-pointer-sign
 .endif
 

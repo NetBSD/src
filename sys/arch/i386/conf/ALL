@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.307 2011/05/28 13:01:49 ryo Exp $
+# $NetBSD: ALL,v 1.307.2.1 2011/06/23 14:19:13 cherry Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.307 $"
+#ident 		"ALL-$Revision: 1.307.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -377,7 +377,8 @@ fdc*		at acpi?		# Floppy disk controller
 fujbp*		at acpi?		# Fujitsu Brightness & Pointer
 fujhk*		at acpi?		# Fujitsu Hotkeys
 hpqlb*		at acpi?		# HP Quick Launch Buttons
-hpet*		at acpi?		# High Precision Event Timer
+hpet*		at acpihpetbus?		# High Precision Event Timer (table)
+hpet*		at acpinodebus?		# High Precision Event Timer (device)
 joy*		at acpi?		# Joystick/Game port
 lpt*		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART

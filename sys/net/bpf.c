@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.164 2011/03/30 21:34:08 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.164.2.1 2011/06/23 14:20:25 cherry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.164 2011/03/30 21:34:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.164.2.1 2011/06/23 14:20:25 cherry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1862,7 +1862,6 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 		if (len >= elem_size && elem_count > 0) {
 #define BPF_EXT(field)	dpe.bde_ ## field = dp->bd_ ## field
 			BPF_EXT(bufsize);
-			BPF_EXT(promisc);
 			BPF_EXT(promisc);
 			BPF_EXT(state);
 			BPF_EXT(immediate);

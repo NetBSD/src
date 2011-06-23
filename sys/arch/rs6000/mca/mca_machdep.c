@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.2 2008/04/28 20:23:34 martin Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.2.32.1 2011/06/23 14:19:37 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.2 2008/04/28 20:23:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.2.32.1 2011/06/23 14:19:37 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,8 +115,7 @@ mca_intr_evcnt(mca_chipset_tag_t ic, int irq)
  * Map the MCA DMA controller registers.
  */
 void
-mca_attach_hook(struct device *parent, struct device *self,
-    struct mcabus_attach_args *mba)
+mca_attach_hook(device_t parent, device_t self, struct mcabus_attach_args *mba)
 {
 #if 0
 	dmaiot = mba->mba_iot;

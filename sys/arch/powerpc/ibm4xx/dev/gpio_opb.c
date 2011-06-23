@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_opb.c,v 1.7 2010/03/18 13:47:04 kiyohara Exp $	*/
+/*	$NetBSD: gpio_opb.c,v 1.7.6.1 2011/06/23 14:19:29 cherry Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -45,7 +45,7 @@
 #include <powerpc/ibm4xx/dev/gpioreg.h>
 
 struct gpio_opb_softc {
-	struct device		sc_dev;		/* device generic */
+	device_t		sc_dev;		/* device generic */
 	/* GPIO interface */
 	bus_space_tag_t		sc_gpio_iot;
 	bus_space_handle_t	sc_gpio_ioh;
@@ -53,21 +53,44 @@ struct gpio_opb_softc {
 	gpio_pin_t		sc_gpio_pins[GPIO_NPINS];
 };
 
-static int	gpio_opb_match(struct device *, struct cfdata *, void *);
-static void	gpio_opb_attach(struct device *, struct device *, void *);
+static int	gpio_opb_match(device_t, cfdata_t, void *);
+static void	gpio_opb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(opbgpio, sizeof(struct gpio_opb_softc),
+CFATTACH_DECL_NEW(opbgpio, sizeof(struct gpio_opb_softc),
 	gpio_opb_match, gpio_opb_attach, NULL, NULL);
 
 static int	gpio_opb_pin_read(void *, int);
 static void	gpio_opb_pin_write(void *, int, int);
 static void	gpio_opb_pin_ctl(void *, int, int);
 
+static inline uint32_t
+gpio_read(struct gpio_opb_softc *sc, bus_size_t o)
+{
+	return bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, o);
+}
+
+static inline void
+gpio_write(struct gpio_opb_softc *sc, bus_size_t o, uint32_t v)
+{
+	bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, o, v);
+}
+
+static inline void
+gpio_set(struct gpio_opb_softc *sc, bus_size_t o, uint32_t v)
+{
+	gpio_write(sc, o, gpio_read(sc, o) | v);
+}
+
+static inline void
+gpio_clear(struct gpio_opb_softc *sc, bus_size_t o, uint32_t v)
+{
+	gpio_write(sc, o, gpio_read(sc, o) & ~v);
+}
 
 static int
-gpio_opb_match(struct device *parent, struct cfdata *cf, void *aux)
+gpio_opb_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct opb_attach_args *oaa = aux;
+	struct opb_attach_args * const oaa = aux;
 
 	if (strcmp(oaa->opb_name, cf->cf_name) != 0)
 		return 0;
@@ -76,16 +99,17 @@ gpio_opb_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-gpio_opb_attach(struct device *parent, struct device *self, void *aux)
+gpio_opb_attach(device_t parent, device_t self, void *aux)
 {
-	struct gpio_opb_softc *sc = (struct gpio_opb_softc *)self;
-	struct opb_attach_args *oaa = aux;
+	struct gpio_opb_softc * const sc = device_private(self);
+	struct opb_attach_args * const oaa = aux;
 	struct gpiobus_attach_args gba;
-	int i;
-	uint32_t reg1, reg2, reg3;
+	uint32_t reg_ir, reg_tcr, reg_odr;
 
 	aprint_naive(": GPIO controller\n");
 	aprint_normal(": On-Chip GPIO controller\n");
+
+	sc->sc_dev = self;
 
 	/* Map GPIO I/O space */
 	sc->sc_gpio_iot = oaa->opb_bt;
@@ -93,28 +117,28 @@ gpio_opb_attach(struct device *parent, struct device *self, void *aux)
 		GPIO_NREG, 0, &sc->sc_gpio_ioh);
 
 	/* Read current register status */
-	reg1 = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_IR);
-	reg2 = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_TCR);
-	reg3 = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_ODR);
+	reg_ir  = gpio_read(sc, GPIO_IR);
+	reg_tcr = gpio_read(sc, GPIO_TCR);
+	reg_odr = gpio_read(sc, GPIO_ODR);
 
 	/* Initialize pins array */
-	for (i = 0 ; i < GPIO_NPINS ; i++) {
-		int p = i + 1;
-		sc->sc_gpio_pins[i].pin_num = i;
-		sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INOUT
-						| GPIO_PIN_OPENDRAIN
-						| GPIO_PIN_TRISTATE;
+	gpio_pin_t *pin = sc->sc_gpio_pins;
+	for (u_int i = 0 ; i < GPIO_NPINS ; i++, pin++) {
+		const uint32_t pin_mask = 1 << GPIO_PIN_SHIFT(i + 1);
+		pin->pin_num = i;
+		pin->pin_caps = GPIO_PIN_INOUT
+				 | GPIO_PIN_OPENDRAIN
+				 | GPIO_PIN_TRISTATE;
 
 		/* current defaults */
-		sc->sc_gpio_pins[i].pin_flags =
-			((reg3 >> GPIO_PIN_SHIFT(p)) & 0x01)
+		pin->pin_flags =
+		    (reg_odr & pin_mask)
 			? GPIO_PIN_OPENDRAIN
-			: (((reg2 >> GPIO_PIN_SHIFT(p)) & 0x01)
-				? GPIO_PIN_INOUT
-				: GPIO_PIN_TRISTATE);
-		sc->sc_gpio_pins[i].pin_state =
-			((reg1 >> GPIO_PIN_SHIFT(p)) & 0x01);
-		sc->sc_gpio_pins[i].pin_mapped = 0;
+			: ((reg_tcr & pin_mask)
+			    ? GPIO_PIN_INOUT
+			    : GPIO_PIN_TRISTATE);
+		pin->pin_state = (reg_ir & pin_mask) != 0;
+		pin->pin_mapped = 0;
 	}
 
 	/* Create controller tag */
@@ -128,90 +152,58 @@ gpio_opb_attach(struct device *parent, struct device *self, void *aux)
 	gba.gba_npins = GPIO_NPINS;
 
 	/* Attach GPIO framework */
-	(void) config_found(&sc->sc_dev, &gba, gpiobus_print);
+	(void) config_found(self, &gba, gpiobus_print);
 }
 
 static int
 gpio_opb_pin_read(void *arg, int pin)
 {
-	struct gpio_opb_softc *sc = arg;
-	uint32_t data;
-	int p;
+	struct gpio_opb_softc * const sc = arg;
+	const u_int p = (pin % GPIO_NPINS) + 1;
+	uint32_t reg_ir = gpio_read(sc, GPIO_IR);
 
-	p = pin % GPIO_NPINS;
-	p = p + 1;
-
-	data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_IR);
-
-	return (data >> GPIO_PIN_SHIFT(p)) & 0x01;
+	return (reg_ir >> GPIO_PIN_SHIFT(p)) & 0x01;
 }
 
 static void
 gpio_opb_pin_write(void *arg, int pin, int value)
 {
-	struct gpio_opb_softc *sc = arg;
-	uint32_t data;
-	int p;
+	struct gpio_opb_softc * const sc = arg;
+	const u_int p = (pin % GPIO_NPINS) + 1;
+	const uint32_t pin_mask = 1 << GPIO_PIN_SHIFT(p);
 
-	p = pin % GPIO_NPINS;
-	p = p + 1;
-
-	data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_OR);
 	if (value == 0) {
-		data &= ~(1 << GPIO_PIN_SHIFT(p));
+		gpio_clear(sc, GPIO_OR, pin_mask);
 	} else if (value == 1) {
-		data |= (1 << GPIO_PIN_SHIFT(p));
+		gpio_set(sc, GPIO_OR, pin_mask);
 	}
-
-	bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_OR, data);
 }
 
 static void
 gpio_opb_pin_ctl(void *arg, int pin, int flags)
 {
-	struct gpio_opb_softc *sc = arg;
-	uint32_t data;
-	int p;
-
-	p = pin % GPIO_NPINS;
-	p = p + 1;
+	struct gpio_opb_softc * const sc = arg;
+	const u_int p = (pin % GPIO_NPINS) + 1;
+	const uint32_t pin_mask = 1 << GPIO_PIN_SHIFT(p);
 
 	if (flags & GPIO_PIN_INOUT) {
 		/* GPIOn_ODR register bit is 0 */
-		data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
-					GPIO_ODR);
-		data &= ~(1 << GPIO_PIN_SHIFT(p));
-		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
-					GPIO_ODR, data);
+		gpio_clear(sc, GPIO_ODR, pin_mask);
+
 		/* GPIOn_TCR register bit is 1 */
-		data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
-					GPIO_TCR);
-		data |= (1 << GPIO_PIN_SHIFT(p));
-		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
-					GPIO_TCR, data);
+		gpio_set(sc, GPIO_TCR, pin_mask);
 	}
 
 	if (flags & GPIO_PIN_TRISTATE) {
 		/* GPIOn_ODR register bit is 0 */
-		data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
-					GPIO_ODR);
-		data &= ~(1 << GPIO_PIN_SHIFT(p));
-		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
-					GPIO_ODR, data);
+		gpio_clear(sc, GPIO_ODR, pin_mask);
+
 		/* GPIOn_TCR register bit is 0 */
-		data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
-					GPIO_TCR);
-		data &= ~(1 << GPIO_PIN_SHIFT(p));
-		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
-					GPIO_TCR, data);
+		gpio_clear(sc, GPIO_TCR, pin_mask);
 	}
 
 	if (flags & GPIO_PIN_OPENDRAIN) {
 		/* GPIOn_ODR register bit is 1 */
-		data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
-					GPIO_ODR);
-		data |= (1 << GPIO_PIN_SHIFT(p));
-		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
-					GPIO_ODR, data);
+		gpio_set(sc, GPIO_ODR, pin_mask);
 	}
 }

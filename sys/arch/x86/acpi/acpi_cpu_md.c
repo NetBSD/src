@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.59 2011/05/31 14:45:36 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.59.2.1 2011/06/23 14:19:47 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.59 2011/05/31 14:45:36 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.59.2.1 2011/06/23 14:19:47 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -138,57 +138,6 @@ acpicpu_md_attach(device_t parent, device_t self, void *aux)
 	struct cpufeature_attach_args *cfaa = aux;
 
 	return cfaa->ci;
-}
-
-uint32_t
-acpicpu_md_cap(void)
-{
-	struct cpu_info *ci = curcpu();
-	uint32_t regs[4];
-	uint32_t val = 0;
-
-	if (cpu_vendor != CPUVENDOR_IDT &&
-	    cpu_vendor != CPUVENDOR_INTEL)
-		return val;
-
-	/*
-	 * Basic SMP C-states (required for e.g. _CST).
-	 */
-	val |= ACPICPU_PDC_C_C1PT | ACPICPU_PDC_C_C2C3;
-
-	/*
-	 * Claim to support dependency coordination.
-	 */
-	val |= ACPICPU_PDC_P_SW | ACPICPU_PDC_C_SW | ACPICPU_PDC_T_SW;
-
-        /*
-	 * If MONITOR/MWAIT is available, announce
-	 * support for native instructions in all C-states.
-	 */
-        if ((ci->ci_feat_val[1] & CPUID2_MONITOR) != 0)
-		val |= ACPICPU_PDC_C_C1_FFH | ACPICPU_PDC_C_C2C3_FFH;
-
-	/*
-	 * Set native P- and T-states, if available.
-	 */
-        if ((ci->ci_feat_val[1] & CPUID2_EST) != 0)
-		val |= ACPICPU_PDC_P_FFH;
-
-	if ((ci->ci_feat_val[0] & CPUID_ACPI) != 0)
-		val |= ACPICPU_PDC_T_FFH;
-
-	/*
-	 * Declare support for APERF and MPERF.
-	 */
-	if (cpuid_level >= 0x06) {
-
-		x86_cpuid(0x00000006, regs);
-
-		if ((regs[2] & CPUID_DSPM_HWF) != 0)
-			val |= ACPICPU_PDC_P_HWF;
-	}
-
-	return val;
 }
 
 uint32_t
@@ -751,6 +700,18 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 
 		if (val == ps->ps_status) {
 			*freq = ps->ps_freq;
+			return 0;
+		}
+	}
+
+	/*
+	 * If the value was not found, try APERF/MPERF.
+	 * The state is P0 if the return value is 100 %.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_P_HWF) != 0) {
+
+		if (acpicpu_md_pstate_hwf(sc->sc_ci) == 100) {
+			*freq = sc->sc_pstate[0].ps_freq;
 			return 0;
 		}
 	}

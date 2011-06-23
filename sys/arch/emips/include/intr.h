@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2011/02/22 08:20:20 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.2.4.1 2011/06/23 14:19:06 cherry Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@ struct emips_intrhand {
 	void *ih_arg;
 };
 
-void intr_init(int);
+void intr_init(void);
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
 

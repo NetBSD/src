@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.42 2011/05/20 21:56:46 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.42.2.1 2011/06/23 14:19:51 cherry Exp $
 #
 # GENERIC machine description file
 #
@@ -190,6 +190,10 @@ pxadmac0 at pxaip? addr 0x40000000 intr 25
 options		PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
 #options	PXA2X0_DMAC_FIXED_PRIORITY	# Don't want multiple priority
 
+# I2C support
+ziic0 at pxaip?
+iic0 at ziic?
+
 # Power management
 zapm0 at pxaip?		# power management
 apmdev0 at zapm0	# APM
@@ -197,6 +201,9 @@ apmdev0 at zapm0	# APM
 # PCMCIA/CF socket and GPIO controllers
 scoop0 at pxaip?
 scoop1 at pxaip?
+
+# alternate GPIO contoller for SL-C1000
+ioexp0 at iic? addr 0x18
 
 # ADC, touchpad, backlight
 zssp0 at pxaip?
@@ -218,9 +225,10 @@ lcd0 at pxaip?
 options 	PXA2X0_LCD_WRITETHROUGH
 wsdisplay* at lcd? console ?
 
-# Audio
-zaudio0 at pxaip?
+# WM8750 Audio
+zaudio0 at iic? addr 0x1b
 audio* at zaudio?
+#options 	ZAUDIO_VOLUME_STRIDE=8
 
 # Audio support
 audio* at audiobus?
@@ -366,7 +374,6 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device   bpfilter                # Berkeley packet filter
 pseudo-device	loop			# network loopback
 
-#
 # accept filters
 pseudo-device	accf_data		# "dataready" accept filter
 pseudo-device	accf_http		# "httpready" accept filter
@@ -383,9 +390,6 @@ pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for SMBFS
 #pseudo-device	nsmb			# experimental - SMB requester
-
-# a pseudo device needed for verified exec
-#pseudo-device  veriexec
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

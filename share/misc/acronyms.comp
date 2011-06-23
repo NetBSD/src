@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.125 2011/05/10 23:33:07 enami Exp $
+$NetBSD: acronyms.comp,v 1.125.2.1 2011/06/23 14:18:46 cherry Exp $
 
 3WHS	three-way handshake
 AA	anti-aliasing
@@ -35,6 +35,7 @@ AI	artificial intelligence
 AL	access list
 AL	active link
 ALE	address latch enable
+ALS	ambient light sensor
 ALU	arithmetic and logical unit
 AM	access method
 AM	amplitude modulation
@@ -50,6 +51,7 @@ AP	access point
 AP	application processor
 API	application programming interface
 APIC	advanced programmable interrupt controller
+AQM	active queue management
 ARAT	always running APIC timer
 ARC	adaptive replacement cache
 ARM	Advanced RISC Machines
@@ -127,11 +129,13 @@ BPI	bits per inch
 BPM	business process modelling
 BPS	bits per second
 BQS	Berkeley quality software
+BRE	basic regular expression
+BS	binary sequence
 BSD	Berkeley software distribution
 BSF	bit scan forward
 BSOD	blue screen of death
 BSP	binary space partition
-BSP	boot strap processor
+BSP	bootstrap processor
 BSR	bit scan reverse
 BSS	block started by symbol
 BT	Bluetooth
@@ -161,6 +165,7 @@ CC	carbon coby
 CD	compact disc
 CD	cache disable
 CDDA	compact disc digital audio
+CDMA	code division multiple access
 CDRAM	cache dynamic random access memory
 CER	canonical encoding rules
 CF	compact flash
@@ -172,9 +177,11 @@ CGI	common gateway interface
 CHAP	challenge-handshake authentication protocol
 CHS	cylinder/head/sector
 CI	{common, component} interface
+CI	continuous integration
 CIDR	classless inter-domain routing
 CIFS	common internet file system
 CIL	common intermediate language
+CIR	carrier to interference ratio
 CIS	contact image sensor
 CJK	Chinese, Japanese, and Korean
 CLF	common log format
@@ -193,13 +200,17 @@ CMS	content management system
 CMYK	cyan magenta yellow black
 CN	{common, canonical} name
 CNC	computer numerical control
+CNR	carrier to noise ratio
 COF	current operating frequency
 COFF	common object file format
+COM	component object model
 COMA	cache-only memory architecture
+CORBA	common object request broker architecture
 COW	copy-on-write
 CPB	core performance boost
 CPG	clock pulse generator
 CPL	current privilege level
+CPLD	complex programmable logic device
 CPS	characters per second
 CPT	command pass through
 CPU	central processing unit
@@ -232,6 +243,9 @@ DAP	directory access protocol
 DAT	digital audio tape
 DAT	dynamic acceleration technology
 DB	database
+DBA	dynamic bandwidth allocation
+DBC	design by contract
+DBL	dynamic buffer limiting
 DBMS	database management system
 DBS	database server
 DC	direct current
@@ -240,6 +254,8 @@ DCC	direct cable connect
 DCD	data carrier detect
 DCE	data control equipment
 DCE	distributed computing environment
+DCOM	distributed component object model
+DCOP	desktop communication protocol
 DCS	data collection systems
 DCT	discrete cosine transform
 DCU	data cache unit
@@ -310,6 +326,7 @@ DTE	data terminal equipment
 DTE	dumb terminal emulator
 DTL	diode-transistor logic
 DTS	digital thermal sensor
+DUT	device under test
 DVB	digital video broadcasting
 DVCS	distributed version control system
 DVD	digital versatile disc
@@ -317,6 +334,7 @@ DVFS	dynamic voltage and frequency scaling
 DVR	digital video recorder
 DVI	digital visual interface
 E-XER	extended XML encoding rules
+EABI	embedded-application binary interface
 EAP	extensible authentication protocol
 EBR	extended boot record
 ECC	error correction code
@@ -344,6 +362,7 @@ EMI	electro-magnetic interference
 EMP	electro-magnetic pulse
 EMR	electro-magnetic radiation
 EOF	end of file
+EOI	end of interrupt
 EOL	end of line
 EOL	end of life
 EOT	end of transmission
@@ -352,6 +371,7 @@ EPP	enhanced parallel port
 EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
 ERD	emergency recovery disk
+ERE	extended regular expression
 ESDRAM	enhanced synchronous dynamic random access memory
 ESS	electronic switching system
 EST	enhanced speedstep
@@ -361,6 +381,7 @@ EULA	end user license agreement
 FAT	file allocation table
 FBRAM	frame buffer random access memory
 FCL	fiber channel loop
+FCFS	first come, first served
 FCS	frame check sequence
 FDC	floppy disk controller
 FDD	floppy disk drive
@@ -403,12 +424,15 @@ FTPS	file transfer protocol, secure
 FUS	fast user switching
 FWH	firmware hub
 FWS	folding white space
+GAL	generic array logic
 GAS	generic address structure
 GC	garbage collector
 GCR	group-coded recording
 GDT	global descriptor table
 GEM	graphics execution manager
 GEM	graphics environment manager
+GENA	general event notification architecture
+GHC	Glasgow Haskell compiler
 GID	group identifier
 GIF	graphics interchange format
 GMCH	graphics and memory controller hub
@@ -418,6 +442,7 @@ GPE	general purpose event
 GPF	general protection fault
 GPL	GNU/general public license
 GPR	general purpose register
+GPS	generalized processor sharing
 GPT	GUID partition table
 GPU	graphics processing unit
 GR	golden ratio
@@ -435,6 +460,7 @@ HCL	hardware compatibility list
 HCF	halt and catch fire
 HDD	hard disk drive
 HDCP	high-bandwidth digital content protection
+HDL	hardware description language
 HF	high frequency
 HFM	highest frequency mode
 HID	human interface device
@@ -468,6 +494,7 @@ ICH	I/O controller hub
 ICE	internal compiler error
 ICE	in-circuit emulator
 ICMP	Internet control message protocol
+ICT	information and communications technology
 IDA	Intel dynamic acceleration
 IDE	integrated drive electronics
 IDE	integrated development environment
@@ -481,6 +508,7 @@ IEEE	Institute [of] Electrical [and] Electronics Engineers
 IESG	Internet Engineering Steering Group
 IETF	Internet Engineering Task Force
 IFCM	isochronous flow control mode
+IGD	Internet gateway device
 IGMP	Internet group management protocol
 IGP	interior gateway protocol
 IHV	independent hardware vendor
@@ -523,6 +551,7 @@ ISP	Internet service provider
 ISR	interrupt service routine
 IST	interrupt stack table
 ISV	independent software vendor
+IT	information technology
 ITB	Intel turbo boost
 IV	initialization vector
 IVT	interrupt vector table
@@ -721,6 +750,7 @@ ODT	on-die termination
 OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
 OFET	organic field-effect transistor
+OLE	object linking and embedding
 ONFI	open nand flash interface
 OO	object oriented
 OO	OpenOffice
@@ -753,6 +783,8 @@ PA	physical address
 PA	phase accumulator
 PAC	phase-amplitude converter
 PAE	physical address extension
+PAL	programmable array logic
+PAL	phase alternating line
 PAM	pluggable authentication modules
 PAM	pulse amplitude modulation
 PAP	password authentication protocol
@@ -800,10 +832,13 @@ PIM	platform-independent model
 PIN	personal identification number
 PIO	programmed input/output
 PIPT	physically indexed, physically tagged
+PIQ	prefetch input queue
+PIT	programmable interrupt timer
 PIV	personal identity verification
 PKI	public key infrastructure
 PKCS	public-key cryptography standards
 PLC	programmable logic controller
+PLD	programmable logic device
 PLL	phase locked loop
 PLRU	pseudo LRU
 PLTM	package level thermal management
@@ -834,6 +869,7 @@ PPPOE	point-to-point protocol over ethernet
 PPU	physics processing unit
 PRBS	pseudo-random bit sequence
 PRML	partial response, maximum likelihood
+PRN	pseudo random {number, noise}
 PRNG	pseudo random number generator
 PROM	programmable read only memory
 PSD	power spectral density
@@ -863,6 +899,7 @@ QOS	quality of service
 RA	receiver address
 RA	remote assistance
 RA	router advertisement
+RA	resource affinity
 RAD	rapid application development
 RAID	redundant array of inexpensive disks
 RAM	random access memory
@@ -878,6 +915,7 @@ RCU	read, copy, update
 RDF	resource description format
 RDM	relational data model
 RDMA	remote direct memory access
+RE	regular expression
 REST	representational state transfer
 RF	radio frequency
 RFI	radio frequency interference
@@ -895,6 +933,7 @@ RLE	run length encoding
 RLL	run length limited
 RLO	right-to-left override
 RM	read miss
+RMI	remote method invocation
 RMPM	rapid memory power management
 RMS	root mean square
 RMW	read, modify, write
@@ -903,6 +942,7 @@ ROM	read only memory
 RPC	remote procedure call
 RPL	requested privilege level
 RPM	revolutions per minute
+RR	round robin
 RR	random replacement
 RS	relay station
 RSA	Rivest, Shamir and Adleman
@@ -927,12 +967,14 @@ SA	structured analysis
 SAAS	software as a service
 SACD	super audio compact disc
 SAD	security association database
+SAL	system abstraction layer
 SAM	serial access memory
 SAM	sum addressed memory
 SAN	storage area network
 SAPIC	streamlined advanced programmable interrupt controller
 SASD	structured analysis, structured design
 SASI	shugart associates system interface (predecessor to SCSI)
+SASL	simple authentication [and] security layer
 SATA	serial advanced technology attachment
 SB	sound blaster
 SBU	standard build unit
@@ -1018,16 +1060,19 @@ STD	state transition diagram
 STP	shielded twisted pair
 STP	spanning-tree protocol
 SUS	Single Unix Specification
+SUT	system under test
 SVG	scalable vector graphics
 SVGA	super video graphics {array,adapter}
 SVM	secure virtual machine
 SVM	support vector machine
 SWF	Shockwave Flash
+SWIG	simplified wrapper [and] interface generator
 TA	transmitter address
 TA	test assertion
 TAI	international atomic time
 TAO	track at once
 TAOCP	The Art of Computer Programming
+TAP	test anywhere protocol
 TAS	test and set
 TB	terabyte
 TCB	trace capture buffer
@@ -1038,7 +1083,9 @@ TCP	transmission control protocol
 TCQ	tagged command queueing
 TDC	time [to] digital converter
 TDD	test driven development
+TDD	time division duplex
 TDM	time division multiplexing
+TDMA	time division multiple access
 TDOA	time difference of arrival
 TDP	thermal design {point, power}
 TECO	Text Editor and Corrector
@@ -1087,6 +1134,7 @@ TX	transmit out, transmitter
 TZ	time zone
 UAC	user {account, access} control
 UART	universal asynchronous receiver/transmitter
+UAT	user acceptance testing
 UC	uncacheable
 UCS	uniform-cost search
 UDMA	ultra DMA
@@ -1103,6 +1151,7 @@ UMA	upper memory area
 UMB	upper memory block
 UMPC	ultra-mobile PC
 UML	unified modeling language
+UPNP	universal plug and play
 UPS	uninterruptible power supply
 URI	uniform resource identifier
 URL	uniform resource locator
@@ -1116,6 +1165,7 @@ UTP	unshielded twisted pair
 UUCP	Unix-to-Unix copy protocol
 UUID	universally unique identifier
 UUOC	useless use of cat
+UUT	unit under test
 VA	volt-ampere
 VA	virtual address
 VA	vertical alignment
@@ -1155,6 +1205,7 @@ WAN	wide area network
 WAP	wireless application protocol
 WEP	wired equivalent privacy
 WFI	wait for interrupt
+WFQ	weighted fair queuing
 WH	write hit
 WIFI    wireless fidelity
 WLAN	wireless local area network

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.85 2010/07/25 09:54:37 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.85.6.1 2011/06/23 14:20:15 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.85 2010/07/25 09:54:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.85.6.1 2011/06/23 14:20:15 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -783,7 +783,7 @@ loop:
 	 */
 	vp = FTOV(fp);
 	if (vp) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		ntfs_ntput(ip);
 		if (vget(vp, lkflags) != 0)
 			goto loop;
@@ -792,13 +792,13 @@ loop:
 	}
 	ntfs_ntput(ip);
 
-	error = getnewvnode(VT_NTFS, ntmp->ntm_mountp, ntfs_vnodeop_p, &vp);
-	ntfs_ntget(ip);
+	error = getnewvnode(VT_NTFS, ntmp->ntm_mountp, ntfs_vnodeop_p,
+	    NULL, &vp);
 	if(error) {
 		ntfs_frele(fp);
-		ntfs_ntput(ip);
 		return (error);
 	}
+	ntfs_ntget(ip);
 	error = ntfs_fget(ntmp, ip, attrtype, attrname, &fp);
 	if (error) {
 		printf("ntfs_vget: ntfs_fget failed\n");

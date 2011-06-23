@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2010/04/25 12:26:07 kiyohara Exp $ */
+/*	$NetBSD: intr.h,v 1.5.6.1 2011/06/23 14:19:30 cherry Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -26,16 +26,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.5 2010/04/25 12:26:07 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.5.6.1 2011/06/23 14:19:30 cherry Exp $");
+#endif
 
 #ifndef POWERPC_INTR_MACHDEP_H
 #define POWERPC_INTR_MACHDEP_H
 
-void *intr_establish(int, int, int, int (*)(void *), void *);
-void intr_disestablish(void *);
-const char *intr_typename(int);
-void genppc_cpu_configure(void);
+#define	__HAVE_FAST_SOFTINTS	1
+
 
 /* Interrupt priority `levels'. */
 #define	IPL_NONE	0	/* nothing */
@@ -54,7 +54,20 @@ void genppc_cpu_configure(void);
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-#ifndef _LOCORE
+#if !defined(_LOCORE)
+void *	intr_establish(int, int, int, int (*)(void *), void *);
+void	intr_disestablish(void *);
+const char *
+	intr_typename(int);
+
+int	splraise(int);
+int	spllower(int);
+void	splx(int);
+
+#if !defined(_MODULE)
+
+void	genppc_cpu_configure(void);
+
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
  * the list.  The handler is called with its (single) argument.
@@ -63,37 +76,35 @@ struct intrhand {
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	struct	intrhand *ih_next;
-	int	ih_level;
-	int	ih_irq;
+	int	ih_ipl;
+	int	ih_virq;
 };
 
-int splraise(int);
-int spllower(int);
-void splx(int);
-void softintr(int);
+void softint_fast_dispatch(struct lwp *, int);
 
-typedef u_int imask_t;
+#define softint_init_md		powerpc_softint_init_md
+#define softint_trigger		powerpc_softint_trigger
+
+#ifdef __IMASK_T
+typedef __IMASK_T imask_t;
+#else
+typedef uint32_t imask_t;
+#endif
+
 extern imask_t imask[];
 
-#define NVIRQ		32	/* 32 virtual IRQs */
+#define NVIRQ		(sizeof(imask_t)*8)	/* 32 virtual IRQs */
+#ifndef NIRQ
 #define NIRQ		128	/* up to 128 HW IRQs */
+#endif
 
-#define HWIRQ_MAX       (NVIRQ - 5 - 1)
-#define HWIRQ_MASK      0x07ffffff
+#define HWIRQ_MAX       (NVIRQ - 1)
+#define HWIRQ_MASK     	(~(imask_t)0 >> 1)
 
-#define MS_PENDING(p)	(31 - cntlzw(p))
+#define	PIC_VIRQ_TO_MASK(v)	__BIT(HWIRQ_MAX - (v))
+#define PIC_VIRQ_MS_PENDING(p)	__builtin_clz(p)
 
-/* Soft interrupt masks. */
-#define SIR_CLOCK	27
-#define SIR_BIO		28
-#define SIR_NET		29
-#define SIR_SERIAL	30
-#define SPL_CLOCK	31
-
-#define setsoftclock()	softintr(SIR_CLOCK)
-#define setsoftbio()	softintr(SIR_BIO)
-#define setsoftnet()	softintr(SIR_NET)
-#define setsoftserial()	softintr(SIR_SERIAL)
+#endif /* !_MODULE */
 
 #define spl0()		spllower(0)
 
@@ -113,7 +124,7 @@ static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
-	return splraise(imask[icookie._ipl]);
+	return splraise(icookie._ipl);
 }
 
 #include <sys/spl.h>

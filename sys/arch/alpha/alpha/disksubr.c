@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.39 2009/03/16 23:11:09 dsl Exp $ */
+/* $NetBSD: disksubr.c,v 1.39.10.1 2011/06/23 14:18:51 cherry Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39 2009/03/16 23:11:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39.10.1 2011/06/23 14:18:51 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39 2009/03/16 23:11:09 dsl Exp $");
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-extern struct device *bootdv;
+extern device_t bootdv;
 
 /*
  * Attempt to read a disk label from a device

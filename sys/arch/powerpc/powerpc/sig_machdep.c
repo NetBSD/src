@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.40 2011/03/16 21:15:30 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.40.2.1 2011/06/23 14:19:35 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.40 2011/03/16 21:15:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.40.2.1 2011/06/23 14:19:35 cherry Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.40 2011/03/16 21:15:30 matt Exp $"
 #include <powerpc/fpu.h>
 #include <powerpc/altivec.h>
 #include <powerpc/pcb.h>
+#include <powerpc/psl.h>
 
 /*
  * Send a signal to process.

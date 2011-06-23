@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.180 2010/12/14 23:44:49 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.180.6.1 2011/06/23 14:19:46 cherry Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180.6.1 2011/06/23 14:19:46 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -108,11 +108,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2010/12/14 23:44:49 matt Exp $");
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/reboot.h>
+#include <sys/kauth.h>
 #include <sys/savar.h>	/* for cpu_upcall */
 #include <sys/sysctl.h>
 #include <sys/time.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -131,8 +133,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2010/12/14 23:44:49 matt Exp $");
 
 #include "smg.h"
 #include "ksyms.h"
+#include "leds.h"
+
+#define DEV_LEDS	13	/* minor device 13 is leds */
 
 extern vaddr_t virtual_avail, virtual_end;
+extern paddr_t avail_end;
+
 /*
  * We do these external declarations here, maybe they should be done
  * somewhere else...
@@ -169,7 +176,6 @@ cpu_startup(void)
 #if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	vaddr_t		minaddr, maxaddr;
 #endif
-	extern paddr_t avail_end;
 	char pbuf[9];
 
 	/*
@@ -771,3 +777,31 @@ generic_reboot(int arg)
 	__asm("halt");
 }
 
+bool
+mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+{
+
+	*vaddr = paddr + KERNBASE;
+	return true;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (pa < avail_end) ? 0 : EFAULT;
+}
+
+int
+mm_md_readwrite(dev_t dev, struct uio *uio)
+{
+
+	switch (minor(dev)) {
+#if NLEDS
+	case DEV_LEDS:
+		return leds_uio(uio);
+#endif
+	default:
+		return ENXIO;
+	}
+}

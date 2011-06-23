@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.99 2011/03/10 07:47:15 bsh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.99.2.1 2011/06/23 14:19:00 cherry Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -190,6 +190,7 @@ struct pmap {
 	pd_entry_t		pm_l1vec;
 	union pmap_cache_state	pm_cstate;
 	struct uvm_object	pm_obj;
+	kmutex_t		pm_obj_lock;
 #define	pm_lock pm_obj.vmobjlock
 	struct l2_dtable	*pm_l2[L2_SIZE];
 	struct pmap_statistics	pm_stats;

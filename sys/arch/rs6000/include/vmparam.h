@@ -1,4 +1,6 @@
-/*	$NetBSD: vmparam.h,v 1.1 2007/12/17 19:09:37 garbled Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.50.1 2011/06/23 14:19:37 cherry Exp $	*/
 
+#if !defined(_MODULE)
 #define	USER_SR		10
-#include <powerpc/oea/vmparam.h>
+#endif
+#include <powerpc/vmparam.h>

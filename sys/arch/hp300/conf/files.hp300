@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.84 2011/05/21 12:06:14 tsutsui Exp $
+#	$NetBSD: files.hp300,v 1.84.2.1 2011/06/23 14:19:11 cherry Exp $
 #
 # hp300-specific configuration info
 
@@ -203,7 +203,6 @@ file	arch/hp300/hp300/dkbad.c
 file	arch/hp300/hp300/machdep.c
 file	arch/hp300/hp300/intr.c
 file	arch/hp300/hp300/leds.c			useleds
-file	arch/hp300/hp300/mem.c
 file	arch/hp300/hp300/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/disksubr.c

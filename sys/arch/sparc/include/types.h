@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.57 2011/03/30 09:23:26 martin Exp $ */
+/*	$NetBSD: types.h,v 1.57.2.1 2011/06/23 14:19:40 cherry Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,8 @@
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
 #endif
+
+#ifndef _LOCORE
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -113,18 +115,23 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__SIMPLELOCK_LOCKED	0xff
 #define	__SIMPLELOCK_UNLOCKED	0
 
+#endif /* _LOCORE */
+
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_SYSCALL_INTERN
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
 #define __HAVE_CPU_DATA_FIRST
 
 #ifdef SUN4U
-#define __HAVE_DEVICE_REGISTER_POSTCONFIG
+#define	__HAVE_DEVICE_REGISTER_POSTCONFIG
 #define	__HAVE_ATOMIC64_OPS
-#define __HAVE_CPU_COUNTER	/* sparc v9 CPUs have %tick */
+#define	__HAVE_CPU_COUNTER	/* sparc v9 CPUs have %tick */
+#define	__HAVE_FAST_SOFTINTS
 #if defined(_KERNEL)
-#define __HAVE_RAS
+#define	__HAVE_RAS
 #endif
+#else
+#define	__HAVE_MM_MD_READWRITE
 #endif
 
 #define	__HAVE_CPU_LWP_SETPRIVATE

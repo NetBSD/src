@@ -1,4 +1,4 @@
-/*	$NetBSD: t_popen.c,v 1.1 2010/12/23 15:27:44 pgoyette Exp $ */
+/*	$NetBSD: t_popen.c,v 1.1.4.1 2011/06/23 14:20:40 cherry Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: t_popen.c,v 1.1 2010/12/23 15:27:44 pgoyette Exp $");
+__RCSID("$NetBSD: t_popen.c,v 1.1.4.1 2011/06/23 14:20:40 cherry Exp $");
 #endif /* not lint */
 
 #include <atf-c.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: t_popen.c,v 1.1 2010/12/23 15:27:44 pgoyette Exp $");
 #include <sys/param.h>
 
 #include <errno.h>
+#include <err.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,7 +59,7 @@ __RCSID("$NetBSD: t_popen.c,v 1.1 2010/12/23 15:27:44 pgoyette Exp $");
 #define TEST_ERROR(a)						\
 	do							\
 	{							\
-		perror(a);					\
+		warn(a);					\
 		atf_tc_fail("Check stderr for error details.");	\
 	} while ( /*CONSTCOND*/ 0 )
 

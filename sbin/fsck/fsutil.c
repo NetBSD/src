@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.19 2010/02/04 23:55:42 christos Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.19.4.1 2011/06/23 14:18:41 cherry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.19 2010/02/04 23:55:42 christos Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.19.4.1 2011/06/23 14:18:41 cherry Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -42,6 +42,8 @@ __RCSID("$NetBSD: fsutil.c,v 1.19 2010/02/04 23:55:42 christos Exp $");
 #include <stdarg.h>
 #include <errno.h>
 #include <fstab.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <err.h>
 
 #include <sys/types.h>
@@ -255,4 +257,45 @@ print_mtime(time_t t)
 	else
 		(void)snprintf(b, sizeof(b), "%lld ", (long long)t);
 	return b;
+}
+
+
+void
+catch(int n)
+{
+	if (ckfinish) (*ckfinish)(0);
+	_exit(FSCK_EXIT_SIGNALLED);
+}
+
+/*
+ * When preening, allow a single quit to signal
+ * a special exit after filesystem checks complete
+ * so that reboot sequence may be interrupted.
+ */
+void
+catchquit(int n)
+{
+	static const char msg[] =
+	    "returning to single-user after filesystem check\n";
+	int serrno = errno;
+
+	(void)write(STDOUT_FILENO, msg, sizeof(msg) - 1);
+	returntosingle = 1;
+	(void)signal(SIGQUIT, SIG_DFL);
+	errno = serrno;
+}
+
+/*
+ * Ignore a single quit signal; wait and flush just in case.
+ * Used by child processes in preen.
+ */
+void
+voidquit(int n)
+{
+	int serrno = errno;
+
+	sleep(1);
+	(void)signal(SIGQUIT, SIG_IGN);
+	(void)signal(SIGQUIT, SIG_DFL);
+	errno = serrno;
 }

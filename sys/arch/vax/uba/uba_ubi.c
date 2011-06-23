@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_ubi.c,v 1.2 2010/12/14 23:38:30 matt Exp $	   */
+/*	$NetBSD: uba_ubi.c,v 1.2.6.1 2011/06/23 14:19:46 cherry Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_ubi.c,v 1.2 2010/12/14 23:38:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_ubi.c,v 1.2.6.1 2011/06/23 14:19:46 cherry Exp $");
 
 #define _VAX_BUS_DMA_PRIVATE
 
@@ -98,8 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: uba_ubi.c,v 1.2 2010/12/14 23:38:30 matt Exp $");
  * and bus status/command registers, the latter are (partly) IPR's
  * on 750.
  */
-static	int	dw730_match(struct device *, struct cfdata *, void *);
-static	void	dw730_attach(struct device *, struct device *, void *);
+static	int	dw730_match(device_t, cfdata_t, void *);
+static	void	dw730_attach(device_t, device_t, void *);
 static	void	dw730_init(struct uba_softc*);
 #ifdef notyet
 static	void	dw730_purge(struct uba_softc *, int);

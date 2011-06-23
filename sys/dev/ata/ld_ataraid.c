@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.37 2010/07/06 18:09:04 bsh Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.37.6.1 2011/06/23 14:19:57 cherry Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.37 2010/07/06 18:09:04 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.37.6.1 2011/06/23 14:19:57 cherry Exp $");
 
 #include "bio.h"
 #include "rnd.h"
@@ -294,7 +294,7 @@ ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
 	cbp->cb_buf.b_iodone = sc->sc_iodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
 	cbp->cb_buf.b_vp = sc->sc_vnodes[comp];
-	cbp->cb_buf.b_objlock = &sc->sc_vnodes[comp]->v_interlock;
+	cbp->cb_buf.b_objlock = sc->sc_vnodes[comp]->v_interlock;
 	cbp->cb_buf.b_blkno = bn + sc->sc_aai->aai_offset;
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_bcount = bcount;
@@ -318,9 +318,9 @@ ld_ataraid_start_vstrategy(void *arg)
        while ((cbp = SIMPLEQ_FIRST(&sc->sc_cbufq)) != NULL) {
                SIMPLEQ_REMOVE_HEAD(&sc->sc_cbufq, cb_q);
                if ((cbp->cb_buf.b_flags & B_READ) == 0) {
-                       mutex_enter(&cbp->cb_buf.b_vp->v_interlock);
+                       mutex_enter(cbp->cb_buf.b_vp->v_interlock);
                        cbp->cb_buf.b_vp->v_numoutput++;
-                       mutex_exit(&cbp->cb_buf.b_vp->v_interlock);
+                       mutex_exit(cbp->cb_buf.b_vp->v_interlock);
                }
                VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
        }

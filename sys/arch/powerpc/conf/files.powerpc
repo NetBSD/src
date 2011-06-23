@@ -1,7 +1,7 @@
-#	$NetBSD: files.powerpc,v 1.76 2011/05/02 02:01:32 matt Exp $
+#	$NetBSD: files.powerpc,v 1.76.2.1 2011/06/23 14:19:28 cherry Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
-defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
+defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE OPENPIC_DISTRIBUTE
 defparam opt_ppcparam.h	L2CR_CONFIG L3CR_CONFIG INTSTK CLOCKBASE
 defflag	opt_ppcarch.h	PPC_OEA PPC_OEA601 PPC_OEA64 PPC_OEA64_BRIDGE PPC_MPC8XX PPC_IBM4XX PPC_IBM403 PPC_BOOKE
 defflag opt_pmap.h	PMAPDEBUG PMAPCHECK PMAPCOUNTERS
@@ -9,14 +9,13 @@ defparam opt_pmap.h	PTEGCOUNT PMAP_MEMLIMIT
 
 file	arch/powerpc/powerpc/copystr.c
 file	arch/powerpc/powerpc/core_machdep.c		coredump
-file	arch/powerpc/powerpc/fixup.c			ppc_booke | (ppc_oea & ppc_oea64) | (ppc_oea & ppc_oea64_bridge) | (ppc_oea64 & ppc_oea64_bridge)
+file	arch/powerpc/powerpc/fixup.c
 file	arch/powerpc/powerpc/fubyte.c
 file	arch/powerpc/powerpc/fuswintr.c
 file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/kgdb_machdep.c		kgdb
 file	arch/powerpc/powerpc/kobj_machdep.c		modular
 file	arch/powerpc/powerpc/lock_stubs.S
-file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/openpic.c			openpic
 file	arch/powerpc/powerpc/pmap_subr.c		ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 file	arch/powerpc/powerpc/powerpc_machdep.c
@@ -24,6 +23,7 @@ file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/setfault.S
 file	arch/powerpc/powerpc/sig_machdep.c
 file	arch/powerpc/powerpc/sigcode.S
+file	arch/powerpc/powerpc/softint_machdep.c
 file	arch/powerpc/powerpc/subyte.c
 file	arch/powerpc/powerpc/suword.c
 file	arch/powerpc/powerpc/suswintr.c
@@ -36,6 +36,7 @@ file	arch/powerpc/powerpc/db_disasm.c		ddb
 file	arch/powerpc/powerpc/db_interface.c		ddb | kgdb
 file	arch/powerpc/powerpc/db_trace.c			ddb
 file	arch/powerpc/powerpc/fpu.c
+file	arch/powerpc/powerpc/intr_stubs.c		ppc_booke
 
 # IBM 4xx Family files (40x)
 file	arch/powerpc/ibm4xx/pmap.c			ppc_ibm4xx

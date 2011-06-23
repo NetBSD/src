@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2011/06/23 14:18:30 cherry Exp $
 
 LIB=	LLVMJIT
 
@@ -14,7 +14,6 @@ SRCS+=	Intercept.cpp \
 	JITDwarfEmitter.cpp \
 	JITEmitter.cpp \
 	JITMemoryManager.cpp \
-	OProfileJITEventListener.cpp \
-	TargetSelect.cpp
+	OProfileJITEventListener.cpp
 
 .include <bsd.lib.mk>

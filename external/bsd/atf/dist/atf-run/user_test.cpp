@@ -82,6 +82,14 @@ ATF_TEST_CASE_BODY(is_member_of_group)
         std::cout << "Last GID is " << maxgid << "\n";
     }
 
+    const gid_t maxgid_limit = 1 << 16;
+    if (maxgid > maxgid_limit) {
+        std::cout << "Test truncated from " << maxgid << " groups to "
+                  << maxgid_limit << " to keep the run time reasonable "
+            "enough\n";
+        maxgid = maxgid_limit;
+    }
+
     for (gid_t g = 0; g <= maxgid; g++) {
         if (groups.find(g) == groups.end()) {
             std::cout << "Checking if user does not belong to group "

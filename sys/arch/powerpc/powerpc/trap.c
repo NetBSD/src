@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.140 2011/05/02 02:01:33 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.140.2.1 2011/06/23 14:19:35 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.140 2011/05/02 02:01:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.140.2.1 2011/06/23 14:19:35 cherry Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -47,23 +47,21 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.140 2011/05/02 02:01:33 matt Exp $");
 #include <sys/savar.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
-#include <sys/kmem.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
-#include <machine/cpu.h>
-#include <machine/db_machdep.h>
-#include <machine/fpu.h>
-#include <machine/frame.h>
-#include <machine/pcb.h>
-#include <machine/pmap.h>
-#include <machine/psl.h>
-#include <machine/trap.h>
 #include <powerpc/altivec.h>
-#include <powerpc/userret.h>
+#include <powerpc/db_machdep.h>
+#include <powerpc/fpu.h>
+#include <powerpc/frame.h>
 #include <powerpc/instr.h>
+#include <powerpc/pcb.h>
+#include <powerpc/pmap.h>
+#include <powerpc/trap.h>
+#include <powerpc/userret.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/oea/spr.h>
@@ -347,15 +345,7 @@ trap(struct trapframe *tf)
 		break;
 
 	case EXC_AST|EXC_USER:
-		ci->ci_astpending = 0;		/* we are about to do it */
-		//ci->ci_data.cpu_nast++;
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
-		/* Check whether we are being preempted. */
-		if (ci->ci_want_resched)
-			preempt();
+		cpu_ast(l, ci);
 		break;
 
 	case EXC_ALI|EXC_USER:
@@ -907,31 +897,4 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
  out2:
 	curpcb->pcb_onfault = 0;
 	return rv;
-}
-
-/* 
- * Start a new LWP
- */
-void
-startlwp(void *arg)
-{
-	ucontext_t * const uc = arg;
-	lwp_t * const l = curlwp;
-	struct trapframe * const tf = l->l_md.md_utf;
-	int error;
-
-	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-	KASSERT(error == 0);
-
-	kmem_free(uc, sizeof(ucontext_t));
-	userret(l, tf);
-}
-
-void
-upcallret(struct lwp *l)
-{
-        struct trapframe * const tf = l->l_md.md_utf;
-
-	KERNEL_UNLOCK_LAST(l);
-	userret(l, tf);
 }

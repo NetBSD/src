@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_locore.S,v 1.10 2011/01/17 08:23:54 matt Exp $	*/
+/*	$NetBSD: obs200_locore.S,v 1.10.4.1 2011/06/23 14:19:09 cherry Exp $	*/
 /*	Original Tag: locore.S,v 1.1 2003/09/23 15:21:58 shige Exp	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
@@ -90,7 +90,6 @@
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
-#include <powerpc/ibm4xx/pmap.h>
 
 /* Function pointer for requesting board_config_data from OpenBlockS S/R BIOS */
 #define BOARD_CFG_FP	(0x00100000)

@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.71 2011/05/17 17:34:47 dyoung Exp $ */
+/* $NetBSD: cia.c,v 1.71.2.1 2011/06/23 14:18:54 cherry Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.71 2011/05/17 17:34:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.71.2.1 2011/06/23 14:18:54 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,16 +102,15 @@ __KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.71 2011/05/17 17:34:47 dyoung Exp $");
 #include <alpha/pci/pci_1000.h>
 #endif
 
-int	ciamatch(struct device *, struct cfdata *, void *);
-void	ciaattach(struct device *, struct device *, void *);
+int	ciamatch(device_t, cfdata_t, void *);
+void	ciaattach(device_t, device_t, void *);
 
-CFATTACH_DECL(cia, sizeof(struct cia_softc),
+CFATTACH_DECL_NEW(cia, sizeof(struct cia_softc),
     ciamatch, ciaattach, NULL, NULL);
 
 extern struct cfdriver cia_cd;
 
-int	cia_bus_get_window(int, int,
-	    struct alpha_bus_space_translation *);
+int	cia_bus_get_window(int, int, struct alpha_bus_space_translation *);
 
 /* There can be only one. */
 int ciafound;
@@ -149,7 +148,7 @@ int	cia_bus_use_bwx = CIA_BUS_USE_BWX;
 int	cia_pyxis_force_bwx = CIA_PYXIS_FORCE_BWX;
 
 int
-ciamatch(struct device *parent, struct cfdata *match, void *aux)
+ciamatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -262,9 +261,9 @@ cia_init(struct cia_config *ccp, int mallocsafe)
 }
 
 void
-ciaattach(struct device *parent, struct device *self, void *aux)
+ciaattach(device_t parent, device_t self, void *aux)
 {
-	struct cia_softc *sc = (struct cia_softc *)self;
+	struct cia_softc *sc = device_private(self);
 	struct cia_config *ccp;
 	struct pcibus_attach_args pba;
 	char bits[64];
@@ -273,6 +272,7 @@ ciaattach(struct device *parent, struct device *self, void *aux)
 
 	/* note that we've attached the chipset; can't have 2 CIAs. */
 	ciafound = 1;
+	sc->sc_dev = self;
 
 	/*
 	 * set up the chipset's info; done once at console init time
@@ -290,11 +290,11 @@ ciaattach(struct device *parent, struct device *self, void *aux)
 		pass = ccp->cc_rev + 1;
 	}
 
-	printf(": DECchip 2117x Core Logic Chipset (%s), pass %d\n",
+	aprint_normal(": DECchip 2117x Core Logic Chipset (%s), pass %d\n",
 	    name, pass);
 	if (ccp->cc_cnfg) {
 		snprintb(bits, sizeof(bits), CIA_CSR_CNFG_BITS, ccp->cc_cnfg);
-		printf("%s: extended capabilities: %s\n", self->dv_xname, bits);
+		aprint_normal_dev(self, "extended capabilities: %s\n", bits);
 	}
 
 	switch (ccp->cc_flags & (CCF_PCI_USE_BWX|CCF_BUS_USE_BWX)) {
@@ -312,7 +312,7 @@ ciaattach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 	if (name != NULL)
-		printf("%s: using BWX for %s access\n", self->dv_xname, name);
+		aprint_normal_dev(self, "using BWX for %s access\n", name);
 
 #ifdef DEC_550
 	if (cputype == ST_DEC_550 &&
@@ -340,8 +340,8 @@ ciaattach(struct device *parent, struct device *self, void *aux)
 		u_int32_t ctrl;
 
 		/* XXX no bets... */
-		printf("%s: WARNING: Pyxis pass 1 DMA bug; no bets...\n",
-		    self->dv_xname);
+		aprint_error_dev(self,
+		    "WARNING: Pyxis pass 1 DMA bug; no bets...\n");
 
 		ccp->cc_flags |= CCF_PYXISBUG;
 

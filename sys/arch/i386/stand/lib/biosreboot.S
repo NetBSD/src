@@ -1,4 +1,4 @@
-/*	$NetBSD: biosreboot.S,v 1.4 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: biosreboot.S,v 1.4.110.1 2011/06/23 14:19:16 cherry Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -40,11 +40,7 @@
 /* Call INT 19 to do the equivalent of CTL-ALT-DEL */
 
 ENTRY(reboot)
-	pushl	%ebp
-	movl	%esp,%ebp
-	pushl	%ebx
-	push	%esi
-	push	%edi
+	pusha
 
 	call	_C_LABEL(prot_to_real)
 	.code16
@@ -56,10 +52,6 @@ ENTRY(reboot)
 	calll	_C_LABEL(real_to_prot)
 	.code32
 
-	movl	%ebx, %eax
-
-	pop	%edi
-	pop	%esi
-	popl	%ebx
-	popl	%ebp
+	movl	%ebx, 28(%esp)
+	popa
 	ret

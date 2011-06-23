@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 2010/10/30 06:11:18 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99.6.1 2011/06/23 14:19:03 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,19 +32,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2010/10/30 06:11:18 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99.6.1 2011/06/23 14:19:03 cherry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 
+#define _POWERPC_BUS_DMA_PRIVATE
+
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/extent.h>
+#include <sys/intr.h>
 #include <sys/kernel.h>
+#include <sys/ksyms.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -54,20 +59,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2010/10/30 06:11:18 kiyohara Exp $"
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
-#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <net/netisr.h>
-
 #include <machine/bootinfo.h>
 #include <machine/autoconf.h>
-#define _POWERPC_BUS_DMA_PRIVATE
-#include <machine/bus.h>
-#include <machine/intr.h>
-#include <machine/pmap.h>
 #include <machine/powerpc.h>
-#include <machine/trap.h>
+
+#include <powerpc/pmap.h>
+#include <powerpc/psl.h>
+#include <powerpc/trap.h>
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/pic/picvar.h> 

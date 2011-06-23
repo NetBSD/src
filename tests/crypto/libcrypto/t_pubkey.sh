@@ -1,4 +1,4 @@
-# $NetBSD: t_pubkey.sh,v 1.2 2010/11/08 19:06:12 pooka Exp $
+# $NetBSD: t_pubkey.sh,v 1.2.4.1 2011/06/23 14:20:38 cherry Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -88,6 +88,16 @@ ecdsa_body()
 	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_ecdsatest"
 }
 
+atf_test_case srp
+srp_head()
+{
+	atf_set "descr" "Checks SRP key agreement protocol"
+}
+srp_body()
+{
+	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_srptest"
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case dsa
@@ -96,4 +106,5 @@ atf_init_test_cases()
 	atf_add_test_case ec
 	atf_add_test_case ecdh
 	atf_add_test_case ecdsa
+	atf_add_test_case srp
 }

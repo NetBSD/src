@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.180 2010/11/19 06:44:45 dholland Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.180.6.1 2011/06/23 14:20:22 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.180 2010/11/19 06:44:45 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.180.6.1 2011/06/23 14:20:22 cherry Exp $");
 
 #include "veriexec.h"
 
@@ -230,9 +230,9 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	if ((error = VOP_OPEN(vp, fmode, cred)) != 0)
 		goto bad;
 	if (fmode & FWRITE) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_writecount++;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 
 bad:
@@ -299,13 +299,13 @@ vn_markexec(struct vnode *vp)
 		return;
 	}
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
 		atomic_add_int(&uvmexp.filepages, -vp->v_uobj.uo_npages);
 		atomic_add_int(&uvmexp.execpages, vp->v_uobj.uo_npages);
 		vp->v_iflag |= VI_EXECMAP;
 	}
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 }
 
 /*
@@ -321,10 +321,10 @@ vn_marktext(struct vnode *vp)
 		return (0);
 	}
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	if (vp->v_writecount != 0) {
 		KASSERT((vp->v_iflag & VI_TEXT) == 0);
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		return (ETXTBSY);
 	}
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
@@ -332,7 +332,7 @@ vn_marktext(struct vnode *vp)
 		atomic_add_int(&uvmexp.execpages, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag |= (VI_TEXT | VI_EXECMAP);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 	return (0);
 }
 
@@ -347,9 +347,9 @@ vn_close(struct vnode *vp, int flags, kauth_cred_t cred)
 	int error;
 
 	if (flags & FWRITE) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_writecount--;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(vp, flags, cred);
@@ -779,7 +779,7 @@ vn_lock(struct vnode *vp, int flags)
 	KASSERT(vp->v_usecount > 0 || (vp->v_iflag & VI_ONWORKLST) != 0);
 #endif
 	KASSERT((flags & ~(LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY)) == 0);
-	KASSERT(!mutex_owned(&vp->v_interlock));
+	KASSERT(!mutex_owned(vp->v_interlock));
 
 #ifdef DIAGNOSTIC
 	if (wapbl_vphaswapbl(vp))
@@ -791,17 +791,17 @@ vn_lock(struct vnode *vp, int flags)
 		 * XXX PR 37706 forced unmount of file systems is unsafe.
 		 * Race between vclean() and this the remaining problem.
 		 */
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		if (vp->v_iflag & VI_XLOCK) {
 			if (flags & LK_NOWAIT) {
-				mutex_exit(&vp->v_interlock);
+				mutex_exit(vp->v_interlock);
 				return EBUSY;
 			}
 			vwait(vp, VI_XLOCK);
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			error = ENOENT;
 		} else {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			error = VOP_LOCK(vp, (flags & ~LK_RETRY));
 			if (error == 0 || error == EDEADLK || error == EBUSY)
 				return (error);
@@ -917,7 +917,7 @@ vn_ra_allocctx(struct vnode *vp)
 {
 	struct uvm_ractx *ra = NULL;
 
-	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	if (vp->v_type != VREG) {
 		return;
@@ -926,9 +926,9 @@ vn_ra_allocctx(struct vnode *vp)
 		return;
 	}
 	if (vp->v_ractx == NULL) {
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		ra = uvm_ra_allocctx();
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		if (ra != NULL && vp->v_ractx == NULL) {
 			vp->v_ractx = ra;
 			ra = NULL;

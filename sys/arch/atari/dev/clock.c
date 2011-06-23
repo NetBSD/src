@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.52 2011/02/08 20:20:10 rmind Exp $	*/
+/*	$NetBSD: clock.c,v 1.52.2.1 2011/06/23 14:19:01 cherry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.52 2011/02/08 20:20:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.52.2.1 2011/06/23 14:19:01 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -100,8 +100,9 @@ static struct timecounter clk_timecounter = {
  */
 
 struct clock_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	int		sc_flags;
+	struct todr_chip_handle	sc_handle;
 };
 
 /*
@@ -114,10 +115,10 @@ dev_type_close(rtcclose);
 dev_type_read(rtcread);
 dev_type_write(rtcwrite);
 
-static void	clockattach(struct device *, struct device *, void *);
-static int	clockmatch(struct device *, struct cfdata *, void *);
+static void	clockattach(device_t, device_t, void *);
+static int	clockmatch(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(clock, sizeof(struct clock_softc),
+CFATTACH_DECL_NEW(clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);
 
 const struct cdevsw rtc_cdevsw = {
@@ -147,10 +148,10 @@ static int	clk2min;	/* current, from above choices		*/
 #endif
 
 int
-clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+clockmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (!strcmp("clock", auxp))
+	if (!strcmp("clock", aux))
 		return 1;
 	return 0;
 }
@@ -158,17 +159,18 @@ clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 /*
  * Start the real-time clock.
  */
-void clockattach(struct device *pdp, struct device *dp, void *auxp)
+void clockattach(device_t parent, device_t self, void *aux)
 {
+	struct clock_softc *sc = device_private(self);
+	struct todr_chip_handle	*tch;
 
-	struct clock_softc *sc = (void *)dp;
-	static struct todr_chip_handle	tch;
+	sc->sc_dev = self;
+	tch = &sc->sc_handle;
+	tch->todr_gettime_ymdhms = atari_rtc_get;
+	tch->todr_settime_ymdhms = atari_rtc_set;
+	tch->todr_setwen = NULL;
 
-	tch.todr_gettime_ymdhms = atari_rtc_get;
-	tch.todr_settime_ymdhms = atari_rtc_set;
-	tch.todr_setwen = NULL;
-
-	todr_attach(&tch);
+	todr_attach(tch);
 
 	sc->sc_flags = 0;
 

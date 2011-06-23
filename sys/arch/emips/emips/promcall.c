@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.2 2011/02/08 20:20:11 rmind Exp $	*/
+/*	$NetBSD: promcall.c,v 1.2.4.1 2011/06/23 14:19:05 cherry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.2 2011/02/08 20:20:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.2.4.1 2011/06/23 14:19:05 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,16 +60,19 @@ static void noprintf(const char *, ...);
 static int  nogetsysid(void);
 static void nohalt(int *, int);
 
-/* Callback vector. We keep this fall-back copy jic the bootloader is broken.
+/*
+ * Callback vector. We keep this fall-back copy jic the bootloader is broken.
  */
 static void *nope(void)
 {
-    return NULL;
+
+	return NULL;
 }
 
 static int  nogetchar(void)
 {
-    return -1;
+
+	return -1;
 }
 
 static void noprintf(const char *fmt, ...)
@@ -78,56 +81,58 @@ static void noprintf(const char *fmt, ...)
 
 static int  nogetsysid(void)
 {
-    /* say its an eMIPS, ML board */
-    return MAKESYSID(1,1,XS_ML40x,MIPS_eMIPS);
+
+	/* say its an eMIPS, ML board */
+	return MAKESYSID(1, 1, XS_ML40x, MIPS_eMIPS);
 }
 
 static void nohalt(int *unused, int howto)
 {
-	while(1) ;	/* fool gcc */
+
+	while (1);	/* fool gcc */
 	/*NOTREACHED*/
 }
 
 const struct callback callvec = {
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
 	nogetchar,
-    nope,
-    nope,
+	nope,
+	nope,
 	noprintf,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nogetsysid,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
-    nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nogetsysid,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
+	nope,
 	nohalt
 };
 
@@ -166,8 +171,7 @@ romgetc(dev_t dev)
  * Print a character on PROM console.
  */
 static void
-romputc(dev_t dev,
-        int c)
+romputc(dev_t dev, int c)
 {
 	int s;
 
@@ -186,7 +190,8 @@ romputc(dev_t dev,
 int
 prom_systype(void)
 {
-    return (*callv->_getsysid)();
+
+	return (*callv->_getsysid)();
 }
 
 /*
@@ -195,8 +200,8 @@ prom_systype(void)
 void __attribute__((__noreturn__))
 prom_halt(int howto)
 {
+
 	(*callv->_halt)((int *)0, howto);
 	while(1) ;	/* fool gcc */
 	/*NOTREACHED*/
 }
-

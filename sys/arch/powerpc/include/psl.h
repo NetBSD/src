@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.17 2011/05/02 02:01:33 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.17.2.1 2011/06/23 14:19:31 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -102,23 +102,34 @@
 #include "opt_ppcarch.h"
 #endif /* _KERNEL_OPT */
 
-#if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE)
-extern int cpu_psluserset, cpu_pslusermod;
+#if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE) || defined(_MODULE)
+extern register_t cpu_psluserset, cpu_pslusermod, cpu_pslusermask;
 
 #define	PSL_USERSET		cpu_psluserset
 #define	PSL_USERMOD		cpu_pslusermod
+#define	PSL_USERMASK		cpu_pslusermask
 #elif defined(PPC_BOOKE)
-#define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_ME | PSL_CE | PSL_DE | PSL_IS | PSL_DS)
-#define	PSL_USERSRR1		((PSL_USERSET|PSL_USERMOD) & (PSL_SPV|PSL_CE|0xFFFF))
+#define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_IS | PSL_DS | PSL_ME | PSL_CE | PSL_DE)
+#define	PSL_USERMASK		(PSL_SPV | PSL_CE | 0xFFFF)
 #define	PSL_USERMOD		(PSL_SPV)
 #else /* PPC_IBM4XX */
-#define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_ME | PSL_IR | PSL_DR)
+#ifdef PPC_IBM403
+#define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_IR | PSL_DR | PSL_ME)
+#else /* Apparently we get unexplained machine checks, so disable them. */
+#define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_IR | PSL_DR)
+#endif
+#define	PSL_USERMASK		0xFFFF
 #define	PSL_USERMOD		(0)
+/* 
+ * We also need to override the PSL_SE bit.  4xx have completely different
+ * debug register support.  The SE bit is actually the DWE bit.  We want to
+ * set the DE bit to enable the debug regs instead of the DWE bit.
+ */
+#undef	PSL_SE
+#define	PSL_SE			PSL_DE
 #endif /* PPC_OEA */
 
-#ifndef PSL_USERSRR1
-#define	PSL_USERSRR1		((PSL_USERSET|PSL_USERMOD) & 0xFFFF)
-#endif
+#define	PSL_USERSRR1		((PSL_USERSET|PSL_USERMOD) & PSL_USERMASK)
 #define	PSL_USEROK_P(psl)	(((psl) & ~PSL_USERMOD) == PSL_USERSET)
 #endif /* !_LOCORE */
 

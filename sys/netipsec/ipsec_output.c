@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.32 2011/02/18 16:12:26 drochner Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.32.2.1 2011/06/23 14:20:26 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.32 2011/02/18 16:12:26 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.32.2.1 2011/06/23 14:20:26 cherry Exp $");
 
 /*
  * IPsec output processing.
@@ -608,9 +608,15 @@ ipsec4_process_packet(
 	 *     for reclaiming their resources.
 	 */
 	if (sav->tdb_xform->xf_type != XF_IP4) {
-		ip = mtod(m, struct ip *);
-		i = ip->ip_hl << 2;
-		off = offsetof(struct ip, ip_p);
+		union sockaddr_union *dst = &sav->sah->saidx.dst;
+		if (dst->sa.sa_family == AF_INET) {
+			ip = mtod(m, struct ip *);
+			i = ip->ip_hl << 2;
+			off = offsetof(struct ip, ip_p);
+		} else {
+			i = sizeof(struct ip6_hdr);
+			off = offsetof(struct ip6_hdr, ip6_nxt);
+		}
 		error = (*sav->tdb_xform->xf_output)(m, isr, NULL, i, off);
 	} else {
 		error = ipsec_process_done(m, isr);
@@ -626,6 +632,18 @@ bad:
 #endif
 
 #ifdef INET6
+static int
+in6_sa_equal_addrwithscope(const struct sockaddr_in6 *sa, const struct in6_addr *ia)
+{
+	struct in6_addr ia2;
+
+	memcpy(&ia2, &sa->sin6_addr, sizeof(ia2));
+	if (IN6_IS_SCOPE_LINKLOCAL(&sa->sin6_addr))
+		ia2.s6_addr16[1] = htons(sa->sin6_scope_id);
+
+	return IN6_ARE_ADDR_EQUAL(ia, &ia2);
+}
+
 int
 ipsec6_process_packet(
 	struct mbuf *m,
@@ -635,16 +653,18 @@ ipsec6_process_packet(
 	struct secasindex saidx;
 	struct secasvar *sav;
 	struct ip6_hdr *ip6;
-	int s, error, i, off; 
+	int s, error, i, off;
+	union sockaddr_union *dst;
 
 	IPSEC_ASSERT(m != NULL, ("ipsec6_process_packet: null mbuf"));
 	IPSEC_ASSERT(isr != NULL, ("ipsec6_process_packet: null isr"));
 
 	s = splsoftnet();   /* insure SA contents don't change */
+
 	isr = ipsec_nextisr(m, isr, AF_INET6, &saidx, &error);
 	if (isr == NULL) {
 		if (error != 0) {
-			// XXX Should we send a notification ?
+			/* XXX Should we send a notification ? */
 			goto bad;
 		} else {
 			if (ipsec_register_done(m, &error) < 0)
@@ -656,64 +676,67 @@ ipsec6_process_packet(
 	}
 
 	sav = isr->sav;
-	if (sav->tdb_xform->xf_type != XF_IP4) {
+	dst = &sav->sah->saidx.dst;
+
+	ip6 = mtod(m, struct ip6_hdr *); /* XXX */
+
+	/* Do the appropriate encapsulation, if necessary */
+	if (isr->saidx.mode == IPSEC_MODE_TUNNEL || /* Tunnel requ'd */
+	    dst->sa.sa_family != AF_INET6 ||        /* PF mismatch */
+	    ((dst->sa.sa_family == AF_INET6) &&
+	     (!IN6_IS_ADDR_UNSPECIFIED(&dst->sin6.sin6_addr)) &&
+	     (!in6_sa_equal_addrwithscope(&dst->sin6,
+				  &ip6->ip6_dst)))) {
+		struct mbuf *mp;
+
+		/* Fix IPv6 header payload length. */
+		if (m->m_len < sizeof(struct ip6_hdr))
+			if ((m = m_pullup(m,sizeof(struct ip6_hdr))) == NULL)
+				return ENOBUFS;
+
+		if (m->m_pkthdr.len - sizeof(*ip6) > IPV6_MAXPACKET) {
+			/* No jumbogram support. */
+			m_freem(m);
+			return ENXIO;   /*XXX*/
+		}
+
+		ip6 = mtod(m, struct ip6_hdr *);
+		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
+
+		/* Encapsulate the packet */
+		error = ipip_output(m, isr, &mp, 0, 0);
+		if (mp == NULL && !error) {
+			/* Should never happen. */
+			DPRINTF(("ipsec6_process_packet: ipip_output "
+				 "returns no mbuf and no error!"));
+			error = EFAULT;
+		}
+
+		if (error) {
+			if (mp) {
+				/* XXX: Should never happen! */
+				m_freem(mp);
+			}
+			m = NULL; /* ipip_output() already freed it */
+			goto bad;
+		}
+
+		m = mp;
+		mp = NULL;
+	}
+
+	if (dst->sa.sa_family == AF_INET) {
+		struct ip *ip;
+		ip = mtod(m, struct ip *);
+		i = ip->ip_hl << 2;
+		off = offsetof(struct ip, ip_p);
+	} else {	
 		i = sizeof(struct ip6_hdr);
 		off = offsetof(struct ip6_hdr, ip6_nxt);
-		error = (*sav->tdb_xform->xf_output)(m, isr, NULL, i, off);
-       } else {
-		union sockaddr_union *dst = &sav->sah->saidx.dst;
-
-        ip6 = mtod(m, struct ip6_hdr *);
-
-		/* Do the appropriate encapsulation, if necessary */
-		if (isr->saidx.mode == IPSEC_MODE_TUNNEL || /* Tunnel requ'd */
-               dst->sa.sa_family != AF_INET6 ||        /* PF mismatch */
-            ((dst->sa.sa_family == AF_INET6) &&
-                (!IN6_IS_ADDR_UNSPECIFIED(&dst->sin6.sin6_addr)) &&
-                (!IN6_ARE_ADDR_EQUAL(&dst->sin6.sin6_addr,
-                &ip6->ip6_dst))) 
-            )
-		{
-			struct mbuf *mp;
-            /* Fix IPv6 header payload length. */
-            if (m->m_len < sizeof(struct ip6_hdr))
-                if ((m = m_pullup(m,sizeof(struct ip6_hdr))) == NULL)
-                   return ENOBUFS;
-
-            if (m->m_pkthdr.len - sizeof(*ip6) > IPV6_MAXPACKET) {
-                /* No jumbogram support. */
-                m_freem(m);
-                return ENXIO;   /*XXX*/
-            }
-            ip6 = mtod(m, struct ip6_hdr *);
-            ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
-
-			/* Encapsulate the packet */
-			error = ipip_output(m, isr, &mp, 0, 0);
-			if (mp == NULL && !error) {
-				/* Should never happen. */
-				DPRINTF(("ipsec6_process_packet: ipip_output "
-						 "returns no mbuf and no error!"));
-				 error = EFAULT;
-			}
-
-			if (error) {
-				if (mp) {
-					/* XXX: Should never happen! */
-					m_freem(mp);
-				}
-				m = NULL; /* ipip_output() already freed it */
-				goto bad;
-			}
-    
-			m = mp;
-			mp = NULL;
-		}
-	
-		error = ipsec_process_done(m,isr);
-		}
-		splx(s);
-		return error;
+	}
+	error = (*sav->tdb_xform->xf_output)(m, isr, NULL, i, off);
+	splx(s);
+	return error;
 bad:
 	splx(s);
 	if (m)

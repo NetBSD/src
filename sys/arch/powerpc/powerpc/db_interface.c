@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.45 2011/01/18 01:02:55 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.45.4.1 2011/06/23 14:19:34 cherry Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45 2011/01/18 01:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45.4.1 2011/06/23 14:19:34 cherry Exp $");
 
 #define USERACC
 
@@ -13,21 +13,23 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45 2011/01/18 01:02:55 matt Exp $
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <dev/cons.h>
 
-#include <machine/db_machdep.h>
-#include <machine/frame.h>
+#include <powerpc/db_machdep.h>
+#include <powerpc/frame.h>
 #include <powerpc/spr.h>
-#include <powerpc/cpu.h>
-#include <powerpc/bat.h>
 #include <powerpc/pte.h>
+#include <powerpc/psl.h>
 
 #if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/spr.h>
+#include <powerpc/oea/bat.h>
 #endif
 
 #ifdef PPC_IBM4XX
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/spr.h>
 #include <machine/tlb.h>
 #include <uvm/uvm_extern.h>

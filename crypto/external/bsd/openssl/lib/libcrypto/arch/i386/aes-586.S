@@ -2515,6 +2515,7 @@ AES_cbc_encrypt:
 	cmpl	$0,%edx
 	je	.L029slow_decrypt
 	cmpl	$16,%ecx
+	movl	%ebx,%edx
 	jb	.L030slow_enc_tail
 	btl	$25,52(%esp)
 	jnc	.L031slow_enc_x86
@@ -2617,7 +2618,7 @@ AES_cbc_encrypt:
 	xorl	%eax,%eax
 .align	4
 .long	2868115081
-	leal	-16(%edx),%edi
+	movl	48(%esp),%edi
 	movl	%edx,%esi
 	movl	(%edi),%eax
 	movl	4(%edi),%ebx

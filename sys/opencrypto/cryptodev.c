@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.66 2011/05/27 17:09:09 drochner Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.66.2.1 2011/06/23 14:20:28 cherry Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.66 2011/05/27 17:09:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.66.2.1 2011/06/23 14:20:28 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -615,6 +615,8 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		crp->crp_mac=cse->tmp_mac;
 	}
 
+	cv_init(&crp->crp_cv, "crydev");
+
 	/*
 	 * XXX there was a comment here which said that we went to
 	 * XXX splcrypto() but needed to only if CRYPTO_F_CBIMM,
@@ -651,6 +653,7 @@ eagain:
 	default:
 		DPRINTF(("cryptodev_op: not waiting, error.\n"));
 		mutex_exit(&crypto_mtx);
+		cv_destroy(&crp->crp_cv);
 		goto bail;
 	}
 
@@ -667,6 +670,7 @@ eagain:
 		(void)crypto_ret_q_remove(crp);
 	}
 	mutex_exit(&crypto_mtx);
+	cv_destroy(&crp->crp_cv);
 
 	if (crp->crp_etype != 0) {
 		DPRINTF(("cryptodev_op: crp_etype %d\n", crp->crp_etype));
@@ -1317,6 +1321,7 @@ cryptodev_mop(struct fcrypt *fcr,
 		cnop[req].reqid = atomic_inc_32_nv(&(fcr->requestid));
 		crp->crp_reqid = cnop[req].reqid;
 		crp->crp_usropaque = cnop[req].opaque;
+		cv_init(&crp->crp_cv, "crydev");
 #ifdef notyet
 eagain:
 #endif
@@ -1335,10 +1340,12 @@ eagain:
 		default:
 			DPRINTF(("cryptodev_op: not waiting, error.\n"));
 			mutex_exit(&crypto_mtx);
+			cv_destroy(&crp->crp_cv);
 			goto bail;
 		}
 
 		mutex_exit(&crypto_mtx);
+		cv_destroy(&crp->crp_cv);
 bail:
 		if (cnop[req].status) {
 			if (crp) {

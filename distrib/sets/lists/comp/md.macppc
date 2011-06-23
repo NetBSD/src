@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.33 2010/03/02 21:54:06 matt Exp $
+# $NetBSD: md.macppc,v 1.33.4.1 2011/06/23 14:18:21 cherry Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/macppc				comp-c-include
 ./usr/include/macppc/_G_config.h		comp-obsolete		obsolete
@@ -7,7 +7,7 @@
 ./usr/include/macppc/aout_machdep.h		comp-c-include
 ./usr/include/macppc/apmvar.h			comp-c-include
 ./usr/include/macppc/asm.h			comp-c-include
-./usr/include/macppc/atomic.h			comp-c-include
+./usr/include/macppc/atomic.h			comp-obsolete		obsolete
 ./usr/include/macppc/autoconf.h			comp-c-include
 ./usr/include/macppc/bat.h			comp-obsolete		obsolete
 ./usr/include/macppc/bswap.h			comp-c-include

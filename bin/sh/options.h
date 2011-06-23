@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.19 2005/12/13 17:44:18 dsl Exp $	*/
+/*	$NetBSD: options.h,v 1.19.40.1 2011/06/23 14:17:48 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -126,8 +126,5 @@ void procargs(int, char **);
 void optschanged(void);
 void setparam(char **);
 void freeparam(volatile struct shparam *);
-int shiftcmd(int, char **);
-int setcmd(int, char **);
-int getoptscmd(int, char **);
 int nextopt(const char *);
 void getoptsreset(const char *);

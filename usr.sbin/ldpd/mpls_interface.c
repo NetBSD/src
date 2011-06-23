@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_interface.c,v 1.5 2011/02/09 11:38:57 kefren Exp $ */
+/* $NetBSD: mpls_interface.c,v 1.5.2.1 2011/06/23 14:20:48 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 #include "mpls_interface.h"
 #include "mpls_routes.h"
 
+extern int no_default_route;
+
 int
 mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
     struct in_addr * addr, int len, int label, int rlookup)
@@ -66,8 +68,8 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 	debugp("Trying to add %s/%d as label %d to peer %s\n", inet_ntoa(*addr),
 		len, label, padd);
 
-	/* Don't accept default route XXX: should be option-able */
-	if (!len)
+	/* Check if we should accept default route */
+	if (!len && no_default_route != 0)
 		return LDP_E_BAD_AF;
 
 	/* Is there a label mapping for this ? */
@@ -92,6 +94,8 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 				debugp("No route for this prefix\n");
 				return LDP_E_NO_SUCH_ROUTE;
 			}
+			if (kount > 0)
+				debugp("Route test hit: %d\n", kount);
 			kount++;
 			/* Last time give it a higher chance */
 			if (kount == rlookup)

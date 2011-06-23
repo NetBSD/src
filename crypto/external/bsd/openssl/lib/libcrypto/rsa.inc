@@ -1,4 +1,4 @@
-#	$NetBSD: rsa.inc,v 1.1 2009/07/19 23:30:44 christos Exp $
+#	$NetBSD: rsa.inc,v 1.1.4.1 2011/06/23 14:18:09 cherry Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -11,7 +11,7 @@
 RSA_SRCS = rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c rsa_saos.c rsa_err.c \
 	rsa_pk1.c rsa_ssl.c rsa_none.c rsa_oaep.c rsa_chk.c rsa_null.c \
 	rsa_asn1.c rsa_x931.c rsa_depr.c rsa_ameth.c rsa_pmeth.c rsa_pss.c \
-	rsa_prn.c
+	rsa_prn.c rsa_crpt.c
 SRCS += ${RSA_SRCS}
 
 .for cryptosrc in ${RSA_SRCS}

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_dma.c,v 1.2 2009/08/06 16:37:01 matt Exp $	*/
+/*	$NetBSD: gdium_dma.c,v 1.2.12.1 2011/06/23 14:19:07 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_dma.c,v 1.2 2009/08/06 16:37:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_dma.c,v 1.2.12.1 2011/06/23 14:19:07 cherry Exp $");
 
 #include <sys/param.h>
 
@@ -55,20 +55,9 @@ gdium_dma_init(struct gdium_config *gc)
 	t = &gc->gc_pci_dmat;
 	t->_cookie = gc;
 	t->_wbase = GDIUM_DMA_PCI_PCIBASE;
-	t->_physbase = GDIUM_DMA_PCI_PHYSBASE;
-	t->_wsize = GDIUM_DMA_PCI_SIZE;
-	t->_dmamap_create = _bus_dmamap_create;
-	t->_dmamap_destroy = _bus_dmamap_destroy;
-	t->_dmamap_load = _bus_dmamap_load;
-	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
-	t->_dmamap_load_uio = _bus_dmamap_load_uio;
-	t->_dmamap_load_raw = _bus_dmamap_load_raw;
-	t->_dmamap_unload = _bus_dmamap_unload;
-	t->_dmamap_sync = _bus_dmamap_sync;
-
-	t->_dmamem_alloc = _bus_dmamem_alloc;
-	t->_dmamem_free = _bus_dmamem_free;
-	t->_dmamem_map = _bus_dmamem_map;
-	t->_dmamem_unmap = _bus_dmamem_unmap;
-	t->_dmamem_mmap = _bus_dmamem_mmap;
+	t->_bounce_alloc_lo = GDIUM_DMA_PCI_PHYSBASE;
+	t->_bounce_alloc_hi = GDIUM_DMA_PCI_PHYSBASE + GDIUM_DMA_PCI_SIZE;
+	t->_dmamap_ops = mips_bus_dmamap_ops;
+	t->_dmamem_ops = mips_bus_dmamem_ops;
+	t->_dmatag_ops = mips_bus_dmatag_ops;
 }

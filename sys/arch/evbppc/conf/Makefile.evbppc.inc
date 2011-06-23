@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbppc.inc,v 1.6 2011/05/28 05:22:25 matt Exp $
+#	$NetBSD: Makefile.evbppc.inc,v 1.6.2.1 2011/06/23 14:19:08 cherry Exp $
 
 CPPFLAGS += -D__${BOARDTYPE}__
 
@@ -31,9 +31,13 @@ MKUBOOTIMAGEARGS=       -A powerpc -T kernel -C gz
 MKUBOOTIMAGEARGS+=      -a ${TEXTADDR:C/....$/0000/} -e $(TEXTADDR)
 MKUBOOTIMAGEARGS+=      -n "NetBSD/$(MACHINE) ${_OSRELEASE} ($(KERNEL_BUILD:T))"
 
+.if defined(USE_PIGZGZIP) && ${USE_PIGZGZIP} != "no"
+TOOL_GZIP?=		${TOOL_PIGZ}
+.endif
+TOOL_GZIP?=		gzip
 SYSTEM_LD_TAIL_EXTRA+=; \
-	echo gzip -v9cn $@.bin '>' $@.bin.gz; \
-	gzip -v9cn $@.bin > $@.bin.gz; \
+	echo ${TOOL_GZIP} -9cn $@.bin '>' $@.bin.gz; \
+	${TOOL_GZIP} -9cn $@.bin > $@.bin.gz; \
 	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin.gz $@.ub; \
 	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin.gz $@.ub
 

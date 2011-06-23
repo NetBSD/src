@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.h,v 1.1 2006/02/23 19:44:02 garbled Exp $	*/
+/*	$NetBSD: eisa_machdep.h,v 1.1.112.1 2011/06/23 14:19:36 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -57,7 +57,7 @@ typedef int eisa_intr_handle_t;
 /*
  * Functions provided to machine-independent EISA code.
  */
-void		eisa_attach_hook(struct device *, struct device *,
+void		eisa_attach_hook(device_t, device_t,
 		    struct eisabus_attach_args *);
 int		eisa_maxslots(eisa_chipset_tag_t);
 int		eisa_intr_map(eisa_chipset_tag_t, u_int,

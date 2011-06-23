@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 2011/03/05 14:27:48 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.23.2.1 2011/06/23 14:19:31 cherry Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,9 +38,6 @@
 #if defined(_KERNEL_OPT)
 #include "opt_ppcarch.h"
 #endif
-#ifndef	_LOCORE
-#include <machine/cpu.h>
-#endif	/* _LOCORE */
 #endif
 
 /*
@@ -116,5 +113,9 @@
 #ifndef NKMEMPAGES_MAX_DEFAULT
 #define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 #endif
+
+#if defined(_KERNEL) && !defined(_LOCORE)
+#include <machine/cpu.h>
+#endif	/* _KERNEL && !_LOCORE */
 
 #endif /* _POWERPC_PARAM_H_ */

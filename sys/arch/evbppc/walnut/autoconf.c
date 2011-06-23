@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2010/03/18 14:04:07 kiyohara Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.6.1 2011/06/23 14:19:11 cherry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,15 +32,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2010/03/18 14:04:07 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.6.1 2011/06/23 14:19:11 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <dev/ic/comreg.h>	/* For COM_FREQ */
 
+#include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 #include <powerpc/ibm4xx/spr.h>
@@ -69,9 +71,6 @@ cpu_configure(void)
 	if (config_rootfound("plb", &local_plb_devs) == NULL)
 		panic("configure: plb not configured");
 
-	printf("biomask %x netmask %x ttymask %x\n",
-	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
-	
 	(void)spl0();
 
 	/*
@@ -92,9 +91,9 @@ cpu_rootconf(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
-	struct device *parent = device_parent(dev);
+	device_t parent = device_parent(dev);
 
 	if (device_is_a(dev, "com") && device_is_a(parent, "opb")) {
 		/* Set the frequency of the on-chip UART. */
@@ -104,7 +103,7 @@ device_register(struct device *dev, void *aux)
 		if (prop_dictionary_set(device_properties(dev),
 					"clock-frequency", pn) == false) {
 			printf("WARNING: unable to set clock-frequency "
-			    "property for %s\n", dev->dv_xname);
+			    "property for %s\n", device_xname(dev));
 		}
 		prop_object_release(pn);
 		return;

@@ -1,9 +1,10 @@
 # 
-#	$NetBSD: files.pic,v 1.4 2009/08/19 06:22:54 nisimura Exp $
+#	$NetBSD: files.pic,v 1.4.10.1 2011/06/23 14:19:33 cherry Exp $
 #
 # generic PIC abstraction
 
 file arch/powerpc/pic/intr.c
+
 defflag opt_pic.h PIC_DEBUG
 
 define pic_openpic
@@ -17,7 +18,6 @@ defflag opt_interrupt.h PIC_DISTOPENPIC:	pic_distopenpic
 defflag opt_interrupt.h PIC_PREPIVR:	pic_prepivr
 defflag opt_interrupt.h PIC_I8259:	pic_i8259
 defflag opt_interrupt.h PIC_MPCSOC:	pic_mpcsoc
-defflag opt_interrupt.h OPENPIC_DISTRIBUTE
 
 file arch/powerpc/pic/pic_openpic.c	pic_openpic	needs-flag
 file arch/powerpc/pic/pic_distopenpic.c	pic_distopenpic	needs-flag

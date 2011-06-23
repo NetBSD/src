@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.27 2011/04/30 11:12:58 phx Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.27.2.1 2011/06/23 14:19:38 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.27 2011/04/30 11:12:58 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.27.2.1 2011/06/23 14:19:38 cherry Exp $");
 
 #include "opt_pci.h"
 
@@ -102,8 +102,7 @@ static int brdtype;
 #define	PCI_CONFIG_ENABLE	0x80000000UL
 
 void
-pci_attach_hook(struct device *parent, struct device *self,
-    struct pcibus_attach_args *pba)
+pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 	pcitag_t tag;
 	pcireg_t dev11, dev22, dev15, dev13, dev16;

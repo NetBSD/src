@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.37 2009/08/22 17:38:06 tsutsui Exp $ */
+/* $NetBSD: bba.c,v 1.37.10.1 2011/06/23 14:20:09 cherry Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.37 2009/08/22 17:38:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.37.10.1 2011/06/23 14:20:09 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ struct bba_softc {
 static int	bba_match(device_t, cfdata_t, void *);
 static void	bba_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(bba, sizeof(struct bba_softc),
+CFATTACH_DECL_NEW(bba, sizeof(struct bba_softc),
     bba_match, bba_attach, NULL, NULL);
 
 /*
@@ -214,6 +214,7 @@ bba_attach(device_t parent, device_t self, void *aux)
 	ia = aux;
 	sc = device_private(self);
 	asc = &sc->sc_am7930;
+	asc->sc_dev = self;
 	sc->sc_bst = iosc->sc_bst;
 	sc->sc_bsh = iosc->sc_bsh;
 	sc->sc_dmat = iosc->sc_dmat;
@@ -221,7 +222,7 @@ bba_attach(device_t parent, device_t self, void *aux)
 	/* get the bus space handle for codec */
 	if (bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 	    ia->iada_offset, 0, &sc->sc_codec_bsh)) {
-		aprint_error_dev(&asc->sc_dev, "unable to map device\n");
+		aprint_error_dev(self, "unable to map device\n");
 		return;
 	}
 
@@ -242,7 +243,7 @@ bba_attach(device_t parent, device_t self, void *aux)
 	ioasic_intr_establish(parent, ia->iada_cookie, TC_IPL_NONE,
 	    bba_intr, sc);
 
-	audio_attach_mi(&sa_hw_if, asc, &asc->sc_dev);
+	audio_attach_mi(&sa_hw_if, asc, self);
 }
 
 
@@ -307,14 +308,14 @@ bba_allocm(void *addr, int direction, size_t size,
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, BBA_DMABUF_ALIGN,
 	    BBA_DMABUF_BOUNDARY, &seg, 1, &rseg, w)) {
-		aprint_error_dev(&asc->sc_dev, "can't allocate DMA buffer\n");
+		aprint_error_dev(asc->sc_dev, "can't allocate DMA buffer\n");
 		goto bad;
 	}
 	state |= 1;
 
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    &kva, w | BUS_DMA_COHERENT)) {
-		aprint_error_dev(&asc->sc_dev, "can't map DMA buffer\n");
+		aprint_error_dev(asc->sc_dev, "can't map DMA buffer\n");
 		goto bad;
 	}
 	state |= 2;
@@ -518,7 +519,7 @@ bba_trigger_input(void *addr, void *start, void *end, int blksize,
 
 	DPRINTF(("bba_trigger_input: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
 	    addr, start, end, blksize, intr, arg));
-	sc = (struct bba_softc *)addr;
+	sc = addr;
 	d = &sc->sc_rx_dma_state;
 	state = 0;
 

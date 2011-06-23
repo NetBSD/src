@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.217 2010/08/12 09:41:10 pooka Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.217.6.1 2011/06/23 14:20:27 cherry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.217 2010/08/12 09:41:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.217.6.1 2011/06/23 14:20:27 cherry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -965,12 +965,12 @@ loop:
 		vmark(mvp, vp);
 		if (vp->v_mount != mp || vismarker(vp))
 			continue;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		/* XXX MNT_LAZY cannot be right? */
 		if (waitfor == MNT_LAZY ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     UVM_OBJ_IS_CLEAN(&vp->v_uobj))) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);

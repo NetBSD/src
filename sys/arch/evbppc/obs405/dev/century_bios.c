@@ -1,4 +1,4 @@
-/*	$NetBSD: century_bios.c,v 1.4 2007/02/22 05:27:47 thorpej Exp $	*/
+/*	$NetBSD: century_bios.c,v 1.4.78.1 2011/06/23 14:19:09 cherry Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,12 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: century_bios.c,v 1.4 2007/02/22 05:27:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: century_bios.c,v 1.4.78.1 2011/06/23 14:19:09 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
-#include <machine/cpu.h>
+#include <powerpc/ibm4xx/cpu.h>
+
 #include <machine/century_bios.h>
 
 /*

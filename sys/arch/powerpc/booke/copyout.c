@@ -1,4 +1,4 @@
-/*	$NetBSD: copyout.c,v 1.2 2011/01/18 01:02:52 matt Exp $	*/
+/*	$NetBSD: copyout.c,v 1.2.6.1 2011/06/23 14:19:27 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -36,12 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.2 2011/01/18 01:02:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.2.6.1 2011/06/23 14:19:27 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
 
-#include <machine/pcb.h>
+#include <powerpc/pcb.h>
+
+#include <powerpc/booke/cpuvar.h>
 
 static inline void
 copyout_uint8(uint8_t *udaddr, uint8_t data, register_t ds_msr)

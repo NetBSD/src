@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.3 2011/03/24 17:05:46 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.3.4.1 2011/06/23 14:20:33 cherry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.3 2011/03/24 17:05:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.3.4.1 2011/06/23 14:20:33 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -381,11 +381,11 @@ quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
 again:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
 		    vp->v_type == VNON || vp->v_writecount == 0 ||
 		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
@@ -454,11 +454,11 @@ quota1_handle_cmd_quotaoff(struct lwp *l, struct ufsmount *ump, int type)
 again:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
 		    vp->v_type == VNON ||
 		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
@@ -771,11 +771,11 @@ q1sync(struct mount *mp)
  again:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
 		    vp->v_type == VNON ||
 		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);

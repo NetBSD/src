@@ -1,4 +1,4 @@
-/*	$NetBSD: g760a.c,v 1.1 2010/10/02 06:07:37 kiyohara Exp $	*/
+/*	$NetBSD: g760a.c,v 1.1.12.1 2011/06/23 14:19:59 cherry Exp $	*/
 
 /*-
  * Copyright (C) 2008 A.Leo.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: g760a.c,v 1.1 2010/10/02 06:07:37 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g760a.c,v 1.1.12.1 2011/06/23 14:19:59 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,6 +231,7 @@ g760a_setup(struct g760a_softc* sc)
 	(void)strlcpy(sc->sc_sensor.desc, "sysfan rpm",
 			sizeof(sc->sc_sensor.desc));
 	sc->sc_sensor.units = ENVSYS_SFANRPM;
+	sc->sc_sensor.state = ENVSYS_SINVALID;
 
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor))
 		goto out;
