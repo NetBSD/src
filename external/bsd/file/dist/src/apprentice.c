@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.3 2011/05/13 01:52:13 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.4 2011/06/23 16:12:36 riz Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: apprentice.c,v 1.169 2011/05/10 17:08:13 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.3 2011/05/13 01:52:13 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.4 2011/06/23 16:12:36 riz Exp $");
 #endif
 #endif	/* lint */
 
@@ -2472,8 +2472,6 @@ bs1(struct magic *m)
 	m->in_offset = swap4((uint32_t)m->in_offset);
 	m->lineno = swap4((uint32_t)m->lineno);
 	if (IS_STRING(m->type)) {
-		if (m->type == FILE_PSTRING)
-			printf("flags! %d\n", m->str_flags);
 		m->str_range = swap4(m->str_range);
 		m->str_flags = swap4(m->str_flags);
 	}
