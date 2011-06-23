@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 2011/06/20 20:24:28 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.7 2011/06/23 02:33:44 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -75,6 +75,7 @@
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
 
+#ifdef __PMAP_PRIVATE
 struct vm_page *
 	pmap_md_alloc_poolpage(int flags);
 vaddr_t	pmap_md_map_poolpage(paddr_t);
@@ -83,6 +84,9 @@ bool	pmap_md_io_vaddr_p(vaddr_t);
 paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
 vaddr_t	pmap_md_direct_map_paddr(paddr_t);
 void	pmap_md_init(void);
+
+bool	pmap_md_tlb_check_entry(void *, vaddr_t, tlb_asid_t, pt_entry_t);
+#endif
 
 void	pmap_md_page_syncicache(struct vm_page *, __cpuset_t);
 void	pmap_bootstrap(vaddr_t, vaddr_t, const phys_ram_seg_t *, size_t);
@@ -101,6 +105,7 @@ vtophys(vaddr_t va)
 	return (paddr_t) -1;
 }
 
+#ifdef __PMAP_PRIVATE
 /*
  * Virtual Cache Alias helper routines.  Not a problem for Booke CPUs.
  */
@@ -120,6 +125,13 @@ static inline void
 pmap_md_vca_clean(struct vm_page *pg, vaddr_t va, int op)
 {
 }
+
+static inline size_t
+pmap_md_tlb_asid_max(void)
+{
+	return PMAP_TLB_NUM_PIDS - 1;
+}
+#endif
 
 #define	POOL_VTOPHYS(va)	((paddr_t)(vaddr_t)(va))
 #define	POOL_PHYSTOV(pa)	((vaddr_t)(paddr_t)(pa))

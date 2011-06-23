@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.6 2011/06/20 20:24:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.7 2011/06/23 02:33:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -308,3 +308,24 @@ pmap_md_io_vaddr_p(vaddr_t va)
 	    && !(VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS);
 }
 
+bool
+pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
+{
+	pmap_t pm = ctx;
+        struct pmap_asid_info * const pai = PMAP_PAI(pm, curcpu()->ci_tlb_info);
+
+	if (asid != pai->pai_asid)
+		return true;
+
+	const pt_entry_t * const ptep = pmap_pte_lookup(pm, va);
+	KASSERT(ptep != NULL);
+	pt_entry_t xpte = *ptep;
+	xpte &= ~((xpte & (PTE_UNSYNCED|PTE_UNMODIFIED)) << 1);
+	xpte ^= xpte & (PTE_UNSYNCED|PTE_UNMODIFIED|PTE_WIRED);
+
+	KASSERTMSG(pte == xpte,
+	    ("pm=%p va=%#"PRIxVADDR" asid=%u: TLB pte (%#x) != real pte (%#x/%#x)",
+	    pm, va, asid, pte, xpte, *ptep));
+
+	return true;
+}
