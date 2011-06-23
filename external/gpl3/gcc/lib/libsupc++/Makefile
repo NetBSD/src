@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:02:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/23 12:16:36 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -11,13 +11,13 @@ CWARNFLAGS.clang+=	-Wno-parentheses
 
 LIB=		supc++
 
-.if exists(${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
-.include "${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH}/defs.mk"
+.if exists(${.CURDIR}/../libstdc++-v3/arch/${MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
+.include "${.CURDIR}/../libstdc++-v3/arch/${MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 
-.include "${.CURDIR}/../libsupc++4/Makefile.common"
+.include "${.CURDIR}/../libsupc++/Makefile.common"
 
 SRCS=		${LIBSUPCXXSRCS} xmalloc.c
 CXXFLAGS+=	${G_SECTION_FLAGS}
@@ -37,9 +37,9 @@ CLEANFILES+= unwind.h
 	${DIST}/libstdc++-v3/libmath \
 	${DIST}/libstdc++-v3/libsupc++ \
 	${DIST}/libiberty \
-	${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH}
+	${.CURDIR}/../libstdc++-v3/arch/${MACHINE_ARCH}
 
-${OBJS}: ${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH}/defs.mk
+${OBJS}: ${.CURDIR}/../libstdc++-v3/arch/${MACHINE_ARCH}/defs.mk
 .else
 .include <bsd.prog.mk> # do nothing
 .endif
