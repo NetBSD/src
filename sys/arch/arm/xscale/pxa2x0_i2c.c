@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2c.c,v 1.6 2011/06/22 16:18:55 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_i2c.c,v 1.7 2011/06/23 11:26:22 kiyohara Exp $	*/
 /*	$OpenBSD: pxa2x0_i2c.c,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.6 2011/06/22 16:18:55 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.7 2011/06/23 11:26:22 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,7 +407,7 @@ err:
 #define	CSR_READ_4(sc,r)	bus_space_read_4(sc->sc_iot, sc->sc_ioh, r)
 #define	CSR_WRITE_4(sc,r,v)	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v)
 
-#define	ISR_ALL			(ISR_RWM | ISR_ACKNAK | ISR_UE | ISR_IBB \
+#define	ISR_ALL			(ISR_RWM | ISR_ACKNAK | ISR_UB | ISR_IBB \
 				 | ISR_SSD | ISR_ALD | ISR_ITE | ISR_IRF \
 				 | ISR_GCAD | ISR_SAD | ISR_BED)
 

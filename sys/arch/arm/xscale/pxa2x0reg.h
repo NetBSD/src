@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.22 2011/06/18 13:52:24 nonaka Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.23 2011/06/23 11:26:22 kiyohara Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -231,36 +231,38 @@ struct pxa2x0_dma_desc {
 
 /* I2C */
 #define I2C_IBMR	0x1680		/* Bus monitor register */
+#define  IBMR_SDAS	(1<<0)		 /* SDA Status */
+#define  IBMR_SCLS	(1<<1)		 /* SCL Status */
 #define I2C_IDBR	0x1688		/* Data buffer */
 #define I2C_ICR  	0x1690		/* Control register */
 #define  ICR_START	(1<<0)
 #define  ICR_STOP	(1<<1)
 #define  ICR_ACKNAK	(1<<2)
-#define  ICR_TB  	(1<<3)
-#define  ICR_MA  	(1<<4)
-#define  ICR_SCLE	(1<<5)		/* PXA270? */
-#define  ICR_IUE	(1<<6)		/* PXA270? */
-#define  ICR_GCD	(1<<7)		/* PXA270? */
-#define  ICR_ITEIE	(1<<8)		/* PXA270? */
-#define  ICR_DRFIE	(1<<9)		/* PXA270? */
-#define  ICR_BEIE	(1<<10)		/* PXA270? */
-#define  ICR_SSDIE	(1<<11)		/* PXA270? */
-#define  ICR_ALDIE	(1<<12)		/* PXA270? */
-#define  ICR_SADIE	(1<<13)		/* PXA270? */
-#define  ICR_UR		(1<<14)		/* PXA270? */
-#define  ICR_FM		(1<<15)		/* PXA270? */
+#define  ICR_TB  	(1<<3)		 /* Transfer Byte */
+#define  ICR_MA  	(1<<4)		 /* Master Abort */
+#define  ICR_SCLE	(1<<5)		 /* SCL Enable */
+#define  ICR_IUE	(1<<6)		 /* I2C Unit Enable */
+#define  ICR_GCD	(1<<7)		 /* General Call Disable */
+#define  ICR_ITEIE	(1<<8)		 /* IDBR Transmit Empty Intr Enable */
+#define  ICR_IRFIE	(1<<9)		 /* IDBR Receive Full Intr Enable */
+#define  ICR_BEIE	(1<<10)		 /* Bus Error Interrupt Enable */
+#define  ICR_SSDIE	(1<<11)		 /* Slave STOP Detected Intr Enable */
+#define  ICR_ALDIE	(1<<12)		 /* Arbitr Loss Detect Intr Enable */
+#define  ICR_SADIE	(1<<13)		 /* Slave Addr Detected Intr Enable */
+#define  ICR_UR		(1<<14)		 /* Unit Reset */
+#define  ICR_FM		(1<<15)		 /* Fast Mode: 0:100kBs/1:400kBs */
 #define I2C_ISR  	0x1698		/* Status register */
-#define  ISR_RWM	(1<<0)
+#define  ISR_RWM	(1<<0)		 /* Read/Write Mode */
 #define  ISR_ACKNAK	(1<<1)
-#define  ISR_UE		(1<<2)
-#define  ISR_IBB	(1<<3)
-#define  ISR_SSD	(1<<4)
-#define  ISR_ALD	(1<<5)
-#define  ISR_ITE	(1<<6)
-#define  ISR_IRF	(1<<7)
-#define  ISR_GCAD	(1<<8)
-#define  ISR_SAD	(1<<9)
-#define  ISR_BED	(1<<10)
+#define  ISR_UB		(1<<2)		 /* Unit Busy */
+#define  ISR_IBB	(1<<3)		 /* I2C Bus Busy */
+#define  ISR_SSD	(1<<4)		 /* Slave STOP Detected */
+#define  ISR_ALD	(1<<5)		 /* Arbitration Loss Detected */
+#define  ISR_ITE	(1<<6)		 /* IDBR Transmit Empty */
+#define  ISR_IRF	(1<<7)		 /* IDBR Receive Full */
+#define  ISR_GCAD	(1<<8)		 /* General Call Address Detected */
+#define  ISR_SAD	(1<<9)		 /* Slave Address Detected */
+#define  ISR_BED	(1<<10)		 /* Bus Error Detected */
 #define I2C_ISAR	0x16a0		/* Slave address */
 
 /* Clock Manager */
