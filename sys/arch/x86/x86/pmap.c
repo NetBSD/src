@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.124 2011/06/18 21:18:20 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.125 2011/06/23 16:25:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2011/06/18 21:18:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2011/06/23 16:25:09 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -778,7 +778,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		ci->ci_tlbstate = TLBSTATE_VALID;
 		atomic_or_32(&pmap->pm_cpus, cpumask);
 		atomic_or_32(&pmap->pm_kernel_cpus, cpumask);
-		lcr3(pmap_pdirpa(pmap, 0));
+		cpu_load_pmap(pmap);
 	}
 	pmap->pm_ncsw = l->l_ncsw;
 	*pmap2 = curpmap;
