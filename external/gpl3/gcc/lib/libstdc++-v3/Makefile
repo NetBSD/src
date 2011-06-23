@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:02:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/23 12:16:36 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -8,7 +8,7 @@ NOLINT=		# defined
 LIB=		stdc++
 LDADD=		-lgcc_s
 
-LIBDPLIBS+=	m ${.CURDIR}/../../../lib/libm
+LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
 
 CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
 			-Wno-deprecated-writable-strings -Wno-parentheses
@@ -24,7 +24,7 @@ SUBDIR=		include
 INCS=		c++config.h
 INCSDIR=	/usr/include/g++
 
-.include "${.CURDIR}/../libsupc++4/Makefile.common"
+.include "${.CURDIR}/../libsupc++/Makefile.common"
 
 SRCS=		${LIBMATHSRCS} ${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
 # affects profiling; can't switch it off just for profiling easily.
