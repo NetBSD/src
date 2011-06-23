@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.142 2011/06/23 16:02:20 riz Exp $
+.\"	$NetBSD: ddb.4,v 1.143 2011/06/23 20:54:24 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -297,7 +297,7 @@ Set a breakpoint at
 If
 .Ar count
 is supplied, continues
-.Pq Ar count Ns -1
+.Pq Ar count Ns \-1
 times before stopping at the breakpoint.
 If the breakpoint is set, a breakpoint number is printed with
 .Sq \&# .
@@ -1215,7 +1215,7 @@ will be initialized to off, causing a stack trace to be printed and
 the system to be rebooted instead of
 .Nm
 being entered.
-Other useful settings are -1, which suppresses the stack trace before
+Other useful settings are \-1, which suppresses the stack trace before
 reboot, and 2, which causes a stack trace to be printed and
 .Nm
 to be entered.
