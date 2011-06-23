@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2011/06/21 09:37:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.39 2011/06/23 05:42:37 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -76,6 +76,7 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 			LIBS=-lintl \
 			ac_cv_prog_cc_cross=yes \
 			ac_cv_func_strcoll_works=yes \
+			ac_cv_func_elf_getshstrndx=no \
 			gcc_cv_func_printf_ptr=yes \
 			gcc_cv_libc_provides_ssp=yes \
 			gdb_cv_printf_has_long_double=yes \
@@ -100,7 +101,7 @@ GCCSRCDIR=${.CURDIR}/../../external/gpl3/gcc/dist
 
 .if ${HAVE_GCC} >= 45
 CXXADDFLAGS=	--sysroot=${DESTDIR}
-CCADDFLAGS=	--sysroot=${DESTDIR} -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+CCADDFLAGS=	--sysroot=${DESTDIR} -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
 .else
 CXXADDFLAGS=	${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++
 CCADDFLAGS=	${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
@@ -148,6 +149,8 @@ NATIVE_CONFIGURE_ARGS+=	\
 				< Makefile.config > Makefile) && \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e tree-check.h config.h multilib.h gcov-iov.h)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
+		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e libgcc.mvars tconfig.h unwind.h)
+	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && touch gcc/cc1obj gcc/cc1plus gcc/f771 gcc/libgcc.a gcc/libgcc_s.so && \
 			${MKNATIVE_ENV} ${BUILD_MAKE} configure-target-libiberty \
 			${MKNATIVE_CONFIG_TARGET_LIBS} configure-target-libobjc \
@@ -167,9 +170,11 @@ NATIVE_CONFIGURE_ARGS+=	\
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
 			all-local) && \
 	true
+.if 0
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/${MACHINE_GNU_PLATFORM}/libiberty && \
 			${MKNATIVE_ENV} ${BUILD_MAKE} needed-list)
+.endif
 	@touch $@
 
 clean: clean.native
