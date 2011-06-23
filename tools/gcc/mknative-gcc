@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.46 2011/06/21 04:11:12 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.47 2011/06/23 05:42:37 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -519,24 +519,24 @@ get_libstdcxx_v3 () {
 get_gcc () {
 	_subdir="$1"
 	mkdir -p $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH
+	mkdir -p $_OUTDIR/usr.bin/$_subdir/libcpp/arch/$MACHINE_ARCH
 	case ${_subdir} in
 	gcc4)
-		mkdir -p $_OUTDIR/usr.bin/$_subdir/libcpp/arch/$MACHINE_ARCH
 		_buildname="BUILD_"
 		_libcppsubdir=""
 		_extravars="TM_H ALL_OPT_FILES"
 		_hconfig_h=""
 		_extravars2="tm_file_list build_xm_include_list"
 		_extravars3="tm_p_include_list"
-		
 		;;
-	*)
-		_buildname="HOST_"
-		_libcppsubdir="gcc/"
-		_extravars=""
-		_hconfig_h="HCONFIG_H"
-		_extravars2=""
-		_extravars3=""
+		
+	gcc)
+		_buildname="BUILD_"
+		_libcppsubdir=""
+		_extravars="TM_H ALL_OPT_FILES"
+		_hconfig_h=""
+		_extravars2="tm_file_list build_xm_include_list"
+		_extravars3="tm_p_include_list"
 		;;
 	esac
 
