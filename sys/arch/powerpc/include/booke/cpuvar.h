@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.9 2011/06/20 06:00:46 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.10 2011/06/23 01:27:20 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -102,9 +102,14 @@ struct generic_attach_args {
 	int ga_irq;
 };
 
-struct tlbmask;
+#ifndef __BSD_PT_ENTRY_T
+#define __BSD_PT_ENTRY_T	__uint32_t
+typedef __BSD_PT_ENTRY_T	pt_entry_t;
+#endif
 
-struct tlb_md_ops {
+#include <common/pmap/tlb/tlb.h>
+
+struct tlb_md_io_ops {
 	/*
 	 * We need mapiodev to be first so we can easily override it in
 	 * early boot by doing cpu_md_ops.tlb_md_ops = (const struct
@@ -112,20 +117,8 @@ struct tlb_md_ops {
 	 */
 	void *(*md_tlb_mapiodev)(paddr_t, psize_t);
 	void (*md_tlb_unmapiodev)(vaddr_t, vsize_t);
-	void (*md_tlb_set_asid)(uint32_t);
-	uint32_t (*md_tlb_get_asid)(void);
-	void (*md_tlb_invalidate_all)(void);
-	void (*md_tlb_invalidate_globals)(void);
-	void (*md_tlb_invalidate_asids)(uint32_t, uint32_t);
-	void (*md_tlb_invalidate_addr)(vaddr_t, uint32_t);
-	bool (*md_tlb_update_addr)(vaddr_t, uint32_t, uint32_t, bool);
-	void (*md_tlb_read_entry)(size_t, struct tlbmask *);
-	u_int (*md_tlb_record_asids)(u_long *, uint32_t);
 	int (*md_tlb_ioreserve)(vaddr_t, vsize_t, uint32_t);
 	int (*md_tlb_iorelease)(vaddr_t);
-	void (*md_tlb_dump)(void (*)(const char *, ...));
-	void (*md_tlb_walk)(void *, bool (*)(void *, vaddr_t, uint32_t,
-	    uint32_t));
 };
 
 struct cpu_md_ops {
@@ -138,6 +131,7 @@ struct cpu_md_ops {
 	void (*md_cpunode_attach)(device_t, device_t, void *);
 
 	const struct tlb_md_ops *md_tlb_ops;
+	const struct tlb_md_io_ops *md_tlb_io_ops;
 };
 
 
@@ -178,22 +172,10 @@ void	calc_delayconst(void);
 struct intrsw;
 void	exception_init(const struct intrsw *);
 
-uint32_t tlb_get_asid(void);
-void	tlb_set_asid(uint32_t);
-void	tlb_invalidate_all(void);
-void	tlb_invalidate_globals(void);
-void	tlb_invalidate_asids(uint32_t, uint32_t);
-void	tlb_invalidate_addr(vaddr_t, uint32_t);
-bool	tlb_update_addr(vaddr_t, uint32_t, uint32_t, bool);
-u_int	tlb_record_asids(u_long *, uint32_t);
-void	tlb_enter_addr(size_t, const struct tlbmask *);
-void	tlb_read_entry(size_t, struct tlbmask *);
 void	*tlb_mapiodev(paddr_t, psize_t);
 void	tlb_unmapiodev(vaddr_t, vsize_t);
-int	tlb_ioreserve(vaddr_t, vsize_t, uint32_t);
+int	tlb_ioreserve(vaddr_t, vsize_t, pt_entry_t);
 int	tlb_iorelease(vaddr_t);
-void	tlb_dump(void (*)(const char *, ...));
-void	tlb_walk(void *, bool (*)(void *, vaddr_t, uint32_t, uint32_t));
 
 extern struct cpu_md_ops cpu_md_ops;
 
