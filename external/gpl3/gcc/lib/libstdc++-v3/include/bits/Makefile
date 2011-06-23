@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:02:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/23 11:47:12 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@
 
 .cc: # disable .cc->NULL transform
 
-DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
+DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 CONF=		${DIST}/libstdc++-v3/config
 
 INCS=		${G_bits_headers} ${G_c_base_headers_extra} ${G_thread_host_headers} ${G_host_headers_extra} ${G_host_headers}

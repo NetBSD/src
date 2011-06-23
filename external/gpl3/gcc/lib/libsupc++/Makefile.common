@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.common,v 1.1 2011/06/21 06:02:28 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.2 2011/06/23 11:47:13 mrg Exp $
 
-DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
+DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 GNUHOSTDIST=	${DIST}
 
 LIBMATHSRCS=	${G_libmath_la_SOURCES} ${G_libmath_la_LIBADD:.lo=.c}
