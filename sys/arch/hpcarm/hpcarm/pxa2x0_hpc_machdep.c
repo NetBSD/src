@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.10 2011/06/21 15:23:57 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.11 2011/06/23 12:38:02 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.10 2011/06/21 15:23:57 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.11 2011/06/23 12:38:02 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -150,8 +150,7 @@ extern int pmap_debug_level;
 
 #define	KERNEL_PT_VMEM		0	/* Page table for mapping video memory */
 #define	KERNEL_PT_SYS		1	/* Page table for mapping proc0 zero page */
-#define	KERNEL_PT_IO		2	/* Page table for mapping IO */
-#define	KERNEL_PT_KERNEL	3	/* Page table for mapping kernel */
+#define	KERNEL_PT_KERNEL	2	/* Page table for mapping kernel */
 #define	KERNEL_PT_KERNEL_NUM	4
 #define	KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
 					/* Page tables for mapping kernel VM */
