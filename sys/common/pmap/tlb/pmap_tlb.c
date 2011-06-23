@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.8 2011/06/23 07:58:19 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.9 2011/06/23 08:11:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.8 2011/06/23 07:58:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.9 2011/06/23 08:11:56 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -123,6 +123,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.8 2011/06/23 07:58:19 matt Exp $");
  */
 
 #define __PMAP_PRIVATE
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,7 +417,7 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 		KASSERT(pm != pmap_kernel());
 		KASSERT(pai->pai_asid > KERNEL_PID);
 #if defined(MULTIPROCESSOR)
-		if (!CPUSET_EMPTY_P(CPUSET_SUBSET(pm->pm_onproc, ti->ti_cpu_mask)) {
+		if (!CPUSET_EMPTY_P(CPUSET_SUBSET(pm->pm_onproc, ti->ti_cpu_mask))) {
 			if (!TLBINFO_ASID_INUSE_P(ti, pai->pai_asid)) {
 				TLBINFO_ASID_MARK_USED(ti, pai->pai_asid);
 				ti->ti_asids_free--;
