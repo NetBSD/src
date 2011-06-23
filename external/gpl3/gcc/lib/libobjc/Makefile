@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:02:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/23 11:47:12 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -25,13 +25,13 @@ EXTRA_FAKEHEADERS=
 EXTRA_FAKEHEADERS=	options.h
 .endif
 
-LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc4/libgcc && ${PRINTOBJDIR}
+LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc/libgcc && ${PRINTOBJDIR}
 
-DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
-GNUHOSTDIST=	${NETBSDSRCDIR}/gnu/dist/gcc4
-GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc4/arch/${MACHINE_ARCH}
-LIBOBJCARCH=	${NETBSDSRCDIR}/gnu/lib/libobjc4/arch/${MACHINE_ARCH}
-GCCLIBXX=	${NETBSDSRCDIR}/gnu/lib/libstdc++-v3_4/arch/${MACHINE_ARCH}
+DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+GNUHOSTDIST=	${NETBSDSRCDIR}/external/gpl3/gcc/dist
+GCCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/usr.bin/gcc/arch/${MACHINE_ARCH}
+LIBOBJCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libobjc/arch/${MACHINE_ARCH}
+GCCLIBXX=	${NETBSDSRCDIR}/external/gpl3/gcc/lib/libstdc++-v3/arch/${MACHINE_ARCH}
 
 SRCS=		${G_OBJS:N[A-Z]*:Nlinking.lo:.lo=.c} ${G_OBJS:M[A-Z]*:.lo=.m} linking.m
 
@@ -40,7 +40,7 @@ CPPFLAGS+=	-I. -I${.CURDIR}/arch/${MACHINE_ARCH}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
 CPPFLAGS+=	-I${GCCLIBXX}
 
-BUILDSYMLINKS=	${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH} bits
+BUILDSYMLINKS=	${.CURDIR}/../libstdc++-v3/arch/${MACHINE_ARCH} bits
 DPSRCS+=	bits
 
 .for f in Protocol.m Object.m NXConstStr.m linking.m
@@ -113,3 +113,6 @@ CLEANFILES+=	options.h optionlist
 .else
 .include <bsd.prog.mk>	# do nothing
 .endif
+
+COPTS.archive.c+=	-Wno-error
+COPTS.sendmsg.c+=	-Wno-error

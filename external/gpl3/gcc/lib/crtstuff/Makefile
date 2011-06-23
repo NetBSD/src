@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:02:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/23 11:47:12 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -9,9 +9,9 @@ NOLINT=		# defined
 # supplied by that toolchain's run-time support.
 .if !defined(EXTERNAL_TOOLCHAIN) && ${MKGCC} != "no"
 
-DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
+DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 GNUHOSTDIST=	${DIST}
-GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc4/arch/${MACHINE_ARCH}
+GCCARCH=	${NETBSDSRCDIR}/external/gpl3/gcc/usr.bin/gcc/arch/${MACHINE_ARCH}
 
 GALLCFLAGS=	${G_CRTSTUFF_CFLAGS} ${G_CRTSTUFF_T_CFLAGS}
 
