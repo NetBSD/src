@@ -1,4 +1,4 @@
-/*	$NetBSD: ziic.c,v 1.1 2011/06/19 16:20:09 nonaka Exp $	*/
+/*	$NetBSD: ziic.c,v 1.2 2011/06/23 10:56:03 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ziic.c,v 1.1 2011/06/19 16:20:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ziic.c,v 1.2 2011/06/23 10:56:03 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ pxaiic_match(device_t parent, cfdata_t cf, void *aux)
 	if (strcmp(cf->cf_name, pxa->pxa_name))
 		return 0;
 
+	pxa->pxa_addr = PXA2X0_I2C_BASE;
 	pxa->pxa_size = PXA2X0_I2C_SIZE;
 	return 1;
 }
@@ -97,6 +98,7 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 
 	psc->sc_dev = self;
 	psc->sc_iot = pxa->pxa_iot;
+	psc->sc_addr = pxa->pxa_addr;
 	psc->sc_size = pxa->pxa_size;
 	psc->sc_flags = 0;
 	if (pxa2x0_i2c_attach_sub(psc)) {
