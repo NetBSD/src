@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.186 2011/06/12 03:36:02 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.187 2011/06/23 17:36:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.186 2011/06/12 03:36:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.187 2011/06/23 17:36:59 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -255,58 +255,60 @@ uvmfault_amapcopy(struct uvm_faultinfo *ufi)
  * uvmfault_anonget: get data in an anon into a non-busy, non-released
  * page in that anon.
  *
- * => maps, amap, and anon locked by caller.
- * => if we fail (result != 0) we unlock everything.
- * => if we are successful, we return with everything still locked.
- * => we don't move the page on the queues [gets moved later]
- * => if we allocate a new page [we_own], it gets put on the queues.
- *    either way, the result is that the page is on the queues at return time
- * => for pages which are on loan from a uvm_object (and thus are not
- *    owned by the anon): if successful, we return with the owning object
- *    locked.   the caller must unlock this object when it unlocks everything
- *    else.
+ * => Map, amap and thus anon should be locked by caller.
+ * => If we fail, we unlock everything and error is returned.
+ * => If we are successful, return with everything still locked.
+ * => We do not move the page on the queues [gets moved later].  If we
+ *    allocate a new page [we_own], it gets put on the queues.  Either way,
+ *    the result is that the page is on the queues at return time
+ * => For pages which are on loan from a uvm_object (and thus are not owned
+ *    by the anon): if successful, return with the owning object locked.
+ *    The caller must unlock this object when it unlocks everything else.
  */
 
 int
 uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
     struct vm_anon *anon)
 {
-	bool we_own;	/* we own anon's page? */
-	bool locked;	/* did we relock? */
 	struct vm_page *pg;
 	int error;
-	UVMHIST_FUNC("uvmfault_anonget"); UVMHIST_CALLED(maphist);
 
+	UVMHIST_FUNC("uvmfault_anonget"); UVMHIST_CALLED(maphist);
 	KASSERT(mutex_owned(anon->an_lock));
 	KASSERT(amap == NULL || anon->an_lock == amap->am_lock);
 
-	error = 0;
+	/* Increment the counters.*/
 	uvmexp.fltanget++;
-        /* bump rusage counters */
-	if (anon->an_page)
+	if (anon->an_page) {
 		curlwp->l_ru.ru_minflt++;
-	else
+	} else {
 		curlwp->l_ru.ru_majflt++;
+	}
+	error = 0;
 
 	/*
-	 * loop until we get it, or fail.
+	 * Loop until we get the anon data, or fail.
 	 */
 
 	for (;;) {
-		we_own = false;		/* true if we set PG_BUSY on a page */
+		bool we_own, locked;
+		/*
+		 * Note: 'we_own' will become true if we set PG_BUSY on a page.
+		 */
+		we_own = false;
 		pg = anon->an_page;
 
 		/*
-		 * if there is a resident page and it is loaned, then anon
-		 * may not own it.   call out to uvm_anon_lockpage() to ensure
-		 * the real owner of the page has been identified and locked.
+		 * If there is a resident page and it is loaned, then anon
+		 * may not own it.  Call out to uvm_anon_lockloanpg() to
+		 * identify and lock the real owner of the page.
 		 */
 
 		if (pg && pg->loan_count)
 			pg = uvm_anon_lockloanpg(anon);
 
 		/*
-		 * page there?   make sure it is not busy/released.
+		 * Is page resident?  Make sure it is not busy/released.
 		 */
 
 		if (pg) {
@@ -320,42 +322,43 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 
 			if ((pg->flags & PG_BUSY) == 0) {
 				UVMHIST_LOG(maphist, "<- OK",0,0,0,0);
-				return (0);
+				return 0;
 			}
 			pg->flags |= PG_WANTED;
 			uvmexp.fltpgwait++;
 
 			/*
-			 * the last unlock must be an atomic unlock+wait on
-			 * the owner of page
+			 * The last unlock must be an atomic unlock and wait
+			 * on the owner of page.
 			 */
 
-			if (pg->uobject) {	/* owner is uobject ? */
+			if (pg->uobject) {
+				/* Owner of page is UVM object. */
 				uvmfault_unlockall(ufi, amap, NULL);
 				UVMHIST_LOG(maphist, " unlock+wait on uobj",0,
 				    0,0,0);
 				UVM_UNLOCK_AND_WAIT(pg,
 				    pg->uobject->vmobjlock,
-				    false, "anonget1",0);
+				    false, "anonget1", 0);
 			} else {
-				/* anon owns page */
+				/* Owner of page is anon. */
 				uvmfault_unlockall(ufi, NULL, NULL);
 				UVMHIST_LOG(maphist, " unlock+wait on anon",0,
 				    0,0,0);
-				UVM_UNLOCK_AND_WAIT(pg, anon->an_lock, 0,
-				    "anonget2",0);
+				UVM_UNLOCK_AND_WAIT(pg, anon->an_lock,
+				    false, "anonget2", 0);
 			}
 		} else {
 #if defined(VMSWAP)
-
 			/*
-			 * no page, we must try and bring it in.
+			 * No page, therefore allocate one.
 			 */
 
 			pg = uvm_pagealloc(NULL,
 			    ufi != NULL ? ufi->orig_rvaddr : 0,
 			    anon, ufi != NULL ? UVM_FLAG_COLORMATCH : 0);
-			if (pg == NULL) {		/* out of RAM.  */
+			if (pg == NULL) {
+				/* Out of memory.  Wait a little. */
 				uvmfault_unlockall(ufi, amap, NULL);
 				uvmexp.fltnoram++;
 				UVMHIST_LOG(maphist, "  noram -- UVM_WAIT",0,
@@ -365,33 +368,33 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				}
 				uvm_wait("flt_noram1");
 			} else {
-				/* we set the PG_BUSY bit */
+				/* PG_BUSY bit is set. */
 				we_own = true;
 				uvmfault_unlockall(ufi, amap, NULL);
 
 				/*
-				 * we are passing a PG_BUSY+PG_FAKE+PG_CLEAN
-				 * page into the uvm_swap_get function with
-				 * all data structures unlocked.  note that
-				 * it is ok to read an_swslot here because
-				 * we hold PG_BUSY on the page.
+				 * Pass a PG_BUSY+PG_FAKE+PG_CLEAN page into
+				 * the uvm_swap_get() function with all data
+				 * structures unlocked.  Note that it is OK
+				 * to read an_swslot here, because we hold
+				 * PG_BUSY on the page.
 				 */
 				uvmexp.pageins++;
 				error = uvm_swap_get(pg, anon->an_swslot,
 				    PGO_SYNCIO);
 
 				/*
-				 * we clean up after the i/o below in the
-				 * "we_own" case
+				 * We clean up after the I/O below in the
+				 * 'we_own' case.
 				 */
 			}
-#else /* defined(VMSWAP) */
+#else
 			panic("%s: no page", __func__);
 #endif /* defined(VMSWAP) */
 		}
 
 		/*
-		 * now relock and try again
+		 * Re-lock the map and anon.
 		 */
 
 		locked = uvmfault_relock(ufi);
@@ -400,14 +403,14 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 		}
 
 		/*
-		 * if we own the page (i.e. we set PG_BUSY), then we need
-		 * to clean up after the I/O. there are three cases to
+		 * If we own the page (i.e. we set PG_BUSY), then we need
+		 * to clean up after the I/O.  There are three cases to
 		 * consider:
-		 *   [1] page released during I/O: free anon and ReFault.
-		 *   [2] I/O not OK.   free the page and cause the fault
-		 *       to fail.
-		 *   [3] I/O OK!   activate the page and sync with the
-		 *       non-we_own case (i.e. drop anon lock if not locked).
+		 *
+		 * 1) Page was released during I/O: free anon and ReFault.
+		 * 2) I/O not OK.  Free the page and cause the fault to fail.
+		 * 3) I/O OK!  Activate the page and sync with the non-we_own
+		 *    case (i.e. drop anon lock if not locked).
 		 */
 
 		if (we_own) {
@@ -418,31 +421,34 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			if (error) {
 
 				/*
-				 * remove the swap slot from the anon
-				 * and mark the anon as having no real slot.
-				 * don't free the swap slot, thus preventing
+				 * Remove the swap slot from the anon and
+				 * mark the anon as having no real slot.
+				 * Do not free the swap slot, thus preventing
 				 * it from being used again.
 				 */
 
-				if (anon->an_swslot > 0)
+				if (anon->an_swslot > 0) {
 					uvm_swap_markbad(anon->an_swslot, 1);
+				}
 				anon->an_swslot = SWSLOT_BAD;
 
-				if ((pg->flags & PG_RELEASED) != 0)
+				if ((pg->flags & PG_RELEASED) != 0) {
 					goto released;
+				}
 
 				/*
-				 * note: page was never !PG_BUSY, so it
-				 * can't be mapped and thus no need to
-				 * pmap_page_protect it...
+				 * Note: page was never !PG_BUSY, so it
+				 * cannot be mapped and thus no need to
+				 * pmap_page_protect() it.
 				 */
 
 				mutex_enter(&uvm_pageqlock);
 				uvm_pagefree(pg);
 				mutex_exit(&uvm_pageqlock);
 
-				if (locked)
+				if (locked) {
 					uvmfault_unlockall(ufi, NULL, NULL);
+				}
 				mutex_exit(anon->an_lock);
 				UVMHIST_LOG(maphist, "<- ERROR", 0,0,0,0);
 				return error;
@@ -453,12 +459,12 @@ released:
 				KASSERT(anon->an_ref == 0);
 
 				/*
-				 * released while we unlocked amap.
+				 * Released while we had unlocked amap.
 				 */
 
-				if (locked)
+				if (locked) {
 					uvmfault_unlockall(ufi, NULL, NULL);
-
+				}
 				uvm_anon_release(anon);
 
 				if (error) {
@@ -472,7 +478,7 @@ released:
 			}
 
 			/*
-			 * we've successfully read the page, activate it.
+			 * We have successfully read the page, activate it.
 			 */
 
 			mutex_enter(&uvm_pageqlock);
@@ -480,13 +486,13 @@ released:
 			mutex_exit(&uvm_pageqlock);
 			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
 			UVM_PAGE_OWN(pg, NULL);
-#else /* defined(VMSWAP) */
+#else
 			panic("%s: we_own", __func__);
 #endif /* defined(VMSWAP) */
 		}
 
 		/*
-		 * we were not able to relock.   restart fault.
+		 * We were not able to re-lock the map - restart the fault.
 		 */
 
 		if (!locked) {
@@ -494,11 +500,12 @@ released:
 				mutex_exit(anon->an_lock);
 			}
 			UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
-			return (ERESTART);
+			return ERESTART;
 		}
 
 		/*
-		 * verify no one has touched the amap and moved the anon on us.
+		 * Verify that no one has touched the amap and moved
+		 * the anon on us.
 		 */
 
 		if (ufi != NULL && amap_lookup(&ufi->entry->aref,
@@ -506,11 +513,11 @@ released:
 
 			uvmfault_unlockall(ufi, amap, NULL);
 			UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
-			return (ERESTART);
+			return ERESTART;
 		}
 
 		/*
-		 * try it again!
+		 * Retry..
 		 */
 
 		uvmexp.fltanretry++;
