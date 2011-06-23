@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2011/06/19 16:20:09 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2011/06/23 11:28:53 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2011/06/19 16:20:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2011/06/23 11:28:53 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -179,8 +179,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2011/06/19 16:20:09 nonaka Exp $");
 #endif
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
-#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
-#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x04000000)
+#define	KERNEL_TEXT_OFFSET	0x00200000
+#define	KERNEL_TEXT_BASE	(KERNEL_BASE + KERNEL_TEXT_OFFSET)
+#ifndef	KERNEL_VM_BASE
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
+#endif
 
 /*
  * The range 0xc4000000 - 0xcfffffff is available for kernel VM space
@@ -235,10 +238,10 @@ extern int pmap_debug_level;
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
-#define	KERNEL_PT_KERNEL_NUM	32
+#define	KERNEL_PT_KERNEL_NUM	((KERNEL_VM_BASE - KERNEL_BASE) >> 22)
 #define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
 				        /* Page tables for mapping kernel VM */
-#define	KERNEL_PT_VMDATA_NUM	8	/* start with 32MB of KVM */
+#define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
@@ -262,7 +265,8 @@ struct bootinfo _bootinfo;
 struct bootinfo *bootinfo;
 struct btinfo_howto *bi_howto;
 
-#define	BOOTINFO_PAGE	(0xa0200000UL - PAGE_SIZE)
+#define	KERNEL_BASE_PHYS	(PXA2X0_SDRAM0_START + KERNEL_TEXT_OFFSET)
+#define	BOOTINFO_PAGE		(KERNEL_BASE_PHYS - PAGE_SIZE)
 
 /* Prototypes */
 void	consinit(void);
@@ -576,8 +580,8 @@ irda_on(int virt)
 
 	if (virt) {
 		/* XXX scoop1 registers are not page-aligned! */
-		int ofs = C3000_SCOOP1_BASE - trunc_page(C3000_SCOOP1_BASE);
-		p = (volatile uint16_t *)(ZAURUS_SCOOP1_VBASE + ofs + SCOOP_GPWR);
+		int o = C3000_SCOOP1_BASE - trunc_page(C3000_SCOOP1_BASE);
+		p = (volatile uint16_t *)(ZAURUS_SCOOP1_VBASE + o + SCOOP_GPWR);
 	} else {
 		p = (volatile uint16_t *)(C3000_SCOOP1_BASE + SCOOP_GPWR);
 	}
@@ -585,33 +589,27 @@ irda_on(int virt)
 	*p &= ~(1 << SCOOP1_IR_ON);
 }
 
-int hw_isc1000(int virt);
-int hw_isc1000(int virt)
+static int
+hw_isc1000(void)
 {
-	u_long baseaddr;
+	/* XXX scoop1 registers are not page-aligned! */
+	const u_long baseaddr = ZAURUS_SCOOP1_VBASE +
+	    (C3000_SCOOP1_BASE - trunc_page(C3000_SCOOP1_BASE));
 	uint16_t mcr, cdr, csr, cpr, ccr, irr, irm, imr, isr;
 	uint16_t gpcr, gpwr, gprr;
 
-	if (virt) {
-		/* XXX scoop1 registers are not page-aligned! */
-		int ofs = C3000_SCOOP1_BASE - trunc_page(C3000_SCOOP1_BASE);
-		baseaddr = ZAURUS_SCOOP1_VBASE + ofs;
-	} else {
-		baseaddr = C3000_SCOOP1_BASE;
-	}
-
-	mcr = *(volatile uint16_t *)(baseaddr + SCOOP_MCR);
-	cdr = *(volatile uint16_t *)(baseaddr + SCOOP_CDR);
-	csr = *(volatile uint16_t *)(baseaddr + SCOOP_CSR);
-	cpr = *(volatile uint16_t *)(baseaddr + SCOOP_CPR);
-	ccr = *(volatile uint16_t *)(baseaddr + SCOOP_CCR);
-	irr = *(volatile uint16_t *)(baseaddr + SCOOP_IRR);
-	irm = *(volatile uint16_t *)(baseaddr + SCOOP_IRM);
-	imr = *(volatile uint16_t *)(baseaddr + SCOOP_IMR);
-	isr = *(volatile uint16_t *)(baseaddr + SCOOP_ISR);
-	gpcr = *(volatile uint16_t *)(baseaddr + SCOOP_GPCR);
-	gpwr = *(volatile uint16_t *)(baseaddr + SCOOP_GPWR);
-	gprr = *(volatile uint16_t *)(baseaddr + SCOOP_GPRR);
+	mcr = ioreg16_read(baseaddr + SCOOP_MCR);
+	cdr = ioreg16_read(baseaddr + SCOOP_CDR);
+	csr = ioreg16_read(baseaddr + SCOOP_CSR);
+	cpr = ioreg16_read(baseaddr + SCOOP_CPR);
+	ccr = ioreg16_read(baseaddr + SCOOP_CCR);
+	irr = ioreg16_read(baseaddr + SCOOP_IRR);
+	irm = ioreg16_read(baseaddr + SCOOP_IRM);
+	imr = ioreg16_read(baseaddr + SCOOP_IMR);
+	isr = ioreg16_read(baseaddr + SCOOP_ISR);
+	gpcr = ioreg16_read(baseaddr + SCOOP_GPCR);
+	gpwr = ioreg16_read(baseaddr + SCOOP_GPWR);
+	gprr = ioreg16_read(baseaddr + SCOOP_GPRR);
 
 	if (mcr == 0 && cdr == 0 && csr == 0 && cpr == 0 && ccr == 0 &&
 	    irr == 0 && irm == 0 && imr == 0 && isr == 0 &&
@@ -677,15 +675,15 @@ initarm(void *arg)
 	 * Examine the boot args string for options we need to know about
 	 * now.
 	 */
-	magicaddr = (void *)(0xa0200000 - BOOTARGS_BUFSIZ);
+	magicaddr = (u_int *)(KERNEL_BASE_PHYS - BOOTARGS_BUFSIZ);
 	if (*magicaddr == BOOTARGS_MAGIC) {
 #ifdef KLOADER
 		bootinfo = &kbootinfo.bootinfo;
 #else
 		bootinfo = &_bootinfo;
 #endif
-		memcpy(bootinfo,
-		  (char *)0xa0200000 - BOOTINFO_MAXSIZE, BOOTINFO_MAXSIZE);
+		memcpy(bootinfo, (void *)(KERNEL_BASE_PHYS - BOOTINFO_MAXSIZE),
+		    BOOTINFO_MAXSIZE);
 		bi_howto = lookup_bootinfo(BTINFO_HOWTO);
 		boothowto = (bi_howto != NULL) ? bi_howto->howto : RB_AUTOBOOT;
 	} else {
@@ -700,19 +698,25 @@ initarm(void *arg)
 		console = "ffuart";
 	}
 
+	memstart = PXA2X0_SDRAM0_START;
+	memsize =  0x04000000; /* 64MB */
+
 	/*
 	 * This test will work for now but has to be revised when support
 	 * for other models is added.
 	 */
 	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X) {
-		if (hw_isc1000(1)) {
-			zaurusmod = ZAURUS_C1000;
-		} else {
-			zaurusmod = ZAURUS_C3000;
-		}
+		if (hw_isc1000())
+			zaurusmod = ZAURUS_C1000;	/* SL-C1000 */
+		else
+			zaurusmod = ZAURUS_C3000;	/* SL-C3x00 */
 		zaurus_gpioconf = pxa27x_zaurus_gpioconf;
 	} else {
-		zaurusmod = ZAURUS_C860;
+		zaurusmod = ZAURUS_C860;		/* SL-C7x0/860 */
+		if (cputype == CPU_ID_PXA250A) {
+			/* SL-C700 */
+			memsize =  0x02000000;		/* 32MB */
+		}
 		zaurus_gpioconf = pxa25x_zaurus_gpioconf;
 	}
 
@@ -730,12 +734,6 @@ initarm(void *arg)
 	/* Talk to the user */
 	printf("\nNetBSD/zaurus booting ...\n");
 #endif
-
-	{
-		/* XXX - all Zaurus have this for now, fix memory sizing */
-		memstart = 0xa0000000;
-		memsize =  0x04000000; /* 64MB */
-	}
 
 #ifdef KLOADER
 	/* copy boot parameter for kloader */
@@ -767,7 +765,7 @@ initarm(void *arg)
 	physical_start = bootconfig.dram[0].address;
 	physical_end = physical_start + (bootconfig.dram[0].pages * PAGE_SIZE);
 
-	physical_freestart = 0xa0009000UL;
+	physical_freestart = PXA2X0_SDRAM0_START + 0x9000;
 	physical_freeend = BOOTINFO_PAGE;
 
 	physmem = (physical_end - physical_start) / PAGE_SIZE;
@@ -912,7 +910,7 @@ initarm(void *arg)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
 #ifdef KLOADER
-	pmap_link_l2pt(l1pagetable, 0xa0000000, &bootinfo_pt);
+	pmap_link_l2pt(l1pagetable, PXA2X0_SDRAM0_START, &bootinfo_pt);
 #endif
 
 	/* update the top of the kernel VM */
@@ -934,7 +932,7 @@ initarm(void *arg)
 		textsize = (textsize + PGOFSET) & ~PGOFSET;
 		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
 		
-		logical = 0x00200000;	/* offset of kernel in RAM */
+		logical = KERNEL_TEXT_OFFSET;	/* offset of kernel in RAM */
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
