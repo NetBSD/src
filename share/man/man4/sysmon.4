@@ -1,4 +1,4 @@
-.\" $NetBSD: sysmon.4,v 1.1 2011/06/22 19:34:53 jruoho Exp $
+.\" $NetBSD: sysmon.4,v 1.2 2011/06/23 07:47:40 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\"
@@ -33,7 +33,7 @@
 .Sh DESCRIPTION
 The machine-independent
 .Nm
-is a general purpose framework for system monitorin and power management.
+is a general purpose framework for system monitoring and power management.
 The main components of
 .Nm
 include:
@@ -60,6 +60,10 @@ A general purpose task queue,
 .Xr sysmon_taskq 9 .
 .It
 An interface for watchdog timers.
+.Sh FILES
+.Bd -literal
+/dev/sysmon
+.Ed
 .Sh SEE ALSO
 .Xr envsys 4 ,
 .Xr swsensor 4 ,
@@ -67,9 +71,5 @@ An interface for watchdog timers.
 .Xr powerd 8 ,
 .Xr wdogctl 8 ,
 .Xr pmf 9
-.Sh FILES
-.Bd -literal
-/dev/sysmon
-.Ed
 .Sh AUTHORS
 .An Jason R. Thorpe Aq thorpej@NetBSD.org
