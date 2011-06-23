@@ -1,4 +1,4 @@
-/*	$NetBSD: winblk.c,v 1.5 2006/01/25 18:28:26 christos Exp $	*/
+/*	$NetBSD: winblk.c,v 1.6 2011/06/23 11:38:24 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -193,7 +193,6 @@ winblkopen(struct open_file *f, ...)
 #endif /* DEBUG */
 
 	if (!(ctx->di.di_flags & DISK_INFO_FLAG_MBR) ||
-	     (ctx->di.di_flags & DISK_INFO_FLAG_CHS_UNCERTAIN) ||
 	     (ctx->di.di_flags & DISK_INFO_FLAG_UNFORMATTED) ||
 	     (ctx->di.di_bytes_per_sect != BLKSZ)) {
 		win_printf(TEXT("invalid flags\n"));
