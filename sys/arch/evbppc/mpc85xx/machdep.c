@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2011/06/15 15:18:20 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2011/06/23 01:27:20 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -821,8 +821,8 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 	 * We know the GUR is mapped via a TLB1 entry so we add a limited
 	 * mapiodev which allows mappings in GUR space.
 	 */
-	CTASSERT(offsetof(struct tlb_md_ops, md_tlb_mapiodev) == 0);
-	cpu_md_ops.md_tlb_ops = (const void *)&early_tlb_mapiodev;
+	CTASSERT(offsetof(struct tlb_md_io_ops, md_tlb_mapiodev) == 0);
+	cpu_md_ops.md_tlb_io_ops = (const void *)&early_tlb_mapiodev;
 	bus_space_init(&gur_bst, NULL, NULL, 0);
 	bus_space_init(&gur_le_bst, NULL, NULL, 0);
 	cpu->cpu_bst = &gur_bst;
