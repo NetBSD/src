@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.141 2010/06/10 18:34:21 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.142 2011/06/23 16:02:20 riz Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1204,14 +1204,21 @@ When this variable is set to zero
 .Nm
 doesn't perform any wrapping.
 .It Va onpanic
-If non-zero (the default),
+If greater than zero (the default is 1),
 .Nm
 will be invoked when the kernel panics.
 If the kernel configuration option
 .D1 Cd options DDB_ONPANIC=0
 is used,
 .Va onpanic
-will be initialized to off.
+will be initialized to off, causing a stack trace to be printed and
+the system to be rebooted instead of
+.Nm
+being entered.
+Other useful settings are -1, which suppresses the stack trace before
+reboot, and 2, which causes a stack trace to be printed and
+.Nm
+to be entered.
 .It Va fromconsole
 If non-zero (the default),
 the kernel allows to enter
