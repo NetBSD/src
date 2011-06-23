@@ -1,4 +1,4 @@
-.\" $NetBSD: altq.4,v 1.1 2011/06/22 20:29:38 jruoho Exp $
+.\" $NetBSD: altq.4,v 1.2 2011/06/23 07:47:22 wiz Exp $
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen@iki.fi>
 .\"
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm altq
-.Nd alternate queueing framework
+.Nd alternate queuing framework
 .Sh SYNOPSIS
 .Cd options ALTQ
 .Cd options ALTQ_BLUE
@@ -60,8 +60,12 @@ At the implementation level
 modifies the interface packet queues.
 Therefore the driver modifications described in
 .Xr altq 9
-are required in order to use a cerain network card with
+are required in order to use a certain network card with
 .Nm .
+.Sh FILES
+.Bd -literal
+/dev/altq
+.Ed
 .Sh SEE ALSO
 .Xr pf 4 ,
 .Xr altq.conf 5 ,
@@ -75,11 +79,6 @@ are required in order to use a cerain network card with
 .%O Asia BSD conference
 .%U http://www.sonycsl.co.jp/~kjc/papers/fittingtheory.pdf
 .Re
-.Sh FILES
-.Bd -literal
-/dev/altq
-.Ed
-.\"
 .\" .Sh HISTORY
 .\"
 .\" XXX: Write this.
