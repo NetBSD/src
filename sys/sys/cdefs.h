@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.85 2011/06/16 13:51:26 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.86 2011/06/23 12:16:03 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -302,6 +302,8 @@
 #define	__packed	_Pragma("packed 1")
 #define	__aligned(x)   	_Pragma("aligned " __STRING(x))
 #define	__section(x)   	_Pragma("section " ## x)
+#elif defined(_MSC_VER)
+#define	__packed	/* ignore */
 #else
 #define	__packed	error: no __packed for this compiler
 #define	__aligned(x)	error: no __aligned for this compiler
