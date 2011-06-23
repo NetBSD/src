@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 2011/06/23 02:33:44 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.7 2011/06/23 05:42:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -161,7 +161,6 @@ struct pmap_tlb_info {
 #define	tlbinfo_noasids_p(ti)	((ti)->ti_asids_free == 0)
 	kmutex_t *ti_lock;
 	u_int ti_wired;			/* # of wired TLB entries */
-	uint32_t ti_asid_mask;
 	uint32_t ti_asid_max;
 	LIST_HEAD(, pmap_asid_info) ti_pais; /* list of active ASIDs */
 #ifdef MULTIPROCESSOR
@@ -180,6 +179,7 @@ struct pmap_tlb_info {
 #else
 #define tlbinfo_index(ti)	(0)
 #endif
+	struct evcnt ti_evcnt_asid_reinits;
 	u_long ti_asid_bitmap[256 / (sizeof(u_long) * 8)];
 };
 
@@ -238,6 +238,7 @@ void	pmap_tlb_syncicache_wanted(struct cpu_info *);
 void	pmap_tlb_syncicache(vaddr_t, uint32_t);
 #endif
 void	pmap_tlb_info_init(struct pmap_tlb_info *);
+void	pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *);
 void	pmap_tlb_asid_acquire(pmap_t, struct lwp *l);
 void	pmap_tlb_asid_deactivate(pmap_t);
 void	pmap_tlb_asid_release_all(pmap_t);

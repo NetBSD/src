@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.4 2011/06/23 01:27:20 matt Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.5 2011/06/23 05:42:27 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.4 2011/06/23 01:27:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.5 2011/06/23 05:42:27 matt Exp $");
 
 #include <sys/param.h>
 
@@ -436,7 +436,7 @@ e500_tlb_invalidate_asids(tlb_asid_t asid_lo, tlb_asid_t asid_hi)
 			 */
 			if ((mas1 & (MAS1_V|MAS1_TS)) == (MAS1_V|MAS1_TS)
 			    && asid_lo <= (mas1 & MAS1_TID)
-			    && (mas1 & MAS1_TID) < asid_hi) {
+			    && (mas1 & MAS1_TID) <= asid_hi) {
 				mtspr(SPR_MAS1, mas1 ^ MAS1_V);
 #if 0
 				printf("%s[%zu,%zu]->[%x]\n",

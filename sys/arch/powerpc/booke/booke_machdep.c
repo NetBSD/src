@@ -177,6 +177,11 @@ booke_cpu_startup(const char *model)
 	printf("avail memory = %s\n", pbuf);
 
 	/*
+	 * Register the tlb's evcnts
+	 */
+	pmap_tlb_info_evcnt_attach(curcpu()->ci_tlb_info);
+
+	/*
 	 * Set up the board properties database.
 	 */
 	board_info_init();
