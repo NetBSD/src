@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/21 06:02:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2011/06/23 11:47:12 mrg Exp $
 
 SUBDIR=		backward ext bits debug tr1
 #SUBDIR+=	pb_assoc
@@ -9,7 +9,7 @@ SUBDIR=		backward ext bits debug tr1
 
 .cc: # disable .cc->NULL transform
 
-DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
+DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 
 INCS=		exception new typeinfo cxxabi.h exception_defines.h
 INCS+=		${G_std_headers_rename} ${G_c_base_headers_rename}
