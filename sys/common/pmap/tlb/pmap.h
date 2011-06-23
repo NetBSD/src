@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2011/06/23 07:45:24 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 2011/06/23 07:58:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -248,6 +248,7 @@ int	pmap_tlb_update_addr(pmap_t, vaddr_t, uint32_t, u_int);
 #define	PMAP_TLB_INSERT		0x02
 void	pmap_tlb_invalidate_addr(pmap_t, vaddr_t);
 void	pmap_tlb_check(pmap_t, bool (*)(void *, vaddr_t, tlb_asid_t, pt_entry_t));
+void	pmap_tlb_asid_check(void);
 
 uint16_t pmap_pvlist_lock(struct vm_page_md *, bool);
 
