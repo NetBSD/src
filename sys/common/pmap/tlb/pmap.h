@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 2011/06/23 05:42:27 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 2011/06/23 05:50:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -233,6 +233,7 @@ void	pmap_pvlist_lock_init(size_t);
 void	pmap_tlb_shootdown_process(void);
 bool	pmap_tlb_shootdown_bystanders(pmap_t pmap);
 void	pmap_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
+void	pmap_md_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
 void	pmap_tlb_syncicache_ast(struct cpu_info *);
 void	pmap_tlb_syncicache_wanted(struct cpu_info *);
 void	pmap_tlb_syncicache(vaddr_t, uint32_t);
