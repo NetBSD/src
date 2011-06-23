@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.180 2010/07/01 02:38:31 rmind Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.181 2011/06/23 17:06:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.180 2010/07/01 02:38:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.181 2011/06/23 17:06:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -723,6 +723,8 @@ procfs_getattr(void *v)
 	case PFScmdline:
 	case PFSemul:
 	case PFSstatm:
+		if (pfs->pfs_type == PFSmap || pfs->pfs_type == PFSmaps)
+			vap->va_mode = S_IRUSR;
 		vap->va_nlink = 1;
 		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
 		vap->va_gid = kauth_cred_getegid(procp->p_cred);
