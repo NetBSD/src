@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.62 2011/03/18 16:20:12 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.63 2011/06/23 15:57:11 riz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2198,7 +2198,12 @@ Number of display lines.
 .It Li ddb.tabstops ( DDBCTL_TABSTOPS )
 Tab width.
 .It Li ddb.onpanic ( DDBCTL_ONPANIC )
-If non-zero, DDB will be entered if the kernel panics.
+If greater than zero, DDB will be entered if the kernel panics.
+A value of 1 causes the system to enter DDB on panic, while a value of 2
+causes the kernel to attempt to print out a stack trace before entering DDB.
+A value of 0 causes the kernel to attempt to print a stack trace, then
+reboot, while a value of -1 means neither a stack trace will be printed
+nor DDB entered.
 .It Li ddb.fromconsole ( DDBCTL_FROMCONSOLE )
 If not zero, DDB may be entered by sending a break on a serial
 console or by a special key sequence on a graphics console.
