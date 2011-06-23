@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.3 2011/06/05 16:52:24 matt Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.4 2011/06/23 01:27:20 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.3 2011/06/05 16:52:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.4 2011/06/23 01:27:20 matt Exp $");
 
 #include <sys/param.h>
 
@@ -335,12 +335,20 @@ e500_free_tlb1_entry(struct e500_xtlb *xtlb, u_int slot, bool needs_sync)
 	wrtee(msr);
 }
 
-static void e500_tlb_set_asid(uint32_t asid)
+static tlb_asid_t
+e500_tlb_get_asid(void)
+{
+	return mfspr(SPR_PID0);
+}
+
+static void
+e500_tlb_set_asid(tlb_asid_t asid)
 {
 	mtspr(SPR_PID0, asid);
 }
 
-static void e500_tlb_invalidate_all(void)
+static void
+e500_tlb_invalidate_all(void)
 {
 	/*
 	 * This does a flash invalidate of all entries in TLB0.
@@ -405,7 +413,7 @@ e500_tlb_invalidate_globals(void)
 }
 
 static void
-e500_tlb_invalidate_asids(uint32_t asid_lo, uint32_t asid_hi)
+e500_tlb_invalidate_asids(tlb_asid_t asid_lo, tlb_asid_t asid_hi)
 {
 	const size_t tlbassoc = TLBCFG_ASSOC(mftlb0cfg());
 	const size_t tlbentries = TLBCFG_NENTRY(mftlb0cfg());
@@ -443,7 +451,7 @@ e500_tlb_invalidate_asids(uint32_t asid_lo, uint32_t asid_hi)
 }
 
 static u_int
-e500_tlb_record_asids(u_long *bitmap, uint32_t start_slot)
+e500_tlb_record_asids(u_long *bitmap)
 {
 	const size_t tlbassoc = TLBCFG_ASSOC(mftlb0cfg());
 	const size_t tlbentries = TLBCFG_NENTRY(mftlb0cfg());
@@ -480,7 +488,7 @@ e500_tlb_record_asids(u_long *bitmap, uint32_t start_slot)
 }
 
 static void
-e500_tlb_invalidate_addr(vaddr_t va, uint32_t asid)
+e500_tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 {
 	KASSERT((va & PAGE_MASK) == 0);
 	/*
@@ -492,7 +500,7 @@ e500_tlb_invalidate_addr(vaddr_t va, uint32_t asid)
 }
 
 static bool
-e500_tlb_update_addr(vaddr_t va, uint32_t asid, uint32_t pte, bool insert)
+e500_tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert)
 {
 	struct e500_hwtlb hwtlb = tlb_to_hwtlb(
 	    (struct e500_tlb){ .tlb_va = va, .tlb_asid = asid,
@@ -526,6 +534,11 @@ e500_tlb_update_addr(vaddr_t va, uint32_t asid, uint32_t pte, bool insert)
 	    hwtlb.hwtlb_mas1, hwtlb.hwtlb_mas2, hwtlb.hwtlb_mas3);
 #endif
 	return (mas1 & MAS1_V) != 0;
+}
+
+static void
+e500_tlb_write_entry(size_t index, const struct tlbmask *tlb)
+{
 }
 
 static void
@@ -696,7 +709,7 @@ e500_tlb_unmapiodev(vaddr_t va, vsize_t len)
 }
 
 static int
-e500_tlb_ioreserve(vaddr_t va, vsize_t len, uint32_t pte)
+e500_tlb_ioreserve(vaddr_t va, vsize_t len, pt_entry_t pte)
 {
 	struct e500_tlb1 * const tlb1 = &e500_tlb1;
 	struct e500_xtlb *xtlb;
@@ -786,6 +799,7 @@ e500_tlbmemmap(paddr_t memstart, psize_t memsize, struct e500_tlb1 *tlb1)
 	return nextslot;
 }
 static const struct tlb_md_ops e500_tlb_ops = {
+	.md_tlb_get_asid = e500_tlb_get_asid,
 	.md_tlb_set_asid = e500_tlb_set_asid,
 	.md_tlb_invalidate_all = e500_tlb_invalidate_all,
 	.md_tlb_invalidate_globals = e500_tlb_invalidate_globals,
@@ -793,13 +807,17 @@ static const struct tlb_md_ops e500_tlb_ops = {
 	.md_tlb_invalidate_addr = e500_tlb_invalidate_addr,
 	.md_tlb_update_addr = e500_tlb_update_addr,
 	.md_tlb_record_asids = e500_tlb_record_asids,
+	.md_tlb_write_entry = e500_tlb_write_entry,
 	.md_tlb_read_entry = e500_tlb_read_entry,
+	.md_tlb_dump = e500_tlb_dump,
+	.md_tlb_walk = e500_tlb_walk,
+};
+
+static const struct tlb_md_io_ops e500_tlb_io_ops = {
 	.md_tlb_mapiodev = e500_tlb_mapiodev,
 	.md_tlb_unmapiodev = e500_tlb_unmapiodev,
 	.md_tlb_ioreserve = e500_tlb_ioreserve,
 	.md_tlb_iorelease = e500_tlb_iorelease,
-	.md_tlb_dump = e500_tlb_dump,
-	.md_tlb_walk = e500_tlb_walk,
 };
 
 void
@@ -882,6 +900,7 @@ e500_tlb_init(vaddr_t endkernel, psize_t memsize)
 	}
 
 	cpu_md_ops.md_tlb_ops = &e500_tlb_ops;
+	cpu_md_ops.md_tlb_io_ops = &e500_tlb_io_ops;
 
 	if (__predict_false(memmapped < memsize)) {
 		/*

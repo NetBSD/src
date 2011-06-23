@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.44 2011/06/14 03:12:43 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.45 2011/06/23 01:27:20 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -64,6 +64,8 @@ typedef __uint32_t register32_t;
 typedef struct label_t {
 	register_t val[40]; /* double check this XXX */
 } label_t;
+
+typedef __uint32_t tlb_asid_t;		/* for booke */
 #endif
 
 typedef volatile int __cpu_simple_lock_t;
