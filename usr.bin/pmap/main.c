@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2009/04/13 00:27:38 lukem Exp $ */
+/*	$NetBSD: main.c,v 1.21 2011/06/23 22:50:53 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.20 2009/04/13 00:27:38 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2011/06/23 22:50:53 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: main.c,v 1.20 2009/04/13 00:27:38 lukem Exp $");
 #include <unistd.h>
 #include <limits.h>
 #include <string.h>
+#include <signal.h>
 
 #include "pmap.h"
 #include "main.h"
@@ -311,6 +312,11 @@ main(int argc, char *argv[])
 		if (pid == 0)
 			kproc = NULL;
 		else {
+			if (kill(pid, 0) == -1) {
+				warn("%d", pid);
+				pid = -1;
+				continue;
+			}
 			kproc = kvm_getproc2(kd, KERN_PROC_PID, pid,
 					     sizeof(struct kinfo_proc2), &rc);
 			if (kproc == NULL || rc == 0) {
